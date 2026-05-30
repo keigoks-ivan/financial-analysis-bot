@@ -1,0 +1,305 @@
+{
+  "id": "auto-soc",
+  "tab": "車用 SoC / MCU",
+  "title": "車用 SoC / MCU（運算 / 控制晶片）供應鏈",
+  "subtitle": "車輛 E/E 架構正從『域控制』走向『區域 + 中央運算』（SDV 軟體定義汽車）——VW SSP 2026 全區域化、ECU 減 50%、線束減 40%。本圖聚焦運算與控制矽：上游 ADAS/自駕 SoC（Mobileye/NVIDIA/Qualcomm/地平線/華為五強 2025 ~69% → 2035 78%）、智慧座艙 SoC、車用 MCU（NXP/Renesas/Infineon/TI/Microchip 五強 ~70-81%）與區域/中央處理器。與消費/AI 鏈最大差異：車廠強制 dual-source + ISO 26262 ASIL 設計鎖（design-in 5-7 年、生命週期 10+ 年），結構上刻意避免單一來源——故晶片層幾無乾淨供應單點，護城河來自『換不掉的設計鎖』而非市佔壟斷。唯一例外在 IP 源頭：ARM Cortex-R/A 仍是車用 CPU 唯一可行核心、FuSa 安全套件已 co-design 進每顆安全 MCU；incumbents 自組的 RISC-V Quintauris（RT-Europa 2025/2）是它唯一遭結構性挑戰的領域，但仍屬參考平台、量產 ASIL-D 替代 2028+。",
+  "single_point_framework": "v1.3",
+  "stats": [
+    { "k": "供應鏈節點", "v": 13 },
+    { "k": "涵蓋廠商", "v": "70+" },
+    { "k": "近乎獨佔 / 關鍵單點", "v": 1, "sub": "1 個關鍵單點 — ARM Cortex-R/A 為車用 CPU IP 唯一可行核心、FuSa 安全套件已 co-design 進每顆 ASIL-D 安全 MCU（RISC-V Quintauris RT-Europa 仍參考平台、量產 2028+，18-24 月內無合格第二源）。其餘運算/控制全層因車廠強制 dual-source + ISO 26262 ASIL 設計鎖而無供應單點 — ADAS SoC 五強互打、MCU 五強 dual-source、座艙多源、RTOS 雙強。護城河 = 設計鎖非壟斷。", "hot": true }
+  ],
+  "rows": [
+    { "id": "ip", "label": "IP / 工具 / 車用 OS", "main": "CPU IP（ARM vs RISC-V Quintauris）・EDA + 安全認證工具・車用 RTOS / AUTOSAR" },
+    { "id": "adas", "label": "ADAS / 自駕 SoC", "main": "高階自駕 SoC・L2+ ADAS SoC・中國自研 ADAS 晶片" },
+    { "id": "cockpit", "label": "智慧座艙 / 記憶體", "main": "智慧座艙 SoC・車規記憶體 LPDDR / UFS / NOR" },
+    { "id": "control", "label": "MCU / 區域控制", "main": "車用 MCU・功能安全 MCU・區域 / 中央運算處理器" },
+    { "id": "demand", "label": "下游需求", "main": "Tier-1 系統整合・車廠 OEM（含自研）" }
+  ],
+  "nodes": [
+    {
+      "id": "ip-cpu",
+      "row": "ip", "col": 1, "span": 2, "kind": "rail",
+      "name": "CPU IP（ARM vs RISC-V）", "nameEn": "CPU IP (ARM vs RISC-V)",
+      "competition": "monopoly",
+      "single": "近乎獨佔 · ARM Cortex-R（安全 MCU lockstep）+ Cortex-A（運算 SoC）為現行車用 CPU IP 唯一可行核心，ARM FuSa 功能安全套件已 co-design 進每顆 AURIX / S32 / R-Car 的 ASIL-D 架構、換核心須重建整套安全認證；唯一結構性挑戰 RISC-V Quintauris RT-Europa（2025/2）仍為參考平台、量產 ASIL-D 替代 2028+，18-24 月內無合格第二量產源（信心度 high · Quintauris 公告 + FuSa 認證生態 + 通用知識多源）",
+      "desc": "車用運算與控制晶片的處理器核心 IP——ARM Cortex-A（SoC）/ Cortex-R（安全 MCU）長年主導，是全鏈唯一過單點門檻的環節（晶片層皆 dual-source）。",
+      "marketSize": "全鏈唯一單點（IP 源頭）",
+      "growth": "RISC-V Quintauris 2025 切入但量產 2028+",
+      "analysis": "車用是 ARM 唯一被『客戶自組聯盟』正面挑戰的領域：NXP / Infineon / Bosch / Nordic / Qualcomm 合資 Quintauris 2025/2 推出 RT-Europa RISC-V 車用即時參考平台、由 MCU 巨頭自己出錢做第二來源。但 critic 對抗審查確認：RT-Europa 仍是參考平台、非量產 ASIL-D IP，缺認證工具鏈與量產 design-in，最快 2028-2029 才成形——18-24 月內 ARM 仍是唯一可行核心、且 FuSa 安全套件深度 co-design 進每顆安全 MCU（S3 IP 鎖），故過 Axis 1 → 打單點。這是全鏈唯一例外（晶片層皆因 dual-source 而無單點）；Quintauris 列為 watch，量產化後重評。",
+      "companies": [
+        { "name": "ARM Holdings", "ticker": "ARM", "country": "UK", "share": "車用 CPU IP ~95%（近乎獨佔）", "products": "Cortex-A / Cortex-R / Cortex-M + FuSa", "note": "唯一可行車用 CPU 核心；FuSa co-design 進每顆 ASIL-D MCU；Quintauris 量產 2028+ 前無替代", "core_business": true, "supply_chain_lock": "tight" },
+        { "name": "Quintauris（RISC-V JV）", "ticker": "—", "country": "EU", "share": "RISC-V 車用標準", "products": "RT-Europa 即時參考平台", "note": "NXP/Infineon/Bosch/Nordic/Qualcomm 合資；incumbents 自建第二源" },
+        { "name": "Synopsys / Cadence（含 ARC / Tensilica）", "ticker": "SNPS", "country": "US", "share": "替代 CPU/DSP IP", "products": "ARC / Tensilica DSP IP", "note": "車用 DSP / 控制核心替代" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "a-highend" }, { "id": "a-mid" }, { "id": "ck-soc" }, { "id": "mc-mcu" }, { "id": "mc-safety" }],
+      "sources": [
+        { "label": "Quintauris: launches first RISC-V profile for real-time automotive (RT-Europa)", "url": "https://www.quintauris.com/quintauris-launches-first-riscv-profile-real-time-automotive/" },
+        { "label": "Electronic Specifier: Quintauris releases RT-Europa, first RISC-V real-time auto platform", "url": "https://www.electronicspecifier.com/industries/automotive/quintauris-releases-rt-europa-the-first-risc-v-real-time-platform-for-automotive-2/" }
+      ]
+    },
+    {
+      "id": "ip-eda",
+      "row": "ip", "col": 3, "span": 2, "kind": "rail",
+      "name": "EDA + 安全認證工具", "nameEn": "EDA + Safety Toolchain",
+      "competition": "oligopoly",
+      "desc": "車用晶片設計工具鏈與功能安全（ISO 26262 ASIL）驗證、NoC（晶片內網）IP——設計門檻高、認證週期長。",
+      "marketSize": "設計 + 認證門檻",
+      "growth": "ASIL-D + zonal 複雜度推升",
+      "analysis": "EDA 由 Synopsys / Cadence / Siemens 三強主導，車用額外需 ISO 26262 ASIL-D 安全認證流程與工具（Synopsys/Cadence 安全套件、Arteris NoC IP）。認證週期長是設計鎖的一環，但工具供應商多源、屬寡占。",
+      "companies": [
+        { "name": "Synopsys", "ticker": "SNPS", "country": "US", "share": "EDA + 安全 IP", "products": "車用 EDA + ASIL IP", "note": "安全認證流程工具" },
+        { "name": "Cadence", "ticker": "CDNS", "country": "US", "share": "EDA 雙雄", "products": "車用 EDA", "note": "與 Synopsys 雙寡占" },
+        { "name": "Arteris", "ticker": "AIP", "country": "US", "share": "NoC IP", "products": "車用 NoC / FlexNoC", "note": "晶片內網 IP，ADAS SoC 採用" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "a-mid" }, { "id": "mc-mcu" }],
+      "sources": [
+        { "label": "Arteris 8-K FY25 (automotive NoC IP design wins)", "url": "https://www.sec.gov/Archives/edgar/data/0001667011/000166701125000018/exhibit991q1fy258-k.htm" }
+      ]
+    },
+    {
+      "id": "ip-os",
+      "row": "ip", "col": 5, "span": 2, "kind": "rail",
+      "name": "車用 RTOS / AUTOSAR", "nameEn": "Automotive RTOS / AUTOSAR",
+      "competition": "oligopoly",
+      "desc": "車用即時作業系統（RTOS）、Hypervisor 與 AUTOSAR 中介軟體——安全認證軟體基礎層，BlackBerry QNX 與 Green Hills 為兩大安全 RTOS。",
+      "marketSize": "軟體基礎層",
+      "growth": "QNX 已進 2.75 億輛車",
+      "analysis": "車用安全 RTOS 由 BlackBerry QNX（已搭載 >2.75 億輛車，BMW/Bosch/Conti/Honda/MB/Toyota/VW）與 Green Hills INTEGRITY 雙強主導，AUTOSAR Classic/Adaptive 為標準中介軟體（ETAS/Vector/Elektrobit）。QNX 在安全微核心 RTOS 份額高，但 Green Hills、Wind River、安全 Linux（ELISA）為合格替代、且軟體可在改款週期切換 → 寡占非單點。SDV 把軟體價值放大，是車用利潤新戰場。",
+      "companies": [
+        { "name": "BlackBerry QNX", "ticker": "BB", "country": "US", "share": "安全 RTOS 領導", "products": "QNX 微核心 RTOS + Hypervisor", "note": "加拿大商、NYSE 上市；>2.75 億輛車；座艙 + 安全雙用" },
+        { "name": "Green Hills Software", "ticker": "—", "country": "US", "share": "安全 RTOS #2", "products": "INTEGRITY RTOS", "note": "私有；ASIL-D 安全認證替代源" },
+        { "name": "ETAS / Vector / Elektrobit", "ticker": "—", "country": "DE", "share": "AUTOSAR 中介軟體", "products": "AUTOSAR Classic / Adaptive", "note": "Bosch(ETAS)/Continental(EB) 旗下" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "a-highend" }, { "id": "ck-soc" }, { "id": "mc-zonal" }],
+      "sources": [
+        { "label": "Robotics&Automation News: BlackBerry QNX now powers 275M+ vehicles", "url": "https://roboticsandautomationnews.com/2025/12/19/blackberry-qnx-embedded-technology-now-powering-more-than-275-million-vehicles-on-the-road/97725/" }
+      ]
+    },
+    {
+      "id": "a-highend",
+      "row": "adas", "col": 1, "span": 2, "kind": "stage",
+      "name": "高階自駕 SoC", "nameEn": "High-end AD SoC",
+      "competition": "highgrowth",
+      "desc": "L2++/L3+ 高算力自駕運算 SoC——數百 TOPS、跑 BEV+Transformer 感知與規劃。NVIDIA Thor/Orin、華為昇騰、Tesla FSD 自研主導。",
+      "marketSize": "高算力競賽",
+      "growth": "NVIDIA Thor 2025 量產",
+      "analysis": "高階自駕 SoC 是算力競賽：NVIDIA Orin-X 當前主流、Thor-X/U 2025 量產接棒，華為昇騰 610 與 Tesla FSD（自研 captive、台積電/三星代工）並列。算力高、客戶綁定深，但 NVIDIA/華為/Tesla/Qualcomm 多強競爭、車廠強制 dual-source → 高成長寡占無單點。",
+      "companies": [
+        { "name": "NVIDIA", "ticker": "NVDA", "country": "US", "share": "高階自駕 SoC 領導", "products": "Drive Thor-X/U / Orin", "note": "Orin 主流、Thor 2025 量產；生態最廣" },
+        { "name": "Huawei 華為", "ticker": "—", "country": "CN", "share": "中國高階主力", "products": "昇騰 Ascend 610", "note": "受制裁但中國市場強；自研全棧" },
+        { "name": "Tesla", "ticker": "TSLA", "country": "US", "share": "自研 captive", "products": "FSD HW4 / AI5", "note": "自研、台積電/三星代工；不外售" }
+      ],
+      "upstream": [{ "id": "ip-cpu" }, { "id": "ip-os" }],
+      "downstream": [{ "id": "d-oem" }],
+      "sources": [
+        { "label": "Counterpoint: Global shifts in ADAS/AV reshaping SoC supplier landscape", "url": "https://counterpointresearch.com/en/insights/Global-Shifts-in-ADAS-and-Autonomous-Vehicles" }
+      ]
+    },
+    {
+      "id": "a-mid",
+      "row": "adas", "col": 3, "span": 2, "kind": "stage",
+      "name": "L2+ ADAS SoC", "nameEn": "L2+ ADAS SoC",
+      "competition": "oligopoly",
+      "desc": "主流 L2/L2+ 駕駛輔助 SoC——成本敏感、量大，Mobileye、Qualcomm Snapdragon Ride、TI、Ambarella 競逐。",
+      "marketSize": "走量主力",
+      "growth": "ADAS 滲透率 2025 >50%",
+      "analysis": "L2+ ADAS 是走量市場：Mobileye EyeQ 曾近 70% 但被侵蝕、Qualcomm Snapdragon Ride（~5% 全球、8797/8397）切入座艙+ADAS 整合、TI TDA4 與 Ambarella 補位。ADAS 滲透 2025 已 >50%。多強競爭 + 車廠 dual-source → 寡占無單點。Mobileye 的 REM 眾包地圖是資料護城河、非供應單點。",
+      "companies": [
+        { "name": "Mobileye", "ticker": "MBLY", "country": "IL", "share": "L2 ADAS 老牌（侵蝕中）", "products": "EyeQ6 / SuperVision", "note": "曾近 70%；REM 地圖資料護城河" },
+        { "name": "Qualcomm", "ticker": "QCOM", "country": "US", "share": "ADAS ~5%（上升）", "products": "Snapdragon Ride 8797/8397", "note": "座艙 + ADAS 整合切入" },
+        { "name": "TI", "ticker": "TXN", "country": "US", "share": "入門 ADAS", "products": "TDA4 Jacinto", "note": "成本敏感 L2 主力" },
+        { "name": "Ambarella", "ticker": "AMBA", "country": "US", "share": "視覺 SoC 利基", "products": "CV3 自駕 SoC", "note": "邊緣 AI 視覺" }
+      ],
+      "upstream": [{ "id": "ip-cpu" }, { "id": "ip-eda" }],
+      "downstream": [{ "id": "d-tier1" }],
+      "sources": [
+        { "label": "Nevsemi: Top 20 most advanced autonomous driving chips 2025", "url": "https://www.nevsemi.com/blog/top-20-most-advanced-autonomous-driving-chips-2025" }
+      ]
+    },
+    {
+      "id": "a-china",
+      "row": "adas", "col": 5, "span": 2, "kind": "stage",
+      "name": "中國自研 ADAS 晶片", "nameEn": "China Domestic ADAS SoC",
+      "competition": "highgrowth",
+      "desc": "中國本土自駕 SoC——地平線（Horizon）、黑芝麻（Black Sesame）以高性價比 L2+ 快速放量，挑戰外商。",
+      "marketSize": "中國國產替代",
+      "growth": "地平線 2035 國產上看 >50%",
+      "analysis": "中國國產 ADAS 是最快成長段：地平線（9660.HK）征程 J6P + HSD 城市 NOA、2024 中國出貨 ~30-40%、累計 >200 萬套、合作 >20 家車廠；黑芝麻（2533.HK）華山 A2000 通過美商務部審查取得全球銷售許可、2025/26 出貨 +131%/+69%。地平線 + 華為預期 2035 國產市佔 >50%。高成長但多家競爭 + 車廠 dual-source → 無單點。",
+      "companies": [
+        { "name": "地平線 Horizon Robotics", "ticker": "9660.HK", "country": "HK", "share": "中國 ADAS ~30-40%", "products": "征程 Journey J6P/J6M", "note": "城市 NOA HSD；挑戰 NVIDIA" },
+        { "name": "黑芝麻 Black Sesame", "ticker": "2533.HK", "country": "HK", "share": "中國國產 #2", "products": "華山 A2000", "note": "通過美審查取得全球銷售；出貨高成長" },
+        { "name": "Huawei 華為", "ticker": "—", "country": "CN", "share": "中國高階", "products": "昇騰 + MDC", "note": "自研全棧；與高階段重疊" }
+      ],
+      "upstream": [{ "id": "ip-cpu" }],
+      "downstream": [{ "id": "d-oem" }],
+      "sources": [
+        { "label": "Longbridge: Horizon Robotics — can China's AD substitute chips unseat NVDA?", "url": "https://longbridge.com/en/topics/37061974" },
+        { "label": "Digitimes: Black Sesame Huashan A2000 clears US Commerce/Defense reviews", "url": "https://www.digitimes.com/news/a20260105VL204/black-sesame-technologies-sales-automotive-ai-chip-performance.html" },
+        { "label": "kingautos: 聯發科協同 Denso 研發次世代車用晶片 瞄準高階 ADAS 與自駕（中國國產競局）", "url": "https://www.kingautos.net/366650" }
+      ]
+    },
+    {
+      "id": "ck-soc",
+      "row": "cockpit", "col": 1, "span": 3, "kind": "stage",
+      "name": "智慧座艙 SoC", "nameEn": "Smart Cockpit SoC",
+      "competition": "oligopoly",
+      "desc": "數位座艙 / 車載資訊娛樂（IVI）運算 SoC——驅動多螢幕、語音、生成式 AI 助手，Qualcomm 座艙領先，台廠聯發科切入。",
+      "marketSize": "座艙運算",
+      "growth": "生成式 AI 座艙 + 多螢幕",
+      "analysis": "智慧座艙 SoC 由 Qualcomm Snapdragon Cockpit（8397/8775）領先，聯發科 Dimensity Auto（C-X1 旗艦座艙 + 攜 NVIDIA GPU + 與 Denso 合作客製 ADAS）切入、Samsung Exynos Auto、Renesas R-Car 競逐。生成式 / Agentic AI 座艙是新賣點。多源競爭、屬寡占無單點；台廠聯發科是少數打進高階座艙的非歐美玩家。",
+      "companies": [
+        { "name": "Qualcomm", "ticker": "QCOM", "country": "US", "share": "座艙 SoC 領導", "products": "Snapdragon Cockpit 8397/8775", "note": "數位座艙市佔領先" },
+        { "name": "聯發科 MediaTek", "ticker": "2454.TW", "country": "TW", "share": "座艙切入（上升）", "products": "Dimensity Auto C-X1 / MT2739", "note": "攜 NVIDIA GPU；與 Denso 合作客製 ADAS" },
+        { "name": "Samsung", "ticker": "005930.KS", "country": "KR", "share": "座艙 SoC", "products": "Exynos Auto", "note": "車規座艙處理器" },
+        { "name": "Renesas", "ticker": "6723.T", "country": "JP", "share": "座艙 + ADAS", "products": "R-Car", "note": "日系車廠座艙主供" }
+      ],
+      "upstream": [{ "id": "ip-cpu" }, { "id": "ip-os" }, { "id": "ck-memory" }],
+      "downstream": [{ "id": "d-tier1" }],
+      "sources": [
+        { "label": "TechNews 科技新報: 聯發科上海車展推 Dimensity Auto 座艙系列", "url": "https://technews.tw/2025/04/23/mediatek-strengthens-its-layout-in-the-automotive-electronics-market/" },
+        { "label": "聯合新聞網 udn: 聯發科偕輝達推智慧座艙晶片組", "url": "https://udn.com/news/story/6839/8011232" }
+      ]
+    },
+    {
+      "id": "ck-memory",
+      "row": "cockpit", "col": 4, "span": 3, "kind": "stage",
+      "name": "車規記憶體 LPDDR / UFS / NOR", "nameEn": "Automotive Memory",
+      "competition": "oligopoly",
+      "desc": "車規記憶體——座艙與 ADAS SoC 搭配的車規 LPDDR/UFS（Micron/Samsung/SK Hynix）與車用 NOR/利基 DRAM（台廠華邦、旺宏）。",
+      "marketSize": "車規認證門檻",
+      "growth": "座艙 + ADAS 拉動容量",
+      "analysis": "車規記憶體由 Micron（車用龍頭）、Samsung、SK Hynix 供 LPDDR/UFS，台廠華邦（Winbond）、旺宏（Macronix）強於車用 NOR Flash 與利基 DRAM。車規 AEC-Q100 認證 + 長供貨承諾是門檻，但多源、屬寡占無單點。座艙多螢幕 + ADAS 模型推升容量。",
+      "companies": [
+        { "name": "Micron", "ticker": "MU", "country": "US", "share": "車規記憶體龍頭", "products": "車規 LPDDR5 / UFS", "note": "車用記憶體市佔領先" },
+        { "name": "華邦 Winbond", "ticker": "2344.TW", "country": "TW", "share": "車用 NOR / 利基 DRAM", "products": "車規 NOR / DRAM", "note": "台廠車用記憶體" },
+        { "name": "旺宏 Macronix", "ticker": "2337.TW", "country": "TW", "share": "車用 NOR 領導", "products": "車規 NOR Flash", "note": "車用 NOR 強；ADAS code storage" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "ck-soc" }],
+      "sources": [
+        { "label": "Mordor Intelligence: Automotive memory landscape", "url": "https://www.mordorintelligence.com/industry-reports/global-automotive-mcu-market" }
+      ]
+    },
+    {
+      "id": "mc-mcu",
+      "row": "control", "col": 1, "span": 2, "kind": "stage",
+      "name": "車用 MCU", "nameEn": "Automotive MCU",
+      "competition": "oligopoly",
+      "desc": "車用微控制器——車身、動力、底盤、ADAS 子系統的控制大腦，五強寡占、車廠強制 dual-source。",
+      "marketSize": "車用控制核心",
+      "growth": "單車 MCU 數量隨電子化上升",
+      "analysis": "車用 MCU 五強（NXP ~20% / Infineon ~28.5%（含 AURIX 安全）/ Renesas / TI / Microchip / STM）合計 ~70-81.5%，是車用半導體最集中也最『刻意不單一化』的環節：車廠以 ISO 26262 + 強制 dual-source 把每個設計鎖進 ≥2 家，故無單點。護城河來自 design-in 5-7 年 + 生命週期 10+ 年的設計鎖，而非市佔壟斷——這正是車用鏈與消費/AI 鏈的結構差異。",
+      "companies": [
+        { "name": "NXP", "ticker": "NXPI", "country": "NL", "share": "車用 MCU ~20%（領導）", "products": "S32 平台 + MRAM", "note": "可擴展 S32；強制 dual-source 之一" },
+        { "name": "Infineon", "ticker": "IFX.DE", "country": "DE", "share": "車用 MCU ~28.5%", "products": "AURIX TC3x/TC4x", "note": "安全 MCU 龍頭；tri-core 安全傳統" },
+        { "name": "Renesas", "ticker": "6723.T", "country": "JP", "share": "車用 MCU 五強", "products": "RH850 / RA", "note": "日系車廠主供；功能安全工具" },
+        { "name": "TI / Microchip / STM", "ticker": "TXN", "country": "US", "share": "車用 MCU 五強", "products": "車身 / 動力 MCU", "note": "五強其餘；dual-source 補位" }
+      ],
+      "upstream": [{ "id": "ip-cpu" }, { "id": "ip-eda" }],
+      "downstream": [{ "id": "mc-zonal" }, { "id": "d-tier1" }],
+      "sources": [
+        { "label": "Intel Market Research: Automotive MCU — NXP 20% lead, top-5 >70%", "url": "https://www.intelmarketresearch.com/microcontroller-for-automotive-market-11978" }
+      ]
+    },
+    {
+      "id": "mc-safety",
+      "row": "control", "col": 3, "span": 1, "kind": "stage",
+      "name": "功能安全 MCU", "nameEn": "Functional-Safety MCU",
+      "competition": "oligopoly",
+      "desc": "ASIL-D 功能安全 MCU——煞車、轉向、安全氣囊等安全關鍵控制，Infineon AURIX 安全傳統最深。",
+      "marketSize": "安全關鍵",
+      "growth": "線控底盤 + zonal 推升",
+      "analysis": "ASIL-D 安全 MCU 由 Infineon AURIX（tri-core lockstep 安全傳統）領先，NXP S32、TI、Renesas 為合格替代。線控（brake/steer-by-wire）與 zonal 把安全 MCU 需求推高。Infineon 份額高但非獨佔、車廠仍 dual-source → 寡占。",
+      "companies": [
+        { "name": "Infineon", "ticker": "IFX.DE", "country": "DE", "share": "安全 MCU 領導", "products": "AURIX tri-core lockstep", "note": "ASIL-D 安全傳統最深" },
+        { "name": "NXP", "ticker": "NXPI", "country": "NL", "share": "安全 MCU #2", "products": "S32 安全核心", "note": "合格替代源" },
+        { "name": "TI", "ticker": "TXN", "country": "US", "share": "安全 MCU", "products": "Hercules 安全 MCU", "note": "底盤 / 動力安全" }
+      ],
+      "upstream": [{ "id": "ip-cpu" }],
+      "downstream": [{ "id": "mc-zonal" }],
+      "sources": [
+        { "label": "Mordor Intelligence: Automotive MCU — Infineon AURIX safety heritage", "url": "https://www.mordorintelligence.com/industry-reports/global-automotive-mcu-market" },
+        { "label": "財報狗: 聯發科攜手 DENSO 深耕車用客製化晶片（車用安全認證鏈）", "url": "https://statementdog.com/news/15412" }
+      ]
+    },
+    {
+      "id": "mc-zonal",
+      "row": "control", "col": 4, "span": 3, "kind": "stage",
+      "name": "區域 / 中央運算處理器", "nameEn": "Zonal / Central Compute",
+      "competition": "highgrowth",
+      "desc": "SDV 的區域控制器與中央運算超整合處理器——把分散 ECU 收斂成幾顆高整合處理器，是 E/E 架構變革的核心受惠段。",
+      "marketSize": "SDV 架構核心",
+      "growth": "VW SSP 2026 全區域化 ECU -50%",
+      "analysis": "區域/中央運算是 SDV 最大結構增量：NXP S32N 中央超整合 + S32Z/E 區域即時、S32K5（Embedded World 2025）、與 Quanta 合作 zonal networking；Infineon AURIX TC4x 定位 zonal；TI Jacinto 補位。VW SSP 2026 全區域化、ECU 減 50%、線束減 40%。高成長但 NXP/Infineon/TI 多強競爭、車廠 dual-source → 無單點。台廠（Quanta 廣達等）切入 zonal 系統組裝。",
+      "companies": [
+        { "name": "NXP", "ticker": "NXPI", "country": "NL", "share": "zonal / 中央運算領導", "products": "S32N / S32Z/E / S32K5", "note": "超整合中央運算 + 區域；與 Quanta 合作" },
+        { "name": "Infineon", "ticker": "IFX.DE", "country": "DE", "share": "zonal 控制", "products": "AURIX TC4x", "note": "區域 E/E 架構定位" },
+        { "name": "TI", "ticker": "TXN", "country": "US", "share": "zonal / gateway", "products": "Jacinto", "note": "區域 + 閘道處理器" }
+      ],
+      "upstream": [{ "id": "mc-mcu" }, { "id": "mc-safety" }, { "id": "ip-os" }],
+      "downstream": [{ "id": "d-tier1" }],
+      "sources": [
+        { "label": "NXP: S32N vehicle super-integration central compute processors", "url": "https://www.nxp.com/products/processors-and-microcontrollers/s32-automotive-platform/s32n-vehicle-super-integration-processors:S32N" },
+        { "label": "All About Circuits: NXP drives zonal computing transition (Embedded World 2025)", "url": "https://www.allaboutcircuits.com/news/nxp-drives-automotive-zonal-computing-transition-new-reference-system/" }
+      ]
+    },
+    {
+      "id": "d-tier1",
+      "row": "demand", "col": 1, "span": 3, "kind": "demand",
+      "name": "Tier-1 系統整合", "nameEn": "Tier-1 Integrators",
+      "competition": "oligopoly",
+      "desc": "一級供應商——把 SoC/MCU 整合成域控制器、ADAS 系統、座艙系統交付車廠，Bosch、Conti、ZF、Denso、Aptiv、Valeo 主導。",
+      "marketSize": "系統整合層",
+      "growth": "SDV 重塑 Tier-1 角色",
+      "analysis": "Tier-1 把晶片整合成可交付系統並承擔功能安全責任：Bosch、Continental、ZF、Denso（與聯發科合作客製 ADAS）、Aptiv、Valeo 主導。SDV 與車廠自研壓縮 Tier-1 軟體價值、但硬體整合與安全認證仍是門檻。多家競爭、屬寡占。",
+      "companies": [
+        { "name": "Bosch", "ticker": "—", "country": "DE", "share": "Tier-1 全球龍頭", "products": "域控制器 / ADAS 系統", "note": "私有；ETAS(AUTOSAR) 母公司" },
+        { "name": "Continental / ZF", "ticker": "CON.DE", "country": "DE", "share": "Tier-1 主力", "products": "ADAS / 座艙系統", "note": "Elektrobit(EB) 母公司" },
+        { "name": "Denso 電裝", "ticker": "6902.T", "country": "JP", "share": "日系 Tier-1 龍頭", "products": "ADAS / 動力系統", "note": "與聯發科合作客製 ADAS 晶片" },
+        { "name": "Aptiv / Valeo", "ticker": "APTV", "country": "US", "share": "Tier-1 主力", "products": "ADAS / 線束 / 連接", "note": "歐美 Tier-1" }
+      ],
+      "upstream": [{ "id": "a-mid" }, { "id": "ck-soc" }, { "id": "mc-mcu" }, { "id": "mc-zonal" }],
+      "downstream": [{ "id": "d-oem" }],
+      "sources": [
+        { "label": "Taipei Times: MediaTek developing car tech (with Denso Tier-1)", "url": "https://www.taipeitimes.com/News/biz/archives/2025/12/27/2003849563" },
+        { "label": "Cool3c: 聯發科攜手日本 DENSO 開發客製化 ADAS 晶片（Tier-1 整合）", "url": "https://www.cool3c.com/article/245374" }
+      ]
+    },
+    {
+      "id": "d-oem",
+      "row": "demand", "col": 4, "span": 3, "kind": "demand",
+      "name": "車廠 OEM（含自研）", "nameEn": "Automaker OEMs (incl. in-house)",
+      "competition": "redocean",
+      "desc": "終端車廠——運算/控制晶片的最終買家，部分（Tesla/中國新勢力）自研 SoC、垂直整合 E/E 架構。",
+      "marketSize": "全球年產 ~9000 萬輛",
+      "growth": "SDV + 自研垂直整合",
+      "analysis": "OEM 端決定架構與供應商：Tesla 自研 FSD + 全自研 E/E、VW SSP 2026 全區域化、中國新勢力（蔚小理 + BYD）自研 + 採地平線/華為。車廠強制 dual-source 與自研垂直整合並行，是全鏈『刻意無單點』的根源。電子化 + SDV 推升單車含矽量與運算需求。",
+      "companies": [
+        { "name": "Tesla", "ticker": "TSLA", "country": "US", "share": "自研全棧領先", "products": "FSD + 全自研 E/E", "note": "SoC 自研、垂直整合典範" },
+        { "name": "VW Group", "ticker": "VOW3.DE", "country": "DE", "share": "傳統車廠 SDV 先行", "products": "SSP 平台（2026 全 zonal）", "note": "ECU -50% / 線束 -40%" },
+        { "name": "BYD / 蔚小理", "ticker": "1211.HK", "country": "CN", "share": "中國新勢力", "products": "自研 + 地平線/華為", "note": "自研 + 國產 SoC 採用" },
+        { "name": "Toyota / 日系", "ticker": "7203.T", "country": "JP", "share": "保守採用", "products": "Renesas + Denso 主供", "note": "日系 Tier-1 鏈" }
+      ],
+      "upstream": [{ "id": "d-tier1" }, { "id": "a-highend" }, { "id": "a-china" }],
+      "downstream": [],
+      "sources": [
+        { "label": "Promwad: Zonal architecture — shift from domain-based to zonal ECUs", "url": "https://promwad.com/news/zonal-architecture-vehicle-electronics" }
+      ]
+    }
+  ],
+  "edges": [
+    ["ip-cpu", "a-highend"], ["ip-cpu", "a-mid"], ["ip-cpu", "ck-soc"], ["ip-cpu", "mc-mcu"], ["ip-cpu", "mc-safety"],
+    ["ip-eda", "a-mid"], ["ip-eda", "mc-mcu"],
+    ["ip-os", "a-highend"], ["ip-os", "ck-soc"], ["ip-os", "mc-zonal"],
+    ["a-highend", "d-oem"], ["a-china", "d-oem"],
+    ["a-mid", "d-tier1"],
+    ["ck-memory", "ck-soc"], ["ck-soc", "d-tier1"],
+    ["mc-mcu", "mc-zonal"], ["mc-safety", "mc-zonal"],
+    ["mc-mcu", "d-tier1"], ["mc-zonal", "d-tier1"],
+    ["d-tier1", "d-oem"]
+  ]
+}

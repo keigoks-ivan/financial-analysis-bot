@@ -1,0 +1,390 @@
+{
+  "id": "lpddr",
+  "tab": "LPDDR",
+  "title": "LPDDR 行動 / 邊緣 DRAM 供應鏈",
+  "subtitle": "LPDDR 是 AI 從雲端走向裝置的記憶體載體：旗艦手機每機 DRAM 含量升至 12-16GB、AI PC 導入可換式 LPCAMM2、車用 ADAS 走 AEC-Q100 LPDDR5X，而 NVIDIA Grace（480GB/CPU）+ Vera Rubin（最大 1.5TB）把伺服器拉進 LPDDR5X 戰局，單顆 Grace ≈ 40 支旗艦手機用量，2025-2026 合約價翻倍擠壓 mobile 供應。結構鎖喉有二：ASML EUV（1γ DRAM 製程閘門）、Samsung / SK Hynix / Micron 三強 DRAM cartel（addressable >95%、$30B/fab 進入障礙）。CXMT 為受限的潛在第四家。",
+  "stats": [
+    { "k": "供應鏈節點", "v": 17 },
+    { "k": "涵蓋廠商", "v": "45+" },
+    { "k": "結構性單點", "v": 2, "sub": "EUV 微影（ASML）/ DRAM 三強 cartel", "hot": true }
+  ],
+  "rows": [
+    { "id": "equip", "label": "製程設備 WFE / TEST", "main": false },
+    { "id": "die", "label": "DRAM Die 原廠 DRAM MAKERS", "main": true },
+    { "id": "pkg", "label": "後段封裝 PoP / LPCAMM2 / SOCAMM2", "main": false },
+    { "id": "ctrl", "label": "介面 IP / 模組 IP & MODULES", "main": false },
+    { "id": "demand", "label": "終端需求 END MARKETS", "main": false }
+  ],
+  "nodes": [
+    {
+      "id": "n-litho",
+      "row": "equip", "col": 1, "span": 3, "kind": "rail",
+      "name": "EUV / DUV 微影設備",
+      "nameEn": "EUV / DUV Lithography",
+      "competition": "monopoly",
+      "single": "近乎獨佔 · ASML 持 EUV / High-NA EUV 全球唯一供應，DRAM 1γ（第六代 10nm 級）製程全面依賴 EUV、1α/1β 已部分採用；無能力替代源（信心度 high · ASML + Micron 雙源證實。Nikon ArFi 僅延用無法取代、Canon nanoimprint 仍研發階段，技術路徑差距 5-10 年以上）",
+      "desc": "EUV 曝光機為 DRAM 高密度 die 量產的關鍵製程閘門；LPDDR5X / LPDDR6 高密度 1γ die 全面採 EUV。",
+      "marketSize": "1γ DRAM 製程閘門",
+      "growth": "High-NA EXE:5200 上量",
+      "analysis": "ASML EUV/High-NA 全球獨家，High-NA EXE:5200（$380M/台）已送 SK Hynix；所有 DRAM 廠 1γ 製程強依賴 ASML 供貨。Nikon ArFi 在 1α/1β 仍有用量但無法替代 EUV；屬技術路徑獨佔，非單純供應鏈集中。",
+      "companies": [
+        { "name": "ASML", "ticker": "ASML", "country": "NL", "share": "EUV ~100%", "products": "NXE:3600D / EXE:5200 High-NA", "note": "DRAM 1γ 製程閘門；EUV backlog 結構性鎖", "src": "https://www.nasdaq.com/articles/asml-pushes-high-na-euv-forward-how-big-manufacturing-leap", "core_business": true, "supply_chain_lock": "tight" },
+        { "name": "Nikon", "ticker": "7731.T", "country": "JP", "share": "DUV ArFi 補位", "products": "NSR-S635E ArFi", "note": "無 EUV 產品；1α/1β 用量" },
+        { "name": "Canon", "ticker": "7751.T", "country": "JP", "share": "Nanoimprint 研發", "products": "FPA-1200NZ2C", "note": "適合 mature node；非 EUV 競爭" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "n-dram" }],
+      "sources": [
+        { "label": "ASML pushes High-NA EUV forward（Nasdaq）", "url": "https://www.nasdaq.com/articles/asml-pushes-high-na-euv-forward-how-big-manufacturing-leap" },
+        { "label": "Micron to bring EUV to Japan", "url": "https://investors.micron.com/news-releases/news-release-details/micron-bring-euv-technology-japan-advancing-next-generation" }
+      ]
+    },
+    {
+      "id": "n-wfe",
+      "row": "equip", "col": 4, "span": 3, "kind": "rail",
+      "name": "蝕刻 / 沉積設備",
+      "nameEn": "Etch & Deposition (WFE)",
+      "competition": "oligopoly",
+      "desc": "DRAM cell（capacitor + transistor）的 ALD、CVD、plasma etch；高深寬比 capacitor etch 為 DRAM 微縮關鍵。",
+      "growth": "AI 記憶體 supercycle",
+      "analysis": "Lam（capacitor etch / ALD）、AMAT（CVD / CMP，2026 DRAM/HBM 最快成長）、TEL（熱處理 / 塗佈顯影）、ASMI（ALD）四強各有強項節點；三大廠資本支出最大單項，但屬競爭性寡占無單點。",
+      "companies": [
+        { "name": "Lam Research", "ticker": "LRCX", "country": "US", "share": "capacitor etch 領先", "products": "Flex etch + Altus ALD", "note": "DRAM/NAND etch 主供" },
+        { "name": "Applied Materials", "ticker": "AMAT", "country": "US", "share": "沉積/CMP #1", "products": "Centura + Vistara CMP", "note": "2026 DRAM/HBM 最快成長" },
+        { "name": "Tokyo Electron", "ticker": "8035.T", "country": "JP", "share": "塗佈顯影近獨佔", "products": "Trias SPA + ACT", "note": "搭 ASML 黃光" },
+        { "name": "ASM International", "ticker": "ASMI", "country": "NL", "share": "ALD 主力", "products": "Pulsar XP / Eagle XP8", "note": "high-k / capacitor ALD" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "n-dram" }],
+      "sources": [
+        { "label": "Lam AI infrastructure supercycle", "url": "https://markets.financialcontent.com/wral/article/marketminute-2026-1-9-the-ai-infrastructure-supercycle-lam-research-leads-a-historic-surge-in-semiconductor-equipment" },
+        { "label": "AMAT scales DRAM advanced packaging（Nasdaq）", "url": "https://www.nasdaq.com/articles/amat-scales-logic-dram-advanced-packaging-whats-ahead" }
+      ]
+    },
+    {
+      "id": "n-test",
+      "row": "equip", "col": 7, "span": 2, "kind": "rail",
+      "name": "DRAM 量測 / 測試 ATE",
+      "nameEn": "Metrology & DRAM ATE",
+      "competition": "oligopoly",
+      "desc": "製程 CD/overlay 量測、缺陷檢測 + LPDDR die 高速電性測試（KGD / final test）；LPDDR5X/6 走 8.5-14.4 Gbps 測試機台。",
+      "growth": "LPDDR6 測試升級",
+      "analysis": "前段量測 KLA / Nova / Onto；DRAM ATE 由 Advantest（T5801 支援 GDDR7/LPDDR6）+ Teradyne（Magnum）雙寡占約 80%。HBM 測試強度為傳統 DRAM 10x，推升 ATE 複雜度。競爭性寡占無單點。",
+      "companies": [
+        { "name": "Advantest", "ticker": "6857.T", "country": "JP", "share": "DRAM ATE ~35%", "products": "T5801 Ultra-High-Speed DRAM", "note": "已展出 LPDDR6 測試機台" },
+        { "name": "Teradyne", "ticker": "TER", "country": "US", "share": "HBM wafer test >50%", "products": "Magnum platform", "note": "HBM 測試 2025 大幅成長" },
+        { "name": "KLA / Nova", "ticker": "KLAC", "country": "US", "share": "量測領導", "products": "overlay / optical CD", "note": "1γ CD uniformity 嚴苛" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "n-pop" }],
+      "sources": [
+        { "label": "Advantest AI/HBM test position", "url": "https://www.ainvest.com/news/advantest-strategic-position-ai-advanced-semiconductor-test-market-lucrative-investment-ai-hpc-driven-growth-2512/" }
+      ]
+    },
+    {
+      "id": "n-dram",
+      "row": "die", "col": 1, "span": 3, "kind": "stage",
+      "name": "三大 DRAM 原廠",
+      "nameEn": "DRAM Trio (Samsung / SK Hynix / Micron)",
+      "competition": "oligopoly",
+      "single": "結構性 cartel · Samsung + SK Hynix + Micron 三家合計 addressable DRAM >95%（非中國市場）、單座 fab capex ~$30B 構成 5 年內阻擋第四家的結構障礙；LPDDR5X 合約價 2025-2026 翻倍、客戶無法 dual-source 脫離整個 cartel（信心度 high · Counterpoint 市佔 + TrendForce 合約價雙源。CXMT 為受限第四家、製程落後 2-3 代且列美 DoD 名單）",
+      "desc": "設計並製造 LPDDR die、持有製程節點（1α/1β/1γ）、供應 KGD 給 PoP 封裝；三廠合計 >90% 全球 DRAM。",
+      "marketSize": "addressable >95%",
+      "growth": "ASP 2025-26 翻倍",
+      "analysis": "Q3 2025 市佔 Samsung ~33% / SK Hynix ~34% / Micron ~26%。Micron 1γ（EUV）LPDDR5X 量產、SK Hynix 1c LPDDR6 2H26 出貨、Samsung 12nm LPDDR6 2H26 量產。$30B/fab 與製程 IP 為結構性進入障礙，CXMT 為唯一潛在第四家但受地緣限制。",
+      "companies": [
+        { "name": "SK Hynix", "ticker": "000660.KS", "country": "KR", "share": "~34%", "products": "1c LPDDR5X/6 + SOCAMM2 192GB", "note": "LPDDR6 2H26 出貨；記憶體純度高、sold out", "src": "https://www.trendforce.com/news/2026/03/10/news-sk-hynix-develops-1c-lpddr6-dram-with-33-speed-gain-20-power-savings-ships-in-2h26/", "core_business": true, "supply_chain_lock": "tight" },
+        { "name": "Micron", "ticker": "MU", "country": "US", "share": "~26%", "products": "1γ（EUV）LPDDR5X + SOCAMM2 256GB", "note": "純記憶體玩家、LPDDR + SOCAMM 核心", "src": "https://www.globenewswire.com/news-release/2025/02/25/3032114/14450/en/Micron-Announces-Shipment-of-1%CE%B3-1-gamma-DRAM-Pioneering-Memory-Technology-Advancements-for-Future-Compute-Needs.html", "core_business": true, "supply_chain_lock": "tight" },
+        { "name": "Samsung Electronics", "ticker": "005930.KS", "country": "KR", "share": "~33%", "products": "12nm LPDDR5X/6 + 車用 ASIL-D", "note": "cartel 成員但集團高度多角化（手機/面板/foundry）", "src": "https://semiconductor.samsung.com/news-events/tech-blog/samsungs-12nm-class-automotive-lpddr5x-dram-for-safety-critical-centralized-automotive-systems/", "node_role": "elephant" }
+      ],
+      "upstream": [{ "id": "n-litho" }, { "id": "n-wfe" }],
+      "downstream": [{ "id": "n-pop" }, { "id": "n-lpcamm" }, { "id": "n-socamm" }],
+      "sources": [
+        { "label": "Counterpoint DRAM market share Q3 2025", "url": "https://counterpointresearch.com/en/insights/global-dram-and-hbm-market-share" },
+        { "label": "SK Hynix 1c LPDDR6 ships 2H26（TrendForce）", "url": "https://www.trendforce.com/news/2026/03/10/news-sk-hynix-develops-1c-lpddr6-dram-with-33-speed-gain-20-power-savings-ships-in-2h26/" },
+        { "label": "Micron 1γ DRAM shipment", "url": "https://www.globenewswire.com/news-release/2025/02/25/3032114/14450/en/Micron-Announces-Shipment-of-1%CE%B3-1-gamma-DRAM-Pioneering-Memory-Technology-Advancements-for-Future-Compute-Needs.html" }
+      ]
+    },
+    {
+      "id": "n-nanya",
+      "row": "die", "col": 4, "span": 2, "kind": "stage",
+      "name": "南亞科技 Nanya",
+      "nameEn": "Nanya Technology",
+      "competition": "redocean",
+      "desc": "台灣本土獨立 DRAM 原廠（南亞塑膠集團），主力 DDR4 / LPDDR4，DDR5 / LPDDR5 逐步導入。",
+      "growth": "新廠 2028H1 量產",
+      "analysis": "自有 20nm→16nm 製程；2026/4 月營收 NT$254.91 億、年增 717%（DRAM 上行週期）；新廠 2028H1 量產 DDR5/LPDDR5，初期 2 萬片/月。三強壓制下走 niche/cost-competitive。",
+      "companies": [
+        { "name": "南亞科技", "ticker": "2408.TW", "country": "TW", "share": "台獨立 DRAM", "products": "DDR4 / LPDDR4 + DDR5 導入", "note": "新廠 2028H1 量產 DDR5/LPDDR5", "src": "https://news.cnyes.com/news/id/6441342" }
+      ],
+      "upstream": [{ "id": "n-wfe" }],
+      "downstream": [{ "id": "n-pop" }],
+      "sources": [
+        { "label": "南亞科 4 月營收 NT$254.91 億（鉅亨）", "url": "https://news.cnyes.com/news/id/6441342" },
+        { "label": "南亞科 Q4 record EPS（TrendForce）", "url": "https://www.trendforce.com/news/2026/01/19/news-nanya-tech-posts-record-q4-eps-nt3-58-flags-tight-ddr543-supply-and-1q-price-hikes/" }
+      ]
+    },
+    {
+      "id": "n-winbond",
+      "row": "die", "col": 6, "span": 1, "kind": "stage",
+      "name": "華邦電子 Winbond",
+      "nameEn": "Winbond",
+      "competition": "emerging",
+      "desc": "利基型 DRAM（consumer / automotive / IoT）；自有 16nm 量產 DDR4/LPDDR4；車用 LPDDR4X + CUBE 客製邊緣 AI 記憶體。",
+      "growth": "路竹廠滿載至 2028",
+      "analysis": "車用 LPDDR4/4X（封裝從 200BGA 縮至 100BGA、減碳 50%）+ CUBE（高頻寬高密度低功耗，1-2 顆取代多顆 LPDDR4）；路竹新產能售罄、訂單看至 2028，Q1 2026 DRAM 合約價漲近 50%。利基定位不與三巨頭正面競爭。",
+      "companies": [
+        { "name": "華邦電子", "ticker": "2344.TW", "country": "TW", "share": "車用/IoT 利基", "products": "LPDDR4/4X auto + CUBE edge AI", "note": "路竹廠訂單滿載至 2028", "src": "https://finance.technews.tw/2026/02/08/winbond-q1-hot/" }
+      ],
+      "upstream": [{ "id": "n-wfe" }],
+      "downstream": [{ "id": "n-pop" }],
+      "sources": [
+        { "label": "華邦電 Q1 2026 DRAM 漲近 50%（TechNews）", "url": "https://finance.technews.tw/2026/02/08/winbond-q1-hot/" },
+        { "label": "華邦電 CUBE 邊緣 AI（TechNews）", "url": "https://technews.tw/2025/09/10/winbond-cube-design-can-meet-customers-edge-ai-needs/" }
+      ]
+    },
+    {
+      "id": "n-cxmt",
+      "row": "die", "col": 7, "span": 2, "kind": "stage",
+      "name": "CXMT 長鑫存儲（中國）",
+      "nameEn": "CXMT (China)",
+      "competition": "emerging",
+      "desc": "中國第一大 DRAM 廠，主力 DDR5 / LPDDR5，LPDDR 占收入 >66%；製程落後 2-3 代但快速追趕，IPO 申請中。",
+      "growth": "全球第 4 ~7.67%",
+      "analysis": "展示 LPDDR5X-10667；列美國 DoD「中國軍企」名單，海外 OEM 採購合規風險高；Q1 2025 DDR5 樣品 >60°C 熱穩定性問題、DDR4 2026 中期停產轉 DDR5。為三強 cartel 的受限第四家，主要鎖定中國內需。",
+      "companies": [
+        { "name": "CXMT 長鑫存儲", "ticker": "—", "country": "CN", "share": "全球第 4 ~7.67%", "products": "DDR5 / LPDDR5X-10667", "note": "DoD 名單；IPO 申請中（目標 Star Market 2026）", "src": "https://www.digitimes.com/news/a20250708VL204/cxmt-dram-ipo-market-lpddr5.html" }
+      ],
+      "upstream": [{ "id": "n-wfe" }],
+      "downstream": [{ "id": "n-pop" }],
+      "sources": [
+        { "label": "CXMT files for IPO, LPDDR5（Digitimes）", "url": "https://www.digitimes.com/news/a20250708VL204/cxmt-dram-ipo-market-lpddr5.html" },
+        { "label": "CXMT LPDDR5X-10667 unveiled（Tom's Hardware）", "url": "https://www.tomshardware.com/pc-components/dram/chinas-banned-memory-maker-cxmt-unveils-surprising-new-chipmaking-capabilities-despite-crushing-us-export-restrictions-ddr5-8000-and-lpddr5x-10667-displayed" }
+      ]
+    },
+    {
+      "id": "n-pop",
+      "row": "pkg", "col": 1, "span": 2, "kind": "stage",
+      "name": "PoP 封裝",
+      "nameEn": "Package-on-Package",
+      "competition": "oligopoly",
+      "desc": "把手機 SoC（AP）與 LPDDR die 整合在同一 PoP 封裝；TSMC InFO_PoP 服務 Apple，Amkor TMV-PoP 服務 Android。",
+      "growth": "InFO_B OSAT 外包",
+      "analysis": "TSMC InFO_PoP 對 iPhone AP 為 captive、InFO_B 允許 Amkor/ASE 完成 DRAM 頂包；Amkor TMV-PoP 服務 QC/MTK Android 旗艦。Apple 用 TSMC 屬客戶配置，Android 路徑有多家替代，非能力獨佔。",
+      "companies": [
+        { "name": "TSMC 台積電", "ticker": "2330.TW", "country": "TW", "share": "旗艦 PoP（Apple）", "products": "InFO_PoP / InFO_B", "note": "iPhone A 系列 captive" },
+        { "name": "Amkor Technology", "ticker": "AMKR", "country": "US", "share": "Android 旗艦 PoP", "products": "TMV-PoP + InFO_B partner", "note": "QC/MTK flagship" },
+        { "name": "日月光 ASE", "ticker": "3711.TW", "country": "TW", "share": "中高階 PoP", "products": "FO-PoP + SiP", "note": "FOPLP 2026 試產" }
+      ],
+      "upstream": [{ "id": "n-dram" }, { "id": "n-test" }],
+      "downstream": [{ "id": "n-phone" }],
+      "sources": [
+        { "label": "TSMC InFO_PoP / InFO_B（Siemens）", "url": "https://blogs.sw.siemens.com/semiconductor-packaging/2025/02/28/exploring-tsmc-info_os-and-info_pop-certification/" },
+        { "label": "Amkor TMV PoP", "url": "https://amkor.com/technology/package-on-package/" }
+      ]
+    },
+    {
+      "id": "n-osat",
+      "row": "pkg", "col": 3, "span": 2, "kind": "rail",
+      "name": "記憶體封測 KGD",
+      "nameEn": "Memory OSAT / KGD Test",
+      "competition": "oligopoly",
+      "desc": "DRAM KGD（Known Good Die）測試、Wire Bond BGA、SiP；台灣記憶體封測領頭羊承接 SK Hynix / Micron / Kingston / 南亞科。",
+      "growth": "AI 封測雙引擎",
+      "analysis": "力成 MUF 製程良率 95%（同業 ~85%）、美系 AI 晶片廠戰略合作至 2027、FOPLP 2027H1 量產；但 ASE / Amkor 亦有 KGD 能力，屬競爭性寡占。",
+      "companies": [
+        { "name": "力成科技 PTI", "ticker": "6239.TW", "country": "TW", "share": "台記憶體封測最大", "products": "DRAM KGD + PoP + 先進封裝", "note": "MUF 95% yield；美系 AI 合作至 2027", "src": "https://money.udn.com/money/story/5612/9128342" },
+        { "name": "南茂科技 ChipMOS", "ticker": "8150.TW", "country": "TW", "share": "記憶體封測第二", "products": "DRAM / NAND 封測", "note": "記憶體佔營收 ~49%" }
+      ],
+      "upstream": [{ "id": "n-dram" }],
+      "downstream": [{ "id": "n-module" }],
+      "sources": [
+        { "label": "力成先進封裝旺到 2027（經濟日報）", "url": "https://money.udn.com/money/story/5612/9128342" }
+      ]
+    },
+    {
+      "id": "n-lpcamm",
+      "row": "pkg", "col": 5, "span": 2, "kind": "rail",
+      "name": "LPCAMM2 模組",
+      "nameEn": "LPCAMM2 Module",
+      "competition": "highgrowth",
+      "desc": "取代 SO-DIMM 的可拆換 LPDDR5X 模組；666-pin 壓縮接觸，比 SO-DIMM 省電 60% / 待機 72%，最大 64GB；AI PC 換機潮驅動。",
+      "growth": "$102M→$182M（34）",
+      "analysis": "Micron Crucial first-to-market（Lenovo AI Workstation 首發）、Samsung / SK Hynix 跟進；連接器 Amphenol（JEDEC JC-11）主力、台廠 Argosy / FIT 共同開發為替代源，連接器 BOM 非單點。",
+      "companies": [
+        { "name": "Micron（Crucial）", "ticker": "MU", "country": "US", "share": "first-to-market", "products": "LPCAMM2 LPDDR5X-7500", "note": "Lenovo AI Workstation 首發" },
+        { "name": "Samsung / SK Hynix", "ticker": "005930.KS", "country": "KR", "share": "模組跟進", "products": "LPCAMM2 8533 MT/s", "note": "省電 60%" },
+        { "name": "Amphenol（連接器）", "ticker": "APH", "country": "US", "share": "連接器主力", "products": "CAMM2 666-pin 連接器", "note": "JEDEC JC-11；台廠 Argosy/FIT 為替代" }
+      ],
+      "upstream": [{ "id": "n-dram" }],
+      "downstream": [{ "id": "n-aipc" }],
+      "sources": [
+        { "label": "Micron Crucial LPCAMM2 for Lenovo AI", "url": "https://investors.micron.com/news-releases/news-release-details/micron-delivers-crucial-lpcamm2-lpddr5x-memory-for-new-ai-ready" },
+        { "label": "Micron vs Samsung/SK Hynix LPCAMM2（Digitimes）", "url": "https://www.digitimes.com/news/a20251023PD221/data-micron-lpcamm-performance-samsung-sk-hynix.html" }
+      ]
+    },
+    {
+      "id": "n-socamm",
+      "row": "pkg", "col": 7, "span": 2, "kind": "rail",
+      "name": "SOCAMM2 模組",
+      "nameEn": "SOCAMM2 Module",
+      "competition": "highgrowth",
+      "desc": "NVIDIA 設計、JEDEC 標準化中的 AI 伺服器 LPDDR5X 可插拔模組；14×90mm、每組 192-256GB；Grace / Vera Rubin 平台用。",
+      "growth": "NVIDIA Rubin 拉動",
+      "analysis": "SK Hynix 192GB SOCAMM2（1c LPDDR5X）2026/4 量產為 Vera Rubin 首發；Micron 256GB 客戶樣品；Samsung 2026 量產。三家 DRAM 廠均供貨，但模組規格鎖定 NVIDIA 生態（平台 lock，非供應端單點）。",
+      "companies": [
+        { "name": "SK Hynix", "ticker": "000660.KS", "country": "KR", "share": "Rubin 首發", "products": "192GB SOCAMM2（1c）", "note": "2026/4 量產", "src": "https://www.trendforce.com/news/2026/04/20/news-sk-hynix-starts-mass-production-of-192gb-socamm2-tapping-1c-dram-and-nvidia-rubin-optimization/" },
+        { "name": "Micron", "ticker": "MU", "country": "US", "share": "最高容量", "products": "256GB SOCAMM2（1γ）", "note": "客戶樣品 2026/3" },
+        { "name": "Samsung", "ticker": "005930.KS", "country": "KR", "share": "2026 量產", "products": "SOCAMM2 LPDDR5X", "note": "NVIDIA 技術合作" }
+      ],
+      "upstream": [{ "id": "n-dram" }],
+      "downstream": [{ "id": "n-server" }],
+      "sources": [
+        { "label": "SK Hynix 192GB SOCAMM2 MP（TrendForce）", "url": "https://www.trendforce.com/news/2026/04/20/news-sk-hynix-starts-mass-production-of-192gb-socamm2-tapping-1c-dram-and-nvidia-rubin-optimization/" },
+        { "label": "Micron/SK Hynix SOCAMM up to 128GB（Tom's HW）", "url": "https://www.tomshardware.com/pc-components/ram/micron-and-sk-hynix-unveil-lpddr5x-socamm-up-to-128gb-for-ai-servers" }
+      ]
+    },
+    {
+      "id": "n-phy",
+      "row": "ctrl", "col": 1, "span": 4, "kind": "rail",
+      "name": "LPDDR PHY + Controller IP",
+      "nameEn": "LPDDR PHY + Controller IP",
+      "competition": "oligopoly",
+      "desc": "SoC 廠（Apple/Qualcomm/MediaTek/NVIDIA）tape-out 前採購 silicon-proven LPDDR PHY + Controller IP；LPDDR5X 8533 Mbps、LPDDR6 14,400 Mbps。",
+      "growth": "LPDDR6 IP 競賽",
+      "analysis": "Cadence 2025/7 率先完成業界首款 LPDDR6/5X 14.4Gbps IP tape-out（先發優勢）；Synopsys LPDDR5X PHY 已 silicon-proven、LPDDR6 跟進；Arm 提供整合於 SoC 的 memory subsystem。雙頭競爭，非單點。",
+      "companies": [
+        { "name": "Cadence", "ticker": "CDNS", "country": "US", "share": "LPDDR6 IP 首發", "products": "LPDDR6/5X 14.4Gbps PHY + controller", "note": "2025/7 業界首款 tape-out", "src": "https://www.cadence.com/en_US/home/company/newsroom/press-releases/pr/2025/cadence-introduces-industry-first-lpddr65x-144gbps-memory-ip-to.html" },
+        { "name": "Synopsys", "ticker": "SNPS", "country": "US", "share": "PHY 領導", "products": "DesignWare LPDDR6/5X/5 PHY", "note": "LPDDR5X silicon-proven" },
+        { "name": "Arm", "ticker": "ARM", "country": "UK", "share": "subsystem", "products": "Corstone / memory controller", "note": "整合於 Cortex SoC" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "n-phone" }, { "id": "n-server" }],
+      "sources": [
+        { "label": "Cadence industry-first LPDDR6/5X IP", "url": "https://www.cadence.com/en_US/home/company/newsroom/press-releases/pr/2025/cadence-introduces-industry-first-lpddr65x-144gbps-memory-ip-to.html" },
+        { "label": "Synopsys LPDDR6/5X/5 PHY IP", "url": "https://www.synopsys.com/designware-ip/interface-ip/ddr/lpddr65x5-phy.html" }
+      ]
+    },
+    {
+      "id": "n-module",
+      "row": "ctrl", "col": 5, "span": 4, "kind": "rail",
+      "name": "台廠記憶體模組",
+      "nameEn": "TW Memory Module Makers",
+      "competition": "redocean",
+      "desc": "向三大原廠採購裸粒，組裝為品牌消費 / 商用 DRAM 模組（SO-DIMM / LPCAMM2 / UDIMM）+ 部分工業 LPDDR 模組。",
+      "growth": "2026 備貨借款潮",
+      "analysis": "威剛全球第 2 大模組品牌、十銓電競模組龍頭、創見工業/車用利基；2025 漲價週期下三家大舉借款備貨（ADATA+TeamGroup 合計 $880M）。品牌差異小、ASP 受原廠漲價擠壓，紅海競爭。",
+      "companies": [
+        { "name": "威剛科技 ADATA", "ticker": "3260.TW", "country": "TW", "share": "全球第 2 模組品牌", "products": "DRAM/SSD/LPDDR module", "note": "2025 營收新高" },
+        { "name": "十銓科技 TeamGroup", "ticker": "4967.TW", "country": "TW", "share": "電競模組龍頭", "products": "DDR5 / 消費 DRAM", "note": "借款 NT$88 億備貨" },
+        { "name": "創見資訊 Transcend", "ticker": "2451.TW", "country": "TW", "share": "工業利基", "products": "工業 LPDDR / storage", "note": "車用/工業利基" }
+      ],
+      "upstream": [{ "id": "n-osat" }],
+      "downstream": [{ "id": "n-aipc" }],
+      "sources": [
+        { "label": "台模組廠借款 $880M 備貨（Tom's HW）", "url": "https://www.tomshardware.com/tech-industry/taiwanese-memory-module-makers-raise-880-million-to-stockpile-chips" },
+        { "label": "威剛 vs 十銓 vs 南亞科（鉅亨）", "url": "https://news.cnyes.com/news/id/6158153" }
+      ]
+    },
+    {
+      "id": "n-phone",
+      "row": "demand", "col": 1, "span": 2, "kind": "demand",
+      "name": "旗艦 / AI 手機",
+      "nameEn": "Flagship / AI Smartphone",
+      "competition": "highgrowth",
+      "desc": "LPDDR 最大傳統需求；AI 功能推動每機 DRAM 從 12GB 向 16GB+ 升級；iPhone / Android 旗艦為 LPDDR5X 最高端需求。",
+      "growth": "每機 GB 加速升級",
+      "analysis": "iPhone 17 全系 12GB LPDDR5X（Samsung 供 60-70%、SK Hynix 補餘，Apple 已同意 100% 漲價確保供應）；Qualcomm/MediaTek 旗艦 SoC 配對 Samsung+SK Hynix；LPDDR6 2H26 進入旗艦。12GB 模組 ASP 一年內 $30→$70。",
+      "companies": [
+        { "name": "Apple（A 系列）", "ticker": "AAPL", "country": "US", "share": "iPhone 旗艦", "products": "A19 + 12GB LPDDR5X", "note": "Samsung 供 60-70%" },
+        { "name": "Qualcomm / MediaTek（SoC）", "ticker": "QCOM", "country": "US", "share": "Android 旗艦 SoC", "products": "Snapdragon 8 Elite / Dimensity 9400", "note": "LPDDR5X/5T 配對" }
+      ],
+      "upstream": [{ "id": "n-pop" }, { "id": "n-phy" }],
+      "downstream": [],
+      "sources": [
+        { "label": "Apple iPhone 17 LPDDR5X Samsung 60-70%（TrendForce）", "url": "https://www.trendforce.com/news/2025/12/24/news-apple-reportedly-sources-60-70-of-iphone-17-lpddr5x-from-samsung-eyeing-iphone-18-volumes/" },
+        { "label": "Apple agrees 100% Samsung RAM price hike", "url": "https://www.macrumors.com/2026/02/26/apple-agrees-100-price-hike-samsung-ram/" }
+      ]
+    },
+    {
+      "id": "n-aipc",
+      "row": "demand", "col": 3, "span": 2, "kind": "demand",
+      "name": "AI PC / Laptop",
+      "nameEn": "AI PC / Laptop",
+      "competition": "highgrowth",
+      "desc": "AI PC 把 LPDDR5X 從手機帶進 laptop；LPCAMM2 模組使記憶體可升級 + 省電；Intel Lunar Lake / AMD Strix 支援高頻 LPDDR5X。",
+      "growth": "LPCAMM2 滲透期",
+      "analysis": "Lenovo LPCAMM2 首發 OEM（ThinkPad T 系列 8533 MT/s）、Dell/HP 跟進；LPCAMM2 市場 2025 $102M → 2034 $182M（CAGR 10.9%）。",
+      "companies": [
+        { "name": "Lenovo", "ticker": "0992.HK", "country": "HK", "share": "LPCAMM2 首發", "products": "ThinkPad T + AI Workstation", "note": "Micron LPCAMM2 首發" },
+        { "name": "Dell / HP（OEM）", "ticker": "DELL", "country": "US", "share": "跟進", "products": "AI PC LPCAMM2", "note": "JEDEC 規格後滲透" }
+      ],
+      "upstream": [{ "id": "n-lpcamm" }, { "id": "n-module" }],
+      "downstream": [],
+      "sources": [
+        { "label": "iFixit: LPCAMM2 is finally here", "url": "https://www.ifixit.com/News/95078/lpcamm2-memory-is-finally-here" }
+      ]
+    },
+    {
+      "id": "n-auto",
+      "row": "demand", "col": 5, "span": 2, "kind": "demand",
+      "name": "車用 ADAS / 自駕",
+      "nameEn": "Automotive ADAS",
+      "competition": "highgrowth",
+      "desc": "ADAS 域控制器需 auto-grade LPDDR4X/LPDDR5X；AEC-Q100 Grade 1 / ASIL-D ISO 26262 認證；Level 2+→3/4 演進驅動。",
+      "growth": "車用 LPDDR5 +85% YoY",
+      "analysis": "Samsung 12nm 車用 LPDDR5X（9600 Mbps、ASIL-D）最先進；SK Hynix / Micron 取得車用認證；華邦 LPDDR4/4X 利基切入。車用記憶體認證週期 2-3 年、OEM 鎖定後難更換。",
+      "companies": [
+        { "name": "Samsung（車用）", "ticker": "005930.KS", "country": "KR", "share": "車用最先進", "products": "12nm Auto LPDDR5X ASIL-D", "note": "AEC-Q100 Grade 1" },
+        { "name": "華邦電（車用利基）", "ticker": "2344.TW", "country": "TW", "share": "利基切入", "products": "Auto LPDDR4/4X 100BGA", "note": "減碳 50%" }
+      ],
+      "upstream": [{ "id": "n-dram" }],
+      "downstream": [],
+      "sources": [
+        { "label": "Samsung 12nm Auto LPDDR5X ASIL-D", "url": "https://semiconductor.samsung.com/news-events/tech-blog/samsungs-12nm-class-automotive-lpddr5x-dram-for-safety-critical-centralized-automotive-systems/" }
+      ]
+    },
+    {
+      "id": "n-server",
+      "row": "demand", "col": 7, "span": 2, "kind": "demand",
+      "name": "AI 伺服器 CPU（Grace / Vera Rubin）",
+      "nameEn": "AI Server CPU (Grace / Vera Rubin)",
+      "competition": "highgrowth",
+      "desc": "NVIDIA Grace CPU 每顆 480GB LPDDR5X、Vera Rubin 最大 1.5TB；是 2026 LPDDR5X 供應緊張的最大非手機驅動源。",
+      "growth": "單顆 ≈ 40 支手機",
+      "analysis": "GB300 Grace Blackwell 用 LPDDR5X SOCAMM（SK Hynix + Micron）、Vera Rubin 用 SOCAMM2（SK Hynix 192GB MP + Micron 256GB）；單顆 Grace 消耗 ≈ 40 支旗艦手機用量，已推升合約價翻倍、擠壓 mobile 供應（demand-side 衝擊，非供應端鎖喉）。",
+      "companies": [
+        { "name": "NVIDIA（Grace / Vera）", "ticker": "NVDA", "country": "US", "share": "AI 伺服器 CPU 主導", "products": "Grace 480GB / Vera Rubin 1.5TB LPDDR5X", "note": "SOCAMM/SOCAMM2 平台" }
+      ],
+      "upstream": [{ "id": "n-socamm" }, { "id": "n-phy" }],
+      "downstream": [],
+      "sources": [
+        { "label": "NVIDIA LPDDR5X demand could double prices（Tom's HW）", "url": "https://www.tomshardware.com/pc-components/dram/nvidias-demand-for-lpddr5x-could-double-smartphone-and-server-memory-prices-in-2026-seismic-shift-means-even-smartphone-class-memory-isnt-safe-from-ai-induced-crunch" }
+      ]
+    }
+  ],
+  "edges": [
+    ["n-litho", "n-dram"],
+    ["n-wfe", "n-dram"],
+    ["n-wfe", "n-nanya"],
+    ["n-wfe", "n-winbond"],
+    ["n-wfe", "n-cxmt"],
+    ["n-test", "n-pop"],
+    ["n-dram", "n-pop"],
+    ["n-dram", "n-lpcamm"],
+    ["n-dram", "n-socamm"],
+    ["n-dram", "n-auto"],
+    ["n-nanya", "n-pop"],
+    ["n-winbond", "n-pop"],
+    ["n-cxmt", "n-pop"],
+    ["n-pop", "n-phone"],
+    ["n-osat", "n-module"],
+    ["n-dram", "n-osat"],
+    ["n-lpcamm", "n-aipc"],
+    ["n-socamm", "n-server"],
+    ["n-phy", "n-phone"],
+    ["n-phy", "n-server"],
+    ["n-module", "n-aipc"]
+  ],
+  "single_point_framework": "v1.3"
+}

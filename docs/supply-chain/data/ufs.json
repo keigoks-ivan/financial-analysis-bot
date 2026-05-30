@@ -1,0 +1,344 @@
+{
+  "id": "ufs",
+  "tab": "UFS",
+  "title": "UFS 通用快閃儲存供應鏈",
+  "subtitle": "UFS（行動 / 嵌入式 NAND 快閃儲存）與 DRAM 鏈最大差異：這是一條沒有結構性鎖喉的競爭鏈。NAND die 是五～六強寬鬆寡占（Samsung / SK Hynix-Solidigm / Kioxia / Micron / WD-SanDisk + YMTC，個別 14-28%，非 DRAM 三強 cartel）；最具 alpha 的控制器層是慧榮（Silicon Motion）+ 群聯（Phison）競爭雙頭，且坐在 captive 原廠自有控制器（Samsung/SK Hynix/Kioxia 旗艦全自製）的多數市場之下。價值在 surface 台灣 controller / 封測 / 模組小型股，而非標單點。主軸：UFS 4.1 旗艦近 100% 滲透、車用 eMMC→UFS 升級、JEDEC 2026/2 發布 UFS 5.0（10.8GB/s）。",
+  "stats": [
+    { "k": "供應鏈節點", "v": 15 },
+    { "k": "涵蓋廠商", "v": "40+" },
+    { "k": "結構性單點", "v": 0, "sub": "competitive 市場 — controller 競爭雙頭、NAND 五強寡占，無結構鎖喉" }
+  ],
+  "rows": [
+    { "id": "equip", "label": "製程設備 3D NAND WFE / TEST", "main": false },
+    { "id": "die", "label": "3D NAND Die 原廠 NAND MAKERS", "main": false },
+    { "id": "ctrl", "label": "UFS 控制器 IC CONTROLLER（Alpha 層）", "main": true },
+    { "id": "pkg", "label": "封測 / eMCP / 模組 OSAT & MODULES", "main": false },
+    { "id": "demand", "label": "終端需求 END MARKETS", "main": false }
+  ],
+  "nodes": [
+    {
+      "id": "u-etch",
+      "row": "equip", "col": 1, "span": 3, "kind": "rail",
+      "name": "高深寬比蝕刻設備",
+      "nameEn": "High-Aspect-Ratio Etch",
+      "competition": "oligopoly",
+      "desc": "3D NAND 堆疊層數的決定性製程 — 在多晶矽堆中垂直蝕刻 >10µm 深通孔；每代層數升級的主要良率瓶頸。",
+      "growth": "400L+ 推升難度",
+      "analysis": "Lam 在 HAR etch 領先（~42% NAND etch wins）、但 AMAT Sym3 Magnum 與 TEL TELAVES（低溫蝕刻、2.5x 速度）皆通過三大 NAND 客戶認證，為可行替代源 — 競爭性寡占，非單點。近單點注記：既有節點若改用新蝕刻機需重做製程流程整合（12-18 月），Lam 實務切換成本偏高，但有合格第二源、過不了 Kill Test，仍不打 ⚑。",
+      "companies": [
+        { "name": "Lam Research", "ticker": "LRCX", "country": "US", "share": "HAR etch ~42%", "products": "Flex / Sym3 Magnum", "note": "NAND etch 市佔最高" },
+        { "name": "Applied Materials", "ticker": "AMAT", "country": "US", "share": "etch ~32%", "products": "Sym3 Magnum + Sculpta ALE", "note": "FY25 NAND 銷售翻倍" },
+        { "name": "Tokyo Electron", "ticker": "8035.T", "country": "JP", "share": "etch ~15%", "products": "TELAVES 低溫蝕刻", "note": "NAND 特化、2.5x 速度" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "u-nand-kr" }, { "id": "u-nand-us" }],
+      "sources": [
+        { "label": "3D NAND roadmap to 500 layers（Tom's HW）", "url": "https://www.tomshardware.com/pc-components/storage/inside-the-future-of-3d-nand-the-roadmap-to-500-layers" },
+        { "label": "Lam NAND etch leadership（BeyondSPX）", "url": "https://beyondspx.com/quote/LRCX/analysis/lam-research-ai-driven-etch-leadership-meets-record-margin-expansion-nasdaq-lrcx" }
+      ]
+    },
+    {
+      "id": "u-depo",
+      "row": "equip", "col": 4, "span": 3, "kind": "rail",
+      "name": "CVD / ALD 薄膜沉積",
+      "nameEn": "CVD / ALD Deposition",
+      "competition": "oligopoly",
+      "desc": "3D NAND 每層氧化物 / 氮化物的 ALD 與 CVD；層數越多此設備組數越多，是資本支出最大單項。",
+      "growth": "層數↑→設備組數↑",
+      "analysis": "AMAT（電漿 ALD）、TEL（ALD+CVD）、Lam（VECTOR 熱 ALD/CVD）三強寡頭，各家在 NAND 客戶皆有份額，競爭性結構無單點。",
+      "companies": [
+        { "name": "Applied Materials", "ticker": "AMAT", "country": "US", "share": "電漿 ALD 領先", "products": "PROVision 沉積", "note": "薄膜沉積主力" },
+        { "name": "Tokyo Electron", "ticker": "8035.T", "country": "JP", "share": "並列第二", "products": "ALD + CVD 系統", "note": "NAND 製程" },
+        { "name": "Lam Research", "ticker": "LRCX", "country": "US", "share": "並列", "products": "VECTOR ALD/CVD", "note": "熱 ALD" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "u-nand-kr" }, { "id": "u-nand-us" }],
+      "sources": [
+        { "label": "AMAT flash memory sales doubled FY25", "url": "https://finance.yahoo.com/news/amats-flash-memory-sales-nearly-150200389.html" }
+      ]
+    },
+    {
+      "id": "u-test",
+      "row": "equip", "col": 7, "span": 2, "kind": "rail",
+      "name": "NAND 測試 ATE",
+      "nameEn": "NAND Test ATE",
+      "competition": "oligopoly",
+      "desc": "3D NAND die wafer-level + package-level KGD 測試；UFS / eMMC protocol tester。",
+      "growth": "UFS 5.0 測試升級",
+      "analysis": "Advantest（T5851 UFS 3.0/PCIe Gen4 protocol）+ Teradyne（Magnum 7、18,432 I/O @5.28Gbps）雙寡占；競爭性，無單點。",
+      "companies": [
+        { "name": "Advantest", "ticker": "6857.T", "country": "JP", "share": "記憶體 ATE 主導", "products": "T5851 / T5503HS2", "note": "UFS protocol 測試" },
+        { "name": "Teradyne", "ticker": "TER", "country": "US", "share": "並列", "products": "Magnum 7 / Magnum V", "note": "高 I/O 通道數" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "u-osat" }],
+      "sources": [
+        { "label": "Advantest T5503HS2 memory tester", "url": "https://www.advantest.com/en/products/semiconductor-test-system/memory/t5503hs2/" }
+      ]
+    },
+    {
+      "id": "u-nand-kr",
+      "row": "die", "col": 1, "span": 3, "kind": "stage",
+      "name": "韓系 3D NAND 原廠",
+      "nameEn": "Korean 3D NAND Makers",
+      "competition": "oligopoly",
+      "desc": "Samsung + SK Hynix（含 Solidigm）3D NAND wafer 製造 + 自有 captive controller 整合，出售 UFS package；亦對外賣 KGD die。",
+      "growth": "400L+ 2026H1",
+      "analysis": "Samsung Q4 2025 NAND ~28%（V9T 286L→V10T 400L+ 2026H1）；SK 集團 ~22%（321L→400L+）。兩家旗艦 UFS 全用 captive controller，不向 merchant 採購；NAND 為五～六強寬鬆寡占，個別市佔遠低於 DRAM 三強 cartel 門檻。",
+      "companies": [
+        { "name": "Samsung Electronics", "ticker": "005930.KS", "country": "KR", "share": "NAND ~28%", "products": "V10T 400L+ + captive UFS 4.1", "note": "旗艦 Galaxy 全自製控制器" },
+        { "name": "SK Hynix（+ Solidigm）", "ticker": "000660.KS", "country": "KR", "share": "NAND ~22%", "products": "321L→400L+ + captive UFS", "note": "高階自有控制器" }
+      ],
+      "upstream": [{ "id": "u-etch" }, { "id": "u-depo" }],
+      "downstream": [{ "id": "u-captive" }, { "id": "u-osat" }],
+      "sources": [
+        { "label": "TrendForce Q4 2025 NAND market share", "url": "https://www.trendforce.com/presscenter/news/20260303-12943.html" },
+        { "label": "Samsung V10T 400-layer V-NAND（Tom's HW）", "url": "https://www.tomshardware.com/pc-components/ssds/samsung-unveils-10th-gen-v-nand-400-layers-5-6-gt-s-and-hybrid-bonding" }
+      ]
+    },
+    {
+      "id": "u-nand-us",
+      "row": "die", "col": 4, "span": 3, "kind": "stage",
+      "name": "日美系 3D NAND 原廠",
+      "nameEn": "Japan/US 3D NAND Makers",
+      "competition": "oligopoly",
+      "desc": "Kioxia / WD-SanDisk（BiCS 技術共用）+ Micron 製造 3D NAND；Kioxia/Micron 有自有 captive controller，WD-SanDisk 外包 merchant。",
+      "growth": "BiCS9 / Gen7 400L",
+      "analysis": "Kioxia ~14%（BiCS8 218L→BiCS9 300L+，車用 UFS 4.1 用自有）、WD-SanDisk ~14%（共用 Kioxia BiCS、外包 merchant controller）、Micron ~14%（276L Gen6→跳過 300L 直攻 400L Gen7，部分外包 Silicon Motion）。三家加上韓系構成五～六強寡占。",
+      "companies": [
+        { "name": "Kioxia", "ticker": "285A.T", "country": "JP", "share": "NAND ~14%", "products": "BiCS9 + captive UFS 4.1 auto", "note": "車用 UFS 自有設計" },
+        { "name": "WD / SanDisk", "ticker": "WDC", "country": "US", "share": "NAND ~14%", "products": "BiCS8/9（共用 Kioxia）", "note": "外包 merchant controller" },
+        { "name": "Micron", "ticker": "MU", "country": "US", "share": "NAND ~14%", "products": "Gen7 400L", "note": "部分外包 Silicon Motion" }
+      ],
+      "upstream": [{ "id": "u-etch" }, { "id": "u-depo" }],
+      "downstream": [{ "id": "u-merchant" }, { "id": "u-captive" }, { "id": "u-osat" }],
+      "sources": [
+        { "label": "Kioxia & SanDisk balance alliance（TrendForce）", "url": "https://www.trendforce.com/news/2026/01/29/news-second-tier-no-more-kioxia-and-sandisk-balance-alliance-and-rivalry-in-ai-nand-race/" },
+        { "label": "Kioxia UFS 4.1 automotive launch", "url": "https://www.businesswire.com/news/home/20250730249798/en/KIOXIA-Launches-UFS-Ver.-4.1-Embedded-Flash-Memory-Devices-for-Automotive-Applications" }
+      ]
+    },
+    {
+      "id": "u-ymtc",
+      "row": "die", "col": 7, "span": 2, "kind": "stage",
+      "name": "YMTC 長江存儲（中國）",
+      "nameEn": "YMTC (China)",
+      "competition": "emerging",
+      "desc": "中國第一大 NAND 廠，Xtacking 3.0 架構（CMOS 與 NAND 陣列分開製造再鍵合）；232L，受出口管制但快速追趕。",
+      "growth": "新廠 3x 擴產",
+      "analysis": "全球市佔 <5% 估計，Xtacking 混合鍵合為技術差異點；新廠規劃月產能 3x（~100K wpm）。受美出口管制，主要鎖定中國內需。",
+      "companies": [
+        { "name": "YMTC 長江存儲", "ticker": "—", "country": "CN", "share": "全球 <5%", "products": "Xtacking 3.0 232L", "note": "混合鍵合架構；未上市" }
+      ],
+      "upstream": [{ "id": "u-etch" }, { "id": "u-depo" }],
+      "downstream": [{ "id": "u-osat" }],
+      "sources": [
+        { "label": "Global NAND market share（Counterpoint）", "url": "https://counterpointresearch.com/en/insights/global-nand-memory-market-share" }
+      ]
+    },
+    {
+      "id": "u-merchant",
+      "row": "ctrl", "col": 1, "span": 4, "kind": "stage",
+      "name": "Merchant UFS / eMMC 控制器 IC",
+      "nameEn": "Merchant UFS / eMMC Controller",
+      "competition": "oligopoly",
+      "desc": "獨立供應商設計 UFS device controller + firmware（FTL / wear-leveling / LDPC ECC），出售給 NAND 原廠或模組廠；台灣半導體在 UFS 鏈最核心的 IP 層。",
+      "growth": "merchant TAM ~35-45%",
+      "analysis": "慧榮 SM2756（6nm EUV UFS 4.0/4.1，讀 >4,300MB/s）為 mobile UFS/eMMC merchant 主力、服務 Micron/WD-SanDisk/模組廠；群聯 PS8361（UFS 4.0）+ 全球最大獨立車用 eMMC controller（自報 >40%、首獲 ASPICE CL3）。兩家為競爭雙頭，且 captive 原廠佔整體 UFS 約 55-65% — merchant 並非市場主導，自報份額無第三方驗證。",
+      "companies": [
+        { "name": "慧榮科技 Silicon Motion", "ticker": "SIMO", "country": "TW", "share": "merchant mobile UFS 主力", "products": "SM2756 6nm UFS 4.0/4.1 + Ferri-UFS 車用", "note": "服務 Micron/WD/模組廠；2025 eMMC/UFS +25%", "src": "https://www.prnewswire.com/news-releases/silicon-motion-unveils-6nm-ufs-4-0-controller-ai-smartphones-302086649.html" },
+        { "name": "群聯電子 Phison", "ticker": "8299.TWO", "country": "TW", "share": "車用 eMMC 最大獨立", "products": "PS8361 UFS 4.0 + 車用 eMMC controller", "note": "首獲 ASPICE CL3；UFS 為第二戰線", "src": "https://www.pocket.tw/school/report/SCHOOL/6346/" },
+        { "name": "MaxLinear", "ticker": "MXL", "country": "US", "share": "次要", "products": "UFS controller", "note": "主業 PCIe/broadband" }
+      ],
+      "upstream": [{ "id": "u-nand-us" }],
+      "downstream": [{ "id": "u-emcp" }, { "id": "u-module" }, { "id": "u-phone" }],
+      "sources": [
+        { "label": "Silicon Motion 6nm UFS 4.0 controller", "url": "https://www.prnewswire.com/news-releases/silicon-motion-unveils-6nm-ufs-4-0-controller-ai-smartphones-302086649.html" },
+        { "label": "群聯 Phison 業務模型（口袋學堂）", "url": "https://www.pocket.tw/school/report/SCHOOL/6346/" },
+        { "label": "Phison full UFS range launch", "url": "https://www.phison.com/en/category/article/press-releases/phison-launches-full-range-of-ufs-storage-solutions-for-unparalleled-mobile-storage-performance/" }
+      ]
+    },
+    {
+      "id": "u-captive",
+      "row": "ctrl", "col": 5, "span": 4, "kind": "stage",
+      "name": "Captive 原廠自有控制器",
+      "nameEn": "Captive In-House Controller",
+      "competition": "oligopoly",
+      "desc": "Samsung / SK Hynix / Kioxia 各自設計 UFS device controller + firmware，僅用於自家 NAND，不對外出售；其決策直接壓縮 merchant 市場天花板。",
+      "growth": "佔 UFS ~55-65%",
+      "analysis": "Samsung 最完整 captive 體系（UFS 2.x~4.1 全自有、旗艦 Galaxy 全用）；SK Hynix 自 UFS 2.0（2015）起自有（UD310/UD220）；Kioxia BiCS8 UFS 4.1 車用用自有設計，曾與 Phison 合作 UFS 4.0 prototype 但量產維持自有。垂直整合非市場競爭節點。",
+      "companies": [
+        { "name": "Samsung", "ticker": "005930.KS", "country": "KR", "share": "captive 最完整", "products": "UFS 2.x~4.1 全自有", "note": "旗艦 Galaxy 全用" },
+        { "name": "SK Hynix", "ticker": "000660.KS", "country": "KR", "share": "高階自有", "products": "UD310 / UD220", "note": "自 2015 UFS 2.0" },
+        { "name": "Kioxia", "ticker": "285A.T", "country": "JP", "share": "車用自有", "products": "BiCS8 UFS 4.1 captive", "note": "曾與 Phison prototype" }
+      ],
+      "upstream": [{ "id": "u-nand-kr" }, { "id": "u-nand-us" }],
+      "downstream": [{ "id": "u-phone" }, { "id": "u-auto" }],
+      "sources": [
+        { "label": "SK Hynix in-house UFS 2.1", "url": "https://news.skhynix.com/sk-hynix-mass-produces-in-house-ufs-2-1-solution/" },
+        { "label": "Samsung UFS 4.0 estorage", "url": "https://semiconductor.samsung.com/estorage/ufs/ufs-4-0/" }
+      ]
+    },
+    {
+      "id": "u-osat",
+      "row": "pkg", "col": 1, "span": 3, "kind": "rail",
+      "name": "NAND / UFS 封測 OSAT",
+      "nameEn": "NAND / UFS OSAT",
+      "competition": "oligopoly",
+      "desc": "KGD wafer-level 測試 + UFS / eMMC BGA 封裝 + eMCP 多晶片堆疊；台灣記憶體封測領頭羊主導。",
+      "growth": "AI / eSSD 拉動",
+      "analysis": "力成（NAND 佔比 ~23%、eSSD 需求強、BF2O/CHIEF/CLIP/PIFO 先進封裝）、南茂（記憶體佔營收 ~49%、3D NAND 為主）、華東 / 福懋（MCP）。競爭性寡占，無單點。",
+      "companies": [
+        { "name": "力成科技 PTI", "ticker": "6239.TW", "country": "TW", "share": "台記憶體 OSAT 最大", "products": "NAND/UFS KGD + eMCP + 先進封裝", "note": "eSSD 需求強" },
+        { "name": "南茂科技 ChipMOS", "ticker": "8150.TW", "country": "TW", "share": "記憶體封測第二", "products": "3D NAND 封測", "note": "記憶體 ~49% 營收" },
+        { "name": "福懋科技 FATC", "ticker": "—", "country": "TW", "share": "小型 MCP", "products": "MCP 封裝", "note": "功能手機/低階；未上市" }
+      ],
+      "upstream": [{ "id": "u-nand-kr" }, { "id": "u-nand-us" }, { "id": "u-ymtc" }, { "id": "u-test" }],
+      "downstream": [{ "id": "u-module" }],
+      "sources": [
+        { "label": "力成科技簡介（鉅亨）", "url": "https://www.cnyes.com/twstock/intro.aspx?code=6239" },
+        { "label": "南茂 ChipMOS 記憶體封測（Taipei Times）", "url": "https://www.taipeitimes.com/News/biz/archives/2025/11/12/2003847038" }
+      ]
+    },
+    {
+      "id": "u-emcp",
+      "row": "pkg", "col": 4, "span": 2, "kind": "rail",
+      "name": "eMCP / uMCP combo 封裝",
+      "nameEn": "eMCP / uMCP Combo Package",
+      "competition": "oligopoly",
+      "desc": "eMMC（NAND+controller die）+ LPDDR 堆疊於同一 BGA；uMCP = UFS + LPDDR5X combo，攻中低階 Android（<$200 機型）。",
+      "growth": "uMCP 中階升級",
+      "analysis": "eMCP 主用於中低階 Android；Samsung uMCP（UFS+LPDDR5X）量產中；OSAT 向 NAND 原廠採購 KGD 再組裝。屬封裝形態而非鎖喉節點。",
+      "companies": [
+        { "name": "Samsung（uMCP）", "ticker": "005930.KS", "country": "KR", "share": "uMCP 量產", "products": "UFS + LPDDR5X combo", "note": "中高階 combo" },
+        { "name": "力成 / 福懋（代工）", "ticker": "6239.TW", "country": "TW", "share": "MCP 代工", "products": "eMCP 堆疊封裝", "note": "KGD 組裝" }
+      ],
+      "upstream": [{ "id": "u-merchant" }],
+      "downstream": [{ "id": "u-phone" }, { "id": "u-iot" }],
+      "sources": [
+        { "label": "福懋 MCP 封裝產品", "url": "https://www.fatc.com.tw/j2fac/fatc_web/product/product_01_mcp.jsp" }
+      ]
+    },
+    {
+      "id": "u-module",
+      "row": "pkg", "col": 6, "span": 3, "kind": "rail",
+      "name": "模組廠 / UFS 卡",
+      "nameEn": "Module Makers / UFS Cards",
+      "competition": "redocean",
+      "desc": "採購 NAND die + merchant controller → 組裝 UFS / eMMC module，出售給手機 ODM 或零售；工業 / 車用模組毛利較高。",
+      "growth": "Micron 退消費利基",
+      "analysis": "威剛（台最大模組廠）、創見（工業/車用 eMMC/UFS 較高毛利）、十銓（DRAM 為主、部分 eMMC）、宇瞻（工業級）。Micron 2026/2 退出 Crucial 消費記憶體，分析師認為模組廠或受惠（DRAM 大於 NAND）。紅海競爭。",
+      "companies": [
+        { "name": "威剛科技 ADATA", "ticker": "3260.TW", "country": "TW", "share": "台最大模組", "products": "UFS/eMMC/SSD module", "note": "2025 營收新高" },
+        { "name": "創見資訊 Transcend", "ticker": "2451.TW", "country": "TW", "share": "工業/車用", "products": "工業 eMMC/UFS", "note": "較高毛利利基" },
+        { "name": "宇瞻科技 Apacer", "ticker": "8271.TW", "country": "TW", "share": "工業定位", "products": "工業級 eMMC/SSD", "note": "車用儲存" }
+      ],
+      "upstream": [{ "id": "u-osat" }, { "id": "u-merchant" }],
+      "downstream": [{ "id": "u-iot" }, { "id": "u-ai" }],
+      "sources": [
+        { "label": "記憶體模組產業迎超級循環（兆豐）", "url": "https://www.sinotrade.com.tw/richclub/hotstock/%E8%A8%98%E6%86%B6%E9%AB%94%E7%94%A2%E6%A5%AD%E8%BF%8E%E8%B6%85%E7%B4%9A%E5%BE%AA%E7%92%B0" }
+      ]
+    },
+    {
+      "id": "u-phone",
+      "row": "demand", "col": 1, "span": 2, "kind": "demand",
+      "name": "旗艦 Android 手機",
+      "nameEn": "Flagship Android (UFS 4.1)",
+      "competition": "highgrowth",
+      "desc": "UFS 4.x 主要量需求；2025 旗艦採用率近 100%；AI 功能推動容量升級（512GB/1TB 標配化）。",
+      "growth": "AI 推容量升級",
+      "analysis": "2024 旗艦機 92% 搭 UFS 4.x；Snapdragon 8 Elite Gen5 / Galaxy S26 用 UFS 4.1；3B 參數 AI 模型 <0.5 秒載入。注意 Apple iPhone 用自研 NVMe-like 控制器、不採 JEDEC UFS，完全不在此鏈內。",
+      "companies": [
+        { "name": "Samsung（Galaxy）", "ticker": "005930.KS", "country": "KR", "share": "旗艦採購方", "products": "Galaxy S26 UFS 4.1", "note": "captive UFS" },
+        { "name": "Xiaomi / OPPO / Vivo（BBK）", "ticker": "1810.HK", "country": "CN", "share": "Android 量", "products": "UFS 4.1 旗艦", "note": "採購 merchant + captive" }
+      ],
+      "upstream": [{ "id": "u-merchant" }, { "id": "u-captive" }, { "id": "u-emcp" }],
+      "downstream": [],
+      "sources": [
+        { "label": "Galaxy S26 UFS 4.1 storage", "url": "https://www.sammyfans.com/2025/09/25/samsung-galaxy-s26-ufs-4-1-storage/" }
+      ]
+    },
+    {
+      "id": "u-auto",
+      "row": "demand", "col": 3, "span": 2, "kind": "demand",
+      "name": "車用 UFS",
+      "nameEn": "Automotive UFS",
+      "competition": "highgrowth",
+      "desc": "ADAS / 智慧座艙 / 域控制器；AEC-Q100 Grade 2（115°C）；eMMC→UFS 3.1→UFS 4.0/4.1 升級；容量 128GB-1TB。",
+      "growth": "汽車電子化升級",
+      "analysis": "Kioxia UFS 4.1 車用（2025 launch）、Samsung/SK Hynix/Micron 車用認證；慧榮 Ferri-UFS（AEC-Q100 Grade 3 + IATF16949）、群聯車用 eMMC（ISO26262 + ASPICE CL3）為 merchant 車用主力。",
+      "companies": [
+        { "name": "Kioxia（車用）", "ticker": "285A.T", "country": "JP", "share": "UFS 4.1 車用", "products": "BiCS8 Auto UFS 4.1", "note": "AEC-Q100 Grade 2" },
+        { "name": "慧榮 / 群聯（merchant 車用）", "ticker": "SIMO", "country": "TW", "share": "merchant 車用", "products": "Ferri-UFS / 車用 eMMC controller", "note": "ASPICE CL3" }
+      ],
+      "upstream": [{ "id": "u-captive" }],
+      "downstream": [],
+      "sources": [
+        { "label": "Kioxia UFS 4.1 automotive", "url": "https://www.businesswire.com/news/home/20250730249798/en/KIOXIA-Launches-UFS-Ver.-4.1-Embedded-Flash-Memory-Devices-for-Automotive-Applications" },
+        { "label": "Phison automotive storage（ASPICE CL3）", "url": "https://www.phison.com/en/category/article/press-releases/phison-the-world-s-first-independent-controller-supplier-earns-automotive-spice-cl3" }
+      ]
+    },
+    {
+      "id": "u-iot",
+      "row": "demand", "col": 5, "span": 2, "kind": "demand",
+      "name": "IoT / 穿戴 / 工業（eMMC）",
+      "nameEn": "IoT / Wearable / Industrial (eMMC)",
+      "competition": "redocean",
+      "desc": "eMMC 5.1 仍為主流（成本優先）；智慧手錶、平板、工業控制、物聯網節點；UFS lite 開始滲透。",
+      "growth": "成熟緩成長",
+      "analysis": "Samsung eMMC 5.1、Kioxia e-MMC 為原廠主力；慧榮 SM2767 / 群聯 PS8213 eMMC 5.1 controller 為 merchant 供應。成熟市場、紅海。",
+      "companies": [
+        { "name": "Samsung / Kioxia（eMMC）", "ticker": "005930.KS", "country": "KR", "share": "原廠 eMMC", "products": "eMMC 5.1", "note": "成本優先" },
+        { "name": "慧榮 / 群聯（controller）", "ticker": "SIMO", "country": "TW", "share": "merchant eMMC", "products": "SM2767 / PS8213", "note": "IoT/工業" }
+      ],
+      "upstream": [{ "id": "u-emcp" }, { "id": "u-module" }],
+      "downstream": [],
+      "sources": [
+        { "label": "Silicon Motion Q4 2025 results", "url": "https://siliconmotiontechnologycorporation.gcs-web.com/news-releases/news-release-details/silicon-motion-announces-results-fourth-quarter-and-year-ended" }
+      ]
+    },
+    {
+      "id": "u-ai",
+      "row": "demand", "col": 7, "span": 2, "kind": "demand",
+      "name": "AI 手機 / PC（UFS 5.0）",
+      "nameEn": "AI Phone / PC (UFS 5.0)",
+      "competition": "highgrowth",
+      "desc": "本地 AI 推論需更大容量、更快隨機讀取（LLM 權重載入）；UFS 4.1 random read 1.5x UFS 3.1；UFS 5.0（10.8GB/s）進一步賦能 Edge AI。",
+      "growth": "UFS 5.0 Q4 2026",
+      "analysis": "JEDEC 2026/2 發布 UFS 5.0（10.8GB/s、HS-Gear6），首批設備預計 Q4 2026；2024 AI device UFS 整合成長 61%。慧榮與群聯需推 UFS 5.0 merchant controller 維持市場地位 — 下一產品週期觸發器。",
+      "companies": [
+        { "name": "慧榮 / 群聯（UFS 5.0 競賽）", "ticker": "SIMO", "country": "TW", "share": "merchant 下一代", "products": "UFS 5.0 controller（開發）", "note": "Q4 2026 觸發器" },
+        { "name": "Samsung / SK Hynix（captive）", "ticker": "005930.KS", "country": "KR", "share": "captive 下一代", "products": "UFS 5.0 captive", "note": "旗艦自製" }
+      ],
+      "upstream": [{ "id": "u-module" }],
+      "downstream": [],
+      "sources": [
+        { "label": "JEDEC UFS 5.0 standard", "url": "https://www.jedec.org/news/pressreleases/jedec%C2%AE-announces-updates-universal-flash-storage-ufs-and-memory-interface-0" },
+        { "label": "UFS 5.0 10.8GB/s（TechPowerUp）", "url": "https://www.techpowerup.com/341645/jedec-ufs-5-0-standard-to-deliver-sequential-performance-up-to-10-8-gb-s" }
+      ]
+    }
+  ],
+  "edges": [
+    ["u-etch", "u-nand-kr"],
+    ["u-etch", "u-nand-us"],
+    ["u-depo", "u-nand-kr"],
+    ["u-depo", "u-nand-us"],
+    ["u-test", "u-osat"],
+    ["u-nand-kr", "u-captive"],
+    ["u-nand-kr", "u-osat"],
+    ["u-nand-us", "u-merchant"],
+    ["u-nand-us", "u-captive"],
+    ["u-nand-us", "u-osat"],
+    ["u-ymtc", "u-osat"],
+    ["u-merchant", "u-emcp"],
+    ["u-merchant", "u-module"],
+    ["u-merchant", "u-phone"],
+    ["u-captive", "u-phone"],
+    ["u-captive", "u-auto"],
+    ["u-osat", "u-module"],
+    ["u-emcp", "u-phone"],
+    ["u-emcp", "u-iot"],
+    ["u-module", "u-iot"],
+    ["u-module", "u-ai"]
+  ],
+  "single_point_framework": "v1.3"
+}

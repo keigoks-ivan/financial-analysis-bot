@@ -1,0 +1,486 @@
+{
+  "id": "fpga",
+  "tab": "FPGA",
+  "title": "FPGA 可程式邏輯閘陣列供應鏈",
+  "subtitle": "FPGA 是少數仍由設計商主導、而非製程鎖喉的半導體賽道：高端市場 AMD（Xilinx）+ Altera 雙寡頭 ~70%，但客戶可在 Lattice / Microchip / Efinix 之間遷移，代工選擇（TSMC / Intel / Samsung FD-SOI / UMC）多為客戶配置而非能力獨佔。唯一結構性單點落在太空 rad-hard：Microchip RTG4 的 Flash 架構抗輻射 FPGA。2025-2026 主軸：AMD Versal Gen2（TSMC N6，PCIe Gen6 + CXL 3.1 首發）、Altera 2025/01 獨立（Silver Lake 控股）、eFPGA IP 賽道 >50% CAGR、邊緣 AI 拉動 Lattice / Efinix。",
+  "stats": [
+    { "k": "供應鏈節點", "v": 22 },
+    { "k": "涵蓋廠商", "v": "55+" },
+    { "k": "結構性單點", "v": 1, "sub": "太空 Rad-Hard FPGA（Microchip RTG4）", "hot": true }
+  ],
+  "rows": [
+    { "id": "ipeda", "label": "IP・EDA 工具 IP / EDA", "main": false },
+    { "id": "vendor", "label": "FPGA 原廠 FPGA VENDORS", "main": true },
+    { "id": "foundry", "label": "晶圓代工 FOUNDRY", "main": false },
+    { "id": "pkg", "label": "封裝・高速介面 PACKAGING & HS-IO", "main": false },
+    { "id": "demand", "label": "終端需求 END MARKETS", "main": false }
+  ],
+  "nodes": [
+    {
+      "id": "ip-efpga",
+      "row": "ipeda", "col": 1, "span": 3, "kind": "rail",
+      "name": "eFPGA 嵌入式邏輯 IP",
+      "nameEn": "Embedded FPGA (eFPGA) IP",
+      "competition": "highgrowth",
+      "desc": "可授權嵌入 ASIC / SoC 的可程式邏輯硬 IP，讓晶片出貨後仍可重組硬體；是 FPGA 市場外的平行成長賽道，CAGR >50%。",
+      "growth": "授權收入 >50% CAGR",
+      "analysis": "Achronix Speedcore（TSMC 7nm hard IP）與 Menta（唯一 100% standard-cell、可 port 任意製程）為兩大授權商；ADI 2024/11 收購 Flex Logix（EFLX + InferX）；Zero ASIC 2025 推開源 Platypus；QuickLogic 2025/04 交付全球首款 Intel 18A sub-5nm eFPGA hard IP，但 Menta 已宣佈 18A 客戶 in-progress，非單一來源。",
+      "companies": [
+        { "name": "Achronix", "ticker": "—", "country": "US", "share": "eFPGA IP 領導", "products": "Speedcore eFPGA IP", "note": "獨立 FPGA + IP 雙軌；未上市" },
+        { "name": "Menta eFPGA", "ticker": "—", "country": "FR", "share": "歐洲最活躍", "products": "standard-cell eFPGA（28nm~7nm silicon-proven）", "note": "可移植任意製程；防務/汽車客戶" },
+        { "name": "Analog Devices（Flex Logix）", "ticker": "ADI", "country": "US", "share": "前第三大", "products": "EFLX eFPGA + InferX", "note": "2024/11 ADI 收購 Flex Logix 資產" },
+        { "name": "QuickLogic", "ticker": "QUIK", "country": "US", "share": "Intel 18A 先發", "products": "Australis IP Generator + ArcticPro", "note": "2025/04 首款 18A eFPGA hard IP", "src": "https://www.prnewswire.com/news-releases/quicklogic-delivers-efpga-hard-ip-for-intel-18a-based-test-chip-302439001.html" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "v-small" }],
+      "sources": [
+        { "label": "Achronix Speedcore eFPGA", "url": "https://www.achronix.com/product/speedcore" },
+        { "label": "Menta brings eFPGA to Embedded World", "url": "https://www.design-reuse.com/news/202529547-menta-brings-its-pioneering-efpga-technology-to-embedded-world-north-america-2025/" },
+        { "label": "QuickLogic 18A eFPGA hard IP", "url": "https://www.stocktitan.net/news/QUIK/quick-logic-delivers-e-fpga-hard-ip-for-intel-18a-based-test-nhn7mls2qbhg.html" }
+      ]
+    },
+    {
+      "id": "ip-eda",
+      "row": "ipeda", "col": 4, "span": 3, "kind": "rail",
+      "name": "FPGA EDA 工具鏈",
+      "nameEn": "FPGA EDA Toolchain",
+      "competition": "oligopoly",
+      "desc": "FPGA 從 RTL 到 bitstream 的合成、placement & routing、timing、模擬與 HLS 工具；分原廠捆綁工具與第三方前端兩大流派。",
+      "growth": "與 FPGA 強綁定",
+      "analysis": "AMD Vivado / Vitis 與 Altera Quartus 各自與自家 FPGA 強綁定（vendor lock-in），是最深的客戶黏著；Lattice Radiant / Propel 以易用見長；Synopsys Synplify 與 Cadence 提供廠商無關的前端合成與形式驗證，可互換補位。",
+      "companies": [
+        { "name": "AMD", "ticker": "AMD", "country": "US", "share": "Vivado 業界標準", "products": "Vivado Design Suite + Vitis", "note": "Versal/UltraScale+ 唯一 P&R 工具" },
+        { "name": "Altera", "ticker": "—", "country": "US", "share": "Quartus 官方", "products": "Quartus Prime + Questa", "note": "Agilex/Cyclone 唯一官方工具；Silver Lake 控股" },
+        { "name": "Synopsys", "ticker": "SNPS", "country": "US", "share": "前端合成", "products": "Synplify Pro + VCS", "note": "廠商無關合成；全球最大 EDA" },
+        { "name": "Cadence", "ticker": "CDNS", "country": "US", "share": "模擬/驗證", "products": "Xcelium + JasperGold", "note": "補位 FPGA 驗證流程" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "v-amd" }, { "id": "v-altera" }, { "id": "v-lattice" }],
+      "sources": [
+        { "label": "AMD Vivado Design Suite", "url": "https://www.amd.com/en/products/software/adaptive-socs-and-fpgas/vivado.html" },
+        { "label": "FPGA design tools landscape 2024", "url": "https://fidus.com/blog/fpga-design-tools-and-trends-whats-new-in-2024/" }
+      ]
+    },
+    {
+      "id": "ip-tw",
+      "row": "ipeda", "col": 7, "span": 2, "kind": "rail",
+      "name": "台廠高速介面 IP",
+      "nameEn": "TW High-Speed Interface IP",
+      "competition": "redocean",
+      "desc": "台灣矽智財公司提供 SerDes / PCIe / UCIe / HBM PHY IP，被 FPGA 廠與 ASIC 廠採購，間接支撐 FPGA 生態；主攻 UMC 22/14nm mid-tier。",
+      "growth": "邊緣 AI / AIoT 拉動",
+      "analysis": "智原 10G SerDes IP 已導入 UMC 22nm、佈局 14nm；創意（TSMC 旗下）UCIe Die-to-Die + HBM4 PHY（N3P）直供高端封裝生態；力旺 NVM IP 嵌入 Flash-based FPGA 配置電路。三家皆在競爭激烈的高速 IP 紅海，無單點地位。",
+      "companies": [
+        { "name": "智原科技 Faraday", "ticker": "3035.TW", "country": "TW", "share": "台最大 ASIC 服務", "products": "10G SerDes / DDR-LPDDR PHY IP", "note": "UMC 22nm 導入、14nm 佈局", "src": "https://technews.tw/2025/06/25/faraday-delivers-latest-serdes-ip-umcs-22nm-platform/" },
+        { "name": "創意電子 GUC", "ticker": "5269.TW", "country": "TW", "share": "TSMC 旗下", "products": "UCIe PHY + HBM4 PHY（N3P 12Gbps）", "note": "高端封裝 die-to-die 互連", "src": "https://www.guc-asic.com/tw/news/PressRelease/PR_TC_20250715" },
+        { "name": "力旺電子 eMemory", "ticker": "3529.TW", "country": "TW", "share": "NVM IP 領導", "products": "NeoFuse / NeoFlash OTP", "note": "嵌入 Flash FPGA 配置電路" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "f-umc" }],
+      "sources": [
+        { "label": "智原 SerDes IP on UMC 22nm（TechNews）", "url": "https://technews.tw/2025/06/25/faraday-delivers-latest-serdes-ip-umcs-22nm-platform/" },
+        { "label": "創意 UCIe / HBM4 PHY", "url": "https://www.guc-asic.com/tw/news/PressRelease/PR_TC_20250715" }
+      ]
+    },
+    {
+      "id": "v-amd",
+      "row": "vendor", "col": 1, "span": 2, "kind": "stage",
+      "name": "AMD（Xilinx）高端 FPGA",
+      "nameEn": "AMD Xilinx High-End FPGA",
+      "competition": "oligopoly",
+      "desc": "高端 FPGA + Adaptive SoC 全球領導；Versal 融合 ARM、AI Engine、可程式邏輯；UltraScale+ 與 7-series 為中高端主力。",
+      "growth": "FPGA 市佔 40-50%",
+      "analysis": "AMD（2022 併 Xilinx）高端市佔估 40-50%，主導資料中心、5G、空天；Versal Premium Gen2（TSMC N6）為全球首發 PCIe Gen6 + CXL 3.1，2026Q1 樣品；Versal HBM 用 TSMC CoWoS + HBM2e。高端與 Altera 雙寡頭但兩家加總未達 cartel 門檻，客戶可往 Lattice/Microchip 遷移。",
+      "companies": [
+        { "name": "AMD（Xilinx）", "ticker": "AMD", "country": "US", "share": "高端 ~40-50%", "products": "Versal Premium/HBM/AI Edge + UltraScale+", "note": "Versal Gen2 TSMC N6，PCIe Gen6 首發", "src": "https://ir.amd.com/news-events/press-releases/detail/1226/amd-announces-versal-premium-series-gen-2-enabling-new-levels-of-system-acceleration-to-meet-the-demands-of-data-intensive-workloads" }
+      ],
+      "upstream": [{ "id": "ip-eda" }, { "id": "ip-tw" }],
+      "downstream": [{ "id": "f-tsmc" }, { "id": "d-5g" }, { "id": "d-dc" }],
+      "sources": [
+        { "label": "AMD Versal Premium Gen 2", "url": "https://ir.amd.com/news-events/press-releases/detail/1226/amd-announces-versal-premium-series-gen-2-enabling-new-levels-of-system-acceleration-to-meet-the-demands-of-data-intensive-workloads" },
+        { "label": "Versal HBM Series product brief", "url": "https://www.xilinx.com/content/dam/xilinx/publications/product-briefs/2504082_versal_hbm_series_product_brief.pdf" }
+      ]
+    },
+    {
+      "id": "v-altera",
+      "row": "vendor", "col": 3, "span": 2, "kind": "stage",
+      "name": "Altera 高端 FPGA",
+      "nameEn": "Altera High-End FPGA",
+      "competition": "oligopoly",
+      "desc": "2025/01 自 Intel 獨立（Silver Lake 持 51% / Intel 49%）；Agilex 系列為旗艦，EMIB 封裝 + HBM2e；5G 與 Azure SmartNIC 主力。",
+      "growth": "高端市佔 25-30%",
+      "analysis": "Agilex 7 M-Series（Intel 7 + EMIB + 內封 HBM2e）為全球最快 FPGA 之一；Agilex 9 Direct RF 整合 64 通道 ADC/DAC；下一代評估 Intel 18A，但 18A 量產時程仍有不確定性，Altera 已評估多晶圓廠策略。Silver Lake 2025/09 以 $44.6 億買 51%（估值 ~$87.5 億）。",
+      "companies": [
+        { "name": "Altera", "ticker": "—", "country": "US", "share": "高端 ~25-30%", "products": "Agilex 9/7/5/3 + EMIB HBM2e", "note": "Silver Lake 控股；Azure MANA SmartNIC", "src": "https://www.techpowerup.com/319804/intel-reincarnates-altera-as-independent-company-launches-agilex-9-7-5-3-series-fpgas" }
+      ],
+      "upstream": [{ "id": "ip-eda" }],
+      "downstream": [{ "id": "f-intel" }, { "id": "d-5g" }, { "id": "d-dc" }],
+      "sources": [
+        { "label": "Intel reincarnates Altera as independent company", "url": "https://www.techpowerup.com/319804/intel-reincarnates-altera-as-independent-company-launches-agilex-9-7-5-3-series-fpgas" },
+        { "label": "Agilex 7 M-Series HBM2e 解析", "url": "https://www.adiuvoengineering.com/post/agilex-7-fpgas-and-socs-m-series-examining-the-hbm2e-memory" }
+      ]
+    },
+    {
+      "id": "v-lattice",
+      "row": "vendor", "col": 5, "span": 1, "kind": "stage",
+      "name": "Lattice 低功耗 FPGA",
+      "nameEn": "Lattice Low-Power FPGA",
+      "competition": "oligopoly",
+      "desc": "全球中低端、低功耗 FPGA 霸主；Nexus 平台（Samsung 28nm FD-SOI）+ Avant（16nm）；累計出貨 5000 萬顆邊緣 AI 裝置。",
+      "growth": "邊緣/工業/安全 EC",
+      "analysis": "Nexus 用 Samsung 28nm FD-SOI（天生 50% 低軟錯誤率），Avant 用 16nm FinFET 攻 mid-range；FD-SOI 全業界僅 Samsung（主流）與 GlobalFoundries 22FDX，雖屬罕見供應但 GF 為可行替代源（需重新設計 18-24 月），不構成能力獨佔單點。",
+      "companies": [
+        { "name": "Lattice Semiconductor", "ticker": "LSCC", "country": "US", "share": "低功耗全球第一", "products": "Nexus（28nm FD-SOI）+ Avant（16nm）", "note": "sensAI 框架；車規/工業/PC 安全 EC", "src": "https://www.eetimes.com/lattice-unveils-first-fpgas-on-fd-soi/" }
+      ],
+      "upstream": [{ "id": "ip-eda" }],
+      "downstream": [{ "id": "f-samsung" }, { "id": "d-ind" }],
+      "sources": [
+        { "label": "Lattice unveils first FPGAs on FD-SOI（EE Times）", "url": "https://www.eetimes.com/lattice-unveils-first-fpgas-on-fd-soi/" },
+        { "label": "Lattice low-power FD-SOI", "url": "https://www.allaboutcircuits.com/news/lattice-leverages-fd-soi-for-new-low-power-fpgas/" }
+      ]
+    },
+    {
+      "id": "v-microchip",
+      "row": "vendor", "col": 6, "span": 1, "kind": "stage",
+      "name": "Microchip 中端 + Rad-Hard FPGA",
+      "nameEn": "Microchip Mid-Range + Rad-Hard FPGA",
+      "competition": "oligopoly",
+      "single": "近乎獨佔 · Microchip RTG4 / RT PolarFire 為 Flash 架構抗輻射 FPGA、天生免 SEU 無需外部 scrubbing、取得 QML Class V 最高太空認證；深空 / 人類評級任務（Artemis II、MEV-1/2）唯一 Flash-based rad-hard 來源（信心度 high · Microchip 官方 + Military Aerospace 雙源。SRAM 路線替代 AMD XQRKU060 架構不同需 scrubbing；NanoXplore/CAES 為歐洲小眾）",
+      "desc": "PolarFire 中端 Flash FPGA（非揮發、低靜態功耗）+ RTG4 輻射強化 FPGA（QML Class V 最高太空等級）；mid-range 競爭，太空 rad-hard 為結構性單點。",
+      "growth": "工業/通訊 + 太空",
+      "analysis": "PolarFire（UMC 28nm SONOS Flash）在 mid-range 與 Lattice/Efinix 競爭；RTG4 / RT PolarFire 的 Flash 架構天生不受輻射誘導配置翻轉影響，是深空與人類評級任務的事實單一來源 — AMD Xilinx 太空級為 SRAM 架構需外部 scrubbing，技術路線不同。",
+      "companies": [
+        { "name": "Microchip Technology", "ticker": "MCHP", "country": "US", "share": "Flash rad-hard 主導", "products": "PolarFire / PolarFire SoC + RTG4（QML Class V）", "note": "rad-hard FPGA 為大集團一小 segment", "src": "https://www.militaryaerospace.com/computers/article/55244207/microchip-technology-inc-microchip-radiation-tolerant-fpgas-for-space-achieve-qml-class-v", "node_role": "elephant" }
+      ],
+      "upstream": [{ "id": "ip-eda" }],
+      "downstream": [{ "id": "f-umc" }, { "id": "d-space" }],
+      "sources": [
+        { "label": "Microchip RTG4 QML Class V（Military Aerospace）", "url": "https://www.militaryaerospace.com/computers/article/55244207/microchip-technology-inc-microchip-radiation-tolerant-fpgas-for-space-achieve-qml-class-v" },
+        { "label": "Microchip RTG4 rad-tolerant FPGAs", "url": "https://www.microchip.com/en-us/products/fpgas-and-plds/radiation-tolerant-fpgas/rtg4-radiation-tolerant-fpgas" }
+      ]
+    },
+    {
+      "id": "v-small",
+      "row": "vendor", "col": 7, "span": 1, "kind": "stage",
+      "name": "小型 / 邊緣 FPGA",
+      "nameEn": "Niche / Edge FPGA",
+      "competition": "highgrowth",
+      "desc": "高頻寬利基（Achronix Speedster7t）、邊緣視覺 AI（Efinix Titanium）、超低功耗 SoC（QuickLogic）；邊緣 AI 拉動快速成長。",
+      "growth": "邊緣 AI 翻倍",
+      "analysis": "Achronix Speedster7t（TSMC 7nm + GDDR6 + 2D NoC + ML 陣列）攻 AI/5G/網路加速；Efinix Titanium（TSMC 16nm）邊緣視覺 AI、2025 營收翻倍；QuickLogic 超低功耗 IoT/語音 + eFPGA IP 授權。",
+      "companies": [
+        { "name": "Achronix", "ticker": "—", "country": "US", "share": "高頻寬利基", "products": "Speedster7t（TSMC 7nm）", "note": "GDDR6 + ML processor 陣列；未上市" },
+        { "name": "Efinix", "ticker": "—", "country": "US", "share": "邊緣視覺 AI", "products": "Titanium（TSMC 16nm）/ Trion", "note": "2025 營收翻倍；未上市" },
+        { "name": "QuickLogic", "ticker": "QUIK", "country": "US", "share": "超低功耗利基", "products": "EOS S3 + ArcticPro（GF 22FDX）", "note": "IoT/語音/感測" }
+      ],
+      "upstream": [{ "id": "ip-efpga" }],
+      "downstream": [{ "id": "f-tsmc" }, { "id": "d-ind" }],
+      "sources": [
+        { "label": "Achronix Speedster7t 7nm FPGA", "url": "https://www.eejournal.com/article/acrhonix-7nm-speedster7t-fpgas/" },
+        { "label": "Efinix Titanium Ti60 tapeout at TSMC", "url": "https://www.efinixinc.com/company-pr-efinix-announces-titanium-ti60-tapeout-at-tsmc.html" }
+      ]
+    },
+    {
+      "id": "v-china",
+      "row": "vendor", "col": 8, "span": 1, "kind": "stage",
+      "name": "中國 FPGA 廠商",
+      "nameEn": "China FPGA Vendors",
+      "competition": "emerging",
+      "desc": "中國本土 FPGA 廠，主力 28nm，國內市占約 15%，由安全/政府/國防驅動快速成長；高端仍依賴進口。",
+      "growth": "中國市場 22.5% CAGR",
+      "analysis": "安路科技（國內品牌市佔第一，12nm 研發中）、紫光同創 Pango（航天航空 + 軍工）、複旦微（28nm 億閘 FPGA、軍用）、高雲 Gowin（低成本嵌入式 + 車用、與 JLCPCB 合作降原型門檻）。國產品牌全球市占仍 <5%，高端（Versal/Agilex 等級）完全依賴進口，地緣政治為真實風險。",
+      "companies": [
+        { "name": "安路科技 Anlogic", "ticker": "688107.SS", "country": "CN", "share": "國內品牌第一", "products": "ELF / EG4（28nm）", "note": "12nm 開發中；國防/政府替代" },
+        { "name": "紫光同創 Pango", "ticker": "—", "country": "CN", "share": "軍工重要", "products": "Titan / Logos（40/28nm）", "note": "航天 + 通訊基礎設施" },
+        { "name": "複旦微電子", "ticker": "688385.SS", "country": "CN", "share": "軍用/航天", "products": "FMQF（28nm 億閘）", "note": "上市公司" },
+        { "name": "高雲半導體 Gowin", "ticker": "—", "country": "CN", "share": "低成本嵌入", "products": "GW5AT（PCIe + MIPI）", "note": "車用視訊；JLCPCB 合作；未上市" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "f-samsung" }, { "id": "d-ind" }],
+      "sources": [
+        { "label": "中國 FPGA 市場與本土廠商（EETrend）", "url": "https://fpga.eetrend.com/blog/2025/100589906.html" },
+        { "label": "Gowin × JLCPCB 合作擴展", "url": "https://finance.yahoo.com/sectors/technology/articles/gowin-semiconductor-collaborates-jlcpcb-expand-155900037.html" }
+      ]
+    },
+    {
+      "id": "f-tsmc",
+      "row": "foundry", "col": 1, "span": 2, "kind": "stage",
+      "name": "TSMC（高端 FPGA 代工）",
+      "nameEn": "TSMC (High-End FPGA Foundry)",
+      "competition": "monopoly",
+      "desc": "承接 AMD Xilinx 全產品線 + Achronix + Efinix；N7/N6 為現行旗艦 FPGA 製程，N4/N2 供應 Versal Gen2 及後續世代。",
+      "growth": "高端 FPGA 製造主導",
+      "analysis": "AMD Xilinx 高端 FPGA 與 Versal 系列 15 年以來由 TSMC 代工，但這是客戶長期配置而非製程能力獨佔 — Samsung/Intel Foundry 技術上可承接，切換需 24-36 月重新驗證。屬 demand-side 集中，非供應端鎖喉單點。",
+      "companies": [
+        { "name": "TSMC 台積電", "ticker": "2330.TW", "country": "TW", "share": "高端 FPGA 主代工", "products": "N7 / N6 / 16nm / 28nm", "note": "AMD Versal/UltraScale+、Achronix、Efinix" }
+      ],
+      "upstream": [{ "id": "v-amd" }, { "id": "v-small" }],
+      "downstream": [{ "id": "p-adv" }, { "id": "p-svc" }],
+      "sources": [
+        { "label": "Xilinx 7nm Versal on TSMC", "url": "https://www.tomshardware.com/news/xilinx-7nm-versal-premium-acap-fpga-pcie-50-cxl" }
+      ]
+    },
+    {
+      "id": "f-intel",
+      "row": "foundry", "col": 3, "span": 2, "kind": "stage",
+      "name": "Intel Foundry",
+      "nameEn": "Intel Foundry",
+      "competition": "oligopoly",
+      "desc": "服務 Altera（自家）使用 Intel 7 / 10nm SuperFin；未來 Agilex 新世代評估 Intel 18A；亦承接 QuickLogic 18A eFPGA 測試晶片。",
+      "growth": "18A 評估中",
+      "analysis": "Agilex 7 F/I 用 Intel 10nm SuperFin、M-Series 用 Intel 7；18A 量產（2025H2 Panther Lake）後 FPGA 為後一波。QuickLogic 2025 在 18A 完成 eFPGA 測試晶片，是 IFS 對外 FPGA-class 客戶之一。",
+      "companies": [
+        { "name": "Intel Foundry", "ticker": "INTC", "country": "US", "share": "Altera 自家 + 外部", "products": "Intel 10nm SuperFin / Intel 7 / 18A", "note": "Altera Agilex + QuickLogic 18A 測試晶片" }
+      ],
+      "upstream": [{ "id": "v-altera" }],
+      "downstream": [{ "id": "p-adv" }],
+      "sources": [
+        { "label": "Altera CEO on move to Intel 18A", "url": "https://www.eenewseurope.com/en/ceo-interview-sandra-rivera-of-altera-on-the-move-to-intel-18a/" }
+      ]
+    },
+    {
+      "id": "f-samsung",
+      "row": "foundry", "col": 5, "span": 2, "kind": "stage",
+      "name": "Samsung Foundry（FD-SOI）",
+      "nameEn": "Samsung Foundry (FD-SOI)",
+      "competition": "oligopoly",
+      "desc": "Lattice Nexus 28nm FD-SOI 主代工 + Avant 16nm FinFET；FD-SOI 全球僅 Samsung（主流）與 GlobalFoundries 提供。",
+      "growth": "FD-SOI 雙供應之一",
+      "analysis": "Lattice Nexus 全線使用 Samsung 28nm FD-SOI，TSMC 無 FD-SOI 量產能力；但 GlobalFoundries 22FDX 為可行替代源（不同製程，需重新設計），故為雙供應結構而非獨佔。",
+      "companies": [
+        { "name": "Samsung Foundry", "ticker": "005930.KS", "country": "KR", "share": "FD-SOI 主流", "products": "28nm FD-SOI / 16nm FinFET", "note": "Lattice Nexus/Avant、部分 Efinix" }
+      ],
+      "upstream": [{ "id": "v-lattice" }, { "id": "v-china" }],
+      "downstream": [{ "id": "p-svc" }],
+      "sources": [
+        { "label": "Lattice FD-SOI on Samsung（EE Times）", "url": "https://www.eetimes.com/lattice-unveils-first-fpgas-on-fd-soi/" }
+      ]
+    },
+    {
+      "id": "f-umc",
+      "row": "foundry", "col": 7, "span": 1, "kind": "stage",
+      "name": "UMC 聯電",
+      "nameEn": "UMC",
+      "competition": "redocean",
+      "desc": "承接 Microchip PolarFire（28nm SONOS Flash）+ 智原 SerDes/DDR IP；不做最先進 FPGA，但是 mid-range Flash FPGA 與台廠 IP 的重要代工夥伴。",
+      "growth": "成熟製程",
+      "analysis": "PolarFire 的 28nm SONOS Flash 製程由 UMC 代工；智原 22nm SerDes 與 14FFC DDR IP 亦在 UMC。成熟製程競爭激烈，無單點地位。",
+      "companies": [
+        { "name": "UMC 聯電", "ticker": "2303.TW", "country": "TW", "share": "成熟製程第二梯", "products": "28nm SONOS / 22nm / 14nm", "note": "Microchip PolarFire + 智原 IP" }
+      ],
+      "upstream": [{ "id": "v-microchip" }, { "id": "ip-tw" }],
+      "downstream": [{ "id": "p-svc" }],
+      "sources": [
+        { "label": "Microsemi PolarFire 28nm FPGA", "url": "https://www.techdesignforums.com/blog/2017/02/14/microsemi-launch-polarfire-28nm-fpga/" }
+      ]
+    },
+    {
+      "id": "f-gf",
+      "row": "foundry", "col": 8, "span": 1, "kind": "stage",
+      "name": "GlobalFoundries",
+      "nameEn": "GlobalFoundries",
+      "competition": "oligopoly",
+      "desc": "FD-SOI（22FDX）與 28SLPe；承接 QuickLogic ArcticPro eFPGA + Microchip SuperFlash NVM；FD-SOI 第二供應源。",
+      "growth": "22FDX 車用利基",
+      "analysis": "GF 22FDX 是 FD-SOI 的第二供應源（主攻汽車/低功耗），為 Lattice FD-SOI 鎖定提供結構性替代可能；QuickLogic ArcticPro eFPGA 也在 22FDX。",
+      "companies": [
+        { "name": "GlobalFoundries", "ticker": "GFS", "country": "US", "share": "FD-SOI 第二源", "products": "22FDX / 28SLPe", "note": "QuickLogic + Microchip NVM" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "p-svc" }],
+      "sources": [
+        { "label": "QuickLogic ArcticPro on GF 22FDX", "url": "https://ir.quicklogic.com/press-releases/detail/425/quicklogic-announces-silicon-proven-arcticpro-efpga-on" }
+      ]
+    },
+    {
+      "id": "p-adv",
+      "row": "pkg", "col": 1, "span": 2, "kind": "stage",
+      "name": "先進封裝（CoWoS / EMIB）",
+      "nameEn": "Advanced Packaging (CoWoS / EMIB)",
+      "competition": "monopoly",
+      "desc": "高端 FPGA + HBM 的物理整合層：AMD Versal HBM 用 TSMC CoWoS，Altera Agilex 7 M-Series 用 Intel EMIB；2025-2026 CoWoS 產能吃緊。",
+      "growth": "CoWoS sold out",
+      "analysis": "TSMC CoWoS 為 AMD 高端 FPGA HBM 整合的主要管道、2026 持續 sold out，日月光 ASE 承接部分委外；Intel EMIB 為 Agilex 的自有 2.5D 路線。CoWoS 鎖喉本質屬 HBM/AI 整體封裝議題（見 HBM / CoWoS 地圖），於 FPGA 視角為共用節點。",
+      "companies": [
+        { "name": "TSMC 台積電", "ticker": "2330.TW", "country": "TW", "share": "CoWoS 主導", "products": "CoWoS-S / CoWoS-L", "note": "AMD Versal HBM + Achronix" },
+        { "name": "日月光投控 ASE", "ticker": "3711.TW", "country": "TW", "share": "OSAT 全球第一", "products": "CoWoS 委外 + InFO + SiP", "note": "TSMC CoWoS 溢出需求" },
+        { "name": "Intel Foundry", "ticker": "INTC", "country": "US", "share": "EMIB 自有", "products": "EMIB 2.5D bridge", "note": "Agilex 7 M-Series HBM2e" }
+      ],
+      "upstream": [{ "id": "f-tsmc" }, { "id": "f-intel" }, { "id": "p-hbm" }, { "id": "p-equip" }],
+      "downstream": [{ "id": "d-dc" }, { "id": "d-5g" }],
+      "sources": [
+        { "label": "Intel EMIB vs CoWoS 比較", "url": "https://www.chipstrat.com/p/advanced-packaging-intels-emib-vs" },
+        { "label": "ASE 先進封裝擴產（TechNews）", "url": "https://finance.technews.tw/2025/09/25/ase-expanding-semiconductor-advanced-packaging/" }
+      ]
+    },
+    {
+      "id": "p-hbm",
+      "row": "pkg", "col": 3, "span": 2, "kind": "rail",
+      "name": "HBM（FPGA in-package）",
+      "nameEn": "HBM (In-Package for High-End FPGA)",
+      "competition": "oligopoly",
+      "desc": "高端 FPGA（Versal HBM、Agilex 7 M-Series）將 HBM2e 直接封裝於 FPGA die 旁，提升記憶體頻寬 10-20x。",
+      "growth": "HBM2e 三強供應",
+      "analysis": "SK Hynix / Samsung / Micron 三家供應 HBM2e；FPGA 用量遠小於 AI GPU，是 HBM 需求的小分支。",
+      "companies": [
+        { "name": "SK Hynix", "ticker": "000660.KS", "country": "KR", "share": "HBM 領先", "products": "HBM2e / HBM3", "note": "FPGA in-package 主供" },
+        { "name": "Samsung", "ticker": "005930.KS", "country": "KR", "share": "HBM2e/3", "products": "HBM2e", "note": "FPGA in-package" },
+        { "name": "Micron", "ticker": "MU", "country": "US", "share": "追趕", "products": "HBM3e", "note": "高端市場切入" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "p-adv" }],
+      "sources": [
+        { "label": "Agilex M-Series in-package HBM", "url": "https://www.eejournal.com/article/intel-announces-worlds-fastest-fpgas-with-in-package-hbm-the-intel-agilex-m-series-fpgas/" }
+      ]
+    },
+    {
+      "id": "p-equip",
+      "row": "pkg", "col": 5, "span": 2, "kind": "rail",
+      "name": "台廠先進封裝設備",
+      "nameEn": "TW Advanced Packaging Equipment",
+      "competition": "highgrowth",
+      "desc": "CoWoS 擴產主要設備受益股，提供清洗、薄膜、CMP 等濕製程設備；FPGA / AI 晶片封裝的間接供應鏈。",
+      "growth": "CoWoS CAGR ~80%",
+      "analysis": "弘塑（CoWoS 濕製程清洗龍頭，2025 出貨 170-200 台）、辛耘（自製比例升至 45%）並稱「CoWoS 雙雄」，萬潤補位；為 TSMC + 日月光 CoWoS 擴產的設備受益者，屬高成長競爭節點。",
+      "companies": [
+        { "name": "弘塑科技", "ticker": "3131.TWO", "country": "TW", "share": "濕製程清洗龍頭", "products": "CoWoS 清洗設備", "note": "訂單能見至 2026H1", "src": "https://news.cnyes.com/news/id/5986290" },
+        { "name": "辛耘企業", "ticker": "3583.TW", "country": "TW", "share": "CoWoS 雙雄", "products": "封裝設備整合", "note": "自製比例 45%" },
+        { "name": "萬潤科技", "ticker": "6187.TW", "country": "TW", "share": "CoWoS 三傑", "products": "先進封裝設備", "note": "TSMC 供應鏈" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "p-adv" }],
+      "sources": [
+        { "label": "弘塑/辛耘 CoWoS 設備受益（鉅亨）", "url": "https://news.cnyes.com/news/id/5986290" }
+      ]
+    },
+    {
+      "id": "p-svc",
+      "row": "pkg", "col": 7, "span": 2, "kind": "rail",
+      "name": "設計服務 / 開發板",
+      "nameEn": "Design Service / Dev Boards",
+      "competition": "redocean",
+      "desc": "FPGA 設計服務、開發板生產與系統整合；連接 AMD / Altera 生態的台廠與 ASIC 服務商。",
+      "growth": "生態系支撐",
+      "analysis": "友晶 Terasic 為 Altera 亞太最重要 FPGA 開發板廠（DE10/TR10）兼 Xilinx 生態代理；創意 GUC 提供 ASIC 設計服務承接 FPGA-to-ASIC 轉換。皆為競爭性服務節點。",
+      "companies": [
+        { "name": "友晶科技 Terasic", "ticker": "—", "country": "TW", "share": "Altera 亞太頂尖", "products": "DE10 / TR10 開發板", "note": "Altera 研發夥伴；未上市" },
+        { "name": "創意電子 GUC", "ticker": "5269.TW", "country": "TW", "share": "ASIC 服務", "products": "FPGA-to-ASIC 轉換服務", "note": "TSMC 旗下" }
+      ],
+      "upstream": [{ "id": "f-tsmc" }, { "id": "f-samsung" }, { "id": "f-umc" }, { "id": "f-gf" }],
+      "downstream": [{ "id": "d-ind" }, { "id": "d-space" }],
+      "sources": [
+        { "label": "Terasic FPGA 開發板", "url": "https://www.terasic.com.tw/cgi-bin/page/archive.pl?Language=Taiwan&CategoryNo=22&No=55" }
+      ]
+    },
+    {
+      "id": "d-5g",
+      "row": "demand", "col": 1, "span": 2, "kind": "demand",
+      "name": "5G / 電信基礎設施",
+      "nameEn": "5G / Telecom Infrastructure",
+      "competition": "redocean",
+      "desc": "5G O-RAN 基站 BBU / RU 大量用 FPGA 做即時訊號處理（beamforming、FFT、FEC）；FPGA 最大應用垂直，約佔 32%。",
+      "growth": "FPGA 最大垂直 ~32%",
+      "analysis": "AMD UltraScale+ RFSoC（含 ADC/DAC）與 Versal AI Edge 最強；Altera Agilex 9 Direct RF 整合直接射頻、Ericsson/Nokia 採用；Achronix 補位。",
+      "companies": [
+        { "name": "Ericsson / Nokia / Samsung（系統商）", "ticker": "ERIC", "country": "SE", "share": "RAN 系統商", "products": "5G BBU/RU", "note": "FPGA 終端需求" },
+        { "name": "AMD / Altera（供應）", "ticker": "AMD", "country": "US", "share": "RFSoC 主供", "products": "UltraScale+ RFSoC / Agilex 9 RF", "note": "5G 訊號處理" }
+      ],
+      "upstream": [{ "id": "v-amd" }, { "id": "v-altera" }, { "id": "p-adv" }],
+      "downstream": [],
+      "sources": [
+        { "label": "FPGA in telecom market", "url": "https://www.datainsightsmarket.com/reports/fpga-in-telecom-890741" }
+      ]
+    },
+    {
+      "id": "d-dc",
+      "row": "demand", "col": 3, "span": 2, "kind": "demand",
+      "name": "資料中心 / SmartNIC / AI",
+      "nameEn": "Datacenter / SmartNIC / AI",
+      "competition": "highgrowth",
+      "desc": "超大規模雲端用 FPGA 做 SmartNIC（網路卸載）、儲存控制與 AI 推理加速；成長最快子市場（CAGR ~11%）。",
+      "growth": "成長最快 ~11% CAGR",
+      "analysis": "Microsoft Azure MANA SmartNIC（Altera Agilex）+ AMD Alveo（FaaS）雙平台並行；AWS 以自研 Nitro 為主、部分歷史 FPGA。FPGA-as-a-Service 在 Azure NP 系列部署。",
+      "companies": [
+        { "name": "Microsoft Azure", "ticker": "MSFT", "country": "US", "share": "雙平台部署", "products": "MANA SmartNIC + Alveo FaaS", "note": "Agilex + AMD Alveo" },
+        { "name": "AWS / Google Cloud", "ticker": "AMZN", "country": "US", "share": "自研為主", "products": "Nitro / 自研 ASIC", "note": "部分歷史 FPGA" }
+      ],
+      "upstream": [{ "id": "p-adv" }, { "id": "v-amd" }, { "id": "v-altera" }],
+      "downstream": [],
+      "sources": [
+        { "label": "Azure SmartNIC（Glenn Lockwood）", "url": "https://glennklockwood.com/garden/Azure-SmartNIC" }
+      ]
+    },
+    {
+      "id": "d-space",
+      "row": "demand", "col": 5, "span": 2, "kind": "demand",
+      "name": "航太 / 國防 / 太空（Rad-Hard）",
+      "nameEn": "Aerospace / Defense / Space (Rad-Hard)",
+      "competition": "oligopoly",
+      "desc": "最高可靠度需求；輻射強化 FPGA（Flash / SRAM 架構）為主力，QML Class V 為最高等級（人類評級任務、深空）。",
+      "growth": "太空/國防穩定",
+      "analysis": "Microchip RTG4（Flash 架構天生免 SEU）主導深空 / 人類評級任務（Artemis II、MEV-1/2）；AMD Xilinx XQRKU060（SRAM + TMR 需 scrubbing）為軍用/商業衛星另一路線；Flash-based 深空 rad-hard 為 Microchip 事實單一來源（見 Microchip 節點 ⚑）。",
+      "companies": [
+        { "name": "Microchip（RTG4）", "ticker": "MCHP", "country": "US", "share": "Flash rad-hard 主導", "products": "RTG4 / RT PolarFire", "note": "深空人類評級唯一 Flash 路線" },
+        { "name": "AMD Xilinx（Space-grade）", "ticker": "AMD", "country": "US", "share": "SRAM rad-tolerant", "products": "XQRKU060 + TMR", "note": "軍用/商業衛星" }
+      ],
+      "upstream": [{ "id": "v-microchip" }, { "id": "p-svc" }],
+      "downstream": [],
+      "sources": [
+        { "label": "Microchip rad-tolerant FPGA QML Class V", "url": "https://www.militaryaerospace.com/computers/article/55244207/microchip-technology-inc-microchip-radiation-tolerant-fpgas-for-space-achieve-qml-class-v" }
+      ]
+    },
+    {
+      "id": "d-ind",
+      "row": "demand", "col": 7, "span": 2, "kind": "demand",
+      "name": "工業 / 汽車 / 邊緣 AI",
+      "nameEn": "Industrial / Auto / Edge AI",
+      "competition": "highgrowth",
+      "desc": "工業機器控制、汽車 ADAS 視覺、功能安全（ISO 26262）、邊緣 AI 推理、ASIC 硬體仿真（emulation）。",
+      "growth": "邊緣 AI + 車規",
+      "analysis": "Lattice 在邊緣 AI / 工業 / PC 安全 EC 最強（5000 萬顆出貨）；AMD Versal AI Edge / Zynq 車規；Microchip PolarFire SoC 工業 RISC-V；Efinix Titanium 視覺 AI；ASIC emulation（Cadence Palladium / Synopsys ZeBu）每台用數千顆 UltraScale+。",
+      "companies": [
+        { "name": "Lattice / Efinix（邊緣）", "ticker": "LSCC", "country": "US", "share": "邊緣 AI 領先", "products": "Nexus / Titanium", "note": "工業/車規/安全 EC" },
+        { "name": "AMD / Microchip（車規工業）", "ticker": "AMD", "country": "US", "share": "車規 + 工業", "products": "Versal AI Edge / PolarFire SoC", "note": "ADAS + RISC-V 工業" }
+      ],
+      "upstream": [{ "id": "v-lattice" }, { "id": "v-small" }, { "id": "v-china" }, { "id": "p-svc" }],
+      "downstream": [],
+      "sources": [
+        { "label": "Lattice in AI infrastructure", "url": "https://iamfabian.substack.com/p/lattice-semiconductor-in-the-ai-infrastructure" }
+      ]
+    }
+  ],
+  "edges": [
+    ["ip-efpga", "v-small"],
+    ["ip-eda", "v-amd"],
+    ["ip-eda", "v-altera"],
+    ["ip-eda", "v-lattice"],
+    ["ip-tw", "v-amd"],
+    ["ip-tw", "f-umc"],
+    ["v-amd", "f-tsmc"],
+    ["v-altera", "f-intel"],
+    ["v-lattice", "f-samsung"],
+    ["v-microchip", "f-umc"],
+    ["v-small", "f-tsmc"],
+    ["v-china", "f-samsung"],
+    ["f-tsmc", "p-adv"],
+    ["f-tsmc", "p-svc"],
+    ["f-intel", "p-adv"],
+    ["f-samsung", "p-svc"],
+    ["f-umc", "p-svc"],
+    ["f-gf", "p-svc"],
+    ["p-hbm", "p-adv"],
+    ["p-equip", "p-adv"],
+    ["p-adv", "d-dc"],
+    ["p-adv", "d-5g"],
+    ["p-svc", "d-ind"],
+    ["p-svc", "d-space"],
+    ["v-amd", "d-5g"],
+    ["v-amd", "d-dc"],
+    ["v-altera", "d-dc"],
+    ["v-microchip", "d-space"],
+    ["v-lattice", "d-ind"],
+    ["v-small", "d-ind"],
+    ["v-china", "d-ind"]
+  ],
+  "single_point_framework": "v1.3"
+}
