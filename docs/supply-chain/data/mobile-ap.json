@@ -1,0 +1,364 @@
+{
+  "id": "mobile-ap",
+  "tab": "手機 AP",
+  "title": "手機 AP（行動應用處理器）供應鏈",
+  "subtitle": "智慧手機 AP/SoC 2025 市場 ~$24.5B、單位 +4% / 營收 +10%（高階機 + on-device AI 拉動 ASP）。產業是一條「ARM IP 稅 → 少數 fabless/captive 設計 → TSMC 先進製程 + 扇出封裝」的窄漏斗：Counterpoint Q1'25 出貨市佔 聯發科 40% / Qualcomm 24% / Apple 17% / UNISOC 13% / Samsung 5%；旗艦運算則由 Apple A19 / Snapdragon 8 Elite Gen 5 / Dimensity 9500 三強壟斷。最深鎖喉不在製造而在源頭——ARM 指令集 + CPU/GPU IP 幾乎是旗艦 Android 唯一可行架構，連 Apple / Qualcomm 自研核心也得持架構授權付權利金。製造端 2025 起 >50% AP 採先進製程，旗艦幾乎全數壓在台積電 N3P / N2。",
+  "single_point_framework": "v1.3",
+  "stats": [
+    { "k": "供應鏈節點", "v": 16 },
+    { "k": "涵蓋廠商", "v": "70+" },
+    { "k": "近乎獨佔 / 關鍵單點", "v": 1, "sub": "ARM CPU/GPU IP 為旗艦智慧手機 CPU 唯一可行架構（RISC-V 尚不支撐旗艦 Android、x86 缺席）。製造/封裝雖高度集中於台積電但 Samsung SF2 為結構替代源、故為寡占非單點；記憶體三雄屬 memory 圖。", "hot": true }
+  ],
+  "rows": [
+    { "id": "ip", "label": "IP / EDA 工具", "main": "ARM CPU/GPU IP・GPU/NPU IP・RISC-V・EDA 設計工具" },
+    { "id": "design", "label": "AP/SoC 設計", "main": "旗艦商用（Qualcomm / 聯發科）・垂直自研（Apple / Samsung / Google / 小米）・入門價值（UNISOC / 中階）" },
+    { "id": "fab", "label": "製程 / 封裝 / 測試", "main": "先進製程代工・扇出 InFO/FOWLP・FCCSP 載板・封測 OSAT" },
+    { "id": "peri", "label": "整合 / 周邊元件", "main": "5G 數據機・行動記憶體 LPDDR/UFS・PMIC 電源・RF 前端" },
+    { "id": "demand", "label": "下游需求", "main": "手機 OEM・旗艦 / 中高階 / 入門 分層" }
+  ],
+  "nodes": [
+    {
+      "id": "ip-arm",
+      "row": "ip", "col": 1, "span": 2, "kind": "rail",
+      "name": "ARM CPU / GPU IP", "nameEn": "ARM CPU & GPU IP",
+      "competition": "monopoly",
+      "single": "近乎獨佔 · ARM 指令集 + Cortex/C1（Lumex）CPU IP 為旗艦智慧手機 CPU 唯一可行架構——RISC-V 尚無法支撐旗艦 Android 生態、x86 缺席；連 Apple / Qualcomm 自研核心（Oryon）也持 ARM 架構授權並付權利金，全球 >99% 智慧手機跑 ARM ISA（信心度 high · ARM 財報 + 通用知識多源）",
+      "desc": "智慧手機 SoC 的最上游——CPU 指令集架構（ISA）與現成 CPU/GPU 核心 IP。每顆 AP 不論誰設計、誰代工，幾乎都要向 ARM 取得架構授權或核心授權並支付權利金。",
+      "marketSize": "全鏈最深單點（IP 稅）",
+      "growth": "ARM 醞釀核心 IP 漲價最高 +300%",
+      "analysis": "ARM 是整條手機 AP 鏈的隱形收費站：Cortex-X/A 系（2025 改名 C1 Ultra/Premium/Pro/Nano「Lumex」平台）+ Mali/Immortalis（改名 G1-Ultra/Premium/Pro）幾乎是所有 Android 旗艦的標配，連自研派也只是把 ARM 架構授權拿去客製。RISC-V 在 MCU / 邊緣有進展，但旗艦 Android app 生態、driver、編譯鏈仍綁死 ARM，18-24 個月無可行替代——這是真正的 18-24 個月不可替換鎖。ARM 2025 起評估對現成核心 IP 漲價最高 300%，凸顯其議價權。",
+      "companies": [
+        { "name": "ARM Holdings", "ticker": "ARM", "country": "UK", "share": "智慧手機 CPU ISA ~100%", "products": "C1 (Lumex) CPU / Mali G1 GPU / 架構授權", "note": "純 IP 授權商，權利金抽成幾乎每一支智慧手機；旗艦無可行替代架構", "core_business": true, "supply_chain_lock": "tight" },
+        { "name": "Imagination Technologies", "ticker": "—", "country": "UK", "share": "GPU IP 利基（中低階 / 中國）", "products": "PowerVR / IMG GPU IP", "note": "私有（Canyon Bridge）；中低階 SoC GPU 替代源，非旗艦主流" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "d-flagship" }, { "id": "d-captive" }, { "id": "d-entry" }],
+      "sources": [
+        { "label": "Android Authority: Arm C1 CPU & Mali G1 GPU deep dive", "url": "https://www.androidauthority.com/arm-c1-cpu-mali-g1-gpu-deep-dive-3595933/" },
+        { "label": "Android Headlines: Arm could raise IP licensing price up to 300%", "url": "https://www.androidheadlines.com/2025/01/arm-could-raise-chip-tech-licensing-price-by-up-to-300.html" }
+      ]
+    },
+    {
+      "id": "ip-gpu",
+      "row": "ip", "col": 3, "span": 2, "kind": "rail",
+      "name": "GPU / NPU / 自研核心 IP", "nameEn": "GPU / NPU / Custom Core IP",
+      "competition": "oligopoly",
+      "desc": "繪圖、AI 加速與自研 CPU 核心的 IP 來源。除 ARM 外，部分大廠自研 GPU（Apple、Qualcomm Adreno）或外購利基 GPU IP；NPU 多為各家自研。",
+      "marketSize": "差異化關鍵",
+      "growth": "on-device AI 推升 NPU TOPS 競賽",
+      "analysis": "GPU 路線分三派：ARM Mali / Immortalis（聯發科、Google、小米）、自研（Apple 自研 GPU 衍生自 2020 Imagination 架構和解授權、Qualcomm Adreno 源自前 AMD 團隊）、利基外購（Imagination 中低階）。NPU 幾乎全數自研以做差異化（Apple Neural Engine、Qualcomm Hexagon、聯發科 APU），是 on-device generative AI 的賣點主戰場，但非單一供應鎖喉。",
+      "companies": [
+        { "name": "ARM (Mali / Immortalis)", "ticker": "ARM", "country": "UK", "share": "Android GPU IP 主流", "products": "Mali G1-Ultra / Immortalis", "note": "聯發科旗艦 + Google Tensor + 小米 XRing 採用" },
+        { "name": "Apple (自研 GPU)", "ticker": "AAPL", "country": "US", "share": "iPhone captive", "products": "自研 GPU（Imagination 架構授權衍生）", "note": "2020 與 Imagination 和解續授權後全自研" },
+        { "name": "Qualcomm (Adreno)", "ticker": "QCOM", "country": "US", "share": "Snapdragon captive", "products": "Adreno GPU（前 AMD Imageon）", "note": "自有 GPU，不外購" },
+        { "name": "Imagination", "ticker": "—", "country": "UK", "share": "利基 GPU IP", "products": "IMG DXT/CXT", "note": "中低階 / 中國 SoC 替代 GPU IP 源" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "d-flagship" }, { "id": "d-captive" }],
+      "sources": [
+        { "label": "Tom's Hardware: Xiaomi XRing 01 — Arm Cortex CPU + Mali G925 GPU", "url": "https://www.tomshardware.com/pc-components/cpus/xiaomis-in-house-xring-01-soc-leaked-melds-10-core-arm-cortex-cpu-plus-16-core-mali-g925-gpu" }
+      ]
+    },
+    {
+      "id": "ip-eda",
+      "row": "ip", "col": 5, "span": 2, "kind": "rail",
+      "name": "EDA 設計工具", "nameEn": "EDA Tools",
+      "competition": "oligopoly",
+      "desc": "晶片設計自動化軟體——從 RTL、合成、佈局繞線到簽核驗證的全流程工具鏈，先進製程 AP 設計不可或缺。",
+      "marketSize": "設計門檻",
+      "growth": "2nm 設計複雜度推升 EDA 用量",
+      "analysis": "全流程 EDA 由 Synopsys + Cadence 雙雄（合計 >60%）加 Siemens EDA 三家主導，先進節點實際多為 Synopsys/Cadence 雙寡占；新進入者 5 年內幾無商用可能（數十年 IP 庫 + 代工廠認證）。但三家互相競爭、客戶可混用工具，未達結構卡特爾門檻（top3 未達 ≥90%），列寡占不打單點；詳見 IC 設計圖。",
+      "companies": [
+        { "name": "Synopsys", "ticker": "SNPS", "country": "US", "share": "EDA ~32%", "products": "全流程 EDA + IP", "note": "先進節點主力工具" },
+        { "name": "Cadence", "ticker": "CDNS", "country": "US", "share": "EDA ~30%", "products": "Innovus / Virtuoso", "note": "與 Synopsys 雙寡占" },
+        { "name": "Siemens EDA", "ticker": "SIE.DE", "country": "DE", "share": "EDA ~13%", "products": "Calibre 簽核", "note": "DRC/LVS 簽核強項" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "d-flagship" }, { "id": "d-captive" }, { "id": "d-entry" }],
+      "sources": [
+        { "label": "Inquisitive Universe: ARM Cortex CPU cores in 2025 explained", "url": "https://inquisitiveuniverse.com/2025/06/07/arm-cortex-cpu-cores-in-2025-explained/" }
+      ]
+    },
+    {
+      "id": "d-flagship",
+      "row": "design", "col": 1, "span": 2, "kind": "stage",
+      "name": "旗艦商用 AP（Qualcomm / 聯發科）", "nameEn": "Flagship Merchant AP",
+      "competition": "oligopoly",
+      "desc": "對外銷售的旗艦 SoC：Qualcomm Snapdragon 8 Elite 與聯發科 Dimensity 9500，供應給 Samsung / 小米 / Oppo / Vivo / Honor 等 Android 旗艦。",
+      "marketSize": "Android 旗艦雙雄",
+      "growth": "Dimensity 9500 把聯發科推上領先",
+      "analysis": "Android 旗艦商用 AP 是 Qualcomm vs 聯發科雙寡占：2025 Dimensity 9500（N3P、3x C1-Premium + 4x C1-Pro、無小核）將聯發科從跟隨者推上領先，且傳成本較 Snapdragon 8 Elite Gen 5 便宜 >50%。聯發科 Q1'25 整體 AP 出貨市佔 40% 居冠（含中低階），Qualcomm 24% 但盤踞高 ASP 旗艦。雙方互相競爭、OEM 可切換，屬競爭寡占非單點。聯發科同步把資源轉押 AI ASIC（2026 上看 $2B），手機部門傳遭降權。",
+      "companies": [
+        { "name": "Qualcomm", "ticker": "QCOM", "country": "US", "share": "AP 出貨 24%（高 ASP 旗艦主導）", "products": "Snapdragon 8 Elite Gen 5（N3P）", "note": "自研 Oryon CPU + Adreno GPU；旗艦 Android + 整合 X 系數據機" },
+        { "name": "聯發科 MediaTek", "ticker": "2454.TW", "country": "TW", "share": "AP 出貨 40%（含中低階居冠）", "products": "Dimensity 9500（N3P）/ 9600（N2P 2026)", "note": "旗艦 9500 推上領先；2nm 已 tape-out、2026 下半量產；資源轉押 AI ASIC" }
+      ],
+      "upstream": [{ "id": "ip-arm" }, { "id": "ip-gpu" }, { "id": "ip-eda" }],
+      "downstream": [{ "id": "f-foundry" }, { "id": "p-modem" }],
+      "sources": [
+        { "label": "Counterpoint: Global Smartphone AP-SoC Market Share Quarterly", "url": "https://counterpointresearch.com/en/insights/global-smartphone-apsoc-market-share-quarterly" },
+        { "label": "TechNews: Dimensity 9500 把聯發科從跟隨者推上領先", "url": "https://technews.tw/2025/12/17/the-dimensity-9500-has-propelled-mediatek-from-a-follower-to-a-leader/" },
+        { "label": "Wccftech: Dimensity 9500 >50% cheaper than Snapdragon 8 Elite Gen 5 (same N3P)", "url": "https://wccftech.com/dimensity-9500-more-than-50-percent-cheaper-than-the-snapdragon-8-elite-gen-5/" },
+        { "label": "鉅亨網〈聯發科法說〉ASIC 爆發、毛利率穩守 46%、手機晶片轉押 AI ASIC", "url": "https://news.cnyes.com/news/id/6213258" }
+      ]
+    },
+    {
+      "id": "d-captive",
+      "row": "design", "col": 3, "span": 2, "kind": "stage",
+      "name": "垂直自研 AP（Apple / Samsung / Google / 小米）", "nameEn": "Captive / In-house AP",
+      "competition": "oligopoly",
+      "desc": "手機品牌自研、僅用於自家機種的 SoC——垂直整合以掌握差異化與成本，不對外銷售。",
+      "marketSize": "垂直整合護城河",
+      "growth": "自研潮擴散（小米 XRing、Google 全客製）",
+      "analysis": "自研派以 Apple A 系（A19/A19 Pro，N3P、效能標竿）為首，Apple 並把無線晶片也自研化（C1/C1X 數據機、N1 連網）以全面掌控 BOM。Samsung Exynos 2600（自家 SF2 2nm）力圖重返旗艦；Google Tensor G5 2025 改為全客製設計並轉單台積電 N3 + InFO；小米 XRing 01（台積電 N4P/3nm 級、千人團隊）切入自研。自研是品牌護城河但各自獨立、非供應鎖喉；共同點是製造仍外包台積電（Samsung 例外用自家 fab）。",
+      "companies": [
+        { "name": "Apple", "ticker": "AAPL", "country": "US", "share": "AP 出貨 17%（iPhone captive）", "products": "A19 / A19 Pro（N3P）+ C1X 數據機 + N1", "note": "效能標竿；無線晶片自研化、台積電 InFO 獨家封裝" },
+        { "name": "Samsung System LSI", "ticker": "005930.KS", "country": "KR", "share": "AP 出貨 5%", "products": "Exynos 2600（SF2 2nm）", "note": "用自家 Samsung Foundry；力圖重返旗艦" },
+        { "name": "Google", "ticker": "GOOGL", "country": "US", "share": "Pixel captive", "products": "Tensor G5（台積電 N3 + InFO）", "note": "2025 起全客製設計、轉單台積電" },
+        { "name": "小米 Xiaomi", "ticker": "1810.HK", "country": "HK", "share": "自研切入", "products": "XRing 01（台積電 3nm 級）", "note": "千人團隊、前 Qualcomm 主管領軍；數據機仍外購" }
+      ],
+      "upstream": [{ "id": "ip-arm" }, { "id": "ip-gpu" }, { "id": "ip-eda" }],
+      "downstream": [{ "id": "f-foundry" }, { "id": "p-memory" }],
+      "sources": [
+        { "label": "Macworld: A19, N1, and C1X — Apple silicon drumbeat", "url": "https://www.macworld.com/article/2905765/the-a19-n1-and-c1x-the-drumbeat-of-impressive-apple-silicon-continues.html" },
+        { "label": "ChromeUnboxed: Google moves to fully-custom Tensor G5 on TSMC", "url": "https://chromeunboxed.com/google-fully-custom-soc-tensor-g5-tsmc/" },
+        { "label": "TrendForce: Xiaomi XRING 01 built on TSMC 3nm", "url": "https://www.trendforce.com/news/2025/05/19/news-xiaomi-announces-homegrown-xring-01-chipset-reportedly-built-on-tsmc-3nm-rivaling-snapdragon-8-gen-2/" }
+      ]
+    },
+    {
+      "id": "d-entry",
+      "row": "design", "col": 5, "span": 2, "kind": "stage",
+      "name": "入門 / 價值 AP（UNISOC / 中階）", "nameEn": "Entry / Value AP",
+      "competition": "redocean",
+      "desc": "中低階與入門市場的 SoC——成熟製程、價格戰激烈，UNISOC 與聯發科 Helio / Qualcomm 中階系列為主，新興市場走量。",
+      "marketSize": "新興市場走量",
+      "growth": "UNISOC 衝上 13% 出貨市佔",
+      "analysis": "入門 AP 是紅海：UNISOC（紫光展銳）Q1'25 出貨市佔衝上 13%，主攻新興市場與功能機升級；聯發科 Helio/Dimensity 中階與 Qualcomm Snapdragon 4/6 系競逐。HiSilicon 麒麟受制裁僅供華為自家（中芯製造）。此段製程多為 6/4nm 成熟級、毛利薄、無單點，純價量競爭。",
+      "companies": [
+        { "name": "UNISOC 紫光展銳", "ticker": "—", "country": "CN", "share": "AP 出貨 13%", "products": "Tiger T 系（入門 5G/4G）", "note": "私有；新興市場走量，出貨快速成長" },
+        { "name": "聯發科（中階 Helio）", "ticker": "2454.TW", "country": "TW", "share": "中階主力", "products": "Helio / Dimensity 6/7/8 系", "note": "中階出貨撐起整體 40% 市佔" },
+        { "name": "HiSilicon 海思", "ticker": "—", "country": "CN", "share": "華為 captive", "products": "麒麟 Kirin（中芯製造）", "note": "受美制裁僅供華為；先進製程受限" }
+      ],
+      "upstream": [{ "id": "ip-arm" }, { "id": "ip-eda" }],
+      "downstream": [{ "id": "f-foundry" }],
+      "sources": [
+        { "label": "Wikipedia: List of UNISOC systems on chips", "url": "https://en.wikipedia.org/wiki/List_of_UNISOC_systems_on_chips" }
+      ]
+    },
+    {
+      "id": "f-foundry",
+      "row": "fab", "col": 1, "span": 2, "kind": "stage",
+      "name": "先進製程代工", "nameEn": "Advanced-node Foundry",
+      "competition": "oligopoly",
+      "desc": "把 AP 設計實體化的晶圓代工。2025 起 >50% AP 採先進製程（≤4nm），旗艦幾乎全壓台積電 N3P / N2，Samsung Foundry 以 SF2 補位。",
+      "marketSize": "旗艦製造命脈",
+      "growth": "2025 AP 先進製程滲透 >50%",
+      "analysis": "旗艦 AP 製造高度集中台積電：Apple A19、Qualcomm 8 Elite Gen 5、聯發科 9500 全在 N3P；2026 台積電 Q4 起量產 N2（月產上看 10 萬片），客戶涵蓋 Apple / 聯發科 / Qualcomm 旗艦。Samsung Foundry SF2（Exynos 2600、傳 For Galaxy 版 Snapdragon）為結構替代源——故旗艦製造是台積電主導的寡占、非絕對單點（Kill Test：Samsung 結構上做得到）。Intel 18A 仍在邊緣。中低階走台積電成熟製程 + 中芯。",
+      "companies": [
+        { "name": "台積電 TSMC", "ticker": "2330.TW", "country": "TW", "share": "旗艦 AP 製造 >70%", "products": "N3P / N2 + 成熟製程", "note": "旗艦幾乎全包；N2 2026 Q4 量產、Apple/聯發科/Qualcomm 採用" },
+        { "name": "Samsung Foundry", "ticker": "005930.KS", "country": "KR", "share": "結構替代源", "products": "SF2（2nm GAA）", "note": "Exynos 2600；傳 For Galaxy Snapdragon；良率追趕中" },
+        { "name": "中芯 SMIC", "ticker": "0981.HK", "country": "CN", "share": "中國 captive", "products": "成熟 / 受限先進", "note": "華為麒麟製造；受設備管制" }
+      ],
+      "upstream": [{ "id": "d-flagship" }, { "id": "d-captive" }, { "id": "d-entry" }],
+      "downstream": [{ "id": "f-info" }],
+      "sources": [
+        { "label": "PhoneArena: Galaxy S26 Ultra chip to be produced by TSMC only", "url": "https://www.phonearena.com/news/galaxy-s26-ultra-chip-to-be-produced-by-tsmc-only_id164782" },
+        { "label": "TechNews 財經: 台積電 2nm 客戶含蘋果、聯發科、高通高階手機晶片", "url": "https://finance.technews.tw/2024/11/11/dimensity-9500-processor-is-expected-to-be-supported-by-tsmcs-2nm-process/" }
+      ]
+    },
+    {
+      "id": "f-info",
+      "row": "fab", "col": 3, "span": 1, "kind": "stage",
+      "name": "扇出封裝 InFO / FOWLP", "nameEn": "Fan-out (InFO / FOWLP)",
+      "competition": "oligopoly",
+      "desc": "AP 的扇出型晶圓級封裝——薄、小、可與 DRAM 做 PoP（堆疊封裝）。台積電 InFO 自 iPhone A10 起為 Apple A 系獨家採用。",
+      "marketSize": "薄型化關鍵",
+      "growth": "FOPLP 2027 量產接棒",
+      "analysis": "扇出封裝讓 AP 更薄並支援 InFO_PoP（AP + LPDDR 堆疊）。台積電 InFO 自 2016 A10 起拿下 Apple A 系獨家、延續至 2026 A 系與 Google Tensor，是當年贏得 Apple 代工的決勝點。但 ASE（FOCoS）、Samsung（FO-PLP）皆有扇出能力、FOPLP 2027 量產接棒，故為台積電主導的寡占而非絕對單點。",
+      "companies": [
+        { "name": "台積電 TSMC", "ticker": "2330.TW", "country": "TW", "share": "行動 AP 扇出主導", "products": "InFO / InFO_PoP / FOPLP（2027）", "note": "Apple A 系 + Google Tensor 採用；行動扇出技術領先" },
+        { "name": "日月光 ASE", "ticker": "3711.TW", "country": "TW", "share": "OSAT 扇出補位", "products": "FOCoS / 扇出", "note": "Android AP 封裝 + 扇出替代源" },
+        { "name": "Samsung", "ticker": "005930.KS", "country": "KR", "share": "自家 captive", "products": "FO-PLP", "note": "Exynos 自家封裝" }
+      ],
+      "upstream": [{ "id": "f-foundry" }],
+      "downstream": [{ "id": "f-substrate" }],
+      "sources": [
+        { "label": "Siemens: Exploring TSMC InFO_oS and InFO_PoP certification", "url": "https://blogs.sw.siemens.com/semiconductor-packaging/2025/02/28/exploring-tsmc-info_os-and-info_pop-certification/" },
+        { "label": "TrendForce: TSMC FOPLP mini lines prepared by 2026", "url": "https://www.trendforce.com/news/2024/12/20/news-tsmc-rumored-to-begin-foplp-production-with-small-substrates-with-mini-lines-prepared-by-2026/" }
+      ]
+    },
+    {
+      "id": "f-substrate",
+      "row": "fab", "col": 4, "span": 1, "kind": "stage",
+      "name": "FCCSP / 載板", "nameEn": "FCCSP Substrate",
+      "competition": "oligopoly",
+      "desc": "AP 的覆晶晶片級封裝載板（FCCSP）——承載 AP 並走線到主板的高密度有機基板，採 ABF / mSAP 製程。",
+      "marketSize": "高密度承載",
+      "growth": "AI 排擠下高階載板緊俏",
+      "analysis": "手機 AP 用 FCCSP 載板由台廠欣興、景碩、南電與日廠 Ibiden、Shinko 寡占供應。雖然 ABF 膜源頭（味之素）近乎獨佔、是全鏈最深單點，但在『手機 AP 載板』這一節點上製造商有多家合格替代源，屬寡占；AI 伺服器排擠高階 ABF 產能間接推升手機載板報價。",
+      "companies": [
+        { "name": "欣興 Unimicron", "ticker": "3037.TW", "country": "TW", "share": "載板龍頭", "products": "FCCSP / ABF / mSAP", "note": "ABF 載板龍頭；AI 排擠下高階產能緊俏" },
+        { "name": "景碩 Kinsus", "ticker": "3189.TW", "country": "TW", "share": "FCCSP 主力", "products": "FCCSP 行動載板", "note": "行動 AP 載板供應" },
+        { "name": "Ibiden", "ticker": "4062.T", "country": "JP", "share": "高階載板", "products": "FCCSP / ABF", "note": "Apple A 系載板長期供應" }
+      ],
+      "upstream": [{ "id": "f-info" }],
+      "downstream": [{ "id": "f-osat" }],
+      "sources": [
+        { "label": "今周刊: 欣興、南電、景碩 ABF 概念股目標價（味之素漲價助攻）", "url": "https://www.businesstoday.com.tw/article/category/183008/post/202605120023/" }
+      ]
+    },
+    {
+      "id": "f-osat",
+      "row": "fab", "col": 5, "span": 2, "kind": "stage",
+      "name": "封測 OSAT / 測試", "nameEn": "OSAT / Final Test",
+      "competition": "oligopoly",
+      "desc": "AP 的封裝、測試與系統級測試（SLT）。旗艦 AP 由台積電前段封裝後交 OSAT 做最終測試，或 IDM 自封。",
+      "marketSize": "良率把關",
+      "growth": "AP 複雜度推升測試工時",
+      "analysis": "封測由日月光（含矽品）、力成、京元電等台廠寡占；行動 AP 封測門檻低於 AI GPU、替代源充足，無單點。測試工時隨 AP 整合度（多核 + NPU + 數據機）上升而拉長，京元電等測試廠受惠 AI 與高階手機測試需求同步成長。",
+      "companies": [
+        { "name": "日月光 ASE", "ticker": "3711.TW", "country": "TW", "share": "OSAT 全球龍頭", "products": "封裝 + 測試（含矽品）", "note": "Android AP 封測主力" },
+        { "name": "京元電 KYEC", "ticker": "2449.TW", "country": "TW", "share": "測試專業大廠", "products": "Final Test / SLT", "note": "AP 與 AI 晶片測試雙受惠" },
+        { "name": "力成 PTI", "ticker": "6239.TW", "country": "TW", "share": "記憶體 + 邏輯封測", "products": "封測 / PoP", "note": "行動記憶體 + AP 封測" }
+      ],
+      "upstream": [{ "id": "f-substrate" }],
+      "downstream": [{ "id": "dem-oem" }],
+      "sources": [
+        { "label": "旺得富: 京元電最純 AI 測試受惠股；日月光、力成 EPS", "url": "https://wantrich.chinatimes.com/news/20260128900324-420101" }
+      ]
+    },
+    {
+      "id": "p-modem",
+      "row": "peri", "col": 1, "span": 2, "kind": "stage",
+      "name": "5G 數據機（整合 / 外掛）", "nameEn": "5G Modem / Baseband",
+      "competition": "oligopoly",
+      "desc": "AP 旁的蜂巢數據機（baseband）——多數旗艦 AP 整合數據機（Snapdragon、Dimensity），少數採外掛（Apple 用 Qualcomm 或自研 C1X）。",
+      "marketSize": "連網命脈",
+      "growth": "Apple 自研化打破 Qualcomm 獨佔",
+      "analysis": "數據機曾是 Qualcomm 在『商用外掛旗艦 5G 數據機』近乎獨佔的環節（Apple 長年外購），但格局正鬆動：Apple 已推自研 C1（16e）/ C1X（iPhone Air，傳省電 30% 勝 Snapdragon X75）並規劃 C2，聯發科、Samsung 數據機 captive 於自家 AP。深度 RF 前端 + 數據機鏈見『無線 5G/Wi-Fi』圖；此處列寡占。",
+      "companies": [
+        { "name": "Qualcomm", "ticker": "QCOM", "country": "US", "share": "商用旗艦數據機主導", "products": "Snapdragon X 系數據機", "note": "iPhone 17 旗艦仍採用；merchant 旗艦數據機龍頭" },
+        { "name": "Apple", "ticker": "AAPL", "country": "US", "share": "自研化進行中", "products": "C1 / C1X（規劃 C2）", "note": "買下 Intel 數據機團隊自研；逐步取代 Qualcomm" },
+        { "name": "聯發科 MediaTek", "ticker": "2454.TW", "country": "TW", "share": "整合於 Dimensity", "products": "5G-Advanced 整合數據機", "note": "captive 整合，不外售旗艦數據機" }
+      ],
+      "upstream": [{ "id": "d-flagship" }, { "id": "d-captive" }],
+      "downstream": [{ "id": "dem-oem" }],
+      "sources": [
+        { "label": "TweakTown: Apple iPhone Air in-house C1X 5G modem", "url": "https://www.tweaktown.com/news/107644/apple-iphone-air-is-official-5-6mm-thick-a19-pro-chip-in-house-c1x-5g-modem-starts-at-dollars999/index.html" }
+      ]
+    },
+    {
+      "id": "p-memory",
+      "row": "peri", "col": 3, "span": 2, "kind": "stage",
+      "name": "行動記憶體 LPDDR / UFS", "nameEn": "Mobile Memory (LPDDR / UFS)",
+      "competition": "oligopoly",
+      "desc": "AP 搭配的低功耗 DRAM（LPDDR5X）與快閃儲存（UFS 4.0/4.1）。LPDDR 常與 AP 做 PoP 堆疊，UFS 為獨立模組。",
+      "marketSize": "on-device AI 拉動容量",
+      "growth": "LPDDR5X 10.7Gbps / on-device LLM 推升容量",
+      "analysis": "行動記憶體由 Samsung、SK Hynix、Micron 三雄供應，LPDDR5X 速度衝上 9.6-10.7Gbps、與 AP PoP 整合。on-device generative AI（如 BitNet 1.58-bit）拉高 DRAM 容量需求。三雄屬 HBM-grade DRAM 結構卡特爾的一員（深度分析見 memory / HBM 圖），此處列寡占以避免重複打旗。",
+      "companies": [
+        { "name": "Samsung", "ticker": "005930.KS", "country": "KR", "share": "行動記憶體龍頭", "products": "LPDDR5X / UFS 4.1", "note": "DRAM + NAND 雙供" },
+        { "name": "SK Hynix", "ticker": "000660.KS", "country": "KR", "share": "LPDDR 主力", "products": "LPDDR5X", "note": "AI 手機記憶體受惠" },
+        { "name": "Micron", "ticker": "MU", "country": "US", "share": "行動記憶體三雄", "products": "LPDDR5X / UFS 4.0", "note": "Qualcomm 旗艦 design-in" }
+      ],
+      "upstream": [{ "id": "d-captive" }, { "id": "d-flagship" }],
+      "downstream": [{ "id": "dem-oem" }],
+      "sources": [
+        { "label": "Micron: LPDDR5X + UFS 4.0 on Qualcomm Snapdragon 8 Elite", "url": "https://www.micron.com/about/press/news/microns-memory-and-storage-supported-on-qualcomms" }
+      ]
+    },
+    {
+      "id": "p-pmic",
+      "row": "peri", "col": 5, "span": 1, "kind": "stage",
+      "name": "PMIC 電源管理", "nameEn": "Power Management IC",
+      "competition": "oligopoly",
+      "desc": "AP 周邊的電源管理晶片——多軌電壓調節、電池充電、快充協定，旗艦多採 AP 廠配套 PMIC + 第三方補位。",
+      "marketSize": "效能/續航關鍵",
+      "growth": "快充 + 高峰功耗推升 PMIC 數量",
+      "analysis": "旗艦 PMIC 多由 AP 廠配套（Qualcomm 自家、聯發科配套），第三方由 TI、MPS、Qualcomm 與台廠矽力-KY（6415）補位充電/DC-DC。矽力-KY 為消費電子復甦受惠的台廠 PMIC 廠。替代源充足、無單點。",
+      "companies": [
+        { "name": "Qualcomm", "ticker": "QCOM", "country": "US", "share": "旗艦配套 PMIC", "products": "Snapdragon 配套電源", "note": "與 AP 綁定銷售" },
+        { "name": "矽力-KY SG Micro", "ticker": "6415.TW", "country": "TW", "share": "台廠 PMIC", "products": "DC-DC / 充電 IC", "note": "消費電子復甦受惠；手機 + 周邊電源" },
+        { "name": "MPS", "ticker": "MPWR", "country": "US", "share": "高效電源", "products": "PMIC / DC-DC", "note": "高階電源補位" }
+      ],
+      "upstream": [{ "id": "d-flagship" }],
+      "downstream": [{ "id": "dem-oem" }],
+      "sources": [
+        { "label": "旺得富: 矽力-KY PMIC 消費電子復甦受惠（台廠手機 AP 供應鏈）", "url": "https://wantrich.chinatimes.com/news/20260111900003-420101" }
+      ]
+    },
+    {
+      "id": "p-rf",
+      "row": "peri", "col": 6, "span": 1, "kind": "stage",
+      "name": "RF 前端（連結）", "nameEn": "RF Front-End (link)",
+      "competition": "oligopoly",
+      "desc": "AP/數據機與天線之間的射頻前端模組（PA / 濾波器 / 開關 / 天線調諧）——本圖僅列連結，深度見『無線 5G/Wi-Fi』圖。",
+      "marketSize": "→ 見無線圖",
+      "growth": "5G 頻段增加推升 RF 內容量",
+      "analysis": "RF 前端（RFFE）是手機連網不可或缺、但獨立於 AP 設計的子系統，由 Skyworks、Qorvo、Broadcom、Qualcomm 與 Murata 等主導，並含 Soitec RF-SOI 工程基板等深層單點。完整節點、單點與台廠濾波器供應請見『無線 5G/Wi-Fi』供應鏈圖。",
+      "companies": [
+        { "name": "Skyworks", "ticker": "SWKS", "country": "US", "share": "RFFE 主力", "products": "PA / FEM", "note": "詳見無線圖" },
+        { "name": "Qorvo", "ticker": "QRVO", "country": "US", "share": "RFFE 主力", "products": "PA / 濾波器", "note": "詳見無線圖" },
+        { "name": "Qualcomm", "ticker": "QCOM", "country": "US", "share": "整合 RFFE", "products": "ultraSAW / modem-to-antenna", "note": "與數據機綁定" }
+      ],
+      "upstream": [{ "id": "p-modem" }],
+      "downstream": [{ "id": "dem-oem" }],
+      "sources": [
+        { "label": "Engadget: Apple's new wireless chips (N1 + C1X) control of iPhone", "url": "https://www.engadget.com/mobile/smartphones/apples-new-wireless-chips-give-it-even-more-control-of-the-iphone-194820274.html" }
+      ]
+    },
+    {
+      "id": "dem-oem",
+      "row": "demand", "col": 1, "span": 3, "kind": "demand",
+      "name": "手機 OEM", "nameEn": "Smartphone OEMs",
+      "competition": "redocean",
+      "desc": "終端手機品牌——AP 的最終買家。垂直整合品牌（Apple/Samsung/小米）自研 AP，其餘採購 Qualcomm/聯發科。",
+      "marketSize": "全球年出貨 ~12 億支",
+      "growth": "高階機 + AI 功能拉動 ASP",
+      "analysis": "OEM 端是紅海競爭：Apple、Samsung、小米、Oppo、Vivo、Honor、傳音（Transsion）瓜分全球 ~12 億支年出貨。垂直整合品牌自研 AP 降低對 Qualcomm/聯發科依賴；其餘向雙雄採購。AI 手機與高階化是 ASP 與 AP 價值量的主要拉力。",
+      "companies": [
+        { "name": "Apple", "ticker": "AAPL", "country": "US", "share": "高階機龍頭", "products": "iPhone（A 系自研）", "note": "全自研 AP + 數據機 + 連網" },
+        { "name": "Samsung", "ticker": "005930.KS", "country": "KR", "share": "出貨量龍頭", "products": "Galaxy（Exynos + Snapdragon 雙軌）", "note": "旗艦混用自研與外購" },
+        { "name": "小米 / Oppo / Vivo / Honor", "ticker": "1810.HK", "country": "CN", "share": "中國品牌主力", "products": "Android 旗艦 + 中階", "note": "採購聯發科/Qualcomm；小米切自研" },
+        { "name": "傳音 Transsion", "ticker": "688036.SS", "country": "CN", "share": "新興市場龍頭", "products": "入門機（UNISOC/聯發科）", "note": "非洲/南亞入門市場走量" }
+      ],
+      "upstream": [{ "id": "f-osat" }, { "id": "p-modem" }, { "id": "p-memory" }, { "id": "p-pmic" }, { "id": "p-rf" }],
+      "downstream": [{ "id": "dem-segment" }],
+      "sources": [
+        { "label": "TechInsights: Smartphone AP market share Q1 2025", "url": "https://www.techinsights.com/blog/narrative-smartphone-application-processor-market-share-q1-2025" }
+      ]
+    },
+    {
+      "id": "dem-segment",
+      "row": "demand", "col": 4, "span": 3, "kind": "demand",
+      "name": "終端分層（旗艦 / 中高階 / 入門）", "nameEn": "Tier Segmentation",
+      "competition": "redocean",
+      "desc": "AP 需求依價格帶分層——旗艦（Apple/Snapdragon Elite/Dimensity 9500）、中高階、入門，各層製程與 ASP 落差大。",
+      "marketSize": "高階放量、製程升級",
+      "growth": "premium SoC 2025 出貨大增",
+      "analysis": "需求分層決定製程與 ASP：旗艦壓 N3P/N2、ASP 最高，AI 功能驅動 2025 premium SoC 出貨大增；中高階用 4nm；入門用 6nm 成熟製程走量。整體 2025 AP 採先進製程比重首破 50%，反映高階化趨勢——這是 AP 營收 +10% 但出貨僅 +4% 的核心原因（mix 上移）。",
+      "companies": [
+        { "name": "旗艦層", "ticker": "—", "country": "GLOBAL", "share": "ASP 最高", "products": "A19 / 8 Elite Gen 5 / Dimensity 9500", "note": "N3P/N2、on-device AI 賣點" },
+        { "name": "中高階層", "ticker": "—", "country": "GLOBAL", "share": "走量主力", "products": "Dimensity 8 系 / Snapdragon 7 系", "note": "4nm、性價比" },
+        { "name": "入門層", "ticker": "—", "country": "GLOBAL", "share": "新興市場", "products": "UNISOC T 系 / Snapdragon 4 系", "note": "6nm 成熟製程、薄利" }
+      ],
+      "upstream": [{ "id": "dem-oem" }],
+      "downstream": [],
+      "sources": [
+        { "label": "EE Times Asia: Premium smartphone SoC shipments to surge in 2025", "url": "https://www.eetasia.com/premium-smartphone-soc-shipments-to-surge-in-2025/" },
+        { "label": "電子工程專輯 EETimes Taiwan: 2025 智慧手機 AP-SoC 邁向 51% 先進製程里程碑", "url": "https://www.eettaiwan.com/20251120nt21-2025-smartphone-ap-soc/" }
+      ]
+    }
+  ],
+  "edges": [
+    ["ip-arm", "d-flagship"], ["ip-arm", "d-captive"], ["ip-arm", "d-entry"],
+    ["ip-gpu", "d-flagship"], ["ip-gpu", "d-captive"],
+    ["ip-eda", "d-flagship"], ["ip-eda", "d-captive"], ["ip-eda", "d-entry"],
+    ["d-flagship", "f-foundry"], ["d-captive", "f-foundry"], ["d-entry", "f-foundry"],
+    ["f-foundry", "f-info"], ["f-info", "f-substrate"], ["f-substrate", "f-osat"],
+    ["d-flagship", "p-modem"], ["d-captive", "p-memory"],
+    ["f-osat", "dem-oem"],
+    ["p-modem", "dem-oem"], ["p-memory", "dem-oem"], ["p-pmic", "dem-oem"], ["p-rf", "dem-oem"],
+    ["p-modem", "p-rf"],
+    ["dem-oem", "dem-segment"]
+  ]
+}
