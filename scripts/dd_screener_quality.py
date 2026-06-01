@@ -84,6 +84,7 @@ TICKER_YF_OVERRIDE = {
     "LVMH":    "MC.PA",     # Euronext Paris (primary EUR listing)
     "ABB":     "ABBNY",     # NYSE ADR (USD); ABB on its own returns 404 on yfinance
     "5274.TW": "5274.TWO",  # ASPEED — TPEx OTC, yfinance uses .TWO (not .TW)
+    "8299.TW": "8299.TWO",  # Phison 群聯 — TPEx OTC, yfinance uses .TWO (not .TW)
 }
 
 
