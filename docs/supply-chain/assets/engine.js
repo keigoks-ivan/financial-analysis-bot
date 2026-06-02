@@ -68,9 +68,13 @@ function ddLinkFor(tickerStr) {
 // SK Hynix HBM (sold out), Apple+TSMC (multi-gen), Meta+Broadcom (1GW
 // commit) — supply-chain truth that YoY growth misses.
 function isGolden(node, company) {
+  // 💎 Top Pick must be investable — a no-ticker private name (e.g. SpaceX
+  // pre-IPO) can never be a satellite, even if core_business+tight.
+  const tk = (company.ticker || "").trim();
   return !!node.single
     && company.core_business === true
-    && company.supply_chain_lock === "tight";
+    && company.supply_chain_lock === "tight"
+    && tk !== "" && tk !== "—";
 }
 
 /* ---------- tabs ---------- */

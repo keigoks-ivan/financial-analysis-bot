@@ -58,8 +58,11 @@ def norm_key(c: dict) -> str:
 
 
 def is_golden(node: dict, c: dict) -> bool:
+    # 💎 Top Pick must be investable — a no-ticker private name (e.g. SpaceX
+    # pre-IPO) can never be a satellite, even if core_business+tight.
+    tk = (c.get("ticker") or "").strip()
     return bool(node.get("single")) and c.get("core_business") is True \
-        and c.get("supply_chain_lock") == "tight"
+        and c.get("supply_chain_lock") == "tight" and tk not in ("", "—")
 
 
 def tier_of(node: dict, c: dict) -> str | None:

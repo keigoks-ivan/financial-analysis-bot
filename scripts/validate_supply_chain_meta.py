@@ -185,6 +185,18 @@ def validate_topic(d: dict, filename_stem: str) -> list[str]:
                         f"node {nid}.companies[{j}]: supply_chain_lock={scl!r}; "
                         f"allowed ['tight', 'med', 'loose']"
                     )
+            # 💎 satellite (core_business+tight) must be actually buyable. A private
+            # / unlisted name (ticker "—" or empty) can never be a Top Pick — tag
+            # node_role:"uninvestable" or give a real ticker. (SpaceX-pre-IPO trap.)
+            if node_has_single and c.get("core_business") is True \
+                    and c.get("supply_chain_lock") == "tight":
+                tk = (c.get("ticker") or "").strip()
+                if tk in ("", "—"):
+                    errs.append(
+                        f"node {nid}.companies[{j}]: 💎 satellite (core_business+tight) "
+                        f"but ticker={c.get('ticker')!r} is not investable — give a real "
+                        "ticker or tag node_role:'uninvestable'"
+                    )
             # Forward-core trajectory (B 例外 — requires 3 hard conditions per SKILL.md)
             if "core_business_trajectory" in c:
                 cbt = c["core_business_trajectory"]
