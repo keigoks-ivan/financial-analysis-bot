@@ -343,7 +343,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
 
     <div style="background:#fef7e7;border:1px solid #fbcf80;border-radius:8px;padding:14px 18px;margin-bottom:18px;font-size:11px;line-height:1.7;color:#5a4a1e">
       <strong style="color:#7c4a07;display:block;margin-bottom:6px;font-size:12px;letter-spacing:.02em">EPS 修正動能 — v1.10 動態 baseline + FY3 加入</strong>
-      <strong>FY+1→FY+3 CAGR</strong> 欄右方的 <span style="color:#166534;font-weight:600">↑+X.X% (5D)</span> / <span style="color:#991B1B;font-weight:600">↓-X.X% (1M)</span> 小字，是「本份 Excel forward CAGR」對照「上一份 Excel snapshot」的差值；尾段 <code>(5D)</code> / <code>(1M)</code> 是 baseline 多舊。<strong>Curr / Next / FY+3 EPS</strong> 三欄底下也都有同樣 chip — FY1 / FY2 / FY3 各自獨立 vs baseline。
+      <strong>FY+1→FY+3 CAGR</strong> 欄右方的 <span style="color:#166534;font-weight:600">↑+X.X% (vs 5/26)</span> / <span style="color:#991B1B;font-weight:600">↓-X.X% (vs 4/30)</span> 小字，是「本份 Excel forward CAGR」對照「上一份 Excel snapshot」的差值；尾段 <code>(vs M/D)</code> 是**比較基準的日期**（不是資料新鮮度 — 主數字永遠是最新一份 Excel）。<strong>Curr / Next / FY+3 EPS</strong> 三欄底下也都有同樣 chip — FY1 / FY2 / FY3 各自獨立 vs baseline。hover tooltip 另列 baseline 距今幾天。
       <br>• <strong>上修（綠）</strong>：分析師對未來 EPS 估算往上調 — 業界已知 alpha factor（Womack 1996 + Bloomberg / FactSet 同名指標），上修股票後續 6-12 個月傾向 outperform
       <br>• <strong>下修（紅）</strong>：估算往下調，常為基本面領先指標壞訊號
       <br>• <strong>持平</strong>（|diff| &lt; 0.5%）：不顯示箭頭，避免雜訊
@@ -379,14 +379,14 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
       <li><strong>FY+1→FY+3 CAGR</strong>：Excel buy-side forward 2Y CAGR（%）— <strong>v1.9 起改用 Excel snapshot</strong>。
         <br><em>來源：</em>Excel <code>cagr_fy1_fy3_pct</code>（FY+1 → FY+3 純前瞻 2 年期複合成長率，目前 202/204 ticker 覆蓋，動態隨 Koyfin watchlist 增刪）；少數 yfinance-only ticker（6146.T / 6857.T 等無 Excel 資料）fallback yfinance「+1y / +2y」row；SU / ABB 因 Koyfin export 資料異常於 <code>scripts/load_eps_estimates_xlsx.py</code> <code>_SKIP_TICKERS</code> 名單中略過。
         <br><em>窗口語意：</em>跟舊版「yearAgo → FY+1」(含 1 個過去實際 EPS) 不同；現在是 2 個前瞻 estimate (FY+1 vs FY+3) — buy-side 對未來 2 年的純前瞻 expectation。
-        <br><em>修正動能：</em>右方小字 <span style="color:#166534;font-weight:600">↑+X.X% (5D)</span>（綠 = 上修）/ <span style="color:#991B1B;font-weight:600">↓-X.X% (1M)</span>（紅 = 下修）= 本份 Excel CAGR vs 上一份 Excel snapshot 差值（絕對 pp 差，標 % 為視覺一致）；尾段 <code>(5D/1M)</code> 動態反映 baseline 多舊；|diff| &lt; 0.5 視為持平；「新」chip = 此 ticker 上份 baseline 未收錄。詳見上方「EPS 修正動能」callout。
+        <br><em>修正動能：</em>右方小字 <span style="color:#166534;font-weight:600">↑+X.X% (vs 5/26)</span>（綠 = 上修）/ <span style="color:#991B1B;font-weight:600">↓-X.X% (vs 4/30)</span>（紅 = 下修）= 本份 Excel CAGR vs 上一份 Excel snapshot 差值（絕對 pp 差，標 % 為視覺一致）；尾段 <code>(vs M/D)</code> 是**比較基準的日期**（hover 看距今幾天）；|diff| &lt; 0.5 視為持平；「新」chip = 此 ticker 上份 baseline 未收錄。詳見上方「EPS 修正動能」callout。
         <br><em>QGM MLB 門檻：</em><code>≥ 15%</code>（顏色基於 Excel forward CAGR；server 端 <code>pass_count</code> 同一欄位 — v1.9 已與 UI 顯示對齊）
       </li>
 
       <li><strong>Curr FY / Next FY / FY+3 EPS</strong>：當前 / 下一 / 兩年後會計年度 consensus EPS（純資訊欄無 pass/fail）— <strong>v1.8 起 Excel buy-side 為主，yfinance fallback；v1.10 加 FY+3 revision chip + 動態 baseline 間距標籤</strong>。
         <br><em>來源優先順序：</em>(1) Koyfin Excel <code>FY1E / FY2E / FY3E</code> consensus mean — 主路徑，202/204 ticker；(2) yfinance <code>.earnings_estimate</code> <code>0y / +1y / +2y</code> row — fallback（JP 股、SU/ABB、Excel 缺值）。<code>eps_source</code> 欄記載每個 ticker 走哪一路。
         <br><em>對應曆年：</em>多數 US Dec-FY 公司：Curr FY ≈ 本曆年、Next FY ≈ 下個曆年；非 Dec-FY 例外（NVDA Jan：Curr = FY27 / Next = FY28；JP 公司 Mar：差約半年）。
-        <br><em>每欄底下修正動能 chip：</em><span style="color:#166534;font-weight:600">↑+X.X% (5D)</span> / <span style="color:#991B1B;font-weight:600">↓-X.X% (1M)</span> = 此 FY EPS vs 上一份 Excel snapshot 的相對變動 %；<code>(5D/1M)</code> 動態反映 baseline 多舊（同月內 intra-month refresh 會顯示「5D」；月度為「1M」）。「新」chip = 此 ticker 在 prior snapshot 還不在 universe（新加入）。詳見上方「EPS 修正動能」callout。
+        <br><em>每欄底下修正動能 chip：</em><span style="color:#166534;font-weight:600">↑+X.X% (vs 5/26)</span> / <span style="color:#991B1B;font-weight:600">↓-X.X% (vs 4/30)</span> = 此 FY EPS vs 上一份 Excel snapshot 的相對變動 %；<code>(vs M/D)</code> 是**比較基準的日期**（即上一份 Excel snapshot 日；hover tooltip 列距今天數）。「新」chip = 此 ticker 在 prior snapshot 還不在 universe（新加入）。詳見上方「EPS 修正動能」callout。
         <br><em>非美股 native currency 顯示：</em><code>.TW / .T / .HK / .KS / .SS / .SZ</code> 後綴的 ticker 自動 back-compute FX（從 yfinance financialCurrency vs Excel USD），表格直接顯示 TWD / JPY / HKD / KRW / CNY 數字 + 後綴 chip；hover 看 USD 原值與 FX rate。
         <br><em>用途：</em>驗證 forward CAGR 公式（<code>((FY+3 / FY+1)^0.5 − 1) × 100</code>，Excel 直接給）；觀察上修/下修方向強弱對比（FY1 與 FY3 上修幅度差很大 = 成長曲線位移）。
       </li>
@@ -879,6 +879,31 @@ function _baselineAgeLabel(baselineDate) {
   return months + 'M';
 }
 
+// Short baseline date "M/D" for the chip suffix (e.g. "5/26"). Anchored to the
+// start of the string so a dirty snapshot_date like
+// "2026-05-26 (incremental updates over 2026-05-25 base)" still yields 5/26
+// (NOT the 5/25 embedded in the parenthetical). Falls back to "M月" for a
+// YYYY-MM-only baseline. The chip shows the baseline DATE (what it's compared
+// against) instead of an age count, which reads as data-staleness to users.
+function _baselineDateShort(baselineDate) {
+  if (!baselineDate) return '';
+  var b = String(baselineDate);
+  var m = b.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return parseInt(m[2], 10) + '/' + parseInt(m[3], 10);
+  var m2 = b.match(/^(\d{4})-(\d{2})/);
+  if (m2) return parseInt(m2[2], 10) + '月';
+  return '';
+}
+
+// Clean ISO date "YYYY-MM-DD" (or "YYYY-MM") stripped of any descriptive
+// suffix, for tooltips. Keeps tooltips from rendering the raw dirty string.
+function _baselineDateClean(baselineDate) {
+  if (!baselineDate) return '';
+  var b = String(baselineDate);
+  var m = b.match(/^\d{4}-\d{2}-\d{2}/) || b.match(/^\d{4}-\d{2}/);
+  return m ? m[0] : b;
+}
+
 function _renderLiveEPSCell(s, flag) {
   // v1.9: 顯示 Excel FY+1→FY+3 forward CAGR (eps_fy1_fy3_cagr_pct) 取代舊
   // yfinance YearAgo→FY+1 mixed-window CAGR (eps2y_live)。MoM revision delta
@@ -897,7 +922,10 @@ function _renderLiveEPSCell(s, flag) {
   // (per-FY revision baseline; intra-month aware), falls back to eps2y prev_date.
   var cagrBaselineDate = s.eps_revision_baseline_date || prevDate;
   var cagrAgeLabel = _baselineAgeLabel(cagrBaselineDate);
-  var cagrAgeSuffix = cagrAgeLabel ? (' (' + cagrAgeLabel + ')') : '';
+  var cagrDateShort = _baselineDateShort(cagrBaselineDate);
+  // Chip suffix shows the baseline DATE ("vs 5/26") — unambiguous vs the old
+  // age count ("10D") which read as data staleness. Age stays in the tooltip.
+  var cagrAgeSuffix = cagrDateShort ? (' (vs ' + cagrDateShort + ')') : '';
   if (revDir === '上修' || revDir === '下修') {
     var revColor = revDir === '上修' ? '#166534' : '#991B1B';
     var arrow = revDir === '上修' ? '↑' : '↓';
@@ -912,7 +940,7 @@ function _renderLiveEPSCell(s, flag) {
   }
   // tooltip
   var parts = ['Excel FY+1→FY+3 forward CAGR ' + cagr.toFixed(1) + '%'];
-  var cagrBaseTip = cagrBaselineDate ? ('baseline ' + cagrBaselineDate + (cagrAgeLabel ? ' (' + cagrAgeLabel + ' 前)' : '')) : 'baseline';
+  var cagrBaseTip = cagrBaselineDate ? ('baseline ' + _baselineDateClean(cagrBaselineDate) + (cagrAgeLabel ? ' · ' + cagrAgeLabel + ' 前' : '')) : 'baseline';
   if (revPp !== null && prevVal !== null) {
     parts.push(cagrBaseTip + ' ' + prevVal.toFixed(1) + '%');
     parts.push('修正 ' + (revPp > 0 ? '+' : '') + revPp.toFixed(1) + 'pp (絕對差) · ' + revDir);
@@ -969,8 +997,9 @@ function _renderRawEpsCell(s, field) {
     var rev = s[revField];
     var baseDate = s.eps_revision_baseline_date;
     var ageLabel = _baselineAgeLabel(baseDate);
-    var ageSuffix = ageLabel ? (' (' + ageLabel + ')') : '';
-    var baseTipName = baseDate ? (baseDate + (ageLabel ? ' / ' + ageLabel + ' 前' : '')) : '?';
+    var dateShort = _baselineDateShort(baseDate);
+    var ageSuffix = dateShort ? (' (vs ' + dateShort + ')') : '';
+    var baseTipName = baseDate ? (_baselineDateClean(baseDate) + (ageLabel ? ' / ' + ageLabel + ' 前' : '')) : '?';
     if (rev === null || rev === undefined) {
       chip = '<div style="font-size:9px;color:#94a3b8;margin-top:1px">新</div>';
       tipBase += ' | baseline 無此 ticker 或首次部署';
