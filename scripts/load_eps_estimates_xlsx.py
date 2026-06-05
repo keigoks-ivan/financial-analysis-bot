@@ -113,6 +113,14 @@ def _read_sst(z: zipfile.ZipFile) -> list[str]:
 
 def _cell_value(c, sst: list[str]):
     t = c.attrib.get("t")
+    # Inline string: <c t="inlineStr"><is><t>text</t></is></c>. openpyxl writes
+    # strings this way (no sharedStrings table), so without this branch an
+    # openpyxl-resaved workbook parses to 0 tickers. Koyfin exports use t="s".
+    if t == "inlineStr":
+        is_el = c.find("s:is", NS)
+        if is_el is None:
+            return None
+        return "".join(n.text or "" for n in is_el.iter() if n.tag.endswith("}t"))
     v = c.find("s:v", NS)
     if v is None or v.text is None:
         return None
@@ -120,6 +128,8 @@ def _cell_value(c, sst: list[str]):
         return sst[int(v.text)]
     if t == "b":
         return bool(int(v.text))
+    if t == "str":  # formula string result
+        return v.text
     try:
         return float(v.text)
     except ValueError:

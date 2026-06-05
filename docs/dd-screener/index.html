@@ -761,7 +761,9 @@ function _renderLivePEGCell(s, flag) {
   }
   // Color flag re-evaluated against live value if available (live primary semantics)
   var pegForFlag = (live !== null && live !== undefined) ? live : peg;
-  var liveFlag = pegForFlag == null ? null : (pegForFlag <= 2.0 ? 'pass' : 'fail');
+  // BOOLEAN for cellStyle() (not 'pass'/'fail' string — a string is always
+  // truthy → PEG > 2.0 wrongly rendered green). null → grey (no data).
+  var liveFlag = pegForFlag == null ? null : (pegForFlag <= 2.0);
   return '<td' + tip + ' style="' + cellStyle(liveFlag) + '">' + display + '</td>';
 }
 
@@ -950,7 +952,10 @@ function _renderLiveEPSCell(s, flag) {
     parts.push('修正動能 baseline 累積中（首月 snapshot 尚未對照）');
   }
   var tip = ' title="' + parts.join('; ') + '"';
-  var flagFinal = cagr >= 15 ? 'pass' : 'fail';
+  // cellStyle() wants a BOOLEAN (truthy→green / falsy→red / null→grey). A
+  // 'pass'/'fail' STRING is always truthy → fails wrongly rendered green
+  // (e.g. CAGR 9.7% showed green despite the ≥15% gate). Use a real boolean.
+  var flagFinal = cagr >= 15;
   return '<td' + tip + ' style="' + cellStyle(flagFinal) + '">' + display + '</td>';
 }
 
@@ -1226,7 +1231,7 @@ function renderEpsSourceBanner() {
   el.style.color = color;
   var missingHtml = '';
   if (src.missing_us_adr_tickers && src.missing_us_adr_tickers.length) {
-    missingHtml = ' <span style="color:#7f1d1d">缺漏（命名不一致，走 yfinance）：'
+    missingHtml = ' <span style="color:#7f1d1d">Excel 未收錄（已從 watchlist 移除或命名不符，走 yfinance）：'
                 + src.missing_us_adr_tickers.map(function(t){return '<code>' + t + '</code>';}).join('、')
                 + '</span>';
   }
