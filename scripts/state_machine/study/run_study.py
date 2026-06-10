@@ -11,13 +11,20 @@
   study-report.md（機械推導：R1/R2/R3 淘汰 → S1/S2 選擇，結論不含自由評論）。
 
 用法：
-  python3 scripts/state_machine/study/run_study.py                 # 全 universe（抓價）
-  python3 scripts/state_machine/study/run_study.py --from-saved P  # 從已存寬表重跑（不抓價）
+  python3 scripts/state_machine/study/run_study.py                 # 全 universe（抓價）+ 跑研究
+  python3 scripts/state_machine/study/run_study.py --refresh-only  # 只增量更新寬表股價，不動研究/報告
+  python3 scripts/state_machine/study/run_study.py --from-saved P  # 從已存寬表重跑研究（不抓價）
+
+寬表股價持續更新：擇一即可
+  ① 跑 --refresh-only（自帶 6mo 增量併入 per-ticker cache，寫 dated + latest 寬表）
+  ② 若每日 state-machine（run_daily.py）已在跑，per-ticker cache 早已逐日更新 —— 此時
+     --refresh-only 幾乎零下載，只是把現有 cache 重新打包成寬表。
 """
 from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import sys
 from itertools import combinations
 from pathlib import Path
@@ -51,6 +58,7 @@ ERAS = {"2020crash": ("2020-01-01", "2020-07-01"),
 GRAMMAR_ORDER = ["V1", "V3", "V2", "V4"]      # 文法序（預登記）
 OUT_JSON = CFG.DATA_DIR / "study" / "trim_variants.json"
 REPORT_PATH = STUDY_DIR / "study-report.md"
+LATEST_CLOSES = CFG.PRICE_CACHE_DIR / "study_closes_wide_latest.csv.gz"   # 穩定指標（免找日期檔名）
 MIN_BARS = 300
 
 
@@ -77,11 +85,15 @@ def build_closes() -> tuple[pd.DataFrame, list[str], list[str]]:
 
 def save_closes(closes: pd.DataFrame) -> Path:
     """持久化寬表收盤價（adjusted, period=max），供日後直接復用：
-    pd.read_csv(path, index_col=0, parse_dates=True)"""
+    pd.read_csv(path, index_col=0, parse_dates=True)
+
+    寫兩份：① 以收盤末日命名的快照（study 跑用，可釘住可重現）② study_closes_wide_latest.csv.gz
+    （穩定指標，自己日常取用免找日期）。兩份同內容。"""
     asof = closes.index[-1].strftime("%Y-%m-%d")
     p = CFG.PRICE_CACHE_DIR / f"study_closes_wide_{asof}.csv.gz"
     p.parent.mkdir(parents=True, exist_ok=True)
     closes.to_csv(p, compression="gzip")
+    shutil.copyfile(p, LATEST_CLOSES)
     return p
 
 
@@ -318,7 +330,23 @@ def write_report(res, winner, trace, meta):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--from-saved", help="已存寬表 csv(.gz) 路徑，跳過抓價")
+    ap.add_argument("--refresh-only", action="store_true",
+                    help="只增量更新寬表收盤價並存檔（dated + latest），不跑研究、不動報告/JSON")
     args = ap.parse_args()
+
+    if args.refresh_only:
+        closes, missing, short_hist = build_closes()
+        saved = save_closes(closes)
+        print(f"  寬表已更新：{closes.shape[1]} 檔 × {closes.shape[0]} 日（截至 "
+              f"{closes.index[-1].strftime('%Y-%m-%d')}）")
+        print(f"    dated  → {saved}")
+        print(f"    latest → {LATEST_CLOSES}")
+        if missing:
+            print(f"  抓取失敗 {len(missing)} 檔：{', '.join(missing)}")
+        if short_hist:
+            print(f"  短歷史（<{MIN_BARS} 根，研究時引擎自動跳過）{len(short_hist)} 檔："
+                  f"{', '.join(short_hist)}")
+        return
 
     print("── 預登記閘門（跑數據前鎖定）──")
     print(PREREG)
