@@ -112,6 +112,197 @@ PRESETS = {
 
 DEFAULT_FILTER = {"moat_min": 9.5, "directions": ["↑", "→"]}
 
+# ---------------------------------------------------------------------------
+# FunnelRank (v1.3) — 漏斗綜合排序分
+# ---------------------------------------------------------------------------
+# 把「QGM 5/5 → Moat → 修正動能 → 時機」四層人工漏斗的前三層（基本面）固化成
+# 一個 0–1 排序鍵。時機（第四層）維持 filter 不進排序分 —— 與 entry-state 的
+# 「基本面排序、時機另看」哲學一致。
+#
+#   FunnelRank = w_quality·QualityGate + w_moat·MoatScore + w_revision·RevisionScore
+#
+# 全部用既有欄位合成，不新增任何外部資料抓取。權重與映射值集中於此，方便調參。
+FUNNEL_WEIGHTS = {"quality": 0.40, "moat": 0.30, "revision": 0.30}
+
+# QualityGate 映射 — 帶「可原諒條件」：D/E、PEG fail 視為資本結構 / 估值問題，
+# 非品質本體缺陷，扣分較輕；FCF / ROIC / EPS CAGR fail 是品質本體缺陷，重扣。
+FUNNEL_QUALITY_MAP = {
+    "pass5": 1.00,
+    "pass4_forgivable": 0.85,   # 唯一 fail 在 D/E 或 PEG
+    "pass4_core": 0.50,         # fail 在 FCF / ROIC / EPS CAGR
+    "pass3": 0.30,
+    "pass_le2": 0.10,
+}
+FUNNEL_FORGIVABLE_FAILS = {"de", "peg"}
+
+# MoatScore：base = moat_score/10，再乘趨勢乘數，cap 1.0。
+FUNNEL_MOAT_TREND_MULT = {"↑": 1.10, "→": 1.00, "↓": 0.80}
+FUNNEL_MOAT_NO_DATA = 0.50
+
+# RevisionScore：FY1/FY2/FY3 各自上修(+1)/持平(0)/下修(-1)，FY3 權重最大
+# （成長曲線後段）。raw ∈ [-1, +1] → (raw+1)/2 ∈ [0, 1]。
+FUNNEL_REVISION_THRESHOLD = 0.5   # |diff| ≥ 0.5% 才算上修/下修
+FUNNEL_REVISION_FY_WEIGHTS = {"fy1": 0.2, "fy2": 0.3, "fy3": 0.5}
+FUNNEL_REVISION_STEEPENING_BONUS = 0.05   # FY3 上修幅度 > FY1 上修幅度 → 加分
+FUNNEL_REVISION_NO_BASELINE = 0.50        # 「新」chip / 無 baseline → 中性
+
+# Hard veto / cap（不進加權公式，直接處置）。
+FUNNEL_MOAT_DOWN_CAP = 0.50   # moat trend ↓ 且 pass_count ≤ 4 → FunnelRank cap
+
+
+def compute_quality_gate(quality: dict) -> tuple[float, bool]:
+    """QualityGate (0–1) with forgivable-fail logic + partial-data scaling.
+
+    Returns (gate, partial). `partial` is True when any of the 5 criteria has
+    no data (null) — that criterion drops out of the denominator and the pass
+    *ratio* over the present criteria is mapped through the same anchor points,
+    so a full-data 4/5 and a partial 3/4 (both ratio 0.75) score alike.
+
+    Anchor points (ratio → score) reproduce the full-data mapping exactly:
+        ratio 1.0          → 1.00
+        ratio [0.7, 1.0)   → 0.85 (forgivable: only D/E / PEG failed) else 0.50
+        ratio [0.5, 0.7)   → 0.30
+        ratio < 0.5        → 0.10
+    """
+    present = [c for c in CRITERIA if quality.get(c["key"]) is not None]
+    n_present = len(present)
+    if n_present == 0:
+        # No quality data at all — bottom bucket, flagged partial.
+        return FUNNEL_QUALITY_MAP["pass_le2"], True
+
+    fails_present: list[str] = []
+    for c in present:
+        v = quality[c["key"]]
+        ok = (v <= c["threshold"]) if c["invert"] else (v >= c["threshold"])
+        if not ok:
+            fails_present.append(c["key"])
+    n_pass = n_present - len(fails_present)
+    partial = n_present < len(CRITERIA)
+
+    forgivable = bool(fails_present) and set(fails_present) <= FUNNEL_FORGIVABLE_FAILS
+    ratio = n_pass / n_present
+
+    if ratio >= 1.0 - 1e-9:
+        gate = FUNNEL_QUALITY_MAP["pass5"]
+    elif ratio >= 0.7:
+        gate = FUNNEL_QUALITY_MAP["pass4_forgivable"] if forgivable \
+            else FUNNEL_QUALITY_MAP["pass4_core"]
+    elif ratio >= 0.5:
+        gate = FUNNEL_QUALITY_MAP["pass3"]
+    else:
+        gate = FUNNEL_QUALITY_MAP["pass_le2"]
+    return gate, partial
+
+
+def compute_moat_score_adj(moat_score, moat_trend: str) -> tuple[float, bool]:
+    """MoatScore (0–1) = (moat_score/10) × trend-multiplier, cap 1.0.
+
+    Returns (score, no_data). no_data=True (→ 0.50) when moat_score is absent
+    (rare — loader requires it, but guard anyway).
+    """
+    if moat_score is None:
+        return FUNNEL_MOAT_NO_DATA, True
+    base = float(moat_score) / 10.0
+    mult = FUNNEL_MOAT_TREND_MULT.get(moat_trend, 1.0)
+    return min(1.0, base * mult), False
+
+
+def _revision_signal(diff) -> int:
+    """+1 上修 / 0 持平 or 無資料 / -1 下修."""
+    if diff is None:
+        return 0
+    if diff >= FUNNEL_REVISION_THRESHOLD:
+        return 1
+    if diff <= -FUNNEL_REVISION_THRESHOLD:
+        return -1
+    return 0
+
+
+def compute_revision_score(rev_fy1, rev_fy2, rev_fy3) -> tuple[float, bool]:
+    """RevisionScore (0–1) from FY1/FY2/FY3 EPS revision % vs prior snapshot.
+
+    Returns (score, no_baseline). no_baseline=True (→ 0.50 中性) when ALL three
+    FY revision values are None (ticker new to snapshot, or no baseline yet).
+    When a baseline exists but a single FY column is missing, that column is
+    treated as a neutral (0) signal rather than collapsing the whole score —
+    this is the edge case most prone to error, kept explicit on purpose.
+    """
+    if rev_fy1 is None and rev_fy2 is None and rev_fy3 is None:
+        return FUNNEL_REVISION_NO_BASELINE, True
+
+    s1 = _revision_signal(rev_fy1)
+    s2 = _revision_signal(rev_fy2)
+    s3 = _revision_signal(rev_fy3)
+    w = FUNNEL_REVISION_FY_WEIGHTS
+    raw = w["fy1"] * s1 + w["fy2"] * s2 + w["fy3"] * s3   # ∈ [-1, +1]
+    score = (raw + 1.0) / 2.0
+
+    # Steepening bonus: FY3 上修幅度 > FY1 上修幅度（成長曲線後段變陡），須兩者皆上修。
+    if (rev_fy1 is not None and rev_fy3 is not None
+            and s1 == 1 and s3 == 1 and rev_fy3 > rev_fy1):
+        score = min(1.0, score + FUNNEL_REVISION_STEEPENING_BONUS)
+    return score, False
+
+
+def compute_funnel_rank(
+    quality: dict,
+    pass_count: int,
+    moat_score,
+    moat_trend: str,
+    rev_fy1,
+    rev_fy2,
+    rev_fy3,
+) -> dict:
+    """Compose FunnelRank (0–1) from the three fundamental sub-scores + vetoes.
+
+    Two hard processes outside the weighted formula:
+      1. FY1/FY2/FY3 三欄全部下修 → FunnelRank 強制歸 0（領先指標壓過落後的品質分），
+         該列沉底 + veto_all_downgrade=True（FE 顯示 ⛔）。三欄須皆有資料且皆下修。
+      2. moat trend ↓ 且 pass_count ≤ 4 → FunnelRank cap 0.50。
+
+    Returns a dict of all funnel fields (rounded to 4dp so the FE can re-derive
+    the weighted sum within < 0.001 for non-veto rows).
+    """
+    quality_gate, q_partial = compute_quality_gate(quality)
+    moat_adj, moat_missing = compute_moat_score_adj(moat_score, moat_trend)
+    revision_score, no_baseline = compute_revision_score(rev_fy1, rev_fy2, rev_fy3)
+
+    quality_gate = round(quality_gate, 4)
+    moat_adj = round(moat_adj, 4)
+    revision_score = round(revision_score, 4)
+
+    w = FUNNEL_WEIGHTS
+    funnel = (w["quality"] * quality_gate
+              + w["moat"] * moat_adj
+              + w["revision"] * revision_score)
+
+    # Veto 1: all three FY downgraded (each present and ≤ -0.5%).
+    all_down = (
+        rev_fy1 is not None and rev_fy2 is not None and rev_fy3 is not None
+        and rev_fy1 <= -FUNNEL_REVISION_THRESHOLD
+        and rev_fy2 <= -FUNNEL_REVISION_THRESHOLD
+        and rev_fy3 <= -FUNNEL_REVISION_THRESHOLD
+    )
+    cap_moat_down = False
+    if all_down:
+        funnel = 0.0
+    elif moat_trend == "↓" and pass_count <= 4:
+        # Veto 2: weakening moat without a clean 5/5 → cap.
+        cap_moat_down = funnel > FUNNEL_MOAT_DOWN_CAP
+        funnel = min(funnel, FUNNEL_MOAT_DOWN_CAP)
+
+    return {
+        "funnel_rank": round(funnel, 4),
+        "quality_gate": quality_gate,
+        "moat_score_adj": moat_adj,
+        "revision_score": revision_score,
+        "veto_all_downgrade": all_down,
+        "funnel_cap_moat_down": cap_moat_down,
+        "quality_gate_partial": q_partial,
+        "moat_no_data": moat_missing,
+        "revision_no_baseline": no_baseline,
+    }
+
 
 # ---------------------------------------------------------------------------
 # Step 5: pass/fail
@@ -145,11 +336,14 @@ def evaluate_criteria(quality: dict) -> tuple[int, list[str]]:
 
 
 def _sort_key(s: dict) -> tuple:
-    # In-tab ordering: pass_count desc → moat_score desc → 5Y IRR desc (nulls last)
-    # → ticker asc. 5Y IRR is preferred over upside_mid_pct because it's
-    # the directly investment-decision-relevant metric shown in the FE.
+    # v1.3: default ordering is FunnelRank desc (漏斗綜合分 — 基本面三層合成).
+    # all-downgrade veto rows carry funnel_rank=0 so they sink to the bottom.
+    # Tie-break preserves the legacy chain: pass_count → moat_score → 5Y IRR
+    # → ticker. The FE honours this order when no column sort is active.
+    funnel = s.get("funnel_rank")
     irr = s.get("ev5y_pct")
     return (
+        -(funnel if funnel is not None else -1.0),
         -s["pass_count"],
         -(s.get("moat_score") or 0),
         -(irr if irr is not None else -1e9),
@@ -1382,7 +1576,11 @@ def enrich_ticker(
     (monthly snapshot), live_peg, and live_ev5y_pct.
     """
     t = entry["ticker"]
-    quality, source = get_quality_for_ticker(t, qgm_index)
+    quality, source, quality_meta = get_quality_for_ticker(t, qgm_index)
+    # v1.3: peg_fallback — frozen PEG came from yfinance manual forwardPE/CAGR
+    # path (denominator not comparable to mainstream forward consensus). The
+    # PEG pass/fail is still computed normally; this only annotates provenance.
+    peg_fallback = bool(quality_meta.get("peg_fallback"))
 
     # v1.5: quality cache fallback for yfinance-path rows on total-wipe outages.
     # Only triggers when ALL 5 fields are None AND source is yfinance (QGM rows
@@ -1512,12 +1710,28 @@ def enrich_ticker(
     _rev_fy3 = _lfy.get("eps_fy3_usd_orig") or _lfy.get("eps_fy3")
     fy_revision = _compute_fy_eps_revision(t, _rev_curr, _rev_next, _rev_fy3, prev_snapshot or {})
 
+    # v1.3: FunnelRank — 漏斗綜合分 (基本面三層: QualityGate + Moat + Revision).
+    # 用 per-FY revision %（vs 上一份 snapshot）的 FY1/FY2/FY3 三欄合成 RevisionScore;
+    # quality 已含 Excel-overridden eps2y; moat_score 來自 dd-meta (entry); moat_trend
+    # 已套 DCA 箭頭。時機 (第四層) 不進公式 — 維持 filter。
+    funnel = compute_funnel_rank(
+        quality,
+        pass_count,
+        entry.get("moat_score"),
+        moat_trend,
+        fy_revision.get("eps_fy_curr_revision_pct"),
+        fy_revision.get("eps_fy_next_revision_pct"),
+        fy_revision.get("eps_fy3_revision_pct"),
+    )
+
     return {
         **entry,
         **quality,
         "moat_trend": moat_trend,
         "pass_count": pass_count,
         "fail_criteria": fails,
+        "peg_fallback": peg_fallback,
+        **funnel,   # funnel_rank + 3 sub-scores + veto/cap/partial flags
         "quality_source": source,
         "quality_from_cache": quality_from_cache,
         "quality_cache_stamp": quality_cache_stamp,
@@ -1703,7 +1917,10 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int) -> dict
     tz_taipei = timezone(timedelta(hours=8))
     now = datetime.now(tz_taipei)
     doc = {
-        "schema_version": "1.2",
+        # v1.3: + FunnelRank (漏斗綜合排序分) per stock — funnel_rank + 3 sub-scores
+        # (quality_gate / moat_score_adj / revision_score) + veto/cap/partial flags
+        # + peg_fallback. Default sort is now funnel_rank desc. See dd_screener_schema.md.
+        "schema_version": "1.3",
         "run_timestamp": now.isoformat(timespec="seconds"),
         "as_of": now.strftime("%Y-%m-%d"),
         "universe_size": len(enriched),
@@ -1711,6 +1928,17 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int) -> dict
         "criteria": CRITERIA,
         "presets": PRESETS,
         "default_filter": DEFAULT_FILTER,
+        # v1.3: FunnelRank weights/mapping surfaced for the FE methodology panel
+        # and audit (per-row sub-scores are computed from these constants).
+        "funnel_config": {
+            "weights": FUNNEL_WEIGHTS,
+            "quality_map": FUNNEL_QUALITY_MAP,
+            "forgivable_fails": sorted(FUNNEL_FORGIVABLE_FAILS),
+            "moat_trend_mult": FUNNEL_MOAT_TREND_MULT,
+            "revision_fy_weights": FUNNEL_REVISION_FY_WEIGHTS,
+            "revision_threshold_pct": FUNNEL_REVISION_THRESHOLD,
+            "moat_down_cap": FUNNEL_MOAT_DOWN_CAP,
+        },
         "summary": summary,
         "stocks": enriched,
     }

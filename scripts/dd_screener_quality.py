@@ -200,20 +200,37 @@ def _yf_ticker_for(dd_ticker: str) -> str:
 
 
 def _yf_peg(t) -> Optional[float]:
-    """Forward PEG from yfinance .info (with TTM fallback).
+    """Backward-compatible wrapper — returns the PEG value only.
+
+    See _yf_peg_meta() for the value + CAGR-fallback flag.
+    """
+    val, _ = _yf_peg_meta(t)
+    return val
+
+
+def _yf_peg_meta(t) -> tuple[Optional[float], bool]:
+    """Forward PEG from yfinance .info, plus a `used_cagr_fallback` flag.
+
+    Returns (peg, used_cagr_fallback).
+
+    Primary path: yfinance pegRatio / trailingPegRatio → used_cagr_fallback=False.
 
     Fallback path: when yfinance doesn't populate pegRatio / trailingPegRatio
     (common after their 2024-2025 schema churn), compute manually as
-    forwardPE / eps2y_growth_pct.  Guards:
+    forwardPE / eps2y_growth_pct and set used_cagr_fallback=True.  Guards:
       - Ignore when EPS 2Y CAGR > 300% (distorted recovery base, e.g. SNDK
         emerging from a near-zero-earnings trough — PEG is meaningless).
       - Ignore when computed PEG > 10 or PEG < 0.
+
+    The fallback PEG's denominator is yfinance's own YearAgo→FY+1 2Y CAGR, a
+    different basis from the mainstream Koyfin pure-forward consensus — callers
+    surface a "PEG 分母與主流不可比" caveat for these tickers.
     """
     try:
         info = t.info or {}
         peg = info.get("pegRatio") or info.get("trailingPegRatio")
         if peg is not None and float(peg) > 0:
-            return float(peg)
+            return float(peg), False
     except Exception:
         pass
     # Manual fallback: forwardPE / eps_growth_pct
@@ -221,26 +238,26 @@ def _yf_peg(t) -> Optional[float]:
         info = t.info or {}
         fpe = info.get("forwardPE")
         if fpe is None or float(fpe) <= 0:
-            return None
+            return None, False
         cagr = _forward_2y_cagr(
             t.earnings_estimate, "yearAgoEps", info.get("trailingEps")
         )
         if cagr is None or cagr <= 0:
-            return None
+            return None, False
         # Guard: skip distorted recovery bases (CAGR > 300% means base ≈ 0)
         if cagr > 3.0:
-            return None
+            return None, False
         growth_pct = cagr * 100.0
         if growth_pct <= 0:
-            return None
+            return None, False
         computed = float(fpe) / growth_pct
         # Ignore absurd values — near-zero growth makes PEG meaningless
         if computed <= 0 or computed > 10:
-            return None
-        return round(computed, 2)
+            return None, False
+        return round(computed, 2), True
     except Exception:
         pass
-    return None
+    return None, False
 
 
 def _yf_de(t) -> Optional[float]:
@@ -304,9 +321,16 @@ def _yf_de(t) -> Optional[float]:
     return None
 
 
-def compute_yfinance_quality(yf_ticker: str) -> dict:
-    """Fetch all 5 quality fields from yfinance. Each field None on failure."""
+def compute_yfinance_quality(yf_ticker: str, *, return_meta: bool = False):
+    """Fetch all 5 quality fields from yfinance. Each field None on failure.
+
+    When ``return_meta`` is True, returns ``(out, meta)`` where ``meta`` carries
+    ``peg_fallback`` (True iff the PEG value came from the manual forwardPE/CAGR
+    fallback path — see _yf_peg_meta). Default False keeps the legacy single-dict
+    return shape used by build_fundamentals_cache.py.
+    """
     out = dict(_EMPTY_QUALITY)
+    peg_fallback = False
     try:
         t = yf.Ticker(yf_ticker)
         try:
@@ -338,7 +362,10 @@ def compute_yfinance_quality(yf_ticker: str) -> dict:
             pass
 
         # PEG
-        out["peg"] = _dec(_yf_peg(t), 2)
+        peg_val, peg_fb = _yf_peg_meta(t)
+        out["peg"] = _dec(peg_val, 2)
+        # Only flag fallback when a value actually survived rounding/guards.
+        peg_fallback = bool(peg_fb and out["peg"] is not None)
 
         # D/E
         out["de"] = _dec(_yf_de(t), 3)
@@ -347,6 +374,8 @@ def compute_yfinance_quality(yf_ticker: str) -> dict:
         # Total failure (e.g. invalid ticker) → all-None
         pass
 
+    if return_meta:
+        return out, {"peg_fallback": peg_fallback}
     return out
 
 
@@ -356,12 +385,16 @@ def compute_yfinance_quality(yf_ticker: str) -> dict:
 def get_quality_for_ticker(
     dd_ticker: str,
     qgm_index: dict[str, tuple[str, dict]],
-) -> tuple[dict, str]:
+) -> tuple[dict, str, dict]:
     """Resolve quality fields for one DD ticker.
 
     Returns:
-        (quality_dict, source_tag)
+        (quality_dict, source_tag, meta)
         source_tag ∈ {"qgm-us", "qgm-tw", "qgm-us+yf-de", "yfinance", "yfinance-eu"}
+        meta = {"peg_fallback": bool} — True only when the PEG value came from
+               the yfinance manual forwardPE/CAGR fallback (denominator not
+               comparable to mainstream Koyfin forward consensus). QGM-sourced
+               PEG always reports False.
 
     QGM gap-fill for D/E: QGM sometimes stores debt_to_equity.value = None
     (e.g. ANET — a zero-debt company where QGM uses nd_ebitda as its gate
@@ -386,13 +419,15 @@ def get_quality_for_ticker(
                     tag = f"{tag}+yf-de"
             except Exception:
                 pass
-        return quality, tag
+        # QGM PEG is sourced from QGM's hard_filter_details, never the yfinance
+        # CAGR fallback — so peg_fallback is always False on the QGM path.
+        return quality, tag, {"peg_fallback": False}
 
     # yfinance fallback
     yf_t = _yf_ticker_for(dd_ticker)
-    quality = compute_yfinance_quality(yf_t)
+    quality, meta = compute_yfinance_quality(yf_t, return_meta=True)
     src = "yfinance-eu" if dd_ticker in EU_SUFFIX_MAP else "yfinance"
-    return quality, src
+    return quality, src, meta
 
 
 # ===== CLI self-test =========================================================
@@ -432,8 +467,9 @@ def main() -> None:
     ]
 
     for t, note in samples:
-        q, src = get_quality_for_ticker(t, idx)
-        print(f"  {t:20s}  [{src:11s}]  {q}   # {note}")
+        q, src, meta = get_quality_for_ticker(t, idx)
+        fb = " peg_fallback" if meta.get("peg_fallback") else ""
+        print(f"  {t:20s}  [{src:11s}]  {q}{fb}   # {note}")
 
 
 if __name__ == "__main__":

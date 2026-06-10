@@ -18,6 +18,18 @@ stock — `pct_5y`, `growth_durability`, `quality_score`, `ai_risk`,
 (`docs/dd-screener/quality-entry.html`). All nullable; v12.3+ DDs carry the
 two moat sub-scores, older DDs leave them `null`.
 
+v1.3 (additive, backward-compatible): **FunnelRank (漏斗綜合排序分)**. Adds a
+0–1 server-computed sort key per stock — `funnel_rank` = `0.40·quality_gate +
+0.30·moat_score_adj + 0.30·revision_score` (基本面三層；時機不進分). New per-stock
+fields: `funnel_rank`, `quality_gate`, `moat_score_adj`, `revision_score`,
+`veto_all_downgrade`, `funnel_cap_moat_down`, `quality_gate_partial`,
+`moat_no_data`, `revision_no_baseline`, `peg_fallback`. New top-level
+`funnel_config` block (weights/mapping for the FE methodology panel + audit).
+**`stocks[]` default sort is now `funnel_rank` DESC** (was `pass_count` DESC).
+Two hard vetoes: FY1/FY2/FY3 all-downgrade → `funnel_rank=0` (+`veto_all_downgrade`);
+moat trend ↓ & pass_count ≤ 4 → cap 0.50. FE adds a `回調帶` (pullback) timing
+preset alongside `起漲點`. All fields additive — pre-v1.3 consumers ignore them.
+
 ## Top-level shape
 
 ```json
@@ -184,13 +196,35 @@ non-US (TW/JP/EU) or screener `latest.json` missing. Same source consumed by
 | `vs_200ma_pct` | number | % distance from 200-day MA. Long-term trend gauge. |
 | `rs_score` | number 0-100 | Percentile RS rating vs SPY (multi-timeframe weighted). 起漲點 threshold: ≥ 80. |
 
+### FunnelRank (v1.3 — 漏斗綜合排序分)
+
+Server-computed 0–1 sort key composed from three fundamental layers (timing is
+**not** included — it stays a filter). Constants live in `build_dd_screener.py`
+header (`FUNNEL_*`) and are mirrored into the top-level `funnel_config` block.
+
+`funnel_rank = 0.40·quality_gate + 0.30·moat_score_adj + 0.30·revision_score`
+
+| Field | Type | Notes |
+|---|---|---|
+| `funnel_rank` | number 0-1 | Primary default sort key (DESC). 0 for all-downgrade veto rows. |
+| `quality_gate` | number 0-1 | 5/5→1.00; 4/5 forgivable (only D/E or PEG fail)→0.85; 4/5 core fail→0.50; 3/5→0.30; ≤2/5→0.10. Partial (null criterion) → ratio-scaled through same anchors. |
+| `moat_score_adj` | number 0-1 | `moat_score/10` × trend mult (↑1.10 / →1.00 / ↓0.80), cap 1.0. 0.50 if no moat data. |
+| `revision_score` | number 0-1 | FY1/FY2/FY3 signal (±0.5% → ±1, else 0) weighted 0.2/0.3/0.5; `(raw+1)/2`; +0.05 if FY3 upgrade magnitude > FY1's. 0.50 if no baseline. |
+| `veto_all_downgrade` | bool | True → `funnel_rank` forced to 0 (FY1/FY2/FY3 all ≤ -0.5%). FE: ⛔ + dim row + sinks. |
+| `funnel_cap_moat_down` | bool | True → `funnel_rank` capped at 0.50 (moat ↓ & pass_count ≤ 4). |
+| `quality_gate_partial` | bool | True → at least one of the 5 criteria was null (gate computed on present ratio). |
+| `moat_no_data` | bool | True → moat_score absent, `moat_score_adj` defaulted to 0.50. |
+| `revision_no_baseline` | bool | True → no prior snapshot for any FY, `revision_score` defaulted to 0.50. |
+| `peg_fallback` | bool | True → frozen `peg` came from yfinance manual forwardPE/CAGR fallback (denominator not comparable to mainstream forward consensus). Does **not** alter `quality_gate`. |
+
 ### Output sort order
 
-`stocks[]` sorted by:
-1. `pass_count` DESC (5 → 4 → 3 → ...)
-2. `moat_score` DESC
-3. `ev5y_pct` DESC (nulls last) — 5Y IRR is the decision-relevant ranking metric
-4. `ticker` ASC
+`stocks[]` sorted by (v1.3):
+1. `funnel_rank` DESC (漏斗綜合分; veto rows = 0 sink to bottom)
+2. `pass_count` DESC (tie-break)
+3. `moat_score` DESC
+4. `ev5y_pct` DESC (nulls last)
+5. `ticker` ASC
 
 ## Front-end render rules
 
@@ -215,6 +249,7 @@ non-US (TW/JP/EU) or screener `latest.json` missing. Same source consumed by
   - Direction: `[↑+→]` (default) / `[↑ only]` / `[Any]`
   - Preset: `[MLB]` (default) / `[Custom]`
   - 時機 (v1.1): `[Any]` (default, no timing filter) / `[起漲點]` (requires `dist_52w_high_pct ∈ [-7, 0]` ∩ `ma50_pct ∈ [0, +5]` ∩ `rs_score ≥ 80`; rows with null `timing` block are filtered out)
+  - 時機 (v1.3): `[回調帶]` (pullback — requires `dist_52w_high_pct ∈ [-15, -7]` ∩ MA badge 🟢 [`above_w52 && above_w250 && slope_w250_pct>0`, or `<5y` listing with `above_w52`] ∩ `ma50_pct ∈ [-3, +5]`; rows with null `timing` filtered out). 日線版 `PULLBACK_WATCH` (週線版見 entry-state.html)
   - Custom mode reveals 5 sliders + S-tier toggle, recomputes `pass_count` client-side using either `presets.MLB` thresholds or user-mutated Custom values
 
 ## File location

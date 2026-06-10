@@ -249,6 +249,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
       <span class="filter-label">時機</span>
       <span class="chip active" data-filter="timing" data-value="any">[Any]</span>
       <span class="chip" data-filter="timing" data-value="qichi" title="起漲點：距ATH ∈ [-7%, 0%] ∩ ma50 ∈ [0%, +5%] ∩ RS ≥ 80">[起漲點]</span>
+      <span class="chip" data-filter="timing" data-value="pullback" title="回調帶：距ATH ∈ [-15%, -7%] ∩ MA 燈號 🟢 ∩ ma50 ∈ [-3%, +5%]（創過高、正回測、長趨勢未壞）">[回調帶]</span>
     </div>
     <div class="filter-group" style="margin-left:auto">
       <span class="filter-label">查 ticker</span>
@@ -307,6 +308,11 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
     🎯 <b>起漲點 模式</b>：距ATH ∈ [-7%, 0%] ∩ 距50DMA ∈ [0%, +5%] ∩ RS ≥ 80。資料源 <code>/screener/latest.json</code>（每日 06:00 TPE 更新，與 Flow ATH Hunter 同源）。非美股（TW/JP/EU）無 timing 資料自動排除。
   </div>
 
+  <!-- 回調帶 banner — shows when 回調帶 timing chip is active -->
+  <div class="qichi-banner hidden" id="pullback-banner" style="background:linear-gradient(135deg,#fef9c3 0%,#fde68a 100%);border-color:#d97706;color:#854d0e">
+    🟡 <b>回調帶 模式</b>：距ATH ∈ [-15%, -7%] ∩ MA 燈號 🟢 ∩ 距50DMA ∈ [-3%, +5%]。語意：創過新高、正在回測、長期趨勢未壞 —— 與 Entry State Machine 的 <code>PULLBACK_WATCH</code> 同構的<b>日線版</b>（週線版見 <a href="./entry-state.html" style="color:#854d0e;text-decoration:underline">Entry State Machine</a>）。非美股無 timing 資料自動排除。
+  </div>
+
   <!-- v1.8: EPS 估算 source banner — populated by JS from eps_estimates_source -->
   <div id="eps-source-banner" style="display:none;margin:0 0 12px 0;padding:10px 14px;border-radius:8px;font-size:11.5px;line-height:1.6"></div>
 
@@ -354,11 +360,29 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
       <br>baseline 來源優先順序：(1) 同月內較早的 <code>{YYYY-MM}-DD.json</code>（intra-month 5/20→5/25 這種短期 refresh），(2) 1-2 個月前的月度 snapshot。每月 2 號 09:00 Taipei 自動 snapshot（<code>.github/workflows/monthly-eps-snapshot.yml</code> → <code>scripts/snapshot_eps_estimates.py</code>），存於 <code>docs/dd-screener/eps-estimates-snapshots/YYYY-MM.json</code>。
     </div>
 
+    <div style="background:#eef6ff;border:1px solid #a9cdf5;border-radius:8px;padding:14px 18px;margin-bottom:18px;font-size:11px;line-height:1.7;color:#1e3a5f">
+      <strong style="color:#1e3a5f;display:block;margin-bottom:6px;font-size:12px;letter-spacing:.02em">FunnelRank — 漏斗綜合排序分（v1.3 新增，預設排序鍵）</strong>
+      把「QGM 5/5 → 護城河 → 修正動能 → 時機」四層人工漏斗的<strong>前三層（基本面）</strong>固化成一個 0–1 排序鍵。時機（第四層）<strong>不進排序分</strong>，維持 filter —— 與 Entry State Machine 的「基本面排序、時機另看」哲學一致。
+      <br><code style="display:inline-block;margin:4px 0;padding:3px 6px">FunnelRank = 0.40·QualityGate + 0.30·MoatScore + 0.30·RevisionScore</code>
+      <br>• <strong>QualityGate（0–1）</strong>：帶「可原諒條件」的品質閘 —— <code>5/5</code> → 1.00；<code>4/5</code> 唯一 fail 在 <strong>D/E 或 PEG</strong>（資本結構 / 估值，非品質本體）→ 0.85；<code>4/5</code> fail 在 <strong>FCF / ROIC / EPS CAGR</strong>（品質本體缺陷）→ 0.50；<code>3/5</code> → 0.30；<code>≤2/5</code> → 0.10。任一條件無資料（灰色）→ 該條退出分母、按比例換算後套同一映射，並標 <code>quality_gate_partial</code>。
+      <br>• <strong>MoatScore（0–1）</strong>：<code>moat_score/10</code> × 趨勢乘數（<code>↑ ×1.10 / → ×1.00 / ↓ ×0.80</code>），cap 1.0。無 moat 資料 → 0.50。
+      <br>• <strong>RevisionScore（0–1）</strong>：FY1/FY2/FY3 各自上修（diff ≥ +0.5%）= +1 / 持平 = 0 / 下修（≤ −0.5%）= −1；<code>raw = 0.2·FY1 + 0.3·FY2 + 0.5·FY3</code>（<strong>FY3 權重最大 = 成長曲線後段</strong>），<code>RevisionScore = (raw+1)/2</code>。FY3 上修幅度 &gt; FY1 上修幅度（後段變陡）再 +0.05。「新」chip / 無 baseline → 0.50 中性，標 <code>revision_no_baseline</code>。
+      <br>• <strong>兩條 hard veto（不進公式，直接處置）</strong>：① FY1/FY2/FY3 <strong>三欄全部下修</strong> → FunnelRank 強制歸 0、該列沉底 + <span style="color:#991b1b">⛔</span>（下修是領先指標、品質分是落後指標，打架時信前者）；② 護城河趨勢 <code>↓</code> 且 <code>pass_count ≤ 4</code> → FunnelRank cap 0.50。
+      <br>權重與映射值寫在 <code>scripts/build_dd_screener.py</code> 檔頭常數（<code>FUNNEL_*</code>），server 端 build 時算好寫進 <code>latest.json</code>（<code>funnel_rank</code> + 三個子分 + 各 flag）。表頭 Funnel 欄 hover 看子分拆解。
+    </div>
+
     <ul>
 
       <li><strong>Ticker</strong>：股票代碼（正規格式）。
         <br><em>來源：</em><code>dd-meta JSON</code> → <code>scripts/dd_screener_dd_loader.py</code>
         <br><em>格式：</em>美股 <code>NVDA</code> / 台股 <code>2330.TW</code> / 日股 <code>6857.T</code> / 歐股 <code>RMS</code>（帶交易所後綴的 EU 用內部 suffix map 轉換，DD 名稱保留無後綴形式）
+        <br><em>⛔ 標記：</em>FY1/FY2/FY3 三欄全下修的 veto 列，ticker 旁顯示 ⛔、整列降透明度並沉底（FunnelRank = 0）。
+      </li>
+
+      <li><strong>Funnel（漏斗綜合分）</strong>：基本面三層合成的 0–1 排序分，<strong>表格預設排序鍵</strong>（降序）。詳見上方「FunnelRank」callout。
+        <br><em>公式：</em><code>0.40·QualityGate + 0.30·MoatScore + 0.30·RevisionScore</code>（時機第四層不進分）。
+        <br><em>來源：</em>全部用既有欄位合成（pass_count / 5 條明細 + moat_score/trend + FY1/FY2/FY3 修正動能），<code>scripts/build_dd_screener.py</code> build 時算好寫進 <code>latest.json</code>。
+        <br><em>互動：</em>3 位小數；hover 看 QualityGate / Moat / Revision 三個子分拆解 + veto/cap 說明；點表頭可改回任一欄位排序（原排序選項全保留）。
       </li>
 
       <li><strong>Moat（護城河等級 + 分數 + 趨勢）</strong>：護城河評等，格式 <code>等級 分數 趨勢</code>，例如 <code>S 9.8 ↑</code>。
@@ -431,7 +455,13 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
 
       <li><strong>距 ATH（距 52 週高點）</strong>：當前股價離 52 週調整後收盤最高點的百分比距離。0% = 站在 52 週高；負值 = 低於高點。
         <br><em>來源：</em>美股 — <code>docs/screener/latest.json</code> <code>dist_52w_high_pct</code>（每日 06:00 TPE 更新，與 Flow ATH Hunter 同源）；非美股及不在 screener universe 的 DD ticker — <code>build_dd_screener.py</code> <code>compute_yfinance_timing_fallback()</code> 批量抓 300d 日線計算（<code>timing_source: "yfinance_fallback"</code>）；TW / JP / EU 若 fallback 也無法取得則顯示「—」
-        <br><em>顏色：</em>🟢 sweet <code>[-7%, 0%]</code> 起漲點甜區 / 🟡 warm <code>[-15%, -7%]</code> base 築底 / ⚪ cool <code>&lt; -15%</code> 深度回調 / 🟠 hot <code>&gt; +2%</code> extended 已突破延伸
+        <br><em>顏色：</em>🟢 sweet <code>[-7%, 0%]</code> 起漲點甜區 / 🟡 warm <code>[-15%, -7%]</code> base 築底（<strong>回調帶</strong> preset 的 distATH 區間）/ ⚪ cool <code>&lt; -15%</code> 深度回調 / 🟠 hot <code>&gt; +2%</code> extended 已突破延伸
+      </li>
+
+      <li><strong>時機 preset（Any / 起漲點 / 回調帶）</strong>：在基本面 FunnelRank 排序之上，疊加日線時機篩選（與排序分相互獨立）。
+        <br><em>起漲點：</em>距ATH ∈ <code>[-7%, 0%]</code> ∩ 距50DMA ∈ <code>[0%, +5%]</code> ∩ RS ≥ 80 —— 剛突破、未延伸。
+        <br><em>回調帶（v1.3 新增）：</em>距ATH ∈ <code>[-15%, -7%]</code> ∩ <strong>MA 燈號 🟢</strong>（W52↑ ∩ W250↑ ∩ slope&gt;0，或 &lt;5y 上市以 W52↑ 判斷）∩ 距50DMA ∈ <code>[-3%, +5%]</code> —— 創過新高、正在回測、長期趨勢未壞。語意與 Entry State Machine 的 <code>PULLBACK_WATCH</code> 同構（<strong>日線版</strong>；<strong>週線版見 <a href="./entry-state.html">Entry State Machine</a></strong>）。
+        <br><em>非美股：</em>TW/JP/EU 無 timing 資料者在起漲點 / 回調帶模式自動排除。
       </li>
 
       <li><strong>vs 50DMA（距 50 日均線）</strong>：當前股價相對 50 日 SMA 的百分比偏離。正值 = 股價在均線上方。
@@ -469,10 +499,12 @@ var state = {
   moat:    'S',      // S | A | B | C | All
   dir:     'updown', // updown | up | any
   preset:  'MLB',    // MLB | Custom
-  timing:  'any',    // any | qichi (起漲點)
+  timing:  'any',    // any | qichi (起漲點) | pullback (回調帶)
   customThresholds: { fcf: 10, roic: 15, eps2y: 15, peg: 2.0, de: 0.7 },
   customSOnly: true,
-  sortKey: null,     // null = default order (pass_count → moat → ev5y); else column key
+  // v1.3: default sort 改為 FunnelRank 降序（漏斗綜合分）。原欄位排序皆保留 —
+  // 點任一可排序表頭即切換。server 端 latest.json 也已 pre-sort by funnel_rank。
+  sortKey: 'funnel_rank',
   sortDir: 'desc',   // 'asc' | 'desc'
   searchQuery: ''    // ticker substring lookup; bypasses chip filters
 };
@@ -484,6 +516,15 @@ var QICHI_THRESHOLDS = {
   ma50_min: 0,            // ma50_pct ∈ [0, +5]
   ma50_max: 5,
   rs_min: 80              // rs_score ≥ 80
+};
+
+// 回調帶 thresholds (v1.3) — 日線版 PULLBACK_WATCH：創過高、正回測、長趨勢未壞。
+var PULLBACK_THRESHOLDS = {
+  dist_52w_high_min: -15,  // dist_52w_high_pct ∈ [-15, -7]（warm 築底帶）
+  dist_52w_high_max: -7,
+  ma50_min: -3,            // ma50_pct ∈ [-3, +5]（在 50DMA 附近震盪）
+  ma50_max: 5
+  // 加上 MA 燈號 = 🟢（長期週均線健康）— 見 maIsGreen()
 };
 
 // Raw data from latest.json
@@ -557,7 +598,6 @@ function qichiPass(stock) {
   // 起漲點 = 距ATH ∈ [-7, 0] ∩ 距50DMA ∈ [0, +5] ∩ RS ≥ 80.
   // Tickers with no timing block (non-US: TW/JP/EU) are filtered out — we
   // can't claim a 起漲點 without screener data.
-  if (state.timing !== 'qichi') return true;
   var t = stock.timing;
   if (!t) return false;
   var d = t.dist_52w_high_pct, m = t.ma50_pct, r = t.rs_score;
@@ -568,6 +608,26 @@ function qichiPass(stock) {
   if (m < QICHI_THRESHOLDS.ma50_min || m > QICHI_THRESHOLDS.ma50_max) return false;
   if (r < QICHI_THRESHOLDS.rs_min) return false;
   return true;
+}
+
+function pullbackPass(stock) {
+  // 回調帶 = 距ATH ∈ [-15, -7] ∩ MA 燈號 🟢 ∩ 距50DMA ∈ [-3, +5].
+  // 日線版 PULLBACK_WATCH。非美股無 timing 資料者排除（沿用起漲點既有行為）。
+  var t = stock.timing;
+  if (!t) return false;
+  var d = t.dist_52w_high_pct, m = t.ma50_pct;
+  if (d === null || d === undefined) return false;
+  if (m === null || m === undefined) return false;
+  if (d < PULLBACK_THRESHOLDS.dist_52w_high_min || d > PULLBACK_THRESHOLDS.dist_52w_high_max) return false;
+  if (m < PULLBACK_THRESHOLDS.ma50_min || m > PULLBACK_THRESHOLDS.ma50_max) return false;
+  if (!maIsGreen(stock.ma)) return false;
+  return true;
+}
+
+function timingPass(stock) {
+  if (state.timing === 'qichi')    return qichiPass(stock);
+  if (state.timing === 'pullback') return pullbackPass(stock);
+  return true; // any
 }
 
 function applyFilters(stocks) {
@@ -582,7 +642,7 @@ function applyFilters(stocks) {
       return false;
     }
     if (!dirFilter(s)) return false;
-    if (!qichiPass(s)) return false;
+    if (!timingPass(s)) return false;
     return true;
   });
 }
@@ -620,6 +680,16 @@ function maBadge(ma) {
     return '<span class="ma-badge" style="color:#ca8a04">&#x1F7E1; mixed</span>';
   }
   return '<span class="ma-badge" style="color:#dc2626">&#x1F534; weak</span>';
+}
+
+function maIsGreen(ma) {
+  // 🟢 燈號 = maBadge 會渲染綠色的兩種情形（與 maBadge 邏輯保持一致）：
+  //   (1) full history: above_w52 && above_w250 && slope_w250_pct > 0  → healthy
+  //   (2) younger listing (< 5y): above_w250===null but above_w52===true → "W52↑ · W250 N/A"
+  // 黃(mixed) / 紅(weak) / 灰(n/a) 都不算綠。用於回調帶 timing 篩選。
+  if (!ma) return false;
+  if (ma.above_w250 === null && ma.above_w52 === true) return true;
+  return !!(ma.above_w52 && ma.above_w250 && ma.slope_w250_pct > 0);
 }
 
 function cellStyle(flag) {
@@ -760,12 +830,18 @@ function _renderLivePEGCell(s, flag) {
     if (peg !== null && peg !== undefined) parts.push('DD frozen ' + peg.toFixed(2) + 'x');
     tip = ' title="' + parts.join('; ') + '"';
   }
+  // v1.3: peg_fallback marker — frozen PEG 來自 yfinance 手動 forwardPE/CAGR
+  // fallback，分母 (YearAgo→FY+1 CAGR) 與主流前瞻 consensus 不可比。pass/fail
+  // 照算（不改 QualityGate），僅標註 provenance。
+  var fbMark = s.peg_fallback
+    ? '<sup style="font-size:8px;color:#b45309" title="PEG 分母與主流不可比：來自 yfinance YearAgo→FY+1 CAGR fallback">‡</sup>'
+    : '';
   // Color flag re-evaluated against live value if available (live primary semantics)
   var pegForFlag = (live !== null && live !== undefined) ? live : peg;
   // BOOLEAN for cellStyle() (not 'pass'/'fail' string — a string is always
   // truthy → PEG > 2.0 wrongly rendered green). null → grey (no data).
   var liveFlag = pegForFlag == null ? null : (pegForFlag <= 2.0);
-  return '<td' + tip + ' style="' + cellStyle(liveFlag) + '">' + display + '</td>';
+  return '<td' + tip + ' style="' + cellStyle(liveFlag) + '">' + display + fbMark + '</td>';
 }
 
 // ── ATH spotlight (rendered once at load; independent of tier/filter state) ──
@@ -1075,6 +1151,34 @@ function _renderLiveIRRInner(s) {
   return '<span style="color:' + color + ';font-weight:600">' + sign + Math.abs(shown).toFixed(1) + '%/yr</span>' + heurMark;
 }
 
+// FunnelRank cell (v1.3) — 漏斗綜合分 3 位小數 + 子分拆解 tooltip。
+function _renderFunnelCell(s) {
+  var f = s.funnel_rank;
+  if (f === null || f === undefined) {
+    return '<td class="left" style="color:#94a3b8">—</td>';
+  }
+  var fmt3 = function(x){ return (x === null || x === undefined) ? '—' : x.toFixed(3); };
+  var w = (DATA && DATA.funnel_config && DATA.funnel_config.weights)
+        || { quality: 0.40, moat: 0.30, revision: 0.30 };
+  var parts = [
+    'FunnelRank ' + f.toFixed(3) + ' = ' + w.quality + '·QualityGate + '
+      + w.moat + '·Moat + ' + w.revision + '·Revision',
+    'QualityGate ' + fmt3(s.quality_gate) + (s.quality_gate_partial ? '（部分欄位無資料，按比例換算）' : ''),
+    'MoatScore ' + fmt3(s.moat_score_adj) + (s.moat_no_data ? '（無 moat 資料 → 0.50）' : ''),
+    'RevisionScore ' + fmt3(s.revision_score) + (s.revision_no_baseline ? '（新/無 baseline → 0.50 中性）' : '')
+  ];
+  if (s.veto_all_downgrade) parts.push('⛔ FY1/FY2/FY3 全下修 → 強制歸 0、沉底');
+  else if (s.funnel_cap_moat_down) parts.push('護城河 ↓ 且 pass ≤ 4 → cap 0.50');
+  var tip = ' title="' + parts.join('; ').replace(/"/g, '&quot;') + '"';
+  var color;
+  if (f >= 0.75)      color = '#166534';
+  else if (f >= 0.55) color = '#15803D';
+  else if (f >= 0.35) color = '#92400E';
+  else                color = '#991B1B';
+  return '<td class="left"' + tip + ' style="font-variant-numeric:tabular-nums;'
+       + 'font-weight:700;color:' + color + '">' + f.toFixed(3) + '</td>';
+}
+
 function buildTable(stocks) {
   if (!stocks.length) return '<p style="padding:20px;color:#94a3b8;font-size:12px">（無符合資料）</p>';
 
@@ -1109,6 +1213,7 @@ function buildTable(stocks) {
 
   var thead = '<table class="tbl"><thead><tr>' +
     _thSortable('Ticker', 'ticker', {left: true}) +
+    _thSortable('Funnel', 'funnel_rank', {left: true, title: '漏斗綜合分 = 0.40·QualityGate + 0.30·Moat + 0.30·Revision（基本面三層；時機不進分）。預設排序鍵。hover 看子分拆解。'}) +
     _thSortable('Moat', 'moat_score', {left: true, title: '依護城河 score 排序'}) +
     criteriaHeaders +
     _thSortable('通過', 'pass_count') +
@@ -1178,10 +1283,16 @@ function buildTable(stocks) {
     var moatHtml = moatGrade + ' ' + moatScore + ' ' + moatTrend;
 
     var tmg = s.timing || {};
-    return '<tr>' +
+    // ⛔ veto 列：整列降透明度 + ticker 旁 ⛔（FY1/FY2/FY3 全下修，已沉底）。
+    var rowStyle = s.veto_all_downgrade ? ' style="opacity:.45"' : '';
+    var vetoMark = s.veto_all_downgrade
+      ? ' <span style="color:#991b1b" title="FY1/FY2/FY3 全下修 → FunnelRank 歸 0、沉底">⛔</span>'
+      : '';
+    return '<tr' + rowStyle + '>' +
       '<td class="left">' +
-        '<span class="ticker-nm">' + s.ticker + '</span>' +
+        '<span class="ticker-nm">' + s.ticker + '</span>' + vetoMark +
       '</td>' +
+      _renderFunnelCell(s) +
       '<td class="left" style="font-size:11px">' + moatHtml + '</td>' +
       criteriaHtml +
       '<td>' + passLabel(pc) + '</td>' +
@@ -1410,13 +1521,12 @@ document.querySelectorAll('.chip[data-filter]').forEach(function(chip) {
       }
     }
 
-    // Show/hide 起漲點 banner
+    // Show/hide 起漲點 / 回調帶 banners (mutually exclusive timing modes)
     if (filterName === 'timing') {
-      var banner = document.getElementById('qichi-banner');
-      if (banner) {
-        if (val === 'qichi') banner.classList.remove('hidden');
-        else banner.classList.add('hidden');
-      }
+      var qBanner = document.getElementById('qichi-banner');
+      var pBanner = document.getElementById('pullback-banner');
+      if (qBanner) qBanner.classList.toggle('hidden', val !== 'qichi');
+      if (pBanner) pBanner.classList.toggle('hidden', val !== 'pullback');
     }
 
     if (DATA) renderAll();
