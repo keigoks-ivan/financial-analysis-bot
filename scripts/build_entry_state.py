@@ -53,7 +53,9 @@ STATE_DIR = OUTPUT_DIR / "entry-state-state"
 WATCH_COUNTERS_PATH = STATE_DIR / "watch_counters.json"
 
 TAIPEI_TZ = timezone(timedelta(hours=8))
-SCHEMA_VERSION = "1.0"
+# v1.1 (2026-06-10): within-state sort key changed from RS desc → FundScore desc
+# (0.571*Q + 0.429*G); each stock record gains a `fund_score` field (float|null).
+SCHEMA_VERSION = "1.1"
 
 # ── universe filter (hysteresis) ──────────────────────────────────────────────
 # v1.2 retune (2026-05-20): Q≥0.55/G≥0.50 produced 83-ticker universe (too
@@ -79,6 +81,15 @@ PULLBACK_DRIFT_HIST_MAX = -3.0     # drift_4w_min_in_8w < -3% (過去 8w 曾深�
 BREAKOUT_MA50 = 0.0
 BREAKOUT_RS = 80.0
 PULLBACK_MA50 = (-3.0, 3.0)
+
+# ── FundScore (within-state sort key, v1.1) ───────────────────────────────────
+# Re-weight the quality (0.40) + growth (0.30) pillars to a [0,1] fundamentals
+# score, dropping the entry pillar (entry timing is already what the state machine
+# itself captures). FundScore = (0.40*Q + 0.30*G) / 0.70 = 0.571*Q + 0.429*G.
+# v1.1 replaces the old "RS desc" within-state ordering with FundScore desc; RS
+# stays as a display-only column.
+FUNDSCORE_Q_WEIGHT = 0.40 / 0.70   # ≈ 0.5714
+FUNDSCORE_G_WEIGHT = 0.30 / 0.70   # ≈ 0.4286
 
 # ── WATCH counter (build-count units) ─────────────────────────────────────────
 GRACE_BUILDS = 7                  # ~1.4 weeks (5 builds/week Tue-Sat)
@@ -145,6 +156,12 @@ def _fmt_score(v: Optional[float]) -> str:
     if v is None:
         return "—"
     return f"{v:.2f}"
+
+
+def _fmt_fund_score(v: Optional[float]) -> str:
+    if v is None:
+        return "—"
+    return f"{v:.3f}"
 
 
 def _fmt_int(v: Optional[int]) -> str:
@@ -402,6 +419,19 @@ def applicable_school(state: str) -> str:
     return "—"
 
 
+def compute_fund_score(
+    quality: Optional[float],
+    growth: Optional[float],
+) -> Optional[float]:
+    """Blend the quality + growth sub-scores into a single [0,1] fundamentals
+    score (FundScore = 0.571*Q + 0.429*G). Returns None when either sub-score is
+    missing — the row then sinks to the bottom of its state bucket (see
+    _state_sort_key) and renders as '—' in the table."""
+    if quality is None or growth is None:
+        return None
+    return FUNDSCORE_Q_WEIGHT * quality + FUNDSCORE_G_WEIGHT * growth
+
+
 # ── is_new flag ───────────────────────────────────────────────────────────────
 def compute_is_new(
     today_state_key: str,
@@ -478,32 +508,34 @@ def update_watch_counter(
 
 # ── pipeline ──────────────────────────────────────────────────────────────────
 def _state_sort_key(row: dict) -> tuple:
-    """Sort priority — actionable signals at top, then resting states.
+    """Sort priority — state bucket first, then FundScore desc (v1.1).
 
-    Bucket order:
-      0 BREAKOUT + is_new=true
-      1 BREAKOUT + is_new=false (continuing)
-      2 PULLBACK_CONFIRMED
-      3 PULLBACK_WATCH
+    Bucket order (state-priority; CONFIRMED before WATCH, BREAKOUT new before
+    continuing):
+      0 PULLBACK_CONFIRMED
+      1 PULLBACK_WATCH
+      2 BREAKOUT + is_new=true
+      3 BREAKOUT + is_new=false (continuing)
       4 RIDING
       5 WEAK
-    Within bucket: RS desc, then dist_250w_high_pct desc (closer to ATH first),
-    then ticker asc (stable).
+    Within bucket: FundScore desc (None sinks to bottom via -inf), then ticker
+    asc (stable). v1.1: RS no longer participates in sorting — it is a
+    display-only column.
     """
     state = row["state"]
     sub = row.get("sub_state")
     is_new = row.get("is_new", False)
-    if state == STATE_BREAKOUT:
-        bucket = 0 if is_new else 1
-    elif state == STATE_PULLBACK:
-        bucket = 2 if sub == SUB_CONFIRMED else 3
+    if state == STATE_PULLBACK:
+        bucket = 0 if sub == SUB_CONFIRMED else 1
+    elif state == STATE_BREAKOUT:
+        bucket = 2 if is_new else 3
     elif state == STATE_RIDING:
         bucket = 4
     else:
         bucket = 5
-    rs = row.get("rs_score") or -1.0
-    d250 = row.get("dist_250w_high_pct") if row.get("dist_250w_high_pct") is not None else -100.0
-    return (bucket, -rs, -d250, row["ticker"])
+    fs = row.get("fund_score")
+    fs_key = fs if fs is not None else float("-inf")
+    return (bucket, -fs_key, row["ticker"])
 
 
 def build_pipeline() -> tuple[dict, dict]:
@@ -608,6 +640,12 @@ def build_pipeline() -> tuple[dict, dict]:
         # Build the per-ticker row
         days_no_new_low = (counter or {}).get("builds_no_new_low")
 
+        # FundScore (within-state sort key + display column). Q/G joined from
+        # quality-entry.json; None when either is missing → row sinks to bottom.
+        q_score = _safe_float(qe_row.get("quality"))
+        g_score = _safe_float(qe_row.get("growth"))
+        fund_score = compute_fund_score(q_score, g_score)
+
         row = {
             "ticker": ticker,
             "name": qe_row.get("name") or ticker,
@@ -617,8 +655,9 @@ def build_pipeline() -> tuple[dict, dict]:
             "sub_state": sub_state,
             "is_new": is_new,
             "applicable_school": applicable_school(state),
-            "quality": _safe_float(qe_row.get("quality")),
-            "growth": _safe_float(qe_row.get("growth")),
+            "quality": q_score,
+            "growth": g_score,
+            "fund_score": fund_score,
             # 5y cycle (primary distance)
             "dist_250w_high_pct": _safe_float(ma.get("dist_250w_high_pct")),
             "weeks_since_250w_high": _safe_int(ma.get("weeks_since_250w_high")),
@@ -815,6 +854,7 @@ def _row_html(row: dict) -> str:
   <td class="left school-cell">{row['applicable_school']}</td>
   <td>{_fmt_score(row.get('quality'))}</td>
   <td>{_fmt_score(row.get('growth'))}</td>
+  <td class="fund-score">{_fmt_fund_score(row.get('fund_score'))}</td>
   <td title="{high_tip}">{_fmt_pct(row.get('dist_250w_high_pct'))}{_is_full_5y_marker(row)}</td>
   <td>{_fmt_int(row.get('weeks_since_250w_high'))}</td>
   <td>{_fmt_pct(row.get('drift_4w_pct'))}</td>
@@ -845,7 +885,7 @@ def render_html(doc: dict, out_path: Path) -> None:
     universe_size = doc["universe_size"]
     new_signals = summary["BREAKOUT_new"] + summary["PULLBACK_WATCH"]
     rows_html = "\n".join(_row_html(r) for r in doc["stocks"]) if doc["stocks"] else \
-                '<tr><td colspan="14" class="empty-row">沒有 universe 標的可顯示</td></tr>'
+                '<tr><td colspan="15" class="empty-row">沒有 universe 標的可顯示</td></tr>'
     warning_banner = _universe_warning_banner_html(doc)
 
     html = f"""<!DOCTYPE html>
@@ -902,6 +942,7 @@ body{{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1
 .tier-card td a{{color:#2563eb;text-decoration:none;font-weight:600}}
 .tier-card td a:hover{{text-decoration:underline}}
 .school-cell{{font-size:11px;color:#475569;font-weight:500}}
+.fund-score{{font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-weight:700;color:#0f2a45}}
 .empty-row{{padding:14px;text-align:center;color:#94a3b8;font-size:12px;font-style:italic}}
 /* state row highlights for is_new actionable signals */
 tr.state-breakout_new{{background:linear-gradient(90deg,#dcfce7 0%,transparent 60%)}}
@@ -1031,6 +1072,7 @@ tr.state-pullback_new{{background:linear-gradient(90deg,#dbeafe 0%,transparent 6
     <div class="row"><b>第一層 MA 閘</b>:🟢 healthy = above_w52 ∩ above_w250 ∩ slope_w250 &gt; 0 · 🟡 mixed = 雙均線上但 slope 平/負 · 🔴 weak = 跌破任一均線(第一層否決)· 🟢 W250 N/A = &lt; 5y 上市但站上 W52(降級,關 BREAKOUT)</div>
     <div class="row"><b>BREAKOUT</b>(僅 🟢 healthy):<code>dist_250w_high_pct ∈ [-3%, 0%]</code> ∩ <code>weeks_since_250w_high ≤ {BREAKOUT_WSH_MAX}</code> ∩ <code>drift_4w_pct &gt; +{BREAKOUT_DRIFT_MIN:.0f}%</code> ∩ <code>ma50_pct ≥ {BREAKOUT_MA50:.0f}</code> ∩ <code>rs_score ≥ {BREAKOUT_RS:.0f}</code></div>
     <div class="row"><b>PULLBACK_WATCH</b>(🟢/🟡):<code>dist_250w_high_pct ∈ [-15%, -5%]</code> ∩ <code>weeks_since_250w_high ∈ [2, 26]</code> ∩ <code>drift_4w_min_in_8w &lt; {PULLBACK_DRIFT_HIST_MAX:.0f}%</code>(過去 8w 曾真跌過)∩ <code>ma50_pct ∈ [-3%, +3%]</code></div>
+    <div class="row"><b>排序鍵(v1.1)</b>:主鍵 = 狀態優先序(PULLBACK_CONFIRMED → PULLBACK_WATCH → BREAKOUT new → BREAKOUT 持續 → RIDING → WEAK);次鍵 = <code>FundScore = (0.40×Q + 0.30×G) / 0.70 = 0.571×Q + 0.429×G</code> 由高到低(缺 Q/G 視為 -∞ 沉底)。<b>RS 自 v1.1 起不再參與排序</b>,僅作顯示欄。</div>
     <div class="row"><b>WATCH → CONFIRMED 升級</b>:WATCH 中累積 <code>builds_no_new_low ≥ {WATCH_N_DAYS_THRESHOLD}</code> 顯示「✓ 可進場考慮」hint,但本頁 v1.0 <b>不自動升級</b>;由 Ivan 看圖判讀後手動進場。容忍式計數:離開 WATCH 區後 ≤ {GRACE_BUILDS} build 內回來 → 計數延續;超過 → 視為這一波結束、清除狀態。</div>
     <div class="row" style="color:#5a7a9a;margin-top:6px"><b>已知設計邊界</b>:MA 燈號只看 W250 斜率,不看 W52 斜率(避免 W52 抖動干擾大方向閘)— 趨勢早期警示由 🔴(跌破 W52)觸發。Backtest 結果(原 v1.1 5y × 23 ticker sample,Q≥0.55):PULLBACK 命中 ~6%(每檔每 ~17 週,合 ~3 次/年)/ BREAKOUT ~18%(production 加 RS≥80 gate 後實際降至 ~10%)。<b>v1.2 retune 後 universe 擴至 ~49 但同屬高品質區段,命中率應接近</b>;未在新 universe 上重 backtest,訊號量明顯異常時可再調 Q/G 門檻。</div>
   </div>
@@ -1049,7 +1091,7 @@ tr.state-pullback_new{{background:linear-gradient(90deg,#dbeafe 0%,transparent 6
 
   <div class="tier-card">
     <h2>狀態總表 <span class="badge">universe {universe_size}</span></h2>
-    <div class="desc">排序:今日新訊號(BREAKOUT_new / PULLBACK_WATCH)優先,其次同狀態內按 RS 由高到低。Ticker 後綴「*」代表上市 &lt; 5 年(以上市以來高點取代真 5y high)。「距 ATH」 hover 顯示真 5 年高點價位。<br><b>預設只顯示 BREAKOUT / PB Watch / PB Conf</b>(actionable);點上方 chip 切換 RIDING / WEAK / 只看 ★ 新訊號。</div>
+    <div class="desc">排序(v1.1):<b>狀態優先</b>(PB Conf → PB Watch → BREAKOUT new → BREAKOUT 持續 → RIDING → WEAK),同狀態內按 <b>FundScore 由高到低</b>(FundScore = 0.571×Q + 0.429×G;缺值沉底)。<b>RS 改為顯示欄,不參與排序</b>。Ticker 後綴「*」代表上市 &lt; 5 年(以上市以來高點取代真 5y high)。「距 ATH」 hover 顯示真 5 年高點價位。<br><b>預設只顯示 BREAKOUT / PB Watch / PB Conf</b>(actionable);點上方 chip 切換 RIDING / WEAK / 只看 ★ 新訊號。</div>
     <table>
     <thead>
     <tr>
@@ -1059,11 +1101,12 @@ tr.state-pullback_new{{background:linear-gradient(90deg,#dbeafe 0%,transparent 6
       <th class="left">進場派別</th>
       <th>Q</th>
       <th>G</th>
+      <th title="FundScore = 0.571×Q + 0.429×G(品質+成長重加權至 0-1)— 同狀態內排序主鍵">FundScore</th>
       <th>距 ATH (250w)</th>
       <th>ATH 週齡</th>
       <th>4w drift</th>
       <th>vs 50DMA</th>
-      <th>RS</th>
+      <th title="顯示用,不參與排序(v1.1 排序鍵已改為 state → FundScore)">RS</th>
       <th>WATCH 計數</th>
       <th>DD 新鮮度</th>
       <th class="left">Links</th>
