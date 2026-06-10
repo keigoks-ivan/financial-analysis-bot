@@ -1,7 +1,7 @@
 ---
 name: deep-conviction-analyst
-version: v1.3
-released: 2026-05-15
+version: v1.5
+released: 2026-06-10
 description: "對單一個股執行深度定見分析（Deep Conviction Analysis / DCA），位於 DD 之上的『投資決策層』 — 假設 stock-analyst 的個股 DD 與 industry-analyst 的產業 ID 已存在，本 skill 透過 Phase A 三軸獨立搜尋（護城河 / 產業趨勢 / 業務財務）+ Phase B 矛盾辨識 + Phase C 基金經理決策框架，產出可執行的單檔 HTML 投資決策報告。v1.3 變更：Phase A4 DD 擷取改 dd-meta JSON 為 primary source（structured；HTML fallback）+ 章節 references modernize（§5.B 假設、§1 結論 — 對齊 DD v9.2+ 編號）+ 砍 obsolete「MA60/MA200/MA104w R:R」+「三引擎目標價」(v10.0 已廢除)；§5 Single Thing 加 DCA vs DD §5.F cross-check rule（v12.3 新增）；Phase A1 護城河可選 adopt execution + pricing power 二維拆解（v12.3 DD 強制框架，DCA 推薦對齊但保留獨立性）。觸發：用戶說『幫我跑 {ticker} dca』、『{ticker} dca』、『{ticker} 定見』、『deep conviction {ticker}』、『conviction analysis {ticker}』、『最終判斷 {ticker}』、『該不該進場 {ticker}』、『買不買 {ticker}』。輸出 docs/dca/DCA_{TICKER}_{YYYYMMDD}.html。"
 ---
 
@@ -174,6 +174,7 @@ ls docs/dd/ | grep -E '^DD_({TICKER}|{ALT})_.*\.html$'
 | 最大政策/地緣風險 | （一句話：什麼法規/事件、影響路徑） |
 | 議價權位置 | 對上游 強/中/弱、對下游 強/中/弱 |
 | **runway_post_y5（必填）** | **🟢 寬 / 🟡 中 / 🔴 窄** — Y5 之後 5-10 年是否還有跑道。判準：S 曲線位置（早/中/晚期）+ TAM 滲透率（Y5 末預估）+ 是否有下一條 S 曲線銜接。範例：「🟢 寬：Y5 末 TAM 滲透率 ~22%，仍有 4-5x 空間；下一條 S 曲線（XX 應用）2027 開始啟動」、「🔴 窄：Y5 末 滲透率 >70%，量價齊飽和，無第二曲線」。**🔴 直接觸發 §7d 持有年限 ≤ 3Y 警示。** |
+| **利潤池位置（必填，v1.5 新增）** | 本標的所在價值鏈環節的利潤池占比方向：**↑ 流入 / → 持平 / ↓ 流出** + 1 個 sourced 證據。**A2 獨立搜尋取得，不引用 DD §11**（維持 Phase A 獨立性規則）；與 DD §11 利潤池地圖結論的分歧 → 進 Phase B 矛盾清單。↓ 流出 = 量增利不增警示，餵入 §7d 持有年限。 |
 
 **A2 獨立結論（一句話）：** ___（必含 runway_post_y5 結論）
 
@@ -276,7 +277,7 @@ python3 scripts/get_eps_for_ticker.py {TICKER}
 - **§8 衰退信號偵測表**（紅旗 / chip 陷阱信號）
 
 **DD 章節編號 reference**（v9.2+ 統一編號，DCA Phase A4 引用須對齊）：
-- §1 = 投資結論（含 trap 定性）
+- §1 = 投資結論（含 trap 定性 + v12.5「空頭最強一擊」一行）
 - §5 = 投資論點錨定（5.A 持有期 / 5.B 假設 / 5.C 風險 / 5.F single thing）
 - §8 = 長期成長性（含 8.G 衰退信號 / 8.H 客戶結構深度 v12.3）
 - §9 = 護城河分析（v12.3 強制二維拆解）
@@ -284,6 +285,7 @@ python3 scripts/get_eps_for_ticker.py {TICKER}
 - §11 = 產業格局
 - §12 = 治理 + 資本配置
 - §13 = 估值診斷（v12.3 後僅 13.1 / 13.2 / 13.4 + 結論段）
+- ⚠ **已廢編號（v12.5，DCA 勿引用）**：§3 三方辯論（併入 §1）、§13.3 Reverse DCF、§13.5 五角驗證/目標價表（5Y 目標價改居 §2 E）
 
 **ID 報告擷取項目（不變）：**
 - 產業評級
@@ -473,9 +475,17 @@ python3 scripts/get_eps_for_ticker.py {TICKER}
 - 股息 + 淨買回貢獻 = 平均股息率 + 平均淨買回率（扣 SBC 後）
 - 合計 ≈ 三項相加（≤ 1%p 誤差容忍，否則打回校驗）
 
+**內生天花板 sanity check（v1.5 新增，必填一行）**：
+
+> Base 情境 EPS CAGR 貢獻 __% vs DD §8.D 內生成長天花板 __%（+ 已歸因缺口）→ **在天花板內 ✅ / 超出 ⚠**。
+> 數據來源：dd-meta `endo_growth_ceiling`；DD 為 v12.3 及之前無此欄 → 標「DD 未提供天花板，本檢核 N/A」。
+> **超出 ⚠ → §4 Bear 機率強制 ≥ 30%**（共識 EPS 成長超過生意自身能長出來的上限 = 依賴 re-rate 或 margin 一次性，下行尾巴更肥）。
+
 **質感解讀（在表格下方寫一段 ≤ 80 字 narrative，必填）**：
 
 > 「Base 12% IRR 中，__%/yr 來自 EPS 複利，__%/yr 來自估值 re-rate，__%/yr 來自股息+回購。這檔的可抱性主要靠 ___（EPS / re-rate / shareholder return）— ___（質感判斷：自然複利好抱 / 需市場配合難抱 / 防禦型穩拿）。」
+
+**估值依賴型標記（v1.5 新增，硬規則）**：**re-rate 貢獻 ≥ Base 合計 IRR 的 40% → 強制在 §4 標記「估值依賴型」**（re-rate 是等市場配合，不是自然複利）。此標記餵入 §7 決策矩陣 7a soft veto。
 
 **Guardrail**：合計年化與 §4 表格上方「機率加權年化 IRR」的 Base 列偏差 > 2%p → 整個 §4 打回校驗。
 
@@ -569,23 +579,7 @@ DD v12.3 起 §5.F 加入了 single thing 概念（從 DCA borrowed back）。DC
 
 ---
 
-### §1｜Mental Models 壓力測試（放在決策前，必填）
-
-**測試一：投委會 1 頁紙 Memo**
-
-假設你是 PM，今天必須給投委會 1 頁紙的 memo，你會寫什麼？
-
-（在此輸出完整的 1 頁紙 memo，包含：thesis、key driver、R:R、主要風險、建議倉位）
-
-**測試二：30 秒電梯簡報**
-
-假設你只能跟朋友講 30 秒，你會怎麼解釋為什麼買這支？
-
-（在此輸出 30 秒版本，約 100 字以內）
-
-**壓力測試結果：**
-- 如果上面兩個都寫得出來且邏輯自洽 → 繼續進入 §7
-- 如果寫不出來或邏輯矛盾 → 回到 §2 重寫 thesis
+> **（v1.5 移除）** 原「§1 Mental Models 壓力測試」（投委會 1 頁紙 Memo + 30 秒電梯簡報）已全刪——memo = §2–§7 全文縮寫再寫一次、電梯簡報 = §2 one-sentence thesis 換字數重寫，零決策增量。「寫不出來就回去重寫 thesis」的檢核意圖由 §2 的 50 字 guardrail（Guardrail 2/3）承擔。§1 編號不再使用。
 
 ---
 
@@ -615,6 +609,8 @@ DD v12.3 起 §5.F 加入了 single thing 概念（從 DCA borrowed back）。DC
 | 5（Soft Veto） | 動能過熱（RSI 14d > 70 或 4 週漂移 > +10%） | ≥ 觀望 |
 | 6（Soft Veto） | DD 訊號燈 = C | ≥ 觀望 |
 | 7（Soft Veto） | runway_post_y5 = 🔴 | ≥ 觀望（§7d ≤ 3Y 警示） |
+| 7a（Soft Veto，v1.5） | §4 標記「估值依賴型」**且** §3 consensus 分歧三題未給出「市場錯在哪」的具體理由 | ≥ 觀望，且 §7d 持有年限上限「中期 2-5 年」 |
+| 7b（Soft Veto，v1.5） | dd-meta `capalloc_grade` = C（DD 未提供 → N/A 不觸發） | 裁決本身不降，但 §7d 持有年限上限「中期 2-5 年」 |
 | 8（Baseline） | 無 Hard Veto + DD ≥ B + 估值 = 🟠 | 觀望（等估值） |
 | 9（Baseline） | 無 Veto + DD ≥ B + 估值 ≤ 🟡 + MA ✅ | 進場 |
 | 10（Baseline） | 無 Veto + DD ≥ A + MA ✅ + 估值 🟢/🟡 | 進場 |
@@ -716,9 +712,9 @@ Soft Veto 命中 → 上限觀望（不得輸出進場）。
 
 ## 【最終自檢清單｜寫完必跑（防偷懶最後一道閘）】
 
-> **Deepening 點 G**：Guardrails 16-22 是「寫的時候不准違規」，這份自檢清單是「寫完後對照確認沒違規」。Skill 在輸出 HTML **之前**必須在對話中靜默列出此 17 條的 ✅/❌ 狀態，任一 ❌ 必須回頭補完才能呼叫 Write 工具。
+> **Deepening 點 G**：Guardrails 16-22 是「寫的時候不准違規」，這份自檢清單是「寫完後對照確認沒違規」。Skill 在輸出 HTML **之前**必須在對話中靜默列出此 19 條的 ✅/❌ 狀態，任一 ❌ 必須回頭補完才能呼叫 Write 工具。
 
-**17 條檢查項（HTML 輸出前必須逐條報告 ✅/❌ + 實際數據）**：
+**19 條檢查項（HTML 輸出前必須逐條報告 ✅/❌ + 實際數據）**：
 
 ```
 □ Phase A1 sourced data point 數 ≥ 5？實際數：__（必須含具體數字 + 來源 + 日期）
@@ -740,6 +736,8 @@ Soft Veto 命中 → 上限觀望（不得輸出進場）。
 □ 裁決 = 觀望 → §7a 初始倉位 = 0% 且 §7b 含具體觸發條件？
    裁決 = 迴避 → §7a-7d 全為 N/A 且「不持有理由」≥ 2 條具體論點？
 □ 裁決與決策矩陣優先序一致？（Pure MA ❌ 或動能過熱 → 不得進場；DD = X → 強制迴避）
+□ §4 IRR Base EPS 分量 ≤ DD §8.D 內生天花板？超出則 §4 Bear 機率 ≥ 30%？（DD 無 endo_growth_ceiling → N/A）
+□ §4「估值依賴型」標記與 §7（7a soft veto）一致？re-rate ≥ Base IRR 40% 有標記？
 ```
 
 **輸出格式範例**（Skill 必須在呼叫 Write 之前在對話中輸出）：
@@ -788,16 +786,15 @@ HTML 必須包含所有 Phase 和 § 的完整分析內容，不得摘要化。
 | 1 | §2 One-Sentence Thesis | 一句話 thesis 緊接 status bar |
 | 2 | §7 Decision（完整，含 7a opportunity cost） | 可執行計畫緊接 thesis |
 | 3 | §4 Asymmetry Analysis（含 Pattern match + IRR composition） | R:R 數字支撐決策 |
-| 4 | §1 Mental Models 壓力測試 | 1 頁紙 memo + 30 秒版本 |
-| 5 | Phase B 矛盾清單 + ⚖ 強制裁決 | 高亮顯示矛盾點與選邊結果 |
-| 6 | §3 Key Drivers + 🔄 consensus 分歧 | |
-| 7 | §5 The Single Thing | |
-| 8 | §6 What I Don't Know + Pre-mortem（含 6c Max DD） | |
-| 9 | §8 Review Triggers | |
-| 10 | Phase A1 護城河深度分析 | 折疊式，預設收起 |
-| 11 | Phase A2 產業趨勢深度分析 | 折疊式，預設收起 |
-| 12 | Phase A3 業務/財務/資本配置 | 折疊式，預設收起 |
-| 13 | Phase A4 既有報告數據摘要 | 折疊式，預設收起 |
+| 4 | Phase B 矛盾清單 + ⚖ 強制裁決 | 高亮顯示矛盾點與選邊結果（v1.5：原位置 4 §1 Mental Models 已刪） |
+| 5 | §3 Key Drivers + 🔄 consensus 分歧 | |
+| 6 | §5 The Single Thing | |
+| 7 | §6 What I Don't Know + Pre-mortem（含 6c Max DD） | |
+| 8 | §8 Review Triggers | |
+| 9 | Phase A1 護城河深度分析 | 折疊式，預設收起 |
+| 10 | Phase A2 產業趨勢深度分析 | 折疊式，預設收起 |
+| 11 | Phase A3 業務/財務/資本配置 | 折疊式，預設收起 |
+| 12 | Phase A4 既有報告數據摘要 | 折疊式，預設收起 |
 
 ### 視覺規格
 
