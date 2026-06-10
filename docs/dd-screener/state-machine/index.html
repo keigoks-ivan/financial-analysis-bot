@@ -89,7 +89,7 @@ tr.veto td{opacity:.5}
   <div class="hero-h1">五狀態機 — 每日執行儀表板</div>
   <div class="hero-sub">
     對 universe 每檔每日收盤後機械判定五狀態機的態（含優先序仲裁與狀態記憶），輸出當日<strong>指令性動作</strong>（不是建議，是 SOP 規定的動作）。
-    態①綠 多頭騎乘 · 態②黃 過熱帶 · 態③橙 觸及極限 · 態④紫 回檔 · 態⑤紅 出場。週線指標週間凍結（用上週五值）。
+    態①綠 健康多頭 · 態②黃 偏熱 · 態③橙 過熱 · 態④紫 回檔中 · 態⑤紅 轉折確認。週線指標週間凍結（用上週五值）。
   </div>
   <div class="hero-stats" id="hero-stats"></div>
 </div></div>
@@ -129,11 +129,11 @@ tr.veto td{opacity:.5}
 <script>
 // ── 對照 config.py 的色票與嚴重度（單一來源在 config；此處鏡像供前端渲染）──
 var STATE_COLORS={
-  1:{name:"① 多頭騎乘",bg:"#dcfce7",fg:"#166534"},
-  2:{name:"② 過熱帶",  bg:"#fef3c7",fg:"#854d0e"},
-  3:{name:"③ 觸及極限",bg:"#ffedd5",fg:"#9a3412"},
-  4:{name:"④ 回檔",    bg:"#f3e8ff",fg:"#6b21a8"},
-  5:{name:"⑤ 出場",    bg:"#fee2e2",fg:"#991b1b"}
+  1:{name:"① 健康多頭",bg:"#dcfce7",fg:"#166534"},
+  2:{name:"② 偏熱",    bg:"#fef3c7",fg:"#854d0e"},
+  3:{name:"③ 過熱",    bg:"#ffedd5",fg:"#9a3412"},
+  4:{name:"④ 回檔中",  bg:"#f3e8ff",fg:"#6b21a8"},
+  5:{name:"⑤ 轉折確認",bg:"#fee2e2",fg:"#991b1b"}
 };
 // action → {label, tier, sev}. tier 決定待辦色塊；sev 決定排序（與 config.ACTION_SEVERITY 對齊）。
 var ACTION_META={
@@ -141,7 +141,6 @@ var ACTION_META={
   WARN_PENDING_5:{l:"⑤待週五確認",tier:"warn",sev:90},
   TRIM_TO_CORE_50:{l:"減至核心50%",tier:"trim",sev:80},
   TRIM_1_3:{l:"減 1/3",tier:"trim",sev:75},
-  REENTRY_TRIGGER:{l:"回補板機",tier:"trigger",sev:60},
   ADD_TRIGGER:{l:"加碼板機",tier:"trigger",sev:55},
   ENTRY_A:{l:"突破進場 A",tier:"trigger",sev:50},
   ENTRY_B:{l:"回踩進場 B",tier:"trigger",sev:48},
@@ -155,13 +154,14 @@ var ACTION_META={
 var TIER_CLASS={exit:"t-exit",warn:"t-warn",trim:"t-trim",trigger:"t-trigger",neutral:""};
 var TIER_CHIP={exit:["#fee2e2","#991b1b"],warn:["#fef3c7","#854d0e"],trim:["#fff7ed","#9a3412"],trigger:["#dcfce7","#166534"],neutral:["#f1f5f9","#64748b"]};
 // 待辦只列「指令性動作 + 警示」
-var TODO_ACTIONS={EXIT_ALL:1,WARN_PENDING_5:1,TRIM_TO_CORE_50:1,TRIM_1_3:1,REENTRY_TRIGGER:1,ADD_TRIGGER:1,ENTRY_A:1,ENTRY_B:1};
+var TODO_ACTIONS={EXIT_ALL:1,WARN_PENDING_5:1,TRIM_TO_CORE_50:1,TRIM_1_3:1,ADD_TRIGGER:1,ENTRY_A:1,ENTRY_B:1};
 
 function effAction(r){ return r.entry_signal && ACTION_META[r.entry_signal] ? r.entry_signal : r.action; }
 function pct(v){ if(v===null||v===undefined) return '<span class="muted">—</span>';
   var c=v<0?'neg':(v>0?'pos':''); var s=v>0?'+':(v<0?'−':'');
   return '<span class="'+c+'">'+s+(Math.abs(v)*100).toFixed(1)+'%</span>'; }
 function num(v,d){ return (v===null||v===undefined)?'<span class="muted">—</span>':v.toFixed(d===undefined?2:d); }
+function capPct(v){ return (v===null||v===undefined)?'<span class="muted">—</span>':(v*100).toFixed(1)+'%'; }
 
 function stateBadge(s){ var c=STATE_COLORS[s]||{name:s,bg:"#eee",fg:"#333"};
   return '<span class="sbadge" style="background:'+c.bg+';color:'+c.fg+'">'+c.name+'</span>'; }
@@ -182,8 +182,10 @@ function earningsCountdown(nextE,runDate){
 function buildTable(rows,isWatch,runDate){
   var head='<thead><tr><th class="left">代號</th><th class="left">態</th><th class="left">動作</th>'
     +(isWatch?'<th class="left">進場訊號</th>':'')
-    +'<th>距52週線</th><th>距60MA</th><th>距ATH</th><th>BB(σ)</th><th>量比</th><th>財報</th><th class="left">旗標</th></tr></thead>';
-  if(!rows.length) return '<table>'+head+'<tbody><tr><td class="left muted" colspan="12">（無）</td></tr></tbody></table>';
+    +'<th>距52週線</th><th>距60MA</th><th>距ATH</th><th>BB(σ)</th><th>量比</th>'
+    +'<th title="總守則 v1.9 S-4：一切買進(首建/加碼/回補)後總部位 ≤ min(10%, 1.5%/停損距離)；停損距離以 52 週線計">公式上限</th>'
+    +'<th>財報</th><th class="left">旗標</th></tr></thead>';
+  if(!rows.length) return '<table>'+head+'<tbody><tr><td class="left muted" colspan="13">（無）</td></tr></tbody></table>';
   var body=rows.map(function(r){
     var m=r.metrics||{};
     var veto=(r.state===5)?' class="veto"':'';
@@ -195,6 +197,7 @@ function buildTable(rows,isWatch,runDate){
       +entryCell
       +'<td>'+pct(m.pct_vs_52w)+'</td><td>'+pct(m.pct_vs_60d)+'</td><td>'+pct(m.pct_vs_ath)+'</td>'
       +'<td>'+num(m.bb_position,2)+'</td><td>'+num(m.volume_ratio,2)+'</td>'
+      +'<td title="買進後總部位上限">'+capPct(m.risk_cap_pct)+'</td>'
       +'<td class="left">'+earningsCountdown(m.next_earnings,runDate)+'</td>'
       +'<td class="left">'+flagsHtml(r.flags)+'</td></tr>';
   }).join('');
@@ -245,11 +248,11 @@ function render(D){
   // method + footer
   var c=D.config||{};
   document.getElementById('method').innerHTML='<h3>方法論（門檻全進 config.py，鎖死）</h3>'
-    +'<div class="row"><b>態① 多頭騎乘</b>：收盤 &gt; MA52w 且 多頭排列（MA52w&gt;MA104w&gt;MA200w；短歷史降級 52&gt;104）。</div>'
-    +'<div class="row"><b>態② 過熱帶</b>：凍結週收盤 ∈ (中軌+2σ, 中軌+3σ]（週 BBand 20 週, ddof='+c.BB_DDOF+'）。</div>'
-    +'<div class="row"><b>態③ 觸及極限</b>：本週至今任一日高 ≥ 中軌+3σ → 一次性 <code>減 1/3</code>（回落 2σ 內結束，再觸=新事件）。</div>'
-    +'<div class="row"><b>態④ 回檔</b>：收盤 &lt; MA60d 但仍 &gt; MA52w → <code>減至核心 50%</code>；站回 60MA 且週線態① → 回補板機。</div>'
-    +'<div class="row"><b>態⑤ 出場</b>：週五收盤 &lt; MA52w 確認，或財報後首日 gap 開低且收破 MA52w（當日確認，不等週五）；出場後等收盤突破 ATH 且 quality_pass 才回態①。</div>'
+    +'<div class="row"><b>態① 健康多頭</b>：收盤 &gt; MA52w 且 多頭排列（MA52w&gt;MA104w&gt;MA200w；短歷史降級 52&gt;104）。</div>'
+    +'<div class="row"><b>態② 偏熱</b>：凍結週收盤 ∈ (中軌+2σ, 中軌+3σ]（週 BBand 20 週, ddof='+c.BB_DDOF+'）。</div>'
+    +'<div class="row"><b>態③ 過熱</b>：本週至今任一日高 ≥ 中軌+3σ → 一次性 <code>減 1/3</code>（回落 2σ 內結束，再觸=新事件）。</div>'
+    +'<div class="row"><b>態④ 回檔中</b>：收盤 &lt; MA60d 但仍 &gt; MA52w，<b>或週中收盤跌破 MA52w（尚未週收確認）</b> → <code>減至核心 50%</code> + 黃牌；站回 60MA、排列回多頭即判回態①，由 <b>加碼板機</b>回補。</div>'
+    +'<div class="row"><b>態⑤ 轉折確認</b>：<b>新完成週</b>週收盤 &lt; MA52w 確認（事件式，假日週/漏跑補跑免疫），或財報後首日 gap 開低且收破 MA52w（當日確認）；出場後等收盤突破 ATH 且 quality_pass 才回態①。</div>'
     +'<div class="row"><b>優先序</b>：⑤ &gt; ④ &gt; ③ &gt; ② &gt; ①（每日唯一狀態）。<b>週間凍結</b>：週線指標用上週五值，週內不滾動。</div>'
     +'<div class="row"><b>進場（觀察清單）</b>：A 突破型（收盤創新高 且 前一日距ATH ≥ −'+(c.ATH_PROXIMITY*100)+'%）/ B 回踩型（回踩前高±'+(c.RETEST_BAND*100)+'% 站回 或 回踩 60MA 站回）；財報靜默期（距財報 ≤ '+c.EARNINGS_BLACKOUT_DAYS+' 交易日）壓制全部訊號。</div>';
 
