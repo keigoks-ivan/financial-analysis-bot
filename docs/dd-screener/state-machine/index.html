@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>五狀態機 — 每日執行儀表板 · InvestMQuest</title>
+<meta name="description" content="universe 內每檔股票的五狀態機每日判定 + 指令性動作。機械判定輸出，動作即指令。">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;background:#f0f5fb;color:#1e3a5f;line-height:1.5}
+a{color:#2563eb;text-decoration:none}
+code{background:#eef4fb;padding:1px 5px;border-radius:3px;font-size:.92em;color:#1e3a5f}
+
+/* nav (沿用 dd-screener) */
+.imq-nav{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:10px 24px}
+.imq-nav-inner{max-width:min(1480px,97vw);margin:0 auto;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.imq-logo{color:#fff;font-weight:700;font-size:15px;letter-spacing:.01em}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px}
+.imq-menu a{color:#cbd5e1}
+.imq-menu a.active{color:#fff;font-weight:700}
+
+/* hero */
+.hero{background:#fff;border-bottom:1px solid #dce8f5;padding:22px 32px 16px}
+.hero-inner{max-width:min(1480px,97vw);margin:0 auto}
+.hero-h1{font-size:21px;font-weight:700;color:#0f2a45;margin-bottom:6px}
+.hero-sub{font-size:12px;color:#5a7a9a;line-height:1.65;max-width:1000px}
+.hero-stats{display:flex;gap:12px;margin-top:13px;flex-wrap:wrap}
+.hero-stat{background:#f0f5fb;border:1px solid #dce8f5;border-radius:6px;padding:7px 11px;font-size:11px;color:#5a7a9a}
+.hero-stat strong{color:#1e3a5f;font-size:14px;display:block;margin-bottom:1px}
+
+.wrap{max-width:min(1480px,97vw);margin:0 auto;padding:22px 16px 60px}
+.card{background:#fff;border:1px solid #dce8f5;border-radius:10px;padding:16px 18px;margin-bottom:20px}
+.card h2{font-size:15px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.card h2 .count{font-size:11px;font-weight:600;color:#94a3b8}
+
+/* 今日待辦 */
+.todo{display:flex;flex-direction:column;gap:7px}
+.todo-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;font-size:13px;border:1px solid transparent}
+.todo-row .sym{font-weight:800;min-width:74px}
+.todo-row .act{font-weight:700;font-size:11px;padding:2px 9px;border-radius:5px}
+.todo-row .meta{margin-left:auto;font-size:11px;color:#64748b;font-variant-numeric:tabular-nums;text-align:right}
+.t-exit{background:#fef2f2;border-color:#fecaca}
+.t-warn{background:#fffbeb;border-color:#fde68a}
+.t-trim{background:#fff7ed;border-color:#fed7aa}
+.t-trigger{background:#f0fdf4;border-color:#bbf7d0}
+.t-empty{color:#94a3b8;font-size:12.5px;padding:8px 4px}
+
+/* 變更 log */
+.chg{display:flex;flex-wrap:wrap;gap:8px}
+.chg-pill{font-size:11px;padding:3px 9px;border-radius:999px;background:#f1f5f9;border:1px solid #e2e8f0;color:#475569;font-variant-numeric:tabular-nums}
+
+/* tables */
+.tbl-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:760px}
+th{background:#f0f6ff;color:#5a7a9a;font-weight:700;padding:8px 10px;text-align:right;border-bottom:2px solid #dce8f5;font-size:10px;letter-spacing:.03em;white-space:nowrap}
+th.left{text-align:left}
+td{padding:8px 10px;text-align:right;border-bottom:1px solid #f0f5fb;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.left{text-align:left}
+tr.veto td{opacity:.5}
+.sbadge{display:inline-block;padding:2px 8px;border-radius:5px;font-size:11px;font-weight:800}
+.abadge{display:inline-block;padding:1px 7px;border-radius:5px;font-size:10.5px;font-weight:700}
+.flag{display:inline-block;font-size:9.5px;padding:1px 5px;border-radius:4px;background:#f1f5f9;color:#64748b;margin-left:3px}
+.flag.warn{background:#fef3c7;color:#854d0e}
+.neg{color:#dc2626}.pos{color:#16a34a}.muted{color:#94a3b8}
+
+.method{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px 18px;font-size:11px;line-height:1.7;color:#475569;margin-bottom:20px}
+.method h3{font-size:12px;color:#1e3a5f;margin-bottom:8px}
+.method .row{margin-bottom:5px}
+.footer{font-size:11px;color:#64748b;line-height:1.7;border-top:1px solid #dce8f5;padding-top:18px;margin-top:8px}
+.footer .creed{background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:11px 14px;color:#991b1b;font-weight:600;margin-top:10px}
+.state-msg{padding:40px;text-align:center;color:#94a3b8}
+</style>
+</head>
+<body>
+
+<nav class="imq-nav"><div class="imq-nav-inner">
+  <span class="imq-logo">InvestMQuest<span>.</span> Research</span>
+  <div class="imq-menu">
+    <a href="/">首頁</a>
+    <a href="/dd-screener/">DD Screener</a>
+    <a href="/dd-screener/quality-entry.html">Quality-Entry</a>
+    <a href="/dd-screener/entry-state.html">Entry State（六態）</a>
+    <a href="/dd-screener/state-machine/" class="active">⚙️ 五狀態機</a>
+  </div>
+</div></nav>
+
+<div class="hero"><div class="hero-inner">
+  <div class="hero-h1">五狀態機 — 每日執行儀表板</div>
+  <div class="hero-sub">
+    對 universe 每檔每日收盤後機械判定五狀態機的態（含優先序仲裁與狀態記憶），輸出當日<strong>指令性動作</strong>（不是建議，是 SOP 規定的動作）。
+    態①綠 多頭騎乘 · 態②黃 過熱帶 · 態③橙 觸及極限 · 態④紫 回檔 · 態⑤紅 出場。週線指標週間凍結（用上週五值）。
+  </div>
+  <div class="hero-stats" id="hero-stats"></div>
+</div></div>
+
+<div class="wrap">
+
+  <!-- 1. 今日待辦 -->
+  <div class="card">
+    <h2>📋 今日待辦 <span class="count" id="todo-count"></span></h2>
+    <div class="todo" id="todo-board"><div class="state-msg">載入中…</div></div>
+  </div>
+
+  <!-- 2. 狀態變更 -->
+  <div class="card">
+    <h2>🔁 今日狀態變更 <span class="count" id="chg-count"></span></h2>
+    <div class="chg" id="chg-log"></div>
+  </div>
+
+  <!-- 3. 持有中 -->
+  <div class="card">
+    <h2>💼 持有中 <span class="count" id="held-count"></span></h2>
+    <div class="tbl-scroll"><table id="held-tbl"></table></div>
+  </div>
+
+  <!-- 4. 觀察清單 -->
+  <div class="card">
+    <h2>👀 觀察清單 <span class="count" id="watch-count"></span></h2>
+    <div class="tbl-scroll"><table id="watch-tbl"></table></div>
+  </div>
+
+  <!-- 方法論 -->
+  <div class="method" id="method"></div>
+
+  <div class="footer" id="footer"></div>
+</div>
+
+<script>
+// ── 對照 config.py 的色票與嚴重度（單一來源在 config；此處鏡像供前端渲染）──
+var STATE_COLORS={
+  1:{name:"① 多頭騎乘",bg:"#dcfce7",fg:"#166534"},
+  2:{name:"② 過熱帶",  bg:"#fef3c7",fg:"#854d0e"},
+  3:{name:"③ 觸及極限",bg:"#ffedd5",fg:"#9a3412"},
+  4:{name:"④ 回檔",    bg:"#f3e8ff",fg:"#6b21a8"},
+  5:{name:"⑤ 出場",    bg:"#fee2e2",fg:"#991b1b"}
+};
+// action → {label, tier, sev}. tier 決定待辦色塊；sev 決定排序（與 config.ACTION_SEVERITY 對齊）。
+var ACTION_META={
+  EXIT_ALL:{l:"全部出場",tier:"exit",sev:100},
+  WARN_PENDING_5:{l:"⑤待週五確認",tier:"warn",sev:90},
+  TRIM_TO_CORE_50:{l:"減至核心50%",tier:"trim",sev:80},
+  TRIM_1_3:{l:"減 1/3",tier:"trim",sev:75},
+  REENTRY_TRIGGER:{l:"回補板機",tier:"trigger",sev:60},
+  ADD_TRIGGER:{l:"加碼板機",tier:"trigger",sev:55},
+  ENTRY_A:{l:"突破進場 A",tier:"trigger",sev:50},
+  ENTRY_B:{l:"回踩進場 B",tier:"trigger",sev:48},
+  NO_ADD:{l:"禁加碼",tier:"neutral",sev:20},
+  HOLD_CORE:{l:"抱核心",tier:"neutral",sev:18},
+  WAIT:{l:"觀望",tier:"neutral",sev:10},
+  DISQUALIFIED:{l:"失格·等新高",tier:"neutral",sev:5},
+  WATCH:{l:"觀察",tier:"neutral",sev:1},
+  NONE:{l:"無動作",tier:"neutral",sev:0}
+};
+var TIER_CLASS={exit:"t-exit",warn:"t-warn",trim:"t-trim",trigger:"t-trigger",neutral:""};
+var TIER_CHIP={exit:["#fee2e2","#991b1b"],warn:["#fef3c7","#854d0e"],trim:["#fff7ed","#9a3412"],trigger:["#dcfce7","#166534"],neutral:["#f1f5f9","#64748b"]};
+// 待辦只列「指令性動作 + 警示」
+var TODO_ACTIONS={EXIT_ALL:1,WARN_PENDING_5:1,TRIM_TO_CORE_50:1,TRIM_1_3:1,REENTRY_TRIGGER:1,ADD_TRIGGER:1,ENTRY_A:1,ENTRY_B:1};
+
+function effAction(r){ return r.entry_signal && ACTION_META[r.entry_signal] ? r.entry_signal : r.action; }
+function pct(v){ if(v===null||v===undefined) return '<span class="muted">—</span>';
+  var c=v<0?'neg':(v>0?'pos':''); var s=v>0?'+':(v<0?'−':'');
+  return '<span class="'+c+'">'+s+(Math.abs(v)*100).toFixed(1)+'%</span>'; }
+function num(v,d){ return (v===null||v===undefined)?'<span class="muted">—</span>':v.toFixed(d===undefined?2:d); }
+
+function stateBadge(s){ var c=STATE_COLORS[s]||{name:s,bg:"#eee",fg:"#333"};
+  return '<span class="sbadge" style="background:'+c.bg+';color:'+c.fg+'">'+c.name+'</span>'; }
+function actionBadge(a){ var m=ACTION_META[a]||{l:a,tier:"neutral"}; var col=TIER_CHIP[m.tier];
+  return '<span class="abadge" style="background:'+col[0]+';color:'+col[1]+'">'+m.l+'</span>'; }
+function flagsHtml(fl){ if(!fl||!fl.length) return '';
+  return fl.filter(function(f){return f!=='seed_init';}).map(function(f){
+    var w=(f==='pending_state5_warning'||f==='earnings_gap_break'||f==='weekly_break_confirmed'||f==='data_error')?' warn':'';
+    return '<span class="flag'+w+'">'+f+'</span>'; }).join(''); }
+
+function earningsCountdown(nextE,runDate){
+  if(!nextE) return '<span class="muted">—</span>';
+  var d=Math.round((new Date(nextE)-new Date(runDate))/86400000);
+  var w=(d>=0&&d<=5)?' class="neg"':'';
+  return '<span'+w+'>'+nextE+(d>=0?' (D-'+d+')':'')+'</span>';
+}
+
+function buildTable(rows,isWatch,runDate){
+  var head='<thead><tr><th class="left">代號</th><th class="left">態</th><th class="left">動作</th>'
+    +(isWatch?'<th class="left">進場訊號</th>':'')
+    +'<th>距52週線</th><th>距60MA</th><th>距ATH</th><th>BB(σ)</th><th>量比</th><th>財報</th><th class="left">旗標</th></tr></thead>';
+  if(!rows.length) return '<table>'+head+'<tbody><tr><td class="left muted" colspan="12">（無）</td></tr></tbody></table>';
+  var body=rows.map(function(r){
+    var m=r.metrics||{};
+    var veto=(r.state===5)?' class="veto"':'';
+    var entryCell=isWatch?('<td class="left">'+(r.entry_signal?actionBadge(r.entry_signal):'<span class="muted">—</span>')+'</td>'):'';
+    return '<tr'+veto+'>'
+      +'<td class="left" style="font-weight:800">'+r.symbol+'</td>'
+      +'<td class="left">'+stateBadge(r.state)+'</td>'
+      +'<td class="left">'+actionBadge(r.action)+'</td>'
+      +entryCell
+      +'<td>'+pct(m.pct_vs_52w)+'</td><td>'+pct(m.pct_vs_60d)+'</td><td>'+pct(m.pct_vs_ath)+'</td>'
+      +'<td>'+num(m.bb_position,2)+'</td><td>'+num(m.volume_ratio,2)+'</td>'
+      +'<td class="left">'+earningsCountdown(m.next_earnings,runDate)+'</td>'
+      +'<td class="left">'+flagsHtml(r.flags)+'</td></tr>';
+  }).join('');
+  return '<table>'+head+'<tbody>'+body+'</tbody></table>';
+}
+
+function render(D){
+  var rows=D.tickers||[];
+  // hero stats
+  var sd=(D.summary&&D.summary.state_dist)||{};
+  document.getElementById('hero-stats').innerHTML=
+    '<div class="hero-stat"><strong>'+D.run_date+'</strong>判定日 ('+D.run_type+')</div>'
+   +'<div class="hero-stat"><strong>'+(D.frozen_week_of||'—')+'</strong>凍結週(上週五)</div>'
+   +'<div class="hero-stat"><strong>'+rows.length+'</strong>universe</div>'
+   +'<div class="hero-stat"><strong>'+(D.held_count||0)+'</strong>持有中</div>'
+   +Object.keys(STATE_COLORS).map(function(k){return '<div class="hero-stat"><strong>'+(sd[k]||0)+'</strong>'+STATE_COLORS[k].name+'</div>';}).join('');
+
+  // 1. 今日待辦
+  var todos=rows.filter(function(r){return TODO_ACTIONS[effAction(r)];})
+    .sort(function(a,b){return (ACTION_META[effAction(b)].sev)-(ACTION_META[effAction(a)].sev);});
+  var board=document.getElementById('todo-board');
+  document.getElementById('todo-count').textContent=todos.length?('（'+todos.length+' 項）'):'';
+  if(!todos.length){ board.innerHTML='<div class="t-empty">今日無指令動作。</div>'; }
+  else{ board.innerHTML=todos.map(function(r){
+      var a=effAction(r),m=ACTION_META[a];
+      return '<div class="todo-row '+TIER_CLASS[m.tier]+'">'
+        +'<span class="sym">'+r.symbol+'</span>'
+        +'<span class="act" style="background:'+TIER_CHIP[m.tier][0]+';color:'+TIER_CHIP[m.tier][1]+'">'+m.l+'</span>'
+        +stateBadge(r.state)
+        +'<span class="meta">距52週線 '+pct(r.metrics.pct_vs_52w)+' · 距ATH '+pct(r.metrics.pct_vs_ath)+(r.held?'':' · 觀察')+'</span>'
+        +'</div>'; }).join(''); }
+
+  // 2. 變更
+  var chg=D.changes_today||[];
+  document.getElementById('chg-count').textContent=chg.length?('（'+chg.length+'）'):'';
+  document.getElementById('chg-log').innerHTML=chg.length
+    ? chg.map(function(c){return '<span class="chg-pill">'+c.symbol+'：'+STATE_COLORS[c['from']].name+' → '+STATE_COLORS[c.to].name+' · '+(ACTION_META[c.action]||{l:c.action}).l+'</span>';}).join('')
+    : '<span class="muted" style="font-size:12px">今日無狀態變更。</span>';
+
+  // 3/4 tables (排序：動作嚴重度 desc → 距52週線 asc，後端已排；前端維持)
+  var held=rows.filter(function(r){return r.held;});
+  var watch=rows.filter(function(r){return !r.held;});
+  document.getElementById('held-count').textContent='（'+held.length+'）';
+  document.getElementById('watch-count').textContent='（'+watch.length+'）';
+  document.getElementById('held-tbl').outerHTML='<table id="held-tbl">'+buildTable(held,false,D.run_date).replace(/^<table>|<\/table>$/g,'')+'</table>';
+  document.getElementById('watch-tbl').outerHTML='<table id="watch-tbl">'+buildTable(watch,true,D.run_date).replace(/^<table>|<\/table>$/g,'')+'</table>';
+
+  // method + footer
+  var c=D.config||{};
+  document.getElementById('method').innerHTML='<h3>方法論（門檻全進 config.py，鎖死）</h3>'
+    +'<div class="row"><b>態① 多頭騎乘</b>：收盤 &gt; MA52w 且 多頭排列（MA52w&gt;MA104w&gt;MA200w；短歷史降級 52&gt;104）。</div>'
+    +'<div class="row"><b>態② 過熱帶</b>：凍結週收盤 ∈ (中軌+2σ, 中軌+3σ]（週 BBand 20 週, ddof='+c.BB_DDOF+'）。</div>'
+    +'<div class="row"><b>態③ 觸及極限</b>：本週至今任一日高 ≥ 中軌+3σ → 一次性 <code>減 1/3</code>（回落 2σ 內結束，再觸=新事件）。</div>'
+    +'<div class="row"><b>態④ 回檔</b>：收盤 &lt; MA60d 但仍 &gt; MA52w → <code>減至核心 50%</code>；站回 60MA 且週線態① → 回補板機。</div>'
+    +'<div class="row"><b>態⑤ 出場</b>：週五收盤 &lt; MA52w 確認，或財報後首日 gap 開低且收破 MA52w（當日確認，不等週五）；出場後等收盤突破 ATH 且 quality_pass 才回態①。</div>'
+    +'<div class="row"><b>優先序</b>：⑤ &gt; ④ &gt; ③ &gt; ② &gt; ①（每日唯一狀態）。<b>週間凍結</b>：週線指標用上週五值，週內不滾動。</div>'
+    +'<div class="row"><b>進場（觀察清單）</b>：A 突破型（收盤創新高 且 前一日距ATH ≥ −'+(c.ATH_PROXIMITY*100)+'%）/ B 回踩型（回踩前高±'+(c.RETEST_BAND*100)+'% 站回 或 回踩 60MA 站回）；財報靜默期（距財報 ≤ '+c.EARNINGS_BLACKOUT_DAYS+' 交易日）壓制全部訊號。</div>';
+
+  document.getElementById('footer').innerHTML=
+    'run_date <code>'+D.run_date+'</code> · 凍結週 <code>'+(D.frozen_week_of||'—')+'</code> · 規則 <code>'+(D.ruleset||'')+'</code> · schema <code>'+(D.schema_version||'')+'</code>'
+    +' · 資料源 <a href="./data/daily.json"><code>data/daily.json</code></a>（state.json / breakouts.json 為狀態記憶）'
+    +(D.summary&&D.summary.earnings_unknown?(' · ⚠ '+D.summary.earnings_unknown+' 檔財報日未知'):'')
+    +'<div class="creed">本頁為機械判定輸出，動作即指令——若你想討論要不要照做，先重讀 S-1 守則第 1 條。</div>';
+}
+
+fetch('./data/daily.json',{cache:'no-store'})
+  .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+  .then(render)
+  .catch(function(e){
+    document.getElementById('todo-board').innerHTML='<div class="state-msg">資料尚未產出。執行 <code>python3 scripts/state_machine/run_daily.py</code> 以建立 data/daily.json。<br>('+e.message+')</div>';
+  });
+</script>
+</body>
+</html>
