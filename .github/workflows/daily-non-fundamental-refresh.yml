@@ -13,6 +13,10 @@ name: Daily Non-Fundamental Refresh
 #                                                    fundamentals 重讀但無變更則 no-op diff)
 #   2. dd_alpha_ranker.py --layers momentum       → alpha-rank Angle 2 起漲點 + 5 RS
 #   3. build_quality_entry.py                     → entry sub-score 跟著 timing 漂移
+#   …（4-7 其餘 screener）…
+#   8. state_machine/study/write_daily_close.py   → 態④研究寬表 forward 切片
+#                                                    docs/.../study/closes_daily/{date}.json
+#                                                    (~4.6KB/日；本機 run_study.py --rebuild 併寬表)
 #
 # 涵蓋頁面：
 #   - /dd-screener/                  (client-side fetch latest.json)
@@ -73,6 +77,10 @@ jobs:
         run: python scripts/build_entry_state.py
         continue-on-error: true
 
+      - name: Step 8 — Study daily closes slice (態④研究寬表 forward 切片)
+        run: python scripts/state_machine/study/write_daily_close.py
+        continue-on-error: true
+
       - name: Commit and push if changed
         run: |
           git config user.name "github-actions[bot]"
@@ -98,7 +106,8 @@ jobs:
                   docs/dd-screener/entry-state.html \
                   docs/dd-screener/entry-state.json \
                   docs/dd-screener/entry-state-snapshots/ \
-                  docs/dd-screener/entry-state-state/
+                  docs/dd-screener/entry-state-state/ \
+                  docs/dd-screener/state-machine/data/study/closes_daily/
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else

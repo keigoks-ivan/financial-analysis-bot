@@ -12,13 +12,18 @@
 
 用法：
   python3 scripts/state_machine/study/run_study.py                 # 全 universe（抓價）+ 跑研究
-  python3 scripts/state_machine/study/run_study.py --refresh-only  # 只增量更新寬表股價，不動研究/報告
+  python3 scripts/state_machine/study/run_study.py --refresh-only  # 只增量更新寬表股價（split-exact）
+  python3 scripts/state_machine/study/run_study.py --rebuild       # base + repo 每日切片 → 最新寬表
   python3 scripts/state_machine/study/run_study.py --from-saved P  # 從已存寬表重跑研究（不抓價）
 
-寬表股價持續更新：擇一即可
-  ① 跑 --refresh-only（自帶 6mo 增量併入 per-ticker cache，寫 dated + latest 寬表）
-  ② 若每日 state-machine（run_daily.py）已在跑，per-ticker cache 早已逐日更新 —— 此時
-     --refresh-only 幾乎零下載，只是把現有 cache 重新打包成寬表。
+寬表股價持續更新：兩條路
+  A. 全抓（split-exact，本機重 baseline）：--refresh-only。走 price_cache 6mo 增量 +
+     拆股偵測，最準；但每次抓 226 檔。
+  B. repo 自更新（CI 維護，本機只 pull+stitch）：CI 每日跑 write_daily_close.py commit
+     一支 ~4.6KB 切片到 docs/.../study/closes_daily/；本機 `git pull` 後跑 --rebuild，把
+     base（本機 latest.csv.gz）+ 累積切片併成最新寬表。git 只長 ~1MB/年。
+     注意：切片是 forward auto_adjust 收盤，不回算拆股 → 尾段久了會有微幅 split 漂移；
+     需 split-exact 時偶爾改跑 A 重 baseline。
 """
 from __future__ import annotations
 
@@ -59,6 +64,7 @@ GRAMMAR_ORDER = ["V1", "V3", "V2", "V4"]      # 文法序（預登記）
 OUT_JSON = CFG.DATA_DIR / "study" / "trim_variants.json"
 REPORT_PATH = STUDY_DIR / "study-report.md"
 LATEST_CLOSES = CFG.PRICE_CACHE_DIR / "study_closes_wide_latest.csv.gz"   # 穩定指標（免找日期檔名）
+CLOSES_DAILY = CFG.DATA_DIR / "study" / "closes_daily"   # CI 每日 commit 的 forward 切片
 MIN_BARS = 300
 
 
@@ -95,6 +101,38 @@ def save_closes(closes: pd.DataFrame) -> Path:
     closes.to_csv(p, compression="gzip")
     shutil.copyfile(p, LATEST_CLOSES)
     return p
+
+
+def rebuild_from_slices() -> tuple[pd.DataFrame, Path, int, int]:
+    """本機全歷史 base（latest.csv.gz）+ repo 累積的 closes_daily/*.json forward 切片
+    → 併成最新寬表。回傳 (closes, saved_path, n_new_cells, n_slices)。
+
+    冪等：切片日期已在 base 內則覆寫同值；只計真正新增的格子。base 缺失時報錯（請先跑
+    一次全抓建立 base）。split 漂移見 write_daily_close.py 註記。"""
+    if not LATEST_CLOSES.exists():
+        raise SystemExit(f"找不到 base 寬表 {LATEST_CLOSES}；請先跑 "
+                         f"`run_study.py --refresh-only`（或不帶旗標跑完整研究）建立 base。")
+    closes = pd.read_csv(LATEST_CLOSES, index_col=0, parse_dates=True)
+    files = sorted(CLOSES_DAILY.glob("*.json")) if CLOSES_DAILY.exists() else []
+    new_cells, n_slices = 0, 0
+    for f in files:
+        try:
+            rec = json.loads(f.read_text(encoding="utf-8")).get("closes", {})
+        except Exception as exc:
+            print(f"  WARN: 略過壞切片 {f.name}: {exc}", file=sys.stderr)
+            continue
+        n_slices += 1
+        for tk, cell in rec.items():
+            ts = pd.Timestamp(cell["date"])
+            if tk not in closes.columns:
+                closes[tk] = pd.NA
+            is_new = ts not in closes.index or pd.isna(closes.at[ts, tk])
+            closes.loc[ts, tk] = cell["close"]
+            if is_new:
+                new_cells += 1
+    closes = closes.apply(pd.to_numeric, errors="coerce").sort_index()
+    saved = save_closes(closes)
+    return closes, saved, new_cells, n_slices
 
 
 # ── 機械規則引擎（R1/R2/R3 → S1/S2）─────────────────────────────────────────
@@ -332,7 +370,18 @@ def main():
     ap.add_argument("--from-saved", help="已存寬表 csv(.gz) 路徑，跳過抓價")
     ap.add_argument("--refresh-only", action="store_true",
                     help="只增量更新寬表收盤價並存檔（dated + latest），不跑研究、不動報告/JSON")
+    ap.add_argument("--rebuild", action="store_true",
+                    help="本機 base + repo closes_daily 切片 → 併成最新寬表（不抓價、不跑研究）")
     args = ap.parse_args()
+
+    if args.rebuild:
+        closes, saved, new_cells, n_slices = rebuild_from_slices()
+        print(f"  寬表已重建：{closes.shape[1]} 檔 × {closes.shape[0]} 日（截至 "
+              f"{closes.index[-1].strftime('%Y-%m-%d')}）")
+        print(f"  併入 {n_slices} 支切片 · 新增 {new_cells} 格收盤")
+        print(f"    dated  → {saved}")
+        print(f"    latest → {LATEST_CLOSES}")
+        return
 
     if args.refresh_only:
         closes, missing, short_hist = build_closes()
