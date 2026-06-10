@@ -33,10 +33,9 @@
 - 包含「分析 / DD / 研究 / 估值」關鍵字且帶 ticker 的句子
 - 多 ticker 批次(例如 "批次分析 MSFT AAPL GOOG"),逐一執行,每檔獨立輸出 HTML
 
-Skill 位置:`~/.claude/skills/stock-analyst/SKILL.md`(全域執行副本)
-Master copy:`docs/dd/skills/stock-analyst/SKILL.md`(版本控制 source of truth)
+Skill 位置(單一 source of truth):`.claude/skills/stock-analyst/SKILL.md`(專案內，git 追蹤，Skill 工具即從此載入執行)
 
-兩份檔案的內容必須保持 byte-for-byte 一致。若修改 skill,先改 master copy,再複製到全域位置,md5 驗證後才算完成。
+**重要(2026-06 更正)**：舊版本曾採「master copy `docs/dd/skills/` + 全域副本 `~/.claude/skills/` + byte-for-byte 同步 + md5 驗證」三點同步工作流，**此工作流已廢棄**。實際情形：`~/.claude/skills/` 不存在、`docs/dd/skills/` 與 root `skills/` 兩棵鏡像樹停在 v12.3 早已不同步(v12.4~v12.7 都只改 `.claude/skills/`)。兩棵廢棄鏡像樹已於 2026-06 刪除。**現在只有一份 source：`.claude/skills/`，改它即可，不需要 cp、不需要 md5、不需要同步任何其他位置。**
 
 ## 工作流分流
 
@@ -103,29 +102,20 @@ Master copy:`docs/dd/skills/stock-analyst/SKILL.md`(版本控制 source of truth
 - 子 agent 接到 commit task 時，prompt 必須白紙黑字列出**這次允許 stage 的檔案清單**，並要求子 agent 用 `git add` 具名而非萬用字元
 - 違反此規則的後果：把 schema 不合規的檔案（典型如 oneliner > 200 chars 的舊 ID）一起帶進 commit，導致 GitHub Actions validate workflow 紅燈
 
-## Skill 升級流程(v7 → v8 → v9 → ...)
+## Skill 升級流程(單一 source，2026-06 改寫)
 
-當需要升級 skill 版本時,遵循以下固定流程:
+當需要升級 skill 版本時(v12.x → v12.y),**只改一份檔：`.claude/skills/stock-analyst/SKILL.md`**。不需要 cp、不需要 md5、不需要同步任何鏡像(舊的 master/global 三點同步已廢棄，鏡像樹已刪)。
 
-1. **先修改 master copy**:`docs/dd/skills/stock-analyst/SKILL.md`
-
-   必要更新欄位:
-   - frontmatter `version`(例:v7.0 → v8.0)
-   - frontmatter `released`(設為當前日期)
-   - 【HTML 輸出協議】→「功能規格」中的「DD Schema vX.X」字串(兩處:頁首字串 + meta 標籤 content)
-   - 【輸出規格】第 1 步 INDEX.md 寫入規則中的範例 `vX.X`(若格式有變)
+1. **直接修改 `.claude/skills/stock-analyst/SKILL.md`**，必要更新欄位:
+   - frontmatter `version`(例:v12.6 → v12.7)+ `released`(當前日期)
+   - 【HTML 輸出協議】→「功能規格」中的「DD Schema vX.X」字串(頁首字串 + meta 標籤 content)
    - 若新增/刪除章節,同步更新【章節架構】區塊與 HTML 章節顯示順序表格
    - 若 INDEX.md 欄位格式變動,同步更新本檔案的「INDEX.md 維護規則」小節與 `docs/dd/INDEX.md` 的表頭
 
-2. **複製到全域執行副本**:
-   ```
-   cp docs/dd/skills/stock-analyst/SKILL.md ~/.claude/skills/stock-analyst/SKILL.md
-   ```
+2. **產出的新 DD HTML 在頁首 meta + 頁首字串自帶版本戳**(取自 frontmatter version)。validator `^v12\.\d+$` 接受 v12.x；dd-meta `schema` 欄位同步該版本。
 
-3. **md5 驗證**兩份 byte-for-byte 一致,不一致則排查
+3. **路徑永遠不變**:目錄名與 skill 觸發名永遠保持 `stock-analyst`，不在路徑帶版本號。版本資訊完全透過 SKILL.md frontmatter + HTML 版本戳 + INDEX.md Schema 欄位管理。
 
-4. **路徑永遠不變**:目錄名與 skill 全域觸發名永遠保持為 `stock-analyst`,不要在路徑帶版本號。版本資訊完全透過 SKILL.md 內部的 frontmatter、HTML 頁首版本戳、INDEX.md 的 Schema 欄位管理
+4. **歷史 DD 不需要重跑**:消費模式查詢時自動從每份 HTML 頁首 meta 讀版本戳套用對應 schema 解析。
 
-5. **歷史 DD 不需要重跑**:消費模式查詢時會自動從每份 HTML 的頁首 meta 標籤讀取版本戳,套用對應的 schema 解析。重跑舊檔案是無意義的成本,因為當時的市場資料已經變動
-
-6. **升級的寫作分工**:使用者把 vX.X 的變更清單(新增/修改/刪除章節)丟給 Claude,由 Claude 基於當前 master copy 產出新版 SKILL.md。使用者負責決定變更內容,Claude 負責確保內部一致性(章節引用、欄位格式、版本戳三處同步)
+5. **deep-conviction-analyst (DCA) skill 同理**：唯一 source = `.claude/skills/deep-conviction-analyst/SKILL.md`。

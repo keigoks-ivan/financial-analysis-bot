@@ -1,5 +1,7 @@
 # DD 工作流維護手冊
 
+> ⚠️ **2026-06 重大更正——本文件多處過時**：以下關於「master copy `docs/dd/skills/` + global `~/.claude/skills/` + byte-for-byte / md5 同步」的三點同步流程**已全部廢棄**。實際上 `~/.claude/skills/` 不存在、兩棵鏡像樹(`docs/dd/skills/` + root `skills/`)停在 v12.3 早不同步，已於 2026-06 刪除。**現在 skill 只有一份 source of truth：`.claude/skills/stock-analyst/SKILL.md`(及 `deep-conviction-analyst/`)，直接改它、不需 cp / md5 / 同步。** 本手冊下方所有 `cp ... ~/.claude/skills` 與 `md5 docs/dd/skills ...` 步驟請一律忽略。權威說明見 `docs/dd/CLAUDE.md`「Skill 升級流程」。
+
 本文件是 `stock-analyst` skill 工作流的**操作手冊**(runbook),不是架構說明。
 架構層面的設計原理請看 `docs/dd/CLAUDE.md` 的「生產端指示」區塊。
 
