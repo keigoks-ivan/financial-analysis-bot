@@ -120,33 +120,42 @@ def _merge(cached: Optional["pd.DataFrame"], fresh: Optional["pd.DataFrame"]) ->
     return out
 
 
-def _split_detected(cached: "pd.DataFrame", fresh: "pd.DataFrame") -> bool:
-    """同一交易日在快取(舊調整價)與新抓(新調整價)的收盤偏離 > 30% → 疑似拆股。
+def _split_factor(cached: "pd.DataFrame", fresh: "pd.DataFrame") -> Optional[float]:
+    """疑似拆股 → 回傳調整係數 factor = new/old（同一重疊日的新舊收盤比）；否則 None。
 
     auto_adjust=True 下，一旦發生拆股，整段歷史會被「重新」調整，使同一歷史日期的
     收盤在新舊兩份序列間出現倍數差。必須比對「重疊日期」的同日收盤，不能拿快取最後一根
     (≈今日) 去比增量第一根 (≈6 個月前) —— 那只是正常價格漂移，會誤判。
+
+    factor 供 run_daily 把 breakouts.json 內 prior_ath 換算到新基準（§P1-2）。
+    2:1 拆股 → 歷史價砍半 → factor≈0.5 → prior_ath 減半。
     """
     try:
         c = cached["Close"].dropna()
         f = fresh["Close"].dropna()
         if c.empty or f.empty:
-            return False
+            return None
         common = c.index.intersection(f.index)
         if len(common) == 0:
-            return False
+            return None
         d = common[0]   # 重疊區最早的同一交易日
         old, new = float(c.loc[d]), float(f.loc[d])
         if old <= 0:
-            return False
-        return abs(new / old - 1.0) > SPLIT_DETECT_THRESHOLD
+            return None
+        if abs(new / old - 1.0) > SPLIT_DETECT_THRESHOLD:
+            return new / old
+        return None
     except Exception:
-        return False
+        return None
 
 
-def load_prices(yf_tickers: list[str]) -> dict[str, "pd.DataFrame"]:
-    """回傳 {yf_ticker: daily DataFrame}。抓不到者不在 dict 中。"""
+def load_prices(yf_tickers: list[str]) -> tuple[dict[str, "pd.DataFrame"], dict[str, float]]:
+    """回傳 (prices, split_factors)。
+      prices: {yf_ticker: daily DataFrame}（抓不到者不在 dict 中）
+      split_factors: {yf_ticker: factor}（本次偵測到拆股、已重抓 max 的標的；供 breakouts 換算）
+    """
     out: dict[str, pd.DataFrame] = {}
+    split_factors: dict[str, float] = {}
     need_full, need_incr = [], []
     cache_map: dict[str, pd.DataFrame] = {}
     for t in yf_tickers:
@@ -170,15 +179,18 @@ def load_prices(yf_tickers: list[str]) -> dict[str, "pd.DataFrame"]:
             if fresh is None:
                 out[t] = cache_map[t]   # 抓不到增量 → 沿用快取
                 continue
-            if _split_detected(cache_map[t], fresh):
+            fac = _split_factor(cache_map[t], fresh)
+            if fac is not None:
                 refetch_full.append(t)  # 疑似拆股 → 改抓 max 重對齊
+                split_factors[t] = fac
                 continue
             merged = _merge(cache_map[t], fresh)
             _write_cache(t, merged)
             out[t] = merged
         need_full.extend(refetch_full)
         if refetch_full:
-            print(f"  [cache] split-refetch {len(refetch_full)}: {refetch_full}", file=sys.stderr)
+            print(f"  [cache] split-refetch {len(refetch_full)}: "
+                  f"{ {k: round(v,3) for k,v in split_factors.items()} }", file=sys.stderr)
 
     # 全歷史（max）
     if need_full:
@@ -191,4 +203,4 @@ def load_prices(yf_tickers: list[str]) -> dict[str, "pd.DataFrame"]:
             _write_cache(t, df)
             out[t] = df
 
-    return out
+    return out, split_factors

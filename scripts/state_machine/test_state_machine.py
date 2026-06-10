@@ -33,8 +33,8 @@ def mk_ind(**over):
     """乾淨的態① indicator dict；以 over 覆寫誘發特定條件。"""
     d = dict(
         close=150.0, prev_close=149.0, open=150.0,
-        ath=200.0, ath_date="2025-01-01", is_new_ath_today=False,
-        prev_is_new_ath=False, ath_prev=200.0, pct_vs_ath=-0.25, prev_pct_vs_ath=-0.25,
+        ath=200.0, ath_date="2025-01-01", is_new_ath_today=False, prev_is_new_ath=False,
+        ath_prev=200.0, pct_vs_ath=-0.25, prev_pct_vs_ath=-0.25,
         ma52w=120.0, ma104w=110.0, ma200w=100.0, alignment=True, short_history=False,
         n_weeks=260, is_week_complete=False,
         bb_mid=130.0, bb_sigma=10.0, bb_upper2=150.0, bb_upper3=160.0,
@@ -61,30 +61,95 @@ def seed_state(ticker, ind, ctx):
     return SM.evaluate(ticker, ind, None, None, mk_ctx(**{**ctx, "seed": True}))
 
 
-# ── §9.1 狀態流序：① → ④ → ⑤待確認 → ⑤ ───────────────────────────────────
+# ── §9.1 狀態流序：① → ④(回檔減碼) → ④(週中破線,trim done→WARN) → ⑤(週確認) ──
 def test_state_flow():
-    print("§9.1 狀態流序 ①→④→⑤待確認→⑤")
+    print("§9.1 狀態流序 ①→④→④破線→⑤（r2 事件式週確認）")
     r0 = seed_state("T", mk_ind(), dict(held=True))
     check("seed 起於態①", r0["state"] == 1)
-    # 態④：跌破 60MA 但仍站上 52w
+    # 態④：跌破 60MA 但仍站上 52w → 首次減碼
     r1 = SM.evaluate("T", mk_ind(below_60d=True, pct_vs_60d=-0.02),
                      r0["mem"], None, mk_ctx())
     check("跌破60MA→態④", r1["state"] == 4, f"got {r1['state']}")
-    check("態④ held→TRIM_TO_CORE_50", r1["action"] == "TRIM_TO_CORE_50", r1["action"])
-    # 非週五破 52w → 維持態④ + 黃色預警
-    r2 = SM.evaluate("T", mk_ind(close=115.0, below_52w=True, below_60d=True,
-                                 last_bar_is_friday=False),
+    check("態④首次→TRIM_TO_CORE_50", r1["action"] == "TRIM_TO_CORE_50", r1["action"])
+    # 週中破 52w（同一完成週，frozen_week_date 未前進）→ 維持態④ + 黃牌；減碼已 done → WARN
+    r2 = SM.evaluate("T", mk_ind(close=115.0, below_52w=True, below_60d=True),
                      r1["mem"], None, mk_ctx())
-    check("非週五破線→維持④+pending", r2["state"] == 4 and "pending_state5_warning" in r2["flags"],
+    check("週中破線→態④+pending", r2["state"] == 4 and "pending_state5_warning" in r2["flags"],
           f"state={r2['state']} flags={r2['flags']}")
-    check("pending→WARN_PENDING_5", r2["action"] == "WARN_PENDING_5", r2["action"])
-    # 週五收盤確認破線 → 態⑤
+    check("減碼已done→WARN_PENDING_5", r2["action"] == "WARN_PENDING_5", r2["action"])
+    # 新完成週 + 週收盤破 52w → 事件式確認態⑤（不靠 weekday）
     r3 = SM.evaluate("T", mk_ind(close=115.0, below_52w=True, frozen_weekly_close=115.0,
-                                 is_week_complete=True, last_bar_is_friday=True),
-                     r2["mem"], None, mk_ctx())
-    check("週五確認→態⑤", r3["state"] == 5, f"got {r3['state']}")
+                                 frozen_week_date="2026-06-12"),
+                     r2["mem"], None, mk_ctx(today="2026-06-12"))
+    check("新完成週週收破線→態⑤", r3["state"] == 5, f"got {r3['state']}")
     check("態⑤ held→EXIT_ALL", r3["action"] == "EXIT_ALL", r3["action"])
     check("態⑤ exited 記憶=true", r3["mem"]["exited"] is True)
+
+
+# ── §9.1b（r2 P0-1）週中首破 60MA+52w（非週收確認）→ 態④ + TRIM_TO_CORE_50 + 黃牌 ──
+def test_midweek_break_p0_1():
+    print("§9.1b P0-1 週中破線：held→TRIM+pending / watch→WAIT+pending")
+    r0 = seed_state("T", mk_ind(), dict(held=True))
+    # held：首次破 52w（同週，未確認）→ 態④、減碼未做 → TRIM_TO_CORE_50 + 黃牌
+    rH = SM.evaluate("T", mk_ind(close=115.0, below_52w=True, below_60d=True, pct_vs_60d=-0.04),
+                     r0["mem"], None, mk_ctx(held=True))
+    check("held 週中破線→態④", rH["state"] == 4, f"got {rH['state']}")
+    check("held→TRIM_TO_CORE_50（不再無動作）", rH["action"] == "TRIM_TO_CORE_50", rH["action"])
+    check("黃牌同列（flags 含 pending）", "pending_state5_warning" in rH["flags"], str(rH["flags"]))
+    # watchlist：同情境 → 態④ + WAIT + 黃牌（無倉可出，不發 WARN）
+    r0w = seed_state("W", mk_ind(), dict(held=False))
+    rW = SM.evaluate("W", mk_ind(close=115.0, below_52w=True, below_60d=True),
+                     r0w["mem"], None, mk_ctx(held=False))
+    check("watch 週中破線→態④", rW["state"] == 4, f"got {rW['state']}")
+    check("watch→WAIT+pending", rW["action"] == "WAIT" and "pending_state5_warning" in rW["flags"],
+          f"action={rW['action']} flags={rW['flags']}")
+
+
+# ── §9.2b（r2 P0-2）態⑤確認事件式：假日週(週四收) + 週五漏跑週一補跑 ──────────
+def test_event_driven_confirm():
+    print("§9.2b P0-2 事件式週確認（假日週 + 漏跑補跑）")
+    # (a) indicators：最後一根為週四，as_of=該週五 → is_week_complete=True
+    base = datetime(2026, 4, 6)  # Monday
+    dates, closes, price = [], [], 100.0
+    d = base
+    for _ in range(60):
+        if d.weekday() < 5:
+            dates.append(d); closes.append(price); price += 0.3
+        d += timedelta(days=1)
+    while dates[-1].weekday() != 3:   # 收在週四（模擬週五休市 Good Friday）
+        dates.pop(); closes.pop()
+    df = pd.DataFrame({"Open": closes, "High": closes, "Low": closes,
+                       "Close": closes, "Volume": [1e6]*len(closes)},
+                      index=pd.DatetimeIndex(dates))
+    thu = dates[-1]; fri = (thu + timedelta(days=1)).strftime("%Y-%m-%d")
+    ind_thu = compute_indicators(df, as_of=thu.strftime("%Y-%m-%d"))
+    ind_fri = compute_indicators(df, as_of=fri)
+    check("週四當天 as_of=週四 → 週未完成", ind_thu["is_week_complete"] is False)
+    check("假日週 as_of=週五 → 週已完成(不延後)", ind_fri["is_week_complete"] is True)
+    # (b) evaluate：週五漏跑、週一補跑 → 新完成週仍確認⑤（不靠 weekday）
+    mem = SM.default_memory(state=1, since="2026-06-01")
+    mem["last_confirmed_week"] = "2026-06-05"
+    rMon = SM.evaluate("T", mk_ind(close=115.0, below_52w=True, frozen_weekly_close=115.0,
+                                   frozen_week_date="2026-06-12"),
+                       mem, None, mk_ctx(held=True, today="2026-06-15"))  # 週一補跑
+    check("週五漏跑→週一補跑仍確認⑤", rMon["state"] == 5, f"got {rMon['state']}")
+    check("last_confirmed_week 推進至新週", rMon["mem"]["last_confirmed_week"] == "2026-06-12")
+
+
+# ── §9 新增（r2 P1-2）拆股後 breakouts.prior_ath 按係數重算 ──────────────────
+def test_split_breakout_adjust():
+    print("§9 P1-2 拆股 breakouts 重算")
+    from price_cache import _split_factor
+    idx = pd.DatetimeIndex([datetime(2026, 1, 5), datetime(2026, 1, 6)])
+    cached = pd.DataFrame({"Open": [200, 201], "High": [200, 201], "Low": [200, 201],
+                           "Close": [200.0, 201.0], "Volume": [1e6, 1e6]}, index=idx)
+    fresh = pd.DataFrame({"Open": [100, 100.5], "High": [100, 100.5], "Low": [100, 100.5],
+                          "Close": [100.0, 100.5], "Volume": [2e6, 2e6]}, index=idx)  # 2:1 拆股
+    fac = _split_factor(cached, fresh)
+    check("2:1 拆股 factor≈0.5", fac is not None and abs(fac - 0.5) < 1e-6, str(fac))
+    prior_ath = 200.0
+    check("prior_ath 減半對齊新基準", abs(prior_ath * fac - 100.0) < 1e-6, str(prior_ath*fac))
+    check("無拆股(正常漂移)→None", _split_factor(cached, cached) is None)
 
 
 # ── §9.2 財報 gap：當日確認態⑤、不等週五 ─────────────────────────────────────
@@ -205,13 +270,34 @@ def test_privacy():
     check("metrics 僅允許白名單",
           set(row["metrics"].keys()) <= {"close", "pct_vs_52w", "pct_vs_60d",
                                           "pct_vs_ath", "bb_position", "volume_ratio",
-                                          "next_earnings"},
+                                          "next_earnings", "risk_cap_pct"},
           str(set(row["metrics"].keys())))
+    check("risk_cap_pct 是 float 或 None（純價格、無隱私）",
+          row["metrics"].get("risk_cap_pct") is None or isinstance(row["metrics"]["risk_cap_pct"], float))
+
+
+# ── §9 新增（r2 P2）ENTRY_A 去重：只在突破首日，連續創高不重發 ────────────────
+def test_entry_a_dedup():
+    print("§9 P2 ENTRY_A 去重（LLY 型連續創高）")
+    base = dict(held=False, quality_pass=True)
+    r0 = seed_state("T", mk_ind(), base)
+    # 突破首日：今日創高、前一日未創 → ENTRY_A
+    d1 = SM.evaluate("T", mk_ind(close=205, is_new_ath_today=True, prev_is_new_ath=False,
+                                 ath=205, ath_prev=200, pct_vs_ath=0.0, prev_pct_vs_ath=-0.01),
+                     r0["mem"], r0["breakout"], mk_ctx(**base))
+    check("突破首日→ENTRY_A", d1["entry_signal"] == "ENTRY_A", str(d1["entry_signal"]))
+    # 隔日續創高（前一日也創高）→ 不重發 A
+    d2 = SM.evaluate("T", mk_ind(close=208, is_new_ath_today=True, prev_is_new_ath=True,
+                                 ath=208, ath_prev=205, pct_vs_ath=0.0, prev_pct_vs_ath=0.0),
+                     d1["mem"], d1["breakout"], mk_ctx(**base))
+    check("連續創高日不重發 ENTRY_A", d2["entry_signal"] != "ENTRY_A", str(d2["entry_signal"]))
 
 
 def main():
-    for t in (test_state_flow, test_earnings_gap, test_overheat_once, test_priority,
-              test_btype_once, test_weekly_freeze, test_privacy):
+    for t in (test_state_flow, test_midweek_break_p0_1, test_earnings_gap,
+              test_event_driven_confirm, test_overheat_once, test_priority,
+              test_btype_once, test_split_breakout_adjust, test_entry_a_dedup,
+              test_weekly_freeze, test_privacy):
         t()
     print()
     if _fails:

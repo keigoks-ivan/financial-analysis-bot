@@ -53,23 +53,24 @@ SPLIT_DETECT_THRESHOLD = 0.30
 # 連續抓取失敗提醒門檻（§8.4）。
 DATA_ERROR_ALERT_STREAK = 3
 
-# ── 狀態色票（§7，與總守則同色）─────────────────────────────────────────────
+# ── 狀態名稱/色票（§7，與總守則原文一致；禁止自創名稱）──────────────────────
+# 總守則原文：①健康多頭 ②偏熱 ③過熱 ④回檔中 ⑤轉折確認。
 STATE_COLORS = {
-    1: {"name": "態①多頭騎乘", "bg": "#dcfce7", "fg": "#166534"},   # 綠
-    2: {"name": "態②過熱帶",   "bg": "#fef3c7", "fg": "#854d0e"},   # 黃
-    3: {"name": "態③觸及極限", "bg": "#ffedd5", "fg": "#9a3412"},   # 橙
-    4: {"name": "態④回檔",     "bg": "#f3e8ff", "fg": "#6b21a8"},   # 紫
-    5: {"name": "態⑤出場",     "bg": "#fee2e2", "fg": "#991b1b"},   # 紅
+    1: {"name": "① 健康多頭", "bg": "#dcfce7", "fg": "#166534"},   # 綠
+    2: {"name": "② 偏熱",     "bg": "#fef3c7", "fg": "#854d0e"},   # 黃
+    3: {"name": "③ 過熱",     "bg": "#ffedd5", "fg": "#9a3412"},   # 橙
+    4: {"name": "④ 回檔中",   "bg": "#f3e8ff", "fg": "#6b21a8"},   # 紫
+    5: {"name": "⑤ 轉折確認", "bg": "#fee2e2", "fg": "#991b1b"},   # 紅
 }
 
 # ── 動作嚴重度（§7 排序：動作嚴重度 desc → 距52週線 asc）─────────────────────
 # 數字越大越「該優先看」。EXIT 最高 → TRIM → 板機/訊號 → 警示 → 無動作。
+# REENTRY_TRIGGER 已於 r2 移除（態④內不可達，回補由 ①-ADD_TRIGGER 發出）。
 ACTION_SEVERITY = {
     "EXIT_ALL": 100,
     "WARN_PENDING_5": 90,
     "TRIM_TO_CORE_50": 80,
     "TRIM_1_3": 75,
-    "REENTRY_TRIGGER": 60,
     "ADD_TRIGGER": 55,
     "ENTRY_A": 50,
     "ENTRY_B": 48,
@@ -81,6 +82,10 @@ ACTION_SEVERITY = {
     "NONE": 0,
 }
 
+# 風險上限公式（總守則 v1.9 S-4）：一切買進後總部位 ≤ min(10%, 1.5%/停損距離)。
+RISK_CAP_MAX = 0.10
+RISK_CAP_RISK_BUDGET = 0.015   # 1.5% 風險預算
+
 # 規則版本（頁尾顯示）。
-RULESET_VERSION = "總守則 v1.7"
+RULESET_VERSION = "總守則 v1.9"
 SCHEMA_VERSION = "1.0"

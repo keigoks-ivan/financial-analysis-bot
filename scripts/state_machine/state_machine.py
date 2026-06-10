@@ -20,12 +20,13 @@ def default_memory(state: int = 1, since: Optional[str] = None) -> dict:
         "state": state,
         "state_since": since,
         "overheat_episode": {"active": False, "trim_done": False},
-        "pullback": {"trim_to_core_done": False, "reentry_armed": False},
+        "pullback": {"trim_to_core_done": False},   # r2: 移除 reentry_armed（死碼）
         "pending_state5_warning": False,
         "exited": False,
         "exit_date": None,
         "state1_clean": state == 1,   # 態①全程未掛 pending warning（B 型門檻）
         "was_below_60d": False,        # 近期曾跌破 60MA（B 型 60MA 參考）
+        "last_confirmed_week": None,   # r2 P0-2：最近一個已判定的「完成週」frozen_week_date
         "data_error_streak": 0,
     }
 
@@ -138,10 +139,12 @@ def evaluate(ticker: str, ind: Optional[dict], mem: Optional[dict],
         m["exited"] = exited
         m["exit_date"] = today if exited else None
         m["overheat_episode"] = {"active": st == 3, "trim_done": True}
-        m["pullback"] = {"trim_to_core_done": True, "reentry_armed": False}
+        m["pullback"] = {"trim_to_core_done": True}
         m["pending_state5_warning"] = False
         m["state1_clean"] = (st == 1)
         m["was_below_60d"] = bool(C["below_60d"])
+        # r2 P0-2：seed 把「當前完成週」標為已確認，避免上線首日對歷史週補確認。
+        m["last_confirmed_week"] = ind.get("frozen_week_date")
         flags.append("seed_init")
         action = _action_for(st, m, ctx, ind=ind)
         entry = _entry_signal(ind, st, m, breakout, ctx) if not ctx["held"] else None
@@ -154,31 +157,41 @@ def evaluate(ticker: str, ind: Optional[dict], mem: Optional[dict],
     pending = False
     degraded = False
 
+    # r2 P0-2：態⑤「週收盤確認」改事件式。frozen_week_date 只在一週完成後前進；
+    # 當它超過 last_confirmed_week，代表「新完成週」首次判定 → 才檢查週線破線確認。
+    # 假日週（週四即週收盤）與週五漏跑改週一補跑都因此被涵蓋，不會遲到或丟失。
+    fwk = ind.get("frozen_week_date")
+    lcw = prior_mem.get("last_confirmed_week")
+    new_completed_week = bool(fwk and (lcw is None or fwk > lcw))
+
     if prior_mem.get("exited"):
         # 1. 已是態⑤（已出場、等新 ATH）→ 維持⑤，只查 §4.4 回歸。
         new_state = 5
         regained = _check_reentry_from_exit(ind, ctx)
         if regained:
             m = default_memory(state=1, since=today)   # 清空全部記憶旗標
+            m["last_confirmed_week"] = fwk             # 保留週確認進度
             new_state = 1
             flags.append("reentry_from_exit")
     elif C["earnings_gap_break"]:
-        new_state = 5                                   # 2. 財報 gap 破線（當日確認）
+        new_state = 5                                   # 2. 財報 gap 破線（當日確認，不等週收）
         flags.append("earnings_gap_break")
-    elif C["friday"] and C["weekly_break"]:
-        new_state = 5                                   # 3. 週五收盤確認破線
+    elif new_completed_week and C["weekly_break"]:
+        new_state = 5                                   # 3. 新完成週 + 週收盤破 52w → 確認
         flags.append("weekly_break_confirmed")
-    elif (not C["friday"]) and C["below_52w"]:
-        new_state = prior_state                         # 4. 非週五破線 → 維持原態 + 黃色預警
+    elif C["below_52w"]:
+        # 4. r2 P0-1：週中（或未確認週）破 52w → 判態④、發減碼、外掛黃牌。
+        #    不再「維持原態 + 只掛 WARN 而無動作」（生死線下方滿倉等週五的 bug）。
+        new_state = 4
         pending = True
     elif C["below_60d"] and C["above_52w"]:
-        new_state = 4                                   # 5. 態④回檔
+        new_state = 4                                   # 5. 態④回檔（跌破 60MA、仍站上 52w）
     elif C["touch_3sigma"]:
-        new_state = 3                                   # 6. 態③觸及極限
+        new_state = 3                                   # 6. 態③過熱（觸 3σ）
     elif C["overheat_zone"]:
-        new_state = 2                                   # 7. 態②過熱帶
+        new_state = 2                                   # 7. 態②偏熱
     elif C["above_52w"] and C["alignment"]:
-        new_state = 1                                   # 8. 態①多頭騎乘
+        new_state = 1                                   # 8. 態①健康多頭
     else:
         new_state = prior_state                         # 9. 維持前態 + degraded
         degraded = True
@@ -186,6 +199,10 @@ def evaluate(ticker: str, ind: Optional[dict], mem: Optional[dict],
     if new_state is None:                               # prior_state 不存在的極端 fallback
         new_state, ex = _direct_state(C, ind)
         m["exited"] = ex
+
+    # r2 P0-2：無論是否破線，新完成週判定後即推進 last_confirmed_week（一週只確認一次）。
+    if new_completed_week:
+        m["last_confirmed_week"] = fwk
 
     # ── 記憶更新（§4.3）─────────────────────────────────────────────────────
     m["pending_state5_warning"] = pending
@@ -231,15 +248,12 @@ def evaluate(ticker: str, ind: Optional[dict], mem: Optional[dict],
     if new_state != 5 and prior_state == 5 and not prior_mem.get("exited"):
         pass  # 不會發生（⑤一定 exited）；保留註記
 
-    # 態④ pullback 記憶：reentry_armed = 日線站回 60MA 且 週線態①
+    # 態④ pullback 記憶：進入態④（新一輪回檔）時重置減碼旗標。
+    # r2 P2：移除 reentry_armed —— 態④內不可達（站回 60MA+排列多頭即判態①），
+    #        回補由 ①-ADD_TRIGGER 正確發出。
     pb = m["pullback"]
-    if new_state == 4:
-        if prior_state != 4:
-            pb["trim_to_core_done"] = False
-            pb["reentry_armed"] = False
-    # 站回 60MA 且 排列仍多頭（週線態①條件）→ armed
-    if (not C["below_60d"]) and C["above_52w"] and C["alignment"]:
-        pb["reentry_armed"] = True
+    if new_state == 4 and prior_state != 4:
+        pb["trim_to_core_done"] = False
 
     m["state"] = new_state
 
@@ -282,10 +296,21 @@ def _action_for(state: int, m: dict, ctx: dict, ind: Optional[dict] = None,
                 pending: bool = False) -> str:
     held = ctx["held"]
     blackout = ctx.get("earnings_blackout")
+    pend = bool(pending or m.get("pending_state5_warning"))
+
     if state == 5:
         return "EXIT_ALL" if held else "DISQUALIFIED"
-    if pending or m.get("pending_state5_warning"):
-        return "WARN_PENDING_5"
+
+    # r2 P0-1：態④減碼優先於 pending —— 週中破線時，持有者先拿到「減至核心 50%」
+    # 指令（黃牌另由 flags 同列顯示），減碼已 done 才退回 WARN_PENDING_5。
+    if state == 4 and held and not m["pullback"]["trim_to_core_done"]:
+        return "TRIM_TO_CORE_50"
+    if pend:
+        # WARN 是持有側指令（本週收盤若仍 < 52w 即全出）；watchlist 無倉可出 → 落入
+        # 下方 by-state（態④ watch → WAIT），黃牌仍由 flags 呈現。
+        if held:
+            return "WARN_PENDING_5"
+
     if state == 1:
         if held:
             # 加碼板機：回踩後站回 60MA 且 非靜默期（B 型 reentry 語義）
@@ -301,13 +326,8 @@ def _action_for(state: int, m: dict, ctx: dict, ind: Optional[dict] = None,
             return "TRIM_1_3" if not m["overheat_episode"]["trim_done"] else "NO_ADD"
         return "WAIT"
     if state == 4:
-        if held:
-            if not m["pullback"]["trim_to_core_done"]:
-                return "TRIM_TO_CORE_50"
-            if m["pullback"]["reentry_armed"]:
-                return "REENTRY_TRIGGER"
-            return "HOLD_CORE"
-        return "WAIT"
+        # held 且 trim 已 done（上方未攔截）→ 抱核心；watchlist → 觀望。
+        return "HOLD_CORE" if held else "WAIT"
     return "NONE"
 
 
@@ -317,9 +337,11 @@ def _entry_signal(ind: dict, state: int, m: dict, breakout: Optional[dict],
     if state != 1 or not ctx.get("quality_pass") or ctx.get("earnings_blackout"):
         return None
 
-    # A 突破型：今日收盤創新高 且 前一日 pct_vs_ath ≥ -5%
+    # A 突破型：突破「首日」收盤創新高（前一日未創）且 前一日 pct_vs_ath ≥ -5%。
+    # r2 P2：加 not prev_is_new_ath 去重 —— 連續創高日（如 LLY 一路噴）不重發 A。
     prev = ind.get("prev_pct_vs_ath")
-    if ind.get("is_new_ath_today") and prev is not None and prev >= -ATH_PROXIMITY:
+    if (ind.get("is_new_ath_today") and not ind.get("prev_is_new_ath")
+            and prev is not None and prev >= -ATH_PROXIMITY):
         return "ENTRY_A"
 
     # B 回踩型：態①全程乾淨（未掛過 pending warning）

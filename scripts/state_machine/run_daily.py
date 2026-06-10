@@ -238,6 +238,21 @@ def _round(v, n=4):
     return round(v, n) if isinstance(v, (int, float)) else None
 
 
+def _risk_cap_pct(ind) -> "float | None":
+    """總守則 v1.9 S-4 風險上限：min(10%, 1.5%/停損距離)。
+    停損距離 = (close − ma52w)/close（以 52 週線為停損）；close ≤ ma52w → null。
+    純價格計算，無隱私問題。"""
+    if not ind:
+        return None
+    close, ma52w = ind.get("close"), ind.get("ma52w")
+    if not close or not ma52w or close <= ma52w:
+        return None
+    stop_distance = (close - ma52w) / close
+    if stop_distance <= 0:
+        return None
+    return round(min(CFG.RISK_CAP_MAX, CFG.RISK_CAP_RISK_BUDGET / stop_distance), 4)
+
+
 def _daily_row(symbol, held, res, ind, ectx) -> dict:
     m = res["mem"]
     return {
@@ -256,6 +271,7 @@ def _daily_row(symbol, held, res, ind, ectx) -> dict:
             "bb_position": _round(ind.get("bb_position"), 2) if ind else None,
             "volume_ratio": _round(ind.get("volume_ratio"), 2) if ind else None,
             "next_earnings": ectx.get("next_earnings"),
+            "risk_cap_pct": _risk_cap_pct(ind),   # 總守則 v1.9 S-4 公式上限
         },
         "notes": [f for f in res["flags"] if f in ("short_history", "earnings_unknown",
                                                     "data_error", "seed_init")],
@@ -287,7 +303,7 @@ def build(top_n=None, dry_run=False, as_of=None, workers=8) -> dict:
 
     # 價格
     yf_map = {s: _yf_ticker(s) for s in symbols}
-    prices = load_prices(sorted(set(yf_map.values())))
+    prices, split_factors = load_prices(sorted(set(yf_map.values())))
     print(f"  prices: {len(prices)} fetched/cached of {len(set(yf_map.values()))} yf tickers")
 
     # 記憶
@@ -296,6 +312,17 @@ def build(top_n=None, dry_run=False, as_of=None, workers=8) -> dict:
     seed_run = (len(state_mem) == 0)
     if seed_run:
         print("  state.json empty → FIRST RUN seed (§8.6: 保守初始化記憶旗標)")
+
+    # §P1-2：偵測到拆股的標的，把 breakouts.json 內 prior_ath 按係數換算到新基準
+    # （價格全歷史已重抓並重新調整；retest band 自然對齊新基準）。
+    if split_factors:
+        rev = {yf_map[s]: s for s in symbols}
+        for yf_t, fac in split_factors.items():
+            sym = rev.get(yf_t)
+            if sym and sym in breakouts and breakouts[sym].get("prior_ath"):
+                old = breakouts[sym]["prior_ath"]
+                breakouts[sym]["prior_ath"] = round(old * fac, 4)
+                print(f"  [split] {sym} prior_ath {old} → {breakouts[sym]['prior_ath']} (×{fac:.3f})")
 
     new_state_mem, new_breakouts = dict(state_mem), dict(breakouts)
     rows, changes = [], []
@@ -306,7 +333,7 @@ def build(top_n=None, dry_run=False, as_of=None, workers=8) -> dict:
         s = u["symbol"]
         yf_t = yf_map[s]
         df = prices.get(yf_t)
-        ind = compute_indicators(df) if df is not None else None
+        ind = compute_indicators(df, as_of=as_of) if df is not None else None
         ind_by_symbol[s] = ind
         ectx = _earnings_ctx(earnings.get(s, {}), as_of,
                              ind.get("prev_bar_date") if ind else None)

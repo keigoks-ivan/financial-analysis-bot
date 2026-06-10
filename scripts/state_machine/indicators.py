@@ -42,11 +42,15 @@ def _f(v) -> Optional[float]:
     return x
 
 
-def to_weekly(daily: "pd.DataFrame") -> tuple["pd.DataFrame", bool]:
+def to_weekly(daily: "pd.DataFrame", as_of: "str | None" = None) -> tuple["pd.DataFrame", bool]:
     """日線 → 週線（W-FRI）。回傳 (weekly_full, is_week_complete)。
 
     weekly_full 每一列：close=該週最後收盤、high=該週日高最大、low=該週日低最小。
-    is_week_complete = 最後一根日線為週五（該週已收）。
+
+    is_week_complete（r2 P0-2，事件式，假日週 + 漏跑免疫）：
+      最後一根日線為週五（weekday==4），**或** 判定日 as_of 已 ≥ 最後一桶的 W-FRI
+      端點日（該週週五）。後者讓週五休市（最後一根為週四）或週五漏跑改週一補跑時，
+      仍能把該週判為「已完成」，不會把破線確認延後一週或永久丟失。
     """
     if daily is None or daily.empty:
         return pd.DataFrame(), False
@@ -57,6 +61,13 @@ def to_weekly(daily: "pd.DataFrame") -> tuple["pd.DataFrame", bool]:
     }).dropna(subset=["close"])
     last_bar_date = daily.index[-1]
     is_week_complete = (last_bar_date.weekday() == _FRIDAY)
+    if not is_week_complete and as_of and not w.empty:
+        try:
+            bucket_friday = w.index[-1].date()
+            if pd.Timestamp(as_of).date() >= bucket_friday:
+                is_week_complete = True
+        except Exception:
+            pass
     return w, is_week_complete
 
 
@@ -66,8 +77,12 @@ def _sma(series: "pd.Series", n: int) -> Optional[float]:
     return _f(series.iloc[-n:].mean())
 
 
-def compute_indicators(daily: "pd.DataFrame") -> Optional[dict]:
-    """從日線 OHLCV 算出全部指標 + 旗標。資料太少（< ~2 個月）回傳 None。"""
+def compute_indicators(daily: "pd.DataFrame", as_of: "str | None" = None) -> Optional[dict]:
+    """從日線 OHLCV 算出全部指標 + 旗標。資料太少（< ~2 個月）回傳 None。
+
+    as_of（YYYY-MM-DD，r2 P0-2）：判定日，傳入後週完成判定改為事件式（見 to_weekly）。
+    None 時退回「最後一根為週五」的舊判定（測試/離線用）。
+    """
     if daily is None or daily.empty or len(daily) < 30:
         return None
     daily = daily[~daily.index.duplicated(keep="last")].sort_index()
@@ -101,7 +116,7 @@ def compute_indicators(daily: "pd.DataFrame") -> Optional[dict]:
     volume_spike = bool(volume_ratio is not None and volume_ratio >= VOLUME_SPIKE)
 
     # ── 週線（凍結）──────────────────────────────────────────────────────────
-    weekly, is_week_complete = to_weekly(daily)
+    weekly, is_week_complete = to_weekly(daily, as_of=as_of)
     if is_week_complete:
         frozen = weekly                 # 本週已收 → 納入
     else:
