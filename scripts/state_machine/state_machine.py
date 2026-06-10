@@ -123,6 +123,10 @@ def evaluate(ticker: str, ind: Optional[dict], mem: Optional[dict],
 
     m = copy.deepcopy(prior_mem) if prior_mem else default_memory(state=1, since=today)
     m["data_error_streak"] = 0
+    # schema 遷移正規化：補 last_confirmed_week、清掉已廢除的 reentry_armed 死鍵。
+    m.setdefault("last_confirmed_week", None)
+    if isinstance(m.get("pullback"), dict):
+        m["pullback"].pop("reentry_armed", None)
     C = _conditions(ind, ctx)
 
     # 短歷史 / 財報未知旗標
@@ -162,7 +166,10 @@ def evaluate(ticker: str, ind: Optional[dict], mem: Optional[dict],
     # 假日週（週四即週收盤）與週五漏跑改週一補跑都因此被涵蓋，不會遲到或丟失。
     fwk = ind.get("frozen_week_date")
     lcw = prior_mem.get("last_confirmed_week")
-    new_completed_week = bool(fwk and (lcw is None or fwk > lcw))
+    # 需有「已建立的 baseline」(lcw 非 None) 且本週嚴格較新，才算新完成週 → 才確認。
+    # lcw is None（新檔/schema 遷移）→ 本次只建立 baseline，不回溯確認歷史週。
+    new_completed_week = bool(fwk and lcw is not None and fwk > lcw)
+    establish_baseline = bool(fwk and lcw is None)
 
     if prior_mem.get("exited"):
         # 1. 已是態⑤（已出場、等新 ATH）→ 維持⑤，只查 §4.4 回歸。
@@ -200,8 +207,9 @@ def evaluate(ticker: str, ind: Optional[dict], mem: Optional[dict],
         new_state, ex = _direct_state(C, ind)
         m["exited"] = ex
 
-    # r2 P0-2：無論是否破線，新完成週判定後即推進 last_confirmed_week（一週只確認一次）。
-    if new_completed_week:
+    # r2 P0-2：新完成週判定後推進 last_confirmed_week（一週只確認一次）；
+    # 或首次建立 baseline（lcw 原為 None）。
+    if new_completed_week or establish_baseline:
         m["last_confirmed_week"] = fwk
 
     # ── 記憶更新（§4.3）─────────────────────────────────────────────────────
