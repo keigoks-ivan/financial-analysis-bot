@@ -502,14 +502,16 @@ function renderGoldenIntersection() {
   slot.style.display = "";
 
   let html = "";
+  html += `<h3 style="margin-bottom:2px"><span class="ico">⚑</span>本圖稀缺鎖喉節點</h3>
+    <p class="lede">此圖中 ⚑ 關鍵單點 / 客戶獨家節點的擁有者，依「能否買到純曝險」分三層。全站跨圖的 T0–T2 稀缺瓶頸排名見 <a href="/supply-chain/">供應鏈首頁</a>。</p>`;
   if (sat.size) {
-    html += `<h3><span class="ico">💎</span>Satellite Top Picks · ${sat.size} 檔</h3>
-    <p class="lede">同時滿足 <em>⚑ 客戶獨家／關鍵單點</em> × <em>核心業務</em>（純玩家 / ≥20% rev，非 side bet） × <em>供應鏈鎖喉緊俏</em>（≥2 訊號）三條件 — 鎖喉<strong>推得動該股 EPS</strong> 的 high-conviction picks。</p>
+    html += `<h3><span class="ico">💎</span>可投資鎖喉純玩家 · ${sat.size} 檔</h3>
+    <p class="lede">同時滿足 <em>⚑ 客戶獨家／關鍵單點</em> × <em>核心業務</em>（純玩家 / ≥20% rev，非 side bet） × <em>供應鏈鎖喉緊俏</em>（≥2 訊號）三條件 — 斷供稀缺性<strong>推得動該股 EPS</strong>。</p>
     ${tierTable(sat, "", "公司")}`;
   }
   if (ele.size) {
-    html += `<h3 class="tier-ele"><span class="ico">🐘</span>Elephant · ${ele.size} 檔 — 最不可或缺，但鎖喉被稀釋</h3>
-    <p class="lede">它<strong>就是</strong>鎖喉本身（壟斷／近獨佔），但身處大型多角化集團，單一節點推不動 EPS。<strong>用 core-holding 框架評</strong>（估值 / 整體成長 / 週期），不是 single-point satellite alpha。</p>
+    html += `<h3 class="tier-ele"><span class="ico">🐘</span>大集團鎖喉 · ${ele.size} 檔 — 是鎖喉本身、但稀缺被集團稀釋</h3>
+    <p class="lede">它<strong>就是</strong>鎖喉本身（壟斷／近獨佔），但身處大型多角化集團，單一節點推不動 EPS。<strong>用 core-holding 框架評</strong>（估值 / 整體成長 / 週期），不是 single-point alpha。</p>
     ${tierTable(ele, "tier-ele-tbl", "公司")}`;
   }
   if (uni.size) {
@@ -517,7 +519,7 @@ function renderGoldenIntersection() {
     <p class="lede">結構上唯一 / sole-source，但<strong>買不到純曝險</strong> — 未上市，或已是某上市母體的次組件。要曝險請透過母體 / 客戶。</p>
     ${tierTable(uni, "tier-uni-tbl", "節點供應商")}`;
   }
-  html += `<p class="gold-foot">三層分類：💎 <code>core_business:true</code> × <code>supply_chain_lock:"tight"</code>（鎖喉推得動 EPS）｜🐘 <code>node_role:"elephant"</code>（是鎖喉但太大太分散，用 core-holding 評）｜🔒 <code>node_role:"uninvestable"</code>（唯一但買不到，透過母體玩）。由 <code>supply-chain-cartographer</code> skill 標註，validator pre-commit 把關。</p>`;
+  html += `<p class="gold-foot">三層分類：💎 <code>core_business:true</code> × <code>supply_chain_lock:"tight"</code>（可投資純玩家、鎖喉推得動 EPS）｜🐘 <code>node_role:"elephant"</code>（是鎖喉但太大太分散，用 core-holding 評）｜🔒 <code>node_role:"uninvestable"</code>（唯一但買不到，透過母體玩）。由 <code>supply-chain-cartographer</code> skill 標註，validator pre-commit 把關。</p>`;
 
   slot.innerHTML = html;
 }
