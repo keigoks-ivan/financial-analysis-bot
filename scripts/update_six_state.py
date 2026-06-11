@@ -116,13 +116,13 @@ def compute_state(close: pd.Series):
         if len(recent) >= 2 and not recent[-1]["above_ma52"] and not recent[-2]["above_ma52"]:
             state = "S2"
 
-    # State info
+    # State info — r1 純 ETF 兩元配置（QQQ + IB01）。個股池已併入 QQQ（總守則 v2.0 §0.3 P2 / E-0 r1-a）。
     state_info = {
-        "S1":   {"name": "S1 正常巡航",  "css": "s1",  "exposure": 95,   "nq": 75, "stock": 20, "bond": 5,    "desc": "所有均線之上，正常配置"},
-        "S1.5": {"name": "S1.5 緩衝層",  "css": "s15", "exposure": 90,   "nq": 70, "stock": 20, "bond": 10,   "desc": ""},
-        "S0":   {"name": "S0 紅燈過熱",  "css": "s0",  "exposure": 79.8, "nq": 63, "stock": 16.8, "bond": 20.2, "desc": "紅燈 4/4 全亮，主動減碼"},
-        "S2":   {"name": "S2 防守模式",  "css": "s2",  "exposure": 47.5, "nq": 37.5, "stock": 10, "bond": 52.5, "desc": "跌破 MA52，大幅減碼防守"},
-        "S5":   {"name": "S5 趨勢重啟",  "css": "s5",  "exposure": 0,    "nq": 0, "stock": 0, "bond": 0,       "desc": "從 S2 恢復中，每週 +15%"},
+        "S1":   {"name": "S1 正常巡航",  "css": "s1",  "exposure": 95,   "qqq": 95,   "ib01": 5,    "desc": "所有均線之上，正常配置"},
+        "S1.5": {"name": "S1.5 緩衝層",  "css": "s15", "exposure": 90,   "qqq": 90,   "ib01": 10,   "desc": ""},
+        "S0":   {"name": "S0 紅燈過熱",  "css": "s0",  "exposure": 79.8, "qqq": 79.8, "ib01": 20.2, "desc": "紅燈 4/4 全亮，主動減碼"},
+        "S2":   {"name": "S2 防守模式",  "css": "s2",  "exposure": 47.5, "qqq": 47.5, "ib01": 52.5, "desc": "跌破 MA52，大幅減碼防守"},
+        "S5":   {"name": "S5 趨勢重啟",  "css": "s5",  "exposure": 0,    "qqq": 0,    "ib01": 0,    "desc": "從 S2 恢復中，每週 +15%"},
     }
 
     if red_count >= 4 and state in ("S1", "S1.5"):
@@ -441,7 +441,7 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
   <div class="container">
     <div class="crumb"><a href="/">首頁</a> / 六狀態機</div>
     <h1>六狀態機 — 即時狀態</h1>
-    <div class="sub">SystemProtocol v7 動態曝險調整系統 &middot; QQQ 週線</div>
+    <div class="sub">指數部六狀態機 v1.0r1 &middot; 純 ETF 配置（QQQ + IB01）&middot; QQQ 週線</div>
   </div>
 </div>
 <div class="container">
@@ -459,13 +459,12 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
 <div class="card">
 <h3>當前配置</h3>
 <div class="alloc-bar">
-  <div class="ab-nq" style="width:{si['nq']}%">NQ100 {si['nq']}%</div>
-  <div class="ab-stock" style="width:{si['stock']}%">個股 {si['stock']}%</div>
-  <div class="ab-bond" style="width:{si['bond']}%">IB01 {si['bond']}%</div>
+  <div class="ab-nq" style="width:{si['qqq']}%">QQQ {si['qqq']}%</div>
+  <div class="ab-bond" style="width:{si['ib01']}%">IB01 {si['ib01']}%</div>
 </div>
 <div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted)">
-  <span>股票曝險 {si['exposure']}% ({s}: NQ {si['nq']}% + 個股 {si['stock']}%)</span>
-  <span>債券 {si['bond']}%</span>
+  <span>股票曝險 {si['exposure']}% ({s}: QQQ {si['qqq']}%)</span>
+  <span>短債 IB01 {si['ib01']}%</span>
 </div>
 </div>
 
@@ -547,13 +546,13 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
 <div id="tab-rules" class="tab-content active">
 <h3 class="section-title">五個主狀態</h3>
 <table>
-<thead><tr><th>狀態</th><th>名稱</th><th>NQ100</th><th>個股</th><th>IB01</th><th>股票曝險</th><th>進入條件</th></tr></thead>
+<thead><tr><th>狀態</th><th>名稱</th><th>QQQ</th><th>IB01</th><th>股票曝險</th><th>進入條件</th></tr></thead>
 <tbody>
-<tr style="background:var(--green-bg)"><td><strong>S1</strong></td><td>正常巡航</td><td>75%</td><td>20%</td><td>5%</td><td style="font-weight:700">95%</td><td>預設 / S5 完成恢復 / S1.5 連續 2 週 &ge; MA12</td></tr>
-<tr style="background:var(--blue-bg)"><td><strong>S1.5</strong></td><td>緩衝層</td><td>70%</td><td>20%</td><td>10%</td><td style="font-weight:700">90%</td><td>週五收盤 &lt; MA12 &times; 0.98</td></tr>
-<tr style="background:var(--amber-bg)"><td><strong>S0</strong></td><td>紅燈過熱</td><td>63%</td><td>16.8%</td><td>20.2%</td><td style="font-weight:700">79.8%</td><td>紅燈 4/4 全亮</td></tr>
-<tr style="background:var(--red-bg)"><td><strong>S2</strong></td><td>防守模式</td><td>37.5%</td><td>10%</td><td>52.5%</td><td style="font-weight:700">47.5%</td><td>Close &lt; MA52&times;0.97 或 連續 2 週 &lt; MA52</td></tr>
-<tr style="background:var(--purple-bg)"><td><strong>S5</strong></td><td>趨勢重啟</td><td colspan="3">每週買回 +15% 股票</td><td style="font-weight:700">動態</td><td>從 S2 恢復: 週五收盤 &gt; MA52</td></tr>
+<tr style="background:var(--green-bg)"><td><strong>S1</strong></td><td>正常巡航</td><td>95%</td><td>5%</td><td style="font-weight:700">95%</td><td>預設 / S5 完成恢復 / S1.5 連續 2 週 &ge; MA12</td></tr>
+<tr style="background:var(--blue-bg)"><td><strong>S1.5</strong></td><td>緩衝層</td><td>90%</td><td>10%</td><td style="font-weight:700">90%</td><td>週五收盤 &lt; MA12 &times; 0.98</td></tr>
+<tr style="background:var(--amber-bg)"><td><strong>S0</strong></td><td>紅燈過熱</td><td>79.8%</td><td>20.2%</td><td style="font-weight:700">79.8%</td><td>紅燈 4/4 全亮</td></tr>
+<tr style="background:var(--red-bg)"><td><strong>S2</strong></td><td>防守模式</td><td>47.5%</td><td>52.5%</td><td style="font-weight:700">47.5%</td><td>Close &lt; MA52&times;0.97 或 連續 2 週 &lt; MA52</td></tr>
+<tr style="background:var(--purple-bg)"><td><strong>S5</strong></td><td>趨勢重啟</td><td colspan="2">每週買回 +15% QQQ</td><td style="font-weight:700">動態</td><td>從 S2 恢復: 週五收盤 &gt; MA52</td></tr>
 </tbody>
 </table>
 <h3 class="section-title" style="margin-top:1.25rem">Grid 加碼層 (S2 下啟用)</h3>
@@ -611,8 +610,8 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
 <div class="card">
 <p style="font-size:.84rem;line-height:1.8;color:#374151">
   進入 S5 時保留所有已觸發 Grid。起始曝險 = S2 當時水位。<br>
-  每週買回 +15% 股票 (NQ:個股 = 75:20 比例)，資金從 IB01 撥出。<br>
-  最多 <strong>5 週</strong>從 47.5% 恢復到 95%。<br>
+  每週買回 +15% QQQ，資金從 IB01 撥出。<br>
+  <strong>第 4 週補滿</strong>從 47.5% 恢復到 95% (15+15+15+2.5)。<br>
   S5 期間若任一週五收盤跌破 MA52 → 立即回 S2，保留已觸發 Grid 記錄。
 </p>
 </div>
@@ -669,7 +668,8 @@ def main():
     print(f"  Written to {OUTPUT}")
     print(f"  State: {data['state_info']['name']} | Exposure: {data['state_info']['exposure']}%")
 
-    # JSON sidecar — consumed by docs/flow/index.html "QQQ 六狀態" cell + QQQ Track section
+    # JSON sidecar — state/exposure 仍由 build_prices_cache.py 讀取（QQQ overlay）。
+    # 配置欄位為純 ETF 兩元（QQQ + IB01）；原 flow 消費者已於 2026-06-11 封存。
     state_json = {
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "data_date": data["last_date"],
@@ -679,9 +679,8 @@ def main():
         "state_css": data["state_info"]["css"],
         "exposure_pct": data["state_info"]["exposure"],
         "allocation": {
-            "nq_pct": data["state_info"]["nq"],
-            "stock_pct": data["state_info"]["stock"],
-            "bond_pct": data["state_info"]["bond"],
+            "qqq_pct": data["state_info"]["qqq"],
+            "ib01_pct": data["state_info"]["ib01"],
         },
         "last_close": round(data["last_close"], 2),
         "key_levels": {
