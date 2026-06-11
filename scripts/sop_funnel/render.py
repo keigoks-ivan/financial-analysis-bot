@@ -5,6 +5,16 @@ from __future__ import annotations
 import html
 
 
+# ── 顯示層圈數字替換（①-⑤ 小字級下不可讀；資料層內部表示不動）──
+_CIRCLED = {"①": "1", "②": "2", "③": "3", "④": "4", "⑤": "5"}
+
+
+def _plain_states(html_text: str) -> str:
+    for k, v in _CIRCLED.items():
+        html_text = html_text.replace(k, v)
+    return html_text
+
+
 def _e(v) -> str:
     return html.escape(str(v)) if v is not None else "—"
 
@@ -24,6 +34,17 @@ def _cls(v) -> str:
 def _dd_link(ev) -> str:
     p = ev.get("dd_path")
     return f'<a href="/{_e(p)}" target="_blank">DD</a>' if p else "—"
+
+
+_ST_COLOR = {"1": "#059669", "2": "#ca8a04", "3": "#ea580c", "4": "#b45309", "5": "#dc2626"}
+
+
+def _state_badge(st) -> str:
+    d = _CIRCLED.get(st, st)
+    if d in _ST_COLOR:
+        return (f'<span style="font-weight:800;font-size:13px;color:{_ST_COLOR[d]}">'
+                f'態{d}</span>')
+    return _e(st)
 
 
 def _signal_rows(evs) -> str:
@@ -92,7 +113,7 @@ def _open_rows(evs) -> str:
             f'<tr><td class="left"><strong>{_e(e["ticker"])}</strong></td>'
             f'<td><span class="tag tag-{e["entry_type"].lower()}">{e["entry_type"]}</span></td>'
             f'<td>{_e(e["entry_date"])}</td><td>{s["entry_close"]:,.1f}</td>'
-            f'<td>{_e(s["current_state"])}'
+            f'<td>{_state_badge(s["current_state"])}'
             + (f'<span class="pending-tag">{_e(s["pending_action"])}·明日收盤執行</span>'
                if s.get("pending_action") else '')
             + f'</td><td>{s["current_fraction"] * 100:.0f}%</td>'
@@ -256,7 +277,7 @@ def render_page(d: dict) -> str:
         insuf = ('<div class="exceeded">歷史不足（&lt;200 週，無法判定週線排列）：'
                  + "、".join(r["ticker"] for r in d["insufficient_history"]) + "</div>")
 
-    return f"""<!DOCTYPE html>
+    return _plain_states(f"""<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
 <meta name="robots" content="noindex,nofollow">
@@ -415,4 +436,4 @@ footer{{text-align:center;font-size:10.5px;color:#8aa5c0;padding:24px}}
 
 <footer>InvestMQuest · Pure MA SOP 漏斗 v1.0 · 生成 {d["run_timestamp"]} · 模擬非投資建議</footer>
 </body></html>
-"""
+""")

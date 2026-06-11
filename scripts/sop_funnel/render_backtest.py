@@ -21,6 +21,16 @@ IN_JSON = REPO_ROOT / "docs" / "dd-screener" / "sop-funnel" / "backtest-full.jso
 OUT_HTML = REPO_ROOT / "docs" / "dd-screener" / "sop-funnel-backtest.html"
 
 
+# ── 顯示層圈數字替換（①-⑤ 小字級下不可讀；資料層內部表示不動）──
+_CIRCLED = {"①": "1", "②": "2", "③": "3", "④": "4", "⑤": "5"}
+
+
+def _plain_states(html_text: str) -> str:
+    for k, v in _CIRCLED.items():
+        html_text = html_text.replace(k, v)
+    return html_text
+
+
 def _e(v):
     return html.escape(str(v)) if v is not None else "—"
 
@@ -311,7 +321,7 @@ footer{{text-align:center;font-size:10.5px;color:#8aa5c0;padding:24px}}
 <footer>InvestMQuest · SOP 漏斗 2022 回測 v1.1 · 生成 {d["run_timestamp"]} · 模擬非投資建議</footer>
 </body></html>
 """
-    OUT_HTML.write_text(page, encoding="utf-8")
+    OUT_HTML.write_text(_plain_states(page), encoding="utf-8")
     print(f"rendered → {OUT_HTML}")
     return 0
 
