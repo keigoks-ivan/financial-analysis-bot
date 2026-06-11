@@ -33,8 +33,8 @@ TH = {"cagr": 8.0, "mdd": -35.0, "sharpe": 0.5, "calmar": 0.3}
 SYSTEMS_20Y = [
     ("Long Track Only", "/backtest/long_track/", 9.59, -20.08, 0.80, 0.48, True, ""),
     ("LTO QQQ only", "/backtest/long_track_qqq/", 10.63, -25.37, 0.74, 0.42, True, ""),
-    ("Ensemble E3", "/backtest/long_track_ensemble/", 11.33, -21.15, 0.88, 0.54, True, "未採用"),
-    ("LT SMH/QQQ", "/backtest/long_track_smh/", 13.88, -26.93, 0.88, 0.52, True, "未採用"),
+    ("Ensemble E3", "/backtest/long_track_ensemble/", 11.33, -21.15, 0.88, 0.54, True, "2026-06-11 採用 · OOS"),
+    ("LT SMH/QQQ", "/backtest/long_track_smh/", 13.88, -26.93, 0.88, 0.52, True, "2026-06-11 採用 · OOS"),
     ("W52 斜率濾網", "/backtest/slope_filter/", 9.59, -20.05, 0.89, 0.48, True, "未經 warmup 審計"),
     ("GEM 雙動能", "/backtest/gem/", 8.49, -21.54, 0.54, 0.39, True, ""),
     ("六狀態機 v1.1", "/backtest/six_state/", 14.53, -35.80, 0.85, 0.41, True, ""),
@@ -46,10 +46,10 @@ SYSTEMS_20Y = [
 
 # (name, cagr, mdd, sharpe, calmar, verdict)  — 10Y corrected
 SYSTEMS_10Y = [
-    ("LT SMH/QQQ(未採用)", 25.90, -26.93, 1.22, 0.96, "warn", "CAGR 進可疑帶(>20%)— H2 半導體 regime"),
+    ("LT SMH/QQQ", 25.90, -26.93, 1.22, 0.96, "warn", "CAGR 進可疑帶(>20%)— H2 半導體 regime"),
     ("六狀態機 v1.1", 21.79, -28.49, 1.10, 0.76, "warn", "CAGR 進可疑帶(>20%)— 無 2008 的視窗"),
     ("LTO QQQ only", 18.30, -25.18, 1.08, 0.73, "good", "進攻型優秀"),
-    ("Ensemble E3(未採用)", 15.90, -21.15, 1.10, 0.75, "good", "優秀(樣本內)"),
+    ("Ensemble E3", 15.90, -21.15, 1.10, 0.75, "good", "優秀(樣本內)"),
     ("Long Track Only", 15.08, -18.75, 1.09, 0.80, "good", "優秀"),
     ("W52 斜率濾網", 10.05, -20.05, 0.77, 0.50, "pass", "合格(穩定)"),
     ("GEM 雙動能", 8.93, -21.54, 0.70, 0.41, "pass", "合格"),
@@ -79,8 +79,8 @@ def scoreboard_rows() -> str:
         c4 = check(calmar, TH["calmar"])
         n_pass = sum([c1, c2, c3, c4, yrs])
         qualified = n_pass == 5
-        if qualified and note == "未採用":
-            verdict = '<span class="tag tag-warn">數字合格 · 未採用</span>'
+        if qualified and "採用" in note:
+            verdict = '<span class="tag tag-best">合格 · 已採用</span>'
         elif qualified:
             verdict = '<span class="tag tag-best">合格</span>'
         else:
@@ -285,7 +285,8 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
     <p>2026-06 的 warmup 修正讓兩個系統的 headline 數字失效(Long Track 10.95% → 9.59%、LTO QQQ 12.33% → 10.63%),
        合格名單隨之變動:Long Track 從「優秀」降為「合格」、六狀態機 v1.1 在 MDD 門檻上以 0.8pp 之差出局。
        <strong>門檻有鑑別力,所以維持不變;這次修訂把修正過程中學到的五條方法論紀律成文化</strong> —
-       分母完整性、樣本內紀律、子期間雙視窗、現實假設、合格 ≠ 採用 — 並把套用結果改為對照修正後數據的計分板。</p>
+       分母完整性、樣本內紀律、子期間雙視窗、現實假設、合格 ≠ 採用(採用 = 有記錄的決策 + 重審條件,
+       Ensemble E3 與 LT SMH/QQQ 即循此流程於 2026-06-11 採用)— 並把套用結果改為對照修正後數據的計分板。</p>
   </div>
 </div>
 
@@ -390,9 +391,10 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
       「更好的系統」其實是「更大的 regime 賭注」。</li>
   <li><strong>現實假設</strong> — 閒置資金計 SHY/BIL 利息(空倉時間集中在高利率熊市,影響不可忽略);
       單邊成本 7bps;訊號在所屬 bar 收盤確認並執行。</li>
-  <li><strong>合格 ≠ 採用</strong> — 數字全過只代表「值得進入 OOS 追蹤」。
-      Ensemble E3(Sharpe 0.88 / Calmar 0.54)與 LT SMH/QQQ(13.88% / 0.52)數字皆全過,
-      仍標記未採用:樣本內證據、改善幅度未排除運氣、或 regime 集中。採用需要角色定位 + OOS 驗證。</li>
+  <li><strong>合格 ≠ 採用,採用 = 決策 + 條件</strong> — 數字全過只代表「值得進入決策」。
+      案例:Ensemble E3 與 LT SMH/QQQ 數字皆全過,先以「未採用」記錄保留意見(樣本內證據、regime 集中),
+      2026-06-11 經系統擁有者審視證據後決策採用 — 採用紀錄包含日期、保留意見與 OOS 重審/退場條件(見各頁)。
+      原則不變:採用來自有記錄的決策,不來自漂亮的回測數字本身。</li>
 </ol>
 </div>
 </div>
@@ -435,7 +437,8 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
   <strong>角色配置:</strong>防守主力 = Long Track 50/50;進攻位 = LTO QQQ 或六狀態機 v1.1(後者不合格但可用部位大小納入 —
   56% 倉位 + 44% T-bill 即等效 -20% MDD 預算,代價是等風險下輸給 Long Track);
   互補 alpha = 跨資產趨勢(Turtle 商品腿 / Clenow),與美股趨勢家族低相關,是把 MDD 再往下壓唯一沒走過的路。<br>
-  <strong>觀察名單(數字合格、未採用):</strong>Ensemble E3(訊號分散,OOS 追蹤中)、LT SMH/QQQ(regime 集中,等 H1 型環境的反證)。<br>
+  <strong>已採用(2026-06-11,OOS 追蹤中):</strong>Ensemble E3 = 股票趨勢核心採用版(Ch12 基準轉為對照組;
+  重審:下一次盤整 + 下一次快崩兩個事件後)、LT SMH/QQQ = 進攻位(重審:滾動 3 年 Calmar 低於 SPY/QQQ 版,或半導體相對 QQQ 連 12 個月落後)。<br>
   <strong>已否決:</strong>雙軌多空(資金配置倒掛)、做空系統(兩個獨立引擎均證偽)、參數式微調(緩衝/確認週數,實測更糟)。
 </div>
 <div class="note">

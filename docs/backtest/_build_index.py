@@ -46,6 +46,7 @@ TAG = {
     "def":  '<span class="tag tag-best">防守</span>',
     "live": '<span class="tag" style="background:#fffbeb;color:#92400e;border:1px solid #fde68a">實盤 ⚠</span>',
     "exp":  '<span class="tag" style="background:#fffbeb;color:#92400e;border:1px solid #fde68a">🔬 實驗·未採用</span>',
+    "adopt": '<span class="tag" style="background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0">✓ 採用 · OOS</span>',
     "fail": '<span class="tag tag-fail">失敗</span>',
     "ma":   '<span class="tag" style="background:#f0fdfa;color:#115e59;border:1px solid #99f6e4">多資產</span>',
     "bh":   '<span class="tag tag-bh">基準</span>',
@@ -60,10 +61,10 @@ US_SYSTEMS = [
      "+9.59%", "-20.08%", "0.80", "0.48", "47", "$6.50M", TAG["def"]),
     ("LTO QQQ only", "/backtest/long_track_qqq/", "100% QQQ · Long Track 進攻變體(2026-06 修正)",
      "+10.63%", "-25.37%", "0.74", "0.42", "29", "$7.87M", TAG["atk"]),
-    ("Ensemble 集成", "/backtest/long_track_ensemble/", "{W40·W52·TSMOM} 各⅓ 倉位 · 假設檢驗",
-     "+11.33%", "-21.15%", "0.88", "0.54", "—", "$8.97M", TAG["exp"]),
-    ("LT SMH/QQQ", "/backtest/long_track_smh/", "50/50 SMH/QQQ · 同規則換標的池 · Layer-1 配置測試",
-     "+13.88%", "-26.93%", "0.88", "0.52", "45", "$14.24M", TAG["exp"]),
+    ("Ensemble 集成", "/backtest/long_track_ensemble/", "{W40·W52·TSMOM} 各⅓ 倉位 · 2026-06-11 採用",
+     "+11.33%", "-21.15%", "0.88", "0.54", "—", "$8.97M", TAG["adopt"]),
+    ("LT SMH/QQQ", "/backtest/long_track_smh/", "50/50 SMH/QQQ · 進攻位 · 2026-06-11 採用",
+     "+13.88%", "-26.93%", "0.88", "0.52", "45", "$14.24M", TAG["adopt"]),
     ("雙軌多空", "/backtest/dual_track/", "50/50 SPY/QQQ · Short 70% + Long 30%(原始設計)",
      "+4.60%", "-26.83%", "0.42", "0.17", "210", "$2.00M", TAG["fail"]),
     ("GEM 雙動能", "/backtest/gem/", "SPY/ACWX/AGG 月度切換",
@@ -93,8 +94,8 @@ PERIOD_CAGR = [
     ("v1.0r1 實盤", "#b45309", "+14.41%", "+17.35%", "+20.53%", "+17.55%"),
     ("Long Track", "#2e7d32", "+9.59%", "+12.04%", "+15.08%", "+11.55%"),
     ("LTO QQQ", "#16a34a", "+10.63%", "+13.90%", "+18.30%", "+13.82%"),
-    ("集成實驗 E3(未採用)", "#d97706", "+11.33%", "+12.98%", "+15.90%", "+13.44%"),
-    ("LT SMH/QQQ(未採用)", "#b45309", "+13.88%", "+18.79%", "+25.90%", "+23.35%"),
+    ("Ensemble E3(採用)", "#d97706", "+11.33%", "+12.98%", "+15.90%", "+13.44%"),
+    ("LT SMH/QQQ(採用)", "#b45309", "+13.88%", "+18.79%", "+25.90%", "+23.35%"),
     ("GEM", "#f57c00", "+7.81%", "+8.54%", "+7.87%", "+5.32%"),
     ("W52 斜率", "#0891b2", "+9.59%", "+10.21%", "+10.05%", "+6.43%"),
     ("QQQ B&H", "#1565c0", "+14.00%", "+17.53%", "+18.28%", "+9.80%"),
@@ -106,8 +107,8 @@ SCATTER = [
     ("v1.0r1 實盤", 49.29, 14.41, "#b45309"),
     ("Long Track", 20.08, 9.59, "#2e7d32"),
     ("LTO QQQ", 25.37, 10.63, "#16a34a"),
-    ("集成實驗(未採用)", 21.15, 11.33, "#d97706"),
-    ("LT SMH/QQQ(未採用)", 26.93, 13.88, "#b45309"),
+    ("Ensemble E3", 21.15, 11.33, "#d97706"),
+    ("LT SMH/QQQ", 26.93, 13.88, "#b45309"),
     ("雙軌多空", 26.83, 4.60, "#7c3aed"),
     ("GEM", 21.54, 8.49, "#f57c00"),
     ("W52 斜率", 20.05, 9.59, "#0891b2"),
@@ -351,7 +352,8 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
   <strong>六狀態機 v1.1</strong>是美股最高絕對報酬(+14.53%),代價 -35.8% MDD;
   <strong>Long Track Only</strong>(2026-06 warmup 修正後 +9.59% / -20.08% / Calmar 0.48)與
   <strong>W52 斜率</strong>(Sharpe 0.89)是防守雙雄;
-  <strong>集成實驗 E3</strong> 在股票趨勢核心中 Sharpe、Calmar 最高(0.88 / 0.54)但屬樣本內證據,未採用;
+  <strong>Ensemble E3</strong>(股票趨勢核心,Sharpe / Calmar 0.88 / 0.54)與
+  <strong>LT SMH/QQQ</strong>(進攻位,+13.88% / -26.93%)於 2026-06-11 經系統擁有者決策採用,OOS 追蹤中(重審條件見各頁);
   <strong>雙軌多空與做空系統</strong>已被否決(指數做空在兩個獨立引擎中均失敗);
   <strong>Turtle / Clenow</strong> 的 alpha 來自商品/匯率/利率,與股票趨勢低相關,是組合層的互補件。
 </div>
@@ -462,8 +464,8 @@ var LINES=[
   ['v1r1','v1.0r1 實盤','#b45309',1.2,[3,3]],
   ['ch12','Long Track','#2e7d32',2.2,[]],
   ['ch12q','LTO QQQ','#16a34a',1.4,[]],
-  ['e3','集成實驗(未採用)','#d97706',1.4,[3,3]],
-  ['smh','LT SMH/QQQ(未採用)','#b45309',1.4,[3,3]],
+  ['e3','Ensemble E3(採用)','#d97706',1.4,[3,3]],
+  ['smh','LT SMH/QQQ(採用)','#b45309',1.4,[3,3]],
   ['dual','雙軌多空','#7c3aed',1.1,[3,3]],
   ['gem','GEM','#f57c00',1.2,[]],
   ['w52','W52 斜率','#0891b2',1.2,[]],
