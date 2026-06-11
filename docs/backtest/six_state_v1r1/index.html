@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta name="robots" content="noindex,nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>六狀態機 v1.0r1 實盤規格 | InvestMQuest Research</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+:root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
+      --text:#111827;--muted:#6b7280;--border:#e5e7eb;
+      --green:#059669;--green-bg:#ecfdf5;--green-border:#a7f3d0;--green-text:#065f46;
+      --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;--red-text:#991b1b;
+      --amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fde68a;--amber-text:#92400e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1120px;margin:0 auto;padding:0 1.5rem}
+.page-hdr{padding:1.75rem 0 1.25rem;background:linear-gradient(180deg,#f0f4ff 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
+.page-hdr h1{font-size:1.6rem;font-weight:700;letter-spacing:-.03em}
+.page-hdr .sub{color:var(--muted);font-size:.9rem;margin-top:.2rem}
+.crumb{font-size:.82rem;color:var(--muted);margin-bottom:.4rem}
+.crumb a{color:var(--muted)}
+.section{padding:1.5rem 0 0}
+.section-title{font-size:1.15rem;font-weight:700;margin-bottom:1rem;
+               padding-bottom:.45rem;border-bottom:2px solid var(--brand)}
+.section-sub{font-size:.85rem;color:var(--muted);margin:-.5rem 0 1rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.card h3{font-size:1rem;font-weight:600;margin-bottom:.85rem}
+.card .takeaway{font-size:.88rem;margin-top:.75rem;padding:.6rem .9rem;border-radius:6px;
+                background:var(--brand-light);border-left:3px solid var(--brand)}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{text-align:left;padding:.6rem .75rem;border-bottom:1px solid var(--border)}
+th{background:#f9fafb;font-weight:600;font-size:.78rem;text-transform:uppercase;
+   letter-spacing:.04em;color:var(--muted)}
+td{font-variant-numeric:tabular-nums}
+tbody tr:hover td{background:#f3f4f6}
+.hero{margin:1.25rem 0;border:1px solid var(--red-border);border-radius:12px;overflow:hidden;background:var(--card)}
+.hero-top{background:linear-gradient(135deg,#fef2f2 0%,#fffbeb 100%);padding:1.4rem 1.6rem;border-bottom:1px solid var(--red-border)}
+.hero-top .verdict-tag{display:inline-block;background:var(--red);color:#fff;font-size:.74rem;font-weight:700;
+                       letter-spacing:.05em;padding:.25rem .7rem;border-radius:99px;margin-bottom:.5rem}
+.hero-top .ver-tag{display:inline-block;background:var(--brand);color:#fff;font-size:.74rem;font-weight:700;
+                   letter-spacing:.05em;padding:.25rem .7rem;border-radius:99px;margin-bottom:.5rem;margin-left:.4rem}
+.hero-top h2{font-size:1.35rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.35rem}
+.hero-top p{font-size:.92rem;color:#374151;max-width:60rem}
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card)}
+.hero-stats > div{padding:1rem 1.2rem;text-align:center;border-right:1px solid var(--border)}
+.hero-stats > div:last-child{border-right:none}
+.hero-stats .hs-label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.hero-stats .hs-value{font-size:1.55rem;font-weight:800;letter-spacing:-.02em}
+.note{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;
+      padding:.85rem 1.1rem;font-size:.84rem;color:var(--amber-text);margin:1rem 0}
+.tag{display:inline-block;padding:.15rem .55rem;border-radius:4px;font-size:.72rem;font-weight:600}
+.tag-best{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border)}
+.tag-fail{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red-border)}
+.tag-pass{background:#f3f4f6;color:#374151;border:1px solid #d1d5db}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.chart-card h3{font-size:.95rem;font-weight:600;margin-bottom:.5rem}
+.chart-wrap{position:relative;width:100%;height:380px}
+.chart-wrap-sm{position:relative;width:100%;height:240px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+details{background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:.75rem}
+details summary{padding:.9rem 1.25rem;font-weight:600;font-size:.95rem;cursor:pointer;list-style:none;display:flex;align-items:center;gap:.5rem}
+details summary::before{content:'▸';color:var(--brand);transition:transform .15s}
+details[open] summary::before{transform:rotate(90deg)}
+details .d-body{padding:0 1.25rem 1.25rem}
+footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
+       text-align:center;padding:1.25rem 0;font-size:.78rem;margin-top:2rem}
+@media(max-width:768px){
+  .two-col{grid-template-columns:1fr}
+  .hero-stats{grid-template-columns:repeat(2,1fr)}
+  .hero-stats > div{border-bottom:1px solid var(--border)}
+  table{font-size:.78rem}th,td{padding:.45rem .5rem}
+}
+</style>
+</head>
+<body>
+<style>
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/">個股 DD</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/">週報</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/six-state/">六狀態機</a>
+        </div>
+      </div>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/" class="active">量化回測</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/screener-tw.html">Screener 台股</a>
+        </div>
+      </div>
+      <a href="/mental-models/">🧠 心智模型</a>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="page-hdr">
+  <div class="container">
+    <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / 六狀態機 v1.0r1 實盤規格</div>
+    <h1 style="color:#b45309">六狀態機 v1.0r1 — 實盤規格(指數部)</h1>
+    <div class="sub">QQQ + IB01 · 五狀態 + Grid · 總守則 v2.1 Layer 2 · 啟用閘門 G1/G2/G3 補做 · 數據截至 2026-06-10</div>
+    <div style="margin-top:.75rem">
+      <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;font-weight:600">相關頁面</div>
+      <div style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-wrap:wrap"><a href="/backtest/six_state/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none">六狀態機(研究版 v1.1)</a><a href="/backtest/six_state_v1r1/" style="padding:.4rem .85rem;background:var(--brand);color:#fff;font-size:.8rem;font-weight:600;text-decoration:none;border-left:1px solid var(--border)">v1.0r1 實盤規格</a><a href="/six-state/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">即時狀態頁</a><a href="/backtest/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">回測總覽</a></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ===== VERDICT HERO ===== -->
+<div class="hero">
+  <div class="hero-top">
+    <span class="verdict-tag">⚠ MDD 突破 E-6 悲觀線</span><span class="ver-tag">閘門補做 · 2026-06-11</span>
+    <h2>報酬端達 E-6 樂觀情境,風險端突破悲觀下限 — G2 壓力路徑 -77%</h2>
+    <p>總守則 §0.25 跳過閘門上線(W_E=50%)後的補做回測。CAGR +14.41% 超過預登記樂觀情境(12-14%),
+       但 20 年 MDD <strong>-49.29%</strong> 遠超悲觀線(-30%);2000-02 壓力路徑(G2)指數部 MDD -77.4%,
+       以 W_E=50% 計對總資產貢獻約 <strong>-38.7pp</strong>。回撤主因與研究版結論一致:Grid 在深熊提前耗盡彈藥
+       (Grid OFF 對照:20 年 -35.66%、G2 -57.7%)。本頁結果供季檢覆議 W_E(Q-1.05)。</p>
+  </div>
+  <div class="hero-stats">
+    <div><div class="hs-label">CAGR (20Y)</div><div class="hs-value" style="color:var(--green)">+14.41%</div></div>
+    <div><div class="hs-label">MDD (20Y)</div><div class="hs-value" style="color:var(--red)">-49.29%</div></div>
+    <div><div class="hs-label">G2 壓力 MDD</div><div class="hs-value" style="color:var(--red)">-77.4%</div></div>
+    <div><div class="hs-label">Sharpe</div><div class="hs-value" style="color:var(--brand)">0.80</div></div>
+  </div>
+</div>
+
+<div class="note">
+  <strong>回測對象:</strong>總守則 v2.1 Layer 2 規格原樣 — QQQ+IB01 兩元(r1-a,無 SMH)、五狀態
+  (S1 95% / S1.5 90% / S0 79.8% / S2 47.5% / S5 四週爬坡 r1-b)、<strong>含 Grid 層</strong>(charter E-3、IC-4)。
+  與研究版(Ch8 v1.1,已移除 Grid)為不同系統;Grid 去留證據已遷移驗證於本系統(見 G1/G2 對照列)。
+  簡化:訊號當日收盤成交(charter 為隔日開盤,影響 1-2 日)。
+</div>
+
+<!-- ===== E-6 ===== -->
+<div class="section">
+<h2 class="section-title">E-6 預登記情境對照(回測前已登記於總守則,防確認偏誤)</h2>
+<table>
+<thead><tr><th>情境</th><th>CAGR</th><th>MDD</th><th>Sharpe</th><th>對應動作</th></tr></thead>
+<tbody>
+<tr><td>樂觀</td><td>12-14%</td><td>-18%</td><td>0.9+</td><td>—</td></tr>
+<tr><td>中性</td><td>8-10%</td><td>-25%</td><td>0.7</td><td>—</td></tr>
+<tr><td>悲觀</td><td>&lt;5%</td><td>-30%</td><td>&lt;0.5</td><td>季檢將 W_E 降回 0</td></tr>
+<tr style="background:var(--amber-bg);font-weight:600"><td>實際</td><td>14.41%(超過樂觀)</td><td style="color:var(--red)">-49.29%(突破悲觀線 19pp)</td><td>0.80(中性~樂觀)</td><td>交季檢裁決</td></tr>
+</tbody>
+</table>
+<div class="card" style="margin-top:1rem"><div class="takeaway">
+預登記情境假設 CAGR 與 MDD 同向(系統爛=雙差),實際結果是<strong>報酬維度落在樂觀之上、風險維度遠超悲觀之外</strong>—
+E-6 的三分法無法直接裁決。悲觀情境的觸發動作(W_E 降回 0)字面上綁定 CAGR&lt;5%,未觸發;
+但 MDD 維度單獨突破悲觀線,且 IC-4(無斷路器)當初是在「未檢視 G2」下承擔的 — 現在 G2 已檢視(下方),風險已量化,裁決屬季檢。
+</div></div>
+</div>
+
+<!-- ===== G1 ===== -->
+<div class="section">
+<h2 class="section-title">G1 · 主回測(2006-01 ~ 至今,1999 起 warmup)</h2>
+<table>
+<thead><tr><th>配置</th><th>CAGR</th><th>MDD</th><th>Sharpe</th><th>Calmar</th></tr></thead>
+<tbody><tr style="background:var(--brand-light)"><td>v1.0r1 實盤規格 (含 Grid)</td><td>+14.41%</td><td>-49.29%</td><td>0.80</td><td>0.29</td></tr><tr><td>v1.0r1 Grid OFF (對照)</td><td>+13.47%</td><td>-35.66%</td><td>0.84</td><td>0.38</td></tr><tr><td>QQQ Buy &amp; Hold</td><td>+15.69%</td><td>-53.40%</td><td>0.78</td><td>0.29</td></tr></tbody>
+</table>
+<div style="font-size:.84rem;color:var(--muted);margin:.5rem 0 1rem">
+Vol 19.15% · 交易 134 次 · 期末 $15.65M(起始 $1M)· 狀態時間 S1 65.1% · S1.5 15.5% · S2 16.8% · S5 2.6% · Grid 觸發 G12 9 · G3 2 · G4 5
+</div>
+
+<div class="chart-card">
+  <h3>淨值曲線 — 起始 $1M(月頻,對數座標)</h3>
+  <div class="chart-wrap"><canvas id="chart-nav"></canvas></div>
+</div>
+
+<div class="card">
+<h3>E-6 檢核項</h3>
+<table>
+<thead><tr><th>檢核</th><th>標準</th><th>實際</th><th></th></tr></thead>
+<tbody>
+<tr><td>S2 觸發次數</td><td>5-15 次 / 20 年</td><td>12</td><td>✓</td></tr>
+<tr><td>Grid #4 觸發</td><td>2-5 次</td><td>5</td><td>✓</td></tr>
+<tr><td>S5 完成時長</td><td>≤4 週(r1-b)</td><td>結構保證 ≤4 週</td><td>✓</td></tr>
+<tr><td>Grid 持有期報酬</td><td>為正</td><td>12/16 為正,平均 +8.0%</td><td>✓</td></tr>
+<tr><td>S5 中途夭折率(新增)</td><td>—(記錄)</td><td>7/19</td><td>—</td></tr>
+<tr style="background:var(--amber-bg)"><td>S0 觸發次數(r1-c)</td><td>&lt;2 次 → 完整版考慮砍除 S0</td><td><strong>0 次</strong>(20 年 + G2 視窗皆 0)</td><td>⚠ 砍除候選</td></tr>
+</tbody>
+</table>
+<div class="takeaway">S0 紅燈(#2 且 #4,週線 MA20+3σ 與 MA80+3σ 同時突破)在 2006-2026 與 1999-2005
+兩個視窗<strong>一次都沒觸發</strong> — 連 1999 年泡沫頂都沒到雙 3σ。依 r1-c 預登記標準,S0 為砍除候選(死代碼)。
+S1.5 緩衝層佔時 15.5%,行為如設計(90% vs 95%,影響輕微)。</div>
+</div>
+</div>
+
+<!-- ===== G2 ===== -->
+<div class="section">
+<h2 class="section-title">G2 · 2000-02 壓力路徑(^NDX 訊號+報酬,^IRX 現金,1999-01 ~ 2005-12)</h2>
+<div class="section-sub">總守則原文:「已看過 2000-02 NDX 壓力路徑(Grid 滿倉後再跌 40% 的帳戶曲線)」— 實際比預想更深。</div>
+<table>
+<thead><tr><th>配置</th><th>CAGR (99-05)</th><th>MDD</th><th>Sharpe</th><th>Calmar</th></tr></thead>
+<tbody><tr style="background:var(--brand-light)"><td>v1.0r1 (含 Grid)</td><td>+0.32%</td><td>-77.35%</td><td>0.18</td><td>0.00</td></tr><tr><td>v1.0r1 Grid OFF</td><td>+6.16%</td><td>-57.67%</td><td>0.36</td><td>0.11</td></tr><tr><td>NDX Buy &amp; Hold</td><td>-1.70%</td><td>-82.90%</td><td>0.15</td><td>-0.02</td></tr></tbody>
+</table>
+
+<div class="chart-card">
+  <h3>G2 帳戶曲線 — 1999-01 起始 $1M(月頻,對數座標)</h3>
+  <div class="chart-wrap"><canvas id="chart-g2"></canvas></div>
+</div>
+
+<div class="card">
+<h3>路徑解剖</h3>
+<p style="font-size:.88rem;color:#374151;line-height:1.8">
+1999 年系統以 95% 曝險吃滿泡沫(+94%),S0 從未觸發。2000-03 頂點後,狀態層在 S1↔S1.5 之間徘徊,
+<strong>2000-10-06 才進 S2</strong>(NDX 已自高點跌約四成)。隨後 Grid 接刀:
+G12(2000-11)→ G4(2000-12,曝險 80%)→ <strong>G3(2001-02-20,曝險回滿 95%)</strong>。
+滿倉後 NDX 再跌 <strong>-61.6%</strong> 至 2002-10-07 低點,帳戶同段 <strong>-58.3%</strong>。
+全程在 S2 蹲到 2003-03(狀態層判斷正確、零 whipsaw),毀滅全部來自 Grid 加碼後的續跌。
+</p>
+<div class="takeaway"><strong>W_E 承受度(G4 輸入):</strong>W_E=50% 下,此路徑對總資產貢獻約
+<strong>-38.7pp</strong>(Grid OFF 對照:-57.7% → 約 -28.8pp)。
+IC-4「無斷路器、無更低防守層」當初在未檢視 G2 下承擔 — 此即當時繞過的東西。
+註:NDX 為價格指數(無股息,當年 &lt;0.5%/年)、現金以 ^IRX 13 週國庫券利率合成(2000-02 約 5-6%,有利防守端);
+從泡沫頂點起算是刻意的最壞路徑設定。
+</div>
+</div>
+</div>
+
+<!-- ===== G3 ===== -->
+<div class="section">
+<h2 class="section-title">G3 · S2→S5 對稱化 A/B 變體(本系統)</h2>
+<table>
+<thead><tr><th>變體</th><th>CAGR</th><th>MDD</th><th>Sharpe</th><th>Calmar</th><th>S5 夭折</th></tr></thead>
+<tbody><tr style="background:var(--brand-light)"><td>現行:>MA52 單週</td><td>+14.41%</td><td>-49.29%</td><td>0.80</td><td>0.29</td><td>7/19</td></tr><tr><td>A:連續 2 週</td><td>+14.38%</td><td>-49.15%</td><td>0.80</td><td>0.29</td><td>2/14</td></tr><tr><td>B:×1.03 緩衝</td><td>+14.41%</td><td>-49.29%</td><td>0.80</td><td>0.29</td><td>7/19</td></tr></tbody>
+</table>
+<div class="card" style="margin-top:1rem"><div class="takeaway">
+與研究版(Ch8)結論一致:變體 A(連續 2 週)夭折次數大減但績效持平;變體 B(×1.03)在本系統
+從未約束(每次突破週收盤都已 &gt;MA52×1.03),與現行完全相同。失敗重啟成本極低,維持現行單週確認。
+G3 閘門:已比較,<strong>建議不改</strong>。
+</div></div>
+</div>
+
+<!-- ===== GATES STATUS ===== -->
+<div class="section">
+<h2 class="section-title">閘門狀態(§0.25 補做進度)</h2>
+<table>
+<thead><tr><th>閘門</th><th>內容</th><th>狀態</th><th>結果摘要</th></tr></thead>
+<tbody>
+<tr><td><strong>G1</strong></td><td>簡化版回測完成且非悲觀情境</td><td><span class="tag tag-pass">已補做</span></td><td>CAGR 超樂觀、MDD 破悲觀線 — E-6 三分法無法裁決,交季檢</td></tr>
+<tr><td><strong>G2</strong></td><td>2000-02 NDX 壓力路徑</td><td><span class="tag tag-pass">已補做</span></td><td>指數部 -77.4%;W_E=50% → 總資產約 -38.7pp</td></tr>
+<tr><td><strong>G3</strong></td><td>S5 對稱化 A/B 比較</td><td><span class="tag tag-pass">已補做</span></td><td>績效中性,維持現行</td></tr>
+<tr><td><strong>G4</strong></td><td>W_E 依 G2 最壞路徑可承受決定 + 雙帳戶隔離</td><td><span class="tag tag-fail">待季檢</span></td><td>數字已備(上方);承受度判斷與 Grid 去留屬持有人季檢決策</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- ===== DETAILS ===== -->
+<div class="section">
+<h2 class="section-title">明細</h2>
+
+<details>
+<summary>G1 逐年報酬</summary>
+<div class="d-body">
+<table>
+<thead><tr><th>Year</th><th style="color:#b45309">v1.0r1</th><th>QQQ B&amp;H</th></tr></thead>
+<tbody>
+<tr><td>2006</td><td>+6.64%</td><td>+4.81%</td></tr>
+<tr><td>2007</td><td>+18.51%</td><td>+18.81%</td></tr>
+<tr><td>2008</td><td>-36.57%</td><td>-40.79%</td></tr>
+<tr><td>2009</td><td>+45.24%</td><td>+48.25%</td></tr>
+<tr><td>2010</td><td>+16.74%</td><td>+18.41%</td></tr>
+<tr><td>2011</td><td>-6.96%</td><td>+1.89%</td></tr>
+<tr><td>2012</td><td>+13.36%</td><td>+15.89%</td></tr>
+<tr><td>2013</td><td>+30.79%</td><td>+32.43%</td></tr>
+<tr><td>2014</td><td>+18.21%</td><td>+20.12%</td></tr>
+<tr><td>2015</td><td>+6.18%</td><td>+9.77%</td></tr>
+<tr><td>2016</td><td>+4.47%</td><td>+9.41%</td></tr>
+<tr><td>2017</td><td>+29.96%</td><td>+31.49%</td></tr>
+<tr><td>2018</td><td>-0.24%</td><td>-1.85%</td></tr>
+<tr><td>2019</td><td>+30.56%</td><td>+38.41%</td></tr>
+<tr><td>2020</td><td>+40.06%</td><td>+45.97%</td></tr>
+<tr><td>2021</td><td>+26.57%</td><td>+29.24%</td></tr>
+<tr><td>2022</td><td>-24.35%</td><td>-33.22%</td></tr>
+<tr><td>2023</td><td>+52.35%</td><td>+55.91%</td></tr>
+<tr><td>2024</td><td>+25.23%</td><td>+27.74%</td></tr>
+<tr><td>2025</td><td>+21.45%</td><td>+21.01%</td></tr>
+<tr><td>2026</td><td>+12.28%</td><td>+13.28%</td></tr>
+
+</tbody>
+</table>
+</div>
+</details>
+
+<details>
+<summary>G1 狀態轉換紀錄(110 次)</summary>
+<div class="d-body">
+<table><thead><tr><th>日期</th><th>轉換</th></tr></thead><tbody>
+<tr><td>2006-03-10</td><td>S1→S1.5</td></tr>
+<tr><td>2006-04-07</td><td>S1.5→S1</td></tr>
+<tr><td>2006-05-12</td><td>S1→S1.5</td></tr>
+<tr><td>2006-05-26</td><td>S1.5→S2</td></tr>
+<tr><td>2006-09-15</td><td>S2→S5</td></tr>
+<tr><td>2006-09-15</td><td>S5→S1</td></tr>
+<tr><td>2007-03-02</td><td>S1→S1.5</td></tr>
+<tr><td>2007-04-20</td><td>S1.5→S1</td></tr>
+<tr><td>2007-08-17</td><td>S1→S1.5</td></tr>
+<tr><td>2007-08-31</td><td>S1.5→S1</td></tr>
+<tr><td>2007-11-09</td><td>S1→S1.5</td></tr>
+<tr><td>2008-01-18</td><td>S1.5→S2</td></tr>
+<tr><td>2008-05-02</td><td>S2→S5</td></tr>
+<tr><td>2008-05-02</td><td>S5→S1</td></tr>
+<tr><td>2008-06-27</td><td>S1→S2</td></tr>
+<tr><td>2008-08-15</td><td>S2→S5</td></tr>
+<tr><td>2008-08-22</td><td>S5→S2</td></tr>
+<tr><td>2009-06-05</td><td>S2→S1</td></tr>
+<tr><td>2010-01-29</td><td>S1→S1.5</td></tr>
+<tr><td>2010-02-26</td><td>S1.5→S1</td></tr>
+<tr><td>2010-05-07</td><td>S1→S1.5</td></tr>
+<tr><td>2010-07-30</td><td>S1.5→S1</td></tr>
+<tr><td>2010-08-27</td><td>S1→S1.5</td></tr>
+<tr><td>2010-09-10</td><td>S1.5→S1</td></tr>
+<tr><td>2011-03-18</td><td>S1→S1.5</td></tr>
+<tr><td>2011-04-01</td><td>S1.5→S1</td></tr>
+<tr><td>2011-06-10</td><td>S1→S1.5</td></tr>
+<tr><td>2011-07-08</td><td>S1.5→S1</td></tr>
+<tr><td>2011-08-05</td><td>S1→S1.5</td></tr>
+<tr><td>2011-08-12</td><td>S1.5→S2</td></tr>
+<tr><td>2011-09-16</td><td>S2→S5</td></tr>
+<tr><td>2011-09-23</td><td>S5→S2</td></tr>
+<tr><td>2011-10-14</td><td>S2→S5</td></tr>
+<tr><td>2011-11-04</td><td>S5→S1</td></tr>
+<tr><td>2011-11-25</td><td>S1→S2</td></tr>
+<tr><td>2011-12-02</td><td>S2→S5</td></tr>
+<tr><td>2011-12-16</td><td>S5→S2</td></tr>
+<tr><td>2011-12-23</td><td>S2→S5</td></tr>
+<tr><td>2011-12-30</td><td>S5→S2</td></tr>
+<tr><td>2012-01-06</td><td>S2→S5</td></tr>
+<tr><td>2012-01-27</td><td>S5→S1</td></tr>
+<tr><td>2012-05-11</td><td>S1→S1.5</td></tr>
+<tr><td>2012-07-06</td><td>S1.5→S1</td></tr>
+<tr><td>2012-10-19</td><td>S1→S1.5</td></tr>
+<tr><td>2013-01-11</td><td>S1.5→S1</td></tr>
+<tr><td>2014-04-11</td><td>S1→S1.5</td></tr>
+<tr><td>2014-05-23</td><td>S1.5→S1</td></tr>
+<tr><td>2014-10-10</td><td>S1→S1.5</td></tr>
+<tr><td>2014-10-31</td><td>S1.5→S1</td></tr>
+<tr><td>2015-01-16</td><td>S1→S1.5</td></tr>
+<tr><td>2015-02-20</td><td>S1.5→S1</td></tr>
+<tr><td>2015-08-21</td><td>S1→S1.5</td></tr>
+<tr><td>2015-10-02</td><td>S1.5→S2</td></tr>
+<tr><td>2015-10-09</td><td>S2→S5</td></tr>
+<tr><td>2015-10-30</td><td>S5→S1</td></tr>
+<tr><td>2016-01-08</td><td>S1→S2</td></tr>
+<tr><td>2016-03-18</td><td>S2→S5</td></tr>
+<tr><td>2016-04-08</td><td>S5→S1</td></tr>
+<tr><td>2016-05-06</td><td>S1→S2</td></tr>
+<tr><td>2016-05-27</td><td>S2→S5</td></tr>
+<tr><td>2016-06-17</td><td>S5→S2</td></tr>
+<tr><td>2016-07-01</td><td>S2→S5</td></tr>
+<tr><td>2016-07-15</td><td>S5→S1</td></tr>
+<tr><td>2016-11-04</td><td>S1→S1.5</td></tr>
+<tr><td>2016-11-25</td><td>S1.5→S1</td></tr>
+<tr><td>2018-02-09</td><td>S1→S1.5</td></tr>
+<tr><td>2018-02-23</td><td>S1.5→S1</td></tr>
+<tr><td>2018-03-23</td><td>S1→S1.5</td></tr>
+<tr><td>2018-05-11</td><td>S1.5→S1</td></tr>
+<tr><td>2018-10-12</td><td>S1→S1.5</td></tr>
+<tr><td>2018-11-23</td><td>S1.5→S2</td></tr>
+<tr><td>2019-02-15</td><td>S2→S5</td></tr>
+<tr><td>2019-03-01</td><td>S5→S1</td></tr>
+<tr><td>2019-05-24</td><td>S1→S1.5</td></tr>
+<tr><td>2019-06-28</td><td>S1.5→S1</td></tr>
+<tr><td>2019-08-23</td><td>S1→S1.5</td></tr>
+<tr><td>2019-09-13</td><td>S1.5→S1</td></tr>
+<tr><td>2020-02-28</td><td>S1→S1.5</td></tr>
+<tr><td>2020-03-20</td><td>S1.5→S2</td></tr>
+<tr><td>2020-04-17</td><td>S2→S5</td></tr>
+<tr><td>2020-04-17</td><td>S5→S1</td></tr>
+<tr><td>2020-10-30</td><td>S1→S1.5</td></tr>
+<tr><td>2020-11-13</td><td>S1.5→S1</td></tr>
+<tr><td>2021-03-05</td><td>S1→S1.5</td></tr>
+<tr><td>2021-04-16</td><td>S1.5→S1</td></tr>
+<tr><td>2021-10-01</td><td>S1→S1.5</td></tr>
+<tr><td>2021-10-29</td><td>S1.5→S1</td></tr>
+<tr><td>2022-01-07</td><td>S1→S1.5</td></tr>
+<tr><td>2022-01-28</td><td>S1.5→S2</td></tr>
+<tr><td>2022-02-04</td><td>S2→S5</td></tr>
+<tr><td>2022-02-11</td><td>S5→S2</td></tr>
+<tr><td>2022-04-01</td><td>S2→S5</td></tr>
+<tr><td>2022-04-08</td><td>S5→S2</td></tr>
+<tr><td>2023-02-03</td><td>S2→S1</td></tr>
+<tr><td>2023-08-18</td><td>S1→S1.5</td></tr>
+<tr><td>2023-09-08</td><td>S1.5→S1</td></tr>
+<tr><td>2023-09-22</td><td>S1→S1.5</td></tr>
+<tr><td>2023-11-10</td><td>S1.5→S1</td></tr>
+<tr><td>2024-04-19</td><td>S1→S1.5</td></tr>
+<tr><td>2024-05-17</td><td>S1.5→S1</td></tr>
+<tr><td>2024-08-02</td><td>S1→S1.5</td></tr>
+<tr><td>2024-08-23</td><td>S1.5→S1</td></tr>
+<tr><td>2024-09-06</td><td>S1→S1.5</td></tr>
+<tr><td>2024-09-20</td><td>S1.5→S1</td></tr>
+<tr><td>2025-02-28</td><td>S1→S1.5</td></tr>
+<tr><td>2025-03-21</td><td>S1.5→S2</td></tr>
+<tr><td>2025-05-02</td><td>S2→S5</td></tr>
+<tr><td>2025-05-16</td><td>S5→S1</td></tr>
+<tr><td>2026-02-13</td><td>S1→S1.5</td></tr>
+<tr><td>2026-04-17</td><td>S1.5→S1</td></tr>
+
+</tbody></table>
+</div>
+</details>
+
+<details>
+<summary>G1 Grid 觸發紀錄(16 次)</summary>
+<div class="d-body">
+<table><thead><tr><th>日期</th><th>Grid</th><th>收盤</th><th>觸發 MA</th></tr></thead><tbody>
+<tr><td>2006-06-09</td><td>G12</td><td>32.63</td><td>32.71</td></tr>
+<tr><td>2006-07-12</td><td>G4</td><td>31.61</td><td>31.77</td></tr>
+<tr><td>2008-01-22</td><td>G12</td><td>38.00</td><td>38.07</td></tr>
+<tr><td>2008-03-06</td><td>G4</td><td>36.27</td><td>36.57</td></tr>
+<tr><td>2008-06-30</td><td>G12</td><td>38.91</td><td>39.10</td></tr>
+<tr><td>2008-09-04</td><td>G4</td><td>37.61</td><td>37.90</td></tr>
+<tr><td>2008-09-09</td><td>G3</td><td>36.56</td><td>36.68</td></tr>
+<tr><td>2016-01-27</td><td>G12</td><td>93.43</td><td>93.57</td></tr>
+<tr><td>2016-06-27</td><td>G12</td><td>95.49</td><td>97.34</td></tr>
+<tr><td>2018-12-20</td><td>G12</td><td>145.15</td><td>146.48</td></tr>
+<tr><td>2020-03-16</td><td>G12</td><td>163.16</td><td>175.70</td></tr>
+<tr><td>2020-03-16</td><td>G4</td><td>163.16</td><td>163.97</td></tr>
+<tr><td>2022-04-26</td><td>G12</td><td>309.24</td><td>314.67</td></tr>
+<tr><td>2022-06-13</td><td>G4</td><td>268.55</td><td>278.64</td></tr>
+<tr><td>2022-09-30</td><td>G3</td><td>261.57</td><td>263.38</td></tr>
+<tr><td>2025-04-04</td><td>G12</td><td>420.63</td><td>427.73</td></tr>
+
+</tbody></table>
+</div>
+</details>
+
+<details>
+<summary>G2 狀態轉換與 Grid 紀錄</summary>
+<div class="d-body">
+<div class="two-col">
+<div><table><thead><tr><th>日期</th><th>轉換</th></tr></thead><tbody>
+<tr><td>1999-06-11</td><td>S1→S1.5</td></tr>
+<tr><td>1999-06-25</td><td>S1.5→S1</td></tr>
+<tr><td>2000-04-14</td><td>S1→S1.5</td></tr>
+<tr><td>2000-06-16</td><td>S1.5→S1</td></tr>
+<tr><td>2000-07-28</td><td>S1→S1.5</td></tr>
+<tr><td>2000-08-25</td><td>S1.5→S1</td></tr>
+<tr><td>2000-09-15</td><td>S1→S1.5</td></tr>
+<tr><td>2000-10-06</td><td>S1.5→S2</td></tr>
+<tr><td>2003-03-21</td><td>S2→S1</td></tr>
+<tr><td>2004-03-12</td><td>S1→S1.5</td></tr>
+<tr><td>2004-06-04</td><td>S1.5→S1</td></tr>
+<tr><td>2004-07-16</td><td>S1→S1.5</td></tr>
+<tr><td>2004-07-23</td><td>S1.5→S2</td></tr>
+<tr><td>2004-10-01</td><td>S2→S5</td></tr>
+<tr><td>2004-10-08</td><td>S5→S2</td></tr>
+<tr><td>2004-10-22</td><td>S2→S5</td></tr>
+<tr><td>2004-11-05</td><td>S5→S1</td></tr>
+<tr><td>2005-01-21</td><td>S1→S1.5</td></tr>
+<tr><td>2005-04-15</td><td>S1.5→S2</td></tr>
+<tr><td>2005-05-20</td><td>S2→S5</td></tr>
+<tr><td>2005-06-03</td><td>S5→S1</td></tr>
+<tr><td>2005-10-14</td><td>S1→S1.5</td></tr>
+<tr><td>2005-11-11</td><td>S1.5→S1</td></tr>
+
+</tbody></table></div>
+<div><table><thead><tr><th>日期</th><th>Grid</th><th>NDX</th><th>MA</th></tr></thead><tbody>
+<tr><td>2000-11-10</td><td>G12</td><td>2890</td><td>2915</td></tr>
+<tr><td>2000-12-19</td><td>G4</td><td>2400</td><td>2414</td></tr>
+<tr><td>2001-02-20</td><td>G3</td><td>2095</td><td>2172</td></tr>
+<tr><td>2004-07-19</td><td>G3</td><td>1397</td><td>1511</td></tr>
+<tr><td>2005-04-15</td><td>G12</td><td>1409</td><td>1411</td></tr>
+
+</tbody></table></div>
+</div>
+</div>
+</details>
+</div>
+
+</div>
+
+<footer>
+  <div class="container">
+    &copy; 2026 InvestMQuest Research &middot; 六狀態機 v1.0r1 實盤規格回測(閘門補做)&middot;
+    真實 yfinance 資料 &middot; 頁面生成 2026-06-11 &middot; 僅供研究參考
+  </div>
+</footer>
+
+<script>
+var L1=["2006-01", "2006-02", "2006-03", "2006-04", "2006-05", "2006-06", "2006-07", "2006-08", "2006-09", "2006-10", "2006-11", "2006-12", "2007-01", "2007-02", "2007-03", "2007-04", "2007-05", "2007-06", "2007-07", "2007-08", "2007-09", "2007-10", "2007-11", "2007-12", "2008-01", "2008-02", "2008-03", "2008-04", "2008-05", "2008-06", "2008-07", "2008-08", "2008-09", "2008-10", "2008-11", "2008-12", "2009-01", "2009-02", "2009-03", "2009-04", "2009-05", "2009-06", "2009-07", "2009-08", "2009-09", "2009-10", "2009-11", "2009-12", "2010-01", "2010-02", "2010-03", "2010-04", "2010-05", "2010-06", "2010-07", "2010-08", "2010-09", "2010-10", "2010-11", "2010-12", "2011-01", "2011-02", "2011-03", "2011-04", "2011-05", "2011-06", "2011-07", "2011-08", "2011-09", "2011-10", "2011-11", "2011-12", "2012-01", "2012-02", "2012-03", "2012-04", "2012-05", "2012-06", "2012-07", "2012-08", "2012-09", "2012-10", "2012-11", "2012-12", "2013-01", "2013-02", "2013-03", "2013-04", "2013-05", "2013-06", "2013-07", "2013-08", "2013-09", "2013-10", "2013-11", "2013-12", "2014-01", "2014-02", "2014-03", "2014-04", "2014-05", "2014-06", "2014-07", "2014-08", "2014-09", "2014-10", "2014-11", "2014-12", "2015-01", "2015-02", "2015-03", "2015-04", "2015-05", "2015-06", "2015-07", "2015-08", "2015-09", "2015-10", "2015-11", "2015-12", "2016-01", "2016-02", "2016-03", "2016-04", "2016-05", "2016-06", "2016-07", "2016-08", "2016-09", "2016-10", "2016-11", "2016-12", "2017-01", "2017-02", "2017-03", "2017-04", "2017-05", "2017-06", "2017-07", "2017-08", "2017-09", "2017-10", "2017-11", "2017-12", "2018-01", "2018-02", "2018-03", "2018-04", "2018-05", "2018-06", "2018-07", "2018-08", "2018-09", "2018-10", "2018-11", "2018-12", "2019-01", "2019-02", "2019-03", "2019-04", "2019-05", "2019-06", "2019-07", "2019-08", "2019-09", "2019-10", "2019-11", "2019-12", "2020-01", "2020-02", "2020-03", "2020-04", "2020-05", "2020-06", "2020-07", "2020-08", "2020-09", "2020-10", "2020-11", "2020-12", "2021-01", "2021-02", "2021-03", "2021-04", "2021-05", "2021-06", "2021-07", "2021-08", "2021-09", "2021-10", "2021-11", "2021-12", "2022-01", "2022-02", "2022-03", "2022-04", "2022-05", "2022-06", "2022-07", "2022-08", "2022-09", "2022-10", "2022-11", "2022-12", "2023-01", "2023-02", "2023-03", "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", "2023-10", "2023-11", "2023-12", "2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06", "2024-07", "2024-08", "2024-09", "2024-10", "2024-11", "2024-12", "2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"], S1=[1.0, 0.9796, 0.9976, 0.9955, 0.9346, 0.9371, 0.916, 0.9523, 0.99, 1.0348, 1.0689, 1.0498, 1.0709, 1.0541, 1.0583, 1.1124, 1.158, 1.1635, 1.1621, 1.1907, 1.2502, 1.3343, 1.2468, 1.2463, 1.1185, 1.0879, 1.1096, 1.1808, 1.2419, 1.1333, 1.1384, 1.1462, 1.0016, 0.855, 0.7632, 0.7794, 0.7629, 0.7256, 0.7948, 0.8915, 0.9184, 0.9438, 1.0194, 1.0337, 1.0895, 1.0576, 1.1217, 1.1776, 1.1045, 1.1502, 1.2344, 1.2608, 1.1716, 1.1086, 1.1805, 1.1237, 1.2597, 1.3357, 1.3335, 1.3941, 1.4318, 1.4752, 1.4644, 1.5043, 1.4868, 1.4551, 1.4758, 1.3867, 1.3483, 1.4114, 1.3344, 1.3164, 1.388, 1.4726, 1.5435, 1.5263, 1.4262, 1.4725, 1.4864, 1.5597, 1.5729, 1.4946, 1.5121, 1.5058, 1.5415, 1.5465, 1.5909, 1.6293, 1.6848, 1.6463, 1.7454, 1.7388, 1.819, 1.9054, 1.9702, 2.0257, 1.9882, 2.0867, 2.0317, 2.0208, 2.1041, 2.1666, 2.1909, 2.2955, 2.2789, 2.3278, 2.4283, 2.3765, 2.329, 2.4803, 2.4247, 2.4689, 2.5216, 2.462, 2.5686, 2.3996, 2.3518, 2.5401, 2.5549, 2.5161, 2.3578, 2.3363, 2.4343, 2.357, 2.4041, 2.3601, 2.5014, 2.5264, 2.5797, 2.5439, 2.5486, 2.576, 2.7019, 2.8145, 2.8689, 2.9438, 3.0535, 2.9858, 3.1019, 3.1637, 3.1548, 3.2943, 3.3567, 3.3763, 3.6608, 3.5993, 3.4584, 3.4746, 3.653, 3.693, 3.7915, 4.0004, 3.9899, 3.668, 3.5676, 3.4248, 3.6059, 3.6761, 3.8113, 4.0111, 3.7013, 3.9541, 4.0421, 3.9638, 3.9938, 4.1602, 4.3214, 4.4816, 4.6119, 4.345, 4.0252, 4.5259, 4.81, 5.0983, 5.4566, 6.0294, 5.6938, 5.527, 6.0928, 6.377, 6.3929, 6.3847, 6.4773, 6.8195, 6.7417, 7.1422, 7.3366, 7.6315, 7.2174, 7.7299, 7.8764, 7.9627, 7.2199, 7.0297, 7.1872, 6.6677, 6.6082, 6.3055, 6.9415, 6.6514, 6.0838, 6.3154, 6.6496, 6.0789, 6.6941, 6.6739, 7.2758, 7.3122, 7.8624, 8.3374, 8.647, 8.5012, 8.0975, 7.9505, 8.7358, 9.2019, 9.3633, 9.8372, 9.9588, 9.5324, 10.0636, 10.684, 10.5155, 10.5951, 10.8259, 10.739, 11.2869, 11.3379, 11.5733, 11.2765, 10.6157, 10.867, 11.6538, 12.3626, 12.6501, 12.7673, 13.4238, 14.0392, 13.831, 13.7444, 13.9079, 13.5913, 13.0029, 14.852, 16.3474, 15.404], Q1=[1.0, 0.9786, 0.999, 0.9971, 0.9249, 0.9244, 0.8845, 0.9267, 0.9697, 1.0158, 1.0506, 1.0309, 1.0526, 1.0349, 1.0404, 1.0984, 1.1331, 1.1385, 1.1369, 1.1689, 1.2303, 1.3169, 1.2279, 1.227, 1.0811, 1.0289, 1.0482, 1.1319, 1.199, 1.0837, 1.0907, 1.1065, 0.9341, 0.7896, 0.6991, 0.715, 0.6987, 0.6619, 0.7302, 0.8255, 0.852, 0.8772, 0.9512, 0.9652, 1.0197, 0.9886, 1.0513, 1.106, 1.0345, 1.0821, 1.1655, 1.1917, 1.1036, 1.0376, 1.113, 1.0559, 1.1949, 1.2707, 1.2685, 1.3288, 1.3664, 1.4096, 1.4033, 1.4436, 1.426, 1.3971, 1.4204, 1.3484, 1.2878, 1.4218, 1.3835, 1.375, 1.4908, 1.5863, 1.6665, 1.647, 1.5311, 1.5865, 1.6023, 1.6854, 1.7004, 1.6106, 1.6317, 1.6241, 1.6675, 1.6732, 1.7238, 1.7675, 1.8308, 1.7869, 1.8998, 1.8922, 1.9837, 2.082, 2.1559, 2.219, 2.1764, 2.2885, 2.226, 2.2189, 2.3184, 2.3908, 2.4191, 2.5403, 2.521, 2.5876, 2.7053, 2.6447, 2.5896, 2.7766, 2.7111, 2.7632, 2.8253, 2.7552, 2.8807, 2.6841, 2.6249, 2.9233, 2.9411, 2.8942, 2.6942, 2.652, 2.8338, 2.7435, 2.8634, 2.7981, 2.9982, 3.0297, 3.0968, 3.0516, 3.065, 3.0997, 3.259, 3.4016, 3.4705, 3.5651, 3.7041, 3.6182, 3.7652, 3.8433, 3.8319, 4.0084, 4.0875, 4.1121, 4.4722, 4.4144, 4.2343, 4.2558, 4.4972, 4.5487, 4.6759, 4.9462, 4.9322, 4.5083, 4.4963, 4.1069, 4.477, 4.6109, 4.7919, 5.0554, 4.6396, 4.9917, 5.1083, 5.0112, 5.0572, 5.2787, 5.4935, 5.707, 5.8804, 5.5242, 5.1218, 5.8887, 6.2774, 6.672, 7.1622, 7.9461, 7.4869, 7.2589, 8.0738, 8.4696, 8.4917, 8.4804, 8.626, 9.1358, 9.026, 9.5913, 9.8657, 10.2819, 9.6975, 10.4601, 10.669, 10.7919, 9.848, 9.4072, 9.8463, 8.5076, 8.3726, 7.6268, 8.5841, 8.1436, 7.2856, 7.577, 7.9971, 7.2763, 8.0507, 8.0217, 8.7832, 8.8278, 9.5237, 10.1241, 10.5149, 10.359, 9.8327, 9.6297, 10.6715, 11.2677, 11.4727, 12.0788, 12.2328, 11.6978, 12.4174, 13.2208, 12.999, 13.1425, 13.487, 13.3704, 14.0858, 14.1498, 14.4559, 14.0651, 12.9981, 13.1796, 14.3893, 15.3082, 15.6792, 15.8288, 16.6798, 17.4771, 17.2043, 17.089, 17.2993, 16.8937, 16.0764, 18.5988, 20.5644, 19.3216];
+var L2=["1999-01", "1999-02", "1999-03", "1999-04", "1999-05", "1999-06", "1999-07", "1999-08", "1999-09", "1999-10", "1999-11", "1999-12", "2000-01", "2000-02", "2000-03", "2000-04", "2000-05", "2000-06", "2000-07", "2000-08", "2000-09", "2000-10", "2000-11", "2000-12", "2001-01", "2001-02", "2001-03", "2001-04", "2001-05", "2001-06", "2001-07", "2001-08", "2001-09", "2001-10", "2001-11", "2001-12", "2002-01", "2002-02", "2002-03", "2002-04", "2002-05", "2002-06", "2002-07", "2002-08", "2002-09", "2002-10", "2002-11", "2002-12", "2003-01", "2003-02", "2003-03", "2003-04", "2003-05", "2003-06", "2003-07", "2003-08", "2003-09", "2003-10", "2003-11", "2003-12", "2004-01", "2004-02", "2004-03", "2004-04", "2004-05", "2004-06", "2004-07", "2004-08", "2004-09", "2004-10", "2004-11", "2004-12", "2005-01", "2005-02", "2005-03", "2005-04", "2005-05", "2005-06", "2005-07", "2005-08", "2005-09", "2005-10", "2005-11", "2005-12"], S2=[1.0, 0.9094, 0.991, 1.0046, 0.9838, 1.0734, 1.0621, 1.1184, 1.1235, 1.2259, 1.3726, 1.7027, 1.6416, 1.952, 2.0106, 1.7162, 1.5303, 1.7132, 1.6441, 1.8401, 1.6252, 1.5161, 1.3248, 1.2713, 1.381, 1.0677, 0.8907, 1.0399, 1.0109, 1.0271, 0.9498, 0.8368, 0.6775, 0.7815, 0.9039, 0.894, 0.8798, 0.7789, 0.8285, 0.7356, 0.6994, 0.6165, 0.5693, 0.559, 0.501, 0.5841, 0.6511, 0.5815, 0.5808, 0.595, 0.5978, 0.6463, 0.6974, 0.6995, 0.7413, 0.7771, 0.7563, 0.8189, 0.8233, 0.8475, 0.8615, 0.849, 0.831, 0.8118, 0.8456, 0.8735, 0.8056, 0.7945, 0.8108, 0.8397, 0.8847, 0.9113, 0.8566, 0.8524, 0.8381, 0.8049, 0.8457, 0.8201, 0.8784, 0.8663, 0.8768, 0.8643, 0.911, 0.897], N2=[1.0, 0.9051, 0.9902, 1.0043, 0.9824, 1.0797, 1.0676, 1.1268, 1.132, 1.2399, 1.3947, 1.7431, 1.6783, 2.0059, 2.0674, 1.7738, 1.5627, 1.7694, 1.6968, 1.9169, 1.6786, 1.543, 1.1783, 1.1008, 1.219, 0.8971, 0.7396, 0.8721, 0.8461, 0.8604, 0.7915, 0.6909, 0.5493, 0.6416, 0.7503, 0.7414, 0.7287, 0.639, 0.683, 0.6004, 0.568, 0.4943, 0.4523, 0.443, 0.3914, 0.4652, 0.5247, 0.4628, 0.4621, 0.4747, 0.4789, 0.52, 0.5631, 0.5649, 0.6003, 0.6305, 0.6129, 0.6659, 0.6695, 0.6901, 0.7019, 0.6912, 0.6762, 0.6588, 0.6893, 0.713, 0.6583, 0.6434, 0.6641, 0.6989, 0.7388, 0.7621, 0.7144, 0.7103, 0.6969, 0.6679, 0.7252, 0.7021, 0.7546, 0.7436, 0.7529, 0.7424, 0.7863, 0.7734];
+Chart.defaults.font.family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif";
+Chart.defaults.font.size=11;
+function lineChart(id, labels, dsets){
+  new Chart(document.getElementById(id),{type:'line',
+    data:{labels:labels,datasets:dsets},
+    options:{responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:true,position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'line',padding:14}},
+        tooltip:{callbacks:{label:function(c){return c.dataset.label+': $'+(c.parsed.y).toFixed(2)+'M'}}}},
+      scales:{x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{maxTicksLimit:21,font:{size:10}}},
+        y:{type:'logarithmic',grid:{color:'rgba(0,0,0,0.06)'},ticks:{callback:function(v){return '$'+v+'M'},font:{size:10}}}}
+    }});
+}
+lineChart('chart-nav', L1, [
+  {label:'v1.0r1',data:S1,borderColor:'#b45309',borderWidth:2.4,pointRadius:0,tension:0.1},
+  {label:'QQQ B&H',data:Q1,borderColor:'#1565c0',borderWidth:1.4,borderDash:[6,3],pointRadius:0,tension:0.1}
+]);
+lineChart('chart-g2', L2, [
+  {label:'v1.0r1 (NDX)',data:S2,borderColor:'#b45309',borderWidth:2.4,pointRadius:0,tension:0.1},
+  {label:'NDX B&H',data:N2,borderColor:'#1565c0',borderWidth:1.4,borderDash:[6,3],pointRadius:0,tension:0.1}
+]);
+</script>
+</body>
+</html>
