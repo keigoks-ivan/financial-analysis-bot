@@ -91,6 +91,11 @@ def main() -> None:
         print(f"ERROR: {DOCS} missing", file=sys.stderr)
         sys.exit(1)
 
+    # ARCHIVED 2026-06-11: /flow/ has been archived. This script is a no-op.
+    # To re-enable: remove the early return below and restore FLOW_LINK injection.
+    print("INFO: /flow/ is archived — add_flow_nav_link.py is a no-op.", file=sys.stderr)
+    return
+
     targets = sorted(DOCS.rglob("*.html"))
     print(f"Scanning {len(targets):,} HTML under {DOCS}/", file=sys.stderr)
 

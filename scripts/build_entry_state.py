@@ -1021,7 +1021,6 @@ tr.state-pullback_new{{background:linear-gradient(90deg,#dbeafe 0%,transparent 6
           <a href="/backtest/">量化回測</a>
         </div>
       </div>
-      <a href="/flow/">🎯 Flow</a>
     </nav>
   </div>
 </header>

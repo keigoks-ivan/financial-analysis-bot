@@ -914,7 +914,6 @@ body{{font-family:system-ui,-apple-system,sans-serif;background:#f5f0fb;color:#1
           <a href="/backtest/">量化回測</a>
         </div>
       </div>
-      <a href="/flow/">🎯 Flow</a>
     </nav>
   </div>
 </header>

@@ -772,7 +772,6 @@ body{{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1
           <a href="/backtest/">量化回測</a>
         </div>
       </div>
-      <a href="/flow/">🎯 Flow</a>
     </nav>
   </div>
 </header>
