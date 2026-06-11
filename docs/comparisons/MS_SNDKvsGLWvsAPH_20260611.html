@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SNDK vs GLW vs APH — 多標的對比分析｜2026-06-11</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", Roboto, sans-serif;
+  background: #ffffff; color: #1a1d24; line-height: 1.8; font-size: 16px; font-weight: 400;
+  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility;
+}
+p { color: #1a1d24; margin: 14px 0; }
+li { color: #1a1d24; }
+strong { color: #000000; font-weight: 700; }
+.container { max-width: 1200px; margin: 0 auto; padding: 24px 20px 60px; }
+.report-header { border-bottom: 2px solid #d0d8e0; padding-bottom: 16px; margin-bottom: 8px; }
+.report-header h1 { font-size: 28px; color: #0a1628; margin: 0 0 8px; font-weight: 700; }
+.report-meta { font-size: 14px; color: #4a5568; font-weight: 500; }
+.report-meta span { margin-right: 16px; }
+.asof { font-size: 12.5px; color: #64748B; font-style: italic; margin: 8px 0 0; }
+.toc-nav { position: sticky; top: 0; background: #ffffff; padding: 14px 20px; border-bottom: 2px solid #d0d8e0; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin: 0 -20px 28px; z-index: 100; }
+.toc-nav a { color: #1565c0; text-decoration: none; margin-right: 16px; font-size: 14px; font-weight: 600; display: inline-block; padding: 4px 2px; }
+.toc-nav a:hover { color: #c2410c; }
+section { margin-bottom: 36px; padding-top: 16px; }
+h2 { font-size: 24px; color: #0a1628; border-left: 4px solid #1565c0; padding-left: 12px; margin: 0 0 18px; font-weight: 700; }
+h3 { font-size: 18px; color: #c2410c; margin: 22px 0 12px; font-weight: 700; }
+h4 { font-size: 16px; color: #15803d; margin: 16px 0 10px; font-weight: 700; }
+.verdict-card { background: linear-gradient(135deg, #f0f7ff 0%, #e3f2fd 100%); border: 1px solid #90caf9; border-left: 4px solid #15803d; border-radius: 8px; padding: 22px 26px; margin-bottom: 22px; }
+.verdict-card .verdict-label { font-size: 13px; color: #4a5568; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; font-weight: 700; }
+.verdict-card .verdict-pick { font-size: 30px; font-weight: 700; color: #15803d; margin-bottom: 6px; }
+.verdict-card .verdict-timeframe { font-size: 15px; color: #c2410c; margin-bottom: 14px; font-weight: 600; }
+.verdict-card ul { margin: 8px 0 0; padding-left: 22px; }
+.verdict-card li { margin-bottom: 10px; font-size: 15px; line-height: 1.7; }
+table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 15px; background: #ffffff; border: 1px solid #d0d8e0; border-radius: 6px; overflow: hidden; }
+th { background: #f1f5f9; color: #0a1628; padding: 12px 14px; text-align: left; border-bottom: 2px solid #cbd5e1; font-weight: 700; font-size: 14px; }
+td { padding: 12px 14px; border-bottom: 1px solid #e2e8f0; color: #1a1d24; vertical-align: top; font-size: 14.5px; }
+tr:hover { background: #f8fafc; }
+tr:last-child td { border-bottom: none; }
+.rank-1 { color: #15803d; font-weight: 700; }
+.rank-2 { color: #475569; font-weight: 700; }
+.rank-3 { color: #c2410c; font-weight: 700; }
+.signal { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 13px; font-weight: 700; }
+.signal-green { background: #dcfce7; color: #166534; }
+.signal-yellow { background: #fef3c7; color: #92400e; }
+.signal-red { background: #fee2e2; color: #991b1b; }
+.signal-grey { background: #e2e8f0; color: #475569; }
+.callout { background: #eff6ff; border-left: 4px solid #1565c0; padding: 16px 20px; margin: 18px 0; border-radius: 4px; font-size: 15px; line-height: 1.75; }
+.callout strong { color: #000000; }
+.callout-warn { background: #fff7ed; border-left-color: #c2410c; }
+.callout-key { background: #f0fdf4; border-left-color: #15803d; }
+.irr-bar { display: flex; height: 40px; border-radius: 4px; overflow: hidden; margin: 10px 0 4px; background: #e2e8f0; border: 1px solid #cbd5e1; }
+.irr-segment { display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #ffffff; white-space: nowrap; padding: 0 8px; }
+.irr-eps { background: #15803d; }
+.irr-rerate-pos { background: #1565c0; }
+.irr-rerate-neg { background: #b91c1c; }
+.irr-buyback { background: #c2410c; }
+.irr-legend { font-size: 14px; color: #334155; margin-bottom: 16px; line-height: 1.7; }
+.timeframe-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; margin: 18px 0; }
+.tf-card { background: #f8fafc; border: 1px solid #d0d8e0; border-radius: 6px; padding: 16px 18px; }
+.tf-card .tf-label { font-size: 12px; color: #4a5568; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; font-weight: 700; }
+.tf-card .tf-winner { font-size: 20px; font-weight: 700; color: #15803d; margin-bottom: 10px; }
+.tf-card .tf-reason { font-size: 14px; color: #1a1d24; line-height: 1.65; }
+.report-footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid #d0d8e0; font-size: 13px; color: #4a5568; text-align: center; line-height: 1.7; }
+@media print { body { background:#fff; color:#000; } .toc-nav { display:none; } }
+@media (max-width: 768px) {
+  body { font-size: 17px; }
+  .container { padding: 16px 16px 40px; }
+  .report-header h1 { font-size: 22px; }
+  h2 { font-size: 21px; } h3 { font-size: 18px; } h4 { font-size: 17px; }
+  table { font-size: 14px; } th, td { padding: 10px 9px; }
+  .toc-nav { padding: 14px 16px; margin: 0 -16px 24px; }
+  .toc-nav a { margin-right: 12px; font-size: 13.5px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header class="report-header">
+  <h1>SNDK vs GLW vs APH — AI Infra 三種打法的對比</h1>
+  <div class="report-meta">
+    <span>📅 2026-06-11</span>
+    <span>來源：DCA（三檔皆 DCA basis）</span>
+    <span>SanDisk · Corning · Amphenol</span>
+  </div>
+  <p class="asof">股價 as-of 2026-06-10/11（WebSearch）· 技術指標 as-of 各報告日（SNDK/APH 5-11、GLW 5-13）· EPS consensus as-of 2026-06-04（dd-screener latest.json，Koyfin snapshot）</p>
+</header>
+
+<nav class="toc-nav">
+  <a href="#sA">§A Dashboard</a>
+  <a href="#sA1">§A.1 業務地圖</a>
+  <a href="#sA2">§A.2 基本面</a>
+  <a href="#sA3">§A.3 競爭態勢</a>
+  <a href="#sB1">§B.1 &lt;12M</a>
+  <a href="#sB2">§B.2 2-3Y</a>
+  <a href="#sB3">§B.3 3-5Y</a>
+  <a href="#sB4">§B.4 5-10Y</a>
+  <a href="#sC">§C IRR</a>
+  <a href="#sD">§D Bear/DD</a>
+  <a href="#sE">§E 裁決</a>
+</nav>
+
+<!-- ============== §A Dashboard ============== -->
+<section id="sA">
+<h2>§A 對比 Dashboard</h2>
+
+<div class="callout"><strong>為什麼把這三檔放一起比</strong>：表面上 SNDK（記憶體）、GLW（玻璃光纖）、APH（連接器）是三個不相干的產業。但它們有一個共同身分 — <strong>都是 hyperscaler AI capex（2026 ~$725B）的「賣鏟人」</strong>，只是站在不同的鏟子攤位：SNDK 賣儲存、GLW 賣光的傳輸介質、APH 賣電/光的連接結構。把它們並排，問的不是「誰打贏誰」（它們不互打，見 §A.3），而是 <strong>「同一筆 AI 資本支出的錢，流進哪條收費管道的『轉化質量』最高」</strong>。答案會發現：成長數字最大的（SNDK 69%）轉化質量最差，成長數字最小的（APH 14.8%）轉化質量最高 — 這個反差就是這份對比的核心洞察。</div>
+
+<div class="verdict-card">
+  <div class="verdict-label">綜合裁決</div>
+  <div class="verdict-pick">3-5Y 品質首選：APH ·　本週可動手：GLW</div>
+  <div class="verdict-timeframe">這三檔不是同類競品，而是 AI capex 的三條不同收費管道 — 買側問題拆成「品質」與「時機」兩個答案</div>
+  <ul>
+    <li><strong>若只能長抱一檔（3-5Y）→ APH</strong>：唯一 A 級訊號燈、護城河 A（執行 9 / 定價 8 雙高）、5Y IRR 96% 來自 EPS 自然複利（不靠市場給臉色）、dd-screener 5Y upside 87% 為三檔最高。</li>
+    <li><strong>但若問「這週該對誰下手」→ GLW</strong>：報告寫於 ~$195，現價已回落到 <strong>$164.5</strong>（跌進報告進場區 $155-175），且 6/8 剛簽 Amazon 多年期光纖大單（第 4 家 hyperscaler）— 進場時機 + 新催化雙到位，是三檔中唯一「現在價位 R:R 合理」的標的。</li>
+    <li><strong>APH 的問題不是品質是價格</strong>：報告寫於 $128-138 進場區，現價已漲到 <strong>$154</strong> 衝出區間（FPE 回到 26x）。品質最好但此刻追高，等回測 ≤$145 再進。</li>
+    <li><strong>SNDK 退出長抱比較</strong>：現價 $1,643、5Y 分位 93%、dd-screener 5Y 期望值 <strong>−3.65%</strong>、護城河 C（定價力僅 2 分）。是 NAND 商品週期投機（&lt;2 年），不是 buy-and-hold 標的，與另兩檔不在同一評估軸上。</li>
+  </ul>
+</div>
+
+<h3>基本資料對照（估值同源：dd-screener latest.json，EPS snapshot 2026-06-04）</h3>
+<table>
+<thead><tr><th>維度</th><th>SNDK · SanDisk</th><th>GLW · Corning</th><th>APH · Amphenol</th></tr></thead>
+<tbody>
+<tr><td>現價（6/10-11）</td><td>~$1,643</td><td><strong>~$164.5</strong></td><td>~$154</td></tr>
+<tr><td>報告基準價</td><td>$1,562（5/10）</td><td>$195-210（5/13）</td><td>$128-138（5/06）</td></tr>
+<tr><td>價格 vs 報告</td><td>+5%（更貴）</td><td><strong>−16%（跌進進場區）</strong></td><td>+12~20%（漲出進場區）</td></tr>
+<tr><td>綜合訊號燈</td><td><span class="signal signal-yellow">B</span></td><td><span class="signal signal-yellow">B</span></td><td><span class="signal signal-green">A</span></td></tr>
+<tr><td>護城河等級｜趨勢</td><td>C ↑（cycle 短期）</td><td>A ↑</td><td><strong>A ↑</strong></td></tr>
+<tr><td>護城河二維（執行/定價）</td><td>6 / <strong>2</strong></td><td>8 / 7</td><td><strong>9 / 8</strong></td></tr>
+<tr><td>Live Fwd PE（FY+2）</td><td>9.0x</td><td>40.2x</td><td>26.2x</td></tr>
+<tr><td>5Y 估值分位（live）</td><td><span class="rank-3">93%（極貴）</span></td><td>71%</td><td><span class="rank-1">28%</span></td></tr>
+<tr><td>Live PEG</td><td>0.13*</td><td>1.28</td><td>1.77</td></tr>
+<tr><td>ROIC</td><td>66%*（cycle peak）</td><td>9.6%</td><td>16.3%</td></tr>
+<tr><td>EPS FY1→FY3 CAGR</td><td>69%*（peak 假象）</td><td>31.5%</td><td>14.8%</td></tr>
+<tr><td>dd-screener 5Y 期望值</td><td><span class="rank-3">−3.65%</span></td><td>+7.96%</td><td><span class="rank-1">+8.5%</span></td></tr>
+<tr><td>dd-screener 5Y upside</td><td>0%</td><td>n/a（未載）</td><td><span class="rank-1">87%</span></td></tr>
+<tr><td>Quality Score</td><td>6.5</td><td><strong>10</strong></td><td>9</td></tr>
+<tr><td>Runway Post-Y5</td><td><span class="signal signal-red">🔴 窄</span></td><td><span class="signal signal-green">🟢 寬</span></td><td><span class="signal signal-green">🟢 寬</span></td></tr>
+<tr><td>DCA 裁決</td><td>觀望（cycle play）</td><td>觀望（等進場 → 現已到）</td><td>觀望（已漲出進場區）</td></tr>
+</tbody>
+</table>
+<p style="font-size:13px;color:#64748B;">* SNDK 的 PEG 0.13 / ROIC 66% / EPS CAGR 69% 都是 NAND cycle peak earnings 的算術假象 — peak EPS 當分母讓估值看起來極便宜，但 dd-screener 的 5Y 期望值 −3.65% 才是穿透 cycle 後的真實訊號。詳見 §C。</p>
+
+<h3>報告 vintage 表（v1.7 財報 staleness gate）</h3>
+<table>
+<thead><tr><th>標的</th><th>報告類型 / 日</th><th>之後是否有財報</th><th>漂移判定</th></tr></thead>
+<tbody>
+<tr><td>SNDK</td><td>DCA 2026-05-11</td><td>無（Q3 FY26 在 4/30，下次 Q4 FY26 約 8/4）</td><td><span class="signal signal-grey">輕微</span>　價格 +5% 續飆但 thesis 未變（仍 cycle peak 追高）</td></tr>
+<tr><td>GLW</td><td>DCA 2026-05-13</td><td>無新財報（Q1 在 4/28，下次 Q2 約 7/29）</td><td><span class="signal signal-green">輕微-正面</span>　6/8 Amazon 多年期光纖大單（第 4 家 hyperscaler）— thesis 強化，非漂移性削弱</td></tr>
+<tr><td>APH</td><td>DCA 2026-05-11</td><td>無（Q1 在 4/29，下次 Q2 約 7/30）</td><td><span class="signal signal-grey">輕微</span>　價格 +12~20% 但無新財報；thesis 未變，僅進場區已失效</td></tr>
+</tbody>
+</table>
+<p>三檔報告日後皆無新財報發布，核心假設未被新季數據推翻 → 無重大漂移、verdict card 不掛警語。唯一實質新資訊是 GLW 的 Amazon 大單（正面），已吸收進 §A.3 與 §B 的 GLW 打分。</p>
+
+<h3>四層時間框架排序速覽（本報告唯一完整排序出處）</h3>
+<div class="timeframe-grid">
+  <div class="tf-card">
+    <div class="tf-label">&lt;12M 短期</div>
+    <div class="tf-winner">1. SNDK*　2. GLW　3. APH</div>
+    <div class="tf-reason">SNDK 動能最猛（+593% YTD）但是「追高賭注」非健康訊號；GLW 在進場區 + 新催化；APH MA 最健康但已脫離進場區。* 帶星號 = 動能領先 ≠ 該追。</div>
+  </div>
+  <div class="tf-card">
+    <div class="tf-label">2-3Y 中期</div>
+    <div class="tf-winner">1. APH　2. GLW　3. SNDK</div>
+    <div class="tf-reason">APH 拐點已兌現（Q1 三段全擴張、B/B 1.24x）；GLW Springboard 達標中 + 估值已修；SNDK 此時最可能 cycle 反轉開始。</div>
+  </div>
+  <div class="tf-card">
+    <div class="tf-label">3-5Y 中長期</div>
+    <div class="tf-winner">1. APH　2. GLW　3. SNDK</div>
+    <div class="tf-reason">APH 自然複利 + 雙高護城河；GLW 材料平台 + 多元化但需 PE 不再壓縮；SNDK 5Y 期望值負，出局。</div>
+  </div>
+  <div class="tf-card">
+    <div class="tf-label">5-10Y 長期</div>
+    <div class="tf-winner">1. APH ≈ GLW　3. SNDK</div>
+    <div class="tf-reason">APH 與 GLW runway 皆 🟢 寬（互連 TAM 翻倍 / 三條 S 曲線）；SNDK 🔴 窄（NAND 已飽和，HBF 是唯一 optionality）。</div>
+  </div>
+</div>
+</section>
+
+<!-- ============== §A.1 業務地圖 ============== -->
+<section id="sA1">
+<h2>§A.1 業務地圖 + 護城河來源對照</h2>
+<p>先回答「三檔到底做什麼、靠什麼賺錢、護城河 mechanism 是什麼」。這是 anatomy，不是評分。</p>
+<table>
+<thead><tr><th>維度</th><th>SNDK</th><th>GLW</th><th>APH</th></tr></thead>
+<tbody>
+<tr>
+<td><strong>營收 mix</strong>（latest FY）</td>
+<td>純 NAND flash。Client SSD ~45% / Datacenter eSSD 25-30%（YoY +400-645%）/ Mobile+Embedded ~30%。單一產品族，無分散。</td>
+<td>Optical Communications $1.8B/季（+36%，占增量主力）/ Solar $370M（+80%）/ Glass Innovations（Display+Specialty）/ Mobile Consumer（Gorilla）/ Auto。五段多元。</td>
+<td>Communications Solutions 52%（含 IT Datacom 41% of total）/ Harsh Environment 26%（汽車+工業+國防醫療）/ Interconnect Products 22%。三段 Q1 全擴張。</td>
+</tr>
+<tr>
+<td><strong>主要產品線</strong></td>
+<td>BiCS8/BiCS10 3D NAND、Client/Enterprise SSD、HBF（High Bandwidth Flash，pre-product 第二曲線）。</td>
+<td>Contour 光纖、fusion-draw 玻璃、Hemlock 多晶矽 wafer、AI packaging 玻璃 substrate、Gorilla Glass。</td>
+<td>高速銅背板（NVL72 sole-source）、AEC/光纖互連、高速 I/O 連接器、CCS（$10.5B 併購的 fiber/datacenter）。</td>
+</tr>
+<tr>
+<td><strong>客戶集中度</strong></td>
+<td>5 家 hyperscaler LTA 占 30-35%（$42B take-or-pay backlog）+ OEM top10 25%；前五 ~50%。</td>
+<td>最大單一客戶 &lt;15%（Apple/Samsung/NVDA/Meta/Amazon/Intel/TSMC 分散）— 三檔中最分散。</td>
+<td>最大客戶（NVDA 透過 ODM）~10-12%，前五 ~25-30%（含 Apple/Amazon/MSFT/Meta）。</td>
+</tr>
+<tr>
+<td><strong>直接對打的 socket</strong>（圈內）</td>
+<td>與 GLW/APH <strong>無 socket 重疊</strong> — 記憶體不與光纖/連接器爭同一張 BOM 位置；搶的是 hyperscaler 的「儲存」預算線而非「網路互連」線。</td>
+<td>AI 光層的 passive 材料端（光纖+玻璃 substrate）。與 APH 在「AI 互連預算」相鄰但 socket 不同（GLW 賣纖、APH 賣連接器/AEC）。</td>
+<td>AI 互連的 active/結構端（高速銅+連接器+AEC）。與 GLW 相鄰非對打；CPO 時代雙方都供 carrier。</td>
+</tr>
+<tr>
+<td><strong>護城河來源</strong>（mechanism）</td>
+<td>Kioxia JV 規模（至 2034）+ $42B take-or-pay LTA 短期鎖定。<strong>本質商品</strong>：mechanism 是「cycle 期間的合約治理」而非結構壁壘 — cycle 反轉時部分溶解。</td>
+<td>175 年材料科學 + 11,000 專利 + fusion-draw/Contour 獨家製程 + 多 hyperscaler 多年綁定。結構性「材料平台 lock-in」。</td>
+<td>35 年 decentralized M&amp;A 飛輪（50+ 併購）+ 16,000 專利 + NVL72 sole-source 設計鎖定 + 高 OEM 切換成本。<strong>執行+規模雙重</strong>。</td>
+</tr>
+<tr>
+<td><strong>護城河趨勢來源</strong></td>
+<td>↑（短期）← $42B backlog + HBF 標準參與；但長期 holding 偏 ↓（cycle 反轉時 +1 短期強化將溶解）。</td>
+<td>↑ ← Q4 Core OM 20.2% 達標 + NVDA $3.2B/Meta $6B/Amazon 三大新單 + 11,000 專利持續累積。</td>
+<td>↑ ← 5 年毛利連續擴張（32%→38%）+ Q4 OP margin 創高 27.5% + CCS $10.5B 整合放大規模。</td>
+</tr>
+</tbody>
+</table>
+
+<div class="callout callout-key">
+<strong>業務地圖洞察</strong>：
+<br>① <strong>圈內業務 overlap 其實很淺</strong> — 這不是「同類三選一」。SNDK（記憶體）與另兩檔零重疊；GLW（光纖玻璃）與 APH（連接器）只在「AI 互連預算」相鄰，socket 不同（passive 材料 vs active 結構），近乎互補。三檔唯一共同點是 <strong>AI capex 這條 beta</strong>，不是彼此搶單。
+<br>② <strong>最 differentiated 的是 SNDK</strong> — 但這是「另一個產業」的 differentiated，不是優勢；它的記憶體商品屬性讓它無法與另兩檔在 buy-and-hold 軸上比較。
+<br>③ <strong>護城河結構硬度排序：APH（執行+規模雙重，35 年複利已證明）≈ GLW（175 年材料平台 lock-in）&gt;&gt; SNDK</strong>。前兩者是結構性硬 lock-in（認證/專利/設計週期），SNDK 是「cycle 期間的合約治理」— cycle 反轉時擊穿。這條差異是後面所有時間框架排序的根：護城河結構硬度直接決定了 §A.2 的 ROIC 穩定性（硬 lock-in → 高且穩的報酬率）、§C 的 IRR 質感（結構壁壘 → 自然複利不靠市場）、§D 的 Bear 復原力（lock-in → 觸發後還能站住）。所以雖然三檔表面是三個產業，§A.1 這張護城河 mechanism 表其實已經預告了全篇結論 — APH/GLW 是「結構複利」、SNDK 是「週期投機」，後面三層時間框架只是把這個 mechanism 差異在不同時間尺度上展開。
+</div>
+</section>
+
+<!-- ============== §A.2 基本面 ============== -->
+<section id="sA2">
+<h2>§A.2 基本面財務體質對比</h2>
+<p>誰的財務體質最硬、成長質量最高？格子皆 sourced（DCA 章節 / dd-screener latest.json / WebSearch）。</p>
+
+<h4>表 1 成長引擎</h4>
+<table>
+<thead><tr><th>維度</th><th>SNDK</th><th>GLW</th><th>APH</th></tr></thead>
+<tbody>
+<tr><td>營收 3Y CAGR（歷史）</td><td>cycle 失真（FY25 +30% 從 trough，FY26 Q3 Rev +251% YoY）</td><td>~低個位數→FY25 doubling FCF；Q1'26 +18% YoY</td><td>FY25 Rev +51.7%（含 M&amp;A）</td></tr>
+<tr><td>營收 FY1/FY2（forward）</td><td>cycle peak（FY27 為高點全年）</td><td>Optical 2028 run-rate &gt;$8B</td><td>Q2'26 guide +43-45% EPS YoY</td></tr>
+<tr><td>EPS FY1→FY3 CAGR（同源）</td><td>69%*（peak 假象，§C 拆穿）</td><td>31.5%</td><td>14.8%</td></tr>
+<tr><td>成長質量（價 vs 量）</td><td><span class="rank-3">幾乎全靠 ASP（價）</span>：Q3 GM 78% 由 ASP 驅動，bit growth 僅 +10-15%。價漲一反轉就崩。</td><td>量價並進：Optical 量（fiber miles）+ Core OM 擴張（價）雙驅。</td><td><span class="rank-1">量驅 + margin 同擴</span>：organic +33% 量 + 5 年毛利 +6pp。最高質量。</td></tr>
+<tr><td>成長動能來源</td><td>NAND ASP cycle（Q1 +90% / Q2 +70-75%）</td><td>AI 光纖（Optical +36%）+ Solar +80%</td><td>IT Datacom organic +81%（AI 直驅）</td></tr>
+</tbody>
+</table>
+<p style="font-size:13.5px;color:#334155;"><strong>表 1 洞察</strong>：成長「數字」最大的是 SNDK（69% CAGR）但質量最差 — 純靠漲價，cycle 反轉直接腰斬。APH 數字最低（14.8%）但質量最高（量驅 + margin 同步擴張）。GLW 居中但 31.5% 隱含 EPS CAGR 偏激進（靠 Springboard 三條 S 曲線全兌現）。<strong>成長質量排序與成長數字排序完全相反</strong> — 這是這組對比的第一個關鍵反差。</p>
+
+<h4>表 2 獲利結構與趨勢</h4>
+<table>
+<thead><tr><th>維度</th><th>SNDK</th><th>GLW</th><th>APH</th></tr></thead>
+<tbody>
+<tr><td>Gross margin</td><td>78%（cycle peak，↑↑ 但會反轉）</td><td>~38%（→ Core OM 20.2%）</td><td>38.2%（↑ 5 年連續 +6pp）</td></tr>
+<tr><td>Op margin 趨勢</td><td>cycle peak 高，trough 轉負</td><td>Core OM 20.2%（達 Springboard target）</td><td><strong>27.5%</strong>（+510bp YoY，創高）</td></tr>
+<tr><td>FCF margin / conversion</td><td>FCF/NI 0.82（Q3）；TTM 失真</td><td>FY25 FCF $1.7B（doubled from $818M）</td><td>FCF/NI <strong>1.025</strong>（健康）</td></tr>
+<tr><td>ROIC vs WACC</td><td>66% peak / trough 為負（標準差極大）</td><td>9.6%（≈ WACC，最低）</td><td>16.3%（工業最高，10 年 &gt;15%）</td></tr>
+<tr><td>Margin 展望</td><td>↓ cycle 反轉時 GM 從 78%→normalized 30-40%</td><td>↑ mix 轉 Optical（ROIC &gt; Display）</td><td>↑ CCS 整合 + scale 兌現</td></tr>
+</tbody>
+</table>
+<p style="font-size:13.5px;color:#334155;"><strong>表 2 洞察</strong>：差異最大的格子是 <strong>ROIC 的「穩定性」</strong> — APH 16.3% 是 10 年 &gt;15% 的穩態複利；SNDK 66% 是 cycle peak 的一次性（trough 轉負，10 年標準差極大）；GLW 9.6% 最低且僅約等於 WACC（這是 GLW 真正的弱點 — 護城河 A 級但資本報酬率偏低，靠 re-investment runway 撐）。APH 是唯一「高且穩」的 ROIC。</p>
+
+<h4>表 3 資產負債與資本配置</h4>
+<table>
+<thead><tr><th>維度</th><th>SNDK</th><th>GLW</th><th>APH</th></tr></thead>
+<tbody>
+<tr><td>Net cash / net debt</td><td><strong>$3.74B 淨現金 / $0 debt</strong>（最乾淨）</td><td>debt avg tenor 21-23 年（S&amp;P 最長之一），$1.2B due 5Y</td><td>Net Debt $14.2B（1.6x EBITDA，歷史新高但 ≤3.0 警戒）</td></tr>
+<tr><td>Buyback + 股息</td><td>$6B 授權（cycle peak 回購，歷史警示）/ 無股息</td><td>股息 ~1.1% + 系統性回購（10Y −50% 流通股）</td><td>股息 0.7% / buyback −1.36%（CCS 整合期淨稀釋）</td></tr>
+<tr><td>Capex intensity</td><td>trough capex/Rev 4%（紀律嚴）</td><td>2026 capex $1.7B（infra 投資週期）</td><td>capex/Rev &lt;5%（輕資產，FCF margin ~19%）</td></tr>
+<tr><td>資本配置紀律</td><td>⚠ cycle peak 大量回購（WD 2018 教訓重演風險）</td><td>Springboard 框架明確 + 股息可持續</td><td>35 年 50+ 併購 ROIC 紀律；leverage 歷史新高需觀察 6 季</td></tr>
+</tbody>
+</table>
+<p style="font-size:13.5px;color:#334155;"><strong>表 3 洞察</strong>：SNDK 資產負債表最乾淨（$0 debt + 淨現金）但這恰恰是 cycle peak 的特徵（現金剛從 peak 利潤累積），且它在 peak 做 $6B 回購是價值毀滅前科（對標 WD 2018 → 2019 −60%）。GLW 是唯一有「股息 + 系統性回購」雙股東回報的（等待過程持有成本低）。APH leverage 歷史新高（$14.2B / 1.6x）是唯一的資產負債表瑕疵，但 CCS EBITDA flow-through 可在 6 季內推回 1.0-1.2x。</p>
+
+<h4>表 4 經營質量</h4>
+<table>
+<thead><tr><th>維度</th><th>SNDK</th><th>GLW</th><th>APH</th></tr></thead>
+<tbody>
+<tr><td>客戶經濟性</td><td>5 hyperscaler LTA（take-or-pay 保護但 cycle 反轉時可重議，歷史執行率 60-70%）</td><td>客戶最分散（單一 &lt;15%）+ 多年合約</td><td>B/B 1.24x（歷史紀錄）+ NVL72 sole-source</td></tr>
+<tr><td>Guidance 兌現</td><td>Q3 大幅 beat（但 cycle 的果非因）</td><td>Q1 Optical/Solar/OM 全達標</td><td>Q1 beat $526M（$7.62B vs $7.09B）</td></tr>
+<tr><td>Earnings quality</td><td>⚠ peak earnings 不可線性外推；FY28 反轉時 beat 變 miss</td><td>Core vs GAAP 差異大（看 Core EPS）</td><td>GAAP vs Adj 差 &lt;5%（最乾淨）</td></tr>
+<tr><td>單位經濟</td><td>cycle-dependent（peak 強 trough 弱）</td><td>n/a（逐段未細載）</td><td>三段全獲利，HES/CS/IPA 皆正</td></tr>
+</tbody>
+</table>
+<p style="font-size:13.5px;color:#334155;"><strong>表 4 洞察</strong>：earnings quality 差距最大 — SNDK 的 peak earnings 本質「不可外推」（這是 §C 估值假象的根），APH 的 GAAP/Adjusted 差 &lt;5% 是工業股裡最乾淨的盈餘品質。客戶經濟性上 GLW 的「最分散」是被低估的優點（無單一客戶綁架風險）。</p>
+
+<div class="callout callout-key">
+<strong>財務體質裁決</strong>：
+<br>① <strong>體質排序：APH（1）&gt; GLW（2）&gt;&gt; SNDK（3）</strong>。APH 勝在 ROIC「高且穩」16.3%（10 年）+ FCF conversion 1.025 + 盈餘品質最乾淨 + 量驅成長；唯一瑕疵是 leverage 歷史新高。GLW 勝在多元化 + 雙股東回報 + 客戶最分散，但 ROIC 9.6% 僅約等 WACC 是真實短板。
+<br>② <strong>高質量成長 vs 低質量成長</strong>：APH = 高質量（organic +33% 量 + margin +6pp 同擴 + FCF 跟上）。SNDK = <strong>低質量</strong>（69% EPS CAGR 幾乎全靠 ASP 漲價，bit growth 僅 +10-15%，cycle 反轉直接崩，且 peak 回購毀滅價值）。GLW = 中性偏高（量價並進但 ROIC 偏低）。
+<br>③ <strong>對 3-5Y 排序影響最大的格子 = ROIC 穩定性</strong>：APH 16.3% 穩態 vs SNDK 66% 一次性 vs GLW 9.6% 偏低 — 這個差異在 §B.3 直接決定誰能「自然複利」、誰需要市場配合、誰會 cycle 反轉。
+</div>
+</section>
+
+<!-- ============== §A.3 競爭態勢 ============== -->
+<section id="sA3">
+<h2>§A.3 競爭態勢對比</h2>
+<p>§A.1 講「業務是什麼」；這節講「打得怎麼樣 — 份額搶誰的、被誰搶、圈外誰虎視」。</p>
+
+<h4>表 1 主戰場競爭格局</h4>
+<table>
+<thead><tr><th>標的</th><th>主戰場</th><th>市占 + 3Y 份額方向</th><th>競爭結構</th><th>圈外最大威脅</th></tr></thead>
+<tbody>
+<tr>
+<td><strong>SNDK</strong></td>
+<td>NAND flash（DC eSSD + Client）</td>
+<td>~12-15% ↑（從 10% 升，cycle 期間搶 Samsung/Micron 份額）</td>
+<td>寡占 5 家（Samsung 32% / SK Hynix+Solidigm / Kioxia-SNDK JV / Micron）</td>
+<td><span class="signal signal-yellow">二級侵蝕</span> YMTC（中國，2026 末目標 15% 份額，產能回流壓 ASP）+ SCM/MRAM（2028+ 一級替代尾部）</td>
+</tr>
+<tr>
+<td><strong>GLW</strong></td>
+<td>AI 光纖 + 玻璃 substrate</td>
+<td>光纖龍頭 ↑（NVDA/Meta/Amazon 三大新單擴大 anchor 地位）；玻璃 substrate 25% ↑</td>
+<td>光纖寡占（GLW/Prysmian/CommScope）；玻璃 substrate 早期</td>
+<td><span class="signal signal-grey">三級噪音</span> CPO 對 GLW <strong>中性偏正</strong>（GLW 供 CPO 所需 specialty fiber + glass carrier，不像 active 元件商被替代）</td>
+</tr>
+<tr>
+<td><strong>APH</strong></td>
+<td>高速互連連接器（IT Datacom）</td>
+<td>#2 全球 ↑（CCS 併購後逼近 TEL #1，AI 段搶份額）</td>
+<td>寡占（TEL #1 / APH #2 / Molex）+ 中國 Luxshare/Bizlink 入榜</td>
+<td><span class="signal signal-yellow">一級擊穿（潛在）</span> NVDA Rubin cable-free / CPO — 若 rack 級連接器內容結構性壓縮 30-40%，這是 APH 唯一的清倉級威脅</td>
+</tr>
+</tbody>
+</table>
+
+<h4>表 2 護城河二維拆解（對齊 DD v12.3 §9）</h4>
+<table>
+<thead><tr><th>標的</th><th>Execution moat</th><th>Pricing power moat</th><th>二維合成</th></tr></thead>
+<tbody>
+<tr><td><strong>SNDK</strong></td><td>6（Kioxia JV 規模 + 製程跟得上）</td><td><span class="rank-3">2</span>（商品本質，cycle peak 才有定價力）</td><td><span class="signal signal-red">單軸偏弱</span>：執行中等、定價力幾乎沒有 — 商品股的典型，抗擊穿能力弱</td></tr>
+<tr><td><strong>GLW</strong></td><td>8（fusion-draw/Contour 獨家製程 + US 製造）</td><td>7（材料 IP 議價力強，但 ROIC 9.6% 顯示定價力沒完全轉成報酬）</td><td><span class="signal signal-green">雙高</span>：結構性 lock-in，抗擊穿強</td></tr>
+<tr><td><strong>APH</strong></td><td><span class="rank-1">9</span>（35 年併購整合 + 良率 + 供應鏈執行，工業最高）</td><td><span class="rank-1">8</span>（5 年漲價成功 GM +6pp + sole-source 切換成本）</td><td><span class="signal signal-green">雙高（最強）</span>：執行+定價皆頂，抗擊穿最強</td></tr>
+</tbody>
+</table>
+
+<h4>表 3 議價權三段（對齊 DD §11）</h4>
+<table>
+<thead><tr><th>標的</th><th>對上游</th><th>對下游</th><th>地緣敏感度</th></tr></thead>
+<tbody>
+<tr><td><strong>SNDK</strong></td><td>弱（ASML/AMAT/TEL/KLA 設備寡占）</td><td>cycle-dependent（peak 中高 / trough 低）</td><td>高（YMTC 中國產能回流直接壓 ASP）</td></tr>
+<tr><td><strong>GLW</strong></td><td>強（材料 IP 自有）</td><td>強-中（hyperscaler dual-source 但 GLW 是核心 anchor）</td><td>低-正（US-made narrative，NVDA 投資強化）</td></tr>
+<tr><td><strong>APH</strong></td><td>強（前 10 連接器商集中）</td><td>中（NVL72 sole-source 強，但 hyperscaler 多源化推進）</td><td>中（~20% 中國 sales 曝險；但 300+ 廠分散，兩輪關稅證明韌性）</td></tr>
+</tbody>
+</table>
+
+<h4>Head-to-head 互打證據（圈內 3 對）</h4>
+<p><strong>SNDK ↔ GLW</strong>：<strong>無直接重疊</strong>。記憶體 vs 光纖玻璃，零 socket 交集。替代關係上是「搶同一筆 hyperscaler capex 的不同分項」（儲存預算 vs 網路互連預算），但這兩條分項各自獨立成長，不互相排擠。</p>
+<p><strong>SNDK ↔ APH</strong>：<strong>無直接重疊</strong>。記憶體 vs 連接器，零交集。同屬 AI capex 受益但分項不同。</p>
+<p><strong>GLW ↔ APH</strong>：<strong>相鄰但非對打</strong>。兩者都吃「AI 互連預算」，但 socket 不同 — GLW 賣 passive 光纖/玻璃 carrier，APH 賣 active 連接器/AEC/銅背板。近 2 年無 design-win 互搶案例（不在同一張 BOM 位置競標）。CPO 時代反而是<strong>互補</strong>：CPO 需要 GLW 的 specialty fiber + glass substrate carrier，也需要 APH 的封裝級連接 — 6/8 Amazon 給 GLW 的是「光纖 + cable + connectivity」整包，其中 connectivity 部分與 APH 的連接器是供應鏈上下游而非競爭。</p>
+
+<h4>互斥假設檢查（v1.7）</h4>
+<div class="callout">
+逐對檢查三檔 base case 是否重複計算同一塊份額：
+<br>• <strong>SNDK base</strong>（NAND ASP cycle 延長）與另兩檔的 AI 互連假設<strong>完全獨立</strong> — 不同產業、不同 capex 分項，無互斥。
+<br>• <strong>GLW base</strong>（Optical +18% EPS CAGR）與 <strong>APH base</strong>（IT Datacom organic +11% EPS CAGR）<strong>相容</strong>：兩者吃 AI 互連預算的不同 socket（光纖材料 vs 連接器），不搶同一筆訂單。共同假設 = <strong>hyperscaler AI capex 維持 $700B+/yr 至 2028-2030</strong>。
+<br>→ <strong>三檔 base case 全部相容，無需裁決砍數字</strong>。三檔 IRR 可並排比較（不存在「A 搶 B 守」的重複計算問題）。但這也意味三檔共享同一條 beta 風險（AI capex 放緩會同時打三檔，只是 SNDK 透過記憶體 cycle、另兩檔透過互連需求）。
+</div>
+
+<div class="callout callout-warn">
+<strong>競爭態勢裁決</strong>：
+<br>① <strong>誰在搶份額</strong>：三檔份額方向都 ↑ — SNDK 在 cycle 期間搶 Samsung/Micron（但會隨 cycle 反轉吐回）、GLW 靠三大 hyperscaler 新單擴大光纖 anchor（結構性）、APH 靠 CCS 併購逼近 TEL #1（結構性）。<strong>SNDK 的份額上升是週期性的（會還），GLW/APH 是結構性的（守得住）</strong>。
+<br>② <strong>競爭壓力來自圈內還是圈外</strong>：三檔的真實威脅全在<strong>圈外</strong>，不在彼此 — SNDK 怕 YMTC + SCM；APH 怕 NVDA cable-free（唯一一級擊穿）；GLW 受 CPO 影響最小（中性偏正）。<strong>圈內排序沒有「你死我活」，因為三檔根本不互打</strong>。這也意味本對比的價值不在「選贏家淘汰輸家」，而在「同一筆 AI capel 資金該放哪條收費管道」。
+<br>③ <strong>5 年後格局</strong>：GLW 在 CPO 過渡中地位最穩（賣鏟子給所有人 — CPO 每一代都更需要 specialty fiber + glass carrier）；APH 押注 cable-free 是漸進（5-10 年）而非斷崖，若押對則 #1；SNDK 仍是 5-8 季一輪的商品週期，結構不變。值得注意的是 APH 的圈外威脅（NVDA Rubin cable-free）與 GLW 的圈外機會（CPO 帶動光纖需求）其實是<strong>同一個技術趨勢的兩面</strong> — 光取代銅。這意味若你同時看好 GLW 又擔心 APH 的 cable-free 風險，兩檔某種程度上是天然對沖：cable-free 來得快，GLW 受惠、APH 受傷；來得慢，APH 續強、GLW 慢熱。把這條技術趨勢的不確定性分散到「光的受惠者 GLW + 銅的守成者 APH」上，比單押一檔更穩 — 這是三檔裡 GLW+APH 組合（而非任一單檔）的一個隱藏優勢。
+</div>
+</section>
+
+<!-- ============== §B.1 ============== -->
+<section id="sB1">
+<h2>§B.1 &lt;12M 短期</h2>
+<p>關鍵維度：Pure MA 狀態、動能健康度、估值分位、進場時機。</p>
+<table>
+<thead><tr><th>維度</th><th>SNDK</th><th>GLW</th><th>APH</th></tr></thead>
+<tbody>
+<tr><td>Pure MA</td><td>✅ 機械支持（但極度延伸）</td><td>✅ 結構多頭</td><td>✅ 三條 MA 強正斜率（最健康）</td></tr>
+<tr><td>動能健康度</td><td><span class="rank-3">⚠ RSI 75-81 過熱，+593% YTD</span></td><td>⚠ 1Y +200% 但已從 $195 回落 −16%</td><td><span class="rank-1">✅ RSI 中性（49），4w +11%</span></td></tr>
+<tr><td>估值分位（live）</td><td>93%（極貴）</td><td>71%</td><td>28%（最低）</td></tr>
+<tr><td>進場時機（現價）</td><td>$1,643 — 距進場區 $650-820 還要 −50%</td><td><span class="rank-1">$164.5 — 已在進場區 $155-175</span></td><td>$154 — 已漲出進場區 $128-138</td></tr>
+<tr><td>近期催化</td><td>+593% YTD 動能（追高賭注）</td><td>6/8 Amazon 光纖大單（新正面）</td><td>6/9 +7% 跳漲</td></tr>
+</tbody>
+</table>
+<p><strong>短期排序：1. SNDK*（動能）　2. GLW　3. APH</strong> — 但這個排序帶最大警告。SNDK 動能最猛（§A.2 表 1 成長數字最大）但這是「+593% YTD、RSI 81 的追高」，動能領先 ≠ 該追；它的 §A.2 估值分位 93% + 表 4 earnings quality「不可外推」說明短期 momentum 是 cycle peak 的尾巴。DCA 報告明確點出 SNDK 5/4→5/10 六個交易日又跳 +31.6%，4w 漂移 +132% 遠超 10% 紅線 13 倍 — 歷史上 RSI &gt;75 後一個月內回測 8-15% 機率約 60%，且 +132% 過熱程度回測幅度可能更大。<strong>真正可動手的是 GLW</strong> — 唯一現價落在報告進場區、且有 §A.3 表 1 的 Amazon 新單催化。APH 短期 MA 最健康（§B 唯一 RSI 中性 49、4w +11% 但 8w −0.9% 的 consolidation pattern）但已漲出進場區，短期反而要等回測。</p>
+<div class="callout callout-warn"><strong>短期進場紀律</strong>：三檔此刻只有一檔該動手。SNDK 機械 Pure MA ✅ 但 RSI 過熱觸發強制條件式進場（等回測 $650-820，−50%）；APH Pure MA 最健康但價位已脫離 $128-138 區（等回 ≤$145）；<strong>GLW 是唯一「Pure MA 多頭 + 價位在進場區 + 新催化」三條同時成立的標的</strong>。短期動能排名第一的 SNDK 反而是最不該在此刻建倉的 — 這正是「動能 ≠ 進場」的教科書案例。</div>
+</section>
+
+<!-- ============== §B.2 ============== -->
+<section id="sB2">
+<h2>§B.2 2-3Y 中期</h2>
+<p>關鍵維度：拐點催化兌現、估值修復、margin path、cycle 位置。</p>
+<table>
+<thead><tr><th>維度</th><th>SNDK</th><th>GLW</th><th>APH</th></tr></thead>
+<tbody>
+<tr><td>拐點催化</td><td><span class="rank-3">⚠ 此時最可能 cycle 反轉開始（第 8-10 季）</span></td><td>Springboard $5.75B 增量 2028 達標中</td><td><span class="rank-1">Q1 三段全擴張已兌現 + B/B 1.24x</span></td></tr>
+<tr><td>估值修復</td><td>peak 估值無修復空間（反轉時 PE 壓縮）</td><td>已從 51x 修到 ~43x（§C 改善）</td><td>FPE 26x（5Y 分位 28%，本就不貴）</td></tr>
+<tr><td>margin path</td><td>↓（GM 78% 將 normalize）</td><td>↑（mix 轉 Optical）</td><td>↑（OP margin 27.5% 創高續升）</td></tr>
+<tr><td>2-3Y EPS 路徑</td><td>FY27 peak → FY28 反轉（−24%/yr）</td><td>EPS CAGR ~18%（引 §A.2 表 1）</td><td>EPS CAGR ~11-14%（引 §A.2 表 1）</td></tr>
+</tbody>
+</table>
+<p><strong>中期排序：1. APH　2. GLW　3. SNDK</strong>。APH 的拐點是「已兌現且在續航」（§A.3 表 2 二維雙高支撐 margin 續升），是三檔中唯一「拐點向上 + 估值不貴」的組合 — Q1'26 orders $9.435B（+78% YoY）、B/B 1.24x 是歷史紀錄，加上 CCS $10.5B 整合在 2027-2028 把 APH 從連接器 #2 推向逼近 TEL #1，中期 re-rate 紅利（FPE 26x 5Y 分位僅 28%，有空間升到 30x）+ EPS 複利雙引擎。GLW 估值已從 51x 修到 43x（§C），2-3Y 靠 Springboard $5.75B 增量達標 + Amazon/NVDA/Meta 三大單 ramp。SNDK 在這個時間窗最危險 — 2-3Y（2027 Q4-2028 Q2）正好對應它最可能 cycle 反轉的時點（§A.2 表 2 margin 展望 ↓，三大原廠 capex 回流 + YMTC 50K wafer/month ramp），此時 peak earnings + peak 估值雙殺，DCA 估該時點 Max DD 觸發。</p>
+<div class="callout"><strong>中期分歧根源</strong>：2-3Y 是「拐點兌現 vs cycle 反轉」的分水嶺。APH/GLW 的拐點是「向上的結構性兌現」（AI 互連需求剛起步），SNDK 的「拐點」卻是「向下的週期反轉」（NAND 第 8-10 季）。同樣是 2-3Y，三檔走在相反方向的曲線上 — 這是為什麼 SNDK 在短期排第一、中期就墊底。</div>
+</section>
+
+<!-- ============== §B.3 ============== -->
+<section id="sB3">
+<h2>§B.3 3-5Y 中長期（核心層）</h2>
+
+<h4>§B.3.a 護城河 3-5Y 持續性判斷</h4>
+<p><strong>SNDK</strong>（mechanism 見 §A.1）：撐不過 3-5 年。$42B take-or-pay 只涵蓋 FY27 的 1/3 bit supply，且歷史 DRAM LTA 在 downturn 執行率僅 60-70%、價格被砍 25-40%。失效事件 = NAND ASP MoM 連 2 月轉負（最快 2027 Q1）— 這正是 §5 single thing，3-5 年內幾乎必然發生一次。護城河定價力僅 2 分（§A.3 表 2），cycle 反轉時結構溶解。</p>
+<p><strong>GLW</strong>（mechanism 見 §A.1）：撐得過。175 年材料 + fusion-draw 獨家製程 + 11,000 專利不是 3-5 年能複製的；Amazon/NVDA/Meta 多年合約把需求鎖到 2028+。失效事件 = Springboard 達標率 &lt;80%（Solar 段執行 + 玻璃 substrate timing 延後到 2030+），但這傷的是「成長斜率」非「護城河存續」。</p>
+<p><strong>APH</strong>（mechanism 見 §A.1）：撐得過且最硬。35 年 decentralized M&amp;A 飛輪是「已驗證 35 年」的可重複執行模型（非單一護城河而是製造護城河的能力）；NVL72 sole-source + OEM design-in 切換成本是結構鎖定。失效事件 = NVDA Rubin cable-free 成為 architectural default（§5 primary），但 transition 通常 5-10 年漸進、不會 3 年內崩。</p>
+
+<h4>§B.3.b 排序判斷（承接 a + §A.3 二維合成 + §C IRR）</h4>
+<table>
+<thead><tr><th>維度</th><th>SNDK</th><th>GLW</th><th>APH</th></tr></thead>
+<tbody>
+<tr><td>護城河二維（§A.3）</td><td>單軸偏弱（6/2）</td><td>雙高（8/7）</td><td><span class="rank-1">雙高最強（9/8）</span></td></tr>
+<tr><td>5Y 期望值（dd-screener）</td><td><span class="rank-3">−3.65%</span></td><td>+7.96%</td><td><span class="rank-1">+8.5%（5Y upside 87%）</span></td></tr>
+<tr><td>Base IRR（§C，現價重算）</td><td>~ −15%/yr</td><td>~ +9.7%/yr（價格回落改善）</td><td><span class="rank-1">~ +10%/yr（自然複利）</span></td></tr>
+<tr><td>IRR 質感</td><td>EPS 衰退 + PE 壓縮雙殺</td><td>EPS +18% 但需 −10% re-rate</td><td><span class="rank-1">96% 來自 EPS 自然複利</span></td></tr>
+<tr><td>Pattern Match</td><td>Micron 2017-2019（5Y 平盤 + 雙底）</td><td>GLW 2010-2015 材料復興（+50%）</td><td>TEL 2010-2015 +85% / ROP +320%</td></tr>
+</tbody>
+</table>
+<p><strong>3-5Y 排序：1. APH　2. GLW　3. SNDK</strong>。APH 與 GLW 的 5Y 期望值很接近（+8.5% vs +7.96%），但 <strong>tiebreaker = IRR 質感</strong>：APH 的 IRR 96% 來自 EPS 自然複利（§C），不需要市場給臉色 re-rate；GLW 的 +9.7% 裡內含 −10%/yr 的 PE 壓縮假設（需 EPS +18% 跑贏壓縮），質感較「需市場配合」。加上 APH 護城河二維最強（9/8）+ ROIC 高且穩（§A.2 表 2）+ pattern match 最乾淨（TEL/ROP 雙錨）→ APH 勝。SNDK 5Y 期望值 −3.65% 直接出局。</p>
+<p><strong>Pattern Match 三檔對照（讓排序有歷史錨點）</strong>：APH 對標 TEL 2010-2015（連接器整合龍頭升級，5Y +85% / IRR 13%）+ ROP 2005-2015（decentralized M&amp;A 飛輪，10Y +320% / IRR 15%）— 兩個都是「工業 compounder 兌現」的乾淨案例，APH base 11.5% 屬保守 shading（起點估值較貴扣 1-2pp）。GLW 對標自己的 2010-2015 材料復興（+50% 穩定成長路徑，非 2003-2008 那種 deep-bear 暴漲）。SNDK 對標 Micron 2017Q4-2019（cycle peak 後 5Y 平盤 + 中途 2019/2022 雙底 −47%/−50%，IRR 僅 +2~4%）。<strong>三個 pattern 講同一件事：自然複利的工業股（APH/GLW）pattern 是「向上斜率」，商品週期股（SNDK）pattern 是「5Y 平盤 + 雙底煎熬」</strong>。歷史對標再次把 APH/GLW 與 SNDK 分到兩個世界。</p>
+<p><strong>ROIC vs WACC 的隱含訊息</strong>：APH ROIC 16.3% 顯著高於 WACC（正差約 7-8pp），意味每一塊再投資都在創造價值，自然複利可持續；GLW ROIC 9.6% 僅約等 WACC（這是它 3-5Y 排第二而非第一的深層原因 — 護城河 A 級但資本效率偏低，成長靠 runway 而非高報酬率）；SNDK 的 66% 是 cycle peak 一次性，10 年平均含 trough 後接近或低於 WACC。這條「ROIC 與 WACC 的距離」是 3-5Y 複利能否持續的根本判據，APH 在這條上最穩。</p>
+</section>
+
+<!-- ============== §B.4 ============== -->
+<section id="sB4">
+<h2>§B.4 5-10Y 長期</h2>
+<p>關鍵維度：Runway post-Y5、第二曲線、範式風險、護城河 10 年抗風險。</p>
+<table>
+<thead><tr><th>維度</th><th>SNDK</th><th>GLW</th><th>APH</th></tr></thead>
+<tbody>
+<tr><td>Runway Post-Y5</td><td><span class="rank-3">🔴 窄（NAND TAM CAGR 5.32%，已飽和）</span></td><td>🟢 寬（三條 S 曲線疊加）</td><td>🟢 寬（連接器 TAM 翻倍至 2034）</td></tr>
+<tr><td>第二曲線</td><td>HBF（唯一，2028+ 才規模化，機率 40%）</td><td>Solar + 玻璃 substrate + 量子光元件</td><td>CCS fiber + optical interconnect（cable-free 對沖）</td></tr>
+<tr><td>範式風險</td><td>SCM/MRAM 替代（2028+ 尾部）</td><td>CPO（對 GLW 中性偏正）</td><td>cable-free/CPO（一級但漸進）</td></tr>
+<tr><td>10Y IRR 估</td><td>−7%/yr（即使 HBF 兌現）</td><td>~8.6%/yr</td><td>~12.1%/yr</td></tr>
+</tbody>
+</table>
+<p><strong>長期排序：1. APH ≈ GLW　3. SNDK</strong>。APH 與 GLW 在 5-10Y 都是 🟢 寬 runway（§A.1 護城河結構硬度支撐），APH 10Y IRR 略高（12.1% vs 8.6%）但 GLW 的多元化（三條無相關 S 曲線 + CPO 中性偏正）讓它範式風險最低 — 兩者接近，tiebreaker 看你怕不怕 APH 的 cable-free 範式風險（雖漸進但存在）。SNDK 🔴 窄 runway + 10Y IRR 仍為負，長期出局無懸念。</p>
+<div class="callout"><strong>CPO 時程是長期關鍵變數</strong>：依 ID_AINetworking §0，CPO 路線圖為「2026 COUPE on PCB（2X power）→ 2027-2028 on Substrate（4X / &lt;0.1X latency）→ 2029+ on Interposer（10X，chip-to-chip 強制光）」。這條時間軸對三檔長期命運分歧：① 對 <strong>APH</strong> 是雙刃 — 2029+ Interposer 級強制光會壓縮 rack 級銅連接器，但 APH 已透過 CCS $10.5B 布局 optical interconnect 對沖（能否在 optical 重建 ASP 是 APH 5-10Y 最大未知）；② 對 <strong>GLW</strong> 是順風 — CPO 每一階段都更需要 specialty fiber + glass substrate carrier，GLW 是「賣鏟子給所有 CPO 玩家」；③ 對 <strong>SNDK</strong> 無關（記憶體不在互連戰場）。所以長期 GLW 的範式韌性其實略勝 APH，只是 APH 10Y IRR 數字較高把兩者拉成並列。若你對 cable-free 時程悲觀（提前到 2027-2028），GLW 應排第一。</div>
+</section>
+
+<!-- ============== §C IRR ============== -->
+<section id="sC">
+<h2>§C IRR Composition 質感對比</h2>
+<p>3-5Y view 真正的 alpha — 「靠自己跑」vs「靠市場配合」。數字為現價重算版（v1.7 IRR cascade：價格距報告日 &gt;3 天，re-rate 段用新價重算）。</p>
+
+<h4>SNDK — Base ~ −15%/yr（現價 $1,643，較報告 $1,562 更貴）</h4>
+<div class="irr-bar">
+  <div class="irr-segment irr-rerate-neg" style="width:80%;">EPS 衰退 −12% + PE 壓縮 −3.3%</div>
+  <div class="irr-segment irr-buyback" style="width:20%;">+0.8%</div>
+</div>
+<p class="irr-legend"><strong>−15%/yr 中：EPS 衰退 −12%（cycle peak → normalized）+ PE 壓縮 −3.3% + buyback +0.8%</strong>。雙殺結構 — cycle 反轉時 EPS 收縮疊加 PE 壓縮。dd-screener 同源 5Y 期望值 −3.65% 也是負（口徑較緩因採不同 normalize 假設，但方向一致）。<strong>需 cycle 配合 + 需市場配合的雙重依賴，最難抱</strong>。PEG 0.13 / FPE 9x 的「便宜」是 peak earnings 當分母的算術假象。</p>
+
+<h4>GLW — Base ~ +9.7%/yr（現價 $164.5，較報告 $195 改善）</h4>
+<div class="irr-bar">
+  <div class="irr-segment irr-eps" style="width:60%;">EPS +18%</div>
+  <div class="irr-segment irr-rerate-neg" style="width:30%;">re-rate −10.3%</div>
+  <div class="irr-segment irr-buyback" style="width:10%;">股息+回購 +2%</div>
+</div>
+<p class="irr-legend"><strong>+9.7%/yr 中：EPS +18% − PE 壓縮 −10.3% + 股息回購 +2%</strong>。報告寫於 $195 時 Base 是 +7.3%（PE 51x，re-rate −12.7%）；現價 $164.5 把 FPE 壓到 ~43x，re-rate 拖累縮小到 −10.3%，IRR 改善到 ~+9.7% — <strong>價格回落直接幫 GLW 加了 ~2.4%/yr</strong>，這正是 v1.7 IRR cascade 要捕捉的。質感「中等」：EPS 複利是主力但仍需 −10%/yr PE 壓縮不要更深，唯一有股息現金流 cushion。</p>
+
+<h4>APH — Base ~ +10%/yr（現價 $154，較報告 $133 略貴）</h4>
+<div class="irr-bar">
+  <div class="irr-segment irr-eps" style="width:88%;">EPS +11%</div>
+  <div class="irr-segment irr-rerate-pos" style="width:7%;">+0.2%</div>
+  <div class="irr-segment irr-buyback" style="width:5%;">+0.3%</div>
+</div>
+<p class="irr-legend"><strong>~+10%/yr 中：EPS +11%（96% 貢獻）+ re-rate +0.2% + 股息 +0.3%</strong>。報告寫於 $128-138 時 Base 是 +11.5%；現價 $154 把 FPE 推到 ~27x，把 IRR 略削到 ~+10%。但<strong>質感最佳 — 96% 來自 EPS 自然複利，幾乎不靠市場 re-rate</strong>。EPS CAGR 維持 11%+ 即使 PE 不擴張也能跑出 10%+。這是三檔中唯一「自然複利好抱型」。</p>
+
+<h4>三檔與市場 consensus 的最大分歧（alpha 來源對照）</h4>
+<table>
+<thead><tr><th>標的</th><th>市場定價在</th><th>報告的不同假設（alpha 來源）</th></tr></thead>
+<tbody>
+<tr><td>SNDK</td><td>FPE 21x（FY27 peak EPS）隱含「cycle 延 8-10 季 + HBF 兌現 + LTA 持續」三樂觀疊加</td><td>賣方把「合約金額」誤讀為「合約價值」— $42B backlog 含 price adjustment 條款，cycle 反轉時打 6-7 折。<strong>alpha 偏空（賺 cycle 物理凌駕合約優勢）</strong></td></tr>
+<tr><td>GLW</td><td>FPE 51x（報告時）= 假設 EPS CAGR 25%+ 維持到 2030 + PE 不 mean-revert，賣方均 PT ~$197「已 priced-in」</td><td>EPS CAGR 18%（非 25%）+ PE re-rate 到 25x；alpha 來自 entry discipline（等回測，現已實現）+ 對玻璃 substrate timing 比共識保守（2028+）+ Solar 執行風險被低估</td></tr>
+<tr><td>APH</td><td>FPE 26x 卡在「歷史 PE band 22-37x」— 用<strong>非 AI 時代</strong>的舊 anchor 定價</td><td>AI infra 讓 EPS CAGR 從歷史 8-10% 跳到 15-17%，但 PE band 仍用舊錨 = anchoring bias（類比 NVDA 2017-2020 被卡 25-35x 直到重定錨）。<strong>alpha 偏多（PE re-rate 到 32x）</strong></td></tr>
+</tbody>
+</table>
+<p style="font-size:13.5px;color:#334155;">三檔的 alpha 方向不同：SNDK 的 edge 在「賭空頭」（所以 DCA 給觀望而非進場）、GLW 在「等回測的紀律 + 對 Solar/玻璃過度樂觀的修正」、APH 在「市場用舊估值錨低估了 AI 時代的成長」。<strong>只有 APH 的 alpha 是「偏多且靠基本面」</strong>，這也呼應它是唯一 A 級訊號燈。</p>
+
+<div class="callout callout-key">
+<strong>IRR 質感裁決</strong>：APH（~10%，96% 自然複利）&gt; GLW（~9.7%，但 18% EPS 需吞 −10% re-rate）&gt;&gt; SNDK（−15%，cycle + 市場雙殺）。<strong>APH 與 GLW 的合計 IRR 幾乎打平（10% vs 9.7%），但質感天差地別</strong>：APH 不需市場配合，GLW 需要 PE 壓縮不要更深。這是 3-5Y 把 APH 排第一的核心理由。注意 GLW 的 +9.7% 是「價格回落送的禮物」— 若它漲回 $195，IRR 又掉回 +7.3%，所以 GLW 的吸引力高度綁定「現在這個價位」。SNDK 的 PEG 0.13 看似三檔最便宜，但那是 peak EPS 當分母的算術 — 用 dd-screener 穿透 cycle 的 5Y 期望值 −3.65% 才是真相，是三檔中唯一負值。</p>
+</div>
+</section>
+
+<!-- ============== §D Bear/DD ============== -->
+<section id="sD">
+<h2>§D Bear Case + Max DD 路徑對比</h2>
+<table>
+<thead><tr><th>維度</th><th>SNDK</th><th>GLW</th><th>APH</th></tr></thead>
+<tbody>
+<tr><td>§5 Single Thing</td><td>NAND ASP MoM 連 2 月轉負</td><td>Springboard 達標率 &lt;80% / 10Y UST &gt;5.5%+SOX −20%</td><td>NVDA Rubin cable-free confirmed / IT Datacom organic 連 2 季 &lt;30%</td></tr>
+<tr><td>Max DD（5Y 估）</td><td><span class="rank-3">−40% ~ −72%</span></td><td>−35% ~ −55%</td><td>−35% ~ −55%</td></tr>
+<tr><td>Bear 觸發時點</td><td>1.5-2.5 年（cycle 反轉）</td><td>2026 Q3-Q4</td><td>2027 H1-H2（Rubin 揭露）</td></tr>
+<tr><td>觸發後復原</td><td><span class="rank-3">不會復原（thesis 破）</span></td><td>12-18 個月（多元化反彈快）</td><td>24-36 個月</td></tr>
+<tr><td>風險類型</td><td><span class="signal signal-red">範式 + 商品週期</span></td><td><span class="signal signal-yellow">執行（可監測）</span></td><td><span class="signal signal-yellow">範式（漸進可監測）</span></td></tr>
+</tbody>
+</table>
+<p><strong>風險類型裁決</strong>：</p>
+<ul>
+<li><strong>SNDK = 商品週期 + 範式雙重，且不可復原</strong>。Bear 觸發後「不會恢復」（peak 是回不去的高點），Max DD 最深（−72% 下界）。這是三檔中唯一「觸發即永久受損」的標的。</li>
+<li><strong>GLW = 執行風險（最可控）</strong>。Bear 是「Springboard 達標率」這種季度可監測的執行指標，且多元化讓復原最快（12-18 個月）。Max DD 中位 −45% 但有股息 cushion。</li>
+<li><strong>APH = 範式風險但漸進</strong>。cable-free 是 5-10 年漸進而非斷崖，中途有 GTC 2027 / OCP 2026 多個可監測節點；DCA 的 §5 雙 trigger 設計（primary = Rubin cable-free confirmed；secondary = IT Datacom organic 連 2 季 &lt;30%）讓它有「先發訊號」可分批撤退，而非一次崩。缺點是復原最慢（24-36 個月，需透過 CCS fiber + 工業/汽車段對沖重建 organic）。</li>
+</ul>
+<p>誰的 Bear 最該怕：<strong>SNDK</strong>（不可復原 + 最深 DD −72% 下界）。Bear 機制最致命處在於「合約 ≠ 價值」— $42B take-or-pay backlog 在 cycle 反轉時，歷史 DRAM LTA 實際執行率僅 60-70% 且價格被砍 25-40%，名目金額會打 6-7 折，半 strategic narrative 一夕崩解。誰的 Bear 最可控：<strong>GLW</strong>（執行型 + 季度可監測 Springboard 達標率 + 復原快 + 股息墊）。APH 的範式風險真實但時間軸長、有雙 trigger 預警、可分批撤退。</p>
+<p><strong>Max DD 對倉位的含義</strong>：SNDK 的 −72% 下界 + 不可復原 → DCA 已自動把上限從 6% 下修到 4%、限 satellite。GLW/APH 的 −35~−55% 屬「需強信念但可承受」→ 可作 core 配置（GLW 3.5-4.5% / APH 目標 5%），但都需分批 + 不用槓桿 + §5 trigger 觸發即減。三檔的 Max DD 評級（🔴 vs 🟡 vs 🟡）直接決定了它們在組合裡的角色分層。</p>
+</section>
+
+<!-- ============== §E 最終裁決 ============== -->
+<section id="sE">
+<h2>§E 最終裁決</h2>
+
+<h3>首選變化矩陣（哪層首選換人 + 為什麼）</h3>
+<table>
+<thead><tr><th>時間框架</th><th>首選</th><th>vs 上一層的變化</th></tr></thead>
+<tbody>
+<tr><td>&lt;12M</td><td>SNDK*（動能）/ <strong>GLW（可動手）</strong></td><td>動能屬 SNDK 但是追高；可實際進場的是 GLW（在進場區 + Amazon 催化）</td></tr>
+<tr><td>2-3Y</td><td>APH</td><td><strong>換人</strong>：SNDK 從短期動能首選跌到末位（2-3Y 正撞 cycle 反轉）；APH 拐點兌現上位</td></tr>
+<tr><td>3-5Y</td><td>APH</td><td>不變：APH 自然複利 + 雙高護城河 + 5Y 期望值最高</td></tr>
+<tr><td>5-10Y</td><td>APH ≈ GLW</td><td>GLW 追平：超長期多元化 + CPO 中性偏正讓 GLW 範式風險最低，與 APH 並列</td></tr>
+</tbody>
+</table>
+
+<h3>共同 beta vs 相對 alpha</h3>
+<div class="callout">
+<strong>共同 beta（比較不解決，要看 ID）</strong>：三檔本質都是 <strong>AI capex 週期</strong>的曝險（hyperscaler 2026 capex ~$725B）。AI capex 若放緩，三檔會同時受傷 — SNDK 透過記憶體需求、GLW 透過光纖訂單、APH 透過 IT Datacom organic。這條風險「選哪一檔都躲不掉」，該不該曝險 AI infra 這個 beta 要看對應 ID（ID_AINetworking §0：2030 互連 TAM $130B+，但核心風險是 CPO/cable-free 時程；ID_MemorySupercycle 涵蓋 SNDK）+ 跑 industry-thesis-critic，不是這份對比能回答的。
+<br><br><strong>相對 alpha（比較才有意義）</strong>：在「都吃 AI capex」的前提下，三檔的差異是 <strong>monetization 質量</strong> — APH 把 capex 變成自然複利的 EPS（ROIC 16% 穩態）；GLW 變成材料平台的多元現金流（但 ROIC 9.6% 偏低）；SNDK 變成商品週期的一次性 peak（定價力 2 分，反轉吐回）。<strong>這個「質量差」才是比較的真正產出</strong>，且它對 AI capex 的方向不敏感（即使 capex 強，SNDK 仍是商品、APH 仍自然複利）。</p>
+</div>
+
+<h3>推薦標的 + 不選其他的理由</h3>
+<div class="callout callout-key">
+<strong>若用戶問「只能長抱一檔（3-5Y）」→ APH</strong>：① 唯一 A 級訊號燈 + 護城河二維最強（9/8）；② IRR 96% 來自 EPS 自然複利，不賭市場配合；③ dd-screener 5Y 期望值 +8.5% / upside 87% 三檔最高；④ ROIC 16% 高且穩（10 年）。<strong>唯一動作限制：現價 $154 已漲出進場區，等回測 ≤$145 再進，不追。</strong>
+<br><br><strong>若用戶問「這週該對誰下手」→ GLW</strong>：① 唯一現價（$164.5）落在報告進場區 $155-175；② 6/8 Amazon 光纖大單是報告後的新正面催化（第 4 家 hyperscaler）；③ 價格從 $195 回落讓 Base IRR 從 +7.3% 改善到 +9.7%；④ Max DD 最可控（執行型 + 股息 cushion + 復原最快）。
+</div>
+<p><strong>為什麼不選 SNDK</strong>：① dd-screener 5Y 期望值 −3.65%、§C Base IRR ~−15%/yr，是唯一負期望值；② 護城河 C，定價力僅 2 分（商品本質）；③ Max DD −72% 下界且「不可復原」；④ Runway 🔴 窄。它是 &lt;2 年的 NAND cycle 投機，根本不在 buy-and-hold 比較軸上 — 若要賭 cycle，等回測 $650-820 且只用 satellite ≤4% 倉位。</p>
+<p><strong>為什麼（此刻）不選 APH 立即進場</strong>：品質沒問題、3-5Y 首選就是它，但現價 $154 已漲出 $128-138 進場區（FPE 回到 27x），此刻追高 R:R 不對等。是「等回測再進」而非「不選」。</p>
+<p><strong>為什麼不（無條件）選 GLW 當 3-5Y 首選</strong>：GLW 的 +9.7% IRR 高度綁定「現在 $164.5 這個價位」— 它漲回 $195 就掉回 +7.3%；且 IRR 內含 −10%/yr PE 壓縮假設（需 EPS +18% 跑贏），ROIC 9.6% 僅約等 WACC。品質與抗風險俱佳但「自然複利」純度不如 APH，所以 3-5Y 品質首選仍是 APH，GLW 是「此刻價位最對的進場標的」。</p>
+
+<h3>vs 組合既有同類曝險（opportunity cost）</h3>
+<p>三份 DCA 各自點名了「同類更優選擇」，這對「邊際資金該不該放這三檔」是關鍵：</p>
+<table>
+<thead><tr><th>標的</th><th>報告點名的同類對照</th><th>邊際資金結論</th></tr></thead>
+<tbody>
+<tr><td>SNDK</td><td>vs MU（多一條 HBM 曲線 + DRAM 寡占非純商品，PE 相當）；vs Kioxia（JV 對應、PE 更低 8-10x）</td><td><span class="rank-3">邊際資金不放 SNDK</span> — 同 cycle 賠率下 MU 多一條 HBM 曲線且非純商品，記憶體曝險應先放滿 MU，SNDK 只是 MU 滿倉後的補強</td></tr>
+<tr><td>GLW</td><td>vs COHR / FN（主動光元件，GLW 是 passive 材料層，不直接競爭）；vs LITE（純 AI play，GLW 多元化更佳）</td><td>若組合已有 COHR+FN 且 ≤3.5%，GLW 可拿 3-4%；GLW 多元化 + 股息讓它「強於 COHR/FN」作為光通訊籃的 anchor</td></tr>
+<tr><td>APH</td><td>vs AVGO（AI ASIC，已是 AI infra 主力，需控集中度 APH+AVGO ≤10%）；vs ANET（系統端）；vs TEL（AI 曝險弱，APH 完全 dominate）</td><td><span class="rank-1">邊際資金優先 APH 而非加碼 ANET</span>；持有 TEL 者應減 TEL 轉 APH（APH 護城河更深 35 年 vs TEL）</td></tr>
+</tbody>
+</table>
+<p>含義：若你的組合已有 MU，SNDK 的邊際價值近零；若已有 AVGO，APH 仍是不錯的互連補位但要控 AI infra 集中度；GLW 因與主動光元件不直接競爭，是三檔中與多數 AI 組合「重疊度最低」的補位 — 這是 GLW 除了進場時機外的第二個加分。</p>
+
+<h3>⏱ 時間軸切換敏感度</h3>
+<p>本對比的最大 alpha 在<strong>「品質首選」與「進場時機首選」分離</strong>：3-5Y 品質首選 APH 不變，但因為價格位移（GLW 跌進區間、APH 漲出區間），<strong>此刻可動手的首選變成 GLW</strong>。若 APH 回測到 ≤$145，兩個答案會合一（APH 同時是品質 + 時機首選）。若時間軸拉到 5-10Y，GLW 因多元化 + CPO 中性追平 APH。若縮到 &lt;2 年純做 cycle，SNDK 才進入考慮（但只能 satellite 試倉）。</p>
+
+<h3>裁決證偽條件（v1.7）</h3>
+<ul>
+<li><strong>若 APH IT Datacom organic 連 2 季 &lt;30%（最快 2026 Q4 法說）</strong> → APH 3-5Y 品質首選裁決作廢，需重跑（自然複利前提破）。</li>
+<li><strong>若 GLW 漲回 ≥$190</strong> → GLW「此刻可動手」裁決作廢（IRR 掉回 +7.3%，進場優勢消失）；APH 若同時回測 ≤$145 則首選合一到 APH。</li>
+<li><strong>若 NVDA Rubin cable-free 在 GTC 2027 / OCP 2026 confirmed 為 architectural default</strong> → APH 長期排序下修，需重評 APH vs GLW（GLW 受 CPO 影響小，可能反超）。</li>
+<li><strong>若任一檔 7-8 月財報觸發重大漂移</strong>（SNDK 8/4、GLW 7/29、APH 7/30）→ 整份對比重跑。</li>
+</ul>
+
+<h3>一句話 takeaway</h3>
+<p><strong>這不是「三選一淘汰賽」而是「同一筆 AI capex 該走哪條收費管道」</strong>：長抱品質選 APH（自然複利 + 雙高護城河，但等回測 ≤$145）；這週要動手選 GLW（在進場區 + Amazon 新單 + 股息墊）；SNDK 退出長抱比較，只是 NAND cycle 的 satellite 投機。三檔不互打，真正的共同風險是 AI capex 這條 beta — 那要去問 ID，不是問這份對比。</p>
+</section>
+
+<footer class="report-footer">
+  <p>📊 多標的對比分析 v1.7-cc-tuned ｜ SNDK vs GLW vs APH ｜ 2026-06-11</p>
+  <p>來源：DCA_SNDK_20260511 + DCA_GLW_20260513 + DCA_APH_20260511 ｜ 估值同源 dd-screener latest.json（EPS snapshot 2026-06-04）｜ 股價 WebSearch 6/10-11 ｜ 財報 staleness gate：三檔報告後皆無新財報，GLW 有 6/8 Amazon 光纖大單（正面）</p>
+  <p><a href="../research/" style="color:#1565c0;text-decoration:none;">← 回研究首頁</a> · <a href="./" style="color:#1565c0;text-decoration:none;">對比報告索引</a></p>
+</footer>
+
+</div>
+</body>
+</html>
