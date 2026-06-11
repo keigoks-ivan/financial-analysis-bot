@@ -1,4 +1,125 @@
-<!DOCTYPE html>
+"""
+Generator for /backtest/criteria/ — system evaluation framework v2 (2026-06).
+
+Redesign rationale:
+  * The threshold bands survived the 2026-06 warmup corrections — systems
+    moved across the pass line exactly as they should (Long Track lost its
+    "excellent" badge, six_state failed MDD marginally), which validates the
+    framework.  Bands are kept as-is.
+  * What rotted was the application section: stale numbers and verdicts
+    ("six_state未驗證" predates its full robustness audit).  The scoreboard
+    is now generated from pinned corrected numbers.
+  * New section: methodology discipline rules learned in the 2026-06 cycle
+    (denominator integrity, in-sample discipline, H1/H2 sub-period windows,
+    realistic cash assumptions, qualified ≠ adopted).
+
+Update SYSTEMS below when a system page changes, then re-run:
+    python3 _build_criteria.py
+"""
+from __future__ import annotations
+import sys
+from datetime import datetime
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent))
+from _nav_common import make_toggle
+
+OUT = Path(__file__).parent / "criteria" / "index.html"
+
+# Minimum qualification thresholds (unchanged from v1)
+TH = {"cagr": 8.0, "mdd": -35.0, "sharpe": 0.5, "calmar": 0.3}
+
+# (name, url, cagr, mdd, sharpe, calmar, years_ok, note)  — 20Y corrected
+SYSTEMS_20Y = [
+    ("Long Track Only", "/backtest/long_track/", 9.59, -20.08, 0.80, 0.48, True, ""),
+    ("LTO QQQ only", "/backtest/long_track_qqq/", 10.63, -25.37, 0.74, 0.42, True, ""),
+    ("Ensemble E3", "/backtest/long_track_ensemble/", 11.33, -21.15, 0.88, 0.54, True, "未採用"),
+    ("LT SMH/QQQ", "/backtest/long_track_smh/", 13.88, -26.93, 0.88, 0.52, True, "未採用"),
+    ("W52 斜率濾網", "/backtest/slope_filter/", 9.59, -20.05, 0.89, 0.48, True, "未經 warmup 審計"),
+    ("GEM 雙動能", "/backtest/gem/", 8.49, -21.54, 0.54, 0.39, True, ""),
+    ("六狀態機 v1.1", "/backtest/six_state/", 14.53, -35.80, 0.85, 0.41, True, ""),
+    ("六狀態機 v1.0r1 實盤", "/backtest/six_state_v1r1/", 14.41, -49.29, 0.80, 0.29, True, "壓力路徑 -77%"),
+    ("雙軌多空", "/backtest/dual_track/", 4.60, -26.83, 0.42, 0.17, True, "已否決"),
+    ("🐢 Turtle(多資產)", "/backtest/turtle/", 21.26, -37.16, 0.71, 0.57, True, "CAGR 進可疑帶"),
+    ("📈 Clenow(多資產)", "/backtest/clenow/", 13.67, -44.06, 0.71, 0.31, True, ""),
+]
+
+# (name, cagr, mdd, sharpe, calmar, verdict)  — 10Y corrected
+SYSTEMS_10Y = [
+    ("LT SMH/QQQ(未採用)", 25.90, -26.93, 1.22, 0.96, "warn", "CAGR 進可疑帶(>20%)— H2 半導體 regime"),
+    ("六狀態機 v1.1", 21.79, -28.49, 1.10, 0.76, "warn", "CAGR 進可疑帶(>20%)— 無 2008 的視窗"),
+    ("LTO QQQ only", 18.30, -25.18, 1.08, 0.73, "good", "進攻型優秀"),
+    ("Ensemble E3(未採用)", 15.90, -21.15, 1.10, 0.75, "good", "優秀(樣本內)"),
+    ("Long Track Only", 15.08, -18.75, 1.09, 0.80, "good", "優秀"),
+    ("W52 斜率濾網", 10.05, -20.05, 0.77, 0.50, "pass", "合格(穩定)"),
+    ("GEM 雙動能", 8.93, -21.54, 0.70, 0.41, "pass", "合格"),
+    ("雙軌多空", 7.28, -19.38, 0.60, 0.38, "fail", "邊緣(CAGR 略低)"),
+    ("QQQ Buy & Hold", 21.19, -35.12, 0.97, 0.60, "bh", "基準"),
+    ("SPY Buy & Hold", 15.06, -33.72, 0.87, 0.45, "bh", "基準"),
+]
+
+
+def check(v, th, geq=True):
+    ok = (v >= th) if geq else (v <= th)
+    return ok
+
+
+def cell(ok, text):
+    color = "var(--green)" if ok else "var(--red)"
+    mark = "✓" if ok else "✗"
+    return f'<td style="color:{color};font-weight:600">{mark} {text}</td>'
+
+
+def scoreboard_rows() -> str:
+    rows = ""
+    for name, url, cagr, mdd, sharpe, calmar, yrs, note in SYSTEMS_20Y:
+        c1 = check(cagr, TH["cagr"])
+        c2 = mdd >= TH["mdd"]
+        c3 = check(sharpe, TH["sharpe"])
+        c4 = check(calmar, TH["calmar"])
+        n_pass = sum([c1, c2, c3, c4, yrs])
+        qualified = n_pass == 5
+        if qualified and note == "未採用":
+            verdict = '<span class="tag tag-warn">數字合格 · 未採用</span>'
+        elif qualified:
+            verdict = '<span class="tag tag-best">合格</span>'
+        else:
+            verdict = f'<span class="tag tag-fail">不合格 ({n_pass}/5)</span>'
+        note_html = f'<br><span style="font-size:.72rem;color:var(--muted)">{note}</span>' if note else ""
+        rows += (f'<tr><td><strong><a href="{url}">{name}</a></strong>{note_html}</td>'
+                 + cell(c1, f"{cagr:+.2f}%") + cell(c2, f"{mdd:.2f}%")
+                 + cell(c3, f"{sharpe:.2f}") + cell(c4, f"{calmar:.2f}")
+                 + cell(yrs, "20y")
+                 + f"<td>{verdict}</td></tr>\n")
+    return rows
+
+
+def table10_rows() -> str:
+    tagmap = {"good": "tag-best", "pass": "tag-pass", "warn": "tag-warn",
+              "fail": "tag-fail", "bh": "tag-pass"}
+    rows = ""
+    for name, cagr, mdd, sharpe, calmar, kind, verdict in SYSTEMS_10Y:
+        style = ' style="background:#f9fafb"' if kind == "bh" else ""
+        rows += (f'<tr{style}><td><strong>{name}</strong></td>'
+                 f'<td>{cagr:+.2f}%</td><td>{mdd:.2f}%</td>'
+                 f'<td>{sharpe:.2f}</td><td>{calmar:.2f}</td>'
+                 f'<td><span class="tag {tagmap[kind]}">{verdict}</span></td></tr>\n')
+    return rows
+
+
+def render() -> str:
+    html = TEMPLATE
+    for k, v in {
+        "%TOGGLE%": make_toggle("criteria"),
+        "%SCOREBOARD%": scoreboard_rows(),
+        "%TABLE10%": table10_rows(),
+        "%NOW%": datetime.now().strftime("%Y-%m-%d"),
+    }.items():
+        html = html.replace(k, v)
+    return html
+
+
+TEMPLATE = r"""<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
   <meta name="robots" content="noindex,nofollow">
@@ -150,7 +271,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
     <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / 系統評估標準</div>
     <h1>系統評估標準 v2</h1>
     <div class="sub">指標門檻 · 方法論紀律 · 全系統合格對照 · 2026-06 修訂</div>
-    <div style="margin-top:.75rem;display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap"><div><div style="font-size:.68rem;color:#1a56db;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;font-weight:600">對比總覽</div><div style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-wrap:wrap"><a href="/backtest/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">20 年</a><a href="/backtest/10y/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">10 年</a><a href="/backtest/criteria/" style="padding:.4rem .85rem;background:#1a56db;color:#fff;font-size:.8rem;font-weight:600;text-decoration:none;border-left:1px solid var(--border)">評估標準</a></div></div><div><div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;font-weight:600">個別系統 (美股)</div><div style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-wrap:wrap"><a href="/backtest/dual_track/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">雙軌多空</a><a href="/backtest/long_track/" style="padding:.4rem .85rem;background:#fff;color:#16a34a;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">Long Track</a><a href="/backtest/long_track_qqq/" style="padding:.4rem .85rem;background:#fff;color:#16a34a;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">LTO QQQ</a><a href="/backtest/long_track_ensemble/" style="padding:.4rem .85rem;background:#fff;color:#d97706;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">🔬 集成實驗</a><a href="/backtest/long_track_smh/" style="padding:.4rem .85rem;background:#fff;color:#d97706;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">🧪 SMH 變體</a><a href="/backtest/six_state/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">六狀態機</a><a href="/backtest/six_state_v1r1/" style="padding:.4rem .85rem;background:#fff;color:#b45309;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">v1.0r1 實盤</a><a href="/backtest/gem/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">GEM</a><a href="/backtest/slope_filter/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">W52 斜率</a><a href="/backtest/short_system/" style="padding:.4rem .85rem;background:#fff;color:#dc2626;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">做空 (失敗)</a></div></div><div><div style="font-size:.68rem;color:#0f766e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;font-weight:600">多資產</div><div style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-wrap:wrap"><a href="/backtest/turtle/" style="padding:.4rem .85rem;background:#fff;color:#0f766e;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">🐢 Turtle</a><a href="/backtest/clenow/" style="padding:.4rem .85rem;background:#fff;color:#6366f1;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">📈 Clenow</a></div></div></div>
+    %TOGGLE%
   </div>
 </div>
 
@@ -284,18 +405,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 <table>
 <thead><tr><th>系統</th><th>CAGR ≥ 8%</th><th>MDD ≥ -35%</th><th>Sharpe ≥ 0.5</th><th>Calmar ≥ 0.3</th><th>樣本 ≥ 15y</th><th>判定</th></tr></thead>
 <tbody>
-<tr><td><strong><a href="/backtest/long_track/">Long Track Only</a></strong></td><td style="color:var(--green);font-weight:600">✓ +9.59%</td><td style="color:var(--green);font-weight:600">✓ -20.08%</td><td style="color:var(--green);font-weight:600">✓ 0.80</td><td style="color:var(--green);font-weight:600">✓ 0.48</td><td style="color:var(--green);font-weight:600">✓ 20y</td><td><span class="tag tag-best">合格</span></td></tr>
-<tr><td><strong><a href="/backtest/long_track_qqq/">LTO QQQ only</a></strong></td><td style="color:var(--green);font-weight:600">✓ +10.63%</td><td style="color:var(--green);font-weight:600">✓ -25.37%</td><td style="color:var(--green);font-weight:600">✓ 0.74</td><td style="color:var(--green);font-weight:600">✓ 0.42</td><td style="color:var(--green);font-weight:600">✓ 20y</td><td><span class="tag tag-best">合格</span></td></tr>
-<tr><td><strong><a href="/backtest/long_track_ensemble/">Ensemble E3</a></strong><br><span style="font-size:.72rem;color:var(--muted)">未採用</span></td><td style="color:var(--green);font-weight:600">✓ +11.33%</td><td style="color:var(--green);font-weight:600">✓ -21.15%</td><td style="color:var(--green);font-weight:600">✓ 0.88</td><td style="color:var(--green);font-weight:600">✓ 0.54</td><td style="color:var(--green);font-weight:600">✓ 20y</td><td><span class="tag tag-warn">數字合格 · 未採用</span></td></tr>
-<tr><td><strong><a href="/backtest/long_track_smh/">LT SMH/QQQ</a></strong><br><span style="font-size:.72rem;color:var(--muted)">未採用</span></td><td style="color:var(--green);font-weight:600">✓ +13.88%</td><td style="color:var(--green);font-weight:600">✓ -26.93%</td><td style="color:var(--green);font-weight:600">✓ 0.88</td><td style="color:var(--green);font-weight:600">✓ 0.52</td><td style="color:var(--green);font-weight:600">✓ 20y</td><td><span class="tag tag-warn">數字合格 · 未採用</span></td></tr>
-<tr><td><strong><a href="/backtest/slope_filter/">W52 斜率濾網</a></strong><br><span style="font-size:.72rem;color:var(--muted)">未經 warmup 審計</span></td><td style="color:var(--green);font-weight:600">✓ +9.59%</td><td style="color:var(--green);font-weight:600">✓ -20.05%</td><td style="color:var(--green);font-weight:600">✓ 0.89</td><td style="color:var(--green);font-weight:600">✓ 0.48</td><td style="color:var(--green);font-weight:600">✓ 20y</td><td><span class="tag tag-best">合格</span></td></tr>
-<tr><td><strong><a href="/backtest/gem/">GEM 雙動能</a></strong></td><td style="color:var(--green);font-weight:600">✓ +8.49%</td><td style="color:var(--green);font-weight:600">✓ -21.54%</td><td style="color:var(--green);font-weight:600">✓ 0.54</td><td style="color:var(--green);font-weight:600">✓ 0.39</td><td style="color:var(--green);font-weight:600">✓ 20y</td><td><span class="tag tag-best">合格</span></td></tr>
-<tr><td><strong><a href="/backtest/six_state/">六狀態機 v1.1</a></strong></td><td style="color:var(--green);font-weight:600">✓ +14.53%</td><td style="color:var(--red);font-weight:600">✗ -35.80%</td><td style="color:var(--green);font-weight:600">✓ 0.85</td><td style="color:var(--green);font-weight:600">✓ 0.41</td><td style="color:var(--green);font-weight:600">✓ 20y</td><td><span class="tag tag-fail">不合格 (4/5)</span></td></tr>
-<tr><td><strong><a href="/backtest/six_state_v1r1/">六狀態機 v1.0r1 實盤</a></strong><br><span style="font-size:.72rem;color:var(--muted)">壓力路徑 -77%</span></td><td style="color:var(--green);font-weight:600">✓ +14.41%</td><td style="color:var(--red);font-weight:600">✗ -49.29%</td><td style="color:var(--green);font-weight:600">✓ 0.80</td><td style="color:var(--red);font-weight:600">✗ 0.29</td><td style="color:var(--green);font-weight:600">✓ 20y</td><td><span class="tag tag-fail">不合格 (3/5)</span></td></tr>
-<tr><td><strong><a href="/backtest/dual_track/">雙軌多空</a></strong><br><span style="font-size:.72rem;color:var(--muted)">已否決</span></td><td style="color:var(--red);font-weight:600">✗ +4.60%</td><td style="color:var(--green);font-weight:600">✓ -26.83%</td><td style="color:var(--red);font-weight:600">✗ 0.42</td><td style="color:var(--red);font-weight:600">✗ 0.17</td><td style="color:var(--green);font-weight:600">✓ 20y</td><td><span class="tag tag-fail">不合格 (2/5)</span></td></tr>
-<tr><td><strong><a href="/backtest/turtle/">🐢 Turtle(多資產)</a></strong><br><span style="font-size:.72rem;color:var(--muted)">CAGR 進可疑帶</span></td><td style="color:var(--green);font-weight:600">✓ +21.26%</td><td style="color:var(--red);font-weight:600">✗ -37.16%</td><td style="color:var(--green);font-weight:600">✓ 0.71</td><td style="color:var(--green);font-weight:600">✓ 0.57</td><td style="color:var(--green);font-weight:600">✓ 20y</td><td><span class="tag tag-fail">不合格 (4/5)</span></td></tr>
-<tr><td><strong><a href="/backtest/clenow/">📈 Clenow(多資產)</a></strong></td><td style="color:var(--green);font-weight:600">✓ +13.67%</td><td style="color:var(--red);font-weight:600">✗ -44.06%</td><td style="color:var(--green);font-weight:600">✓ 0.71</td><td style="color:var(--green);font-weight:600">✓ 0.31</td><td style="color:var(--green);font-weight:600">✓ 20y</td><td><span class="tag tag-fail">不合格 (4/5)</span></td></tr>
-
+%SCOREBOARD%
 </tbody>
 </table>
 <div class="takeaway">修正後的變動:<strong>Long Track 從「優秀」降為「合格」</strong>(CAGR 9.59% &lt; 12%、Calmar 0.48 &lt; 0.5,各差一步);
@@ -309,17 +419,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 <table>
 <thead><tr><th>系統</th><th>CAGR</th><th>MDD</th><th>Sharpe</th><th>Calmar</th><th>評語</th></tr></thead>
 <tbody>
-<tr><td><strong>LT SMH/QQQ(未採用)</strong></td><td>+25.90%</td><td>-26.93%</td><td>1.22</td><td>0.96</td><td><span class="tag tag-warn">CAGR 進可疑帶(>20%)— H2 半導體 regime</span></td></tr>
-<tr><td><strong>六狀態機 v1.1</strong></td><td>+21.79%</td><td>-28.49%</td><td>1.10</td><td>0.76</td><td><span class="tag tag-warn">CAGR 進可疑帶(>20%)— 無 2008 的視窗</span></td></tr>
-<tr><td><strong>LTO QQQ only</strong></td><td>+18.30%</td><td>-25.18%</td><td>1.08</td><td>0.73</td><td><span class="tag tag-best">進攻型優秀</span></td></tr>
-<tr><td><strong>Ensemble E3(未採用)</strong></td><td>+15.90%</td><td>-21.15%</td><td>1.10</td><td>0.75</td><td><span class="tag tag-best">優秀(樣本內)</span></td></tr>
-<tr><td><strong>Long Track Only</strong></td><td>+15.08%</td><td>-18.75%</td><td>1.09</td><td>0.80</td><td><span class="tag tag-best">優秀</span></td></tr>
-<tr><td><strong>W52 斜率濾網</strong></td><td>+10.05%</td><td>-20.05%</td><td>0.77</td><td>0.50</td><td><span class="tag tag-pass">合格(穩定)</span></td></tr>
-<tr><td><strong>GEM 雙動能</strong></td><td>+8.93%</td><td>-21.54%</td><td>0.70</td><td>0.41</td><td><span class="tag tag-pass">合格</span></td></tr>
-<tr><td><strong>雙軌多空</strong></td><td>+7.28%</td><td>-19.38%</td><td>0.60</td><td>0.38</td><td><span class="tag tag-fail">邊緣(CAGR 略低)</span></td></tr>
-<tr style="background:#f9fafb"><td><strong>QQQ Buy & Hold</strong></td><td>+21.19%</td><td>-35.12%</td><td>0.97</td><td>0.60</td><td><span class="tag tag-pass">基準</span></td></tr>
-<tr style="background:#f9fafb"><td><strong>SPY Buy & Hold</strong></td><td>+15.06%</td><td>-33.72%</td><td>0.87</td><td>0.45</td><td><span class="tag tag-pass">基準</span></td></tr>
-
+%TABLE10%
 </tbody>
 </table>
 <div class="takeaway">10 年窗是「沒有 2008 的科技牛市」— 所有 CAGR &gt; 20% 的格子都該觸發可疑帶警報而不是慶祝;
@@ -349,8 +449,20 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 <footer>
   <div class="container">
     &copy; 2026 InvestMQuest Research &middot; 系統評估標準 v2 &middot; 門檻參考業界共識與個人經驗 &middot;
-    頁面生成 2026-06-11 &middot; 僅供研究參考
+    頁面生成 %NOW% &middot; 僅供研究參考
   </div>
 </footer>
 </body>
 </html>
+"""
+
+
+def main():
+    html = render()
+    OUT.parent.mkdir(parents=True, exist_ok=True)
+    OUT.write_text(html, encoding="utf-8")
+    print(f"Written {OUT} ({len(html):,} bytes)")
+
+
+if __name__ == "__main__":
+    main()
