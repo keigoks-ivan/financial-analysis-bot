@@ -1,11 +1,11 @@
 ---
 name: id-review
-description: 對既有產業報告（Industry DD / ID 或 Industry Discourse / DS）跑 cold-review critic 並 patch 大錯。觸發：用戶要求「改 / review / audit / patch / 驗證」某份既存 ID / DS 報告，或詢問「這份 ID 還活著嗎 / 哪裡有大錯 / 要改什麼」。本 skill 把「critic 跑 + 大錯/cosmetic 分類 + user-in-the-loop patch + commit & push」這個工作流固化下來。**不寫新 ID 或 DS**（那是 industry-analyst / industry-ds skill）；**也被 industry-analyst Step 8.7 與 industry-ds Step 8.7 強制呼叫**做新報告寫稿後的 mandatory critic gate。v1.3 起加 `--mode ds` 分支支援 DS 報告。v1.4.1（搭配 industry-ds v1.2）：DS-mode 檢查清單 8 條（v1.4 原 9 條移除 DS-7，因 source-tag 從 inline 改為 §末 aside 後與 Gate 12 重疊）— DS-1 表格比 / DS-2 因果閉合（§3 或 §5）/ DS-3 供需平衡 / DS-4 §6 三情境 / DS-5 §10 雙路徑 / DS-6 §11 一致性 / DS-8 §6 推導抽查 / DS-9 §1 雙錨點。
-version: v1.4
-date: 2026-05-13
+description: 對既有產業報告（Industry DD / ID 或 Industry Discourse / DS）跑 cold-review critic 並 patch 大錯。觸發：用戶要求「改 / review / audit / patch / 驗證」某份既存 ID / DS 報告，或詢問「這份 ID 還活著嗎 / 哪裡有大錯 / 要改什麼」。本 skill 把「critic 跑 + 大錯/cosmetic 分類 + user-in-the-loop patch + commit & push」這個工作流固化下來。**不寫新 ID 或 DS**（那是 industry-analyst skill；industry-ds 已 deprecated 併入 industry-analyst v2.0）；**也被 industry-analyst Step 8.7 強制呼叫**做新報告寫稿後的 mandatory critic gate。v1.5（搭配 industry-analyst v2.0）：**讀目標 HTML id-meta `skill_version` 自動判別模式** — `v2.x` → v2 checklist（cornerstone 6 條 + thesis box sync + V2-1~V2-11 共 11 條，含 3 條 v2 新模組抽查：三角對帳 / 資本週期證據 / priced-in）；`v1.x` → 現行 ID checklist（legacy 不動）；`--mode ds` → DS-mode 8 條（8 份 legacy DS 仍可 review）。v1.4.1：DS-mode 檢查清單 8 條（DS-1 表格比 / DS-2 因果閉合 / DS-3 供需平衡 / DS-4 §6 三情境 / DS-5 §10 雙路徑 / DS-6 §11 一致性 / DS-8 §6 推導抽查 / DS-9 §1 雙錨點）。
+version: v1.5
+date: 2026-06-11
 ---
 
-# id-review skill v1.4
+# id-review skill v1.5
 
 ## 【角色定位】
 
@@ -17,20 +17,49 @@ date: 2026-05-13
 
 ---
 
-## 【Mode Dispatch — ID vs DS】（v1.3 新增）
+## 【Mode Dispatch — ID v1 / ID v2 / DS】（v1.5：加 v2 自動判別）
 
-本 skill 自 v1.3 起支援兩個模式，由 `--mode` 參數決定：
+本 skill 自 v1.3 起支援多模式。**判別順序（v1.5 起）**：
 
-| Mode | 對象 | Step-by-Step 走法 |
-|:---|:---|:---|
-| `--mode id`（預設，可省略） | `docs/id/ID_*.html` | 走原本 Step 1-7 流程 + ID-specific check list（§12 / §13 / §10.5 / cornerstone fact / thesis box / mega-sub_group） |
-| `--mode ds` | `docs/ds/DS_*.html` | 走 Step 1-7 但讀 DS 檔，套用 **DS-specific check list**（見本檔末 「【DS Mode 檢查清單】」段） |
+1. **檔名前綴 = `DS_*.html`** → `--mode ds`（8 份 legacy DS，不讀 id-meta）。
+2. **檔名前綴 = `ID_*.html`** → 進一步**讀目標 HTML 的 `<script id="id-meta">` JSON 取 `skill_version`**：
+   - `skill_version` 以 `v2`（v2.0、v2.x）開頭 → **ID v2 mode**（套用本檔末「【ID v2 Mode 檢查清單】」段，cornerstone 6 條 + thesis box sync + V2-1~V2-11）。
+   - `skill_version` 以 `v1`（或缺欄位 / 解析失敗）開頭 → **ID v1 mode（legacy，現行流程不動）**。
+3. `--mode {id|ds}` 顯式參數**覆寫**檔名/skill_version 判別；但 `--mode id` 不強迫 v1 — 仍走 skill_version 子判別（v2 報告即使被傳 `--mode id` 也套 v2 checklist）。若要強制 legacy v1 行為，傳 `--mode id-v1`。
 
-**自動 dispatch**：若 user 沒傳 `--mode`，skill 從檔名前綴判斷：
-- `ID_*.html` → mode id
+| Mode | 對象 | id-meta | 檢查清單 |
+|:---|:---|:---|:---|
+| **ID v1**（legacy，預設於舊 ID） | `docs/id/ID_*.html`，`skill_version` v1.x | id-meta | 現行 ID checklist（§12 / §13 / §10.5 / cornerstone fact / thesis box / mega-sub_group）— **legacy 不動** |
+| **ID v2**（新格式） | `docs/id/ID_*.html`，`skill_version` v2.x | id-meta | **cornerstone 6 條 + thesis box sync（保留）+ V2-1~V2-11（11 條）**，見本檔末「【ID v2 Mode 檢查清單】」 |
+| **DS**（legacy） | `docs/ds/DS_*.html` | ds-meta | DS 8 條，見本檔末「【DS Mode 檢查清單】」 |
+
+**skill_version 讀法**（Step 1 定位檔案後立即執行）：
+
+```bash
+python3 - "$ID_PATH" << 'PY'
+import sys, re, json
+html = open(sys.argv[1]).read()
+m = re.search(r'<script id="id-meta"[^>]*>(.*?)</script>', html, re.DOTALL)
+sv = "v1.0"  # 缺欄位 / 解析失敗 → fallback legacy v1
+if m:
+    try:
+        sv = json.loads(m.group(1)).get("skill_version", "v1.0")
+    except Exception:
+        pass
+print("MODE=" + ("id-v2" if re.match(r'^v2', sv) else "id-v1"), "skill_version=" + sv)
+PY
+```
+
+**自動 dispatch**（user 沒傳 `--mode`）：
 - `DS_*.html` → mode ds
+- `ID_*.html` → 讀 skill_version → id-v2 或 id-v1（上方腳本）
 
-**Spawn 時明確指定**：被 industry-analyst Step 8.7 或 industry-ds Step 8.7 強制呼叫時，spawn prompt 必須明確含 `Mode: --mode {id|ds}` 字樣，由 critic agent 讀取 dispatch。
+**Spawn 時明確指定**：被 industry-analyst Step 8.7 強制呼叫時，spawn prompt 含 `The skill auto-detects v2 from id-meta skill_version >= v2.0 and applies the v2 checklist`（v2.0 主稿 Step 8.7 已如此寫），critic agent 自行讀 skill_version dispatch；不需在 prompt 硬寫 mode。
+
+**ID v2 mode 與 v1 的差異**：
+- v2 沒有 §10/§11/§12/§13/§14 舊編號 — 改 §0-§9 九章。cornerstone fact 與 thesis box sync 改 remap 到 v2 章節（cornerstone 在 §7 Non-Consensus、thesis box 在 §0；§13 falsification 移到 §8 證偽表、§10.5 catalyst 移到 §8 catalyst timeline、§11 ranking 移到 §9 ticker 表）。
+- 額外套 V2-1~V2-11（從 DS 搬 8 條 remap 到 v2 章節 + 3 條 v2 新模組抽查）。
+- 仍讀 id-meta（v2 沿用 id-meta schema 零改動），仍用 `validate_id_meta.py`。
 
 DS 模式下：
 - 不檢查 §12 / §13 / §10.5（DS 沒有這些章節）
@@ -38,6 +67,8 @@ DS 模式下：
 - 改檢查 **DS 8 條**（v1.4.1：v1.4 9 條移除 DS-7，因 industry-ds v1.2 把 source-tag 從 inline 移至 §末 aside，Gate 12 已涵蓋結構檢查 + T1 占比；DS-7 ~80% 與 Gate 12 重疊）：DS-1 表格比 / DS-2 因果閉合（升級）/ DS-3 供需平衡 / DS-4 §6 三情境 / DS-5 §10 雙路徑 / DS-6 §11 一致性 / ~~DS-7~~（已移除）/ **DS-8 推導抽查** / **DS-9 §1 雙錨點**
 - Banner 寫到 §0 但格式略不同（見 DS Mode 段）
 - critic report 路徑：`docs/ds/_critic_{Theme}_{YYYYMMDD}.md`（不是 `docs/id/_critic_*`）
+
+> **legacy DS 仍可 review**：industry-ds 已 deprecated 併入 industry-analyst v2.0，但 8 份既存 DS 報告凍結保留，`--mode ds` 分支不動，仍可對它們跑 critic + patch。
 
 ---
 
@@ -48,7 +79,7 @@ DS 模式下：
 - **驗證意圖**：「review ID_X」/「audit ID_X」/「驗證這份 ID」/ 「review DS_X」/「驗證這份 DS」
 - **健康度查詢**：「ID_X 還活著嗎」/「哪裡有大錯」/「要改什麼」/「DS_X 還活著嗎」
 - **明確 invocation**：`/id-review {file or theme}`（自動 dispatch 模式）
-- **被 skill 強制呼叫**：industry-analyst Step 8.7（mode id）/ industry-ds Step 8.7（mode ds）
+- **被 skill 強制呼叫**：industry-analyst Step 8.7（v2 報告由 id-meta `skill_version` 自動判別 → ID v2 mode；legacy ID 仍走 ID v1 mode）。industry-ds 已 deprecated，無獨立 Step 8.7。
 
 不觸發：
 - 「ID_X 寫了什麼」/「介紹一下 X 產業」（純資訊查詢，直接回答即可）
@@ -223,6 +254,20 @@ ID file path: {absolute path to docs/id/ID_X.html}
 User's intent: {如「驗證這份 ID 哪些段落需要改」/「考慮加倉前體檢」}
 
 Run all 7 items + Item 6.5 CONCLUSION_IMPACT triage（Item 7 = thesis box sync, agent v1.3 加）.
+
+{若 ID v2 mode（id-meta skill_version v2.x）→ 在 prompt 內附下列 v2 章節對映 + V2 checklist：}
+This is a v2.0 ID（敘事為骨表格為窗，§0-§9 九章）. Apply the 7 cornerstone items with this chapter mapping:
+  - cornerstone fact / Non-Consensus → §7（not §12）
+  - falsification metric table → §8（not §13）
+  - catalyst timeline → §8（not §10.5）
+  - ticker ranking / conviction tier → §9（not §11）
+  - thesis box / PM Implication 綠卡 → §0
+Additionally run the V2-1~V2-11 checklist (see id-review SKILL.md 「【ID v2 Mode 檢查清單】」):
+表格比≥55%/表≤10 / 因果閉合 §1→§3·§4 / §5 供需裁決三選一 / §5 三視野×三情境 trigger 可量化 /
+§8 catalyst 雙路徑 / §9 ticker 與 §3·§4 一致 / §5 cell 推導回溯 §3·§4 / §1 雙錨點 /
+§4 三角對帳兩邊數字真實+回溯來源（差>20% 有解釋）/ §5 資本週期 ≥2 指標且方向與裁決一致 /
+§7 每條分歧 priced-in 分位有來源.
+
 Save report to /Users/ivanchang/financial-analysis-bot/docs/id/_critic_{Theme}_{YYYYMMDD}.md.
 
 After saving, return brief summary:
@@ -285,14 +330,16 @@ Agent({
 You are doing a focused second-pass critic. Pass 1 report at: 
 /Users/ivanchang/financial-analysis-bot/docs/id/_critic_{Theme}_{date}.md.
 
-Hunt for ADDITIONAL conclusion-changing errors Pass 1 might have missed:
-1. §0 thesis cornerstone numbers (key magnitudes)
-2. §6 player ranking facts (誰 > 誰 的支撐)
-3. §14 portfolio actionable claims
+Hunt for ADDITIONAL conclusion-changing errors Pass 1 might have missed
+（章號為 legacy ID；ID v2 mode 用括號內 v2 對映）:
+1. §0 thesis cornerstone numbers (key magnitudes) — v2: §0 thesis box
+2. §6 player ranking facts (誰 > 誰 的支撐) — v2: §3 玩家矩陣 + §9 ticker 表
+3. §14 portfolio actionable claims — v2: §0 PM Implication 綠卡
 4. Cross-ID consistency with recent critic findings (check sister IDs)
-5. §9.5 Kill scenarios — real steel-man or strawman?
-6. §13 falsification metrics — any close to crossing?
-7. Under-rated tickers (中等 tier 但事實顯示應升 🔴)
+5. §9.5 Kill scenarios — real steel-man or strawman? — v2: §7 steel-man 反方
+6. §13 falsification metrics — any close to crossing? — v2: §8 證偽表
+7. Under-rated tickers (中等 tier 但事實顯示應升 🔴) — v2: §9 ticker 表
+{ID v2 mode 額外：抽查 V2-9 §4 三角對帳 / V2-10 §5 資本週期 / V2-11 §7 priced-in 三條新模組是否裝飾性。}
 
 Save to /Users/ivanchang/financial-analysis-bot/docs/id/_critic_pass2_{Theme}_{date}.md.
 
@@ -682,7 +729,8 @@ industry-analyst skill 在 publish 前必須跑 critic gate（Step 8.7，介於 
 - v1.2（2026-05-03）：加 Step 6.5d PM Implication §0.7 re-assessment（5 bullet / j-logic 4 action / conviction pill sync + back-fill scenario 舊 ID）。觸發：ID_AIDataCenter v1.1 patch（commit f1c450b）— user 把臨時 PM block 升格為所有 ID 標準段落。
 - v1.3（2026-05-12）：加 `--mode ds` 分支支援 industry-ds skill 產出的 DS 報告。新增「DS Mode 檢查清單」（DS-1 到 DS-6：表格比 / history-future causality / supply-demand 平衡 / §6 三情境 / §10 雙路徑 / §11 一致性）+「DS Mode Banner 格式」。觸發：industry-ds skill v1.0 上線，需要 mandatory critic gate。
 - v1.4（2026-05-13）：DS-mode 檢查清單從 6 條擴為 9 條。DS-2 升級為「因果閉合在 §3 或 §5，不可延後到 §8」；新增 DS-7（source-tag 抽查 + T1 占比 + 黑名單）、DS-8（§6 base/bull/bear 推導抽查）、DS-9（§1 雙錨點 — 日期 + 量化）。觸發：industry-ds v1.1 上線，DS_AIAcceleratorDemand v1.0 暴露 5 個系統性弱點（無 footnote、無推導、§1 口語錨點、§11 forward-looking 閾值無時間標、§3 因果延後到 §8），需要對應 critic 鎖點。
-- v1.4.1（current，2026-05-13）：移除 DS-7（source-tag 抽查）。觸發：industry-ds v1.2 把 inline `<span class="source-tag">` 移至每節末 `<aside class="ds-refs">`，pre-publish Gate 12 已更新為 aside 結構檢查 + T1 占比。DS-7 原本三個功能（URL 可達性抽查 / tier mis-tag 偵測 / ≥15 sources 底線）與 Gate 12 重疊度 ~80%，剩 20% 為低頻 redundancy；保留會誤 fail v1.2 報告（aside 內無 inline tag）。DS-8/DS-9 編號保留不動。
+- v1.4.1（2026-05-13）：移除 DS-7（source-tag 抽查）。觸發：industry-ds v1.2 把 inline `<span class="source-tag">` 移至每節末 `<aside class="ds-refs">`，pre-publish Gate 12 已更新為 aside 結構檢查 + T1 占比。DS-7 原本三個功能（URL 可達性抽查 / tier mis-tag 偵測 / ≥15 sources 底線）與 Gate 12 重疊度 ~80%，剩 20% 為低頻 redundancy；保留會誤 fail v1.2 報告（aside 內無 inline tag）。DS-8/DS-9 編號保留不動。
+- v1.5（current，2026-06-11）：**加 v2 自動判別分支**，搭配 industry-analyst v2.0（合併 industry-ds、改 §0-§9 九章敘事骨架）。① Mode Dispatch 改三層判別：`DS_*` → ds mode；`ID_*` → 讀 id-meta `skill_version`，`v2.x` → ID v2 mode、`v1.x`/缺欄位 → ID v1 mode（legacy 現行流程不動）。② 新增「【ID v2 Mode 檢查清單】」= 現行 ID cornerstone 6 條 + thesis box sync（保留、remap 到 §0/§7/§8/§9）+ 從 DS 搬 8 條 remap 到 v2 章節（V2-1 文字比≥55%/表≤10 / V2-2 因果閉合 §3 或 §4 / V2-3 §5 供需裁決三選一 / V2-4 §5 三視野×三情境 trigger 可量化 / V2-5 §8 catalyst 雙路徑 / V2-6 §9 ticker 與 §3/§4 一致 / V2-7 §5 cell 推導抽查回溯 §3/§4 / V2-8 §1 雙錨點）+ 3 條 v2 新模組抽查（V2-9 §4 三角對帳 / V2-10 §5 資本週期證據 / V2-11 §7 priced-in 分位）。共 11 條 V2 + cornerstone 6 + thesis box sync。③ Step 8.7 spawn prompt 由 skill_version 自動 dispatch（v2.0 主稿已對齊）。DS-mode 8 條與現行 ID v1 checklist 文字不動（legacy 報告續用）。
 - v1.3：跑熟後降為 mode (b) auto-patch 大錯
 - v1.3：加 cron 排程模式（weekly 自動跑所有 Q0 ID 的 critic，產 alert 但不 patch）
 - v1.4：跨 ID 一致性 reconcile（critic 找到 cross-ID 數字差異時，自動 patch 兩份 ID 的數字）
@@ -699,6 +747,187 @@ industry-analyst skill 在 publish 前必須跑 critic gate（Step 8.7，介於 
 5. **commit 訊息要結構化**：列大錯/cosmetic 分類 + portfolio implication
 6. **失敗不靜默**：validator fail / critic 找不到章節 / user skip 全部 → 都明確告訴 user
 7. **Banner 累積上限**：≥5 patch 標記、>2000 字、或 id_version ≥v1.5 → 進 consolidation flow（Step 0 → C1-C6），不再疊新 patch；此規則不可繞過
+
+---
+
+## 【ID v2 Mode 檢查清單】（v1.5 新增）
+
+當 id-meta `skill_version` 以 `v2` 開頭（industry-analyst v2.0 產出的「敘事為骨表格為窗」§0-§9 九章報告），跑 Step 1-7 patch flow，但**檢查清單 = cornerstone 6 條 + thesis box sync（保留）+ 以下 V2-1~V2-11（11 條）**。
+
+v2 報告的章節與 legacy ID 對映（critic 與 patch 都用 v2 章號）：
+
+| legacy ID 概念 | v2 章節 |
+|:---|:---|
+| §0 thesis box（一句 Thesis）| §0 決策摘要層 thesis box |
+| §12 Non-Consensus（cornerstone fact + priced-in）| §7 Non-Consensus + Priced-in + Kill |
+| §13 Falsification metric table | §8 證偽表 |
+| §10.5 Catalyst Timeline | §8 Catalyst Timeline |
+| §11 ticker ranking / conviction tier | §9 關聯個股 🔴🟡🟢 表 |
+| §0.7 PM Implication 綠卡 | §0 PM Implication 綠卡 |
+
+### 保留：cornerstone 6 條 + thesis box sync（remap 到 v2 章節）
+
+industry-thesis-critic agent 的 7-item 冷讀（Item 1-6 cornerstone + Item 7 thesis box sync）**全部保留**，spawn 時在 prompt 內告知 v2 章節對映：
+
+- **Item 1 鮮度**：讀 id-meta `sections_refreshed`（v2 沿用 technical / market / judgment 三桶，mapping：technical→§1-§2、market→§3-§5、judgment→§6-§9）。
+- **Item 2 cornerstone fact 重驗**：cornerstone fact 從 **§7 Non-Consensus 三條分歧**萃取（不再是 §12）。「獨家 / 唯一 / 首家」類 claim 仍跑 ecosystem search。
+- **Item 3 falsification 越線**：讀 **§8 證偽表**（不再是 §13）。
+- **Item 4 catalyst 自 publish 後狀況**：讀 **§8 Catalyst Timeline**（不再是 §10.5）。
+- **Item 5 / 6**：cross-ID 一致 + ticker tier 合理性，讀 **§9 ticker 表**。
+- **Item 7 thesis box sync**：對映 **§0 thesis box + §0 PM Implication 綠卡**（Step 6.5a / 6.5d 流程不變，章號改 v2）。
+
+> Step 6.5（thesis box sync / body sweep / framework promotion / §0.7 PM re-assessment）全部沿用，僅把 §11/§8/§13/§10/§0.7 章號替換為 v2 對映（§9/§8/§8/§5/§0 PM 綠卡）。grep body sweep 的「常見重複位置」改掃 v2 章節（§3 利潤池 / §5 三情境 / §9 ticker 表）。
+
+### V2-1：表格比例 + 數量硬限制（原 DS-1 門檻改）
+
+industry-analyst v2.0 是「敘事為骨表格為窗」，門檻**比 DS 寬**（DS 是 ≥80% 文字 / ≤4 表；v2 是 ≥55% 文字 / ≤10 表）：
+
+| 項目 | Pass | Fail |
+|:---|:---|:---|
+| 文字字元比例 | ≥ 55% | < 55% |
+| 表格數量 | ≤ 10 張 | > 10 張 |
+| 單表行數 | 每張 ≤ 8 行（§9 例外 ≤16）| 任一非 §9 表 > 8 行 |
+
+**檢查方式**（同 Pre-Publish Gate 6）：
+
+```bash
+python3 << 'PY'
+import re
+html = open("docs/id/ID_X.html").read()
+clean = re.sub(r'<(script|style)[^>]*>.*?</\1>', '', html, flags=re.DOTALL)
+tables = re.findall(r'<table[^>]*>.*?</table>', clean, flags=re.DOTALL)
+text_total = len(re.sub(r'\s+','',re.sub(r'<[^>]+>','',clean)))
+table_text = sum(len(re.sub(r'\s+','',re.sub(r'<[^>]+>','',t))) for t in tables)
+print(f"tables: {len(tables)}, text ratio: {1-table_text/text_total:.1%}")
+PY
+```
+
+**Fail 處置**：表格 > 10 張或文字 < 53% → 🔴。53-55% → 🟡（補敘述）。
+
+### V2-2：§1 → §3 / §4 因果閉合（原 DS-2，remap 到 v2）
+
+**Why**：v2 §1 提出的結構變數（某代際技術 / 護城河 / 製程獨家性）必須在 **§3（供給）或 §4（需求）**至少一段（≥50 字符）直接回應「該變數未來 3-5 年是否仍 binding」。v2.0 明文規定「不准推到判斷層（§7 Non-Consensus 不算閉合點）」。
+
+**檢查方式**：
+1. 人工讀 §1 提煉 2-3 個關鍵結構變數 / inflection。
+2. 對每個變數，在 §3 + §4 grep 是否有顯式回應段（≥50 字符）。
+3. 若答案只出現在 §5/§6/§7/§8/§9 → 仍 fail（破壞「歷史→未來」spine）。
+
+**Fail 處置**：🔴（§5 推估完全脫離 §1，無 trace）/ 🟡（答案延後到 §7 等判斷層，要求前置到 §3 或 §4）/ 🟢（部分連結不顯式，補橋段）。
+
+### V2-3：§5 供需裁決三選一明確（原 DS-3，remap 到 §5）
+
+**Why**：v2 §5 開頭必須給「未來 X 年產業供需狀態是 **過剩 / 平衡 / 短缺**，因為 [具體原因]」，三選一不准騎牆。
+
+**檢查方式**：在 §5 開頭尋找裁決句，確認出現過剩 / 平衡 / 短缺三選一（surplus / balance / shortage）。允許分時間段（「短期 X 中長期 Y」）但每段必須明確；禁「可能 X 也可能 Y」。
+
+**Fail 處置**：🔴 — 缺明確裁決或騎牆 → 阻擋發布。
+
+### V2-4：§5 三視野 × 三情境 + trigger 可量化（原 DS-4，remap 到 §5）
+
+**檢查項**：
+- 三視野：12M / 3Y / 5Y+
+- 三情境：base / bull / bear
+- Trigger 欄非空，且每個 trigger 是**可量化 metric**（禁「demand booms」「inference takes off」這類模糊詞；要像「NVDA inference run-rate ≥ $80B annualized」）。
+- 表外有 ≥3 段敘述展開三視野邏輯。
+
+**Fail 處置**：🔴（缺視野 / 三情境 / trigger 全模糊）/ 🟡（trigger 部分模糊或敘述太薄）。
+
+### V2-5：§8 catalyst 雙路徑齊備（原 DS-5，remap 到 §8）
+
+**Why**：§8 Catalyst Timeline 每個節點必須寫「若達成→ X」「若落空→ Y」雙路徑，否則退化成單純時間表，喪失 falsification 價值。
+
+**檢查方式**：grep §8 catalyst 每個節點（`<time>` / 日期標記）後 30 字內是否含「若達成 / 若落空」「if hit / if miss」「達成 / 落空」字眼。
+
+**Fail 處置**：🔴（全部單路徑）/ 🟡（部分節點單路徑）。
+
+### V2-6：§9 ticker depth 與 §3 / §4 敘事一致（原 DS-6，remap 到 §9）
+
+**Why**：§9 是 stock-analyst hook。若 §3 寫供給過剩、§9 把所有供應商標 🔴 beneficiary，邏輯不通。
+
+**檢查方式**：
+- 找 §9 標 beneficiary=true 的 🔴 ticker，確認 §3（供給）或 §4（需求）有敘述支持「為何受益」。
+- 對 beneficiary=false 的 ticker，確認有敘述支持「為何受害」。
+
+**Fail 處置**：🔴（系統性矛盾）/ 🟡（個別 ticker 缺對應）。
+
+### V2-7：§4 / §5 推導抽查 — inputs 可回溯（原 DS-8，remap 到 v2）
+
+**Why**：v2 §5 三視野×三情境 cell 與 §4 TAM 三情境必須附 input → calc → implication 推導；bull/bear 偏離 base 必須由「某 input 假設改變」推出，不准黑盒 ±20%。
+
+**檢查方式**：
+1. 從 §5 三情境表**隨機抽 base / bull / bear 各一格**（共 2 個 cell 起跳）。
+2. 對每個抽到的 cell：
+   - 表外緊鄰段落（同 horizon 敘述展開段）是否有「推導：」字串或等效推導行（「→」「換算」「計算」開頭短行）。
+   - 推導行提到的 input 數字（如「hyperscaler capex $600B」「workload mix 35%」），是否能回溯到 **§3（供給）/ §4（需求）/ §2** 找到對應出處（不是憑空假設）。
+   - bull / bear 偏離 base 是否由「某 input 假設改變」推出。
+
+**Fail 處置**：🔴（§5 完全無推導行，所有 cell 黑盒）/ 🟡（部分 cell 有推導但 input 無法追到 §3/§4）/ 🟢（推導存在但不夠精確）。
+
+### V2-8：§1 雙錨點（日期 + 量化）（原 DS-9，章號不變）
+
+**Why**：v2 §1 每個 inflection 段必含具體日期（YYYY 或 YYYY-MM）+ 至少一個量化錨點，禁「過去幾年」「最近」這類模糊表述。
+
+**檢查方式**：對 §1 每個 inflection 段正則檢查：
+
+```python
+import re
+s1 = re.search(r'<h2[^>]*>§1[^<]*</h2>(.*?)(?=<h2|\Z)', html, re.DOTALL).group(1)
+paragraphs = re.findall(r'<p[^>]*>(.*?)</p>', s1, re.DOTALL)
+for i, p in enumerate(paragraphs):
+    text = re.sub(r'<[^>]+>', '', p)
+    has_date = bool(re.search(r'\b(19|20)\d{2}(-\d{2})?\b', text))
+    has_number = bool(re.search(r'\d+\s*%|\$\s?\d+|\d+\s?(GW|TFLOPS|GB|MAU|B|M)|\d+x|\d+\s?倍', text))
+    if not (has_date and has_number):
+        print(f"§1 段 {i+1}: 缺 {'日期' if not has_date else ''} {'量化錨點' if not has_number else ''}")
+```
+
+**Fail 處置**：🔴（§1 全無日期錨點）/ 🟡（部分段有日期無量化或反之）/ 🟢（精度太低只到 decade）。
+
+---
+
+### V2 新模組抽查（v2 獨有 3 條，DS 沒有）
+
+industry-analyst v2.0 新增 7 個分析模組，其中三個對 thesis 結論最 load-bearing — critic 必須抽查它們是「真有做」還是「裝飾」。
+
+### V2-9：§4 需求三角對帳（QC-M2 對應）
+
+**Why**：v2 §4 要求 top-down TAM 與 bottom-up（下游客戶 capex/採購 guidance 加總 vs 上游廠商營收 consensus 加總）對帳；**兩邊差 >20% 必須解釋缺口在哪**。critic 抽查這對帳是否真實存在。
+
+**檢查方式**：
+1. 在 §4 找 top-down TAM 數字 + bottom-up 加總數字（兩邊都要有具體 $ 數）。
+2. **兩邊數字真實存在且可回溯來源**（節末 aside 有對應條目，不是憑空寫一個 bottom-up 數字湊對帳）。
+3. 若兩邊差 >20% → 確認章內有解釋缺口（重複計算 / 樂觀滲透率 / 口徑不同）+ 寫明採信哪邊。
+
+**Fail 處置**：🔴（只有 top-down，完全沒 bottom-up 對帳 / 兩邊差 >20% 但無解釋）/ 🟡（對帳存在但某一邊數字無來源）/ 🟢（對帳完整但結論採信邏輯薄弱）。
+
+### V2-10：§5 資本週期證據真實引用（QC-M1 對應）
+
+**Why**：v2 §5 供需裁決必須引資本週期三指標（① capex/折舊比趨勢、② ROIC vs WACC、③ 新產能 lead time）中**至少 2 項**作量化依據。critic 抽查是否「真引用」且「非裝飾性」。
+
+**檢查方式**：
+1. 在 §5 裁決段找資本週期指標，確認**至少 2 項**有具體數字（不只提名詞）。
+2. **非裝飾性檢查**：裁決方向必須與指標方向**邏輯一致** — e.g. 裁決「未來過剩」但 capex/折舊比下降、ROIC < WACC、lead time 縮短（三者都指向產能收縮）→ 矛盾，指標是裝飾。反之裁決「短缺」配 lead time 拉長 + ROIC > WACC + capex/折舊比攀升 → 一致。
+
+**Fail 處置**：🔴（裁決只靠敘事，0-1 項指標 / 指標方向與裁決方向矛盾）/ 🟡（湊到 2 項但其一無數字或來源）/ 🟢（指標齊但與裁決連結不夠顯式）。
+
+### V2-11：§7 priced-in 分位有來源（QC-M3 對應）
+
+**Why**：v2 §7 每條 non-consensus 分歧必須附 priced-in 檢驗 — ① sector 估值歷史分位（現在 EV/Sales 或 Fwd P/E 在過去兩輪 cycle band 的 percentile）+ ② 現價隱含成長假設。**分歧對但已 priced → 標「不可操作」**。critic 抽查每條分歧的 priced-in 是否齊備、分位數字是否有來源。
+
+**檢查方式**：
+1. 對 §7 每條分歧（通常 3 條），確認旁邊有 priced-in 段。
+2. 每個 priced-in 段含：① 估值分位（具體 percentile 或 band 位置）+ ② 現價隱含假設。
+3. **分位數字有來源**：節末 aside 有對應 valuation band 來源（券商 T3-A valuation band 圖、或自算但註明資料窗口）；隱含成長假設有推導行。
+4. 若某分歧「對但已被 price」→ 確認章內標明「不可操作」。
+
+**Fail 處置**：🔴（≥1 條分歧完全沒 priced-in / 分位數字憑空無來源）/ 🟡（priced-in 存在但隱含假設無推導 / 部分分歧缺）/ 🟢（齊備但「可操作性」結論未明示）。
+
+---
+
+## 【ID v2 Mode Banner 格式】（v1.5 新增）
+
+v2 報告 banner 沿用**現行 ID banner 格式**（§0 頂部紅底 block，見 Step 6「Banner 標準格式」），不採 DS 的 `<details>` 摺疊式 — 因為 v2 是 id-meta + §0 決策層結構，與 legacy ID 同源。累積上限（≥5 patch / >2000 字 / id_version ≥v1.5）與 consolidation flow（Step 0 → C1-C6）完全沿用。critic report 路徑 `docs/id/_critic_{Theme}_{YYYYMMDD}.md`（與 legacy ID 同目錄）。validator 用 `scripts/validate_id_meta.py`。
 
 ---
 

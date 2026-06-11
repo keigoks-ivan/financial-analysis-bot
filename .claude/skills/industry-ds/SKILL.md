@@ -1,11 +1,23 @@
 ---
 name: industry-ds
-description: 建立「產業敘述報告（Industry Discourse / DS）」— 與 industry-analyst（產業 ID）並列的姊妹 skill。輸入產業主題（如「AI 加速器需求」「玻璃基板封裝」「全球航運週期」），skill 執行 WebSearch / WebFetch 三軸研究（歷史 / 供給 / 需求），輸出一份 11 章節、文字 ≥ 80% / 表格 ≤ 20%、以「歷史 → 現供 → 未供 → 現需 → 未需 → 短中長期推估」為敘事骨架的 HTML 報告。與 ID 互補（ID 表格 dashboard 給 PM 快速決策、DS 敘述供需循環給深度準備），同 theme 可並存。v1.3 變更：放寬「不用 bullet」硬規則，改為「敘述為主、條列為輔」hybrid — 因果鏈與漸進推理保留段落敘事，3+ 平行同類項目 / 對稱結構 / 無因果列舉強制 bullet，讓讀體驗在 scan 與深讀之間找到平衡。v1.2：把 inline `<span class="source-tag">` 移至每節末 `<aside class="ds-refs">` 參考區塊，保留可審計性但大幅改善閱讀流暢度。觸發：使用者說「{主題} ds」/「ds {主題}」/「{產業} 敘述報告」/「分析 {產業} 的供需循環」/「{產業} 歷史與未來」/「discourse {industry}」。
+description: 【DEPRECATED 2026-06-11】已併入 industry-analyst v2.0 — 所有 DS 觸發語（「{主題} ds」「敘述報告」「供需循環」「discourse」）改觸發 industry-analyst。本檔保留供 legacy DS 報告維護參考。原 DS skill：與 industry-analyst（產業 ID）並列的姊妹 skill，輸入產業主題執行三軸研究，輸出 11 章節、文字 ≥ 80% / 表格 ≤ 20%、以「歷史 → 現供 → 未供 → 現需 → 未需 → 短中長期推估」為敘事骨架的 HTML 報告（docs/ds/DS_*.html）。
 version: v1.2
 date: 2026-05-13
 ---
 
-# industry-ds skill v1.2
+# industry-ds skill v1.2 — 【DEPRECATED 2026-06-11】
+
+> ## ⛔ DEPRECATED — 已併入 industry-analyst v2.0
+>
+> **狀態**：本 skill 自 2026-06-11 起停用，不再產出新報告。
+>
+> **為什麼合併**：DS（敘述供需循環，深入淺出好讀）與 ID（表格 dashboard，決策密度高）長期是並列姊妹 skill，但同 theme 常要兩邊各跑一份、內容重疊、維護雙線。industry-analyst v2.0 把兩者合成單一「敘事為骨、表格為窗」的產業深度報告：用 DS 的因果敘事弧當骨架，把 ID 的決策資產（PM 結論、玩家矩陣、利潤池、估值傳導、證偽表）當器官嵌入對應章節，並吸收 DS 的因果閉合、推導鏈、§末 aside 來源系統與可讀性規則層。
+>
+> **新去處**：所有原 DS 觸發語（「{主題} ds」「ds {主題}」「{產業} 敘述報告」「分析 {產業} 的供需循環」「{產業} 歷史與未來」「discourse {industry}」）一律轉向 `industry-analyst`（v2.0），輸出寫到 `docs/id/`（不再寫 `docs/ds/`）。
+>
+> **8 份 legacy DS 報告如何維護**：既有 8 份 `docs/ds/DS_*.html` 凍結為 legacy，**檔案不動、不 retrofit、不遷移**。若需要 review / patch / 驗證某份 legacy DS，走 `id-review --mode ds`（DS-mode 檢查清單仍在）；**不要用本 skill 生新 DS**。所有 plumbing（`validate_ds_meta.py` / `build_ds_category_pages.py` / `init_ds_index.py`）僅供 legacy DS 維護參考。
+>
+> **本檔以下內文全部保留供歷史參考**，描述的是停用前的 v1.2 行為。
 
 ## v1.2 變更記錄（inline → aside 遷移）
 

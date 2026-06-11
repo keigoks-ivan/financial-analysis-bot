@@ -472,7 +472,7 @@ skill 行為:
 | 個股 DD(深度) | `stock-analyst` | ticker | `docs/dd/DD_<TICKER>_<YYYYMMDD>.html` |
 | 個股 DCA(定見) | `deep-conviction-analyst` | ticker | `docs/dca/DCA_<TICKER>_<YYYYMMDD>.html` |
 | 多股對比(本 skill) | `multi-stock-comparator-v1` | 2-5 tickers + DCA/DD | `docs/comparisons/MS_<...>.html` |
-| 產業 ID / DS | `industry-analyst` / `industry-ds` | 產業主題 | `docs/id/` / `docs/ds/` |
+| 產業 ID | `industry-analyst` (v2.0，已併入舊 DS 敘述) | 產業主題 | `docs/id/` (legacy DS 凍結於 `docs/ds/`) |
 
 本 skill 是**消費端** — 假設 DCA / DD 已存在。若用戶要的 ticker 還沒有 DCA / DD,**不自動觸發** `stock-analyst` 或 `deep-conviction-analyst`,先告知用戶並提供選項。
 

@@ -1,11 +1,26 @@
-# industry-analyst v1.7 — Pre-Publish Gate Check（10 Gates）
+# industry-analyst v2.0 — Pre-Publish Gate Check（10 Gates）
 
-每份 Industry DD 發布前必跑。Step 8.5 讀取本檔並逐條檢查。
+每份 v2.0 產業深度報告（ID）發布前必跑。寫好 HTML 草稿後（Step 8.5），讀取本檔逐條檢查，產出 `pre_publish_report.md`。
 
-v1.7（2026-05-03）相對 v1.6 的差異：新增 Gate 9（§0.7 PM Implication Existence + Conviction Consistency），要求每份 ID 必含 §0.7 綠色 PM 行動結論段，conviction pill 需與 §11/§8 一致。觸發自 2026-05-03 ID_AIDataCenter v1.1 patch（commit f1c450b）——user 要求把臨時加入的 PM Implication block 升格為所有 ID 的標準必填段。
+Gate 編號與 `SKILL.md`【Pre-Publish Gate（10 道）】表完全一致：
 
-v1.6（2026-04-27）：新增 Gate 8（id-meta JSON Validation）。
-v1.5（2026-04-21）：新增 Gate 2.1（Thesis Cornerstone Fact Verification）+ Gate 3.1（Cross-ID Thesis Bias Detection）。
+| Gate | 性質 | 檢查 | 來源 |
+|:---|:---|:---|:---|
+| **Gate 1** | 阻斷 | 核心 ticker financials < 60 天 | ID v1.x Gate 1 原文 |
+| **Gate 2** | 阻斷 | Event-triggered thesis < 14 天 refresh | ID v1.x Gate 2 原文 |
+| **Gate 2.1** | 阻斷 | Thesis Cornerstone Fact 驗證（獨家/首家/唯一） | ID v1.x Gate 2.1 原文 |
+| **Gate 3** | 阻斷 | Cross-ID reconciliation | ID v1.x Gate 3 原文 |
+| **Gate 4** | 阻斷 | id-meta JSON validate（原 ID Gate 8） | ID v1.x Gate 8 |
+| **Gate 5** | 阻斷 | §0 PM Implication 綠卡（原 ID Gate 9） | ID v1.x Gate 9 |
+| **Gate 6** | 阻斷 | 文字比 ≥ 55% + 表格 ≤10 張 / ≤8 行（§9 ≤16） | DS Gate 11 + Gate 10 碼，門檻 80%→55% |
+| **Gate 7** | 阻斷 | 推導鏈 regex（掃 §4/§5/§7/§8/§9） | DS Gate 13 碼 |
+| **Gate 8** | 阻斷 | aside 來源 + T1 占比 ≥ 60% | DS Gate 12 碼，門檻 50%→60% |
+| **Gate 9** | 阻斷 | §1 錨點（日期 + 量化） | DS Gate 14/DS-9 對應碼 |
+| **Gate 10** | warning | 供需裁決三選一 + §9 depth 時間限定 + catalyst 雙路徑 + 原 ID warning gates 摘要 | 新（DS Gate 7 + Gate 14 + ID 3.1/5/6/7 摘要） |
+
+任一阻斷 Gate（1/2/2.1/3/4/5/6/7/8/9）fail → **阻斷發布** + 列修正項。阻斷全過、Gate 10（warning）fail → 允許發布但輸出 warning。
+
+> 下方所有出現 `docs/id/ID_{Theme}_{Date}.html` 的 path 在實跑時替換為實際檔案路徑（草稿階段可能在 staging path）。
 
 ---
 
@@ -14,7 +29,7 @@ v1.5（2026-04-21）：新增 Gate 2.1（Thesis Cornerstone Fact Verification）
 **規則**：所有 🔴 核心 ticker 的最新公告季度財報必須在發布日前 60 天內。
 
 **檢查步驟**：
-1. 列出 §11 所有 🔴 核心 ticker
+1. 列出 §9 所有 🔴 核心 ticker
 2. 對每檔 → 查最近公告的 quarterly earnings release 日期
 3. 若 `(發布日 - earnings 日) > 60 天`：
    - **阻斷發布**
@@ -28,7 +43,7 @@ v1.5（2026-04-21）：新增 Gate 2.1（Thesis Cornerstone Fact Verification）
 
 ## Gate 2 [必備 / 阻斷]｜Event-Triggered Thesis Refresh（< 14 天）
 
-**規則**：§12 Non-Consensus thesis 引用的事件性 data point，必須在發布日前 14 天內重新檢索最新狀態。
+**規則**：§7 Non-Consensus thesis 引用的事件性 data point，必須在發布日前 14 天內重新檢索最新狀態。
 
 **事件性 data point 定義**：
 - 具體 yield 數字（"Samsung SF2P 70% yield"）
@@ -38,7 +53,7 @@ v1.5（2026-04-21）：新增 Gate 2.1（Thesis Cornerstone Fact Verification）
 - 產能 sold out / 量產時序（"Samsung HBM4 Feb 2026 量產"）
 
 **檢查步驟**：
-1. 掃 §12 三條 thesis 的「分歧事實」與「證偽條件」段落
+1. 掃 §7 三條 thesis 的「分歧事實」與「證偽條件」段落
 2. 標註每條為 `[event-triggered]` 或 `[structural]`
 3. 對 event-triggered → WebSearch 最近 14 天是否有更新
 4. 若最新資料矛盾：
@@ -52,15 +67,15 @@ v1.5（2026-04-21）：新增 Gate 2.1（Thesis Cornerstone Fact Verification）
 
 ---
 
-## Gate 2.1 [必備 / 阻斷 · v1.5 新增]｜Thesis Cornerstone Fact Verification
+## Gate 2.1 [必備 / 阻斷]｜Thesis Cornerstone Fact Verification
 
-**規則**：§12 每條 thesis 的「核心分歧事實」必須獨立 WebSearch 最新狀態，特別針對含有「獨家」「首家」「唯一」「only」等定性的 claim 逐一驗證。
+**規則**：§7 每條 thesis 的「核心分歧事實」必須獨立 WebSearch 最新狀態，特別針對含有「獨家」「首家」「唯一」「only」等定性的 claim 逐一驗證。
 
-**為何新增**：
+**為何存在**：
 ID_Transformers v1.4 發生的「Eaton 800V DC 獨家 co-design」錯誤是典型案例 — Gate 2 確實檢查了 Eaton Beam Rubin DSX 公告 14 天內正確，但未驗證「是否真的獨家」這個 thesis 基石 claim。實際狀況：NVDA MGX 800V DC 官方 14+ 家夥伴（ABB、Delta、Schneider、Vertiv 等），Eaton 是 top 3 而非獨家。此類錯誤不是 data 過期，是 cornerstone 定性從未被獨立驗證。
 
 **檢查步驟**：
-1. 掃 §12 每條 thesis，圈出所有含「獨家」「首家」「唯一」「only」「first」「exclusive」「sole」「lock-in」「壟斷」等詞的 claim
+1. 掃 §7 每條 thesis，圈出所有含「獨家」「首家」「唯一」「only」「first」「exclusive」「sole」「lock-in」「壟斷」等詞的 claim
 2. 對每條 → 獨立 WebSearch：
    - `"{相關技術或事件}" partners list` 或
    - `"{相關技術或事件}" ecosystem OR alliance OR consortium`
@@ -100,7 +115,7 @@ Thesis 1 cornerstone: "{關鍵 claim}"
 - TAM 數字（避免 AI DC ID 和 Liquid Cooling ID 的「液冷 2026 TAM $4-5B vs $6.4B」類似情境）
 
 **檢查步驟**：
-1. 掃所有待發布 ID 的 §4 SOM 表 + §6 玩家清單 + §11 關聯個股
+1. 掃所有待發布 ID 的 §4 TAM 表 + §3 玩家清單 + §9 關聯個股
 2. 對每檔共用 ticker → 列所有 ID 的核心數字
 3. 若 inconsistency：
    - 數字差 > 10% → **阻斷發布**
@@ -113,136 +128,22 @@ Thesis 1 cornerstone: "{關鍵 claim}"
 
 ---
 
-## Gate 3.1 [重要 / warning · v1.5 新增]｜Cross-ID Thesis Bias Detection
-
-**規則**：跨 ID 檢查同一 ticker 的「定性偏差」— 若某 ticker 在多份 ID 被定性為「獨家」「首家」「領先」「lock-in」，觸發 red flag 並要求獨立驗證每份 ID 的 claim 是否基於相同錯誤來源。
-
-**為何新增**：
-peer review 發現 AI DC ID 和 Transformers ID 對 Eaton 有同一 cross-ID bias（兩份 ID 都誇大 Eaton 在 800V DC 的獨占地位）。這不是兩個獨立錯誤，是一個 common mistake 重複出現。Gate 3 reconciliation 只看「數字是否一致」，沒抓到「定性是否同樣錯誤」。
-
-**檢查步驟**：
-1. 列出 cross-ID ticker 定性 claim：
-   - 所有在 ≥ 2 份 ID 提及的 ticker
-   - 針對每檔，列出各 ID 對它的「角色描述」（從 §6 玩家矩陣 + §12 thesis 段）
-2. Red flag 觸發條件：
-   - 同一 ticker 在 ≥ 2 份 ID 都出現「獨家」「首家」「lock-in」類定性
-   - 同一 ticker 在 ≥ 2 份 ID 都被歸為「最大受益者」
-3. 若 red flag 觸發：
-   - 套用 Gate 2.1 獨立驗證（WebSearch ecosystem 玩家清單）
-   - 若錯誤成立 → 修正所有相關 ID 的定性（不只是當前發布的那份）
-   - 若錯誤不成立 → 在 pre_publish_report 註記「cross-ID 定性一致且事實驗證通過」
-4. Warning 不阻斷發布，但必須在 report 明確列出所有 red flag
-
-**典型 fail 情境**：
-- Eaton 在 AI DC ID 和 Transformers ID 都被寫成「NVDA 獨家 co-design」（實際 14+ 家夥伴）
-- 若未來 Alchip 在 AP ID、Hybrid Bonding ID、AI ASIC ID 都被寫成「AWS Trainium 3 唯一 backend partner」— 需驗證是否多源化
-
-**輸出格式**：
-```
-## Gate 3.1: Cross-ID Thesis Bias Detection
-Ticker: Eaton (ETN)
-  - AI DC ID：「Boyd Thermal 後 800V DC co-design」
-  - Transformers ID：「Eaton + NVIDIA 獨家 SST co-design」
-  → Red flag 觸發（兩份 ID 都說獨家）
-  → 獨立驗證：NVDA 14+ 家夥伴 → ❌ 定性錯誤
-  → 修正：AI DC ID + Transformers ID 同步改寫為「top 3」
-```
-
----
-
-## Gate 4 [重要 / warning]｜Catalyst & Falsification Status Check
-
-**規則**：§10.5 Catalyst Timeline 中所有日期早於發布日的條目，必須標示「已發生」並評估結果；§13 Falsification Test 條件若已觸發或已越過，必須明確標示。
-
-**檢查步驟**：
-1. §10.5 掃所有日期 < 發布日的 catalyst
-   - 已發生 → 標 ✅「已發生，結果：{brief}」
-   - 未標示 → warning
-2. §13 每條閾值
-   - 已觸發（thesis 破） → 紅字警示
-   - 已強烈越過（thesis 強化） → 綠字確認
-   - 未評估 → warning
-
-**典型 fail 情境**：
-- HBM ID §10.5「2026-02 Samsung HBM4 Feb 量產」標成「未來事件」但實際上已發生且 Samsung 未如期
-- §13「Credo 季 revenue < $250M」但 Q3 FY26 已達 $407M 卻沒標「強烈越過」
-
----
-
-## Gate 5 [重要 / warning]｜Unit & Scope Consistency
-
-**規則**：ASP、BOM、Revenue 等關鍵數字必須宣告單位與口徑。
-
-**檢查項目**：
-- ASP 單位：`$/wafer` vs `$/stack` vs `$/GB` vs `$/unit`
-- Revenue 口徑：全年 / 季度 / annualized run-rate
-- 營收 scope：segment / AI-only / total company
-- 百分比：必須有 source 或降級為定性描述
-
-**檢查步驟**：
-1. 報告開頭必須有 unit glossary（§0 TL;DR 前或後）
-2. 所有百分比抽樣檢查 source
-3. Revenue 數字附註時間範圍（"FY26" vs "Q4 FY26" vs "annualized"）
-
-**典型 fail 情境**：
-- HBM ID 寫 HBM ASP "$20 → $25 → $35 per GB" 但沒宣告 per-stack 還是 per-GB
-- §5 議價權「NVDA 45% / TSMC 30%」無 source
-
----
-
-## Gate 6 [重要 / warning]｜Cross-ID Layer Disambiguation
-
-**規則**：同一主題跨多份 ID 出現時，必須明確區分層次。Ticker 評級在跨 ID 時必須一致。
-
-**常見需分層主題**：
-- **CPO**：switch-level（2026 已商用）vs chip-to-chip（2028+ Feynman）
-- **UALink**：規格完成（2025 H2）vs hardware ramp（2026 H2）vs 商用（2027+）
-- **Intel 角色**：foundry 客戶 vs GPU 設計商 vs 下游封裝
-- **AVGO AI Revenue**：AI-only networking vs AI ASIC vs AI total
-
-**檢查步驟**：
-1. 掃同批次 ID 是否有 overlap 主題
-2. 對每 overlap 主題 → 確認各 ID 明確標層次
-3. Ticker 評級跨 ID 比對（讀 `references/ticker_ratings.md`）
-
----
-
-## Gate 7 [重要 / warning]｜Sub-Topic ID Value-Add Rule
-
-**規則**：子題 ID（如 Liquid Cooling vs 母題 AI DC、SiPho/CPO vs 母題 Networking）必須有獨立 value-add，不能只重複母題 + 加幾檔 non-obvious。
-
-**檢查方式**：
-產出 sub-topic value-add matrix：
-```
-| 面向 | 母題 ID 涵蓋度 | 子題 ID 新增深度 |
-|:---|:---|:---|
-| 技術 | 母題寫幾段 | 子題必須 deep dive |
-| TAM | 母題合併數字 | 子題必須拆分細項 |
-| 玩家 | 母題列主要 | 子題必須加次要玩家 |
-| Thesis | 母題的 thesis | 子題必須有獨立 thesis |
-```
-
-若「子題新增深度」全空 → 子題無存在必要，**建議合併回母題**。
-
-**典型 fail 情境**：
-- Liquid Cooling ID 大部分內容與 AI DC ID 重複，only 多了 Chemours 等 non-obvious → value-add 不足
-
----
-
-## Gate 8 [必備 / 阻斷 · v1.6 新增]｜id-meta JSON 區塊存在且通過 strict 驗證
+## Gate 4 [必備 / 阻斷]｜id-meta JSON 存在且通過 strict 驗證
 
 **規則**：每份 ID HTML 的 `<head>` 內必含 `<script id="id-meta" type="application/json">{...}</script>`，且該 JSON 通過 `scripts/validate_id_meta.py` strict 驗證（必填欄位齊全、enum 值合法、`oneliner` ≤ 200 chars、`related_tickers` 結構正確）。
 
-**為何新增（v1.6, 2026-04-27）**：
-2026-04-27 連 11 份新 ID（AerospaceMetals / CommercialAerospace / DefenseAerospaceUpgrade / EdgeAI / FoundryGeography / HeavyMachineryMining / HumanoidIndustrialRobotics / IndustrialAutomation / ProductivityCopilot / TokenEconomics / GlobalLuxury）漏了 id-meta 區塊，CI `Validate DD + ID metadata` workflow strict gate 全部 fail，使用者收到連續失敗信件。根因：`templates/html_template.md` 骨架未列 id-meta，QC-I14.5 只在 QC 列表（事後檢核），缺乏 pre-publish blocking gate。本 Gate 把 id-meta 從「QC 提醒」升格為「阻斷式 publish gate」。
+**為何阻斷**：
+2026-04-27 連 11 份新 ID 漏了 id-meta 區塊，CI `Validate DD + ID metadata` workflow strict gate 全部 fail，使用者收到連續失敗信件。本 Gate 把 id-meta 從「QC 提醒」升格為「阻斷式 publish gate」。
 
 **檢查步驟**：
-1. 執行 `python3 scripts/validate_id_meta.py docs/id/ID_{Theme}_{YYYYMMDD}.html`
-2. exit code != 0 → **阻斷發布**，列出缺漏 / 違規欄位
-3. 常見 fail：
+```bash
+python3 scripts/validate_id_meta.py docs/id/ID_{Theme}_{Date}.html
+```
+1. exit code != 0 → **阻斷發布**，列出缺漏 / 違規欄位
+2. 常見 fail：
    - 沒有 `<script id="id-meta">` 區塊（漏寫）
    - `oneliner` 超過 200 chars（沒裁切，把 §0 整段塞進去）
-   - `ai_exposure` 用了預設 🟡 但語意上應該是 🟢/🔴（warning，不阻斷；發布前人工調整）
+   - enum 值用了複合字串（`structural+event` / `mature_diverging` / `oligopoly+disruption`）— 必須改回單一白名單 enum
    - `related_tickers` 為空陣列且非 cross-cutting 主題
 
 **典型 fail 情境**：
@@ -251,7 +152,7 @@ Ticker: Eaton (ETN)
 
 **輸出格式**：
 ```
-## Gate 8: id-meta JSON Validation
+## Gate 4: id-meta JSON Validation
 $ python3 scripts/validate_id_meta.py docs/id/ID_XXX_YYYYMMDD.html
 {exit code, errors}
 ✅ PASS / ❌ FAIL — {缺漏欄位列表}
@@ -259,19 +160,19 @@ $ python3 scripts/validate_id_meta.py docs/id/ID_XXX_YYYYMMDD.html
 
 ---
 
-## Gate 9 [必備 / 阻斷 · v1.7 新增]｜§0.7 PM Implication 存在 + conviction 一致性
+## Gate 5 [必備 / 阻斷]｜§0 PM Implication 綠卡存在 + conviction 一致性
 
-**規則**：每份 ID HTML 的 §0 與 §1 之間必須存在 `<h2>§0.7 Portfolio Implication（PM 級行動結論）</h2>` 及對應的綠色 `judgment-card`（`background:#F0FDF4;border-left:4px solid #16A34A`），且內容必須通過以下一致性查驗。
+**規則**：每份 ID HTML 的 §0 內（決策摘要層）必須存在 `<h2>` 含「Portfolio Implication」及對應的綠色 `judgment-card`（`background:#F0FDF4;border-left:4px solid #16A34A`），且內容必須通過以下一致性查驗。
 
-**為何新增（v1.7, 2026-05-03）**：
-2026-05-03 ID_AIDataCenter v1.1 patch 由 user 臨時加入綠色 PM Implication block（commit f1c450b），user 認可並要求改為每份 ID 的標準段落。核心理由：§11 conviction tier / §8 de-rating window / §13 falsification metric 這三個判斷層完成後，PM 的行動結論必須在同一文件明文化——否則讀者得自己從三個不同章節拼湊，增加誤讀風險。
+**為何阻斷**：
+§9 conviction tier / §6 de-rating window / §8 falsification metric 這三個判斷層完成後，PM 的行動結論必須在同一文件明文化 — 否則讀者得自己從三個不同章節拼湊，增加誤讀風險。
 
 **檢查步驟**：
 
 1. **存在性查驗**（阻斷）
-   - HTML 中搜尋 `§0.7 Portfolio Implication`（或 `id="s0-7"`）
+   - HTML 中搜尋 `Portfolio Implication`（或 §0 內 `judgment-card` 綠卡）
    - 搜尋 `background:#F0FDF4` + `border-left:4px solid #16A34A`
-   - 缺任一 → **阻斷發布**：「§0.7 PM Implication section missing」
+   - 缺任一 → **阻斷發布**：「§0 PM Implication 綠卡 missing」
 
 2. **五 bullet 完整性**（阻斷）
    - 確認存在以下五個 `<strong>` 標籤的 bullet：
@@ -288,8 +189,8 @@ $ python3 scripts/validate_id_meta.py docs/id/ID_XXX_YYYYMMDD.html
 
 4. **conviction pill 一致性**（warning）
    - 讀取 `<span class="j-conf">` 內的 conviction 值（high/mid/low）
-   - 對比 §11 🔴 ticker 數量：
-     - ≥ 2 個 🔴 且 §12 verdict 傾向 INTACT → 預期 `high`；若標 `low` → warning
+   - 對比 §9 🔴 ticker 數量 + §8 falsification 距離：
+     - ≥ 2 個 🔴 且 §8 falsification 距離 > 2 sigma → 預期 `high`；若標 `low` → warning
      - 0 個 🔴 → 預期 `low`；若標 `high` → warning
    - Conviction 不一致 → warning（不阻斷，但必須在 report 說明）
 
@@ -298,20 +199,348 @@ $ python3 scripts/validate_id_meta.py docs/id/ID_XXX_YYYYMMDD.html
    - 若只寫「部分核心股」「相關個股」等泛語 → warning
 
 **典型 fail 情境**：
-- 整份 ID 缺 §0.7（舊格式或未跑 Step 7.5）→ 阻斷
-- §0.7 只有 3 條 bullet，漏寫 Entry 時機 → 阻斷
+- 整份 ID 缺 §0 PM 綠卡（舊格式或未跑 §0 定稿步驟）→ 阻斷
+- 綠卡只有 3 條 bullet，漏寫 Entry 時機 → 阻斷
 - j-logic 只列 ①②③，沒有 ④ → 阻斷
-- conviction 標 `high` 但 §11 無任何 🔴 ticker → warning
+- conviction 標 `high` 但 §9 無任何 🔴 ticker → warning
+
+**檢查碼（存在性 + 五 bullet + j-logic）**：
+```bash
+python3 << 'PY'
+import re
+html = open("docs/id/ID_{Theme}_{Date}.html").read()
+# 1. 綠卡存在
+card = bool(re.search(r'#F0FDF4', html)) and bool(re.search(r'border-left:4px solid #16A34A', html))
+title = bool(re.search(r'Portfolio Implication', html))
+print(f"綠卡存在: {'✅' if (card and title) else '❌ MISSING'}")
+# 2. 五 bullet
+bullets = ['thesis 方向', '個股 conviction tier 變化', '關鍵新監測點', '估值', 'Entry 時機']
+missing = [b for b in bullets if b not in html]
+print(f"五 bullet: {'✅ all present' if not missing else '❌ missing: '+str(missing)}")
+# 3. j-logic 四行動
+acts = [s for s in '①②③④' if s in html]
+print(f"j-logic 四行動: {'✅' if len(acts)==4 else '❌ missing: '+''.join(s for s in '①②③④' if s not in html)}")
+PY
+```
 
 **輸出格式**：
 ```
-## Gate 9: §0.7 PM Implication Existence + Conviction Consistency
-§0.7 block exists: ✅ / ❌ MISSING
+## Gate 5: §0 PM Implication Existence + Conviction Consistency
+綠卡 exists: ✅ / ❌ MISSING
 Five bullets: ✅ all present / ❌ missing: {bullet names}
 j-logic 4 actions: ✅ / ❌ missing: {①②③④ which absent}
 Conviction consistency: ✅ / ⚠ {explain mismatch}
 Ticker name-check: ✅ / ⚠ {no ticker found}
-→ Gate 9: ✅ PASS / ❌ BLOCKED / ⚠ WARNED
+→ Gate 5: ✅ PASS / ❌ BLOCKED / ⚠ WARNED
+```
+
+---
+
+## Gate 6 [必備 / 阻斷]｜文字比 ≥ 55% + 表格 ≤ 10 張 / ≤ 8 行（§9 ≤ 16）
+
+**規則**（搬自 DS Gate 11 + Gate 10，門檻 80%→55%、表格上限 4→10）：
+- 純文字字元（含 bullet 內容）/ 整篇可見字元 ≥ **55%**（DS 為 80%；v2.0 是 ID 70-80% 表 ↔ DS 80% 文字的中間值）。
+- 表格數量 ≤ **10** 張；每張 ≤ **8** 行（不含表頭），**§9 ticker 表例外可至 16 行**；成本曲線 / 庫存指標表視產業屬性可省。
+
+**為何阻斷**：低於 55% 文字 → 退化回舊 ID 表格 dashboard；表格爆量同理。
+
+**Part A — 文字比例 ≥ 55%**（搬自 DS Gate 11 碼，門檻改 0.80 → 0.55）：
+```bash
+python3 << 'PY'
+import re
+path = "docs/id/ID_{Theme}_{Date}.html"
+html = open(path).read()
+
+# 1. 移除 <script>...</script>、<style>...</style>、<!-- comments -->
+clean = re.sub(r'<script[^>]*>.*?</script>', '', html, flags=re.DOTALL)
+clean = re.sub(r'<style[^>]*>.*?</style>', '', clean, flags=re.DOTALL)
+clean = re.sub(r'<!--.*?-->', '', clean, flags=re.DOTALL)
+
+# 2. 抓所有 <table>...</table> 區塊
+tables = re.findall(r'<table[^>]*>.*?</table>', clean, flags=re.DOTALL)
+
+# 3. 計算純文字總字元（去 HTML tags 後）
+text_only = re.sub(r'<[^>]+>', '', clean)
+total_chars = len(re.sub(r'\s+', '', text_only))
+table_chars_clean = sum(len(re.sub(r'\s+', '', re.sub(r'<[^>]+>', '', t))) for t in tables)
+
+narrative_chars = total_chars - table_chars_clean
+ratio = narrative_chars / total_chars if total_chars else 0
+
+print(f"總可見字元: {total_chars:,}")
+print(f"  ├─ 敘述字元: {narrative_chars:,} ({ratio:.1%})")
+print(f"  └─ 表格字元: {table_chars_clean:,} ({1-ratio:.1%})")
+print(f"\n敘述比例: {ratio:.1%}")
+print("PASS" if ratio >= 0.55 else "FAIL (目標 ≥ 55%)")
+PY
+```
+
+**Part B — 表格數 ≤ 10、行數 ≤ 8/張（§9 ≤ 16）**（搬自 DS Gate 10 碼，§11→§9 + cap 4→10）：
+```bash
+python3 << 'PY'
+import re
+html = open("docs/id/ID_{Theme}_{Date}.html").read()
+tables = re.findall(r'<table[^>]*>.*?</table>', html, re.DOTALL)
+print(f"表格數: {len(tables)}（cap 10）— {'OK' if len(tables) <= 10 else 'FAIL'}")
+for i, t in enumerate(tables):
+    tbody_m = re.search(r'<tbody>(.*?)</tbody>', t, re.DOTALL)
+    tbody = tbody_m.group(1) if tbody_m else t
+    rows = len(re.findall(r'<tr', tbody))
+    # 判斷是否為 §9 ticker table（含 .id-tickers / .ds-tickers / depth pill）
+    is_s9 = 'id-tickers' in t or 'ds-tickers' in t or 'tier-red' in t or 'depth-red' in t
+    cap = 16 if is_s9 else 8
+    status = 'OK' if rows <= cap else 'FAIL'
+    print(f"  表 {i+1}: {rows} 行（cap {cap}）— {status}")
+PY
+```
+
+**Fail action**：
+- 文字 < 55%：把表格資訊轉敘述段落，或補 `.id-implication` 💡 段落 + lede。
+- 表格 > 10 張：合併同類表 / 把次要表轉敘述。
+- 單表超 8 行（非 §9）：合併 / 取捨。§9 超 16 行 → 把 🟢 邊緣 ticker 拆到表外文字。
+
+---
+
+## Gate 7 [必備 / 阻斷]｜推導鏈 regex（§4/§5/§7/§8/§9）
+
+**規則**（搬自 DS Gate 13，章節對應改為 §4/§5/§7/§8/§9）：以下章節的結論數字必附「推導：」行或等效標記（「→」「換算」「計算」開頭的短行）：
+- §4 TAM 三情境（base/bull/bear）+ CAGR + 三角驗證對帳缺口
+- §5 三 horizon × 三 case 全部 cell；資本週期指標換算；phase 轉換量化閾值
+- §7 估值分位、現價隱含成長假設的 reverse 推算（priced-in）
+- §8 kill metric 的閾值換算
+- §9 ticker depth 閾值；forward-looking 閾值須註明時間基準 + 當前 actual
+
+**為何阻斷**：source-tag 標「數字來自哪裡」；推導行標「為什麼是這個數字而不是別的」。PM 看不出 bull case +20% 來自哪個 input 變動 → 無法獨立驗證。
+
+**檢查碼**（搬自 DS Gate 13，`required` 改 `[4,5,7,8,9]`，匹配 v2 `<h2>§N` 標題）：
+```bash
+python3 << 'PY'
+import re
+html = open("docs/id/ID_{Theme}_{Date}.html").read()
+# Locate each section by <h2>§N
+sections = {}
+for m in re.finditer(r'<h2[^>]*>§(\d+)\s*[^<]+</h2>(.*?)(?=<h2[^>]*>§|\Z)', html, re.DOTALL):
+    sections[int(m.group(1))] = m.group(2)
+
+required = [4, 5, 7, 8, 9]
+any_fail = False
+for sec in required:
+    body = sections.get(sec, '')
+    derive_count = len(re.findall(r'推導[：:]', body))
+    arrow_count = len(re.findall(r'→', body))
+    num_count = len(re.findall(r'\$\d|\d+%|\d+\s?GW|\d+\.\d+\s?倍|\d+\s?x\b', body))
+    print(f"§{sec}: 量化數字 {num_count} 處, 推導行 {derive_count} 條, → 箭頭 {arrow_count} 個")
+    if num_count > 3 and derive_count == 0 and arrow_count < num_count // 2:
+        print(f"  FAIL §{sec}: 結論數字無對應推導行")
+        any_fail = True
+print("\nGate 7:", "FAIL" if any_fail else "PASS")
+PY
+```
+
+**Fail action**：在結論數字鄰近段內補一行「推導：input1 + input2 → calc → implication」。例：
+- ❌「bull case TAM $340B」
+- ✅「bull case TAM $340B（推導：hyperscaler capex $720B × workload mix 35% × accelerator ratio 1.33 → $340B；對比 base $280B 的 +20% 來自 capex 兌現度從 100% 上修至 120%）」
+
+---
+
+## Gate 8 [必備 / 阻斷]｜aside 來源 + T1 占比 ≥ 60%
+
+**規則**（搬自 DS Gate 12，T1 門檻 50%→60%）：
+- 每個含量化斷言（%、$、GW、倍數、市占、增長率、TAM、用戶數、capex 等）的 `<section>` 末必有 `<aside class="ds-refs">` 且 ≥ 1 條 `<li>`。
+- 全文所有 `.ds-refs` 條目的 T1 + T1-zh 占比 ≥ **60%**。
+- 正文中**不應有** `<span class="source-tag">` — 視為遷移未完成的殘留，需清除。
+
+**為何阻斷**：v2.0 來源全部走節末 aside、正文零 inline tag（深入淺出）；同時 ID 嚴謹性要求 T1 ≥ 60%（高於 DS 的 50%）。
+
+**Part A — aside 條目 tier 分佈 + T1 占比 ≥ 60%**（搬自 DS Gate 12 Part A，門檻 0.50→0.60）：
+```bash
+python3 << 'PY'
+import re
+from collections import Counter
+html = open("docs/id/ID_{Theme}_{Date}.html").read()
+
+tiers = re.findall(r'<span class="tier">\[(T[12]|T3-[ABC]|T1-zh|T2-zh|T3-zh|T3\.5-zh|T4)\]</span>', html)
+counts = Counter(tiers)
+total = sum(counts.values())
+t1 = counts.get('T1', 0) + counts.get('T1-zh', 0)
+t1_share = t1 / total if total else 0
+print(f"Aside refs total: {total}")
+print(f"  T1+T1-zh: {t1} ({t1_share:.1%})")
+print(f"  T2+T2-zh: {counts.get('T2',0)+counts.get('T2-zh',0)}")
+print(f"  T3-A: {counts.get('T3-A',0)}, T3-B: {counts.get('T3-B',0)}, T3-C: {counts.get('T3-C',0)}, T3-zh: {counts.get('T3-zh',0)}")
+print(f"  T4: {counts.get('T4',0)}")
+print("PASS" if t1_share >= 0.60 else f"FAIL: T1 share {t1_share:.1%} < 60%")
+
+inline_tags = re.findall(r'<span class="source-tag">', html)
+if inline_tags:
+    print(f"WARNING: {len(inline_tags)} inline source-tag 殘留 — 需遷移至 aside")
+PY
+```
+
+**Part B — 每個含量化斷言的 `<section>` 都有 aside**（搬自 DS Gate 12 Part B 原文）：
+```bash
+python3 << 'PY'
+import re
+html = open("docs/id/ID_{Theme}_{Date}.html").read()
+quant_pat = re.compile(r'\$\s?\d|\d+(\.\d+)?\s?%|\d+\s?(GW|TW|MW|B|T)|\d+(\.\d+)?\s?(倍|x|×)')
+sections = re.finditer(r'<section[^>]*id="(s\d+)"[^>]*>(.*?)</section>', html, re.DOTALL)
+missing_aside = []
+for m in sections:
+    sec_id = m.group(1)
+    body = m.group(2)
+    has_quant = bool(quant_pat.search(body))
+    has_aside = bool(re.search(r'<aside class="ds-refs">', body))
+    if has_quant and not has_aside:
+        missing_aside.append(sec_id)
+if missing_aside:
+    print(f"FAIL: 以下節含量化斷言但無 aside: {missing_aside}")
+else:
+    print("PASS: 所有含量化斷言的節都有 aside")
+PY
+```
+
+**Fail action**：每節末加 `<aside class="ds-refs">` 列來源（tier + URL + claim summary）。某數字真無 T1 可得 → 用 T2/T3 + 節末加 `<aside class="source-warning">` 警示。T1 占比 < 60% → 補 IR / earnings transcript / 行業協會 source 取代 T3 個股 report。
+
+---
+
+## Gate 9 [必備 / 阻斷]｜§1 歷史錨點（日期 + 量化）
+
+**規則**（搬自 DS Gate 14 / DS-9，阻斷性質）：§1 中每個 inflection point 段落必須同時包含：
+1. **具體日期或月份**：YYYY 或 YYYY-MM 格式（不允許「過去幾年」「最近」「近期」模糊表述）。
+2. **至少一個量化錨點**：價格、性能指標（TFLOPS / GB / 頻寬）、市占、capacity（GW / wafers）、用戶數、營收。
+
+**為何阻斷**：歷史敘事是 v2.0 因果骨架的起點；缺日期 + 量化的歷史段是「口語回憶」不是可用於 timing 的分析。
+
+**檢查碼**（每段檢查 `\b(19|20)\d{2}\b` 日期 + 至少一個數字單位）：
+```bash
+python3 << 'PY'
+import re
+html = open("docs/id/ID_{Theme}_{Date}.html").read()
+m = re.search(r'<section[^>]*id="s1"[^>]*>(.*?)</section>', html, re.DOTALL)
+if not m:
+    print("FAIL: §1 (s1) not found"); raise SystemExit
+s1 = m.group(1)
+# 抓 §1 內所有 <p> 段（排除 lede 與 implication / aside）
+paras = re.findall(r'<p[^>]*>(.*?)</p>', s1, re.DOTALL)
+date_pat = re.compile(r'\b(19|20)\d{2}\b')
+num_pat = re.compile(r'\d+(\.\d+)?\s?(%|\$|x|×|倍|GW|TW|MW|TFLOPS|GB|TB|MAU|DAU|億|萬|B\b|M\b|nm)')
+fails = []
+checked = 0
+for i, p in enumerate(paras):
+    txt = re.sub(r'<[^>]+>', '', p)
+    # 只檢查「敘事性」段落（含日期跡象或 >60 字的 inflection 段）
+    if len(re.sub(r'\s+','',txt)) < 40:
+        continue
+    has_date = bool(date_pat.search(txt))
+    has_num = bool(num_pat.search(txt)) or bool(re.search(r'\d', txt))
+    # inflection 段判定：段落足夠長且似乎在講歷史事件
+    is_inflection = has_date or len(re.sub(r'\s+','',txt)) > 120
+    if is_inflection:
+        checked += 1
+        if not (has_date and has_num):
+            fails.append((i, '缺日期' if not has_date else '缺量化錨點', txt[:50]))
+print(f"§1 檢查 inflection 段: {checked} 段")
+if fails:
+    print("FAIL: 以下段落缺日期或量化錨點（阻斷）：")
+    for idx, why, snip in fails:
+        print(f"  段 {idx}: {why} — 「{snip}...」")
+else:
+    print("PASS: §1 所有 inflection 段含日期 + 量化錨點")
+PY
+```
+
+**Fail action**：阻斷發布，返工補錨點。範例：
+- ❌「ChatGPT 興起後，NVDA H100 變成稀缺品」
+- ✅「**2022-11-30 ChatGPT 發布**，兩個月內 MAU 衝破 1 億；**2023-03 H100 launch** 時 hyperscaler 已大量採購；**2023-Q3 NVDA DC 營收同比 +279%**，第一次出現 12+ 個月 lead time 配給」
+
+---
+
+## Gate 10 [warning]｜供需裁決明確 + §9 depth 時間限定 + catalyst 雙路徑 + 原 ID warning gates 摘要
+
+**性質**：warning（不阻斷，但 fail 須在 report 明列）。本 Gate 是多個 sub-check 的集合。
+
+### 10-1｜供需裁決三選一明確（搬自 DS Gate 7）
+
+**規則**：§5 必須有明確的供需結論 — 三選一字眼之一：
+- 「供需平衡」/「balance」
+- 「供給過剩」/「surplus」/「oversupply」
+- 「供給短缺」/「shortage」/「undersupply」
+
+或更細「平衡偏寬鬆 / 平衡偏緊」，但必須有明確方向。允許「短期 X 中長期 Y」分時間段結論，但每段必須明確。**不准騎牆**（「可能 X 也可能 Y」）。
+
+```bash
+python3 << 'PY'
+import re
+html = open("docs/id/ID_{Theme}_{Date}.html").read()
+m = re.search(r'<section[^>]*id="s5"[^>]*>(.*?)</section>', html, re.DOTALL)
+s5 = m.group(1) if m else ''
+verdict = re.findall(r'過剩|平衡|短缺|surplus|oversupply|shortage|undersupply|balance|偏寬鬆|偏緊', s5)
+print(f"§5 裁決字眼: {set(verdict) if verdict else '無'}")
+print("PASS" if verdict else "WARN: §5 缺明確供需裁決")
+PY
+```
+
+### 10-2｜§9 ticker depth 閾值時間限定（搬自 DS Gate 14）
+
+**規則**：§9 caption 或表頭若含「>X%」「≥Y%」「by YYYY」「forecast」字樣 → 必須在同 caption 或下方 footnote 註明時間基準。若 forward-looking → 表格每行另列「current YYYY actual」對照欄。
+
+```bash
+python3 << 'PY'
+import re
+html = open("docs/id/ID_{Theme}_{Date}.html").read()
+m = re.search(r'<section[^>]*id="s9"[^>]*>(.*?)</section>', html, re.DOTALL)
+if not m:
+    print("WARN: §9 not found"); raise SystemExit
+s9 = m.group(1)
+threshold_words = re.findall(r'≥\s*\d+%|>\s*\d+%|≥\s*\$\d+', s9)
+time_markers = re.findall(r'as of \d{4}|by 20\d{2}|20\d{2}[Q-]?\d?\s?actual|current|當前|forward.looking|forecast|projected', s9, re.IGNORECASE)
+print(f"§9 閾值字樣: {len(threshold_words)}  時間限定字樣: {len(time_markers)}")
+if threshold_words and not time_markers:
+    print("WARN: §9 有閾值但無時間限定")
+else:
+    print("PASS")
+PY
+```
+
+### 10-3｜Catalyst 雙路徑齊備（QC-12）
+
+**規則**：§8 Catalyst Timeline ≥ 5 個節點，每個含明確日期 + 事件類別 + 檢視指標 + **若達成 / 若落空雙路徑**。缺雙路徑 → warn。
+
+```bash
+python3 << 'PY'
+import re
+html = open("docs/id/ID_{Theme}_{Date}.html").read()
+m = re.search(r'<section[^>]*id="s8"[^>]*>(.*?)</section>', html, re.DOTALL)
+s8 = m.group(1) if m else ''
+pos = len(re.findall(r'若達成|ds-path-positive', s8))
+neg = len(re.findall(r'若落空|ds-path-negative', s8))
+print(f"§8 catalyst 雙路徑: 若達成 {pos} / 若落空 {neg}")
+print("PASS" if pos >= 3 and neg >= 3 else "WARN: catalyst 雙路徑不齊（<3 對）")
+PY
+```
+
+### 10-4｜原 ID warning gates 摘要（人工抽查）
+
+下列原 ID v1.x warning gates 在 v2.0 收斂為本 Gate 子項，發布前人工抽查、fail 記入 report（不阻斷）：
+
+| 子項 | 原 ID Gate | 檢查 |
+|:---|:---|:---|
+| **cross-ID 定性偏差** | 3.1 | 同一 ticker 在 ≥2 份 ID 都被寫「獨家 / 首家 / lock-in / 最大受益者」→ red flag，套 Gate 2.1 獨立驗證；錯誤成立 → 同步修所有相關 ID |
+| **unit / scope 一致** | 5 | ASP（$/wafer vs $/stack vs $/GB）、Revenue 口徑（全年 / 季 / annualized）、營收 scope（segment / AI-only / total）宣告齊全；§0 前後有 unit glossary（QC-19） |
+| **cross-ID layer 消歧** | 6 | 同主題跨 ID 明確標層次（CPO switch-level vs chip-to-chip；UALink 規格 vs ramp vs 商用；AVGO AI-only vs total）；ticker 評級跨 ID 一致 |
+| **子題 value-add** | 7 | 子題 ID（Liquid Cooling vs 母題 AI DC）須有獨立 value-add（技術 deep dive / TAM 拆分 / 次要玩家 / 獨立 thesis），不能只重複母題 + 加幾檔 non-obvious |
+
+**輸出格式**：
+```
+## Gate 10: Warning Checks
+10-1 供需裁決明確: ✅ {過剩/平衡/短缺} / ⚠ 騎牆
+10-2 §9 depth 時間限定: ✅ / ⚠
+10-3 catalyst 雙路徑: ✅ {pos}/{neg} / ⚠
+10-4 cross-ID bias: ✅ / ⚠ {ticker}
+10-4 unit/scope: ✅ / ⚠
+10-4 layer 消歧: ✅ / ⚠
+10-4 子題 value-add: ✅ / N/A（非子題）/ ⚠
+→ Gate 10: ✅ PASS / ⚠ WARNED（list）
 ```
 
 ---
@@ -327,35 +556,53 @@ Ticker name-check: ✅ / ⚠ {no ticker found}
 ## Gate 1: Core Ticker Financials
 ✅ PASS / ❌ FAIL
 - NVDA Q4 FY26（2026-02-25）在 60 天內 ✅
-- BESI FY25（2026-02-19）在 60 天內 ✅
 
 ## Gate 2: Event-Triggered Thesis
 ✅ PASS / ❌ FAIL
-- Thesis 1 [event]：Samsung yield 55% (2026-04-14 TrendForce 最新) ✅
+- Thesis 1 [event]：Samsung yield 55%（2026-04-14 TrendForce 最新）✅
 - Thesis 2 [structural]：not checked ✅
 
-...
+## Gate 2.1: Thesis Cornerstone Fact Verification
+✅ PASS / ❌ FAIL — {findings}
 
-## Gate 8: id-meta JSON Validation
+## Gate 3: Cross-ID Reconciliation
+✅ PASS / ❌ FAIL — {inconsistencies}
+
+## Gate 4: id-meta JSON Validation
 ✅ PASS / ❌ FAIL — {缺漏欄位列表}
 
-## Gate 9: §0.7 PM Implication Existence + Conviction Consistency
-§0.7 block exists: ✅ / ❌ MISSING
-Five bullets: ✅ all present / ❌ missing: {bullet names}
-j-logic 4 actions: ✅ / ❌ missing: {①②③④ which absent}
-Conviction consistency: ✅ / ⚠ {explain mismatch}
-→ Gate 9: ✅ PASS / ❌ BLOCKED / ⚠ WARNED
+## Gate 5: §0 PM Implication Existence + Conviction Consistency
+綠卡 exists: ✅ / ❌ MISSING
+Five bullets / j-logic / conviction / ticker-name: ...
+→ Gate 5: ✅ PASS / ❌ BLOCKED
+
+## Gate 6: 文字比 ≥55% + 表格 cap
+敘述比例: {Y}% — {PASS/FAIL}
+表格數 {n}/10、超行表: {list}
+
+## Gate 7: 推導鏈 regex（§4/§5/§7/§8/§9）
+{per-section counts} — {PASS/FAIL}
+
+## Gate 8: aside 來源 + T1 ≥60%
+T1 share {Z}% — {PASS/FAIL}；missing-aside sections: {list}
+
+## Gate 9: §1 歷史錨點
+{checked} 段，fails: {list} — {PASS/FAIL}
+
+## Gate 10: Warning Checks
+{10-1..10-4} — {PASS/WARNED}
 
 ## Final Status
-✅ ALL GATES PASS - 允許發布
-⚠ WARNINGS (4, 5, 6, 7): {list}
+✅ ALL BLOCKING GATES PASS - 允許發布
+⚠ WARNINGS (Gate 10): {list}
 ❌ BLOCKED at Gate {n}: {reason}
 ```
 
 ---
 
 ## 版本歷史
-- v1.0（2026-04-19）：基於 8 份 ID peer review 累積建立。核心 Gate 1/2/3 阻斷式，Gate 4-7 warning。
-- v1.5（2026-04-21）：基於 ID_Transformers v1.4 peer review 發現新增 2 個 gate。Gate 2.1 Thesis Cornerstone Fact Verification（阻斷）— 針對「獨家 / 首家 / 唯一」類 claim 必須獨立 WebSearch 驗證 ecosystem 玩家；Gate 3.1 Cross-ID Thesis Bias Detection（warning）— 跨 ID 同 ticker 的「定性偏差」要 red flag 並獨立驗證。
-- v1.6（2026-04-27）：新增 Gate 8（id-meta JSON 必要區塊 + strict validator）。
-- v1.7（2026-05-03）：新增 Gate 9（§0.7 PM Implication 存在 + conviction 一致性）— 源自 ID_AIDataCenter v1.1 patch。
+- **v2.0（2026-06-11）**：配合 industry-analyst v2.0（合併 ID + DS）完整重寫為 10 道 gate。Gate 1/2/2.1/3 從 ID v1.x 原文搬入；Gate 4（id-meta validate，原 ID Gate 8）/ Gate 5（PM 綠卡，原 ID Gate 9）保留；Gate 6（文字比 ≥55% + 表格 cap，搬 DS Gate 11+10、門檻 80%→55% / 表格 4→10）/ Gate 7（推導 regex，搬 DS Gate 13、掃 §4/§5/§7/§8/§9）/ Gate 8（aside 來源 + T1 ≥60%，搬 DS Gate 12、門檻 50%→60%）/ Gate 9（§1 錨點，搬 DS Gate 14/DS-9、阻斷）為 DS 移植；Gate 10（warning：供需裁決 + §9 depth 時間限定 + catalyst 雙路徑 + 原 ID 3.1/5/6/7 warning gates 摘要）。輸出 pre_publish_report.md 格式照舊。
+- v1.7（2026-05-03）：新增 Gate 9（§0.7 PM Implication 存在 + conviction 一致性）。
+- v1.6（2026-04-27）：新增 Gate 8（id-meta JSON Validation）。
+- v1.5（2026-04-21）：新增 Gate 2.1（cornerstone fact）+ Gate 3.1（cross-ID bias）。
+- v1.0（2026-04-19）：基於 8 份 ID peer review 累積建立。

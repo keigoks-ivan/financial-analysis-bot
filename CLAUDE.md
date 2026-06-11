@@ -88,29 +88,15 @@ Agent({
 - 索引：`docs/dca/INDEX.md`（skill 自動 append）
 - Research 頁同步：跑 `python scripts/update_dd_index.py` 後，「定見」欄會自動連到該 ticker 最新的 DCA 報告
 
-## Workflow: 產業 DS（敘述型產業研究）
+## Workflow: 產業 DS（敘述型產業研究）— 【DEPRECATED 2026-06-11，已併入 industry-analyst v2.0】
 
-當用戶說「{主題} ds」/「ds {主題}」/「{產業} 敘述報告」/「分析 {產業} 的供需循環」/「{產業} 歷史與未來」/「discourse {industry}」時，自動觸發 `industry-ds` skill（`.claude/skills/industry-ds/`）。
+`industry-ds`（DS 敘述報告）已於 2026-06-11 停用，**併入 `industry-analyst` v2.0**。v2.0 走「敘事為骨、表格為窗」單一架構，用 DS 的因果敘事弧當骨架、ID 的決策資產當器官嵌入，吸收了 DS 的敘事弧 / 因果閉合 / 推導鏈 / §末 aside 來源系統。
 
-**定位**：與 `industry-analyst`（產業 ID）並列的姊妹 skill — ID 給 PM 表格 dashboard 快速決策、DS 給供需循環敘事深度準備。同 theme 可並存（DS `ds-meta.related_ids[]` 指向同主題 ID，§0 顯示 cross-link callout）。
+**觸發語轉向**：原 DS 觸發語（「{主題} ds」/「ds {主題}」/「{產業} 敘述報告」/「分析 {產業} 的供需循環」/「{產業} 歷史與未來」/「discourse {industry}」）現在一律觸發 `industry-analyst`（v2.0），輸出寫 `docs/id/`（不再寫 `docs/ds/`）。
 
-**章節骨架（不可動）**：§0 TL;DR → §1 歷史 → §2 現供 → §3 未供 → §4 現需 → §5 未需（含 TAM） → §6 短中長期推估 → §7 投資時鐘 → §8 Non-Consensus → §9 Kill Scenario → §10 Catalyst → §11 關聯個股。
+**Legacy DS 報告**：既有 8 份 `docs/ds/DS_*.html` 凍結為 legacy，檔案不動、不 retrofit、不遷移，仍在 `https://research.investmquest.com/ds/` 上站。需 review / patch / 驗證 legacy DS 時走 `id-review --mode ds`（DS-mode 8 條檢查清單仍在）；**不要用 industry-ds 生新 DS**。
 
-**硬性比例**：文字 ≥ 80%、表格 ≤ 20%（與 ID 的 ≥ 70% 表格反過來）。表格上限 4 張，每張 ≤ 8 行。
-
-**輸出**：
-- HTML：`docs/ds/DS_{Theme}_{YYYYMMDD}.html`
-- 索引：`docs/ds/INDEX.md` + `docs/ds/index.html`（skill 插入卡片到 subgroup-anchor 之後）
-- 分類頁：跑 `python3 scripts/build_ds_category_pages.py` 重新生成 15 個 `docs/ds/cat-{mega}.html`
-- 上站路徑：`https://research.investmquest.com/ds/`（與 `/id/` 並列）
-
-**Plumbing**：
-- `scripts/validate_ds_meta.py`：驗 `<script id="ds-meta">` 欄位（pre-commit hook 會跑）
-- `scripts/build_ds_category_pages.py`：mirror `build_id_category_pages.py`，從 `docs/ds/index.html` 產 cat-*.html
-- `scripts/init_ds_index.py`：一次性 bootstrap（從 `docs/id/index.html` 轉換出 `docs/ds/index.html`）
-- Taxonomy：完全共用 ID（`docs/id/taxonomy.md` 是單一資料源；`validate_ds_meta.py` import `validate_id_meta.TAXONOMY`）
-
-**Critic gate**：Step 8.7 強制 spawn `id-review` skill `--mode ds`（reuse 既有 id-review，加 6 條 DS-specific 檢查：表格比 / history-future causality / 供需平衡 / §6 三情境 / §10 雙路徑 / §11 一致性）。Critic report 放 `docs/ds/_critic_{Theme}_{YYYYMMDD}.md`。
+**Plumbing（僅供 legacy DS 維護參考）**：`scripts/validate_ds_meta.py`（驗 `ds-meta`，pre-commit hook 仍跑）、`scripts/build_ds_category_pages.py`（重生 `docs/ds/cat-*.html`）、`scripts/init_ds_index.py`（一次性 bootstrap）。Taxonomy 與 ID 共用（`docs/id/taxonomy.md`）。
 
 ## Workflow: 多股對比（multi-stock comparator）
 
@@ -131,7 +117,7 @@ Agent({
 
 當用戶說「跑 {topic} 供應鏈地圖」/「{topic} 供應鏈」/「畫 {topic} 供應鏈」/「supply-chain {topic}」/「{topic} supply chain map」時，自動觸發 `supply-chain-cartographer` skill（`.claude/skills/supply-chain-cartographer/`）。
 
-**定位**：與 industry-analyst（ID 表格 dashboard）和 industry-ds（敘述供需循環）並列的**第三種產業視角** — 互動式節點圖，看「製程節點上誰是脆弱依賴點」。同 theme 可與 ID / DS 並存。
+**定位**：與 industry-analyst v2.0（敘事為骨、表格為窗的產業深度報告，含供需循環敘事 + 決策層）並列的**另一種產業視角** — 互動式節點圖，看「製程節點上誰是脆弱依賴點」。同 theme 可與 ID 並存。
 
 **輸出**：
 - JSON：`docs/supply-chain/data/{topic}.json`（節點圖資料，schema 見 SKILL.md）

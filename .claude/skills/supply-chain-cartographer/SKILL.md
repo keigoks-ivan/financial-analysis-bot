@@ -1,6 +1,6 @@
 ---
 name: supply-chain-cartographer
-description: 建立「產業供應鏈互動地圖」— 把產業鏈拆成節點 × 廠商 × 競爭態勢 × 客戶獨家／關鍵單點的視覺化頁面，與 industry-analyst（ID 表格 dashboard）和 industry-ds（敘述供需循環）並列的第三種產業視角。輸入產業主題（如「HBM」「ASIC」「先進製程」「IC 設計」「人形機器人」），skill 執行多輪 WebSearch / WebFetch 研究（英文 + TW 中文雙語策略），輸出 docs/supply-chain/data/{topic}.json + 一支 thin {topic}.html template，引擎 (engine.css + engine.js) 已存在不需動。row 數量自由（3-6 列），由產業敘事決定；每個 single-point ⚑ 必須引用 ≥2 來源並標註信心度。觸發：使用者說「跑 {topic} 供應鏈地圖」/「{topic} supply chain map」/「畫 {topic} 供應鏈」/「{topic} supply-chain」/「supply-chain {topic}」。
+description: 建立「產業供應鏈互動地圖」— 把產業鏈拆成節點 × 廠商 × 競爭態勢 × 客戶獨家／關鍵單點的視覺化頁面，與 industry-analyst v2.0（敘事為骨、表格為窗的產業深度報告，含供需循環敘事 + 決策層）並列的另一種產業視角。輸入產業主題（如「HBM」「ASIC」「先進製程」「IC 設計」「人形機器人」），skill 執行多輪 WebSearch / WebFetch 研究（英文 + TW 中文雙語策略），輸出 docs/supply-chain/data/{topic}.json + 一支 thin {topic}.html template，引擎 (engine.css + engine.js) 已存在不需動。row 數量自由（3-6 列），由產業敘事決定；每個 single-point ⚑ 必須引用 ≥2 來源並標註信心度。觸發：使用者說「跑 {topic} 供應鏈地圖」/「{topic} supply chain map」/「畫 {topic} 供應鏈」/「{topic} supply-chain」/「supply-chain {topic}」。
 version: v1.0
 date: 2026-05-26
 ---
@@ -11,14 +11,13 @@ date: 2026-05-26
 
 把產業鏈拆解成**互動式視覺地圖**：節點 = 製程環節 / 元件子段 / 客戶層 ; 邊 = 上下游關係 ; 標籤 = 競爭態勢（壟斷 / 寡占 / 紅海 / 高速增長 / 新興萌芽）+ ⚑ 客戶獨家／關鍵單點。
 
-**與 ID / DS 的分工**：
+**與 ID 的分工**：
 | 視角 | 主要載體 | 適用情境 |
 |---|---|---|
-| ID（industry-analyst） | 14 章節 HTML，表格 ≥ 70% | PM 快速決策的 dashboard |
-| DS（industry-ds） | 11 章節 HTML，敘述 ≥ 80% | 供需循環的深度準備 |
+| ID（industry-analyst v2.0） | §0 決策層 + 9 章節 HTML，敘事為骨表格為窗（含供需循環敘事 + 決策資產） | PM 決策 + 深度準備（v2.0 已併入舊 DS 的敘述供需循環） |
 | **本 skill** | 互動式 JSON map | **看「製程節點上誰是脆弱依賴點」**、surface 沒做過 DD 的關鍵小單點 |
 
-三者**可並存**：同 theme 出 ID + DS + supply-chain 三份不衝突。
+兩者**可並存**：同 theme 出 ID + supply-chain 兩份不衝突。（註：舊 industry-ds DS 已於 2026-06-11 併入 industry-analyst v2.0；8 份 legacy DS 凍結保留。）
 
 ## 觸發語
 

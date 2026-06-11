@@ -64,11 +64,9 @@ def build_nav(active):
         <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
         <div class="imq-dd-menu">
           <a href="/research/"{cls("dd")}>個股 DD</a>
-          <a href="/pm/"{cls("pm")}>PM 複盤</a>
           <a href="/id/"{cls("id")}>產業深度 ID</a>
           <a href="/ds/"{cls("ds")}>產業敘述 DS</a>
           <a href="/comparisons/"{cls("cmp")}>多股對比</a>
-          <a href="/id/theses.html"{cls("theses")}>⭐ 九大非共識</a>
           <a href="/id/tier_matrix.html"{cls("tier")}>🎯 Tier Matrix</a>
         </div>
       </div>
