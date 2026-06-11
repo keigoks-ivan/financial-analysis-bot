@@ -61,6 +61,22 @@ QUALITY_GATE = {  # 五條件閘門（用戶 2026-06-11 拍板；資料全取 dd
     #           且 moat_trend ≠ ↓（進場漏斗不開衰退中護城河的新倉；
     #           trend 源頭 = build_dd_screener 的 DCA-authoritative map）
     "moat_veto_grades": ("C", "X"),
+    "moat_review_age_days": 183,    # DD 評級逾 6 個月未更新 → 訊號照發但標「護城河待複檢」
+}
+
+# ── 預登記裁決規則（跑前鎖定，不得中途修改）────────────────────────────────
+PREREG = {
+    "a2_adjudication": (
+        "【鎖定 2026-06-11】A2 續勢型裁決：A1＋A2 已平倉合計 ≥20 筆後執行一次 — "
+        "A2 的中位報酬或平均 α 落後 A1 超過 5 個百分點 → A2 降為純觀察（停止模擬進場，"
+        "僅記錄）；未落後 → A2 轉正為正式訊號。裁決前 A2 維持「記錄＋模擬進場」作為對照組；"
+        "本規則於資料累積前鎖定，禁止看到結果後修改門檻。"
+    ),
+    "quarterly_review_items": [
+        "26 週（A1 基期）與 20 週（築基中）兩個相近參數是否統一為一個",
+        "態⑤ 出場改 T+1 開盤（生死線不該多扛一個交易日；模擬端需先建 OHLC 資料層）",
+        "財報靜默期回測覆蓋（歷史財報日資料源）",
+    ],
 }
 
 
@@ -459,6 +475,10 @@ def simulate_trade(frame: Frame, entry_date: pd.Timestamp, params: dict = PARAMS
     ret_pct = profit / invested * 100.0 if invested > 0 else None
     closed = exit_reason is not None and fraction <= 1e-9
     holding_end = exit_date if closed else last_d
+    # 資料末日剛確認、尚未到 T+1 執行日的動作 → 顯式曝露（避免「態④+100%」誤讀）
+    _ACTION_LABEL = {"exit": "態⑤全出", "trim_t3": "態③減1/3",
+                     "trim_t4": "態④減碼", "rebuy": "態④回補"}
+    pending_action = _ACTION_LABEL.get(pending[0][0]) if pending else None
     return {
         "status": "closed" if closed else "open",
         "entry_date": str(entry_date.date()), "entry_close": round(p0, 4),
@@ -466,6 +486,7 @@ def simulate_trade(frame: Frame, entry_date: pd.Timestamp, params: dict = PARAMS
         "suggested_position_pct": pos0,
         "legs": legs,
         "current_state": cur_state if not closed else "—",
+        "pending_action": pending_action,   # 明日收盤執行的已確認動作（無則 None）
         "current_fraction": round(fraction, 4),
         "exit_date": str(exit_date.date()) if exit_date is not None else None,
         "exit_reason": exit_reason,

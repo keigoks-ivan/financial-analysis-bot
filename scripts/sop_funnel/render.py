@@ -40,8 +40,18 @@ def _signal_rows(evs) -> str:
             f'<td>{base}</td><td>{e["signal_close"]:,.1f}</td>'
             f'<td>{_pct(-(e["stop_dist_pct"] or 0)) if e.get("stop_dist_pct") else "—"}</td>'
             f'<td>{_e(e.get("suggested_position_pct"))}%</td>'
+            f'<td>{_warn_tags(e)}</td>'
             f'<td>{_dd_link(e)}</td></tr>')
     return "".join(out)
+
+
+def _warn_tags(e) -> str:
+    tags = []
+    if e.get("moat_review_due"):
+        tags.append('<span class="warn-tag">護城河待複檢</span>')
+    if e.get("earnings_check") == "unverified":
+        tags.append('<span class="warn-tag">靜默期未驗</span>')
+    return "".join(tags) or "—"
 
 
 def _veto_rows(evs) -> str:
@@ -80,7 +90,10 @@ def _open_rows(evs) -> str:
             f'<tr><td class="left"><strong>{_e(e["ticker"])}</strong></td>'
             f'<td><span class="tag tag-{e["entry_type"].lower()}">{e["entry_type"]}</span></td>'
             f'<td>{_e(e["entry_date"])}</td><td>{s["entry_close"]:,.1f}</td>'
-            f'<td>{_e(s["current_state"])}</td><td>{s["current_fraction"] * 100:.0f}%</td>'
+            f'<td>{_e(s["current_state"])}'
+            + (f'<span class="pending-tag">{_e(s["pending_action"])}·明日收盤執行</span>'
+               if s.get("pending_action") else '')
+            + f'</td><td>{s["current_fraction"] * 100:.0f}%</td>'
             f'<td class="{_cls(flo)}">{_pct(flo)}</td>'
             f'<td class="{_cls(s.get("alpha_pct"))}">{_pct(s.get("alpha_pct"))}</td>'
             f'<td class="left legs">{legs}</td></tr>')
@@ -175,7 +188,9 @@ def _population_block(pop, excluded) -> str:
         st = "態① ✓" if r["state1"] else "✗" + "、".join(r["state1_fails"])
         st_cls = "pos" if r["state1"] else ""
         rows.append(
-            f'<tr><td class="left"><strong>{_e(r["ticker"])}</strong> {_e(r.get("name") or "")}</td>'
+            f'<tr><td class="left"><strong>{_e(r["ticker"])}</strong> {_e(r.get("name") or "")}'
+            + ('<span class="warn-tag">待複檢</span>' if r.get("moat_review_due") else '')
+            + f'</td>'
             f'<td>{_grade_badge(r["moat_grade"], r["moat_trend"])} <span style="color:#94a3b8">{_e(r["moat_score"])}</span></td>'
             f'<td>{_e(r.get("signal"))}</td>'
             f'<td>{_e(round(r["cagr"], 0)) if r.get("cagr") is not None else "—"}</td>'
@@ -291,6 +306,10 @@ td.veto{{color:#b45309;font-size:11px}}
 .score-grid strong{{font-size:14px;color:#0f2a45}}
 .thin-flag{{font-size:10px;background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:4px;font-weight:600}}
 .exceeded{{font-size:11px;color:#8aa5c0;margin-top:10px;line-height:1.7}}
+.warn-tag{{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:4px;font-size:9.5px;font-weight:700;background:#fef3c7;color:#92400e}}
+.pending-tag{{display:block;font-size:9.5px;color:#b45309;font-weight:600}}
+.prereg{{background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px 14px;font-size:11.5px;color:#0c4a6e;line-height:1.7;margin-bottom:14px}}
+.prereg strong{{display:inline;margin-right:6px}}
 details{{margin-top:12px;font-size:12px}}
 summary{{cursor:pointer;color:#5a7a9a;font-weight:600}}
 .a2-list{{padding:10px 4px;color:#5a7a9a;line-height:1.9;font-size:11.5px}}
@@ -327,7 +346,7 @@ footer{{text-align:center;font-size:10.5px;color:#8aa5c0;padding:24px}}
 <div class="section"><div class="card">
 <h2>§1 今日板機 🔫</h2>
 <div class="desc">今天收盤觸發的進場訊號（執行 = 次一交易日收盤）。部位建議 = min(10%, 1.5% ÷ 停損距離)，分母 = 個股部淨值。</div>
-<table><thead><tr><th class="left">ticker</th><th>型態</th><th>基期/錨</th><th>訊號收盤</th><th>停損距離</th><th>建議部位</th><th>報告</th></tr></thead>
+<table><thead><tr><th class="left">ticker</th><th>型態</th><th>基期/錨</th><th>訊號收盤</th><th>停損距離</th><th>建議部位</th><th>旗標</th><th>報告</th></tr></thead>
 <tbody>{_signal_rows(d["today_signals"])}</tbody></table>
 {_veto_rows(d["today_vetoed"])}
 </div></div>
@@ -353,6 +372,7 @@ footer{{text-align:center;font-size:10.5px;color:#8aa5c0;padding:24px}}
 <div class="section"><div class="card">
 <h2>§4 記分板</h2>
 <div class="desc">漏斗累積成績（半年後裁決依據）。統計只算已平倉 trades；closed &lt; 20 顯示「樣本未熟」不給結論。A1 vs A2 對照驗證「起漲優於續勢」假設本身。</div>
+<div class="prereg">🔒 <strong>預登記裁決（跑前鎖定）</strong>{_e(d["prereg"]["a2_adjudication"])}</div>
 <div class="grid3">{_score_cards(d["scoreboard"])}</div>
 <h4>已平倉明細</h4>
 <table><thead><tr><th class="left">ticker</th><th>型態</th><th>進場</th><th>出場</th><th>原因</th><th>報酬</th><th>R</th><th>α vs SPY</th><th>持有</th></tr></thead>
@@ -369,14 +389,19 @@ footer{{text-align:center;font-size:10.5px;color:#8aa5c0;padding:24px}}
 <div class="caveat" style="margin-top:12px">
 <strong>v1 已知簡化（誠實清單）</strong>
 <ul>
-<li>財報靜默期（S-7 前 5 日禁建倉、gap 破線當日態⑤）未模擬 — 模擬以週收盤判態⑤，財報崩跌的出場時點與真實 SOP 有差</li>
+<li>財報靜默期：<strong>forward 訊號自 2026-06-11 起自動檢查</strong>（yfinance 財報日；查無 → 訊號照發標「靜默期未驗」）。回填段與 5 年回測無歷史財報日、不受保護 → 該兩段成績含向下偏誤（真實 SOP 躲得掉部分財報雷）。S-7 gap 破線當日態⑤亦未模擬</li>
+<li>態⑤ 執行 = 週收盤確認後的次一交易日<strong>收盤</strong>（資料層只有日收盤、無開盤價）— 真實操作建議週一開盤即出，模擬與實盤在生死線上差約一個交易日</li>
 <li>組合層規則（斷路器 10%、總曝險 100%、單檔 10% 互斥）未模擬 — 本頁為單筆訊號追蹤，非 NAV 回測</li>
 <li>態①金字塔加碼未模擬 — 每 ticker 同時最多一筆 trade</li>
 <li>價格為含息調整（auto_adjust，與全站一致）— TW 高息股的 ATH/52週線訊號可能比看盤圖表早觸發 ~1-2%/年</li>
 <li>B 型「限突破後首次回測」實作為「每 A1 錨最多一次站回」；錨齡上限 26 週</li>
 <li>回填段（{_e(d["params"].get("base_age_min_weeks"))}週基期規則上線前的歷史事件）五條件用當前值評估</li>
 <li>報酬分母 = 累計投入資金（含態④回補）；R = 報酬 ÷ 進場時停損距離</li>
+<li>護城河評級來自 DD 報告（人工輸入會過期）：dd 評級逾 {_e(183)} 天未更新 → 訊號照發但標「護城河待複檢」</li>
 </ul>
+</div>
+<div class="sop-table" style="margin-top:12px">
+<strong>季檢待議（2026-09，預登記）</strong>：{"　·　".join(_e(x) for x in d["prereg"]["quarterly_review_items"])}
 </div>
 </div></div>
 

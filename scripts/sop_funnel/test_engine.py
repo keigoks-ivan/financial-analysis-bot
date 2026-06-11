@@ -258,10 +258,38 @@ def test_quality_gate():
     ok(p is True, "moat_trend 缺 = 視為 →（不否決）")
 
 
+def test_pending_action_exposed():
+    print("[12] 資料末日確認、T+1 未到 → pending_action 顯式曝露（AVGO 案例）")
+    ser = make_series([
+        (1500, 50, 100),
+        (30, 100, 118),
+        (60, 117, 118),                      # 60MA ≈ 117.5
+        (1, 113.0, 113.0),                   # 末日跌破 ×0.97 → 確認但尚未執行
+    ])
+    fr = build_frame(ser)
+    res = simulate_trade(fr, ser.index[1545])
+    ok(res["current_state"] == "④", "末日判定態④")
+    ok(res["current_fraction"] == 1.0, "部位仍 100%（減碼排在 T+1）")
+    ok(res["pending_action"] == "態④減碼", "pending_action = 態④減碼（頁面標示明日執行）")
+    ok(res["legs"] == [], "尚無已執行腿（時序正確，非漏執行）")
+
+
+def test_earnings_guard_verdict():
+    print("[13] 財報靜默期判定（純函數）")
+    from sop_funnel.earnings_guard import _verdict
+    sig = pd.Timestamp("2026-06-01")
+    ok(_verdict(pd.Timestamp("2026-06-05"), sig) == "silent", "4 天後財報 → silent")
+    ok(_verdict(pd.Timestamp("2026-06-08"), sig) == "silent", "7 天後財報 → silent（邊界）")
+    ok(_verdict(pd.Timestamp("2026-06-09"), sig) == "ok", "8 天後財報 → ok")
+    ok(_verdict(pd.Timestamp("2026-05-28"), sig) == "ok", "財報已過 → ok（持有過財報是知情選擇）")
+    ok(_verdict(None, sig) == "ok", "None 由呼叫端標 unverified，純函數回 ok")
+
+
 if __name__ == "__main__":
     for fn in [test_frozen_no_lookahead, test_a1_vs_a2, test_quality_veto_recorded,
                test_b_second_train, test_t4_band_trim_and_rebuy, test_t4_consec3,
                test_t3_overheat_trim, test_t5_full_exit, test_t4_staged_ab,
-               test_replay_anchors, test_quality_gate]:
+               test_replay_anchors, test_quality_gate,
+               test_pending_action_exposed, test_earnings_guard_verdict]:
         fn()
     print(f"\nALL PASS — {N_PASS} 斷言")

@@ -24,10 +24,11 @@ from pathlib import Path
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from sop_funnel import prices  # noqa: E402
+from sop_funnel import earnings_guard, prices  # noqa: E402
 from sop_funnel.engine import (  # noqa: E402
-    PARAMS, build_frame, fixed_horizon_ret, next_trading_close, position_pct,
-    quality_check, scan_ticker, simulate_trade, stop_dist_pct,
+    PARAMS, PREREG, QUALITY_GATE, build_frame, fixed_horizon_ret,
+    next_trading_close, position_pct, quality_check, scan_ticker,
+    simulate_trade, stop_dist_pct,
 )
 from sop_funnel.render import render_page  # noqa: E402
 
@@ -146,6 +147,14 @@ def main() -> int:
             known_ids.add(eid)
             new_events += 1
             sd = stop_dist_pct(frame, e["date"], e["close"])
+            status = "vetoed" if e["vetoes"] else "pending"
+            vetoes = list(e["vetoes"])
+            # 財報靜默期守衛（forward-only：回填段無歷史財報日，caveat 明標）
+            earnings_check, next_earnings = None, None
+            if not backfilling and status == "pending":
+                earnings_check, next_earnings = earnings_guard.check(t, e["date"])
+                if earnings_check == "silent":
+                    status, vetoes = "vetoed", vetoes + ["財報靜默期"]
             ledger["events"].append({
                 "id": eid, "ticker": t,
                 "name": row.get("name"), "sector": row.get("sector"),
@@ -157,9 +166,13 @@ def main() -> int:
                 "signal_close": round(e["close"], 4),
                 "stop_dist_pct": round(sd, 2) if sd is not None else None,
                 "suggested_position_pct": position_pct(sd),
-                "status": "vetoed" if e["vetoes"] else "pending",
-                "vetoes": e["vetoes"],
+                "status": status,
+                "vetoes": vetoes,
                 "backfilled": backfilling,
+                "earnings_check": earnings_check,
+                "next_earnings": next_earnings,
+                "moat_review_due": (row.get("dd_age_days") or 0)
+                                   > QUALITY_GATE["moat_review_age_days"],
                 "quality_at_signal": qused,
                 "dd_path": row.get("dd_path"), "dca_path": row.get("dca_path"),
                 "sim": None, "fixed": None,
@@ -188,6 +201,9 @@ def main() -> int:
                 "dist_ath_pct": round(dist_ath, 1), "ath_age_weeks": round(ath_age_w, 1),
                 "state1": ok1, "state1_fails": reasons1,
                 "moat_cut": [f for f in qfails if f.startswith("護城河")] if moat_fail_only else [],
+                "moat_review_due": (row.get("dd_age_days") or 0)
+                                   > QUALITY_GATE["moat_review_age_days"],
+                "dd_age_days": row.get("dd_age_days"),
                 "dd_path": row.get("dd_path"), "dca_path": row.get("dca_path"),
             })
 
@@ -305,6 +321,7 @@ def main() -> int:
         "standby_b": sorted(standby_b, key=lambda x: x["weeks_since_anchor"]),
         "base_building": sorted(base_building, key=lambda x: -x["ath_age_weeks"]),
         "insufficient_history": insufficient,
+        "prereg": PREREG,
         "population": sorted(population, key=lambda x: (
             {"S": 0, "A": 1, "B": 2}.get(x["moat_grade"], 9), -(x["moat_score"] or 0))),
         "moat_excluded": moat_excluded,
