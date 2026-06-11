@@ -14,11 +14,22 @@ from __future__ import annotations
 
 import html
 import json
+import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 IN_JSON = REPO_ROOT / "docs" / "dd-screener" / "sop-funnel" / "backtest-full.json"
 OUT_HTML = REPO_ROOT / "docs" / "dd-screener" / "sop-funnel-backtest.html"
+
+# Canonical site header (single source: scripts/site_nav.py)
+sys.path.insert(0, str(REPO_ROOT / "scripts"))
+from site_nav import DD_SCREENER_SUBNAV, build_subnav, full_nav_block  # noqa: E402
+
+# Canonical site header + dd-screener sub-nav for this page
+NAV_BLOCK = full_nav_block(
+    "quant", "dds",
+    build_subnav(DD_SCREENER_SUBNAV, "/dd-screener/sop-funnel-backtest.html"),
+)
 
 
 # ── 顯示層圈數字替換（①-⑤ 小字級下不可讀；資料層內部表示不動）──
@@ -170,14 +181,6 @@ def main() -> int:
 <style>
 *{{margin:0;padding:0;box-sizing:border-box}}
 body{{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e3a5f;line-height:1.5}}
-.imq-nav-root{{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;position:sticky;top:0;z-index:1000}}
-.imq-nav-inner{{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}}
-.imq-logo{{font-weight:700;color:#fff;text-decoration:none;font-size:15px}}
-.imq-logo span{{color:#3b82f6}}
-.imq-menu{{display:flex;gap:.5rem}}
-.imq-menu a{{color:rgba(255,255,255,.7);font-size:.8rem;padding:.4rem .7rem;border-radius:6px;text-decoration:none}}
-.imq-menu a:hover{{color:#fff;background:rgba(255,255,255,.08)}}
-.imq-menu a.active{{color:#fff;background:rgba(59,130,246,.22);font-weight:600}}
 .hero{{background:#fff;border-bottom:1px solid #dce8f5;padding:24px 32px 18px}}
 .hero-inner{{max-width:min(1320px,96vw);margin:0 auto}}
 .hero-h1{{font-size:22px;font-weight:600;color:#0f2a45;margin-bottom:6px}}
@@ -216,12 +219,7 @@ footer{{text-align:center;font-size:10.5px;color:#8aa5c0;padding:24px}}
 </style>
 </head>
 <body>
-<header class="imq-nav-root"><div class="imq-nav-inner">
-<a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
-<nav class="imq-menu"><a href="/">首頁</a><a href="/dd-screener/">DD Screener</a>
-<a href="/dd-screener/sop-funnel.html">🎯 SOP 漏斗</a>
-<a href="/dd-screener/sop-funnel-backtest.html" class="active">🧪 2022 回測</a></nav>
-</div></header>
+{NAV_BLOCK}
 
 <div class="hero"><div class="hero-inner">
 <div class="hero-h1">SOP 漏斗 2022 回測 — 技術執行層 × 規則實驗室</div>

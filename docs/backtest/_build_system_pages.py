@@ -21,6 +21,12 @@ OUT = Path(__file__).parent
 sys.path.insert(0, str(OUT))
 from _nav_common import make_toggle  # noqa: E402
 
+# Canonical site header (single source: scripts/site_nav.py)
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
+from site_nav import full_nav_block  # noqa: E402
+
+NAV_HEADER = full_nav_block("quant", "bt")
+
 # ===== Common assets =====
 CSS = """
 :root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
@@ -33,22 +39,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
      background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
 a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
 .container{max-width:1120px;margin:0 auto;padding:0 1.5rem}
-.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
-.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
-.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
-.imq-logo:hover{color:#fff !important;text-decoration:none !important}
-.imq-logo span{color:#3b82f6}
-.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
-.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
-.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
-.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
-.imq-dd{position:relative;display:inline-block}
-.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
-.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
-.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
-.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
-.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
-.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
 .page-hdr{padding:1.75rem 0 1.25rem;background:linear-gradient(180deg,#f0f4ff 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
 .page-hdr h1{font-size:1.6rem;font-weight:700;letter-spacing:-.03em}
 .page-hdr .sub{color:var(--muted);font-size:.9rem;margin-top:.2rem}
@@ -108,12 +98,6 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 @media(max-width:768px){
   .kpi-grid{grid-template-columns:repeat(2,1fr)}
   .kpi-pair{grid-template-columns:1fr}
-  .imq-nav-root{padding:.55rem 12px}
-  .imq-nav-inner{gap:.4rem}
-  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
-  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
-  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
-  .imq-dd.open .imq-dd-menu{display:block}
   table{font-size:.78rem}th,td{padding:.45rem .5rem}
 }
 """

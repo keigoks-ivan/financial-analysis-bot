@@ -34,6 +34,12 @@ ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "docs" / "ds" / "index.html"
 OUT_DIR = ROOT / "docs" / "ds"
 
+# Canonical site header (single source: scripts/site_nav.py)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from site_nav import full_nav_block  # noqa: E402
+
+NAV_BLOCK = full_nav_block("research", "ds")
+
 # ── Taxonomy: shared with ID (docs/id/taxonomy.md is single source of truth) ──
 TAXONOMY = [
     {"mega": "semi",       "data_cat": "semi",       "chinese": "半導體 / AI 基建",        "icon": "🔷", "hint": "AI Accelerator / 封裝 / 記憶體 / 製程 / 互連"},
@@ -63,17 +69,6 @@ def extract_head(html: str) -> str:
     m = re.search(r"<head>(.*?)</head>", html, re.DOTALL | re.IGNORECASE)
     if not m:
         raise ValueError("No <head> block found in source HTML")
-    return m.group(1)
-
-
-def extract_nav_block(html: str) -> str:
-    m = re.search(
-        r'(<style>\s*\.imq-nav-root.*?</style>.*?<header class="imq-nav-root">.*?</header>\s*<script>.*?</script>)',
-        html,
-        re.DOTALL | re.IGNORECASE,
-    )
-    if not m:
-        raise ValueError("No imq-nav-root nav block found")
     return m.group(1)
 
 
@@ -304,7 +299,6 @@ def generate_cat_page(
 <meta name="robots" content="noindex,nofollow">{adapted_head}
 </head>
 <body>
-
 {nav_block}
 
 <div class="container">
@@ -373,9 +367,10 @@ def main():
 
     print(f"Parsing {SRC} ({len(html):,} bytes)...", file=sys.stderr)
 
+    # nav comes from scripts/site_nav.py, not the source page
+    nav_block = NAV_BLOCK
     try:
         head_content = extract_head(html)
-        nav_block = extract_nav_block(html)
         cat_jump_links = extract_cat_jump_links(html)
         filter_bar_inner = extract_filter_bar(html)
         filter_js = extract_filter_js(html)
