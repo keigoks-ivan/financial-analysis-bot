@@ -225,48 +225,6 @@ SYSTEMS = {
 }
 
 
-NAV_HEADER = """<header class="imq-nav-root">
-  <div class="imq-nav-inner">
-    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
-    <nav class="imq-menu">
-      <a href="/">首頁</a>
-      <div class="imq-dd">
-        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
-        <div class="imq-dd-menu">
-          <a href="/research/">個股 DD</a>
-          <a href="/id/">產業深度 ID</a>
-          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
-        </div>
-      </div>
-      <div class="imq-dd">
-        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
-        <div class="imq-dd-menu">
-          <a href="/briefing/">每日簡報</a>
-          <a href="/weekly/">週報</a>
-          <a href="/earnings/">財報分析</a>
-          <a href="/markets.html">Markets</a>
-          <a href="/sectors.html">Sectors</a>
-          <a href="/six-state/">六狀態機</a>
-        </div>
-      </div>
-      <div class="imq-dd active">
-        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
-        <div class="imq-dd-menu">
-          <a href="/backtest/" class="active">量化回測</a>
-          <a href="/qgm/">QGM 美股</a>
-          <a href="/qgm-tw/">QGM 台股</a>
-          <a href="/screener.html">Screener 美股</a>
-          <a href="/screener-tw.html">Screener 台股</a>
-        </div>
-      </div>
-      <a href="/mental-models/">🧠 心智模型</a>
-      <a href="/how-to.html">📘 使用說明</a>
-    </nav>
-  </div>
-</header>
-<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>"""
-
-
 def make_yearly_table(yearly_returns: list, name: str, color: str) -> str:
     """Build the yearly returns table HTML."""
     rows = []
