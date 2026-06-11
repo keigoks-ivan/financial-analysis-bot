@@ -2690,9 +2690,8 @@ def main():
                 print(
                     f"\n⏸ DD Screener cascade debounced — latest.json updated "
                     f"{age:.0f}s ago (< {DEBOUNCE_SEC}s window).\n"
-                    f"   Skipping build_dd_screener + alpha-ranker + quality-entry + bottom-out + breakout + earnings-acceleration + entry-state.\n"
+                    f"   Skipping build_dd_screener + quality-entry + bottom-out + breakout + earnings-acceleration + entry-state.\n"
                     f"   寫完整批後請手動跑：python3 scripts/build_dd_screener.py "
-                    f"&& python3 scripts/dd_alpha_ranker.py --layers fundamental "
                     f"&& python3 scripts/build_quality_entry.py "
                     f"&& python3 scripts/build_bottom_out.py "
                     f"&& python3 scripts/build_breakout.py "
@@ -2740,33 +2739,38 @@ def main():
                 file=sys.stderr,
             )
 
+    # ARCHIVED: alpha-rank.html is archived (stub at URL). Auto-trigger for DD Alpha Ranker
+    # is disabled so update_dd_index.py does not regenerate the page.
+    # To re-enable: uncomment the block below and restore _archived/dd-screener/alpha-rank.html.
     # Event-driven trigger for DD Alpha Ranker fundamental layer (angles 1/3/4).
     # Per TASK §修正 7: must run only after update_dd_index + build_dd_screener
     # fully succeed — never on half-stale data. Failure here is non-fatal
     # (alpha-rank is supplementary).
+    # if not screener_ok:
+    #     return
+    # alpha_script = Path(__file__).resolve().parent / "dd_alpha_ranker.py"
+    # if not alpha_script.exists():
+    #     return
+    # print(f"\n→ Auto-trigger: {alpha_script.name} --layers fundamental")
+    # try:
+    #     subprocess.run(
+    #         [sys.executable, str(alpha_script), "--layers", "fundamental"],
+    #         check=True,
+    #     )
+    # except subprocess.CalledProcessError as e:
+    #     print(
+    #         f"\n⚠ Alpha Ranker fundamental layer failed (exit {e.returncode}). "
+    #         f"Other layers (momentum/jensen) still reflect their last state. "
+    #         f"Rerun `python3 {alpha_script} --layers fundamental` manually.",
+    #         file=sys.stderr,
+    #     )
+    # except Exception as e:
+    #     print(
+    #         f"\n⚠ Alpha Ranker errored: {e}.",
+    #         file=sys.stderr,
+    #     )
     if not screener_ok:
         return
-    alpha_script = Path(__file__).resolve().parent / "dd_alpha_ranker.py"
-    if not alpha_script.exists():
-        return
-    print(f"\n→ Auto-trigger: {alpha_script.name} --layers fundamental")
-    try:
-        subprocess.run(
-            [sys.executable, str(alpha_script), "--layers", "fundamental"],
-            check=True,
-        )
-    except subprocess.CalledProcessError as e:
-        print(
-            f"\n⚠ Alpha Ranker fundamental layer failed (exit {e.returncode}). "
-            f"Other layers (momentum/jensen) still reflect their last state. "
-            f"Rerun `python3 {alpha_script} --layers fundamental` manually.",
-            file=sys.stderr,
-        )
-    except Exception as e:
-        print(
-            f"\n⚠ Alpha Ranker errored: {e}.",
-            file=sys.stderr,
-        )
 
     # Event-driven trigger for Quality-Entry screener (品質複利者 + 勝率切入點).
     # Reads latest.json (schema v1.2+) and emits docs/dd-screener/quality-entry.{html,json}

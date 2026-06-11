@@ -906,7 +906,7 @@ body{{font-family:system-ui,-apple-system,sans-serif;background:#f5f0fb;color:#1
         <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
         <div class="imq-dd-menu">
           <a href="/dd-screener/">DD Screener</a>
-          <a href="/dd-screener/alpha-rank.html">Alpha Rank</a>
+
           <a href="/dd-screener/quality-entry.html">Quality-Entry</a>
           <a href="/dd-screener/bottom-out.html">Bottom-Out</a>
           <a href="/dd-screener/breakout.html">Breakout</a>

@@ -1137,7 +1137,7 @@ body{{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1
         <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
         <div class="imq-dd-menu">
           <a href="/dd-screener/">DD Screener</a>
-          <a href="/dd-screener/alpha-rank.html" class="active">Alpha Rank</a>
+
           <a href="/dd-screener/quality-entry.html">Quality-Entry</a>
           <a href="/backtest/">量化回測</a>
         </div>
@@ -1689,11 +1689,15 @@ def run_layers(layers: list[str], *, write_snapshot_flag: bool = True) -> int:
 
     merged = merge_layer_states(rows)
     write_json(merged, JSON_OUT)
-    render_html(merged, HTML_OUT)
+    # ARCHIVED: alpha-rank.html is archived (stub at URL). HTML write is guarded so the
+    # stub at docs/dd-screener/alpha-rank.html is never overwritten by this script.
+    # To re-enable: remove the guard below and restore the original file from
+    # _archived/dd-screener/alpha-rank.html.
+    # render_html(merged, HTML_OUT)
     if write_snapshot_flag:
         write_snapshot(merged, rows, SNAPSHOT_DIR)
 
-    print(f"  wrote {HTML_OUT.relative_to(ROOT)}", file=sys.stderr)
+    # print(f"  wrote {HTML_OUT.relative_to(ROOT)}", file=sys.stderr)  # guarded (archived)
     print(f"  wrote {JSON_OUT.relative_to(ROOT)}", file=sys.stderr)
     if write_snapshot_flag:
         print(f"  wrote snapshot {SNAPSHOT_DIR.relative_to(ROOT)}/{merged['as_of']}.json",
