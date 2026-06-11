@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta name="robots" content="noindex,nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ensemble Trend 訊號集成實驗 | InvestMQuest Research</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+:root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
+      --text:#111827;--muted:#6b7280;--border:#e5e7eb;
+      --green:#059669;--green-bg:#ecfdf5;--green-border:#a7f3d0;--green-text:#065f46;
+      --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;--red-text:#991b1b;
+      --amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fde68a;--amber-text:#92400e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1120px;margin:0 auto;padding:0 1.5rem}
+.page-hdr{padding:1.75rem 0 1.25rem;background:linear-gradient(180deg,#fffbeb 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
+.page-hdr h1{font-size:1.6rem;font-weight:700;letter-spacing:-.03em}
+.page-hdr .sub{color:var(--muted);font-size:.9rem;margin-top:.2rem}
+.crumb{font-size:.82rem;color:var(--muted);margin-bottom:.4rem}
+.crumb a{color:var(--muted)}
+.section{padding:1.5rem 0 0}
+.section-title{font-size:1.15rem;font-weight:700;margin-bottom:1rem;
+               padding-bottom:.45rem;border-bottom:2px solid var(--brand)}
+.section-sub{font-size:.85rem;color:var(--muted);margin:-.5rem 0 1rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.card h3{font-size:1rem;font-weight:600;margin-bottom:.85rem}
+.card .takeaway{font-size:.88rem;margin-top:.75rem;padding:.6rem .9rem;border-radius:6px;
+                background:var(--brand-light);border-left:3px solid var(--brand)}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{text-align:left;padding:.6rem .75rem;border-bottom:1px solid var(--border)}
+th{background:#f9fafb;font-weight:600;font-size:.78rem;text-transform:uppercase;
+   letter-spacing:.04em;color:var(--muted)}
+td{font-variant-numeric:tabular-nums}
+tbody tr:hover td{background:#f3f4f6}
+.kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.85rem 1rem;text-align:center}
+.kpi .label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.25rem}
+.kpi .value{font-size:1.25rem;font-weight:700}
+.kpi .value.pos{color:var(--green)}.kpi .value.neg{color:var(--red)}.kpi .value.neu{color:var(--brand)}
+.kpi-pair{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+.kpi-pair > div{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem 1.2rem}
+.kpi-pair h4{font-size:.85rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.7rem;font-weight:600}
+.hero{margin:1.25rem 0;border:1px solid var(--amber-border);border-radius:12px;overflow:hidden;background:var(--card)}
+.hero-top{background:linear-gradient(135deg,#fffbeb 0%,#fef9ec 100%);padding:1.4rem 1.6rem;border-bottom:1px solid var(--amber-border)}
+.hero-top .verdict-tag{display:inline-block;background:#d97706;color:#fff;font-size:.74rem;font-weight:700;
+                       letter-spacing:.05em;padding:.25rem .7rem;border-radius:99px;margin-bottom:.5rem}
+.hero-top h2{font-size:1.35rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.35rem}
+.hero-top p{font-size:.92rem;color:#374151;max-width:60rem}
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card)}
+.hero-stats > div{padding:1rem 1.2rem;text-align:center;border-right:1px solid var(--border)}
+.hero-stats > div:last-child{border-right:none}
+.hero-stats .hs-label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.hero-stats .hs-value{font-size:1.55rem;font-weight:800;letter-spacing:-.02em}
+.note{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;
+      padding:.85rem 1.1rem;font-size:.84rem;color:var(--amber-text);margin:1rem 0}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.chart-card h3{font-size:.95rem;font-weight:600;margin-bottom:.5rem}
+.chart-wrap{position:relative;width:100%;height:380px}
+.chart-wrap-sm{position:relative;width:100%;height:220px}
+details{background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:.75rem}
+details summary{padding:.9rem 1.25rem;font-weight:600;font-size:.95rem;cursor:pointer;list-style:none;display:flex;align-items:center;gap:.5rem}
+details summary::before{content:'▸';color:var(--brand);transition:transform .15s}
+details[open] summary::before{transform:rotate(90deg)}
+details .d-body{padding:0 1.25rem 1.25rem}
+.issue-list{font-size:.88rem;color:#374151;padding-left:1.2rem;line-height:1.9}
+footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
+       text-align:center;padding:1.25rem 0;font-size:.78rem;margin-top:2rem}
+@media(max-width:768px){
+  .kpi-pair{grid-template-columns:1fr}
+  .hero-stats{grid-template-columns:repeat(2,1fr)}
+  .hero-stats > div{border-bottom:1px solid var(--border)}
+  table{font-size:.78rem}th,td{padding:.45rem .5rem}
+}
+</style>
+</head>
+<body>
+<style>
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/">個股 DD</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/">週報</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/six-state/">六狀態機</a>
+        </div>
+      </div>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/" class="active">量化回測</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/screener-tw.html">Screener 台股</a>
+        </div>
+      </div>
+      <a href="/mental-models/">🧠 心智模型</a>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="page-hdr">
+  <div class="container">
+    <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / Ensemble Trend 訊號集成實驗</div>
+    <h1 style="color:#d97706">Ensemble Trend 訊號集成 — 假設檢驗</h1>
+    <div class="sub">50/50 SPY/QQQ · {W40 · W52 · 12m TSMOM} 各 1/3 倉位 · 實驗紀錄,未採用 · 數據截至 2026-06-10</div>
+    <div style="margin-top:.75rem;display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap">
+      <div>
+        <div style="font-size:.68rem;color:#1a56db;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;font-weight:600">對比總覽</div>
+        <div style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-wrap:wrap"><a href="/backtest/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">20 年</a><a href="/backtest/10y/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">10 年</a><a href="/backtest/criteria/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">評估標準</a></div>
+      </div>
+      <div>
+        <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;font-weight:600">Long Track 家族</div>
+        <div style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-wrap:wrap"><a href="/backtest/long_track/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">Long Track 50/50</a><a href="/backtest/long_track_qqq/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">LTO QQQ only</a><a href="/backtest/long_track_ensemble/" style="padding:.4rem .85rem;background:#d97706;color:#fff;font-size:.8rem;font-weight:600;text-decoration:none;border-left:1px solid var(--border)">🔬 集成實驗</a></div>
+      </div>
+      <div>
+        <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;font-weight:600">其他系統</div>
+        <div style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-wrap:wrap"><a href="/backtest/six_state/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">六狀態機</a><a href="/backtest/gem/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">GEM</a><a href="/backtest/slope_filter/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">W52 斜率</a><a href="/backtest/turtle/" style="padding:.4rem .85rem;background:#fff;color:#0f766e;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">🐢 Turtle</a><a href="/backtest/clenow/" style="padding:.4rem .85rem;background:#fff;color:#6366f1;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">📈 Clenow</a></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ===== VERDICT HERO ===== -->
+<div class="hero">
+  <div class="hero-top">
+    <span class="verdict-tag">🔬 假設檢驗 — 部分成立,未採用</span>
+    <h2>集成治得了盤整病,治不了 gap risk — 而且把 MDD 搬了家</h2>
+    <p>假設:用三個獨立趨勢訊號的分數倉位(各 1/3)取代單一規則的全倉進出,降低 whipsaw 傷害。
+       結果部分成立:基準最痛的 2015-16 盤整從 -20.08% 收斂到 -17.86%、2011 從 -16.11% 到 -14.18%,
+       Sharpe 0.80 → 0.88、Calmar 0.48 → 0.54,子期間 Calmar 從 0.32/0.74 失衡改善為 0.48/0.70。
+       但 MDD 沒有變淺 — 它搬到 2020 COVID(-21.15%):月頻 TSMOM 腿在快速崩跌中出場慢一拍,
+       集成繼承了 1/3 的遲鈍。<strong>全部為樣本內證據,改善幅度尚不足以排除運氣,headline 維持 Ch12 修正版基準;
+       此頁為證據紀錄,待 OOS 追蹤後再決策。</strong></p>
+  </div>
+  <div class="hero-stats">
+    <div><div class="hs-label">E3 CAGR (20Y)</div><div class="hs-value" style="color:var(--green)">+11.33%</div></div>
+    <div><div class="hs-label">E3 MDD</div><div class="hs-value" style="color:var(--red)">-21.15%</div></div>
+    <div><div class="hs-label">E3 Sharpe</div><div class="hs-value" style="color:var(--brand)">0.88</div></div>
+    <div><div class="hs-label">E3 Calmar</div><div class="hs-value" style="color:var(--brand)">0.54</div></div>
+  </div>
+</div>
+
+<div class="note">
+  <strong>實驗設計:</strong>訊號分散,不是參數網格。三個訊號取自兩個不同家族 — 均線位置(週線收盤 &gt; W40 / W52)
+  與報酬符號(12 個月總報酬 &gt; 同期 T-bill 報酬,月頻,Moskowitz/Ooi/Pedersen 2012 的 TSMOM)。
+  全部 stateless、long only;倉位 = 看多訊號數 ÷ 訊號總數;閒置部位持有 SHY/BIL;
+  成本對 |Δ倉位| 收單邊 7bps;兩標的各自跑訊號後日報酬 50/50 加權合成;warmup 自 1999、模擬自 2006-01。
+  方法與 <a href="/backtest/long_track/">Long Track 50/50 修正版</a>完全同基準,數字可直接對比。
+</div>
+
+<!-- ===== KPI ===== -->
+<div class="section">
+<h2 class="section-title">E3 集成版績效(僅供對照,未採用)</h2>
+<div class="kpi-pair">
+<div>
+<h4>20 年 (2006-01 ~ 至今)</h4>
+<div class="kpi-grid">
+<div class="kpi"><div class="label">CAGR</div><div class="value pos">+11.33%</div></div>
+<div class="kpi"><div class="label">MDD</div><div class="value neg">-21.15%</div></div>
+<div class="kpi"><div class="label">Sharpe</div><div class="value neu">0.88</div></div>
+<div class="kpi"><div class="label">Sortino</div><div class="value neu">1.07</div></div>
+<div class="kpi"><div class="label">Calmar</div><div class="value neu">0.54</div></div>
+<div class="kpi"><div class="label">Vol</div><div class="value ">13.19%</div></div>
+<div class="kpi"><div class="label">期末資產</div><div class="value ">$8.97M</div></div>
+</div>
+</div>
+<div>
+<h4>10 年 (2016-06 ~ 至今)</h4>
+<div class="kpi-grid">
+<div class="kpi"><div class="label">CAGR</div><div class="value pos">+15.90%</div></div>
+<div class="kpi"><div class="label">MDD</div><div class="value neg">-21.15%</div></div>
+<div class="kpi"><div class="label">Sharpe</div><div class="value neu">1.10</div></div>
+<div class="kpi"><div class="label">Sortino</div><div class="value neu">1.31</div></div>
+<div class="kpi"><div class="label">Calmar</div><div class="value neu">0.75</div></div>
+<div class="kpi"><div class="label">Vol</div><div class="value ">14.36%</div></div>
+<div class="kpi"><div class="label">期末資產</div><div class="value ">$4.37M</div></div>
+</div>
+</div>
+</div>
+
+<div class="card">
+<h3>全變體對照(2006 ~ 至今)</h3>
+<table>
+<thead><tr><th>變體</th><th>CAGR</th><th>MDD</th><th>Sharpe</th><th>Calmar</th><th>H1 Calmar</th><th>H2 Calmar</th></tr></thead>
+<tbody><tr><td>Ch12 基準(二元,本站 headline)</td><td>+9.59%</td><td>-20.08%</td><td>0.80</td><td>0.48</td><td>0.32</td><td>0.74</td></tr><tr><td>純 W52(二元)</td><td>+10.75%</td><td>-20.58%</td><td>0.84</td><td>0.52</td><td>0.35</td><td>0.71</td></tr><tr><td>純 TSMOM(二元)</td><td>+11.80%</td><td>-30.86%</td><td>0.79</td><td>0.38</td><td>0.60</td><td>0.46</td></tr><tr><td>集成 {W52, TSMOM} k/2</td><td>+11.40%</td><td>-23.18%</td><td>0.86</td><td>0.49</td><td>0.54</td><td>0.62</td></tr><tr style="background:var(--brand-light)"><td>集成 {W40, W52, TSMOM} k/3</td><td>+11.33%</td><td>-21.15%</td><td>0.88</td><td>0.54</td><td>0.48</td><td>0.70</td></tr><tr><td>50/50 SPY/QQQ Buy &amp; Hold</td><td>+13.39%</td><td>-53.66%</td><td>0.72</td><td>0.25</td><td>0.17</td><td>0.57</td></tr></tbody>
+</table>
+<div class="takeaway">交叉驗證的價值先於集成本身:純 TSMOM 的回撤窗口(2020/2018/2025)與 W52 家族(2015-16/2011)
+幾乎不重疊 — 證實兩個訊號家族捕捉的是同一個趨勢、不同的失效模式。集成的改善正是來自這個互補,
+不是來自任何參數的巧合。</div>
+</div>
+</div>
+
+<!-- ===== CHARTS ===== -->
+<div class="section">
+<h2 class="section-title">淨值與回撤</h2>
+<div class="section-sub">月頻淨值(對數座標);精確 MDD 以表格數字為準。</div>
+<div class="chart-card">
+  <h3>淨值曲線 — 起始 $1M</h3>
+  <div class="chart-wrap"><canvas id="chart-nav"></canvas></div>
+</div>
+<div class="chart-card">
+  <h3>回撤 — E3 集成 vs E0 基準</h3>
+  <div class="chart-wrap-sm"><canvas id="chart-dd"></canvas></div>
+</div>
+<div class="chart-card">
+  <h3>逐年報酬 — E3 vs E0</h3>
+  <div class="chart-wrap"><canvas id="chart-yearly"></canvas></div>
+</div>
+</div>
+
+<!-- ===== WINDOWS ===== -->
+<div class="section">
+<h2 class="section-title">固定窗口對照 — whipsaw 與崩盤分開看</h2>
+<div class="section-sub">窗口取自基準的痛點(2011、2015-16 盤整)與三次崩盤;紅字 = 該窗口虧損超過 -15%。</div>
+<div class="card">
+<table>
+<thead><tr><th>窗口</th><th>E0 基準</th><th>F1 純 W52</th><th>T1 純 TSMOM</th><th>E2 二訊號</th><th>E3 三訊號</th></tr></thead>
+<tbody>
+<tr><td>2008 GFC (08-09~09-03)</td><td style="color:inherit">+0.37%</td><td style="color:inherit">+0.37%</td><td style="color:inherit">+0.37%</td><td style="color:inherit">+0.37%</td><td style="color:inherit">+0.37%</td></tr>
+<tr><td>2011 whipsaw (07~12)</td><td style="color:var(--red)">-16.11%</td><td style="color:var(--red)">-19.60%</td><td style="color:inherit">-3.23%</td><td style="color:inherit">-11.46%</td><td style="color:inherit">-14.18%</td></tr>
+<tr><td>2015-16 whipsaw (baseline worst DD)</td><td style="color:var(--red)">-20.08%</td><td style="color:var(--red)">-20.08%</td><td style="color:var(--red)">-18.02%</td><td style="color:var(--red)">-18.92%</td><td style="color:var(--red)">-17.86%</td></tr>
+<tr><td>2020 COVID</td><td style="color:inherit">-11.58%</td><td style="color:inherit">-11.58%</td><td style="color:var(--red)">-15.63%</td><td style="color:inherit">-13.15%</td><td style="color:inherit">-12.52%</td></tr>
+<tr><td>2022 bear</td><td style="color:inherit">-14.12%</td><td style="color:inherit">-14.12%</td><td style="color:var(--red)">-17.08%</td><td style="color:var(--red)">-15.45%</td><td style="color:inherit">-13.84%</td></tr>
+
+</tbody>
+</table>
+<div class="takeaway">逐窗口看清楚分工:盤整(2011、2015-16)TSMOM 最強、W52 家族最弱,集成落在中間偏好;
+快速崩跌(2020)順序反過來 — 週頻出場快、月頻 TSMOM 慢,集成又落在中間。
+集成不創造新能力,它買的是「不會在任何單一情境裡墊底」。2008 全員 +0.37%:三個訊號都在 2008-09 前出場完畢,
+該窗口的報酬全部來自 T-bill 利息。</div>
+</div>
+
+<div class="card">
+<h3>Top 3 回撤(各變體)</h3>
+<table>
+<thead><tr><th>變體</th><th>#1</th><th>#2</th><th>#3</th></tr></thead>
+<tbody>
+<tr><td>Ch12 基準(二元,本站 headline)</td><td>2015-07-20 → 2016-06-27<br><span style="color:var(--red);font-weight:600">-20.1%</span></td><td>2020-02-19 → 2020-03-12<br><span style="color:var(--red);font-weight:600">-18.8%</span></td><td>2007-10-31 → 2010-08-26<br><span style="color:var(--red);font-weight:600">-17.1%</span></td></tr>
+<tr><td>純 W52(二元)</td><td>2011-07-22 → 2011-12-28<br><span style="color:var(--red);font-weight:600">-20.6%</span></td><td>2021-12-27 → 2023-03-10<br><span style="color:var(--red);font-weight:600">-20.2%</span></td><td>2015-07-20 → 2016-06-27<br><span style="color:var(--red);font-weight:600">-20.1%</span></td></tr>
+<tr><td>純 TSMOM(二元)</td><td>2020-02-19 → 2020-03-23<br><span style="color:var(--red);font-weight:600">-30.9%</span></td><td>2018-10-01 → 2018-12-24<br><span style="color:var(--red);font-weight:600">-20.9%</span></td><td>2025-02-19 → 2025-04-08<br><span style="color:var(--red);font-weight:600">-20.8%</span></td></tr>
+<tr><td>集成 {W52, TSMOM} k/2</td><td>2020-02-19 → 2020-03-23<br><span style="color:var(--red);font-weight:600">-23.2%</span></td><td>2015-07-20 → 2016-06-27<br><span style="color:var(--red);font-weight:600">-18.9%</span></td><td>2021-12-27 → 2023-03-10<br><span style="color:var(--red);font-weight:600">-18.0%</span></td></tr>
+<tr><td>集成 {W40, W52, TSMOM} k/3</td><td>2020-02-19 → 2020-03-12<br><span style="color:var(--red);font-weight:600">-21.2%</span></td><td>2015-07-20 → 2016-06-27<br><span style="color:var(--red);font-weight:600">-17.9%</span></td><td>2011-04-29 → 2011-12-19<br><span style="color:var(--red);font-weight:600">-16.8%</span></td></tr>
+
+</tbody>
+</table>
+<div class="takeaway">E0 的回撤錄是「盤整、gap、緩熊」各一;E3 把盤整壓下去之後,gap(2020)浮上來變成 #1 —
+風險不會消失,只會換形狀。要把 -21% 再往下壓,訊號層已經到頂,只剩部位大小與跨資產兩條路。</div>
+</div>
+</div>
+
+<!-- ===== VERDICT ===== -->
+<div class="section">
+<h2 class="section-title">判決與後續</h2>
+<div class="card">
+<ol class="issue-list">
+  <li><strong>證據方向</strong>:E3 在 Sharpe(0.88)、Calmar(0.54)、子期間平衡上全面優於基準,CAGR +1.74pp,
+      換手率相當 — 是目前股票趨勢核心所有變體中綜合最好的。</li>
+  <li><strong>為什麼不採用</strong>:(a) 全部為樣本內證據,Calmar +0.06 的幅度尚不足以排除運氣;
+      (b) W40 引入新 lookback,是輕度參數選擇;(c) TSMOM 腿加深 gap risk(2020 -21.15% vs 基準 -18.75%),
+      2025-04 關稅崩跌型的快市對它不利;(d) stateless 訊號放棄了 Ch12 score-5 的進場紀律,屬規則變更,
+      需走 design/validation 流程。</li>
+  <li><strong>OOS 追蹤計畫</strong>:自 2026-06 起記錄 E3 與基準的實時分歧;觀察重點是下一次盤整叢集
+      (假設預測 E3 較淺)與下一次快速崩跌(假設預測 E3 較深)。兩個事件後重審。</li>
+  <li><strong>最小可採納版本</strong>:若未來只取一步,E2(W52 + TSMOM,不含 W40)是不引入任何新參數的版本,
+      但其 COVID 回撤 -23.18% 更深 — 取捨記錄在案。</li>
+</ol>
+</div>
+</div>
+
+<!-- ===== DETAILS ===== -->
+<div class="section">
+<h2 class="section-title">明細</h2>
+
+<details>
+<summary>逐年報酬表</summary>
+<div class="d-body">
+<table>
+<thead><tr><th>Year</th><th style="color:#d97706">E3 集成(未採用)</th><th>E0 基準</th><th>50/50 B&amp;H</th></tr></thead>
+<tbody>
+<tr><td>2006</td><td>+5.12%</td><td>+4.20%</td><td>+9.33%</td></tr>
+<tr><td>2007</td><td>+8.81%</td><td>+10.71%</td><td>+11.98%</td></tr>
+<tr><td>2008</td><td>-4.68%</td><td>-5.38%</td><td style="color:var(--red)">-38.36%</td></tr>
+<tr><td>2009</td><td>+19.63%</td><td>+0.25%</td><td style="color:var(--green);font-weight:600">+35.01%</td></tr>
+<tr><td>2010</td><td>+7.95%</td><td>+7.89%</td><td>+15.80%</td></tr>
+<tr><td>2011</td><td>-9.89%</td><td>-9.57%</td><td>+1.44%</td></tr>
+<tr><td>2012</td><td>+10.26%</td><td>+8.62%</td><td>+15.08%</td></tr>
+<tr><td>2013</td><td style="color:var(--green);font-weight:600">+31.10%</td><td style="color:var(--green);font-weight:600">+31.28%</td><td style="color:var(--green);font-weight:600">+30.75%</td></tr>
+<tr><td>2014</td><td>+16.53%</td><td>+17.36%</td><td>+17.36%</td></tr>
+<tr><td>2015</td><td>-2.40%</td><td>-5.30%</td><td>+5.49%</td></tr>
+<tr><td>2016</td><td>+3.91%</td><td>+3.47%</td><td>+11.54%</td></tr>
+<tr><td>2017</td><td style="color:var(--green);font-weight:600">+26.09%</td><td style="color:var(--green);font-weight:600">+26.09%</td><td style="color:var(--green);font-weight:600">+26.09%</td></tr>
+<tr><td>2018</td><td>-1.56%</td><td>-1.53%</td><td>-3.47%</td></tr>
+<tr><td>2019</td><td>+20.19%</td><td>+20.81%</td><td style="color:var(--green);font-weight:600">+34.76%</td></tr>
+<tr><td>2020</td><td style="color:var(--green);font-weight:600">+25.20%</td><td style="color:var(--green);font-weight:600">+26.54%</td><td style="color:var(--green);font-weight:600">+31.08%</td></tr>
+<tr><td>2021</td><td style="color:var(--green);font-weight:600">+30.01%</td><td style="color:var(--green);font-weight:600">+30.01%</td><td style="color:var(--green);font-weight:600">+30.01%</td></tr>
+<tr><td>2022</td><td style="color:var(--red)">-13.62%</td><td style="color:var(--red)">-13.53%</td><td style="color:var(--red)">-26.19%</td></tr>
+<tr><td>2023</td><td>+19.54%</td><td>+10.45%</td><td style="color:var(--green);font-weight:600">+40.66%</td></tr>
+<tr><td>2024</td><td style="color:var(--green);font-weight:600">+26.74%</td><td style="color:var(--green);font-weight:600">+26.74%</td><td style="color:var(--green);font-weight:600">+26.74%</td></tr>
+<tr><td>2025</td><td>+17.20%</td><td>+17.59%</td><td>+19.56%</td></tr>
+<tr><td>2026</td><td>+6.84%</td><td>+5.85%</td><td>+9.87%</td></tr>
+
+</tbody>
+</table>
+</div>
+</details>
+
+<details>
+<summary>訊號規則</summary>
+<div class="d-body">
+  <p style="font-size:.92rem;color:#374151;line-height:1.75">
+    <strong>W40 / W52</strong>:週線(W-FRI)收盤 &gt; 40 週 / 52 週均線 → 該訊號看多。stateless,無進出場遲滯。<br>
+    <strong>TSMOM</strong>:月底收盤的 12 個月總報酬 &gt; 同期 SHY/BIL 報酬 → 看多。月頻,Moskowitz/Ooi/Pedersen (2012)。<br>
+    <strong>倉位</strong>:看多訊號數 ÷ 3,即 {0, ⅓, ⅔, 1};訊號在所屬 bar 的最後交易日收盤確認並執行,次日起生效。<br>
+    <strong>其餘假設</strong>與 Long Track 修正版完全相同:閒置部位 SHY/BIL、|Δ倉位| 單邊 7bps、
+    兩標的獨立跑訊號後日報酬 50/50 加權、warmup 自 1999、模擬 2006-01 起。<br><br>
+    對照組:E0 = Ch12 修正版基準(score-5 進場 / W52 出場,二元);F1 / T1 = 單訊號二元版;E2 = 去掉 W40 的二訊號集成。
+  </p>
+</div>
+</details>
+</div>
+
+</div>
+
+<footer>
+  <div class="container">
+    &copy; 2026 InvestMQuest Research &middot; Ensemble Trend 訊號集成實驗 &middot; 真實 yfinance 資料 &middot;
+    頁面生成 2026-06-11 &middot; 證據紀錄,未採用 &middot; 僅供研究參考
+  </div>
+</footer>
+
+<script>
+var NAV_LABELS=["2006-01", "2006-02", "2006-03", "2006-04", "2006-05", "2006-06", "2006-07", "2006-08", "2006-09", "2006-10", "2006-11", "2006-12", "2007-01", "2007-02", "2007-03", "2007-04", "2007-05", "2007-06", "2007-07", "2007-08", "2007-09", "2007-10", "2007-11", "2007-12", "2008-01", "2008-02", "2008-03", "2008-04", "2008-05", "2008-06", "2008-07", "2008-08", "2008-09", "2008-10", "2008-11", "2008-12", "2009-01", "2009-02", "2009-03", "2009-04", "2009-05", "2009-06", "2009-07", "2009-08", "2009-09", "2009-10", "2009-11", "2009-12", "2010-01", "2010-02", "2010-03", "2010-04", "2010-05", "2010-06", "2010-07", "2010-08", "2010-09", "2010-10", "2010-11", "2010-12", "2011-01", "2011-02", "2011-03", "2011-04", "2011-05", "2011-06", "2011-07", "2011-08", "2011-09", "2011-10", "2011-11", "2011-12", "2012-01", "2012-02", "2012-03", "2012-04", "2012-05", "2012-06", "2012-07", "2012-08", "2012-09", "2012-10", "2012-11", "2012-12", "2013-01", "2013-02", "2013-03", "2013-04", "2013-05", "2013-06", "2013-07", "2013-08", "2013-09", "2013-10", "2013-11", "2013-12", "2014-01", "2014-02", "2014-03", "2014-04", "2014-05", "2014-06", "2014-07", "2014-08", "2014-09", "2014-10", "2014-11", "2014-12", "2015-01", "2015-02", "2015-03", "2015-04", "2015-05", "2015-06", "2015-07", "2015-08", "2015-09", "2015-10", "2015-11", "2015-12", "2016-01", "2016-02", "2016-03", "2016-04", "2016-05", "2016-06", "2016-07", "2016-08", "2016-09", "2016-10", "2016-11", "2016-12", "2017-01", "2017-02", "2017-03", "2017-04", "2017-05", "2017-06", "2017-07", "2017-08", "2017-09", "2017-10", "2017-11", "2017-12", "2018-01", "2018-02", "2018-03", "2018-04", "2018-05", "2018-06", "2018-07", "2018-08", "2018-09", "2018-10", "2018-11", "2018-12", "2019-01", "2019-02", "2019-03", "2019-04", "2019-05", "2019-06", "2019-07", "2019-08", "2019-09", "2019-10", "2019-11", "2019-12", "2020-01", "2020-02", "2020-03", "2020-04", "2020-05", "2020-06", "2020-07", "2020-08", "2020-09", "2020-10", "2020-11", "2020-12", "2021-01", "2021-02", "2021-03", "2021-04", "2021-05", "2021-06", "2021-07", "2021-08", "2021-09", "2021-10", "2021-11", "2021-12", "2022-01", "2022-02", "2022-03", "2022-04", "2022-05", "2022-06", "2022-07", "2022-08", "2022-09", "2022-10", "2022-11", "2022-12", "2023-01", "2023-02", "2023-03", "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", "2023-10", "2023-11", "2023-12", "2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06", "2024-07", "2024-08", "2024-09", "2024-10", "2024-11", "2024-12", "2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"];
+var NAV_E3=[1.0, 0.9921, 1.0108, 1.0162, 0.9719, 0.9708, 0.9576, 0.9717, 0.983, 1.0146, 1.0421, 1.0392, 1.0581, 1.0389, 1.0476, 1.0906, 1.1261, 1.1242, 1.1134, 1.1297, 1.1648, 1.1988, 1.135, 1.1308, 1.1024, 1.1042, 1.1068, 1.106, 1.109, 1.0731, 1.0752, 1.0683, 1.0738, 1.0713, 1.0707, 1.071, 1.0731, 1.0731, 1.073, 1.0737, 1.0791, 1.0827, 1.1351, 1.1551, 1.1904, 1.1648, 1.2376, 1.2815, 1.2168, 1.2637, 1.3509, 1.3766, 1.2705, 1.2036, 1.2275, 1.1834, 1.266, 1.3304, 1.3293, 1.4053, 1.4416, 1.4894, 1.4863, 1.5292, 1.5113, 1.4722, 1.4657, 1.3715, 1.3253, 1.358, 1.3136, 1.2827, 1.3501, 1.4227, 1.4815, 1.468, 1.3721, 1.4064, 1.4218, 1.4763, 1.5016, 1.4481, 1.4399, 1.43, 1.4743, 1.4863, 1.537, 1.5713, 1.618, 1.5878, 1.6791, 1.6504, 1.7164, 1.7988, 1.8574, 1.9087, 1.8568, 1.9469, 1.9281, 1.9319, 1.9976, 2.0494, 2.0476, 2.1393, 2.1165, 2.1541, 2.2327, 2.2048, 2.1493, 2.2872, 2.2423, 2.275, 2.3152, 2.263, 2.3401, 2.1717, 2.1384, 2.2177, 2.2034, 2.1481, 2.0342, 2.0292, 2.0518, 2.0222, 2.0402, 2.0139, 2.1187, 2.1311, 2.1546, 2.1203, 2.1639, 2.1982, 2.2741, 2.3685, 2.394, 2.4384, 2.503, 2.4821, 2.558, 2.5883, 2.6104, 2.7013, 2.7694, 2.7946, 2.9955, 2.9216, 2.8222, 2.8368, 2.9515, 2.977, 3.074, 3.2118, 3.2169, 2.9292, 2.9097, 2.7849, 2.7898, 2.8147, 2.8752, 3.013, 2.7927, 2.9762, 3.0335, 2.9791, 3.0178, 3.1172, 3.237, 3.347, 3.3968, 3.1588, 3.0064, 3.1695, 3.2724, 3.4039, 3.6299, 3.9551, 3.7674, 3.6636, 4.0698, 4.2451, 4.2294, 4.2853, 4.4205, 4.6682, 4.6558, 4.8533, 4.9821, 5.1614, 4.8946, 5.2589, 5.2902, 5.4428, 4.9986, 4.8695, 4.9577, 4.689, 4.694, 4.6976, 4.6993, 4.7084, 4.7182, 4.7257, 4.7505, 4.7379, 4.7617, 4.6837, 4.7371, 4.7764, 4.9728, 5.24, 5.4272, 5.3432, 5.0809, 4.9647, 5.3905, 5.6642, 5.7611, 6.0639, 6.2017, 5.9413, 6.2745, 6.5878, 6.5726, 6.6859, 6.8442, 6.7844, 7.1685, 7.0983, 7.2709, 7.1266, 6.7342, 6.7734, 7.0489, 7.4551, 7.6315, 7.7462, 8.0922, 8.3819, 8.3249, 8.3006, 8.4131, 8.2783, 7.8133, 8.6577, 9.3409, 8.8675];
+var NAV_E0=[1.0, 0.9921, 1.0108, 1.0162, 0.9703, 0.9729, 0.9626, 0.9768, 0.9862, 1.0252, 1.053, 1.05, 1.0691, 1.0497, 1.0586, 1.1116, 1.148, 1.1423, 1.1236, 1.1467, 1.199, 1.2491, 1.1695, 1.1626, 1.099, 1.1008, 1.1033, 1.1026, 1.117, 1.0895, 1.0916, 1.0838, 1.0893, 1.0867, 1.0862, 1.0865, 1.0887, 1.0886, 1.0885, 1.0892, 1.0893, 1.0892, 1.0885, 1.0892, 1.0895, 1.0896, 1.0891, 1.0895, 1.0895, 1.0888, 1.1302, 1.1428, 1.1013, 1.0688, 1.062, 1.0416, 1.0699, 1.1123, 1.1114, 1.1749, 1.2053, 1.2453, 1.2426, 1.2785, 1.2636, 1.2402, 1.238, 1.1484, 1.1224, 1.1199, 1.0951, 1.0762, 1.0977, 1.1566, 1.2044, 1.1935, 1.1157, 1.1586, 1.1712, 1.2162, 1.237, 1.193, 1.1789, 1.1687, 1.2002, 1.21, 1.2513, 1.2792, 1.3172, 1.2926, 1.3669, 1.3436, 1.3973, 1.4644, 1.5121, 1.5539, 1.5116, 1.5849, 1.5696, 1.5727, 1.6262, 1.6684, 1.667, 1.7416, 1.723, 1.7662, 1.8306, 1.8077, 1.7622, 1.8753, 1.8385, 1.8653, 1.8982, 1.8554, 1.9186, 1.7664, 1.7265, 1.7817, 1.7601, 1.7088, 1.598, 1.598, 1.6252, 1.6018, 1.6165, 1.5929, 1.6743, 1.6841, 1.7027, 1.6756, 1.7101, 1.7371, 1.7971, 1.8718, 1.8919, 1.927, 1.9781, 1.9615, 2.0215, 2.0454, 2.0629, 2.1348, 2.1885, 2.2085, 2.3672, 2.3088, 2.2303, 2.2418, 2.3325, 2.3527, 2.4293, 2.5382, 2.5422, 2.2993, 2.2481, 2.2016, 2.2055, 2.2483, 2.3127, 2.4235, 2.2458, 2.3614, 2.4069, 2.3639, 2.3978, 2.4768, 2.572, 2.6594, 2.699, 2.5096, 2.4378, 2.5453, 2.6279, 2.7335, 2.915, 3.1762, 3.0254, 2.9421, 3.2682, 3.4091, 3.3964, 3.4414, 3.5499, 3.7488, 3.7388, 3.8974, 4.0009, 4.1449, 3.9306, 4.2232, 4.2483, 4.3708, 3.9993, 3.8773, 3.887, 3.7562, 3.7574, 3.7604, 3.7617, 3.769, 3.7768, 3.7828, 3.7947, 3.8085, 3.8193, 3.7508, 3.7658, 3.7913, 3.8036, 4.047, 4.1917, 4.1268, 3.9242, 3.8055, 4.0165, 4.207, 4.279, 4.5038, 4.6062, 4.4128, 4.6603, 4.893, 4.8816, 4.9659, 5.0834, 5.039, 5.3242, 5.2721, 5.4003, 5.2932, 4.9822, 4.9991, 5.2529, 5.5556, 5.687, 5.7726, 6.0304, 6.2463, 6.2038, 6.1856, 6.2695, 6.169, 5.7167, 6.3924, 6.8969, 6.5473];
+var NAV_T1=[1.0, 0.9921, 1.0108, 1.0162, 0.9639, 0.965, 0.9459, 0.9598, 0.9748, 0.9918, 1.0187, 1.0159, 1.0343, 1.0156, 1.0238, 1.0475, 1.0811, 1.0858, 1.0898, 1.1076, 1.1097, 1.1137, 1.0782, 1.0808, 1.085, 1.0868, 1.0893, 1.0886, 1.0893, 1.0372, 1.0392, 1.04, 1.0453, 1.0429, 1.0423, 1.0426, 1.0447, 1.0446, 1.0446, 1.0452, 1.0453, 1.0452, 1.0445, 1.0453, 1.0452, 1.0292, 1.0936, 1.1324, 1.0752, 1.1167, 1.1937, 1.2164, 1.1231, 1.0606, 1.1353, 1.0807, 1.2001, 1.2611, 1.26, 1.3321, 1.3665, 1.4118, 1.4088, 1.4495, 1.4326, 1.4061, 1.4036, 1.3295, 1.2536, 1.3873, 1.3658, 1.3688, 1.458, 1.5363, 1.5998, 1.5852, 1.4814, 1.508, 1.5245, 1.583, 1.6101, 1.5528, 1.5673, 1.5707, 1.6319, 1.6452, 1.7013, 1.7393, 1.7909, 1.7575, 1.8585, 1.8269, 1.8999, 1.991, 2.0559, 2.1127, 2.0552, 2.155, 2.1342, 2.1384, 2.2111, 2.2684, 2.2665, 2.368, 2.3427, 2.4014, 2.4889, 2.4578, 2.3959, 2.5497, 2.4997, 2.5361, 2.5809, 2.5227, 2.6086, 2.4403, 2.3815, 2.5128, 2.5251, 2.4833, 2.335, 2.317, 2.3154, 2.2821, 2.3009, 2.2785, 2.4012, 2.4153, 2.442, 2.4031, 2.4525, 2.4913, 2.5774, 2.6844, 2.7132, 2.7636, 2.8369, 2.8131, 2.8992, 2.9335, 2.9586, 3.0616, 3.1387, 3.1673, 3.395, 3.3113, 3.1986, 3.2151, 3.3452, 3.3741, 3.484, 3.6401, 3.646, 3.364, 3.3909, 3.093, 3.0984, 3.1019, 3.1908, 3.3437, 3.0996, 3.3254, 3.3894, 3.3278, 3.3618, 3.4725, 3.606, 3.7285, 3.784, 3.5197, 3.1703, 3.4052, 3.5158, 3.6571, 3.8998, 4.2493, 4.0476, 3.9361, 4.3725, 4.5609, 4.544, 4.6041, 4.7492, 5.0154, 5.0021, 5.2142, 5.3526, 5.5453, 5.2586, 5.6501, 5.6836, 5.8476, 5.4374, 5.2361, 5.4575, 4.8443, 4.8536, 4.8574, 4.8591, 4.8685, 4.8786, 4.8863, 4.9017, 4.9195, 4.9335, 4.9505, 4.9703, 4.9866, 5.1909, 5.364, 5.5557, 5.4696, 5.2011, 5.0913, 5.5992, 5.8835, 5.9842, 6.2986, 6.4418, 6.1713, 6.5174, 6.8428, 6.827, 6.9448, 7.1092, 7.0471, 7.446, 7.3731, 7.5524, 7.4025, 6.9157, 6.934, 7.4696, 7.9, 8.0869, 8.2086, 8.5752, 8.8822, 8.8217, 8.796, 8.9152, 8.7723, 8.3438, 9.4346, 10.1791, 9.6632];
+var NAV_BH50=[1.0, 0.9921, 1.0108, 1.0162, 0.9639, 0.965, 0.9462, 0.9791, 1.0151, 1.0552, 1.0838, 1.0808, 1.1005, 1.0805, 1.0896, 1.1442, 1.1817, 1.1758, 1.1565, 1.1803, 1.2342, 1.2857, 1.2176, 1.2104, 1.1016, 1.0608, 1.0661, 1.1341, 1.1761, 1.0706, 1.0695, 1.0857, 0.9497, 0.7986, 0.725, 0.7369, 0.698, 0.6419, 0.7019, 0.7826, 0.8182, 0.83, 0.896, 0.9191, 0.9614, 0.9375, 0.9961, 1.0315, 0.9793, 1.0172, 1.0873, 1.108, 1.0231, 0.9661, 1.0341, 0.9844, 1.0931, 1.1487, 1.1477, 1.2134, 1.2447, 1.286, 1.2833, 1.3203, 1.3049, 1.2808, 1.2785, 1.211, 1.1419, 1.2637, 1.2441, 1.2468, 1.328, 1.3994, 1.4572, 1.444, 1.3498, 1.4017, 1.4171, 1.4715, 1.4966, 1.4434, 1.4569, 1.4601, 1.5169, 1.5292, 1.5814, 1.6167, 1.6647, 1.6337, 1.7276, 1.6981, 1.766, 1.8507, 1.9111, 1.9639, 1.9104, 2.0031, 1.9838, 1.9877, 2.0553, 2.1086, 2.1068, 2.2011, 2.1777, 2.2322, 2.3135, 2.2846, 2.2271, 2.3701, 2.3236, 2.3574, 2.3991, 2.3449, 2.4249, 2.2684, 2.2145, 2.4345, 2.4464, 2.4058, 2.2629, 2.2445, 2.3969, 2.3633, 2.4348, 2.4112, 2.5411, 2.5559, 2.5842, 2.543, 2.5953, 2.6364, 2.7275, 2.8408, 2.8712, 2.9246, 3.0021, 2.9769, 3.068, 3.1043, 3.1309, 3.2399, 3.3215, 3.3518, 3.5927, 3.5041, 3.3848, 3.4024, 3.54, 3.5706, 3.6869, 3.8521, 3.8583, 3.5599, 3.5884, 3.2754, 3.5543, 3.6651, 3.7701, 3.9508, 3.6624, 3.9291, 4.0048, 3.9334, 3.9898, 4.1211, 4.2796, 4.4249, 4.4908, 4.1771, 3.7639, 4.2855, 4.5295, 4.7115, 5.0242, 5.4744, 5.2145, 5.071, 5.6331, 5.8758, 5.8541, 5.9315, 6.1185, 6.4615, 6.4442, 6.7176, 6.8959, 7.1441, 6.7748, 7.2791, 7.3223, 7.5335, 7.0051, 6.7458, 7.031, 6.2433, 6.2017, 5.6702, 6.2873, 5.998, 5.4049, 5.7322, 6.0512, 5.6036, 6.0772, 5.9902, 6.3838, 6.4512, 6.7167, 7.1467, 7.4021, 7.2875, 6.9297, 6.7834, 7.4601, 7.8389, 7.973, 8.392, 8.5827, 8.2224, 8.6835, 9.1171, 9.096, 9.2529, 9.472, 9.3892, 9.9207, 9.8235, 10.0624, 9.8628, 9.2142, 9.2385, 9.9522, 10.5256, 10.7747, 10.9367, 11.4252, 11.8342, 11.7537, 11.7194, 11.8782, 11.6879, 11.1169, 12.5702, 13.5622, 12.8748];
+var YEARS=[2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026];
+var RET_E3=[5.12, 8.81, -4.68, 19.63, 7.95, -9.89, 10.26, 31.1, 16.53, -2.4, 3.91, 26.09, -1.56, 20.19, 25.2, 30.01, -13.62, 19.54, 26.74, 17.2, 6.84];
+var RET_E0=[4.2, 10.71, -5.38, 0.25, 7.89, -9.57, 8.62, 31.28, 17.36, -5.3, 3.47, 26.09, -1.53, 20.81, 26.54, 30.01, -13.53, 10.45, 26.74, 17.59, 5.85];
+
+function toDD(nav){
+  var dd=[],peak=0;
+  for(var i=0;i<nav.length;i++){
+    if(nav[i]>peak)peak=nav[i];
+    dd.push((nav[i]/peak-1)*100);
+  }
+  return dd;
+}
+Chart.defaults.font.family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif";
+Chart.defaults.font.size=11;
+
+new Chart(document.getElementById('chart-nav'),{
+  type:'line',
+  data:{labels:NAV_LABELS,datasets:[
+    {label:'E3 集成(未採用)',data:NAV_E3,borderColor:'#d97706',borderWidth:2.4,pointRadius:0,pointHoverRadius:4,tension:0.1},
+    {label:'E0 Ch12 基準',data:NAV_E0,borderColor:'#16a34a',borderWidth:1.6,pointRadius:0,pointHoverRadius:3,tension:0.1},
+    {label:'T1 純 TSMOM',data:NAV_T1,borderColor:'#dc2626',borderWidth:1.1,borderDash:[3,3],pointRadius:0,pointHoverRadius:3,tension:0.1},
+    {label:'50/50 B&H',data:NAV_BH50,borderColor:'#7c3aed',borderWidth:1.4,borderDash:[6,3],pointRadius:0,pointHoverRadius:3,tension:0.1}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:true,position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'line',padding:14}},
+      tooltip:{callbacks:{label:function(c){return c.dataset.label+': $'+(c.parsed.y).toFixed(2)+'M'}}}},
+    scales:{x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{maxTicksLimit:21,font:{size:10}}},
+      y:{type:'logarithmic',grid:{color:'rgba(0,0,0,0.06)'},ticks:{callback:function(v){return '$'+v+'M'},font:{size:10}}}}
+  }
+});
+
+new Chart(document.getElementById('chart-dd'),{
+  type:'line',
+  data:{labels:NAV_LABELS,datasets:[
+    {label:'E3 集成(未採用)',data:toDD(NAV_E3),borderColor:'#d97706',backgroundColor:'#d977061f',borderWidth:1.5,fill:'origin',pointRadius:0,tension:0.1},
+    {label:'E0 Ch12 基準',data:toDD(NAV_E0),borderColor:'#16a34a',backgroundColor:'rgba(22,163,74,0.08)',borderWidth:1.2,fill:'origin',pointRadius:0,tension:0.1}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:true,position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'line',padding:10}},
+      tooltip:{callbacks:{label:function(c){return c.dataset.label+': '+c.parsed.y.toFixed(2)+'%'}}}},
+    scales:{x:{grid:{display:false},ticks:{maxTicksLimit:21,font:{size:10}}},
+      y:{grid:{color:'rgba(0,0,0,0.06)'},ticks:{callback:function(v){return v+'%'},font:{size:10}}}}
+  }
+});
+
+new Chart(document.getElementById('chart-yearly'),{
+  type:'bar',
+  data:{labels:YEARS.map(String),datasets:[
+    {label:'E3 集成(未採用)',data:RET_E3,backgroundColor:RET_E3.map(function(v){return v>=0?'#d97706cc':'#d9770655'}),borderColor:'#d97706',borderWidth:1,borderRadius:2},
+    {label:'E0 Ch12 基準',data:RET_E0,backgroundColor:RET_E0.map(function(v){return v>=0?'rgba(22,163,74,0.6)':'rgba(22,163,74,0.25)'}),borderColor:'#16a34a',borderWidth:1,borderRadius:2}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:true,position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'rect',padding:14}},
+      tooltip:{callbacks:{label:function(c){return c.dataset.label+': '+(c.parsed.y>0?'+':'')+c.parsed.y.toFixed(2)+'%'}}}},
+    scales:{x:{grid:{display:false},ticks:{font:{size:10}}},
+      y:{grid:{color:'rgba(0,0,0,0.06)'},ticks:{callback:function(v){return v+'%'},font:{size:10}}}}
+  }
+});
+</script>
+</body>
+</html>
