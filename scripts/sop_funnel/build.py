@@ -115,6 +115,8 @@ def main() -> int:
     standby_a2: list[dict] = []
     standby_b: list[dict] = []
     base_building: list[dict] = []
+    population: list[dict] = []        # 五條件全過的母體（頁面 §6）
+    moat_excluded: list[dict] = []     # 四質量過、卡護城河 gate（26→23 對帳）
     n_qpass = n_state1 = 0
     new_events = 0
 
@@ -172,6 +174,23 @@ def main() -> int:
         ok1, reasons1 = frame.state1(today, px)
         if ok1:
             n_state1 += 1
+
+        # ── 母體清單（頁面 §6）+ 護城河 gate 對帳 ──
+        moat_fail_only = (qpass is False and qfails
+                          and all(f.startswith("護城河") for f in qfails))
+        if qpass or moat_fail_only:
+            (population if qpass else moat_excluded).append({
+                "ticker": t, "name": row.get("name"), "sector": row.get("sector"),
+                "moat_grade": row.get("moat_grade"), "moat_trend": row.get("moat_trend"),
+                "moat_score": row.get("moat_score"), "signal": row.get("signal"),
+                "cagr": qused.get("eps_fy1_fy3_cagr_pct"), "roic": qused.get("roic"),
+                "fcf": qused.get("fcf"), "peg": qused.get("peg_used"),
+                "dist_ath_pct": round(dist_ath, 1), "ath_age_weeks": round(ath_age_w, 1),
+                "state1": ok1, "state1_fails": reasons1,
+                "moat_cut": [f for f in qfails if f.startswith("護城河")] if moat_fail_only else [],
+                "dd_path": row.get("dd_path"), "dca_path": row.get("dca_path"),
+            })
+
         if "歷史不足" in reasons1 and qpass:
             insufficient.append({"ticker": t, "name": row.get("name")})
             continue
@@ -286,6 +305,9 @@ def main() -> int:
         "standby_b": sorted(standby_b, key=lambda x: x["weeks_since_anchor"]),
         "base_building": sorted(base_building, key=lambda x: -x["ath_age_weeks"]),
         "insufficient_history": insufficient,
+        "population": sorted(population, key=lambda x: (
+            {"S": 0, "A": 1, "B": 2}.get(x["moat_grade"], 9), -(x["moat_score"] or 0))),
+        "moat_excluded": moat_excluded,
         "open_trades": open_trades,
         "closed_trades": closed_trades,
         "scoreboard": {k: agg(k) for k in ("A1", "A2", "B")},

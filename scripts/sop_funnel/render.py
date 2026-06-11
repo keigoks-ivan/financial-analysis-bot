@@ -160,6 +160,44 @@ def _backtest_block(bt) -> str:
             f'</tr></thead><tbody>{"".join(rows)}</tbody></table>{per_type}')
 
 
+def _grade_badge(g, trend) -> str:
+    color = {"S": "#7c2d12", "A": "#166534", "B": "#1e40af"}.get(g, "#64748b")
+    tcolor = {"↑": "#059669", "↓": "#dc2626"}.get(trend, "#94a3b8")
+    return (f'<span style="font-weight:700;color:{color}">{_e(g)}</span>'
+            f'<span style="color:{tcolor};margin-left:3px">{_e(trend)}</span>')
+
+
+def _population_block(pop, excluded) -> str:
+    if not pop:
+        return '<div class="empty">母體為空</div>'
+    rows = []
+    for r in pop:
+        st = "態① ✓" if r["state1"] else "✗" + "、".join(r["state1_fails"])
+        st_cls = "pos" if r["state1"] else ""
+        rows.append(
+            f'<tr><td class="left"><strong>{_e(r["ticker"])}</strong> {_e(r.get("name") or "")}</td>'
+            f'<td>{_grade_badge(r["moat_grade"], r["moat_trend"])} <span style="color:#94a3b8">{_e(r["moat_score"])}</span></td>'
+            f'<td>{_e(r.get("signal"))}</td>'
+            f'<td>{_e(round(r["cagr"], 0)) if r.get("cagr") is not None else "—"}</td>'
+            f'<td>{_e(round(r["roic"], 0)) if r.get("roic") is not None else "—"}</td>'
+            f'<td>{_e(round(r["fcf"], 1)) if r.get("fcf") is not None else "—"}</td>'
+            f'<td>{_e(round(r["peg"], 2)) if r.get("peg") is not None else "—"}</td>'
+            f'<td>{_pct(r["dist_ath_pct"])}</td>'
+            f'<td class="left {st_cls}" style="font-size:10.5px">{_e(st)}</td>'
+            f'<td>{_dd_link(r)}</td></tr>')
+    recon = ""
+    if excluded:
+        items = "、".join(
+            f'{_e(e["ticker"])}（{_grade_badge(e["moat_grade"], e["moat_trend"])}'
+            f'，{_e("、".join(e["moat_cut"]))}）' for e in excluded)
+        recon = (f'<div class="exceeded">四質量條件通過、被護城河 gate 擋下 {len(excluded)} 檔'
+                 f'（{len(pop)}＋{len(excluded)} = 四條件母體）：{items}</div>')
+    return (f'<table><thead><tr><th class="left">ticker</th><th>護城河</th><th>訊號</th>'
+            f'<th>CAGR</th><th>ROIC</th><th>FCFm</th><th>PEG</th><th>距ATH</th>'
+            f'<th class="left">週線態勢</th><th>報告</th></tr></thead>'
+            f'<tbody>{"".join(rows)}</tbody></table>{recon}')
+
+
 def render_page(d: dict) -> str:
     a1_cols = [
         ("ticker", lambda r: f'<strong>{_e(r["ticker"])}</strong> {_e(r.get("name") or "")}', "left"),
@@ -340,6 +378,12 @@ footer{{text-align:center;font-size:10.5px;color:#8aa5c0;padding:24px}}
 <li>報酬分母 = 累計投入資金（含態④回補）；R = 報酬 ÷ 進場時停損距離</li>
 </ul>
 </div>
+</div></div>
+
+<div class="section"><div class="card">
+<h2>§6 漏斗母體 — 五條件全過清單（{len(d["population"])} 檔）</h2>
+<div class="desc">這是任何時點的「射程內」標的：四質量條件（CAGR&gt;15 · ROIC&gt;15 · FCFm&gt;10 · PEG&lt;2）＋護城河（≥B 且趨勢非↓）全過。技術面（態①/起漲板機）只決定「何時」對這份名單動手，不影響入列。按護城河等級排序。</div>
+{_population_block(d["population"], d.get("moat_excluded", []))}
 </div></div>
 
 <footer>InvestMQuest · Pure MA SOP 漏斗 v1.0 · 生成 {d["run_timestamp"]} · 模擬非投資建議</footer>
