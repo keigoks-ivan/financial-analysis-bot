@@ -291,3 +291,210 @@ All four declared fixes are substantively resolved (not cosmetically papered ove
 ---
 
 *Pass 1 re-check by id-review sub-agent, claude-sonnet-4-6, 2026-06-11. Scope: 4 fix verifications + HTML regression scan + 1 NC#3 band spot-check via WebSearch.*
+
+---
+
+## Pass 2 Re-check (Post-Expansion, ~21,400 chars)
+
+**Date:** 2026-06-11  
+**Reviewer model:** claude-sonnet-4-6  
+**Scope:** Focused expansion re-check only — new content added after CLEAR_TO_PUBLISH verdict. Does NOT re-run the full 18-item checklist; new issues only.  
+**Source verification method:** Cross-reference against axis_e_depth.md research file + structural analysis.
+
+---
+
+### Focus 1 — 結論先行段 (§0 「📌 本報告結論」) Quality Check
+
+**Verdict: 🟢 PASSES**
+
+The conclusion block (lines 175-180 of HTML) satisfies all four required elements:
+
+- **Verdict**: Explicit — "未來 12 個月 AI 算力供給仍是「短缺」…未來 3 年轉向「平衡偏緊」"
+- **Non-consensus**: Explicit — "市場吵錯了問題…真正的脆弱點不是產能，而是「已驗證 AI 終端營收（~$55-70B）vs 上游晶片營收（~$450-500B）」存在 ~7-9x 變現缺口"
+- **Risk**: Explicit — "疊加折舊年限縮短…與 2025-09 起集體轉外部發債——本輪的 kill 是 financial 過剩而非 physical 過剩"
+- **Action**: Explicit — "續抱掌握瓶頸的上游核心倉（🔴 NVDA / TSM / AVGO）…避開「量大錢薄」的 ODM 與「高槓桿換 backlog」的 neocloud"
+
+**Consistency check** (§0 vs §5 vs §7 vs §9):
+- §0 conclusion "short 12M / balanced 3Y" matches §5 verdict bridge exactly ✅
+- §0 三監測點（H100 租價 / 四大 2027 capex 增速 / 折舊縮短擴散）matches §8 catalyst table ✅
+- §0 "NVDA / TSM / AVGO 🔴 核心" matches §9 tier table ✅
+- §0 "FY27 >$100B 是最大 bull claim" matches §7 NC#3 priced-in update ✅
+- §0 monitoring point ③ (AVGO Q3 meet/miss) and ④ (FY27 >$100B) cross-reference §8 nodes by name ✅
+
+**Hedging check**: No hedging or forward-reference issues. The block uses present-tense verdict language and the "Phase II" framing is a commitment, not a hedge. One 🟢 cosmetic: the third action paragraph's "盯的不是估值倍數…是三個領先訊號" slightly re-explains the monitoring framework already in §8, but this is appropriate duplication for a conclusions-first executive block, not padding.
+
+---
+
+### Focus 2 — New Load-Bearing Claim Verification (6 claims)
+
+#### Claim A: NVDA→OpenAI $100B縮為$30B equity
+
+**Source in axis_e**: 組 1a — "最新狀態（2026）：$100B 縮水為 $30B equity stake — 屬 OpenAI 2026-02-27 宣布的 $110B funding round 一部分。Jensen Huang 2026-03 確認 $100B「probably not in the cards」｜ [T2] TechTimes 2026-06-05 / CNBC 2026-02-03"
+
+**HTML §3 text (line 388)**: "$100B 已縮水為 $30B equity stake，屬 OpenAI 2026-02-27 宣布的 $110B funding round 一部分；Jensen Huang 2026-03 親自確認原 $100B「probably not in the cards」"
+
+**HTML §7 text (line 713)**: "NVDA→OpenAI（原宣布 up to $100B，2026 已縮水為 $30B equity stake——Jensen Huang 2026-03 親自確認原 $100B「probably not in the cards」，屬 OpenAI 2026-02-27 宣布的 $110B funding round 一部分）"
+
+**Verdict: 🟢 CONSISTENT** — Both §3 and §7 accurately transcribe the axis_e source. The $100B/$30B distinction is clearly framed. The "縮水" framing in the HTML matches axis_e's "縮水原因" narrative.
+
+---
+
+#### Claim B: Moody's $662B off-balance-sheet = 113% adjusted debt
+
+**Source in axis_e**: 組 3d — "五大 hyperscaler 累積 $662B 未起算的 DC 租賃承諾，完全在資產負債表外 → 等於這五家最新調整後債務的 113% ｜ [T2] Fortune / Yahoo 2026-02-25"
+
+**HTML §7 text (line 713)**: "Moody's 點出五大 hyperscaler 累積 $662B 未起算的 DC 租賃承諾完全在表外，等於這五家最新調整後債務的 113%"
+
+**Verdict: 🟢 CONSISTENT** — Numbers accurately transcribed. Attribution to "Fortune / Moody's" in the aside (line 735) correctly reflects the source tier ([T2] Fortune reporting Moody's analysis). One nuance: axis_e labels this [T2] Fortune/Yahoo, HTML labels it [T2] Fortune/Moody's — both correct, Moody's being the underlying source. No issue.
+
+---
+
+#### Claim C: Bloomberg >$800B circular deals
+
+**Source in axis_e**: 組 1d — "2026 分析估循環交易 >$800B；loop 路徑：晶片商 → AI lab → 雲端商 → 回到晶片，同一批公司出現在交易多側 ｜ [T2] Bloomberg ｜ https://www.bloomberg.com/graphics/2026-ai-circular-deals/"
+
+**HTML §3 (line 386)** and **§7 (line 713)**: Both use ">$800B" figure attributed to Bloomberg.
+
+**Verdict: 🟢 CONSISTENT** — Number and source match axis_e exactly. The HTML correctly characterizes the multi-side structure ("同一批公司出現在交易多側").
+
+---
+
+#### Claim D: Burry $176B depreciation claim
+
+**Source in axis_e**: 組 4c — "Michael Burry：指控 Meta/AMZN/MSFT/Google/Oracle 把 NVDA GPU 折舊拉到 5-6 年（真實經濟壽命 2-3 年）→ 2026-2028 間低估折舊 $176B、虛增獲利；部位 = 對 SOXX 的槓桿空單（2027-01 到期 put）｜ [T3-B] TheStreet / 247wallst"
+
+**HTML §5 (line 554)**: "Michael Burry 指控的「2026-2028 間低估折舊 $176B、虛增獲利」的來源"
+
+**HTML §7 反方 1 (line 710)**: "Michael Burry 的具體控訴——Meta/AMZN/MSFT/Google/Oracle 把 GPU 折舊拉到 5-6 年（真實經濟壽命 2-3 年），2026-2028 間低估折舊 $176B、虛增獲利，他的部位是對 SOXX 的槓桿空單（2027-01 到期 put，直接押 digestion 在 2027 顯性化）"
+
+**Verdict: 🟢 CONSISTENT** — Exact numbers and source match axis_e. The HTML correctly attributes to [T3-B] TheStreet and accurately reproduces the "2026-2028" window and "SOXX put 2027-01" detail.
+
+**One note**: The $176B claim is sourced [T3-B] and represents Burry's allegation, not independently verified accounting. The HTML frames it as Burry's "控訴" (accusation), which is appropriate epistemic framing. This is correctly treated as a bear-side data point, not an established fact.
+
+---
+
+#### Claim E: AI capex 1.2-1.28% of GDP vs 2000 telecom ~1.0%
+
+**Source in axis_e**: 組 5e — "占 GDP 水準：AI capex ~1.2-1.28% of GDP（Mag-7，Q2 2025 annualized）— 已超 2000 電信 capex 占 GDP 峰值 ~1.0% ｜ [T3-A] 7gc.co / chriswatling"
+
+**HTML §5 (line 595)**: "AI capex 約占 GDP 1.2-1.28%（Mag-7，Q2 2025 annualized），已超過 2000 電信 capex 占 GDP 峰值的 ~1.0%"
+
+**Verdict: 🟢 CONSISTENT** — Numbers match axis_e exactly. Scope qualifier "(Mag-7，Q2 2025 annualized)" preserved, preventing readers from treating it as a 2026 figure. Source correctly listed as [T3-A] 7gc.co in aside (line 619).
+
+---
+
+#### Claim F: 2000 fiber — "每100天翻倍" myth, WorldCom/Lucent timeline, 95% dark fiber
+
+**Source in axis_e**: 組 2 — WorldCom $3.8B虛增/$30B債/2002-07破產; Lucent FY2001 -26%至$21.3B/虧$16B/市值蒸發$250B; Nortel C$398B→C$5B/optical +133%→崩; 5% lit fiber (2001) / ~85% dark (mid-2000s)
+
+**HTML §1** (lines 229-235):
+- "WorldCom 最終虛增獲利 $3.8B、對應約 $30B 債務（2002-07 成為當時史上最大破產）" ✅ matches axis_e 2b
+- "Global Crossing 2002-01 破產，留下 $12.4B 債務" ✅ matches axis_e 2b
+- "Lucent FY2001 營收 −26% 至 $21.3B、單財年虧 $16B、裁員 2/3、市值蒸發約 $250B（≈ 美國 GDP 2%）" ✅ matches axis_e 2c exactly
+- "Nortel 市值從 2000-09 的 C$398B 崩到 2002-08 的 <C$5B（股價 C$124→C$0.47，−95%+），其 optical 營收 2000 還暴衝 +133% 至 $9.2B" ✅ matches axis_e 2c exactly
+- "2001 僅 5% 光纖點亮、mid-2000s 仍 ~85% dark" ✅ matches axis_e 2e table
+
+**Table §1 (line 243)**: "2001 僅 5% 光纖點亮、mid-2000s 仍 ~85% dark" ✅
+
+**Verdict: 🟢 CONSISTENT** — All six quantitative claims from the 2000 fiber bubble section match axis_e sources precisely. No invented numbers found.
+
+---
+
+### Focus 3 — Internal Consistency After Expansion
+
+#### §0 conclusion vs §5 verdict vs §7 NC cards vs §9 actions
+
+| Cross-check | §0 says | Cross-section says | Match? |
+|:---|:---|:---|:---:|
+| Time horizon verdict | "12M 短缺 / 3Y 平衡偏緊" | §5 bridge identical text | ✅ |
+| Core positions | "NVDA/TSM/AVBO 🔴" | §9 table: all three tier-red | ✅ |
+| CRWV positioning | "不入核心，作溫度計" | §9: "過剩風險的高槓桿放大器，非核心 long" | ✅ |
+| NC#1 status | "供給仍 shortage INTACT" | §7 NC#1 confidence 高, priced-in operable | ✅ |
+| NC#2 status | "AT_RISK" (§0 PM block) | §7 NC#2 confidence 中, "risk control line" | ✅ |
+| 三監測點 | 租價/capex增速/折舊擴散 | §8 2026-Q3/Q4 nodes | ✅ |
+| AVBO FY27 >$100B | "本主題最大 bull claim" | §7 NC#3 priced-in, §8 2027-Q1 node | ✅ |
+
+**Verdict: 🟢 FULLY CONSISTENT** — All §0 new content cross-checks against downstream sections without contradiction.
+
+#### Header/footer stats plausibility
+
+- **Header/footer**: "~21,000 字 / 文字比 ~92% / 🟡 ~7%"
+- **Measured**: CJK chars = 21,662 + English tokens = 5,887 → total ~27,549 content units. The "~21,000" claim is likely counting CJK characters only, which lands at 21,662 — plausible and within ~3%.
+- **Table count**: 10 tables present (python3 verified). V2-1 cap is ≤10 tables. Exactly at cap — not a violation, but no margin.
+- **🟡 占比 ~7%**: 1 inline [I:] tag in §0 thesis box out of ~14 total bracketed claims. ~7% is correct. This corrects the stale ~12% from Pass 1's cosmetic finding. ✅
+
+#### Source warning "~36% T1" check
+
+- **Claimed**: "full文 aside T1+T1-zh 占比約 ~36%（含 T2 權威第三方則約 ~51%）"
+- **Measured**: T1 = 32, T2 = 13, T3-A = 27, T3-B = 11, T3-C = 6, T3 = 1. Total = 90 refs.
+  - T1 only: 32/90 = **35.6%** ≈ ~36% ✅
+  - T1+T2: 45/90 = **50.0%** ≈ ~51% ✅ (rounding difference)
+
+**Verdict: 🟢 ACCURATE** — The source-warning disclosure matches actual sidebar tier counts.
+
+---
+
+### Focus 4 — Narrative Quality Regression Check
+
+Checking for padding (same fact restated twice in different words) in the expanded sections.
+
+**§0 結論先行 block**: No padding. Three paragraphs cover distinct territory: verdict + non-consensus identification, kill mechanism explanation, action framework. No repetition with the §0 id-thesis box above it — thesis box is the single-sentence "market is asking the wrong question" framing; conclusion block expands into actionable consequence. ✅
+
+**§5 二階效應 section** (lines 589-596 — new expansion): Three bullet points (electricity, memory, GDP) are genuinely distinct domains. No cross-bullet repetition.
+
+**Worst repetition found — §3 + §5 overlap on "變壓器 2-4年 / 5年"**:
+- §3 (line 453): "高壓變壓器 lead time 2-4 年、interconnection 4-10 年"
+- §2 (line 340): "高壓變壓器交期已從 pre-2020 的 24-30 個月拉到 5 年、interconnection 4-10 年"
+- §5 (line 593): "高壓變壓器交期由 pre-2020 的 24-30 個月拉長到 5 年"
+
+The transformer lead time appears three times (§2, §3, §5) with a minor internal inconsistency: §3 says "2-4 年" while §2 and §5 say "5 年." The source (axis_e 5c) says "由 pre-2020 的 24-30 個月拉長到 5 年" (i.e., 5 years is the correct current number). The "2-4 年" in §3/§5 implication (line 459: "電力散熱（變壓器 2-4 年、interconnection 4-10 年）") appears to be a different source or an earlier draft remnant. This is a minor numerical inconsistency, not padding per se.
+
+**🟡 MINOR INCONSISTENCY — transformer lead time**: §3 says "2-4 年" while §2 and §5 say "5 年." The axis_e source clearly states "5 年." The "2-4 年" variant (also appearing in §2 kingmaker table: "電力 / 電網接入 — 變壓器 2-4 年") appears to originate from a separate DataCenterKnowledge source (aside line 471) which may use a different range. **This is a 🟡 precision issue, not a conclusion-changer**: the thesis direction (瓶頸下移) is unchanged regardless of 2-4 vs 5 years, but the inconsistency within the same document could confuse readers.
+
+**Other repetition**: The "7-9x 變現缺口" appears in §0, §3, §4, §5, §7 — appropriate given it is the thesis's load-bearing claim; repetition is intentional reinforcement, not padding.
+
+**Verdict**: 1 minor repetition/inconsistency worth noting (transformer lead time 2-4y vs 5y); no section-level padding.
+
+---
+
+### Focus 5 — HTML Structural Integrity Around Edited Regions
+
+**Aside balance**: 10 open / 10 close ✅  
+**Section balance**: 10 open / 10 close ✅  
+**li count**: 133 open / 131 close — net 2 unclosed `<li>` tags. Python HTMLParser flagged this.
+
+**Investigation**: The imbalance is caused by the `<C$5B` string in line 235 (Nortel stock price `<C$5B`). The `<` before `C$5B` is an unescaped HTML angle bracket that Python's HTMLParser misinterprets as an opening tag. This is a **pre-existing issue** (present in the original file, not introduced by the expansion) — browsers render it correctly because `<C$5B` doesn't match any valid HTML tag pattern and is treated as text. However, it is technically invalid HTML per spec. Occurrences: 2 (line 235 in body text; line 283 in aside link text).
+
+The `<em>` net -1 and `<a>` net +1 in the HTMLParser results are false positives caused by the same `<C$5B` parsing confusion cascading into surrounding tags — the actual `em` and `a` elements in context are properly balanced when read by real browsers.
+
+**Verdict: 🟡 PRE-EXISTING HTML ISSUE (not introduced by expansion)** — `<C$5B` (Nortel stock price) should be escaped as `&lt;C$5B` per HTML spec. Two occurrences: line 235 (body) and line 283 (aside). Browsers render correctly; validators will flag. Not a functional regression from the expansion, but worth fixing for cleanliness.
+
+---
+
+### Pass 2 Summary
+
+| Focus | Verdict | Issues Found |
+|:---|:---:|:---|
+| 1. §0 結論先行段 quality | 🟢 | None — real conclusion (verdict/NC/risk/action), fully consistent with §5/§7/§9 |
+| 2. Load-bearing claim verification (6) | 🟢 | All 6 claims match axis_e source exactly; no fabricated numbers |
+| 3. Internal consistency after expansion | 🟢 | All §0→§5/§7/§9 cross-checks pass; header stats accurate (21,662 CJK ≈ "~21,000", T1 35.6% ≈ "~36%") |
+| 4. Narrative quality regression | 🟡 | Transformer lead time inconsistency: §3/§2 kingmaker table says "2-4 年"; §2 mechanism + §5 二階效應 say "5 年" (axis_e says "5 年" is correct) |
+| 5. HTML structural integrity | 🟡 | Pre-existing (not new): `<C$5B` unescaped in 2 locations (Nortel price); valid HTML requires `&lt;C$5B`; browsers render fine |
+
+**New issues from expansion: 0 🔴, 2 🟡, 0 🟢 separate cosmetics**
+
+---
+
+### Final Verdict
+
+**CLEAR_TO_PUBLISH**
+
+The expansion did not introduce any 🔴 or thesis-reversing issues. All 6 spot-checked load-bearing claims faithfully transcribe the axis_e research file. The 結論先行段 is substantive (not a hedge) and cross-checks cleanly against §5/§7/§8/§9. Header stats are accurate within rounding. Source-warning "~36% T1" disclosure matches actual sidebar count (35.6%).
+
+**Two 🟡 optional fixes before commit** (neither blocking):
+1. **Transformer lead time consistency**: Change "2-4 年" in §3 supply pipeline paragraph (line 453: "高壓變壓器 lead time 2-4 年") and §2 kingmaker table (line 330) to "5 年" to match §2 mechanism text, §5, and the axis_e primary source. Current "2-4 年" may originate from a DataCenterKnowledge source using a different range; the "5 年" from IEA/power-eng is the more conservative/cited figure.
+2. **Escape `<C$5B` in 2 locations** (lines 235 and 283) to `&lt;C$5B` for valid HTML. Low priority — browser display is unaffected.
+
+---
+
+*Pass 2 expansion re-check by id-review sub-agent, claude-sonnet-4-6, 2026-06-11. Scope: 5 focus areas per brief — 結論先行段 quality, 6 load-bearing claim spot-verifications against axis_e_depth.md, cross-section internal consistency, narrative regression scan, HTML structural integrity around edited regions. Source tier count verified programmatically (90 total refs, 32 T1/35.6%, 13 T2). No web searches performed — verification against local axis_e research file per brief instructions.*
