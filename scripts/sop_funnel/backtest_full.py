@@ -372,11 +372,28 @@ def main() -> int:
     trades_ungated = collect_trades(closes, all_universe, start, end, None, p_charter)
     attach_alpha(trades_ungated, spy, end)
 
+    print("④b Tier1 gated 無靜默期對照 …")
+    trades_nosilent = collect_trades(closes, gated, start, end, None, p_charter)
+    attach_alpha(trades_nosilent, spy, end)
+    # 被靜默期擋下訊號的假想下場（counterfactual）
+    blocked_ids = {(t["ticker"], t["signal_date"]) for t in trades
+                   if t.get("earnings_check") == "silent"}
+    silent_cf = [{"ticker": t["ticker"], "signal_date": t["signal_date"],
+                  "ret_pct": t["sim"]["ret_pct"],
+                  "exit_reason": t["sim"]["exit_reason"] or "持有中"}
+                 for t in trades_nosilent
+                 if (t["ticker"], t["signal_date"]) in blocked_ids and t.get("sim")]
+
     print("⑤ Tier2 NAV 模擬（charter 斷路器 + 無斷路器對照）…")
     nav = nav_simulation(trades, closes, start, end, use_breaker=True)
     import copy
     nav_nb = nav_simulation(copy.deepcopy(trades), closes, start, end,
                             use_breaker=False)
+    print("⑤b 226 檔純價格 NAV（無閘門、無斷路器）+ 無靜默期 NAV …")
+    nav_ungated = nav_simulation(copy.deepcopy(trades_ungated), closes, start, end,
+                                 use_breaker=False)
+    nav_nosilent = nav_simulation(copy.deepcopy(trades_nosilent), closes, start, end,
+                                  use_breaker=False)
     cal = closes.loc[start:end].index
     spy_norm = benchmark_series("SPY", cal)
     qqq_norm = benchmark_series("QQQ", cal)
@@ -413,12 +430,18 @@ def main() -> int:
             "gated_charter": stat_block(trades),
             "gated_staged": stat_block(trades_staged),
             "ungated_all": stat_block(trades_ungated),
+            "gated_no_silent": stat_block(trades_nosilent),
             "by_type": by_type,
             "yearly": yearly,
         },
         "tier2": {**nav, "spy_norm": spy_norm, "qqq_norm": qqq_norm},
         "tier2_no_breaker": {k: v for k, v in nav_nb.items()
                              if k != "trade_weights"},
+        "tier2_ungated": {k: v for k, v in nav_ungated.items()
+                          if k != "trade_weights"},
+        "tier2_no_silent": {k: v for k, v in nav_nosilent.items()
+                            if k != "trade_weights"},
+        "silent_counterfactual": silent_cf,
         "trades": [{
             "ticker": t["ticker"], "type": t["entry_type"],
             "signal_date": t["signal_date"],

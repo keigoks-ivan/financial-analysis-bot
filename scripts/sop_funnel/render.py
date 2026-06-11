@@ -49,8 +49,10 @@ def _warn_tags(e) -> str:
     tags = []
     if e.get("moat_review_due"):
         tags.append('<span class="warn-tag">護城河待複檢</span>')
+    if e.get("earnings_check") == "silent":
+        tags.append('<span class="warn-tag">財報窗內</span>')
     if e.get("earnings_check") == "unverified":
-        tags.append('<span class="warn-tag">靜默期未驗</span>')
+        tags.append('<span class="warn-tag">財報日未驗</span>')
     return "".join(tags) or "—"
 
 
@@ -389,7 +391,7 @@ footer{{text-align:center;font-size:10.5px;color:#8aa5c0;padding:24px}}
 <div class="caveat" style="margin-top:12px">
 <strong>v1 已知簡化（誠實清單）</strong>
 <ul>
-<li>財報靜默期：<strong>forward 訊號自 2026-06-11 起自動檢查</strong>（yfinance 財報日；查無 → 訊號照發標「靜默期未驗」）。回填段與 5 年回測無歷史財報日、不受保護 → 該兩段成績含向下偏誤（真實 SOP 躲得掉部分財報雷）。S-7 gap 破線當日態⑤亦未模擬</li>
+<li>財報靜默期：<strong>2026-06-11 用戶裁決拿掉禁令</strong>（2022 回測：被擋 14 筆放行後全獲利，惟證據含凍結名單偏誤）。forward 訊號改為「標記不擋」——財報窗內進場標 ⚠ 供季檢以無偏數據複查。S-7 gap 破線當日態⑤未模擬</li>
 <li>態⑤ 執行 = 週收盤確認後的次一交易日<strong>收盤</strong>（資料層只有日收盤、無開盤價）— 真實操作建議週一開盤即出，模擬與實盤在生死線上差約一個交易日</li>
 <li>組合層規則（斷路器 10%、總曝險 100%、單檔 10% 互斥）未模擬 — 本頁為單筆訊號追蹤，非 NAV 回測</li>
 <li>態①金字塔加碼未模擬 — 每 ticker 同時最多一筆 trade</li>

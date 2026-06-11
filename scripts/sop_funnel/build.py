@@ -149,12 +149,12 @@ def main() -> int:
             sd = stop_dist_pct(frame, e["date"], e["close"])
             status = "vetoed" if e["vetoes"] else "pending"
             vetoes = list(e["vetoes"])
-            # 財報靜默期守衛（forward-only：回填段無歷史財報日，caveat 明標）
+            # 財報窗標記（2026-06-11 用戶裁決：不擋、只標）— 回測顯示被擋 14 筆
+            # 放行後全數獲利（含 FIX +186%），惟證據含凍結名單 survivorship 偏誤；
+            # forward 標記持續累積無偏數據，季檢複查是否恢復禁令
             earnings_check, next_earnings = None, None
             if not backfilling and status == "pending":
                 earnings_check, next_earnings = earnings_guard.check(t, e["date"])
-                if earnings_check == "silent":
-                    status, vetoes = "vetoed", vetoes + ["財報靜默期"]
             ledger["events"].append({
                 "id": eid, "ticker": t,
                 "name": row.get("name"), "sector": row.get("sector"),
