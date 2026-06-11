@@ -275,11 +275,11 @@ footer{{text-align:center;font-size:10.5px;color:#8aa5c0;padding:24px}}
 
 <div class="hero"><div class="hero-inner">
 <div class="hero-h1">Pure MA SOP 漏斗 — 起漲點雷達 × 自動記分板</div>
-<div class="hero-sub">個股部 Pure MA SOP v2.1 機器版（總守則 v2.0）。四條件閘門（FY1→FY3 CAGR&gt;15 · ROIC&gt;15 · FCF&gt;15 · PEG&lt;2）→ 態①健康多頭 → <strong>A1 起漲型</strong>（突破站立 ≥26 週的 ATH）/ <strong>B 第二班車</strong>（A1 後 26 週內首次回踩站回 60MA）。所有動作 T+1 收盤執行；進場後五狀態機自動模擬、出場自動記分。</div>
+<div class="hero-sub">個股部 Pure MA SOP v2.1 機器版（總守則 v2.0）。五條件閘門（FY1→FY3 CAGR&gt;15 · ROIC&gt;15 · FCFm&gt;10 · PEG&lt;2 · 護城河≥B 且趨勢非↓）→ 態①健康多頭 → <strong>A1 起漲型</strong>（突破站立 ≥26 週的 ATH）/ <strong>B 第二班車</strong>（A1 後 26 週內首次回踩站回 60MA）。所有動作 T+1 收盤執行；進場後五狀態機自動模擬、出場自動記分。</div>
 <div class="hero-stats">
 <div class="hero-stat"><strong>{d["as_of"]}</strong>as of</div>
 <div class="hero-stat"><strong>{d["universe_total"]}</strong>universe</div>
-<div class="hero-stat"><strong>{d["quality_pass"]}</strong>四條件過閘</div>
+<div class="hero-stat"><strong>{d["quality_pass"]}</strong>五條件過閘</div>
 <div class="hero-stat"><strong>{d["state1_count"]}</strong>態①健康多頭</div>
 <div class="hero-stat"><strong>{len(d["open_trades"])}</strong>模擬持倉</div>
 <div class="hero-stat"><strong>{len(d["closed_trades"])}</strong>已平倉</div>
@@ -326,7 +326,7 @@ footer{{text-align:center;font-size:10.5px;color:#8aa5c0;padding:24px}}
 <div class="section"><div class="card">
 <h2>§5 規則對照與 Caveats</h2>
 <div class="sop-table">
-<strong>S-4 五問機器化程度</strong>：Q1 四條件 ✓自動（dd-screener 資料庫）· Q2 進場型態 ✓自動（A1/A2/B）· Q3 態①健康多頭 ✓自動（凍結週線）· Q4 部位公式 ✓建議值 · Q5 財報靜默期＋斷路器＋總曝險 ✗<strong>人工自查</strong>
+<strong>S-4 五問機器化程度</strong>：Q1 五條件 ✓自動（四質量 + 護城河≥B 非↓，dd-screener 資料庫）· Q2 進場型態 ✓自動（A1/A2/B）· Q3 態①健康多頭 ✓自動（凍結週線）· Q4 部位公式 ✓建議值 · Q5 財報靜默期＋斷路器＋總曝險 ✗<strong>人工自查</strong>
 </div>
 <div class="caveat" style="margin-top:12px">
 <strong>v1 已知簡化（誠實清單）</strong>
@@ -336,7 +336,7 @@ footer{{text-align:center;font-size:10.5px;color:#8aa5c0;padding:24px}}
 <li>態①金字塔加碼未模擬 — 每 ticker 同時最多一筆 trade</li>
 <li>價格為含息調整（auto_adjust，與全站一致）— TW 高息股的 ATH/52週線訊號可能比看盤圖表早觸發 ~1-2%/年</li>
 <li>B 型「限突破後首次回測」實作為「每 A1 錨最多一次站回」；錨齡上限 26 週</li>
-<li>回填段（{_e(d["params"].get("base_age_min_weeks"))}週基期規則上線前的歷史事件）四條件用當前值評估</li>
+<li>回填段（{_e(d["params"].get("base_age_min_weeks"))}週基期規則上線前的歷史事件）五條件用當前值評估</li>
 <li>報酬分母 = 累計投入資金（含態④回補）；R = 報酬 ÷ 進場時停損距離</li>
 </ul>
 </div>

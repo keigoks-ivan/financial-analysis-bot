@@ -16,7 +16,7 @@
 - A1 起漲型：日收盤突破「已站立 ≥26 週」的 prior ATH（主訊號；≥52 週標 ⭐）
 - A2 續勢型：基期 <26 週的新高（記錄 + 降級顯示）
 - B 第二班車：A1 價格事件後 26 週內，首次回踩 60MA/前高後站回（每 A1 最多一次）
-- 否決必記錄：創新高但 態②過熱 / 四條件 fail / 歷史不足 → vetoed 事件含原因
+- 否決必記錄：創新高但 態②過熱 / 五條件 fail / 歷史不足 → vetoed 事件含原因
 
 態④減碼幅度參數化（t4_staged）：forward 帳本照 charter（一次減至核心 50%）；
 backtest.py 跑 50% vs 25%+25% A/B 供 2026-09 季檢。
@@ -50,16 +50,23 @@ PARAMS = {
     "base_watch_dist": (5.0, 25.0),  # 築基中：距 ATH 5-25%
 }
 
-QUALITY_GATE = {  # 四條件（用戶指定：EPS 用 FY1→FY3 CAGR，資料全取 dd-screener latest.json）
-    "eps_fy1_fy3_cagr_pct": 15.0,   # > 15%
+QUALITY_GATE = {  # 五條件閘門（用戶 2026-06-11 拍板；資料全取 dd-screener latest.json）
+    "eps_fy1_fy3_cagr_pct": 15.0,   # > 15%（用戶指定：EPS 用 FY1→FY3 CAGR）
     "roic": 15.0,                   # > 15%
-    "fcf": 15.0,                    # FCF margin > 15%
+    "fcf": 10.0,                    # FCF margin > 10%（2026-06-11 自 15 下修：15 在 AI capex
+                                    #   超級週期懲罰投資期的 S/A 級公司 — LLY/MSFT/AMAT 案例；
+                                    #   資本紀律由 ROIC>15 把守，FCF 只當現金地板）
     "peg": 2.0,                     # < 2（live_peg 優先，缺值退 peg）
+    # 第五條件：護城河 — grade ∉ {C, X}（全站 screener veto 慣例）
+    #           且 moat_trend ≠ ↓（進場漏斗不開衰退中護城河的新倉；
+    #           trend 源頭 = build_dd_screener 的 DCA-authoritative map）
+    "moat_veto_grades": ("C", "X"),
 }
 
 
 def quality_check(row: dict) -> tuple[bool | None, list[str], dict]:
-    """四條件閘門。回傳 (pass / None=缺資料, fail 清單, 使用值)。缺值 = 不過閘。"""
+    """五條件閘門（四質量 + 護城河）。回傳 (pass / None=缺資料, fail 清單, 使用值)。
+    質量四欄缺值 = 不過閘；moat_grade 缺 = 不過閘；moat_trend 缺 = 視為 →（不否決）。"""
     def _num(v):
         if v is None:
             return None
@@ -77,9 +84,12 @@ def quality_check(row: dict) -> tuple[bool | None, list[str], dict]:
     if peg is None:
         peg = _num(row.get("peg"))
         peg_src = "peg"
+    grade = row.get("moat_grade")
+    trend = row.get("moat_trend")
     used = {"eps_fy1_fy3_cagr_pct": cagr, "roic": roic, "fcf": fcf,
-            "peg_used": peg, "peg_source": peg_src}
-    if any(v is None for v in (cagr, roic, fcf, peg)):
+            "peg_used": peg, "peg_source": peg_src,
+            "moat_grade": grade, "moat_trend": trend}
+    if any(v is None for v in (cagr, roic, fcf, peg)) or not grade:
         return None, ["缺資料"], used
     fails = []
     if not cagr > QUALITY_GATE["eps_fy1_fy3_cagr_pct"]:
@@ -87,9 +97,13 @@ def quality_check(row: dict) -> tuple[bool | None, list[str], dict]:
     if not roic > QUALITY_GATE["roic"]:
         fails.append("ROIC≤15")
     if not fcf > QUALITY_GATE["fcf"]:
-        fails.append("FCFm≤15")
+        fails.append("FCFm≤10")
     if not peg < QUALITY_GATE["peg"]:
         fails.append("PEG≥2")
+    if grade in QUALITY_GATE["moat_veto_grades"]:
+        fails.append(f"護城河{grade}")
+    if trend == "↓":
+        fails.append("護城河↓")
     return (len(fails) == 0), fails, used
 
 
@@ -233,9 +247,9 @@ def scan_ticker(frame: Frame, quality_pass: bool | None, quality_fails: list[str
             ok1, reasons1 = frame.state1(d, px)
             vetoes = list(reasons1)
             if quality_pass is None:
-                vetoes.append("四條件缺資料")
+                vetoes.append("五條件缺資料")
             elif not quality_pass:
-                vetoes.append("四條件fail:" + ",".join(quality_fails))
+                vetoes.append("五條件fail:" + ",".join(quality_fails))
             ev.append({
                 "type": sig_class, "date": d, "close": px,
                 "base_age_weeks": round(base_age_w, 1),
@@ -276,9 +290,9 @@ def scan_ticker(frame: Frame, quality_pass: bool | None, quality_fails: list[str
             ok1, reasons1 = frame.state1(d, px)
             vetoes = list(reasons1)
             if quality_pass is None:
-                vetoes.append("四條件缺資料")
+                vetoes.append("五條件缺資料")
             elif not quality_pass:
-                vetoes.append("四條件fail:" + ",".join(quality_fails))
+                vetoes.append("五條件fail:" + ",".join(quality_fails))
             ev.append({
                 "type": "B", "date": d, "close": px,
                 "base_age_weeks": None, "base_star": False,

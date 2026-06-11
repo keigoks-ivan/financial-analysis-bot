@@ -131,7 +131,7 @@ def main() -> int:
         events = scan_ticker(frame, qpass, qfails)
 
         # ── ledger append（窗內新事件）──
-        # 噪音控制：四條件 fail/缺資料的票不進帳本（漏斗外，頁面以「四條件過閘 N」
+        # 噪音控制：五條件 fail/缺資料的票不進帳本（漏斗外，頁面以「五條件過閘 N」
         # 呈現即可）；過閘票的否決（態②/排列/歷史不足）才是 SOP 張力證據，必記。
         for e in events:
             if not qpass:
@@ -300,7 +300,7 @@ def main() -> int:
     LATEST_PATH.write_text(json.dumps(latest, ensure_ascii=False, indent=1),
                            encoding="utf-8")
     PAGE_PATH.write_text(render_page(latest), encoding="utf-8")
-    print(f"sop-funnel: as_of={today_str} universe={len(universe)} 四條件pass={n_qpass} "
+    print(f"sop-funnel: as_of={today_str} universe={len(universe)} 五條件pass={n_qpass} "
           f"新事件={new_events} 持倉={len(open_trades)} 已平倉={len(closed_trades)} "
           f"今日板機={len(today_signals)} 今日否決={len(today_vetoed)}")
     return 0

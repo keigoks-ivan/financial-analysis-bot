@@ -75,10 +75,10 @@ def test_quality_veto_recorded():
     fr = build_frame(ser)
     evs = scan_ticker(fr, False, ["PEG≥2"])
     a1 = [e for e in evs if e["type"] == "A1"][-1]
-    ok(any("四條件fail" in v for v in a1["vetoes"]), "A1 帶四條件 fail 否決標記")
+    ok(any("五條件fail" in v for v in a1["vetoes"]), "A1 帶五條件 fail 否決標記")
     evs2 = scan_ticker(fr, None, [])
     a12 = [e for e in evs2 if e["type"] == "A1"][-1]
-    ok("四條件缺資料" in a12["vetoes"], "缺資料 = 不過閘（記錄缺資料否決）")
+    ok("五條件缺資料" in a12["vetoes"], "缺資料 = 不過閘（記錄缺資料否決）")
 
 
 def test_b_second_train():
@@ -235,16 +235,27 @@ def test_replay_anchors():
 
 
 def test_quality_gate():
-    print("[11] 四條件閘門欄位語義")
-    p, fails, used = quality_check({"eps_fy1_fy3_cagr_pct": 32.3, "roic": 62.1,
-                                    "fcf": 18.3, "live_peg": 0.51, "peg": 0.27})
-    ok(p is True and used["peg_source"] == "live_peg", "NVDA 樣本 4/4 pass、live_peg 優先")
-    p, fails, _ = quality_check({"eps_fy1_fy3_cagr_pct": 10, "roic": 62,
-                                 "fcf": 18, "live_peg": 0.5})
+    print("[11] 五條件閘門欄位語義（四質量 + 護城河）")
+    base = {"eps_fy1_fy3_cagr_pct": 32.3, "roic": 62.1, "fcf": 18.3,
+            "live_peg": 0.51, "peg": 0.27, "moat_grade": "S", "moat_trend": "→"}
+    p, fails, used = quality_check(base)
+    ok(p is True and used["peg_source"] == "live_peg", "NVDA 樣本 5/5 pass、live_peg 優先")
+    p, fails, _ = quality_check({**base, "eps_fy1_fy3_cagr_pct": 10})
     ok(p is False and "CAGR≤15" in fails, "CAGR 10 → fail 標記")
-    p, fails, _ = quality_check({"eps_fy1_fy3_cagr_pct": None, "roic": 62,
-                                 "fcf": 18, "live_peg": 0.5})
-    ok(p is None and fails == ["缺資料"], "缺值 = 不過閘（None）")
+    p, fails, _ = quality_check({**base, "eps_fy1_fy3_cagr_pct": None})
+    ok(p is None and fails == ["缺資料"], "質量欄缺值 = 不過閘（None）")
+    p, fails, _ = quality_check({**base, "fcf": 12.7})
+    ok(p is True, "FCFm 12.7（LLY 案例）在 >10 門檻下過閘")
+    p, fails, _ = quality_check({**base, "fcf": 8.2})
+    ok(p is False and "FCFm≤10" in fails, "FCFm 8.2 仍被擋")
+    p, fails, _ = quality_check({**base, "moat_grade": "C"})
+    ok(p is False and "護城河C" in fails, "護城河 C → 硬否決")
+    p, fails, _ = quality_check({**base, "moat_trend": "↓"})
+    ok(p is False and "護城河↓" in fails, "護城河趨勢 ↓ → 否決新進場")
+    p, fails, _ = quality_check({**base, "moat_grade": None})
+    ok(p is None, "moat_grade 缺 = 不過閘")
+    p, fails, _ = quality_check({**base, "moat_trend": None})
+    ok(p is True, "moat_trend 缺 = 視為 →（不否決）")
 
 
 if __name__ == "__main__":
