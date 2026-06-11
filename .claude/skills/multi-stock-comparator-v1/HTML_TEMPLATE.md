@@ -184,24 +184,31 @@ tr:last-child td { border-bottom: none; }
 **`<head>` 必填(v1.2+)**:緊接 `<meta charset>` 後加一行 `<meta name="robots" content="noindex,nofollow">`。理由:研究站 `research.investmquest.com` 走 noindex 政策避免 Koyfin/SimplyWallSt 等第三方估值資料源觸發 TOS。漏寫 → 下次 `scripts/inject_noindex.py` 會自動補上但 comparison 多一次無謂 diff。
 
 關鍵章節:
-- §A Dashboard:verdict-card(綠 border)+ 基本資料表 + 四層排序速覽
-- §B.1-B.4:四層時間框架,每層獨立排序 + 判斷邏輯
-- §C IRR Composition:irr-bar 視覺化拆解
+- §A Dashboard:verdict-card(綠 border)+ 基本資料表 + **報告 vintage 表(v1.7)** + 四層排序速覽(全報告唯一完整排序出處)
+- §A.1 業務地圖 + 護城河來源對照:6 rows 對照表 + 業務地圖洞察 box
+- §A.2 基本面財務體質對比(v1.6):四張表(成長引擎 / 獲利結構 / 資產負債與資本配置 / 經營質量)各帶 1 段橫向洞察 + 財務體質裁決 box(callout-key)
+- §A.3 競爭態勢對比(v1.6):主戰場競爭格局表(含圈外威脅)+ 護城河二維拆解表 + 議價權三段表 + head-to-head 逐對散文段 + **互斥假設檢查段(v1.7)** + 競爭態勢裁決 box(callout-warn)
+- §B.1-B.4:四層時間框架,每層獨立排序 + 判斷邏輯(引 §A.2/§A.3 格子當論據)
+- §C IRR Composition:irr-bar 視覺化拆解(價格重抓檔用 re-rate 重算後數字)
 - §D Bear / MaxDD:執行風險 vs 範式風險標籤
-- §E 最終裁決:推薦標的 + 不選他檔理由 + 時間軸敏感度測試
+- §E 最終裁決:首選變化矩陣(只寫差異,不重抄 §A)+ 共同 beta vs 相對 alpha 段 + 推薦標的 + 不選他檔理由 + 時間軸敏感度測試 + 裁決證偽條件(≥1 條可監測)
+
+**report-meta 必含 as-of 行(v1.7)**:`股價 as-of YYYY-MM-DD(WebSearch)· 技術指標 as-of 各報告日 · EPS consensus as-of {latest.json snapshot 日}`。
+
+sticky nav 錨點:`#sA`、`#sA1`、`#sA2`、`#sA3`、`#sB1`-`#sB4`、`#sC`、`#sD`、`#sE`。
 
 ---
 
-## 【字元數估計】
+## 【字元數估計】(v1.6 — 含 §A.2/§A.3 後上修;同時是 size floor)
 
-| 檔數 | HTML 大小 |
-|:---|:---|
-| 2 檔對比 | 18-25K 字元 |
-| 3 檔對比 | 25-45K 字元 |
-| 4 檔對比 | 40-55K 字元 |
-| 5 檔對比 | 50-65K 字元 |
+| 檔數 | HTML 大小(典型) | size floor(低於視為偷懶) |
+|:---|:---|:---|
+| 2 檔對比 | 45-55K 字元 | ≥ 45K |
+| 3 檔對比 | 60-75K 字元 | ≥ 60K |
+| 4 檔對比 | 70-85K 字元 | ≥ 70K |
+| 5 檔對比 | 80-95K 字元 | ≥ 70K |
 
-單次 create_file 可容納 3 檔。**4-5 檔需要分段追加**,以 str_replace 補完。
+單次 Write 可容納 3 檔。**4-5 檔需要分段追加**,以 Edit 補完。floor 不准用空表格 / 重複段落灌水達標。
 
 ---
 
@@ -211,15 +218,25 @@ HTML 生成後內部檢核:
 
 1. ✅ 所有 [TICKER1/2/3] 都已替換為實際 ticker
 2. ✅ 所有 [YYYY-MM-DD] 都是當前日期
-3. ✅ 所有表格欄位填滿(無 ... 殘留)
-4. ✅ 五大章節(§A-§E)全寫完
+3. ✅ 所有表格欄位填滿(無 ... 殘留;缺值用「n/a(來源未載)」明標,非留白)
+4. ✅ 五大章節(§A-§E)全寫完,§A 含 A.1/A.2/A.3 三個子章
 5. ✅ §A 推薦卡片有明確推薦標的(綠色 verdict-pick)
-6. ✅ §B 每層都有 1-N 排序(rank-1/rank-2/rank-3 css)
-7. ✅ §C IRR Bar 已 render(寬度比例正確,白色文字)
-8. ✅ §D 風險類型已標籤(執行/範式)
-9. ✅ §E 不選其他檔的理由已點名每一檔
-10. ✅ §E 時間軸敏感度測試已寫
-11. ✅ 配色為白底深字(主文 #1a1d24,背景 #ffffff)
+6. ✅ §A 報告 vintage 表填齊(每檔:報告類型 / 報告日 / 之後財報? / 漂移判定);重大漂移檔的警語在 verdict card 上(v1.7)
+7. ✅ report-meta 有 as-of 行(股價 / 技術指標 / EPS consensus 三個 vintage)(v1.7)
+8. ✅ §A.2 四張表齊備,每格是 sourced number(無「高/中/不錯」定性詞充數),表後各 1 段橫向洞察 + 財務體質裁決 box 有 1-N 排序
+9. ✅ §A.2 的 EPS CAGR 與 §C IRR 拆解數字一致(同源);價格重抓檔的 §C IRR 為 re-rate 重算版(v1.7)
+10. ✅ §A.3 每檔都有圈外威脅 + QC-23 等級;head-to-head 每對組合都有 win/loss 案例或明寫「無直接重疊」;互斥假設檢查每對都有「相容 / 互斥+裁決」結論(v1.7);競爭態勢裁決 box 已寫
+11. ✅ §B 每層都有 1-N 排序(rank-1/rank-2/rank-3 css),且至少引用 1 個 §A.2/§A.3 格子當論據
+12. ✅ §C IRR Bar 已 render(寬度比例正確,白色文字)
+13. ✅ §D 風險類型已標籤(執行/範式)
+14. ✅ §E 不選其他檔的理由已點名每一檔
+15. ✅ §E 時間軸敏感度測試已寫
+16. ✅ §E 共同 beta vs 相對 alpha 段已寫(同產業對比;引 ID §0 或標明自建)(v1.7)
+17. ✅ §E 裁決證偽條件 ≥1 條且可監測(數字閾值或具體事件)(v1.7)
+18. ✅ 配色為白底深字(主文 #1a1d24,背景 #ffffff)
+19. ✅ HTML size ≥ floor(2 檔 45K / 3 檔 60K / 4-5 檔 70K)
+
+檢核全過後,還要過 SKILL.md 的「寫稿後 self-review gate」(數字抽查 ≥6 + 跨章節一致)才能更新 index.html(v1.7)。
 
 ---
 
