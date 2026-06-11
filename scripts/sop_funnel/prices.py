@@ -71,7 +71,9 @@ def load_benchmark(refresh: bool = True) -> tuple[pd.Series, bool]:
             if hist is None or hist.empty:
                 raise RuntimeError("yfinance 回傳空資料")
             for d, row in hist["Close"].items():
-                closes[pd.Timestamp(d).strftime("%Y-%m-%d")] = round(float(row), 4)
+                v = float(row)
+                if v == v and v > 0:   # 排除 nan / 空 bar（曾汙染 cache 造成 α=nan）
+                    closes[pd.Timestamp(d).strftime("%Y-%m-%d")] = round(v, 4)
             BENCHMARK_PATH.parent.mkdir(parents=True, exist_ok=True)
             BENCHMARK_PATH.write_text(json.dumps({
                 "ticker": BENCHMARK_TICKER,
@@ -86,6 +88,7 @@ def load_benchmark(refresh: bool = True) -> tuple[pd.Series, bool]:
     if not closes:
         return pd.Series(dtype=float), True
     ser = pd.Series({pd.Timestamp(k): v for k, v in closes.items()}).sort_index()
+    ser = ser[ser.notna() & (ser > 0)]
     return ser, stale
 
 

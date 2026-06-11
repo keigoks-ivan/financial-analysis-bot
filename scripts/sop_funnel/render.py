@@ -327,7 +327,7 @@ footer{{text-align:center;font-size:10.5px;color:#8aa5c0;padding:24px}}
 <header class="imq-nav-root"><div class="imq-nav-inner">
 <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
 <nav class="imq-menu"><a href="/">首頁</a><a href="/research/">個股 DD</a>
-<a href="/dd-screener/">DD Screener</a><a href="/dd-screener/sop-funnel.html" class="active">🎯 SOP 漏斗</a></nav>
+<a href="/dd-screener/">DD Screener</a><a href="/dd-screener/sop-funnel.html" class="active">🎯 SOP 漏斗</a><a href="/dd-screener/sop-funnel-backtest.html">🧪 2022 回測</a></nav>
 </div></header>
 
 <div class="hero"><div class="hero-inner">
@@ -377,7 +377,7 @@ footer{{text-align:center;font-size:10.5px;color:#8aa5c0;padding:24px}}
 <h4>已平倉明細</h4>
 <table><thead><tr><th class="left">ticker</th><th>型態</th><th>進場</th><th>出場</th><th>原因</th><th>報酬</th><th>R</th><th>α vs SPY</th><th>持有</th></tr></thead>
 <tbody>{_closed_rows(d["closed_trades"])}</tbody></table>
-<h4>5 年歷史回測參考（含態④減碼幅度 A/B，供 2026-09 季檢）</h4>
+<h4>5 年歷史回測參考（含態④減碼幅度 A/B，供 2026-09 季檢）　·　<a href="/dd-screener/sop-funnel-backtest.html">🧪 完整 2022 回測：斷路器死鎖發現 + NAV 曲線 + 規則實驗室 →</a></h4>
 {_backtest_block(d.get("backtest"))}
 </div></div>
 
