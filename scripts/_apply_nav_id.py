@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# DEPRECATED: superseded by scripts/site_nav.py (canonical site header source of truth)
 """Prepend unified nav to ID_*.html files (they currently have NO top nav)."""
 
 import sys

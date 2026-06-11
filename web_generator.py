@@ -14,12 +14,17 @@ from __future__ import annotations
 
 import os
 import re
+import sys
 import json
 import datetime
 import html as html_lib
 import requests
 import markdown as md_lib
 from pathlib import Path
+
+# Canonical site header (single source: scripts/site_nav.py)
+sys.path.insert(0, str(Path(__file__).resolve().parent / "scripts"))
+from site_nav import full_nav_block  # noqa: E402
 
 # ── 路徑常數 ─────────────────────────────────────────────────────────────────
 DOCS_DIR = Path("docs")
@@ -317,29 +322,6 @@ def _gauge_color_hex(score: float, max_score: float = 80.0) -> str:
 
 # ── HTML 骨架 ────────────────────────────────────────────────────────────────
 
-def _header(active: str = "") -> str:
-    links = [
-        ("首頁", "/"),
-        ("每日簡報", "/briefing/"),
-        ("週報", "/weekly/"),
-        ("回測", "/backtest/"),
-        ("研究報告", "/research/"),
-        ("QGM 美股", "/qgm/"),
-        ("QGM 台股", "/qgm-tw/"),
-        ("六狀態機", "/six-state/"),
-    ]
-    nav = " ".join(
-        f'<a href="{url}" class="{"active" if active == lbl else ""}">{lbl}</a>'
-        for lbl, url in links
-    )
-    return f"""<header>
-  <div class="container hdr-inner">
-    <a class="logo" href="/">InvestMQuest<span>.</span> Research</a>
-    <nav>{nav}</nav>
-  </div>
-</header>"""
-
-
 def _footer() -> str:
     year = datetime.date.today().year
     return f"""<div class="container"><div class="disclaimer">{DISCLAIMER}</div></div>
@@ -351,7 +333,13 @@ def _footer() -> str:
 </footer>"""
 
 
-def _base_page(title: str, body: str, extra_head: str = "") -> str:
+def _base_page(
+    title: str,
+    body: str,
+    extra_head: str = "",
+    nav_group: str | None = None,
+    nav_item: str | None = None,
+) -> str:
     return f"""<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
@@ -365,7 +353,7 @@ def _base_page(title: str, body: str, extra_head: str = "") -> str:
   {extra_head}
 </head>
 <body>
-{_header()}
+{full_nav_block(nav_group, nav_item)}
 {body}
 {_footer()}
 <script>
@@ -1231,7 +1219,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
   <style>{landing_css}</style>
 </head>
 <body>
-{_header('首頁')}
+{full_nav_block("home", None)}
 {body}
 <div class="container">
   <div class="disclaimer">
@@ -1398,7 +1386,8 @@ def generate_research(reports: list[dict]) -> None:
 
     out_path = DOCS_DIR / "research" / "index.html"
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    _write_html(out_path, _base_page(f"研究報告 — {today}", body))
+    _write_html(out_path, _base_page(f"研究報告 — {today}", body,
+                                     nav_group="research", nav_item="dd"))
 
 
 # ── 10-K 報告頁面 ───────────────────────────────────────────────────────────
@@ -1719,7 +1708,8 @@ document.addEventListener('DOMContentLoaded',function(){{
     out_dir.mkdir(parents=True, exist_ok=True)
     _write_html(
         out_dir / f"{slug}.html",
-        _base_page(f"{ticker} 10-K — {date}", full_body, chart_head),
+        _base_page(f"{ticker} 10-K — {date}", full_body, chart_head,
+                   nav_group="research", nav_item="dd"),
     )
 
 
@@ -1986,7 +1976,8 @@ def generate_report_page_10q(report: dict, content: str) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     _write_html(
         out_dir / f"{slug}.html",
-        _base_page(f"{ticker} 10-Q — {date}", body),
+        _base_page(f"{ticker} 10-Q — {date}", body,
+                   nav_group="research", nav_item="dd"),
     )
 
 
@@ -2390,72 +2381,8 @@ def generate_mental_models() -> None:
     positions = compute_positions(MODELS, DISCIPLINES)
     edges = compute_edges(MODELS, positions)
 
-    # ── IMQ Nav (verbatim from docs/mental-models/index.html lines 33-306) ───
-    IMQ_NAV_CSS = """
-.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
-.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
-.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
-.imq-logo:hover{color:#fff !important;text-decoration:none !important}
-.imq-logo span{color:#3b82f6}
-.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
-.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
-.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
-.imq-menu > a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
-.imq-dd{position:relative;display:inline-block}
-.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
-.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
-.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
-.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
-.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
-@media(max-width:768px){
-  .imq-nav-root{padding:.55rem 12px}
-  .imq-nav-inner{gap:.4rem}
-  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
-  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
-  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
-  .imq-dd.open .imq-dd-menu{display:block}
-}"""
-
-    IMQ_NAV_HTML = """<header class="imq-nav-root">
-  <div class="imq-nav-inner">
-    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
-    <nav class="imq-menu">
-      <a href="/">首頁</a>
-      <div class="imq-dd">
-        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
-        <div class="imq-dd-menu">
-          <a href="/research/">個股 DD</a>
-          <a href="/id/">產業深度 ID</a>
-          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
-        </div>
-      </div>
-      <div class="imq-dd">
-        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
-        <div class="imq-dd-menu">
-          <a href="/briefing/">每日簡報</a>
-          <a href="/weekly/">週報</a>
-          <a href="/earnings/">財報分析</a>
-          <a href="/markets.html">Markets</a>
-          <a href="/sectors.html">Sectors</a>
-          <a href="/six-state/">六狀態機</a>
-        </div>
-      </div>
-      <div class="imq-dd">
-        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
-        <div class="imq-dd-menu">
-          <a href="/backtest/">量化回測</a>
-          <a href="/qgm/">QGM 美股</a>
-          <a href="/qgm-tw/">QGM 台股</a>
-          <a href="/screener.html">Screener 美股</a>
-          <a href="/screener-tw.html">Screener 台股</a>
-        </div>
-      </div>
-      <a href="/mental-models/" class="active">🧠 心智模型</a>
-      <a href="/how-to.html">📘 使用說明</a>
-    </nav>
-  </div>
-</header>
-<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>"""
+    # ── IMQ Nav — canonical block from scripts/site_nav.py ───────────────────
+    IMQ_NAV_HTML = full_nav_block("mm", None)
 
     # ── SVG: cluster labels ───────────────────────────────────────────────────
     def render_cluster_labels(models, disciplines, positions):
@@ -2668,9 +2595,6 @@ body{{font-family:var(--imq-font-sans);background:var(--imq-bg);color:var(--imq-
 a{{color:var(--imq-accent);text-decoration:none;transition:color .15s}}
 a:hover{{color:var(--imq-accent-hover)}}
 
-/* IMQ Nav */
-{IMQ_NAV_CSS}
-
 /* ── Top chrome ── */
 .top-chrome{{padding:20px 28px 14px;border-bottom:1px solid var(--imq-border-soft);background:var(--imq-card);display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}}
 .top-eyebrow{{font-family:var(--imq-font-mono);font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--imq-accent);margin-bottom:6px}}
@@ -2842,7 +2766,6 @@ a:hover{{color:var(--imq-accent-hover)}}
   </style>
 </head>
 <body>
-
 {IMQ_NAV_HTML}
 
 <!-- Top chrome -->

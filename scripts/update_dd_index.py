@@ -2896,6 +2896,26 @@ def main():
             file=sys.stderr,
         )
 
+    # Self-heal pass for the canonical site header (scripts/site_nav.py):
+    # any page newly written by a skill/generator since the last sync gets the
+    # unified nav injected; pages already canonical are untouched (idempotent).
+    # Runs last — its failure is non-fatal.
+    nav_script = Path(__file__).resolve().parent / "site_nav.py"
+    if not nav_script.exists():
+        return
+    print(f"\n→ Auto-trigger: {nav_script.name} (site header self-heal)")
+    try:
+        subprocess.run(
+            [sys.executable, str(nav_script)],
+            check=True,
+        )
+    except Exception as e:
+        print(
+            f"\n⚠ site_nav self-heal errored: {e}. "
+            f"Rerun `python3 {nav_script}` manually.",
+            file=sys.stderr,
+        )
+
 
 if __name__ == "__main__":
     main()

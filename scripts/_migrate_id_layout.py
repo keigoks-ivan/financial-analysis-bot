@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# DEPRECATED: superseded by scripts/site_nav.py (canonical site header source of truth)
 """One-off migration: rebuild docs/id/index.html with new layout (compressed hero + sticky toolbar + 2-col grid + collapsible cards)
 preserving every category, topic card, child, suggest block, and inline content."""
 from __future__ import annotations

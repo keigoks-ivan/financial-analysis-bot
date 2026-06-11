@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# DEPRECATED: superseded by scripts/site_nav.py (canonical site header source of truth)
 """Apply unified nav to all top-level landing pages.
 
 Strategy:

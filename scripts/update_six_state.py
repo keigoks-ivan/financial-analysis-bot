@@ -19,6 +19,12 @@ import numpy as np
 import pandas as pd
 import yfinance as yf
 
+# Canonical site header (single source: scripts/site_nav.py)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from site_nav import full_nav_block  # noqa: E402
+
+NAV_BLOCK = full_nav_block("market", "six")
+
 OUTPUT = Path(__file__).parent.parent / "docs" / "six-state" / "index.html"
 STATE_JSON = Path(__file__).parent.parent / "docs" / "six-state" / "state.json"
 
@@ -431,12 +437,7 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
 </style>
 </head>
 <body>
-<header>
-  <div class="container hdr-inner">
-    <a class="logo" href="/">InvestMQuest Research</a>
-    <nav><a href="/">首頁</a> <a href="/briefing/">每日簡報</a> <a href="/weekly/">週報</a> <a href="/backtest/">回測</a> <a href="/six-state/" class="active">六狀態機</a></nav>
-  </div>
-</header>
+{NAV_BLOCK}
 <div class="page-hdr">
   <div class="container">
     <div class="crumb"><a href="/">首頁</a> / 六狀態機</div>
