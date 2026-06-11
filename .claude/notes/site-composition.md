@@ -15,6 +15,19 @@
 - 不確定時：`git -C <repo> log --oneline -- docs/<path>` 看哪個 repo 有歷史
 - 訊號：本 repo `git log` 顯示 commit author = `github-actions[bot]` 但 `.github/workflows/` 裡找不到對應 workflow → 該路徑由外部 repo cron push 過來
 
+## Canonical site header（2026-06-11 起）
+
+全站頁首單一真相來源：**本 repo `scripts/site_nav.py`**（NAV_STYLE / build_nav / NAV_SCRIPT / full_nav_block + dd-screener sub-nav）。改 nav 的流程：
+
+1. 改 `scripts/site_nav.py`
+2. 跑 `python3 scripts/site_nav.py` 重注入 docs/ 全部頁面（冪等；`update_dd_index.py` 結尾也會自動跑一次 self-heal）
+3. **re-sync 三個外部 repo 的 synced literal copy**（各 repo 內有 "do not edit by hand" 註解與重生指令）：
+   - v7-backtest：`site_nav_snippet.py`
+   - morning-briefing：`briefing/site_nav_snippet.py`
+   - minervini-quality-backtest：`live/site_nav_block.py`（+ `live/inject_nav.py` 給 workflow stub 頁用）
+
+本 repo generator（web_generator、scripts/build_*、docs/backtest/_build_*、update_six_state）直接 import `site_nav`，不需 sync。注意：ID 報告的章節錨點列 class 是 `id-secnav`，不要再用 `imq-nav-root`（會被站頭樣式污染）。
+
 ## 工作流程
 
 - 接到「整站頁首/頁尾改 XX」「為什麼某個子頁面長得不一樣」這類任務：先判斷該路徑屬於哪個 repo，到對應 repo 改 template，再考慮要不要同時 patch 已經渲染好的檔案
