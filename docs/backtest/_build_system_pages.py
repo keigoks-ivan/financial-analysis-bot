@@ -1,16 +1,25 @@
 """
-One-shot generator for 4 individual system pages:
+Generator for the system pages that have no dedicated backtest engine generator:
   /backtest/dual_track/  - 雙軌多空
-  /backtest/long_track/  - Long Track Only
-  /backtest/six_state/   - 六狀態機
   /backtest/gem/         - GEM 雙動能
 
-Run from anywhere; outputs each <slug>/index.html.
-Re-run to regenerate.
+DO NOT add these back — they are owned by generators in the v7-backtest repo
+(re-running them here would overwrite the corrected hero-layout pages):
+  /backtest/long_track/           v7-backtest/src/long_track_backtest/generate_site_page.py
+  /backtest/long_track_qqq/       v7-backtest/src/lto_qqq_backtest/generate_site_page.py
+  /backtest/long_track_ensemble/  v7-backtest/src/long_track_backtest/generate_ensemble_page.py
+  /backtest/six_state/            v7-backtest/six_state_backtest/generate_site_page.py
+  /backtest/six_state_v1r1/       v7-backtest/six_state_backtest/generate_v1r1_page.py
+
+Sub-navigation comes from _nav_common.make_toggle (single source).
+Run from anywhere; outputs each <slug>/index.html.  Re-run to regenerate.
 """
+import sys
 from pathlib import Path
 
 OUT = Path(__file__).parent
+sys.path.insert(0, str(OUT))
+from _nav_common import make_toggle  # noqa: E402
 
 # ===== Common assets =====
 CSS = """
@@ -88,6 +97,12 @@ tbody tr:hover td{background:#f3f4f6}
 .chart-card h3{font-size:.95rem;font-weight:600;margin-bottom:.5rem;color:var(--text)}
 .chart-wrap{position:relative;width:100%;height:380px}
 .chart-wrap-sm{position:relative;width:100%;height:200px}
+.hero{margin:1.25rem 0;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--card)}
+.hero-top{padding:1.4rem 1.6rem;border-bottom:1px solid var(--border)}
+.hero-top .verdict-tag{display:inline-block;color:#fff;font-size:.74rem;font-weight:700;
+                       letter-spacing:.05em;padding:.25rem .7rem;border-radius:99px;margin-bottom:.5rem}
+.hero-top h2{font-size:1.35rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.35rem}
+.hero-top p{font-size:.92rem;color:#374151;max-width:60rem}
 footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
        text-align:center;padding:1.25rem 0;font-size:.78rem}
 @media(max-width:768px){
@@ -103,71 +118,6 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 }
 """
 
-# Toggle pill — three semantic groups
-COMPARISON_LINKS = [
-    ("/backtest/", "20 年", "20y"),
-    ("/backtest/10y/", "10 年", "10y"),
-    ("/backtest/criteria/", "評估標準", "criteria"),
-]
-INDIVIDUAL_LINKS = [
-    ("/backtest/dual_track/", "雙軌多空", "dual"),
-    ("/backtest/long_track/", "Long Track", "long"),
-    ("/backtest/long_track_qqq/", "LTO QQQ only", "long_qqq"),
-    ("/backtest/six_state/", "六狀態機", "six_state"),
-    ("/backtest/gem/", "GEM", "gem"),
-    ("/backtest/slope_filter/", "W52 斜率", "slope"),
-    ("/backtest/short_system/", "做空 (失敗)", "short"),
-]
-MULTI_LINKS = [
-    ("/backtest/turtle/", "🐢 Turtle", "turtle"),
-    ("/backtest/clenow/", "📈 Clenow", "clenow"),
-]
-TOGGLE_LINKS = COMPARISON_LINKS + INDIVIDUAL_LINKS + MULTI_LINKS  # back-compat
-
-
-def make_toggle(active: str) -> str:
-    """Build three-group toggle: 對比總覽 / 個別系統 / 多資產."""
-    def link(url, label, key):
-        is_active = key == active
-        if is_active:
-            if key == "short":
-                bg = "#dc2626"
-            elif key == "turtle":
-                bg = "#0f766e"
-            elif key == "clenow":
-                bg = "#6366f1"
-            elif key == "long_qqq":
-                bg = "#16a34a"
-            else:
-                bg = "var(--brand)"
-            return f'<a href="{url}" style="padding:.4rem .85rem;background:{bg};color:#fff;font-size:.8rem;font-weight:600;text-decoration:none;border-left:1px solid var(--border)">{label}</a>'
-        else:
-            if key == "short":
-                color = "#dc2626"
-            elif key == "turtle":
-                color = "#0f766e"
-            elif key == "clenow":
-                color = "#6366f1"
-            elif key == "long_qqq":
-                color = "#16a34a"
-            else:
-                color = "var(--brand)"
-            return f'<a href="{url}" style="padding:.4rem .85rem;background:#fff;color:{color};font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">{label}</a>'
-
-    def group(label_text, links, accent):
-        links_html = "".join(link(u, l, k) for u, l, k in links)
-        return f'''<div>
-        <div style="font-size:.68rem;color:{accent};text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;font-weight:600">{label_text}</div>
-        <div style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-wrap:wrap">{links_html}</div>
-      </div>'''
-
-    return f'''<div style="margin-top:.75rem;display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap">
-      {group("對比總覽", COMPARISON_LINKS, "#1a56db")}
-      {group("個別系統 (美股)", INDIVIDUAL_LINKS, "var(--muted)")}
-      {group("多資產", MULTI_LINKS, "#0f766e")}
-    </div>'''
-
-
 # Years used in yearly returns arrays
 YEARS = list(range(2006, 2027))
 
@@ -179,6 +129,18 @@ SYSTEMS = {
         "name": "雙軌多空",
         "subtitle": "50/50 SPY/QQQ · Short Track 70% + Long Track 30%",
         "color": "#7c3aed",
+        "hero": {
+            "tag": "✗ 原始設計 — 已否決",
+            "tag_bg": "#dc2626",
+            "bg": "linear-gradient(135deg,#fef2f2 0%,#fff5f5 100%)",
+            "border": "var(--red-border)",
+            "title": "70% 資金配給獲利因子 1.15 的短線軌 — 結構性錯置",
+            "body": """v7 Ch12 原始雙軌設計。短線軌(70% 資金)獲利因子僅 1.15、做空勝率 11-16%,
+                貢獻 75.7% 的最大回撤,把長線軌(獲利因子 6.6-8.9)的優勢稀釋殆盡。
+                CAGR 4.60% 輸所有基準。後續演化:移除短線軌 →
+                <a href="/backtest/long_track/">Long Track Only</a>(2026-06 修正版 +9.59% / -20.08%)。
+                「指數做空不可行」由本系統與 <a href="/backtest/turtle/">Turtle 的 SPY 腿</a>(勝率 3.2%)獨立驗證兩次。""",
+        },
         "rules": """
             原始 v7 Ch12 系統設計。每個標的內部分為兩條獨立軌道:<br>
             <strong>短線軌 (70% 資金)</strong>: D60/D120/D200 日線均線,N=2 出場確認,可做多可做空。<br>
@@ -213,164 +175,21 @@ SYSTEMS = {
 </div>
         """),
     },
-    "long": {
-        "name": "Long Track Only",
-        "subtitle": "50/50 SPY/QQQ · 只用週線長線軌 · 推薦配置",
-        "color": "#059669",
-        "rules": """
-            從 v7 Ch12 雙軌系統中<strong>移除短線軌</strong>,只保留長線軌:<br>
-            週線均線 W52 / W104 / W250,斜率 lookback N=4 週,出場確認 N=1 (週線收盤跌破 W52 即出場)。<br>
-            進場條件: 週線收盤 &gt; W52, W104, W250 且 W104, W250 斜率 &gt; 0 (score == 5)。<br>
-            50/50 配置 SPY 和 QQQ。<strong>實際 20 年從未觸發做空訊號</strong>,等同只做多策略。
-        """,
-        "m20": {"cagr": 10.95, "mdd": -19.99, "sharpe": 0.86, "sortino": 1.02, "calmar": 0.55, "vol": 13.17, "trades": 37, "final": "$5.00M"},
-        "m10": {"cagr": 13.06, "mdd": -18.82, "sharpe": 0.97, "sortino": 1.16, "calmar": 0.69, "vol": 12.96, "trades": 21, "final": "$3.42M"},
-        "yearly": [None, None, None, None, 4.47, -9.51, 8.64, 31.26, 17.36, -5.19, 3.45, 26.09, -1.78, 20.49, 25.78, 30.01, -14.72, 8.71, 26.74, 17.03, -5.07],
-        "verdict": """
-            <strong>本站唯一通過所有合格 + 優秀 + 穩健標準的系統。</strong>
-            CAGR 10.95%、Sharpe 0.86、Calmar 0.55,且 Walk-forward 與參數敏感度檢驗都通過。
-            10 年視窗下 Sharpe 進一步提升到 0.97,Calmar 0.69,證明這個系統在不同時期都穩定。
-            年均交易 ~2 筆,平均持有 255 天,交易成本極低。
-        """,
-        "extra_section": ("穩健性驗證", """
-<table>
-<thead><tr><th>檢驗</th><th>標準</th><th>結果</th><th>狀態</th></tr></thead>
-<tbody>
-<tr><td>Walk-Forward</td><td>Sharpe 差距 &lt; 0.3</td><td>0.22 (訓練 0.71 / 驗證 0.94)</td><td><span class="tag tag-best">通過</span></td></tr>
-<tr><td>參數敏感度</td><td>CAGR 極差 &lt; 3pp</td><td>0.44pp (W48-W56 / W100-W112 / W240-W260)</td><td><span class="tag tag-best">通過</span></td></tr>
-<tr><td>年度穩定性</td><td>無連虧兩年 / 無 +50% 年</td><td>最長連虧 1 年 / 最好年 +31%</td><td><span class="tag tag-best">通過</span></td></tr>
-<tr><td>正報酬比</td><td>&gt; 60%</td><td>71% (12 / 17 年)</td><td><span class="tag tag-best">通過</span></td></tr>
-</tbody>
-</table>
-        """),
-    },
-    "long_qqq": {
-        "name": "Long Track Only — QQQ only",
-        "subtitle": "100% QQQ · 只用週線長線軌 · Long Track 進攻變體",
-        "color": "#16a34a",
-        "rules": """
-            與 <a href="/backtest/long_track/" style="color:var(--brand)">Long Track Only (50/50 SPY/QQQ)</a> 完全相同的規則,但<strong>只持有 QQQ</strong>:<br>
-            週線均線 W52 / W104 / W250,斜率 lookback N=4 週,出場確認 N=1 (週線收盤跌破 W52 即出場)。<br>
-            進場條件: 週線收盤 &gt; W52, W104, W250 且 W104, W250 斜率 &gt; 0 (score == 5)。<br>
-            放棄 SPY 的分散保護,集中曝險於 NASDAQ 100 (科技股),追求更高絕對報酬。
-        """,
-        "m20": {"cagr": 12.33, "mdd": -25.18, "sharpe": 0.81, "sortino": 0.94, "calmar": 0.49, "vol": 15.92, "trades": 22, "final": "$6.05M"},
-        "m10": {"cagr": 15.34, "mdd": -25.18, "sharpe": 0.94, "sortino": 1.10, "calmar": 0.61, "vol": 15.10, "trades": 14, "final": "$4.18M"},
-        "yearly": [None, None, None, None, 3.85, -14.36, 6.93, 33.46, 20.12, -0.93, -0.47, 31.49, 4.35, 19.54, 37.80, 29.24, -18.39, 18.09, 27.74, 18.40, -5.51],
-        "verdict": """
-            <strong>Long Track Only 的進攻變體 — 集中持有 QQQ,放棄分散。</strong>
-            CAGR 12.33% (vs 50/50 baseline 10.95%, +1.38pp),但 MDD 也加深到 -25.18% (vs -19.99%, -5.19pp)。
-            10 年視窗下 CAGR 衝到 15.34%,Calmar 0.61。
-            <strong>適合的角色:</strong> 在更大的組合裡作為「進攻位」,搭配防守型 (例如 W52 或 GEM) 平衡 MDD。
-            若單獨持有,50/50 baseline 的 Calmar 0.55 仍優於 QQQ only 的 0.49,因為 SPY 的分散在 2020 COVID 等急跌時提供了實質緩衝。
-        """,
-        "extra_section": ("與 50/50 baseline 對比", """
-<table>
-<thead><tr><th>指標</th><th>QQQ only</th><th>50/50 baseline</th><th>差異</th></tr></thead>
-<tbody>
-<tr><td>20Y CAGR</td><td style="color:var(--green);font-weight:600">+12.33%</td><td>+10.95%</td><td class="tag tag-best">+1.38pp</td></tr>
-<tr><td>20Y MDD</td><td style="color:var(--red)">-25.18%</td><td>-19.99%</td><td class="tag tag-fail">-5.19pp</td></tr>
-<tr><td>20Y Sharpe</td><td>0.81</td><td style="font-weight:600">0.86</td><td>-0.05</td></tr>
-<tr><td>20Y Calmar</td><td>0.49</td><td style="font-weight:600">0.55</td><td>-0.06</td></tr>
-<tr><td>10Y CAGR</td><td style="color:var(--green);font-weight:600">+15.34%</td><td>+13.06%</td><td class="tag tag-best">+2.28pp</td></tr>
-<tr><td>10Y Calmar</td><td>0.61</td><td style="font-weight:600">0.69</td><td>-0.08</td></tr>
-<tr><td>交易次數</td><td>22</td><td>37</td><td>-15</td></tr>
-<tr><td>勝率</td><td>40.9%</td><td style="font-weight:600">45.9%</td><td>-5.0pp</td></tr>
-<tr><td>盈虧比</td><td style="color:var(--green);font-weight:600">12.87x</td><td>—</td><td>QQQ 贏家更大</td></tr>
-<tr><td>獲利因子</td><td style="color:var(--green);font-weight:600">8.91</td><td>~7.86</td><td>+1.05</td></tr>
-</tbody>
-</table>
-
-<h3 class="section-title" style="margin-top:1.5rem">Top 5 回撤</h3>
-<table>
-<thead><tr><th>#</th><th>Peak</th><th>Trough</th><th>Recovery</th><th>深度</th><th>下跌天數</th><th>恢復天數</th></tr></thead>
-<tbody>
-<tr><td>1</td><td>2020-02-20</td><td>2020-03-12</td><td>2020-07-01</td><td style="color:var(--red)">-25.18%</td><td>21</td><td>111</td></tr>
-<tr><td>2</td><td>2015-07-21</td><td>2016-07-05</td><td>2017-05-01</td><td>-21.75%</td><td>350</td><td>300</td></tr>
-<tr><td>3</td><td>2011-07-26</td><td>2012-01-09</td><td>2013-09-17</td><td>-21.17%</td><td>167</td><td><strong>617</strong></td></tr>
-<tr><td>4</td><td>2021-12-29</td><td>2023-10-26</td><td>2024-01-29</td><td>-19.69%</td><td><strong>665</strong></td><td>95</td></tr>
-<tr><td>5</td><td>2024-07-10</td><td>2024-08-07</td><td>2024-11-06</td><td>-13.56%</td><td>28</td><td>91</td></tr>
-</tbody>
-</table>
-
-<div class="note">
-  <strong>2020 COVID 一週跌 25%</strong> 是 QQQ only 與 50/50 最大的差距點 (50/50 同期只跌 19.4%)。
-  SPY 部位在那一週幫助緩衝。<strong>2011 那次花了 617 天才恢復</strong> — 不能承受漫長套牢的人不適合此配置。
-</div>
-        """),
-    },
-    "six_state": {
-        "name": "六狀態機",
-        "subtitle": "QQQ + SMH + BIL · 三狀態 + Grid 加碼層 · v7 Ch8",
-        "color": "#d32f2f",
-        "rules": """
-            v7 Ch8 簡化版 (路徑 B)。三主狀態 + Grid 加碼層:<br>
-            <strong>S1 正常巡航</strong>: 95% 股票 (QQQ 75% + SMH 20% + BIL 5%)<br>
-            <strong>S2 防守模式</strong>: 47.5% 股票 (QQQ 37.5% + SMH 10% + BIL 52.5%)<br>
-            <strong>S5 趨勢重啟</strong>: 每週股票曝險 +15% 直到 95% 回到 S1<br>
-            <strong>Grid 加碼</strong>: S2 期間,QQQ 跌破 MA104/200/156 觸發 +10%/+15%/+22.5% 加碼。<br>
-            所有 MA 用週線收盤計算,Grid 判斷用上週五已知 MA 值避免 look-ahead。
-        """,
-        "m20": {"cagr": 15.14, "mdd": -40.35, "sharpe": 0.83, "sortino": 1.10, "calmar": 0.38, "vol": 19.36, "trades": 68, "final": "$17.40M"},
-        "m10": {"cagr": 21.24, "mdd": -29.41, "sharpe": 1.03, "sortino": 1.36, "calmar": 0.72, "vol": 19.33, "trades": 36, "final": "$6.88M"},
-        "yearly": [1.54, 15.38, -27.86, 43.31, 16.86, -8.14, 11.56, 30.17, 21.50, 4.58, 8.47, 31.57, -2.39, 35.38, 40.25, 31.11, -25.29, 56.96, 30.20, 26.96, -0.99],
-        "verdict": """
-            <strong>進攻型系統,但 MDD 不合格。</strong> 20Y CAGR 15.14% 漂亮,
-            但 -40.35% 回撤超出個人可接受範圍。10Y 視窗下 CAGR 衝到 21.24% (進入「可疑」區),
-            Sharpe 1.03 + Calmar 0.72 看似優秀,但 21% CAGR 加上未做 walk-forward 驗證,
-            <strong>有過擬合疑慮</strong>。需要外推樣本驗證才能採信。
-        """,
-        "extra_section": ("狀態轉換 + Grid 統計 (20年)", """
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
-<div class="card">
-  <h3>狀態轉換次數</h3>
-  <table>
-  <tbody>
-  <tr><td>S1→S2 進入防守</td><td style="font-weight:600">11 次</td></tr>
-  <tr><td>S2→S5 趨勢重啟</td><td style="font-weight:600">18 次</td></tr>
-  <tr><td>S5→S1 完成恢復</td><td style="font-weight:600;color:var(--green)">11 次</td></tr>
-  <tr><td>S5→S2 恢復失敗</td><td style="font-weight:600;color:var(--red)">7 次</td></tr>
-  </tbody>
-  </table>
-</div>
-<div class="card">
-  <h3>Grid 觸發 + 時間分布</h3>
-  <table>
-  <tbody>
-  <tr><td>Grid #1+#2 (MA104)</td><td style="font-weight:600">8 次</td></tr>
-  <tr><td>Grid #3 (MA200)</td><td style="font-weight:600">1 次</td></tr>
-  <tr><td>Grid #4 (MA156)</td><td style="font-weight:600">3 次</td></tr>
-  <tr style="border-top:2px solid var(--border)"><td>S1 巡航時間</td><td>81.8%</td></tr>
-  <tr><td>S2 防守時間</td><td>15.4%</td></tr>
-  <tr><td>S5 過渡時間</td><td>2.8%</td></tr>
-  </tbody>
-  </table>
-</div>
-</div>
-
-<h3 class="section-title" style="margin-top:1.25rem">關鍵壓力事件</h3>
-<div class="event-card">
-  <div class="ev-name">2008 GFC <span class="tag tag-best" style="margin-left:.5rem">+16pp vs B&amp;H</span></div>
-  <div class="ev-detail">系統 -16.97% vs QQQ B&amp;H -33.18%。S2 + G12 + G4 觸發。2009-06 以 80% 曝險快速恢復。</div>
-</div>
-<div class="event-card">
-  <div class="ev-name">2011 歐債 <span class="tag tag-fail" style="margin-left:.5rem">-6.6pp vs B&amp;H</span></div>
-  <div class="ev-detail">系統 -7.89% vs QQQ B&amp;H -1.33%。S2/S5 來回 whipsaw 4 次。</div>
-</div>
-<div class="event-card">
-  <div class="ev-name">2020 COVID <span class="tag tag-fail" style="margin-left:.5rem">-3.7pp vs B&amp;H</span></div>
-  <div class="ev-detail">系統 -11.15% vs QQQ B&amp;H -7.43%。S2 進入太晚 (3/20),G12+G4 觸發,但 S5→S1 太快。</div>
-</div>
-<div class="event-card">
-  <div class="ev-name">2022 通膨熊 <span class="tag tag-best" style="margin-left:.5rem">+6.1pp vs B&amp;H</span></div>
-  <div class="ev-detail">系統 -24.32% vs QQQ B&amp;H -30.46%。三層 Grid 全觸發。2023-02 以 95% 曝險直接回 S1。</div>
-</div>
-        """),
-    },
     "gem": {
         "name": "GEM 雙動能",
         "subtitle": "SPY / ACWX / AGG · 月度切換 · Gary Antonacci",
         "color": "#f57c00",
+        "hero": {
+            "tag": "✓ 經典防守基準",
+            "tag_bg": "#f57c00",
+            "bg": "linear-gradient(135deg,#fff7ed 0%,#fffbf5 100%)",
+            "border": "#fed7aa",
+            "title": "2008 一役定江山 — alpha 集中在單一事件的防守型經典",
+            "body": """Gary Antonacci 的雙動能,規則只有兩條、20 年僅 33 次換倉,低過擬合風險。
+                2008 GFC 完美避開(-1.30% vs SPY -36.97%)是它全部價值的來源;
+                2010 之後的 V 轉環境(2018/2020/2022)避險訊號反而慢半拍。
+                定位:組合中的防守對照組,不是報酬引擎。""",
+        },
         "rules": """
             Gary Antonacci 的 Global Equities Momentum 雙動能策略。每月底依據 12 個月動能決定下月持倉:<br>
             <strong>1. 相對動能</strong>: 比較 SPY (美國) vs ACWX (國際) 過去 12 個月報酬,選較強者。<br>
@@ -420,6 +239,48 @@ SYSTEMS = {
         """),
     },
 }
+
+
+NAV_HEADER = """<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/">個股 DD</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/">週報</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/six-state/">六狀態機</a>
+        </div>
+      </div>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/" class="active">量化回測</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/screener-tw.html">Screener 台股</a>
+        </div>
+      </div>
+      <a href="/mental-models/">🧠 心智模型</a>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>"""
 
 
 def make_yearly_table(yearly_returns: list, name: str, color: str) -> str:
@@ -481,6 +342,14 @@ def build_page(slug: str, system: dict) -> str:
     yearly_table = make_yearly_table(yearly, name, color)
     kpi_pair = make_kpi_pair(m20, m10)
     toggle = make_toggle(slug)
+    h = system["hero"]
+    hero = f"""<div class="hero" style="border-color:{h['border']}">
+  <div class="hero-top" style="background:{h['bg']};border-bottom-color:{h['border']}">
+    <span class="verdict-tag" style="background:{h['tag_bg']}">{h['tag']}</span>
+    <h2>{h['title']}</h2>
+    <p>{h['body']}</p>
+  </div>
+</div>"""
 
     # Yearly returns as JS array
     yearly_js = "[" + ",".join("null" if v is None else str(v) for v in yearly) + "]"
@@ -495,48 +364,7 @@ def build_page(slug: str, system: dict) -> str:
 <style>{CSS}</style>
 </head>
 <body>
-<header class="imq-nav-root">
-  <div class="imq-nav-inner">
-    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
-    <nav class="imq-menu">
-      <a href="/">首頁</a>
-      <div class="imq-dd">
-        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
-        <div class="imq-dd-menu">
-          <a href="/research/">個股 DD</a>
-          <a href="/pm/">PM 複盤</a>
-          <a href="/id/">產業深度 ID</a>
-          <a href="/id/theses.html">⭐ 九大非共識</a>
-          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
-        </div>
-      </div>
-      <div class="imq-dd">
-        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
-        <div class="imq-dd-menu">
-          <a href="/briefing/">每日簡報</a>
-          <a href="/weekly/">週報</a>
-          <a href="/earnings/">財報分析</a>
-          <a href="/markets.html">Markets</a>
-          <a href="/sectors.html">Sectors</a>
-          <a href="/six-state/">六狀態機</a>
-        </div>
-      </div>
-      <div class="imq-dd active">
-        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
-        <div class="imq-dd-menu">
-          <a href="/backtest/" class="active">量化回測</a>
-          <a href="/qgm/">QGM 美股</a>
-          <a href="/qgm-tw/">QGM 台股</a>
-          <a href="/screener.html">Screener 美股</a>
-          <a href="/screener-tw.html">Screener 台股</a>
-        </div>
-      </div>
-      <a href="/mental-models/">🧠 心智模型</a>
-      <a href="/how-to.html">📘 使用說明</a>
-    </nav>
-  </div>
-</header>
-<script>(function(){{document.querySelectorAll('.imq-dd-btn').forEach(function(btn){{btn.addEventListener('click',function(e){{e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){{if(d!==dd)d.classList.remove('open')}});dd.classList.toggle('open')}})}}});document.addEventListener('click',function(e){{if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){{d.classList.remove('open')}})}})}})();</script>
+{NAV_HEADER}
 
 <div class="page-hdr">
   <div class="container">
@@ -548,6 +376,8 @@ def build_page(slug: str, system: dict) -> str:
 </div>
 
 <div class="container">
+
+{hero}
 
 <!-- ===== 1. 策略規則 ===== -->
 <div class="section">
@@ -721,9 +551,6 @@ new Chart(document.getElementById('chart-yearly'),{{
 
 SLUG_TO_DIR = {
     "dual": "dual_track",
-    "long": "long_track",
-    "long_qqq": "long_track_qqq",
-    "six_state": "six_state",
     "gem": "gem",
 }
 
