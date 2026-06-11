@@ -25,6 +25,7 @@ INDIVIDUAL_LINKS = [
     ("/backtest/long_track/", "Long Track", "long", "#16a34a"),
     ("/backtest/long_track_qqq/", "LTO QQQ", "long_qqq", "#16a34a"),
     ("/backtest/long_track_ensemble/", "🔬 集成實驗", "ensemble", "#d97706"),
+    ("/backtest/long_track_smh/", "🧪 SMH 變體", "smh", "#d97706"),
     ("/backtest/six_state/", "六狀態機", "six_state", None),
     ("/backtest/six_state_v1r1/", "v1.0r1 實盤", "v1r1", "#b45309"),
     ("/backtest/gem/", "GEM", "gem", None),
