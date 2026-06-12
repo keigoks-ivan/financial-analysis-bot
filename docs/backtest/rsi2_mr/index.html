@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta name="robots" content="noindex,nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>盤整 MR — RSI(2) 拉回均值回歸 (SPY/QQQ) | InvestMQuest Research</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+:root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
+      --text:#111827;--muted:#6b7280;--border:#e5e7eb;
+      --green:#059669;--green-bg:#ecfdf5;--green-border:#a7f3d0;--green-text:#065f46;
+      --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;--red-text:#991b1b;
+      --amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fde68a;--amber-text:#92400e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1120px;margin:0 auto;padding:0 1.5rem}
+.page-hdr{padding:1.75rem 0 1.25rem;background:linear-gradient(180deg,#fffbeb 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
+.page-hdr h1{font-size:1.6rem;font-weight:700;letter-spacing:-.03em}
+.page-hdr .sub{color:var(--muted);font-size:.9rem;margin-top:.2rem}
+.crumb{font-size:.82rem;color:var(--muted);margin-bottom:.4rem}
+.crumb a{color:var(--muted)}
+.section{padding:1.5rem 0 0}
+.section-title{font-size:1.15rem;font-weight:700;margin-bottom:1rem;
+               padding-bottom:.45rem;border-bottom:2px solid var(--amber)}
+.section-sub{font-size:.85rem;color:var(--muted);margin:-.5rem 0 1rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.card h3{font-size:1rem;font-weight:600;margin-bottom:.85rem}
+.card .takeaway{font-size:.88rem;margin-top:.75rem;padding:.6rem .9rem;border-radius:6px;
+                background:var(--amber-bg);border-left:3px solid var(--amber)}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{text-align:left;padding:.6rem .75rem;border-bottom:1px solid var(--border)}
+th{background:#f9fafb;font-weight:600;font-size:.78rem;text-transform:uppercase;
+   letter-spacing:.04em;color:var(--muted)}
+td{font-variant-numeric:tabular-nums}
+tbody tr:hover td{background:#f3f4f6}
+.hero{margin:1.25rem 0;border:1px solid var(--amber-border);border-radius:12px;overflow:hidden;background:var(--card)}
+.hero-top{background:linear-gradient(135deg,#fffbeb 0%,#fefce8 100%);padding:1.4rem 1.6rem;border-bottom:1px solid var(--amber-border)}
+.hero-top .verdict-tag{display:inline-block;background:var(--amber);color:#fff;font-size:.74rem;font-weight:700;
+                       letter-spacing:.05em;padding:.25rem .7rem;border-radius:99px;margin-bottom:.5rem}
+.hero-top h2{font-size:1.35rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.35rem}
+.hero-top p{font-size:.92rem;color:#374151;max-width:60rem}
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card)}
+.hero-stats > div{padding:1rem 1.2rem;text-align:center;border-right:1px solid var(--border)}
+.hero-stats > div:last-child{border-right:none}
+.hero-stats .hs-label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.hero-stats .hs-value{font-size:1.55rem;font-weight:800;letter-spacing:-.02em}
+.note{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;
+      padding:.85rem 1.1rem;font-size:.84rem;color:var(--amber-text);margin:1rem 0}
+.tag{display:inline-block;padding:.15rem .55rem;border-radius:4px;font-size:.72rem;font-weight:600}
+.tag-best{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border)}
+.tag-fail{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red-border)}
+.tag-pass{background:#f3f4f6;color:#374151;border:1px solid #d1d5db}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.chart-card h3{font-size:.95rem;font-weight:600;margin-bottom:.5rem}
+.chart-wrap{position:relative;width:100%;height:380px}
+.chart-wrap-sm{position:relative;width:100%;height:220px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+details{background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:.75rem}
+details summary{padding:.9rem 1.25rem;font-weight:600;font-size:.95rem;cursor:pointer;list-style:none;display:flex;align-items:center;gap:.5rem}
+details summary::before{content:'▸';color:var(--brand);transition:transform .15s}
+details[open] summary::before{transform:rotate(90deg)}
+details .d-body{padding:0 1.25rem 1.25rem}
+.rule-list{font-size:.88rem;color:#374151;padding-left:1.2rem;line-height:1.9}
+footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
+       text-align:center;padding:1.25rem 0;font-size:.78rem;margin-top:2rem}
+@media(max-width:768px){
+  .two-col{grid-template-columns:1fr}
+  .hero-stats{grid-template-columns:repeat(2,1fr)}
+  .hero-stats > div{border-bottom:1px solid var(--border)}
+  table{font-size:.78rem}th,td{padding:.45rem .5rem}
+}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#0f172a;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(59,130,246,.28);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/">個股 DD</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/ds/">產業敘述 DS</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/">週報</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/long-track-smh/">長線訊號</a>
+        </div>
+      </div>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/" class="active">量化回測</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/screener-tw.html">Screener 台股</a>
+          <a href="/screener-jp.html">Screener 日股</a>
+          <a href="/screener-my.html">Screener 馬股</a>
+          <a href="/cache/">🗄 Data Cache</a>
+          <a href="/tools/">期貨部位計算機</a>
+        </div>
+      </div>
+      <a href="/mental-models/">🧠 心智模型</a>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="page-hdr">
+  <div class="container">
+    <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / 盤整 MR — RSI(2) 拉回均值回歸</div>
+    <h1 style="color:var(--amber)">盤整 MR — RSI(2) 拉回均值回歸 (SPY/QQQ)</h1>
+    <div class="sub">200DMA 濾網 + RSI(2)&lt;10 收盤進場 · 時間停損、無價格停損 · 只做多 · 數據截至 2026-06</div>
+    <div style="margin-top:.75rem;display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap"><div><div style="font-size:.68rem;color:#1a56db;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;font-weight:600">對比總覽</div><div style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-wrap:wrap"><a href="/backtest/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">20 年</a><a href="/backtest/10y/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">10 年</a><a href="/backtest/criteria/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">評估標準</a></div></div><div><div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;font-weight:600">個別系統 (美股)</div><div style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-wrap:wrap"><a href="/backtest/dual_track/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">雙軌多空</a><a href="/backtest/long_track/" style="padding:.4rem .85rem;background:#fff;color:#16a34a;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">Long Track</a><a href="/backtest/long_track_qqq/" style="padding:.4rem .85rem;background:#fff;color:#16a34a;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">LTO QQQ</a><a href="/backtest/long_track_ensemble/" style="padding:.4rem .85rem;background:#fff;color:#16a34a;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">Ensemble 集成</a><a href="/backtest/long_track_smh/" style="padding:.4rem .85rem;background:#fff;color:#16a34a;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">LT SMH/QQQ</a><a href="/backtest/six_state/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">六狀態機</a><a href="/backtest/six_state_v1r1/" style="padding:.4rem .85rem;background:#fff;color:#b45309;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">v1.0r1 實盤</a><a href="/backtest/gem/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">GEM</a><a href="/backtest/slope_filter/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">W52 斜率</a><a href="/backtest/rsi2_mr/" style="padding:.4rem .85rem;background:#d97706;color:#fff;font-size:.8rem;font-weight:600;text-decoration:none;border-left:1px solid var(--border)">盤整 MR</a><a href="/backtest/short_system/" style="padding:.4rem .85rem;background:#fff;color:#dc2626;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">做空 (失敗)</a><a href="/backtest/cndr/" style="padding:.4rem .85rem;background:#fff;color:#dc2626;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">Iron Condor (失敗)</a></div></div><div><div style="font-size:.68rem;color:#0f766e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;font-weight:600">多資產</div><div style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-wrap:wrap"><a href="/backtest/turtle/" style="padding:.4rem .85rem;background:#fff;color:#0f766e;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">🐢 Turtle</a><a href="/backtest/clenow/" style="padding:.4rem .85rem;background:#fff;color:#6366f1;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">📈 Clenow</a></div></div></div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ===== VERDICT HERO ===== -->
+<div class="hero">
+  <div class="hero-top">
+    <span class="verdict-tag">⚠ 候選系統 — 未採用</span>
+    <h2>紅旗 4/4 通過,但「不大賠」依賴收盤 MOC 成交 — 矩陣裡所有次日開盤變體都破限</h2>
+    <p>設計目標是雙軌趨勢系統的互補:在盤整期接拉回、用 200DMA 濾網 + 時間停損切掉左尾,事前明文「不能小賺大賠」的
+       四條紅旗驗收(最大單筆 ≥ -8%、虧獲比 ≤ 3、PF ≥ 1.2、壓力事件暴險 ≤ 30%)。20 年真實資料:基準版兩標的全數通過,
+       2008 GFC 暴險 0%。但 32 組合矩陣揭露單點依賴:全部 16 個「次日開盤成交」變體最大單筆虧損 -9.6% ~ -11%,破紅旗 —
+       自動化實作必須用 MOC 單在收盤成交,這不是可妥協的細節。與雙軌的組合分析顯示:時段互補假設不成立,
+       但 0.33 低相關讓 MDD 單調改善(-38.7% → -26.6% @ w=30%),且 MR 在雙軌最深回撤窗口反而 +8.3%。</p>
+  </div>
+  <div class="hero-stats">
+    <div><div class="hs-label">勝率(兩標的均值)</div><div class="hs-value" style="color:var(--green)">73.0%</div></div>
+    <div><div class="hs-label">最大單筆虧損</div><div class="hs-value" style="color:var(--red)">-7.86%</div></div>
+    <div><div class="hs-label">Profit Factor</div><div class="hs-value" style="color:var(--brand)">1.69</div></div>
+    <div><div class="hs-label">暴險比率</div><div class="hs-value">13.2%</div></div>
+  </div>
+</div>
+
+<div class="note">
+  <strong>定位與誠實聲明:</strong>這是候選系統頁,不是採用決定。standalone CAGR 只有 3.12%(暴險僅 ~13%,閒置現金以 0 計),
+  Sharpe 0.45 低於 200DMA 擇時基準的 0.71 — 它的價值主張不在 standalone,在暴險中年化 +28%/+34% 的資金效率與低相關分散。
+  紅旗門檻為 spec 事前指定(<code>docs/RSI2_Pullback_MR_Backtest_Spec.md</code>),回測後未修改;
+  32 組合矩陣全列於下方,基準版為事前指定,禁止事後選優。
+</div>
+
+<!-- ===== RULES ===== -->
+<div class="section">
+<h2 class="section-title">規則(基準版)</h2>
+<div class="two-col">
+<div class="card">
+<h3>進出場</h3>
+<ul class="rule-list">
+  <li><strong>濾網</strong>:close &gt; 200DMA 才允許持倉;跌破即強制出場</li>
+  <li><strong>進場</strong>:空手 AND RSI(2) &lt; 10 → 當日收盤全額買進(MOC)</li>
+  <li><strong>出場</strong>(先觸發者):RSI(2) &gt; 70 / 持滿 10 交易日 / 跌破 200DMA</li>
+  <li><strong>無價格停損</strong> — 刻意設計:MR 的價格停損常停在最大不利點;左尾由濾網 + 時間停損 + 短持有期控制</li>
+  <li>成本:單邊 7bps(來回 14bps),與全站一致</li>
+</ul>
+</div>
+<div class="card">
+<h3>紅旗驗收(事前指定,SPY / QQQ 各自檢查)</h3>
+<table>
+<thead><tr><th colspan="4">SPY</th></tr><tr><th>條件</th><th>門檻</th><th>實際</th><th>結果</th></tr></thead>
+<tbody><tr><td>最大單筆虧損</td><td>≥ -8%</td><td>-7.86%</td><td><span class="tag tag-best">PASS</span></td></tr>
+<tr><td>平均虧損 / 平均獲利</td><td>≤ 3.0</td><td>1.77</td><td><span class="tag tag-best">PASS</span></td></tr>
+<tr><td>Profit factor</td><td>≥ 1.2</td><td>1.68</td><td><span class="tag tag-best">PASS</span></td></tr>
+<tr><td>壓力事件最高暴險</td><td>≤ 30%</td><td>7.9%</td><td><span class="tag tag-best">PASS</span></td></tr>
+</tbody>
+</table>
+<table style="margin-top:.5rem">
+<thead><tr><th colspan="4">QQQ</th></tr><tr><th>條件</th><th>門檻</th><th>實際</th><th>結果</th></tr></thead>
+<tbody><tr><td>最大單筆虧損</td><td>≥ -8%</td><td>-7.33%</td><td><span class="tag tag-best">PASS</span></td></tr>
+<tr><td>平均虧損 / 平均獲利</td><td>≤ 3.0</td><td>1.45</td><td><span class="tag tag-best">PASS</span></td></tr>
+<tr><td>Profit factor</td><td>≥ 1.2</td><td>1.69</td><td><span class="tag tag-best">PASS</span></td></tr>
+<tr><td>壓力事件最高暴險</td><td>≤ 30%</td><td>9.6%</td><td><span class="tag tag-best">PASS</span></td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+
+<!-- ===== TRADE STRUCTURE ===== -->
+<div class="section">
+<h2 class="section-title">報酬結構 — 「不小賺大賠」的證據</h2>
+<div class="section-sub">2006-01 ~ 至今,真實 yfinance 調整價,含成本。單筆報酬分布的左尾是本系統的存在前提。</div>
+<div class="card">
+<table>
+<thead><tr><th>指標</th><th>SPY</th><th>QQQ</th></tr></thead>
+<tbody>
+<tr><td>交易筆數</td><td>155</td><td>166</td></tr>
+<tr><td>勝率</td><td>74.8%</td><td>71.1%</td></tr>
+<tr><td>平均獲利 / 平均虧損</td><td>1.20% / -2.13%</td><td>1.53% / -2.22%</td></tr>
+<tr><td>虧獲比(紅旗 ≤ 3.0)</td><td>1.77</td><td>1.45</td></tr>
+<tr><td>Profit factor</td><td>1.68</td><td>1.69</td></tr>
+<tr><td>單筆報酬 P1</td><td>-5.74%</td><td>-6.59%</td></tr>
+<tr><td>單筆報酬偏度</td><td>-1.62</td><td>-1.46</td></tr>
+<tr><td>平均持有</td><td>4.2d</td><td>4.2d</td></tr>
+<tr><td>暴險比率</td><td>12.8%</td><td>13.5%</td></tr>
+<tr><td>暴險中年化報酬</td><td>+28.3%</td><td>+34.2%</td></tr>
+</tbody>
+</table>
+<div class="takeaway">形狀上仍是 MR 天性的「常小賺、偶爾較大賠」(偏度 -1.6),但大賠被框住:最差單筆 -7.86%、
+P1 約 -6%,且最差 10 筆全部是濾網或時間停損出場 — 機制照設計運作,沒有失控左尾。</div>
+</div>
+
+<div class="card">
+<h3>最差 10 筆交易(兩標的合併)</h3>
+<table>
+<thead><tr><th>標的</th><th>進場</th><th>出場</th><th>天數</th><th>報酬</th><th>MAE</th><th>出場原因</th></tr></thead>
+<tbody><tr><td>SPY</td><td>2020-02-24</td><td>2020-02-27</td><td>3d</td><td style="color:var(--red);font-weight:600">-7.86%</td><td>-7.73%</td><td>filter</td></tr>
+<tr><td>QQQ</td><td>2025-02-21</td><td>2025-03-06</td><td>9d</td><td style="color:var(--red);font-weight:600">-7.33%</td><td>-7.58%</td><td>filter</td></tr>
+<tr><td>QQQ</td><td>2018-10-04</td><td>2018-10-11</td><td>5d</td><td style="color:var(--red);font-weight:600">-7.14%</td><td>-7.99%</td><td>filter</td></tr>
+<tr><td>QQQ</td><td>2011-08-01</td><td>2011-08-04</td><td>3d</td><td style="color:var(--red);font-weight:600">-6.30%</td><td>-6.17%</td><td>filter</td></tr>
+<tr><td>QQQ</td><td>2012-05-04</td><td>2012-05-18</td><td>10d</td><td style="color:var(--red);font-weight:600">-6.14%</td><td>-6.09%</td><td>time_stop</td></tr>
+<tr><td>SPY</td><td>2018-10-04</td><td>2018-10-11</td><td>5d</td><td style="color:var(--red);font-weight:600">-6.10%</td><td>-6.59%</td><td>filter</td></tr>
+<tr><td>QQQ</td><td>2018-03-19</td><td>2018-04-03</td><td>10d</td><td style="color:var(--red);font-weight:600">-6.02%</td><td>-7.91%</td><td>time_stop</td></tr>
+<tr><td>QQQ</td><td>2010-06-23</td><td>2010-06-29</td><td>4d</td><td style="color:var(--red);font-weight:600">-5.77%</td><td>-6.29%</td><td>filter</td></tr>
+<tr><td>SPY</td><td>2012-05-04</td><td>2012-05-18</td><td>10d</td><td style="color:var(--red);font-weight:600">-5.43%</td><td>-5.44%</td><td>time_stop</td></tr>
+<tr><td>QQQ</td><td>2020-10-19</td><td>2020-11-02</td><td>10d</td><td style="color:var(--red);font-weight:600">-5.00%</td><td>-5.93%</td><td>time_stop</td></tr>
+</tbody>
+</table>
+<div class="takeaway">全部集中在 regime 轉折日(2020/2/24、2018/10、2011/8、2025/2)。已知殘餘風險是跳空:
+濾網與時間停損都擋不住單日 gap,持倉中最差隔夜跳空 SPY -2.1% / QQQ -3.4%。</div>
+</div>
+</div>
+
+<!-- ===== PERFORMANCE ===== -->
+<div class="section">
+<h2 class="section-title">淨值與基準比較</h2>
+<div class="section-sub">standalone 數字誠實呈現:這不是一個靠 CAGR 取勝的系統。閒置現金以 0 計(未計 T-bill,屬低估)。</div>
+<div class="card">
+<table>
+<thead><tr><th>配置</th><th>CAGR</th><th>MDD</th><th>Sharpe</th><th>Calmar</th></tr></thead>
+<tbody><tr style="background:var(--brand-light)"><td>盤整 MR 50/50(本頁)</td><td>+3.12%</td><td>-16.46%</td><td>0.50</td><td>0.19</td></tr>
+<tr><td>盤整 MR — SPY 單獨</td><td>+2.68%</td><td>-17.03%</td><td>0.45</td><td>0.16</td></tr>
+<tr><td>盤整 MR — QQQ 單獨</td><td>+3.47%</td><td>-18.65%</td><td>0.45</td><td>0.19</td></tr>
+<tr><td>SPY 200DMA 擇時(濾網基準)</td><td>+8.29%</td><td>-21.89%</td><td>0.71</td><td>0.38</td></tr>
+<tr><td>QQQ 200DMA 擇時(濾網基準)</td><td>+11.75%</td><td>-27.38%</td><td>0.76</td><td>0.43</td></tr>
+<tr><td>50/50 Buy &amp; Hold</td><td>+13.55%</td><td>-53.66%</td><td>0.67</td><td>0.25</td></tr>
+</tbody>
+</table>
+<div class="takeaway">與 200DMA 擇時基準的正確讀法:200DMA 擇時暴險 ~70%+,MR 暴險 ~13%;
+standalone Sharpe MR 較低,但每一天暴險的報酬效率(+28%/+34% 年化)遠高於擇時基準。
+MR 的進出場相對濾網本身有沒有附加價值,要看暴險調整後的數字。</div>
+</div>
+<div class="chart-card">
+  <h3>淨值曲線 — 起始 $1M(對數座標,月頻)</h3>
+  <div class="chart-wrap"><canvas id="chart-nav"></canvas></div>
+</div>
+<div class="chart-card">
+  <h3>逐年報酬 — 盤整 MR 50/50 vs Buy &amp; Hold 50/50</h3>
+  <div class="chart-wrap"><canvas id="chart-yearly"></canvas></div>
+</div>
+</div>
+
+<!-- ===== STRESS ===== -->
+<div class="section">
+<h2 class="section-title">壓力事件 — 濾網的工作證明</h2>
+<div class="card">
+<table>
+<thead><tr><th>事件</th><th>窗口</th><th>SPY 暴險</th><th>SPY 報酬</th><th>QQQ 暴險</th><th>QQQ 報酬</th><th>SPY B&amp;H</th></tr></thead>
+<tbody><tr><td>2008_GFC</td><td>2008-09-01 ~ 2009-03-31</td><td>0.0%</td><td>+0.00%</td><td>0.0%</td><td>+0.00%</td><td>-36.55%</td></tr>
+<tr><td>2011_eurozone</td><td>2011-07-01 ~ 2011-10-31</td><td>4.7%</td><td>-4.05%</td><td>3.5%</td><td>-6.30%</td><td>-5.80%</td></tr>
+<tr><td>2015_cny_deval</td><td>2015-08-01 ~ 2016-02-29</td><td>2.1%</td><td>-1.69%</td><td>9.0%</td><td>-3.22%</td><td>-6.70%</td></tr>
+<tr><td>2018_Q4</td><td>2018-10-01 ~ 2018-12-31</td><td>7.9%</td><td>-6.10%</td><td>7.9%</td><td>-7.14%</td><td>-13.83%</td></tr>
+<tr><td>2020_COVID</td><td>2020-02-15 ~ 2020-04-30</td><td>5.8%</td><td>-7.86%</td><td>9.6%</td><td>-2.38%</td><td>-13.23%</td></tr>
+<tr><td>2022_inflation</td><td>2022-01-01 ~ 2022-12-31</td><td>2.8%</td><td>-4.04%</td><td>2.0%</td><td>-1.18%</td><td>-18.65%</td></tr>
+</tbody>
+</table>
+<div class="takeaway">2008 GFC 暴險 0% — 200DMA 濾網讓系統整段空手。六個壓力窗口暴險全部 &lt;10%,
+紅旗門檻 30% 遠未觸及。系統在壓力期的虧損來自 regime 轉折「第一刀」(2020/2/24 型),之後就被濾網鎖在場外。</div>
+</div>
+</div>
+
+<!-- ===== MATRIX ===== -->
+<div class="section">
+<h2 class="section-title">32 組合穩健性矩陣 — 含 MOC 單點依賴的證據</h2>
+<div class="section-sub">維度:進場 RSI&lt;10/5 × 出場 RSI&gt;70/MA5 × 時間停損 10/5 日 × 單筆/分批 × 收盤/次日開盤成交。
+基準版事前指定;全列不挑選。</div>
+<div class="note"><strong>關鍵發現:</strong>16/32 組合突破 -8% 單筆虧損紅旗(紅字),且全部是 next_open 變體 —
+訊號日收盤後的隔夜跳空會把單筆虧損推到 -9.6% ~ -11%。結論:紅旗通過依賴 MOC 收盤成交,實單不可改用次日開盤。</div>
+<details>
+<summary>SPY — 32 組合全列</summary>
+<div class="d-body"><table>
+<thead><tr><th>組合</th><th>CAGR</th><th>MDD</th><th>勝率</th><th>PF</th><th>最差單筆</th><th>筆數</th></tr></thead>
+<tbody><tr style="background:var(--brand-light)"><td>e10_rsi70_t10_full_close <strong>(base)</strong></td><td>2.68%</td><td>-17.03%</td><td>74.8%</td><td>1.68</td><td>-7.86%</td><td>155</td></tr>
+<tr><td>e10_rsi70_t10_full_next_open</td><td>2.06%</td><td>-18.38%</td><td>69.0%</td><td>1.49</td><td style="color:var(--red);font-weight:600">-11.00%</td><td>155</td></tr>
+<tr><td>e10_rsi70_t10_scale_close</td><td>1.91%</td><td>-13.81%</td><td>78.1%</td><td>2.44</td><td>-6.42%</td><td>155</td></tr>
+<tr><td>e10_rsi70_t10_scale_next_open</td><td>1.16%</td><td>-14.66%</td><td>73.5%</td><td>1.95</td><td style="color:var(--red);font-weight:600">-9.62%</td><td>155</td></tr>
+<tr><td>e10_rsi70_t5_full_close</td><td>2.01%</td><td>-17.66%</td><td>67.7%</td><td>1.46</td><td>-7.86%</td><td>164</td></tr>
+<tr><td>e10_rsi70_t5_full_next_open</td><td>1.30%</td><td>-21.54%</td><td>66.2%</td><td>1.28</td><td style="color:var(--red);font-weight:600">-11.00%</td><td>160</td></tr>
+<tr><td>e10_rsi70_t5_scale_close</td><td>1.39%</td><td>-14.64%</td><td>71.3%</td><td>2.03</td><td>-6.42%</td><td>164</td></tr>
+<tr><td>e10_rsi70_t5_scale_next_open</td><td>0.68%</td><td>-17.41%</td><td>70.0%</td><td>1.62</td><td style="color:var(--red);font-weight:600">-9.62%</td><td>160</td></tr>
+<tr><td>e10_ma5_t10_full_close</td><td>2.11%</td><td>-16.76%</td><td>70.4%</td><td>1.56</td><td>-7.86%</td><td>162</td></tr>
+<tr><td>e10_ma5_t10_full_next_open</td><td>1.49%</td><td>-20.15%</td><td>67.7%</td><td>1.37</td><td style="color:var(--red);font-weight:600">-11.00%</td><td>161</td></tr>
+<tr><td>e10_ma5_t10_scale_close</td><td>1.62%</td><td>-13.03%</td><td>75.9%</td><td>2.34</td><td>-6.42%</td><td>162</td></tr>
+<tr><td>e10_ma5_t10_scale_next_open</td><td>0.90%</td><td>-15.51%</td><td>72.0%</td><td>1.82</td><td style="color:var(--red);font-weight:600">-9.62%</td><td>161</td></tr>
+<tr><td>e10_ma5_t5_full_close</td><td>1.89%</td><td>-18.85%</td><td>69.9%</td><td>1.47</td><td>-7.86%</td><td>166</td></tr>
+<tr><td>e10_ma5_t5_full_next_open</td><td>1.36%</td><td>-20.76%</td><td>67.1%</td><td>1.33</td><td style="color:var(--red);font-weight:600">-11.00%</td><td>164</td></tr>
+<tr><td>e10_ma5_t5_scale_close</td><td>1.38%</td><td>-15.26%</td><td>75.3%</td><td>2.10</td><td>-6.42%</td><td>166</td></tr>
+<tr><td>e10_ma5_t5_scale_next_open</td><td>0.82%</td><td>-16.12%</td><td>72.0%</td><td>1.73</td><td style="color:var(--red);font-weight:600">-9.62%</td><td>164</td></tr>
+<tr><td>e5_rsi70_t10_full_close</td><td>2.06%</td><td>-13.62%</td><td>79.3%</td><td>1.92</td><td>-7.86%</td><td>87</td></tr>
+<tr><td>e5_rsi70_t10_full_next_open</td><td>1.75%</td><td>-14.30%</td><td>74.7%</td><td>1.74</td><td style="color:var(--red);font-weight:600">-11.00%</td><td>87</td></tr>
+<tr><td>e5_rsi70_t10_scale_close</td><td>1.19%</td><td>-10.93%</td><td>82.8%</td><td>2.47</td><td>-6.42%</td><td>87</td></tr>
+<tr><td>e5_rsi70_t10_scale_next_open</td><td>0.79%</td><td>-12.19%</td><td>75.9%</td><td>2.05</td><td style="color:var(--red);font-weight:600">-9.62%</td><td>87</td></tr>
+<tr><td>e5_rsi70_t5_full_close</td><td>1.77%</td><td>-16.80%</td><td>73.0%</td><td>1.79</td><td>-7.86%</td><td>89</td></tr>
+<tr><td>e5_rsi70_t5_full_next_open</td><td>1.29%</td><td>-18.17%</td><td>70.8%</td><td>1.49</td><td style="color:var(--red);font-weight:600">-11.00%</td><td>89</td></tr>
+<tr><td>e5_rsi70_t5_scale_close</td><td>1.14%</td><td>-12.58%</td><td>75.3%</td><td>2.35</td><td>-6.42%</td><td>89</td></tr>
+<tr><td>e5_rsi70_t5_scale_next_open</td><td>0.44%</td><td>-17.14%</td><td>73.0%</td><td>1.74</td><td style="color:var(--red);font-weight:600">-9.62%</td><td>89</td></tr>
+<tr><td>e5_ma5_t10_full_close</td><td>1.73%</td><td>-13.94%</td><td>77.3%</td><td>1.91</td><td>-7.86%</td><td>88</td></tr>
+<tr><td>e5_ma5_t10_full_next_open</td><td>1.30%</td><td>-16.24%</td><td>71.6%</td><td>1.62</td><td style="color:var(--red);font-weight:600">-11.00%</td><td>88</td></tr>
+<tr><td>e5_ma5_t10_scale_close</td><td>1.09%</td><td>-10.76%</td><td>81.8%</td><td>2.61</td><td>-6.42%</td><td>88</td></tr>
+<tr><td>e5_ma5_t10_scale_next_open</td><td>0.57%</td><td>-12.91%</td><td>73.9%</td><td>1.96</td><td style="color:var(--red);font-weight:600">-9.62%</td><td>88</td></tr>
+<tr><td>e5_ma5_t5_full_close</td><td>1.68%</td><td>-15.19%</td><td>76.4%</td><td>1.87</td><td>-7.86%</td><td>89</td></tr>
+<tr><td>e5_ma5_t5_full_next_open</td><td>1.27%</td><td>-16.24%</td><td>70.8%</td><td>1.60</td><td style="color:var(--red);font-weight:600">-11.00%</td><td>89</td></tr>
+<tr><td>e5_ma5_t5_scale_close</td><td>1.10%</td><td>-11.73%</td><td>79.8%</td><td>2.56</td><td>-6.42%</td><td>89</td></tr>
+<tr><td>e5_ma5_t5_scale_next_open</td><td>0.57%</td><td>-12.96%</td><td>74.2%</td><td>1.96</td><td style="color:var(--red);font-weight:600">-9.62%</td><td>89</td></tr>
+</tbody>
+</table></div>
+</details>
+<details>
+<summary>QQQ — 32 組合全列</summary>
+<div class="d-body"><table>
+<thead><tr><th>組合</th><th>CAGR</th><th>MDD</th><th>勝率</th><th>PF</th><th>最差單筆</th><th>筆數</th></tr></thead>
+<tbody><tr style="background:var(--brand-light)"><td>e10_rsi70_t10_full_close <strong>(base)</strong></td><td>3.47%</td><td>-18.65%</td><td>71.1%</td><td>1.69</td><td>-7.33%</td><td>166</td></tr>
+<tr><td>e10_rsi70_t10_full_next_open</td><td>3.11%</td><td>-16.54%</td><td>70.3%</td><td>1.64</td><td style="color:var(--red);font-weight:600">-10.87%</td><td>165</td></tr>
+<tr><td>e10_rsi70_t10_scale_close</td><td>2.65%</td><td>-15.56%</td><td>77.7%</td><td>2.39</td><td>-6.78%</td><td>166</td></tr>
+<tr><td>e10_rsi70_t10_scale_next_open</td><td>2.63%</td><td>-11.58%</td><td>75.8%</td><td>2.15</td><td style="color:var(--red);font-weight:600">-10.87%</td><td>165</td></tr>
+<tr><td>e10_rsi70_t5_full_close</td><td>2.30%</td><td>-17.30%</td><td>63.7%</td><td>1.39</td><td>-7.14%</td><td>171</td></tr>
+<tr><td>e10_rsi70_t5_full_next_open</td><td>1.85%</td><td>-22.34%</td><td>64.9%</td><td>1.34</td><td style="color:var(--red);font-weight:600">-10.87%</td><td>168</td></tr>
+<tr><td>e10_rsi70_t5_scale_close</td><td>1.44%</td><td>-17.06%</td><td>68.4%</td><td>1.87</td><td>-6.56%</td><td>171</td></tr>
+<tr><td>e10_rsi70_t5_scale_next_open</td><td>1.60%</td><td>-15.78%</td><td>69.6%</td><td>1.70</td><td style="color:var(--red);font-weight:600">-10.87%</td><td>168</td></tr>
+<tr><td>e10_ma5_t10_full_close</td><td>2.74%</td><td>-16.79%</td><td>67.3%</td><td>1.61</td><td>-7.14%</td><td>171</td></tr>
+<tr><td>e10_ma5_t10_full_next_open</td><td>2.21%</td><td>-22.88%</td><td>66.1%</td><td>1.48</td><td style="color:var(--red);font-weight:600">-10.87%</td><td>171</td></tr>
+<tr><td>e10_ma5_t10_scale_close</td><td>2.20%</td><td>-13.38%</td><td>77.2%</td><td>2.43</td><td>-6.56%</td><td>171</td></tr>
+<tr><td>e10_ma5_t10_scale_next_open</td><td>1.78%</td><td>-14.14%</td><td>73.1%</td><td>2.02</td><td style="color:var(--red);font-weight:600">-10.87%</td><td>171</td></tr>
+<tr><td>e10_ma5_t5_full_close</td><td>1.69%</td><td>-23.10%</td><td>65.9%</td><td>1.32</td><td>-7.14%</td><td>173</td></tr>
+<tr><td>e10_ma5_t5_full_next_open</td><td>1.62%</td><td>-24.67%</td><td>63.4%</td><td>1.33</td><td style="color:var(--red);font-weight:600">-10.87%</td><td>172</td></tr>
+<tr><td>e10_ma5_t5_scale_close</td><td>1.18%</td><td>-20.58%</td><td>72.8%</td><td>1.84</td><td>-6.56%</td><td>173</td></tr>
+<tr><td>e10_ma5_t5_scale_next_open</td><td>1.38%</td><td>-15.80%</td><td>69.8%</td><td>1.77</td><td style="color:var(--red);font-weight:600">-10.87%</td><td>172</td></tr>
+<tr><td>e5_rsi70_t10_full_close</td><td>2.26%</td><td>-16.26%</td><td>74.7%</td><td>1.79</td><td>-7.33%</td><td>91</td></tr>
+<tr><td>e5_rsi70_t10_full_next_open</td><td>2.46%</td><td>-13.17%</td><td>74.7%</td><td>1.93</td><td style="color:var(--red);font-weight:600">-10.87%</td><td>91</td></tr>
+<tr><td>e5_rsi70_t10_scale_close</td><td>1.66%</td><td>-12.44%</td><td>76.9%</td><td>2.26</td><td>-6.78%</td><td>91</td></tr>
+<tr><td>e5_rsi70_t10_scale_next_open</td><td>1.74%</td><td>-8.42%</td><td>74.7%</td><td>2.15</td><td style="color:var(--red);font-weight:600">-10.87%</td><td>91</td></tr>
+<tr><td>e5_rsi70_t5_full_close</td><td>2.01%</td><td>-13.62%</td><td>70.7%</td><td>1.70</td><td>-5.99%</td><td>92</td></tr>
+<tr><td>e5_rsi70_t5_full_next_open</td><td>1.78%</td><td>-14.16%</td><td>66.3%</td><td>1.60</td><td style="color:var(--red);font-weight:600">-10.87%</td><td>92</td></tr>
+<tr><td>e5_rsi70_t5_scale_close</td><td>1.65%</td><td>-9.60%</td><td>71.7%</td><td>2.18</td><td>-5.70%</td><td>92</td></tr>
+<tr><td>e5_rsi70_t5_scale_next_open</td><td>1.26%</td><td>-11.13%</td><td>68.5%</td><td>1.81</td><td style="color:var(--red);font-weight:600">-10.87%</td><td>92</td></tr>
+<tr><td>e5_ma5_t10_full_close</td><td>1.66%</td><td>-14.50%</td><td>74.7%</td><td>1.67</td><td>-6.14%</td><td>91</td></tr>
+<tr><td>e5_ma5_t10_full_next_open</td><td>1.07%</td><td>-13.45%</td><td>67.0%</td><td>1.41</td><td style="color:var(--red);font-weight:600">-10.87%</td><td>91</td></tr>
+<tr><td>e5_ma5_t10_scale_close</td><td>1.39%</td><td>-10.02%</td><td>79.1%</td><td>2.22</td><td>-5.87%</td><td>91</td></tr>
+<tr><td>e5_ma5_t10_scale_next_open</td><td>0.78%</td><td>-10.51%</td><td>70.3%</td><td>1.61</td><td style="color:var(--red);font-weight:600">-10.87%</td><td>91</td></tr>
+<tr><td>e5_ma5_t5_full_close</td><td>1.73%</td><td>-14.50%</td><td>73.9%</td><td>1.72</td><td>-5.99%</td><td>92</td></tr>
+<tr><td>e5_ma5_t5_full_next_open</td><td>1.09%</td><td>-13.45%</td><td>66.3%</td><td>1.42</td><td style="color:var(--red);font-weight:600">-10.87%</td><td>92</td></tr>
+<tr><td>e5_ma5_t5_scale_close</td><td>1.49%</td><td>-10.02%</td><td>77.2%</td><td>2.33</td><td>-5.70%</td><td>92</td></tr>
+<tr><td>e5_ma5_t5_scale_next_open</td><td>0.85%</td><td>-8.74%</td><td>69.6%</td><td>1.66</td><td style="color:var(--red);font-weight:600">-10.87%</td><td>92</td></tr>
+</tbody>
+</table></div>
+</details>
+</div>
+
+<!-- ===== COMBO ===== -->
+<div class="section">
+<h2 class="section-title">與雙軌的重疊度與組合分析</h2>
+<div class="section-sub">雙軌腿 = 2026-06-12 修正基準 D0(+4.35% / -38.72%,warmup 修正、閒置資金 SHY/BIL)。
+共同窗口 2006-01-03 ~ 2026-06-11。組合為日報酬加權(不直接相加淨值)。</div>
+
+<div class="card">
+<h3>暴險重疊度 — 時段互補假設「不成立」</h3>
+<table>
+<thead><tr><th>標的</th><th>MR 持倉日數</th><th>其中雙軌空手</th><th>全期雙軌空手基準</th><th>MR 持倉時雙軌平均暴險</th><th>全期雙軌平均暴險</th></tr></thead>
+<tbody><tr><td>SPY</td><td>657</td><td>2.3%</td><td>8.5%</td><td>75.1%</td><td>76.9%</td></tr>
+<tr><td>QQQ</td><td>696</td><td>3.9%</td><td>7.7%</td><td>71.1%</td><td>76.6%</td></tr>
+</tbody>
+</table>
+<div class="takeaway">原假設「MR 工作在雙軌空手的日子」被資料否定:MR 持倉日中雙軌空手只有 2-4%,
+甚至低於全期基準 — 因為兩個系統都要求多頭結構(MR 要 close&gt;200DMA,雙軌要趨勢分數),
+它們在同一種 regime 裡同時在場。互補的真正來源是下面的低相關,不是時段錯開。</div>
+</div>
+
+<div class="card">
+<h3>Return-weighting 組合掃描 — (1-w)·雙軌 D0 + w·盤整 MR</h3>
+<p style="font-size:.88rem;color:#374151;margin-bottom:.75rem">日報酬相關性 <strong>0.33</strong> / 月 <strong>0.32</strong>。</p>
+<table>
+<thead><tr><th>w (MR 權重)</th><th>CAGR</th><th>MDD</th><th>Sharpe</th><th>Calmar</th></tr></thead>
+<tbody><tr><td>0%</td><td>+4.35%</td><td>-38.72%</td><td>0.30</td><td>0.11</td></tr>
+<tr><td>5%</td><td>+4.34%</td><td>-36.82%</td><td>0.31</td><td>0.12</td></tr>
+<tr><td>10%</td><td>+4.32%</td><td>-34.88%</td><td>0.33</td><td>0.12</td></tr>
+<tr><td>15%</td><td>+4.29%</td><td>-32.88%</td><td>0.34</td><td>0.13</td></tr>
+<tr style="background:var(--brand-light)"><td>20%</td><td>+4.26%</td><td>-30.85%</td><td>0.36</td><td>0.14</td></tr>
+<tr><td>25%</td><td>+4.23%</td><td>-28.76%</td><td>0.37</td><td>0.15</td></tr>
+<tr><td>30%</td><td>+4.19%</td><td>-26.64%</td><td>0.39</td><td>0.16</td></tr>
+</tbody>
+</table>
+<div class="takeaway">CAGR 幾乎不動(兩腿 CAGR 相近),MDD/Sharpe/Calmar 隨 w 單調改善 — 教科書式的低相關分散。
+雙軌自身最深回撤窗口 2008-11-20 ~ 2012-01-09(D0 -38.72%)中,MR 報酬 <strong>+8.27%</strong>(暴險 10.3%)。
+注意:雙軌多空在本站已被否決,此分析是分散效果的證據,不是雙軌的翻案;
+對「採用中系統 + MR」的組合分析是合理的下一步。</div>
+</div>
+
+<div class="chart-card">
+  <h3>組合淨值 — 雙軌 D0 vs +20% MR vs 純 MR(對數座標,月頻)</h3>
+  <div class="chart-wrap"><canvas id="chart-combo"></canvas></div>
+</div>
+</div>
+
+<!-- ===== METHOD ===== -->
+<div class="section">
+<h2 class="section-title">方法論附註</h2>
+<div class="card">
+<ul class="rule-list">
+  <li>成交假設:訊號日收盤價成交(RSI(2) 在 15:55 與收盤值幾乎相同,MOC 可執行);next_open 變體在矩陣中驗證,結論見上。</li>
+  <li>出場同日不再進場;次日起可再進場。無價格停損為刻意設計(spec 第 0 節)。</li>
+  <li>MR 閒置現金以 0 計;雙軌 D0 閒置資金持有 SHY/BIL — 組合分析對 MR 腿略偏保守。</li>
+  <li>MAE 用調整後日內 Low 計算(進場日當日不計),為近似值。</li>
+  <li>規格與紅旗門檻:<code>v7-backtest/docs/RSI2_Pullback_MR_Backtest_Spec.md</code>(事前指定,回測後未改);
+      引擎:<code>src/rsi2_mr_backtest/</code>;完整 321 筆交易日誌與 32 組合 JSON 在 <code>results/rsi2_mr/</code>。</li>
+</ul>
+</div>
+</div>
+
+</div>
+
+<footer>
+  InvestMQuest Research · 盤整 MR 候選系統回測 · 產生於 2026-06-12(回測執行 2026-06-12) · 僅供研究,非投資建議
+</footer>
+
+<script>
+const LBL=["2006-01", "2006-02", "2006-03", "2006-04", "2006-05", "2006-06", "2006-07", "2006-08", "2006-09", "2006-10", "2006-11", "2006-12", "2007-01", "2007-02", "2007-03", "2007-04", "2007-05", "2007-06", "2007-07", "2007-08", "2007-09", "2007-10", "2007-11", "2007-12", "2008-01", "2008-02", "2008-03", "2008-04", "2008-05", "2008-06", "2008-07", "2008-08", "2008-09", "2008-10", "2008-11", "2008-12", "2009-01", "2009-02", "2009-03", "2009-04", "2009-05", "2009-06", "2009-07", "2009-08", "2009-09", "2009-10", "2009-11", "2009-12", "2010-01", "2010-02", "2010-03", "2010-04", "2010-05", "2010-06", "2010-07", "2010-08", "2010-09", "2010-10", "2010-11", "2010-12", "2011-01", "2011-02", "2011-03", "2011-04", "2011-05", "2011-06", "2011-07", "2011-08", "2011-09", "2011-10", "2011-11", "2011-12", "2012-01", "2012-02", "2012-03", "2012-04", "2012-05", "2012-06", "2012-07", "2012-08", "2012-09", "2012-10", "2012-11", "2012-12", "2013-01", "2013-02", "2013-03", "2013-04", "2013-05", "2013-06", "2013-07", "2013-08", "2013-09", "2013-10", "2013-11", "2013-12", "2014-01", "2014-02", "2014-03", "2014-04", "2014-05", "2014-06", "2014-07", "2014-08", "2014-09", "2014-10", "2014-11", "2014-12", "2015-01", "2015-02", "2015-03", "2015-04", "2015-05", "2015-06", "2015-07", "2015-08", "2015-09", "2015-10", "2015-11", "2015-12", "2016-01", "2016-02", "2016-03", "2016-04", "2016-05", "2016-06", "2016-07", "2016-08", "2016-09", "2016-10", "2016-11", "2016-12", "2017-01", "2017-02", "2017-03", "2017-04", "2017-05", "2017-06", "2017-07", "2017-08", "2017-09", "2017-10", "2017-11", "2017-12", "2018-01", "2018-02", "2018-03", "2018-04", "2018-05", "2018-06", "2018-07", "2018-08", "2018-09", "2018-10", "2018-11", "2018-12", "2019-01", "2019-02", "2019-03", "2019-04", "2019-05", "2019-06", "2019-07", "2019-08", "2019-09", "2019-10", "2019-11", "2019-12", "2020-01", "2020-02", "2020-03", "2020-04", "2020-05", "2020-06", "2020-07", "2020-08", "2020-09", "2020-10", "2020-11", "2020-12", "2021-01", "2021-02", "2021-03", "2021-04", "2021-05", "2021-06", "2021-07", "2021-08", "2021-09", "2021-10", "2021-11", "2021-12", "2022-01", "2022-02", "2022-03", "2022-04", "2022-05", "2022-06", "2022-07", "2022-08", "2022-09", "2022-10", "2022-11", "2022-12", "2023-01", "2023-02", "2023-03", "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", "2023-10", "2023-11", "2023-12", "2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06", "2024-07", "2024-08", "2024-09", "2024-10", "2024-11", "2024-12", "2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"], SYS=[0.9957, 0.998, 1.0056, 1.0213, 1.0005, 0.9978, 0.9978, 1.0035, 1.0035, 1.0173, 1.0323, 1.0373, 1.0496, 1.0401, 1.0347, 1.0405, 1.0504, 1.0644, 1.0289, 1.0554, 1.0554, 1.0685, 1.0486, 1.0602, 1.0383, 1.0383, 1.0383, 1.0383, 1.047, 1.047, 1.047, 1.0447, 1.0447, 1.0447, 1.0447, 1.0447, 1.0447, 1.0447, 1.0447, 1.0447, 1.0447, 1.0534, 1.0639, 1.0808, 1.1169, 1.1072, 1.1517, 1.1513, 1.1322, 1.1617, 1.1617, 1.1822, 1.1726, 1.1385, 1.1385, 1.1385, 1.1385, 1.1516, 1.1479, 1.1479, 1.1559, 1.1663, 1.1778, 1.1859, 1.2052, 1.1925, 1.1863, 1.1311, 1.1311, 1.1311, 1.1311, 1.1311, 1.1311, 1.1311, 1.1587, 1.1805, 1.1121, 1.1465, 1.1827, 1.1879, 1.2069, 1.2046, 1.2085, 1.2179, 1.2179, 1.2241, 1.2241, 1.2241, 1.2241, 1.2555, 1.2578, 1.2624, 1.2581, 1.259, 1.2743, 1.2886, 1.2882, 1.281, 1.2962, 1.315, 1.315, 1.3184, 1.3046, 1.3034, 1.3104, 1.3175, 1.3175, 1.308, 1.3276, 1.3568, 1.3793, 1.3907, 1.4072, 1.3915, 1.4079, 1.3762, 1.3762, 1.3762, 1.364, 1.3826, 1.3738, 1.3738, 1.3738, 1.3553, 1.3618, 1.3479, 1.3479, 1.3576, 1.3871, 1.3855, 1.3827, 1.398, 1.4125, 1.4125, 1.4252, 1.4334, 1.4436, 1.4455, 1.4523, 1.4766, 1.4756, 1.496, 1.5098, 1.5056, 1.5183, 1.4675, 1.4269, 1.4293, 1.4339, 1.4296, 1.4399, 1.4585, 1.4574, 1.361, 1.361, 1.361, 1.361, 1.361, 1.3628, 1.3628, 1.3514, 1.336, 1.3351, 1.3358, 1.3347, 1.3283, 1.3283, 1.3496, 1.3584, 1.2706, 1.3029, 1.3029, 1.3029, 1.3286, 1.3286, 1.3459, 1.3759, 1.3461, 1.3662, 1.3744, 1.366, 1.358, 1.3779, 1.3779, 1.4233, 1.4363, 1.4476, 1.4635, 1.4656, 1.4847, 1.4919, 1.5193, 1.4795, 1.4795, 1.4795, 1.4795, 1.4795, 1.4795, 1.4795, 1.4795, 1.4795, 1.4795, 1.4795, 1.4795, 1.4795, 1.4721, 1.4893, 1.5221, 1.5507, 1.5507, 1.5507, 1.5377, 1.5172, 1.4749, 1.4749, 1.4749, 1.4918, 1.5126, 1.5126, 1.53, 1.5364, 1.5486, 1.5319, 1.5716, 1.6247, 1.6264, 1.6736, 1.7004, 1.7507, 1.7143, 1.6531, 1.6531, 1.6757, 1.6757, 1.6751, 1.7094, 1.7094, 1.7518, 1.7556, 1.7715, 1.8271, 1.865, 1.8587, 1.8587, 1.8587, 1.8723], BH=[1.0116, 1.0036, 1.0224, 1.028, 0.9751, 0.9762, 0.9571, 0.9904, 1.0268, 1.0674, 1.0964, 1.0933, 1.1132, 1.093, 1.1022, 1.1574, 1.1953, 1.1894, 1.1699, 1.194, 1.2485, 1.3006, 1.2317, 1.2243, 1.1143, 1.0731, 1.0784, 1.1472, 1.1897, 1.083, 1.0819, 1.0982, 0.9607, 0.8078, 0.7334, 0.7454, 0.706, 0.6493, 0.71, 0.7916, 0.8276, 0.8396, 0.9064, 0.9298, 0.9725, 0.9483, 1.0077, 1.0434, 0.9907, 1.0289, 1.0999, 1.1208, 1.0349, 0.9772, 1.0461, 0.9958, 1.1058, 1.162, 1.161, 1.2274, 1.2591, 1.3009, 1.2981, 1.3356, 1.32, 1.2956, 1.2933, 1.225, 1.155, 1.2783, 1.2585, 1.2612, 1.3434, 1.4156, 1.4741, 1.4606, 1.3654, 1.4179, 1.4334, 1.4885, 1.5139, 1.46, 1.4738, 1.4769, 1.5345, 1.5469, 1.5997, 1.6354, 1.684, 1.6526, 1.7475, 1.7178, 1.7864, 1.8721, 1.9332, 1.9866, 1.9325, 2.0263, 2.0067, 2.0107, 2.079, 2.133, 2.1311, 2.2265, 2.2028, 2.258, 2.3403, 2.311, 2.2528, 2.3975, 2.3504, 2.3846, 2.4268, 2.372, 2.4529, 2.2946, 2.2401, 2.4626, 2.4747, 2.4336, 2.2891, 2.2704, 2.4246, 2.3906, 2.463, 2.439, 2.5704, 2.5855, 2.6141, 2.5724, 2.6253, 2.6669, 2.759, 2.8736, 2.9044, 2.9584, 3.0368, 3.0113, 3.1035, 3.1402, 3.1671, 3.2773, 3.3599, 3.3905, 3.6342, 3.5446, 3.4239, 3.4417, 3.5809, 3.6118, 3.7295, 3.8966, 3.9029, 3.601, 3.6299, 3.3132, 3.5954, 3.7075, 3.8137, 3.9965, 3.7047, 3.9745, 4.0511, 3.9788, 4.0359, 4.1688, 4.329, 4.476, 4.5427, 4.2254, 3.8074, 4.3351, 4.5818, 4.7659, 5.0823, 5.5377, 5.2748, 5.1296, 5.6982, 5.9437, 5.9217, 6.0, 6.1892, 6.5361, 6.5187, 6.7952, 6.9756, 7.2266, 6.853, 7.3632, 7.4069, 7.6206, 7.086, 6.8238, 7.1123, 6.3154, 6.2733, 5.7358, 6.3599, 6.0673, 5.4674, 5.7984, 6.1211, 5.6683, 6.1474, 6.0595, 6.4576, 6.5258, 6.7943, 7.2293, 7.4876, 7.3717, 7.0098, 6.8618, 7.5463, 7.9295, 8.0652, 8.489, 8.6819, 8.3174, 8.7838, 9.2224, 9.2011, 9.3598, 9.5814, 9.4977, 10.0353, 9.9371, 10.1787, 9.9767, 9.3206, 9.3453, 10.0672, 10.6472, 10.8992, 11.0631, 11.5573, 11.971, 11.8895, 11.8548, 12.0155, 11.8229, 11.2453, 12.7155, 13.7189, 13.3542];
+new Chart(document.getElementById('chart-nav'),{
+  type:'line',
+  data:{labels:LBL,datasets:[
+    {label:'盤整 MR 50/50',data:SYS,borderColor:'#d97706',borderWidth:1.6,pointRadius:0,tension:0.1},
+    {label:'50/50 Buy & Hold',data:BH,borderColor:'#9ca3af',borderWidth:1.2,pointRadius:0,tension:0.1}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:true,position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'line',padding:14}},
+      tooltip:{callbacks:{label:function(c){return c.dataset.label+': $'+c.parsed.y.toFixed(2)+'M'}}}},
+    scales:{x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{maxTicksLimit:21,font:{size:10}}},
+      y:{type:'logarithmic',grid:{color:'rgba(0,0,0,0.06)'},ticks:{callback:function(v){return '$'+v+'M'},font:{size:10}}}}
+  }
+});
+
+const YEARS=["2006", "2007", "2008", "2009", "2010", "2011", "2012", "2013", "2014", "2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025", "2026"], RSYS=[3.73, 2.21, -1.46, 10.2, -0.29, -1.47, 7.67, 5.81, 1.51, 5.7, 1.11, 7.7, -9.61, -0.83, 1.84, 10.54, -2.62, -0.32, 15.29, 4.18, 5.69], RBH=[9.33, 11.99, -39.11, 39.97, 17.63, 2.76, 17.1, 34.5, 16.33, 5.3, 9.59, 27.13, -2.28, 35.1, 32.79, 28.21, -25.62, 39.89, 25.32, 19.3, 12.65];
+new Chart(document.getElementById('chart-yearly'),{
+  type:'bar',
+  data:{labels:YEARS,datasets:[
+    {label:'盤整 MR 50/50',data:RSYS,backgroundColor:RSYS.map(function(v){return v>=0?'#d97706cc':'#d9770655'}),borderColor:'#d97706',borderWidth:1,borderRadius:2},
+    {label:'B&H 50/50',data:RBH,backgroundColor:RBH.map(function(v){return v>=0?'rgba(156,163,175,0.7)':'rgba(156,163,175,0.3)'}),borderColor:'#9ca3af',borderWidth:1,borderRadius:2}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:true,position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'rect',padding:14}},
+      tooltip:{callbacks:{label:function(c){return c.dataset.label+': '+(c.parsed.y>0?'+':'')+c.parsed.y.toFixed(2)+'%'}}}},
+    scales:{x:{grid:{display:false},ticks:{font:{size:10}}},
+      y:{grid:{color:'rgba(0,0,0,0.06)'},ticks:{callback:function(v){return v+'%'},font:{size:10}}}}
+  }
+});
+
+const CL=["2006-01", "2006-02", "2006-03", "2006-04", "2006-05", "2006-06", "2006-07", "2006-08", "2006-09", "2006-10", "2006-11", "2006-12", "2007-01", "2007-02", "2007-03", "2007-04", "2007-05", "2007-06", "2007-07", "2007-08", "2007-09", "2007-10", "2007-11", "2007-12", "2008-01", "2008-02", "2008-03", "2008-04", "2008-05", "2008-06", "2008-07", "2008-08", "2008-09", "2008-10", "2008-11", "2008-12", "2009-01", "2009-02", "2009-03", "2009-04", "2009-05", "2009-06", "2009-07", "2009-08", "2009-09", "2009-10", "2009-11", "2009-12", "2010-01", "2010-02", "2010-03", "2010-04", "2010-05", "2010-06", "2010-07", "2010-08", "2010-09", "2010-10", "2010-11", "2010-12", "2011-01", "2011-02", "2011-03", "2011-04", "2011-05", "2011-06", "2011-07", "2011-08", "2011-09", "2011-10", "2011-11", "2011-12", "2012-01", "2012-02", "2012-03", "2012-04", "2012-05", "2012-06", "2012-07", "2012-08", "2012-09", "2012-10", "2012-11", "2012-12", "2013-01", "2013-02", "2013-03", "2013-04", "2013-05", "2013-06", "2013-07", "2013-08", "2013-09", "2013-10", "2013-11", "2013-12", "2014-01", "2014-02", "2014-03", "2014-04", "2014-05", "2014-06", "2014-07", "2014-08", "2014-09", "2014-10", "2014-11", "2014-12", "2015-01", "2015-02", "2015-03", "2015-04", "2015-05", "2015-06", "2015-07", "2015-08", "2015-09", "2015-10", "2015-11", "2015-12", "2016-01", "2016-02", "2016-03", "2016-04", "2016-05", "2016-06", "2016-07", "2016-08", "2016-09", "2016-10", "2016-11", "2016-12", "2017-01", "2017-02", "2017-03", "2017-04", "2017-05", "2017-06", "2017-07", "2017-08", "2017-09", "2017-10", "2017-11", "2017-12", "2018-01", "2018-02", "2018-03", "2018-04", "2018-05", "2018-06", "2018-07", "2018-08", "2018-09", "2018-10", "2018-11", "2018-12", "2019-01", "2019-02", "2019-03", "2019-04", "2019-05", "2019-06", "2019-07", "2019-08", "2019-09", "2019-10", "2019-11", "2019-12", "2020-01", "2020-02", "2020-03", "2020-04", "2020-05", "2020-06", "2020-07", "2020-08", "2020-09", "2020-10", "2020-11", "2020-12", "2021-01", "2021-02", "2021-03", "2021-04", "2021-05", "2021-06", "2021-07", "2021-08", "2021-09", "2021-10", "2021-11", "2021-12", "2022-01", "2022-02", "2022-03", "2022-04", "2022-05", "2022-06", "2022-07", "2022-08", "2022-09", "2022-10", "2022-11", "2022-12", "2023-01", "2023-02", "2023-03", "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", "2023-10", "2023-11", "2023-12", "2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06", "2024-07", "2024-08", "2024-09", "2024-10", "2024-11", "2024-12", "2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"], CDT=[1.0058, 0.9904, 0.9975, 1.0029, 0.9749, 0.9767, 0.992, 0.9923, 1.0061, 1.0298, 1.0577, 1.0547, 1.0699, 1.0429, 1.0379, 1.0836, 1.1192, 1.1136, 1.0937, 1.0949, 1.1417, 1.1894, 1.0964, 1.0846, 1.072, 1.1006, 1.0951, 1.0538, 1.0609, 1.0563, 1.0565, 1.0293, 1.0978, 1.1465, 1.2231, 1.1833, 1.181, 1.2452, 1.11, 1.055, 1.0402, 1.0336, 1.042, 1.0613, 1.0955, 1.0768, 1.1097, 1.1374, 1.1013, 1.097, 1.1577, 1.177, 1.0913, 1.0818, 1.0426, 1.0124, 1.0033, 1.0364, 1.0355, 1.0947, 1.123, 1.1603, 1.1417, 1.1633, 1.1394, 1.1151, 1.1155, 1.0306, 1.036, 0.9758, 0.9141, 0.8841, 0.8916, 0.9395, 0.9783, 0.9694, 0.9331, 0.9373, 0.9277, 0.9633, 0.9798, 0.9411, 0.9378, 0.9292, 0.9532, 0.9609, 0.9937, 1.0159, 1.046, 1.0169, 1.0729, 1.055, 1.092, 1.1349, 1.172, 1.2043, 1.1709, 1.2136, 1.1978, 1.1769, 1.2062, 1.2375, 1.2364, 1.2857, 1.272, 1.2768, 1.3234, 1.2974, 1.2329, 1.2912, 1.2596, 1.2779, 1.3005, 1.2648, 1.2791, 1.1633, 1.1569, 1.114, 1.1137, 1.0591, 1.0357, 1.0396, 1.0148, 0.9989, 0.991, 0.9756, 1.0254, 1.0314, 1.0341, 1.0163, 1.0217, 1.0293, 1.0648, 1.1091, 1.1209, 1.1418, 1.172, 1.1622, 1.1939, 1.1967, 1.2069, 1.2489, 1.2804, 1.2921, 1.3849, 1.3101, 1.2686, 1.2534, 1.2845, 1.2956, 1.3378, 1.3978, 1.4, 1.3116, 1.3001, 1.3524, 1.2903, 1.2994, 1.3123, 1.3561, 1.2787, 1.3178, 1.3432, 1.2546, 1.2626, 1.2819, 1.3312, 1.3764, 1.3969, 1.3474, 1.2831, 1.2168, 1.2537, 1.2767, 1.3614, 1.4834, 1.375, 1.3488, 1.4392, 1.5012, 1.4956, 1.515, 1.5062, 1.581, 1.5623, 1.6286, 1.6718, 1.732, 1.6315, 1.7151, 1.7253, 1.7751, 1.677, 1.6616, 1.5893, 1.5684, 1.5664, 1.66, 1.5304, 1.5357, 1.6078, 1.5385, 1.5058, 1.5293, 1.473, 1.4686, 1.4956, 1.5098, 1.5547, 1.6542, 1.7133, 1.6383, 1.5985, 1.5759, 1.6602, 1.7428, 1.7726, 1.8658, 1.9082, 1.8329, 1.9038, 1.9989, 1.9749, 1.9301, 1.9535, 1.9364, 2.046, 2.0164, 2.0373, 2.0039, 1.9731, 1.8568, 1.8438, 1.95, 1.9962, 2.0262, 2.1167, 2.1925, 2.1626, 2.1458, 2.1684, 2.1274, 2.0839, 2.2717, 2.451, 2.3858], CW20=[1.0038, 0.992, 0.9992, 1.0067, 0.9801, 0.9811, 0.9934, 0.9948, 1.0058, 1.0275, 1.0529, 1.0516, 1.0663, 1.0428, 1.0378, 1.0755, 1.1057, 1.1043, 1.0812, 1.0877, 1.1249, 1.1654, 1.088, 1.081, 1.0666, 1.0895, 1.0853, 1.0525, 1.06, 1.0564, 1.0567, 1.0345, 1.0901, 1.1323, 1.1954, 1.1658, 1.1649, 1.2157, 1.1101, 1.066, 1.054, 1.0505, 1.0596, 1.0786, 1.1137, 1.0966, 1.1324, 1.1548, 1.1218, 1.124, 1.1736, 1.1935, 1.122, 1.1077, 1.0755, 1.0506, 1.043, 1.0729, 1.0717, 1.1205, 1.1453, 1.1778, 1.1651, 1.1843, 1.1686, 1.1464, 1.1457, 1.0654, 1.0699, 1.02, 0.9682, 0.9428, 0.9492, 0.9898, 1.0274, 1.0238, 0.9813, 0.991, 0.989, 1.0202, 1.0375, 1.0043, 1.0021, 0.9963, 1.0168, 1.0246, 1.0525, 1.0714, 1.0969, 1.078, 1.1256, 1.1115, 1.1418, 1.1778, 1.2114, 1.2409, 1.2133, 1.2472, 1.2372, 1.2235, 1.2479, 1.2744, 1.2709, 1.3111, 1.3014, 1.3068, 1.3448, 1.3218, 1.2729, 1.3266, 1.3049, 1.3224, 1.3443, 1.3117, 1.3268, 1.2243, 1.219, 1.1827, 1.1804, 1.1371, 1.1157, 1.1193, 1.0979, 1.0813, 1.0754, 1.0599, 1.103, 1.1098, 1.117, 1.1013, 1.1057, 1.1147, 1.1478, 1.1858, 1.1981, 1.2173, 1.2449, 1.2369, 1.265, 1.2717, 1.2802, 1.3194, 1.3485, 1.3576, 1.4376, 1.366, 1.324, 1.3118, 1.3387, 1.3472, 1.3843, 1.4374, 1.4391, 1.3475, 1.338, 1.3813, 1.3304, 1.338, 1.349, 1.3849, 1.3192, 1.3484, 1.369, 1.2967, 1.3031, 1.3178, 1.3582, 1.3995, 1.4181, 1.3599, 1.3151, 1.2609, 1.2915, 1.3161, 1.3858, 1.4882, 1.4073, 1.3801, 1.4581, 1.51, 1.504, 1.5179, 1.5155, 1.5755, 1.5709, 1.627, 1.6641, 1.7157, 1.6362, 1.7074, 1.7173, 1.7635, 1.6764, 1.6641, 1.606, 1.5895, 1.5885, 1.6646, 1.56, 1.5643, 1.623, 1.5673, 1.541, 1.5602, 1.5141, 1.509, 1.5349, 1.5533, 1.5961, 1.6776, 1.7255, 1.6621, 1.6255, 1.598, 1.6662, 1.7323, 1.7601, 1.839, 1.8725, 1.8176, 1.8753, 1.953, 1.9302, 1.9052, 1.9367, 1.9238, 2.0221, 2.0054, 2.0341, 1.9991, 1.9603, 1.8688, 1.8634, 1.949, 1.9857, 2.0178, 2.0897, 2.1602, 2.1379, 2.1285, 2.1598, 2.136, 2.0996, 2.2499, 2.3912, 2.3439], CMR=[0.9957, 0.998, 1.0056, 1.0213, 1.0005, 0.9978, 0.9978, 1.0035, 1.0035, 1.0173, 1.0323, 1.0373, 1.0496, 1.0401, 1.0347, 1.0405, 1.0504, 1.0644, 1.0289, 1.0554, 1.0554, 1.0685, 1.0486, 1.0602, 1.0383, 1.0383, 1.0383, 1.0383, 1.047, 1.047, 1.047, 1.0447, 1.0447, 1.0447, 1.0447, 1.0447, 1.0447, 1.0447, 1.0447, 1.0447, 1.0447, 1.0534, 1.0639, 1.0808, 1.1169, 1.1072, 1.1517, 1.1513, 1.1322, 1.1617, 1.1617, 1.1822, 1.1726, 1.1385, 1.1385, 1.1385, 1.1385, 1.1516, 1.1479, 1.1479, 1.1559, 1.1663, 1.1778, 1.1859, 1.2052, 1.1925, 1.1863, 1.1311, 1.1311, 1.1311, 1.1311, 1.1311, 1.1311, 1.1311, 1.1587, 1.1805, 1.1121, 1.1465, 1.1827, 1.1879, 1.2069, 1.2046, 1.2085, 1.2179, 1.2179, 1.2241, 1.2241, 1.2241, 1.2241, 1.2555, 1.2578, 1.2624, 1.2581, 1.259, 1.2743, 1.2886, 1.2882, 1.281, 1.2962, 1.315, 1.315, 1.3184, 1.3046, 1.3034, 1.3104, 1.3175, 1.3175, 1.308, 1.3276, 1.3568, 1.3793, 1.3907, 1.4072, 1.3915, 1.4079, 1.3762, 1.3762, 1.3762, 1.364, 1.3826, 1.3738, 1.3738, 1.3738, 1.3553, 1.3618, 1.3479, 1.3479, 1.3576, 1.3871, 1.3855, 1.3827, 1.398, 1.4125, 1.4125, 1.4252, 1.4334, 1.4436, 1.4455, 1.4523, 1.4766, 1.4756, 1.496, 1.5098, 1.5056, 1.5183, 1.4675, 1.4269, 1.4293, 1.4339, 1.4296, 1.4399, 1.4585, 1.4574, 1.361, 1.361, 1.361, 1.361, 1.361, 1.3628, 1.3628, 1.3514, 1.336, 1.3351, 1.3358, 1.3347, 1.3283, 1.3283, 1.3496, 1.3584, 1.2706, 1.3029, 1.3029, 1.3029, 1.3286, 1.3286, 1.3459, 1.3759, 1.3461, 1.3662, 1.3744, 1.366, 1.358, 1.3779, 1.3779, 1.4233, 1.4363, 1.4476, 1.4635, 1.4656, 1.4847, 1.4919, 1.5193, 1.4795, 1.4795, 1.4795, 1.4795, 1.4795, 1.4795, 1.4795, 1.4795, 1.4795, 1.4795, 1.4795, 1.4795, 1.4795, 1.4721, 1.4893, 1.5221, 1.5507, 1.5507, 1.5507, 1.5377, 1.5172, 1.4749, 1.4749, 1.4749, 1.4918, 1.5126, 1.5126, 1.53, 1.5364, 1.5486, 1.5319, 1.5716, 1.6247, 1.6264, 1.6736, 1.7004, 1.7507, 1.7143, 1.6531, 1.6531, 1.6757, 1.6757, 1.6751, 1.7094, 1.7094, 1.7518, 1.7556, 1.7715, 1.8271, 1.865, 1.8587, 1.8587, 1.8587, 1.8723];
+new Chart(document.getElementById('chart-combo'),{
+  type:'line',
+  data:{labels:CL,datasets:[
+    {label:'雙軌 D0(w=0%)',data:CDT,borderColor:'#7c3aed',borderWidth:1.3,pointRadius:0,tension:0.1},
+    {label:'80% 雙軌 + 20% MR',data:CW20,borderColor:'#d97706',borderWidth:1.8,pointRadius:0,tension:0.1},
+    {label:'純盤整 MR(w=100%)',data:CMR,borderColor:'#9ca3af',borderWidth:1.2,pointRadius:0,tension:0.1}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:true,position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'line',padding:14}},
+      tooltip:{callbacks:{label:function(c){return c.dataset.label+': $'+c.parsed.y.toFixed(2)+'M'}}}},
+    scales:{x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{maxTicksLimit:21,font:{size:10}}},
+      y:{type:'logarithmic',grid:{color:'rgba(0,0,0,0.06)'},ticks:{callback:function(v){return '$'+v+'M'},font:{size:10}}}}
+  }
+});
+</script>
+</body>
+</html>
