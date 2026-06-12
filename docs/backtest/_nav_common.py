@@ -43,7 +43,7 @@ MULTI_LINKS = [
 ]
 
 INTRADAY_LINKS = [
-    ("/backtest/txf_intraday/", "台指當沖 (預覽)", "txf_intra", "#9333ea"),
+    ("/backtest/txf_intraday/", "台指當沖 (未過)", "txf_intra", "#dc2626"),
 ]
 
 _BRAND = "var(--brand)"

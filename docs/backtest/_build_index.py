@@ -356,11 +356,11 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 <thead><tr><th>系統</th><th>標的 / 時段</th><th>結構</th><th>狀態</th></tr></thead>
 <tbody>
 <tr><td><strong><a href="/backtest/txf_intraday/">台指期日內趨勢</a></strong><br>
-<span style="font-size:.72rem;color:var(--muted)">小段趨勢當沖 · 全規則波動相對化 · 目標導入 XQ 自動交易</span></td>
+<span style="font-size:.72rem;color:var(--muted)">小段趨勢當沖 · 全規則波動相對化 · 18 年 1 分 K 回測(2006–2024/05)</span></td>
 <td>MTX 小台 · 日盤 08:45–13:45 不留倉</td>
 <td>2 觸發(ORB / MA 順勢)× 2 出場(Chandelier / MA20×2)+ 日型過濾</td>
-<td><span class="tag" style="background:#faf5ff;color:#6b21a8;border:1px solid #e9d5ff">預覽 · 管道驗證</span><br>
-<span style="font-size:.72rem;color:var(--muted)">完整回測待 2006–2024 分 K 資料</span></td></tr>
+<td><span class="tag tag-fail">未通過 · 不上實單</span><br>
+<span style="font-size:.72rem;color:var(--muted)">毛利優勢僅 ~1 tick,0 滑價全正、1 tick 全負;最佳變體 PF 0.92</span></td></tr>
 </tbody>
 </table>
 </div>
