@@ -167,7 +167,9 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
     <h2>毛利優勢真實存在,但只有約 1 tick 寬 —— 被交易成本整碗端走</h2>
     <p>8 個變體在 2006-01-02 ~ 2024-05-16 全數虧損。決定性證據是滑價敏感度:<b>0 滑價時 8 個變體全部轉正</b>(+0.05 ~ +0.16R),
     每邊 1 tick 時全負,2 tick 時大虧 —— 訊號不是雜訊,但毛利優勢小於現實摩擦成本。勝率 20.7%、賺賠比 3.5:1 的結構符合趨勢系統教科書,
-    可惜淨期望 ≈ 0。獲利集中在 2008-09、2015、2020 等高波動年,平靜年慢性失血。<b>v0 規則不導入 XQ 實單。</b></p>
+    可惜淨期望 ≈ 0。獲利集中在 2008-09、2015、2020 等高波動年,平靜年慢性失血。
+    後續加測的<b>限價進場救援研究</b>(下方)把最佳變體從 -1,042 點救到約打平,但 2017 夜盤上線後的年代仍是淨虧損。
+    <b>v0 規則不導入 XQ 實單,日內趨勢線關檔。</b></p>
   </div>
   <div class="hero-stats">
     <div><div class="hs-label">最佳變體 18 年淨點數</div><div class="hs-value" style="color:var(--red)">-1,042</div></div>
@@ -188,6 +190,23 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 <div class="takeaway"><b>每 1 tick 滑價 ≈ -0.13R expectancy。</b>系統平均每筆毛利優勢只有 1 tick 上下:
 這不是「優化參數可以救」的等級,是頻率與持倉時間的結構問題 —— 平均單筆風險約 30-40 點,
 而 5 分 K 小段趨勢的平均可捕捉段落扣掉假突破後,只比 4.7 點的來回成本多一點點。</div>
+</div>
+</div>
+
+<div class="section">
+<h2 class="section-title">執行端救援:限價進場研究(加測)</h2>
+<div class="section-sub">既然死因是 taker 成本,測試 maker 進場:訊號 bar 收盤價掛限價單、工作 2 根 K。
+保守成交假設 = 次根 K 須「穿過」掛單價 1 tick(基準);觸價即成交為樂觀對照。出場全部維持市價含滑價。格式:expectancy / 18 年總點數。</div>
+<div class="card" style="overflow-x:auto">
+<table>
+<thead><tr><th>組合</th><th>市價進場(基準 v0)</th><th>限價 · 穿價成交(保守)</th><th>限價 · 觸價成交(樂觀)</th></tr></thead>
+<tbody><tr><td style="color:#1a56db;font-weight:600">ORB 突破 + Chandelier</td><td style="color:var(--red)">-0.102R / -3,494 點</td><td style="color:var(--red)">-0.026R / -1,365 點<span style="color:var(--muted);font-size:.78rem">(成交 96%)</span></td><td style="color:var(--red)">-0.001R / -677 點<span style="color:var(--muted);font-size:.78rem">(成交 99%)</span></td></tr><tr><td style="color:#0891b2;font-weight:600">ORB 突破 + MA20×2</td><td style="color:var(--red)">-0.080R / -2,785 點</td><td style="color:var(--red)">+0.002R / -568 點<span style="color:var(--muted);font-size:.78rem">(成交 96%)</span></td><td style="color:var(--green)">+0.027R / +58 點<span style="color:var(--muted);font-size:.78rem">(成交 99%)</span></td></tr><tr><td style="color:#16a34a;font-weight:600">MA 順勢 + Chandelier</td><td style="color:var(--red)">-0.059R / -2,062 點</td><td style="color:var(--red)">-0.006R / -1,238 點<span style="color:var(--muted);font-size:.78rem">(成交 97%)</span></td><td style="color:var(--red)">+0.018R / -757 點<span style="color:var(--muted);font-size:.78rem">(成交 99%)</span></td></tr><tr><td style="color:#d97706;font-weight:600">MA 順勢 + MA20×2</td><td style="color:var(--red)">+0.003R / -1,042 點</td><td style="color:var(--green)">+0.067R / +50 點<span style="color:var(--muted);font-size:.78rem">(成交 97%)</span></td><td style="color:var(--green)">+0.097R / +567 點<span style="color:var(--muted);font-size:.78rem">(成交 99%)</span></td></tr></tbody>
+</table>
+<div class="takeaway"><b>救援失敗 —— 從「虧損」救到「打平」,救不到「值得交易」。</b>
+成交率 96-97% 出乎意料地高(5 分 K 尺度下價格幾乎都會回踩訊號收盤價),未成交偏誤很小,
+每組合一致改善約 +0.07R —— 但最佳變體也只到 +0.067R(PF 1.00、18 年 +50 點)。
+更致命的是年代拆解:同一限價版本 <b>2006–16 共 +1,284 點、2017–24(夜盤時代)共 -1,234 點</b> ——
+打平的總數掩蓋了「現在要交易的年代是虧損的那段」。掛單存續 1/2/6 根 K 結果幾乎相同(會成交的第一根就成交)。</div>
 </div>
 </div>
 
@@ -313,10 +332,12 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 <h2 class="section-title">結論與後續</h2>
 <div class="card">
 <p style="font-size:.9rem;color:#374151;line-height:1.85">
-<b>v0 不導入實單,XQ 部署計畫擱置。</b>診斷明確:5 分 K 小段趨勢的單筆毛利優勢約等於 1 tick,
-頻率高(最佳變體 18 年 1,394 筆)而單筆優勢薄,任何現實滑價都讓淨期望歸零或轉負。
-若要續作,數學上必須讓「單筆毛利優勢 ÷ 成本」的比值放大數倍 —— 方向上意味著更低頻率、更長持倉、或更低成本的執行方式,
-而非調整現有參數(OR 閾值掃描已顯示參數內無解)。是否開啟 v1 設計由 owner 決定。</p>
+<b>日內趨勢線正式關檔,XQ 部署取消。</b>結案邏輯:(1) 訊號存在但毛利優勢僅 ~1 tick,1 tick 滑價即歸零;
+(2) 參數內無解(OR 閾值掃描單調);(3) 執行端救援已測 —— maker 進場、保守成交假設下成交率 96%+、
+未成交偏誤小,仍只能救到打平(PF 1.00),且 2017 夜盤上線後的年代為淨虧損;
+(4) 四個其他日內價格型家族(日內動能/ORB 持有到收盤/跳空收斂/午盤反轉)的訊號層掃描全數不及格,
+其中兩個在 2017 後翻負 —— 夜盤把隔夜資訊消化完,日盤的純價格結構基本被套利殆盡。
+若未來重啟日內研究,方向是新資訊維度(跨市場夜盤傳導、訂單流微結構),而非價格 pattern 變體。</p>
 <div class="takeaway">本頁所有數據可由 repo 重現:<code>txf_intraday_backtest/run_full.py</code>(回測)
 → <code>generate_site_page.py</code>(本頁)。tick 管道持續自動累積,forward 段未來可隨時對照。</div>
 </div>
