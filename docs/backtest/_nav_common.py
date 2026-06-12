@@ -32,6 +32,7 @@ INDIVIDUAL_LINKS = [
     ("/backtest/gem/", "GEM", "gem", None),
     ("/backtest/slope_filter/", "W52 斜率", "slope", None),
     ("/backtest/short_system/", "做空 (失敗)", "short", "#dc2626"),
+    ("/backtest/cndr/", "Iron Condor (失敗)", "cndr", "#dc2626"),
 ]
 
 MULTI_LINKS = [

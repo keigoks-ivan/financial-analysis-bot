@@ -80,6 +80,8 @@ US_SYSTEMS = [
      "+10.16%", "-20.05%", "0.92", "0.51", "17", "$7.02M*", TAG["def"]),
     ("做空系統", "/backtest/short_system/", "指數做空 · 兩個獨立引擎均否決",
      "—", "—", "—", "—", "—", "—", TAG["fail"]),
+    ("Iron Condor 盤整", "/backtest/cndr/", "CBOE CNDR 指數 · 盤整選擇權系統 Step 1 · 翼封住左尾但 beta ≈ 0",
+     "+1.19%", "-19.72%", "0.18", "0.06", "—", "—", TAG["fail"]),
 ]
 
 MULTI_SYSTEMS = [
