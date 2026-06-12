@@ -361,6 +361,12 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 <td>2 觸發(ORB / MA 順勢)× 2 出場(Chandelier / MA20×2)+ 日型過濾</td>
 <td><span class="tag tag-fail">未通過 · 不上實單</span><br>
 <span style="font-size:.72rem;color:var(--muted)">毛利優勢僅 ~1 tick,0 滑價全正、1 tick 全負;最佳變體 PF 0.92</span></td></tr>
+<tr><td><strong><a href="/backtest/txf_basis/">台指期現基差偏向</a></strong><br>
+<span style="font-size:.72rem;color:var(--muted)">基差極端 → 次日日盤反向 · XQ 想法普查的唯一合格候選 · 18 年驗證</span></td>
+<td>MTX 小台 · 次日日盤全段持有</td>
+<td>13:30 對齊基差 z 分數 ≥1.5 反向 + 轉倉週剔除 + 除息分組對照</td>
+<td><span class="tag tag-fail">否決 · 假訊號</span><br>
+<span style="font-size:.72rem;color:var(--muted)">原始掃描 +17.9 點/筆;量測對齊後現行年代歸零(+0.3 點,t=0.04)</span></td></tr>
 </tbody>
 </table>
 </div>
