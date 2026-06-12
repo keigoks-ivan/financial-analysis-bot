@@ -6,15 +6,21 @@
   （態③減1/3 / 態④減碼+回補 / 態⑤全出 都已記在 legs），不重寫狀態機邏輯 →
   與 §3/§4 的 sim 經濟學完全一致。
 - 部位金額 = 進場時建議部位% × 當下個股部淨值（running NAV，循環以時序解開：
-  trade 進場當日自身 P&L=0，故進場日 NAV 只含先前 trade）。
-- 其餘為現金（0% 報酬）。NAV(t) = 起始資金 + Σ 各 trade 到 t 的美元損益。
-- 基準 SPY 以同起始資金、start_date 為基期。x 軸取 SPY 交易日（兩端對齊）。
+  trade 進場當日自身 P&L=0，故進場日 NAV 只含先前 trade + 現金）。
+- 未投入現金照 IBKR 閒置資金利率計息（USD 3.12% p.a.，2026-06-05；NAV>$100k 級距、
+  $10,000 以上計息），逐日 Actual/360 累計（含週末日曆日）。
+- NAV(t) = 現金(t, 含利息) + Σ 持倉市值(t)。基準 SPY 同起始資金、start_date 為基期。
+  x 軸取 SPY 交易日（兩端對齊）。
 """
 from __future__ import annotations
 
 from collections import defaultdict
 
 import pandas as pd
+
+# IBKR USD 閒置資金利率（2026-06-05；NAV>$100k 享全額 BM-0.5%），餘額 > $10,000 計息
+CASH_APR_DEFAULT = 0.0312
+CASH_FLOOR_DEFAULT = 10_000.0
 
 
 def _leg_schedule(legs: list[dict]) -> dict[str, list[dict]]:
@@ -24,38 +30,11 @@ def _leg_schedule(legs: list[dict]) -> dict[str, list[dict]]:
     return by_date
 
 
-def _trade_unit_pnl_series(ev: dict, col: pd.Series, axis: pd.DatetimeIndex) -> dict:
-    """回傳 {date: 每股單位損益}（fraction 1.0 = 1 股 @ p0）。重建自 legs。"""
-    sim = ev["sim"]
-    p0 = float(sim["entry_close"])
-    entry = pd.Timestamp(ev["entry_date"])
-    sched = _leg_schedule(sim.get("legs"))
-    fraction, invested, proceeds = 1.0, p0, 0.0
-    out: dict[pd.Timestamp, float] = {}
-    for d in axis:
-        if d < entry:
-            out[d] = 0.0
-            continue
-        for lg in sched.get(str(d.date()), []):
-            qty, price, reason = lg["fraction"], lg["price"], lg["reason"]
-            if "回補" in reason:                     # 態④回補：買回
-                invested += qty * price
-                fraction += qty
-            elif "全出" in reason:                   # 態⑤全出：賣光
-                proceeds += fraction * price
-                fraction = 0.0
-            else:                                     # 態③/態④減碼：賣 qty
-                proceeds += qty * price
-                fraction -= qty
-        sub = col[col.index <= d].dropna()
-        px = float(sub.iloc[-1]) if len(sub) else p0
-        out[d] = (proceeds + fraction * px) - invested   # 每股單位損益
-    return out
-
-
 def compute(events: list[dict], closes: pd.DataFrame, spy: pd.Series,
-            start_date: str, capital: float = 1_000_000.0) -> dict | None:
-    """產出策略 NAV vs SPY 日序列 + 摘要。資料不足回 None。"""
+            start_date: str, capital: float = 1_000_000.0,
+            cash_apr: float = CASH_APR_DEFAULT,
+            cash_floor: float = CASH_FLOOR_DEFAULT) -> dict | None:
+    """產出策略 NAV vs SPY 日序列 + 摘要（含現金利息）。資料不足回 None。"""
     start = pd.Timestamp(start_date)
     if spy is None or spy.empty:
         return None
@@ -69,57 +48,111 @@ def compute(events: list[dict], closes: pd.DataFrame, spy: pd.Series,
               and e.get("entry_date") and e["ticker"] in closes.columns]
     trades.sort(key=lambda e: e["entry_date"])
 
-    # 每筆 trade：單位損益日序列 + 美元 scale（部位金額 ÷ p0）
-    unit_series: dict[int, dict] = {}
-    dollar_pnl: dict[int, dict] = {}
-    positions = []
-    for idx, ev in enumerate(trades):
-        col = closes[ev["ticker"]]
-        unit_series[idx] = _trade_unit_pnl_series(ev, col, axis)
-        ed = pd.Timestamp(ev["entry_date"])
-        # 進場日個股部淨值（只含先前已配置 trade 的當日損益）
-        nav_at_entry = capital + sum(dollar_pnl[j].get(ed, 0.0) for j in dollar_pnl)
-        pos_pct = float(ev["sim"].get("suggested_position_pct") or 0.0)
-        alloc = pos_pct / 100.0 * nav_at_entry
-        p0 = float(ev["sim"]["entry_close"])
-        scale = alloc / p0 if p0 else 0.0
-        dollar_pnl[idx] = {d: unit_series[idx][d] * scale for d in axis}
-        last_pnl = dollar_pnl[idx][axis[-1]]
-        positions.append({
-            "ticker": ev["ticker"], "name": ev.get("name"),
-            "entry_type": ev["entry_type"], "entry_date": ev["entry_date"],
-            "weight_pct": round(pos_pct, 2), "alloc_usd": round(alloc, 0),
-            "ret_pct": ev["sim"].get("ret_pct"),
-            "pnl_usd": round(last_pnl, 0),
-            "state": ev["sim"].get("current_state"),
-            "status": ev["status"],
-            "exit_date": ev["sim"].get("exit_date"),
+    def px_at(ticker: str, d: pd.Timestamp) -> float | None:
+        sub = closes[ticker][closes[ticker].index <= d].dropna()
+        return float(sub.iloc[-1]) if len(sub) else None
+
+    # 每筆 trade 的可變帳：fraction（1.0=初始部位）+ 美元投入/賣出
+    st = []
+    for ev in trades:
+        st.append({
+            "ev": ev, "p0": float(ev["sim"]["entry_close"]),
+            "entry": pd.Timestamp(ev["entry_date"]),
+            "sched": _leg_schedule(ev["sim"].get("legs")),
+            "opened": False, "frac": 0.0, "shares_unit": 0.0,
+            "invested": 0.0, "proceeds": 0.0, "alloc": 0.0,
+            "pos_pct": float(ev["sim"].get("suggested_position_pct") or 0.0),
         })
 
+    cash = capital
+    interest_total = 0.0
+    prev = None
     series = []
     for d in axis:
-        nav = capital + sum(dollar_pnl[j][d] for j in dollar_pnl)
-        spv = capital * float(spy.loc[d]) / spy0
+        # 1) 閒置現金計息（日曆日，Actual/360，$10k 以上）
+        if prev is not None and cash_apr > 0:
+            days = (d - prev).days
+            earn = max(0.0, cash - cash_floor) * cash_apr * days / 360.0
+            cash += earn
+            interest_total += earn
+        # 2) 當日進場：部位 = pos% × 當下個股部淨值
+        for s in st:
+            if not s["opened"] and s["entry"] == d:
+                held_others = sum(
+                    o["frac"] * o["shares_unit"] * (px_at(o["ev"]["ticker"], d) or o["p0"])
+                    for o in st if o["opened"])
+                nav_now = cash + held_others
+                s["alloc"] = s["pos_pct"] / 100.0 * nav_now
+                s["shares_unit"] = s["alloc"] / s["p0"] if s["p0"] else 0.0
+                s["frac"], s["opened"], s["invested"] = 1.0, True, s["alloc"]
+                cash -= s["alloc"]
+        # 3) 當日 legs（態③/④減碼、態④回補、態⑤全出）→ 現金流
+        for s in st:
+            if not s["opened"] or s["frac"] <= 1e-9:
+                continue
+            for lg in s["sched"].get(str(d.date()), []):
+                f, pr, reason = lg["fraction"], lg["price"], lg["reason"]
+                if "回補" in reason:                       # 買回 → 現金出
+                    amt = f * s["shares_unit"] * pr
+                    cash -= amt
+                    s["frac"] += f
+                    s["invested"] += amt
+                elif "全出" in reason:                      # 賣光 → 現金入
+                    amt = s["frac"] * s["shares_unit"] * pr
+                    cash += amt
+                    s["proceeds"] += amt
+                    s["frac"] = 0.0
+                else:                                        # 減碼 qty → 現金入
+                    amt = f * s["shares_unit"] * pr
+                    cash += amt
+                    s["frac"] -= f
+                    s["proceeds"] += amt
+        # 4) NAV = 現金 + 持倉市值
+        held = sum(s["frac"] * s["shares_unit"] * (px_at(s["ev"]["ticker"], d) or s["p0"])
+                   for s in st if s["opened"] and s["frac"] > 1e-9)
+        nav = cash + held
         series.append({"date": str(d.date()),
-                       "nav": round(nav, 2), "spy": round(spv, 2)})
+                       "nav": round(nav, 2),
+                       "spy": round(capital * float(spy.loc[d]) / spy0, 2)})
+        prev = d
 
-    invested_pct = sum(p["weight_pct"] for p in positions)
+    end_held = 0.0
+    positions = []
+    for s in st:
+        p = px_at(s["ev"]["ticker"], axis[-1]) or s["p0"]
+        hv = s["frac"] * s["shares_unit"] * p
+        end_held += hv
+        positions.append({
+            "ticker": s["ev"]["ticker"], "name": s["ev"].get("name"),
+            "entry_type": s["ev"]["entry_type"], "entry_date": s["ev"]["entry_date"],
+            "weight_pct": round(s["pos_pct"], 2), "alloc_usd": round(s["alloc"], 0),
+            "ret_pct": s["ev"]["sim"].get("ret_pct"),
+            "pnl_usd": round(s["proceeds"] + hv - s["invested"], 0),
+            "state": s["ev"]["sim"].get("current_state"),
+            "status": s["ev"]["status"],
+            "exit_date": s["ev"]["sim"].get("exit_date"),
+        })
+
     end_nav = series[-1]["nav"]
     end_spy = series[-1]["spy"]
+    end_cash = end_nav - end_held
     summary = {
         "strategy_value": round(end_nav, 0),
         "strategy_ret_pct": round((end_nav / capital - 1) * 100, 2),
         "spy_value": round(end_spy, 0),
         "spy_ret_pct": round((end_spy / capital - 1) * 100, 2),
         "excess_pp": round((end_nav - end_spy) / capital * 100, 2),
-        "invested_pct": round(invested_pct, 2),
-        "cash_pct": round(100 - invested_pct, 2),
+        "invested_pct": round(end_held / end_nav * 100, 2),
+        "cash_pct": round(end_cash / end_nav * 100, 2),
+        "interest_usd": round(interest_total, 0),
+        "cash_apr_pct": round(cash_apr * 100, 2),
         "n_positions": len(positions),
     }
     return {
         "start": start_date,
         "capital": capital,
         "benchmark": "SPY",
+        "cash_apr_pct": round(cash_apr * 100, 2),
         "as_of": series[-1]["date"],
         "series": series,
         "summary": summary,

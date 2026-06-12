@@ -185,6 +185,9 @@ def _performance_block(p) -> str:
         f'<em class="{"pos" if sm["spy_ret_pct"] >= 0 else "neg"}">{sm["spy_ret_pct"]:+.2f}%</em></div>'
         f'<div class="pf-stat"><span>超額 (vs SPY)</span><strong class="{"pos" if win else "neg"}">{sm["excess_pp"]:+.2f}pp</strong>'
         f'<em>投入 {sm["invested_pct"]:.1f}% · 現金 {sm["cash_pct"]:.1f}%</em></div>'
+        f'<div class="pf-stat"><span>現金利息（IBKR {sm.get("cash_apr_pct", 0):.2f}% p.a.）</span>'
+        f'<strong class="pos">+${sm.get("interest_usd", 0):,.0f}</strong>'
+        f'<em>閒置 USD 計息（&gt;$10k）</em></div>'
         f'</div>')
     prows = "".join(
         f'<tr><td class="left"><strong>{_e(pp["ticker"])}</strong> '
@@ -202,7 +205,8 @@ def _performance_block(p) -> str:
         f'<div class="section"><div class="card">'
         f'<h2>📈 6/1 起策略淨值 vs SPY（起始資金 {cap_m}）</h2>'
         f'<div class="desc">起始 {cap_m} 個股部，照 SOP 全交易設定（T+1 進場 · 部位 = min(10%, 1.5%÷停損) · '
-        f'態③減1/3 · 態④減碼+回補 · 態⑤全出）逐日 mark-to-market；未投入部位為現金（0% 報酬）。'
+        f'態③減1/3 · 態④減碼+回補 · 態⑤全出）逐日 mark-to-market；未投入現金照 IBKR 閒置資金利率 '
+        f'{p.get("cash_apr_pct", 0):.2f}% p.a. 計息（USD、&gt;$10k、Actual/360）。'
         f'基準 SPY 同起始資金、{_e(p["start"])} 為基期。日序列由 sim legs 重建，與 §3/§4 一致。</div>'
         f'<div class="pf-legend"><span class="pf-lg-nav">策略 NAV</span>'
         f'<span class="pf-lg-spy">SPY</span><span class="pf-lg-base">基期 {cap_m}</span></div>'
