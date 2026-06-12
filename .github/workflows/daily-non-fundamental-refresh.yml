@@ -85,6 +85,43 @@ jobs:
         run: python scripts/sop_funnel/build.py
         continue-on-error: true
 
+      - name: Step 9b — SOP 漏斗板機 alert 檔
+        run: python scripts/sop_funnel/alert.py
+        continue-on-error: true
+
+      - name: Read SOP funnel alert
+        id: sop_alert
+        run: |
+          if [ -f sop_funnel_alert.txt ]; then
+            echo "triggered=true" >> "$GITHUB_OUTPUT"
+            {
+              echo "body<<ALERT_EOF"
+              cat sop_funnel_alert.txt
+              echo "ALERT_EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "triggered=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Email SOP funnel trigger
+        if: steps.sop_alert.outputs.triggered == 'true'
+        uses: dawidd6/action-send-mail@v3
+        continue-on-error: true
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_APP_PASSWORD }}
+          subject: "🎯 SOP 漏斗板機 — 今日有通過全部 veto 的進場訊號"
+          to: keigoks@gmail.com
+          from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
+          body: |
+            ${{ steps.sop_alert.outputs.body }}
+
+            —
+            InvestMQuest · 每日收盤後自動掃描
+
       - name: Commit and push if changed
         run: |
           git config user.name "github-actions[bot]"
