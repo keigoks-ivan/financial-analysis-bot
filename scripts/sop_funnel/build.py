@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -298,6 +299,27 @@ def main() -> int:
     open_trades = [e for e in ledger["events"] if e["status"] == "entered" and e["sim"]]
     closed_trades = [e for e in ledger["events"] if e["status"] == "closed"]
 
+    # ── 否決原因分布（帳本累計 + 近 30 日窗）──
+    veto_evs = [e for e in ledger["events"] if e["status"] == "vetoed"]
+    cutoff_30d = today - pd.Timedelta(days=30)
+    reason_all, reason_recent = Counter(), Counter()
+    recent_total = 0
+    for e in veto_evs:
+        is_recent = pd.Timestamp(e["signal_date"]) >= cutoff_30d
+        if is_recent:
+            recent_total += 1
+        for r in (e.get("vetoes") or []):
+            reason_all[r] += 1
+            if is_recent:
+                reason_recent[r] += 1
+    veto_distribution = {
+        "total": len(veto_evs),
+        "recent_window_days": 30,
+        "recent_total": recent_total,
+        "by_reason": [{"reason": r, "count": n} for r, n in reason_all.most_common()],
+        "recent_by_reason": [{"reason": r, "count": n} for r, n in reason_recent.most_common()],
+    }
+
     backtest = None
     if BACKTEST_PATH.exists():
         try:
@@ -316,6 +338,7 @@ def main() -> int:
         "spy_benchmark_stale": spy_stale,
         "today_signals": today_signals,
         "today_vetoed": today_vetoed,
+        "veto_distribution": veto_distribution,
         "standby_a1": sorted(standby_a1, key=lambda x: -x["ath_age_weeks"]),
         "standby_a2": sorted(standby_a2, key=lambda x: x["dist_ath_pct"], reverse=True),
         "standby_b": sorted(standby_b, key=lambda x: x["weeks_since_anchor"]),

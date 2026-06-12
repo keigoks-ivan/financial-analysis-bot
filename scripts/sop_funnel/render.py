@@ -115,6 +115,32 @@ def _veto_rows(evs) -> str:
             f'<th class="left">否決原因</th></tr></thead><tbody>{rows}</tbody></table></details>')
 
 
+def _veto_distribution_block(vd) -> str:
+    """否決原因分布小統計區塊（帳本累計 + 近 30 日）。"""
+    if not vd or not vd.get("by_reason"):
+        return ""
+    mentions = sum(x["count"] for x in vd["by_reason"]) or 1
+    recent_map = {x["reason"]: x["count"] for x in vd.get("recent_by_reason", [])}
+    palette = ["#b45309", "#0369a1", "#7c3aed", "#0f766e", "#be185d"]
+    bars = ""
+    for i, x in enumerate(vd["by_reason"]):
+        pct = x["count"] / mentions * 100
+        rec = recent_map.get(x["reason"], 0)
+        bars += (
+            f'<div class="vd-row"><div class="vd-label">{_e(x["reason"])}</div>'
+            f'<div class="vd-track"><div class="vd-fill" '
+            f'style="width:{pct:.0f}%;background:{palette[i % len(palette)]}"></div></div>'
+            f'<div class="vd-val">{x["count"]} 筆 · {pct:.0f}%'
+            f'<span class="vd-rec">近30日 {rec}</span></div></div>')
+    return (
+        f'<details class="vd-box" open><summary>否決原因分布 — 帳本累計 {vd["total"]} 筆'
+        f'（近 {vd["recent_window_days"]} 日 {vd["recent_total"]} 筆）</summary>'
+        f'<div class="vd-wrap">{bars}</div>'
+        f'<div class="vd-note">否決＝五條件已過、技術型態觸發，但進場當下被態勢守則擋下。'
+        f'態2過熱＝價格離均線過遠，不追高、等回踩；價≤52週線／排列不正＝尚未進入健康多頭。</div>'
+        f'</details>')
+
+
 def _standby_table(rows, cols, empty_msg) -> str:
     if not rows:
         return f'<div class="empty">{empty_msg}</div>'
@@ -349,6 +375,16 @@ td.veto{{color:#b45309;font-size:11px}}
 .pending-tag{{display:block;font-size:9.5px;color:#b45309;font-weight:600}}
 .prereg{{background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px 14px;font-size:11.5px;color:#0c4a6e;line-height:1.7;margin-bottom:14px}}
 .prereg strong{{display:inline;margin-right:6px}}
+.vd-box{{margin-top:14px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 14px}}
+.vd-box>summary{{color:#92400e;font-weight:700;font-size:12px}}
+.vd-wrap{{margin-top:11px;display:flex;flex-direction:column;gap:7px;max-width:580px}}
+.vd-row{{display:grid;grid-template-columns:92px 1fr auto;align-items:center;gap:10px;font-size:11px}}
+.vd-label{{color:#78350f;font-weight:600;text-align:right;white-space:nowrap}}
+.vd-track{{background:#fef3c7;border-radius:5px;height:14px;overflow:hidden}}
+.vd-fill{{height:100%;border-radius:5px;min-width:2px}}
+.vd-val{{color:#92400e;white-space:nowrap;font-variant-numeric:tabular-nums}}
+.vd-rec{{color:#b9893f;margin-left:8px}}
+.vd-note{{font-size:10.5px;color:#a16207;margin-top:10px;line-height:1.6;max-width:700px}}
 details{{margin-top:12px;font-size:12px}}
 summary{{cursor:pointer;color:#5a7a9a;font-weight:600}}
 .a2-list{{padding:10px 4px;color:#5a7a9a;line-height:1.9;font-size:11.5px}}
@@ -385,6 +421,7 @@ footer{{text-align:center;font-size:10.5px;color:#8aa5c0;padding:24px}}
 <table><thead><tr><th class="left">ticker</th><th>型態</th><th>基期/錨</th><th>訊號收盤</th><th>停損距離</th><th>建議部位</th><th>旗標</th><th>報告</th></tr></thead>
 <tbody>{_signal_rows(d["today_signals"])}</tbody></table>
 {_veto_rows(d["today_vetoed"])}
+{_veto_distribution_block(d.get("veto_distribution"))}
 </div></div>
 
 <div class="section"><div class="card">
