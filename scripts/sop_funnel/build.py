@@ -321,8 +321,12 @@ def main() -> int:
     }
 
     # ── 6/1 起策略淨值 vs SPY（起始資金 $1M，遵守所有交易設定）──
+    cash_rate = prices.load_cash_rate(refresh=not args.no_benchmark_refresh)
     perf = performance.compute(ledger["events"], closes, spy,
-                               start_date="2026-06-01", capital=1_000_000.0)
+                               start_date="2026-06-01", capital=1_000_000.0,
+                               cash_apr=cash_rate["ibkr_apr_pct"] / 100.0)
+    if perf:
+        perf["cash_rate"] = cash_rate
 
     backtest = None
     if BACKTEST_PATH.exists():

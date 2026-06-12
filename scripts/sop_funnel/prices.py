@@ -27,6 +27,13 @@ OUT_DIR = REPO_ROOT / "docs" / "dd-screener" / "sop-funnel"
 BENCHMARK_PATH = OUT_DIR / "benchmark.json"
 BENCHMARK_TICKER = "SPY"
 
+# IBKR USD 閒置資金利率 = BM − 0.5%（NAV>$100k 級距）。BM 以 ^IRX（13週國庫券殖利率）
+# 為基準自動帶 — 與 SPY 同走 yfinance（CI 已驗證可達）；^IRX−0.5 現值 ≈ IBKR 公告 3.12%。
+CASH_RATE_PATH = OUT_DIR / "cash_rate.json"
+CASH_BM_TICKER = "^IRX"
+CASH_SPREAD_PCT = 0.5
+CASH_APR_FALLBACK_PCT = 3.12   # 取不到時保底（IBKR 2026-06-05 公告 USD 值）
+
 
 def load_closes() -> pd.DataFrame:
     """寬表 + 切片 → 最新日收盤寬表（in-memory，不落地）。
@@ -90,6 +97,55 @@ def load_benchmark(refresh: bool = True) -> tuple[pd.Series, bool]:
     ser = pd.Series({pd.Timestamp(k): v for k, v in closes.items()}).sort_index()
     ser = ser[ser.notna() & (ser > 0)]
     return ser, stale
+
+
+def load_cash_rate(refresh: bool = True) -> dict:
+    """IBKR USD 閒置資金利率（%）— BM(^IRX) − 0.5%，自動跟基準。
+
+    refresh=True 時抓 ^IRX 最新殖利率重算並寫 cache；失敗或 refresh=False 沿用 cache；
+    無 cache 用 CASH_APR_FALLBACK_PCT 保底。回傳 dict 含 apr/bm/spread/source/stale。
+    """
+    cache: dict = {}
+    if CASH_RATE_PATH.exists():
+        try:
+            cache = json.loads(CASH_RATE_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            cache = {}
+    bm = cache.get("bm")
+    apr = cache.get("ibkr_apr_pct")
+    asof = cache.get("bm_asof")
+    stale = bool(cache)
+
+    if refresh:
+        try:
+            import yfinance as yf
+            hist = yf.Ticker(CASH_BM_TICKER).history(period="5d")["Close"].dropna()
+            if hist is None or hist.empty:
+                raise RuntimeError("yfinance 回傳空資料")
+            bm = round(float(hist.iloc[-1]), 3)
+            apr = round(max(0.0, bm - CASH_SPREAD_PCT), 3)
+            asof = pd.Timestamp(hist.index[-1]).strftime("%Y-%m-%d")
+            CASH_RATE_PATH.parent.mkdir(parents=True, exist_ok=True)
+            CASH_RATE_PATH.write_text(json.dumps({
+                "ibkr_apr_pct": apr, "bm": bm, "bm_ticker": CASH_BM_TICKER,
+                "bm_asof": asof, "spread_pct": CASH_SPREAD_PCT,
+                "source": f"{CASH_BM_TICKER} − {CASH_SPREAD_PCT}%（IBKR USD BM-0.5%）",
+                "updated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            }, ensure_ascii=False), encoding="utf-8")
+            stale = False
+        except Exception as exc:
+            print(f"  WARN: 現金利率 {CASH_BM_TICKER} 更新失敗（沿用 cache/保底）: {exc}",
+                  file=sys.stderr)
+            stale = True
+
+    if apr is None:
+        return {"ibkr_apr_pct": CASH_APR_FALLBACK_PCT, "bm": None,
+                "bm_ticker": CASH_BM_TICKER, "spread_pct": CASH_SPREAD_PCT,
+                "source": "fallback（IBKR 公告值）", "bm_asof": None, "stale": True}
+    return {"ibkr_apr_pct": apr, "bm": bm, "bm_ticker": CASH_BM_TICKER,
+            "spread_pct": CASH_SPREAD_PCT,
+            "source": f"{CASH_BM_TICKER} − {CASH_SPREAD_PCT}%", "bm_asof": asof,
+            "stale": stale}
 
 
 def benchmark_ret_pct(spy: pd.Series, d0: pd.Timestamp, d1: pd.Timestamp) -> float | None:
