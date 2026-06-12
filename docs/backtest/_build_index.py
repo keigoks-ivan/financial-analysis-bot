@@ -367,6 +367,12 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 <td>13:30 對齊基差 z 分數 ≥1.5 反向 + 轉倉週剔除 + 除息分組對照</td>
 <td><span class="tag tag-fail">否決 · 假訊號</span><br>
 <span style="font-size:.72rem;color:var(--muted)">原始掃描 +17.9 點/筆;量測對齊後現行年代歸零(+0.3 點,t=0.04)</span></td></tr>
+<tr><td><strong><a href="/backtest/txf_chips/">台指籌碼日盤偏向</a></strong><br>
+<span style="font-size:.72rem;color:var(--muted)">Z1 外資淨部位變化跟單 / Z2 選擇權 PCR · 收盤公布次日交易,無前視</span></td>
+<td>MTX 小台 · 次日日盤全段持有</td>
+<td>z 分數極端 ±1.5 · 預註冊網格(門檻/窗口/結算週)+ 跟單反向雙揭露</td>
+<td><span class="tag" style="background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber-border)">Z2 否決 · Z1 觀察中</span><br>
+<span style="font-size:.72rem;color:var(--muted)">PCR 全規格 t&lt;0.8;外資跟單 +11.9 點(t=1.2)單調但未達標,forward 確認中</span></td></tr>
 </tbody>
 </table>
 </div>
