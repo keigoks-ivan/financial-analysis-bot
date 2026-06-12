@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta name="robots" content="noindex,nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>台指期日內趨勢系統(預覽)| InvestMQuest Research</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+:root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
+      --text:#111827;--muted:#6b7280;--border:#e5e7eb;
+      --green:#059669;--green-bg:#ecfdf5;--green-border:#a7f3d0;--green-text:#065f46;
+      --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;--red-text:#991b1b;
+      --amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fde68a;--amber-text:#92400e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1120px;margin:0 auto;padding:0 1.5rem}
+.page-hdr{padding:1.75rem 0 1.25rem;background:linear-gradient(180deg,#fffbeb 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
+.page-hdr h1{font-size:1.6rem;font-weight:700;letter-spacing:-.03em}
+.page-hdr .sub{color:var(--muted);font-size:.9rem;margin-top:.2rem}
+.crumb{font-size:.82rem;color:var(--muted);margin-bottom:.4rem}
+.crumb a{color:var(--muted)}
+.section{padding:1.5rem 0 0}
+.section-title{font-size:1.15rem;font-weight:700;margin-bottom:1rem;
+               padding-bottom:.45rem;border-bottom:2px solid var(--amber)}
+.section-sub{font-size:.85rem;color:var(--muted);margin:-.5rem 0 1rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.card h3{font-size:1rem;font-weight:600;margin-bottom:.85rem}
+.card .takeaway{font-size:.88rem;margin-top:.75rem;padding:.6rem .9rem;border-radius:6px;
+                background:var(--brand-light);border-left:3px solid var(--brand)}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{text-align:left;padding:.6rem .75rem;border-bottom:1px solid var(--border)}
+th{background:#f9fafb;font-weight:600;font-size:.78rem;text-transform:uppercase;
+   letter-spacing:.04em;color:var(--muted)}
+td{font-variant-numeric:tabular-nums}
+tbody tr:hover td{background:#f3f4f6}
+.hero{margin:1.25rem 0;border:1px solid var(--amber-border);border-radius:12px;overflow:hidden;background:var(--card)}
+.hero-top{background:linear-gradient(135deg,#fffbeb 0%,#fefce8 100%);padding:1.4rem 1.6rem;border-bottom:1px solid var(--amber-border)}
+.hero-top .verdict-tag{display:inline-block;background:#d97706;color:#fff;font-size:.74rem;font-weight:700;
+                       letter-spacing:.05em;padding:.25rem .7rem;border-radius:99px;margin-bottom:.5rem}
+.hero-top h2{font-size:1.35rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.35rem}
+.hero-top p{font-size:.92rem;color:#374151;max-width:60rem}
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card)}
+.hero-stats > div{padding:1rem 1.2rem;text-align:center;border-right:1px solid var(--border)}
+.hero-stats > div:last-child{border-right:none}
+.hero-stats .hs-label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.hero-stats .hs-value{font-size:1.55rem;font-weight:800;letter-spacing:-.02em}
+.note{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;
+      padding:.85rem 1.1rem;font-size:.84rem;color:var(--amber-text);margin:1rem 0}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.chart-card h3{font-size:.95rem;font-weight:600;margin-bottom:.5rem}
+.chart-wrap{position:relative;width:100%;height:380px}
+details{background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:.75rem}
+details summary{padding:.9rem 1.25rem;font-weight:600;font-size:.95rem;cursor:pointer;list-style:none;display:flex;align-items:center;gap:.5rem}
+details summary::before{content:'▸';color:var(--brand);transition:transform .15s}
+details[open] summary::before{transform:rotate(90deg)}
+details .d-body{padding:0 1.25rem 1.25rem;overflow-x:auto}
+.rule-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem}
+.rule-grid h4{font-size:.85rem;color:var(--amber);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.5rem;font-weight:700}
+.rule-grid ul{font-size:.85rem;color:#374151;padding-left:1.1rem;line-height:1.85}
+footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
+       text-align:center;padding:1.25rem 0;font-size:.78rem;margin-top:2rem}
+@media(max-width:768px){
+  .hero-stats{grid-template-columns:repeat(2,1fr)}
+  .hero-stats > div{border-bottom:1px solid var(--border)}
+  .rule-grid{grid-template-columns:1fr}
+  table{font-size:.78rem}th,td{padding:.45rem .5rem}
+}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#0f172a;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(59,130,246,.28);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/">個股 DD</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/ds/">產業敘述 DS</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/">週報</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/long-track-smh/">長線訊號</a>
+        </div>
+      </div>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/" class="active">量化回測</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/screener-tw.html">Screener 台股</a>
+          <a href="/screener-jp.html">Screener 日股</a>
+          <a href="/screener-my.html">Screener 馬股</a>
+          <a href="/cache/">🗄 Data Cache</a>
+          <a href="/tools/">期貨部位計算機</a>
+        </div>
+      </div>
+      <a href="/mental-models/">🧠 心智模型</a>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="page-hdr">
+  <div class="container">
+    <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / 台指期日內趨勢(預覽)</div>
+    <h1 style="color:#b45309">台指期日內趨勢系統 — 管道驗證預覽</h1>
+    <div class="sub">MTX 小台 · 日盤當沖不留倉 · 5 分 K 小段趨勢 · 2 觸發 × 2 出場矩陣 · 頁面生成 2026-06-12</div>
+    <div style="margin-top:.75rem;display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap"><div><div style="font-size:.68rem;color:#1a56db;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;font-weight:600">對比總覽</div><div style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-wrap:wrap"><a href="/backtest/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">20 年</a><a href="/backtest/10y/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">10 年</a><a href="/backtest/criteria/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">評估標準</a></div></div><div><div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;font-weight:600">個別系統 (美股)</div><div style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-wrap:wrap"><a href="/backtest/dual_track/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">雙軌多空</a><a href="/backtest/long_track/" style="padding:.4rem .85rem;background:#fff;color:#16a34a;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">Long Track</a><a href="/backtest/long_track_qqq/" style="padding:.4rem .85rem;background:#fff;color:#16a34a;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">LTO QQQ</a><a href="/backtest/long_track_ensemble/" style="padding:.4rem .85rem;background:#fff;color:#16a34a;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">Ensemble 集成</a><a href="/backtest/long_track_smh/" style="padding:.4rem .85rem;background:#fff;color:#16a34a;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">LT SMH/QQQ</a><a href="/backtest/six_state/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">六狀態機</a><a href="/backtest/six_state_v1r1/" style="padding:.4rem .85rem;background:#fff;color:#b45309;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">v1.0r1 實盤</a><a href="/backtest/gem/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">GEM</a><a href="/backtest/slope_filter/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">W52 斜率</a><a href="/backtest/rsi2_mr/" style="padding:.4rem .85rem;background:#fff;color:#d97706;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">盤整 MR</a><a href="/backtest/short_system/" style="padding:.4rem .85rem;background:#fff;color:#dc2626;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">做空 (失敗)</a><a href="/backtest/cndr/" style="padding:.4rem .85rem;background:#fff;color:#dc2626;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">Iron Condor (失敗)</a></div></div><div><div style="font-size:.68rem;color:#0f766e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;font-weight:600">多資產</div><div style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-wrap:wrap"><a href="/backtest/turtle/" style="padding:.4rem .85rem;background:#fff;color:#0f766e;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">🐢 Turtle</a><a href="/backtest/clenow/" style="padding:.4rem .85rem;background:#fff;color:#6366f1;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">📈 Clenow</a></div></div><div><div style="font-size:.68rem;color:#9333ea;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;font-weight:600">日內交易</div><div style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-wrap:wrap"><a href="/backtest/txf_intraday/" style="padding:.4rem .85rem;background:#9333ea;color:#fff;font-size:.8rem;font-weight:600;text-decoration:none;border-left:1px solid var(--border)">台指當沖 (預覽)</a></div></div></div>
+  </div>
+</div>
+
+<div class="container">
+
+<div class="hero">
+  <div class="hero-top">
+    <span class="verdict-tag">預覽 · 非正式回測</span>
+    <h2>這一頁只證明「管道通了」,不證明系統能賺錢</h2>
+    <p>以下結果來自自建期交所 tick 資料管道的 <b>27 個交易日</b>(2026-05-04 ~ 2026-06-11)——
+    樣本小到沒有任何統計意義,期間又恰逢罕見高波動行情。它的用途是驗證:資料管道、回測引擎、
+    規則實作、成本模型全部就位。取得 2006–2024 的 1 分 K 歷史資料包後,本頁將整頁改版為完整回測。</p>
+  </div>
+  <div class="hero-stats">
+    <div><div class="hs-label">資料窗口</div><div class="hs-value" style="color:var(--amber)">27 日</div></div>
+    <div><div class="hs-label">暫時領先組合</div><div class="hs-value" style="font-size:1.05rem;padding-top:.45rem">MA 順勢 + Chandelier</div></div>
+    <div><div class="hs-label">其 expectancy(4 筆)</div><div class="hs-value" style="color:var(--green)">+0.37R</div></div>
+    <div><div class="hs-label">環境過濾改善組合數</div><div class="hs-value" style="color:var(--brand)">4/4</div></div>
+  </div>
+</div>
+
+<div class="section">
+<h2 class="section-title">系統設計(規格 v0)</h2>
+<div class="section-sub">完整規格見 repo <code>docs/TXF_Intraday_Trend_Backtest_Spec.md</code>。指數已在 4 萬點以上,所有閾值一律波動相對化,無固定點數。</div>
+<div class="card">
+<div class="rule-grid">
+<div>
+<h4>環境層(日型過濾)</h4>
+<ul>
+<li>開盤區間 OR = 08:45–09:15 高低點</li>
+<li>OR 寬度 / 日 ATR20 ≤ 0.35 才交易(收縮日易出趨勢)</li>
+<li>突破方向需與夜盤 gap 方向一致</li>
+<li>日 ATR20 / 價格 &lt; 0.6% 的低波動日不交易</li>
+</ul>
+</div>
+<div>
+<h4>觸發層(兩種並行測試)</h4>
+<ul>
+<li><b>ORB 突破</b>:收盤突破 OR ± 0.1×OR 寬,且 MA20/MA60 同向</li>
+<li><b>MA 順勢</b>:收盤 &gt; MA20 &gt; MA60 + 創當日新高(空方鏡像)</li>
+<li>5 分 K 收盤確認,次根開盤進場(對齊 XQ 實單行為)</li>
+</ul>
+</div>
+<div>
+<h4>出場層(兩種並行測試)</h4>
+<ul>
+<li>初始停損:OR 另一側 vs 1×ATR 取近者;+1R 後移至成本</li>
+<li><b>Chandelier</b>:極值回落 2×ATR / <b>MA20×2</b>:連兩根收盤跌破</li>
+<li>時間停損:6 根 K 未達 +0.5R 出場;13:40 無條件平倉</li>
+</ul>
+</div>
+<div>
+<h4>風控層</h4>
+<ul>
+<li>同方向最多 2 進;日虧 2R 停機;12:30 後不開新倉</li>
+<li>結算日 13:00 後不開新倉(結算價計算區間)</li>
+<li>成本:稅 2×10⁻⁵/邊 + 手續費 0.5 點/邊 + 滑價 1 點/邊(來回 ≈ 4.7 點)</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+
+<div class="section">
+<h2 class="section-title">2×2 矩陣結果(環境過濾開)</h2>
+<div class="section-sub">交易標的為小台 1 口(NT$50/點),價格序列為大台近月。R = 單筆初始風險。</div>
+<div class="card">
+<table>
+<thead><tr><th>組合</th><th>筆數</th><th>勝率</th><th>Expectancy</th><th>PF</th><th>淨點數</th><th>NT$(1 口)</th><th>交易日/總日</th></tr></thead>
+<tbody><tr><td style="color:#1a56db;font-weight:600">ORB 突破 + Chandelier</td><td>7</td><td>43%</td><td style="color:var(--red)">-0.04R</td><td>1.17</td><td style="color:var(--green)">+86.1</td><td style="color:var(--green)">+4,305</td><td>8/27</td></tr><tr><td style="color:#0891b2;font-weight:600">ORB 突破 + MA20×2</td><td>6</td><td>33%</td><td style="color:var(--red)">-0.15R</td><td>1.19</td><td style="color:var(--green)">+72.2</td><td style="color:var(--green)">+3,611</td><td>8/27</td></tr><tr><td style="color:#16a34a;font-weight:600">MA 順勢 + Chandelier</td><td>4</td><td>50%</td><td style="color:var(--green);font-weight:600">+0.37R</td><td>2.26</td><td style="color:var(--green)">+325.8</td><td style="color:var(--green)">+16,292</td><td>8/27</td></tr><tr><td style="color:#d97706;font-weight:600">MA 順勢 + MA20×2</td><td>4</td><td>25%</td><td style="color:var(--green);font-weight:600">+0.04R</td><td>1.72</td><td style="color:var(--green)">+188.5</td><td style="color:var(--green)">+9,427</td><td>8/27</td></tr></tbody>
+</table>
+<div class="takeaway">環境過濾(OR 收縮 + 夜盤方向一致)把 27 個交易日篩到只剩約 8 個可交易日,
+且在 <b>4/4 個組合上同時改善 expectancy</b> —— 方向上支持「日內趨勢系統的勝負在日型過濾」的設計假說。
+但每格僅 4–7 筆交易,任何一筆的運氣都能翻轉排名,<b>請勿從本表挑選組合</b>。</div>
+</div>
+<details>
+<summary>對照:環境過濾關(僅保留風控層)</summary>
+<div class="d-body">
+<table>
+<thead><tr><th>組合</th><th>筆數</th><th>勝率</th><th>Expectancy</th><th>PF</th><th>淨點數</th><th>NT$(1 口)</th><th>交易日/總日</th></tr></thead>
+<tbody><tr><td style="color:#1a56db;font-weight:600">ORB 突破 + Chandelier</td><td>32</td><td>31%</td><td style="color:var(--red)">-0.12R</td><td>0.71</td><td style="color:var(--red)">-561.9</td><td style="color:var(--red)">-28,097</td><td>27/27</td></tr><tr><td style="color:#0891b2;font-weight:600">ORB 突破 + MA20×2</td><td>31</td><td>23%</td><td style="color:var(--red)">-0.20R</td><td>0.56</td><td style="color:var(--red)">-801.4</td><td style="color:var(--red)">-40,069</td><td>27/27</td></tr><tr><td style="color:#16a34a;font-weight:600">MA 順勢 + Chandelier</td><td>20</td><td>30%</td><td style="color:var(--red)">-0.06R</td><td>0.97</td><td style="color:var(--red)">-41.4</td><td style="color:var(--red)">-2,071</td><td>27/27</td></tr><tr><td style="color:#d97706;font-weight:600">MA 順勢 + MA20×2</td><td>20</td><td>25%</td><td style="color:var(--red)">-0.17R</td><td>0.72</td><td style="color:var(--red)">-350.7</td><td style="color:var(--red)">-17,535</td><td>27/27</td></tr></tbody>
+</table>
+</div>
+</details>
+</div>
+
+<div class="section">
+<h2 class="section-title">累積損益(點數)</h2>
+<div class="section-sub">實線 = 環境過濾開;淡虛線 = 過濾關。縱軸為累積淨點數(小台 1 口,含全部成本)。</div>
+<div class="chart-card">
+  <div class="chart-wrap"><canvas id="chart-pnl"></canvas></div>
+</div>
+<div class="note">這 27 天恰逢台指期單月振幅逾 10% 的極端行情(42,000 → 47,000 → 43,500),
+日內波動遠高於常態 —— 對日內趨勢系統是順風環境,數字會偏樂觀。完整回測必須涵蓋低波動盤整年份。</div>
+</div>
+
+<div class="section">
+<h2 class="section-title">交易明細</h2>
+
+<details>
+<summary><span style="color:#1a56db">●</span> ORB 突破 + Chandelier(環境過濾開)— 7 筆</summary>
+<div class="d-body">
+<table>
+<thead><tr><th>日期</th><th>方向</th><th>進場</th><th>進場價</th><th>出場</th><th>出場價</th><th>淨點數</th><th>R 倍數</th><th>出場原因</th></tr></thead>
+<tbody><tr><td>2026-05-08</td><td>做空</td><td>10:10</td><td>41,992.0</td><td>10:25</td><td>41,810.4</td><td style="color:var(--green)">+178.9</td><td style="color:var(--green)">+1.54R</td><td>stop</td></tr><tr><td>2026-05-08</td><td>做空</td><td>10:30</td><td>41,680.0</td><td>10:35</td><td>41,820.1</td><td style="color:var(--red)">-142.7</td><td style="color:var(--red)">-1.03R</td><td>stop</td></tr><tr><td>2026-06-03</td><td>做多</td><td>09:35</td><td>46,987.0</td><td>09:35</td><td>46,859.3</td><td style="color:var(--red)">-130.6</td><td style="color:var(--red)">-1.03R</td><td>stop</td></tr><tr><td>2026-06-04</td><td>做空</td><td>10:05</td><td>46,255.0</td><td>10:25</td><td>46,375.9</td><td style="color:var(--red)">-123.7</td><td style="color:var(--red)">-1.00R</td><td>stop</td></tr><tr><td>2026-06-04</td><td>做空</td><td>10:40</td><td>46,255.0</td><td>11:00</td><td>46,368.1</td><td style="color:var(--red)">-115.9</td><td style="color:var(--red)">-1.03R</td><td>stop</td></tr><tr><td>2026-06-09</td><td>做多</td><td>09:40</td><td>44,141.0</td><td>12:00</td><td>44,548.7</td><td style="color:var(--green)">+404.9</td><td style="color:var(--green)">+2.02R</td><td>stop</td></tr><tr><td>2026-06-09</td><td>做多</td><td>12:05</td><td>44,568.0</td><td>13:15</td><td>44,586.0</td><td style="color:var(--green)">+15.2</td><td style="color:var(--green)">+0.22R</td><td>stop</td></tr></tbody>
+</table>
+</div>
+</details>
+<details>
+<summary><span style="color:#0891b2">●</span> ORB 突破 + MA20×2(環境過濾開)— 6 筆</summary>
+<div class="d-body">
+<table>
+<thead><tr><th>日期</th><th>方向</th><th>進場</th><th>進場價</th><th>出場</th><th>出場價</th><th>淨點數</th><th>R 倍數</th><th>出場原因</th></tr></thead>
+<tbody><tr><td>2026-05-08</td><td>做空</td><td>10:10</td><td>41,992.0</td><td>11:00</td><td>41,993.0</td><td style="color:var(--red)">-3.7</td><td style="color:var(--red)">-0.03R</td><td>stop</td></tr><tr><td>2026-05-08</td><td>做空</td><td>11:05</td><td>41,951.0</td><td>11:40</td><td>41,948.0</td><td style="color:var(--green)">+0.3</td><td style="color:var(--green)">+0.00R</td><td>MA20 x2</td></tr><tr><td>2026-06-03</td><td>做多</td><td>09:35</td><td>46,987.0</td><td>09:35</td><td>46,859.3</td><td style="color:var(--red)">-130.6</td><td style="color:var(--red)">-1.03R</td><td>stop</td></tr><tr><td>2026-06-04</td><td>做空</td><td>10:05</td><td>46,255.0</td><td>10:25</td><td>46,380.3</td><td style="color:var(--red)">-128.1</td><td style="color:var(--red)">-1.03R</td><td>stop</td></tr><tr><td>2026-06-04</td><td>做空</td><td>10:40</td><td>46,255.0</td><td>11:00</td><td>46,368.1</td><td style="color:var(--red)">-115.9</td><td style="color:var(--red)">-1.03R</td><td>stop</td></tr><tr><td>2026-06-09</td><td>做多</td><td>09:40</td><td>44,141.0</td><td>13:25</td><td>44,594.0</td><td style="color:var(--green)">+450.2</td><td style="color:var(--green)">+2.25R</td><td>MA20 x2</td></tr></tbody>
+</table>
+</div>
+</details>
+<details>
+<summary><span style="color:#16a34a">●</span> MA 順勢 + Chandelier(環境過濾開)— 4 筆</summary>
+<div class="d-body">
+<table>
+<thead><tr><th>日期</th><th>方向</th><th>進場</th><th>進場價</th><th>出場</th><th>出場價</th><th>淨點數</th><th>R 倍數</th><th>出場原因</th></tr></thead>
+<tbody><tr><td>2026-05-08</td><td>做空</td><td>10:10</td><td>41,992.0</td><td>10:25</td><td>41,810.4</td><td style="color:var(--green)">+178.9</td><td style="color:var(--green)">+1.54R</td><td>stop</td></tr><tr><td>2026-06-03</td><td>做多</td><td>09:35</td><td>46,987.0</td><td>09:35</td><td>46,859.3</td><td style="color:var(--red)">-130.6</td><td style="color:var(--red)">-1.03R</td><td>stop</td></tr><tr><td>2026-06-04</td><td>做空</td><td>10:15</td><td>46,183.0</td><td>10:20</td><td>46,307.6</td><td style="color:var(--red)">-127.4</td><td style="color:var(--red)">-1.03R</td><td>stop</td></tr><tr><td>2026-06-09</td><td>做多</td><td>09:40</td><td>44,141.0</td><td>12:00</td><td>44,548.7</td><td style="color:var(--green)">+404.9</td><td style="color:var(--green)">+2.02R</td><td>stop</td></tr></tbody>
+</table>
+</div>
+</details>
+<details>
+<summary><span style="color:#d97706">●</span> MA 順勢 + MA20×2(環境過濾開)— 4 筆</summary>
+<div class="d-body">
+<table>
+<thead><tr><th>日期</th><th>方向</th><th>進場</th><th>進場價</th><th>出場</th><th>出場價</th><th>淨點數</th><th>R 倍數</th><th>出場原因</th></tr></thead>
+<tbody><tr><td>2026-05-08</td><td>做空</td><td>10:10</td><td>41,992.0</td><td>11:00</td><td>41,993.0</td><td style="color:var(--red)">-3.7</td><td style="color:var(--red)">-0.03R</td><td>stop</td></tr><tr><td>2026-06-03</td><td>做多</td><td>09:35</td><td>46,987.0</td><td>09:35</td><td>46,859.3</td><td style="color:var(--red)">-130.6</td><td style="color:var(--red)">-1.03R</td><td>stop</td></tr><tr><td>2026-06-04</td><td>做空</td><td>10:15</td><td>46,183.0</td><td>10:20</td><td>46,307.6</td><td style="color:var(--red)">-127.4</td><td style="color:var(--red)">-1.03R</td><td>stop</td></tr><tr><td>2026-06-09</td><td>做多</td><td>09:40</td><td>44,141.0</td><td>13:25</td><td>44,594.0</td><td style="color:var(--green)">+450.2</td><td style="color:var(--green)">+2.25R</td><td>MA20 x2</td></tr></tbody>
+</table>
+</div>
+</details>
+</div>
+
+<div class="section">
+<h2 class="section-title">資料管道與後續計畫</h2>
+<div class="card">
+<table>
+<thead><tr><th>階段</th><th>內容</th><th>狀態</th></tr></thead>
+<tbody>
+<tr><td>1. 自建 tick 管道</td><td>期交所每日成交資料(滾動 30 交易日)→ 5 分 K;日線 API 餵 ATR20</td><td style="color:var(--green);font-weight:600">✓ 完成(本頁)</td></tr>
+<tr><td>2. 歷史資料</td><td>台指期 1 分 K 2006–2024/05(量化通免費包)+ XQ 匯出補 2024/05 後缺口</td><td style="color:var(--amber);font-weight:600">進行中</td></tr>
+<tr><td>3. 完整回測</td><td>2×2 矩陣 × 過濾對照 × 成本敏感度,跨多空頭與低波動年份;本頁整頁改版</td><td>待資料</td></tr>
+<tr><td>4. XQ 導入</td><td>XS 腳本 + 模擬單逐筆比對 ≥ 1 個月後上線</td><td>待回測通過</td></tr>
+</tbody>
+</table>
+<div class="takeaway">tick 資料來源僅保留最近 30 個交易日,自動累積腳本需定期執行;
+forward 資料將持續累積,作為完整回測的 out-of-sample 驗證段。</div>
+</div>
+</div>
+
+</div>
+
+<footer>
+<div class="container">
+InvestMQuest Research · 台指期日內趨勢系統(管道驗證預覽)· 資料:TAIFEX · 生成 2026-06-12<br>
+內部研究用,非投資建議。預覽數據樣本極小,無統計意義,將於完整回測後整頁更新。
+</div>
+</footer>
+
+<script>
+new Chart(document.getElementById('chart-pnl'),{
+  type:'line',
+  data:{labels:["2026-05-04", "2026-05-05", "2026-05-06", "2026-05-07", "2026-05-08", "2026-05-11", "2026-05-12", "2026-05-13", "2026-05-14", "2026-05-15", "2026-05-18", "2026-05-19", "2026-05-20", "2026-05-21", "2026-05-22", "2026-05-25", "2026-05-26", "2026-05-28", "2026-06-01", "2026-06-02", "2026-06-03", "2026-06-04", "2026-06-05", "2026-06-08", "2026-06-09", "2026-06-10", "2026-06-11"],datasets:[{"label": "ORB 突破 + Chandelier(過濾開)", "data": [0.0, 0.0, 0.0, 0.0, 36.2, 36.2, 36.2, 36.2, 36.2, 36.2, 36.2, 36.2, 36.2, 36.2, 36.2, 36.2, 36.2, 36.2, 36.2, 36.2, -94.4, -334.0, -334.0, -334.0, 86.2, 86.2, 86.2], "borderColor": "#1a56db", "borderWidth": 2.2, "pointRadius": 0, "tension": 0.1}, {"label": "ORB 突破 + Chandelier(過濾關)", "data": [0.0, 0.0, 0.0, -252.6, -216.4, -216.4, -383.8, -383.8, -383.8, -499.6, -499.6, -506.8, -594.2, -389.4, -357.1, -463.3, -548.2, -658.0, -474.7, -344.9, -475.5, -715.1, -938.5, -938.5, -518.3, -323.0, -561.9], "borderColor": "#1a56db55", "borderWidth": 1.2, "pointRadius": 0, "tension": 0.1, "borderDash": [5, 4]}, {"label": "ORB 突破 + MA20×2(過濾開)", "data": [0.0, 0.0, 0.0, 0.0, -3.4, -3.4, -3.4, -3.4, -3.4, -3.4, -3.4, -3.4, -3.4, -3.4, -3.4, -3.4, -3.4, -3.4, -3.4, -3.4, -134.0, -378.1, -378.1, -378.1, 72.1, 72.1, 72.1], "borderColor": "#0891b2", "borderWidth": 2.2, "pointRadius": 0, "tension": 0.1}, {"label": "ORB 突破 + MA20×2(過濾關)", "data": [0.0, 0.0, 0.0, -252.6, -256.0, -256.0, -423.4, -423.4, -423.4, -539.2, -539.2, -546.4, -633.8, -411.1, -378.8, -485.0, -569.9, -679.7, -614.4, -628.1, -758.7, -1002.8, -1226.2, -1226.2, -776.0, -562.7, -801.6], "borderColor": "#0891b255", "borderWidth": 1.2, "pointRadius": 0, "tension": 0.1, "borderDash": [5, 4]}, {"label": "MA 順勢 + Chandelier(過濾開)", "data": [0.0, 0.0, 0.0, 0.0, 178.9, 178.9, 178.9, 178.9, 178.9, 178.9, 178.9, 178.9, 178.9, 178.9, 178.9, 178.9, 178.9, 178.9, 178.9, 178.9, 48.3, -79.1, -79.1, -79.1, 325.8, 325.8, 325.8], "borderColor": "#16a34a", "borderWidth": 2.2, "pointRadius": 0, "tension": 0.1}, {"label": "MA 順勢 + Chandelier(過濾關)", "data": [0.0, 0.0, -110.8, -188.5, -9.6, -9.6, -9.6, -9.6, -9.6, -124.8, -124.8, -238.1, -325.5, -398.4, -235.1, -238.9, -238.9, -394.9, -152.7, -156.5, -287.1, -414.5, -637.9, -637.9, -233.0, -37.7, -41.4], "borderColor": "#16a34a55", "borderWidth": 1.2, "pointRadius": 0, "tension": 0.1, "borderDash": [5, 4]}, {"label": "MA 順勢 + MA20×2(過濾開)", "data": [0.0, 0.0, 0.0, 0.0, -3.7, -3.7, -3.7, -3.7, -3.7, -3.7, -3.7, -3.7, -3.7, -3.7, -3.7, -3.7, -3.7, -3.7, -3.7, -3.7, -134.3, -261.7, -261.7, -261.7, 188.5, 188.5, 188.5], "borderColor": "#d97706", "borderWidth": 2.2, "pointRadius": 0, "tension": 0.1}, {"label": "MA 順勢 + MA20×2(過濾關)", "data": [0.0, 0.0, -110.8, -188.5, -192.2, -192.2, -192.2, -192.2, -192.2, -307.4, -307.4, -420.7, -508.1, -581.0, -417.7, -421.5, -421.5, -577.5, -525.3, -529.1, -659.7, -787.1, -1010.5, -1010.5, -560.3, -347.0, -350.7], "borderColor": "#d9770655", "borderWidth": 1.2, "pointRadius": 0, "tension": 0.1, "borderDash": [5, 4]}]},
+  options:{responsive:true,maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:true,position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'line',padding:10,font:{size:10}}},
+      tooltip:{callbacks:{label:function(c){return c.dataset.label+': '+(c.parsed.y>0?'+':'')+c.parsed.y.toFixed(1)+' 點'}}}},
+    scales:{x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{maxTicksLimit:14,font:{size:10}}},
+      y:{grid:{color:'rgba(0,0,0,0.06)'},ticks:{callback:function(v){return v+' 點'},font:{size:10}}}}
+  }
+});
+</script>
+</body>
+</html>

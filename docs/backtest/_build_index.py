@@ -349,6 +349,24 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 </div>
 
 <div class="section">
+<h2 class="section-title" style="border-bottom-color:#9333ea">日內交易專區</h2>
+<div class="section-sub">台指期日內系統獨立追蹤 — 不同市場、不同時間尺度(5 分 K 當沖),不與上方持倉系統比較。</div>
+<div class="card" style="overflow-x:auto">
+<table>
+<thead><tr><th>系統</th><th>標的 / 時段</th><th>結構</th><th>狀態</th></tr></thead>
+<tbody>
+<tr><td><strong><a href="/backtest/txf_intraday/">台指期日內趨勢</a></strong><br>
+<span style="font-size:.72rem;color:var(--muted)">小段趨勢當沖 · 全規則波動相對化 · 目標導入 XQ 自動交易</span></td>
+<td>MTX 小台 · 日盤 08:45–13:45 不留倉</td>
+<td>2 觸發(ORB / MA 順勢)× 2 出場(Chandelier / MA20×2)+ 日型過濾</td>
+<td><span class="tag" style="background:#faf5ff;color:#6b21a8;border:1px solid #e9d5ff">預覽 · 管道驗證</span><br>
+<span style="font-size:.72rem;color:var(--muted)">完整回測待 2006–2024 分 K 資料</span></td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div class="section">
 <h2 class="section-title">明細</h2>
 <details>
 <summary>逐年報酬表(全系統)</summary>

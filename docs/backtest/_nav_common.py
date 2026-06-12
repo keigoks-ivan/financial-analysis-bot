@@ -1,9 +1,10 @@
 """Canonical /backtest/ sub-navigation (toggle pills) — single source of truth.
 
-Every backtest page header renders the same three groups via make_toggle(active):
+Every backtest page header renders the same groups via make_toggle(active):
     對比總覽:    20y | 10y | criteria
     個別系統:    dual | long | long_qqq | ensemble | six_state | v1r1 | gem | slope | short
     多資產:      turtle | clenow
+    日內交易:    txf_intra
 
 Used by:
     docs/backtest/_build_system_pages.py    (dual_track, gem)
@@ -41,6 +42,10 @@ MULTI_LINKS = [
     ("/backtest/clenow/", "📈 Clenow", "clenow", "#6366f1"),
 ]
 
+INTRADAY_LINKS = [
+    ("/backtest/txf_intraday/", "台指當沖 (預覽)", "txf_intra", "#9333ea"),
+]
+
 _BRAND = "var(--brand)"
 
 
@@ -70,4 +75,5 @@ def make_toggle(active: str) -> str:
             + _group("對比總覽", COMPARISON_LINKS, "#1a56db", active)
             + _group("個別系統 (美股)", INDIVIDUAL_LINKS, "var(--muted)", active)
             + _group("多資產", MULTI_LINKS, "#0f766e", active)
+            + _group("日內交易", INTRADAY_LINKS, "#9333ea", active)
             + "</div>")
