@@ -193,7 +193,11 @@ PREFIX_ACTIVE = [
 ]
 
 SKIP_DIRS = {"_archived", "private"}
-SKIP_FILES = {"pm/index.html"}  # archived stub, intentionally bare
+SKIP_FILES = {
+    "pm/index.html",                            # archived stub, intentionally bare
+    "six-state/index.html",                     # redirect stub -> /backtest/six_state/status/
+    "backtest/six_state/status/index.html",     # live status sub-page, intentionally headerless
+}
 
 
 def active_for(rel: str):
