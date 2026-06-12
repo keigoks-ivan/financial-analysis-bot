@@ -35,33 +35,33 @@ OUT = Path(__file__).parent / "criteria" / "index.html"
 # Minimum qualification thresholds (unchanged from v1)
 TH = {"cagr": 8.0, "mdd": -35.0, "sharpe": 0.5, "calmar": 0.3}
 
-# (name, url, cagr, mdd, sharpe, calmar, years_ok, note)  — 20Y corrected
+# (name, url, cagr, mdd, sharpe, calmar, years_ok, note)  — 20Y, refreshed 2026-06-12
 SYSTEMS_20Y = [
-    ("Long Track Only", "/backtest/long_track/", 9.59, -20.08, 0.80, 0.48, True, ""),
-    ("LTO QQQ only", "/backtest/long_track_qqq/", 10.63, -25.37, 0.74, 0.42, True, ""),
-    ("Ensemble E3", "/backtest/long_track_ensemble/", 11.33, -21.15, 0.88, 0.54, True, "2026-06-11 採用 · OOS"),
-    ("LT SMH/QQQ", "/backtest/long_track_smh/", 13.88, -26.93, 0.88, 0.52, True, "2026-06-11 採用 · OOS"),
-    ("W52 斜率濾網", "/backtest/slope_filter/", 9.59, -20.05, 0.89, 0.48, True, "未經 warmup 審計"),
-    ("GEM 雙動能", "/backtest/gem/", 8.49, -21.54, 0.54, 0.39, True, ""),
-    ("六狀態機 v1.1", "/backtest/six_state/", 14.53, -35.80, 0.85, 0.41, True, ""),
-    ("六狀態機 v1.0r1 實盤", "/backtest/six_state_v1r1/", 14.41, -49.29, 0.80, 0.29, True, "壓力路徑 -77%"),
-    ("雙軌多空", "/backtest/dual_track/", 4.60, -26.83, 0.42, 0.17, True, "已否決"),
-    ("🐢 Turtle(多資產)", "/backtest/turtle/", 21.26, -37.16, 0.71, 0.57, True, "CAGR 進可疑帶"),
-    ("📈 Clenow(多資產)", "/backtest/clenow/", 13.67, -44.06, 0.71, 0.31, True, ""),
+    ("Long Track Only", "/backtest/long_track/", 9.72, -20.08, 0.81, 0.48, True, ""),
+    ("LTO QQQ only", "/backtest/long_track_qqq/", 10.80, -25.37, 0.75, 0.43, True, ""),
+    ("Ensemble E3", "/backtest/long_track_ensemble/", 11.47, -21.15, 0.89, 0.54, True, "2026-06-11 採用 · OOS"),
+    ("LT SMH/QQQ E3", "/backtest/long_track_smh/", 15.30, -26.93, 0.90, 0.57, True, "2026-06-12 採用 · OOS"),
+    ("W52 斜率濾網", "/backtest/slope_filter/", 10.16, -20.05, 0.92, 0.51, True, "warmup 完整(資料自 2000)"),
+    ("GEM 雙動能", "/backtest/gem/", 8.95, -21.54, 0.57, 0.42, True, ""),
+    ("六狀態機 v1.1", "/backtest/six_state/", 14.77, -35.80, 0.86, 0.41, True, ""),
+    ("六狀態機 v1.0r1 實盤", "/backtest/six_state_v1r1/", 14.58, -49.29, 0.81, 0.30, True, "壓力路徑 -77%"),
+    ("雙軌多空", "/backtest/dual_track/", 4.35, -38.72, 0.37, 0.11, True, "已否決 · 2026-06-12 修正重檢"),
+    ("🐢 Turtle(多資產)", "/backtest/turtle/", 22.48, -38.12, 0.73, 0.59, True, "CAGR 進可疑帶"),
+    ("📈 Clenow(多資產)", "/backtest/clenow/", 13.28, -44.11, 0.69, 0.30, True, ""),
 ]
 
-# (name, cagr, mdd, sharpe, calmar, verdict)  — 10Y corrected
+# (name, cagr, mdd, sharpe, calmar, verdict)  — 10Y, refreshed 2026-06-12
 SYSTEMS_10Y = [
-    ("LT SMH/QQQ", 25.90, -26.93, 1.22, 0.96, "warn", "CAGR 進可疑帶(>20%)— H2 半導體 regime"),
-    ("六狀態機 v1.1", 21.79, -28.49, 1.10, 0.76, "warn", "CAGR 進可疑帶(>20%)— 無 2008 的視窗"),
-    ("LTO QQQ only", 18.30, -25.18, 1.08, 0.73, "good", "進攻型優秀"),
-    ("Ensemble E3", 15.90, -21.15, 1.10, 0.75, "good", "優秀(樣本內)"),
-    ("Long Track Only", 15.08, -18.75, 1.09, 0.80, "good", "優秀"),
-    ("W52 斜率濾網", 10.05, -20.05, 0.77, 0.50, "pass", "合格(穩定)"),
-    ("GEM 雙動能", 8.93, -21.54, 0.70, 0.41, "pass", "合格"),
-    ("雙軌多空", 7.28, -19.38, 0.60, 0.38, "fail", "邊緣(CAGR 略低)"),
-    ("QQQ Buy & Hold", 21.19, -35.12, 0.97, 0.60, "bh", "基準"),
-    ("SPY Buy & Hold", 15.06, -33.72, 0.87, 0.45, "bh", "基準"),
+    ("LT SMH/QQQ E3", 26.55, -26.93, 1.23, 0.99, "warn", "CAGR 進可疑帶(>20%)— H2 半導體 regime"),
+    ("六狀態機 v1.1", 22.40, -28.49, 1.12, 0.79, "warn", "CAGR 進可疑帶(>20%)— 無 2008 的視窗"),
+    ("LTO QQQ only", 18.81, -25.18, 1.10, 0.75, "good", "進攻型優秀"),
+    ("Ensemble E3", 16.29, -21.15, 1.12, 0.77, "good", "優秀(樣本內)"),
+    ("Long Track Only", 15.47, -18.75, 1.11, 0.83, "good", "優秀"),
+    ("W52 斜率濾網", 11.04, -20.05, 0.82, 0.55, "pass", "合格(穩定)"),
+    ("GEM 雙動能", 9.85, -21.54, 0.54, 0.46, "pass", "合格"),
+    ("雙軌多空", 9.26, -19.61, 0.73, 0.47, "fail", "10 年窗口仍墊底;全期已否決"),
+    ("QQQ Buy & Hold", 21.71, -35.12, 0.99, 0.62, "bh", "基準"),
+    ("SPY Buy & Hold", 15.35, -33.72, 0.89, 0.46, "bh", "基準"),
 ]
 
 
