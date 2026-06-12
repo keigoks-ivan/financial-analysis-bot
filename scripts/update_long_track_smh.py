@@ -1,17 +1,23 @@
 #!/usr/bin/env python3
 """
-Long Track SMH/QQQ — E3 Signal Status Page Generator
-====================================================
-Fetches SMH, QQQ daily data + SHY/BIL cash, computes the adopted E3 ensemble
-signal (W40, W52, 12-month TSMOM, each 1/3 position) per ticker, and renders
-docs/long-track-smh/index.html — the live counterpart to the six-state page.
+Long Track SMH/QQQ — STX50 Signal Status Page Generator
+========================================================
+Fetches SMH, QQQ daily OHLC + SHY/BIL cash, computes the adopted STX50
+position per ticker and renders docs/long-track-smh/index.html.
+
+STX50 (adopted 2026-06-13, owner decision):
+    pos = 0.5 * E3 + 0.5 * (E3 if ST_up else 0)
+    E3 = mean of {W40, W52, 12m TSMOM} 0/1 signals (each 1/3)
+    ST = weekly Supertrend(ATR 10, mult 3) direction — exit gate on half
+         the book; the gate only ever reduces exposure.
 
 Signal definitions are copied verbatim from the backtest authority
-(v7-backtest src/long_track_backtest/ensemble_experiment.py:build_signals);
-keep them in sync if the adopted rule ever changes.
+(v7-backtest src/long_track_backtest/ensemble_experiment.py:build_signals
+and supertrend_experiment.py:supertrend_direction); keep them in sync if
+the adopted rule ever changes.
 
-Adopted 2026-06-12 (owner decision); OOS tracking. This is an EXPOSURE-state
-readout, not a daily trade trigger — signals only move ~2x/year per ticker.
+OOS tracking. This is an EXPOSURE-state readout, not a daily trade
+trigger — signals only move ~2x/year per ticker.
 
 Schedule: Fridays after US close (weekly W40/W52 update; TSMOM is month-end).
 """
@@ -48,11 +54,60 @@ def _close(df) -> pd.Series:
 
 
 def fetch_close(ticker: str) -> pd.Series:
+    return _close(fetch_ohlc(ticker))
+
+
+def fetch_ohlc(ticker: str) -> pd.DataFrame:
     end = datetime.now() + timedelta(days=1)
-    start = end - timedelta(days=365 * 6)  # 6y: covers 52w MA + 12m TSMOM warmup
+    start = end - timedelta(days=365 * 6)  # 6y: covers 52w MA + 12m TSMOM + ATR warmup
     df = yf.download(ticker, start=start.strftime("%Y-%m-%d"),
                      end=end.strftime("%Y-%m-%d"), progress=False, auto_adjust=True)
-    return _close(df)
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = df.columns.get_level_values(0)
+    return df
+
+
+def supertrend_state(df: pd.DataFrame, period: int = 10, mult: float = 3.0):
+    """Weekly Supertrend direction — verbatim port of
+    v7-backtest supertrend_experiment.supertrend_direction (TradingView
+    final-band formula incl. reset).  6y of weekly bars contains several
+    flips, so the recursive state matches the full-history computation."""
+    wk = pd.DataFrame({
+        "High": df["High"].resample("W-FRI").max(),
+        "Low": df["Low"].resample("W-FRI").min(),
+        "Close": df["Close"].resample("W-FRI").last(),
+    }).dropna(subset=["Close"])
+    h, l, c = wk["High"].values, wk["Low"].values, wk["Close"].values
+    n = len(wk)
+    c_prev = np.roll(c, 1)
+    c_prev[0] = c[0]
+    tr = np.maximum(h - l, np.maximum(np.abs(h - c_prev), np.abs(l - c_prev)))
+    atr = pd.Series(tr, index=wk.index).ewm(alpha=1 / period, adjust=False,
+                                            min_periods=period).mean().values
+    mid = (h + l) / 2
+    bub, blb = mid + mult * atr, mid - mult * atr
+    fub = np.full(n, np.nan)
+    flb = np.full(n, np.nan)
+    direction = np.zeros(n)
+    st = np.full(n, np.nan)
+    started = False
+    for i in range(n):
+        if np.isnan(atr[i]):
+            continue
+        if not started:
+            fub[i], flb[i] = bub[i], blb[i]
+            direction[i] = 1.0 if c[i] > fub[i] else -1.0
+            st[i] = flb[i] if direction[i] > 0 else fub[i]
+            started = True
+            continue
+        fub[i] = bub[i] if (bub[i] < fub[i - 1] or c[i - 1] > fub[i - 1]) else fub[i - 1]
+        flb[i] = blb[i] if (blb[i] > flb[i - 1] or c[i - 1] < flb[i - 1]) else flb[i - 1]
+        if st[i - 1] == fub[i - 1]:
+            direction[i] = 1.0 if c[i] > fub[i] else -1.0
+        else:
+            direction[i] = -1.0 if c[i] < flb[i] else 1.0
+        st[i] = flb[i] if direction[i] > 0 else fub[i]
+    return bool(direction[-1] > 0), float(st[-1])
 
 
 def load_cash_close() -> pd.Series:
@@ -68,7 +123,8 @@ def load_cash_close() -> pd.Series:
 # ---------------------------------------------------------------------------
 # Signal — verbatim from ensemble_experiment.build_signals
 # ---------------------------------------------------------------------------
-def compute_signals(px: pd.Series, cash: pd.Series) -> dict:
+def compute_signals(px: pd.Series, cash: pd.Series,
+                    st_on: bool, st_level: float) -> dict:
     wk = px.resample("W-FRI").last().dropna()
     mo = px.resample("ME").last().dropna()
     cash_m = cash.resample("ME").last()
@@ -86,7 +142,9 @@ def compute_signals(px: pd.Series, cash: pd.Series) -> dict:
     w40_now = bool(w40.iloc[-1])
     w52_now = bool(w52.iloc[-1])
     ts_now = bool(ts.iloc[-1])
-    pos = (int(w40_now) + int(w52_now) + int(ts_now)) / 3.0
+    e3 = (int(w40_now) + int(w52_now) + int(ts_now)) / 3.0
+    # STX50 (adopted 2026-06-13): ST gate on half the book, reduce-only
+    pos = 0.5 * e3 + 0.5 * (e3 if st_on else 0.0)
 
     # recent 8 weekly bars for the trajectory table
     recent = []
@@ -105,6 +163,7 @@ def compute_signals(px: pd.Series, cash: pd.Series) -> dict:
     return {
         "ticker": None,
         "w40": w40_now, "w52": w52_now, "tsmom": ts_now,
+        "st": st_on, "st_level": st_level, "e3": e3,
         "pos": pos,
         "wk_close": float(wk.iloc[-1]),
         "wk_date": wk.index[-1].strftime("%Y-%m-%d"),
@@ -155,13 +214,16 @@ def ticker_card(t: str, d: dict) -> str:
                  f"<b style='color:var(--{'green' if d['w52'] else 'red'})'>{fmt_pct((d['wk_close']/d['ma52']-1)*100)}</b>"),
         sig_bulb("TSMOM", d["tsmom"],
                  f"12m 報酬 <b>{fmt_pct(d['mom12'])}</b> vs 現金 <b>{fmt_pct(d['cash_mom12'])}</b>"),
+        sig_bulb("ST 閘門 (10,3)", d["st"],
+                 f"週收 {d['wk_close']:.2f} vs Supertrend {d['st_level']:.2f} — "
+                 f"{'開(受閘半倉在場)' if d['st'] else '關(受閘半倉出場)'}"),
     ])
     return f"""<div class="tcard">
   <div class="tcard-hdr">
     <span class="tname">{t}</span>
     <span class="pos-badge pos-{col}">{pos_pct:.0f}% 倉位</span>
   </div>
-  <div class="tcard-sub">{int(d['w40'])+int(d['w52'])+int(d['tsmom'])} / 3 訊號綠燈 · 閒置部分持 SHY/BIL</div>
+  <div class="tcard-sub">E3 {int(d['w40'])+int(d['w52'])+int(d['tsmom'])}/3 綠燈 × ST 閘門{'開' if d['st'] else '關'} → 倉位 {d['pos']*100:.0f}% · 閒置部分持 SHY/BIL</div>
   <div class="sig-row">{bulbs}</div>
 </div>"""
 
@@ -201,8 +263,8 @@ def generate_html(sigs: dict) -> str:
   <meta name="robots" content="noindex,nofollow">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>長線訊號 SMH/QQQ(E3)即時狀態 | InvestMQuest Research</title>
-  <meta name="description" content="SystemProtocol v7 Ch12 長線 E3 結構 — 50/50 SMH/QQQ 當前訊號與倉位">
+  <title>長線訊號 SMH/QQQ(STX50)即時狀態 | InvestMQuest Research</title>
+  <meta name="description" content="SystemProtocol v7 長線 STX50 — 50/50 SMH/QQQ 當前訊號與倉位">
   <style>
 :root{{--brand:#1a56db;--bg:#f8f9fa;--card:#fff;--text:#1a1a2e;--muted:#6b7280;--border:#e2e5e9;
   --green:#059669;--green-bg:#ecfdf5;--green-border:#a7f3d0;--green-text:#065f46;
@@ -280,8 +342,8 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
 <div class="page-hdr">
   <div class="container">
     <div class="crumb"><a href="/">首頁</a> / 長線訊號 SMH/QQQ</div>
-    <h1>長線訊號 — SMH/QQQ(E3 結構)即時狀態</h1>
-    <div class="sub">SystemProtocol v7 Ch12 · 50% SMH + 50% QQQ · 三訊號平均 {{W40, W52, 12m TSMOM}} 各 1/3 · Long only</div>
+    <h1>長線訊號 — SMH/QQQ(STX50)即時狀態</h1>
+    <div class="sub">SystemProtocol v7 · 50% SMH + 50% QQQ · E3 三訊號各 1/3 + ST(10,3) 半倉出場閘門 · Long only</div>
   </div>
 </div>
 <div class="container">
@@ -294,7 +356,7 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
 </div>
 
 <div class="banner">
-  <b>E3 長線訊號 · 2026-06-12 採用 · OOS 追蹤中。</b>
+  <b>STX50 長線訊號 · 2026-06-13 採用 · OOS 追蹤中。</b>
   這是<b>曝險狀態讀數</b>,不是每日交易動作 —— 訊號為週/月頻,每標的年換手約 2.4 邊,
   多數日子不會變化。SMH 為高 β 半導體,集中度高;此結構在半導體寒冬的 whipsaw 從未實測,
   解讀請對照 <a href="/backtest/long_track_smh/">回測頁</a> 的 caveat。
@@ -303,12 +365,15 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
 <div class="tgrid">{cards}</div>
 
 <div class="card">
-<h3>規則(每標的倉位 = 三個獨立訊號的平均,各 1/3)</h3>
+<h3>規則(每標的倉位 = 0.5 × E3 + 0.5 × (ST 開 ? E3 : 0))</h3>
 <div class="rule-list">
 ① <b>W40</b>:週線收盤 &gt; 40 週均線<br>
 ② <b>W52</b>:週線收盤 &gt; 52 週均線<br>
 ③ <b>TSMOM</b>:過去 12 個月總報酬 &gt; 現金(SHY/BIL)同期 12 個月報酬,<b>月頻、月底判定</b><br>
-<span style="color:var(--muted);font-size:.78rem">三訊號各管 1/3 倉位 → 單標的倉位只有 0 / 33% / 67% / 100% 四檔。兩標的各自獨立跑訊號與資金,日報酬 50/50 加權合成。成本單邊 7bps 計於 |倉位變動|。</span>
+④ <b>ST 閘門</b>:週線 Supertrend(ATR 10、乘數 3,TradingView final-band 公式)方向 —
+翻空時受閘半倉出場、翻多時回來;<b>閘門只減倉、永不加倉</b><br>
+<span style="color:var(--muted);font-size:.78rem">E3 = 三訊號平均(0/33%/67%/100% 四檔);ST 關閘時倉位折半(0/17%/33%/50%)。
+兩標的各自獨立跑訊號與資金,日報酬 50/50 加權合成。成本單邊 7bps 計於 |倉位變動|。2026-06-13 採用,對照線為 E3。</span>
 </div>
 </div>
 
@@ -316,8 +381,8 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
 
 </div>
 <footer>
-  &copy; {datetime.now().year} InvestMQuest Research · 長線訊號 SMH/QQQ(E3)· 真實 yfinance 資料 ·
-  訊號定義同步自 v7-backtest ensemble_experiment.build_signals · 每週五美股收盤後自動更新
+  &copy; {datetime.now().year} InvestMQuest Research · 長線訊號 SMH/QQQ(STX50)· 真實 yfinance 資料 ·
+  訊號定義同步自 v7-backtest ensemble_experiment.build_signals + supertrend_experiment · 每週五美股收盤後自動更新
 </footer>
 </body>
 </html>"""
@@ -329,12 +394,14 @@ def main():
     cash = load_cash_close()
     for t in TICKERS:
         print(f"Fetching {t}...")
-        px = fetch_close(t)
+        df = fetch_ohlc(t)
+        px = _close(df)
         print(f"  {len(px)} daily bars")
-        d = compute_signals(px, cash)
+        st_on, st_level = supertrend_state(df)
+        d = compute_signals(px, cash, st_on, st_level)
         d["ticker"] = t
         sigs[t] = d
-        print(f"  {t}: W40={d['w40']} W52={d['w52']} TSMOM={d['tsmom']} -> pos {d['pos']*100:.0f}%")
+        print(f"  {t}: W40={d['w40']} W52={d['w52']} TSMOM={d['tsmom']} ST={d['st']} -> pos {d['pos']*100:.0f}%")
 
     combined = sum(WEIGHTS[t] * sigs[t]["pos"] for t in TICKERS) * 100
     print(f"Combined exposure: {combined:.0f}%")
@@ -353,6 +420,8 @@ def main():
             t: {
                 "position_pct": round(sigs[t]["pos"] * 100, 1),
                 "w40": sigs[t]["w40"], "w52": sigs[t]["w52"], "tsmom": sigs[t]["tsmom"],
+                "st_gate": sigs[t]["st"], "st_level": round(sigs[t]["st_level"], 2),
+                "e3_pct": round(sigs[t]["e3"] * 100, 1),
                 "wk_close": round(sigs[t]["wk_close"], 2),
                 "ma40": round(sigs[t]["ma40"], 2),
                 "ma52": round(sigs[t]["ma52"], 2),

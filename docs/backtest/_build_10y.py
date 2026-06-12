@@ -28,8 +28,8 @@ YEARS_10 = list(range(2016, 2027))
 # (name, url, key-in-RET-or-None, 10y: cagr, mdd, sharpe, calmar, final, 20y: cagr, mdd, tag)
 # Refreshed 2026-06-12, data through 2026-06-11 (windows = trailing 10y from last date).
 SYS = [
-    ("LT SMH/QQQ E3(採用)", "/backtest/long_track_smh/", "smh",
-     "+26.55%", "-26.93%", "1.23", "0.99", "$10.52M", "+15.30%", "-26.93%", TAG["adopt"]),
+    ("LT SMH/QQQ STX50(採用)", "/backtest/long_track_smh/", "smh",
+     "+25.60%", "-20.04%", "1.31", "1.28", "$9.76M", "+14.05%", "-21.87%", TAG["adopt"]),
     ("六狀態機 v1.1", "/backtest/six_state/", "ch8",
      "+22.40%", "-28.49%", "1.12", "0.79", "$7.54M", "+14.77%", "-35.80%", TAG["atk"]),
     ("六狀態機 v1.0r1 實盤", "/backtest/six_state_v1r1/", "v1r1",
@@ -70,7 +70,7 @@ SCATTER = [
     ("週線 ST (SPY)", 13.48, 11.86, "#be185d"),
     ("盤整 MR", 16.46, 3.29, "#ca8a04"),
     ("🐢 Turtle", 38.12, 24.13, "#0f766e"),
-    ("LT SMH/QQQ E3", 26.93, 26.55, "#b45309"),
+    ("LT SMH/QQQ STX50", 20.04, 25.60, "#b45309"),
     ("六狀態機 v1.1", 28.49, 22.40, "#d32f2f"),
     ("v1.0r1 實盤", 26.55, 21.02, "#b45309"),
     ("LTO QQQ", 25.18, 18.81, "#16a34a"),
@@ -253,7 +253,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 <div class="verdict">
   <strong>10 年視角的結論(2026-06 刷新):</strong>
   去除 2008 後所有系統數字都變好,但排序也變了 —
-  <strong>主動系統重新領先 B&amp;H</strong>:LT SMH/QQQ E3(+26.55%)、六狀態機(+22.40%)都超過 QQQ B&amp;H(+21.71%),
+  <strong>主動系統重新領先 B&amp;H</strong>:LT SMH/QQQ STX50(+25.60%)、六狀態機(+22.40%)都超過 QQQ B&amp;H(+21.71%),
   且 MDD 低 7~8pp;這與前一版「近 10 年 B&amp;H 是最大贏家」的結論不同,主因是 2025-26 的 AI/半導體行情
   由趨勢系統滿倉吃到、而 QQQ B&amp;H 在 2022 的 -35% 拖累了它的 10 年窗口。
   <strong>防守組</strong>(Long Track +15.47% / -18.75%、Calmar 0.83)以一半的回撤拿到 SPY B&amp;H 的報酬。

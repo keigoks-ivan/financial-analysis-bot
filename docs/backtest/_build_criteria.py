@@ -40,7 +40,7 @@ SYSTEMS_20Y = [
     ("Long Track Only", "/backtest/long_track/", 9.72, -20.08, 0.81, 0.48, True, ""),
     ("LTO QQQ only", "/backtest/long_track_qqq/", 10.80, -25.37, 0.75, 0.43, True, ""),
     ("Ensemble E3", "/backtest/long_track_ensemble/", 11.47, -21.15, 0.89, 0.54, True, "2026-06-11 採用 · OOS"),
-    ("LT SMH/QQQ E3", "/backtest/long_track_smh/", 15.30, -26.93, 0.90, 0.57, True, "2026-06-12 採用 · OOS"),
+    ("LT SMH/QQQ STX50", "/backtest/long_track_smh/", 14.05, -21.87, 0.91, 0.64, True, "2026-06-13 採用 STX50 · OOS"),
     ("W52 斜率濾網", "/backtest/slope_filter/", 10.16, -20.05, 0.92, 0.51, True, "warmup 完整(資料自 2000)"),
     ("GEM 雙動能", "/backtest/gem/", 8.95, -21.54, 0.57, 0.42, True, ""),
     ("六狀態機 v1.1", "/backtest/six_state/", 14.77, -35.80, 0.86, 0.41, True, ""),
@@ -54,7 +54,7 @@ SYSTEMS_20Y = [
 
 # (name, cagr, mdd, sharpe, calmar, verdict)  — 10Y, refreshed 2026-06-12
 SYSTEMS_10Y = [
-    ("LT SMH/QQQ E3", 26.55, -26.93, 1.23, 0.99, "warn", "CAGR 進可疑帶(>20%)— H2 半導體 regime"),
+    ("LT SMH/QQQ STX50", 25.60, -20.04, 1.31, 1.28, "warn", "CAGR 進可疑帶(>20%)— H2 半導體 regime"),
     ("六狀態機 v1.1", 22.40, -28.49, 1.12, 0.79, "warn", "CAGR 進可疑帶(>20%)— 無 2008 的視窗"),
     ("LTO QQQ only", 18.81, -25.18, 1.10, 0.75, "good", "進攻型優秀"),
     ("Ensemble E3", 16.29, -21.15, 1.12, 0.77, "good", "優秀(樣本內)"),
