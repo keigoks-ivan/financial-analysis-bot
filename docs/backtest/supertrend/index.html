@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta name="robots" content="noindex,nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>週線 Supertrend — SPY/QQQ/SMH | InvestMQuest Research</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+:root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
+      --text:#111827;--muted:#6b7280;--border:#e5e7eb;
+      --green:#059669;--green-bg:#ecfdf5;--green-border:#a7f3d0;--green-text:#065f46;
+      --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;--red-text:#991b1b;
+      --amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fde68a;--amber-text:#92400e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1120px;margin:0 auto;padding:0 1.5rem}
+.page-hdr{padding:1.75rem 0 1.25rem;background:linear-gradient(180deg,#fffbeb 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
+.page-hdr h1{font-size:1.6rem;font-weight:700;letter-spacing:-.03em}
+.page-hdr .sub{color:var(--muted);font-size:.9rem;margin-top:.2rem}
+.crumb{font-size:.82rem;color:var(--muted);margin-bottom:.4rem}
+.crumb a{color:var(--muted)}
+.section{padding:1.5rem 0 0}
+.section-title{font-size:1.15rem;font-weight:700;margin-bottom:1rem;
+               padding-bottom:.45rem;border-bottom:2px solid var(--amber)}
+.section-sub{font-size:.85rem;color:var(--muted);margin:-.5rem 0 1rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.card h3{font-size:1rem;font-weight:600;margin-bottom:.85rem}
+.card .takeaway{font-size:.88rem;margin-top:.75rem;padding:.6rem .9rem;border-radius:6px;
+                background:var(--amber-bg);border-left:3px solid var(--amber)}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{text-align:left;padding:.6rem .75rem;border-bottom:1px solid var(--border)}
+th{background:#f9fafb;font-weight:600;font-size:.78rem;text-transform:uppercase;
+   letter-spacing:.04em;color:var(--muted)}
+td{font-variant-numeric:tabular-nums}
+tbody tr:hover td{background:#f3f4f6}
+.hero{margin:1.25rem 0;border:1px solid var(--amber-border);border-radius:12px;overflow:hidden;background:var(--card)}
+.hero-top{background:linear-gradient(135deg,#fffbeb 0%,#fefce8 100%);padding:1.4rem 1.6rem;border-bottom:1px solid var(--amber-border)}
+.hero-top .verdict-tag{display:inline-block;background:var(--amber);color:#fff;font-size:.74rem;font-weight:700;
+                       letter-spacing:.05em;padding:.25rem .7rem;border-radius:99px;margin-bottom:.5rem}
+.hero-top h2{font-size:1.35rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.35rem}
+.hero-top p{font-size:.92rem;color:#374151;max-width:60rem}
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card)}
+.hero-stats > div{padding:1rem 1.2rem;text-align:center;border-right:1px solid var(--border)}
+.hero-stats > div:last-child{border-right:none}
+.hero-stats .hs-label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.hero-stats .hs-value{font-size:1.55rem;font-weight:800;letter-spacing:-.02em}
+.note{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;
+      padding:.85rem 1.1rem;font-size:.84rem;color:var(--amber-text);margin:1rem 0}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.chart-card h3{font-size:.95rem;font-weight:600;margin-bottom:.5rem}
+.chart-wrap{position:relative;width:100%;height:380px}
+.chart-wrap-sm{position:relative;width:100%;height:220px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+details{background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:.75rem}
+details summary{padding:.9rem 1.25rem;font-weight:600;font-size:.95rem;cursor:pointer;list-style:none;display:flex;align-items:center;gap:.5rem}
+details summary::before{content:'▸';color:var(--brand);transition:transform .15s}
+details[open] summary::before{transform:rotate(90deg)}
+details .d-body{padding:0 1.25rem 1.25rem}
+.rule-list{font-size:.88rem;color:#374151;padding-left:1.2rem;line-height:1.9}
+footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
+       text-align:center;padding:1.25rem 0;font-size:.78rem;margin-top:2rem}
+@media(max-width:768px){
+  .two-col{grid-template-columns:1fr}
+  .hero-stats{grid-template-columns:repeat(2,1fr)}
+  .hero-stats > div{border-bottom:1px solid var(--border)}
+  table{font-size:.78rem}th,td{padding:.45rem .5rem}
+}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#0f172a;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(59,130,246,.28);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/">個股 DD</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/ds/">產業敘述 DS</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/">週報</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/long-track-smh/">長線訊號</a>
+        </div>
+      </div>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/" class="active">量化回測</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/screener-tw.html">Screener 台股</a>
+          <a href="/screener-jp.html">Screener 日股</a>
+          <a href="/screener-my.html">Screener 馬股</a>
+          <a href="/cache/">🗄 Data Cache</a>
+          <a href="/tools/">期貨部位計算機</a>
+        </div>
+      </div>
+      <a href="/mental-models/">🧠 心智模型</a>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="page-hdr">
+  <div class="container">
+    <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / 週線 Supertrend</div>
+    <h1 style="color:var(--amber)">週線 Supertrend — SPY / QQQ / SMH 單獨回測</h1>
+    <div class="sub">ATR(10) 通道 · 乘數 3(基準)· long-only · 週線收盤決策次日生效 · 數據截至 2026-06-11</div>
+    <div style="margin-top:.75rem;display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap"><div><div style="font-size:.68rem;color:#1a56db;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;font-weight:600">對比總覽</div><div style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-wrap:wrap"><a href="/backtest/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">20 年</a><a href="/backtest/10y/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">10 年</a><a href="/backtest/criteria/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">評估標準</a></div></div><div><div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;font-weight:600">個別系統 (美股)</div><div style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-wrap:wrap"><a href="/backtest/dual_track/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">雙軌多空</a><a href="/backtest/long_track/" style="padding:.4rem .85rem;background:#fff;color:#16a34a;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">Long Track</a><a href="/backtest/long_track_qqq/" style="padding:.4rem .85rem;background:#fff;color:#16a34a;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">LTO QQQ</a><a href="/backtest/long_track_ensemble/" style="padding:.4rem .85rem;background:#fff;color:#16a34a;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">Ensemble 集成</a><a href="/backtest/long_track_smh/" style="padding:.4rem .85rem;background:#fff;color:#16a34a;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">LT SMH/QQQ</a><a href="/backtest/six_state/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">六狀態機</a><a href="/backtest/six_state_v1r1/" style="padding:.4rem .85rem;background:#fff;color:#b45309;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">v1.0r1 實盤</a><a href="/backtest/gem/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">GEM</a><a href="/backtest/slope_filter/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">W52 斜率</a><a href="/backtest/rsi2_mr/" style="padding:.4rem .85rem;background:#fff;color:#d97706;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">盤整 MR</a><a href="/backtest/supertrend/" style="padding:.4rem .85rem;background:#d97706;color:#fff;font-size:.8rem;font-weight:600;text-decoration:none;border-left:1px solid var(--border)">ST 週線</a><a href="/backtest/short_system/" style="padding:.4rem .85rem;background:#fff;color:#dc2626;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">做空 (失敗)</a><a href="/backtest/cndr/" style="padding:.4rem .85rem;background:#fff;color:#dc2626;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">Iron Condor (失敗)</a></div></div><div><div style="font-size:.68rem;color:#0f766e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;font-weight:600">多資產</div><div style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-wrap:wrap"><a href="/backtest/turtle/" style="padding:.4rem .85rem;background:#fff;color:#0f766e;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">🐢 Turtle</a><a href="/backtest/clenow/" style="padding:.4rem .85rem;background:#fff;color:#6366f1;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">📈 Clenow</a></div></div><div><div style="font-size:.68rem;color:#9333ea;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;font-weight:600">日內交易</div><div style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-wrap:wrap"><a href="/backtest/txf_intraday/" style="padding:.4rem .85rem;background:#fff;color:#dc2626;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">台指當沖 (未過)</a><a href="/backtest/txf_basis/" style="padding:.4rem .85rem;background:#fff;color:#dc2626;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">基差偏向 (否決)</a><a href="/backtest/txf_chips/" style="padding:.4rem .85rem;background:#fff;color:#d97706;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">籌碼偏向 (觀察)</a></div></div></div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ===== VERDICT HERO ===== -->
+<div class="hero">
+  <div class="hero-top">
+    <span class="verdict-tag">🔬 證據頁 — standalone 不採用</span>
+    <h2>三個標的全部輸給 W52 單成員,但虧損時段系統性錯開 — E4 集成成員候選資格保留</h2>
+    <p>來源是 Quantified Strategies 的 S&amp;P 500 週線 Supertrend 測試(deep research 驗證存活,2026-06)。
+       用修正方法論基準(warmup 自上市起算、收盤決策次日生效、7bps、閒置資金 SHY/BIL)在 SPY/QQQ/SMH 上重測:
+       standalone 全部低於同引擎的 W52 對照 — QQQ 差距最大(CAGR -3.93pp),且 3×3 參數格在 QQQ 上敏感度高,訊號穩健性存疑。
+       但它的價值在虧損模式:whipsaw 窗口(2011、2015-16、2022)的虧損一致比 W52 淺,2008 GFC 全身而退 —
+       ATR 自適應通道在盤整中比固定均線少被掃。50/50 雙參數混合((10,3)+(10,2))在 QQQ/SMH 改善 MDD 與 Calmar,
+       但仍未超越 W52。結論:不做 standalone 系統;作為 E3 ensemble 第四成員(錯誤時段多樣性)的測試是合理下一步。</p>
+  </div>
+  <div class="hero-stats">
+    <div><div class="hs-label">SMH ST(10,3) CAGR</div><div class="hs-value" style="color:var(--green)">+15.64%</div></div>
+    <div><div class="hs-label">QQQ vs W52 差距</div><div class="hs-value" style="color:var(--red)">-3.93pp</div></div>
+    <div><div class="hs-label">QQQ 混合版 Sharpe</div><div class="hs-value" style="color:var(--brand)">0.73</div></div>
+    <div><div class="hs-label">平均持有</div><div class="hs-value">39~55 週</div></div>
+  </div>
+</div>
+
+<!-- ===== RULES ===== -->
+<div class="section">
+<h2 class="section-title">規則</h2>
+<div class="two-col">
+<div class="card">
+<h3>Supertrend(TradingView final-band 公式)</h3>
+<ul class="rule-list">
+  <li>週線 OHLC(日線重採樣至 W-FRI),ATR(10) Wilder 平滑</li>
+  <li>basicUB/LB = (H+L)/2 ± 3×ATR</li>
+  <li>finalUB = basicUB 若 basicUB &lt; 前 finalUB 或前收 &gt; 前 finalUB,否則沿用(下軌鏡像)— <strong>reset 條件必要</strong>,純單調棘輪在第一次翻轉後失效</li>
+  <li>方向:前 ST 在上軌 → 收盤上穿 finalUB 翻多;前 ST 在下軌 → 收盤下穿 finalLB 翻空</li>
+  <li><strong>Long-only</strong>:方向向上持有 100%,向下空手</li>
+</ul>
+</div>
+<div class="card">
+<h3>執行慣例(與全站修正基準一致)</h3>
+<ul class="rule-list">
+  <li>週五收盤決策(實際為該週最後交易日),次日起生效</li>
+  <li>成本 7bps × |Δ部位|;閒置資金持有 SHY/BIL</li>
+  <li>Warmup 自上市起算;模擬 2006-01 起</li>
+  <li>混合版:50% (10,3) + 50% (10,2),fractional 倉位(E3 慣例,等價於兩參數版各半資金)</li>
+  <li>參數格 3×3 事前註冊全列;基準 (10,3) 為 Seban 原版預設,非格內挑選</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- ===== COMPARISON ===== -->
+<div class="section">
+<h2 class="section-title">績效比較(2006-01 ~ 至今)</h2>
+<div class="section-sub">每標的五行:兩個參數版、50/50 混合(高亮)、同引擎 W52 對照、Buy &amp; Hold。</div>
+<div class="card"><h3>SPY</h3><table><thead><tr><th>版本</th><th>CAGR</th><th>MDD</th><th>Sharpe</th><th>Calmar</th><th>在場時間</th><th>交易數</th></tr></thead><tbody><tr><td>Supertrend (10,3) — 基準</td><td>+8.11%</td><td>-17.77%</td><td>0.77</td><td>0.46</td><td>69%</td><td>30</td></tr>
+<tr><td>Supertrend (10,2)</td><td>+6.98%</td><td>-24.67%</td><td>0.65</td><td>0.28</td><td>72%</td><td>56</td></tr>
+<tr style="background:var(--brand-light)"><td>50% (10,3) + 50% (10,2) 混合</td><td>+7.61%</td><td>-18.33%</td><td>0.75</td><td>0.42</td><td>79%</td><td>—</td></tr>
+<tr><td>W52 單成員(同引擎對照)</td><td>+9.05%</td><td>-20.83%</td><td>0.78</td><td>0.43</td><td>81%</td><td>—</td></tr>
+<tr><td>Buy &amp; Hold</td><td>+11.01%</td><td>-55.19%</td><td>0.64</td><td>0.20</td><td>100%</td><td>—</td></tr>
+</tbody></table></div>
+<div class="card"><h3>QQQ</h3><table><thead><tr><th>版本</th><th>CAGR</th><th>MDD</th><th>Sharpe</th><th>Calmar</th><th>在場時間</th><th>交易數</th></tr></thead><tbody><tr><td>Supertrend (10,3) — 基準</td><td>+8.57%</td><td>-29.74%</td><td>0.64</td><td>0.29</td><td>71%</td><td>38</td></tr>
+<tr><td>Supertrend (10,2)</td><td>+10.11%</td><td>-28.02%</td><td>0.76</td><td>0.36</td><td>69%</td><td>58</td></tr>
+<tr style="background:var(--brand-light)"><td>50% (10,3) + 50% (10,2) 混合</td><td>+9.44%</td><td>-25.43%</td><td>0.73</td><td>0.37</td><td>80%</td><td>—</td></tr>
+<tr><td>W52 單成員(同引擎對照)</td><td>+12.50%</td><td>-25.18%</td><td>0.82</td><td>0.50</td><td>81%</td><td>—</td></tr>
+<tr><td>Buy &amp; Hold</td><td>+15.88%</td><td>-53.40%</td><td>0.78</td><td>0.30</td><td>100%</td><td>—</td></tr>
+</tbody></table></div>
+<div class="card"><h3>SMH</h3><table><thead><tr><th>版本</th><th>CAGR</th><th>MDD</th><th>Sharpe</th><th>Calmar</th><th>在場時間</th><th>交易數</th></tr></thead><tbody><tr><td>Supertrend (10,3) — 基準</td><td>+15.64%</td><td>-32.23%</td><td>0.84</td><td>0.49</td><td>62%</td><td>26</td></tr>
+<tr><td>Supertrend (10,2)</td><td>+13.12%</td><td>-34.84%</td><td>0.70</td><td>0.38</td><td>67%</td><td>52</td></tr>
+<tr style="background:var(--brand-light)"><td>50% (10,3) + 50% (10,2) 混合</td><td>+14.62%</td><td>-27.16%</td><td>0.82</td><td>0.54</td><td>76%</td><td>—</td></tr>
+<tr><td>W52 單成員(同引擎對照)</td><td>+17.36%</td><td>-29.70%</td><td>0.84</td><td>0.58</td><td>73%</td><td>—</td></tr>
+<tr><td>Buy &amp; Hold</td><td>+19.46%</td><td>-64.19%</td><td>0.74</td><td>0.30</td><td>100%</td><td>—</td></tr>
+</tbody></table></div>
+
+<div class="note"><strong>讀法:</strong>三個標的的 ST 家族全數低於 W52 對照 — standalone 不採用。
+混合版的價值在參數分散:QQQ 上 Sharpe 0.64→0.73、MDD -29.7%→-25.4%,SMH 上 Calmar 0.49→0.54;
+SPY 上反而略差(兩參數在 SPY 高度重疊,分散無效)。</div>
+</div>
+
+<!-- ===== CHARTS ===== -->
+<div class="section">
+<h2 class="section-title">淨值與回撤 — ST(10,3) 三標的</h2>
+<div class="chart-card">
+  <h3>淨值(起始 $1M,對數座標,月頻)</h3>
+  <div class="chart-wrap"><canvas id="chart-nav"></canvas></div>
+</div>
+<div class="chart-card">
+  <h3>回撤</h3>
+  <div class="chart-wrap-sm"><canvas id="chart-dd"></canvas></div>
+</div>
+<div class="chart-card">
+  <h3>QQQ — 參數混合效果:(10,3) vs (10,2) vs 50/50 混合 vs W52</h3>
+  <div class="chart-wrap"><canvas id="chart-blend"></canvas></div>
+</div>
+</div>
+
+<!-- ===== STRESS ===== -->
+<div class="section">
+<h2 class="section-title">壓力窗口 — whipsaw 互補性的證據</h2>
+<div class="section-sub">ST 的虧損在 whipsaw 窗口(2011、2015-16、2022)一致比 W52 淺;這是 E4 成員候選資格的核心論據。</div>
+<div class="card"><h3>SPY</h3><table><thead><tr><th>窗口</th><th>ST(10,3)</th><th>混合</th><th>W52</th><th>B&amp;H</th></tr></thead><tbody><tr><td>2008 GFC (08-09~09-03)</td><td>+0.37%</td><td>+0.37%</td><td>+0.37%</td><td>-36.55%</td></tr>
+<tr><td>2011 whipsaw (07~12)</td><td>-10.89%</td><td>-10.71%</td><td>-18.09%</td><td>-3.78%</td></tr>
+<tr><td>2015-16 whipsaw (baseline worst DD)</td><td>-9.92%</td><td>-11.47%</td><td>-19.17%</td><td>-4.07%</td></tr>
+<tr><td>2020 COVID</td><td>-12.34%</td><td>-10.41%</td><td>-12.34%</td><td>-13.64%</td></tr>
+<tr><td>2022 bear</td><td>-7.71%</td><td>-12.23%</td><td>-10.46%</td><td>-18.22%</td></tr>
+</tbody></table></div>
+<div class="card"><h3>QQQ</h3><table><thead><tr><th>窗口</th><th>ST(10,3)</th><th>混合</th><th>W52</th><th>B&amp;H</th></tr></thead><tbody><tr><td>2008 GFC (08-09~09-03)</td><td>-5.49%</td><td>-2.50%</td><td>+0.37%</td><td>-33.18%</td></tr>
+<tr><td>2011 whipsaw (07~12)</td><td>-16.17%</td><td>-13.03%</td><td>-21.22%</td><td>-2.77%</td></tr>
+<tr><td>2015-16 whipsaw (baseline worst DD)</td><td>-19.56%</td><td>-17.82%</td><td>-21.20%</td><td>-9.32%</td></tr>
+<tr><td>2020 COVID</td><td>-11.66%</td><td>-11.66%</td><td>-11.70%</td><td>-7.43%</td></tr>
+<tr><td>2022 bear</td><td>-11.87%</td><td>-16.49%</td><td>-17.78%</td><td>-30.46%</td></tr>
+</tbody></table></div>
+<div class="card"><h3>SMH</h3><table><thead><tr><th>窗口</th><th>ST(10,3)</th><th>混合</th><th>W52</th><th>B&amp;H</th></tr></thead><tbody><tr><td>2008 GFC (08-09~09-03)</td><td>+0.37%</td><td>+0.37%</td><td>+0.37%</td><td>-33.57%</td></tr>
+<tr><td>2011 whipsaw (07~12)</td><td>-0.06%</td><td>-1.12%</td><td>-5.24%</td><td>-6.13%</td></tr>
+<tr><td>2015-16 whipsaw (baseline worst DD)</td><td>-20.33%</td><td>-13.75%</td><td>-20.46%</td><td>+2.94%</td></tr>
+<tr><td>2020 COVID</td><td>-13.22%</td><td>-6.01%</td><td>-15.67%</td><td>-12.16%</td></tr>
+<tr><td>2022 bear</td><td>-16.52%</td><td>-22.11%</td><td>-23.14%</td><td>-40.04%</td></tr>
+</tbody></table></div>
+
+</div>
+
+<!-- ===== GRID ===== -->
+<div class="section">
+<h2 class="section-title">3×3 參數格(事前註冊,全列)</h2>
+<div class="section-sub">QQQ 上 (14,2) Sharpe 0.88 vs 基準 0.64 的跳動是穩健性警訊,不是換參數的理由。</div>
+<details><summary>SPY — 3×3 參數格</summary><div class="d-body"><table><thead><tr><th>(ATR,乘數)</th><th>CAGR</th><th>MDD</th><th>Sharpe</th><th>Calmar</th><th>交易數</th><th>在場</th></tr></thead><tbody><tr><td>(7,2)</td><td>+6.36%</td><td>-24.67%</td><td>0.60</td><td>0.26</td><td>56</td><td>71%</td></tr>
+<tr><td>(7,3)</td><td>+7.58%</td><td>-19.35%</td><td>0.73</td><td>0.39</td><td>30</td><td>68%</td></tr>
+<tr><td>(7,4)</td><td>+5.18%</td><td>-21.93%</td><td>0.51</td><td>0.24</td><td>22</td><td>66%</td></tr>
+<tr><td>(10,2)</td><td>+6.98%</td><td>-24.67%</td><td>0.65</td><td>0.28</td><td>56</td><td>72%</td></tr>
+<tr style="background:var(--brand-light)"><td>(10,3) <strong>(base)</strong></td><td>+8.11%</td><td>-17.77%</td><td>0.77</td><td>0.46</td><td>30</td><td>69%</td></tr>
+<tr><td>(10,4)</td><td>+6.57%</td><td>-19.66%</td><td>0.62</td><td>0.33</td><td>20</td><td>69%</td></tr>
+<tr><td>(14,2)</td><td>+7.93%</td><td>-24.67%</td><td>0.72</td><td>0.32</td><td>54</td><td>74%</td></tr>
+<tr><td>(14,3)</td><td>+7.52%</td><td>-19.14%</td><td>0.71</td><td>0.39</td><td>32</td><td>71%</td></tr>
+<tr><td>(14,4)</td><td>+7.70%</td><td>-18.24%</td><td>0.71</td><td>0.42</td><td>18</td><td>70%</td></tr>
+</tbody></table></div></details>
+<details><summary>QQQ — 3×3 參數格</summary><div class="d-body"><table><thead><tr><th>(ATR,乘數)</th><th>CAGR</th><th>MDD</th><th>Sharpe</th><th>Calmar</th><th>交易數</th><th>在場</th></tr></thead><tbody><tr><td>(7,2)</td><td>+9.18%</td><td>-28.02%</td><td>0.71</td><td>0.33</td><td>60</td><td>68%</td></tr>
+<tr><td>(7,3)</td><td>+6.80%</td><td>-31.57%</td><td>0.54</td><td>0.22</td><td>40</td><td>67%</td></tr>
+<tr><td>(7,4)</td><td>+8.67%</td><td>-33.45%</td><td>0.63</td><td>0.26</td><td>22</td><td>71%</td></tr>
+<tr><td>(10,2)</td><td>+10.11%</td><td>-28.02%</td><td>0.76</td><td>0.36</td><td>58</td><td>69%</td></tr>
+<tr style="background:var(--brand-light)"><td>(10,3) <strong>(base)</strong></td><td>+8.57%</td><td>-29.74%</td><td>0.64</td><td>0.29</td><td>38</td><td>71%</td></tr>
+<tr><td>(10,4)</td><td>+9.80%</td><td>-23.61%</td><td>0.69</td><td>0.42</td><td>20</td><td>73%</td></tr>
+<tr><td>(14,2)</td><td>+12.30%</td><td>-28.44%</td><td>0.88</td><td>0.43</td><td>54</td><td>72%</td></tr>
+<tr><td>(14,3)</td><td>+8.49%</td><td>-30.03%</td><td>0.63</td><td>0.28</td><td>38</td><td>72%</td></tr>
+<tr><td>(14,4)</td><td>+10.76%</td><td>-23.15%</td><td>0.75</td><td>0.46</td><td>18</td><td>75%</td></tr>
+</tbody></table></div></details>
+<details><summary>SMH — 3×3 參數格</summary><div class="d-body"><table><thead><tr><th>(ATR,乘數)</th><th>CAGR</th><th>MDD</th><th>Sharpe</th><th>Calmar</th><th>交易數</th><th>在場</th></tr></thead><tbody><tr><td>(7,2)</td><td>+13.20%</td><td>-34.84%</td><td>0.71</td><td>0.38</td><td>52</td><td>67%</td></tr>
+<tr><td>(7,3)</td><td>+14.83%</td><td>-33.92%</td><td>0.80</td><td>0.44</td><td>26</td><td>64%</td></tr>
+<tr><td>(7,4)</td><td>+12.81%</td><td>-31.20%</td><td>0.68</td><td>0.41</td><td>18</td><td>63%</td></tr>
+<tr><td>(10,2)</td><td>+13.12%</td><td>-34.84%</td><td>0.70</td><td>0.38</td><td>52</td><td>67%</td></tr>
+<tr style="background:var(--brand-light)"><td>(10,3) <strong>(base)</strong></td><td>+15.64%</td><td>-32.23%</td><td>0.84</td><td>0.49</td><td>26</td><td>62%</td></tr>
+<tr><td>(10,4)</td><td>+13.19%</td><td>-30.54%</td><td>0.70</td><td>0.43</td><td>18</td><td>63%</td></tr>
+<tr><td>(14,2)</td><td>+13.94%</td><td>-34.84%</td><td>0.74</td><td>0.40</td><td>52</td><td>68%</td></tr>
+<tr><td>(14,3)</td><td>+15.94%</td><td>-32.23%</td><td>0.85</td><td>0.49</td><td>26</td><td>62%</td></tr>
+<tr><td>(14,4)</td><td>+13.74%</td><td>-33.36%</td><td>0.72</td><td>0.41</td><td>18</td><td>67%</td></tr>
+</tbody></table></div></details>
+
+</div>
+
+<!-- ===== METHOD ===== -->
+<div class="section">
+<h2 class="section-title">附註</h2>
+<div class="card">
+<ul class="rule-list">
+  <li>來源:Quantified Strategies 週線 Supertrend(S&amp;P 500,60 年 41 筆交易宣稱);本頁為本站獨立重測,非複製其數字。</li>
+  <li>引擎:<code>v7-backtest/src/long_track_backtest/supertrend_experiment.py</code>;結果 JSON:<code>results/supertrend_weekly.json</code>。</li>
+  <li>W52 對照使用完全相同的 runner 與成本,差異純粹來自訊號。</li>
+  <li>下一步(未執行):ST(10,3) 作為 E3 ensemble 第四成員的集成測試。</li>
+</ul>
+</div>
+</div>
+
+</div>
+
+<footer>
+  InvestMQuest Research · 週線 Supertrend 證據頁 · 產生於 2026-06-12 · 僅供研究,非投資建議
+</footer>
+
+<script>
+const L=["2006-01", "2006-02", "2006-03", "2006-04", "2006-05", "2006-06", "2006-07", "2006-08", "2006-09", "2006-10", "2006-11", "2006-12", "2007-01", "2007-02", "2007-03", "2007-04", "2007-05", "2007-06", "2007-07", "2007-08", "2007-09", "2007-10", "2007-11", "2007-12", "2008-01", "2008-02", "2008-03", "2008-04", "2008-05", "2008-06", "2008-07", "2008-08", "2008-09", "2008-10", "2008-11", "2008-12", "2009-01", "2009-02", "2009-03", "2009-04", "2009-05", "2009-06", "2009-07", "2009-08", "2009-09", "2009-10", "2009-11", "2009-12", "2010-01", "2010-02", "2010-03", "2010-04", "2010-05", "2010-06", "2010-07", "2010-08", "2010-09", "2010-10", "2010-11", "2010-12", "2011-01", "2011-02", "2011-03", "2011-04", "2011-05", "2011-06", "2011-07", "2011-08", "2011-09", "2011-10", "2011-11", "2011-12", "2012-01", "2012-02", "2012-03", "2012-04", "2012-05", "2012-06", "2012-07", "2012-08", "2012-09", "2012-10", "2012-11", "2012-12", "2013-01", "2013-02", "2013-03", "2013-04", "2013-05", "2013-06", "2013-07", "2013-08", "2013-09", "2013-10", "2013-11", "2013-12", "2014-01", "2014-02", "2014-03", "2014-04", "2014-05", "2014-06", "2014-07", "2014-08", "2014-09", "2014-10", "2014-11", "2014-12", "2015-01", "2015-02", "2015-03", "2015-04", "2015-05", "2015-06", "2015-07", "2015-08", "2015-09", "2015-10", "2015-11", "2015-12", "2016-01", "2016-02", "2016-03", "2016-04", "2016-05", "2016-06", "2016-07", "2016-08", "2016-09", "2016-10", "2016-11", "2016-12", "2017-01", "2017-02", "2017-03", "2017-04", "2017-05", "2017-06", "2017-07", "2017-08", "2017-09", "2017-10", "2017-11", "2017-12", "2018-01", "2018-02", "2018-03", "2018-04", "2018-05", "2018-06", "2018-07", "2018-08", "2018-09", "2018-10", "2018-11", "2018-12", "2019-01", "2019-02", "2019-03", "2019-04", "2019-05", "2019-06", "2019-07", "2019-08", "2019-09", "2019-10", "2019-11", "2019-12", "2020-01", "2020-02", "2020-03", "2020-04", "2020-05", "2020-06", "2020-07", "2020-08", "2020-09", "2020-10", "2020-11", "2020-12", "2021-01", "2021-02", "2021-03", "2021-04", "2021-05", "2021-06", "2021-07", "2021-08", "2021-09", "2021-10", "2021-11", "2021-12", "2022-01", "2022-02", "2022-03", "2022-04", "2022-05", "2022-06", "2022-07", "2022-08", "2022-09", "2022-10", "2022-11", "2022-12", "2023-01", "2023-02", "2023-03", "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", "2023-10", "2023-11", "2023-12", "2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06", "2024-07", "2024-08", "2024-09", "2024-10", "2024-11", "2024-12", "2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"];
+new Chart(document.getElementById('chart-nav'),{
+  type:'line',
+  data:{labels:L,datasets:[
+    {label:'SPY ST(10,3)',data:[1.024, 1.0299, 1.0469, 1.0601, 1.0282, 1.0308, 1.0041, 1.0116, 1.0154, 1.0474, 1.0682, 1.0825, 1.0988, 1.0772, 1.0613, 1.0597, 1.0957, 1.0796, 1.0458, 1.0593, 1.1003, 1.1152, 1.072, 1.0599, 1.0277, 1.0294, 1.0318, 1.0311, 1.0321, 1.0345, 1.0364, 1.0373, 1.0425, 1.0401, 1.0396, 1.0399, 1.0419, 1.0419, 1.0418, 1.0425, 1.0426, 1.0183, 1.0943, 1.1347, 1.175, 1.1524, 1.2234, 1.2468, 1.2014, 1.2389, 1.3143, 1.3347, 1.2249, 1.2251, 1.2246, 1.2246, 1.2246, 1.2249, 1.1816, 1.2606, 1.2899, 1.3347, 1.3349, 1.3736, 1.3581, 1.3352, 1.3085, 1.2141, 1.2138, 1.2133, 1.2136, 1.2133, 1.2064, 1.2588, 1.2993, 1.2906, 1.1963, 1.1958, 1.1958, 1.1958, 1.1983, 1.1765, 1.1832, 1.1938, 1.2549, 1.2709, 1.3191, 1.3445, 1.3762, 1.3578, 1.428, 1.3852, 1.429, 1.4952, 1.5395, 1.5794, 1.5238, 1.5931, 1.6063, 1.6175, 1.655, 1.6892, 1.6665, 1.7323, 1.7084, 1.632, 1.6768, 1.6725, 1.623, 1.7142, 1.6873, 1.7039, 1.7258, 1.6907, 1.7289, 1.624, 1.6233, 1.623, 1.6233, 1.623, 1.6233, 1.6233, 1.6233, 1.6176, 1.6451, 1.6508, 1.711, 1.713, 1.7131, 1.6834, 1.7455, 1.7808, 1.8127, 1.8839, 1.8863, 1.905, 1.9319, 1.9442, 1.9842, 1.99, 2.0301, 2.0779, 2.1414, 2.1674, 2.2895, 2.1235, 2.1263, 2.1285, 2.1317, 2.1349, 2.1378, 2.1873, 2.2003, 2.0891, 2.093, 2.0968, 2.1005, 2.111, 2.1492, 2.237, 2.0943, 2.24, 2.2739, 2.2358, 2.2793, 2.3297, 2.4141, 2.4842, 2.4832, 2.285, 2.2897, 2.2892, 2.2872, 2.3278, 2.4649, 2.6369, 2.5382, 2.4749, 2.7441, 2.8458, 2.8168, 2.8951, 3.0265, 3.1867, 3.2076, 3.2795, 3.3596, 3.4596, 3.2983, 3.5298, 3.5014, 3.6633, 3.3761, 3.3753, 3.3769, 3.3765, 3.3776, 3.3802, 3.3815, 3.388, 3.395, 3.4004, 3.4111, 3.4235, 3.4332, 3.4451, 3.4588, 3.469, 3.485, 3.7108, 3.8323, 3.77, 3.5912, 3.54, 3.5596, 3.7221, 3.7814, 3.9788, 4.1089, 3.9432, 4.1426, 4.2888, 4.3407, 4.4422, 4.5355, 4.495, 4.763, 4.6484, 4.7733, 4.7127, 4.4681, 4.4833, 4.4996, 4.6544, 4.7616, 4.8594, 5.0324, 5.1524, 5.1625, 5.1666, 5.2427, 5.1974, 4.8144, 4.878, 5.1347, 5.0077],borderColor:'#1a56db',borderWidth:1.4,pointRadius:0,tension:0.1},
+    {label:'QQQ ST(10,3)',data:[1.0393, 1.0171, 1.0383, 1.0364, 0.9613, 0.9441, 0.9503, 0.9575, 0.961, 1.0067, 1.0412, 1.0216, 1.0431, 1.0256, 1.031, 1.0886, 1.1229, 1.1283, 1.1266, 1.0972, 1.0985, 1.1759, 1.0964, 1.0956, 1.0386, 1.0403, 1.0427, 1.042, 1.0416, 0.9415, 0.9475, 0.9613, 0.8979, 0.8958, 0.8953, 0.8956, 0.8973, 0.8973, 0.8972, 0.8978, 0.9238, 0.9511, 1.0314, 1.0465, 1.1056, 1.0719, 1.1399, 1.1992, 1.1216, 1.1733, 1.2638, 1.2921, 1.1907, 1.191, 1.1905, 1.1905, 1.1905, 1.2056, 1.2035, 1.2608, 1.2964, 1.3374, 1.3314, 1.3696, 1.353, 1.2489, 1.2146, 1.0469, 1.0467, 1.0462, 1.0465, 1.0463, 1.0586, 1.1265, 1.1834, 1.1695, 1.0645, 1.0641, 1.0641, 1.0608, 1.0703, 1.0138, 0.9891, 0.9891, 0.9891, 0.9891, 0.9934, 1.0186, 1.055, 1.0298, 1.0948, 1.0905, 1.1432, 1.1998, 1.2424, 1.2788, 1.2542, 1.3188, 1.2828, 1.2787, 1.3361, 1.3778, 1.3941, 1.4639, 1.4528, 1.3658, 1.4279, 1.3959, 1.3668, 1.4655, 1.4309, 1.4584, 1.4912, 1.4542, 1.5205, 1.3901, 1.3894, 1.3952, 1.4037, 1.3814, 1.2449, 1.2449, 1.2449, 1.2455, 1.2455, 1.2452, 1.2828, 1.2962, 1.3249, 1.3056, 1.3113, 1.3262, 1.3943, 1.4553, 1.4848, 1.5253, 1.5848, 1.548, 1.6109, 1.6443, 1.6395, 1.715, 1.7488, 1.7593, 1.9134, 1.7629, 1.6323, 1.6405, 1.7336, 1.7535, 1.8025, 1.9067, 1.9013, 1.7045, 1.7077, 1.7108, 1.7138, 1.717, 1.733, 1.8283, 1.6779, 1.8053, 1.8475, 1.8124, 1.829, 1.9091, 1.9868, 2.064, 2.1267, 1.9965, 2.0006, 2.0324, 2.1666, 2.3028, 2.4719, 2.7425, 2.584, 2.5053, 2.7866, 2.9232, 2.9308, 2.9269, 2.9771, 3.1531, 3.1152, 3.3103, 3.405, 3.5486, 3.347, 3.6102, 3.6823, 3.7247, 3.2905, 3.2898, 3.2913, 3.291, 3.292, 3.2946, 3.2958, 3.3022, 3.309, 3.3142, 3.3247, 3.3367, 3.3462, 3.3578, 3.3688, 3.386, 3.6529, 3.8832, 4.0331, 3.9733, 3.7714, 3.6935, 4.0931, 4.3218, 4.4004, 4.6329, 4.692, 4.4868, 4.7628, 5.0709, 4.9858, 4.7644, 4.7845, 4.6863, 4.937, 4.9595, 5.0668, 4.9298, 4.5527, 4.5682, 4.5535, 4.8443, 4.9617, 5.0091, 5.2784, 5.5307, 5.4444, 5.4079, 5.4744, 5.3461, 4.9557, 5.1062, 5.6458, 5.4838],borderColor:'#7c3aed',borderWidth:1.4,pointRadius:0,tension:0.1},
+    {label:'SMH ST(10,3)',data:[1.018, 1.0104, 0.9913, 1.0276, 0.9314, 0.9336, 0.9398, 0.9468, 0.951, 0.955, 0.9596, 0.9602, 0.9618, 0.9688, 0.9731, 0.9841, 0.9867, 1.0228, 1.0152, 1.0185, 1.0295, 0.957, 0.9608, 0.9631, 0.9669, 0.9684, 0.9707, 0.9701, 0.971, 0.9733, 0.9751, 0.9759, 0.9808, 0.9785, 0.978, 0.9783, 0.9803, 0.9802, 0.9802, 0.9808, 0.9809, 0.9807, 1.0333, 1.054, 1.061, 1.0018, 1.0544, 1.1563, 1.0254, 1.0925, 1.1542, 1.2006, 1.1356, 1.0735, 1.0625, 1.0625, 1.0625, 1.0628, 1.0574, 1.1074, 1.1714, 1.2181, 1.1775, 1.249, 1.2218, 1.0995, 1.0995, 1.0995, 1.0993, 1.0988, 1.099, 1.0988, 1.0986, 1.094, 1.1352, 1.0969, 0.9782, 0.9778, 0.9778, 0.9778, 0.9778, 0.978, 0.9778, 0.9778, 0.9887, 1.0123, 1.0242, 1.068, 1.1037, 1.0864, 1.1115, 1.0706, 1.1495, 1.1867, 1.187, 1.2425, 1.2056, 1.2782, 1.3356, 1.3081, 1.357, 1.4493, 1.4279, 1.5134, 1.4961, 1.3335, 1.415, 1.4075, 1.3588, 1.468, 1.425, 1.4291, 1.5412, 1.4062, 1.3187, 1.3187, 1.3181, 1.2721, 1.3094, 1.2774, 1.1193, 1.1193, 1.1224, 1.069, 1.1595, 1.1617, 1.2939, 1.3492, 1.4156, 1.3911, 1.448, 1.4716, 1.5291, 1.5691, 1.6373, 1.6371, 1.7663, 1.6815, 1.7633, 1.8195, 1.9169, 2.0872, 2.0592, 2.0378, 2.219, 2.2197, 2.1726, 2.042, 2.045, 2.0481, 2.0509, 2.0542, 2.057, 2.0605, 2.0644, 2.0681, 2.0718, 2.0565, 2.1163, 2.3137, 1.9784, 1.982, 1.9938, 1.9484, 2.0286, 2.1709, 2.2632, 2.4441, 2.3777, 2.2794, 2.284, 2.2836, 2.3318, 2.5264, 2.7483, 2.8996, 2.8803, 2.8927, 3.4492, 3.6366, 3.7729, 4.0117, 4.055, 4.0458, 4.1489, 4.3662, 4.3811, 4.5092, 4.2668, 4.556, 5.0764, 5.1687, 4.3783, 4.3773, 4.3793, 4.3789, 4.3803, 4.3837, 4.3853, 4.3938, 4.4029, 4.4098, 4.4237, 4.4398, 4.4083, 4.451, 4.8933, 4.597, 5.3669, 5.6614, 5.9726, 5.809, 5.3911, 5.1668, 5.9674, 6.5417, 6.9532, 7.9288, 8.4167, 8.0089, 8.9961, 9.7525, 9.2397, 8.1965, 8.2311, 8.2636, 8.2942, 8.3276, 8.3568, 8.3838, 8.4112, 8.4399, 8.4705, 9.2013, 9.5279, 9.5777, 10.7678, 11.9773, 11.623, 11.919, 13.353, 13.4493, 12.6891, 16.7706, 19.8224, 20.1705],borderColor:'#d97706',borderWidth:1.4,pointRadius:0,tension:0.1}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:true,position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'line',padding:14}},
+      tooltip:{callbacks:{label:function(c){return c.dataset.label+': $'+c.parsed.y.toFixed(2)+'M'}}}},
+    scales:{x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{maxTicksLimit:21,font:{size:10}}},
+      y:{type:'logarithmic',grid:{color:'rgba(0,0,0,0.06)'},ticks:{callback:function(v){return '$'+v+'M'},font:{size:10}}}}
+  }
+});
+new Chart(document.getElementById('chart-dd'),{
+  type:'line',
+  data:{labels:L,datasets:[
+    {label:'SPY',data:[0.0, 0.0, 0.0, 0.0, -3.01, -2.76, -5.28, -4.58, -4.22, -1.2, 0.0, 0.0, 0.0, -1.97, -3.41, -3.56, -0.28, -1.75, -4.82, -3.59, 0.0, 0.0, -3.87, -4.96, -7.85, -7.69, -7.48, -7.54, -7.45, -7.24, -7.07, -6.99, -6.52, -6.73, -6.78, -6.75, -6.57, -6.57, -6.58, -6.52, -6.51, -8.69, -1.87, 0.0, 0.0, -1.92, 0.0, 0.0, -3.64, -0.63, 0.0, 0.0, -8.23, -8.21, -8.25, -8.25, -8.25, -8.23, -11.47, -5.55, -3.36, 0.0, 0.0, 0.0, -1.13, -2.8, -4.74, -11.61, -11.63, -11.67, -11.65, -11.67, -12.17, -8.36, -5.41, -6.04, -12.91, -12.94, -12.94, -12.94, -12.76, -14.35, -13.86, -13.09, -8.64, -7.48, -3.97, -2.12, 0.0, -1.34, 0.0, -3.0, 0.0, 0.0, 0.0, 0.0, -3.52, 0.0, 0.0, 0.0, 0.0, 0.0, -1.34, 0.0, -1.38, -5.79, -3.2, -3.45, -6.31, -1.04, -2.6, -1.64, -0.38, -2.4, -0.2, -6.25, -6.29, -6.31, -6.29, -6.31, -6.29, -6.29, -6.29, -6.62, -5.03, -4.7, -1.23, -1.11, -1.11, -2.82, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -7.25, -7.13, -7.03, -6.89, -6.75, -6.63, -4.46, -3.9, -8.75, -8.58, -8.42, -8.26, -7.8, -6.13, -2.29, -8.53, -2.16, -0.68, -2.35, -0.45, 0.0, 0.0, 0.0, -0.04, -8.02, -7.83, -7.85, -7.93, -6.3, -0.78, 0.0, -3.74, -6.14, 0.0, 0.0, -1.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -4.66, 0.0, -0.8, 0.0, -7.84, -7.86, -7.82, -7.83, -7.8, -7.73, -7.69, -7.52, -7.32, -7.18, -6.88, -6.55, -6.28, -5.96, -5.58, -5.3, -4.87, 0.0, 0.0, -1.63, -6.29, -7.63, -7.12, -2.88, -1.33, 0.0, 0.0, -4.03, 0.0, 0.0, 0.0, 0.0, 0.0, -0.89, 0.0, -2.41, 0.0, -1.27, -6.39, -6.08, -5.73, -2.49, -0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.86, -8.17, -6.96, -2.06, -4.48],borderColor:'#1a56db',borderWidth:1,pointRadius:0,tension:0.1},
+    {label:'QQQ',data:[0.0, -2.14, -0.1, -0.28, -7.51, -9.16, -8.56, -7.87, -7.53, -3.14, 0.0, -1.88, 0.0, -1.68, -1.16, 0.0, 0.0, 0.0, -0.15, -2.76, -2.64, 0.0, -6.76, -6.83, -11.68, -11.53, -11.33, -11.39, -11.42, -19.93, -19.42, -18.25, -23.64, -23.82, -23.86, -23.84, -23.69, -23.69, -23.7, -23.65, -21.44, -19.12, -12.29, -11.0, -5.98, -8.84, -3.06, 0.0, -6.47, -2.16, 0.0, 0.0, -7.85, -7.82, -7.86, -7.86, -7.86, -6.69, -6.86, -2.42, 0.0, 0.0, -0.45, 0.0, -1.21, -8.81, -11.32, -23.56, -23.58, -23.61, -23.59, -23.61, -22.71, -17.75, -13.6, -14.61, -22.28, -22.31, -22.31, -22.55, -21.85, -25.98, -27.78, -27.78, -27.78, -27.78, -27.47, -25.63, -22.97, -24.81, -20.06, -20.38, -16.53, -12.4, -9.29, -6.63, -8.43, -3.71, -6.34, -6.64, -2.45, 0.0, 0.0, 0.0, -0.76, -6.7, -2.46, -4.65, -6.63, 0.0, -2.36, -0.48, 0.0, -2.48, 0.0, -8.58, -8.62, -8.24, -7.68, -9.15, -18.13, -18.13, -18.13, -18.09, -18.09, -18.11, -15.63, -14.75, -12.86, -14.13, -13.76, -12.78, -8.3, -4.29, -2.35, 0.0, 0.0, -2.32, 0.0, 0.0, -0.29, 0.0, 0.0, 0.0, 0.0, -7.87, -14.69, -14.26, -9.4, -8.36, -5.8, -0.35, -0.63, -10.92, -10.75, -10.59, -10.43, -10.26, -9.43, -4.45, -12.31, -5.65, -3.44, -5.28, -4.41, -0.22, 0.0, 0.0, 0.0, -6.12, -5.93, -4.43, 0.0, 0.0, 0.0, 0.0, -5.78, -8.65, 0.0, 0.0, 0.0, -0.13, 0.0, 0.0, -1.2, 0.0, 0.0, 0.0, -5.68, 0.0, 0.0, 0.0, -11.66, -11.68, -11.64, -11.64, -11.62, -11.55, -11.52, -11.34, -11.16, -11.02, -10.74, -10.42, -10.16, -9.85, -9.56, -9.09, -1.93, 0.0, 0.0, -1.48, -6.49, -8.42, 0.0, 0.0, 0.0, 0.0, 0.0, -4.37, 0.0, 0.0, -1.68, -6.04, -5.65, -7.58, -2.64, -2.2, -0.08, -2.78, -10.22, -9.91, -10.2, -4.47, -2.15, -1.22, 0.0, 0.0, -1.56, -2.22, -1.02, -3.34, -10.4, -7.68, 0.0, -2.87],borderColor:'#7c3aed',borderWidth:1,pointRadius:0,tension:0.1},
+    {label:'SMH',data:[0.0, -0.75, -2.62, 0.0, -9.36, -9.15, -8.54, -7.86, -7.45, -7.07, -6.62, -6.56, -6.4, -5.72, -5.3, -4.23, -3.98, -0.47, -1.21, -0.89, 0.0, -7.04, -6.67, -6.45, -6.08, -5.93, -5.71, -5.77, -5.68, -5.46, -5.28, -5.21, -4.73, -4.95, -5.0, -4.97, -4.78, -4.79, -4.79, -4.73, -4.72, -4.74, 0.0, 0.0, 0.0, -5.58, -0.62, 0.0, -11.32, -5.52, -0.18, 0.0, -5.41, -10.59, -11.5, -11.5, -11.5, -11.48, -11.93, -7.76, -2.43, 0.0, -3.33, 0.0, -2.18, -11.97, -11.97, -11.97, -11.99, -12.03, -12.01, -12.03, -12.04, -12.41, -9.11, -12.18, -21.68, -21.71, -21.71, -21.71, -21.71, -21.7, -21.71, -21.71, -20.84, -18.95, -18.0, -14.49, -11.63, -13.02, -11.01, -14.28, -7.97, -4.99, -4.96, -0.52, -3.47, 0.0, 0.0, -2.06, 0.0, 0.0, -1.48, 0.0, -1.14, -11.89, -6.5, -7.0, -10.22, -3.0, -5.84, -5.57, 0.0, -8.76, -14.44, -14.44, -14.48, -17.46, -15.04, -17.12, -27.37, -27.37, -27.17, -30.64, -24.77, -24.62, -16.05, -12.46, -8.15, -9.74, -6.05, -4.52, -0.79, 0.0, 0.0, -0.01, 0.0, -4.8, -0.17, 0.0, 0.0, 0.0, -1.34, -2.37, 0.0, 0.0, -2.12, -8.01, -7.87, -7.73, -7.6, -7.46, -7.33, -7.17, -7.0, -6.83, -6.66, -7.35, -4.66, 0.0, -14.49, -14.34, -13.83, -15.79, -12.32, -6.17, -2.18, 0.0, -2.72, -6.74, -6.55, -6.57, -4.59, 0.0, 0.0, 0.0, -0.67, -0.24, 0.0, 0.0, 0.0, 0.0, 0.0, -0.23, 0.0, 0.0, 0.0, 0.0, -5.38, 0.0, 0.0, 0.0, -15.29, -15.31, -15.27, -15.28, -15.25, -15.19, -15.16, -14.99, -14.82, -14.68, -14.41, -14.1, -14.71, -13.89, -5.33, -11.06, 0.0, 0.0, 0.0, -2.74, -9.74, -13.49, -0.09, 0.0, 0.0, 0.0, 0.0, -4.85, 0.0, 0.0, -5.26, -15.95, -15.6, -15.27, -14.95, -14.61, -14.31, -14.03, -13.75, -13.46, -13.15, -5.65, -2.3, -1.79, 0.0, 0.0, -2.96, -0.49, 0.0, 0.0, -5.65, 0.0, 0.0, 0.0],borderColor:'#d97706',borderWidth:1,pointRadius:0,tension:0.1,fill:'origin',backgroundColor:'#d977061a'}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:true,position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'line',padding:10}},
+      tooltip:{callbacks:{label:function(c){return c.dataset.label+': '+c.parsed.y.toFixed(2)+'%'}}}},
+    scales:{x:{grid:{display:false},ticks:{maxTicksLimit:21,font:{size:10}}},
+      y:{grid:{color:'rgba(0,0,0,0.06)'},ticks:{callback:function(v){return v+'%'},font:{size:10}}}}
+  }
+});
+new Chart(document.getElementById('chart-blend'),{
+  type:'line',
+  data:{labels:["2006-01", "2006-02", "2006-03", "2006-04", "2006-05", "2006-06", "2006-07", "2006-08", "2006-09", "2006-10", "2006-11", "2006-12", "2007-01", "2007-02", "2007-03", "2007-04", "2007-05", "2007-06", "2007-07", "2007-08", "2007-09", "2007-10", "2007-11", "2007-12", "2008-01", "2008-02", "2008-03", "2008-04", "2008-05", "2008-06", "2008-07", "2008-08", "2008-09", "2008-10", "2008-11", "2008-12", "2009-01", "2009-02", "2009-03", "2009-04", "2009-05", "2009-06", "2009-07", "2009-08", "2009-09", "2009-10", "2009-11", "2009-12", "2010-01", "2010-02", "2010-03", "2010-04", "2010-05", "2010-06", "2010-07", "2010-08", "2010-09", "2010-10", "2010-11", "2010-12", "2011-01", "2011-02", "2011-03", "2011-04", "2011-05", "2011-06", "2011-07", "2011-08", "2011-09", "2011-10", "2011-11", "2011-12", "2012-01", "2012-02", "2012-03", "2012-04", "2012-05", "2012-06", "2012-07", "2012-08", "2012-09", "2012-10", "2012-11", "2012-12", "2013-01", "2013-02", "2013-03", "2013-04", "2013-05", "2013-06", "2013-07", "2013-08", "2013-09", "2013-10", "2013-11", "2013-12", "2014-01", "2014-02", "2014-03", "2014-04", "2014-05", "2014-06", "2014-07", "2014-08", "2014-09", "2014-10", "2014-11", "2014-12", "2015-01", "2015-02", "2015-03", "2015-04", "2015-05", "2015-06", "2015-07", "2015-08", "2015-09", "2015-10", "2015-11", "2015-12", "2016-01", "2016-02", "2016-03", "2016-04", "2016-05", "2016-06", "2016-07", "2016-08", "2016-09", "2016-10", "2016-11", "2016-12", "2017-01", "2017-02", "2017-03", "2017-04", "2017-05", "2017-06", "2017-07", "2017-08", "2017-09", "2017-10", "2017-11", "2017-12", "2018-01", "2018-02", "2018-03", "2018-04", "2018-05", "2018-06", "2018-07", "2018-08", "2018-09", "2018-10", "2018-11", "2018-12", "2019-01", "2019-02", "2019-03", "2019-04", "2019-05", "2019-06", "2019-07", "2019-08", "2019-09", "2019-10", "2019-11", "2019-12", "2020-01", "2020-02", "2020-03", "2020-04", "2020-05", "2020-06", "2020-07", "2020-08", "2020-09", "2020-10", "2020-11", "2020-12", "2021-01", "2021-02", "2021-03", "2021-04", "2021-05", "2021-06", "2021-07", "2021-08", "2021-09", "2021-10", "2021-11", "2021-12", "2022-01", "2022-02", "2022-03", "2022-04", "2022-05", "2022-06", "2022-07", "2022-08", "2022-09", "2022-10", "2022-11", "2022-12", "2023-01", "2023-02", "2023-03", "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", "2023-10", "2023-11", "2023-12", "2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06", "2024-07", "2024-08", "2024-09", "2024-10", "2024-11", "2024-12", "2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"],datasets:[
+    {label:'QQQ ST(10,3)',data:[1.0393, 1.0171, 1.0383, 1.0364, 0.9613, 0.9441, 0.9503, 0.9575, 0.961, 1.0067, 1.0412, 1.0216, 1.0431, 1.0256, 1.031, 1.0886, 1.1229, 1.1283, 1.1266, 1.0972, 1.0985, 1.1759, 1.0964, 1.0956, 1.0386, 1.0403, 1.0427, 1.042, 1.0416, 0.9415, 0.9475, 0.9613, 0.8979, 0.8958, 0.8953, 0.8956, 0.8973, 0.8973, 0.8972, 0.8978, 0.9238, 0.9511, 1.0314, 1.0465, 1.1056, 1.0719, 1.1399, 1.1992, 1.1216, 1.1733, 1.2638, 1.2921, 1.1907, 1.191, 1.1905, 1.1905, 1.1905, 1.2056, 1.2035, 1.2608, 1.2964, 1.3374, 1.3314, 1.3696, 1.353, 1.2489, 1.2146, 1.0469, 1.0467, 1.0462, 1.0465, 1.0463, 1.0586, 1.1265, 1.1834, 1.1695, 1.0645, 1.0641, 1.0641, 1.0608, 1.0703, 1.0138, 0.9891, 0.9891, 0.9891, 0.9891, 0.9934, 1.0186, 1.055, 1.0298, 1.0948, 1.0905, 1.1432, 1.1998, 1.2424, 1.2788, 1.2542, 1.3188, 1.2828, 1.2787, 1.3361, 1.3778, 1.3941, 1.4639, 1.4528, 1.3658, 1.4279, 1.3959, 1.3668, 1.4655, 1.4309, 1.4584, 1.4912, 1.4542, 1.5205, 1.3901, 1.3894, 1.3952, 1.4037, 1.3814, 1.2449, 1.2449, 1.2449, 1.2455, 1.2455, 1.2452, 1.2828, 1.2962, 1.3249, 1.3056, 1.3113, 1.3262, 1.3943, 1.4553, 1.4848, 1.5253, 1.5848, 1.548, 1.6109, 1.6443, 1.6395, 1.715, 1.7488, 1.7593, 1.9134, 1.7629, 1.6323, 1.6405, 1.7336, 1.7535, 1.8025, 1.9067, 1.9013, 1.7045, 1.7077, 1.7108, 1.7138, 1.717, 1.733, 1.8283, 1.6779, 1.8053, 1.8475, 1.8124, 1.829, 1.9091, 1.9868, 2.064, 2.1267, 1.9965, 2.0006, 2.0324, 2.1666, 2.3028, 2.4719, 2.7425, 2.584, 2.5053, 2.7866, 2.9232, 2.9308, 2.9269, 2.9771, 3.1531, 3.1152, 3.3103, 3.405, 3.5486, 3.347, 3.6102, 3.6823, 3.7247, 3.2905, 3.2898, 3.2913, 3.291, 3.292, 3.2946, 3.2958, 3.3022, 3.309, 3.3142, 3.3247, 3.3367, 3.3462, 3.3578, 3.3688, 3.386, 3.6529, 3.8832, 4.0331, 3.9733, 3.7714, 3.6935, 4.0931, 4.3218, 4.4004, 4.6329, 4.692, 4.4868, 4.7628, 5.0709, 4.9858, 4.7644, 4.7845, 4.6863, 4.937, 4.9595, 5.0668, 4.9298, 4.5527, 4.5682, 4.5535, 4.8443, 4.9617, 5.0091, 5.2784, 5.5307, 5.4444, 5.4079, 5.4744, 5.3461, 4.9557, 5.1062, 5.6458, 5.4838],borderColor:'#9ca3af',borderWidth:1.1,pointRadius:0,tension:0.1},
+    {label:'QQQ ST(10,2)',data:[1.0393, 1.0171, 1.0383, 1.0364, 0.9963, 0.9987, 1.0053, 1.0129, 1.0264, 1.0752, 1.112, 1.0911, 1.1141, 1.0954, 1.1012, 1.1626, 1.1993, 1.2051, 1.2033, 1.2054, 1.2323, 1.3191, 1.1997, 1.2026, 1.2073, 1.2093, 1.2121, 1.2128, 1.2847, 1.1612, 1.1482, 1.1491, 1.155, 1.1523, 1.1517, 1.1521, 1.1543, 1.1543, 1.1542, 1.2224, 1.2617, 1.2989, 1.4085, 1.4292, 1.51, 1.4638, 1.5568, 1.6378, 1.5307, 1.5304, 1.5869, 1.6225, 1.4953, 1.4956, 1.4949, 1.4949, 1.4765, 1.57, 1.5673, 1.6419, 1.6883, 1.7417, 1.642, 1.6409, 1.6209, 1.5165, 1.5174, 1.4074, 1.4071, 1.4002, 1.3625, 1.3541, 1.4681, 1.5622, 1.6412, 1.622, 1.4764, 1.4757, 1.4757, 1.5034, 1.5167, 1.4521, 1.4518, 1.4518, 1.4563, 1.4613, 1.5055, 1.5437, 1.5989, 1.5606, 1.6592, 1.6526, 1.7325, 1.8183, 1.8829, 1.938, 1.9008, 1.9987, 1.9441, 1.8638, 1.8625, 1.9207, 1.9434, 2.0408, 2.0253, 1.9875, 2.0778, 2.0313, 1.989, 2.1326, 2.0823, 2.1223, 2.17, 2.1161, 2.2126, 2.0228, 2.0219, 2.1494, 2.1625, 2.128, 1.9777, 1.9777, 2.0096, 1.9456, 2.0306, 1.9843, 2.1262, 2.1485, 2.1961, 2.1641, 2.1735, 2.1981, 2.3111, 2.4122, 2.4611, 2.5283, 2.6268, 2.5659, 2.6701, 2.7255, 2.7174, 2.8426, 2.8987, 2.9161, 3.1715, 2.9031, 2.7557, 2.7586, 2.7627, 2.7494, 2.8263, 2.9897, 2.9812, 2.798, 2.8032, 2.8084, 2.8133, 2.8904, 3.0038, 3.169, 2.978, 2.9834, 2.9829, 2.8411, 2.8457, 2.8503, 2.9375, 3.0516, 3.1444, 2.9518, 2.9579, 3.0049, 3.2033, 3.4046, 3.6548, 4.0548, 3.8204, 3.7041, 4.1199, 4.3219, 4.3332, 4.3274, 4.4017, 4.6618, 4.6058, 4.8943, 5.0343, 5.2467, 4.9485, 4.9717, 5.071, 5.1294, 4.5315, 4.5305, 4.5326, 4.5321, 4.5336, 4.5371, 4.5387, 4.2209, 4.0817, 4.0881, 4.101, 4.1159, 4.1014, 4.0867, 4.4746, 4.4973, 4.8519, 5.1577, 5.3568, 5.2774, 5.0093, 4.9604, 5.1031, 5.3882, 5.4862, 5.776, 5.8497, 5.4655, 5.397, 5.7462, 5.5506, 5.5236, 5.6684, 5.6194, 5.9201, 5.9469, 6.0756, 5.9113, 5.7306, 5.7501, 5.7316, 6.0976, 6.2454, 6.305, 6.644, 6.9616, 6.5297, 6.5516, 6.571, 6.5885, 6.6075, 6.808, 7.5275, 7.3115],borderColor:'#a78bfa',borderWidth:1.1,pointRadius:0,tension:0.1},
+    {label:'QQQ 50/50 混合',data:[1.0393, 1.0171, 1.0383, 1.0364, 0.9788, 0.9713, 0.9777, 0.9851, 0.9936, 1.0407, 1.0764, 1.0562, 1.0785, 1.0604, 1.0659, 1.1254, 1.1609, 1.1665, 1.1648, 1.1508, 1.1643, 1.2462, 1.1483, 1.1497, 1.1219, 1.1238, 1.1264, 1.1264, 1.1594, 1.0479, 1.046, 1.0544, 1.0228, 1.0205, 1.0199, 1.0203, 1.0223, 1.0222, 1.0221, 1.0529, 1.085, 1.1171, 1.2113, 1.2291, 1.2986, 1.2589, 1.3388, 1.4085, 1.3169, 1.3471, 1.4237, 1.4557, 1.3415, 1.3418, 1.3412, 1.3412, 1.3329, 1.3834, 1.381, 1.4467, 1.4876, 1.5346, 1.4869, 1.5078, 1.4894, 1.3842, 1.3658, 1.2231, 1.2229, 1.22, 1.2048, 1.2014, 1.2584, 1.3391, 1.4068, 1.3903, 1.2655, 1.2649, 1.2649, 1.2748, 1.2861, 1.2248, 1.2099, 1.2099, 1.2118, 1.2141, 1.2351, 1.2664, 1.3117, 1.2803, 1.3611, 1.3557, 1.4212, 1.4917, 1.5447, 1.5899, 1.5593, 1.6397, 1.5949, 1.5593, 1.5935, 1.6433, 1.6627, 1.746, 1.7328, 1.6645, 1.7402, 1.7012, 1.6658, 1.786, 1.7439, 1.7774, 1.8174, 1.7722, 1.853, 1.6941, 1.6933, 1.7499, 1.7606, 1.7325, 1.5861, 1.5861, 1.5989, 1.5739, 1.6082, 1.5904, 1.671, 1.6886, 1.7259, 1.7008, 1.7082, 1.7275, 1.8163, 1.8958, 1.9342, 1.987, 2.0644, 2.0166, 2.0985, 2.142, 2.1356, 2.234, 2.2781, 2.2918, 2.4925, 2.2891, 2.1471, 2.1548, 2.2171, 2.2244, 2.2866, 2.4188, 2.412, 2.214, 2.2181, 2.2222, 2.2261, 2.2585, 2.3134, 2.4406, 2.2666, 2.354, 2.3812, 2.3019, 2.3147, 2.3674, 2.4517, 2.547, 2.6244, 2.4637, 2.4688, 2.508, 2.6736, 2.8417, 3.0504, 3.3843, 3.1887, 3.0916, 3.4387, 3.6073, 3.6167, 3.6119, 3.6739, 3.891, 3.8442, 4.085, 4.2018, 4.3791, 4.1302, 4.3006, 4.3865, 4.437, 3.9198, 3.919, 3.9208, 3.9203, 3.9216, 3.9247, 3.9261, 3.7921, 3.7352, 3.7411, 3.7529, 3.7665, 3.7655, 3.7674, 3.9506, 3.9706, 4.2837, 4.5537, 4.7295, 4.6593, 4.4226, 4.356, 4.6519, 4.9118, 5.0011, 5.2654, 5.3325, 5.0411, 5.1619, 5.4959, 5.3567, 5.2247, 5.3061, 5.2296, 5.5094, 5.5344, 5.6541, 5.5013, 5.2083, 5.2261, 5.2093, 5.542, 5.6763, 5.7304, 6.0385, 6.3272, 6.0804, 6.0712, 6.1185, 6.0563, 5.8417, 6.019, 6.6551, 6.4641],borderColor:'#d97706',borderWidth:1.8,pointRadius:0,tension:0.1},
+    {label:'QQQ W52 對照',data:[1.0393, 1.0171, 1.0383, 1.0364, 0.9739, 0.9762, 0.9827, 0.9901, 0.9826, 1.0292, 1.0645, 1.0445, 1.0666, 1.0486, 1.0542, 1.113, 1.1481, 1.1536, 1.1519, 1.1844, 1.2466, 1.3344, 1.2442, 1.2433, 1.1452, 1.1471, 1.1498, 1.149, 1.1775, 1.1165, 1.1186, 1.1017, 1.1073, 1.1047, 1.1041, 1.1045, 1.1066, 1.1066, 1.1065, 1.1072, 1.1073, 1.0952, 1.1877, 1.2051, 1.2732, 1.2343, 1.3127, 1.381, 1.2916, 1.3511, 1.4552, 1.4879, 1.3779, 1.2956, 1.3205, 1.2695, 1.3564, 1.4424, 1.4399, 1.5084, 1.551, 1.6001, 1.5929, 1.6386, 1.6187, 1.5859, 1.6123, 1.4953, 1.4282, 1.4213, 1.3575, 1.3108, 1.3712, 1.4591, 1.5328, 1.5149, 1.4082, 1.4592, 1.4738, 1.5502, 1.564, 1.4814, 1.4383, 1.4006, 1.405, 1.4098, 1.4525, 1.4893, 1.5426, 1.5057, 1.6007, 1.5944, 1.6715, 1.7543, 1.8166, 1.8698, 1.8339, 1.9283, 1.8756, 1.8696, 1.9535, 2.0145, 2.0383, 2.1404, 2.1243, 2.1804, 2.2795, 2.2284, 2.182, 2.3396, 2.2844, 2.3283, 2.3807, 2.3215, 2.4273, 2.1901, 2.0917, 2.2237, 2.2372, 2.2016, 2.0461, 2.0461, 2.079, 2.0114, 2.0138, 1.9473, 2.0756, 2.0974, 2.1438, 2.1126, 2.1218, 2.1458, 2.2561, 2.3548, 2.4025, 2.4681, 2.5642, 2.5048, 2.6065, 2.6606, 2.6527, 2.7749, 2.8296, 2.8467, 3.096, 3.056, 2.9313, 2.9461, 3.1133, 3.1489, 3.237, 3.4241, 3.4145, 3.061, 3.0258, 3.0313, 3.0366, 3.0595, 3.1796, 3.3544, 3.0763, 3.1792, 3.2535, 3.1917, 3.221, 3.362, 3.4989, 3.6348, 3.7453, 3.5184, 3.2865, 3.5775, 3.8136, 4.0534, 4.3512, 4.8274, 4.5484, 4.4099, 4.905, 5.1455, 5.1589, 5.152, 5.2405, 5.5502, 5.4835, 5.8269, 5.9936, 6.2464, 5.8914, 6.3547, 6.4816, 6.5563, 5.7921, 5.6057, 5.6083, 5.4044, 5.4062, 5.4104, 5.4123, 5.4228, 5.434, 5.4427, 5.4598, 5.4796, 5.4952, 5.2085, 5.279, 5.3059, 5.7242, 6.085, 6.3199, 6.2262, 5.9099, 5.7878, 6.414, 6.7723, 6.8955, 7.2599, 7.3524, 7.0308, 7.4634, 7.9463, 7.8129, 7.8992, 8.1062, 8.0362, 8.4662, 8.5046, 8.6886, 8.4537, 7.987, 8.0142, 8.5095, 9.0529, 9.2723, 9.3608, 9.864, 10.3356, 10.1742, 10.1061, 10.2304, 9.9906, 9.2611, 10.569, 11.686, 11.3506],borderColor:'#1a56db',borderWidth:1.1,borderDash:[4,3],pointRadius:0,tension:0.1}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:true,position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'line',padding:14}},
+      tooltip:{callbacks:{label:function(c){return c.dataset.label+': $'+c.parsed.y.toFixed(2)+'M'}}}},
+    scales:{x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{maxTicksLimit:21,font:{size:10}}},
+      y:{type:'logarithmic',grid:{color:'rgba(0,0,0,0.06)'},ticks:{callback:function(v){return '$'+v+'M'},font:{size:10}}}}
+  }
+});
+</script>
+</body>
+</html>

@@ -33,6 +33,7 @@ INDIVIDUAL_LINKS = [
     ("/backtest/gem/", "GEM", "gem", None),
     ("/backtest/slope_filter/", "W52 斜率", "slope", None),
     ("/backtest/rsi2_mr/", "盤整 MR", "rsi2", "#d97706"),
+    ("/backtest/supertrend/", "ST 週線", "st", "#d97706"),
     ("/backtest/short_system/", "做空 (失敗)", "short", "#dc2626"),
     ("/backtest/cndr/", "Iron Condor (失敗)", "cndr", "#dc2626"),
 ]
