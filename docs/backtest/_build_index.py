@@ -379,6 +379,12 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 <td>z 分數極端 ±1.5 · 預註冊網格(門檻/窗口/結算週)+ 跟單反向雙揭露</td>
 <td><span class="tag" style="background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber-border)">Z2 否決 · Z1 觀察中</span><br>
 <span style="font-size:.72rem;color:var(--muted)">PCR 全規格 t&lt;0.8;外資跟單 +11.9 點(t=1.2)單調但未達標,forward 確認中</span></td></tr>
+<tr><td><strong><a href="/backtest/ssf_xsec/">個股期橫斷面當沖</a></strong><br>
+<span style="font-size:.72rem;color:var(--muted)">329 檔個股期 · 橫斷面選多空各 K 檔 · 量增/外資/動能/強度複合 · 14.4 年</span></td>
+<td>個股期近月 · 當日 open→close</td>
+<td>Point-in-time universe(月成交額 ≥NT$1 億)· 預註冊 K/成本/門檻網格 + 單訊號拆解</td>
+<td><span class="tag tag-fail">Phase 1 未過</span><br>
+<span style="font-size:.72rem;color:var(--muted)">跟單 t=-13 決定性否決;鏡像日反轉毛利 +0.13% 撞 0.15% 成本牆;Phase 1b 待 tick 累積</span></td></tr>
 </tbody>
 </table>
 </div>

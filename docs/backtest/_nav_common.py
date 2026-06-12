@@ -47,6 +47,7 @@ INTRADAY_LINKS = [
     ("/backtest/txf_intraday/", "台指當沖 (未過)", "txf_intra", "#dc2626"),
     ("/backtest/txf_basis/", "基差偏向 (否決)", "txf_basis", "#dc2626"),
     ("/backtest/txf_chips/", "籌碼偏向 (觀察)", "txf_chips", "#d97706"),
+    ("/backtest/ssf_xsec/", "個股期橫斷面 (未過)", "ssf_xsec", "#dc2626"),
 ]
 
 _BRAND = "var(--brand)"
