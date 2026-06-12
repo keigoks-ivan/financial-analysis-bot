@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta name="robots" content="noindex,nofollow">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>長線訊號 SMH/QQQ(E3)即時狀態 | InvestMQuest Research</title>
+  <meta name="description" content="SystemProtocol v7 Ch12 長線 E3 結構 — 50/50 SMH/QQQ 當前訊號與倉位">
+  <style>
+:root{--brand:#1a56db;--bg:#f8f9fa;--card:#fff;--text:#1a1a2e;--muted:#6b7280;--border:#e2e5e9;
+  --green:#059669;--green-bg:#ecfdf5;--green-border:#a7f3d0;--green-text:#065f46;
+  --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;--red-text:#991b1b;
+  --amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fde68a;--amber-text:#92400e;
+  --blue:#2563eb;--blue-bg:#eff6ff;--blue-border:#93c5fd;--blue-text:#1e40af}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',sans-serif;
+  background:var(--bg);color:var(--text);line-height:1.65;font-size:14px}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1140px;margin:0 auto;padding:0 1.5rem}
+.page-hdr{padding:1.5rem 0 1.2rem;background:#fff;border-bottom:1px solid var(--border)}
+.page-hdr h1{font-size:1.5rem;font-weight:700;letter-spacing:-.03em}
+.page-hdr .sub{color:var(--muted);font-size:.85rem;margin-top:.2rem}
+.crumb{font-size:.8rem;color:var(--muted);margin-bottom:.35rem}
+.crumb a{color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.card h3{font-size:.95rem;font-weight:600;margin-bottom:.75rem}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th,td{text-align:left;padding:.55rem .7rem;border-bottom:1px solid var(--border)}
+th{background:#f8f9fa;font-weight:600;font-size:.74rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+td{font-variant-numeric:tabular-nums}
+tbody tr:hover td{background:#f3f4f6}
+.tag{display:inline-block;padding:.12rem .5rem;border-radius:4px;font-size:.7rem;font-weight:600}
+footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);text-align:center;padding:1rem 0;font-size:.75rem;margin-top:1rem}
+.banner{background:var(--amber-bg);border:1px solid var(--amber-border);color:var(--amber-text);
+  border-radius:8px;padding:.7rem 1rem;font-size:.8rem;margin:1rem 0}
+.status-hero{padding:2rem 0 1rem;text-align:center}
+.status-badge{display:inline-flex;align-items:center;gap:.75rem;padding:1rem 2.5rem;border-radius:16px;
+  font-size:1.4rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.5rem}
+.status-badge .dot{width:14px;height:14px;border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.status-exposure{font-size:2.6rem;font-weight:800;margin:.3rem 0}
+.status-date{font-size:.8rem;color:var(--muted)}
+.hero-green .status-badge{background:var(--green-bg);color:var(--green-text);border:2px solid var(--green-border)}
+.hero-green .dot{background:var(--green)}.hero-green .status-exposure{color:var(--green)}
+.hero-blue .status-badge{background:var(--blue-bg);color:var(--blue-text);border:2px solid var(--blue-border)}
+.hero-blue .dot{background:var(--blue)}.hero-blue .status-exposure{color:var(--blue)}
+.hero-amber .status-badge{background:var(--amber-bg);color:var(--amber-text);border:2px solid var(--amber-border)}
+.hero-amber .dot{background:var(--amber)}.hero-amber .status-exposure{color:var(--amber)}
+.hero-red .status-badge{background:var(--red-bg);color:var(--red-text);border:2px solid var(--red-border)}
+.hero-red .dot{background:var(--red)}.hero-red .status-exposure{color:var(--red)}
+.tgrid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+.tcard{background:#fff;border:1px solid var(--border);border-radius:10px;padding:1.1rem;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.tcard-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:.2rem}
+.tname{font-size:1.3rem;font-weight:800;letter-spacing:-.02em}
+.pos-badge{font-size:.95rem;font-weight:700;padding:.25rem .7rem;border-radius:8px}
+.pos-green{background:var(--green-bg);color:var(--green-text)}
+.pos-blue{background:var(--blue-bg);color:var(--blue-text)}
+.pos-amber{background:var(--amber-bg);color:var(--amber-text)}
+.pos-red{background:var(--red-bg);color:var(--red-text)}
+.tcard-sub{font-size:.75rem;color:var(--muted);margin-bottom:.75rem}
+.sig-row{display:grid;grid-template-columns:1fr;gap:.5rem}
+.sig{border:1px solid var(--border);border-radius:8px;padding:.55rem .7rem;background:#fff}
+.sig.on{border-color:var(--green-border);background:var(--green-bg)}
+.sig.off{border-color:var(--red-border);background:var(--red-bg)}
+.sig-top{display:flex;align-items:center;gap:.5rem}
+.sig-dot{width:11px;height:11px;border-radius:50%}
+.sig.on .sig-dot{background:var(--green)}.sig.off .sig-dot{background:var(--red)}
+.sig-name{font-weight:700;font-size:.85rem}
+.sig-mark{margin-left:auto;font-weight:800}
+.sig.on .sig-mark{color:var(--green)}.sig.off .sig-mark{color:var(--red)}
+.sig-detail{font-size:.74rem;color:var(--muted);margin-top:.2rem;font-variant-numeric:tabular-nums}
+.rule-list{font-size:.82rem;line-height:1.9}
+.rule-list b{color:var(--text)}
+@media(max-width:768px){
+  .tgrid{grid-template-columns:1fr}
+  .status-exposure{font-size:2rem}
+  table{font-size:.74rem}th,td{padding:.4rem .45rem}
+}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#0f172a;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(59,130,246,.28);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/">個股 DD</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/ds/">產業敘述 DS</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
+        </div>
+      </div>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/">週報</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/six-state/">六狀態機</a>
+          <a href="/long-track-smh/" class="active">長線訊號</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/">量化回測</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/screener-tw.html">Screener 台股</a>
+          <a href="/screener-jp.html">Screener 日股</a>
+          <a href="/screener-my.html">Screener 馬股</a>
+          <a href="/cache/">🗄 Data Cache</a>
+          <a href="/tools/">期貨部位計算機</a>
+        </div>
+      </div>
+      <a href="/mental-models/">🧠 心智模型</a>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+<div class="page-hdr">
+  <div class="container">
+    <div class="crumb"><a href="/">首頁</a> / 長線訊號 SMH/QQQ</div>
+    <h1>長線訊號 — SMH/QQQ(E3 結構)即時狀態</h1>
+    <div class="sub">SystemProtocol v7 Ch12 · 50% SMH + 50% QQQ · 三訊號平均 {W40, W52, 12m TSMOM} 各 1/3 · Long only</div>
+  </div>
+</div>
+<div class="container">
+
+<div class="status-hero hero-green">
+  <div class="status-badge"><span class="dot"></span><span>組合當前曝險</span></div>
+  <div class="status-exposure">100%</div>
+  <div style="font-size:.8rem;color:var(--muted)">50% SMH + 50% QQQ · 閒置部分持 SHY/BIL</div>
+  <div class="status-date">數據截至 2026-06-12(週五收盤)· 頁面更新 2026-06-12 09:12</div>
+</div>
+
+<div class="banner">
+  <b>E3 長線訊號 · 2026-06-12 採用 · OOS 追蹤中。</b>
+  這是<b>曝險狀態讀數</b>,不是每日交易動作 —— 訊號為週/月頻,每標的年換手約 2.4 邊,
+  多數日子不會變化。SMH 為高 β 半導體,集中度高;此結構在半導體寒冬的 whipsaw 從未實測,
+  解讀請對照 <a href="/backtest/long_track_smh/">回測頁</a> 的 caveat。
+</div>
+
+<div class="tgrid"><div class="tcard">
+  <div class="tcard-hdr">
+    <span class="tname">SMH</span>
+    <span class="pos-badge pos-green">100% 倉位</span>
+  </div>
+  <div class="tcard-sub">3 / 3 訊號綠燈 · 閒置部分持 SHY/BIL</div>
+  <div class="sig-row"><div class="sig on">
+      <div class="sig-top"><span class="sig-dot"></span><span class="sig-name">W40</span><span class="sig-mark">✓</span></div>
+      <div class="sig-detail">週收 609.45 vs 40週均 409.20 <b style='color:var(--green)'>+48.94%</b></div>
+    </div><div class="sig on">
+      <div class="sig-top"><span class="sig-dot"></span><span class="sig-name">W52</span><span class="sig-mark">✓</span></div>
+      <div class="sig-detail">週收 609.45 vs 52週均 380.68 <b style='color:var(--green)'>+60.09%</b></div>
+    </div><div class="sig on">
+      <div class="sig-top"><span class="sig-dot"></span><span class="sig-name">TSMOM</span><span class="sig-mark">✓</span></div>
+      <div class="sig-detail">12m 報酬 <b>+119.21%</b> vs 現金 <b>+3.64%</b></div>
+    </div></div>
+</div><div class="tcard">
+  <div class="tcard-hdr">
+    <span class="tname">QQQ</span>
+    <span class="pos-badge pos-green">100% 倉位</span>
+  </div>
+  <div class="tcard-sub">3 / 3 訊號綠燈 · 閒置部分持 SHY/BIL</div>
+  <div class="sig-row"><div class="sig on">
+      <div class="sig-top"><span class="sig-dot"></span><span class="sig-name">W40</span><span class="sig-mark">✓</span></div>
+      <div class="sig-detail">週收 717.12 vs 40週均 626.27 <b style='color:var(--green)'>+14.51%</b></div>
+    </div><div class="sig on">
+      <div class="sig-top"><span class="sig-dot"></span><span class="sig-name">W52</span><span class="sig-mark">✓</span></div>
+      <div class="sig-detail">週收 717.12 vs 52週均 610.81 <b style='color:var(--green)'>+17.40%</b></div>
+    </div><div class="sig on">
+      <div class="sig-top"><span class="sig-dot"></span><span class="sig-name">TSMOM</span><span class="sig-mark">✓</span></div>
+      <div class="sig-detail">12m 報酬 <b>+30.48%</b> vs 現金 <b>+3.64%</b></div>
+    </div></div>
+</div></div>
+
+<div class="card">
+<h3>規則(每標的倉位 = 三個獨立訊號的平均,各 1/3)</h3>
+<div class="rule-list">
+① <b>W40</b>:週線收盤 &gt; 40 週均線<br>
+② <b>W52</b>:週線收盤 &gt; 52 週均線<br>
+③ <b>TSMOM</b>:過去 12 個月總報酬 &gt; 現金(SHY/BIL)同期 12 個月報酬,<b>月頻、月底判定</b><br>
+<span style="color:var(--muted);font-size:.78rem">三訊號各管 1/3 倉位 → 單標的倉位只有 0 / 33% / 67% / 100% 四檔。兩標的各自獨立跑訊號與資金,日報酬 50/50 加權合成。成本單邊 7bps 計於 |倉位變動|。</span>
+</div>
+</div>
+
+<div class="card">
+<h3>SMH — 近 8 週軌跡(週線)</h3>
+<table><thead><tr><th>週五</th><th>收盤</th><th>40週均</th><th>距離</th><th>52週均</th><th>距離</th><th>週線訊號</th></tr></thead>
+<tbody><tr>
+  <td>2026-04-24</td><td>506.44</td>
+  <td>360.31</td><td style="color:var(--green)">+40.56%</td>
+  <td>336.13</td><td style="color:var(--green)">+50.67%</td>
+  <td><span class="tag" style="background:var(--green-bg);color:var(--green-text)">W40 ✓</span>
+      <span class="tag" style="background:var(--green-bg);color:var(--green-text)">W52 ✓</span></td>
+</tr>
+<tr>
+  <td>2026-05-01</td><td>509.82</td>
+  <td>365.89</td><td style="color:var(--green)">+39.34%</td>
+  <td>341.74</td><td style="color:var(--green)">+49.18%</td>
+  <td><span class="tag" style="background:var(--green-bg);color:var(--green-text)">W40 ✓</span>
+      <span class="tag" style="background:var(--green-bg);color:var(--green-text)">W52 ✓</span></td>
+</tr>
+<tr>
+  <td>2026-05-08</td><td>566.54</td>
+  <td>372.98</td><td style="color:var(--green)">+51.89%</td>
+  <td>348.35</td><td style="color:var(--green)">+62.64%</td>
+  <td><span class="tag" style="background:var(--green-bg);color:var(--green-text)">W40 ✓</span>
+      <span class="tag" style="background:var(--green-bg);color:var(--green-text)">W52 ✓</span></td>
+</tr>
+<tr>
+  <td>2026-05-15</td><td>556.34</td>
+  <td>379.57</td><td style="color:var(--green)">+46.57%</td>
+  <td>354.32</td><td style="color:var(--green)">+57.01%</td>
+  <td><span class="tag" style="background:var(--green-bg);color:var(--green-text)">W40 ✓</span>
+      <span class="tag" style="background:var(--green-bg);color:var(--green-text)">W52 ✓</span></td>
+</tr>
+<tr>
+  <td>2026-05-22</td><td>576.32</td>
+  <td>386.61</td><td style="color:var(--green)">+49.07%</td>
+  <td>360.86</td><td style="color:var(--green)">+59.71%</td>
+  <td><span class="tag" style="background:var(--green-bg);color:var(--green-text)">W40 ✓</span>
+      <span class="tag" style="background:var(--green-bg);color:var(--green-text)">W52 ✓</span></td>
+</tr>
+<tr>
+  <td>2026-05-29</td><td>598.93</td>
+  <td>394.27</td><td style="color:var(--green)">+51.91%</td>
+  <td>367.78</td><td style="color:var(--green)">+62.85%</td>
+  <td><span class="tag" style="background:var(--green-bg);color:var(--green-text)">W40 ✓</span>
+      <span class="tag" style="background:var(--green-bg);color:var(--green-text)">W52 ✓</span></td>
+</tr>
+<tr>
+  <td>2026-06-05</td><td>569.69</td>
+  <td>401.28</td><td style="color:var(--green)">+41.97%</td>
+  <td>373.89</td><td style="color:var(--green)">+52.37%</td>
+  <td><span class="tag" style="background:var(--green-bg);color:var(--green-text)">W40 ✓</span>
+      <span class="tag" style="background:var(--green-bg);color:var(--green-text)">W52 ✓</span></td>
+</tr>
+<tr>
+  <td>2026-06-12</td><td>609.45</td>
+  <td>409.20</td><td style="color:var(--green)">+48.94%</td>
+  <td>380.68</td><td style="color:var(--green)">+60.09%</td>
+  <td><span class="tag" style="background:var(--green-bg);color:var(--green-text)">W40 ✓</span>
+      <span class="tag" style="background:var(--green-bg);color:var(--green-text)">W52 ✓</span></td>
+</tr>
+</tbody></table>
+<div style="font-size:.72rem;color:var(--muted);margin-top:.5rem">TSMOM 為月頻(月底判定),不在此週線表中;見上方卡片當前值。</div>
+</div><div class="card">
+<h3>QQQ — 近 8 週軌跡(週線)</h3>
+<table><thead><tr><th>週五</th><th>收盤</th><th>40週均</th><th>距離</th><th>52週均</th><th>距離</th><th>週線訊號</th></tr></thead>
+<tbody><tr>
+  <td>2026-04-24</td><td>663.88</td>
+  <td>601.35</td><td style="color:var(--green)">+10.40%</td>
+  <td>583.77</td><td style="color:var(--green)">+13.72%</td>
+  <td><span class="tag" style="background:var(--green-bg);color:var(--green-text)">W40 ✓</span>
+      <span class="tag" style="background:var(--green-bg);color:var(--green-text)">W52 ✓</span></td>
+</tr>
+<tr>
+  <td>2026-05-01</td><td>674.15</td>
+  <td>604.10</td><td style="color:var(--green)">+11.60%</td>
+  <td>587.38</td><td style="color:var(--green)">+14.77%</td>
+  <td><span class="tag" style="background:var(--green-bg);color:var(--green-text)">W40 ✓</span>
+      <span class="tag" style="background:var(--green-bg);color:var(--green-text)">W52 ✓</span></td>
+</tr>
+<tr>
+  <td>2026-05-08</td><td>711.23</td>
+  <td>608.09</td><td style="color:var(--green)">+16.96%</td>
+  <td>591.72</td><td style="color:var(--green)">+20.20%</td>
+  <td><span class="tag" style="background:var(--green-bg);color:var(--green-text)">W40 ✓</span>
+      <span class="tag" style="background:var(--green-bg);color:var(--green-text)">W52 ✓</span></td>
+</tr>
+<tr>
+  <td>2026-05-15</td><td>708.93</td>
+  <td>611.50</td><td style="color:var(--green)">+15.93%</td>
+  <td>595.38</td><td style="color:var(--green)">+19.07%</td>
+  <td><span class="tag" style="background:var(--green-bg);color:var(--green-text)">W40 ✓</span>
+      <span class="tag" style="background:var(--green-bg);color:var(--green-text)">W52 ✓</span></td>
+</tr>
+<tr>
+  <td>2026-05-22</td><td>717.54</td>
+  <td>615.06</td><td style="color:var(--green)">+16.66%</td>
+  <td>599.43</td><td style="color:var(--green)">+19.70%</td>
+  <td><span class="tag" style="background:var(--green-bg);color:var(--green-text)">W40 ✓</span>
+      <span class="tag" style="background:var(--green-bg);color:var(--green-text)">W52 ✓</span></td>
+</tr>
+<tr>
+  <td>2026-05-29</td><td>738.31</td>
+  <td>619.27</td><td style="color:var(--green)">+19.22%</td>
+  <td>603.69</td><td style="color:var(--green)">+22.30%</td>
+  <td><span class="tag" style="background:var(--green-bg);color:var(--green-text)">W40 ✓</span>
+      <span class="tag" style="background:var(--green-bg);color:var(--green-text)">W52 ✓</span></td>
+</tr>
+<tr>
+  <td>2026-06-05</td><td>705.06</td>
+  <td>622.69</td><td style="color:var(--green)">+13.23%</td>
+  <td>607.11</td><td style="color:var(--green)">+16.13%</td>
+  <td><span class="tag" style="background:var(--green-bg);color:var(--green-text)">W40 ✓</span>
+      <span class="tag" style="background:var(--green-bg);color:var(--green-text)">W52 ✓</span></td>
+</tr>
+<tr>
+  <td>2026-06-12</td><td>717.12</td>
+  <td>626.27</td><td style="color:var(--green)">+14.51%</td>
+  <td>610.81</td><td style="color:var(--green)">+17.40%</td>
+  <td><span class="tag" style="background:var(--green-bg);color:var(--green-text)">W40 ✓</span>
+      <span class="tag" style="background:var(--green-bg);color:var(--green-text)">W52 ✓</span></td>
+</tr>
+</tbody></table>
+<div style="font-size:.72rem;color:var(--muted);margin-top:.5rem">TSMOM 為月頻(月底判定),不在此週線表中;見上方卡片當前值。</div>
+</div>
+
+</div>
+<footer>
+  &copy; 2026 InvestMQuest Research · 長線訊號 SMH/QQQ(E3)· 真實 yfinance 資料 ·
+  訊號定義同步自 v7-backtest ensemble_experiment.build_signals · 每週五美股收盤後自動更新
+</footer>
+</body>
+</html>

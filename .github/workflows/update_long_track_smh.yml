@@ -1,0 +1,33 @@
+name: Update Long Track SMH/QQQ Signal
+
+on:
+  schedule:
+    # Every Friday 21:30 UTC (US market close 16:00 ET + 1.5h buffer)
+    # = Saturday 05:30 Taiwan time. E3 signals are weekly (W40/W52) + monthly
+    # (TSMOM month-end), so the Friday close is the only meaningful update.
+    - cron: '30 21 * * 5'
+  workflow_dispatch:  # Manual trigger anytime
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'  # site_nav.py uses 3.12+ f-string syntax
+
+      - name: Install dependencies
+        run: pip install "yfinance>=0.2.40" pandas numpy
+
+      - name: Run long-track SMH/QQQ update
+        run: python scripts/update_long_track_smh.py
+
+      - name: Commit and push
+        run: |
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
+          git add docs/long-track-smh/index.html docs/long-track-smh/state.json
+          git diff --staged --quiet || git commit -m "Auto update long-track SMH/QQQ: $(date -u '+%Y-%m-%d')"
+          git push
