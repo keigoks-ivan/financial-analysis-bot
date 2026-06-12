@@ -31,6 +31,7 @@ INDIVIDUAL_LINKS = [
     ("/backtest/six_state_v1r1/", "v1.0r1 實盤", "v1r1", "#b45309"),
     ("/backtest/gem/", "GEM", "gem", None),
     ("/backtest/slope_filter/", "W52 斜率", "slope", None),
+    ("/backtest/rsi2_mr/", "盤整 MR", "rsi2", "#d97706"),
     ("/backtest/short_system/", "做空 (失敗)", "short", "#dc2626"),
     ("/backtest/cndr/", "Iron Condor (失敗)", "cndr", "#dc2626"),
 ]
