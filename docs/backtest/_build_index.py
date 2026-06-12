@@ -59,6 +59,8 @@ TAG = {
     "live": '<span class="tag" style="background:#fffbeb;color:#92400e;border:1px solid #fde68a">實盤 ⚠</span>',
     "exp":  '<span class="tag" style="background:#fffbeb;color:#92400e;border:1px solid #fde68a">🔬 實驗·未採用</span>',
     "adopt": '<span class="tag" style="background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0">✓ 採用 · OOS</span>',
+    "live_now": '<span class="tag" style="background:#065f46;color:#fff;border:1px solid #065f46">✓ 實倉中</span>',
+    "adopt_wait": '<span class="tag" style="background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0">✓ 採用 · 待上實倉</span>',
     "fail": '<span class="tag tag-fail">失敗</span>',
     "ma":   '<span class="tag" style="background:#f0fdfa;color:#115e59;border:1px solid #99f6e4">多資產</span>',
     "bh":   '<span class="tag tag-bh">基準</span>',
@@ -77,13 +79,13 @@ DOM = {
 
 # (name, url, subtitle, cagr, mdd, sharpe, calmar, dom_key, final, tag)
 GROUPS = [
-    ("✓ 現役配置(2026-06 採用 · OOS 追蹤中)", [
-        ("Ensemble E3 — 股票趨勢核心", "/backtest/long_track_ensemble/",
-         "50/50 SPY/QQQ · {W40·W52·TSMOM} 各⅓ 倉位 · 2026-06-11 採用 · 重審:下一次盤整+快崩後",
-         "+11.47%", "-21.15%", "0.89", "0.54", "trade", "$9.20M", TAG["adopt"]),
+    ("✓ 採用(2026-06 · OOS 追蹤中)", [
         ("LT SMH/QQQ STX50 — 進攻位", "/backtest/long_track_smh/",
          "50/50 SMH/QQQ · E3 + 週線 ST(10,3) 半倉出場閘門 · 2026-06-13 採用 · 重審:滾動 3 年 Calmar 落後 SPY/QQQ 版",
-         "+14.05%", "-21.87%", "0.91", "0.64", "trade", "$14.69M", TAG["adopt"]),
+         "+14.05%", "-21.87%", "0.91", "0.64", "trade", "$14.69M", TAG["live_now"]),
+        ("Ensemble E3 — 股票趨勢核心", "/backtest/long_track_ensemble/",
+         "50/50 SPY/QQQ · {W40·W52·TSMOM} 各⅓ 倉位 · 2026-06-11 採用 · 重審:下一次盤整+快崩後",
+         "+11.47%", "-21.15%", "0.89", "0.54", "trade", "$9.20M", TAG["adopt_wait"]),
     ]),
     ("合格候補(通過 L1 門檻,未採用)", [
         ("W52 斜率濾網", "/backtest/slope_filter/",
@@ -345,9 +347,10 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 <div class="hero">
   <div class="hero-top">
     <span class="verdict-tag">研究線現狀 — 2026-06</span>
-    <h2>現役:E3(股票趨勢核心)+ STX50(進攻位)· 防守對照:W52 · 互補缺口:跨資產趨勢</h2>
+    <h2>實倉中:STX50(SMH/QQQ 進攻位)· 已採用待上實倉:E3(SPY/QQQ 核心)· 防守對照:W52 · 互補缺口:跨資產趨勢</h2>
     <p>20 年全週期是<strong>主判定窗</strong>(10 年頁是「無 2008」的壓力對照窗,兩窗取交集)。
-       美股趨勢家族的礦脈已基本挖完 — E3 與 STX50 經 L1~L4 全流程採用,W52 經 2026-06 審計確認為全站唯一「近支配」系統(SPY 特定);
+       美股趨勢家族的礦脈已基本挖完 — E3 與 STX50 經 L1~L4 全流程採用(目前實倉只有 STX50 在跑,E3 待上線),
+       W52 經 2026-06 審計確認為全站唯一「近支配」系統(SPY 特定);
        已否決:雙軌多空、做空、盤整 MR(被支配)。下一塊拼圖在組合層:跨資產趨勢(Turtle 商品腿)與既有持倉低相關,
        是把組合 MDD 再往下壓唯一沒走過的路。每行的「支配性」= 對該系統自然基準的
        <a href="/backtest/criteria/">L2 雙軸判定</a>:只有「被支配」才等於「策略不好」。</p>
