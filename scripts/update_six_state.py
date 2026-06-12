@@ -19,13 +19,11 @@ import numpy as np
 import pandas as pd
 import yfinance as yf
 
-# Canonical site header (single source: scripts/site_nav.py)
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from site_nav import full_nav_block  # noqa: E402
-
-NAV_BLOCK = full_nav_block("market", "six")
-
-OUTPUT = Path(__file__).parent.parent / "docs" / "six-state" / "index.html"
+# Now a sub-page under the backtest section (no site header). The state.json
+# sidecar stays at the old /six-state/ path because build_prices_cache.py reads
+# it there; only the HTML page moved. The old /six-state/index.html is a
+# redirect stub to this new location.
+OUTPUT = Path(__file__).parent.parent / "docs" / "backtest" / "six_state" / "status" / "index.html"
 STATE_JSON = Path(__file__).parent.parent / "docs" / "six-state" / "state.json"
 
 # ---------------------------------------------------------------------------
@@ -437,10 +435,9 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
 </style>
 </head>
 <body>
-{NAV_BLOCK}
 <div class="page-hdr">
   <div class="container">
-    <div class="crumb"><a href="/">首頁</a> / 六狀態機</div>
+    <div class="crumb"><a href="/backtest/">回測</a> / <a href="/backtest/six_state/">六狀態機</a> / 即時狀態</div>
     <h1>六狀態機 — 即時狀態</h1>
     <div class="sub">指數部六狀態機 v1.0r1 &middot; 純 ETF 配置（QQQ + IB01）&middot; QQQ 週線</div>
   </div>
