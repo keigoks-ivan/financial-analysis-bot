@@ -13,6 +13,7 @@ Used by:
 
 When adding a page: add one entry here, regenerate all pages.
 """
+from __future__ import annotations
 
 COMPARISON_LINKS = [
     ("/backtest/", "20 年", "20y", None),

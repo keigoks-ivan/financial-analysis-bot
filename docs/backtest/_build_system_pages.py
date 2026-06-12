@@ -1,10 +1,10 @@
 """
 Generator for the system pages that have no dedicated backtest engine generator:
-  /backtest/dual_track/  - 雙軌多空
   /backtest/gem/         - GEM 雙動能
 
 DO NOT add these back — they are owned by generators in the v7-backtest repo
 (re-running them here would overwrite the corrected hero-layout pages):
+  /backtest/dual_track/           v7-backtest/src/dual_track_backtest/generate_page.py
   /backtest/long_track/           v7-backtest/src/long_track_backtest/generate_site_page.py
   /backtest/long_track_qqq/       v7-backtest/src/lto_qqq_backtest/generate_site_page.py
   /backtest/long_track_ensemble/  v7-backtest/src/long_track_backtest/generate_ensemble_page.py
@@ -109,56 +109,6 @@ YEARS = list(range(2006, 2027))
 # Each system has: name, slug, color, 20y/10y metrics, yearly returns, etc.
 
 SYSTEMS = {
-    "dual": {
-        "name": "雙軌多空",
-        "subtitle": "50/50 SPY/QQQ · Short Track 70% + Long Track 30%",
-        "color": "#7c3aed",
-        "hero": {
-            "tag": "✗ 原始設計 — 已否決",
-            "tag_bg": "#dc2626",
-            "bg": "linear-gradient(135deg,#fef2f2 0%,#fff5f5 100%)",
-            "border": "var(--red-border)",
-            "title": "70% 資金配給獲利因子 1.15 的短線軌 — 結構性錯置",
-            "body": """v7 Ch12 原始雙軌設計。短線軌(70% 資金)獲利因子僅 1.15、做空勝率 11-16%,
-                貢獻 75.7% 的最大回撤,把長線軌(獲利因子 6.6-8.9)的優勢稀釋殆盡。
-                CAGR 4.60% 輸所有基準。後續演化:移除短線軌 →
-                <a href="/backtest/long_track/">Long Track Only</a>(2026-06 修正版 +9.59% / -20.08%)。
-                「指數做空不可行」由本系統與 <a href="/backtest/turtle/">Turtle 的 SPY 腿</a>(勝率 3.2%)獨立驗證兩次。""",
-        },
-        "rules": """
-            原始 v7 Ch12 系統設計。每個標的內部分為兩條獨立軌道:<br>
-            <strong>短線軌 (70% 資金)</strong>: D60/D120/D200 日線均線,N=2 出場確認,可做多可做空。<br>
-            <strong>長線軌 (30% 資金)</strong>: W52/W104/W250 週線均線,N=1 出場,可做多可做空。<br>
-            兩軌獨立運作,可同時持有相反方向。50/50 配置 SPY 和 QQQ 兩個標的。
-        """,
-        "m20": {"cagr": 4.60, "mdd": -26.83, "sharpe": 0.42, "sortino": 0.51, "calmar": 0.17, "vol": 12.47, "trades": 210, "final": "$2.00M"},
-        "m10": {"cagr": 7.28, "mdd": -19.38, "sharpe": 0.60, "sortino": 0.71, "calmar": 0.38, "vol": 12.50, "trades": 105, "final": "$2.02M"},
-        "yearly": [None, None, None, None, 5.69, -19.27, 5.18, 29.62, 7.79, -18.49, -2.28, 25.48, 4.43, 1.62, 9.42, 18.27, -13.13, 12.22, 15.26, 6.23, -2.40],
-        "verdict": """
-            <strong>原始系統,已被證明是錯誤設計。</strong> 短線軌獲利因子僅 1.15、佔 70% 資金,
-            把長線軌的優勢稀釋掉了。CAGR 4.60% 跑輸所有基準,Calmar 0.17 不及格。
-            短線軌在所有 4 個子軌中貢獻了 75.7% 的最大回撤。
-            <strong>建議改用 Long Track Only 配置</strong> (移除短線軌)。
-        """,
-        "extra_section": ("短線軌 vs 長線軌貢獻拆解", """
-<table>
-<thead><tr><th></th><th>SPY Short</th><th>SPY Long</th><th>QQQ Short</th><th>QQQ Long</th></tr></thead>
-<tbody>
-<tr><td>交易數</td><td>84</td><td>15</td><td>89</td><td>22</td></tr>
-<tr><td>勝率</td><td>40.5%</td><td style="color:var(--green);font-weight:600">53.3%</td><td>36.0%</td><td>40.9%</td></tr>
-<tr><td>盈虧比</td><td>1.68x</td><td style="color:var(--green);font-weight:600">5.77x</td><td>2.10x</td><td style="color:var(--green);font-weight:600">12.87x</td></tr>
-<tr><td>獲利因子</td><td>1.14</td><td style="color:var(--green);font-weight:600">6.60</td><td>1.18</td><td style="color:var(--green);font-weight:600">8.91</td></tr>
-<tr><td>做空勝率</td><td style="color:var(--red)">11.8%</td><td>—</td><td style="color:var(--red)">15.8%</td><td>—</td></tr>
-<tr><td>總 P&amp;L</td><td>+$131K</td><td style="font-weight:600">+$865K</td><td>+$264K</td><td style="font-weight:600">+$1,464K</td></tr>
-<tr><td>佔 MDD %</td><td style="color:var(--red);font-weight:600">46.2%</td><td>11.5%</td><td style="color:var(--red);font-weight:600">29.5%</td><td>10.0%</td></tr>
-</tbody>
-</table>
-<div class="note">
-  短線軌做空方向幾乎全軍覆沒 (SPY 11.8%、QQQ 15.8% 勝率)。
-  70% 資金配給獲利因子 ~1.15 的策略是 underperform 的根本原因。
-</div>
-        """),
-    },
     "gem": {
         "name": "GEM 雙動能",
         "subtitle": "SPY / ACWX / AGG · 月度切換 · Gary Antonacci",
@@ -492,7 +442,6 @@ new Chart(document.getElementById('chart-yearly'),{{
 
 
 SLUG_TO_DIR = {
-    "dual": "dual_track",
     "gem": "gem",
 }
 

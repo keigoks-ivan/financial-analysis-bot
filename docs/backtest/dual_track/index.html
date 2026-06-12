@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
+  <meta name="robots" content="noindex,nofollow">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>雙軌多空 | InvestMQuest Research</title>
+<title>雙軌多空(修正基準重檢)| InvestMQuest Research</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
-:root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
+:root{--brand:#7c3aed;--brand-light:#f5f3ff;--bg:#f9fafb;--card:#fff;
       --text:#111827;--muted:#6b7280;--border:#e5e7eb;
       --green:#059669;--green-bg:#ecfdf5;--green-border:#a7f3d0;--green-text:#065f46;
       --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;--red-text:#991b1b;
@@ -16,29 +17,26 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
      background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
 a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
 .container{max-width:1120px;margin:0 auto;padding:0 1.5rem}
-.page-hdr{padding:1.75rem 0 1.25rem;background:linear-gradient(180deg,#f0f4ff 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
+.page-hdr{padding:1.75rem 0 1.25rem;background:linear-gradient(180deg,#f5f3ff 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
 .page-hdr h1{font-size:1.6rem;font-weight:700;letter-spacing:-.03em}
 .page-hdr .sub{color:var(--muted);font-size:.9rem;margin-top:.2rem}
 .crumb{font-size:.82rem;color:var(--muted);margin-bottom:.4rem}
 .crumb a{color:var(--muted)}
-.toggle-pill{display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-top:.75rem;flex-wrap:wrap}
-.toggle-pill a{padding:.4rem .85rem;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)}
-.toggle-pill a:first-child{border-left:none}
-.toggle-pill a.active{background:var(--brand);color:#fff;font-weight:600}
-.toggle-pill a:not(.active){background:#fff;color:var(--brand)}
-.section{padding:1.5rem 0}
+.section{padding:1.5rem 0 0}
 .section-title{font-size:1.15rem;font-weight:700;margin-bottom:1rem;
                padding-bottom:.45rem;border-bottom:2px solid var(--brand)}
-.section-sub{font-size:.85rem;color:var(--muted);margin-bottom:1rem;margin-top:-.5rem}
+.section-sub{font-size:.85rem;color:var(--muted);margin:-.5rem 0 1rem}
 .card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
-.card h3{font-size:1rem;font-weight:600;margin-bottom:.85rem;color:var(--text)}
+.card h3{font-size:1rem;font-weight:600;margin-bottom:.85rem}
+.card .takeaway{font-size:.88rem;margin-top:.75rem;padding:.6rem .9rem;border-radius:6px;
+                background:var(--brand-light);border-left:3px solid var(--brand)}
 table{width:100%;border-collapse:collapse;font-size:.88rem}
 th,td{text-align:left;padding:.6rem .75rem;border-bottom:1px solid var(--border)}
 th{background:#f9fafb;font-weight:600;font-size:.78rem;text-transform:uppercase;
    letter-spacing:.04em;color:var(--muted)}
 td{font-variant-numeric:tabular-nums}
 tbody tr:hover td{background:#f3f4f6}
-.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.7rem;margin-bottom:1rem}
+.kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem}
 .kpi{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.85rem 1rem;text-align:center}
 .kpi .label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.25rem}
 .kpi .value{font-size:1.25rem;font-weight:700}
@@ -46,35 +44,39 @@ tbody tr:hover td{background:#f3f4f6}
 .kpi-pair{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
 .kpi-pair > div{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem 1.2rem}
 .kpi-pair h4{font-size:.85rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.7rem;font-weight:600}
-.verdict{background:var(--brand-light);border-left:4px solid var(--brand);
-         padding:1rem 1.4rem;border-radius:0 8px 8px 0;margin:1rem 0;font-size:.9rem;line-height:1.7}
-.verdict strong{color:var(--brand)}
-.note{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;
-      padding:.85rem 1.1rem;font-size:.82rem;color:var(--amber-text);margin:1rem 0}
-.event-card{background:var(--card);border:1px solid var(--border);border-radius:8px;
-            padding:.85rem 1.1rem;margin-bottom:.6rem}
-.event-card .ev-name{font-weight:600;font-size:.92rem;margin-bottom:.3rem;color:var(--text)}
-.event-card .ev-detail{font-size:.83rem;color:#374151;line-height:1.65}
-.tag{display:inline-block;padding:.15rem .55rem;border-radius:4px;font-size:.72rem;font-weight:600}
-.tag-best{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border)}
-.tag-warn{background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber-border)}
-.tag-fail{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red-border)}
-.tag-pass{background:#f3f4f6;color:#374151;border:1px solid #d1d5db}
-.chart-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
-.chart-card h3{font-size:.95rem;font-weight:600;margin-bottom:.5rem;color:var(--text)}
-.chart-wrap{position:relative;width:100%;height:380px}
-.chart-wrap-sm{position:relative;width:100%;height:200px}
-.hero{margin:1.25rem 0;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--card)}
-.hero-top{padding:1.4rem 1.6rem;border-bottom:1px solid var(--border)}
-.hero-top .verdict-tag{display:inline-block;color:#fff;font-size:.74rem;font-weight:700;
+.hero{margin:1.25rem 0;border:1px solid var(--red-border);border-radius:12px;overflow:hidden;background:var(--card)}
+.hero-top{background:linear-gradient(135deg,#fef2f2 0%,#fff5f5 100%);padding:1.4rem 1.6rem;border-bottom:1px solid var(--red-border)}
+.hero-top .verdict-tag{display:inline-block;background:#dc2626;color:#fff;font-size:.74rem;font-weight:700;
                        letter-spacing:.05em;padding:.25rem .7rem;border-radius:99px;margin-bottom:.5rem}
 .hero-top h2{font-size:1.35rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.35rem}
 .hero-top p{font-size:.92rem;color:#374151;max-width:60rem}
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card)}
+.hero-stats > div{padding:1rem 1.2rem;text-align:center;border-right:1px solid var(--border)}
+.hero-stats > div:last-child{border-right:none}
+.hero-stats .hs-label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.hero-stats .hs-value{font-size:1.55rem;font-weight:800;letter-spacing:-.02em}
+.note{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;
+      padding:.85rem 1.1rem;font-size:.84rem;color:var(--amber-text);margin:1rem 0}
+.tag{display:inline-block;padding:.15rem .55rem;border-radius:4px;font-size:.72rem;font-weight:600}
+.tag-best{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border)}
+.tag-fail{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red-border)}
+.tag-pass{background:#f3f4f6;color:#374151;border:1px solid #d1d5db}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.chart-card h3{font-size:.95rem;font-weight:600;margin-bottom:.5rem}
+.chart-wrap{position:relative;width:100%;height:380px}
+.chart-wrap-sm{position:relative;width:100%;height:220px}
+details{background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:.75rem}
+details summary{padding:.9rem 1.25rem;font-weight:600;font-size:.95rem;cursor:pointer;list-style:none;display:flex;align-items:center;gap:.5rem}
+details summary::before{content:'▸';color:var(--brand);transition:transform .15s}
+details[open] summary::before{transform:rotate(90deg)}
+details .d-body{padding:0 1.25rem 1.25rem;overflow-x:auto}
+.issue-list{font-size:.88rem;color:#374151;padding-left:1.2rem;line-height:1.9}
 footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
-       text-align:center;padding:1.25rem 0;font-size:.78rem}
+       text-align:center;padding:1.25rem 0;font-size:.78rem;margin-top:2rem}
 @media(max-width:768px){
-  .kpi-grid{grid-template-columns:repeat(2,1fr)}
   .kpi-pair{grid-template-columns:1fr}
+  .hero-stats{grid-template-columns:repeat(2,1fr)}
+  .hero-stats > div{border-bottom:1px solid var(--border)}
   table{font-size:.78rem}th,td{padding:.45rem .5rem}
 }
 </style>
@@ -163,250 +165,633 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 <div class="page-hdr">
   <div class="container">
     <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / 雙軌多空</div>
-    <h1 style="color:#7c3aed">雙軌多空</h1>
-    <div class="sub">50/50 SPY/QQQ · Short Track 70% + Long Track 30%</div>
+    <h1 style="color:#7c3aed">雙軌多空(修正基準重檢)</h1>
+    <div class="sub">50/50 SPY/QQQ · 短線軌(日線)70% + 長線軌(週線)30% · 2026-06-12 修正基準重跑 + 結構假設測試 · 數據截至 2026-06-11</div>
     <div style="margin-top:.75rem;display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap"><div><div style="font-size:.68rem;color:#1a56db;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;font-weight:600">對比總覽</div><div style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-wrap:wrap"><a href="/backtest/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">20 年</a><a href="/backtest/10y/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">10 年</a><a href="/backtest/criteria/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">評估標準</a></div></div><div><div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;font-weight:600">個別系統 (美股)</div><div style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-wrap:wrap"><a href="/backtest/dual_track/" style="padding:.4rem .85rem;background:#1a56db;color:#fff;font-size:.8rem;font-weight:600;text-decoration:none;border-left:1px solid var(--border)">雙軌多空</a><a href="/backtest/long_track/" style="padding:.4rem .85rem;background:#fff;color:#16a34a;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">Long Track</a><a href="/backtest/long_track_qqq/" style="padding:.4rem .85rem;background:#fff;color:#16a34a;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">LTO QQQ</a><a href="/backtest/long_track_ensemble/" style="padding:.4rem .85rem;background:#fff;color:#16a34a;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">Ensemble 集成</a><a href="/backtest/long_track_smh/" style="padding:.4rem .85rem;background:#fff;color:#16a34a;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">LT SMH/QQQ</a><a href="/backtest/six_state/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">六狀態機</a><a href="/backtest/six_state_v1r1/" style="padding:.4rem .85rem;background:#fff;color:#b45309;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">v1.0r1 實盤</a><a href="/backtest/gem/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">GEM</a><a href="/backtest/slope_filter/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">W52 斜率</a><a href="/backtest/short_system/" style="padding:.4rem .85rem;background:#fff;color:#dc2626;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">做空 (失敗)</a></div></div><div><div style="font-size:.68rem;color:#0f766e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;font-weight:600">多資產</div><div style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-wrap:wrap"><a href="/backtest/turtle/" style="padding:.4rem .85rem;background:#fff;color:#0f766e;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">🐢 Turtle</a><a href="/backtest/clenow/" style="padding:.4rem .85rem;background:#fff;color:#6366f1;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">📈 Clenow</a></div></div></div>
   </div>
 </div>
 
 <div class="container">
 
-<div class="hero" style="border-color:var(--red-border)">
-  <div class="hero-top" style="background:linear-gradient(135deg,#fef2f2 0%,#fff5f5 100%);border-bottom-color:var(--red-border)">
-    <span class="verdict-tag" style="background:#dc2626">✗ 原始設計 — 已否決</span>
-    <h2>70% 資金配給獲利因子 1.15 的短線軌 — 結構性錯置</h2>
-    <p>v7 Ch12 原始雙軌設計。短線軌(70% 資金)獲利因子僅 1.15、做空勝率 11-16%,
-                貢獻 75.7% 的最大回撤,把長線軌(獲利因子 6.6-8.9)的優勢稀釋殆盡。
-                CAGR 4.60% 輸所有基準。後續演化:移除短線軌 →
-                <a href="/backtest/long_track/">Long Track Only</a>(2026-06 修正版 +9.59% / -20.08%)。
-                「指數做空不可行」由本系統與 <a href="/backtest/turtle/">Turtle 的 SPY 腿</a>(勝率 3.2%)獨立驗證兩次。</p>
+<!-- ===== VERDICT HERO ===== -->
+<div class="hero">
+  <div class="hero-top">
+    <span class="verdict-tag">✗ 維持否決 — 2026-06-12 修正基準重檢確認</span>
+    <h2>做空腿是致命傷;但移除它之後,任何權重下仍不及 Long Track Only</h2>
+    <p>v7 Ch12 原始雙軌設計在修正方法基準(warmup 自上市起算、閒置收 SHY/BIL、收盤決策次日生效)
+       重跑後,結論比舊頁更強:樣本補回 2008 後 CAGR +4.35%、MDD -38.72%(舊頁 +4.60% / -26.83%,
+       漏掉 GFC 是 warmup bug 的假象)。本次補做兩個結構假設測試:
+       <strong>H-A 移除做空</strong> — CAGR +3.31pp、MDD 砍半(-18.48%),確認做空腿(勝率 19.2%、
+       獲利因子 0.41)是第一致命傷;
+       <strong>H-B 軌道權重掃描</strong> — 長多化之後 CAGR 隨長線軌權重單調上升,終點就是已採用的
+       <a href="/backtest/long_track/">Long Track Only</a>(+9.72% / -20.08%)。
+       日線軌唯一的貢獻是回撤略淺與後十年 Calmar 較高,代價是 1~2pp CAGR —
+       不足以推翻現行 <a href="/backtest/long_track_ensemble/">E3</a> 採用。
+       「雙軌結構能不能救」的問題就此關閉。</p>
+  </div>
+  <div class="hero-stats">
+    <div><div class="hs-label">CAGR (20Y)</div><div class="hs-value" style="color:var(--muted)">+4.35%</div></div>
+    <div><div class="hs-label">MDD</div><div class="hs-value" style="color:var(--red)">-38.72%</div></div>
+    <div><div class="hs-label">Sharpe</div><div class="hs-value" style="color:var(--muted)">0.37</div></div>
+    <div><div class="hs-label">Calmar</div><div class="hs-value" style="color:var(--red)">0.11</div></div>
   </div>
 </div>
 
-<!-- ===== 1. 策略規則 ===== -->
-<div class="section">
-<h2 class="section-title">1. 策略規則</h2>
-<div class="card">
-  <p style="font-size:.92rem;color:#374151;line-height:1.75">
-            原始 v7 Ch12 系統設計。每個標的內部分為兩條獨立軌道:<br>
-            <strong>短線軌 (70% 資金)</strong>: D60/D120/D200 日線均線,N=2 出場確認,可做多可做空。<br>
-            <strong>長線軌 (30% 資金)</strong>: W52/W104/W250 週線均線,N=1 出場,可做多可做空。<br>
-            兩軌獨立運作,可同時持有相反方向。50/50 配置 SPY 和 QQQ 兩個標的。
-        </p>
-</div>
+<div class="note">
+  <strong>方法基準說明(2026-06-12 重跑):</strong>舊頁數字(+4.60% / -26.83%)出自原始引擎 —
+  資料自 2006 載入,W250 warmup 把第一筆有效訊號悄悄推遲到 2010 年底,「20 年」實際只有 ~15.5 年,
+  且完全錯過 2008 做空腿的實戰;閒置資金無收益、成本同日成交。
+  本頁全部數字改用與 long_track / lto_qqq / smh 一致的修正基準:warmup 自上市起算(SPY 1993、QQQ 1999)、
+  模擬自 2006-01、收盤決策次日生效、單邊 7bps 計於倉位變動、閒置資金收 SHY/BIL。
+  修正後原始設計 MDD 從 -26.8% 惡化到 -38.72% — 否決結論不變,且更強。
 </div>
 
-<!-- ===== 2. 績效摘要 ===== -->
+<!-- ===== KPI ===== -->
 <div class="section">
-<h2 class="section-title">2. 績效摘要</h2>
+<h2 class="section-title">績效摘要(D0 原始 Ch12 結構,修正基準)</h2>
 <div class="kpi-pair">
 <div>
-<h4>20 年 (2006-2026)</h4>
-<div class="kpi-grid" style="grid-template-columns:repeat(2,1fr);gap:.5rem">
-  <div class="kpi"><div class="label">CAGR</div><div class="value pos">+4.60%</div></div>
-  <div class="kpi"><div class="label">MDD</div><div class="value">-26.83%</div></div>
-  <div class="kpi"><div class="label">Sharpe</div><div class="value neu">0.42</div></div>
-  <div class="kpi"><div class="label">Sortino</div><div class="value neu">0.51</div></div>
-  <div class="kpi"><div class="label">Calmar</div><div class="value">0.17</div></div>
-  <div class="kpi"><div class="label">Vol</div><div class="value">12.47%</div></div>
-  <div class="kpi"><div class="label">交易次數</div><div class="value">210</div></div>
-  <div class="kpi"><div class="label">期末資產</div><div class="value">$2.00M</div></div>
+<h4>20 年 (2006-01 ~ 至今)</h4>
+<div class="kpi-grid">
+<div class="kpi"><div class="label">CAGR</div><div class="value pos">+4.35%</div></div>
+<div class="kpi"><div class="label">MDD</div><div class="value neg">-38.72%</div></div>
+<div class="kpi"><div class="label">Sharpe</div><div class="value neu">0.37</div></div>
+<div class="kpi"><div class="label">Sortino</div><div class="value neu">0.42</div></div>
+<div class="kpi"><div class="label">Calmar</div><div class="value neu">0.11</div></div>
+<div class="kpi"><div class="label">Vol</div><div class="value ">14.39%</div></div>
+<div class="kpi"><div class="label">交易次數</div><div class="value ">275</div></div>
+<div class="kpi"><div class="label">期末資產</div><div class="value ">$2.39M</div></div>
 </div>
 </div>
-
 <div>
-<h4>10 年 (2016-2026)</h4>
-<div class="kpi-grid" style="grid-template-columns:repeat(2,1fr);gap:.5rem">
-  <div class="kpi"><div class="label">CAGR</div><div class="value pos">+7.28%</div></div>
-  <div class="kpi"><div class="label">MDD</div><div class="value">-19.38%</div></div>
-  <div class="kpi"><div class="label">Sharpe</div><div class="value neu">0.60</div></div>
-  <div class="kpi"><div class="label">Sortino</div><div class="value neu">0.71</div></div>
-  <div class="kpi"><div class="label">Calmar</div><div class="value">0.38</div></div>
-  <div class="kpi"><div class="label">Vol</div><div class="value">12.50%</div></div>
-  <div class="kpi"><div class="label">交易次數</div><div class="value">105</div></div>
-  <div class="kpi"><div class="label">期末資產</div><div class="value">$2.02M</div></div>
+<h4>10 年 (2016-06 ~ 至今)</h4>
+<div class="kpi-grid">
+<div class="kpi"><div class="label">CAGR</div><div class="value pos">+9.26%</div></div>
+<div class="kpi"><div class="label">MDD</div><div class="value neg">-19.61%</div></div>
+<div class="kpi"><div class="label">Sharpe</div><div class="value neu">0.73</div></div>
+<div class="kpi"><div class="label">Sortino</div><div class="value neu">0.84</div></div>
+<div class="kpi"><div class="label">Calmar</div><div class="value neu">0.47</div></div>
+<div class="kpi"><div class="label">Vol</div><div class="value ">13.49%</div></div>
+<div class="kpi"><div class="label">期末資產</div><div class="value ">$2.42M</div></div>
 </div>
 </div>
 </div>
 
-<div class="verdict">
-  <strong>結論:</strong> 
-            <strong>原始系統,已被證明是錯誤設計。</strong> 短線軌獲利因子僅 1.15、佔 70% 資金,
-            把長線軌的優勢稀釋掉了。CAGR 4.60% 跑輸所有基準,Calmar 0.17 不及格。
-            短線軌在所有 4 個子軌中貢獻了 75.7% 的最大回撤。
-            <strong>建議改用 Long Track Only 配置</strong> (移除短線軌)。
-        
+<div class="card">
+<h3>vs 基準(2006 ~ 至今)</h3>
+<table>
+<thead><tr><th>配置</th><th>CAGR</th><th>MDD</th><th>Sharpe</th><th>Calmar</th><th>H1 Calmar</th><th>H2 Calmar</th></tr></thead>
+<tbody><tr style="background:var(--brand-light)"><td>D0 原始 Ch12(ST70/LT30,可做空) — 本頁系統</td><td>+4.35%</td><td>-38.72%</td><td>0.37</td><td>0.11</td><td>0.01</td><td>0.42</td></tr><tr><td>A70 長多版 ST70/LT30(假設 H-A)</td><td>+7.66%</td><td>-18.48%</td><td>0.75</td><td>0.41</td><td>0.28</td><td>0.99</td></tr><tr><td>A0 純長線軌(= Long Track Only)</td><td>+9.72%</td><td>-20.08%</td><td>0.81</td><td>0.48</td><td>0.32</td><td>0.76</td></tr><tr><td>E3 結構 SPY/QQQ(現行採用核心)</td><td>+11.47%</td><td>-21.15%</td><td>0.89</td><td>0.54</td><td>0.48</td><td>0.71</td></tr><tr><td>SPY/QQQ 50/50 Buy &amp; Hold</td><td>+13.52%</td><td>-53.66%</td><td>0.73</td><td>0.25</td><td>0.17</td><td>0.58</td></tr><tr><td>SPY Buy &amp; Hold</td><td>+11.01%</td><td>-55.19%</td><td>0.64</td><td>0.20</td><td>0.13</td><td>0.45</td></tr><tr><td>QQQ Buy &amp; Hold</td><td>+15.88%</td><td>-53.40%</td><td>0.78</td><td>0.30</td><td>0.21</td><td>0.59</td></tr></tbody>
+</table>
+<div class="takeaway">原始雙軌(D0)輸給所有基準,H1 Calmar 0.01 — 前十年幾乎全毀於做空腿。
+移除做空(A70)後立刻翻身,但全期仍不及純長線軌(A0)與現行採用的 E3 核心。
+詳細拆解見下方兩個假設測試。</div>
 </div>
 </div>
 
-<!-- ===== 3. 淨值曲線 ===== -->
+<!-- ===== H-A ===== -->
 <div class="section">
-<h2 class="section-title">3. 淨值曲線</h2>
+<h2 class="section-title">🔬 假設 H-A:移除做空腿(2026-06-12)</h2>
+<div class="section-sub">同權重(ST70/LT30)、同規則,唯一差異 = 不開空單。證據先行:D0 的分方向交易紀錄。</div>
+
+<div class="card">
+<h3>D0 交易紀錄分方向拆解(2006 ~ 至今,SPY+QQQ 合計)</h3>
+<table>
+<thead><tr><th>軌道 / 方向</th><th>筆數</th><th>勝率</th><th>獲利因子</th><th>平均報酬</th></tr></thead>
+<tbody><tr><td>短線軌 做多</td><td>170</td><td>41.8%</td><td>2.15</td><td>+1.45%</td></tr>
+<tr><td>短線軌 做空</td><td>52</td><td style="color:var(--red);font-weight:600">19.2%</td><td style="color:var(--red);font-weight:600">0.41</td><td style="color:var(--red);font-weight:600">-2.33%</td></tr>
+<tr><td>長線軌 做多</td><td>47</td><td>40.4%</td><td>5.58</td><td>+8.87%</td></tr>
+<tr><td>長線軌 做空</td><td>2</td><td style="color:var(--red);font-weight:600">0.0%</td><td style="color:var(--red);font-weight:600">0.00</td><td style="color:var(--red);font-weight:600">-17.86%</td></tr>
+</tbody>
+</table>
+<div class="takeaway"><strong>做空腿在兩條軌道都是負期望:</strong>短線軌做空 52 筆、勝率 19.2%、獲利因子 0.41;
+長線軌做空 2 筆全虧。與舊頁(11-16% 勝率)、<a href="/backtest/turtle/">Turtle SPY 腿</a>(3.2%)、
+<a href="/backtest/short_system/">做空系統</a>(失敗)互相印證 — 這是第三次獨立確認「指數做空不可行」。
+移除做空後(A70):CAGR +3.31pp,MDD -38.72% → -18.48%。</div>
+</div>
+</div>
+
+<!-- ===== H-B ===== -->
+<div class="section">
+<h2 class="section-title">🔬 假設 H-B:Layer-2 軌道權重掃描(長多版)</h2>
+<div class="section-sub">長多規則固定,掃描 短線軌/長線軌 資金比。100/0 = 純日線軌、0/100 = 純長線軌(= 已採用的 Long Track Only 修正基準)。
+此為假設測試證據,Layer-2 的 70/30 規格未經擁有者決策不變更。</div>
+<div class="card">
+<table>
+<thead><tr><th>ST / LT</th><th>CAGR</th><th>MDD</th><th>Sharpe</th><th>Calmar</th><th>10Y CAGR</th><th>10Y Calmar</th><th>H1 Calmar</th><th>H2 Calmar</th><th>期末</th></tr></thead>
+<tbody>
+<tr><td>100% / 0%</td><td>+6.70%</td><td>-20.00%</td><td>0.67</td><td>0.34</td><td>+11.31%</td><td>0.73</td><td>0.19</td><td>0.69</td><td>$3.8M</td></tr>
+<tr><td>70% / 30%</td><td>+7.66%</td><td>-18.48%</td><td>0.75</td><td>0.41</td><td>+12.61%</td><td>1.06</td><td>0.28</td><td>0.99</td><td>$4.5M</td></tr>
+<tr><td>50% / 50%</td><td>+8.28%</td><td>-18.17%</td><td>0.79</td><td>0.46</td><td>+13.46%</td><td>1.00</td><td>0.33</td><td>0.93</td><td>$5.1M</td></tr>
+<tr><td>30% / 70%</td><td>+8.87%</td><td>-18.94%</td><td>0.81</td><td>0.47</td><td>+14.28%</td><td>0.92</td><td>0.34</td><td>0.85</td><td>$5.7M</td></tr>
+<tr><td>0% / 100%</td><td>+9.72%</td><td>-20.08%</td><td>0.81</td><td>0.48</td><td>+15.47%</td><td>0.83</td><td>0.32</td><td>0.76</td><td>$6.7M</td></tr>
+
+</tbody>
+</table>
+<div class="takeaway"><strong>CAGR 隨長線軌權重單調上升;全期 Calmar 也是(0.34 → 0.48)。</strong>
+日線軌的辯護證據只有兩條:混合配置 MDD 略淺(約 -18% vs -20%,日線軌出場快)、
+後十年 Calmar 較高(A70 H2 0.99 vs A0 0.76)。但這要用 1~2pp CAGR 去換,
+且 H2 優勢依賴後十年的 V 型反彈型態(日線軌回場快)。
+結論:日線軌沒有足以推翻 Long Track Only / E3 採用的證據;雙軌結構正式關閉,不再重檢。</div>
+</div>
+</div>
+
+<!-- ===== CHARTS ===== -->
+<div class="section">
+<h2 class="section-title">淨值與回撤</h2>
+<div class="section-sub">月頻淨值(對數座標);精確 MDD 以表格數字為準。</div>
 <div class="chart-card">
+  <h3>淨值曲線 — 起始 $1M</h3>
   <div class="chart-wrap"><canvas id="chart-nav"></canvas></div>
 </div>
-</div>
-
-<!-- ===== 4. 回撤 ===== -->
-<div class="section">
-<h2 class="section-title">4. 回撤分析</h2>
 <div class="chart-card">
+  <h3>回撤 — D0 原始 vs A70 長多版 vs A0 純長線軌</h3>
   <div class="chart-wrap-sm"><canvas id="chart-dd"></canvas></div>
 </div>
-</div>
-
-<!-- ===== 5. 逐年報酬 ===== -->
-<div class="section">
-<h2 class="section-title">5. 逐年報酬</h2>
 <div class="chart-card">
+  <h3>逐年報酬 — D0 vs A0</h3>
   <div class="chart-wrap"><canvas id="chart-yearly"></canvas></div>
 </div>
 
+<div class="card">
+<h3>Top 5 回撤(D0 原始結構)</h3>
 <table>
-<thead><tr><th>Year</th><th style="color:#7c3aed">雙軌多空</th></tr></thead>
+<thead><tr><th>#</th><th>高點</th><th>低點</th><th>回到前高</th><th>深度</th><th>下跌天數</th><th>修復天數</th></tr></thead>
 <tbody>
-<tr><td>2006</td><td>—</td></tr><tr><td>2007</td><td>—</td></tr><tr><td>2008</td><td>—</td></tr><tr><td>2009</td><td>—</td></tr><tr><td>2010</td><td style="">+5.69%</td></tr><tr><td>2011</td><td style="color:var(--red)">-19.27%</td></tr><tr><td>2012</td><td style="">+5.18%</td></tr><tr><td>2013</td><td style="color:var(--green);font-weight:600">+29.62%</td></tr><tr><td>2014</td><td style="">+7.79%</td></tr><tr><td>2015</td><td style="color:var(--red)">-18.49%</td></tr><tr><td>2016</td><td style="color:var(--red)">-2.28%</td></tr><tr><td>2017</td><td style="color:var(--green);font-weight:600">+25.48%</td></tr><tr><td>2018</td><td style="">+4.43%</td></tr><tr><td>2019</td><td style="">+1.62%</td></tr><tr><td>2020</td><td style="">+9.42%</td></tr><tr><td>2021</td><td style="">+18.27%</td></tr><tr><td>2022</td><td style="color:var(--red)">-13.13%</td></tr><tr><td>2023</td><td style="">+12.22%</td></tr><tr><td>2024</td><td style="">+15.26%</td></tr><tr><td>2025</td><td style="">+6.23%</td></tr><tr><td>2026</td><td style="color:var(--red)">-2.40%</td></tr>
+<tr><td>1</td><td>2008-11-20</td><td>2012-01-09</td><td>2020-02-05</td><td style="color:var(--red);font-weight:600">-38.72%</td><td>1145d</td><td>2949d</td></tr>
+<tr><td>2</td><td>2020-02-19</td><td>2020-04-14</td><td>2020-09-01</td><td style="color:var(--red);font-weight:600">-19.61%</td><td>55d</td><td>140d</td></tr>
+<tr><td>3</td><td>2021-12-27</td><td>2023-03-10</td><td>2024-01-24</td><td style="color:var(--red);font-weight:600">-19.30%</td><td>438d</td><td>320d</td></tr>
+<tr><td>4</td><td>2008-10-27</td><td>2008-11-04</td><td>2008-11-19</td><td style="color:var(--red);font-weight:600">-17.04%</td><td>8d</td><td>15d</td></tr>
+<tr><td>5</td><td>2024-12-16</td><td>2025-05-23</td><td>2025-09-22</td><td style="color:var(--red);font-weight:600">-14.20%</td><td>158d</td><td>122d</td></tr>
+
 </tbody>
 </table>
-
+<div class="takeaway"><strong>最大回撤不是 2008 崩盤,而是 2008 做空獲利的高點之後。</strong>
+淨值高點落在 2008-11-20(做空腿的戰果),接著在 2009-2011 的 V 型復甦與盤整中
+被 whipsaw 連續回吐 -38.7%,低點 2012-01,直到 2020-02 才回到前高 — 水下 11.2 年。
+做空腿「賺得到崩盤、守不住復甦」是這個結構的死因,與壓力事件表互為印證。</div>
+</div>
 </div>
 
-<!-- ===== 6. 系統特有分析 ===== -->
+<!-- ===== STRESS ===== -->
 <div class="section">
-<h2 class="section-title">6. 短線軌 vs 長線軌貢獻拆解</h2>
-
+<h2 class="section-title">關鍵壓力事件(綠字 = 三變體中最佳)</h2>
+<div class="card">
 <table>
-<thead><tr><th></th><th>SPY Short</th><th>SPY Long</th><th>QQQ Short</th><th>QQQ Long</th></tr></thead>
+<thead><tr><th>事件</th><th>D0 原始</th><th>A70 長多版</th><th>A0 純長線軌</th><th>50/50 B&amp;H</th></tr></thead>
 <tbody>
-<tr><td>交易數</td><td>84</td><td>15</td><td>89</td><td>22</td></tr>
-<tr><td>勝率</td><td>40.5%</td><td style="color:var(--green);font-weight:600">53.3%</td><td>36.0%</td><td>40.9%</td></tr>
-<tr><td>盈虧比</td><td>1.68x</td><td style="color:var(--green);font-weight:600">5.77x</td><td>2.10x</td><td style="color:var(--green);font-weight:600">12.87x</td></tr>
-<tr><td>獲利因子</td><td>1.14</td><td style="color:var(--green);font-weight:600">6.60</td><td>1.18</td><td style="color:var(--green);font-weight:600">8.91</td></tr>
-<tr><td>做空勝率</td><td style="color:var(--red)">11.8%</td><td>—</td><td style="color:var(--red)">15.8%</td><td>—</td></tr>
-<tr><td>總 P&amp;L</td><td>+$131K</td><td style="font-weight:600">+$865K</td><td>+$264K</td><td style="font-weight:600">+$1,464K</td></tr>
-<tr><td>佔 MDD %</td><td style="color:var(--red);font-weight:600">46.2%</td><td>11.5%</td><td style="color:var(--red);font-weight:600">29.5%</td><td>10.0%</td></tr>
+<tr><td>2008 GFC</td><td style="color:var(--green);font-weight:600">+7.79%</td><td>+0.37%</td><td>+0.37%</td><td style="background:#f9fafb">-34.74%</td></tr>
+<tr><td>2011 歐債</td><td>-15.97%</td><td style="color:var(--green);font-weight:600">-7.48%</td><td>-12.26%</td><td style="background:#f9fafb">-4.13%</td></tr>
+<tr><td>2015 中國股災</td><td>-18.46%</td><td style="color:var(--green);font-weight:600">-12.59%</td><td>-16.44%</td><td style="background:#f9fafb">-7.14%</td></tr>
+<tr><td>2018 Q4</td><td style="color:var(--green);font-weight:600">-3.66%</td><td>-7.52%</td><td>-13.64%</td><td style="background:#f9fafb">-15.34%</td></tr>
+<tr><td>2020 COVID</td><td>-18.33%</td><td style="color:var(--green);font-weight:600">-7.92%</td><td>-11.58%</td><td style="background:#f9fafb">-10.53%</td></tr>
+<tr><td>2022 通膨熊</td><td>-13.99%</td><td style="color:var(--green);font-weight:600">-10.97%</td><td>-14.12%</td><td style="background:#f9fafb">-24.49%</td></tr>
+
 </tbody>
 </table>
-<div class="note">
-  短線軌做空方向幾乎全軍覆沒 (SPY 11.8%、QQQ 15.8% 勝率)。
-  70% 資金配給獲利因子 ~1.15 的策略是 underperform 的根本原因。
+<div class="takeaway">給做空腿一個公道:在慢熊(2008 GFC +7.8%、2018 Q4)它確實兌現了。
+但在 V 型反轉(2020 COVID,D0 反而是三變體最差)、盤整熊(2011、2015)與 2022 它都是淨傷害 —
+而全期帳單(CAGR 4.35% vs 7.66%、MDD -38.7% vs -18.5%)說明:兩次慢熊的獲利,
+付不起其餘十八年的 whipsaw 損耗。</div>
 </div>
-        
+</div>
+
+<!-- ===== LIMITATIONS ===== -->
+<div class="section">
+<h2 class="section-title">已知限制與決策狀態</h2>
+<div class="card">
+<ol class="issue-list">
+  <li><strong>本頁是驗屍報告,不是活系統</strong> — 雙軌多空 2026-06 已否決;本次重檢的目的是在修正基準上
+      關閉「結構能不能救」的問題,結論是不能。現行採用:核心 SPY/QQQ E3、進攻位 SMH/QQQ E3。</li>
+  <li><strong>假設測試均為樣本內</strong> — H-A/H-B 是同一段歷史上的重新切分;它們用於解釋失敗原因,
+      不構成新配置的採用依據。</li>
+  <li><strong>Layer-2 70/30 規格未變更</strong> — 權重掃描是證據,不是決策;v7 Ch12 文件規格的變更需擁有者明示。</li>
+  <li><strong>日線軌 H2 Calmar 優勢未追蹤</strong> — A70 後十年 Calmar 0.99 的紀錄留檔;若未來市場進入
+      高頻 V 型反轉常態,可重開這條證據線,重開條件:E3 滾動 3 年 Calmar 連續落後 A70 對照線。</li>
+  <li><strong>期貨槓桿未模擬</strong> — 原始 Ch12 以期貨為標的;本頁用 ETF 全額保證金近似,
+      槓桿與保證金壓力下做空腿的傷害只會更大。</li>
+</ol>
+</div>
+</div>
+
+<!-- ===== DETAILS ===== -->
+<div class="section">
+<h2 class="section-title">明細</h2>
+
+<details>
+<summary>逐年報酬表</summary>
+<div class="d-body">
+<table>
+<thead><tr><th>Year</th><th style="color:#7c3aed">D0 原始</th><th>A70 長多版</th><th style="color:#16a34a">A0 純長線軌</th><th>QQQ B&amp;H</th></tr></thead>
+<tbody>
+<tr><td>2006</td><td>+5.47%</td><td>+5.04%</td><td>+4.20%</td><td>+4.81%</td></tr>
+<tr><td>2007</td><td>+2.83%</td><td>+2.83%</td><td>+10.71%</td><td>+19.03%</td></tr>
+<tr><td>2008</td><td>+9.44%</td><td>-2.53%</td><td>-5.38%</td><td style="color:var(--red)">-41.73%</td></tr>
+<tr><td>2009</td><td>-0.21%</td><td>+10.71%</td><td>+0.25%</td><td style="color:var(--green);font-weight:600">+54.68%</td></tr>
+<tr><td>2010</td><td>-4.79%</td><td>-0.07%</td><td>+7.89%</td><td>+20.14%</td></tr>
+<tr><td>2011</td><td style="color:var(--red)">-20.27%</td><td>-6.93%</td><td>-9.57%</td><td>+3.48%</td></tr>
+<tr><td>2012</td><td>+5.13%</td><td>+5.13%</td><td>+8.62%</td><td>+18.11%</td></tr>
+<tr><td>2013</td><td style="color:var(--green);font-weight:600">+27.96%</td><td style="color:var(--green);font-weight:600">+27.96%</td><td style="color:var(--green);font-weight:600">+31.28%</td><td style="color:var(--green);font-weight:600">+36.63%</td></tr>
+<tr><td>2014</td><td>+8.67%</td><td>+8.67%</td><td>+17.36%</td><td>+19.18%</td></tr>
+<tr><td>2015</td><td style="color:var(--red)">-18.22%</td><td style="color:var(--red)">-11.01%</td><td>-5.30%</td><td>+9.44%</td></tr>
+<tr><td>2016</td><td>-1.05%</td><td>+1.74%</td><td>+3.47%</td><td>+7.10%</td></tr>
+<tr><td>2017</td><td>+24.50%</td><td>+24.50%</td><td style="color:var(--green);font-weight:600">+26.09%</td><td style="color:var(--green);font-weight:600">+32.66%</td></tr>
+<tr><td>2018</td><td>+3.40%</td><td>-0.74%</td><td>-1.53%</td><td>-0.13%</td></tr>
+<tr><td>2019</td><td>+1.96%</td><td>+6.87%</td><td>+20.81%</td><td style="color:var(--green);font-weight:600">+38.96%</td></tr>
+<tr><td>2020</td><td>+7.67%</td><td>+21.67%</td><td style="color:var(--green);font-weight:600">+26.54%</td><td style="color:var(--green);font-weight:600">+48.41%</td></tr>
+<tr><td>2021</td><td>+19.91%</td><td>+19.91%</td><td style="color:var(--green);font-weight:600">+30.01%</td><td style="color:var(--green);font-weight:600">+27.42%</td></tr>
+<tr><td>2022</td><td style="color:var(--red)">-14.50%</td><td style="color:var(--red)">-10.37%</td><td style="color:var(--red)">-13.53%</td><td style="color:var(--red)">-32.58%</td></tr>
+<tr><td>2023</td><td>+13.51%</td><td>+18.64%</td><td>+10.45%</td><td style="color:var(--green);font-weight:600">+54.86%</td></tr>
+<tr><td>2024</td><td>+17.02%</td><td>+17.02%</td><td style="color:var(--green);font-weight:600">+26.74%</td><td style="color:var(--green);font-weight:600">+25.58%</td></tr>
+<tr><td>2025</td><td>+6.55%</td><td>+15.90%</td><td>+17.59%</td><td>+20.77%</td></tr>
+<tr><td>2026</td><td>+11.19%</td><td>+11.19%</td><td>+8.54%</td><td>+16.88%</td></tr>
+
+</tbody>
+</table>
+</div>
+</details>
+
+<details>
+<summary>策略規則(v7 Ch12 原文,本頁未變更)</summary>
+<div class="d-body">
+  <p style="font-size:.92rem;color:#374151;line-height:1.75">
+    每標的資金分兩條獨立軌道,可同時持有相反方向;50/50 配置 SPY/QQQ。<br><br>
+    <strong>短線軌(70% 資金,日線)</strong>:
+    進場 收盤 &gt; D60、D120、D200 且 D120、D200 斜率(5 日)&gt; 0(score 5)且收盤 &gt; W52(週線安全網);
+    出場 連續 2 日收盤 &lt; D60。做空為鏡像(score 1、收盤 &lt; W52)。<br>
+    <strong>長線軌(30% 資金,週線)</strong>:
+    進場 週收盤 &gt; W52、W104、W250 且 W104、W250 斜率(4 週)&gt; 0(score 5);
+    出場 週收盤 &lt; W52(N=1)。做空為鏡像。<br><br>
+    修正基準:warmup 自上市起算、模擬自 2006-01、收盤決策次日生效、
+    單邊 7bps 計於倉位變動、閒置資金收 SHY/BIL。
+    軌道與標的各自獨立計算,日報酬加權合成(不直接相加淨值)。
+  </p>
+</div>
+</details>
+
+<details>
+<summary>D0 交易紀錄(275 筆,含軌道與方向)</summary>
+<div class="d-body">
+<table>
+<thead><tr><th>軌道</th><th>標的</th><th>方向</th><th>進場</th><th>出場</th><th>報酬</th><th>持有</th></tr></thead>
+<tbody>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2006-01-03</td><td>2006-05-15</td><td style="color:var(--green);font-weight:600">+2.48%</td><td>132d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2006-01-03</td><td>2006-02-03</td><td style="color:var(--red);font-weight:600">-1.08%</td><td>31d</td></tr>
+<tr><td>LT</td><td>SPY</td><td>多</td><td>2006-01-03</td><td>2006-07-14</td><td style="color:var(--red);font-weight:600">-1.83%</td><td>192d</td></tr>
+<tr><td>LT</td><td>QQQ</td><td>多</td><td>2006-01-13</td><td>2006-05-19</td><td style="color:var(--red);font-weight:600">-8.52%</td><td>126d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2006-02-27</td><td>2006-03-06</td><td style="color:var(--red);font-weight:600">-1.65%</td><td>7d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2006-03-15</td><td>2006-03-22</td><td style="color:var(--red);font-weight:600">-1.29%</td><td>7d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2006-03-29</td><td>2006-05-12</td><td style="color:var(--red);font-weight:600">-4.27%</td><td>44d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>空</td><td>2006-05-19</td><td>2006-08-16</td><td style="color:var(--green);font-weight:600">+1.73%</td><td>89d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2006-07-28</td><td>2007-02-28</td><td style="color:var(--green);font-weight:600">+11.08%</td><td>215d</td></tr>
+<tr><td>LT</td><td>SPY</td><td>多</td><td>2006-07-28</td><td>2007-11-09</td><td style="color:var(--green);font-weight:600">+15.90%</td><td>469d</td></tr>
+<tr><td>LT</td><td>QQQ</td><td>多</td><td>2006-09-15</td><td>2006-09-22</td><td style="color:var(--red);font-weight:600">-0.74%</td><td>7d</td></tr>
+<tr><td>LT</td><td>QQQ</td><td>多</td><td>2006-09-29</td><td>2008-01-11</td><td style="color:var(--green);font-weight:600">+16.09%</td><td>469d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2006-10-16</td><td>2007-01-29</td><td style="color:var(--green);font-weight:600">+2.67%</td><td>105d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2007-01-31</td><td>2007-02-12</td><td style="color:var(--red);font-weight:600">-0.96%</td><td>12d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2007-02-14</td><td>2007-02-28</td><td style="color:var(--red);font-weight:600">-2.99%</td><td>14d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2007-03-21</td><td>2007-03-29</td><td style="color:var(--red);font-weight:600">-1.06%</td><td>8d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2007-03-21</td><td>2007-03-29</td><td style="color:var(--red);font-weight:600">-2.05%</td><td>8d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2007-04-02</td><td>2007-07-27</td><td style="color:var(--green);font-weight:600">+2.38%</td><td>116d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2007-04-03</td><td>2007-08-10</td><td style="color:var(--green);font-weight:600">+7.01%</td><td>129d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2007-08-24</td><td>2007-08-28</td><td style="color:var(--red);font-weight:600">-3.17%</td><td>4d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2007-08-29</td><td>2007-11-12</td><td style="color:var(--green);font-weight:600">+1.26%</td><td>75d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2007-09-13</td><td>2007-11-08</td><td style="color:var(--red);font-weight:600">-0.85%</td><td>56d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2007-11-29</td><td>2007-12-03</td><td style="color:var(--red);font-weight:600">-1.73%</td><td>4d</td></tr>
+<tr><td>LT</td><td>SPY</td><td>多</td><td>2007-11-30</td><td>2008-01-04</td><td style="color:var(--red);font-weight:600">-4.58%</td><td>35d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2007-12-06</td><td>2007-12-12</td><td style="color:var(--red);font-weight:600">-1.17%</td><td>6d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2007-12-24</td><td>2007-12-28</td><td style="color:var(--red);font-weight:600">-0.94%</td><td>4d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>空</td><td>2008-01-10</td><td>2008-04-02</td><td style="color:var(--green);font-weight:600">+2.63%</td><td>83d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>空</td><td>2008-01-28</td><td>2008-04-02</td><td style="color:var(--red);font-weight:600">-2.84%</td><td>65d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>空</td><td>2008-04-11</td><td>2008-04-17</td><td style="color:var(--red);font-weight:600">-2.89%</td><td>6d</td></tr>
+<tr><td>LT</td><td>QQQ</td><td>多</td><td>2008-05-02</td><td>2008-06-20</td><td style="color:var(--red);font-weight:600">-2.84%</td><td>49d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2008-05-19</td><td>2008-06-23</td><td style="color:var(--red);font-weight:600">-5.31%</td><td>35d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>空</td><td>2008-06-06</td><td>2008-08-29</td><td style="color:var(--green);font-weight:600">+4.89%</td><td>84d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>空</td><td>2008-06-26</td><td>2008-08-11</td><td style="color:var(--red);font-weight:600">-4.74%</td><td>46d</td></tr>
+<tr><td>LT</td><td>QQQ</td><td>多</td><td>2008-08-15</td><td>2008-08-22</td><td style="color:var(--red);font-weight:600">-1.53%</td><td>7d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>空</td><td>2008-09-02</td><td>2009-01-02</td><td style="color:var(--green);font-weight:600">+26.22%</td><td>122d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>空</td><td>2008-09-12</td><td>2009-01-05</td><td style="color:var(--green);font-weight:600">+28.28%</td><td>115d</td></tr>
+<tr><td>LT</td><td>SPY</td><td>空</td><td>2008-10-24</td><td>2009-07-17</td><td style="color:var(--red);font-weight:600">-10.56%</td><td>266d</td></tr>
+<tr><td>LT</td><td>QQQ</td><td>空</td><td>2008-10-24</td><td>2009-06-05</td><td style="color:var(--red);font-weight:600">-25.16%</td><td>224d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>空</td><td>2009-01-12</td><td>2009-02-09</td><td style="color:var(--red);font-weight:600">-0.31%</td><td>28d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>空</td><td>2009-01-12</td><td>2009-01-29</td><td style="color:var(--red);font-weight:600">-0.34%</td><td>17d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>空</td><td>2009-01-30</td><td>2009-02-03</td><td style="color:var(--red);font-weight:600">-2.93%</td><td>4d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>空</td><td>2009-02-10</td><td>2009-03-26</td><td style="color:var(--red);font-weight:600">-0.86%</td><td>44d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>空</td><td>2009-02-17</td><td>2009-03-18</td><td style="color:var(--red);font-weight:600">-1.78%</td><td>29d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>空</td><td>2009-03-30</td><td>2009-04-02</td><td style="color:var(--red);font-weight:600">-6.03%</td><td>3d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2009-07-22</td><td>2009-11-02</td><td style="color:var(--green);font-weight:600">+6.79%</td><td>103d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2009-07-29</td><td>2009-11-02</td><td style="color:var(--green);font-weight:600">+7.20%</td><td>96d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2009-11-03</td><td>2010-01-25</td><td style="color:var(--green);font-weight:600">+5.32%</td><td>83d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2009-11-05</td><td>2010-01-25</td><td style="color:var(--green);font-weight:600">+4.66%</td><td>81d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2010-01-27</td><td>2010-01-29</td><td style="color:var(--red);font-weight:600">-4.41%</td><td>2d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2010-02-18</td><td>2010-02-26</td><td style="color:var(--red);font-weight:600">-0.29%</td><td>8d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2010-02-18</td><td>2010-02-24</td><td style="color:var(--red);font-weight:600">-0.68%</td><td>6d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2010-02-26</td><td>2010-05-07</td><td style="color:var(--green);font-weight:600">+1.42%</td><td>70d</td></tr>
+<tr><td>LT</td><td>QQQ</td><td>多</td><td>2010-02-26</td><td>2010-07-02</td><td style="color:var(--red);font-weight:600">-4.79%</td><td>126d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2010-03-01</td><td>2010-05-07</td><td style="color:var(--red);font-weight:600">-0.29%</td><td>67d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2010-05-10</td><td>2010-05-14</td><td style="color:var(--red);font-weight:600">-2.09%</td><td>4d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2010-05-10</td><td>2010-05-17</td><td style="color:var(--red);font-weight:600">-1.58%</td><td>7d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>空</td><td>2010-07-06</td><td>2010-07-26</td><td style="color:var(--red);font-weight:600">-8.59%</td><td>20d</td></tr>
+<tr><td>LT</td><td>QQQ</td><td>多</td><td>2010-07-23</td><td>2010-08-27</td><td style="color:var(--red);font-weight:600">-4.46%</td><td>35d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2010-07-26</td><td>2010-08-13</td><td style="color:var(--red);font-weight:600">-3.84%</td><td>18d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2010-08-02</td><td>2010-08-13</td><td style="color:var(--red);font-weight:600">-4.09%</td><td>11d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>空</td><td>2010-08-30</td><td>2010-09-03</td><td style="color:var(--red);font-weight:600">-5.44%</td><td>4d</td></tr>
+<tr><td>LT</td><td>QQQ</td><td>多</td><td>2010-09-10</td><td>2011-08-05</td><td style="color:var(--green);font-weight:600">+16.30%</td><td>329d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2010-09-20</td><td>2011-03-11</td><td style="color:var(--green);font-weight:600">+15.78%</td><td>172d</td></tr>
+<tr><td>LT</td><td>SPY</td><td>多</td><td>2010-10-08</td><td>2011-08-05</td><td style="color:var(--green);font-weight:600">+4.41%</td><td>301d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2010-10-25</td><td>2011-03-16</td><td style="color:var(--green);font-weight:600">+6.72%</td><td>142d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2011-03-21</td><td>2011-05-24</td><td style="color:var(--green);font-weight:600">+1.56%</td><td>64d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2011-03-24</td><td>2011-04-12</td><td style="color:var(--red);font-weight:600">-0.72%</td><td>19d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2011-04-20</td><td>2011-05-24</td><td style="color:var(--red);font-weight:600">-2.40%</td><td>34d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2011-05-26</td><td>2011-06-02</td><td style="color:var(--red);font-weight:600">-1.09%</td><td>7d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2011-05-27</td><td>2011-06-02</td><td style="color:var(--red);font-weight:600">-0.52%</td><td>6d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2011-06-30</td><td>2011-07-28</td><td style="color:var(--red);font-weight:600">-1.47%</td><td>28d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2011-06-30</td><td>2011-08-03</td><td style="color:var(--red);font-weight:600">-0.56%</td><td>34d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>空</td><td>2011-08-11</td><td>2011-10-12</td><td style="color:var(--red);font-weight:600">-3.59%</td><td>62d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>空</td><td>2011-08-22</td><td>2011-09-16</td><td style="color:var(--red);font-weight:600">-13.06%</td><td>25d</td></tr>
+<tr><td>LT</td><td>QQQ</td><td>多</td><td>2011-09-16</td><td>2011-09-23</td><td style="color:var(--red);font-weight:600">-4.45%</td><td>7d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>空</td><td>2011-10-03</td><td>2011-10-11</td><td style="color:var(--red);font-weight:600">-10.27%</td><td>8d</td></tr>
+<tr><td>LT</td><td>QQQ</td><td>多</td><td>2011-10-14</td><td>2011-11-18</td><td style="color:var(--red);font-weight:600">-4.92%</td><td>35d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2011-11-08</td><td>2011-11-21</td><td style="color:var(--red);font-weight:600">-7.85%</td><td>13d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>空</td><td>2011-11-21</td><td>2011-12-01</td><td style="color:var(--red);font-weight:600">-4.58%</td><td>10d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>空</td><td>2011-11-21</td><td>2011-12-01</td><td style="color:var(--red);font-weight:600">-4.63%</td><td>10d</td></tr>
+<tr><td>LT</td><td>QQQ</td><td>多</td><td>2011-12-02</td><td>2011-12-16</td><td style="color:var(--red);font-weight:600">-2.96%</td><td>14d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>空</td><td>2011-12-19</td><td>2011-12-21</td><td style="color:var(--red);font-weight:600">-3.37%</td><td>2d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>空</td><td>2011-12-19</td><td>2011-12-27</td><td style="color:var(--red);font-weight:600">-3.77%</td><td>8d</td></tr>
+<tr><td>LT</td><td>QQQ</td><td>多</td><td>2011-12-23</td><td>2011-12-30</td><td style="color:var(--red);font-weight:600">-0.50%</td><td>7d</td></tr>
+<tr><td>LT</td><td>QQQ</td><td>多</td><td>2012-01-06</td><td>2012-11-16</td><td style="color:var(--green);font-weight:600">+8.37%</td><td>315d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2012-01-19</td><td>2012-05-07</td><td style="color:var(--green);font-weight:600">+8.23%</td><td>109d</td></tr>
+<tr><td>LT</td><td>SPY</td><td>多</td><td>2012-01-20</td><td>2015-08-21</td><td style="color:var(--green);font-weight:600">+60.75%</td><td>1309d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2012-01-23</td><td>2012-05-07</td><td style="color:var(--green);font-weight:600">+4.49%</td><td>105d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2012-06-19</td><td>2012-06-22</td><td style="color:var(--red);font-weight:600">-1.79%</td><td>3d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2012-06-29</td><td>2012-10-24</td><td style="color:var(--green);font-weight:600">+4.03%</td><td>117d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2012-06-29</td><td>2012-07-11</td><td style="color:var(--red);font-weight:600">-1.92%</td><td>12d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2012-07-18</td><td>2012-07-25</td><td style="color:var(--red);font-weight:600">-3.01%</td><td>7d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2012-07-27</td><td>2012-10-10</td><td style="color:var(--green);font-weight:600">+3.31%</td><td>75d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2012-10-16</td><td>2012-10-19</td><td style="color:var(--red);font-weight:600">-3.72%</td><td>3d</td></tr>
+<tr><td>LT</td><td>QQQ</td><td>多</td><td>2012-11-23</td><td>2012-12-28</td><td style="color:var(--red);font-weight:600">-1.32%</td><td>35d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2012-12-11</td><td>2013-06-21</td><td style="color:var(--green);font-weight:600">+12.63%</td><td>192d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2012-12-18</td><td>2012-12-24</td><td style="color:var(--red);font-weight:600">-1.82%</td><td>6d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2013-01-03</td><td>2013-06-21</td><td style="color:var(--green);font-weight:600">+5.79%</td><td>169d</td></tr>
+<tr><td>LT</td><td>QQQ</td><td>多</td><td>2013-01-04</td><td>2015-08-21</td><td style="color:var(--green);font-weight:600">+58.45%</td><td>959d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2013-06-27</td><td>2013-08-28</td><td style="color:var(--green);font-weight:600">+1.62%</td><td>62d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2013-07-01</td><td>2014-02-04</td><td style="color:var(--green);font-weight:600">+19.00%</td><td>218d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2013-09-04</td><td>2013-10-08</td><td style="color:var(--green);font-weight:600">+0.18%</td><td>34d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2013-10-10</td><td>2014-01-27</td><td style="color:var(--green);font-weight:600">+5.66%</td><td>109d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2014-02-06</td><td>2014-03-27</td><td style="color:var(--green);font-weight:600">+1.81%</td><td>49d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2014-02-11</td><td>2014-04-11</td><td style="color:var(--green);font-weight:600">+0.04%</td><td>59d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2014-04-01</td><td>2014-04-07</td><td style="color:var(--red);font-weight:600">-4.24%</td><td>6d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2014-04-15</td><td>2014-08-01</td><td style="color:var(--green);font-weight:600">+4.87%</td><td>108d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2014-05-12</td><td>2014-05-15</td><td style="color:var(--red);font-weight:600">-1.38%</td><td>3d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2014-05-19</td><td>2014-10-02</td><td style="color:var(--green);font-weight:600">+10.48%</td><td>136d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2014-08-13</td><td>2014-10-02</td><td style="color:var(--green);font-weight:600">+0.09%</td><td>50d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2014-10-03</td><td>2014-10-10</td><td style="color:var(--red);font-weight:600">-3.94%</td><td>7d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2014-10-23</td><td>2015-01-07</td><td style="color:var(--green);font-weight:600">+3.86%</td><td>76d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2014-10-24</td><td>2014-12-16</td><td style="color:var(--green);font-weight:600">+0.61%</td><td>53d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2014-12-17</td><td>2015-01-14</td><td style="color:var(--red);font-weight:600">-0.05%</td><td>28d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2015-01-08</td><td>2015-01-13</td><td style="color:var(--red);font-weight:600">-1.86%</td><td>5d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2015-01-22</td><td>2015-01-28</td><td style="color:var(--red);font-weight:600">-3.03%</td><td>6d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2015-01-22</td><td>2015-01-28</td><td style="color:var(--red);font-weight:600">-3.13%</td><td>6d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2015-02-03</td><td>2015-03-11</td><td style="color:var(--red);font-weight:600">-0.31%</td><td>36d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2015-02-03</td><td>2015-06-30</td><td style="color:var(--green);font-weight:600">+4.33%</td><td>147d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2015-03-12</td><td>2015-06-09</td><td style="color:var(--green);font-weight:600">+0.96%</td><td>89d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2015-06-10</td><td>2015-06-30</td><td style="color:var(--red);font-weight:600">-2.08%</td><td>20d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2015-07-13</td><td>2015-07-27</td><td style="color:var(--red);font-weight:600">-1.56%</td><td>14d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2015-07-13</td><td>2015-08-21</td><td style="color:var(--red);font-weight:600">-6.66%</td><td>39d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2015-07-29</td><td>2015-08-07</td><td style="color:var(--red);font-weight:600">-1.48%</td><td>9d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2015-08-10</td><td>2015-08-12</td><td style="color:var(--red);font-weight:600">-0.92%</td><td>2d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2015-08-17</td><td>2015-08-20</td><td style="color:var(--red);font-weight:600">-3.28%</td><td>3d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>空</td><td>2015-08-25</td><td>2015-10-09</td><td style="color:var(--red);font-weight:600">-8.21%</td><td>45d</td></tr>
+<tr><td>LT</td><td>QQQ</td><td>多</td><td>2015-08-28</td><td>2015-09-04</td><td style="color:var(--red);font-weight:600">-3.42%</td><td>7d</td></tr>
+<tr><td>LT</td><td>QQQ</td><td>多</td><td>2015-09-11</td><td>2015-09-25</td><td style="color:var(--red);font-weight:600">-2.41%</td><td>14d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>空</td><td>2015-09-28</td><td>2015-10-16</td><td style="color:var(--red);font-weight:600">-8.27%</td><td>18d</td></tr>
+<tr><td>LT</td><td>QQQ</td><td>多</td><td>2015-10-09</td><td>2016-01-08</td><td style="color:var(--red);font-weight:600">-2.21%</td><td>91d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>空</td><td>2015-10-14</td><td>2015-10-16</td><td style="color:var(--red);font-weight:600">-2.14%</td><td>2d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2015-10-23</td><td>2016-01-05</td><td style="color:var(--red);font-weight:600">-2.92%</td><td>74d</td></tr>
+<tr><td>LT</td><td>SPY</td><td>多</td><td>2015-10-23</td><td>2015-11-13</td><td style="color:var(--red);font-weight:600">-2.54%</td><td>21d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2015-10-29</td><td>2015-12-14</td><td style="color:var(--red);font-weight:600">-2.98%</td><td>46d</td></tr>
+<tr><td>LT</td><td>SPY</td><td>多</td><td>2015-11-20</td><td>2015-12-11</td><td style="color:var(--red);font-weight:600">-3.69%</td><td>21d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>空</td><td>2015-12-14</td><td>2015-12-16</td><td style="color:var(--red);font-weight:600">-2.67%</td><td>2d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>空</td><td>2015-12-18</td><td>2015-12-24</td><td style="color:var(--red);font-weight:600">-2.97%</td><td>6d</td></tr>
+<tr><td>LT</td><td>SPY</td><td>多</td><td>2015-12-24</td><td>2016-01-08</td><td style="color:var(--red);font-weight:600">-6.83%</td><td>15d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2015-12-29</td><td>2016-01-04</td><td style="color:var(--red);font-weight:600">-3.22%</td><td>6d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>空</td><td>2016-01-05</td><td>2016-03-02</td><td style="color:var(--green);font-weight:600">+1.03%</td><td>57d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>空</td><td>2016-01-11</td><td>2016-03-02</td><td style="color:var(--red);font-weight:600">-1.58%</td><td>51d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>空</td><td>2016-03-09</td><td>2016-03-14</td><td style="color:var(--red);font-weight:600">-1.90%</td><td>5d</td></tr>
+<tr><td>LT</td><td>SPY</td><td>多</td><td>2016-03-11</td><td>2018-10-26</td><td style="color:var(--green);font-weight:600">+37.91%</td><td>959d</td></tr>
+<tr><td>LT</td><td>QQQ</td><td>多</td><td>2016-03-18</td><td>2016-04-29</td><td style="color:var(--red);font-weight:600">-1.68%</td><td>42d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2016-03-30</td><td>2016-05-04</td><td style="color:var(--red);font-weight:600">-4.08%</td><td>35d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2016-04-04</td><td>2016-06-27</td><td style="color:var(--red);font-weight:600">-2.86%</td><td>84d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>空</td><td>2016-05-04</td><td>2016-05-25</td><td style="color:var(--red);font-weight:600">-4.13%</td><td>21d</td></tr>
+<tr><td>LT</td><td>QQQ</td><td>多</td><td>2016-05-27</td><td>2016-06-17</td><td style="color:var(--red);font-weight:600">-3.19%</td><td>21d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2016-06-29</td><td>2016-09-14</td><td style="color:var(--green);font-weight:600">+3.00%</td><td>77d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2016-07-01</td><td>2016-10-31</td><td style="color:var(--green);font-weight:600">+8.38%</td><td>122d</td></tr>
+<tr><td>LT</td><td>QQQ</td><td>多</td><td>2016-07-01</td><td>2018-10-26</td><td style="color:var(--green);font-weight:600">+57.19%</td><td>847d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2016-09-15</td><td>2016-09-19</td><td style="color:var(--red);font-weight:600">-0.51%</td><td>4d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2016-09-21</td><td>2016-10-04</td><td style="color:var(--red);font-weight:600">-0.67%</td><td>13d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2016-10-10</td><td>2016-10-12</td><td style="color:var(--red);font-weight:600">-1.27%</td><td>2d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2016-11-09</td><td>2017-08-18</td><td style="color:var(--green);font-weight:600">+13.73%</td><td>282d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2016-11-09</td><td>2016-11-11</td><td style="color:var(--red);font-weight:600">-1.71%</td><td>2d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2016-11-17</td><td>2016-12-02</td><td style="color:var(--red);font-weight:600">-1.89%</td><td>15d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2016-12-07</td><td>2017-07-05</td><td style="color:var(--green);font-weight:600">+16.96%</td><td>210d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2017-07-10</td><td>2017-08-18</td><td style="color:var(--green);font-weight:600">+1.71%</td><td>39d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2017-08-22</td><td>2018-02-08</td><td style="color:var(--green);font-weight:600">+5.89%</td><td>170d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2017-08-22</td><td>2018-02-09</td><td style="color:var(--green);font-weight:600">+9.34%</td><td>171d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2018-02-13</td><td>2018-03-23</td><td style="color:var(--red);font-weight:600">-0.72%</td><td>38d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2018-02-14</td><td>2018-02-22</td><td style="color:var(--green);font-weight:600">+0.16%</td><td>8d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2018-02-23</td><td>2018-03-02</td><td style="color:var(--red);font-weight:600">-2.19%</td><td>7d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2018-03-05</td><td>2018-03-20</td><td style="color:var(--red);font-weight:600">-0.20%</td><td>15d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2018-04-17</td><td>2018-04-20</td><td style="color:var(--red);font-weight:600">-1.47%</td><td>3d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2018-04-17</td><td>2018-04-23</td><td style="color:var(--red);font-weight:600">-2.67%</td><td>6d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2018-05-04</td><td>2018-10-08</td><td style="color:var(--green);font-weight:600">+8.89%</td><td>157d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2018-05-09</td><td>2018-10-11</td><td style="color:var(--green);font-weight:600">+1.76%</td><td>155d</td></tr>
+<tr><td>LT</td><td>SPY</td><td>多</td><td>2018-11-02</td><td>2018-11-23</td><td style="color:var(--red);font-weight:600">-3.32%</td><td>21d</td></tr>
+<tr><td>LT</td><td>QQQ</td><td>多</td><td>2018-11-02</td><td>2018-11-16</td><td style="color:var(--red);font-weight:600">-1.25%</td><td>14d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>空</td><td>2018-11-15</td><td>2019-01-18</td><td style="color:var(--green);font-weight:600">+1.27%</td><td>64d</td></tr>
+<tr><td>LT</td><td>SPY</td><td>多</td><td>2018-11-30</td><td>2018-12-07</td><td style="color:var(--red);font-weight:600">-4.52%</td><td>7d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>空</td><td>2018-12-11</td><td>2019-01-18</td><td style="color:var(--red);font-weight:600">-1.61%</td><td>38d</td></tr>
+<tr><td>LT</td><td>SPY</td><td>多</td><td>2019-02-01</td><td>2020-02-28</td><td style="color:var(--green);font-weight:600">+11.64%</td><td>392d</td></tr>
+<tr><td>LT</td><td>QQQ</td><td>多</td><td>2019-02-15</td><td>2019-05-31</td><td style="color:var(--green);font-weight:600">+1.21%</td><td>105d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2019-04-03</td><td>2019-05-14</td><td style="color:var(--red);font-weight:600">-1.90%</td><td>41d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2019-04-04</td><td>2019-05-14</td><td style="color:var(--red);font-weight:600">-1.46%</td><td>40d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2019-05-15</td><td>2019-05-24</td><td style="color:var(--red);font-weight:600">-0.94%</td><td>9d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2019-05-15</td><td>2019-05-21</td><td style="color:var(--red);font-weight:600">-0.83%</td><td>6d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2019-06-07</td><td>2019-08-06</td><td style="color:var(--green);font-weight:600">+0.40%</td><td>60d</td></tr>
+<tr><td>LT</td><td>QQQ</td><td>多</td><td>2019-06-07</td><td>2020-03-13</td><td style="color:var(--green);font-weight:600">+6.78%</td><td>280d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2019-06-11</td><td>2019-08-06</td><td style="color:var(--red);font-weight:600">+0.00%</td><td>56d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2019-08-08</td><td>2019-08-15</td><td style="color:var(--red);font-weight:600">-3.19%</td><td>7d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2019-08-08</td><td>2019-08-15</td><td style="color:var(--red);font-weight:600">-3.17%</td><td>7d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2019-08-19</td><td>2019-08-26</td><td style="color:var(--red);font-weight:600">-1.62%</td><td>7d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2019-08-19</td><td>2019-08-26</td><td style="color:var(--red);font-weight:600">-2.06%</td><td>7d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2019-08-29</td><td>2019-09-03</td><td style="color:var(--red);font-weight:600">-1.35%</td><td>5d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2019-09-04</td><td>2019-10-02</td><td style="color:var(--red);font-weight:600">-1.72%</td><td>28d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2019-09-04</td><td>2019-09-30</td><td style="color:var(--green);font-weight:600">+0.32%</td><td>26d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2019-10-04</td><td>2019-10-08</td><td style="color:var(--red);font-weight:600">-2.12%</td><td>4d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2019-10-10</td><td>2020-02-26</td><td style="color:var(--green);font-weight:600">+14.84%</td><td>139d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2019-10-11</td><td>2020-02-25</td><td style="color:var(--green);font-weight:600">+5.90%</td><td>137d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>空</td><td>2020-03-12</td><td>2020-04-30</td><td style="color:var(--red);font-weight:600">-17.91%</td><td>49d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>空</td><td>2020-03-25</td><td>2020-04-15</td><td style="color:var(--red);font-weight:600">-15.02%</td><td>21d</td></tr>
+<tr><td>LT</td><td>QQQ</td><td>多</td><td>2020-04-09</td><td>2022-01-21</td><td style="color:var(--green);font-weight:600">+76.42%</td><td>652d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2020-04-15</td><td>2020-09-21</td><td style="color:var(--green);font-weight:600">+27.81%</td><td>159d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>空</td><td>2020-05-01</td><td>2020-05-06</td><td style="color:var(--red);font-weight:600">-0.66%</td><td>5d</td></tr>
+<tr><td>LT</td><td>SPY</td><td>多</td><td>2020-05-29</td><td>2022-03-04</td><td style="color:var(--green);font-weight:600">+45.60%</td><td>644d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2020-06-08</td><td>2020-09-24</td><td style="color:var(--green);font-weight:600">+0.80%</td><td>108d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2020-09-22</td><td>2020-09-24</td><td style="color:var(--red);font-weight:600">-2.74%</td><td>2d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2020-09-25</td><td>2020-10-29</td><td style="color:var(--green);font-weight:600">+1.64%</td><td>34d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2020-09-28</td><td>2020-10-28</td><td style="color:var(--red);font-weight:600">-2.39%</td><td>30d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2020-11-04</td><td>2021-09-21</td><td style="color:var(--green);font-weight:600">+27.86%</td><td>321d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2020-11-04</td><td>2021-02-26</td><td style="color:var(--green);font-weight:600">+9.55%</td><td>114d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2021-03-01</td><td>2021-03-04</td><td style="color:var(--red);font-weight:600">-6.16%</td><td>3d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2021-03-16</td><td>2021-03-19</td><td style="color:var(--red);font-weight:600">-2.46%</td><td>3d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2021-04-01</td><td>2021-05-11</td><td style="color:var(--green);font-weight:600">+0.09%</td><td>40d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2021-05-14</td><td>2021-05-18</td><td style="color:var(--red);font-weight:600">-1.42%</td><td>4d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2021-05-20</td><td>2021-09-21</td><td style="color:var(--green);font-weight:600">+11.46%</td><td>124d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2021-09-22</td><td>2021-09-29</td><td style="color:var(--red);font-weight:600">-2.92%</td><td>7d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2021-09-23</td><td>2021-09-29</td><td style="color:var(--red);font-weight:600">-2.11%</td><td>6d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2021-10-14</td><td>2022-01-19</td><td style="color:var(--green);font-weight:600">+2.31%</td><td>97d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2021-10-15</td><td>2022-01-06</td><td style="color:var(--green);font-weight:600">+4.08%</td><td>83d</td></tr>
+<tr><td>LT</td><td>QQQ</td><td>多</td><td>2022-02-04</td><td>2022-02-11</td><td style="color:var(--red);font-weight:600">-3.20%</td><td>7d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>空</td><td>2022-03-11</td><td>2022-03-25</td><td style="color:var(--red);font-weight:600">-11.05%</td><td>14d</td></tr>
+<tr><td>LT</td><td>SPY</td><td>多</td><td>2022-03-18</td><td>2022-04-14</td><td style="color:var(--red);font-weight:600">-1.65%</td><td>27d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2022-03-24</td><td>2022-04-12</td><td style="color:var(--red);font-weight:600">-2.85%</td><td>19d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2022-03-29</td><td>2022-04-11</td><td style="color:var(--red);font-weight:600">-8.30%</td><td>13d</td></tr>
+<tr><td>LT</td><td>QQQ</td><td>多</td><td>2022-04-01</td><td>2022-04-08</td><td style="color:var(--red);font-weight:600">-3.65%</td><td>7d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>空</td><td>2022-04-12</td><td>2022-07-20</td><td style="color:var(--green);font-weight:600">+10.42%</td><td>99d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>空</td><td>2022-04-27</td><td>2022-07-21</td><td style="color:var(--green);font-weight:600">+3.88%</td><td>85d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>空</td><td>2022-07-26</td><td>2022-07-28</td><td style="color:var(--red);font-weight:600">-4.02%</td><td>2d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>空</td><td>2022-07-26</td><td>2022-07-28</td><td style="color:var(--red);font-weight:600">-5.39%</td><td>2d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>空</td><td>2022-08-30</td><td>2022-09-12</td><td style="color:var(--red);font-weight:600">-3.37%</td><td>13d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>空</td><td>2022-08-31</td><td>2022-09-08</td><td style="color:var(--red);font-weight:600">-1.46%</td><td>8d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>空</td><td>2022-09-13</td><td>2022-11-11</td><td style="color:var(--red);font-weight:600">-1.93%</td><td>59d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>空</td><td>2022-09-13</td><td>2022-11-14</td><td style="color:var(--green);font-weight:600">+2.50%</td><td>62d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>空</td><td>2022-12-15</td><td>2023-01-12</td><td style="color:var(--red);font-weight:600">-1.16%</td><td>28d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>空</td><td>2022-12-30</td><td>2023-01-09</td><td style="color:var(--red);font-weight:600">-1.56%</td><td>10d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>空</td><td>2023-01-19</td><td>2023-01-23</td><td style="color:var(--red);font-weight:600">-5.16%</td><td>4d</td></tr>
+<tr><td>LT</td><td>SPY</td><td>多</td><td>2023-02-03</td><td>2023-02-24</td><td style="color:var(--red);font-weight:600">-4.01%</td><td>21d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2023-03-03</td><td>2023-03-10</td><td style="color:var(--red);font-weight:600">-4.66%</td><td>7d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2023-03-14</td><td>2023-08-17</td><td style="color:var(--green);font-weight:600">+20.80%</td><td>156d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2023-03-30</td><td>2023-08-18</td><td style="color:var(--green);font-weight:600">+8.39%</td><td>141d</td></tr>
+<tr><td>LT</td><td>SPY</td><td>多</td><td>2023-04-14</td><td>2023-10-27</td><td style="color:var(--green);font-weight:600">+0.15%</td><td>196d</td></tr>
+<tr><td>LT</td><td>QQQ</td><td>多</td><td>2023-05-26</td><td>2025-03-14</td><td style="color:var(--green);font-weight:600">+39.09%</td><td>658d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2023-08-23</td><td>2023-08-25</td><td style="color:var(--red);font-weight:600">-0.83%</td><td>2d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2023-08-23</td><td>2023-08-25</td><td style="color:var(--red);font-weight:600">-1.52%</td><td>2d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2023-08-28</td><td>2023-09-18</td><td style="color:var(--green);font-weight:600">+0.41%</td><td>21d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2023-08-29</td><td>2023-09-18</td><td style="color:var(--red);font-weight:600">-1.09%</td><td>20d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2023-10-11</td><td>2023-10-18</td><td style="color:var(--red);font-weight:600">-2.25%</td><td>7d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2023-11-03</td><td>2024-04-16</td><td style="color:var(--green);font-weight:600">+17.55%</td><td>165d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2023-11-06</td><td>2024-04-16</td><td style="color:var(--green);font-weight:600">+16.26%</td><td>162d</td></tr>
+<tr><td>LT</td><td>SPY</td><td>多</td><td>2023-12-01</td><td>2025-03-28</td><td style="color:var(--green);font-weight:600">+23.31%</td><td>483d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2024-04-26</td><td>2024-05-01</td><td style="color:var(--red);font-weight:600">-1.70%</td><td>5d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2024-05-03</td><td>2024-08-05</td><td style="color:var(--green);font-weight:600">+1.38%</td><td>94d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2024-05-03</td><td>2024-07-25</td><td style="color:var(--green);font-weight:600">+5.26%</td><td>83d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2024-07-31</td><td>2024-08-02</td><td style="color:var(--red);font-weight:600">-4.88%</td><td>2d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2024-08-13</td><td>2024-09-09</td><td style="color:var(--green);font-weight:600">+0.67%</td><td>27d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2024-08-15</td><td>2024-08-29</td><td style="color:var(--red);font-weight:600">-0.93%</td><td>14d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2024-08-30</td><td>2024-09-04</td><td style="color:var(--red);font-weight:600">-3.43%</td><td>5d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2024-09-10</td><td>2024-12-19</td><td style="color:var(--green);font-weight:600">+6.99%</td><td>100d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2024-09-12</td><td>2025-01-13</td><td style="color:var(--green);font-weight:600">+7.02%</td><td>123d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2024-12-20</td><td>2024-12-31</td><td style="color:var(--red);font-weight:600">-1.00%</td><td>11d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2025-01-03</td><td>2025-01-08</td><td style="color:var(--red);font-weight:600">-0.56%</td><td>5d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2025-01-15</td><td>2025-02-25</td><td style="color:var(--green);font-weight:600">+0.11%</td><td>41d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2025-01-15</td><td>2025-02-25</td><td style="color:var(--red);font-weight:600">-0.79%</td><td>41d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>空</td><td>2025-04-03</td><td>2025-05-05</td><td style="color:var(--red);font-weight:600">-7.97%</td><td>32d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>空</td><td>2025-04-07</td><td>2025-05-09</td><td style="color:var(--red);font-weight:600">-12.03%</td><td>32d</td></tr>
+<tr><td>LT</td><td>SPY</td><td>多</td><td>2025-05-02</td><td>2026-03-27</td><td style="color:var(--green);font-weight:600">+13.02%</td><td>329d</td></tr>
+<tr><td>LT</td><td>QQQ</td><td>多</td><td>2025-05-02</td><td>2026-03-27</td><td style="color:var(--green);font-weight:600">+15.50%</td><td>329d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>空</td><td>2025-05-06</td><td>2025-05-08</td><td style="color:var(--red);font-weight:600">-1.57%</td><td>2d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2025-05-15</td><td>2025-11-19</td><td style="color:var(--green);font-weight:600">+15.65%</td><td>188d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2025-05-16</td><td>2025-11-19</td><td style="color:var(--green);font-weight:600">+12.02%</td><td>187d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2025-11-24</td><td>2026-02-13</td><td style="color:var(--green);font-weight:600">+2.11%</td><td>81d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2025-11-24</td><td>2025-12-18</td><td style="color:var(--green);font-weight:600">+0.51%</td><td>24d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2025-12-19</td><td>2026-01-21</td><td style="color:var(--red);font-weight:600">-0.14%</td><td>33d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2026-01-22</td><td>2026-02-04</td><td style="color:var(--red);font-weight:600">-2.56%</td><td>13d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2026-02-18</td><td>2026-03-02</td><td style="color:var(--red);font-weight:600">-0.13%</td><td>12d</td></tr>
+<tr><td>LT</td><td>SPY</td><td>多</td><td>2026-04-02</td><td>持倉中</td><td style="color:var(--green);font-weight:600">+12.42%</td><td>70d</td></tr>
+<tr><td>LT</td><td>QQQ</td><td>多</td><td>2026-04-02</td><td>持倉中</td><td style="color:var(--green);font-weight:600">+22.52%</td><td>70d</td></tr>
+<tr><td>ST</td><td>SPY</td><td>多</td><td>2026-04-08</td><td>持倉中</td><td style="color:var(--green);font-weight:600">+9.06%</td><td>64d</td></tr>
+<tr><td>ST</td><td>QQQ</td><td>多</td><td>2026-04-10</td><td>持倉中</td><td style="color:var(--green);font-weight:600">+17.28%</td><td>62d</td></tr>
+
+</tbody>
+</table>
+</div>
+</details>
 </div>
 
 </div>
 
 <footer>
   <div class="container">
-    &copy; 2026 InvestMQuest Research &middot; 雙軌多空 詳細回測 &middot; 真實 yfinance 資料 &middot; 僅供研究參考
+    &copy; 2026 InvestMQuest Research &middot; 雙軌多空(修正基準重檢)&middot; 真實 yfinance 資料 &middot;
+    頁面生成 2026-06-12 &middot; 已否決系統 · 存查 &middot; 僅供研究參考
   </div>
 </footer>
 
 <script>
+var NAV_LABELS=["2006-01", "2006-02", "2006-03", "2006-04", "2006-05", "2006-06", "2006-07", "2006-08", "2006-09", "2006-10", "2006-11", "2006-12", "2007-01", "2007-02", "2007-03", "2007-04", "2007-05", "2007-06", "2007-07", "2007-08", "2007-09", "2007-10", "2007-11", "2007-12", "2008-01", "2008-02", "2008-03", "2008-04", "2008-05", "2008-06", "2008-07", "2008-08", "2008-09", "2008-10", "2008-11", "2008-12", "2009-01", "2009-02", "2009-03", "2009-04", "2009-05", "2009-06", "2009-07", "2009-08", "2009-09", "2009-10", "2009-11", "2009-12", "2010-01", "2010-02", "2010-03", "2010-04", "2010-05", "2010-06", "2010-07", "2010-08", "2010-09", "2010-10", "2010-11", "2010-12", "2011-01", "2011-02", "2011-03", "2011-04", "2011-05", "2011-06", "2011-07", "2011-08", "2011-09", "2011-10", "2011-11", "2011-12", "2012-01", "2012-02", "2012-03", "2012-04", "2012-05", "2012-06", "2012-07", "2012-08", "2012-09", "2012-10", "2012-11", "2012-12", "2013-01", "2013-02", "2013-03", "2013-04", "2013-05", "2013-06", "2013-07", "2013-08", "2013-09", "2013-10", "2013-11", "2013-12", "2014-01", "2014-02", "2014-03", "2014-04", "2014-05", "2014-06", "2014-07", "2014-08", "2014-09", "2014-10", "2014-11", "2014-12", "2015-01", "2015-02", "2015-03", "2015-04", "2015-05", "2015-06", "2015-07", "2015-08", "2015-09", "2015-10", "2015-11", "2015-12", "2016-01", "2016-02", "2016-03", "2016-04", "2016-05", "2016-06", "2016-07", "2016-08", "2016-09", "2016-10", "2016-11", "2016-12", "2017-01", "2017-02", "2017-03", "2017-04", "2017-05", "2017-06", "2017-07", "2017-08", "2017-09", "2017-10", "2017-11", "2017-12", "2018-01", "2018-02", "2018-03", "2018-04", "2018-05", "2018-06", "2018-07", "2018-08", "2018-09", "2018-10", "2018-11", "2018-12", "2019-01", "2019-02", "2019-03", "2019-04", "2019-05", "2019-06", "2019-07", "2019-08", "2019-09", "2019-10", "2019-11", "2019-12", "2020-01", "2020-02", "2020-03", "2020-04", "2020-05", "2020-06", "2020-07", "2020-08", "2020-09", "2020-10", "2020-11", "2020-12", "2021-01", "2021-02", "2021-03", "2021-04", "2021-05", "2021-06", "2021-07", "2021-08", "2021-09", "2021-10", "2021-11", "2021-12", "2022-01", "2022-02", "2022-03", "2022-04", "2022-05", "2022-06", "2022-07", "2022-08", "2022-09", "2022-10", "2022-11", "2022-12", "2023-01", "2023-02", "2023-03", "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", "2023-10", "2023-11", "2023-12", "2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06", "2024-07", "2024-08", "2024-09", "2024-10", "2024-11", "2024-12", "2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"];
+var NAV_D0=[1.0, 0.9848, 0.9918, 0.9972, 0.9693, 0.9711, 0.9864, 0.9866, 1.0003, 1.0239, 1.0516, 1.0487, 1.0638, 1.0369, 1.032, 1.0774, 1.1128, 1.1073, 1.0874, 1.0886, 1.1352, 1.1826, 1.0901, 1.0783, 1.0658, 1.0943, 1.0888, 1.0477, 1.0548, 1.0502, 1.0504, 1.0234, 1.0915, 1.1399, 1.2161, 1.1765, 1.1743, 1.2381, 1.1036, 1.049, 1.0342, 1.0277, 1.0361, 1.0552, 1.0892, 1.0706, 1.1034, 1.1309, 1.095, 1.0907, 1.1511, 1.1702, 1.085, 1.0756, 1.0366, 1.0066, 0.9975, 1.0304, 1.0296, 1.0884, 1.1166, 1.1536, 1.1352, 1.1566, 1.1328, 1.1087, 1.1091, 1.0247, 1.0301, 0.9702, 0.9088, 0.879, 0.8865, 0.9341, 0.9727, 0.9638, 0.9277, 0.932, 0.9224, 0.9578, 0.9742, 0.9357, 0.9324, 0.9239, 0.9477, 0.9554, 0.988, 1.01, 1.04, 1.0111, 1.0667, 1.0489, 1.0858, 1.1284, 1.1652, 1.1974, 1.1642, 1.2066, 1.1909, 1.1701, 1.1993, 1.2304, 1.2293, 1.2784, 1.2647, 1.2695, 1.3158, 1.2899, 1.2259, 1.2838, 1.2524, 1.2706, 1.2931, 1.2575, 1.2718, 1.1566, 1.1503, 1.1076, 1.1074, 1.053, 1.0297, 1.0337, 1.009, 0.9932, 0.9853, 0.97, 1.0195, 1.0255, 1.0282, 1.0104, 1.0159, 1.0234, 1.0587, 1.1027, 1.1145, 1.1352, 1.1653, 1.1556, 1.187, 1.1898, 1.2, 1.2418, 1.2731, 1.2846, 1.377, 1.3026, 1.2614, 1.2462, 1.2771, 1.2882, 1.3301, 1.3897, 1.392, 1.3041, 1.2926, 1.3447, 1.2829, 1.292, 1.3048, 1.3483, 1.2713, 1.3103, 1.3355, 1.2474, 1.2553, 1.2745, 1.3235, 1.3685, 1.3889, 1.3397, 1.2758, 1.2098, 1.2465, 1.2694, 1.3536, 1.4749, 1.3671, 1.3411, 1.4309, 1.4926, 1.487, 1.5063, 1.4976, 1.5719, 1.5533, 1.6192, 1.6622, 1.722, 1.6221, 1.7053, 1.7154, 1.7649, 1.6674, 1.6521, 1.5802, 1.5594, 1.5574, 1.6505, 1.5216, 1.5269, 1.5986, 1.5297, 1.4972, 1.5205, 1.4645, 1.4602, 1.4871, 1.5012, 1.5458, 1.6447, 1.7035, 1.6289, 1.5894, 1.5668, 1.6506, 1.7328, 1.7624, 1.8551, 1.8972, 1.8224, 1.8929, 1.9874, 1.9635, 1.9191, 1.9423, 1.9253, 2.0343, 2.0048, 2.0256, 1.9924, 1.9618, 1.8461, 1.8332, 1.9388, 1.9847, 2.0146, 2.1045, 2.1799, 2.1502, 2.1335, 2.1559, 2.1152, 2.0719, 2.2587, 2.4369, 2.3722];
+var NAV_A70=[1.0, 0.9848, 0.9918, 0.9972, 0.9651, 0.9675, 0.9683, 0.9825, 0.9962, 1.0196, 1.0473, 1.0443, 1.0594, 1.0326, 1.0277, 1.073, 1.1082, 1.1027, 1.0829, 1.0841, 1.1305, 1.1777, 1.0856, 1.0739, 1.059, 1.0608, 1.0632, 1.0625, 1.0697, 1.0405, 1.0425, 1.0408, 1.0461, 1.0437, 1.0432, 1.0435, 1.0455, 1.0455, 1.0454, 1.0461, 1.0462, 1.046, 1.0587, 1.0782, 1.1129, 1.0939, 1.1274, 1.1555, 1.1189, 1.1145, 1.1762, 1.1958, 1.1087, 1.0991, 1.0911, 1.0597, 1.0699, 1.1052, 1.1043, 1.1674, 1.1976, 1.2373, 1.2175, 1.2405, 1.215, 1.1892, 1.1896, 1.1548, 1.1468, 1.1457, 1.1065, 1.1006, 1.1099, 1.1696, 1.2179, 1.2068, 1.1616, 1.1669, 1.1549, 1.1993, 1.2198, 1.1716, 1.1674, 1.1568, 1.1866, 1.1962, 1.237, 1.2647, 1.3022, 1.266, 1.3356, 1.3134, 1.3595, 1.4129, 1.459, 1.4993, 1.4577, 1.5108, 1.4911, 1.4651, 1.5016, 1.5406, 1.5392, 1.6006, 1.5836, 1.5895, 1.6475, 1.6151, 1.5349, 1.6075, 1.5681, 1.5909, 1.619, 1.5745, 1.5924, 1.4769, 1.4665, 1.4799, 1.4796, 1.4347, 1.3874, 1.3874, 1.3935, 1.3717, 1.3804, 1.3589, 1.4284, 1.4367, 1.4405, 1.4156, 1.4232, 1.4338, 1.4833, 1.5449, 1.5615, 1.5905, 1.6326, 1.6189, 1.663, 1.6669, 1.6812, 1.7397, 1.7836, 1.7998, 1.9292, 1.825, 1.7672, 1.7459, 1.7893, 1.8047, 1.8635, 1.947, 1.9502, 1.827, 1.8175, 1.8085, 1.8117, 1.8245, 1.8426, 1.9041, 1.7954, 1.8504, 1.886, 1.7616, 1.7728, 1.7999, 1.8691, 1.9326, 1.9613, 1.8919, 1.8797, 1.9264, 1.9894, 2.0258, 2.1603, 2.3539, 2.1818, 2.1403, 2.2837, 2.3821, 2.3732, 2.404, 2.3901, 2.5087, 2.479, 2.5842, 2.6528, 2.7483, 2.5888, 2.7215, 2.7377, 2.8167, 2.6611, 2.6367, 2.6188, 2.5093, 2.5101, 2.512, 2.5129, 2.5178, 2.523, 2.527, 2.535, 2.5442, 2.5514, 2.5438, 2.5907, 2.6153, 2.693, 2.8654, 2.9677, 2.8378, 2.7689, 2.7296, 2.8757, 3.0188, 3.0704, 3.2318, 3.3052, 3.1749, 3.2977, 3.4624, 3.4208, 3.3433, 3.3837, 3.3542, 3.544, 3.4927, 3.529, 3.4711, 3.4177, 3.4293, 3.4739, 3.674, 3.761, 3.8175, 3.9881, 4.1308, 4.0746, 4.0429, 4.0855, 4.0082, 3.9262, 4.2802, 4.618, 4.4952];
+var NAV_A0=[1.0, 0.9921, 1.0108, 1.0162, 0.9703, 0.9729, 0.9626, 0.9768, 0.9862, 1.0252, 1.053, 1.05, 1.0691, 1.0497, 1.0586, 1.1116, 1.148, 1.1423, 1.1236, 1.1467, 1.199, 1.2491, 1.1695, 1.1626, 1.099, 1.1008, 1.1033, 1.1026, 1.117, 1.0895, 1.0916, 1.0838, 1.0893, 1.0867, 1.0862, 1.0865, 1.0887, 1.0886, 1.0885, 1.0892, 1.0893, 1.0892, 1.0885, 1.0892, 1.0895, 1.0896, 1.0891, 1.0895, 1.0895, 1.0888, 1.1302, 1.1428, 1.1013, 1.0688, 1.062, 1.0416, 1.0699, 1.1123, 1.1114, 1.1749, 1.2053, 1.2453, 1.2426, 1.2785, 1.2636, 1.2402, 1.238, 1.1484, 1.1224, 1.1199, 1.0951, 1.0762, 1.0977, 1.1566, 1.2044, 1.1935, 1.1157, 1.1586, 1.1712, 1.2162, 1.237, 1.193, 1.1789, 1.1687, 1.2002, 1.21, 1.2513, 1.2792, 1.3172, 1.2926, 1.3669, 1.3436, 1.3973, 1.4644, 1.5121, 1.5539, 1.5116, 1.5849, 1.5697, 1.5727, 1.6262, 1.6684, 1.667, 1.7416, 1.723, 1.7662, 1.8306, 1.8077, 1.7622, 1.8753, 1.8385, 1.8653, 1.8982, 1.8554, 1.9186, 1.7664, 1.7265, 1.7817, 1.7601, 1.7088, 1.598, 1.598, 1.6252, 1.6018, 1.6165, 1.5929, 1.6743, 1.6841, 1.7027, 1.6756, 1.7101, 1.7372, 1.7971, 1.8718, 1.8919, 1.927, 1.9781, 1.9615, 2.0215, 2.0454, 2.0629, 2.1348, 2.1886, 2.2085, 2.3672, 2.3089, 2.2303, 2.2418, 2.3325, 2.3527, 2.4293, 2.5382, 2.5422, 2.2993, 2.2481, 2.2016, 2.2055, 2.2483, 2.3127, 2.4235, 2.2458, 2.3614, 2.4069, 2.3639, 2.3978, 2.4768, 2.572, 2.6594, 2.699, 2.5096, 2.4378, 2.5453, 2.6279, 2.7335, 2.915, 3.1762, 3.0254, 2.9421, 3.2682, 3.4091, 3.3964, 3.4414, 3.5499, 3.7488, 3.7389, 3.8974, 4.0009, 4.1449, 3.9306, 4.2232, 4.2483, 4.3708, 3.9993, 3.8774, 3.8871, 3.7562, 3.7574, 3.7604, 3.7617, 3.769, 3.7768, 3.7828, 3.7947, 3.8085, 3.8193, 3.7508, 3.7658, 3.7913, 3.8036, 4.047, 4.1917, 4.1268, 3.9242, 3.8055, 4.0165, 4.207, 4.279, 4.5038, 4.6062, 4.4128, 4.6603, 4.893, 4.8817, 4.9659, 5.0834, 5.039, 5.3242, 5.2721, 5.4003, 5.2932, 4.9822, 4.9991, 5.2529, 5.5556, 5.687, 5.7726, 6.0304, 6.2463, 6.2038, 6.1857, 6.2695, 6.169, 5.7167, 6.3924, 6.8969, 6.7135];
+var NAV_BH=[1.0, 0.9921, 1.0108, 1.0162, 0.9639, 0.965, 0.9462, 0.9791, 1.0151, 1.0552, 1.0838, 1.0808, 1.1005, 1.0805, 1.0896, 1.1442, 1.1817, 1.1758, 1.1565, 1.1803, 1.2342, 1.2857, 1.2176, 1.2104, 1.1016, 1.0608, 1.0661, 1.1341, 1.1761, 1.0706, 1.0695, 1.0857, 0.9497, 0.7986, 0.725, 0.7369, 0.698, 0.6419, 0.7019, 0.7826, 0.8182, 0.83, 0.896, 0.9191, 0.9614, 0.9375, 0.9961, 1.0315, 0.9793, 1.0172, 1.0873, 1.108, 1.0231, 0.9661, 1.0341, 0.9844, 1.0931, 1.1487, 1.1477, 1.2134, 1.2447, 1.286, 1.2833, 1.3203, 1.3049, 1.2808, 1.2785, 1.211, 1.1419, 1.2637, 1.2441, 1.2468, 1.328, 1.3994, 1.4572, 1.444, 1.3498, 1.4017, 1.4171, 1.4715, 1.4966, 1.4434, 1.4569, 1.4601, 1.5169, 1.5292, 1.5814, 1.6167, 1.6647, 1.6337, 1.7276, 1.6981, 1.766, 1.8507, 1.9111, 1.9639, 1.9104, 2.0031, 1.9838, 1.9877, 2.0553, 2.1086, 2.1068, 2.2011, 2.1777, 2.2322, 2.3135, 2.2846, 2.2271, 2.3701, 2.3236, 2.3574, 2.3991, 2.3449, 2.4249, 2.2684, 2.2145, 2.4345, 2.4464, 2.4058, 2.2629, 2.2445, 2.3969, 2.3633, 2.4348, 2.4112, 2.5411, 2.5559, 2.5842, 2.543, 2.5953, 2.6364, 2.7275, 2.8408, 2.8712, 2.9246, 3.0021, 2.9769, 3.068, 3.1043, 3.1309, 3.2399, 3.3215, 3.3518, 3.5927, 3.5041, 3.3848, 3.4024, 3.54, 3.5706, 3.6869, 3.8521, 3.8583, 3.5599, 3.5884, 3.2754, 3.5543, 3.6651, 3.7701, 3.9508, 3.6624, 3.9291, 4.0048, 3.9334, 3.9898, 4.1211, 4.2796, 4.4249, 4.4908, 4.1771, 3.7639, 4.2855, 4.5295, 4.7115, 5.0242, 5.4744, 5.2145, 5.071, 5.6331, 5.8758, 5.8541, 5.9315, 6.1185, 6.4615, 6.4442, 6.7176, 6.8959, 7.1441, 6.7748, 7.2791, 7.3223, 7.5335, 7.0051, 6.7458, 7.031, 6.2433, 6.2017, 5.6703, 6.2873, 5.998, 5.4049, 5.7322, 6.0512, 5.6036, 6.0772, 5.9902, 6.3838, 6.4512, 6.7167, 7.1467, 7.4021, 7.2875, 6.9297, 6.7834, 7.4601, 7.8389, 7.973, 8.392, 8.5827, 8.2224, 8.6835, 9.1171, 9.096, 9.2529, 9.472, 9.3892, 9.9207, 9.8235, 10.0624, 9.8628, 9.2142, 9.2385, 9.9522, 10.5256, 10.7747, 10.9367, 11.4252, 11.8342, 11.7537, 11.7194, 11.8782, 11.6879, 11.1169, 12.5702, 13.5622, 13.2017];
 var YEARS=[2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026];
-var RET=[null,null,null,null,5.69,-19.27,5.18,29.62,7.79,-18.49,-2.28,25.48,4.43,1.62,9.42,18.27,-13.13,12.22,15.26,6.23,-2.4];
-var SPY=[13.81,3.69,-36.81,25.94,12.78,0.00,13.47,29.93,11.39,-0.73,9.54,19.42,-6.24,28.88,16.26,26.89,-19.44,24.23,23.31,21.50,1.20];
-var QQQ=[6.93,18.67,-41.73,53.47,19.22,2.70,16.82,33.27,19.18,7.09,5.89,31.60,-1.04,37.96,47.58,26.63,-32.58,53.81,28.73,23.88,-3.50];
+var RET_D0=[5.47, 2.83, 9.44, -0.21, -4.79, -20.27, 5.13, 27.96, 8.67, -18.22, -1.05, 24.5, 3.4, 1.96, 7.67, 19.91, -14.5, 13.51, 17.02, 6.55, 11.19];
+var RET_A0=[4.2, 10.71, -5.38, 0.25, 7.89, -9.57, 8.62, 31.28, 17.36, -5.3, 3.47, 26.09, -1.53, 20.81, 26.54, 30.01, -13.53, 10.45, 26.74, 17.59, 8.54];
 
-function toNAV(ret){
-  var nav=[1];var v=1;
-  for(var i=0;i<ret.length;i++){
-    if(ret[i]===null){nav.push(null)}
-    else{v=v*(1+ret[i]/100);nav.push(v)}
-  }
-  return nav;
-}
 function toDD(nav){
-  var dd=[];var peak=0;
+  var dd=[],peak=0;
   for(var i=0;i<nav.length;i++){
-    if(nav[i]===null){dd.push(null);continue}
     if(nav[i]>peak)peak=nav[i];
     dd.push((nav[i]/peak-1)*100);
   }
   return dd;
 }
-var LABELS=['2005'].concat(YEARS.map(String));
-var NAV_SYS=toNAV(RET);
-var NAV_SPY=toNAV(SPY);
-var NAV_QQQ=toNAV(QQQ);
-var DD_SYS=toDD(NAV_SYS);
-var DD_SPY=toDD(NAV_SPY);
-var DD_QQQ=toDD(NAV_QQQ);
-
 Chart.defaults.font.family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif";
 Chart.defaults.font.size=11;
 
 new Chart(document.getElementById('chart-nav'),{
   type:'line',
-  data:{labels:LABELS,datasets:[
-    {label:'雙軌多空',data:NAV_SYS,borderColor:'#7c3aed',borderWidth:2.6,pointRadius:0,pointHoverRadius:4,tension:0.15,spanGaps:false},
-    {label:'QQQ B&H',data:NAV_QQQ,borderColor:'#1565c0',borderWidth:1.6,borderDash:[6,3],pointRadius:0,pointHoverRadius:3,tension:0.15},
-    {label:'SPY B&H',data:NAV_SPY,borderColor:'#757575',borderWidth:1.6,borderDash:[6,3],pointRadius:0,pointHoverRadius:3,tension:0.15}
+  data:{labels:NAV_LABELS,datasets:[
+    {label:'D0 原始雙軌',data:NAV_D0,borderColor:'#7c3aed',borderWidth:2.4,pointRadius:0,pointHoverRadius:4,tension:0.1},
+    {label:'A70 長多版 70/30',data:NAV_A70,borderColor:'#d97706',borderWidth:1.6,pointRadius:0,pointHoverRadius:3,tension:0.1},
+    {label:'A0 純長線軌(採用方向)',data:NAV_A0,borderColor:'#16a34a',borderWidth:1.6,pointRadius:0,pointHoverRadius:3,tension:0.1},
+    {label:'50/50 B&H',data:NAV_BH,borderColor:'#1565c0',borderWidth:1.3,borderDash:[6,3],pointRadius:0,pointHoverRadius:3,tension:0.1}
   ]},
-  options:{
-    responsive:true,maintainAspectRatio:false,
+  options:{responsive:true,maintainAspectRatio:false,
     interaction:{mode:'index',intersect:false},
-    plugins:{
-      legend:{display:true,position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'line',padding:14,font:{size:11}}},
-      tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){
-        if(ctx.parsed.y===null)return null;
-        return ctx.dataset.label+': $'+(ctx.parsed.y*1000000/1e6).toFixed(2)+'M';
-      }}}
-    },
-    scales:{
-      x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:10}}},
-      y:{type:'logarithmic',grid:{color:'rgba(0,0,0,0.06)'},ticks:{callback:function(v){return '$'+v.toFixed(1)+'M'},font:{size:10}}}
-    }
+    plugins:{legend:{display:true,position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'line',padding:14}},
+      tooltip:{callbacks:{label:function(c){return c.dataset.label+': $'+(c.parsed.y).toFixed(2)+'M'}}}},
+    scales:{x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{maxTicksLimit:21,font:{size:10}}},
+      y:{type:'logarithmic',grid:{color:'rgba(0,0,0,0.06)'},ticks:{callback:function(v){return '$'+v+'M'},font:{size:10}}}}
   }
 });
 
 new Chart(document.getElementById('chart-dd'),{
   type:'line',
-  data:{labels:LABELS,datasets:[
-    {label:'雙軌多空',data:DD_SYS,borderColor:'#7c3aed',backgroundColor:'#7c3aed1f',borderWidth:1.6,fill:'origin',pointRadius:0,pointHoverRadius:3,tension:0.15,spanGaps:false},
-    {label:'QQQ',data:DD_QQQ,borderColor:'#1565c0',backgroundColor:'rgba(21,101,192,0.10)',borderWidth:1.4,fill:'origin',pointRadius:0,pointHoverRadius:3,tension:0.15},
-    {label:'SPY',data:DD_SPY,borderColor:'#757575',backgroundColor:'rgba(117,117,117,0.10)',borderWidth:1.4,fill:'origin',pointRadius:0,pointHoverRadius:3,tension:0.15}
+  data:{labels:NAV_LABELS,datasets:[
+    {label:'D0 原始雙軌',data:toDD(NAV_D0),borderColor:'#7c3aed',backgroundColor:'#7c3aed1f',borderWidth:1.5,fill:'origin',pointRadius:0,tension:0.1},
+    {label:'A70 長多版',data:toDD(NAV_A70),borderColor:'#d97706',backgroundColor:'rgba(217,119,6,0.08)',borderWidth:1.2,fill:'origin',pointRadius:0,tension:0.1},
+    {label:'A0 純長線軌',data:toDD(NAV_A0),borderColor:'#16a34a',backgroundColor:'rgba(22,163,74,0.08)',borderWidth:1.2,fill:'origin',pointRadius:0,tension:0.1}
   ]},
-  options:{
-    responsive:true,maintainAspectRatio:false,
+  options:{responsive:true,maintainAspectRatio:false,
     interaction:{mode:'index',intersect:false},
-    plugins:{
-      legend:{display:true,position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'line',padding:10,font:{size:10}}},
-      tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){
-        if(ctx.parsed.y===null)return null;
-        return ctx.dataset.label+': '+ctx.parsed.y.toFixed(2)+'%';
-      }}}
-    },
-    scales:{
-      x:{grid:{display:false},ticks:{font:{size:10}}},
-      y:{grid:{color:'rgba(0,0,0,0.06)'},ticks:{callback:function(v){return v+'%'},font:{size:10}}}
-    }
+    plugins:{legend:{display:true,position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'line',padding:10}},
+      tooltip:{callbacks:{label:function(c){return c.dataset.label+': '+c.parsed.y.toFixed(2)+'%'}}}},
+    scales:{x:{grid:{display:false},ticks:{maxTicksLimit:21,font:{size:10}}},
+      y:{grid:{color:'rgba(0,0,0,0.06)'},ticks:{callback:function(v){return v+'%'},font:{size:10}}}}
   }
 });
 
 new Chart(document.getElementById('chart-yearly'),{
   type:'bar',
-  data:{
-    labels:YEARS.map(String),
-    datasets:[
-      {label:'雙軌多空',data:RET,backgroundColor:RET.map(function(v){return v===null?'transparent':v>=0?'#7c3aedcc':'#7c3aed55'}),borderColor:'#7c3aed',borderWidth:1,borderRadius:2},
-      {label:'SPY B&H',data:SPY,backgroundColor:SPY.map(function(v){return v>=0?'rgba(117,117,117,0.65)':'rgba(117,117,117,0.30)'}),borderColor:'#757575',borderWidth:1,borderRadius:2}
-    ]
-  },
-  options:{
-    responsive:true,maintainAspectRatio:false,
+  data:{labels:YEARS.map(String),datasets:[
+    {label:'D0 原始雙軌',data:RET_D0,backgroundColor:RET_D0.map(function(v){return v>=0?'#7c3aedcc':'#7c3aed55'}),borderColor:'#7c3aed',borderWidth:1,borderRadius:2},
+    {label:'A0 純長線軌',data:RET_A0,backgroundColor:RET_A0.map(function(v){return v==null?'transparent':v>=0?'rgba(22,163,74,0.7)':'rgba(22,163,74,0.3)'}),borderColor:'#16a34a',borderWidth:1,borderRadius:2}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
     interaction:{mode:'index',intersect:false},
-    plugins:{
-      legend:{display:true,position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'rect',padding:14,font:{size:11}}},
-      tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){
-        if(ctx.parsed.y===null)return null;
-        return ctx.dataset.label+': '+(ctx.parsed.y>0?'+':'')+ctx.parsed.y.toFixed(2)+'%';
-      }}}
-    },
-    scales:{
-      x:{grid:{display:false},ticks:{font:{size:10}}},
-      y:{grid:{color:'rgba(0,0,0,0.06)'},ticks:{callback:function(v){return v+'%'},font:{size:10}}}
-    }
+    plugins:{legend:{display:true,position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'rect',padding:14}},
+      tooltip:{callbacks:{label:function(c){return c.dataset.label+': '+(c.parsed.y>0?'+':'')+c.parsed.y.toFixed(2)+'%'}}}},
+    scales:{x:{grid:{display:false},ticks:{font:{size:10}}},
+      y:{grid:{color:'rgba(0,0,0,0.06)'},ticks:{callback:function(v){return v+'%'},font:{size:10}}}}
   }
 });
 </script>
