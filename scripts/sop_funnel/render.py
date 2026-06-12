@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import html
 import sys
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 # Canonical site header (single source: scripts/site_nav.py)
@@ -14,6 +15,18 @@ from site_nav import DD_SCREENER_SUBNAV, build_subnav, full_nav_block  # noqa: E
 NAV_BLOCK = full_nav_block(
     "quant", "dds", build_subnav(DD_SCREENER_SUBNAV, "/dd-screener/sop-funnel.html")
 )
+
+
+_TAIPEI = timezone(timedelta(hours=8))
+
+
+def _updated_taipei(run_ts: str) -> str:
+    """UTC ISO run_timestamp → 台北時間 'YYYY-MM-DD HH:MM'（含幾點幾分）。"""
+    try:
+        dt = datetime.strptime(run_ts, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+        return dt.astimezone(_TAIPEI).strftime("%Y-%m-%d %H:%M")
+    except (ValueError, TypeError):
+        return run_ts
 
 
 # ── 顯示層圈數字替換（①-⑤ 小字級下不可讀；資料層內部表示不動）──
@@ -363,6 +376,7 @@ footer{{text-align:center;font-size:10.5px;color:#8aa5c0;padding:24px}}
 <div class="hero-stat"><strong>{len(d["open_trades"])}</strong>模擬持倉</div>
 <div class="hero-stat"><strong>{len(d["closed_trades"])}</strong>已平倉</div>
 {'<div class="hero-stat"><strong>⚠</strong>SPY 基準滯後</div>' if d.get("spy_benchmark_stale") else ''}
+<div class="hero-stat"><strong>{_updated_taipei(d["run_timestamp"])}</strong>更新時間（台北）</div>
 </div></div></div>
 
 <div class="section"><div class="card">
@@ -433,6 +447,6 @@ footer{{text-align:center;font-size:10.5px;color:#8aa5c0;padding:24px}}
 {_population_block(d["population"], d.get("moat_excluded", []))}
 </div></div>
 
-<footer>InvestMQuest · Pure MA SOP 漏斗 v1.0 · 生成 {d["run_timestamp"]} · 模擬非投資建議</footer>
+<footer>InvestMQuest · Pure MA SOP 漏斗 v1.0 · 更新 {_updated_taipei(d["run_timestamp"])}（台北）· 模擬非投資建議</footer>
 </body></html>
 """)
