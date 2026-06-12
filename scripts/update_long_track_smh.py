@@ -391,11 +391,11 @@ ST 閘門自己開關(受閘半倉跟著 E3 或歸零)。<b>買回訊號就是 S
 <table style="margin-top:.6rem">
 <thead><tr><th>決策日(週收盤)</th><th>部位</th><th>發生了什麼</th></tr></thead>
 <tbody>
-<tr><td>2026-03-20</td><td>100% → 67%</td><td>E3 自己先出 1/3(W40 跌破),ST 仍多 — 兩個半邊都縮</td></tr>
-<tr><td>2026-03-27</td><td>67% → 17%</td><td><b>ST 翻空</b>(週收 562.58)+ E3 掉到 1/3 — 受閘半倉歸零</td></tr>
-<tr><td>2026-04-02</td><td>17% → 33%</td><td>E3 回到 2/3,ST 仍空 — 受閘半倉不跟</td></tr>
-<tr><td>2026-04-10</td><td>33% → 50%</td><td>E3 回滿 3/3,ST 仍空 — 只有未受閘半倉滿</td></tr>
-<tr><td>2026-04-17</td><td>50% → 100%</td><td><b>ST 翻多(週收 648.85)— 受閘半倉一次買回</b></td></tr>
+<tr><td>2026-03-20</td><td>100% → 67%</td><td>E3 自己先出了 ⅓(W40 跌破),ST 還在多方。兩個半邊都縮:0.5×⅔ + 0.5×⅔</td></tr>
+<tr><td>2026-03-27</td><td>67% → 17%</td><td><b>ST 翻空</b>(對應 TradingView 圖上的 Sell 標籤,週收 562.58)+ E3 再掉到 ⅓。受閘半倉歸零:0.5×⅓ + 0</td></tr>
+<tr><td>2026-04-02</td><td>17% → 33%</td><td>E3 回到 ⅔(W52 收復),ST 仍空 → 受閘半倉不跟</td></tr>
+<tr><td>2026-04-10</td><td>33% → 50%</td><td>E3 回滿 3/3,ST 仍空。未受閘半倉滿、受閘半倉仍是 0</td></tr>
+<tr><td>2026-04-17</td><td>50% → 100%</td><td><b>ST 翻多(對應 TradingView 圖上的 Buy 標籤,週收 648.85)→ 受閘半倉一次買回</b></td></tr>
 </tbody>
 </table>
 <div style="font-size:.74rem;color:var(--amber-text);background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:6px;padding:.5rem .8rem;margin-top:.6rem">
