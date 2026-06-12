@@ -1,15 +1,21 @@
 """
-Generator for the /backtest/ overview page (index.html).
+Generator for the /backtest/ overview page (index.html) — v3 (2026-06).
 
-Design: the overview is a comparison dashboard ONLY — summary table with
-links to every sub-page, comparison charts, multi-window CAGR, yearly table,
-and honest key findings.  Per-system deep dives live in the sub-pages; the
-old hand-maintained tab sprawl duplicated them and rotted (stale numbers).
+Design: the overview is a decision dashboard — grouped by adoption status
+(現役 → 合格候補 → 多資產參照 → 實驗 → 已否決 → 基準), each row carrying its
+L2 dominance verdict vs its natural benchmark (single source: criteria page).
+Per-system deep dives live in the sub-pages.
 
-Numbers are pinned here with as-of dates, sourced from each system's own
-generator output.  When a system page is regenerated with new numbers,
-update SYSTEMS below and re-run:
+v3 changes (2026-06):
+  * Rows regrouped by status; trades column replaced by L2 dominance verdict.
+  * New 結構性發現 section — cross-system lessons (rule×asset-rhythm
+    transferability, tail-vs-vol premium, no-short defense, intraday exit).
+  * W52 numbers updated to audited engine v2 (+10.79%/-18.96%/1.01/0.57,
+    yearly array regenerated; COVID re-entry now 2020 not 2021).
+  * Stale claims fixed (近 10 年主動系統已重新領先 B&H,見 10y 頁).
 
+Numbers are pinned with as-of dates, sourced from each system's generator.
+When a system page changes, update below and re-run:
     python3 _build_index.py
 """
 from __future__ import annotations
@@ -32,7 +38,7 @@ YEARS = list(range(2006, 2027))
 
 # Yearly returns (%, within-year; qqq/spy prev-year-close base), 2006..2026 — drive all charts.
 # Refreshed 2026-06-12, data through 2026-06-11. dual = corrected-baseline rerun (D0);
-# smh = STX50 (2026-06-13 adoption: E3 + ST(10,3) half-book exit gate); w52 = refreshed adjusted data.
+# smh = STX50 (2026-06-13 adoption); w52 = engine v2 (2026-06 audit: W-FRI/ME alignment).
 RET = {
     "ch8":   [0.00, 14.90, -26.41, 33.68, 16.87, -8.11, 11.56, 30.17, 21.50, 4.58, 6.23, 31.52, -2.54, 33.64, 30.16, 31.09, -23.13, 41.41, 30.25, 23.58, 27.92],
     "v1r1":  [6.64, 18.51, -36.57, 45.24, 16.74, -6.96, 13.36, 30.79, 18.21, 6.18, 4.47, 29.96, -0.24, 30.56, 40.06, 26.57, -24.35, 52.35, 25.23, 21.45, 15.89],
@@ -42,12 +48,11 @@ RET = {
     "smh":   [-4.34, 8.68, -5.20, 21.52, 4.04, -7.00, -2.73, 30.93, 17.60, -5.08, 7.42, 35.70, 1.38, 22.22, 47.41, 35.11, -15.37, 37.40, 26.30, 24.47, 35.65],
     "dual":  [5.47, 2.83, 9.44, -0.21, -4.79, -20.27, 5.13, 27.96, 8.67, -18.22, -1.05, 24.50, 3.40, 1.96, 7.67, 19.91, -14.50, 13.51, 17.02, 6.55, 11.19],
     "gem":   [16.48, 9.48, -1.30, 6.35, 6.99, -0.85, 11.26, 28.45, 13.45, -7.52, 6.80, 20.17, -8.01, 18.02, 1.69, 24.11, -16.57, 5.84, 24.97, 13.33, 15.22],
-    "w52":   [12.50, 2.84, 4.65, 4.40, 12.50, -2.75, 5.00, 25.19, 16.96, -1.64, 11.95, 18.96, -10.36, 16.45, 1.24, 29.60, -12.23, 15.13, 22.52, 6.47, 6.91],
+    "w52":   [13.13, 5.15, -1.11, 2.97, 14.98, -0.41, 15.99, 32.31, 13.46, -3.80, 6.46, 21.71, -6.15, 22.36, 16.19, 28.73, -16.60, 19.75, 24.89, 11.08, 9.06],
     "qqq":   [7.14, 19.03, -41.73, 54.68, 20.14, 3.48, 18.11, 36.63, 19.18, 9.44, 7.10, 32.66, -0.13, 38.96, 48.41, 27.42, -32.58, 54.86, 25.58, 20.77, 16.88],
     "spy":   [15.85, 5.15, -36.80, 26.35, 15.06, 1.89, 15.99, 32.31, 13.46, 1.23, 12.00, 21.71, -4.57, 31.22, 18.33, 28.73, -18.18, 26.18, 24.89, 17.72, 8.48],
 }
 
-# Summary rows: (name, url, subtitle, cagr, mdd, sharpe, calmar, trades, final, tag_html, asof)
 TAG = {
     "atk":  '<span class="tag" style="background:#dcfce7;color:#166534;border:1px solid #86efac">進攻</span>',
     "def":  '<span class="tag tag-best">防守</span>',
@@ -59,40 +64,76 @@ TAG = {
     "bh":   '<span class="tag tag-bh">基準</span>',
 }
 
-US_SYSTEMS = [
-    ("六狀態機 v1.1", "/backtest/six_state/", "QQQ+SMH+BIL · 三狀態 · 無 Grid(2026-06 修正)",
-     "+14.77%", "-35.80%", "0.86", "0.41", "85", "$16.69M", TAG["atk"]),
-    ("六狀態機 v1.0r1 實盤", "/backtest/six_state_v1r1/", "QQQ+IB01 · 五狀態+Grid · 指數部閘門補做",
-     "+14.58%", "-49.29%", "0.81", "0.30", "134", "$16.15M", TAG["live"]),
-    ("Long Track Only", "/backtest/long_track/", "50/50 SPY/QQQ · W52/104/250(2026-06 warmup 修正)",
-     "+9.72%", "-20.08%", "0.81", "0.48", "49", "$6.66M", TAG["def"]),
-    ("LTO QQQ only", "/backtest/long_track_qqq/", "100% QQQ · Long Track 進攻變體(2026-06 修正)",
-     "+10.80%", "-25.37%", "0.75", "0.43", "30", "$8.14M", TAG["atk"]),
-    ("Ensemble 集成", "/backtest/long_track_ensemble/", "{W40·W52·TSMOM} 各⅓ 倉位 · 2026-06-11 採用",
-     "+11.47%", "-21.15%", "0.89", "0.54", "—", "$9.20M", TAG["adopt"]),
-    ("LT SMH/QQQ", "/backtest/long_track_smh/", "50/50 SMH/QQQ · STX50(E3 + ST 半倉出場閘門) · 2026-06-13 採用",
-     "+14.05%", "-21.87%", "0.91", "0.64", "—", "$14.69M", TAG["adopt"]),
-    ("雙軌多空", "/backtest/dual_track/", "50/50 SPY/QQQ · Short 70% + Long 30%(2026-06-12 修正基準重檢)",
-     "+4.35%", "-38.72%", "0.37", "0.11", "275", "$2.39M", TAG["fail"]),
-    ("GEM 雙動能", "/backtest/gem/", "SPY/ACWX/AGG 月度切換",
-     "+8.95%", "-21.54%", "0.57", "0.42", "33", "$5.39M*", TAG["def"]),
-    ("W52 斜率濾網", "/backtest/slope_filter/", "SPY/AGG 非對稱進出場",
-     "+10.16%", "-20.05%", "0.92", "0.51", "17", "$7.02M*", TAG["def"]),
-    ("盤整 MR (RSI2)", "/backtest/rsi2_mr/", "50/50 SPY/QQQ · RSI(2) 拉回 · 200DMA 濾網+時間停損 · 紅旗 4/4 過(依賴 MOC) · 暴險僅 13%",
-     "+3.12%", "-16.46%", "0.50", "0.19", "321", "$1.87M", TAG["exp"]),
-    ("週線 Supertrend", "/backtest/supertrend/", "SPY/QQQ/SMH 各自單獨 · ATR(10)×3 + 雙參數混合 · standalone 輸 W52、whipsaw 較淺 · 表列 SPY 基準版",
-     "+8.11%", "-17.77%", "0.77", "0.46", "30", "$4.93M", TAG["exp"]),
-    ("做空系統", "/backtest/short_system/", "指數做空 · 兩個獨立引擎均否決",
-     "—", "—", "—", "—", "—", "—", TAG["fail"]),
-    ("Iron Condor 盤整", "/backtest/cndr/", "CBOE CNDR 指數 · 盤整選擇權系統 Step 1 · 翼封住左尾但 beta ≈ 0",
-     "+1.19%", "-19.72%", "0.18", "0.06", "—", "—", TAG["fail"]),
-]
+# L2 dominance verdicts vs each system's natural benchmark (source: /backtest/criteria/)
+DOM = {
+    "domc":      '<span class="tag" style="background:#fffbeb;color:#92400e;border:1px solid #fde68a">支配候選 ⚠</span>',
+    "neardom":   '<span class="tag tag-best">近支配</span>',
+    "trade":     '<span class="tag" style="background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe">有效交換</span>',
+    "mixed":     '<span class="tag tag-bh">混合</span>',
+    "weak":      '<span class="tag" style="background:#fff7ed;color:#9a3412;border:1px solid #fed7aa">無效交換</span>',
+    "dominated": '<span class="tag tag-fail">被支配</span>',
+    "na":        "—",
+}
 
-MULTI_SYSTEMS = [
-    ("🐢 Turtle System 2", "/backtest/turtle/", "USO/GLD/DBA/FXE/TLT/SPY · 55/20 突破(2007 起)",
-     "+22.48%", "-38.12%", "0.73", "0.59", "585", "$51.40M", TAG["ma"]),
-    ("📈 Clenow 趨勢", "/backtest/clenow/", "35 ETF × 7 類別 · EMA50/100 + 突破",
-     "+13.28%", "-44.11%", "0.69", "0.30", "1159", "$14.47M", TAG["ma"]),
+# (name, url, subtitle, cagr, mdd, sharpe, calmar, dom_key, final, tag)
+GROUPS = [
+    ("✓ 現役配置(2026-06 採用 · OOS 追蹤中)", [
+        ("Ensemble E3 — 股票趨勢核心", "/backtest/long_track_ensemble/",
+         "50/50 SPY/QQQ · {W40·W52·TSMOM} 各⅓ 倉位 · 2026-06-11 採用 · 重審:下一次盤整+快崩後",
+         "+11.47%", "-21.15%", "0.89", "0.54", "trade", "$9.20M", TAG["adopt"]),
+        ("LT SMH/QQQ STX50 — 進攻位", "/backtest/long_track_smh/",
+         "50/50 SMH/QQQ · E3 + 週線 ST(10,3) 半倉出場閘門 · 2026-06-13 採用 · 重審:滾動 3 年 Calmar 落後 SPY/QQQ 版",
+         "+14.05%", "-21.87%", "0.91", "0.64", "trade", "$14.69M", TAG["adopt"]),
+    ]),
+    ("合格候補(通過 L1 門檻,未採用)", [
+        ("W52 斜率濾網", "/backtest/slope_filter/",
+         "SPY/AGG 非對稱進出場 · 2026-06 審計完成(引擎 v2)後上修 · 全站唯一近支配;規則不可移植(QQQ 失敗/SMH 輸 Faber)",
+         "+10.79%", "-18.96%", "1.01", "0.57", "neardom", "$7.81M*", TAG["def"]),
+        ("Long Track Only", "/backtest/long_track/",
+         "50/50 SPY/QQQ · W52/104/250(2026-06 warmup 修正)",
+         "+9.72%", "-20.08%", "0.81", "0.48", "trade", "$6.66M", TAG["def"]),
+        ("LTO QQQ only", "/backtest/long_track_qqq/",
+         "100% QQQ · Long Track 進攻變體(2026-06 修正)· Calmar 贏但 Sharpe 微輸 QQQ B&H",
+         "+10.80%", "-25.37%", "0.75", "0.43", "mixed", "$8.14M", TAG["atk"]),
+        ("GEM 雙動能", "/backtest/gem/",
+         "SPY/ACWX/AGG 月度切換 · warmup 審計待辦",
+         "+8.95%", "-21.54%", "0.57", "0.42", "mixed", "$5.39M*", TAG["def"]),
+    ]),
+    ("L1 不合格但角色可用(部位大小解,不豁免門檻)", [
+        ("六狀態機 v1.1", "/backtest/six_state/",
+         "QQQ+SMH+BIL · 三狀態 · 無 Grid(2026-06 修正)· MDD -35.8% 差 0.8pp 出局;56% 倉位+T-bill 可等效 -20% 預算",
+         "+14.77%", "-35.80%", "0.86", "0.41", "trade", "$16.69M", TAG["atk"]),
+        ("六狀態機 v1.0r1 實盤", "/backtest/six_state_v1r1/",
+         "QQQ+IB01 · 五狀態+Grid · 2000-02 壓力路徑 -77% · 升級 v1.1 待決",
+         "+14.58%", "-49.29%", "0.81", "0.30", "weak", "$16.15M", TAG["live"]),
+    ]),
+    ("多資產(互補候選 · 不同資產池,僅參照)", [
+        ("🐢 Turtle System 2", "/backtest/turtle/",
+         "USO/GLD/DBA/FXE/TLT/SPY · 55/20 突破(2007 起)· CAGR 進可疑帶 → 過擬合/regime 審查 + 商品腿拆解待辦",
+         "+22.48%", "-38.12%", "0.73", "0.59", "domc", "$51.40M", TAG["ma"]),
+        ("📈 Clenow 趨勢", "/backtest/clenow/",
+         "35 ETF × 7 類別 · EMA50/100 + 突破",
+         "+13.28%", "-44.11%", "0.69", "0.30", "mixed", "$14.47M", TAG["ma"]),
+    ]),
+    ("🔬 實驗(未採用)", [
+        ("週線 Supertrend", "/backtest/supertrend/",
+         "SPY/QQQ/SMH 各自單獨 · ATR(10)×3 · standalone 輸 W52 → 已以出場閘門形式進 STX50;表列 SPY 基準版",
+         "+8.11%", "-17.77%", "0.77", "0.46", "trade", "$4.93M", TAG["exp"]),
+        ("盤整 MR (RSI2)", "/backtest/rsi2_mr/",
+         "50/50 SPY/QQQ · RSI(2) 拉回 · 暴險僅 13% · 組合互補性被現金支配 → 雙重否決",
+         "+3.12%", "-16.46%", "0.50", "0.19", "dominated", "$1.87M", TAG["exp"]),
+    ]),
+    ("✗ 已否決", [
+        ("雙軌多空", "/backtest/dual_track/",
+         "50/50 SPY/QQQ · Short 70% + Long 30%(2026-06-12 修正基準重檢)· 全軸輸 50/50 B&H",
+         "+4.35%", "-38.72%", "0.37", "0.11", "dominated", "$2.39M", TAG["fail"]),
+        ("做空系統", "/backtest/short_system/",
+         "指數做空 · 兩個獨立引擎均否決",
+         "—", "—", "—", "—", "na", "—", TAG["fail"]),
+        ("Iron Condor 盤整", "/backtest/cndr/",
+         "CBOE CNDR 指數 · 翼封住左尾但 beta ≈ 0",
+         "+1.19%", "-19.72%", "0.18", "0.06", "na", "—", TAG["fail"]),
+    ]),
 ]
 
 BH_ROWS = [
@@ -101,7 +142,7 @@ BH_ROWS = [
     ("50/50 SPY/QQQ B&H", "+13.52%", "-53.66%", "0.73", "0.25"),
 ]
 
-# 分期間 CAGR (全期 / 近15y / 近10y / 近5y) — refreshed 2026-06-12
+# 分期間 CAGR (全期 / 近15y / 近10y / 近5y) — refreshed 2026-06-12; w52 = 引擎 v2
 PERIOD_CAGR = [
     ("六狀態機 v1.1", "#d32f2f", "+14.77%", "+18.28%", "+22.40%", "+21.39%"),
     ("v1.0r1 實盤", "#b45309", "+14.58%", "+17.61%", "+21.02%", "+18.24%"),
@@ -110,7 +151,7 @@ PERIOD_CAGR = [
     ("Ensemble E3(採用)", "#d97706", "+11.47%", "+13.17%", "+16.29%", "+13.96%"),
     ("LT SMH/QQQ STX50(採用)", "#b45309", "+14.05%", "+17.82%", "+25.60%", "+24.45%"),
     ("GEM", "#f57c00", "+8.61%", "+9.02%", "+9.85%", "+9.98%"),
-    ("W52 斜率", "#0891b2", "+10.16%", "+10.32%", "+11.04%", "+10.50%"),
+    ("W52 斜率(審計 v2)", "#0891b2", "+10.79%", "+11.75%", "+13.04%", "+11.04%"),
     ("週線 ST SPY(實驗)", "#be185d", "+8.11%", "+9.49%", "+11.86%", "+9.10%"),
     ("盤整 MR(實驗)", "#ca8a04", "+3.12%", "+3.14%", "+3.29%", "+5.64%"),
     ("QQQ B&H", "#1565c0", "+15.88%", "+19.77%", "+21.71%", "+16.71%"),
@@ -128,7 +169,7 @@ SCATTER = [
     ("LT SMH/QQQ", 21.87, 14.05, "#b45309"),
     ("雙軌多空", 38.72, 4.35, "#7c3aed"),
     ("GEM", 21.54, 8.95, "#f57c00"),
-    ("W52 斜率", 20.05, 10.16, "#0891b2"),
+    ("W52 斜率", 18.96, 10.79, "#0891b2"),
     ("🐢 Turtle", 38.12, 22.48, "#0f766e"),
     ("📈 Clenow", 44.11, 13.28, "#6366f1"),
     ("QQQ B&H", 53.40, 15.88, "#1565c0"),
@@ -160,22 +201,27 @@ def yearly_cell(v) -> str:
     return f'<td>{v:+.2f}%</td>'
 
 
-def sys_row(name, url, sub, cagr, mdd, sharpe, calmar, trades, final, tag) -> str:
+def sys_row(name, url, sub, cagr, mdd, sharpe, calmar, dom_key, final, tag) -> str:
     cagr_html = (f'<td style="font-weight:700;color:var(--green)">{cagr}</td>'
                  if cagr != "—" else "<td>—</td>")
     mdd_html = f'<td style="color:var(--red)">{mdd}</td>' if mdd != "—" else "<td>—</td>"
     return (f'<tr><td><strong><a href="{url}">{name}</a></strong><br>'
             f'<span style="font-size:.72rem;color:var(--muted)">{sub}</span></td>'
             f'{cagr_html}{mdd_html}<td>{sharpe}</td><td>{calmar}</td>'
-            f'<td>{trades}</td><td>{final}</td><td>{tag}</td></tr>')
+            f'<td>{DOM[dom_key]}</td><td>{final}</td><td>{tag}</td></tr>')
+
+
+def group_header(title: str) -> str:
+    return ('<tr><td colspan="8" style="background:#f0f4ff;font-size:.75rem;font-weight:600;'
+            f'color:#1e40af;text-transform:uppercase;letter-spacing:.04em">{title}</td></tr>')
 
 
 def render() -> str:
-    rows = "".join(sys_row(*r) for r in US_SYSTEMS)
-    rows += ('<tr><td colspan="8" style="background:#f0fdfa;font-size:.75rem;font-weight:600;'
-             'color:#115e59;text-transform:uppercase;letter-spacing:.04em">多資產系統'
-             '(不同資產池,僅供參考對照)</td></tr>')
-    rows += "".join(sys_row(*r) for r in MULTI_SYSTEMS)
+    rows = ""
+    for title, items in GROUPS:
+        rows += group_header(title)
+        rows += "".join(sys_row(*r) for r in items)
+    rows += group_header("基準(Buy &amp; Hold)")
     rows += "".join(
         f'<tr style="background:#f9fafb"><td>{n}</td><td>{c}</td>'
         f'<td style="color:var(--red)">{m}</td><td>{s}</td><td>{cl}</td>'
@@ -254,11 +300,18 @@ tbody tr:hover td{background:#f3f4f6}
 .tag-best{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border)}
 .tag-fail{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red-border)}
 .tag-bh{background:#f3f4f6;color:#374151;border:1px solid #d1d5db}
+.hero{margin:1.25rem 0;border:1px solid #bfdbfe;border-radius:12px;overflow:hidden;background:var(--card)}
+.hero-top{background:linear-gradient(135deg,#eff6ff 0%,#f0f7ff 100%);padding:1.4rem 1.6rem}
+.hero-top .verdict-tag{display:inline-block;background:var(--brand);color:#fff;font-size:.74rem;font-weight:700;
+                       letter-spacing:.05em;padding:.25rem .7rem;border-radius:99px;margin-bottom:.5rem}
+.hero-top h2{font-size:1.3rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.35rem}
+.hero-top p{font-size:.92rem;color:#374151;max-width:62rem}
 .verdict{background:var(--brand-light);border-left:4px solid var(--brand);
          padding:1rem 1.4rem;border-radius:0 8px 8px 0;margin:1rem 0;font-size:.9rem;line-height:1.7}
 .verdict strong{color:var(--brand)}
 .note{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;
       padding:.85rem 1.1rem;font-size:.84rem;color:var(--amber-text);margin:1rem 0}
+.issue-list{font-size:.88rem;color:#374151;padding-left:1.2rem;line-height:1.9}
 .chart-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
 .chart-card h3{font-size:.95rem;font-weight:600;margin-bottom:.5rem}
 .chart-sub{font-size:.78rem;color:var(--muted);margin-bottom:.5rem}
@@ -281,44 +334,71 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
   <div class="container">
     <div class="crumb"><a href="/">首頁</a> / 量化回測</div>
     <h1>量化回測系統總覽</h1>
-    <div class="sub">20 年實證(2006 ~ 至今) · 真實 yfinance 資料 · 起始資金 $1,000,000 · 詳細分析見各系統頁</div>
+    <div class="sub">20 年全週期(2006 ~ 至今,含 2008/2020/2022 三熊)· 真實 yfinance 資料 · 起始 $1,000,000 · 判定框架見 <a href="/backtest/criteria/">評估標準 v3</a></div>
     %TOGGLE%
   </div>
 </div>
 
 <div class="container">
 
+<!-- ===== HERO: CURRENT STATE ===== -->
+<div class="hero">
+  <div class="hero-top">
+    <span class="verdict-tag">研究線現狀 — 2026-06</span>
+    <h2>現役:E3(股票趨勢核心)+ STX50(進攻位)· 防守對照:W52 · 互補缺口:跨資產趨勢</h2>
+    <p>20 年全週期是<strong>主判定窗</strong>(10 年頁是「無 2008」的壓力對照窗,兩窗取交集)。
+       美股趨勢家族的礦脈已基本挖完 — E3 與 STX50 經 L1~L4 全流程採用,W52 經 2026-06 審計確認為全站唯一「近支配」系統(SPY 特定);
+       已否決:雙軌多空、做空、盤整 MR(被支配)。下一塊拼圖在組合層:跨資產趨勢(Turtle 商品腿)與既有持倉低相關,
+       是把組合 MDD 再往下壓唯一沒走過的路。每行的「支配性」= 對該系統自然基準的
+       <a href="/backtest/criteria/">L2 雙軸判定</a>:只有「被支配」才等於「策略不好」。</p>
+  </div>
+</div>
+
 <div class="section">
-<h2 class="section-title">配置對比總表(20 年)</h2>
-<div class="section-sub">點系統名稱進入詳頁。各系統數據截至日期見頁尾說明;多資產系統使用不同資產池,不與美股單資產系統直接比較。</div>
+<h2 class="section-title">全系統對比(20 年 · 按狀態分組)</h2>
+<div class="section-sub">點系統名稱進入詳頁。支配性 = 報酬軸 × 風險調整軸對自然基準的判定(<a href="/backtest/criteria/">評估標準 §3</a>);多資產系統資產池不同,僅供參照。</div>
 <div class="card" style="overflow-x:auto">
 <table>
-<thead><tr><th>系統</th><th>CAGR</th><th>MDD</th><th>Sharpe</th><th>Calmar</th><th>交易</th><th>期末資產</th><th></th></tr></thead>
+<thead><tr><th>系統</th><th>CAGR</th><th>MDD</th><th>Sharpe</th><th>Calmar</th><th>支配性</th><th>期末資產</th><th>狀態</th></tr></thead>
 <tbody>
 %ROWS%
 </tbody>
 </table>
 </div>
 
-<div class="verdict">
-  <strong>定位一覽:</strong>
-  <strong>LT SMH/QQQ STX50</strong>(進攻位,+14.05% / -21.87%,2026-06-13 採用 E3+ST 半倉出場閘門)與
-  <strong>六狀態機 v1.1</strong>(+14.77% / -35.8%)是美股報酬前緣;
-  <strong>Ensemble E3</strong>(股票趨勢核心,Sharpe / Calmar 0.89 / 0.54)於 2026-06-11 採用,OOS 追蹤中(重審條件見各頁);
-  <strong>Long Track Only</strong>(+9.72% / -20.08% / Calmar 0.48)與
-  <strong>W52 斜率</strong>(Sharpe 0.92)是防守雙雄;
-  <strong>雙軌多空與做空系統</strong>已被否決 — 雙軌 2026-06-12 修正基準重檢後結論更強(補回 2008 後 MDD -38.7%),
-  指數做空三次獨立驗證失敗;
-  <strong>Turtle / Clenow</strong> 的 alpha 來自商品/匯率/利率,與股票趨勢低相關,是組合層的互補件。
+<div class="note">
+  <strong>2026-06 方法論修正與審計:</strong>全部美股系統已統一至修正基準 —
+  MA warmup 自上市起算、CAGR 自模擬起點起算、閒置資金計 SHY/BIL 利息。
+  受影響:雙軌多空(補回 2008 做空腿,MDD -26.8% → -38.7%,否決確認)、Long Track(+10.95% → +9.72%)、
+  <strong>W52 斜率(2026-06 審計:修正 ~4 週 MA 對齊過時,+10.16% → +10.79%、Sharpe 0.92 → 1.01,近支配確認)</strong>。
+  GEM 的同標準審計待辦。
+</div>
 </div>
 
-<div class="note">
-  <strong>2026-06 方法論修正與全站重整:</strong>全部美股系統已統一至修正基準 —
-  MA warmup 自上市起算(舊版資料自 2006 載入使 W250/D200 到 2010 年才有值,「20 年」實為 15.5 年)、
-  閒置資金計 SHY/BIL 利息、數據延伸至 2026-06-11。
-  受影響最大者:雙軌多空(補回 2008 做空腿實戰,MDD -26.8% → -38.7%,否決確認);
-  Long Track +9.72% / Calmar 0.48(pre-fix 舊頁 +10.95% / 0.55 已失效)。
-  各系統頁已統一為同一版面(含 月報酬分布 / 滾動 12 月 / 曝險時間軸)。
+<!-- ===== STRUCTURAL FINDINGS ===== -->
+<div class="section">
+<h2 class="section-title">結構性發現(跨系統教訓)</h2>
+<div class="section-sub">單一系統的數字會過期,這些交互作用層級的結論不會 — 它們約束之後每一條新研究線。</div>
+<div class="card">
+<ol class="issue-list">
+  <li><strong>規則優勢 = 規則結構 × 標的回撤-修復幾何,不可假設可移植。</strong>
+      W52 同規則零調整移植:SPY 近支配 → QQQ 失敗(無效交換)→ SMH 輸 Faber。
+      慢 U 型熊市(寬基指數:跌得久、修復慢)獎勵「出場敏感+進場嚴格」;
+      深 V 修復(高 beta 成長:反彈集中在落底後幾個月)讓嚴格進場變成結構性遲到。
+      <strong>每次移植 = 新系統,重走評估漏斗</strong>(<a href="/backtest/criteria/">標準 §1 第 8 條</a>)。
+      同理反向成立:進攻標的的趨勢曝險要用進出較對稱的家族(E3/STX50),不是把防守規則搬過去。</li>
+  <li><strong>趨勢系統的溢酬在尾部,不在波動效率。</strong>
+      家族常態判定是「有效交換」:Calmar 大勝(1.4~2.6 倍)、Sharpe 小勝或打平。
+      它買的是「-50% 不會發生在你身上」,不是「漲多跌少都贏」— 用 Sharpe 單一標準評趨勢系統會系統性低估它,
+      用 CAGR 單一標準則會系統性否定它(見 <a href="/backtest/long_track_smh/">STX50 vs B&amp;H 判讀範例</a>)。</li>
+  <li><strong>防守靠離場,不靠反向部位。</strong>
+      指數做空兩個獨立引擎證偽、雙軌多空被支配(空頭腿在 2008 都救不回資金配置的倒掛)。
+      持有現金(+短債利息)就是最好的空頭腿;唯一的注意事項是 2022 型股債雙殺 — 避險腿本身也不是保險。</li>
+  <li><strong>單一指數的時間序列自由度已被套利殆盡(日內尺度)。</strong>
+      台指期五路日內訊號毛利全 &lt; 1 tick 成本(<a href="/backtest/txf_intraday/">結案</a>);
+      結構性出路是橫斷面選擇(<a href="/backtest/ssf_xsec/">個股期,Phase 1b 待 tick 累積</a>)
+      與跨資產(Turtle/Clenow 商品腿 = 組合層互補缺口)。</li>
+</ol>
 </div>
 </div>
 
@@ -336,14 +416,14 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 </div>
 <div class="chart-card">
   <h3>Risk vs Return</h3>
-  <div class="chart-sub">X = MDD (%) · Y = CAGR (%) · 左上為最佳象限</div>
+  <div class="chart-sub">X = MDD (%) · Y = CAGR (%) · 左上為最佳象限 · B&amp;H 三點在右側 = 用 -50%+ 回撤換報酬</div>
   <div style="position:relative;width:100%;height:340px"><canvas id="chart-scatter"></canvas></div>
 </div>
 </div>
 
 <div class="section">
 <h2 class="section-title">分期間 CAGR 對比</h2>
-<div class="section-sub">近 10 年所有主動系統都跑輸對應 Buy &amp; Hold — 這些系統買的是危機保險,不是牛市超額報酬。</div>
+<div class="section-sub">窗口越短、終點(2026 半導體多頭)權重越高 — 近 10 年 STX50/六狀態已反超 QQQ B&amp;H,但這正是可疑帶要攔的 regime 集中訊號;判定用 20 年 × 10 年交集(<a href="/backtest/10y/">10 年頁</a>)。</div>
 <div class="card">
 <table>
 <thead><tr><th>系統</th><th>全期</th><th>近 15 年</th><th>近 10 年</th><th>近 5 年</th></tr></thead>
@@ -408,9 +488,10 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 <summary>數據截至日期與方法論說明</summary>
 <div class="d-body">
 <ul style="font-size:.85rem;color:#374151;line-height:1.9;padding-left:1.2rem">
-  <li><strong>全部美股系統(六狀態機、Long Track 家族、雙軌多空、GEM、W52 斜率、做空系統)</strong>:截至 2026-06-11,
+  <li><strong>全部美股系統(六狀態機、Long Track 家族、雙軌多空、GEM、W52 斜率、做空系統)</strong>:截至 2026-06,
       統一修正基準 — MA warmup 自上市起算、模擬自 2006-01、閒置資金計 SHY/BIL 利息(GEM/W52 依各自規格)。
-      雙軌多空為 2026-06-12 修正基準重跑(舊頁數字 +4.60%/-26.83% 因 warmup bug 漏掉 2008,已失效)。</li>
+      雙軌多空為 2026-06-12 修正基準重跑;W52 為 2026-06 審計引擎 v2(W-FRI/ME 對齊修正,逐年報酬同步更新 —
+      例:2020 年 +16.19%,舊引擎因 MA 過時晚回場僅 +1.24%)。</li>
   <li><strong>Turtle / Clenow</strong>:多資產系統,數據截至 2026-06,詳見各頁。</li>
   <li>* GEM 與 W52 斜率規格定義初始資金 $100,000;表中 $M 值為換算 $1M 起始的等效值。</li>
   <li>逐年報酬與圖表使用年頻資料;精確 MDD / Sharpe 以各系統詳頁的日頻(GEM/W52 為月頻)計算為準。</li>

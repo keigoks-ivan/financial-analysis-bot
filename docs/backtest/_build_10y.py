@@ -41,7 +41,7 @@ SYS = [
     ("Long Track Only", "/backtest/long_track/", "ch12",
      "+15.47%", "-18.75%", "1.11", "0.83", "$4.21M", "+9.72%", "-20.08%", TAG["def"]),
     ("W52 斜率濾網", "/backtest/slope_filter/", "w52",
-     "+11.04%", "-20.05%", "0.82", "0.55", "$2.87M*", "+10.16%", "-20.05%", TAG["def"]),
+     "+13.04%", "-18.96%", "1.03", "0.69", "$3.41M*", "+10.79%", "-18.96%", TAG["def"]),
     ("GEM 雙動能", "/backtest/gem/", "gem",
      "+9.85%", "-21.54%", "0.54", "0.46", "$2.56M*", "+8.95%", "-21.54%", TAG["def"]),
     ("雙軌多空", "/backtest/dual_track/", "dual",
@@ -76,7 +76,7 @@ SCATTER = [
     ("LTO QQQ", 25.18, 18.81, "#16a34a"),
     ("Ensemble E3", 21.15, 16.29, "#d97706"),
     ("Long Track", 18.75, 15.47, "#2e7d32"),
-    ("W52 斜率", 20.05, 11.04, "#0891b2"),
+    ("W52 斜率", 18.96, 13.04, "#0891b2"),
     ("GEM", 21.54, 9.85, "#f57c00"),
     ("雙軌多空", 19.61, 9.26, "#7c3aed"),
     ("📈 Clenow", 40.07, 13.16, "#6366f1"),
@@ -111,9 +111,17 @@ def pp(a: str, b: str) -> str:
     return f'<td class="{cls}">{v:+.2f}pp</td>'
 
 
+WARN_20 = ('<span class="tag" style="background:var(--amber-bg);color:var(--amber-text);'
+           'border:1px solid var(--amber-border);margin-left:.35rem">⚠ 可疑帶</span>')
+
+
 def sys_row(name, url, _key, c10, m10, sh10, cal10, fin10, c20, m20, tag) -> str:
+    try:
+        warn = WARN_20 if float(c10.replace("%", "").replace("+", "")) > 20 else ""
+    except ValueError:
+        warn = ""
     return (f'<tr><td><strong><a href="{url}">{name}</a></strong></td>'
-            f'<td style="font-weight:700;color:var(--green)">{c10}</td>'
+            f'<td style="font-weight:700;color:var(--green)">{c10}{warn}</td>'
             f'<td style="color:var(--red)">{m10}</td><td>{sh10}</td><td>{cal10}</td>'
             f'<td>{fin10}</td><td>{tag}</td></tr>')
 
@@ -231,7 +239,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
   <div class="container">
     <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">量化回測</a> / 10 年</div>
     <h1>量化系統回測 — 10 年視角</h1>
-    <div class="sub">近 10 年滾動窗口(2016-06 ~ 2026-06)· 去除 2008 GFC 後的系統面貌 · 詳細分析見各系統頁</div>
+    <div class="sub">近 10 年滾動窗口(2016-06 ~ 2026-06)· 「無 2008」的壓力對照窗 — 本頁的工作是偵測 regime 集中,不是排名;判定 = 與 <a href="/backtest/">20 年頁</a>取交集</div>
     %TOGGLE%
   </div>
 </div>
@@ -251,19 +259,20 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 </div>
 
 <div class="verdict">
-  <strong>10 年視角的結論(2026-06 刷新):</strong>
-  去除 2008 後所有系統數字都變好,但排序也變了 —
-  <strong>主動系統重新領先 B&amp;H</strong>:LT SMH/QQQ STX50(+25.60%)、六狀態機(+22.40%)都超過 QQQ B&amp;H(+21.71%),
-  且 MDD 低 7~8pp;這與前一版「近 10 年 B&amp;H 是最大贏家」的結論不同,主因是 2025-26 的 AI/半導體行情
-  由趨勢系統滿倉吃到、而 QQQ B&amp;H 在 2022 的 -35% 拖累了它的 10 年窗口。
-  <strong>防守組</strong>(Long Track +15.47% / -18.75%、Calmar 0.83)以一半的回撤拿到 SPY B&amp;H 的報酬。
-  <strong>雙軌多空即使在最有利的 10 年窗口</strong>(無 2008 做空腿災難)仍墊底 — 否決不因窗口而改變。
+  <strong>怎麼讀這一頁(2026-06 刷新):</strong>
+  這個窗口沒有 2008,終點落在 AI/半導體多頭高點 — 所有數字都被窗口加持,
+  <strong>每個 ⚠ 可疑帶(CAGR &gt; 20%)都是 regime 集中警報,不是慶祝理由</strong>。
+  讀法上有三件事是訊號:
+  (1) <strong>主動系統在此窗反超 B&amp;H</strong>(STX50 +25.60%、六狀態 +22.40% &gt; QQQ B&amp;H +21.71%,MDD 低 7~8pp)—
+  與 20 年窗「讓報酬換回撤」的結論不同,正說明窗口與基準的選擇能改寫故事,所以判定取兩窗交集;
+  (2) <strong>防守組的數字在兩窗一致</strong>(Long Track Calmar 0.83 / W52 0.69,審計 v2)— 一致性本身就是 regime 不集中的證據;
+  (3) <strong>雙軌多空在最有利的窗口仍墊底</strong> — 被支配的判定對窗口穩健,否決不因窗口而改變。
 </div>
 </div>
 
 <div class="section">
-<h2 class="section-title">20 年 vs 10 年對比</h2>
-<div class="section-sub">差異欄:CAGR 正值 = 近 10 年更好;MDD 正值 = 近 10 年回撤更淺。</div>
+<h2 class="section-title">20 年 vs 10 年對比(regime 集中度檢查)</h2>
+<div class="section-sub">差異欄:CAGR 正值 = 近 10 年更好;MDD 正值 = 近 10 年回撤更淺。CAGR 差異越大 = 績效越集中在「無 2008 的科技牛市」這一個 regime — 差異小的系統(W52 +2.3pp、GEM +1.2pp)對 regime 最穩健,差異 8pp+ 的系統(STX50、六狀態)是 regime 賭注,部位大小要按此打折。</div>
 <div class="card" style="overflow-x:auto">
 <table>
 <thead><tr><th>系統</th><th>20Y CAGR</th><th>10Y CAGR</th><th>差異</th><th>20Y MDD</th><th>10Y MDD</th><th>差異</th></tr></thead>
@@ -311,7 +320,8 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 <summary>數據截至日期與方法論說明</summary>
 <div class="d-body">
 <ul style="font-size:.85rem;color:#374151;line-height:1.9;padding-left:1.2rem">
-  <li>全部美股系統:截至 2026-06-11,統一修正基準(warmup 自上市起算、閒置資金計 SHY/BIL 利息)。</li>
+  <li>全部美股系統:截至 2026-06,統一修正基準(warmup 自上市起算、閒置資金計 SHY/BIL 利息);
+      W52 為 2026-06 審計引擎 v2(MA 對齊修正,10 年窗 +11.04% → +13.04%)。</li>
   <li>10 年窗口 = 最新數據日往回 10 年(約 2016-06 起),起點重設 $1M;與 20 年頁的全期數字計算方式一致。</li>
   <li>* GEM 與 W52 斜率規格定義初始資金 $100,000;表中 $M 值為換算 $1M 起始的等效值。</li>
   <li>逐年報酬與圖表使用年頻資料;精確 MDD / Sharpe 以各系統詳頁計算為準。</li>
