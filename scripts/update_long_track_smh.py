@@ -498,13 +498,31 @@ def main():
 
     changes = detect_changes(prev_state, sigs)
     data_date = max(sigs[t]["wk_date"] for t in TICKERS)
+    alert_file = Path(__file__).parent.parent / "lt_smh_alert.txt"
     if changes:
         last_change_date = data_date
         last_change_desc = "; ".join(c.replace("<b>", "").replace("</b>", "") for c in changes)
         print(f"CHANGES: {last_change_desc}")
+        # plain-text alert consumed by the Action's email step (not committed)
+        lines = [f"LT SMH/QQQ (STX50) 訊號變化 — 數據截至 {data_date}", ""]
+        for c in changes:
+            lines.append("• " + c.replace("<b>", "").replace("</b>", ""))
+        lines += ["",
+                  "當前目標倉位:"]
+        for t in TICKERS:
+            d_ = sigs[t]
+            lines.append(f"  {t}: {d_['pos']*100:.0f}%  "
+                         f"(W40{'✓' if d_['w40'] else '✕'} W52{'✓' if d_['w52'] else '✕'} "
+                         f"TSMOM{'✓' if d_['tsmom'] else '✕'} ST{'✓' if d_['st'] else '✕'})")
+        lines += ["", "下一個交易日將部位調整至上列目標。",
+                  "", "詳細: https://research.investmquest.com/long-track-smh/"]
+        alert_file.write_text("\n".join(lines), encoding="utf-8")
+        print(f"Alert file: {alert_file}")
     else:
         last_change_date = prev_state.get("last_change_date")
         last_change_desc = prev_state.get("last_change_desc")
+        if alert_file.exists():
+            alert_file.unlink()
         print("No signal changes vs last run.")
 
     html = generate_html(sigs, changes, last_change_date)

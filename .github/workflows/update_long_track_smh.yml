@@ -3,10 +3,15 @@ name: Update Long Track SMH/QQQ Signal
 on:
   schedule:
     # Every Friday 21:30 UTC (US market close 16:00 ET + 1.5h buffer)
-    # = Saturday 05:30 Taiwan time. E3 signals are weekly (W40/W52) + monthly
-    # (TSMOM month-end), so the Friday close is the only meaningful update.
+    # = Saturday 05:30 Taiwan time. STX50 signals are weekly (W40/W52/ST) +
+    # monthly (TSMOM month-end), so the Friday close is the only meaningful update.
     - cron: '30 21 * * 5'
   workflow_dispatch:  # Manual trigger anytime
+    inputs:
+      test_email:
+        description: 'Send a test email even without signal changes'
+        type: boolean
+        default: false
 
 jobs:
   update:
@@ -23,6 +28,39 @@ jobs:
 
       - name: Run long-track SMH/QQQ update
         run: python scripts/update_long_track_smh.py
+
+      - name: Read change alert
+        id: alert
+        run: |
+          if [ -f lt_smh_alert.txt ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            {
+              echo "body<<ALERT_EOF"
+              cat lt_smh_alert.txt
+              echo "ALERT_EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Email signal change
+        if: steps.alert.outputs.changed == 'true' || inputs.test_email == true
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_APP_PASSWORD }}
+          subject: "⚡ LT SMH/QQQ 訊號變化 ${{ steps.alert.outputs.changed == 'true' && '' || '(測試信)' }}"
+          to: keigoks@gmail.com
+          from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
+          body: |
+            ${{ steps.alert.outputs.changed == 'true' && steps.alert.outputs.body || '這是測試信 — email 推播管線正常。本週無訊號變化。' }}
+
+            —
+            InvestMQuest · 每週五美股收盤後自動檢查
+            退訂: 移除 repo secret MAIL_APP_PASSWORD 或編輯 update_long_track_smh.yml
 
       - name: Commit and push
         run: |
