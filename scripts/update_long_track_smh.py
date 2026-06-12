@@ -107,7 +107,9 @@ def supertrend_state(df: pd.DataFrame, period: int = 10, mult: float = 3.0):
         else:
             direction[i] = -1.0 if c[i] < flb[i] else 1.0
         st[i] = flb[i] if direction[i] > 0 else fub[i]
-    return bool(direction[-1] > 0), float(st[-1])
+    dir_s = pd.Series(direction, index=wk.index)
+    st_s = pd.Series(st, index=wk.index)
+    return bool(direction[-1] > 0), float(st[-1]), dir_s, st_s
 
 
 def load_cash_close() -> pd.Series:
@@ -124,7 +126,8 @@ def load_cash_close() -> pd.Series:
 # Signal — verbatim from ensemble_experiment.build_signals
 # ---------------------------------------------------------------------------
 def compute_signals(px: pd.Series, cash: pd.Series,
-                    st_on: bool, st_level: float) -> dict:
+                    st_on: bool, st_level: float,
+                    st_dir_s=None, st_lvl_s=None) -> dict:
     wk = px.resample("W-FRI").last().dropna()
     mo = px.resample("ME").last().dropna()
     cash_m = cash.resample("ME").last()
@@ -149,8 +152,9 @@ def compute_signals(px: pd.Series, cash: pd.Series,
     # recent 8 weekly bars for the trajectory table
     recent = []
     for i in range(-8, 0):
-        recent.append({
-            "date": wk.index[i].strftime("%Y-%m-%d"),
+        wdate = wk.index[i]
+        r = {
+            "date": wdate.strftime("%Y-%m-%d"),
             "close": float(wk.iloc[i]),
             "ma40": float(ma40.iloc[i]),
             "ma52": float(ma52.iloc[i]),
@@ -158,13 +162,24 @@ def compute_signals(px: pd.Series, cash: pd.Series,
             "w52": bool(w52.iloc[i]),
             "pct40": (float(wk.iloc[i]) / float(ma40.iloc[i]) - 1) * 100,
             "pct52": (float(wk.iloc[i]) / float(ma52.iloc[i]) - 1) * 100,
-        })
+        }
+        if st_dir_s is not None and wdate in st_dir_s.index:
+            r["st"] = bool(st_dir_s.loc[wdate] > 0)
+            r["st_lvl"] = float(st_lvl_s.loc[wdate])
+            r["pct_st"] = (r["close"] / r["st_lvl"] - 1) * 100
+        recent.append(r)
 
     return {
         "ticker": None,
         "w40": w40_now, "w52": w52_now, "tsmom": ts_now,
         "st": st_on, "st_level": st_level, "e3": e3,
         "pos": pos,
+        "near": {   # within 2% (2pp for TSMOM) of flipping
+            "w40": abs(float(wk.iloc[-1]) / float(ma40.iloc[-1]) - 1) < 0.02,
+            "w52": abs(float(wk.iloc[-1]) / float(ma52.iloc[-1]) - 1) < 0.02,
+            "tsmom": abs(float(mom.iloc[-1]) - float(cash_mom.reindex(mo.index).iloc[-1])) < 0.02,
+            "st": abs(float(wk.iloc[-1]) / st_level - 1) < 0.02,
+        },
         "wk_close": float(wk.iloc[-1]),
         "wk_date": wk.index[-1].strftime("%Y-%m-%d"),
         "ma40": float(ma40.iloc[-1]),
@@ -193,11 +208,12 @@ def pos_color(pos):
     return "red"
 
 
-def sig_bulb(label, on, detail):
+def sig_bulb(label, on, detail, near=False):
     cls = "on" if on else "off"
     mark = "✓" if on else "✕"
+    warn = ' <span style="color:var(--amber);font-weight:700;font-size:.72rem">⚠ 接近翻轉</span>' if near else ""
     return f"""<div class="sig {cls}">
-      <div class="sig-top"><span class="sig-dot"></span><span class="sig-name">{label}</span><span class="sig-mark">{mark}</span></div>
+      <div class="sig-top"><span class="sig-dot"></span><span class="sig-name">{label}</span>{warn}<span class="sig-mark">{mark}</span></div>
       <div class="sig-detail">{detail}</div>
     </div>"""
 
@@ -208,15 +224,20 @@ def ticker_card(t: str, d: dict) -> str:
     bulbs = "".join([
         sig_bulb("W40", d["w40"],
                  f"週收 {d['wk_close']:.2f} vs 40週均 {d['ma40']:.2f} "
-                 f"<b style='color:var(--{'green' if d['w40'] else 'red'})'>{fmt_pct((d['wk_close']/d['ma40']-1)*100)}</b>"),
+                 f"<b style='color:var(--{'green' if d['w40'] else 'red'})'>{fmt_pct((d['wk_close']/d['ma40']-1)*100)}</b>",
+                 near=d["near"]["w40"]),
         sig_bulb("W52", d["w52"],
                  f"週收 {d['wk_close']:.2f} vs 52週均 {d['ma52']:.2f} "
-                 f"<b style='color:var(--{'green' if d['w52'] else 'red'})'>{fmt_pct((d['wk_close']/d['ma52']-1)*100)}</b>"),
+                 f"<b style='color:var(--{'green' if d['w52'] else 'red'})'>{fmt_pct((d['wk_close']/d['ma52']-1)*100)}</b>",
+                 near=d["near"]["w52"]),
         sig_bulb("TSMOM", d["tsmom"],
-                 f"12m 報酬 <b>{fmt_pct(d['mom12'])}</b> vs 現金 <b>{fmt_pct(d['cash_mom12'])}</b>"),
+                 f"12m 報酬 <b>{fmt_pct(d['mom12'])}</b> vs 現金 <b>{fmt_pct(d['cash_mom12'])}</b>",
+                 near=d["near"]["tsmom"]),
         sig_bulb("ST 閘門 (10,3)", d["st"],
-                 f"週收 {d['wk_close']:.2f} vs Supertrend {d['st_level']:.2f} — "
-                 f"{'開(受閘半倉在場)' if d['st'] else '關(受閘半倉出場)'}"),
+                 f"週收 {d['wk_close']:.2f} vs Supertrend {d['st_level']:.2f} "
+                 f"<b style='color:var(--{'green' if d['st'] else 'red'})'>{fmt_pct((d['wk_close']/d['st_level']-1)*100)}</b> — "
+                 f"{'開(受閘半倉在場)' if d['st'] else '關(受閘半倉出場)'}",
+                 near=d["near"]["st"]),
     ])
     return f"""<div class="tcard">
   <div class="tcard-hdr">
@@ -233,22 +254,31 @@ def recent_table(t: str, d: dict) -> str:
     for r in d["recent"]:
         c40 = "var(--green)" if r["w40"] else "var(--red)"
         c52 = "var(--green)" if r["w52"] else "var(--red)"
+        st_cell = "<td>—</td>"
+        if "st" in r:
+            cst = "green" if r["st"] else "red"
+            st_cell = (f'<td>{r["st_lvl"]:.2f} <span class="tag" '
+                       f'style="background:var(--{cst}-bg);color:var(--{cst}-text)">'
+                       f'ST {"✓" if r["st"] else "✕"} {fmt_pct(r["pct_st"], 1)}</span></td>')
         rows += f"""<tr>
   <td>{r['date']}</td><td>{r['close']:.2f}</td>
   <td>{r['ma40']:.2f}</td><td style="color:{c40}">{fmt_pct(r['pct40'])}</td>
   <td>{r['ma52']:.2f}</td><td style="color:{c52}">{fmt_pct(r['pct52'])}</td>
+  {st_cell}
   <td><span class="tag" style="background:var(--{'green' if r['w40'] else 'red'}-bg);color:var(--{'green' if r['w40'] else 'red'}-text)">W40 {'✓' if r['w40'] else '✕'}</span>
       <span class="tag" style="background:var(--{'green' if r['w52'] else 'red'}-bg);color:var(--{'green' if r['w52'] else 'red'}-text)">W52 {'✓' if r['w52'] else '✕'}</span></td>
 </tr>\n"""
     return f"""<div class="card">
 <h3>{t} — 近 8 週軌跡(週線)</h3>
-<table><thead><tr><th>週五</th><th>收盤</th><th>40週均</th><th>距離</th><th>52週均</th><th>距離</th><th>週線訊號</th></tr></thead>
+<table><thead><tr><th>週五</th><th>收盤</th><th>40週均</th><th>距離</th><th>52週均</th><th>距離</th><th>Supertrend</th><th>週線訊號</th></tr></thead>
 <tbody>{rows}</tbody></table>
 <div style="font-size:.72rem;color:var(--muted);margin-top:.5rem">TSMOM 為月頻(月底判定),不在此週線表中;見上方卡片當前值。</div>
 </div>"""
 
 
-def generate_html(sigs: dict) -> str:
+def generate_html(sigs: dict, changes: list[str] | None = None,
+                  last_change_date: str | None = None) -> str:
+    changes = changes or []
     combined = sum(WEIGHTS[t] * sigs[t]["pos"] for t in TICKERS) * 100
     ccol = pos_color(combined / 100)
     data_date = max(sigs[t]["wk_date"] for t in TICKERS)
@@ -355,6 +385,8 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
   <div class="status-date">數據截至 {data_date}(週五收盤)· 頁面更新 {now}</div>
 </div>
 
+{('<div style="background:var(--red-bg);border:2px solid var(--red-border);border-radius:10px;padding:.9rem 1.2rem;margin:.5rem 0 1rem;font-size:.9rem"><b style="color:var(--red-text)">⚡ 本週訊號變化</b><br>' + "<br>".join(changes) + '<br><span style="font-size:.78rem;color:var(--muted)">下一個交易日將部位調整至上列目標。</span></div>') if changes else ('<div style="text-align:center;font-size:.78rem;color:var(--muted);margin:.3rem 0 1rem">本週無訊號變化' + (f"(上次變化:{last_change_date})" if last_change_date else "") + '</div>')}
+
 <div class="banner">
   <b>STX50 長線訊號 · 2026-06-13 採用 · OOS 追蹤中。</b>
   這是<b>曝險狀態讀數</b>,不是每日交易動作 —— 訊號為週/月頻,每標的年換手約 2.4 邊,
@@ -415,8 +447,39 @@ ST 閘門賺錢的場景是 2022 型持續陰跌(出場後不必更高買回);�
 </html>"""
 
 
+SIG_LABEL = {"w40": "W40", "w52": "W52", "tsmom": "TSMOM", "st_gate": "ST 閘門"}
+
+
+def detect_changes(prev: dict, sigs: dict) -> list[str]:
+    """Compare last run's state.json against this run; return change strings."""
+    if not prev or "tickers" not in prev:
+        return []
+    out = []
+    for t in TICKERS:
+        pt = prev["tickers"].get(t)
+        if not pt:
+            continue
+        cur = {"w40": sigs[t]["w40"], "w52": sigs[t]["w52"],
+               "tsmom": sigs[t]["tsmom"], "st_gate": sigs[t]["st"]}
+        flips = [f"{SIG_LABEL[k]} {'✕→✓' if cur[k] else '✓→✕'}"
+                 for k in cur if k in pt and bool(pt[k]) != bool(cur[k])]
+        new_pos = round(sigs[t]["pos"] * 100, 1)
+        old_pos = pt.get("position_pct")
+        if flips or (old_pos is not None and abs(old_pos - new_pos) > 0.5):
+            arrow = (f"倉位 {old_pos:.0f}% → {new_pos:.0f}%"
+                     if old_pos is not None else f"倉位 {new_pos:.0f}%")
+            out.append(f"<b>{t}</b>:{'、'.join(flips) if flips else '訊號未翻轉'} → {arrow}")
+    return out
+
+
 def main():
     sigs = {}
+    prev_state = {}
+    if STATE_JSON.exists():
+        try:
+            prev_state = json.loads(STATE_JSON.read_text())
+        except Exception:
+            prev_state = {}
     print("Fetching cash (SHY/BIL)...")
     cash = load_cash_close()
     for t in TICKERS:
@@ -424,8 +487,8 @@ def main():
         df = fetch_ohlc(t)
         px = _close(df)
         print(f"  {len(px)} daily bars")
-        st_on, st_level = supertrend_state(df)
-        d = compute_signals(px, cash, st_on, st_level)
+        st_on, st_level, st_dir_s, st_lvl_s = supertrend_state(df)
+        d = compute_signals(px, cash, st_on, st_level, st_dir_s, st_lvl_s)
         d["ticker"] = t
         sigs[t] = d
         print(f"  {t}: W40={d['w40']} W52={d['w52']} TSMOM={d['tsmom']} ST={d['st']} -> pos {d['pos']*100:.0f}%")
@@ -433,14 +496,27 @@ def main():
     combined = sum(WEIGHTS[t] * sigs[t]["pos"] for t in TICKERS) * 100
     print(f"Combined exposure: {combined:.0f}%")
 
-    html = generate_html(sigs)
+    changes = detect_changes(prev_state, sigs)
+    data_date = max(sigs[t]["wk_date"] for t in TICKERS)
+    if changes:
+        last_change_date = data_date
+        last_change_desc = "; ".join(c.replace("<b>", "").replace("</b>", "") for c in changes)
+        print(f"CHANGES: {last_change_desc}")
+    else:
+        last_change_date = prev_state.get("last_change_date")
+        last_change_desc = prev_state.get("last_change_desc")
+        print("No signal changes vs last run.")
+
+    html = generate_html(sigs, changes, last_change_date)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(html, encoding="utf-8")
     print(f"Written {OUTPUT} ({len(html):,} bytes)")
 
     state_json = {
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "data_date": max(sigs[t]["wk_date"] for t in TICKERS),
+        "data_date": data_date,
+        "last_change_date": last_change_date,
+        "last_change_desc": last_change_desc,
         "weights": WEIGHTS,
         "combined_exposure_pct": round(combined, 1),
         "tickers": {
