@@ -111,7 +111,8 @@ GROUPS = [
     ]),
     ("多資產(互補候選 · 不同資產池,僅參照)", [
         ("🐢 Turtle System 2", "/backtest/turtle/",
-         "USO/GLD/DBA/FXE/TLT/SPY · 55/20 突破(2007 起)· CAGR 進可疑帶 → 過擬合/regime 審查 + 商品腿拆解待辦",
+         "USO/GLD/DBA/FXE/TLT/SPY · 55/20 突破(2007 起)· 2026-06 拆解:CAGR=3.3× 曝險的槓桿效果非過擬合;"
+         "CMDTY 腿 L3 通過(+20% → 組合 Calmar 1.03),採用待 L4 決策",
          "+22.48%", "-38.12%", "0.73", "0.59", "domc", "$51.40M", TAG["ma"]),
         ("📈 Clenow 趨勢", "/backtest/clenow/",
          "35 ETF × 7 類別 · EMA50/100 + 突破",
@@ -351,8 +352,9 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
     <p>20 年全週期是<strong>主判定窗</strong>(10 年頁是「無 2008」的壓力對照窗,兩窗取交集)。
        美股趨勢家族的礦脈已基本挖完 — E3 與 STX50 經 L1~L4 全流程採用(目前實倉只有 STX50 在跑,E3 待上線),
        W52 經 2026-06 審計確認為全站唯一「近支配」系統(SPY 特定);
-       已否決:雙軌多空、做空、盤整 MR(被支配)。下一塊拼圖在組合層:跨資產趨勢(Turtle 商品腿)與既有持倉低相關,
-       是把組合 MDD 再往下壓唯一沒走過的路。每行的「支配性」= 對該系統自然基準的
+       已否決:雙軌多空、做空、盤整 MR(被支配)。組合層的下一塊拼圖<strong>已完成 L3 檢驗</strong>:
+       Turtle 商品腿(USO/GLD/DBA)與 STX50 相關 -0.03、三次危機窗全正報酬,
+       +20% 權重使組合 Calmar 0.64 → 1.03 — 採用與工具選擇(需期貨)待 L4 決策。每行的「支配性」= 對該系統自然基準的
        <a href="/backtest/criteria/">L2 雙軸判定</a>:只有「被支配」才等於「策略不好」。</p>
   </div>
 </div>
