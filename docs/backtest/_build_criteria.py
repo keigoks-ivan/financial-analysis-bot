@@ -47,7 +47,7 @@ SYSTEMS_20Y = [
     ("LTO QQQ only", "/backtest/long_track_qqq/", 10.80, -25.37, 0.75, 0.43, True, ""),
     ("Ensemble E3", "/backtest/long_track_ensemble/", 11.47, -21.15, 0.89, 0.54, True, "2026-06-11 採用 · OOS"),
     ("LT SMH/QQQ STX50", "/backtest/long_track_smh/", 14.05, -21.87, 0.91, 0.64, True, "2026-06-13 採用 STX50 · OOS"),
-    ("W52 斜率濾網", "/backtest/slope_filter/", 10.16, -20.05, 0.92, 0.51, True, "warmup 完整(資料自 2000)"),
+    ("W52 斜率濾網", "/backtest/slope_filter/", 10.79, -18.96, 1.01, 0.57, True, "2026-06 審計完成 · MA 對齊修正後上修"),
     ("GEM 雙動能", "/backtest/gem/", 8.95, -21.54, 0.57, 0.42, True, ""),
     ("六狀態機 v1.1", "/backtest/six_state/", 14.77, -35.80, 0.86, 0.41, True, ""),
     ("六狀態機 v1.0r1 實盤", "/backtest/six_state_v1r1/", 14.58, -49.29, 0.81, 0.30, True, "壓力路徑 -77%"),
@@ -65,7 +65,7 @@ SYSTEMS_10Y = [
     ("LTO QQQ only", 18.81, -25.18, 1.10, 0.75, "good", "進攻型優秀"),
     ("Ensemble E3", 16.29, -21.15, 1.12, 0.77, "good", "優秀(樣本內)"),
     ("Long Track Only", 15.47, -18.75, 1.11, 0.83, "good", "優秀"),
-    ("W52 斜率濾網", 11.04, -20.05, 0.82, 0.55, "pass", "合格(穩定)"),
+    ("W52 斜率濾網", 13.04, -18.96, 1.03, 0.69, "pass", "合格(穩定)· 2026-06 審計後上修"),
     ("GEM 雙動能", 9.85, -21.54, 0.54, 0.46, "pass", "合格"),
     ("雙軌多空", 9.26, -19.61, 0.73, 0.47, "fail", "10 年窗口仍墊底;全期已否決"),
     ("週線 Supertrend (SPY)", 11.86, -13.48, 1.09, 0.88, "pass", "實驗:10 年窗口合格,但全期輸 W52 · 未採用"),
@@ -87,9 +87,10 @@ DOMINANCE = [
     ("🐢 Turtle(多資產)", "/backtest/turtle/", "等權多資產 B&H",
      (22.48, -38.12, 0.73, 0.59), (10.92, None, None, None), "domc",
      "兩軸皆贏的稀有案例 → 不是慶祝,是觸發過擬合/regime 審查(CAGR 已進可疑帶;資產池不同僅參照)"),
-    ("W52 斜率濾網", "/backtest/slope_filter/", "SPY B&H(同期,2000 起)",
-     (10.16, -20.05, 0.92, 0.51), (10.94, -50.78, None, None), "neardom",
-     "報酬只讓 0.8pp、回撤淺 2.5 倍 — 全站最接近支配的交換;惟 warmup 審計未完成,數字未確認"),
+    ("W52 斜率濾網", "/backtest/slope_filter/", "SPY B&H(同引擎)",
+     (10.79, -18.96, 1.01, 0.57), (11.02, -50.78, 0.73, 0.22), "neardom",
+     "2026-06 審計完成(MA 對齊修正後全指標上修):報酬只讓 0.23pp、Calmar 2.6 倍 — 近支配確認;"
+     "惟規則不可移植:QQQ 套用失敗、SMH 輸 Faber(見系統頁擴展節)"),
     ("LT SMH/QQQ STX50", "/backtest/long_track_smh/", "SMH/QQQ 50/50 B&H",
      (14.05, -21.87, 0.91, 0.64), (18.03, -56.93, 0.79, 0.32), "trade",
      "★ 本版觸發案例 — 完整判讀見上方範例"),
@@ -635,7 +636,7 @@ Turtle 兩軸全贏反而觸發審查,這是可疑帶哲學在 L2 的延伸。
 <div class="section">
 <h2 class="section-title">6. 第 4 層 — 採用決策與現行配置</h2>
 <div class="verdict">
-  <strong>合格名單(2026-06):</strong>Long Track Only、LTO QQQ、Ensemble E3、LT SMH/QQQ STX50、GEM、W52 斜率(未經 warmup 審計,數字待覆核)。<br>
+  <strong>合格名單(2026-06):</strong>Long Track Only、LTO QQQ、Ensemble E3、LT SMH/QQQ STX50、GEM、W52 斜率(2026-06 審計完成)。<br>
   <strong>已採用(均附 OOS 重審 / 退場條件):</strong>
   Ensemble E3 = 股票趨勢核心(2026-06-11;Ch12 基準轉為對照組;重審:下一次盤整 + 下一次快崩兩個事件後)、
   LT SMH/QQQ <strong>STX50</strong> = 進攻位(2026-06-13;E3 + 週線 Supertrend 半倉出場閘門;
@@ -648,8 +649,10 @@ Turtle 兩軸全贏反而觸發審查,這是可疑帶哲學在 L2 的延伸。
   <strong>原則:</strong>採用來自有記錄的決策,不來自漂亮的回測數字本身;每筆採用必須同時寫下「什麼情況下退場重審」。
 </div>
 <div class="note">
-  <strong>待辦:</strong>W52 斜率濾網與 GEM 尚未做 2026-06 標準的 warmup / 分母審計(數字截至 2026-04,引擎獨立)。
-  在審計完成前,W52 的「近支配」判定應視為未確認 — 它若確認,將是全站第一個近支配系統,值得優先排審。
+  <strong>審計進度:</strong>W52 斜率濾網已完成 2026-06 標準的 warmup / 分母審計(分母通過;
+  發現 MA 對齊過時 ~4 週並修正,全指標上修,「近支配」確認 — 全站第一個近支配系統,詳見系統頁審計節)。
+  同場擴展測試:同規則套 QQQ <strong>失敗</strong>(無效交換)、SMH 不優於 Faber — 近支配是 SPY 特定的,規則不可移植。
+  <strong>剩餘待辦:</strong>GEM 的 warmup / 分母審計(數字截至 2026-04,引擎獨立)。
 </div>
 </div>
 
