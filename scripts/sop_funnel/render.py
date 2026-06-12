@@ -141,6 +141,77 @@ def _veto_distribution_block(vd) -> str:
         f'</details>')
 
 
+def _performance_block(p) -> str:
+    """6/1 起策略淨值 vs SPY — 內嵌 SVG 折線圖 + 摘要 + 持倉貢獻。"""
+    if not p or not p.get("series") or len(p["series"]) < 2:
+        return ""
+    s, cap = p["series"], float(p["capital"])
+    navs = [r["nav"] for r in s]
+    spys = [r["spy"] for r in s]
+    lo, hi = min(min(navs), min(spys)), max(max(navs), max(spys))
+    if hi == lo:
+        hi = lo + 1
+    span = (hi - lo) * 0.14
+    lo, hi = lo - span, hi + span
+    W, H, pl, pr, pt, pb = 760, 280, 56, 16, 16, 30
+    n = len(s)
+    fx = lambda i: pl + (W - pl - pr) * (i / (n - 1))
+    fy = lambda v: pt + (H - pt - pb) * (1 - (v - lo) / (hi - lo))
+    nav_pts = " ".join(f"{fx(i):.1f},{fy(r['nav']):.1f}" for i, r in enumerate(s))
+    spy_pts = " ".join(f"{fx(i):.1f},{fy(r['spy']):.1f}" for i, r in enumerate(s))
+    grid = ""
+    for k in range(5):
+        v = lo + (hi - lo) * k / 4
+        y = fy(v)
+        grid += (f'<line x1="{pl}" y1="{y:.1f}" x2="{W - pr}" y2="{y:.1f}" class="pf-grid"/>'
+                 f'<text x="{pl - 7}" y="{y + 3:.1f}" class="pf-ytick">{(v / cap - 1) * 100:+.1f}%</text>')
+    yb = fy(cap)
+    base = f'<line x1="{pl}" y1="{yb:.1f}" x2="{W - pr}" y2="{yb:.1f}" class="pf-base"/>'
+    xticks = (f'<text x="{fx(0):.1f}" y="{H - 9}" class="pf-xtick" text-anchor="start">{_e(s[0]["date"][5:])}</text>'
+              f'<text x="{fx(n - 1):.1f}" y="{H - 9}" class="pf-xtick" text-anchor="end">{_e(s[-1]["date"][5:])}</text>')
+    svg = (f'<svg viewBox="0 0 {W} {H}" class="pf-svg" preserveAspectRatio="none" role="img" '
+           f'aria-label="策略淨值 vs SPY">{grid}{base}'
+           f'<polyline points="{spy_pts}" class="pf-spy"/>'
+           f'<polyline points="{nav_pts}" class="pf-nav"/>{xticks}</svg>')
+
+    sm = p["summary"]
+    win = sm["excess_pp"] >= 0
+    cap_m = f'${cap / 1e6:.0f}M'
+    stat = (
+        f'<div class="pf-stats">'
+        f'<div class="pf-stat"><span>策略淨值</span><strong>${sm["strategy_value"]:,.0f}</strong>'
+        f'<em class="{"pos" if sm["strategy_ret_pct"] >= 0 else "neg"}">{sm["strategy_ret_pct"]:+.2f}%</em></div>'
+        f'<div class="pf-stat"><span>SPY 基準</span><strong>${sm["spy_value"]:,.0f}</strong>'
+        f'<em class="{"pos" if sm["spy_ret_pct"] >= 0 else "neg"}">{sm["spy_ret_pct"]:+.2f}%</em></div>'
+        f'<div class="pf-stat"><span>超額 (vs SPY)</span><strong class="{"pos" if win else "neg"}">{sm["excess_pp"]:+.2f}pp</strong>'
+        f'<em>投入 {sm["invested_pct"]:.1f}% · 現金 {sm["cash_pct"]:.1f}%</em></div>'
+        f'</div>')
+    prows = "".join(
+        f'<tr><td class="left"><strong>{_e(pp["ticker"])}</strong> '
+        f'<span class="tag tag-{pp["entry_type"].lower()}">{pp["entry_type"]}</span></td>'
+        f'<td>{_e(pp["entry_date"][5:])}</td><td>{pp["weight_pct"]:.2f}%</td>'
+        f'<td>${pp["alloc_usd"]:,.0f}</td>'
+        f'<td class="{"pos" if (pp["ret_pct"] or 0) >= 0 else "neg"}">{(pp["ret_pct"] or 0):+.1f}%</td>'
+        f'<td class="{"pos" if pp["pnl_usd"] >= 0 else "neg"}">{pp["pnl_usd"]:+,.0f}</td>'
+        f'<td>{_e(pp.get("state") or "—")}</td></tr>'
+        for pp in p["positions"])
+    ptable = (f'<table class="pf-pos"><thead><tr><th class="left">ticker</th><th>進場</th>'
+              f'<th>部位%</th><th>配置$</th><th>報酬</th><th>損益$</th><th>態</th></tr></thead>'
+              f'<tbody>{prows}</tbody></table>') if p["positions"] else ""
+    return (
+        f'<div class="section"><div class="card">'
+        f'<h2>📈 6/1 起策略淨值 vs SPY（起始資金 {cap_m}）</h2>'
+        f'<div class="desc">起始 {cap_m} 個股部，照 SOP 全交易設定（T+1 進場 · 部位 = min(10%, 1.5%÷停損) · '
+        f'態③減1/3 · 態④減碼+回補 · 態⑤全出）逐日 mark-to-market；未投入部位為現金（0% 報酬）。'
+        f'基準 SPY 同起始資金、{_e(p["start"])} 為基期。日序列由 sim legs 重建，與 §3/§4 一致。</div>'
+        f'<div class="pf-legend"><span class="pf-lg-nav">策略 NAV</span>'
+        f'<span class="pf-lg-spy">SPY</span><span class="pf-lg-base">基期 {cap_m}</span></div>'
+        f'{svg}{stat}{ptable}'
+        f'<div class="pf-note">截至 {_e(p["as_of"])}（x 軸取 SPY 交易日，兩端對齊）。'
+        f'現金部位主導 → 空頭時抗跌，多頭時跟不上；樣本小，僅追蹤非結論。</div>'
+        f'</div></div>')
+
+
 def _standby_table(rows, cols, empty_msg) -> str:
     if not rows:
         return f'<div class="empty">{empty_msg}</div>'
@@ -385,6 +456,26 @@ td.veto{{color:#b45309;font-size:11px}}
 .vd-val{{color:#92400e;white-space:nowrap;font-variant-numeric:tabular-nums}}
 .vd-rec{{color:#b9893f;margin-left:8px}}
 .vd-note{{font-size:10.5px;color:#a16207;margin-top:10px;line-height:1.6;max-width:700px}}
+.pf-legend{{display:flex;gap:16px;font-size:11px;color:#5a7a9a;margin-bottom:8px;flex-wrap:wrap}}
+.pf-legend span{{display:inline-flex;align-items:center}}
+.pf-legend span::before{{content:"";width:14px;height:0;border-top:2.5px solid;margin-right:5px}}
+.pf-lg-nav::before{{border-color:#0369a1}}
+.pf-lg-spy::before{{border-color:#94a3b8}}
+.pf-lg-base::before{{border-top-style:dashed!important;border-color:#cbd5e1}}
+.pf-svg{{width:100%;height:280px;display:block;background:#fcfdff;border:1px solid #eef3f9;border-radius:8px}}
+.pf-grid{{stroke:#eef3f9;stroke-width:1}}
+.pf-base{{stroke:#cbd5e1;stroke-width:1;stroke-dasharray:4 3}}
+.pf-nav{{fill:none;stroke:#0369a1;stroke-width:2.2;stroke-linejoin:round}}
+.pf-spy{{fill:none;stroke:#94a3b8;stroke-width:1.8;stroke-linejoin:round}}
+.pf-ytick{{fill:#94a3b8;font-size:9.5px;text-anchor:end}}
+.pf-xtick{{fill:#94a3b8;font-size:9.5px}}
+.pf-stats{{display:flex;gap:14px;flex-wrap:wrap;margin:13px 0 4px}}
+.pf-stat{{background:#f8fbff;border:1px solid #e6eef8;border-radius:8px;padding:9px 14px;min-width:150px}}
+.pf-stat span{{display:block;font-size:10px;color:#8aa5c0}}
+.pf-stat strong{{font-size:16px;color:#0f2a45;display:block;margin:1px 0;font-variant-numeric:tabular-nums}}
+.pf-stat em{{font-style:normal;font-size:11px;color:#5a7a9a;font-variant-numeric:tabular-nums}}
+.pf-pos{{margin-top:12px}}
+.pf-note{{font-size:10.5px;color:#8aa5c0;margin-top:10px;line-height:1.6}}
 details{{margin-top:12px;font-size:12px}}
 summary{{cursor:pointer;color:#5a7a9a;font-weight:600}}
 .a2-list{{padding:10px 4px;color:#5a7a9a;line-height:1.9;font-size:11.5px}}
@@ -441,6 +532,8 @@ footer{{text-align:center;font-size:10.5px;color:#8aa5c0;padding:24px}}
 <table><thead><tr><th class="left">ticker</th><th>型態</th><th>進場日</th><th>進場價</th><th>目前態</th><th>部位</th><th>浮動報酬</th><th>α</th><th class="left">出場腿</th></tr></thead>
 <tbody>{_open_rows(d["open_trades"])}</tbody></table>
 </div></div>
+
+{_performance_block(d.get("performance"))}
 
 <div class="section"><div class="card">
 <h2>§4 記分板</h2>

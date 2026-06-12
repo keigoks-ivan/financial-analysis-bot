@@ -25,7 +25,7 @@ from pathlib import Path
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from sop_funnel import earnings_guard, prices  # noqa: E402
+from sop_funnel import earnings_guard, performance, prices  # noqa: E402
 from sop_funnel.engine import (  # noqa: E402
     PARAMS, PREREG, QUALITY_GATE, build_frame, fixed_horizon_ret,
     next_trading_close, position_pct, quality_check, scan_ticker,
@@ -320,6 +320,10 @@ def main() -> int:
         "recent_by_reason": [{"reason": r, "count": n} for r, n in reason_recent.most_common()],
     }
 
+    # ── 6/1 起策略淨值 vs SPY（起始資金 $1M，遵守所有交易設定）──
+    perf = performance.compute(ledger["events"], closes, spy,
+                               start_date="2026-06-01", capital=1_000_000.0)
+
     backtest = None
     if BACKTEST_PATH.exists():
         try:
@@ -339,6 +343,7 @@ def main() -> int:
         "today_signals": today_signals,
         "today_vetoed": today_vetoed,
         "veto_distribution": veto_distribution,
+        "performance": perf,
         "standby_a1": sorted(standby_a1, key=lambda x: -x["ath_age_weeks"]),
         "standby_a2": sorted(standby_a2, key=lambda x: x["dist_ath_pct"], reverse=True),
         "standby_b": sorted(standby_b, key=lambda x: x["weeks_since_anchor"]),
