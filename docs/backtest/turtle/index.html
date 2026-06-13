@@ -510,6 +510,57 @@ margin 版兩個未建模的現實成本:>1× 時的融資利息(IBKR ~BM+1.5%),
 </div>
 </div>
 
+<!-- ===== OPERATIONS MANUAL (2026-06) ===== -->
+<div class="section">
+<h2 class="section-title">操作手冊 — CMDTY2 sleeve(草案,待 L4 採用決策)</h2>
+<div class="section-sub">形態:GLD/USO 訊號 → MGC/MCL 微型期貨執行 · 20% sleeve 權重 · 月底再平衡。每日指令由 src/turtle_backtest/daily_signals.py 產生(replay 架構:每次從 2005 重放引擎到最新收盤,live 狀態 = 引擎狀態,永不漂移)。</div>
+
+<div class="card">
+<h3>① 規則卡(引擎精確定義)</h3>
+<table>
+<thead><tr><th>環節</th><th>規則</th></tr></thead>
+<tbody>
+<tr><td><strong>進場</strong></td><td>收盤突破 55 日高 → 做多;跌破 55 日低 → 做空(多空對稱,無過濾器)</td></tr>
+<tr><td><strong>單位大小</strong></td><td>股數 = sleeve NAV × 1% ÷ (2 × ATR20) — 停損被打到剛好虧 1%;波動定倉位,不是信心定倉位</td></tr>
+<tr><td><strong>金字塔</strong></td><td>每順行 0.5 ATR 加 1 單位,最多 4;每次加碼後全部位停損上移至「最新進場價 ∓ 2 ATR」</td></tr>
+<tr><td><strong>出場</strong></td><td>停損(收盤觸及,全出)或 20 日反向通道(收盤跌破 20 日低/站上 20 日高,全出),先到先贏</td></tr>
+<tr><td><strong>口數換算</strong></td><td>單位名目 = NAV×1%×ETF價÷(2×ATR);MGC 口數 = 名目÷(金價×10)、MCL = 名目÷(油價×100),無條件捨去</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="card">
+<h3>② 每日流程(美股收盤後,約 5 分鐘)</h3>
+<ol class="issue-list">
+  <li><code>python3 daily_signals.py --capital &lt;sleeve NAV&gt;</code> — 重放引擎、輸出:當前持倉/停損、今日是否觸發事件、<strong>明日觸發價</strong>(突破/停損/通道/加碼四條線)與對應口數。</li>
+  <li>今日有事件(進場/出場/加碼)→ 次日開盤市價執行;無事件 → 把四條觸發價記下即可,不需要盯盤。</li>
+  <li>轉倉:MGC/MCL 到期前一週滾次月(成本已內含於 ETF 訊號價格路徑,實作只是動作)。</li>
+  <li>每月最後交易日:sleeve ⇄ 股票核心再平衡回 20/80(回測驗證的紀律;+30% 劑量遞減,不要手癢加碼)。</li>
+  <li>sleeve 閒置現金(保證金外的大部分)放 T-bill — 回測未計利息,實作端免費加分。</li>
+</ol>
+</div>
+
+<div class="card">
+<h3>③ 操作體感(先讀這個再決定要不要做)</h3>
+<ul style="font-size:.88rem;color:#374151;line-height:1.85;margin-left:1.2rem">
+  <li>勝率 23%、平均賺賠比 12.7×、<strong>76% 的交易死在停損</strong>;Top 5 交易佔 20 年總損益 84%(其餘 179 筆合計為虧)— 這是一台付 1% 保費買大趨勢樂透的機器,賺錢的不對稱來自部位管理,不來自預測。</li>
+  <li><strong>最大連虧 17 筆</strong>(約一年半);64% 的時間淨值在 -10% 水下 — 「住在回撤裡、偶爾創新高」與股票系統體感相反。流血年:2017 -16.4%、2011 -11.9%;大年:2025 +73%、2020 +44%、2008 +43%。</li>
+  <li>多單貢獻 94% 長期損益;空單長期近乎打平,但 2008/2020 的危機保護全靠它 — <strong>空單是保費打平的危機保險,不可省略</strong>。</li>
+  <li>唯一的死法:在連虧段棄船,錯過付清所有保費的那一筆。20% sleeve 權重把 -16% 流血年稀釋為組合層 -3% 級,這就是 sleeve 化的意義。</li>
+</ul>
+</div>
+
+<div class="card">
+<h3>④ 採用紀錄草案(L4 待擁有者拍板)</h3>
+<ul style="font-size:.88rem;color:#374151;line-height:1.85;margin-left:1.2rem">
+  <li><strong>形態</strong>:CMDTY2(GLD/USO 訊號 → MGC/MCL)· 20% 權重 · 月底再平衡。</li>
+  <li><strong>上線前</strong>:ETF 訊號 vs 期貨執行並行比對 ≥ 1 個月(收盤訊號 → 次日開盤的滑差、基差、轉倉,逐筆記錄)。</li>
+  <li><strong>重審/退場條件</strong>:①下一次股票危機窗(核心回撤 &gt;15%)sleeve 報酬應 ≥ 0;②滾動 3 年組合 Calmar「含 sleeve」低於「不含」→ 退出;③sleeve 自身 MDD 超過 -35%(回測 -28%)→ 停機重審。</li>
+  <li><strong>保留意見(寫進紀錄)</strong>:樣本內探索非預註冊;金+油兩風險因子集中;2025-26 金價行情墊高近期數字(ex-2024 檢驗已過)。</li>
+</ul>
+</div>
+</div>
+
 <!-- ===== POSITIONING ===== -->
 <div class="section">
 <h2 class="section-title">評等與定位</h2>
