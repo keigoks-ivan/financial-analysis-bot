@@ -334,3 +334,4 @@
 | 2026-06-15 | MS | Morgan Stanley 把週期券商嫁接成管理 $9.3T 的費用型複利機器，Great Wealth Transfer 驅動財富管理第二曲線（好公司貴起點，觀望等 P/TBV<3.3x/$183，已持倉續抱） | DCA_MS_20260615.html | DD_MS_20260615.html | — |
 | 2026-06-15 | GS | Goldman Sachs 是世界最難資本交易的可信對手方，正把波動投行收入轉成高 ROTCE 的 AWM 費用流（好公司錯價格，觀望等 cycle/valuation reset 至 P/TBV~2x/$700-800） | DCA_GS_20260615.html | DD_GS_20260615.html | — |
 | 2026-06-15 | ADBE | Adobe 把專業內容創作與 PDF 做成全球標準，被 GenAI 質疑專業還值不值錢，賭它從威脅變分發者 | DCA_ADBE_20260615.html | DD_ADBE_20260615.html | — |
+| 2026-06-15 | CRWD | CrowdStrike 用單一輕量 agent + 雲端 AI 看遍全球攻擊，看得越多防得越準（資料飛輪龍頭，頂級公司極端價格→觀望等回檔） | DCA_CRWD_20260615.html | DD_CRWD_20260615.html | — |
