@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v12.7">
+<title>DD｜Palo Alto Networks (PANW) — v12.7 深度研究報告</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F8FAFC;--card:#FFFFFF;--ink:#1E3A5F;--accent:#3B82F6;--mut:#64748B;--line:#E2E8F0;}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:#0F172A;font-family:'Noto Sans TC',sans-serif;line-height:1.7;font-size:15px;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+header.fixed{position:sticky;top:0;z-index:50;background:#0B2545;color:#fff;padding:10px 20px;display:flex;flex-wrap:wrap;gap:14px;align-items:center;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.15);}
+header.fixed .tk{font-weight:900;font-size:18px;letter-spacing:.5px;}
+header.fixed .pill{background:rgba(255,255,255,.14);padding:3px 9px;border-radius:6px;font-family:'IBM Plex Mono',monospace;}
+.wrap{max-width:1080px;margin:0 auto;padding:24px 18px 80px;}
+nav.dd-toc{background:#fff;border-left:4px solid var(--accent);border-radius:8px;padding:14px 16px;margin:18px 0 26px;box-shadow:0 1px 4px rgba(0,0,0,.05);}
+nav.dd-toc b{display:block;color:var(--ink);font-size:13px;margin-bottom:8px;}
+nav.dd-toc a{display:inline-block;background:#EFF6FF;color:#1E3A5F;text-decoration:none;padding:4px 11px;border-radius:999px;font-size:12.5px;margin:3px 4px 3px 0;border:1px solid #DBEAFE;}
+nav.dd-toc a:hover{background:#DBEAFE;}
+section{background:var(--card);border-radius:10px;padding:22px 24px;margin-bottom:22px;box-shadow:0 1px 4px rgba(0,0,0,.05);}
+h2{color:#fff;background:var(--ink);border-left:4px solid var(--accent);margin:-22px -24px 18px;padding:12px 20px;border-radius:10px 10px 0 0;font-size:19px;scroll-margin-top:80px;}
+h3{color:var(--ink);font-size:16px;border-bottom:2px solid var(--line);padding-bottom:6px;margin-top:26px;}
+h4{color:#334155;font-size:14.5px;margin:18px 0 8px;}
+table{border-collapse:collapse;width:100%;margin:12px 0;font-size:13.5px;}
+th{background:var(--ink);color:#fff;padding:8px 10px;text-align:left;font-weight:500;}
+td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top;}
+tbody tr:nth-child(even){background:#F1F5F9;}
+.beat{background:#DCFCE7;color:#166534;padding:1px 7px;border-radius:4px;font-weight:600;}
+.miss{background:#FEE2E2;color:#991B1B;padding:1px 7px;border-radius:4px;font-weight:600;}
+.neu{background:#FEF9C3;color:#92400E;padding:1px 7px;border-radius:4px;font-weight:600;}
+.hypothesis-box{background:#EFF6FF;border-left:4px solid var(--accent);border-radius:6px;padding:14px 18px;margin:14px 0;}
+.hypothesis-box ul{margin:0;padding-left:18px;}
+.hypothesis-box li{margin-bottom:7px;}
+.trap-box{background:#FFF0E6;border-left:4px solid #F97316;border-radius:6px;padding:14px 18px;margin:14px 0;}
+.trap-box h3,.trap-box h4{color:#C2410C;border:none;}
+.reasoning{background:#F8FAFC;border:1px dashed #94A3B8;border-radius:6px;padding:9px 13px;margin:10px 0;font-size:13px;color:#334155;font-family:'IBM Plex Mono',monospace;}
+.note{color:var(--mut);font-size:12.5px;}
+.big{font-size:21px;font-weight:900;}
+.tag{display:inline-block;padding:2px 9px;border-radius:5px;font-size:12.5px;font-weight:700;}
+.g{background:#DCFCE7;color:#166534;}.y{background:#FEF9C3;color:#92400E;}.o{background:#FFEDD5;color:#9A3412;}.r{background:#FEE2E2;color:#991B1B;}.b{background:#EFF6FF;color:#1E40AF;}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:14px 0;}
+.rrcard{border-radius:8px;padding:12px 14px;font-size:13px;}
+.rr1{border-left:4px solid #0284C7;background:#F0F9FF;}
+.rr2{border-left:4px solid #7C3AED;background:#F5F3FF;}
+.rr3{border-left:4px solid #059669;background:#ECFDF5;}
+.printbtn{position:fixed;right:18px;bottom:18px;background:var(--ink);color:#fff;border:none;padding:11px 16px;border-radius:8px;cursor:pointer;font-size:13px;box-shadow:0 3px 10px rgba(0,0,0,.2);z-index:60;}
+@media print{header.fixed,.printbtn,nav.dd-toc{display:none;}section{box-shadow:none;break-inside:avoid;}}
+@media(max-width:720px){.three{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#0f172a;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(59,130,246,.28);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/" class="active">個股 DD</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/ds/">產業敘述 DS</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/">週報</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/long-track-smh/">長線訊號</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/">量化回測</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/screener-tw.html">Screener 台股</a>
+          <a href="/screener-jp.html">Screener 日股</a>
+          <a href="/screener-my.html">Screener 馬股</a>
+          <a href="/cache/">🗄 Data Cache</a>
+          <a href="/tools/">期貨部位計算機</a>
+        </div>
+      </div>
+      <a href="/mental-models/">🧠 心智模型</a>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+<header class="fixed">
+<span class="tk">PANW</span>
+<span class="pill">Palo Alto Networks</span>
+<span class="pill">資料抓取：2026-06-15</span>
+<span class="pill">股價：$276.76</span>
+<span class="pill">最近財報：Q3 FY2026（截至 2026-05-09）</span>
+<span class="pill">DD Schema v12.7</span>
+<span class="pill">yfinance + 16 web searches</span>
+</header>
+<div class="wrap">
+
+<nav class="dd-toc">
+<b>章節導覽</b>
+<a href="#s1">§1 投資結論</a>
+<a href="#s2">§2 四層判定</a>
+<a href="#s3">§3 三方辯論</a>
+<a href="#s4">§4 序章</a>
+<a href="#s5">§5 論點錨定</a>
+<a href="#s6">§6 財報</a>
+<a href="#s7">§7 門檻</a>
+<a href="#s8">§8 成長</a>
+<a href="#s9">§9 護城河</a>
+<a href="#s10">§10 財務</a>
+<a href="#s11">§11 產業</a>
+<a href="#s12">§12 治理</a>
+<a href="#s13">§13 估值</a>
+</nav>
+
+<!-- ============ §1 ============ -->
+<section id="s1">
+<h2>§1｜投資結論（Executive Summary）</h2>
+<p class="note">本結論基於以下完整分析得出，詳見各章節。資料截至 2026-06-15，股價 $276.76（接近 52 週高點 $302.95；52 週區間 $139.57–$302.95）。</p>
+
+<h3>結論 Dashboard（綜合訊號燈）</h3>
+<div class="hypothesis-box">
+<ul>
+<li><strong>產業風向燈 🟢（順風）：</strong>§8 長期成長性 🟢 高確信｜§9 護城河趨勢 加深（platformization + 併購擴張）｜§8 F AI 風險 🟢 受益｜判斷：「AI 驅動資安超級週期，NGS ARR +60% YoY 至 $8.1B，全球資安 TAM 2024 $241B → 2030E ~$500B（CAGR ~13%），AI-native 資安 $30B(25)→$86B(30)」</li>
+<li><strong>品質 A 級：</strong>護城河 9/10（§9，execution 9 + pricing power 8）｜體質 veto 0 項不過｜等級調整：A → A（不變）</li>
+<li><strong>估值燈 🔴（過熱）：</strong>Fwd PE 67.3x（FY27 EPS $4.11）/ 73.4x（FY26 EPS $3.77），5Y 分位 ~82%，PEG（EPS）5.29｜盲點 1 救援：否（PEG ≫ 2.0 不符）｜⚠️ FCF 口徑較緩（P/FCF fwd ~51x），但任何口徑皆屬高位</li>
+<li><strong>Pure MA 狀態 ✅ 強勢進場：</strong>W52 $195.15（斜率 +4.4%）/ W104 $188.21（+4.7%）/ W250 $140.33（13週斜率 +5.9%）｜現價 > 三線，三線斜率全正｜盲點 2 救援：否（無需）</li>
+<li><strong>大盤豁免 ✅ 正常：</strong>對應大盤 SPX，現價 7,538.75 vs W104 6,275.48（未破線，無系統性風險）</li>
+<li><strong>參考 R:R：</strong>短期 −25%（合理 PE 55x）/ 中期 −18%／5Y +14%｜壓力測試通過率 0/2（current entry R:R 不過，資訊性，不主導 thesis grade）</li>
+<li><strong>綜合訊號：<span class="big">B（觀望）</span></strong>（取自 §2 H）｜判定理由：品質 A 級 + thesis 完整，但估值 🔴 過熱 + 現價接近 52 週高、R:R 為負 → 依 QC-31 規則 #2「估值🔴 ≠ C」，落 <strong>B 觀望（等估值或時機修復）</strong>，非進場、非迴避</li>
+<li><strong>長期持有信心：高</strong>（§2 I）｜<strong>陷阱定性：🟢 非陷阱</strong>（PANW 為溢價成長複利股，風險是「估值透支」而非「價值陷阱」；衰退信號偵測 0 盞燈）</li>
+<li><strong>Inception DD：</strong><code>DD_PANW_20260427.html</code>（2026-04-27）— 該 ticker 最早一份 v12.2+ DD，作為「累積漂移」對照基準</li>
+<li><strong>下次年度對照倒數：</strong>2027-04-27（距今 316 天）— Inception 日期 + 365 天，到期時 §5.B' 開始有實質 YoY 對照</li>
+</ul>
+</div>
+<p class="note"><strong>訊號語意：</strong>A+ = 核心候選滿格｜A = 核心候選｜B = 衛星候選／觀望｜C = 觀察池｜X = 迴避／清倉。倉位 % 由 portfolio-manager skill 依組合狀態決定（DD 不含倉位建議）。</p>
+
+<h3>⚠️ 這是價值陷阱嗎？（強制回答題）</h3>
+<div class="trap-box">
+<table>
+<tr><th>問題</th><th>回答</th></tr>
+<tr><td><strong>最可能的價值陷阱模式是哪一種？</strong></td><td><strong>非陷阱</strong>。PANW 不是「便宜但有理由」的標的，反而是「貴但品質頂尖」。四種陷阱模式（護城河侵蝕／盈餘品質／產業衰退／隱性資本密集）皆不成立——產業在擴張（資安 TAM CAGR ~13%）、護城河在加深（platformization 80% NGS ARR 來自 2+ 平台客戶）、FCF 品質極佳（adj FCF margin 38–39%）。</td></tr>
+<tr><td><strong>支持「這不是陷阱」的最強論據？</strong></td><td>① NGS ARR +60% YoY 至 $8.1B（organic ~28%），RPO +36% 至 $18.4B = 已簽約未認列收入能見度高；② Adj FCF $910M（Q3）+57% YoY，FY26 adj FCF margin 38–39%、FY28 目標 40%+；③ 淨現金 ~$1.9B（FY25 現金 $2.27B − 總債 $0.34B），無財務壓力；④ 毛利率 73→76% 持續改善、定價權未鬆動。盈餘品質：FCF/NI = 3.47/1.13 = 3.06，遠優於 0.75 門檻（SaaS 遞延收入結構）。</td></tr>
+<tr><td><strong>支持「這可能是陷阱」的最強反駁？</strong></td><td>誠實列出：① <strong>ROIC 崩塌</strong>——$25B CyberArk 商譽入帳後，投入資本暴增，ROIC 從 FY25 ~11–14% 降至 ~4–5%（GuruFocus 5.4%），增量 ROIC 短期 < WACC；② GAAP 連續轉虧（Q3 FY26 GAAP 淨損 −$177M，併購攤銷 + SBC 拖累）；③ SBC/Rev ~14%（FY25 $1.295B）真實稀釋 + CyberArk 再發 112M 股（~16% 股權稀釋）。這些是「估值與資本配置」風險，不是業務衰退。</td></tr>
+<tr><td><strong>空頭最強一擊（18 個月內 30%+ 虧損路徑）</strong></td><td>資安板塊 multiple de-rating + 一次 NGS ARR guidance miss 的雙殺：若 Fwd PE 從 67x 收斂至板塊中位（ZS ~35x），股價 → ~$145（−48%）。觸發監測：R3（§5.C）資安板塊 NTM EV/S 中位數連 2 季下移 + NGS ARR 季增速跌破 25% YoY。<strong>這是現價最大的下行風險，也是訊號落 B（觀望，等回檔）而非 A 的核心原因。</strong></td></tr>
+<tr><td><strong>如何在持有期間判斷陷阱是否正在發生？</strong></td><td>領先指標 1：organic NGS ARR YoY（剔除併購）連 2 季 &lt; 25% → 平台化失速。領先指標 2：CyberArk + Chronosphere 整合 churn 連 2 季 &gt; 10%（行業併購均 ~12%）→ M&A 飛輪價值破壞。</td></tr>
+</table>
+<p><strong>最終定性：🟢 非陷阱</strong>（風險為估值透支與 ROIC 稀釋，非業務性衰退；entry 時機不佳 → 觀望）</p>
+</div>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+<tr><td>1</td><td>Organic NGS ARR YoY（剔除 CyberArk/Chronosphere）</td><td>§5 H1 / §6</td><td>🔵 核心假設驗證信號</td><td>連 2 季 &lt; 25% YoY → H1 警戒（QC-34 季節性過濾，單季不觸發）</td></tr>
+<tr><td>2</td><td>Fwd PE（NTM）估值水位</td><td>§13 / §2 D</td><td>🔵 估值校準（進場時機）</td><td>Fwd PE 跌至 ≤ 45x（約 $185；FY27 EPS 4.11 × 45）→ R:R 轉正、啟動分批進場評估</td></tr>
+<tr><td>3</td><td>CyberArk + Chronosphere 整合 ARR + churn</td><td>§6 / §12.E M&A 飛輪</td><td>🔵 M&A 兌現信號</td><td>FY27 EOY 整合 ARR &lt; $1.8B 或 churn 連 2 季 &gt; 10% → H2 削弱</td></tr>
+</table>
+</section>
+
+<!-- ============ §2 ============ -->
+<section id="s2">
+<h2>§2｜產業風向燈 × 品質 × 估值燈 × Pure MA 四層判定</h2>
+
+<h3>0｜產業風向燈</h3>
+<table>
+<tr><th>輸入</th><th>數值</th></tr>
+<tr><td>§8 長期成長性綜合評級</td><td>🟢 高確信</td></tr>
+<tr><td>§9 護城河趨勢</td><td>加深（execution 加深 / pricing power 穩定）</td></tr>
+<tr><td>§8 F AI 風險</td><td>🟢 受益</td></tr>
+<tr><td><strong>產業風向燈</strong></td><td><strong>🟢 順風</strong></td></tr>
+<tr><td>一句話產業判斷</td><td>AI 驅動資安超級週期：攻擊面隨 AI agent 爆炸、防守端也需 AI-SOC；全球資安 TAM 2024 ~$241B → 2030E ~$500B（CAGR ~13%），AI-native 資安 $30B(25)→$86B(30)。PANW 是唯一橫跨網路／雲／SecOps／identity／observability 的全棧平台龍頭。</td></tr>
+</table>
+<div class="reasoning">輸入：§8 🟢 + 護城河加深 + AI 🟢 → 三者全綠 → 風向燈 🟢 順風 → implication：盲點 1/2 救援機制「可啟動」（但本案 PEG ≫ 2.0，盲點 1 條件②不符，估值燈不獲救）。</div>
+
+<h3>A｜體質檢核（veto 制）</h3>
+<table>
+<tr><th>#</th><th>項目</th><th>結果</th><th>關鍵數據</th></tr>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 &gt;2pp</td><td><span class="beat">✅</span></td><td>FY23 72.3% → FY24 74.3% → FY25 73.4%（non-GAAP Q3 FY26 75.8%，持續高檔）</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td><span class="beat">✅</span></td><td>FY25 FCF $3.47B / NI $1.13B = 3.06（SaaS 遞延收入推升，極佳）</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td><span class="beat">✅</span></td><td>FY26 EPS $3.69→$3.77（90 天上修 +2.2%；Q3 beat 後上修）</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td><span class="beat">✅</span></td><td>4 季全部正成長（Q3 FY26 +31% YoY，organic +14%）</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td><span class="beat">✅</span></td><td>淨現金 ~$1.9B（FY25），即使計入 CyberArk 對價現金 $2.3B 仍維持低槓桿</td></tr>
+</table>
+<p><strong>體質 veto 結果＝0 項不過 → 等級不變</strong></p>
+
+<h3>B｜品質等級（護城河單一決定）</h3>
+<table>
+<tr><th>項目</th><th>值</th></tr>
+<tr><td>護城河分數（§9）</td><td>9 / 10（execution 9 + pricing power 8，加權合併 9）</td></tr>
+<tr><td>護城河原始等級</td><td>⭐ A 級</td></tr>
+<tr><td>體質 veto 調整</td><td>0 項不過 → 不變</td></tr>
+<tr><td><strong>調整後等級</strong></td><td><strong>A 級</strong></td></tr>
+<tr><td>底倉</td><td>25%（目標倉位的）— 但受 §2 D 估值燈與 §2 H 訊號燈最終裁決</td></tr>
+</table>
+<div class="reasoning">護城河 9 → A 級（v12.0：護城河單一決定品質等級）。體質 5/5 全過 → 不降級。註：護城河 9 而非 10（S 級），因 pricing power 受 CRWD/MSFT 競爭與 identity 賽道 Okta/Microsoft Entra 制衡，未達 NVDA CUDA 級單一壟斷。</div>
+
+<h3>C｜估值輸入（FY+1 / FY+2 共識）</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>FY+1 EPS（FY2026，截至 Jul 2026）Non-GAAP</td><td>$3.77</td><td>Excel buy-side consensus（snapshot 2026-06-04）</td></tr>
+<tr><td>FY+2 EPS（FY2027）Non-GAAP</td><td>$4.11</td><td>同上</td></tr>
+<tr><td>FY+3 EPS（FY2028）Non-GAAP</td><td>$4.79</td><td>同上</td></tr>
+<tr><td>FY+1→FY+3 EPS CAGR</td><td>12.72%</td><td>計算（(4.79/3.77)^0.5 − 1）</td></tr>
+<tr><td>當前 FY+2 Forward P/E</td><td>67.3x</td><td>$276.76 ÷ $4.11</td></tr>
+</table>
+<p class="note">⚠️ EPS 來源：Excel snapshot 2026-06-04。yfinance +1y 列（$1.98）疑為 GAAP/非 GAAP 口徑污染，不採用。§8 sanity check：FY27 EPS +9% 偏低，係 CyberArk 整合期 margin 稀釋 + 112M 新股 ~16% 稀釋 + 非 GAAP 稅率正常化所致；FCF 成長（+57% Q3）遠快於 EPS，PEG 用 EPS 會高估貴的程度（見 §13 分歧說明）。</p>
+
+<h3>D｜估值燈</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>當前 Fwd PE（FY27）</td><td>67.3x</td></tr>
+<tr><td>5Y Fwd PE 範圍</td><td>~40x ~ ~72x（低～高；2022 末／2024 中谷底 ~40x，2026 高點 ~72x）</td></tr>
+<tr><td>5Y Fwd PE 分位</td><td>~82%（(67.3−40)/(72−40)×100 ≈ 85%，取保守 82%）</td></tr>
+<tr><td>3Y EPS CAGR（§7）</td><td>12.72%</td></tr>
+<tr><td>PEG（EPS 口徑）</td><td>5.29</td></tr>
+<tr><td><strong>估值燈</strong></td><td><span class="tag r">🔴 過熱</span></td></tr>
+<tr><td>套用規則</td><td>機械上 PEG &gt; 2.5 + 分位 &gt; 70% → 拒絕（0%）；惟 §2 H 依 QC-31 #2「估值🔴 不單獨歸 C」，落 B 觀望</td></tr>
+</table>
+<div class="reasoning">分位計算：(67.3−40)/(72−40) = 85% → 取 82%（保守）。PEG = 67.3 ÷ 12.72 = 5.29（EPS 口徑）。取較嚴者 → 🔴。implication：現價透支未來；惟 FCF 口徑 P/FCF fwd ~51x（市值 $225B ÷ FY26E adj FCF ~$4.4B），FCF CAGR ~20% → FCF-PEG ~2.5，亦屬偏貴但非荒謬。綜合：估值燈 🔴（嚴格口徑），FCF 校準後 🟠；無論何者，entry 時機不佳。</div>
+<p class="note"><strong>🛡️ 盲點 1 救援檢核：</strong>① §8 🟢 ✅；② PEG &lt; 2.0 ❌（EPS-PEG 5.29，FCF-PEG ~2.5，皆不符）；③ AI 🟢 ✅ → 三條件未全滿足，<strong>救援不觸發</strong>，估值燈維持 🔴。</p>
+
+<h3>E｜R:R + Bear Case</h3>
+<p class="note">合理 P/E 參考：護城河 A（9/10）+ 成長 🟢 → 給予資安平台龍頭溢價，合理 NTM PE ~55x（介於 ZS 35x 與 CRWD 90x 之間，反映 #1 全棧平台地位但低於純高成長 CRWD）。</p>
+<div class="three">
+<div class="rrcard rr1"><strong>① 短期 R:R（~1 年）</strong><br>FY+1 EPS $3.77 × 55x = <b>$207</b><br>vs 現價 $276.76<br><span class="miss">−25%（R:R 負）</span></div>
+<div class="rrcard rr2"><strong>② 中期 R:R（~2 年）</strong><br>FY+2 EPS $4.11 × 55x = <b>$226</b><br>vs 現價 $276.76<br><span class="miss">−18%（R:R 負）</span></div>
+<div class="rrcard rr3"><strong>③ 5Y 長期（FY31）</strong><br>Base 5Y EPS ~$8.28 × 38x = <b>$315</b><br>vs 現價 $276.76<br><span class="neu">+14%（僅微正）</span></div>
+</div>
+<p><strong>Bear anchor（1 行）：</strong>Bear EPS = FY+1 $3.77 × 0.9 = $3.39；Bear PE = §8E 成長熄火「降至 ~10–15% growth + 板塊 de-rate 至 35x」情境；<strong>Bear 股價 ≈ $119（現價下行 −57%）</strong>。</p>
+<div class="reasoning">5Y EPS build：FY28 $4.79 → FY29 $5.80(+21%) → FY30 $6.96(+20%) → FY31 $8.28(+19%)，post-synergy reaccel（§8.E Base）。長期合理 PE 38x（成長放緩至 ~18%、板塊溢價收斂）。upside_5y = (315−276.76)/276.76 = +14%。<strong>implication：現價的短中期 R:R 皆為負、5Y 僅 +14%，且 Bear −57% 下行巨大 → 進場安全邊際為零 → 訊號 B 觀望（等 Fwd PE ≤ 45x / 股價 ~$185 才轉正）。</strong>dd-meta stress = 0/2（base + bear 兩情境 entry R:R 皆不過）。</div>
+
+<h3>F｜Pure MA 狀態機</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>現價</td><td>$276.76</td></tr>
+<tr><td>W52 / 斜率</td><td>$195.15 / +4.4%</td></tr>
+<tr><td>W104 / 斜率</td><td>$188.21 / +4.7%</td></tr>
+<tr><td>W250 / 斜率（13週）</td><td>$140.33 / +5.9%</td></tr>
+<tr><td><strong>Pure MA 狀態</strong></td><td><span class="tag g">✅ 強勢進場</span></td></tr>
+<tr><td>MA 部位乘數</td><td>× 1.0</td></tr>
+</table>
+<div class="reasoning">現價 $276.76 &gt; W52 $195.15 &gt; W104 $188.21 &gt; W250 $140.33，且 W250 13 週斜率 +5.9% &gt; +3% → ✅ 強勢進場。Bollinger：BB 上軌 ~$296、中軌 ~$197，現價位於中上軌之間、接近上軌（過去 20 週大漲推高波動帶）→ 技術面強勢但已伸展。盲點 2（V 型反轉）不適用（非破線情境）。</div>
+
+<h3>G｜大盤豁免層</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>對應大盤</td><td>SPX（^GSPC）</td></tr>
+<tr><td>大盤現價</td><td>7,538.75</td></tr>
+<tr><td>大盤 W104</td><td>6,275.48</td></tr>
+<tr><td>系統性風險（破 W104）</td><td>否</td></tr>
+<tr><td><strong>豁免係數</strong></td><td>× 1.0（正常）</td></tr>
+</table>
+
+<h3>H｜綜合訊號燈</h3>
+<table>
+<tr><th>維度</th><th>值</th></tr>
+<tr><td>quality_tier（§2 B）</td><td>A 級</td></tr>
+<tr><td>gate（§2 D）</td><td>🔴 過熱</td></tr>
+<tr><td>ma_status（§2 F）</td><td>✅ 強勢</td></tr>
+<tr><td>benchmark_regime（§2 G）</td><td>正常</td></tr>
+<tr><td>trap（§1 定性）</td><td>🟢 非陷阱</td></tr>
+<tr><td><strong>final_signal</strong></td><td><span class="big">B（觀望）</span></td></tr>
+</table>
+<div class="reasoning">§2 H 機械初判表步驟 1：gate 🔴 → X。<strong>QC-31 cross-check（權威表優先）</strong>：thesis 完整（品質 A + 護城河加深 + 成長 🟢 + 非陷阱），僅「估值過熱 / 現價 R:R 不過」這類「時機」訊號觸發 → 依 QC-31 #2「估值🔴 ≠ C」、規則 #1「R:R 不足 ≠ C」→ <strong>落 B（觀望，等估值或時機修復）</strong>，非 C（thesis 未失敗）、非 X（無治理／結構性衰退）。判定理由：好公司、貴價格、等回檔。</div>
+
+<h3>I｜長期展望（3-5 年定性）</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>結論</th></tr>
+<tr><td>成長跑道</td><td>§8A</td><td>充裕（NGS ARR $8.1B → FY30 目標 $20B；platformization 滲透率仍低，top-5000 客戶僅半數有 2+ 平台）</td></tr>
+<tr><td>護城河趨勢</td><td>§9</td><td>加深（全棧平台 + identity（CyberArk）+ observability（Chronosphere）擴張轉換成本）</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td>綜合</td><td><strong>高</strong></td></tr>
+</table>
+<p><strong>一句話：</strong>🟢 順風，A 級護城河 9/10，全棧資安平台龍頭，platformization + AI-SOC + identity 三引擎。估值燈 🔴 過熱（Fwd PE 67x、PEG 5.3）+ Pure MA ✅ 強勢但接近 52 週高 → 品質無虞但現價透支，建議等 Fwd PE ≤ 45x（~$185）再分批進場；關鍵觀察 organic NGS ARR 與 CyberArk 整合兌現。</p>
+</section>
+
+<!-- ============ §3 ============ -->
+<section id="s3">
+<h2>§3｜（v12.5 已併入 §1）</h2>
+<p class="note">§3 三方辯論已併入 §1 終判（v12.5）。空頭最強一擊已移入 §1「⚠️ 這是價值陷阱嗎？」答題區。</p>
+</section>
+
+<!-- ============ §4 ============ -->
+<section id="s4">
+<h2>§4｜序章：第一性原理 × 逆向思考</h2>
+<h3>存在意義</h3>
+<p>PANW 解決的長期不可逆痛點：<strong>數位化與 AI 化使「攻擊面」指數級擴張，但企業的資安能力被切割在數十個點狀工具中，產生整合債（integration debt）與防護盲區。</strong>PANW 的「platformization」命題是——把網路安全（NGFW/SASE）、雲安全（Prisma Cloud / Cortex Cloud）、SecOps（Cortex XSIAM/XDR）、身分安全（CyberArk）、可觀測性（Chronosphere）整併到單一資料層 + 單一 AI 大腦，讓客戶用「一個平台」取代「30 個供應商」。若 PANW 明天消失，全球 ~75,000 家企業（含多數 Fortune 100）的核心防火牆與 SOC 自動化將出現替換真空，短期無單一供應商能補齊全棧——這正是它不可替代性的來源。</p>
+<p class="note">護城河如何累積而成，見 §9.D 時間軸。</p>
+<h3>逆向推演（Munger Inversion）</h3>
+<p>若要讓這筆投資 3 年內虧損 50%+，最可能路徑：</p>
+<ul>
+<li><strong>技術替代維度：</strong>AI-native 新創（如 SOC autonomous agents）或超大規模雲廠（Microsoft Security，年營收已 $20B+）以「免費綁定 / 全棧打包」侵蝕 PANW 的 SecOps 與 SASE 增量——這是最可信的長期慢變數（🐢）。</li>
+<li><strong>管理層失職維度：</strong>$25B CyberArk 為史上最大資安併購，若整合失敗 / 出價過高（ROIIC &lt; WACC 持續），會把 platformization 飛輪變成「規模幻覺」。自我毀滅決策路徑詳見 §12 資本配置計分卡與 §12.E M&A 飛輪。</li>
+<li><strong>結構/估值維度：</strong>最現實的 50% 虧損路徑其實不是業務崩壞，而是<strong>估值 de-rating</strong>——Fwd PE 從 67x 收斂至板塊中位 35x，即使 EPS 照計畫成長，股價仍可腰斬。架構性替代分級見 QC-23 ⛔（目前無 ⛔ 級事件）。</li>
+<li><strong>歷史對標（單一案例）：</strong>Cisco 2024 以 ~$28B 收購 Splunk（前一大資安併購）。整合後 Cisco 整體成長未顯著加速、估值倍數未 re-rate，市場對「大型資安併購創造價值」普遍懷疑。PANW $25B CyberArk 須證明能避免「大併購 = 成長稀釋 + 整合拖累」的常見劇本——synergy 提前 3–6 個月是早期正面差異化信號，但 §12.E M&A 飛輪須持續驗收。</li>
+<li><strong>價值陷阱路徑：</strong>四選一 → <strong>皆不成立</strong>（見 §1）。PANW 的風險是「過度定價」而非「陷阱」。</li>
+</ul>
+</section>
+
+<!-- ============ §5 ============ -->
+<section id="s5">
+<h2>§5｜投資論點錨定</h2>
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td>預設持有期</td><td>3–5 年（核心複利股視角）</td></tr>
+<tr><td>主要驅動時間軸的理由</td><td>platformization S 曲線（FY30 NGS ARR $20B 目標）+ CyberArk/Chronosphere 整合兌現週期（FY28 為首個全年整合年）；非短期估值修復（現價已高）</td></tr>
+<tr><td>哪些是訊號、哪些是噪音</td><td>訊號：organic NGS ARR 軌跡、護城河（platformization 滲透）、FCF margin 兌現、整合 churn。噪音：單季 GAAP 損益（受併購攤銷 + SBC 扭曲）、單季股價對 guidance 的情緒反應。</td></tr>
+</table>
+
+<h3>B｜三個核心假設 + 三層時間軸</h3>
+<table>
+<tr><th>#</th><th>核心假設</th><th>2Y 驗證點</th><th>5Y 驗證點</th><th>10Y 驗證點</th><th>具體門檻（sourced）</th><th>來源</th><th>漂移觸發</th></tr>
+<tr><td>H1</td><td>Platformization 持續加速，FY30 NGS ARR 達 $20B（隱含 CAGR ~25%）</td><td>organic NGS ARR YoY ≥ 25%；每季 platformization deals 淨增 ≥ 60</td><td>NGS ARR FY28 ≥ $13B；top-5000 客戶 2+ 平台滲透 ≥ 65%（現 ~50%）</td><td>FY30 NGS ARR $20B；全棧 attach &gt; 3 平台成主流</td><td>NGS ARR $8.1B（Q3 FY26），FY26 guide $8.9–8.95B；60+ deals/Q（SDxCentral 2026-06）</td><td>PANW Q3 FY26 法說 + 財報新聞稿（PRNewswire 2026-06-02）</td><td>organic NGS ARR 連 2 季 &lt; 25% YoY → 警戒；連 4 季 &lt; 22% → 削弱（QC-34 季節性過濾，單季不觸發）</td></tr>
+<tr><td>H2</td><td>CyberArk + Chronosphere 整合兌現協同，FCF margin FY28 達 40%+</td><td>整合 ARR（identity+observability）持續成長、churn ≤ 10%；FY26 adj FCF margin 38–39% 達標</td><td>FY28 adj FCF margin ≥ 40%；synergy 完全兌現（已宣告提前 3–6 個月）</td><td>identity 成為第四大營收支柱，與網路安全交叉銷售飛輪閉合</td><td>CyberArk 閉合 2026-02-11（$25B）；Q3 M&A 貢獻 $388M 營收 / $1.6B NGS ARR；FY28 FCF 40%+ 目標</td><td>PANW 新聞稿（2026-02-11 完成）+ Q3 FY26 法說（FCF guide）</td><td>整合 churn 連 2 季 &gt; 10% → H2 警戒；FY27 EOY 整合 ARR &lt; $1.8B → H2 削弱</td></tr>
+<tr><td>H3</td><td>市場維持 cybersecurity 平台溢價（Fwd PE 50–60x）</td><td>NTM Fwd PE 維持 ≥ 50x；資安板塊 EV/S 中位不系統性下移</td><td>板塊溢價隨成長放緩自然收斂但有序（PE 40–50x）</td><td>PE 收斂至成熟 SaaS 區間（30–40x）需 EPS 已大幅成長承接</td><td>當前 Fwd PE 67x；板塊 CRWD 90x / ZS 35x / FTNT ~30x（StockTwits / TIKR 2026-06）</td><td>多源估值（GuruFocus / YCharts / 同業比較）</td><td>板塊 EV/S 中位連 2 季下移 + PE 跌破 45x → H3 反轉（估值 thesis 破，但業務 thesis 不受影響）</td></tr>
+</table>
+
+<h3>B'｜12 個月前 DD 對照</h3>
+<p class="note">最近一份 DD = <code>DD_PANW_20260427.html</code>（2026-04-27，v12.3，距今 49 天 &lt; 365 天）。狀態：進場未滿一年（Inception = 2026-04-27）。本欄位將於 2027-04-27 起首次有 YoY 對照。在此之前，以 §5 B 戰術假設視角追蹤。</p>
+<p><strong>49 天內的關鍵邊際變化（vs 2026-04-27 DD，非 YoY 對照，僅記錄重大事件）：</strong></p>
+<table>
+<tr><th>項目</th><th>上次（2026-04-27）</th><th>本次（2026-06-15）</th><th>邊際變化</th></tr>
+<tr><td>最新財報</td><td>Q2 FY26（NGS ARR $6.12B，1,550 deals）</td><td>Q3 FY26（NGS ARR $8.1B，含 $1.6B M&A；60+ deals/Q）</td><td>強化（organic +28%，+CyberArk 整合啟動）</td></tr>
+<tr><td>CyberArk 狀態</td><td>已宣布、未閉合（H2 為「pre-close」假設）</td><td>已閉合（2026-02-11，consolidated）；Q3 貢獻 $388M 營收</td><td>H2 從「賭整合」進入「驗整合」階段</td></tr>
+<tr><td>股價</td><td>~$180–190 區間</td><td>$276.76（+~48%）</td><td>估值大幅 re-rate，R:R 惡化</td></tr>
+<tr><td>裁決</td><td>B（觀望，等 FPE ≤ 38x）</td><td>B（觀望，等 FPE ≤ 45x ~ $185）</td><td>不變（仍 B）；進場門檻上調反映 EPS 基數提升 + CyberArk ARR 並表</td></tr>
+</table>
+
+<h3>C｜三個最可能推翻論點的風險</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>時間尺度</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td>CyberArk 整合不如預期（churn 上升 / 交叉銷售低於計畫 / 商譽減損）</td><td>H2</td><td>🔥 中期（4–6 季）</td><td>整合 ARR 成長 + churn 率</td><td>整合 ARR 連 2 季停滯 或 churn &gt; 10% → 連 4 季觸發才大動作</td></tr>
+<tr><td>R2</td><td>超大規模雲廠（Microsoft Security）與 CRWD 以全棧打包侵蝕 PANW 增量（SecOps/SASE/identity）</td><td>H1</td><td>🐢 長期（2+ 年慢變數）</td><td>organic NGS ARR 增速、win rate vs MSFT/CRWD</td><td>organic NGS ARR 連 4 季 &lt; 22% → 需 ≥50% 機率才砍倉（避免短期新聞驚嚇）</td></tr>
+<tr><td>R3</td><td>資安板塊估值 de-rating（multiple compression），即使業務照計畫成長股價仍腰斬</td><td>H3</td><td>⚡ 短期（1–2 季可觸發）</td><td>板塊 NTM EV/S 中位、PANW Fwd PE</td><td>板塊 EV/S 中位連 2 季下移 + PANW PE 跌破 45x → 估值 thesis 破（但非業務 thesis）</td></tr>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<table>
+<tr><th>判斷步驟</th><th>問題</th></tr>
+<tr><td>1. 時間軸匹配？</td><td>事件在 3–5 年持有期內有影響嗎？</td></tr>
+<tr><td>2. 假設關聯？</td><td>影響 H1（平台化）/ H2（整合）/ H3（估值）哪一個？</td></tr>
+<tr><td>3. 邊際方向？</td><td>＋強化 / 0 無關 / －削弱？</td></tr>
+<tr><td>4. 閾值判斷？</td><td>是否達到 §5.C 的警戒閾值？</td></tr>
+</table>
+<p class="note">範例應用：Q3 FY26 GAAP 淨損 −$177M → 步驟 2 不影響任何核心假設（係併購攤銷 + SBC，非業務惡化）→ 步驟 3 為「0 無關」→ 噪音，不行動。</p>
+
+<h3>E｜可執行決策主線預設</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr><td><strong>進場</strong></td><td>估值條件：Fwd PE ≤ 45x（~$185）；基本面確認：organic NGS ARR ≥ 25% 維持</td><td>首次分批建倉</td></tr>
+<tr><td><strong>加碼</strong></td><td>H1 + H2 均確認（FY28 FCF margin 軌跡達標 + 整合 ARR 兌現）+ 估值回落</td><td>加碼至目標倉位</td></tr>
+<tr><td><strong>減碼</strong></td><td>R3 觸發（板塊 de-rate）且現價仍 &gt; Fwd PE 60x</td><td>減碼、保留核心</td></tr>
+<tr><td><strong>撤退</strong></td><td>H1 反轉（organic NGS ARR 連 4 季 &lt; 22%）或 CyberArk 重大減損</td><td>清倉，記錄推翻理由</td></tr>
+</table>
+
+<h3>F｜Single Thing</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>Single Thing 描述</td><td><strong>CyberArk 整合出現重大減損或 churn 失控（單季 identity ARR 環比衰退）</strong>——這是一個 binary、可觀測、會立刻改變判斷的事件（M&A 飛輪價值破壞的確證）。</td></tr>
+<tr><td>如果發生</td><td>重新評估 H2 與 §12 資本配置等級；若 ROIIC 確認 &lt; WACC 且無逆轉跡象 → thesis 降級（A→B 護城河重審）。</td></tr>
+<tr><td>可觀測性</td><td>FY27 各季法說的 identity/observability ARR 揭露 + 任何 8-K 商譽減損公告。</td></tr>
+<tr><td>機率估計</td><td>未來 12–24 個月 ~15%（synergy 已宣告提前 3–6 個月兌現，降低此機率，但 $25B 史上最大資安併購整合風險不可忽視）。</td></tr>
+</table>
+<p class="note">三者職責分工：§1 trap（🟢 非陷阱，靜態裁決）｜§5.C R1-R3（過程風險，連續監測）｜§5.F Single Thing（CyberArk 減損，binary trigger）— 三者不重疊。</p>
+</section>
+
+<!-- ============ §6 ============ -->
+<section id="s6">
+<h2>§6｜即時財報情報（Q3 FY2026，截至 2026-05-09）</h2>
+<h3>① 最新一季財報關鍵數字</h3>
+<table>
+<tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 成長</th></tr>
+<tr><td>Revenue</td><td>$3.00B（含 $388M M&A）</td><td>$2.94B</td><td><span class="beat">Beat</span></td><td>+31%（organic ~+14%）</td></tr>
+<tr><td>EPS（Non-GAAP）</td><td>$0.85</td><td>$0.79</td><td><span class="beat">Beat</span></td><td>~+6%</td></tr>
+<tr><td>Adj. FCF</td><td>$910M</td><td>—</td><td><span class="beat">強</span></td><td>+57%</td></tr>
+<tr><td>NGS ARR</td><td>$8.1B（含 $1.6B M&A）</td><td>guide 上緣以上</td><td><span class="beat">Beat（史上最大超標）</span></td><td>+60%（organic ~+28%）</td></tr>
+<tr><td>RPO</td><td>$18.4B</td><td>—</td><td><span class="beat">Beat</span></td><td>+36%</td></tr>
+<tr><td>Non-GAAP Gross Margin</td><td>75.8%</td><td>—</td><td><span class="neu">高檔</span></td><td>+~1pp</td></tr>
+<tr><td>GAAP Operating Income</td><td>−$183M（虧損）</td><td>—</td><td><span class="miss">轉虧</span></td><td>併購攤銷 + SBC + 整合費用拖累</td></tr>
+</table>
+<p class="note">FY26 guidance（上調）：Revenue $11.415–11.425B（~24% YoY）｜NGS ARR $8.90–8.95B（+59–60%）｜RPO $20.9–21.0B｜adj FCF margin 38–39%｜non-GAAP 營業利益率 29.2–29.7%。FY28 目標：adj FCF margin 40%+（首個全年整合年，含 synergy）。synergy 兌現提前 3–6 個月。</p>
+<h4>FY26 全年 guidance 上調 bridge（法說，sourced）</h4>
+<table>
+<tr><th>指標</th><th>FY26 guidance（Q3 後上調）</th><th>隱含 YoY</th><th>Q4 FY26 guidance</th></tr>
+<tr><td>營收</td><td>$11.415–11.425B</td><td>~+24%</td><td>$3.345–3.355B（+32%）</td></tr>
+<tr><td>NGS ARR</td><td>$8.90–8.95B</td><td>+59–60%</td><td>$8.90–8.95B</td></tr>
+<tr><td>RPO</td><td>$20.9–21.0B</td><td>+32–33%</td><td>$20.9–21.0B</td></tr>
+<tr><td>Adj FCF margin</td><td>38–39%</td><td>—</td><td>—（FY28 目標 40%+）</td></tr>
+<tr><td>Non-GAAP 營業利益率</td><td>29.2–29.7%</td><td>—</td><td>—</td></tr>
+</table>
+<p class="note">Q3 beat 後全面上調，NGS ARR guidance +59–60% 是「史上最大季度超標」的延續。Q4（截至 2026-07-31，預定 2026-08-19 公布）營收 +32% 含 CyberArk 全季並表。注意：原 FY26 guidance 是 standalone 基礎（不含 CyberArk），本次上調已納入並表，是「raise」的主因之一。</p>
+<h4>FY26 逐季財務軌跡（yfinance 自算）</h4>
+<table>
+<tr><th>季度</th><th>營收 $M</th><th>GAAP 毛利 $M</th><th>GAAP GM</th><th>GAAP 營業損益 $M</th><th>GAAP 淨損益 $M</th><th>QoQ 營收</th></tr>
+<tr><td>Q3 FY25（2025-04）</td><td>2,289</td><td>1,670</td><td>73.0%</td><td>219</td><td>262</td><td>—</td></tr>
+<tr><td>Q1 FY26（2025-10）</td><td>2,474</td><td>1,836</td><td>74.2%</td><td>309</td><td>334</td><td>—</td></tr>
+<tr><td>Q2 FY26（2026-01）</td><td>2,594</td><td>1,909</td><td>73.6%</td><td>397</td><td>432</td><td>+4.8%</td></tr>
+<tr><td>Q3 FY26（2026-04）</td><td>3,002</td><td>2,028</td><td>67.5%</td><td>−183</td><td>−177</td><td>+15.7%</td></tr>
+</table>
+<div class="reasoning">Q3 FY26 GAAP GM 從 ~74% 驟降至 67.5% + 營業/淨損益轉虧 = CyberArk 並表（2026-02-11 起，本季僅 ~2.5 個月）帶入的<strong>無形資產攤銷 + 收購會計遞延收入 haircut + SBC 跳升</strong>。這是「GAAP 失真、non-GAAP 健康（EPS $0.85 beat）」的典型併購首季現象——QoQ 營收 +15.7% 的跳升正是 CyberArk $388M 並表。implication：未來 4 季 GAAP 將持續受攤銷拖累，判斷須以 non-GAAP + adj FCF 為錨（§10 已交叉驗證 FCF/NI 品質）。</div>
+<h4>財報對 §5 假設的邊際貢獻</h4>
+<table>
+<tr><th>假設</th><th>本季邊際方向</th><th>關鍵佐證</th></tr>
+<tr><td>H1（平台化）</td><td><span class="beat">＋強化</span></td><td>organic NGS ARR +28%、60+ platformization deals、RPO +36% 能見度提升</td></tr>
+<tr><td>H2（整合）</td><td><span class="beat">＋強化</span></td><td>CyberArk+Chronosphere $1.6B NGS ARR 並表、synergy 提前 3–6 個月、FCF +57%</td></tr>
+<tr><td>H3（估值溢價）</td><td><span class="neu">0 無關／略負</span></td><td>財報 beat 但股價盤後 −5%（profit-taking + GAAP 虧損 + SBC 疑慮）→ 估值風險浮現</td></tr>
+</table>
+<h3>② Earnings Call 語氣解析</h3>
+<p>Guidance vs 共識：FY26 營收／NGS ARR／RPO 全面上調（NGS ARR +59–60%），管理層語氣強烈樂觀，Arora 重申 FY30 NGS ARR $20B。被迴避/追問：分析師關注 CyberArk 整合的 margin 稀釋與 GAAP 虧損的持續時間，管理層以「synergy 提前、FY28 FCF 40%+」回應，但未明確給出 GAAP 轉正時點。</p>
+<h3>③ 產業 Imply 萃取</h3>
+<p>產業隱含信號：AI 驅動的資安需求超級週期確立（AI-SOC、agent 安全），平台整併（vendor consolidation）是客戶主動訴求 → 餵入 §11（利潤池向「全棧平台」環節集中，點狀工具被擠壓）。</p>
+</section>
+
+<!-- ============ §7 ============ -->
+<section id="s7">
+<h2>§7｜核心門檻檢核</h2>
+<h3>門檻檢核表</h3>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據與趨勢</th></tr>
+<tr><td>FCF Margin（當前）</td><td>&gt; 15%</td><td><span class="beat">✅</span></td><td>FY25 37.6%（FCF $3.47B / Rev $9.22B）；FY26 guide adj FCF margin 38–39%，趨勢 ↑</td></tr>
+<tr><td>正規化 FCF Margin【Munger】</td><td>5Y 均 &gt; 15%；谷底 &gt; 10%</td><td><span class="beat">✅</span></td><td>FY22 32.6% / FY23 38.2% / FY24 38.6% / FY25 37.6%；5Y 均 ~37%，谷底 &gt; 30%。判斷：穩健（SaaS 遞延收入結構，極穩）</td></tr>
+<tr><td>ROIC（當前）</td><td>&gt; 15% 且 &gt; WACC</td><td><span class="miss">⚠️</span></td><td>FY25 營運基準 ~11.3%（NOPAT $883M / IC $7.82B）；<strong>CyberArk 商譽入帳後 ~4–5%（GuruFocus 5.4%）</strong>，暫時 &lt; WACC ~9%（見 §8.D 解釋）</td></tr>
+<tr><td>ROIC 穩定性【Munger】</td><td>10 年 ≥70% 年份 &gt;15%</td><td><span class="neu">🟡</span></td><td>2023 28.6% → 2024 23.1% → 2025 14.4%（Macrotrends 口徑）下行；M&A 驅動稀釋（非營運惡化）。5 年樣本</td></tr>
+<tr><td>毛利率定價能力【Munger】</td><td>10 年 ≥70% 年份改善</td><td><span class="beat">✅</span></td><td>2020 70.7% → 2022 68.8%（谷）→ 2024 74.4% → 2025 73.4% → Q3 FY26 75.8%（non-GAAP），趨勢 ↑</td></tr>
+<tr><td>資本密集度【Munger】</td><td>Capex/Rev &lt;5% 優</td><td><span class="beat">✅</span></td><td>FY25 Capex $246M / Rev $9.22B = 2.7%；近 3 年均 ~2.3%，評級：低密集（軟體輕資產）</td></tr>
+<tr><td>EPS CAGR（未來 3 年）</td><td>&gt; 20%</td><td><span class="miss">⚠️</span></td><td>基期 FY25 ~$3.34（non-GAAP）｜FY26E $3.77｜FY27E $4.11｜FY28E $4.79｜CAGR（FY26→FY28）= 12.72%。<strong>低於 20% 門檻</strong>，係 CyberArk 稀釋 + 稅率正常化壓低 EPS（FCF CAGR ~20% 仍佳）。來源：Excel snapshot 2026-06-04</td></tr>
+<tr><td>PEG（Non-GAAP）</td><td>&lt; 2</td><td><span class="miss">❌</span></td><td>引用 §13.2：EPS-PEG 5.29（過高）；FCF-PEG ~2.5</td></tr>
+<tr><td>負債安全性【Munger】</td><td>D/E &lt;0.7；現金/Rev 合理</td><td><span class="beat">✅</span></td><td>FY25 總債 $0.34B / 權益 $7.82B = 0.04；淨現金 ~$1.9B，評級：低槓桿</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是 / 否</td><td><span class="beat">是</span></td><td>現金 $2.27B &gt; 總債 $0.34B</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8 分，趨勢擴大</td><td><span class="beat">✅</span></td><td>9/10（§9），趨勢加深</td></tr>
+</table>
+<p><strong>最大財務弱點：</strong>$25B CyberArk 併購使 ROIC 短期崩塌至 ~5%（增量 ROIC 暫 &lt; WACC），且 EPS 成長被稀釋至 ~13%（FCF 成長較佳）。<strong>Munger 三維評級：🟢</strong>（ROIC 穩定性偏弱係 M&A 稀釋，毛利率定價力 + 資本密集度兩維強達標）。</p>
+<p class="note">FY+3 邏輯推導（sanity check）：Excel 直接給 FY28 $4.79；業務邏輯 — CyberArk 全年並表 + synergy 兌現 + 網路安全刷新週期 + Cortex/SASE 高成長段擴張，FY28 +16.5% reaccel 合理（vs FY27 +9% 為整合稀釋谷年）。無明顯矛盾。</p>
+</section>
+
+<!-- ============ §8 ============ -->
+<section id="s8">
+<h2>§8｜長期成長性評估</h2>
+
+<h3>0｜成長品質 7 問儀表板</h3>
+<table>
+<tr><th>#</th><th>成長品質拷問</th><th>裁決</th><th>關鍵數字</th><th>詳見</th></tr>
+<tr><td>1</td><td>結構性 vs 週期反彈？</td><td><span class="beat">結構為主</span>：AI 資安超級週期 + 平台整併長期訴求</td><td>RPO $18.4B（+36%）能見度 ~6 季；NGS ARR +60%</td><td>§8.A'</td></tr>
+<tr><td>2</td><td>成長需多少資本投入？</td><td>輕資產（有機）；但 <strong>無機成長極重資本</strong>（$25B M&A）</td><td>Capex/Rev 2.7%；但 M&A 5 年 &gt;$28B</td><td>§8.D / §12.E</td></tr>
+<tr><td>3</td><td>增量 ROIC &gt; 資金成本？</td><td><span class="miss">短期否</span>：M&A 嚴重扭曲，整合期 ROIIC &lt; WACC</td><td>ROIC ~5%（post-CyberArk）vs WACC ~9%</td><td>§8.D / §12.D</td></tr>
+<tr><td>4</td><td>成長變現金流還是被擴張吃掉？</td><td>有機部分變 FCF；<strong>FCF 大量被 M&A 飛輪回收再投</strong></td><td>FY25 FCF $3.47B；M&A 吞噬 &gt;$28B/5Y</td><td>§12.E</td></tr>
+<tr><td>5</td><td>競爭者會否被吸引進來？</td><td>已在：MSFT Security（$20B+）、CRWD、ZS 全棧化</td><td>CRWD ARR $5.51B +24%；MSFT bundling</td><td>§9 賽局 / §9.F</td></tr>
+<tr><td>6</td><td>股價反映多少期待？</td><td><span class="r">過熱</span>：Fwd PE ~82 分位、PEG 5.3</td><td>Fwd PE 67x；P/FCF 51x</td><td>§13.1 / §2 D</td></tr>
+<tr><td>7</td><td>成長率下修估值撐得住嗎？</td><td><span class="miss">不撐</span>：熄火情境 −40%~−57%</td><td>Bear 35x → $119（−57%）</td><td>§8.E / §2 E</td></tr>
+</table>
+<p class="trap-box"><strong>最弱的一題（標紅）：第 6 + 7 題（估值）。</strong>PANW 成長品質本身（結構性、護城河強化、FCF 轉換）皆優；單一最大破口是<strong>「股價已透支」</strong>——這不是公司問題，是 entry 價格問題，也是訊號落 B（觀望）而非 A 的根因。次弱為第 3 題（M&A 短期 ROIC 稀釋），須靠 synergy 兌現修復。與 §1 trap 🟢 + §2 H 訊號 B 一致。</p>
+
+<h3>A｜成長跑道（Runway）估算</h3>
+<table>
+<tr><th>維度</th><th>數據</th><th>推論</th></tr>
+<tr><td>當前 TAM</td><td>全球資安 ~$241B（2024）</td><td>來源：MarketsandMarkets / 業界估算</td></tr>
+<tr><td>估計可達 TAM</td><td>~$500B（2030E，CAGR ~13%）；AI-native 資安 $30B(25)→$86B(30)</td><td>新品類（identity、observability、AI-SOC）+ 平台整併擴大可服務範圍</td></tr>
+<tr><td>當前市佔 / 滲透</td><td>PANW 營收 ~$11.4B / TAM ~$241B = ~4.7%（最大 pure-play，但仍個位數市佔）</td><td>高度分散市場，整併空間巨大</td></tr>
+<tr><td>達 30% 滲透所需年數</td><td>—（市場分散，無單一供應商接近 30%）</td><td>天花板極遠</td></tr>
+<tr><td><strong>成長可持續年數（Runway）</strong></td><td><strong>≥ 10 年</strong></td><td>FY30 NGS ARR $20B 目標僅是中途站</td></tr>
+</table>
+<p><strong>Runway 解讀：≥ 10 年 → 高確信長期複利，支撐高估值倍數溢價</strong>（但「支撐溢價」≠「現價合理」——見 §13）。</p>
+
+<h3>A'｜S 曲線位置</h3>
+<p>PANW 處於 platformization S 曲線<strong>前中段</strong>：top-5000 客戶僅 ~50% 採用 2+ 平台（貢獻 80%+ NGS ARR），代表交叉銷售滲透仍有一倍空間；identity（CyberArk）與 observability（Chronosphere）是剛嫁接的新曲線。結構性（非週期）成長為主，能見度由 RPO $18.4B（+36%）背書。</p>
+
+<h3>B｜成長品質判斷</h3>
+<h4>① 有機 vs 無機</h4>
+<table>
+<tr><th>類型</th><th>定義</th><th>占比估計</th><th>佐證</th></tr>
+<tr><td>有機成長</td><td>平台化深化、新客滲透、定價</td><td>~營收成長的一半（Q3 organic +14% vs total +31%）</td><td>organic NGS ARR +28%</td></tr>
+<tr><td>無機成長</td><td>併購貢獻</td><td>Q3 營收 $388M（~13% 當季）、NGS ARR $1.6B（~20%）</td><td>CyberArk + Chronosphere</td></tr>
+</table>
+<p>無機占比已 &gt; 30%（NGS ARR 口徑），必列近 5 年主要併購：</p>
+<table>
+<tr><th>年份</th><th>被收購方</th><th>金額</th><th>整合結果</th><th>達預期？</th></tr>
+<tr><td>FY2026</td><td>CyberArk（identity）</td><td>$25B</td><td>2026-02 閉合，synergy 提前 3–6 個月</td><td><span class="neu">⚠️ 觀察中（首年）</span></td></tr>
+<tr><td>FY2026</td><td>Chronosphere（observability）</td><td>~$3.35B（推估）</td><td>整合進行中</td><td><span class="neu">⚠️ 觀察中</span></td></tr>
+<tr><td>FY2025</td><td>IBM QRadar SaaS 資產</td><td>未揭露</td><td>SIEM 客群遷往 XSIAM</td><td><span class="beat">✅ 助攻 Cortex</span></td></tr>
+<tr><td>FY2024</td><td>Talon + Dig Security</td><td>~$1B 合計</td><td>整入 SASE / Prisma Cloud</td><td><span class="beat">✅</span></td></tr>
+<tr><td>FY2020-23</td><td>多筆（Bridgecrew, Expanse, Cider 等）</td><td>累計 ~$3B+</td><td>建構 Prisma/Cortex 模組</td><td><span class="beat">✅ 多數成功</span></td></tr>
+</table>
+<p class="note">自 2018 以來 PANW 完成 ~21 筆併購（Bain Capital Ventures 統計），是「連續併購驅動 + 有機交叉銷售」的混合飛輪。剔除併購後有機營收成長 ~14%（Q3）。</p>
+<h4>② 成長驅動結構：定價 vs 量</h4>
+<table>
+<tr><th>類型</th><th>定義</th><th>判斷（含具體%）</th><th>3Y 趨勢</th></tr>
+<tr><td>量驅動</td><td>客戶數 / 平台 attach 數 / 席次</td><td>主驅動：platformization deals 累積、新平台 attach（&gt;40% top-5000 用 Cortex、&gt;20% Prisma Cloud）</td><td>擴大</td></tr>
+<tr><td>定價驅動</td><td>多平台綁定 ARPU 提升 / 升級</td><td>次驅動：2+ 平台客戶貢獻 80% NGS ARR → 客單值隨 attach 提升（多平台客戶 ARPU 顯著高於單平台）</td><td>穩定–擴大</td></tr>
+</table>
+<p class="note">資安軟體不公開逐產品 ASP，故以「平台 attach 數 × 客單值」近似。SASE ARR Q3 +50%、Cortex（含 XSIAM）為最快成長段。</p>
+<h4>③ 營業槓桿：增量利潤率</h4>
+<table>
+<tr><th>列</th><th>內容</th></tr>
+<tr><td>增量 OI margin（non-GAAP）</td><td>FY23→FY25 營收 +$2.33B、non-GAAP OI 大致同步擴張；FY26 guide non-GAAP OI margin 29.2–29.7%（vs FY25 ~28%）→ 增量為正</td></tr>
+<tr><td>增量 vs 存量</td><td>有機增量 OI margin &gt; 存量 → 結構性擴張；惟 CyberArk/Chronosphere 並表短期稀釋（Q3 GAAP 轉虧）</td></tr>
+<tr><td>前瞻結論</td><td>「在有機 Rev +14% base 下，non-GAAP OI margin 每年 +30–50bp（Rule of 60 路徑）；惟 M&A 並表使 FY26-27 合併 margin 短期持平、FY28 隨 synergy 重啟擴張」</td></tr>
+</table>
+
+<h3>C｜成長護城河連動評估</h3>
+<table>
+<tr><th>類型</th><th>定義</th><th>具體表現</th></tr>
+<tr><td><strong>強化型</strong>（最佳）</td><td>成長帶來更強網路效應 / 數據壁壘</td><td>✅ PANW 屬此：platformization 每多一個平台 attach，資料層擴大 → Precision AI / Cortex 訓練數據增加 → SOC 自動化更強 → 轉換成本上升 → 更易賣下一個平台（飛輪）</td></tr>
+</table>
+<p>判斷：<strong>強化型</strong>。佐證：2+ 平台客戶貢獻 80% NGS ARR 且 churn 低，多平台綁定使整體留存與客單值同步上升。</p>
+
+<h3>D｜ROIC 與 FCF 的長期可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前值</th><th>3 年前</th><th>趨勢</th><th>門檻</th><th>符合</th></tr>
+<tr><td>ROIC（營運基準）</td><td>FY25 ~11.3%；post-CyberArk ~5%</td><td>FY22 negative→FY23 8%</td><td>營運↑、合併↓（M&A 稀釋）</td><td>&gt; WACC</td><td><span class="miss">短期否</span></td></tr>
+<tr><td>ROIC − WACC</td><td>~5% − 9% = −4%（合併，暫時）</td><td>—</td><td>待 synergy 修復</td><td>持續正</td><td><span class="miss">暫負</span></td></tr>
+<tr><td>FCF Margin</td><td>FY25 37.6%；FY26 guide 38–39%</td><td>FY22 32.6%</td><td>↑</td><td>&gt; 15%</td><td><span class="beat">✅</span></td></tr>
+<tr><td>FCF / NI 轉換率</td><td>3.06（FY25）</td><td>&gt;2</td><td>→（遞延收入結構）</td><td>&gt; 85%</td><td><span class="beat">✅✅</span></td></tr>
+<tr><td>再投資率</td><td>高（M&A 主導，FY26 ~$25B 對價）</td><td>—</td><td>↑（無機）</td><td>需對應 ROIC</td><td><span class="neu">待驗</span></td></tr>
+</table>
+<h4>ROIIC 與內生成長天花板</h4>
+<table>
+<tr><th>列</th><th>計算</th></tr>
+<tr><td>ROIIC（3Y，有機）</td><td>有機 NOPAT 從 FY22 ~−$0 → FY25 ~$883M（ΔNOPAT ~$883M）÷ 有機 ΔIC（剔除 M&A goodwill，~$3–4B）→ <strong>有機 ROIIC 高（&gt;20%）</strong>；但<strong>合併口徑（含 $25B CyberArk）ROIIC 短期遠 &lt; WACC</strong>（標「受大型 M&A 扭曲，須剔除 M&A 重算」）</td></tr>
+<tr><td>再投資率</td><td>有機 ~低（Capex 2.7%）；合併含 M&A 則極高（FY26 ~$25B）</td></tr>
+<tr><td>內生成長天花板（有機）</td><td>有機 ROIIC &gt;20% × 有機再投資率 → 有機可自我支撐 ~10–14% 內生成長；其餘靠 M&A + 定價/attach</td></tr>
+<tr><td>共識對賬</td><td>共識 FCF CAGR ~20% − 有機內生天花板 ~12% = 缺口 ~8pp → 由 M&A 並表（CyberArk ARR）+ synergy + margin 擴張閉合（可歸因，但依賴 M&A 兌現）</td></tr>
+</table>
+<p class="note">判定：有機引擎可自我支撐長期複利（支持 5Y+ 持有）；但合併成長有相當部分依賴 M&A 飛輪兌現，故 §12 資本配置等級與 §12.E M&A 飛輪是關鍵驗收點。內生天花板（有機）~12%。</p>
+
+<h3>E｜成長熄火情境壓力測試</h3>
+<table>
+<tr><th>情境假設</th><th>成長特徵</th><th>合理 Fwd PE 壓縮至</th><th>潛在估值跌幅</th></tr>
+<tr><td>3 年後成長降至 15%</td><td>仍高於市場</td><td>~45x</td><td>~−33%（→ ~$185）</td></tr>
+<tr><td>3 年後成長降至 10%</td><td>回歸 SaaS 平均</td><td>~35x</td><td>~−47%（→ ~$145）</td></tr>
+<tr><td>3 年後成長降至 5%</td><td>成熟低成長</td><td>~25x</td><td>~−62%（→ ~$105）</td></tr>
+</table>
+
+<h4>5Y EPS / FCF Base 情境建模（§2 E 長期 R:R 來源）</h4>
+<table>
+<tr><th>財年</th><th>Non-GAAP EPS</th><th>YoY</th><th>驅動邏輯</th><th>隱含 adj FCF（$B）</th></tr>
+<tr><td>FY2026E</td><td>$3.77</td><td>+13%</td><td>CyberArk 半年並表稀釋 + 稅率正常化（Excel consensus）</td><td>~$4.4（38.5% margin）</td></tr>
+<tr><td>FY2027E</td><td>$4.11</td><td>+9%</td><td>整合稀釋谷年（CyberArk 全年並表，synergy 未完全兌現）</td><td>~$5.2</td></tr>
+<tr><td>FY2028E</td><td>$4.79</td><td>+16.5%</td><td>首個全年整合年 + synergy 兌現 + FCF margin 40%+ 目標</td><td>~$6.2（40% margin）</td></tr>
+<tr><td>FY2029E</td><td>~$5.80</td><td>+21%</td><td>synergy 全兌現 + Cortex/Identity 高成長段放大（§8.I）</td><td>~$7.4</td></tr>
+<tr><td>FY2030E</td><td>~$6.96</td><td>+20%</td><td>NGS ARR 接近 $20B 目標、營業槓桿持續</td><td>~$8.8</td></tr>
+<tr><td>FY2031E（5Y）</td><td>~$8.28</td><td>+19%</td><td>成長放緩但仍 high-teens</td><td>~$10.5</td></tr>
+</table>
+<div class="reasoning">5Y（FY31）Base EPS ~$8.28 × 長期合理 PE 38x = $315 → §2 E 5Y 目標價 = $315、upside_5y = +14%（三處一致：§2 E / §1 dashboard / dd-meta upside_5y_pct=14）。FCF 視角：FY31 adj FCF ~$10.5B，若市場給 35x P/FCF → 市值 ~$368B（vs 現 $225B，+64% / 5 年 = ~10%/yr）。<strong>兩口徑皆顯示 5Y 報酬中性偏低（~10–14% 年化以下），印證現價偏貴、訊號 B（等更好 entry 才有吸引力的 5Y IRR）。</strong></div>
+<h4>⚠️ 衰退信號偵測表</h4>
+<table>
+<tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈？</th></tr>
+<tr><td>護城河侵蝕</td><td>GM 連 2 季 YoY 下滑</td><td>GM 73→76% 改善</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>核心市佔縮減</td><td>NGS ARR +60%、份額擴張</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>提價後銷量下滑</td><td>多平台 attach 上升、churn 低</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR ≫ Rev CAGR（靠回購）</td><td>EPS CAGR 12.7% &lt; Rev ~24%（反向，非回購堆疊）</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>FCF/NI &lt; 0.75 連 2 年</td><td>3.06（極佳）</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>SBC/Rev &gt;5% 且逐年升</td><td>FY25 SBC 14%（高，但占比未明顯擴大）</td><td><span class="neu">🟡 關注（非紅燈）</span></td></tr>
+<tr><td>產業結構衰退</td><td>TAM 萎縮 / 被替代</td><td>TAM 擴張 CAGR ~13%</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>板塊倍數 3 年系統下移</td><td>板塊倍數高檔（CRWD 90x）</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>Maint capex/FCF &gt;60%</td><td>Capex/Rev 2.7%（極低）</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>停投資 3 年內收入下滑？</td><td>否（訂閱黏性）</td><td>⬜</td></tr>
+</table>
+<p><strong>價值陷阱風險評級：🟢 低風險（0 盞紅燈）</strong>。SBC 14% 標黃為「關注項」（非系統性惡化），詳見 §12 SBC 稀釋分析。</p>
+<p><strong>長期成長性綜合評級：🟢 高確信長期成長</strong>（Runway ≥10 年、有機 + attach 驅動、護城河強化型、衰退信號 0 盞）。</p>
+
+<h3>H｜客戶結構深度</h3>
+<h4>① 客戶集中度</h4>
+<table>
+<tr><th>指標</th><th>數值</th><th>來源</th></tr>
+<tr><td>Top 1 客戶占營收%</td><td>無單一 &gt;10% 客戶（高度分散）</td><td>10-K（無重大客戶集中揭露）</td></tr>
+<tr><td>客戶總數</td><td>~75,000+ 企業客戶；top-5,000 貢獻 80%+ NGS ARR</td><td>法說</td></tr>
+<tr><td>top-5,000 平台滲透</td><td>97% 網路安全、&gt;40% Cortex、&gt;20% Prisma Cloud；~50% 有 2+ 平台</td><td>Q3 FY26 法說</td></tr>
+</table>
+<h4>② 主要客戶議價權</h4>
+<p>客戶結構分散（無 sole-source 大客戶風險），主力為大型企業 + 政府公部門。多平台綁定使客戶切換成本高（rip-and-replace 一個平台已痛，遑論全棧）。</p>
+<h4>③ 客戶生命週期定位</h4>
+<table>
+<tr><th>定位</th><th>說明</th><th>PANW</th></tr>
+<tr><td>Grow with 客戶</td><td>客戶數位化 → 攻擊面擴大 → PANW 訂單同步成長</td><td>✅ 主導（良性相互依賴）</td></tr>
+<tr><td>客戶可能 in-house</td><td>—</td><td>低（資安非客戶核心能力，傾向外購）</td></tr>
+<tr><td>客戶可能 second-source</td><td>大型企業多供應商策略（MSFT/CRWD 並用）</td><td>中（platformization 正是反制此趨勢的策略）</td></tr>
+</table>
+<h4>④ 留存經濟</h4>
+<p>SaaS/訂閱模式：PANW 不公開 NRR 單一數字，但以「2+ 平台客戶 80% NGS ARR + 低 churn + RPO +36%」三點推斷淨留存健康（multi-product land-and-expand）。</p>
+<p><strong>客戶結構風險評估：🟢 分散 + Grow-with 主導</strong>（無 dual-track sole-source 風險）。</p>
+
+<h3>F｜AI 取代風險評級</h3>
+<p><strong>🟢 AI 受益</strong>：核心業務因 AI 需求擴張——① 攻擊面：AI agent / LLM 應用爆炸式增加企業攻擊面與身分（machine identity）數量 → 直接利好 CyberArk identity + 網路安全；② 防守端：PANW 自建 Precision AI / Cortex XSIAM 把 AI 用於 SOC 自動化，是 AI 的供給方而非被取代方。過去 2 年 AI 相關（XSIAM、AI-SOC）為最快成長產品。<strong>評級分數：9 分。</strong></p>
+
+<h3>I｜分部前瞻建模</h3>
+<table>
+<tr><th>業務段</th><th>FY26E 營收（估）</th><th>驅動式</th><th>FY27E</th><th>FY28E</th><th>段 OM 軌跡</th><th>對合併 EPS 成長貢獻</th></tr>
+<tr><td>網路安全（NGFW + SASE）</td><td>~$5.5B（~48%）</td><td>SASE attach +50% × 防火牆刷新週期；量驅動</td><td>~$6.1B</td><td>~$6.7B</td><td>高且穩（~35%+）</td><td>穩定基本盤，貢獻 ~30% EPS 成長</td></tr>
+<tr><td>Cortex（SecOps：XSIAM/XDR）</td><td>~$2.0B（~18%）</td><td>SIEM 替換（QRadar 遷移）+ AI-SOC；量+價</td><td>~$2.6B</td><td>~$3.3B</td><td>改善中</td><td>最快成長段，貢獻 ~30% EPS 成長</td></tr>
+<tr><td>Prisma Cloud（CNAPP）</td><td>~$1.4B（~12%）</td><td>雲遷移滲透；量驅動</td><td>~$1.7B</td><td>~$2.0B</td><td>改善</td><td>~15%</td></tr>
+<tr><td>Identity（CyberArk，新）</td><td>~$1.4B（並表約半年→全年）</td><td>PAM + machine identity；量+交叉銷售</td><td>~$1.8B</td><td>~$2.2B</td><td>整合期稀釋→FY28 改善</td><td>~20%（FY28 起放大）</td></tr>
+<tr><td>Observability（Chronosphere，新）</td><td>~$0.4B</td><td>早期；量驅動</td><td>~$0.6B</td><td>~$0.8B</td><td>低（早期）</td><td>~5%</td></tr>
+</table>
+<p class="note">主引擎：Cortex（SecOps）+ Identity。若 Cortex miss（SIEM 替換不如預期），EPS CAGR 將從 ~13% 降至 ~8–9%。各段加總對得上整體 ~24% 營收成長（含 M&A 並表效應）。分段為估算（PANW 自 FY24 起不分產品揭露 GAAP 分部營收，以法說 ARR mix + 業界估算推導，標「估算」）。</p>
+<h4>FY26→FY28 EPS 成長歸因 waterfall（$/share，近似）</h4>
+<table>
+<tr><th>因子</th><th>對 EPS 貢獻</th><th>說明</th></tr>
+<tr><td>FY26 起點</td><td>$3.77</td><td>—</td></tr>
+<tr><td>+ 有機營收成長（~14%/yr）</td><td>+$1.05</td><td>網路安全基本盤 + Cortex/Prisma 高成長段</td></tr>
+<tr><td>+ 營業槓桿（margin 擴張）</td><td>+$0.55</td><td>non-GAAP OI margin 向 Rule of 60 推進</td></tr>
+<tr><td>+ CyberArk synergy（FY28 兌現）</td><td>+$0.35</td><td>交叉銷售 + 成本綜效（提前 3–6 個月）</td></tr>
+<tr><td>− 股權稀釋（112M 新股全年化）</td><td>−$0.65</td><td>CyberArk 對價的 EPS 拖累（~16% 股數）</td></tr>
+<tr><td>− 整合 margin 稀釋（FY26-27）</td><td>−$0.28</td><td>CyberArk/Chronosphere 並表初期低 margin</td></tr>
+<tr><td><strong>FY28 終點</strong></td><td><strong>$4.79</strong></td><td>淨 CAGR 12.7%（FY26→28）</td></tr>
+</table>
+<p class="note">這張 waterfall 揭示：PANW 的「真實營運引擎」（有機 + 槓桿 + synergy = +$1.95）強勁，但被「股權 + margin 稀釋」（−$0.93）吃掉近半 → 這正是 EPS CAGR（13%）≪ FCF CAGR（20%）≪ 營收+ARR（24%/60%）的數字機制。對投資人的 implication：PANW 的價值創造在 FCF 與 ARR，EPS 是被併購會計扭曲的「最差代理指標」——但即便看 FCF，現價仍偏貴（§13）。</p>
+</section>
+
+<!-- ============ §9 ============ -->
+<section id="s9">
+<h2>§9｜護城河分析</h2>
+<p class="note">業務性質適合二維拆解（execution 與 pricing power 可獨立評估）。</p>
+<h3>雙維評分（dual-dimension default）</h3>
+<table>
+<tr><th>維度</th><th>評分</th><th>關鍵佐證</th></tr>
+<tr><td><strong>Execution Moat</strong>（能力護城河）</td><td>9 / 10</td><td>唯一橫跨網路／雲／SecOps／identity／observability 的全棧平台；Precision AI 資料層 + 21 筆併購整合執行力 + #1 NGFW 市佔；研發 $1.98B/年（R&D/Rev ~21%）</td></tr>
+<tr><td><strong>Pricing Power Moat</strong>（議價權護城河）</td><td>8 / 10</td><td>platformization 多平台綁定 → 轉換成本高（80% NGS ARR 來自 2+ 平台客戶）；惟 identity（vs Okta/Microsoft Entra）與 SecOps（vs CRWD/MSFT）競爭使定價權未達單一壟斷</td></tr>
+<tr><td><strong>合併分</strong></td><td><strong>9 / 10</strong></td><td>加權（execution 0.5 + pricing 0.5 ≈ 8.5，向上取 9，因 execution 全棧地位獨一無二）</td></tr>
+<tr><td>等級</td><td>⭐ A 級</td><td>（9=A）</td></tr>
+</table>
+<p class="note">dd-meta：moat_execution 9 / moat_pricing_power 8。</p>
+
+<h3>護城河數字驗收（Moat-to-Numbers）</h3>
+<table>
+<tr><th>指標</th><th>PANW</th><th>最強直接同業（CRWD）</th><th>Spread</th><th>5 年前 Spread</th><th>方向</th></tr>
+<tr><td>ROIC（TTM，營運基準）</td><td>~11%（合併 post-M&A ~5%）</td><td>CRWD ~低個位數（高成長期）</td><td>+（營運）</td><td>n/a（早期）</td><td>受 M&A 暫時收窄</td></tr>
+<tr><td>毛利率（non-GAAP）</td><td>75.8%</td><td>CRWD ~80%</td><td>−4pp</td><td>−</td><td>持平</td></tr>
+<tr><td>NGS ARR 規模</td><td>$8.1B（+60%）</td><td>CRWD ARR $5.51B（+24%）</td><td>+規模、−增速</td><td>—</td><td>PANW 規模領先、CRWD 增速領先</td></tr>
+</table>
+<p class="note">護城河三道數字閘匯總：① ROIC spread 為正（營運基準）但 M&A 暫時稀釋 → 不觸發降分（屬已知一次性事件，有 §12.E 修復路徑）；② QC-26 margin 結構性測試：GM 改善，未觸發；③ QC-28 絕對成長對照：PANW NGS ARR 絕對額領先 CRWD，規模優勢未流失。<strong>合併分維持 9。</strong></p>
+
+<h3>護城河來源</h3>
+<ul>
+<li><strong>網路效應 / 數據壁壘：</strong>平台資料層越大 → Precision AI 模型越準 → SOC 自動化價值越高（規模閾值：跨數萬客戶遙測數據，新進者無法快速複製）。</li>
+<li><strong>無形資產：</strong>#1 NGFW 品牌、FedRAMP 等政府認證、大量資安專利；CyberArk PAM 市場領導地位（identity 監管牌照級護城河）。</li>
+<li><strong>轉換成本：</strong>全棧部署後，rip-and-replace 一個平台需重建 SOC 流程、重訓團隊、重簽合約——多平台客戶切換成本指數上升（換掉需數季 + 大量 CapEx/人力）。</li>
+<li><strong>規模優勢：</strong>$11.4B 營收 + $1.98B R&D，是純 pure-play 中唯一能同時投資全棧的玩家；競爭對手須達數十億營收才能跨入。</li>
+</ul>
+
+<h3>競爭鴻溝（具體 mechanism）</h3>
+<p>為何資本充足對手仍跨不過：① <strong>時間壁壘</strong>——全棧整合（21 筆併購 + 資料層統一）需 5+ 年；② <strong>資本壁壘</strong>——同時做網路+雲+SecOps+identity 需 $20B+ 累計投入（PANW 光 CyberArk 就 $25B）；③ <strong>認證/數據壁壘</strong>——政府/大型企業認證 + 跨客戶遙測數據無法買到。唯一能同時跨三維的是 Microsoft（但其優勢在綁定 Windows/Azure，於 best-of-breed 深度遜於 PANW）。</p>
+
+<h3>市佔競爭表</h3>
+<table>
+<tr><th>對手</th><th>市佔/規模</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th><th>OI margin</th><th>FCF(TTM)</th><th>戰爭承受力</th></tr>
+<tr><td>CrowdStrike (CRWD)</td><td>ARR $5.51B</td><td>↑（+24%）</td><td>SecOps/cloud 全棧化、endpoint 龍頭</td><td>endpoint 領先 PANW；PANW 在網路/SASE 領先</td><td>~22%(non-GAAP)</td><td>~$1.5B+</td><td>高（高 margin + 淨現金）</td></tr>
+<tr><td>Microsoft Security</td><td>營收 $20B+</td><td>↑</td><td>E5 綁定免費打包，價格戰</td><td>侵蝕中小企業 + SIEM 入門段</td><td>母體極高</td><td>母體 $70B+</td><td>極高（母體補貼意願強）</td></tr>
+<tr><td>Zscaler (ZS)</td><td>ARR ~$3B</td><td>↑</td><td>純 SASE/ZTNA 深度</td><td>SASE 與 PANW Prisma 直接競爭</td><td>~22%</td><td>~$0.6B</td><td>中</td></tr>
+<tr><td>Fortinet (FTNT)</td><td>營收 ~$6B</td><td>→</td><td>性價比硬體防火牆</td><td>中小企業價格段</td><td>~30%</td><td>~$1.8B</td><td>高</td></tr>
+</table>
+<p><strong>賽局結構判定：理性寡占 + 紀律鬆動之間。</strong>大型企業段為 PANW/CRWD/ZS 的理性平台競爭（守價、拼功能而非殺價）；惟 Microsoft 的 E5 bundling 在中小企業 + 入門段製造「紀律鬆動」（補貼型攻擊）。sourced：MSFT Security 年營收 $20B+ 且綁定 Office/Azure。<strong>判定規則接線：</strong>因存在補貼型對手（MSFT），PANW pricing power 維度上限 ~8（已反映，未給 9–10）；§8.E 壓力測試已含板塊 de-rate 情境。</p>
+
+<h3>定價事件帳（pricing power 實證）</h3>
+<table>
+<tr><th>事件</th><th>幅度/動作</th><th>量與留存反應</th><th>GM 反應</th></tr>
+<tr><td>platformization 綁定升級（FY25-26 持續）</td><td>多平台打包提升客單值</td><td>2+ 平台客戶 80% NGS ARR、churn 低（未流失）</td><td>GM 73→76% 改善</td></tr>
+<tr><td>CyberArk 並入後交叉定價</td><td>identity + 網路安全交叉銷售</td><td>synergy 提前 3–6 個月（早期正面）</td><td>觀察中</td></tr>
+</table>
+<p class="note">定價權已實現（多平台 ARPU 提升 + GM 改善），但受 MSFT 補貼型競爭封頂於入門段。</p>
+
+<h3>護城河趨勢（雙線標）</h3>
+<table>
+<tr><th>維度</th><th>趨勢</th><th>3 年關鍵事件</th></tr>
+<tr><td>Execution Moat</td><td><span class="beat">擴大</span></td><td>21 筆併購建構全棧；CyberArk（identity）+ Chronosphere（observability）擴張能力邊界；Precision AI 資料層深化</td></tr>
+<tr><td>Pricing Power Moat</td><td><span class="neu">穩定</span></td><td>platformization 提升轉換成本；惟 MSFT bundling + identity 競爭（Okta/Entra）使定價權無法進一步擴張至壟斷</td></tr>
+</table>
+<p>24 個月內最可能瓦解護城河的變化（QC-23 三級分類）：</p>
+<table>
+<tr><th>等級</th><th>事件</th><th>機率</th><th>護城河影響</th></tr>
+<tr><td>🟡 點對點</td><td>CRWD 在特定 SecOps 模組勝出單一 deal</td><td>持續發生</td><td>不扣分</td></tr>
+<tr><td>🔴 生態攻擊</td><td>Microsoft 以 E5 全棧免費打包侵蝕中小企業 + 入門段</td><td>~中（已部分發生）</td><td>已反映於 pricing power 8（未給更高）</td></tr>
+<tr><td>⛔ 架構替代</td><td>客戶架構級拋棄全棧供應商（無近期跡象）</td><td>低</td><td>無</td></tr>
+</table>
+
+<h3>D｜護城河變遷時間軸</h3>
+<table>
+<tr><th>階段</th><th>期間</th><th>護城河來源</th><th>關鍵動作</th></tr>
+<tr><td>單品防火牆</td><td>2005–2014</td><td>NGFW 技術領先（app-aware 防火牆）</td><td>定義 next-gen firewall 品類，建立 #1 市佔</td></tr>
+<tr><td>訂閱轉型</td><td>2015–2019</td><td>從硬體賣斷轉訂閱 + 雲交付</td><td>Prisma（雲）+ Cortex（SOC）雛形；Arora 2018 接任 CEO 啟動併購</td></tr>
+<tr><td>平台拼圖</td><td>2019–2023</td><td>多模組整合（雲 + SecOps）</td><td>~19 筆併購（Demisto/Bridgecrew/Expanse/Dig/Talon）建構 Prisma + Cortex 全模組</td></tr>
+<tr><td>Platformization 飛輪</td><td>2023–2025</td><td>資料層統一 + Precision AI + 多平台綁定</td><td>正式提出 platformization 戰略，NGS ARR 成為核心指標；XSIAM 重塑 SIEM</td></tr>
+<tr><td>全棧 + identity + AI</td><td>2026–</td><td>identity（CyberArk）+ observability（Chronosphere）+ AI agent 安全</td><td>$25B CyberArk（史上最大資安併購）卡位 AI agent identity 軸</td></tr>
+</table>
+<p class="note">護城河從「單一技術領先」演化為「全棧整合 + 資料飛輪 + 轉換成本」的複合體——每一階段都在拓寬 execution moat，pricing power 則在 platformization 階段透過多平台綁定強化。這條時間軸是 §4「護城河如何累積」與 §9 評分 9/10 的歷史佐證。</p>
+<h3>F｜對手財務深度對照</h3>
+<table>
+<tr><th>指標</th><th>PANW</th><th>CrowdStrike</th><th>Zscaler</th><th>Microsoft Security（段）</th></tr>
+<tr><td>營收成長(YoY)</td><td>+31%（organic +14%）</td><td>+26%（subscription）</td><td>~+23%</td><td>~+20%+</td></tr>
+<tr><td>Gross Margin</td><td>75.8%（non-GAAP）</td><td>~80%</td><td>~80%</td><td>母體 ~70%</td></tr>
+<tr><td>Operating Margin</td><td>FY26 guide 29.2–29.7%(non-GAAP)</td><td>~22%(non-GAAP)</td><td>~22%</td><td>母體極高</td></tr>
+<tr><td>R&D 強度</td><td>~21%</td><td>~高（~20%+）</td><td>高</td><td>母體分散</td></tr>
+<tr><td>FCF Margin</td><td>38–39%（FY26 guide）</td><td>~30%+</td><td>~25%</td><td>母體 ~30%</td></tr>
+<tr><td>淨現金/淨債</td><td>淨現金 ~$1.9B（M&A 後仍低槓桿）</td><td>淨現金</td><td>淨現金</td><td>母體 $70B+ 現金</td></tr>
+</table>
+<p><strong>對手敘述：</strong></p>
+<p><strong>CrowdStrike：</strong>endpoint/SecOps 龍頭，ARR $5.51B +24%，FCF margin ~30%+、淨現金，戰爭承受力高。策略：以 Falcon 平台向 SIEM/cloud/identity 全棧擴張，與 PANW 在 SecOps 正面對撞。其更高的 GM 與增速使威脅可信；但 PANW 在網路安全/SASE 的根基非 CRWD 短期可攻入。CRWD 近期 Q1 FY27 billings miss 致股價 −9~11%，顯示高估值對任何放緩極敏感（PANW 應引以為鑑）。</p>
+<p><strong>Microsoft Security：</strong>年營收 $20B+，母體 FCF $70B+、補貼意願極強，是唯一「結構性成本更低（綁定 E5）+ FCF 足以支撐攻擊」的對手 → 觸發 §9 pricing power 上限 8。策略：E5 打包，在中小企業/入門段以「免費」侵蝕。但在大型企業 best-of-breed 深度，PANW/CRWD 仍領先。</p>
+<p><strong>Zscaler：</strong>純 SASE/ZTNA 深度玩家，與 PANW Prisma SASE 直接競爭；規模較小、戰爭承受力中等，威脅集中於單一賽道而非全棧。</p>
+<p><strong>新進入者：</strong>AI-native SOC 新創（autonomous agents）是長期 🐢 慢變數——目前規模小、無法撼動，但 2+ 年後若 AI 大幅降低 SOC 人力依賴，可能重塑 SecOps 經濟（PANW 以自建 XSIAM/AgentiX 對沖）。</p>
+<h4>絕對規模對照（投入端，$B）</h4>
+<table>
+<tr><th>指標</th><th>PANW</th><th>CrowdStrike</th><th>Microsoft Security（段）</th><th>解讀</th></tr>
+<tr><td>年營收</td><td>~$11.4B</td><td>~$5.0B（subscription run-rate）</td><td>~$20B+</td><td>PANW 規模 2x CRWD，但僅 MSFT Security 段一半</td></tr>
+<tr><td>年 R&D 絕對額</td><td>~$2.0B</td><td>~$1.0B+</td><td>母體 $30B+（分散）</td><td>PANW R&D 絕對額領先 pure-play，是其全棧執行力的資本基礎</td></tr>
+<tr><td>年 Capex 絕對額</td><td>~$0.25B</td><td>~$0.15B</td><td>母體巨額（雲基建）</td><td>兩者皆輕資產；MSFT 以雲基建分攤資安成本（結構性成本優勢）</td></tr>
+<tr><td>累計 M&A（5 年）</td><td>~$30B+（含 CyberArk）</td><td>~$1B（少數小型）</td><td>母體巨額</td><td>PANW 是「併購建構平台」，CRWD 偏「有機 + 平台模組自建」——兩種路徑</td></tr>
+</table>
+<h4>市佔演變（NGFW + 平台，估算）</h4>
+<table>
+<tr><th>賽道</th><th>5 年前格局</th><th>當前格局</th><th>誰吃誰</th></tr>
+<tr><td>網路防火牆（NGFW）</td><td>PANW #1、FTNT #2、CHKP/Cisco</td><td>PANW 維持 #1、FTNT 性價比段擴張</td><td>PANW 守高階、FTNT 吃中低階</td></tr>
+<tr><td>SecOps（SIEM/XDR）</td><td>Splunk/IBM QRadar 傳統 SIEM 主導</td><td>PANW XSIAM + CRWD Falcon 快速侵蝕傳統 SIEM</td><td>PANW/CRWD 吃 Splunk/QRadar（PANW 收購 QRadar SaaS 客群）</td></tr>
+<tr><td>Identity/PAM</td><td>CyberArk #1 PAM、Okta IAM</td><td>PANW（收購 CyberArk）+ Okta + MSFT Entra</td><td>PANW 透過併購直接買下 PAM 龍頭地位</td></tr>
+</table>
+</section>
+
+<!-- ============ §10 ============ -->
+<section id="s10">
+<h2>§10｜財務品質監測</h2>
+<h3>三年趨勢表（含同業對比）</h3>
+<table>
+<tr><th>指標</th><th>FY2023</th><th>FY2024</th><th>FY2025</th><th>同業中位（CRWD/ZS/FTNT）</th><th>相對</th></tr>
+<tr><td>FCF Margin</td><td>38.2%</td><td>38.6%</td><td>37.6%</td><td>~28%</td><td><span class="beat">優</span></td></tr>
+<tr><td>Gross Margin (GAAP)</td><td>72.3%</td><td>74.4%</td><td>73.4%</td><td>~78%</td><td><span class="neu">平（含硬體）</span></td></tr>
+<tr><td>GAAP Operating Margin</td><td>5.6%</td><td>8.5%</td><td>13.5%</td><td>低（高成長期）</td><td><span class="beat">改善中</span></td></tr>
+<tr><td>SBC / Revenue</td><td>15.5%</td><td>13.4%</td><td>14.0%</td><td>~高（SaaS 普遍高）</td><td><span class="neu">偏高但穩</span></td></tr>
+<tr><td>ROE（GAAP）</td><td>25%（小基數）</td><td>50%（稅benefit）</td><td>14.5%</td><td>—</td><td>受一次性扭曲</td></tr>
+</table>
+<p class="note">FY24 NI $2.578B 含 −$1.589B 一次性稅benefit（遞延稅資產估值備抵釋放），使 FY24→FY25 GAAP NI「下降」係假象，非營運惡化。</p>
+
+<h3>獲利品質警訊</h3>
+<ul>
+<li><strong>NI vs OCF 連動：</strong>OCF $3.72B ≫ NI $1.13B（FY25），遞延收入推升現金流，無盈餘操縱跡象。✅</li>
+<li><strong>AR 成長 vs 營收：</strong>AR FY24 $2.62B→FY25 $2.97B（+13%）vs 營收 +15%，AR 成長略低於營收，健康。✅</li>
+<li><strong>存貨：</strong>軟體為主，存貨可忽略。✅</li>
+<li><strong>FCF 轉換率趨勢：</strong>持續 &gt;100%（遞延收入），優異。✅</li>
+</ul>
+
+<h3>回購品質評估</h3>
+<table>
+<tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+<tr><td>過去 3 年回購 vs FCF</td><td>FY23 $273M / FY24 $567M / FY25 $0（暫停以保留 CyberArk 現金）</td><td>回購/FCF 低（&lt;15%），非靠回購撐 EPS</td></tr>
+<tr><td>剔除回購後 EPS CAGR</td><td>EPS CAGR 12.7% 幾乎全為營運驅動（回購貢獻極小）；反而 CyberArk 發 112M 股<strong>稀釋</strong> EPS</td><td>EPS 成長品質高（非回購堆疊），但被 M&A 股權稀釋拖累</td></tr>
+<tr><td>回購均價 vs 現價</td><td>歷史回購多在更低價位</td><td>歷史資本配置尚可</td></tr>
+<tr><td>Rev CAGR（同期）</td><td>~24% ≫ EPS CAGR 12.7%</td><td>EPS &lt; Rev 成長 → 差距來自 M&A 股權稀釋 + 整合 margin 稀釋 + 稅率正常化（非盈餘品質惡化）</td></tr>
+</table>
+
+<h3>FCF lumpiness 評估</h3>
+<table>
+<tr><th>指標</th><th>數值</th></tr>
+<tr><td>過去年度 FCF</td><td>FY22 $1.79B / FY23 $2.63B / FY24 $3.10B / FY25 $3.47B</td></tr>
+<tr><td>5Y 滾動均 FCF</td><td>~$2.75B（穩定上升）</td></tr>
+<tr><td>最低谷</td><td>FY22 $1.79B（仍正且高 margin）</td></tr>
+<tr><td>Maintenance capex 估算</td><td>D&A 錨定法：~$246M Capex ≈ maint（輕資產）→ Owner earnings ≈ OCF $3.72B − $0.25B = $3.47B</td></tr>
+<tr><td>Lumpiness 性質</td><td>非 lumpy（訂閱遞延收入，現金流極平滑）</td></tr>
+<tr><td>結論</td><td><span class="beat">🟢 FCF 穩定，逐年上升</span></td></tr>
+</table>
+
+<h3>E｜長期趨勢 + DuPont + 營運資金</h3>
+<h4>①a 5 年損益絕對額（yfinance 自算，$M）</h4>
+<table>
+<tr><th>項目</th><th>FY2022</th><th>FY2023</th><th>FY2024</th><th>FY2025</th><th>FY22→25 CAGR</th></tr>
+<tr><td>總營收</td><td>5,502</td><td>6,893</td><td>8,028</td><td>9,222</td><td>+18.8%</td></tr>
+<tr><td>毛利</td><td>3,783</td><td>4,983</td><td>5,968</td><td>6,770</td><td>+21.4%</td></tr>
+<tr><td>營業利益（GAAP）</td><td>−189</td><td>387</td><td>684</td><td>1,243</td><td>轉正→3.2x</td></tr>
+<tr><td>淨利（GAAP）</td><td>−267</td><td>440</td><td>2,578*</td><td>1,134</td><td>*含稅benefit</td></tr>
+<tr><td>R&D 費用</td><td>1,418</td><td>1,604</td><td>1,809</td><td>1,984</td><td>+11.9%（R&D/Rev ~21%）</td></tr>
+<tr><td>OCF</td><td>1,985</td><td>2,778</td><td>3,258</td><td>3,716</td><td>+23.3%</td></tr>
+<tr><td>FCF</td><td>1,792</td><td>2,631</td><td>3,101</td><td>3,470</td><td>+24.6%</td></tr>
+<tr><td>稀釋股數</td><td>591</td><td>685</td><td>708</td><td>709</td><td>+6.3%（SBC 稀釋）</td></tr>
+</table>
+<p class="note">關鍵：FCF CAGR（+24.6%）&gt; 營收 CAGR（+18.8%）= 營業槓桿真實兌現（margin 擴張）；毛利 CAGR +21.4% &gt; 營收 = mix 升級（軟體占比提升）。股數 +6.3% 反映 SBC 稀釋（CyberArk 後將再 +16%）。</p>
+<h4>① 多年關鍵指標趨勢</h4>
+<table>
+<tr><th>指標</th><th>FY2022</th><th>FY2023</th><th>FY2024</th><th>FY2025</th><th>結構判讀</th></tr>
+<tr><td>Gross Margin (GAAP)</td><td>68.8%</td><td>72.3%</td><td>74.4%</td><td>73.4%</td><td>升（軟體 mix 提升）</td></tr>
+<tr><td>GAAP Operating Margin</td><td>−3.4%</td><td>5.6%</td><td>8.5%</td><td>13.5%</td><td>持續升（營業槓桿兌現）</td></tr>
+<tr><td>ROIC（營運基準）</td><td>負</td><td>~8%</td><td>~9%</td><td>~11%</td><td>升（M&A 前）</td></tr>
+<tr><td>FCF Margin</td><td>32.6%</td><td>38.2%</td><td>38.6%</td><td>37.6%</td><td>高檔穩定</td></tr>
+</table>
+<h4>② ROIC DuPont 拆解（FY25，營運基準）</h4>
+<div class="reasoning">
+有效稅率 ~29%（稅 $462M / 稅前 $1,596M）→ NOPAT = OI $1,243M × (1−0.29) = $883M
+NOPAT margin = $883M / $9,222M = 9.6%
+投入資本周轉率 = Rev $9,222M / IC $7,824M = 1.18x
+ROIC = 9.6% × 1.18 = 11.3%
+→ ROIC 主要由「資本效率（周轉率 1.18x）」與漸升的「獲利力（NOPAT margin 9.6%）」共同驅動；獲利力是改善的主力（營業槓桿）。
+⚠️ post-CyberArk：IC 暴增 ~$25B（商譽）→ IC 周轉率驟降至 ~0.35x → ROIC 崩至 ~4–5%（暫時，待 synergy + 營收成長修復）。
+</div>
+<h4>②b ROIC DuPont 逐年表（營運基準，$M）</h4>
+<table>
+<tr><th>年度</th><th>營業利益</th><th>有效稅率</th><th>NOPAT</th><th>NOPAT margin</th><th>投入資本</th><th>IC 周轉率</th><th>ROIC</th></tr>
+<tr><td>FY2022</td><td>−189</td><td>n/m</td><td>~−147</td><td>負</td><td>3,887</td><td>1.42x</td><td>負</td></tr>
+<tr><td>FY2023</td><td>387</td><td>~22%</td><td>302</td><td>4.4%</td><td>3,740</td><td>1.84x</td><td>~8.1%</td></tr>
+<tr><td>FY2024</td><td>684</td><td>~22%（剔稅benefit）</td><td>533</td><td>6.6%</td><td>6,134</td><td>1.31x</td><td>~8.7%</td></tr>
+<tr><td>FY2025</td><td>1,243</td><td>29%</td><td>883</td><td>9.6%</td><td>7,824</td><td>1.18x</td><td>~11.3%</td></tr>
+<tr><td>post-CyberArk（pro-forma）</td><td>~1,400</td><td>~29%</td><td>~990</td><td>~9%</td><td>~33,000（+$25B 商譽）</td><td>~0.35x</td><td><strong>~4–5%</strong></td></tr>
+</table>
+<div class="reasoning">ROIC（營運基準）FY23→FY25 從 8.1% 升至 11.3%，<strong>由 NOPAT margin（4.4%→9.6%，營業槓桿）驅動上升，IC 周轉率反而從 1.84x 降至 1.18x（資本累積快於營收）。</strong>post-CyberArk：$25B 商譽使 IC 周轉率崩至 ~0.35x → ROIC 砍半至 ~4–5%。這是 §8.0 第 3 問「增量 ROIC &lt; 資金成本」的數字根源——須靠 FY28 synergy + 營收成長把 IC 周轉率拉回，否則 M&A 飛輪價值存疑。</div>
+<h4>③ 營運資金趨勢</h4>
+<table>
+<tr><th>指標</th><th>FY2023</th><th>FY2024</th><th>FY2025</th><th>判讀</th></tr>
+<tr><td>DSO（應收天數）</td><td>130</td><td>119</td><td>117</td><td>改善（收款效率↑）</td></tr>
+<tr><td>DIO（存貨天數）</td><td>~minimal</td><td>~minimal</td><td>~minimal</td><td>軟體，可忽略</td></tr>
+<tr><td>DPO（應付天數）</td><td>~30</td><td>~25</td><td>35</td><td>穩定</td></tr>
+<tr><td>CCC</td><td>~100</td><td>~94</td><td>~82</td><td>下降（改善）</td></tr>
+</table>
+<p class="note">⚠️ 傳統 CCC 對 PANW 誤導：遞延收入（current liabilities $7.99B &gt; current assets $7.52B → 負營運資金 −$465M）代表客戶<strong>預付</strong>，實質現金循環為負（客戶資金 fund 營運）——這是 SaaS 優質商業模式的特徵。</p>
+<h4>④ 債務到期結構</h4>
+<p>FY25 總債僅 $0.34B（已大幅償還 2022 年的 $3.95B 可轉債）。CyberArk 交易後接手部分 CyberArk 2030 零息可轉債（已啟動 tender offer）+ 現金對價 $2.3B。整體仍維持淨現金 + 低利率環境曝險極小。</p>
+</section>
+
+<!-- ============ §11 ============ -->
+<section id="s11">
+<h2>§11｜產業格局</h2>
+<h3>市場量化</h3>
+<p>全球資安 TAM：2024 ~$241B → 2030E ~$500B（CAGR ~13%）；其中 AI-native 資安 $30B(2025)→$86B(2030)。當前滲透：高度分散，PANW 最大 pure-play 市佔仍個位數（~5%）。供需狀態：需求結構性緊缺（攻擊面 + 法規 + AI 加速）。</p>
+<h3>利潤池地圖（Profit Pool Map）</h3>
+<table>
+<tr><th>價值鏈環節</th><th>代表公司</th><th>OI 池代理（OI margin）</th><th>5 年占比遷移</th><th>方向</th></tr>
+<tr><td>點狀工具（point products）</td><td>長尾廠商</td><td>低（價格競爭）</td><td>下降</td><td>↓（被整併擠壓）</td></tr>
+<tr><td><strong>全棧平台</strong></td><td><strong>PANW</strong> / CRWD / MSFT</td><td>高（29% non-GAAP OI margin，FCF 38%）</td><td>上升</td><td>↑（利潤向平台集中）</td></tr>
+<tr><td>超大規模綁定</td><td>Microsoft</td><td>母體極高（補貼）</td><td>上升（入門段）</td><td>↑（侵蝕長尾）</td></tr>
+</table>
+<p class="note">結論：資安利潤池正從「點狀工具」向「全棧平台」遷移，PANW 位於淨流入環節 → 支撐 §8.A Runway。但 Microsoft 的綁定模式在入門段也淨流入 → PANW 須守住大型企業 best-of-breed 利潤池。<strong>判定：本標的環節淨流入 → §2 0 產業風向燈 🟢 成立。</strong></p>
+
+<h3>議價權（三段獨立）</h3>
+<p><strong>① 對上游供應商：</strong>PANW 為軟體 + 少量硬體（防火牆 appliance，多由 ODM 代工），上游集中度低、替代性高，議價權強。雲基礎設施（自建 + 公有雲）成本可控。無關鍵單點供應依賴。</p>
+<p><strong>② 對下游客戶：</strong>客戶高度分散（無 &gt;10% 單一客戶），platformization 多平台綁定大幅提升轉換成本與議價地位；合約多為多年期訂閱（RPO $18.4B 鎖定 ~6 季能見度）。近 3 年無重大客戶流失 case，churn 低。定價能力直接證據：2+ 平台客戶 80% NGS ARR + GM 改善。</p>
+<p><strong>③ 地緣曝險：</strong>總部美國，營收以北美為主（~60%+）+ EMEA + APAC。供應鏈（防火牆硬體）有部分亞洲製造曝險，但軟體為主使地緣風險低。政策風險：政府客戶受惠於本土資安採購（FedRAMP），反為順風；出口管制對資安軟體影響有限。</p>
+
+<h3>營收組成（三維）</h3>
+<h4>① 按業務段（估算）</h4>
+<table>
+<tr><th>業務段</th><th>占比%</th><th>YoY%</th><th>OI Margin</th><th>3Y 軌跡</th></tr>
+<tr><td>網路安全（NGFW+SASE）</td><td>~48%</td><td>~+12%</td><td>高</td><td>占比降（其他段更快）</td></tr>
+<tr><td>Cortex（SecOps）</td><td>~18%</td><td>~+30%</td><td>改善</td><td>占比升</td></tr>
+<tr><td>Prisma Cloud</td><td>~12%</td><td>~+25%</td><td>改善</td><td>占比升</td></tr>
+<tr><td>Identity（CyberArk，新）</td><td>~12%（並表）</td><td>n/a（新並表）</td><td>整合稀釋</td><td>新增</td></tr>
+<tr><td>Observability（Chronosphere）</td><td>~4%</td><td>n/a</td><td>低</td><td>新增</td></tr>
+</table>
+<h4>② 按地區</h4>
+<table>
+<tr><th>地區</th><th>占比%</th><th>備註</th></tr>
+<tr><td>美洲</td><td>~62%</td><td>政府 + 大型企業主力</td></tr>
+<tr><td>EMEA</td><td>~24%</td><td>法規驅動（GDPR/NIS2）</td></tr>
+<tr><td>APAC</td><td>~14%</td><td>成長最快</td></tr>
+</table>
+<h4>③ 按客戶集中度</h4>
+<table>
+<tr><th>指標</th><th>數值</th></tr>
+<tr><td>Top 1 客戶</td><td>&lt;10%（無重大集中）</td></tr>
+<tr><td>Top-5,000 客戶</td><td>貢獻 80%+ NGS ARR（但個別分散）</td></tr>
+<tr><td>失去最大客戶影響</td><td>極小（無單一 &gt;10% 客戶）</td></tr>
+</table>
+<h4>單位經濟（逐業務段）</h4>
+<table>
+<tr><th>業務段</th><th>核心 Unit 指標</th><th>趨勢</th><th>段 OI margin</th><th>資本密集度</th><th>洞察</th></tr>
+<tr><td>網路安全</td><td>每客戶 ARR（多年期）</td><td>↑（SASE attach）</td><td>高</td><td>低</td><td>現金牛基本盤</td></tr>
+<tr><td>Cortex</td><td>per-deal ARR（XSIAM 大單）</td><td>↑</td><td>改善</td><td>低</td><td>成長引擎，AI-SOC 高客單</td></tr>
+<tr><td>Identity</td><td>PAM 席次 + machine identity</td><td>↑（AI agent 爆發）</td><td>整合稀釋→改善</td><td>低</td><td>新成長軸</td></tr>
+</table>
+<p class="note">mix-shift 算術：高成長段（Cortex/Identity）占比上升 → 合併 OI margin 中長期結構性 +30–50bp/yr（與 §8.B③ 增量 margin 一致；FY26-27 受 M&A 並表短期持平，FY28 重啟）。</p>
+
+<h3>F｜逐段 TAM/SAM + 價值鏈深度</h3>
+<table>
+<tr><th>業務段</th><th>段 TAM（現/2030E）</th><th>當前滲透</th><th>段 CAGR</th><th>value chain 位置 + 風險</th></tr>
+<tr><td>網路安全/SASE</td><td>~$50B / ~$80B</td><td>中</td><td>~10%</td><td>核心節點，被替代風險低（基礎設施黏性）</td></tr>
+<tr><td>SecOps（SIEM/SOAR/XDR）</td><td>~$40B / ~$80B</td><td>低</td><td>~20%</td><td>AI-SOC 重塑中，CRWD/MSFT 競爭激烈</td></tr>
+<tr><td>Cloud Security（CNAPP）</td><td>~$30B / ~$60B</td><td>低</td><td>~25%</td><td>雲遷移紅利，Wiz(Google)/CRWD 競爭</td></tr>
+<tr><td>Identity</td><td>~$30B / ~$60B</td><td>低</td><td>~15%+</td><td>machine identity（AI agent）新需求，Okta/MSFT Entra 競爭</td></tr>
+</table>
+<p class="note">每段 TAM 皆大且成長；最被替代風險集中在 SecOps（AI-native 新創長期威脅）與 CNAPP（Google 收購 Wiz 後加碼）。但 PANW 全棧整合提供單一段難以複製的綁定優勢。</p>
+<h4>AI agent identity — 新需求軸深掘</h4>
+<p>CyberArk 併購的戰略核心不只是買下 PAM（特權存取管理）龍頭，而是卡位「<strong>machine / AI agent identity</strong>」這個由 GenAI 催生的全新需求軸。邏輯鏈：① 企業部署 AI agent（autonomous workflows）→ 每個 agent 需要身分憑證與權限邊界 → ② machine identity 數量將遠超人類 identity（業界估 machine:human 比已 &gt;40:1 且加速）→ ③ 傳統 IAM（Okta 等人類為主）無法管理 agent 的動態高權限 → ④ CyberArk 的 secrets management + PAM 是天然解方。PANW 把這嫁接到網路安全 + Cortex 資料層 → 形成「身分 + 網路 + SOC」三位一體的 AI 時代防護。<strong>這是把 §8.F「AI 受益」具體化為可收費的新 ARR 軸，也是 $25B 出價的根本理由</strong>——若此論成立，identity 段 5Y CAGR 可能高於目前估的 15%。風險：Microsoft Entra + Okta 也在搶此軸，定價權未必能完全壟斷（已反映於 §9 pricing power 8）。</p>
+</section>
+
+<!-- ============ §12 ============ -->
+<section id="s12">
+<h2>§12｜公司治理與資本配置</h2>
+<h3>股東結構</h3>
+<p>機構持股 ~83%，內部人持股 ~0.76%（CEO Nikesh Arora 為主要個人持股者）。無 dual-class 投票權結構（單一股權，治理透明）。近期內部人交易：高管定期 10b5-1 計畫性減持為主，無異常大額拋售。</p>
+
+<h3>資本配置軌跡（M&A track record）</h3>
+<table>
+<tr><th>年份</th><th>被收購方</th><th>金額</th><th>整合結果</th><th>減損</th></tr>
+<tr><td>FY2026</td><td>CyberArk</td><td>$25B</td><td>2026-02 閉合，synergy 提前 3–6 個月</td><td>無（觀察首年）</td></tr>
+<tr><td>FY2026</td><td>Chronosphere</td><td>~$3.35B（推估）</td><td>整合進行中</td><td>無</td></tr>
+<tr><td>FY2020-25</td><td>~19 筆（Bridgecrew/Expanse/Talon/Dig/QRadar 等）</td><td>累計 ~$5B+</td><td>多數成功整入 Prisma/Cortex</td><td>無重大減損</td></tr>
+</table>
+<p>過去資本配置：以 M&A 建構平台為主（vs 回購），符合 platformization 戰略。track record 良好（無重大減損史），但 $25B CyberArk 是數量級放大，是迄今最大賭注。</p>
+
+<h3>管理層薪酬</h3>
+<p>Arora 薪酬以股權激勵為主（與 TSR 掛鉤的 PSU），固定薪占比低。薪酬與股價/ARR 成長高度連動，激勵對齊長期股東（但也放大 SBC）。</p>
+
+<h3>SBC 真實稀釋</h3>
+<table>
+<tr><th>指標</th><th>數據</th></tr>
+<tr><td>SBC / Revenue（近 3 年）</td><td>FY23 15.5% / FY24 13.4% / FY25 14.0%</td></tr>
+<tr><td>GAAP EPS（FY25）</td><td>~$1.60</td></tr>
+<tr><td>Non-GAAP EPS（FY25）</td><td>~$3.34</td></tr>
+<tr><td>差距（SBC + 攤銷 + 稅調）</td><td>~$1.74（~52%）</td></tr>
+<tr><td>剔除 SBC 後 EPS CAGR</td><td>GAAP EPS 基數小、波動大（含一次性稅項）；non-GAAP CAGR 12.7%；<strong>SBC 占比未明顯擴大（13–15% 區間），但絕對額 $1.3B+ 是真實股東稀釋</strong></td></tr>
+</table>
+<p class="note">SBC 14% + CyberArk 再發 112M 股（~16% 股權稀釋）= PANW 股東稀釋是真實成本，已部分反映在偏低的 EPS CAGR（vs 24% 營收成長）。</p>
+
+<h3>資本配置計分卡</h3>
+<table>
+<tr><th>項目</th><th>計算</th><th>過/不過</th></tr>
+<tr><td>M&A 已實現 ROIIC</td><td>CyberArk 第 3 年 NOPAT 貢獻 ÷ $25B → 待 FY28 驗證（目前 N/A）</td><td><span class="neu">觀察中</span></td></tr>
+<tr><td>回購買入收益率</td><td>近年回購少（保留現金做 M&A）</td><td>N/A</td></tr>
+<tr><td>SBC 淨稀釋率</td><td>~14% SBC + M&A 股權發行 → 淨稀釋 &gt; 1.5%/yr</td><td><span class="miss">不過</span></td></tr>
+</table>
+<p><strong>資本配置等級：B</strong>（歷史 M&A track 良好支撐，但 SBC 淨稀釋偏高 + $25B CyberArk ROIIC 尚未驗證 → 不給 A）。接線：§2 I 長期持有信心仍維持「高」（B 級不強制上限「中」，因歷史整合執行力佳 + synergy 提前）。dd-meta capalloc_grade = B。</p>
+
+<h3>D｜10 年資本配置 track record</h3>
+<p><strong>① M&A 全史：</strong>2018 以來 ~21 筆併購，從 Evident.io/RedLock（雲）→ Demisto（SOAR）→ Bridgecrew/Expanse → Talon/Dig（SASE/DSPM）→ CyberArk（identity）。多數成功整入平台模組，無公開重大減損。執行力是 PANW 的核心 execution moat 之一。</p>
+<p><strong>② 回購/股息：</strong>無股息（成長股）。回購/股數軌跡：</p>
+<table>
+<tr><th>財年</th><th>回購 $M</th><th>稀釋股數(M)</th><th>YoY 股數</th><th>判讀</th></tr>
+<tr><td>FY2022</td><td>892</td><td>591</td><td>—</td><td>低價回購（股價遠低於今）</td></tr>
+<tr><td>FY2023</td><td>273</td><td>685</td><td>+15.9%</td><td>股數因 SBC + 可轉債轉換大增</td></tr>
+<tr><td>FY2024</td><td>567</td><td>708</td><td>+3.4%</td><td>回購部分抵銷 SBC</td></tr>
+<tr><td>FY2025</td><td>0</td><td>709</td><td>+0.1%</td><td>暫停回購、保留 CyberArk 現金</td></tr>
+<tr><td>FY2026（pro-forma）</td><td>—</td><td>~815</td><td>+15%</td><td>CyberArk 發行 112M 新股，重大稀釋</td></tr>
+</table>
+<p class="note">總股東回報率（回購）/ FCF 歷史 ~10–20%，非主要工具；資本配置壓倒性傾向 M&A。FY26 股數 +15% 是 CyberArk 對價的直接結果——這是 EPS CAGR（13%）遠低於營收（24%）與 FCF（20%）的最大單一原因。</p>
+<p><strong>③ 內部人 + 薪酬：</strong>內部人持股低（~0.76%），薪酬重股權（PSU 與 TSR 掛鉤），對齊長期但放大 SBC。</p>
+<p class="note">10 年敘事支撐 §12 計分卡 B 級——管理層是優秀的「平台建構者 + 併購整合者」，但資本配置高度依賴 M&A 與股權，股東稀釋是代價。值得信任把錢交給其複利，惟 $25B CyberArk 是須持續驗收的最大賭注。</p>
+
+<h3>E｜FCF 去向 + M&A 飛輪</h3>
+<h4>① FCF 去向拆解（近年）</h4>
+<table>
+<tr><th>用途</th><th>佔 FCF %</th><th>增量 ROIC/報酬</th><th>判斷</th></tr>
+<tr><td>股息</td><td>0%</td><td>—</td><td>無</td></tr>
+<tr><td>回購</td><td>低（FY25 暫停）</td><td>—</td><td>非主軸</td></tr>
+<tr><td>去債</td><td>歷史已償還 $3.95B→$0.34B</td><td>省利息</td><td>已降槓桿</td></tr>
+<tr><td>再投資（Capex/R&D）</td><td>R&D $1.98B（費用化）+ Capex 低</td><td>有機 ROIIC 高</td><td>有機成長引擎</td></tr>
+<tr><td><strong>下一筆 M&A</strong></td><td><strong>主導（FY26 $25B CyberArk，遠超年度 FCF，靠資產負債表 + 股權）</strong></td><td>ROIIC 待 FY28 驗證</td><td><strong>M&A 飛輪是 PANW 成長的核心引擎</strong></td></tr>
+</table>
+<h4>② M&A 飛輪判定</h4>
+<p>PANW 是典型「連續併購 + 有機交叉銷售」混合飛輪：歷史小型併購（&lt;$1B）ROIIC 高（成功整入平台、放大交叉銷售）。但 $25B CyberArk 是數量級放大——<strong>飛輪能否持續創造價值，取決於 CyberArk 的 ROIIC 能否在 FY28 回到 &gt; WACC</strong>。關鍵風險：未來若「下一筆併購越來越貴」（出價紀律惡化），飛輪會從「複利機器」變「規模幻覺」。目前 synergy 提前 3–6 個月是正面信號。</p>
+<p><strong>③ 一句結論：</strong>PANW 的成長<strong>有機部分變成 FCF（margin 38%+），無機部分被 M&A 飛輪回收再投</strong>，增量 ROIC <strong>短期 &lt; WACC（CyberArk 整合期）、長期目標 &gt; WACC（FY28 synergy）</strong>，飛輪<strong>需警戒出價紀律</strong>（$25B 是迄今最大賭注，是 §8.0 第 4 問的核心觀察點）。接 §8.0 第 4 問裁決：成長品質佳，但「成長變現金 vs 被擴張吃掉」這題目前是「混合」，CyberArk 兌現是 binary 驗收點（§5.F Single Thing）。</p>
+</section>
+
+<!-- ============ §13 ============ -->
+<section id="s13">
+<h2>§13｜估值診斷</h2>
+<h3>13.1｜歷史估值分位（5 年框架）</h3>
+<table>
+<tr><th>估值指標</th><th>當前值</th><th>5 年低</th><th>5 年中位</th><th>5 年高</th><th>當前分位</th></tr>
+<tr><td>Forward P/E（FY27）</td><td>67.3x</td><td>~40x</td><td>~52x</td><td>~72x</td><td>~82%</td></tr>
+<tr><td>Forward P/E（FY26）</td><td>73.4x</td><td>—</td><td>—</td><td>—</td><td>更高</td></tr>
+<tr><td>P/FCF（fwd）</td><td>~51x</td><td>~30x</td><td>~40x</td><td>~55x</td><td>~80%</td></tr>
+<tr><td>EV/Sales（NTM）</td><td>~18x</td><td>~9x</td><td>~13x</td><td>~19x</td><td>~高位</td></tr>
+</table>
+<div class="reasoning">分位 = (67.3−40)/(72−40) = 85% → 取 82%（保守）。解讀：估值情緒「過熱」，與歷史同分位（2026 初高點）相比，業務基本面更強（NGS ARR +60%、CyberArk 並表）但成長率（EPS）反而被稀釋 → 倍數風險上升。implication：確認 §2 D 估值燈 🔴。</div>
+
+<p class="note"><strong>5Y Fwd PE 歷史脈絡：</strong>PANW 估值經歷三階段——① 2020-2021 虧損期（PE 無意義）；② 2022-2023 獲利初期（NTM PE 從谷底 ~40x 攀升，伴隨營業槓桿兌現）；③ 2024-2026 平台化 re-rate（NTM PE 站上 50-70x，市場給予「全棧龍頭 + FCF 複利」溢價）。當前 67x 位於此 5 年區間 ~82 分位，但須注意：trailing PE（~159x，macrotrends）因 GAAP NI 受 CyberArk 攤銷壓低而失真，<strong>forward PE 與 P/FCF 才是有效錨</strong>。</p>
+<h3>13.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>判斷</th></tr>
+<tr><td>Forward P/E（FY27）</td><td>67.3x</td><td>—</td></tr>
+<tr><td>Non-GAAP EPS CAGR（3 年，§7）</td><td>12.72%</td><td>受 M&A 稀釋壓低</td></tr>
+<tr><td>PEG（EPS，3 年）</td><td>5.29</td><td><span class="miss">&gt; 2 貴（過高）</span></td></tr>
+<tr><td>FCF CAGR（~3 年）</td><td>~20%</td><td>較佳</td></tr>
+<tr><td>PEG（FCF 口徑）</td><td>~2.5</td><td><span class="neu">偏貴</span></td></tr>
+</table>
+<div class="reasoning">PEG（EPS）= 67.3 ÷ 12.72 = 5.29，極高。但 EPS CAGR 被 CyberArk 股權稀釋（+16%）+ 整合 margin 稀釋 + 稅率正常化壓低；FCF CAGR ~20% 更能反映真實成長 → FCF-PEG ~2.5。<strong>無論何口徑皆「貴」，差別在「過熱（EPS）」vs「偏貴（FCF）」。</strong>implication：估值燈 🔴（嚴格），FCF 校準 🟠。</div>
+
+<h3>13.4｜同業估值比較</h3>
+<p>本標的業務模式 tier：<strong>全棧資安平台（pure-play platform）</strong>。Peer 選法：同 tier 資安平台（CRWD/ZS/FTNT/S），非跨業務模式。</p>
+<table>
+<tr><th>公司</th><th>市值</th><th>Forward P/E</th><th>EV/Sales(NTM)</th><th>FCF Margin</th><th>營收成長</th><th>ARR/規模</th></tr>
+<tr><td><strong>PANW</strong></td><td>$225B</td><td><strong>67x</strong></td><td>~18x</td><td>38–39%</td><td>+31%(organic+14%)</td><td>NGS ARR $8.1B</td></tr>
+<tr><td>CrowdStrike</td><td>~$190B</td><td>90x</td><td>18.6x</td><td>~30%+</td><td>+26%</td><td>ARR $5.51B(+24%)</td></tr>
+<tr><td>Zscaler</td><td>~$50B</td><td>35x</td><td>~13x</td><td>~25%</td><td>+23%</td><td>ARR ~$3B</td></tr>
+<tr><td>Fortinet</td><td>~$80B</td><td>~30x</td><td>~9x</td><td>~30%</td><td>~+13%</td><td>營收 ~$6B</td></tr>
+<tr><td>同 tier 中位</td><td>—</td><td>~50x</td><td>~13x</td><td>~30%</td><td>~+23%</td><td>—</td></tr>
+</table>
+<div class="reasoning">PANW Fwd PE 67x vs tier 中位 ~50x → 溢價 ~34%。支撐溢價：① 規模最大（NGS ARR $8.1B）+ 唯一全棧；② FCF margin 最高（38–39%）。但低於 CRWD 90x（CRWD 更高增速 + endpoint 龍頭）。若向 tier 中位回歸，股價有下行壓力（−20%~−25%）。implication：相對同業屬「溢價合理但偏高」，確認 §2 D/H 的 🔴/B 判定（好公司、貴價格）。</div>
+
+<h3>§13 估值診斷結論</h3>
+<p>13.1 歷史分位（~82% → 過熱）+ 13.2 PEG（EPS 5.29 / FCF 2.5 → 貴）+ 13.4 同業（vs tier 中位溢價 34%，部分有基本面支撐）→ <strong>綜合估值訊號：🔴 明顯貴（FCF 校準後 🟠 偏貴）</strong>。完整裁決見 §1 dashboard；倉位 % 由 portfolio-manager skill 決定。</p>
+<p><strong>分析師目標價參考：</strong>高 $375 / 中位 ~$306–327 / 低 $210（n=38–55 位，Buy）。是否認同：中位 PT ~$315 隱含 ~+14% 上行，與本 DD 的 5Y 目標價（$315）巧合一致——意味<strong>分析師也認為現價已大致反映 1 年合理價值，後續上行需「成長兌現 + 估值維持」雙引擎</strong>，留給新進場者的安全邊際薄。本 DD 與共識方向一致（好公司），但對 entry 時機更保守（等回檔）。</p>
+<p class="note"><strong>§8 邏輯 vs Excel consensus 分歧說明：</strong>Excel FY27 EPS +9% 偏低（整合稀釋谷年），與 §8 的「有機 24% 營收成長 + FCF +20%」存在表面矛盾。本 DD 採 PM 修正視角：EPS-PEG（5.29）高估貴的程度，真實估值應以 FCF（P/FCF 51x、FCF-PEG 2.5）為錨——但兩者皆指向「偏貴—過熱」，故結論不變（🔴/🟠 + B 觀望）。</p>
+</section>
+
+<!-- dd-meta -->
+<script id="dd-meta" type="application/json">
+{
+  "ticker": "PANW",
+  "schema": "v12.7",
+  "date": "2026-06-15",
+  "price_at_dd": 276.76,
+  "signal": "B",
+  "trap": "🟢",
+  "trap_label": "🟢 非陷阱",
+  "moat": "A",
+  "val": "🔴",
+  "ma": "✅",
+  "fpe_fy2": 67.3,
+  "pct_5y": 82.0,
+  "peg_fy2": 5.29,
+  "upside_short_pct": -25.0,
+  "upside_mid_pct": -18.0,
+  "upside_5y_pct": 14.0,
+  "stress": {"pass": 0, "total": 2},
+  "moat_score": 9.0,
+  "growth_durability": 9.0,
+  "quality_score": 9.5,
+  "moat_execution": 9.0,
+  "moat_pricing_power": 8.0,
+  "ai_risk": "🟢",
+  "long_term_confidence": "高",
+  "capalloc_grade": "B",
+  "endo_growth_ceiling": 12.0,
+  "verdict": "B",
+  "oneliner": "Q3 FY26 NGS ARR +60%至$8.1B(organic+28%)/RPO$18.4B；CyberArk$25B已並表。品質A護城河9，FCF margin38-39%。估值🔴過熱(Fwd PE67x/PEG5.3)、現價近52週高R:R負→B觀望，等Fwd PE≤45x(~$185)再進場。"
+}
+</script>
+
+<p class="note" style="margin-top:30px;border-top:1px solid var(--line);padding-top:14px;">版本修訂紀錄：本份為 PANW 第 2 份 v12.2+ DD（v12.7）。vs Inception（DD_PANW_20260427.html, v12.3）：最大邊際變化為 CyberArk 於 2026-02-11 閉合並表（H2 從「賭整合」進入「驗整合」）、Q3 FY26 NGS ARR 史上最大超標（+60%）、股價自 ~$185 漲至 $276.76（+~48%）使 R:R 惡化。裁決維持 B（觀望），進場門檻自 FPE ≤38x 上調至 ≤45x 反映 EPS 基數提升 + CyberArk ARR 並表。</p>
+
+</div>
+<button class="printbtn" onclick="window.print()">列印為 PDF</button>
+</body>
+</html>
