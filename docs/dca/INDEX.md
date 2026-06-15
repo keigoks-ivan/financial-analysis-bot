@@ -335,3 +335,5 @@
 | 2026-06-15 | GS | Goldman Sachs 是世界最難資本交易的可信對手方，正把波動投行收入轉成高 ROTCE 的 AWM 費用流（好公司錯價格，觀望等 cycle/valuation reset 至 P/TBV~2x/$700-800） | DCA_GS_20260615.html | DD_GS_20260615.html | — |
 | 2026-06-15 | ADBE | Adobe 把專業內容創作與 PDF 做成全球標準，被 GenAI 質疑專業還值不值錢，賭它從威脅變分發者 | DCA_ADBE_20260615.html | DD_ADBE_20260615.html | — |
 | 2026-06-15 | CRWD | CrowdStrike 用單一輕量 agent + 雲端 AI 看遍全球攻擊，看得越多防得越準（資料飛輪龍頭，頂級公司極端價格→觀望等回檔） | DCA_CRWD_20260615.html | DD_CRWD_20260615.html | — |
+| 2026-06-15 | TD | Toronto-Dominion 握有加拿大第一的核心存款特許，但美國 AML 資產上限把成長引擎鎖住——adj EPS 復甦真實卻已 re-rate 過頭（好公司晚價格，觀望等 adj PE<14x/C$135 或上限解除） | DCA_TD_20260615.html | DD_TD_20260615.html | — |
+| 2026-06-15 | BMO | Bank of Montreal 靠加拿大寡占護城河從信用週期谷底復甦，但市場已把復甦完全定價、ROE 最低卻給溢價（等 Fwd PE 11-12x 或同價位選 RY） | DCA_BMO_20260615.html | DD_BMO_20260615.html | — |
