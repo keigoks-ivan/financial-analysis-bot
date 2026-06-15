@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="dd-schema-version" content="v12.7">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DD｜ORCL Oracle — v12.7 深度研究（2026-06-15）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F8FAFC;--card:#FFFFFF;--ink:#1E3A5F;--accent:#3B82F6;--mono:'IBM Plex Mono',monospace;}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:#0f172a;font-family:'Noto Sans TC',sans-serif;line-height:1.7;font-size:15px;}
+.wrap{max-width:1080px;margin:0 auto;padding:0 18px 80px;}
+header.dd-head{position:sticky;top:0;z-index:50;background:#0f2440;color:#fff;padding:10px 18px;display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;font-family:var(--mono);font-size:12.5px;border-bottom:3px solid var(--accent);}
+header.dd-head b{font-size:15px;letter-spacing:.5px;}
+header.dd-head .tag{background:#1d4ed8;border-radius:5px;padding:2px 8px;}
+header.dd-head .px{color:#fde68a;}
+h1{font-size:24px;margin:26px 0 6px;color:var(--ink);}
+h2{background:var(--ink);color:#fff;padding:10px 14px;border-left:5px solid var(--accent);margin:42px 0 14px;font-size:19px;scroll-margin-top:80px;border-radius:0 6px 6px 0;}
+h3{color:var(--ink);font-size:16.5px;margin:26px 0 8px;border-bottom:2px solid #e2e8f0;padding-bottom:5px;}
+h4{color:#334155;font-size:14.5px;margin:18px 0 6px;}
+table{border-collapse:collapse;width:100%;margin:12px 0;font-size:13px;background:var(--card);box-shadow:0 1px 2px rgba(0,0,0,.05);}
+th{background:var(--ink);color:#fff;padding:8px 9px;text-align:left;font-weight:500;}
+td{padding:7px 9px;border-bottom:1px solid #e8eef4;vertical-align:top;}
+tr:nth-child(even) td{background:#F1F5F9;}
+.mono,td .mono{font-family:var(--mono);}
+.card{background:var(--card);border:1px solid #e2e8f0;border-radius:8px;padding:16px 18px;margin:14px 0;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+.hypothesis-box{background:#EFF6FF;border-left:4px solid #3B82F6;padding:14px 18px;margin:14px 0;border-radius:0 8px 8px 0;}
+.hypothesis-box ul{margin:6px 0;padding-left:20px;}
+.hypothesis-box li{margin:7px 0;}
+.trap-box{background:#FFF0E6;border-left:4px solid #F97316;padding:14px 18px;margin:14px 0;border-radius:0 8px 8px 0;}
+.trap-box h3,.trap-box h4{color:#C2410C;border:none;}
+.reasoning{background:#f8fafc;border:1px dashed #94a3b8;border-radius:6px;padding:9px 12px;margin:9px 0;font-size:12.5px;font-family:var(--mono);color:#334155;white-space:pre-line;}
+.note{font-size:12.5px;color:#64748b;}
+.g{background:#DCFCE7;color:#166534;padding:1px 6px;border-radius:4px;font-weight:600;}
+.r{background:#FEE2E2;color:#991B1B;padding:1px 6px;border-radius:4px;font-weight:600;}
+.y{background:#FEF9C3;color:#92400E;padding:1px 6px;border-radius:4px;font-weight:600;}
+.b{background:#EFF6FF;color:#1e40af;padding:1px 6px;border-radius:4px;font-weight:600;}
+.pill{display:inline-block;background:#EFF6FF;color:#1e3a5f;border-radius:999px;padding:3px 11px;margin:3px 4px 3px 0;font-size:12.5px;text-decoration:none;border:1px solid #dbeafe;}
+nav.dd-toc{background:#fff;border:1px solid #e2e8f0;border-left:4px solid #3B82F6;border-radius:0 8px 8px 0;padding:12px 14px;margin:18px 0;}
+.big{font-size:21px;font-weight:900;}
+.scol3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:14px 0;}
+.scol3 .s{border-radius:0 8px 8px 0;padding:12px 14px;font-size:13px;}
+.s1{background:#F0F9FF;border-left:4px solid #0284C7;}
+.s2{background:#F5F3FF;border-left:4px solid #7C3AED;}
+.s3{background:#ECFDF5;border-left:4px solid #059669;}
+.print-btn{position:fixed;right:18px;bottom:18px;background:var(--ink);color:#fff;border:none;border-radius:8px;padding:11px 16px;font-size:13px;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.2);z-index:60;}
+.src{font-size:11.5px;color:#94a3b8;font-family:var(--mono);}
+@media print{header.dd-head,.print-btn,nav.dd-toc{display:none;}body{font-size:11px;}h2{background:#1E3A5F!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+@media(max-width:760px){.scol3{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#0f172a;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(59,130,246,.28);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/" class="active">個股 DD</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/ds/">產業敘述 DS</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/">週報</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/long-track-smh/">長線訊號</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/">量化回測</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/screener-tw.html">Screener 台股</a>
+          <a href="/screener-jp.html">Screener 日股</a>
+          <a href="/screener-my.html">Screener 馬股</a>
+          <a href="/cache/">🗄 Data Cache</a>
+          <a href="/tools/">期貨部位計算機</a>
+        </div>
+      </div>
+      <a href="/mental-models/">🧠 心智模型</a>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+<header class="dd-head">
+<b>ORCL · Oracle Corp</b>
+<span class="tag">DD Schema v12.7</span>
+<span>資料抓取 <b>2026-06-15</b>（收盤 6/12）</span>
+<span class="px">最新股價 $184.13</span>
+<span>最近財報季 <b>Q4 FY2026（2026-06-10 AMC）</b></span>
+<span>yfinance 批量 + 14 次 web_search/fetch</span>
+</header>
+<div class="wrap">
+
+<h1>Oracle Corporation（ORCL）— 買側深度研究 DD</h1>
+<p class="note">本結論基於以下完整分析得出，詳見各章節。報告日 2026-06-15／股價為 2026-06-12 收盤 $184.13。<b>本份為財報後重評（Q4 FY2026 於 2026-06-10 盤後公布）</b>，較前份 DD（2026-04-18，v12.0，訊號 X）股價自 52 週高 $345.72 回落 ~47%、近 5 日 −20%。</p>
+
+<nav class="dd-toc">
+<a class="pill" href="#s1">§1 投資結論</a>
+<a class="pill" href="#s2">§2 四層判定</a>
+<a class="pill" href="#s3">§3 三方辯論</a>
+<a class="pill" href="#s4">§4 序章</a>
+<a class="pill" href="#s5">§5 論點錨定</a>
+<a class="pill" href="#s6">§6 財報情報</a>
+<a class="pill" href="#s7">§7 門檻檢核</a>
+<a class="pill" href="#s8">§8 長期成長</a>
+<a class="pill" href="#s9">§9 護城河</a>
+<a class="pill" href="#s10">§10 財務品質</a>
+<a class="pill" href="#s11">§11 產業格局</a>
+<a class="pill" href="#s12">§12 治理資配</a>
+<a class="pill" href="#s13">§13 估值診斷</a>
+</nav>
+
+<!-- ===================== §1 ===================== -->
+<section id="s1">
+<h2>§1　投資結論（Executive Summary）</h2>
+
+<h3>結論 Dashboard（綜合訊號燈）</h3>
+<div class="hypothesis-box">
+<ul>
+<li><strong>產業風向燈 <span class="y">🟡 中性</span>：</strong>§8 長期成長性 🟡 中等可見度（營收能見度極高，<b>但利潤/FCF 轉化未證實</b>）｜§9 護城河趨勢 穩定偏侵蝕（mix 由高毛利 DB/ERP 轉向低毛利 OCI）｜§8 F AI 風險 🟢 直接受益。一句話：<b>AI 基建超級週期讓 Oracle 營收 8 年能見度爆表（RPO $638B），但 OCI 14% 毛利 + 負 FCF $23.7B 讓「量增是否利增」成為核心未決問題。</b></li>
+<li><strong>品質 <span class="b">B 級（護城河單一決定）→ 體質 veto 後 C，QC-31 回判 B</span>：</strong>護城河 7.0/10（§9，execution 7 + pricing power 7）｜體質 veto <b>3 項不過</b>（毛利連降／FCF 為負／淨負債比偏高）→ 原 B 降 1 級至 C；惟 quality_score 7.0（非 &lt;6）、moat 非 X、trap 非 🔴、AI 🟢 → 依 QC-31 thesis-level 非失敗，回判 <b>B（觀望）</b>。</li>
+<li><strong>估值燈 <span class="y">🟡 公允</span>：</strong>Fwd P/E（FY27）22.9x ｜5Y 分位 ~32% ｜PEG（3Y CAGR 22.4%）~1.02。分位 🟡 與 PEG 🟡 取較嚴 → 🟡。盲點 1 救援：否（§8 非 🟢）。</li>
+<li><strong>Pure MA 狀態 <span class="g">🟢 最佳進場</span>：</strong>W52 $208.52 / W104 $182.94 / W250 $129.43（斜率 +3.1%/+4.1%/+4.0% 全正）；現價 $184.13 &lt; W52 且 &gt; W104 → 🟢。<b>⚠️ 脆弱：僅高於 W104 約 $1.2（0.7%），6/11 盤中低點 $175 已破 W104。</b>盲點 2 救援：否（未達 ❌）。</li>
+<li><strong>大盤豁免 <span class="g">✅ 正常</span>：</strong>SPX 7,431 vs W104 6,256 → 未破線，無系統性風險。</li>
+<li><strong>參考 R:R：</strong>短期 −0.1x（合理價 $177 &lt; 現價，上行為負）／中期 0.73x（上行 +30% vs Bear −41%）｜壓力測試 1/2 過（資訊性，不主導裁決）。</li>
+<li><strong>綜合訊號：<span class="big">B</span></strong>（取自 §2 H）｜判定理由：thesis 完整（RPO 鎖定營收）但<b>體質 3 項 veto + R:R 不利 + 估值僅公允 + trap 🟡</b>，時機/風險訊號壓制至衛星/觀望，不到核心進場。</li>
+<li><strong>長期持有信心：<span class="y">中</span></strong>（§2 I）｜<strong>陷阱定性：<span class="y">🟡 觀察期</span></strong>（隱性資本密集 + 盈餘品質型，待 OCI 毛利拐點 / OpenAI 付款健康度確認）。</li>
+<li><strong>Inception DD：</strong><code>DD_ORCL_20260418.html</code>（2026-04-18）— 該 ticker 最早一份 v12.2+ DD，作為「累積漂移」對照基準。</li>
+<li><strong>下次年度對照倒數：</strong>2027-04-18（距今約 307 天）— Inception 日期 + 365 天。</li>
+</ul>
+</div>
+<p class="note"><strong>訊號語意：</strong>A+ = 核心候選滿格｜A = 核心候選｜B = 衛星候選/觀望｜C = 觀察池｜X = 迴避／清倉。倉位 % 由 portfolio-manager skill 依組合狀態決定（DD 不含倉位建議）。</p>
+
+<div class="card" style="border-left:4px solid #f59e0b;">
+<strong>⚠️ 較前份 DD 裁決變更：X（迴避）→ B（觀望）。</strong> 變更驅動：①股價自 $345 高點回落 ~47%、近 5 日 −20%，<b>前份「4 週 +17% 追高」否決理由消失</b>，MA 由 🟠 重置為 🟢 最佳進場（回測支撐）；②估值由極端高位 de-rate 至 Fwd 22.9x（5Y ~32% 分位）。<b>反向惡化</b>：③H3（FCF 恢復）由「削弱」轉「大幅惡化」（FY26 FCF −$23.7B，FY27 淨 capex ~$70B）；④R2（信貸/再融資）由 🟡 近觸發升級為<b>實質確認</b>（Moody's Baa2 負向、S&P BBB 負向，明列 OpenAI 對手風險；FY27 擬募 $40B 含 $20B 股權稀釋）。淨效果：進場時機改善但資產負債表/集中度 thesis 風險加重 → 由「迴避」轉為「觀望」，非「進場」。</div>
+
+<h3 style="color:#C2410C;border:none;">⚠️ 這是價值陷阱嗎？（強制回答題）</h3>
+<div class="trap-box">
+<table>
+<tr><th style="width:30%;">問題</th><th>回答</th></tr>
+<tr><td><strong>最可能的價值陷阱模式？</strong></td><td><b>隱性資本密集型 + 盈餘品質型（並列）</b>。非 GAAP EPS $7.63 看似穩健，但同年 FCF −$23.7B；EPS 由低毛利、需持續投入維持的 OCI 驅動，OCF（$32B）被 RPO 客戶預付款（$20–25B 級）灌大，現金品質低於帳面。</td></tr>
+<tr><td><strong>支持「這不是陷阱」的最強論據</strong></td><td>負 FCF 是<b>成長型 capex</b>而非維持型：$55.7B capex 對應 <b>$638B 已簽約 RPO（+363% YoY，~9.5x 當年營收）</b>，能見度由合約鎖定而非預測。DB/ERP 核心仍高毛利、極高轉換成本（FY26 非 GAAP OM 43%）。一旦資料中心填滿合約用量，管理層與多數賣方預期 FY28 EPS +35%（$10.87）的營運槓桿收割。</td></tr>
+<tr><td><strong>支持「這可能是陷阱」的最強反駁</strong></td><td><b>OCI 毛利僅 ~14%</b>（FY26 Q1：$900M 營收只賺 $125M 毛利；Blackwell 租賃曾單季虧 ~$100M），若規模化後毛利不回升，$200B+ capex 永遠賺不回資金成本。<b>~47%（~$300B）RPO 綁定 OpenAI</b> 這家燒錢、依賴持續外部融資的單一新創 — Moody's/S&P 已明列此對手風險。FY27 營收 +34% 但 EPS 僅 +5–8% = 成長尚未轉利。</td></tr>
+<tr><td><strong>空頭最強一擊（18 個月 30%+ 虧損路徑）</strong></td><td><b>OpenAI/Stargate 出現付款或融資裂縫</b>（延後提貨、重議、違約傳聞）→ 市場對 $300B backlog 折價 + Oracle 已投入的 GPU 資產面臨閒置/減值 → 估值由 22.9x 重設至 14–15x（低成長、高槓桿軟體倍數）→ 股價落 $110–120（−40% 級）。監測指標：§5.C R2/R3 + §5.F Single Thing。</td></tr>
+<tr><td><strong>如何在持有期判斷陷阱正在發生？</strong></td><td>領先指標：①OCI cloud services 毛利率（季）是否自 ~14% 朝 25%+ 拐升；②RPO QoQ 是否轉為下滑或出現「客戶供 GPU/預付」佔比驟升（品質惡化）；③信評由負向展望轉為實質降級至 Baa3/BBB−。任一觸發 → trap 升 🔴、訊號降 C。</td></tr>
+</table>
+<p><strong>最終定性：<span class="y">🟡 觀察期</span></strong> — 已亮 2–3 個衰退信號（毛利壓縮、FCF/NI 連 2 年 &lt;0.75、資本密集），但均可由「OCI 投資期 + 合約 backlog」解釋，尚非結構性衰退；惟 OpenAI 集中度 + 毛利拐點未證實，使其無法判為 🟢 非陷阱。</p>
+</div>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估閾值</th></tr>
+<tr><td>1</td><td><b>OCI（IaaS）cloud services 毛利率</b></td><td>§5 H1/H3 · §9 · §8.E</td><td>🔵 核心假設驗證（必填）</td><td>連 2 季未自 ~14% 朝 25%+ 拐升 → thesis（利潤轉化）削弱 → trap 升 🔴、訊號 B→C</td></tr>
+<tr><td>2</td><td><b>季度 RPO 金額 + QoQ + 結構（OpenAI 佔比 / 預付佔比）</b></td><td>§5 H2 · §6</td><td>🔵 長期成長領先信號（必填）</td><td>連 2 季 QoQ 下滑，或 OpenAI 集中度 &gt;55%、客戶供 GPU/預付佔 RPO &gt;20% → 品質警示</td></tr>
+<tr><td>3</td><td><b>FCF 轉正時程 + 信評動作</b>（Net Debt/EBITDA、$40B 募資進度）</td><td>§10 · §12 · §13</td><td>短期財報 + 信貸信號</td><td>FY28（2027 中）FCF 仍深度負，或信評實質降至 Baa3/BBB− → 重設估值倍數、訊號降級</td></tr>
+</table>
+</section>
+
+<!-- ===================== §2 ===================== -->
+<section id="s2">
+<h2>§2　產業風向燈 × 品質 × 估值燈 × Pure MA 四層判定（v12.7：7 子節）</h2>
+
+<h3>0｜產業風向燈</h3>
+<table>
+<tr><th>輸入</th><th>數值</th></tr>
+<tr><td>§8 長期成長性綜合評級</td><td><span class="y">🟡 中等可見度</span>（Runway 10+ 年，<b>但成長品質/利潤轉化未證實</b>：OCI 14% 毛利、負 FCF）</td></tr>
+<tr><td>§9 護城河趨勢</td><td>穩定偏侵蝕（DB/ERP 鎖定不變；mix 轉向低護城河 OCI；ROIC 因 capex 攤薄而 IC 周轉率下行）</td></tr>
+<tr><td>§8 F AI 風險</td><td><span class="g">🟢 直接受益</span>（OCI 是 AI infra 最快成長者之一）</td></tr>
+<tr><td><strong>產業風向燈</strong></td><td><strong><span class="y">🟡 中性</span></strong></td></tr>
+<tr><td>一句話產業判斷</td><td>AI 基建超級週期讓 Oracle 從 DB 老兵躍升 hyperscaler 第四極（RPO $638B 鎖定 8 年營收），<b>但其在價值鏈站位是「用 14% 毛利租 Nvidia GPU」</b>，利潤池多被上游晶片吸走 → TAM 大但「量增利不增」風險真實，風向燈不給 🟢。</td></tr>
+</table>
+<div class="reasoning">§8 🟡 → 救援機制不啟動，嚴格套用 Gate。
+與前份（2026-04 給 🟢）的差異：本份對「成長品質」獨立降評 — 營收能見度（H2）與利潤/FCF 轉化（H3）首度明確脫鉤，前者極強、後者極弱。</div>
+
+<h3>B｜品質等級（護城河單一決定 + 體質 veto）</h3>
+<h4>體質檢核（veto 制，不加分）</h4>
+<table>
+<tr><th>#</th><th>項目</th><th>結果</th><th>關鍵數據</th></tr>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 &gt;2%p</td><td><span class="r">❌ 不過</span></td><td>總毛利 FY24 71.4% → FY25 70.5% → FY26 ~67%（est）；連 3 年降 ~4pp，OCI 低毛利 mix 拖累</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td><span class="r">❌ 不過</span></td><td>FY26 FCF −$23.69B / GAAP NI $16.98B = −1.4；FY25 亦 −$0.39B/$12.44B（連 2 年 &lt;0.75）</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td><span class="g">✅ 過</span></td><td>FY27（0y）共識 $7.96→$8.05（90d 微升）；FY28（+1y）$10.73→$10.87</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td><span class="g">✅ 過</span></td><td>Q4 +21%、全年 +17%，雲端 +39%</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td><span class="r">❌ 不過</span></td><td>淨負債 ~$100B / GAAP EBITDA（OI $20.6B + D&A ~$7.6B = ~$28B）≈ 3.5x；非 GAAP EBITDA ~$37B ≈ 2.7x；信評負向展望佐證槓桿偏高</td></tr>
+</table>
+<p><b>體質 veto 結果 = 3 項不過 → 等級降 1 級（B → C）。</b></p>
+
+<h4>護城河等級（5 級制）</h4>
+<table>
+<tr><th>項目</th><th>值</th></tr>
+<tr><td>護城河分數（§9）</td><td>7.0 / 10（execution 7.0 + pricing power 7.0）</td></tr>
+<tr><td>護城河原始等級</td><td>B 級（7-8）</td></tr>
+<tr><td>體質 veto 調整</td><td>不過 3 項 → 降 1 級</td></tr>
+<tr><td><strong>調整後等級（機械）</strong></td><td><strong>C</strong></td></tr>
+<tr><td>QC-31 thesis-level 回判</td><td>quality_score 7.0（非 &lt;6.0）、moat 非 X、trap 非 🔴、AI 🟢 → <b>非 thesis 失敗</b>，最終訊號回判 <b>B</b>（見 §2 H）</td></tr>
+</table>
+<div class="reasoning">QC-9 品質分：底分=(護城河7+成長持久性7)/2=7.0；v12.0 體質改 veto 不進綜合分。
+體質 3 項 veto 反映「AI capex 投資期」（負 FCF by design、槓桿融資成長），非經營崩壞 → 依 QC-31 規則 5，thesis 完整者不機械落 C，回判 B 並在 §1 強標 trap 觀察。</div>
+
+<h3>C｜估值輸入（FY+1 / FY+2 共識）</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>基期 FY26 非 GAAP EPS（實際）</td><td>$7.63</td><td>FY26 財報（非 GAAP NI $22.234B ÷ 2.913B 股）</td></tr>
+<tr><td>FY+1（FY27）EPS</td><td>$8.05</td><td>公司 guide + 共識（n=41）；+5.5% vs 實際</td></tr>
+<tr><td>FY+2（FY28）EPS</td><td>$10.87</td><td>yfinance 共識（n=38；區間 $8.28–$13.51，<b>離散度極大</b>）</td></tr>
+<tr><td>FY+2 成長率</td><td>+35.0%</td><td>(10.87/8.05)−1</td></tr>
+<tr><td>當前 FY+2 Fwd P/E</td><td>16.9x</td><td>$184.13 ÷ $10.87</td></tr>
+</table>
+
+<h3>D｜估值燈</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>當前 Fwd P/E（FY27）</td><td>22.9x</td></tr>
+<tr><td>5Y Fwd P/E 範圍</td><td>~14x（2022 低）～ ~42x（2025 OCI 狂熱高）</td></tr>
+<tr><td>5Y Fwd P/E 分位</td><td>~32%</td></tr>
+<tr><td>3Y EPS CAGR（§7，FY26→FY29）</td><td>~22.4%</td></tr>
+<tr><td>PEG</td><td>~1.02</td></tr>
+<tr><td><strong>估值燈</strong></td><td><strong><span class="y">🟡 公允</span></strong></td></tr>
+<tr><td>套用規則</td><td>不變（無 modifier）</td></tr>
+</table>
+<div class="reasoning">分位 32% → 🟡（30-70%）；PEG 1.02 → 🟡（1.0-2.0）。取較嚴 → 🟡 公允。
+盲點 1 救援檢核：①§8 須 🟢（本份 🟡）✗ → 救援不啟動。
+implication：估值非進場觸發點（既不便宜也不過熱）；47% 回落把極端高估消化至公允，但「back-loaded、低 FCF 品質」的成長使 PEG &lt;1 的表象不可照單全收。</div>
+
+<h3>E｜R:R + Bear Case</h3>
+<p class="note">合理 P/E 基準：B 級護城河（7）+ 🟡 中等成長能見度 → 長期合理 Fwd P/E ~22x（對齊 MSFT/SAP/IBM ~21-22x 同 tier）。</p>
+<div class="scol3">
+<div class="s s1"><b>① 短期（1 年）</b><br>FY27 EPS $8.05 × 22 = <b>$177</b><br>vs 現價 $184.13<br>上行 <span class="r">−3.8%</span>｜R:R ≈ <b>−0.1x</b></div>
+<div class="s s2"><b>② 中期（2 年）</b><br>FY28 EPS $10.87 × 22 = <b>$239</b><br>上行 <span class="g">+29.9%</span><br>vs Bear 下行 −41% ｜R:R ≈ <b>0.73x</b></div>
+<div class="s s3"><b>③ 長期（5 年視角）</b><br>§8.E Base FY30 EPS ~$18 × 長期 PE 20 = <b>~$360</b><br>上行 <span class="g">+~95%</span>（<b>條件：OCI 毛利回升 + OpenAI 履約</b>）｜R:R 高但高度條件化</div>
+</div>
+<p><strong>Bear anchor（1 行）：</strong>Bear EPS = FY27 $8.05 × 0.9 = $7.25；Bear PE = §8.E 成長熄火「降至 10%」情境 ~15x（高槓桿/低成長軟體倍數）；<b>Bear 股價 ≈ $109（現價下行 −41%）</b>。下行距離 &gt;15% → R:R 有效（非數學假象）。</p>
+<p class="note">dd-meta <code>stress</code> = 1/2：5Y Base 過（條件化）、近中期 Bear 情境不過（下行 &gt; 上行）。R:R 不利為「時機」訊號，依 QC-31 不單獨觸發 C。</p>
+
+<h3>F｜Pure MA 狀態機</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>現價</td><td>$184.13</td></tr>
+<tr><td>W52 / 斜率(13w)</td><td>$208.52 / +3.09%</td></tr>
+<tr><td>W104 / 斜率</td><td>$182.94 / +4.05%</td></tr>
+<tr><td>W250 / 斜率</td><td>$129.43 / +4.04%</td></tr>
+<tr><td><strong>Pure MA 狀態</strong></td><td><strong><span class="g">🟢 最佳進場</span></strong>（價 &lt; W52、&gt; W104、三斜率全正）</td></tr>
+<tr><td>MA 部位乘數</td><td>× 1.2（理論）</td></tr>
+</table>
+<div class="reasoning">判定：current $184.13 &lt; W52 $208.52 ✓ 且 &gt; W104 $182.94 ✓ 且 W52/W104/W250 斜率 +3.1/+4.1/+4.0% 全正 → 🟢 最佳進場。
+⚠️ 脆弱性警示：僅高於 W104 $1.19（0.7%）；6/11 盤中低 $175.28 已破 W104，6/11 單日 −8%、量 63.7M（財報後 capitulation）。BB：上 $218 / 中 $168 / 下 $118，現價在中上軌間。
+盲點 2（V 轉早期）不適用 — 未達 ❌ 系統失效。</div>
+
+<h3>G｜大盤豁免層</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>對應大盤</td><td>SPX（美股）</td></tr>
+<tr><td>大盤現價 / W104</td><td>7,431 / 6,256</td></tr>
+<tr><td>系統性風險（破 W104）</td><td>否</td></tr>
+<tr><td><strong>豁免係數</strong></td><td>× 1.0（正常）</td></tr>
+</table>
+
+<h3>H｜綜合訊號燈</h3>
+<table>
+<tr><th>維度</th><th>值</th></tr>
+<tr><td>quality_tier（§2 B 調整後）</td><td>B（C 機械 → QC-31 回判 B）</td></tr>
+<tr><td>gate（§2 D）</td><td>🟡 公允</td></tr>
+<tr><td>ma_status（§2 F）</td><td>🟢 最佳進場</td></tr>
+<tr><td>benchmark_regime（§2 G）</td><td>正常</td></tr>
+<tr><td>trap（§1 定性）</td><td>🟡 觀察期</td></tr>
+<tr><td><strong>final_signal</strong></td><td><strong><span class="big">B</span></strong></td></tr>
+</table>
+<div class="reasoning">§2 H 初判路徑：步驟 1 不觸發 X（trap 非🔴、gate 非🔴、MA 非❌、quality 非拒絕）。
+步驟 5「時機不到/thesis 完整」：體質 3 項 veto + R:R 不利 + 估值僅公允，但 QC-31 四項失敗條件皆未觸發（quality 7.0≥6、moat B 非 X、trap 🟡 非🔴、AI 🟢）→ 落 B（觀望/衛星），非 C。
+判定理由：thesis（RPO 鎖定營收）完整，惟資產負債表/利潤轉化風險把訊號壓在 B；倉位 % 交 PM skill。</div>
+
+<h3>I｜長期展望（3-5 年定性）</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>結論</th></tr>
+<tr><td>成長跑道</td><td>§8A</td><td>充裕（RPO $638B、OCI roadmap FY30 $144B）</td></tr>
+<tr><td>護城河趨勢</td><td>§9</td><td>穩定偏侵蝕（mix 轉向低護城河 OCI）</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td>綜合</td><td><strong><span class="y">中</span></strong></td></tr>
+</table>
+<p class="note"><b>一句話：</b>🟡 中性，B 級護城河 7/10（DB/ERP 鎖定強、OCI 弱）。估值 🟡 公允（Fwd 22.9x/PEG ~1.0，47% 回落後消化）+ Pure MA 🟢 但僅微高 W104。關鍵觀察：OCI 毛利能否自 14% 拐升 + OpenAI $300B backlog 履約 + FCF 轉正時程；二者未證實前長期信心封頂「中」。</p>
+</section>
+
+<!-- ===================== §3 ===================== -->
+<section id="s3">
+<h2>§3　三方辯論（v12.5 已併入 §1 終判）</h2>
+<p class="note">§3 三方辯論已併入 §1 終判（v12.5）。空頭最強一擊見 §1「這是價值陷阱嗎？」答題區。</p>
+</section>
+
+<!-- ===================== §4 ===================== -->
+<section id="s4">
+<h2>§4　序章：第一性原理 × 逆向思考</h2>
+<h3>存在意義</h3>
+<p>Oracle 解決兩個長期且高度不可逆的痛點：①<b>企業「記錄真相」的資料庫</b> — 全球銀行、電信、航空、政府的交易系統跑在 Oracle Database 上，一筆轉帳、一張機票、一筆稅，背後是 ACID 一致性與數十年累積的維運慣性；②<b>企業「營運骨架」的 ERP/HCM</b>（Fusion、NetSuite）— 總帳、薪資、供應鏈的 system of record。這兩者的共同點是：<b>遷移成本不是金錢問題，是「停機 = 業務癱瘓」的存亡問題</b>。若 Oracle 明天消失，全球後台會出現的不是「效率下降」，而是金融清算、電信計費、政府發餉的<b>系統性中斷</b>。<br>2023 年起 Oracle 疊上第三條腿：<b>OCI（雲基建）</b> — 把同一批 mission-critical 客戶的資料庫搬上自家雲，並切入 AI 訓練/推論的 GPU 算力出租。前兩條腿是 80%+ 毛利的護城河資產；第三條腿（OCI）目前是 ~14% 毛利、資本密集的「規模賭注」，是本份 DD 全部張力的來源。</p>
+<p class="note">護城河如何累積而成，見 §9.D 時間軸。</p>
+
+<h3>逆向推演（Munger Inversion）— 3 年內虧 50%+ 的路徑</h3>
+<ul>
+<li><strong>技術替代維度：</strong>AI infra 客戶（尤其 OpenAI）轉向<b>自建資料中心或改用更便宜的 neocloud（CoreWeave 類）/ 超大規模自研晶片</b>，Oracle 的 GPU 出租被當作「過渡產能」用完即棄 → $638B RPO 中 backlog 的可實現性折價。時間軸：12–24 個月（合約可重議/延後提貨）。</li>
+<li><strong>管理層失職維度：</strong>在 14% 毛利仍以債 + 股權（$40B/年）擴 capex（FY27 淨 $70B），若終端需求或毛利不如預期，等於<b>用昂貴資本買低報酬資產</b> → 自我毀滅式資本配置。<span class="note">自我毀滅決策路徑詳見 §12 資本配置計分卡。</span></li>
+<li><strong>結構/產業過時維度：</strong>AI 算力供給若由短缺轉為過剩（如 Micron 對記憶體週期的警告外溢），GPU 租金 ASP 崩 → Oracle 已投入的折舊資產面臨閒置減值。<span class="note">架構性替代分級見 §9 QC-23 ⛔。</span></li>
+<li><strong>價值陷阱路徑（四選一）：</strong><b>隱性資本密集型</b> — 帳面 EPS 看似成長，但維持 OCI 競爭力所需的資本支出被市場系統性低估，真實 owner earnings 遠低於非 GAAP NI。歷史對標：2000 年代電信/光纖「蓋了就有人來」的產能泡沫。</li>
+</ul>
+</section>
+
+<!-- ===================== §5 ===================== -->
+<section id="s5">
+<h2>§5　投資論點錨定</h2>
+
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td>預設持有期</td><td><b>3–5 年</b>（thesis 的勝負在 FY28–FY30 的 OCI 毛利收割期才見分曉）</td></tr>
+<tr><td>主要驅動時間軸的理由</td><td>成長兌現節點：OCI roadmap FY28 $73B → FY30 $144B；FCF 轉正預期 FY28–29；OpenAI/Stargate 履約節奏</td></tr>
+<tr><td>哪些變數是訊號、哪些是噪音</td><td>持有期 &gt;2 年 → <b>OCI 毛利趨勢、ROIC 方向、FCF 轉正、backlog 品質為訊號</b>；單季 EPS beat/miss、guidance 語氣為噪音</td></tr>
+</table>
+
+<h3>B｜三個核心假設 + 三層時間軸</h3>
+<table>
+<tr><th>#</th><th>核心假設</th><th>2Y 驗證點</th><th>5Y 驗證點</th><th>10Y 驗證點</th><th>數字門檻</th><th>來源</th><th>漂移觸發</th></tr>
+<tr><td><b>H1</b></td><td>OCI 規模化後<b>毛利率顯著回升</b>，capex 賺回資金成本（成長轉利）</td><td>OCI cloud services 毛利自 ~14% 升至 25%+</td><td>OCI 段 OM 轉正且 ROIIC &gt; WACC</td><td>合併 FCF margin 回到 +15%</td><td>OCI 毛利 ≥ 25%（FY28）；ROIIC ≥ 10%</td><td>公司法說（毛利「填滿後改善」）；DCD/內部文件 14-16% 毛利報導</td><td>連 4 季（5Y 假設）OCI 毛利未升 ≥5pp → 削弱</td></tr>
+<tr><td><b>H2</b></td><td>$638B RPO <b>高品質轉化為營收</b>，FY27 $90B、FY30 $225B 達標，OpenAI 履約</td><td>FY27 營收 +34%（$90B）；RPO QoQ 持續增</td><td>OCI FY30 $144B roadmap 兌現</td><td>OCI 成為 ~74% 營收且穩定</td><td>FY27 營收 ≥ $88B；OpenAI 集中度可控</td><td>公司 guide $90B（confirmed）；roadmap（2025 analyst meeting，+$41B 上修）</td><td>連 2 季 RPO QoQ 下滑 或 OpenAI 集中度 &gt;55% → 削弱（2Y 假設）</td></tr>
+<tr><td><b>H3</b></td><td><b>FCF 由深負轉正</b>且槓桿可控（信評守住投資級）</td><td>FY28 FCF 接近轉正；Net Debt/EBITDA 不再惡化</td><td>FY29–30 FCF 顯著正、自償 capex</td><td>股息/回購由內生 FCF 支撐，停止股權稀釋</td><td>FY28 FCF &gt; −$10B；信評 ≥ Baa2/BBB</td><td>FY26 FCF −$23.7B 實際；FY27 淨 capex ~$70B guide；$40B 募資計畫</td><td>FY28（2027 中）FCF 仍 &lt; −$15B 或信評降至 Baa3/BBB− → 反轉</td></tr>
+</table>
+<p class="note">三層時間軸內容由 §6 財報 + §8 Runway/壓力測試 + §9 護城河趨勢 + §11 TAM raw 章節抓取重組，未延用上一份 §5B 結論。</p>
+
+<h3>B'｜12 個月前 DD 對照（假設驗證對照）</h3>
+<p class="note">最接近 today−365d 之 DD：<code>DD_ORCL_20260418.html</code>（2026-04-18，Inception，距今約 58 天 &lt; 365 天）。尚未滿一年 → 以「vs Inception 短期漂移」呈現，正式 YoY 對照於 2027-04-18 起。</p>
+<table>
+<tr><th>假設</th><th>Inception（2026-04）當時判定</th><th>本次（2026-06）判定</th><th>vs Inception 漂移</th><th>結論</th></tr>
+<tr><td>H1（OCI 份額 / AI 遷移）</td><td>＋強化（OCI +66% Q3）</td><td>＋強化（OCI +93% Q4，IaaS $18.1B FY26，roadmap 上修 $41B）</td><td>持續強化（份額/規模）</td><td>持續（但「毛利轉化」首度獨立追蹤 → H1 重定義為利潤而非份額）</td></tr>
+<tr><td>H2（RPO 轉化 / FY27 $90B）</td><td>＋強化（RPO 持平 $553B；FY27 $90B 維持）</td><td>＋強化（RPO $638B +363%、+$85B QoQ；FY27 $90B confirmed +34%）</td><td>大幅強化（能見度）</td><td>持續（最強的一條腿）</td></tr>
+<tr><td>H3（FCF 恢復）</td><td>−削弱（capex 維持、FCF 深負）</td><td><span class="r">−−大幅惡化</span>（FY26 FCF −$23.7B；FY27 淨 capex ~$70B；$40B 募資 + $20B 股權稀釋）</td><td>惡化加速</td><td><b>警戒升級</b></td></tr>
+<tr><td>R1（RPO QoQ 下滑）</td><td>未觸發（Q3 +$29B）</td><td>未觸發（Q4 +$85B，史上最大）</td><td>更遠離觸發</td><td>—</td></tr>
+<tr><td>R2（利息 / 再融資）</td><td>🟡 接近觸發（S&P/Moody's 負向；壓力測試 2026-11 現金耗盡）</td><td><span class="r">🔴 實質確認</span>（Moody's Baa2 負向、S&P BBB 負向皆明列 OpenAI 對手風險；FY27 募 $40B）</td><td>觸發升級</td><td><b>新增負向事實，列 §5.C R2</b></td></tr>
+<tr><td>R3（OCI 技術劣勢）</td><td>未觸發</td><td>未觸發（技術不是問題；<b>毛利/集中度才是</b>）</td><td>風險型態轉移</td><td>R3 重定義為「毛利/集中度」</td></tr>
+</table>
+<p class="note">漂移判定僅標狀態，不直接觸發動作；動作回到 §5.E「連 X 季 + 絕對閾值」。動作建議：H3 惡化 + R2 觸發 = 「警戒 + 提高監控頻率」，回到 §5.E 確認觸發條件後才執行減碼。</p>
+
+<h3>C｜三個最可能推翻論點的風險（時間尺度分層）</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>時間尺度</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td><b>OCI 毛利規模化後仍不回升</b>（GPU 出租結構性低毛利、ASP 戰）</td><td>H1</td><td>⚡🔥 短中期（2-6 季可顯現）</td><td>OCI cloud services 毛利率（季）</td><td>連 2 季未朝 25%+ → 減碼觸發評估</td></tr>
+<tr><td>R2</td><td><b>OpenAI/Stargate 集中度爆雷 + 信貸/再融資壓力</b>（$300B 對手 + $40B/年募資 + 負向信評）</td><td>H2/H3</td><td>🔥 中期（4-6 季）</td><td>OpenAI 付款/履約新聞、信評動作、Net Debt/EBITDA</td><td>信評降至 Baa3/BBB− 或 OpenAI 重議/延付 → 大動作</td></tr>
+<tr><td>R3</td><td><b>AI 算力供給由短缺轉過剩</b>（GPU 租金崩、已投產能閒置減值）</td><td>H1/H2</td><td>🐢 長期（2+ 年慢變數）</td><td>AI infra 利用率、競品 capex、租金 ASP</td><td>需 ≥50% 機率才砍倉（避免短期新聞驚嚇）</td></tr>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<table>
+<tr><th>判斷步驟</th><th>問題</th></tr>
+<tr><td>1. 時間軸匹配？</td><td>事件是否影響 3–5 年持有期內的 OCI 毛利/FCF 路徑？</td></tr>
+<tr><td>2. 假設關聯？</td><td>影響 H1（毛利）/ H2（backlog 轉化）/ H3（FCF/信貸）哪一個？</td></tr>
+<tr><td>3. 邊際方向？</td><td>＋強化 / 0 無關 / −削弱？</td></tr>
+<tr><td>4. 閾值判斷？</td><td>是否達 §5.C 警戒閾值（連 X 季 + 絕對門檻）？</td></tr>
+</table>
+<p class="note">例：單季 OCI 營收 +93% 但毛利仍 14% → 影響 H1（−），未達「連 2 季」閾值 → 監控不動作。OpenAI 傳延後提貨 → 影響 H2/R2（−−），若確認則達閾值 → 減碼。</p>
+
+<h3>E｜可執行決策主線預設</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr><td><b>進場</b></td><td>OCI 毛利連 2 季拐升（&gt;20%）<b>且</b> 股價回測 W104（~$183）或 Bollinger 中軌（~$168）</td><td>啟動建倉（升 A 條件成立才核心化）</td></tr>
+<tr><td><b>加碼</b></td><td>H1 + H2 雙確認（OCI 毛利 &gt;25% + RPO 持續增 + FCF 轉正在望）</td><td>加碼至目標倉位</td></tr>
+<tr><td><b>減碼</b></td><td>R1（毛利連 2 季不升）或 估值突破 Fwd 30x</td><td>減至試倉，重新評估</td></tr>
+<tr><td><b>撤退</b></td><td>R2 確認（OpenAI 重議/延付 或 信評降至投機級邊緣）或 trap 升 🔴</td><td>清倉，記錄推翻理由</td></tr>
+</table>
+
+<h3>F｜Single Thing（binary discrete event）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>Single Thing 描述</td><td><b>OpenAI/Stargate 對 $300B backlog 出現實質付款或履約裂縫</b>（公開重議、延後提貨、融資斷鏈傳聞被證實）</td></tr>
+<tr><td>如果發生</td><td>立刻重評 thesis：$638B RPO 須對最大對手折價，已投 GPU 資產面臨閒置 → <b>清倉/大幅減碼</b>，trap 升 🔴</td></tr>
+<tr><td>可觀測性</td><td>季度 RPO 揭露 + OpenAI 融資新聞流 + Oracle 8-K；最快下季（FY27 Q1，2026-09-10 財報）</td></tr>
+<tr><td>機率估計</td><td>未來 12–24 個月 ~20–30%（OpenAI 融資依賴外部、燒錢中，但短期有微軟/軟銀/Nvidia 生態支撐）</td></tr>
+</table>
+<p class="note">三者職責：§1 trap = thesis 靜態裁決（🟡）；§5.C R1-R3 = 過程性風險（毛利/集中度/供給）+ 監測；§5.F = 單一 binary trigger（OpenAI 履約事件）。不重疊。</p>
+</section>
+
+<!-- ===================== §6 ===================== -->
+<section id="s6">
+<h2>§6　即時財報情報（Q4 & FY2026，2026-06-10 盤後）</h2>
+<h3>① 最新一季財報關鍵數字（Q4 FY2026）</h3>
+<table>
+<tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY</th></tr>
+<tr><td>Revenue</td><td>$19.2B</td><td>$19.09B</td><td><span class="g">Beat</span></td><td>+21%（cc +20%）</td></tr>
+<tr><td>Total Cloud</td><td>$9.9B</td><td>—</td><td>—</td><td>+47%（cc +46%）</td></tr>
+<tr><td>　IaaS（OCI）</td><td>$5.8B</td><td>—</td><td>—</td><td><b>+93%</b></td></tr>
+<tr><td>　SaaS（Apps）</td><td>$4.1B</td><td>—</td><td>—</td><td>+10%</td></tr>
+<tr><td>EPS（Non-GAAP）</td><td>$2.11</td><td>$1.96</td><td><span class="g">Beat</span></td><td>+24%</td></tr>
+<tr><td>EPS（GAAP）</td><td>$1.45</td><td>—</td><td>—</td><td>+21%</td></tr>
+<tr><td>RPO</td><td><b>$638B</b></td><td>—</td><td><span class="g">爆量</span></td><td>+363%（+$85B QoQ）</td></tr>
+<tr><td>Gross Margin（Q4 GAAP OM 對照）</td><td>GAAP OM 32% / 非 GAAP OM ~45%</td><td>—</td><td><span class="y">壓縮中</span></td><td>OCI mix 拖累</td></tr>
+</table>
+<p><b>全年 FY2026：</b>營收 $67.357B（+17%）｜雲端 $33.989B（+39%，IaaS $18.101B / SaaS $15.888B）｜GAAP OI $20.606B（OM 31%）／非 GAAP OI $28.926B（OM 43%）｜GAAP NI $16.984B／非 GAAP NI $22.234B｜<b>GAAP EPS $5.83／非 GAAP EPS $7.63</b>｜OCF $31.977B（+54%）｜<b>Capex $55.663B</b>｜<b>FCF −$23.686B</b>。</p>
+
+<h4>RPO / OCI / Capex 軌跡（核心 thesis 計量）</h4>
+<table>
+<tr><th>指標</th><th>~Q4 FY25</th><th>Q3 FY26</th><th>Q4 FY26</th><th>QoQ / 趨勢</th></tr>
+<tr><td>RPO（remaining performance obligations）</td><td>~$138B</td><td>$553B</td><td><b>$638B</b></td><td>+$85B QoQ（史上最大單季增）；+363% YoY</td></tr>
+<tr><td>RPO / 當年營收倍數</td><td>~2.4x</td><td>~8.5x</td><td><b>~9.5x</b></td><td>能見度爆表（但集中 + 預付成分高）</td></tr>
+<tr><td>OCI（IaaS）季營收</td><td>~$3.0B</td><td>~$4.0B+</td><td>$5.8B</td><td>+93% YoY（量驅動）</td></tr>
+<tr><td>Capex（季）</td><td>~$5-8B</td><td>~$13-16B</td><td>~$16B+</td><td>FY26 全年 $55.7B；FY27 淨 $70B guide</td></tr>
+<tr><td>OCI cloud services 毛利率</td><td>—</td><td>~14-16%</td><td>~14-16%（est）</td><td>規模化未拉升 → H1 核心未決</td></tr>
+</table>
+<div class="reasoning">RPO 從 ~$138B（一年前）爆增至 $638B = thesis 的「能見度」支柱；但 $75B 為客戶預付/自供硬體、~47% 綁 OpenAI → 能見度的「品質」打折。
+implication：RPO（H2）強到無可挑剔，但其能否高品質轉成「有利潤的營收」（H1）才是估值的真實槓桿。</div>
+
+<h4>財報對 §5 假設的邊際貢獻</h4>
+<table>
+<tr><th>假設</th><th>邊際方向</th><th>關鍵佐證</th></tr>
+<tr><td>H1（OCI 毛利轉化）</td><td><span class="r">－</span></td><td>OCI +93% 但毛利仍 ~14%；EPS（+5–8% FY27 guide）遠落後營收（+34%）= 成長尚未轉利</td></tr>
+<tr><td>H2（RPO 轉化）</td><td><span class="g">＋＋</span></td><td>RPO $638B +363%、QoQ +$85B（史上最大）；FY27 $90B confirmed</td></tr>
+<tr><td>H3（FCF 恢復）</td><td><span class="r">－－</span></td><td>FY26 FCF −$23.7B；FY27 淨 capex ~$70B；擬募 $40B（含 $20B 股權稀釋）</td></tr>
+</table>
+
+<h3>② Earnings Call 語氣解析</h3>
+<ul>
+<li><strong>Guidance vs 共識：</strong>FY27 營收 +34% cc（CFO Hilary Maxson：「surpassing the five-year revenue CAGR」），<b>上調 EPS guide 至 $8.05</b>；Q1 FY27 雲端 +58–64% cc、EPS $1.72–1.76。多年 OCI roadmap 上修 $41B（FY27 $32B → FY30 $144B）。</li>
+<li><strong>被迴避/淡化的問題：</strong>OCI 毛利率的<b>絕對水準與回升時程</b>被以「reach full contractual revenue levels at our data centers 後改善」帶過，未給具體 bps 目標或拐點季度；$40B 募資的股債比例與稀釋幅度語焉不詳 → 正是隔日 −8%、五日 −20% 的賣壓來源。</li>
+</ul>
+
+<h3>③ 產業 Imply 萃取</h3>
+<p><b>產業隱含信號：</b>本次 call 對產業最關鍵 imply 是「<b>AI infra 需求仍遠超供給（Oracle 1 季即上線 ~1GW）、但 hyperscaler 之間以 capex 軍備競賽搶份額，租賃端毛利被 Nvidia 上游吸走</b>」→ 餵入 §11 利潤池：算力鏈利潤正集中於 GPU 設計（Nvidia）與先進製程，<b>租賃/組裝環節（Oracle 站位）淨流出</b>。</p>
+<div class="reasoning">QC-27 Rev vs OI divergence：FY27 guide 營收 +34% vs 非 GAAP OI 成長（隱含 ~+15-20%，因 D&A 倍增）→ divergence &gt;7pp = 嚴重 margin 壓縮警示，列 §8.E。</div>
+</section>
+
+<!-- ===================== §7 ===================== -->
+<section id="s7">
+<h2>§7　核心門檻檢核</h2>
+<p class="note"><b>EPS 來源：</b>Excel buy-side snapshot 2026-06-04（pre-earnings：FY+1 $7.45 / FY+2 $8.05 / FY+3 $10.71）＋<b>財報後校正</b>（FY26 實際非 GAAP $7.63 beat、FY27 guide $8.05、FY28 共識 $10.87）。因 Excel snapshot 早於 6/10 財報，§13 以財報後 anchor 為準並標明分歧。FY29 採 §8 邏輯推導（yfinance 無 FY+3）。</p>
+
+<h4>EPS CAGR 推導</h4>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>基期 FY26（實際，非 GAAP）</td><td>$7.63</td></tr>
+<tr><td>FY27E（guide + 共識 n=41）</td><td>$8.05（+5.5%）</td></tr>
+<tr><td>FY28E（共識 n=38，區間 $8.28–$13.51）</td><td>$10.87（+35.0%）</td></tr>
+<tr><td>FY29E（§8 邏輯推導）</td><td>~$14.0（+~29%）</td></tr>
+<tr><td><b>3 年 EPS CAGR（FY26→FY29，非 GAAP）</b></td><td><b>~22.4%</b></td></tr>
+<tr><td>GAAP CAGR（基期 $5.83）</td><td>~30%（GAAP 基期低、Cerner 攤銷遞減使 GAAP 成長率較高）</td></tr>
+<tr><td>口徑差距（FY26）</td><td>$7.63 − $5.83 = $1.80（24%）；來源：Cerner 無形資產攤銷 + SBC + 收購相關</td></tr>
+</table>
+<div class="reasoning">FY29 推導（§8 邏輯，非機械外推）：①Runway — FY29 OCI roadmap $114B（vs FY28 $73B，+56%）仍高速；②驅動 — 量驅動為主、毛利隨資料中心填滿回升（H1）；③內生天花板（§8.D）ROIIC×再投資率 ≈ 受限於 14% 毛利期。綜合給 FY28→FY29 EPS +~29%（營運槓桿收割初期）→ FY29 ~$14.0。
+注意：3Y CAGR 22.4% 為 back-loaded（FY27 僅 +5.5%），品質依賴 OCI 毛利拐點，§13.2 PEG 不可照單全收。</div>
+
+<h4>門檻檢核表</h4>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據與趨勢</th></tr>
+<tr><td>FCF Margin（當前）</td><td>&gt; 15%</td><td><span class="r">❌</span></td><td>FY26 FCF −$23.69B → margin <b>−35%</b>；近 3 年 ↓↓（FY24 +22% → FY25 −1% → FY26 −35%）</td></tr>
+<tr><td>正規化 FCF Margin【Munger】</td><td>5 年均 &gt;15%；谷底 &gt;10%</td><td><span class="r">❌</span></td><td>FY22 12% / FY23 17% / FY24 22% / FY25 −1% / FY26 −35%；5 年均 ~3%，谷底 −35%（FY26）→ <b>不穩定（capex 潮）</b></td></tr>
+<tr><td>ROIC（當前）</td><td>&gt;15% 且 &gt; WACC</td><td><span class="y">~</span></td><td>ROIC ~12.8%（&lt;15% 但 &gt; WACC ~9.5%，超額 +3.3pp）</td></tr>
+<tr><td>ROIC 穩定性【Munger】</td><td>10 年 ≥70% 年份 &gt;15%</td><td><span class="y">~</span></td><td>歷史多在 12–16%；近年因 capex 攤薄 IC 周轉率下行，趨勢 <b>收窄</b></td></tr>
+<tr><td>毛利率定價能力【Munger】</td><td>10 年 ≥70% 年份改善</td><td><span class="r">❌</span></td><td>總毛利 FY22 79.1% → FY26 ~67%（OCI mix 拖累，趨勢 ↓）</td></tr>
+<tr><td>資本密集度【Munger】</td><td>Capex/Rev &lt;5%(優)/&lt;10%(尚可)</td><td><span class="r">❌❌</span></td><td>FY26 Capex/Rev = <b>83%</b>（$55.7B/$67.4B）；近 3 年 10%→37%→83% → <b>極高密集</b></td></tr>
+<tr><td>EPS CAGR（未來 3 年）</td><td>&gt; 20%</td><td><span class="g">✅</span></td><td>非 GAAP ~22.4%（FY26 $7.63 → FY29 ~$14.0），惟 back-loaded</td></tr>
+<tr><td>PEG（Non-GAAP）</td><td>&lt; 2</td><td><span class="g">✅</span></td><td>引用 §13.2 = ~1.02</td></tr>
+<tr><td>負債安全性【Munger】</td><td>D/E &lt;0.7；現金/Rev 10–50%</td><td><span class="r">❌</span></td><td>D/E ~3.6x（總債 ~$110B / 權益 ~$30B）；現金/Rev ~16%；<b>高槓桿</b></td></tr>
+<tr><td>現金覆蓋總負債</td><td>是/否</td><td><span class="r">否</span></td><td>現金 ~$11B vs 總債 ~$110B</td></tr>
+<tr><td>護城河強度</td><td>&gt;8 分，趨勢擴大</td><td><span class="y">~</span></td><td>§9 = 7.0；趨勢「execution 擴大 / pricing power mix 侵蝕」</td></tr>
+</table>
+<p><b>最大財務弱點：</b>capex/Rev 83% + FCF −35% margin + D/E 3.6x — <b>資本密集度與槓桿是這份 DD 的單一最大破口</b>。Munger 三維評級：<span class="r">🔴</span>（三維皆受 OCI 投資期壓制）。傳遞至 §9：護城河數字（FCF/ROIC）正在被 capex 稀釋，pricing power 維度封頂。</p>
+</section>
+
+<!-- ===================== §8 ===================== -->
+<section id="s8">
+<h2>§8　長期成長性評估</h2>
+
+<h3>0｜成長品質 7 問儀表板（v12.7）</h3>
+<table>
+<tr><th>#</th><th>成長品質拷問</th><th>裁決</th><th>關鍵數字</th><th>詳見</th></tr>
+<tr><td>1</td><td>結構性 vs 週期反彈？</td><td><b>結構為主</b>（AI infra 超級週期 + DB 上雲遷移）</td><td>RPO $638B（~9.5x 營收）、OCI roadmap FY30 $144B</td><td>§8.A'</td></tr>
+<tr><td>2</td><td>成長需多少資本投入？</td><td><span class="r">極重資產</span></td><td>Capex/Rev 83%；FY27 淨 capex ~$70B</td><td>§8.D</td></tr>
+<tr><td>3</td><td>增量 ROIC &gt; 資金成本？</td><td><span class="y">未證實</span>（OCI 14% 毛利下存疑）</td><td>ROIC ~12.8% vs WACC ~9.5%（整體正，但 OCI 增量段疑慮）</td><td>§8.D</td></tr>
+<tr><td>4</td><td><b>成長變 FCF 還是被下輪擴張吃掉？</b></td><td><b class="r">🔴 被 capex 吃掉（最弱一題）</b></td><td>FCF −$23.7B；FCF 去向 100%+ 流入 capex/去債/募資</td><td>§12.E</td></tr>
+<tr><td>5</td><td>競爭者會否被吸引進來？</td><td><b>已在</b>（hyperscaler + neocloud 軍備競賽）</td><td>MSFT/AMZN/GOOGL capex 各 $80–100B+；CoreWeave 類新進</td><td>§9.F</td></tr>
+<tr><td>6</td><td>股價反映多少期待？</td><td><b>公允</b>（47% 回落後消化）</td><td>Fwd PE 22.9x（5Y ~32% 分位）、PEG ~1.02</td><td>§13.1/§2D</td></tr>
+<tr><td>7</td><td>成長率下修估值撐得住嗎？</td><td><span class="r">不太撐</span>（Bear 至 ~15x = −41%）</td><td>熄火情境 −41%（§8.E）</td><td>§8.E/§2E</td></tr>
+</table>
+<p class="note"><b>最弱一題（標紅）= 第 4 題</b>：成長目前是「被下一輪 capex 吃掉」而非「變成股東現金」。這是 Oracle 成長品質的單一最大破口，與 §1 trap 🟡 + §2 H B 訊號一致。</p>
+
+<h3>A｜成長跑道（Runway）</h3>
+<table>
+<tr><th>維度</th><th>數據</th><th>推論</th></tr>
+<tr><td>當前 TAM（AI infra + 雲 DB/Apps）</td><td>雲基建 ~$0.5–0.7T（2026），AI infra 子集快速擴張</td><td>來源：產業共識；Oracle 僅佔個位數%</td></tr>
+<tr><td>可達 TAM（5–10Y）</td><td>$1T+ 雲基建 + AI 訓練/推論</td><td>新需求：主權 AI、企業推論、multicloud DB</td></tr>
+<tr><td>當前市佔 / 滲透</td><td>OCI 為 IaaS 第四（個位數%），DB 為市場領導</td><td>OCI 自 ~2% 起跳，份額快速上升</td></tr>
+<tr><td>幾年達 30% 滲透（自然放緩）</td><td>OCI 仍在 S 曲線前半（&lt;10% 滲透）</td><td>放緩點遠（10Y+）</td></tr>
+<tr><td><b>成長可持續年數（Runway）</b></td><td><b>10+ 年（營收）</b></td><td>但「利潤型 Runway」受 14% 毛利封頂，須 H1 證實</td></tr>
+</table>
+<p class="note"><b>Runway 解讀：</b>營收 Runway ≥10 年（支撐高倍數溢價），<b>但利潤/FCF Runway 未證實</b> → §2 E 合理倍數不給 S 級溢價，維持 ~22x。</p>
+
+<h3>A'｜S 曲線位置</h3>
+<p>OCI 處 S 曲線<b>陡升段前半</b>（FY26 $18B → FY30 $144B，4 年 8x）。DB/ERP 處<b>成熟穩定段</b>（個位數成長、極高毛利的現金牛）。整體公司因 mix 由成熟現金牛轉向陡升但低毛利的 OCI，呈現「<b>營收加速、毛利與 FCF 暫時崩」</b>的投資期型態 — 典型 S 曲線換腿陣痛。</p>
+
+<h3>B｜成長品質判斷</h3>
+<h4>① 有機 vs 無機</h4>
+<table>
+<tr><th>類型</th><th>占比估計</th><th>佐證</th></tr>
+<tr><td>有機（OCI 自建、DB/ERP 滲透）</td><td>~90%+</td><td>近年成長幾乎全來自 OCI 有機擴產 + 雲遷移</td></tr>
+<tr><td>無機（併購）</td><td>&lt;10%</td><td>近 5 年最大併購 Cerner（$28.3B，2022）已整合，近 3 年無重大新併購</td></tr>
+</table>
+<p class="note">無機占比 &lt;30% → 有機成長為主，免列完整併購清單（Cerner 見 §12.D）。</p>
+
+<h4>② 定價 vs 量（含具體 % + 3Y 趨勢）</h4>
+<table>
+<tr><th>類型</th><th>判斷</th><th>3 年趨勢</th></tr>
+<tr><td>定價驅動</td><td>DB/ERP：年約溫和提價（個位數）；<b>OCI：以低於 hyperscaler 的價格搶份額（定價向下）</b></td><td>整體定價貢獻 縮減（OCI mix 上升稀釋）</td></tr>
+<tr><td>量驅動</td><td><b>主力</b>：OCI 算力出貨量爆發（IaaS +93% Q4），雲 DB 席次增；GW 容量 2026 上線 ~1.2GW，FY27 Q1 即 +1GW</td><td>擴大（量是核心引擎）</td></tr>
+</table>
+<p class="note">Oracle 成長為<b>量驅動為主、定價向下</b> — 與「定價驅動 = 高品質成長」相反，是成長品質的扣分項（§8 評級 🟡 的主因之一）。</p>
+
+<h4>③ 營業槓桿：增量利潤率 3Y</h4>
+<table>
+<tr><th>列</th><th>內容</th></tr>
+<tr><td>增量 GAAP OI margin（ΔOI/ΔRev）</td><td>FY24→25：ΔOI $1.98B / ΔRev $4.44B = 45%；FY25→26：ΔOI $2.55B / ΔRev $9.96B = <b>26%</b></td></tr>
+<tr><td>增量 vs 存量對照</td><td>FY26 增量 26% vs 存量 OM 31% → <b>增量低於存量 = 成長在稀釋獲利結構</b>（OCI 低毛利 mix）</td></tr>
+<tr><td>前瞻結論</td><td>在營收 +34% base case 下，因 D&A 倍增（$7.6B→更高），<b>合併 GAAP OM 每年 −100~150bp</b>，直至 OCI 毛利拐點出現才反轉</td></tr>
+</table>
+<p class="note">判定：增量 margin 趨向 &lt; 存量 → §5.B H1/H3 觸發「削弱」標記；§8.E 衰退信號表補一盞（盈餘品質類）。bp 數餵入 §8.D 與 §8.E。</p>
+
+<h3>C｜成長護城河連動評估</h3>
+<table>
+<tr><th>類型</th><th>此標的屬於</th><th>佐證</th></tr>
+<tr><td>強化型</td><td>部分（DB 上雲：OCI 綁住 DB 客戶，轉換成本疊加）</td><td>multicloud（Oracle@AWS/Azure/Google）讓 DB 留存隨雲擴張</td></tr>
+<tr><td>中性型</td><td>—</td><td></td></tr>
+<tr><td><b>消耗型（警示）</b></td><td><b>OCI 純算力出租</b>：為搶份額犧牲定價、擴張至低 ROIC 的 GPU 租賃</td><td>14% 毛利、Blackwell 曾虧本租；SBC/capex 上升</td></tr>
+</table>
+<p>判斷：<b>雙軌</b> — DB 上雲是強化型（好），純 GPU 算力出租是消耗型（壞）。淨效果取決於 OCI 中「黏住 DB 的高價值工作負載」vs「純算力套利」的比例，後者越大護城河越被稀釋。</p>
+
+<h3>D｜ROIC 與 FCF 的長期可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前(FY26)</th><th>3 年前(FY23)</th><th>趨勢</th><th>門檻</th><th>符合</th></tr>
+<tr><td>ROIC</td><td>~12.8%</td><td>~13%</td><td>→ 持平（IC 周轉率下行抵消）</td><td>&gt; WACC</td><td><span class="y">~</span></td></tr>
+<tr><td>ROIC − WACC</td><td>~+3.3pp</td><td>~+4pp</td><td>↓ 收窄</td><td>正且擴大</td><td><span class="r">❌（收窄）</span></td></tr>
+<tr><td>FCF Margin</td><td>−35%</td><td>+17%</td><td>↓↓</td><td>&gt;15%</td><td><span class="r">❌</span></td></tr>
+<tr><td>FCF/NI 轉換率</td><td>−1.4</td><td>~1.0</td><td>↓↓</td><td>&gt;85%</td><td><span class="r">❌</span></td></tr>
+<tr><td>再投資率</td><td>極高（capex&gt;OCF）</td><td>中</td><td>↑↑</td><td>須有對應 ROIC</td><td><span class="y">待證</span></td></tr>
+</table>
+
+<h4>ROIIC 與內生成長天花板</h4>
+<table>
+<tr><th>列</th><th>計算</th></tr>
+<tr><td>ROIIC（3Y）</td><td>NOPAT FY23 ~$11.0B → FY26 ~$16.5B（Δ$5.5B）÷ 投入資本 FY23 ~$82B → FY26 ~$129B（Δ$47B）= <b>~11.7%</b>（受 capex 前置扭曲，回報尚未實現，標「投資期低估」）</td></tr>
+<tr><td>再投資率</td><td>(Capex − D&A + ΔWC) ÷ NOPAT，3Y 均 &gt; 100%（capex 遠超 NOPAT）</td></tr>
+<tr><td>內生成長天花板</td><td>ROIIC 11.7% × 再投資率（封頂 100%）≈ <b>~11.7%/yr</b>（投資期讀數，回收後應上修）</td></tr>
+<tr><td>共識對賬</td><td>共識 3Y EPS CAGR 22.4% − 內生天花板 11.7% = <b>缺口 10.7pp</b></td></tr>
+</table>
+<div class="reasoning">缺口 10.7pp 強制歸因：①營運槓桿/毛利回升（H1，FY28 收割，~+6pp）；②D&A 前置扭曲使當期 ROIIC 低估（資產尚未產生對應營收，~+3pp）；③淨回購/股數（極小，甚至股權稀釋為負，~−1pp）。
+判定：缺口<b>部分依賴未證實的 OCI 毛利回升</b> → §5.B H1 加註「依賴 margin 回升，非當下基本面引擎」，§2 I 長期持有信心封頂「中」。endo_growth_ceiling 寫入 dd-meta = 11.7%（投資期讀數）。</div>
+
+<h3>E｜成長熄火情境壓力測試</h3>
+<table>
+<tr><th>情境</th><th>對應特徵</th><th>合理 Fwd P/E 壓縮至</th><th>潛在估值跌幅</th></tr>
+<tr><td>3 年後成長降至 15%</td><td>OCI 毛利部分回升但放緩</td><td>~18x</td><td>~−20%</td></tr>
+<tr><td>3 年後成長降至 10%</td><td>回歸市場平均（Bear anchor）</td><td>~15x</td><td><b>~−41%</b></td></tr>
+<tr><td>3 年後成長降至 5%</td><td>OCI 毛利不回升 + 需求轉弱</td><td>~12x</td><td>~−55%</td></tr>
+</table>
+<p class="note">目標 P/E 引用 §2 E 合理 PE 基準（22x）。Bear 取「降至 10%」情境 → 約 $109（−41%），作 §2 E Bear anchor。</p>
+
+<h4>OCI 毛利回升敏感度（thesis 的單一最大變數 → FY30 估值）</h4>
+<p class="note">整份 DD 的多空都壓在「H1：OCI 規模化後毛利能否回升」。以管理層 FY30 營收目標 $225B + 約 3.1B 股（含稀釋）為基底，按 OCI cloud services 毛利結果拆三情境：</p>
+<table>
+<tr><th>情境</th><th>OCI cloud 毛利</th><th>FY30 合併淨利率(隱含)</th><th>FY30 NI</th><th>FY30 非 GAAP EPS</th><th>長期 PE</th><th>FY30 估值</th><th>vs $184</th></tr>
+<tr><td><span class="r">Bear（不回升）</span></td><td>~15%（維持當前）</td><td>~12%</td><td>~$27B</td><td>~$8.7</td><td>16x</td><td>~$140</td><td><span class="r">−24%</span></td></tr>
+<tr><td>Base（部分回升）</td><td>~30%</td><td>~18%</td><td>~$40B</td><td>~$13.0</td><td>20x</td><td>~$260</td><td><span class="g">+41%</span></td></tr>
+<tr><td><span class="g">Bull（接近 hyperscaler）</span></td><td>~40%</td><td>~24%</td><td>~$54B</td><td>~$17.4</td><td>22x</td><td>~$383</td><td><span class="g">+108%</span></td></tr>
+</table>
+<div class="reasoning">三情境分歧近 3 倍（$140 vs $383）幾乎完全由 OCI 毛利一個變數驅動 → 這檔本質是「<b>OCI 毛利回升的選擇權</b>」，而非穩態複利股。
+當前 $184 隱含市場 priced 介於 Bear 與 Base 之間（~50% 機率 OCI 毛利回升至 ~25-30%）→ 與「🟡 公允」一致：既未 priced Bull，也未完全 priced Bear。
+決策含義：在 OCI 毛利出現拐點「證據」前，賠率對稱（−24% vs +41%），不構成核心進場；故訊號 B 觀望，等 H1 數據（§5.E 進場觸發）。</div>
+
+<h4>⚠️ 衰退信號偵測表</h4>
+<table>
+<tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈?</th></tr>
+<tr><td>護城河侵蝕</td><td>Gross Margin 連 2 季 YoY 下滑</td><td>總毛利連年降（OCI mix）</td><td><span class="r">🔴</span></td></tr>
+<tr><td>護城河侵蝕</td><td>核心市場市佔縮減</td><td>DB/Apps 份額穩定；OCI 反而增</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>提價後銷量下滑（§9 定價事件帳）</td><td>OCI 反向（降價搶量）</td><td>⬜（型態不同）</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR &gt;&gt; Revenue CAGR（差 &gt;5pp）</td><td>FY27 EPS +5.5% &lt; 營收 +34%（<b>反向</b>）</td><td>⬜（反向，非回購撐 EPS）</td></tr>
+<tr><td>盈餘品質</td><td>FCF/NI &lt;0.75 連 2 年</td><td>FY25 −0.03、FY26 −1.4</td><td><span class="r">🔴</span></td></tr>
+<tr><td>盈餘品質</td><td>SBC/Rev &gt;5% 且逐年升</td><td>SBC ~$3.5-4.5B est，~5-7%（數據限制，見 §12）</td><td><span class="y">🟡 邊界</span></td></tr>
+<tr><td>產業結構衰退</td><td>TAM 萎縮/被替代</td><td>TAM 擴張（AI infra）</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>產業倍數系統性下移</td><td>AI 名估值仍高</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>Maint capex 占 FCF &gt;60%</td><td>FCF 為負，capex/Rev 83%</td><td><span class="r">🔴</span></td></tr>
+<tr><td>隱性資本密集</td><td>停投資則 3 年內收入下滑?</td><td>OCI 須持續投產維持成長</td><td><span class="y">🟡</span></td></tr>
+</table>
+<p><b>價值陷阱風險評級：</b>亮 <b>3 個 🔴</b>（毛利壓縮、FCF/NI&lt;0.75 連 2 年、隱性資本密集）+ 2 個 🟡 → <b>🔴 高度警戒</b>區間。§1 已正面回應「這是價值陷阱嗎」並給 🟡 觀察期（因亮燈可由「合約 backlog + OCI 投資期」解釋，非結構衰退）；§9 正面回應護城河侵蝕信號。</p>
+
+<p><strong>長期成長性綜合評級：<span class="y">🟡 中等可見度成長</span></strong> — Runway ≥10 年（營收），但量驅動定價向下、護城河 mix 侵蝕、ROIC 收窄、衰退信號 3 個 🔴 → 不給 🟢；傳遞至 §2 E（合理 PE 22x，非 S 級溢價）與 §2 0（風向燈 🟡）。</p>
+
+<h3>H｜客戶結構深度</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>來源</th></tr>
+<tr><td>Top 1 客戶占 RPO%</td><td><b>~47%（~$300B，OpenAI/Stargate）</b></td><td>賣方廣泛引用（Oracle 未於 SEC 正式確認）</td></tr>
+<tr><td>Top 1 客戶占當期營收%</td><td>較低（backlog 多尚未轉營收）</td><td>RPO 集中 ≠ 當期營收集中</td></tr>
+<tr><td>客戶供 GPU / 預付佔 RPO</td><td>~$75B（預付 + 客戶自供硬體）</td><td>賣方分析</td></tr>
+</table>
+<table>
+<tr><th>客戶</th><th>議價權類型</th><th>說明</th></tr>
+<tr><td>OpenAI（Stargate）</td><td><b>Sole/anchor 但對手信用弱</b></td><td>Oracle 是 anchor 供應商，但 OpenAI 為燒錢新創、依賴外部融資 → 集中 + 對手信用風險（Moody's 明列）</td></tr>
+<tr><td>其他 AI/企業</td><td>Multi-source</td><td>客戶多為大型企業 + 主權 AI，分散度待 RPO 結構揭露</td></tr>
+</table>
+<p><b>客戶生命週期定位：</b>OpenAI 屬「<b>客戶可能 in-house / dual-source</b>」（規模化後有動機自建資料中心或多雲分散，Stargate 本身即與其他供應商合作）→ 警示。<b>客戶結構風險評估：<span class="r">🔴 高集中 + 對手信用風險</span></b>（Top 1 占 RPO ~47%）。<span class="note">留存經濟（半導體/算力模式）：DB 上雲席次留存佳；純算力 backlog 留存待驗。</span></p>
+
+<h3>I｜分部前瞻建模</h3>
+<table>
+<tr><th>業務段</th><th>FY26 營收</th><th>驅動式</th><th>FY27E</th><th>FY28E</th><th>段毛利/OM 軌跡</th><th>對合併 EPS 成長貢獻</th></tr>
+<tr><td><b>OCI / IaaS</b></td><td>$18.1B</td><td>量×價：容量 GW +~80% × ASP 略降</td><td>~$32B</td><td>~$73B</td><td>毛利 ~14% → 回升（H1 待證）</td><td><b>營收成長主引擎；EPS 貢獻前低後高</b>（FY28 收割）</td></tr>
+<tr><td>SaaS（Apps）</td><td>$15.9B</td><td>席次 × ARPU（Fusion/NetSuite）</td><td>~$18B</td><td>~$21B</td><td>高毛利 ~70%+，穩定</td><td>穩定高毛利貢獻，EPS 的壓艙石</td></tr>
+<tr><td>軟體（License+Support）</td><td>$24.5B</td><td>維護續約 + 溫和提價</td><td>~$24B</td><td>~$24B</td><td>~85% 毛利現金牛</td><td>現金與 EPS 的基底（資助 capex）</td></tr>
+<tr><td>硬體 + 服務</td><td>$8.8B</td><td>Exadata + 顧問</td><td>~$9B</td><td>~$9B</td><td>低毛利</td><td>小</td></tr>
+</table>
+<p class="note"><b>主引擎：OCI</b>（貢獻 FY27→FY29 EPS 成長的大部分，但前 1-2 年因 D&A 前置貢獻為負/低）。<b>若 OCI miss（毛利不回升）→ EPS CAGR 由 ~22% 降至 ~10%（僅軟體/SaaS 內生）。</b>各段加總對得上 §7 整體 CAGR（差異 &lt;5pp，由 D&A 時點解釋）。來源：FY26 分部財報 + 法說 roadmap。</p>
+</section>
+
+<!-- ===================== §9 ===================== -->
+<section id="s9">
+<h2>§9　護城河分析（報告核心）</h2>
+<p class="note">§8 衰退信號 3 盞 🔴，本節正面回應：毛利壓縮與 FCF 惡化是「OCI 低毛利 mix + capex 投資期」的<b>結構 mix 現象</b>（DB/ERP 本體護城河與毛利未壞），非核心資產侵蝕；惟 mix 持續轉向 OCI 會稀釋整體護城河 → pricing power 維度封頂。</p>
+
+<h3>評分：二維拆解（default）</h3>
+<table>
+<tr><th>維度</th><th>評分(1-10)</th><th>關鍵佐證</th></tr>
+<tr><td><b>Execution Moat</b>（製造工藝/研發/供應鏈/規模效率）</td><td><b>7.0</b></td><td>OCI 快速建廠（1 季 ~1GW）、RDMA 網路、Exadata 工程化、multicloud 工程整合是真執行力；但純算力建置門檻正被 neocloud 拉低</td></tr>
+<tr><td><b>Pricing Power Moat</b>（轉換成本/無形資產/網路效應/客戶依賴）</td><td><b>7.0</b></td><td>DB/ERP 轉換成本極高（9/10 級）<b>但</b> OCI 純算力定價權弱（5/10，降價搶量、14% 毛利）→ 混合封頂 7</td></tr>
+<tr><td><b>合併分</b>（均值）</td><td><b>7.0</b></td><td>(7+7)/2；DB/ERP 拉高、OCI 拉低，mix 持續轉 OCI 使合併分有下行壓力</td></tr>
+<tr><td>等級</td><td>B 級</td><td>7-8 = B</td></tr>
+</table>
+<p class="note">dd-meta：moat_execution 7.0 / moat_pricing_power 7.0。</p>
+
+<h3>護城河數字驗收（Moat-to-Numbers）</h3>
+<table>
+<tr><th>指標</th><th>本標的(ORCL)</th><th>最強同業(MSFT)</th><th>Spread</th><th>5 年前 Spread</th><th>方向</th></tr>
+<tr><td>ROIC（TTM）</td><td>~12.8%</td><td>~28%（MSFT）</td><td>−15pp</td><td>−8pp</td><td><span class="r">收窄(惡化)</span></td></tr>
+<tr><td>毛利率</td><td>~67%</td><td>~69%</td><td>−2pp</td><td>+8pp（昔日 Oracle 較高）</td><td><span class="r">由正轉負</span></td></tr>
+<tr><td>已實現定價溢價</td><td>DB/ERP 有；OCI 折價搶量</td><td>—</td><td>—</td><td>—</td><td>引用定價事件帳</td></tr>
+</table>
+<div class="reasoning">硬 gate：護城河合併分 ≥8 的必要條件 = ROIC spread 為正且擴大。ORCL vs MSFT 的 ROIC spread 為負且收窄 → 不符合 ≥8 條件 → 合併分封頂 7（B 級），與二維評分一致。
+三道數字閘匯總：QC-26 margin（OCI 結構性壓縮，🔴）；QC-28 絕對成長（對手 capex 絕對額更大，見 §9.F）；本 ROIC gate（spread 負且收窄）→ 三閘皆指向「護城河數字面被 OCI mix + 資本密集稀釋」。</div>
+
+<h3>護城河來源（sourced evidence）</h3>
+<ul>
+<li><strong>轉換成本（最強）：</strong>DB 是 mission-critical system of record，遷移需重寫應用、資料移轉、停機驗證 — 換掉 Oracle DB 通常是 18–36 個月、數千萬美元的工程，且承擔業務中斷風險。ERP（Fusion/NetSuite）同理綁總帳/薪資流程。<b>這是 8-9/10 級護城河</b>。</li>
+<li><strong>無形資產：</strong>數十年累積的 DB 引擎 IP、Exadata 軟硬整合專利、龐大認證 DBA 生態。</li>
+<li><strong>網路效應（弱）：</strong>OCI 純算力幾乎無網路效應；multicloud DB 有弱的「資料引力」。</li>
+<li><strong>規模優勢（OCI 待建）：</strong>OCI 賭的是「規模化後單位成本壓縮 + 毛利回升」，但目前 14% 毛利顯示<b>規模優勢尚未兌現</b>，是 thesis 的待證點。</li>
+</ul>
+
+<h3>競爭鴻溝</h3>
+<p>DB/ERP 的鴻溝：①時間壁壘（客戶遷移週期 2-3 年 + 風險趨避）；②認證壁壘（金融/政府/電信的合規認證需數年）；③生態壁壘（DBA 技能、第三方整合）。<b>這就是為什麼 AWS/Azure 自家資料庫多年仍無法把 Oracle 從 mission-critical 核心拔除</b>。<br>OCI 的鴻溝<b>遠淺</b>：純 GPU 算力是準商品，CoreWeave 類 neocloud + hyperscaler 自研晶片都在攻；Oracle 的差異化在「DB 客戶就近上雲 + 價格 + 建置速度」，而非不可複製的技術。</p>
+
+<h3>市佔競爭表（對手經濟體質 + 賽局判定）</h3>
+<table>
+<tr><th>對手</th><th>市佔/規模</th><th>3年趨勢</th><th>核心威脅</th><th>誰在吃誰</th><th>OI margin</th><th>FCF(TTM)</th><th>戰爭承受力</th></tr>
+<tr><td>AWS（AMZN）</td><td>雲基建第一</td><td>份額略降但絕對額大增</td><td>自研晶片(Trainium)+規模</td><td>整體吃 on-prem；Oracle 在 AI infra 搶增量</td><td>~35%(AWS)</td><td>+(集團)</td><td><b>極高</b>（母體 FCF 厚）</td></tr>
+<tr><td>Azure（MSFT）</td><td>雲基建第二</td><td>份額升</td><td>OpenAI 綁定 + 企業關係</td><td>與 Oracle 既競爭（AI infra）又合作（Oracle@Azure DB）</td><td>~45%</td><td>+++</td><td><b>極高</b></td></tr>
+<tr><td>CoreWeave 類 neocloud</td><td>AI 算力新進</td><td>快速增</td><td>純算力低價、彈性</td><td>在純 GPU 出租段與 Oracle 正面爭</td><td>低/虧</td><td>−（燒錢）</td><td>中低（靠融資）</td></tr>
+</table>
+<p><b>賽局結構判定：破壞性競爭（AI infra 段）</b> — hyperscaler 以 capex 軍備競賽 + 低價搶 AI 份額，neocloud 虧損搶量，<b>無人守價</b>（Oracle 自己也降價搶份額）。佐證：OCI 14% 毛利、Blackwell 曾虧本租。<br><b>判定規則接線：</b>存在「結構性更低成本 + FCF 雄厚 + 承受力極高」的對手（AWS/Azure）→ §9 <b>pricing power 維度封頂 7</b>（已套用）；破壞性競爭 → §8.E 須含「ASP 戰」情境（已含「降至 5-10%」）。</p>
+
+<h3>定價事件帳（pricing power 實證）</h3>
+<table>
+<tr><th>日期</th><th>提價幅度</th><th>量與留存反應</th><th>其後 2 季 GM 反應</th></tr>
+<tr><td>DB/ERP 年約（持續）</td><td>個位數溫和提價</td><td>續約率高、量穩（mission-critical）</td><td>該段 GM 穩於 ~80%+</td></tr>
+<tr><td>OCI（2025–26）</td><td><b>反向：降價搶份額</b></td><td>量爆增（IaaS +93%）</td><td>段毛利壓至 ~14%</td></tr>
+</table>
+<p class="note">定價權「兩極化」：DB/ERP 有真定價權（量價齊穩），OCI 是「以價換量」 → 整體 pricing power moat 被 OCI mix 拉低，封頂 7。</p>
+
+<h3>護城河趨勢（雙線標）</h3>
+<table>
+<tr><th>維度</th><th>趨勢</th><th>3 年關鍵事件</th></tr>
+<tr><td>Execution Moat 趨勢</td><td><span class="g">擴大</span></td><td>OCI 建廠速度、multicloud DB（Oracle@AWS/Azure/Google）落地、Exadata X11</td></tr>
+<tr><td>Pricing Power Moat 趨勢</td><td><span class="r">縮減</span></td><td>OCI mix 上升、降價搶份額、14% 毛利；DB/ERP 定價權本體未變但占比下降</td></tr>
+</table>
+<h4>24 個月最可能瓦解護城河的變化（QC-23 三級）</h4>
+<table>
+<tr><th>等級</th><th>事件</th><th>機率</th><th>護城河影響</th></tr>
+<tr><td>⛔ 架構替代</td><td>OpenAI/大客戶轉自建資料中心或改用 neocloud，視 Oracle 為過渡產能</td><td>~25-30%</td><td>−2（§1 trap 重評）— 已反映於 pricing power 封頂 + trap 🟡</td></tr>
+<tr><td>🔴 生態攻擊</td><td>Azure/AWS 以「自研晶片 + 全棧 + 企業關係」綁定 AI infra 多年合約</td><td>~40%</td><td>−1（OCI 段）— 已反映於賽局「破壞性競爭」</td></tr>
+<tr><td>🟡 點對點</td><td>單一 neocloud 在特定 GPU 代次低價搶單</td><td>高</td><td>不扣分（份額噪音）</td></tr>
+</table>
+
+<h3>F｜對手財務深度對照</h3>
+<table>
+<tr><th>指標</th><th>ORCL</th><th>MSFT</th><th>AMZN(AWS 母體)</th><th>CoreWeave 類(新進)</th></tr>
+<tr><td>營收成長(YoY)</td><td>+17%（雲 +39%）</td><td>~+15%</td><td>~+11%</td><td>+100%+（小基期）</td></tr>
+<tr><td>Gross Margin</td><td>~67%</td><td>~69%</td><td>~48%（集團）</td><td>低（算力租賃）</td></tr>
+<tr><td>Operating Margin</td><td>31%(GAAP)/43%(非GAAP)</td><td>~45%</td><td>~11%</td><td>低/虧</td></tr>
+<tr><td>R&D 強度(R&D/Rev)</td><td>~15.5%（~$10.5B）</td><td>~12%（絕對額 ~$30B+）</td><td>高（絕對額最大）</td><td>低</td></tr>
+<tr><td>FCF Margin</td><td><b>−35%</b></td><td>~+25%</td><td>+（改善中）</td><td>−（燒錢）</td></tr>
+<tr><td>淨現金/淨債</td><td><b>淨債 ~$100B</b></td><td>淨現金</td><td>淨現金/低債</td><td>高槓桿</td></tr>
+</table>
+<p><b>策略與經濟體質敘述：</b></p>
+<ul>
+<li><strong>MSFT（最可信威脅）：</strong>以 ~45% OM、雄厚 FCF + Azure 企業關係 + OpenAI 綁定攻 AI infra，<b>同時是 Oracle 的合作方</b>（Oracle@Azure DB）。其經濟體質讓它打得起任何價格戰；Oracle 在純算力上難以正面贏，差異化只能靠 DB 客戶與速度。威脅<b>可信且高</b>。</li>
+<li><strong>AWS（AMZN）：</strong>規模最大、自研 Trainium 壓成本、母體 FCF 厚 → 戰爭承受力極高。對 Oracle 是「規模與成本」的結構壓制；QC-28 絕對成長對照：AWS/Azure 單季 AI infra 絕對美元新增 ≥ Oracle，份額優勢仍在它們手上。</li>
+<li><strong>新進入者（neocloud，CoreWeave 類）：</strong>切入點 = 純 GPU 出租、彈性、低價；客戶 = AI 新創 + 部分大廠 overflow。對 Oracle top 客戶（OpenAI 亦用多供應商）構成「<b>純算力段</b>」的直接替代威脅，但其靠融資燒錢、承受力中低 → 中期可能洗牌，但短期壓低整段毛利。</li>
+</ul>
+
+<h4>絕對規模對照（QC-28：誰的 capex/R&D 絕對額更大 → 規模優勢歸屬）</h4>
+<table>
+<tr><th>指標（年化，約值）</th><th>ORCL</th><th>MSFT</th><th>AMZN</th><th>GOOGL</th><th>含義</th></tr>
+<tr><td>AI/雲 Capex（絕對額）</td><td>~$56B（FY26）→ ~$70B 淨（FY27）</td><td>~$90-100B</td><td>~$100B+</td><td>~$80-90B</td><td>Oracle 絕對 capex 已逼近 hyperscaler，但<b>營收基期僅其 1/3-1/5</b> → 相對壓力最大</td></tr>
+<tr><td>R&D（絕對額）</td><td>~$10.5B</td><td>~$32B+</td><td>最大（含 AWS/裝置）</td><td>~$50B+</td><td>Oracle R&D 絕對額僅對手 1/3 → 純算力外的軟體創新縱深較淺</td></tr>
+<tr><td>淨現金部位</td><td><span class="r">淨債 ~$100B</span></td><td>淨現金</td><td>淨現金/低債</td><td>淨現金 $90B+</td><td><b>Oracle 是唯一以「淨負債」打 capex 軍備競賽者</b></td></tr>
+<tr><td>單季 AI infra 絕對美元新增</td><td>OCI +$2-3B/季</td><td>Azure ≥ Oracle</td><td>AWS ≥ Oracle</td><td>—</td><td>對手絕對新增 ≥ Oracle → 規模優勢仍在對手手上（QC-28 警示）</td></tr>
+</table>
+<div class="reasoning">QC-28 判定：對手（MSFT/AMZN）AI infra 絕對美元新增 ≥ Oracle 90% 且以淨現金支應，Oracle 以淨債 $100B 跟進 → <b>「規模優勢質變」警示</b>：Oracle 在算力軍備競賽中是「以小博大、以債博現金」的結構劣勢方。
+這直接支撐 §9 pricing power 封頂 7（打不起長期價格戰）+ §2 0 風向燈 🟡（利潤池被上游與規模更大對手雙重擠壓）。</div>
+</section>
+
+<!-- ===================== §10 ===================== -->
+<section id="s10">
+<h2>§10　財務品質監測</h2>
+<h3>三年趨勢表（含同業中位數）</h3>
+<table>
+<tr><th>指標</th><th>FY2024</th><th>FY2025</th><th>FY2026</th><th>同業中位(MSFT/SAP/IBM)</th><th>相對</th></tr>
+<tr><td>FCF Margin</td><td>+22%</td><td>−1%</td><td><b>−35%</b></td><td>~+20%</td><td><span class="r">劣</span></td></tr>
+<tr><td>非 GAAP OI Margin</td><td>~44%</td><td>~44%</td><td>43%</td><td>~30-45%</td><td>優/平</td></tr>
+<tr><td>ROIC − WACC</td><td>+~4.5pp</td><td>+~3.5pp</td><td>+~3.3pp</td><td>+10pp+(MSFT)</td><td><span class="r">劣</span></td></tr>
+<tr><td>SBC / Revenue</td><td>~6%(est)</td><td>~6%(est)</td><td>~5-7%(est，數據限制)</td><td>~6-10%</td><td>平</td></tr>
+<tr><td>ROE</td><td>極高（權益薄）</td><td>~60%+</td><td>~60%+</td><td>~30-40%</td><td>失真(權益薄)</td></tr>
+</table>
+<p class="note">ROE 因歷史回購使權益薄、留存盈餘為負（FY25 −$15.5B）而虛高，不具可比性 → 以 ROIC 為準。</p>
+
+<h3>獲利品質警訊</h3>
+<ul>
+<li><strong>淨利 vs OCF：</strong>OCF $32B &gt; GAAP NI $17B（連動正常），<b>但 OCF 被 RPO 客戶預付款（$20-25B 級）灌大</b> → 現金品質低於表面（扣掉預付，underlying OCF 較弱）。</li>
+<li><strong>AR vs 營收：</strong>AR 隨營收增（數據限制：精確 DSO 待 10-K）；deferred revenue（遞延收入）大幅成長是 RPO 預付的鏡像。</li>
+<li><strong>存貨：</strong>軟體業，存貨極小（DIO ~近 0）。</li>
+<li><strong>FCF 轉換率：</strong>FY26 −1.4，<b>結構性轉差（capex 潮）</b> — 這是全份 DD 最關鍵的品質惡化。</li>
+</ul>
+
+<h3>回購品質評估</h3>
+<table>
+<tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+<tr><td>過去 3 年回購 vs FCF</td><td>FY24-26 回購 ~$1.5-3.2B/年；FY26 FCF 為負 → <b>回購已大幅縮減</b>（轉用現金於 capex/股息）</td><td>回購讓位 capex（合理）</td></tr>
+<tr><td>剔除回購後 EPS CAGR</td><td>近年股數微增（股權激勵 + 擬 $20B ATM 稀釋）→ <b>剔除回購後 EPS CAGR 幾無差異甚至更低</b></td><td>EPS 成長非靠回購（反而面臨稀釋）</td></tr>
+<tr><td>回購均價 vs 現價</td><td>歷史高位回購（昔日 $100-180 區）；現停手</td><td>—</td></tr>
+<tr><td>Revenue CAGR vs EPS CAGR</td><td>近期營收 +17-34% &gt; 非 GAAP EPS +5.5%（FY27）</td><td><b>EPS 落後營收</b>（margin 壓縮，非回購撐）</td></tr>
+</table>
+<p class="note">與典型「回購撐 EPS」陷阱<b>相反</b>：Oracle 是營收衝、EPS 反而被 margin/D&A 壓 + 面臨股權稀釋。盈餘品質問題在「FCF 為負 + 稀釋」，非「假性 EPS」。</p>
+
+<h3>FCF lumpiness 評估</h3>
+<table>
+<tr><th>指標</th><th>數值</th></tr>
+<tr><td>過去 5 年 FCF</td><td>FY22 $5.03B / FY23 $8.47B / FY24 $11.81B / FY25 −$0.39B / FY26 <b>−$23.69B</b></td></tr>
+<tr><td>5Y 滾動均 FCF</td><td>~+$0.2B（被 FY26 拉到近零）</td></tr>
+<tr><td>最低谷</td><td>FY26 −$23.69B</td></tr>
+<tr><td>Maint capex 估算（D&A 錨定法）</td><td>D&A ~$7.6B 多為近期 capex 折舊；<b>Owner earnings = OCF $32B − maint capex（≈D&A $7.6B）= ~$24B</b>（但成長 capex $48B 另計，故總 FCF 仍深負）</td></tr>
+<tr><td>Lumpiness 性質</td><td><b>非自然 lumpy</b>：是<b>結構性、持續性的成長 capex 潮</b>（非一次性、非訂單型隨機）</td></tr>
+<tr><td>結論</td><td><span class="r">🔴 FCF 穩定性存疑</span>（未來 2-3 年持續深負，賭 FY28+ 回收）</td></tr>
+</table>
+<p class="note">關鍵分辨：負 FCF 由成長 capex（對應 $638B RPO）驅動，<b>若 backlog 履約則為「投資」，若不履約則為「燒錢」</b> — 這正是 trap 🟡 的核心未決點。</p>
+
+<h3>E｜長期趨勢 + DuPont + 營運資金</h3>
+<h4>① 5 年關鍵指標趨勢</h4>
+<table>
+<tr><th>指標</th><th>FY22</th><th>FY23</th><th>FY24</th><th>FY25</th><th>FY26</th><th>結構判讀</th></tr>
+<tr><td>Gross Margin</td><td>79.1%</td><td>72.8%</td><td>71.4%</td><td>70.5%</td><td>~67%(est)</td><td><span class="r">結構性降</span>（OCI mix）</td></tr>
+<tr><td>GAAP Operating Margin</td><td>37.3%</td><td>27.6%</td><td>30.3%</td><td>31.4%</td><td>30.6%</td><td>持平（非 GAAP 43%）</td></tr>
+<tr><td>ROIC</td><td>~13%</td><td>~13%</td><td>~14.1%</td><td>~12.7%</td><td>~12.8%</td><td>持平偏降</td></tr>
+<tr><td>FCF Margin</td><td>+12%</td><td>+17%</td><td>+22%</td><td>−1%</td><td>−35%</td><td><span class="r">崩</span>（capex 潮）</td></tr>
+<tr><td>Capex/Revenue</td><td>11%</td><td>17%</td><td>13%</td><td>37%</td><td>83%</td><td><span class="r">爆升</span></td></tr>
+</table>
+<h4>② ROIC DuPont 拆解</h4>
+<table>
+<tr><th>年</th><th>NOPAT margin</th><th>投入資本周轉率</th><th>= ROIC</th></tr>
+<tr><td>FY24</td><td>24.3%</td><td>0.58x</td><td>14.1%</td></tr>
+<tr><td>FY25</td><td>25.2%</td><td>0.50x</td><td>12.7%</td></tr>
+<tr><td>FY26</td><td>24.5%</td><td>0.52x</td><td>12.8%</td></tr>
+</table>
+<p class="note"><b>ROIC 由「獲利力」（NOPAT margin ~25% 穩）支撐，但被「資本效率」（IC 周轉率 0.58→0.52x）拖累</b> — 資本密集化是 ROIC 的結構壓力。未來 D&A 倍增將壓 NOPAT margin，除非營收快速填滿產能（H1）。</p>
+<h4>③ 營運資金趨勢</h4>
+<p class="note">Oracle 為訂閱/授權模式：<b>DIO ~近 0</b>（無實體存貨）；<b>deferred revenue 龐大且增</b>（RPO 預付）→ 營運資金實為<b>現金來源</b>（客戶先付）。精確 DSO/DPO/CCC 待 FY26 10-K 的 AR/AP 明細（數據限制，QC-8 標註）；定性結論：CCC 結構性偏負（遞延收入墊付營運），這是軟體業的現金優勢，<b>部分緩衝了 capex 的現金壓力</b>（OCF 因此達 $32B）。</p>
+<h4>④ 債務到期結構</h4>
+<p class="note">總債 ~$104B（FY25）→ 隨 FY26 發債與 FY27 擬募 $40B 上升至 ~$130B+。加權利率歷史 ~4-5%（利息費用 FY25 $3.58B，隨新債在高利率環境再融資而上升）。<b>到期牆 + 高利率再融資 = R2 核心</b>；信評 Baa2/BBB（負向）尚屬投資級，但緩衝變薄。</p>
+</section>
+
+<!-- ===================== §11 ===================== -->
+<section id="s11">
+<h2>§11　產業格局</h2>
+<p><b>市場量化：</b>雲基建 TAM ~$0.5-0.7T（2026）→ $1T+（5Y），AI infra 子集 CAGR &gt;30%；當前滲透低（企業上雲仍 &lt;50%），供需<b>緊缺</b>（GPU 與電力受限，Oracle 1 季上線 ~1GW 仍供不應求）。</p>
+
+<h3>利潤池地圖（Profit Pool Map）</h3>
+<table>
+<tr><th>價值鏈環節</th><th>代表公司</th><th>OI 池代理</th><th>5 年前→當前 OI 池占比</th><th>遷移方向</th></tr>
+<tr><td>GPU/加速器設計</td><td>Nvidia</td><td>極高（~75% 毛利）</td><td>~30% → ~46%</td><td><span class="g">↑↑</span></td></tr>
+<tr><td>先進製程/HBM</td><td>TSMC / SK海力士</td><td>高</td><td>~22% → ~24%</td><td>→/↑</td></tr>
+<tr><td><b>雲算力出租（本標的環節）</b></td><td><b>ORCL</b> / CoreWeave / hyperscaler IaaS</td><td>低（OCI ~14% 毛利）</td><td>較高 → 被壓縮</td><td><span class="r">↓（淨流出）</span></td></tr>
+<tr><td>應用/模型層</td><td>OpenAI / SaaS</td><td>不一（多虧損燒錢）</td><td>—</td><td>?</td></tr>
+</table>
+<p><b>結論：</b>AI 算力鏈利潤正<b>向上游 GPU 設計（Nvidia）集中</b>，<b>租賃環節（Oracle 站位）淨流出</b> — 「量增 8 倍但利潤被上游吸走」。<b>判定規則接線：本標的環節 OI 池占比 5 年淨流出 → §8.A Runway 評級降一檔（已反映於 🟡），§2 0 產業風向燈不得標 🟢（已標 🟡）。</b>這是 Oracle「替 Nvidia 打工」風險的量化表達。</p>
+
+<h3>議價權（三段獨立）</h3>
+<p><strong>①對上游供應商：</strong>OCI 的關鍵上游是 <b>Nvidia GPU</b>（集中度極高、替代難度 High — AMD/自研晶片尚未成熟）。近 3 年 Oracle <b>議價權弱</b>：GPU 供給受限、價格由 Nvidia 主導，Oracle 是 price-taker，這正是 OCI 14% 毛利的根因（成本端被上游吃）。其次上游為電力/資料中心建置（受電網與工期限制）。</p>
+<p><strong>②對下游客戶：</strong>DB/ERP 客戶議價權<b>強</b>（mission-critical、轉換成本高、合約帶溫和漲價）；<b>但 OCI/AI infra 客戶議價權弱</b> — 大客戶（OpenAI 占 RPO ~47%）規模大、可多雲分散、可威脅自建 → 反向壓 Oracle 定價。合約結構：AI infra 多為多年大額合約（提供 backlog 能見度）但<b>客戶集中</b>。</p>
+<p><strong>③地緣曝險：</strong>資料中心遍布美國 + 國際（含主權 AI 如中東、日本）；關鍵單點為 <b>Nvidia GPU 供應 + 美國 AI 晶片出口管制</b>（影響國際資料中心可部署的晶片）。電力與 land 是擴產的實體瓶頸。分散化：multicloud + 多國 region。</p>
+
+<h3>營收組成（三維）</h3>
+<h4>① 按業務段</h4>
+<table>
+<tr><th>業務段</th><th>FY26 占比</th><th>YoY</th><th>段毛利</th><th>3Y 占比軌跡</th></tr>
+<tr><td>軟體（License+Support）</td><td>36%（$24.5B）</td><td>低個位數</td><td>~85%</td><td>↓（被雲稀釋）</td></tr>
+<tr><td>OCI / IaaS</td><td>27%（$18.1B）</td><td>+~70%</td><td>~14%</td><td><span class="g">↑↑</span></td></tr>
+<tr><td>SaaS（Apps）</td><td>24%（$15.9B）</td><td>+~12%</td><td>~70%</td><td>→/↑</td></tr>
+<tr><td>硬體</td><td>5%（$3.1B）</td><td>低</td><td>中</td><td>→</td></tr>
+<tr><td>服務</td><td>9%（$5.7B）</td><td>低</td><td>低</td><td>→</td></tr>
+</table>
+<h4>② 按地區</h4>
+<table>
+<tr><th>地區</th><th>占比(約)</th><th>備註</th></tr>
+<tr><td>美洲</td><td>~60%</td><td>主場；AI infra 大單集中</td></tr>
+<tr><td>EMEA</td><td>~25%</td><td>主權 AI（中東）擴張</td></tr>
+<tr><td>亞太</td><td>~15%</td><td>日本/印度 region 擴建</td></tr>
+</table>
+<h4>③ 按客戶集中度</h4>
+<table>
+<tr><th>指標</th><th>數值</th></tr>
+<tr><td>Top 1 占 RPO%</td><td>~47%（OpenAI/Stargate，~$300B）</td></tr>
+<tr><td>失去最大 backlog 客戶影響</td><td>RPO 折價 + 已投 GPU 資產閒置 → 中長期成長與資產價值雙重打擊</td></tr>
+</table>
+
+<h3>單位經濟（逐業務段）</h3>
+<table>
+<tr><th>業務段</th><th>核心 Unit 指標</th><th>趨勢</th><th>段 OI margin</th><th>資本密集度 proxy</th><th>結構洞察</th></tr>
+<tr><td>OCI</td><td>每 GW 容量營收 / GPU 利用率</td><td>量↑ 價↓</td><td>低（毛利~14%）</td><td><b>極高</b>（capex/段營收 &gt;2x）</td><td>規模化前單位經濟差，賭利用率填滿後改善</td></tr>
+<tr><td>SaaS</td><td>每席 ARPU（Fusion/NetSuite）</td><td>↑</td><td>~70% 毛利段</td><td>低</td><td>健康，高黏著</td></tr>
+<tr><td>軟體</td><td>維護續約率 / 每客戶支援費</td><td>穩</td><td>~85%</td><td>極低</td><td>現金牛，資助 capex</td></tr>
+</table>
+<p class="note"><b>mix-shift 算術：</b>以各段成長外推 3 年，OCI 占比 27%→~50%+ → 合併毛利結構性 <b>−100~150bp/yr</b>（OCI 毛利不回升前）；與 §8.B③ 增量 OI margin（26%&lt;存量）互相驗證，同向（皆指向 mix 稀釋），差距可由 OCI 毛利回升時點解釋。</p>
+
+<h3>F｜逐段 TAM/SAM + 價值鏈深度</h3>
+<table>
+<tr><th>業務段</th><th>段 TAM(現/5Y)</th><th>滲透</th><th>段 CAGR</th><th>value chain 位置 + 替代風險</th></tr>
+<tr><td>OCI/AI infra</td><td>~$0.3T / $0.7T+</td><td>低</td><td>&gt;40%</td><td>租賃節點（中游），<b>被上游 GPU 與下游自建雙向擠壓，替代風險中高</b></td></tr>
+<tr><td>雲 DB（含 multicloud）</td><td>~$100B / $150B+</td><td>中</td><td>~20%</td><td>上游壟斷節點（DB IP），替代風險<b>低</b>（Oracle 護城河核心）</td></tr>
+<tr><td>SaaS Apps（ERP/HCM）</td><td>~$200B / $300B</td><td>中</td><td>~12%</td><td>system of record，替代風險低-中（vs SAP/Workday）</td></tr>
+</table>
+<p class="note">與利潤池接線：OCI 段 TAM 最大但利潤池流出（替別人打工）；DB 段 TAM 較小但利潤池最厚、護城河最深 → <b>Oracle 的價值取決於「能否用低毛利 OCI 黏住高毛利 DB 工作負載」</b>。</p>
+</section>
+
+<!-- ===================== §12 ===================== -->
+<section id="s12">
+<h2>§12　公司治理與資本配置</h2>
+<h3>股東結構</h3>
+<p>創辦人 <b>Larry Ellison 持股 ~40.3%（11.6 億股，市值 ~$210B）</b>，為最大個人股東；內部人合計 ~40.7%，機構 ~41.9%，散戶 ~17.4%。<b>Ellison 高度控盤</b>（雖非雙重股權，實質創辦人控制）。<br><b>⚠️ 治理旗標：</b>Ellison 慣以<b>質押股票（pledge ~2.77 億股）借款</b>融資其他投資（如 AI、媒體），而非賣股 — 董事會稱不構成重大風險，但<b>股價深跌時的質押/保證金連動是潛在尾部風險</b>。近期無經確認的重大新證券訴訟（2000 年代舊案已和解；前份 DD 提及之訴訟本份 web 搜尋未見新進展 — 數據限制，列監測）。</p>
+
+<h3>資本配置軌跡（M&A track record）</h3>
+<table>
+<tr><th>年份</th><th>被收購方</th><th>金額</th><th>整合結果</th><th>減損</th></tr>
+<tr><td>2022</td><td>Cerner（醫療 IT）</td><td>$28.3B</td><td>整合中；醫療雲推進，但整合較預期慢、攤銷拖累 GAAP EPS</td><td>無重大減損（持續攤銷）</td></tr>
+<tr><td>2023-2026</td><td>無重大併購</td><td>—</td><td>有機成長（OCI 自建）為主</td><td>—</td></tr>
+</table>
+
+<h3>管理層薪酬</h3>
+<p class="note">Ellison（CTO/董事長）薪酬高度以股權/選擇權為主；CEO（Safra Catz 後接班結構）與雲端高管（Clay Magouyrk、Mike Sicilia）薪酬含大額股權激勵。精確固定/績效/股權比例待最新代理聲明（數據限制，QC-6 標註）。</p>
+
+<h3>SBC 真實稀釋</h3>
+<table>
+<tr><th>指標</th><th>數據</th></tr>
+<tr><td>GAAP EPS（FY26）</td><td>$5.83</td></tr>
+<tr><td>Non-GAAP EPS（FY26）</td><td>$7.63</td></tr>
+<tr><td>差距</td><td>$1.80（24%）= SBC + Cerner 無形資產攤銷 + 收購相關</td></tr>
+<tr><td>GAAP→非 GAAP NI 橋</td><td>$16.984B → $22.234B = $5.25B 調整</td></tr>
+<tr><td>SBC 估計</td><td>~$3.5-4.5B（~5-7% 營收，數據限制：精確 SBC 待 10-K；公開搜尋一度給 ~$1.2B 但與 NI 橋不符，存疑）</td></tr>
+<tr><td><b>剔除 SBC/攤銷後</b></td><td>GAAP CAGR（~30%，基期低）vs 非 GAAP CAGR（~22%）；<b>GAAP 因 Cerner 攤銷遞減而成長率較高</b></td></tr>
+</table>
+<p class="note">GAAP 與非 GAAP 差距 24% 主要來自 <b>Cerner 無形資產攤銷</b>（非現金、會遞減）而非單純 SBC — 這對 Oracle 是相對良性的（攤銷未來遞減會自動縮小差距）。但<b>擬發 $20B ATM 股權的真實稀釋</b>是新增的、現金性的股東傷害。</p>
+
+<h3>資本配置計分卡</h3>
+<table>
+<tr><th>項目</th><th>計算</th><th>過/不過</th></tr>
+<tr><td>M&A 已實現 ROIIC</td><td>Cerner $28.3B：醫療雲貢獻爬坡中，Y3 ROIIC 約 &lt; WACC（整合偏慢）</td><td><span class="y">邊界/不過</span></td></tr>
+<tr><td>回購買入收益率</td><td>歷史高位回購；現停手</td><td>N/A（現不回購）</td></tr>
+<tr><td>SBC 淨稀釋率</td><td>~1-1.5%/yr + 擬 $20B ATM 額外稀釋</td><td><span class="y">邊界</span>（ATM 後惡化）</td></tr>
+</table>
+<p><b>資本配置等級：B（偏 C）</b> — Cerner 回報平庸 + 高位回購歷史 + 即將股權稀釋；惟核心現金牛配置紀律尚可。<b>接線：B/C 邊界 → §2 I 長期信心封頂「中」（已套用），§8.D 內生天花板引用打折。</b>dd-meta capalloc_grade = B。</p>
+
+<h3>D｜10 年資本配置 track record</h3>
+<p class="note"><b>① M&A 全史：</b>Oracle 是史上最積極的軟體併購者（PeopleSoft、Siebel、Sun、NetSuite、Cerner...）。過去 10 年最大為 Cerner（$28.3B，2022）；多數早期併購（PeopleSoft/Siebel/Sun）長期被評整合成功、強化 apps/DB 護城河，<b>track record 整體中上</b>，但 Cerner 與近期擴張尚未證明同等回報。<b>② 回購/股息 10 年：</b>過去 10 年股數由 ~42 億降至 ~29 億（大量回購，是 GAAP EPS 成長的歷史推手之一），股息持續成長（現 $2.00/yr）；<b>但 FY26 起回購讓位 capex、並轉向股權稀釋</b>，是 10 年資本配置的重大轉折。<b>③ 內部人/薪酬：</b>Ellison 控盤 + 質押借款模式；薪酬重股權。<br><b>10 年敘事 vs 計分卡：</b>歷史是「併購整合 + 回購縮股」的複利機器（支撐 B 級），<b>但 FY26 起轉為「債/股權融資的重資本 AI 賭注」</b>，10 年信任資本能否延續到 OCI capex，是 thesis 的治理層未決點。</p>
+
+<h4>5 年資金流與融資軌跡（$B，FY22→FY26）</h4>
+<table>
+<tr><th>項目</th><th>FY22</th><th>FY23</th><th>FY24</th><th>FY25</th><th>FY26</th><th>讀數</th></tr>
+<tr><td>OCF</td><td>9.5</td><td>17.2</td><td>18.7</td><td>20.8</td><td>32.0</td><td>↑（含 RPO 預付灌大）</td></tr>
+<tr><td>Capex</td><td>4.5</td><td>8.7</td><td>6.9</td><td>21.2</td><td><b>55.7</b></td><td><span class="r">爆升 12x</span></td></tr>
+<tr><td>FCF</td><td>5.0</td><td>8.5</td><td>11.8</td><td>−0.4</td><td><b>−23.7</b></td><td><span class="r">由正轉深負</span></td></tr>
+<tr><td>股息</td><td>3.5</td><td>3.7</td><td>4.4</td><td>4.7</td><td>~5.7</td><td>穩定成長</td></tr>
+<tr><td>回購</td><td><b>17.3</b></td><td>2.5</td><td>3.2</td><td>1.5</td><td>~0</td><td><span class="r">驟停（讓位 capex）</span></td></tr>
+<tr><td>總負債（期末）</td><td>75.9</td><td>90.5</td><td>93.1</td><td>104.1</td><td>~110+</td><td><span class="r">持續加槓桿</span></td></tr>
+<tr><td>稀釋股數（M）</td><td>2,786</td><td>2,766</td><td>2,823</td><td>2,866</td><td>~2,913</td><td><span class="r">近年「增」非「減」</span></td></tr>
+</table>
+<div class="reasoning">關鍵轉折：FY22 回購 $17.3B（縮股引擎）→ FY26 回購 ~0、股數反增 2,786M→2,913M、且擬發 $20B ATM。
+即「資本配置由『把現金還股東（回購）』全面切換為『把現金 + 外部融資投入 capex』」。FY24→FY26 capex 累計 ~$84B，FCF 累計 −$12B（被 FY26 拉負）。
+implication to §12.E/§8.0 第 4 問：成長確實「被下一輪 capex 吃掉」，且伴隨股數膨脹 → 每股價值的稀釋風險真實。</div>
+
+<h3>E｜FCF 去向 + M&A 飛輪（v12.7）</h3>
+<h4>① FCF 去向拆解</h4>
+<table>
+<tr><th>用途</th><th>佔 OCF/資金 %</th><th>增量報酬</th><th>判斷</th></tr>
+<tr><td>成長 capex（OCI 資料中心）</td><td><b>~174%（capex $55.7B &gt; OCF $32B）</b></td><td>OCI 增量 ROIC 待證（14% 毛利期）</td><td><b>吞噬全部 OCF 且須外部融資</b></td></tr>
+<tr><td>股息</td><td>~$5.7B/yr（佔 OCF ~18%）</td><td>殖利率 ~1.1%</td><td>穩定回報（須維持）</td></tr>
+<tr><td>回購</td><td>已大幅縮減至 ~0</td><td>—</td><td>讓位 capex</td></tr>
+<tr><td>去債 / 募資</td><td>淨募資（FY27 擬 +$40B）</td><td>利息上升</td><td><b>淨增槓桿 + 股權稀釋</b></td></tr>
+</table>
+<h4>② M&A 飛輪判定</h4>
+<p>Oracle 歷史是「FCF → 併購 → 整合 → 更多 FCF」的飛輪（PeopleSoft→Sun→Cerner）。<b>但 FY26 起飛輪已切換</b>：不再是「FCF 驅動併購」，而是「<b>外部融資（債+股權）驅動 capex</b>」。新模式的增量 ROIC 取決於 OCI 毛利回升，<b>目前未證實 &gt; WACC</b>。風險：FCF 不僅沒變股東現金，反而<b>被「越來越大的下一輪 capex」吃掉，且須靠稀釋股權與舉債填補</b>。</p>
+<h4>③ 一句結論</h4>
+<p><b>這檔的成長最終<span class="r">被下一輪 capex 吃掉</span>（FCF −$23.7B、capex &gt; OCF、須外部融資），增量 ROIC <span class="y">≈ WACC（OCI 段未證實 &gt;）</span>，飛輪由「併購複利機器」切換為「<span class="r">需警戒出價/投資紀律的重資本賭注</span>」。</b>對齊 §8.0 第 4 問（最弱一題）裁決。</p>
+</section>
+
+<!-- ===================== §13 ===================== -->
+<section id="s13">
+<h2>§13　估值診斷</h2>
+<p class="note"><b>EPS 來源：</b>Excel snapshot 2026-06-04（pre-earnings）+ 財報後校正（FY26 實際 $7.63、FY27 guide $8.05、FY28 共識 $10.87、FY29 §8 推導 ~$14.0）。因 Excel 早於 6/10 財報，以財報後 anchor 為準。</p>
+
+<h3>13.1｜歷史估值分位（5 年框架）</h3>
+<table>
+<tr><th>估值指標</th><th>當前</th><th>5Y 低</th><th>5Y 中位</th><th>5Y 高</th><th>當前分位</th></tr>
+<tr><td>Trailing P/E</td><td>31.6x</td><td>~15x</td><td>~34x</td><td>~55x</td><td>~41%</td></tr>
+<tr><td>Forward P/E（FY27/NTM）</td><td>22.9x</td><td>~14x</td><td>~22x</td><td>~42x</td><td><b>~32%</b></td></tr>
+<tr><td>Forward P/E（FY28）</td><td>16.9x</td><td>—</td><td>—</td><td>—</td><td>低</td></tr>
+<tr><td>EV/EBITDA</td><td>20.6x</td><td>~12x</td><td>~18x</td><td>~30x</td><td>~62%（債務推高 EV）</td></tr>
+</table>
+<div class="reasoning">分位計算：Fwd P/E（22.9−14)/(42−14)=8.9/28=32%。
+解讀：47% 回落後估值情緒由「狂熱」回到「公允偏低」（Fwd PE 32% 分位 &lt; 5Y 均 34x 甚多）；但與歷史同分位（2023-24）相比，當時 Oracle 是高毛利、正 FCF；現在是負 FCF、高槓桿 → <b>同分位但基本面品質更差</b>。
+implication to §2 D：確認 🟡（分位偏低但 EV/EBITDA 因債務偏高，且品質折讓抵消便宜）。</div>
+
+<h3>13.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>判斷基準</th><th>解讀</th></tr>
+<tr><td>Forward P/E（FY27）</td><td>22.9x</td><td>—</td><td>—</td></tr>
+<tr><td>非 GAAP EPS CAGR（3Y，§7）</td><td>~22.4%</td><td>—</td><td>back-loaded</td></tr>
+<tr><td>PEG（非 GAAP，3Y）</td><td><b>~1.02</b></td><td>&lt;1 便宜/1-2 合理/&gt;2 貴</td><td>合理區下緣</td></tr>
+<tr><td>PEG（近期 FY27 成長 +5.5%）</td><td>~4.2</td><td>同上</td><td><b>近期看極貴</b>（成長未到）</td></tr>
+<tr><td>5 年 EPS CAGR（含 roadmap）</td><td>~25-30%（若 OCI 毛利回升）</td><td>—</td><td>高度條件化</td></tr>
+<tr><td>3Y vs 5Y PEG 差異</td><td>大（near-term 弱、long-term 強）</td><td>差異大 = 成長 back-loaded，需警惕</td><td><b>估值便宜與否取決於你信 FY28+ 收割</b></td></tr>
+</table>
+<div class="reasoning">PEG 3Y = 22.9 ÷ 22.4% = 1.02（合理下緣）。
+但 3Y CAGR 嚴重 back-loaded（FY27 僅 +5.5%）→ PEG 1.02 的「便宜」依賴 FY28 +35% / FY29 +29% 的營運槓桿收割兌現，而後者繫於 OCI 毛利回升（未證實）。
+implication to §2 D：PEG 1.02 → 🟡（非 🟢）；與分位 32% 取較嚴仍 🟡。不可用 PEG&lt;1.1 表象判便宜。</div>
+
+<h3>13.4｜同業估值比較</h3>
+<p>本標的業務模式 tier：<b>混合型（hybrid）</b> — 兼具「大型企業軟體/應用」（對 SAP/CRM/IBM）與「超大規模雲基建」（對 MSFT/AMZN）。<b>無單一完美 peer</b>：Oracle 是唯一「高槓桿 + 重 capex + DB 護城河」組合。下表以企業軟體/雲 tier 為主，並標 hyperscaler 對照。</p>
+<table>
+<tr><th>公司</th><th>市值</th><th>Fwd P/E</th><th>EV/EBITDA</th><th>FCF Margin</th><th>EPS CAGR(3Y)</th><th>ROIC</th></tr>
+<tr><td><b>ORCL</b></td><td>~$530B</td><td>22.9x(FY27)/16.9x(FY28)</td><td><b>20.6x</b></td><td><span class="r">−35%</span></td><td>~22%</td><td>~12.8%</td></tr>
+<tr><td>MSFT</td><td>~$3.5T+</td><td>~21x</td><td>~16x</td><td>+25%</td><td>~15%</td><td>~28%</td></tr>
+<tr><td>SAP</td><td>~$300B</td><td>~21x</td><td>~高</td><td>+正</td><td>~15%</td><td>~中</td></tr>
+<tr><td>IBM</td><td>~$250B</td><td>~22x</td><td>~19x</td><td>+正</td><td>~低個位</td><td>~中</td></tr>
+<tr><td>CRM</td><td>~$250B</td><td>~13x</td><td>~14x</td><td>+正</td><td>~10%</td><td>~中</td></tr>
+<tr><td>AMZN（hyperscaler 對照）</td><td>~$2.5T+</td><td>~28x</td><td>~17x</td><td>+改善</td><td>~高</td><td>~中</td></tr>
+<tr><td>同 tier 中位（軟體/雲）</td><td>—</td><td>~21x</td><td>~17x</td><td>+正</td><td>~15%</td><td>~中高</td></tr>
+</table>
+<div class="reasoning">Fwd PE：ORCL 22.9x（FY27）≈ 同 tier 中位 ~21x（小幅溢價），低於 AMZN，高於 CRM。
+但 EV/EBITDA 20.6x 為組內最高 → <b>因 ~$100B 淨債推高 EV + OCI 壓低 EBITDA</b>；FCF margin −35% 為組內唯一負值 → ORCL 在現金品質與槓桿上明顯劣於 peer。
+向 tier 中位回歸：PE 已接近中位（無明顯折價空間）；溢價需護城河/成長支撐，但 ORCL 的成長品質（負 FCF）反而劣 → implication to §2 D/H：估值不提供安全邊際，🟡。</div>
+
+<h3>§13 估值診斷結論</h3>
+<p>13.1 歷史分位（~32% → 情緒：公允偏低）+ 13.2 PEG（~1.02，但 back-loaded → 🟡）+ 13.4 同業相對（Fwd PE 近中位無折價、EV/EBITDA 組內最高、FCF margin 唯一負）→ <b>綜合估值訊號：🟡 公允</b>。47% 回落已消化狂熱，但因負 FCF + 高槓桿的品質折讓，便宜表象（PEG&lt;1.1）不構成安全邊際。完整裁決見 §1 dashboard；倉位 % 由 portfolio-manager skill 決定。</p>
+<p class="note"><b>分析師目標價參考：</b>高 $400 / 中位 ~$240 / 低 $155（n≈34-52，<b>多為財報前或混合</b>，UBS 6/2 升至 $285）。當前 $184 vs 中位 $240 隱含 +30% upside，<b>但須注意目標價多未完全反映 6/10 財報後的 capex/FCF/稀釋衝擊</b> — 不認同直接照搬中位，因其多 priced 財報前的樂觀。PM 自家修正：以 22x × FY28 $10.87 = ~$239 為中期合理錨，但要求 OCI 毛利確認後才提升信心。</p>
+</section>
+
+<!-- ===================== 版本修訂 ===================== -->
+<section>
+<h2>版本修訂紀錄 &amp; 假設驗證對照</h2>
+<table>
+<tr><th>日期</th><th>版本</th><th>主要變更</th><th>訊號</th></tr>
+<tr><td>2026-04-17</td><td>v11.0</td><td>初版，B 級品質，中期 R:R 1.07x，判定「觀望」</td><td>觀望</td></tr>
+<tr><td>2026-04-18</td><td>v12.0</td><td>v11→v12；MA 🟠 + 體質 3 項 veto → C；4 週 +17% 追高；訴訟 + 信評負向</td><td>X（迴避）</td></tr>
+<tr><td>2026-06-15</td><td><b>v12.7</b></td><td><b>財報後（Q4 FY2026, 6/10）重評。</b>股價自 $345 高 −47%、5 日 −20% → 追高否決消失，MA 重置 🟢 最佳進場；估值 de-rate 至 Fwd 22.9x（🟡 公允）。反向：H3（FCF）大幅惡化（FY26 FCF −$23.7B、FY27 淨 capex ~$70B）、R2（信貸）升級實質確認（Moody's Baa2 neg / S&P BBB neg，OpenAI 對手風險、$40B 募資含 $20B 股權稀釋）。新增 v12.7 模組：§8.0 七問儀表板、§8.I 分部建模、§9.F 對手財務、§10.E DuPont/WC、§12.D 10Y 資配、§12.E FCF 去向/飛輪。護城河維持 7.0（B），體質 3 veto，trap 🟡。<b>訊號 X→B（觀望）</b></td><td><b>B（觀望）</b></td></tr>
+</table>
+<h3>假設驗證對照（vs 2026-04-18 v12.0）</h3>
+<table>
+<tr><th>項目</th><th>上次（v12.0）</th><th>本次（v12.7）</th><th>邊際變化</th></tr>
+<tr><td>H1（OCI 份額/AI 遷移）</td><td>+強化（OCI +66%）</td><td>+強化（OCI +93%、IaaS $18.1B、roadmap +$41B）；<b>H1 重定義為「毛利轉化」</b></td><td>份額續強，但焦點轉向利潤</td></tr>
+<tr><td>H2（RPO/FY27 $90B）</td><td>+強化（RPO $553B）</td><td>+強化（RPO $638B +363%、+$85B QoQ；$90B confirmed）</td><td>大幅強化</td></tr>
+<tr><td>H3（FCF 恢復）</td><td>−削弱</td><td><span class="r">−−大幅惡化</span>（FCF −$23.7B；淨 capex ~$70B；$40B 募資）</td><td>惡化加速</td></tr>
+<tr><td>R1（RPO QoQ 下滑）</td><td>未觸發</td><td>未觸發（+$85B 史上最大）</td><td>更遠離</td></tr>
+<tr><td>R2（利息/再融資）</td><td>🟡 接近觸發</td><td><span class="r">🔴 實質確認</span>（雙評負向 + OpenAI 對手風險 + $20B 股權稀釋）</td><td>觸發升級</td></tr>
+<tr><td>R3（OCI 技術劣勢）</td><td>未觸發</td><td>未觸發（重定義為毛利/集中度風險）</td><td>型態轉移</td></tr>
+<tr><td>裁決變化</td><td>X（迴避）</td><td><b>B（觀望）</b></td><td>3 個關鍵新事實：①−47% de-rate 消除追高否決 ②MA 重置 🟢 ③但 FCF/信貸 thesis 風險加重</td></tr>
+</table>
+</section>
+
+<p class="note src">資料來源：Oracle Q4/FY2026 earnings release（2026-06-10, prnewswire/oracle.com/SEC 8-K）｜earnings call transcript（investing.com）｜yfinance（價格/MA/Bollinger/財務三表/共識，抓取 2026-06-12）｜get_eps_for_ticker.py Excel snapshot 2026-06-04｜OCI 毛利（DCD/FinancialContent）｜信評（ainvest/Moody's/S&P 報導）｜估值（Macrotrends/GuruFocus/stockanalysis）｜目標價（public.com/stockanalysis）｜roadmap（Cloud Wars/io-fund/CreditSights 2025 analyst meeting）。本報告為買側研究，非投資建議；含估計值處已標數據限制。</p>
+
+<script id="dd-meta" type="application/json">
+{
+  "ticker": "ORCL",
+  "schema": "v12.7",
+  "date": "2026-06-15",
+  "price_at_dd": 184.13,
+  "signal": "B",
+  "trap": "🟡",
+  "trap_label": "🟡 觀察期",
+  "moat": "B",
+  "val": "🟡",
+  "ma": "🟢",
+  "fpe_fy2": 16.94,
+  "pct_5y": 32.0,
+  "peg_fy2": 1.02,
+  "upside_short_pct": -3.8,
+  "upside_mid_pct": 29.9,
+  "stress": {"pass": 1, "total": 2},
+  "moat_score": 7.0,
+  "growth_durability": 7.0,
+  "quality_score": 7.0,
+  "ai_risk": "🟢",
+  "long_term_confidence": "中",
+  "moat_execution": 7.0,
+  "moat_pricing_power": 7.0,
+  "endo_growth_ceiling": 11.7,
+  "capalloc_grade": "B",
+  "verdict": "B",
+  "oneliner": "財報後重評：OCI +93%／RPO $638B(+363%,~47%綁OpenAI)；惟FY27營收+34%但EPS僅+5.5%，OCI毛利~14%、FCF -$23.7B、$40B募資含$20B稀釋、信評負向。估值🟡(Fwd22.9x/PEG1.02/32%分位)，MA🟢僅微高W104。護城河B(7)，體質3veto，trap🟡。X→B觀望。"
+}
+</script>
+
+</div>
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+</body>
+</html>
