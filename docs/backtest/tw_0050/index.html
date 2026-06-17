@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta name="robots" content="noindex,nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>0050 STX50 方法移植(台股配置測試)| InvestMQuest Research</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+:root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
+      --text:#111827;--muted:#6b7280;--border:#e5e7eb;
+      --green:#059669;--green-bg:#ecfdf5;--green-border:#a7f3d0;--green-text:#065f46;
+      --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;--red-text:#991b1b;
+      --amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fde68a;--amber-text:#92400e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1120px;margin:0 auto;padding:0 1.5rem}
+.page-hdr{padding:1.75rem 0 1.25rem;background:linear-gradient(180deg,#fffbeb 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
+.page-hdr h1{font-size:1.6rem;font-weight:700;letter-spacing:-.03em}
+.page-hdr .sub{color:var(--muted);font-size:.9rem;margin-top:.2rem}
+.crumb{font-size:.82rem;color:var(--muted);margin-bottom:.4rem}
+.crumb a{color:var(--muted)}
+.section{padding:1.5rem 0 0}
+.section-title{font-size:1.15rem;font-weight:700;margin-bottom:1rem;
+               padding-bottom:.45rem;border-bottom:2px solid var(--brand)}
+.section-sub{font-size:.85rem;color:var(--muted);margin:-.5rem 0 1rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.card h3{font-size:1rem;font-weight:600;margin-bottom:.85rem}
+.card .takeaway{font-size:.88rem;margin-top:.75rem;padding:.6rem .9rem;border-radius:6px;
+                background:var(--brand-light);border-left:3px solid var(--brand)}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{text-align:left;padding:.6rem .75rem;border-bottom:1px solid var(--border)}
+th{background:#f9fafb;font-weight:600;font-size:.78rem;text-transform:uppercase;
+   letter-spacing:.04em;color:var(--muted)}
+td{font-variant-numeric:tabular-nums}
+tbody tr:hover td{background:#f3f4f6}
+.kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.85rem 1rem;text-align:center}
+.kpi .label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.25rem}
+.kpi .value{font-size:1.25rem;font-weight:700}
+.kpi .value.pos{color:var(--green)}.kpi .value.neg{color:var(--red)}.kpi .value.neu{color:var(--brand)}
+.kpi-pair{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+.kpi-pair > div{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem 1.2rem}
+.kpi-pair h4{font-size:.85rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.7rem;font-weight:600}
+.hero{margin:1.25rem 0;border:1px solid var(--amber-border);border-radius:12px;overflow:hidden;background:var(--card)}
+.hero-top{background:linear-gradient(135deg,#fffbeb 0%,#fef9ec 100%);padding:1.4rem 1.6rem;border-bottom:1px solid var(--amber-border)}
+.hero-top .verdict-tag{display:inline-block;background:#d97706;color:#fff;font-size:.74rem;font-weight:700;
+                       letter-spacing:.05em;padding:.25rem .7rem;border-radius:99px;margin-bottom:.5rem}
+.hero-top h2{font-size:1.35rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.35rem}
+.hero-top p{font-size:.92rem;color:#374151;max-width:60rem}
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card)}
+.hero-stats > div{padding:1rem 1.2rem;text-align:center;border-right:1px solid var(--border)}
+.hero-stats > div:last-child{border-right:none}
+.hero-stats .hs-label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.hero-stats .hs-value{font-size:1.55rem;font-weight:800;letter-spacing:-.02em}
+.note{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;
+      padding:.85rem 1.1rem;font-size:.84rem;color:var(--amber-text);margin:1rem 0}
+.tag{display:inline-block;padding:.15rem .55rem;border-radius:4px;font-size:.72rem;font-weight:600}
+.tag-best{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border)}
+.tag-fail{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red-border)}
+.tag-pass{background:#f3f4f6;color:#374151;border:1px solid #d1d5db}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.chart-card h3{font-size:.95rem;font-weight:600;margin-bottom:.5rem}
+.chart-wrap{position:relative;width:100%;height:380px}
+.chart-wrap-sm{position:relative;width:100%;height:220px}
+details{background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:.75rem}
+details summary{padding:.9rem 1.25rem;font-weight:600;font-size:.95rem;cursor:pointer;list-style:none;display:flex;align-items:center;gap:.5rem}
+details summary::before{content:'▸';color:var(--brand);transition:transform .15s}
+details[open] summary::before{transform:rotate(90deg)}
+details .d-body{padding:0 1.25rem 1.25rem;overflow-x:auto}
+.issue-list{font-size:.88rem;color:#374151;padding-left:1.2rem;line-height:1.9}
+footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
+       text-align:center;padding:1.25rem 0;font-size:.78rem;margin-top:2rem}
+@media(max-width:768px){
+  .kpi-pair{grid-template-columns:1fr}
+  .hero-stats{grid-template-columns:repeat(2,1fr)}
+  .hero-stats > div{border-bottom:1px solid var(--border)}
+  table{font-size:.78rem}th,td{padding:.45rem .5rem}
+}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#0f172a;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(59,130,246,.28);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/">個股 DD</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/ds/">產業敘述 DS</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/">週報</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/long-track-smh/">長線訊號</a>
+        </div>
+      </div>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/" class="active">量化回測</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/screener-tw.html">Screener 台股</a>
+          <a href="/screener-jp.html">Screener 日股</a>
+          <a href="/screener-my.html">Screener 馬股</a>
+          <a href="/cache/">🗄 Data Cache</a>
+          <a href="/tools/">期貨部位計算機</a>
+        </div>
+      </div>
+      <a href="/mental-models/">🧠 心智模型</a>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="page-hdr">
+  <div class="container">
+    <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / 0050 STX50(方法移植)</div>
+    <h1 style="color:#d97706">台股 0050 — STX50 方法移植</h1>
+    <div class="sub">把 Long Track SMH/QQQ(STX50)的訊號堆疊原樣套到台股 0050 ·
+      單一 ETF · NT$ 現金腿 1.0/年 · 探索性配置測試(非採用)· 數據 2009-01-02 ~ 2026-06-17</div>
+    <div style="margin-top:.75rem;display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap"><div><div style="font-size:.68rem;color:#1a56db;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;font-weight:600">對比總覽</div><div style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-wrap:wrap"><a href="/backtest/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">20 年</a><a href="/backtest/10y/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">10 年</a><a href="/backtest/criteria/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">評估標準</a></div></div><div><div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;font-weight:600">個別系統 (美股)</div><div style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-wrap:wrap"><a href="/backtest/dual_track/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">雙軌多空</a><a href="/backtest/long_track/" style="padding:.4rem .85rem;background:#fff;color:#16a34a;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">Long Track</a><a href="/backtest/long_track_qqq/" style="padding:.4rem .85rem;background:#fff;color:#16a34a;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">LTO QQQ</a><a href="/backtest/long_track_ensemble/" style="padding:.4rem .85rem;background:#fff;color:#16a34a;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">Ensemble 集成</a><a href="/backtest/long_track_smh/" style="padding:.4rem .85rem;background:#fff;color:#16a34a;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">LT SMH/QQQ</a><a href="/backtest/six_state/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">六狀態機</a><a href="/backtest/six_state_v1r1/" style="padding:.4rem .85rem;background:#fff;color:#b45309;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">v1.0r1 實盤</a><a href="/backtest/gem/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">GEM</a><a href="/backtest/slope_filter/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">W52 斜率</a><a href="/backtest/rsi2_mr/" style="padding:.4rem .85rem;background:#fff;color:#d97706;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">盤整 MR</a><a href="/backtest/supertrend/" style="padding:.4rem .85rem;background:#fff;color:#d97706;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">ST 週線</a><a href="/backtest/short_system/" style="padding:.4rem .85rem;background:#fff;color:#dc2626;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">做空 (失敗)</a><a href="/backtest/cndr/" style="padding:.4rem .85rem;background:#fff;color:#dc2626;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">Iron Condor (失敗)</a></div></div><div><div style="font-size:.68rem;color:#0f766e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;font-weight:600">多資產</div><div style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-wrap:wrap"><a href="/backtest/turtle/" style="padding:.4rem .85rem;background:#fff;color:#0f766e;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">🐢 Turtle</a><a href="/backtest/clenow/" style="padding:.4rem .85rem;background:#fff;color:#6366f1;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">📈 Clenow</a></div></div><div><div style="font-size:.68rem;color:#d97706;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;font-weight:600">台股波段</div><div style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-wrap:wrap"><a href="/backtest/tw_0050/" style="padding:.4rem .85rem;background:#d97706;color:#fff;font-size:.8rem;font-weight:600;text-decoration:none;border-left:1px solid var(--border)">0050 STX50 (移植)</a></div></div><div><div style="font-size:.68rem;color:#9333ea;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;font-weight:600">日內交易</div><div style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-wrap:wrap"><a href="/backtest/txf_intraday/" style="padding:.4rem .85rem;background:#fff;color:#dc2626;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">台指當沖 (未過)</a><a href="/backtest/txf_basis/" style="padding:.4rem .85rem;background:#fff;color:#dc2626;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">基差偏向 (否決)</a><a href="/backtest/txf_chips/" style="padding:.4rem .85rem;background:#fff;color:#d97706;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">籌碼偏向 (觀察)</a><a href="/backtest/ssf_xsec/" style="padding:.4rem .85rem;background:#fff;color:#dc2626;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">個股期橫斷面 (未過)</a></div></div></div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ===== VERDICT HERO ===== -->
+<div class="hero">
+  <div class="hero-top">
+    <span class="verdict-tag">🧪 探索性方法移植 — 未採用</span>
+    <h2>STX50 的疊加在 0050 上不複現:原始 Ch12 binary 反而最好,B&amp;H 因樣本無崩盤而難敗</h2>
+    <p>本頁把 <a href="/backtest/long_track_smh/">long_track_smh</a> 頁的 STX50 方法
+       (E3 三訊號分數倉位 {W40, W52, 12m TSMOM} 各 1/3,再疊週線 Supertrend(10,3) 半倉出場閘門)
+       規則完全不變地套到台股 0050(2010 起,16.4 年)。<strong>誠實結論:在 0050 上,SMH 頁的兩層「升級」反而層層減分</strong> —
+       Ch12 binary(Sharpe 1.10、Calmar 0.68、MDD -21.30%)> E3 > STX50(Sharpe 0.95、Calmar 0.47);
+       ST 閘門在 0050 的盤整段製造 whipsaw,不但少賺、MDD 還更深。<strong>更根本的限制:0050 的免費歷史只到 2009,樣本內沒有 2008 級崩盤</strong> —
+       趨勢系統最大的價值(崩盤保護)無從展現,於是 16.4 年裡 B&amp;H 的原始報酬(CAGR +16.36%)很難被打敗(Sharpe 與趨勢版打平)。
+       <strong>趨勢的價值要看更長歷史的 ^TWII 代理(2006 起,含 2008):那裡 B&amp;H 吃了 -58.31% 的 MDD,
+       趨勢版把它砍到 -28.17%,2008 GFC STX50 只 -12.68%、B&amp;H -54.01%</strong> —
+       這才是台股趨勢系統真正的賣點,但 0050 的 ETF 樣本看不到。本頁為配置/方法移植測試,不構成採用建議。</p>
+  </div>
+  <div class="hero-stats">
+    <div><div class="hs-label">STX50 CAGR (16.4Y)</div><div class="hs-value" style="color:var(--green)">+12.56%</div></div>
+    <div><div class="hs-label">STX50 MDD</div><div class="hs-value" style="color:var(--red)">-26.69%</div></div>
+    <div><div class="hs-label">STX50 Sharpe</div><div class="hs-value" style="color:var(--brand)">0.95</div></div>
+    <div><div class="hs-label">STX50 Calmar</div><div class="hs-value" style="color:var(--brand)">0.47</div></div>
+  </div>
+</div>
+
+<div class="note">
+  <strong>與美股母頁的方法差異(均由標的/資料逼出,非規則更動):</strong>
+  ① <strong>單一標的</strong> — 0050 本身就是台股大盤(約 5-6 成半導體),無 SMH/QQQ 式的攻擊/核心配對可做,故 100% 0050,不做權重掃描。
+  ② <strong>現金腿</strong> — 閒置資金以固定 1.0/年 NT$ 短率計息(母頁用美債 SHY/BIL,幣別不符);TIM 85%、閒置段約 1-2 成。
+  ③ <strong>資料修復</strong> — yfinance 的 0050.TW 在 2014-01-02(×0.24936) 有一根幻影分割壞 bar(當日 TAIEX 持平,0050 卻 -75%),已偵測並重接續報酬;修復後與 ^TWII 週報酬相關 0.935。
+  ④ <strong>樣本起點</strong> — Yahoo 免費 0050 自 2009 起(ETF 實際 2003 上市),暖身 1 年後模擬自 2010-01;<strong>不含 2008 GFC</strong>。
+  成本單邊 7bps、週線決策次日生效等其餘慣例與母頁一致。
+</div>
+
+<!-- ===== KPI ===== -->
+<div class="section">
+<h2 class="section-title">績效摘要(STX50 0050)</h2>
+<div class="kpi-pair">
+<div>
+<h4>全期 (2010-01 ~ 至今,16.4 年)</h4>
+<div class="kpi-grid">
+<div class="kpi"><div class="label">CAGR</div><div class="value pos">+12.56%</div></div>
+<div class="kpi"><div class="label">MDD</div><div class="value neg">-26.69%</div></div>
+<div class="kpi"><div class="label">Sharpe</div><div class="value neu">0.95</div></div>
+<div class="kpi"><div class="label">Sortino</div><div class="value neu">1.13</div></div>
+<div class="kpi"><div class="label">Calmar</div><div class="value neu">0.47</div></div>
+<div class="kpi"><div class="label">Vol</div><div class="value ">13.93%</div></div>
+<div class="kpi"><div class="label">期末資產</div><div class="value ">$7.00M</div></div>
+</div>
+</div>
+<div>
+<h4>近 10 年 (2016-06 ~ 至今)</h4>
+<div class="kpi-grid">
+<div class="kpi"><div class="label">CAGR</div><div class="value pos">+21.86%</div></div>
+<div class="kpi"><div class="label">MDD</div><div class="value neg">-21.30%</div></div>
+<div class="kpi"><div class="label">Sharpe</div><div class="value neu">1.37</div></div>
+<div class="kpi"><div class="label">Sortino</div><div class="value neu">1.70</div></div>
+<div class="kpi"><div class="label">Calmar</div><div class="value neu">1.03</div></div>
+<div class="kpi"><div class="label">Vol</div><div class="value ">15.84%</div></div>
+<div class="kpi"><div class="label">期末資產</div><div class="value ">$7.22M</div></div>
+</div>
+</div>
+</div>
+
+<div class="card">
+<h3>vs 對照與基準(0050,2010-01 ~ 至今)</h3>
+<table>
+<thead><tr><th>配置</th><th>CAGR</th><th>MDD</th><th>Sharpe</th><th>Calmar</th><th>前半 Calmar</th><th>後半 Calmar</th></tr></thead>
+<tbody><tr style="background:var(--brand-light)"><td>STX50 0050(移植 long_track_smh 方法,本頁主數字)</td><td>+12.56%</td><td>-26.69%</td><td>0.95</td><td>0.47</td><td>0.10</td><td>1.14</td></tr><tr><td>E3 結構 0050(對照,去 ST 閘門)</td><td>+13.41%</td><td>-25.14%</td><td>0.96</td><td>0.53</td><td>0.16</td><td>1.15</td></tr><tr><td>Ch12 binary 0050(原始長軌,對照)</td><td>+14.39%</td><td>-21.30%</td><td>1.10</td><td>0.68</td><td>0.41</td><td>1.12</td></tr><tr><td>0050 Buy &amp; Hold(含息,總報酬)</td><td>+16.36%</td><td>-33.83%</td><td>0.94</td><td>0.48</td><td>0.28</td><td>0.80</td></tr></tbody>
+</table>
+<div class="takeaway"><strong>趨勢三版單調退步:Ch12 binary → E3 → STX50,每加一層 Sharpe/Calmar/MDD 都更差。</strong>
+SMH 上有效的「分數倉位 + ST 閘門」是對那個高波動標的的擬合,移到 0050 變成淨成本。
+四者裡 <strong>Ch12 binary 風險調整最佳</strong>(Calmar 0.68、Sharpe 1.10),但有一個要老實講的暖身偏誤:
+Ch12 的 W250 需約 5 年暖身,0050 資料自 2009,故 2010–2013 它被迫持現金 —
+剛好躲掉 2011 那段下跌,MDD/Calmar 因此被美化(見「已知限制」)。
+對 B&amp;H:趨勢版讓出約 2–4pp CAGR、換較淺的 MDD,但 <strong>Sharpe 與 B&amp;H 幾乎打平</strong> —
+在這段沒有崩盤的 0050 樣本,趨勢的風險調整優勢很薄。</div>
+</div>
+</div>
+
+<!-- ===== CHARTS ===== -->
+<div class="section">
+<h2 class="section-title">淨值與回撤(0050)</h2>
+<div class="section-sub">月頻淨值(對數座標);精確 MDD 以表格數字為準。</div>
+<div class="chart-card">
+  <h3>淨值曲線 — 起始 $1M</h3>
+  <div class="chart-wrap"><canvas id="chart-nav"></canvas></div>
+</div>
+<div class="chart-card">
+  <h3>回撤 — STX50 vs 0050 B&amp;H</h3>
+  <div class="chart-wrap-sm"><canvas id="chart-dd"></canvas></div>
+</div>
+<div class="chart-card">
+  <h3>逐年報酬 — STX50 vs 0050 B&amp;H</h3>
+  <div class="chart-wrap"><canvas id="chart-yearly"></canvas></div>
+</div>
+
+<div class="card">
+<h3>STX50 Top 5 回撤</h3>
+<table>
+<thead><tr><th>#</th><th>高點</th><th>低點</th><th>回到前高</th><th>深度</th><th>下跌天數</th><th>修復天數</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>2011-01-28</td><td>2013-08-22</td><td>2015-04-24</td><td style="color:var(--red);font-weight:600">-26.69%</td><td>937d</td><td>610d</td></tr>
+<tr><td>2</td><td>2024-07-11</td><td>2024-08-05</td><td>2025-01-06</td><td style="color:var(--red);font-weight:600">-21.30%</td><td>25d</td><td>154d</td></tr>
+<tr><td>3</td><td>2018-01-23</td><td>2019-05-23</td><td>2019-12-13</td><td style="color:var(--red);font-weight:600">-16.39%</td><td>485d</td><td>204d</td></tr>
+<tr><td>4</td><td>2020-01-14</td><td>2020-03-19</td><td>2020-07-22</td><td style="color:var(--red);font-weight:600">-13.64%</td><td>65d</td><td>125d</td></tr>
+<tr><td>5</td><td>2025-01-07</td><td>2025-04-09</td><td>2025-07-31</td><td style="color:var(--red);font-weight:600">-13.11%</td><td>92d</td><td>113d</td></tr>
+
+</tbody>
+</table>
+<div class="takeaway">最大回撤落在 2011-01 ~ 2013-08 的盤整下行(-26.7%,修復到 2015)—
+正是 ST 閘門 whipsaw 最傷的環境:翻空半倉退出後價格回升又得追回,盤整裡來回損耗。
+2024-07 的 -21.3% 是日圓套利逆轉的單週急跌,週線系統當週全來不及(三版同跌)。</div>
+</div>
+</div>
+
+<!-- ===== STRESS ===== -->
+<div class="section">
+<h2 class="section-title">關鍵壓力事件(0050)</h2>
+<div class="card">
+<table>
+<thead><tr><th>事件</th><th>STX50</th><th>E3</th><th>0050 B&amp;H</th><th>STX50 − B&amp;H</th></tr></thead>
+<tbody>
+<tr><td>2011 歐債/美債降評</td><td>-13.97%</td><td>-14.69%</td><td style="background:#f9fafb">-19.86%</td><td><span class="tag tag-best">+5.89pp</span></td></tr>
+<tr><td>2015-16 陸股/匯率</td><td>-9.32%</td><td>-9.59%</td><td style="background:#f9fafb">-20.90%</td><td><span class="tag tag-best">+11.58pp</span></td></tr>
+<tr><td>2018 Q4 升息</td><td>-8.70%</td><td>-9.19%</td><td style="background:#f9fafb">-13.57%</td><td><span class="tag tag-best">+4.87pp</span></td></tr>
+<tr><td>2020 COVID</td><td>-13.64%</td><td>-19.73%</td><td style="background:#f9fafb">-28.22%</td><td><span class="tag tag-best">+14.58pp</span></td></tr>
+<tr><td>2022 通膨升息熊</td><td>-9.14%</td><td>-9.54%</td><td style="background:#f9fafb">-32.63%</td><td><span class="tag tag-best">+23.49pp</span></td></tr>
+<tr><td>2024 Q3 套利逆轉</td><td>-21.30%</td><td>-21.30%</td><td style="background:#f9fafb">-21.30%</td><td><span class="tag tag-pass">+0.00pp</span></td></tr>
+<tr><td>2025 關稅震盪</td><td>-13.11%</td><td>-15.70%</td><td style="background:#f9fafb">-27.48%</td><td><span class="tag tag-best">+14.37pp</span></td></tr>
+
+</tbody>
+</table>
+<div class="takeaway">緩跌與盤整事件(2015-16、2022、2025)趨勢版明顯較淺,protection 來自月頻 TSMOM 不翻面 + 部分減倉;
+單週崩跌(2020 COVID、2024 套利逆轉)則來不及 — 週線系統對 gap 無解。
+但全部都是「中級」回檔:0050 樣本內沒有 2008 級的系統性崩盤,所以趨勢最該發光的場景缺席。</div>
+</div>
+</div>
+
+<!-- ===== TWII LONGER HISTORY ===== -->
+<div class="section">
+<h2 class="section-title">📐 長歷史穩健度對照:^TWII(2006 起,含 2008 GFC)</h2>
+<div class="section-sub">^TWII 是台股大盤「價格指數」,<strong>不可直接交易、且不含股息</strong>(故絕對報酬結構性低於含息的 0050),
+僅作為「更長歷史 + 含 2008 崩盤」的趨勢穩健度對照;0050 是追蹤它的可交易產品(週報酬相關 0.935)。</div>
+<div class="card">
+<h3>^TWII 全期(2006-01 ~ 至今,20.5 年)</h3>
+<table>
+<thead><tr><th>配置</th><th>CAGR</th><th>MDD</th><th>Sharpe</th><th>Calmar</th><th>前半 Calmar</th><th>後半 Calmar</th></tr></thead>
+<tbody><tr><td>STX50 ^TWII</td><td>+7.60%</td><td>-28.17%</td><td>0.71</td><td>0.27</td><td>0.07</td><td>0.71</td></tr><tr><td>E3 ^TWII</td><td>+8.18%</td><td>-29.77%</td><td>0.67</td><td>0.27</td><td>0.08</td><td>0.55</td></tr><tr><td>Ch12 binary ^TWII</td><td>+6.83%</td><td>-35.84%</td><td>0.60</td><td>0.19</td><td>0.00</td><td>0.66</td></tr><tr><td>^TWII Buy &amp; Hold(價格指數)</td><td>+10.06%</td><td>-58.31%</td><td>0.62</td><td>0.17</td><td>0.04</td><td>0.57</td></tr></tbody>
+</table>
+<div class="takeaway"><strong>把 2008 放進樣本,結論就翻過來:趨勢開始值得。</strong>
+^TWII B&amp;H 在 GFC 吃了 -58.31% 的 MDD,所有趨勢版把它砍到 −28~−36%,
+Sharpe/Calmar 全面高於 B&amp;H(B&amp;H Calmar 0.17 vs STX50 0.27)。
+這就是 0050 短樣本看不到的那塊價值 — 趨勢系統是「崩盤保險」,保費(盤整少賺)在沒有崩盤的 16 年裡看起來很貴,
+但在含崩盤的 20 年裡明顯划算。<strong>在 ^TWII 上 STX50/E3 也終於略勝 Ch12</strong>,但這仍是價格指數、不可交易,只作機制佐證。</div>
+</div>
+<div class="card">
+<h3>^TWII 壓力事件</h3>
+<table>
+<thead><tr><th>事件</th><th>STX50</th><th>E3</th><th>^TWII B&amp;H</th><th>STX50 − B&amp;H</th></tr></thead>
+<tbody>
+<tr><td>2008 GFC</td><td>-12.68%</td><td>-13.38%</td><td style="background:#f9fafb">-54.01%</td><td><span class="tag tag-best">+41.33pp</span></td></tr>
+<tr><td>2011 歐債/美債降評</td><td>-6.03%</td><td>-12.45%</td><td style="background:#f9fafb">-20.95%</td><td><span class="tag tag-best">+14.92pp</span></td></tr>
+<tr><td>2015-16 陸股/匯率</td><td>-8.22%</td><td>-9.93%</td><td style="background:#f9fafb">-23.15%</td><td><span class="tag tag-best">+14.93pp</span></td></tr>
+<tr><td>2018 Q4 升息</td><td>-3.34%</td><td>-6.84%</td><td style="background:#f9fafb">-11.98%</td><td><span class="tag tag-best">+8.64pp</span></td></tr>
+<tr><td>2020 COVID</td><td>-13.54%</td><td>-20.98%</td><td style="background:#f9fafb">-28.72%</td><td><span class="tag tag-best">+15.18pp</span></td></tr>
+<tr><td>2022 通膨升息熊</td><td>-8.13%</td><td>-8.51%</td><td style="background:#f9fafb">-31.53%</td><td><span class="tag tag-best">+23.40pp</span></td></tr>
+<tr><td>2024 Q3 套利逆轉</td><td>-15.02%</td><td>-18.69%</td><td style="background:#f9fafb">-18.69%</td><td><span class="tag tag-best">+3.67pp</span></td></tr>
+<tr><td>2025 關稅震盪</td><td>-13.09%</td><td>-13.09%</td><td style="background:#f9fafb">-26.47%</td><td><span class="tag tag-best">+13.38pp</span></td></tr>
+
+</tbody>
+</table>
+<div class="takeaway">2008 GFC 是整張表的重點:STX50 -12.68% vs B&amp;H -54.01% — 這是趨勢系統的招牌防護,
+也正是 0050(2009 後)資料缺席的那一刀。</div>
+</div>
+</div>
+
+<!-- ===== LIMITATIONS ===== -->
+<div class="section">
+<h2 class="section-title">已知限制</h2>
+<div class="card">
+<ol class="issue-list">
+  <li><strong>資料品質(yfinance)</strong> — 0050.TW 免費資料只到 2009,且有一根幻影分割壞 bar(2014-01-02(×0.24936))已修復;
+      若要正式採用,應改用 TWSE/券商的還原股價驗證。修復後與 ^TWII 週報酬相關 0.935,但這是「重建」不是原始乾淨資料。</li>
+  <li><strong>樣本無 2008</strong> — 0050 模擬自 2010-01,整段沒有系統性崩盤;趨勢系統最核心的崩盤保護從未在 0050 被實測。
+      ^TWII 對照(含 2008)顯示那才是趨勢的價值來源 — 也就是說,本頁 0050 數字對趨勢「偏不利」。</li>
+  <li><strong>Ch12 的暖身偏誤</strong> — Ch12 binary 的 W250 需約 5 年暖身,0050 資料自 2009,故 2010–2013 被迫持現金、
+      剛好躲掉 2011 下跌;它「最佳風險調整」的桂冠部分來自這個結構性偏誤,非純訊號能力。E3/STX50 只需約 1 年暖身,2010 起就滿載。</li>
+  <li><strong>STX50 在 0050 是負貢獻</strong> — ST 半倉閘門相對 E3 少賺 +13.41%→+12.56%、MDD 反而更深;
+      在 0050 的盤整段它製造 whipsaw。SMH 頁採用 STX50 的依據(同 CAGR 現金對照、尾部修剪)在 0050 不成立。</li>
+  <li><strong>單一標的、集中度高</strong> — 0050 約 5-6 成是半導體(台積電權重極高),本身已是高度集中的 beta;
+      無跨產業緩衝,單週 gap(2024 套利逆轉 -21%)直接全額承受。</li>
+  <li><strong>^TWII 不可交易、不含息</strong> — 長歷史對照僅供機制佐證,不是可投資結果;0050 才是可交易、含息的總報酬。</li>
+</ol>
+</div>
+</div>
+
+<!-- ===== DETAILS ===== -->
+<div class="section">
+<h2 class="section-title">明細</h2>
+
+<details>
+<summary>逐年報酬表(0050)</summary>
+<div class="d-body">
+<table>
+<thead><tr><th>Year</th><th style="color:#d97706">STX50</th><th>E3</th><th>Ch12 binary</th><th style="color:#1565c0">0050 B&amp;H</th></tr></thead>
+<tbody>
+<tr><td>2010</td><td>+4.18%</td><td>+5.71%</td><td>+0.99%</td><td>+8.67%</td></tr>
+<tr><td>2011</td><td style="color:var(--red)">-12.99%</td><td style="color:var(--red)">-13.72%</td><td>+0.98%</td><td style="color:var(--red)">-18.88%</td></tr>
+<tr><td>2012</td><td style="color:var(--red)">-11.01%</td><td>-9.04%</td><td>+0.98%</td><td>+8.01%</td></tr>
+<tr><td>2013</td><td>+2.29%</td><td>+6.63%</td><td>+3.22%</td><td>+11.68%</td></tr>
+<tr><td>2014</td><td>+20.33%</td><td style="color:var(--green);font-weight:600">+26.20%</td><td style="color:var(--green);font-weight:600">+26.20%</td><td style="color:var(--green);font-weight:600">+26.20%</td></tr>
+<tr><td>2015</td><td>-0.93%</td><td>-1.22%</td><td>-0.25%</td><td>-6.28%</td></tr>
+<tr><td>2016</td><td>+8.73%</td><td>+8.86%</td><td>+7.89%</td><td>+19.65%</td></tr>
+<tr><td>2017</td><td>+17.97%</td><td>+17.97%</td><td>+17.97%</td><td>+18.14%</td></tr>
+<tr><td>2018</td><td>-6.88%</td><td>-5.99%</td><td>-5.58%</td><td>-4.94%</td></tr>
+<tr><td>2019</td><td>+15.39%</td><td>+19.45%</td><td>+20.92%</td><td style="color:var(--green);font-weight:600">+33.52%</td></tr>
+<tr><td>2020</td><td>+24.81%</td><td>+19.49%</td><td>+22.33%</td><td style="color:var(--green);font-weight:600">+31.14%</td></tr>
+<tr><td>2021</td><td>+16.26%</td><td>+16.26%</td><td>+19.86%</td><td>+21.92%</td></tr>
+<tr><td>2022</td><td>-7.16%</td><td>-7.58%</td><td>-6.75%</td><td style="color:var(--red)">-21.22%</td></tr>
+<tr><td>2023</td><td>+13.25%</td><td>+13.25%</td><td>+4.82%</td><td style="color:var(--green);font-weight:600">+27.52%</td></tr>
+<tr><td>2024</td><td style="color:var(--green);font-weight:600">+49.25%</td><td style="color:var(--green);font-weight:600">+49.25%</td><td style="color:var(--green);font-weight:600">+49.25%</td><td style="color:var(--green);font-weight:600">+48.64%</td></tr>
+<tr><td>2025</td><td style="color:var(--green);font-weight:600">+34.73%</td><td style="color:var(--green);font-weight:600">+35.78%</td><td style="color:var(--green);font-weight:600">+31.22%</td><td style="color:var(--green);font-weight:600">+36.86%</td></tr>
+<tr><td>2026</td><td style="color:var(--green);font-weight:600">+60.56%</td><td style="color:var(--green);font-weight:600">+60.56%</td><td style="color:var(--green);font-weight:600">+60.56%</td><td style="color:var(--green);font-weight:600">+63.87%</td></tr>
+
+</tbody>
+</table>
+</div>
+</details>
+
+<details>
+<summary>策略規則(與 long_track_smh 母頁一致)</summary>
+<div class="d-body">
+  <p style="font-size:.92rem;color:#374151;line-height:1.75">
+    <strong>STX50(本頁主數字)</strong>:單標的倉位 = 0.5 × E3 + 0.5 × min(E3, ST):<br>
+    E3 = 三個獨立訊號的平均(各 1/3):① W40:週線收盤 &gt; 40 週均線 ② W52:週線收盤 &gt; 52 週均線
+    ③ TSMOM:12 個月總報酬 &gt; 現金 12 個月報酬(月頻,月底判定)。<br>
+    ST 閘門 = 週線 Supertrend(ATR 10、乘數 3,TradingView final-band 公式)方向:
+    翻空時受閘半倉退出、翻多時回來;閘門只減倉、永不加倉。<br>
+    Long only;閒置部分以 1.0/年 NT$ 短率計息;成本單邊 7bps 計於 |倉位變動|;年換手約 2.3 邊。
+    週線訊號於每週最後交易日收盤決策,次日生效。<br><br>
+    <strong>E3 結構(對照)</strong>:同上,不含 ST 閘門。<br><br>
+    <strong>Ch12 binary(對照)</strong>:進場 週線收盤 &gt; W52、W104、W250 且 W104、W250 斜率(4 週)&gt; 0(score == 5);
+    出場 週線收盤 &lt; W52(N=1)。全期 13 筆交易、勝率 38%。
+    W250 需約 5 年暖身(見已知限制)。<br>
+    Warmup 自資料起點(0050 自 2009);0050 模擬自 2010-01、^TWII 自 2006-01。
+  </p>
+</div>
+</details>
+
+<details>
+<summary>STX50 倉位變動紀錄(全期 112 次調整 · 顯示最近 60 筆 · 新到舊)</summary>
+<div class="d-body">
+<p style="font-size:.8rem;color:var(--muted);margin-bottom:.6rem">
+STX50 為分數倉位,沒有「整筆進出」的離散交易;對應紀錄是每次倉位調整事件 —
+決策日(週收盤,次日生效)、部位變化、與當下四個訊號元件的狀態。
+部位 = 0.5×E3 + 0.5×(ST✓ ? E3 : 0),E3 = (W40+W52+TSMOM)/3。</p>
+<table>
+<thead><tr><th>決策日</th><th>部位</th><th>E3 三訊號</th><th>ST 閘門</th><th>收盤</th></tr></thead>
+<tbody>
+<tr><td>2025-06-13</td><td style="color:var(--green);font-weight:600">33% → 100%</td><td><span style="color:var(--green);font-weight:600">W40✓</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--green);font-weight:600">ST✓</span></td><td>46.18</td></tr>
+<tr><td>2025-05-16</td><td style="color:var(--green);font-weight:600">17% → 33%</td><td><span style="color:var(--red);font-weight:600">W40✕</span> <span style="color:var(--red);font-weight:600">W52✕</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--green);font-weight:600">ST✓</span></td><td>44.80</td></tr>
+<tr><td>2025-04-02</td><td style="color:var(--red);font-weight:600">33% → 17%</td><td><span style="color:var(--red);font-weight:600">W40✕</span> <span style="color:var(--red);font-weight:600">W52✕</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--red);font-weight:600">ST✕</span></td><td>43.08</td></tr>
+<tr><td>2025-03-28</td><td style="color:var(--red);font-weight:600">67% → 33%</td><td><span style="color:var(--red);font-weight:600">W40✕</span> <span style="color:var(--red);font-weight:600">W52✕</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--green);font-weight:600">ST✓</span></td><td>43.87</td></tr>
+<tr><td>2025-03-07</td><td style="color:var(--red);font-weight:600">100% → 67%</td><td><span style="color:var(--red);font-weight:600">W40✕</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--green);font-weight:600">ST✓</span></td><td>45.62</td></tr>
+<tr><td>2023-11-03</td><td style="color:var(--green);font-weight:600">67% → 100%</td><td><span style="color:var(--green);font-weight:600">W40✓</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--green);font-weight:600">ST✓</span></td><td>29.45</td></tr>
+<tr><td>2023-10-27</td><td style="color:var(--red);font-weight:600">100% → 67%</td><td><span style="color:var(--red);font-weight:600">W40✕</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--green);font-weight:600">ST✓</span></td><td>28.71</td></tr>
+<tr><td>2023-05-31</td><td style="color:var(--green);font-weight:600">67% → 100%</td><td><span style="color:var(--green);font-weight:600">W40✓</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--green);font-weight:600">ST✓</span></td><td>29.19</td></tr>
+<tr><td>2023-02-03</td><td style="color:var(--green);font-weight:600">33% → 67%</td><td><span style="color:var(--green);font-weight:600">W40✓</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--red);font-weight:600">TSMOM✕</span></td><td><span style="color:var(--green);font-weight:600">ST✓</span></td><td>28.00</td></tr>
+<tr><td>2023-01-13</td><td style="color:var(--green);font-weight:600">0% → 33%</td><td><span style="color:var(--green);font-weight:600">W40✓</span> <span style="color:var(--red);font-weight:600">W52✕</span> <span style="color:var(--red);font-weight:600">TSMOM✕</span></td><td><span style="color:var(--green);font-weight:600">ST✓</span></td><td>26.52</td></tr>
+<tr><td>2022-04-29</td><td style="color:var(--red);font-weight:600">17% → 0%</td><td><span style="color:var(--red);font-weight:600">W40✕</span> <span style="color:var(--red);font-weight:600">W52✕</span> <span style="color:var(--red);font-weight:600">TSMOM✕</span></td><td><span style="color:var(--red);font-weight:600">ST✕</span></td><td>28.62</td></tr>
+<tr><td>2022-04-15</td><td style="color:var(--red);font-weight:600">33% → 17%</td><td><span style="color:var(--red);font-weight:600">W40✕</span> <span style="color:var(--red);font-weight:600">W52✕</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--red);font-weight:600">ST✕</span></td><td>29.40</td></tr>
+<tr><td>2022-04-08</td><td style="color:var(--red);font-weight:600">67% → 33%</td><td><span style="color:var(--red);font-weight:600">W40✕</span> <span style="color:var(--red);font-weight:600">W52✕</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--green);font-weight:600">ST✓</span></td><td>29.91</td></tr>
+<tr><td>2022-04-01</td><td style="color:var(--red);font-weight:600">100% → 67%</td><td><span style="color:var(--red);font-weight:600">W40✕</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--green);font-weight:600">ST✓</span></td><td>30.45</td></tr>
+<tr><td>2022-03-25</td><td style="color:var(--green);font-weight:600">67% → 100%</td><td><span style="color:var(--green);font-weight:600">W40✓</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--green);font-weight:600">ST✓</span></td><td>30.72</td></tr>
+<tr><td>2022-03-18</td><td style="color:var(--green);font-weight:600">33% → 67%</td><td><span style="color:var(--red);font-weight:600">W40✕</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--green);font-weight:600">ST✓</span></td><td>30.26</td></tr>
+<tr><td>2022-03-11</td><td style="color:var(--red);font-weight:600">100% → 33%</td><td><span style="color:var(--red);font-weight:600">W40✕</span> <span style="color:var(--red);font-weight:600">W52✕</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--green);font-weight:600">ST✓</span></td><td>29.88</td></tr>
+<tr><td>2021-11-05</td><td style="color:var(--green);font-weight:600">67% → 100%</td><td><span style="color:var(--green);font-weight:600">W40✓</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--green);font-weight:600">ST✓</span></td><td>30.04</td></tr>
+<tr><td>2021-10-29</td><td style="color:var(--red);font-weight:600">100% → 67%</td><td><span style="color:var(--red);font-weight:600">W40✕</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--green);font-weight:600">ST✓</span></td><td>29.54</td></tr>
+<tr><td>2021-10-15</td><td style="color:var(--green);font-weight:600">67% → 100%</td><td><span style="color:var(--green);font-weight:600">W40✓</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--green);font-weight:600">ST✓</span></td><td>29.64</td></tr>
+<tr><td>2021-10-01</td><td style="color:var(--red);font-weight:600">100% → 67%</td><td><span style="color:var(--red);font-weight:600">W40✕</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--green);font-weight:600">ST✓</span></td><td>29.14</td></tr>
+<tr><td>2021-08-27</td><td style="color:var(--green);font-weight:600">67% → 100%</td><td><span style="color:var(--green);font-weight:600">W40✓</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--green);font-weight:600">ST✓</span></td><td>30.05</td></tr>
+<tr><td>2021-08-20</td><td style="color:var(--red);font-weight:600">100% → 67%</td><td><span style="color:var(--red);font-weight:600">W40✕</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--green);font-weight:600">ST✓</span></td><td>28.44</td></tr>
+<tr><td>2020-06-19</td><td style="color:var(--green);font-weight:600">50% → 100%</td><td><span style="color:var(--green);font-weight:600">W40✓</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--green);font-weight:600">ST✓</span></td><td>18.73</td></tr>
+<tr><td>2020-06-05</td><td style="color:var(--green);font-weight:600">33% → 50%</td><td><span style="color:var(--green);font-weight:600">W40✓</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--red);font-weight:600">ST✕</span></td><td>18.63</td></tr>
+<tr><td>2020-05-29</td><td style="color:var(--green);font-weight:600">17% → 33%</td><td><span style="color:var(--red);font-weight:600">W40✕</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--red);font-weight:600">ST✕</span></td><td>17.81</td></tr>
+<tr><td>2020-05-15</td><td style="color:var(--red);font-weight:600">33% → 17%</td><td><span style="color:var(--red);font-weight:600">W40✕</span> <span style="color:var(--red);font-weight:600">W52✕</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--red);font-weight:600">ST✕</span></td><td>17.68</td></tr>
+<tr><td>2020-04-30</td><td style="color:var(--green);font-weight:600">0% → 33%</td><td><span style="color:var(--red);font-weight:600">W40✕</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--red);font-weight:600">ST✕</span></td><td>18.03</td></tr>
+<tr><td>2020-03-31</td><td style="color:var(--red);font-weight:600">17% → 0%</td><td><span style="color:var(--red);font-weight:600">W40✕</span> <span style="color:var(--red);font-weight:600">W52✕</span> <span style="color:var(--red);font-weight:600">TSMOM✕</span></td><td><span style="color:var(--red);font-weight:600">ST✕</span></td><td>16.06</td></tr>
+<tr><td>2020-03-13</td><td style="color:var(--red);font-weight:600">50% → 17%</td><td><span style="color:var(--red);font-weight:600">W40✕</span> <span style="color:var(--red);font-weight:600">W52✕</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--red);font-weight:600">ST✕</span></td><td>17.08</td></tr>
+<tr><td>2020-02-27</td><td style="color:var(--red);font-weight:600">100% → 50%</td><td><span style="color:var(--green);font-weight:600">W40✓</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--red);font-weight:600">ST✕</span></td><td>18.69</td></tr>
+<tr><td>2019-09-27</td><td style="color:var(--green);font-weight:600">67% → 100%</td><td><span style="color:var(--green);font-weight:600">W40✓</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--green);font-weight:600">ST✓</span></td><td>17.28</td></tr>
+<tr><td>2019-07-31</td><td style="color:var(--red);font-weight:600">100% → 67%</td><td><span style="color:var(--green);font-weight:600">W40✓</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--red);font-weight:600">TSMOM✕</span></td><td><span style="color:var(--green);font-weight:600">ST✓</span></td><td>16.91</td></tr>
+<tr><td>2019-07-19</td><td style="color:var(--green);font-weight:600">50% → 100%</td><td><span style="color:var(--green);font-weight:600">W40✓</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--green);font-weight:600">ST✓</span></td><td>16.95</td></tr>
+<tr><td>2019-06-14</td><td style="color:var(--green);font-weight:600">33% → 50%</td><td><span style="color:var(--green);font-weight:600">W40✓</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--red);font-weight:600">ST✕</span></td><td>15.98</td></tr>
+<tr><td>2019-06-06</td><td style="color:var(--red);font-weight:600">50% → 33%</td><td><span style="color:var(--green);font-weight:600">W40✓</span> <span style="color:var(--red);font-weight:600">W52✕</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--red);font-weight:600">ST✕</span></td><td>15.73</td></tr>
+<tr><td>2019-05-31</td><td style="color:var(--green);font-weight:600">17% → 50%</td><td><span style="color:var(--green);font-weight:600">W40✓</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--red);font-weight:600">ST✕</span></td><td>15.88</td></tr>
+<tr><td>2019-05-24</td><td style="color:var(--red);font-weight:600">67% → 17%</td><td><span style="color:var(--red);font-weight:600">W40✕</span> <span style="color:var(--red);font-weight:600">W52✕</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--red);font-weight:600">ST✕</span></td><td>15.66</td></tr>
+<tr><td>2019-05-17</td><td style="color:var(--red);font-weight:600">100% → 67%</td><td><span style="color:var(--green);font-weight:600">W40✓</span> <span style="color:var(--red);font-weight:600">W52✕</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--green);font-weight:600">ST✓</span></td><td>15.84</td></tr>
+<tr><td>2019-04-30</td><td style="color:var(--green);font-weight:600">67% → 100%</td><td><span style="color:var(--green);font-weight:600">W40✓</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--green);font-weight:600">ST✓</span></td><td>16.76</td></tr>
+<tr><td>2019-04-03</td><td style="color:var(--green);font-weight:600">33% → 67%</td><td><span style="color:var(--green);font-weight:600">W40✓</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--red);font-weight:600">TSMOM✕</span></td><td><span style="color:var(--green);font-weight:600">ST✓</span></td><td>16.23</td></tr>
+<tr><td>2019-03-22</td><td style="color:var(--green);font-weight:600">0% → 33%</td><td><span style="color:var(--green);font-weight:600">W40✓</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--red);font-weight:600">TSMOM✕</span></td><td><span style="color:var(--red);font-weight:600">ST✕</span></td><td>16.07</td></tr>
+<tr><td>2018-10-31</td><td style="color:var(--red);font-weight:600">17% → 0%</td><td><span style="color:var(--red);font-weight:600">W40✕</span> <span style="color:var(--red);font-weight:600">W52✕</span> <span style="color:var(--red);font-weight:600">TSMOM✕</span></td><td><span style="color:var(--red);font-weight:600">ST✕</span></td><td>15.23</td></tr>
+<tr><td>2018-10-12</td><td style="color:var(--red);font-weight:600">100% → 17%</td><td><span style="color:var(--red);font-weight:600">W40✕</span> <span style="color:var(--red);font-weight:600">W52✕</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--red);font-weight:600">ST✕</span></td><td>15.72</td></tr>
+<tr><td>2018-07-27</td><td style="color:var(--green);font-weight:600">50% → 100%</td><td><span style="color:var(--green);font-weight:600">W40✓</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--green);font-weight:600">ST✓</span></td><td>16.83</td></tr>
+<tr><td>2018-07-13</td><td style="color:var(--green);font-weight:600">17% → 50%</td><td><span style="color:var(--green);font-weight:600">W40✓</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--red);font-weight:600">ST✕</span></td><td>16.23</td></tr>
+<tr><td>2018-07-06</td><td style="color:var(--red);font-weight:600">33% → 17%</td><td><span style="color:var(--red);font-weight:600">W40✕</span> <span style="color:var(--red);font-weight:600">W52✕</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--red);font-weight:600">ST✕</span></td><td>15.77</td></tr>
+<tr><td>2018-06-22</td><td style="color:var(--red);font-weight:600">50% → 33%</td><td><span style="color:var(--red);font-weight:600">W40✕</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--red);font-weight:600">ST✕</span></td><td>15.80</td></tr>
+<tr><td>2018-06-08</td><td style="color:var(--green);font-weight:600">33% → 50%</td><td><span style="color:var(--green);font-weight:600">W40✓</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--red);font-weight:600">ST✕</span></td><td>16.08</td></tr>
+<tr><td>2018-06-01</td><td style="color:var(--red);font-weight:600">50% → 33%</td><td><span style="color:var(--red);font-weight:600">W40✕</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--red);font-weight:600">ST✕</span></td><td>15.84</td></tr>
+<tr><td>2018-05-25</td><td style="color:var(--green);font-weight:600">33% → 50%</td><td><span style="color:var(--green);font-weight:600">W40✓</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--red);font-weight:600">ST✕</span></td><td>15.94</td></tr>
+<tr><td>2018-05-18</td><td style="color:var(--red);font-weight:600">50% → 33%</td><td><span style="color:var(--red);font-weight:600">W40✕</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--red);font-weight:600">ST✕</span></td><td>15.77</td></tr>
+<tr><td>2018-05-11</td><td style="color:var(--green);font-weight:600">17% → 50%</td><td><span style="color:var(--green);font-weight:600">W40✓</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--red);font-weight:600">ST✕</span></td><td>15.89</td></tr>
+<tr><td>2018-04-27</td><td style="color:var(--red);font-weight:600">33% → 17%</td><td><span style="color:var(--red);font-weight:600">W40✕</span> <span style="color:var(--red);font-weight:600">W52✕</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--red);font-weight:600">ST✕</span></td><td>15.43</td></tr>
+<tr><td>2018-04-20</td><td style="color:var(--red);font-weight:600">50% → 33%</td><td><span style="color:var(--red);font-weight:600">W40✕</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--red);font-weight:600">ST✕</span></td><td>15.73</td></tr>
+<tr><td>2018-02-23</td><td style="color:var(--green);font-weight:600">33% → 50%</td><td><span style="color:var(--green);font-weight:600">W40✓</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--red);font-weight:600">ST✕</span></td><td>15.97</td></tr>
+<tr><td>2018-02-09</td><td style="color:var(--red);font-weight:600">100% → 33%</td><td><span style="color:var(--red);font-weight:600">W40✕</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--red);font-weight:600">ST✕</span></td><td>15.40</td></tr>
+<tr><td>2016-07-29</td><td style="color:var(--green);font-weight:600">67% → 100%</td><td><span style="color:var(--green);font-weight:600">W40✓</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--green);font-weight:600">TSMOM✓</span></td><td><span style="color:var(--green);font-weight:600">ST✓</span></td><td>12.60</td></tr>
+<tr><td>2016-05-27</td><td style="color:var(--green);font-weight:600">0% → 67%</td><td><span style="color:var(--green);font-weight:600">W40✓</span> <span style="color:var(--green);font-weight:600">W52✓</span> <span style="color:var(--red);font-weight:600">TSMOM✕</span></td><td><span style="color:var(--green);font-weight:600">ST✓</span></td><td>11.37</td></tr>
+<tr><td>2016-04-29</td><td style="color:var(--red);font-weight:600">67% → 0%</td><td><span style="color:var(--red);font-weight:600">W40✕</span> <span style="color:var(--red);font-weight:600">W52✕</span> <span style="color:var(--red);font-weight:600">TSMOM✕</span></td><td><span style="color:var(--green);font-weight:600">ST✓</span></td><td>11.19</td></tr>
+
+</tbody>
+</table>
+</div>
+</details>
+</div>
+
+</div>
+
+<footer>
+  <div class="container">
+    &copy; 2026 InvestMQuest Research &middot; 0050 STX50 方法移植(台股配置測試)&middot; 真實 yfinance 資料(已修復幻影分割)&middot;
+    頁面生成 2026-06-17 &middot; 探索性測試,非採用建議 &middot; 僅供研究參考
+  </div>
+</footer>
+
+<script>
+var NAV_LABELS=["2010-01", "2010-02", "2010-03", "2010-04", "2010-05", "2010-06", "2010-07", "2010-08", "2010-09", "2010-10", "2010-11", "2010-12", "2011-01", "2011-02", "2011-03", "2011-04", "2011-05", "2011-06", "2011-07", "2011-08", "2011-09", "2011-10", "2011-11", "2011-12", "2012-01", "2012-02", "2012-03", "2012-04", "2012-05", "2012-06", "2012-07", "2012-08", "2012-09", "2012-10", "2012-11", "2012-12", "2013-01", "2013-02", "2013-03", "2013-04", "2013-05", "2013-06", "2013-07", "2013-08", "2013-09", "2013-10", "2013-11", "2013-12", "2014-01", "2014-02", "2014-03", "2014-04", "2014-05", "2014-06", "2014-07", "2014-08", "2014-09", "2014-10", "2014-11", "2014-12", "2015-01", "2015-02", "2015-03", "2015-04", "2015-05", "2015-06", "2015-07", "2015-08", "2015-09", "2015-10", "2015-11", "2015-12", "2016-01", "2016-02", "2016-03", "2016-04", "2016-05", "2016-06", "2016-07", "2016-08", "2016-09", "2016-10", "2016-11", "2016-12", "2017-01", "2017-02", "2017-03", "2017-04", "2017-05", "2017-06", "2017-07", "2017-08", "2017-09", "2017-10", "2017-11", "2017-12", "2018-01", "2018-02", "2018-03", "2018-04", "2018-05", "2018-06", "2018-07", "2018-08", "2018-09", "2018-10", "2018-11", "2018-12", "2019-01", "2019-02", "2019-03", "2019-04", "2019-05", "2019-06", "2019-07", "2019-08", "2019-09", "2019-10", "2019-11", "2019-12", "2020-01", "2020-02", "2020-03", "2020-04", "2020-05", "2020-06", "2020-07", "2020-08", "2020-09", "2020-10", "2020-11", "2020-12", "2021-01", "2021-02", "2021-03", "2021-04", "2021-05", "2021-06", "2021-07", "2021-08", "2021-09", "2021-10", "2021-11", "2021-12", "2022-01", "2022-02", "2022-03", "2022-04", "2022-05", "2022-06", "2022-07", "2022-08", "2022-09", "2022-10", "2022-11", "2022-12", "2023-01", "2023-02", "2023-03", "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", "2023-10", "2023-11", "2023-12", "2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06", "2024-07", "2024-08", "2024-09", "2024-10", "2024-11", "2024-12", "2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"];
+var NAV_STX=[1.0, 0.9649, 0.9906, 0.9963, 0.9474, 0.9465, 0.9657, 0.9434, 1.0213, 0.9912, 1.0107, 1.0868, 1.1151, 1.0532, 1.0541, 1.0974, 1.0974, 1.0437, 1.0462, 0.9516, 0.944, 0.9448, 0.9456, 0.9464, 0.947, 0.9512, 0.9391, 0.9247, 0.9131, 0.9138, 0.9146, 0.9148, 0.9266, 0.8394, 0.8399, 0.8423, 0.849, 0.8517, 0.851, 0.8645, 0.8729, 0.8248, 0.8367, 0.8277, 0.8377, 0.8546, 0.8494, 0.8664, 0.8523, 0.8627, 0.8893, 0.9027, 0.9337, 0.9759, 0.9877, 1.024, 0.9663, 1.0184, 1.0527, 1.0426, 1.0605, 1.0964, 1.0769, 1.1143, 1.1089, 1.0823, 1.0268, 1.0176, 1.0183, 1.0264, 1.0273, 1.0282, 1.029, 1.0296, 1.0366, 0.9955, 1.0016, 1.0264, 1.0674, 1.0807, 1.1048, 1.1305, 1.1165, 1.118, 1.1414, 1.1661, 1.1749, 1.1884, 1.2195, 1.2817, 1.308, 1.3337, 1.2967, 1.3699, 1.3224, 1.3208, 1.3961, 1.3221, 1.327, 1.3043, 1.2997, 1.3017, 1.3267, 1.3484, 1.3476, 1.2347, 1.2357, 1.2367, 1.2377, 1.2384, 1.238, 1.2703, 1.1935, 1.2093, 1.2269, 1.2181, 1.2453, 1.3263, 1.3469, 1.4271, 1.3671, 1.3468, 1.2768, 1.2775, 1.2715, 1.3098, 1.5233, 1.494, 1.5116, 1.5116, 1.6627, 1.7941, 1.9224, 2.0004, 2.0206, 2.1083, 2.0559, 2.0836, 2.0453, 2.071, 2.0223, 1.9916, 2.0123, 2.1217, 2.1094, 2.0639, 2.0292, 1.9686, 1.9702, 1.9718, 1.9735, 1.9753, 1.9769, 1.9785, 1.9802, 1.9819, 2.0039, 1.995, 2.0272, 1.9808, 2.0785, 2.1271, 2.1532, 2.1014, 2.0504, 2.0313, 2.1766, 2.2445, 2.2782, 2.43, 2.6758, 2.6835, 2.8149, 3.1617, 3.0824, 3.0909, 3.1352, 3.269, 3.1915, 3.3363, 3.4783, 3.3263, 3.0993, 3.1041, 3.1303, 3.2619, 3.5015, 3.5661, 3.9261, 4.3982, 4.2351, 4.4559, 5.001, 5.5899, 4.9838, 6.234, 7.2604, 7.3017];
+var NAV_E3=[1.0, 0.9726, 1.0236, 1.034, 0.9335, 0.931, 0.9681, 0.9573, 1.0363, 1.0058, 1.0255, 1.1028, 1.1315, 1.0686, 1.0695, 1.1135, 1.1135, 1.059, 1.0616, 0.9661, 0.9498, 0.9506, 0.9514, 0.9522, 0.9528, 0.9604, 0.9472, 0.9327, 0.921, 0.9217, 0.9225, 0.922, 0.95, 0.862, 0.8621, 0.8662, 0.879, 0.8885, 0.8877, 0.9019, 0.9107, 0.8644, 0.8879, 0.8681, 0.8883, 0.9212, 0.9156, 0.9339, 0.9187, 0.9299, 0.9586, 0.973, 1.0065, 1.0519, 1.0647, 1.1038, 1.0416, 1.1513, 1.1901, 1.1786, 1.1989, 1.2395, 1.2174, 1.2597, 1.2536, 1.2236, 1.1609, 1.1391, 1.1398, 1.157, 1.1579, 1.159, 1.1599, 1.1605, 1.1698, 1.1234, 1.1303, 1.1582, 1.2046, 1.2195, 1.2467, 1.2757, 1.2599, 1.2617, 1.288, 1.3159, 1.3258, 1.3411, 1.3762, 1.4463, 1.476, 1.505, 1.4633, 1.5459, 1.4923, 1.4905, 1.5755, 1.5136, 1.5228, 1.4695, 1.4576, 1.4606, 1.5195, 1.5444, 1.5435, 1.4067, 1.4079, 1.409, 1.4102, 1.4109, 1.4088, 1.452, 1.3671, 1.4022, 1.447, 1.4366, 1.4687, 1.5642, 1.5885, 1.6831, 1.6123, 1.589, 1.4248, 1.4252, 1.4104, 1.4788, 1.7199, 1.6868, 1.7066, 1.7066, 1.8773, 2.0256, 2.1705, 2.2585, 2.2814, 2.3804, 2.3212, 2.3525, 2.3093, 2.3383, 2.2833, 2.2486, 2.272, 2.3955, 2.3816, 2.3302, 2.2911, 2.2127, 2.2145, 2.2163, 2.2182, 2.2202, 2.222, 2.2238, 2.2257, 2.2276, 2.2523, 2.2424, 2.2785, 2.2264, 2.3363, 2.3909, 2.4202, 2.3619, 2.3046, 2.2831, 2.4464, 2.5228, 2.5607, 2.7313, 3.0076, 3.0162, 3.1639, 3.5537, 3.4646, 3.4741, 3.524, 3.6743, 3.5872, 3.75, 3.9096, 3.7387, 3.4836, 3.4681, 3.5459, 3.695, 3.9665, 4.0395, 4.4473, 4.9821, 4.7974, 5.0475, 5.665, 6.3321, 5.6455, 7.0617, 8.2243, 8.2712];
+var NAV_CH12=[1.0, 1.0005, 1.0014, 1.0023, 1.0031, 1.0039, 1.0048, 1.0057, 1.0065, 1.0073, 1.0082, 1.0091, 1.0099, 1.0105, 1.0114, 1.0122, 1.013, 1.0138, 1.0147, 1.0156, 1.0164, 1.0172, 1.0181, 1.019, 1.0196, 1.0204, 1.0213, 1.0221, 1.023, 1.0238, 1.0247, 1.0256, 1.0264, 1.0273, 1.0282, 1.029, 1.0299, 1.0304, 1.0313, 1.0321, 1.033, 1.0338, 1.0347, 1.0356, 1.0363, 1.0372, 1.0381, 1.0622, 1.045, 1.0577, 1.0903, 1.1067, 1.1448, 1.1965, 1.211, 1.2554, 1.1847, 1.3095, 1.3536, 1.3406, 1.3636, 1.4097, 1.3847, 1.4328, 1.4258, 1.3917, 1.3256, 1.3267, 1.3278, 1.3289, 1.33, 1.3312, 1.3323, 1.3329, 1.3317, 1.2369, 1.2478, 1.2933, 1.3713, 1.3883, 1.4193, 1.4523, 1.4343, 1.4363, 1.4663, 1.498, 1.5093, 1.5267, 1.5666, 1.6465, 1.6803, 1.7133, 1.6658, 1.7598, 1.6989, 1.6968, 1.7935, 1.7448, 1.7554, 1.6769, 1.6588, 1.6732, 1.719, 1.7471, 1.7461, 1.6082, 1.6096, 1.6109, 1.6122, 1.6131, 1.6088, 1.683, 1.5889, 1.6117, 1.6636, 1.6445, 1.6998, 1.8103, 1.8384, 1.9479, 1.866, 1.839, 1.6799, 1.6801, 1.646, 1.7522, 2.0379, 1.9986, 2.0221, 2.0221, 2.2244, 2.4001, 2.5717, 2.676, 2.7031, 2.8205, 2.7503, 2.7874, 2.7362, 2.8227, 2.7563, 2.7312, 2.7754, 2.9262, 2.9092, 2.8466, 2.7995, 2.7272, 2.7295, 2.7318, 2.734, 2.7365, 2.7388, 2.7409, 2.7433, 2.7457, 2.7471, 2.7491, 2.7516, 2.7534, 2.7558, 2.7039, 2.737, 2.6711, 2.6063, 2.5744, 2.7912, 2.8783, 2.9215, 3.1161, 3.4314, 3.4412, 3.6097, 4.0544, 3.9528, 3.9637, 4.0205, 4.1921, 4.0926, 4.2784, 4.4605, 4.2655, 3.9682, 3.9713, 3.9745, 4.0741, 4.3735, 4.4541, 4.9037, 5.4933, 5.2897, 5.5655, 6.2463, 6.9819, 6.2248, 7.7863, 9.0683, 9.1199];
+var NAV_BH=[1.0, 0.9726, 1.0236, 1.034, 0.9453, 0.9349, 1.017, 1.0057, 1.0887, 1.0566, 1.0774, 1.1585, 1.1887, 1.1226, 1.1236, 1.1698, 1.1698, 1.1104, 1.1302, 1.0292, 0.9745, 0.9849, 0.9072, 0.9398, 0.9802, 1.0566, 1.0358, 0.9821, 0.9462, 0.9472, 0.9642, 0.9953, 1.0406, 0.9509, 1.0104, 1.0151, 1.0302, 1.0415, 1.0396, 1.0642, 1.0745, 1.0396, 1.0679, 1.0538, 1.0783, 1.1182, 1.1114, 1.1336, 1.1152, 1.1288, 1.1636, 1.1811, 1.2217, 1.2769, 1.2924, 1.3398, 1.2643, 1.3975, 1.4446, 1.4307, 1.4553, 1.5045, 1.4778, 1.5291, 1.5216, 1.4853, 1.4157, 1.3333, 1.3354, 1.3949, 1.3508, 1.3408, 1.3022, 1.3519, 1.4269, 1.3596, 1.3938, 1.4446, 1.5317, 1.5506, 1.5853, 1.6221, 1.602, 1.6043, 1.6378, 1.6732, 1.6858, 1.7053, 1.7499, 1.8391, 1.8768, 1.9137, 1.8607, 1.9656, 1.8976, 1.8953, 2.0033, 1.9489, 1.9607, 1.8933, 1.911, 1.9276, 2.0415, 2.0749, 2.0737, 1.8506, 1.8315, 1.8017, 1.8292, 1.9104, 1.9473, 2.0371, 1.9301, 1.9904, 2.0545, 2.0309, 2.0992, 2.2356, 2.2704, 2.4056, 2.3044, 2.2711, 1.9509, 2.1904, 2.1635, 2.3032, 2.6786, 2.627, 2.6579, 2.6579, 2.9237, 3.1547, 3.3803, 3.5175, 3.553, 3.7073, 3.615, 3.6638, 3.5965, 3.7102, 3.6229, 3.5899, 3.648, 3.8463, 3.824, 3.7416, 3.7308, 3.4782, 3.5065, 3.1283, 3.2382, 3.2336, 2.8445, 2.7235, 3.1992, 3.0301, 3.326, 3.3401, 3.4188, 3.3007, 3.5467, 3.6297, 3.6741, 3.5857, 3.4987, 3.4559, 3.7469, 3.8638, 3.9218, 4.1831, 4.6064, 4.6195, 4.8457, 5.4427, 5.3062, 5.3209, 5.3971, 5.6275, 5.494, 5.7434, 5.9878, 5.7261, 5.1386, 5.0151, 5.3468, 5.754, 6.1768, 6.2906, 6.9257, 7.7585, 7.4709, 7.8603, 8.8218, 9.8608, 8.7915, 10.9969, 12.8075, 12.8804];
+var TWII_LABELS=["2006-01", "2006-02", "2006-03", "2006-04", "2006-05", "2006-06", "2006-07", "2006-08", "2006-09", "2006-10", "2006-11", "2006-12", "2007-01", "2007-02", "2007-03", "2007-04", "2007-05", "2007-06", "2007-07", "2007-08", "2007-09", "2007-10", "2007-11", "2007-12", "2008-01", "2008-02", "2008-03", "2008-04", "2008-05", "2008-06", "2008-07", "2008-08", "2008-09", "2008-10", "2008-11", "2008-12", "2009-01", "2009-02", "2009-03", "2009-04", "2009-05", "2009-06", "2009-07", "2009-08", "2009-09", "2009-10", "2009-11", "2009-12", "2010-01", "2010-02", "2010-03", "2010-04", "2010-05", "2010-06", "2010-07", "2010-08", "2010-09", "2010-10", "2010-11", "2010-12", "2011-01", "2011-02", "2011-03", "2011-04", "2011-05", "2011-06", "2011-07", "2011-08", "2011-09", "2011-10", "2011-11", "2011-12", "2012-01", "2012-02", "2012-03", "2012-04", "2012-05", "2012-06", "2012-07", "2012-08", "2012-09", "2012-10", "2012-11", "2012-12", "2013-01", "2013-02", "2013-03", "2013-04", "2013-05", "2013-06", "2013-07", "2013-08", "2013-09", "2013-10", "2013-11", "2013-12", "2014-01", "2014-02", "2014-03", "2014-04", "2014-05", "2014-06", "2014-07", "2014-08", "2014-09", "2014-10", "2014-11", "2014-12", "2015-01", "2015-02", "2015-03", "2015-04", "2015-05", "2015-06", "2015-07", "2015-08", "2015-09", "2015-10", "2015-11", "2015-12", "2016-01", "2016-02", "2016-03", "2016-04", "2016-05", "2016-06", "2016-07", "2016-08", "2016-09", "2016-10", "2016-11", "2016-12", "2017-01", "2017-02", "2017-03", "2017-04", "2017-05", "2017-06", "2017-07", "2017-08", "2017-09", "2017-10", "2017-11", "2017-12", "2018-01", "2018-02", "2018-03", "2018-04", "2018-05", "2018-06", "2018-07", "2018-08", "2018-09", "2018-10", "2018-11", "2018-12", "2019-01", "2019-02", "2019-03", "2019-04", "2019-05", "2019-06", "2019-07", "2019-08", "2019-09", "2019-10", "2019-11", "2019-12", "2020-01", "2020-02", "2020-03", "2020-04", "2020-05", "2020-06", "2020-07", "2020-08", "2020-09", "2020-10", "2020-11", "2020-12", "2021-01", "2021-02", "2021-03", "2021-04", "2021-05", "2021-06", "2021-07", "2021-08", "2021-09", "2021-10", "2021-11", "2021-12", "2022-01", "2022-02", "2022-03", "2022-04", "2022-05", "2022-06", "2022-07", "2022-08", "2022-09", "2022-10", "2022-11", "2022-12", "2023-01", "2023-02", "2023-03", "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", "2023-10", "2023-11", "2023-12", "2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06", "2024-07", "2024-08", "2024-09", "2024-10", "2024-11", "2024-12", "2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"];
+var TWII_STX=[1.0, 1.0045, 1.0125, 1.0979, 1.0482, 0.9965, 0.9762, 0.9764, 0.9958, 1.0063, 1.0737, 1.11, 1.0924, 1.1211, 1.1186, 1.1173, 1.1555, 1.2603, 1.3176, 1.1952, 1.2241, 1.2444, 1.1601, 1.1347, 1.1133, 1.1138, 1.1174, 1.1229, 1.0845, 0.9929, 0.9938, 0.9946, 0.9954, 0.9963, 0.9971, 0.998, 0.9985, 0.9993, 1.0002, 1.0287, 1.1302, 1.0806, 1.1525, 1.1257, 1.2001, 1.1731, 1.2117, 1.3086, 1.2211, 1.1645, 1.2026, 1.2098, 1.1496, 1.1487, 1.1631, 1.1556, 1.202, 1.2092, 1.2217, 1.3092, 1.3345, 1.2548, 1.2456, 1.2694, 1.2688, 1.2451, 1.2382, 1.1981, 1.1858, 1.1868, 1.1878, 1.1888, 1.1895, 1.1967, 1.1764, 1.1556, 1.1409, 1.1419, 1.1429, 1.1409, 1.1543, 1.0964, 1.097, 1.1061, 1.1197, 1.1263, 1.1287, 1.1455, 1.1683, 1.1217, 1.1257, 1.1148, 1.1258, 1.1453, 1.1429, 1.1621, 1.142, 1.1658, 1.1941, 1.1863, 1.2247, 1.2675, 1.2571, 1.2734, 1.2112, 1.2015, 1.2136, 1.2179, 1.2146, 1.2483, 1.2437, 1.274, 1.2586, 1.1989, 1.1819, 1.1828, 1.1838, 1.1848, 1.1857, 1.1868, 1.1878, 1.1884, 1.1882, 1.164, 1.1568, 1.1666, 1.1951, 1.2064, 1.2194, 1.2358, 1.2292, 1.2309, 1.2568, 1.297, 1.3052, 1.3132, 1.3356, 1.3828, 1.3871, 1.4082, 1.3741, 1.4358, 1.4048, 1.4157, 1.4771, 1.3991, 1.4058, 1.3855, 1.3914, 1.3897, 1.3929, 1.3831, 1.3802, 1.3346, 1.3358, 1.3368, 1.3379, 1.3385, 1.3398, 1.3671, 1.2965, 1.3041, 1.3088, 1.3014, 1.3106, 1.3388, 1.3542, 1.414, 1.3544, 1.3431, 1.2655, 1.2664, 1.2653, 1.2908, 1.4067, 1.3985, 1.3901, 1.3935, 1.5242, 1.6363, 1.6814, 1.772, 1.825, 1.9511, 1.8263, 1.8637, 1.838, 1.8523, 1.8237, 1.8216, 1.8461, 1.8878, 1.8314, 1.8291, 1.8113, 1.7525, 1.7539, 1.7554, 1.7569, 1.7585, 1.7599, 1.7613, 1.7628, 1.7644, 1.7781, 1.7839, 1.8125, 1.791, 1.8676, 1.8931, 1.9188, 1.8616, 1.8302, 1.7999, 1.87, 1.91, 1.9056, 2.0203, 2.1618, 2.1726, 2.2555, 2.4534, 2.3647, 2.3419, 2.3419, 2.3392, 2.282, 2.3612, 2.4115, 2.3631, 2.2284, 2.2062, 2.2079, 2.1875, 2.2716, 2.3382, 2.4914, 2.7242, 2.6656, 2.7946, 3.0938, 3.4171, 3.0609, 3.7559, 4.3162, 4.4266];
+var TWII_BH=[1.0, 1.0045, 1.0125, 1.0979, 1.0482, 1.0264, 0.9881, 1.0122, 1.0537, 1.0749, 1.1585, 1.1977, 1.1787, 1.2097, 1.207, 1.2056, 1.2469, 1.3599, 1.4218, 1.3751, 1.4409, 1.4867, 1.3145, 1.3022, 1.1514, 1.2879, 1.3124, 1.3655, 1.3195, 1.1518, 1.0753, 1.0787, 0.8756, 0.7456, 0.6828, 0.7029, 0.6503, 0.6976, 0.7977, 0.9174, 1.0548, 0.9847, 1.0835, 1.045, 1.1496, 1.1237, 1.1607, 1.2535, 1.1697, 1.1384, 1.2125, 1.2254, 1.1289, 1.122, 1.1881, 1.166, 1.2611, 1.2687, 1.2817, 1.3736, 1.4, 1.3165, 1.3293, 1.379, 1.3761, 1.3246, 1.3233, 1.1851, 1.1061, 1.1616, 1.0569, 1.0827, 1.1508, 1.2433, 1.2144, 1.1484, 1.1178, 1.117, 1.113, 1.1324, 1.1811, 1.097, 1.1604, 1.1787, 1.2017, 1.2091, 1.2122, 1.239, 1.2637, 1.2342, 1.2412, 1.2281, 1.2513, 1.2936, 1.287, 1.3183, 1.2955, 1.3226, 1.3547, 1.3459, 1.3894, 1.438, 1.4261, 1.4446, 1.3727, 1.3739, 1.4064, 1.4248, 1.4332, 1.473, 1.4676, 1.5033, 1.4851, 1.4272, 1.3266, 1.2515, 1.2525, 1.3096, 1.2738, 1.2765, 1.237, 1.2877, 1.3387, 1.2826, 1.3067, 1.3268, 1.3754, 1.3883, 1.4033, 1.4222, 1.4146, 1.4166, 1.4464, 1.4927, 1.502, 1.5113, 1.5371, 1.5914, 1.5963, 1.6206, 1.5814, 1.6524, 1.6167, 1.6293, 1.6999, 1.6557, 1.6696, 1.6316, 1.6648, 1.659, 1.6928, 1.6938, 1.6849, 1.5006, 1.5137, 1.4892, 1.5205, 1.5905, 1.629, 1.679, 1.6072, 1.6428, 1.657, 1.6255, 1.6579, 1.7389, 1.7589, 1.8366, 1.7598, 1.7287, 1.4862, 1.6828, 1.6751, 1.7791, 1.9388, 1.9276, 1.916, 1.9207, 2.1008, 2.2554, 2.3175, 2.4424, 2.5154, 2.6893, 2.613, 2.7182, 2.6404, 2.6776, 2.5925, 2.6006, 2.668, 2.7891, 2.7058, 2.7024, 2.7087, 2.5401, 2.5731, 2.2697, 2.2963, 2.3109, 2.0552, 1.9825, 2.2779, 2.1643, 2.3369, 2.3735, 2.4292, 2.385, 2.5381, 2.5896, 2.6248, 2.5466, 2.5036, 2.4496, 2.6689, 2.745, 2.7387, 2.9036, 3.1069, 3.1225, 3.2415, 3.526, 3.3985, 3.409, 3.4023, 3.4936, 3.4081, 3.5264, 3.6015, 3.5292, 3.1683, 3.0978, 3.268, 3.4072, 3.6041, 3.7098, 3.9528, 4.3222, 4.2293, 4.434, 4.9086, 5.4216, 4.8564, 5.9592, 6.8481, 7.0233];
+var YEARS=[2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026];
+var RET_STX=[4.18, -12.99, -11.01, 2.29, 20.33, -0.93, 8.73, 17.97, -6.88, 15.39, 24.81, 16.26, -7.16, 13.25, 49.25, 34.73, 60.56];
+var RET_BH=[8.67, -18.88, 8.01, 11.68, 26.2, -6.28, 19.65, 18.14, -4.94, 33.52, 31.14, 21.92, -21.22, 27.52, 48.64, 36.86, 63.87];
+
+function toDD(nav){
+  var dd=[],peak=0;
+  for(var i=0;i<nav.length;i++){
+    if(nav[i]>peak)peak=nav[i];
+    dd.push((nav[i]/peak-1)*100);
+  }
+  return dd;
+}
+Chart.defaults.font.family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif";
+Chart.defaults.font.size=11;
+
+new Chart(document.getElementById('chart-nav'),{
+  type:'line',
+  data:{labels:NAV_LABELS,datasets:[
+    {label:'STX50(移植)',data:NAV_STX,borderColor:'#d97706',borderWidth:2.4,pointRadius:0,pointHoverRadius:4,tension:0.1},
+    {label:'E3(對照)',data:NAV_E3,borderColor:'#a855f7',borderWidth:1.4,pointRadius:0,pointHoverRadius:3,tension:0.1},
+    {label:'Ch12 binary(對照)',data:NAV_CH12,borderColor:'#9ca3af',borderWidth:1.3,pointRadius:0,pointHoverRadius:3,tension:0.1},
+    {label:'0050 B&H(含息)',data:NAV_BH,borderColor:'#1565c0',borderWidth:1.6,borderDash:[6,3],pointRadius:0,pointHoverRadius:3,tension:0.1}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:true,position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'line',padding:14}},
+      tooltip:{callbacks:{label:function(c){return c.dataset.label+': $'+(c.parsed.y).toFixed(2)+'M'}}}},
+    scales:{x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{maxTicksLimit:18,font:{size:10}}},
+      y:{type:'logarithmic',grid:{color:'rgba(0,0,0,0.06)'},ticks:{callback:function(v){return '$'+v+'M'},font:{size:10}}}}
+  }
+});
+
+new Chart(document.getElementById('chart-dd'),{
+  type:'line',
+  data:{labels:NAV_LABELS,datasets:[
+    {label:'STX50(移植)',data:toDD(NAV_STX),borderColor:'#d97706',backgroundColor:'#d977061f',borderWidth:1.5,fill:'origin',pointRadius:0,tension:0.1},
+    {label:'0050 B&H',data:toDD(NAV_BH),borderColor:'#1565c0',backgroundColor:'rgba(21,101,192,0.08)',borderWidth:1.2,fill:'origin',pointRadius:0,tension:0.1}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:true,position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'line',padding:10}},
+      tooltip:{callbacks:{label:function(c){return c.dataset.label+': '+c.parsed.y.toFixed(2)+'%'}}}},
+    scales:{x:{grid:{display:false},ticks:{maxTicksLimit:18,font:{size:10}}},
+      y:{grid:{color:'rgba(0,0,0,0.06)'},ticks:{callback:function(v){return v+'%'},font:{size:10}}}}
+  }
+});
+
+new Chart(document.getElementById('chart-yearly'),{
+  type:'bar',
+  data:{labels:YEARS.map(String),datasets:[
+    {label:'STX50(移植)',data:RET_STX,backgroundColor:RET_STX.map(function(v){return v>=0?'#d97706cc':'#d9770655'}),borderColor:'#d97706',borderWidth:1,borderRadius:2},
+    {label:'0050 B&H',data:RET_BH,backgroundColor:RET_BH.map(function(v){return v>=0?'rgba(21,101,192,0.7)':'rgba(21,101,192,0.3)'}),borderColor:'#1565c0',borderWidth:1,borderRadius:2}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:true,position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'rect',padding:14}},
+      tooltip:{callbacks:{label:function(c){return c.dataset.label+': '+(c.parsed.y>0?'+':'')+c.parsed.y.toFixed(2)+'%'}}}},
+    scales:{x:{grid:{display:false},ticks:{font:{size:10}}},
+      y:{grid:{color:'rgba(0,0,0,0.06)'},ticks:{callback:function(v){return v+'%'},font:{size:10}}}}
+  }
+});
+</script>
+</body>
+</html>

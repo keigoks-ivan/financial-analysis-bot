@@ -43,6 +43,10 @@ MULTI_LINKS = [
     ("/backtest/clenow/", "📈 Clenow", "clenow", "#6366f1"),
 ]
 
+TAIWAN_LINKS = [
+    ("/backtest/tw_0050/", "0050 STX50 (移植)", "tw0050", "#d97706"),
+]
+
 INTRADAY_LINKS = [
     ("/backtest/txf_intraday/", "台指當沖 (未過)", "txf_intra", "#dc2626"),
     ("/backtest/txf_basis/", "基差偏向 (否決)", "txf_basis", "#dc2626"),
@@ -79,5 +83,6 @@ def make_toggle(active: str) -> str:
             + _group("對比總覽", COMPARISON_LINKS, "#1a56db", active)
             + _group("個別系統 (美股)", INDIVIDUAL_LINKS, "var(--muted)", active)
             + _group("多資產", MULTI_LINKS, "#0f766e", active)
+            + _group("台股波段", TAIWAN_LINKS, "#d97706", active)
             + _group("日內交易", INTRADAY_LINKS, "#9333ea", active)
             + "</div>")
