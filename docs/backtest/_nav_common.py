@@ -45,6 +45,7 @@ MULTI_LINKS = [
 
 TAIWAN_LINKS = [
     ("/backtest/tw_0050/", "0050 STX50 (移植)", "tw0050", "#d97706"),
+    ("/backtest/tw_0050_dual/", "0050 雙軌多空 (否決)", "tw0050d", "#dc2626"),
 ]
 
 INTRADAY_LINKS = [
