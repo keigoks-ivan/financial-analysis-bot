@@ -119,6 +119,10 @@ GROUPS = [
          "+13.28%", "-44.11%", "0.69", "0.30", "mixed", "$14.47M", TAG["ma"]),
     ]),
     ("🇹🇼 台股(方法移植 · 不同市場/幣別,僅參照)", [
+        ("0050 總覽 · 台股 vs 美股差異", "/backtest/tw_0050_compare/",
+         "四系統風險調整排名 + matched-window 檢驗:把美股關進同 2010+ 窗口,連 QQQ B&H 也反贏趨勢 → 「B&H 難敗」主因是樣本無崩盤,非台股特性",
+         "—", "—", "—", "—", "na", "—",
+         '<span class="tag" style="background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe">總覽/分析</span>'),
         ("0050 Long Track — v7 Ch12 長軌", "/backtest/tw_0050_lt/",
          "週線 W52/104/250 score-5 · long only · 0050 上最強趨勢變體:Sharpe 1.10/Calmar 0.68 全面勝 B&H 風險調整(只讓出 CAGR);"
          "贏 STX50/六狀態/雙軌 · 有 W250 暖身偏誤 · CAGR 為 NT$",
