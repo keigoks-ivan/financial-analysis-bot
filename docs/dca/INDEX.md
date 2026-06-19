@@ -337,3 +337,5 @@
 | 2026-06-15 | CRWD | CrowdStrike 用單一輕量 agent + 雲端 AI 看遍全球攻擊，看得越多防得越準（資料飛輪龍頭，頂級公司極端價格→觀望等回檔） | DCA_CRWD_20260615.html | DD_CRWD_20260615.html | — |
 | 2026-06-15 | TD | Toronto-Dominion 握有加拿大第一的核心存款特許，但美國 AML 資產上限把成長引擎鎖住——adj EPS 復甦真實卻已 re-rate 過頭（好公司晚價格，觀望等 adj PE<14x/C$135 或上限解除） | DCA_TD_20260615.html | DD_TD_20260615.html | — |
 | 2026-06-15 | BMO | Bank of Montreal 靠加拿大寡占護城河從信用週期谷底復甦，但市場已把復甦完全定價、ROE 最低卻給溢價（等 Fwd PE 11-12x 或同價位選 RY） | DCA_BMO_20260615.html | DD_BMO_20260615.html | — |
+| 2026-06-19 | JBL | Jabil 是 AI capex 超級週期裡執行力最強的「製造外包水龍頭」，賺組裝量不賺晶片價差；Q3 三度上修驗證 thesis 但估值 30x/96 分位已過熱（好公司過熱價格，觀望等 Fwd PE<20x/$247 或回測 BB 中軌 $308） | DCA_JBL_20260619.html | DD_JBL_20260619.html | — |
+| 2026-06-19 | KR | Kroger 用龐大客流與 84.51° 第一方數據變現高毛利零售媒體，補貼一場它結構性正在輸給 Walmart/Aldi/Amazon 的價格戰；10x 便宜但便宜有理由（迴避：品質 4.0 結構性價值陷阱，新 CEO Greg Foran 是唯一轉機） | DCA_KR_20260619.html | DD_KR_20260619.html | — |
