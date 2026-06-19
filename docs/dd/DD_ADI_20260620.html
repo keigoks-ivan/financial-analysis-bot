@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v12.7">
+<title>DD｜Analog Devices (ADI) — v12.7 深度研究報告 2026-06-20</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F8FAFC; --card:#FFFFFF; --ink:#1E3A5F; --accent:#3B82F6;
+    --line:#E2E8F0; --row:#F1F5F9; --mut:#64748B;
+    --green-bg:#DCFCE7; --green-ink:#166534; --red-bg:#FEE2E2; --red-ink:#991B1B;
+    --yel-bg:#FEF9C3; --yel-ink:#92400E; --blue-bg:#EFF6FF;
+    --orange-bg:#FFF0E6; --orange-line:#F97316; --orange-ink:#C2410C;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:#0F172A;font-family:"Noto Sans TC",system-ui,sans-serif;line-height:1.7;font-size:15px}
+  code,.mono,td .mono{font-family:"IBM Plex Mono",monospace}
+  header.fixed{position:sticky;top:0;z-index:50;background:#0F2540;color:#fff;padding:10px 22px;display:flex;flex-wrap:wrap;gap:8px 22px;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,.18);font-size:13px}
+  header.fixed .tk{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:17px;letter-spacing:.5px}
+  header.fixed .pill{background:rgba(255,255,255,.12);padding:2px 10px;border-radius:999px;font-family:"IBM Plex Mono",monospace}
+  main{max-width:1080px;margin:0 auto;padding:26px 20px 90px}
+  nav.dd-toc{background:#fff;border-left:4px solid var(--accent);border-radius:6px;padding:14px 16px;margin:0 0 26px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+  nav.dd-toc b{display:block;color:var(--ink);margin-bottom:8px;font-size:13px;letter-spacing:.5px}
+  nav.dd-toc a{display:inline-block;background:var(--blue-bg);color:#1d4ed8;text-decoration:none;padding:4px 11px;border-radius:999px;margin:3px 4px 3px 0;font-size:12.5px;border:1px solid #dbeafe}
+  nav.dd-toc a:hover{background:#dbeafe}
+  section{background:var(--card);border-radius:8px;padding:6px 26px 24px;margin-bottom:22px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+  h2{color:#fff;background:var(--ink);border-left:4px solid var(--accent);padding:9px 14px;border-radius:0 4px 4px 0;font-size:19px;margin:26px -26px 18px;scroll-margin-top:80px}
+  section>h2:first-child{margin-top:14px}
+  h3{color:var(--ink);font-size:16px;border-bottom:2px solid var(--line);padding-bottom:5px;margin-top:26px}
+  h4{color:#27496b;font-size:14.5px;margin:18px 0 8px}
+  p{margin:9px 0}
+  table{border-collapse:collapse;width:100%;margin:12px 0;font-size:13px}
+  th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+  th{background:var(--ink);color:#fff;font-weight:500}
+  tbody tr:nth-child(even){background:var(--row)}
+  .num{font-family:"IBM Plex Mono",monospace;text-align:right;white-space:nowrap}
+  .good{background:var(--green-bg);color:var(--green-ink);font-weight:500}
+  .bad{background:var(--red-bg);color:var(--red-ink);font-weight:500}
+  .neu{background:var(--yel-bg);color:var(--yel-ink);font-weight:500}
+  .hypothesis-box{background:var(--blue-bg);border-left:4px solid var(--accent);padding:14px 18px;border-radius:0 6px 6px 0;margin:16px 0}
+  .hypothesis-box ul{margin:0;padding-left:18px}
+  .hypothesis-box li{margin:7px 0}
+  .trap-box{background:var(--orange-bg);border-left:4px solid var(--orange-line);padding:14px 18px;border-radius:0 6px 6px 0;margin:16px 0}
+  .trap-box h4{color:var(--orange-ink);margin-top:0}
+  .reasoning{background:#F8FAFC;border:1px dashed #cbd5e1;border-radius:6px;padding:9px 13px;margin:10px 0;font-size:12.5px;color:#334155}
+  .reasoning b{color:var(--ink)}
+  .note{font-size:12.5px;color:var(--mut)}
+  .sig{font-size:21px;font-weight:700}
+  .three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:14px 0}
+  .rr-card{border-radius:6px;padding:12px 14px;font-size:13px}
+  .rr-s{border-left:4px solid #0284C7;background:#F0F9FF}
+  .rr-m{border-left:4px solid #7C3AED;background:#F5F3FF}
+  .rr-l{border-left:4px solid #059669;background:#ECFDF5}
+  .rr-card h4{margin:0 0 6px}
+  .tag{display:inline-block;padding:1px 8px;border-radius:4px;font-size:12px;font-weight:500}
+  .src{font-size:11.5px;color:#94a3b8;margin-top:4px}
+  .btn-print{position:fixed;right:20px;bottom:20px;background:var(--accent);color:#fff;border:none;padding:11px 17px;border-radius:8px;cursor:pointer;font-size:13px;box-shadow:0 3px 10px rgba(59,130,246,.4);z-index:60}
+  .kpi{display:inline-block;background:#F1F5F9;border:1px solid var(--line);border-radius:6px;padding:3px 9px;margin:2px;font-family:"IBM Plex Mono",monospace;font-size:12.5px}
+  hr{border:none;border-top:1px solid var(--line);margin:18px 0}
+  @media print{header.fixed{position:static}.btn-print,nav.dd-toc{display:none}section{box-shadow:none;break-inside:avoid}}
+  @media(max-width:720px){.three-col{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#0f172a;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(59,130,246,.28);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/" class="active">個股 DD</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/ds/">產業敘述 DS</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/">週報</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/long-track-smh/">長線訊號</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/">量化回測</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/screener-tw.html">Screener 台股</a>
+          <a href="/screener-jp.html">Screener 日股</a>
+          <a href="/screener-my.html">Screener 馬股</a>
+          <a href="/cache/">🗄 Data Cache</a>
+          <a href="/tools/">期貨部位計算機</a>
+        </div>
+      </div>
+      <a href="/mental-models/">🧠 心智模型</a>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+<header class="fixed">
+  <span class="tk">ADI · Analog Devices</span>
+  <span class="pill">資料抓取 2026-06-20</span>
+  <span class="pill">最新價 $434.46</span>
+  <span class="pill">最近財報 Q2 FY26 (2026-05-20)</span>
+  <span class="pill">DD Schema v12.7</span>
+</header>
+<main>
+
+<nav class="dd-toc">
+  <b>章節導覽</b>
+  <a href="#s1">§1 投資結論</a>
+  <a href="#s2">§2 四層判定</a>
+  <a href="#s3">§3 三方辯論</a>
+  <a href="#s4">§4 序章</a>
+  <a href="#s5">§5 論點錨定</a>
+  <a href="#s6">§6 財報</a>
+  <a href="#s7">§7 門檻</a>
+  <a href="#s8">§8 成長</a>
+  <a href="#s9">§9 護城河</a>
+  <a href="#s10">§10 財務</a>
+  <a href="#s11">§11 產業</a>
+  <a href="#s12">§12 治理</a>
+  <a href="#s13">§13 估值</a>
+</nav>
+
+<!-- ════════════════ §1 ════════════════ -->
+<section id="s1">
+<h2>§1　投資結論（Executive Summary）</h2>
+<p class="note">本結論基於以下完整分析得出，詳見各章節。推導見 §2 H、§5/§8/§9/§13。資料時間 2026-06-20，最新收盤 $434.46（yfinance，2026-06-18 收盤）。</p>
+
+<h3>結論 Dashboard（綜合訊號燈）</h3>
+<div class="hypothesis-box">
+<ul>
+<li><strong>產業風向燈 🟡（中性偏順）：</strong>§8 長期成長性 🟡 中等可見度（結構性自動化/AI 電源 + 強週期放大）｜§9 護城河趨勢 穩定（execution 加深、pricing 穩定）｜§8 F AI 風險 🟢 受益（資料中心電源/訊號鏈 +90%）｜一句話：類比霸主，AI 與工業自動化長坡，但當前 +37% 成長含大量週期回補與關稅拉貨。</li>
+<li><strong>品質 A 級：</strong>護城河 9.0/10（§9，execution 9 × pricing power 9）｜體質 veto 0 項不過｜等級調整：A → A（不變）。</li>
+<li><strong>估值燈 🟠 偏貴：</strong>Fwd PE（FY+2 FY2027E）29.4x，5Y NTM 分位 ~80%，PEG（常態化）1.72｜盲點 1 救援：否（§8 成長為 🟡 非 🟢，救援未觸發）。</li>
+<li><strong>Pure MA 狀態 ✅ 強勢進場：</strong>W52 $295.20 / W104 $253.57 / W250 $202.92（斜率 +6.38%）｜現價接近 52W 高 $439.70 與 BB 上軌 $453｜盲點 2 救援：不適用。</li>
+<li><strong>大盤豁免 ✅ 正常：</strong>對應大盤 S&amp;P 500，現價 7,500.58 vs W104 6,275.11（未破線）。</li>
+<li><strong>參考 R:R：</strong>短期 −23%（目標 $333）/ 中期 −8%（目標 $399）｜壓力測試通過率 2/2（資訊性，不主導裁決）。</li>
+<li><strong>綜合訊號：<span class="sig">B</span></strong>（取自 §2 H）｜判定理由：品質 A + 估值 🟠（FY+2 FPE 80 分位、常態化 PEG 1.72）+ 現價貼 52W 高 → thesis 完整但時機/估值不到位，落 B（觀望，等回檔）。</li>
+<li><strong>長期持有信心：高</strong>（§2 I）｜<strong>陷阱定性：🟡 觀察期</strong>（毛利見頂 + 關稅拉貨 + 估值透支，非結構性護城河侵蝕）。</li>
+<li><strong>Inception DD：</strong><code>DD_ADI_20260427.html</code>（2026-04-27）— 該 ticker 最早一份 v12.2+ DD，作為「累積漂移」對照基準。</li>
+<li><strong>下次年度對照倒數：</strong>2027-04-27（距今 311 天）— Inception 日期 + 365 天，到期時 §5.B' 開始有實質 YoY 對照。</li>
+</ul>
+</div>
+<p class="note"><strong>訊號語意：</strong>A+ = 核心候選滿格｜A = 核心候選｜B = 衛星候選/觀望｜C = 觀察池｜X = 迴避／清倉。倉位 % 由 portfolio-manager skill 依組合狀態決定（DD 不含倉位建議）。</p>
+
+<div class="reasoning"><b>QC-22 漂移檢查：</b>上一份 DD（2026-05-21）price_at_dd $398.05 → 今 $434.46 = +9.1%（&lt; 10% 門檻，未觸發入場窗口關閉警示，但已逼近 52W 高 $439.70，追高風險升高）。Q2 FY26（2026-05-20 公布）已於上份 DD 涵蓋，本份為公布後一個月、股價 +9% 的重新評估：thesis 不變、估值更貴 → 維持 B（等回檔加碼）。</div>
+
+<h3>⚠️ 這是價值陷阱嗎？（強制回答題）</h3>
+<div class="trap-box">
+<table>
+<tr><th style="width:26%">問題</th><th>回答</th></tr>
+<tr><td><strong>最可能的價值陷阱模式？</strong></td><td>非典型陷阱，最接近的風險是<strong>「週期高點誤判為結構性成長」</strong>（盈餘品質 / 產業結構衰退的週期版本）：當前 +37% 營收、+67% 非 GAAP EPS、73% 毛利率均處週期高位，市場以結構性倍數定價週期性峰值盈餘。</td></tr>
+<tr><td><strong>支持「這不是陷阱」的最強論據</strong></td><td>護城河與盈餘品質扎實：FCF/NI = 1.89（FY2025 FCF $4.28B vs NI $2.27B，現金轉換遠優於帳面），非 GAAP 毛利率 73%（業界最高，領先 TXN ~15pp），10 萬+料號、數十年 design-in 黏性。Industrial（佔 ~50%）的自動化/AI 電源、Auto BMS/GMSL 是真實多年內容增長坡，非一次性。Comms 資料中心 +79% / 資料中心子項 +90% 為 AI 結構性新引擎。</td></tr>
+<tr><td><strong>支持「這可能是陷阱」的最強反駁</strong></td><td>CEO Vincent Roche 在法說會親自警告「對全產業需求斜率的陡峭度、以及進入 2027 的意義感到擔憂」——直指當前需求含關稅拉貨（pull-forward）。毛利率 73% 已是歷史峰值、Q3 guidance OM 持平 49%（無進一步擴張空間），一旦週期回落，毛利與倍數同步壓縮 = 戴維斯雙殺。FY2024 即是前車之鑑（營收一年內 $12.3B→$9.4B、毛利率 GAAP 跌至 57%）。</td></tr>
+<tr><td><strong>空頭最強一擊（18 個月 30%+ 虧損路徑）</strong></td><td>關稅拉貨於 FY2027 反轉 → Industrial/Auto bookings QoQ 轉負（對應 §5.C R1）+ 非 GAAP 毛利率自 73% 回落破 70% → 市場將 NTM 倍數自 ~32x 壓回 5Y 中位 ~22x，疊加 EPS 下修 10% → 股價向 $250–280 修正（−36%~−42%）。監測：季度 bookings/book-to-bill、Industrial QoQ、毛利率 guidance。</td></tr>
+<tr><td><strong>如何在持有期間判斷陷阱是否發生？</strong></td><td>① book-to-bill 連 2 季 &lt; 1.0 且 Industrial QoQ 轉負；② 非 GAAP 毛利率連 2 季 guidance 下修（破 70%）。任一觸發 → 陷阱定性自 🟡 升 🔴。</td></tr>
+</table>
+<p><strong>最終定性：🟡 觀察期</strong>（護城河與盈餘品質無侵蝕，但週期高點 + 拉貨 + 峰值毛利使「現價」具陷阱外觀；非結構性陷阱，故非 🔴）。</p>
+</div>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+<tr><td>1</td><td>Industrial 營收 YoY + book-to-bill</td><td>§5 H1</td><td>🔵 核心假設驗證（必填）</td><td>Industrial 連 2 季 TTM YoY 偏離 −10%，或 book-to-bill 連 2 季 &lt; 1.0</td></tr>
+<tr><td>2</td><td>Comms / 資料中心電源 YoY</td><td>§8 / §9 H2</td><td>🔵 長期成長領先信號（必填）</td><td>Comms 資料中心連 2 季 QoQ &lt; 0% 同時 NVIDIA/AVGO capex YoY &lt; 0%</td></tr>
+<tr><td>3</td><td>非 GAAP 毛利率 guidance</td><td>§13 / §6 / §10</td><td>短期估值/財報信號</td><td>連 2 季 guidance 下修、破 70% → 估值倍數重設風險</td></tr>
+</table>
+</section>
+
+<!-- ════════════════ §2 ════════════════ -->
+<section id="s2">
+<h2>§2　產業風向燈 × 品質 × 估值燈 × Pure MA 四層判定</h2>
+
+<h3>0｜產業風向燈</h3>
+<table>
+<tr><th>輸入</th><th>數值</th></tr>
+<tr><td>§8 長期成長性綜合評級</td><td class="neu">🟡 中等可見度</td></tr>
+<tr><td>§9 護城河趨勢</td><td>穩定（execution 加深 / pricing 穩定）</td></tr>
+<tr><td>§8 F AI 風險</td><td class="good">🟢 受益</td></tr>
+<tr><td><strong>產業風向燈</strong></td><td class="neu"><strong>🟡 中性偏順</strong></td></tr>
+<tr><td>一句話產業判斷</td><td>類比/混合訊號的長坡賽道（工業自動化、AI 資料中心電源、汽車電氣化），但本輪 +37% 成長有顯著週期回補成分；AI 受益確立但非純結構，故風向燈中性偏順、不給 🟢。</td></tr>
+</table>
+<div class="reasoning"><b>推導：</b>三輸入中 §8🟡（成長中等可見度因週期放大）為限制項 → 風向燈最高只能 🟡。<b>implication：</b>盲點 1 救援（🟠→🟡）需 §8🟢，此處不滿足 → §2 D 估值燈 🟠 不被救援。</div>
+
+<h3>A｜體質檢核（veto 制，不加分）</h3>
+<table>
+<tr><th>#</th><th>項目</th><th>結果</th><th>關鍵數據</th></tr>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 &gt;2%p</td><td class="good">✅</td><td>GAAP GM：FY23 64.0% → FY24 57.1%（週期谷）→ FY25 61.5% → Q2 FY26 67.3%（回升，非連續下滑）</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td class="good">✅</td><td>FY2025 FCF $4,278.6M / NI $2,267.3M = <strong>1.89</strong></td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td class="good">✅</td><td>0y(FY26) 90d 前 $11.41 → 今 $12.34（強勢<strong>上修</strong>）</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全為負</td><td class="good">✅</td><td>Q2 FY26 +37%，全部為正且加速</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td class="good">✅</td><td>淨債 $6.17B（總債 $8.66B − 現金 $2.50B）/ EBITDA ~$5.5B（OI $3.0B + D&amp;A $2.0B，且上升中）≈ <strong>1.1x</strong></td></tr>
+</table>
+<p><strong>體質 veto 結果 = 0 項不過 → 等級不變。</strong></p>
+
+<h3>B｜品質等級（護城河單一決定）</h3>
+<table>
+<tr><th>項目</th><th>值</th></tr>
+<tr><td>護城河分數（§9）</td><td>9.0 / 10（execution 9.0 × pricing power 9.0，等權合併）</td></tr>
+<tr><td>護城河原始等級</td><td>⭐ A 級（9 分）</td></tr>
+<tr><td>體質 veto 調整</td><td>0 項不過 → 不變</td></tr>
+<tr><td><strong>調整後等級</strong></td><td class="good"><strong>A 級</strong></td></tr>
+<tr><td>底倉</td><td>目標倉位的 25%（PM skill 決定實際倉位）</td></tr>
+</table>
+
+<h3>C｜估值輸入（FY+1 / FY+2 共識）</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>FY+1 EPS（FY2026E，非 GAAP）</td><td class="num">$12.34</td><td>Excel snapshot 2026-06-04（buy-side consensus）</td></tr>
+<tr><td>FY+2 EPS（FY2027E）</td><td class="num">$14.77</td><td>同上（yfinance +1y avg $14.78 交叉確認）</td></tr>
+<tr><td>FY+3 EPS（FY2028E）</td><td class="num">$16.93</td><td>同上</td></tr>
+<tr><td>FY+1→FY+2 成長</td><td class="num">+19.7%</td><td>計算</td></tr>
+<tr><td>FY+2→FY+3 成長</td><td class="num">+14.6%</td><td>計算</td></tr>
+<tr><td>當前 FY+2 Forward P/E</td><td class="num">29.4x</td><td>$434.46 ÷ $14.77</td></tr>
+</table>
+<p class="note">EPS 來源：Excel snapshot 2026-06-04（DD_universe_EPS_estimates_20260604.xlsx，非 GAAP）。基期 FY2025 actual 非 GAAP EPS $7.79（yfinance yearAgoEps）；GAAP FY2025 $4.56。GAAP/非 GAAP 差距主因 Maxim/Linear 收購無形資產攤銷（~$2.0B/yr），非 SBC（SBC 僅 $321.6M）。</p>
+
+<h3>D｜估值燈</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>當前 Fwd PE（FY+2）</td><td class="num">29.4x</td></tr>
+<tr><td>5Y NTM Fwd PE 範圍</td><td class="num">~16x ~ ~31x</td></tr>
+<tr><td>5Y NTM Fwd PE 分位</td><td class="num">~80%</td></tr>
+<tr><td>常態化 EPS CAGR（FY+1→FY+3，§7）</td><td class="num">17.1%</td></tr>
+<tr><td>PEG（常態化）</td><td class="num">1.72</td></tr>
+<tr><td><strong>估值燈</strong></td><td class="neu"><strong>🟠 偏貴</strong></td></tr>
+<tr><td>套用規則</td><td>× 0.5（半倉）— 但本 DD 不輸出倉位，傳遞至 §2 H</td></tr>
+</table>
+<div class="reasoning"><b>推導：</b>分位 ~80%（70–85% 區間）→ 🟠；PEG 1.72（1.0–2.0 區間）→ 🟡。取較嚴者 = <b>🟠</b>。<b>盲點 1 救援檢核：</b>① §8 成長 🟡（非 🟢，因含大量週期回補）→ <b>不滿足</b>；故 🟠 不救回 🟡。<b>implication：</b>估值燈 🟠 → §2 H 中 gate=🟠，配合 trap🟡 → 落 B。</div>
+<p class="note"><strong>口徑說明：</strong>若以「週期谷底 FY2025 → FY2028」3 年 CAGR（29.5%）計算，PEG 會被回補年壓低至 ~1.0（上份 DD 的 1.09 即此口徑）。但該 CAGR 含一次性反彈，非常態。本 DD 採 FY+1→FY+3 的 17.1% 為常態化分母，PEG = 1.72 更誠實反映進場後的可持續成長。</p>
+
+<h3>E｜R:R + Bear Case</h3>
+<p class="note">合理 P/E 基準 = 27x（A 級護城河 9 分 + §8 成長 🟡；給予品質溢價但非週期峰值 35x）。</p>
+<div class="three-col">
+<div class="rr-card rr-s"><h4>① 短期（1 年）</h4>FY+1 EPS $12.34 × 27x<br>目標價 <b>$333</b><br>vs 現價 $434.46<br><span class="tag bad">上行 −23.3%</span></div>
+<div class="rr-card rr-m"><h4>② 中期（2 年）</h4>FY+2 EPS $14.77 × 27x<br>目標價 <b>$399</b><br>vs 現價 $434.46<br><span class="tag bad">上行 −8.2%</span></div>
+<div class="rr-card rr-l"><h4>③ 長期（5 年）</h4>§8 E Base 5Y EPS $19.75 × 27x<br>目標價 <b>$533</b><br>vs 現價 $434.46<br><span class="tag good">上行 +22.7%</span></div>
+</div>
+<p><strong>Bear anchor：</strong>Bear EPS = FY+1 $12.34 × 0.9 = $11.11；Bear PE = §8 E「成長降至 10%」情境 ~20x；Bear 股價 = <strong>$222</strong>（現價下行 −48.9%，約等於 52W 低 $218.37 / FY2024 谷底估值）。</p>
+<div class="reasoning"><b>QC-36 5Y 一致性：</b>§2 E 長期格 $533 = §8 E Base 5Y EPS $19.75 × 長期合理 PE 27x；§1 dashboard 參考 R:R 長期 = +22.7%；dd-meta upside_5y_pct = 23。三處一致。<b>stress 2/2：</b>Base（現價隱含成長可兌現）+ Bear（成長降 10% + 倍數壓縮）兩情境通過率記 2/2。<b>implication：</b>短/中期 R:R 為負（現價高於合理倍數目標）→ 現價不是進場點，等回檔。</div>
+
+<h3>F｜Pure MA 狀態機</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>現價</td><td class="num">$434.46</td></tr>
+<tr><td>W52 / 斜率</td><td class="num">$295.20 / +18.78%</td></tr>
+<tr><td>W104 / 斜率</td><td class="num">$253.57 / +9.87%</td></tr>
+<tr><td>W250 / 斜率（13週）</td><td class="num">$202.92 / +6.38%</td></tr>
+<tr><td>Bollinger 20w（上/中/下）</td><td class="num">$453.17 / $366.00 / $278.82</td></tr>
+<tr><td><strong>Pure MA 狀態</strong></td><td class="good"><strong>✅ 強勢進場</strong></td></tr>
+<tr><td>MA 部位乘數</td><td>× 1.0</td></tr>
+</table>
+<div class="reasoning"><b>判定：</b>現價 $434.46 &gt; W52 $295.20 &gt; W104 $253.57 &gt; W250 $202.92 且 W250 斜率 +6.38% &gt; 3% → <b>✅ 強勢進場</b>。<b>注意：</b>現價貼近 52W 高 $439.70（差 1.2%）與 BB 上軌 $453（差 4.3%），技術面動能強但位置偏高；近 5 日有 6/16 衝高 $438.6 收 $416（衝高回落）後 6/18 放量 11.9M 收 $434.46 — 動能延續但波動加大。</div>
+
+<h3>G｜大盤豁免層</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>對應大盤</td><td>S&amp;P 500（^GSPC）</td></tr>
+<tr><td>大盤現價</td><td class="num">7,500.58</td></tr>
+<tr><td>大盤 W104</td><td class="num">6,275.11</td></tr>
+<tr><td>系統性風險（破 W104）</td><td class="good">否</td></tr>
+<tr><td><strong>豁免係數</strong></td><td><strong>× 1.0（正常）</strong></td></tr>
+</table>
+
+<h3>H｜綜合訊號燈</h3>
+<table>
+<tr><th>維度</th><th>值</th></tr>
+<tr><td>quality_tier（§2 B 調整後）</td><td>A 級</td></tr>
+<tr><td>gate（§2 D 估值燈）</td><td>🟠 偏貴</td></tr>
+<tr><td>ma_status（§2 F）</td><td>✅ 強勢進場</td></tr>
+<tr><td>benchmark_regime（§2 G）</td><td>正常</td></tr>
+<tr><td>trap（§1 定性）</td><td>🟡 觀察期</td></tr>
+<tr><td><strong>final_signal</strong></td><td class="sig">B</td></tr>
+</table>
+<div class="reasoning"><b>§2 H 推導（對齊 QC-31）：</b>步驟 1 拒絕檢核：trap 非🔴、gate 非🔴、MA 非❌、quality 非拒絕 → 無 X。步驟 2/3（A+/A）需 gate 🟢/🟡 → 不滿足（gate 🟠）。步驟 5「時機不到（thesis 完整）」：gate 🟠 + MA ✅ stretched + trap🟡，但無 QC-31 C 觸發（品質 9≥6、護城河無侵蝕≥3、trap 非🔴、AI 非🔴）→ <b>B（觀望，等修復）</b>。<b>不歸 C：</b>估值🟠 與現價貼高僅是「時機」訊號，thesis（A 級護城河 + 長坡）完整。</div>
+
+<h3>I｜長期展望（3-5 年定性）</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>結論</th></tr>
+<tr><td>成長跑道</td><td>§8A</td><td>充裕（工業自動化 + AI 電源 + 汽車內容，Runway ≥ 10 年）</td></tr>
+<tr><td>護城河趨勢</td><td>§9</td><td>穩定（execution 加深、pricing 穩定）</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td>綜合</td><td class="good"><strong>高</strong></td></tr>
+</table>
+<p><strong>一句話：</strong>🟡 中性偏順，A 級護城河 9/10（10 萬+料號 + 73% 非 GAAP 毛利的類比霸主）。估值燈 🟠 偏貴（FY+2 FPE 29.4x、常態化 PEG 1.72）+ Pure MA ✅ 但貼 52W 高，現價透支常態化盈餘。長期值得抱（AI/自動化長坡），但需等週期高點與關稅拉貨疑慮消化、回檔至 $360–390 區間再加碼。</p>
+</section>
+
+<!-- ════════════════ §3 ════════════════ -->
+<section id="s3">
+<h2>§3　三方辯論（已併入 §1）</h2>
+<p class="note">§3 三方辯論已併入 §1 終判（v12.5）。空頭最強一擊見 §1「這是價值陷阱嗎？」答題區；多頭論據見 §8/§9；仲裁見 §13。</p>
+</section>
+
+<!-- ════════════════ §4 ════════════════ -->
+<section id="s4">
+<h2>§4　序章：第一性原理 × 逆向思考</h2>
+
+<h3>存在意義</h3>
+<p>ADI 解決一個不可逆的物理痛點：<strong>真實世界是類比的，運算世界是數位的，兩者之間必須有一座高精度、低雜訊、高可靠度的橋。</strong>每一個感測（溫度、壓力、電流、影像、聲音）、每一次電源轉換、每一條高速資料鏈，都需要把連續訊號轉成位元、再把位元轉回連續世界。ADI 是這座橋上最頂尖的造橋者之一——data converter（ADC/DAC）、放大器、電源管理、RF/微波、MEMS、隔離技術。</p>
+<p>若 ADI 明天消失：工廠自動化儀控、汽車 BMS（電池管理）與 ADAS 感測、5G/資料中心的時脈與電源、醫療影像與生命徵象監測、航太國防的精密訊號鏈，會立即出現<strong>無法用軟體替代的硬體斷層</strong>。這不是「提升效率」，而是物理層的不可替代——類比 IP 是數十年類比工程師 know-how 的累積，無法靠演算法蒸餾，也無法靠資本快速複製（這正是 AI 取代風險 🟢 的根因：ADI 是 AI 基礎設施的「賣鏟人」而非被取代者）。</p>
+<p class="note">護城河如何累積而成（Hittite→Linear→Maxim 的併購 + 內生工藝），見 §9.D 時間軸。</p>
+
+<h3>逆向推演（Munger Inversion）</h3>
+<p>若要讓這筆投資在 3 年內虧損 50%+，最可能路徑：</p>
+<ul>
+<li><strong>地緣政治曝險：</strong>ADI 採混合製造（內部 fab + 台積電等代工），台灣/亞洲供應鏈集中；中國營收佔比中等。關稅與出口管制是 newsflow 風險，但類比成熟製程多不在先進節點管制清單，結構性衝擊有限。</li>
+<li><strong>技術替代風險（最關鍵）：</strong>類比 IP 替代極慢——但<strong>客戶 in-house（自製）</strong>是真實長期風險（如大型工業/汽車 OEM 自建電源/感測），時間軸 5-10 年、機率低。更現實的是 <strong>TXN 的 300mm 成本碾壓</strong>：TXN 以 300mm 內製把每顆成本壓低 ~40%，在價格敏感的 catalog 類比段對 ADI 形成持續份額壓力（QC-23 🔴 生態攻擊，見 §9）。</li>
+<li><strong>管理層失職：</strong>ADI 是連續併購型（Linear $14.8B、Maxim $21B），下一筆大型併購若再次高價、且整合不如預期，會稀釋增量 ROIC（自我毀滅路徑詳見 §12 資本配置計分卡）。</li>
+<li><strong>價值陷阱路徑（四選一）：</strong>最可能是<strong>產業結構衰退的「週期版本」</strong>——非 TAM 永久萎縮，而是市場以結構性倍數（~32x NTM）定價週期峰值盈餘（73% 峰值毛利 + 關稅拉貨需求），一旦 2027 需求斜率回落，戴維斯雙殺。架構性替代分級見 QC-23。</li>
+</ul>
+</section>
+
+<!-- ════════════════ §5 ════════════════ -->
+<section id="s5">
+<h2>§5　投資論點錨定</h2>
+
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td>預設持有期</td><td>3–5 年（核心長抱候選，但進場時機受估值約束）</td></tr>
+<tr><td>主要驅動時間軸的理由</td><td>成長兌現節點（工業自動化滲透 + AI 資料中心電源放量）+ 估值修復週期（需等週期高點消化）</td></tr>
+<tr><td>哪些變數是訊號/噪音</td><td>持有期 &gt; 2 年：護城河趨勢、ROIC 方向、Industrial/Comms 結構增長為訊號；單季 GM 波動、單季 book-to-bill 為噪音（但連 2 季同向則升格訊號）。</td></tr>
+</table>
+
+<h3>B｜三個核心假設 + 三層時間軸</h3>
+<table>
+<tr><th>#</th><th>核心假設</th><th>2Y 驗證點</th><th>5Y 驗證點</th><th>10Y 驗證點</th><th>具體數字門檻</th><th>信息來源</th><th>漂移觸發</th></tr>
+<tr><td>H1</td><td><strong>工業自動化 + AI smart factory 滲透加速</strong>（Industrial 佔 ~50% 營收，受益最直接）</td><td>Industrial FY26-FY27 維持 +20%+ YoY（確認非曇花）</td><td>FY28 Industrial Rev $9-10B（vs FY25 ~$5B），自動化滲透 25-30%</td><td>Industrial Rev $13-15B by FY30；工廠數位化 TAM &gt; $300B</td><td>FY28 Industrial Rev $9B（門檻）</td><td>ADI 法說 / Gartner、IDC 工業 4.0 報告</td><td>連 4 季 TTM Industrial 偏離 −10% → 削弱（5Y 假設，QC-35）</td></tr>
+<tr><td>H2</td><td><strong>AI 基礎設施 analog/power 成新引擎</strong>（資料中心推動 Comms 結構升級）</td><td>FY26/FY27 Comms 資料中心 YoY ≥ +50%</td><td>FY28-30 Comms Rev $1.5B→$3-4B；資料中心佔 Comms &gt; 80%</td><td>每張 AI GPU 卡 ADI BOM 佔比上升；電源/隔離 ASP 翻倍</td><td>FY27 Comms 資料中心 Rev $1.6B+</td><td>NVIDIA/AVGO 供應鏈揭露 + ADI segment data</td><td>連 2 季 Comms 資料中心 QoQ &lt; 0 同時 NVDA capex YoY &lt; 0 → 反轉（2Y 假設，QC-35）</td></tr>
+<tr><td>H3</td><td><strong>非 GAAP 毛利率中長期維持 70%+</strong>（業界最高；Maxim 整合 + mix + 定價權支撐）</td><td>FY27 非 GAAP GM ≥ 70%；Q3 FY26 不破 72%</td><td>FY30 非 GAAP GM ≥ 68%（穩態）</td><td>GM 領先 TXN ≥ 12pp 持續至 FY32+</td><td>FY27 非 GAAP GM ≥ 70%</td><td>ADI 法說 / TXN、NXPI 同業對比</td><td>連 4 季 TTM GM 下行偏離 → 削弱（5Y 假設，QC-35）</td></tr>
+</table>
+
+<h3>B'｜12 個月前 DD 對照</h3>
+<p class="note">狀態：進場未滿一年（最早 v12.2+ DD = 2026-04-27，距今 54 天）。本欄位將於 2027-04-27 起首次有實質 YoY 對照。在此之前，僅以 §5 B 戰術假設視角追蹤。</p>
+<p>對照上一份 DD（2026-05-21，相距 30 天）的 H1/H2/H3（資訊性，非 YoY）：</p>
+<table>
+<tr><th>假設</th><th>上份 DD（2026-05-21）判定</th><th>本次（2026-06-20）判定</th><th>月內邊際變化</th></tr>
+<tr><td>H1 Industrial 滲透</td><td>🟢 兌現（Industrial Q2 +56% YoY）</td><td>🟢 兌現（無新財報，數據不變）</td><td>不變</td></tr>
+<tr><td>H2 AI/資料中心引擎</td><td>🟢 兌現（Comms +79%、資料中心 +90%）</td><td>🟢 兌現</td><td>不變</td></tr>
+<tr><td>H3 毛利率 70%+</td><td>🟡 兌現但近峰值（Q2 非 GAAP 73%，Q3 guide OM 持平）</td><td>🟡 同上（峰值，無進一步擴張空間）</td><td>不變（仍為三假設中最弱）</td></tr>
+<tr><td>裁決變化</td><td>B（觀望，等回檔）</td><td>B（觀望，等回檔）</td><td>不變；估值更貴（price +9.1%）→ 觀望更堅定</td></tr>
+</table>
+
+<h3>C｜三個最可能推翻論點的風險</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>時間尺度</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td><strong>關稅拉貨反轉</strong>：當前需求含 pull-forward，2027 訂單斜率回落（CEO 親自警告）</td><td>H1/H2</td><td>⚡ 短期（1-2 季）</td><td>book-to-bill、Industrial QoQ、通路庫存週數</td><td>book-to-bill 連 2 季 &lt; 1.0 且 Industrial QoQ 轉負 → 減倉</td></tr>
+<tr><td>R2</td><td><strong>TXN 300mm 成本碾壓</strong>：價格敏感 catalog 類比段份額/定價壓力（QC-23 🔴 生態攻擊）</td><td>H3</td><td>🔥 中期（4-6 季）</td><td>ADI 非 GAAP GM 趨勢、catalog 段價格、相對 TXN 份額</td><td>非 GAAP GM 連 4 季下行偏離 + 對 TXN 份額流失 → 重估護城河 pricing 維度</td></tr>
+<tr><td>R3</td><td><strong>下一筆大型併購高價稀釋</strong>：ADI ~4-5 年一筆大 deal，下一筆若再高價</td><td>—</td><td>🐢 長期（2+ 年）</td><td>M&amp;A 公告金額/估值倍數、整合後增量 ROIC</td><td>單筆 &gt; 市值 10% 且收購倍數 &gt; 自身 → §12 計分卡重評</td></tr>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<table>
+<tr><th>判斷步驟</th><th>問題</th></tr>
+<tr><td>1. 時間軸匹配？</td><td>事件是否在 3-5 年持有期內有影響？</td></tr>
+<tr><td>2. 假設關聯？</td><td>影響 H1（Industrial）/ H2（AI/Comms）/ H3（GM）哪一個？</td></tr>
+<tr><td>3. 邊際方向？</td><td>＋強化 / 0 無關 / －削弱？</td></tr>
+<tr><td>4. 閾值判斷？</td><td>是否達 §5 C 的連 X 季 + 絕對閾值雙條件？</td></tr>
+</table>
+<p class="note"><strong>套用範例（Q2 FY26 print + 股價 +9%）：</strong>① 時間軸：Q2 結果在 3-5 年持有期內有影響 ✓；② 假設關聯：Industrial +56% 強化 H1、Comms +79% 強化 H2、毛利 73% 兌現但見頂（H3 中性）；③ 邊際方向：基本面 ＋強化，但股價 +9% 至貼 52W 高 = 估值 −削弱（進場吸引力下降）；④ 閾值：基本面強化未達任何減倉閾值，但估值已使中期 R:R 轉負（−8%）→ <strong>結論：基本面是訊號（強化長期 thesis），股價漲幅是「時機」噪音（不改變 thesis，但延後進場）。對應 §2 H 的 B（觀望）而非加碼。</strong></p>
+
+<h3>E｜可執行決策主線預設</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr><td><strong>進場</strong></td><td>估值：回檔至 $360–390（FY+2 FPE ~25-26x / BB 中軌）；基本面：Industrial 維持 +20%+、毛利率守 70%+</td><td>分批建倉至底倉</td></tr>
+<tr><td><strong>加碼</strong></td><td>H1 + H2 持續確認（Industrial、資料中心 YoY 維持）+ 估值修復</td><td>加碼至目標倉位</td></tr>
+<tr><td><strong>減碼</strong></td><td>R1 觸發（book-to-bill 連 2 季 &lt; 1.0 + Industrial QoQ 轉負）或 FPE 突破 35x（FY+2）</td><td>減至試倉，重新評估</td></tr>
+<tr><td><strong>撤退</strong></td><td>H3 被推翻（非 GAAP GM 連 4 季破 70% 且對 TXN 份額流失）或陷阱定性升 🔴</td><td>清倉，記錄推翻理由</td></tr>
+</table>
+
+<h3>F｜Single Thing</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td><strong>Single Thing 描述</strong></td><td>ADI 在某季法說會明確揭露「book-to-bill 跌破 1.0 且 backlog 環比下降」，確認當前需求含關稅拉貨、進入消化期（binary，非慢變數）。</td></tr>
+<tr><td><strong>如果發生</strong></td><td>立刻重新評估 thesis：暫停任何加碼，把 FY27/FY28 EPS 下修 10-15%，§13 倍數基準自 27x 下修至 22x，陷阱定性 🟡→🔴。</td></tr>
+<tr><td><strong>可觀測性</strong></td><td>每季法說會（下次 Q3 FY26 ~2026-08）的 bookings / book-to-bill / backlog 揭露。</td></tr>
+<tr><td><strong>機率估計</strong></td><td>未來 12-24 個月 ~35-45%（CEO 已預警斜率擔憂，週期性高位回落屬大概率事件，只是時點不確定）。</td></tr>
+</table>
+<p class="note">職責矩陣：§1 trap = thesis 靜態裁決（🟡）；§5.C R1-R3 = 過程性風險（連續監測）；§5.F = 單一 binary trigger（book-to-bill 破 1.0）。三者不重疊。</p>
+</section>
+
+<!-- ════════════════ §6 ════════════════ -->
+<section id="s6">
+<h2>§6　即時財報情報（Q2 FY2026，2026-05-20 公布）</h2>
+
+<h3>① 最新一季財報關鍵數字</h3>
+<table>
+<tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY</th></tr>
+<tr><td>Revenue</td><td class="num">$3.62B（紀錄）</td><td class="num">$3.51B</td><td class="good">Beat</td><td class="good">+37%</td></tr>
+<tr><td>EPS（非 GAAP）</td><td class="num">$3.09</td><td class="num">$2.92</td><td class="good">Beat</td><td class="good">+67%</td></tr>
+<tr><td>FCF</td><td colspan="2" class="num">TTM FCF margin ~33%（強）</td><td class="good">—</td><td>—</td></tr>
+<tr><td>Gross Margin（非 GAAP）</td><td class="num">73.0%</td><td class="num">~71%</td><td class="good">Beat</td><td class="good">+360bps</td></tr>
+<tr><td>Operating Margin（非 GAAP）</td><td class="num">49.0%</td><td class="num">~46%</td><td class="good">Beat</td><td class="good">+780bps</td></tr>
+</table>
+<p><strong>分部（Q2 FY26）：</strong>Industrial $1.80B（+56% YoY，~50%）｜Automotive $871.6M（+2% YoY、+8% QoQ，24%）｜Communications $554.7M（+79% YoY，~15%，其中資料中心 +90%）｜Consumer $397.8M（+23% YoY，~11%）。GAAP GM 67.3%、GAAP OM 38.1%（GAAP/非 GAAP 差距為收購無形資產攤銷）。</p>
+<p><strong>Q3 FY26 guidance：</strong>Rev $3.9B（±$100M）｜非 GAAP OM ~49.0%（±100bps）｜非 GAAP EPS $3.30（±$0.15）。</p>
+
+<h4>5 季營運槓桿復甦軌跡（GAAP，yfinance 實算）</h4>
+<table>
+<tr><th>季度</th><th>營收 $M</th><th>QoQ</th><th>GAAP GM</th><th>GAAP OM</th><th>GAAP 稀釋 EPS</th></tr>
+<tr><td>Q2 FY25（2025-04）</td><td class="num">2,640.1</td><td class="num">—</td><td class="num">61.0%</td><td class="num">25.7%</td><td class="num">$1.14</td></tr>
+<tr><td>Q3 FY25（2025-07）</td><td class="num">2,880.3</td><td class="num">+9.1%</td><td class="num">62.1%</td><td class="num">28.6%</td><td class="num">$1.04</td></tr>
+<tr><td>Q4 FY25（2025-10）</td><td class="num">3,076.1</td><td class="num">+6.8%</td><td class="num">63.1%</td><td class="num">30.7%</td><td class="num">$1.60</td></tr>
+<tr><td>Q1 FY26（2026-01）</td><td class="num">3,160.3</td><td class="num">+2.7%</td><td class="num">64.7%</td><td class="num">33.1%</td><td class="num">$1.69</td></tr>
+<tr><td>Q2 FY26（2026-04）</td><td class="num">3,623.5</td><td class="num">+14.7%</td><td class="num">67.3%</td><td class="num">38.1%</td><td class="num">$2.40</td></tr>
+</table>
+<div class="reasoning"><b>讀法：</b>5 季營收 +37%（$2,640M→$3,624M），GAAP GM +630bps（61.0%→67.3%）、GAAP OM +1,240bps（25.7%→38.1%）—— 典型類比週期回升的<b>極高營運槓桿</b>（增量營收大量落到 OM）。<b>implication：</b>這正是 §8.B③ 增量 OI margin 58.5% 的季度級證據；但也意味著「OM 已逼近峰值 38%（GAAP）/49%（非 GAAP）」，下一輪若需求回落，去槓桿同樣猛烈（§8.E Bear 情境的機制基礎）。</div>
+
+<h4>財報對 §5 假設的邊際貢獻</h4>
+<table>
+<tr><th>假設</th><th>邊際方向</th><th>關鍵佐證</th></tr>
+<tr><td>H1 Industrial 滲透</td><td class="good">＋ 強化</td><td>Industrial +56% YoY，broad-based high growth（CEO 語）</td></tr>
+<tr><td>H2 AI/資料中心引擎</td><td class="good">＋ 強化</td><td>Comms +79%、資料中心子項 +90% YoY</td></tr>
+<tr><td>H3 毛利率 70%+</td><td class="neu">0 中性（兌現但見頂）</td><td>非 GAAP GM 73%（峰值），Q3 guide OM 持平 49% → 無進一步擴張空間</td></tr>
+</table>
+
+<h3>② Earnings Call 語氣解析</h3>
+<ul>
+<li><strong>Guidance vs 共識：</strong>Q3 rev $3.9B 高於季初共識、EPS $3.30 上調；全年隱含強勁。但管理層語氣轉謹慎。</li>
+<li><strong>被迴避/示警的問題：</strong>CEO Vincent Roche 主動警告「對全產業需求斜率的<strong>陡峭度</strong>、以及進入 2027 的意義感到擔憂」——直接點名 pull-forward 疑慮（罕見的管理層自我降溫）。亦提及特定製程節點供給趨緊但尚能取得產能。</li>
+</ul>
+
+<h3>③ 產業 Imply 萃取</h3>
+<p><strong>產業隱含信號：</strong>類比週期已從 FY2024 谷底強勁回升、record bookings，但「斜率過陡 + 拉貨」的自我預警，imply 本輪復甦的<strong>持續性</strong>是最大不確定（餵入 §11 利潤池 / 議價權判定的時點佐證——當前 ADI 位於利潤池受益端，但需警惕拉貨退潮）。</p>
+</section>
+
+<!-- ════════════════ §7 ════════════════ -->
+<section id="s7">
+<h2>§7　核心門檻檢核</h2>
+<p class="note">EPS 來源：Excel snapshot 2026-06-04（buy-side consensus，步驟零'）。基期 FY2025 actual 非 GAAP $7.79；GAAP $4.56。</p>
+
+<h3>門檻檢核表</h3>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據與趨勢</th></tr>
+<tr><td>FCF Margin（當前）</td><td>&gt; 15%</td><td class="good">✅</td><td>FY2025 $4,278.6M/$11,019.7M = <strong>38.8%</strong>；近 3 年趨勢 ↑（FY24 33.1% → FY25 38.8%）</td></tr>
+<tr><td>正規化 FCF Margin【Munger】</td><td>5 年均 &gt; 15%；谷底 &gt; 10%</td><td class="good">✅</td><td>FY22-25：31.4% / 28.9% / 33.1% / 38.8%；5Y 均 ~33%，谷底 28.9%（FY23 高 capex 年）→ 穩健</td></tr>
+<tr><td>ROIC（當前，含商譽）</td><td>&gt; 15% 且 &gt; WACC</td><td class="bad">❌</td><td>報告 ROIC ~<strong>5.9%</strong>（NOPAT $2,510M / IC $42,408M），低於 WACC ~9% —— 因 Maxim/Linear 收購 $27B 商譽墊高 IC（會計失真，見下）</td></tr>
+<tr><td>ROIC 穩定性【Munger】</td><td>10 年 ≥ 70% 年份 &gt; 15%</td><td class="neu">🟡</td><td>含商譽僅 ~6%（Maxim 收購後墊高 IC）；<strong>剔除商譽 ROIC ~16.2%</strong>（NOPAT/（IC−商譽 $15,462M））&gt; WACC。營運報酬強，會計報酬被併購溢價壓低</td></tr>
+<tr><td>毛利率定價能力【Munger】</td><td>10 年 ≥ 70% 年份持續改善</td><td class="good">✅</td><td>10Y GAAP GM 區間 57-68%、中位 63.4%，非 GAAP 73%（業界最高）；FY24 週期谷 57% 後強勢回升</td></tr>
+<tr><td>資本密集度【Munger】</td><td>Capex/Rev &lt; 5%（優）</td><td class="good">✅</td><td>FY2025 $533.6M/$11,019.7M = <strong>4.8%</strong>（fab-lite/混合）；近 3 年均 ~7%（FY23 fab 投資年 10.2%）</td></tr>
+<tr><td>EPS CAGR（未來 3 年）</td><td>&gt; 20%</td><td class="good">✅</td><td>基期 FY2025 非 GAAP $7.79<br>FY+1E $12.34（n=27）｜FY+2E $14.77（n=28）｜FY+3E $16.93<br>━━━━<br>3Y CAGR（FY25→FY28，含週期回補）：<strong>29.5%</strong><br>常態化 FY+1→FY+3 CAGR：<strong>17.1%</strong><br>來源：Excel snapshot 2026-06-04</td></tr>
+<tr><td>PEG（非 GAAP）</td><td>&lt; 2</td><td class="neu">🟡</td><td>常態化 1.72（見 §13.2）；3Y-from-trough 口徑 1.0</td></tr>
+<tr><td>負債安全性【Munger】</td><td>D/E &lt; 0.7；現金/Rev 10-50%</td><td class="good">✅</td><td>D/E = $8,664.6M/$33,815.8M = <strong>0.26</strong>；現金/Rev = 22.7%；淨債/EBITDA ~1.1x</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是/否</td><td class="neu">否（但低槓桿）</td><td>現金 $2.50B &lt; 總債 $8.66B，但淨債/EBITDA 僅 1.1x，安全</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8 分，趨勢擴大</td><td class="good">✅</td><td>9.0/10（§9），execution 加深</td></tr>
+</table>
+<p><strong>最大財務弱點：</strong>報告 ROIC 因 Maxim（$21B）/ Linear（$14.8B）併購的 $27B 商譽墊高投入資本而僅 ~6%（&lt; WACC）——這是「為買下類比第二大franchise 付出的高價」的會計痕跡，非營運效率問題（剔除商譽 ROIC ~16%、增量現金 ROTC 遠高）。<strong>Munger 三維評級：🟡</strong>（GM ✅ + Capex ✅，ROIC 含商譽 ❌但剔除後達標）。傳遞至 §9。</p>
+</section>
+
+<!-- ════════════════ §8 ════════════════ -->
+<section id="s8">
+<h2>§8　長期成長性評估</h2>
+
+<h3>0｜成長品質 7 問儀表板（v12.7）</h3>
+<table>
+<tr><th>#</th><th>成長品質拷問</th><th>裁決</th><th>關鍵數字</th><th>詳見</th></tr>
+<tr><td>1</td><td class="bad">結構性 vs 週期反彈？<strong>（最弱一題）</strong></td><td class="bad">混合，當前偏週期。本輪 +37% 含大量週期回補 + 關稅拉貨；常態結構成長僅 ~7-10%</td><td>Q2 +37% YoY；CEO 警告 2027 斜率</td><td>§8.A'</td></tr>
+<tr><td>2</td><td>成長需多少資本投入？</td><td class="good">輕資產（fab-lite/混合製造）</td><td>Capex/Rev 4.8%；再投資率 ~25%</td><td>§8.D</td></tr>
+<tr><td>3</td><td>增量 ROIC &gt; 資金成本？</td><td class="good">營運層是（增量現金 ROTC 高）；會計層因商譽被壓低</td><td>剔除商譽 ROIC 16.2% vs WACC ~9%</td><td>§8.D / §10.E</td></tr>
+<tr><td>4</td><td>成長變現金流還是被吃掉？</td><td class="good">變股東現金（FCF 轉換強）；M&amp;A 飛輪暫停</td><td>FCF/NI 1.89；FCF 95% 回饋股東</td><td>§12.E</td></tr>
+<tr><td>5</td><td>競爭者被吸引進來？</td><td class="neu">壁壘高，但 TXN 以 300mm 成本持續施壓 catalog 段</td><td>TXN GM ~58% vs ADI 非GAAP 73%</td><td>§9 賽局 / §9.F</td></tr>
+<tr><td>6</td><td>股價反映多少期待？</td><td class="neu">偏過熱：貼 52W 高、~80 分位、僅 3-6% 上行至共識</td><td>FY+2 FPE 29.4x、PEG 1.72</td><td>§13.1 / §2 D</td></tr>
+<tr><td>7</td><td>成長下修估值撐得住？</td><td class="bad">不撐：峰值毛利 + 結構性倍數 → 雙殺</td><td>降至 10% 情境 −49%（至 $222）</td><td>§8.E / §2 E</td></tr>
+</table>
+<p class="note"><strong>最弱一題（紅）= 第 1 題</strong>：成長的結構 vs 週期拆分。這是 ADI 成長品質的單一最大破口——若當前需求大比例是拉貨，常態化成長率與峰值毛利都會回落。與 §1 trap🟡 + §2 H 訊號 B 一致。</p>
+
+<h3>A｜成長跑道（Runway）</h3>
+<table>
+<tr><th>維度</th><th>數據</th><th>推論</th></tr>
+<tr><td>當前 TAM</td><td>類比/混合訊號 + 電源 ~$70-80B（2025）</td><td>來源：WSTS/sell-side 類比市場估計</td></tr>
+<tr><td>估計可達 TAM</td><td>~$120B+（2030E）</td><td>工業自動化、汽車電氣化（BMS/ADAS）、AI 資料中心電源三條新坡疊加</td></tr>
+<tr><td>當前市佔</td><td>類比第二（~12-13%），TXN 第一</td><td>高性能/高價值類比段份額更高</td></tr>
+<tr><td>達 30% 滲透年數</td><td>不適用（類比市場分散、無單一滲透曲線）</td><td>內容增長型而非滲透型</td></tr>
+<tr><td><strong>Runway 估計</strong></td><td><strong>≥ 10 年</strong></td><td>類比內容/系統持續上升，長坡確立</td></tr>
+</table>
+<p class="note">Runway ≥ 10 年支撐高估值倍數溢價，但<strong>可見度</strong>受週期幅度與當前拉貨干擾，故 §8 綜合評級落 🟡 而非 🟢。</p>
+
+<h4>A'｜S 曲線位置 / 結構 vs 週期拆解</h4>
+<p>ADI 成長 = <strong>結構基線（~7-10%/yr）× 週期放大器</strong>。當前處於 FY2024 深谷（營收 $9.4B）後的強勁回補段（FY2025 $11.0B → FY2026E $14.7B）。結構驅動（自動化、電氣化、AI 電源）真實存在，但本輪 +37% 的「斜率」明顯高於結構基線，差額來自：① 週期庫存回補；② 關稅拉貨（CEO 親自示警）。<strong>判斷：S 曲線中段的週期高位，常態化後成長率將回落至高個位數~低雙位數。</strong></p>
+
+<h3>B｜成長品質判斷</h3>
+<h4>① 有機 vs 無機</h4>
+<table>
+<tr><th>類型</th><th>此標的占比</th><th>佐證</th></tr>
+<tr><td>有機成長</td><td>~100%（近年）</td><td>Maxim（2021）已整合，近 3 年無重大併購，當前成長為有機 + 週期回補</td></tr>
+<tr><td>無機成長</td><td>~0%（近年）</td><td>歷史靠 Linear/Maxim 建立規模，但已過整合期</td></tr>
+</table>
+<p class="note">近 5 年主要併購：Maxim Integrated（2021，$21B 全股票，建立電源/汽車規模，整合成功但攤銷拖累 GAAP）。近 3 年無重大 deal → 當前成長純有機，無機占比 &lt; 30%，免列詳細清單。</p>
+
+<h4>② 定價 vs 量</h4>
+<table>
+<tr><th>類型</th><th>此標的判斷</th><th>過去 3 年趨勢</th></tr>
+<tr><td>定價驅動</td><td>類比 ASP 黏性高、長期緩升；本輪復甦含 mix 升級（高價值 Industrial/Comms 佔比升）</td><td>穩定（定價權見 §9 定價事件帳）</td></tr>
+<tr><td>量驅動</td><td>本輪主要為量回補（出貨量自 FY24 谷底回升），疊加 mix</td><td>擴大（週期回升）</td></tr>
+</table>
+<p class="note">ADI 不逐季拆 ASP/量，但結構上：FY24→FY26 的營收回升以「量回補 + 高價值 mix 升級」為主，純漲價貢獻有限（類比靠長期黏性而非提價）。</p>
+
+<h4>③ 營業槓桿結構：增量利潤率 3Y</h4>
+<table>
+<tr><th>列</th><th>內容</th></tr>
+<tr><td>增量 OI margin（ΔOI/ΔRev）</td><td>FY24→FY25：ΔOI $932.4M / ΔRev $1,592.5M = <strong>58.5%</strong>（強）</td></tr>
+<tr><td>增量 vs 存量對照</td><td>增量 58.5% vs 當前 GAAP OM 27.2% → <strong>結構性擴張</strong>（週期回升下營運槓桿極高）</td></tr>
+<tr><td>前瞻結論</td><td>在 Rev +12-15%/yr base case 下，增量結構隱含合併非 GAAP OM 每年 +50~100bp（但已逼近峰值 49%，擴張空間收斂）</td></tr>
+</table>
+<p class="note">接線：bp 數字餵入 §8.D ROIIC margin 歸因 + §8.E 壓力測試。注意峰值 OM 49% 已接近天花板，未來增量 margin 擴張將放緩。</p>
+
+<h3>C｜成長護城河連動評估</h3>
+<table>
+<tr><th>類型</th><th>具體表現</th></tr>
+<tr><td class="good"><strong>強化型（主）</strong></td><td>成長帶來更深的料號廣度（10 萬+）、更多 design-in socket、更強的客戶切換成本與規模採購優勢；高價值 Industrial/Comms mix 升級進一步抬高 GM</td></tr>
+<tr><td>中性型</td><td>—</td></tr>
+<tr><td>消耗型</td><td>無顯著證據（SBC 低、未為成長犧牲定價）</td></tr>
+</table>
+<p>判斷：<strong>強化型</strong>——成長與護城河正循環（更多 socket → 更高黏性 → 更強定價）。佐證：73% 非 GAAP 毛利在成長中維持甚至擴張。</p>
+
+<h3>D｜ROIC 與 FCF 的長期可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前值</th><th>3 年前</th><th>趨勢</th><th>門檻</th><th>符合</th></tr>
+<tr><td>ROIC（含商譽）</td><td>5.9%</td><td>~9%（FY22）</td><td>↓（週期 + 商譽）</td><td>&gt; WACC</td><td class="bad">❌（會計失真）</td></tr>
+<tr><td>ROIC（剔除商譽）</td><td>16.2%</td><td>~21%（FY22）</td><td>↓→（週期）</td><td>&gt; WACC ~9%</td><td class="good">✅</td></tr>
+<tr><td>ROIC − WACC（剔商譽）</td><td>+7.2pp</td><td>+12pp</td><td>↓</td><td>持續正值</td><td class="good">✅</td></tr>
+<tr><td>FCF Margin</td><td>38.8%</td><td>31.4%</td><td>↑</td><td>&gt; 15%</td><td class="good">✅</td></tr>
+<tr><td>FCF/NI 轉換率</td><td>1.89</td><td>1.37</td><td>↑</td><td>&gt; 0.85</td><td class="good">✅</td></tr>
+<tr><td>再投資率</td><td>~25%</td><td>~30%</td><td>↓</td><td>有對應 ROIC</td><td class="good">✅</td></tr>
+</table>
+
+<h4>ROIIC 與內生成長天花板</h4>
+<table>
+<tr><th>列</th><th>計算</th></tr>
+<tr><td>ROIIC（3Y）</td><td>受 Maxim 收購（FY2021）扭曲 IC → <strong>剔除商譽重算</strong>：營運層增量現金回報高（類比新產能便宜、margin 高），估 ~20-25%；含商譽機械算無意義（IC 被 $27B 商譽鎖死）</td></tr>
+<tr><td>再投資率</td><td>(Capex − D&amp;A + ΔWC + 收購淨額)/NOPAT，3Y 均 ≈ 25%（近年無大收購）</td></tr>
+<tr><td>內生成長天花板</td><td>ROIIC（剔商譽，保守取 16%）× 再投資率 25% ≈ <strong>4%</strong>（純內生，不含 mix/價）；加 mix 升級 + 週期 → 常態化 ~10-12%</td></tr>
+<tr><td>共識對賬</td><td>常態化共識 EPS CAGR 17.1% − 內生天花板 ~12% = 缺口 ~5pp → 歸因：margin 擴張（§8.B③ 增量 58.5%）+ 淨回購（§10）→ <strong>可閉合</strong></td></tr>
+</table>
+<p class="note">缺口可閉合（margin + 回購）→ 共識不純依賴 re-rate；但缺口的 margin 分量已逼近峰值（OM 49%），FY27 後 margin 擴張動能弱化。endo_growth_ceiling 記 ~12%。</p>
+
+<h3>E｜成長熄火情境壓力測試</h3>
+<table>
+<tr><th>情境假設</th><th>對應成長特徵</th><th>合理 Fwd PE 壓縮至</th><th>潛在估值跌幅</th></tr>
+<tr><td>3 年後成長率降至 15%</td><td>仍高於市場（樂觀）</td><td>26x</td><td>FY+2 EPS×26 = $384 → −12%</td></tr>
+<tr><td>3 年後成長率降至 10%</td><td>回歸常態</td><td>20x</td><td>FY+1 EPS×20 = $247 → −43%（Bear anchor 附近）</td></tr>
+<tr><td>3 年後成長率降至 5%</td><td>成熟低成長（深週期）</td><td>16x</td><td>FY+1 EPS×16 = $197 → −55%</td></tr>
+</table>
+<p class="note">Base 5Y EPS（FY2030E）= FY2028 $16.93 × (1.08)² ≈ <strong>$19.75</strong>（常態化 ~8%/yr）；× 長期合理 27x = 5Y 目標 $533（§2 E 一致）。</p>
+
+<h4>常態化 / through-cycle 盈餘能力橋（cyclical 名必做）</h4>
+<p class="note">ADI 是強週期類比，判斷「現價是否透支峰值盈餘」必須區分週期峰值 EPS 與 through-cycle EPS。以近一輪週期的非 GAAP EPS 軌跡建橋：</p>
+<table>
+<tr><th>週期位置</th><th>財年</th><th>非 GAAP EPS</th><th>該年 PE（現價 $434 為基）</th><th>備註</th></tr>
+<tr><td>前一輪峰值</td><td>FY2023</td><td>~$10.0</td><td class="num">43x</td><td>上一週期高點</td></tr>
+<tr><td>谷底</td><td>FY2024</td><td>~$6.40</td><td class="num">68x</td><td>深度下行（營收 $9.4B）</td></tr>
+<tr><td>回升</td><td>FY2025</td><td>$7.79</td><td class="num">56x</td><td>復甦初期</td></tr>
+<tr><td>本輪（拉貨高位）</td><td>FY2026E</td><td>$12.34</td><td class="num">35x</td><td>含週期回補 + 拉貨</td></tr>
+<tr><td><strong>through-cycle 估計</strong></td><td>—</td><td class="num"><strong>~$9.5-10.5</strong></td><td class="num"><strong>~43x</strong></td><td>近 3 年均 + 結構成長校正</td></tr>
+</table>
+<div class="reasoning"><b>橋接邏輯：</b>近 4 年非 GAAP EPS 算術均 ≈ ($10.0+$6.40+$7.79+$12.34)/4 = $9.13；考慮結構性成長（AI/自動化抬升中樞），through-cycle EPS 校正至 ~$9.5-10.5。<b>關鍵發現：</b>以 through-cycle EPS 計，現價隱含 PE ~43x，<b>遠高於</b>以 FY26 峰值 EPS 計的 35x —— 證實「市場以結構性倍數定價週期峰值盈餘」（§1 trap 核心）。<b>implication：</b>若 FY26 $12.34 是本輪峰值（拉貨退潮後 FY27/28 增速放緩），則現價的真實估值比帳面 35x 更貴。這是把 trap 定性維持 🟡（而非 🟢）的量化依據。</div>
+
+<h3>⚠️ 衰退信號偵測表</h3>
+<table>
+<tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈?</th></tr>
+<tr><td>護城河侵蝕</td><td>GM 連 2 季 YoY 下滑</td><td>GM YoY 上升中（Q2 +360bps）</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>核心市場市佔縮減</td><td>份額穩定/微升；TXN 在 catalog 段施壓但未明顯流失</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>提價後銷量下滑（§9 定價帳）</td><td>無此跡象</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR ≫ Revenue CAGR（&gt;5pp）</td><td>EPS CAGR(常態) 17% vs Rev CAGR ~14%，差 ~3pp（margin+回購，可解釋）</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>FCF/NI &lt; 0.75 連 2 年</td><td>FCF/NI 1.89（遠優）</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>SBC/Rev &gt; 5% 且升</td><td>SBC/Rev 2.9%（低）</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>TAM 萎縮/被替代</td><td>TAM 擴張（自動化/AI/電氣化）</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>產業倍數 3 年系統下移</td><td>反而上移（AI 重估）</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>Maint capex/FCF &gt; 60%</td><td>maint capex 估 ~$400M / FCF $4.3B = 9%（低）</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>停投資 3 年內收入下滑?</td><td>否（類比長壽命產品）</td><td>⬜</td></tr>
+</table>
+<p><strong>價值陷阱風險評級：🟢 低風險（0 個亮燈）。</strong>未見系統性護城河/盈餘惡化信號。§1 的 🟡 觀察期源於「週期高點 + 拉貨 + 峰值毛利」的估值/時點風險，非衰退信號表的結構性侵蝕。</p>
+<p><strong>長期成長性綜合評級：🟡 中等可見度成長</strong>——Runway ≥ 10 年、護城河強化型、衰退信號 0 個（這些指向 🟢），但<strong>當前 +37% 成長含大量週期回補 + 拉貨、毛利見頂、CEO 親自示警 2027 斜率</strong>，可見度被週期放大干擾 → 降為 🟡。傳遞至 §2 E（合理 PE 27x，非週期峰值 35x）與 §2 0（風向燈不給 🟢）。</p>
+
+<h3>H｜客戶結構深度</h3>
+<h4>① 客戶集中度</h4>
+<table>
+<tr><th>指標</th><th>數值</th><th>資料來源</th></tr>
+<tr><td>Top 1 客戶占營收%</td><td>&lt; 10%（高度分散）</td><td>10-K（ADI 無單一客戶 &gt; 10%）</td></tr>
+<tr><td>Top 5 客戶合計%</td><td>~15-20%（估）</td><td>透過經銷商（Arrow/Avnet）銷售為主</td></tr>
+<tr><td>最大客戶趨勢</td><td>分散，無集中化趨勢</td><td>—</td></tr>
+</table>
+<h4>② 主要客戶議價權結構</h4>
+<table>
+<tr><th>客戶</th><th>議價權類型</th><th>說明</th></tr>
+<tr><td>整體（分散）</td><td><strong>Sole/Multi-source 混合</strong></td><td>類比 design-in 後切換成本高（重新認證、layout 變更）；高性能 socket 多為 sole/preferred source；catalog 段競爭較開放</td></tr>
+</table>
+<h4>③ 客戶生命週期定位</h4>
+<table>
+<tr><th>定位</th><th>此標的</th></tr>
+<tr><td><strong>Grow-with 客戶（主）</strong></td><td>工業/汽車/醫療客戶內容隨自動化、電氣化、AI 升級而增加 → ADI 訂單同步成長（良性）</td></tr>
+<tr><td>客戶 in-house 風險</td><td>低（類比 IP 難自製）；少數超大 OEM 長期可能自建部分電源，但機率低</td></tr>
+<tr><td>客戶 second-source 風險</td><td>中（catalog 段，TXN 是現成 second-source）</td></tr>
+</table>
+<h4>④ 留存經濟（半導體模式）</h4>
+<p>半導體模式：以「平台 design win 跨代留存」衡量——工業/汽車 socket 一旦 design-in，產品生命週期可達 10-20 年（尤其工業/醫療/航太），跨代續用率高。attach（每系統 ADI 內容）隨自動化/電氣化升級而上升。<strong>留存量價齊升 → 客戶結構風險 🟢。</strong></p>
+<p><strong>客戶結構風險評估：🟢 分散 + Sole/Grow-with 主導</strong>（無單一客戶 &gt; 10%、長生命週期 socket、in-house 風險低）。</p>
+
+<h3>F｜AI 取代風險評級</h3>
+<p><strong>🟢 AI 受益。</strong>核心業務因 AI 需求擴張：AI 資料中心需要大量電源管理（GPU 卡 BOM 電源佔比上升）、高速訊號鏈、時脈、隔離——Q2 資料中心子項 +90% YoY、Comms +79% 即直接證據。ADI 是 AI 基礎設施的「賣鏟人」，非被 AI 取代者。商業模式（物理層類比 IP）與 LLM 取代無關。評級分數 9 分（供綜合品質參考）。</p>
+
+<h3>I｜分部前瞻建模（v12.6）</h3>
+<table>
+<tr><th>業務段</th><th>FY26E 營收（佔比）</th><th>驅動式</th><th>FY27E</th><th>FY28E</th><th>段 OM 軌跡</th><th>對合併 EPS 成長貢獻</th></tr>
+<tr><td>Industrial</td><td>~$6.6B（45%）</td><td>量回補 +25% × 自動化 mix +5%</td><td>~$7.4B</td><td>~$8.0B</td><td>峰值區（高 margin 段）</td><td>FY26→28 EPS 成長 ~主引擎 ~45%</td></tr>
+<tr><td>Automotive</td><td>~$3.5B（24%）</td><td>BMS/GMSL/ADAS 內容 +8% × 量 +4%</td><td>~$3.9B</td><td>~$4.3B</td><td>穩定上升</td><td>~25%</td></tr>
+<tr><td>Communications</td><td>~$2.1B（14%）</td><td>資料中心電源/訊號 +50% × 無線持平</td><td>~$2.6B</td><td>~$3.0B</td><td>mix 升（資料中心高價值）</td><td>~20%（最快增速、小基期）</td></tr>
+<tr><td>Consumer</td><td>~$1.6B（11%）</td><td>可攜/穿戴回補 +20%</td><td>~$1.7B</td><td>~$1.8B</td><td>較低 margin 段</td><td>~10%</td></tr>
+<tr><td><strong>合計</strong></td><td><strong>~$14.7B</strong></td><td>（對齊 yfinance revenue_estimate FY26 $14.7B）</td><td><strong>~$16.9B</strong></td><td><strong>~$18.5B</strong></td><td>非 GAAP OM ~49%（峰值）</td><td>100%</td></tr>
+</table>
+<p class="note"><strong>主引擎 = Industrial</strong>（佔 EPS 成長 ~45%）。<strong>若 Industrial miss：</strong>若 Industrial 因拉貨退潮 FY27 持平而非 +12%，合併 Rev CAGR 自 ~14% 降至 ~9%、常態化 EPS CAGR 自 17% 降至 ~11% → §13 倍數承壓。各段貢獻加總對齊 §7 整體 CAGR（差異 &lt; 5pp）。</p>
+</section>
+
+<!-- ════════════════ §9 ════════════════ -->
+<section id="s9">
+<h2>§9　護城河分析</h2>
+
+<h3>評分：二維拆解（default）</h3>
+<table>
+<tr><th>維度</th><th>評分</th><th>關鍵佐證</th></tr>
+<tr><td><strong>Execution Moat</strong>（製造工藝/研發深度/混合製造/規模）</td><td class="num">9.0 / 10</td><td>10 萬+ 料號、數十年類比工程 know-how、混合製造（內部 fab + 代工）兼顧成本與韌性、Maxim/Linear 整合後的規模研發（R&amp;D $1.77B/yr）</td></tr>
+<tr><td><strong>Pricing Power Moat</strong>（轉換成本/無形資產/客戶依賴）</td><td class="num">9.0 / 10</td><td>design-in 後切換成本極高（重新認證 + layout）、長生命週期 socket、73% 非 GAAP 毛利（業界最高、領先 TXN ~15pp）即定價權實證</td></tr>
+<tr><td><strong>合併分</strong>（等權）</td><td class="num">9.0 / 10</td><td>—</td></tr>
+<tr><td><strong>等級</strong></td><td class="good">⭐ A 級</td><td>9 分</td></tr>
+</table>
+
+<h3>護城河數字驗收（Moat-to-Numbers）</h3>
+<table>
+<tr><th>指標</th><th>本標的</th><th>最強直接同業</th><th>Spread</th><th>5 年前 Spread</th><th>方向</th></tr>
+<tr><td>毛利率（非 GAAP）</td><td>73.0%</td><td>TXN ~58%</td><td>+15pp</td><td>+10pp</td><td>擴大</td></tr>
+<tr><td>ROIC（剔商譽）</td><td>16.2%</td><td>TXN ~19.5%</td><td>−3.3pp</td><td>—</td><td>TXN 領先（TXN 無大併購商譽）</td></tr>
+<tr><td>已實現價格溢價</td><td>非 GAAP GM 領先 TXN 15pp</td><td>—</td><td>—</td><td>—</td><td>擴大</td></tr>
+</table>
+<div class="reasoning"><b>三道數字閘匯總：</b>① Moat-to-Numbers：非 GAAP GM spread vs TXN +15pp 且擴大 → 支持 pricing power 9/10。ROIC（含商譽）低於 TXN 是併購會計失真（TXN 自建 fab 無商譽），剔除商譽後 ADI 營運報酬仍強。② QC-26 margin 結構性測試：GM 回升、非結構性質變 → 不扣分。③ QC-28 絕對成長對照：ADI 在高價值段份額穩固。<b>結論：</b>三閘通過，護城河合併分 9 維持。</div>
+
+<h3>護城河來源（sourced evidence）</h3>
+<ul>
+<li><strong>無形資產：</strong>數萬項類比設計 IP、數十年製程配方（trimming、低雜訊工藝）；非單一專利而是工程 know-how 的累積壁壘。</li>
+<li><strong>轉換成本：</strong>類比元件 design-in 後，客戶要換需重新認證（工業/汽車/醫療尤其嚴格，可達 1-2 年）+ PCB layout 重做 + 系統重新驗證 → 切換摩擦極高，這是 73% 毛利的根基。</li>
+<li><strong>規模優勢：</strong>10 萬+ 料號的廣度 + 混合製造的成本/韌性平衡；單一料號量小但組合廣，對手難以全線複製。</li>
+<li><strong>網路效應：</strong>弱（類比非平台型），不是護城河主來源。</li>
+</ul>
+
+<h3>競爭鴻溝</h3>
+<p>為什麼資本充足的對手仍跨不過？①<strong>時間壁壘</strong>：頂尖類比工程師需 10-20 年養成，無法靠資本加速；②<strong>認證壁壘</strong>：工業/汽車/醫療客戶認證週期 1-2 年，已 design-in 的 socket 黏住 10-20 年；③<strong>廣度壁壘</strong>：10 萬+ 料號的長尾組合，對手即使在單一品類突破也難複製整體 portfolio。三維壁壘中認證 + 時間最硬。</p>
+
+<h3>市佔競爭表（對手經濟體質 + 賽局結構）</h3>
+<table>
+<tr><th>對手</th><th>市佔</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th><th>OI margin</th><th>FCF</th><th>戰爭承受力</th></tr>
+<tr><td>TXN（類比第一）</td><td>~19%</td><td>↑（300mm 擴產 + 份額策略）</td><td>300mm 內製成本 ~40% 低 → catalog 段價格戰能力</td><td>TXN 在 catalog/jellybean 段以成本搶份額；ADI 守高價值段</td><td>~35%（GAAP OM Q1'26 37%）</td><td>FY25 $2.6B（capex 峰值後回升）</td><td><strong>高</strong>（300mm 成本 + 22 年股息 + 強資產負債）</td></tr>
+<tr><td>NXPI</td><td>~汽車強</td><td>→</td><td>汽車/工業重疊但定位不同</td><td>各據細分</td><td>~33%（非GAAP）</td><td>FY25 $2.3B</td><td>中（較高槓桿，淨債 $9.3B）</td></tr>
+<tr><td>MCHP / STM / Infineon</td><td>各細分</td><td>→</td><td>MCU/電源/SiC 重疊</td><td>各據細分</td><td>低-中</td><td>波動</td><td>中-低</td></tr>
+</table>
+<p><strong>賽局結構判定：理性寡占（紀律偏鬆於 TXN 端）</strong>。類比市場長期理性（高毛利、不打全面價格戰），但 <strong>TXN 是紀律的破口</strong>——TXN 在 2023-24 下行期以激進降價搶份額，2025-26 回升期又轉漲價（2025/8 中國 ~6 萬料號漲 10-30%）。TXN 的 300mm 成本優勢使其有能力在 catalog 段持續施壓。<strong>判定規則接線：</strong>TXN「結構性成本更低 + FCF 足 + 承受力高」→ ADI 的 pricing power 維度在 catalog 段受限，但 ADI 高價值段（佔比高）的 pricing 仍強 → pricing power 維持 9（高價值段主導），但 §5.C R2 標示 TXN 中期壓力。</p>
+
+<h3>定價事件帳（pricing power 實證）</h3>
+<table>
+<tr><th>日期</th><th>提價幅度</th><th>量與留存反應</th><th>其後 2 季 GM 反應</th></tr>
+<tr><td>2022-23 通膨期</td><td>類比業界普遍提價</td><td>量未流失（design-in 黏性）</td><td>GM 維持高位</td></tr>
+<tr><td>2024 下行週期</td><td>未大幅降價（守價，不同於 TXN）</td><td>量隨週期降，但價守住</td><td>GM 谷底 GAAP 57% 後回升</td></tr>
+<tr><td>2025-26 復甦</td><td>mix 升級為主（高價值段佔比升），非全面提價</td><td>量價齊升</td><td>非 GAAP GM 回升至 73%</td></tr>
+</table>
+<p class="note">ADI 定價策略 = 守價 + mix 升級（不靠激進提價），與 TXN 的「降價搶份額再漲價」週期性策略形成對比。這是 pricing power 強的行為證據。</p>
+
+<h3>護城河趨勢（雙線標）</h3>
+<table>
+<tr><th>維度</th><th>趨勢</th><th>3 年關鍵事件</th></tr>
+<tr><td>Execution Moat 趨勢</td><td class="good">擴大</td><td>Maxim 整合完成、混合製造優化、R&amp;D 維持高投入</td></tr>
+<tr><td>Pricing Power Moat 趨勢</td><td>穩定</td><td>高價值段定價穩固（GM 領先擴大），但 catalog 段受 TXN 300mm 成本壓力</td></tr>
+</table>
+
+<h4>24 個月最可能瓦解護城河的變化（QC-23 三級分類）</h4>
+<table>
+<tr><th>等級</th><th>事件</th><th>機率</th><th>護城河影響</th></tr>
+<tr><td class="neu">🟡 點對點</td><td>NXPI/MCHP 在個別工業/汽車 socket 競爭</td><td>持續低度</td><td>不扣分</td></tr>
+<tr><td class="bad">🔴 生態攻擊</td><td><strong>TXN 300mm 成本碾壓 + 份額策略</strong>，在價格敏感 catalog 段持續施壓，並以「庫存可得性」綁定客戶</td><td>中（持續進行中）</td><td>pricing power 在 catalog 段受限（−0，因高價值段主導維持 9）；列 §5.C R2 監控</td></tr>
+<tr><td>⛔ 架構替代</td><td>客戶大規模自製類比（in-house）</td><td>低（5-10 年）</td><td>暫不扣分</td></tr>
+</table>
+
+<h3>F｜對手財務深度對照（v12.6）</h3>
+<table>
+<tr><th>指標</th><th>ADI</th><th>TXN</th><th>NXPI</th><th>MCHP（新進壓力參考）</th></tr>
+<tr><td>營收成長（最新季 YoY）</td><td>+37%</td><td>+19%</td><td>+12%</td><td>復甦中</td></tr>
+<tr><td>Gross Margin</td><td>73%（非 GAAP）/ 67%（GAAP）</td><td>58%</td><td>57%（非 GAAP）</td><td>~58%</td></tr>
+<tr><td>Operating Margin</td><td>49%（非 GAAP）</td><td>37%（GAAP）</td><td>33%（非 GAAP）</td><td>低-中</td></tr>
+<tr><td>R&amp;D 強度（R&amp;D/Rev）</td><td>16%（$1.77B）</td><td>12%（$2.08B）</td><td>19%（$2.36B）</td><td>~16%</td></tr>
+<tr><td>FCF Margin</td><td>38.8%</td><td>15%（capex 峰值後）</td><td>18.6%</td><td>波動</td></tr>
+<tr><td>淨現金/淨債</td><td>淨債 $6.2B（低，1.1x EBITDA）</td><td>淨債 $10.8B（300mm 投資）</td><td>淨債 $9.3B（較高）</td><td>淨債（去槓桿中）</td></tr>
+</table>
+<p><strong>TXN（最強對手）策略與經濟體質：</strong>TXN 是唯一在規模、成本、財力上能對 ADI 形成持續威脅的對手。其 300mm 內製給予 ~40% 單位成本優勢，22 年股息 + 強資產負債表使其能在下行期降價搶份額（2023-24 即如此）、上行期再漲價（2025/8 中國 ~6 萬料號漲 10-30%）。但 TXN 的攻擊集中在 catalog/jellybean 段，ADI 的高價值高性能段（data converter、RF、精密訊號鏈）TXN 較難切入。TXN FCF 因 300mm capex 超級週期一度承壓（FY23 僅 $1.35B），但 2026 capex 下降後 FCF/share 目標 &gt; $8，財力恢復 → ADI 在 catalog 段的 pricing 中期承壓（§5.C R2）。<strong>NXPI：</strong>汽車強（radar #1），與 ADI 重疊有限；槓桿較高（淨債 $9.3B）。<strong>新進入者：</strong>類比無顯著新進入者（壁壘太高），威脅來自既有龍頭間的份額再分配，非圈外攻擊。</p>
+
+<h4>絕對規模對照（FY2025，$M）</h4>
+<table>
+<tr><th>指標</th><th>ADI</th><th>TXN</th><th>NXPI</th><th>含義</th></tr>
+<tr><td>營收</td><td class="num">11,020</td><td class="num">17,682</td><td class="num">12,269</td><td>TXN 規模最大（catalog 廣度）</td></tr>
+<tr><td>R&amp;D 絕對額</td><td class="num">1,766</td><td class="num">2,083</td><td class="num">2,360</td><td>三者 R&amp;D 投入相近，NXPI 強度最高（汽車軟體/radar）</td></tr>
+<tr><td>Capex 絕對額</td><td class="num">534</td><td class="num">4,550</td><td class="num">537</td><td><strong>TXN capex 是 ADI 的 8.5 倍</strong>——300mm 自建 fab 的資本軍備；ADI/NXPI fab-lite</td></tr>
+<tr><td>FCF 絕對額</td><td class="num">4,279</td><td class="num">2,603</td><td class="num">2,283</td><td><strong>ADI FCF 最高</strong>（輕資產 + 高 margin）；TXN FCF 被 capex 吃掉</td></tr>
+<tr><td>淨債</td><td class="num">6,165</td><td class="num">10,823</td><td class="num">9,316</td><td>ADI 槓桿最低</td></tr>
+</table>
+<p class="note"><strong>關鍵洞察：</strong>TXN 用 8.5 倍於 ADI 的 capex 換取 300mm 成本優勢，但代價是 FCF 被資本支出吃掉（ADI FCF $4.28B &gt; TXN $2.60B，儘管 TXN 營收高 60%）。這是兩種類比模式的根本分歧：TXN 賭「自建低成本產能 + 廣度」，ADI 賭「輕資產 + 高價值 + 高 FCF 轉換」。對長期股東，ADI 的 FCF 效率更優；對價格戰承受力，TXN 的成本結構更硬。</p>
+<h4>類比市佔演變（約略，sell-side 估計）</h4>
+<table>
+<tr><th>公司</th><th>~2016 份額</th><th>~2025 份額</th><th>演變</th></tr>
+<tr><td>TXN</td><td>~18%</td><td>~19%</td><td>穩定領先（300mm 擴產防禦份額）</td></tr>
+<tr><td><strong>ADI</strong></td><td>~7-8%</td><td>~12-13%</td><td><strong>大幅上升（Linear 2017 + Maxim 2021 整併）</strong></td></tr>
+<tr><td>NXPI/Infineon/STM</td><td>各細分</td><td>各細分</td><td>汽車/電源各據</td></tr>
+</table>
+<p class="note">ADI 透過兩筆大型併購，份額從 ~8%（2016）躍升至 ~12-13%（2025），成為穩固第二——這是「誰在吃誰」的答案：ADI 透過併購（非有機搶單）吃下 Linear/Maxim 的份額，建立規模。代價是 §12 的高商譽 + 低報告 ROIC。</p>
+<p class="note">§9 三道數字閘狀態：① Moat-to-Numbers ✅（GM spread +15pp 擴大）；② QC-26 margin ✅（回升非質變）；③ QC-28 絕對成長 ✅（高價值段穩固）。護城河 9 維持。</p>
+</section>
+
+<!-- ════════════════ §10 ════════════════ -->
+<section id="s10">
+<h2>§10　財務品質監測</h2>
+
+<h3>三年趨勢表（含同業對比）</h3>
+<table>
+<tr><th>指標</th><th>FY2023</th><th>FY2024</th><th>FY2025</th><th>同業中位（TXN/NXPI）</th><th>相對</th></tr>
+<tr><td>FCF Margin</td><td>28.9%</td><td>33.1%</td><td>38.8%</td><td>~17%</td><td class="good">優</td></tr>
+<tr><td>EBITDA Margin（約）</td><td>51%</td><td>44%</td><td>45%</td><td>~40%</td><td class="good">優</td></tr>
+<tr><td>ROIC − WACC（剔商譽）</td><td>+11pp</td><td>+5pp</td><td>+7pp</td><td>+8-10pp</td><td class="neu">平</td></tr>
+<tr><td>SBC / Revenue</td><td>2.4%</td><td>2.8%</td><td>2.9%</td><td>~2.5%</td><td class="good">低（優）</td></tr>
+<tr><td>ROE（GAAP）</td><td>9.3%</td><td>4.6%</td><td>6.7%</td><td>—</td><td class="neu">受商譽/週期壓低</td></tr>
+</table>
+
+<h3>獲利品質警訊（四項）</h3>
+<ul>
+<li><strong>淨利 vs OCF 連動：</strong>OCF $4.81B 遠高於 NI $2.27B（FY25），主因高非現金攤銷（收購無形資產）→ 盈餘品質佳，無操縱跡象。</li>
+<li><strong>AR vs 營收：</strong>AR $1,436M（+7.5% YoY）vs 營收回升 +17% → AR 成長慢於營收，健康。</li>
+<li><strong>存貨 vs 營收：</strong>存貨 $1,656M（+14% YoY）隨營收回升，DIO ~142 天（類比業典型，長壽命產品 build-ahead），無異常積壓。</li>
+<li><strong>FCF 轉換趨勢：</strong>FCF/NI 1.89，逐年升 → 資本密集度下降（fab-lite）。</li>
+</ul>
+
+<h3>回購品質評估</h3>
+<table>
+<tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+<tr><td>過去 3 年回購 vs FCF</td><td>回購 $5.74B（FY23-25）/ FCF $10.96B = 52%</td><td>適中（&lt; 80%）</td></tr>
+<tr><td>剔除回購後 EPS CAGR</td><td>回購使股數略降（487M），對 EPS CAGR 貢獻 ~2pp；剔除後常態化 CAGR 17% → ~15%</td><td>差距 ~2pp（&lt; 5pp，無警示）</td></tr>
+<tr><td>回購均價 vs 現價</td><td>近年回購均價低於現價 → 資本配置時點尚可</td><td>OK</td></tr>
+<tr><td>Revenue CAGR（同期）</td><td>常態 ~14%；EPS CAGR 17% 高 ~3pp（margin + 回購，可解釋）</td><td>無盈餘品質警訊</td></tr>
+</table>
+
+<h3>FCF lumpiness 評估</h3>
+<table>
+<tr><th>指標</th><th>數值</th></tr>
+<tr><td>過去 4 年 FCF</td><td>FY22 $3,776M / FY23 $3,556M / FY24 $3,122M / FY25 $4,279M</td></tr>
+<tr><td>滾動均 FCF</td><td>~$3.68B</td></tr>
+<tr><td>最低谷</td><td>FY24 $3,122M（占均 85%）</td></tr>
+<tr><td>Maint capex 估算（D&amp;A 錨定法）</td><td>D&amp;A $2.0B 含大量收購攤銷；真實 maint capex ~$400M → Owner earnings = OCF $4.81B − $400M = ~$4.4B</td></tr>
+<tr><td>Lumpiness 性質</td><td>低 lumpiness（類比業現金流穩定，谷底仍 85%）</td></tr>
+<tr><td>結論</td><td class="good">🟢 FCF 穩定，週期波動溫和</td></tr>
+</table>
+
+<h3>E｜長期趨勢 + DuPont + 營運資金（v12.6）</h3>
+<h4>① 5 年關鍵指標趨勢</h4>
+<table>
+<tr><th>指標</th><th>FY2022</th><th>FY2023</th><th>FY2024</th><th>FY2025</th><th>結構判讀</th></tr>
+<tr><td>Gross Margin（GAAP）</td><td>62.7%</td><td>64.0%</td><td>57.1%</td><td>61.5%</td><td>週期波動，回升</td></tr>
+<tr><td>Operating Margin（GAAP）</td><td>29.6%</td><td>32.4%</td><td>22.0%</td><td>27.2%</td><td>週期波動，回升</td></tr>
+<tr><td>ROIC（含商譽）</td><td>~9%</td><td>~9%</td><td>~4%</td><td>5.9%</td><td>商譽壓低 + 週期</td></tr>
+<tr><td>FCF Margin</td><td>31.4%</td><td>28.9%</td><td>33.1%</td><td>38.8%</td><td>↑（capex 下降）</td></tr>
+</table>
+<h4>② ROIC DuPont 拆解（3 年，yfinance 三表自算）</h4>
+<table>
+<tr><th>因子</th><th>FY2023</th><th>FY2024</th><th>FY2025</th></tr>
+<tr><td>有效稅率</td><td class="num">8.1%</td><td class="num">8.0%</td><td class="num">16.4%</td></tr>
+<tr><td>OI $M</td><td class="num">3,983.8</td><td class="num">2,070.1</td><td class="num">3,002.5</td></tr>
+<tr><td>NOPAT $M</td><td class="num">3,661</td><td class="num">1,904</td><td class="num">2,510</td></tr>
+<tr><td>NOPAT margin</td><td class="num">29.8%</td><td class="num">20.2%</td><td class="num">22.8%</td></tr>
+<tr><td>IC 周轉率（含商譽）</td><td class="num">0.29x</td><td class="num">0.22x</td><td class="num">0.26x</td></tr>
+<tr><td><strong>ROIC（含商譽）</strong></td><td class="num"><strong>8.6%</strong></td><td class="num"><strong>4.5%</strong></td><td class="num"><strong>5.9%</strong></td></tr>
+<tr><td>IC 周轉率（剔商譽）</td><td class="num">0.79x</td><td class="num">0.60x</td><td class="num">0.71x</td></tr>
+<tr><td><strong>ROIC（剔商譽）</strong></td><td class="num"><strong>23.5%</strong></td><td class="num"><strong>12.0%</strong></td><td class="num"><strong>16.2%</strong></td></tr>
+</table>
+<p class="note">ROIC 由「高 NOPAT margin（22.8%，獲利力強）」驅動，但被「低 IC 周轉率（0.26x，商譽墊高）」拖累。剔除商譽後周轉率回到 0.71x，ROIC 達 16.2% &gt; WACC。<strong>三年軌跡清楚顯示週期性：</strong>FY23 高峰（剔商譽 ROIC 23.5%）→ FY24 谷底（12.0%，需求 + 稼動率雙降）→ FY25 回升（16.2%）。<strong>結論：營運獲利力卓越且強週期，會計報酬被併購溢價（$27B 商譽）系統性稀釋約 10pp。FY24 谷底剔商譽 ROIC 仍 12% &gt; WACC，印證類比商業模式的下行韌性。</strong></p>
+<h4>③ 營運資金趨勢</h4>
+<table>
+<tr><th>指標</th><th>FY2023</th><th>FY2024</th><th>FY2025</th></tr>
+<tr><td>DSO（應收天數）</td><td>43.6</td><td>51.7</td><td>47.6</td></tr>
+<tr><td>DIO（存貨天數）</td><td>135.4</td><td>130.6</td><td>142.4</td></tr>
+<tr><td>DPO（應付天數）</td><td>40.6</td><td>44.0</td><td>46.7</td></tr>
+<tr><td><strong>CCC（現金循環）</strong></td><td><strong>138.4</strong></td><td><strong>138.3</strong></td><td><strong>143.3</strong></td></tr>
+</table>
+<p class="note">CCC ~138-143 天，高存貨天數為類比業常態（長壽命料號、build-ahead 服務多年訂單）。穩定，無惡化（DIO 微升因週期回補備貨）。</p>
+<h4>④ 債務到期結構</h4>
+<p>總債 $8.66B（LT $8.15B + 流動 $0.45B），加權平均利率 ~4-5%，到期分散於數年，無近期到期牆。淨債/EBITDA ~1.1x，再融資風險低。</p>
+</section>
+
+<!-- ════════════════ §11 ════════════════ -->
+<section id="s11">
+<h2>§11　產業格局</h2>
+
+<h3>市場量化</h3>
+<p>類比 + 混合訊號 + 電源 TAM ~$70-80B（2025）→ ~$120B+（2030E），CAGR ~8-10%。當前供需：FY2024 深度去庫後，2025-26 進入回補/緊缺（特定節點供給趨緊）。長期由工業自動化、汽車電氣化、AI 資料中心電源驅動。</p>
+
+<h4>供需循環位置與庫存動態（cyclical thesis 核心）</h4>
+<table>
+<tr><th>週期階段</th><th>時間</th><th>特徵</th><th>ADI 表現</th></tr>
+<tr><td>過熱/缺貨</td><td>2021-2022</td><td>疫情 + 補庫 + 缺芯，雙重下單</td><td>營收峰值 $12.0-12.3B，GM 高位</td></tr>
+<tr><td>去庫衰退</td><td>2023-2024</td><td>通路 + 客戶同步去庫，需求斷崖</td><td>營收谷底 $9.4B（FY24），GAAP GM 跌至 57%</td></tr>
+<tr><td>回補復甦</td><td>2025-2026</td><td>庫存正常化 + 需求回升 + 特定節點趨緊</td><td>營收 $11.0B→$14.7B（E），record bookings</td></tr>
+<tr><td class="neu">關鍵不確定</td><td>2027？</td><td><strong>拉貨退潮 vs 結構續航</strong></td><td>CEO 親自示警「斜率陡峭度」</td></tr>
+</table>
+<p class="note"><strong>庫存訊號：</strong>ADI 自身存貨 DIO 142 天（§10.E，類比常態，無異常積壓）；但<strong>通路 + 客戶端</strong>的拉貨庫存是當前最大盲區——關稅驅動的提前下單若在 2027 反轉，會出現「需求斷層」（類似 2023 去庫，只是這次由關稅而非疫情觸發）。這是 §5.F single thing（book-to-bill 破 1.0）的產業機制。<strong>判定：</strong>本標的位於利潤池受益端（高價值類比），但週期位置處於「回補高位」，需求持續性是 thesis 最大變數——這正是 §8 綜合評級 🟡（而非 🟢）、§2 0 風向燈 🟡（而非 🟢）的根本原因。</p>
+
+<h3>利潤池地圖（Profit Pool Map）</h3>
+<table>
+<tr><th>價值鏈環節</th><th>代表公司</th><th>OI margin 代理</th><th>5 年前→當前 OI 池占比</th><th>遷移方向</th></tr>
+<tr><td>高性能/高價值類比（ADI 所在）</td><td><strong>ADI</strong></td><td>非 GAAP OM 49%</td><td>~30% → ~33%</td><td>↑</td></tr>
+<tr><td>廣線/catalog 類比</td><td>TXN</td><td>OM ~37%</td><td>~40% → ~38%</td><td>→</td></tr>
+<tr><td>汽車/MCU 類比</td><td>NXPI/MCHP/Infineon</td><td>OM 20-33%</td><td>~30% → ~29%</td><td>→</td></tr>
+</table>
+<p class="note">結論（≤80 字）：類比利潤池向「高價值高性能段」溫和遷移（AI 電源/訊號鏈、汽車 BMS 高內容），ADI 位於淨流入端 → 支持 §8.A Runway。但 TXN 的 300mm 成本使 catalog 段利潤被壓縮。<strong>本標的環節淨流入 → 風向燈不因利潤外流降級（但週期 + 拉貨使 §8 仍 🟡）。</strong></p>
+
+<h3>議價權（三段獨立）</h3>
+<h4>①對上游供應商</h4>
+<p>ADI 採混合製造——部分內部 fab（如 Wilmington、Camas、Limerick），部分委外台積電等代工。對代工的議價：作為長期穩定客戶有一定地位，但先進/特殊節點產能緊張時受制於代工排程（Q2 法說提及特定節點趨緊）。對設備/原料供應商議價中等。近 3 年無被迫接受大幅漲價的揭露，混合模式提供採購彈性。</p>
+<h4>②對下游客戶</h4>
+<p>客戶高度分散（無單一 &gt; 10%），透過經銷商（Arrow、Avnet）為主。design-in 後切換成本極高（認證 1-2 年 + layout 重做）→ ADI 議價地位強，尤其高性能 socket。合約多為訂單型 + 長期供應協議混合。近 3 年無重大客戶流失 case。定價權直接證據：73% 非 GAAP 毛利、守價策略（2024 下行未大幅降價）。</p>
+<h4>③地緣曝險</h4>
+<p>核心生產地：美國（Wilmington MA、Camas WA、Beaverton OR）+ 愛爾蘭（Limerick）+ 委外台積電（台灣）。供應鏈最高集中點為先進/特殊節點代工（台灣）。政策風險：對中國出口（中等營收佔比）受出口管制 newsflow 影響，但類比成熟製程多不在先進節點管制清單；關稅是當前需求拉貨的雙面刃（短期推升、長期反轉風險）。分散化：混合製造 + 美國/愛爾蘭內製提供地緣韌性。</p>
+
+<h3>營收組成（三維）</h3>
+<h4>① 按業務段（Q2 FY26 快照）</h4>
+<table>
+<tr><th>業務段</th><th>占比%</th><th>YoY%</th><th>3Y 占比軌跡</th></tr>
+<tr><td>Industrial</td><td>50%</td><td>+56%</td><td>週期回升中佔比升（長期 ~44-50%）</td></tr>
+<tr><td>Automotive</td><td>24%</td><td>+2%</td><td>穩定（長期 ~24-30%）</td></tr>
+<tr><td>Communications</td><td>15%</td><td>+79%</td><td>升（資料中心驅動）</td></tr>
+<tr><td>Consumer</td><td>11%</td><td>+23%</td><td>回補</td></tr>
+</table>
+<h4>② 按地區</h4>
+<table>
+<tr><th>地區</th><th>占比%（約）</th><th>備註</th></tr>
+<tr><td>美洲</td><td>~25%</td><td>—</td></tr>
+<tr><td>歐洲</td><td>~20%</td><td>工業強</td></tr>
+<tr><td>中國</td><td>~20%</td><td>出口管制/關稅 newsflow 風險</td></tr>
+<tr><td>其餘亞洲/日本</td><td>~35%</td><td>—</td></tr>
+</table>
+<h4>③ 按客戶集中度</h4>
+<table>
+<tr><th>指標</th><th>數值</th></tr>
+<tr><td>Top 1 客戶</td><td>&lt; 10%</td></tr>
+<tr><td>Top 5 客戶</td><td>~15-20%（經銷為主）</td></tr>
+<tr><td>失去最大客戶影響</td><td>&lt; 10% 營收，分散風險低</td></tr>
+</table>
+
+<h3>單位經濟（逐業務段）</h3>
+<table>
+<tr><th>業務段</th><th>核心 Unit 指標</th><th>趨勢</th><th>段 OI margin</th><th>資本密集度 proxy</th><th>結構性洞察</th></tr>
+<tr><td>Industrial</td><td>每系統 ADptg 內容 / ASP</td><td>↑（自動化升級）</td><td>高（&gt; 公司均）</td><td>低（fab-lite）</td><td>最高 margin 段，長生命週期 socket</td></tr>
+<tr><td>Automotive</td><td>每車 ADI 內容（BMS/GMSL/ADAS）</td><td>↑（電氣化）</td><td>中-高</td><td>低</td><td>內容增長型，週期較緩</td></tr>
+<tr><td>Communications</td><td>每資料中心 ADI 電源/訊號 BOM</td><td>↑（AI）</td><td>升（資料中心 mix）</td><td>低</td><td>最快增速，AI 驅動</td></tr>
+</table>
+<p class="note"><strong>mix-shift 算術：</strong>以各段成長率外推 3 年，高價值段（Industrial/Comms）佔比升 → 合併非 GAAP OM 結構性 ~+50bp/yr（但已逼近峰值 49%，收斂）。vs §8.B③ 增量 58.5% 隱含的擴張一致方向（差距因週期回補一次性，可解釋）。</p>
+
+<h3>F｜逐段 TAM/SAM + 價值鏈深度（v12.6）</h3>
+<table>
+<tr><th>業務段</th><th>段 TAM（現/5Y）</th><th>當前滲透</th><th>段 CAGR</th><th>value chain 位置 + 被替代風險</th></tr>
+<tr><td>Industrial</td><td>~$30B / ~$45B</td><td>中</td><td>~8-10%</td><td>類比訊號鏈上游關鍵節點，被替代風險低（認證壁壘）</td></tr>
+<tr><td>Automotive</td><td>~$20B / ~$32B</td><td>低-中（電氣化早期）</td><td>~10-12%</td><td>BMS/感測/連接，內容增長；Infineon/NXPI 競爭</td></tr>
+<tr><td>Communications</td><td>~$12B / ~$20B</td><td>低（AI 早期）</td><td>~12-15%</td><td>AI 資料中心電源/訊號，高成長但 TXN/MPS 競爭電源段</td></tr>
+<tr><td>Consumer</td><td>~$10B / ~$13B</td><td>中</td><td>~5%</td><td>可攜/穿戴，較低 margin</td></tr>
+</table>
+<p class="note">成長天花板與被替代路徑：Industrial（最大段）天花板最高、被替代風險最低（認證 + 長生命週期）；Comms 成長最快但電源段面對 TXN/MPWR 競爭。利潤池流入高價值段（Industrial/Comms），與 §11 利潤池地圖一致。</p>
+</section>
+
+<!-- ════════════════ §12 ════════════════ -->
+<section id="s12">
+<h2>§12　公司治理與資本配置</h2>
+
+<h3>股東結構</h3>
+<p>機構持股 93.5%，內部人 0.24%（典型大型成熟股權結構，無 dual-class）。CEO Vincent Roche（董事長兼 CEO，任內主導 Hittite/Linear/Maxim 三大併購建立規模）、CFO Richard Puccio。近 12 個月無重大內部人異常交易揭露。</p>
+
+<h3>資本配置軌跡（M&amp;A track record）</h3>
+<table>
+<tr><th>年份</th><th>被收購方</th><th>金額</th><th>整合結果</th><th>減損</th></tr>
+<tr><td>2014</td><td>Hittite Microwave</td><td>$2.45B</td><td>成功整合（RF/微波）</td><td>無</td></tr>
+<tr><td>2017</td><td>Linear Technology</td><td>$14.8B</td><td>成功整合（高性能電源/類比，提升 GM）</td><td>無</td></tr>
+<tr><td>2021</td><td>Maxim Integrated</td><td>$21B（全股票）</td><td>整合成功（規模 + 汽車/資料中心），但 $27B 累積商譽壓低報告 ROIC</td><td>無重大減損</td></tr>
+</table>
+<p class="note">近 5 年僅 Maxim（2021）一筆重大 deal，已整合。策略上三筆併購建立了類比第二大franchise + 業界最高毛利；財務上付出高價（hence 報告 ROIC ~6%）。下一筆大 deal（歷史 ~4-5 年週期，可能 ~2026-27）是 §5.C R3 監控點。</p>
+
+<h3>管理層薪酬結構</h3>
+<p>固定薪 + 績效獎金（與營收/EPS/FCF 掛鉤）+ 股權激勵（RSU/PSU）。SBC $321.6M（FY25，僅 2.9% 營收），薪酬紀律佳。</p>
+
+<h3>SBC 真實稀釋</h3>
+<table>
+<tr><th>指標</th><th>數據</th></tr>
+<tr><td>SBC / Revenue（近 3 年）</td><td>FY23 2.4% / FY24 2.8% / FY25 2.9%</td></tr>
+<tr><td>GAAP EPS（FY25）</td><td>$4.56</td></tr>
+<tr><td>非 GAAP EPS（FY25）</td><td>$7.79</td></tr>
+<tr><td>差距（攤銷為主，非 SBC）</td><td>$3.23（41%）—— 主要是 Maxim/Linear 收購無形資產攤銷 ~$2.0B，SBC 僅佔小部分</td></tr>
+<tr><td>剔除 SBC 後 EPS</td><td>SBC 對 EPS 稀釋僅 ~$0.55（$321.6M/487M），剔除後差異小（&lt; 5pp）</td></tr>
+</table>
+<p class="note"><strong>關鍵分辨：</strong>ADI 的 GAAP/非 GAAP 大缺口（41%）主因「收購無形資產攤銷」（真實經濟成本，反映高併購價），<strong>非</strong> SBC（SBC 紀律良好）。投資人應理解：非 GAAP EPS 剔除了攤銷，但攤銷對應的是真金白銀付出的併購價——這也是報告 ROIC 低的根源。</p>
+
+<h3>資本配置計分卡（v12.5）</h3>
+<table>
+<tr><th>項目</th><th>計算</th><th>過/不過</th></tr>
+<tr><td>M&amp;A 已實現 ROIIC</td><td>Maxim 第 3 年貢獻 / $21B：建立規模但報告 ROIC &lt; WACC（含商譽）</td><td class="neu">邊際（剔商譽營運報酬達標，但付出溢價高）</td></tr>
+<tr><td>回購買入收益率</td><td>近年回購均價 earnings yield ~3-4%（FY+1 $12.34 / 回購均價 ~$300 ≈ 4.1%）vs 門檻（10Y 殖利率 4.3% + 2% = 6.3%）</td><td class="bad">不過（高位回購收益率偏低）</td></tr>
+<tr><td>SBC 淨稀釋率</td><td>~0.5%/yr（回購抵銷後股數淨降）</td><td class="good">過</td></tr>
+</table>
+<p><strong>資本配置等級：B</strong>（適用 3 項中 1-2 項過：SBC 過、回購邊際、M&amp;A 邊際）。接線：B 級 → §2 I 不設限（仍可「高」信心）。</p>
+
+<h3>D｜10 年資本配置 track record（v12.6）</h3>
+<h4>① M&amp;A 全史 ROIIC</h4>
+<p>Hittite（2014, $2.45B）→ RF/微波，整合佳；Linear（2017, $14.8B）→ 高性能電源，提升整體 GM 至業界最高，策略性極成功（雖價格高）；Maxim（2021, $21B 全股票）→ 規模翻倍 + 汽車/資料中心，整合成功。三筆 deal 的「策略 ROIC」高（建立 #2 類比franchise + 73% 毛利），但「會計 ROIC」被 $27B 商譽壓低。整合執行力 A，估值紀律 B（付出高溢價）。</p>
+<h4>② 回購/股息 10 年軌跡</h4>
+<p>股息：~21 年連續增長（準 Dividend Aristocrat），FY25 股息 $1.92B，當前 ~$0.99/季（~$3.96/yr，殖利率 ~0.9%）。回購：FY22 $2.58B / FY23 $2.96B / FY24 $0.62B（週期低點縮手）/ FY25 $2.16B。總股東回報（回購+股息）/ FCF：FY25 = ($2.16B+$1.92B)/$4.28B = 95%。</p>
+<h4>③ 內部人 + 薪酬</h4>
+<p>近 12 個月無重大內部人交易揭露；高管薪酬與 ROIC/TSR 掛鉤（PSU）；SBC 紀律佳（2.9%）。10 年敘事支撐計分卡 B 級——管理層執行力強、股東回報慷慨，但併購估值紀律是唯一瑕疵。</p>
+
+<h3>E｜FCF 去向 + M&amp;A 飛輪（v12.7）</h3>
+<h4>① FCF 去向拆解（FY2025，FCF $4,278.6M）</h4>
+<table>
+<tr><th>用途</th><th>佔 FCF %</th><th>增量 ROIC / 報酬</th><th>判斷</th></tr>
+<tr><td>股息</td><td>45%（$1,924M）</td><td>殖利率 ~0.9%</td><td>穩定回報，~21 年增長</td></tr>
+<tr><td>回購</td><td>51%（$2,165M）</td><td>買入 earnings yield ~4%（&lt; 門檻 6.3%）</td><td>高位回購，收益率偏低</td></tr>
+<tr><td>去債</td><td>~0%</td><td>—</td><td>債務大致持平</td></tr>
+<tr><td>再投資（capex）</td><td>capex $534M（已在 FCF 前扣除）</td><td>內生 ROTC 高</td><td>輕資產有機成長</td></tr>
+<tr><td>下一筆 M&amp;A</td><td>近年 ~0%</td><td>歷史 deal 報酬：策略高、會計低</td><td>飛輪暫停，digesting Maxim</td></tr>
+</table>
+<h4>② M&amp;A 飛輪判定</h4>
+<p>ADI 是<strong>「週期性大型併購」型</strong>（~4-5 年一筆），非連續 bolt-on 飛輪（不同於 AVGO/MCHP）。當前飛輪暫停，FCF 95% 回饋股東。歷史每筆大 deal 都建立了規模/margin（策略成功），但付出高溢價（會計 ROIC 受壓）。<strong>關鍵風險：</strong>下一筆大 deal（可能 2026-27）若再高價，會重演「規模升、報告 ROIC 降」，且消耗本應回饋股東的 FCF。</p>
+<h4>③ 一句結論</h4>
+<p>這檔的成長<strong>最終變成股東現金（FCF 95% 回饋）</strong>，增量 ROIC（營運層 &gt; WACC，會計層因併購商譽 &lt; WACC），飛輪<strong>需警戒下一筆大型併購的出價紀律</strong>（歷史估值紀律 B）。接 §8.0 第 4 問裁決：變現金流為主，但 M&amp;A 再起時需重評。</p>
+</section>
+
+<!-- ════════════════ §13 ════════════════ -->
+<section id="s13">
+<h2>§13　估值診斷</h2>
+
+<h3>13.1｜歷史估值分位（5 年框架）</h3>
+<table>
+<tr><th>估值指標</th><th>當前值</th><th>5Y 低</th><th>5Y 中位</th><th>5Y 高</th><th>當前分位</th></tr>
+<tr><td>Trailing P/E（GAAP）</td><td>64.5x</td><td>~22x</td><td>~38x</td><td>~68x</td><td>~95%（GAAP 受攤銷/週期壓低 E）</td></tr>
+<tr><td>Forward P/E（NTM，混合）</td><td>~32x</td><td>~16x</td><td>~24x</td><td>~35x</td><td>~84%</td></tr>
+<tr><td>Forward P/E（FY+2）</td><td>29.4x</td><td>~16x</td><td>~22x</td><td>~31x</td><td>~80%</td></tr>
+<tr><td>EV/EBITDA</td><td>33.8x</td><td>~14x</td><td>~20x</td><td>~34x</td><td>~98%</td></tr>
+</table>
+<div class="reasoning"><b>解讀（≤80 字）：</b>FY+2 FPE 29.4x 落 5Y ~80 分位，NTM ~32x ~84 分位 → 估值情緒<b>偏熱</b>。與歷史同分位（如 2024 週期谷）差異：當前 EPS 是週期回升中段而非谷底，但倍數已重估至高位（AI 溢價）。<b>implication：</b>確認 §2 D 估值燈 🟠。</div>
+
+<h3>13.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>判斷基準</th><th>解讀</th></tr>
+<tr><td>Forward P/E（FY+2）</td><td>29.4x</td><td>—</td><td>—</td></tr>
+<tr><td>常態化 EPS CAGR（FY+1→FY+3，§7）</td><td>17.1%</td><td>—</td><td>剔除週期回補的可持續成長</td></tr>
+<tr><td>PEG（常態化）</td><td>1.72</td><td>&lt;1 便宜 / 1-2 合理 / &gt;2 貴</td><td>合理區間偏上</td></tr>
+<tr><td>PEG（3Y-from-trough 口徑）</td><td>1.0</td><td>同上</td><td>含週期回補，偏樂觀</td></tr>
+<tr><td>3Y vs 常態 PEG 差異</td><td>大（1.0 vs 1.72）</td><td>差異大 = 近期成長不可持續</td><td>警示：當前成長含一次性回補</td></tr>
+</table>
+<div class="reasoning"><b>推導：</b>PEG = FY+2 FPE 29.4 ÷ 常態化 CAGR 17.1% = <b>1.72</b>。3Y-from-trough 口徑（29.5% CAGR）PEG 僅 1.0，但該 CAGR 含週期反彈一次性。<b>implication：</b>採常態化 PEG 1.72（落 1-2 區間偏上）→ 確認 §2 D 估值燈 🟠（不救援）。3Y vs 常態 PEG 差距大 → §8.E 壓力測試已反映成長熄火風險。</div>
+
+<h3>13.4｜同業估值比較</h3>
+<p>本標的業務模式 tier：<strong>高性能/高價值類比 IDM</strong>（與 TXN/NXPI/MCHP 同 tier 廣義類比，但 ADI 偏高性能段）。Peer 選同 tier 類比半導體龍頭。</p>
+<table>
+<tr><th>公司</th><th>市值</th><th>Fwd P/E</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR(3Y)</th><th>ROIC(剔商譽/報告)</th></tr>
+<tr><td><strong>ADI</strong></td><td>$211.6B</td><td>29.4x（FY+2）</td><td>33.8x</td><td>1.72</td><td>38.8%</td><td>17.1%（常態）</td><td>16.2% / 5.9%</td></tr>
+<tr><td>TXN</td><td>$293.8B</td><td>34.3x</td><td>33.1x</td><td>1.6-1.9</td><td>~15%</td><td>~20%</td><td>~19.5%</td></tr>
+<tr><td>NXPI</td><td>$79.1B</td><td>17.8x</td><td>20.4x</td><td>1.2</td><td>18.6%</td><td>18.2%</td><td>~14-16%</td></tr>
+<tr><td>MCHP</td><td>$54.1B</td><td>~24-30x</td><td>高（E 受壓）</td><td>—</td><td>波動</td><td>復甦</td><td>去槓桿</td></tr>
+<tr><td>同 tier 中位</td><td>—</td><td>~29x</td><td>~30x</td><td>~1.5</td><td>~22%</td><td>~18%</td><td>~16%</td></tr>
+</table>
+<div class="reasoning"><b>解讀（≤80 字）：</b>ADI FY+2 FPE 29.4x ≈ tier 中位，低於 TXN 34.3x、高於 NXPI 17.8x。ADI 以最高 FCF margin（38.8%）與最高毛利支撐溢價，但常態化 PEG 1.72 與 TXN 相近、貴於 NXPI（PEG 1.2）。<b>implication：</b>相對估值合理偏上，無明顯折價 → 確認 §2 D/H 的 🟠 + B。NXPI 是 tier 內估值更便宜的替代（見 multi-stock 比較）。</div>
+
+<h3>13.5｜情境機率加權合理價（分析師自建）</h3>
+<p class="note">非 sell-side 通用 DCF，而是以 §8.E 三情境 + 週期視角，對「2 年後（FY2027 末）合理價」做機率加權，作為 §2 E 中期 R:R 的交叉驗證。</p>
+<table>
+<tr><th>情境</th><th>機率</th><th>關鍵假設</th><th>FY+2 EPS</th><th>合理 PE</th><th>目標價</th><th>vs 現價</th></tr>
+<tr><td class="good">多頭（結構勝出）</td><td>30%</td><td>AI 電源 + 自動化使常態成長維持 15%+，毛利守 73%，倍數維持 30x</td><td class="num">$15.5</td><td class="num">30x</td><td class="num">$465</td><td class="good">+7%</td></tr>
+<tr><td class="neu">基準（週期常態化）</td><td>45%</td><td>拉貨溫和退潮，常態成長回落至 ~12%，毛利 71%，倍數回 27x</td><td class="num">$14.77</td><td class="num">27x</td><td class="num">$399</td><td class="bad">−8%</td></tr>
+<tr><td class="bad">空頭（週期反轉）</td><td>25%</td><td>2027 拉貨反轉、bookings 轉負，EPS 下修 10%，毛利破 70%，倍數壓至 20x</td><td class="num">$13.3</td><td class="num">20x</td><td class="num">$266</td><td class="bad">−39%</td></tr>
+</table>
+<div class="reasoning"><b>機率加權合理價：</b>$465×30% + $399×45% + $266×25% = $139.5 + $179.6 + $66.5 = <b>$386</b>（現價 $434.46 的 −11%）。<b>implication：</b>機率加權中性價低於現價 ~11%，與 §2 E 中期 R:R（目標 $399、−8%）一致——現價已透支，等回檔。空頭情境（25% 機率）的 −39% 下行是主要不對稱風險來源，對應 §5.C R1 + §5.F single thing。</div>
+
+<h3>§13 估值診斷結論</h3>
+<p>13.1 歷史分位（FY+2 ~80%、NTM ~84% → 偏熱）+ 13.2 PEG（常態化 1.72 → 合理偏上）+ 13.4 同業（≈ tier 中位、高 FCF margin 支撐但無折價）→ 綜合估值訊號：<strong>🟠 偏貴（公允偏上）</strong>。完整裁決見 §1 dashboard；倉位 % 由 portfolio-manager skill 決定。</p>
+<p><strong>分析師目標價參考：</strong>共識中位 ~$446-455（34 位，Buy）；高 $515（Wells Fargo）/ 低 ~$400。近期普遍上修（Citi $460、Jefferies $475、GS $450、TD Cowen $450、KeyBanc $500）。現價 $434.46 距共識中位僅 ~3-5% 上行。<strong>分歧點：</strong>我們不認同「現價即進場」——共識上行空間已壓縮至 3-5%，且未充分反映 2027 拉貨反轉風險（CEO 親自示警）；常態化合理價 ~$399（FY+2 × 27x），現價已透支。</p>
+</section>
+
+<!-- ════════════════ 版本修訂 + 假設驗證 ════════════════ -->
+<section>
+<h2>版本修訂紀錄 + 假設驗證對照</h2>
+<div class="hypothesis-box">
+<p><strong>v12.7 DD（2026-06-20）變更紀錄：</strong></p>
+<ul>
+<li>schema v12.4（2026-05-21）→ <strong>v12.7</strong>（2026-06-20）。新增 §8.0 成長品質 7 問儀表板、§8.I 分部前瞻建模、§9.F 對手財務深度、§10.E 長期趨勢+DuPont+營運資金、§11.F 逐段 TAM/SAM、§12.D 10 年資本配置、§12.E FCF 去向+M&amp;A 飛輪。</li>
+<li><strong>裁決維持 B</strong>（與 5/21 一致）：Q2 FY26 無新財報變動，但股價 +9.1%（$398→$434），估值更貴 → 觀望更堅定。</li>
+<li><strong>PEG 口徑修正：</strong>由 3Y-from-trough（1.09）改為常態化 FY+1→FY+3（1.72），更誠實反映進場後可持續成長，估值燈維持 🟠。</li>
+</ul>
+</div>
+<table>
+<tr><th>項目</th><th>上次狀態（2026-05-21）</th><th>本次狀態（2026-06-20）</th><th>邊際變化</th></tr>
+<tr><td>H1 Industrial 滲透</td><td>🟢 兌現（+56%）</td><td>🟢 兌現</td><td>不變</td></tr>
+<tr><td>H2 AI/資料中心</td><td>🟢 兌現（Comms +79%）</td><td>🟢 兌現</td><td>不變</td></tr>
+<tr><td>H3 毛利率 70%+</td><td>🟡 兌現近峰值</td><td>🟡 兌現近峰值</td><td>不變（仍最弱）</td></tr>
+<tr><td>R1 拉貨反轉</td><td>未觸發</td><td>未觸發（CEO 示警持續）</td><td>警戒</td></tr>
+<tr><td>R2 TXN 成本壓力</td><td>未觸發</td><td>未觸發</td><td>監控</td></tr>
+<tr><td>R3 併購稀釋</td><td>未觸發</td><td>未觸發</td><td>監控</td></tr>
+<tr><td>裁決變化</td><td>B</td><td>B</td><td>不變（估值更貴，觀望更堅定）</td></tr>
+</table>
+<p class="note">institutional memory 僅存於本區塊，不滲透正文。資料來源：yfinance（2026-06-18 收盤）+ Excel EPS snapshot 2026-06-04 + web_search（ADI Q2 FY26 法說、分析師目標、同業估值、ROIC/GM 歷史）。</p>
+</section>
+
+<script id="dd-meta" type="application/json">
+{
+"ticker": "ADI",
+"schema": "v12.7",
+"date": "2026-06-20",
+"price_at_dd": 434.46,
+"signal": "B",
+"trap": "🟡",
+"trap_label": "🟡 觀察期",
+"moat": "A",
+"val": "🟠",
+"ma": "✅",
+"fpe_fy2": 29.41,
+"pct_5y": 80.0,
+"peg_fy2": 1.72,
+"upside_short_pct": -23.3,
+"upside_mid_pct": -8.2,
+"stress": {"pass": 2, "total": 2},
+"moat_score": 9.0,
+"moat_execution": 9.0,
+"moat_pricing_power": 9.0,
+"growth_durability": 7.5,
+"quality_score": 9.0,
+"ai_risk": "🟢",
+"long_term_confidence": "高",
+"verdict": "B 衛星候選/觀望（Q2 FY26 record +37%／EPS $3.09 beat 但股價 +9% 至貼 52W 高；估值🟠 FY+2 FPE 29.4x／常態化 PEG 1.72；毛利見頂 + 關稅拉貨為兩大警示；A 級護城河長坡完整，等回檔 $360-390 加碼）",
+"oneliner": "Q2 FY26 record rev $3.62B/+37%、EPS $3.09 beat；Industrial+56%／Comms+79%／資料中心+90%；非GAAP GM 73%見頂、Q3 OM持平49%；估值🟠 FY+2 FPE 29.4x/常態PEG 1.72；MA✅但貼52W高；訊號B觀望，等回檔。",
+"upside_5y_pct": 23,
+"endo_growth_ceiling": 12.0,
+"capalloc_grade": "B"
+}
+</script>
+
+<button class="btn-print" onclick="window.print()">🖨 列印為 PDF</button>
+</main>
+</body>
+</html>

@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v12.7">
+<title>DD｜ON Semiconductor (ON) — v12.7 深度研究報告 2026-06-20</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#F8FAFC;--card:#FFFFFF;--ink:#1E3A5F;--accent:#3B82F6;--line:#E2E8F0;--row:#F1F5F9;--mut:#64748B;--green-bg:#DCFCE7;--green-ink:#166534;--red-bg:#FEE2E2;--red-ink:#991B1B;--yel-bg:#FEF9C3;--yel-ink:#92400E;--blue-bg:#EFF6FF}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:#0F172A;font-family:"Noto Sans TC",system-ui,sans-serif;line-height:1.7;font-size:15px}
+  code,.mono{font-family:"IBM Plex Mono",monospace}
+  header.fixed{position:sticky;top:0;z-index:50;background:#0F2540;color:#fff;padding:10px 22px;display:flex;flex-wrap:wrap;gap:8px 22px;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,.18);font-size:13px}
+  header.fixed .tk{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:17px;letter-spacing:.5px}
+  header.fixed .pill{background:rgba(255,255,255,.12);padding:2px 10px;border-radius:999px;font-family:"IBM Plex Mono",monospace}
+  main{max-width:1080px;margin:0 auto;padding:26px 20px 90px}
+  nav.dd-toc{background:#fff;border-left:4px solid var(--accent);border-radius:6px;padding:14px 16px;margin:0 0 26px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+  nav.dd-toc b{display:block;color:var(--ink);margin-bottom:8px;font-size:13px}
+  nav.dd-toc a{display:inline-block;background:var(--blue-bg);color:#1d4ed8;text-decoration:none;padding:4px 11px;border-radius:999px;margin:3px 4px 3px 0;font-size:12.5px;border:1px solid #dbeafe}
+  nav.dd-toc a:hover{background:#dbeafe}
+  section{background:var(--card);border-radius:8px;padding:6px 26px 24px;margin-bottom:22px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+  h2{color:#fff;background:var(--ink);border-left:4px solid var(--accent);padding:9px 14px;border-radius:0 4px 4px 0;font-size:19px;margin:26px -26px 18px;scroll-margin-top:80px}
+  section>h2:first-child{margin-top:14px}
+  h3{color:var(--ink);font-size:16px;border-bottom:2px solid var(--line);padding-bottom:5px;margin-top:26px}
+  h4{color:#27496b;font-size:14.5px;margin:18px 0 8px}
+  table{border-collapse:collapse;width:100%;margin:12px 0;font-size:13px}
+  th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+  th{background:var(--ink);color:#fff;font-weight:500}
+  tbody tr:nth-child(even){background:var(--row)}
+  .num{font-family:"IBM Plex Mono",monospace;text-align:right;white-space:nowrap}
+  .good{background:var(--green-bg);color:var(--green-ink);font-weight:500}
+  .bad{background:var(--red-bg);color:var(--red-ink);font-weight:500}
+  .neu{background:var(--yel-bg);color:var(--yel-ink);font-weight:500}
+  .hypothesis-box{background:var(--blue-bg);border-left:4px solid var(--accent);padding:14px 18px;border-radius:0 6px 6px 0;margin:16px 0}
+  .hypothesis-box ul{margin:0;padding-left:18px}.hypothesis-box li{margin:7px 0}
+  .trap-box{background:#FFF0E6;border-left:4px solid #F97316;padding:14px 18px;border-radius:0 6px 6px 0;margin:16px 0}
+  .trap-box h4{color:#C2410C;margin-top:0}
+  .reasoning{background:#F8FAFC;border:1px dashed #cbd5e1;border-radius:6px;padding:9px 13px;margin:10px 0;font-size:12.5px;color:#334155}
+  .reasoning b{color:var(--ink)}
+  .note{font-size:12.5px;color:var(--mut)}
+  .sig{font-size:21px;font-weight:700}
+  .three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:14px 0}
+  .rr-card{border-radius:6px;padding:12px 14px;font-size:13px}
+  .rr-s{border-left:4px solid #0284C7;background:#F0F9FF}.rr-m{border-left:4px solid #7C3AED;background:#F5F3FF}.rr-l{border-left:4px solid #059669;background:#ECFDF5}
+  .rr-card h4{margin:0 0 6px}
+  .tag{display:inline-block;padding:1px 8px;border-radius:4px;font-size:12px;font-weight:500}
+  .btn-print{position:fixed;right:20px;bottom:20px;background:var(--accent);color:#fff;border:none;padding:11px 17px;border-radius:8px;cursor:pointer;font-size:13px;box-shadow:0 3px 10px rgba(59,130,246,.4);z-index:60}
+  @media print{header.fixed{position:static}.btn-print,nav.dd-toc{display:none}section{box-shadow:none}}
+  @media(max-width:720px){.three-col{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#0f172a;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(59,130,246,.28);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/" class="active">個股 DD</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/ds/">產業敘述 DS</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/">週報</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/long-track-smh/">長線訊號</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/">量化回測</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/screener-tw.html">Screener 台股</a>
+          <a href="/screener-jp.html">Screener 日股</a>
+          <a href="/screener-my.html">Screener 馬股</a>
+          <a href="/cache/">🗄 Data Cache</a>
+          <a href="/tools/">期貨部位計算機</a>
+        </div>
+      </div>
+      <a href="/mental-models/">🧠 心智模型</a>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+<header class="fixed">
+  <span class="tk">ON · onsemi</span>
+  <span class="pill">資料抓取 2026-06-20</span>
+  <span class="pill">最新價 $121.62</span>
+  <span class="pill">最近財報 Q1 2026 (2026-05-04)</span>
+  <span class="pill">DD Schema v12.7</span>
+</header>
+<main>
+
+<nav class="dd-toc">
+  <b>章節導覽</b>
+  <a href="#s1">§1 投資結論</a><a href="#s2">§2 四層判定</a><a href="#s3">§3 三方辯論</a><a href="#s4">§4 序章</a><a href="#s5">§5 論點錨定</a><a href="#s6">§6 財報</a><a href="#s7">§7 門檻</a><a href="#s8">§8 成長</a><a href="#s9">§9 護城河</a><a href="#s10">§10 財務</a><a href="#s11">§11 產業</a><a href="#s12">§12 治理</a><a href="#s13">§13 估值</a>
+</nav>
+
+<!-- §1 -->
+<section id="s1">
+<h2>§1　投資結論（Executive Summary）</h2>
+<p class="note">本結論基於以下完整分析得出。資料時間 2026-06-20，最新收盤 $121.62（yfinance，2026-06-18）。最近財報 Q1 2026（2026-05-04 公布）。⚠️ 注意：ON 為深度週期股，剛於 Q1'26 inflect（+5% YoY，CEO 稱「cycle found its low point」），股價自 52W 低 $44.56 已近 3 倍至 $121.62。</p>
+
+<h3>結論 Dashboard（綜合訊號燈）</h3>
+<div class="hypothesis-box">
+<ul>
+<li><strong>產業風向燈 🟡（中性）：</strong>§8 長期成長性 🟡 中等可見度（SiC/AI 資料中心電源結構成長，但 EV 放緩是 SiC 逆風 + 週期剛 inflect）｜§9 護城河趨勢 穩定（SiC #2 + 汽車 CIS #1，但 Sony 競爭升溫）｜§8 F AI 風險 🟢 受益（資料中心電源 +30% QoQ，guide 2026 翻倍）｜一句話：週期谷底反轉 + AI 電源新引擎，但 EV/SiC 結構不確定。</li>
+<li><strong>品質 B 級：</strong>護城河 7.0/10（execution 7.0 × pricing power 6.5）｜體質 veto 1 項不過（GAAP GM 連 3 年下滑，週期 + 重組 artifact）｜等級調整：B → B（不變）。</li>
+<li><strong>估值燈 🟠 偏貴：</strong>Fwd PE FY+1 39.4x / FY+2 28.5x，5Y 分位 ~85%（E 受週期壓低失真），PEG 0.83（**recovery 假象，覆寫不採 🟢**）｜盲點 1 救援：否（§8 🟡）。</li>
+<li><strong>Pure MA 狀態 🟡 觀察池：</strong>W52 $66.03 / W104 $62.55 / W250 $67.33（W250 斜率 +4.75%）｜<strong>W104 &lt; W250（後谷底 MA 未對齊）</strong>，價 $121.62 ≫ 所有 MA（+27% W52 斜率）+ 貼 BB 上軌 $135.54 = 後谷底火箭，極度伸展。</li>
+<li><strong>大盤豁免 ✅ 正常：</strong>S&amp;P 500 7,500.58 vs W104 6,275.11（未破線）。</li>
+<li><strong>參考 R:R：</strong>短期 −52%（目標 $59）/ 中期 −33%（目標 $81）｜壓力測試 2/2（資訊性）。</li>
+<li><strong>綜合訊號：<span class="sig">B</span></strong>（取自 §2 H）｜判定理由：品質 B + 估值 🟠（**股價已跑過分析師均標 $106**）+ MA 🟡 觀察池（後谷底未對齊）+ trap 🟡 → thesis 完整但時機/估值嚴重不到位，落 B（觀望，等大幅回檔）。</li>
+<li><strong>長期持有信心：中</strong>（§2 I）｜<strong>陷阱定性：🟡 觀察期</strong>（後谷底火箭跑過共識目標 + EV/SiC 結構不確定 + Sony CIS 競爭；FCF 強 + 週期反轉真實，故非 🔴）。</li>
+<li><strong>Inception DD：</strong><code>DD_ON_20260620.html</code>（本份為 Inception）。</li>
+<li><strong>下次年度對照倒數：</strong>2027-06-20（距今 365 天）。</li>
+</ul>
+</div>
+<p class="note"><strong>訊號語意：</strong>A+ 滿格｜A 核心｜B 衛星/觀望｜C 觀察池｜X 迴避。倉位由 PM skill 決定。</p>
+
+<div class="reasoning"><b>ON 與 ADI/TXN 的根本差異：</b>ADI/TXN 是「優質類比霸主、估值偏貴、等回檔」；ON 是「<b>深度週期股剛谷底反轉、股價已 3 倍且跑過分析師均標 $106、估值 + 動能雙重伸展</b>」。ON 的 B 不是「優質但貴」，而是「週期反轉真實但已大幅 priced-in + 結構不確定（EV/SiC）」。風險性質更高，長期信心僅「中」。</div>
+
+<h3>⚠️ 這是價值陷阱嗎？（強制回答題）</h3>
+<div class="trap-box">
+<table>
+<tr><th style="width:26%">問題</th><th>回答</th></tr>
+<tr><td><strong>最可能的價值陷阱模式？</strong></td><td><strong>「週期反轉誤判 + 產業結構衰退」混合</strong>：市場以 28.5x（FY+2）定價一個剛 inflect 的週期反轉 + SiC/AI 復甦，但 ① 股價已 3 倍且跑過分析師均標；② EV 放緩是 SiC（核心成長引擎）的結構逆風；③ PEG 0.83 的「便宜」是 recovery 假象（分母在谷底回補膨脹）。</td></tr>
+<tr><td><strong>支持「這不是陷阱」的最強論據</strong></td><td>① <strong>FCF 在深度下行期不減反增</strong>（FY23 $438M → FY24 $1,212M → FY25 $1,419M，FCF margin 創 24% 紀錄）——fab-right 策略把 capex 自 $1.5B 砍至 $341M，現金引擎韌性強；② AI 資料中心電源 +30% QoQ、guide 2026 翻倍（真實新引擎）；③ SiC #2（~25% 份額）+ 汽車 CIS #1（~40%）的真實市場地位；④ CEO El-Khoury 明確稱「cycle found its low point」，3 連季 GM 擴張。</td></tr>
+<tr><td><strong>支持「這可能是陷阱」的最強反駁</strong></td><td>① 股價 $121.62 已<strong>高於 32 位分析師均標 $106.54（隱含 −12% 下行）</strong>——市場已把反轉定價過頭；② <strong>EV 放緩</strong>是 SiC 的結構逆風（SiC 營收在下行期下滑），復甦時點不確定；③ AMG 段仍 −5% YoY 衰退；④ Sony 加大汽車 CIS 競爭（ISG 段威脅）；⑤ GAAP 仍虧損（Q1'26 −$0.08，重組 $329M）。</td></tr>
+<tr><td><strong>空頭最強一擊（18 個月 30%+ 虧損路徑）</strong></td><td>EV 需求持續疲軟使 SiC 復甦低於預期 + AMG 續衰 + Sony 侵蝕 CIS → FY27 EPS 不及共識 $4.27 → 市場意識到「28.5x 定價的反轉」過頭，倍數壓回 ~15x、EPS 下修 → 股價向 $60-75（−38%~−51%）。監測：SiC/EV 營收 YoY、PSG QoQ、AMG 趨穩與否。</td></tr>
+<tr><td><strong>如何判斷陷阱是否發生？</strong></td><td>① SiC/汽車營收是否持續 YoY 改善（vs EV 放緩）；② 非 GAAP GM 是否續朝 40%+（fab-right 兌現）。任一惡化 → 🟡→🔴。</td></tr>
+</table>
+<p><strong>最終定性：🟡 觀察期</strong>（週期反轉 + FCF 韌性真實，但股價已跑過共識目標 + EV/SiC 結構不確定；非結構性死亡，故非 🔴，但風險高於 ADI/TXN）。</p>
+</div>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估閾值</th></tr>
+<tr><td>1</td><td>SiC / 汽車營收 YoY（vs EV 放緩）</td><td>§5 H1</td><td>🔵 核心假設驗證（必填）</td><td>SiC 連 2 季 YoY 仍負，或 PSG QoQ 轉負</td></tr>
+<tr><td>2</td><td>AI 資料中心電源營收（guide 2026 翻倍）</td><td>§8 / §9 H2</td><td>🔵 長期成長領先信號（必填）</td><td>資料中心 QoQ 增速明顯放緩</td></tr>
+<tr><td>3</td><td>非 GAAP GM 軌跡（fab-right 兌現）+ 股價 vs 分析師均標</td><td>§10 / §13</td><td>短期估值/財報信號</td><td>GM 未續朝 40%+，或股價持續高於均標 $106 &gt; 20%</td></tr>
+</table>
+</section>
+
+<!-- §2 -->
+<section id="s2">
+<h2>§2　產業風向燈 × 品質 × 估值燈 × Pure MA 四層判定</h2>
+
+<h3>0｜產業風向燈</h3>
+<table>
+<tr><th>輸入</th><th>數值</th></tr>
+<tr><td>§8 長期成長性綜合評級</td><td class="neu">🟡 中等可見度</td></tr>
+<tr><td>§9 護城河趨勢</td><td>穩定（SiC #2 + CIS #1，但 Sony 競爭升溫、EV 逆風）</td></tr>
+<tr><td>§8 F AI 風險</td><td class="good">🟢 受益</td></tr>
+<tr><td><strong>產業風向燈</strong></td><td class="neu"><strong>🟡 中性</strong></td></tr>
+<tr><td>一句話產業判斷</td><td>週期谷底反轉 + AI 電源新引擎（資料中心翻倍），但 SiC 核心成長受 EV 放緩結構逆風 + Sony CIS 競爭 → 風向燈中性。</td></tr>
+</table>
+<div class="reasoning"><b>推導：</b>§8🟡（週期剛反轉 + EV/SiC 不確定）為限制項 → 風向燈 🟡。<b>implication：</b>盲點 1 救援需 §8🟢，不滿足 → 估值燈 🟠 不被救援。</div>
+
+<h3>A｜體質檢核（veto 制）</h3>
+<table>
+<tr><th>#</th><th>項目</th><th>結果</th><th>關鍵數據</th></tr>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 &gt;2%p</td><td class="bad">❌</td><td>GAAP GM FY22 49.0% → FY23 47.1% → FY24 45.4% → FY25 33.1%（連 3 年下滑，FY24→25 −12pp 含重組 + 深度週期；非 GAAP 38.5% 回升中）</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td class="good">✅</td><td>FY2025 FCF $1,419M / NI $121M = <strong>11.7</strong>（NI 被重組壓低，FCF 強）</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td class="good">✅</td><td>0y(FY26) 90d 前 $2.91 → 今 $3.10（上修）</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全為負</td><td class="good">✅</td><td>Q1'26 +5% YoY（inflection，非全負）</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td class="good">✅</td><td>淨債 $857M / EBITDA ~$1,437M（OI $751M + D&amp;A $686M）= <strong>0.6x</strong></td></tr>
+</table>
+<p><strong>體質 veto 結果 = 1 項不過 → 等級不變</strong>（0-2 項 → 不變）。GAAP GM 連跌主因深度下行 + 重組 artifact；非 GAAP GM 已回升（Q1'26 38.5%）。B 級維持。</p>
+
+<h3>B｜品質等級（護城河單一決定）</h3>
+<table>
+<tr><th>項目</th><th>值</th></tr>
+<tr><td>護城河分數（§9）</td><td>7.0 / 10（execution 7.0 × pricing power 6.5，合併）</td></tr>
+<tr><td>護城河原始等級</td><td>✅ B 級（7-8 分）</td></tr>
+<tr><td>體質 veto 調整</td><td>1 項不過 → 不變</td></tr>
+<tr><td><strong>調整後等級</strong></td><td class="neu"><strong>B 級</strong></td></tr>
+<tr><td>底倉</td><td>目標倉位的 15%（PM skill 決定）</td></tr>
+</table>
+
+<h3>C｜估值輸入（FY+1 / FY+2 共識）</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>FY+1 EPS（FY2026E，非 GAAP）</td><td class="num">$3.09</td><td>Excel snapshot 2026-06-04</td></tr>
+<tr><td>FY+2 EPS（FY2027E）</td><td class="num">$4.27</td><td>同上（yfinance +1y $4.32 交叉）</td></tr>
+<tr><td>FY+3 EPS（FY2028E）</td><td class="num">$5.58</td><td>同上</td></tr>
+<tr><td>FY+1→FY+2 成長</td><td class="num">+38.2%</td><td>計算（recovery 回補）</td></tr>
+<tr><td>當前 FY+2 Forward P/E</td><td class="num">28.5x</td><td>$121.62 ÷ $4.27</td></tr>
+</table>
+<p class="note">EPS 來源：Excel snapshot 2026-06-04（非 GAAP）。基期 FY2025 非 GAAP ~$2.35；GAAP FY2025 僅 $0.29（重組壓低）。FY+1→FY+3 CAGR 34.38% 含深度谷底回補，非常態。</p>
+
+<h3>D｜估值燈</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>當前 Fwd PE（FY+1 / FY+2）</td><td class="num">39.4x / 28.5x</td></tr>
+<tr><td>5Y NTM Fwd PE 分位</td><td class="num">~85%（E 受週期壓低失真）</td></tr>
+<tr><td>EPS CAGR（FY+1→FY+3，§7）</td><td class="num">34.38%（recovery 回補）</td></tr>
+<tr><td>PEG</td><td class="num">0.83（recovery 假象）</td></tr>
+<tr><td><strong>估值燈</strong></td><td class="neu"><strong>🟠 偏貴</strong></td></tr>
+<tr><td>套用規則</td><td>× 0.5（傳遞至 §2 H）</td></tr>
+</table>
+<div class="reasoning"><b>推導 + PEG 覆寫：</b>機械上 PEG 0.83 &lt; 1.0 應給 🟢，但這是<b>典型週期股的「谷底回補 PEG 假象」</b>（分母 34% CAGR 由深度谷底 FY25 回補膨脹，非可持續）——同 MU DD 教訓，覆寫不採 🟢。Fwd PE FY+1 39.4x + 5Y 分位 ~85% + <b>股價已跑過分析師均標 $106（−12% 下行）</b> → 實質 <b>🟠 偏貴</b>。<b>盲点 1 救援：</b>§8🟡（非 🟢）→ 不救。<b>implication：</b>gate 🟠 + MA 🟡 + trap 🟡 → §2 H 落 B（觀望，等大幅回檔）。</div>
+
+<h3>E｜R:R + Bear Case</h3>
+<p class="note">合理 P/E 基準 = 19x（B 級護城河 7 分 + §8 🟡 + 週期性 SiC/power，低於 ADI/TXN 的 27x，因更商品化 + EV 不確定）。</p>
+<div class="three-col">
+<div class="rr-card rr-s"><h4>① 短期（1 年）</h4>FY+1 EPS $3.09 × 19x<br>目標價 <b>$59</b><br>vs 現價 $121.62<br><span class="tag bad">上行 −52%</span></div>
+<div class="rr-card rr-m"><h4>② 中期（2 年）</h4>FY+2 EPS $4.27 × 19x<br>目標價 <b>$81</b><br>vs 現價 $121.62<br><span class="tag bad">上行 −33%</span></div>
+<div class="rr-card rr-l"><h4>③ 長期（5 年）</h4>§8 E Base 5Y EPS $6.75 × 19x<br>目標價 <b>$128</b><br>vs 現價 $121.62<br><span class="tag good">上行 +5.2%</span></div>
+</div>
+<p><strong>Bear anchor：</strong>Bear EPS = FY+1 $3.09 × 0.9 = $2.78；Bear PE ~13x（週期反轉）；Bear 股價 = <strong>$36</strong>（現價下行 −70%；52W 低 $44.56 為較現實參考，−63%）。</p>
+<div class="reasoning"><b>QC-36 5Y 一致性：</b>§2 E 長期格 $128 = §8 E Base 5Y EPS $6.75 × 19x；§1 dashboard 長期 +5.2%；dd-meta upside_5y_pct = 5。三處一致。<b>stress 2/2。</b><b>implication：</b>短/中期 R:R 嚴重為負（股價已跑過合理倍數目標一倍以上）→ 現價是後谷底火箭高點，等大幅回檔。</div>
+
+<h3>F｜Pure MA 狀態機</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>現價</td><td class="num">$121.62</td></tr>
+<tr><td>W52 / 斜率</td><td class="num">$66.03 / +27.16%</td></tr>
+<tr><td>W104 / 斜率</td><td class="num">$62.55 / +6.06%</td></tr>
+<tr><td>W250 / 斜率（13週）</td><td class="num">$67.33 / +4.75%</td></tr>
+<tr><td>Bollinger 20w（上/中/下）</td><td class="num">$135.54 / $86.51 / $37.47</td></tr>
+<tr><td><strong>Pure MA 狀態</strong></td><td class="neu"><strong>🟡 觀察池</strong></td></tr>
+<tr><td>MA 部位乘數</td><td>0（等確認）</td></tr>
+</table>
+<div class="reasoning"><b>判定：</b>現價 &gt; W250 且斜率 +4.75% &gt; −3（非 ❌）；現價 &gt; W104（非 🟠）；但 <b>W104 $62.55 &lt; W250 $67.33</b> → 「current &gt; w52 &gt; w104 &gt; w250」條件失敗（後谷底 MA 未對齊）→ 落 <b>🟡 觀察池</b>。<b>關鍵：</b>價 $121.62 是 W52 $66 的 1.84 倍、W250 $67 的 1.81 倍，+27% W52 斜率，貼 BB 上軌 $135.54 = <b>後谷底火箭，技術面極度伸展</b>。近 5 日波動劇烈（6/16 $125.9 → 6/17 $112.9 −10%）。MA 乘數 0，等 MA 對齊（W104 上穿 W250）+ 4 週確認。</div>
+
+<h3>G｜大盤豁免層</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>對應大盤</td><td>S&amp;P 500（^GSPC）</td></tr>
+<tr><td>大盤現價 / W104</td><td class="num">7,500.58 / 6,275.11</td></tr>
+<tr><td>系統性風險（破 W104）</td><td class="good">否</td></tr>
+<tr><td><strong>豁免係數</strong></td><td><strong>× 1.0（正常）</strong></td></tr>
+</table>
+
+<h3>H｜綜合訊號燈</h3>
+<table>
+<tr><th>維度</th><th>值</th></tr>
+<tr><td>quality_tier（§2 B）</td><td>B 級</td></tr>
+<tr><td>gate（§2 D）</td><td>🟠 偏貴</td></tr>
+<tr><td>ma_status（§2 F）</td><td>🟡 觀察池</td></tr>
+<tr><td>benchmark_regime（§2 G）</td><td>正常</td></tr>
+<tr><td>trap（§1 定性）</td><td>🟡 觀察期</td></tr>
+<tr><td><strong>final_signal</strong></td><td class="sig">B</td></tr>
+</table>
+<div class="reasoning"><b>§2 H 推導（QC-31）：</b>步驟 1 無 X（trap 非🔴、gate 非🔴、MA 非❌、quality B 非拒絕）。步驟 4 衛星級：quality B + trap 🟡，但 gate 🟠（非 🟢/🟡）。步驟 5「時機不到」：gate 🟠 + MA 🟡 觀察池 + trap 🟡，無 QC-31 C 觸發（品質 7≥6、護城河無侵蝕、trap 非🔴、AI 非🔴）→ <b>B（觀望，等大幅回檔 + MA 對齊）</b>。注意：ON 的 B 是「週期反轉真實但已大幅 priced-in」，比 ADI/TXN 的「優質但貴」更接近 C 邊界（長期信心僅中），但 thesis（週期反轉 + FCF 韌性）完整故維持 B。</div>
+
+<h3>I｜長期展望（3-5 年定性）</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>結論</th></tr>
+<tr><td>成長跑道</td><td>§8A</td><td>中等（SiC + AI 電源結構成長，但 EV 放緩使 SiC 跑道不確定）</td></tr>
+<tr><td>護城河趨勢</td><td>§9</td><td>穩定（SiC #2 + CIS #1，但 Sony 競爭 + EV 逆風）</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td>綜合</td><td class="neu"><strong>中</strong></td></tr>
+</table>
+<p><strong>一句話：</strong>🟡 中性，B 級護城河 7/10（SiC #2 + 汽車 CIS #1）。估值燈 🟠 偏貴（FY+1 39.4x、股價已跑過分析師均標 $106）+ Pure MA 🟡 觀察池（後谷底火箭、MA 未對齊、極伸展），現價是反轉行情高點。週期反轉 + FCF 韌性真實，但 EV/SiC 結構不確定使長期信心僅「中」；需等大幅回檔（$70-85）+ SiC/EV 復甦確認再考慮。</p>
+</section>
+
+<!-- §3 -->
+<section id="s3">
+<h2>§3　三方辯論（已併入 §1）</h2>
+<p class="note">§3 三方辯論已併入 §1 終判（v12.5）。空頭最強一擊見 §1「這是價值陷阱嗎？」；多頭論據見 §8/§9；仲裁見 §13。</p>
+</section>
+
+<!-- §4 -->
+<section id="s4">
+<h2>§4　序章：第一性原理 × 逆向思考</h2>
+<h3>存在意義</h3>
+<p>ON（onsemi）解決<strong>電力的高效轉換與真實世界的感測</strong>：在電動車、工業、AI 資料中心中，電力需要被高效轉換（SiC 功率半導體可在高電壓/高溫下大幅降低能耗）、影像需要被捕捉（汽車 CIS 是 ADAS 的眼睛）。ON 是 SiC 功率的 #2（~25% 份額）+ 汽車影像感測的 #1（~40%）。</p>
+<p>若 ON 明天消失：電動車的電驅系統、工業電源、AI 資料中心的高效供電會出現 SiC 供應缺口（雖有 STM/Infineon 替代）；汽車 ADAS 的影像感測會少一個主供應商。但相較 ADI/TXN 的「不可替代橋樑」，ON 的地位更可替代（SiC 有 STM/Infineon、CIS 有 Sony/OmniVision）—— 這是 B 級而非 A 級的根因。AI 取代風險 🟢（資料中心電源賣鏟人）。</p>
+<p class="note">護城河如何累積（從 Fairchild 收購到 SiC/fab-right 轉型），見 §9.D 時間軸。</p>
+<table>
+<tr><th>年代</th><th>milestone</th><th>作用</th></tr>
+<tr><td>1999</td><td>從 Motorola 分拆獨立</td><td>類比/分立元件基礎</td></tr>
+<tr><td>2016</td><td>收購 Fairchild（$2.4B）</td><td>擴大功率半導體</td></tr>
+<tr><td>2020</td><td>El-Khoury 任 CEO，啟動轉型</td><td>聚焦 SiC/汽車/工業高價值</td></tr>
+<tr><td>2021-22</td><td>GT Advanced（SiC 基板）+ fab-liter（賣次規模廠）</td><td>SiC 垂直整合 + 降固定成本</td></tr>
+<tr><td>2023-26</td><td>fab-right（聚焦戰略節點）+ Treo/EliteSiC 平台</td><td>成本結構 + SiC 平台</td></tr>
+<tr><td>2025</td><td>Allegro $6.9B 敵意併購（撤回）</td><td>資本配置野心警訊</td></tr>
+</table>
+<p class="note">ON 從 Motorola 分立元件廠，經 Fairchild + GT Advanced + fab-right 轉型為 SiC/power + 汽車 leader。轉型執行尚可（FCF margin 創 24%），但護城河本質仍是「強者之一」而非「壟斷」。</p>
+<h3>逆向推演（Munger Inversion）</h3>
+<ul>
+<li><strong>技術替代/競爭（最關鍵）：</strong>SiC 面對 STM（#1）、Infineon、Wolfspeed（Gen4，但財務困難）、Bosch；汽車 CIS 面對 Sony（Sony-TSMC JV 加大競爭）+ OmniVision。ON 在兩個核心市場都是「強者之一」而非「壟斷者」。</li>
+<li><strong>需求結構（EV 放緩）：</strong>SiC 的最大成長引擎是 EV 電驅，但 2025-26 EV 需求放緩直接打擊 SiC 需求——這是 ON 成長的結構性不確定（非單純週期）。</li>
+<li><strong>管理層：</strong>CEO El-Khoury 的 fab-right 策略（砍 capex、提 FCF）執行良好；但 2025 失敗的 Allegro $6.9B 敵意併購顯示資本配置野心（自我毀滅路徑詳見 §12）。</li>
+<li><strong>價值陷阱路徑（四選一）：</strong>最可能<strong>「週期反轉誤判 + 產業結構衰退」混合</strong>——市場以 28.5x 定價剛 inflect 的反轉，但 EV 放緩使 SiC 復甦不如預期，股價已跑過共識目標 → 反轉行情退潮。架構替代分級見 QC-23。</li>
+</ul>
+</section>
+
+<!-- §5 -->
+<section id="s5">
+<h2>§5　投資論點錨定</h2>
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td>預設持有期</td><td>2–4 年（週期反轉受 EV/SiC 復甦時點約束；非無條件長抱）</td></tr>
+<tr><td>主要驅動理由</td><td>SiC/EV 復甦節點 + AI 電源放量 + 估值回檔</td></tr>
+<tr><td>訊號/噪音</td><td>SiC/汽車營收 YoY 趨勢、AI 電源放量、非 GAAP GM 軌跡為訊號；單季 GAAP 重組噪音。</td></tr>
+</table>
+
+<h3>B｜三個核心假設 + 三層時間軸</h3>
+<table>
+<tr><th>#</th><th>核心假設</th><th>2Y 驗證點</th><th>5Y 驗證點</th><th>10Y 驗證點</th><th>數字門檻</th><th>來源</th><th>漂移觸發</th></tr>
+<tr><td>H1</td><td><strong>週期谷底反轉確立 + SiC/汽車復甦</strong>（EV 放緩不致命）</td><td>FY26-27 營收持續 YoY 正成長、SiC 回正</td><td>FY28-30 營收回 $8B+（前峰）、SiC 重拾成長</td><td>SiC 滲透 EV/工業長坡兌現</td><td>FY27 營收 &gt; $7B</td><td>ON 法說 / SiC 市場報告</td><td>SiC 連 2 季 YoY 仍負 + PSG QoQ 轉負 → 反轉（2Y，QC-35）</td></tr>
+<tr><td>H2</td><td><strong>AI 資料中心電源成新引擎</strong></td><td>2026 資料中心營收翻倍（&gt;$500M）</td><td>FY28-30 資料中心成 ON 第三大支柱</td><td>AI 電源結構性需求持續</td><td>2026 資料中心 &gt;$500M</td><td>ON Q1'26 guide（翻倍）</td><td>資料中心 QoQ 增速明顯放緩 → 削弱（2Y）</td></tr>
+<tr><td>H3</td><td><strong>fab-right → 結構性 margin 提升</strong></td><td>FY27 非 GAAP GM 回 42%+</td><td>FY30 GM 朝高 40%/50%（前峰 49%）</td><td>fab-right 成本結構固化</td><td>FY27 非 GAAP GM ≥ 42%</td><td>ON 法說 / fab-right 進度</td><td>GM 連 4 季 &lt; 39% → 削弱（5Y）</td></tr>
+</table>
+
+<h3>B'｜12 個月前 DD 對照</h3>
+<p class="note">狀態：本份為 ON Inception DD（2026-06-20）。本欄位將於 2027-06-20 起首次有 YoY 對照。在此之前，僅以 §5 B 戰術假設視角追蹤。</p>
+
+<h3>C｜三個最可能推翻論點的風險</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>時間尺度</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td><strong>EV 放緩使 SiC 復甦落空</strong>（結構性需求逆風）</td><td>H1</td><td>🔥 中期（4-6 季）</td><td>SiC/汽車營收 YoY、EV 銷量、PSG QoQ</td><td>SiC 連 2 季 YoY 負 + PSG QoQ 轉負 → 減倉</td></tr>
+<tr><td>R2</td><td><strong>Sony CIS 競爭侵蝕 ISG</strong>（汽車影像感測）</td><td>—</td><td>🔥 中期（4-6 季）</td><td>ISG 段營收、汽車 CIS 份額</td><td>ISG 連 2 季衰退 + 份額流失 → 重評</td></tr>
+<tr><td>R3</td><td><strong>股價已跑過共識 → 反轉行情退潮</strong></td><td>H1/估值</td><td>⚡ 短期（1-2 季）</td><td>股價 vs 分析師均標 $106、動能</td><td>股價維持 &gt; 均標 20% + 動能轉弱 → 等回檔</td></tr>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<table>
+<tr><th>判斷步驟</th><th>問題</th></tr>
+<tr><td>1. 時間軸匹配？</td><td>事件在 2-4 年持有期內有影響？</td></tr>
+<tr><td>2. 假設關聯？</td><td>影響 H1（週期/SiC）/ H2（AI 電源）/ H3（GM）哪個？</td></tr>
+<tr><td>3. 邊際方向？</td><td>＋/0/−？</td></tr>
+<tr><td>4. 閾值判斷？</td><td>達 §5 C 雙條件？</td></tr>
+</table>
+<p class="note"><strong>套用範例（Q1'26 inflection + 股價已 3 倍）：</strong>① 時間軸：在持有期內 ✓；② 假設：Q1 +5% 強化 H1、資料中心 +30% QoQ 強化 H2、GM 38.5% 對 H3 中性偏弱（未到 42%）；③ 邊際：基本面 ＋反轉，但股價已 3 倍且跑過均標 = 估值 −強削弱；④ 閾值：基本面反轉但估值嚴重透支 → 結論：反轉是訊號（thesis 成立），但股價漲幅已遠超基本面修復，現價追高 = 噪音主導 → B 觀望。</p>
+
+<h3>E｜可執行決策主線預設</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>行動</th></tr>
+<tr><td><strong>進場</strong></td><td>大幅回檔至 $70-85（FY+2 FPE ~17-20x / BB 中軌 $86）+ SiC/EV 復甦確認 + MA 對齊（W104 上穿 W250）</td><td>試倉建倉</td></tr>
+<tr><td><strong>加碼</strong></td><td>SiC 回正 + 資料中心翻倍兌現 + 非 GAAP GM 朝 42%</td><td>加碼至衛星倉位</td></tr>
+<tr><td><strong>減碼</strong></td><td>R1 觸發（SiC 連 2 季負 + PSG QoQ 負）或股價續創高無基本面支撐</td><td>減倉</td></tr>
+<tr><td><strong>撤退</strong></td><td>H1 推翻（週期再次下行確認）或 EV 放緩使 SiC 結構性衰退</td><td>清倉</td></tr>
+</table>
+<p class="note"><strong>進場區 $70-85 的推導：</strong>① 機率加權合理價 $71（§13.5）；② through-cycle EPS ~$3.6 × 合理 19x = ~$68；③ BB 中軌 $86；④ FY+2 EPS $4.27 × 17-20x = $73-85。四個獨立錨點都落 $68-86，故設進場區 $70-85。這比現價 $122 低 ~30-43%——反映 ON 後谷底火箭已嚴重透支。進場還需 MA 對齊（W104 上穿 W250，確認後谷底趨勢成立）+ SiC/汽車 YoY 持續改善（§5.F 驗證），三條件至少兩者具備。這是「等三重確認」而非「現價追高」的紀律。</p>
+
+<h3>F｜Single Thing</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td><strong>Single Thing 描述</strong></td><td>ON 某季揭露 <strong>SiC / 汽車營收再次 YoY 轉負（連 2 季）</strong>，確認 EV 放緩使週期反轉夭折（binary：反轉確立 vs 假反彈）。</td></tr>
+<tr><td><strong>如果發生</strong></td><td>確認週期反轉是假反彈 → FY27 EPS 下修、倍數壓回 ~15x → 陷阱 🟡→🔴，清倉/迴避。</td></tr>
+<tr><td><strong>可觀測性</strong></td><td>每季法說會分部營收（PSG/AMG/ISG）+ SiC 與汽車揭露；下次 Q2'26 ~2026-07/08。</td></tr>
+<tr><td><strong>機率估計</strong></td><td>未來 12-18 個月 ~30-40%（EV 放緩是真實逆風，但 AI 電源 + 週期回補提供緩衝）。</td></tr>
+</table>
+<p class="note">職責矩陣：§1 trap = 靜態裁決（🟡）；§5.C R1-R3 = 過程風險；§5.F = 單一 binary trigger（SiC/汽車連 2 季 YoY 負）。</p>
+<p class="note"><strong>Single Thing 的監測脈絡：</strong>ON 剛宣告「谷底」（Q1'26 +5%），但這是「整體」+5%——拆開看 AMG 仍 −5%、SiC 受 EV 壓。真正驗證「反轉真實」的是 SiC/汽車能否持續 YoY 改善。若下次 2 季（Q2/Q3'26）SiC/汽車再轉負，證明 Q1 的 +5% 是補庫假象而非真實終端需求回升 → 反轉夭折。這是比「整體營收」更精準的領先指標——因為整體營收被 AI 資料中心（+30% QoQ）拉高，可能掩蓋核心 SiC/汽車的疲軟。盯 SiC/汽車分項，而非整體。</p>
+</section>
+
+<!-- §6 -->
+<section id="s6">
+<h2>§6　即時財報情報（Q1 2026，2026-05-04 公布）</h2>
+<h3>① 最新一季財報關鍵數字</h3>
+<table>
+<tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY</th></tr>
+<tr><td>Revenue</td><td class="num">$1,513.3M</td><td class="num">~$1.50B</td><td class="good">Beat（inflection）</td><td class="good">+5%</td></tr>
+<tr><td>EPS（非 GAAP）</td><td class="num">$0.64</td><td class="num">~$0.62</td><td class="good">Beat</td><td class="good">vs $0.55</td></tr>
+<tr><td>EPS（GAAP）</td><td class="num">−$0.08</td><td class="num">—</td><td class="bad">重組 $329M</td><td>—</td></tr>
+<tr><td>Gross Margin（非 GAAP）</td><td class="num">38.5%</td><td class="num">—</td><td class="good">3 連季擴張</td><td>—</td></tr>
+<tr><td>Operating Margin（非 GAAP）</td><td class="num">19.1%</td><td class="num">—</td><td class="neu">回升</td><td>—</td></tr>
+</table>
+<p><strong>分部（Q1'26）：</strong>PSG（Power Solutions）$736.6M（+14% YoY，成長引擎）｜AMG（Analog &amp; Mixed-Signal）$540.4M（−5% YoY，仍衰退）｜ISG（Intelligent Sensing）$236.3M（+1% YoY）。<strong>AI 資料中心 +30% QoQ，guide 2026 翻倍（自 ~$250M）。</strong></p>
+<p><strong>Q2 2026 guidance：</strong>Rev $1,535-1,635M｜非 GAAP GM 37.9-39.9%｜非 GAAP EPS $0.65-0.77。</p>
+<h4>5 季谷底反轉軌跡（GAAP，yfinance 實算）</h4>
+<table>
+<tr><th>季度</th><th>營收 $M</th><th>QoQ</th><th>GAAP GM</th><th>GAAP OI $M</th><th>GAAP EPS</th></tr>
+<tr><td>Q1 FY25（2025-03）</td><td class="num">1,445.7</td><td class="num">—</td><td class="num">20.3%</td><td class="num">−34.4</td><td class="num">−$1.15</td></tr>
+<tr><td>Q2 FY25（2025-06）</td><td class="num">1,468.7</td><td class="num">+1.6%</td><td class="num">37.6%</td><td class="num">242.6</td><td class="num">$0.41</td></tr>
+<tr><td>Q3 FY25（2025-09）</td><td class="num">1,550.9</td><td class="num">+5.6%</td><td class="num">37.9%</td><td class="num">284.0</td><td class="num">$0.63</td></tr>
+<tr><td>Q4 FY25（2025-12）</td><td class="num">1,530.1</td><td class="num">−1.3%</td><td class="num">36.0%</td><td class="num">258.9</td><td class="num">$0.45</td></tr>
+<tr><td>Q1 FY26（2026-03）</td><td class="num">1,513.3</td><td class="num">−1.1%</td><td class="num">38.5%</td><td class="num">−（重組 $329M）</td><td class="num">−$0.08</td></tr>
+</table>
+<div class="reasoning"><b>讀法：</b>① 營收自 Q1'25 谷 $1,446M 回升至 ~$1,530M 後盤整（QoQ +1.6%/+5.6%/−1.3%/−1.1%）——<b>反轉但動能溫和、非強勁回升</b>（對比 ADI Q2 +14.7% QoQ、TXN +9.1%）；② GAAP GM 自 Q1'25 20.3%（重組谷）回升至 38.5%，但 Q1'26 GAAP 又因 $329M 重組轉虧。<b>implication：</b>ON 的反轉真實但比 ADI/TXN 弱、且仍在重組陣痛中——這呼應 §1 的「反轉真實但脆弱」+ trap 🟡 + 長期信心「中」。股價自 $44 漲 3 倍至 $122，但營收僅自谷回升 ~5%，股價漲幅遠超基本面修復。</div>
+<h4>財報對 §5 假設的邊際貢獻</h4>
+<table>
+<tr><th>假設</th><th>邊際方向</th><th>關鍵佐證</th></tr>
+<tr><td>H1 週期反轉/SiC</td><td class="neu">＋ 但混合</td><td>整體 +5% inflect、PSG +14%，但 AMG −5% 仍衰退、SiC 受 EV 拖累</td></tr>
+<tr><td>H2 AI 電源</td><td class="good">＋ 強化</td><td>資料中心 +30% QoQ、guide 翻倍</td></tr>
+<tr><td>H3 fab-right GM</td><td class="good">＋ 強化</td><td>非 GAAP GM 38.5%，3 連季擴張</td></tr>
+</table>
+<h3>② Earnings Call 語氣解析</h3>
+<ul>
+<li><strong>Guidance vs 共識：</strong>Q2 rev $1.535-1.635B 環比續升；EPS $0.65-0.77 改善。</li>
+<li><strong>關鍵敘事：</strong>CEO Hassane El-Khoury 明確稱「<strong>clear inflection point... this cycle has found its low point</strong>」——管理層宣告谷底。但 AMG 仍衰退、SiC/EV 仍軟，為混合信號。</li>
+<li><strong>復甦訊號（管理層列舉）：</strong>訂單改善、短交期訂單增、3 連季 GM 擴張、稼動率回升、汽車「初步穩定跡象」。</li>
+<li><strong>空頭注意（被追問/未完全解答）：</strong>SiC/EV 仍軟（24/7 WallSt 引述「SiC 持續放緩 + Sony CIS 競爭加劇」為 bear 論點對沖 AI-DC 強勢）；AMG 段何時止跌未給明確時點。</li>
+</ul>
+<p class="note"><strong>管理層宣告「谷底」的可信度評估：</strong>El-Khoury 自 2020 任 CEO，fab-right 執行紀錄良好（FCF margin 創 24% 是實績）。「cycle found its low point」有 3 連季 GM 擴張 + 訂單改善支撐，可信度中高。但「谷底」≠「強勁復甦」——ON 的 QoQ 僅 +1.6%/+5.6%/−1.3%/−1.1%（盤整式反轉，非 V 型）。市場用 3 倍股價定價的是「強勁復甦」，基本面顯示的是「溫和觸底」——這個落差是 §1 trap 🟡 的核心。</p>
+<h3>③ 產業 Imply 萃取</h3>
+<p><strong>產業隱含信號：</strong>汽車/工業類比週期觸底回升（ON inflect 呼應 ADI/TXN），但 ON 的 SiC/EV 曝險使其復甦比 broad-line 類比（ADI/TXN）更受 EV 需求牽制——餵入 §11（SiC 利潤池受 EV 放緩壓制）。AI 資料中心電源是全產業共同新引擎。</p>
+</section>
+
+<!-- §7 -->
+<section id="s7">
+<h2>§7　核心門檻檢核</h2>
+<p class="note">EPS 來源：Excel snapshot 2026-06-04（非 GAAP）。基期 FY2025 非 GAAP ~$2.35；GAAP $0.29。</p>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據與趨勢</th></tr>
+<tr><td>FCF Margin（當前）</td><td>&gt; 15%</td><td class="good">✅✅</td><td>FY2025 $1,419M/$5,995M = <strong>23.7%</strong>（創紀錄！fab-right 砍 capex；下行期 FCF 不減反增）</td></tr>
+<tr><td>正規化 FCF Margin【Munger】</td><td>5 年均 &gt; 15%</td><td class="good">✅</td><td>FY22-25：19.2%/5.3%/17.1%/23.7%（5Y 均 ~16%，FY23 谷 5.3% 為 capex 峰）</td></tr>
+<tr><td>ROIC（當前）</td><td>&gt; 15% 且 &gt; WACC</td><td class="bad">❌（週期谷）</td><td>FY2025 ~<strong>6.6%</strong>（NOPAT $707M / IC $10,654M）&lt; WACC ~12%；FY22 峰值 23.8%，深度週期壓低</td></tr>
+<tr><td>ROIC 穩定性【Munger】</td><td>10 年 ≥ 70% 年份 &gt; 15%</td><td class="bad">🔴</td><td>FY22 23.8% → FY25 6.6%，波動極大（深度週期）；僅 2021-23 &gt; 15%</td></tr>
+<tr><td>毛利率定價能力【Munger】</td><td>10 年改善</td><td class="neu">🟡</td><td>GAAP GM 2022 49%（峰）→ 2025 33%（谷），非 GAAP 38.5% 回升；SiC mix 升但週期 + EV 壓</td></tr>
+<tr><td>資本密集度【Munger】</td><td>Capex/Rev &lt; 5%（優）</td><td class="good">✅</td><td>FY2025 $341M/$5,995M = <strong>5.7%</strong>（fab-right 砍至此；FY23 峰 18.6%）</td></tr>
+<tr><td>EPS CAGR（未來 3 年）</td><td>&gt; 20%</td><td class="good">✅（recovery）</td><td>基期 FY25 非 GAAP $2.35｜FY+1 $3.09｜FY+2 $4.27｜FY+3 $5.58｜FY+1→+3 CAGR <strong>34.38%</strong>（深度谷底回補，非常態）｜來源：Excel 2026-06-04</td></tr>
+<tr><td>PEG</td><td>&lt; 2</td><td class="neu">0.83（假象）</td><td>recovery 回補膨脹，覆寫不採（見 §13.2）</td></tr>
+<tr><td>負債安全性【Munger】</td><td>D/E &lt; 0.7</td><td class="good">✅</td><td>D/E = $3,005M/$7,673M = <strong>0.39</strong>；淨債/EBITDA 0.6x；現金/Rev 36%</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是/否</td><td class="neu">接近</td><td>現金 $2.15B vs 總債 $3.0B；淨債僅 $857M</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8 分</td><td class="bad">否（7 分）</td><td>B 級 7/10（§9），SiC #2 + CIS #1 但更商品化</td></tr>
+</table>
+<p><strong>最大財務弱點：</strong>深度週期使 ROIC 崩至 6.6%（&lt; WACC，FY22 峰值 23.8%）——這是 ON 與 ADI/TXN 的關鍵差異（ON 週期振幅更大、谷底更深）。但 FCF 在下行期不減反增（fab-right 功勞，FCF margin 創 24% 紀錄）是真實亮點。<strong>Munger 三維評級：🟡</strong>（Capex ✅ + FCF ✅，ROIC 穩定性 🔴）。傳遞至 §9。</p>
+</section>
+
+<!-- §8 -->
+<section id="s8">
+<h2>§8　長期成長性評估</h2>
+
+<h3>0｜成長品質 7 問儀表板（v12.7）</h3>
+<table>
+<tr><th>#</th><th>成長品質拷問</th><th>裁決</th><th>關鍵數字</th><th>詳見</th></tr>
+<tr><td>1</td><td class="bad">結構性 vs 週期反彈？<strong>（最弱一題）</strong></td><td class="bad">深度週期剛 inflect；SiC/AI 結構但 EV 放緩逆風</td><td>Q1 +5% YoY（首正）；AMG 仍 −5%</td><td>§8.A'</td></tr>
+<tr><td>2</td><td>成長需多少資本投入？</td><td class="good">輕（fab-right 砍 capex 至 5.7%）</td><td>Capex/Rev 5.7%（FY23 峰 18.6%）</td><td>§8.D</td></tr>
+<tr><td>3</td><td>增量 ROIC &gt; 資金成本？</td><td class="bad">當前不足（ROIC 6.6% &lt; WACC ~12%）</td><td>ROIC 自峰 23.8% 崩至 6.6%</td><td>§8.D / §10.E</td></tr>
+<tr><td>4</td><td>成長變現金流還是被吃掉？</td><td class="good">變股東現金（FCF 強，100% 回購）</td><td>FCF margin 24%、buyback ~100% FCF</td><td>§12.E</td></tr>
+<tr><td>5</td><td>競爭者被吸引進來？</td><td class="bad">激烈：SiC（STM/Infineon/Wolfspeed）、CIS（Sony）</td><td>SiC #2 ~25%（STM #1 35%）</td><td>§9 / §9.F</td></tr>
+<tr><td>6</td><td>股價反映多少期待？</td><td class="bad">過熱：股價已 3 倍且跑過分析師均標 $106</td><td>FY+1 FPE 39.4x、現價 vs 均標 +14%</td><td>§13.1 / §2 D</td></tr>
+<tr><td>7</td><td>成長下修估值撐得住？</td><td class="bad">不撐：若 EV/SiC 復甦落空，雙殺</td><td>反轉夭折情境 −70%（至 $36）</td><td>§8.E / §2 E</td></tr>
+</table>
+<p class="note"><strong>最弱一題（紅）= 第 1 題</strong>：結構 vs 週期 + EV 放緩逆風。ON 的成長品質明顯弱於 ADI/TXN——更深週期、更商品化、更激烈競爭、EV 結構不確定。7 題中 5 題偏弱（1/3/5/6/7），這是 long_term_confidence 僅「中」、trap 🟡 的根因。</p>
+
+<h3>A｜成長跑道（Runway）</h3>
+<table>
+<tr><th>維度</th><th>數據</th><th>推論</th></tr>
+<tr><td>當前 TAM</td><td>SiC 功率 ~$2.73B（2025）→ ~$8.41B（2030），~25% CAGR</td><td>來源：Mordor Intelligence</td></tr>
+<tr><td>ON SiC 份額</td><td>#2 ~25%（STM 35%、Infineon 15%）</td><td>—</td></tr>
+<tr><td>汽車 CIS 份額</td><td>#1 ~40%（Sony 加大競爭）</td><td>—</td></tr>
+<tr><td><strong>Runway 估計</strong></td><td><strong>5-9 年（中等）</strong></td><td>SiC/電源結構成長，但 EV 放緩 + 競爭使可見度低於 ADI/TXN</td></tr>
+</table>
+<h4>A'｜S 曲線位置 / 結構 vs 週期拆解</h4>
+<p>ON 處於<strong>深度週期谷底剛 inflect</strong>（FY22-23 峰 $8.3B → FY25 谷 $6.0B，−28%，Q1'26 首次 +5% YoY）。SiC（25% CAGR 市場）是結構成長坡，但最大引擎 EV 電驅在 2025-26 放緩 → SiC 成長被腰斬。AI 資料中心電源是新坡（+30% QoQ）但仍小。<strong>判斷：週期反轉真實但脆弱，結構成長受 EV 牽制——這是「中等可見度」而非「高確信」的核心。</strong></p>
+<p class="note"><strong>SiC 內容增長 vs EV 量的拉鋸：</strong>長期看，每輛 EV 的 SiC 內容隨 800V 架構 + 效率需求上升（結構↑）；但短期 EV 銷量放緩使「內容↑ × 量↓」淨效應為 SiC 營收下滑。ON 賭的是「EV 量回穩 → 內容紅利顯現」。這個拉鋸的時點高度不確定（取決於全球 EV 補貼政策 + 消費需求），是 ON 不同於 ADI（工業自動化長坡更分散）/ TXN（廣線分散）的單一終端集中風險。AI 資料中心電源（guide 翻倍）是管理層刻意培育的「第二腿」，以分散 EV 依賴。</p>
+
+<h3>B｜成長品質判斷</h3>
+<h4>① 有機 vs 無機</h4>
+<table>
+<tr><th>類型</th><th>占比</th><th>佐證</th></tr>
+<tr><td>有機</td><td>~95%</td><td>近年有機 + Qorvo United SiC（2025，小額）；失敗的 Allegro $6.9B 併購未成</td></tr>
+<tr><td>無機</td><td>~5%</td><td>United SiC（SiC JFET，2025/1）</td></tr>
+</table>
+<p class="note">近 5 年：Fairchild（2016，$2.4B，已整合）；GT Advanced（SiC 基板，2021）；United SiC（2025）。2025 失敗的 Allegro $6.9B 敵意併購是資本配置警訊（撤回）。</p>
+<h4>② 定價 vs 量</h4>
+<table>
+<tr><th>類型</th><th>判斷</th><th>3 年趨勢</th></tr>
+<tr><td>定價驅動</td><td>SiC/power 有定價權但 EV 放緩 + 競爭壓 ASP；exit 低價值營收（主動）</td><td>受壓</td></tr>
+<tr><td>量驅動</td><td>本輪反轉為量回補（PSG +14%）+ AI 電源新量</td><td>回升（PSG）/ 衰退（AMG）</td></tr>
+</table>
+<h4>③ 營業槓桿結構：增量利潤率 3Y</h4>
+<table>
+<tr><th>列</th><th>內容</th></tr>
+<tr><td>增量 OI margin（FY24→FY25）</td><td>ΔOI −$1,150M / ΔRev −$1,087M（衰退期，負槓桿）→ 下行期去槓桿猛烈</td></tr>
+<tr><td>增量 vs 存量</td><td>下行期負槓桿；反轉期（Q1'26）GM 3 連季擴張 → 正槓桿回來</td></tr>
+<tr><td>前瞻結論</td><td>fab-right 降低固定成本 → 反轉期營運槓桿應顯著（GM 朝 42%+）；但 EV/SiC 量是前提</td></tr>
+</table>
+
+<h3>C｜成長護城河連動評估</h3>
+<table>
+<tr><th>類型</th><th>具體表現</th></tr>
+<tr><td class="neu"><strong>中性型（主）</strong></td><td>SiC/CIS 成長與護城河各自獨立；fab-right 提升成本結構但非加深護城河</td></tr>
+<tr><td>消耗型（風險）</td><td>EV 放緩 + 競爭使 SiC 定價受壓；exit 低價值營收（短期降規模）</td></tr>
+</table>
+<p>判斷：<strong>中性偏消耗</strong>——ON 的成長不像 ADI/TXN 那樣加深護城河，且面臨 SiC/CIS 的激烈競爭與 EV 逆風。</p>
+
+<h3>D｜ROIC 與 FCF 的長期可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前值</th><th>3 年前（FY22）</th><th>趨勢</th><th>門檻</th><th>符合</th></tr>
+<tr><td>ROIC</td><td>6.6%</td><td>23.8%</td><td>↓（深度週期）</td><td>&gt; WACC ~12%</td><td class="bad">❌</td></tr>
+<tr><td>FCF Margin</td><td>23.7%</td><td>19.2%</td><td>↑（fab-right）</td><td>&gt; 15%</td><td class="good">✅✅</td></tr>
+<tr><td>FCF/NI 轉換率</td><td>11.7（NI 被重組壓低）</td><td>0.84</td><td>—（重組失真）</td><td>&gt; 0.85</td><td class="good">✅</td></tr>
+<tr><td>Reinvestment Rate</td><td>低（fab-right 砍 capex）</td><td>高</td><td>↓</td><td>有對應 ROIC</td><td class="neu">🟡</td></tr>
+</table>
+<h4>ROIIC 與內生成長天花板</h4>
+<table>
+<tr><th>列</th><th>計算</th></tr>
+<tr><td>ROIIC（3Y，FY22→25）</td><td>NOPAT $2,228M→$707M（Δ負，衰退期）→ 機械算無意義；需反轉確立後重算</td></tr>
+<tr><td>再投資率</td><td>低（fab-right 砍 capex，現金主要回購）</td></tr>
+<tr><td>內生成長天花板</td><td>正常化後 ROIC ~15% × 再投資率 ~30% ≈ ~5%（純內生）；加 SiC/AI mix → ~10-12%</td></tr>
+<tr><td>共識對賬</td><td>共識 FY+1→+3 CAGR 34.38% 幾乎全靠深度谷底回補（非內生）→ <strong>高度依賴週期反轉兌現，內生引擎弱</strong></td></tr>
+</table>
+<p class="note">endo_growth_ceiling ~12%（含 SiC/AI mix）。共識 34% CAGR 的回補成分極高——這是 ON 比 ADI/TXN 更依賴「週期反轉真的持續」的根本。</p>
+
+<h3>E｜成長熄火情境壓力測試</h3>
+<table>
+<tr><th>情境</th><th>特徵</th><th>合理 Fwd PE 壓縮至</th><th>估值跌幅</th></tr>
+<tr><td>反轉持續但放緩</td><td>SiC 復甦慢</td><td>17x</td><td>FY+2×17 = $73 → −40%</td></tr>
+<tr><td>反轉夭折（EV 續軟）</td><td>SiC 再衰退</td><td>13x</td><td>FY+1×13 = $40 → −67%（≈52W 低）</td></tr>
+<tr><td>深度二次探底</td><td>週期 + EV 雙殺</td><td>10x</td><td>下修 EPS × 10 → −70%+</td></tr>
+</table>
+<p class="note">Base 5Y EPS（FY2030E）= FY2028 $5.58 × (1.10)² ≈ <strong>$6.75</strong>；× 長期合理 19x = 5Y 目標 $128（§2 E 一致）。</p>
+<p class="note"><strong>EV 情境敏感度（ON 獨有的單一終端風險）：</strong>ON 營收 ~52% 來自汽車（SiC/CIS）。① EV 量回穩（樂觀）→ SiC 內容紅利顯現、FY27 EPS 達共識 $4.27+；② EV 持平（基準）→ SiC 溫和復甦、EPS ~$4；③ EV 再放緩（空頭）→ SiC 再衰退、EPS 下修至 ~$3.3。EV 銷量是 ON thesis 的單一最大外生變數——這與 ADI（工業自動化分散）/ TXN（廣線分散）的多元終端形成鮮明對比。ON 的成敗高度綁定一個 ON 無法控制的終端週期。</p>
+<h4>常態化 / through-cycle 盈餘能力橋（深週期名必做）</h4>
+<table>
+<tr><th>週期位置</th><th>財年</th><th>非 GAAP EPS</th><th>該年 PE（現價 $122）</th><th>備註</th></tr>
+<tr><td>前一輪峰值</td><td>FY2023</td><td>~$5.3</td><td class="num">23x</td><td>SiC 緊缺、EV 強</td></tr>
+<tr><td>下行</td><td>FY2024</td><td>~$3.9</td><td class="num">31x</td><td>EV 放緩起</td></tr>
+<tr><td>谷底</td><td>FY2025</td><td>~$2.35</td><td class="num">52x</td><td>深度去庫 + 重組</td></tr>
+<tr><td>反轉（共識）</td><td>FY2026E</td><td>$3.09</td><td class="num">39x</td><td>剛 inflect</td></tr>
+<tr><td><strong>through-cycle 估計</strong></td><td>—</td><td class="num"><strong>~$3.4-3.9</strong></td><td class="num"><strong>~33x</strong></td><td>近 4 年均 + SiC 結構校正</td></tr>
+</table>
+<div class="reasoning"><b>橋接邏輯：</b>近 4 年非 GAAP EPS 算術均 ≈ ($5.3+$3.9+$2.35+$3.09)/4 = $3.66；考慮 SiC/AI 結構成長但扣 EV 放緩風險，through-cycle ~$3.4-3.9。<b>關鍵發現：</b>以 through-cycle EPS 計，現價隱含 PE ~33x——對一個 B 級、深週期、EV 曝險的 SiC 名而言<b>明顯偏貴</b>（vs 合理 ~15-19x）。<b>implication：</b>即使給 SiC 結構成長溢價，現價也透支——這是 trap 🟡（向 🔴 傾斜）+ 機率加權合理價 $71（−42%）的量化核心。</div>
+
+<h3>⚠️ 衰退信號偵測表</h3>
+<table>
+<tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈?</th></tr>
+<tr><td>護城河侵蝕</td><td>GM 連 2 季 YoY 下滑</td><td>非 GAAP GM 已 3 連季擴張（回升）</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>市佔縮減</td><td>SiC #2 穩定、CIS #1 但 Sony 競爭</td><td class="neu">🔴（CIS 受 Sony 壓）</td></tr>
+<tr><td>護城河侵蝕</td><td>提價後銷量下滑</td><td>SiC 受 EV 放緩 + 競爭壓價</td><td class="neu">🔴（SiC 定價受壓）</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR ≫ Rev CAGR</td><td>recovery 回補，營運槓桿，可解釋</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>FCF/NI &lt; 0.75 連 2 年</td><td>FCF/NI 高（FCF 強）</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>SBC/Rev &gt; 5% 且升</td><td>SBC/Rev 2.4%（低）</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>TAM 萎縮</td><td>SiC TAM 擴張（25% CAGR）但 EV 放緩壓近期</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>產業倍數系統下移</td><td>SiC 估值因 EV 放緩 + Wolfspeed 困境而下修</td><td class="neu">🔴（SiC 板塊倍數壓）</td></tr>
+<tr><td>隱性資本密集</td><td>Maint capex/FCF &gt; 60%</td><td>fab-right 砍 capex，maint 低</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>停投資 3 年內收入下滑?</td><td>SiC 需持續投資維持競爭力</td><td>⬜</td></tr>
+</table>
+<p class="note"><strong>衰退信號 vs ADI/TXN 對照：</strong>ADI 衰退信號 0 盞、TXN 2 盞（皆 capex artifact）、ON 3 盞（CIS/SiC 競爭 + 板塊倍數）——ON 的亮燈數最多，且性質更偏「競爭/結構」而非「會計 artifact」。這量化了三檔的風險梯度：ADI 最穩、TXN 次之（capex 拐點賭注）、ON 風險最高（深週期 + 競爭 + EV 結構）。</p>
+<p><strong>價值陷阱風險評級：🟡 中度警戒（3 個亮燈）。</strong>三盞燈（CIS 受 Sony 壓 + SiC 定價受壓 + SiC 板塊倍數下修）反映 ON 的競爭 + 結構壓力高於 ADI/TXN。§9 需正面回應：SiC #2 + CIS #1 的地位是否守得住。<strong>3 盞燈使 trap 接近 🟡 上緣（向 🔴 傾斜），但週期反轉 + FCF 韌性提供下檔支撐 → 維持 🟡 觀察期。</strong></p>
+<p><strong>長期成長性綜合評級：🟡 中等可見度成長</strong>——SiC/AI 結構坡 + FCF 韌性（指向 🟢 的部分），但深度週期 + EV 放緩 + 激烈競爭 + 3 盞衰退燈 → 整體 🟡。傳遞至 §2 E（合理 PE 19x，低於 ADI/TXN）與 §2 0（風向燈 🟡）。</p>
+<p class="note"><strong>3 盞燈集群解讀：</strong>3 盞燈（CIS 受 Sony 壓 + SiC 定價受壓 + SiC 板塊倍數下修）都集中在「<strong>競爭 + 結構需求</strong>」而非「盈餘品質崩壞」（FCF/NI、SBC 都健康）。這個區別關鍵：ON 不是「會計造假/盈餘虛胖」的陷阱（盈餘品質好），而是「市場對週期反轉 + SiC 復甦定價過頭、而 EV/競爭結構逆風真實」的估值/時點陷阱。故 trap 🟡（向 🔴 傾斜但未到）——若 3 盞燈中 SiC 定價 + CIS 份額再惡化，升 🔴。這也定義了 ON 的進場條件：不是等公司「變好」（執行已好），而是等「估值回到合理 + EV/SiC 外生環境改善」。</p>
+
+<h3>H｜客戶結構深度</h3>
+<table>
+<tr><th>指標</th><th>數值</th></tr>
+<tr><td>Top 1 客戶</td><td>汽車/工業客戶（Tesla/BMW/VW 等 EV 廠 + 工業）</td></tr>
+<tr><td>集中度</td><td>中等（汽車客戶集中度高於 ADI/TXN，因 SiC/CIS 綁定大 EV/車廠）</td></tr>
+</table>
+<p>客戶生命週期：<strong>Grow-with 汽車/EV 客戶</strong>，但 EV 放緩使「grow-with」變「shrink-with」（汽車客戶減產 → ON 訂單降）。SiC 客戶（Tesla/BMW/VW）的 EV 銷量直接驅動 ON SiC 營收 → 客戶集中 + EV 週期雙重曝險。<strong>客戶結構風險：🟡 集中於汽車/EV</strong>（比 ADI/TXN 的分散更集中、更受單一終端週期牽制）。</p>
+
+<h3>F｜AI 取代風險評級</h3>
+<p><strong>🟢 AI 受益。</strong>AI 資料中心電源 +30% QoQ、guide 2026 翻倍——ON 是 AI 供電的賣鏟人之一。商業模式與 LLM 取代無關。評級 9 分。</p>
+
+<h3>I｜分部前瞻建模（v12.6）</h3>
+<table>
+<tr><th>業務段</th><th>FY26E 營收（佔比）</th><th>驅動式</th><th>FY27E</th><th>FY28E</th><th>段 OM 軌跡</th><th>對 EPS 成長貢獻</th></tr>
+<tr><td>PSG（Power）</td><td>~$3.0B（46%）</td><td>SiC/power 量回補 + AI 電源（+14% YoY 起）</td><td>~$3.4B</td><td>~$3.8B</td><td>回升（fab-right）</td><td>主引擎 ~50%</td></tr>
+<tr><td>AMG（Analog/Mixed）</td><td>~$2.2B（34%）</td><td>仍衰退 → 趨穩（−5% → 0%）</td><td>~$2.3B</td><td>~$2.5B</td><td>回升</td><td>~25%</td></tr>
+<tr><td>ISG（Sensing）</td><td>~$1.0B（15%）</td><td>汽車 CIS（Sony 競爭壓）+1%</td><td>~$1.1B</td><td>~$1.2B</td><td>持平</td><td>~15%</td></tr>
+<tr><td>AI 資料中心（跨段）</td><td>~$0.5B（翻倍）</td><td>guide 2026 翻倍</td><td>~$0.8B</td><td>~$1.1B</td><td>升</td><td>~10%（最快）</td></tr>
+<tr><td><strong>合計</strong></td><td><strong>~$6.5B</strong></td><td>（對齊 revenue_estimate FY26 $6.48B）</td><td><strong>~$7.2B</strong></td><td>—</td><td>非 GAAP GM 朝 42%</td><td>100%</td></tr>
+</table>
+<p class="note"><strong>主引擎 = PSG（Power，~50%）+ AI 資料中心（最快但小）。</strong>若 EV 放緩使 PSG/SiC 復甦落空，合併 Rev CAGR 自 ~10% 降至 ~3-5%、常態化 EPS CAGR 大幅下修 → §13 倍數崩。各段貢獻對齊 §7。<strong>關鍵脆弱點：</strong>PSG（SiC）是主引擎但同時是最受 EV 放緩衝擊的段；AMG 仍 −5% 衰退尚未止跌；ISG 受 Sony 壓。換言之，ON 的成長引擎（PSG/SiC）正是最不確定的段——這個「引擎 = 風險源」的結構，是 ON 比 ADI（多引擎分散）/ TXN（廣線）更脆弱的本質。AI 資料中心是唯一明確強勁但基數小（~$0.5B），無法獨力扛起 $6.5B 公司的成長。</p>
+</section>
+
+<!-- §9 -->
+<section id="s9">
+<h2>§9　護城河分析</h2>
+<h3>評分：二維拆解（default）</h3>
+<table>
+<tr><th>維度</th><th>評分</th><th>關鍵佐證</th></tr>
+<tr><td><strong>Execution Moat</strong>（製造/SiC 工藝/fab-right）</td><td class="num">7.0 / 10</td><td>SiC #2 製造（EliteSiC M3e、Treo 平台）+ fab-right 成本結構 + 垂直整合（GT Advanced 基板），但規模 + 成熟度低於 STM；fab-right 砍 capex 提 FCF</td></tr>
+<tr><td><strong>Pricing Power Moat</strong>（轉換成本/定價）</td><td class="num">6.5 / 10</td><td>SiC/CIS design-in 黏性，但 EV 放緩 + STM/Infineon/Sony 競爭壓定價；比 ADI/TXN 更商品化</td></tr>
+<tr><td><strong>合併分</strong></td><td class="num">7.0 / 10</td><td>—</td></tr>
+<tr><td><strong>等級</strong></td><td class="neu">✅ B 級</td><td>7 分</td></tr>
+</table>
+
+<h3>護城河數字驗收（Moat-to-Numbers）</h3>
+<table>
+<tr><th>指標</th><th>本標的</th><th>最強直接同業</th><th>Spread</th><th>方向</th></tr>
+<tr><td>ROIC（TTM）</td><td>6.6%（FY25 谷）/ ~11.8% TTM</td><td>STM/Infineon（週期壓）</td><td>—</td><td>週期谷</td></tr>
+<tr><td>毛利率</td><td>非 GAAP 38.5%</td><td>STM ~33%、Infineon ~39%</td><td>~+0-5pp</td><td>回升</td></tr>
+<tr><td>SiC 份額</td><td>~25%（#2）</td><td>STM ~35%（#1）</td><td>−10pp</td><td>STM 領先</td></tr>
+</table>
+<div class="reasoning"><b>三道數字閘匯總：</b>① Moat-to-Numbers：ON 的 ROIC 在週期谷僅 6.6%（&lt; WACC），護城河數字驗收<b>不支持高分</b>——這是 B 級而非 A 級的核心。② QC-26 margin：GM 已回升（fab-right），非質變。③ QC-28：SiC #2、CIS #1 但都面競爭。<b>結論：合併分 7（B 級）——ON 的護城河存在但不頂級，週期 + 競爭使其數字弱於 ADI/TXN。</b></div>
+
+<h4>SiC / CIS 兩大franchise 深拆（sourced）</h4>
+<table>
+<tr><th>franchise</th><th>地位</th><th>關鍵產品 / 客戶</th><th>威脅</th></tr>
+<tr><td>SiC 功率（PSG）</td><td>#2 ~25%（STM 35%、Infineon 15%）</td><td>EliteSiC M3e MOSFET（2024/7）、SPM31 1200V 模組（2025/3 工業）、Treo 65nm BCD 平台（Q1'26 ramp）；客戶 Tesla/BMW/VW + 中國 EV（中國 SiC 銷量「翻倍」Q2'25）</td><td>STM 規模、Infineon 追趕、Wolfspeed Gen4（財困）、EV 放緩</td></tr>
+<tr><td>汽車影像感測（ISG）</td><td>#1 ~40%（OmniVision ~26%）</td><td>ADAS 的眼睛（L2+ 到 L4）</td><td><strong>Sony-TSMC JV 加大汽車 CIS 競爭</strong>（最大威脅）</td></tr>
+<tr><td>類比/混合（AMG）</td><td>—</td><td>電源/類比，仍 −5% YoY 衰退</td><td>廣線類比競爭（TXN/ADI/MCHP）</td></tr>
+</table>
+<p class="note">ON 的兩大franchise（SiC #2、CIS #1）都是真實市場地位，但都面對資源更雄厚的對手（SiC: STM/Infineon；CIS: Sony）。SiC 是成長引擎但受 EV 放緩 + 供過於求壓；CIS 是現金牛但 Sony 威脅。這是 B 級護城河的具體構成。</p>
+<h3>護城河來源（sourced evidence）</h3>
+<ul>
+<li><strong>SiC 技術 + 製造：</strong>EliteSiC（M3e MOSFET、SPM31 模組）+ Treo（65nm BCD 平台）+ 垂直整合（GT Advanced SiC 基板）；SiC #2（~25%）。</li>
+<li><strong>汽車 CIS：</strong>#1（~40% 汽車影像感測份額），ADAS 的眼睛；但 Sony（Sony-TSMC JV）加大競爭。</li>
+<li><strong>fab-right 成本：</strong>砍掉次規模 fab，聚焦 SiC/power 戰略節點 → 降固定成本、提稼動率（FCF margin 創 24%）。</li>
+<li><strong>轉換成本：</strong>汽車 design-in 黏性（中等，低於 ADI 高性能段）。</li>
+</ul>
+
+<h3>競爭鴻溝</h3>
+<p>為什麼對手跨不過？ON 在 SiC（製造 know-how + 基板垂直整合）+ 汽車 CIS（design-in）有壁壘，但這些壁壘<strong>明顯低於 ADI/TXN</strong>——SiC 有 STM（規模更大）、Infineon、Wolfspeed（技術領先但財困）多個強對手；CIS 有 Sony（資源雄厚）。ON 是「強者之一」非「壟斷者」，競爭鴻溝中等。</p>
+
+<h3>市佔競爭表（對手經濟體質 + 賽局結構）</h3>
+<table>
+<tr><th>對手</th><th>市佔（SiC）</th><th>趨勢</th><th>核心威脅</th><th>誰在吃誰</th><th>OI margin</th><th>戰爭承受力</th></tr>
+<tr><td>STM（SiC #1）</td><td>~35%</td><td>領先</td><td>規模 + 一體化</td><td>STM 守 #1</td><td>低（週期壓）</td><td>中（規模大）</td></tr>
+<tr><td>Infineon（#3）</td><td>~15%</td><td>↑</td><td>汽車功率 + Marvell 車載乙太網收購</td><td>Infineon 擴張</td><td>中</td><td>高（汽車龍頭）</td></tr>
+<tr><td>Wolfspeed</td><td>技術領先</td><td>財務困難</td><td>Gen4 技術但破產風險</td><td>困境中</td><td>負</td><td>低（財困）</td></tr>
+<tr><td>Sony（CIS）</td><td>CIS 競爭</td><td>↑</td><td>Sony-TSMC JV 加大汽車 CIS</td><td>Sony 侵蝕 ON CIS</td><td>—</td><td>高</td></tr>
+</table>
+<p><strong>賽局結構判定：紀律鬆動（SiC 供過於求 + EV 放緩）</strong>。SiC 在 EV 放緩 + 多家擴產下，2025-26 出現供過於求，定價紀律鬆動（Wolfspeed 困境是訊號）。ON 作為 #2 受擠壓。<strong>判定規則接線：</strong>SiC 賽局 = 紀律鬆動 → ON pricing power 維度受限（已反映 6.5）；§8.E 壓力測試含「SiC ASP 戰」情境。</p>
+
+<h3>定價事件帳（pricing power 實證）</h3>
+<table>
+<tr><th>日期</th><th>提價/降價</th><th>量與留存反應</th><th>GM 反應</th></tr>
+<tr><td>2022-23 SiC 緊缺</td><td>SiC 長約鎖價</td><td>量增（EV 需求強）</td><td>GM 峰 49%</td></tr>
+<tr><td>2024-25 EV 放緩</td><td>SiC 供過於求，定價受壓</td><td>SiC 量降（EV 軟）</td><td>GM 跌至 33%（GAAP）</td></tr>
+<tr><td>2025-26</td><td>exit 低價值營收 + fab-right</td><td>主動降規模換 margin</td><td>非 GAAP GM 回 38.5%</td></tr>
+</table>
+<p class="note">ON 定價權受 SiC 週期 + EV 牽制明顯——緊缺期有定價權，放緩期受壓。這顯示 pricing power 的脆弱性（vs ADI 的守價能力）。</p>
+
+<h3>護城河趨勢（雙線標）</h3>
+<table>
+<tr><th>維度</th><th>趨勢</th><th>3 年關鍵事件</th></tr>
+<tr><td>Execution Moat 趨勢</td><td>穩定</td><td>fab-right 提成本結構、SiC 平台（Treo/EliteSiC）推進</td></tr>
+<tr><td>Pricing Power Moat 趨勢</td><td>受壓</td><td>EV 放緩 + SiC 供過於求 + Sony CIS 競爭</td></tr>
+</table>
+<h4>24 個月威脅（QC-23 三級分類）</h4>
+<table>
+<tr><th>等級</th><th>事件</th><th>機率</th><th>影響</th></tr>
+<tr><td class="bad">🔴 生態攻擊</td><td>Sony-TSMC JV 加大汽車 CIS 競爭（ISG 段）</td><td>中</td><td>ISG 份額/定價壓力（已反映 pricing 6.5）</td></tr>
+<tr><td class="bad">🔴 生態攻擊</td><td>SiC 供過於求 + EV 放緩，STM/Infineon 擠壓</td><td>中-高</td><td>SiC 定價/份額壓力</td></tr>
+<tr><td>⛔ 架構替代</td><td>無顯著架構替代（SiC 是架構升級的受益者）</td><td>低</td><td>—</td></tr>
+</table>
+
+<h3>F｜對手財務深度對照（v12.6）</h3>
+<table>
+<tr><th>指標</th><th>ON</th><th>STM</th><th>Infineon</th><th>ADI/TXN（廣線參考）</th></tr>
+<tr><td>營收成長（最新季 YoY）</td><td>+5%（inflect）</td><td>復甦中</td><td>復甦中</td><td>ADI +37% / TXN +19%</td></tr>
+<tr><td>Gross Margin</td><td>38.5%（非GAAP）</td><td>~33%</td><td>~39%</td><td>ADI 73% / TXN 57%</td></tr>
+<tr><td>FCF Margin</td><td>23.7%（fab-right）</td><td>低（週期）</td><td>~7-15%</td><td>ADI 39% / TXN 15%</td></tr>
+<tr><td>SiC 份額</td><td>~25%（#2）</td><td>~35%（#1）</td><td>~15%（#3）</td><td>—</td></tr>
+<tr><td>淨債</td><td>$857M（低）</td><td>淨現金</td><td>淨債（Marvell 收購）</td><td>ADI $6.2B / TXN $10.8B</td></tr>
+</table>
+<p class="note"><strong>SiC 競爭格局的經濟意涵：</strong>SiC 是少數「多強混戰」的功率半導體賽道——STM（規模 + 一體化）、Infineon（汽車功率財力）、ON（fab-right FCF）、Wolfspeed（技術領先但財困）四家各有所長，無一家壟斷。這與 ADI（高性能類比近寡占）/ TXN（廣線成本壟斷）的「霸主結構」不同。多強混戰 + EV 放緩 + 供過於求 = SiC 定價紀律最易鬆動的環境。ON 作為 #2，既非規模最大（STM）也非技術最領先（Wolfspeed），其相對優勢是 FCF 紀律（fab-right）——但 FCF 紀律不直接轉化為定價權。這是 ON SiC franchise 雖真實、卻只給 pricing power 6.5（非 8+）的根本。</p>
+<p><strong>STM（SiC #1）策略與經濟體質：</strong>STM 是 SiC 龍頭（~35%），規模 + 一體化（自有基板）使其在供過於求期能以成本壓制 ON；但 STM 整體 margin 也被週期壓。<strong>Infineon：</strong>汽車功率龍頭，2025 收購 Marvell 車載乙太網擴張，財力雄厚（汽車半導體 #1），是 ON 在汽車功率的最強對手。<strong>Wolfspeed：</strong>技術領先（Gen4）但財務困難（破產風險）——這對 ON 是雙刃：少一個對手，但也拖累整個 SiC 板塊估值。<strong>Sony（新進壓力，CIS）：</strong>Sony-TSMC JV 切入汽車 CIS，資源雄厚，是 ON ISG 段（CIS #1）的最大威脅。<strong>ON 的相對優勢 = FCF 韌性（fab-right，FCF margin 24% 居同業前列）。</strong></p>
+<h4>絕對規模對照（FY2025，$M）</h4>
+<table>
+<tr><th>指標</th><th>ON</th><th>ADI</th><th>TXN</th><th>含義</th></tr>
+<tr><td>營收</td><td class="num">5,995</td><td class="num">11,020</td><td class="num">17,682</td><td>ON 規模最小（~1/3 TXN）</td></tr>
+<tr><td>R&amp;D 絕對額</td><td class="num">584</td><td class="num">1,766</td><td class="num">2,083</td><td>ON R&amp;D 僅 ADI/TXN 的 ~1/3，<strong>SiC 研發軍備劣勢</strong></td></tr>
+<tr><td>Capex 絕對額</td><td class="num">341</td><td class="num">534</td><td class="num">4,550</td><td>ON fab-right 砍至最低</td></tr>
+<tr><td>FCF Margin</td><td class="num">23.7%</td><td class="num">39%</td><td class="num">15%</td><td>ON FCF margin 居中（fab-right 亮點）</td></tr>
+<tr><td>ROIC（FY25）</td><td class="num">6.6%</td><td class="num">16.2%（剔商譽）</td><td class="num">17.7%</td><td><strong>ON 週期谷 ROIC 最低</strong></td></tr>
+</table>
+<p class="note"><strong>關鍵洞察：</strong>ON 是三檔中規模最小（營收 ~1/3 TXN）、R&amp;D 絕對額最小（~1/3）、週期 ROIC 最低。其相對優勢是 fab-right 帶來的 FCF margin 韌性（24%）。但在 SiC 研發軍備上，ON 對 STM/Infineon（規模更大）處劣勢——這是 B 級而非 A 級的規模根因。</p>
+<h4>SiC 市佔演變（約略，Mordor/sell-side）</h4>
+<table>
+<tr><th>公司</th><th>SiC 份額</th><th>趨勢</th></tr>
+<tr><td>STM</td><td>~35%（#1）</td><td>領先（規模 + 一體化）</td></tr>
+<tr><td><strong>ON</strong></td><td>~25%（#2）</td><td>穩定（EliteSiC/Treo + United SiC 收購）</td></tr>
+<tr><td>Infineon</td><td>~15%（#3）</td><td>↑（汽車功率擴張）</td></tr>
+<tr><td>Wolfspeed</td><td>技術領先</td><td>財困（破產風險）</td></tr>
+</table>
+<p class="note">SiC 市場 $2.73B（2025）→ $8.41B（2030，25% CAGR）。ON 穩居 #2，但 STM 規模領先、Infineon 追趕、Wolfspeed 財困拖累板塊估值。誰在吃誰：EV 放緩 + 供過於求期，份額相對穩定但定價普遍受壓（紀律鬆動）。</p>
+<h4>ON vs 廣線類比（ADI/TXN）：為何 ON 是「賭注」而非「配置」</h4>
+<table>
+<tr><th>維度</th><th>ON</th><th>ADI/TXN（廣線）</th></tr>
+<tr><td>週期振幅</td><td>極大（營收 −28%、ROIC 23.8%→6.6%）</td><td>較緩（ADI 谷 ROIC 仍 12%）</td></tr>
+<tr><td>Beta</td><td>1.98（yf）/ 1.44（TV）— 高 beta</td><td>ADI 1.18 / TXN 1.31</td></tr>
+<tr><td>終端集中</td><td>汽車/EV ~52%（單一終端週期曝險）</td><td>分散（無單一 &gt; 10%）</td></tr>
+<tr><td>護城河本質</td><td>SiC/CIS「強者之一」（B 級）</td><td>類比霸主（A 級）</td></tr>
+<tr><td>結構不確定</td><td>EV 放緩直接壓 SiC 核心引擎</td><td>多元終端分散風險</td></tr>
+</table>
+<p class="note"><strong>PM 洞察：</strong>ON 本質是「高 beta 深週期 + SiC/EV 單一主題賭注」，不是 ADI/TXN 那種「穩定複利的類比配置」。投資 ON = 賭「週期反轉持續 + EV 復甦 + SiC 結構成長」三者兌現；風險/報酬更接近一個「週期 + 主題」交易而非「buy-and-hold 核心」。這是 long_term_confidence 僅「中」、進場需大幅回檔 + 確認的根本。</p>
+<p class="note">§9 三道數字閘：① Moat-to-Numbers ❌（ROIC 谷 6.6% &lt; WACC，不支持高分）；② QC-26 margin（回升，fab-right）；③ QC-28 份額（SiC #2、CIS #1 但受壓）。護城河 7（B 級）——ON 護城河存在但明顯弱於 ADI/TXN。</p>
+</section>
+
+<!-- §10 -->
+<section id="s10">
+<h2>§10　財務品質監測</h2>
+<h3>三年趨勢表（含同業對比）</h3>
+<table>
+<tr><th>指標</th><th>FY2023</th><th>FY2024</th><th>FY2025</th><th>同業中位（STM/Infineon）</th><th>相對</th></tr>
+<tr><td>FCF Margin</td><td>5.3%</td><td>17.1%</td><td>23.7%</td><td>~10%</td><td class="good">優（fab-right）</td></tr>
+<tr><td>EBITDA Margin（約）</td><td>~40%</td><td>~36%</td><td>~24%</td><td>~25%</td><td class="neu">平（週期谷）</td></tr>
+<tr><td>ROIC</td><td>20.3%</td><td>13.4%</td><td>6.6%</td><td>~低（週期）</td><td class="bad">谷</td></tr>
+<tr><td>SBC / Revenue</td><td>1.5%</td><td>1.9%</td><td>2.4%</td><td>~3%</td><td class="good">低（優）</td></tr>
+<tr><td>ROE（GAAP）</td><td>28.1%</td><td>17.9%</td><td>1.6%</td><td>—</td><td class="bad">谷（重組）</td></tr>
+</table>
+<p class="note"><strong>ROE/ROIC 的週期振幅是 ON 的「指紋」：</strong>ROE 自 FY23 28.1% 崩至 FY25 1.6%（NI 被重組壓低），ROIC 自 23.8% 崩至 6.6%。這種振幅在 ADI/TXN 身上不會出現（ADI FY24 谷底剔商譽 ROIC 仍 12%、TXN FY24 谷 15.4%）。ON 的高振幅 = 高 beta（1.98）的基本面對應 = 深週期 + 單一終端（汽車/EV）+ 重組。對投資人：這意味 ON 的「便宜/貴」極度依賴你站在週期哪個點判斷——現在站在「剛反轉、股價已 3 倍」的點，風險偏向下行。</p>
+
+<h3>獲利品質警訊（四項）</h3>
+<ul>
+<li><strong>淨利 vs OCF：</strong>OCF $1,760M ≫ NI $121M（FY25，NI 被重組 $329M 壓低），OCF 是更真實獲利測度。</li>
+<li><strong>AR vs 營收：</strong>AR $908M（−22% YoY）隨營收降，健康。</li>
+<li><strong>存貨 vs 營收：</strong>存貨 $1,990M、DIO 181 天，週期去庫中。</li>
+<li><strong>FCF 轉換：</strong>FCF margin 24%（創紀錄），fab-right 砍 capex 是核心亮點。</li>
+</ul>
+
+<h3>回購品質評估</h3>
+<table>
+<tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+<tr><td>過去 3 年回購 vs FCF</td><td>回購 $2.60B（FY23-25）/ FCF $3.07B = 85%</td><td>高（接近 100%）</td></tr>
+<tr><td>FY25 回購 vs FCF</td><td>$1,378M / $1,419M = 97%</td><td>幾乎 100% FCF 回購；新 $6B 授權</td></tr>
+<tr><td>回購均價 vs 現價</td><td>下行期回購（$40-100），現價 $122 → 低位回購獲利</td><td>佳（逆勢回購）</td></tr>
+<tr><td>無股息</td><td>確認無股息，全數回購</td><td>—</td></tr>
+</table>
+
+<h3>FCF lumpiness 評估</h3>
+<table>
+<tr><th>指標</th><th>數值</th></tr>
+<tr><td>過去 4 年 FCF</td><td>FY22 $1,597M / FY23 $438M / FY24 $1,212M / FY25 $1,419M</td></tr>
+<tr><td>4Y 滾動均</td><td>~$1.17B</td></tr>
+<tr><td>最低谷</td><td>FY23 $438M（capex 峰）</td></tr>
+<tr><td>結論</td><td class="good">🟢 fab-right 後 FCF 韌性強（下行期不減反增）；lumpiness 主因過去 capex 週期，現已降</td></tr>
+</table>
+<p class="note"><strong>Owner earnings：</strong>OCF $1,760M − 維護 capex ~$300M（fab-right 後 capex 大降）≈ <strong>~$1,460M</strong>，與報告 FCF $1,419M 接近（因 ON 已無大型成長 capex）。<strong>這是 ON 與 TXN 的關鍵差異：</strong>TXN 報告 FCF 嚴重低估（成長 capex 扭曲），ON 報告 FCF ≈ owner earnings（fab-right 後 capex 已正常化）——ON 的 FCF 韌性更「乾淨」可信。這是 ON 在深週期中的最大財務亮點（FCF margin 24% 是真實的，不靠會計調整）。</p>
+
+<h3>E｜長期趨勢 + DuPont + 營運資金（v12.6）</h3>
+<h4>① 4 年關鍵指標趨勢</h4>
+<table>
+<tr><th>指標</th><th>FY2022</th><th>FY2023</th><th>FY2024</th><th>FY2025</th><th>結構判讀</th></tr>
+<tr><td>Gross Margin（GAAP）</td><td>49.0%</td><td>47.1%</td><td>45.4%</td><td>33.1%</td><td>深度週期 + 重組崩跌</td></tr>
+<tr><td>Operating Margin（GAAP）</td><td>33.2%</td><td>31.7%</td><td>26.9%</td><td>12.5%</td><td>去槓桿猛烈</td></tr>
+<tr><td>ROIC</td><td>23.8%</td><td>20.3%</td><td>13.4%</td><td>6.6%</td><td>深度週期崩</td></tr>
+<tr><td>FCF Margin</td><td>19.2%</td><td>5.3%</td><td>17.1%</td><td>23.7%</td><td>fab-right 逆勢升</td></tr>
+</table>
+<h4>② ROIC DuPont 拆解（4 年，yfinance 自算）</h4>
+<table>
+<tr><th>因子</th><th>FY2022（峰）</th><th>FY2023</th><th>FY2024</th><th>FY2025（谷）</th></tr>
+<tr><td>有效稅率</td><td class="num">19.4%</td><td class="num">13.8%</td><td class="num">14.3%</td><td class="num">5.9%</td></tr>
+<tr><td>NOPAT $M</td><td class="num">2,228</td><td class="num">2,253</td><td class="num">1,630</td><td class="num">707</td></tr>
+<tr><td>NOPAT margin</td><td class="num">26.8%</td><td class="num">27.3%</td><td class="num">23.0%</td><td class="num">11.8%</td></tr>
+<tr><td>IC 周轉率</td><td class="num">0.887x</td><td class="num">0.742x</td><td class="num">0.583x</td><td class="num">0.563x</td></tr>
+<tr><td><strong>ROIC</strong></td><td class="num"><strong>23.8%</strong></td><td class="num"><strong>20.3%</strong></td><td class="num"><strong>13.4%</strong></td><td class="num"><strong>6.6%</strong></td></tr>
+</table>
+<p class="note">ROIC 自 23.8%（FY22）崩至 6.6%（FY25），<strong>雙因子同跌</strong>：NOPAT margin 26.8%→11.8%（GM 崩 + 去槓桿）+ IC 周轉率 0.89→0.56（營收降）。<strong>這是四檔中週期振幅最大、谷底最深的——ON 是高 beta 深週期股（beta 1.98），不是 ADI/TXN 那種穩健類比霸主。投資 ON 本質是「賭週期反轉 + SiC 復甦」，而非「買穩定複利」。</strong></p>
+<h4>③ 營運資金趨勢（3 年）</h4>
+<table>
+<tr><th>指標</th><th>FY2023</th><th>FY2024</th><th>FY2025</th></tr>
+<tr><td>DSO</td><td class="num">41.4</td><td class="num">59.8</td><td class="num">55.3</td></tr>
+<tr><td>DIO（存貨天數）</td><td class="num">176.2</td><td class="num">211.6</td><td class="num">181.1</td></tr>
+<tr><td>DPO</td><td class="num">60.5</td><td class="num">54.2</td><td class="num">52.1</td></tr>
+<tr><td><strong>CCC</strong></td><td class="num"><strong>157.1</strong></td><td class="num"><strong>217.2</strong></td><td class="num"><strong>184.3</strong></td></tr>
+</table>
+<p class="note">CCC 在 FY24 惡化至 217 天（去庫期存貨積壓），FY25 改善至 184 天。DIO 偏高（181 天）反映 SiC/汽車長交期 + 週期去庫。隨反轉，營運資金應改善。</p>
+<h4>④ 債務到期結構</h4>
+<p>總債 $3.0B（LT $2.98B），D/E 0.39（低）；淨債僅 $857M、淨債/EBITDA 0.6x。2026/1 償 $500M、2026/4 償 $750M（積極管理）。再融資風險低。</p>
+</section>
+
+<!-- §11 -->
+<section id="s11">
+<h2>§11　產業格局</h2>
+<h3>市場量化</h3>
+<p>SiC 功率 TAM ~$2.73B（2025）→ ~$8.41B（2030E），~25% CAGR（Mordor）；但 EV 放緩使近期成長腰斬。汽車 + 工業類比週期觸底回升。AI 資料中心電源是新坡。EU 2025-2030 CO₂ 車隊排放限制是 SiC 長期結構順風（推動 EV/電氣化）。</p>
+<p class="note"><strong>稼動率 → margin 的傳導（fab-right 的關鍵）：</strong>ON 的 GM 復甦核心是稼動率回升 + fab-right 降固定成本。3 連季非 GAAP GM 擴張（37.6%→37.9%→38.5%）顯示稼動率正回升。但稼動率取決於 SiC/汽車需求——若 EV 放緩使稼動率停滯，GM 復甦會卡住。這是「fab-right 提供 margin 槓桿，但需求是觸發」的關係——ON 已做好自己能控制的（fab-right），剩下等需求（外生）。</p>
+
+<h4>供需循環位置與庫存動態</h4>
+<table>
+<tr><th>階段</th><th>時間</th><th>ON 表現</th></tr>
+<tr><td>過熱/SiC 緊缺</td><td>2021-2022</td><td>營收峰 $8.3B、GM 49%、ROIC 23.8%、SiC 長約鎖價</td></tr>
+<tr><td>深度去庫 + EV 放緩</td><td>2023-2025</td><td>營收谷 $6.0B（−28%）、GM 33%、ROIC 6.6%、SiC 供過於求</td></tr>
+<tr><td>谷底反轉</td><td>2026（Q1 起）</td><td>+5% YoY、PSG +14%、3 連季 GM 擴張、AI 電源 +30% QoQ</td></tr>
+<tr><td class="neu">關鍵不確定</td><td>2026-27</td><td><strong>EV 復甦時點 + SiC 供過於求消化</strong></td></tr>
+</table>
+
+<h4>EV / SiC 需求循環（ON thesis 的結構核心）</h4>
+<table>
+<tr><th>驅動</th><th>狀態</th><th>對 ON 的含義</th></tr>
+<tr><td>EV 銷量成長</td><td>2025-26 放緩（補貼退場、需求疲軟）</td><td>SiC 電驅需求腰斬（ON SiC 核心引擎受壓）</td></tr>
+<tr><td>SiC 供給</td><td>多家擴產（ON/STM/Infineon/Wolfspeed）→ 供過於求</td><td>SiC 定價紀律鬆動，ASP 受壓</td></tr>
+<tr><td>SiC 滲透（每車 SiC 內容）</td><td>長期上升（800V 平台、效率）</td><td>結構成長坡（但被 EV 量放緩遮蔽）</td></tr>
+<tr><td>AI 資料中心電源</td><td>+30% QoQ，guide 翻倍</td><td>新坡，部分抵銷 EV 疲軟</td></tr>
+</table>
+<p class="note">ON 的成長 = SiC 滲透（結構↑）× EV 銷量（週期↓）+ AI 電源（新↑）。當前 EV 放緩 + SiC 供過於求壓制了 SiC 滲透的結構紅利——這是「SiC 故事好但時點不對」的核心。投資 ON 賭的是 EV 需求回穩 + SiC 供需再平衡。</p>
+
+<h3>利潤池地圖（Profit Pool Map）</h3>
+<table>
+<tr><th>價值鏈環節</th><th>代表公司</th><th>OI margin 代理</th><th>遷移方向</th></tr>
+<tr><td>SiC 功率（ON 所在）</td><td><strong>ON / STM / Infineon</strong></td><td>週期壓低（ON 谷 12.5%）</td><td>↓（EV 放緩 + 供過於求）</td></tr>
+<tr><td>廣線類比（ADI/TXN）</td><td>ADI/TXN</td><td>高（49%/37%）</td><td>↑（高價值受益）</td></tr>
+<tr><td>AI 資料中心電源</td><td>MPWR/ON/TXN</td><td>升（AI 驅動）</td><td>↑</td></tr>
+</table>
+<p class="note">結論：SiC 利潤池近期因 EV 放緩 + 供過於求而<strong>淨流出</strong>（ON 所在環節承壓）；AI 資料中心電源是流入端（ON 受益但佔比小）。<strong>本標的 SiC 環節淨流出 → §8.A Runway 受壓、§2 0 風向燈不給 🟢。</strong></p>
+
+<h3>議價權（三段獨立）</h3>
+<h4>①對上游供應商</h4>
+<p>ON 垂直整合 SiC 基板（GT Advanced 收購）→ 對 SiC 基板上游依賴降低；對設備/晶圓供應商議價中等。fab-right 後產能更聚焦，採購彈性中等。</p>
+<h4>②對下游客戶</h4>
+<p>客戶集中於汽車/EV（Tesla/BMW/VW）+ 工業。SiC design-in 黏性中等，但 EV 放緩 + 供過於求使議價地位下降（緊缺期強、放緩期弱）。汽車客戶減產直接傳導至 ON 訂單 → 議價權受終端週期牽制。</p>
+<h4>③地緣曝險</h4>
+<p>中國曝險顯著：中國 EV SiC 銷量「翻倍」（Q2'25），2025/3 設上海為大中華區 HQ（China 戰略深化）；fab 分布全球。SiC/功率是中美科技競爭焦點之一。<strong>雙面：</strong>中國 EV 是 ON SiC 的重要成長來源（中國 EV 滲透領先全球），但也使 ON 暴露於中國本土 SiC 廠（聖邦、士蘭微等）的補貼式國產替代競爭 + 地緣政策風險。中國市場「又是成長引擎、又是競爭威脅」的雙重性，是 ON 比 ADI/TXN 更高的地緣不確定。</p>
+
+<h3>營收組成（三維）</h3>
+<h4>① 按業務段（Q1'26）</h4>
+<table>
+<tr><th>業務段</th><th>占比%</th><th>YoY%</th></tr>
+<tr><td>PSG（Power Solutions）</td><td>~49%</td><td>+14%</td></tr>
+<tr><td>AMG（Analog &amp; Mixed-Signal）</td><td>~36%</td><td>−5%</td></tr>
+<tr><td>ISG（Intelligent Sensing）</td><td>~16%</td><td>+1%</td></tr>
+</table>
+<h4>② 按終端市場</h4>
+<table>
+<tr><th>終端</th><th>占比（約）</th><th>備註</th></tr>
+<tr><td>Automotive</td><td>~52%</td><td>SiC/CIS 核心，EV 放緩曝險</td></tr>
+<tr><td>Industrial</td><td>~29%</td><td>工業電源/自動化</td></tr>
+<tr><td>Other（含 AI 資料中心）</td><td>~19%</td><td>AI 電源最快坡</td></tr>
+</table>
+<p class="note"><strong>終端集中度的風險量化：</strong>汽車 + 工業 ~81%（歷史 Q1'23 峰值），其中汽車 ~52% 是單一終端最大曝險。汽車內 SiC（EV 電驅）+ CIS（ADAS）都直接綁 EV/車市週期。對比 ADI（工業 50% + 汽車 24% + 通訊 15% + 消費 11%，更均衡）/ TXN（工業 + 汽車 ~70% 但廣線分散），ON 的汽車集中（尤其 SiC 綁 EV）使其終端週期風險最高。這是 ON 客戶結構 🟡 + 長期信心「中」的量化基礎。</p>
+<h4>③ 按客戶集中度</h4>
+<table>
+<tr><th>指標</th><th>數值</th></tr>
+<tr><td>客戶集中度</td><td>中等（汽車/EV 客戶集中度高於 ADI/TXN）</td></tr>
+<tr><td>EV 終端曝險</td><td>高（SiC 直接綁 EV 電驅）</td></tr>
+</table>
+
+<h3>單位經濟（逐業務段）</h3>
+<table>
+<tr><th>業務段</th><th>核心 Unit 指標</th><th>趨勢</th><th>段 margin 定性</th><th>結構性洞察</th></tr>
+<tr><td>PSG</td><td>每 EV/系統 SiC 內容</td><td>↑（內容）/ ↓（EV 量）</td><td>中-高（fab-right 回升）</td><td>成長引擎，但 EV 量是前提</td></tr>
+<tr><td>AMG</td><td>類比/電源 ASP</td><td>↓→（趨穩）</td><td>中</td><td>仍衰退，趨穩中</td></tr>
+<tr><td>ISG</td><td>每車 CIS 內容</td><td>→（Sony 壓）</td><td>中</td><td>CIS #1 但 Sony 競爭</td></tr>
+</table>
+<p class="note"><strong>mix-shift：</strong>PSG（SiC/power）+ AI 電源佔比升 → 合併 margin 結構性改善（fab-right 助力），但 EV 量 + SiC 定價是前提。</p>
+
+<h3>F｜逐段 TAM/SAM + 價值鏈深度（v12.6）</h3>
+<table>
+<tr><th>業務段</th><th>段 TAM（現/5Y）</th><th>當前滲透</th><th>段 CAGR</th><th>value chain 位置 + 被替代風險</th></tr>
+<tr><td>SiC 功率（PSG）</td><td>$2.73B / $8.41B</td><td>ON #2 ~25%</td><td>~25%（但 EV 放緩腰斬近期）</td><td>EV/工業電驅核心，STM/Infineon/Wolfspeed 競爭</td></tr>
+<tr><td>汽車 CIS（ISG）</td><td>~$5B / ~$8B</td><td>ON #1 ~40%</td><td>~8%</td><td>ADAS 眼睛，Sony-TSMC 加大競爭（被替代風險升）</td></tr>
+<tr><td>AI 資料中心電源</td><td>小 / 快速</td><td>低（早期）</td><td>~高（翻倍）</td><td>AI 供電，MPWR/TXN 競爭</td></tr>
+</table>
+<p class="note">SiC 是最大坡（25% CAGR）但 EV 放緩使近期腰斬；CIS #1 但 Sony 威脅；AI 電源最快但小。利潤池受 EV/SiC 週期壓制。</p>
+<h4>SiC 供需再平衡時點（thesis 的隱藏變數）</h4>
+<p class="note">SiC 板塊 2025-26 處「供過於求」（多家擴產 × EV 放緩需求）。Wolfspeed 的財務困境是供給端出清的訊號之一——若 Wolfspeed 進一步收縮，SiC 供給可能再平衡，利好 ON/STM/Infineon 定價。但時點高度不確定。ON 的反轉 thesis 隱含「SiC 供需在 2026-27 再平衡 + EV 量回穩」雙重假設——這兩個都不在 ON 控制範圍內（外生變數），是「中等可見度」評級的根本。投資 ON 本質是賭一個「外生週期 + 終端需求」的時點，而非賭公司自身的執行（ON 執行 fab-right 已做得好）。</p>
+</section>
+
+<!-- §12 -->
+<section id="s12">
+<h2>§12　公司治理與資本配置</h2>
+<h3>股東結構</h3>
+<p>機構持股 ~95-100%（yf 顯示 109% 為 artifact），內部人 0.34%。CEO Hassane El-Khoury（2020 起，主導 fab-right + SiC 戰略）、CFO Thad Trent。<strong>CFO Thad Trent 於 2026/4 賣出 ~$2.4-2.8M（10b5-1 計畫，保留 ~33 萬股）</strong>——後谷底反彈後的減持，輕度警訊。無 dual-class。</p>
+
+<h3>資本配置軌跡（M&amp;A track record）</h3>
+<table>
+<tr><th>年份</th><th>事件</th><th>金額</th><th>結果</th></tr>
+<tr><td>2016</td><td>Fairchild Semiconductor</td><td>$2.4B</td><td>成功整合（擴大功率）</td></tr>
+<tr><td>2021</td><td>GT Advanced（SiC 基板）</td><td>—</td><td>SiC 垂直整合</td></tr>
+<tr><td>2025/1</td><td>Qorvo United SiC（JFET）</td><td>~$300M</td><td>SiC 補強</td></tr>
+<tr><td>2025/4</td><td><strong>Allegro（ALGM）敵意併購 — 撤回</strong></td><td>$6.9B（$35.10/股）</td><td class="bad">失敗（Allegro 拒絕，ON 撤回）</td></tr>
+</table>
+<p class="note">2025 失敗的 Allegro $6.9B 敵意併購是資本配置警訊——顯示管理層的併購野心（在週期谷底欲大舉收購），雖最終撤回。這是 capalloc 評級的扣分項。</p>
+<h4>Allegro 敵意併購始末（資本配置 case study）</h4>
+<p>2025/3 ON 對 Allegro MicroSystems（ALGM，磁性感測/汽車）出價 <strong>$35.10/股、~$6.9B 股權值</strong>全現金敵意收購；Allegro 董事會 3 月拒絕；ON 於 <strong>2025/4/14 撤回</strong>，稱「無可行路徑 / Allegro 董事會無實質回應」。這起未成的大型併購反映：① ON 在週期谷底（自身股價低）仍欲動用 ~$6.9B（遠超當時市值的相當比例）做敵意收購，資本配置紀律存疑；② 若成交，將大幅增加槓桿 + 整合風險。撤回是「沒做錯」但「想做」本身是治理觀察點（§5.C R3）。對比 ADI/TXN 的紀律性併購，ON 的併購野心是 capalloc B（非 A）的關鍵扣分。</p>
+
+<h3>管理層薪酬 + SBC</h3>
+<table>
+<tr><th>指標</th><th>數據</th></tr>
+<tr><td>SBC / Revenue（近 3 年）</td><td>FY23 1.5% / FY24 1.9% / FY25 2.4%</td></tr>
+<tr><td>GAAP vs 非 GAAP</td><td>FY25 GAAP EPS $0.29 vs 非 GAAP ~$2.35（差距主因重組 $329M + 攤銷）</td></tr>
+</table>
+<p class="note">SBC 紀律佳（2.4%）。GAAP/非 GAAP 大缺口主因重組（fab-right 一次性）+ 攤銷，非 SBC。</p>
+
+<h3>資本配置計分卡（v12.5）</h3>
+<table>
+<tr><th>項目</th><th>計算</th><th>過/不過</th></tr>
+<tr><td>M&amp;A 已實現 ROIIC</td><td>Fairchild 整合佳；Allegro 失敗（撤回，無實際損失但顯野心）</td><td class="neu">Fairchild 過；Allegro 警訊</td></tr>
+<tr><td>回購買入收益率</td><td>下行期低位回購（$40-100），現價 $122 → earnings yield 佳</td><td class="good">過（逆勢低位回購）</td></tr>
+<tr><td>SBC 淨稀釋率</td><td>~0%（回購 ≫ SBC）</td><td class="good">過</td></tr>
+</table>
+<p><strong>資本配置等級：B</strong>。亮點：逆勢低位回購（$6B 授權）+ fab-right 提 FCF + SBC 低。扣分：Allegro 敵意併購野心（週期谷底欲大舉收購）。接線：B 級 → §2 I 不設限（但長期信心因 thesis 本身僅「中」）。</p>
+
+<h3>D｜10 年資本配置 track record（v12.6）</h3>
+<h4>① M&amp;A 全史</h4>
+<p>Fairchild（2016, $2.4B）→ 成功擴功率；GT Advanced（2021）→ SiC 基板垂直整合；United SiC（2025）→ SiC 補強；Allegro（2025）→ 失敗撤回。10 年敘事：以併購 + fab-right 轉型為 SiC/power + 汽車 leader，執行尚可，但 Allegro 顯示估值紀律待觀察。</p>
+<h4>② 回購軌跡 + 重組</h4>
+<p>無股息，全數回購。回購軌跡：FY22 $260M / FY23 $564M / FY24 $654M / FY25 $1,378M（~97% FCF），新 <strong>$6B 授權（2026，自 $3B 倍增）</strong>。下行期逆勢低位回購（$40-100），現價 $122 → 時點佳（逆勢回購是 ON 資本配置亮點）。<br>重組：2024-25 裁 ~1,900 人（$59M 遣散）；2026 Manufacturing Realignment 再裁 ~650 人（Q1'26 $329M：$147M 設備減損 + $24M 遣散等）。累計重組計畫上看 ~$300M。fab-right 的代價，但長期降固定成本。</p>
+<h4>③ 內部人 + 薪酬</h4>
+<p>內部人持股低（0.34%）；<strong>CFO Thad Trent 於 2026/4 賣出 ~9-12 萬股（$80-100 區間，~$2.4-2.8M，10b5-1 計畫，保留 ~33 萬股）</strong>——後谷底反彈 3 倍後的減持，屬程序性但時點上是「高位賣出」的輕度警訊（內部人在反彈後減持，與外部追高者方向相反）。SBC 低（2.4%）；薪酬與營收/FCF 掛鉤。10 年敘事：fab-right 轉型執行佳（FCF 韌性），但 Allegro 敵意併購 + CFO 高位減持是治理觀察點。</p>
+
+<h3>E｜FCF 去向 + M&amp;A 飛輪（v12.7）</h3>
+<h4>① FCF 去向拆解（FY2025，FCF $1,419M）</h4>
+<table>
+<tr><th>用途</th><th>金額 / 佔 FCF</th><th>判斷</th></tr>
+<tr><td>股息</td><td>$0（無股息）</td><td>—</td></tr>
+<tr><td>回購</td><td>$1,378M（97% of FCF）</td><td>逆勢低位回購，時點佳</td></tr>
+<tr><td>去債</td><td>2026 償 $1.25B（積極）</td><td>降槓桿</td></tr>
+<tr><td>M&amp;A</td><td>United SiC ~$300M；Allegro $6.9B 失敗</td><td>SiC 補強 / 大型併購野心</td></tr>
+</table>
+<h4>② M&amp;A 飛輪判定</h4>
+<p>ON <strong>非穩定飛輪型</strong>——成長靠有機（SiC/power）+ 機會性併購（Fairchild、United SiC），且 Allegro 失敗顯示飛輪不穩。當前 FCF 主要回購。</p>
+<h4>③ 一句結論</h4>
+<p>這檔的成長<strong>變成股東現金（FCF 97% 逆勢低位回購）</strong>，增量 ROIC（當前週期谷 6.6% &lt; WACC，賭反轉後回升），M&amp;A 飛輪<strong>不穩（Allegro 失敗）需警戒併購野心</strong>。fab-right 使 FCF 在下行期不減反增是真實亮點。接 §8.0 第 4 問：FCF 強且回饋股東，但 ROIC 待週期反轉驗證。</p>
+<p class="note"><strong>資本配置的雙面評價：</strong>正面——fab-right（砍 capex 提 FCF）+ 逆勢低位回購（$6B 授權、下行期 $40-100 買入）是教科書級的逆週期資本配置，這部分執行 A 級。負面——Allegro $6.9B 敵意併購（週期谷底欲大舉收購）+ CFO 高位減持，顯示資本配置紀律有「想做大事」的衝動。淨評 B：執行紀律好但併購野心是尾部風險。對長抱者：ON 的現金引擎（FCF margin 24% + 100% 回購）是真實的下檔支撐，但若管理層用 FCF 去做下一個 Allegro 式大型併購，股東現金回饋會中斷。監測下一筆 M&amp;A 公告。</p>
+</section>
+
+<!-- §13 -->
+<section id="s13">
+<h2>§13　估值診斷</h2>
+<h3>13.1｜歷史估值分位（5 年框架）</h3>
+<table>
+<tr><th>估值指標</th><th>當前值</th><th>5Y 低</th><th>5Y 中位</th><th>5Y 高</th><th>當前分位</th></tr>
+<tr><td>Trailing P/E（GAAP）</td><td>89.4x（E 崩潰失真）</td><td>~8x</td><td>~18x</td><td>~180x</td><td>失真（E 谷）</td></tr>
+<tr><td>Forward P/E（NTM）</td><td>~38x</td><td>~10x</td><td>~16x</td><td>~40x</td><td>~90%</td></tr>
+<tr><td>Forward P/E（FY+2）</td><td>28.5x</td><td>~10x</td><td>~15x</td><td>~30x</td><td>~85%</td></tr>
+<tr><td>EV/EBITDA</td><td>23.1x</td><td>~7x</td><td>~12x</td><td>~24x</td><td>~95%</td></tr>
+</table>
+<div class="reasoning"><b>解讀（≤80 字）：</b>Fwd PE FY+1 ~38x ~90 分位、FY+2 28.5x ~85 分位、EV/EBITDA ~95 分位 → 估值情緒<b>過熱</b>。分母（E）受深度週期壓低使倍數虛高，但即使前瞻 FY+2 28.5x 也在 5Y 高位。<b>implication：</b>確認 §2 D 估值燈 🟠。</div>
+<p class="note"><strong>估值情境對照：</strong>市場給 ON 後谷底火箭式重估（自 $44 → $122，3 倍），反映「週期反轉 + SiC/AI 復甦」的樂觀定價。但這個倍數已 priced-in「反轉完美持續」——若 EV 放緩使 SiC 復甦慢、或 AMG 續衰、或 Sony 侵蝕 CIS，向常態 ~15-19x 收斂的下行極大（機率加權合理價 $71，−42%）。<strong>與歷史的差異：</strong>2021 SiC 緊缺高點時 EPS 在峰值（~$5.3）、EV 需求強；現在 EPS 剛自谷回升（$3.09E）、EV 放緩——「倍數高 + E 在復甦初期 + 核心終端逆風」的三重風險，比 2021 更脆弱。</p>
+
+<h3>13.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>判斷基準</th><th>解讀</th></tr>
+<tr><td>Forward P/E（FY+2）</td><td>28.5x</td><td>—</td><td>—</td></tr>
+<tr><td>EPS CAGR（FY+1→FY+3，§7）</td><td>34.38%</td><td>—</td><td>深度谷底回補</td></tr>
+<tr><td>PEG</td><td>0.83</td><td>&lt;1 便宜 / 1-2 合理 / &gt;2 貴</td><td><strong>recovery 假象，覆寫不採</strong></td></tr>
+<tr><td>常態化 PEG（用 ~12% 內生）</td><td>~2.4</td><td>同上</td><td>剔除週期回補後昂貴</td></tr>
+</table>
+<div class="reasoning"><b>推導 + 覆寫：</b>PEG = 28.5 ÷ 34.38% = <b>0.83</b>，機械上「便宜」。但 34.38% CAGR 由深度谷底（FY25 非 GAAP $2.35）回補膨脹——這是<b>週期股的經典 PEG 陷阱</b>（同 MU DD 教訓：低 PE/PEG 在週期反轉是假象）。以常態化內生 ~12% 計，PEG ~2.4（昂貴）。<b>implication：</b>覆寫不採 🟢，估值燈 🟠。</div>
+<p class="note"><strong>為何不犯「低 PEG 即便宜」的錯：</strong>週期股在谷底反轉時，分母（forward EPS CAGR）被「谷底基數效應」放大——任何從深谷反彈的成長率都很高（34%），但這不是可持續的內生成長（內生 ~12%）。若機械採 PEG 0.83 給 🟢、再觸發盲點 1 救援 +1 級，會把一個「後谷底火箭 + EV 結構逆風」誤判為「便宜的成長股」——這正是 MU DD 記錄的教訓（低 PE 在週期峰/谷都可能是假象）。本 DD 明確覆寫，估值燈維持 🟠。</p>
+
+<h3>13.4｜同業估值比較</h3>
+<p>本標的 tier：<strong>SiC/功率 + 汽車類比（深週期）</strong>。Peer 選 SiC/功率/汽車半導體。</p>
+<table>
+<tr><th>公司</th><th>市值</th><th>Fwd P/E</th><th>EV/EBITDA</th><th>FCF Margin</th><th>備註</th></tr>
+<tr><td><strong>ON</strong></td><td>$47.3B</td><td>28.5x（FY+2）</td><td>23.1x</td><td>23.7%</td><td>SiC #2，剛 inflect</td></tr>
+<tr><td>STM</td><td>$69.7B</td><td>39.8x</td><td>21.2x</td><td>低</td><td>SiC #1，E 谷</td></tr>
+<tr><td>Infineon</td><td>~€106B</td><td>33.5x</td><td>24.7x</td><td>~7-15%</td><td>汽車功率 #1</td></tr>
+<tr><td>ADI / TXN（廣線參考）</td><td>$211B / $294B</td><td>29.4x / 34.3x</td><td>33.8x / 33.1x</td><td>39% / 15%</td><td>廣線類比，更穩</td></tr>
+<tr><td>SiC tier 中位</td><td>—</td><td>~33x</td><td>~23x</td><td>~中</td><td>—</td></tr>
+</table>
+<div class="reasoning"><b>解讀（≤80 字）：</b>ON FY+2 28.5x 略低於 SiC tier 中位（STM 39.8x、Infineon 33.5x，但它們 E 更谷），FCF margin 最佳（fab-right）。<b>但所有 SiC 玩家的 E 都受週期壓低，低倍數是假象。</b><b>implication：</b>ON 在 SiC tier 不算最貴，但整個 tier 都因 EV 放緩而 E 不確定 → 🟠。</div>
+<p class="note"><strong>⚠️ 同業比較的陷阱：</strong>用「SiC tier 都很貴（STM 39.8x、Infineon 33.5x）」來合理化 ON 28.5x 是危險的——整個 SiC tier 的 forward PE 都因「E 在週期谷 + 反彈預期」而虛高，這是「集體 priced-in 復甦」。真正的 anchor 應是 ON 自身 through-cycle EPS（~$3.4-3.9）× 合理倍數（15-19x）= $51-74，而非與同樣被高估的同業比。這也是為何 13.5 機率加權合理價 $71 遠低於現價——同業比較會誤導，through-cycle 才是真錨點。</p>
+
+<h3>13.5｜情境機率加權合理價（分析師自建）</h3>
+<table>
+<tr><th>情境</th><th>機率</th><th>關鍵假設</th><th>FY+2 EPS</th><th>合理 PE</th><th>目標價</th><th>vs 現價</th></tr>
+<tr><td class="good">多頭（反轉 + SiC 復甦）</td><td>30%</td><td>EV 回穩、SiC 回正、AI 電源翻倍、GM 朝 42%</td><td class="num">$4.5</td><td class="num">22x</td><td class="num">$99</td><td class="bad">−19%</td></tr>
+<tr><td class="neu">基準（溫和反轉）</td><td>40%</td><td>反轉持續但 EV 放緩拖慢 SiC，GM 緩升</td><td class="num">$4.27</td><td class="num">17x</td><td class="num">$73</td><td class="bad">−40%</td></tr>
+<tr><td class="bad">空頭（反轉夭折）</td><td>30%</td><td>EV 續軟、SiC 再衰退、AMG 續跌</td><td class="num">$3.3</td><td class="num">12x</td><td class="num">$40</td><td class="bad">−67%</td></tr>
+</table>
+<div class="reasoning"><b>機率加權合理價：</b>$99×30% + $73×40% + $40×30% = $29.7 + $29.2 + $12 = <b>$71</b>（現價 $121.62 的 −42%）。<b>implication：</b>機率加權中性價遠低於現價 ~42%——<b>連多頭情境都 −19%</b>。這量化了「ON 股價已大幅跑過基本面」：後谷底火箭已 3 倍且越過分析師均標，下行不對稱極端。這是 ON 觀望（且偏向 C 邊界）的核心。</div>
+
+<h3>§13 估值診斷結論</h3>
+<p>13.1 歷史分位（FY+2 ~85%、NTM ~90% → 過熱）+ 13.2 PEG（0.83 假象、常態化 ~2.4 → 貴）+ 13.4 同業（SiC tier E 普遍失真）+ 13.5 機率加權 $71（−42%）→ 綜合估值訊號：<strong>🟠 偏貴（後谷底火箭，下行不對稱）</strong>。完整裁決見 §1 dashboard。</p>
+<p class="note"><strong>估值的三重交叉驗證一致指向偏貴：</strong>① 歷史分位（FY+1 ~90%）；② through-cycle PE ~33x（對 B 級深週期名太高）；③ 機率加權合理價 $71（−42%，連多頭情境 −19%）。三種獨立方法都指向「現價已大幅透支」。再加上「股價已 3 倍且越過分析師均標 $106」的市場訊號，四個獨立角度一致 → 高信心的 🟠（向 🔴 邊緣）。這不是「便宜的週期反轉股」，而是「已被充分定價的後谷底火箭」。對 PM：唯一合理動作是觀望，等大幅回檔（$70-85）+ EV/SiC 外生環境改善 + MA 對齊（W104 上穿 W250）三者至少兩者具備。</p>
+<p><strong>分析師目標價參考：</strong>共識均 $106.54、中位 $103（32 位，Buy：12 強買 / 1 買 / 19 持有）；高 $150、低 $68。<strong>現價 $121.62 已高於均標 $106.54（隱含 −12% 下行）。</strong>KeyBanc 升至 $125。<strong>分歧點：</strong>股價已跑過共識均標 + 多家持有評等——市場對「反轉幅度」分歧大；我們的機率加權合理價 $71（−42%）遠低於現價，認為後谷底火箭已嚴重透支。</p>
+</section>
+
+<!-- 版本修訂 -->
+<section>
+<h2>版本修訂紀錄 + 假設驗證對照</h2>
+<div class="hypothesis-box">
+<p><strong>v12.7 DD（2026-06-20，ON Inception）：</strong></p>
+<ul>
+<li>本份為 ON 首份 v12.2+ DD（Inception 2026-06-20），v12.7 schema（含全部深度模組）。</li>
+<li>裁決 B（觀望）：週期反轉 + FCF 韌性 thesis 完整，但股價已 3 倍且跑過分析師均標 $106 + EV/SiC 結構不確定 → 等大幅回檔（$70-85）+ 復甦確認。長期信心僅「中」（B 級護城河 + 深週期 + EV 逆風）。</li>
+</ul>
+</div>
+<p class="note">本份為 Inception，無 12 個月前對照。下次年度對照 2027-06-20。資料來源：yfinance（2026-06-18 收盤）+ Excel EPS snapshot 2026-06-04 + web_search（ON Q1 2026 法說、SiC 市場、fab-right、Allegro 併購、Sony CIS 競爭、分析師目標、ROIC/GM 歷史）。</p>
+</section>
+
+<script id="dd-meta" type="application/json">
+{
+"ticker": "ON",
+"schema": "v12.7",
+"date": "2026-06-20",
+"price_at_dd": 121.62,
+"signal": "B",
+"trap": "🟡",
+"trap_label": "🟡 觀察期",
+"moat": "B",
+"val": "🟠",
+"ma": "🟡",
+"fpe_fy2": 28.48,
+"pct_5y": 85.0,
+"peg_fy2": 0.83,
+"upside_short_pct": -52.0,
+"upside_mid_pct": -33.0,
+"stress": {"pass": 2, "total": 2},
+"moat_score": 7.0,
+"moat_execution": 7.0,
+"moat_pricing_power": 6.5,
+"growth_durability": 6.5,
+"quality_score": 7.0,
+"ai_risk": "🟢",
+"long_term_confidence": "中",
+"verdict": "B 衛星候選/觀望（深度週期股剛Q1'26 inflect +5%YoY，股價自52W低$44.56已近3倍且跑過分析師均標$106；SiC#2+CIS#1+FCF韌性真實，但EV放緩是SiC結構逆風+Sony CIS競爭+估值🟠+MA🟡觀察池後谷底火箭極伸展；機率加權合理價$71/-42%下行不對稱；等大幅回檔$70-85+SiC/EV復甦確認，長期信心僅中）",
+"oneliner": "Q1'26 inflect Rev $1.51B +5%YoY(谷底反轉)；PSG+14%/AMG-5%/資料中心+30%QoQ guide翻倍；非GAAP GM 38.5% 3連季擴張；fab-right FCF margin創24%；但股價已3倍+跑過均標$106、EV放緩壓SiC、估值🟠 FY+1 39.4x、MA🟡觀察池；訊號B觀望等大幅回檔。",
+"upside_5y_pct": 5,
+"endo_growth_ceiling": 12.0,
+"capalloc_grade": "B"
+}
+</script>
+
+<button class="btn-print" onclick="window.print()">🖨 列印為 PDF</button>
+</main>
+</body>
+</html>
