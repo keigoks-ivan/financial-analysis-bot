@@ -344,3 +344,5 @@
 | 2026-06-19 | SPCX | SpaceX 獨家把上太空的成本打崩、壟斷通往軌道的高速公路，Starlink 是唯一規模化收費站；但 ~130x P/S 已把 Goldman 的 xAI「AI-100x」moonshot 全定價（觀望：絕世資產 × 離譜價格 × 估值依賴型，等 EV/Sales<30x ~$82-100 或回測 IPO $135 + xAI 經濟性首個驗證點 + 8 月 lockup 供給消化） | DCA_SPCX_20260619.html | DD_SPCX_20260619.html | — |
 | 2026-06-20 | ADI | ADI 是真實世界與數位世界之間最頂尖的橋，AI 資料中心電源與工業自動化讓這座橋的價值結構性放大（觀望：好公司、價格不夠好，現價機率加權5Y IRR僅~5%、隱含through-cycle PE~43x，等回檔$360-390/FY+2 FPE~25x 或拉貨疑慮消化再分批進場） | DCA_ADI_20260620.html | DD_ADI_20260620.html | — |
 | 2026-06-20 | SNDK | SanDisk 是不擁有自己晶圓廠的 NAND 純玩，在 AI 缺貨循環的史上最猛 blow-off 峰值 | DCA_SNDK_20260620.html | DD_SNDK_20260620.html | — |
+| 2026-06-20 | TXN | TXN 押注自建 300mm fab 的成本壟斷與永不缺貨——缺芯時唯一保證交貨、價格戰時唯一打不死的類比霸主（觀望：類比霸主、價格不夠好，現價34x/FY+1 41.6x貼天花板、IRR僅2.3%、下行不對稱多頭僅-3%，雙重gating等回檔$240-270+FCF/share拐點>$8驗證；三檔類比R:R排序NXPI>ADI>TXN） | DCA_TXN_20260620.html | DD_TXN_20260620.html | — |
+| 2026-06-20 | RKLB | Rocket Lab 是 SpaceX 之外唯一成熟的端到端太空公司（自己造火箭/衛星/零件），押注美國國防「不能只靠一家供應商」；Neutron 是把利基從小型放大到中型的 binary 賭注（觀望：~103x P/S 已預支 Neutron 成功，等回測 $80-90 或 Q4'26 成功首飛；治理/資本配置健康優於 SPCX，下行被業務分散+淨現金 $760M 保護、非 Astra 式歸零；機率加權 5Y IRR ~4%/yr） | DCA_RKLB_20260620.html | DD_RKLB_20260620.html | — |
