@@ -22,8 +22,9 @@ static and the block never drifts from this file):
 
     python3 scripts/build_supply_chain_tiers.py
 
-Source of the ranking: docs/supply-chain/_audit_findings_20260610.md (full-site
-audit, 40 maps / 749 nodes / 70 ⚑, 9 cluster sub-agents + cross-map check).
+Source of the ranking: docs/supply-chain/audit-2026-06.json (full-site audit,
+40 maps / 749 nodes / 67 ⚑, Part 1 deterministic + Part 2 9-cluster sub-agents;
+earlier narrative pass: docs/supply-chain/_audit_20260529.md).
 """
 from __future__ import annotations
 
@@ -136,6 +137,12 @@ T1 = [
         "sup": [("Namics（未上市）", "", "JP")],
         "topics": ["hbm"],
         "verdict": "對 SK Hynix 的 MR-MUF 製程今日為零二供（材料與製程 co-developed）；半徑＝全球過半 HBM 供給的材料咽喉。但稀缺性衰減中：獨家合約 ~2027 到期、CXMT 已開始複製、HBM4E hybrid bonding 會結構性降低 EMC 依賴 — 「現在很硬、三年後變普通」。",
+    },
+    {
+        "name": "Mitsui Chemicals EUV pellicle（光罩保護膜）",
+        "sup": [("Mitsui Chemicals", "4183.T", "JP")],
+        "topics": ["material", "advanced", "fe-equipment"],
+        "verdict": "唯一獲 ASML / IMEC 授權的外供 EUV pellicle 廠（ASML 已把組裝 + 配銷轉給 Mitsui）。但這是<strong>衰減中</strong>的獨家：TSMC 自 Fab 3 已自製 CNT pellicle、Samsung 量產暫不用 pellicle 且規畫轉 FST / S&S Tech 韓系供應 —— 兩大 EUV 用戶各自絕緣後，斷供爆炸半徑遠小於 ABF，剩 Intel 為 swing client。耗材屬性（每 2–6 月換）使短期仍有供給風險、requalify 12–18 月；Mitsui 反攻點在岩國 CNT 廠（2025/12 完工、&gt;1kW、High-NA ready）。",
     },
     {
         "name": "Mitsui Mining HVLP 高速銅箔",
@@ -337,8 +344,9 @@ def build_block(dd_links) -> str:
              '產能 / 地理集中度 · 斷供爆炸半徑），單一資料源在 '
              '<code>scripts/build_supply_chain_tiers.py</code> 的 <code>T0/T1/T2/OVER</code> 清單，'
              'DD 連結由 <code>data/dd_links.json</code> 自動解析。'
-             '完整審計（40 maps / 749 nodes / 70 ⚑）見 '
-             '<code>docs/supply-chain/_audit_findings_20260610.md</code>。</p>')
+             '完整審計（40 maps / 749 nodes / 67 ⚑）見 '
+             '<code>docs/supply-chain/audit-2026-06.json</code>'
+             '（早期敘述版 <code>_audit_20260529.md</code>）。</p>')
     return "\n".join(h)
 
 
