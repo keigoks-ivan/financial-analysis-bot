@@ -60,7 +60,7 @@ financial-analysis-bot/
 
 | § | 標題 | 幕 | 主要形式 | 嵌入決策資產 | 字數目標 |
 |:---|:---|:---|:---|:---|:---|
-| **§0** | 決策摘要層 | 摘要 | **結論先行段** + 6-box 卡片 + thesis + PM 綠卡 | 結論 / TL;DR / oneliner / PM Implication | 500-800 |
+| **§0** | 決策摘要層 | 摘要 | **三句話看完** + 最重要的一個判斷 + 6-box 卡片 + thesis + PM 綠卡 | 三句話（現在/未來/怎麼做）/ 結論 / TL;DR / oneliner / PM Implication | 500-800 |
 | **§1** | 產業白話定義 + 歷史脈絡 | 一 | 敘事 + 1 表 | 歷史 cycle 統計表 | 1,800-2,800 |
 | **§2** | 技術成熟度 + S 曲線 | 一 | 敘事 + S 曲線 + 1 小表 | S-curve（強制）+ kingmaker 小表 | 1,200-1,800 |
 | **§3** | 供給側：現在與未來 + 利潤池 | 二 | 敘事 + 2-3 表 | 玩家矩陣 / 利潤池遷移 / 成本曲線 | 2,400-3,600 |
@@ -96,13 +96,18 @@ financial-analysis-bot/
 
 ### §0 決策摘要層（純 ID 優點，給掃讀的 PM）
 
-掃讀的 PM 不讀 9 章，他讀 §0 就要拿到行動結論。本層五件事（順序固定，**結論先行**）：
+掃讀的 PM 不讀 9 章，他讀 §0 就要拿到行動結論。本層六件事（順序固定，**結論先行**）：
 
-1. **結論先行段（v2.1 新增，必填，報告第一個內容塊）**：3-6 句**純白話文字**把本報告結論完整寫出來 — 裁決是什麼（過剩/平衡/短缺 + 時間範圍）、最核心的一條非共識判斷、真正的風險是什麼、所以該做什麼（方向 + 標的層級）。讀者只讀這一段就知道全文說了什麼。**禁止**：用卡片 / pill / bullet 替代這段文字；埋伏筆（「詳見 §5」不算結論）；騎牆語。放在 cross-link callout 之後、6-box 卡片之前，視覺上用結論框（紫框白底，見 templates）。
-2. **TL;DR 6-box 卡片**：TAM / 5Y CAGR / 投資時鐘 Phase / **供需裁決（過剩/平衡/短缺三選一）** / conviction pill（high/mid/low）/ top picks（2-3 ticker）。
-3. **一句話 thesis**（≤200 字，必帶 [I:] 或 [X:] tag）→ 同步寫進 id-meta `oneliner`。這是本 ID 最核心的非共識觀點。
-4. **PM Implication 綠卡**（沿用舊 §0.7，**必填，缺即 Gate 9 阻斷**）：五 bullet + ①②③④ 四行動 + conviction pill。
-5. **legacy cross-link callout**（若同主題已有 legacy ID / DS）：頂部加 callout 連回去，標明本份為 v2 敘事版。
+1. **三句話看完（v2.2 新增，必填，報告第一個內容塊）**：黑框三行，左側彩色標籤 `現在`（藍）/ `未來`（橘）/ `怎麼做`（綠），是全報告的 10 秒答案，放在最頂、6-box 與來源 warning **之上**：
+   - **現在**：產業現況一句裁決（過剩 / 平衡 / 短缺三選一）+ 最硬的一條證據錨點。
+   - **未來**：3-5 年走向 + 最大的那條結構裂縫（一句）。
+   - **怎麼做**：標的層級 + 動作。**允許且鼓勵寫「都不買 / 現價非進場點 / 等回調 X%」** — 不得被結構性逼著一定點名買標的（這正是與 6-box『top picks 一格永遠要填』的關鍵差異，避免報告結構性偏多）。
+   每行「一句結論 + 一個證據子句」，硬上限 ≤2 行（過長就退化成段落）。三行**同步寫進 id-meta `now_state` / `future_state` / `action`**（v2.x 必填、`validate_id_meta.py` 阻斷、各 ≤240 字元）。
+2. **最重要的一個判斷（原「結論先行段」，v2.1→v2.2 reframe，必填）**：3-6 句純白話，放**那一條最反直覺、三句話濃縮不下的深層非共識判斷**（不是重述三句話的裁決）— 講清因果機制、市場為何看錯、訊號該盯哪裡。視覺用紫框白底，標題「📌 本報告最重要的一個判斷」。**禁止**：重述三句話的裁決字句（短缺/過剩別講第二遍）；用卡片 / pill / bullet 替代這段文字；埋伏筆（「詳見 §5」不算結論）；騎牆語。
+3. **TL;DR 6-box 卡片**：TAM / 5Y CAGR / 投資時鐘 Phase / **供需裁決（過剩/平衡/短缺三選一）** / conviction pill（high/mid/low）/ top picks（2-3 ticker）。
+4. **一句話 thesis**（≤200 字，必帶 [I:] 或 [X:] tag）→ 同步寫進 id-meta `oneliner`。這是本 ID 最核心的非共識觀點。
+5. **PM Implication 綠卡**（沿用舊 §0.7，**必填，缺即 Gate 9 阻斷**）：五 bullet + ①②③④ 四行動 + conviction pill。
+6. **legacy cross-link callout**（若同主題已有 legacy ID / DS）：頂部加 callout 連回去，標明本份為 v2 敘事版。
 
 **PM Implication 綠卡五 bullet + j-logic**（缺任一 = 未完成）：
 
@@ -120,7 +125,26 @@ HTML 樣板（綠卡，沿用 DS 綠 #16A34A 點綴）：
 
 ```html
 <h2>§0 決策摘要層</h2>
-<!-- 6-box TL;DR 卡片 + 一句話 thesis（帶 [I:]/[X:] tag）-->
+
+<!-- ① 三句話看完（v2.2，報告第一個內容塊；同步寫進 id-meta now_state/future_state/action）-->
+<div style="border:2px solid #0F172A;background:#F8FAFC;border-radius:10px;padding:16px 20px;margin:4px 0 20px">
+  <div style="font-weight:800;color:#0F172A;font-size:13px;letter-spacing:1px;margin-bottom:12px">⚡ 三句話看完</div>
+  <div style="display:flex;align-items:flex-start;gap:12px;margin:10px 0;line-height:1.75">
+    <span style="flex:0 0 auto;background:#1E3A8A;color:#fff;font-weight:700;font-size:11px;border-radius:5px;padding:3px 9px;margin-top:2px">現在</span>
+    <span>{{產業現況一句裁決（過剩/平衡/短缺）+ 最硬的證據錨點}}</span>
+  </div>
+  <div style="display:flex;align-items:flex-start;gap:12px;margin:10px 0;line-height:1.75">
+    <span style="flex:0 0 auto;background:#B45309;color:#fff;font-weight:700;font-size:11px;border-radius:5px;padding:3px 9px;margin-top:2px">未來</span>
+    <span>{{3-5 年走向 + 最大的結構裂縫}}</span>
+  </div>
+  <div style="display:flex;align-items:flex-start;gap:12px;margin:10px 0;line-height:1.75">
+    <span style="flex:0 0 auto;background:#15803D;color:#fff;font-weight:700;font-size:11px;border-radius:5px;padding:3px 9px;margin-top:2px">怎麼做</span>
+    <span>{{標的層級 + 動作；可寫「都不買 / 現價非進場點 / 等回調 X%」}}</span>
+  </div>
+</div>
+
+<!-- ② 最重要的一個判斷（紫框白底，放三句話濃縮不下的深層非共識判斷，勿重述裁決）-->
+<!-- ③ 6-box TL;DR 卡片 + ④ 一句話 thesis（帶 [I:]/[X:] tag）-->
 <div class="judgment-card" style="background:#F0FDF4;border-left:4px solid #16A34A">
   <div class="j-head">📊 <strong>Portfolio Implication（PM 級行動結論）</strong> <span class="j-conf high">conviction：{{level}}</span></div>
   <ul class="j-facts" style="color:#14532D">
@@ -881,7 +905,7 @@ Highest priority issues (top 3 by CONCLUSION_IMPACT).
 
 ## 【id-meta JSON Schema（原樣保留，schema 不准動）】
 
-> **v2.0 相容說明**：id-meta JSON schema **一個欄位都不加 / 不改**（`validate_id_meta.py` 會 reject unknown key）。`skill_version: "v2.0"` 即新格式標記（validator 只 regex 驗 vN.N，免改）。`sections_refreshed` 沿用 `technical / market / judgment` 三桶，v2 章節 mapping：**technical → §1-§2、market → §3-§5、judgment → §6-§9**。`related_tickers[]` / taxonomy（mega + sub_group）/ oneliner 規則全部不變 → stock-analyst、DCA、earnings-synthesis 零感知。
+> **v2.0→v2.2 相容說明**：id-meta JSON schema 在 v2.2 新增 **3 個 optional 欄位** `now_state` / `future_state` / `action`（§0 三句話）— validator **不 reject unknown key**（實測；只有 `sections_refreshed` 子鍵走白名單），故對 legacy 零影響；這三欄**只在 `skill_version` 為 `v2.x` 時必填**（`V2_RE` 阻斷、各 ≤240 字元），v1.x legacy ID 不受影響。`skill_version: "v2.x"` 即新格式標記（validator 只 regex 驗 vN.N）。`sections_refreshed` 沿用 `technical / market / judgment` 三桶，v2 章節 mapping：**technical → §1-§2、market → §3-§5、judgment → §6-§9**。`related_tickers[]` / taxonomy（mega + sub_group）/ oneliner 規則全部不變 → stock-analyst、DCA、earnings-synthesis 零感知（新欄位純為 §0 + 下游索引/screener 之後可選用）。
 
 每份 ID HTML 的 `<head>` 內必含 `<script id="id-meta" type="application/json">{...}</script>`，在 `<title>` 之後、第一個 `<style>` 之前，與既有 `<meta name="id-*">` tags 並存。這是下游消費者（stock-analyst §9 自動引用、CI validator、未來 sector index）的 SSOT。**漏寫 → CI `Validate DD + ID metadata` workflow strict gate fail，整 push 連坐被擋**。
 
@@ -896,6 +920,9 @@ Highest priority issues (top 3 by CONCLUSION_IMPACT).
 | `thesis_type` | enum | `"structural"` / `"event-triggered"` / `"mixed"` |
 | `ai_exposure` | enum | `"🟢"` 直接受益 / `"🟡"` 部分受益 / `"🔴"` 中性或受害 |
 | `oneliner` | string | ≤ 200 chars，核心 thesis 一句話 |
+| `now_state` | string | **v2.x 必填**，≤ 240 chars，§0 三句話之「現在」（產業現況裁決 + 證據錨點）|
+| `future_state` | string | **v2.x 必填**，≤ 240 chars，§0 三句話之「未來」（3-5 年走向 + 最大結構裂縫）|
+| `action` | string | **v2.x 必填**，≤ 240 chars，§0 三句話之「怎麼做」（標的層級 + 動作，可寫「都不買」）|
 | `related_tickers` | array | 關聯個股；每項 `{ticker, role, depth, beneficiary}` |
 
 **選填欄位**（不強制）：
@@ -957,12 +984,15 @@ Highest priority issues (top 3 by CONCLUSION_IMPACT).
 <script id="id-meta" type="application/json">
 {
   "theme": "AI EDA + IP",
-  "skill_version": "v2.0",
+  "skill_version": "v2.2",
   "id_version": "v1.0",
   "publish_date": "2026-06-11",
   "thesis_type": "structural",
   "ai_exposure": "🟢",
   "oneliner": "AI 晶片設計爆發推動 EDA + IP 需求結構性向上，SNPS/CDNS 雙寡占受益顯著，AI-native EDA tooling 為下一個複利層。",
+  "now_state": "需求結構性向上、供給雙寡占——AI 晶片設計爆發推動 EDA/IP 用量，SNPS/CDNS 合計 >70% 份額、客戶遷移成本極高，現況是賣方市場。",
+  "future_state": "未來 3-5 年雙寡占護城河更深，最大變數是 AI-native EDA tooling 能否把工具鏈重定價；中國自主 EDA 仍落後兩代、暫不構成結構威脅。",
+  "action": "核心倉 SNPS / CDNS 續抱；估值偏貴（Fwd P/E 高位），新進等回調而非追高，ARM 列 🟡 衛星觀察授權模式變現。",
   "related_tickers": [
     {"ticker": "SNPS", "role": "EDA 雙寡占 + ARC IP", "depth": "🔴", "beneficiary": true},
     {"ticker": "CDNS", "role": "EDA 雙寡占 + Tensilica IP", "depth": "🔴", "beneficiary": true},

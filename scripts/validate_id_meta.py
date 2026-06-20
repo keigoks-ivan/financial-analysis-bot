@@ -97,6 +97,13 @@ NUMERIC_RANGES = {
 ONELINER_HARD_CAP = 200
 TICKER_DEPTH_ALLOWED = {"🔴", "🟡", "🟢"}
 
+# v2.2 §0「三句話看完」— 現在 / 未來 / 怎麼做，同步寫進 id-meta。
+# v2.x ID 必填（validator 阻斷）；legacy v1.x 不受影響（startswith v2. 才觸發）。
+# 每句「一句結論 + 一個證據子句」，硬上限比 oneliner 略寬以容納證據錨點。
+THREE_SENTENCE_FIELDS = ("now_state", "future_state", "action")
+THREE_SENTENCE_HARD_CAP = 240
+V2_RE = re.compile(r"^v2\.")
+
 
 def validate_meta(meta: dict) -> list:
     errs = []
@@ -135,6 +142,15 @@ def validate_meta(meta: dict) -> list:
     one = meta.get("oneliner")
     if isinstance(one, str) and len(one) > ONELINER_HARD_CAP:
         errs.append(f"oneliner: {len(one)} chars exceeds hard cap {ONELINER_HARD_CAP}")
+
+    # v2.2 §0 三句話（now_state / future_state / action）— v2.x 必填 + 長度上限。
+    is_v2 = bool(V2_RE.match(str(meta.get("skill_version", ""))))
+    for field in THREE_SENTENCE_FIELDS:
+        v = meta.get(field)
+        if is_v2 and not (isinstance(v, str) and v.strip()):
+            errs.append(f"{field}: required (non-empty) for skill_version v2.x (§0 三句話看完)")
+        if isinstance(v, str) and len(v) > THREE_SENTENCE_HARD_CAP:
+            errs.append(f"{field}: {len(v)} chars exceeds hard cap {THREE_SENTENCE_HARD_CAP}")
 
     # related_tickers entries
     rt = meta.get("related_tickers")

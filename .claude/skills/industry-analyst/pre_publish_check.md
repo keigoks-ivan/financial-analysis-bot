@@ -130,7 +130,7 @@ Thesis 1 cornerstone: "{關鍵 claim}"
 
 ## Gate 4 [必備 / 阻斷]｜id-meta JSON 存在且通過 strict 驗證
 
-**規則**：每份 ID HTML 的 `<head>` 內必含 `<script id="id-meta" type="application/json">{...}</script>`，且該 JSON 通過 `scripts/validate_id_meta.py` strict 驗證（必填欄位齊全、enum 值合法、`oneliner` ≤ 200 chars、`related_tickers` 結構正確）。
+**規則**：每份 ID HTML 的 `<head>` 內必含 `<script id="id-meta" type="application/json">{...}</script>`，且該 JSON 通過 `scripts/validate_id_meta.py` strict 驗證（必填欄位齊全、enum 值合法、`oneliner` ≤ 200 chars、`related_tickers` 結構正確）。**v2.2 新增**：`skill_version` 為 `v2.x` 時，§0 三句話 `now_state` / `future_state` / `action` 三欄**必填且各 ≤240 chars**（validator 阻斷；legacy v1.x 不受影響）。
 
 **為何阻斷**：
 2026-04-27 連 11 份新 ID 漏了 id-meta 區塊，CI `Validate DD + ID metadata` workflow strict gate 全部 fail，使用者收到連續失敗信件。本 Gate 把 id-meta 從「QC 提醒」升格為「阻斷式 publish gate」。
