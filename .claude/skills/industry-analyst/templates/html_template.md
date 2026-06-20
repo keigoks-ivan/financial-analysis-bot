@@ -126,14 +126,21 @@
 <!-- ▲▲ canonical site header 結束 ▲▲ -->
 
 <header class="id-head">
-  <div class="id-badge">產業深度 · Industry Deep Report <span class="v2-pill">v2 敘事版</span></div>
+  <div class="id-badge"><span>產業深度研究 · INDUSTRY EQUITY RESEARCH · {SECTOR}</span><span class="v2-pill">{DD MON YYYY}</span></div>
   <h1>{THEME}</h1>
-  <p class="id-meta">發布日：{YYYY-MM-DD} ｜ 涵蓋股票：{N} ｜ 🟡 占比：{PCT}% ｜ 文字比：{RATIO}% ｜ v2.0</p>
+  <!-- stance band：等同個股 rating+TP。stance NEUTRAL→.rate 琥珀；Overweight→改 #15803D；Underweight→改 #B42318 -->
+  <div class="mh-stance">
+    <span><span class="k">Sector stance</span>　<span class="rate">{NEUTRAL / OVERWEIGHT / UNDERWEIGHT}</span></span>
+    <span><span class="k">供需裁決</span>　<span class="vv">{過剩 / 平衡 / 短缺（含時間範圍）}</span></span>
+    <span><span class="k">Conviction</span>　<span class="vv">{High / Mid / Low}</span></span>
+    <span><span class="k">Top picks</span>　<span class="vv">{TICKER1, TICKER2}</span></span>
+  </div>
+  <p class="id-meta">發布日 {YYYY-MM-DD} ｜ 涵蓋股票 {N} ｜ AI 占比 {PCT}% ｜ 文字比 {RATIO}% ｜ v2.2</p>
 </header>
 
 <!-- Claim Taxonomy reader banner（v2 必加） -->
 <div class="claim-banner">
-  <strong>📐 Claim Taxonomy v1（v2.0 敘事版）</strong>：本 ID 在 §0/§5/§7/§8 使用 4 類 inline tag 揭露 claim 性質：
+  <strong>CLAIM TAXONOMY v1（v2.0 敘事版）</strong>：本 ID 在 §0/§5/§7/§8 使用 4 類 inline tag 揭露 claim 性質：
   <strong>[F:]</strong> 事實（有 source）｜<strong>[I:]</strong> 推論（A→B 揭露）｜
   <strong>[X:]</strong> 情境預測（base/bull/bear 三情境，詞彙級機率）｜<strong>[A:]</strong> 顯式假設。
   數字以 range / ~xxx 呈現（除非 T1 公告精準值）；機率用「很可能 / 可能 / 不太可能」非百分比。來源收在每節末「本節參考來源」區塊。
@@ -162,8 +169,14 @@
 <section id="s8" class="id-body"> ... Catalyst Timeline + 證偽表 ... </section>
 <section id="s9" class="id-body"> ... 關聯個股 ... </section>
 
+<!-- Disclosures（IB 免責頁尾，v2.2 必加） -->
+<div class="id-disclosures">
+  <div class="dh">DISCLOSURES &amp; IMPORTANT INFORMATION</div>
+  本報告由 InvestMQuest Research 內部買方研究流程產生，僅供研究與投資決策參考，不構成要約、招攬或個別投資建議。資料來源含公司公告（8-K / 10-Q / 法說 transcript）與第三方研究機構，已力求準確但不保證完整或無誤；前瞻性陳述（base / bull / bear 情境）含不確定性，實際結果可能重大不同。估值與目標倍數隨價格與盈餘修正而變動。持倉揭露：本研究流程關聯帳戶可能持有文中標的部位。Past performance is not indicative of future results. © {YYYY} InvestMQuest Research.
+</div>
+
 <footer class="id-foot">
-  <p>產業深度報告 · industry-analyst v2.0（敘事版） · 主題：{THEME} · 發布日：{YYYY-MM-DD} · 🟡 占比：{PCT}% · 文字比：{RATIO}%</p>
+  <p>產業深度報告 · industry-analyst v2.2（敘事版） · 主題：{THEME} · 發布日：{YYYY-MM-DD} · AI 占比 {PCT}% · 文字比 {RATIO}%</p>
   <p><a href="/research/">← 回研究首頁</a> · <a href="/id/">所有產業報告</a></p>
 </footer>
 </body></html>
@@ -173,132 +186,161 @@
 
 ## 共用 CSS（貼到 `<style>`）
 
-紫色主視覺保留；💡 / PM 綠卡 DS 綠；`.ds-refs` / `.ds-refs-label` / `.tier` / `.source-warning` / `.ds-implication` 全套從 DS 模板搬入。
+**外資券商風格（Classic IB · v2.2）**：海軍藍 `#1F2A44` 主結構 + teal `#0F766E` 次強調 + 鋼藍/綠/琥珀/酒紅功能語意色。中文 body 無襯線（好讀），h1/h2/h3 + 數字卡用 Georgia 襯線（IB 質感）。每張表自動 `Exhibit N.`（CSS counter），§0 含 masthead stance band + INVESTMENT SUMMARY 三句話框 + KEY CALL，頁尾 Disclosures。`.ds-refs` / `.tier` / `.source-warning` 沿用。**禁回紫色派對**，但顏色要帶語意（不可單一 navy 到底——會單調費眼）。
 
 ```css
-body{font-family:-apple-system,'Noto Sans TC','Noto Serif TC',sans-serif;background:#FAFAF9;color:#1E1B4B;margin:0;padding:24px;max-width:920px;margin:0 auto;font-size:14.5px;line-height:1.8}
-.id-head{border-bottom:3px solid #7C3AED;padding-bottom:12px;margin-bottom:20px}
-.id-badge{display:inline-block;background:#7C3AED;color:#fff;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:600;letter-spacing:.5px;margin-bottom:6px}
-.v2-pill{display:inline-block;background:#DDD6FE;color:#4C1D95;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:700;margin-left:6px;letter-spacing:.3px}
-h1{color:#4C1D95;font-size:25px;margin:4px 0;line-height:1.3}
-.id-meta{color:#6B7280;font-size:12px;margin:4px 0}
-h2{color:#4C1D95;border-left:4px solid #7C3AED;padding-left:12px;margin:34px 0 12px;font-size:18px;font-weight:700}
-h3{color:#5B21B6;margin:18px 0 6px;font-size:14.5px;font-weight:600}
-p{margin:12px 0;line-height:1.8}
+body{font-family:-apple-system,'Noto Sans TC','PingFang TC',sans-serif;background:#fff;color:#222831;margin:0 auto;padding:30px 24px;max-width:880px;font-size:14.5px;line-height:1.74;counter-reset:exhibit}
+
+/* masthead：desk 抬頭 + 標題 + stance band（stance/裁決/conviction/picks，等同個股 rating+TP） */
+.id-head{border-bottom:3px solid #1F2A44;padding-bottom:12px;margin-bottom:22px}
+.id-badge{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:10.5px;letter-spacing:1.3px;color:#1F2A44;font-weight:700;text-transform:uppercase;border-bottom:1px solid #C9CDD6;padding-bottom:6px}
+.v2-pill{color:#9AA0AB;font-weight:600;letter-spacing:.5px;font-size:10px;flex:0 0 auto}
+h1{font-family:Georgia,'Noto Serif TC',serif;color:#1F2A44;font-size:25px;margin:14px 0 4px;line-height:1.28;font-weight:700}
+.id-meta{color:#6B7280;font-size:11px;margin:9px 0 0;letter-spacing:.2px}
+.mh-stance{display:flex;gap:22px;flex-wrap:wrap;align-items:center;border-top:1px solid #C9CDD6;border-bottom:1px solid #C9CDD6;padding:9px 0;margin:12px 0 0;font-size:12px}
+.mh-stance .k{color:#6B7280}
+.mh-stance .vv{color:#1F2A44;font-weight:700}
+.mh-stance .rate{color:#fff;padding:2px 10px;font-weight:700;letter-spacing:.5px;border-radius:3px;background:#B7791F} /* stance 色：Overweight→#15803D / Neutral→#B7791F / Underweight→#B42318 */
+h2{font-family:Georgia,'Noto Serif TC',serif;color:#1F2A44;border-left:5px solid #0F766E;border-bottom:1px solid #D4D7DE;padding:0 0 5px 13px;margin:40px 0 16px;font-size:18px;font-weight:700;letter-spacing:.2px}
+h3{font-family:Georgia,'Noto Serif TC',serif;color:#1F2A44;margin:20px 0 6px;font-size:15px;font-weight:700}
+p{margin:12px 0;line-height:1.74}
 .id-body p{text-align:justify;hyphens:auto}
-.id-body ul,.id-body ol{margin:10px 0 16px;padding-left:26px;line-height:1.75}
-.id-body li{margin:6px 0}
-.id-body li strong{color:#1F2937}
-strong{color:#1F2937;font-weight:700}
-em{color:#374151;font-style:normal;font-weight:600}
+.id-body ul,.id-body ol{margin:10px 0 16px;padding-left:24px;line-height:1.72}
+.id-body li{margin:7px 0}
+.id-body li strong,strong{color:#1F2A44;font-weight:700}
+em{color:#0F766E;font-style:normal;font-weight:600} /* 強調用 teal，不用斜體（中文斜體醜） */
 
-/* 每章開頭 lede（2-3 句人話導讀） */
-.id-lede{background:#F5F3FF;border-left:3px solid #A78BFA;padding:10px 14px;margin:10px 0 14px;border-radius:4px;font-size:13.5px;color:#4C1D95;line-height:1.7}
+/* 每章開頭 lede（2-3 句人話導讀）— 鋼藍 */
+.id-lede{background:#F0F5FA;border-left:4px solid #2C5282;padding:11px 15px;margin:10px 0 15px;font-size:13.5px;color:#2A3B52;line-height:1.7}
 
-/* Claim Taxonomy reader banner */
-.claim-banner{background:#EEF2FF;border-left:4px solid #6366F1;padding:10px 14px;margin:12px 0;font-size:12.5px;line-height:1.6;color:#312E81}
-.claim-banner strong{color:#3730A3}
-/* Unit glossary */
-.unit-glossary{background:#FFF7ED;border-left:3px solid #FB923C;padding:8px 14px;margin:8px 0 14px;border-radius:4px;font-size:12px;color:#7C2D12;line-height:1.6}
+/* Claim Taxonomy reader banner / Unit glossary — 中性灰 */
+.claim-banner{background:#F7F8FA;border:1px solid #D4D7DE;border-left:4px solid #6B7280;padding:10px 14px;margin:12px 0;font-size:11.5px;line-height:1.6;color:#3A4256}
+.claim-banner strong{color:#1F2A44}
+.unit-glossary{background:#FBFBFC;border:1px solid #E3E5EA;border-left:4px solid #B0B5BE;padding:9px 14px;margin:8px 0 14px;font-size:11px;color:#4B5160;line-height:1.6}
 
-/* 表格 — 敘事為窗，刻意小巧 */
-table{width:100%;border-collapse:collapse;margin:10px 0 8px;font-size:13px;background:#fff;box-shadow:0 1px 3px rgba(76,29,149,.08)}
-th{background:#4C1D95;color:#fff;padding:8px;text-align:left;font-weight:500;font-size:12.5px}
-td{padding:7px 8px;border-bottom:1px solid #E5E7EB;vertical-align:top}
-tr:hover td{background:#FAF5FF}
-caption{caption-side:top;color:#6B7280;font-size:11.5px;text-align:left;padding:4px 0 6px}
-.tbl-why{font-size:12.5px;color:#5B21B6;margin:10px 0 2px}      /* 表前「為什麼看這張表」 */
-.tbl-read{font-size:12.5px;color:#374151;margin:4px 0 14px}     /* 表後「怎麼讀」2 句 */
+/* 表格 — 金融 Exhibit 風：navy 表頭 + 斑馬列 + 自動 Exhibit 編號 */
+table{width:100%;border-collapse:collapse;margin:8px 0 4px;font-size:12.5px;background:#fff}
+th{background:#1F2A44;color:#fff;padding:7px 10px;text-align:left;font-weight:600;font-size:12px}
+td{padding:6px 10px;border-bottom:1px solid #E3E5EA;vertical-align:top}
+tbody tr:nth-child(even){background:#F7F9FB}
+tbody tr:hover td{background:#EEF3F8}
+caption{caption-side:top;color:#1F2A44;font-size:12.5px;text-align:left;padding:7px 0 8px;font-weight:700}
+caption::before{counter-increment:exhibit;content:"Exhibit " counter(exhibit) ".  ";color:#0F766E;font-weight:700} /* 每張表自動編號 */
+.tbl-why{font-size:11.5px;color:#6B7280;margin:12px 0 2px;font-style:italic}   /* 表前「為什麼看這張表」 */
+.tbl-read{font-size:11.5px;color:#4B5160;margin:5px 0 18px}                     /* 表後「怎麼讀」2 句 */
 
 /* TL;DR 6-box 卡片 */
-.tldr-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:10px 0 18px}
-.tldr-card{background:#fff;border:1px solid #E5E7EB;border-radius:6px;padding:12px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
-.tldr-card h4{margin:0 0 6px;color:#6B21A8;font-size:11px;letter-spacing:.5px;text-transform:uppercase;font-weight:600}
-.tldr-card .v{font-size:15px;font-weight:600;color:#1E1B4B;line-height:1.35}
+.tldr-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:0;margin:14px 0 20px;border:1px solid #C9CDD6;border-bottom:0}
+.tldr-card{background:#fff;border-right:1px solid #C9CDD6;border-bottom:1px solid #C9CDD6;padding:11px 13px}
+.tldr-card h4{margin:0 0 5px;color:#0F766E;font-size:10px;letter-spacing:.6px;text-transform:uppercase;font-weight:700}
+.tldr-card .v{font-family:Georgia,'Noto Serif TC',serif;font-size:15.5px;font-weight:700;color:#1F2A44;line-height:1.3}
 
-/* §0 thesis box（紫） */
-.id-thesis{background:linear-gradient(135deg,#F5F3FF 0%,#EDE9FE 100%);border-left:4px solid #7C3AED;padding:16px 20px;margin:16px 0 18px;border-radius:6px;font-size:14.5px;color:#1E1B4B;line-height:1.75}
-.id-thesis .label{display:inline-block;background:#7C3AED;color:#fff;padding:2px 9px;border-radius:3px;font-size:10.5px;letter-spacing:.5px;font-weight:600;text-transform:uppercase;margin-bottom:8px}
+/* §0 三句話看完（INVESTMENT SUMMARY）— 現在/未來/行動，側標分色（鋼藍/琥珀/綠） */
+.inv-summary{border:1px solid #C5D2E0;border-top:3px solid #1F2A44;background:#FBFCFD;padding:15px 19px;margin:6px 0 22px}
+.inv-summary .inv-hd{font-size:11px;letter-spacing:1px;color:#1F2A44;font-weight:700;margin-bottom:11px;padding-bottom:6px;border-bottom:1px solid #E3E5EA}
+.inv-row{display:flex;gap:14px;margin:11px 0;line-height:1.7}
+.inv-row .inv-lab{flex:0 0 80px;font-size:10.5px;letter-spacing:.4px;font-weight:700;padding:2px 0 0 10px;color:#1F2A44}
+.inv-row:nth-child(2) .inv-lab{border-left:3px solid #2C5282;color:#2C5282} /* 現在/NOW */
+.inv-row:nth-child(3) .inv-lab{border-left:3px solid #B7791F;color:#B7791F} /* 未來/NEXT */
+.inv-row:nth-child(4) .inv-lab{border-left:3px solid #15803D;color:#15803D} /* 行動/ACTION */
+.inv-row .inv-txt{flex:1}
 
-/* legacy cross-link callout */
-.id-crosslink{background:#F5F3FF;border-left:4px solid #7C3AED;padding:10px 14px;margin:8px 0 18px;border-radius:4px;font-size:13px;color:#1F2937;line-height:1.7}
-.id-crosslink a{color:#7C3AED;font-weight:600}
+/* §0 thesis box / KEY CALL（最重要的一個判斷）— navy */
+.id-thesis{background:#F0F5FA;border:1px solid #C5D2E0;border-left:4px solid #1F2A44;padding:15px 19px;margin:16px 0 18px;font-size:14px;color:#222831;line-height:1.7}
+.id-thesis .label{display:inline-block;background:#1F2A44;color:#fff;padding:2px 9px;font-size:10.5px;letter-spacing:.8px;font-weight:700;text-transform:uppercase;margin-bottom:8px;border-radius:2px}
+.key-judgment{background:#F0F5FA;border:1px solid #C5D2E0;border-left:4px solid #1F2A44;padding:15px 19px;margin:14px 0 18px;line-height:1.7}
+.key-judgment .kj-hd{font-weight:700;color:#1F2A44;font-size:11px;letter-spacing:.8px;margin-bottom:8px}
 
-/* 判斷層 banner + 🟡 卡片（紫底黃 accent，沿用 ID） */
-.judgment-banner{background:#FEF9C3;border-left:4px solid #EAB308;padding:10px 14px;margin:8px 0 14px;border-radius:4px;color:#713F12;font-size:13px}
-.judgment-card{background:#FEF9C3;border-left:4px solid #EAB308;border-radius:4px;padding:12px 14px;margin:10px 0}
-.judgment-card .j-head{display:flex;align-items:center;gap:8px;font-weight:600;color:#713F12;margin-bottom:6px;flex-wrap:wrap}
-.j-conf{display:inline-block;font-size:11px;padding:1px 8px;border-radius:10px;font-weight:600}
-.j-conf.high{background:#DCFCE7;color:#166534}
-.j-conf.mid{background:#FEF3C7;color:#92400E}
-.j-conf.low{background:#FEE2E2;color:#991B1B}
-.j-facts{font-size:12.5px;color:#713F12;margin:6px 0;padding-left:20px}
-.j-logic{font-size:12.5px;color:#713F12;margin-top:6px;padding:6px 10px;background:rgba(234,179,8,.08);border-radius:3px}
+/* legacy cross-link callout — 灰 */
+.id-crosslink{background:#F7F8FA;border-left:4px solid #6B7280;padding:10px 14px;margin:8px 0 18px;font-size:12px;color:#3A4256;line-height:1.6}
+.id-crosslink a{color:#0F766E;font-weight:700;text-decoration:underline}
 
-/* 💡 對投資的意義 box — DS 綠 */
-.id-implication{background:#F0FDF4;border-left:3px solid #16A34A;padding:12px 16px;margin:18px 0 12px;border-radius:4px;font-size:14px;color:#14532D;line-height:1.75}
-.id-implication::before{content:"💡 對投資的意義";display:block;font-weight:700;color:#15803D;font-size:11.5px;letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px}
+/* 判斷層 banner + PM 卡片 — teal（行動色） */
+.judgment-banner{background:#F0FDFA;border-left:4px solid #0F766E;padding:11px 15px;margin:8px 0 14px;color:#134E48;font-size:13px}
+.judgment-card{background:#F0FDFA;border:1px solid #99E6DC;border-left:4px solid #0F766E;padding:13px 17px;margin:12px 0}
+.judgment-card .j-head{display:flex;align-items:center;gap:8px;font-weight:700;color:#0F5A52;margin-bottom:8px;flex-wrap:wrap;font-size:13px;letter-spacing:.2px}
+.j-conf{display:inline-block;font-size:10.5px;padding:2px 9px;border-radius:3px;font-weight:700;letter-spacing:.3px}
+.j-conf.high{background:#DCFCE7;color:#15803D}
+.j-conf.mid{background:#FEF0C7;color:#B7791F}
+.j-conf.low{background:#FEE4E2;color:#B42318}
+.j-facts{font-size:12.5px;color:#1F3A36;margin:6px 0;padding-left:20px;line-height:1.7}
+.j-logic{font-size:12px;color:#0F5A52;margin-top:8px;padding:8px 12px;background:#fff;border:1px solid #99E6DC;border-radius:2px}
 
-/* §5 供需裁決 bridge（合 §3+§4 結論） */
-.id-bridge{background:#F5F3FF;border-left:4px solid #7C3AED;padding:14px 18px;margin:20px 0;border-radius:4px;font-size:14.5px;color:#4C1D95;line-height:1.8}
-.id-bridge .label{display:inline-block;background:#7C3AED;color:#fff;padding:2px 9px;border-radius:3px;font-size:10.5px;letter-spacing:.5px;font-weight:600;text-transform:uppercase;margin-bottom:8px}
+/* 對投資的意義 box — 綠 */
+.id-implication{background:#F4FBF6;border:1px solid #BBE7C9;border-left:4px solid #15803D;padding:13px 17px;margin:18px 0 12px;font-size:13.5px;color:#1A3A26;line-height:1.7}
+.id-implication::before{content:"對投資的意義 — INVESTMENT IMPLICATION";display:block;font-weight:700;color:#15803D;font-size:10.5px;letter-spacing:.6px;margin-bottom:7px}
 
-/* tier pill */
-.tier-pill{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:600}
-.tier-red{background:#FEE2E2;color:#991B1B}
-.tier-yellow{background:#FEF3C7;color:#92400E}
-.tier-green{background:#DCFCE7;color:#166534}
+/* §5 供需裁決 bridge — 鋼藍 */
+.id-bridge{background:#EFF4FB;border-left:4px solid #2C5282;padding:14px 18px;margin:20px 0;font-size:14px;color:#27374D;line-height:1.7}
+.id-bridge .label{display:inline-block;background:#2C5282;color:#fff;padding:2px 9px;font-size:10.5px;letter-spacing:.8px;font-weight:700;text-transform:uppercase;margin-bottom:8px;border-radius:2px}
+
+/* tier pill — 綠/琥珀/酒紅 語意 */
+.tier-pill{display:inline-block;padding:2px 8px;border-radius:3px;font-size:10.5px;font-weight:700}
+.tier-red{background:#FEE4E2;color:#B42318}
+.tier-yellow{background:#FEF0C7;color:#B7791F}
+.tier-green{background:#DCFCE7;color:#15803D}
 
 /* S 曲線 ASCII */
-.scurve-ascii{background:#F5F3FF;color:#4C1D95;padding:12px 14px;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:12px;white-space:pre;line-height:1.4;overflow-x:auto;border:1px solid #DDD6FE}
-/* 利潤池 value chain SVG */
+.scurve-ascii{background:#F7F8FA;color:#1F2A44;padding:12px 14px;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:12px;white-space:pre;line-height:1.4;overflow-x:auto;border:1px solid #C9CDD6}
+/* 利潤池 value chain SVG（fill 用 #F4F6F9/#E2E6EC/#C9CDD6，stroke/text 用 #1F2A44/#5A6172） */
 .vc-svg{display:block;max-width:100%;margin:12px auto}
 
 /* §8 catalyst 時間錨點 + 雙路徑 */
-time,strong.id-time{display:inline;background:#F3F4F6;color:#374151;padding:1px 6px;border-radius:3px;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:13px;font-weight:600;white-space:nowrap}
-.ds-path-positive{color:#166534;font-weight:600}
-.ds-path-negative{color:#991B1B;font-weight:600}
+time,strong.id-time{display:inline;background:#EEF3F8;color:#1F2A44;padding:1px 6px;border-radius:2px;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:12.5px;font-weight:700;white-space:nowrap}
+.ds-path-positive{color:#15803D;font-weight:700}
+.ds-path-negative{color:#B42318;font-weight:700}
 
 /* §9 ticker table */
 .id-tickers{font-size:12.5px}
-.id-tickers .depth-red{color:#DC2626;font-weight:700}
-.id-tickers .depth-yellow{color:#D97706;font-weight:700}
-.id-tickers .depth-green{color:#059669;font-weight:700}
+.id-tickers .depth-red{color:#B42318;font-weight:700}
+.id-tickers .depth-yellow{color:#B7791F;font-weight:700}
+.id-tickers .depth-green{color:#15803D;font-weight:700}
 
-/* §末 references aside（搬自 DS v1.2，正文零 inline tag） */
-.ds-refs{margin:26px 0 8px;padding:10px 14px;background:#FAFAF9;border-left:2px solid #D1D5DB;border-radius:3px;font-size:12px;color:#6B7280;line-height:1.7}
-.ds-refs .ds-refs-label{color:#4B5563;font-size:10.5px;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;font-weight:700}
+/* §末 references aside */
+.ds-refs{margin:22px 0 8px;padding:11px 15px;background:#F7F8FA;border-top:2px solid #C9CDD6;font-size:11px;color:#6B7280;line-height:1.65}
+.ds-refs .ds-refs-label{color:#0F766E;font-size:10px;letter-spacing:.8px;text-transform:uppercase;display:block;margin-bottom:6px;font-weight:700}
 .ds-refs ol{margin:0;padding-left:20px}
 .ds-refs li{margin:3px 0}
-.ds-refs a{color:#7C3AED;text-decoration:none}
-.ds-refs a:hover{text-decoration:underline}
-.ds-refs .tier{display:inline-block;color:#4B5563;font-weight:600;margin-right:6px;font-size:11px}
-/* T2/T3-only section warning */
-.source-warning{background:#FEF3C7;border-left:3px solid #F59E0B;padding:10px 14px;margin:14px 0;font-size:12px;color:#78350F;border-radius:3px}
+.ds-refs a{color:#0F766E;text-decoration:underline}
+.ds-refs a:hover{color:#0A5249}
+.ds-refs .tier{display:inline-block;color:#6B7280;font-weight:700;margin-right:6px;font-size:10.5px}
+/* T2/T3-only section warning — 琥珀 */
+.source-warning{background:#FFFAEB;border:1px solid #FCE3A8;border-left:4px solid #B7791F;padding:10px 14px;margin:14px 0;font-size:11px;color:#7A4708;line-height:1.6}
 
 /* sticky section nav（頁內錨點） */
-.id-secnav{position:sticky;top:0;z-index:20;background:rgba(250,250,249,.95);backdrop-filter:blur(4px);border-bottom:1px solid #E5E7EB;padding:6px 0;margin:0 0 18px;display:flex;flex-wrap:wrap;gap:4px;font-size:12px}
-.id-secnav a{color:#6B21A8;text-decoration:none;padding:2px 8px;border-radius:4px}
-.id-secnav a:hover{background:#EDE9FE}
+.id-secnav{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.97);backdrop-filter:blur(4px);border-top:2px solid #1F2A44;border-bottom:1px solid #C9CDD6;padding:7px 0;margin:0 0 22px;display:flex;flex-wrap:wrap;gap:2px;font-size:11.5px}
+.id-secnav a{color:#1F2A44;text-decoration:none;padding:3px 9px;font-weight:600;border-radius:3px}
+.id-secnav a:hover{background:#0F766E;color:#fff}
 
-.id-foot{margin-top:40px;padding-top:16px;border-top:1px solid #E5E7EB;color:#6B7280;font-size:11px;text-align:center;line-height:1.8}
-.id-foot a{color:#7C3AED;text-decoration:none}
+/* 頁尾 + Disclosures（IB 免責頁尾） */
+.id-foot{margin-top:34px;padding-top:14px;border-top:1px solid #D4D7DE;color:#6B7280;font-size:11px;text-align:center;line-height:1.7}
+.id-foot a{color:#0F766E;text-decoration:underline}
+.id-disclosures{margin-top:30px;padding-top:12px;border-top:2px solid #1F2A44;color:#8A8F9A;font-size:10px;line-height:1.6}
+.id-disclosures .dh{color:#1F2A44;font-weight:700;letter-spacing:.8px;font-size:10px;margin-bottom:5px}
 
-@media (max-width:720px){body{padding:18px}h1{font-size:21px}h2{font-size:16px}.id-secnav{font-size:11px}}
-@media print{body{padding:12px;max-width:none;font-size:11pt;line-height:1.6}.id-thesis,.id-implication,.id-bridge,.judgment-card{break-inside:avoid}.id-secnav{display:none}}
+@media (max-width:720px){body{padding:18px 14px}h1{font-size:21px}h2{font-size:15px}.id-secnav{font-size:10.5px}.mh-stance{gap:14px}.inv-row{flex-wrap:wrap}}
+@media print{body{padding:12px;max-width:none;font-size:10.5pt;line-height:1.55}.id-thesis,.id-implication,.id-bridge,.judgment-card{break-inside:avoid}.id-secnav{display:none}}
 ```
 
 ---
 
-## §0 決策摘要層（6-box + thesis box + PM 綠卡 + cross-link）
+## §0 決策摘要層（三句話 + KEY CALL + 6-box + thesis + PM 綠卡 + cross-link）
 
-`§0 內順序`：6-box TL;DR → 一句話 thesis box（帶 [I:]/[X:]）→ legacy cross-link callout（若有）→ PM 綠卡。
+`§0 內順序`：**INVESTMENT SUMMARY 三句話看完（現在/未來/行動，v2.2 第一個內容塊）→ KEY CALL 最重要的一個判斷** → 6-box TL;DR → 一句話 thesis box（帶 [I:]/[X:]）→ legacy cross-link callout（若有）→ PM 綠卡。
 
 ```html
 <section id="s0" class="id-body">
 <h2>§0 決策摘要層</h2>
 
-<!-- 1. 6-box TL;DR -->
+<!-- 1. INVESTMENT SUMMARY — 三句話看完（v2.2，§0 第一個內容塊；同步寫進 id-meta now_state/future_state/action） -->
+<div class="inv-summary">
+  <div class="inv-hd">INVESTMENT SUMMARY — 三句話看完</div>
+  <div class="inv-row"><div class="inv-lab">現在 / NOW</div><div class="inv-txt">{產業現況裁決（過剩/平衡/短缺）+ 最硬證據錨點}</div></div>
+  <div class="inv-row"><div class="inv-lab">未來 / NEXT</div><div class="inv-txt">{3-5 年走向 + 最大結構裂縫}</div></div>
+  <div class="inv-row"><div class="inv-lab">行動 / ACTION</div><div class="inv-txt">{標的層級 + 動作；允許「都不買 / 現價非進場點 / 等回調 X%」}</div></div>
+</div>
+
+<!-- 2. 6-box TL;DR -->
 <div class="tldr-grid">
   <div class="tldr-card"><h4>TAM（2030）</h4><div class="v">USD {X} B</div></div>
   <div class="tldr-card"><h4>5Y CAGR</h4><div class="v">~{Y}%</div></div>
@@ -314,15 +356,21 @@ time,strong.id-time{display:inline;background:#F3F4F6;color:#374151;padding:1px 
   <strong>{≤200 字非共識核心觀點}</strong> 🟡 [I: {事實鏈} → {結論}] 或 🔵 [X: base 很可能 / bull 可能 / bear 不太可能]
 </div>
 
-<!-- 3. legacy cross-link callout（若同 theme 有 legacy ID/DS） -->
+<!-- 3. KEY CALL — 本報告最重要的一個判斷（放三句話濃縮不下的深層非共識洞見，勿重述裁決字句） -->
+<div class="key-judgment">
+  <div class="kj-hd">KEY CALL — 本報告最重要的一個判斷</div>
+  <p><strong>{那一條最反直覺、三句話容不下的深層判斷}</strong>{講清因果機制、市場為何看錯、訊號該盯哪裡}。</p>
+</div>
+
+<!-- 4. legacy cross-link callout（若同 theme 有 legacy ID/DS） -->
 <div class="id-crosslink">
-  📊 本主題已有 legacy 報告：<a href="ID_{Theme}_{舊日期}.html"><strong>ID_{Theme}_{舊日期}</strong></a>（v1.x 表格 dashboard）／
+  本主題已有 legacy 報告：<a href="ID_{Theme}_{舊日期}.html"><strong>ID_{Theme}_{舊日期}</strong></a>（v1.x 表格 dashboard）／
   <a href="../ds/DS_{Theme}_{舊日期}.html"><strong>DS_{Theme}_{舊日期}</strong></a>（敘述版）。本份為 <strong>v2 敘事版</strong>，整合兩者。
 </div>
 
-<!-- 4. PM Implication 綠卡（必填，缺即 Gate 5 阻斷）；§7/§8/§9 完成後才寫 -->
-<div class="judgment-card" style="background:#F0FDF4;border-left:4px solid #16A34A">
-  <div class="j-head">📊 <strong>Portfolio Implication（PM 級行動結論）</strong> <span class="j-conf high">conviction：{high/mid/low}</span></div>
+<!-- 5. PM Implication 綠卡（必填，缺即 Gate 5 阻斷）；§7/§8/§9 完成後才寫 -->
+<div class="judgment-card">
+  <div class="j-head"><strong>Portfolio Implication（PM 級行動結論）</strong> <span class="j-conf high">conviction：{high/mid/low}</span></div>
   <!-- conviction：high = §9 ≥2 🔴 + §8 falsification 距離 >2 sigma；mid = ≥1 🔴 + ≥1 kill 未排除；low = thesis AT_RISK/BROKEN -->
   <ul class="j-facts" style="color:#14532D">
     <li><strong>thesis 方向</strong>：{保持 / 強化 / 降級 — 引用 §7 哪條 NC thesis 的 INTACT/AT_RISK 判斷}</li>
