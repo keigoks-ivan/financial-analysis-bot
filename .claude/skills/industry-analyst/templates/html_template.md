@@ -1,6 +1,6 @@
 # 產業深度報告 HTML Template v2.0 — 敘事為骨、表格為窗
 
-紫色主視覺（住在 `/id/`）；💡 對投資的意義 box 與 §0 PM 綠卡用 DS 綠（#16A34A / #F0FDF4）；來源走每節末 `<aside class="ds-refs">`（DS 全套 CSS 搬入）。
+**此檔是「完整考證版」（`_full.html`）的 template**。視覺走精煉版編輯風（暖紙 + 襯線 + 鏽金，見 §共用 CSS）。每次跑 skill 同時產**兩份**：canonical 精煉版（決策卡，帶 id-meta，見 `lean_template.md`）+ 本完整版（9 章 + 一手 source，無 id-meta，`_full.html`）。dual-output 規則見 SKILL.md。
 
 ## 檔名規則
 
@@ -186,140 +186,114 @@
 
 ## 共用 CSS（貼到 `<style>`）
 
-**外資券商風格（Classic IB · v2.2）**：海軍藍 `#1F2A44` 主結構 + teal `#0F766E` 次強調 + 鋼藍/綠/琥珀/酒紅功能語意色。中文 body 無襯線（好讀），h1/h2/h3 + 數字卡用 Georgia 襯線（IB 質感）。每張表自動 `Exhibit N.`（CSS counter），§0 含 masthead stance band + INVESTMENT SUMMARY 三句話框 + KEY CALL，頁尾 Disclosures。`.ds-refs` / `.tier` / `.source-warning` 沿用。**禁回紫色派對**，但顏色要帶語意（不可單一 navy 到底——會單調費眼）。
+**精煉版編輯風（Editorial · v2.3）**：暖紙底 `--paper:#faf7f2` + 墨黑 `--ink:#1c1916` + 鏽金 accent `--accent:#7a3d1c` / `--gold:#b08840`，功能語意色 `--green/--red/--amber`。body 用 Noto Serif TC + Crimson Pro **襯線**，標籤/數字用 IBM Plex Mono（需在 `<head>` 引 Google Fonts：Crimson Pro + IBM Plex Mono + Noto Serif TC）。每張表自動 `Exhibit N ·`（CSS counter）+ mono 表頭；§0 含 masthead（desk 抬頭 + stance band）+ INVESTMENT SUMMARY 三欄 dsum（綠/金/紅）+ KEY CALL 深墨金字框；頁尾 Disclosures。`.ds-refs` / `.tier` / `.source-warning` 沿用。**統一精煉版風，完整版與精煉版同皮**；禁回紫色 / 海軍藍 IB。
 
 ```css
-body{font-family:-apple-system,'Noto Sans TC','PingFang TC',sans-serif;background:#fff;color:#222831;margin:0 auto;padding:30px 24px;max-width:880px;font-size:14.5px;line-height:1.74;counter-reset:exhibit}
-
-/* masthead：desk 抬頭 + 標題 + stance band（stance/裁決/conviction/picks，等同個股 rating+TP） */
-.id-head{border-bottom:3px solid #1F2A44;padding-bottom:12px;margin-bottom:22px}
-.id-badge{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:10.5px;letter-spacing:1.3px;color:#1F2A44;font-weight:700;text-transform:uppercase;border-bottom:1px solid #C9CDD6;padding-bottom:6px}
-.v2-pill{color:#9AA0AB;font-weight:600;letter-spacing:.5px;font-size:10px;flex:0 0 auto}
-h1{font-family:Georgia,'Noto Serif TC',serif;color:#1F2A44;font-size:25px;margin:14px 0 4px;line-height:1.28;font-weight:700}
-.id-meta{color:#6B7280;font-size:11px;margin:9px 0 0;letter-spacing:.2px}
-.mh-stance{display:flex;gap:22px;flex-wrap:wrap;align-items:center;border-top:1px solid #C9CDD6;border-bottom:1px solid #C9CDD6;padding:9px 0;margin:12px 0 0;font-size:12px}
-.mh-stance .k{color:#6B7280}
-.mh-stance .vv{color:#1F2A44;font-weight:700}
-.mh-stance .rate{color:#fff;padding:2px 10px;font-weight:700;letter-spacing:.5px;border-radius:3px;background:#B7791F} /* stance 色：Overweight→#15803D / Neutral→#B7791F / Underweight→#B42318 */
-h2{font-family:Georgia,'Noto Serif TC',serif;color:#1F2A44;border-left:5px solid #0F766E;border-bottom:1px solid #D4D7DE;padding:0 0 5px 13px;margin:40px 0 16px;font-size:18px;font-weight:700;letter-spacing:.2px}
-h3{font-family:Georgia,'Noto Serif TC',serif;color:#1F2A44;margin:20px 0 6px;font-size:15px;font-weight:700}
-p{margin:12px 0;line-height:1.74}
-.id-body p{text-align:justify;hyphens:auto}
-.id-body ul,.id-body ol{margin:10px 0 16px;padding-left:24px;line-height:1.72}
+:root{--ink:#1c1916;--ink-soft:#3d3833;--paper:#faf7f2;--paper-deep:#f0ebe1;--paper-card:#f5f1e8;--accent:#7a3d1c;--accent-deep:#4a2410;--gold:#b08840;--gold-soft:#d4b572;--muted:#6e665a;--green:#2a5040;--red:#8a3424;--amber:#8a6420}
+html{background:var(--paper-deep)}
+body{font-family:'Noto Serif TC','Crimson Pro',serif;background:var(--paper);color:var(--ink);margin:0 auto;padding:30px 46px 90px;max-width:940px;font-size:15px;line-height:1.78;counter-reset:exhibit;-webkit-font-smoothing:antialiased}
+.id-head{position:relative;border-bottom:3px double var(--ink);padding-bottom:22px;margin-bottom:16px}
+.id-badge{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:var(--muted);font-weight:500;text-transform:uppercase;margin-bottom:18px}
+.v2-pill{color:var(--accent);font-weight:600;letter-spacing:.1em;font-size:10px;flex:0 0 auto;text-transform:none}
+h1{font-family:'Crimson Pro','Noto Serif TC',serif;color:var(--ink);font-size:33px;margin:6px 0 10px;line-height:1.2;font-weight:700;letter-spacing:-.005em}
+h1 em{color:var(--accent);font-style:italic}
+.id-meta{font-family:'IBM Plex Mono',monospace;color:var(--muted);font-size:10px;letter-spacing:.07em;text-transform:uppercase;margin:16px 0 0;border-top:1px solid var(--paper-deep);padding-top:12px}
+.mh-stance{display:flex;gap:0;flex-wrap:wrap;border:1px solid var(--ink);margin:22px 0 0;font-family:'IBM Plex Mono',monospace;font-size:12px}
+.mh-stance>span{flex:1 1 150px;padding:13px 16px;border-right:1px solid var(--ink)}
+.mh-stance>span:last-child{border-right:none}
+.mh-stance .k{display:block;font-size:9.5px;letter-spacing:.16em;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
+.mh-stance .vv{font-family:'Crimson Pro',serif;color:var(--ink);font-weight:600;font-size:16px}
+.mh-stance .rate{font-family:'Crimson Pro',serif;background:var(--amber);color:var(--paper);padding:1px 10px;font-weight:600;letter-spacing:.04em;font-size:15px}
+h2{font-family:'Crimson Pro','Noto Serif TC',serif;color:var(--ink);border-bottom:2px solid var(--ink);padding:0 0 12px;margin:56px 0 18px;font-size:27px;font-weight:700;line-height:1.2}
+h2 em{color:var(--accent);font-style:italic}
+h3{font-family:'Crimson Pro','Noto Serif TC',serif;color:var(--accent-deep);margin:28px 0 8px;font-size:19px;font-weight:600;font-style:italic}
+p{margin:0 0 16px;line-height:1.8}
+.id-body p{text-align:justify;hyphens:auto;font-size:16px}
+.id-body ul,.id-body ol{margin:12px 0 18px;padding-left:24px;line-height:1.72}
 .id-body li{margin:7px 0}
-.id-body li strong,strong{color:#1F2A44;font-weight:700}
-em{color:#0F766E;font-style:normal;font-weight:600} /* 強調用 teal，不用斜體（中文斜體醜） */
-
-/* 每章開頭 lede（2-3 句人話導讀）— 鋼藍 */
-.id-lede{background:#F0F5FA;border-left:4px solid #2C5282;padding:11px 15px;margin:10px 0 15px;font-size:13.5px;color:#2A3B52;line-height:1.7}
-
-/* Claim Taxonomy reader banner / Unit glossary — 中性灰 */
-.claim-banner{background:#F7F8FA;border:1px solid #D4D7DE;border-left:4px solid #6B7280;padding:10px 14px;margin:12px 0;font-size:11.5px;line-height:1.6;color:#3A4256}
-.claim-banner strong{color:#1F2A44}
-.unit-glossary{background:#FBFBFC;border:1px solid #E3E5EA;border-left:4px solid #B0B5BE;padding:9px 14px;margin:8px 0 14px;font-size:11px;color:#4B5160;line-height:1.6}
-
-/* 表格 — 金融 Exhibit 風：navy 表頭 + 斑馬列 + 自動 Exhibit 編號 */
-table{width:100%;border-collapse:collapse;margin:8px 0 4px;font-size:12.5px;background:#fff}
-th{background:#1F2A44;color:#fff;padding:7px 10px;text-align:left;font-weight:600;font-size:12px}
-td{padding:6px 10px;border-bottom:1px solid #E3E5EA;vertical-align:top}
-tbody tr:nth-child(even){background:#F7F9FB}
-tbody tr:hover td{background:#EEF3F8}
-caption{caption-side:top;color:#1F2A44;font-size:12.5px;text-align:left;padding:7px 0 8px;font-weight:700}
-caption::before{counter-increment:exhibit;content:"Exhibit " counter(exhibit) ".  ";color:#0F766E;font-weight:700} /* 每張表自動編號 */
-.tbl-why{font-size:11.5px;color:#6B7280;margin:12px 0 2px;font-style:italic}   /* 表前「為什麼看這張表」 */
-.tbl-read{font-size:11.5px;color:#4B5160;margin:5px 0 18px}                     /* 表後「怎麼讀」2 句 */
-
-/* TL;DR 6-box 卡片 */
-.tldr-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:0;margin:14px 0 20px;border:1px solid #C9CDD6;border-bottom:0}
-.tldr-card{background:#fff;border-right:1px solid #C9CDD6;border-bottom:1px solid #C9CDD6;padding:11px 13px}
-.tldr-card h4{margin:0 0 5px;color:#0F766E;font-size:10px;letter-spacing:.6px;text-transform:uppercase;font-weight:700}
-.tldr-card .v{font-family:Georgia,'Noto Serif TC',serif;font-size:15.5px;font-weight:700;color:#1F2A44;line-height:1.3}
-
-/* §0 三句話看完（INVESTMENT SUMMARY）— 現在/未來/行動，側標分色（鋼藍/琥珀/綠） */
-.inv-summary{border:1px solid #C5D2E0;border-top:3px solid #1F2A44;background:#FBFCFD;padding:15px 19px;margin:6px 0 22px}
-.inv-summary .inv-hd{font-size:11px;letter-spacing:1px;color:#1F2A44;font-weight:700;margin-bottom:11px;padding-bottom:6px;border-bottom:1px solid #E3E5EA}
-.inv-row{display:flex;gap:14px;margin:11px 0;line-height:1.7}
-.inv-row .inv-lab{flex:0 0 80px;font-size:10.5px;letter-spacing:.4px;font-weight:700;padding:2px 0 0 10px;color:#1F2A44}
-.inv-row:nth-child(2) .inv-lab{border-left:3px solid #2C5282;color:#2C5282} /* 現在/NOW */
-.inv-row:nth-child(3) .inv-lab{border-left:3px solid #B7791F;color:#B7791F} /* 未來/NEXT */
-.inv-row:nth-child(4) .inv-lab{border-left:3px solid #15803D;color:#15803D} /* 行動/ACTION */
-.inv-row .inv-txt{flex:1}
-
-/* §0 thesis box / KEY CALL（最重要的一個判斷）— navy */
-.id-thesis{background:#F0F5FA;border:1px solid #C5D2E0;border-left:4px solid #1F2A44;padding:15px 19px;margin:16px 0 18px;font-size:14px;color:#222831;line-height:1.7}
-.id-thesis .label{display:inline-block;background:#1F2A44;color:#fff;padding:2px 9px;font-size:10.5px;letter-spacing:.8px;font-weight:700;text-transform:uppercase;margin-bottom:8px;border-radius:2px}
-.key-judgment{background:#F0F5FA;border:1px solid #C5D2E0;border-left:4px solid #1F2A44;padding:15px 19px;margin:14px 0 18px;line-height:1.7}
-.key-judgment .kj-hd{font-weight:700;color:#1F2A44;font-size:11px;letter-spacing:.8px;margin-bottom:8px}
-
-/* legacy cross-link callout — 灰 */
-.id-crosslink{background:#F7F8FA;border-left:4px solid #6B7280;padding:10px 14px;margin:8px 0 18px;font-size:12px;color:#3A4256;line-height:1.6}
-.id-crosslink a{color:#0F766E;font-weight:700;text-decoration:underline}
-
-/* 判斷層 banner + PM 卡片 — teal（行動色） */
-.judgment-banner{background:#F0FDFA;border-left:4px solid #0F766E;padding:11px 15px;margin:8px 0 14px;color:#134E48;font-size:13px}
-.judgment-card{background:#F0FDFA;border:1px solid #99E6DC;border-left:4px solid #0F766E;padding:13px 17px;margin:12px 0}
-.judgment-card .j-head{display:flex;align-items:center;gap:8px;font-weight:700;color:#0F5A52;margin-bottom:8px;flex-wrap:wrap;font-size:13px;letter-spacing:.2px}
-.j-conf{display:inline-block;font-size:10.5px;padding:2px 9px;border-radius:3px;font-weight:700;letter-spacing:.3px}
-.j-conf.high{background:#DCFCE7;color:#15803D}
-.j-conf.mid{background:#FEF0C7;color:#B7791F}
-.j-conf.low{background:#FEE4E2;color:#B42318}
-.j-facts{font-size:12.5px;color:#1F3A36;margin:6px 0;padding-left:20px;line-height:1.7}
-.j-logic{font-size:12px;color:#0F5A52;margin-top:8px;padding:8px 12px;background:#fff;border:1px solid #99E6DC;border-radius:2px}
-
-/* 對投資的意義 box — 綠 */
-.id-implication{background:#F4FBF6;border:1px solid #BBE7C9;border-left:4px solid #15803D;padding:13px 17px;margin:18px 0 12px;font-size:13.5px;color:#1A3A26;line-height:1.7}
-.id-implication::before{content:"對投資的意義 — INVESTMENT IMPLICATION";display:block;font-weight:700;color:#15803D;font-size:10.5px;letter-spacing:.6px;margin-bottom:7px}
-
-/* §5 供需裁決 bridge — 鋼藍 */
-.id-bridge{background:#EFF4FB;border-left:4px solid #2C5282;padding:14px 18px;margin:20px 0;font-size:14px;color:#27374D;line-height:1.7}
-.id-bridge .label{display:inline-block;background:#2C5282;color:#fff;padding:2px 9px;font-size:10.5px;letter-spacing:.8px;font-weight:700;text-transform:uppercase;margin-bottom:8px;border-radius:2px}
-
-/* tier pill — 綠/琥珀/酒紅 語意 */
-.tier-pill{display:inline-block;padding:2px 8px;border-radius:3px;font-size:10.5px;font-weight:700}
-.tier-red{background:#FEE4E2;color:#B42318}
-.tier-yellow{background:#FEF0C7;color:#B7791F}
-.tier-green{background:#DCFCE7;color:#15803D}
-
-/* S 曲線 ASCII */
-.scurve-ascii{background:#F7F8FA;color:#1F2A44;padding:12px 14px;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:12px;white-space:pre;line-height:1.4;overflow-x:auto;border:1px solid #C9CDD6}
-/* 利潤池 value chain SVG（fill 用 #F4F6F9/#E2E6EC/#C9CDD6，stroke/text 用 #1F2A44/#5A6172） */
-.vc-svg{display:block;max-width:100%;margin:12px auto}
-
-/* §8 catalyst 時間錨點 + 雙路徑 */
-time,strong.id-time{display:inline;background:#EEF3F8;color:#1F2A44;padding:1px 6px;border-radius:2px;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:12.5px;font-weight:700;white-space:nowrap}
-.ds-path-positive{color:#15803D;font-weight:700}
-.ds-path-negative{color:#B42318;font-weight:700}
-
-/* §9 ticker table */
-.id-tickers{font-size:12.5px}
-.id-tickers .depth-red{color:#B42318;font-weight:700}
-.id-tickers .depth-yellow{color:#B7791F;font-weight:700}
-.id-tickers .depth-green{color:#15803D;font-weight:700}
-
-/* §末 references aside */
-.ds-refs{margin:22px 0 8px;padding:11px 15px;background:#F7F8FA;border-top:2px solid #C9CDD6;font-size:11px;color:#6B7280;line-height:1.65}
-.ds-refs .ds-refs-label{color:#0F766E;font-size:10px;letter-spacing:.8px;text-transform:uppercase;display:block;margin-bottom:6px;font-weight:700}
+.id-body li strong,strong{color:var(--ink);font-weight:600}
+em{color:var(--accent);font-style:italic;font-weight:400}
+.id-lede{font-style:italic;color:var(--ink-soft);font-size:17px;line-height:1.62;margin:16px 0 22px;border-left:3px solid var(--gold);padding:4px 0 4px 18px;background:none}
+.claim-banner{font-family:'IBM Plex Mono',monospace;background:var(--paper-card);border-left:3px solid var(--muted);padding:11px 16px;margin:14px 0;font-size:11.5px;line-height:1.6;color:var(--ink-soft)}
+.claim-banner strong{color:var(--accent-deep)}
+.unit-glossary{background:var(--paper-card);border-left:3px solid var(--gold);padding:10px 16px;margin:10px 0 16px;font-size:12px;color:var(--ink-soft);line-height:1.6}
+table{width:100%;border-collapse:collapse;margin:14px 0 6px;background:var(--paper)}
+th{font-family:'IBM Plex Mono',monospace;background:none;color:var(--muted);padding:9px 14px;text-align:left;font-weight:600;font-size:10px;letter-spacing:.06em;text-transform:uppercase;border-bottom:1.5px solid var(--ink)}
+td{padding:10px 14px;border-bottom:1px solid var(--paper-deep);vertical-align:top;font-size:14px;line-height:1.5}
+tbody tr:last-child td{border-bottom:1px solid var(--ink)}
+tbody tr:hover td{background:var(--paper-card)}
+caption{caption-side:top;font-family:'IBM Plex Mono',monospace;color:var(--accent);font-size:11px;letter-spacing:.06em;text-transform:uppercase;text-align:left;padding:8px 0;font-weight:600}
+caption::before{counter-increment:exhibit;content:"Exhibit " counter(exhibit) " · ";color:var(--gold);font-weight:600}
+.tbl-why{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;margin:16px 0 0}
+.tbl-read{font-size:14px;color:var(--ink-soft);font-style:italic;line-height:1.66;margin:12px 0 18px}
+.tldr-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0;margin:24px 0;border:1px solid var(--ink)}
+.tldr-card{background:var(--paper);border-right:1px solid var(--ink);border-bottom:1px solid var(--ink);padding:15px 17px}
+.tldr-card h4{font-family:'IBM Plex Mono',monospace;margin:0 0 7px;color:var(--muted);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:500}
+.tldr-card .v{font-family:'Crimson Pro','Noto Serif TC',serif;font-size:20px;font-weight:600;color:var(--ink);line-height:1.15}
+.id-thesis{background:var(--paper-card);border-left:4px solid var(--accent);padding:22px 26px;margin:24px 0;font-size:16px;color:var(--ink);line-height:1.72}
+.id-thesis .label{font-family:'IBM Plex Mono',monospace;display:inline-block;background:var(--accent);color:var(--paper);padding:3px 11px;font-size:10px;letter-spacing:.22em;font-weight:600;text-transform:uppercase;margin-bottom:12px}
+.id-crosslink{background:var(--paper-card);border:1px solid var(--paper-deep);padding:14px 18px;margin:18px 0;font-size:13.5px;color:var(--ink-soft);line-height:1.7}
+.id-crosslink a{color:var(--accent);font-weight:600;text-decoration:none}
+.judgment-banner{background:var(--paper-card);border-left:4px solid var(--gold);padding:12px 16px;margin:10px 0 16px;color:var(--ink-soft);font-size:14px}
+.judgment-card{background:var(--paper-card);border:1px solid var(--gold-soft);border-left:4px solid var(--gold);padding:20px 24px;margin:24px 0}
+.judgment-card .j-head{font-family:'IBM Plex Mono',monospace;display:flex;align-items:center;gap:10px;font-weight:600;color:var(--accent-deep);margin-bottom:12px;flex-wrap:wrap;font-size:12px;letter-spacing:.1em;text-transform:uppercase}
+.j-conf{font-family:'IBM Plex Mono',monospace;display:inline-block;font-size:10px;padding:2px 9px;font-weight:600;letter-spacing:.08em;color:var(--paper)}
+.j-conf.high{background:var(--green)}
+.j-conf.mid{background:var(--gold)}
+.j-conf.low{background:var(--red)}
+.j-facts{font-size:14.5px;color:var(--ink-soft);margin:8px 0;padding-left:20px;line-height:1.66}
+.j-logic{font-size:13.5px;color:var(--ink);margin-top:12px;padding:12px 16px;background:rgba(28,25,22,.05);line-height:1.6}
+.id-implication{background:rgba(42,80,64,.06);border-left:4px solid var(--green);padding:18px 22px;margin:24px 0 14px;font-size:15px;color:var(--ink);line-height:1.7}
+.id-implication::before{font-family:'IBM Plex Mono',monospace;content:"對投資的意義 · INVESTMENT IMPLICATION";display:block;font-weight:600;color:var(--green);font-size:10px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:10px}
+.id-bridge{background:rgba(176,136,64,.07);border-left:4px solid var(--gold);padding:18px 22px;margin:26px 0;font-size:15px;color:var(--ink);line-height:1.7}
+.id-bridge .label{font-family:'IBM Plex Mono',monospace;display:inline-block;color:var(--accent);font-size:10px;letter-spacing:.18em;font-weight:600;text-transform:uppercase;margin-bottom:10px}
+.tier-pill{font-family:'IBM Plex Mono',monospace;display:inline-block;padding:2px 8px;font-size:10px;font-weight:600;color:var(--paper)}
+.tier-red{background:var(--red)}
+.tier-yellow{background:var(--gold)}
+.tier-green{background:var(--green)}
+.scurve-ascii{background:var(--paper-card);color:var(--accent-deep);padding:14px 16px;font-family:'IBM Plex Mono',monospace;font-size:12px;white-space:pre;line-height:1.45;overflow-x:auto;border:1px solid var(--paper-deep)}
+.vc-svg{display:block;max-width:100%;margin:16px auto}
+time,strong.id-time{display:inline;background:rgba(122,61,28,.08);color:var(--accent-deep);padding:1px 7px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:600;white-space:nowrap}
+.ds-path-positive{color:var(--green);font-weight:600}
+.ds-path-negative{color:var(--red);font-weight:600}
+.id-tickers{font-size:13px}
+.id-tickers .depth-red{color:var(--red);font-weight:700}
+.id-tickers .depth-yellow{color:var(--amber);font-weight:700}
+.id-tickers .depth-green{color:var(--green);font-weight:700}
+.ds-refs{margin:30px 0 8px;padding:16px 0 0;background:none;border-top:1px solid var(--paper-deep);font-size:12px;color:var(--muted);line-height:1.6}
+.ds-refs .ds-refs-label{font-family:'IBM Plex Mono',monospace;color:var(--muted);font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;display:block;margin-bottom:8px;font-weight:600}
 .ds-refs ol{margin:0;padding-left:20px}
-.ds-refs li{margin:3px 0}
-.ds-refs a{color:#0F766E;text-decoration:underline}
-.ds-refs a:hover{color:#0A5249}
-.ds-refs .tier{display:inline-block;color:#6B7280;font-weight:700;margin-right:6px;font-size:10.5px}
-/* T2/T3-only section warning — 琥珀 */
-.source-warning{background:#FFFAEB;border:1px solid #FCE3A8;border-left:4px solid #B7791F;padding:10px 14px;margin:14px 0;font-size:11px;color:#7A4708;line-height:1.6}
-
-/* sticky section nav（頁內錨點） */
-.id-secnav{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.97);backdrop-filter:blur(4px);border-top:2px solid #1F2A44;border-bottom:1px solid #C9CDD6;padding:7px 0;margin:0 0 22px;display:flex;flex-wrap:wrap;gap:2px;font-size:11.5px}
-.id-secnav a{color:#1F2A44;text-decoration:none;padding:3px 9px;font-weight:600;border-radius:3px}
-.id-secnav a:hover{background:#0F766E;color:#fff}
-
-/* 頁尾 + Disclosures（IB 免責頁尾） */
-.id-foot{margin-top:34px;padding-top:14px;border-top:1px solid #D4D7DE;color:#6B7280;font-size:11px;text-align:center;line-height:1.7}
-.id-foot a{color:#0F766E;text-decoration:underline}
-.id-disclosures{margin-top:30px;padding-top:12px;border-top:2px solid #1F2A44;color:#8A8F9A;font-size:10px;line-height:1.6}
-.id-disclosures .dh{color:#1F2A44;font-weight:700;letter-spacing:.8px;font-size:10px;margin-bottom:5px}
-
-@media (max-width:720px){body{padding:18px 14px}h1{font-size:21px}h2{font-size:15px}.id-secnav{font-size:10.5px}.mh-stance{gap:14px}.inv-row{flex-wrap:wrap}}
-@media print{body{padding:12px;max-width:none;font-size:10.5pt;line-height:1.55}.id-thesis,.id-implication,.id-bridge,.judgment-card{break-inside:avoid}.id-secnav{display:none}}
+.ds-refs li{margin:4px 0}
+.ds-refs a{color:var(--accent);text-decoration:none}
+.ds-refs a:hover{text-decoration:underline}
+.ds-refs .tier{font-family:'IBM Plex Mono',monospace;display:inline-block;color:var(--gold);font-weight:600;margin-right:6px;font-size:10px}
+.source-warning{background:rgba(138,100,32,.07);border-left:3px solid var(--amber);padding:12px 18px;margin:16px 0;font-size:12.5px;color:var(--accent-deep);line-height:1.62}
+.id-secnav{position:sticky;top:0;z-index:20;background:rgba(250,247,242,.96);backdrop-filter:blur(5px);border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);padding:8px 0;margin:0 0 24px;display:flex;flex-wrap:wrap;gap:2px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.03em}
+.id-secnav a{color:var(--accent);text-decoration:none;padding:3px 9px;font-weight:500}
+.id-secnav a:hover{background:var(--accent);color:var(--paper)}
+.inv-summary{display:grid;grid-template-columns:repeat(3,1fr);border:2px solid var(--ink);margin:24px 0;padding:0}
+.inv-summary .inv-hd{grid-column:1/-1;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--paper);background:var(--ink);font-weight:600;padding:9px 16px;margin:0;border:none}
+.inv-row{display:block;margin:0;padding:20px 22px;border-right:1px solid var(--ink);line-height:1.62}
+.inv-row:last-child{border-right:none}
+.inv-row:nth-child(2){background:rgba(42,80,64,.05)}
+.inv-row:nth-child(3){background:rgba(176,136,64,.06)}
+.inv-row:nth-child(4){background:rgba(138,52,36,.05)}
+.inv-row .inv-lab{display:block;flex:none;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;padding:0;margin-bottom:11px;border:none}
+.inv-row:nth-child(2) .inv-lab{color:var(--green)}
+.inv-row:nth-child(3) .inv-lab{color:var(--gold)}
+.inv-row:nth-child(4) .inv-lab{color:var(--red)}
+.inv-row .inv-txt{font-size:14px}
+.key-judgment{background:var(--ink);color:var(--paper);padding:28px 32px;margin:26px 0;line-height:1.7;position:relative}
+.key-judgment .kj-hd{font-family:'IBM Plex Mono',monospace;color:var(--gold-soft);font-size:10px;letter-spacing:.28em;text-transform:uppercase;font-weight:600;margin-bottom:14px}
+.key-judgment p{color:var(--paper);font-size:16px}
+.key-judgment strong{color:var(--gold-soft)}
+.key-judgment em{color:var(--gold-soft)}
+.id-foot{margin-top:42px;padding-top:16px;border-top:3px double var(--ink);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;text-align:center;line-height:1.9}
+.id-foot a{color:var(--accent);text-decoration:none}
+.id-disclosures{margin-top:36px;padding-top:16px;border-top:1px solid var(--paper-deep);color:var(--muted);font-size:11px;line-height:1.62}
+.id-disclosures .dh{font-family:'IBM Plex Mono',monospace;color:var(--accent);font-weight:600;letter-spacing:.18em;font-size:10px;text-transform:uppercase;margin-bottom:6px}
+@media (max-width:720px){body{padding:20px 18px 60px}h1{font-size:27px}h2{font-size:22px}.id-secnav{font-size:10px}.mh-stance{flex-direction:column}.mh-stance>span{border-right:none;border-bottom:1px solid var(--ink)}.mh-stance>span:last-child{border-bottom:none}.inv-summary{grid-template-columns:1fr}.inv-row{border-right:none;border-bottom:1px solid var(--ink)}}
+@media print{body{padding:12px;max-width:none;font-size:11pt;line-height:1.6;background:#fff}.id-thesis,.id-implication,.id-bridge,.judgment-card,.key-judgment{break-inside:avoid}.id-secnav{display:none}}
 ```
 
 ---
