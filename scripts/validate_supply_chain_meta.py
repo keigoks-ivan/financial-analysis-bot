@@ -132,6 +132,9 @@ def validate_topic(d: dict, filename_stem: str) -> list[str]:
             errs.append(f"node {nid}: col must be int, got {type(n['col']).__name__}")
         if "span" in n and not isinstance(n["span"], int):
             errs.append(f"node {nid}: span must be int, got {type(n['span']).__name__}")
+        # node trust field (optional): confidence enum — drives 信心度 column + card badge
+        if "confidence" in n and n["confidence"] not in {"high", "med", "low"}:
+            errs.append(f"node {nid}: confidence={n['confidence']!r}; allowed ['high', 'med', 'low']")
 
         node_has_single = bool(n.get("single"))
         if node_has_single:

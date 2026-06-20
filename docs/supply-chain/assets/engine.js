@@ -37,6 +37,10 @@ let activeFilter = null;
 let singleFilter = false;
 let activeNodeId = null;
 let searchTerm = "";
+let view = "table";                       // 'table' | 'graph' — 表格優先 (default)
+let tableSort = { col: "row", dir: 1 };   // current table sort column + direction
+const ROW_ORDER = {};                      // row id -> logical index (for 層 sort)
+const CONF_RANK = { high: 3, med: 2, low: 1 };
 
 /* ---------- tiny helpers ---------- */
 const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
@@ -153,20 +157,24 @@ function updateFilterChips() {
   s.classList.toggle("active", singleFilter);
   s.classList.toggle("dim", activeFilter && !singleFilter);
 }
+function nodeHidden(node) {
+  if (!node) return false;
+  if (activeFilter && node.competition !== activeFilter) return true;
+  if (singleFilter && !node.single) return true;
+  if (searchTerm) {
+    const blob = (node.name + " " + (node.nameEn||"") + " " +
+      (node.companies||[]).map(c => (c.name||"") + " " + (c.ticker||"")).join(" ")).toLowerCase();
+    if (!blob.includes(searchTerm)) return true;
+  }
+  return false;
+}
 function applyFilter() {
+  // graph nodes dim; table rows hide — same filter state drives both views
   document.querySelectorAll(".node").forEach(n => {
-    const id = n.dataset.id;
-    const node = TOPIC._map[id];
-    if (!node) return;
-    let hidden = false;
-    if (activeFilter && node.competition !== activeFilter) hidden = true;
-    if (singleFilter && !node.single) hidden = true;
-    if (searchTerm) {
-      const blob = (node.name + " " + (node.nameEn||"") + " " +
-        (node.companies||[]).map(c => (c.name||"") + " " + (c.ticker||"")).join(" ")).toLowerCase();
-      if (!blob.includes(searchTerm)) hidden = true;
-    }
-    n.classList.toggle("dim", hidden);
+    n.classList.toggle("dim", nodeHidden(TOPIC._map[n.dataset.id]));
+  });
+  document.querySelectorAll("#tableView tr[data-id]").forEach(tr => {
+    tr.style.display = nodeHidden(TOPIC._map[tr.dataset.id]) ? "none" : "";
   });
 }
 
@@ -208,6 +216,36 @@ function renderGrid() {
   });
 }
 
+/* ---------- node trust badge (PoC v2): 來源強度 + 信心度 ----------
+   Date is a weak proxy (only ~40% of nodes carry an extractable date, and ~70%
+   are structural facts that never go stale). Instead we show two signals that
+   answer "how much should I trust this":
+     · 來源強度 ◆◆◆  — from sources[] count (100% coverage, auto-derived)
+     · 信心度 高/中/低 — author/audit judgement (colours the pill)
+   Plus a ⟳ marker ONLY on "live" nodes (a company carries a % share) — the
+   ~30% of perishable facts that need periodic refresh; structural monopolies
+   stay unmarked. Pill renders from sources[] alone even when confidence absent. */
+const CONF_META = { high: { cls: "cf-high", txt: "信高" }, med: { cls: "cf-med", txt: "信中" }, low: { cls: "cf-low", txt: "信低" } };
+function srcDots(n) {
+  const k = (n.sources || []).length;
+  const f = k >= 3 ? 3 : k;
+  return { k, dots: "◆".repeat(f) + "◇".repeat(3 - f) };
+}
+function isLiveNode(n) {
+  if (n.competition === "monopoly") return false; // a structural monopoly's share doesn't perish
+  return (n.companies || []).some(c => /\d\s*%/.test(String(c.share || "")));
+}
+function trustBadge(n) {
+  const s = srcDots(n);
+  if (!s.k && !n.confidence) return "";
+  const cm = n.confidence ? CONF_META[n.confidence] : null;
+  const cls = cm ? cm.cls : "cf-none";
+  const conf = cm ? ` ${cm.txt}` : "";
+  const tip = `來源強度 ${s.k} 源${cm ? ` · 信心度 ${n.confidence}` : " · 信心度未標"}`;
+  const live = isLiveNode(n) ? `<span class="n-live" title="帶市佔 % 的『活』數據 — 需定期更新">⟳</span>` : "";
+  return `<span class="n-trust ${cls}" title="${tip}"><span class="dots">${s.dots}</span>${conf}</span>${live}`;
+}
+
 function buildNode(n) {
   const cc = colorOf(n);
   const comp = compOf(n);
@@ -227,6 +265,7 @@ function buildNode(n) {
   const more = cos.length > 3 ? `<span class="chip more">+${cos.length - 3}</span>` : "";
   const growth = n.growth ? `<span class="g">↑ ${n.growth}</span>` : "";
   const ms = n.marketSize ? `<span class="ms">${n.marketSize}</span>` : "";
+  const trust = trustBadge(n);
 
   card.innerHTML = `
     ${n.single ? `<div class="n-single" title="${String(n.single).replace(/"/g,"&quot;")}">⚑</div>` : ""}
@@ -238,12 +277,108 @@ function buildNode(n) {
       <span class="n-badge">${comp.label}</span>
     </div>
     <div class="n-companies">${chips}${more}</div>
-    ${(growth || ms) ? `<div class="n-foot">${growth}${ms}</div>` : ""}
+    ${(growth || ms || trust) ? `<div class="n-foot">${growth}${ms}${trust}</div>` : ""}
   `;
   card.onclick = () => openDrawer(n.id);
   card.onmouseenter = () => highlightPath(n.id, true);
   card.onmouseleave = () => { if (!activeNodeId) highlightPath(null, false); };
   return card;
+}
+
+/* ---------- table view (表格優先) ---------- */
+function srcCount(n) { return (n.sources || []).length; }
+function sortVal(n, col) {
+  switch (col) {
+    case "name": return n.name || "";
+    case "row":  return (ROW_ORDER[n.row] ?? 9) * 1000 + (n.col || 0);
+    case "comp": return (COMP[n.competition] || {}).label || "";
+    case "src":  return srcCount(n);
+    case "conf": return CONF_RANK[n.confidence] || 0;
+    case "co":   return (((n.companies || [])[0]) || {}).name || "";
+    default:     return "";
+  }
+}
+function renderTableBody() {
+  const tb = document.getElementById("scTbody");
+  if (!tb) return;
+  const nodes = [...TOPIC.nodes].sort((a, b) => {
+    const va = sortVal(a, tableSort.col), vb = sortVal(b, tableSort.col);
+    if (va < vb) return -tableSort.dir;
+    if (va > vb) return  tableSort.dir;
+    return (ROW_ORDER[a.row] ?? 9) - (ROW_ORDER[b.row] ?? 9);  // stable-ish tiebreak
+  });
+  tb.innerHTML = nodes.map(n => {
+    const comp = COMP[n.competition] || COMP.emerging;
+    const flag = n.single ? '<span class="t-flag" title="關鍵單點">⚑</span>' : "";
+    const k = srcCount(n), f = Math.min(k, 3);
+    const dots = "◆".repeat(f) + "◇".repeat(3 - f);
+    const cm = CONF_META[n.confidence];
+    const conf = cm ? `<span class="t-conf ${cm.cls}">${cm.txt.replace("信", "")}</span>`
+                    : '<span class="t-conf t-none">—</span>';
+    const co = (n.companies || [])[0] || {};
+    const dd = ddLinkFor(co.ticker);
+    const ddb = dd ? ` <a href="${dd.href}" class="dd-link" target="_blank" rel="noopener" title="開啟 DD 報告">DD↗</a>` : "";
+    const coName = co.name ? `${flagOf(co)} ${String(co.name).split("（")[0]}${ddb}` : "—";
+    return `<tr data-id="${n.id}">
+      <td class="t-name">${flag}${n.name}</td>
+      <td class="t-row">${TOPIC._rowlbl[n.row] || n.row}</td>
+      <td><span class="t-comp" style="color:var(${comp.cssVar})">${comp.label}</span></td>
+      <td class="t-dots" title="來源強度 ${k} 源">${dots}</td>
+      <td>${conf}</td>
+      <td class="t-co">${coName}</td>
+    </tr>`;
+  }).join("");
+  tb.querySelectorAll("tr[data-id]").forEach(tr =>
+    tr.onclick = (e) => { if (!e.target.closest("a")) openDrawer(tr.dataset.id); });
+  applyFilter();
+}
+function updateSortArrows() {
+  document.querySelectorAll(".sc-table th[data-col]").forEach(th => {
+    const a = th.querySelector(".t-arr");
+    if (a) a.textContent = th.dataset.col === tableSort.col ? (tableSort.dir > 0 ? " ▲" : " ▼") : "";
+  });
+}
+function renderTable() {
+  const host = document.getElementById("tableView");
+  if (!host) return;
+  TOPIC._rowlbl = {};
+  (TOPIC.rows || []).forEach((r, i) => { ROW_ORDER[r.id] = i; TOPIC._rowlbl[r.id] = r.label; });
+  const cols = [["name", "節點"], ["row", "層"], ["comp", "競爭態勢"],
+                ["src", "來源強度"], ["conf", "信心度"], ["co", "主要公司"]];
+  const thead = cols.map(([k, lbl]) => `<th data-col="${k}">${lbl}<span class="t-arr"></span></th>`).join("");
+  host.innerHTML = `<div class="t-wrap"><table class="sc-table">
+    <thead><tr>${thead}</tr></thead><tbody id="scTbody"></tbody></table></div>`;
+  host.querySelectorAll("th[data-col]").forEach(th => th.onclick = () => {
+    const c = th.dataset.col;
+    if (tableSort.col === c) tableSort.dir *= -1; else { tableSort.col = c; tableSort.dir = 1; }
+    updateSortArrows(); renderTableBody();
+  });
+  updateSortArrows();
+  renderTableBody();
+}
+function setView(v) {
+  view = v;
+  const canvas = document.getElementById("mapCanvas");
+  const tv = document.getElementById("tableView");
+  if (canvas) canvas.style.display = v === "graph" ? "" : "none";
+  if (tv) tv.style.display = v === "table" ? "" : "none";
+  document.querySelectorAll(".view-toggle .vt").forEach(b => b.classList.toggle("on", b.dataset.v === v));
+  if (v === "graph") requestAnimationFrame(() => requestAnimationFrame(drawEdges));
+}
+function injectViews() {
+  const wrap = document.querySelector(".map-wrap");
+  const canvas = document.getElementById("mapCanvas");
+  if (!wrap || !canvas || document.getElementById("tableView")) return;
+  const bar = el("div", "view-toggle",
+    `<button data-v="table" class="vt on">▤ 表</button>` +
+    `<button data-v="graph" class="vt">▦ 圖</button>` +
+    `<span class="vt-hint">點欄位標題排序 · 點列看詳情 · 左上圖例 / 搜尋同步篩選</span>`);
+  wrap.insertBefore(bar, canvas);
+  const tv = el("div"); tv.id = "tableView";
+  wrap.insertBefore(tv, canvas.nextSibling);
+  bar.querySelectorAll(".vt").forEach(b => b.onclick = () => setView(b.dataset.v));
+  renderTable();
+  setView(view);
 }
 
 /* ---------- edges ---------- */
@@ -254,6 +389,7 @@ function svgDefs() {
   </defs>`;
 }
 function drawEdges() {
+  if (view !== "graph") return;            // graph hidden in table view — skip
   const canvas = document.getElementById("mapCanvas");
   const svg = document.getElementById("edges");
   if (!canvas || !svg || !TOPIC.edges) return;
@@ -586,6 +722,7 @@ async function boot() {
     renderLegend();
     renderStats();
     renderGrid();
+    injectViews();
     renderGoldenIntersection();
     renderDefinitions();
     bindSearch();
