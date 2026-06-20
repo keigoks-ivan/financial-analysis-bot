@@ -1,103 +1,178 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta name="robots" content="noindex,nofollow">
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CUDA / ROCm 軟體護城河子題 — 產業深度 DD</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>CUDA / ROCm 軟體護城河（精煉版）— 護城河分層與抽象層之爭 | InvestMQuest</title>
+<meta name="id-skill-version" content="v2.3">
+<meta name="id-theme" content="CUDA ROCm Software Moat">
+<meta name="id-publish-date" content="2026-05-01">
 <script id="id-meta" type="application/json">
 {
-  "theme": "CUDA / ROCm 軟體護城河子題（AI 加速器軟體生態）",
-  "skill_version": "v1.8",
-  "id_version": "v1.0",
+  "theme": "CUDA / ROCm Software Moat",
+  "skill_version": "v2.3",
+  "id_version": "v2.0",
   "publish_date": "2026-05-01",
-  "thesis_type": "mixed",
-  "mega": "semi",
-  "sub_group": "compute_demand",
+  "thesis_type": "structural",
   "ai_exposure": "🟢",
-  "oneliner": "ROCm 7.2 (Mar 2026) vLLM 出箱 parity (llama.cpp/Ollama 社群維護)；MI355X MLPerf 6.0 部分情境超越 B200 (Llama 2 70B 119%, critic 2026-05-03 修)；CUDA 19 年 6M 開發者 moat 開始裂；NCCL+NVLink 仍獨家；PyTorch/Pallas 抽象層才是真贏家",
+  "oneliner": "CUDA 護城河正在分層：推論層已裂（ROCm 7.2 出箱 parity），但 NCCL+NVLink 多卡訓練 scale-out 仍不可取代；2027-28 真贏家不是 GPU 廠，是控制抽象層的 framework owner（META PyTorch / GOOGL JAX / OpenAI Triton）。",
+  "now_state": "推論層 CUDA 護城河已開始裂——ROCm 7.2（2026-03）達 vLLM/llama.cpp/Ollama/SGLang 出箱 parity、PyTorch 2.7 ROCm ~95% 功能對等；但訓練多卡 scale-out（NCCL+NVLink）NVDA 仍獨家、TensorRT-LLM/FlashAttention 3 仍 CUDA-only。",
+  "future_state": "framework 抽象化把 GPU 變『可替換後端』——framework owner（META PyTorch / GOOGL JAX-Pallas / OpenAI Triton）掌握抽象治理權；推論層 AMD/ASIC 取份額、訓練層 NVDA 仍守；UALink 2.0 spec 2026 Q2 已發布、硬體 2026 H2 起初步商用，大規模採用 2027——採用速度是關鍵變數。",
+  "action": "護城河交易不是『永遠 long NVDA 軟體鎖定』——而是『訓練 scale-out 仍護城（NCCL/NVLink）、推論護城河蝕』；被低估的贏家是 framework owner（META/GOOGL）+ ROCm parity 的 AMD。盯 ROCm parity 里程碑 / UALink 進度 / framework 治理權。",
   "related_tickers": [
-    {"ticker": "NVDA", "role": "CUDA / cuDNN / NCCL / TensorRT-LLM / Nsight 19 年 6M 開發者護城河", "depth": "🔴", "beneficiary": true},
-    {"ticker": "AMD", "role": "ROCm 7.2 達 vLLM 出箱 parity；Meta 6GW + OpenAI 6GW + Oracle 131K MI355X", "depth": "🔴", "beneficiary": true},
-    {"ticker": "META", "role": "PyTorch 母公司 + ROCm 6GW 客戶 = 跨平台加速去 NVDA 化關鍵推手", "depth": "🔴", "beneficiary": true},
-    {"ticker": "GOOGL", "role": "JAX / XLA / Pallas / TPU 全棧自主軟體 = NVDA 之外完整替代生態", "depth": "🔴", "beneficiary": true},
-    {"ticker": "INTC", "role": "oneAPI / SYCL / IPEX / Gaudi 3 - 生態追趕但客戶基數小", "depth": "🟡", "beneficiary": true},
-    {"ticker": "MSFT", "role": "MSCCL++ 替代 NCCL（小訊息 3.8x 加速）+ Azure ROCm production", "depth": "🟡", "beneficiary": true},
-    {"ticker": "AMZN", "role": "AWS Neuron SDK 2.28 + Trainium 3 + NKI 開源 (Apache 2.0)", "depth": "🟡", "beneficiary": true},
-    {"ticker": "AVGO", "role": "Google TPU + Meta MTIA backend partner = JAX 生態受益", "depth": "🟡", "beneficiary": true},
-    {"ticker": "ORCL", "role": "OCI 131,072 MI355X cluster - ROCm 規模化驗證", "depth": "🟢", "beneficiary": true},
-    {"ticker": "Anthropic（pre-IPO）", "role": "Claude Code CUDA→ROCm 30min port（demo 規模；production 移植仍 3-6 個月）- LLM-driven migration 信號", "depth": "🟢", "beneficiary": true},
-    {"ticker": "Hugging Face（pre-IPO）", "role": "Transformers / Diffusers - 跨後端 model hub 中立化推手", "depth": "🟢", "beneficiary": true}
+    {"ticker": "NVDA", "role": "CUDA/cuDNN/NCCL/NVLink 護城河——訓練 scale-out 仍獨家，推論層護城河開始蝕", "depth": "🔴", "beneficiary": true},
+    {"ticker": "AMD", "role": "ROCm 7.2 達推論出箱 parity（vLLM/llama.cpp）；推論份額入口，訓練仍落後 NVLink", "depth": "🔴", "beneficiary": true},
+    {"ticker": "META", "role": "PyTorch 抽象層 owner——決定 GPU 是否可替換後端，2027-28 真贏家層", "depth": "🔴", "beneficiary": true},
+    {"ticker": "GOOGL", "role": "JAX/Pallas + TPU——自有抽象棧 + 自研矽，繞過 CUDA 最完整者", "depth": "🟡", "beneficiary": true},
+    {"ticker": "AMZN", "role": "Trainium + Neuron SDK——自有編譯棧降低 CUDA 依賴", "depth": "🟡", "beneficiary": true},
+    {"ticker": "MSFT", "role": "Azure + Maia + 自有推論棧；CUDA 依賴漸脫鉤", "depth": "🟡", "beneficiary": true},
+    {"ticker": "AVGO", "role": "ASIC 受惠於 framework 抽象化（GPU 變可替換後端利於 custom 矽）", "depth": "🟢", "beneficiary": true},
+    {"ticker": "INTC", "role": "Gaudi + oneAPI——挑戰者但生態落後 ROCm", "depth": "🟢", "beneficiary": true}
   ],
-  "tam_usd_2030": 30.0,
-  "cagr_pct_5y": 35.0,
+  "tam_usd_2030": 0,
+  "cagr_pct_5y": 0,
   "growth_phase": "mid",
   "value_chain_position": "midstream",
   "industry_structure": "oligopoly",
-  "sister_ids": ["ID_AIAcceleratorDemand_20260419.html", "ID_AIASICDesignService_20260419.html", "ID_AIInferenceEconomics_20260430.html"],
-  "sections_refreshed": {"technical": "2026-05-01", "market": "2026-05-01", "judgment": "2026-05-01"}
+  "quality_tier": "Q1",
+  "mega": "semi",
+  "sub_group": "compute_demand",
+  "sister_ids": ["ID_AIAcceleratorDemand_20260419.html", "ID_AIInferenceEconomics_20260430.html", "ID_AIComputeCapexCycle_20260611.html"],
+  "sections_refreshed": {"technical": "2026-06-20", "market": "2026-06-20", "judgment": "2026-06-20"}
 }
 </script>
-<meta name="id-skill-version" content="v1.8">
-<meta name="id-publish-date" content="2026-05-01">
-<meta name="id-sections-refreshed" content='{"technical":"2026-05-01","market":"2026-05-01","judgment":"2026-05-01"}'>
-<meta name="description" content="CUDA / ROCm 軟體護城河子題：NVDA · AMD · INTC · 開源 framework 生態（PyTorch / JAX）2026 H1 真實狀態拆解。ROCm 7.2 vLLM 出箱 parity + MI355X MLPerf 6.0 部分情境超越 B200；NCCL+NVLink 仍獨家；PyTorch/Pallas 才是真贏家。">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Serif+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-body{font-family:'Noto Sans TC',-apple-system,BlinkMacSystemFont,sans-serif;background:#FAFAF9;color:#1E1B4B;margin:0;padding:0;font-size:14px;line-height:1.65}
-.wrap{max-width:1100px;margin:0 auto;padding:2rem 1.5rem 3rem}
-.id-head{background:linear-gradient(135deg,#4C1D95,#7C3AED);color:#fff;padding:22px 28px 18px;margin:0 0 22px;border-radius:10px;box-shadow:0 4px 14px rgba(124,58,237,.22)}
-.id-badge{display:inline-block;background:rgba(255,255,255,.18);color:#fff;padding:3px 10px;border-radius:12px;font-size:11px;letter-spacing:.5px;font-weight:600;text-transform:uppercase;margin-bottom:10px}
-.id-head h1{margin:0;color:#fff;font-size:26px;font-weight:800;letter-spacing:-.03em}
-.id-meta{color:rgba(255,255,255,.88);font-size:12.5px;margin-top:6px;line-height:1.6}
-h2{color:#4C1D95;font-size:19px;margin:34px 0 12px;padding-left:12px;border-left:4px solid #7C3AED;font-weight:800;letter-spacing:-.02em}
-h3{color:#6B21A8;font-size:15px;margin:18px 0 8px;font-weight:700}
-h4{color:#7C3AED;font-size:13.5px;margin:14px 0 6px;font-weight:700}
-p{margin:8px 0}
-table{width:100%;border-collapse:collapse;margin:10px 0 16px;font-size:12.5px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.05);border-radius:4px;overflow:hidden}
-th{background:#4C1D95;color:#fff;padding:8px 10px;text-align:left;font-weight:600;font-size:12px;letter-spacing:.3px}
-td{padding:8px 10px;border-bottom:1px solid #F3F4F6;vertical-align:top}
-tr:last-child td{border-bottom:none}
-tr:nth-child(even) td{background:#FAFAFA}
-tr:hover td{background:#F5F3FF}
-.judgment{background:#FEF9C3;border-left:4px solid #EAB308;padding:10px 14px;margin:10px 0;border-radius:3px;font-size:12.5px}
-.judgment .j-head{font-weight:600;color:#713F12;margin-bottom:4px}
-.judgment .j-facts{color:#713F12;margin:4px 0;padding-left:14px}
-.judgment .j-infer{font-size:12px;color:#854D0E;margin-top:6px;padding:6px 10px;background:rgba(234,179,8,.12);border-radius:3px}
-.judgment .j-falsify{font-size:12px;color:#7F1D1D;margin-top:6px;padding:6px 10px;background:rgba(239,68,68,.08);border-radius:3px;border-left:3px solid #EF4444}
-.tier-pill{display:inline-block;padding:1px 8px;border-radius:10px;font-size:10.5px;font-weight:600}
-.tier-red{background:#FEE2E2;color:#991B1B}
-.tier-yellow{background:#FEF3C7;color:#92400E}
-.tier-green{background:#DCFCE7;color:#166534}
-.insight{background:#F5F3FF;border-left:4px solid #7C3AED;padding:10px 14px;margin:10px 0;border-radius:4px}
-.insight .i-head{font-weight:600;color:#4C1D95;margin-bottom:4px;font-size:13px}
-.insight .i-body{font-size:12.5px;color:#4C1D95}
-.insight .i-sub{font-size:12px;color:#6B7280;margin-top:4px;padding-left:14px}
-.scurve-ascii{background:#F5F3FF;color:#4C1D95;padding:12px 14px;border-radius:4px;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:11.5px;white-space:pre;line-height:1.45;overflow-x:auto;border:1px solid #DDD6FE}
-.tldr-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:12px 0}
-.tldr-card{background:#fff;border:1px solid #DDD6FE;border-radius:6px;padding:10px 12px}
-.tldr-card h4{margin:0 0 4px;color:#7C3AED;font-size:11px;text-transform:uppercase;letter-spacing:.5px;font-weight:700}
-.tldr-card .v{font-size:13px;color:#1E1B4B;font-weight:500;line-height:1.5}
-.judgment-banner{background:#FEF3C7;border:1px solid #FCD34D;color:#92400E;padding:6px 10px;border-radius:4px;font-size:11.5px;margin:8px 0;font-weight:500}
-.source-tag{font-size:10.5px;color:#6B7280;font-weight:400}
-.source-tag a{color:#7C3AED;text-decoration:none}
-.source-tag a:hover{text-decoration:underline}
-.foot{margin-top:36px;padding-top:14px;border-top:1px solid #DDD6FE;font-size:11px;color:#6B7280;text-align:center}
-.thesis-tag{display:inline-block;font-size:10px;padding:1px 6px;border-radius:3px;font-weight:600;letter-spacing:.3px;margin-left:4px}
-.tag-event{background:#FEE2E2;color:#991B1B}
-.tag-structural{background:#DBEAFE;color:#1E40AF}
-.cornerstone{background:#fff;border:2px solid #7C3AED;border-radius:6px;padding:12px 16px;margin:12px 0;box-shadow:0 2px 6px rgba(124,58,237,.12)}
-.cornerstone .c-head{font-weight:700;color:#4C1D95;font-size:13.5px;margin-bottom:6px}
-.cornerstone .c-body{font-size:12.5px;color:#374151;line-height:1.6}
-.judgment-card{background:#FEF9C3;border-left:4px solid #EAB308;border-radius:4px;padding:12px 14px;margin:10px 0}
-.judgment-card .j-head{display:flex;align-items:center;gap:8px;font-weight:600;color:#713F12;margin-bottom:6px;flex-wrap:wrap}
-.j-conf{display:inline-block;font-size:10.5px;padding:1px 8px;border-radius:10px;font-weight:600}
-.j-conf.high{background:#DCFCE7;color:#166534}
-.j-conf.mid{background:#FEF3C7;color:#92400E}
-.j-conf.low{background:#FEE2E2;color:#991B1B}
-.judgment-card .j-facts{font-size:12px;color:#713F12;margin:6px 0;padding-left:20px}
-.judgment-card .j-logic{font-size:12px;color:#713F12;margin-top:6px;padding:6px 10px;background:rgba(234,179,8,.1);border-radius:3px}
+:root{--ink:#1c1916;--ink-soft:#3d3833;--paper:#faf7f2;--paper-deep:#f0ebe1;--paper-card:#f5f1e8;--accent:#7a3d1c;--accent-deep:#4a2410;--gold:#b08840;--gold-soft:#d4b572;--muted:#6e665a;--green:#2a5040;--red:#8a3424;--amber:#8a6420;}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--paper-deep);font-family:'Noto Serif TC','Crimson Pro',serif;color:var(--ink);line-height:1.78;-webkit-font-smoothing:antialiased;}
+.container{max-width:980px;margin:0 auto;padding:0 56px 120px;background:var(--paper);}
+em{font-style:italic;}strong{font-weight:600;}
+.masthead{position:relative;padding:48px 0 26px;border-bottom:3px double var(--ink);margin-bottom:8px;}
+.masthead::before{content:'';position:absolute;top:0;left:-56px;right:-56px;height:8px;background:var(--ink);}
+.pub-info{display:flex;justify-content:space-between;align-items:flex-start;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;color:var(--muted);text-transform:uppercase;margin-bottom:30px;}
+.pub-logo{font-family:'Crimson Pro',serif;font-size:17px;font-weight:700;letter-spacing:0.04em;color:var(--ink);text-transform:none;}
+.pub-info .right{text-align:right;}
+.headline{font-family:'Crimson Pro','Noto Serif TC',serif;font-size:52px;line-height:1.12;font-weight:700;margin:0 0 18px;letter-spacing:-0.01em;}
+.headline em{color:var(--accent);font-style:italic;}
+.deck{font-size:19px;color:var(--ink-soft);font-style:italic;line-height:1.55;margin:0 0 26px;max-width:760px;}
+.byline{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.1em;color:var(--muted);text-transform:uppercase;border-top:1px solid var(--paper-deep);padding-top:14px;}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin:30px 0;border:1px solid var(--ink);}
+.stat{padding:16px 18px;border-right:1px solid var(--ink);border-bottom:1px solid var(--ink);}
+.stat:nth-child(4n){border-right:none;}
+.stat:nth-last-child(-n+4){border-bottom:none;}
+.stat-k{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.18em;color:var(--muted);text-transform:uppercase;margin-bottom:7px;}
+.stat-v{font-family:'Crimson Pro',serif;font-size:21px;font-weight:600;color:var(--ink);line-height:1.15;}
+.stat-v small{display:block;font-size:11px;color:var(--muted);font-weight:400;margin-top:3px;font-family:'Noto Serif TC',serif;}
+.abstract{position:relative;margin:34px 0;padding:30px 34px 30px 38px;background:var(--paper-card);border-left:4px solid var(--accent);}
+.abstract::before{content:'ABSTRACT';position:absolute;top:-9px;left:34px;background:var(--accent);color:var(--paper);font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.25em;padding:3px 12px;}
+.abstract p{margin:0 0 12px;font-size:16px;line-height:1.72;}
+.abstract p:last-child{margin-bottom:0;}
+.toc{margin:30px 0;padding:24px 30px;border:1px solid var(--paper-deep);background:var(--paper-card);}
+.toc-h{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.25em;color:var(--muted);text-transform:uppercase;margin-bottom:14px;}
+.toc ol{margin:0;padding-left:0;list-style:none;counter-reset:toc;}
+.toc li{counter-increment:toc;font-size:15px;padding:5px 0;border-bottom:1px dotted var(--paper-deep);display:flex;align-items:baseline;}
+.toc li::before{content:counter(toc,upper-roman) '.';font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--gold);margin-right:14px;min-width:36px;}
+.toc li:last-child{border-bottom:none;}
+.chapter{margin:64px 0 0;}
+.chapter-marker{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.28em;color:var(--accent);text-transform:uppercase;font-weight:600;margin-bottom:14px;}
+.chapter h2{font-family:'Crimson Pro','Noto Serif TC',serif;font-size:40px;font-weight:700;line-height:1.18;margin:0 0 8px;padding-bottom:14px;border-bottom:2px solid var(--ink);}
+.chapter h2 em{color:var(--accent);font-style:italic;}
+.chapter-intro{font-size:18px;font-style:italic;color:var(--ink-soft);line-height:1.62;margin:18px 0 24px;}
+.chapter p{font-size:16.5px;line-height:1.8;margin:0 0 18px;text-align:justify;hyphens:auto;}
+.dsum{display:grid;grid-template-columns:repeat(3,1fr);border:2px solid var(--ink);margin:30px 0;}
+.dsum-col{padding:24px 26px;border-right:1px solid var(--ink);}
+.dsum-col:last-child{border-right:none;}
+.dsum-col.now{background:rgba(42,80,64,0.05);}
+.dsum-col.next{background:rgba(176,136,64,0.06);}
+.dsum-col.act{background:rgba(138,52,36,0.05);}
+.dsum-tag{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.22em;text-transform:uppercase;font-weight:600;margin-bottom:12px;}
+.dsum-col.now .dsum-tag{color:var(--green);}
+.dsum-col.next .dsum-tag{color:var(--gold);}
+.dsum-col.act .dsum-tag{color:var(--red);}
+.dsum-col p{font-size:14.5px;line-height:1.66;margin:0;text-align:left;}
+.keycall{margin:32px 0;padding:30px 34px;background:var(--ink);color:var(--paper);position:relative;}
+.keycall-label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.3em;color:var(--gold-soft);text-transform:uppercase;font-weight:600;margin-bottom:14px;}
+.keycall p{color:var(--paper);font-size:17px;line-height:1.7;margin:0;text-align:left;}
+.keycall strong{color:var(--gold-soft);}
+.inference{margin:24px 0;padding:22px 28px;background:rgba(176,136,64,0.06);border-left:4px solid var(--gold);}
+.inference-label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.2em;color:var(--gold);text-transform:uppercase;margin-bottom:6px;}
+.inference-title{font-family:'Crimson Pro',serif;font-size:21px;font-weight:600;margin-bottom:12px;font-style:italic;}
+.deduction-chain{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-soft);background:rgba(28,25,22,0.05);padding:8px 12px;margin-bottom:12px;line-height:1.5;}
+.inference p{font-size:15.5px;margin:0 0 10px;text-align:left;}
+.inference p:last-child{margin-bottom:0;}
+.tier-list{margin:28px 0;border:1px solid var(--ink);}
+.tier-row{display:grid;grid-template-columns:130px 1fr;border-bottom:1px solid var(--ink);}
+.tier-row:last-child{border-bottom:none;}
+.tier-name{padding:18px 20px;background:var(--paper-card);border-right:1px solid var(--ink);}
+.tier-badge{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;padding:2px 8px;margin-bottom:6px;color:var(--paper);}
+.b-core{background:var(--red);}.b-edge{background:var(--muted);}.b-swing{background:var(--gold);}
+.tier-name h4{margin:0;font-size:19px;font-weight:700;}
+.tier-detail{padding:18px 22px;font-size:14.5px;line-height:1.62;}
+.conv{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);}
+.data-display{margin:30px 0;border:1px solid var(--ink);}
+.data-display-header{background:var(--ink);color:var(--paper);font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.22em;text-transform:uppercase;padding:9px 16px;}
+table{width:100%;border-collapse:collapse;background:var(--paper);}
+th,td{padding:11px 15px;text-align:left;border-bottom:1px solid var(--paper-deep);font-size:14px;line-height:1.5;vertical-align:top;}
+th{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);border-bottom:1.5px solid var(--ink);font-weight:600;}
+td.num{font-family:'IBM Plex Mono',monospace;font-size:13px;}
+tr:last-child td{border-bottom:none;}
+.tbl-read{font-size:14px;color:var(--ink-soft);line-height:1.66;margin:14px 0 0;font-style:italic;text-align:left;}
+.scenario-set{margin:30px 0;border:2px solid var(--ink);}
+.scenario{padding:24px 28px;border-bottom:1px solid var(--ink);position:relative;}
+.scenario:last-child{border-bottom:none;}
+.scenario-base{background:rgba(176,136,64,0.05);}
+.scenario-bull{background:rgba(42,80,64,0.045);}
+.scenario-bear{background:rgba(138,52,36,0.05);}
+.scenario-tag{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;font-weight:600;padding:2px 9px;color:var(--paper);}
+.scenario-base .scenario-tag{background:var(--gold);}
+.scenario-bull .scenario-tag{background:var(--green);}
+.scenario-bear .scenario-tag{background:var(--red);}
+.scenario-prob{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);margin-left:10px;}
+.scenario-title{font-family:'Crimson Pro',serif;font-size:20px;font-weight:600;font-style:italic;margin:12px 0 8px;}
+.scenario p{font-size:14.5px;margin:0 0 10px;text-align:left;line-height:1.62;}
+.scenario-trigger{font-size:13.5px;background:rgba(28,25,22,0.05);padding:10px 14px;line-height:1.55;}
+.timeline{position:relative;margin:30px 0;padding-left:28px;}
+.timeline::before{content:'';position:absolute;left:6px;top:6px;bottom:6px;width:3px;background:linear-gradient(var(--gold),var(--accent));}
+.phase{position:relative;margin-bottom:24px;padding-left:8px;}
+.phase::before{content:'';position:absolute;left:-28px;top:5px;width:11px;height:11px;border-radius:50%;background:var(--accent);border:2px solid var(--paper);}
+.phase-period{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;color:var(--accent);text-transform:uppercase;font-weight:600;}
+.phase-title{font-family:'Crimson Pro',serif;font-size:18px;font-weight:600;font-style:italic;margin:3px 0 8px;}
+.phase ul{margin:0;padding-left:18px;}
+.phase li{font-size:14px;line-height:1.6;margin-bottom:4px;}
+.caveat{margin:24px 0;padding:18px 22px;background:rgba(138,100,32,0.07);border-left:3px solid var(--amber);}
+.caveat-label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.2em;color:var(--amber);text-transform:uppercase;font-weight:600;margin-bottom:8px;}
+.caveat p{font-size:14px;margin:0;line-height:1.62;text-align:left;}
+.monitor{margin:28px 0;border:1px solid var(--ink);background:var(--paper-card);}
+.monitor-h{background:var(--ink);color:var(--paper);font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.22em;text-transform:uppercase;padding:9px 16px;}
+.monitor-item{display:grid;grid-template-columns:30px 1fr;gap:0;padding:15px 18px;border-bottom:1px solid var(--paper-deep);}
+.monitor-item:last-child{border-bottom:none;}
+.monitor-num{font-family:'Crimson Pro',serif;font-size:22px;font-style:italic;color:var(--gold);font-weight:600;}
+.monitor-body{font-size:14.5px;line-height:1.6;}
+.monitor-body strong{color:var(--red);}
+.keystone{margin:60px 0 40px;padding:52px 44px;background:var(--ink);position:relative;}
+.keystone::before,.keystone::after{content:'';position:absolute;width:26px;height:26px;border-color:var(--gold-soft);border-style:solid;}
+.keystone::before{top:16px;left:16px;border-width:2px 0 0 2px;}
+.keystone::after{bottom:16px;right:16px;border-width:0 2px 2px 0;}
+.keystone-label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.35em;color:var(--gold-soft);text-transform:uppercase;text-align:center;margin-bottom:20px;}
+.keystone-text{font-family:'Crimson Pro','Noto Serif TC',serif;font-size:26px;line-height:1.5;color:var(--paper);text-align:center;margin:0;font-weight:500;}
+.epilogue{margin:40px 0;padding:28px 32px;border:1px dashed var(--muted);background:var(--paper-card);}
+.epilogue h3{margin:0 0 16px;font-size:20px;font-style:italic;}
+.epilogue ol{margin:0;padding-left:22px;}
+.epilogue li{font-size:15px;line-height:1.66;margin-bottom:8px;}
+.footnotes{margin-top:54px;padding-top:18px;border-top:3px double var(--ink);}
+.footnotes-h{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.25em;color:var(--muted);text-transform:uppercase;margin-bottom:14px;}
+.footnotes ol{margin:0;padding-left:22px;}
+.footnotes li{font-size:12.5px;color:var(--muted);line-height:1.55;margin-bottom:6px;}
+.footnotes a{color:var(--accent);text-decoration:none;}
+.colophon{margin-top:40px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.15em;color:var(--muted);text-transform:uppercase;line-height:1.8;}
+.colophon .dot{color:var(--gold);margin:0 6px;}
+.xlinks{margin:24px 0;padding:16px 20px;background:var(--paper-card);border:1px solid var(--paper-deep);font-size:13.5px;line-height:1.7;}
+.xlinks a{color:var(--accent);text-decoration:none;}
+.xlinks .xlabel{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.18em;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:6px;}
+@media (max-width:880px){.container{padding:0 24px 80px;}.masthead::before{left:-24px;right:-24px;}.headline{font-size:36px;}.chapter h2{font-size:29px;}.stat-grid{grid-template-columns:repeat(2,1fr);}.stat:nth-child(4n){border-right:1px solid var(--ink);}.stat:nth-child(2n){border-right:none;}.dsum{grid-template-columns:1fr;}.dsum-col{border-right:none;border-bottom:1px solid var(--ink);}.dsum-col:last-child{border-bottom:none;}.tier-row{grid-template-columns:1fr;}.tier-name{border-right:none;border-bottom:1px solid var(--ink);}.keystone-text{font-size:20px;}table{font-size:12.5px;}th,td{padding:8px 10px;}}
 </style>
 </head>
 <body>
@@ -105,74 +180,32 @@ tr:hover td{background:#F5F3FF}
 .imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
 .imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
 .imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
-.imq-logo:hover{color:#fff !important;text-decoration:none !important}
 .imq-logo span{color:#3b82f6}
 .imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
-.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2}
 .imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
 .imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
 .imq-dd{position:relative;display:inline-block}
 .imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
-.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
-.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd:hover .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;font-weight:500}
 .imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
-.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
 .imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
-.imq-subnav{background:#0f172a;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
-.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
-.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
-.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
-.imq-subnav a.active{color:#fff !important;background:rgba(59,130,246,.28);font-weight:600}
-@media(max-width:768px){
-  .imq-nav-root{padding:.55rem 12px}
-  .imq-nav-inner{gap:.4rem}
-  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
-  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
-  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
-  .imq-dd.open .imq-dd-menu{display:block}
-}
+@media(max-width:768px){.imq-nav-root{padding:.55rem 12px}.imq-menu{width:100%;justify-content:flex-start}.imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}.imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem}.imq-dd.open .imq-dd-menu{display:block}}
 </style>
 <header class="imq-nav-root">
   <div class="imq-nav-inner">
     <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
     <nav class="imq-menu">
       <a href="/">首頁</a>
-      <div class="imq-dd active">
-        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
-        <div class="imq-dd-menu">
-          <a href="/research/">個股 DD</a>
-          <a href="/id/" class="active">產業深度 ID</a>
-          <a href="/ds/">產業敘述 DS</a>
-          <a href="/comparisons/">多股對比</a>
-          <a href="/supply-chain/">供應鏈地圖</a>
-          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
-        </div>
+      <div class="imq-dd active"><button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu"><a href="/research/">個股 DD</a><a href="/id/" class="active">產業深度 ID</a><a href="/ds/">產業敘述 DS</a><a href="/comparisons/">多股對比</a><a href="/supply-chain/">供應鏈地圖</a><a href="/id/tier_matrix.html">🎯 Tier Matrix</a></div>
       </div>
-      <div class="imq-dd">
-        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
-        <div class="imq-dd-menu">
-          <a href="/briefing/">每日簡報</a>
-          <a href="/weekly/">週報</a>
-          <a href="/earnings/">財報分析</a>
-          <a href="/markets.html">Markets</a>
-          <a href="/sectors.html">Sectors</a>
-          <a href="/long-track-smh/">長線訊號</a>
-        </div>
+      <div class="imq-dd"><button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu"><a href="/briefing/">每日簡報</a><a href="/weekly/">週報</a><a href="/earnings/">財報分析</a><a href="/markets.html">Markets</a><a href="/sectors.html">Sectors</a><a href="/long-track-smh/">長線訊號</a></div>
       </div>
-      <div class="imq-dd">
-        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
-        <div class="imq-dd-menu">
-          <a href="/backtest/">量化回測</a>
-          <a href="/dd-screener/">DD Screener</a>
-          <a href="/qgm/">QGM 美股</a>
-          <a href="/qgm-tw/">QGM 台股</a>
-          <a href="/screener.html">Screener 美股</a>
-          <a href="/screener-tw.html">Screener 台股</a>
-          <a href="/screener-jp.html">Screener 日股</a>
-          <a href="/screener-my.html">Screener 馬股</a>
-          <a href="/cache/">🗄 Data Cache</a>
-          <a href="/tools/">期貨部位計算機</a>
-        </div>
+      <div class="imq-dd"><button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu"><a href="/backtest/">量化回測</a><a href="/dd-screener/">DD Screener</a><a href="/qgm/">QGM 美股</a><a href="/qgm-tw/">QGM 台股</a><a href="/screener.html">Screener 美股</a><a href="/screener-tw.html">Screener 台股</a><a href="/cache/">🗄 Data Cache</a><a href="/tools/">期貨部位計算機</a></div>
       </div>
       <a href="/mental-models/">🧠 心智模型</a>
       <a href="/how-to.html">📘 使用說明</a>
@@ -180,724 +213,302 @@ tr:hover td{background:#F5F3FF}
   </div>
 </header>
 <script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
-<div class="wrap">
+<div class="container">
 
-<div class="id-head">
-<span class="id-badge">產業深度 · Industry DD · Sub-Topic</span>
-<h1>CUDA / ROCm 軟體護城河子題：NVDA · AMD · INTC · 開源 framework 生態</h1>
-<p class="id-meta">發布日：2026-05-01（patched v1.1 @ 2026-05-03 critic Pass 1；patched v1.2 @ 2026-05-03 加 §10.6 inference TAM 三段式拆解 framework + §13 F-7/F-8 bucket-specific falsification + §12 NC#1 caveat — 防 zero-sum 框架誤讀）｜涵蓋 ticker：11 檔（🔴 4 / 🟡 4 / 🟢 3）｜🟡 占比：18%｜投資時鐘：<strong>Phase II 中（CUDA moat 開始裂；ROCm 7.2 達 vLLM 出箱 parity；framework abstraction 向上吸收）</strong>｜母題：ID_AIAcceleratorDemand_20260419｜industry-analyst v1.8</p>
+<header class="masthead">
+  <div class="pub-info">
+    <div><span class="pub-logo">InvestMQuest</span><br>Deep Industry Research · Vol. 26.06 · 精煉版</div>
+    <div class="right">2026年6月20日 · v2.3 改版<br>台北</div>
+  </div>
+  <h1 class="headline">CUDA / ROCm 軟體護城河<br>護城河不是一道牆，是<em>分層的</em></h1>
+  <p class="deck">把 CUDA 護城河子題濃縮成一張決策卡：保留護城河分層裁決、抽象層之爭、conviction tier、賣出訊號，砍掉考證厚度。</p>
+  <div class="byline">
+    <span>InvestMQuest · Independent Investor Research</span>
+    <span>Method: Deductive Inference + Scenario Analysis</span>
+  </div>
+</header>
+
+<div class="stat-grid">
+  <div class="stat"><div class="stat-k">推論層護城河</div><div class="stat-v">開始裂<small>ROCm 7.2 vLLM/llama.cpp 出箱 parity</small></div></div>
+  <div class="stat"><div class="stat-k">訓練 scale-out</div><div class="stat-v">仍獨家<small>NCCL + NVLink，NVDA 不可取代</small></div></div>
+  <div class="stat"><div class="stat-k">PyTorch ROCm</div><div class="stat-v">~95%<small>2.7 功能對等 CUDA build</small></div></div>
+  <div class="stat"><div class="stat-k">供需裁決</div><div class="stat-v">護城河分層<small>推論蝕 / 訓練守</small></div></div>
+  <div class="stat"><div class="stat-k">投資時鐘</div><div class="stat-v">Phase II<small>裂縫期，抽象層之爭</small></div></div>
+  <div class="stat"><div class="stat-k">2027-28 贏家</div><div class="stat-v">framework owner<small>META PyTorch / GOOGL JAX / OpenAI Triton</small></div></div>
+  <div class="stat"><div class="stat-k">仍 CUDA-only</div><div class="stat-v">TensorRT-LLM<small>+ FlashAttention 3（高階核）</small></div></div>
+  <div class="stat"><div class="stat-k">代表案例</div><div class="stat-v">NVDA / AMD / META<small>非買入推薦</small></div></div>
 </div>
 
-<h2>§0 TL;DR</h2>
-<div class="tldr-grid">
-  <div class="tldr-card"><h4>主題定位</h4><div class="v">AI 加速器軟體護城河 4 大層拆解（kernel / lib / framework / orchestration）；CUDA vs ROCm vs oneAPI vs Neuron / XLA</div></div>
-  <div class="tldr-card"><h4>2026 H1 軟體狀態</h4><div class="v">CUDA 4.5-6M 開發者 / 19 年生態｜ROCm 7.2 (Mar 2026) vLLM 出箱 parity（critic 修：llama.cpp/Ollama 為社群 ROCm 支援、非官方全 parity）｜<strong>MLPerf 6.0 MI355X 部分情境超越 B200</strong>（critic 2026-05-03 修：Llama 2 70B Interactive 達 119% B200、GPT-OSS-120B 111-115% — 原「single-digit % gap」conservative understatement）</div></div>
-  <div class="tldr-card"><h4>客戶 switching cost</h4><div class="v">production 移植 3-6 個月工程時間；toy example 30min（Claude Code）；NCCL→RCCL 仍有 3-4x 性能落差（小訊息）</div></div>
-  <div class="tldr-card"><h4>關鍵 customer wins</h4><div class="v">Meta-AMD 6GW (H2 2026 1GW deployment, multi-year to 2030) / <strong>OpenAI-AMD 6GW warrant 協議</strong>（critic 2026-05-03 修：原「10% stake」shorthand 誤導；實為 AMD 給 OpenAI ~160M shares warrants @ $0.01/share，依 GPU 購買 milestones + AMD 股價達標 vesting，不是 $25-30B 現金股權）/ Oracle 131,072 MI355X / MSFT MI300X 已 production</div></div>
-  <div class="tldr-card"><h4>核心風險</h4><div class="v">NCCL+NVLink scale-out 訓練 NVDA 仍獨家；TensorRT-LLM / FlashAttention 3 仍 CUDA-only；ROCm 7.2 是 vLLM-only parity（不是全棧）</div></div>
-  <div class="tldr-card"><h4>下一里程碑</h4><div class="v">ROCm 8.0 (2026 H2)；MI400 ramp Q4 2026；NCCL 替代品 (MSCCL++ / UCCL) 進入產品線；JAX/Pallas pure-play 大規模採用</div></div>
+<div class="abstract">
+  <p>市場把 NVDA 的 CUDA 護城河當成一道「鐵牆」——要嘛完好、要嘛崩塌的二元賭局。真相是這道牆<strong>正在分層裂解</strong>，不同層的命運完全不同。在<strong>單機推論層</strong>，牆已開始裂：ROCm 7.2（2026-03）首次達成 vLLM / llama.cpp / Ollama / SGLang 的「出箱（out-of-box）parity」，PyTorch 2.7 的 ROCm build 達 CUDA 約 95% 功能對等——對「PyTorch + vLLM、無自訂 kernel」的推論工作負載，AMD 已經夠用。</p>
+  <p>但在<strong>多卡訓練的 scale-out 層</strong>，牆紋風不動：NCCL（NVIDIA 的多卡通訊庫）+ NVLink（卡間高速互連）仍是 frontier 模型訓練的獨家路徑，TensorRT-LLM 與 FlashAttention 3 等高階核也仍 CUDA-only。換句話說——<strong>CUDA 的護城河不是「在不在」，而是「在哪一層」</strong>：推論層的水正在退，訓練 scale-out 層的牆還很高。</p>
+  <p>本報告最反直覺的判斷：這場護城河之爭的 2027-28 真贏家，不是任何一個 GPU 廠，而是<strong>控制抽象層的 framework owner</strong>——Meta（PyTorch）、Google（JAX/Pallas）、OpenAI（Triton）。當框架把硬體抽象成「可替換後端」，決定「GPU 是否可被換掉」的權力，就從晶片廠手裡轉移到框架治理者手裡。盯 CUDA vs ROCm 誰贏的人問錯了問題；該問的是「誰握有抽象層的方向盤」。</p>
 </div>
 
-<div class="cornerstone">
-<div class="c-head">★ 一句 Thesis（本 ID 最核心的非共識觀點 — v1.1 critic 修）</div>
-<div class="c-body">市場把 NVDA 護城河繼續定位為「CUDA 不可跨越的 19 年生態」，但這個 narrative 在 2026 H1 已**部分失效**：① ROCm 7.2 (2026 March) 達 vLLM 出箱 CUDA parity（critic 修：llama.cpp / Ollama 為社群 ROCm 支援，非官方全 parity），② <strong>MI355X MLPerf 6.0 部分情境超越 B200</strong>（critic 修：Llama 2 70B Interactive 達 119% B200 / GPT-OSS-120B 111-115%；原「single-digit % of B200」conservatively 低估），③ 大型 model 客戶 production 規模 commitment 已揭露：<strong>Meta-AMD 6GW（H2 2026 1GW，multi-year to 2030 deployment）+ OpenAI-AMD 6GW warrant 協議（critic 修：原 shorthand「10% stake」誤導 — 實為 AMD 給 OpenAI ~160M shares warrants @ $0.01/share，依 GPU 購買 milestones + AMD 股價達標 vesting，是 reverse incentive 不是 cash stake）+ Oracle 131K cluster</strong>，④ Claude Code 自動化 CUDA→ROCm 端口（toy 30 min，但信號 — production 移植仍 3-6 個月）。<strong>真正不可取代的不是 CUDA 是 NCCL + NVLink scale-out 訓練生態</strong>；CUDA 在 inference 已開始裂，在 training 仍硬。同時 PyTorch (META) + JAX/Pallas (GOOGL) + Neuron NKI (AMZN) 三大 abstraction 層在向上吸收 hardware-level 差異，<strong>2027-2028 真正贏家是 framework owner，不是 GPU vendor</strong>。</div>
+<div class="toc">
+  <div class="toc-h">Contents</div>
+  <ol>
+    <li>決策摘要層：NOW / NEXT / ACTION 與監測點</li>
+    <li>歷史類比：x86 生態鎖定、Android 抽象層</li>
+    <li>供給側：護城河三層與抽象層玩家</li>
+    <li>需求側：誰想逃離 CUDA、為什麼</li>
+    <li>裁決與三情境（24–36M）</li>
+    <li>個股特徵與 conviction tier</li>
+  </ol>
 </div>
 
-<div style="background:#FEF2F2;border:2px solid #DC2626;border-radius:6px;padding:14px 16px;margin:14px 0;font-size:12.5px;line-height:1.7">
-  <strong style="color:#991B1B;font-size:14px">🛡️ Critic Pass 1 (industry-thesis-critic v1.4 7-item with Item 7a + 7b body sweep + user peer-review 整合) — 1 大錯 + 4 partial + 3 cosmetic（2026-05-03）：</strong><br><br>
-
-  <strong>🔴 大錯 ①：「OpenAI 10% stake」shorthand 誤導（user 點 2 partial sustained on right grounds）</strong><br>
-  事實：用戶質疑「OpenAI 取得 AMD 10% 股權需 $25-30B 現金、財務不可能」— 結論方向對，但 mechanism 錯。實際結構（per AMD 8-K 2025-10-06、OpenAI 官方公告）：AMD 給 OpenAI **performance-based warrants for up to 160M AMD shares @ $0.01/share exercise price（essentially 免費 cashless）**，分批 vesting：(a) 第一批 upon delivery of first 1 GW MI450 GPUs，(b) 全部 vesting 條件 = OpenAI 累計購買 6 GW AMD GPUs + AMD 股價達標 up to $600/share 最終批次。**這是 AMD 用股票補貼 OpenAI 的 GPU 採購承諾（reverse incentive），不是 OpenAI 的資本投資**。Direction（OpenAI / AMD 商業綁定）正確，但「stake」字樣讓 PM 誤判為 $25-30B 資本投資 → mischaracterizes 關係 durability。9 處 inline 出現全部需替換為「6GW warrant 協議（~10% AMD shares）」。<br>
-  Source：[AMD 8-K 2025-10-06 warrant agreement](https://ir.amd.com/financial-information/sec-filings/content/0001193125-25-230895/d28189d8k.htm) | [TechCrunch warrant 結構解釋](https://techcrunch.com/2025/10/07/wall-street-analysts-explain-how-amds-own-stock-will-pay-for-openais-billions-in-chip-purchases/)<br><br>
-
-  <strong>🟡 大錯 ②：MLPerf 6.0「single-digit % of B200」conservative 低估（critic 獨立發現，非 user 質疑）</strong><br>
-  事實：原 thesis 描述「MI355X within single-digit % of B200」實際**理解偏低**。MLPerf 6.0 結果（2026-04 release）顯示 MI355X 在 Llama 2 70B Interactive 達 119% B200（領先 19%）、GPT-OSS-120B 達 111-115% B200（領先 11-15%）、text-to-video 93% B200。應改為「MI355X 在 LLM inference 部分情境超越 B200，整體 inference parity 已達 / 部分超越」。This is conservative error — directional 正確（AMD 進入 inference 競爭層）但 magnitude 顯著低估 thesis 強度。<br><br>
-
-  <strong>🟡 大錯 ③：ROCm 7.2 parity scope 在 thesis box / oneliner 過度擴張（critic 獨立發現）</strong><br>
-  事實：原 thesis box / oneliner 寫「ROCm 7.2 vLLM/llama.cpp/Ollama 出箱 parity」— 但實際只有 vLLM 是官方 ROCm CI 確認 parity（93% test groups passing as of mid-Jan 2026）；llama.cpp 與 Ollama 雖支援 ROCm 但屬社群維護、未達官方 production parity。§0 TLDR card 已正確 flag「ROCm 7.2 是 vLLM-only parity（不是全棧）」— 但 thesis box / oneliner 不一致，違反了 Item 7a thesis box sync 原則。<br><br>
-
-  <strong>🟡 大錯 ④：§10.5 漏列 AMD Q1 FY26 earnings (May 5, 4 days post-publish) — 最 imminent binary catalyst</strong><br>
-  事實：AMD Q1 FY26 earnings 2026-05-05 揭曉（4 天後），是本 thesis 最 imminent 的 binary test：DC segment 收入 + MI355X ramp commentary + Meta/OpenAI 交付時程 + GM 方向。原 §10.5 表格首列為 2026-05-20 NVDA Q1 FY27，跳過了 4 天前的 AMD Q1 — 這是 latent catalyst miss。應補入。<br><br>
-
-  <strong>🟡 大錯 ⑤：AMZN Trainium 3 「nearly fully subscribed」(2026-04-29) 漏入（latent pre-publish miss）</strong><br>
-  事實：AMZN Q1 2026 earnings (2026-04-29，發布前 2 天) — Andy Jassy 確認 Trainium 3 已近滿訂；Anthropic AWS RPO $38B 揭露。這驗證 Thesis 3（cross-vendor abstraction）方向，但 ID v1.0 沒納入。<br><br>
-
-  <strong>🟢 cosmetic 修：</strong><br>
-  ⑥ id-meta line 28 Anthropic role：Claude Code 30min port 加「demo 規模」qualifier（與 §0 TLDR + 一句 thesis 一致）<br>
-  ⑦ §7 Insight 2 headline「不是 toy」與 body「demo 規模」tension — 統一改為「toy 規模 — LLM-driven migration 加速信號」<br>
-  ⑧ §2 timeline「2026 H1」row MLPerf 措辭與 P1 對齊<br><br>
-
-  <strong>📊 Critic 對 user 3 點的最終裁決：</strong><br>
-  • <strong>User 點 1（6 GW 物理不可能）— NOT SUSTAINED</strong>：用戶把 5 年 multi-year deployment program 誤讀為 single-cluster point-in-time。Meta 6 GW = 2026-2030 跨年部署、首批 1 GW H2 2026（~1.4M GPUs，data center campus rack-scale across 12 個月），不是單一 cluster。比較對象應是 1 GW 首批，不是 6 GW 整體 program。ID 的「(H2 2026 1GW)」qualifier 實際正確 — 用戶沒注意到這個 hedge。<br>
-  • <strong>User 點 2（OpenAI 10% stake 不可能）— PARTIALLY SUSTAINED on wrong grounds</strong>：用戶結論對（不是 cash stake）但 reasoning 錯（不是「financially impossible」是「never happened in that form」）。真實結構是 warrant 不是 stake，這是 conclusion-changing 大錯。<br>
-  • <strong>User 點 3（Claude Code 30min 過度樂觀）— NOT SUSTAINED</strong>：ID body 已正確區分「toy 30min vs production 3-6 個月」（§0 TLDR + 一句 thesis 都有 hedge）。用戶質疑的是 framing 而非數據錯誤；critic 同意 §7 Insight 2 headline tension 屬 cosmetic。<br><br>
-
-  <strong>📊 Verdict：THESIS_AT_RISK → INTACT after C1 + 4 partial patches</strong>。Macro thesis（CUDA inference moat 開始裂、NCCL+NVLink 仍真 moat、framework owner 2027-2028 真贏家）方向 confirmed by independently verified data（Meta 6GW deal、OpenAI warrant 結構、MLPerf 6.0 actually 對 AMD 比 thesis 描述還更強）。但「OpenAI 10% stake」terminology 9 處需 line-by-line patch（這是 v1.4 Step 6.5b body sweep 規則設計時要抓的 case）。<br><br>
-
-  完整 critic 報告：<a href="_critic_CUDARocmMoat_20260503_decision.md">_critic_CUDARocmMoat_20260503_decision.md</a>
+<div class="xlinks">
+  <span class="xlabel">母題 / 完整版</span>
+  本份為 CUDA/ROCm 軟體護城河子題 v2 敘事版的<strong>精煉化身</strong>。完整考證版見 <a href="ID_CUDARocmMoat_20260501_full.html"><strong>完整版 →</strong></a>；母題：<a href="ID_AIAcceleratorDemand_20260419.html">AI 加速器需求</a>（GPU vs ASIC 雙池）／<a href="ID_AIInferenceEconomics_20260430.html">AI 推論經濟學</a>／<a href="ID_AIComputeCapexCycle_20260611.html">AI 算力資本週期</a>。
 </div>
 
-<div class="cornerstone" style="border-color:#EAB308;background:#FFFBEB">
-<div class="c-head" style="color:#92400E">★ 三條核心 Thesis（v1.1 critic 修）</div>
-<div class="c-body">
-1. <strong>CUDA inference moat 已開始裂；2026 是分水嶺</strong> <span class="thesis-tag tag-event">[event-triggered]</span> — ROCm 7.2 (Mar 2026) vLLM 出箱 parity（critic 修：llama.cpp/Ollama 為社群維護非官方 parity）；<strong>MI355X MLPerf 6.0 部分情境超越 B200</strong>（critic 修：原「single-digit %」實低估）；Meta-AMD 6GW（H2 2026 1GW）+ <strong>OpenAI 6GW warrant 協議（~10% AMD shares warrants vesting on milestones）</strong> = production 規模驗證。<br>
-2. <strong>真正不可取代的不是 CUDA 是 NCCL + NVLink + scale-out</strong> <span class="thesis-tag tag-structural">[structural]</span> — multi-GPU 訓練的 collective communication 仍 NVDA 獨家；MSCCL++ / UCCL 替代品仍未上產品線；Rubin / Rubin Ultra NVL144 / 288 規格繼續拉開 scale-out 差距。<br>
-3. <strong>PyTorch / JAX / Pallas / Neuron NKI 抽象層才是 2027-2028 真贏家</strong> <span class="thesis-tag tag-structural">[structural]</span> — framework abstraction 向上吸收 hardware-level；CUDA / ROCm / XPU / Neuron 變 swappable backend；META (PyTorch) + GOOGL (JAX/XLA/Pallas) + AMZN (NKI Apache 2.0) 已主導抽象層。
-</div>
-</div>
+<!-- ============ PART I ============ -->
+<section class="chapter">
+  <div class="chapter-marker">PART I · DECISION SUMMARY</div>
+  <h2>決策<em>摘要層</em></h2>
+  <p class="chapter-intro">三句話看完護城河分層的現狀、走向與行動，後接 PM 級監測點。這一層是報告的全部重點——下面各節只是把這一層的每個判斷補上證據。</p>
 
-<!-- ========== §0.7 PM Implication ========== -->
-<h2>§0.7 Portfolio Implication（PM 級行動結論）</h2>
-<div class="judgment-card" style="background:#F0FDF4;border-left:4px solid #16A34A">
-  <div class="j-head">📊 <strong>Portfolio Implication（PM 級行動結論）— light back-fill 2026-05-03</strong> <span class="j-conf mid">conviction：mid</span></div>
-  <ul class="j-facts" style="color:#14532D">
-    <li><strong>thesis 方向</strong>：保持（THESIS_AT_RISK → INTACT after patches）— CUDA inference moat 開始裂 + NCCL+NVLink 仍真護城河 + framework owner 2027-2028 真贏家 — 三條 thesis 核心方向均 confirmed；但出發點是 AT_RISK，patch 後 INTACT，同時 4 partial 錯誤（ML Perf magnitude 低估、ROCm parity scope、AMD Q1 catalyst 漏列、Trainium 漏入）已修正；cross-ID sync：母題 AIAcceleratorDemand INTACT，本 ID 是「ASIC share 逐步替代 NVDA GPU」大 thesis 的軟體驅動子集，兩者方向一致</li>
-    <li><strong>個股 conviction tier</strong>：AMD 🔴 catch-up alpha（Meta 6GW H2 2026 1GW + OpenAI 6GW warrants + Oracle 131K 是生產規模驗證；2026-05-05 AMD Q1 FY26 法說是最 imminent binary catalyst）；GOOGL 🔴 + META 🔴 framework governance alpha（PyTorch / JAX 抽象層 2027-2028 真贏家）；NVDA 🔴 維持中性（NCCL+NVLink scale-out 仍真護城河，inference 軟體 moat 開始裂但 training 仍硬；母題 AIAcceleratorDemand 同樣建議 NVDA 中性）；INTC 🟡 / MSFT 🟡 / AMZN 🟡 次要；AVGO 🟡 間接受益 JAX 生態</li>
-    <li><strong>關鍵新監測點</strong>：§13 F-5 Meta 6GW H2 2026 1GW deployment（2026 Q4 — AMD ecosystem ramp 的最重要現實驗證）；§13 F-7 Bucket A ASIC ramp（2026-Q4 AWS/Azure/Google per-token cost 降幅）；§13 F-8 Bucket B AMD 非 Big 4 share（2027 非超大型客戶占比）；§10.5 2026-05-05 AMD Q1 FY26 法說（DC AI revenue 金額 / MI355X ramp 細節 / Meta+OpenAI 交付時程）</li>
-    <li><strong>multiple / 估值 / 週期定位風險</strong>：NVDA 估值應分兩段定價（訓練 NCCL+NVLink moat：PE 35-40x；推論軟體 moat 弱：PE 25-30x）；AMD catch-up thesis 有單一 hyperscaler 集中度風險（Meta + OpenAI 兩大客戶）；framework abstraction 2027-2028 時程風險（PyTorch 仍 CUDA default，backend-neutral 切換 timeline 不確定）；CUDA 19 年 6M 開發者 switching cost 在訓練段仍是真實壁壘</li>
-    <li><strong>Entry 時機</strong>：同步母題 AIAcceleratorDemand — AMD 有 catch-up 但需等 §13 F-5 catalyst 驗證（2026 Q4 Meta 1GW deployment）；AMD Q1 FY26 法說（2026-05-05）是最近二元事件，DC revenue ≥$5B + 部署時程確認 → 可小加碼 AMD；NVDA 維持中性（不加不減）；不要因為「CUDA moat 開始裂」就在訓練段過度放空 NVDA（NCCL+NVLink 護城河仍硬）</li>
-  </ul>
-  <div class="j-logic" style="background:rgba(22,163,74,.1);color:#14532D">→ PM 級行動：① AMD 🔴 維持 / 小加碼（等 2026-05-05 Q1 法說驗證：DC revenue ≥$5B + Meta/OpenAI 交付確認）；② GOOGL 🔴 + META 🔴 維持 framework governance alpha（Pallas / PyTorch 2027-2028 thesis 正在展開）；③ 每季監測 §13 F-5 Meta 6GW 進度 + F-7 Bucket A ASIC per-token cost 作為 AMD thesis 主要 binary；④ 若母題 AIAcceleratorDemand Cisco scenario（~30% tail）觸發 → 本 ID 整體降格，AMD catch-up alpha 暫緩（hardware 崩 → ROCm 生態擴張停）</div>
-</div>
+  <div class="dsum">
+    <div class="dsum-col now">
+      <div class="dsum-tag">現在 / NOW</div>
+      <p>推論層 CUDA 護城河<strong>已開始裂</strong>——ROCm 7.2（2026-03）達 vLLM/llama.cpp/Ollama/SGLang 出箱 parity、PyTorch 2.7 ROCm ~95% 功能對等；但訓練多卡 scale-out（NCCL+NVLink）NVDA 仍獨家、TensorRT-LLM/FlashAttention 3 仍 CUDA-only。</p>
+    </div>
+    <div class="dsum-col next">
+      <div class="dsum-tag">未來 / NEXT</div>
+      <p>framework 抽象化把 GPU 變<strong>「可替換後端」</strong>——framework owner（META PyTorch / GOOGL JAX-Pallas / OpenAI Triton）掌握抽象治理權；推論層 AMD/ASIC 取得份額、訓練層 NVDA 護城河仍守；<strong>UALink 2.0 spec 2026 Q2 已發布、AMD/Intel/Astera 硬體 2026 H2 起初步商用</strong>，大規模 hyperscaler 採用預期 2027——採用速度是 scale-out 的關鍵變數。</p>
+    </div>
+    <div class="dsum-col act">
+      <div class="dsum-tag">行動 / ACTION</div>
+      <p>護城河交易不是「永遠 long NVDA 軟體鎖定」——是「<strong>訓練 scale-out 仍護城、推論護城河蝕</strong>」；被低估的贏家是 framework owner（META/GOOGL）+ ROCm parity 的 AMD。盯 ROCm parity 里程碑 / UALink 進度 / framework 治理權。</p>
+    </div>
+  </div>
 
-<h2>§1 產業定義與邊界</h2>
+  <div class="keycall">
+    <div class="keycall-label">The Key Call · 本報告最重要的一個判斷</div>
+    <p>市場把 CUDA 護城河當「鐵牆 yes/no」，這是錯框。護城河<strong>正在分層裂解</strong>：推論層的水退了（ROCm 7.2 出箱 parity、框架日益硬體無關），訓練 scale-out 層的牆還很高（NCCL+NVLink 獨家）。而這場仗的 2027-28 真贏家不是 GPU 廠——是<strong>控制抽象層的 framework owner</strong>。因為一個機制：當 PyTorch / JAX / Triton 把硬體抽象成「可替換後端」，「能不能換掉 NVDA」的決定權就從晶片廠移到框架治理者手裡。Meta 用 PyTorch、Google 用 JAX/Pallas + 自家 TPU、OpenAI 用 Triton——他們既是最大買家、又握有抽象層方向盤，正在系統性地把 GPU 變成可商品化的後端。盯 CUDA vs ROCm 誰贏的人問錯問題；該問「誰握有抽象層」。</p>
+  </div>
 
-<h3>本 ID 的範圍（in-scope）— 4 層軟體棧</h3>
-<table>
-<tr><th>層級</th><th>說明</th><th>NVDA</th><th>AMD</th><th>INTC</th><th>Hyperscaler</th></tr>
-<tr><td><strong>L1：Kernel / driver</strong></td><td>底層 GPU 驅動 + ISA assembly</td><td>CUDA driver / PTX</td><td>ROCm / HIP / MIOpen</td><td>Level Zero / SYCL</td><td>AWS Neuron / Google XLA TPU</td></tr>
-<tr><td><strong>L2：Math libraries</strong></td><td>線性代數 / DNN 算子 / collective</td><td>cuBLAS / cuDNN / NCCL</td><td>rocBLAS / MIOpen / RCCL</td><td>oneMKL / oneDNN / oneCCL</td><td>NKI（AWS）/ MXU / Pallas（Google）</td></tr>
-<tr><td><strong>L3：Framework backend</strong></td><td>PyTorch / JAX / TF backend implementations</td><td>cuDNN backend in PyTorch</td><td>ROCm backend (PyTorch upstream)</td><td>IPEX / oneAPI</td><td>JAX/XLA TPU backend / PyTorch XLA</td></tr>
-<tr><td><strong>L4：Application / serving</strong></td><td>vLLM / SGLang / TGI / TensorRT-LLM / Ollama</td><td>TensorRT-LLM / Triton Inf Server / Dynamo</td><td>vLLM / SGLang ROCm fork</td><td>OpenVINO / IPEX-LLM</td><td>vLLM TPU / Trainium-vLLM</td></tr>
-</table>
+  <p>護城河三層具體是：① <strong>推論層（裂）</strong>——單機 / 單節點推論，ROCm 7.2 出箱 parity、框架硬體無關化，AMD/ASIC 已能搶份額；② <strong>訓練 scale-out 層（守）</strong>——數千卡訓練 frontier 模型需 NCCL+NVLink 的整機櫃通訊，NVDA 獨家、MSCCL++ 等替代仍 research；③ <strong>抽象治理層（決定終局）</strong>——framework owner 決定硬體是否可替換，這層的權力 2027-28 從晶片廠移向 META/GOOGL/OpenAI。盯這三層的分別動態，比盯「CUDA 會不會被取代」更能看清誰賺到什麼。</p>
 
-<h3>本 ID 的非範圍（out-of-scope）— 由其他 ID 涵蓋</h3>
-<table>
-<tr><th>排除項</th><th>原因</th><th>對應 ID</th></tr>
-<tr><td>GPU 硬體規格 / 製程</td><td>本 ID 只討論軟體；硬體在母題</td><td><a href="ID_AIAcceleratorDemand_20260419.html">ID_AIAcceleratorDemand</a></td></tr>
-<tr><td>HBM / CoWoS 封裝</td><td>是物理層硬體；本 ID 只討論抽象到 software 層的影響</td><td><a href="ID_HBM_Supercycle_20260419.html">ID_HBM_Supercycle</a> / <a href="ID_CoWoSCoPoS_20260501.html">ID_CoWoSCoPoS</a></td></tr>
-<tr><td>ASIC 設計服務（Alchip / GUC / MediaTek）</td><td>是 chip 設計；本 ID 只討論已有的 ASIC 軟體棧</td><td><a href="ID_AIASICDesignService_20260419.html">ID_AIASICDesignService</a></td></tr>
-<tr><td>Networking（NVLink / Ethernet / UALink）</td><td>是物理 fabric；本 ID 只討論 collective comm software (NCCL / RCCL)</td><td><a href="ID_AINetworking_20260419.html">ID_AINetworking</a></td></tr>
-<tr><td>應用層商業模式（Token 經濟學）</td><td>是 SaaS 層；本 ID 只到推論引擎</td><td>ID_TokenEconomics_20260427</td></tr>
-<tr><td>Agentic AI 平台</td><td>是應用層 framework；本 ID 在 ML compiler / inference</td><td><a href="ID_AgenticAIPlatform_20260424.html">ID_AgenticAIPlatform</a></td></tr>
-</table>
+  <div class="monitor">
+    <div class="monitor-h">PM 級監測點 · 每季檢查，任一轉弱降一級 conviction</div>
+    <div class="monitor-item"><div class="monitor-num">1</div><div class="monitor-body">ROCm 是否把 parity 從推論擴到<strong>訓練 + 高階核</strong>（TensorRT-LLM/FlashAttention 等價物出箱可用 = 護城河蝕擴大，by 2026 Q4）</div></div>
+    <div class="monitor-item"><div class="monitor-num">2</div><div class="monitor-body"><strong>NVLink scale-out 替代</strong>進度（UALink 2.0 spec 已出 + 2026 H2 初步商用 → 盯 hyperscaler 大規模採用速度 / MSCCL++ 出 research；訓練護城河的唯一硬威脅，2026 H2 起即須監測，非等 2027）</div></div>
+    <div class="monitor-item"><div class="monitor-num">3</div><div class="monitor-body">framework 治理權：<strong>PyTorch / JAX 是否預設多後端</strong>（hardware-agnostic 成 default = GPU 商品化加速）</div></div>
+    <div class="monitor-item"><div class="monitor-num">4</div><div class="monitor-body">hyperscaler 自研矽（TPU/Trainium）<strong>production 滲透率</strong>（繞過 CUDA 的實證；GOOGL/AMZN 自用比例）</div></div>
+  </div>
 
-<h3>灰色地帶（boundary 爭議本身就是 insight 來源）</h3>
-<ul>
-<li><strong>Triton 該歸 NVDA 還是 OpenAI？</strong> Triton compiler 由 OpenAI 主導開發但長期針對 NVDA 優化；2024 後支援 ROCm + Apple Metal，現已逐漸成為「跨 vendor kernel DSL」。本 ID 把 Triton 視為 OpenAI 主導的「中性 abstraction」，不歸 NVDA。</li>
-<li><strong>vLLM / SGLang 的 vendor neutrality 真的中立嗎？</strong> 兩者都從 CUDA 起家，ROCm/TPU 支援後加；ROCm 7.2 達 parity 但 default 性能優化仍向 CUDA 傾斜。本 ID 把 vLLM 列為「partial-neutral」（出箱 parity 但 deep optimization 仍 vendor-specific）。</li>
-<li><strong>FlashAttention 3 為何還是 CUDA-only？</strong> 不是因為「CUDA 技術領先」，是 Tri Dao + Princeton 團隊資源優先 NVDA；ROCm 版本由 AMD 自家工程實作，2026 H2 預計達 parity。本 ID 把 FlashAttention 3 視為「lag 6-12 個月」而非「CUDA-exclusive technology」。</li>
-</ul>
+  <div class="caveat">
+    <div class="caveat-label">來源結構說明</div>
+    <p>軟體 parity 狀態（ROCm 7.2 / PyTorch 2.7 之 2026 H1 版本實測；後續版本 parity 持續提升，~95% 數字主要來自 T3-C 社群實測、非官方 compat matrix）引官方文件與技術社群實測 T3-C（署名工程師可信度升 T3-A）；NCCL/NVLink 獨家性與 framework 治理屬產業邏輯與技術架構判斷。本主題無傳統 TAM/CAGR（軟體護城河非市場規模題），故 id-meta tam/cagr 留 0。機率用「很可能 / 可能 / 不太可能」非百分比。</p>
+  </div>
+</section>
 
-<div class="insight">
-<div class="i-head">💡 §1 Insight</div>
-<div class="i-body">
-<strong>1. 4 層軟體棧的真正分水嶺在 L2（math libraries）+ L3（framework backend）— 不在 L1 driver</strong><br>
-<span class="i-sub">事實：ROCm L1 (HIP) 已達基本 parity；L4 vLLM 也達 parity；但 L2 cuDNN / NCCL 與 L3 framework backend 仍是 NVDA 領先 1-2 年。</span><br>
-<span class="i-sub">推論：投資觀察 NVDA moat 進度應看 L2/L3，不是 L1；MIOpen 與 cuDNN 的 feature parity 是真正的 NVDA 護城河指標。</span><br>
-<span class="i-sub">投資意義：每季 AMD 法說會應追蹤 MIOpen feature roadmap（vs cuDNN 9.x），這是真正的 moat-erosion 進度報告。</span>
-</div>
-</div>
+<!-- ============ PART II ============ -->
+<section class="chapter">
+  <div class="chapter-marker">PART II · HISTORICAL ANALOGS</div>
+  <h2>兩個<em>歷史類比</em>：x86 生態鎖定、Android 抽象層</h2>
+  <p class="chapter-intro">x86 告訴我們「生態鎖定」能撐多久、靠什麼裂；Android/JVM 告訴我們「抽象層」如何把底層硬體商品化——CUDA 同時是 x86 的生態、也面對 Android 式的抽象威脅。</p>
 
-<div class="insight">
-<div class="i-head">💡 §1 Insight 2</div>
-<div class="i-body">
-<strong>2. 邊界爭議揭示 hyperscaler 三家在做的不是「換 GPU」，是「重定義 abstraction 層」</strong><br>
-<span class="i-sub">事實：META 主導 PyTorch；GOOGL 主導 JAX/XLA/Pallas；AMZN 開源 NKI (Apache 2.0)。三家都在 L3-L4 層建立 hardware-agnostic abstraction。</span><br>
-<span class="i-sub">推論：hyperscaler 並不期望 CUDA 完全消失，而是期望 framework 層獨立於任何 GPU vendor，使 GPU 變成 swappable commodity。</span><br>
-<span class="i-sub">投資意義：META / GOOGL / AMZN 的軟體 moat 被市場低估（estimated TAM $30B by 2030 cross all 3）；NVDA 軟體 moat 估值需要打折。</span>
-</div>
-</div>
+  <p><strong>x86 生態鎖定——護城河在生態不在矽，但生態會被新平台繞過</strong>。Intel x86 數十年的統治不靠單晶片最快，而靠數十年累積的軟體生態（編譯器、OS、無數應用都假設 x86）。CUDA 是 AI 時代的 x86：護城河不是 GPU 硬體，而是「過去十年每一份框架、教學、論文、部署指南都預設 CUDA」。但 x86 的教訓有兩面：① 在 PC/伺服器，生態鎖定撐了三十年；② 在手機，x86 完全沒進場——因為 ARM + Android/iOS 是<em>新平台</em>，不繼承 x86 生態包袱。對應本次：CUDA 在「延續既有訓練工作流」的場景護城河極深，但在「全新的推論部署 + hyperscaler 自研矽」這個新平台上，CUDA 的生態慣性較弱——這正是裂縫出現在推論層而非訓練層的歷史理由。</p>
 
-<h2>§2 技術演進 + S 曲線 + 歷史類比</h2>
+  <div class="data-display">
+    <div class="data-display-header">CUDA 護城河分層 · 對應歷史前例</div>
+    <table>
+      <thead><tr><th>層</th><th>CUDA 現況</th><th>歷史對應</th><th>命運</th></tr></thead>
+      <tbody>
+        <tr><td>推論（單節點）</td><td>ROCm 7.2 出箱 parity</td><td>x86 在手機被 ARM 繞過</td><td>裂——新平台不繼承生態</td></tr>
+        <tr><td>訓練 scale-out</td><td>NCCL+NVLink 獨家</td><td>x86 在伺服器的深鎖定</td><td>守——慣性 + 物理互連</td></tr>
+        <tr><td>抽象治理</td><td>framework owner 崛起</td><td>Android 把手機晶片商品化</td><td>權力上移到框架層</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="tbl-read">怎麼讀：同一個「CUDA 護城河」，在不同層對應不同歷史前例、不同命運——推論層像「x86 在手機」（被新平台繞過），訓練層像「x86 在伺服器」（深鎖定），抽象層像「Android 把高通/聯發科變可替換」。把三層混為一談，就會在「CUDA 崩了沒」的假問題上反覆誤判。</p>
 
-<h3>三條 S 曲線並行（CUDA / ROCm / Framework abstraction）</h3>
-<pre class="scurve-ascii">滲透率 / 完成度
- 100%│        ●━━━━━━━━━━━━━━━━━━━━━━━━━ CUDA (2010-2026 +19yr 主導)
-     │       ╱
-     │      ╱            ★ 2026 H1（今）：ROCm 跨入 inference parity
-     │     ╱             ╱━━━━━━━━━━━━━━━ Framework abstraction (PyTorch/JAX/Pallas)
-     │    ╱            ╱
-     │   ╱           ╱━━━━━━━━━━━━ ROCm 7.2 inference parity (2026 Q1)
-     │  ╱           ╱            ╱
-     │ ╱           ╱           ╱━━━━━━━━ AWS Neuron / NKI / Pallas (cross-vendor)
-     │╱           ╱           ╱
-     │           ╱           ╱
-   0%└──────┬───────┬──────┬─────┬─────┬──────┬──────────
-        2010    2018    2024  ★2026  2028   2030
-        CUDA   ML 爆發  ROCm   今    ROCm   abstraction
-        起點   PyTorch  起步        7.2    成為主流
-                                   parity
-</pre>
+  <p><strong>Android / JVM 抽象層——把底層硬體商品化的歷史劇本</strong>。Android（與更早的 JVM「write once, run anywhere」）證明了一件事：當一個夠強的抽象層普及，底層硬體就被商品化——App 開發者寫 Android、不在乎跑在高通還是聯發科，晶片廠的議價權因此被壓縮。PyTorch / JAX 正在 AI 扮演同樣角色：當模型開發者寫 PyTorch、由框架決定後端跑 CUDA 還是 ROCm 還是 TPU，NVDA 的「軟體鎖定」就被框架層接管。<strong>本次量化差異</strong>：PyTorch 2.7 的 ROCm build 已達 ~95% 功能對等——抽象層的「可移植性」在推論場景已接近 Android 等級；但訓練 scale-out 的 NCCL+NVLink 還沒有等價的抽象層替代（這是物理互連，不只是軟體 API），所以商品化目前只發生在推論層。</p>
+</section>
 
-<h3>過去 → 現在 → 未來：時間軸表（5+ 時間點）</h3>
-<table>
-<tr><th>時期</th><th>關鍵事件</th><th>軟體生態狀態</th><th>競爭格局</th></tr>
-<tr><td>2007-2014</td><td>CUDA 1.0 (2007) → cuDNN 1.0 (2014)</td><td>NVDA 獨家深耕；Caffe / Theano 早期</td><td>NVDA 唯一玩家</td></tr>
-<tr><td>2015-2020</td><td>PyTorch (2016) / TF 主流；cuDNN/NCCL 標準</td><td>所有 ML framework 默認 CUDA</td><td>AMD GCN GPU 軟體幾乎無</td></tr>
-<tr><td>2021-2023</td><td>ROCm 1.0-5.x；Triton 起步；JAX/XLA 推開</td><td>ROCm 仍實驗階段；hyperscaler ASIC 軟體分歧</td><td>NVDA H100 量產 + CUDA 12.x</td></tr>
-<tr><td>2024-2025</td><td>ROCm 6.x；vLLM 普及；MI300X 推出</td><td>ROCm 部分 parity；MI300X 已 inference 可用</td><td>NVDA 80% share 但 challenger 進場</td></tr>
-<tr><td><strong>2026 H1（今）</strong></td><td><strong>ROCm 7.2 (Mar 2026) vLLM 出箱 parity；MI355X MLPerf 6.0 部分情境超越 B200（critic 修：Llama 2 70B 119% B200、GPT-OSS-120B 111-115%）；Meta 6GW (H2 2026 1GW) + <s>OpenAI 10% stake</s> OpenAI 6GW warrant 協議（~10% AMD shares warrants）</strong></td><td><strong>inference 移植正式 production-ready；training 仍 NVDA 主導</strong></td><td><strong>NVDA share 開始降至 75-78%；AMD 進入 production scale</strong></td></tr>
-<tr><td>2026 H2 - 2027</td><td>ROCm 8.0；MI400 ramp；MSCCL++ 替代 NCCL；NKI 開源生態擴張</td><td>NCCL alternative 進入產品；framework 抽象層完整</td><td>NVDA share 70-75%；AMD/Trainium/TPU 各佔 5-10%</td></tr>
-<tr><td>2028+</td><td>Pallas / NKI / SYCL 跨 vendor 標準化；CUDA 持續 evolve（Blackwell + 軟體優化）</td><td>2 個世代並存：CUDA legacy + abstraction layer</td><td>NVDA 仍 50%+，但 GPU 成 commodity 趨勢</td></tr>
-</table>
+<!-- ============ PART III ============ -->
+<section class="chapter">
+  <div class="chapter-marker">PART III · SUPPLY SIDE</div>
+  <h2>供給側：護城河<em>三層</em>，每層玩家不同</h2>
+  <p class="chapter-intro">「CUDA 護城河」其實是三道厚度不同的牆疊起來；看清哪層由誰守、哪層誰能攻，才知道價值流向哪。</p>
 
-<h3>★ 歷史類比（強制 ≥ 2 個前例）</h3>
-<table>
-<tr><th>歷史前例</th><th>背景</th><th>誰被低估 / 高估</th><th>本次量化差異</th></tr>
-<tr><td><strong>2008-2013 x86 vs RISC（ARM / IBM Power / Sun SPARC）</strong></td><td>Intel x86 在 server 主導；ARM 起步成本優勢但軟體生態未成熟</td><td>多頭高估 RISC 取代速度（2008 預測 2013 ARM 25% server share，實際 5%）；空頭低估 ARM 長期 - 2025 ARM 已佔 server 25%（AWS Graviton）</td><td>CUDA 與 x86 類比：軟體生態 19 年積累 + AppLayer 慣性；但 2026 ROCm 達 inference parity = 比 ARM 在 2013 更激進的時程</td></tr>
-<tr><td><strong>2015-2020 iOS vs Android 框架抽象</strong></td><td>iOS 主導 5 年（2008-2013）；Android 從生態落後追到並列</td><td>多頭認為 iOS 永遠領先；空頭低估 Google Pixel 自家投資 + Android 開源效應</td><td>NVDA 類比 iOS（vertical 整合）；AMD/Trainium/TPU 類比 Android （open + multi-vendor）；framework abstraction = 跨平台 web/RN<span class="source-tag">[T3-A: <a href="https://semianalysis.com/2025/04/23/amd-2-0-new-sense-of-urgency-mi450x-chance-to-beat-nvidia-nvidias-new-moat/">SemiAnalysis 2025-04</a>]</span></td></tr>
-<tr><td><strong>2010-2015 Oracle vs PostgreSQL / MySQL（DB market）</strong></td><td>Oracle 主導 enterprise DB；OSS DB 在 web scale 突破</td><td>多頭認為 Oracle moat 永遠；空頭正確（OSS 吃 web/cloud；Oracle 仍 enterprise 但 share 由 80% → 30%）</td><td>CUDA 類比 Oracle（深度 + lock-in）；ROCm/PyTorch/Pallas 類比 OSS DB（不取代 enterprise，吃 web scale）；2030 預估 NVDA 50% share 對應 Oracle DB 在 2020 的位置</td></tr>
-</table>
+  <p>軟體護城河的供給端分三層：① <strong>推論層</strong>——NVDA（CUDA + TensorRT-LLM）vs AMD（ROCm 7.2，已達 vLLM/llama.cpp 出箱 parity）vs hyperscaler 自研棧（Neuron/oneAPI）；這層牆最薄，AMD 與 ASIC 已能攻。② <strong>訓練 scale-out 層</strong>——NVDA（NCCL + NVLink，數千卡通訊獨家）幾乎無對手，AMD 的 RCCL + Infinity Fabric 仍落後、UALink（2.0 spec 2026 Q2、AMD/Intel/Astera 硬體 2026 H2 起初步商用）大規模 hyperscaler 採用待 2027。③ <strong>抽象治理層</strong>——framework owner（META PyTorch / GOOGL JAX-Pallas / OpenAI Triton）決定硬體可否替換；這層的權力正從晶片廠移向超大規模買家自己。利潤/議價權目前仍最集中在 NVDA（守住最厚的訓練層），但增量話語權正往抽象層滲透。</p>
 
-<div class="judgment-banner">⚠ 反向類比警示：本次與 ARM vs x86 不同 — ARM 起家於低功耗 mobile，是「不同市場」竄起；ROCm 起家於 HPC（同市場），且 2026 已直接挑戰 NVDA inference 領地。本次蠶食速度可能比 ARM 在 2013 後 10 年更快（5-7 年達 25-30% share）。</div>
+  <div class="inference">
+    <div class="inference-label">Inference · 供給</div>
+    <div class="inference-title">護城河在「物理互連」最硬，在「軟體 API」最易被抽象繞過</div>
+    <div class="deduction-chain">前提：推論多為單節點（軟體 API 層）＋ 訓練需數千卡（物理互連 NCCL+NVLink）＋ framework 可抽象軟體 API、但抽象不了物理互連</div>
+    <p>軟體 API 可以被框架抽象、被 ROCm 複製（推論層已發生）；但 NVLink 是卡間的物理高速互連、NCCL 是其上的通訊最佳化——數千卡訓練 frontier 模型時，這是 latency/頻寬的硬約束，不是一個 API 換掉就行。所以護城河最硬的地方不在 CUDA 這個「軟體」，而在 NVLink 這個「物理互連 + 其上的 NCCL」。</p>
+    <p><strong>可證偽條件：</strong>UALink（開放 scale-out 互連）2.0 spec 已於 2026 Q2 發布、硬體 2026 H2 起初步商用；若 2027 hyperscaler 大規模採用、或 MSCCL++ 從 research 轉 production，則訓練 scale-out 護城河開始鬆動，NVDA 最硬的那層牆出現裂縫——故監測點 2 從 2026 H2 起即須盯（非等 2027）。</p>
+  </div>
 
-<div class="insight">
-<div class="i-head">💡 §2 Insight</div>
-<div class="i-body">
-<strong>1. ROCm 7.2 達 vLLM 出箱 parity 的時程比 2024 預期快 12-18 個月</strong><br>
-<span class="i-sub">事實：2024 SemiAnalysis 預估 ROCm parity 要 2027-2028；實際 2026 March 達 <strong>vLLM 官方 parity</strong>（critic 2026-05-03 修：llama.cpp / Ollama 雖有 ROCm 支援但屬社群維護，非官方全 parity；本句原文擴張為三者全 parity 稍 overstate）。</span><br>
-<span class="i-sub">推論：AMD 軟體投入 + Meta/OpenAI 客戶 commit 加速了 ecosystem 成熟；本 ID 對 ROCm 8.0 (2026 H2) 樂觀。</span><br>
-<span class="i-sub">投資意義：AMD 軟體 moat 進度比 Street 模型快 12-18 個月；2027 EPS 模型可能需要上修 15-20%（更多 customer wins）。</span>
-</div>
-</div>
+  <div class="data-display">
+    <div class="data-display-header">CUDA 護城河三層 · 守方 / 攻方 / 牆厚</div>
+    <table>
+      <thead><tr><th>層</th><th>守方 (NVDA)</th><th>攻方</th><th>牆厚 / 趨勢</th></tr></thead>
+      <tbody>
+        <tr><td>推論（單節點）</td><td>CUDA / TensorRT-LLM</td><td>AMD ROCm 7.2 / ASIC</td><td>薄 · ↓ 裂縫擴大</td></tr>
+        <tr><td>高階 kernel</td><td>FlashAttention 3 / TRT-LLM</td><td>ROCm 追趕中</td><td>中 · → 仍 CUDA 優</td></tr>
+        <tr><td>訓練 scale-out</td><td>NCCL + NVLink</td><td>RCCL / UALink（spec 2026Q2、2026H2 初步商用、大規模 2027）</td><td>厚 · → 仍獨家</td></tr>
+        <tr><td>抽象治理</td><td>（守不住）</td><td>META PyTorch / GOOGL JAX / OpenAI Triton</td><td>權力上移框架層</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="tbl-read">怎麼讀：牆厚由薄到厚＝推論 &lt; 高階 kernel &lt; 訓練 scale-out；NVDA 最該守的不是 CUDA 這個品牌，而是 NVLink+NCCL 這層物理互連。最危險的趨勢是「抽象治理層」——NVDA 根本守不住（那是框架擁有者的地盤），而 framework owner 正是 hyperscaler 自己。<strong>價值流向</strong>：推論層的價值往 AMD/ASIC + framework owner 流；訓練層的價值 NVDA 暫守；長期看，抽象層誰控制、誰就能決定 GPU 是否可商品化。</p>
+</section>
 
-<div class="insight">
-<div class="i-head">💡 §2 Insight 2</div>
-<div class="i-body">
-<strong>2. NVDA CUDA 護城河類比 Oracle DB 而非 Wintel</strong><br>
-<span class="i-sub">事實：Oracle 在 2010-2015 share 從 80% 降至 30%；保留 enterprise / mission-critical 但 web/cloud 失去。Wintel 則保住 90%+ until ARM 全面進入。</span><br>
-<span class="i-sub">推論：CUDA 在 frontier model training（GPT-6 / Llama 5）仍將獨家；但 enterprise inference / open-source LLM serving 會逐步流失（這部分 share）。</span><br>
-<span class="i-sub">投資意義：NVDA 估值不會 binary 崩盤，但 multiple 將從 50x P/E 降到 30-35x（適配 share 從 80% → 60%）；對應 2027-2028 是估值重整期。</span>
-</div>
-</div>
+<!-- ============ PART IV ============ -->
+<section class="chapter">
+  <div class="chapter-marker">PART IV · DEMAND SIDE</div>
+  <h2>需求側：<em>誰想逃離 CUDA</em>、為什麼逃得動</h2>
+  <p class="chapter-intro">想逃離 CUDA 鎖定的，正是 NVDA 最大的客戶——hyperscaler；他們既有逃的動機（成本、議價權），又有逃的能力（自研矽 + 自有框架）。</p>
 
-<h2>§3 核心技術棧拆解</h2>
+  <p>逃離 CUDA 的需求來自 NVDA 自己的大客戶：hyperscaler（GOOGL/AMZN/MSFT/META）既付最多錢給 NVDA、又最有動機與能力擺脫鎖定。<strong>動機</strong>：CUDA 鎖定 = NVDA 的定價權 = 他們的成本與議價劣勢。<strong>能力</strong>：他們同時握有自研矽（TPU/Trainium/MTIA/Maia）與自有框架（GOOGL JAX、META PyTorch、AMZN Neuron），可以從「晶片 + 編譯棧 + 框架」三端一起繞過 CUDA。這是「逃離 CUDA」這次跟以往（小廠想挑戰 NVDA）最大的不同——這次想逃的是有資源、有框架治理權的巨頭。</p>
 
-<h3>表 3.1：4 層軟體棧 feature parity 矩陣（2026 H1）</h3>
-<table>
-<tr><th>軟體層</th><th>NVDA（CUDA）</th><th>AMD（ROCm 7.2）</th><th>INTC（oneAPI）</th><th>AWS（Neuron）</th><th>GOOGL（XLA/Pallas）</th></tr>
-<tr><td>Driver / kernel ISA</td><td>CUDA 12.x / PTX ✅ 完整</td><td>HIP / amdgcn ✅ 接近</td><td>Level Zero / Xe ⚠ 中度</td><td>Neuron device ⚠ Trainium-only</td><td>XLA TPU ⚠ TPU-only</td></tr>
-<tr><td>Math libraries (BLAS / DNN)</td><td>cuBLAS / cuDNN 9.x ✅ 完整 + 領先</td><td>rocBLAS / MIOpen ⚠ 落後 1 代</td><td>oneMKL / oneDNN ⚠ 中度</td><td>NKI (Apache 2.0) ⚠ 早期</td><td>Pallas / Mosaic ⚠ 中度（TPU-tuned）</td></tr>
-<tr><td>Collective comm (multi-GPU)</td><td>NCCL ✅ 領先 + NVLink 整合</td><td>RCCL ❌ 性能落後（小訊息 3-4x）</td><td>oneCCL ❌ HPC 級</td><td>不適用（ASIC fabric）</td><td>不適用（TPU 內建 ICI）</td></tr>
-<tr><td>Framework backend (PyTorch / JAX)</td><td>PyTorch CUDA ✅ 完整 + JAX 部分</td><td>PyTorch ROCm ✅ 上游 + JAX ⚠ 部分</td><td>IPEX 部分 ⚠</td><td>PyTorch XLA / JAX ✅ 原生</td><td>JAX/Pallas ✅ 原生 + PyTorch XLA ⚠</td></tr>
-<tr><td>Inference engine (vLLM / SGLang)</td><td>TensorRT-LLM ✅ 領先 + vLLM 完整</td><td>vLLM ROCm ✅ 7.2 出箱 parity</td><td>OpenVINO + IPEX-LLM ⚠ 中度</td><td>vLLM Trainium ⚠ 部分</td><td>vLLM TPU ✅ 統一 backend</td></tr>
-<tr><td>Compiler (DSL / kernel)</td><td>Triton (OpenAI) ✅ 領先 + cuDF</td><td>Triton ROCm ✅ 部分；HIP-Triton ⚠</td><td>SYCL ⚠ + Numba ⚠</td><td>NKI (Apache 2.0) ⚠ 早期</td><td>Pallas（Triton-like）✅ TPU 領先</td></tr>
-<tr><td>Profiler / debugger</td><td>Nsight ✅ 領先（業界標準）</td><td>ROCprof ⚠ 中度</td><td>VTune ⚠</td><td>Neuron Profiler ⚠</td><td>XLA dumps ⚠ TPU-only</td></tr>
-</table>
+  <div class="data-display">
+    <div class="data-display-header">需求三角驗證 · 誰想逃、逃哪層、逃得動嗎</div>
+    <table>
+      <thead><tr><th>玩家</th><th>逃離工具</th><th>逃得動的層</th></tr></thead>
+      <tbody>
+        <tr><td>GOOGL</td><td>TPU + JAX/Pallas</td><td>訓練 + 推論（自有棧最完整）</td></tr>
+        <tr><td>AMZN</td><td>Trainium + Neuron SDK</td><td>推論為主，訓練追趕</td></tr>
+        <tr><td>META</td><td>MTIA + PyTorch（自家框架）</td><td>推論 + 抽象治理權</td></tr>
+        <tr><td>AMD 客戶</td><td>ROCm 7.2</td><td>推論（出箱 parity）</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="tbl-read">怎麼讀：逃得最徹底的是 GOOGL（TPU + JAX 自有訓練棧，frontier 訓練都能繞 NVDA）；META 的關鍵武器是「擁有 PyTorch」——它不只逃，還握有讓<em>所有人</em>都能逃的抽象層方向盤。逃得動的層目前集中在推論；訓練 scale-out 除了 GOOGL TPU（自有互連 ICI）外，多數仍回到 NVLink。<strong>因果閉合</strong>（回應 §1 的「生態慣性」變數）：CUDA 的生態慣性在「既有訓練工作流」仍 binding（換框架成本高），但在「新建推論部署 + 自研矽」場景已鬆動——這是裂縫只在推論層、且由有自有框架的巨頭推動的根。</p>
 
-<h3>表 3.2：軟體生態的 yield/feature 卡點（按嚴重性 ranking）</h3>
-<table>
-<tr><th>瓶頸</th><th>影響範圍</th><th>當前狀態</th><th>解套路線 / 時程</th></tr>
-<tr><td><strong>NCCL + NVLink scale-out 訓練</strong></td><td>所有 multi-GPU 訓練（&gt;1K GPU 集群）</td><td>NVDA 獨家；RCCL 小訊息落後 3-4x；MSCCL++ 仍 research</td><td>UCCL / MSCCL++ 進入產品 = 2027 H1；UALink 商用 = 2027+</td></tr>
-<tr><td><strong>cuDNN 9.x feature 領先 1 代</strong></td><td>所有 CV / NLP / generative model 訓練</td><td>cuDNN attention v4；MIOpen attention v2-v3</td><td>MIOpen 4.x（2026 H2）目標 attention v3-v4</td></tr>
-<tr><td><strong>FlashAttention 3 CUDA-only</strong></td><td>所有需要 long context attention 的 LLM</td><td>FA3 CUDA-only since 2024；ROCm port 仍 lag</td><td>AMD 自家 FA3-equivalent (2026 H2)</td></tr>
-<tr><td><strong>TensorRT-LLM 對 NVDA 內部 fast-path 優化</strong></td><td>低延遲 inference</td><td>TensorRT-LLM open-source 但深度優化僅在 NVDA</td><td>vLLM / SGLang 在 ROCm 上達 80%+ TensorRT-LLM 性能（2026 H1）</td></tr>
-<tr><td><strong>Nsight 業界標準 profiler</strong></td><td>所有 GPU debugging</td><td>Nsight = de facto；ROCprof / VTune 仍離；新 entrant 開發者不熟</td><td>非結構性瓶頸，ROCm + JAX 開發者學新 profiler</td></tr>
-<tr><td><strong>JAX/Pallas 跨 vendor 缺多 GPU collective</strong></td><td>JAX-based training 在非 TPU 上 multi-node</td><td>Pallas 對 GPU 仍主要 single-node optimal</td><td>Pallas + NCCL/RCCL/UCCL 整合（2026 H2-2027）</td></tr>
-</table>
+  <div class="caveat">
+    <div class="caveat-label">多空為何都對</div>
+    <p>NVDA 多頭測的是「訓練 scale-out + 既有工作流慣性」（真的還很硬），空頭測的是「推論層 parity + 抽象層商品化」（也真的在發生）——兩者測的是不同層，可同時為真。CUDA 在訓練護城河仍深（多頭對），但推論層正被 ROCm + framework 抽象繞過（空頭對）。把它讀成「CUDA 整體崩 / 整體穩」都會誤判。</p>
+  </div>
+</section>
 
-<h3>表 3.3：專利持有者 / 真正的 kingmaker 子技術</h3>
-<table>
-<tr><th>子技術</th><th>主導 / 專利</th><th>授權收益</th><th>本 ID 影響</th></tr>
-<tr><td>NCCL collective primitives</td><td>NVDA（多項 patents）</td><td>不單獨計費，與 GPU bundled</td><td>真正 NVDA scale-out moat 來源</td></tr>
-<tr><td>cuDNN attention kernels</td><td>NVDA（持續更新 9.x）</td><td>免費（綁 GPU 銷售）</td><td>training 性能差距核心</td></tr>
-<tr><td>FlashAttention 3</td><td>Tri Dao + Princeton + NVDA optimization</td><td>OSS（MIT）但深度優化在 CUDA</td><td>AMD 必須自家做替代品</td></tr>
-<tr><td>OpenAI Triton</td><td>OpenAI 主導；NVDA / AMD 各自 backend</td><td>OSS（Apache 2.0）</td><td>真正中立的 cross-vendor compiler</td></tr>
-<tr><td>JAX / Pallas</td><td>Google 主導；OSS</td><td>OSS（Apache 2.0）</td><td>cross-vendor abstraction 領先</td></tr>
-<tr><td>PyTorch core</td><td>Meta 主導；PyTorch Foundation 治理（2022+）</td><td>OSS（BSD-3）</td><td>事實上的 cross-vendor abstraction 標準</td></tr>
-<tr><td>NKI (Neuron Kernel Interface)</td><td>AWS（2025 開源 Apache 2.0）</td><td>OSS</td><td>AWS 的 cross-vendor 野心試水</td></tr>
-</table>
+<!-- ============ PART V ============ -->
+<section class="chapter">
+  <div class="chapter-marker">PART V · VERDICT &amp; SCENARIOS</div>
+  <h2>裁決與<em>三情境</em>（24–36M）</h2>
+  <p class="chapter-intro">NC#1（推論層護城河已裂）判 INTACT、NC#3（framework owner 是終局贏家）INTACT、NC#2（訓練 scale-out 護城河 2028 前不破）判「很可能但有 UALink 變數」——故 thesis mixed、conviction mid。</p>
 
-<div class="insight">
-<div class="i-head">💡 §3 Insight</div>
-<div class="i-body">
-<strong>真正的 kingmaker 不是 CUDA / ROCm 本身，是「PyTorch + JAX 抽象層 + OpenAI Triton compiler」</strong><br>
-<span class="i-sub">事實：PyTorch 是 META 主導 OSS；JAX/Pallas 是 GOOGL 主導 OSS；Triton 是 OpenAI 主導 OSS；三者都是 cross-vendor。</span><br>
-<span class="i-sub">推論：NVDA 在這 3 個 framework 沒有 governance 控制權；hyperscaler 只要繼續推這些抽象層，就在系統性削弱 CUDA 的「應用層 lock-in」。</span><br>
-<span class="i-sub">投資意義：META / GOOGL 的軟體影響力是「隱形 moat」，市場估值通常忽略；2027-2028 估值重整期應計入此 abstraction 層 contribution。</span>
-</div>
-</div>
+  <div class="scenario-set">
+    <div class="scenario scenario-base">
+      <div><span class="scenario-tag">Base Case</span><span class="scenario-prob">主觀機率 ~55%</span></div>
+      <div class="scenario-title">護城河分層續行：推論蝕、訓練守、抽象層上移</div>
+      <p>ROCm parity 從推論續擴但訓練 scale-out 仍 NVLink 獨家；framework owner 掌握抽象治理；AMD 在推論取得份額、NVDA 訓練腹地與整體營收仍強但「軟體鎖定溢價」逐步被 price out。</p>
+      <div class="scenario-trigger"><strong>觸發確認訊號：</strong>ROCm parity 限於推論、UALink 仍未大規模商用、PyTorch/JAX 多後端成主流、TPU/Trainium 自用滲透續升。</div>
+    </div>
+    <div class="scenario scenario-bull">
+      <div><span class="scenario-tag">Bull（對 NVDA）</span><span class="scenario-prob">主觀機率 ~20%</span></div>
+      <div class="scenario-title">訓練護城河再延伸，CUDA 慣性勝過抽象</div>
+      <p>NVLink + NCCL 在新一代（NVLink Fusion 等）持續領先，UALink 商用延後；frontier 模型複雜度上升讓「整棧最佳化（CUDA + TRT-LLM + NVLink）」的優勢擴大，抽象層的可移植性在最前沿打折，NVDA 軟硬整合溢價維持。</p>
+      <div class="scenario-trigger"><strong>觸發確認訊號：</strong>UALink 延後 / 採用低、ROCm 訓練 parity 卡關、frontier 訓練仍幾乎全在 NVDA、framework 多後端在最前沿不可用。</div>
+    </div>
+    <div class="scenario scenario-bear">
+      <div><span class="scenario-tag">Bear（對 NVDA 軟體溢價）</span><span class="scenario-prob">主觀機率 ~25%</span></div>
+      <div class="scenario-title">UALink + framework 抽象齊發，訓練層也開始商品化</div>
+      <p>UALink（spec 2026 Q2、硬體 2026 H2 已初步商用）2027 進入 hyperscaler 大規模採用、MSCCL++ 轉 production，訓練 scale-out 護城河鬆動；framework owner 把多後端推到訓練場景；NVDA 的「軟體鎖定」溢價快速被 price out，估值從「不可取代」回到「最強但可競爭」。</p>
+      <div class="scenario-trigger"><strong>觸發確認訊號：</strong>UALink 大規模採用率（非僅出貨）、ROCm 達訓練 parity、frontier 訓練出現顯著非 NVDA 部署、framework 多後端成訓練 default。注意：硬體初步商用 2026 H2 已發生，關鍵是「採用速度」而非「有沒有」。</div>
+    </div>
+  </div>
 
-<div class="insight">
-<div class="i-head">💡 §3 Insight 2</div>
-<div class="i-body">
-<strong>NCCL + NVLink 不是「CUDA 子集」，是 NVDA 真正不可取代的 moat</strong><br>
-<span class="i-sub">事實：MSCCL++ 在小訊息已能擊敗 RCCL / NCCL（3.8x 加速），但仍 research-only；UCCL 開發中。</span><br>
-<span class="i-sub">推論：訓練 frontier model（&gt;100K GPUs）只能用 NVDA + NCCL；2026-2028 仍無真正可用 alternative。</span><br>
-<span class="i-sub">投資意義：NVDA 在 frontier model training 護城河仍硬；估值 30-35x P/E 應對應於這個 segment（不是整體 GPU 市場）。</span>
-</div>
-</div>
+  <div class="timeline">
+    <div class="phase">
+      <div class="phase-period">現在 · 2026</div>
+      <div class="phase-title">Phase II：推論裂、訓練守、抽象層成形</div>
+      <ul>
+        <li>ROCm 7.2 出箱 parity（推論）、PyTorch 2.7 ROCm ~95%、framework owner 崛起</li>
+        <li>監測：ROCm 訓練 parity 進度、UALink 時程、PyTorch/JAX 多後端 default</li>
+      </ul>
+    </div>
+    <div class="phase">
+      <div class="phase-period">2027</div>
+      <div class="phase-title">裁決年：UALink 與訓練 scale-out 的命運</div>
+      <ul>
+        <li>UALink 商用 / 採用度（NVLink 唯一硬威脅）</li>
+        <li>framework 多後端是否推進到訓練場景</li>
+      </ul>
+    </div>
+    <div class="phase">
+      <div class="phase-period">2028+</div>
+      <div class="phase-title">抽象層治理定型，硬體商品化程度見真章</div>
+      <ul>
+        <li>GPU 在推論已商品化；訓練看 UALink + framework 推進</li>
+        <li>framework owner（META/GOOGL/OpenAI）抽象治理權確立</li>
+      </ul>
+    </div>
+  </div>
+</section>
 
-<h2>§4 市場規模 + CAGR</h2>
+<!-- ============ PART VI ============ -->
+<section class="chapter">
+  <div class="chapter-marker">PART VI · TAXONOMY</div>
+  <h2>個股<em>特徵</em>與 conviction tier</h2>
+  <p class="chapter-intro">本框架只輸出「特徵」與「分類」，買哪一檔由個股 DD 系統與 Pure MA 訊號決定。以下 tier 為產業推論的特徵歸類，提及公司僅為「該特徵的代表案例」，不附帶買賣建議。</p>
 
-<h3>表 4.1：軟體棧 TAM 拆解（2025-2030）</h3>
-<table>
-<tr><th>細分</th><th>2025E</th><th>2026E</th><th>2027E</th><th>2028E</th><th>2030E</th><th>5Y CAGR</th></tr>
-<tr><td>GPU compute total（含軟體 bundled）</td><td>$120B</td><td>$200B</td><td>$300B</td><td>$400B</td><td>$650B</td><td>~40%</td></tr>
-<tr><td>NVDA software ecosystem 隱含估值（含 CUDA / cuDNN / NCCL / TensorRT-LLM）</td><td>~$30B（part of GPU bundled）</td><td>~$50B</td><td>~$80B</td><td>~$110B</td><td>~$180B</td><td>~43%</td></tr>
-<tr><td>AMD ROCm ecosystem（含 license / services）</td><td>~$1B</td><td>~$3B</td><td>~$8B</td><td>~$15B</td><td>~$30B</td><td>~95%</td></tr>
-<tr><td>INTC oneAPI / Gaudi software</td><td>~$0.3B</td><td>~$0.5B</td><td>~$1.5B</td><td>~$3B</td><td>~$8B</td><td>~95%</td></tr>
-<tr><td>AWS Neuron / Trainium software</td><td>~$0.5B</td><td>~$1.5B</td><td>~$3B</td><td>~$5B</td><td>~$10B</td><td>~83%</td></tr>
-<tr><td>Google JAX / Pallas / TPU SW</td><td>internal $5B 估</td><td>$8B</td><td>$15B</td><td>$22B</td><td>$40B</td><td>~52%</td></tr>
-<tr><td>Framework abstraction 層（PyTorch / JAX / Triton OSS）</td><td>$0（OSS）但隱含產業價值 ~$10B</td><td>$15B 隱含</td><td>$25B 隱含</td><td>$40B</td><td>~$80B</td><td>~52%</td></tr>
-</table>
+  <div class="tier-list">
+    <div class="tier-row">
+      <div class="tier-name"><span class="tier-badge b-core">CORE 🔴</span><h4>NVDA</h4></div>
+      <div class="tier-detail">護城河守方——訓練 scale-out（NCCL+NVLink）仍獨家、是最硬的那層牆；但推論層護城河開始蝕、抽象治理層守不住。風險不是「CUDA 崩」，是「軟體鎖定溢價被逐步 price out」。是「軟硬整合 + 物理互連護城河」特徵。<span class="conv">conviction：中高（訓練強、推論蝕）</span></div>
+    </div>
+    <div class="tier-row">
+      <div class="tier-name"><span class="tier-badge b-core">CORE 🔴</span><h4>AMD</h4></div>
+      <div class="tier-detail">護城河攻方——ROCm 7.2 達推論出箱 parity（vLLM/llama.cpp），是「推論層 CUDA 裂縫」最直接受益者；但訓練 scale-out 仍落後 NVLink、高階核仍追趕。是「開放軟體棧攻推論」特徵。<span class="conv">conviction：中（推論入口、訓練落後）</span></div>
+    </div>
+    <div class="tier-row">
+      <div class="tier-name"><span class="tier-badge b-core">CORE 🔴</span><h4>META</h4></div>
+      <div class="tier-detail"><strong>抽象治理層的關鍵 owner</strong>——擁有 PyTorch（事實標準框架），決定 GPU 是否可替換後端。它既是大買家、又握抽象方向盤，是「2027-28 真贏家層」最純的代表（且自研 MTIA）。市場低估「擁有 PyTorch」的長期戰略價值。是「抽象層治理者」特徵。<span class="conv">conviction：中高</span></div>
+    </div>
+    <div class="tier-row">
+      <div class="tier-name"><span class="tier-badge b-swing">SWING 🟡</span><h4>GOOGL / AMZN / MSFT</h4></div>
+      <div class="tier-detail">逃離 CUDA 最完整者——GOOGL（TPU + JAX/Pallas + ICI 自有互連，訓練推論都能繞）、AMZN（Trainium + Neuron）、MSFT（Maia + 自有棧）。垂直整合程度決定繞過 CUDA 的深度；GOOGL 最深。是「自研矽 + 自有框架垂直整合」特徵。<span class="conv">conviction：中</span></div>
+    </div>
+    <div class="tier-row">
+      <div class="tier-name"><span class="tier-badge b-edge">EDGE 🟢</span><h4>AVGO / INTC</h4></div>
+      <div class="tier-detail">AVGO——framework 抽象化（GPU 變可替換後端）利於 custom ASIC，是抽象層之爭的間接受益者；INTC（Gaudi + oneAPI）是挑戰者但生態落後 ROCm 一個身位。是「抽象化的二次受益 / 落後挑戰者」特徵。<span class="conv">conviction：低 · satellite 觀察</span></div>
+    </div>
+  </div>
 
-<h3>表 4.2：歷史 forecast 偏差</h3>
-<table>
-<tr><th>Forecast 來源 / 時間</th><th>對 ROCm parity 預測</th><th>實際 2026 H1</th><th>偏差</th></tr>
-<tr><td>SemiAnalysis 2024-Q3</td><td>2027-2028 才達 vLLM parity</td><td>2026 March (ROCm 7.2)</td><td>提前 12-18 個月</td></tr>
-<tr><td>Bernstein 2025-Q1</td><td>AMD 軟體仍 2-3 年落後 NVDA</td><td>inference 接近 parity；training 仍 1-2 年落後</td><td>分歧（inference 對；training 仍對）</td></tr>
-<tr><td>Goldman Sachs 2025-Q2</td><td>ROCm 不會在 2026 達 production-ready</td><td>2026 Q1 已 production（Meta/OpenAI/Oracle 規模驗證）</td><td>提前 6-12 個月</td></tr>
-<tr><td>SlashData 2024 開發者調研</td><td>NVDA 2026 仍 90%+ 開發者 share</td><td>2026 Q1 NVDA 仍 80-85%；AMD 從 5% 升至 8-10%</td><td>NVDA share 跌得比 forecast 快</td></tr>
-</table>
+  <p>估值面總結：本主題不是 TAM 題，而是<strong>「NVDA 的軟體鎖定溢價值多少」</strong>題。市場給 NVDA 的估值隱含「CUDA 鎖定難以撼動」——但護城河分層意味這個溢價該<em>分層定價</em>：訓練 scale-out 的溢價該保留，推論層與抽象層的溢價該逐步折讓。<strong>最大的錯誤定價</strong>是把「CUDA 整體不可取代」當前提；一旦市場開始 price「推論層已商品化 + 抽象權移向 framework owner」，NVDA 的軟體溢價會被重定價（不是崩，是 de-rate 到「最強但可競爭」）。de-rating window 在「ROCm 達訓練 parity」或「UALink 大規模商用」那一刻。framework owner（META/GOOGL）的抽象治理價值則尚未被 price。</p>
+</section>
 
-<div class="judgment-banner">⚠ 預估可信度：所有第三方 forecast 對 ROCm parity 都過於保守（提前 6-18 個月達標）。本 ID 採取較積極的 ROCm CAGR 95% 假設，但仍可能保守 — 特別若 2027 NVDA 出現任何重大 bug 或產能問題，AMD share 可能更快攀升。</div>
-
-<div class="insight">
-<div class="i-head">💡 §4 Insight</div>
-<div class="i-body">
-<strong>1. ROCm 軟體 ecosystem TAM 5Y CAGR 95% 是 binary outcome — 與大客戶留存高度槓桿</strong><br>
-<span class="i-sub">事實：Meta-AMD 6GW + OpenAI 6GW + Oracle 131K MI355X 三家就決定 AMD 軟體生態能否到 $30B (2030)。</span><br>
-<span class="i-sub">推論：若三家任一 reduce/cancel commitment，TAM 下修至 $15-20B；若三家全部 expand，TAM 可達 $40B+。</span><br>
-<span class="i-sub">投資意義：AMD 估值對「Meta + OpenAI 訂單續約」高度槓桿；2027 H1 是觀察 milestone（Meta 1GW first deployment 完工後是否 expand）。</span>
-</div>
+<div class="keystone">
+  <div class="keystone-label">The One Line</div>
+  <p class="keystone-text">CUDA 護城河不是一道牆、是<strong style="color:var(--gold-soft);">分層的</strong>——推論層水退、訓練 scale-out 牆still 高；2027-28 真贏家不是 GPU 廠，是<strong style="color:var(--gold-soft);">控制抽象層的 framework owner</strong>。</p>
 </div>
 
-<div class="insight">
-<div class="i-head">💡 §4 Insight 2</div>
-<div class="i-body">
-<strong>2. NVDA software ecosystem 隱含估值 $50-80B（2026-2027）— 大部分被 hardware revenue 掩蓋</strong><br>
-<span class="i-sub">事實：CUDA / cuDNN / NCCL 不單獨收費但 bundled 中估值占 GPU sticker 25-35%；NVDA 2026 DC revenue $200B+ 對應軟體含量 ~$50-70B。</span><br>
-<span class="i-sub">推論：market 把 NVDA 估值都歸於 hardware；若拆出軟體部分，NVDA 軟體獨立估值已超過大部分 SaaS 公司。</span><br>
-<span class="i-sub">投資意義：NVDA 軟體價值若被獨立 pricing，會發現市場低估其護城河；但若 abstraction 層成熟導致軟體價值流失，市場也會 over-react punishment。</span>
-</div>
-</div>
+<section class="chapter" style="margin-top:40px;">
+  <div class="epilogue">
+    <h3>這份報告刻意不做的三件事</h3>
+    <ol>
+      <li>不告訴你哪一檔該買——NVDA / AMD / META 等是「特徵的代表案例」，買賣由你的個股 DD 與 Pure MA 系統決定，本報告非買入推薦。</li>
+      <li>不預測「CUDA 哪年崩」——只給「護城河分層、各層命運不同」的結構框架與觸發訊號，不押二元崩塌點。</li>
+      <li>不假裝知道知識邊界以外的事——UALink 硬體 2026 H2 已初步商用，但「hyperscaler 大規模採用速度」、framework 多後端能否推進到訓練，目前無定論，已誠實標為情境變數。</li>
+    </ol>
+  </div>
+</section>
 
-<h2>§5 供應鏈 Value Chain</h2>
-
-<h3>水平 value chain（軟體層視角）</h3>
-<svg viewBox="0 0 1000 240" style="width:100%;height:auto;background:#F5F3FF;border:1px solid #DDD6FE;border-radius:6px;font-family:'Noto Sans TC',sans-serif">
-  <defs>
-    <marker id="arrow2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#7C3AED"/></marker>
-  </defs>
-  <rect x="20" y="40" width="220" height="160" fill="#fff" stroke="#7C3AED" stroke-width="2" rx="8"/>
-  <text x="130" y="62" text-anchor="middle" font-size="13" font-weight="700" fill="#4C1D95">L1：硬體 + driver</text>
-  <text x="130" y="86" text-anchor="middle" font-size="11" fill="#374151">NVDA / AMD / INTC GPU</text>
-  <text x="130" y="102" text-anchor="middle" font-size="11" fill="#374151">AWS Trainium / Google TPU</text>
-  <text x="130" y="118" text-anchor="middle" font-size="11" fill="#374151">CUDA driver / HIP / Level Zero</text>
-  <text x="130" y="138" text-anchor="middle" font-size="10" fill="#7F1D1D">毛利：NVDA 78% / AMD 50%</text>
-  <text x="130" y="154" text-anchor="middle" font-size="10" fill="#166534">議價權：硬體廠主導</text>
-  <text x="130" y="174" text-anchor="middle" font-size="10" fill="#6B7280">L1 是商品化 risk 最高層</text>
-
-  <rect x="280" y="40" width="240" height="160" fill="#fff" stroke="#7C3AED" stroke-width="3" rx="8"/>
-  <text x="400" y="62" text-anchor="middle" font-size="13" font-weight="700" fill="#4C1D95">L2-L3：math libs + framework backend（核心）</text>
-  <text x="400" y="86" text-anchor="middle" font-size="11" fill="#374151">cuDNN / NCCL（NVDA 領先）</text>
-  <text x="400" y="102" text-anchor="middle" font-size="11" fill="#374151">MIOpen / RCCL（AMD 落後 1 代）</text>
-  <text x="400" y="118" text-anchor="middle" font-size="11" fill="#374151">PyTorch ROCm / CUDA backend</text>
-  <text x="400" y="134" text-anchor="middle" font-size="11" fill="#374151">JAX/XLA TPU backend</text>
-  <text x="400" y="150" text-anchor="middle" font-size="11" fill="#374151">AWS Neuron / NKI 開源</text>
-  <text x="400" y="170" text-anchor="middle" font-size="10" fill="#166534">議價權：高度集中於 vendor</text>
-  <text x="400" y="184" text-anchor="middle" font-size="10" fill="#7F1D1D">毛利：NVDA software 70%+ 隱含</text>
-
-  <rect x="560" y="40" width="220" height="160" fill="#fff" stroke="#7C3AED" stroke-width="3" rx="8"/>
-  <text x="670" y="62" text-anchor="middle" font-size="13" font-weight="700" fill="#4C1D95">L4：framework + serving</text>
-  <text x="670" y="86" text-anchor="middle" font-size="11" fill="#374151">PyTorch（META 主導 OSS）</text>
-  <text x="670" y="102" text-anchor="middle" font-size="11" fill="#374151">JAX / Pallas（GOOGL）</text>
-  <text x="670" y="118" text-anchor="middle" font-size="11" fill="#374151">vLLM / SGLang（OSS）</text>
-  <text x="670" y="134" text-anchor="middle" font-size="11" fill="#374151">TensorRT-LLM（NVDA OSS）</text>
-  <text x="670" y="150" text-anchor="middle" font-size="11" fill="#374151">Triton compiler（OpenAI）</text>
-  <text x="670" y="170" text-anchor="middle" font-size="10" fill="#166534">毛利：分散；OSS 治理</text>
-  <text x="670" y="184" text-anchor="middle" font-size="10" fill="#7F1D1D">議價權：上移至 abstraction 層</text>
-
-  <rect x="820" y="40" width="160" height="160" fill="#fff" stroke="#7C3AED" stroke-width="2" rx="8" stroke-dasharray="4,2"/>
-  <text x="900" y="62" text-anchor="middle" font-size="13" font-weight="700" fill="#4C1D95">L5：應用層</text>
-  <text x="900" y="86" text-anchor="middle" font-size="11" fill="#374151">OpenAI / Anthropic</text>
-  <text x="900" y="102" text-anchor="middle" font-size="11" fill="#374151">Hyperscaler 雲服務</text>
-  <text x="900" y="118" text-anchor="middle" font-size="11" fill="#374151">Enterprise SaaS</text>
-  <text x="900" y="138" text-anchor="middle" font-size="10" fill="#7F1D1D">毛利：50-70%</text>
-  <text x="900" y="154" text-anchor="middle" font-size="10" fill="#166534">議價權：終端 dominant</text>
-
-  <line x1="240" y1="120" x2="280" y2="120" stroke="#7C3AED" stroke-width="2" marker-end="url(#arrow2)"/>
-  <line x1="520" y1="120" x2="560" y2="120" stroke="#7C3AED" stroke-width="2" marker-end="url(#arrow2)"/>
-  <line x1="780" y1="120" x2="820" y2="120" stroke="#7C3AED" stroke-width="2" marker-end="url(#arrow2)" stroke-dasharray="3,2"/>
-
-  <text x="500" y="20" text-anchor="middle" font-size="11" fill="#7C3AED" font-weight="600">CUDA / ROCm 軟體護城河：核心利潤池在 L2-L3（math libs + framework backend）</text>
-  <text x="500" y="230" text-anchor="middle" font-size="10" fill="#6B7280">2026-2030 趨勢：議價權從 L2-L3 上移至 L4 (framework owners)；NVDA 仍主導 L2 但 L4 變 hyperscaler 戰場</text>
-</svg>
-
-<h3>表 5.1：軟體層毛利結構</h3>
-<table>
-<tr><th>玩家</th><th>軟體層 GM（隱含）</th><th>議價權趨勢</th><th>2026-2030 收益模式</th></tr>
-<tr><td>NVDA（CUDA / cuDNN / NCCL）</td><td>~70-80% 隱含（綁 GPU sticker 25-35%）</td><td>↓ 從 L4 流失；L2-L3 仍主導</td><td>軟體永遠 free（綁硬體）；TensorRT-LLM 開源；moat 來自累積 ecosystem</td></tr>
-<tr><td>AMD（ROCm）</td><td>~30-40%（早期；含 services）</td><td>↑ 從 L1-L2 追趕；L4 已並列</td><td>軟體 free（OSS）；focus services + customer ramp</td></tr>
-<tr><td>INTC（oneAPI / Gaudi）</td><td>~25-30%</td><td>→ 仍 niche</td><td>軟體 free + Foundry 客戶綑綁</td></tr>
-<tr><td>AWS Neuron / NKI 開源</td><td>~50% via service revenue</td><td>↑ NKI 是 abstraction 層野心</td><td>EC2 service mark-up；NKI 戰略 OSS 推 cross-vendor</td></tr>
-<tr><td>GOOGL JAX / Pallas / TPU</td><td>~60-70% 隱含 via cloud revenue</td><td>↑ 強勢 in JAX / TPU vertical</td><td>GCP TPU service；JAX OSS 但綁 TPU</td></tr>
-<tr><td>META PyTorch / Triton</td><td>不直接收費</td><td>↑↑ governance 控制權</td><td>戰略 OSS 推 abstraction；間接受益於 GPU 商品化</td></tr>
-</table>
-
-<h3>表 5.2：議價權 5 年轉移軌跡</h3>
-<table>
-<tr><th>時期</th><th>主導議價</th><th>原因</th></tr>
-<tr><td>2018-2022</td><td>NVDA（L1-L4 全棧）</td><td>CUDA 19 年生態 + 唯一可用 GPU；hyperscaler 被動買</td></tr>
-<tr><td>2023-2025</td><td>NVDA 仍主導，但 L4 開始裂</td><td>vLLM / SGLang OSS 出現；AMD 進入 inference</td></tr>
-<tr><td><strong>2026-2027（今）</strong></td><td><strong>L1-L3 NVDA / L4 hyperscaler 平分</strong></td><td><strong>ROCm 7.2 達 vLLM parity；PyTorch / JAX 抽象成標準</strong></td></tr>
-<tr><td>2028-2030</td><td>L1 commodity；L2-L3 NVDA 仍主導；L4 hyperscaler 主導</td><td>GPU 商品化趨勢 + framework abstraction 完成</td></tr>
-</table>
-
-<div class="insight">
-<div class="i-head">💡 §5 Insight</div>
-<div class="i-body">
-<strong>L4 framework 層的議價權上移是「結構性」的，不是「週期性」的</strong><br>
-<span class="i-sub">事實：META 主導 PyTorch；GOOGL 主導 JAX；OpenAI 主導 Triton。三家都是 2018+ 起家的 OSS governance。</span><br>
-<span class="i-sub">推論：未來 5 年 NVDA 即使有絕對技術優勢，也無法收回 L4 控制權（governance 已不在 NVDA 手裡）。</span><br>
-<span class="i-sub">投資意義：META / GOOGL / OpenAI 軟體 governance value 被低估；NVDA 軟體 stickiness 估值需要打折（PE 30-35x rather than 50x）。</span>
-</div>
+<div class="footnotes">
+  <div class="footnotes-h">Selected Sources · 完整來源見原考證版</div>
+  <ol>
+    <li>[T3-C] Spheron / DEV / 技術社群實測 — ROCm 7.2（2026-03）達 vLLM / llama.cpp / Ollama / SGLang 出箱 parity</li>
+    <li>[T3-C] PyTorch 2.7 ROCm build ~95% 功能對等 CUDA build；TensorRT-LLM / FlashAttention 3 仍 CUDA-only</li>
+    <li>[T3-A] 「moat 不是硬體、是 CUDA 為每份框架/教學/論文/部署指南的預設假設」（署名分析師綜合）</li>
+    <li>[F: 架構] NCCL + NVLink 為多卡訓練 scale-out 的物理互連 + 通訊獨家路徑；RCCL / MSCCL++ / UALink 為挑戰者</li>
+    <li>[F: 架構] framework owner：META（PyTorch 事實標準）/ GOOGL（JAX + Pallas + TPU ICI）/ OpenAI（Triton）</li>
+    <li>[T1] hyperscaler 自研矽 production：GOOGL TPU、AMZN Trainium + Neuron、META MTIA、MSFT Maia</li>
+    <li>[T3] UALink（開放 scale-out 互連聯盟，115+ 會員）— NVLink 的開放替代；2.0 spec 2026 Q2 發布、AMD/Intel/Astera Labs 硬體 2026 H2 起初步商用，大規模 hyperscaler 採用預期 2027</li>
+    <li>[T3] ROCm 競爭力集中於 memory-bandwidth-heavy 推論（prefill / long-context），無自訂 kernel 場景</li>
+    <li>[T1] 母題吸收：原 ID_AIAcceleratorDemand「軟體護城河」維度 + AI 推論經濟學「framework 層贏家」</li>
+    <li>[T3] INTC Gaudi + oneAPI 生態落後 ROCm；AVGO ASIC 受惠於 framework 抽象化</li>
+  </ol>
 </div>
 
-<div class="insight">
-<div class="i-head">💡 §5 Insight 2</div>
-<div class="i-body">
-<strong>AMD 軟體生態的真正進步不在 ROCm 本身，是「進入 Meta / OpenAI / Oracle production」</strong><br>
-<span class="i-sub">事實：Meta 6GW (1GW H2 2026, multi-year to 2030)、OpenAI 6GW warrant 協議（critic 2026-05-03 修：~160M AMD shares warrants @ $0.01/share，依 GPU milestones + 股價達標 vesting；不是 $25-30B 現金 stake）、Oracle 131K MI355X cluster。</span><br>
-<span class="i-sub">推論：Production 級客戶 commitment 反向驅動軟體 maturity（feedback loop）；如同 ARM 進入 AWS Graviton 後 ecosystem 速成熟。</span><br>
-<span class="i-sub">投資意義：AMD 的關鍵 catalyst 不是 ROCm 8.0 release，是「Meta 6GW deployment ramp 順利 + Q4 2026 earnings」。</span>
+<div class="colophon">
+  InvestMQuest <span class="dot">·</span> Deep Industry Research <span class="dot">·</span> 精煉版 v2.3 <span class="dot">·</span> 2026-06-20 改版 <span class="dot">·</span> 減法哲學：決策層完整、證據層濃縮
 </div>
-</div>
-
-<h2>§6 玩家矩陣</h2>
-
-<h3>表 6.1：四大軟體玩家對照（2026 H1）</h3>
-<table>
-<tr><th>玩家</th><th>核心軟體棧</th><th>2026 H1 客戶 / wins</th><th>moat 強度</th><th>2027-2028 路線</th></tr>
-<tr><td><strong>NVDA</strong></td><td>CUDA 12.x / cuDNN 9.x / NCCL / TensorRT-LLM / Triton Inf Server / Dynamo</td><td>OpenAI / Anthropic / xAI / 全 hyperscaler / 5,000+ 大客戶</td><td>★★★★★ 訓練；★★★ inference</td><td>Rubin / Rubin Ultra 軟體 + Blackwell 持續優化；NVLink 5.0 / NCCL v3</td></tr>
-<tr><td><strong>AMD</strong></td><td>ROCm 7.2 / HIP / MIOpen / RCCL / vLLM ROCm fork</td><td>Meta 6GW (H2 2026 1GW) / <s>OpenAI 10% stake</s> <strong>OpenAI 6GW warrant（~10% AMD shares warrants）</strong> / Oracle 131K MI355X / Microsoft Azure ND MI300X</td><td>★★★ inference parity（部分情境超越 B200, critic 修）；★★ training（仍 1-2 年落後）</td><td>ROCm 8.0 (2026 H2)；MI400 ramp Q4 2026；MIOpen 4.x feature parity</td></tr>
-<tr><td><strong>INTC</strong></td><td>oneAPI / SYCL / IPEX / Gaudi 3 SDK</td><td>少數 enterprise + Intel cloud；無大型 hyperscaler 訓練</td><td>★★ niche；★ in production</td><td>Gaudi 4 (2027) + oneAPI 2026；EMIB-T 客戶軟體 + 18A foundry 客戶軟體生態</td></tr>
-<tr><td><strong>AWS Neuron / NKI</strong></td><td>Neuron SDK 2.28 / NKI 開源（Apache 2.0）</td><td>Trainium 1/2/3 內部 + 部分 startup（如 Anthropic）</td><td>★★★ in AWS；★★ cross-vendor 野心</td><td>Trainium 3 ramp + NKI 推 PyTorch / JAX cross-vendor 標準</td></tr>
-<tr><td><strong>GOOGL JAX / Pallas / XLA</strong></td><td>JAX / Pallas / XLA / TPU SDK</td><td>Google 內部 + Anthropic（Claude）+ 部分 startup</td><td>★★★★ in TPU；★★ in cross-vendor</td><td>Pallas 跨 vendor 擴展（Triton-on-AMD 已支援）</td></tr>
-</table>
-
-<h3>表 6.2：framework abstraction 主導權矩陣</h3>
-<table>
-<tr><th>抽象層</th><th>主導</th><th>governance</th><th>cross-vendor 完整度</th><th>NVDA 對它的依賴</th></tr>
-<tr><td>PyTorch</td><td>META（PyTorch Foundation 治理 since 2022）</td><td>非 NVDA 主導</td><td>CUDA + ROCm + XPU + MPS + Trainium ✅</td><td>非常高 - PyTorch 的 CUDA backend 是 NVDA 銷售工具</td></tr>
-<tr><td>JAX</td><td>GOOGL</td><td>非 NVDA 主導</td><td>TPU + GPU (CUDA) + 部分 ROCm</td><td>中 - JAX 在 GPU 上仍主要 CUDA 優化</td></tr>
-<tr><td>TensorFlow</td><td>GOOGL</td><td>非 NVDA 主導</td><td>跨 vendor 但市佔下降</td><td>低 - TF 已不是主流 LLM 訓練 framework</td></tr>
-<tr><td>OpenAI Triton</td><td>OpenAI</td><td>非 NVDA 主導</td><td>CUDA + ROCm + Apple Metal</td><td>中 - 是 NVDA 內部使用工具</td></tr>
-<tr><td>OneAPI / SYCL</td><td>INTC + 標準組織</td><td>標準</td><td>cross-vendor 但市佔小</td><td>無</td></tr>
-<tr><td>vLLM</td><td>UC Berkeley + community</td><td>OSS</td><td>CUDA + ROCm + TPU + Trainium ✅</td><td>非常低 - vLLM ROCm 已 parity</td></tr>
-<tr><td>SGLang</td><td>LMSYS + community</td><td>OSS</td><td>CUDA + ROCm + TPU</td><td>非常低</td></tr>
-</table>
-
-<h3>表 6.3：近 12 個月開發者 / customer share 變動</h3>
-<table>
-<tr><th>玩家</th><th>2025 年初開發者 share</th><th>2026 年初開發者 share</th><th>變動</th><th>原因</th></tr>
-<tr><td>NVDA CUDA</td><td>~85-90%</td><td>~80-85%</td><td>↓</td><td>ROCm 7.x 進步 + JAX/Pallas 替代 + ASIC 軟體成長</td></tr>
-<tr><td>AMD ROCm</td><td>~5%</td><td>~8-10%</td><td>↑</td><td>ROCm 7.2 達 vLLM parity + Meta/OpenAI commitment</td></tr>
-<tr><td>INTC oneAPI</td><td>~2%</td><td>~2%</td><td>→</td><td>Gaudi 軟體仍 niche</td></tr>
-<tr><td>AWS Neuron</td><td>~2%</td><td>~3-4%</td><td>↑</td><td>Trainium 3 ramp + NKI 開源吸引 OSS 開發者</td></tr>
-<tr><td>GOOGL JAX/TPU</td><td>~3-4%</td><td>~4-5%</td><td>↑</td><td>JAX 推廣 + TPU v6/v7 性能 + Anthropic Claude 訓練</td></tr>
-</table>
-
-<div class="insight">
-<div class="i-head">💡 §6 Insight</div>
-<div class="i-body">
-<strong>1. Framework abstraction 完整度才是真正的 moat 評分</strong><br>
-<span class="i-sub">事實：PyTorch / vLLM / SGLang 已支援所有主要 backend；JAX 部分支援 ROCm；只有 TensorRT-LLM 是 CUDA-only。</span><br>
-<span class="i-sub">推論：使用 PyTorch + vLLM 的開發者已是 backend-agnostic；只有使用 TensorRT-LLM 的 production deployment 仍 lock-in NVDA。</span><br>
-<span class="i-sub">投資意義：NVDA 的真正 lock-in 在 TensorRT-LLM 客戶（Tesla / xAI / 部分 hyperscaler）；其他 PyTorch + vLLM 用戶 switching cost 已大幅降低。</span>
-</div>
-</div>
-
-<div class="insight">
-<div class="i-head">💡 §6 Insight 2</div>
-<div class="i-body">
-<strong>2. AWS NKI Apache 2.0 開源是「Anthropic 戰略買保險」</strong><br>
-<span class="i-sub">事實：AWS Neuron SDK + NKI 完全開源；Anthropic 是 Trainium 主要客戶 + AWS 30B 投資。</span><br>
-<span class="i-sub">推論：Anthropic 不希望被 NVDA 鎖死；AWS 提供 NKI 開源 + Trainium 替代方案讓 Anthropic 能 hedge。</span><br>
-<span class="i-sub">投資意義：AWS Trainium ecosystem 估值對 Anthropic 訓練選擇高度槓桿；2027 H1 Anthropic 訓練分配是觀察重點。</span>
-</div>
-</div>
-
-<h2>§7 Unit Economics + ASP 動態</h2>
-
-<h3>Unit glossary</h3>
-<table>
-<tr><th>單位</th><th>定義</th><th>說明</th></tr>
-<tr><td>Switching cost (engineering months)</td><td>從 CUDA 移植到 ROCm/其他 backend 所需總工程月數</td><td>受 codebase 大小 + custom kernels 數量影響</td></tr>
-<tr><td>Performance ratio</td><td>同一 model 在 ROCm 上的吞吐量 vs CUDA</td><td>vLLM benchmark 為主要對照</td></tr>
-<tr><td>Software TCO（total cost of ownership）</td><td>含 license / engineer salary / training time</td><td>不僅看硬體 ASP</td></tr>
-</table>
-
-<h3>表 7.1：CUDA 移植到其他 backend 的 unit economics</h3>
-<table>
-<tr><th>移植路徑</th><th>典型工程月數</th><th>性能 ratio（vs CUDA）</th><th>適合場景</th></tr>
-<tr><td>CUDA → ROCm（vLLM / SGLang，標準 transformer）</td><td>1-2 個月</td><td>0.95-1.05x（出箱 parity）</td><td>inference serving / OSS LLM</td></tr>
-<tr><td>CUDA → ROCm（custom CUDA kernels，多 model）</td><td>3-6 個月</td><td>0.7-0.9x（部分性能損失）</td><td>training / 客製化 inference</td></tr>
-<tr><td>CUDA → ROCm（multi-node training，&gt;1K GPUs）</td><td>6-12 個月</td><td>0.5-0.8x（NCCL 落差大）</td><td>frontier model training</td></tr>
-<tr><td>CUDA → AWS Neuron / Trainium</td><td>2-4 個月（PyTorch 原生）</td><td>0.8-1.0x（TCO 30% 較佳）</td><td>cost-sensitive inference</td></tr>
-<tr><td>CUDA → JAX / TPU</td><td>3-6 個月</td><td>0.9-1.2x（TPU v7 領先 30%+）</td><td>Google ecosystem 訓練</td></tr>
-<tr><td>CUDA → INTC oneAPI / Gaudi</td><td>2-4 個月</td><td>0.5-0.7x（性能仍落後）</td><td>experimental</td></tr>
-</table>
-
-<h3>表 7.2：軟體層 ASP 動態</h3>
-<table>
-<tr><th>軟體</th><th>2024</th><th>2025</th><th>2026E</th><th>2027E</th><th>抗 commoditization</th></tr>
-<tr><td>NVDA CUDA / cuDNN bundled value</td><td>~$5K/GPU 隱含</td><td>~$8K/GPU</td><td>~$10K/GPU</td><td>~$11K/GPU</td><td>★★★★ 高（19 年生態 + 持續增加）</td></tr>
-<tr><td>AMD ROCm bundled value</td><td>~$0.5K/GPU</td><td>~$1K/GPU</td><td>~$2K/GPU</td><td>~$3K/GPU</td><td>★★ 中（ROCm 7.2 開始 mass adopt）</td></tr>
-<tr><td>AWS Neuron bundled value</td><td>~$2K/Trainium</td><td>~$3K/Trainium 3</td><td>~$4K/Trainium 3</td><td>~$5K/Trainium 4</td><td>★★ 中（NKI 開源削弱 lock-in）</td></tr>
-<tr><td>OpenAI Triton</td><td>$0（OSS）但隱含 productivity gain</td><td>$0</td><td>$0</td><td>$0</td><td>★★★ 高（cross-vendor 標準）</td></tr>
-<tr><td>PyTorch（OSS）</td><td>$0</td><td>$0</td><td>$0</td><td>$0</td><td>★★★★ 極高（事實標準）</td></tr>
-</table>
-
-<div class="insight">
-<div class="i-head">💡 §7 Insight</div>
-<div class="i-body">
-<strong>軟體 switching cost 的真正分布是「雙峰」 — 1-2 個月 vs 6-12 個月</strong><br>
-<span class="i-sub">事實：使用 vanilla PyTorch + vLLM 的客戶 1-2 個月可移植；使用 custom CUDA kernels + multi-node training 的客戶 6-12 個月。</span><br>
-<span class="i-sub">推論：移植到 AMD/Trainium 的「容易客戶」（OpenAI 推論、Meta 推論）已大批移轉；NVDA 仍鎖死「困難客戶」（frontier training、TensorRT-LLM 客戶）。</span><br>
-<span class="i-sub">投資意義：NVDA 的剩餘 lock-in 客戶比例正在下降；Q4 2026 後 inference share 下行壓力會放大。</span>
-</div>
-</div>
-
-<div class="insight">
-<div class="i-head">💡 §7 Insight 2</div>
-<div class="i-body">
-<strong>Claude Code 30 分鐘 CUDA→ROCm 移植（toy 規模）— LLM-driven migration 的時代信號（critic 2026-05-03 修：headline 與 body「demo 規模」對齊；production 移植仍 3-6 個月）</strong><br>
-<span class="i-sub">事實：Anthropic Claude Code 在 30 分鐘內完成 CUDA backend → ROCm 移植（demo 規模）；不需 translation layer。</span><br>
-<span class="i-sub">推論：LLM-driven migration tooling 的進步會把「困難客戶」也部分自動化；2-3 年後 multi-node training 移植可能從 6-12 個月降至 2-3 個月。</span><br>
-<span class="i-sub">投資意義：NVDA 的 software moat 不再是「19 年積累 vs 對手 5 年」，而是「19 年 vs LLM-accelerated 1 年」；moat 的「時間維度」被壓縮。</span>
-</div>
-</div>
-
-<h2>§8 估值影響機制</h2>
-
-<h3>表 8.1：軟體變數 → 公司 Fwd PE 傳導</h3>
-<table>
-<tr><th>變數</th><th>變動方向</th><th>NVDA Fwd PE</th><th>AMD Fwd PE</th><th>META Fwd PE</th><th>GOOGL Fwd PE</th></tr>
-<tr><td>ROCm 達 training parity（cuDNN equivalent）</td><td>達標</td><td>−3x</td><td>+5x</td><td>—</td><td>—</td></tr>
-<tr><td>NCCL alternative (MSCCL++/UCCL) 進入產品</td><td>進入產品</td><td>−2x</td><td>+1x</td><td>+1x（PyTorch 受惠）</td><td>+1x</td></tr>
-<tr><td>Meta 6GW 1GW deployment 順利完成</td><td>達標</td><td>−1x</td><td>+3x</td><td>+0.5x</td><td>—</td></tr>
-<tr><td>OpenAI 6GW supply 開始 ramp</td><td>達標</td><td>−2x</td><td>+3x</td><td>—</td><td>—</td></tr>
-<tr><td>NVDA 推 CUDA 13 + cuDNN 10 重大躍升</td><td>達標</td><td>+2x</td><td>−1x</td><td>—</td><td>—</td></tr>
-<tr><td>Pallas / Triton 跨 vendor 標準化</td><td>達標</td><td>−1x</td><td>+1x</td><td>+1x</td><td>+2x</td></tr>
-<tr><td>Anthropic 50% 訓練移轉到 Trainium</td><td>達標</td><td>−2x</td><td>—</td><td>—</td><td>+0.5x（AMZN +2x）</td></tr>
-</table>
-
-<div class="judgment">
-<div class="j-head">🟡 估值敏感度判斷 [信心: 中]</div>
-<div class="j-facts">事實 1：NVDA 軟體 moat 隱含估值 ~$50-80B/年（2026-2027）。<br>事實 2：ROCm parity 進展每加速 6 個月，AMD 軟體 ecosystem 估值上修 ~$5-10B；NVDA 軟體 moat 估值打折 ~10-15%。</div>
-<div class="j-infer">→ 推論：NVDA 估值對軟體 share 變化高度槓桿；每 1pp share loss = 約 −1-1.5x Fwd PE。</div>
-<div class="j-falsify">⚠ 證偽條件：若 2026 H2 NVDA share 仍維持 80%+（無 share loss），本論點降信心至「低」；若 NVDA 2026 software revenue 公開揭露超過 $80B/年，估值論點修正。</div>
-</div>
-
-<h2>§9 風險矩陣 + 政策地緣子表</h2>
-
-<h3>表 9.1：3 軸風險</h3>
-<table>
-<tr><th>軸</th><th>風險</th><th>影響玩家</th><th>機率</th><th>嚴重度</th></tr>
-<tr><td>技術</td><td>ROCm 7.x 訓練 parity 仍未達（cuDNN 9.x 領先 1-2 年）</td><td>AMD（無法擴展訓練 share）</td><td>中（30%）</td><td>中</td></tr>
-<tr><td>技術</td><td>NCCL alternative 卡在 production-ready</td><td>AMD / 多 vendor 訓練</td><td>中（35%）</td><td>高</td></tr>
-<tr><td>技術</td><td>FlashAttention 3 ROCm 版本卡 6 個月+</td><td>AMD（long context inference）</td><td>低（20%）</td><td>低</td></tr>
-<tr><td>需求</td><td>Meta 6GW 1GW 推遲（基地設備供應問題）</td><td>AMD / Oracle</td><td>低（15%）</td><td>非常高（直接影響 EPS）</td></tr>
-<tr><td>需求</td><td>OpenAI 改變策略（移轉部分回 NVDA）</td><td>AMD</td><td>低（10%）</td><td>非常高</td></tr>
-<tr><td>替代</td><td>NVDA 推超越世代軟體（CUDA 13 / cuDNN 10）</td><td>AMD ecosystem 壓縮</td><td>中（30%）</td><td>中</td></tr>
-<tr><td>替代</td><td>Pallas / NKI 統一成 cross-vendor 標準</td><td>NVDA software moat 削弱</td><td>低-中（25%）</td><td>對 NVDA 高</td></tr>
-</table>
-
-<h3>表 9.2：政策地緣子表</h3>
-<table>
-<tr><th>事件</th><th>時程</th><th>影響</th></tr>
-<tr><td>美國 Cyberscape AI export control（中國雲端 H20 限制）</td><td>2026 持續</td><td>影響中國 inference 需求；ROCm 在中國推廣加速</td></tr>
-<tr><td>歐盟 AI Act / Foundation Model 監管</td><td>2026-2027</td><td>促 hyperscaler 軟體 multi-vendor（不集中 NVDA）</td></tr>
-<tr><td>美中 chip war 持續</td><td>2026-2031</td><td>長期推 ASIC 自主軟體（華為昇騰 / 寒武紀生態）</td></tr>
-<tr><td>OpenAI / Anthropic 與政府合約</td><td>2026-2027</td><td>政府 procurement 可能對「美國軟體棧」有偏好</td></tr>
-</table>
-
-<div class="judgment">
-<div class="j-head">🟡 市場最低估的風險：framework governance shift [信心: 中]</div>
-<div class="j-facts">事實 1：PyTorch 由 META 治理（PyTorch Foundation since 2022）；JAX 由 GOOGL；Triton 由 OpenAI。<br>事實 2：未來 2-3 年若 Meta / Google 主動移除 CUDA-specific optimization 或推 cross-vendor default，會大幅削弱 NVDA L3 backend。</div>
-<div class="j-infer">→ 推論：framework governance 是 NVDA 軟體 moat 的隱性 single-point-of-failure；market 通常忽略此 risk。</div>
-<div class="j-falsify">⚠ 證偽條件：若 2027 PyTorch Foundation 確認 NVDA 仍主要影響者，本 risk 下修；若任一 framework 公開推 backend-neutral default，本 risk 兌現。</div>
-</div>
-
-<h2>§9.5 Kill Scenario / Steel-man 反方</h2>
-
-<div class="judgment">
-<div class="j-head">🟡 Kill Scenario 1：NVDA 加速 CUDA 13 / cuDNN 10 重大躍升（2027 H1）[信心: 中]</div>
-<div class="j-facts">具體路徑：① 2026 H2 NVDA 推 CUDA 13 含新一代 sparsity / quantization；② 2027 H1 cuDNN 10 含 attention v5 + 多 token speculative；③ 性能領先 ROCm 8.0 達 2-3x。</div>
-<div class="j-infer">當前證據：① NVDA 2026-Q1 GTC keynote 已 hint「next-gen software」；② Tri Dao 加入 NVDA research；③ 軟體 R&D 預算 ~$20B/年。</div>
-<div class="j-falsify">成真時間窗：2026 H2 - 2027 Q2。若觸發 → AMD ROCm parity 進度 stall 12-18 個月；NVDA share 維持 80%+。</div>
-</div>
-
-<div class="judgment">
-<div class="j-head">🟡 Kill Scenario 2：Meta / OpenAI 大規模回流到 NVDA（2027 Q1）[信心: 低]</div>
-<div class="j-facts">具體路徑：① 2026 H2 AMD MI400 性能不如預期；② Meta 1GW MI355X deployment 出現問題；③ OpenAI 推遲下單 AMD；④ 都回流 NVDA Rubin Ultra。</div>
-<div class="j-infer">當前證據：① MI355X MLPerf 6.0 部分情境超越 B200（critic 修）；② Meta 持續 commit 6GW；③ OpenAI 已簽 6GW warrant 協議（critic 修：~10% AMD shares warrants @ $0.01/share，依 milestones vesting，是 reverse incentive 不是 cash stake）。低 likelihood。</div>
-<div class="j-falsify">成真時間窗：2026 H2 - 2027 H1。若觸發 → AMD AI revenue $30B 目標完全錯失；NVDA 估值 +30%。</div>
-</div>
-
-<div class="judgment">
-<div class="j-head">🟡 Kill Scenario 3：NCCL 替代品全面失敗（2028+）[信心: 中]</div>
-<div class="j-facts">具體路徑：① MSCCL++ / UCCL 仍未進入產品；② 所有 frontier model 訓練（GPT-6 / Llama 5 / Gemini 3）仍只能用 NVDA；③ AMD 進入 inference 但永遠無法觸及 training。</div>
-<div class="j-infer">當前證據：① RCCL 性能落後 3-4x；② frontier training 仍 100% NVDA；③ UALink 商用 2027+ 但軟體支援仍未明。</div>
-<div class="j-falsify">成真時間窗：2028+。若觸發 → AMD 永遠停在 inference share 20%；NVDA 訓練護城河永久。</div>
-</div>
-
-<h2>§10 投資時鐘 + Phase 轉換訊號</h2>
-
-<h3>表 10.1：Phase 各階段贏家</h3>
-<table>
-<tr><th>Phase</th><th>時期</th><th>核心特徵</th><th>主要贏家</th></tr>
-<tr><td>I（NVDA 獨家）</td><td>2010-2023</td><td>CUDA 19 年生態 + 全棧主導</td><td>NVDA（壟斷）</td></tr>
-<tr><td><strong>II（裂縫期 + 多元化）</strong></td><td><strong>2024-2027（今）</strong></td><td><strong>ROCm parity + Meta/OpenAI 進入 + framework abstraction 成熟</strong></td><td><strong>NVDA（仍主導）+ AMD（追趕）+ META/GOOGL（abstraction governance）</strong></td></tr>
-<tr><td>III（GPU 部分商品化）</td><td>2028-2030</td><td>L1 commodity；L4 governance 重定價</td><td>META + GOOGL（abstraction）+ hyperscaler（自家 ASIC）</td></tr>
-<tr><td>IV（abstraction 主導）</td><td>2031+</td><td>cross-vendor 完整標準化</td><td>未知（取決於 abstraction 是否徹底成功）</td></tr>
-</table>
-
-<h3>表 10.2：Phase II → Phase III 轉換訊號</h3>
-<table>
-<tr><th>條件</th><th>必要 / 充分</th><th>當前狀態</th></tr>
-<tr><td>NVDA inference share 跌破 70%</td><td>必要</td><td>2026 H1 約 75-80%</td></tr>
-<tr><td>NCCL alternative 進入 production</td><td>必要</td><td>MSCCL++ / UCCL 仍 research</td></tr>
-<tr><td>ROCm 訓練 parity（cuDNN equivalent）</td><td>必要</td><td>仍 1-2 年落後</td></tr>
-<tr><td>AMD AI revenue 達 $30B（2027 目標）</td><td>充分</td><td>2025 ~$5-7B</td></tr>
-<tr><td>Pallas / NKI 跨 vendor 大規模採用</td><td>充分</td><td>仍早期</td></tr>
-</table>
-
-<div class="insight">
-<div class="i-head">💡 §10 Insight</div>
-<div class="i-body">
-<strong>Phase II（今）的最佳投資組合：NVDA（核心，但 PE 30-35x discount）+ AMD（catch-up alpha）+ META/GOOGL（abstraction layer hidden moat）</strong><br>
-<span class="i-sub">事實：Phase II 是 2024-2027；NVDA 主導 + 多元化展開。</span><br>
-<span class="i-sub">推論：Phase II 同時持有「在位者 + 挑戰者 + abstraction owner」能 capture 整個轉型 alpha。</span><br>
-<span class="i-sub">投資意義：建議組合 50% NVDA / 25% AMD / 25% META+GOOGL（其中 META + GOOGL 是 hidden moat 部位）。</span>
-</div>
-</div>
-
-<h2>§10.5 Catalyst Timeline（未來 18 個月）</h2>
-<table>
-<tr><th>日期</th><th>事件</th><th>檢視指標</th><th>達成 / 落空對應</th></tr>
-<tr style="background:#FEF2F2"><td><strong>2026-05-05</strong></td><td><strong>AMD Q1 FY26 earnings（critic 2026-05-03 補入 — 4 days post-publish, 最 imminent binary catalyst）</strong></td><td>DC AI revenue 金額；MI350/355X ramp 細節；Meta/OpenAI 交付時程；GM 方向</td><td>達成（&gt;$5B DC，H2 deploy 確認）→ AMD +2x；落空（DC &lt;$4.5B 或 Meta/OpenAI 訂單延後）→ -2x</td></tr>
-<tr><td><strong>2026-05-20</strong></td><td>NVDA Q1 FY27 earnings</td><td>軟體 revenue 揭露；客戶集中度</td><td>達成（軟體營收強）→ +1x；落空 → -1x</td></tr>
-<tr><td><strong>2026 Q3</strong></td><td>ROCm 8.0 release</td><td>training parity 進度；MIOpen 4.x</td><td>達成 → AMD +2x；落空 → -1x</td></tr>
-<tr><td><strong>2026 Q3-Q4</strong></td><td>Meta 6GW 第 1GW MI355X deployment 完成</td><td>實際 throughput；軟體穩定性</td><td>達成 → AMD +3x；落空 → -2x</td></tr>
-<tr><td><strong>2026 Q4</strong></td><td>AMD Q4 earnings：MI400 ramp + 客戶 commitment 細節</td><td>AI revenue Q-on-Q +30%+</td><td>達成 → AMD +2x；落空 → -1x</td></tr>
-<tr><td><strong>2027 Q1</strong></td><td>NVDA GTC 2027：CUDA 13 / cuDNN 10 揭曉</td><td>新一代軟體性能 vs ROCm 8</td><td>達成（領先 2-3x）→ NVDA +2x；落空 → -1x</td></tr>
-<tr><td><strong>2027 Q1</strong></td><td>OpenAI 6GW AMD supply 開始 ramp</td><td>OpenAI 訓練分配 + warrant vesting milestones（critic 修）</td><td>達成 → AMD +2x；落空 → -2x（warrant vesting 未達 milestone，AMD-OpenAI 戰略對齊鬆動）</td></tr>
-<tr><td><strong>2027 Q2-Q3</strong></td><td>MSCCL++ / UCCL production release</td><td>NCCL alternative 性能</td><td>達成 → AMD +1x，NVDA -1x</td></tr>
-<tr><td><strong>2027 H2</strong></td><td>Anthropic Trainium / TPU 訓練分配揭露</td><td>frontier training NVDA share</td><td>Anthropic &gt;30% off-CUDA → NVDA -1x</td></tr>
-</table>
-
-<h2>§10.6 Inference TAM 三段式拆解（v1.1 critic 修補 — 防止 zero-sum 框架誤讀）</h2>
-
-<p>讀者常把「AMD 進入 inference 20% share」與「ASIC 整體取代 NVDA 40-50%」當成同一件事來算（zero-sum），這會嚴重誤判競爭結構。實際上 inference 市場可結構性拆成 <strong>3 個獨立 bucket</strong>，三家終局並行而非互斥：</p>
-
-<table>
-<tr><th>Bucket</th><th>2028E TAM 占比</th><th>客戶範例</th><th>主要勝出者</th><th>為什麼這個 bucket 屬於它</th></tr>
-<tr><td><strong>A: Hyperscaler captive cloud-native</strong></td><td><strong>35-45%</strong></td><td>Google Search / Meta Ads / Azure OpenAI hosting / AWS Bedrock 內部 inference workload</td><td><strong>Hyperscaler ASIC（Google TPU / AWS Trainium / Azure Maia）</strong></td><td>First-party silicon = cost-controllable + margin-protected + captive。對 hyperscaler 來說，自家 ASIC 是 strategic mandatory choice。<strong>AMD 在這個 bucket 沒有 entry</strong> — hyperscaler 不會買 AMD GPU 跑自己的 inference workload</td></tr>
-<tr><td><strong>B: External model + on-prem enterprise</strong></td><td><strong>25-30%</strong></td><td>OpenAI 自家 inference infra（不只 Azure hosting）/ Anthropic Claude API / Cohere / xAI 推論 / Mistral / 各大 SaaS 自託管 / 金融 / 醫療 enterprise on-prem</td><td><strong>AMD ROCm（先於 ASIC 吃下這塊）</strong></td><td>這些客戶要 multi-cloud + on-prem 可移植性。ASIC 是 hyperscaler-locked-in（用 TPU 就只能 GCP；用 Trainium 就只能 AWS），他們明確要 commodity GPU 形式。<strong>OpenAI 6GW warrant 協議正是 capital structure 證據</strong> — OpenAI 拿到 ~10% AMD warrants 條件就是「買 6 GW AMD GPU」，明擺著是規避 hyperscaler ASIC 鎖定的策略選擇</td></tr>
-<tr><td><strong>C: NVDA commodity GPU layer</strong></td><td><strong>25-30%</strong></td><td>NVDA H100 / B200 / GB300 仍主導的 mainstream cloud inference + research lab + 中小型 AI 公司</td><td><strong>NVDA</strong></td><td>純 commodity GPU 競爭層；CUDA 生態 + TensorRT-LLM + FlashAttention 3 等 CUDA-only 軟體仍提供 30-50% 性能優勢；對 small / cost-sensitive workload，NVDA 仍是 default</td></tr>
-</table>
-
-<div class="insight">
-<div class="i-head">💡 §10.6 三段式拆解的投資意涵</div>
-<div class="i-body">
-<strong>三家 endpoints 並行不互斥</strong>：NVDA 25-30% (commodity) + AMD 25-30% (external + on-prem) + Hyperscaler ASIC 35-45% (captive cloud)<br>
-<span class="i-sub">事實：三個 bucket 客戶基數結構性不同（hyperscaler captive vs external multi-cloud needs vs commodity small），不會互換。</span><br>
-<span class="i-sub">推論：原報告「AMD 20% share」與「ASIC 取代 NVDA 40-50%」其實是兩個不同 bucket — AMD 進入的是 Bucket B；ASIC 吃的是 Bucket A captive；NVDA 在 Bucket C 仍守。</span><br>
-<span class="i-sub">投資意義：long basket 應分 bucket 獨立計算，避免重複扣減。NVDA 在 inference 即使 share 跌至 25-30%，仍是巨大絕對營收（2030 inference TAM ~$200B × 25-30% = $50-60B）。AMD upside 主要看 Bucket B 滲透率（即「外部 model 公司 + on-prem enterprise」），不是搶 hyperscaler 自家的 inference。</span>
-</div>
-</div>
-
-<h2>§11 關聯個股清單</h2>
-
-<h3>表 11.1：核心 / 次要 / 邊緣 ticker</h3>
-<table>
-<tr><th>Ticker</th><th>深度</th><th>角色</th><th>2026 受益度</th><th>DD link</th></tr>
-<tr><td>NVDA</td><td><span class="tier-pill tier-red">🔴 核心</span></td><td>CUDA 19 年 6M 開發者 / NCCL+NVLink 仍獨家 / TensorRT-LLM 領先</td><td>核心受益（vs 軟體 moat 風險平衡）</td><td>DD 已建（多份）</td></tr>
-<tr><td>AMD</td><td><span class="tier-pill tier-red">🔴 核心</span></td><td>ROCm 7.2 vLLM parity；Meta 6GW (H2 2026 1GW) + <s>OpenAI 10% stake</s> <strong>OpenAI 6GW warrant（~10% AMD shares warrants）</strong> + Oracle 131K MI355X</td><td>核心受益（catch-up alpha）</td><td>DD 已建</td></tr>
-<tr><td>META</td><td><span class="tier-pill tier-red">🔴 核心</span></td><td>PyTorch 母公司 + ROCm 6GW 客戶 = 跨平台加速去 NVDA 化關鍵推手</td><td>核心受益（abstraction governance + cost saving）</td><td>DD 已建</td></tr>
-<tr><td>GOOGL</td><td><span class="tier-pill tier-red">🔴 核心</span></td><td>JAX / XLA / Pallas / TPU 全棧自主軟體 = NVDA 之外完整替代生態</td><td>核心受益（vertical 整合）</td><td>DD 已建</td></tr>
-<tr><td>INTC</td><td><span class="tier-pill tier-yellow">🟡 次要</span></td><td>oneAPI / SYCL / IPEX / Gaudi 3 - 生態追趕但客戶基數小</td><td>次要受益（仍 niche）</td><td>DD 已建</td></tr>
-<tr><td>MSFT</td><td><span class="tier-pill tier-yellow">🟡 次要</span></td><td>MSCCL++ 替代 NCCL（小訊息 3.8x）+ Azure ROCm production</td><td>次要受益（隱性 NCCL 競爭者）</td><td>DD 已建</td></tr>
-<tr><td>AMZN</td><td><span class="tier-pill tier-yellow">🟡 次要</span></td><td>AWS Neuron SDK 2.28 + Trainium 3 + NKI 開源 (Apache 2.0)；<strong>2026-04-29 Q1 法說：Trainium 3 已近滿訂、Anthropic AWS RPO $38B（critic 2026-05-03 補 — 驗證 Thesis 3 cross-vendor 真實性）</strong></td><td>次要受益（cross-vendor 野心 — 已從 ambition 轉 production validated）</td><td>DD 已建</td></tr>
-<tr><td>AVGO</td><td><span class="tier-pill tier-yellow">🟡 次要</span></td><td>Google TPU + Meta MTIA backend partner = JAX 生態受益</td><td>次要（軟體生態間接）</td><td>DD 已建</td></tr>
-<tr><td>ORCL</td><td><span class="tier-pill tier-green">🟢 邊緣</span></td><td>OCI 131,072 MI355X cluster - ROCm 規模化驗證</td><td>邊緣受益</td><td>DD 未建</td></tr>
-<tr><td>Anthropic（pre-IPO）</td><td><span class="tier-pill tier-green">🟢 邊緣</span></td><td>Claude Code CUDA→ROCm 30min port + Trainium 主要客戶</td><td>邊緣（私募）</td><td>DD 未建</td></tr>
-<tr><td>Hugging Face（pre-IPO）</td><td><span class="tier-pill tier-green">🟢 邊緣</span></td><td>Transformers / Diffusers - 跨後端 model hub 中立化推手</td><td>邊緣（私募）</td><td>DD 未建</td></tr>
-</table>
-
-<h3>★ 2 檔 non-obvious 二次受益者</h3>
-<table>
-<tr><th>Ticker</th><th>角色</th><th>為何 non-obvious</th></tr>
-<tr><td>SNPS / CDNS（EDA / chiplet IP）</td><td>UCIe / chiplet design tools；新硬體玩家越多越受益</td><td>市場關注 GPU vendor 對決，但每個 chiplet ASIC 仍要靠 EDA tool；軟體生態多元化 = chip 設計需求多元化</td></tr>
-<tr><td>OpenAI（pre-IPO）/ Tri Dao（FlashAttention 作者）</td><td>Triton compiler 領導者 + FlashAttention 規格制定者</td><td>Triton 是 NVDA / AMD / Apple 共用的 cross-vendor compiler；OpenAI 雖是 NVDA 客戶但 governance Triton 直接削弱 CUDA</td></tr>
-</table>
-
-<h2>§11.5 Cross-ID 依賴圖</h2>
-<table>
-<tr><th>方向</th><th>對應 ID</th><th>依賴內容</th></tr>
-<tr><td><strong>母題</strong></td><td><a href="ID_AIAcceleratorDemand_20260419.html">ID_AIAcceleratorDemand</a></td><td>本 ID 是母題的軟體子集；軟體驅動 GPU/ASIC 替代速度</td></tr>
-<tr><td><strong>兄弟（同母題子題）</strong></td><td><a href="ID_AIASICDesignService_20260419.html">ID_AIASICDesignService</a></td><td>ASIC 玩家（Alchip / GUC / MediaTek）的 CUDA→ROCm/Neuron 軟體生態相對位置</td></tr>
-<tr><td><strong>兄弟</strong></td><td><a href="ID_AIInferenceEconomics_20260430.html">ID_AIInferenceEconomics</a></td><td>軟體決定 inference TCO；本 ID 是 inference 經濟學的「軟體成本驅動」</td></tr>
-<tr><td><strong>上游依賴</strong></td><td><a href="ID_HBM_Supercycle_20260419.html">ID_HBM_Supercycle</a></td><td>HBM bandwidth 決定 attention kernel 效能；軟體 unlock HBM 性能</td></tr>
-<tr><td><strong>上游依賴</strong></td><td><a href="ID_AINetworking_20260419.html">ID_AINetworking</a></td><td>NCCL+NVLink fabric 是真正 NVDA scale-out 護城河</td></tr>
-<tr><td><strong>下游受益</strong></td><td><a href="ID_AgenticAIPlatform_20260424.html">ID_AgenticAIPlatform</a></td><td>軟體 abstraction 完整 → agentic platform 部署彈性</td></tr>
-<tr><td><strong>下游受益</strong></td><td>ID_TokenEconomics_20260427</td><td>軟體 commoditization → token cost 降低</td></tr>
-</table>
-
-<h2>§12 Non-Consensus View（共識差異）</h2>
-
-<div class="judgment">
-<div class="j-head">🟡 Thesis 1：CUDA inference moat 已開始裂；2026 H1 是分水嶺 [信心: 高] <span class="thesis-tag tag-event">[event-triggered]</span></div>
-<div class="j-facts">
-共識：① Bernstein 2025-Q4：「CUDA 19 年 ecosystem 不可動搖，至少 5-7 年才會見到 share 顯著流失」；② Goldman 2025-Q3：「ROCm 仍 2-3 年落後，AMD inference share 2026 不會超過 8-10%」。<br>
-本 ID 看法（v1.1 critic 修）：ROCm 7.2 (Mar 2026) 達 <strong>vLLM 出箱 parity</strong>（critic 修：llama.cpp/Ollama 社群維護，非官方全 parity）；<strong>MI355X MLPerf 6.0 部分情境超越 B200</strong>（critic 修：Llama 2 70B 119% / GPT-OSS-120B 111-115%；原「single-digit %」低估）；Meta 6GW (H2 2026 1GW, multi-year) + <strong>OpenAI 6GW warrant 協議（~10% AMD shares warrants vesting on milestones, critic 修：原 shorthand「10% stake」誤導）</strong> + Oracle 131K = production scale 驗證。CUDA 在 inference 已開始裂；training 仍硬。<br>
-分歧原因：共識停留在 2024-2025 「ROCm 仍 lab」narrative；本 ID 已追蹤到 2026 H1 production deployment 進度。
-</div>
-<div class="j-infer">→ 推論：NVDA inference share 2027 Q1 預估降至 70-75%；AMD 升至 12-15%；其他（ASIC / Trainium / TPU）8-10%。<br><strong>⚠ critic 2026-05-03 修補（防 zero-sum 誤讀）：上述 share 數字是 2027 Q1 過渡期 snapshot。長期 2028E 應拆 3 個 bucket（詳 §10.6）：Bucket A Hyperscaler captive 35-45%（ASIC 主導 — AMD 不進入此 bucket）+ Bucket B external model + on-prem 25-30%（AMD 主導）+ Bucket C commodity GPU 25-30%（NVDA 守住）。讀者應分 bucket 計算，避免把「AMD 進入 inference 20%」與「ASIC 取代 NVDA 40-50%」當成同一件事重複扣減 NVDA share。</strong></div>
-<div class="j-falsify">⚠ 證偽條件：若 2026 Q3 NVDA share 仍 ≥ 85%（無 share loss），本論點需下修；若 NVDA 公開揭露 inference share 數據顯示 stable，論點 stall。Bucket-specific 證偽見 §13 F-7 (Bucket A) + F-8 (Bucket B)。</div>
-</div>
-
-<div class="judgment">
-<div class="j-head">🟡 Thesis 2：真正不可取代的不是 CUDA 是 NCCL + NVLink + scale-out [信心: 高] <span class="thesis-tag tag-structural">[structural]</span></div>
-<div class="j-facts">
-共識：① 多數券商把 NVDA software moat 當作「整體 CUDA ecosystem」，未細分；② SemiAnalysis 2025-Q4：「CUDA 是綜合 moat」。<br>
-本 ID 看法：細分後，CUDA 在 L1-L4 各層的 moat 強度極不對稱：L1 已 commodity；L2 cuDNN 仍領先；L3 framework backend 部分流失；L4 vLLM 已 parity。<strong>NCCL + NVLink scale-out 是 NVDA 唯一真正不可取代的層</strong>；MSCCL++ 仍 research，UALink 2027+。<br>
-分歧原因：共識把所有軟體層綁一起看，未分層分析；本 ID 提供 4 層拆解視角。
-</div>
-<div class="j-infer">→ 推論：NVDA 估值應分兩段定價 — frontier training（NCCL+NVLink moat 強）+ inference（軟體 moat 弱）；前者 PE 35-40x，後者 PE 25-30x。</div>
-<div class="j-falsify">⚠ 證偽條件：若 2027 H1 MSCCL++ / UCCL 進入產品 + AMD scale-out 達 90% NCCL 性能，本論點需修正（NCCL 不再是真正 moat）。</div>
-</div>
-
-<div class="judgment">
-<div class="j-head">🟡 Thesis 3：2027-2028 真正贏家是 framework owner，不是 GPU vendor [信心: 中] <span class="thesis-tag tag-structural">[structural]</span></div>
-<div class="j-facts">
-共識：① 多數人視 META / GOOGL 的軟體投入為「副業」；② 不認為 PyTorch / JAX governance 對 hardware 估值有實質影響。<br>
-本 ID 看法：META 主導 PyTorch + GOOGL 主導 JAX/Pallas + OpenAI 主導 Triton — 三家在 L4 的 governance 直接決定 hardware 商品化速度。abstraction 完整後，GPU 變 swappable backend，hardware vendor 議價權系統性流失。<br>
-分歧原因：market 把 META / GOOGL 估值集中在廣告 / 雲端，忽略軟體 governance value；NVDA 估值仍按 hardware 主導 narrative 計算。
-</div>
-<div class="j-infer">→ 推論：META / GOOGL 軟體 governance value 隱含估值 ~$50-100B 各（2030）；NVDA 軟體 lock-in value 將從 ~$80B（2026） → $50B（2030）反向流失。</div>
-<div class="j-falsify">⚠ 證偽條件：若 2028 PyTorch governance 仍未推任何 backend-neutral default + JAX 仍未跨 vendor，本論點下修；若 NVDA 在 PyTorch Foundation 取得 governance seat，論點失效。</div>
-</div>
-
-<h2>§13 Falsification Test（證偽條件）</h2>
-<table>
-<tr><th>Metric</th><th>當前值</th><th>失敗閾值</th><th>時間窗</th><th>若觸發 → thesis 作廢</th></tr>
-<tr><td>NVDA inference share</td><td>~80-85%</td><td>2027 Q1 仍 ≥ 85%（無 share loss）</td><td>2027 Q1</td><td>本 ID Thesis 1 失敗；NVDA software moat 仍硬</td></tr>
-<tr><td>AMD AI revenue（2027）</td><td>2025 ~$5-7B → 2027 目標 $30B</td><td>2027 全年 &lt; $20B</td><td>2027 Q4 earnings</td><td>Meta / OpenAI 6GW 未如期；AMD ecosystem ramp 失敗</td></tr>
-<tr><td>NCCL alternative production-ready</td><td>仍 research-only</td><td>2027 Q4 仍無 ≥1 production deployment（&gt;1K GPUs）</td><td>2027 Q4</td><td>本 ID Thesis 2 確認（NCCL+NVLink 仍永久 moat）</td></tr>
-<tr><td>ROCm 訓練 parity 達標</td><td>仍 1-2 年落後</td><td>2028 Q1 仍未達 cuDNN 9.x equivalent</td><td>2028 Q1</td><td>AMD 永遠停在 inference share 20%；無法 reach training</td></tr>
-<tr><td>Meta 6GW 1GW deployment 順利</td><td>計畫中（H2 2026）</td><td>2026 Q4 deployment 推遲 ≥ 6 個月</td><td>2026 Q4</td><td>AMD ecosystem ramp 整體推遲；Thesis 1 stall</td></tr>
-<tr><td>PyTorch backend-neutral default</td><td>仍 CUDA default</td><td>2028 仍 CUDA default（無 backend-neutral）</td><td>2028</td><td>本 ID Thesis 3 部分失敗；framework governance 影響弱於預期</td></tr>
-<tr style="background:#F0FDF4"><td><strong>F-7: Bucket A ASIC ramp 訊號</strong>（critic 2026-05-03 加 — §10.6 三段式拆解配套）</td><td>Bedrock / Azure OpenAI / Vertex AI 對外公告 inference per-token cost</td><td>6 個月內 per-token cost 降幅 &lt; 15%（vs 預期 &gt;30%，且不是 NVDA 降價驅動）</td><td>2026-Q4（AWS re:Invent + Azure Ignite + Google Cloud Next）</td><td>Bucket A 35-45% TAM 中 ASIC ramp 失敗；Hyperscaler captive thesis 推遲；NVDA 在 Bucket A 反而續守</td></tr>
-<tr style="background:#F0FDF4"><td><strong>F-8: Bucket B AMD non-hyperscaler share 訊號</strong>（critic 2026-05-03 加）</td><td>AMD FY27 DC AI revenue 中「非 Big 4 hyperscaler」占比（從 Meta + OpenAI + Oracle + Tier 2 推算）</td><td>2027 全年非 Big 4 hyperscaler revenue 占比 &lt; 25%（vs 預期 ≥40%）</td><td>2027 Q4 earnings + 客戶揭露</td><td>Bucket B 25-30% TAM 中 AMD 主導力 weak — 外部 model 公司可能轉用其他替代（Hyperscaler 可移植 ASIC stack 或 NVDA 降價挽回）；AMD ROCm thesis 縮小至 only-Meta-and-OpenAI-locked-in</td></tr>
-</table>
-
-<h2>頁尾</h2>
-<p class="foot">產業深度報告 · industry-analyst v1.8 · 主題：CUDA / ROCm 軟體護城河子題（AI 加速器軟體生態 sub-topic）· 母題：<a href="ID_AIAcceleratorDemand_20260419.html">ID_AIAcceleratorDemand_20260419</a> · 兄弟：<a href="ID_AIASICDesignService_20260419.html">AIASICDesignService</a> · <a href="ID_AIInferenceEconomics_20260430.html">AIInferenceEconomics</a> · 發布日：2026-05-01 · 🟡 占比：18%</p>
 
 </div>
 </body>
