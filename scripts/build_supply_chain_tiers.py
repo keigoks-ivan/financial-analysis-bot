@@ -57,6 +57,12 @@ T0 = [
         "verdict": "全站最純 T0。ZEISS 是唯一能做 sub-nm 多反射鏡系統者，重建替代路線 &gt;10 年；ASML 年產 ~90 台本身就是全行業擴產硬上限。不是「未認證」而是「第二產品線不存在」。真正脆弱點藏在 ASML 上游（光學 / 光源）。",
     },
     {
+        "name": "Lasertec actinic EUV 光罩 / 光罩基板檢測",
+        "sup": [("Lasertec", "6920.T", "JP")],
+        "topics": ["metrology"],
+        "verdict": "全站被漏掉的最純單點之一。actinic（13.5nm 波長）EUV 光罩檢測 ~100% + 光罩基板 actinic 檢測同為全球唯一商用機台 —— 地球上沒有第二家量產設備。常被拿來當替代的 Zeiss AIMS EUV 只是 R&D 級 aerial-image 工具、非產線缺陷篩檢，不構成二供。每座跑 EUV 的 fab（TSMC / Samsung / Intel）都依賴它，High-NA 量產（ACTIS A200HiT, 2025/10）同樣無檢測路徑可繞 —— 爆炸半徑等同 ASML / TEL 出貨歸零，卻長期被排在 ASML 級風險討論之外。唯一折價：日本單一國集中、多光束電子束檢測為遠期潛在替代。",
+    },
+    {
         "name": "Ajinomoto 味之素 ABF 增層膜",
         "sup": [("味之素 Ajinomoto", "2802.T", "JP")],
         "topics": ["cowos", "substrate", "plp", "hbm", "material"],
@@ -88,6 +94,12 @@ T1 = [
         "sup": [("Tokyo Electron", "8035.T", "JP")],
         "topics": ["fe-equipment", "advanced"],
         "verdict": "全球 ~88%、<strong>EUV 應用 ~100%</strong>，每台 EUV scanner 必配。SCREEN 僅低階機型，EUV track requalify 估 3–5 年。爆炸半徑等同 ASML 出貨歸零，卻很少被當成 ASML 級風險討論。",
+    },
+    {
+        "name": "Advantest AI / GPU SoC 測試",
+        "sup": [("Advantest", "6857.T", "JP")],
+        "topics": ["metrology", "ate"],
+        "verdict": "AI / GPU SoC 測試 ~70–80%（CY25 SoC 整體 56%→66%），NVIDIA Blackwell 量產指定 V93000 + ACS RTDI；GPU 運算 die 今日無合格二供，轉測需 socket 重設計 + test program 移植 + OSAT 重認證 12–24 月。<strong>carve-out</strong>：Teradyne Magnum 7H 在 <strong>HBM 記憶體測試</strong>為真二供且放量中 —— 故記憶體側屬 T2、GPU compute die 側才是 T1。lead time 已 &gt;6 個月、2026 機台產能 3K→5K 仍緊，是 AI 晶片 final test 的隱形咽喉。",
     },
     {
         "name": "Nittobo T-Glass 玻纖布",
@@ -296,7 +308,7 @@ def build_block(dd_links) -> str:
              f'{len(T0)} 條 — 無合格二供，斷供即全產業停擺</h3>')
     h.append('<p class="lede">無 ANY 合格二供、替代路線需以「年」甚至「十年」計、'
              '產能與地理高度集中、斷供爆炸半徑直達整條 AI / 半導體經濟。'
-             '<em>這四條是 PM 唯一必須持續盯的結構性斷點。</em></p>')
+             '<em>這五條是 PM 唯一必須持續盯的結構性斷點。</em></p>')
     h.append(table_html(T0, "tier-t0-tbl", dd_links, "瓶頸 / 關鍵供應商"))
 
     h.append('<h3 class="tier-t1"><span class="ico">🟠</span>T1 · 近單點 · '
