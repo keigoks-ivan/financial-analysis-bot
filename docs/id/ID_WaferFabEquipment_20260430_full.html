@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>半導體設備五寡占（完整考證版）— 前段 WFE × 後段 ATE 的結構超循環 | InvestMQuest</title>
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Serif+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1c1916; --ink-soft:#3d3833; --paper:#faf7f2; --paper-deep:#f0ebe1;
+  --paper-card:#f5f1e8; --accent:#7a3d1c; --accent-deep:#4a2410;
+  --gold:#b08840; --gold-soft:#d4b572; --muted:#6e665a;
+  --green:#2a5040; --red:#8a3424; --amber:#8a6420;
+}
+*{box-sizing:border-box;}
+body{margin:0; background:var(--paper-deep); font-family:'Noto Serif TC','Crimson Pro',serif; color:var(--ink); line-height:1.78; -webkit-font-smoothing:antialiased;}
+.container{max-width:980px; margin:0 auto; padding:0 56px 120px; background:var(--paper);}
+em{font-style:italic;} strong{font-weight:600;}
+
+/* fast-path banner */
+.fastpath{margin:0 -56px 0; background:var(--gold); color:var(--ink); padding:12px 56px; font-family:'IBM Plex Mono',monospace; font-size:12.5px; letter-spacing:0.04em; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;}
+.fastpath a{color:var(--accent-deep); font-weight:600; text-decoration:underline;}
+
+/* Masthead */
+.masthead{position:relative; padding:40px 0 26px; border-bottom:3px double var(--ink); margin-bottom:8px;}
+.pub-info{display:flex; justify-content:space-between; align-items:flex-start; font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.12em; color:var(--muted); text-transform:uppercase; margin-bottom:30px;}
+.pub-logo{font-family:'Crimson Pro',serif; font-size:17px; font-weight:700; letter-spacing:0.04em; color:var(--ink); text-transform:none;}
+.pub-info .right{text-align:right;}
+.headline{font-family:'Crimson Pro','Noto Serif TC',serif; font-size:46px; line-height:1.14; font-weight:700; margin:0 0 18px; letter-spacing:-0.01em;}
+.headline em{color:var(--accent); font-style:italic;}
+.deck{font-size:18px; color:var(--ink-soft); font-style:italic; line-height:1.55; margin:0 0 26px; max-width:780px;}
+.byline{display:flex; justify-content:space-between; font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:0.1em; color:var(--muted); text-transform:uppercase; border-top:1px solid var(--paper-deep); padding-top:14px; flex-wrap:wrap; gap:6px;}
+
+/* reader banner */
+.reader-banner{margin:22px 0; padding:14px 18px; background:rgba(122,61,28,0.06); border-left:4px solid var(--accent); font-size:13px; line-height:1.7;}
+.reader-banner strong{color:var(--accent-deep);}
+
+/* glossary */
+.glossary{margin:22px 0; padding:16px 20px; background:var(--paper-card); border:1px solid var(--paper-deep); font-size:13.5px; line-height:1.72;}
+.glossary strong{color:var(--ink);}
+
+/* source warning */
+.source-warning{margin:18px 0; padding:14px 18px; background:rgba(138,100,32,0.09); border-left:4px solid var(--amber); font-size:13px; line-height:1.66;}
+
+/* chapter */
+.chapter{margin:60px 0 0;}
+.chapter-marker{font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:0.28em; color:var(--accent); text-transform:uppercase; font-weight:600; margin-bottom:12px;}
+.chapter h2{font-family:'Crimson Pro','Noto Serif TC',serif; font-size:34px; font-weight:700; line-height:1.2; margin:0 0 8px; padding-bottom:12px; border-bottom:2px solid var(--ink);}
+.chapter h2 em{color:var(--accent); font-style:italic;}
+.chapter h3{font-family:'Crimson Pro','Noto Serif TC',serif; font-size:22px; font-weight:600; font-style:italic; margin:30px 0 10px; color:var(--accent-deep);}
+.chapter-intro{font-size:17px; font-style:italic; color:var(--ink-soft); line-height:1.62; margin:16px 0 22px;}
+.chapter p{font-size:16px; line-height:1.8; margin:0 0 16px; text-align:justify; hyphens:auto;}
+.chapter ul,.chapter ol{font-size:15.5px; line-height:1.72; margin:10px 0 16px; padding-left:24px;}
+.chapter li{margin-bottom:7px;}
+
+/* s-curve ascii */
+.scurve-ascii{background:var(--ink); color:var(--paper); padding:18px 20px; font-family:'IBM Plex Mono',monospace; font-size:11px; white-space:pre; line-height:1.45; overflow-x:auto; margin:22px 0; border-radius:2px;}
+
+/* data table */
+.data-display{margin:26px 0; border:1px solid var(--ink);}
+.data-display-header{background:var(--ink); color:var(--paper); font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.22em; text-transform:uppercase; padding:9px 16px;}
+table{width:100%; border-collapse:collapse; background:var(--paper);}
+th,td{padding:10px 13px; text-align:left; border-bottom:1px solid var(--paper-deep); font-size:13.5px; line-height:1.5; vertical-align:top;}
+th{font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:0.06em; text-transform:uppercase; color:var(--muted); border-bottom:1.5px solid var(--ink); font-weight:600;}
+td.num{font-family:'IBM Plex Mono',monospace; font-size:12.5px;}
+tr:last-child td{border-bottom:none;}
+.tbl-read{font-size:13.5px; color:var(--ink-soft); line-height:1.66; margin:12px 0 0; font-style:italic; text-align:left;}
+
+/* insight box */
+.insight{margin:24px 0; padding:20px 26px; background:rgba(42,80,64,0.06); border-left:4px solid var(--green);}
+.insight-label{font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.2em; color:var(--green); text-transform:uppercase; font-weight:600; margin-bottom:10px;}
+.insight p{font-size:15px; margin:0 0 10px; line-height:1.7;}
+.insight p:last-child{margin-bottom:0;}
+
+/* inference */
+.inference{margin:24px 0; padding:22px 28px; background:rgba(176,136,64,0.06); border-left:4px solid var(--gold);}
+.inference-label{font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.2em; color:var(--gold); text-transform:uppercase; margin-bottom:6px;}
+.inference-title{font-family:'Crimson Pro',serif; font-size:20px; font-weight:600; margin-bottom:12px; font-style:italic;}
+.deduction-chain{font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink-soft); background:rgba(28,25,22,0.05); padding:8px 12px; margin-bottom:12px; line-height:1.5;}
+.inference p{font-size:15px; margin:0 0 10px; text-align:left; line-height:1.7;}
+.inference p:last-child{margin-bottom:0;}
+
+/* refs aside */
+.ds-refs{margin:18px 0 6px; padding:14px 18px; background:var(--paper-card); border:1px solid var(--paper-deep); font-size:12px;}
+.ds-refs-label{font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:0.2em; color:var(--muted); text-transform:uppercase; display:block; margin-bottom:8px;}
+.ds-refs ol{margin:0; padding-left:20px;}
+.ds-refs li{margin-bottom:5px; line-height:1.5; color:var(--ink-soft);}
+.ds-refs a{color:var(--accent); text-decoration:none;}
+.ds-refs .tier{font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:var(--gold); font-weight:600; margin-right:6px;}
+
+/* invest-meaning box */
+.invest-meaning{margin:22px 0; padding:16px 20px; background:rgba(28,25,22,0.04); border-left:3px solid var(--ink); font-size:14.5px; line-height:1.7;}
+.invest-meaning::before{content:'💡 對投資的意義'; display:block; font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.16em; color:var(--accent); margin-bottom:8px; font-weight:600;}
+
+/* value chain svg wrapper */
+.vc-wrap{margin:24px 0;}
+.vc-wrap svg{display:block; max-width:100%;}
+
+/* scenario */
+.scenario-set{margin:26px 0; border:2px solid var(--ink);}
+.scenario{padding:22px 26px; border-bottom:1px solid var(--ink);}
+.scenario:last-child{border-bottom:none;}
+.scenario-base{background:rgba(176,136,64,0.05);}
+.scenario-bull{background:rgba(42,80,64,0.045);}
+.scenario-bear{background:rgba(138,52,36,0.05);}
+.scenario-tag{display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; font-weight:600; padding:2px 9px; color:var(--paper);}
+.scenario-base .scenario-tag{background:var(--gold);}
+.scenario-bull .scenario-tag{background:var(--green);}
+.scenario-bear .scenario-tag{background:var(--red);}
+.scenario-prob{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--muted); margin-left:10px;}
+.scenario-title{font-family:'Crimson Pro',serif; font-size:19px; font-weight:600; font-style:italic; margin:10px 0 8px;}
+.scenario p{font-size:14.5px; margin:0 0 8px; line-height:1.62;}
+.scenario-trigger{font-size:13px; background:rgba(28,25,22,0.05); padding:9px 13px; line-height:1.55;}
+
+/* footnotes / colophon */
+.footnotes{margin-top:54px; padding-top:18px; border-top:3px double var(--ink);}
+.footnotes-h{font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.25em; color:var(--muted); text-transform:uppercase; margin-bottom:14px;}
+.footnotes ol{margin:0; padding-left:22px;}
+.footnotes li{font-size:12px; color:var(--muted); line-height:1.55; margin-bottom:6px;}
+.footnotes a{color:var(--accent); text-decoration:none;}
+.colophon{margin-top:36px; text-align:center; font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.15em; color:var(--muted); text-transform:uppercase; line-height:1.8;}
+.colophon .dot{color:var(--gold); margin:0 6px;}
+
+@media (max-width:880px){
+  .container{padding:0 24px 80px;}
+  .fastpath{margin:0 -24px 0; padding:12px 24px;}
+  .headline{font-size:32px;}
+  .chapter h2{font-size:26px;}
+  table{font-size:12px;} th,td{padding:8px 9px;}
+}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/">個股 DD</a>
+          <a href="/id/" class="active">產業深度 ID</a>
+          <a href="/ds/">產業敘述 DS</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/">週報</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/long-track-smh/">長線訊號</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/">量化回測</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/screener-tw.html">Screener 台股</a>
+          <a href="/screener-jp.html">Screener 日股</a>
+          <a href="/screener-my.html">Screener 馬股</a>
+          <a href="/cache/">🗄 Data Cache</a>
+          <a href="/tools/">期貨部位計算機</a>
+        </div>
+      </div>
+      <a href="/mental-models/">🧠 心智模型</a>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+<div class="container">
+
+<div class="fastpath">
+  <span>⚡ 趕時間？這是完整考證版（9 章 + 一手 source）</span>
+  <span><a href="ID_WaferFabEquipment_20260430.html">→ 2 頁精煉版決策卡</a></span>
+</div>
+
+<header class="masthead">
+  <div class="pub-info">
+    <div><span class="pub-logo">InvestMQuest</span><br>Deep Industry Research · Vol. 26.06 · 完整考證版</div>
+    <div class="right">2026年6月21日 · v2.3 改版<br>台北</div>
+  </div>
+  <h1 class="headline">半導體設備五寡占（完整考證版）<br>前段 <em>WFE</em> × 後段 <em>ATE</em> 的結構超循環</h1>
+  <p class="deck">敘事為骨、表格為窗的產業深度報告：從產業定義、技術 S 曲線、供需循環裁決、估值傳導到證偽表。本份已併入原「AI 測試設備 ATE」子題——後段測試與前段 WFE 是同一個「賣鏟子」邏輯的兩端。</p>
+  <div class="byline">
+    <span>InvestMQuest · Independent Investor Research</span>
+    <span>Method: Narrative-Spine + Decision Assets · skill v2.3</span>
+  </div>
+</header>
+
+<div class="reader-banner">
+  <strong>📐 Claim Taxonomy v1（v2.3 敘事版）</strong>：本報告在 §0/§5/§7/§8 使用 4 類 inline 揭露 claim 性質：<strong>[F:]</strong> 事實（有 source）｜<strong>[I:]</strong> 推論（A→B 揭露）｜<strong>[X:]</strong> 情境預測（base/bull/bear 三情境、詞彙級機率）｜<strong>[A:]</strong> 顯式假設。數字以 range／~xxx 呈現（除非 T1 公告精準值）；機率用「很可能／可能／不太可能」非百分比。來源收在每節末「本節參考來源」區塊。提及公司皆為「該特徵的代表案例」、非買入推薦。
+</div>
+
+<div class="glossary">
+  <strong>📐 Unit &amp; Scope Glossary</strong>｜本報告「WFE 市場規模」= SEMI 定義的 wafer fab equipment（前段製程設備），<strong>原本不含</strong> ATE 後段測試——但本份已將後段 ATE 子題併入，故同時涵蓋兩端、並明確分段計算（前段純 WFE ~$123B / 後段 ATE 全鏈 ~$20-22B，2026E）。營收口徑 = company 全年 segment revenue；ASP 單位 = $/tool（前段）或 $/tester（後段本體）vs $/test-hour（per-chip 測試成本）；EUV：Low-NA = NA 0.33（NXE 系列，~$200M），High-NA = NA 0.55（EXE:5200，~$380M）；「WFE intensity」= 設備支出／晶圓產能（$/wafer-month）；「process control intensity」本報告採 KLA 營收／整體 WFE 為簡化代理（非 SEMI 公認 segment metric）；GAA = Gate-All-Around（環繞式閘極，2nm 起替代 FinFET）；SLT = System-Level Test。
+</div>
+
+<div class="source-warning">
+  <strong>來源結構：</strong>公司級數字皆引一手法說／IR／官方 release 或權威媒體（T1/T2）；市場規模、市佔、process control intensity、ATE CAGR 屬第三方研究（SEMI／Yole／TrendForce／DIGITIMES）與券商估計或本報告自算框架，明標 tier。「ATE CAGR 12-15%」是時數驅動框架下的本報告估計、共識 6-8% 是設備台數框架，口徑不同。本報告 T1 來源占比 ≥60%。
+</div>
+
+<!-- ============ §0 ============ -->
+<section class="chapter" style="margin-top:48px;">
+  <div class="chapter-marker">§0 · DECISION LAYER</div>
+  <h2>決策摘要層</h2>
+  <p class="chapter-intro">掃讀的 PM 讀這一層就能拿到行動結論：三句話看完現狀／走向／行動，加上一個最反直覺的判斷與監測點。</p>
+
+  <h3>三句話看完</h3>
+  <ul>
+    <li><strong>現在 / NOW</strong>：供需裁決＝<strong>結構性短缺、利潤往設備層集中</strong>——前段純 WFE 2026E ~$123B（總設備 ~$145B）、五寡占先進節點 90%+；後段 ATE Advantest FY25 ¥1,070B（+71% YoY）、Teradyne Q1 +75% YoY，per-chip 測試時數 2026 ~12h（3x vs 2022）即使 GPU 數持平仍推升營收。[F: T1: SEMI Dec 2025 / Advantest FY25 / Teradyne Q4 2025]</li>
+    <li><strong>未來 / NEXT</strong>：最大結構裂縫是<strong>市場仍用 cyclical 框架估 KLA 與 ATE 雙寡占</strong>——GAA + High-NA 把 process control intensity 結構升至 11-13%、測試時數 2028 ~5-7x；五寡占 PE 應分層（真獨佔 ASML／TEL coater 上限 32-35x、雙寡占 28-30x）。中國反制僅成熟節點。[I: 集中度 + 內生引擎 + cyclical 框架 → 重估空間 1-1.5 turn]</li>
+    <li><strong>怎麼做 / ACTION</strong>：前段 WFE 五寡占＋後段 ATE 雙寡占是最純「賣鏟子」play 但隨 AI 已 re-rate——<strong>不追高</strong>；非顯而易見角度押 KLA 複利機＋ FormFactor／Technoprobe 探針卡 HBM tax。盯 AI capex 增速／KLA process control%／Advantest HBM4 ASP／中國先進節點滲透才是賣點。</li>
+  </ul>
+
+  <div class="inference">
+    <div class="inference-label">📌 本報告最重要的一個判斷</div>
+    <div class="inference-title">設備業內部有兩台「即使晶片數量不增、營收仍能自己長」的複利機，被 cyclical 尺整個遮住</div>
+    <p>市場用同一把 cyclical 尺量整個設備業——以為 wafer 出貨量到頂、設備就到頂。這把尺最大的盲點，是它看不見設備業內部兩條與「晶片有多複雜」（不是「有多少顆」）綁定的曲線。前段是 <strong>KLA</strong>：GAA nanosheet 形貌控制與 High-NA 多重曝光把良率挑戰升一級，每片晶圓需要的檢測量測結構性變多，process control intensity 從歷史 8-10% 往 11-13% 走——「complexity = revenue」、不靠 wafer 數的內生引擎。後段是 <strong>ATE</strong>：AI 加速器單顆測試時數 2022 ~4h → 2026 ~12h（3x）→ 2028 ~20-30h（5-7x），因為每多疊一層 HBM、每加一個 reticle 都把要驗證的故障模式倍增——Advantest 的真實 unit economics 早已是「測試時數 × $/hour 折舊」、不是「設備台數 × ASP」。所以當市場擔心 AI GPU 出貨見頂，KLA 與 ATE 雙寡占的營收還能靠 intensity／時數自己往上爬。下一輪設備 alpha 不在 wafer starts，而在「每片晶圓檢測多少、每顆晶片測多少小時」這兩條被遮住的曲線。</p>
+  </div>
+
+  <p>一句話 thesis：[I: 半導體設備（前段 WFE 五寡占 + 後段 ATE 雙寡占）正經歷一次利潤從下游晶圓廠往中段設備層的結構性遷移，而非另一個 cyclical 高點；最被低估的是 KLA 的檢測 intensity 與 ATE 的測試時數兩條與晶片複雜度綁定的內生引擎，市場仍用台數框架低估，重估空間 1-1.5 turn——除非 AI capex 2027 集中放緩觸發 2000-style 不對稱下修。]</p>
+
+  <div class="ds-refs">
+    <span class="ds-refs-label">本節參考來源</span>
+    <ol>
+      <li><span class="tier">[T1]</span><a href="https://www.semi.org/en/semi-press-release/global-semiconductor-equipment-sales-projected-to-reach-a-record-of-156-billion-dollars-in-2027-semi-reports">SEMI Dec 2025 — 2026E 總設備 $145B / 純 WFE $123B / 2027E $156B</a></li>
+      <li><span class="tier">[T1]</span><a href="https://www.advantest.com/en/investors">Advantest FY25 2Q Results — 營收 raised guide ¥1,070B（+71% YoY）</a></li>
+      <li><span class="tier">[T1]</span><a href="https://ir.kla.com/news-events/press-releases">KLA Q3 FY2026 release（2026-04-29）— process control intensity ~9.7%、5 年 share gain 160bps</a></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============ §1 ============ -->
+<section class="chapter">
+  <div class="chapter-marker">§1 · 第一幕</div>
+  <h2>產業<em>白話定義</em>與歷史脈絡</h2>
+  <p class="chapter-intro">這是一個「賣鏟子」的產業——別人挖金（造晶片）你賣設備，無論誰挖到金，你都收錢。但鏟子有兩端：前段把矽變成電路，後段在出貨前驗證每顆晶片。</p>
+
+  <p>半導體設備賣什麼、誰付錢？簡單說，<strong>晶圓廠（TSMC / Samsung / Intel / SK Hynix / Micron）要造晶片，得先買設備</strong>；造一座先進晶圓廠的資本支出有 70-80% 花在設備上。這些設備分兩大階段：「前段（Front-end / WFE）」把一片空白矽晶圓，經過微影（畫電路）、蝕刻（刻掉不要的）、沉積（鋪上薄膜）、離子佈植、化學機械研磨、清洗、檢測量測，變成佈滿數百億電晶體的晶圓；「後段（Back-end）」把晶圓切成晶片、封裝、然後<strong>測試</strong>——確認每顆晶片是好的才能出貨。SEMI 的標準分類把 WFE（前段）與「組裝＋封裝＋測試（後段）」分開計算，因為兩端的玩家、毛利結構、cycle 週期都不同。</p>
+
+  <p>本報告的範圍刻意收在「設備層的兩個寡占」：前段 <strong>WFE 五寡占</strong>（ASML 微影 / AMAT 沉積 / LRCX 蝕刻 / KLAC 檢測 / TEL 塗佈）＋兩家日商（SCREEN 清洗 / Hitachi 特殊蝕刻），以及後段 <strong>ATE 雙寡占</strong>（Advantest / Teradyne 自動測試設備）。為什麼把前後段放同一份？因為它們是同一個 picks-and-shovels 邏輯的兩端——都賣設備而非賣晶片、都是高度寡占、都隨 AI 結構受益，但被市場分開看待、且都被低估。灰色地帶有三個值得獨立討論：（1）BESI（hybrid bonding）原屬後段封裝設備，但 AMAT 2025-04 取得 9% 持股 + co-develop 後，前後段邊界已模糊，本報告列「次要 🟡」；（2）矽晶圓材料商（信越 / SUMCO / Globalwafers）雖與設備同步 cycle，但屬「materials」不是「equipment」，不涵蓋；（3）探針卡（FormFactor / Technoprobe）介於「設備」與「耗材」之間，Yole 歸 test consumables、本報告歸 in-scope（屬測試 stack 的關鍵稀缺資源）。</p>
+
+  <p>另一個關鍵邊界：前段 WFE 內部要把「成熟節點 ICAPS（IoT + Communications + Auto + Power + Sensors，28nm 以上）」與「先進節點 leading-edge（5nm 以下）」分開。AMAT 自己 2026 Q1 法說就把這兩段拆開報數——ICAPS 預估「全年大致持平」，leading-edge 卻「+20% 以上」。<strong>這個分裂結構是理解整個設備業的鑰匙</strong>：中國替代 narrative 只衝擊 ICAPS，而 leading-edge 才是五寡占毛利的主要來源；把 WFE 當單一市場討論會錯過 90% 的 alpha。</p>
+
+  <h3>歷史脈絡：三個轉折點（具體日期 + 量化錨點）</h3>
+  <ul>
+    <li><strong>2007 — Nikon ArF dry 失敗、ASML immersion 接收 80%+ litho 市佔</strong>：2002-2005 ArF immersion 出現時 ASML 押 immersion、Nikon 押 dry ArF；到 2007-2010 Nikon 從 50%+ litho 市佔跌到 &lt;10%。litho 設備每次世代轉換都「贏家通吃、沒有第二名」。</li>
+    <li><strong>2018 — ASML EUV NXE:3400 量產</strong>：Intel / TSMC / Samsung 三家共同投資 ASML 取得優先供應權；ASML 對 EUV 的 ~$5B 賭注（2008 啟動）2018-2019 真正商用，2010-2020 PE 從約 18x 重估到 35x、股價 8x。litho 的 R&D cycle 是 10-15 年，只有資本足夠深的玩家撐得到回收。</li>
+    <li><strong>2022-2026 — AI 浪潮把後段測試從「附屬」升格為獨立利潤池</strong>：2022-11 ChatGPT 引爆後，AI 加速器（NVDA H100/Blackwell/Rubin、AVGO TPU、AMD MI 系列）單顆測試時數從 2022 ~4h 飆到 2026 ~12h（3x）；SLT / Burn-in / Probe Card / Handler 四個過去被當「設備配件」的子市場全部升格獨立利潤池。Advantest FY25（3/2026 結算）營收 raised guide ¥950B→¥1,070B（+71% YoY），是過去 30 年 ATE 廠最大單年成長。</li>
+  </ul>
+
+  <p>兩個歷史類比框住本次。<strong>正類比（ASML 18x→35x）</strong>：litho／設備寡占的 PE 結構重估是真的、有先例的，本次 High-NA 是「ASML 內部世代躍遷」（Low-NA 主導 → High-NA + Low-NA 雙線壟斷），KLA 與 ATE 雙寡占的集中度也已達 ASML-level。<strong>反例類比（2000-2002 光纖測試設備）</strong>：dot-com 高峰 Agilent/Tektronix/Anritsu 測試設備訂單 +400%、2001-2002 -75%、直到 2005-2007 才復原——測試設備固定成本高、生命週期 5-7 年，一旦終端 capex 集中放緩，訂單修正是「不對稱」的。差異點：本次測試時數已內生成長（per-chip +200%，即使 GPU 數不增）、且 AI capex 分散在多家 hyperscaler（不像 2000 集中在 telecom carrier），系統性風險較分散。</p>
+
+  <div class="data-display">
+    <div class="data-display-header">設備業歷史 cycle 統計 · litho 世代躍遷與重估</div>
+    <table>
+      <thead><tr><th>世代轉折</th><th>起訖</th><th>贏家 / 輸家</th><th>PE / 市佔變化</th></tr></thead>
+      <tbody>
+        <tr><td>ArF immersion</td><td>2002-2010</td><td>ASML 贏 / Nikon・Canon 退</td><td>Nikon litho 50%→&lt;10%；ASML 接收 80%+</td></tr>
+        <tr><td>EUV 商用</td><td>2008-2020</td><td>ASML 獨家</td><td>ASML PE ~18x→35x、股價 8x</td></tr>
+        <tr><td>3D NAND step change</td><td>2008-2014</td><td>LRCX high-aspect-ratio etch</td><td>LRCX etcher 市佔 ~30%→~50%</td></tr>
+        <tr><td>AI 測試時數爆發</td><td>2022-2026</td><td>Advantest・Teradyne 雙寡占</td><td>per-chip 時數 4h→12h(3x)；Advantest +71% YoY</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="tbl-read">怎麼讀：前三個是前段 litho／etch 的世代躍遷（贏家通吃 + 重估有先例），第四個是後段測試的時數爆發（與 wafer 數量脫鉤的內生引擎）。把這四輪併看，本次 thesis 是「重複歷史 — 設備寡占強者恆強 + 利潤往設備層集中」，不是新故事。</p>
+
+  <div class="invest-meaning">這段歷史對今天意味著：把五寡占與 ATE 雙寡占當「準消費獨佔」（如 V/MA／台積電）而非 cyclical equipment maker 才是對的框架——歷史證明 litho／設備寡占的 PE 重估是真的，市場每次都後知後覺；但 2000-2002 反類比要求把「AI capex YoY 增速」放在監測點第一位。</div>
+
+  <div class="ds-refs">
+    <span class="ds-refs-label">本節參考來源</span>
+    <ol>
+      <li><span class="tier">[T1]</span><a href="https://www.asml.com/en/products/euv-lithography-systems">ASML EUV Products — immersion → EUV → High-NA 世代史</a></li>
+      <li><span class="tier">[T1]</span><a href="https://www.investing.com/news/transcripts/earnings-call-transcript-applied-materials-q1-2026-beats-eps-forecast-stock-slips-93CH-4504178">AMAT Q1 FY26 Earnings Call — ICAPS vs leading-edge 分段</a></li>
+      <li><span class="tier">[T1]</span><a href="https://www.advantest.com/en/investors">Advantest FY25 2Q — 營收 +71% YoY、30 年最大單年</a></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============ §2 ============ -->
+<section class="chapter">
+  <div class="chapter-marker">§2 · 第一幕</div>
+  <h2>技術成熟度與 <em>S 曲線</em></h2>
+  <p class="chapter-intro">為什麼是現在，不是三年前？因為 GAA + High-NA 兩個製程拐點剛同時跨過，而 AI 把後段測試的複雜度推到非線性曲線——前後段同時點火。</p>
+
+  <p>前段 WFE 的技術演進史，本質是「光波長 vs 線寬」的競賽——從 1980 年代 g-line（436nm）一路到 EUV（13.5nm）與 High-NA EUV（NA 0.33→0.55）。每一次世代轉換都伴隨「在位者死亡 + 新王者誕生」，過去 30 年發生 4 次，本報告認為 2026-2030 是第 5 次（High-NA EUV 主導期）。為什麼是現在：GAA（2nm 起替代 FinFET）的 nanosheet 良率挑戰剛成為主要瓶頸、High-NA EXE:5200（~$380M/台）剛開始出貨、2nm wafer 成本（$28-30K）相對 7nm（$8K）的 3.5x 設備強度躍升剛兌現——三個拐點同時到位。</p>
+
+  <div class="scurve-ascii">WFE 設備技術 S 曲線（litho 為主軸）
+
+  TAM (Bn)
+   180 |                                                  _---*--- High-NA EUV (2026-2030)
+       |                                          ___---'         ($380M/tool, 2nm GAA + 1.4nm)
+   150 |                                   ___---'                Intel 14A 2027 + Samsung 1.4nm
+       |                            _---'''                       TSMC late adopter (~A10 2029-30)
+   120 |                      _---''     <- EUV (2018-2026)
+       |                _---''           NXE:3800 / 3600
+    90 |          _---''                 $200M/tool, 5/3/2nm
+       |     _---''     <- ArF immersion (2007-2018)
+    60 |  _-''                           ASML 主導，Nikon 退場
+       |_-'   <- ArF dry (2002-2007)
+    30 |.'     <- KrF (1996-2002)
+     0 |________________________________________________________________
+       1985   1995    2005    2015     2020     2025     2030
+              Nikon/Canon          ASML EUV            ASML High-NA
+              dominate             monopoly            monopoly
+
+  關鍵節點：
+  • 2007 Nikon ArF dry 失敗 -> ASML immersion 接收 80%+ litho 市佔
+  • 2018 ASML EUV NXE:3400 量產 -> Intel/TSMC/Samsung 同步採用
+  • 2025-Q2 ASML 首台 High-NA EXE:5200 出貨給 Intel
+  • 2027 ASML 計畫出貨 ~10 台 High-NA + ~56 台 Low-NA EUV
+  • 2028-2030 High-NA 進入 HVM；TSMC 戰略 skip 到 ~A10（2029-30）</div>
+
+  <p><strong>S 曲線解讀</strong>：每一次 litho 世代轉換，市場規模躍升一個台階、且「在位者跨代失敗」機率高達 70-80%。本次 High-NA 是「ASML 內部世代躍遷」——從 Low-NA 主導變成 High-NA + Low-NA 雙線壟斷，沒有競爭者搶食。這個 S 曲線描述的是 leading-edge 段（ICAPS 段不需 EUV），所以五寡占在 EUV 世代得以 100% 收下技術 rent。[F: T1: ASML EUV roadmap]</p>
+
+  <h3>後段 ATE 的技術曲線：測試時數非線性爆發</h3>
+  <p>後段測試有兩個獨立的技術規律疊加。第一：「測試時數隨節點代際指數成長」——每個新世代（5nm→3nm→2nm→A14）transistor 增加，要 cover 的故障模式（fault model）爆炸式變多。第二：「測試 fee 隨封裝複雜度成倍上升」——從單晶片 SoC 到 chiplet 拼接、CoWoS 大封裝、HBM 多層堆疊，每加一層整合就需新測試類別（die-level→package-level→system-level）。兩規律疊加造就 2022-2026 ATE 設備時數需求 3x 的非線性曲線。</p>
+
+  <div class="data-display">
+    <div class="data-display-header">ATE 代際 × 平均單顆測試時數（per AI 加速器）</div>
+    <table>
+      <thead><tr><th>時代</th><th>年份</th><th>代表晶片 / 封裝</th><th>單顆測試時數</th></tr></thead>
+      <tbody>
+        <tr><td>AI 加速器爆發</td><td>2022-2025</td><td>H100/Blackwell、HBM3/3E 12-high、CoWoS 5.5 reticle</td><td>~4h</td></tr>
+        <tr><td>★ 現在：HBM4 + chiplet</td><td>2026-2027</td><td>Rubin/MI400、HBM4 16-high、N12FFC+ base die、SLT 滲透</td><td>~12h（3x vs 2022）</td></tr>
+        <tr><td>HBM5 + A14</td><td>2028-2029</td><td>Feynman、HBM5/5E、14-reticle CoWoS、SoW-X wafer-scale</td><td>~20-30h（5-7x，推估）</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="tbl-read">怎麼讀：最關鍵是「2022 ~4h → 2026 ~12h(3x) → 2028E ~20-30h(5-7x)」這條測試時數曲線——不是線性，而是每代加速（每多一層 HBM、每加一個 reticle 都倍增故障模式）。對 Advantest／Teradyne 意味：即使 AI 加速器數量 2026-2029 持平，per-chip 測試 hour × 設備折舊 ASP 仍能 +50-100% 推升營收——這是過去 ATE 廠從未經歷的 unit economics。</p>
+
+  <div class="invest-meaning">技術成熟度對 entry timing 的含義：前段 ASML High-NA 是「monopoly→super-monopoly」轉折（unit ASP 翻倍）、KLA 是「complexity = revenue」雙倍催化；後段 ATE 是「測試時數 × $/hour」內生引擎。三者都不靠 wafer 數量增長，這是把設備裁決從「景氣循環」打成「結構成長」的技術基礎。</div>
+
+  <div class="ds-refs">
+    <span class="ds-refs-label">本節參考來源</span>
+    <ol>
+      <li><span class="tier">[T1]</span><a href="https://www.asml.com/en/news/press-releases/2026/q1-2026-financial-results">ASML Q1 2026 — EUV €4.1B (+28%)、High-NA EXE:5200 ~$380M</a></li>
+      <li><span class="tier">[T2]</span><a href="https://www.trendforce.com/">TrendForce — 2nm wafer $28-30K vs 7nm $8K = 3.5x、GAA tool intensity ~1.4x</a></li>
+      <li><span class="tier">[T3]</span><a href="https://www.digitimes.com/">DIGITIMES — per-chip 測試時數 2022~4h→2026~12h(3x)→2028~20-30h(5-7x)、SLT +30% YoY</a></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============ §3 ============ -->
+<section class="chapter">
+  <div class="chapter-marker">§3 · 第二幕</div>
+  <h2>供給側：<em>兩個寡占</em>與利潤池遷移</h2>
+  <p class="chapter-intro">誰在供給、瓶頸在哪、利潤被誰賺走？前段五寡占在 8 個 subsystem 分工、後段 ATE 雙寡占在六道測試關卡收 toll——利潤正往設備層兩端集中。</p>
+
+  <p>前段 WFE 可拆成 8 個主要 subsystem，五寡占並非「7 家在每段都競爭」，而是分工結構：<strong>2 個真 80%+ 單家獨佔（litho ASML 100% / coater TEL 90%）+ 3 個雙寡占或 leader-with-followers（etch、process control、deposition）+ 2 個 commodity 段（wet clean、implant/CMP）+ 1 個新興（hybrid bonding）</strong>。新進者要打破，得同時突破 3-4 個 subsystem、每個都有 10-15 年 know-how。</p>
+
+  <div class="data-display">
+    <div class="data-display-header">8 大 WFE Subsystem × 玩家結構（先進製程）</div>
+    <table>
+      <thead><tr><th>Subsystem</th><th>主導玩家</th><th>市佔</th><th>kingmaker?</th></tr></thead>
+      <tbody>
+        <tr><td>Lithography</td><td>ASML（EUV + immersion）</td><td>ASML 80%+；EUV 100%；High-NA 100%</td><td>✅ 真獨佔</td></tr>
+        <tr><td>Etch</td><td>LRCX / TEL / AMAT / Hitachi</td><td>LRCX ~50%、TEL ~25%、AMAT ~15%</td><td>✅ 雙寡占</td></tr>
+        <tr><td>Deposition</td><td>AMAT / LRCX / TEL（ALD）/ ASMI</td><td>AMAT ~40%、LRCX ~25%、TEL ~15%</td><td>部分（ALD 是 GAA 關鍵）</td></tr>
+        <tr><td>Process Control</td><td>KLA / AMAT / Hitachi（review SEM）</td><td>KLA 55-60%；patterned 75-80%；reticle 80%+</td><td>✅ 複利機</td></tr>
+        <tr><td>Coater / Developer</td><td>TEL / SCREEN（小份）</td><td>TEL 90%；EUV coater 100%</td><td>✅ 真獨佔（EUV scanner 必配）</td></tr>
+        <tr><td>Wet Cleaning</td><td>SCREEN / TEL / LRCX / Semes</td><td>SCREEN 25%+；TEL 20%；LRCX 15%</td><td>✗ commodity</td></tr>
+        <tr><td>Implant / CMP</td><td>AMAT / Ebara（CMP）</td><td>AMAT implant 70%+、CMP 50%+</td><td>✗ 成熟</td></tr>
+        <tr><td>Hybrid Bonding</td><td>BESI / AMAT（9% stake）/ ASMPT</td><td>BESI ~67% + AMAT 9% stake；ASMPT ~25%</td><td>新興（HBM4 + 3D IC 必備）</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="tbl-read">怎麼讀：八段拆成 4 類——3 個 confirmed kingmaker（litho ASML 100%、etch LRCX+TEL 75% 合計、process control KLA 55-60%）+ 2 個 partial/雙寡占（deposition、coater）+ 2 個 commodity + 1 個新興。分析五寡占公司時要區分「真 80%+ 單家（ASML / TEL coater，PE 上限 32-35x）」vs「雙寡占需共享 pricing power（LRCX/TEL etch、AMAT/LRCX dep、KLA 半壟斷，上限 28-30x）」。</p>
+
+  <p>良率瓶頸是五寡占議價權結構性上升的根源。當製程從 7nm FinFET 進入 2nm GAA，瓶頸從「litho overlay 對齊」轉向「nanosheet 形貌控制」與「multiple patterning EUV defect」：① ALD 沉積關鍵性大增（LRCX ALD 在 GAA 客戶滲透從 FinFET 30% 升到 GAA 60%）；② high-aspect-ratio etch 難度上升（3D NAND 400+ 層、GAA inner spacer 需 100:1 aspect ratio，LRCX Kiyo/Flex 唯一被三家記憶體廠共同認證）；③ EUV mask defect 風險倍增（High-NA 多重曝光，KLA reticle inspection 80%+ 成「不可繞過」）；④ wet clean step 從 7nm ~50 步增到 2nm ~80-100 步（SCREEN SU-3400 24-chamber 對應）。</p>
+
+  <div class="inference">
+    <div class="inference-label">Inference · 供給（吸收原 AI 測試設備 ATE 子題核心）</div>
+    <div class="inference-title">後段 ATE 是 AI 供應鏈的「最後一哩 toll booth」，雙寡占已 ASML 化卻仍按 cyclical 估</div>
+    <div class="deduction-chain">前提：每顆 AI 加速器出貨前過六道測試關（晶圓針測→封裝後初測→終測→SLT→burn-in→final test）＋ Advantest SoC 60%・Memory 70%（HBM 近獨家）＋ Teradyne ~35%／HBM ~25-50% ＋ 合計 ~90% ＋ 單顆 toll fee $40-80（占 chip BOM ~2-3%）</div>
+    <p>市場把 ATE 與 ASML／AMAT 並列做 cyclical 看待，但 ATE 雙寡占集中度（~90%）已是 ASML-level，且有一條前段沒有的內生引擎：每顆晶片出貨前都繳「測試稅」，而這筆稅隨封裝複雜度（HBM3→4→5 多疊一層、CoWoS 5.5x→9.5x→14x reticle）倍增。Advantest 在 HBM4 16-high stack 上不只賣設備，而是與 SK hynix／Samsung／Micron 共同設計 stack-level 測試流程、即時回饋修整製程——把 OEM 升級為「yield management partner」，客戶切換成本（NRE + qualification 6-12 個月）結構性上升。SK hynix 連續 HBM 領先有相當部分歸功於與 Advantest 深度整合，這個「軟性護城河」市場完全沒在 model。</p>
+    <p><strong>可證偽條件：</strong>若 Teradyne 在 HBM4 追平 Advantest（Magnum 7H 目前落後 6-12 個月）、或 Advantest T5801 ASP 上不去（$5M→$7-8M 目標未達），「ATE 雙寡占 = ASML 化」溢價就不成立、重估空間消失。而 AI capex 是前段 WFE 與後段 ATE 的共同 kill switch，曝險高度相關、不可分散。</p>
+  </div>
+
+  <h3>利潤池遷移：利潤往設備層兩端集中</h3>
+  <div class="data-display">
+    <div class="data-display-header">前段 WFE × 後段 ATE 利潤池 · 毛利／市佔為最新 T1/T2 實際值或區間</div>
+    <table>
+      <thead><tr><th>環節</th><th>代表玩家 / 毛利 · 市佔</th><th>遷移</th><th>搶 / 被搶 · 鎖喉度</th></tr></thead>
+      <tbody>
+        <tr><td>前段 — 微影（EUV/High-NA）</td><td class="num">ASML GM ~53% / 100% 獨家</td><td>↑</td><td>litho 真物理護城河；High-NA ASP $380M</td></tr>
+        <tr><td>前段 — 蝕刻 / 沉積</td><td class="num">LRCX 蝕刻 50% / AMAT 沉積 40%</td><td>↑</td><td>GAA + 3D NAND 設備密度上行</td></tr>
+        <tr><td>前段 — 檢測 / 量測</td><td class="num">KLA 55-60%・reticle 80%+ / GM ~60%</td><td>↑</td><td><strong>複利機</strong>：intensity 8-10%→11-13%</td></tr>
+        <tr><td>前段 — 塗佈 / 清洗</td><td class="num">TEL coater 90% / SCREEN 25%+</td><td>↑</td><td>EUV scanner 必配；clean 步驟倍增</td></tr>
+        <tr><td>後段 — SoC / Memory ATE</td><td class="num">Advantest+Teradyne ~90%</td><td>↑↑</td><td><strong>最後一哩 toll</strong>：時數 3x→5-7x</td></tr>
+        <tr><td>後段 — 探針卡（耗材）</td><td class="num">FormFactor+Technoprobe ~60% / GM 35-45%</td><td>↑</td><td>per-HBM tax：HBM4 +30% YoY、royalty-like</td></tr>
+        <tr><td>下游 — 晶圓廠（客戶）</td><td class="num">TSMC GM 58% / Samsung・Intel 落後</td><td>→</td><td>capex 出資方，對 ASML/ATE 議價權低</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="tbl-read">怎麼讀：利潤往「前段五寡占 ＋ 後段 ATE 雙寡占」兩端集中（都在 ↑／↑↑），下游晶圓廠是 capex 出資方但議價權低（→）。最被低估的兩環是 KLA（前段複利機）與 Advantest／Teradyne（後段最後一哩 toll）——營收和「晶片有多複雜」綁定、不是「有多少顆」。探針卡是 royalty-like 的隱性 per-HBM tax，被當設備估、其實該當 IP 估。</p>
+
+  <div class="invest-meaning">12-36M 內供給能否回應需求？前段 GAA + High-NA 把設備強度結構推高、後段測試時數倍增，供給端反而被瓶頸鎖死（良率 + 測試 know-how）；議價權往設備層兩端集中。新進者（中國）即使突破單一設備也難打破生態系（AMAT-BESI 收編 hybrid bonding、TEL-ASML EUV 100% 綁定、Advantest-SK hynix yield partnership）。</div>
+
+  <div class="ds-refs">
+    <span class="ds-refs-label">本節參考來源</span>
+    <ol>
+      <li><span class="tier">[T2]</span><a href="https://www.semi.org/sites/semi.org/files/2025-09/5%20Clark%20Tseng_Building%20the%20Future-AI%20Investment,%20Equipment%20&%20Materials%20Market%20Outlook.pdf">SEMI 2025 Equipment Outlook — subsystem 市佔</a></li>
+      <li><span class="tier">[T1]</span><a href="https://filecache.investorroom.com/mr5ir_lamresearch2/1476/MarQ26_slides_Full_Final.pdf">LRCX Mar Q26 slides — 蝕刻 50% + ALD 25%、+24% YoY</a></li>
+      <li><span class="tier">[T1]</span><a href="https://www.advantest.com/en/investors">Advantest FY25 — SoC 60% + Memory 70%（HBM 近獨家）、T5801 IO 1024→2048、ASP $5M→$7-8M</a></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============ §4 ============ -->
+<section class="chapter">
+  <div class="chapter-marker">§4 · 第二幕</div>
+  <h2>需求側：<em>設備強度</em>與<em>測試時數</em>，與 wafer 數量脫鉤</h2>
+  <p class="chapter-intro">誰在買、為何買、哪塊需求最不可替代？最不可替代的不是「多少片晶圓」，而是「每片要多少設備、每顆要測多少小時」——這兩條曲線即使 wafer 持平也往上。</p>
+
+  <p>需求驅動分兩段。前段 WFE 是「設備強度」：2nm GAA wafer 成本是 7nm 的 3.5x（$28-30K vs $8K），因為 GAA 每層 nanosheet 需 ALD、inner spacer etch 需 100:1 aspect ratio、High-NA 多重曝光把 reticle defect 翻倍、wet clean 步驟從 ~50 增到 ~80-100 步——即使 wafer starts 不增，每片的設備支出也結構上行。後段 ATE 是「測試時數」：AI 加速器單顆 2022 ~4h → 2026 ~12h（3x）→ 2028E ~20-30h（5-7x）。前段純 WFE 2026E ~$123B、CAGR ~7-10%；後段 ATE 全鏈 2026 ~$20-22B、本報告時數框架估 CAGR 12-15%（vs 設備台數框架共識 6-8%）。</p>
+
+  <div class="data-display">
+    <div class="data-display-header">前段 WFE TAM 多口徑對照（2024-2027E）</div>
+    <table>
+      <thead><tr><th>口徑 / 年度</th><th>2024</th><th>2025E</th><th>2026E</th><th>2027E</th></tr></thead>
+      <tbody>
+        <tr><td>SEMI 總設備（含後段）</td><td class="num">$117B</td><td class="num">$133B</td><td class="num">$145B</td><td class="num">$156B</td></tr>
+        <tr><td>SEMI 純 WFE（前段）</td><td class="num">$108B</td><td class="num">$113B</td><td class="num">$123B</td><td class="num">$135.2B</td></tr>
+        <tr><td>WFE foundry/logic 段</td><td class="num">$60.7B</td><td class="num">$66.6B</td><td class="num">$70.3B</td><td class="num">$75.2B</td></tr>
+        <tr><td>WFE memory 段</td><td class="num">$31B</td><td class="num">$36B</td><td class="num">$42B</td><td class="num">$48B</td></tr>
+        <tr><td>後段 ATE 全鏈</td><td class="num">—</td><td class="num">~$18-20B</td><td class="num">~$20-22B</td><td class="num">~$22-24B</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="tbl-read">怎麼讀：前段三口徑 CAGR 都在 7-10%（memory +14-17% 高於 logic +5-7%，對應 HBM + 1c DRAM + NAND）；後段 ATE 本體台數 CAGR 僅 6%，但加上 per-chip 時數 3x→5-7x，全鏈成長動能高於台數框架。<strong>推導：</strong>純 WFE 2026E base ~$123B（SEMI Dec 2025）；若 AI capex 維持 +20% 且 GAA/High-NA 同步點火，TEL 自家 guidance「&gt; $130B + 15-20% YoY」暗示 2026 SEMI 數字有上修風險。</p>
+
+  <h3>需求三角驗證（top-down vs bottom-up）</h3>
+  <div class="data-display">
+    <div class="data-display-header">設備強度 vs 測試時數 · 對帳（口徑不同，量級判斷）</div>
+    <table>
+      <thead><tr><th>視角</th><th>數值</th><th>口徑 / 來源</th></tr></thead>
+      <tbody>
+        <tr><td>前段純 WFE TAM（top-down）</td><td class="num">2026E ~$123B → 2030 ~$184B</td><td>SEMI Dec 2025 + Yole 2030（含 services）</td></tr>
+        <tr><td>前段設備強度（bottom-up）</td><td class="num">2nm $28-30K vs 7nm $8K = 3.5x</td><td>GAA + High-NA tool intensity ~1.4x</td></tr>
+        <tr><td>後段 ATE 全鏈（top-down）</td><td class="num">2026 ~$20-22B → 2030 ~$30-32B</td><td>本體+探針卡+SLT+burn-in+handler</td></tr>
+        <tr><td>後段測試時數（bottom-up）</td><td class="num">2022~4h→2026~12h(3x)→2028~20-30h(5-7x)</td><td>per AI 加速器；HBM stack + reticle 倍增</td></tr>
+        <tr><td>雙寡占放量（上游 bottom-up）</td><td class="num">Advantest +71%・Teradyne Q1 +75% YoY</td><td>30 年最大、同步放量</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="tbl-read">怎麼讀：前段 top-down（純 WFE ~$123B）對得起 bottom-up（2nm 設備強度 3.5x × 先進節點擴產），缺口 &lt;20%（口徑差：TAM 含成熟節點存量）。後段要對帳的是「時數假設」——ATE 本體 CAGR 6%，但全鏈 alignment（Advantest +71%、Teradyne +75%、SLT +30% YoY、burn-in 8.48% CAGR、探針卡 9% CAGR 同步）說明 2026 是結構轉折年。「ATE CAGR 12-15%」採信時數框架、共識 6-8% 是台數框架，口徑不同、本報告明標分歧。</p>
+
+  <div class="inference">
+    <div class="inference-label">Inference · 需求</div>
+    <div class="inference-title">中國替代論衝擊的是成熟節點 ICAPS，不是先進節點——市場把兩件事混為一談</div>
+    <div class="deduction-chain">前提：中國 WFE 占比 2024 40%（$49.5B）→ 2025E 28%（$38B）＋ Naura/AMEC 成熟節點 +4-5pp ＋ AMEC 5nm dielectric etch TSMC Nanjing single-step ＋ SMEE litho 卡 28nm DUV、EUV 10-15 年 ＋ 先進節點五寡占 90%→95%</div>
+    <p>市場常把「中國國產設備崛起」當五寡占的整體威脅，但混淆了兩個戰場。成熟節點（28nm 以上 ICAPS）：中國 domestic adoption 2025 已達 35%（超政府 28% target），這是 AMAT ICAPS（中國 revenue 27-30%）的真風險，且 etch／depo 在先進節點出現局部 single-step 突破（AMEC 5nm dielectric etch TSMC Nanjing 訂單、14nm 已在 SMIC 驗證）。先進節點（5nm 以下）：litho 仍 100% 被堵（SMEE 卡 28nm DUV、EUV 至少 10-15 年），五寡占從 90% 升向 95%。</p>
+    <p><strong>可證偽條件：</strong>① 若 Naura／AMEC 在 7nm 以下取得任何<em>量產</em>訂單、或 SiCarrier LDP EUV prototype 2028 商用提前，先進節點護城河出現真裂縫；② 若中國成熟節點 stockpile 反轉、ICAPS 需求崩，AMAT／LRCX 中國 revenue（27-34%）拖累整體——兩個方向相反。</p>
+  </div>
+
+  <div class="invest-meaning">哪塊需求最有定價權？前段 ASML EUV（下游晶圓廠零議價權）＋ 後段 Advantest HBM yield partnership（切換成本 6-12 個月 NRE）。需求拐點風險：兩段都高度綁 AI capex——這是「結構成長」與「週期尾巴」的分界。</div>
+
+  <div class="ds-refs">
+    <span class="ds-refs-label">本節參考來源</span>
+    <ol>
+      <li><span class="tier">[T1]</span><a href="https://www.semi.org/en/semi-press-release/global-semiconductor-equipment-sales-projected-to-reach-a-record-of-156-billion-dollars-in-2027-semi-reports">SEMI Dec 2025 — 純 WFE / 總設備 / 分段 / 區域</a></li>
+      <li><span class="tier">[T2]</span><a href="https://www.yolegroup.com/press-release/wafer-fab-equipment-wfe-market-to-hit-184-billion-by-2030-for-equipment-and-services-driven-by-specialized-segment-growth-and-global-manufacturing-shifts/">Yole 2025 — WFE 2030 $184B（含 services）</a></li>
+      <li><span class="tier">[T2]</span><a href="https://www.semi.org/">SEMI / TechNews — 中國 domestic adoption 35%、AMEC 5nm dielectric etch TSMC Nanjing、SMEE 卡 28nm DUV</a></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============ §5 ============ -->
+<section class="chapter">
+  <div class="chapter-marker">§5 · 第二幕</div>
+  <h2>供需<em>裁決</em>與三情境、投資時鐘</h2>
+  <p class="chapter-intro">綜合 §3 §4：依本章推導，半導體設備層未來 24-36 個月供需狀態是 <strong>結構性短缺、利潤往設備層集中</strong>，現處 Phase II。</p>
+
+  <h3>資本週期證據（裁決的量化依據）</h3>
+  <ul>
+    <li><strong>capex/折舊比與毛利結構</strong>：設備層毛利從 5 年前 42-45% 升到 47-53%（ASML 47%→53%），這 6pp 對應約 €2.5B 額外毛利（年化），是從下游晶圓廠 capex budget「轉移」來的——利潤遷移而非單純週期。</li>
+    <li><strong>產業 ROIC vs WACC</strong>：KLA ROIC ~50%、ASML 高位、Advantest 因 +71% 成長 ROIC 跳升——遠高於 WACC，且<em>未</em>引來新資本過剩（litho / 測試 know-how 是 10-15 年門檻，新產能 lead time 長），這正是「高報酬未引資本過剩→均值回歸延後」的反 commodity 訊號。</li>
+    <li><strong>新產能 lead time</strong>：EUV / High-NA 設備交期 12-18 個月、ATE qualification 6-12 個月——供給彈性低，價格漲時無法快速擴產，支撐賣方市場。</li>
+  </ul>
+
+  <p><strong>強制裁決</strong>：依 §3（供給瓶頸：良率 + 測試 know-how 雙鎖）與 §4（需求：設備強度 3.5x + 測試時數 3x→5-7x），未來 24-36 個月設備層供需狀態是 <strong>結構性短缺</strong>，因為供給被物理門檻與 know-how 鎖死、需求由 AI 結構驅動往設備層兩端集中。三選一不騎牆——不是「平衡」也不是「過剩」，是短缺中的利潤遷移。唯一未排除的變數是「AI capex 週期尾巴」（§7 / §8 處理）。</p>
+
+  <div class="scenario-set">
+    <div class="scenario scenario-base">
+      <div><span class="scenario-tag">Base Case</span><span class="scenario-prob">主觀機率 ~55%</span></div>
+      <div class="scenario-title">結構超循環續行，AI capex 高位但增速放緩、設備層緩升</div>
+      <p>[X: base 很可能] 純 WFE 2026E ~$123B / 2027E ~$135B 連 4 年新高，五寡占先進節點 90%→95%；後段 ATE 隨 HBM4 ramp、測試時數往 5x 走，雙寡占維持 ~90% 集中度。KLA intensity 往 10-11%（未到上端 13%）；中國成熟滲透續升但先進 litho 仍 0%。設備層毛利守 47-53%、PE 高位但未進一步 re-rate。</p>
+      <div class="scenario-trigger"><strong>觸發確認訊號：</strong>SEMI 2027 維持 $156B、ASML High-NA 2027 ~10 台、Advantest FY26 維持高位 guidance、AI capex YoY +15-25%、中國先進仍無量產訂單。</div>
+    </div>
+    <div class="scenario scenario-bull">
+      <div><span class="scenario-tag">Bull Case</span><span class="scenario-prob">主觀機率 ~22%</span></div>
+      <div class="scenario-title">市場改用「準消費獨佔」框架重估 KLA 與 ATE 雙寡占</div>
+      <p>[X: bull 可能] AI capex 持續 +25%+、三引擎同步點火；KLA intensity 突破 12-13%、Advantest T5801 ASP 達 $7-8M 且 HBM4 維持近獨家。Street 把 KLA／Advantest／Teradyne 從 cyclical（25-30x）重估到準獨佔（KLA 32-35x、ATE 30-32x），兌現 1-1.5 turn；探針卡被當 IP 重估、HBM tax 顯性化。</p>
+      <div class="scenario-trigger"><strong>觸發確認訊號：</strong>KLA intensity 連兩季 &gt; 11%、Advantest HBM4 ASP 確認 $7-8M、SLT TAM 翻倍至 $3B+、sell-side 用「準消費獨佔」措辭、探針卡 +30% YoY 兌現。</div>
+    </div>
+    <div class="scenario scenario-bear">
+      <div><span class="scenario-tag">Bear Case</span><span class="scenario-prob">主觀機率 ~23%</span></div>
+      <div class="scenario-title">AI capex 2027 集中放緩，ATE 重演 2000-style 不對稱下修</div>
+      <p>[X: bear 不太可能但非微小] hyperscaler capex 連兩季 YoY &lt; +15%、NVDA DC deceleration；後段 ATE（固定成本高、生命週期 5-7 年）訂單 -30~50% 不對稱下修，前段 WFE 也踩煞車。中國成熟若同時反轉，AMAT／LRCX 中國 revenue（27-34%）雙重拖累。KLA／ATE「結構成長」被當「又一 cyclical 高點」，PE 進一步 de-rate。</p>
+      <div class="scenario-trigger"><strong>觸發確認訊號：</strong>2027 hyperscaler capex YoY &lt; +15%、NVDA DC 環比轉負、Advantest／Teradyne 下修 guidance、SEMI 2027 從 $156B 下修、ATE book-to-bill &lt; 1。</div>
+    </div>
+  </div>
+
+  <h3>投資時鐘 phase 判定 + 庫存/訂單指標</h3>
+  <p>當前 <strong>Phase II</strong>（技術採用加速 + 玩家格局已定）。leading indicator：SEMI book-to-bill &gt; 1（賣方市場）、ASML backlog €25.5B、Advantest／Teradyne guidance 同步上修——三者全綠。換 Phase III（成熟）的必要 ∩ 充分條件：AI capex YoY 跌破 +15% ∩ ATE book-to-bill &lt; 1 ∩ KLA intensity 停止上升。三者全亮才轉 Phase——目前無一亮。</p>
+
+  <div class="invest-meaning">本產業現在處於 cycle Phase II（短缺中的利潤遷移），下個 phase 的觸發條件是「AI capex 集中放緩」這條 binary；現在 act vs 等？設備層隨 AI 已 re-rate 至高位——結構對但現價非穩進場點，等 AI capex 雜訊或中國 ICAPS 風險錯殺再進更不對稱。</div>
+
+  <div class="ds-refs">
+    <span class="ds-refs-label">本節參考來源</span>
+    <ol>
+      <li><span class="tier">[T1]</span><a href="https://www.asml.com/en/news/press-releases/2026/q1-2026-financial-results">ASML Q1 2026 — GM ~53%、backlog €25.5B、China 36%→19%</a></li>
+      <li><span class="tier">[T1]</span><a href="https://www.advantest.com/en/investors">Advantest FY25 / Teradyne Q4 2025 — guidance 同步上修、book-to-bill</a></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============ §6 ============ -->
+<section class="chapter">
+  <div class="chapter-marker">§6 · 第三幕</div>
+  <h2>產業經濟學與<em>估值傳導</em></h2>
+  <p class="chapter-intro">這產業的錢怎麼賺、估值跟著什麼變數動？unit economics 是「ASP × 寡占定價權」，估值傳導的關鍵變數是「市場用 cyclical 還是準獨佔框架」。</p>
+
+  <p>unit economics：前段五寡占毛利 47-53%、ROIC 25-50%、capex cycle 與 wafer fab 投資同步但因寡占有定價權緩衝；ASP 動態是「每代 +」（High-NA $380M vs Low-NA $200M = 1.9x、Advantest T5801 ASP $5M→$7-8M）。抗 commoditization 分析：litho / 測試 know-how 是 10-15 年累積門檻，中國替代在先進節點失敗（litho 0%），故設備層 ASP 不會 commodity 化——這是與 DRAM／面板等真 cyclical 的根本差異。</p>
+
+  <p>估值傳導：產業變數 → 公司 Fwd PE 的 pass-through，核心不是 EPS 成長率，而是「市場用哪把尺」。敏感度錨點：若市場把 KLA／ATE 從 cyclical（25-30x）重估到準獨佔（30-35x），即使 EPS 不變，股價也有 +20-40% 倍數擴張空間（1-1.5 turn）。反之，若 AI capex 集中放緩、市場確認「又一 cyclical 高點」，PE 從 25-30x de-rate 到 18-22x（cyclical 谷底），下殺 -25~35%。</p>
+
+  <div class="data-display">
+    <div class="data-display-header">設備層估值傳導 · PE 分層（真獨佔 vs 雙寡占）</div>
+    <table>
+      <thead><tr><th>類別</th><th>代表</th><th>GM / ROIC</th><th>PE 上限（準獨佔框架）</th></tr></thead>
+      <tbody>
+        <tr><td>真 80%+ 單家獨佔</td><td>ASML / TEL coater</td><td class="num">ASML 53% / 高</td><td class="num">32-35x（V/MA 級）</td></tr>
+        <tr><td>雙寡占 — 檢測複利機</td><td>KLA</td><td class="num">~60% / ~50%</td><td class="num">32-35x（intensity 兌現）</td></tr>
+        <tr><td>雙寡占 — 蝕刻 / 沉積</td><td>LRCX / AMAT</td><td class="num">48-50% / 25-40%</td><td class="num">28-30x</td></tr>
+        <tr><td>雙寡占 — 後段 ATE</td><td>Advantest / Teradyne</td><td class="num">高 / 跳升</td><td class="num">30-32x（時數兌現）</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="tbl-read">怎麼讀：PE 不該一刀切——真獨佔（ASML/TEL coater）與複利機（KLA）上限 32-35x；雙寡占需共享 pricing power（LRCX/AMAT）上限 28-30x；ATE 雙寡占因時數內生引擎可達 30-32x（但 cyclical 較淺、保守於 ASML）。目前 sell-side 多用 cyclical 框架估，這是 alpha 來源。</p>
+
+  <div class="invest-meaning">估值現在 price 了什麼？前段 ASML／High-NA 已 price 多數溢價；KLA 與 ATE 雙寡占仍被 cyclical 框架估、重估未完。哪個變數動會 re-rate / de-rate？re-rate 觸發＝市場改用「準消費獨佔」措辭；de-rate 觸發＝AI capex 集中放緩。</div>
+
+  <div class="ds-refs">
+    <span class="ds-refs-label">本節參考來源</span>
+    <ol>
+      <li><span class="tier">[T1]</span><a href="https://ir.kla.com/news-events/press-releases">KLA Q3 FY2026 — GM ~60%、ROIC ~50%、process control intensity 軌道</a></li>
+      <li><span class="tier">[T1]</span><a href="https://www.asml.com/en/news/press-releases/2026/q1-2026-financial-results">ASML Q1 2026 — GM 47%→53% 5 年趨勢</a></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============ §7 ============ -->
+<section class="chapter">
+  <div class="chapter-marker">§7 · 第三幕</div>
+  <h2>Non-Consensus、<em>Priced-in</em> 檢驗與 Kill Scenario</h2>
+  <p class="chapter-intro">市場主流怎麼看、我們哪裡不同、為什麼這分歧還能賺錢？三條分歧 + 三條 steel-man 反方 + 每條對照市場已 price 多少。</p>
+
+  <h3>三個與共識的分歧（含 priced-in 檢驗）</h3>
+  <p><strong>NC#1 — 設備是「結構超循環」非 cyclical</strong>。共識：sell-side 多把 WFE/ATE 當 cyclical equipment maker、跟著 wafer 出貨估值（T3 多家券商 primer）。我們：利潤從下游晶圓廠往設備層結構性遷移、五寡占毛利 42-45%→47-53%、ATE 雙寡占 ~90% 集中度。證據 Z：§3 利潤池表 + §6 毛利趨勢。[F: ASML GM 47%→53%] <strong>市場 price 了多少？</strong> 設備層 PE 已從 cyclical 低點 18-22x 升到 25-30x，故「結構超循環」已 partial priced——alpha 不在這條（方向對但已 priced 一半）。</p>
+  <p><strong>NC#2 — KLA 複利機與 ATE 雙寡占被 cyclical 框架低估</strong>。共識：用「設備台數 × ASP」估 KLA/ATE（T3 sell-side model）。我們：KLA 的 process control intensity（8-10%→11-13%）與 ATE 的測試時數（3x→5-7x）是與 wafer 數脫鉤的內生引擎，集中度已 ASML-level、該按準獨佔估。[I: 集中度 + 內生引擎 + cyclical 框架 → 1-1.5 turn 重估] <strong>市場 price 了多少？</strong> KLA／Advantest／Teradyne 仍給 25-30x cyclical 倍數、未到準獨佔 30-35x——<strong>這條分歧對且未 priced，最可操作</strong>。</p>
+  <p><strong>NC#3 — 中國替代僅成熟節點、先進節點 litho 0%</strong>。共識：把「中國國產設備崛起」當五寡占整體威脅（T3 媒體）。我們：成熟節點 ICAPS 滲透真（35% adoption），但先進節點 litho 仍 0%、五寡占 90%→95%。證據 Z：SMEE 卡 28nm DUV、AMEC 僅 single-step 突破。 <strong>市場 price 了多少？</strong> 市場常用「中國威脅」折價 ASML／KLA，但混淆成熟 vs 先進——這條分歧對且被錯誤 priced（ASML／KLA 被中國折價錯殺）。</p>
+
+  <h3>三個 steel-man 反方（每條附路徑 + 證偽窗口）</h3>
+  <ul>
+    <li><strong>反方 1（最強）：AI capex 2027 集中放緩 → 設備層 -25~45% 殺戮</strong>。空頭數據：2000-2002 光纖測試設備 +400%→-75%；ATE 固定成本高、生命週期 5-7 年；hyperscaler capex 若連兩季 YoY &lt; +15%。我們回應：本次測試時數已內生成長（+200% 即使 GPU 數不增）+ AI capex 分散多家 hyperscaler；但承認這是真 kill switch、無法完全抵銷。證偽窗口：2027 各季法說。</li>
+    <li><strong>反方 2：Teradyne 在 HBM4 追平 Advantest、ATE 雙寡占溢價消失</strong>。空頭數據：Teradyne Magnum 7H + merchant GPU 認證反撲、$6B evergreen target。我們回應：Magnum 7H 目前落後 HBM4 6-12 個月、Advantest yield partnership 切換成本高；但若追平，「ASML 化」溢價就不成立。證偽窗口：2026 H2 HBM4 ramp。</li>
+    <li><strong>反方 3：中國在先進節點取得任何 etch/depo 量產訂單 → 五寡占護城河第一道裂縫</strong>。空頭數據：AMEC 5nm dielectric etch TSMC Nanjing single-step、SiCarrier LDP EUV 2028 目標。我們回應：single-step ≠ 量產線、EUV litho 仍 10-15 年；但若 7nm 以下出現量產訂單須調整。證偽窗口：年度追蹤。</li>
+  </ul>
+
+  <div class="invest-meaning">這三條分歧裡哪條最可操作（對 + 未 priced）？<strong>NC#2（KLA 複利機 + ATE 雙寡占被 cyclical 低估）</strong>——對且未 priced，重估空間 1-1.5 turn；NC#1 已 partial priced；NC#3 是「被錯殺」的防守型 alpha。市場最低估的風險：AI capex 週期尾巴（反方 1）。</div>
+
+  <div class="ds-refs">
+    <span class="ds-refs-label">本節參考來源</span>
+    <ol>
+      <li><span class="tier">[T1]</span><a href="https://www.advantest.com/en/investors">Advantest / Teradyne — SoC/Memory 份額、Magnum 7H HBM4 落後 6-12 個月、$6B target</a></li>
+      <li><span class="tier">[T2]</span><a href="https://www.semi.org/">SEMI / TechNews — AMEC 5nm single-step、SMEE 卡 28nm、先進節點 90%→95%</a></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============ §8 ============ -->
+<section class="chapter">
+  <div class="chapter-marker">§8 · 第三幕</div>
+  <h2>Catalyst Timeline 與<em>證偽表</em></h2>
+  <p class="chapter-intro">未來 18 個月盯哪些節點、哪些數字一破就要砍？前段 High-NA 出貨與後段 HBM4 ramp 是雙引擎試金石，AI capex 是共同 kill switch。</p>
+
+  <h3>Catalyst Timeline（18M）</h3>
+  <ul>
+    <li><strong>2026-Q3 — HBM4 16-high mass production + Advantest T5801 ramp</strong>：若 ASP 達 $7-8M、Advantest 維持近獨家 → 後段時數溢價兌現；若 Teradyne Magnum 7H 追平 → ATE 雙寡占溢價打折。</li>
+    <li><strong>2026 各季 — hyperscaler capex YoY + NVDA DC 營收</strong>：若 +15-25% → base case 續行；若連兩季 &lt; +15% → bear case 啟動（前後段共同 kill switch）。</li>
+    <li><strong>2027 — ASML High-NA 出貨 ~10 台 + 三家 HBM4 全面 ramp</strong>：若如 guidance → 前段設備強度 + 後段時數雙引擎驗證；若 &lt; 7 台 → High-NA TAM 延後。</li>
+    <li><strong>2027 各季 — KLA process control intensity</strong>：若連兩季 &gt; 11% → 複利機 thesis 兌現、KLA 重估啟動；若 &lt; 9% → 證偽。</li>
+    <li><strong>2028 — 中國先進節點滲透（SiCarrier LDP EUV 商用目標）+ 測試時數 ~20-30h</strong>：若中國 7nm 以下量產訂單 → 護城河裂縫；若 litho 仍 0% → thesis intact。</li>
+  </ul>
+
+  <div class="data-display">
+    <div class="data-display-header">證偽表 · kill metrics（thesis 作廢點，數字用 range）</div>
+    <table>
+      <thead><tr><th>Kill Metric</th><th>Bear（thesis 作廢）</th><th>Base</th><th>時間窗</th></tr></thead>
+      <tbody>
+        <tr><td>hyperscaler capex YoY</td><td class="num">&lt; +15% 連兩季</td><td class="num">+15-25%</td><td>2027 各季</td></tr>
+        <tr><td>純 WFE 2027 TAM（前段）</td><td class="num">&lt; $115B</td><td class="num">~$135B</td><td>SEMI 2027 forecast</td></tr>
+        <tr><td>KLA process control intensity</td><td class="num">&lt; 9%（停止上升）</td><td class="num">10-13%</td><td>季度法說</td></tr>
+        <tr><td>Advantest HBM4 ASP / 份額</td><td class="num">ASP &lt; $6M 或被 Teradyne 追平</td><td class="num">$7-8M、近獨家</td><td>2026 H2</td></tr>
+        <tr><td>中國先進節點 etch/depo 量產訂單</td><td class="num">7nm 以下取得任何量產線</td><td class="num">僅 single-step</td><td>年度追蹤</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="tbl-read">怎麼讀：第一行（AI capex）是前後段共同 kill switch、最該盯；第三、四行（KLA intensity、Advantest HBM4 ASP）是 NC#2 兩台複利機的兌現指標；第五行（中國先進節點）是 NC#3 的護城河試金石。bear 閾值是真 falsification 不是 strawman——「純 WFE &lt; $115B」即明確標為前段口徑（ex-ATE/packaging）以避免歧義。</p>
+
+  <div class="invest-meaning">最該盯的 1-2 個 leading indicator：① hyperscaler capex YoY（共同 kill switch）；② KLA process control intensity（NC#2 複利機是否兌現、最可操作分歧的試金石）。</div>
+
+  <div class="ds-refs">
+    <span class="ds-refs-label">本節參考來源</span>
+    <ol>
+      <li><span class="tier">[T1]</span><a href="https://www.semi.org/en/semi-press-release/global-semiconductor-equipment-sales-projected-to-reach-a-record-of-156-billion-dollars-in-2027-semi-reports">SEMI Dec 2025 — 2027 純 WFE $135.2B</a></li>
+      <li><span class="tier">[T1]</span><a href="https://ir.kla.com/news-events/press-releases">KLA Q3 FY2026 — intensity ~9.7%（軌道下端）</a></li>
+      <li><span class="tier">[T1]</span><a href="https://www.advantest.com/en/investors">Advantest — T5801 HBM4 ramp 2026-Q3、ASP $7-8M 目標</a></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============ §9 ============ -->
+<section class="chapter">
+  <div class="chapter-marker">§9 · 第三幕</div>
+  <h2>關聯<em>個股</em></h2>
+  <p class="chapter-intro">誰是這產業的純度玩家、誰是市場沒注意到的二次受益者？🔴 核心（前段五寡占 + 後段 ATE 雙寡占龍頭）、🟡 次要、🟢 邊緣（探針卡 + 中國 loser）。提及公司僅為「該特徵代表案例」、非買入推薦。</p>
+
+  <div class="data-display">
+    <div class="data-display-header">🔴🟡🟢 關聯個股（depth 閾值：營收依賴度 + 技術領導；forward-looking 已標 current actual）</div>
+    <table>
+      <thead><tr><th>Ticker</th><th>角色 / 段</th><th>depth</th><th>受益 / 受害 · current actual</th></tr></thead>
+      <tbody>
+        <tr><td>ASML</td><td>前段 — EUV/High-NA 100% 獨家</td><td>🔴</td><td>受益 · GM 53%、EUV €4.1B (+28%)</td></tr>
+        <tr><td>AMAT</td><td>前段 — 沉積/離子佈植/CMP 40-70%</td><td>🔴</td><td>受益 · $7.01B、leading-edge +20%（ICAPS 中國 risk）</td></tr>
+        <tr><td>LRCX</td><td>前段 — 蝕刻 50% + ALD 25%</td><td>🔴</td><td>受益 · Mar Q26 +24% YoY、China 34%</td></tr>
+        <tr><td>KLAC</td><td>前段 — process control 55-60%（複利機）</td><td>🔴</td><td>受益 · intensity ~9.7% 往 11-13%</td></tr>
+        <tr><td>8035.T TEL</td><td>前段 — coater 90% + etch #2 25%</td><td>🔴</td><td>受益 · 與 ASML scanner 100% 綁定</td></tr>
+        <tr><td>6857.T Advantest</td><td>後段 — ATE SoC 60% + Memory 70%</td><td>🔴</td><td>受益 · FY25 ¥1,070B (+71%)、HBM yield partner</td></tr>
+        <tr><td>TER Teradyne</td><td>後段 — ATE 次席 SoC 35% + HBM 25-50%</td><td>🟡</td><td>受益 · FY25 $3.39B、Magnum 7H 追 HBM4</td></tr>
+        <tr><td>7735.T SCREEN</td><td>前段 — wet clean 25%+</td><td>🟡</td><td>受益 · EUV 多重曝光 clean 步驟倍增</td></tr>
+        <tr><td>6501.T Hitachi</td><td>前段 — conductor etch niche + review SEM</td><td>🟡</td><td>受益 · custom etch 唯一供應（市佔小）</td></tr>
+        <tr><td>BESI.AS</td><td>跨段 — hybrid bonding 67% + AMAT 9% 持股</td><td>🟡</td><td>受益 · HBM4 / 3D IC 必備</td></tr>
+        <tr><td>002371.SZ Naura</td><td>前段 — 中國蝕刻/沉積成熟節點</td><td>🟢</td><td>受害（先進節點）· +4-5pp 僅成熟、litho 0%</td></tr>
+        <tr><td>688012.SS AMEC</td><td>前段 — 中國蝕刻 ~5%</td><td>🟢</td><td>受害（先進節點）· 5nm single-step、EUV 0%</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="tbl-read">怎麼讀：🔴 核心是前段五寡占（ASML/AMAT/LRCX/KLAC/TEL）+ 後段 ATE 龍頭 Advantest，營收 &gt;40% 依賴此產業或技術領導；🟡 次要（Teradyne/SCREEN/Hitachi/BESI）營收 10-40% 或 leveraged play；🟢 邊緣是中國 loser（對先進節點五寡占是結構 loser、非 beneficiary）。中國兩檔 depth 雖列但 beneficiary=false。</p>
+
+  <p><strong>非顯而易見受益者敘事</strong>：① <strong>探針卡（FormFactor / Technoprobe）</strong>——被低估的 royalty-like「per-HBM tax」。每片探針卡 ASP $50-300K、壽命僅 ~100 萬次接觸（HBM4 16 層磨損更快），HBM4 每量產 1M stack 需 8K-12K 片新探針卡 → FormFactor/Technoprobe「HBM tax」隱性收入接近 $1-2B/年（2027+），不被合約鎖死、該當 IP 公司估而非設備公司估；Technoprobe 贏 30% TSMC 2nm 認證是 FormFactor 第一道裂縫。② <strong>Carl Zeiss / Cymer</strong>——ASML 上游隱性 toll booth（Zeiss 是 ASML 唯一光學供應、ASML 持 Zeiss SMT 24.9%），High-NA 對 Zeiss 是「光學系統 ASP $50M→$100M+」事件，但無 pure play vehicle、不可直接投資，只強化 ASML 不可替代性。</p>
+
+  <div class="invest-meaning">哪檔是最高純度 play？前段 ASML（litho 真獨佔）+ 後段 Advantest（ATE 最後一哩 toll）；哪檔被低估其曝險？KLA（複利機被 cyclical 框架估）+ FormFactor/Technoprobe（per-HBM tax 被當設備估）。對應 DD：ASML/AMAT/LRCX/TER/CAMT/FORM 已有 DD（見 /research/），其餘建議後續追加。</div>
+
+  <div class="ds-refs">
+    <span class="ds-refs-label">本節參考來源</span>
+    <ol>
+      <li><span class="tier">[T1]</span><a href="https://www.asml.com/en/news/press-releases/2026/q1-2026-financial-results">ASML / AMAT / LRCX / KLA / Advantest / Teradyne 各家 IR 與法說</a></li>
+      <li><span class="tier">[T3]</span><a href="https://www.digitimes.com/">DIGITIMES / Yole — 探針卡 FormFactor+Technoprobe ~60%、HBM4 +30% YoY、Technoprobe 30% TSMC 2nm 認證</a></li>
+    </ol>
+  </div>
+</section>
+
+<div class="footnotes">
+  <div class="footnotes-h">Selected Sources（全文整合）</div>
+  <ol>
+    <li>[T1] SEMI Dec 2025 Equipment Forecast — 總設備 2024 $117B / 2025E $133B / 2026E $145B / 2027E $156B；純 WFE 2026E $123B / 2027E $135.2B；foundry/logic 與 memory 分段；區域：中國 2024 40%($49.5B)→2025E 28%($38B)、韓台美日成長</li>
+    <li>[T1] ASML Q1 2026 Results — FY25 €32.7B、Q1 26 €8.8B、EUV €4.1B(+28%)、GM ~53%、China 36%→19%；EUV/High-NA 100% 獨家、High-NA EXE:5200 ~$380M、backlog €25.5B</li>
+    <li>[T1] AMAT Q1 FY26 Earnings Call — $7.01B（annualized $28B+）、leading-edge +20% vs ICAPS 持平、China 27-30%；沉積/離子佈植/CMP 每段 40-70%</li>
+    <li>[T1] LRCX Mar Q26 slides — $5.84B（+24% YoY、annualized $23B+）、蝕刻 ~50% + ALD ~25%、NAND 主導、China 34%</li>
+    <li>[T1] KLA Q3 FY2026 release（2026-04-29）— $3.415B（+11.5% YoY、annualized ~$13.6B）；process control intensity ~9.7%（往 11-13% 軌道）、5 年 share gain 160bps、未來再 +150bps；GM ~60%、ROIC ~50%、reticle 80%+</li>
+    <li>[T1] Advantest FY25 2Q Results — 全公司營收 raised guide ¥950B→¥1,070B（+71% YoY）、30 年來 ATE 最大單年；SoC ~60% + Memory ~70%（HBM 近獨家）；T5801（2026）IO 1024→2048、ASP $5M→$7-8M 目標、HBM4 ramp 2026-Q3</li>
+    <li>[T1] Teradyne Q4 2025 Release — FY25 actual $3.39B、Q1 26 guide +75% YoY 中位、$6B evergreen target；SoC ~35% + HBM ~25-50%、Magnum 7H HBM4 落後 6-12 個月</li>
+    <li>[T1] TEL Q2 FY26 IR — coater/developer 90%（EUV coater 100%）+ etch #2 ~25%；自家 calendar 2026 guide「&gt; $130B + 15-20% YoY」</li>
+    <li>[T2] TrendForce / Yole — 2nm wafer cost $28-30K vs 7nm $8K = 3.5x、GAA + High-NA tool intensity ~1.4x；Yole 2030 WFE $184B（含 services）</li>
+    <li>[T2/T3] DIGITIMES / SNS Insider / Persistence — per-chip 測試時數 2022~4h→2026~12h(3x)→2028~20-30h(5-7x)；SLT 2026 ~$1.7B(+30% YoY)→2030 ~$3-3.5B；burn-in CAGR 8.48%；探針卡 FormFactor+Technoprobe ~60%、HBM4 +30% YoY、Technoprobe 30% TSMC 2nm 認證；ATE 全鏈 2026 ~$20-22B → 2030 ~$30-32B</li>
+    <li>[T2] SEMI / TechNews — 中國成熟節點 domestic adoption 2025 ~35%（超 28% target）、AMEC 5nm dielectric etch TSMC Nanjing 訂單 + 14nm SMIC 驗證；SMEE litho 卡 28nm DUV、SiCarrier LDP EUV prototype 2028 目標；先進節點五寡占 90%→95%；AMAT-BESI 9% stake 2025-04（hybrid bonding 入口）</li>
+  </ol>
+</div>
+
+<div class="colophon">
+  InvestMQuest <span class="dot">·</span> Deep Industry Research <span class="dot">·</span> 完整考證版 v2.3 <span class="dot">·</span> 2026-06-21 改版 <span class="dot">·</span> 敘事為骨、表格為窗 <span class="dot">·</span> <a href="ID_WaferFabEquipment_20260430.html" style="color:var(--accent);">→ 精煉版決策卡</a>
+</div>
+
+</div>
+</body>
+</html>
