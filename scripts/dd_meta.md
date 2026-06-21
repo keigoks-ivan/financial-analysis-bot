@@ -130,6 +130,32 @@ python scripts/validate_dd_meta.py --report
 }
 ```
 
+## v13 merged-report 欄位（schema = `v13.X`）
+
+v13 把舊 DCA 決策層併入 DD（單一 `DD_*.html`，不再有 `DCA_*.html`）。下列欄位**只在
+`schema` 為 `v13.X` 時必填**；v12 報告不帶這些欄位，舊契約完全不變（validator 用
+`schema` 前綴判斷，見 `_is_v13()` / `V13_REQUIRED_FIELDS`）。下游聚合器（`update_dd_index`、
+`dd_screener_dd_loader`、`aggregate_dca_stats`）直接讀這些 JSON 欄位，不再 regex 拆獨立 DCA HTML。
+
+```json
+{
+  "schema": "v13.0",
+  "dca_verdict":    "進場|觀望|迴避",
+  "dca_role":       "核心持倉|條件式核心持倉|衛星持倉|條件式衛星持倉|投機部位|不持有/迴避|候選/追蹤池",
+  "moat_trend":     "↑|→|↓",
+  "runway_post_y5": "🟢|🟡|🔴",
+  "ev5y_pct":       NUMBER,
+  "irr_base_pct":   NUMBER,   // 選填
+  "max_dd_pct":     NUMBER    // 選填
+}
+```
+
+- `signal`/`verdict`（A+/A/B/C/X）在 v13 保留為**基本面評級（metadata-only）**，餵 screener；
+  人面對的單一裁決是 `dca_verdict`。
+- `dca_role` enum 對齊 `aggregate_dca_stats.py` 的 `CATEGORY_ORDER`（去掉 fallback「缺資料」）。
+- `moat_trend` 在 v13 升為**權威**（= 決策層趨勢），舊版本是 optional 文字欄。
+- v12 的 22 必填欄在 v13 全部沿用（screener 不斷線）。
+
 ## 設計決策記錄
 
 - **為什麼選 `<script type="application/json">` 而不是 sidecar `.json` 檔？**

@@ -228,7 +228,12 @@ def load_dd_universe(
         dd_date = _extract_date_from_dd_filename(dd_filename) or meta.get("date")
 
         # ── DCA lookup ────────────────────────────────────────────────────
-        dca_path, dca_date = _find_latest_dca(dca_dir, ticker)
+        # v13 merged report folds the decision layer into the DD itself, so the
+        # 定見 link is the DD's own #decision anchor (no separate /dca/ file).
+        if str(meta.get("schema", "")).startswith("v13"):
+            dca_path, dca_date = f"{dd_path}#decision", dd_date
+        else:
+            dca_path, dca_date = _find_latest_dca(dca_dir, ticker)
 
         results.append({
             "ticker": ticker,

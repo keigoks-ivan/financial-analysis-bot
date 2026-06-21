@@ -15,6 +15,7 @@ Stats included:
 Stdlib only (no yfinance — pure local aggregation, fast).
 Python 3.9 compat: use Optional[X] from typing, not X | None.
 """
+import json
 import re
 import sys
 from collections import Counter
@@ -25,6 +26,7 @@ from typing import Optional
 
 ROOT = Path(__file__).parent.parent
 DCA_DIR = ROOT / "docs" / "dca"
+DD_DIR = ROOT / "docs" / "dd"
 
 # Regex: handle both <th> and <td> label elements (DCA reports use <th>)
 _ROLE_RE = re.compile(
@@ -33,6 +35,15 @@ _ROLE_RE = re.compile(
 )
 _VERDICT_RE = re.compile(r'<!--\s*dca-verdict:\s*(進場|觀望|迴避)\s*-->')
 _FILE_RE = re.compile(r'^DCA_(.+)_(\d{8})\.html$')
+# v13 merged reports carry the decision layer (dca_role/dca_verdict) in dd-meta.
+_DD_META_RE = re.compile(
+    r'<script\s+id="dd-meta"\s+type="application/json"\s*>(.*?)</script>',
+    re.DOTALL,
+)
+
+
+def _norm(t: str) -> str:
+    return re.sub(r"[^A-Za-z0-9]", "", t or "").upper()
 
 # Category order for display
 CATEGORY_ORDER = [
@@ -128,13 +139,53 @@ def load_dca_records() -> dict:
                 "role_category": role_category,
                 "verdict": verdict,
             }
+
+    # v13 merged reports: dca_role/dca_verdict live in dd-meta. Overlay over the
+    # legacy DCA records, newest date wins (a v13 DD supersedes a stale stand-
+    # alone DCA for the same ticker). No-op for the current all-v12 corpus.
+    if DD_DIR.exists():
+        for p in sorted(DD_DIR.glob("DD_*.html")):
+            try:
+                text = p.read_text(encoding="utf-8")
+            except Exception:
+                continue
+            mm = _DD_META_RE.search(text)
+            if not mm:
+                continue
+            try:
+                meta = json.loads(mm.group(1).strip())
+            except Exception:
+                continue
+            if not str(meta.get("schema", "")).startswith("v13"):
+                continue
+            ticker = _norm(meta.get("ticker", ""))
+            datestr = (meta.get("date") or "").replace("-", "")
+            if not ticker or len(datestr) != 8:
+                continue
+            role_raw = meta.get("dca_role", "") or ""
+            verdict = meta.get("dca_verdict", "") or "—"
+            if ticker not in records or datestr > records[ticker]["_datestr"]:
+                records[ticker] = {
+                    "date": f"{datestr[:4]}-{datestr[4:6]}-{datestr[6:8]}",
+                    "_datestr": datestr,
+                    "path": p.name,  # DD_* → _ticker_link routes to /dd/...#decision
+                    "role_raw": role_raw,
+                    "role_category": _categorize(role_raw),
+                    "verdict": verdict,
+                }
     return records
 
 
 def _ticker_link(ticker: str, path: str) -> str:
     if path:
+        # v13 records store the DD filename (DD_*) → link to its #decision anchor;
+        # legacy records store the DCA filename (DCA_*) → link to /dca/.
+        if path.startswith("DD_"):
+            href = f"/dd/{escape(path)}#decision"
+        else:
+            href = f"/dca/{escape(path)}"
         return (
-            f'<a href="/dca/{escape(path)}" target="_blank" rel="noopener">'
+            f'<a href="{href}" target="_blank" rel="noopener">'
             f'{escape(ticker)}</a>'
         )
     return escape(ticker)

@@ -17,6 +17,7 @@ import json
 import re
 import sys
 import time
+from functools import lru_cache
 from pathlib import Path
 
 DOCS = Path(__file__).parent.parent / "docs"
@@ -38,18 +39,22 @@ def collect_dca_map() -> dict:
     Returns empty dict if dca/ folder missing or empty (research page just
     shows '—' for every row).
     """
-    if not DCA_DIR.exists():
-        return {}
-    latest: dict[str, tuple[str, str]] = {}  # ticker -> (date_str, filename)
-    for path in DCA_DIR.glob("DCA_*.html"):
-        m = DCA_FILENAME_RE.match(path.name)
-        if not m:
-            continue
-        ticker, date_str = m.group(1), m.group(2)
-        prev = latest.get(ticker)
-        if prev is None or date_str > prev[0]:
-            latest[ticker] = (date_str, path.name)
-    return {t: f"/dca/{fname}" for t, (_, fname) in latest.items()}
+    out: dict = {}
+    if DCA_DIR.exists():
+        latest: dict[str, tuple[str, str]] = {}  # ticker -> (date_str, filename)
+        for path in DCA_DIR.glob("DCA_*.html"):
+            m = DCA_FILENAME_RE.match(path.name)
+            if not m:
+                continue
+            ticker, date_str = m.group(1), m.group(2)
+            prev = latest.get(ticker)
+            if prev is None or date_str > prev[0]:
+                latest[ticker] = (date_str, path.name)
+        out = {t: f"/dca/{fname}" for t, (_, fname) in latest.items()}
+    # v13 merged reports: 定見 points at the DD's own #decision anchor (v13 wins).
+    for norm, fields in _v13_dca_overlay().items():
+        out[norm] = fields["href"]
+    return out
 
 
 _DCA_EV_ANCHORS = (
@@ -395,22 +400,25 @@ def collect_dca_moat_trend_map() -> dict:
     arrow is one of '↑'/'→'/'↓'. Tickers where extraction fails are omitted.
     Mirrors collect_dca_bear_maps() scan pattern but returns a single dict.
     """
-    if not DCA_DIR.exists():
-        return {}
-    latest: dict = {}
-    for path in DCA_DIR.glob("DCA_*.html"):
-        m = DCA_FILENAME_RE.match(path.name)
-        if not m:
-            continue
-        ticker, date_str = m.group(1), m.group(2)
-        prev = latest.get(ticker)
-        if prev is None or date_str > prev[0]:
-            latest[ticker] = (date_str, path)
     out: dict = {}
-    for ticker, (_, path) in latest.items():
-        arrow = extract_dca_moat_trend(path)
-        if arrow is not None:
-            out[ticker] = arrow
+    if DCA_DIR.exists():
+        latest: dict = {}
+        for path in DCA_DIR.glob("DCA_*.html"):
+            m = DCA_FILENAME_RE.match(path.name)
+            if not m:
+                continue
+            ticker, date_str = m.group(1), m.group(2)
+            prev = latest.get(ticker)
+            if prev is None or date_str > prev[0]:
+                latest[ticker] = (date_str, path)
+        for ticker, (_, path) in latest.items():
+            arrow = extract_dca_moat_trend(path)
+            if arrow is not None:
+                out[ticker] = arrow
+    # v13 merged reports: authoritative moat_trend comes from dd-meta (v13 wins).
+    for norm, fields in _v13_dca_overlay().items():
+        if fields["moat_trend"] is not None:
+            out[norm] = fields["moat_trend"]
     return out
 
 
@@ -420,23 +428,26 @@ def collect_dca_ev_map() -> dict:
     Tickers without a parseable §4 EV are omitted. Caller should treat
     missing ticker as "no EV available" and render '—'.
     """
-    if not DCA_DIR.exists():
-        return {}
-    # Pick latest DCA per ticker (mirrors collect_dca_map logic).
-    latest: dict[str, tuple[str, Path]] = {}
-    for path in DCA_DIR.glob("DCA_*.html"):
-        m = DCA_FILENAME_RE.match(path.name)
-        if not m:
-            continue
-        ticker, date_str = m.group(1), m.group(2)
-        prev = latest.get(ticker)
-        if prev is None or date_str > prev[0]:
-            latest[ticker] = (date_str, path)
     out: dict[str, float] = {}
-    for ticker, (_, path) in latest.items():
-        ev = extract_dca_ev_5y(path)
-        if ev is not None:
-            out[ticker] = ev
+    if DCA_DIR.exists():
+        # Pick latest DCA per ticker (mirrors collect_dca_map logic).
+        latest: dict[str, tuple[str, Path]] = {}
+        for path in DCA_DIR.glob("DCA_*.html"):
+            m = DCA_FILENAME_RE.match(path.name)
+            if not m:
+                continue
+            ticker, date_str = m.group(1), m.group(2)
+            prev = latest.get(ticker)
+            if prev is None or date_str > prev[0]:
+                latest[ticker] = (date_str, path)
+        for ticker, (_, path) in latest.items():
+            ev = extract_dca_ev_5y(path)
+            if ev is not None:
+                out[ticker] = ev
+    # v13 merged reports: 5Y EV comes from dd-meta ev5y_pct (v13 wins).
+    for norm, fields in _v13_dca_overlay().items():
+        if fields["ev5y"] is not None:
+            out[norm] = fields["ev5y"]
     return out
 
 META_RE = re.compile(
@@ -463,6 +474,56 @@ def extract_dd_meta_json(text: str):
     except json.JSONDecodeError as e:
         print(f"  WARN: dd-meta JSON parse error: {e}")
         return None
+
+
+def _norm_ticker(t: str) -> str:
+    """Normalize ticker to the DCA-filename form (alnum, upper): 2330.TW→2330TW.
+    Matches DCA_FILENAME_RE group keys and the consumer dot-stripped lookups."""
+    return re.sub(r"[^A-Za-z0-9]", "", t or "").upper()
+
+
+@lru_cache(maxsize=1)
+def _v13_dca_overlay() -> dict:
+    """Scan docs/dd/ for v13 merged reports and return the decision-layer fields
+    that used to live in a separate DCA file, keyed by normalized ticker:
+
+        {norm_ticker: {"ev5y": float|None, "moat_trend": str|None, "href": str}}
+
+    v13 reports fold the DCA decision layer into the DD, so these come straight
+    from dd-meta (no fragile §4 HTML regex). Latest v13 DD per ticker wins.
+    The three collect_dca_* maps overlay this over their legacy /dca/ scan so a
+    v13 report supersedes any stale DCA file. Empty until v13 DDs exist, so this
+    is a no-op for the current all-v12 corpus. lru_cache: files are stable within
+    a single sync run (separate processes get their own cache)."""
+    if not DD_DIR.exists():
+        return {}
+    latest: dict[str, tuple[str, dict, str]] = {}  # norm -> (date, meta, fname)
+    for path in DD_DIR.glob("DD_*.html"):
+        try:
+            text = path.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+        meta = extract_dd_meta_json(text)
+        if not meta or not str(meta.get("schema", "")).startswith("v13"):
+            continue
+        ticker = meta.get("ticker")
+        if not ticker:
+            continue
+        norm = _norm_ticker(ticker)
+        date = meta.get("date") or ""
+        prev = latest.get(norm)
+        if prev is None or date > prev[0]:
+            latest[norm] = (date, meta, path.name)
+    out: dict = {}
+    for norm, (_, meta, fname) in latest.items():
+        ev = meta.get("ev5y_pct")
+        trend = meta.get("moat_trend")
+        out[norm] = {
+            "ev5y": ev if isinstance(ev, (int, float)) else None,
+            "moat_trend": trend if trend in ("↑", "→", "↓") else None,
+            "href": f"/dd/{fname}#decision",
+        }
+    return out
 
 
 # === v12 extractors (regex fallback for DDs without dd-meta JSON) ===============
@@ -1807,7 +1868,8 @@ def collect_v12_entries(force_refresh_eps: bool = False):
       2) INDEX.md rr_raw column (triax: moat / val / ma).
       3) Regex extractors over DD HTML body (legacy fallback).
 
-    Only includes DDs where INDEX.md schema starts with 'v12'.
+    Only includes DDs where INDEX.md schema starts with 'v12' or 'v13'
+    (v13 = merged DD+DCA report; its decision layer lives inside the DD).
     """
     index_data = parse_index_md()
     eps_cache = load_eps_cagr_cache()
@@ -1815,7 +1877,7 @@ def collect_v12_entries(force_refresh_eps: bool = False):
 
     entries = []
     for fname, md in index_data.items():
-        if not md["schema"].startswith("v12"):
+        if not md["schema"].startswith(("v12", "v13")):
             continue
         path = DD_DIR / fname
         if not path.exists():
@@ -1953,6 +2015,8 @@ def update_index_v12_full(html: str, force_refresh_eps: bool = False) -> tuple:
     open_tag, _, close_tag = m.group(1), m.group(2), m.group(3)
 
     entries = _sort_v12_entries(collect_v12_entries(force_refresh_eps=force_refresh_eps))
+    # The three collect_dca_* maps are v13-aware (overlay dd-meta decision-layer
+    # fields over the legacy /dca/ scan, v13 wins) — see _v13_dca_overlay().
     dca_map = collect_dca_map()
     dca_ev_map = collect_dca_ev_map()
     dca_moat_trend_map = collect_dca_moat_trend_map()

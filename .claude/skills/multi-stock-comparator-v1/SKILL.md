@@ -49,12 +49,14 @@ FILE_EXT=".html"                      # DCA/DD 都是 .html(非 .md)
 對每個 ticker 執行:
 
 ```bash
-# 主邏輯:列出該 ticker 所有 DCA,按 filename 降序取最新
-ls ${DCA_DIR}/DCA_${TICKER}_*${FILE_EXT} 2>/dev/null | sort -r | head -1
-
-# 若用戶指定 DD 或 DCA 不存在則 fallback
+# v13 優先:列出該 ticker 所有 DD,按 filename 降序取最新（v13 DD 已含基本面 + 決策層 Part II）
 ls ${DD_DIR}/DD_${TICKER}_*${FILE_EXT} 2>/dev/null | sort -r | head -1
+
+# legacy fallback:若該 ticker 是舊架構（v12 DD + 獨立 DCA），補讀 DCA 決策層
+ls ${DCA_DIR}/DCA_${TICKER}_*${FILE_EXT} 2>/dev/null | sort -r | head -1
 ```
+
+> **v13 變更（2026-06-22）**：DCA 已併入 stock-analyst v13 單一報告。新 ticker 只有 `docs/dd/DD_*.html`（schema v13.0，內含 §12-§15 決策層 + §14 統一裁決 + dd-meta `dca_verdict`/`ev5y_pct` 等），**沒有獨立 DCA 檔不是缺漏**——讀 v13 DD 即取得決策層，不要報「DCA 缺」。判斷：DD 內有 `"schema":"v13` 或 `id="decision"` → v13，決策層在 DD 內；否則為 legacy，照下表補讀 `docs/dca/`。
 
 **情境處理表**:
 

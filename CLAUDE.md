@@ -49,7 +49,7 @@ Agent({
 - 同跑 `DD_STALE_FRESH` / `PM_LAST_RUN` / `PM_HOLDINGS` / `PM_ACTIONS` 五段標記注入
 - **自動觸發** `scripts/build_dd_screener.py`（rebuild `docs/dd-screener/latest.json`），讓 `/research/` 與 `/dd-screener/` 兩個頁面 universe 永遠一致。yfinance 失敗時 screener rebuild 會 warn 但不 abort research sync；要離線跑加 `--skip-dd-screener`。
 
-把 `docs/research/index.html`、`docs/dd-screener/latest.json`、DD/DCA 新檔**併入同一 commit**，避免任一頁面滯後於底層報告。stock-analyst skill §2164 與 deep-conviction-analyst skill §68 已內建此步，但**手動 patch / 補 metadata / 改 DCA Verdict** 這類 skill-外路徑也必須遵守此規則。
+把 `docs/research/index.html`、`docs/dd-screener/latest.json`、DD 新檔**併入同一 commit**，避免任一頁面滯後於底層報告。stock-analyst v13 skill 的 HTML 輸出協議已內建此步（step 3 跑 update_dd_index.py），但**手動 patch / 補 metadata / 改 legacy DCA Verdict** 這類 skill-外路徑也必須遵守此規則。v13 DD 的決策層欄位（dca_verdict 等）在 dd-meta JSON，下游 dual-read 直接讀。
 
 ## Workflow: push earnings / 發布財報
 
@@ -77,16 +77,18 @@ Agent({
 
 **git flow**：commit 訊息格式 `Add earnings synthesis: window YYYY-MM-DD → YYYY-MM-DD`，直接 push main。
 
-## Workflow: DCA 深度定見分析
+## Workflow: 個股深度報告（v13 DD，含決策層）— DCA 已併入
 
-當用戶說「幫我跑 {ticker} dca」/「{ticker} 定見」/「{ticker} dca」/「conviction analysis {ticker}」/「最終判斷 {ticker}」時，自動觸發 `deep-conviction-analyst` skill（`.claude/skills/deep-conviction-analyst/`）。
+**2026-06-22 起 DCA 已併入 stock-analyst v13。** 個股深度研究與投資決策層整併成**單一報告** `docs/dd/DD_{TICKER}_{YYYYMMDD}.html`：Part I 基本面深度（§1-§11）+ Part II 決策層（§12 矛盾裁決 / §13 pre-mortem+Max DD / §14 統一裁決 / §15 複審），收斂為**一個人面對裁決：進場 / 觀望 / 迴避**。基本面評級 A+/A/B/C/X 降為 metadata（餵 screener），不再是並列 headline。
 
-**定位**：DD 之上的「投資決策層」 — Phase A 三軸獨立搜尋（護城河 / 產業趨勢 / 業務財務） + Phase B 矛盾辨識與強制裁決 + Phase C PM 決策框架（§2 thesis、§7 倉位+opportunity cost、§5 single-thing、§6 pre-mortem）。
+當用戶說「幫我跑 {ticker} dca」/「{ticker} 定見」/「conviction analysis {ticker}」/「最終判斷 {ticker}」/「該不該進場 {ticker}」/「買不買 {ticker}」/「個股分析 {ticker}」/「{ticker} DD」時，一律自動觸發 `stock-analyst` skill（v13，`.claude/skills/stock-analyst/`）。`deep-conviction-analyst` 已退役為 deprecation stub，dca/定見 觸發語改觸發 stock-analyst。
 
 **輸出**：
-- HTML：`docs/dca/DCA_{TICKER}_{YYYYMMDD}.html`（不放 `docs/dd/`，避免被 `validate_dd_meta.py` 鎖規則）
-- 索引：`docs/dca/INDEX.md`（skill 自動 append）
-- Research 頁同步：跑 `python scripts/update_dd_index.py` 後，「定見」欄會自動連到該 ticker 最新的 DCA 報告
+- HTML：單一 `docs/dd/DD_{TICKER}_{YYYYMMDD}.html`（schema v13.0；§14 帶 `id="decision"` 錨點；**不再產獨立 `docs/dca/DCA_*.html`**）
+- dd-meta v13：新增決策層欄位 `dca_verdict`/`dca_role`/`moat_trend`（權威）/`runway_post_y5`/`ev5y_pct`（+ 選填 `irr_base_pct`/`max_dd_pct`），下游聚合器直接讀
+- Research 頁同步：跑 `python scripts/update_dd_index.py` 後，「定見」欄連到該 ticker v13 報告的 `/dd/DD_X.html#decision` 錨點
+
+**Legacy**：343 份既有 `docs/dca/DCA_*.html` 凍結保留、仍在站上，下游以 dual-read 支援（v13 dd-meta 優先，讀不到才 fall back legacy DCA）。設計細節見 `docs/_handoff_v13_dd_design_20260621.md`。
 
 ## Workflow: 產業 DS（敘述型產業研究）— 【DEPRECATED 2026-06-11，已併入 industry-analyst v2.0】
 
@@ -102,7 +104,7 @@ Agent({
 
 當用戶說「比較 {T1} {T2} 用 DCA」/「比較 {T1} {T2} {T3} 看 DD」/「多檔比較」/「同類對比」/「該選哪一家」/「DCA 對比分析」時，自動觸發 `multi-stock-comparator-v1` skill（`.claude/skills/multi-stock-comparator-v1/`）。
 
-**定位**：消費端 skill — 假設目標 ticker 的 DCA / DD 已存在（`docs/dca/` / `docs/dd/`），不自動觸發 `stock-analyst` 或 `deep-conviction-analyst`。對 2-5 檔執行四層時間框架（<12M / 2-3Y / 3-5Y / 5-10Y）橫向打分，每層獨立排序 + 判斷邏輯，最後給推薦標的 + 不選其他檔的具體理由。
+**定位**：消費端 skill — 假設目標 ticker 的個股報告已存在（v13 `docs/dd/DD_*.html`，內含基本面 + 決策層；或 legacy `docs/dca/` + `docs/dd/`），不自動觸發 `stock-analyst`。對 2-5 檔執行四層時間框架（<12M / 2-3Y / 3-5Y / 5-10Y）橫向打分，每層獨立排序 + 判斷邏輯，最後給推薦標的 + 不選其他檔的具體理由。**v13 注意**：新報告的決策層（裁決/IRR/Max DD/pattern match）已在 DD 檔 Part II，不再有獨立 DCA 檔——讀 v13 DD 即可；legacy ticker 才需讀 `docs/dca/`。
 
 **輸出**：
 - HTML：`docs/comparisons/MS_{T1}vs{T2}_{YYYYMMDD}.html`（4 檔以上用底線連接：`MS_T1_T2_T3_T4_YYYYMMDD.html`）
@@ -140,6 +142,29 @@ Agent({
 
 **現況**：CoWoS（31 nodes 3 列）+ CPO（19 nodes 5 列）兩個 topic 上線；剩下 13 個 topic 在 manifest 中標 `active: false`（HBM / 先進製程 / 矽光子 / 面板級封裝 / IC 設計 / 半導體材料 / ASIC / IC 基板 / 電源散熱 / AI 伺服器 ODM / 機器人 / 低軌衛星 / 軍工國防）。
 
+## Report 篇幅 floor（depth gate，非灌水目標）
+
+DD 報告有 size floor，但**這是深度閘門，不是 byte 目標** — 達標的正道永遠是「真量化模組 × sourced 數字」，反灌水鐵律不變（skill：「寧可 105KB 全自算，不要 125KB 注水」）。v13 單檔含基本面 Part I + 決策層 Part II，floor 上修；下列 floor 留足餘裕，只攔真正偷懶的薄報告：
+
+| 類型 | hard floor（commit 擋下） | soft warn（放行但提示） | skill 目標 |
+|---|---|---|---|
+| **v13 DD**（`"schema":"v13`，含決策層） | < 110KB | < 125KB | ~110–125KB（Part I 基本面 ≥ 60%；Part II 決策層淨增深度） |
+| legacy v12 DD（`docs/dd/DD_*.html`） | < 80KB | < 90KB | ~90–100KB（§5+§8+§9+§10+§11+§12 ≥ 60%） |
+| legacy DCA（`docs/dca/DCA_*.html`，已退役不再新增） | < 50KB | < 55KB | — |
+
+**只對「新增」檔生效**（`git diff --cached --diff-filter=A`）— 全新報告永遠是新 `*_YYYYMMDD.html`（Add），對 legacy 報告補 metadata 是 Modify，不會被擋。gate 寫在 `scripts/hooks/pre-commit`（v13 floor 對 `"schema":"v13` 檔生效，legacy v12 維持 80KB），真要放行 lean-but-complete 報告用 `git commit --no-verify`。
+
+## Parallel-session git hygiene（commit 前自檢）
+
+常同時跑多個 session 對同一 working tree，歷史上多次被並行 session 清空 `_build`、catalog 掉條目、wrong-cwd commit、untracked sibling 被廣域 `git add` 掃進來（見 memory `feedback_supply_chain_precommit_sweeps_untracked` / `feedback_no_fixtures_in_docs`）。**commit 前固定四步**：
+
+1. 確認 cwd 是對的 repo（4-repo 同站，改錯 repo 是真風險）。
+2. `git status` 看 `??` 區 — 確認沒有別的 session 留下的 orphan 檔會被一起 commit；只 `git add` 你這次真的要動的檔，**不要盲 `git add -A`**。
+3. push 前重查 `docs/research/index.html` / `docs/dd-screener/latest.json` / 相關 catalog 沒被並行 session 覆蓋掉你剛產的條目。
+4. 驗證 fixture 一律放 `/tmp`，**不要放 `docs/` 追蹤目錄**（並行 cron/session 會掃上線）。
+
 ## Git pre-commit hook
 
-Repo 有 dd/id meta validator pre-commit hook。新 clone 啟用方式與 bypass 細節：見 `scripts/README.md`。
+Repo 有 pre-commit hook（`core.hooksPath=scripts/hooks`，已啟用）跑：dd/id-meta validator、cache schema、supply-chain schema、`.nojekyll` guard、supply-chain hub rollup，以及 **DD/DCA size-floor gate（added-only，見上）**。新 clone 啟用方式（`bash scripts/install_hooks.sh`）與 bypass 細節（`--no-verify`）：見 `scripts/README.md`。
+
+標準 ticker pipeline（一句指令跑完，v13）：`stock-analyst`（v13 單一 DD，含決策層 + 統一裁決）→ `python scripts/update_dd_index.py`（同步 research 頁 + screener）→ commit/push。**DCA 已併入 v13，無獨立 DCA 步驟。** 給單一 ticker 時可順帶自動偵測同產業 peer 一起跑（如 KLAC → ASML / LRCX），但**動部位前先按 repo 頂部「Decision-time critic」規則 spawn `industry-thesis-critic`**。`/ddreport` skill（v2.0）把這條鏈固化。

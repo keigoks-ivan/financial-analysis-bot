@@ -61,14 +61,60 @@ ID_VALIDATOR_CHANGED=$(echo "$STAGED" | grep -E '^scripts/validate_id_meta\.py$'
 CACHE_VALIDATOR_CHANGED=$(echo "$STAGED" | grep -E '^scripts/validate_cache_schema\.py$' || true)
 SC_VALIDATOR_CHANGED=$(echo "$STAGED" | grep -E '^scripts/validate_supply_chain_meta\.py$' || true)
 
+# Size-floor gate operates on ADDED files only (diff-filter=A). A fresh report is
+# always a new DD_/DCA_<date>.html (an Add); metadata patches to legacy reports are
+# Modifies and must NOT be size-gated (471 DD files span 33-130KB — many legacy
+# ones are organically <80KB and would false-block). New reports must clear floor.
+ADDED=$(git diff --cached --name-only --diff-filter=A)
+ADDED_DD=$(echo "$ADDED" | grep -E '^docs/dd/DD_.*\.html$' || true)
+ADDED_DCA=$(echo "$ADDED" | grep -E '^docs/dca/DCA_.*\.html$' || true)
+
 # Bail early if nothing relevant in scope
 if [ -z "$STAGED_DD" ] && [ -z "$STAGED_ID" ] && [ -z "$STAGED_CACHE" ] && [ -z "$STAGED_SC" ] && \
    [ -z "$DD_VALIDATOR_CHANGED" ] && [ -z "$ID_VALIDATOR_CHANGED" ] && [ -z "$CACHE_VALIDATOR_CHANGED" ] && \
-   [ -z "$SC_VALIDATOR_CHANGED" ]; then
+   [ -z "$SC_VALIDATOR_CHANGED" ] && [ -z "$ADDED_DCA" ]; then
   exit 0
 fi
 
 FAIL=0
+
+# ---- DD/DCA size-floor gate (added files only) -------------------------------
+# Hard floor = authoritative size memory; soft warn = skill target. Floors:
+#   v13 DD (merged DD+DCA decision layer): 110KB hard / 125KB soft
+#   legacy v12 DD:                          80KB hard /  90KB soft
+#   legacy DCA (retired, dormant gate):     50KB hard /  55KB soft
+# Real v12.7 output is DD ~105-108KB; v13 folds in the decision layer (~+25-35KB).
+# The hard floor leaves margin and only fires on genuinely thin new reports
+# (the "偷懶" pattern). NOT a byte target — anti-灌水 rule still governs upward.
+# Bypass a legitimately-lean report with: git commit --no-verify
+check_report_size() {  # $1=file  $2=hardBytes  $3=warnBytes  $4=label
+  _b=$(wc -c < "$1" 2>/dev/null || echo 0)
+  if [ "$_b" -lt "$2" ]; then
+    echo "❌ $4 $(basename "$1"): ${_b}B < ${2}B floor — too thin (depth gate), commit blocked."
+    return 1
+  elif [ "$_b" -lt "$3" ]; then
+    echo "⚠️  $4 $(basename "$1"): ${_b}B < ${3}B skill target — thin but allowed."
+  fi
+  return 0
+}
+if [ -n "$ADDED_DD" ] || [ -n "$ADDED_DCA" ]; then
+  echo "→ pre-commit: checking new DD/DCA size floors (added files only)"
+  # DD floor is schema-aware: v13 merged report ≥110KB, legacy v12 DD ≥80KB.
+  for f in $ADDED_DD; do
+    if grep -q '"schema"[[:space:]]*:[[:space:]]*"v13' "$f" 2>/dev/null; then
+      check_report_size "$f" 110000 125000 "DD" || FAIL=1
+    else
+      check_report_size "$f" 80000 90000 "DD" || FAIL=1
+    fi
+  done
+  for f in $ADDED_DCA; do check_report_size "$f" 50000 55000 "DCA" || FAIL=1; done
+  if [ "$FAIL" -ne 0 ]; then
+    echo "   A new report under the floor usually means a skipped section or"
+    echo "   bullet-only padding. Deepen it (sourced numbers, not 灌水), or"
+    echo "   --no-verify if it is genuinely a lean-but-complete report."
+  fi
+fi
+# ------------------------------------------------------------------------------
 
 # DD path: validator changed → full sweep; else staged only
 TARGETS_DD=""

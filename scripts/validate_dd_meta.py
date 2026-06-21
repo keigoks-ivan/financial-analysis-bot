@@ -29,7 +29,9 @@ META_VERSION_RE = re.compile(
     r'<meta\s+name="dd-schema-version"\s+content="([^"]+)"', re.IGNORECASE
 )
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
-SCHEMA_RE = re.compile(r"^v12\.\d+$")
+# v12.x = legacy DD; v13.x = merged DD+DCA report (decision layer folded in).
+SCHEMA_RE = re.compile(r"^v1[23]\.\d+$")
+IN_SCOPE_VERSIONS = ("v12", "v13")
 
 # Required fields with their expected Python types (after json.loads).
 # Keys present here MUST appear in every v12 dd-meta block.
@@ -77,6 +79,56 @@ NUMERIC_RANGES = {
 }
 
 ONELINER_HARD_CAP = 200  # hard cap; ≤ 120 is the soft target per skill spec
+
+# ── v13 (merged DD+DCA) additions ──────────────────────────────────────────
+# The v13 report folds the former DCA decision layer into the DD. These fields
+# are REQUIRED only when schema is v13.x; v12 reports never carry them, so the
+# legacy contract is untouched. The aggregators (update_dd_index,
+# dd_screener_dd_loader, aggregate_dca_stats) read these straight from JSON
+# instead of regex-parsing a separate DCA HTML.
+V13_REQUIRED_FIELDS = {
+    "dca_verdict": str,
+    "dca_role": str,
+    "moat_trend": str,
+    "runway_post_y5": str,
+    "ev5y_pct": (int, float),
+}
+
+V13_ENUM_FIELDS = {
+    "dca_verdict": {"進場", "觀望", "迴避"},
+    # dca_role enum mirrors aggregate_dca_stats.py CATEGORY_ORDER (minus the
+    # "缺資料" fallback, which must never be emitted by a real report).
+    "dca_role": {
+        "核心持倉",
+        "條件式核心持倉",
+        "衛星持倉",
+        "條件式衛星持倉",
+        "投機部位",
+        "不持有/迴避",
+        "候選/追蹤池",
+    },
+    "moat_trend": {"↑", "→", "↓"},
+    "runway_post_y5": {"🟢", "🟡", "🔴"},
+}
+
+# Optional v13 fields: validated for type only when present.
+V13_OPTIONAL_TYPES = {
+    "irr_base_pct": (int, float),
+    "max_dd_pct": (int, float),
+}
+
+
+def _is_v13(meta: dict) -> bool:
+    s = meta.get("schema")
+    return isinstance(s, str) and s.startswith("v13")
+
+
+def _type_name(expected_type) -> str:
+    return (
+        expected_type.__name__
+        if isinstance(expected_type, type)
+        else " or ".join(t.__name__ for t in expected_type)
+    )
 
 
 def validate_meta(meta: dict) -> list:
@@ -153,6 +205,34 @@ def validate_meta(meta: dict) -> list:
             f"oneliner: {len(one)} chars exceeds hard cap {ONELINER_HARD_CAP}"
         )
 
+    # v13 merged-report contract (only enforced when schema is v13.x)
+    if _is_v13(meta):
+        for field, expected_type in V13_REQUIRED_FIELDS.items():
+            if field not in meta:
+                errs.append(f"missing required field (v13): {field}")
+                continue
+            v = meta[field]
+            if v is None:
+                errs.append(f"{field}: must not be null (omit field instead)")
+            elif not isinstance(v, expected_type):
+                errs.append(
+                    f"{field}: expected {_type_name(expected_type)}, "
+                    f"got {type(v).__name__} ({v!r})"
+                )
+        for field, allowed in V13_ENUM_FIELDS.items():
+            v = meta.get(field)
+            if v is not None and v not in allowed:
+                errs.append(
+                    f"{field}: invalid value {v!r}; allowed: {sorted(allowed)}"
+                )
+        for field, expected_type in V13_OPTIONAL_TYPES.items():
+            v = meta.get(field)
+            if v is not None and not isinstance(v, expected_type):
+                errs.append(
+                    f"{field}: expected {_type_name(expected_type)}, "
+                    f"got {type(v).__name__} ({v!r})"
+                )
+
     return errs
 
 
@@ -160,8 +240,8 @@ def validate_file(path: Path) -> dict:
     """Inspect one DD HTML; return {status, errors[, meta_keys]}.
 
     status:
-      - "non_v12": meta tag missing or not v12 (skipped from CI)
-      - "missing_block": v12 DD without <script id="dd-meta">
+      - "non_v12": meta tag missing or pre-v12 (out of scope; skipped from CI)
+      - "missing_block": in-scope DD without <script id="dd-meta">
       - "parse_error": JSON could not be parsed
       - "invalid": JSON parsed but failed validation
       - "ok": fully valid
@@ -173,7 +253,10 @@ def validate_file(path: Path) -> dict:
 
     version_m = META_VERSION_RE.search(text)
     version = version_m.group(1) if version_m else ""
-    if not version.startswith("v12"):
+    # In scope = v12.x (legacy DD) or v13.x (merged DD+DCA). The "non_v12"
+    # status label is kept for back-compat with the counts/printing below;
+    # it now means "out of scope" (pre-v12).
+    if not version.startswith(IN_SCOPE_VERSIONS):
         return {"status": "non_v12", "version": version}
 
     meta_m = DD_META_RE.search(text)
