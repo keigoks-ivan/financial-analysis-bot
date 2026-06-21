@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex,nofollow">
+<!-- dca-moat-trend: ↑ -->
+<!-- dca-verdict: 觀望 -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRDO 深度定見分析（DCA）v1.5 — 2026-06-21</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1E3A5F;--accent:#3B82F6;--bg:#F8FAFC;--row:#F1F5F9;}
+*{box-sizing:border-box;}
+body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:#0F172A;margin:0;line-height:1.7;font-size:15px;}
+.wrap{max-width:1000px;margin:0 auto;padding:0 18px 80px;}
+header.fixed{position:sticky;top:0;z-index:50;background:var(--ink);color:#fff;padding:9px 18px;font-size:12.5px;box-shadow:0 2px 8px rgba(0,0,0,.15);}
+header.fixed .row{max-width:1000px;margin:0 auto;display:flex;flex-wrap:wrap;gap:12px;align-items:center;}
+header.fixed b{font-size:15px;}
+h2{font-size:19px;color:#fff;background:var(--ink);border-left:4px solid var(--accent);padding:9px 14px;margin:30px 0 12px;border-radius:0 6px 6px 0;}
+h3{font-size:15.5px;color:var(--ink);margin:18px 0 7px;border-bottom:2px solid #E2E8F0;padding-bottom:4px;}
+h4{font-size:14px;color:#334155;margin:14px 0 5px;}
+table{width:100%;border-collapse:collapse;margin:9px 0 14px;font-size:13px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+th{background:var(--ink);color:#fff;padding:7px 9px;text-align:left;font-weight:500;}
+td{padding:6px 9px;border-bottom:1px solid #E2E8F0;vertical-align:top;}
+tr:nth-child(even) td{background:var(--row);}
+.mono{font-family:'IBM Plex Mono',monospace;}
+.statusbar{display:flex;gap:12px;justify-content:center;background:#F1F5F9;border-left:4px solid #3B82F6;border-right:4px solid #3B82F6;padding:14px 10px;margin:18px 0;border-radius:6px;flex-wrap:wrap;}
+.statusbar .cell{width:148px;text-align:center;}
+.statusbar .lbl{font-size:11px;color:#64748B;display:block;margin-bottom:3px;}
+.statusbar .val{font-size:21px;font-weight:700;font-family:'IBM Plex Mono',monospace;}
+.thesis{background:#EFF6FF;text-align:center;padding:22px 28px;border-radius:8px;margin:14px 0;}
+.thesis .big{font-size:26px;font-weight:700;color:var(--ink);line-height:1.5;}
+.thesis .sub{font-size:12.5px;color:#64748B;margin-top:8px;}
+.decision{background:#FEF9C3;border-left:4px solid #92400E;padding:14px 18px;border-radius:0 6px 6px 0;margin:12px 0;}
+.chip{display:inline-block;padding:6px 20px;border-radius:4px;font-size:18px;font-weight:700;background:#92400E;color:#fff;border-left:4px solid #78350F;margin-bottom:8px;}
+.chip-sub{font-size:13px;color:#475569;font-style:italic;display:block;margin-bottom:16px;}
+.conflict{background:#FFF7ED;border-left:4px solid #F97316;padding:12px 16px;border-radius:0 6px 6px 0;margin:12px 0;}
+.conflict .verdict-tbl th{background:#C2410C;}
+.premortem{background:#FEF2F2;border-left:4px solid #DC2626;padding:12px 16px;border-radius:0 6px 6px 0;margin:12px 0;}
+.premortem blockquote{margin:6px 0;padding:8px 14px;background:#fff;border-left:3px solid #DC2626;font-style:italic;font-size:13.5px;}
+.pattern{background:#F0F9FF;border-left:4px solid #0EA5E9;padding:12px 16px;border-radius:0 6px 6px 0;margin:12px 0;}
+.pattern blockquote{margin:6px 0;padding:8px 14px;font-style:italic;font-size:13.5px;background:#fff;border-left:3px solid #0EA5E9;}
+.maxdd{display:flex;align-items:center;gap:20px;flex-wrap:wrap;background:#fff;border:1px solid #E2E8F0;border-radius:8px;padding:14px 18px;margin:10px 0;}
+.maxdd .num{font-size:32px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:#991B1B;}
+.maxdd .rate{font-size:28px;}
+.bar{height:14px;border-radius:7px;background:linear-gradient(90deg,#16a34a 0 28%,#f59e0b 28% 50%,#dc2626 50% 100%);margin:6px 0;}
+details{background:#fff;border:1px solid #E2E8F0;border-radius:8px;margin:10px 0;padding:4px 14px;}
+summary{cursor:pointer;font-weight:600;color:var(--ink);padding:8px 0;}
+.note{font-size:12.3px;color:#64748B;}
+.ok{background:#DCFCE7;color:#166534;font-weight:600;}
+.bad{background:#FEE2E2;color:#991B1B;font-weight:600;}
+.warn{background:#FEF9C3;color:#92400E;font-weight:600;}
+.stack{display:flex;height:22px;border-radius:5px;overflow:hidden;margin:8px 0;font-size:11px;color:#fff;font-weight:600;}
+.stack span{display:flex;align-items:center;justify-content:center;}
+.print-btn{position:fixed;right:18px;bottom:18px;background:var(--ink);color:#fff;border:none;padding:11px 16px;border-radius:8px;cursor:pointer;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.25);}
+@media print{header.fixed,.print-btn{display:none;}details{border:none;}details>*{display:block!important;}}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#0f172a;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(59,130,246,.28);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/" class="active">個股 DD</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/ds/">產業敘述 DS</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/">週報</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/long-track-smh/">長線訊號</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/">量化回測</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/screener-tw.html">Screener 台股</a>
+          <a href="/screener-jp.html">Screener 日股</a>
+          <a href="/screener-my.html">Screener 馬股</a>
+          <a href="/cache/">🗄 Data Cache</a>
+          <a href="/tools/">期貨部位計算機</a>
+        </div>
+      </div>
+      <a href="/mental-models/">🧠 心智模型</a>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+<header class="fixed"><div class="row">
+<b>CRDO</b><span>Credo Technology</span>
+<span class="mono">2026-06-21</span>
+<span>Thesis：把「AI 叢集連得可靠」做成 de facto 標準，連接價值隨叢集規模指數放大</span>
+</div></header>
+
+<div class="wrap">
+
+<!-- Status Bar -->
+<div class="statusbar">
+<div class="cell"><span class="lbl">DD 訊號燈</span><span class="val" style="color:#92400E">B</span></div>
+<div class="cell"><span class="lbl">Moat 趨勢</span><span class="val">B<span style="color:#166534">↑</span></span></div>
+<div class="cell"><span class="lbl">Runway Post-Y5</span><span class="val">🟢 寬</span></div>
+<div class="cell"><span class="lbl">Max DD（5Y）</span><span class="val" style="color:#991B1B">−65%</span></div>
+<div class="cell"><span class="lbl">DCA 裁決</span><span class="val" style="color:#92400E">觀望</span></div>
+</div>
+
+<!-- §2 Thesis -->
+<div class="thesis">
+<div class="big">Credo 把「讓 AI 叢集連得夠可靠」做成業界 de facto 標準；當叢集從萬卡走向百萬卡，可靠連接的價值被指數級放大。</div>
+<div class="sub">§2 One-Sentence Thesis（44 字，敘事性投資本質）</div>
+</div>
+
+<!-- §7 Decision -->
+<section>
+<h2>§7｜Decision</h2>
+<div class="decision">
+<span class="chip">觀望</span>
+<span class="chip-sub">卓越公司、滿買點：thesis 完整且 optical 第二曲線兌現中，但股價 4 週 +40.6%、財報後 +20%、貼 52 週高、站上布林上軌——動能過熱 soft veto，等回測再分批。</span>
+
+<h3>決策矩陣套用</h3>
+<table>
+<tr><th>優先序</th><th>條件</th><th>本案</th><th>結果</th></tr>
+<tr><td>1-3 Hard Veto</td><td>DD=X / thesis 不成立 / moat↓且≤B</td><td>DD=B、thesis 完整、moat B 但趨勢 ↑</td><td class="ok">未觸發</td></tr>
+<tr><td>5 Soft Veto</td><td>動能過熱（RSI>70 或 4 週漂移>+10%）</td><td>RSI 60.3（未過）但 <strong>4 週漂移 +40.6%</strong>（遠過）</td><td class="warn">觸發 → ≥ 觀望</td></tr>
+<tr><td>7 Soft Veto</td><td>runway_post_y5 🔴</td><td>🟢 寬</td><td class="ok">未觸發</td></tr>
+<tr><td>7a/7b Soft Veto</td><td>估值依賴型 / capalloc C</td><td>非估值依賴（re-rate 為負）、capalloc B</td><td class="ok">未觸發</td></tr>
+<tr><td>9 Baseline</td><td>無 veto + DD≥B + 估值≤🟡 + MA✅</td><td>本符合（會給「進場」）</td><td class="warn">但被 #5 動能過熱上限鎖為觀望</td></tr>
+</table>
+<p class="note">衝突解決：Soft Veto #5（動能過熱）命中 → 上限觀望，不得輸出進場。thesis 完整（非 C/X）→ 非迴避。<strong>最終：觀望（等回測修復時機）。</strong></p>
+
+<h3>7a. 倉位與進場計畫（觀望路徑）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>在組合中的角色</td><td>衛星持倉（高成長 AI 連接 optionality；非核心——因客戶高集中＋高 beta＋估值滿）</td></tr>
+<tr><td>初始建倉倉位</td><td><strong>0%</strong>（觀望，不在現價追）</td></tr>
+<tr><td>目標倉位（條件成立後）</td><td><strong>3–4%</strong> of portfolio（已因 §6c Max DD 🔴 自上限 6% 下修至 ≤4%）</td></tr>
+<tr><td>進場價位區間</td><td>$155–195（回測布林中軌 ~$160 / W104 ＋ 緩衝；或 PEG(3Y) 回到 <0.9 ≈ FY28 28x ~$240 以下且動能降溫）</td></tr>
+<tr><td>進場節奏（條件式）</td><td><strong>觸發條件：</strong>① 4 週漂移降溫至 <+10% 且回測布林中軌 ~$160 或 W104 區；② 或 FY27 H2 optical inflection 確認（Q2 FY27，~11 月）＋ 股價回檔 ≥15%。滿足任一 → 分 2–3 批建倉。<strong>禁止現價一次追高。</strong></td></tr>
+<tr><td>vs 現有組合同類曝險（opportunity cost）</td><td>組合已有 AI 半導體核心曝險（近期 DCA：<strong>TSM</strong>，S 級護城河 9.5、亦為 B 觀望等回測）。CRDO 相對 TSM：成長更快＋optical 第二曲線 optionality 更高，但<strong>護城河淺一級（B vs S）＋客戶集中極高（Top3 77%）＋beta 3.23（vs TSM ~1.3）＋同樣 R:R 近期不利</strong>。邊際資金結論：兩者皆「等回測」，不急於現價加任一個；若要增 AI 連接曝險，CRDO 的差異化在「銅＋光雙曲線」，但須等更好價位——目前加碼 TSM（更深護城河、回測後）優先於追 CRDO。</td></tr>
+</table>
+
+<h3>7b. 加碼與減碼條件</h3>
+<table>
+<tr><th>行動</th><th>觸發條件</th><th>調整至倉位</th></tr>
+<tr><td>進場（首批）</td><td>回測布林中軌 ~$160 或 W104，動能降溫（4 週漂移 <+10%）</td><td>1.5–2%</td></tr>
+<tr><td>加碼</td><td>FY27 H2 optical inflection 確認（Q2/Q3 FY27 季營收兌現 >80% 路徑 ＋ optical 季營收顯著放量）＋ 估值回到 🟢（PEG<0.9）</td><td>3–4%（目標）</td></tr>
+<tr><td>減碼</td><td>Top1 客戶回升 >45%，或 MRVL AEC 連 2 季 >$50M，或連 2 季營收偏離路徑 ≥10%</td><td>減半</td></tr>
+<tr><td>清倉</td><td>§5 Single Thing 觸發（前三大客戶轉自研/Synopsys SerDes）</td><td>0%</td></tr>
+</table>
+
+<h3>7c. Pure MA 相容性 + 動能過熱</h3>
+<table>
+<tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr>
+<tr><td>股價在 MA60（日）之上？</td><td class="ok">✅</td><td>$271.83 vs MA60 $181.01</td></tr>
+<tr><td>股價在 MA200（日）之上？</td><td class="ok">✅</td><td>遠在其上</td></tr>
+<tr><td>股價在 MA104w 之上？</td><td class="ok">✅</td><td>$271.83 vs W104 $97.67</td></tr>
+<tr><td>Pure MA 系統支持進場？</td><td class="ok">✅ 結構多頭</td><td>價 > W52 > W104 > W200，斜率全強正</td></tr>
+<tr><td><strong>短期動能過熱</strong></td><td class="warn">⚠ 4 週漂移 +40.6%（>>+10%）</td><td>RSI 14d 60.3（未過 70，因 6/16 回測 $239 降溫）；但 4 週 +40.6% ＋ 站上布林上軌（$268.79）＋ 財報後 +20% → 過熱</td></tr>
+</table>
+<p class="note"><strong>結論</strong>：Pure MA 結構多頭（✅），但動能過熱（4 週漂移 +40.6%）→ §7a 進場節奏強制改條件式，禁止現價一次追高。mean reversion 前提：站上布林上軌後 1 個月內回測中軌的歷史頻率高，疊加高 beta 3.23 → 等回測更佳。</p>
+
+<h3>7d. 建議持有年限</h3>
+<table>
+<tr><th>持有年限</th><th>條件</th></tr>
+<tr><td>短期（<2 年）</td><td>若僅賭 FY27 H2 optical inflection ＋ 估值修復 → 不建議（現價追高、R:R 近期負）</td></tr>
+<tr><td>中期（2–5 年）</td><td>若 optical 第二曲線兌現（FY28 optical 2–3x）＋ AEC 1.6T ASP uplift → 成立</td></tr>
+<tr><td>長期（5–10 年）</td><td>若 scale-up/Weaver/ALC 第三曲線放量 ＋ 維持連接系統 IP 領先 → 成立（runway 🟢 寬支持）</td></tr>
+</table>
+<p><strong>建議持有年限：中長期（3–7 年），但須在合理價位 + 動能降溫進場</strong>。原因：runway_post_y5 🟢（AEC＋optical＋scale-up 三曲線接力，跑道 ≥10 年）支持長抱；惟 §6c Max DD 🔴（中途出場風險高）＋ 高 beta → 須以較小倉位（≤4%）＋ 不用槓桿 ＋ 回測進場，才抱得住。</p>
+
+<h4>EPS 預測參考表</h4>
+<table>
+<tr><th>年份</th><th>EPS 估計（NG）</th><th>來源</th><th>備注</th></tr>
+<tr><td>FY26（實際）</td><td class="mono">$3.46</td><td>公司 6/1 法說</td><td>基期；GAAP $2.51</td></tr>
+<tr><td>FY27E</td><td class="mono">$6.06</td><td>Excel snapshot 2026-06-04</td><td>+75% YoY；JPM $6.20 / Jefferies $6.06 / Barclays $6.27 / BofA $5.65</td></tr>
+<tr><td>FY28E</td><td class="mono">$8.62</td><td>Excel snapshot</td><td>+42% YoY</td></tr>
+<tr><td>FY29E</td><td class="mono">$10.39</td><td>Excel snapshot</td><td>+21% YoY</td></tr>
+<tr><td>FY31E（外推）</td><td class="mono">~$15.5</td><td>外推</td><td>外推假設：FY29→FY31 ~20%/yr（內生天花板 ~22% 內，optical/scale-up 接棒）</td></tr>
+</table>
+<p class="note"><strong>假設長期持有（5–10 年），現價適合嗎？</strong>——以 Base 5Y 期望（§4）+48% / IRR ~8.2%/yr 計，現價（$271.83）對長抱者「報酬中等、且大半 EPS 複利被估值正常化抵銷」。EPS 預測（FY31 ~$15.5）支撐長期價值，但 45x 進場意味前 2–3 年的成長已被預付；長抱可行但<strong>不是好的進場點</strong>——等回測布林中軌/W104（$155–195）能把 5Y IRR 拉到 ~14–16%/yr（同樣 EPS 路徑 + 較低進場成本 + 較小 de-rate 拖累），R:R 大幅改善。</p>
+</div>
+</section>
+
+<!-- §4 Asymmetry -->
+<section>
+<h2>§4｜Asymmetry Analysis</h2>
+<table>
+<tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率</th></tr>
+<tr><td>Bull（thesis 對）</td><td>+130%</td><td class="ok">+18.1%/yr</td><td>optical 2–3x 兌現 ＋ AEC 1.6T 再加速 ＋ scale-up/Weaver 放量；FY31 EPS ~$18，exit ~35x（維持成長溢價）</td><td>30%</td></tr>
+<tr><td>Base</td><td>+47%</td><td>+8.0%/yr</td><td>optical 兌現但 AEC 減速；FY31 EPS ~$15.5，exit ~25x（成長正常化 de-rate）</td><td>45%</td></tr>
+<tr><td>Bear（thesis 錯）</td><td>−45%</td><td class="bad">−11.2%/yr</td><td>AI capex 消化 ＋ optical miss ＋ 客戶 dual-source；EPS 失速、exit ~20x → broker downside $120–175</td><td>25%</td></tr>
+<tr><td><strong>機率加權期望值</strong></td><td><strong>+49% 5Y</strong></td><td><strong>IRR ≈ 8.3%/yr</strong></td><td>0.30×130 + 0.45×47 + 0.25×(−45)</td><td>100%</td></tr>
+</table>
+<p class="note"><strong>IRR 落點：中（8–12%/yr）</strong>——合理 mid-conviction，但<strong>現價</strong>下的 IRR 被估值正常化拖累。</p>
+<h4>10Y 壓力測試 + 機會成本</h4>
+<table>
+<tr><th>視角</th><th>Base 假設</th><th>IRR</th><th>解讀</th></tr>
+<tr><td>5Y（現價進）</td><td>FY31 EPS ~$15.5 × 25x = $403</td><td>+8.2%/yr</td><td>EPS +20% 被 re-rate −11% 拖累</td></tr>
+<tr><td>10Y（現價進）</td><td>FY36 EPS ~$30（成長向 ~12–14% 收斂）× 22x = $660</td><td>+9.3%/yr</td><td>拉長後 de-rate 攤平、複利更久 → IRR 略升；但 10Y 內客戶/架構替代不確定性大增（§5 Single Thing 機率累積）</td></tr>
+<tr><td>5Y（回測 $175 進）</td><td>同 EPS 路徑、起點 PE ~29x → 較輕 de-rate</td><td>+15–16%/yr</td><td><strong>同一 thesis、較低進場成本，IRR 翻倍</strong>——這是觀望的核心算術</td></tr>
+</table>
+<p class="note"><strong>機會成本</strong>：同期 AI 半導體可比——TSM 5Y Base IRR ~12%（機率加權 ~8.6%）、護城河 S 級、亦為 B 觀望；大盤 ~7%/yr。CRDO 現價 5Y IRR ~8.2% <strong>不明顯優於更深護城河、更低 beta 的 TSM</strong>，且 Max DD 風險更高（🔴 vs TSM 🔴 但 beta 低一半）。邊際資金結論：現價不該追 CRDO，回測後（IRR 翻至 ~15%）才有明顯超越大盤與 TSM 的吸引力。</p>
+
+<h4>📅 機率估計校準（時間視角）</h4>
+<table>
+<tr><th>檢查項</th><th>標準</th><th>本案</th></tr>
+<tr><td>Bear 機率</td><td>5Y 視角不應 <20%</td><td class="ok">25%（高 beta 3.23 + 客戶集中 + capex 週期性 → 合理偏高）</td></tr>
+<tr><td>Bull/Bear 散布</td><td>5Y 應比 1Y/2Y 寬 ≥50%</td><td class="ok">Bull +130% vs Bear −45%（散布 175pp，寬）</td></tr>
+<tr><td>Base 機率</td><td>不應 >50%</td><td class="ok">45%（已壓測失敗路徑：optical miss + capex 消化）</td></tr>
+<tr><td>Pattern match 校準</td><td>歷史相似 case 年化 IRR</td><td>高成長滿倍數股 thesis 半兌現 + 高價進場 → 5Y IRR ~8–12%（與 Base 8.2% 一致）</td></tr>
+</table>
+<div class="pattern">
+<h4>📐 Pattern match</h4>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>歷史結構類似個股</td><td>2021–22 的高 beta AI/連接早期賭局（如早期 MRVL data center、2021 的 AI 連接小盤），以及「beat-and-raise 動能股在 beat 幅度首次收斂時的 de-rate」</td></tr>
+<tr><td>當時 setup</td><td>40–50x forward PE、高成長（>50%）、市場給滿倍數、動能極強</td></tr>
+<tr><td>最終 5 年實現</td><td>分化極大：thesis 兌現者（如 NVDA/AVGO 級）5Y IRR >25%；thesis 半兌現但進場價過高者，前 2 年常先 −40~−60% de-rate 再隨 EPS 追上，5Y IRR 攤回 ~8–12%</td></tr>
+<tr><td>最像/最不像</td><td>最像：高成長 ＋ 滿倍數 ＋ 動能過熱進場點。最不像：CRDO 基本面（FCF 30%、淨現金、AEC 88% 份額）遠強於多數早期賭局——這是真盈利的龍頭，不是故事股。</td></tr>
+</table>
+</div>
+
+<h4>🧬 IRR Composition（5Y 質感拆解）</h4>
+<table>
+<tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息+淨買回</th><th>合計年化</th></tr>
+<tr><td>Bull</td><td class="ok">+24%/yr</td><td class="bad">−5%/yr</td><td class="bad">−1%/yr</td><td class="ok">+18%/yr</td></tr>
+<tr><td>Base</td><td class="ok">+20%/yr</td><td class="bad">−11%/yr</td><td class="bad">−1%/yr</td><td>+8%/yr</td></tr>
+<tr><td>Bear</td><td class="bad">+5%/yr</td><td class="bad">−15%/yr</td><td class="bad">−1%/yr</td><td class="bad">−11%/yr</td></tr>
+</table>
+<div class="stack"><span style="width:65%;background:#15803d">EPS +20</span><span style="width:0%;background:#3B82F6"></span><span style="width:35%;background:#94a3b8">re-rate −11 / SBC −1（拖累）</span></div>
+<p class="note">（Base 視覺化：綠＝EPS 複利 +20%/yr，灰＝估值 re-rate −11%/yr ＋ SBC 稀釋 −1%/yr 的拖累。合計 +8%/yr。）</p>
+<p class="note"><strong>內生天花板 sanity check</strong>：Base EPS CAGR +20%/yr vs DD §8.D 內生成長天花板 ~22%（dd-meta endo_growth_ceiling 22）→ <strong>在天花板內 ✅</strong>（缺口已由增量 OM 58% 歸因，非依賴 re-rate）。故 Bear 機率不強制 ≥30%（維持 25%，已反映高 beta＋集中度）。</p>
+<div class="pattern"><blockquote>
+質感解讀：Base +8%/yr IRR 中，<strong>+20%/yr 全來自 EPS 複利，−11%/yr 是估值 re-rate 拖累，−1%/yr 是 SBC 稀釋</strong>。這檔的可抱性<strong>純靠 EPS 自然複利（公司自己長出來），且要「逆著估值正常化」抱</strong>——進場價越高、de-rate 拖累越重。<strong>非估值依賴型</strong>（re-rate 是負貢獻，不是靠多重擴張）：這意味著「等回測進場」能直接把 IRR 從 8% 拉到 14–16%（同 EPS 路徑、較低起點 PE、較輕 de-rate），是本案觀望的核心算術理由。
+</blockquote></div>
+<p class="note"><strong>估值依賴型標記：否</strong>（re-rate 貢獻為負 −11%/yr，非正向多重擴張依賴 → 7a soft veto 不觸發）。</p>
+</section>
+
+<!-- Phase B -->
+<section>
+<h2>Phase B｜矛盾辨識 + 強制裁決</h2>
+<div class="conflict">
+<h3>共識清單（A1-A3 方向一致，高信心）</h3>
+<ul>
+<li>AEC 護城河真實且深（execution 維度）——A1（vertical integration/88% 份額）＋ A3（GM 68%/FCF 30%）＋ A2（de facto 標準）一致。</li>
+<li>連接 TAM 結構性擴張、optical 第二曲線是成長主引擎——A2（TAM）＋ A3（segment model optical +700%）一致。</li>
+<li>現價估值滿、動能過熱、進場時機差——A3（45x/PEG 1.0/4 週 +40%）共識。</li>
+</ul>
+
+<h3>矛盾清單</h3>
+<table>
+<tr><th>#</th><th>矛盾點</th><th>A1</th><th>A2</th><th>A3</th><th>性質</th></tr>
+<tr><td>1</td><td>護城河 pricing power 強度</td><td>execution 強（9）但 pricing 受客戶集中封頂</td><td>連接玩家議價佳（緊缺）</td><td>Top3 77% 集中、客戶想 dual-source</td><td>🟡 可調和（程度差異）</td></tr>
+<tr><td>2</td><td>AEC vs optical 成長重心</td><td>AEC 是護城河核心</td><td>optical TAM 更大</td><td>AEC FY28 僅 +9%、optical +133%</td><td>🟡 可調和（接力，非衝突）</td></tr>
+<tr><td>3</td><td>現價是否該買</td><td>—</td><td>產業順風支持長抱</td><td>R:R 近期負、broker PT 均低於現價</td><td>🔴 不可調和（買 vs 等）</td></tr>
+</table>
+
+<h3>與既有報告交叉矛盾</h3>
+<table>
+<tr><th>#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD 結論</th><th>原因</th></tr>
+<tr><td>1</td><td>verdict</td><td>觀望（動能過熱 soft veto）</td><td>DD signal B（觀望偏進場）</td><td>一致——DCA 動能 soft veto 與 DD 的 Pure MA 🟡 同源</td></tr>
+</table>
+
+<h3 style="background:#FED7AA;padding:6px 10px;border-radius:4px;">⚖ 強制裁決（不可調和矛盾 #3）</h3>
+<table class="verdict-tbl">
+<tr><th>#</th><th>矛盾</th><th>我選哪邊</th><th>依據</th><th>會 settle 的硬數據點</th><th>裁決後執行路徑（≥2 if-then）</th></tr>
+<tr><td>3</td><td>現價買 vs 等回測</td><td><strong>等回測（A3 時機面）</strong></td><td>IRR composition 證明：現價 Base IRR 僅 8%/yr（EPS +20% 被 re-rate −11% 拖累）；回測進場可拉到 14–16%。且 4 家 broker PT（$250–270）均低於現價 $272、4 週漂移 +40.6%、站上布林上軌——非 thesis 否定，是時機。</td><td>① 股價回測布林中軌 ~$160 或 W104（週度盯）；② Q2 FY27 季報（~11 月）optical 季營收是否確認 H2 inflection；③ PEG(3Y) 回到 <0.9（≈ FY28 28x ~$240 以下）</td><td>(a) 回測 $155–195 且動能降溫 → 升級首批建倉 1.5–2%；(b) 突破且站穩 $300+ 而 EPS 未跟上（PEG>1.3）→ 維持 0%、不追，等下一次財報重評</td></tr>
+</table>
+</div>
+</section>
+
+<!-- §3 Key Drivers -->
+<section>
+<h2>§3｜Key Drivers</h2>
+<table>
+<tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>可觀測指標</th></tr>
+<tr><td>1</td><td><strong>可靠連接的 de facto 標準地位</strong>（供給/執行側壟斷：垂直整合 SerDes→DSP→系統→telemetry，唯一大規模量產 AEC）</td><td>叢集停機成本以百萬美元計，hyperscaler 以「可靠度」而非「規格」選供應商；CRDO 1,000× 可靠度 ＋ N-1 SerDes 架構是難以複製的系統級護城河</td><td>AEC 市佔（~88%）、GM（68%）、5/6 hyperscaler 部署、是否守住下一代設計</td></tr>
+<tr><td>2</td><td><strong>AI 叢集規模化的結構性連接需求 ＋ optical 第二曲線</strong>（需求側持續性，獨立於 driver 1）</td><td>叢集萬→百萬卡 → 連接節點數非線性上升（scale-up ~10x）；optical（光）開出 AEC（銅）之外的第二條曲線，TAM 量級更大</td><td>FY27 optical >$600M 兌現、FY28 optical 2–3x、scale-up/Weaver FY28 起量</td></tr>
+</table>
+<p class="note"><strong>為什麼是這 2 個</strong>：driver 1（供給側執行壟斷）回答「為什麼是 CRDO 賺到」，driver 2（需求側結構成長）回答「這門生意能長多久多大」——兩條獨立因果鏈。校驗：driver 2（AI 連接需求）可在不假設 driver 1（CRDO 執行壟斷）成立下單獨被推翻（如 AI capex 消化）→ 通過正交測試，非 sub-component。</p>
+
+<h4>強制減法——我認為不重要的事</h4>
+<table>
+<tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr>
+<tr><td>CPO/NPO 何時取代可插拔光</td><td>更長期架構（FY28+ initial），且 CRDO 已用 DustPhotonics SiPho ＋ MicroLED 雙路徑對沖——不是 thesis 命門</td></tr>
+<tr><td>單季客戶 mix 波動（lumpy）</td><td>半導體訂單型業務天然 lumpy，2–4 年持有期內是噪音；趨勢（多元化方向）才是訊號</td></tr>
+<tr><td>毛利率 64% vs 68% 之爭（券商分歧）</td><td>±4pp GM 不改 thesis（仍是高 margin 龍頭）；mix 轉硬體稀釋是已知、可預期</td></tr>
+</table>
+
+<h4>🔄 我和市場 consensus 的最大分歧</h4>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>市場目前定價在什麼假設上</td><td>45x forward PE = 假設 optical 第二曲線完美兌現 ＋ AEC 維持主導 ＋ beat-and-raise 動能延續（動能買盤推到 $272、貼 52 週高）</td></tr>
+<tr><td>我的不同假設</td><td>thesis（業務）我認同；分歧在「<strong>beat-and-raise 機器已現首道裂縫</strong>」——F4Q26 beat 幅度收斂（+1%/+2% vs 前 +7~17%）＋ 前三大客戶環比金額同步下滑。動能買盤低估了「核心客戶見頂 ＋ AEC 減速」對 FY27 H1 的影響。</td></tr>
+<tr><td>賣方為什麼錯（具體）</td><td>賣方其實不算錯——4 家新 PT（$250–270）均<strong>低於</strong>現價，即賣方共識也認為現價略超 12 個月目標。真正「錯」的是現價的動能買盤（追高者），把短期能見度套到滿倍數。我的 alpha 來源弱（我不反對業務，只反對進場價）→ 依 guardrail 5，倉位打折（目標 ≤4%）並維持觀望。</td></tr>
+</table>
+</section>
+
+<!-- §5 Single Thing -->
+<section>
+<h2>§5｜The Single Thing That Could Change My Mind</h2>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>事件描述（primary）</td><td>任一前三大 hyperscaler 客戶（xAI/AMZN/MSFT）公告其下一代 AI 加速器/交換機<strong>自研 SerDes 或轉用 Synopsys/Cadence 商用 IP</strong>，繞過 CRDO 的連接方案（discrete binary 架構替代）</td></tr>
+<tr><td>為什麼致命</td><td>這直接打穿 driver 1（執行壟斷）——若客戶能自建/外購等效連接，CRDO 的 de facto 標準地位瓦解，護城河 −2、量價齊跌。AMZN（Trainium + Marvell SerDes）是最可能來源。</td></tr>
+<tr><td>如何監測</td><td>hyperscaler 晶片發表會 / 法說 / 供應鏈報導（Trainium 下一代、MAIA、TPU 規格）；季度頻率 ＋ 重大發表會即時</td></tr>
+<tr><td>目前離發生多遠</td><td>~20–25%/12–24 個月（單一客戶層級）；尚無公告。AMZN dual-source（Marvell）是前哨訊號</td></tr>
+<tr><td>事件描述（secondary，pre-mortem 派生）</td><td><strong>AI capex 進入消化期</strong>：≥3 家 hyperscaler 同季給 capex 同比下修指引 → 高 beta CRDO 戴維斯雙殺（見 §6b 校驗）</td></tr>
+</table>
+<h4>🔗 Cross-check with DD §5.F</h4>
+<p class="note"><strong>✅ Aligned</strong>：DD §5.F single thing = 同一架構替代事件（hyperscaler 自研/轉 Synopsys SerDes）。DCA confirm，並加強監測 detail（AMZN/Trainium 為最可能來源、發表會即時盯）。DCA §5 primary = DD §5.F；DCA secondary（capex 消化）為 pre-mortem 派生補充。</p>
+</section>
+
+<!-- §6 -->
+<section>
+<h2>§6｜What I Don't Know + Pre-mortem</h2>
+<h4>6a. 盲點</h4>
+<table>
+<tr><th>#</th><th>不確定的假設</th><th>thesis 仍成立的前提</th><th>不成立的後果</th><th>如何監測（領先指標）</th></tr>
+<tr><td>1</td><td>optical（ZF/PIC）能否如 AEC 一樣建立可靠度護城河</td><td>ZF Optics telemetry/可靠度差異化獲第二、三家 hyperscaler 認證</td><td>optical 淪為低毛利模組商品競爭（vs COHR 38% GM）→ 第二曲線 margin 不如預期，GM 向 64% 下修</td><td>ZF Optics 客戶數揭露（管理層稱 2H26 第二家認證為 catalyst）；optical 段 GM 分色揭露</td></tr>
+<tr><td>2</td><td>AEC FY28 +9% 是保守 guidance 還是真減速</td><td>1.6T ASP uplift FY28+ 重新加速 AEC（200G/lane 量起）</td><td>AEC 確實見頂 → thesis 全押 optical 兌現，風險集中於單一曲線</td><td>1.6T/200G AEC 季營收占比；Rubin 部署時點（管理層稱 FY27 200G「relatively light」）</td></tr>
+<tr><td>3</td><td>客戶高集中（Top3 77%）的下行放大</td><td>Neo Cloud/Tier-2 多元化如期（管理層稱可達 ~20%）</td><td>單一大客戶（xAI/AMZN）砍單 → 營收劇烈波動 ＋ 高 beta 3.23 放大股價</td><td>季度 Top1/Top3 集中度；>10% 客戶家數（Q4 為 4 家）；Neo Cloud 營收占比</td></tr>
+<tr><td>4</td><td>DustPhotonics ~$750M 併購 ROIIC 能否 > WACC</td><td>SiPho PIC backlog 兌現 + 內化提升 ZF Optics margin（FY27 accretive 宣稱）</td><td>M&A 飛輪變「規模幻覺」，未來以更貴價碼追併購吃掉 FCF</td><td>DustPhotonics 整合後 optical GM；earn-out 達成度（2 年期，依財務指標）</td></tr>
+</table>
+
+<div class="premortem">
+<h4>6b. Pre-mortem（三段式）</h4>
+<h4>第一段｜故事倒推</h4>
+<blockquote>假設 5 年後這個部位虧 50%，最可能的故事：2026 H2–2027，AI capex 進入消化期（hyperscaler ROI 審查趨嚴 + overbuild），AMZN 下一代 Trainium 採 Marvell+Amphenol「Golden Cable」取代部分 CRDO AEC，xAI 訂單 lumpy 下修；同時 FY27 H2 optical inflection 不如期（ZF Optics ramp 延後、僅第一家 hyperscaler）。FY27 營收成長從 +84% 降至 ~+50%，共識 EPS 下修 25%，市場把 forward PE 從 45x 壓到 20x → 股價打回 broker downside $120（−56%）。高 beta 3.23 在過程中放大波動。</blockquote>
+<h4>第二段｜校驗 §5</h4>
+<table>
+<tr><th>檢查問題</th><th>答案</th></tr>
+<tr><td>失敗故事的關鍵觸發，是否就是 §5 single thing？</td><td><strong>⚠ 部分重疊</strong>：§5 primary（AMZN 轉自研/Marvell SerDes）撞上故事的一半；但故事的另一半「AI capex 消化 + optical inflection 延後」是 §5 primary 未涵蓋的<strong>過程性 + 第二觸發</strong></td></tr>
+</table>
+<h4>第三段｜修正 §5</h4>
+<p>校驗結果 ⚠ 部分重疊 → <strong>已在 §5 區塊實際補一條 secondary trigger</strong>（「AI capex 進入消化期：≥3 家 hyperscaler 同季 capex 下修」）。§5 trigger 數由 1（primary）增為 2（primary + secondary）。</p>
+<p class="note"><strong>§5 修正狀態：⚠ 已補 1 條 secondary trigger</strong>（capex 消化）。</p>
+</div>
+
+<h4>6c. 路徑壓力測試（Max DD）</h4>
+<div class="maxdd">
+<div><span class="note">估計 Max DD 範圍（5Y 期間）</span><br><span class="num">−45% ~ −65%</span></div>
+<div style="flex:1;min-width:200px;">
+<div class="bar"></div>
+<span class="note">下界取 −65%（高 beta 3.23 + 客戶集中 + 52 週高進場 → 接近 2022 高 beta 半導體回落幅度；broker bear $120 = −56%）</span>
+</div>
+<div style="text-align:center;"><span class="rate">🔴</span><br><span class="note">最快復原 12–24 月（若 thesis 未破）</span></div>
+</div>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>估計 Max DD 範圍</td><td><strong>−45% ~ −65%</strong>（寬度 20pp）</td></tr>
+<tr><td>最可能觸發時點</td><td>1–2 年後（2026 H2–2027 AI capex 消化 + optical inflection 不如期）</td></tr>
+<tr><td>觸發後恢復</td><td>若 thesis 未破（optical 終究兌現）：12–24 月隨 EPS 追上；若 §5 觸發（架構替代）：thesis 已破，不恢復</td></tr>
+<tr><td>路徑風險評級</td><td class="bad">🔴 <−50%（多數人會在中途出場）</td></tr>
+</table>
+<p class="note"><strong>校驗</strong>：若 Max DD 落在 −65%，能否撐到復原？條件：<strong>部位 ≤4% of portfolio（已下修）＋ 不用槓桿 ＋ §5 trigger 未發生 ＋ 回測進場（不在 52 週高追）</strong>。因評級 🔴 → §7a 倉位上限自 6% 強制下修至 ≤4%，且 §7d 標註「中途出場風險高，須小倉 + 回測進場」。</p>
+</section>
+
+<!-- §8 -->
+<section>
+<h2>§8｜Review Triggers</h2>
+<table>
+<tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間/條件</th></tr>
+<tr><td>1</td><td>Q1 FY27 財報（截止 2026/7）</td><td>財報日期</td><td>~2026 年 9 月初；看營收 vs >80% 路徑 ＋ optical 季營收起步 ＋ Top3 客戶集中度</td></tr>
+<tr><td>2</td><td>Marvell AEC 季營收 / Golden Cable 合作廠數；OFC 等產業展</td><td>產業事件</td><td>持續；MRVL AEC 連 2 季 >$50M 或合作組裝廠 >5 家 → R2 升級</td></tr>
+<tr><td>3</td><td>股價回測布林中軌 ~$160 或 W104（進場）／突破 $300+ 而 PEG>1.3（不追）</td><td>價位觸發</td><td>週度盯</td></tr>
+<tr><td>4</td><td>§5 Single Thing：前三大客戶轉自研/Synopsys SerDes</td><td>架構替代</td><td>hyperscaler 發表會即時；~20–25%/12–24M</td></tr>
+</table>
+<p><strong>報告保質期</strong>：至 <strong>2026-09-15</strong>（Q1 FY27 財報前有效；財報後須重評 optical inflection 與客戶集中度）。</p>
+<p><strong>最可能 upside 因素</strong>：FY27 H2 optical inflection 超預期（ZF Optics 第二家 hyperscaler 認證 + DSP 放量），或 1.6T AEC ASP uplift 提前重新加速 AEC。</p>
+<p><strong>最可能 downside 因素</strong>：AI capex 消化期 + 前三大客戶環比續降 + beat 幅度持續收斂 → 高 beta de-rate；或 §5 架構替代事件。</p>
+</section>
+
+<!-- Phase A folded -->
+<section>
+<h2>Phase A｜獨立研究（折疊）</h2>
+
+<details>
+<summary>Phase A1｜護城河深度分析 — 結論：execution moat 強且加深（9），pricing power 被客戶集中封頂（7）；moat_trend ↑ widening</summary>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>主要護城河類型</td><td>① 規模/執行（唯一大規模量產 AEC >數百萬條，垂直整合 SerDes→DSP→系統→telemetry）；② 無形資產（N-1 SerDes 架構 + 專利，2026/3 與 Amphenol/TE 和解驗證 IP）</td></tr>
+<tr><td>持久性評分</td><td>8/10，5 年穩固度：高（execution 維度）/ 中（pricing 維度，受集中度威脅）</td></tr>
+<tr><td>最大侵蝕風險</td><td>Marvell+Amphenol「Golden Cable」生態攻擊（DSP silicon + 組裝廠聯盟 + AWS custom 綁定），中期 4–6 季</td></tr>
+<tr><td>關鍵數據</td><td>GM 68.1%（↑，FY25 65%）、AEC 市佔 ~88%（→/↑）、ROIC ~43–46% vs WACC ~13–15% 超額 ~+28–30pp</td></tr>
+<tr><td><strong>moat_trend</strong></td><td><strong>↑ widening</strong>：12 個月證據——① GM 65%（FY25）→ 68.1%（FY26）+310bps；② 2026/3 與 Amphenol+TE 和解 AEC 專利（IP 地位獲法律驗證）；③ DustPhotonics 內化 SiPho PIC 擴大可控光堆疊（execution 加深）。Broadcom/Astera「struggled to breach」（Seeking Alpha/產業分析）。</td></tr>
+</table>
+<h4>二維護城河拆解（對齊 DD v12.7 §9）</h4>
+<table>
+<tr><th>維度</th><th>DD §9</th><th>DCA 獨立</th><th>Alignment</th></tr>
+<tr><td>Execution moat</td><td>9/10</td><td>9/10</td><td>aligned</td></tr>
+<tr><td>Pricing power moat</td><td>7/10</td><td>7/10</td><td>aligned</td></tr>
+<tr><td>合併</td><td>8/10</td><td>8/10</td><td>aligned</td></tr>
+</table>
+<h4>護城河形成史與競爭鴻溝機制</h4>
+<p class="note">CRDO 2018 首創 AEC，把原本「被動銅纜（短距、不可靠）」與「光模組（長距、貴、易 link flap）」之間的空白，用「主動式 DSP + 系統級可靠度」補上。過去 5 年從營收 <$200M 做到 $1.3B（FY26），且是<strong>唯一在 2025 年前交付數百萬條高速 AEC 的供應商</strong>——這個「量產 track record」本身是後進者最難複製的認證壁壘：hyperscaler 的 AEC 採購以「實證大規模部署的可靠度」為核心 gate，新進者從零開始需數季至數年跨多代客戶認證。競爭鴻溝三維：① 時間（領先 ~3–5 年）；② 認證（需實證 1,000× link flap 改善的量產數據）；③ 系統整合（CRDO 控 SerDes→DSP→cable→PILOT telemetry 全棧，Marvell+Amphenol 是「DSP silicon + 組裝廠」拆分組合，issue-resolution cycle 更長）。</p>
+<h4>對手財務體質（pricing power 為何封頂在 7）</h4>
+<table>
+<tr><th>對手</th><th>策略 / 對 CRDO 威脅</th><th>經濟體質</th><th>戰爭承受力</th></tr>
+<tr><td>Marvell（MRVL）</td><td>AEC DSP silicon + Amphenol「Golden Cable」聯盟 + custom ASIC SerDes（AWS/MSFT 綁定）→ 🔴 生態攻擊（最須盯）</td><td>市值 ~$112B、NG OM ~30%+、多元 FCF</td><td>高（吃得起補貼份額戰、母體願綁定 custom 生意）</td></tr>
+<tr><td>Astera Labs（ALAB）</td><td>retimer/fabric（Scorpio/Aries），AEC 非主攻 → 🟡 點對點</td><td>市值 ~$72B、GM ~75%（純 IP）、fwd PE ~125x</td><td>中高（早期高成長，AEC 直接重疊小）</td></tr>
+<tr><td>Amphenol/TE（APH/TEL）</td><td>商品銅纜 + 與 Marvell 合作做 AEC → 🟡 點對點（2026/3 已與 CRDO 和解專利）</td><td>APH 連接器 OM ~20%、深客戶關係 + 全球產能</td><td>高（規模大但走商品/被動段）</td></tr>
+</table>
+<p class="note">pricing power 封頂在 7 的根源：對手不需「跨過」CRDO 的執行壁壘，只需被客戶<strong>扶植為第二供應商</strong>即可分食——每個 hyperscaler 都有 dual-source 動機（AMZN 已是 Marvell custom 大客戶 = 最可能的 dual-source 來源）。這使 CRDO 雖有 88% 份額與 68% GM，卻無法像獨佔型（如 ASML EUV）那樣完全掌控定價。</p>
+<p class="note"><strong>Sourced data points（7）</strong>：① AEC ~88% 份額（CNBC/產業 2025-26）；② GM 68.1% FY26（公司法說 6/1）；③ ROIC ~43–46%（JPM/BofA F4Q26 review 6/1-2）；④ 專利和解 Amphenol+TE 2026/3（產業報導）；⑤ 1,000× 可靠度 / N-1 SerDes / ZeroFlap（公司法說 + Seeking Alpha）；⑥ 5/6 hyperscaler 部署（法說 6/1）；⑦ 垂直整合 own SerDes/系統/firmware/telemetry/光堆疊（法說 + 產業分析）。<br><strong>A1 獨立結論</strong>：護城河 execution 維度強且加深（vertical integration + 88% 份額 + 專利驗證），pricing power 被客戶集中（Top3 77%）+ Marvell 生態攻擊封頂；moat_trend ↑ widening。</p>
+</details>
+
+<details>
+<summary>Phase A2｜產業趨勢深度分析 — 結論：AI 連接 super-cycle，TAM 結構性擴張，optical 開第二大 TAM；runway_post_y5 🟢 寬，利潤池 ↑ 流入</summary>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>TAM 與成長</td><td>AEC AI 子市場 ~$0.2B（2024）→ ~$1.3B（2031，CAGR ~28%）；可插拔光「遠大於 AEC」、SiPho PIC 2030 ~$6B；連接整體 forecaster 喊 $10B 級。CAGR ~25–30%（AI 段），滲透率低（optical 剛起步）</td></tr>
+<tr><td>供需判斷</td><td>目前偏緊（AEC + ZF Optics + 3nm「顯著緊張」，管理層 6/1）；未來 12 月方向：續緊（AI 叢集擴張 + 供應鏈承諾鎖產能）</td></tr>
+<tr><td>最大技術替代風險</td><td>CPO/NPO 取代可插拔光——但更長期架構（FY28+ initial），CRDO 已雙路徑（SiPho + MicroLED）對沖，近期非威脅</td></tr>
+<tr><td>最大政策/地緣風險</td><td>關稅（guide「基於當前 tariff regime，仍 fluid」）+ 台積電先進製程地緣集中（台海）</td></tr>
+<tr><td>議價權位置</td><td>對上游 中（fabless 依台積電 3nm，但 5 年承諾鎖產能）；對下游 中（AEC 標準 + 轉換成本高，但客戶集中 + dual-source 動機）</td></tr>
+<tr><td><strong>runway_post_y5</strong></td><td><strong>🟢 寬</strong>：AEC（S 曲線中前段）+ optical（最前段，FY27 才 inflection）+ scale-up/Weaver/ALC（萌芽，FY28 起）三條曲線接力；Y5 末 optical 滲透率仍低（multibillion TAM <10%），下一條 S 曲線（scale-up/CPO）已啟動</td></tr>
+<tr><td><strong>利潤池位置</strong></td><td><strong>↑ 流入</strong>：CRDO 從「賣 DSP 晶片」上移到「賣系統 + telemetry 軟體 + 內化 PIC」，吃下原歸光模組廠的 margin stack（DustPhotonics 內化 SiPho PIC 即此）。證據：ZF Optics 三位數 ASP vs 模組商品化（COHR 38% GM）（法說 + DustPhotonics call）</td></tr>
+</table>
+<h4>供需循環位置（為何「緊」可信）</h4>
+<p class="note">需求側：AI 叢集從萬卡→十萬→百萬卡，連接節點數<strong>非線性上升</strong>（scale-up 較 scale-out 多 ~10x 連接，管理層 4/14 M&A call）；每 GPU 多埠設計（客戶為 1.6T 升級彈性設計「2 埠/GPU」）。供給側：管理層 6/1 明言 AEC + ZF Optics + 3nm「顯著緊張」，CRDO 以「5 年供應鏈承諾 + leaning forward 投資」鎖到產能、信心 H2 aggressive ramp 並隔年再 2–3x。供需循環位置 = <strong>需求加速 + 供給緊 = 賣方市場</strong>（有利 ASP 與 margin），但也意味「供給一旦鬆動 + 需求消化」會雙向放大（R1 capex 消化風險）。</p>
+<h4>逐段 TAM 與替代風險</h4>
+<table>
+<tr><th>段</th><th>TAM（現/5Y）</th><th>滲透</th><th>段 CAGR</th><th>被替代風險</th></tr>
+<tr><td>AEC（銅）</td><td>~$0.2B/~$1.3B+（AI 子市場）</td><td>CRDO ~88%</td><td>~28%</td><td>低（NIC-to-ToR 短距銅最優；CPO 不威脅短距）</td></tr>
+<tr><td>Optical（ZF/DSP/PIC）</td><td>可插拔光 multibillion / SiPho PIC 2030 ~$6B</td><td>低（~2% transceiver）</td><td>>50%</td><td>中（COHR/LITE/MXL 競爭，CRDO 以可靠度差異化高階）</td></tr>
+<tr><td>Scale-up/Weaver/ALC</td><td>萌芽（scale-up 連接 ~10x）</td><td>~0（FY28 起）</td><td>極高（早期）</td><td>低（CRDO 卡位 CPO/NPO 路徑 + MicroLED）</td></tr>
+</table>
+<p class="note">CPO/NPO（共封裝光）是市場最常辯論的「銅→光終局替代」——但 Jefferies/BofA 均判為「更長期架構」（FY28+ initial revenue），且 CRDO 已用 DustPhotonics SiPho + MicroLED 雙路徑卡位，非近期 thesis 威脅。NVIDIA $4B 分別投 LITE/COHR 強化光模組廠地位（產業報導），是 optical 段競爭加劇的訊號（CRDO 以系統級 + telemetry 差異化，而非當低毛利模組廠）。</p>
+<p class="note"><strong>Sourced data points（7）</strong>：① AEC TAM $0.2B→$1.3B 28% CAGR（產業報告 2024-26）；② SiPho PIC 2030 ~$6B（DustPhotonics call 4/14）；③ pluggable optical multibillion（法說）；④ 競爭 AVGO/MRVL/MXL/COHR/LITE/ALAB（BofA 6/2）；⑤ 3nm 緊缺（法說 + Jefferies）；⑥ NVIDIA $4B 投 LITE/COHR（產業報導）；⑦ 連接 TAM $10B forecaster（BofA 科技大會 fireside）。<br><strong>A2 獨立結論</strong>：AI 連接 super-cycle，TAM 結構性擴張且供給緊；optical 開出比 AEC 更大的第二 TAM；runway_post_y5 🟢 寬，利潤池往垂直整合連接系統商流入。</p>
+</details>
+
+<details>
+<summary>Phase A3｜業務/財務/資本配置 — 結論：基本面卓越（FCF 30%/淨現金）但客戶高集中 + SBC 稀釋；成長重心由 AEC 移向 optical</summary>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>營收結構</td><td>現金牛：AEC（FY26 88%、FY27 ~72%）；成長引擎：optical DSP/ZF/PIC（FY26 6% → FY27 ~25%，+700%）；新興：retimer/ALC/Weaver（小，FY28 起）</td></tr>
+<tr><td>客戶集中度</td><td>最大客戶（xAI）34%，前三 77%，前四 87%；風險：高（但 AEC 轉換成本高、跨代留存）</td></tr>
+<tr><td>定價權</td><td>ASP 趨勢 ↑（800G→1.6T uplift、ZF 三位數 ASP mix-up）；定價權：中強（GM 升 68% 證明，但客戶集中封頂）</td></tr>
+<tr><td>未來金雞母</td><td>Optical（FY27 ~25% 營收，TAM multibillion，FY28 2–3x）；Weaver scale-up（$2–3k/GPU，FY28 起）</td></tr>
+<tr><td>財務體質</td><td>FCF 轉換率 0.86（FCF/GAAP NI）/ 0.61（vs NG，SBC 拉低）；GM 68.1%（↑）；壓力測試：淨現金 $1.4B + 零有息債，營收 -20% 可撐多季無虞</td></tr>
+<tr><td>資本配置紀律</td><td>零股息/零回購（留現金作 M&A 彈性）；ATM FY26 募 ~$736M（趁高股價）；DustPhotonics ~$750M（>1.8x 年 FCF，FY27 accretive 宣稱）；capex 4.3% 輕資產。capalloc B（無減損劣跡，但 SBC 淨稀釋 ~3%/yr）</td></tr>
+<tr><td><strong>5Y IRR 分量基底（Base）</strong></td><td>EPS CAGR ~20%/yr（5Y，向內生天花板 22% 收斂；FY27→FY31 $6.06→$15.5）；5Y 末 forward PE ~25x vs 當前 ~45x（re-rate −11%/yr）；現金股息率 0%；淨買回率 −1%（SBC 稀釋，無回購）。EPS 來源：Excel snapshot 2026-06-04</td></tr>
+</table>
+<h4>分部前瞻建模（成長可驗證來源拆解）</h4>
+<table>
+<tr><th>段</th><th>FY26</th><th>FY27E</th><th>FY28E</th><th>段成長</th><th>對 EPS 成長貢獻</th></tr>
+<tr><td>AEC（銅）</td><td>$1,181M</td><td>~$1,763M</td><td>~$1,918M</td><td>+49% / +9%</td><td>FY27 最大絕對額但放緩 → 貢獻遞減</td></tr>
+<tr><td>Optical（DSP+ZF+PIC）</td><td>$76M</td><td>~$608M</td><td>~$1,416M</td><td>+700% / +133%</td><td><strong>FY27→28 EPS 成長主引擎</strong>（半數 FY27 美元成長）</td></tr>
+<tr><td>Retimer / IP / 其他</td><td>~$78M</td><td>~$88M</td><td>~$115M</td><td>低速</td><td>小</td></tr>
+<tr><td>合計</td><td>$1,335M</td><td>~$2,460M（+84%）</td><td>~$3,449M（+40%）</td><td>—</td><td>—</td></tr>
+</table>
+<p class="note">主引擎失守情境：若 optical FY27 <$450M（而非 $600M），整體成長從 +84% 降至 ~+50–60%、EPS CAGR 從 44% 降至 ~30% → 估值 de-rate（§4 Bear 路徑）。<strong>thesis 重心 FY27 起由 AEC（FY28 僅 +9%）移向 optical 兌現</strong>——這是本次最關鍵的結構變化。</p>
+<h4>財務深度（DuPont / 現金循環 / 資本配置）</h4>
+<table>
+<tr><th>指標</th><th>FY26</th><th>判讀</th></tr>
+<tr><td>ROIC/ROCE</td><td>~43–46%</td><td>DuPont：高 NOPAT margin 47.3% 主導（超額現金拉低周轉率）；剔除 $1.4B 超額現金後周轉與 ROIC 更高</td></tr>
+<tr><td>FCF margin</td><td>30.5%</td><td>FCF $407M（自 FY23 −$46M 結構性轉強）；owner earnings ~$436M（OCF − maint capex ~$28M）</td></tr>
+<tr><td>CCC（現金循環）</td><td>~187 天</td><td>DSO ~64 + DIO ~215（供應鏈緊缺主動備料）− DPO ~92；偏長須盯 DIO（若升而營收不跟 = 盈餘品質警訊）</td></tr>
+<tr><td>SBC / Rev</td><td>13.7%（$182.6M）</td><td>占比隨營收放大而降（FY25 ~37%→FY26 13.7%）；NG EPS $3.46 vs 含 SBC 真實 EPS $2.49 = 差 ~28%；股數膨脹 ~3–4%/yr（淨稀釋）</td></tr>
+<tr><td>capex / Rev</td><td>4.3%</td><td>fabless 輕資產；有息債 ~$25M、淨現金 $1.4B、無到期牆</td></tr>
+</table>
+<h4>資本配置 track + FCF 去向</h4>
+<p class="note">零股息、零回購（管理層 6/1 明言無計畫），現金全留作 M&A 彈性 + 有機再投資。FY26 ATM 募 ~$736M（趁高股價，攤薄但補彈性）；DustPhotonics ~$750M（>1.8x 年 FCF，2 年 earn-out、FY27 accretive 宣稱）= M&A 飛輪起點，須盯後續出價紀律。<strong>capalloc B</strong>：無 M&A 減損劣跡、無高位回購，但 SBC 淨稀釋 ~3%/yr 不過 1.5% 門檻。FCF 去向結論：成長<strong>變成股東現金（FCF $407M + 累積 $1.4B）</strong>，目前僅一筆大型 M&A 回收再投，增量 ROIC > WACC，飛輪健康但須警戒未來出價紀律。</p>
+<p class="note"><strong>5Y IRR 分量基底（Base 再確認）</strong>：EPS CAGR ~20%/yr（FY27 $6.06 → FY31 ~$15.5，向內生天花板 22% 收斂）；5Y 末 fwd PE ~25x vs 當前 ~45x → re-rate = (25/45)^(1/5)−1 = −11.0%/yr；股息 0%、淨買回 −1%（SBC 稀釋）。合計 ~+8%/yr（餵 §4 IRR composition）。</p>
+<p class="note"><strong>Sourced data points（10）</strong>：① F4Q26 Rev $437M +157%（法說 6/1）；② NG GM 68.3%（法說）；③ EPS consensus FY27 $6.06/FY28 $8.62/FY29 $10.39（Excel 2026-06-04）；④ FCF $407M FY26（法說）；⑤ SBC $182.6M=13.7% 營收（法說/Jefferies）；⑥ 現金 $1.4B 淨現金（法說）；⑦ capex 4.3%（計算）；⑧ DustPhotonics ~$750M 淨現金（法說/M&A call）；⑨ 客戶 xAI 34%/AMZN 27%/MSFT 16%（Jefferies/Barclays 6/1）；⑩ segment AEC FY26 $1,181M→FY27 $1,763M、optical $76M→$608M（Jefferies 模型 6/1）。<br><strong>A3 獨立結論</strong>：基本面卓越（FCF 30%、淨現金、營業槓桿），但客戶高集中 + SBC 稀釋 ~3%/yr 是兩個瑕疵；成長重心 FY27 起由 AEC 移向 optical。</p>
+</details>
+
+<details>
+<summary>Phase A4｜既有報告數據摘要（DD_CRDO_20260621.html v12.7）</summary>
+<table>
+<tr><th>dd-meta 欄位</th><th>值</th><th>DCA 引用</th></tr>
+<tr><td>signal / verdict</td><td>B / B</td><td>決策矩陣（DD≥B baseline）</td></tr>
+<tr><td>trap / trap_label</td><td>🟡 / 觀察期</td><td>§1 trap 一致（DCA 觀望）</td></tr>
+<tr><td>moat / moat_score</td><td>B / 8.0</td><td>Phase A1 cross-check（aligned）</td></tr>
+<tr><td>moat_execution / pricing_power</td><td>9 / 7</td><td>Phase A1 二維 adoption（aligned）</td></tr>
+<tr><td>val</td><td>🟡 公允</td><td>§4 估值 input</td></tr>
+<tr><td>fpe_fy2 / pct_5y / peg_fy2</td><td>31.5 / 55 / 0.71</td><td>§4 model inputs</td></tr>
+<tr><td>ma</td><td>🟡 減半</td><td>§7c（與 DCA 動能過熱同源）</td></tr>
+<tr><td>price_at_dd</td><td>$271.83</td><td>§7 進場價錨點</td></tr>
+<tr><td>upside_short / mid / 5y</td><td>−37% / −11% / +48%</td><td>§4 對照（一致）</td></tr>
+<tr><td>endo_growth_ceiling</td><td>22.0%</td><td>§4 IRR composition sanity check（Base EPS 20% < 22% ✅）</td></tr>
+<tr><td>capalloc_grade</td><td>B</td><td>§7b（不觸發 soft veto）</td></tr>
+<tr><td>ai_risk / long_term_confidence</td><td>🟢 / 高</td><td>Phase A2 對照 / §7d</td></tr>
+<tr><td>stress</td><td>1/2</td><td>§4 conviction 校驗（R:R 近期不利）</td></tr>
+</table>
+<h4>DD §5 投資論點錨定擷取（H1/H2/H3 + R1-R3）</h4>
+<table>
+<tr><th>假設</th><th>內容</th><th>具體門檻（sourced floor）</th><th>漂移觸發</th></tr>
+<tr><td>H1</td><td>AI 後端連接 super-cycle 延續，AEC+optical 維持高速成長</td><td>FY27 +>80%（~$2.4–2.5B）；optical >$600M（管理層 6/1 guide）</td><td>連 2 季 TTM 營收偏離路徑 ≥10% → 削弱</td></tr>
+<tr><td>H2</td><td>客戶多元化降低集中度（Top1 續降、Neo Cloud/Tier-2 放量）</td><td>Top1 維持 <40%；3–4 家 >10%；Neo Cloud 趨向 ~20%（法說揭露）</td><td>連 2 季 Top1 回升 >45% → 削弱</td></tr>
+<tr><td>H3</td><td>Optical 第二曲線（DSP/PIC/ZeroFlap）兌現，分散 AEC 依賴</td><td>FY27 optical >$600M（三段各 >$100M）；FY28 2–3x</td><td>連 4 季 optical 顯著低於路徑 → 削弱</td></tr>
+<tr><td>R1 ⚡</td><td>AI capex 消化 / 訂單推遲，高 beta 放大回落</td><td>季營收 vs >80% 路徑；hyperscaler capex guidance</td><td>連 2 季偏離 ≥10% 或主要客戶下修 capex</td></tr>
+<tr><td>R2 🔥</td><td>Marvell（AEC DSP+Golden Cable）+ Astera 競爭實質化</td><td>MRVL AEC 季營收；Golden Cable 合作廠數；CRDO GM</td><td>MRVL AEC 連 2 季 >$50M 或合作廠 >5 家 或 GM 連 2 季 <64%</td></tr>
+<tr><td>R3 🐢</td><td>Hyperscaler 自研/轉 Synopsys SerDes（架構替代）</td><td>各 hyperscaler internal silicon roadmap</td><td>任一前三大客戶公告轉商用/自研 SerDes（≥50% 機率才大動作）</td></tr>
+</table>
+<p class="note">DD §5.F single thing（架構替代）= DCA §5 primary（✅ aligned）。DD §1 trap 🟡 觀察期 = DCA 觀望一致。DD verdict 由上份 0602 的 A 降為 B（股價 +20%、貼 52 週高、站上布林上軌 → 估值 🟢→🟡、MA 惡化；非 thesis 惡化）——與本 DCA「觀望偏進場、等回測」完全一致。</p>
+</details>
+</section>
+
+<p class="note" style="margin-top:24px;border-top:1px solid #E2E8F0;padding-top:12px;">
+本報告為投資決策層（DCA），呈現分析框架與條件化判斷，不含直接買賣建議。DD basis：DD_CRDO_20260621.html（v12.7，signal B）。資料：Excel buy-side EPS snapshot 2026-06-04、yfinance（價格/RSI/MA）、web_search、7 份隨附文件。站點 noindex。
+</p>
+
+</div>
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+</body>
+</html>
