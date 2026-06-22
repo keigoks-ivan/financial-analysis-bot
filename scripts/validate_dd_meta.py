@@ -29,9 +29,11 @@ META_VERSION_RE = re.compile(
     r'<meta\s+name="dd-schema-version"\s+content="([^"]+)"', re.IGNORECASE
 )
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
-# v12.x = legacy DD; v13.x = merged DD+DCA report (decision layer folded in).
-SCHEMA_RE = re.compile(r"^v1[23]\.\d+$")
-IN_SCOPE_VERSIONS = ("v12", "v13")
+# v12.x = legacy DD; v13.x / v14.x = merged DD+DCA report (decision layer folded in).
+# v14 is a methodology bump (QC-39/QC-40); same dd-meta field contract as v13 — the
+# v13-required-fields rule below applies to v13.x AND v14.x identically.
+SCHEMA_RE = re.compile(r"^v1[234]\.\d+$")
+IN_SCOPE_VERSIONS = ("v12", "v13", "v14")
 
 # Required fields with their expected Python types (after json.loads).
 # Keys present here MUST appear in every v12 dd-meta block.
@@ -119,8 +121,9 @@ V13_OPTIONAL_TYPES = {
 
 
 def _is_v13(meta: dict) -> bool:
+    # "v13-style" merged DD+DCA contract — applies to v13.x and v14.x (same fields).
     s = meta.get("schema")
-    return isinstance(s, str) and s.startswith("v13")
+    return isinstance(s, str) and s.startswith(("v13", "v14"))
 
 
 def _type_name(expected_type) -> str:

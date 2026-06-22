@@ -156,7 +156,7 @@ def load_dca_records() -> dict:
                 meta = json.loads(mm.group(1).strip())
             except Exception:
                 continue
-            if not str(meta.get("schema", "")).startswith("v13"):
+            if not str(meta.get("schema", "")).startswith(("v13", "v14")):
                 continue
             ticker = _norm(meta.get("ticker", ""))
             datestr = (meta.get("date") or "").replace("-", "")

@@ -101,7 +101,7 @@ if [ -n "$ADDED_DD" ] || [ -n "$ADDED_DCA" ]; then
   echo "→ pre-commit: checking new DD/DCA size floors (added files only)"
   # DD floor is schema-aware: v13 merged report ≥110KB, legacy v12 DD ≥80KB.
   for f in $ADDED_DD; do
-    if grep -q '"schema"[[:space:]]*:[[:space:]]*"v13' "$f" 2>/dev/null; then
+    if grep -qE '"schema"[[:space:]]*:[[:space:]]*"v1[34]' "$f" 2>/dev/null; then
       check_report_size "$f" 110000 125000 "DD" || FAIL=1
     else
       check_report_size "$f" 80000 90000 "DD" || FAIL=1

@@ -504,7 +504,7 @@ def _v13_dca_overlay() -> dict:
         except OSError:
             continue
         meta = extract_dd_meta_json(text)
-        if not meta or not str(meta.get("schema", "")).startswith("v13"):
+        if not meta or not str(meta.get("schema", "")).startswith(("v13", "v14")):
             continue
         ticker = meta.get("ticker")
         if not ticker:
@@ -1877,7 +1877,7 @@ def collect_v12_entries(force_refresh_eps: bool = False):
 
     entries = []
     for fname, md in index_data.items():
-        if not md["schema"].startswith(("v12", "v13")):
+        if not md["schema"].startswith(("v12", "v13", "v14")):
             continue
         path = DD_DIR / fname
         if not path.exists():
