@@ -570,9 +570,10 @@ def inject_html_alert(min_id_count: int = 2, include_geopolitics: bool = False) 
 
     alert_html = build_alert_html(report)
 
-    # Inject into both pages
+    # Inject into landing pages.
+    # 2026-06-22 per user: Tier Matrix 健康度 卡片已從 /research/ 取消 — 不再注入 research/index.html
+    # （research 的 TIER_MATRIX_ALERT marker 已刪，且本清單移除後不會走 re-insert fallback 重新長回來）。
     targets = [
-        REPO_ROOT / "docs" / "research" / "index.html",
         REPO_ROOT / "docs" / "id" / "index.html",
     ]
 

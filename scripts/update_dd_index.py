@@ -2542,68 +2542,9 @@ def update_index(entries, dry_run: bool = False, force_refresh_eps: bool = False
         flags=re.DOTALL,
     )
 
-    # Inject DD auto-stats panel (replaces former hand-curated insight-box)
-    try:
-        import sys as _sys
-        _sys.path.insert(0, str(Path(__file__).parent))
-        from aggregate_dd_stats import load_records as _load_recs, render as _render_stats, set_table_html as _set_table_html
-        _set_table_html(new_html)  # 直接抓現在表格有的（in-memory fresh table）
-        stats_html = _render_stats(_load_recs())
-        new_html = re.sub(
-            r'<!-- DD_AUTO_STATS_START -->.*?<!-- DD_AUTO_STATS_END -->',
-            f'<!-- DD_AUTO_STATS_START -->\n    {stats_html}\n    <!-- DD_AUTO_STATS_END -->',
-            new_html,
-            flags=re.DOTALL,
-        )
-        print("DD_AUTO_STATS injected.")
-    except Exception as e:
-        print(f"WARN: DD_AUTO_STATS injection skipped — {e}")
-
-    # Inject DCA auto-stats panel (mirrors DD_AUTO_STATS, reads docs/dca/)
-    try:
-        from aggregate_dca_stats import load_dca_records, render as render_dca_stats
-        _dca_records = load_dca_records()
-        _dca_stats_html = render_dca_stats(_dca_records)
-        new_html = re.sub(
-            r'<!-- DCA_AUTO_STATS_START -->.*?<!-- DCA_AUTO_STATS_END -->',
-            f'<!-- DCA_AUTO_STATS_START -->\n    {_dca_stats_html}\n    <!-- DCA_AUTO_STATS_END -->',
-            new_html,
-            flags=re.DOTALL,
-        )
-        print("DCA_AUTO_STATS injected.")
-    except Exception as e:
-        print(f"WARN: DCA_AUTO_STATS injection skipped — {e}")
-
-    # Inject DD freshness panel (yfinance scan, cached 6h)
-    try:
-        from check_dd_earnings_freshness import (
-            load_records as _frload,
-            scan_all as _frscan,
-            load_cache as _frload_cache,
-            save_cache as _frsave_cache,
-            filter_cached_against_current as _frfilter,
-            render_html as _frrender,
-        )
-        fr_records = _frload()
-        cached, age = _frload_cache()
-        if cached is not None:
-            stale_list = _frfilter(cached, fr_records)
-            print(f"DD_STALE_FRESH: using cache ({len(cached)}→{len(stale_list)} after filter, age={int(age)}s)")
-        else:
-            print(f"DD_STALE_FRESH: scanning {len(fr_records)} tickers via yfinance (cache miss/expired)...")
-            stale_list = _frscan(fr_records, progress=False)
-            _frsave_cache(stale_list)
-            print(f"DD_STALE_FRESH: cached {len(stale_list)} stale entries")
-        fresh_html = _frrender(stale_list)
-        new_html = re.sub(
-            r'<!-- DD_STALE_FRESH_START -->.*?<!-- DD_STALE_FRESH_END -->',
-            f'<!-- DD_STALE_FRESH_START -->\n    {fresh_html}\n    <!-- DD_STALE_FRESH_END -->',
-            new_html,
-            flags=re.DOTALL,
-        )
-        print("DD_STALE_FRESH injected.")
-    except Exception as e:
-        print(f"WARN: DD_STALE_FRESH injection skipped — {e}")
+    # 2026-06-22 per user: DD 組合快照 / DCA 組合快照 / 已發財報但 DD 未更新 三張面板已從 /research/ 取消。
+    # 原 DD_AUTO_STATS / DCA_AUTO_STATS / DD_STALE_FRESH 注入區塊已移除（research/index.html 對應 marker 也已刪），
+    # 不再注入，並省去 DD_STALE_FRESH 的 yfinance 全 ticker 掃描。
 
     # Inject PM marker blocks (PM_LAST_RUN, PM_HOLDINGS, PM_ACTIONS)
     pm_path, pm_date = parse_latest_pm()
