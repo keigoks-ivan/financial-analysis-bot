@@ -131,7 +131,24 @@ alpha-ranker（修 loader 即涵蓋）、ID/earnings/supply-chain/QGM、~15 份 
   `how-to.html`（DCA card 改 v13 整併、skill list）。portfolio-manager 無 DCA 引用免改；dd-screener JS functional
   （v13 dca_path 已指 /dd/..#decision）。
 - **未跑 update_dd_index.py**：避免重建 research/index.html + 觸發 yfinance screener 撞並行 session
-  （這兩個 shared 檔此刻被其他 session 改著）。dual-read 已驗，下次任一 session 跑 update_dd_index 會自動撿 TSM。
+  （這兩個 shared 檔此刻被其他 session 改著）。dual-read 已驗，下次任一 session 跑 update_dd_index 會自動撿 TSM/AVGO。
+
+## 6. 已 commit + push（2026-06-22）
+
+- commit `44869bf3`：v13 系統（P1-P3 plumbing + skills + docs + TSM pilot）。
+- commit `3fad73c7`：AVGO v13 pilot（進場）+ TSM/AVGO INDEX.md 列 + docs/dd/CLAUDE.md rule 18。
+- 兩份 pilot 示範 v13 差異化裁決：**TSM 觀望**（貼 ATH/站上布林上軌/動能過熱）vs **AVGO 進場**
+  （PEG 0.44/回檔 17%/布林上軌下方/未過熱）；基本面評級皆 A（metadata），人面對裁決由 §14
+  決策矩陣（時機）區分 — 正是 v13 統一裁決設計的核心價值。
+- 兩份皆 --no-verify（68-74KB < 110KB floor，用戶 review 認可的 lean pilot）。
+
+## 7. 後續可選（非阻塞）
+
+- v13 報告要達 110KB production 深度需完整研究 run（每深度模組 6-8 次 web 深搜 + segment-level
+  sourced TAM + 完整對手 P&L 實數）；目前 pilot 走精簡。若要量產 v13，建議排一次「TSM/AVGO 全深度重跑」。
+- INDEX.md 維護規則小節（docs/dd/CLAUDE.md）仍寫「7 欄」，實際已 8 欄（裁決欄 v13 = 統一裁決）；
+  pre-existing drift，未在此次 scope 修。
+- 跑一次 update_dd_index.py（待並行 session 靜止時）讓 research 頁/screener 正式反映 v13 兩檔。
 
 ## 5. 風險與守則
 - 兩種「裁決」混淆 → 已用「A+/A/B/C/X 只進 metadata、人面對單一裁決」化解。
