@@ -123,6 +123,10 @@ GROUPS = [
          "四系統風險調整排名 + matched-window 檢驗:把美股關進同 2010+ 窗口,連 QQQ B&H 也反贏趨勢 → 「B&H 難敗」主因是樣本無崩盤,非台股特性",
          "—", "—", "—", "—", "na", "—",
          '<span class="tag" style="background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe">總覽/分析</span>'),
+        ("台股含崩盤樣本 · 趨勢 vs B&H（^TWII/EWT/2330）", "/backtest/tw_crash/",
+         "把 2000(−66%)＋2008(−58%)放進樣本,5 系統零調參(OOS):趨勢把 MDD −60〜66% 砍到 −28〜44%、Calmar 全勝 B&H → 證實「B&H 難敗」是 2009+ 無崩盤的樣本假象;為風險調整(尾部)支配,非 CAGR 支配",
+         "—", "—", "—", "—", "na", "—",
+         '<span class="tag" style="background:#fef2f2;color:#991b1b;border:1px solid #fecaca">🔬 結論驗證</span>'),
         ("0050 週線長軌趨勢（移植）", "/backtest/tw_0050_lt/",
          "週線 W52/104/250 score-5 · long only · 0050 上最強趨勢變體:Sharpe 1.10/Calmar 0.68 全面勝 B&H 風險調整(只讓出 CAGR);"
          "贏 STX50/六狀態/雙軌 · 有 W250 暖身偏誤 · CAGR 為 NT$",

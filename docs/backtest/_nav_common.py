@@ -45,6 +45,7 @@ MULTI_LINKS = [
 
 TAIWAN_LINKS = [
     ("/backtest/tw_0050_compare/", "0050 總覽·台美差異", "tw0050cmp", "#1a56db"),
+    ("/backtest/tw_crash/", "台股含崩盤驗證", "twcrash", "#b91c1c"),
     ("/backtest/tw_0050/", "0050 進攻趨勢（移植）", "tw0050", "#d97706"),
     ("/backtest/tw_0050_lt/", "0050 長軌趨勢", "tw0050lt", "#16a34a"),
     ("/backtest/tw_0050_six/", "0050 六狀態機", "tw0050six", "#2563eb"),
