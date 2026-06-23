@@ -961,6 +961,18 @@ def _fetch_live_fy_eps(
         out["growth_fy1_fy2_pct"] = excel_record.get("growth_fy1_fy2_pct")
         out["growth_fy2_fy3_pct"] = excel_record.get("growth_fy2_fy3_pct")
         out["cagr_fy1_fy3_pct"] = excel_record.get("cagr_fy1_fy3_pct")
+        # Fallback: compute growth/CAGR from FY1/FY2/FY3 when the Excel drops the
+        # pre-computed columns (2026-06-23 Koyfin export left cols 5/6/7 blank for
+        # the whole universe). Without this the xlsx_forward eps2y fallback and
+        # live PEG go dark whenever yfinance is also rate-limited. Same formulas
+        # as the yfinance-source path below (line ~1015).
+        _xf1, _xf2, _xf3 = excel_record.get("fy1"), excel_record.get("fy2"), excel_record.get("fy3")
+        if out["growth_fy1_fy2_pct"] is None and _xf1 and _xf2 and _xf1 > 0:
+            out["growth_fy1_fy2_pct"] = round((_xf2 / _xf1 - 1) * 100, 4)
+        if out["growth_fy2_fy3_pct"] is None and _xf2 and _xf3 and _xf2 > 0:
+            out["growth_fy2_fy3_pct"] = round((_xf3 / _xf2 - 1) * 100, 4)
+        if out["cagr_fy1_fy3_pct"] is None and _xf1 and _xf3 and _xf1 > 0 and _xf3 > 0:
+            out["cagr_fy1_fy3_pct"] = round(((_xf3 / _xf1) ** 0.5 - 1) * 100, 4)
 
     # v1.8.1: ALWAYS fetch yfinance 0y/+1y into local vars (independent of Excel
     # override). Used for:

@@ -205,7 +205,13 @@ def snapshot_from_excel(
         # v2: eps_cagr_2y anchors on Excel FY+1→FY+3 forward CAGR (matches
         # build_dd_screener.py v1.9 — gives MoM revision delta a consistent
         # pure-forward window instead of TTM→FY+1 backward-forward mix).
+        # Fallback: compute from FY1/FY3 when the Excel drops the pre-computed
+        # CAGR column (2026-06-23 Koyfin export left cols 5/6/7 blank for the
+        # whole universe). Same formula, so eps2y_revision_pp stays apples-to-
+        # apples vs prior snapshots that read Koyfin's own column.
         cagr = rec.get("cagr_fy1_fy3_pct")
+        if cagr is None and fy1 and fy3 and fy1 > 0 and fy3 > 0:
+            cagr = ((fy3 / fy1) ** 0.5 - 1) * 100
         if cagr is not None:
             cagr = round(float(cagr), 2)
         results[t] = {
