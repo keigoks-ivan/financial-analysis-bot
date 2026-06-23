@@ -516,6 +516,8 @@ python3 scripts/validate_dd_meta.py --report   # 確認 v13 欄位 + enum 全綠
 
 **反灌水（不變的底線）**:篇幅是深度的結果，不是目標本身。達 ~115KB 的正道是「五個基本面模組 × 真量化表格 + 四個決策模組 × 真決策內容」，**不是**同一數字換句話重寫、無 source 的長篇定性、或回填估值/技術。寧可 105KB 全自算，不要 125KB 注水。
 
+**深度標竿（flagship 全深度，v14.2 起預設）**:每份新 DD **第一次生成就要達 flagship 全深度**（~110KB hard floor 不是事後補、更不是用 `--no-verify` 放行 lean 版）。參考範本 = `docs/dd/DD_TSM_20260623.html`（110KB）：五個量化模組全部「yfinance 三表自算的真數字表」——§8.E（DuPont 三因子 + CCC 逐年 DSO/DIO/DPO + ROIC 含/剔現金時序）、§10.D（多年 capex/股息/FCF/折舊 track + M&A 全史）、§6.I（分部 量×價 $ build）、§7.F（對手完整 P&L + 市佔演變 + 各對手策略敘述）、§9.F（逐段 TAM/SAM + 利潤池 OI margin 代理 + 三維營收 + 單位經濟）。**執行紀律**:搜尋階段就把 §8.E/§10.D 需要的多年三表（income/balance/cashflow 全欄 + AR/Inv/AP 營運資金項）一次抓齊（見【即時數據協議】yfinance 腳本），章節撰寫時直接建表，不要先寫精簡版再回頭補。`--no-verify` 僅限「純驗證/拋棄用、不上站」的報告;要上站的報告一律走 flagship 全深度 + 正常 commit 過 floor。
+
 ### QC-39｜產業態勢變化雙向掃描（v14.0，AVGO / SNDK 教訓）
 
 **WHY（兩個鏡像翻車）**:① **AVGO**——報告把 moat_trend 標 ↑ widening、裁決進場，但**沒搜到**「Google 把 TPU 份額從 Broadcom 分散給 MediaTek（~95%→80%→65%, 2026→28）」這個競爭惡化 → 過度樂觀。② **SNDK**——NAND 產業面明顯很缺（結構性短缺可能到 2027/2030），報告卻**只用歷史「NAND 一定硬反轉」的均值回歸 pattern 外推**，對「這輪缺貨多結構」credit 不足、bear 機率可能壓太重 → 對結構性產業順風判斷過嚴。**兩者同根:DD 把「產業態勢」當靜態處理,該搜「它正在往哪變」時沒搜——而且兩個方向都會錯。**
@@ -877,16 +879,24 @@ print(t.eps_trend)
 print("\n=== Revenue Estimate ===")
 print(t.revenue_estimate)
 
-# 3. 財務三表（5 年）
-print("\n=== Income Statement ===")
-print(t.income_stmt.loc[['Total Revenue', 'Gross Profit', 'Operating Income',
-                         'Net Income', 'Diluted EPS']] if not t.income_stmt.empty else "N/A")
-print("\n=== Balance Sheet ===")
-print(t.balance_sheet.loc[['Cash And Cash Equivalents', 'Total Debt',
-                            'Stockholders Equity']] if not t.balance_sheet.empty else "N/A")
-print("\n=== Cash Flow ===")
-print(t.cashflow.loc[['Operating Cash Flow', 'Capital Expenditure',
-                      'Free Cash Flow']] if not t.cashflow.empty else "N/A")
+# 3. 財務三表（多年）— flagship 深度模組所需全欄一次抓齊（robust 逐行，缺行不報錯）
+#    §8.E DuPont/CCC 需:Pretax/Tax(NOPAT)、AR/Inventory/AP(CCC)、Total Assets/Invested Capital(DuPont)
+#    §10.D 資本配置需:D&A、Dividends Paid、Repurchase
+def _dump(df, keys, title):
+    print(f"\n=== {title} ===")
+    if df is None or df.empty:
+        print("N/A"); return
+    for k in keys:
+        try: print(k, "=", [round(float(v)/1e9,2) if v==v else None for v in df.loc[k].values])
+        except Exception: pass  # 該公司無此行（如金融股無 Gross Profit）→ 跳過不報錯
+_dump(t.income_stmt, ['Total Revenue','Gross Profit','Operating Income','Pretax Income',
+                      'Tax Provision','Net Income','Diluted EPS'], "Income Statement (TWD/USD bn)")
+_dump(t.balance_sheet, ['Cash And Cash Equivalents','Accounts Receivable','Receivables','Inventory',
+                        'Accounts Payable','Total Debt','Stockholders Equity','Total Assets',
+                        'Invested Capital','Working Capital'], "Balance Sheet")
+_dump(t.cashflow, ['Operating Cash Flow','Capital Expenditure','Free Cash Flow',
+                   'Depreciation And Amortization','Cash Dividends Paid',
+                   'Repurchase Of Capital Stock'], "Cash Flow")
 
 # 4. 週線 MA + Bollinger + 近 5 日 intraday
 weekly = yf.download(ticker, period="6y", interval="1wk", auto_adjust=True, progress=False)
