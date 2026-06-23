@@ -82,6 +82,7 @@ MENU = {
         ("markets", "/markets.html", "Markets"),
         ("sectors", "/sectors.html", "Sectors"),
         ("ltsmh", "/long-track-smh/", "長線訊號"),
+        ("lttw", "/long-track-tw/", "台股長線"),
     ],
     "quant": [
         ("bt", "/backtest/", "量化回測"),
@@ -177,6 +178,7 @@ PREFIX_ACTIVE = [
     ("markets.html", ("market", "markets")),
     ("sectors.html", ("market", "sectors")),
     ("long-track-smh/", ("market", "ltsmh")),
+    ("long-track-tw/", ("market", "lttw")),
     ("backtest/", ("quant", "bt")),
     ("dd-screener/", ("quant", "dds")),
     ("qgm/", ("quant", "qus")),
