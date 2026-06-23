@@ -336,6 +336,34 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
 
 {tables}
 
+<div class="card">
+<h3>訊號流程說明 — 純 E3、沒有「半倉買回」問題(對照美股 SMH 頁)</h3>
+<div class="rule-list" style="font-size:.8rem">
+台股版<b>只有一套訊號:E3</b>,沒有美股 SMH/QQQ 頁那層 ST(10,3) 半倉出場閘門,所以<b>不存在「出場的半倉怎麼買回來」這個問題</b> ——
+E3 跌破一條線就減 ⅓、收復一條線就加 ⅓,買回訊號就是均線/動能自己收復的那一週收盤,不需要第二層閘門。<br>
+每週五收盤只算一個數字:<b>每標的目標倉位 = E3 =(W40 + W52 + TSMOM)÷ 3</b>,四檔 0 / 33% / 67% / 100%;
+與上週目標的差額就是下一個交易日要下的單。2330 與 0050 各自獨立跑訊號與資金、日報酬 50/50 合成,本頁頂部的倉位數字即當前目標。<br>
+<span style="color:var(--muted);font-size:.78rem">TSMOM 為月頻(月底判定),在週線盤整裡不翻面,所以那 ⅓ 多數時候不動 —— 真正把大盤回撤砍半的,是 W40 / W52 兩條週均線在趨勢轉折時各讓出 ⅓。</span>
+</div>
+<table style="margin-top:.6rem">
+<thead><tr><th>情境(示意機制,非實際歷史)</th><th>每標的倉位</th><th>動到哪個 ⅓</th></tr></thead>
+<tbody>
+<tr><td>三訊號全多</td><td>100%</td><td>W40 ✓ · W52 ✓ · TSMOM ✓(當前狀態)</td></tr>
+<tr><td>週收跌破 40 週均</td><td>100% → 67%</td><td>W40 讓出 ⅓;W52、TSMOM 仍多</td></tr>
+<tr><td>跌勢延續、再破 52 週均</td><td>67% → 33%</td><td>W52 再讓 ⅓;只剩 TSMOM 撐 ⅓</td></tr>
+<tr><td>月底 TSMOM 翻空</td><td>33% → 0%</td><td>三訊號全空 → 空手、持台幣現金</td></tr>
+<tr><td>反彈站回 52 週均</td><td>0% → 33%</td><td>W52 收復、買回 ⅓(不必等其他兩條)</td></tr>
+<tr><td>站回 40 週均 + 月底 TSMOM 翻多</td><td>33% → 100%</td><td>三訊號逐一收復、各加 ⅓ 回滿</td></tr>
+</tbody>
+</table>
+<div style="font-size:.74rem;color:var(--amber-text);background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:6px;padding:.5rem .8rem;margin-top:.6rem">
+<b>為什麼台股不掛美股那層 ST 閘門:</b>美股 SMH/QQQ 的 ST 半倉閘門搬到台股<b>過不了同一把尺</b> —— 它的 Calmar 0.83 反而輸給「同 CAGR 少持一點 E3」的靜態稀釋線(0.85)、MDD 也沒更淺。
+原因是台股急跌後常 V 型反彈(2020、2022 底、2024-08),週線閘門砍在低點、追在高點,傷害集中在上半期(H1 Calmar 0.73 vs E3 0.82)。
+跨市場結論:<b>趨勢本體(E3)會搬家、出場閘門這層不會。</b>
+E3 本身對大盤 B&amp;H 已是經典趨勢交換 —— 讓出約 4pp CAGR、把 -39.5% 回撤壓到 -23.75%(Calmar 0.62 → 0.85),詳見 <a href="/backtest/long_track_tw/">回測頁</a>。保留意見:2008 GFC 不在樣本、2330 集中度高。
+</div>
+</div>
+
 </div>
 <footer>
   &copy; {datetime.now().year} InvestMQuest Research · 台股長線訊號 2330/0050(E3)· 真實 yfinance 資料 ·
