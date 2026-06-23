@@ -1,0 +1,22 @@
+#!/bin/sh
+# post-commit hook (2026-06-23)
+# 若本次 commit 動到 DD / ID / 供應鏈，自動重建知識層（decisions.jsonl + graph.json）
+# 與本機儀表板（dashboard.html）。三者皆 gitignored，重建不會造成 commit loop。
+#
+# post-commit 不能中止 commit，故任何失敗都靜默放行（exit 0）。
+# 啟用方式：bash scripts/install_hooks.sh（設 core.hooksPath=scripts/hooks）。
+# 跨機同步：本檔被 git 追蹤，pull 後再跑一次 install_hooks.sh 即生效。
+
+REPO="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
+cd "$REPO" || exit 0
+
+# 只有動到知識來源時才重建（避免每筆 commit 都掃 700 檔）
+changed="$(git diff-tree --no-commit-id --name-only -r HEAD 2>/dev/null)"
+echo "$changed" | grep -qE '^docs/(dd|id|supply-chain)/' || exit 0
+[ -f knowledge/build_knowledge.py ] || exit 0
+
+if python3 knowledge/build_knowledge.py >/dev/null 2>&1 \
+   && python3 knowledge/build_dashboard.py >/dev/null 2>&1; then
+  echo "🔄 knowledge: 帳本 + 圖譜 + dashboard.html 已自動重建（open knowledge/dashboard.html）"
+fi
+exit 0
