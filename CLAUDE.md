@@ -21,6 +21,8 @@ Agent({
 })
 ```
 
+**並讀知識帳本**（2026-06 新增）：對決策涉及的每個 ticker，先跑 `python knowledge/q.py <TICKER>` 載入歷次裁決 / thesis 演進 / 已回填 outcome 再給建議——不要從零重推一個我可能早有定見的名字；產業層級用 `python knowledge/q.py --theme {關鍵字}` 看成員現裁決分布。帳本（我過去實際下的判斷）與 critic（事前冷讀）互補，是動部位前的另一隻錨。衍生物若不在則 `q.py` 會自動 rebuild；細節見 `knowledge/README.md`。
+
 **不觸發**（僅資訊查詢）：
 - 「ID_X 寫了什麼」/「{theme} 是什麼」/「介紹一下 {industry}」 — 純解釋型問題，直接回答即可
 - 寫稿過程中（that's a separate write-time critic, P2 未實作）
