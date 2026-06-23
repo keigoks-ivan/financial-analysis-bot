@@ -46,20 +46,25 @@ def _node(graph, nid):
 def cmd_entity(name):
     decisions, graph = _load()
     name = name.upper()
-    mine = sorted([d for d in decisions if (d.get("entity") or "").upper() == name],
+    aliases = graph.get("aliases", {})
+    canonical = aliases.get(name, name)
+    members = {canonical} | {a for a, c in aliases.items() if c == canonical}
+
+    mine = sorted([d for d in decisions if (d.get("entity") or "").upper() in members],
                   key=lambda d: d.get("date") or "")
-    node = _node(graph, name)
+    node = _node(graph, canonical)
 
     if not mine and not node:
         print(f"找不到 {name}（沒有 DD、也不在任何 ID 的 related_tickers）")
         return
 
+    alias_note = f"  (含別名: {', '.join(sorted(members - {canonical}))})" if len(members) > 1 else ""
     if node and node.get("canonical"):
         c = node["canonical"]
-        print(f"━━ {name} ━━  現裁決: {c.get('verdict') or '—'}  "
+        print(f"━━ {canonical} ━━{alias_note}  現裁決: {c.get('verdict') or '—'}  "
               f"(基本面 {c.get('fundamental_grade') or '—'}, {c.get('date') or '—'}, {c.get('freshness')})")
     else:
-        print(f"━━ {name} ━━  （無 DD，只在產業圖中被引用）")
+        print(f"━━ {canonical} ━━{alias_note}  （無 DD，只在產業圖中被引用）")
 
     if mine:
         print(f"\n決策史（{len(mine)} 筆）：")
@@ -81,7 +86,7 @@ def cmd_entity(name):
 
     # 圖譜鄰居：此 ticker 屬於哪些產業/主題（belongs_to）
     themes = sorted({e["to"] for e in graph["edges"]
-                     if e["from"] == name and e.get("rel") == "belongs_to"})
+                     if e["from"] == canonical and e.get("rel") == "belongs_to"})
     if themes:
         print(f"\n所屬產業/主題（{len(themes)}）：")
         for t in themes:
@@ -89,7 +94,7 @@ def cmd_entity(name):
 
     # 供應鏈位置（supplies）：此 ticker 在哪些供應鏈 topic 的哪個製程節點
     supplies = sorted({(e["to"], e.get("node") or "") for e in graph["edges"]
-                       if e["from"] == name and e.get("rel") == "supplies"})
+                       if e["from"] == canonical and e.get("rel") == "supplies"})
     if supplies:
         print(f"\n供應鏈位置（{len(supplies)}）：")
         for tid, proc in supplies:

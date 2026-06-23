@@ -36,6 +36,17 @@ ID_META_RE = re.compile(r'<script\s+id="id-meta"\s+type="application/json"\s*>(.
 FRESH_DAYS = 90
 AGING_DAYS = 180
 
+# 同一家公司的多重掛牌 → 正規化到主 ticker（取有最新/v13 DD 的那邊為主）。
+# 注意：價格幣別不同（ADR USD vs 當地幣），合併後決策史會混幣，看 thesis 文字區分。可持續擴充。
+ALIASES = {
+    "2330.TW": "TSM",   # 台積電：v13 DD 在 ADR
+    "GOOG": "GOOGL",     # Alphabet：DD 在 GOOGL
+}
+
+
+def canon_ticker(t):
+    return ALIASES.get(t, t)
+
 
 def _rel(path):
     return os.path.relpath(str(path), str(REPO))
@@ -143,7 +154,8 @@ def build_decisions(manual_decisions, outcomes):
             "entity": ticker,
             "entity_type": "company",
             "verdict": meta.get("dca_verdict"),              # 進場/觀望/迴避（v13+；舊版可能 None）
-            "fundamental_grade": meta.get("verdict") or meta.get("signal"),  # A+/A/B/C/X
+            # signal 才是乾淨評級（A+/A/B/C/X）；v12 的 verdict 欄是 stance 長文，故 signal 優先
+            "fundamental_grade": meta.get("signal") or meta.get("verdict"),
             "conviction": meta.get("long_term_confidence"),
             "role": meta.get("dca_role"),
             "price_at_decision": meta.get("price_at_dd"),
@@ -169,16 +181,16 @@ def build_graph(decisions, id_metas, sc_topics):
     nodes = {}
     edges = []
 
-    # 公司節點：canonical = 每個 ticker 最新一筆決策
+    # 公司節點：canonical = 每個（正規化後）ticker 最新一筆決策；多重掛牌合併
     latest = {}
     for d in decisions:
         if d.get("entity_type") != "company":
             continue
-        t = d["entity"]
+        t = canon_ticker(d["entity"])
         if t not in latest or (d.get("date") or "") > (latest[t].get("date") or ""):
             latest[t] = d
     for t, d in latest.items():
-        nodes[t] = {
+        node = {
             "id": t,
             "type": "company",
             "canonical": {
@@ -189,6 +201,10 @@ def build_graph(decisions, id_metas, sc_topics):
                 "source": d.get("source_report"),
             },
         }
+        members = sorted({a for a, c in ALIASES.items() if c == t})
+        if members:
+            node["aliases"] = [t] + members
+        nodes[t] = node
 
     # 產業/主題節點 + 邊（來自 id-meta related_tickers）
     seen_theme = {}  # theme -> publish_date（去重取最新）
@@ -214,6 +230,7 @@ def build_graph(decisions, id_metas, sc_topics):
             tk = rt.get("ticker")
             if not tk:
                 continue
+            tk = canon_ticker(tk)
             nodes.setdefault(tk, {"id": tk, "type": "company"})  # 可能尚無 DD
             edges.append({
                 "from": tk,
@@ -248,6 +265,7 @@ def build_graph(decisions, id_metas, sc_topics):
                     tk = tk.strip()
                     if not tk or tk in {"—", "-", "–", "N/A", "n/a", "未上市"}:
                         continue
+                    tk = canon_ticker(tk)
                     key = (tk, proc)
                     if key in seen_pair:
                         continue
@@ -264,6 +282,7 @@ def build_graph(decisions, id_metas, sc_topics):
 
     return {
         "generated": date.today().isoformat(),
+        "aliases": ALIASES,
         "nodes": list(nodes.values()),
         "edges": edges,
     }
