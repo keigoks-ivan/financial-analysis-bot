@@ -22,6 +22,7 @@ REPO = Path(__file__).resolve().parent.parent          # financial-analysis-bot/
 KDIR = Path(__file__).resolve().parent                 # knowledge/
 DD_GLOB = str(REPO / "docs" / "dd" / "DD_*.html")
 ID_GLOB = str(REPO / "docs" / "id" / "ID_*.html")
+SC_DIR = REPO / "docs" / "supply-chain" / "data"
 
 DECISIONS_OUT = KDIR / "decisions.jsonl"
 GRAPH_OUT = KDIR / "graph.json"
@@ -101,6 +102,29 @@ def _read_manual():
     return decisions, outcomes
 
 
+def _load_sc_topics():
+    """讀 active 的 supply-chain topic JSON（topics.json manifest 的 active 決定）。"""
+    out = []
+    manifest = SC_DIR / "topics.json"
+    if not manifest.exists():
+        return out
+    try:
+        topics = json.loads(manifest.read_text(encoding="utf-8")).get("topics", [])
+    except json.JSONDecodeError:
+        return out
+    for t in topics:
+        if not t.get("active"):
+            continue
+        p = SC_DIR / f"{t.get('id')}.json"
+        if not p.exists():
+            continue
+        try:
+            out.append((json.loads(p.read_text(encoding="utf-8")), p))
+        except json.JSONDecodeError:
+            print(f"  WARN: supply-chain JSON parse error: {p.name}")
+    return out
+
+
 def build_decisions(manual_decisions, outcomes):
     rows = []
     for f in sorted(glob.glob(DD_GLOB)):
@@ -141,7 +165,7 @@ def build_decisions(manual_decisions, outcomes):
     return rows
 
 
-def build_graph(decisions, id_metas):
+def build_graph(decisions, id_metas, sc_topics):
     nodes = {}
     edges = []
 
@@ -199,6 +223,45 @@ def build_graph(decisions, id_metas):
                 "depth": rt.get("depth"),
             })
 
+    # 供應鏈 topic 節點 + 邊（來自 docs/supply-chain/data/<topic>.json，僅 active）
+    for topic, path in sc_topics:
+        tid = topic.get("id")
+        if not tid:
+            continue
+        nodes[tid] = {
+            "id": tid,
+            "type": "supplychain",
+            "title": topic.get("title"),
+            "tab": topic.get("tab"),
+            "source": _rel(path),
+        }
+        seen_pair = set()
+        for nd in topic.get("nodes", []):
+            proc = nd.get("name")
+            comp = nd.get("competition")
+            for co in nd.get("companies", []):
+                raw = (co.get("ticker") or "").strip()
+                if not raw:
+                    continue
+                # 一格可能併多個 ticker（"MRVL / GOOGL"）；拆開、濾掉未上市佔位（—）
+                for tk in re.split(r"[/,、]", raw):
+                    tk = tk.strip()
+                    if not tk or tk in {"—", "-", "–", "N/A", "n/a", "未上市"}:
+                        continue
+                    key = (tk, proc)
+                    if key in seen_pair:
+                        continue
+                    seen_pair.add(key)
+                    nodes.setdefault(tk, {"id": tk, "type": "company"})
+                    edges.append({
+                        "from": tk,
+                        "to": tid,
+                        "rel": "supplies",
+                        "node": proc,
+                        "competition": comp,
+                        "country": co.get("country"),
+                    })
+
     return {
         "generated": date.today().isoformat(),
         "nodes": list(nodes.values()),
@@ -221,7 +284,8 @@ def main():
         if meta:
             id_metas.append((meta, f))
 
-    graph = build_graph(decisions, id_metas)
+    sc_topics = _load_sc_topics()
+    graph = build_graph(decisions, id_metas, sc_topics)
     GRAPH_OUT.write_text(json.dumps(graph, ensure_ascii=False, indent=2), encoding="utf-8")
 
     # 摘要
@@ -229,11 +293,13 @@ def main():
     n_outcome = sum(1 for d in decisions if d.get("outcome"))
     companies = [n for n in graph["nodes"] if n["type"] == "company"]
     industries = [n for n in graph["nodes"] if n["type"] == "industry"]
+    sc_nodes = [n for n in graph["nodes"] if n["type"] == "supplychain"]
+    sc_edges = [e for e in graph["edges"] if e.get("rel") == "supplies"]
     print(f"✅ decisions.jsonl  : {len(decisions)} 筆決策"
           f"（{n_verdict} 有 dca_verdict、{n_outcome} 有 outcome、"
           f"{len(manual_decisions)} 人工）")
-    print(f"✅ graph.json       : {len(companies)} 公司節點 / "
-          f"{len(industries)} 產業節點 / {len(graph['edges'])} 條邊")
+    print(f"✅ graph.json       : {len(companies)} 公司 / {len(industries)} 產業 / "
+          f"{len(sc_nodes)} 供應鏈 topic / {len(graph['edges'])} 邊（含 {len(sc_edges)} supplies）")
 
 
 if __name__ == "__main__":

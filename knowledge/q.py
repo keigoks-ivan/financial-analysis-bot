@@ -79,12 +79,21 @@ def cmd_entity(name):
                       f"realized {o.get('realized_return_pct','?')}%  held={o.get('verdict_held')}  "
                       f"{o.get('lesson','')}")
 
-    # 圖譜鄰居：此 ticker 屬於哪些產業/主題
-    themes = sorted({e["to"] for e in graph["edges"] if e["from"] == name})
+    # 圖譜鄰居：此 ticker 屬於哪些產業/主題（belongs_to）
+    themes = sorted({e["to"] for e in graph["edges"]
+                     if e["from"] == name and e.get("rel") == "belongs_to"})
     if themes:
         print(f"\n所屬產業/主題（{len(themes)}）：")
         for t in themes:
             print(f"  • {t}")
+
+    # 供應鏈位置（supplies）：此 ticker 在哪些供應鏈 topic 的哪個製程節點
+    supplies = sorted({(e["to"], e.get("node") or "") for e in graph["edges"]
+                       if e["from"] == name and e.get("rel") == "supplies"})
+    if supplies:
+        print(f"\n供應鏈位置（{len(supplies)}）：")
+        for tid, proc in supplies:
+            print(f"  • {tid}: {proc}")
 
 
 def cmd_stale(n):
@@ -104,18 +113,31 @@ def cmd_theme(kw):
     decisions, graph = _load()
     kw_l = kw.lower()
     hits = [nd for nd in graph["nodes"]
-            if nd["type"] == "industry" and kw_l in (nd["id"] or "").lower()]
+            if nd["type"] in ("industry", "supplychain")
+            and (kw_l in (nd["id"] or "").lower() or kw_l in (nd.get("title") or "").lower())]
     if not hits:
-        print(f"沒有產業/主題節點含「{kw}」")
+        print(f"沒有產業/供應鏈節點含「{kw}」")
         return
     canon = {nd["id"]: nd.get("canonical", {}) for nd in graph["nodes"] if nd["type"] == "company"}
     for nd in hits:
+        if nd["type"] == "supplychain":
+            print(f"━━ {nd['id']} ━━  [供應鏈] {nd.get('title') or ''}")
+            members = [e for e in graph["edges"]
+                       if e["to"] == nd["id"] and e.get("rel") == "supplies"]
+            print(f"  節點 × 廠商（{len(members)}）：")
+            for e in sorted(members, key=lambda e: (e.get("node") or "", e["from"])):
+                c = canon.get(e["from"], {})
+                print(f"    {e['from']:8s}  {(e.get('node') or '')[:18]:18s}  "
+                      f"裁決:{c.get('verdict') or '—':4s}  {c.get('freshness') or 'no-DD'}")
+            print()
+            continue
         print(f"━━ {nd['id']} ━━  ({nd.get('thesis_type') or '—'}, {nd.get('publish_date') or '—'}, {nd.get('freshness')})")
         if nd.get("oneliner"):
             print(f"  {nd['oneliner']}")
         if nd.get("action"):
             print(f"  ▸ action: {nd['action']}")
-        members = [e for e in graph["edges"] if e["to"] == nd["id"]]
+        members = [e for e in graph["edges"]
+                   if e["to"] == nd["id"] and e.get("rel") == "belongs_to"]
         print(f"\n  成員 ticker（{len(members)}）：")
         for e in sorted(members, key=lambda e: e["from"]):
             c = canon.get(e["from"], {})
