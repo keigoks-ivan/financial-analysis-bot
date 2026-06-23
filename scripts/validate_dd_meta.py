@@ -30,8 +30,9 @@ META_VERSION_RE = re.compile(
 )
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 # v12.x = legacy DD; v13.x / v14.x = merged DD+DCA report (decision layer folded in).
-# v14 is a methodology bump (QC-39/QC-40); same dd-meta field contract as v13 — the
-# v13-required-fields rule below applies to v13.x AND v14.x identically.
+# v14.0–v14.2 are methodology bumps (QC-39/40/41, row5 demotion, F1-F3 long-wave
+# calibration); same dd-meta field contract as v13 — the v13-required-fields rule
+# below applies to v13.x AND v14.x identically.
 SCHEMA_RE = re.compile(r"^v1[234]\.\d+$")
 IN_SCOPE_VERSIONS = ("v12", "v13", "v14")
 
