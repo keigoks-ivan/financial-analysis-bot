@@ -81,13 +81,13 @@ DOM = {
 GROUPS = [
     ("✓ 採用(2026-06 · OOS 追蹤中)", [
         ("SMH/QQQ 週線趨勢＋Supertrend 出場（進攻位）", "/backtest/long_track_smh/",
-         "50/50 SMH/QQQ · E3 + 週線 ST(10,3) 半倉出場閘門 · 2026-06-13 採用 · 重審:滾動 3 年 Calmar 落後 SPY/QQQ 版",
+         "50/50 SMH/QQQ · E3 + 週線 ST(10,3) 半倉出場閘門 · 2026-06-13 採用 · 美股唯一實倉系統 · 重審:滾動 3 年 Calmar 落後 SPY/QQQ 版",
          "+14.05%", "-21.87%", "0.91", "0.64", "trade", "$14.69M", TAG["live_now"]),
-        ("SPY/QQQ 三訊號趨勢集成（核心）", "/backtest/long_track_ensemble/",
-         "50/50 SPY/QQQ · {W40·W52·TSMOM} 各⅓ 倉位 · 2026-06-11 採用 · 重審:下一次盤整+快崩後",
-         "+11.47%", "-21.15%", "0.89", "0.54", "trade", "$9.20M", TAG["adopt_wait"]),
     ]),
     ("合格候補(通過 L1 門檻,未採用)", [
+        ("SPY/QQQ 三訊號趨勢集成（核心）", "/backtest/long_track_ensemble/",
+         "50/50 SPY/QQQ · {W40·W52·TSMOM} 各⅓ 倉位 · 原列採用 → 現為合格候補(未上實倉)· 防守核心",
+         "+11.47%", "-21.15%", "0.89", "0.54", "trade", "$9.20M", TAG["def"]),
         ("SPY/AGG 週線斜率擇時（防守）", "/backtest/slope_filter/",
          "SPY/AGG 非對稱進出場 · 2026-06 審計完成(引擎 v2)後上修 · 全站唯一近支配;規則不可移植(QQQ 失敗/SMH 輸 Faber)",
          "+10.79%", "-18.96%", "1.01", "0.57", "neardom", "$7.81M*", TAG["def"]),
@@ -630,7 +630,12 @@ new Chart(document.getElementById('chart-scatter'),{
 
 
 def main():
-    html = render()
+    # /backtest/ now renders with the redesigned dashboard layout (US-only,
+    # muted palette).  Data (GROUPS/RET/...) still lives here and is consumed
+    # by the layout module + _build_10y/_build_tw.  The legacy render()/TEMPLATE
+    # above are kept only as importable data helpers (group_header/sys_row/etc.).
+    from _index_layout import render as render_layout  # late import (avoids cycle)
+    html = render_layout()
     OUT.write_text(html, encoding="utf-8")
     print(f"Written {OUT} ({len(html):,} bytes)")
 
