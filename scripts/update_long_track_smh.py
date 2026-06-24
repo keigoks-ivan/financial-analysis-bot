@@ -392,7 +392,7 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
 {('<div style="background:var(--red-bg);border:2px solid var(--red-border);border-radius:10px;padding:.9rem 1.2rem;margin:.5rem 0 1rem;font-size:.9rem"><b style="color:var(--red-text)">⚡ 本週訊號變化</b><br>' + "<br>".join(changes) + '<br><span style="font-size:.78rem;color:var(--muted)">下一個交易日將部位調整至上列目標。</span></div>') if changes else ('<div style="text-align:center;font-size:.78rem;color:var(--muted);margin:.3rem 0 1rem">本週無訊號變化' + (f"(上次變化:{last_change_date})" if last_change_date else "") + '</div>')}
 
 <div class="banner">
-  <b>STX50 長線訊號 · 2026-06-13 採用 · OOS 追蹤中。</b>
+  <b>STX50 長線訊號 · 2026-06-13 採用 · 實倉中。</b>
   這是<b>曝險狀態讀數</b>,不是每日交易動作 —— 訊號為週/月頻,每標的年換手約 2.4 邊,
   多數日子不會變化。SMH 為高 β 半導體,集中度高;此結構在半導體寒冬的 whipsaw 從未實測,
   解讀請對照 <a href="/backtest/long_track_smh/">回測頁</a> 的 caveat。
