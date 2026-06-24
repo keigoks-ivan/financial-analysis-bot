@@ -256,6 +256,17 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </div>
 </div>
 
+<!-- 研究 / 否決 -->
+<div class="section">
+<h2 class="section-title">研究筆記 / 否決</h2>
+<div class="section-sub">非實倉候選 · 帶方法論偏誤或負面結論的研究頁,刻意不列入上方比較表。</div>
+<a class="link-card" href="/backtest/minervini/" style="border-left:3px solid var(--red)">
+  <span style="font-size:1.3rem">🔬</span>
+  <span><span class="lc-name">Minervini RS+VCP 機械回測 ·《超級績效》</span><br><span class="lc-sub">否決 · 存活者偏誤樂觀上界,非忠實回測 · 即使偏誤灌水 CAGR 仍輸大盤;三槓桿(出場/進場/部位)皆推不開報酬↔回撤前緣 → alpha 在裁量、不可機械化</span></span>
+  <span class="lc-arrow">→</span>
+</a>
+</div>
+
 <!-- TW link -->
 <div class="section">
 <a class="link-card" href="/backtest/tw/">
