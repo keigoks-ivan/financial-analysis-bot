@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta name="robots" content="noindex,nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Minervini RS+VCP 機械回測 | InvestMQuest Research</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+:root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
+      --text:#111827;--muted:#6b7280;--border:#e5e7eb;
+      --green:#059669;--green-bg:#ecfdf5;--green-border:#a7f3d0;--green-text:#065f46;
+      --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;--red-text:#991b1b;
+      --amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fde68a;--amber-text:#92400e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1120px;margin:0 auto;padding:0 1.5rem}
+.page-hdr{padding:1.75rem 0 1.25rem;background:linear-gradient(180deg,#fef2f2 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
+.page-hdr h1{font-size:1.6rem;font-weight:700;letter-spacing:-.03em}
+.page-hdr .sub{color:var(--muted);font-size:.9rem;margin-top:.2rem}
+.crumb{font-size:.82rem;color:var(--muted);margin-bottom:.4rem}
+.crumb a{color:var(--muted)}
+.section{padding:1.5rem 0 0}
+.section-title{font-size:1.15rem;font-weight:700;margin-bottom:1rem;padding-bottom:.45rem;border-bottom:2px solid var(--brand)}
+.section-sub{font-size:.85rem;color:var(--muted);margin:-.5rem 0 1rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.card h3{font-size:1rem;font-weight:600;margin-bottom:.85rem}
+.card .takeaway{font-size:.88rem;margin-top:.75rem;padding:.6rem .9rem;border-radius:6px;background:var(--brand-light);border-left:3px solid var(--brand)}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{text-align:left;padding:.6rem .75rem;border-bottom:1px solid var(--border)}
+th{background:#f9fafb;font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+td{font-variant-numeric:tabular-nums}
+tbody tr:hover td{background:#f3f4f6}
+.kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.85rem 1rem;text-align:center}
+.kpi .label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.25rem}
+.kpi .value{font-size:1.25rem;font-weight:700}
+.kpi .value.pos{color:var(--green)}.kpi .value.neg{color:var(--red)}.kpi .value.neu{color:var(--brand)}
+.kpi-pair{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+.kpi-pair > div{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem 1.2rem}
+.kpi-pair h4{font-size:.85rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.7rem;font-weight:600}
+.hero{margin:1.25rem 0;border:1px solid var(--amber-border);border-radius:12px;overflow:hidden;background:var(--card)}
+.hero-top{background:linear-gradient(135deg,#fffbeb 0%,#fff7ed 100%);padding:1.4rem 1.6rem;border-bottom:1px solid var(--amber-border)}
+.hero-top .verdict-tag{display:inline-block;background:var(--amber);color:#fff;font-size:.74rem;font-weight:700;letter-spacing:.05em;padding:.25rem .7rem;border-radius:99px;margin-bottom:.5rem}
+.hero-top h2{font-size:1.35rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.35rem}
+.hero-top p{font-size:.92rem;color:#374151;max-width:62rem}
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card)}
+.hero-stats > div{padding:1rem 1.2rem;text-align:center;border-right:1px solid var(--border)}
+.hero-stats > div:last-child{border-right:none}
+.hero-stats .hs-label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.hero-stats .hs-value{font-size:1.55rem;font-weight:800;letter-spacing:-.02em}
+.caveat{background:var(--red-bg);border:1px solid var(--red-border);border-radius:10px;padding:1rem 1.2rem;font-size:.88rem;color:var(--red-text);margin:1rem 0}
+.caveat b{color:var(--red-text)}
+.note{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;padding:.85rem 1.1rem;font-size:.84rem;color:var(--amber-text);margin:1rem 0}
+.tag{display:inline-block;padding:.15rem .55rem;border-radius:4px;font-size:.72rem;font-weight:600}
+.tag-best{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border)}
+.tag-fail{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red-border)}
+.tag-pass{background:#f3f4f6;color:#374151;border:1px solid #d1d5db}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.chart-card h3{font-size:.95rem;font-weight:600;margin-bottom:.5rem}
+.chart-wrap{position:relative;width:100%;height:380px}
+.chart-wrap-sm{position:relative;width:100%;height:220px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+details{background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:.75rem}
+details summary{padding:.9rem 1.25rem;font-weight:600;font-size:.95rem;cursor:pointer;list-style:none;display:flex;align-items:center;gap:.5rem}
+details summary::before{content:'▸';color:var(--brand);transition:transform .15s}
+details[open] summary::before{transform:rotate(90deg)}
+details .d-body{padding:0 1.25rem 1.25rem;font-size:.88rem;color:#374151}
+.issue-list{font-size:.88rem;color:#374151;padding-left:1.2rem;line-height:1.9}
+footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);text-align:center;padding:1.25rem 0;font-size:.78rem;margin-top:2rem}
+@media(max-width:768px){.kpi-pair,.two-col{grid-template-columns:1fr}.hero-stats{grid-template-columns:repeat(2,1fr)}.hero-stats > div{border-bottom:1px solid var(--border)}table{font-size:.78rem}th,td{padding:.45rem .5rem}}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#0f172a;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(59,130,246,.28);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/">個股 DD</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/ds/">產業敘述 DS</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/">週報</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/long-track-smh/">長線訊號</a>
+          <a href="/long-track-tw/">台股長線</a>
+        </div>
+      </div>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/" class="active">量化回測</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/screener-tw.html">Screener 台股</a>
+          <a href="/screener-jp.html">Screener 日股</a>
+          <a href="/screener-my.html">Screener 馬股</a>
+          <a href="/cache/">🗄 Data Cache</a>
+          <a href="/tools/">期貨部位計算機</a>
+        </div>
+      </div>
+      <a href="/mental-models/">🧠 心智模型</a>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="page-hdr">
+  <div class="container">
+    <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / Minervini RS+VCP 機械回測</div>
+    <h1 style="color:var(--amber)">Minervini RS+VCP 機械回測 <span style="font-size:1rem;color:var(--muted)">《超級績效》</span></h1>
+    <div class="sub">站上 RS+VCP screener 規則化 · S&amp;P500 + NQ100(511 檔)· 2015-01-02 ~ 2026-06-23 · 數據截至 2026-06-23</div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ===== CAVEAT (front and centre) ===== -->
+<div class="caveat">
+  <b>⚠ 這不是忠實回測,是「樂觀上界」。</b>本頁用<strong>今天</strong>的 S&amp;P500 + NQ100 成分股回補整段歷史 →
+  <b>存活者偏誤 + 成分股前視</b>:被剔除/下市/併購的輸家不在樣本,今天的贏家(NVDA、PLTR、APP…)當年根本不在指數裡卻被全程納入。
+  結果<b>系統性偏高</b>。真正不騙自己的記分板是「前進測」(Path A):從 2026-04-27 起每日歸檔的快照,照當時實際 picks 往前算 —— 那個還在累積中。
+  本頁只用來研究「規則本身的行為」,不可當作可達成的績效。
+</div>
+
+<!-- ===== HERO ===== -->
+<div class="hero">
+  <div class="hero-top">
+    <span class="verdict-tag">機械版 ≠ 超級績效</span>
+    <h2>即使偏誤在幫它,機械版仍跑輸大盤 — 它買到的是「回撤控制」,不是 alpha</h2>
+    <p>把站上 RS+VCP screener 的<strong>最嚴條件</strong>(rs≥80、vcp≥75、accelerating、距高&lt;5%、量比&lt;0.8)規則化,
+       8% 硬停損 + 跌破 50DMA 出場,8 槽等權。結果:CAGR <b>+12.2%</b>、MDD <b>-20.6%</b>、Calmar <b>0.59</b>。
+       對照同期 SPY 買持 13.6%、QQQ 買持 19.3% —— <b>即便存活者偏誤在灌水,CAGR 仍輸大盤(QQQ 海放)</b>。
+       它真正交出的價值是 MDD 只有 -20.6%(大盤 −34%)。勝率僅 41%、353/464 筆出場是跌破 50DMA ——
+       機械進場抓不到 Minervini 裁量的 pivot 精度,緊停損被反覆洗。讓系統「超級」的那層,正是無法機械化的那層。</p>
+  </div>
+  <div class="hero-stats">
+    <div><div class="hs-label">CAGR (11.5Y)</div><div class="hs-value" style="color:var(--amber)">+12.2%</div></div>
+    <div><div class="hs-label">MDD</div><div class="hs-value" style="color:var(--red)">-20.6%</div></div>
+    <div><div class="hs-label">Calmar</div><div class="hs-value" style="color:var(--brand)">0.59</div></div>
+    <div><div class="hs-label">期末資產</div><div class="hs-value">$3.75M</div></div>
+  </div>
+</div>
+
+<!-- ===== KPI ===== -->
+<div class="section">
+<h2 class="section-title">績效摘要 — 兩種大盤濾網版本</h2>
+<div class="section-sub">起始 $1M · 隔日開盤成交 · 7bps/邊成本 · 8 槽等權(空槽持現金 → 漸進式曝險,平均曝險 73%)。</div>
+<div class="kpi-pair">
+<div><h4>無大盤閘門(永遠可進場)</h4><div class="kpi-grid"><div class="kpi"><div class="label">CAGR</div><div class="value pos">+12.2%</div></div>
+<div class="kpi"><div class="label">MDD</div><div class="value neg">-20.6%</div></div>
+<div class="kpi"><div class="label">Sharpe</div><div class="value neu">0.77</div></div>
+<div class="kpi"><div class="label">Sortino</div><div class="value neu">0.96</div></div>
+<div class="kpi"><div class="label">Calmar</div><div class="value neu">0.59</div></div>
+<div class="kpi"><div class="label">年化波動</div><div class="value ">16.9%</div></div>
+<div class="kpi"><div class="label">交易次數</div><div class="value ">464</div></div>
+<div class="kpi"><div class="label">期末資產</div><div class="value ">$3.75M</div></div></div></div>
+<div><h4>SPY&lt;200DMA 不開新倉</h4><div class="kpi-grid"><div class="kpi"><div class="label">CAGR</div><div class="value pos">+11.8%</div></div>
+<div class="kpi"><div class="label">MDD</div><div class="value neg">-21.5%</div></div>
+<div class="kpi"><div class="label">Sharpe</div><div class="value neu">0.75</div></div>
+<div class="kpi"><div class="label">Sortino</div><div class="value neu">0.91</div></div>
+<div class="kpi"><div class="label">Calmar</div><div class="value neu">0.55</div></div>
+<div class="kpi"><div class="label">年化波動</div><div class="value ">16.9%</div></div>
+<div class="kpi"><div class="label">交易次數</div><div class="value ">442</div></div>
+<div class="kpi"><div class="label">期末資產</div><div class="value ">$3.61M</div></div></div></div>
+</div>
+
+<div class="card">
+<h3>vs 買入持有(2015-01-02 ~ 至今)</h3>
+<table>
+<thead><tr><th>策略</th><th>CAGR</th><th>MDD</th><th>Sharpe</th><th>Sortino</th><th>Calmar</th><th>期末</th></tr></thead>
+<tbody><tr style="background:var(--brand-light)"><td>Minervini 嚴格(無閘門)</td><td>+12.2%</td><td style="color:var(--red)">-20.6%</td><td>0.77</td><td>0.96</td><td>0.59</td><td>$3.75M</td></tr><tr><td>Minervini 嚴格(200DMA 閘門)</td><td>+11.8%</td><td style="color:var(--red)">-21.5%</td><td>0.75</td><td>0.91</td><td>0.55</td><td>$3.61M</td></tr><tr><td>SPY 買入持有</td><td>+13.6%</td><td style="color:var(--red)">-33.7%</td><td>0.81</td><td>0.99</td><td>0.40</td><td>$4.32M</td></tr><tr><td>QQQ 買入持有</td><td>+19.3%</td><td style="color:var(--red)">-35.1%</td><td>0.92</td><td>1.17</td><td>0.55</td><td>$7.55M</td></tr></tbody>
+</table>
+<div class="takeaway">頭條:<b>CAGR 全輸,風險調整(Calmar)略勝</b>。機械版以一半的回撤跑出大盤約九成的 Sharpe,但 CAGR 落後 SPY、被 QQQ 海放。
+大盤閘門全期略傷(CAGR↓、MDD↑),只有 2022 持續性熊市才大幅止血 —— 這跟台股長軌「出場閘門那層不會搬家」的結論一致:
+<b>趨勢濾網有效、擇時閘門看市況</b>。</div>
+</div>
+</div>
+
+<!-- ===== CHARTS ===== -->
+<div class="section">
+<h2 class="section-title">淨值與回撤</h2>
+<div class="section-sub">月頻淨值(對數座標);精確 MDD 以表格為準。</div>
+<div class="chart-card"><h3>淨值曲線 — 起始 $1M</h3><div class="chart-wrap"><canvas id="chart-nav"></canvas></div></div>
+<div class="chart-card"><h3>回撤 — 機械版 vs SPY</h3><div class="chart-wrap-sm"><canvas id="chart-dd"></canvas></div></div>
+<div class="chart-card"><h3>逐年報酬 — 機械版 vs SPY</h3><div class="chart-wrap"><canvas id="chart-yearly"></canvas></div></div>
+
+<div class="card">
+<h3>逐年報酬全表</h3>
+<table>
+<thead><tr><th>年</th><th>無閘門</th><th>200DMA 閘門</th><th>SPY</th><th>QQQ</th></tr></thead>
+<tbody><tr><td>2015</td><td style="color:var(--red)">-11.9%</td><td style="color:var(--red)">-12.1%</td><td>+1.3%</td><td>+9.8%</td></tr>
+<tr><td>2016</td><td>+4.5%</td><td>+1.6%</td><td>+13.6%</td><td>+9.4%</td></tr>
+<tr><td>2017</td><td>+16.5%</td><td>+16.5%</td><td>+20.8%</td><td style="color:var(--green);font-weight:600">+31.5%</td></tr>
+<tr><td>2018</td><td>-2.9%</td><td>-2.9%</td><td>-5.2%</td><td>-1.8%</td></tr>
+<tr><td>2019</td><td>+4.7%</td><td>+2.1%</td><td style="color:var(--green);font-weight:600">+31.1%</td><td style="color:var(--green);font-weight:600">+38.4%</td></tr>
+<tr><td>2020</td><td>+22.8%</td><td>+17.0%</td><td>+17.2%</td><td style="color:var(--green);font-weight:600">+46.0%</td></tr>
+<tr><td>2021</td><td>+17.7%</td><td>+17.7%</td><td style="color:var(--green);font-weight:600">+30.5%</td><td style="color:var(--green);font-weight:600">+29.2%</td></tr>
+<tr><td>2022</td><td style="color:var(--red)">-17.0%</td><td>-5.5%</td><td style="color:var(--red)">-18.6%</td><td style="color:var(--red)">-33.2%</td></tr>
+<tr><td>2023</td><td style="color:var(--green);font-weight:600">+32.9%</td><td style="color:var(--green);font-weight:600">+30.1%</td><td style="color:var(--green);font-weight:600">+26.7%</td><td style="color:var(--green);font-weight:600">+55.9%</td></tr>
+<tr><td>2024</td><td style="color:var(--green);font-weight:600">+31.8%</td><td style="color:var(--green);font-weight:600">+31.8%</td><td style="color:var(--green);font-weight:600">+25.6%</td><td style="color:var(--green);font-weight:600">+27.7%</td></tr>
+<tr><td>2025</td><td>+9.2%</td><td>+6.4%</td><td>+18.0%</td><td>+21.0%</td></tr>
+<tr><td>2026</td><td style="color:var(--green);font-weight:600">+49.4%</td><td style="color:var(--green);font-weight:600">+46.4%</td><td>+7.9%</td><td>+16.7%</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="card">
+<h3>Top 5 回撤(無閘門版)</h3>
+<table>
+<thead><tr><th>#</th><th>高點</th><th>低點</th><th>回到前高</th><th>深度</th><th>下跌</th><th>修復</th></tr></thead>
+<tbody><tr><td>1</td><td>2022-04-20</td><td>2022-12-19</td><td>2023-07-13</td><td style="color:var(--red);font-weight:600">-20.6%</td><td>243d</td><td>206d</td></tr>
+<tr><td>2</td><td>2015-01-26</td><td>2016-01-13</td><td>2017-10-31</td><td style="color:var(--red);font-weight:600">-20.5%</td><td>352d</td><td>657d</td></tr>
+<tr><td>3</td><td>2024-05-28</td><td>2024-08-05</td><td>2024-11-11</td><td style="color:var(--red);font-weight:600">-14.7%</td><td>69d</td><td>98d</td></tr>
+<tr><td>4</td><td>2020-02-19</td><td>2020-03-12</td><td>2020-07-30</td><td style="color:var(--red);font-weight:600">-14.3%</td><td>22d</td><td>140d</td></tr>
+<tr><td>5</td><td>2020-09-02</td><td>2020-10-28</td><td>2020-12-04</td><td style="color:var(--red);font-weight:600">-12.8%</td><td>56d</td><td>37d</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<!-- ===== STRESS ===== -->
+<div class="section">
+<h2 class="section-title">壓力事件(區間報酬 vs SPY)</h2>
+<div class="card">
+<table>
+<thead><tr><th>事件</th><th>機械版(無閘門)</th><th>SPY</th><th>相對</th></tr></thead>
+<tbody><tr><td>2018 Q4 升息</td><td>-5.4%</td><td>-13.8%</td><td><span class="tag tag-best">+8.4pp</span></td></tr>
+<tr><td>2020 COVID</td><td>-14.3%</td><td>-13.6%</td><td><span class="tag tag-pass">-0.7pp</span></td></tr>
+<tr><td>2022 通膨熊</td><td>-15.6%</td><td>-18.2%</td><td><span class="tag tag-best">+2.6pp</span></td></tr>
+<tr><td>2025 關稅震盪</td><td>-8.4%</td><td>-9.3%</td><td><span class="tag tag-pass">+0.8pp</span></td></tr>
+</tbody>
+</table>
+<div class="takeaway">緊停損 + 50DMA 出場在「快跌」事件(2018Q4、2022)防守不錯;但 2020 COVID 這種瞬殺反而小輸 SPY ——
+單週 gap 直接穿過 8% 停損,機械版沒有 Minervini 盤中減碼的裁量空間。</div>
+</div>
+</div>
+
+<!-- ===== TRADE STATS ===== -->
+<div class="section">
+<h2 class="section-title">交易特徵</h2>
+<div class="card">
+<table>
+<thead><tr><th>指標</th><th>數值</th><th>指標</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>交易次數</td><td>464</td><td>勝率</td><td>41%</td></tr>
+<tr><td>獲利因子 PF</td><td>1.74</td><td>平均持有</td><td>51 天</td></tr>
+<tr><td>平均獲利(贏單)</td><td style="color:var(--green)">+14.0%</td><td>平均虧損(輸單)</td><td style="color:var(--red)">-5.8%</td></tr>
+<tr><td>8% 停損出場</td><td>111 筆</td><td>跌破 50DMA 出場</td><td>353 筆</td></tr>
+</tbody>
+</table>
+<div class="takeaway">典型趨勢交易輪廓:低勝率(41%)、贏大輸小(+14.0% vs -5.8%)、PF 1.74。
+出場以 50DMA(353 筆)為主、硬停損(111 筆)為輔 —— 大量小幅虧損正是機械進場「抓不準 pivot」的代價。</div>
+</div>
+</div>
+
+<!-- ===== LEVER EXPERIMENTS ===== -->
+<div class="section">
+<h2 class="section-title">槓桿實驗:三根槓桿能不能把「報酬↔回撤」前緣往外推?</h2>
+<div class="section-sub" style="margin-bottom:1rem">想逼近 Minervini「精準買在 pivot、停損幾乎不觸發、贏家一路抱」的 alpha,試了三個方向。每個都<strong>一次只改一個變數</strong>對照基線。<b>結論:三根都推不開前緣 —— 因為那層 alpha 本質是裁量,不可機械化。</b></div>
+<h3 style="font-size:1rem;font-weight:700;margin:.5rem 0">槓桿 A — 出場改聰明(分階段、隨獲利放寬)</h3>
+<div class="section-sub">只改<strong>出場</strong>一個變數(進場 cond_a、8 槽等權不變)。staged = 未證實前緊(8% 停損 + 跌破 50DMA);獲利 +20% 賣出半倉、停損拉到成本價;剩下的 runner 改用較寬的均線跌破才出 → 讓贏家一路抱。</div>
+<div class="card">
+<table>
+<thead><tr><th>出場規則</th><th>CAGR</th><th>MDD</th><th>Sharpe</th><th>Calmar</th><th>期末</th></tr></thead>
+<tbody><tr style="background:var(--brand-light)"><td>基線:8% 停損 + 跌破 50DMA(本頁主結果)</td><td>+12.2%</td><td style="color:var(--red)">-20.6%</td><td>0.77</td><td>0.59</td><td>$3.75M</td></tr><tr><td>staged · runner 50DMA</td><td>+10.7%</td><td style="color:var(--red)">-21.0%</td><td>0.79</td><td>0.51</td><td>$3.21M</td></tr><tr><td>staged · runner 100DMA</td><td>+10.7%</td><td style="color:var(--red)">-22.6%</td><td>0.77</td><td>0.48</td><td>$3.22M</td></tr><tr><td>staged · runner 150DMA</td><td>+12.6%</td><td style="color:var(--red)">-23.0%</td><td>0.86</td><td>0.55</td><td>$3.90M</td></tr><tr><td>staged · runner 200DMA</td><td>+14.5%</td><td style="color:var(--red)">-33.8%</td><td>0.87</td><td>0.43</td><td>$4.71M</td></tr><tr><td>staged · runner 200DMA + 大盤閘門</td><td>+12.5%</td><td style="color:var(--red)">-34.8%</td><td>0.78</td><td>0.36</td><td>$3.85M</td></tr></tbody>
+</table>
+<div class="takeaway"><b>結論:否。</b>沒有任何 staged 版本在 Calmar(本站的尺)上贏過原始簡單的 50DMA(0.59)。放鬆 runner 移動停損只是讓策略<strong>沿著「報酬↔回撤」前緣往 QQQ 移動</strong>(放越鬆=報酬越高、回撤越深),<b>沒有把前緣往外推</b> —— 不是免費的風險調整改善。
+讓贏家一路抱,會賺到肥尾、也賠掉崩盤回吐;breakeven 只擋「跌破成本」,擋不住「賺到的回吐」。Minervini 能「抱得住又不大回撤」,靠的是 ① 精準 pivot 進場讓贏家早早有厚墊、② 裁量地賣在強勢 —— 這兩層無法機械化。
+<b>Lever A 反證:真正的 alpha 在進場精度與賣強,不在出場均線。</b>(若硬選一個 staged 版,runner 150DMA 是甜蜜點:Sharpe 0.86、但 Calmar 0.55 仍輸 0.59。)</div>
+</div>
+
+<h3 style="font-size:1rem;font-weight:700;margin:1.25rem 0 .5rem">槓桿 B(進場改觸發)+ C(風險式部位)</h3>
+<div class="card">
+<table>
+<thead><tr><th>變體</th><th>CAGR</th><th>MDD</th><th>Sharpe</th><th>Calmar</th><th>期末</th></tr></thead>
+<tbody><tr style="background:var(--brand-light)"><td>基線:cond_a 狀態進場(本頁主結果)</td><td>+12.2%</td><td style="color:var(--red)">-20.6%</td><td>0.77</td><td>0.59</td><td>$3.75M</td></tr><tr><td>Lever B:突破觸發進場(設定→觸發)</td><td>+4.9%</td><td style="color:var(--red)">-19.2%</td><td>0.45</td><td>0.25</td><td>$1.73M</td></tr><tr><td>Lever C:風險式部位(固定停損)</td><td>+10.0%</td><td style="color:var(--red)">-20.9%</td><td>0.69</td><td>0.48</td><td>$2.98M</td></tr><tr><td>B+C+staged 全套</td><td>+6.4%</td><td style="color:var(--red)">-17.8%</td><td>0.59</td><td>0.36</td><td>$2.04M</td></tr></tbody>
+</table>
+<div class="takeaway"><b>B 反而傷、C 中性。</b>槓桿 B(只在突破 pivot + 爆量當下進場)CAGR 從 12% 崩到個位數 —— 因為<strong>機械突破 ≠ 好的突破</strong>:沒有對基底品質的裁量判讀,大量假突破/高潮日買完就反轉,曝險還掉到 ~40%。(註:若要求 cond_a 與突破<strong>同一天</strong>,更慘 —— 全期只剩 41 筆交易、近乎空倉,因為「量縮緊縮帶」與「爆量突破」幾乎自相矛盾。)
+槓桿 C(風險式部位)在固定停損下 ≈ 等權,單獨無增益。<b>結論:cond_a「準備狀態」進場已是最好的可機械化進場;那個 pivot 的「精準」本身就是裁量,機械化就消失了。</b></div>
+</div>
+</div>
+
+<!-- ===== METHODOLOGY ===== -->
+<div class="section">
+<h2 class="section-title">方法論 — 怎麼跑的,哪裡忠實、哪裡不忠實</h2>
+<details open><summary>進場 / 出場 / 部位規則</summary><div class="d-body">
+<ul class="issue-list">
+<li><b>進場(cond_a,站上 screener 最嚴條件):</b>rs_score≥80 且 vcp_score≥75 且 rs_trend=accelerating 且 距 90 日高&lt;5% 且 量比(10/60 日均量)&lt;0.8。歷史上平均 1.2 檔/日、53% 的交易日至少 1 檔。</li>
+<li><b>出場:</b>進場價 −8% 硬停損(盤中,跳空穿越則以開盤價成交)<b>或</b>收盤跌破 50DMA(隔日開盤出),擇一先到。</li>
+<li><b>部位:</b>8 槽等權,每筆 = 總資產/8,贏家續抱不再平衡;空槽持現金 → 自動漸進式曝險(平均 73%)。</li>
+<li><b>執行:</b>訊號用當日收盤算、隔日開盤成交(無前視);成本 7bps/邊(5 佣金 + 2 滑價)。</li>
+</ul>
+</div></details>
+<details><summary>引擎忠實度 — 已對站上 live screener 驗證</summary><div class="d-body">
+RS+VCP 評分引擎是站上 <code>screener.py</code> 的逐字 port,並以 2026-06-23 的 live 快照逐檔對帳:
+vcp_score 509/510 完全相同、dist_from_high 相關性 1.00、rs_score 相關性 0.997(EMA 收斂殘差)、
+排名 top-50 重疊 47/50。RS 的逐日 α=0.2 EMA 平滑以向量化 forward-walk 重現,數學等價。
+</div></details>
+<details><summary>為什麼這不是「超級績效」</summary><div class="d-body">
+Minervini 的 edge 主要在<strong>裁量的進場擇時</strong>(VCP 樞紐點的精準買進,讓 8% 停損幾乎不會被觸發)與基本面選股(SEPA)。
+本回測只能機械化「趨勢樣板 + VCP 分數」這層可量化的濾網,抓不到那個 pivot 精度 → 緊停損被反覆洗(勝率 41%)。
+加上存活者偏誤已在灌水,CAGR 仍輸大盤,證明:<b>可機械化的部分不是讓系統超級的部分。</b>
+</div></details>
+<details><summary>已知限制與下一步</summary><div class="d-body">
+<ul class="issue-list">
+<li>存活者 + 成分股前視偏誤(本頁最大限制)→ 真值看 Path A 前進測。</li>
+<li>未納入 Minervini 的漸進式加碼、賣在強勢(sell into strength)、基本面 SEPA 篩選。</li>
+<li>單週 gap 穿越停損無解(2020 COVID 即一例)。</li>
+<li>2026 半年 +49% 為小樣本,勿外推。</li>
+</ul>
+</div></details>
+</div>
+
+</div>
+
+<footer>InvestMQuest Research · Minervini RS+VCP 機械回測(Path B 樂觀上界)· 生成於 2026-06-24 · 僅供研究,非投資建議</footer>
+
+<script>
+Chart.defaults.font.family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif";
+Chart.defaults.font.size=11;
+const LBL=["2015-01", "2015-02", "2015-03", "2015-04", "2015-05", "2015-06", "2015-07", "2015-08", "2015-09", "2015-10", "2015-11", "2015-12", "2016-01", "2016-02", "2016-03", "2016-04", "2016-05", "2016-06", "2016-07", "2016-08", "2016-09", "2016-10", "2016-11", "2016-12", "2017-01", "2017-02", "2017-03", "2017-04", "2017-05", "2017-06", "2017-07", "2017-08", "2017-09", "2017-10", "2017-11", "2017-12", "2018-01", "2018-02", "2018-03", "2018-04", "2018-05", "2018-06", "2018-07", "2018-08", "2018-09", "2018-10", "2018-11", "2018-12", "2019-01", "2019-02", "2019-03", "2019-04", "2019-05", "2019-06", "2019-07", "2019-08", "2019-09", "2019-10", "2019-11", "2019-12", "2020-01", "2020-02", "2020-03", "2020-04", "2020-05", "2020-06", "2020-07", "2020-08", "2020-09", "2020-10", "2020-11", "2020-12", "2021-01", "2021-02", "2021-03", "2021-04", "2021-05", "2021-06", "2021-07", "2021-08", "2021-09", "2021-10", "2021-11", "2021-12", "2022-01", "2022-02", "2022-03", "2022-04", "2022-05", "2022-06", "2022-07", "2022-08", "2022-09", "2022-10", "2022-11", "2022-12", "2023-01", "2023-02", "2023-03", "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", "2023-10", "2023-11", "2023-12", "2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06", "2024-07", "2024-08", "2024-09", "2024-10", "2024-11", "2024-12", "2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"];
+new Chart(document.getElementById('chart-nav'),{type:'line',
+ data:{labels:LBL,datasets:[
+  {label:'機械版(無閘門)',data:[1000340.0, 1002893.0, 1014395.0, 969821.0, 967641.0, 959071.0, 985004.0, 899782.0, 887403.0, 900951.0, 912175.0, 880748.0, 844324.0, 850312.0, 855584.0, 873370.0, 898973.0, 913134.0, 950122.0, 938806.0, 924466.0, 862433.0, 904836.0, 904260.0, 906355.0, 912568.0, 935674.0, 973799.0, 993435.0, 967120.0, 935382.0, 947186.0, 968811.0, 1053852.0, 1089882.0, 1056288.0, 1083524.0, 1050300.0, 1023817.0, 1017342.0, 1019747.0, 1064517.0, 1045827.0, 1089504.0, 1092333.0, 1046331.0, 1052640.0, 1032771.0, 1041621.0, 1084653.0, 1099562.0, 1099400.0, 1031204.0, 1105947.0, 1098231.0, 1060211.0, 998613.0, 1033300.0, 1042363.0, 1081354.0, 1066884.0, 1047979.0, 1007287.0, 1007287.0, 1031033.0, 1063119.0, 1193506.0, 1293632.0, 1209256.0, 1176342.0, 1300645.0, 1340063.0, 1361418.0, 1374422.0, 1386253.0, 1398469.0, 1426428.0, 1344846.0, 1484091.0, 1535035.0, 1494761.0, 1520832.0, 1514697.0, 1587772.0, 1513776.0, 1505537.0, 1538961.0, 1489264.0, 1510432.0, 1439054.0, 1417486.0, 1366541.0, 1329079.0, 1329079.0, 1329492.0, 1308172.0, 1400220.0, 1393232.0, 1389067.0, 1372565.0, 1482491.0, 1593928.0, 1648119.0, 1547347.0, 1527731.0, 1517502.0, 1634420.0, 1732257.0, 1795249.0, 1932110.0, 2051600.0, 2007678.0, 2119954.0, 1947541.0, 1893206.0, 1957725.0, 2006060.0, 1990935.0, 2300119.0, 2265314.0, 2241889.0, 2302967.0, 2160407.0, 2150525.0, 2141014.0, 2263978.0, 2316511.0, 2277274.0, 2396475.0, 2419956.0, 2399061.0, 2468396.0, 2748489.0, 3020759.0, 2779845.0, 3093121.0, 3543051.0, 3753475.0],borderColor:'#1a56db',borderWidth:1.8,pointRadius:0,tension:.05},
+  {label:'機械版(200DMA 閘門)',data:[1000340.0, 1002893.0, 1014395.0, 969821.0, 967641.0, 959071.0, 985004.0, 899782.0, 896746.0, 897374.0, 907287.0, 878708.0, 833683.0, 833683.0, 830535.0, 847966.0, 871754.0, 884887.0, 920964.0, 909926.0, 896229.0, 836343.0, 877462.0, 876902.0, 878936.0, 884960.0, 907366.0, 944338.0, 963380.0, 937861.0, 907083.0, 918530.0, 939500.0, 1021969.0, 1056909.0, 1024332.0, 1050743.0, 1018524.0, 992843.0, 986564.0, 988896.0, 1032311.0, 1014187.0, 1056542.0, 1059285.0, 1014675.0, 1020793.0, 1001525.0, 1001525.0, 1009504.0, 1030448.0, 1039267.0, 970233.0, 1042392.0, 1037516.0, 1002036.0, 943931.0, 976717.0, 985284.0, 1022140.0, 1008463.0, 990593.0, 952129.0, 952129.0, 953909.0, 967664.0, 1053457.0, 1156089.0, 1087881.0, 1060208.0, 1171563.0, 1206747.0, 1225925.0, 1237541.0, 1248107.0, 1259041.0, 1284288.0, 1210902.0, 1336402.0, 1382422.0, 1346072.0, 1369551.0, 1364025.0, 1429832.0, 1363196.0, 1355777.0, 1383323.0, 1351707.0, 1376578.0, 1348421.0, 1348421.0, 1341272.0, 1340752.0, 1340752.0, 1340752.0, 1340752.0, 1375594.0, 1364035.0, 1377734.0, 1396166.0, 1473239.0, 1599233.0, 1668180.0, 1547056.0, 1534004.0, 1527764.0, 1645409.0, 1743988.0, 1807225.0, 1945063.0, 2065337.0, 2020997.0, 2134046.0, 1960479.0, 1905788.0, 1970739.0, 2019396.0, 2004157.0, 2315423.0, 2280391.0, 2256804.0, 2318289.0, 2174781.0, 2164833.0, 2167645.0, 2275335.0, 2285273.0, 2194943.0, 2290142.0, 2325496.0, 2374575.0, 2421749.0, 2632548.0, 2907836.0, 2679023.0, 2976513.0, 3408961.0, 3611291.0],borderColor:'#d97706',borderWidth:1.3,pointRadius:0,tension:.05,borderDash:[4,3]},
+  {label:'SPY 買持',data:[970890.0, 1025459.0, 1009353.0, 1019279.0, 1032384.0, 1011413.0, 1034261.0, 971222.0, 946440.0, 1026945.0, 1030698.0, 1012885.0, 962457.0, 961662.0, 1026349.0, 1030394.0, 1047923.0, 1051565.0, 1089917.0, 1091222.0, 1091286.0, 1072366.0, 1111870.0, 1134410.0, 1154710.0, 1200080.0, 1201580.0, 1213507.0, 1230633.0, 1238478.0, 1263934.0, 1267622.0, 1293164.0, 1323636.0, 1364095.0, 1380638.0, 1458450.0, 1405420.0, 1366897.0, 1373961.0, 1407361.0, 1415454.0, 1467892.0, 1514747.0, 1523753.0, 1418455.0, 1444766.0, 1317557.0, 1423048.0, 1469177.0, 1495770.0, 1556876.0, 1457591.0, 1559021.0, 1582592.0, 1556095.0, 1586372.0, 1621439.0, 1680132.0, 1728949.0, 1728251.0, 1591433.0, 1392708.0, 1569559.0, 1644341.0, 1673503.0, 1772059.0, 1895743.0, 1824759.0, 1779262.0, 1972804.0, 2045893.0, 2025045.0, 2081352.0, 2175844.0, 2290969.0, 2306012.0, 2357730.0, 2415288.0, 2487166.0, 2371251.0, 2537626.0, 2517236.0, 2633653.0, 2494751.0, 2421114.0, 2512124.0, 2291637.0, 2296810.0, 2107414.0, 2301481.0, 2207576.0, 2003495.0, 2166330.0, 2286759.0, 2154977.0, 2290498.0, 2232909.0, 2315700.0, 2352693.0, 2363554.0, 2516711.0, 2599092.0, 2556851.0, 2435568.0, 2382695.0, 2600340.0, 2719059.0, 2762365.0, 2906523.0, 3001572.0, 2880550.0, 3026248.0, 3133014.0, 3170952.0, 3245043.0, 3313204.0, 3283639.0, 3479453.0, 3395737.0, 3486935.0, 3442669.0, 3250845.0, 3222660.0, 3425188.0, 3601195.0, 3684137.0, 3759733.0, 3893656.0, 3986471.0, 3994245.0, 3997430.0, 4056343.0, 4021288.0, 3822719.0, 4224306.0, 4446613.0, 4323115.0],borderColor:'#6b7280',borderWidth:1.3,pointRadius:0,tension:.05},
+  {label:'QQQ 買持',data:[982125.0, 1053041.0, 1028199.0, 1047965.0, 1071528.0, 1044910.0, 1092535.0, 1017975.0, 995505.0, 1108693.0, 1115443.0, 1097654.0, 1021802.0, 1005807.0, 1074731.0, 1040482.0, 1085951.0, 1061213.0, 1137098.0, 1149039.0, 1174473.0, 1157358.0, 1162404.0, 1175565.0, 1235990.0, 1290065.0, 1316213.0, 1352107.0, 1404803.0, 1372240.0, 1427971.0, 1457581.0, 1453278.0, 1520222.0, 1550196.0, 1559546.0, 1696116.0, 1674189.0, 1605902.0, 1614025.0, 1705587.0, 1725118.0, 1773358.0, 1875870.0, 1870587.0, 1709796.0, 1705266.0, 1557578.0, 1697927.0, 1748716.0, 1817345.0, 1917286.0, 1759586.0, 1893139.0, 1937341.0, 1900540.0, 1917985.0, 2001993.0, 2083463.0, 2164434.0, 2230199.0, 2095106.0, 1942460.0, 2233319.0, 2380738.0, 2530407.0, 2716304.0, 3013597.0, 2839451.0, 2752994.0, 3062038.0, 3212152.0, 3220548.0, 3216248.0, 3271463.0, 3464800.0, 3423182.0, 3637545.0, 3741613.0, 3899459.0, 3677847.0, 3967073.0, 4046289.0, 4092916.0, 3734908.0, 3567735.0, 3734272.0, 3226571.0, 3175378.0, 2892518.0, 3255579.0, 3088498.0, 2763108.0, 2873628.0, 3032946.0, 2759567.0, 3053266.0, 3042280.0, 3331076.0, 3347994.0, 3611943.0, 3839634.0, 3987849.0, 3928708.0, 3729135.0, 3652110.0, 4047226.0, 4273343.0, 4351084.0, 4580967.0, 4639373.0, 4436457.0, 4709380.0, 5014082.0, 4929941.0, 4984361.0, 5115031.0, 5070805.0, 5342135.0, 5366390.0, 5482486.0, 5334269.0, 4929602.0, 4998459.0, 5457232.0, 5805722.0, 5946435.0, 6003162.0, 6325905.0, 6628308.0, 6524838.0, 6481126.0, 6560886.0, 6407063.0, 6097073.0, 7053709.0, 7799179.0, 7546967.0],borderColor:'#059669',borderWidth:1.3,pointRadius:0,tension:.05}
+ ]},
+ options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'index'},
+  scales:{y:{type:'logarithmic',ticks:{callback:v=>'$'+(v/1e6).toFixed(1)+'M'}},
+          x:{ticks:{maxTicksLimit:14,autoSkip:true}}},
+  plugins:{legend:{position:'top'}}}});
+new Chart(document.getElementById('chart-dd'),{type:'line',
+ data:{labels:LBL,datasets:[
+  {label:'機械版',data:[-4.92, -4.67, -3.58, -7.82, -8.03, -8.84, -6.38, -14.48, -15.65, -14.36, -13.3, -16.28, -19.75, -19.18, -18.68, -16.99, -14.55, -13.21, -9.69, -10.77, -12.13, -18.03, -14.0, -14.05, -13.85, -13.26, -11.06, -7.44, -5.57, -8.08, -11.09, -9.97, -7.91, 0.0, 0.0, -3.08, -2.68, -5.66, -8.04, -8.62, -8.41, -4.39, -6.07, -2.14, -1.89, -6.02, -5.45, -7.24, -6.44, -2.58, -1.24, -2.38, -8.44, -1.8, -2.72, -6.09, -11.55, -8.47, -7.67, -4.22, -5.5, -10.86, -14.32, -14.32, -12.3, -9.57, 0.0, -0.61, -9.35, -11.81, -2.49, -0.53, -9.64, -8.77, -7.99, -7.18, -5.32, -10.74, -1.5, -3.86, -6.8, -5.17, -5.56, -1.0, -5.61, -6.13, -4.04, -8.7, -7.4, -11.78, -13.1, -16.23, -18.52, -18.52, -18.5, -19.8, -14.16, -14.59, -14.84, -15.86, -9.12, -2.29, -2.65, -8.6, -9.76, -10.37, -3.46, -0.33, -2.44, -0.26, -0.66, -4.0, -2.19, -10.14, -12.65, -9.67, -7.44, -8.14, 0.0, -5.33, -6.31, -3.75, -9.71, -10.13, -10.52, -5.38, -3.19, -4.99, -0.01, -0.48, -3.54, -2.5, -1.66, -1.82, -9.65, -0.05, 0.0, -3.91],borderColor:'#dc2626',backgroundColor:'rgba(220,38,38,.10)',fill:true,borderWidth:1.3,pointRadius:0},
+  {label:'SPY',data:[-3.23, -0.54, -2.19, -1.51, -1.11, -3.11, -0.98, -7.02, -9.39, -1.68, -1.32, -3.03, -7.86, -7.93, -1.74, -1.79, -0.19, -0.85, -0.06, -0.78, -0.77, -2.5, -0.51, -1.28, -0.89, -0.27, -1.26, -0.28, -0.13, -1.17, -0.27, -0.15, 0.0, -0.22, 0.0, -0.5, -1.63, -5.21, -7.81, -7.33, -5.08, -4.53, -1.0, -0.4, -0.53, -7.4, -5.68, -13.99, -7.1, -4.09, -2.35, 0.0, -6.38, -0.48, -1.52, -3.17, -1.28, -0.27, -0.37, -0.33, -3.08, -12.44, -23.37, -13.64, -9.53, -7.92, -2.5, -0.36, -6.0, -8.35, -0.44, 0.0, -3.73, -3.13, 0.0, -0.66, -0.49, 0.0, -0.57, -0.15, -5.0, 0.0, -3.02, -0.53, -5.82, -8.6, -5.16, -13.49, -13.29, -20.44, -13.12, -16.66, -24.37, -18.22, -13.67, -18.65, -13.53, -15.7, -12.58, -11.18, -10.77, -4.99, -1.88, -3.48, -8.05, -10.05, -1.83, -0.29, -1.71, 0.0, -0.02, -4.05, -0.75, -0.46, -2.49, -0.21, 0.0, -2.73, 0.0, -3.25, -1.3, -3.06, -8.46, -9.25, -3.55, 0.0, -0.79, -0.6, -0.1, -0.78, -0.58, -1.23, -0.51, -1.37, -6.24, 0.0, 0.0, -3.17],borderColor:'#6b7280',borderWidth:1,pointRadius:0}
+ ]},
+ options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'index'},
+  scales:{y:{ticks:{callback:v=>v+'%'}},x:{ticks:{maxTicksLimit:14,autoSkip:true}}},
+  plugins:{legend:{position:'top'}}}});
+new Chart(document.getElementById('chart-yearly'),{type:'bar',
+ data:{labels:[2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026],datasets:[
+  {label:'機械版(無閘門)',data:[-11.9, 4.5, 16.5, -2.9, 4.7, 22.8, 17.7, -17.0, 32.9, 31.8, 9.2, 49.4],backgroundColor:'#1a56db'},
+  {label:'SPY',data:[1.3, 13.6, 20.8, -5.2, 31.1, 17.2, 30.5, -18.6, 26.7, 25.6, 18.0, 7.9],backgroundColor:'#9ca3af'}
+ ]},
+ options:{responsive:true,maintainAspectRatio:false,
+  scales:{y:{ticks:{callback:v=>v+'%'}}},plugins:{legend:{position:'top'}}}});
+</script>
+</body>
+</html>
