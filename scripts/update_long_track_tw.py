@@ -299,6 +299,10 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
     <div class="crumb"><a href="/">首頁</a> / 台股長線訊號 2330/0050</div>
     <h1>台股長線訊號 — 2330/0050(E3)即時狀態</h1>
     <div class="sub">SystemProtocol v7 · 50% 2330 + 50% 0050 · E3 三訊號各 1/3 · Long only</div>
+    <div style="margin-top:.6rem;display:flex;gap:.4rem">
+      <a href="/long-track-smh/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">🇺🇸 美股</a>
+      <a href="/long-track-tw/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border-radius:6px;background:#16a34a;color:#fff;text-decoration:none">🇹🇼 台股</a>
+    </div>
   </div>
 </div>
 <div class="container">
@@ -313,7 +317,7 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
 {('<div style="background:var(--red-bg);border:2px solid var(--red-border);border-radius:10px;padding:.9rem 1.2rem;margin:.5rem 0 1rem;font-size:.9rem"><b style="color:var(--red-text)">⚡ 本週訊號變化</b><br>' + "<br>".join(changes) + '<br><span style="font-size:.78rem;color:var(--muted)">下一個交易日將部位調整至上列目標。</span></div>') if changes else ('<div style="text-align:center;font-size:.78rem;color:var(--muted);margin:.3rem 0 1rem">本週無訊號變化' + (f"(上次變化:{last_change_date})" if last_change_date else "") + '</div>')}
 
 <div class="banner">
-  <b>E3 台股長線訊號 · 2026-06-23 採用 · OOS 追蹤中。</b>
+  <b>E3 台股長線訊號 · 2026-06-23 採用 · 實倉中。</b>
   這是<b>曝險狀態讀數</b>,不是每日交易動作 —— 訊號為週/月頻,多數日子不會變化。
   本系統是美股 <a href="/backtest/long_track_smh/">SMH/QQQ 長軌</a>的台股鏡像;美股加掛的 ST 半倉出場閘門(STX50)
   在台股回測<b>過不了同一把尺、已否決</b>,故本頁為純 E3(無閘門)。

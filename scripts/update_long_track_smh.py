@@ -293,7 +293,7 @@ def generate_html(sigs: dict, changes: list[str] | None = None,
   <meta name="robots" content="noindex,nofollow">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>長線訊號 SMH/QQQ(STX50)即時狀態 | InvestMQuest Research</title>
+  <title>美股長線訊號 SMH/QQQ(STX50)即時狀態 | InvestMQuest Research</title>
   <meta name="description" content="SystemProtocol v7 長線 STX50 — 50/50 SMH/QQQ 當前訊號與倉位">
   <style>
 :root{{--brand:#1a56db;--bg:#f8f9fa;--card:#fff;--text:#1a1a2e;--muted:#6b7280;--border:#e2e5e9;
@@ -371,9 +371,13 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
 {NAV_BLOCK}
 <div class="page-hdr">
   <div class="container">
-    <div class="crumb"><a href="/">首頁</a> / 長線訊號 SMH/QQQ</div>
-    <h1>長線訊號 — SMH/QQQ(STX50)即時狀態</h1>
+    <div class="crumb"><a href="/">首頁</a> / 美股長線訊號 SMH/QQQ</div>
+    <h1>美股長線訊號 — SMH/QQQ(STX50)即時狀態</h1>
     <div class="sub">SystemProtocol v7 · 50% SMH + 50% QQQ · E3 三訊號各 1/3 + ST(10,3) 半倉出場閘門 · Long only</div>
+    <div style="margin-top:.6rem;display:flex;gap:.4rem">
+      <a href="/long-track-smh/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border-radius:6px;background:#1a1a2e;color:#fff;text-decoration:none">🇺🇸 美股</a>
+      <a href="/long-track-tw/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">🇹🇼 台股</a>
+    </div>
   </div>
 </div>
 <div class="container">
