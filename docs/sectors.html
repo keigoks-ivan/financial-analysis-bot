@@ -91,7 +91,6 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
         <div class="imq-dd-menu">
           <a href="/research/">個股 DD</a>
           <a href="/id/">產業深度 ID</a>
-          <a href="/ds/">產業敘述 DS</a>
           <a href="/comparisons/">多股對比</a>
           <a href="/supply-chain/">供應鏈地圖</a>
           <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
@@ -134,7 +133,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
 <section class="hero">
   <div class="hero-inner">
     <h1 class="hero-h1"><span class="lang-en">US Sector ETFs Comparison</span><span class="lang-zh">美股類股 ETF 比較</span></h1>
-    <p class="hero-sub"><span class="lang-en">23 ETFs &middot; 11 GICS sectors + 12 sub-sectors &middot; Price, YTD, PE, Yield, AUM &middot; All columns sortable &middot; Apr 2026</span><span class="lang-zh">23 檔 ETF &middot; 11 大 GICS 類股 + 12 子類股 &middot; 價格、YTD、PE、殖利率、規模 &middot; 所有欄位可排序 &middot; 2026年4月</span></p>
+    <p class="hero-sub"><span class="lang-en">23 ETFs &middot; 11 GICS sectors + 12 sub-sectors &middot; Price, YTD, PE, EPS YoY, Yield, AUM &middot; All columns sortable &middot; Apr 2026</span><span class="lang-zh">23 檔 ETF &middot; 11 大 GICS 類股 + 12 子類股 &middot; 價格、YTD、PE、獲利YoY、殖利率、規模 &middot; 所有欄位可排序 &middot; 2026年4月</span></p>
   </div>
 </section>
 
@@ -160,14 +159,16 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
         <span class="lang-zh"><strong>YTD</strong> &mdash; 年初至今總報酬（價格+配息）。</span>
         <span class="lang-en"><strong>PE</strong> &mdash; Trailing 12-month price-to-earnings ratio.</span>
         <span class="lang-zh"><strong>PE</strong> &mdash; 過去12個月本益比。</span>
+        <span class="lang-en"><strong>EPS YoY</strong> &mdash; Sector earnings growth, FactSet Q1 2026 actual/blended (Y/Y), as of May 8 2026. 11 GICS sectors only; thematic ETFs show &mdash;.</span>
+        <span class="lang-zh"><strong>獲利YoY</strong> &mdash; 類股獲利成長，FactSet Q1 2026 實際（年增，blended），截至 2026-05-08。僅 11 大 GICS 類股；主題型 ETF 顯示 &mdash;。</span>
         <span class="lang-en"><strong>Yld</strong> &mdash; Trailing 12-month distribution yield.</span>
         <span class="lang-zh"><strong>Yld</strong> &mdash; 過去12個月配息殖利率。</span>
         <span class="lang-en"><strong>RS</strong> &mdash; Relative Strength (0-100). Percentile rank of 1w/4w/13w returns, weighted 20/30/50 + trend bonus. Same logic as Screener.</span>
         <span class="lang-zh"><strong>RS</strong> &mdash; 相對強度（0-100）。1週/4週/13週漲幅百分位排名，加權20/30/50+趨勢加分。與選股器相同邏輯。</span>
         <span class="lang-en"><strong>Beta</strong> &mdash; 3-year beta vs S&amp;P 500. &lt;1.0 = defensive (green), 1.0-1.3 = market-like, &gt;1.3 = aggressive (red).</span>
         <span class="lang-zh"><strong>Beta</strong> &mdash; 3年期相對S&amp;P 500的Beta。&lt;1.0=防禦型（綠色）、1.0-1.3=類市場、&gt;1.3=進攻型（紅色）。</span>
-        <span class="lang-en" style="grid-column:span 2;font-weight:600;color:#5a7a9a;margin-top:4px">Data from Yahoo Finance via yfinance. Auto-updated weekly. Outlook is editorial assessment. PB/PEG not available for ETFs (no consensus EPS forecast for fund-level).</span>
-        <span class="lang-zh" style="grid-column:span 2;font-weight:600;color:#5a7a9a;margin-top:4px">數據來自 Yahoo Finance (yfinance)。每週自動更新。展望為編輯評估。PB/PEG不適用於ETF（基金層級無共識EPS預估）。</span>
+        <span class="lang-en" style="grid-column:span 2;font-weight:600;color:#5a7a9a;margin-top:4px">Price / YTD / PE / AUM from Yahoo Finance via yfinance, auto-updated weekly. EPS YoY &amp; Outlook are editorial (FactSet, updated quarterly). PB/PEG not available for ETFs (no consensus EPS forecast for fund-level).</span>
+        <span class="lang-zh" style="grid-column:span 2;font-weight:600;color:#5a7a9a;margin-top:4px">價格／YTD／PE／AUM 來自 Yahoo Finance (yfinance)，每週自動更新。獲利YoY 與展望為編輯維護（FactSet，每季更新）。PB/PEG不適用於ETF（基金層級無共識EPS預估）。</span>
       </div>
     </div>
   </div>
@@ -187,17 +188,17 @@ var C = {navy:'#1e3a5f',green:'#16a34a',orange:'#d97706',red:'#dc2626',blue:'#25
 // group: 'sector' = GICS 11 sectors, 'sub' = sub-sector/thematic
 var SECTORS = [
   // 11 GICS Sectors (SPDR Select Sector)
-  {ticker:'XLK',name:'Technology',nameZh:'科技',group:'sector',price:191.44,aum:124.5,ytd:32.8,pe:38.1,divYld:0.6,beta:1.11,rs:50.0,rs_trend:'accelerating',outlook:{en:'AI hardware strong; software under pressure (-21% IGV); tariff risk on supply chains',zh:'AI硬體強勁；軟體承壓（IGV -21%）；供應鏈關稅風險'}},
-  {ticker:'XLF',name:'Financials',nameZh:'金融',group:'sector',price:53.57,aum:49.4,ytd:-2.0,pe:16.9,divYld:1.6,beta:0.92,rs:35.8,rs_trend:'choppy',outlook:{en:'Banks profitable but tariff uncertainty weighs; rate cut delayed',zh:'銀行獲利但關稅不確定性壓制；降息延遲'}},
-  {ticker:'XLE',name:'Energy',nameZh:'能源',group:'sector',price:53.77,aum:38.7,ytd:18.6,pe:20.1,divYld:2.4,beta:0.23,rs:78.3,rs_trend:'choppy',outlook:{en:'Best performer YTD; oil prices up on geopolitical risk; tariff beneficiary',zh:'YTD最佳表現；地緣風險推升油價；關稅受惠者'}},
-  {ticker:'XLV',name:'Health Care',nameZh:'醫療',group:'sector',price:149.4,aum:38.2,ytd:-3.5,pe:24.1,divYld:1.7,beta:0.71,rs:24.6,rs_trend:'choppy',outlook:{en:'Eli Lilly dominance; GLP-1 drugs secular trend; defensive in downturn',zh:'禮來主導；GLP-1藥物長期趨勢；下行防禦型'}},
-  {ticker:'XLI',name:'Industrials',nameZh:'工業',group:'sector',price:180.91,aum:30.2,ytd:14.8,pe:31.4,divYld:1.3,beta:1.24,rs:50.0,rs_trend:'choppy',outlook:{en:'Reshoring + defense spending; tariff mixed (domestic beneficiary but input costs up)',zh:'回流+國防支出；關稅影響分化（國內受惠但進口成本上升）'}},
-  {ticker:'XLC',name:'Communication',nameZh:'通訊',group:'sector',price:109.45,aum:25.1,ytd:-6.1,pe:16.7,divYld:1.3,beta:0.92,rs:37.9,rs_trend:'choppy',outlook:{en:'META + GOOG AI capex; lowest PE among growth sectors; ad revenue resilient',zh:'META+GOOG AI資本支出；成長類股中最低PE；廣告收入有韌性'}},
-  {ticker:'XLU',name:'Utilities',nameZh:'公用事業',group:'sector',price:44.76,aum:22.4,ytd:4.4,pe:20.6,divYld:2.6,beta:0.67,rs:57.9,rs_trend:'fading',outlook:{en:'AI data center power demand; rate cut beneficiary; defensive yield',zh:'AI資料中心用電需求；降息受惠；防禦型殖利率'}},
-  {ticker:'XLY',name:'Consumer Disc.',nameZh:'非必需消費',group:'sector',price:117.16,aum:23.8,ytd:-0.8,pe:29.2,divYld:0.8,beta:1.25,rs:26.2,rs_trend:'accelerating',outlook:{en:'Amazon + Tesla heavy; consumer spending slowing; tariff headwind on imports',zh:'亞馬遜+特斯拉權重大；消費支出放緩；進口關稅逆風'}},
-  {ticker:'XLP',name:'Consumer Staples',nameZh:'必需消費',group:'sector',price:83.3,aum:14.9,ytd:7.8,pe:25.1,divYld:2.7,beta:0.66,rs:51.2,rs_trend:'fading',outlook:{en:'Defensive; Costco + PG pricing power; recession hedge',zh:'防禦型；Costco+PG定價權；衰退避險'}},
-  {ticker:'XLRE',name:'Real Estate',nameZh:'房地產',group:'sector',price:43.86,aum:7.9,ytd:9.3,pe:32.3,divYld:3.4,beta:1.09,rs:55.8,rs_trend:'choppy',outlook:{en:'Rate sensitive; data center REITs offset office drag; wait for rate cuts',zh:'利率敏感；資料中心REIT抵消辦公拖累；等待降息'}},
-  {ticker:'XLB',name:'Materials',nameZh:'原物料',group:'sector',price:51.81,aum:7.3,ytd:12.8,pe:26.2,divYld:1.8,beta:1.09,rs:62.9,rs_trend:'fading',outlook:{en:'Gold miners surge; commodity inflation hedge; tariff-driven reshoring demand',zh:'金礦股飆升；大宗商品通膨避險；關稅驅動回流需求'}},
+  {ticker:'XLK',name:'Technology',nameZh:'科技',group:'sector',price:191.44,aum:124.5,ytd:32.8,pe:38.1,epsYoY:50.7,divYld:0.6,beta:1.11,rs:50.0,rs_trend:'accelerating',outlook:{en:'AI hardware strong; software under pressure (-21% IGV); tariff risk on supply chains',zh:'AI硬體強勁；軟體承壓（IGV -21%）；供應鏈關稅風險'}},
+  {ticker:'XLF',name:'Financials',nameZh:'金融',group:'sector',price:53.57,aum:49.4,ytd:-2.0,pe:16.9,epsYoY:21.8,divYld:1.6,beta:0.92,rs:35.8,rs_trend:'choppy',outlook:{en:'Banks profitable but tariff uncertainty weighs; rate cut delayed',zh:'銀行獲利但關稅不確定性壓制；降息延遲'}},
+  {ticker:'XLE',name:'Energy',nameZh:'能源',group:'sector',price:53.77,aum:38.7,ytd:18.6,pe:20.1,epsYoY:0.7,divYld:2.4,beta:0.23,rs:78.3,rs_trend:'choppy',outlook:{en:'Best performer YTD; oil prices up on geopolitical risk; tariff beneficiary',zh:'YTD最佳表現；地緣風險推升油價；關稅受惠者'}},
+  {ticker:'XLV',name:'Health Care',nameZh:'醫療',group:'sector',price:149.4,aum:38.2,ytd:-3.5,pe:24.1,epsYoY:-3.1,divYld:1.7,beta:0.71,rs:24.6,rs_trend:'choppy',outlook:{en:'Eli Lilly dominance; GLP-1 drugs secular trend; defensive in downturn',zh:'禮來主導；GLP-1藥物長期趨勢；下行防禦型'}},
+  {ticker:'XLI',name:'Industrials',nameZh:'工業',group:'sector',price:180.91,aum:30.2,ytd:14.8,pe:31.4,epsYoY:20.4,divYld:1.3,beta:1.24,rs:50.0,rs_trend:'choppy',outlook:{en:'Reshoring + defense spending; tariff mixed (domestic beneficiary but input costs up)',zh:'回流+國防支出；關稅影響分化（國內受惠但進口成本上升）'}},
+  {ticker:'XLC',name:'Communication',nameZh:'通訊',group:'sector',price:109.45,aum:25.1,ytd:-6.1,pe:16.7,epsYoY:48.8,divYld:1.3,beta:0.92,rs:37.9,rs_trend:'choppy',outlook:{en:'META + GOOG AI capex; lowest PE among growth sectors; ad revenue resilient',zh:'META+GOOG AI資本支出；成長類股中最低PE；廣告收入有韌性'}},
+  {ticker:'XLU',name:'Utilities',nameZh:'公用事業',group:'sector',price:44.76,aum:22.4,ytd:4.4,pe:20.6,epsYoY:17.7,divYld:2.6,beta:0.67,rs:57.9,rs_trend:'fading',outlook:{en:'AI data center power demand; rate cut beneficiary; defensive yield',zh:'AI資料中心用電需求；降息受惠；防禦型殖利率'}},
+  {ticker:'XLY',name:'Consumer Disc.',nameZh:'非必需消費',group:'sector',price:117.16,aum:23.8,ytd:-0.8,pe:29.2,epsYoY:39.7,divYld:0.8,beta:1.25,rs:26.2,rs_trend:'accelerating',outlook:{en:'Amazon + Tesla heavy; consumer spending slowing; tariff headwind on imports',zh:'亞馬遜+特斯拉權重大；消費支出放緩；進口關稅逆風'}},
+  {ticker:'XLP',name:'Consumer Staples',nameZh:'必需消費',group:'sector',price:83.3,aum:14.9,ytd:7.8,pe:25.1,epsYoY:6.1,divYld:2.7,beta:0.66,rs:51.2,rs_trend:'fading',outlook:{en:'Defensive; Costco + PG pricing power; recession hedge',zh:'防禦型；Costco+PG定價權；衰退避險'}},
+  {ticker:'XLRE',name:'Real Estate',nameZh:'房地產',group:'sector',price:43.86,aum:7.9,ytd:9.3,pe:32.3,epsYoY:7.6,divYld:3.4,beta:1.09,rs:55.8,rs_trend:'choppy',outlook:{en:'Rate sensitive; data center REITs offset office drag; wait for rate cuts',zh:'利率敏感；資料中心REIT抵消辦公拖累；等待降息'}},
+  {ticker:'XLB',name:'Materials',nameZh:'原物料',group:'sector',price:51.81,aum:7.3,ytd:12.8,pe:26.2,epsYoY:43.2,divYld:1.8,beta:1.09,rs:62.9,rs_trend:'fading',outlook:{en:'Gold miners surge; commodity inflation hedge; tariff-driven reshoring demand',zh:'金礦股飆升；大宗商品通膨避險；關稅驅動回流需求'}},
 
   // Sub-sector / Thematic ETFs
   {ticker:'VNQ',name:'REITs',nameZh:'REITs',group:'sub',price:95.56,aum:69.8,ytd:9.1,pe:30.5,divYld:3.9,beta:1.10,rs:47.9,rs_trend:'choppy',outlook:{en:'Broadest REIT exposure; rate cut = catalyst; DC REITs carry index',zh:'最廣REIT曝險；降息=催化劑；資料中心REIT撐指數'}},
@@ -225,6 +226,7 @@ var COLS = [
   {key:'price',  en:'Price',     zh:'價格',    align:'right',w:'32px'},
   {key:'ytd',    en:'YTD',       zh:'YTD',     align:'right',w:'38px'},
   {key:'pe',     en:'PE',        zh:'PE',      align:'right',w:'32px'},
+  {key:'epsYoY', en:'EPS YoY',   zh:'獲利YoY', align:'right',w:'46px'},
   {key:'divYld', en:'Yld',       zh:'殖利',    align:'right',w:'32px'},
   {key:'rs',     en:'RS',        zh:'RS',      align:'right',w:'32px'},
   {key:'rs_trend',en:'Trend',    zh:'趨勢',    align:'left', w:'52px'},
@@ -289,6 +291,10 @@ function renderTable(){
         case 'pe':
           if(!r.pe||r.pe<=0){val='n/a';style+='color:#94a3b8;';}
           else{val=r.pe.toFixed(1);style+='color:'+(r.pe<18?C.green:r.pe<=28?C.navy:C.red)+';';}
+          break;
+        case 'epsYoY':
+          if(r.epsYoY===undefined||r.epsYoY===null){val='—';style+='color:#94a3b8;';}
+          else{val=(r.epsYoY>=0?'+':'')+r.epsYoY.toFixed(1)+'%';style+='color:'+yoyColor(r.epsYoY)+';font-weight:600;';}
           break;
         case 'divYld':
           val=r.divYld.toFixed(1)+'%';

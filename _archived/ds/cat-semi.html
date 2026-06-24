@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta name="robots" content="noindex,nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>半導體 / AI 基建 — 產業敘述 DS 索引</title>
+<meta name="description" content="跨多檔個股共用的產業敘述型研究（Industry Discourse / DS），以歷史脈絡 → 供需循環 → 短中長期推估為骨架，文字 ≥ 80%、表格 ≤ 20%">
+<style>
+*{box-sizing:border-box}
+body{font-family:-apple-system,'Noto Sans TC',sans-serif;background:#FAFAF9;color:#111827;margin:0;padding:0;font-size:14px;line-height:1.65;-webkit-text-size-adjust:100%}
+.container{max-width:1240px;margin:0 auto;padding:1.4rem 1.5rem 3rem}
+.crumb{font-size:.78rem;color:#6B7280;margin-bottom:.5rem}
+.crumb a{color:#6B7280;text-decoration:none}
+
+/* H1 + meta strip */
+.head-row{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap;border-bottom:1px solid #E5E7EB;padding-bottom:14px;margin-bottom:14px}
+h1{color:#065F46;font-size:1.7rem;font-weight:800;letter-spacing:-.03em;margin:0}
+.sub{color:#6B7280;font-size:.88rem;margin-top:.35rem;max-width:680px;line-height:1.55}
+.sub code{background:#F3F4F6;padding:1px 6px;border-radius:3px;font-size:11.5px;color:#1F2937}
+
+.meta-strip{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap;font-size:11.5px;color:#4B5563}
+.meta-strip .item{display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid #E5E7EB;padding:5px 10px;border-radius:14px}
+.meta-strip .item b{color:#1F2937;font-weight:700;font-family:'IBM Plex Mono',ui-monospace,monospace}
+.meta-strip .info-toggle{cursor:pointer;color:#047857;background:none;border:0;font:inherit;font-size:11.5px;padding:0;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px}
+.phase-pop{display:none;background:#fff;border:1px solid #E5E7EB;border-radius:8px;padding:10px 14px;margin-top:8px;font-size:12px;color:#4B5563;line-height:1.6}
+.phase-pop.open{display:block}
+.phase-pop b{color:#1F2937}
+.phase-pop .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+
+/* Compressed Flagship */
+.flagship{background:linear-gradient(135deg,#1F2937 0%,#047857 100%);color:#fff;border-radius:12px;padding:16px 20px;margin:14px 0;box-shadow:0 4px 14px rgba(31,41,55,.15)}
+.fl-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+.fl-head .label{font-size:10.5px;letter-spacing:.5px;text-transform:uppercase;opacity:.8;font-weight:600}
+.fl-head h2{margin:2px 0 0;font-size:16px;font-weight:700;letter-spacing:-.01em}
+.fl-tabs{display:flex;gap:4px;background:rgba(255,255,255,.1);padding:3px;border-radius:8px}
+.fl-tab{background:none;border:0;color:rgba(255,255,255,.75);padding:6px 12px;border-radius:6px;cursor:pointer;font:inherit;font-size:12px;font-weight:600}
+.fl-tab.active{background:#fff;color:#1F2937}
+.fl-pane{display:none}
+.fl-pane.active{display:block}
+.fl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
+.fl-grid a{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:6px;padding:9px 11px;text-decoration:none;color:#fff;transition:background .15s}
+.fl-grid a:hover{background:rgba(255,255,255,.18)}
+.fl-grid .num{font-size:9.5px;opacity:.7;font-weight:600;letter-spacing:.5px}
+.fl-grid .title{font-size:12px;font-weight:600;margin-top:2px;line-height:1.4}
+.fl-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;font-size:11.5px;flex-wrap:wrap}
+.fl-foot .more{background:#fff;color:#1F2937;padding:5px 12px;border-radius:5px;text-decoration:none;font-weight:700;font-size:11.5px}
+.fl-foot .toggle{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;padding:5px 10px;border-radius:5px;cursor:pointer;font:inherit;font-size:11px;font-weight:500}
+
+/* Tier Matrix one-liner: keep as-is from original (passes through tier_alert_html which already has its own styling). Wrapped in margin reset */
+.tier-passthrough{margin:8px 0 16px}
+.tier-passthrough > div{margin:0 !important}
+
+/* Sticky toolbar */
+.toolbar{position:sticky;top:48px;z-index:50;background:rgba(250,250,249,.96);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:10px 0;margin:6px -1.5rem 0;border-bottom:1px solid #E5E7EB}
+.toolbar-inner{max-width:1240px;margin:0 auto;padding:0 1.5rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.search-box{flex:1 1 280px;min-width:0;position:relative}
+.search-box input{width:100%;border:1px solid #E5E7EB;border-radius:8px;padding:8px 12px 8px 32px;font:inherit;font-size:13px;background:#fff;color:#111827;outline:none;transition:border-color .15s,box-shadow .15s}
+.search-box input:focus{border-color:#047857;box-shadow:0 0 0 3px rgba(71,85,105,.12)}
+.search-box::before{content:"🔍";position:absolute;top:50%;left:10px;transform:translateY(-50%);font-size:13px;opacity:.55;pointer-events:none}
+.f-group{display:flex;gap:5px;flex-wrap:wrap}
+.f-chip{background:#fff;border:1px solid #E5E7EB;color:#4B5563;padding:6px 10px;border-radius:14px;cursor:pointer;font:inherit;font-size:11.5px;font-weight:500;transition:all .12s;white-space:nowrap}
+.f-chip:hover{border-color:#D1D5DB;color:#1F2937}
+.f-chip.active{background:#047857;color:#fff;border-color:#047857}
+.f-clear{background:none;border:0;color:#047857;font:inherit;font-size:11.5px;font-weight:600;cursor:pointer;padding:4px 6px;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px}
+.cat-jump{display:flex;gap:6px;overflow-x:auto;margin:10px -1.5rem 0;padding:6px 1.5rem;border-bottom:1px solid #E5E7EB;background:#fff;scrollbar-width:thin}
+.cat-jump a{flex-shrink:0;background:#F9FAFB;color:#1F2937;padding:5px 11px;border-radius:14px;text-decoration:none;font-size:11.5px;font-weight:500;border:1px solid transparent;white-space:nowrap}
+.cat-jump a:hover{background:#F3F4F6;border-color:#E5E7EB}
+.cat-jump a .n{color:#94A3B8;font-size:10.5px;margin-left:4px;font-weight:400}
+.filter-status{font-size:11.5px;color:#6B7280;margin-top:10px}
+.filter-status b{color:#1F2937;font-weight:700}
+
+/* Categories */
+.category{margin-top:24px;border:1px solid #E5E7EB;border-radius:10px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.025);overflow:hidden;scroll-margin-top:130px}
+.cat-head{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid #E5E7EB;background:linear-gradient(90deg,#F9FAFB,#fff);gap:10px;flex-wrap:wrap;cursor:pointer;user-select:none}
+.cat-head:hover{background:linear-gradient(90deg,#F3F4F6,#F9FAFB)}
+.cat-head .left{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cat-head h2{margin:0;color:#065F46;font-size:15.5px;font-weight:700}
+.cat-head .cat-icon{font-size:18px}
+.cat-head .count{background:#F3F4F6;color:#1F2937;padding:2px 10px;border-radius:14px;font-size:11px;font-weight:600}
+.cat-head .hint{color:#94A3B8;font-size:11.5px;flex:1 1 auto;text-align:right}
+.cat-chev{font-size:11px;color:#047857;transition:transform .25s;font-weight:700;display:inline-block}
+.category:not(.open) .cat-chev{transform:rotate(-90deg)}
+.cat-body{padding:14px 18px 18px}
+.category:not(.open) .cat-body{display:none}
+
+/* Topic grid */
+.topic-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:10px}
+.topic-card{background:#fff;border:1px solid #E5E7EB;border-radius:8px;padding:11px 14px;transition:border-color .15s,box-shadow .15s;display:flex;flex-direction:column}
+.topic-card:hover{border-color:#D1D5DB;box-shadow:0 2px 10px rgba(71,85,105,.06)}
+.topic-card.is-parent{background:linear-gradient(180deg,#F9FAFB,#fff);border-color:#E5E7EB;grid-column:1/-1}
+
+.tc-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tc-num{flex:0 0 auto;background:#F3F4F6;color:#1F2937;font-weight:700;font-size:11.5px;min-width:22px;height:22px;padding:0 5px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',ui-monospace,monospace}
+.topic-card.is-parent .tc-num{background:#047857;color:#fff}
+.tc-title{flex:1 1 auto;min-width:0;font-size:14.5px;font-weight:700;color:#1F2937;text-decoration:none;line-height:1.35}
+.tc-title:hover{color:#047857;text-decoration:underline}
+.tc-title .arrow{font-size:12px;opacity:.55;font-weight:500;margin-left:3px}
+.tc-badge{background:#047857;color:#fff;padding:1px 6px;border-radius:3px;font-size:9.5px;font-weight:600;letter-spacing:.3px}
+.tc-badge.child{background:#F9FAFB;color:#047857;border:1px solid #E5E7EB}
+.tc-phase{display:inline-block;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:600;flex-shrink:0}
+.phase-I{background:#DCFCE7;color:#166534}
+.phase-II{background:#FEF3C7;color:#92400E}
+.phase-III{background:#FEE2E2;color:#991B1B}
+.phase-IV{background:#F3F4F6;color:#1F2937}
+.tc-expand{flex:0 0 auto;background:none;border:0;color:#94A3B8;cursor:pointer;font-size:13px;padding:2px 4px;line-height:1;transition:transform .2s,color .15s}
+.tc-expand:hover{color:#047857}
+.topic-card.expanded .tc-expand{transform:rotate(180deg);color:#047857}
+
+.tc-thesis-short{font-size:12px;color:#4B5563;margin-top:6px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis}
+
+.tc-details{display:none;border-top:1px dashed #E5E7EB;margin-top:10px;padding-top:10px}
+.topic-card.expanded .tc-details{display:block}
+.tc-tags{color:#6B7280;font-size:11.5px;margin-bottom:6px}
+.tc-meta{display:flex;flex-wrap:wrap;gap:5px 8px;align-items:center;margin-bottom:6px;font-size:11px;color:#6B7280}
+.tc-meta .chip{display:inline-flex;align-items:center;gap:3px;background:#F3F4F6;padding:2px 7px;border-radius:9px;color:#4B5563;font-weight:500}
+.tc-thesis-full{padding:8px 11px;background:#FAFAF9;border-left:3px solid #D1D5DB;border-radius:0 4px 4px 0;font-size:11.5px;color:#4B5563;line-height:1.55;margin-top:4px}
+.tc-thesis-full::before{content:"非共識";display:block;font-size:9px;color:#047857;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:2px}
+
+.tc-children{margin-top:8px;display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.tc-children .label{font-size:10px;color:#047857;font-weight:700;letter-spacing:.3px}
+.tc-chip{display:inline-flex;align-items:center;gap:3px;background:#fff;border:1px solid #D1D5DB;color:#1F2937;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:600;text-decoration:none;transition:all .15s}
+.tc-chip:hover{background:#047857;color:#fff;border-color:#047857}
+.tc-chip .arrow{font-size:9px;opacity:.7}
+
+.empty-state{text-align:center;padding:18px 14px;color:#94A3B8;font-size:12px}
+.empty-state .eco{font-size:24px;margin-bottom:4px}
+.suggest{background:#F9FAFB;border:1px dashed #D1D5DB;border-radius:6px;padding:10px 14px;margin-top:10px;color:#1F2937;font-size:12px;line-height:1.65}
+.suggest summary{cursor:pointer;font-weight:600;list-style:none;color:#1F2937}
+.suggest summary::-webkit-details-marker{display:none}
+.suggest summary::before{content:"▸";display:inline-block;margin-right:6px;transition:transform .2s}
+.suggest[open] summary::before{transform:rotate(90deg)}
+.suggest-body{margin-top:8px}
+.suggest strong{color:#1F2937}
+.suggest code{background:#F3F4F6;padding:1px 6px;border-radius:3px;color:#1F2937;font-size:11.5px;font-weight:600}
+.suggest ul{margin:8px 0 0;padding-left:18px}
+.suggest ul li{margin-bottom:6px;color:#1F2937;font-size:11.5px}
+
+.footer{margin-top:2.5rem;padding-top:1rem;border-top:1px solid #E5E7EB;color:#6B7280;font-size:.78rem;text-align:center}
+
+.topic-card.hidden,.category.hidden{display:none !important}
+
+/* ===== Responsive breakpoints =====
+   ≥1280 desktop wide / ≤1024 tablet 橫 / ≤768 平板直 + 大手機橫 / ≤480 手機直 / ≤360 ultra narrow
+*/
+@media(max-width:1024px){
+  .container{padding:1.2rem 1.2rem 2.5rem}
+  .toolbar{margin:6px -1.2rem 0}
+  .toolbar-inner{padding:0 1.2rem}
+  .cat-jump{margin:8px -1.2rem 0;padding:6px 1.2rem}
+  .head-row{align-items:flex-start}
+  .meta-strip{font-size:11px;gap:6px 8px}
+  .meta-strip .item{padding:4px 8px}
+  .flagship{padding:14px 16px}
+  .fl-grid{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+  .topic-grid{gap:8px}
+}
+@media(max-width:768px){
+  .container{padding:1rem 1rem 2.2rem}
+  h1{font-size:1.4rem}
+  .sub{font-size:.85rem}
+  .head-row{flex-direction:column;gap:10px;padding-bottom:10px;margin-bottom:10px}
+  .meta-strip{width:100%}
+  .toolbar{margin:6px -1rem 0;top:46px;padding:8px 0}
+  .toolbar-inner{padding:0 1rem;gap:6px}
+  .search-box{flex:1 1 100%;order:1}
+  .toolbar .f-group{order:2}
+  .toolbar .f-clear{order:3}
+  .cat-jump{margin:8px -1rem 0;padding:6px 1rem;-webkit-overflow-scrolling:touch}
+  .topic-grid{grid-template-columns:1fr;gap:8px}
+  .topic-card{padding:10px 12px}
+  .topic-card.is-parent{grid-column:auto}
+  .fl-head{flex-direction:column;align-items:flex-start;gap:10px}
+  .fl-tabs{align-self:stretch}
+  .fl-tab{flex:1 1 50%;text-align:center}
+  .fl-grid{grid-template-columns:1fr 1fr}
+  .tc-title{font-size:13.5px}
+  .tc-num{font-size:11px;height:20px;min-width:20px;padding:0 4px}
+  .tc-badge{font-size:9px;padding:1px 5px}
+  .tc-phase{font-size:9.5px;padding:1px 6px}
+  .cat-head{padding:11px 14px}
+  .cat-head h2{font-size:14.5px}
+  .cat-head .hint{display:none}
+  .cat-body{padding:12px 12px 14px}
+  .tier-passthrough > div{font-size:12px !important}
+  .tier-passthrough > div span{word-break:break-all}
+}
+@media(max-width:480px){
+  body{font-size:13.5px}
+  .container{padding:.85rem .8rem 2rem}
+  h1{font-size:1.25rem}
+  .sub{font-size:.82rem;line-height:1.5}
+  .meta-strip{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;width:100%}
+  .meta-strip .item{justify-content:center;padding:5px 8px;font-size:10.5px}
+  .meta-strip .info-toggle{grid-column:1/-1;text-align:center;padding:4px 0}
+  .toolbar{margin:6px -.8rem 0;top:42px}
+  .toolbar-inner{padding:0 .8rem}
+  .cat-jump{margin:8px -.8rem 0;padding:6px .8rem}
+  .flagship{padding:12px 14px;border-radius:10px}
+  .fl-head h2{font-size:14.5px}
+  .fl-head .label{font-size:9.5px}
+  .fl-grid{grid-template-columns:1fr}
+  .fl-foot{flex-direction:column;align-items:stretch;gap:6px}
+  .fl-foot .more,.fl-foot .toggle{text-align:center}
+  .topic-card{padding:9px 11px;border-radius:7px}
+  .tc-head{gap:6px}
+  .tc-title{font-size:13px;flex:1 1 100%;order:2}
+  .tc-num{order:1}
+  .tc-badge,.tc-phase{order:3}
+  .tc-expand{order:4;margin-left:auto}
+  .tc-thesis-short{font-size:11.5px;margin-top:5px;-webkit-line-clamp:3}
+  .tc-children{margin-top:6px;gap:4px}
+  .tc-chip{font-size:10.5px;padding:2px 8px}
+  .tc-tags,.tc-meta{font-size:10.5px}
+  .tc-thesis-full{font-size:11px;padding:7px 9px}
+  .cat-head{padding:10px 12px;gap:6px}
+  .cat-head h2{font-size:14px}
+  .cat-head .count{font-size:10.5px;padding:2px 8px}
+  .cat-body{padding:10px 10px 12px}
+  .filter-status{font-size:11px}
+  .suggest{padding:9px 12px;font-size:11.5px}
+  .suggest ul{padding-left:16px}
+  .suggest ul li{font-size:11px}
+  .phase-pop .row{grid-template-columns:1fr}
+}
+@media(max-width:360px){
+  .container{padding:.7rem .65rem 1.8rem}
+  h1{font-size:1.15rem}
+  .meta-strip{grid-template-columns:1fr;gap:4px}
+  .meta-strip .info-toggle{grid-column:auto}
+  .toolbar{margin:5px -.65rem 0}
+  .toolbar-inner{padding:0 .65rem}
+  .cat-jump{margin:6px -.65rem 0;padding:5px .65rem}
+  .topic-card{padding:8px 10px}
+  .tc-head{gap:5px}
+  .tc-title{font-size:12.5px}
+  .tc-thesis-short{font-size:11px;-webkit-line-clamp:4}
+  .fl-tab{font-size:11px;padding:5px 8px}
+}
+/* Landscape phones (low height): drop sticky to recover viewport */
+@media(max-height:500px) and (orientation:landscape){
+  .toolbar{position:static;border-bottom:none}
+  .imq-nav-root{position:static}
+  .category{scroll-margin-top:8px}
+}
+/* Wide screens: enable 3-col when there's room (capped by 1240 container) */
+@media(min-width:1280px){
+  .topic-grid{grid-template-columns:repeat(auto-fit,minmax(360px,1fr))}
+}
+/* Print */
+@media print{
+  .toolbar,.cat-jump,.tc-expand,.imq-nav-root{display:none !important}
+  .category{break-inside:avoid;page-break-inside:avoid}
+  .topic-card{break-inside:avoid}
+  .tc-details{display:block !important}
+  .category:not(.open) .cat-body{display:block !important}
+  body{font-size:11px}
+}
+
+/* ── Cat summary grid (directory mode) ── */
+.cat-summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin:20px 0}
+.cat-summary-card{display:flex;align-items:center;gap:14px;padding:16px 18px;background:#fff;border:1px solid #E5E7EB;border-radius:8px;text-decoration:none;color:inherit;transition:border-color .15s,box-shadow .15s,transform .12s}
+.cat-summary-card:hover{border-color:#D1D5DB;box-shadow:0 4px 12px rgba(71,85,105,.08);transform:translateY(-1px)}
+.cs-icon{font-size:24px;flex-shrink:0;line-height:1}
+.cs-text{flex:1 1 auto;min-width:0}
+.cs-text h3{margin:0 0 2px;color:#1F2937;font-size:14px;font-weight:700;line-height:1.3}
+.cs-count{display:inline-block;background:#F3F4F6;color:#1F2937;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:600;font-family:'IBM Plex Mono',ui-monospace,monospace;margin-bottom:4px}
+.cs-count.cs-empty{background:#FEF3C7;color:#92400E}
+.cs-hint{margin:0;color:#94A3B8;font-size:11.5px;line-height:1.4}
+.cs-arrow{color:#D1D5DB;font-size:16px;font-weight:600;flex-shrink:0}
+.cat-summary-card:hover .cs-arrow{color:#047857}
+@media(max-width:768px){
+  .cat-summary-grid{grid-template-columns:1fr 1fr;gap:8px}
+  .cat-summary-card{padding:12px 14px;gap:10px}
+  .cs-icon{font-size:20px}
+  .cs-text h3{font-size:13px}
+}
+@media(max-width:480px){
+  .cat-summary-grid{grid-template-columns:1fr}
+}
+
+
+/* Cat page extras */
+.cat-breadcrumb{padding:12px 0 8px;font-size:.8rem;color:#6B7280}
+.cat-breadcrumb a{color:#6B7280;text-decoration:none}
+.cat-breadcrumb a:hover{color:#1F2937;text-decoration:underline}
+.cat-breadcrumb strong{color:#1F2937}
+.cat-page-h1{color:#1F2937;font-size:1.6rem;font-weight:800;letter-spacing:-.03em;margin:0 0 4px}
+.cat-page-hint{color:#6B7280;font-size:.88rem;margin:0 0 12px}
+.cat-jump a.active{background:#047857;color:#fff;border-color:#047857}
+.cat-page-footer{margin-top:2rem;padding-top:1rem;border-top:1px solid #E5E7EB;color:#9CA3AF;font-size:.72rem;text-align:center}
+.cat-head{cursor:default !important}
+.cat-head:hover{background:linear-gradient(90deg,#F9FAFB,#fff) !important}
+
+</style>
+
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#0f172a;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(59,130,246,.28);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/">個股 DD</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/ds/" class="active">產業敘述 DS</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/">週報</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/long-track-smh/">長線訊號</a>
+          <a href="/long-track-tw/">台股長線</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/">量化回測</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/screener-tw.html">Screener 台股</a>
+          <a href="/screener-jp.html">Screener 日股</a>
+          <a href="/screener-my.html">Screener 馬股</a>
+          <a href="/cache/">🗄 Data Cache</a>
+          <a href="/tools/">期貨部位計算機</a>
+        </div>
+      </div>
+      <a href="/mental-models/">🧠 心智模型</a>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+
+<div class="container">
+  <nav class="cat-breadcrumb">
+    <a href="/">首頁</a> &rsaquo;
+    <a href="/research/">研究</a> &rsaquo;
+    <a href="/ds/">所有產業 DS 報告</a>
+    &rsaquo; <strong>🔷 半導體 / AI 基建</strong>
+  </nav>
+
+  <h1 class="cat-page-h1">🔷 半導體 / AI 基建（6 份）</h1>
+  <p class="cat-page-hint">AI Accelerator / 封裝 / 記憶體 / 製程 / 互連</p>
+
+  <div class="toolbar">
+    <div class="toolbar-inner">
+      <div class="search-box">
+        <input id="q" type="search" placeholder="搜尋產業 / 標題 / ticker / tag（如 CoWoS、CRWD、液冷）" autocomplete="off">
+      </div>
+      <div class="f-group" id="type-filter">
+        <button class="f-chip" data-filter="type" data-val="parent">母題</button>
+        <button class="f-chip" data-filter="type" data-val="child">子題</button>
+      </div>
+      <button class="f-clear" id="clear-filters">清除</button>
+    </div>
+    <div class="cat-jump">
+      <a href="/ds/">↩ 全部</a>
+      <a href="cat-semi.html" class="active">🔷 半導體 / AI 基建 <span class="n">1 份</span></a>
+      <a href="cat-bio.html">🧬 生技 / 醫療 <span class="n">0 份</span></a>
+      <a href="cat-cloud.html">☁️ 雲端 / SaaS / 軟體 <span class="n">0 份</span></a>
+      <a href="cat-energy.html">⚡ 能源 / 電動車 / 新能源 <span class="n">0 份</span></a>
+      <a href="cat-consumer.html">🛍️ 消費 / 零售 / 精品 <span class="n">0 份</span></a>
+      <a href="cat-finance.html">🏦 金融 / 保險 / FinTech <span class="n">0 份</span></a>
+      <a href="cat-industrial.html">🔧 工業 / 航太 / 自動化 <span class="n">0 份</span></a>
+      <a href="cat-staples.html">🛒 必選消費 / 飲料 / 個護 <span class="n">0 份</span></a>
+      <a href="cat-reits.html">🏢 REITs / 數位基建房東 <span class="n">0 份</span></a>
+      <a href="cat-space.html">🛰️ 太空經濟 / 衛星 / 低軌道 <span class="n">0 份</span></a>
+      <a href="cat-housing.html">🏠 住房 / 房貸 / Builders <span class="n">0 份</span></a>
+      <a href="cat-transport.html">🚢 運輸 / 物流 / 航運 <span class="n">0 份</span></a>
+      <a href="cat-materials.html">⛏️ 材料 / 礦業 / 特殊化學 <span class="n">0 份</span></a>
+      <a href="cat-agri.html">🌾 農業 / 食品 / 大宗商品 <span class="n">0 份</span></a>
+      <a href="cat-macro.html">🌐 跨域 / 其他 <span class="n">0 份</span></a>
+    </div>
+  </div>
+  <div class="filter-status" id="filter-status">顯示全部 <b id="visible-count">—</b> 份報告</div>
+
+<div class="category open" id="cat-semi" data-cat="semi">
+  <div class="cat-head">
+    <div class="left">
+      <span class="cat-icon">🔷</span>
+      <h2>半導體 / AI 基建</h2>
+      <span class="count">1 份</span>
+    </div>
+    <span class="hint">AI Accelerator / 封裝 / 記憶體 / 製程 / 互連</span>
+    <span class="cat-chev">▾</span>
+  </div>
+  <div class="cat-body">
+    <div class="topic-grid">
+<!-- subgroup-anchor: semi.compute_demand -->
+<article class="topic-card" data-phase="II" data-type="standalone" data-search="ai asic 設計服務 design service ds discourse avgo broadcom marvell alchip mediatek guc tpu trainium maia mtia openai apple baltra google hyperscaler 自研矽">
+  <div class="tc-head">
+    <span class="tc-num">1</span>
+    <a class="tc-title" href="DS_AIASICDesignService_20260514.html">AI ASIC 設計服務 — 從 AVGO 寡占走向 4-5 家分軌、Alchip / MediaTek 接力與 Google TPU 8 雙軌策略 <span class="arrow">→</span></a>
+    <span class="tc-badge">DS</span>
+    <span class="tc-phase phase-II">II 容量擴張 + 二供化開始 + 商業模式未收斂</span>
+    <button class="tc-expand" aria-label="展開">▾</button>
+  </div>
+  <div class="tc-thesis-short">AVGO Q1 FY26 AI $8.4B (+106%)、2027 target $100B；Google TPU 8 拆軌（8t Broadcom + 8i MediaTek）首次二供；Alchip 拿下 Trainium 3/4、CoWoS 60K/月；ASIC unit 2028 超越 GPU 但收入仍小於 1/3 — 設計服務鏈走向 4 強分食</div>
+  <div class="tc-children">
+  <span class="label">↳ 同主題 ID + 姊妹 DS：</span>
+  <a class="tc-chip" href="../id/ID_AIASICDesignService_20260419.html">ID — dashboard 視角 <span class="arrow">→</span></a>
+  <a class="tc-chip" href="DS_AIAcceleratorDemand_20260513.html">DS — 上游硬體供需 <span class="arrow">→</span></a>
+  <a class="tc-chip" href="DS_AIInferenceEconomics_20260514.html">DS — 推論經濟學 <span class="arrow">→</span></a>
+</div>
+  <div class="tc-details">
+    <div class="tc-tags">30 年史 / 5 inflection points / 3 類比（fabless 革命 / Apple 自研 / Cisco 二供）/ 設計服務鏈兩種商業模式 / 二供化擴散 / merchant LLM lab 新增</div>
+    <div class="tc-meta"><span class="chip">📊 11 檔</span>
+<span class="chip">6🔴 / 4🟡 / 1🟢</span>
+<span class="chip">敘述 90.4%</span>
+<span class="chip">T1 50.7%</span>
+<span class="chip">v1.2 spec</span>
+<span class="chip">🟢 fresh</span></div>
+    <div class="tc-thesis-full">三條 non-consensus：① AVGO 60% 設計服務市占已是「定義性峰值」、2029 前降至 45-55%（市場仍認為持續上升）；② Alchip 跳級不是 noise、是設計服務商業模式（NRE+wafer markup vs IP royalty）長期收斂的早期信號；③「ASIC unit 量 2028 超越 GPU」經常被誤讀為「ASIC 收入 2028 超越 GPU」— 後者要 2032+ 才會發生，GPU ASP 結構性比 ASIC 高 4-8×</div>
+  </div>
+</article>
+<article class="topic-card" data-phase="II" data-type="standalone" data-search="ai 推論經濟學 inference economics ds discourse token jevons margin pool openai anthropic nvda avgo msft googl meta cerebras">
+  <div class="tc-head">
+    <span class="tc-num">2</span>
+    <a class="tc-title" href="DS_AIInferenceEconomics_20260514.html">AI 推論經濟學 — Token 通縮 600×、margin pool 遷移、電力取代晶片成為真正 binding <span class="arrow">→</span></a>
+    <span class="tc-badge">DS</span>
+    <span class="tc-phase phase-II">II 容量擴張 + 單價通縮 + winner 未明</span>
+    <button class="tc-expand" aria-label="展開">▾</button>
+  </div>
+  <div class="tc-thesis-short">2026 推論占 AI compute 67%；token 6 年通縮 600× + enterprise AI spend 反向 +3× → Jevons 主宰；margin pool 從 LLM API（OpenAI -$14B）遷至 vertical integration（MSFT/GOOG）+ ASIC fabless（AVGO）；真正 binding 是電力</div>
+  <div class="tc-children">
+  <span class="label">↳ 同主題 ID + 姊妹 DS：</span>
+  <a class="tc-chip" href="../id/ID_AIInferenceEconomics_20260430.html">ID — dashboard 視角 <span class="arrow">→</span></a>
+  <a class="tc-chip" href="DS_AIAcceleratorDemand_20260513.html">DS — 上游硬體供需 <span class="arrow">→</span></a>
+</div>
+  <div class="tc-details">
+    <div class="tc-tags">13 年史 / 5 inflection points / 3 類比（電信 / AWS / Akamai）/ Jevons paradox / margin pool migration / 推論 CUDA moat 裂縫 / 電力 binding</div>
+    <div class="tc-meta"><span class="chip">📊 15 檔</span>
+<span class="chip">7🔴 / 5🟡 / 3🟢</span>
+<span class="chip">敘述 91.9%</span>
+<span class="chip">T1 51.8%</span>
+<span class="chip">v1.2 spec</span>
+<span class="chip">🟢 fresh</span></div>
+    <div class="tc-thesis-full">三條 non-consensus：① Token 通縮 ≠ inference 營收衰退（Jevons 主宰至 2028+，Google token 量 +50× / 同期單價 -10× / enterprise spend +3×）；② NVDA inference share 將從 ~80% 降至 30-40% by 2028 但 training share 仍 80%+ 至 2030+（Wintel/ARM 路徑、CUDA training-stack vs inference-stack 分裂）；③ Sora 失敗（$15M/day cost vs $2.1M lifetime rev）不是孤例，是 premium inference 廣泛 unit-economics 危機的 leading indicator</div>
+  </div>
+</article>
+<article class="topic-card" data-phase="II" data-type="standalone" data-search="ai 加速器需求 ds discourse 敘述 cuda asic 推論 電力 nvda amd avgo 25年史 cisco wintel dram openai">
+  <div class="tc-head">
+    <span class="tc-num">3</span>
+    <a class="tc-title" href="DS_AIAcceleratorDemand_20260513.html">AI 加速器需求 — 25 年史下的供需循環、ASIC 蠶食路徑與電力結構性 binding <span class="arrow">→</span></a>
+    <span class="tc-badge">DS</span>
+    <span class="tc-phase phase-II">II 後 → III 初</span>
+    <button class="tc-expand" aria-label="展開">▾</button>
+  </div>
+  <div class="tc-thesis-short">2026 capex 翻倍 + inference 主導 + ASIC 從 inference 端蠶食 三軌共振；電力 binding 是 10-15 年結構約束非晶片；2026-27 最大風險不是 scaling laws 而是 OpenAI $14B 虧損</div>
+  <div class="tc-children">
+  <span class="label">↳ 同主題 ID：</span>
+  <a class="tc-chip" href="../id/ID_AIAcceleratorDemand_20260419.html">ID — 表格 dashboard 視角 <span class="arrow">→</span></a>
+</div>
+  <div class="tc-details">
+    <div class="tc-tags">25 年史 / 三類比（Cisco/Wintel/DRAM）/ 現供 / 未供 / 現需 / 未需 / 短中長期</div>
+    <div class="tc-meta"><span class="chip">📊 16 檔</span>
+<span class="chip">4🔴 / 8🟡 / 4🟢</span>
+<span class="chip">敘述 92.0%</span>
+<span class="chip">T1 52.8%</span>
+<span class="chip">v1.2 spec</span>
+<span class="chip">🟢 fresh</span></div>
+    <div class="tc-thesis-full">三條 non-consensus：① ASIC 真正攻擊戰場是 inference 不是 training（共識辯論 training-grade 是 strawman；Wintel/ARM workload-specific 侵蝕 5-10 年時間尺度）；② 電力是 10-15 年結構性 binding（變壓器 128-160 週、PJM 8 年 queue、Cleveland-Cliffs 單一 GOES）；③ 2026-27 capex pullback 最 likely trigger 是 OpenAI $14B 虧損 / $14.1B compute cost 經濟學，不是 scaling laws plateau</div>
+  </div>
+</article>
+
+<!-- subgroup-anchor-end: semi.compute_demand -->
+
+<!-- subgroup-anchor: semi.memory -->
+<article class="topic-card" data-phase="II" data-type="standalone" data-search="memory supercycle dram nand hbm samsung sk hynix micron mu kioxia sandisk advantest cxmt ymtc 記憶體 hbm4">
+  <div class="tc-head">
+    <span class="tc-num">1</span>
+    <a class="tc-title" href="DS_MemorySupercycle_20260514.html">記憶體大循環 — 30 年史下的第一次「結構性」supercycle、HBM 吞噬產能、capex 紀律 + 7 年低庫存 + AI 8-10× 需求三重共振 <span class="arrow">→</span></a>
+    <span class="tc-badge">DS</span>
+    <span class="tc-phase phase-II">II 結構性 supercycle peak + 三巨頭紀律 + 中國未突破</span>
+    <button class="tc-expand" aria-label="展開">▾</button>
+  </div>
+  <div class="tc-thesis-short">MU Q1 FY26 rev $13.64B (+57%)、Samsung memory KRW 74.8T (+292%)、SK Hynix +200%+；HBM4 售罄至 2028；DRAM 三巨頭 95% 寡占；本次 supercycle 結構 vs 2017-18 完全不同、trough OP margin 維持 20-30% 區間</div>
+  <div class="tc-children">
+  <span class="label">↳ 同主題 ID：</span>
+  <a class="tc-chip" href="../id/ID_MemorySupercycle_20260430.html">ID — dashboard 視角 <span class="arrow">→</span></a>
+  <a class="tc-chip" href="../id/ID_HBM4CustomBaseDie_20260430.html">ID — HBM4 客製 base die <span class="arrow">→</span></a>
+</div>
+  <div class="tc-details">
+    <div class="tc-tags">30 年史 / 5 inflection points / 3 類比（鋰電池 / Apple 自研 / OPEC+）/ capex 紀律 / HBM 吞噬 commodity / 三巨頭寡占 / 中國替代 2027-28</div>
+    <div class="tc-meta"><span class="chip">📊 10 檔</span>
+<span class="chip">5🔴 / 1🟡 / 4🟢</span>
+<span class="chip">敘述 90.1%</span>
+<span class="chip">T1 50.5%</span>
+<span class="chip">v1.2 spec</span>
+<span class="chip">🟢 fresh</span></div>
+    <div class="tc-thesis-full">三條 non-consensus：① 本次 supercycle 結構 vs 2017-2018 完全不同（capex 紀律 + AI 結構性 + Kioxia/SanDisk 重組）、trough 不會像 2018-19 / 2022-23 那樣崩到 OP loss；② HBM 不是 thesis 全部 — 真正的 alpha 在 commodity DRAM 被 implicit 收縮的「補漲段」（base mobile DRAM 從 8GB 退回 4GB 是早期警訊）；③ 中國 CXMT 4% / YMTC 13% 已是結構性影響、2027-2028 觸發中端 DRAM step-down（不是「2030 後才需擔心」）</div>
+  </div>
+</article>
+<!-- subgroup-anchor-end: semi.memory -->
+
+<!-- subgroup-anchor: semi.storage -->
+
+<!-- subgroup-anchor-end: semi.storage -->
+
+<!-- subgroup-anchor: semi.networking -->
+
+
+<!-- subgroup-anchor-end: semi.networking -->
+
+<!-- subgroup-anchor: semi.dc_infra -->
+
+
+
+
+<!-- subgroup-anchor-end: semi.dc_infra -->
+
+<!-- subgroup-anchor: semi.advanced_packaging -->
+
+
+
+
+
+
+<!-- subgroup-anchor-end: semi.advanced_packaging -->
+
+<!-- subgroup-anchor: semi.foundry_process -->
+<article class="topic-card" data-phase="II" data-type="standalone" data-search="leading edge node 製程 n3 n2 a16 a14 tsmc intel samsung smic rapidus euv high-na gaa foundry monopoly wafer asp">
+  <div class="tc-head">
+    <span class="tc-num">2</span>
+    <a class="tc-title" href="DS_LeadingEdgeNode_20260514.html">Leading Edge Node — N3 / N2 / A16 / A14 製程節點供需循環與壟斷結構 <span class="arrow">→</span></a>
+    <span class="tc-badge">DS</span>
+    <span class="tc-phase phase-II">Phase II mid-cycle</span>
+    <button class="tc-expand" aria-label="展開">▾</button>
+  </div>
+  <div class="tc-thesis-short">Leading-edge logic 從技術競爭演化為單寡頭壟斷 — TSMC 一家吃下 90%+ &lt;7nm 商業產能，N2 ASP $30K 比 N3 +50%，訂單 sold out 到 2028；Intel 18A binary、Samsung 卡 yield 60%；五年內無第二來源。</div>
+  <div class="tc-children">
+    <span class="label">↳ 同主題 ID：</span>
+    <a class="tc-chip" href="../id/ID_LeadingEdgeNode_20260419.html">ID — 表格 dashboard 視角 <span class="arrow">→</span></a>
+  </div>
+  <div class="tc-details">
+    <div class="tc-tags">25 年史 / 三家名義玩家、一家實質供應商 / wafer ASP 結構上行 / High-NA EUV 設備瓶頸 / 三 kill scenarios</div>
+    <div class="tc-meta"><span class="chip">📊 8 檔</span>
+<span class="chip">2🔴 / 6🟡</span>
+<span class="chip">敘述 ≥80%</span>
+<span class="chip">T1 ~30%</span>
+<span class="chip">v1.2 spec</span>
+<span class="chip">🟢 fresh</span></div>
+    <div class="tc-thesis-full">三條 non-consensus：① N2 不只是 smartphone 舞台，AI 才是真正 margin 驅動（Apple 是 N2 的「量」、AI 是「margin」）；② Intel 18A 商業化成本被低估（Lip-Bu Tan 一度評估放棄外賣）；③ wafer ASP +50% N3→N2 將結構性壓縮 fabless GM 200-400bps，市場估值還沒反映 — 未來 5 年 foundry PE 可能反超 fabless</div>
+  </div>
+</article>
+
+<article class="topic-card" data-phase="II" data-type="standalone" data-search="foundry geography 地理 chips act 補貼 trump tariff taiwan dominance arizona kumamoto dresden esmc samsung pyeongtaek smic china reshoring sovereign ai friend-shoring advanced packaging cowos">
+  <div class="tc-head">
+    <span class="tc-num">3</span>
+    <a class="tc-title" href="DS_FoundryGeography_20260514.html">Foundry Geography — 晶圓代工地理供應鏈、CHIPS Act 重組、Taiwan 集中度結構性悖論 <span class="arrow">→</span></a>
+    <span class="tc-badge">DS</span>
+    <span class="tc-phase phase-II">Phase II multi-hub ramp</span>
+    <button class="tc-expand" aria-label="展開">▾</button>
+  </div>
+  <div class="tc-thesis-short">全球晶圓代工地理「名義分散、實質集中」 — CHIPS Act $52B + Trump 25% tariff + Taiwan deal $250B 把製造表面挪美國，但 CoWoS 封裝、設備生態、人才仍綁台灣，5 年內 leading-edge 90% 仍在台灣；中國 21% 是 mature node 自循環、非 self-sufficient。</div>
+  <div class="tc-children">
+    <span class="label">↳ 同主題 ID：</span>
+    <a class="tc-chip" href="../id/ID_FoundryGeography_20260427.html">ID — 表格 dashboard 視角 <span class="arrow">→</span></a>
+    <span class="label">↳ 姊妹 DS：</span>
+    <a class="tc-chip" href="DS_LeadingEdgeNode_20260514.html">DS Leading Edge Node — 製程技術維度 <span class="arrow">→</span></a>
+  </div>
+  <div class="tc-details">
+    <div class="tc-tags">25 年史 / 5 大 hub × 製程世代分工 / CHIPS Act 兌現乘數 2x / advanced packaging 仍綁台灣 / 三 kill scenarios（地震/中台/Trump 100%）</div>
+    <div class="tc-meta"><span class="chip">📊 8 檔</span>
+<span class="chip">2🔴 / 6🟡</span>
+<span class="chip">敘述 ~86%</span>
+<span class="chip">T1 ~25%</span>
+<span class="chip">v1.2 spec</span>
+<span class="chip">🟢 fresh</span></div>
+    <div class="tc-thesis-full">三條 non-consensus：① CHIPS Act 是 Taiwan 集中度的 incremental 緩解而非結構替代（Taiwan 4-year cycle -7pp，遠低於 demand growth 6-7%/yr）；② 中國 21% 全球產能不等於 self-sufficient（mature node 自循環，leading-edge 仍 <5% self-sufficient）；③ Sovereign AI 對 Taiwan 是 tailwind 而非 threat（friend-shoring 模型強化 TSMC 議價權）</div>
+  </div>
+</article>
+
+
+<!-- subgroup-anchor-end: semi.foundry_process -->
+
+<!-- subgroup-anchor: semi.equipment_test -->
+
+
+<!-- subgroup-anchor-end: semi.equipment_test -->
+
+<!-- subgroup-anchor: semi.eda_ip -->
+
+<!-- subgroup-anchor-end: semi.eda_ip -->
+
+<!-- subgroup-anchor: semi.edge_ai -->
+
+<!-- subgroup-anchor-end: semi.edge_ai -->
+
+<!-- subgroup-anchor: semi.emerging_compute -->
+
+<!-- subgroup-anchor-end: semi.emerging_compute -->
+</div>
+<details class="suggest"><summary>📋 建議補建</summary>
+<div class="suggest-body"><strong>📋 本類別建議補建（依 taxonomy 子群組對照）：</strong>
+
+<p style="margin:10px 0 6px;font-size:12px;color:#16A34A;font-weight:700">✅ 已建子群組</p>
+<ul style="margin:4px 0 0;padding-left:18px;line-height:1.7;font-size:12px;color:#4B5563">
+<li><strong>Compute Demand（compute_demand）</strong> — AIInferenceEconomics ★ · AIAcceleratorDemand(P) · AIASICDesignService</li>
+<li><strong>記憶體（memory）</strong> — MemorySupercycle(P) · HBM_Supercycle · HBM4CustomBaseDie</li>
+<li><strong>儲存（storage）</strong> — AIStorage</li>
+<li><strong>互連（networking）</strong> — AINetworking(P) · SiliconPhotonicsCPO</li>
+<li><strong>AI DC 基建（dc_infra）</strong> — AIDataCenter(P) · LiquidCooling · Transformers · AIDCPowerElectronics</li>
+<li><strong>先進封裝（advanced_packaging）</strong> — AdvancedPackaging(P) · GlassSubstrate · HybridBondingSoIC</li>
+<li><strong>製程（foundry_process）</strong> — LeadingEdgeNode · FoundryGeography</li>
+<li><strong>設備 / 測試（equipment_test）</strong> — WaferFabEquipment(P) · AITestEquipmentATE</li>
+<li><strong>設計工具（eda_ip）</strong> — AIEDAIP</li>
+<li><strong>邊緣 AI（edge_ai）</strong> — EdgeAI</li>
+<li><strong>量子 / 新興運算（emerging_compute）</strong> — QuantumComputing</li>
+</ul>
+
+<p style="margin:14px 0 6px;font-size:12px;color:#EAB308;font-weight:700">🟡 子題級補強（所有子群組已建；聚焦深化現有母題）</p>
+<ul style="margin:4px 0 0;padding-left:18px;line-height:1.85">
+<li><code>研究 CoWoS / CoPoS 細分子題</code><br/><span style="color:#4B5563">2330 TSMC · 3711 ASE · INTC EMIB · Samsung I-Cube</span><br/><span style="font-size:11px;color:#94A3B8">補強 AdvancedPackaging；TSMC CoWoS 產能 ramp 是 NVDA 2026 H2 最大瓶頸；CoPoS vs CoWoS 良率 / 成本差異</span></li>
+<li><code>研究 High-NA EUV 子題</code><br/><span style="color:#4B5563">ASML · ZEISS（私）· Intel 18A / TSMC A14 客戶</span><br/><span style="font-size:11px;color:#94A3B8">補強 LeadingEdgeNode；ASML NXE:5000 二代 + ZEISS 光學護城河；2026-2028 商業化 binary；KLAC / ONTO metrology 連帶受益</span></li>
+<li><code>研究 CUDA / ROCm 軟體護城河子題</code><br/><span style="color:#4B5563">NVDA · AMD · INTC · 開源 framework 生態（PyTorch / JAX）</span><br/><span style="font-size:11px;color:#94A3B8">補強 AIAcceleratorDemand；NVDA 真正護城河 = CUDA lock-in 比硬體更深；AMD ROCm 進展 + 客戶 switching cost；ASIC 戰真正分水嶺在軟體生態</span></li>
+<li><code>研究 AI 推理 ASIC 新進入者子題</code><br/><span style="color:#4B5563">Cerebras（IPO 候選）· Groq（私）· SambaNova（私）· hyperscaler 自研（Trillium / MTIA / Trainium）</span><br/><span style="font-size:11px;color:#94A3B8">補強 AIInferenceEconomics + AIAcceleratorDemand；推理戰 NVDA 護城河首次真正受挑戰；2026-2027 IPO 高峰；token/$ 曲線分析</span></li>
+<li><code>研究 Custom HBM「客製化 base die」路徑子題</code> <span style="font-size:11px;color:#16A34A;font-weight:600">✅ 已建 → <a href="/id/ID_HBM4CustomBaseDie_20260430.html">ID_HBM4CustomBaseDie</a></span><br/><span style="color:#4B5563">SK Hynix · Samsung（4nm 自代）· Micron · NVDA C-HBM4E spec · AVGO（hyperscaler 客製）· MRVL（SRAM-rich custom HBM）</span><br/><span style="font-size:11px;color:#94A3B8">補強 HBM_Supercycle 母題 §1 灰色地帶「Custom HBM 是下一步未知數」；JEDEC HBM4/C-HBM4E/SPHBM4 三規格並行；per-customer base die spec 把 HBM 從 commodity 變 specified silicon；競爭軸從 yield 戰轉成 IP 設計戰</span></li>
+<li><code>研究 TSMC HBM base die 隱性贏家子題</code> <span style="font-size:11px;color:#16A34A;font-weight:600">✅ 已建 → <a href="/id/ID_HBM4CustomBaseDie_20260430.html">ID_HBM4CustomBaseDie</a></span><br/><span style="color:#4B5563">2330 TSMC（N12FFC+ HBM4 base die / N3P HBM4E / 9.5 reticle CoWoS / SoW-X 64 stacks）· 3443 GUC（Micron 設計伙伴）</span><br/><span style="font-size:11px;color:#94A3B8">補強 HBM_Supercycle 母題 §1 灰色地帶「TSMC base die 切走 HBM 增量」；2028 HBM-related 增量量化 $5-15B（vs 共識 $1-2B 差 5-10x）；4 線收入疊加 — TSMC 是 inference 母題 + HBM 母題雙 thesis 疊加</span></li>
+<li><code>研究 Process Control / Metrology 子題</code><br/><span style="color:#4B5563">KLAC · Onto Innovation ONTO · CAMTEK · AMAT e-beam 部門</span><br/><span style="font-size:11px;color:#94A3B8">補強 WaferFabEquipment；KLAC 70%+ 寡占；High-NA + GAA 多圖案良率需求暴增；2026-2028 隱性 bottleneck</span></li>
+<li><code>研究 半導體基板（ABF Substrate）子題</code><br/><span style="color:#4B5563">4062.T Ibiden · 3037 Unimicron · 6967.T Shinko · AT&amp;S</span><br/><span style="font-size:11px;color:#94A3B8">補強 AdvancedPackaging；ABF 缺貨 2021-2027 延續；NVDA Rubin / Vera CPU substrate 仍是 bottleneck；四家寡占定價力</span></li>
+<li><code>研究 Photomask / Mask Shop 子題</code><br/><span style="color:#4B5563">PLAB Photronics · 7867.T Toppan · 7741.T Hoya · 9613.T NTT-AT</span><br/><span style="font-size:11px;color:#94A3B8">補強 LeadingEdgeNode；High-NA EUV mask 新世代需求；Hoya 光學玻璃 + PLAB phase-shift mask 二寡占</span></li>
+<li><code>研究 半導體化學品 / 特殊氣體子題</code><br/><span style="color:#4B5563">ENTG Entegris · LIN Linde · APD Air Products · 大陽日酸 4091.T · 4042 三井化學</span><br/><span style="font-size:11px;color:#94A3B8">補強 WaferFabEquipment 生態；High-NA + 3D NAND 良率材料關鍵；中國替代風險低；ENTG CMP 護城河</span></li>
+<li><code>研究 AI 伺服器 Server ODM 子題</code><br/><span style="color:#4B5563">SMCI · 2382 廣達 · 2317 鴻海 · 3231 緯創 · 2376 技嘉 · Dell · HPE · 2356 英業達</span><br/><span style="font-size:11px;color:#94A3B8">補強 AIDataCenter；GB200 NVL72 / GB300 份額重洗牌；白牌 ODM vs OEM 利潤分配；SMCI FY27 market share 攻防</span></li>
+<li><code>研究 AI Sovereign / 主權 AI 子題</code><br/><span style="color:#4B5563">NVDA · DELL · SMCI · HPE · VRT · ETN（供電受益鏈）</span><br/><span style="font-size:11px;color:#94A3B8">補強 AIDataCenter；G42 / Humain / Stargate UAE / EuroHPC / IndiaAI / 日本 ABCI 是 NVDA 2026-2030 新增長區；非超大型 hyperscaler 的 AI cluster 需求被低估</span></li>
+<li><code>研究 GPU-as-a-Service / NeoClouds 子題</code><br/><span style="color:#4B5563">CRWV CoreWeave · NBIS Nebius · LMBD Lambda（私）· hyperscaler 租賃競爭</span><br/><span style="font-size:11px;color:#94A3B8">補強 AIDataCenter；2026 IPO 高峰但 thesis 仍分歧；客戶集中度 + capex 結構風險；CoreWeave leverage 模型</span></li>
+<li><code>研究 Optical Interconnect（LPO / DWDM）細分子題</code><br/><span style="color:#4B5563">COHR · LITE · Innolight · Eoptolink · 中際旭創 2327</span><br/><span style="font-size:11px;color:#94A3B8">補強 AINetworking；LPO 短期過渡 vs CPO 長期；800G/1.6T 速率競賽；與 SiliconPhotonicsCPO 互補</span></li>
+<li><code>研究 CXL / Memory Pooling 子題</code><br/><span style="color:#4B5563">MU · MRVL · 三星 · INTC（CXL 2.0）· Astera Labs ALAB</span><br/><span style="font-size:11px;color:#94A3B8">補強 AINetworking + MemorySupercycle；大模型推理記憶體池化新架構；2026 niche、2027+ 起量</span></li>
+<li><code>研究 半導體中國自主供應鏈子題</code><br/><span style="color:#4B5563">SMIC 0981.HK · CXMT · YMTC · 華為 Ascend · 寒武紀 688256 · NAURA 002371 · AMEC 688012</span><br/><span style="font-size:11px;color:#94A3B8">補強 FoundryGeography；中國本土算力替代 + 設備國產化進度；美國禁令升級風險；受 CNTW S6 交叉</span></li>
+</ul>
+</div>
+</details>
+
+  </div>
+</div>
+
+
+</div>
+
+<div class="cat-page-footer">
+  本頁由 scripts/build_ds_category_pages.py 從 docs/ds/index.html 自動生成 · 最後生成：2026-05-14T12:52:05Z
+</div>
+
+<script>
+// Topic card expand (event delegation)
+document.addEventListener('click', function(e){
+  var btn = e.target.closest('.tc-expand');
+  if(!btn) return;
+  e.preventDefault();
+  btn.closest('.topic-card').classList.toggle('expanded');
+});
+
+// Open DS / ID report links in new tab
+document.querySelectorAll('a[href*="/ds/DS_"], a[href*="/id/ID_"], a[href^="DS_"], a[href^="ID_"]').forEach(function(a){
+  a.target = '_blank';
+  a.rel = 'noopener';
+});
+
+// Filters & search
+var filterState = {type:new Set(), q:''};
+function applyFilters(){
+  var visible = 0;
+  document.querySelectorAll('.topic-card').forEach(function(card){
+    var ok = true;
+    if(filterState.type.size > 0 && !filterState.type.has(card.dataset.type)) ok = false;
+    if(ok && filterState.q){
+      var hay = (card.dataset.search || '') + ' ' + card.textContent.toLowerCase();
+      if(hay.indexOf(filterState.q) === -1) ok = false;
+    }
+    card.classList.toggle('hidden', !ok);
+    if(ok) visible++;
+  });
+  document.querySelectorAll('.category').forEach(function(cat){
+    var topics = cat.querySelectorAll('.topic-card');
+    if(topics.length === 0) return;
+    var anyVisible = Array.from(topics).some(function(c){return !c.classList.contains('hidden');});
+    cat.classList.toggle('hidden', !anyVisible);
+  });
+  var vcEl=document.getElementById('visible-count');if(vcEl)vcEl.textContent=visible;
+  var any = filterState.type.size || filterState.q;
+  var fsEl=document.getElementById('filter-status');if(fsEl)fsEl.firstChild.textContent=any?'篩選後顯示 ':'顯示全部 ';
+}
+
+document.querySelectorAll('.f-chip').forEach(function(chip){
+  chip.addEventListener('click', function(){
+    var f = chip.dataset.filter, v = chip.dataset.val;
+    if(filterState[f].has(v)){ filterState[f].delete(v); chip.classList.remove('active'); }
+    else { filterState[f].add(v); chip.classList.add('active'); }
+    applyFilters();
+</script>
+
+</body>
+</html>

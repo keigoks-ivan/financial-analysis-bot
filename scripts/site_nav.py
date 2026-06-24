@@ -70,7 +70,7 @@ MENU = {
     "research": [
         ("dd", "/research/", "個股 DD"),
         ("id", "/id/", "產業深度 ID"),
-        ("ds", "/ds/", "產業敘述 DS"),
+        # ("ds", "/ds/", "產業敘述 DS"),  # 2026-06-25 封存 /ds/（已併入 ID）— 自 nav 移除
         ("cmp", "/comparisons/", "多股對比"),
         ("sc", "/supply-chain/", "供應鏈地圖"),
         ("tier", "/id/tier_matrix.html", "🎯 Tier Matrix"),
