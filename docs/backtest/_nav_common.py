@@ -20,6 +20,7 @@ COMPARISON_LINKS = [
     ("/backtest/", "20 年", "20y", None),
     ("/backtest/10y/", "10 年", "10y", None),
     ("/backtest/criteria/", "評估標準", "criteria", None),
+    ("/backtest/tw/", "🇹🇼 台股總覽", "tw20y", "#16a34a"),
 ]
 
 INDIVIDUAL_LINKS = [
