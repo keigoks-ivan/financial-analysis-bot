@@ -1,0 +1,73 @@
+name: Update Long Track TW 2330/0050 Signal
+
+on:
+  schedule:
+    # Every Saturday 01:30 UTC = Saturday 09:30 Taiwan time.
+    # Taiwan market closes Fri 13:30 (05:30 UTC); this runs ~28h later so
+    # yfinance .TW end-of-day data is fully settled. E3 signals are weekly
+    # (W40/W52) + monthly (TSMOM month-end), so the Friday close is the only
+    # meaningful update — checking once over the weekend is sufficient.
+    - cron: '30 1 * * 6'
+  workflow_dispatch:  # Manual trigger anytime
+    inputs:
+      test_email:
+        description: 'Send a test email even without signal changes'
+        type: boolean
+        default: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'  # site_nav.py uses 3.12+ f-string syntax
+
+      - name: Install dependencies
+        run: pip install "yfinance>=0.2.40" pandas numpy
+
+      - name: Run long-track TW 2330/0050 update
+        run: python scripts/update_long_track_tw.py
+
+      - name: Read change alert
+        id: alert
+        run: |
+          if [ -f lt_tw_alert.txt ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            {
+              echo "body<<ALERT_EOF"
+              cat lt_tw_alert.txt
+              echo "ALERT_EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Email signal change
+        if: steps.alert.outputs.changed == 'true' || inputs.test_email == true
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_APP_PASSWORD }}
+          subject: "⚡ 台股長軌 2330/0050 訊號變化 ${{ steps.alert.outputs.changed == 'true' && '' || '(測試信)' }}"
+          to: keigoks@gmail.com
+          from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
+          body: |
+            ${{ steps.alert.outputs.changed == 'true' && steps.alert.outputs.body || '這是測試信 — email 推播管線正常。本週無訊號變化。' }}
+
+            —
+            InvestMQuest · 每週六台股收盤後自動檢查
+            退訂: 移除 repo secret MAIL_APP_PASSWORD 或編輯 update_long_track_tw.yml
+
+      - name: Commit and push
+        run: |
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
+          git add docs/long-track-tw/index.html docs/long-track-tw/state.json
+          git diff --staged --quiet || git commit -m "Auto update long-track TW 2330/0050: $(date -u '+%Y-%m-%d')"
+          git push
