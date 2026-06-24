@@ -136,6 +136,17 @@ def render() -> str:
     rows += ('<tr><td colspan="7" style="background:#f0fdfa;font-size:.75rem;font-weight:600;'
              'color:#115e59;text-transform:uppercase;letter-spacing:.04em">多資產系統</td></tr>')
     rows += "".join(sys_row(*r) for r in MULTI)
+    rows += ('<tr><td colspan="7" style="background:#ecfdf5;font-size:.75rem;font-weight:600;'
+             'color:#065f46;text-transform:uppercase;letter-spacing:.04em">'
+             '🇹🇼 台股(2330/0050 E3 已採用 · NT$ · 不同市場/幣別,僅參照)</td></tr>'
+             '<tr><td><strong><a href="/backtest/long_track_tw/">2330/0050 E3（採用）</a></strong>'
+             '<br><span style="font-size:.72rem;color:var(--muted)">50/50 · {W40·W52·TSMOM} 各⅓ · '
+             '2026-06-23 採用 · NT$ · 近 10 年(2016~) · 詳見 '
+             '<a href="/backtest/tw/">台股總覽</a></span></td>'
+             '<td style="font-weight:700;color:var(--green)">+26.63%</td>'
+             '<td style="color:var(--red)">-23.75%</td><td>1.37</td><td>1.12</td><td>$19.0M</td>'
+             '<td><span class="tag" style="background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0">'
+             '✓ 採用 · NT$</span></td></tr>')
     rows += "".join(
         f'<tr style="background:#f9fafb"><td>{n}</td><td>{c}</td>'
         f'<td style="color:var(--red)">{m}</td><td>{s}</td><td>{cl}</td>'
