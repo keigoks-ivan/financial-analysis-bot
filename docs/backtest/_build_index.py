@@ -164,6 +164,10 @@ GROUPS = [
         ("Iron Condor 盤整・CBOE CNDR 指數", "/backtest/cndr/",
          "CBOE CNDR 指數 · 翼封住左尾但 beta ≈ 0",
          "+1.19%", "-19.72%", "0.18", "0.06", "na", "—", TAG["fail"]),
+        ("SMH/QQQ 出場法斜率切換（否決）", "/backtest/exit_switch/",
+         "依上漲斜率在 W52 ↔ ST(10,3) 出場間切換 · 四判別×門檻掃描×兩進場全測 · "
+         "從不勝純 W52、切換方向相反、ST 優勢屬跨時代非跨斜率",
+         "—", "—", "—", "—", "na", "—", TAG["fail"]),
     ]),
 ]
 
