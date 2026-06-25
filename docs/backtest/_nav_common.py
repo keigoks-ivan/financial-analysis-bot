@@ -56,6 +56,7 @@ TAIWAN_LINKS = [
     ("/backtest/long_track_tw/", "2330/0050 E3 長軌", "lttw", "#16a34a"),
     ("/backtest/tw_0050_six/", "0050 六狀態機", "tw0050six", "#2563eb"),
     ("/backtest/tw_0050_dual/", "0050 雙軌多空（否決）", "tw0050d", "#dc2626"),
+    ("/backtest/tw_vcrash/", "🛡️ V崩防禦研究", "tw_vcrash", "#16a34a"),
 ]
 
 INTRADAY_LINKS = [
