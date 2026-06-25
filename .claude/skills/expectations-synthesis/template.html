@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<!--
+  expectations-synthesis · template v1
+  填法：把 {{TOKEN}} 與 <!-- FILL: ... --> 區塊換成內容。CSS/nav 不要動。
+  TOKENS: {{TICKER}} {{COMPANY}} {{DATE}}(YYYY-MM-DD) {{PRICE_CLOSE}} {{PRICE_DATE}} {{LOCAL_PRICE_OR_BLANK}}
+  章節順序固定（§0 §A §1 §2 §3 §Δ §4 §5 §6 §7 §退出 §8 來源）。錨點 id 不要改（TOC 依賴）。
+  硬規則：§2+§3 都要寫；§Δ 必須收斂兩面成方向+不對稱；§5 只連出不複製 DD；專業賣方口吻、無 slang / 無 我·你 自我對話；不跨檔對照；股價=最新收盤。
+-->
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{TICKER}} · 趨勢 × 期望落差綜合研判 {{DATE}} · InvestMQuest Research</title>
+<meta name="description" content="{{COMPANY}} ({{TICKER}}) 趨勢 × 期望落差綜合研判：整合站內 ID/供應鏈/DD/帳本、外部賣方報告與法說逐字稿。核心命題——市場對 {{TICKER}} 未來 EPS 的預估是否過高或過低。">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#ffffff;--bg-subtle:#fafaf9;--surface:#ffffff;--surface-2:#f7f7f5;--border:#e5e5e2;--border-strong:#1a1a1a;--text:#1a1a1a;--text-muted:#666;--text-dim:#999;--accent:#2563eb;--green:#15803d;--green-bg:#f0fdf4;--red:#b91c1c;--red-bg:#fef2f2;--amber:#b45309;--amber-bg:#fffbeb;--orange:#c2410c;--orange-bg:#fff7ed;--radius:8px}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter','Noto Sans TC',-apple-system,sans-serif;font-size:15px;line-height:1.7;color:var(--text);background:var(--bg)}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:920px;margin:0 auto;padding:32px 24px 64px}
+.breadcrumb{font-size:12px;color:var(--text-dim);margin-bottom:24px;font-family:'IBM Plex Mono',monospace}
+.breadcrumb a{color:var(--text-dim)}
+.report-header{margin-bottom:28px}
+.report-header h1{font-size:30px;font-weight:700;letter-spacing:-0.03em;margin-bottom:6px;line-height:1.2}
+.report-meta{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-dim);margin-bottom:16px}
+.report-lede{border-left:3px solid var(--accent);padding:14px 18px;background:var(--surface-2);border-radius:0 var(--radius) var(--radius) 0;font-size:14px;line-height:1.7}
+.toc{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin:28px 0 36px}
+.toc-title{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);margin-bottom:10px}
+.toc ol{padding-left:20px}.toc li{font-size:13px;margin-bottom:4px}
+h2{font-size:22px;font-weight:700;letter-spacing:-0.02em;margin:48px 0 18px;padding-bottom:10px;border-bottom:2px solid var(--border-strong);scroll-margin-top:60px}
+h3{font-size:17px;font-weight:600;margin:26px 0 10px}
+h4{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin:18px 0 6px}
+p{margin-bottom:12px}
+strong{font-weight:600}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px}
+thead th{text-align:left;padding:8px 10px;background:var(--surface-2);font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);border-bottom:1px solid var(--border-strong)}
+tbody td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+tbody tr:hover td{background:var(--surface-2)}
+tbody tr:last-child td{border-bottom:none}
+ul.bullets{padding-left:22px;margin:6px 0 14px}
+ul.bullets li{margin-bottom:6px;font-size:14px;line-height:1.6}
+.mono{font-family:'IBM Plex Mono',monospace}
+.up{color:var(--green);font-weight:600}.down{color:var(--red);font-weight:600}
+.verdict{border:1px solid var(--border);border-top:4px solid var(--green);border-radius:var(--radius);padding:20px 22px;margin:24px 0;background:linear-gradient(180deg,#fbfbfa,#fff)}
+.verdict .badge{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;letter-spacing:.04em;padding:3px 10px;border-radius:5px;background:#ecfdf5;color:#166534;border:1px solid #a7f3d0}
+.verdict h3{margin:12px 0 8px;font-size:18px}
+.verdict .kv{display:flex;flex-wrap:wrap;gap:8px 26px;margin:12px 0 4px;font-size:13.5px}
+.verdict .kv div span{color:var(--text-dim);font-family:'IBM Plex Mono',monospace;font-size:11px;display:block;text-transform:uppercase;letter-spacing:.05em}
+.verdict .kv div b{font-size:15px}
+.callout{background:var(--amber-bg);border-left:3px solid #f59e0b;border-radius:0 6px 6px 0;padding:12px 16px;margin:18px 0;font-size:13.5px;line-height:1.6}
+.callout strong{color:#92400e}
+.vec{border-radius:var(--radius);padding:14px 16px;margin:16px 0}
+.vec.good{background:var(--green-bg);border:1px solid #bbf7d0}
+.vec.bad{background:var(--red-bg);border:1px solid #fecaca}
+.vec ol{padding-left:18px;margin:0}
+.vec li{font-size:13px;line-height:1.55;margin-bottom:8px}
+.contradiction{background:var(--orange-bg);border-left:3px solid var(--orange);border-radius:0 var(--radius) var(--radius) 0;padding:14px 18px;margin:16px 0}
+.contradiction h4{color:var(--orange);text-transform:none;font-family:'Inter',sans-serif;font-size:14.5px;font-weight:600;letter-spacing:0;margin:0 0 8px}
+.contradiction ul{margin:6px 0 0;padding-left:20px}.contradiction li{margin-bottom:4px;font-size:13.5px;line-height:1.5}
+.tag-add{background:var(--green-bg);color:var(--green);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;font-family:'IBM Plex Mono',monospace}
+.tag-cut{background:var(--red-bg);color:var(--red);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;font-family:'IBM Plex Mono',monospace}
+.tag-hold{background:var(--amber-bg);color:var(--amber);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;font-family:'IBM Plex Mono',monospace}
+.src-local{color:#0369a1;font-size:.72rem;border:1px solid #bae6fd;background:#f0f9ff;padding:1px 5px;border-radius:3px;font-family:'IBM Plex Mono',monospace;white-space:nowrap}
+.src-broker{color:#6d28d9;font-size:.72rem;border:1px solid #ddd6fe;background:#f5f3ff;padding:1px 5px;border-radius:3px;font-family:'IBM Plex Mono',monospace;white-space:nowrap}
+.src-web{color:#9a3412;font-size:.72rem;border:1px solid #fed7aa;background:#fff7ed;padding:1px 5px;border-radius:3px;font-family:'IBM Plex Mono',monospace;white-space:nowrap}
+.disclaimer{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;font-size:12px;color:var(--text-muted);margin-top:48px;line-height:1.6}
+footer{text-align:center;margin-top:24px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim)}
+@media(max-width:720px){.container{padding:20px 16px 48px}.report-header h1{font-size:22px}h2{font-size:18px}table{font-size:12.5px}thead th,tbody td{padding:6px 7px}}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/" class="active">個股 DD</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/">週報</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/long-track-smh/">長線訊號</a>
+          <a href="/long-track-tw/">台股長線</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/">量化回測</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/cache/">🗄 Data Cache</a>
+          <a href="/tools/">期貨部位計算機</a>
+        </div>
+      </div>
+      <a href="/mental-models/">🧠 心智模型</a>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="container">
+  <div class="breadcrumb"><a href="/">首頁</a> / <a href="/research/">研究報告</a> / 趨勢 × 期望落差綜合研判 / {{TICKER}}</div>
+
+  <div class="report-header">
+    <h1>{{COMPANY}} ({{TICKER}}) — 趨勢 × 期望落差綜合研判</h1>
+    <div class="report-meta">EXPECTATIONS-GAP SYNTHESIS · {{DATE}} · 最新收盤 {{PRICE_CLOSE}}（{{PRICE_DATE}}）{{LOCAL_PRICE_OR_BLANK}}</div>
+    <div class="report-lede">
+      <!-- FILL: 3 句。① 本文整合站內(ID/供應鏈/DD/帳本)+外部賣方+法說逐字稿，收斂為單一投資判斷。② 核心命題=市場對 {{TICKER}} 未來 EPS 的預估是否過高或過低（預期 vs 現實的落差）。③ 結論一句（裁決+進場節奏）。禁止與其他 ticker 對照。 -->
+    </div>
+  </div>
+
+  <div class="toc">
+    <div class="toc-title">目錄</div>
+    <ol>
+      <li><a href="#verdict">§0 投資摘要（雙鏡頭裁決）</a></li>
+      <li><a href="#trend">§A 趨勢定位（選股漏斗上游）</a></li>
+      <li><a href="#where">§1 市場 EPS 共識落點（共識地圖）</a></li>
+      <li><a href="#better">§2 EPS 可能優於共識嗎（上行向量）</a></li>
+      <li><a href="#worse">§3 EPS 可能劣於共識嗎（下行向量）</a></li>
+      <li><a href="#netgap">§Δ 期望落差淨判讀（收斂 §2/§3）</a></li>
+      <li><a href="#reframe">§4 估值再框架</a></li>
+      <li><a href="#industry">§5 產業變動：淨判讀與查證路徑</a></li>
+      <li><a href="#brokers">§6 賣方報告對照</a></li>
+      <li><a href="#mgmt">§7 管理層論述 vs 實際鎖定</a></li>
+      <li><a href="#exit">§退出觸發（趨勢部位核心紀律）</a></li>
+      <li><a href="#decision">§8 投資結論與分批進場</a></li>
+      <li><a href="#sources">資料來源</a></li>
+    </ol>
+  </div>
+
+  <h2 id="verdict">§0 投資摘要</h2>
+  <div class="verdict">
+    <span class="badge"><!-- FILL: 裁決標籤，如「進場·條件式 · 建立部位 · 退出紀律」或「觀望 · STARTER · 退出紀律」 --></span>
+    <h3><!-- FILL: 一句裁決（依 mandate 取捨後的方向） --></h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0">
+      <div style="background:var(--green-bg);border:1px solid #bbf7d0;border-radius:6px;padding:10px 12px;font-size:13px;line-height:1.55"><strong style="color:#166534">趨勢鏡頭（A 層）</strong><br><!-- FILL: 收費站/S曲線/動能 → 動作 --></div>
+      <div style="background:var(--red-bg);border:1px solid #fecaca;border-radius:6px;padding:10px 12px;font-size:13px;line-height:1.55"><strong style="color:#991b1b">價值鏡頭（B 層）</strong><br><!-- FILL: PE/分位/共識 → 動作。若估值不貴改用 amber-bg/#92400e --></div>
+    </div>
+    <p style="font-size:13.5px;margin:4px 0 12px"><strong>融合裁決：</strong><!-- FILL: 依 mandate 取捨（趨勢 mandate→趨勢鏡頭主導）；說明建立部位/等回檔 + 加碼區間定位為非進場門檻 + 指向 §退出 --></p>
+    <div class="kv">
+      <div><span>趨勢 / S 曲線</span><b><!-- FILL --></b></div>
+      <div><span>收費站卡位</span><b><!-- FILL --></b></div>
+      <div><span>動能 RS / vs 200MA</span><b><!-- FILL: dd-screener MA/RS 或 DD MA 段 --></b></div>
+      <div><span>品質 / 護城河</span><b><!-- FILL --></b></div>
+      <div><span>Fwd PE / PEG</span><b><!-- FILL --></b></div>
+      <div><span>5Y EV / Base IRR</span><b><!-- FILL --></b></div>
+    </div>
+    <p style="margin:12px 0 4px;font-size:13px;color:var(--text-muted)">註：<!-- FILL: 近期價格/波動脈絡、共識評等分布(買/中性/賣)、平均/高/低目標 --></p>
+    <p style="margin:10px 0 4px;font-size:14px">
+      <strong>分批配置：</strong><!-- FILL: starter/建立部位 @ 現價 → 加碼價位(對應 PE/DCF/帳本) → 部位上限(若有尾部風險) --></p>
+    <p style="margin:6px 0 0;font-size:14px"><strong>加碼至滿額之觸發：</strong><!-- FILL: 量化觸發 -->；<strong>減碼／出場條件見 <a href="#exit">§退出觸發</a></strong>。</p>
+  </div>
+
+  <h2 id="trend">§A 趨勢定位（選股漏斗上游）</h2>
+  <p>就趨勢 mandate 而言，評估估值之前須先評估趨勢——標的所屬的長期趨勢、其 S 曲線位置、是否具收費站卡位、動能是否符合領導股特徵。此四項決定 B 層估值紀律的權重。</p>
+  <table>
+    <thead><tr><th>維度</th><th>讀數</th><th>判定</th></tr></thead>
+    <tbody>
+      <tr><td>母趨勢</td><td><!-- FILL: 主趨勢 + 次要選擇權 + 成熟業務 --></td><td><!-- FILL --></td></tr>
+      <tr><td>S 曲線位置</td><td><!-- FILL: 早/中/晚 的證據(滲透率、供需比、訂單能見度)；引 deck/ID 頁碼 --></td><td><span class="up"><!-- FILL --></span></td></tr>
+      <tr><td>收費站？</td><td><!-- FILL: 份額、節點圖鎖喉、長約鎖定 --></td><td><span class="up"><!-- FILL --></span></td></tr>
+      <tr><td>動能 / 量化</td><td><!-- FILL: RS / vs 200MA / 均線結構 / 距高點 --></td><td><span class="up"><!-- FILL --></span></td></tr>
+    </tbody>
+  </table>
+  <div class="callout"><strong>A 層結論：</strong><!-- FILL: 趨勢真實性 + 階段 + 收費站 + 動能 → 是否為核心持有類型。動能來源若 QGM 未收錄則註明改用 dd-screener MA/RS。 --></div>
+  <div class="contradiction">
+    <h4>須明確區分的鏡頭衝突</h4>
+    <ul>
+      <li><strong>價值鏡頭</strong>：<!-- FILL -->；<strong>趨勢鏡頭</strong>：<!-- FILL --></li>
+      <li><strong>裁決不取兩者平均，而是依 mandate 取捨：</strong><!-- FILL: 哪個鏡頭主導、另一個降為什麼 --></li>
+      <li><!-- FILL: 對趨勢股，核心紀律在退出而非進場價（指向 §退出） --></li>
+    </ul>
+  </div>
+
+  <h2 id="where">§1 市場 EPS 共識落點</h2>
+  <p><!-- FILL: 先界定共識。共識是窄(一致)還是寬(分歧)？分歧在 EPS 水準還是估值/風險？標明 EPS 基準(ADR/本地/CL)。 --></p>
+  <table>
+    <thead><tr><th>來源</th><th>FY+1e</th><th>FY+2e</th><th>FY+3e</th><th>立場 / 目標</th></tr></thead>
+    <tbody>
+      <tr><td>DD（站內）</td><td><!-- --></td><td><!-- --></td><td><!-- --></td><td><!-- 裁決 + 目標 --></td></tr>
+      <tr><td>{{BROKER_1}} <span class="src-broker">券商</span></td><td><!-- --></td><td><!-- --></td><td><!-- --></td><td><!-- 評等 + 目標 --></td></tr>
+      <tr><td>市場共識</td><td><!-- --></td><td><!-- --></td><td><!-- --></td><td><!-- 評等分布 + 均值/高/低 --></td></tr>
+    </tbody>
+  </table>
+  <div class="callout"><strong>關鍵點：</strong><!-- FILL: 離散度的意義；現價 vs 共識(被 price 到共識之上 or 之下)——這是判讀對稱性的關鍵事實。 --></div>
+  <p><strong>修正方向：</strong><!-- FILL: 近端 vs 遠端 EPS 修正方向(dd-screener revision 或近期 guide / 法說) --></p>
+
+  <h2 id="better">§2 EPS 可能優於共識嗎（上行向量）</h2>
+  <p><!-- FILL: 一句定調(會/不太會 + 為何)。 --></p>
+  <div class="vec good">
+    <ol>
+      <!-- FILL: 4-6 個具體上行向量。每個=具體機制+數字+來源。涵蓋：beat-and-raise DNA、供需/需求向量、利潤率/組合、未被 model 的選擇權、管理層保守留底。 -->
+      <li><!-- --></li>
+    </ol>
+  </div>
+  <p style="font-size:13px;color:var(--text-muted)"><!-- FILL: 一句指向 §Δ：這些上行多數是否已反映於現價。 -->兩面之收斂與方向見 <a href="#netgap">§Δ 期望落差淨判讀</a>。</p>
+
+  <h2 id="worse">§3 EPS 可能劣於共識嗎（下行向量）</h2>
+  <p><!-- FILL: 一句定調。下行多為「時點/循環/倍數」還是「結構崩壞」？ --></p>
+  <div class="vec bad">
+    <ol>
+      <!-- FILL: 4-8 個下行向量，按可回復性或機率排序。涵蓋：倍數 de-rate(最可能近端路徑)、結構/需求風險、毛利稀釋、競爭/卡位鬆動、市場面(內部人/共識位置)、不可回復尾部(地緣等)。 -->
+      <li><!-- --></li>
+    </ol>
+  </div>
+
+  <h2 id="netgap">§Δ 期望落差淨判讀（收斂 §2/§3）</h2>
+  <p><!-- FILL: 把 §2/§3 收斂成一句方向判讀（不可停在「兩面都可能」）。 --></p>
+  <table>
+    <thead><tr><th>時段 / 維度</th><th>讀數</th><th>方向</th></tr></thead>
+    <tbody>
+      <tr><td>近端 FY+1/+2</td><td><!-- --></td><td><!-- --></td></tr>
+      <tr><td>遠端 FY+3+</td><td><!-- --></td><td><!-- --></td></tr>
+      <tr><td><strong>對稱性 / 估值</strong></td><td><!-- 現價 vs 共識/目標、PEG --></td><td><strong style="color:var(--green)"><!-- 正向 or 負向不對稱 --></strong></td></tr>
+    </tbody>
+  </table>
+  <div class="callout"><strong>操作含義：</strong><!-- FILL: 對趨勢領導股，重點不在預測 EPS level，而在追蹤修正的「軌跡(derivative)」(續抱/加碼 vs 減碼)。「兩面皆可能」於運作層以 §退出之上修軌跡監控處理，不靠預測。 -->（見 <a href="#exit">§退出觸發</a>）</div>
+  <p style="font-size:13.5px;color:var(--text-muted)"><!-- FILL: 本頁最重要的一句：價值鏡頭在此 mandate 的權重(風控/加碼依據 vs 主鏡頭)。不跨檔對照。 --></p>
+
+  <h2 id="reframe">§4 估值再框架</h2>
+  <p><!-- FILL: 「現倍數」是哪一年 EPS 的數字？若 ramp 兌現倍數正常化多快。 --></p>
+  <table>
+    <thead><tr><th>用哪一年 EPS</th><th>對應 EPS</th><th>現價的 PE</th><th>讀法</th></tr></thead>
+    <tbody>
+      <tr><td>FY+1e（NTM）</td><td><!-- --></td><td><span class="down"><!-- --></span></td><td><!-- --></td></tr>
+      <tr><td>FY+2e</td><td><!-- --></td><td><!-- --></td><td><!-- PEG 註記 --></td></tr>
+      <tr><td>FY+3e</td><td><!-- --></td><td><span class="up"><!-- --></span></td><td><!-- --></td></tr>
+    </tbody>
+  </table>
+  <div class="callout"><!-- FILL: 賣方估值法對照(如 X× 某年 EPS、對某龍頭折溢價)；「便宜/貴」要看哪一年兌現。 --></div>
+
+  <h2 id="industry">§5 產業變動：淨判讀與查證路徑</h2>
+  <p>競爭格局與結構位移的<strong>深度分析住在 DD §8/§11、ID 報告、供應鏈節點圖</strong>——本頁不複製，只給<strong>淨判讀 ＋ 下鑽連結 ＋ 可自行追蹤的指標</strong>，讓每個論點都能獨立查證、回溯到證據來源。</p>
+  <p style="font-size:13.5px;color:var(--text-muted)"><strong>淨判讀：</strong><!-- FILL: 3-4 句競爭/結構淨讀(鎖喉在哪、哪裡只是選擇權、核心張力)。不重寫競爭分析。 --></p>
+  <table>
+    <thead><tr><th>產業變動論點</th><th>證據住哪（點進去驗）</th><th>追蹤指標</th></tr></thead>
+    <tbody>
+      <!-- FILL: 3-4 列。每列=一個產業論點 → 真連結(DD #s8/#s11/#s13、ID、供應鏈 html) → 可自盯的指標。連結目標須先驗證存在。 -->
+      <tr><td><!-- --></td><td><a href="/dd/DD_{{TICKER}}_{{DD_DATE}}.html#s8" target="_blank">DD §8</a> · <!-- 其他 --></td><td><!-- --></td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="brokers">§6 賣方報告對照</h2>
+  <table>
+    <thead><tr><th>來源</th><th>評等</th><th>目標 / 立場</th><th>方法 / 重點</th><th>在現價的意涵</th></tr></thead>
+    <tbody>
+      <!-- FILL: 每份外部賣方一列(評等、目標、估值法、在現價的意涵)。 -->
+      <tr><td>{{BROKER_1}}</td><td><!-- --></td><td><!-- --></td><td><!-- --></td><td><!-- --></td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:13.5px"><strong>整體賣方：</strong><!-- FILL: 評等分布、共識均值 vs 現價、街頭高/低。 --></p>
+  <div class="contradiction">
+    <h4><!-- FILL: 各報告普遍淡化 or 反共識的一個風險/觀點 --></h4>
+    <ul><li><!-- FILL --></li></ul>
+  </div>
+
+  <h2 id="mgmt">§7 管理層論述 vs 實際鎖定</h2>
+  <p>以下取自 <!-- FILL: 法說/投資人日 --> 逐字稿 <span class="src-broker">primary</span>：</p>
+  <ul class="bullets">
+    <!-- FILL: 4-5 條。涵蓋：合約/需求是「實證可見」還是「願景」(契約鎖定 vs 框架)、最強供給端訊號、管理層自承的對沖/逆風、定價/毛利、地緣/關稅。引原話。 -->
+    <li><!-- --></li>
+  </ul>
+
+  <h2 id="exit">§退出觸發（趨勢部位核心紀律）</h2>
+  <p>趨勢股的超額報酬來自「在共識之前進、在飽和之前出」。進場價錯一點不致命，<strong>抱過頭才致命</strong>。下列任一觸發＝減碼／出場（不是「估值偏高即賣出」）：</p>
+  <ul class="bullets">
+    <!-- FILL: 4-6 條可監控的賣出訊號，各附「目前狀態」(全綠/需盯/AT_RISK)。涵蓋：① 上修軌跡反轉 ② 技術轉弱(RS/200MA) ③ 收費站侵蝕 ④ 趨勢成熟/滲透越過後段 ⑤ 不可回復尾部(若有) -->
+    <li><strong>① 上修反轉</strong>：<!-- -->。目前 <span class="up"><!-- --></span>。</li>
+  </ul>
+  <div class="callout"><strong>操作含義：</strong><!-- FILL: 訊號目前狀態總結；為何在訊號轉負前估值偏高本身不構成賣出。追蹤這些訊號較關注短期股價更關鍵。 --></div>
+
+  <h2 id="decision">§8 投資結論與分批進場</h2>
+  <p><!-- FILL: 幾個獨立錨點(帳本/DD/critic/賣方/逐字稿)收斂為同一結論；點明兩鏡頭同向 or 相反、依 mandate 取捨後的方向。 --></p>
+  <h3>分批配置（趨勢加權）<!-- FILL: 一句策略 --></h3>
+  <table>
+    <thead><tr><th>動作</th><th>價位</th><th>對應邏輯</th></tr></thead>
+    <tbody>
+      <tr><td><span class="tag-add"><!-- 建立部位/starter --></span></td><td><!-- 現價 --></td><td><!-- --></td></tr>
+      <tr><td><span class="tag-add">加碼 1</span></td><td><!-- --></td><td><!-- --></td></tr>
+      <tr><td><span class="tag-add">加碼 2</span></td><td><!-- --></td><td><!-- --></td></tr>
+      <tr><td><span class="tag-cut"><!-- 減碼/出 or 部位上限 --></span></td><td><!-- --></td><td><!-- 指向 §退出 or 尾部限額 --></td></tr>
+    </tbody>
+  </table>
+  <div class="callout">
+    <strong>淨效果：</strong><!-- FILL: 為何此配置優於「一次梭哈」與「死等深度回檔」兩端。若與 critic 立場分歧，誠實標明並說明取捨。 --><br>
+    <strong>加碼至滿額 / 翻空：</strong><!-- FILL: 觸發 + 指向 §退出 -->
+  </div>
+  <p style="margin-top:18px"><strong>總結：</strong><!-- FILL: 一句收(核心問題=趨勢是否仍加速+是否仍是收費站；估值偏高只決定配置節奏不決定是否進場)。不跨檔對照。 --></p>
+
+  <h2 id="sources">資料來源</h2>
+  <ul class="bullets">
+    <li><strong><span class="src-local">站內</span></strong> <!-- FILL: DD 檔、ID 報告、供應鏈節點、知識帳本 q.py {{TICKER}}、冷讀 critic({{DATE}})。 --></li>
+    <li><strong><span class="src-broker">賣方 / 會議（私有訂閱，不外連）</span></strong> <!-- FILL: 各報告名稱+評等+日期+逐字稿。僅列名不連結。 --></li>
+    <li><strong><span class="src-web">公開網路</span></strong> <!-- FILL: 現價、共識/目標彙整、guide/趨勢報導(出處)。 --></li>
+  </ul>
+
+  <div class="disclaimer">
+    本頁為 InvestMQuest 內部研究綜合，僅供教育與紀錄用途，非投資建議，不構成要約或勸誘。所有數據截至 {{DATE}}；股價、共識與賣方目標價會隨時間變動，引用前請重新查核。賣方報告與分析師會議內容為私有訂閱來源，本頁僅引述要點、不公開原始檔。EPS 估計與情境分析含高度不確定性，實際結果可能顯著不同。投資人應自行判斷並承擔風險。
+  </div>
+  <footer>InvestMQuest Research · 趨勢 × 期望落差綜合研判 · {{TICKER}} · {{DATE}}</footer>
+</div>
+</body>
+</html>

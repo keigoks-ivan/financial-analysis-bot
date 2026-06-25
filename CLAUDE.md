@@ -117,6 +117,21 @@ Agent({
 
 **Plumbing**：無 pre-commit validator（與 DCA 同政策）；無 build script（listing 是 skill-appended，類似 `push-earnings` 模式）；目前無 `push-comparisons` skill，git flow 是手動 `add / commit / push`。
 
+## Workflow: 期望落差綜合研判（expectations-synthesis）
+
+當用戶說「{ticker} 期望綜合」/「{ticker} 綜合研判」/「{ticker} 趨勢期望」/「expectations synthesis {ticker}」，或丟下一個 `…/007美股/{ticker}/` 券商報告資料夾並要做綜合判讀時，自動觸發 `expectations-synthesis` skill（`.claude/skills/expectations-synthesis/`）。
+
+**定位**：消費端 / 綜合層 skill — 假設目標 ticker 的 DD（`docs/dd/DD_*.html`）與相關 ID / 供應鏈已存在，**不重做基本面或競爭分析**。把站內深度料（ID / 供應鏈 / DD / 知識帳本）＋ 外部賣方報告（CLSA / Nomura / HSBC / UBS / Barclays…）＋ 法說與分析師會議逐字稿，收斂成單一投資判斷。骨架＝ A 趨勢定位（選股漏斗上游）＋ B 期望落差（市場對未來 EPS 的預估是否過高或過低）＋ 退出觸發，雙鏡頭依 mandate 取捨。與 `multi-stock-comparator-v1` 並列（皆消費端），與 `stock-analyst` 互補（後者做單檔 DD）。
+
+**輸出**：
+- HTML：`docs/research/synthesis/{TICKER}_{YYYYMMDD}.html`（noindex；模板 `.claude/skills/expectations-synthesis/template.html`）
+- 索引：`docs/research/index.html` hero 卡片；報告數 ≥3 時建 `docs/research/synthesis/index.html` 列表頁
+- 上站路徑：`https://research.investmquest.com/research/synthesis/`
+
+**硬規則**（詳見 SKILL.md）：§2+§3 都要寫且 §Δ 必須收斂兩面、§5 只連出 DD/ID/供應鏈不複製、專業賣方口吻無 slang/自我對話、**每份報告獨立成立不跨檔對照**、股價＝最新收盤、大 PDF 一律先 `pdftotext`。內建**決策時 critic**（spawn `industry-thesis-critic`，存 `docs/id/_critic_{TICKER}_*.md`）。
+
+**Plumbing**：無 pre-commit validator（同 comparisons / DCA 政策）；連結 skill-appended（同 push-earnings）。**預設停下複審**，用戶說 push 才走 3 檔 commit（synthesis 頁 + `research/index.html` + critic md），push 前先 `git pull --rebase`。參考實作：`docs/research/synthesis/GLW_20260625.html`、`TSM_20260625.html`。
+
 ## Workflow: 產業供應鏈互動地圖（supply-chain map）
 
 當用戶說「跑 {topic} 供應鏈地圖」/「{topic} 供應鏈」/「畫 {topic} 供應鏈」/「supply-chain {topic}」/「{topic} supply chain map」時，自動觸發 `supply-chain-cartographer` skill（`.claude/skills/supply-chain-cartographer/`）。
