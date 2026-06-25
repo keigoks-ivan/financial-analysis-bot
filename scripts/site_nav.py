@@ -69,6 +69,7 @@ NAV_SCRIPT = """<script>(function(){document.querySelectorAll('.imq-dd-btn').for
 MENU = {
     "research": [
         ("dd", "/research/", "個股 DD"),
+        ("syn", "/research/synthesis/", "期望落差綜合研判"),
         ("id", "/id/", "產業深度 ID"),
         # ("ds", "/ds/", "產業敘述 DS"),  # 2026-06-25 封存 /ds/（已併入 ID）— 自 nav 移除
         ("cmp", "/comparisons/", "多股對比"),
@@ -163,6 +164,7 @@ def build_subnav(links, current):
 # ----------------------------------------------------------- active mapping
 
 PREFIX_ACTIVE = [
+    ("research/synthesis/", ("research", "syn")),
     ("research/", ("research", "dd")),
     ("dd/", ("research", "dd")),
     ("dca/", ("research", "dd")),
