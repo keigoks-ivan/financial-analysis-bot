@@ -274,6 +274,11 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
   <span><span class="lc-name">Minervini RS+VCP 機械回測 ·《超級績效》</span><br><span class="lc-sub">否決 · 存活者偏誤樂觀上界,非忠實回測 · 即使偏誤灌水 CAGR 仍輸大盤;三槓桿(出場/進場/部位)皆推不開報酬↔回撤前緣 → alpha 在裁量、不可機械化</span></span>
   <span class="lc-arrow">→</span>
 </a>
+<a class="link-card" href="/backtest/slope_filter_global/" style="border-left:3px solid #1a56db">
+  <span style="font-size:1.3rem">🌍</span>
+  <span><span class="lc-name">W52 斜率濾網 · 全球 15 國 ETF 穩健性</span><br><span class="lc-sub">穩健性地圖 · 同規則套 15 國指數 ETF · MDD 控制 15/15 普世(平均淺 +25.7pp)、CAGR 0/15 全輸 B&amp;H、Sharpe 9/15 只在乾淨週期市 · 換倉↔折損 corr −0.79(澳洲 41 次極端)、慢熊到處有效/急殺月度太慢</span></span>
+  <span class="lc-arrow">→</span>
+</a>
 </div>
 
 <!-- TW link -->
