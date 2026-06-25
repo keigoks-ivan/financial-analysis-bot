@@ -117,6 +117,10 @@ GROUPS = [
         ("📈 35 檔 ETF 跨資產趨勢（EMA＋突破）", "/backtest/clenow/",
          "35 ETF × 7 類別 · EMA50/100 + 突破",
          "+13.28%", "-44.11%", "0.69", "0.30", "mixed", "$14.47M", TAG["ma"]),
+        ("🛡️ 跨資產防守趨勢（SPY/TLT/GLD/DBC）", "/backtest/crossasset_defense/",
+         "股/債/金/商品 各一條 · E3 趨勢 + Chandelier 給回吐閘門 · 等權 · 防守端:CAGR 最低但 "
+         "Calmar 0.62/Sharpe 0.92 全勝 GEM/Clenow、對 QQQ 月相關僅 0.28 → 真分散補位 · 候選未採用",
+         "+5.86%", "-9.39%", "0.92", "0.62", "trade", "$2.9M", TAG["ma"]),
     ]),
     ("🇹🇼 台股(2330/0050 E3 已採用 · 不同市場/幣別,不與美股同尺)", [
         ("2330/0050 三訊號趨勢集成（E3 · 實倉）", "/backtest/long_track_tw/",

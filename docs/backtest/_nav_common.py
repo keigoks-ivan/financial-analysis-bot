@@ -45,6 +45,7 @@ MULTI_LINKS = [
     ("/backtest/turtle/", "🐢 唐奇安突破", "turtle", "#0f766e"),
     ("/backtest/clenow/", "📈 跨資產趨勢", "clenow", "#6366f1"),
     ("/backtest/slope_filter_global/", "🌍 全球斜率穩健性", "slope_global", "#0f766e"),
+    ("/backtest/crossasset_defense/", "🛡️ 跨資產防守", "xadef", "#0f766e"),
 ]
 
 TAIWAN_LINKS = [
