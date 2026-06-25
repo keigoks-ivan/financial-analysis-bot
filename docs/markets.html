@@ -179,8 +179,6 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
         <span class="lang-zh"><strong>PB</strong> &mdash; 股價淨值比（歷史）。</span>
         <span class="lang-en"><strong>EPS&#x2191;</strong> &mdash; Full-year CY2026E consensus earnings growth (estimate, not actual). S&amp;P 500 anchor (FactSet, May 2026): Q1&#x2019;26 actual +27.7%, CY2026E +21.0%. Sector-level breakdown on the <a href="/sectors.html">Sectors</a> page.</span>
         <span class="lang-zh"><strong>EPS&#x2191;</strong> &mdash; CY2026 全年共識獲利成長率（預估，非實際）。標普500 對照（FactSet，2026年5月）：Q1&#x2019;26 實際 +27.7%、CY2026E +21.0%。類股層級拆分見 <a href="/sectors.html">Sectors</a> 頁。</span>
-        <span class="lang-en"><strong>Q1 26A / Q2 26E / CY26E</strong> &mdash; S&amp;P 500 index-level earnings growth Y/Y (FactSet, May 8 2026): Q1 actual +27.7%, Q2 estimate +19.9%, full-year CY2026 estimate +21.0% &mdash; the aggregate of the 11 sectors. Only the S&amp;P 500 is broken out this way; other indices show &mdash; (NASDAQ-100 Q1&#x2019;26 ran &approx;+51%, FactSet-cited, but isn&#x2019;t fully published per-period).</span>
-        <span class="lang-zh"><strong>Q1實際／Q2估／全年估</strong> &mdash; 標普500 指數層級獲利成長年增（FactSet，2026-05-08）：Q1 實際 +27.7%、Q2 預估 +19.9%、CY2026 全年預估 +21.0%——即 11 大類股加總。僅標普500 有此分期拆分；其他指數顯示 &mdash;（NASDAQ-100 Q1&#x2019;26 約 +51%，FactSet 引述，但未完整分期公佈）。</span>
         <span class="lang-en"><strong>PEG</strong> &mdash; PE &divide; EPS growth. &lt;1.0 = cheap growth, 1.0-1.5 = fair, &gt;2.0 = expensive.</span>
         <span class="lang-zh"><strong>PEG</strong> &mdash; PE &divide; 獲利成長率。&lt;1.0=便宜成長、1.0-1.5=合理、&gt;2.0=昂貴。</span>
         <span class="lang-en"><strong>Yld</strong> &mdash; Trailing 12-month dividend yield.</span>
@@ -645,7 +643,7 @@ var MARKETS = [
   // US
   // PE: forward 12M (verified sources: MacroMicro, Siblis, GuruFocus, CEIC)
   // GDP: IMF WEO Jan 2026. Bond: Trading Economics Apr 2026.
-  {flag:'\uD83C\uDDFA\uD83C\uDDF8',name:'S&P 500',nameZh:'標普500',index:'SPX',level:7501,ytd:9.4,gdp:2.4,per:20.5,pbr:5.0,epsGr:12,epsQ1:27.7,epsQ2:19.9,epsCY:21.0,divYld:1.3,bond10y:4.31,mktCapT:52.0,currency:'USD',rs:67.7,rs_trend:'choppy',outlook:{en:'MS target 7500; 15% tariff drag on multinationals; AI capex strong',zh:'MS目標7500；15%關稅拖累跨國企業；AI資本支出強勁'}},
+  {flag:'\uD83C\uDDFA\uD83C\uDDF8',name:'S&P 500',nameZh:'標普500',index:'SPX',level:7501,ytd:9.4,gdp:2.4,per:20.5,pbr:5.0,epsGr:12,divYld:1.3,bond10y:4.31,mktCapT:52.0,currency:'USD',rs:67.7,rs_trend:'choppy',outlook:{en:'MS target 7500; 15% tariff drag on multinationals; AI capex strong',zh:'MS目標7500；15%關稅拖累跨國企業；AI資本支出強勁'}},
   {flag:'\uD83C\uDDFA\uD83C\uDDF8',name:'NASDAQ 100',nameZh:'那斯達克100',index:'NDX',level:30406,ytd:20.6,gdp:2.4,per:27.5,pbr:8.0,epsGr:18,divYld:0.7,bond10y:4.31,mktCapT:28.0,currency:'USD',rs:82.7,rs_trend:'choppy',outlook:{en:'AI capex cycle intact; tariff costs $1B+/qtr for Apple; small cap outperforming',zh:'AI資本支出週期不變；蘋果每季關稅成本$10億+；小型股跑贏'}},
 
   // Japan
@@ -692,9 +690,6 @@ var COLS = [
   {key:'gdp',     en:'GDP',       zh:'GDP',      align:'right',w:'34px'},
   {key:'epsGr',   en:'EPS\u2191', zh:'EPS\u2191',align:'right',w:'34px'},
   {key:'peg',     en:'PEG',       zh:'PEG',      align:'right',w:'34px'},
-  {key:'epsQ1',   en:'Q1 26A',    zh:'Q1實際',  align:'right',w:'52px'},
-  {key:'epsQ2',   en:'Q2 26E',    zh:'Q2估',    align:'right',w:'52px'},
-  {key:'epsCY',   en:'CY26E',     zh:'全年估',  align:'right',w:'52px'},
   {key:'per',     en:'PE',        zh:'PE',       align:'right',w:'32px'},
   {key:'pbr',     en:'PB',        zh:'PB',       align:'right',w:'30px'},
   {key:'rs',      en:'RS',        zh:'RS',       align:'right',w:'32px'},
@@ -798,12 +793,6 @@ function renderTable() {
           val = '+' + r.epsGr + '%';
           style += 'color:' + (r.epsGr >= 15 ? C.green : r.epsGr >= 8 ? C.navy : C.orange) + ';font-weight:600;';
           break;
-        case 'epsQ1': case 'epsQ2': case 'epsCY': {
-          var ev = r[col.key];
-          if (ev === undefined || ev === null) { val = '—'; style += 'color:#94a3b8;'; }
-          else { val = (ev >= 0 ? '+' : '') + ev.toFixed(1) + '%'; style += 'color:' + (ev >= 0 ? C.green : C.red) + ';font-weight:600;'; }
-          break;
-        }
         case 'peg':
           val = r.peg >= 99 ? 'n/a' : r.peg.toFixed(2);
           style += 'color:' + pegColor(r.peg) + ';font-weight:600;';
