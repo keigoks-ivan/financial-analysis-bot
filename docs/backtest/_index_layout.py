@@ -309,6 +309,16 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
   <span><span class="lc-name">黃金/死亡交叉 · 慢晚回吐大 (QQQ/SMH/SPY/0050)</span><br><span class="lc-sub">快×慢均線交叉當進出訊 · 0/20 過尺 · CAGR 不輸週線但交叉出場太晚、MDD 一律更深(SMH 10/30 −44%);交叉事件前瞻邊際近零,死叉甚至不是乾淨賣訊(50/200 死叉後 120日 +2.5%);「站上家族」最後一塊,仍敗給週線</span></span>
   <span class="lc-arrow">→</span>
 </a>
+<a class="link-card" href="/backtest/ma_squeeze/" style="border-left:3px solid #1a56db">
+  <span style="font-size:1.3rem">🪢</span>
+  <span><span class="lc-name">均線糾結→發散 · 糾結不加值 (QQQ/SMH/SPY/0050)</span><br><span class="lc-sub">多均線收斂後發散點火進場 · 點火 60日超額 −2.1%、比「無糾結純突破」對照(−0.8%)更差 = 糾結減值;系統 3/8 過尺但無糾結對照過得一樣好(QQQ 純突破 0.63≥糾結)→ 是底層突破持有+200日出場在做工,且全擠在弱週線市(QQQ/SPY)= 弱基準假象</span></span>
+  <span class="lc-arrow">→</span>
+</a>
+<a class="link-card" href="/backtest/ma_dynband/" style="border-left:3px solid #1a56db">
+  <span style="font-size:1.3rem">📊</span>
+  <span><span class="lc-name">ATR/σ 動態乖離帶 · 解決稀有沒解決可交易 (QQQ/SMH/SPY/0050)</span><br><span class="lc-sub">把固定% 乖離門檻換波動標準化(布林/肯特納) · 深超賣訊號 n 1-2→70-110 變密 ✓,但揭穿固定−15%「深超賣神格」是門檻錯覺(σ 單位下極端反轉負、甜蜜點移到中度−1~−2σ);跨標的仍不一致、曝險僅 8-33%,系統 1/32 過尺幻象 — MA 進場方法系列收尾</span></span>
+  <span class="lc-arrow">→</span>
+</a>
 </div>
 
 <!-- TW link -->
