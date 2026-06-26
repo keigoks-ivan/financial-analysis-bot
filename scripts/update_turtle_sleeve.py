@@ -103,9 +103,11 @@ def compute_indicators(df, params):
 
 
 def run_turtle(data_dict, params, start_date, end_date):
-    """Returns (positions dict, equity index). Faithful port — only the bits
-    the live dashboard needs (positions + bar index) are retained; sizing,
-    pyramiding, stops and exits are identical to the backtest engine."""
+    """Faithful port of strategy.run_turtle. Returns (positions, equity, events):
+    positions = end-of-run state (the live state), equity = daily mark-to-market
+    NAV Series, events = chronological (date, tk, kind, direction, price, units,
+    reason) log of entries/adds/exits. Sizing/pyramiding/stops/exits are
+    identical to the backtest engine."""
     p = {**DEFAULT_PARAMS, **(params or {})}
     markets = {tk: compute_indicators(df, p) for tk, df in data_dict.items()}
     common_idx = None
@@ -116,7 +118,7 @@ def run_turtle(data_dict, params, start_date, end_date):
     capital = p["initial_capital"]
     positions = {tk: Position() for tk in markets}
     cost = p["cost_bps"] / 10_000
-    equity_idx = []
+    eq_dates, eq_vals, events = [], [], []
 
     for date in common_idx:
         for tk, df in markets.items():
@@ -137,17 +139,20 @@ def run_turtle(data_dict, params, start_date, end_date):
                 if hit:
                     ep = pos.stop * (1 - cost) if pos.direction == 1 else pos.stop * (1 + cost)
                     capital += sum(s * (ep - e) * pos.direction for e, s, _ in pos.units)
+                    events.append((date, tk, "exit", pos.direction, ep, 0, "stop"))
                     positions[tk] = Position()
                     continue
             # 2. channel exit
             if pos.direction == 1 and not pd.isna(low_exit) and close < low_exit:
                 ep = close * (1 - cost)
                 capital += sum(s * (ep - e) for e, s, _ in pos.units)
+                events.append((date, tk, "exit", 1, ep, 0, "channel"))
                 positions[tk] = Position()
                 continue
             elif pos.direction == -1 and not pd.isna(high_exit) and close > high_exit:
                 ep = close * (1 + cost)
                 capital += sum(s * (e - ep) for e, s, _ in pos.units)
+                events.append((date, tk, "exit", -1, ep, 0, "channel"))
                 positions[tk] = Position()
                 continue
             # 3. pyramide
@@ -164,6 +169,7 @@ def run_turtle(data_dict, params, start_date, end_date):
                         pos.stop = (entry_eff - p["stop_loss_atr_multiple"] * atr
                                     if pos.direction == 1
                                     else entry_eff + p["stop_loss_atr_multiple"] * atr)
+                        events.append((date, tk, "add", pos.direction, entry_eff, len(pos.units), ""))
             # 4. entry (confirmation_days=0 → immediate)
             if pos.direction == 0:
                 if not pd.isna(high_entry) and close > high_entry:
@@ -173,6 +179,7 @@ def run_turtle(data_dict, params, start_date, end_date):
                     if shares > 0:
                         positions[tk] = Position(1, [(entry_eff, shares, atr)],
                                                  entry_eff - p["stop_loss_atr_multiple"] * atr)
+                        events.append((date, tk, "entry", 1, entry_eff, 1, ""))
                 elif (not pd.isna(low_entry) and close < low_entry and not p["long_only"]):
                     risk = p["stop_loss_atr_multiple"] * atr
                     shares = (capital * p["risk_per_trade"]) / risk if risk > 0 else 0
@@ -180,9 +187,21 @@ def run_turtle(data_dict, params, start_date, end_date):
                     if shares > 0:
                         positions[tk] = Position(-1, [(entry_eff, shares, atr)],
                                                  entry_eff + p["stop_loss_atr_multiple"] * atr)
-        equity_idx.append(date)
+                        events.append((date, tk, "entry", -1, entry_eff, 1, ""))
 
-    return positions, pd.DatetimeIndex(equity_idx)
+        # mark-to-market NAV at end of bar
+        pv = capital
+        for tk, pos in positions.items():
+            if pos.direction == 0 or date not in markets[tk].index:
+                continue
+            c = markets[tk]["Close"].loc[date]
+            for e, s, _ in pos.units:
+                pv += s * (c - e) * pos.direction
+        eq_dates.append(date)
+        eq_vals.append(pv)
+
+    equity = pd.Series(eq_vals, index=pd.DatetimeIndex(eq_dates), name="equity")
+    return positions, equity, events
 
 
 # ===========================================================================
@@ -337,7 +356,70 @@ def stx50_card(s: dict | None) -> str:
 </div>"""
 
 
-def generate_html(legs, stx, combined, asof, changes, last_change_date, rebal_due):
+def event_row(ev) -> str:
+    date, tk, kind, direction, price, units, reason = ev
+    fut = FUT[tk][2]
+    if kind == "entry":
+        label = "🟢 進場做多" if direction == 1 else "🔴 進場做空"
+        col = "green" if direction == 1 else "red"
+    elif kind == "add":
+        label = f"➕ 加碼 → 第 {units} 單位 ({'多' if direction == 1 else '空'})"
+        col = "blue"
+    else:  # exit
+        rs = {"stop": "停損", "channel": "通道"}.get(reason, "")
+        label = f"✂️ 出場 ({'多' if direction == 1 else '空'} · {rs})"
+        col = "amber"
+    return (f'<tr><td>{date.strftime("%Y-%m-%d")}</td>'
+            f'<td><b>{tk}</b> <span style="color:var(--muted);font-size:.72rem">{fut}</span></td>'
+            f'<td style="color:var(--{col});font-weight:600">{label}</td>'
+            f'<td>{price:.2f}</td></tr>')
+
+
+def events_section(year_events) -> str:
+    if not year_events:
+        body = ('<div style="font-size:.82rem;color:var(--muted);padding:.5rem">'
+                '近一年無進出場事件(部位持續持有或空手)。</div>')
+    else:
+        rows = "".join(event_row(e) for e in year_events)
+        body = (f'<table><thead><tr><th>日期</th><th>標的</th><th>動作</th><th>成交價</th></tr></thead>'
+                f'<tbody>{rows}</tbody></table>')
+    return f"""<div class="card">
+  <h3>近一年訊號史 — 進場 / 加碼 / 出場({len(year_events)} 筆)</h3>
+  <div style="font-size:.78rem;color:var(--muted);margin-bottom:.6rem">
+    由 replay 引擎逐日重放產生(回測訊號,非實單成交)。成交價為訊號日收盤含 2bps 成本;
+    實單為次日開盤,gap 列入並行比對。多空雙向,加碼每 0.5×ATR 一單位至 4 單位。</div>
+  {body}
+</div>"""
+
+
+def perf_section(yr_ret) -> str:
+    col = "green" if yr_ret >= 0 else "red"
+    return f"""<div class="card">
+  <h3>Sleeve 績效曲線(replay 權益,起點=100)
+    <span style="font-size:.8rem;font-weight:600;color:var(--{col})">· 近一年 {yr_ret:+.1f}%</span></h3>
+  <div style="font-size:.78rem;color:var(--muted);margin-bottom:.6rem">
+    引擎自 2005 重放至最新收盤的 sleeve 模型 NAV(月頻、含成本)。
+    <b>這是回測/紙上權益,非實倉損益</b> —— OOS 並行追蹤期間沒有真實成交。
+    趨勢系統的長平台 + 少數大趨勢右尾是常態。組合 80/20 曲線見
+    <a href="/backtest/turtle_adopt/">採用回測頁</a>。</div>
+  <div class="chart-wrap"><canvas id="chart-perf"></canvas></div>
+</div>"""
+
+
+def perf_script(nav_labels, nav_vals) -> str:
+    return ("<script>new Chart(document.getElementById('chart-perf'),{type:'line',"
+            "data:{labels:" + json.dumps(nav_labels) + ",datasets:[{label:'Sleeve replay NAV',data:"
+            + json.dumps(nav_vals) + ",borderColor:'#0f766e',borderWidth:2,pointRadius:0,"
+            "pointHoverRadius:3,tension:0.1}]},"
+            "options:{responsive:true,maintainAspectRatio:false,"
+            "interaction:{mode:'index',intersect:false},"
+            "plugins:{legend:{display:false}},"
+            "scales:{x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{maxTicksLimit:14,font:{size:10}}},"
+            "y:{type:'logarithmic',grid:{color:'rgba(0,0,0,0.06)'},ticks:{font:{size:10}}}}}});</script>")
+
+
+def generate_html(legs, stx, combined, asof, changes, last_change_date, rebal_due,
+                  year_events, nav_labels, nav_vals, yr_ret):
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
     sleeve_dir = ", ".join(f"{l['ticker']} {l['pos']}" for l in legs)
     cards = "".join(leg_card(l) for l in legs)
@@ -365,6 +447,7 @@ def generate_html(legs, stx, combined, asof, changes, last_change_date, rebal_du
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>商品 Sleeve + 組合系統即時狀態 (OOS) | InvestMQuest Research</title>
   <meta name="description" content="CMDTY2 唐奇安突破 sleeve (GLD/USO→MGC/MCL) 日線訊號 + 80/20 STX50 組合曝險">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
   <style>
 :root{{--brand:#1a56db;--bg:#f8f9fa;--card:#fff;--text:#1a1a2e;--muted:#6b7280;--border:#e2e5e9;
   --green:#059669;--green-bg:#ecfdf5;--green-border:#a7f3d0;--green-text:#065f46;
@@ -413,7 +496,8 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
 .trig-l{{font-weight:700}}
 .trig-d{{color:var(--muted);font-variant-numeric:tabular-nums;text-align:right}}
 .rule-list{{font-size:.82rem;line-height:1.9}}
-@media(max-width:768px){{.hero,.tgrid{{grid-template-columns:1fr}}.big{{font-size:1.6rem}}table{{font-size:.74rem}}th,td{{padding:.4rem .45rem}}}}
+.chart-wrap{{position:relative;width:100%;height:340px;margin-top:.4rem}}
+@media(max-width:768px){{.hero,.tgrid{{grid-template-columns:1fr}}.big{{font-size:1.6rem}}table{{font-size:.74rem}}th,td{{padding:.4rem .45rem}}.chart-wrap{{height:260px}}}}
 </style>
 </head>
 <body>
@@ -462,6 +546,10 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
 
 {stx50_card(stx)}
 
+{perf_section(yr_ret)}
+
+{events_section(year_events)}
+
 <div class="card">
   <h3>規則摘要(組合 = 80% STX50 + 20% CMDTY2 sleeve,月底再平衡)</h3>
   <div class="rule-list">
@@ -480,6 +568,7 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
   &copy; {datetime.now().year} InvestMQuest Research · 商品 Sleeve + 組合系統(OOS 並行追蹤)·
   真實 yfinance 資料 · 引擎同步自 v7-backtest turtle_backtest/strategy.py · 每日美股收盤後自動更新
 </footer>
+{perf_script(nav_labels, nav_vals)}
 </body>
 </html>"""
 
@@ -517,13 +606,24 @@ def main():
     data = {t: df[df.index <= asof] for t, df in data.items()}
     print(f"  data as-of {asof.date()}")
 
-    pos_now, idx = run_turtle(data, P, START, str(asof.date()))
-    prev_day = idx[-2]
-    pos_prev, _ = run_turtle(data, P, START, str(prev_day.date()))
+    pos_now, eq, events = run_turtle(data, P, START, str(asof.date()))
+    prev_day = eq.index[-2]
+    pos_prev, _, _ = run_turtle(data, P, START, str(prev_day.date()))
 
     legs = build_leg_state(data, fut_px, pos_now, pos_prev)
     for l in legs:
         print(f"  {l['ticker']}: {l['pos']} | event={l['event_kind']} | {l['n_contracts']} contracts")
+
+    # past-year signal history (most recent first) + monthly NAV for the perf chart
+    one_yr_ago = asof - pd.Timedelta(days=365)
+    year_events = sorted([e for e in events if e[0] >= one_yr_ago],
+                         key=lambda e: e[0], reverse=True)
+    mm = eq.resample("ME").last().dropna()
+    nav_base = float(mm.iloc[0])
+    nav_labels = [str(k.date())[:7] for k in mm.index]
+    nav_vals = [round(float(v) / nav_base * 100, 2) for v in mm.values]
+    yr_ret = round((float(eq.iloc[-1]) / float(eq.loc[eq.index >= one_yr_ago].iloc[0]) - 1) * 100, 1)
+    print(f"  {len(year_events)} events in past year | sleeve replay NAV 1y {yr_ret:+.1f}%")
 
     stx = read_stx50()
     stx_exp = stx.get("combined_exposure_pct", 0.0) if stx else 0.0
@@ -560,7 +660,8 @@ def main():
             ALERT_FILE.unlink()
         print("No sleeve events.")
 
-    html = generate_html(legs, stx, combined, asof_str, changes, last_change_date, rebal_due)
+    html = generate_html(legs, stx, combined, asof_str, changes, last_change_date,
+                         rebal_due, year_events, nav_labels, nav_vals, yr_ret)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(html, encoding="utf-8")
     print(f"Written {OUTPUT} ({len(html):,} bytes)")
@@ -572,6 +673,8 @@ def main():
         "status": "oos_paper",
         "sleeve_weight": SLEEVE_W,
         "stx50_exposure_pct": stx_exp,
+        "sleeve_1y_replay_ret_pct": yr_ret,
+        "events_1y": len(year_events),
         "legs": {
             l["ticker"]: {
                 "direction": l["direction"], "units": l["units"],
