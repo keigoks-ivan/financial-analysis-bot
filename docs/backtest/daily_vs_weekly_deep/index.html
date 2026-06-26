@@ -136,8 +136,9 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <div class="hero"><div class="hero-top">
   <span class="verdict-tag">✓ 結構性可預測(r=+0.88) · 但動態輪動不可吃</span>
   <h2>市場趨勢度以 r=+0.88 預測長軌 Calmar(事前可算)—— 但這是慢的結構性事實,不是可交易的動態訊號:跨市場輪動全輸「只用美國」</h2>
-  <p>長軌的 edge 集中在強趨勢市場(<a href="/backtest/daily_vs_weekly_global/">全球頁</a>)。本頁問三個更深的問題:
+  <p>長軌的 edge 集中在強趨勢市場(<a href="/backtest/daily_vs_weekly_global/">全球頁</a>)。本頁問四個更深的問題:
      <strong>① 能不能事前量化?</strong> 能——市場的週線效率比(ER,衡量趨勢乾淨度)以 <strong>r=+0.88</strong> 預測週線 Calmar。
+     <strong>② 弱 edge 是市場還是匯率?</strong> 是市場——換成當地貨幣一樣弱(改善 -0.01、與 FX 波動相關 +0.07≈0)。
      <strong>③ 為什麼弱市場弱?</strong> 趨勢不持久→系統大半時間在現金(在場%低)+ 進場被洗(勝率低、持有短)。
      <strong>④ 能不能動態輪動吃?</strong> <strong>不能</strong>——用趨勢度或動量排名、只部署在「當下最會趨勢」的市場,全部輸給「只用美國」(Calmar 0.46 vs 0.09–0.16),而且<strong>追高反而加深回撤</strong>。
      靜態關係轉不成動態訊號:這個 edge 只能用<strong>靜態選市場</strong>(部署在結構上會趨勢的美國)吃,不能用輪動吃。</p>
@@ -156,6 +157,29 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <div class="card"><div class="takeaway" style="margin-top:0"><strong>相關 r=+0.88——強且因果可算。</strong>市場越會趨勢(ER 高),長軌 Calmar 越高。
 這把「edge 集中在強趨勢市場」從事後觀察,變成<strong>事前可篩選</strong>的量化關係:看一個市場的 ER,就能預判長軌值不值得在那裡部署。</div></div>
 </div>
+
+<div class="section">
+<h2 class="section-title">② 弱 edge 是市場、還是匯率?— 是市場</h2>
+<div class="section-sub">把同一支 USD ETF 的總報酬換算回當地貨幣(usd × 當地貨幣每美元,同資產同股息、只去掉 FX 鏡頭),比週線長軌的 Calmar。若 FX 是元兇,高 FX 波動的市場在當地貨幣下會大幅改善。</div>
+<div class="card"><table>
+<thead><tr><th>市場</th><th>FX 年化波動</th><th>USD 版 Calmar</th><th>當地貨幣 Calmar</th><th>Δ(當地−USD)</th></tr></thead>
+<tbody><tr><td><strong>巴西</strong></td><td>16.9%</td><td>0.05</td><td>0.04</td><td style="color:var(--muted);font-weight:600">-0.01</td></tr>
+<tr><td><strong>台灣</strong></td><td>12.1%</td><td>0.19</td><td>0.26</td><td style="color:var(--green);font-weight:600">+0.07</td></tr>
+<tr><td><strong>南韓</strong></td><td>11.3%</td><td>0.30</td><td>0.39</td><td style="color:var(--green);font-weight:600">+0.09</td></tr>
+<tr><td><strong>澳洲</strong></td><td>10.7%</td><td>0.09</td><td>0.06</td><td style="color:var(--red);font-weight:600">-0.03</td></tr>
+<tr><td><strong>日本</strong></td><td>9.3%</td><td>0.05</td><td>0.10</td><td style="color:var(--green);font-weight:600">+0.05</td></tr>
+<tr><td><strong>英國</strong></td><td>8.8%</td><td>0.14</td><td>0.01</td><td style="color:var(--red);font-weight:600">-0.13</td></tr>
+<tr><td><strong>德國</strong></td><td>8.5%</td><td>0.19</td><td>0.06</td><td style="color:var(--red);font-weight:600">-0.13</td></tr>
+<tr><td><strong>加拿大</strong></td><td>7.7%</td><td>0.25</td><td>0.17</td><td style="color:var(--red);font-weight:600">-0.08</td></tr>
+<tr><td><strong>印度</strong></td><td>7.6%</td><td>0.12</td><td>0.21</td><td style="color:var(--green);font-weight:600">+0.09</td></tr>
+<tr><td><strong>中國</strong></td><td>5.2%</td><td>0.07</td><td>0.06</td><td style="color:var(--muted);font-weight:600">-0.01</td></tr>
+<tr><td><strong>香港</strong></td><td>0.6%</td><td>0.13</td><td>0.15</td><td style="color:var(--muted);font-weight:600">+0.02</td></tr>
+
+<tr style="background:#fafafa;font-weight:700"><td>平均(11 國)</td><td></td><td>0.14</td><td>0.14</td><td>-0.01</td></tr></tbody></table>
+<div class="takeaway"><strong>去掉 FX 沒有系統性改善(平均 Calmar 0.14→0.14,改善 -0.01),且「改善幅度 ~ FX 波動」相關僅 +0.07 ≈ 0。</strong>
+FX 波動最大的市場(巴西、韓、台)在當地貨幣下也沒系統性變好——若 FX 是元兇,它們該大幅改善,但沒有。一些市場當地版較好(韓/印/台/日)、一些更差(德/英/加),淨零。
+<strong>這些市場「不趨勢」是市場本質,換成當地貨幣一樣弱,不是被美元計價洗掉的。</strong></div>
+</div></div>
 
 <div class="section">
 <h2 class="section-title">③ 為什麼弱市場弱 — 交易層機制(依 Calmar 排序)</h2>
