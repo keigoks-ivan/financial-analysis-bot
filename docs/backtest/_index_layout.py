@@ -284,6 +284,11 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
   <span><span class="lc-name">突發 V 崩防禦 · SMH/QQQ STX50</span><br><span class="lc-sub">同台股研究套到美股 · 唯一過尺仍是分散腿,但 2022 股債雙殺讓債券危機腿反向(TLT 只 10% 過、上不去)· 跨 regime 穩健只剩黃金(過尺 10–40%);純對沖股票(put/加速出場/vol-target)全失敗</span></span>
   <span class="lc-arrow">→</span>
 </a>
+<a class="link-card" href="/backtest/daily_vs_weekly/" style="border-left:3px solid #1a56db">
+  <span style="font-size:1.3rem">⏱️</span>
+  <span><span class="lc-name">日線 vs 週線長軌 · SPY/QQQ/SMH</span><br><span class="lc-sub">長軌規則搬到日線 D60/120/200,加遍出場確認/盤整閘門(ER·R²·ADX·CHOP)/多空/200日方向/MA組合 · 0/72 真過尺,週線 long-only 是最優;盤整閘門只是重建週線、空單任何濾網都救不活</span></span>
+  <span class="lc-arrow">→</span>
+</a>
 </div>
 
 <!-- TW link -->
