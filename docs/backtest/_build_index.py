@@ -114,6 +114,11 @@ GROUPS = [
          "USO/GLD/DBA/FXE/TLT/SPY · 55/20 突破(2007 起)· 2026-06 拆解:CAGR=3.3× 曝險的槓桿效果非過擬合;"
          "CMDTY 腿 L3 通過(+20% → 組合 Calmar 1.03),採用待 L4 決策",
          "+22.48%", "-38.12%", "0.73", "0.59", "domc", "$51.40M", TAG["ma"]),
+        ("🧩 組合系統:STX50 + 商品 Sleeve（80/20）", "/backtest/turtle_adopt/",
+         "80% STX50(SMH/QQQ)+ 20% CMDTY2 sleeve(GLD/USO→MGC/MCL)· 月底再平衡 · 採用評估頁:"
+         "Calmar 0.66→1.02、MDD -21.9%→-15.0% · 參數高原 35/35 + 日線時間架構雙過審 · "
+         "OOS 並行追蹤(紙上)中,sleeve 採用待 L4 · 即時頁 <a href='/turtle-sleeve/'>/turtle-sleeve/</a>",
+         "+15.25%", "-14.98%", "1.12", "1.02", "trade", "$17.40M", TAG["ma"]),
         ("📈 35 檔 ETF 跨資產趨勢（EMA＋突破）", "/backtest/clenow/",
          "35 ETF × 7 類別 · EMA50/100 + 突破",
          "+13.28%", "-44.11%", "0.69", "0.30", "mixed", "$14.47M", TAG["ma"]),
