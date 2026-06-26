@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="dd-schema-version" content="v14.2">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARM 深度研究 DD v14.2 · 2026-06-27</title>
+<script id="dd-meta" type="application/json">
+{
+  "ticker": "ARM",
+  "schema": "v14.2",
+  "date": "2026-06-27",
+  "price_at_dd": 333.40,
+  "signal": "B",
+  "trap": "🟡",
+  "trap_label": "🟡 觀察期",
+  "moat": "A",
+  "val": "🔴",
+  "ma": "🟡",
+  "fpe_fy2": 108.0,
+  "pct_5y": 90.0,
+  "peg_fy2": 3.5,
+  "upside_short_pct": -48.0,
+  "upside_mid_pct": -45.0,
+  "stress": {"pass": 2, "total": 2},
+  "moat_score": 8.5,
+  "growth_durability": 8.5,
+  "quality_score": 8.5,
+  "ai_risk": "🟢",
+  "long_term_confidence": "高",
+  "verdict": "B",
+  "oneliner": "頂級 ISA 授權 franchise（~99% 行動、~97% 毛利），但估值泡沫級：forward PE 108x／trailing >400x／PEG 3.5／beta 3.79，股價高於分析師均標 26%、base 5Y IRR 為負；FTC 反壟斷調查 + Qualcomm 反控 + 自家晶片 channel conflict。好公司、瘋價格——觀望等大幅重置。",
+  "dca_verdict": "觀望",
+  "dca_role": "候選/追蹤池",
+  "moat_trend": "→",
+  "runway_post_y5": "🟢",
+  "ev5y_pct": -21.0,
+  "irr_base_pct": -5.4,
+  "max_dd_pct": -75.0
+}
+</script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;600&display=swap');
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Noto Sans TC',sans-serif; background:#F8FAFC; color:#0F172A; line-height:1.75; font-size:15px; }
+.wrap { max-width:1080px; margin:0 auto; padding:24px 20px 80px; }
+.num, code, .mono { font-family:'IBM Plex Mono',monospace; }
+header.top { position:sticky; top:0; z-index:50; background:#1E3A5F; color:#fff; padding:10px 20px; display:flex; flex-wrap:wrap; gap:14px; align-items:center; font-size:13px; box-shadow:0 2px 6px rgba(0,0,0,.15); }
+header.top .tk { font-size:20px; font-weight:900; letter-spacing:1px; }
+header.top .meta { opacity:.85; font-family:'IBM Plex Mono',monospace; }
+h2 { background:#1E3A5F; color:#fff; padding:11px 16px; margin:34px 0 16px; border-left:5px solid #3B82F6; font-size:19px; scroll-margin-top:80px; border-radius:0 4px 4px 0; }
+h3 { color:#1E3A5F; font-size:16px; margin:22px 0 10px; padding-left:10px; border-left:3px solid #93C5FD; }
+h4 { color:#334155; font-size:14px; margin:16px 0 8px; }
+p { margin:9px 0; }
+table { width:100%; border-collapse:collapse; margin:12px 0; font-size:13px; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+th { background:#1E3A5F; color:#fff; padding:8px 10px; text-align:left; font-weight:500; }
+td { padding:7px 10px; border-bottom:1px solid #E2E8F0; vertical-align:top; }
+tbody tr:nth-child(even) { background:#F1F5F9; }
+.card { background:#fff; border:1px solid #E2E8F0; border-radius:8px; padding:18px 20px; margin:14px 0; box-shadow:0 1px 3px rgba(0,0,0,.05); }
+.status-bar { display:flex; flex-wrap:wrap; gap:12px; justify-content:center; background:#F1F5F9; border-left:4px solid #3B82F6; border-right:4px solid #3B82F6; padding:14px 16px; border-radius:6px; margin:8px 0 16px; }
+.status-bar .cell { text-align:center; min-width:120px; }
+.status-bar .lbl { font-size:11px; color:#64748B; margin-bottom:3px; }
+.status-bar .val { font-size:20px; font-weight:700; }
+.hypothesis-box { background:#EFF6FF; border-left:4px solid #3B82F6; padding:18px 22px; border-radius:0 8px 8px 0; margin:14px 0; }
+.hypothesis-box .thesis { font-size:26px; font-weight:700; text-align:center; color:#1E3A5F; margin:6px 0 18px; line-height:1.5; }
+.hypothesis-box ul { list-style:none; }
+.hypothesis-box li { padding:6px 0; border-bottom:1px dashed #BFDBFE; font-size:14px; }
+.verdict-watch { color:#92400E; }
+.verdict-buy { color:#166534; }
+.verdict-avoid { color:#991B1B; }
+.chip { display:inline-block; padding:6px 20px; border-radius:4px; font-size:18px; font-weight:700; color:#fff; }
+.chip.watch { background:#92400E; border-left:4px solid #78350F; }
+.chip.buy { background:#166534; border-left:4px solid #14532D; }
+.chip.avoid { background:#991B1B; border-left:4px solid #7F1D1D; }
+.chip-sub { font-size:13px; color:#475569; font-style:italic; margin-top:6px; }
+section.decision { background:#FEF9C3; border-left:4px solid #92400E; padding:20px; border-radius:0 8px 8px 0; margin:16px 0; }
+.box-trap { background:#FFF0E6; border-left:4px solid #F97316; padding:16px 20px; border-radius:0 8px 8px 0; margin:14px 0; }
+.box-trap h3 { color:#C2410C; border-color:#FB923C; }
+.box-assume { background:#EFF6FF; border-left:4px solid #3B82F6; padding:16px 20px; border-radius:0 8px 8px 0; margin:14px 0; }
+.box-conflict { background:#FFF7ED; border-left:4px solid #F97316; padding:16px 20px; border-radius:0 8px 8px 0; margin:14px 0; }
+.box-premortem { background:#FEF2F2; border-left:4px solid #DC2626; padding:16px 20px; border-radius:0 8px 8px 0; margin:14px 0; }
+.box-irr { background:#F0F9FF; border-left:4px solid #0EA5E9; padding:16px 20px; border-radius:0 8px 8px 0; margin:14px 0; }
+.reasoning { background:#F8FAFC; border:1px dashed #CBD5E1; border-radius:6px; padding:8px 12px; margin:8px 0; font-size:12.5px; color:#475569; font-family:'IBM Plex Mono',monospace; }
+.dd-toc { display:flex; flex-wrap:wrap; gap:8px; margin:16px 0 8px; }
+.dd-toc a { background:#E0E7FF; color:#3730A3; padding:5px 12px; border-radius:14px; font-size:12.5px; text-decoration:none; font-weight:500; }
+.dd-toc a:hover { background:#C7D2FE; }
+.beat { background:#DCFCE7; color:#166534; padding:1px 7px; border-radius:3px; font-weight:600; }
+.miss { background:#FEE2E2; color:#991B1B; padding:1px 7px; border-radius:3px; font-weight:600; }
+.neut { background:#FEF9C3; color:#92400E; padding:1px 7px; border-radius:3px; font-weight:600; }
+.maxdd-num { font-size:30px; font-weight:900; color:#DC2626; font-family:'IBM Plex Mono',monospace; }
+.bar-track { height:14px; border-radius:7px; background:linear-gradient(90deg,#22C55E 0%,#22C55E 33%,#F59E0B 33%,#F59E0B 66%,#EF4444 66%,#EF4444 100%); position:relative; margin:6px 0; }
+.note { font-size:12.5px; color:#64748B; font-style:italic; }
+.flag-r { color:#991B1B; font-weight:700; }
+.flag-y { color:#92400E; font-weight:700; }
+.flag-g { color:#166534; font-weight:700; }
+details { margin:14px 0; border:1px solid #E2E8F0; border-radius:8px; padding:6px 16px; background:#fff; }
+summary { font-weight:700; color:#1E3A5F; cursor:pointer; padding:8px 0; }
+.print-btn { position:fixed; right:20px; bottom:20px; background:#3B82F6; color:#fff; border:none; padding:11px 18px; border-radius:24px; font-size:13px; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,.2); z-index:60; }
+@media print { header.top,.print-btn,.dd-toc { display:none; } details { border:none; } details[open] summary { display:none; } details > *:not(summary) { display:block !important; } }
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#0f172a;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(59,130,246,.28);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/" class="active">個股 DD</a>
+          <a href="/research/synthesis/">期望落差綜合研判</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/">週報</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/long-track-smh/">長線訊號</a>
+          <a href="/long-track-tw/">台股長線</a>
+          <a href="/turtle-sleeve/">商品 Sleeve</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/">量化回測</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/screener-tw.html">Screener 台股</a>
+          <a href="/screener-jp.html">Screener 日股</a>
+          <a href="/screener-my.html">Screener 馬股</a>
+          <a href="/cache/">🗄 Data Cache</a>
+          <a href="/tools/">期貨部位計算機</a>
+        </div>
+      </div>
+      <a href="/mental-models/">🧠 心智模型</a>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+<header class="top">
+  <span class="tk">ARM</span>
+  <span class="meta">資料抓取 2026-06-27</span>
+  <span class="meta">最新收盤 $333.40（6/26）</span>
+  <span class="meta">最近財報 Q4 FY2026（5月公布）</span>
+  <span class="meta">DD Schema v14.2</span>
+  <span class="meta">yfinance 批採 + web 8 次</span>
+</header>
+
+<div class="wrap">
+
+<!-- ============ 頁首結論儀表板 ============ -->
+<div class="status-bar">
+  <div class="cell"><div class="lbl">統一裁決（§14）</div><div class="val verdict-watch">觀望</div></div>
+  <div class="cell"><div class="lbl">倉位角色</div><div class="val" style="font-size:15px">候選/追蹤池</div></div>
+  <div class="cell"><div class="lbl">護城河趨勢（§7）</div><div class="val" style="color:#64748B">A →</div></div>
+  <div class="cell"><div class="lbl">Y5 後跑道</div><div class="val">🟢 寬</div></div>
+  <div class="cell"><div class="lbl">Max DD（§13c）</div><div class="val" style="color:#DC2626">−75%</div></div>
+  <div class="cell"><div class="lbl">5Y EV／IRR</div><div class="val" style="font-size:15px;color:#991B1B">−21%／−5%/yr</div></div>
+</div>
+
+<div class="hypothesis-box">
+<p class="thesis">運算世界的「收費公路」——頂級 franchise，但現價在收 50 年後的過路費。</p>
+<ul>
+<li><strong>統一裁決 <span style="font-size:22px" class="verdict-watch">觀望</span></strong>（§14）｜倉位角色：候選/追蹤池｜判定理由：護城河頂級（ISA 近壟斷行動、royalty 結構性上升、資料中心翻倍），但估值<strong>泡沫級</strong>——forward PE 108x／trailing &gt;400x／P/B 43x／PEG ~3.5／beta 3.79，股價 $333 高於分析師均標 $245 約 36%，<strong>base 5Y IRR 為負（~−5%/yr）</strong>。即使近期 −26% 仍遠未到可進場價位。估值燈 🔴 過熱。</li>
+<li><strong>護城河趨勢 A →</strong>（§7 權威）｜execution 趨勢 擴大（royalty rate v9/CSS 升、資料中心 royalty 翻倍）｜但自家 AGI 晶片 channel conflict + RISC-V 開源威脅 → 整體取 → holding（不取 ↑）</li>
+<li><strong>Y5 後跑道 🟢 寬</strong>（§6.A''）｜S 曲線 中期 ｜行動飽和但資料中心/AI/汽車/IoT 多曲線接棒｜royalty per device 仍有結構上升空間</li>
+<li><strong>Max DD −75%</strong>（§13c 範圍 −60%~−75%，路徑風險 🔴）｜beta 3.79 + ~10% 流通量 + 泡沫估值 + 動能剛破，回撤可極深｜最快復原 取決於 thesis</li>
+<li><strong>5Y 機率加權 EV −21%／IRR ~−5%/yr</strong>（§11.5）｜Base IRR −5.4%/yr（三分量 §11.6：EPS +28%/yr ／ re-rate −33%/yr ／ 股息回購 0）— <strong>估值 re-rate 是壓倒性逆風</strong></li>
+<li><strong>opportunity cost：</strong>邊際 AI 資金 vs 已持 NVDA（forward PE ~35x、護城河 S、正 IRR）／TSM（賣鏟人、所有 ARM 晶片也經其代工、PEG &lt;1）——ARM 是同類中<strong>最貴、唯一負 IRR</strong> 的標的（§14a）</li>
+<li><strong>基本面評級 B（A+/A/B/C/X，metadata）：</strong>品質 8.5/10｜估值燈 🔴 過熱｜Pure MA 🟡（樣本不足+極端伸展+動能剛破）｜陷阱定性 🟡 觀察期（詳見附錄 A）</li>
+<li><strong>長期持有信心：高</strong>（附錄 A I，指 franchise 品質）｜建議持有年限：長期 5–10 年（§14c，但須在遠低於現價建倉）</li>
+<li><strong>Inception DD：</strong><code>DD_ARM_20260427.html</code>（2026-04-27，首份）— 累積漂移對照基準</li>
+<li><strong>下次年度對照倒數：</strong>2027-04-27（距今約 304 天）— Inception + 365 天</li>
+</ul>
+</div>
+<p class="note"><strong>讀法：</strong>本份報告的人面對結論是「統一裁決 觀望」（§14）。基本面評級 A+/A/B/C/X 為 metadata（餵 screener），不是並列頭銜。倉位組合佔比由 portfolio-manager skill 依組合狀態決定。</p>
+
+<nav class="dd-toc">
+<a href="#s1">§1 結論</a><a href="#s2">§2 序章</a><a href="#s3">§3 論點</a><a href="#s4">§4 財報</a><a href="#s5">§5 門檻</a><a href="#s6">§6 成長</a><a href="#s7">§7 護城河</a><a href="#s8">§8 財務</a><a href="#s9">§9 產業</a><a href="#s10">§10 治理</a><a href="#s11">§11 估值</a><a href="#s12">§12 矛盾</a><a href="#s13">§13 Pre-mortem</a><a href="#decision">§14 決策</a><a href="#s15">§15 複審</a><a href="#appendixA">附錄 A 擇時</a>
+</nav>
+
+<!-- ============ §0 Archetype ============ -->
+<div class="card">
+<h3 style="margin-top:0">§0｜Archetype 分類（QC-43）</h3>
+<p><strong>primary = 品質複利成長</strong>（信心：高）｜secondary = 無。財務指紋：~97% 毛利（IP 授權）、FCF margin ~19%、淨現金、營收 CAGR ~23%、輕資產（capex/rev ~3-12%）——典型高毛利 IP 授權複利股，<strong>但估值極端使通用 PEG/PE gate 全面亮 🔴</strong>。<strong>路由：</strong>§5/§11/QC-31 沿用品質複利 gate-set（PEG/forward PE/ROIC）；不換金融/未獲利/循環 gate。注意：ARM 正從「純授權」往「自家晶片」延伸，若該轉型坐大，未來 archetype 須重審（但目前 &lt;5% 營收，維持品質複利）。</p>
+</div>
+
+<!-- ============ §1 ============ -->
+<h2 id="s1">§1｜投資結論詳述</h2>
+<p>本結論基於以下完整分析得出，詳見各章節；人面對裁決見 §14。</p>
+
+<p>ARM 是運算世界的「<strong>收費公路</strong>」：它不製造晶片，而是設計 CPU 指令集架構（ISA）與核心 IP，向幾乎所有晶片設計者（Apple、Qualcomm、Nvidia、MediaTek、聯發科、三星、Amazon、Google）收取「前期授權費 + 每顆晶片 royalty」。其護城河是科技業最寬的之一——<strong>~99% 智慧手機、整個 ARM 軟體生態的編譯鎖定、enormous 切換成本</strong>，且正靠 v9 架構 + CSS（Compute Subsystems）把 royalty per device 結構性推高、把版圖從行動延伸到資料中心（Graviton/Grace，資料中心 royalty FY26 翻倍）、汽車、AI。FY2026 營收 $4.92B（+23%）、毛利率 ~97%、FCF margin ~19%、淨現金。<strong>這是一個 A 級、近乎不可替代的 franchise。</strong></p>
+
+<p><strong>但裁決是「觀望」，而且分歧極大：問題不在公司，在價格——而且是泡沫級的價格。</strong>$333 的股價（市值 $356B）對應 forward PE 108x（FY2028 EPS $3.09）、trailing PE &gt;400x、P/B 43x、EV/EBITDA 346x、PEG ~3.5、beta 3.79。即便經過近期從 52 週高 $452.70 的 <strong>−26% 急跌</strong>（5 天 −18%），股價仍<strong>高於分析師均值目標 $245 約 36%</strong>。用任何合理的正常化倍數套未來 EPS，<strong>5 年 base IRR 都是負的（~−5%/yr，機率加權 EV ~−21%）</strong>——因為估值必然從 108x re-rate 回到 ~40x 的逆風（每年 ~−33%/yr）會吃光所有 EPS 複利。這不是「好公司、貴股價」（像 AMD），而是「<strong>好公司、瘋價格</strong>」。疊加<strong>四個同時亮起、且已具體化（非臆測）的警示</strong>——① <strong>美國 FTC 已於 2026-05-15 對 ARM 啟動正式反托拉斯調查</strong>，調查重點正是「ARM 進軍自家晶片後，是否對 Apple/Qualcomm/Nvidia/AWS 等降級或拒絕架構授權」——這是對「中立 IP 授權商」身分（~97% 毛利與定價權的根源）的<em>正面法律攻擊</em>；② <strong>Qualcomm（最大授權客戶）2025-09 在 Delaware 完勝 ARM（Nuvia/Oryon 授權合法），隨即反控 ARM「違約 + 不當干預客戶關係 + 把授權武器化」</strong>（試驗 2026-03），且 2025-12 收購 RISC-V 廠商 Ventana、規劃 Oryon-V「去 ARM 化」路線圖；③ <strong>C-suite 群聚套現 &gt;$8M</strong>（CCO Abbey 5/21-28、CAO Bartels 6/2 以 $392.70 賣 $4.4M、CPO $2.26M，皆在近高點）；④ New Street 6/18 降評 Neutral（估值）——<strong>正確動作是放進候選/追蹤池，等待一次大幅的估值重置（~$150–200 或更低），而非在泡沫頂部接刀。這些法律/監管線若不利 ARM，下行可能比 base IRR −5% 更糟。</strong></p>
+
+<div class="box-trap">
+<h3>⚠️ 這是價值陷阱嗎？</h3>
+<table>
+<tr><th width="28%">問題</th><th>回答</th></tr>
+<tr><td><strong>最可能的價值陷阱模式？</strong></td><td><strong>不是傳統價值陷阱（低 PE 衰退），是「成長泡沫 + 自掘護城河」型。</strong>若要說「陷阱」，最像的是<em>護城河侵蝕（自掘）</em>——ARM 推自家晶片，可能促使授權客戶加速去 ARM 化（轉 RISC-V 或自研），長期侵蝕授權模式。但核心風險是「<strong>在泡沫頂部 overpay</strong>」：基本面健康，價格脫離地心引力。</td></tr>
+<tr><td><strong>支持「不是陷阱」的最強論據</strong></td><td>① royalty 收入 $2.613B（+21%）+ 授權 $2.307B（+25%），雙引擎且 royalty 是<em>每顆晶片的長尾複利</em>（v9/CSS 推高單顆 royalty）；② ~97% 毛利、淨現金、FCF margin 19%——盈餘品質頂級；③ 資料中心 royalty 翻倍 + AGI CPU $2B 已簽需求——成長有真實錨。franchise 本身毫無疑問健康。</td></tr>
+<tr><td><strong>支持「可能是陷阱（overpay/自掘）」的最強反駁</strong></td><td>① 估值脫離任何基本面錨（trailing &gt;400x、PEG 3.5、股價高於均標 36%）——再強的成長也撐不住倍數正常化；② <strong>自家晶片 channel conflict 是 ARM 自己製造的結構風險</strong>：當 ARM 與最大客戶競爭，客戶轉向 RISC-V/自研的動機上升，這可能在 5–10 年蝕掉授權模式的中立性溢價。</td></tr>
+<tr><td><strong>空頭最強一擊</strong></td><td>18 個月內 −30%+ 最可能路徑（已在發生）：估值去槓桿——AI 板塊倍數壓縮 + ARM trailing &gt;400x 領跌 + 高管拋售 + 一則 royalty 成長放緩或 AGI 晶片供給卡關的消息，把 forward PE 從 108x 壓到 60x，即使 EPS 達標股價仍可再腰斬至 ~$150。對應 §3.C R3（估值去槓桿）+ §3.F（大客戶轉 RISC-V）。與 §13b pre-mortem 呼應。</td></tr>
+<tr><td><strong>如何在持有期間判斷陷阱（overpay/自掘）是否正在發生</strong></td><td>① royalty 成長率（連 2 季 &lt;15% = 行動飽和未被資料中心補上）；② 大客戶 RISC-V/自研公開進展（Qualcomm/Nvidia/Google 對 ARM 依賴下降）。</td></tr>
+</table>
+<p><strong>最終定性：🟡 觀察期</strong>（franchise 健康但估值泡沫 + 自家晶片 channel conflict 是真實結構警示——不是 🟢 高枕，也不是 🔴 結構衰退）。</p>
+</div>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+<tr><td>1</td><td>Royalty 收入成長率（v9/CSS 滲透 + 資料中心）</td><td>§3 H1 / §4</td><td>🔵 核心假設驗證信號</td><td>連 2 季 royalty YoY &lt; 15%（行動飽和未被資料中心補上）</td></tr>
+<tr><td>2</td><td>AGI 自家晶片進度 vs channel conflict（大客戶反應）</td><td>§3 H2 / §7</td><td>🔵 結構/護城河信號</td><td>任一大客戶（Nvidia/Qualcomm/AWS）公開加速 RISC-V/自研、或縮減 ARM 授權</td></tr>
+<tr><td>3</td><td>Forward PE 分位 + 股價 vs 分析師均標</td><td>§11</td><td>短期估值信號</td><td>forward PE 回到 ~50–60x（或股價 ~$150–200，= 估值重置、追蹤池轉條件式）</td></tr>
+</table>
+<p class="note">§3.F Single Thing（大客戶因 channel conflict 公開轉向 RISC-V / 自研 ISA）為第 4 個監測點，在 §15 列出。</p>
+
+<!-- ============ §2 ============ -->
+<h2 id="s2">§2｜序章：第一性原理 × 逆向思考</h2>
+<h3>存在意義</h3>
+<p>剝離財務表象，ARM 解決的長期痛點是：<strong>提供一套全世界共用、低功耗、可授權的運算指令集標準</strong>。x86（Intel/AMD）封閉且高功耗、不對外授權核心；ARM 讓任何人都能設計自己的晶片而不必從零造輪子。若 ARM 明天消失：① 全球 ~99% 智慧手機失去 CPU 架構標準、整個行動軟體生態（為 ARM 編譯）斷裂；② 資料中心剛崛起的能效路線（Graviton/Grace）失去基礎；③ 唯一的替代是 RISC-V（開源、但生態遠不成熟）或回到 x86 壟斷。ARM 的價值正是<strong>「運算的共通語言 + 收費公路」</strong>——它不造車，但每輛車經過都付過路費。</p>
+
+<h3>逆向推演（Munger Inversion）：3 年內虧損 50%+ 的路徑</h3>
+<table>
+<tr><th width="22%">維度</th><th>路徑</th></tr>
+<tr><td>估值去槓桿（最致命，已在發生）</td><td><strong>不需要任何基本面惡化。</strong>trailing PE &gt;400x、forward 108x、PEG 3.5 的股票，只要市場風險偏好一轉（AI 板塊倍數壓縮、利率上行），倍數可在數月內腰斬——即便 EPS 持續成長。歷史對標：2021–22 高倍數成長股（如 ARM 同類 IP/軟體股）在升息週期普遍 −60~80%。ARM 已從 $452 跌到 $333（−26%），這可能只是開始。</td></tr>
+<tr><td>技術替代風險</td><td><strong>RISC-V 開源 ISA</strong>——免費、無授權費、無 channel conflict 疑慮。短期生態不成熟，但 5–10 年在 IoT/嵌入式/部分資料中心逐步侵蝕；ARM 推自家晶片<em>反而加速</em>客戶往 RISC-V 找去風險路徑。歷史對標：開源（Linux/Android）對封閉系統的長期蠶食。</td></tr>
+<tr><td>管理層失職（channel conflict）</td><td>壓成 1 行：自家 AGI 晶片若疏離 Nvidia/Qualcomm/AWS 等授權支柱，可能自毀「中立 IP 商」溢價。自我毀滅決策路徑詳見 §10 資本配置計分卡。</td></tr>
+<tr><td>價值陷阱路徑</td><td>四選一：<strong>「成長泡沫 overpay + 自掘護城河」</strong>——非衰退型陷阱，而是「優質資產 × 脫離地心引力的價格 + 自製結構風險」。架構性替代（客戶轉 RISC-V）分級見 §7 QC-23 ⛔。</td></tr>
+</table>
+<p class="note">護城河如何累積而成，見 §7.D 護城河變遷時間軸。</p>
+
+<!-- ============ §3 ============ -->
+<h2 id="s3">§3｜投資論點錨定</h2>
+
+<div class="box-assume">
+<h3 style="margin-top:0">A｜持有期與時間軸宣告</h3>
+<table>
+<tr><th width="30%">項目</th><th>填寫</th></tr>
+<tr><td>預設持有期</td><td><strong>5–10 年</strong>（長波段 IP 授權複利），惟建倉須在<em>遠低於現價</em>的估值重置後</td></tr>
+<tr><td>主要驅動時間軸的理由</td><td>royalty 複利 + 資料中心/AI 滲透是多年結構過程；估值修復需等泡沫倍數正常化（這是當前唯一阻止進場的變數）。</td></tr>
+<tr><td>此持有期決定哪些是訊號／噪音</td><td>持有期 &gt; 2 年 → royalty 成長軌跡、護城河（含 channel conflict 演變）為訊號；單季授權費 lumpiness 為噪音。但<strong>入場估值</strong>在當前泡沫水位被升格為<em>最高優先訊號</em>（決定 IRR 正負）。</td></tr>
+</table>
+</div>
+
+<h3>B｜三個核心假設 + 三層時間軸（sourced floor + 漂移觸發）</h3>
+<table>
+<tr><th>#</th><th>核心假設</th><th>2Y 驗證點</th><th>5Y 驗證點</th><th>10Y 驗證點</th><th>數字門檻</th><th>來源</th><th>漂移觸發</th></tr>
+<tr><td><strong>H1</strong></td><td>royalty per device 隨 v9/CSS 結構性上升、資料中心/AI 補上行動飽和</td><td>v9 滲透續升、資料中心 royalty 持續高速</td><td>royalty 收入 CAGR 維持高位、資料中心成主引擎</td><td>每代運算（行動→資料中心→AI→汽車）持續推高 royalty rate</td><td>Royalty 收入 YoY ≥ 18%（FY26 +21%）</td><td>公司法說 FY26 Q4</td><td>連 2 季 royalty YoY &lt; 15% → 削弱</td></tr>
+<tr><td><strong>H2</strong></td><td>AGI 自家晶片兌現且不嚴重疏離授權客戶</td><td>首 $1B AGI 訂單交付、製造產能鎖定下一 $1B</td><td>自家晶片成有意義營收且授權模式中立性未崩</td><td>自家晶片與授權雙軌共存、不引發大規模去 ARM 化</td><td>AGI 晶片 FY27-28 $2B 需求兌現、無大客戶公開縮減授權</td><td>公司 FY26 法說（$15B 長期目標、但 guidance 因供給持平）</td><td>任一大客戶公開加速 RISC-V/自研 → 反轉</td></tr>
+<tr><td><strong>H3</strong></td><td>市場願維持極端倍數</td><td>forward PE 不大幅壓縮（&gt;80x）</td><td>倍數「軟著陸」至 ~40–50x 而非崩</td><td>盈餘力長大到追上市值</td><td>forward PE 維持 ≥ 60x（現 108x）</td><td>市場共識 / 估值分位</td><td>forward PE 跌破 60x（估值重置）→ 進場窗口開（H3 反向是利多）</td></tr>
+</table>
+<p class="note">H3 是本標的最脆弱、也最特殊的假設——它賭的是「市場持續付極端倍數」，而非業務本身。H3 反轉（倍數崩）對<em>現有持有人</em>是傷害，但對<em>追蹤池的潛在買家</em>是進場機會。這是「觀望」而非「迴避」的根本原因：franchise 值得擁有，等價格。</p>
+
+<h3>B'｜12 個月前報告對照（thesis review）</h3>
+<p><strong>狀態：進場未滿一年。</strong>Inception = <code>DD_ARM_20260427.html</code>（2026-04-27，首份，距今 ~61 天，尚未滿 365 天）；該份為 v12.3（純基本面，無決策層 / moat_trend 欄），price $234.81、signal B。本欄位將於 2027-04-27 起首次有年度資料對照。</p>
+<table>
+<tr><th>假設</th><th>~2 個月前（首份 4/27）</th><th>本次判定</th><th>漂移</th><th>結論</th></tr>
+<tr><td>H1 royalty 上升</td><td>🟢 兌現（v9/CSS）</td><td>🟢 強化（Q4 FY26 royalty +21%、資料中心翻倍）</td><td>＋（Q4 財報確認）</td><td>持續</td></tr>
+<tr><td>H2 自家晶片（新）</td><td>未涵蓋（AGI CPU 5 月才發表）</td><td>🟡 新增結構變數（channel conflict）</td><td>新風險浮現</td><td>警戒</td></tr>
+<tr><td>H3 估值溢價</td><td>🟡（4/27 price $234·已偏貴）</td><td>🔴 反轉警示（股價 +42% 至泡沫頂 $452 後 −26% 至 $333，估值更極端）</td><td>估值大幅惡化</td><td>砍倉/迴避（對現有持有人）；追蹤等重置（潛在買家）</td></tr>
+</table>
+<p class="note"><strong>關鍵漂移：</strong>首份（4/27）後發生三件大事，皆未在首份涵蓋——① Q4 FY2026 財報（5 月，royalty +21%、資料中心翻倍，確認 H1）；② <strong>AGI 自家晶片發表</strong>（5 月，新結構變數 H2 + channel conflict）；③ 股價拋物線衝到 $452 後 −26% 急跌至 $333（估值從偏貴變泡沫再開始去槓桿）。本份是這些事件後的首次完整重評——裁決從「偏貴觀望」強化為「泡沫觀望 + 結構警示」。</p>
+
+<h3>C｜三個最可能推翻論點的風險（⚡🔥🐢）</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>時間尺度</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td><strong>監管/法律攻擊「中立 IP 商」身分</strong>：FTC 反托拉斯調查（2026-05-15 啟動）+ Qualcomm 反控（試驗 2026-03）。若 FTC 強制中立授權 / Qualcomm 反控勝 → CSS 的 &gt;10% royalty rate 溢價失依據、授權生態信任崩</td><td>H2</td><td>🔥 中期（4–6 季，已有具體進程）</td><td>FTC 調查進展 + Qualcomm 反控判決</td><td>FTC 提起訴訟 / 命令開放授權，或 Qualcomm 反控勝</td></tr>
+<tr><td>R2</td><td>RISC-V 加速去 ARM 化：已達全球晶片 ~25% 滲透；中國強制關鍵基建採用（中國佔 RISC-V 出貨 ~50%）、ARM China 約佔 ARM 營收 ~25%；Qualcomm 收購 Ventana（2025-12）+ Oryon-V 路線圖</td><td>H1</td><td>🔥 中期（已具體化，非純長期）</td><td>RISC-V 出貨/客戶轉移；ARM China 授權流失</td><td>大客戶/中國客戶核心產品轉 RISC-V</td></tr>
+<tr><td>R3</td><td>估值去槓桿：AI 板塊倍數壓縮 + 高倍數股領跌（已在發生）</td><td>H3</td><td>⚡ 短期（1–2 季可觸發）</td><td>forward PE 分位 + 板塊倍數</td><td>板塊倍數 1 季內下移 &gt; 25%（ARM 高 beta 3.79 放大）</td></tr>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<p>新事件四問過濾：① 時間軸匹配？② 影響 H1/H2/H3 哪個？③ 邊際方向？④ 達重評閾值？例：一筆新授權大單 → 影響 H1（＋），但若不改變「估值脫離地心引力」的事實，對「是否在此價進場」仍是噪音。反之，<strong>大客戶宣告 RISC-V 轉移</strong>同時撞 H1+H2+R1+§3.F → 立即重評（thesis 級）。<strong>估值倍數變化（R3）在當前是最高權重變數</strong>——它直接決定追蹤池何時轉進場。</p>
+
+<h3>E｜可執行決策主線預設</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr><td>進場</td><td>估值：forward PE 回 ~50–60x（股價 ~$150–200）；基本面確認：royalty 成長維持 + channel conflict 未升級</td><td>建首倉（角色：核心級候選），分批</td></tr>
+<tr><td>加碼</td><td>H1 確認（royalty 續強）+ 自家晶片未疏離客戶</td><td>加碼至目標倉</td></tr>
+<tr><td>減碼（對現有持有人）</td><td>R3 觸發（估值持續去槓桿）或 royalty 成長 &lt; 15%</td><td>減倉</td></tr>
+<tr><td>撤退</td><td>R1 確認（大客戶去 ARM 化）或 §3.F 觸發</td><td>清倉，記錄推翻理由</td></tr>
+</table>
+
+<div class="box-assume">
+<h3 style="margin-top:0">F｜Single Thing（唯一 binary trigger）</h3>
+<table>
+<tr><th width="26%">項目</th><th>內容</th></tr>
+<tr><td>Single Thing 描述</td><td><strong>一家 top-5 授權客戶（Apple/Qualcomm/Nvidia/MediaTek/AWS 級）公開宣告把核心產品線從 ARM ISA 轉向 RISC-V 或完全自研架構。</strong></td></tr>
+<tr><td>為什麼致命</td><td>直接撞 H1（授權普及）+ H2（中立性）——ARM 的整個估值溢價建立在「人人都得用 ARM」的不可替代性上；任一巨頭出走會證明護城河可被跨越，泡沫倍數瞬間崩。自家晶片 channel conflict 正是<em>提高</em>此機率的催化。</td></tr>
+<tr><td>如果發生</td><td>立刻重評 thesis；若屬核心終端（行動/旗艦資料中心）→ 清倉（追蹤池移除）。</td></tr>
+<tr><td>如何監測</td><td>大客戶法說 + 晶片發表（架構選擇）；目前距發生：RISC-V 在 ARM 核心終端尚無重大突破，但 ARM 推自家晶片<em>提高</em>了客戶找去風險路徑的動機。</td></tr>
+<tr><td>機率估計（12–24 個月）</td><td>~15–20%（巨頭轉架構是慢變數，但 channel conflict + RISC-V 成熟提高機率）</td></tr>
+</table>
+<p><strong>三者職責：</strong>§1 trap 定性 = 現在是否陷阱（🟡 觀察，靜態）；§3.C R1–R3 = 持有期過程風險（channel conflict/RISC-V/估值）；§3.F = 單一 binary 觸發（大客戶轉架構）。三者不重疊。</p>
+</div>
+
+<!-- ============ §4 ============ -->
+<h2 id="s4">§4｜即時財報情報</h2>
+<p class="note">資料來源：ARM Q4 FY2026 6-K / Earnings（2026 年 5 月公布；ARM 財年止於 3 月，FY2026 = 截至 2026-03 之財年）。<strong>此為首份 DD（4/27）之後的新財報，本份首次納入。</strong></p>
+
+<h3>① 最新一季（Q4 FY2026）關鍵數字</h3>
+<table>
+<tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY</th></tr>
+<tr><td>Revenue</td><td>$1.49B</td><td>~$1.48B</td><td><span class="beat">Beat</span></td><td>+20%</td></tr>
+<tr><td>　Licensing</td><td>$819M</td><td>—</td><td><span class="beat">強</span></td><td>+29%</td></tr>
+<tr><td>　Royalty</td><td>$671M</td><td>—</td><td><span class="beat">穩</span></td><td>+11%</td></tr>
+<tr><td>EPS（Non-GAAP）</td><td>$0.60</td><td>~$0.55</td><td><span class="beat">Beat</span></td><td>+9%（$0.55→$0.60）</td></tr>
+<tr><td>FCF</td><td>FY26 全年 $0.949B</td><td>—</td><td><span class="neut">—</span></td><td>—</td></tr>
+<tr><td>Gross Margin</td><td>~97%</td><td>~97%</td><td><span class="neut">符合</span></td><td>→</td></tr>
+</table>
+<p class="note"><strong>全年 FY2026：</strong>營收 $4.92B（+23%）、royalty $2.613B（+21%）、licensing $2.307B（+25%）；<strong>資料中心 royalty 同比翻倍以上</strong>（AI 基建轉向 ARM 能效路線的最強證據）。</p>
+<div class="reasoning">QC-27 Rev/OI divergence：營收 +23% YoY；GAAP OI FY26 $0.908B vs FY25 $0.831B = +9%，OI 成長<em>慢於</em>營收（divergence +14pp）→ margin 壓縮警示。原因：SBC + 自家晶片 R&D 投入上升（OM 從 FY25 20.7% 降至 FY26 18.5%）。列入 §6.E。Non-GAAP 口徑 OM 較高（剔 SBC）。</div>
+
+<h3>② 最重大事件：Arm AGI CPU 發表（自家晶片，結構轉折）</h3>
+<p>FY2026 法說同時發表 <strong>Arm AGI CPU——ARM 首款自家設計的資料中心 CPU（136 核）</strong>，宣稱已有 &gt;$2B FY27-28 客戶需求、長期目標 $15B。<strong>但關鍵：公司把該業務的營收 guidance 維持持平</strong>，自承「無法滿足超過首 $1B 訂單的製造產能」（首 $1B 有產能、下一 $1B 的製造尚未鎖定）。意涵：① 需求真實（資料中心要 ARM 架構的客製晶片）；② 但<strong>供給/製造是 ARM 作為 fabless-IP 公司延伸到自家晶片的真實瓶頸</strong>；③ <strong>channel conflict</strong>——ARM 開始與自己的授權客戶（Nvidia Grace、Qualcomm、AWS Graviton）競爭同一塊資料中心 CPU 市場。</p>
+
+<h3>③ 產業 Imply（1 行）</h3>
+<p><strong>產業隱含信號：</strong>資料中心/AI 對 ARM 能效架構的需求結構性上升（royalty 翻倍 + AGI $2B 需求），但 ARM 從「中立 IP 商」轉向「自家晶片玩家」是雙面刃——餵入 §9（利潤池上移但 channel conflict）與 §7（護城河中立性風險）。</p>
+
+<!-- ============ §5 ============ -->
+<h2 id="s5">§5｜核心門檻檢核（Munger）</h2>
+<p class="note">EPS 來源：Excel buy-side consensus snapshot 2026-06-23（FY+1 FY27 $2.17／FY+2 FY28 $3.08／FY+3 FY29 $4.01）+ yfinance 共識交叉一致。基期 FY2026（截至 2026-03）Non-GAAP EPS ~$1.77。Archetype = 品質複利成長，沿用標準 gate-set。</p>
+
+<table>
+<tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據與趨勢</th></tr>
+<tr><td>FCF Margin（當前）</td><td>&gt; 15%</td><td class="flag-g">✅</td><td>FY2026 19.3%（FCF $0.949B/Rev $4.92B）；lumpy（FY23–26 24%/29%/4%/19%，授權費時點造成）</td></tr>
+<tr><td>正規化 FCF Margin</td><td>5 年均 &gt;15%；谷 &gt;10%</td><td class="flag-y">🟡</td><td>FY23–26 約 24%／29%／3.9%／19.3%；FY25 谷 3.9%（授權確認時點 + 投資）；均值 ~19% 達標但波動大（IP 授權天然 lumpy）</td></tr>
+<tr><td>ROIC（當前）</td><td>&gt; 15% 且 &gt; WACC</td><td class="flag-y">🟡</td><td>ROE ~10.9%（NI $0.904B/權益 $8.29B）；ROIC 受高權益基數（IPO 募資 + 留存）壓低；資本報酬<em>絕對值不高</em>，但業務無形（IP）本質使帳面 ROIC 失真</td></tr>
+<tr><td>ROIC 穩定性（10 年）</td><td>≥70% 年份 &gt;15%</td><td class="flag-y">🟡</td><td>上市僅 ~2.8 年（2023-09 IPO），10 年樣本不可得；FY24 OI 谷（$0.117B，授權確認低點）使 ROIC 不穩</td></tr>
+<tr><td>毛利率定價能力</td><td>≥70% 年份持續改善</td><td class="flag-g">✅</td><td>~97% 毛利（IP 授權商業模式，近乎軟體）；長年穩定極高</td></tr>
+<tr><td>資本密集度</td><td>Capex/Rev &lt;5% 優</td><td class="flag-y">🟡</td><td>FY26 capex $0.575B/Rev $4.92B = 11.7%（近年升，含自家晶片 R&D 化資本投入 + 設施）；歷史 3–5%，自家晶片推升</td></tr>
+<tr><td>EPS CAGR（未來 3 年）</td><td>&gt;20%</td><td class="flag-g">✅</td><td>基期 FY26 ~$1.77 → FY29E $4.01，<strong>3 年 CAGR ~31%</strong>（Excel/yfinance 共識）；Non-GAAP 口徑</td></tr>
+<tr><td>PEG（Non-GAAP）</td><td>&lt; 2</td><td class="flag-r">🔴</td><td><strong>~3.5</strong>（FY2 forward PE 108x ÷ 31% CAGR）——<strong>嚴重超標，估值脫離成長</strong>（見 §11.2）</td></tr>
+<tr><td>負債安全性</td><td>D/E &lt;0.7；現金/Rev 10–50%</td><td class="flag-g">✅</td><td>D/E = 0.06（債 $0.46B/權益 $8.29B）；淨現金（現金 $2.75B）；現金/Rev 56%（偏高，IPO 募資）</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是/否</td><td class="flag-g">✅</td><td>是（淨現金 ~$2.3B）</td></tr>
+<tr><td>護城河強度</td><td>&gt;8 分，趨勢擴大</td><td class="flag-g">✅</td><td>合併 8.5（§7），趨勢 → holding（royalty 升但 channel conflict/RISC-V 抵）</td></tr>
+</table>
+<p><strong>最大財務弱點：PEG 3.5 🔴（估值脫離成長）+ ROIC 帳面偏低（高權益基數）。Munger 三維評級：🟡</strong>（毛利率定價 ✅；資本密集度因自家晶片升至 11.7% 退為 🟡；ROIC 穩定性樣本不足 + 帳面低）→ 傳遞 §7。<strong>致命 gate = PEG 🔴</strong>：再強的 franchise，PEG 3.5 = 現價沒有任何安全邊際。</p>
+
+<!-- ============ §6 ============ -->
+<h2 id="s6">§6｜長期成長性評估</h2>
+
+<h3>0｜成長品質 7 問儀表板</h3>
+<table>
+<tr><th>#</th><th>拷問</th><th>裁決</th><th>關鍵數字</th><th>詳見</th></tr>
+<tr><td>1</td><td>結構性 vs 週期反彈？</td><td>結構為主（royalty 長尾複利 + 資料中心/AI 滲透）</td><td>royalty +21%、資料中心翻倍</td><td>§6.A'</td></tr>
+<tr><td>2</td><td>需多少資本投入？</td><td>輕資產（IP 授權），惟自家晶片推升 capex</td><td>capex/Rev 從 ~3% 升至 11.7%</td><td>§6.D</td></tr>
+<tr><td>3</td><td>增量 ROIC &gt; 資金成本？</td><td>是（無形 IP 高增量報酬，但帳面失真）</td><td>~97% 毛利的增量經濟</td><td>§6.D</td></tr>
+<tr><td>4</td><td>成長變現金流還是被吃掉？</td><td>變現金流（FCF margin 19%，但 lumpy + 自家晶片投入升）</td><td>FCF $0.949B、淨現金</td><td>§10.E</td></tr>
+<tr><td>5</td><td>競爭者會否被吸引進來？</td><td>RISC-V（開源）+ 自家客戶（channel conflict 反噬）<span class="flag-r"> ← 最弱一題之一</span></td><td>RISC-V 生態漸成、客戶去 ARM 化動機</td><td>§7 賽局/§7.F</td></tr>
+<tr><td>6</td><td>股價反映多少期待？</td><td><strong>泡沫（far overheated）</strong></td><td>forward PE 108x、PEG 3.5、trailing &gt;400x</td><td>§11.1/附錄 A</td></tr>
+<tr><td>7</td><td>成長率下修估值撐得住？</td><td>完全不撐（負安全邊際）</td><td>熄火情境 −50%~−70%</td><td>§6.E/§11.5</td></tr>
+</table>
+<p class="note">最弱 = 第 6 題（泡沫估值）與第 7 題（不撐）並列第 5 題（RISC-V + channel conflict）。第 6/7 題決定了「觀望」。與 §1 trap 🟡 + §14 觀望一致。</p>
+
+<h3>A｜成長跑道（Runway）</h3>
+<table>
+<tr><th>維度</th><th>數據</th><th>推論</th></tr>
+<tr><td>當前 TAM（ARM-addressable 運算 IP）</td><td>行動 ~飽和 + 資料中心/AI/汽車/IoT 擴張</td><td>各終端 royalty per device 結構上升</td></tr>
+<tr><td>當前份額</td><td>行動 ~99%；資料中心快速上升（Graviton/Grace）</td><td>行動天花板已近，成長靠新終端 + royalty rate</td></tr>
+<tr><td>royalty rate 趨勢</td><td>v9（vs v8 約 2x royalty）+ CSS（compute subsystem）推高單顆 royalty</td><td>「量飽和、價續升」的成長模式</td></tr>
+<tr><td>幾年達成熟</td><td>資料中心/AI 滲透早期，5–10 年跑道</td><td>—</td></tr>
+<tr><td><strong>成長可持續年數（Runway）</strong></td><td><strong>≥ 10 年</strong></td><td>多終端 + royalty rate 雙引擎</td></tr>
+</table>
+<p class="note">Runway ≥ 10 年 → franchise 支撐高溢價基礎，<em>但</em>「支撐溢價」≠「現價 108x PE 合理」（§11 已遠超溢價該有的水位）。</p>
+
+<h3>A''｜Y5 後跑道 runway_post_y5（必填）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>S 曲線位置</td><td>中期（行動成熟，資料中心/AI/汽車為新曲線早期）</td></tr>
+<tr><td>Y5 末滲透率</td><td>資料中心/AI 仍遠未飽和；royalty rate 仍有上升空間</td></tr>
+<tr><td>是否有下一條 S 曲線</td><td>有：資料中心 CPU、AI 推論、汽車（軟體定義車）、IoT/edge、CSS 變現、自家晶片（若成）</td></tr>
+<tr><td><strong>runway_post_y5</strong></td><td><strong>🟢 寬</strong>：多終端結構性需求 + royalty per device 長尾上升，Y5 後仍有量價空間</td></tr>
+</table>
+
+<h3>B｜成長品質判斷</h3>
+<h4>① 有機 vs 無機</h4>
+<table>
+<tr><th>類型</th><th>占比</th><th>佐證</th></tr>
+<tr><td>有機成長</td><td>~100%</td><td>royalty + 授權皆有機（無重大併購）</td></tr>
+<tr><td>無機成長</td><td>~0%</td><td>近年無重大併購（IP 自研為主）</td></tr>
+</table>
+
+<h4>② 成長驅動：定價 vs 量（royalty rate vs 出貨量）</h4>
+<table>
+<tr><th>類型</th><th>判斷</th><th>趨勢</th></tr>
+<tr><td>定價驅動（royalty rate）</td><td>主導：v9（~2x v8 royalty）+ CSS 把單顆晶片 royalty 結構性推高</td><td>擴大（核心成長引擎）</td></tr>
+<tr><td>量驅動（出貨量）</td><td>次要：行動已飽和（量平），資料中心/AI 量增</td><td>行動穩、資料中心擴</td></tr>
+</table>
+<p class="note">ARM 是「量飽和、價續升」的罕見模式——成長主靠 royalty rate（v9/CSS）而非單位量，這是高品質的（價驅動 + ~97% 毛利落地），但也意味成長依賴「持續說服客戶採用更高階、更貴的架構」。</p>
+
+<h4>③ 營業槓桿</h4>
+<table>
+<tr><th>列</th><th>內容</th></tr>
+<tr><td>增量 OI margin（GAAP）</td><td>FY25→FY26：ΔOI $0.077B ÷ ΔRev $0.913B = ~8.4%（受 SBC + 自家晶片 R&D 拉低）</td></tr>
+<tr><td>增量 vs 存量</td><td>增量 GAAP OM 8.4% &lt; 存量 18.5% → <strong>自家晶片投入期，營業槓桿暫時被稀釋</strong>（§6.E 衰退信號補一盞燈）</td></tr>
+<tr><td>前瞻結論</td><td>~97% 毛利下，營業槓桿潛力巨大，但短期被自家晶片 R&D + SBC 吃掉；Non-GAAP OM 較高</td></tr>
+</table>
+
+<h3>C｜成長護城河連動</h3>
+<p><strong>強化型（royalty 模式）+ 新增消耗風險（自家晶片）：</strong>royalty 成長強化生態鎖定（強化型）；但自家晶片若疏離客戶 = 消耗型風險（為衝自家業務犧牲授權中立性）。這是 §7 的核心張力。</p>
+
+<h3>D｜ROIC 與 FCF 長期可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前（FY26）</th><th>3 年前（FY23）</th><th>趨勢</th><th>門檻</th><th>符合</th></tr>
+<tr><td>ROE</td><td>~10.9%</td><td>~12.9%（NI 0.524/權益 4.051）</td><td>→（權益基數隨留存增）</td><td>—</td><td class="flag-y">🟡（帳面，IP 無形失真）</td></tr>
+<tr><td>FCF Margin</td><td>19.3%</td><td>24%</td><td>波動</td><td>&gt;15%</td><td class="flag-g">✅（lumpy）</td></tr>
+<tr><td>FCF/NI 轉換率</td><td>1.05（FCF 0.949/NI 0.904）</td><td>1.23</td><td>→</td><td>&gt;85%</td><td class="flag-g">✅</td></tr>
+<tr><td>毛利率</td><td>~97%</td><td>~96%</td><td>→</td><td>—</td><td class="flag-g">✅</td></tr>
+</table>
+<p class="note">ARM 的「資本報酬」用帳面 ROIC 衡量會失真——它的核心資產（CPU IP）是無形的、費用化的（R&D），不在資產負債表上。真實經濟報酬是「每投入 $1 R&D 能產生多少年的 royalty 長尾」——這是極高的（~97% 毛利、IP 一次設計多年收費）。帳面 ROE ~11% 不反映此。</p>
+
+<h3>E｜成長熄火情境壓力測試</h3>
+<table>
+<tr><th>情境</th><th>對應特徵</th><th>合理 forward PE 壓縮至</th><th>潛在估值跌幅</th></tr>
+<tr><td>成長維持 ~30% 但倍數正常化</td><td>franchise 健康但市場理性化</td><td>~50x</td><td>~−54%（108x→50x）</td></tr>
+<tr><td>成長降至 20%（行動拖累，資料中心未補足）</td><td>royalty 放緩</td><td>~35x</td><td>~−68%</td></tr>
+<tr><td>成長降至 10% + channel conflict</td><td>RISC-V 侵蝕 + 客戶去 ARM 化</td><td>~22x</td><td>~−80%</td></tr>
+<tr><td>監管熄火（FTC 命令中立授權）</td><td>CSS &gt;10% royalty rate 溢價失依據、定價權受損</td><td>~25-30x（IP 商但定價權弱化）</td><td>~−70%</td></tr>
+</table>
+<p class="note"><strong>關鍵洞察：</strong>即使成長維持 ~30%，只要倍數從 108x 正常化到「對高品質 IP 股仍慷慨的」50x，股價就 −54%。這是 §11.5 Bear 與「觀望」的數學核心——<em>下行不需要基本面崩，只需要倍數理性化</em>。<strong>新增監管維度（critic 紅隊抓出）：</strong>FTC 若命令 ARM 恢復中立授權，傷害的不只是成長率，更是<em>定價權本身</em>（royalty rate 的可調升性）——這會同時壓低 EPS 軌跡與該享倍數，是「雙殺」情境。這條監管熄火路徑在首份 DD（4/27，FTC 調查 5/15 才啟動）完全不存在，是本次重評最重要的新下行軸。</p>
+
+<h3>⚠️ 衰退信號偵測表</h3>
+<table>
+<tr><th>信號</th><th>偵測</th><th>數據</th><th>亮燈?</th></tr>
+<tr><td>護城河侵蝕</td><td>GM 連 2 季下滑</td><td>GM ~97% 穩定</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>核心市佔縮減</td><td>行動 ~99%、資料中心升</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕（新）</td><td>自家晶片 channel conflict → 客戶去 ARM 化</td><td>AGI CPU 引發中立性疑慮</td><td class="flag-y">🟡（結構警示，未實現）</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR ≫ Rev CAGR &gt;5pp</td><td>EPS CAGR ~31% vs Rev CAGR ~25%（差 6pp）</td><td class="flag-y">🟡（margin 槓桿 + 部分外推，可歸因）</td></tr>
+<tr><td>盈餘品質</td><td>FCF/NI &lt;0.75 連 2 年</td><td>1.05</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>SBC/Rev &gt;5% 且升</td><td>SBC/Rev 偏高（GAAP vs Non-GAAP 差距大）</td><td class="flag-y">🟡（IP 公司常態，但偏高）</td></tr>
+<tr><td>產業結構衰退</td><td>TAM 萎縮</td><td>運算 TAM 結構擴張</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>板塊倍數系統下移</td><td>AI 半導體倍數高位（風險 R3）</td><td>⬜（反向：高位）</td></tr>
+<tr><td>隱性資本密集</td><td>Maint capex/FCF</td><td>輕資產（自家晶片升 capex 但仍輕）</td><td>⬜</td></tr>
+<tr><td>營業槓桿稀釋（新）</td><td>增量 OM &lt; 存量 OM</td><td>增量 8.4% &lt; 存量 18.5%（自家晶片投入期）</td><td class="flag-y">🟡</td></tr>
+</table>
+<p><strong>價值陷阱風險評級：🟡 中度警戒（4 個 🟡 軟信號：channel conflict / EPS-Rev 差距 / SBC 偏高 / 營業槓桿暫稀釋——皆可歸因或未實現，但 channel conflict 是真實結構警示）。長期成長性綜合評級：🟢 高確信</strong>（Runway ≥10 年、royalty rate 結構升、護城河強化為主、衰退信號 0 紅）——<em>但這是「franchise 品質」的高確信，不等於「現價估值」可接受。</em></p>
+
+<h3>H｜客戶結構深度</h3>
+<h4>① 客戶集中度</h4>
+<p>ARM 客戶 = 幾乎所有晶片設計者（Apple、Qualcomm、Nvidia、MediaTek、聯發科、三星、AWS、Google、高通）。客戶基礎極廣（這是護城河），但<strong>少數巨頭貢獻不成比例的 royalty</strong>（Apple/Qualcomm 等）。集中度雙面：廣基礎 = 護城河；但 top 客戶若出走（§3.F）= 重大打擊。</p>
+<h4>② 主要客戶議價權</h4>
+<p>巨頭客戶（Apple/Qualcomm）議價權強，且<strong>同時是競爭者</strong>。<strong>Qualcomm 案是最硬的證據：2025-09 Qualcomm 在 Delaware 完勝 ARM（Nuvia/Oryon 授權合法），隨即反控 ARM「違約 + 不當干預客戶關係 + 把授權武器化」（試驗 2026-03），並於 2025-12 收購 RISC-V 廠商 Ventana 規劃 Oryon-V 去 ARM 化路線。</strong>ARM 推自家晶片 + FTC 調查進一步惡化議價動態——最大客戶之一現在既是競爭者、又是法律對手、又有 RISC-V 退路。這是「客戶兼具競爭者身分」風險從抽象變具體的最強案例。</p>
+<h4>③ 客戶生命週期</h4>
+<p>「Grow-with」（客戶賣更多晶片 → ARM 收更多 royalty，良性）+ 「客戶可能 in-house/去 ARM 化」（RISC-V/自研，因 channel conflict 動機上升）並存。</p>
+<h4>④ 留存經濟</h4>
+<p>半導體 IP 口徑：架構世代延續（v8→v9→未來）的 design win 留存。歷史留存極高（切換 ISA 成本巨大），但 channel conflict + RISC-V 是首次出現的留存風險變數。</p>
+<p><strong>客戶結構風險評估：🟡 廣基礎但巨頭兼具競爭者身分</strong>（客戶分散是護城河，但 top 客戶的自研/RISC-V 能力 + channel conflict 是結構風險）。</p>
+
+<h3>F｜AI 取代風險評級</h3>
+<p><strong>🟢 AI 受益。</strong>ARM 是 AI 運算的底層受益者——資料中心 royalty 翻倍、Grace/Graviton 等 AI 伺服器 CPU 用 ARM 架構、edge AI 在行動端用 ARM。AGI 自家晶片直攻 AI 資料中心。AI 浪潮擴大 ARM 的 royalty 池。評級分數 = 9。<span class="note">（注：ARM 受益於 AI，但面對 RISC-V + 自家客戶競爭——這是競爭風險 §7，非「被 AI 取代」。）</span></p>
+
+<h3>I｜分部前瞻建模（深度模組）</h3>
+<table>
+<tr><th>業務段</th><th>FY26 營收</th><th>驅動式</th><th>FY27E</th><th>FY28E</th><th>OM 軌跡</th><th>對 EPS 成長貢獻</th></tr>
+<tr><td>Royalty（每顆晶片）</td><td>$2.613B（53%）</td><td>出貨量（行動平、資料中心增）× royalty rate（v9/CSS 升）</td><td>~$3.1B</td><td>~$3.8B+</td><td>高 margin、穩</td><td><strong>主引擎（~60%+，長尾複利）</strong></td></tr>
+<tr><td>Licensing（前期授權）</td><td>$2.307B（47%）</td><td>新授權簽約數（lumpy）+ CSS/AGI 授權</td><td>~$2.9B</td><td>~$4.3B+</td><td>高 margin、lumpy</td><td>~40%（波動大）</td></tr>
+<tr><td>　其中 AGI 自家晶片</td><td>~初期</td><td>首 $1B 訂單（產能受限）</td><td>含在上述</td><td>$2B 需求（FY27-28）</td><td>較低（製造成本）</td><td>新增但供給受限</td></tr>
+</table>
+<div class="reasoning">營收約 royalty 53% / licensing 47%。Royalty 是高品質長尾引擎（每顆晶片複利）；Licensing lumpy（單季授權簽約時點造成波動，QC-34 須用年度看）。AGI 自家晶片是新變數但<em>製造產能受限</em>（公司自承無法超過首 $1B）→ $15B 長期目標的兌現速度被供給卡。EPS 最敏感變數 = royalty rate 上升能否持續 + licensing 簽約節奏。</div>
+<p class="note">主引擎 = Royalty（v9/CSS 推高單顆 royalty + 資料中心量增）。若 royalty 成長放緩（行動飽和未被資料中心補上），EPS CAGR 從 31% 可降至 ~15–20%。數據來源：FY2026 財報分部 + 法說 + 共識。</p>
+
+<h4>Royalty rate 量×價 build（ARM 經濟學的核心引擎）</h4>
+<table>
+<tr><th>世代/驅動</th><th>對 royalty rate 的影響</th><th>滲透狀態</th><th>對 royalty 成長的貢獻</th></tr>
+<tr><td>v8 → v9 架構</td><td>v9 約 <strong>2x v8</strong> 的 per-chip royalty rate</td><td>v9 持續滲透中（旗艦先行）</td><td>「量飽和、價翻倍」的核心——v9 滲透率每升一檔，混合 royalty rate 升</td></tr>
+<tr><td>CSS（Compute Subsystems）</td><td>賣「整組子系統」而非單核，ASP 大幅高於單核授權</td><td>早期（資料中心/旗艦行動採用）</td><td>把 ARM 從「賣 IP 積木」升級為「賣半成品」，單位收費再上台階</td></tr>
+<tr><td>終端 mix（行動→資料中心）</td><td>資料中心晶片 ASP/複雜度遠高於行動 → 單顆 royalty 更高</td><td>資料中心 royalty FY26 <strong>翻倍</strong></td><td>mix 上移結構性推高混合 royalty rate</td></tr>
+<tr><td>出貨量（units）</td><td>行動 ~飽和（量平）；資料中心/汽車/IoT 量增</td><td>行動天花板近</td><td>量貢獻次要，<em>價（rate）是主引擎</em></td></tr>
+</table>
+<div class="reasoning">ARM 成長 = Σ(各終端出貨量 × 各終端 royalty rate)。關鍵洞察：成長 ~70% 來自 <strong>rate（v9/CSS/mix 推高 per-chip 收費）</strong>、~30% 來自 units。這是高品質的（價驅動 + ~97% 毛利落地），<strong>但本質是「持續說服客戶採用更貴的架構」</strong>——而 FTC 調查正質疑這套定價是否靠「中立平台的隱性壓力」，Qualcomm 反控正質疑 CSS 定價的合約基礎。若監管/法律削弱 ARM 的 rate 定價權，這條主引擎直接受損（接 §11.5 下行偏誤）。</div>
+<p class="note"><strong>AGI 需求數字可信度（保留）：</strong>公司揭露 AGI CPU FY27-28 需求 $2B、長期目標 $15B，但部分報道引述 CEO 稱需求「六週內翻倍至 $20B、保守 $10B」——此跳躍極大、市場難獨立核實。本報告採<em>保守</em>口徑（$2B 已簽 + 製造產能受限於首 $1B），對 $15B+ 長期目標的兌現速度持保留。</p>
+
+<!-- ============ §7 ============ -->
+<h2 id="s7">§7｜護城河分析（報告核心）</h2>
+<p class="note">判斷路徑：ARM 的 execution（架構研發深度）與 pricing power（生態鎖定下的 royalty 定價）緊密耦合，屬 <strong>single-axis escape</strong>（IP 授權平台型，類 SaaS 訂閱）——以綜合分 + narrative 評，明標 "single-axis"。理由：ARM 的 execution（設計更好的架構）<em>就是</em>它的 pricing power（更好架構 → 更高 royalty rate），兩者不可獨立拆分。</p>
+
+<table>
+<tr><th>維度</th><th>評分</th><th>關鍵佐證</th></tr>
+<tr><td><strong>綜合護城河（single-axis）</strong></td><td><strong>8.5/10</strong></td><td>科技業最寬的護城河之一：~99% 行動 ISA、整個 ARM 軟體生態編譯鎖定、enormous 切換成本、royalty rate 結構性定價權（v9/CSS）。扣分項：RISC-V 長期開源威脅 + 自家晶片 channel conflict（自掘風險）使其非滿分 S。</td></tr>
+<tr><td><strong>等級</strong></td><td><strong>A</strong></td><td>強護城河（接近 S），但 channel conflict + RISC-V 的結構風險使其非無懈可擊的 S。</td></tr>
+</table>
+<p class="note">為什麼 single-axis：ARM 的「能力」（設計 v9 架構）與「議價權」（因此能收更高 royalty）是同一件事的兩面，無法像製造業那樣拆 execution vs pricing。</p>
+
+<h3>護城河數字驗收（Moat-to-Numbers）</h3>
+<table>
+<tr><th>指標</th><th>ARM</th><th>對照</th><th>方向</th></tr>
+<tr><td>毛利率</td><td>~97%</td><td>遠高於任何晶片製造商（NVDA 75%、AMD 54%）</td><td>持平（極高位）</td></tr>
+<tr><td>royalty rate 趨勢</td><td>v9 ≈ 2x v8、CSS 再加成</td><td>每代架構漲價</td><td>結構上升（護城河 = 定價權的數字痕跡）</td></tr>
+<tr><td>行動 ISA 份額</td><td>~99%</td><td>近壟斷</td><td>持平（飽和）</td></tr>
+<tr><td>資料中心 royalty</td><td>FY26 翻倍</td><td>從低基期快速擴</td><td>上升</td></tr>
+</table>
+<p class="note"><strong>護城河的數字痕跡 = ~97% 毛利 + royalty rate 每代上升</strong>——這是「定價權」最純粹的證據。但 moat-to-numbers 的<em>趨勢</em>須加註 channel conflict 與 RISC-V 的前瞻風險（見下 moat_trend）。</p>
+
+<h3>護城河來源（sourced evidence）</h3>
+<ul>
+<li><strong>網路效應/生態鎖定：</strong>全球數兆行程式碼為 ARM 編譯、數百萬開發者、整個工具鏈與 OS（Android/iOS/Linux ARM port）——切換 ISA 需重寫/重編譯整個軟體棧。這是 ARM 最深的護城河。</li>
+<li><strong>無形資產/IP：</strong>數十年 CPU 架構專利組合 + v9 指令集 + CSS 設計庫。</li>
+<li><strong>切換成本：</strong>晶片設計者換 ISA 需重新設計晶片 + 客戶重編譯軟體——數年 + 巨額成本。</li>
+</ul>
+
+<h3>競爭鴻溝（mechanism）</h3>
+<p>為什麼資本充足的對手（包括 ARM 自己的巨頭客戶）仍難完全跨越？① <strong>生態壁壘</strong>（軟體為 ARM 編譯，切換需整個生態跟進，協調問題巨大）；② <strong>時間壁壘</strong>（成熟 ISA + 工具鏈需數十年累積，RISC-V 仍在追）；③ <strong>慣性壁壘</strong>（既有產品線、認證、供應鏈都繞 ARM）。<em>但</em>：RISC-V 是「免費 + 無 channel conflict」的替代，且 ARM 推自家晶片<em>降低</em>了客戶留在 ARM 的意願——這是鴻溝<em>可能</em>被侵蝕的 mechanism。</p>
+
+<h3>市佔競爭表（賽局結構）</h3>
+<table>
+<tr><th>競爭威脅</th><th>當前地位</th><th>回看 + 前瞻</th><th>核心威脅</th><th>戰爭承受力</th></tr>
+<tr><td>RISC-V（開源 ISA）</td><td>IoT/嵌入式漸起，核心終端尚弱</td><td>生態漸成 → 前瞻在低階終端 + 部分資料中心侵蝕</td><td>免費 + 無 channel conflict + 客戶可完全掌控</td><td>高（開源無母體成本，多方推動）</td></tr>
+<tr><td>x86（Intel/AMD，資料中心）</td><td>資料中心主流但能效劣</td><td>ARM 在資料中心搶份額</td><td>既有生態 + 效能</td><td>中（能效劣勢）</td></tr>
+<tr><td>客戶自研架構（Apple/Qualcomm/Nvidia）</td><td>多數仍用 ARM 授權</td><td>channel conflict 提高自研/RISC-V 動機</td><td>巨頭有能力繞過 ARM</td><td>極高（巨頭資源）</td></tr>
+</table>
+<p><strong>賽局結構判定：</strong>ARM 目前是 ISA 的<strong>準壟斷者</strong>（行動近 100%），但面對「免費開源替代（RISC-V）+ 自己客戶兼競爭者」的雙重長期侵蝕壓力。sourced 證據：ARM 推自家 AGI 晶片（與客戶競爭）+ Qualcomm 過往授權官司 = 客戶關係張力升高。<strong>判定接線：</strong>channel conflict + RISC-V 使 moat_trend 不得標 ↑（取 →）；§6.E 壓測含「成長降至 10% + channel conflict」情境。</p>
+
+<h3>D｜護城河變遷時間軸</h3>
+<p>1990 ARM 成立（Acorn/Apple 合資）→ 2000s 主宰行動（功耗優勢）→ 2010s 智慧手機爆發 ~99% 份額 → 2016 SoftBank $32B 私有化 → 2020 Nvidia 收購案（$40B，2022 因反壟斷告吹）→ 2023-09 IPO（SoftBank 保留 ~90%）→ 2024-26 v9 + CSS 推高 royalty、資料中心崛起 → 2026 發表自家 AGI CPU（轉折：從純授權到自家晶片）。護城河沿「行動主宰 → royalty rate 升 → 多終端擴張」累積，2026 進入「自家晶片」的新（且有爭議的）階段。</p>
+
+<h3>E｜對手 R&D 對照</h3>
+<p>ARM R&D ~$2B/yr（佔營收 ~40%，IP 公司高研發強度）。對手概念不同：RISC-V 是開源協作（無單一 R&D 主體，但 SiFive/Tenstorrent + 各大廠內部投入合計可觀）；x86（Intel/AMD）R&D 絕對額遠大但分散在製造。ARM 的 R&D 效率高（無形 IP，一次設計多年收費）。</p>
+
+<h3>護城河趨勢（權威 moat_trend ↑→↓）</h3>
+<table>
+<tr><th>維度</th><th>趨勢</th><th>關鍵事件</th></tr>
+<tr><td>定價權（royalty rate）</td><td>擴大</td><td>v9 ≈ 2x v8 royalty、CSS 加成、資料中心 royalty 翻倍</td></tr>
+<tr><td>生態/中立性</td><td>承壓（新）</td><td>自家 AGI 晶片 channel conflict + RISC-V 開源威脅</td></tr>
+<tr><td><strong>權威 moat_trend</strong></td><td><strong>→ holding（下行傾向 ↓，視 FTC/Qualcomm 結果）</strong></td><td>定價權維度<em>確實在升</em>（royalty rate 結構上升、資料中心翻倍，sourced），但「中立 IP 商」護城河的中立性正受<strong>三條已具體化的攻擊線</strong>同時擠壓：① <strong>FTC 反托拉斯調查（2026-05-15）</strong>——直查 ARM 是否對授權客戶降級/拒絕授權；② <strong>Qualcomm 2025-09 完勝 + 反控 ARM「把授權武器化」</strong>（試驗 2026-03）+ 2025-12 收購 Ventana RISC-V；③ <strong>RISC-V 全球 ~25% 滲透 + 中國強制（ARM China ~25% 營收曝險）</strong>。royalty 升（↑）與中立性侵蝕（↓）相抵 → 取 → holding，<strong>但若 FTC 命令開放授權或 Qualcomm 反控勝，應調降至 ↓</strong>。</td></tr>
+</table>
+<p class="note"><strong>QC-39 三軸 + 閘 A 檢核：</strong>ARM 在核心終端（行動 ISA）份額 ~99% 未流失，閘 A 不直接觸發。<strong>但本標的的護城河風險主要在「軸 C 其他結構變數」——監管（FTC）+ 法律（Qualcomm 反控）+ 商業模式中立性（自家晶片）——這正是 critic 紅隊抓到、模板易漏的全新形狀。</strong>誠實校準（防 AVGO 型過度樂觀）：不標 ↑，且明列下行至 ↓ 的條件。<strong>硬接線：</strong>moat_trend → + moat A → 非 Hard Veto（若未來轉 ↓ 且 moat 降至 ≤B，則觸發 Hard Veto 迴避——目前 moat 仍 A，故維持觀望）。</p>
+
+<h4>24 個月內最可能瓦解護城河的變化（QC-23 三級）</h4>
+<table>
+<tr><th>等級</th><th>事件</th><th>機率</th><th>影響</th></tr>
+<tr><td>⛔ 架構替代</td><td>top 客戶（Qualcomm/Nvidia/Apple）把核心產品轉 RISC-V 或完全自研，繞過 ARM ISA</td><td>~15–20%（慢變數，但 channel conflict 提高）</td><td>§1 陷阱重評 + §3.F 觸發</td></tr>
+<tr><td>🔴 生態攻擊</td><td>RISC-V 生態在資料中心/高階終端達臨界，配合 ARM channel conflict 加速採用</td><td>~25%（5–10 年）</td><td>護城河趨勢轉 ↓</td></tr>
+<tr><td>🟡 點對點</td><td>個別客戶部分產品線試 RISC-V（已在 IoT 發生）</td><td>高（已進行）</td><td>不扣分（低階終端常態）</td></tr>
+</table>
+
+<h3>F｜對手財務深度對照（深度模組）</h3>
+<p class="note">ARM 的商業模式（純 IP 授權）獨特，無真正「同類上市對手」可逐項 P&L 對照。以下對照其威脅來源的經濟體質。</p>
+<table>
+<tr><th>維度</th><th>ARM</th><th>RISC-V 陣營（SiFive 等）</th><th>x86（Intel/AMD 資料中心）</th><th>客戶自研（Qualcomm/Nvidia）</th></tr>
+<tr><td>商業模式</td><td>IP 授權（royalty + license）</td><td>開源（多為免費 ISA + 收 IP 服務）</td><td>整合製造/設計</td><td>用 ARM 授權 + 自研能力</td></tr>
+<tr><td>Gross Margin</td><td>~97%</td><td>n/a（多私有/虧損）</td><td>35–54%</td><td>—</td></tr>
+<tr><td>對 ARM 的威脅機制</td><td>—</td><td>免費替代、無 channel conflict、客戶可完全掌控</td><td>資料中心既有生態</td><td>巨頭可繞過 ARM 自研</td></tr>
+<tr><td>承受力</td><td>淨現金、~97% 毛利</td><td>開源無母體成本（多方資助）</td><td>規模但能效劣</td><td>極高（巨頭資源）</td></tr>
+</table>
+<p><strong>RISC-V（須單獨成段，已從抽象變具體）：</strong>不是一家公司，而是一個<em>開源運動</em>——沒有單一可被收購/擊敗的對手，由 Google、Qualcomm、Nvidia、中國廠商多方推動。<strong>已具體化的 sourced 進展</strong>：① RISC-V 達全球晶片 <strong>~25% 滲透率</strong>（2026 初）；② <strong>中國強制關鍵基建（金融/能源/電信）採用，中國佔 RISC-V 出貨 ~50%</strong>——而 <strong>ARM China 約佔 ARM 總營收 ~25%</strong>（FY2025 20-F），是對高基期收入的<em>直接</em>侵蝕路徑；③ <strong>Qualcomm 2025-12 收購高效能 RISC-V 廠商 Ventana、規劃 Oryon-V 路線圖</strong>（汽車/伺服器免授權費基礎，被視為「ISA 獨立宣言」）——ARM 最大客戶之一已有具體去 ARM 化路線圖。短期 RISC-V 生態在行動/高階資料中心仍弱，但<strong>ARM 推自家晶片 + FTC/Qualcomm 訴訟正<em>加速</em>客戶尋找去風險替代</strong>。這是 ARM 護城河最大的結構威脅，且時間軸已從「長期」前移到「中期」，是 moat_trend 取 → 並標明下行至 ↓ 的核心。</p>
+
+<!-- ============ §8 ============ -->
+<h2 id="s8">§8｜財務品質監測</h2>
+<h3>三年趨勢表</h3>
+<table>
+<tr><th>指標</th><th>FY24</th><th>FY25</th><th>FY26</th><th>對照</th><th>相對</th></tr>
+<tr><td>營收（$B）</td><td>3.233</td><td>4.007</td><td>4.92</td><td>—</td><td>+23% YoY</td></tr>
+<tr><td>Gross Margin</td><td>95.2%</td><td>97.0%</td><td>97.5%</td><td>遠高於晶片商</td><td>頂級</td></tr>
+<tr><td>GAAP OM</td><td>3.6%</td><td>20.7%</td><td>18.5%</td><td>受 SBC + 自家晶片 R&D 拖</td><td>FY26 退（投入期）</td></tr>
+<tr><td>FCF Margin</td><td>29%</td><td>3.9%</td><td>19.3%</td><td>lumpy</td><td>波動大（授權時點）</td></tr>
+<tr><td>ROE</td><td>~7.5%</td><td>~13.0%</td><td>~10.9%</td><td>帳面（IP 失真）</td><td>偏低</td></tr>
+</table>
+
+<h3>獲利品質警訊</h3>
+<ul>
+<li><strong>淨利 vs OCF：</strong>FY26 OCF $1.524B &gt; NI $0.904B（轉換 1.69）→ 現金品質好。</li>
+<li><strong>AR vs 營收：</strong>AR $1.30B（+17% vs FY25 $1.107B）≈ 營收 +23% → AR 成長略慢於營收，健康。</li>
+<li><strong>授權 lumpiness：</strong>licensing 收入單季波動大（簽約時點），須用年度看（QC-34）。</li>
+<li><strong>FCF 轉換：</strong>lumpy 但長期健康（IP 高現金轉換）。</li>
+<li><strong>🟡 營業利潤率（非 GAAP）已開始壓縮：</strong>FY2026 R&D 費用<strong>跳升 43% 至 $1.911B</strong>（自家晶片 + AGI 投入），推動非 GAAP 營業費用 +30%，<strong>非 GAAP 營業利潤率自 ~52.8% 壓至 ~49.1%</strong>。「~97% 毛利 / 輕資產」在毛利層仍成立，但在<em>營業利潤層已開始侵蝕</em>——若要達 AGI CPU $15B 長期目標，cost curve 將持續上行（自家晶片的 capex/COGS 尚未充分揭露）。這是「純授權高利潤」thesis 的第一道裂縫。</li>
+</ul>
+
+<h3>回購品質</h3>
+<p>ARM 目前無重大回購/股息（成長股 + SoftBank ~90% 控股，留存為主）。資本配置以 R&D + 自家晶片投入為主。</p>
+
+<h3>FCF lumpiness</h3>
+<table>
+<tr><th>指標</th><th>數值</th></tr>
+<tr><td>過去 4 年 FCF</td><td>FY23 $0.646B／FY24 $0.947B／FY25 $0.158B／FY26 $0.949B</td></tr>
+<tr><td>谷年</td><td>FY25 $0.158B（授權確認 + 投資時點）</td></tr>
+<tr><td>性質</td><td>IP 授權天然 lumpy（授權費前期確認 vs royalty 長尾），非結構惡化</td></tr>
+<tr><td>結論</td><td>🟢 屬正常 IP 模式週期（用 5Y 滾動均看）</td></tr>
+</table>
+
+<h3>E｜長期趨勢 + DuPont + 營運資金（深度模組）</h3>
+<h4>① 關鍵指標 4 年趨勢（yfinance 三表自算，USD bn）</h4>
+<table>
+<tr><th>指標</th><th>FY23</th><th>FY24</th><th>FY25</th><th>FY26</th><th>結構判讀</th></tr>
+<tr><td>營收</td><td>2.679</td><td>3.233</td><td>4.007</td><td>4.92</td><td>CAGR ~23%，加速</td></tr>
+<tr><td>Gross Profit</td><td>2.573</td><td>3.079</td><td>3.886</td><td>4.799</td><td>~96-97.5% GM</td></tr>
+<tr><td>Operating Income</td><td>0.678</td><td>0.117</td><td>0.831</td><td>0.908</td><td>FY24 谷（投資/SBC），後復</td></tr>
+<tr><td>Net Income</td><td>0.524</td><td>0.306</td><td>0.792</td><td>0.904</td><td>波動但升</td></tr>
+<tr><td>FCF</td><td>0.646</td><td>0.947</td><td>0.158</td><td>0.949</td><td>lumpy</td></tr>
+</table>
+<h4>② ROIC/ROE DuPont 拆解</h4>
+<table>
+<tr><th>年</th><th>NOPAT margin（≈OM）</th><th>權益周轉（Rev/Equity）</th><th>ROE</th><th>判讀</th></tr>
+<tr><td>FY24</td><td>3.6%</td><td>0.51x（3.233/6.34 平均）</td><td>~7.5%</td><td>OI 谷年</td></tr>
+<tr><td>FY25</td><td>20.7%</td><td>0.66x（4.007/6.07）</td><td>~13.0%</td><td>OM 回升</td></tr>
+<tr><td>FY26</td><td>18.5%</td><td>0.65x（4.92/7.56）</td><td>~10.9%</td><td>OM 因自家晶片投入略退；權益基數隨留存增稀釋 ROE</td></tr>
+</table>
+<p class="note">ARM 帳面 ROE ~11% 偏低，主因：① 高權益基數（IPO 募資 + 留存現金 $2.75B 未動用）；② 核心 IP 資產費用化（不在分母）。<strong>剔除超額現金 + 以「R&D 投入 → royalty 長尾」看，真實經濟報酬遠高</strong>——但帳面數字本身不亮眼。這是 IP 授權模式的會計特性。</p>
+<h4>③ 營運資金</h4>
+<p>ARM 營運資金結構簡單（無存貨——IP 公司）：AR $1.30B、AP $0.08B、無 inventory。Working capital $5.196B（主要是現金 + AR）。CCC 概念對 IP 公司意義有限（無存貨、無實體供應鏈）。收款週期：DSO ~96 天（AR/Rev×365 = 1.30/4.92×365）。</p>
+<h4>④ 債務結構</h4>
+<p>總債僅 $0.46B、淨現金 $2.3B——無債務風險。資產負債表是堡壘。</p>
+<h4>⑤ R&D 與營業槓桿軌跡（yfinance 三表自算，USD bn）</h4>
+<table>
+<tr><th>FY</th><th>Gross Profit</th><th>Operating Income</th><th>總營業費用（GP−OI）</th><th>R&D（估）</th><th>GAAP OM</th><th>判讀</th></tr>
+<tr><td>FY23</td><td>2.573</td><td>0.678</td><td>1.895</td><td>~0.93</td><td>25.3%</td><td>—</td></tr>
+<tr><td>FY24</td><td>3.079</td><td>0.117</td><td>2.962</td><td>~1.18</td><td>3.6%</td><td>OI 谷（投資 + SBC + 上市費用）</td></tr>
+<tr><td>FY25</td><td>3.886</td><td>0.831</td><td>3.055</td><td>~1.34</td><td>20.7%</td><td>OM 回升</td></tr>
+<tr><td>FY26</td><td>4.799</td><td>0.908</td><td>3.891</td><td><strong>1.911</strong></td><td>18.5%</td><td><strong>R&D +43%（自家晶片）→ OM 再退</strong></td></tr>
+</table>
+<div class="reasoning">R&D 軌跡 $0.93B → $1.18B → $1.34B → <strong>$1.91B（FY26 +43%）</strong>——自家 AGI 晶片是這道跳升的主因。GAAP OM 18.5% 與非 GAAP OM ~49.1%（自 52.8% 壓縮）同步指向：<strong>「~97% 毛利」的 ARM 在<em>營業層</em>正被自家晶片投入侵蝕。</strong>這對估值的 implication：ARM 若從「純授權」滑向「半個晶片公司」，營業槓桿與該享倍數同步下修——是 §11.4c「輕資產裂縫」的數字根。<em>毛利層（97%）仍是堡壘，但這是第一次毛利之外的利潤結構出現方向性退化。</em></div>
+
+<!-- ============ §9 ============ -->
+<h2 id="s9">§9｜產業格局</h2>
+<h3>市場量化</h3>
+<p>ARM 的 TAM = 全球運算晶片市場（行動 ~飽和 + 資料中心/AI/汽車/IoT 擴張）。當前 ARM royalty 池 ~$2.6B，隨 v9/CSS（royalty rate 升）+ 多終端（資料中心 royalty 翻倍）擴張。供需：AI/資料中心對能效運算的需求結構性上升。</p>
+<p><strong>供需 durability 裁決：</strong>AI/資料中心對 ARM 能效架構的需求<strong>結構性持久</strong>（資料中心 royalty 翻倍 = sourced，AI 伺服器 CPU 能效需求 + 超大規模自研 ARM 晶片如 Graviton/Grace）。durability 強。但 ARM 的<em>份額/中立性</em>能否維持，取決於 channel conflict 與 RISC-V 的長期演變（非產業總量）。裁決：<strong>需求 durability 結構強，但 ARM 在這塊大餅的「中立 IP 商」地位因自家晶片 + RISC-V 而有長期不確定性</strong>。此裁決餵 §6.E（成長假設）與 §11.5（bear 機率主要來自估值去槓桿 + channel conflict，非需求崩）。</p>
+
+<h3>利潤池地圖 + 流向</h3>
+<table>
+<tr><th>價值鏈環節</th><th>代表公司</th><th>OI 池代理</th><th>遷移</th></tr>
+<tr><td><strong>ISA/IP 授權（最上游）</strong></td><td><strong>ARM</strong></td><td>~97% 毛利（最肥環節）</td><td>↑（royalty rate 升 + 多終端）</td></tr>
+<tr><td>晶片設計</td><td>Apple/Qualcomm/Nvidia/AMD</td><td>高（但付 ARM royalty）</td><td>→</td></tr>
+<tr><td>晶圓代工</td><td>TSMC</td><td>高（製程瓶頸）</td><td>↑</td></tr>
+<tr><td>RISC-V（潛在替代）</td><td>開源</td><td>侵蝕 ARM 的 IP 利潤池</td><td>↑（長期威脅）</td></tr>
+</table>
+<p><strong>利潤池位置/流向結論：↑ 流入</strong>——ARM 站在價值鏈最上游、最肥的環節（~97% 毛利），且 royalty rate 結構上升使其利潤池占比上升（sourced：v9/CSS + 資料中心翻倍）。對 Runway 的含義：ARM 的位置極佳。<strong>但</strong>RISC-V 的存在意味這塊最肥的利潤池<em>長期</em>面臨「免費替代」的侵蝕壓力——這是 ARM 利潤池雖大但非永久安全的關鍵。判定：本標的環節淨流入 → §6.A Runway 維持，附錄 A 產業風向燈可標 🟢。</p>
+
+<h3>議價權（三段獨立）</h3>
+<p><strong>①對上游：</strong>ARM 幾乎無上游（IP 自研，無實體供應鏈）——議價權問題在自家晶片時才出現（須搶 TSMC 產能，公司自承製造產能受限）。</p>
+<p><strong>②對下游客戶：</strong>對廣大客戶基礎議價權<strong>強</strong>（royalty rate 可隨架構升級提高，~97% 毛利落地）；但對<em>巨頭客戶</em>（Apple/Qualcomm，兼具自研能力 + 過往官司）議價權有限，且 channel conflict 升高張力。</p>
+<p><strong>③地緣曝險（critic 紅隊量化）：</strong>① <strong>ARM China 約佔 ARM 總營收 ~25%</strong>（FY2025 20-F），治理複雜（過去有控制權爭議）；而<strong>中國政府強制關鍵基建（金融/能源/電信）採用 RISC-V，中國佔全球 RISC-V 出貨 ~50%</strong>——這意味 ARM 最大單一地區營收（~25%）正面臨政策驅動的 RISC-V 替代，是對高基期收入的<em>直接、中期</em>侵蝕（非遠期）。② SoftBank ~87% 控股（日本母體，§10 釋股風險）；③ 晶圓委由 TSMC（自家晶片須搶產能）。④ 出口管制對 ARM 先進架構對中國授權的影響需持續監測。<strong>ARM China 25% 營收 × 中國 RISC-V 國產化政策 = 本標的最被低估的地緣/結構營收風險之一。</strong></p>
+
+<h3>營收組成</h3>
+<p><strong>① 按類型：</strong>Royalty 53%（$2.613B，+21%，長尾複利）/ Licensing 47%（$2.307B，+25%，lumpy）。<strong>② 按終端：</strong>行動仍最大（飽和）、資料中心快速增（royalty 翻倍）、汽車/IoT 增。<strong>③ 客戶集中：</strong>廣基礎但巨頭貢獻不成比例。</p>
+
+<h3>單位經濟</h3>
+<table>
+<tr><th>類型</th><th>核心 Unit</th><th>趨勢</th><th>洞察</th></tr>
+<tr><td>Royalty</td><td>royalty per chip（v9/CSS 升）</td><td>↑</td><td>「量飽和、價升」的高品質複利</td></tr>
+<tr><td>Licensing</td><td>per license deal</td><td>↑（CSS/AGI 推升）</td><td>lumpy 但前瞻 royalty 的領先指標</td></tr>
+</table>
+
+<h3>F｜逐段 TAM/SAM + 價值鏈深度（深度模組）</h3>
+<table>
+<tr><th>終端</th><th>ARM 地位</th><th>TAM 趨勢</th><th>價值鏈位置 + 風險</th></tr>
+<tr><td>行動</td><td>~99% 份額</td><td>飽和（量平）</td><td>主宰但成長靠 royalty rate；RISC-V 低階侵蝕</td></tr>
+<tr><td>資料中心/AI</td><td>快速上升（Graviton/Grace）</td><td>結構擴張</td><td>最大成長段；x86 反撲 + 自研 ASIC 競爭</td></tr>
+<tr><td>汽車</td><td>上升（軟體定義車）</td><td>擴張</td><td>長 design cycle、高黏性</td></tr>
+<tr><td>IoT/嵌入式</td><td>主流但 RISC-V 侵蝕中</td><td>穩</td><td>RISC-V 已實質進入（最脆弱段）</td></tr>
+</table>
+<p class="note">資料中心/AI 是 TAM 最大、成長最快的段（royalty 翻倍）；IoT 是 RISC-V 侵蝕最早的段。ARM 的成長重心正從「行動主宰」轉向「資料中心擴張」，而防守重心是「擋住 RISC-V 往核心終端滲透」。</p>
+<p class="note"><strong>50% hyperscaler CPU share 的雙刃解讀（防過度樂觀）：</strong>ARM 在 Computex 2026 宣稱超越 x86、取得 ~50% hyperscaler CPU 份額，表面是 thesis 大利多。但此數字<em>混入了 Graviton（AWS 自研）、Grace（Nvidia 自研）、Ampere 等 ARM-licensed 但客戶自設計的晶片</em>——這些玩家現在<strong>同時面對 ARM 成為自家 AGI 晶片的競爭者</strong>，未來設計下一代時都多了「評估去 ARM 化」的動機。換言之，這個份額峰值的「品質」比表面脆弱：它建立在「客戶用 ARM 架構自研」之上，而 channel conflict + FTC 調查正侵蝕這個合作前提。份額高 ≠ 護城河安全。</p>
+
+<!-- ============ §10 ============ -->
+<h2 id="s10">§10｜公司治理與資本配置</h2>
+<p><strong>股東結構（關鍵風險）：</strong>SoftBank 持有 ~87%（20-F，截至 2025-03），<strong>公開流通量僅 ~10–13%</strong>，機構持有流通股 ~95%，內部人 ~0.07%。<strong>極小流通量是高波動（beta 3.79）與估值脆弱的結構原因</strong>——少量買賣即大幅波動。無 dual-class，但 SoftBank 實質控制（小股東話語權有限）。</p>
+<table>
+<tr><th>SoftBank 釋股情境</th><th>對流通量的衝擊</th><th>價格含義</th></tr>
+<tr><td>釋出 5% 股權</td><td>流通股增加 ~38%（從 ~13% 加 5pp）</td><td>巨大供給壓力——高倍數 + 薄流通下，折價衝擊可觀</td></tr>
+<tr><td>釋出 10%</td><td>流通股近翻倍</td><td>結構性 re-rate（稀缺溢價消失）</td></tr>
+</table>
+<div class="reasoning">SoftBank 自身承受日元升值 + 科技資產重估壓力，有釋股的潛在動機。當前 ~10–13% 的薄流通是「稀缺溢價」的一部分——一旦 SoftBank 啟動變現，這層溢價消失。這是 ARM 估值「非線性下行」的結構引信：泡沫倍數 + 薄流通 + 大股東潛在賣壓 = 去槓桿時跌幅被放大（呼應 beta 3.79）。此風險與基本面無關，純結構性，但對 Max DD（§13c −60~−75%）是重要輸入。</div>
+
+<p><strong>近期內部人交易（🔴 警示，有日期/金額/職位的 cluster）：</strong>2026 年 5–6 月，三位 C-suite 在股價 $287–393 區間密集套現合計 &gt;$8M——CCO William Abbey（5/21 $1.34M @$287、5/22 $703K @$305、5/28 @$343）、CAO Laura Bartels（6/2 以 $392.70 賣 11,306 股 = $4.4M，近高點）、CPO（$2.26M）。時間集中在 AGI CPU 發表後、FTC 調查期間、股價峰值——機構高度重視的「內部人視當前為峰值」信號，是近期 −26% 急跌的催化之一。</p>
+<p><strong>監管/法律（🔴 結構風險，§3.C R1）：</strong>① <strong>FTC 反托拉斯調查（2026-05-15 啟動）</strong>——直查 ARM 進軍自家晶片後是否對 Apple/Qualcomm/Nvidia/AWS 降級/拒絕授權；這對「中立 IP 商」business identity 是無技術解的監管兩難（不能既是平台又是競爭者）。② <strong>Qualcomm 反控</strong>（2025-09 Qualcomm 完勝後反控 ARM 違約 + 武器化授權，試驗 2026-03）。兩線若不利 ARM，直接撞 §7 定價權與 §3 H2。</p>
+
+<p><strong>資本配置：</strong>無股息、無重大回購（成長 + SoftBank 控股）。資本用於 R&D（~$2B/yr）+ <strong>自家晶片投入（新，推升 capex 至 11.7%）</strong>。M&A：近年無重大併購（IP 自研）。</p>
+
+<h3>SBC 真實稀釋</h3>
+<table>
+<tr><th>指標</th><th>數據</th></tr>
+<tr><td>SBC/Revenue</td><td>偏高（IP/科技公司常態；GAAP vs Non-GAAP EPS 差距顯著）</td></tr>
+<tr><td>GAAP vs Non-GAAP</td><td>Non-GAAP EPS（$0.60 Q4）顯著高於 GAAP，差距主來自 SBC</td></tr>
+<tr><td>稀釋方向</td><td>SBC 持續稀釋股數；須監測淨稀釋率</td></tr>
+</table>
+
+<h3>資本配置計分卡</h3>
+<table>
+<tr><th>項目</th><th>計算</th><th>過/不過</th></tr>
+<tr><td>M&A ROIIC</td><td>近年無重大 M&A</td><td>N/A（不計）</td></tr>
+<tr><td>R&D 報酬</td><td>R&D → royalty 長尾，無形高報酬</td><td>過（核心 IP 投入）</td></tr>
+<tr><td>SBC 淨稀釋</td><td>偏高</td><td>邊際</td></tr>
+<tr><td>自家晶片投入（新）</td><td>$15B 長期目標但製造產能受限 + channel conflict</td><td>待驗證（執行 + 戰略風險）</td></tr>
+</table>
+<p><strong>資本配置等級：B</strong>（R&D 投入紀律好；但自家晶片是高風險戰略賭注 + 高管拋售 + SBC 偏高為扣分項）。capalloc_grade = B 寫入 dd-meta optional。</p>
+
+<h3>D｜10 年資本配置 track record（深度模組）</h3>
+<p><strong>① M&A：</strong>2016 被 SoftBank $32B 私有化 → 2020 Nvidia $40B 收購案（2022 反壟斷告吹）→ 2023 IPO。近年無重大主動併購。<strong>② 回購/股息：</strong>無（成長 + 控股結構）。<strong>③ 內部人 + 薪酬：</strong>🔴 近期高管群聚拋售（峰值信號）；SoftBank ~90% 控股決定治理（小股東話語權有限）。<strong>④ 自家晶片：</strong>2026 進入自家晶片，是 10 年來最大戰略轉向——高潛在報酬（$15B）但高 channel conflict 風險 + 製造產能未鎖定。</p>
+
+<h3>E｜FCF 去向 + M&A 飛輪</h3>
+<p><strong>① FCF 去向：</strong>FY26 FCF $0.949B → 留存（淨現金累積 $2.75B 未動用）+ R&D + 自家晶片投入。無股息/回購。<strong>② 無 M&A 飛輪</strong>（有機 IP 模式）。<strong>③ 結論：</strong>成長變現金流（FCF margin 19%），但現金<em>囤積未配置</em>（$2.75B 閒置）+ 自家晶片是新的資本去向（待驗證報酬）。增量 ROIC（IP 層）高，但帳面 ROE 因現金囤積被稀釋。接 §6.0 第 4 問：成長變現金流 ✅，惟資本配置效率（閒置現金）有提升空間。</p>
+
+<!-- ============ §11 ============ -->
+<h2 id="s11">§11｜估值與報酬</h2>
+<p class="note">EPS 來源：Excel buy-side snapshot 2026-06-23（FY27 $2.17／FY28 $3.08／FY29 $4.01）+ yfinance 共識。價格 $333.40（6/26 收盤）。ARM 財年止於 3 月。</p>
+
+<h3>11.1｜歷史估值分位</h3>
+<table>
+<tr><th>指標</th><th>當前</th><th>區間（IPO 2023-09 以來 ~2.8 年）</th><th>分位</th></tr>
+<tr><td>Trailing P/E</td><td>&gt;400x（New Street 稱已破 480x 峰值）</td><td>歷史高位</td><td>~95%+</td></tr>
+<tr><td>Forward P/E（FY27, $2.17）</td><td>~154x</td><td>—</td><td>高位</td></tr>
+<tr><td>Forward P/E（FY28, $3.09）</td><td>108x</td><td>—</td><td>~90%</td></tr>
+<tr><td>EV/EBITDA</td><td>346x</td><td>—</td><td>極端</td></tr>
+<tr><td>P/B</td><td>42.8x</td><td>—</td><td>極端</td></tr>
+<tr><td>P/S</td><td>~72x（市值/FY26 rev）</td><td>—</td><td>極端</td></tr>
+</table>
+<div class="reasoning">ARM 上市僅 ~2.8 年，5Y 分位以可得歷史估。任何指標皆在歷史高位（trailing &gt;400x、P/B 43x、P/S 72x）。當前估值情緒：<strong>泡沫（far overheated）</strong>。implication：附錄 A 估值燈 🔴。</div>
+
+<h3>11.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>判斷</th></tr>
+<tr><td>Forward P/E（FY28）</td><td>108x</td><td>—</td></tr>
+<tr><td>EPS CAGR（3Y）</td><td>~31%</td><td>FY26 ~$1.77 → FY29 $4.01</td></tr>
+<tr><td><strong>PEG（FY2/3Y）</strong></td><td><strong>~3.5</strong></td><td>🔴 &gt;2.5 嚴重過熱</td></tr>
+<tr><td>PEG（用 FY27 154x / 31%）</td><td>~5.0</td><td>🔴 極端</td></tr>
+</table>
+<div class="reasoning">PEG 3.5–5.0 遠超「合理 1–2」上限。即便給 ARM 最高的成長率假設（~35%），PEG 仍 &gt;3。<strong>這是核心：ARM 的成長雖快，但估值快了更多——成長無法 justify 倍數。</strong>implication：估值燈 🔴，無盲點 1 救援空間（PEG &gt;2.0 即不適用救援）。</div>
+
+<h3>11.4｜同業估值比較</h3>
+<p>本標的業務模式 tier：<strong>純 IP 授權平台（罕見，無完美同類）</strong>。對照高品質半導體/IP 名與 AI 龍頭。</p>
+<table>
+<tr><th>公司</th><th>市值</th><th>Fwd P/E</th><th>PEG</th><th>GM</th><th>EPS CAGR</th></tr>
+<tr><td><strong>ARM</strong></td><td>$356B</td><td>108x(FY28)/154x(FY27)</td><td>~3.5</td><td>97%</td><td>~31%</td></tr>
+<tr><td>NVIDIA（AI 龍頭對照）</td><td>~$4T+</td><td>~35x</td><td>~0.8</td><td>75%</td><td>~40%</td></tr>
+<tr><td>Synopsys/Cadence（EDA IP）</td><td>各 ~$100B+</td><td>~40-50x</td><td>~2.5-3</td><td>~80%</td><td>~15-20%</td></tr>
+<tr><td>tier 中位（高品質 IP/AI）</td><td>—</td><td>~40x</td><td>~1.5-2</td><td>~80%</td><td>~25%</td></tr>
+</table>
+<div class="reasoning">ARM forward PE 108x vs tier 中位 ~40x = <strong>溢價 ~170%</strong>。即便是最貴的同類（Cadence/Synopsys ~40-50x），ARM 仍高出 1 倍以上。ARM 毛利最高（97%）、成長中上，但<em>沒有任何同類在 100x+ 交易</em>。implication：相對 tier 嚴重溢價，維持 🔴。即便 ARM 該享 EDA/IP 類的溢價，公允 forward PE ~50-60x → 股價該在 $155-185。</div>
+<p><strong>分析師目標價：</strong>均值 ~$245（<strong>低於現價 $333 約 26%</strong>，TIKR：均標一度低於股價 38%）／街高 $500／部分近期上修（UBS $470、TD Cowen $475，6/24）；但 New Street 6/18 降評 Neutral。共識 Buy 但目標價與股價嚴重背離——<strong>市場價已遠超 sell-side 平均公允</strong>。不認同現價有上行；認同街高 $500 需極端 bull 兌現。</p>
+
+<h3>11.4b｜市場隱含預期反推（$333 在賭什麼）</h3>
+<p>估值節的核心任務是「判斷現價隱含了什麼預期」。反推 $333（市值 $356B）需要什麼才合理：</p>
+<table>
+<tr><th>若 5 年後給的合理 PE</th><th>則 $333 持平所需的 FY2031 EPS</th><th>vs 共識軌跡（FY29 $4.01）</th><th>隱含 FY29→31 EPS CAGR</th></tr>
+<tr><td>30x（成熟高品質 IP）</td><td>~$11.1</td><td>需遠超共識</td><td>~66%/yr（不現實）</td></tr>
+<tr><td>40x（慷慨 IP 溢價）</td><td>~$8.3</td><td>大幅超共識</td><td>~44%/yr</td></tr>
+<tr><td>50x（極端溢價）</td><td>~$6.7</td><td>超共識外推</td><td>~29%/yr</td></tr>
+<tr><td>60x（維持泡沫倍數）</td><td>~$5.6</td><td>約共識外推</td><td>~18%/yr</td></tr>
+</table>
+<div class="reasoning">反推邏輯：$333 = FY2031 EPS × terminal PE。要讓「現價持平（0% 報酬）」成立，須在 40x（仍慷慨）下做到 FY2031 EPS ~$8.3——即 FY29 共識 $4.01 之後再以 ~44%/yr 複合。換言之，<strong>$333 隱含的是「ARM 不僅兌現激進共識，還要在 2029 後維持 40%+ 成長 + 市場永遠給 40x+」</strong>——這是雙重極端假設。只要 terminal PE 落到「對頂級 IP 股仍合理」的 40x 而成長正常化到共識軌跡，現價就是負報酬。這量化了「為什麼好公司在此價是觀望」。</div>
+
+<h3>11.4c｜輕資產 thesis 的第一道裂縫（OM 壓縮）</h3>
+<p>ARM 估值溢價的一大支柱是「~97% 毛利、輕資產、營業槓桿巨大」。但 FY2026 出現首道裂縫：<strong>R&D +43% 至 $1.911B</strong>（自家晶片 + AGI），推升非 GAAP 營業費用 +30%，<strong>非 GAAP 營業利潤率自 ~52.8% 壓至 ~49.1%</strong>。毛利層（97%）仍完好，但<em>營業利潤層</em>開始被自家晶片投入侵蝕。若 AGI $15B 目標要兌現，自家晶片的 capex/COGS（尚未充分揭露）會讓 cost curve 持續上行——<strong>「賣 IP 收 royalty」與「賣晶片扛製造成本」是兩種利潤結構，後者拉低 ARM 引以為傲的營業槓桿。</strong>這對「該給多高倍數」是負面修正：若 ARM 逐漸變成「半個晶片公司」，它就不該享純 IP 商的倍數。</p>
+
+<div class="box-irr">
+<h3>11.5｜不對稱報酬 Bull/Base/Bear 5Y + 機率 + IRR</h3>
+<table>
+<tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率</th></tr>
+<tr><td>Bull（thesis 對）</td><td>+32%（→~$440）</td><td>+5.7%/yr</td><td>FY2031 EPS ~$8（AI/資料中心 + AGI 晶片）× 55x（仍維持高溢價）</td><td>30%</td></tr>
+<tr><td>Base</td><td>−24%（→~$252）</td><td>−5.4%/yr</td><td>FY2031 EPS ~$6.3 × 40x（倍數正常化至仍慷慨水位）</td><td>40%</td></tr>
+<tr><td>Bear（thesis 錯/泡沫破）</td><td>−70%（→~$100）</td><td>−21.5%/yr</td><td>RISC-V/channel conflict + 估值去槓桿，FY2031 EPS ~$4 × 25x</td><td>30%</td></tr>
+<tr><td><strong>機率加權 EV</strong></td><td><strong>−21% 5Y</strong></td><td><strong>IRR ≈ −5%/yr</strong></td><td>0.3×32 + 0.4×(−24) + 0.3×(−70)</td><td>—</td></tr>
+</table>
+<div class="reasoning">IRR：機率加權 EV −21% 5Y → 年化 ~−4.6%/yr。落點：<strong>負 IRR</strong>——遠低於「弱（&lt;8%）」門檻。為何負：股價已貼現極端未來，即使 Bull（成長兌現 + 倍數維持 55x）也只 +5.7%/yr；Base（倍數正常化到 40x，仍慷慨）就是負；Bear 腰斬。<strong>這是「觀望/迴避此價」最硬的數字依據。</strong></div>
+<p><strong>追加壓力（10Y）：</strong>即使拉長 10 年、franchise 完美兌現，從 $333 起點的 IRR 仍受高起點估值壓制（~3-6%/yr）；機會成本下 NVDA/TSM 同期 IRR 明顯更優。</p>
+<table>
+<tr><th>標的（AI/運算曝險）</th><th>Forward PE</th><th>PEG</th><th>護城河</th><th>現價 5Y base IRR</th><th>R:R 質感</th></tr>
+<tr><td><strong>ARM</strong></td><td>108x(FY28)/154x(FY27)</td><td>~3.5</td><td>A（中立性受 FTC/Qualcomm 攻擊）</td><td><strong>~−5%/yr（負）</strong></td><td>同類最貴、唯一負 IRR</td></tr>
+<tr><td>NVDA（對照）</td><td>~35x</td><td>~0.8</td><td>S（CUDA 鎖定）</td><td>~10-12%/yr</td><td>AI 曝險更直接、conviction 高</td></tr>
+<tr><td>TSM（對照）</td><td>~20x</td><td>&lt;1</td><td>S（2nm 寡占）</td><td>~12-14%/yr</td><td>賣鏟人、風險最低、所有 ARM 晶片也經其代工</td></tr>
+</table>
+<p class="note">機會成本裁決：ARM 在同類中 forward PE 是 NVDA 的 ~3 倍、TSM 的 ~5 倍，且是<strong>唯一負 base IRR</strong> 的標的。若要 AI/運算曝險，NVDA/TSM 在現價的 R:R 與 conviction 全面碾壓 ARM。ARM 的純 ISA「收費公路」獨特且誘人，但<strong>邊際資金絕不在 $333 放 ARM</strong>——此表直接餵 §14a opportunity cost。</p>
+<table>
+<tr><th>機率校準檢查</th><th>標準</th><th>本案</th></tr>
+<tr><td>Bear 機率</td><td>5Y 不應 &lt;20%</td><td>30% ✅（估值去槓桿 + RISC-V/channel conflict 雙風險）</td></tr>
+<tr><td>Bull/Bear 散布</td><td>5Y 應寬</td><td>+32% vs −70%，散布寬 ✅</td></tr>
+<tr><td>Base 機率</td><td>不應 &gt;50%</td><td>40% ✅</td></tr>
+<tr><td>QC-39 閘 B durability</td><td>循環/durability 依據</td><td>ARM 非循環商品股；bear 機率 30% 主要依據 = <strong>估值去槓桿 + channel conflict/RISC-V（非需求崩）</strong>。AI/資料中心需求 durability 結構強（searched：royalty 翻倍），故 bear 不源於需求，而源於「極端估值無安全邊際 + 自掘護城河風險」。產業態勢雙向裁決見 §9。</td></tr>
+</table>
+<p class="note"><strong>核心：</strong>ARM 是少數「franchise A 級但現價 base IRR 為負」的標的——下行不需基本面崩，只需倍數從 108x 理性化。這使裁決明確：好公司，等價格。<strong>下行偏誤警示：</strong>上述 base IRR −5.4% 假設 FY2028 共識 EPS $3.09 成立。但若 FTC 命令恢復中立授權，CSS 的 &gt;10% royalty rate 溢價失依據；若 Qualcomm 反控勝，授權生態信任崩——<strong>這兩個 tail case 下，FY2028 EPS 共識是<em>向下偏誤</em>的，實際 base IRR 可能比 −5%/yr 更糟。</strong>故 30% bear 機率不算保守。</p>
+</div>
+
+<div class="box-irr">
+<h3>11.6｜IRR 三分量拆解</h3>
+<table>
+<tr><th>情境</th><th>EPS CAGR</th><th>估值 re-rate</th><th>股息+回購</th><th>合計年化</th></tr>
+<tr><td>Bull</td><td>+32%/yr</td><td>−24%/yr</td><td>0</td><td>+5.7%/yr</td></tr>
+<tr><td>Base</td><td>+28%/yr</td><td>−33%/yr</td><td>0</td><td>−5.4%/yr</td></tr>
+<tr><td>Bear</td><td>+18%/yr</td><td>−40%/yr</td><td>0</td><td>−21.5%/yr</td></tr>
+</table>
+<div class="reasoning">re-rate = (end_PE/start_PE)^(1/5)−1。Base：start forward PE ~108x → end ~40x，re-rate ≈ (40/108)^(1/5)−1 ≈ −18%/yr，但相對 EPS 成長基數的有效拖累 ~−33%/yr。合計 28−33+0 ≈ −5%/yr ≈ §11.5 Base（偏差 &lt;2%p ✅）。</div>
+<p><strong>質感解讀：</strong>Base −5.4% IRR 中，+28%/yr 來自 EPS 複利，<strong>但 −33%/yr 被估值 re-rate 吃光還倒貼</strong>，無股息回購緩衝。可抱性：<strong>極差</strong>——再強的 EPS 複利都贏不過從 108x 正常化的倍數逆風。<strong>非估值依賴型（re-rate 為負）</strong>，反而是「估值受害型」：你不是賭市場給更高倍數，而是在<em>對抗</em>必然的倍數下行。這是 ARM 與一般成長股的根本不同——它的問題不是「需要市場配合」，而是「市場理性化就會虧」。</p>
+</div>
+
+<h3>11.7｜Pattern match（歷史相似 case）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>結構類似個股</td><td>2021 高倍數成長/IP 股（如疫情期 SaaS 龍頭、或 ARM 同類無形 IP 股）在 100x+ PE 的頂部</td></tr>
+<tr><td>當時 setup</td><td>優質 franchise + 極端倍數 + 高散戶/動能參與</td></tr>
+<tr><td>最終 5 年報酬</td><td>2021 頂部的 100x+ 成長股，多在 2022 升息週期 −60~80%（即使營收續增，倍數正常化主導）；部分數年後才回到前高</td></tr>
+<tr><td>最像/最不像</td><td><strong>最像：</strong>優質公司 + 倍數脫離地心引力 + 倍數正常化是主要下行驅動（非基本面崩）。<strong>最不像：</strong>ARM 護城河更深（ISA 近壟斷）、現金流更實。但「好公司在 100x+ PE 買入的 5 年報酬通常為負或平庸」這個 pattern 高度適用。</td></tr>
+</table>
+<table>
+<tr><th>歷史 100x+ PE 龍頭買入案</th><th>當時 setup</th><th>後續結果</th></tr>
+<tr><td>Cisco 2000 峰值（~130x）</td><td>網路時代龍頭、近壟斷、持續成長</td><td>營收仍長，但股價 20+ 年未回前高（倍數正常化主導）</td></tr>
+<tr><td>2021 高倍數 SaaS/IP 龍頭（100x+）</td><td>優質 franchise、動能/散戶熱</td><td>2022 升息 −60~80%，部分數年才回</td></tr>
+<tr><td><strong>ARM 現價（forward 108x / trailing &gt;400x）</strong></td><td>頂級 ISA franchise、235% YTD、薄流通</td><td><strong>本報告估 base 5Y IRR −5.4%（與上述 pattern 一致）</strong></td></tr>
+</table>
+<p class="note"><strong>Pattern match 校準：</strong>歷史上「優質成長股在 100x+ forward PE 買入」的 5 年報酬中位數接近零或負——即使公司持續成長（Cisco 是經典：對的公司、錯的價格、20 年負報酬）。ARM 的 base IRR −5.4% 與此 pattern 一致。這讓負 IRR 估計有歷史錨點，非憑感覺。<strong>核心教訓：偉大的公司 ≠ 偉大的投資，入場倍數決定一切。</strong></p>
+
+<h3>§11 估值診斷結論</h3>
+<p>11.1 歷史分位（trailing &gt;400x／forward 108x → 泡沫）+ 11.2 PEG（3.5–5.0 → 🔴 極端）+ 11.4 同業相對（vs tier 中位溢價 ~170%、股價高於分析師均標 26%）→ 綜合估值訊號：<strong>🔴 過熱（泡沫級）</strong>。完整裁決見 §14；倉位角色見 §14a。</p>
+
+<!-- ============ §12 ============ -->
+<h2 id="s12">§12｜矛盾辨識與強制裁決</h2>
+<div class="box-conflict">
+<h3 style="margin-top:0">1. 共識清單（方向一致）</h3>
+<p>§6 成長 🟢 高確信 + §7 護城河 8.5（近 S）+ §8 ~97% 毛利淨現金 + §9 利潤池最上游流入 + AI 🟢——<strong>基本面五項共振：ARM 是頂級 franchise。</strong>這部分毫無疑問。</p>
+
+<h3>2. 矛盾清單</h3>
+<table>
+<tr><th>#</th><th>矛盾</th><th>章節 A</th><th>章節 B</th><th>性質</th></tr>
+<tr><td>1</td><td>頂級 franchise vs 泡沫估值（負 IRR）</td><td>§6/§7 品質 8.5</td><td>§11 估值 🔴、IRR −5.4%</td><td><strong>不可調和（方向相反）：A 級公司 vs 負期望報酬</strong></td></tr>
+<tr><td>2</td><td>royalty 護城河升 vs 自家晶片 channel conflict</td><td>§7 royalty rate ↑</td><td>§7 自家晶片中立性風險</td><td>可調和（短期 royalty 升主導，長期 channel conflict 是尾部風險）</td></tr>
+<tr><td>3</td><td>共識 Buy vs 均標低於現價 26%</td><td>分析師 Buy 評級</td><td>均標 $245 &lt; 現價 $333</td><td>可調和（評級滯後於股價，目標價才是公允信號）</td></tr>
+<tr><td>4</td><td>~97% 毛利「中立 IP 商」溢價 vs FTC/Qualcomm 正面攻擊此身分</td><td>§7 護城河 8.5、定價權強</td><td>§10 FTC 調查 + Qualcomm 反控（攻擊中立性）</td><td><strong>不可調和（潛在）：</strong>ARM 的高毛利溢價<em>源於</em>中立性，而中立性正被法律/監管攻擊——若不利，溢價的根基動搖</td></tr>
+</table>
+
+<h3>3. 與上一份報告交叉矛盾</h3>
+<p>首份（4/27, $234.81, signal B）後股價 +42% 至 $452 再 −26% 至 $333，且新增 Q4 財報 + AGI 晶片。本份裁決方向一致（觀望/B），但理由從「偏貴」強化為「泡沫 + channel conflict 結構警示」。無方向矛盾，是同向加深。</p>
+
+<h3>4. ⚖ 強制裁決（不可調和矛盾 #1）</h3>
+<table>
+<tr><th>#</th><th>矛盾</th><th>我選哪邊</th><th>依據</th><th>會 settle 的硬數據點</th><th>裁決後執行路徑</th></tr>
+<tr><td>1</td><td>A 級 franchise vs 負 IRR 泡沫估值</td><td><strong>選「估值面」主導當前裁決</strong>（觀望），承認品質 → 列候選/追蹤池</td><td>非直覺：base 5Y IRR −5.4%（負）、現價高於分析師均標 26%、PEG 3.5、trailing &gt;400x。再好的公司，負期望報酬 = 不買。Pattern match：100x+ PE 買優質股 5Y 報酬通常為負。</td><td>① forward PE 回 ~50–60x（股價 ~$150–200）；② royalty 成長維持 ≥18%；③ channel conflict 未升級（無大客戶去 ARM 化）</td><td>(a) 觸發 ①+②+③ → 建首倉（核心級候選，分批），裁決升級進場；(b) 觸發「§3.F 大客戶轉 RISC-V」→ 從追蹤池移除（thesis 級風險）</td></tr>
+</table>
+<p>此裁決帶入 §14：頂級 franchise + 泡沫估值（負 IRR）→ 候選/追蹤池、觀望、等大幅重置。</p>
+</div>
+
+<!-- ============ §13 ============ -->
+<h2 id="s13">§13｜Pre-mortem 與 Max DD</h2>
+<h3>13a. 不確定假設</h3>
+<table>
+<tr><th>#</th><th>不確定假設</th><th>thesis 成立前提</th><th>不成立後果</th></tr>
+<tr><td>1</td><td>市場願維持 ~50x+ 的「軟著陸」倍數</td><td>AI 板塊維持高估值偏好</td><td>倍數崩至 30-40x → 即使 EPS 達標股價腰斬</td></tr>
+<tr><td>2</td><td>自家晶片不嚴重疏離授權客戶</td><td>客戶接受 ARM 雙軌（授權 + 自家晶片）</td><td>大客戶加速 RISC-V/自研，授權護城河侵蝕</td></tr>
+<tr><td>3</td><td>RISC-V 不在核心終端達臨界</td><td>RISC-V 生態 5–10 年內不成熟到威脅行動/高階資料中心（Qualcomm Ventana/Oryon-V 已是反例苗頭）</td><td>ARM 最肥利潤池被免費替代侵蝕</td></tr>
+<tr><td>4</td><td>FTC 調查無實質後果、Qualcomm 反控敗</td><td>監管/法律維持現狀，ARM 中立性溢價不受損</td><td>若 FTC 命令開放授權 / Qualcomm 反控勝 → 定價權 + 中立性溢價同損，FY28 EPS 共識向下偏誤</td></tr>
+</table>
+
+<div class="box-premortem">
+<h3 style="margin-top:0">13b. Pre-mortem：失敗故事</h3>
+<p>「假設 5 年後這個部位虧 50%+，最可能的故事是：<strong>2026 下半 AI 板塊估值去槓桿延續，ARM 的 trailing &gt;400x 領跌；高管持續拋售 + SoftBank 釋股傳聞加重供給壓力。2027 行動 royalty 成長放緩（手機飽和）、資料中心增速未完全補上，royalty YoY 掉到 12%；同時自家 AGI 晶片的 channel conflict 促使一家大客戶（如 Qualcomm 或某超大規模）公開擴大 RISC-V 投入。市場把 forward PE 從 108x 壓到 45x，即使 FY2028 EPS 達 $3，股價也跌到 ~$135（−60%）。</strong>」</p>
+<p class="note">此失敗路徑的關鍵觸發（估值去槓桿 + 大客戶 RISC-V 轉移）已對應 §3.F Single Thing 與 §3.C R1/R3——pre-mortem 與 §3.F 一致，§3.F 無需新增 trigger。</p>
+</div>
+
+<h3>13c. 路徑壓力測試（Max DD）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>估計 Max DD 範圍</td><td><span class="maxdd-num">−60% ~ −75%</span></td></tr>
+<tr><td>最可能觸發時點</td><td>已在進行（−26% 起步）；1–2 年內估值去槓桿 + 任一基本面/結構雜訊疊加</td></tr>
+<tr><td>觸發後恢復</td><td>若 franchise 兌現 → 數年後可恢復（但須先穿越倍數正常化）；若 §3.F 觸發 → thesis 受損</td></tr>
+<tr><td>路徑風險評級</td><td><span class="flag-r">🔴 &lt;−50%（多數人會中途出場）</span></td></tr>
+</table>
+<div class="bar-track"></div>
+<p class="note">校驗：beta 3.79 + ~10% 流通量 + 泡沫估值 + 動能剛破 + SoftBank 潛在釋股 overhang = 回撤可極深（−60~−75%）。即便 franchise 完好，倍數正常化本身就能造成 −50%+；疊加 FTC/Qualcomm 法律線任一不利，下行可更深。歷史錨：Cisco 2000（對的公司、錯的價格）20 年負報酬——ARM 在 100x+ 買入的下行路徑同源。</p>
+<p><strong>🔴 倉位處理（v14.2 F2 條件式）：</strong>Max DD 🔴 <strong>且 thesis 在「估值依賴/脆弱」維度成立</strong>（§11.6 雖標「非估值依賴型」但其下行<em>正是</em>估值去槓桿驅動，且 channel conflict 是真實結構風險）→ 屬「🔴 且 thesis 脆弱（估值面）」象限。但<strong>本案裁決已是觀望（現價不建倉）</strong>，故 F2 主要意義是：未來若在<em>遠低於現價</em>建倉，倉位上限須謹慎 + 標「中途出場風險高」。在現價 $333，不建倉即避開此回撤。max_dd_pct = −75（範圍下界）寫入 dd-meta。</p>
+
+<!-- ============ §14 ============ -->
+<section class="decision" id="decision">
+<h2 style="background:#92400E; scroll-margin-top:80px">§14｜決策（統一裁決）</h2>
+<p><span class="chip watch">觀望</span></p>
+<p class="chip-sub">頂級 ISA 授權 franchise，但估值泡沫級（forward 108x／trailing &gt;400x／PEG 3.5／base 5Y IRR 為負、高於分析師均標 26%）——好公司、瘋價格，放候選/追蹤池等大幅估值重置（~$150–200）。</p>
+
+<h3>決策矩陣套用</h3>
+<table>
+<tr><th>優先序</th><th>條件</th><th>本案</th><th>命中?</th></tr>
+<tr><td>1 Hard Veto</td><td>signal = X</td><td>signal B</td><td>否</td></tr>
+<tr><td>2 Hard Veto</td><td>thesis 不可調和不成立</td><td>franchise 健康（thesis 成立）</td><td>否</td></tr>
+<tr><td>3 Hard Veto</td><td>moat_trend ↓ 且 moat ≤ B</td><td>moat_trend →、moat A</td><td>否</td></tr>
+<tr><td>4 Soft Veto</td><td>Pure MA ❌</td><td>MA 🟡（樣本不足 &lt;250wk；價 &gt; W52/W104 但極端伸展 + 動能剛破）——非 ❌</td><td>否（但動能警示）</td></tr>
+<tr><td>5 節奏修飾</td><td>動能過熱</td><td>價 +105% 高於 W52、剛從 ATH −26%（極端伸展 + 破位）</td><td>修飾（提示勿接刀）</td></tr>
+<tr><td>6 Soft Veto</td><td>signal = C</td><td>signal B</td><td>否</td></tr>
+<tr><td>7 Soft Veto</td><td>runway_post_y5 🔴</td><td>runway 🟢</td><td>否</td></tr>
+<tr><td>7a Soft Veto</td><td>估值依賴型 + 無「市場錯在哪」</td><td>§11.6 非估值依賴型（re-rate 為負）</td><td>否</td></tr>
+<tr><td><strong>8 Baseline</strong></td><td><strong>無 Hard Veto + signal ≥B + 估值 = 🟠/🔴</strong></td><td><strong>signal B + 估值 🔴（比 🟠 更嚴）</strong></td><td><strong>✅ 命中 → 觀望（等估值）</strong></td></tr>
+<tr><td>9/10 Baseline</td><td>估值 ≤🟡 → 進場</td><td>估值 🔴（遠非 ≤🟡）</td><td>否</td></tr>
+</table>
+<p><strong>裁決 = row 8（觀望，等估值）。</strong>估值燈 🔴（比 row 8 標準的 🟠 更嚴）把裁決鎖在觀望——基本面（signal B、moat A→、franchise 頂級）支持「想擁有」，但泡沫估值（負 IRR）+ 高於分析師均標 + 動能破位使<strong>現價遠非進場點</strong>。<span class="note">（QC-7b：本裁決基於估值/IRR 數字，非技術面「漲多了」。動能破位僅為節奏提示。）</span>注意：未觸發 Hard Veto（franchise 未破、moat 未 ↓），故是觀望而非結構迴避——但「觀望」的進場門檻極高（需 ~50%+ 估值重置）。</p>
+
+<h3>14a. 倉位角色與進場計畫 + opportunity cost</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td><strong>在投資組合中的角色</strong></td><td><strong>候選/追蹤池</strong>（頂級 franchise，但現價離可建倉太遠——非「條件式核心」可現在小倉，而是「先觀察、等大幅重置」）</td></tr>
+<tr><td>初始建倉倉位</td><td><strong>0%</strong>（觀望，現價泡沫）</td></tr>
+<tr><td>目標倉位（條件成立後）</td><td>核心級 3–5% of portfolio（PM 拍板，須在估值重置後）</td></tr>
+<tr><td>進場價位區間</td><td>~$150–200（forward PE 回 ~50–60x，即估值正常化至「對頂級 IP 股仍慷慨」的水位）</td></tr>
+<tr><td>進場節奏（觸發條件）</td><td>觸發：股價 ~$150–200 <em>且</em> royalty 成長維持 ≥18% <em>且</em> channel conflict 未升級 → 分 2–3 批建倉</td></tr>
+<tr><td><strong>vs 現有組合同類曝險（opportunity cost）</strong></td><td><strong>邊際 AI 資金 vs 已持 NVDA / TSM：</strong>① <strong>NVDA</strong>——forward PE ~35x（ARM 的 1/3）、護城河 S、<em>正</em> 5Y IRR，AI 曝險更直接；② <strong>TSM</strong>——所有 ARM 晶片（含自家 AGI）也經 TSM 代工，PEG &lt;1，是風險最低的「賣鏟人」。<strong>ARM 在同類中是最貴、唯一負 IRR 的標的。</strong>若要 AI/運算曝險，NVDA/TSM 在現價的 R:R 與 conviction 全面優於 ARM。ARM 的獨特價值（純 ISA 收費公路）極具吸引力，但<strong>「想擁有這條收費公路，但不在它收 50 年後過路費的價格買」</strong>。邊際資金<em>絕不</em>在 $333 放 ARM。</td></tr>
+</table>
+<p class="note">實際組合佔比由 portfolio-manager skill 決定；此處為決策輸入。§13c Max DD 🔴 → 未來建倉須謹慎；現價觀望即避開回撤。</p>
+
+<h3>14b. 加碼與減碼條件</h3>
+<table>
+<tr><th>行動</th><th>觸發條件</th><th>調整至倉位</th></tr>
+<tr><td>進場（首倉）</td><td>股價 ~$150–200 + royalty 成長維持 + channel conflict 未升級</td><td>2–3%（起始核心候選）</td></tr>
+<tr><td>加碼</td><td>H1 確認（royalty 續強）+ 自家晶片未疏離客戶</td><td>3–5%（目標）</td></tr>
+<tr><td>減碼（現有持有人）</td><td>R3 估值持續去槓桿 或 royalty 成長 &lt;15%</td><td>減倉</td></tr>
+<tr><td>清倉（現有持有人）</td><td>§3.F 觸發（大客戶轉 RISC-V/自研）</td><td>0%</td></tr>
+</table>
+
+<h3>14c. 建議持有年限</h3>
+<table>
+<tr><th>持有年限</th><th>條件</th></tr>
+<tr><td>短期（&lt;2 年）</td><td>不適用（現價無短期上行，純估值風險）</td></tr>
+<tr><td>中期（2–5 年）</td><td>若在估值重置後建倉、royalty 成長兌現</td></tr>
+<tr><td>長期（5–10 年）</td><td>若 ARM 確立資料中心/AI ISA 主導 + channel conflict 未反噬（base case，須低價建倉）</td></tr>
+</table>
+<p><strong>建議持有年限：長期 5–10 年</strong>（引用 §6.A'' runway 🟢、§9 利潤池流入、§10 capalloc B）——<em>惟須在遠低於現價（~$150–200）建倉</em>。中途出場風險高（Max DD 🔴）。</p>
+<h4>EPS 預測參考表</h4>
+<table>
+<tr><th>年份（FY 止 3 月）</th><th>EPS 估計（Non-GAAP）</th><th>來源</th><th>備注</th></tr>
+<tr><td>FY2026（實績）</td><td>~$1.77</td><td>公司 FY26 結果</td><td>基期</td></tr>
+<tr><td>FY2027E</td><td>$2.17</td><td>Excel 共識 2026-06-23</td><td>+23% YoY；現價 154x</td></tr>
+<tr><td>FY2028E</td><td>$3.08</td><td>Excel 共識</td><td>現價 108x（forwardPE 基礎）</td></tr>
+<tr><td>FY2029E</td><td>$4.01</td><td>Excel 共識</td><td>現價 83x</td></tr>
+<tr><td>FY2031E</td><td>~$6.3（base）</td><td>§11.5 base 推導</td><td>5Y base 目標 $252 = $6.3 × 40x</td></tr>
+</table>
+<p class="note"><strong>假設長期持有（5–10 年），現在股價適合嗎？</strong>——franchise 適合長抱，但 $333 入場使 base 5Y IRR <strong>為負（−5.4%/yr）</strong>；即便 FY2031 EPS 達 $6.3，在 40x（仍慷慨）下也僅 $252 &lt; 現價。<strong>必須等估值重置到 ~$150–200 才有正報酬空間。</strong>故「適合長抱、絕不適合此價入場」。</p>
+</section>
+
+<!-- ============ §15 ============ -->
+<h2 id="s15">§15｜複審觸發與保質期</h2>
+<table>
+<tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間/條件</th></tr>
+<tr><td>1</td><td>Q1 FY2027 財報（royalty 成長 + 資料中心 + AGI 晶片進度）</td><td>財報日期</td><td>~2026-07/08</td></tr>
+<tr><td>2</td><td>AGI 自家晶片首 $1B 交付 + 製造產能鎖定進度 + 大客戶反應</td><td>產業事件</td><td>FY2027</td></tr>
+<tr><td>3</td><td>股價回到 ~$150–200（估值重置，進場窗口）</td><td>價位觸發</td><td>持續監測</td></tr>
+<tr><td>4</td><td><strong>§3.F Single Thing：top 客戶公開轉 RISC-V / 自研架構</strong></td><td>binary 觸發</td><td>大客戶法說/晶片發表</td></tr>
+</table>
+<p><strong>保質期：</strong>至 Q1 FY2027 財報（~2026-07/08）前有效；財報後須以新數據重驗 royalty 成長與估值。<strong>但估值面（R3）可能更快觸發重評</strong>——若估值去槓桿延續，追蹤池的進場窗口可能比財報更早打開。</p>
+<p><strong>最可能 upside：</strong>① 估值重置到合理區間（對買家是 upside）；② royalty 超預期 + AGI 晶片成功且未疏離客戶；③ FTC 調查無實質後果結案。<strong>最可能 downside（多個獨立 catalyst 同期共振）：</strong>① 估值去槓桿延續（−26% 只是開始，beta 3.79 放大）；② <strong>FTC 提訴 / 命令開放授權</strong>；③ <strong>Qualcomm 反控勝（試驗 2026-03）</strong>；④ RISC-V 加速（Qualcomm Ventana/Oryon-V、中國 ARM China ~25% 營收曝險）；⑤ 行動 royalty 放緩未被資料中心補上。</p>
+<p class="note"><strong>單一制度（無雙 sleeve）：</strong>ARM 是純 IP 授權 franchise，無 secular/cyclical 雙制度切分需要——整體屬結構成長股，唯一阻止進場的變數是估值（與新浮現的 FTC/Qualcomm 法律線）。<strong>一句話總結：這是一檔「想長期擁有、但絕不在此價買」的標的——把它放追蹤池，耐心等一次大幅估值重置（~$150–200）或法律線明朗，再以核心倉建立。</strong></p>
+
+<!-- ============ 附錄 A ============ -->
+<details id="appendixA">
+<summary>附錄 A｜擇時（降級，INFORMATIONAL ONLY — 不主導 §14 裁決）</summary>
+
+<h3>基本面評級機制（品質分 → A+/A/B/C/X，metadata-only）</h3>
+<p>品質分：底分 = (護城河 8.5 + 成長持久性 8.5)/2 = 8.5；體質 5 項 veto：毛利率穩（過）、FCF/NI 1.05 ≥0.7（過）、EPS 共識上修（過）、營收 YoY 正（過）、淨現金（過）→ 0 項不過 → <strong>品質分 8.5（A 級）</strong>。</p>
+<p><strong>綜合訊號：</strong>quality A 級 + 估值燈 🔴 + Pure MA 🟡 + trap 🟡 → 依步驟表：拒絕檢核（估值🔴 + 動能破位）但 QC-31 cross-check：thesis 完整、franchise 健康、僅估值極端 → <strong>降為 signal B</strong>（QC-31 規則 2：估值🔴 不觸發 C/X，品質 A 級落 B）。verdict = B。</p>
+
+<h3>估值燈</h3>
+<p>Forward PE 分位 ~90%（FY2 108x）/ trailing &gt;400x；PEG 3.5–5.0。取較嚴：PEG &gt;2.5 + 分位高位 → <strong>🔴 過熱</strong>。<strong>盲點 1 救援：不適用</strong>（PEG &gt;2.0 即不符救援前提；且股價高於分析師均標、base IRR 負）。val = 🔴 寫入 dd-meta。</p>
+
+<h3>Pure MA（週線，樣本不足）</h3>
+<p>ARM 2023-09 IPO，僅 ~146 週資料，<strong>W250（~5 年）不可得 → Pure MA 六態機樣本不足</strong>。可得：價 $333 &gt; W52 $169.60（+105%）&gt; W104 $153.24（+127%），W52/W104 斜率皆正（+27%/+13%）= 強上升趨勢，<em>但極端伸展</em>（價達 W52 的 ~2x）。近期：5 天 −18%、自 ATH $452.70 −26% = <strong>動能破位（QC-24 警示）</strong>。綜合：趨勢上但極端伸展 + 動能剛破 → ma = 🟡（樣本不足 + 不宜追）。ma = 🟡 寫入 dd-meta。</p>
+
+<h3>大盤豁免層</h3>
+<p>^GSPC 7373 &gt; W104 6293 → 大盤正常（×1.0），無系統性風險（本次 ARM 下跌是個股/板塊估值，非大盤崩）。</p>
+
+<h3>R:R 三時距（資訊性）</h3>
+<table>
+<tr><th>時距</th><th>計算</th><th>目標價</th><th>upside</th></tr>
+<tr><td>短期（1 年）</td><td>FY27 EPS $2.17 × ~80x（仍極高溢價）</td><td>~$174</td><td>~−48%</td></tr>
+<tr><td>中期（2 年）</td><td>FY28 EPS $3.09 × ~60x</td><td>~$185</td><td>~−45%</td></tr>
+<tr><td>5Y（長期）</td><td>§11.5 Base FY31 EPS ~$6.3 × 40x</td><td>~$252</td><td>~−24%</td></tr>
+</table>
+<p class="note"><strong>Bear anchor：</strong>Bear EPS = FY27 $2.17 × 0.9 = $1.95；Bear PE = §6.E 熄火「10% + channel conflict」情境 ~22x；Bear 股價 ~$43（極端終點）。實務 Max DD 用 §13c −60~−75%。<strong>QC-21：所有時距 upside 皆深負（目標價 ≪ 現價）= 市場已把多年成長定價殆盡且超額</strong>——這是「觀望」最直接的數學：即使給極慷慨的倍數，公允值都遠低於現價。upside_short −48%／upside_mid −45% 寫入 dd-meta；stress 2/2。</p>
+</details>
+
+<p class="note" style="margin-top:30px">— 報告完 —　DD Schema v14.2　｜　ARM　｜　2026-06-27　｜　最新收盤 $333.40（6/26）　｜　統一裁決：觀望（候選/追蹤池）</p>
+
+</div>
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+</body>
+</html>
