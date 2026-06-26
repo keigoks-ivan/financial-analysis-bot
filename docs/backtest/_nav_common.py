@@ -21,6 +21,7 @@ COMPARISON_LINKS = [
     ("/backtest/10y/", "10 年", "10y", None),
     ("/backtest/criteria/", "評估標準", "criteria", None),
     ("/backtest/tw/", "🇹🇼 台股總覽", "tw20y", "#16a34a"),
+    ("/backtest/multi/", "🧩 多資產總覽", "multi20y", "#0f766e"),
     ("/backtest/ma_sensitivity/", "MA 敏感度", "masens", "#6b7280"),
 ]
 

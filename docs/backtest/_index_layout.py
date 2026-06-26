@@ -101,12 +101,6 @@ def render():
         f'<td style="color:var(--muted)">{m}</td><td>{cl}</td><td>—</td><td>{idx.TAG["bh"]}</td></tr>'
         for n, c, m, s, cl in idx.BH_ROWS)
 
-    # 多資產 rows
-    multi_rows = ""
-    for title, items in idx.GROUPS:
-        if "多資產" in title:
-            multi_rows = "".join(slim_row(*r, GREY) for r in items)
-
     period = "".join(
         f'<tr><td style="font-weight:600">{name}</td><td>{a}</td><td>{b}</td><td>{c}</td><td>{d}</td></tr>'
         for name, _color, a, b, c, d in idx.PERIOD_CAGR)
@@ -139,7 +133,7 @@ def render():
     for k, v in {
         "%NAV%": NAV_BLOCK, "%TOGGLE%": make_toggle("20y"),
         "%CARD%": card, "%MAIN_ROWS%": main_rows, "%TAIL_ROWS%": tail_rows, "%BH_ROWS%": bh,
-        "%MULTI_ROWS%": multi_rows, "%PERIOD_ROWS%": period,
+        "%PERIOD_ROWS%": period,
         "%FULL_ROWS%": full_rows, "%YEARLY_HEAD%": yhead, "%YEARLY_ROWS%": yrows,
         "%JS_RET%": json.dumps(idx.RET), "%JS_SCATTER%": json.dumps(scatter),
         "%JS_YEARS%": json.dumps(idx.YEARS), "%NOW%": datetime.now().strftime("%Y-%m-%d"),
@@ -221,7 +215,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
   <div class="crumb"><a href="/">首頁</a> / 量化回測</div>
   <h1>美股量化回測總覽</h1>
   <div class="sub">20 年全週期(2006~,含 2008/2020/2022 三熊)· 真實 yfinance · 起始 $1M · <a href="/backtest/criteria/">評估標準</a></div>
-  <div class="tabs"><a class="on" href="/backtest/">🇺🇸 美股</a><a href="/backtest/tw/">🇹🇼 台股</a></div>
+  <div class="tabs"><a class="on" href="/backtest/">🇺🇸 美股</a><a href="/backtest/tw/">🇹🇼 台股</a><a href="/backtest/multi/">🧩 多資產</a></div>
 </div></div>
 
 <div class="container">
@@ -248,16 +242,6 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <details><summary>實驗 / 已否決系統(收合)</summary><div class="d-body">
 <table><thead><tr><th>系統</th><th>CAGR</th><th>MDD</th><th>Calmar</th><th>支配性</th><th>狀態</th></tr></thead>
 <tbody>%TAIL_ROWS%</tbody></table></div></details>
-</div>
-
-<!-- 多資產 -->
-<div class="section">
-<h2 class="section-title">多資產 · 跨資產趨勢</h2>
-<div class="section-sub">不同資產池(商品/債/匯/股),與上方單一股票系統不同尺,僅供組合互補參照。</div>
-<div class="card">
-<table><thead><tr><th>系統</th><th>CAGR</th><th>MDD</th><th>Calmar</th><th>支配性</th><th>狀態</th></tr></thead>
-<tbody>%MULTI_ROWS%</tbody></table>
-</div>
 </div>
 
 <!-- 研究 / 否決 -->
