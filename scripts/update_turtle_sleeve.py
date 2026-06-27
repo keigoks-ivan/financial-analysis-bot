@@ -218,6 +218,157 @@ def fetch_ohlc(ticker: str) -> pd.DataFrame:
 
 
 # ===========================================================================
+# STX50 stock core (80% leg) — faithful port of v7-backtest stx50_curve
+# (e4_experiment.member_signals + run_pos + combine; E3 {W40·W52·TSMOM} each ⅓
+# with a weekly Supertrend(10,3) half-book reduce-only gate, 50/50 SMH/QQQ).
+# Lets this page draw the COMBINED 80/20 curve that is actually run, not just
+# the 20% sleeve leg in isolation.
+# ===========================================================================
+STX_TICKERS = ["SMH", "QQQ"]
+SIM_START_STX = "2006-01-01"
+INIT_CAP = 1_000_000.0
+COST_PER_SIDE = 0.0007
+
+
+def _close_series(df: pd.DataFrame) -> pd.Series:
+    c = df["Close"]
+    return (c.iloc[:, 0] if isinstance(c, pd.DataFrame) else c).dropna()
+
+
+def load_cash_close() -> pd.Series:
+    """SHY before BIL inception (2007-05), BIL after — same splice as backtest."""
+    shy, bil = _close_series(fetch_ohlc("SHY")), _close_series(fetch_ohlc("BIL"))
+    if len(bil) == 0:
+        return shy
+    return pd.concat([shy[shy.index < bil.index[0]], bil]).sort_index()
+
+
+def _exec_dates(px: pd.Series, freq: str) -> pd.Series:
+    return px.resample(freq).apply(lambda x: x.index[-1] if len(x) else pd.NaT).dropna()
+
+
+def _signal_daily(sig: pd.Series, ex: pd.Series, idx: pd.DatetimeIndex) -> pd.Series:
+    s = pd.Series(sig.values, index=ex.reindex(sig.index).values).dropna()
+    s = s[~s.index.duplicated(keep="last")]
+    return s.reindex(idx).ffill()
+
+
+def _build_e3(px: pd.Series, cash: pd.Series) -> dict:
+    wk = px.resample("W-FRI").last().dropna()
+    exw = _exec_dates(px, "W-FRI")
+    mo = px.resample("ME").last().dropna()
+    exm = _exec_dates(px, "ME")
+    cash_m = cash.resample("ME").last()
+    w40 = (wk > wk.rolling(40).mean()).astype(float)
+    w52 = (wk > wk.rolling(52).mean()).astype(float)
+    ts = ((mo / mo.shift(12) - 1) >
+          (cash_m / cash_m.shift(12) - 1).reindex(mo.index).fillna(0)).astype(float)
+    return {"W40": _signal_daily(w40, exw, px.index),
+            "W52": _signal_daily(w52, exw, px.index),
+            "TSMOM": _signal_daily(ts, exm, px.index)}
+
+
+def _weekly_ohlc(df: pd.DataFrame) -> pd.DataFrame:
+    return pd.DataFrame({
+        "High": df["High"].resample("W-FRI").max(),
+        "Low": df["Low"].resample("W-FRI").min(),
+        "Close": df["Close"].resample("W-FRI").last(),
+        "exec_date": df["Close"].resample("W-FRI").apply(
+            lambda x: x.index[-1] if len(x) else pd.NaT),
+    }).dropna(subset=["Close"])
+
+
+def _supertrend_dir(wk: pd.DataFrame, period: int = 10, mult: float = 3.0) -> pd.Series:
+    h, l, c = wk["High"].values, wk["Low"].values, wk["Close"].values
+    n = len(wk)
+    c_prev = np.roll(c, 1)
+    c_prev[0] = c[0]
+    tr = np.maximum(h - l, np.maximum(np.abs(h - c_prev), np.abs(l - c_prev)))
+    atr = pd.Series(tr, index=wk.index).ewm(alpha=1 / period, adjust=False,
+                                            min_periods=period).mean().values
+    mid = (h + l) / 2
+    bub, blb = mid + mult * atr, mid - mult * atr
+    fub = np.full(n, np.nan)
+    flb = np.full(n, np.nan)
+    direction = np.zeros(n)
+    st = np.full(n, np.nan)
+    started = False
+    for i in range(n):
+        if np.isnan(atr[i]):
+            continue
+        if not started:
+            fub[i], flb[i] = bub[i], blb[i]
+            direction[i] = 1.0 if c[i] > fub[i] else -1.0
+            st[i] = flb[i] if direction[i] > 0 else fub[i]
+            started = True
+            continue
+        fub[i] = bub[i] if (bub[i] < fub[i - 1] or c[i - 1] > fub[i - 1]) else fub[i - 1]
+        flb[i] = blb[i] if (blb[i] > flb[i - 1] or c[i - 1] < flb[i - 1]) else flb[i - 1]
+        if st[i - 1] == fub[i - 1]:
+            direction[i] = 1.0 if c[i] > fub[i] else -1.0
+        else:
+            direction[i] = -1.0 if c[i] < flb[i] else 1.0
+        st[i] = flb[i] if direction[i] > 0 else fub[i]
+    return pd.Series(direction, index=wk.index)
+
+
+def _run_pos(px: pd.Series, cash: pd.Series, pos: pd.Series) -> pd.Series:
+    sim = px.index[px.index >= SIM_START_STX]
+    qr = px.pct_change().reindex(sim).fillna(0)
+    cr = cash.pct_change().reindex(sim).fillna(0)
+    p = pos.reindex(sim)
+    p_prev = p.shift(1)
+    pre = pos[pos.index < sim[0]].dropna()
+    p_prev.iloc[0] = float(pre.iloc[-1]) if len(pre) else 0.0
+    turn = (p - p_prev).abs().fillna(0)
+    ret = p_prev * qr + (1 - p_prev) * cr - turn * COST_PER_SIDE
+    return INIT_CAP * (1 + ret).cumprod()
+
+
+def _daily_returns(eq: pd.Series) -> pd.Series:
+    dr = eq.pct_change()
+    dr.iloc[0] = eq.iloc[0] / INIT_CAP - 1
+    return dr
+
+
+def _combine(eqs: dict, weights: dict) -> pd.Series:
+    common = None
+    for eq in eqs.values():
+        common = eq.index if common is None else common.intersection(eq.index)
+    cr = sum(weights[t] * _daily_returns(eq.reindex(common)) for t, eq in eqs.items())
+    return INIT_CAP * (1 + cr).cumprod()
+
+
+def stx50_equity(cash: pd.Series) -> pd.Series:
+    eqs = {}
+    for t in STX_TICKERS:
+        df = fetch_ohlc(t)
+        px = _close_series(df)
+        sigs = _build_e3(px, cash)
+        st_w = (_supertrend_dir(_weekly_ohlc(df)) > 0).astype(float)
+        wk = _weekly_ohlc(df)
+        st_daily = _signal_daily(st_w, wk["exec_date"], px.index)
+        e3 = sum(sigs[m] for m in ("W40", "W52", "TSMOM")) / 3
+        pos = 0.5 * e3 + 0.5 * np.minimum(e3, st_daily)
+        eqs[t] = _run_pos(px, cash, pos)
+    return _combine(eqs, {"SMH": 0.5, "QQQ": 0.5})
+
+
+def monthly_rebal_mix(base_r: pd.Series, sleeve_r: pd.Series, w: float) -> pd.Series:
+    """80/20 portfolio, weights reset to (1-w, w) at each month end."""
+    vb, vs = INIT_CAP * (1 - w), INIT_CAP * w
+    vals, idx = [], base_r.index
+    for i, d in enumerate(idx):
+        vb *= 1 + base_r.iloc[i]
+        vs *= 1 + sleeve_r.iloc[i]
+        tot = vb + vs
+        vals.append(tot)
+        if i + 1 < len(idx) and idx[i + 1].month != d.month:
+            vb, vs = tot * (1 - w), tot * w
+    return pd.Series(vals, index=idx)
+
+
+# ===========================================================================
 # Signal / live state
 # ===========================================================================
 def fmt_pos(pos: Position) -> str:
@@ -395,31 +546,37 @@ def events_section(year_events) -> str:
 def perf_section(yr_ret) -> str:
     col = "green" if yr_ret >= 0 else "red"
     return f"""<div class="card">
-  <h3>Sleeve 績效曲線(replay 權益,起點=100)
+  <h3>組合 80/20 績效曲線(replay 權益,起點=100)
     <span style="font-size:.8rem;font-weight:600;color:var(--{col})">· 近一年 {yr_ret:+.1f}%</span></h3>
   <div style="font-size:.78rem;color:var(--muted);margin-bottom:.6rem">
-    引擎自 2005 重放至最新收盤的 sleeve 模型 NAV(月頻、含成本)。
+    引擎自 2006 重放至最新收盤的模型 NAV(月頻、含成本)。實線 = <b>實際在跑的組合
+    80% STX50 + 20% 商品 sleeve(月底再平衡)</b>;虛線為兩條分解腿。
     <b>這是回測/紙上權益,非實倉損益</b> —— OOS 並行追蹤期間沒有真實成交。
-    趨勢系統的長平台 + 少數大趨勢右尾是常態。組合 80/20 曲線見
-    <a href="/backtest/turtle_adopt/">採用回測頁</a>。</div>
+    sleeve 單腿波動大(MDD ≈ -28%),但只佔 20%;組合層 MDD 被 STX50 拉到約 -15%。
+    細節見 <a href="/backtest/turtle_adopt/">採用回測頁</a>。</div>
   <div class="chart-wrap"><canvas id="chart-perf"></canvas></div>
 </div>"""
 
 
-def perf_script(nav_labels, nav_vals) -> str:
+def perf_script(nav_labels, comb_vals, stx_vals, slv_vals) -> str:
     return ("<script>new Chart(document.getElementById('chart-perf'),{type:'line',"
-            "data:{labels:" + json.dumps(nav_labels) + ",datasets:[{label:'Sleeve replay NAV',data:"
-            + json.dumps(nav_vals) + ",borderColor:'#0f766e',borderWidth:2,pointRadius:0,"
-            "pointHoverRadius:3,tension:0.1}]},"
+            "data:{labels:" + json.dumps(nav_labels) + ",datasets:["
+            "{label:'組合 80/20',data:" + json.dumps(comb_vals) + ",borderColor:'#0f766e',"
+            "borderWidth:2.4,pointRadius:0,pointHoverRadius:4,tension:0.1},"
+            "{label:'STX50 (股核 80%)',data:" + json.dumps(stx_vals) + ",borderColor:'#1565c0',"
+            "borderWidth:1.3,borderDash:[6,3],pointRadius:0,pointHoverRadius:3,tension:0.1},"
+            "{label:'Sleeve (商品 20%)',data:" + json.dumps(slv_vals) + ",borderColor:'#d97706',"
+            "borderWidth:1.3,borderDash:[2,3],pointRadius:0,pointHoverRadius:3,tension:0.1}]},"
             "options:{responsive:true,maintainAspectRatio:false,"
             "interaction:{mode:'index',intersect:false},"
-            "plugins:{legend:{display:false}},"
+            "plugins:{legend:{position:'top',align:'start',labels:{usePointStyle:true,"
+            "pointStyle:'line',boxWidth:24,font:{size:10},padding:12}}},"
             "scales:{x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{maxTicksLimit:14,font:{size:10}}},"
             "y:{type:'logarithmic',grid:{color:'rgba(0,0,0,0.06)'},ticks:{font:{size:10}}}}}});</script>")
 
 
 def generate_html(legs, stx, combined, asof, changes, last_change_date, rebal_due,
-                  year_events, nav_labels, nav_vals, yr_ret):
+                  year_events, nav_labels, comb_vals, stx_vals, slv_vals, yr_ret):
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
     sleeve_dir = ", ".join(f"{l['ticker']} {l['pos']}" for l in legs)
     cards = "".join(leg_card(l) for l in legs)
@@ -568,7 +725,7 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
   &copy; {datetime.now().year} InvestMQuest Research · 商品 Sleeve + 組合系統(OOS 並行追蹤)·
   真實 yfinance 資料 · 引擎同步自 v7-backtest turtle_backtest/strategy.py · 每日美股收盤後自動更新
 </footer>
-{perf_script(nav_labels, nav_vals)}
+{perf_script(nav_labels, comb_vals, stx_vals, slv_vals)}
 </body>
 </html>"""
 
@@ -614,16 +771,39 @@ def main():
     for l in legs:
         print(f"  {l['ticker']}: {l['pos']} | event={l['event_kind']} | {l['n_contracts']} contracts")
 
-    # past-year signal history (most recent first) + monthly NAV for the perf chart
+    # past-year signal history (most recent first)
     one_yr_ago = asof - pd.Timedelta(days=365)
     year_events = sorted([e for e in events if e[0] >= one_yr_ago],
                          key=lambda e: e[0], reverse=True)
-    mm = eq.resample("ME").last().dropna()
-    nav_base = float(mm.iloc[0])
-    nav_labels = [str(k.date())[:7] for k in mm.index]
-    nav_vals = [round(float(v) / nav_base * 100, 2) for v in mm.values]
-    yr_ret = round((float(eq.iloc[-1]) / float(eq.loc[eq.index >= one_yr_ago].iloc[0]) - 1) * 100, 1)
-    print(f"  {len(year_events)} events in past year | sleeve replay NAV 1y {yr_ret:+.1f}%")
+    sleeve_yr = round((float(eq.iloc[-1]) /
+                       float(eq.loc[eq.index >= one_yr_ago].iloc[0]) - 1) * 100, 1)
+
+    # COMBINED 80/20 curve (what is actually run) + STX50/sleeve decomposition.
+    # STX50 stock core built live (faithful v7 port); 80/20 monthly-rebalanced.
+    def _mnav(series):
+        m = series.resample("ME").last().dropna()
+        b = float(m.iloc[0])
+        return [str(k.date())[:7] for k in m.index], [round(float(v) / b * 100, 2) for v in m.values]
+
+    try:
+        cash = load_cash_close()
+        stx_eq = stx50_equity(cash)
+        common = stx_eq.index.intersection(eq.index)
+        sr = stx_eq.reindex(common).pct_change().fillna(0)
+        cr = eq.reindex(common).pct_change().fillna(0)
+        combined_eq = monthly_rebal_mix(sr, cr, SLEEVE_W)          # 80% STX50 + 20% sleeve
+        nav_labels, comb_vals = _mnav(combined_eq)
+        _, stx_vals = _mnav(INIT_CAP * (1 + sr).cumprod())
+        _, slv_vals = _mnav(INIT_CAP * (1 + cr).cumprod())
+        c1 = combined_eq.loc[combined_eq.index >= one_yr_ago]
+        yr_ret = round((float(combined_eq.iloc[-1]) / float(c1.iloc[0]) - 1) * 100, 1)
+        print(f"  combined 80/20 replay NAV 1y {yr_ret:+.1f}% | STX50+sleeve decomposition built")
+    except Exception as exc:  # network / data hiccup → degrade to sleeve-only line
+        print(f"  WARN: STX50/combined build failed ({exc}); sleeve-only curve")
+        nav_labels, slv_vals = _mnav(eq)
+        comb_vals = stx_vals = slv_vals
+        yr_ret = sleeve_yr
+    print(f"  {len(year_events)} events in past year | sleeve 1y {sleeve_yr:+.1f}%")
 
     stx = read_stx50()
     stx_exp = stx.get("combined_exposure_pct", 0.0) if stx else 0.0
@@ -661,7 +841,7 @@ def main():
         print("No sleeve events.")
 
     html = generate_html(legs, stx, combined, asof_str, changes, last_change_date,
-                         rebal_due, year_events, nav_labels, nav_vals, yr_ret)
+                         rebal_due, year_events, nav_labels, comb_vals, stx_vals, slv_vals, yr_ret)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(html, encoding="utf-8")
     print(f"Written {OUTPUT} ({len(html):,} bytes)")
@@ -673,7 +853,8 @@ def main():
         "status": "oos_paper",
         "sleeve_weight": SLEEVE_W,
         "stx50_exposure_pct": stx_exp,
-        "sleeve_1y_replay_ret_pct": yr_ret,
+        "sleeve_1y_replay_ret_pct": sleeve_yr,
+        "combined_1y_replay_ret_pct": yr_ret,
         "events_1y": len(year_events),
         "legs": {
             l["ticker"]: {
