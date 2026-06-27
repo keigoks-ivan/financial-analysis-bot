@@ -249,7 +249,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
   <div class="crumb"><a href="/">首頁</a> / 量化回測</div>
   <h1>台股量化回測總覽</h1>
   <div class="sub">2010–2026 · NT$ 含息 · 起始 $1M · 與美股不同市場/幣別,不直接同尺 · <a href="/backtest/criteria/">評估標準</a></div>
-  <div class="tabs"><a href="/backtest/">🇺🇸 美股</a><a class="on" href="/backtest/tw/">🇹🇼 台股</a><a href="/backtest/multi/">🧩 多資產</a></div>
+  <div class="tabs"><a href="/backtest/">🇺🇸 美股</a><a class="on" href="/backtest/tw/">🇹🇼 台股</a><a href="/backtest/multi/">🧩 多資產</a><a href="/backtest/leverage/">🔧 槓桿疊加</a></div>
 </div></div>
 
 <div class="container">
