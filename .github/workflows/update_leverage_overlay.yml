@@ -1,0 +1,33 @@
+name: Update vol-target Leverage Overlay
+
+on:
+  schedule:
+    # Weekdays 21:30 UTC (US close 16:00 ET + buffer). vol-target reads off
+    # daily realized vol, so it updates every trading day (unlike the weekly
+    # STX50 page it sits under). Experimental / paper — no email alerts.
+    - cron: '30 21 * * 1-5'
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'  # site_nav.py uses 3.12+ f-string syntax
+
+      - name: Install dependencies
+        run: pip install "yfinance>=0.2.40" pandas numpy
+
+      - name: Run vol-target leverage overlay update
+        run: python scripts/update_leverage_overlay.py
+
+      - name: Commit and push
+        run: |
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
+          git add docs/long-track-smh/leverage/index.html docs/long-track-smh/leverage/state.json
+          git diff --staged --quiet || git commit -m "Auto update vol-target leverage overlay: $(date -u '+%Y-%m-%d')"
+          git push

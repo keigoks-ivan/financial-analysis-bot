@@ -398,6 +398,10 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
   解讀請對照 <a href="/backtest/long_track_smh/">回測頁</a> 的 caveat。
 </div>
 
+<div style="text-align:center;font-size:.82rem;margin:.2rem 0 1rem;padding:.6rem;background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px">
+  🔧 想在這上面用期貨疊一點槓桿? → <a href="/long-track-smh/leverage/" style="font-weight:600">vol-target 槓桿層(實驗·紙上讀數)</a>
+</div>
+
 <div class="tgrid">{cards}</div>
 
 <div class="card">
