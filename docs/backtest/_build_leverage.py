@@ -54,11 +54,17 @@ ROWS = [
 ]
 BASE = ("1.0x STX50 底倉（不加槓桿）", "+14.1%", "-21.9%", "0.92", "0.65 / 0.27 / 0.95")
 
-# cross-market robustness (Calmar full + Sharpe, B&H → vol-target)
-XMKT = [
-    ("SPY", "0.20", "0.22", "0.64", "0.66"),
-    ("QQQ", "0.30", "0.34", "0.78", "0.83"),
-    ("SMH", "0.30", "0.34", "0.75", "0.79"),
+# cross-ASSET generalization: same vol-target rule on genuinely low-correlation
+# asset classes (corr −0.31~+0.37, not the 0.79–0.92 of SPY/QQQ/SMH). Only equity
+# improves → the edge is EQUITY-SPECIFIC, not a universal vol-targeting principle.
+# (BH Calmar, VT Calmar, BH Sharpe, VT Sharpe, improved?)
+XASSET = [
+    ("SPY 美股", "0.22", "0.24", "0.64", "0.67", True),
+    ("GLD 黃金", "0.19", "0.16", "0.55", "0.53", False),
+    ("USO 原油", "−0.08", "−0.10", "−0.04", "−0.03", False),
+    ("DBA 農業", "−0.01", "−0.02", "0.06", "−0.01", False),
+    ("FXE 歐元", "−0.03", "−0.04", "−0.09", "−0.13", False),
+    ("TLT 長債", "0.05", "0.04", "0.24", "0.20", False),
 ]
 
 
@@ -83,11 +89,16 @@ def sys_rows():
 
 
 def xmkt_rows():
-    return "".join(
-        f'<tr><td><b>{t}</b></td><td>{a}</td><td style="color:var(--green);font-weight:600">{b}</td>'
-        f'<td>{c}</td><td style="color:var(--green);font-weight:600">{d}</td>'
-        f'<td><span class="tag tag-best">✓ 改善</span></td></tr>'
-        for t, a, b, c, d in XMKT)
+    out = ""
+    for t, a, b, c, d, ok in XASSET:
+        col = "#16a34a" if ok else "var(--muted)"
+        tag = ('<span class="tag tag-best">✓ 改善</span>' if ok
+               else '<span class="tag" style="color:#dc2626">✗ 無改善</span>')
+        out += (f'<tr><td><b>{t}</b></td><td>{a}</td>'
+                f'<td style="color:{col};font-weight:600">{b}</td>'
+                f'<td>{c}</td><td style="color:{col};font-weight:600">{d}</td>'
+                f'<td>{tag}</td></tr>')
+    return out
 
 
 CRISIS_YEARS = {2008, 2011, 2018, 2020, 2022}
@@ -312,26 +323,29 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <div class="note"><b>為什麼別的都輸:</b>固定槓桿只是「同比例放大報酬與回撤」,Calmar 幾乎不變;而所有<b>挑時段</b>的趨勢閘門挑到的反而是比平均差的時段(趨勢尾端/崩盤前平靜),把 Calmar 挑低了。要靠槓桿加值,只能把它<b>集中在真正高 Sharpe 的時段</b>——「比平常平靜＋上升、連續縮放」是少數做得到的。</div>
 </div>
 
-<!-- EVIDENCE: cross-market -->
+<!-- EVIDENCE: cross-asset generalization (corrected) -->
 <div class="section">
-<h2 class="section-title">③ 穩健性 · 跨市場 9/9</h2>
-<div class="section-sub">同一條 vol-target 規則套到三個獨立指數的 B&amp;H,Calmar 與 Sharpe 全部改善 → 是普遍原理,不是 QQQ 的運氣。窗口也是 15–40 日一片高原(只有 10 日太雜訊破功)。</div>
+<h2 class="section-title">③ 普遍性檢驗 · 這是「股票特有」的小 edge,不是萬用原理</h2>
+<div class="section-sub"><b style="color:#dc2626">2026-06 review 修正:</b>之前宣稱「SPY/QQQ/SMH 9/9 → 普遍原理」<b>是錯的</b> —— 那三個都是高度相關的美股(日報酬相關 0.79–0.92),等於同一賭注測三次。放到<b>真正低相關</b>的資產類別(彼此相關 −0.31~+0.37)才見真章:</div>
 <div class="card">
-<table><thead><tr><th>市場</th><th>B&amp;H Calmar</th><th>vol-target Calmar</th><th>B&amp;H Sharpe</th><th>vol-target Sharpe</th><th></th></tr></thead>
+<table><thead><tr><th>資產類別</th><th>B&amp;H Calmar</th><th>vol-target Calmar</th><th>B&amp;H Sharpe</th><th>vol-target Sharpe</th><th></th></tr></thead>
 <tbody>%XMKT_ROWS%</tbody></table>
 </div>
+<div class="note"><b>只有 1/6 改善,而且就是股票。</b>機制:vol-target 加值需要同時有「正的長期漂移」＋「低波動→續漲、高波動→崩的不對稱」——
+<b>股票兩個都有;黃金只有漂移,原油/匯/農兩個都弱,長債也不行。</b>所以它是<b>股票特有現象、不跨資產類別</b>,不是普遍的波動目標原理。窗口仍是 15–40 日一片高原(只有 10 日太雜訊破功)。</div>
 </div>
 
 <!-- HONEST CAVEATS -->
 <div class="section">
 <h2 class="section-title">④ 誠實警語</h2>
 <div class="warn">
-  <b>這是小 edge,不是翻倍級的東西。</b>每個市場 Sharpe 只 +0.02–0.05、Calmar +0.02–0.06。它是教科書級 vol-targeting 的「穩定小效率提升」,
+  <b>這是小 edge、股票特有、不是翻倍級的東西。</b>Sharpe 只 +0.02–0.05、Calmar +0.02–0.06,且只對股票(見 ③)。
   最大實質價值是<b>危機年自動收槓桿(不放大尾部)＋ 平靜年小幅加速</b>。<br>
-  · <b>工具折扣</b>:純期貨只能槓 QQQ 半邊(+0.4x);要更大 edge 需 SOXL/保證金槓 SMH 半邊。<br>
-  · <b>regime</b>:贏面在「波動分層清楚」的年代;若波動結構大變,edge 可能縮小。<br>
-  · <b>選擇權凸性試過</b>:模型上只小贏線性、且救不到 MDD(回撤來自底倉、危機時疊加早已關掉),不值得多一層複雜度。<br>
-  程式與全部數字:<code>v7-backtest/src/long_track_backtest/stx50_mnq_overlay.py</code>(commit a6cdbc7)。
+  · <b>已用真實期貨驗證(2026-06)</b>:之前 MNQ 是用 QQQ 還原報酬−現金「代理」;改用<b>真實 NQ 期貨</b>重跑,結果 Calmar 0.68/0.36/0.97,比代理(0.67/0.35/0.96)還略好 → 代理沒美化。<br>
+  · <b>工具/可執行性折扣</b>:純期貨只能槓 QQQ 半邊(+0.4x);且 <b>MNQ 微型 2019 才上市</b>,回測 65% 期間只能用全尺寸 NQ,小帳戶切不出這麼細的曝險(平均才 +0.09x)。要更大 edge 需 SOXL/保證金槓 SMH 半邊。<br>
+  · <b>尚未做 walk-forward</b>:兩個年代是同一份資料的子區間,參數雖落在敏感度高原(15–40d,非針),但「沒過擬合」目前是論證、還沒用擴張窗 OOS 證明。<br>
+  · <b>選擇權凸性試過</b>:模型上只小贏線性、且救不到 MDD,不值得。<b>期貨作空也試過(A/B/C)全否決</b>——救持續空頭但 V 轉/軋空賠更多。<br>
+  程式與全部數字:<code>v7-backtest/src/long_track_backtest/stx50_mnq_overlay.py</code>。
 </div>
 </div>
 
