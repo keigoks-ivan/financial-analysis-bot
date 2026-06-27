@@ -90,10 +90,45 @@ def xmkt_rows():
         for t, a, b, c, d in XMKT)
 
 
+CRISIS_YEARS = {2008, 2011, 2018, 2020, 2022}
+
+
+def _c(v):
+    return "#16a34a" if v >= 0 else "#dc2626"
+
+
+def yearly_rows():
+    y = CURVES["yearly"]
+    out = ""
+    for yr in sorted(CURVES["decomp"], key=int):
+        hl = ' style="background:#fffbeb"' if int(yr) in CRISIS_YEARS else ""
+        vt = y["voltarget"].get(yr, 0.0); bs = y["base"].get(yr, 0.0)
+        c18 = y["const18"].get(yr, 0.0); bh = y["bh"].get(yr, 0.0)
+        out += (f'<tr{hl}><td>{yr}</td>'
+                f'<td style="color:{_c(vt)};font-weight:600">{vt:+.1f}%</td>'
+                f'<td style="color:{_c(bs)}">{bs:+.1f}%</td>'
+                f'<td style="color:{_c(c18)}">{c18:+.1f}%</td>'
+                f'<td style="color:{_c(bh)}">{bh:+.1f}%</td></tr>')
+    return out
+
+
+def decomp_rows():
+    out = ""
+    for yr in sorted(CURVES["decomp"], key=int):
+        d = CURVES["decomp"][yr]
+        hl = ' style="background:#fffbeb"' if int(yr) in CRISIS_YEARS else ""
+        out += (f'<tr{hl}><td>{yr}</td>'
+                f'<td style="color:{_c(d["base"])}">{d["base"]:+.1f}%</td>'
+                f'<td style="color:{_c(d["overlay"])};font-weight:600">{d["overlay"]:+.1f}%</td>'
+                f'<td style="color:{_c(d["total"])};font-weight:600">{d["total"]:+.1f}%</td></tr>')
+    return out
+
+
 def render():
     html = TEMPLATE
     for k, v in {
         "%NAV%": NAV_BLOCK, "%SYS_ROWS%": sys_rows(), "%XMKT_ROWS%": xmkt_rows(),
+        "%YEARLY_ROWS%": yearly_rows(), "%DECOMP_ROWS%": decomp_rows(),
         "%JS_CURVES%": json.dumps(CURVES),
         "%NOW%": datetime.now().strftime("%Y-%m-%d"),
     }.items():
@@ -126,6 +161,9 @@ a{color:var(--ink);text-decoration:none}a:hover{text-decoration:underline}
 .section-title{font-size:1.05rem;font-weight:700;color:var(--ink);margin-bottom:.85rem;padding-bottom:.4rem;border-bottom:1px solid var(--border)}
 .section-sub{font-size:.82rem;color:var(--muted);margin:-.45rem 0 .9rem}
 .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:.5rem;margin-bottom:1rem;overflow-x:auto}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.1rem;margin-bottom:1rem}
+.chart-wrap{position:relative;width:100%;height:300px}
+.chart-wrap-sm{position:relative;width:100%;height:260px}
 .prose{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.2rem 1.4rem;margin-bottom:1rem;font-size:.9rem;line-height:1.85}
 .prose h3{font-size:.95rem;font-weight:700;color:var(--ink);margin:1rem 0 .4rem}
 .prose h3:first-child{margin-top:0}
@@ -202,6 +240,30 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </div>
 <div class="note"><b>讀法:</b>權益圖上「常態 1.8x」(灰虛線)終值最高,但回撤圖它的谷比 vol-target／底倉深得多、B&amp;H(點線)更是 −50% 級。
 <b>vol-target(琥珀)的回撤幾乎貼著底倉(藍)</b> —— 這就是「小 edge」的長相:多賺一點、痛幾乎沒多。(月頻略低估盤中回撤,精確值見下方表格。)</div>
+</div>
+
+<!-- YEARLY -->
+<div class="section">
+<h2 class="section-title">逐年績效</h2>
+<div class="section-sub">日曆年報酬。黃底為股票危機年(2008/2011/2018/2020/2022)。末年 2026 為年初至今。常態 1.8x／B&amp;H 多數年更高,但崩盤年(2008/2022)被放大得多 —— 對照下方拆解看 vol-target 的槓桿在危機年幾乎關掉。</div>
+<div class="chart-card"><div class="chart-wrap"><canvas id="chart-yearly"></canvas></div></div>
+<div class="card">
+<table><thead><tr><th>年度</th><th>vol-target(採用)</th><th>1.0x STX50 底倉</th><th>常態 1.8x</th><th>B&amp;H 50/50</th></tr></thead>
+<tbody>%YEARLY_ROWS%</tbody></table>
+</div>
+</div>
+
+<!-- DECOMPOSE SOURCE -->
+<div class="section">
+<h2 class="section-title">來源拆解 · 底倉 vs MNQ 槓桿腿</h2>
+<div class="section-sub">把 vol-target 每年的報酬<strong>加法拆成兩塊</strong>:底倉 STX50 的貢獻 ＋ MNQ 槓桿腿的貢獻(以年初 NAV 標準化,兩者相加 = vol-target 合計)。看槓桿腿到底在哪些年加了多少。</div>
+<div class="chart-card"><div class="chart-wrap-sm"><canvas id="chart-decomp"></canvas></div></div>
+<div class="card">
+<table><thead><tr><th>年度</th><th>底倉 STX50 貢獻</th><th>MNQ 槓桿腿貢獻</th><th>vol-target 合計</th></tr></thead>
+<tbody>%DECOMP_ROWS%</tbody></table>
+</div>
+<div class="note"><b>讀法:</b>槓桿腿(琥珀)逐年貢獻其實很小 —— 最大幾年是 <b>2023 +9.3pp、2009 +7.9pp</b>(乾淨大多頭);
+而 <b>2008 只 −1.6pp、2022 只 −0.8pp</b>:危機年波動一升,vol-target 把槓桿關到接近 0,所以崩盤年的拖累極小。全期它<b>平均一年只加個位數 pp、且常常是 0</b> —— 這正是「危機自動關、平時小幅加速」的數字證據。</div>
 </div>
 
 <!-- METHOD (detailed) -->
@@ -292,6 +354,32 @@ function mk(id,field,logy){
             :{grid:{color:'rgba(0,0,0,0.06)'},ticks:{callback:function(v){return v+'%'},font:{size:10}}}}}});
 }
 mk('chart-nav','nav',true); mk('chart-dd','dd',false);
+
+var Y=Object.keys(C.decomp).sort(function(a,b){return a-b});
+function ya(k){return Y.map(function(y){return C.yearly[k][y]})}
+new Chart(document.getElementById('chart-yearly'),{type:'bar',
+ data:{labels:Y,datasets:[
+   {label:'vol-target(採用)',data:ya('voltarget'),backgroundColor:'#b45309'},
+   {label:'1.0x STX50 底倉',data:ya('base'),backgroundColor:'rgba(21,101,192,0.55)'},
+   {label:'常態 1.8x',data:ya('const18'),backgroundColor:'rgba(156,163,175,0.6)'},
+   {label:'B&H 50/50',data:ya('bh'),backgroundColor:'rgba(203,213,225,0.7)'}
+ ]},
+ options:{responsive:true,maintainAspectRatio:false,
+   plugins:{legend:{position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'rect',font:{size:10},padding:10}},
+     tooltip:{callbacks:{label:function(c){return c.dataset.label+': '+(c.parsed.y>=0?'+':'')+c.parsed.y+'%'}}}},
+   scales:{x:{grid:{display:false},ticks:{font:{size:9}}},
+     y:{grid:{color:'rgba(0,0,0,0.06)'},ticks:{callback:function(v){return v+'%'},font:{size:10}}}}}});
+
+new Chart(document.getElementById('chart-decomp'),{type:'bar',
+ data:{labels:Y,datasets:[
+   {label:'底倉 STX50',data:Y.map(function(y){return C.decomp[y].base}),backgroundColor:'rgba(21,101,192,0.6)',stack:'s'},
+   {label:'MNQ 槓桿腿',data:Y.map(function(y){return C.decomp[y].overlay}),backgroundColor:'#b45309',stack:'s'}
+ ]},
+ options:{responsive:true,maintainAspectRatio:false,
+   plugins:{legend:{position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'rect',font:{size:10},padding:10}},
+     tooltip:{callbacks:{label:function(c){return c.dataset.label+': '+(c.parsed.y>=0?'+':'')+c.parsed.y+'pp'}}}},
+   scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:9}}},
+     y:{stacked:true,grid:{color:'rgba(0,0,0,0.06)'},ticks:{callback:function(v){return v+'%'},font:{size:10}}}}}});
 </script>
 </body></html>
 """
