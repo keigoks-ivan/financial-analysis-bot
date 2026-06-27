@@ -21,6 +21,7 @@ from site_nav import full_nav_block  # noqa: E402
 
 NAV_BLOCK = full_nav_block("quant", "bt")
 OUT = Path(__file__).parent / "leverage" / "index.html"
+CURVES = json.loads((OUT.parent / "_curves.json").read_text())  # monthly NAV+DD, pinned from v7 backtest
 
 ADOPT, GREY, RED = "#b45309", "#9ca3af", "#dc2626"
 
@@ -93,6 +94,7 @@ def render():
     html = TEMPLATE
     for k, v in {
         "%NAV%": NAV_BLOCK, "%SYS_ROWS%": sys_rows(), "%XMKT_ROWS%": xmkt_rows(),
+        "%JS_CURVES%": json.dumps(CURVES),
         "%NOW%": datetime.now().strftime("%Y-%m-%d"),
     }.items():
         html = html.replace(k, v)
@@ -105,6 +107,7 @@ TEMPLATE = r"""<!DOCTYPE html>
   <meta name="robots" content="noindex,nofollow">
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>槓桿疊加量化回測總覽 | InvestMQuest Research</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--ink:#1f2937;--text:#374151;--muted:#6b7280;--border:#e5e7eb;--bg:#f7f8fa;--card:#fff;
       --green:#b45309;--green-bg:#fffbeb;--green-border:#fde68a;--red:#dc2626;--grey:#9ca3af;--blue:#1a56db}
@@ -185,6 +188,22 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </div>
 </div>
 
+<!-- PERF CURVES -->
+<div class="section">
+<h2 class="section-title">績效曲線 · 權益與回撤</h2>
+<div class="section-sub">月頻 · 起點=100 · 2006–今。<b>重點是風險調整,不是終值</b>:常態 1.8x／B&amp;H 終值更高,但回撤深得多(見下圖);vol-target(琥珀)用最小的額外回撤把底倉小幅往上推。</div>
+<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.1rem;margin-bottom:1rem">
+  <div style="font-size:.86rem;font-weight:600;color:var(--ink);margin-bottom:.3rem">權益曲線(NAV,起點=100,對數軸)</div>
+  <div style="position:relative;width:100%;height:340px"><canvas id="chart-nav"></canvas></div>
+</div>
+<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.1rem;margin-bottom:1rem">
+  <div style="font-size:.86rem;font-weight:600;color:var(--ink);margin-bottom:.3rem">回撤(月頻)</div>
+  <div style="position:relative;width:100%;height:240px"><canvas id="chart-dd"></canvas></div>
+</div>
+<div class="note"><b>讀法:</b>權益圖上「常態 1.8x」(灰虛線)終值最高,但回撤圖它的谷比 vol-target／底倉深得多、B&amp;H(點線)更是 −50% 級。
+<b>vol-target(琥珀)的回撤幾乎貼著底倉(藍)</b> —— 這就是「小 edge」的長相:多賺一點、痛幾乎沒多。(月頻略低估盤中回撤,精確值見下方表格。)</div>
+</div>
+
 <!-- METHOD (detailed) -->
 <div class="section">
 <h2 class="section-title">① 邏輯與做法（詳述）</h2>
@@ -256,6 +275,24 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 
 </div>
 <footer><div class="container">&copy; 2026 InvestMQuest Research · 槓桿疊加量化回測總覽 · 真實 yfinance · 生成 %NOW%</div></footer>
+<script>
+var C=%JS_CURVES%, L=C.labels;
+function mk(id,field,logy){
+  return new Chart(document.getElementById(id),{type:'line',
+   data:{labels:L,datasets:[
+     {label:'vol-target 疊加(採用)',data:C.voltarget[field],borderColor:'#b45309',borderWidth:2.6,pointRadius:0,pointHoverRadius:3,tension:0.1},
+     {label:'1.0x STX50 底倉',data:C.base[field],borderColor:'#1565c0',borderWidth:1.6,pointRadius:0,pointHoverRadius:3,tension:0.1},
+     {label:'常態 1.8x STX50',data:C.const18[field],borderColor:'#9ca3af',borderWidth:1.2,borderDash:[6,3],pointRadius:0,pointHoverRadius:3,tension:0.1},
+     {label:'1.0x B&H 50/50',data:C.bh[field],borderColor:'#cbd5e1',borderWidth:1.1,borderDash:[2,3],pointRadius:0,pointHoverRadius:3,tension:0.1}
+   ]},
+   options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+     plugins:{legend:{display:field==='nav',position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'line',boxWidth:24,font:{size:10},padding:10}}},
+     scales:{x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{maxTicksLimit:14,font:{size:10}}},
+       y:logy?{type:'logarithmic',grid:{color:'rgba(0,0,0,0.06)'},ticks:{font:{size:10}}}
+            :{grid:{color:'rgba(0,0,0,0.06)'},ticks:{callback:function(v){return v+'%'},font:{size:10}}}}}});
+}
+mk('chart-nav','nav',true); mk('chart-dd','dd',false);
+</script>
 </body></html>
 """
 
