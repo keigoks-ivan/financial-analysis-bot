@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v14.2">
+<title>CSX 深度研究 DD｜v14.2｜2026-06-29</title>
+<script id="dd-meta" type="application/json">
+{
+  "ticker": "CSX",
+  "schema": "v14.2",
+  "date": "2026-06-29",
+  "price_at_dd": 48.32,
+  "signal": "B",
+  "trap": "🟡",
+  "trap_label": "🟡 觀察期",
+  "moat": "B",
+  "val": "🟠",
+  "ma": "🟡",
+  "fpe_fy2": 22.3,
+  "pct_5y": 84.0,
+  "peg_fy2": 1.64,
+  "upside_short_pct": -21.0,
+  "upside_mid_pct": -10.0,
+  "stress": {"pass": 1, "total": 2},
+  "moat_score": 8.0,
+  "growth_durability": 6.5,
+  "quality_score": 7.0,
+  "ai_risk": "🟢",
+  "long_term_confidence": "中",
+  "verdict": "B",
+  "moat_execution": 7.0,
+  "moat_pricing_power": 9.0,
+  "endo_growth_ceiling": 6.5,
+  "capalloc_grade": "B",
+  "dca_verdict": "觀望",
+  "dca_role": "條件式核心持倉",
+  "moat_trend": "→",
+  "runway_post_y5": "🟢",
+  "ev5y_pct": 14.0,
+  "irr_base_pct": 5.5,
+  "max_dd_pct": -50.0,
+  "oneliner": "FY25 營運+景氣雙谷底(OR~66%、ROIC跌破WACC);Q1 FY26 OR改善至64%、EPS$0.43+26%、上調指引確認Angel(Linde)領導的turnaround。但股價ATH$48.32、Fwd PE~22x(5Y高檔)、近期R:R負、5Y IRR僅~4%/yr;Buffett否認BNSF併購但UP-NS骨牌仍在。品質B→觀望,等PE≤20x或OR連2季<62%。"
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F8FAFC;--card:#FFFFFF;--ink:#1E3A5F;--accent:#3B82F6;--mut:#64748B;--line:#E2E8F0;}
+*{box-sizing:border-box;}
+body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:#1E293B;margin:0;line-height:1.75;font-size:15.5px;}
+.wrap{max-width:1040px;margin:0 auto;padding:24px 20px 80px;}
+code,.mono,td .mono{font-family:'IBM Plex Mono',monospace;}
+h1{font-size:25px;color:var(--ink);margin:6px 0;}
+h2{font-size:21px;color:#fff;background:var(--ink);border-left:4px solid var(--accent);padding:9px 14px;margin:34px 0 14px;scroll-margin-top:80px;border-radius:0 4px 4px 0;}
+h3{font-size:17px;color:var(--ink);margin:22px 0 8px;border-bottom:2px solid var(--line);padding-bottom:4px;}
+h4{font-size:15px;color:#334155;margin:16px 0 6px;}
+p{margin:9px 0;}
+table{border-collapse:collapse;width:100%;margin:12px 0;font-size:13.5px;}
+th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top;}
+th{background:var(--ink);color:#fff;font-weight:500;}
+tbody tr:nth-child(even){background:#F1F5F9;}
+.topbar{position:sticky;top:0;z-index:50;background:var(--ink);color:#fff;padding:8px 16px;font-size:12.5px;display:flex;flex-wrap:wrap;gap:14px;justify-content:center;}
+.topbar b{color:#93C5FD;}
+.status-bar{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;background:#F1F5F9;border-left:4px solid var(--accent);border-right:4px solid var(--accent);padding:14px 12px;margin:14px 0;border-radius:6px;}
+.status-bar .cell{text-align:center;min-width:110px;}
+.status-bar .lab{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;}
+.status-bar .val{font-size:20px;font-weight:700;margin-top:3px;}
+.hypothesis-box{background:#EFF6FF;border-left:4px solid var(--accent);padding:16px 20px;border-radius:0 8px 8px 0;margin:14px 0;}
+.hypothesis-box .thesis{font-size:25px;font-weight:700;text-align:center;color:var(--ink);line-height:1.5;margin:6px 0 16px;}
+.hypothesis-box ul{margin:0;padding-left:20px;}
+.hypothesis-box li{margin:7px 0;}
+.note{font-size:12.5px;color:var(--mut);background:#F8FAFC;border:1px dashed var(--line);padding:8px 12px;border-radius:6px;}
+.dd-toc{display:flex;flex-wrap:wrap;gap:7px;margin:14px 0 6px;}
+.dd-toc a{font-size:12px;background:#E0ECFF;color:#1E40AF;padding:4px 11px;border-radius:999px;text-decoration:none;border:1px solid #BFDBFE;}
+.dd-toc a:hover{background:#1E40AF;color:#fff;}
+.reasoning{background:#F0F9FF;border-left:3px solid #0EA5E9;padding:7px 11px;margin:8px 0;font-size:13px;border-radius:0 4px 4px 0;}
+.reasoning b{color:#0369A1;}
+.decision{border-radius:8px;padding:18px 22px;margin:14px 0;}
+.dec-watch{background:#FEF9C3;border-left:4px solid #92400E;}
+.chip{display:inline-block;padding:6px 22px;border-radius:4px;font-size:19px;font-weight:700;border-left:4px solid;}
+.chip-watch{background:#92400E;color:#fff;border-left-color:#78350F;}
+.sub{font-size:13px;color:#475569;font-style:italic;margin-top:7px;}
+.box-contra{background:#FFF7ED;border-left:4px solid #F97316;padding:14px 18px;border-radius:0 8px 8px 0;margin:12px 0;}
+.box-pm{background:#FEF2F2;border-left:4px solid #DC2626;padding:14px 18px;border-radius:0 8px 8px 0;margin:12px 0;}
+.box-trap{background:#FFF0E6;border-left:4px solid #F97316;padding:14px 18px;border-radius:0 8px 8px 0;margin:12px 0;}
+.box-trap h3{color:#C2410C;border:none;}
+.box-assum{background:#EFF6FF;border-left:4px solid var(--accent);padding:14px 18px;border-radius:0 8px 8px 0;margin:12px 0;}
+.box-learn{background:#F0F9FF;border-left:4px solid #0284C7;padding:14px 18px;border-radius:0 8px 8px 0;margin:12px 0;}
+.maxdd-num{font-size:30px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:#B45309;}
+.ddbar{height:16px;border-radius:8px;background:linear-gradient(90deg,#22C55E 0%,#22C55E 35%,#F59E0B 35%,#F59E0B 62%,#EF4444 62%,#EF4444 100%);margin:6px 0;position:relative;}
+.g{color:#166534;font-weight:600;} .a{color:#92400E;font-weight:600;} .r{color:#991B1B;font-weight:600;} .b{color:#1E40AF;font-weight:600;}
+.tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:4px;font-weight:600;}
+.t-beat{background:#DCFCE7;color:#166534;} .t-miss{background:#FEE2E2;color:#991B1B;} .t-neu{background:#FEF9C3;color:#92400E;}
+.print-btn{position:fixed;right:18px;bottom:18px;background:var(--ink);color:#fff;border:none;padding:11px 16px;border-radius:8px;font-size:13px;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.2);z-index:60;}
+details{margin:10px 0;border:1px solid var(--line);border-radius:6px;padding:6px 12px;background:#fff;}
+summary{cursor:pointer;font-weight:600;color:var(--ink);font-size:15px;padding:4px 0;}
+@media print{.topbar,.print-btn,.dd-toc{display:none;} details{open:true;} details>*{display:block!important;} h2{background:#1E3A5F!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#0f172a;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(59,130,246,.28);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/" class="active">個股 DD</a>
+          <a href="/research/synthesis/">期望落差綜合研判</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/">週報</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/long-track-smh/">長線訊號</a>
+          <a href="/long-track-tw/">台股長線</a>
+          <a href="/turtle-sleeve/">商品 Sleeve</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/">量化回測</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/screener-tw.html">Screener 台股</a>
+          <a href="/screener-jp.html">Screener 日股</a>
+          <a href="/screener-my.html">Screener 馬股</a>
+          <a href="/cache/">🗄 Data Cache</a>
+          <a href="/tools/">期貨部位計算機</a>
+        </div>
+      </div>
+      <a href="/mental-models/">🧠 心智模型</a>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+<div class="topbar">
+<span>標的：<b>CSX</b>（CSX Corporation · NASDAQ）</span>
+<span>資料抓取：<b>2026-06-29</b></span>
+<span>最新股價：<b>$48.32</b></span>
+<span>最近財報季：<b>Q1 FY2026（2026-04）</b></span>
+<span>DD Schema <b>v14.2</b></span>
+<span>採集：yfinance 批量 + web_search ×9</span>
+</div>
+<div class="wrap">
+<h1>CSX Corporation — 個股深度研究（v14.2 統一裁決報告）</h1>
+<p class="note">東部美國 Class I 鐵路雙寡占（與 Norfolk Southern）。本報告為單一裁決報告：Part I 基本面深度 + Part II 投資決策層，收斂為一個人面對的結論 <b>進場 / 觀望 / 迴避</b>。基本面評級 A+/A/B/C/X 為 metadata（餵 screener），非並列頭銜。</p>
+
+<!-- ============ 頁首結論儀表板 ============ -->
+<div class="status-bar">
+<div class="cell"><div class="lab">統一裁決</div><div class="val" style="color:#92400E;">觀望</div></div>
+<div class="cell"><div class="lab">倉位角色</div><div class="val" style="font-size:15px;">條件式核心持倉</div></div>
+<div class="cell"><div class="lab">護城河趨勢</div><div class="val" style="color:#64748B;">B →</div></div>
+<div class="cell"><div class="lab">Y5 後跑道</div><div class="val">🟢 寬</div></div>
+<div class="cell"><div class="lab">Max DD</div><div class="val" style="color:#B45309;">−50%</div></div>
+<div class="cell"><div class="lab">5Y EV／IRR</div><div class="val" style="font-size:15px;">+14%／~4%/yr</div></div>
+</div>
+
+<div class="hypothesis-box">
+<p class="thesis">東部鐵路雙寡占、永續特許經營權，正由 Angel（PSR 型營運操盤手）做營運自助式復甦；UP-NS 合併骨牌是被動的下檔對沖（CSX 積極防守、非賣盤策略）——但好故事已在 ATH 價位被 price in。</p>
+<ul>
+<li><strong>統一裁決 <span style="font-size:22px;color:#92400E;">觀望</span></strong>（§14）｜倉位角色：條件式核心持倉｜判定理由：品質 B 的寬護城河鐵路，營運 turnaround 真實、但股價 ATH $48.32、Fwd PE ~22x（5Y 約 84 分位）、近期 R:R 為負、5Y 機率加權 IRR 僅 ~4%/yr，等回檔或 OR 進一步確認。</li>
+<li><strong>護城河趨勢 B →（holding）</strong>（§7 權威）｜execution 趨勢 穩定偏弱→修復中（OR 谷底回升）｜pricing power 趨勢 穩定（雙寡占定價權持續 &gt; 通膨）</li>
+<li><strong>Y5 後跑道 🟢 寬</strong>（§6.A''）｜S 曲線 成熟期但特許永續｜Y5 末滲透 — 鐵路為存量資產非滲透模型｜第二曲線 卡車轉鐵路（intermodal）+ 製造業回流，數十年結構順風</li>
+<li><strong>Max DD −35% ~ −50%</strong>（§13c，路徑風險 🟡）｜最可能觸發 2026-2027 貨運衰退延長 + turnaround 停滯 + UP-NS 被否決使 M&A 溢價蒸發｜最快復原 12-24 個月</li>
+<li><strong>5Y 機率加權 EV +14%／IRR ~4%/yr</strong>（§11.5）｜Base IRR ~5.5%/yr（三分量 §11.6：EPS +6.0/yr ／ re-rate −3.0/yr ／ 股息回購 +2.6/yr）</li>
+<li><strong>opportunity cost：</strong>同為「寬護城河、低成長、高品質」的邊際資金競爭對象（若組合已持 UNP / 公用事業 / 必需消費），CSX 在 ATH 的 R:R 明顯劣於這些可在合理價買進的同類；邊際資金不應在此價位投入 CSX（§14a）。</li>
+<li><strong>基本面評級 B（metadata）：</strong>品質 7.0/10｜估值燈 🟠 偏貴｜Pure MA 🟡 減半進場｜陷阱定性 🟡 觀察期（詳見附錄 A）</li>
+<li><strong>長期持有信心：中</strong>（附錄 A I）｜建議持有年限：中長期（2-5 年起，視 turnaround 兌現可延長）（§14c）</li>
+<li><strong>Inception DD：</strong><code>DD_CSX_20260615.html</code>（2026-06-15）— 累積漂移對照基準（前一份為 v12.7，本份為首份 v14.2）</li>
+<li><strong>下次年度對照倒數：</strong>2027-06-15（距今 351 天）— Inception + 365 天</li>
+</ul>
+</div>
+<p class="note"><strong>讀法：</strong>本份報告的人面對結論是「統一裁決 觀望」（§14）。基本面評級 B 為 metadata（餵 screener），不是並列頭銜。倉位組合佔比由 portfolio-manager skill 依組合狀態決定。<br><strong>§0 archetype：</strong>品質複利成長（primary，高信心）＋ 循環（secondary，貨運量景氣敏感）。採 <b>預設品質複利 gate-set</b>（CSX 為定價設定者非商品 price-taker，pricing power 強），未套循環/金融特別 gate。附錄 B 循環交易鏡頭<b>未觸發</b>（QC-42 僅命中 1 項：capex/rev 20.6%&gt;15%；無 GAAP 虧損年、無 &gt;20pp 毛利擺動、非商品 ASP 驅動、產業不在記憶體/礦業/航運等清單 — 未達 ≥2 門檻）。</p>
+
+<nav class="dd-toc">
+<a href="#s1">§1 結論</a><a href="#s2">§2 序章</a><a href="#s3">§3 論點</a><a href="#s4">§4 財報</a><a href="#s5">§5 門檻</a><a href="#s6">§6 成長</a><a href="#s7">§7 護城河</a><a href="#s8">§8 財務</a><a href="#s9">§9 產業</a><a href="#s10">§10 治理</a><a href="#s11">§11 估值</a><a href="#s12">§12 矛盾</a><a href="#s13">§13 pre-mortem</a><a href="#decision">§14 決策</a><a href="#s15">§15 複審</a><a href="#sA">附錄 A 擇時</a>
+</nav>
+
+<!-- ============ §1 ============ -->
+<h2 id="s1">§1｜投資結論詳述</h2>
+<p>本結論基於以下完整分析得出，詳見各章節；人面對裁決見 §14。</p>
+<p>CSX 是美國東部兩大 Class I 鐵路之一（與 Norfolk Southern 構成雙寡占），擁有不可複製的軌道網路特許經營權——這是近乎永續、政府不會再核發的實體護城河。但過去三年（2022-2025）營收由 $148.5 億下滑至 $140.9 億、淨利由 $41.1 億腰斬式下滑至 $28.9 億（−30%）、operating ratio（OR，營運費用 ÷ 營收，鐵路核心效率指標）由 2022 的 59.5% 惡化至 2025 約 65-66%、自算 ROIC 由 ~14.6% 降至 ~11.3%（第三方更嚴口徑顯示 2024 約 10.2%、Q1 2025 年化谷底 7.6% 一度跌破 WACC ~9.5%）。這是一段「景氣（貨運衰退、coal 衰退、housing 弱）＋ 自身營運（服務品質滑落、網路流動性問題、被 activist Ancora 施壓）」雙重谷底。</p>
+<p><strong>轉折點</strong>：2025-09-28 Steve Angel（前 Linde / Praxair 整併操盤手、前 GE 高管）接任 CEO，搭配 2023 上任的 COO Mike Cory。Angel 在 Linde 以「PSR 式營運紀律 + 成本結構重塑」著稱。需校正一個常見誤讀：Angel 並非「準備賣公司」的 endgame CEO——他 2026-02 公開表示自己「退休失敗、找到合適位置」，並說 CSX 僅約 5 人在研究產業整併、其餘 23,000 人專注改善營運；CSX 更在 2026-05 主動架設 csxstayingontrack.com、動員貨主向 STB 陳情<b>反對</b> UP-NS 合併。因此 Angel 的策略目標是「作為獨立公司把 OR 改善做到極致」，被收購是外部格局賦予的 put option（對沖），不是管理層的目標。Q1 FY2026（2026-04 公布）首份成績單即顯著：營收 $34.8 億（+2% YoY）、營業利益 $12.5 億（+20%）、OR 改善至 <b>64.0%</b>（前年同期 69.6%）、EPS $0.43（+26% YoY）、量 +3%，6% 費用下降是主引擎。全年營收指引由「low single digit」上調至「mid-single-digit」。turnaround 已啟動且被首季數據確認。</p>
+<p><strong>為什麼仍是「觀望」而非「進場」</strong>：股價 $48.32 正落在 52 週高點（ATH），自 52 週低點 $31.8 反彈 +52%。Fwd PE（FY2027 EPS $2.17）~22.3x，位於 5 年區間約 84 分位（高檔）；EV/EBITDA ~16x，溢價於 NSC（~13.5x）。以 FY2027 EPS × 合理 20x 計，12-24 個月公允值約 $43，現價已高於公允值 ~10-12%（近期 R:R 為負）。5 年機率加權 EV 僅 +14%、Base IRR ~5.5%/yr、機率加權 IRR ~4%/yr——低於大盤長期報酬。<b>好公司、真實 turnaround，但已被 price in。</b>邊際資金在此價位投入 CSX 的風險報酬不足。</p>
+
+<div class="box-trap">
+<h3>⚠️ 這是價值陷阱嗎？（強制回答題）</h3>
+<table>
+<tr><th width="26%">問題</th><th>回答</th></tr>
+<tr><td><b>最可能的價值陷阱模式</b></td><td><b>盈餘品質型（次要）+ 產業結構衰退型（coal 部分）</b>——但整體<b>非陷阱</b>。盈餘品質疑慮：FCF/NI 僅 0.59（capex/rev 20.6% 吃掉現金）；結構衰退僅限 coal（占營收約 17-18%、長期下滑）。但 merchandise + intermodal（占 ~80%）有定價權與卡車轉換結構順風，TAM 不萎縮。</td></tr>
+<tr><td><b>支持「這不是陷阱」的最強論據</b></td><td>雙寡占定價權真實且持續：Q1 FY26 merchandise 靠提價推升營收，鐵路對 captive shipper 數十年提價 &gt; 通膨。護城河是「不可再建的軌道特許」（政府不再核發），ROIC 即使谷底仍 ~11%（自算）、正常年 14-15%、遠高於資本密集製造業。OR 谷底回升（66%→64%）證明效率惡化是循環/自助可逆，非結構崩壞。Buffett 持有 BNSF 數十年印證鐵路是優質永續複利資產。</td></tr>
+<tr><td><b>支持「這可能是陷阱」的最強反駁</b></td><td>ROIC 在 2024-Q1'25 一度跌破 WACC（第三方口徑 7.6% vs 9.5%）——若這是<b>結構性</b>（PSR 模式報酬遞減、capex 長期吃 FCF、coal 加速衰退）而非循環，則高 capex + 低 FCF 轉換的「隱性資本密集」會讓帳面盈餘長期無法轉成股東現金。2025 公司把 $23.7 億（股息 + 回購）還給股東卻只賺 $17.1 億 FCF，靠舉債維持——不可持續。</td></tr>
+<tr><td><b>空頭最強一擊</b></td><td>18 個月內 30%+ 虧損最可能路徑：2026-2027 貨運衰退延長 + UP-NS 合併 2027 被 STB 否決使 M&A 溢價蒸發 + turnaround 進度低於市場高預期 → Fwd PE 由 22x de-rate 至 16x、EPS 不如預期 → 股價回 $33-35（−30%）。對應監測：§3.C R1（OR）+ §3.F（STB 裁決）。與 §13b pre-mortem 故事呼應。</td></tr>
+<tr><td><b>如何在持有期間判斷陷阱是否正在發生</b></td><td>領先指標①：OR 連 2 季回升至 &gt; 65%（turnaround 停滯）。領先指標②：FCF/NI 連 2 年 &lt; 0.6 且 capex/rev 維持 &gt; 20%（資本密集惡化、盈餘無法變現）。任一觸發 → 陷阱風險升 🔴。</td></tr>
+</table>
+<p><strong>最終定性：🟡 觀察期</strong>（寫 dd-meta trap）。寬護城河使其非結構性陷阱，但盈餘品質（FCF 轉換）+ ROIC 谷底回升的可持續性需 2-3 季數據確認，且現價無安全邊際。</p>
+</div>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+<tr><td>1</td><td>季度 operating ratio（OR）</td><td>§3 H1 / §4</td><td>🔵 核心假設驗證（必填）</td><td>連 2 季 OR &gt; 65% → H1 削弱（turnaround 停滯）；連 2 季 OR &lt; 62% → H1 兌現、可升級進場</td></tr>
+<tr><td>2</td><td>總量 YoY + intermodal 量 YoY</td><td>§6 / §9</td><td>🔵 長期成長領先信號（必填）</td><td>連 2 季總量 YoY 轉負 → H2 削弱；intermodal 連 2 季 &gt; +5% → H2 兌現</td></tr>
+<tr><td>3</td><td>Fwd PE（FY+2）vs 5Y 分位</td><td>§11</td><td>短期估值信號</td><td>Fwd PE 回落 ≤ 20x（約 $43）→ 估值燈轉 🟡、進場窗口開啟</td></tr>
+<tr><td>4</td><td>UP-NS 合併 STB 裁決</td><td>§3.F</td><td>binary 事件（§15 列出）</td><td>核准 → CSX M&A 選擇權兌現（重估）；否決 → 溢價蒸發（重估）</td></tr>
+</table>
+
+<!-- ============ §2 ============ -->
+<h2 id="s2">§2｜序章：第一性原理 × 逆向思考</h2>
+<h3>存在意義</h3>
+<p>剝離財務表象，CSX 解決的長期且不可逆痛點是：<b>以最低單位成本、最低碳排，把大宗與貨櫃貨物跨越美國東部 23 州做長程地面運輸</b>。一列火車可載運相當於數百輛卡車的貨物，每加侖燃油的噸-英里效率約為卡車的 4 倍。若 CSX 明天消失，東部的煤炭、化學品、農產、汽車、貨櫃進口將失去最有效率的內陸幹線，被迫轉向已飽和、缺司機、成本更高的卡車網路——運費上漲、供應鏈壅塞、碳排激增。這個痛點是<b>實體網路效應</b>：軌道一旦鋪設，新進者幾乎不可能複製（土地徵收、環評、數十年資本、政府不再核發 Class I 特許）。</p>
+<h3>逆向推演（Munger Inversion）</h3>
+<p>若要讓這筆投資在 3 年內虧損 50% 以上，最可能路徑：</p>
+<ul>
+<li><strong>地緣政治曝險（低）</strong>：CSX 純美國國內網路，無海外生產地集中風險。間接曝險＝關稅戰壓低 intermodal 進口櫃量、貿易衰退壓低貨運需求。歷史對標：2009 金融海嘯期間鐵路量 −15%、股價 −50%+。</li>
+<li><strong>技術替代風險（中長期）</strong>：自駕長途卡車（autonomous trucking）若在 2030 年代成熟，可侵蝕鐵路 intermodal 的成本優勢——這是鐵路最大的長期 🐢 慢變數（見 §3.C R3）。短期內鐵路的噸-英里成本與碳排優勢仍難撼動。</li>
+<li><strong>管理層失職</strong>：高 capex 配置失當（Howard St Tunnel 等大型專案超支不達綜效）、或在高位大舉回購耗用槓桿空間。自我毀滅決策路徑詳見 §10 資本配置計分卡。</li>
+<li><strong>價值陷阱路徑（四選一）</strong>：<b>隱性資本密集型</b>——若維持競爭力的 maintenance capex 被系統性低估，FCF 長期無法兌現（2025 FCF/NI 0.59 是警訊）。但 CSX 的 capex 中含成長性 capex（Howard St Tunnel、容量擴張），非全為維持性，故此路徑為「需監測」而非「已成立」。</li>
+</ul>
+<p class="note">護城河如何累積而成，見 §7.D 護城河變遷時間軸（不在此重複）。</p>
+
+<!-- ============ §3 ============ -->
+<h2 id="s3">§3｜投資論點錨定</h2>
+<div class="box-assum">
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<tr><th width="34%">項目</th><th>填寫</th></tr>
+<tr><td>預設持有期</td><td><b>3-5 年起</b>（turnaround 兌現 + 循環復甦週期；若 OR 持續改善至高-50s 可延長至 5-10 年複利持有）</td></tr>
+<tr><td>主要驅動這個時間軸的理由</td><td>Angel turnaround 的 OR 改善是 3-5 年工程（Linde 整併綜效歷時數年）；疊加貨運景氣循環復甦（2-3 年）+ UP-NS 合併骨牌（2027 STB 裁決）的 M&A 選擇權。</td></tr>
+<tr><td>此持有期決定哪些是訊號、哪些是噪音</td><td>訊號：OR 趨勢、ROIC vs WACC 方向、定價權持續性、intermodal 量能。噪音：單季 weather/煤炭出口波動、月度 carload 雜訊。</td></tr>
+</table>
+</div>
+
+<h3>B｜三個核心假設 + 三層時間軸（sourced floor + 漂移觸發）</h3>
+<table>
+<tr><th>#</th><th>核心假設</th><th>2Y 驗證點</th><th>5Y 驗證點</th><th>10Y 驗證點</th><th>數字門檻</th><th>來源</th><th>漂移觸發</th></tr>
+<tr><td><b>H1</b></td><td>Angel 領導的營運自助式復甦，把 OR 從 ~66% 拉回高-50s/低-60s</td><td>2027 全年 OR &lt; 62%</td><td>OR ~58%（接近 UNP-class）、ROIC 穩定 &gt; WACC</td><td>OR 永續 sub-60、ROIC 14-15%</td><td>OR ~58-62%</td><td>Q1'26 OR 64.0%（CSX 8-K）；Angel Linde 整併紀錄；mgmt 費用紀律</td><td>連 2 季 OR &gt; 65% → 削弱</td></tr>
+<tr><td><b>H2</b></td><td>量能復甦：intermodal 份額贏單 + Howard St Tunnel 容量解鎖 + coal lapping + 貨運景氣回升 → mid-single-digit 營收成長</td><td>2026-27 總量 +3-5%/yr</td><td>intermodal CAGR &gt; 5%</td><td>卡車轉鐵路結構份額持續擴大</td><td>總量 +3-5%/yr</td><td>Q1'26 量 +3%、intermodal +6%；2026 營收指引上調 mid-single（CSX 法說）</td><td>連 2 季總量 YoY &lt; 0 → 削弱</td></tr>
+<tr><td><b>H3</b></td><td>M&A 變數（防守框架）：UP-NS 泛太平洋合併是<b>結構威脅</b>，CSX 是防守方；若 2027 STB 核准 → CSX 面臨東西向直達對手，被收購（BNSF 骨牌壓力）是被動對沖 put 而非正面選擇權</td><td>2026-27 STB 裁決方向；CSX 反對行動成效</td><td>東西向整併格局定案 + CSX 戰略歸屬</td><td>北美鐵路 2 大集團格局</td><td>STB 核准 UP-NS（機率 ~40-50%）</td><td>UP-NS 修訂申請 2026-05-28 獲 STB 受理（補件限 7/27、裁決預期 2027 初）；CSX 2026-05 架 csxstayingontrack.com 動員貨主反對；Buffett 否認 BNSF 主動收購</td><td>UP-NS 核准且 CSX 被孤立 → 結構護城河受損（非利多）</td></tr>
+</table>
+
+<h3>B'｜12 個月前報告對照（thesis review）</h3>
+<p class="note">最接近 today−365d 的報告為 <code>DD_CSX_20260615.html</code>（2026-06-15，僅 14 天前，v12.7），尚無滿一年的對照基準（CSX 首份 v12.2+ 報告即 2026-06-15）。<b>狀態：進場未滿一年</b>——本欄位將於 2027-06-15 起首次有完整 YoY 對照。在此之前以 §3.B 戰術假設視角追蹤。</p>
+<p>與 14 天前 v12.7 的<b>短期漂移</b>（非正式 YoY review）：股價 $47.67 → $48.32（+1.4%，極小）；前份裁決 B / 觀望（estimated 🔴、PE 5Y 90 分位）。本份獨立重推維持 B / 觀望，但對 turnaround 的 credit 略升（Q1'26 OR 64.0% 已確認復甦軌跡），估值仍是進場的唯一障礙。</p>
+
+<h3>C｜三個最可能推翻論點的風險（⚡🔥🐢）</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>時間尺度</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td><b>估值風險</b>：ATH + Fwd PE 5Y 高檔，任何 OR miss / 量能轉弱即觸發 de-rate（多重壓縮 + EPS 下修雙殺）</td><td>H1/H3</td><td>⚡ 短期（1-2 季）</td><td>Fwd PE、季度 OR、EPS 共識修正方向</td><td>連 2 季 OR &gt; 65% 或 EPS 共識連 2 季下修</td></tr>
+<tr><td>R2</td><td><b>貨運衰退延長 + coal 加速衰退</b>：宏觀疲弱 + housing 弱 + export coal 下滑 → 量價齊跌</td><td>H2</td><td>🔥 中期（4-6 季）</td><td>merchandise/intermodal/coal 量 YoY、industrial production</td><td>連 4 季 merchandise 量 YoY &lt; −3%</td></tr>
+<tr><td>R3</td><td><b>結構性 pricing power 侵蝕</b>：① STB 互惠換車（reciprocal switching）監管走向——2024 最終規則 → 2025-07 被第七巡迴上訴法院撤銷 → <b>2026-01 STB 發 NPRM 提議改為逐案審查</b>，captive shipper 爭取競爭接入成本若降低 → 長期侵蝕東部雙寡占定價權；② 自駕長途卡車（Aurora 2025-04 德州商業化、2026 擴至 10 條 Sun Belt 線、年底 200+ 輛）長期侵蝕 intermodal 成本優勢</td><td>H1/H2</td><td>🐢 長期（2+ 年）</td><td>STB reciprocal switching NPRM 進度、自駕卡車商業化規模、real pricing vs 通膨</td><td>STB 逐案審查制落地並實際擴大競爭接入；或 real yield 連 2 年 &lt; 通膨</td></tr>
+</table>
+<table>
+<tr><th>標記</th><th>時間尺度</th><th>應對速度</th><th>觸發大動作條件</th></tr>
+<tr><td>⚡ 短期</td><td>1-2 季可觸發</td><td>季度監控</td><td>連 2 季觸發即減倉</td></tr>
+<tr><td>🔥 中期</td><td>4-6 季</td><td>半年回顧</td><td>連 4 季觸發才大動作</td></tr>
+<tr><td>🐢 長期</td><td>2+ 年慢變數</td><td>跨年度監控</td><td>需 ≥ 50% 機率才砍倉</td></tr>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<p>新事件出現時依四問判斷：① 時間軸匹配？② 影響 H1/H2/H3 哪個？③ 邊際方向（＋/0/−）？④ 達重估閾值嗎？例：單季 coal 出口因國際煤價波動 −10% → 影響 H2 但屬噪音層（coal 僅占 ~17%、且循環），不行動。反例：STB 通過強制 reciprocal switching → 撞 R3、影響 H1 定價權核心、達重估閾值 → 立即重評護城河。</p>
+
+<h3>E｜可執行決策主線預設</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr><td><b>進場</b></td><td>估值：Fwd PE ≤ 20x（約 $43）或回測 W52（~$39-40）；基本面確認：OR 連 2 季 &lt; 62%</td><td>建倉 3-4%（角色：核心），首次進場</td></tr>
+<tr><td><b>加碼</b></td><td>H1 + H2 均確認（OR sub-60 + 量持續 +3-5%）</td><td>加碼至 5-6%，目標倉位</td></tr>
+<tr><td><b>減碼</b></td><td>R1 觸發（OR 回升 &gt; 65%）或股價突破 25x Fwd PE 無基本面支撐</td><td>減至 2-3%，重新評估</td></tr>
+<tr><td><b>撤退</b></td><td>H1 被推翻（OR 結構性卡在 65%+）或 R3 陷阱信號（reciprocal switching 通過）</td><td>清倉，記錄推翻理由</td></tr>
+</table>
+
+<h3>F｜Single Thing（唯一 binary trigger）</h3>
+<table>
+<tr><th width="26%">項目</th><th>內容</th></tr>
+<tr><td>Single Thing 描述</td><td><b>UP-NS 泛太平洋合併在 2027 的 STB 最終裁決（核准 / 否決）。</b></td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>它同時撞 H3（M&A 選擇權）與 R3（結構威脅），且是 binary：核准 → 美國鐵路進入「2 大東西向集團」格局，CSX 要嘛成為被併標的（takeout premium 30%+），要嘛淪為唯一未整併者面對泛太平洋直達對手（標準化單獨價值受損）。否決 → CSX 股價中內含的 M&A/重組溢價蒸發（估計現價含 ~10-15% 重組期望）。</td></tr>
+<tr><td>如果發生</td><td>核准且 CSX 被點名為併購標的 → 重評（可能加倉博 takeout，但須注意 CSX 管理層立場是<b>反對整併</b>，takeout 是被動結果非其爭取，溢價兌現存在不確定）。核准但 CSX 被孤立 → 重評護城河（單獨價值受損，可能減倉）。否決（CSX 樂見的結果）→ 股價中內含的 M&A/重組投機溢價蒸發，回歸基本面估值（公允 ~$43），現價無安全邊際 → 維持觀望/減碼。</td></tr>
+<tr><td>如何監測</td><td>STB 公告、UP-NS 重新申請進度、CSX 法說會對整併的表態。頻率：每季 + STB 重大公告即時。目前距發生：UP-NS 2026 Jan 被駁回、將重申請，裁決預期 2027（約 12-24 個月）。</td></tr>
+<tr><td>機率估計（12-24 個月）</td><td>STB 核准 UP-NS 機率 ~40-50%（2001 後新規對 Class I 大型合併標準高、競爭性疑慮重）；若核准，CSX 被併或被迫整併機率 ~60%。</td></tr>
+</table>
+<table>
+<tr><th>角色</th><th>定義</th><th>時間軸</th><th>類型</th></tr>
+<tr><td>§1 trap 定性</td><td>thesis 整體是否價值陷阱的靜態裁決（🟡 觀察期）</td><td>現在（static）</td><td>狀態判斷</td></tr>
+<tr><td>§3.C R1-R3</td><td>持有期間的過程性風險 + 監測 + 閾值</td><td>未來持續（⚡🔥🐢）</td><td>過程風險</td></tr>
+<tr><td>§3.F Single Thing</td><td>UP-NS STB 裁決（discrete、可觀測、改變判斷）</td><td>2027 某 specific moment</td><td>觸發事件</td></tr>
+</table>
+
+<!-- ============ §4 ============ -->
+<h2 id="s4">§4｜即時財報情報</h2>
+<p>資料來源：CSX Q1 FY2026 8-K / 法說會（2026-04）、Q4 & FY2025 結果（2026-01）。</p>
+<h3>① 最新一季財報關鍵數字（Q1 FY2026）</h3>
+<table>
+<tr><th>指標</th><th>本季實際</th><th>市場預期 / 前年同期</th><th>Beat/Miss</th><th>YoY 成長</th></tr>
+<tr><td>Revenue</td><td>$34.8 億</td><td>前年同期 $34.1 億</td><td><span class="tag t-beat">符合/小贏</span></td><td>+2%</td></tr>
+<tr><td>EPS（diluted）</td><td>$0.43</td><td>共識 ~$0.42 / 前年 $0.34</td><td><span class="tag t-beat">Beat</span></td><td>+26%</td></tr>
+<tr><td>營業利益</td><td>$12.5 億</td><td>前年 $10.4 億</td><td><span class="tag t-beat">Beat</span></td><td>+20%</td></tr>
+<tr><td>Operating Ratio</td><td><b>64.0%</b></td><td>前年同期 69.6%</td><td><span class="tag t-beat">改善 5.6pp</span></td><td>—</td></tr>
+<tr><td>總量（carloads）</td><td>156 萬單位</td><td>—</td><td><span class="tag t-beat">+3%</span></td><td>+3%（intermodal +6%）</td></tr>
+<tr><td>FCF（股息前）</td><td>$7.93 億</td><td>前年 $5.59 億</td><td><span class="tag t-beat">+42%</span></td><td>+42%</td></tr>
+</table>
+<div class="reasoning"><b>輸入：</b>OR 69.6%→64.0%（−5.6pp）、營收 +2%、量 +3%、6% 費用下降。<b>計算：</b>營業利益 +20% 主要來自費用下降（成本紀律）而非營收（僅 +2%），是 self-help margin 故事。<b>implication：</b>確認 §3 H1（Angel 營運復甦）已啟動；但須注意這是<b>第一季</b>，OR 64% 仍高於 2022 的 59.5%、且高於 UNP/CPKC，turnaround 尚有長路（→ §6.E / §11.5 不可因單季 extrapolate 過度樂觀）。</div>
+<h4>財報對 §3 假設的邊際貢獻</h4>
+<table>
+<tr><th>假設</th><th>本季財報的邊際方向</th><th>關鍵佐證</th></tr>
+<tr><td>H1（OR 復甦）</td><td><b>＋</b></td><td>OR 64.0%（−5.6pp YoY）、費用 −6%、營業利益 +20%</td></tr>
+<tr><td>H2（量能復甦）</td><td><b>0 / 偏＋（但能見度低）</b></td><td>Q1 量 +3%、intermodal +6%——但須對照產業面：2026 前 10 週北美 intermodal 同比 <b>−8.8%</b>（關稅前置拉貨反噬），故 Q1 +3% 含基數效應，趨勢方向待確認</td></tr>
+<tr><td>H3（M&A 變數）</td><td><b>0</b></td><td>本季無 STB 裁決進展；CSX 持續反對 UP-NS</td></tr>
+</table>
+<p class="reasoning"><b>QC-27 Rev/OI divergence：</b>Revenue YoY +2% vs Operating Income YoY +20% → divergence = −18pp（OI 成長遠快於 Revenue）= margin <b>擴張</b>（非壓縮），這是 self-help 成本下降的正面訊號，不觸發壓縮警示。但同時意味成長品質目前<b>靠成本不靠營收</b>，營收引擎（量）仍待啟動。</p>
+<h3>② Earnings Call 語氣解析</h3>
+<ul>
+<li><strong>Guidance vs 共識：</strong>2026 全年營收指引由「low single digit」<b>上調至「mid-single-digit」</b>（含燃油附加費）；全年 FCF 成長指引 <b>&gt;60%</b>；宣布 <b>$50 億回購</b>計劃。管理層同時表態「不預期 2026 宏觀有意義改善」，故指引上調主靠自助 + 份額。</li>
+<li><strong>被迴避/含糊的問題：</strong>對 intermodal 進口櫃量在關稅反噬下的全年走勢給出較保守、未量化的回答——這是 H2 的最大不確定點。</li>
+</ul>
+<h3>③ 產業 Imply 萃取</h3>
+<p><strong>產業隱含信號：</strong>本次 call 對產業最關鍵 imply 是「2026 是<b>自助驅動（成本/效率）而非需求驅動</b>的一年」——餵入 §9 產業格局（貨運景氣處循環底部、進口櫃量受關稅政策壓制、coal 結構下滑）。</p>
+
+<!-- ============ §5 ============ -->
+<h2 id="s5">§5｜核心門檻檢核（Munger）</h2>
+<p class="note"><b>EPS 來源：</b>Excel buy-side consensus snapshot 2026-06-23（步驟零'）：FY2026E $1.91、FY2027E $2.17、FY2028E $2.36；與 yfinance earnings_estimate 一致（FY2025 actual 基期 $1.61）。3Y EPS CAGR（FY2025 $1.61 → FY2028E $2.36）=（2.36/1.61)^(1/3)−1 = <b>13.6%</b>。<br><b>archetype gate-set：</b>品質複利成長（預設）——CSX 為定價設定者、寬護城河、正常年高 ROIC，採通用 Munger 尺；循環性（量能景氣敏感）在 §6.E/§9/§11.5 以 normalized 視角處理，未套商品/金融特別 gate（QC-43/47）。</p>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據與趨勢</th></tr>
+<tr><td>FCF Margin（當前）</td><td>&gt; 15%</td><td><span class="t-miss tag">否</span></td><td>FY2025 FCF $17.1 億 / 營收 $140.9 億 = <b>12.1%</b>；近 3 年 ↓（FY22 23% → FY25 12%），因 capex 升 + OCF 降。Q1'26 FCF +42% 顯示回升軌跡</td></tr>
+<tr><td>正規化 FCF Margin</td><td>5Y 均 &gt; 15%；谷底 &gt; 10%</td><td><span class="t-neu tag">部分</span></td><td>FY21-25 約 23%/23%/22%/19%/12%，5Y 均 ~19.8%（達標）但谷底 FY25 12.1%（剛過 10%）；FCF 受 capex 週期影響大</td></tr>
+<tr><td>ROIC（當前）</td><td>&gt; 15%，且 &gt; WACC</td><td><span class="t-neu tag">谷底回升</span></td><td>自算 NOPAT/IC：FY25 <b>11.3%</b>（FY22 14.6%）；第三方嚴口徑 FY24 ~10.2%、Q1'25 年化谷底 7.6%。WACC ~8.5-9.5%——谷底一度持平/略低於 WACC，2026 回升中</td></tr>
+<tr><td>ROIC 穩定性</td><td>10 年 ≥ 70% 年份 &gt; 15%</td><td><span class="t-miss tag">否</span></td><td>自算口徑近年 11-15%，多數年低於 15%（鐵路資本密集、IC 龐大）；但穩定 &gt; WACC（除谷底）</td></tr>
+<tr><td>毛利率定價能力</td><td>10 年 ≥ 70% 年份改善</td><td><span class="t-neu tag">循環</span></td><td>OR（效率代理）2017 PSR 導入後由 ~67% 改善至 2022 59.5%（佳），2023-25 惡化至 ~66%，2026 回升至 64%——非單調，但定價權（yield）持續 &gt; 通膨</td></tr>
+<tr><td>資本密集度</td><td>Capex/Rev &lt; 5%（優）/ &lt;10%（尚可）</td><td><span class="t-miss tag">高</span></td><td>FY25 capex/rev = <b>20.6%</b>（$29.0 億 / $140.9 億）——鐵路天然重資產，含維持性 + 成長性（Howard St Tunnel 等）</td></tr>
+<tr><td>EPS CAGR（未來 3 年）</td><td>&gt;20% 或 12-20% 且 runway≥10Y 高 durability</td><td><span class="t-neu tag">走 durable 路徑</span></td><td><b>13.6%</b>（FY25→FY28E）——<b>非高成長股</b>，靠長 runway 複利 + 谷底復甦達標；引用 §6.A runway（鐵路特許永續）。注意此 13.6% 含谷底反彈（FY26 +19%），steady-state ~6-9%</td></tr>
+<tr><td>PEG（Non-GAAP）</td><td>&lt; 2</td><td><span class="t-beat tag">是</span></td><td>1.64（見 §11.2）</td></tr>
+<tr><td>負債安全性</td><td>D/E &lt; 0.7；現金/Rev 10-50%</td><td><span class="t-neu tag">鐵路常態</span></td><td>D/E（總債/權益）= $193.5 億/$131.6 億 = 1.47（鐵路常態偏高）；Net Debt/EBITDA = 2.9x（≤3 尚可）；現金/Rev 僅 ~5%（鐵路低現金常態）</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是/否</td><td><span class="t-miss tag">否</span></td><td>現金 $6.7 億 vs 總債 $193.5 億（鐵路不以現金覆蓋債務，以穩定 FCF + 資產覆蓋）</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8 分，趨勢擴大</td><td><span class="t-neu tag">8 / 趨勢→</span></td><td>合併 8.0（execution 7 / pricing 9），趨勢 holding（見 §7）</td></tr>
+</table>
+<p><strong>最大財務弱點：</strong>FCF 轉換弱（FCF/NI 0.59、capex/rev 20.6%）+ ROIC 谷底一度持平 WACC——「隱性資本密集」是核心監測點。Munger 三維護城河評級（ROIC 穩定性弱 / 毛利定價循環 / 資本密集高）：<b>🟡</b>（pricing power 強但資本密集 + ROIC 穩定性是弱項）→ 傳遞至 §7 作定量起點。</p>
+<p class="note">注：CSX 為美股，GAAP 與 Non-GAAP 差距小（無大額 SBC/攤銷），EPS CAGR GAAP ≈ Non-GAAP。低估值四問 / 便宜理由五問已移除（統一在 §1 trap 定性處理）。</p>
+
+<!-- ============ §6 ============ -->
+<h2 id="s6">§6｜長期成長性評估</h2>
+<h3>0｜成長品質 7 問儀表板</h3>
+<table>
+<tr><th>#</th><th>成長品質拷問</th><th>裁決</th><th>關鍵數字</th><th>詳見</th></tr>
+<tr><td>1</td><td>成長是結構性還是週期反彈？</td><td><b>混合（谷底循環反彈 + 自助 + 結構順風/逆風並存）</b></td><td>FY26 EPS +19% 多為谷底反彈；steady-state ~6-9%</td><td>§6.A'</td></tr>
+<tr><td>2</td><td>成長需多少資本投入？</td><td><b>重資產</b></td><td>Capex/Rev 20.6%、再投資率 ~34%</td><td>§6.D</td></tr>
+<tr><td>3</td><td>增量 ROIC 是否 &gt; 資金成本？</td><td><b>谷底一度持平/略低，回升中</b></td><td>ROIC 11.3% vs WACC ~8.5-9.5%</td><td>§6.D</td></tr>
+<tr><td>4</td><td>成長變現金流還是被擴張吃掉？</td><td><b>部分被 capex 吃（改善中）</b></td><td>FCF/NI 0.59（FY25）；Q1'26 FCF +42%、指引 &gt;60%</td><td>§10.E</td></tr>
+<tr><td>5</td><td>競爭者會否被吸引進來？</td><td><b>壁壘極高（不可再建軌道）</b></td><td>新進者 = 卡車/自駕卡車（替代非進入）</td><td>§7</td></tr>
+<tr><td>6</td><td>股價反映多少期待？</td><td><b style="color:#92400E;">偏貴（最弱一題🔴）</b></td><td>Fwd PE ~22x（5Y 84 分位）、PEG 1.64</td><td>§11.1</td></tr>
+<tr><td>7</td><td>成長率下修估值撐得住嗎？</td><td><b>不太撐</b></td><td>熄火至 5% → PE 壓至 ~15x、跌幅 ~−30%</td><td>§6.E/§11.5</td></tr>
+</table>
+<p class="note">最弱一題：第 6 題（股價已反映高預期）——與 §1 trap 定性 🟡 + §14 觀望一致。</p>
+
+<h3>A｜成長跑道（Runway）</h3>
+<table>
+<tr><th>維度</th><th>數據</th><th>推論</th></tr>
+<tr><td>當前 TAM（美國貨運市場）</td><td>美國地面貨運 ~$9,000 億+/年（卡車為主），鐵路占地面噸-英里 ~28%、營收 ~$800 億（Class I）</td><td>來源：AAR / 產業估計 2025</td></tr>
+<tr><td>可達 TAM 擴張</td><td>卡車轉鐵路（intermodal）+ 製造業回流 + 碳排法規利鐵路</td><td>結構順風但漸進（非爆發）</td></tr>
+<tr><td>當前市佔 / 滲透</td><td>東部 Class I 雙寡占（CSX ~50% 東部鐵路噸-英里，與 NSC 對分）</td><td>地理寡占，份額穩定</td></tr>
+<tr><td>達自然放緩的時間點</td><td>鐵路為成熟產業，無「滲透率達 30%」概念；成長 = GDP-linked 量 + 定價 + 份額轉換</td><td>低個位數量 + 中個位數營收</td></tr>
+<tr><td><b>成長可持續年數（Runway）</b></td><td><b>永續（franchise）/ 成長率低</b></td><td>特許經營權永續，但成長<b>速率</b>低（非高成長股）</td></tr>
+</table>
+<p class="reasoning"><b>Runway 解讀：</b>franchise 永續支撐長期持有信心，但成長率低（中個位數營收、低雙位數 EPS 含買回）→ §11.5/附錄 A 的合理倍數溢價應<b>受限</b>（不該給高成長股倍數）。現價 22x Fwd PE 對一檔低成長鐵路偏高。</p>
+
+<h3>A''｜Y5 後跑道 runway_post_y5</h3>
+<table>
+<tr><th width="30%">項目</th><th>內容</th></tr>
+<tr><td>S 曲線位置</td><td>成熟期（鐵路為百年存量資產）</td></tr>
+<tr><td>Y5 末滲透率預估</td><td>不適用滲透模型；Y5 後仍有卡車轉鐵路（intermodal 占地面貨運比例可緩升）+ 製造業回流增量</td></tr>
+<tr><td>是否有下一條 S 曲線銜接</td><td>有（漸進）：① intermodal 結構轉換（數十年順風，但被自駕卡車部分對沖）；② 製造業回流帶動工業品量；③ Howard St Tunnel 雙層櫃容量已於 2026-06 兌現</td></tr>
+<tr><td><b>runway_post_y5</b></td><td><b>🟢 寬</b>（特許永續 + 卡車轉鐵路結構順風；但成長率低，非加速）</td></tr>
+</table>
+<p class="reasoning"><b>判準：</b>鐵路特許經營權永續（Buffett BNSF 邏輯：可長抱數十年），Y5 後仍能以「定價 &gt; 通膨 + 漸進量 + 大額買回」複利。<b>🟢 寬</b>反映 franchise 的永續性與卡車轉鐵路長期順風；但須誠實標註：成長<b>速率</b>低，且長期面對自駕卡車（R3）這個慢變數對 intermodal 順風的對沖。不觸發 §14d ≤3Y 警示。</p>
+
+<h3>B｜成長品質判斷</h3>
+<h4>① 有機 vs 無機</h4>
+<table>
+<tr><th>類型</th><th>占比估計</th><th>佐證</th></tr>
+<tr><td>有機成長</td><td>~100%</td><td>CSX 近年無重大併購；成長全來自定價 + 量 + 效率</td></tr>
+<tr><td>無機成長</td><td>~0%</td><td>過去 5 年無金額 &gt; 市值 5% 的併購（M&A 是「被併」變數，非主動擴張）</td></tr>
+</table>
+<h4>② 成長驅動結構：定價 vs 量</h4>
+<table>
+<tr><th>類型</th><th>判斷</th><th>3 年趨勢</th></tr>
+<tr><td>定價驅動（yield）</td><td>Q1'26 merchandise 靠提價推升營收；鐵路 core pricing 長期 &gt; rail cost inflation（~+3-4%/yr real positive）</td><td>穩定（定價權持續）</td></tr>
+<tr><td>量驅動（volume）</td><td>FY23-25 量持平/微降（coal 拖累 + 貨運衰退）；Q1'26 +3%（含基數）；2026 北美 intermodal 前 10 週 −8.8%（關稅反噬）</td><td>近年弱、待循環復甦</td></tr>
+</table>
+<p class="reasoning"><b>關鍵：</b>CSX 成長品質目前<b>靠定價 + 成本不靠量</b>。量是 H2 的關鍵變數，且近期能見度低（進口櫃量受關稅政策壓制）。定價權是真實護城河證據，但若量長期不回，營收成長天花板有限。</p>
+<h4>③ 營業槓桿：增量利潤率</h4>
+<table>
+<tr><th>列</th><th>內容</th></tr>
+<tr><td>增量 OI margin（Q1'26）</td><td>ΔOI $2.1 億 / ΔRev $0.7 億 = &gt;100%（費用下降驅動，非營收驅動，故增量 margin 失真偏高）</td></tr>
+<tr><td>增量 vs 存量</td><td>存量 OM ~34-36%；當前增量主要來自成本結構重塑（self-help），是一次性效率釋放 + 持續紀律的混合</td></tr>
+<tr><td>前瞻結論</td><td>在營收 +mid-single base case 下，OR 每年改善 ~0.5-1.0pp（若 turnaround 持續），對應合併 OM 每年 +50-100bp</td></tr>
+</table>
+
+<h3>C｜成長護城河連動</h3>
+<p><b>中性型偏強化型。</b>CSX 的成長（份額轉換 + 定價）與護城河（軌道網路密度、雙寡占）各自獨立但互相強化：量增提升網路密度 → 單位成本下降 → 強化成本護城河；定價權來自寡占結構。非消耗型（不靠犧牲定價買量）。</p>
+
+<h3>D｜ROIC 與 FCF 長期可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前（FY25）</th><th>3 年前（FY22）</th><th>趨勢</th><th>門檻</th><th>符合</th></tr>
+<tr><td>ROIC（自算 NOPAT/IC）</td><td>11.3%</td><td>14.6%</td><td>↓（谷底回升中）</td><td>&gt;WACC 且擴大</td><td>谷底持平/回升</td></tr>
+<tr><td>ROIC − WACC</td><td>~+2-3pp（嚴口徑曾轉負）</td><td>~+6pp</td><td>↓→回升</td><td>持續正且擴大</td><td>收窄後回升</td></tr>
+<tr><td>FCF Margin</td><td>12.1%</td><td>23%</td><td>↓（Q1'26 回升）</td><td>&gt;15%</td><td>谷底未達</td></tr>
+<tr><td>FCF/NI 轉換率</td><td>0.59</td><td>0.83</td><td>↓（Q1'26 改善）</td><td>&gt;85%</td><td>否（capex 週期）</td></tr>
+<tr><td>再投資率</td><td>~34%</td><td>~30%</td><td>↑</td><td>對應 ROIC 合理</td><td>偏高</td></tr>
+</table>
+<h4>ROIIC 與內生成長天花板</h4>
+<table>
+<tr><th>列</th><th>計算</th><th>結果</th></tr>
+<tr><td>ROIIC（3Y）</td><td>ΔNOPAT / ΔIC，但 FY22-25 NOPAT 下滑（ΔNOPAT &lt; 0）</td><td><b>不適用（NOPAT 下滑期）</b>——以正常化 ROIC ~12% 替代</td></tr>
+<tr><td>再投資率</td><td>(Capex − D&A + ΔWC) / NOPAT，3Y 均</td><td>~34%</td></tr>
+<tr><td>內生成長天花板</td><td>正常化 ROIC 12% × 再投資率 34%</td><td><b>~4.1% 有機</b> + 大額買回 ~2-3% = ~6.5%</td></tr>
+<tr><td>共識對賬</td><td>共識 3Y EPS CAGR 13.6% − 內生天花板 6.5% = 缺口 ~7pp</td><td>缺口歸因：<b>谷底盈餘復甦（OR 改善一次性）+ 淨回購</b>，非永續有機引擎</td></tr>
+</table>
+<p class="reasoning"><b>判定：</b>13.6% 近期 CAGR <b>依賴谷底復甦 + 回購</b>，非永續有機成長。steady-state EPS 成長 ~6-8%（內生天花板 6.5% + 買回）。寫入 dd-meta endo_growth_ceiling = 6.5。§11.5 base case 須以此天花板為錨（不可把 13.6% 當永續）。</p>
+
+<h3>E｜成長熄火情境壓力測試</h3>
+<table>
+<tr><th>情境</th><th>對應特徵</th><th>合理 Fwd PE 壓縮至</th><th>潛在估值跌幅（自現價）</th></tr>
+<tr><td>3 年後成長降至 ~8%</td><td>turnaround 兌現但量平（基本情境）</td><td>~19x</td><td>~−10% to 持平（EPS 成長部分抵銷）</td></tr>
+<tr><td>3 年後成長降至 ~5%</td><td>turnaround 停滯 + 量弱</td><td>~16x</td><td>~−25% to −30%</td></tr>
+<tr><td>3 年後成長降至 ~2%</td><td>結構性（coal 加速衰退 + reciprocal switching 侵蝕定價 + 衰退）</td><td>~13x</td><td>~−40%</td></tr>
+</table>
+<p class="reasoning">目標 PE 引用 §11.5 / 附錄 A 合理 PE 基準。熄火情境（成長 5%）→ PE 16x → 約 −25-30%，與 §13b/§13c Max DD 一致。</p>
+
+<h3>⚠️ 衰退信號偵測表</h3>
+<table>
+<tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈？</th></tr>
+<tr><td>護城河侵蝕</td><td>Gross/OM 連 2 季 YoY 下滑</td><td>OR 2024-25 惡化，但 Q1'26 已回升（−5.6pp YoY）</td><td>⬜（已回升）</td></tr>
+<tr><td>護城河侵蝕</td><td>核心市場市佔縮減</td><td>東部雙寡占份額穩定；intermodal 在贏單</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>提價後銷量下滑</td><td>提價持續、量受 coal/景氣拖累（非提價導致）</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR &gt;&gt; Revenue CAGR（差 &gt;5pp）</td><td>EPS 13.6% vs Rev ~3-5%——差距大（靠 OR 改善 + 回購）</td><td>🔴</td></tr>
+<tr><td>盈餘品質</td><td>FCF/NI &lt; 0.75 連 2 年</td><td>FY24 ~0.78、FY25 0.59——連續偏低</td><td>🔴</td></tr>
+<tr><td>盈餘品質</td><td>SBC/Rev &gt; 5% 且升</td><td>鐵路 SBC 極低（&lt;1%）</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>TAM 萎縮/被替代</td><td>coal（~17% 營收）結構衰退；但 merchandise/intermodal TAM 不萎縮</td><td>🟡（部分 coal）</td></tr>
+<tr><td>產業結構衰退</td><td>產業倍數系統下移</td><td>鐵路倍數穩定（UNP/NSC 仍 ~20x）</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>Maint capex / FCF &gt; 60%</td><td>capex 高（20.6% rev），含維持 + 成長；維持性 capex 估 ~$18-20 億占 FCF 高</td><td>🟡</td></tr>
+<tr><td>隱性資本密集</td><td>停止投資 3 年內收入下滑？</td><td>鐵路停投資短期收入不立即降，但長期網路劣化</td><td>⬜</td></tr>
+</table>
+<p><strong>價值陷阱風險評級：</strong>亮燈 2 個 🔴（盈餘品質：EPS&gt;&gt;Rev + FCF/NI 偏低）+ 2 個 🟡 → <b>🟡 中度警戒</b>（§7 須正面回應盈餘品質 + 資本密集）。<br>
+<strong>長期成長性綜合評級：🟡 中等可見度</strong>（Runway 永續但成長率低、量能能見度低、2 個盈餘品質衰退信號）→ 傳遞 §11.5 / 附錄 A：合理 PE 基準應<b>保守</b>（鐵路寬護城河給 ~18-20x，不給高成長溢價）。growth_durability = 6.5。</p>
+
+<h3>H｜客戶結構深度</h3>
+<table>
+<tr><th>指標</th><th>數值/說明</th></tr>
+<tr><td>客戶集中度</td><td>鐵路客戶<b>高度分散</b>（數千貨主，無單一客戶 &gt; 幾 %）；最大「客戶群」為 utilities（coal）、汽車製造、化工、零售（intermodal via 船公司/IMC）</td></tr>
+<tr><td>議價權結構</td><td>多數 merchandise 貨主為 captive（軌道僅一家可達）→ sole-source 定價權強；intermodal 較競爭（vs 卡車 + NSC）</td></tr>
+<tr><td>客戶生命週期</td><td>captive 貨主長期綁定（grow-with）；風險是 STB reciprocal switching 若放寬競爭接入 → captive 鬆動（R3）</td></tr>
+<tr><td>留存經濟</td><td>鐵路無 NRR 概念；以 captive shipper 比例 + 長約佔比衡量，結構穩定</td></tr>
+</table>
+<p><strong>客戶結構風險評估：🟢 分散 + captive/grow-with 主導</strong>（最大尾部風險是 R3 監管放寬競爭接入，非客戶流失）。</p>
+
+<h3>F｜AI 取代風險評級</h3>
+<p><strong>🟢 AI 免疫（核心業務與 AI 取代無關）。</strong>實體貨運無法被 AI 取代；反而 AI/資料中心電力需求可能<b>延緩燃煤電廠退役</b>（利 coal 量短期）+ AI 帶動工業活動。AI 在 CSX 內部用於 PSR 排程優化、預測性維護（利 OR 改善）。唯一間接負向：自駕卡車（AI 應用）長期侵蝕 intermodal（R3，慢變數）。評級 🟢 = 9 分（供品質分）。</p>
+
+<h3>I｜分部前瞻建模</h3>
+<table>
+<tr><th>業務段</th><th>FY25 營收占比</th><th>驅動式</th><th>FY26-28E 方向</th><th>段獲利特性</th><th>對 EPS 成長貢獻</th></tr>
+<tr><td><b>Merchandise</b>（化工/汽車/農產/金屬/林產/礦物）</td><td>~63%（$89 億）</td><td>量（GDP-linked）× 定價（&gt;通膨）</td><td>定價 +3-4%/yr × 量 +1-3%/yr → +4-6%/yr</td><td>最高 margin、最強定價權、最 captive</td><td><b>主引擎（~60%）</b>：定價權 + 量復甦</td></tr>
+<tr><td><b>Intermodal</b>（貨櫃/掛車）</td><td>~20%（$28 億）</td><td>量（進口櫃 + 卡車轉換）× 單位營收</td><td>近期 −（關稅反噬，2026 北美 −8.8%）；中期份額贏單 + Howard St → +3-5%/yr</td><td>較低 margin、較競爭（vs 卡車/NSC）</td><td>~20%：量驅動、能見度低</td></tr>
+<tr><td><b>Coal</b>（國內動力煤/冶金煤/出口）</td><td>~17%（$24 億）</td><td>量（電廠退役 ↓）× 煤價（出口波動）</td><td><b>結構性緩降</b>：國內煤 FY25 −14%、未來 5 年估 −11.8%（電廠退役，部分因 AI 電力延遲）；出口受國際煤價</td><td>高 margin 但衰退</td><td>負貢獻（拖累），lapping 礦場關閉短期緩和</td></tr>
+</table>
+<p class="reasoning"><b>主引擎：</b>Merchandise（定價權）是 EPS 成長主引擎。<b>若 intermodal miss（關稅反噬延長）+ coal 加速衰退，EPS CAGR 可由 13.6% 降至 ~8-9%</b>（仍正，因 merchandise 定價 + OR 改善 + 回購撐住）。各段加總與 §5 整體 CAGR 對得上（差異 &lt; 5pp）。</p>
+
+<!-- ============ §7 ============ -->
+<h2 id="s7">§7｜護城河分析（報告核心）</h2>
+<p>CSX 護城河 = <b>不可複製的實體軌道網路特許 + 東部雙寡占定價權</b>。採二維拆解（execution × pricing power 可獨立評分）。回應 §6 衰退信號（盈餘品質 + 資本密集）：FCF 弱是 capex 週期 + OR 谷底所致（循環/可逆），非定價權崩壞——pricing 維度仍 9 分。</p>
+<h3>評分：二維拆解</h3>
+<table>
+<tr><th>維度</th><th>評分</th><th>關鍵佐證</th></tr>
+<tr><td><b>Execution Moat</b>（網路密度/PSR 營運/工程資產）</td><td><b>7/10</b></td><td>不可再建的軌道網路（~20,000 英里、23 州、東岸港口連結）；但 2023-25 服務品質/網路流動性滑落、OR 落後 UNP/CPKC，曾被 activist 點名——execution 在谷底，Angel 領導下回升（Q1'26 OR −5.6pp）</td></tr>
+<tr><td><b>Pricing Power Moat</b>（captive shipper/雙寡占/轉換成本）</td><td><b>9/10</b></td><td>多數 merchandise 貨主僅 CSX 軌道可達（sole-served）→ 數十年 core pricing &gt; rail cost inflation；雙寡占（與 NSC）非價格戰結構；轉換成本極高（貨主無替代軌道）</td></tr>
+<tr><td><b>合併分</b>（pricing 權重略高，因其更 durable）</td><td><b>8.0/10</b></td><td>(7×0.45 + 9×0.55) ≈ 8.1 → 8.0</td></tr>
+<tr><td><b>等級</b></td><td><b>B</b>（8 分為 B/A 邊界）</td><td>10=S, 9=A, 7-8=B</td></tr>
+</table>
+<p class="note">dd-meta：moat_execution 7.0 / moat_pricing_power 9.0 / moat 合併 8.0 / 等級 B。</p>
+
+<h3>護城河數字驗收（Moat-to-Numbers）</h3>
+<table>
+<tr><th>指標</th><th>CSX</th><th>最強直接同業（UNP）</th><th>Spread</th><th>5 年前 Spread</th><th>方向</th></tr>
+<tr><td>OR（效率，越低越好）</td><td>FY25 ~66% / Q1'26 64.0%</td><td>UNP ~59-60%</td><td>CSX 落後 ~4-6pp</td><td>FY22 CSX 59.5% vs UNP ~60%（曾領先）</td><td>由領先轉落後（谷底，回升中）</td></tr>
+<tr><td>OM</td><td>~34-36%</td><td>UNP ~40%</td><td>−4-6pp</td><td>持平/略領先</td><td>收窄（execution 谷底）</td></tr>
+<tr><td>已實現定價溢價</td><td>core pricing &gt; 通膨（持續）</td><td>同業類似</td><td>—</td><td>—</td><td>定價權維持（pricing 維度）</td></tr>
+</table>
+<p class="reasoning"><b>判定（硬 gate）：</b>護城河合併分 ≥ 8 的必要條件 = ROIC spread 為正且非持續收窄。CSX ROIC spread 對 UNP 在 2023-25 <b>收窄</b>（execution 谷底），但 2026 已回升（OR −5.6pp）。因此合併分維持 8.0（不再 −1）的理由：① 收窄是循環/自助可逆（Q1'26 已證明回升）；② pricing 維度（更 durable）未受損。<b>但這是「谷底回升的賭注」——若 OR 連 2 季回升 &gt; 65%（H1 削弱），合併分須 −1 至 7.0、等級維持 B 但 moat_trend 轉 ↓。</b></p>
+
+<h3>護城河來源（sourced evidence）</h3>
+<ul>
+<li><strong>無形資產/特許：</strong>Class I 鐵路特許政府不再核發；CSX 擁約 20,000 英里自有軌道 + 路權（right-of-way），重置成本數千億美元、且實務上無法重建（土地徵收 + 環評不可能）。</li>
+<li><strong>轉換成本：</strong>captive merchandise 貨主（化工廠、礦場）的廠房直接連 CSX 軌道，換供應商 = 重建專用側線（spur）或改用昂貴卡車，成本與時間極高。</li>
+<li><strong>規模/密度優勢：</strong>東部最密集網路 + 東岸港口（NY/NJ、Baltimore、Savannah 連結）；密度越高單位成本越低，新進者需同等規模才能匹敵（不可能）。</li>
+</ul>
+<h3>競爭鴻溝（mechanism）</h3>
+<p>為什麼資本充足對手仍跨不過：① <b>資本壁壘</b>——重建同等網路需數千億美元 + 數十年；② <b>監管/法律壁壘</b>——政府不再核發 Class I 特許、土地徵收權受限；③ <b>時間壁壘</b>——路權與港口連結是百年積累。三維皆成立。唯一「跨越」方式是<b>替代</b>（卡車/自駕卡車）而非「進入」。</p>
+
+<h3>市佔競爭表（對手體質 + 賽局）</h3>
+<table>
+<tr><th>競爭對手</th><th>市佔/定位</th><th>回看3年+前瞻2-3年趨勢</th><th>核心威脅</th><th>OI margin</th><th>FCF(TTM)</th><th>戰爭承受力</th></tr>
+<tr><td><b>Norfolk Southern（NSC）</b></td><td>東部另一極（雙寡占對手）</td><td>份額對分穩定；若被 UP 併購則競爭力跳升</td><td>理性寡占共存（非價格戰）；UP-NS 合併後變泛太平洋對手</td><td>~38-40%</td><td>~$20 億</td><td>高（同為寡占）</td></tr>
+<tr><td><b>卡車運輸（truckload）</b></td><td>地面貨運主體（intermodal 直接對手）</td><td>2026 現貨運價 +23% YoY、拒載 ~14%（短期利鐵路轉換）；長期自駕卡車威脅</td><td>intermodal 價格/服務競爭</td><td>低（卡車業薄利）</td><td>分散</td><td>中（分散、薄利）</td></tr>
+<tr><td><b>UNP / CPKC（西部+跨境）</b></td><td>西部 + 墨西哥/加拿大</td><td>地理不重疊（互聯非直接競爭）；CPKC 已成首條美墨加單一鐵路</td><td>整併後跨網路直達削弱 CSX 互聯議價</td><td>UNP ~40%</td><td>UNP &gt;$60 億</td><td>高</td></tr>
+</table>
+<p><strong>賽局結構判定：理性寡占</strong>（東部 CSX/NSC 數十年共存、不打價格戰、各自對 captive 貨主提價）。sourced 證據：兩家長期 core pricing 同步 &gt; 通膨、無破壞性降價史。<b>但有一個結構變數（QC-39 C 軸）：STB 互惠換車 NPRM 若放寬競爭接入，會從監管面侵蝕此寡占定價權（見威脅清單）。</b></p>
+
+<h3>定價事件帳（pricing power 實證）</h3>
+<table>
+<tr><th>期間</th><th>定價動作</th><th>量與留存反應</th><th>margin 反應</th></tr>
+<tr><td>FY24-25</td><td>merchandise core pricing 持續 &gt; 通膨</td><td>量受 coal/景氣拖累（非提價導致流失）；captive 貨主留存</td><td>定價貢獻被量下滑 + 成本通膨抵銷（OR 惡化），2026 成本紀律下定價開始 flow-through</td></tr>
+<tr><td>Q1'26</td><td>merchandise 提價推升營收</td><td>量 +3%（含基數），提價未傷量</td><td>OR −5.6pp（定價 + 成本下降雙重）</td></tr>
+</table>
+
+<h3>D｜護城河變遷時間軸</h3>
+<ul>
+<li><b>1980s-2000s：</b>產業整併，CSX 由多家東部鐵路合併成形，奠定東部網路。</li>
+<li><b>2017：</b>已故 Hunter Harrison 導入 PSR（精準排程鐵路），OR 由 ~70% 大幅改善至 2022 的 59.5%——execution 護城河高峰。</li>
+<li><b>2023-2025：</b>服務品質滑落、網路流動性問題、coal/景氣逆風，OR 惡化至 ~66%、ROIC 谷底——execution 護城河滑落、activist（Ancora）施壓。</li>
+<li><b>2025-09：</b>Angel 接任 CEO，啟動成本結構重塑；<b>2026-06：</b>Howard St Tunnel 雙層櫃容量擴張完工（容量護城河強化）。</li>
+</ul>
+
+<h3>E｜對手 Capex/R&D 對照</h3>
+<p>鐵路無 R&D 概念，以 capex 強度看投入。CSX capex/rev ~20.6%、UNP ~16-17%、NSC ~17-18%。CSX capex 強度偏高（含 Howard St Tunnel 等成長專案）——投入維持網路 + 容量，但短期壓 FCF。與 §7.F 互補（看承受力）。</p>
+
+<h3>護城河趨勢（權威 moat_trend）</h3>
+<table>
+<tr><th>維度</th><th>趨勢</th><th>3 年關鍵事件 + 前瞻</th></tr>
+<tr><td>Execution Moat 趨勢</td><td><b>谷底回升（→偏修復）</b></td><td>2023-25 滑落（OR 惡化），2026 Angel 領導回升（Q1 OR −5.6pp）；前瞻 2-3 年若 OR 回 sub-62 則修復</td></tr>
+<tr><td>Pricing Power Moat 趨勢</td><td><b>穩定</b></td><td>定價權持續 &gt; 通膨；前瞻最大變數 = STB 互惠換車 NPRM（監管風險，尚未落地）</td></tr>
+<tr><td><b>權威 moat_trend</b></td><td><b>→ holding</b></td><td>雙寡占結構完整、定價權 durable；execution 谷底回升但尚未證明永續。sourced：Q1'26 OR 64.0% vs 前年 69.6%（−5.6pp，CSX 8-K）——ROIC gap 對 UNP 由擴大轉收斂跡象</td></tr>
+</table>
+<p class="reasoning"><b>為何 →（非 ↑ 非 ↓）：</b>不標 ↑，因 ROIC/OR 仍落後 UNP、execution 修復未完成、且面臨 STB 監管 + 自駕卡車兩個前瞻逆風；不標 ↓，因雙寡占結構與定價權完整、Q1'26 已現修復。<b>QC-39 閘 A：</b>CSX 在其「客戶/program」份額無流失（intermodal 反在贏單），故不觸發強制降級——但也無「擴大」證據支撐 ↑。<b>硬接線提醒：</b>若 OR 連 2 季回升 &gt; 65%（execution 修復失敗）→ moat_trend 轉 ↓；moat 等級 B，屆時觸發 §14 決策矩陣 Hard Veto（迴避）。目前 →，不觸發。</p>
+
+<h3>24 個月內最可能瓦解護城河的變化（QC-23 三級）</h3>
+<table>
+<tr><th>等級</th><th>事件</th><th>機率</th><th>影響</th></tr>
+<tr><td>🔴 生態攻擊</td><td><b>STB 互惠換車（reciprocal switching）逐案審查制落地</b>（2026-01 NPRM）→ captive 貨主取得競爭接入，侵蝕 pricing power</td><td>~25-30%（NPRM 階段，2024 版曾被法院撤銷）</td><td>pricing 維度 −1（若實際擴大接入）→ 合併分 −0.5</td></tr>
+<tr><td>🔴 生態攻擊</td><td>UP-NS 合併核准 → 泛太平洋直達對手削弱 CSX 互聯/intermodal 議價</td><td>~40-50%（裁決 2027）</td><td>execution/pricing 邊際 −；但 CSX 可能成被併標的（雙刃）</td></tr>
+<tr><td>🟡 點對點</td><td>卡車現貨運價回落 → intermodal 轉換誘因下降</td><td>循環</td><td>intermodal 量短期波動，護城河不扣分</td></tr>
+<tr><td>⛔ 架構替代</td><td>自駕長途卡車（Aurora 等）2030s 成熟 → intermodal 成本優勢被侵蝕</td><td>低（10年慢變數）</td><td>長期 intermodal 順風對沖；merchandise/coal 不受影響</td></tr>
+</table>
+
+<h3>F｜對手財務深度對照</h3>
+<table>
+<tr><th>指標</th><th>CSX</th><th>UNP（西部龍頭）</th><th>NSC（東部對手）</th><th>卡車（代表 truckload）</th></tr>
+<tr><td>營收成長 YoY</td><td>+2%（Q1'26）</td><td>低個位數</td><td>低個位數</td><td>弱（貨運衰退）</td></tr>
+<tr><td>Operating Margin</td><td>~34-36%</td><td>~40%</td><td>~38-40%</td><td>低個位數-10%</td></tr>
+<tr><td>OR</td><td>64.0%（Q1'26）</td><td>~59-60%</td><td>~62-64%</td><td>n/a</td></tr>
+<tr><td>FCF Margin</td><td>12.1%（FY25，回升中）</td><td>~高 teens</td><td>~mid teens</td><td>低</td></tr>
+<tr><td>淨債/EBITDA</td><td>2.9x</td><td>~2.7x</td><td>~2.8x</td><td>各異</td></tr>
+</table>
+<p><strong>UNP（對手 A）：</strong>西部龍頭、業界最佳 OR（~59%）、規模與 FCF 最強；地理不與 CSX 直接競爭（互聯為主）。UP-NS 合併若成 → 變泛太平洋對手，是 CSX 最大結構威脅。承受力高，但合併審查漫長且 CSX 反對。<br>
+<strong>NSC（對手 B）：</strong>東部雙寡占另一極，與 CSX 理性共存（非價格戰）；OR 略優於 CSX。若被 UP 併購則競爭力跳升——這是 CSX 反對 UP-NS 的核心理由。<br>
+<strong>卡車/自駕卡車（替代者）：</strong>intermodal 的真正對手。短期卡車運價高（+23%）利鐵路；長期 Aurora 等自駕卡車（2025 德州商業化、2026 擴張）是 intermodal 成長論述的結構性對沖（慢變數，10年級）。</p>
+
+<!-- ============ §8 ============ -->
+<h2 id="s8">§8｜財務品質監測</h2>
+<h3>三年趨勢表（含同業對比）</h3>
+<table>
+<tr><th>指標</th><th>FY2023</th><th>FY2024</th><th>FY2025</th><th>同業中位（UNP/NSC）</th><th>相對</th></tr>
+<tr><td>FCF Margin</td><td>22%</td><td>19%</td><td>12.1%</td><td>~15-17%</td><td>劣（capex 週期）</td></tr>
+<tr><td>EBITDA Margin</td><td>49.4%</td><td>48.5%</td><td>44.7%</td><td>~48-50%</td><td>略劣（谷底）</td></tr>
+<tr><td>OM（OR 反向）</td><td>37.7%（OR 62.3%）</td><td>37.2%（OR 62.8%）</td><td>~34%（OR ~66%）</td><td>~40%（OR ~60%）</td><td>劣（execution 谷底）</td></tr>
+<tr><td>ROE</td><td>~30%</td><td>~28%</td><td>23.7%</td><td>~30-40%</td><td>下滑（NI 降）</td></tr>
+<tr><td>ROIC（自算）</td><td>13.8%</td><td>13.3%</td><td>11.3%</td><td>~14-16%（UNP）</td><td>谷底回升</td></tr>
+</table>
+<h3>獲利品質警訊</h3>
+<ul>
+<li><strong>淨利 vs OCF：</strong>FY25 NI $28.9 億 vs OCF $46.1 億（OCF &gt; NI，因 D&A $16.8 億；無盈餘操縱跡象）。</li>
+<li><strong>AR vs 營收：</strong>AR FY25 $9.1 億（YoY 降），營收 −3%——AR 未膨脹（健康）。</li>
+<li><strong>存貨 vs 營收：</strong>存貨（料件）$3.9 億，YoY 降——無積壓。</li>
+<li><strong>FCF 轉換：</strong>FCF/NI 0.59（FY25）——<b>核心警訊</b>，因 capex 升至 20.6% rev；Q1'26 FCF +42%、全年指引 &gt;60% 顯示資本週期高峰漸過、轉換回升。</li>
+</ul>
+<h3>回購品質評估</h3>
+<table>
+<tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+<tr><td>近 3 年回購 vs FCF</td><td>FY23-25 回購 $34.8+22.4+14.0 億 = $71 億 vs FCF $32.6+27.2+17.1 億 = $77 億 → ~92%</td><td>回購/FCF 高（&gt;80% 警示）；FY25 回購已縮（FCF 降）</td></tr>
+<tr><td>剔除回購 EPS CAGR</td><td>近年股數年減 ~3-4%（buyback），對 EPS 成長貢獻 ~3-4pp/yr；剔除後有機 EPS 成長更低</td><td>EPS 成長部分靠買回（盈餘品質警訊之一）</td></tr>
+<tr><td>回購均價 vs 現價</td><td>過去多在 $25-35 回購（低於現價 $48）</td><td>歷史回購在低位（資本配置合理）；新 $50 億計劃在 ATH 執行須留意</td></tr>
+<tr><td>Revenue CAGR vs EPS CAGR</td><td>Rev ~平/微降 vs EPS 13.6%（含復甦+回購）</td><td>差距大——靠 OR 改善 + 回購，非營收</td></tr>
+</table>
+<h3>FCF lumpiness 評估</h3>
+<table>
+<tr><th>指標</th><th>數值</th></tr>
+<tr><td>過去 5 年 FCF（FY21-25）</td><td>~$34 / 34.1 / 32.6 / 27.2 / 17.1 億</td></tr>
+<tr><td>5Y 滾動均 FCF</td><td>~$29 億</td></tr>
+<tr><td>最低谷</td><td>FY25 $17.1 億（占 5Y 均 59%）——capex 高峰 + OR 谷底雙重</td></tr>
+<tr><td>Maintenance capex 估算（D&A 錨定法）</td><td>D&A ~$16.8 億為維持性下限；總 capex $29 億含成長性 ~$10 億 → Owner earnings ≈ OCF $46.1 − maint $18 億 ≈ <b>$28 億</b></td></tr>
+<tr><td>Lumpiness 性質</td><td>一次性資本支出高峰（Howard St Tunnel 等）+ OR 谷底——非結構性惡化</td></tr>
+<tr><td>結論</td><td><b>🟡 需關注低谷頻率</b>：FCF 谷底受 capex 週期 + OR 谷底雙壓；Q1'26 +42% 顯示回升，但 capex/rev 結構性偏高是長期 owner-earnings 折扣因子</td></tr>
+</table>
+
+<h3>E｜長期趨勢 + DuPont + 營運資金</h3>
+<h4>① 5 年關鍵指標趨勢（FY21→FY25）</h4>
+<table>
+<tr><th>指標</th><th>FY22</th><th>FY23</th><th>FY24</th><th>FY25</th><th>結構判讀</th></tr>
+<tr><td>OM</td><td>39.0%</td><td>37.7%</td><td>37.2%</td><td>~34%</td><td>降（execution 谷底，2026 回升）</td></tr>
+<tr><td>ROIC（自算）</td><td>14.6%</td><td>13.8%</td><td>13.3%</td><td>11.3%</td><td>降後回升</td></tr>
+<tr><td>FCF Margin</td><td>23%</td><td>22%</td><td>19%</td><td>12.1%</td><td>降（capex 升 + OCF 降）</td></tr>
+<tr><td>Capex/Rev</td><td>14.2%</td><td>15.4%</td><td>17.4%</td><td>20.6%</td><td>升（成長 capex + 通膨）</td></tr>
+</table>
+<h4>② ROIC DuPont 拆解</h4>
+<p>ROIC = NOPAT margin × IC 周轉率。FY25：NOPAT margin 25.7%（NOPAT $36.2 億 / 營收 $140.9 億）× IC 周轉 0.44（營收 / IC $320 億）= <b>11.3%</b>。FY22：NOPAT margin 30.0% × IC 周轉 0.48 = <b>14.6%</b>。<b>ROIC 下滑由「獲利力」（margin 30%→25.7%）與「資本效率」（周轉 0.48→0.44，capex 建 IC 快於營收）<b>雙雙</b>惡化驅動。</b>復甦需 margin（OR）回升為主——Q1'26 已啟動。</p>
+<h4>③ 營運資金趨勢</h4>
+<p>DSO（AR/日均營收）FY22 25.8 → FY25 23.5 天（改善）；DIO（料件）~15 天；DPO（AP）~45 天。CCC = 23.5 + 15 − 45 ≈ <b>−6.5 天（負）</b>，Working Capital −$5.8 億（負）——鐵路<b>營運資金為負/輕</b>（先收後付），現金品質健康，營運資金非問題。</p>
+<h4>④ 債務到期結構</h4>
+<p>總債 $193.5 億（多為長期，LTD $181.7 億）；加權平均利率 ~4-4.5%（利息費用 $8.4 億 / 總債）；鐵路長期固定利率債券為主，到期分散，再融資風險低（投資級評等）。Net Debt/EBITDA 2.9x（合理，鐵路常態 ~2.5-3x）。</p>
+
+<!-- ============ §9 ============ -->
+<h2 id="s9">§9｜產業格局</h2>
+<h3>市場量化</h3>
+<table>
+<tr><th>項目</th><th>數據</th></tr>
+<tr><td>TAM（美國地面貨運）</td><td>~$9,000 億+/年（卡車主導 ~$8,000 億，鐵路 Class I ~$800 億）</td></tr>
+<tr><td>5Y / 10Y</td><td>GDP-linked 成長（~2-4%/yr 名目）+ 卡車轉鐵路份額轉移（漸進）</td></tr>
+<tr><td>當前滲透/結構</td><td>鐵路占地面噸-英里 ~28%；intermodal 是卡車轉換的成長 vector</td></tr>
+<tr><td>供需狀態</td><td><b>循環底部</b>：2024-26 貨運衰退、進口櫃量受關稅壓制、coal 結構下滑；卡車運價 2026 +23%（運力收縮）</td></tr>
+</table>
+<p class="reasoning"><b>供需 durability 裁決（QC-39 閘 B，雙向）：</b>產業態勢 = <b>雙向拉鋸 + 循環底部</b>。結構順風：卡車轉鐵路（intermodal）+ 製造業回流（durable，但被自駕卡車長期對沖）；結構逆風：coal 永續衰退（電廠退役，未來 5 年 −11.8%）+ STB 互惠換車監管風險。循環：貨運量處衰退底部（會回升）但 2026 進口櫃量受關稅反噬（前 10 週北美 intermodal −8.8%）。<b>裁決：景氣循環底部待回升（cyclical，normalized 守歷史中樞不過度上修），疊加結構性 coal 衰退（永久下修該段）+ intermodal 結構順風（中性偏正）。</b>此裁決餵 §6.E normalized 與 §11.5 bear：bear 機率不因「循環底部會回升」而壓太低（關稅 + coal 是真實下行尾巴），亦不因「在衰退」而過度悲觀（franchise 永續、定價權在）。</p>
+
+<h3>利潤池地圖 + 流向</h3>
+<table>
+<tr><th>價值鏈環節</th><th>代表</th><th>OI 池占比變化（代理）</th><th>遷移方向</th></tr>
+<tr><td>上游（車廂/機車製造）</td><td>GBX, Wabtec, Trinity</td><td>週期性、低於鐵路 margin</td><td>→</td></tr>
+<tr><td><b>幹線鐵路（本標的）</b></td><td><b>CSX, UNP, NSC</b></td><td>價值鏈利潤池<b>核心</b>（高 margin、寡占定價權）；OI 池占比穩定</td><td>→（穩定）</td></tr>
+<tr><td>下游（卡車接駁/3PL/IMC）</td><td>JBHT, Schneider</td><td>較低 margin、較競爭</td><td>→</td></tr>
+</table>
+<p class="reasoning"><b>利潤池位置/流向結論：</b>CSX 站在價值鏈利潤池<b>核心環節</b>（幹線鐵路），OI 池占比<b>→ 持平</b>（寡占結構穩定，不流出）。sourced：鐵路 OM ~35-40% 遠高於卡車/3PL 個位數-10%，且結構未變。對 §6.A Runway 含義：利潤池不流失，franchise 永續性成立——支撐 runway_post_y5 🟢。<b>無 5pp 淨流出</b>，不觸發 Runway 降檔。</p>
+
+<h3>議價權（三段）</h3>
+<p><strong>① 對上游供應商：</strong>機車（Wabtec/GE）、鋼軌、燃油為主要採購。供應商有一定集中度（機車近寡占），但鐵路為大買家、議價地位中等；燃油成本以 fuel surcharge 部分轉嫁貨主。切換成本中等。</p>
+<p><strong>② 對下游客戶：</strong>議價地位<b>強</b>——多數 merchandise 貨主 captive（軌道僅 CSX 可達）→ sole-source 定價權，數十年 core pricing &gt; 通膨。合約結構含長約 + spot 混合，多帶燃油/通膨調整條款。風險：<b>STB 互惠換車 NPRM</b>（2026-01）若放寬 captive 貨主競爭接入，將從監管面削弱此議價地位（R3）。intermodal 段議價較弱（vs 卡車 + NSC）。</p>
+<p><strong>③ 地緣曝險：</strong>純美國國內網路，無海外生產地集中。間接曝險：① 關稅/貿易政策壓制進口櫃量（直接打 intermodal）；② 國際煤價影響出口 coal；③ 美國工業/消費景氣決定整體量。政策風險路徑明確（關稅 → intermodal 進口櫃 ↓）。</p>
+
+<h3>營收組成（三維）</h3>
+<p><strong>① 按業務段：</strong>Merchandise ~63%（化工/汽車/農產/金屬/林產/礦物）| Intermodal ~20% | Coal ~17%。3Y 趨勢：merchandise 占比升（定價 + 韌性）、coal 占比降（結構衰退）、intermodal 波動。<br>
+<strong>② 按地區：</strong>美國東部 23 州為主 + 東岸港口 + 與西部鐵路互聯（芝加哥/Memphis/New Orleans 交接）。<br>
+<strong>③ 按客戶集中度：</strong>高度分散（數千貨主），無單一客戶重大集中；最大客戶<b>群</b>為 utilities（coal）、汽車、化工。</p>
+
+<h3>單位經濟（逐段）</h3>
+<table>
+<tr><th>業務段</th><th>核心 Unit 指標</th><th>趨勢</th><th>段 OM</th><th>資本密集</th><th>結構洞察</th></tr>
+<tr><td>Merchandise</td><td>RPU（每車營收，含定價）</td><td>↑（定價 &gt; 通膨）</td><td>最高</td><td>高（共用網路）</td><td>captive 定價權 = 利潤池核心</td></tr>
+<tr><td>Intermodal</td><td>每櫃營收 + 量</td><td>近期 ↓（關稅）/中期 ↑（份額）</td><td>較低</td><td>高</td><td>量驅動、卡車競爭、Howard St 容量已解鎖</td></tr>
+<tr><td>Coal</td><td>每噸營收 + 量</td><td>量 ↓（結構）、價波動</td><td>高但衰退</td><td>高</td><td>結構性緩降，現金牛但非成長</td></tr>
+</table>
+<p class="reasoning"><b>mix-shift 算術：</b>coal（高 margin 但衰退）占比下降、merchandise（高 margin 定價）占比上升、intermodal（低 margin）量驅動——淨 mix 對合併 OM 影響 ~中性至略負（coal 衰退拖累 margin，由 merchandise 定價 + OR 改善抵銷）。與 §6.B③ 增量利潤率方向一致（margin 主要靠 OR self-help 而非 mix）。</p>
+
+<h3>F｜逐段 TAM/SAM + 價值鏈深度</h3>
+<table>
+<tr><th>業務段</th><th>段 TAM（現/5Y）</th><th>滲透/份額</th><th>段 CAGR</th><th>value chain 位置 + 風險</th></tr>
+<tr><td>Merchandise</td><td>大（化工/汽車/農產/金屬地面運輸）</td><td>captive 段高份額</td><td>+4-6%/yr（價&gt;量）</td><td>利潤池核心、被替代風險低（captive）；風險 = STB 監管</td></tr>
+<tr><td>Intermodal</td><td>大且成長（卡車轉換 + 進口櫃）</td><td>低滲透（卡車主導地面）→ 成長空間</td><td>中期 +3-5%/yr</td><td>成長 vector，但近期關稅反噬 + 長期自駕卡車對沖</td></tr>
+<tr><td>Coal</td><td>萎縮（電廠退役）</td><td>高份額但 TAM 縮</td><td>−5 to −10%/yr（結構）</td><td>現金牛、TAM 萎縮、被天然氣/再生能源替代</td></tr>
+</table>
+<p class="note">TAM 大但利潤池流出的段：無（coal 是 TAM 萎縮非利潤外流；merchandise/intermodal TAM 不縮）。整體利潤池穩定在幹線鐵路環節。</p>
+
+<!-- ============ §10 ============ -->
+<h2 id="s10">§10｜公司治理與資本配置</h2>
+<h3>股東結構</h3>
+<p>機構持股 ~82%（高度機構化）、內部人持股 ~0.2%（職業經理人公司，無創辦人控制）。無 dual-class（一股一票）。近期重大內部人交易：CEO 更替（Angel 接任）相關股權授予；無異常大額內部人賣出訊號。</p>
+<h3>資本配置軌跡（M&A track record）</h3>
+<p>過去 5 年<b>無重大併購</b>（金額 &gt; 市值 5%）——CSX 為有機成長 + 股東回報模式，非 M&A 飛輪。M&A 是「被併」變數（UP-NS 骨牌），非主動擴張。資本配置三支柱：① 維持/成長 capex（Howard St Tunnel 等）；② 股息（穩定成長，Q1'26 再升）；③ 大額回購（新 $50 億計劃）。</p>
+<h3>管理層薪酬</h3>
+<p>Angel（CEO）薪酬結構以股權激勵 + 績效為主（與 OR 改善 / TSR 掛鉤）；其 Linde 背景以股東回報導向著稱。COO Cory 負責營運執行。薪酬與 OR/ROIC 掛鉤是治理正面。</p>
+<h3>SBC 真實稀釋</h3>
+<table>
+<tr><th>指標</th><th>數據</th></tr>
+<tr><td>SBC/Revenue</td><td>&lt;1%（鐵路 SBC 極低）</td></tr>
+<tr><td>GAAP vs Non-GAAP EPS</td><td>差距小（無大額調整）</td></tr>
+<tr><td>淨稀釋</td><td>負稀釋（buyback &gt; SBC，股數年減 ~3-4%）</td></tr>
+</table>
+<h3>資本配置計分卡</h3>
+<table>
+<tr><th>項目</th><th>計算</th><th>過/不過</th></tr>
+<tr><td>M&A ROIIC</td><td>5 年無重大 M&A</td><td>N/A（不計）</td></tr>
+<tr><td>回購買入收益率</td><td>歷史回購均價 $25-35（earnings yield &gt; 10Y 殖利率 + 2%）；新 $50 億在 ATH 須留意</td><td>過（歷史）/ 待觀察（新計劃）</td></tr>
+<tr><td>SBC 淨稀釋率</td><td>負稀釋（buyback 主導）</td><td>過</td></tr>
+</table>
+<p><strong>資本配置等級：B</strong>（適用 2 項過：回購歷史佳 + SBC 淨稀釋負；M&A N/A）。註：FY25 把 $23.7 億（股息+回購）還股東卻只賺 $17.1 億 FCF（靠舉債），是 B 非 A 的原因——須監測在 ATH 執行 $50 億回購的紀律。寫入 dd-meta capalloc_grade = B。<b>接線：</b>B 級不觸發 §14 持有年限上限收緊（C 才觸發）。</p>
+
+<h3>D｜10 年資本配置 track record</h3>
+<p><strong>① M&A 全史：</strong>過去 10 年無重大併購（CSX 是 PSR + 股東回報模式，非整併者）。<br>
+<strong>② 回購/股息 10 年軌跡：</strong>2017 PSR 後大舉回購（股數由 ~9 億+ 降至 ~18.6 億——註：經 split 調整，趨勢是持續縮股）；股息穩定成長（payout ~33%）；總股東回報率（回購 + 股息）/ FCF 多年 &gt; 90%（積極回饋，近年因 FCF 降而舉債維持，須留意）。<br>
+<strong>③ 內部人 + 薪酬：</strong>無創辦人；薪酬與 OR/TSR 掛鉤；Angel 上任帶來營運紀律導向。</p>
+<p class="reasoning">10 年敘事<b>支撐</b> B 級：管理層長期以股東回報為核心、回購多在低位（價值創造）、無亂併購毀價。扣分項：近年回購/股息 &gt; FCF（舉債回饋）+ 新 $50 億計劃在 ATH——資本配置紀律在高股價下面臨考驗。</p>
+
+<h3>E｜FCF 去向 + M&A 飛輪</h3>
+<p><strong>① FCF 去向（近 3-5 年）：</strong>股息 ~$9-10 億/yr（穩定）+ 回購（FY22 $47 億 → FY25 $14 億，隨 FCF 縮減）+ 再投資（capex 升至 $29 億）。<br>
+<strong>② M&A 飛輪：</strong>不適用（CSX 非連續併購型）。<br>
+<strong>③ 一句結論：</strong>CSX 的成長最終<b>部分變股東現金（股息 + 低位回購）、部分被高 capex 吃掉</b>，增量 ROIC <b>≈ WACC（谷底）→ 回升中</b>，無 M&A 飛輪（純有機 + 回饋模式）。回答 §6.0 第 4 問：FCF 轉換是核心監測點，2026 回升（Q1 +42%、指引 &gt;60%）是正面訊號。</p>
+<p class="note">QC-19 重大事件正面確認：過去 12 個月無重大 M&A（被併方）、無證券集體訴訟重大進展、無 SEC 調查/財報重編、無 CEO/CFO 異常離職（Angel 接任為計劃性交棒）。主要事件 = CEO 更替（正面，turnaround 催化）+ UP-NS 合併（外部結構變數，CSX 反對中）。🟢</p>
+
+<!-- ============ §11 ============ -->
+<h2 id="s11">§11｜估值與報酬</h2>
+<p class="note">EPS 來源：Excel buy-side consensus snapshot 2026-06-23（FY26 $1.91 / FY27 $2.17 / FY28 $2.36）。5Y multiple band 與 consensus 為同一輪搜尋取得，Part II 不重搜。</p>
+<h3>11.1｜歷史估值分位（5 年框架）</h3>
+<table>
+<tr><th>估值指標</th><th>當前</th><th>5Y 低</th><th>5Y 中位</th><th>5Y 高</th><th>當前分位</th></tr>
+<tr><td>Trailing P/E</td><td>29.6x</td><td>~14x</td><td>~19x</td><td>~30x</td><td>~94%（谷底盈餘失真）</td></tr>
+<tr><td>Forward P/E（FY+2，FY27）</td><td><b>22.3x</b></td><td>~14x</td><td>~19.4x</td><td>~24x</td><td><b>~84%</b></td></tr>
+<tr><td>EV/EBITDA</td><td>16.1x</td><td>~10x</td><td>~13x</td><td>~17x</td><td>~87%</td></tr>
+<tr><td>P/FCF</td><td>~52x（FY25 谷底 FCF）</td><td>~18x</td><td>~25x</td><td>~52x</td><td>高（FCF 谷底失真）</td></tr>
+<tr><td>P/B</td><td>6.6x</td><td>~4x</td><td>~5.5x</td><td>~7x</td><td>~87%</td></tr>
+</table>
+<div class="reasoning"><b>輸入：</b>Fwd PE 22.3x（FY27 EPS $2.17），5Y 區間 ~14-24x。<b>計算：</b>分位 =（22.3−14)/(24−14)= <b>83%</b>。<b>implication：</b>估值情緒偏熱（5Y 約 84 分位），與歷史同分位時相比，當前基本面（OR 谷底回升中、ROIC 偏低）<b>弱於</b>過往高分位（2021-22 OR 處高峰）——即「用復甦預期 + M&A 投機 + 自助故事撐高分位」。確認附錄 A 估值燈 🟠 偏貴。Trailing PE/P-FCF 因谷底盈餘/FCF 失真，以 Fwd PE 為準。</div>
+
+<h3>11.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>判斷</th></tr>
+<tr><td>Forward P/E（FY27）</td><td>22.3x</td><td>—</td></tr>
+<tr><td>3Y EPS CAGR（§5，FY25→FY28E）</td><td>13.6%</td><td>含谷底復甦</td></tr>
+<tr><td><b>PEG（3Y）</b></td><td><b>1.64</b></td><td>1.0-2.0 合理</td></tr>
+<tr><td>steady-state EPS 成長（內生 6.5% + 回購）</td><td>~7-8%</td><td>—</td></tr>
+<tr><td>PEG（用 steady-state 8%）</td><td><b>~2.8</b></td><td>&gt; 2.5 偏貴</td></tr>
+</table>
+<div class="reasoning"><b>關鍵：</b>用含谷底復甦的 13.6% CAGR，PEG 1.64（看似合理）；但用<b>永續 steady-state ~8%</b>，PEG ~2.8（偏貴）。<b>implication：</b>現價合理性<b>依賴谷底復甦兌現</b>——若 turnaround 達標（OR sub-60），13.6% CAGR 成立、PEG 1.64 OK；若停滯回到 8% steady-state，PEG 2.8 過貴。這是 §12 的核心矛盾（operations vs valuation）。</div>
+
+<h3>11.4｜同業估值比較（tier-correct）</h3>
+<p>本標的 tier：<b>Class I 幹線鐵路</b>（peer = UNP / NSC / CPKC，非卡車/3PL）。</p>
+<table>
+<tr><th>公司</th><th>市值</th><th>Fwd P/E</th><th>EV/EBITDA</th><th>OR</th><th>FCF Margin</th><th>EPS 成長</th></tr>
+<tr><td><b>CSX</b></td><td>$898 億</td><td><b>22.3x</b></td><td><b>16.1x</b></td><td>64.0%（Q1'26）</td><td>12.1%</td><td>13.6%（含復甦）</td></tr>
+<tr><td>Union Pacific（UNP）</td><td>~$1,300 億</td><td>21.1x</td><td>~14x</td><td>~59-60%（最佳）</td><td>~高teens</td><td>mid-single</td></tr>
+<tr><td>Norfolk Southern（NSC）</td><td>~$600 億</td><td>~20x</td><td>13.5x</td><td>~62-64%</td><td>~mid teens</td><td>（merger arb）</td></tr>
+<tr><td>同 tier 中位</td><td>—</td><td>~21x</td><td>~14x</td><td>~61%</td><td>~15%</td><td>—</td></tr>
+</table>
+<div class="reasoning"><b>輸入：</b>CSX Fwd PE 22.3x vs tier 中位 ~21x（溢價 ~6%）；EV/EBITDA 16.1x vs 中位 ~14x（溢價 ~15%）。<b>計算：</b>CSX 對 UNP（業界最佳 OR、最強 FCF）<b>溢價</b>，但 CSX 的 OR/FCF/ROIC 目前<b>最差</b>。<b>implication：</b>溢價的唯一支撐 = 「turnaround 改善空間最大（OR 64%→58% 的彈性最高）+ M&A 投機」。若向 tier 中位收斂（且 CSX 基本面落後），股價下行壓力。<b>QC-30 溢價收斂：</b>CSX 對 UNP 溢價未達 50%（僅 ~6-15%），不觸發強制收斂壓測，但「最差體質 + 溢價估值」本身是 R1。</div>
+<p><strong>分析師目標價：</strong>近期上調 Barclays $55、BofA $53（Overweight/Buy）；但 S&P Global 23 位分析師<b>共識中位僅 $45.89</b>——<b>低於現價 $48.32</b>。即「少數多頭升至 $53-55，全體中位數仍在現價之下」。<b>不完全認同共識</b>：多頭目標假設 turnaround 快速 + 多重擴張；但中位數 $45.89 &lt; 現價，印證估值已超多數分析師公允值（強化觀望）。</p>
+
+<h3>11.5｜不對稱報酬 Bull/Base/Bear 5Y + 機率 + IRR</h3>
+<table>
+<tr><th>情境</th><th>5 年絕對（價格）</th><th>年化 IRR（含股息+回購）</th><th>依據</th><th>機率</th></tr>
+<tr><td>Bull（thesis 對）</td><td>+55%</td><td>~+10.9%/yr</td><td>OR 改善至 ~58%（UNP-class）、EPS FY31 ~$3.2、PE 22x；或 UP-NS 核准帶 takeout 溢價</td><td>30%</td></tr>
+<tr><td>Base</td><td>+16%</td><td>~+5.2%/yr</td><td>OR 至 ~62%、EPS FY31 ~$2.9、PE 19x（多重小幅收斂）+ 股息回購</td><td>45%</td></tr>
+<tr><td>Bear（thesis 錯）</td><td>−38%</td><td>~−6.4%/yr</td><td>turnaround 停滯（OR 卡 65%）+ 貨運衰退延長 + UP-NS 否決溢價蒸發 + de-rate 至 16x、EPS ~$2.2</td><td>25%</td></tr>
+<tr><td><b>機率加權期望值</b></td><td><b>+14% 5Y（= ev5y_pct）</b></td><td><b>IRR ≈ +4.0%/yr</b></td><td></td><td>100%</td></tr>
+</table>
+<div class="reasoning"><b>IRR 公式：</b>(1+5Y_pct)^(1/5)−1。機率加權 5Y +14% → 年化 price ~2.7% + 股息回購 ~1.3% ≈ <b>4.0%/yr</b>。<b>落點解讀：&lt; 8%/yr 弱（不及大盤平均）。</b>主因 = ATH 進場點差、估值高檔使 re-rate 為負向。<b>追加壓測：</b>10Y 視角下，若 turnaround 完全兌現 + franchise 永續複利，10Y IRR 可達 ~8-9%/yr（時間攤平進場點 + 複利）；但同期 UNP 在合理價的 IRR 亦相當——機會成本不利在此價位選 CSX。</div>
+<table>
+<tr><th>機率估計檢查</th><th>標準/結果</th></tr>
+<tr><td>Bear 機率</td><td>25%（5Y 視角 ≥ 20% ✓）——關稅反噬 + coal 衰退 + de-rate 是真實下行尾巴</td></tr>
+<tr><td>Bull/Bear 散布</td><td>+55% / −38%（夠寬，5Y 視角 ✓）</td></tr>
+<tr><td>Base 機率</td><td>45%（&lt; 50% ✓，已壓測失敗路徑）</td></tr>
+<tr><td>Pattern match 校準</td><td>見 §11.7（PSR turnaround 歷史 case）</td></tr>
+<tr><td><b>QC-39 閘 B durability</b></td><td>本案 bear 機率 25% 主要依據 = <b>searched durability + 結構證據</b>（coal 永續衰退、關稅壓制進口櫃、STB 監管），非單純歷史 pattern 外推。產業態勢雙向裁決見 §9（循環底部 + 結構雙向）。不因「在衰退」過度悲觀（franchise 永續），亦不因「會循環復甦」過度樂觀（結構逆風真實）。</td></tr>
+</table>
+<p class="reasoning"><b>內生天花板 sanity check：</b>Base 情境 EPS CAGR 貢獻 ~6.0%/yr（§11.6）vs §6.D 內生天花板 6.5% → <b>在天花板內 ✅</b>（Base 不依賴超額 re-rate 或不可持續成長；Bull 的 13%+ 才需谷底復甦兌現）。故 Bear 機率不強制 ≥30%。</p>
+
+<h3>11.6｜IRR 三分量拆解</h3>
+<table>
+<tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息+淨回購</th><th>合計年化</th></tr>
+<tr><td>Bull</td><td>+11%/yr</td><td>−0.5%/yr（PE 22→22 持平）</td><td>+2.6%/yr</td><td>~+10.9%/yr</td></tr>
+<tr><td>Base</td><td>+6.0%/yr</td><td>−3.0%/yr（PE 22.3→19）</td><td>+2.6%/yr</td><td>~+5.5%/yr</td></tr>
+<tr><td>Bear</td><td>+1%/yr</td><td>−7.0%/yr（PE 22.3→16）</td><td>+2.6%/yr</td><td>~−6.4%/yr（含 EPS 下修）</td></tr>
+</table>
+<div class="reasoning"><b>質感解讀：</b>Base ~5.5% IRR 中，+6.0%/yr 來自 EPS 複利、<b>−3.0%/yr 來自估值 re-rate（負向拖累）</b>、+2.6%/yr 來自股息+回購。可抱性主要靠 <b>EPS 複利 + 股東回報</b>——但 re-rate 是<b>逆風</b>（現價在 5Y 高檔，多重只會壓縮不會擴張）。<b>非「估值依賴型」</b>（re-rate 貢獻為負，不需多重擴張；低 IRR 純源自進場點貴，非依賴 re-rate）。故 §14 row 7a 不觸發。</div>
+<p class="note">Guardrail 校驗：§11.6 Base 合計 +5.5%/yr 與 §11.5 機率加權 Base 列 +5.2%/yr 偏差 &lt; 2pp ✓。dd-meta irr_base_pct = 5.5。</p>
+
+<h3>11.7｜Pattern match（歷史相似 case）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>歷史結構類似個股</td><td><b>2018-19 NSC / UNP 的 PSR 導入 turnaround</b>（OR 由 ~67% 改善至 ~60%）；以及 <b>CSX 自身 2017 Hunter Harrison PSR</b>（OR 70%→60%）</td></tr>
+<tr><td>當時 setup</td><td>OR 高檔 + 新 CEO + 成本重塑承諾；估值在改善前段已部分反映</td></tr>
+<tr><td>最終 5 年實現報酬</td><td>CSX 2017-22 PSR 期股價 + EPS 大漲（OR 70→59）；但<b>進場點關鍵</b>——在故事被市場認知前進場（低估值）報酬豐厚，在故事已 price in（高估值）進場報酬平庸</td></tr>
+<tr><td>本標的最像/最不像</td><td><b>最像：</b>同樣 PSR 型 OR turnaround + 成本操盤手 CEO（Angel）。<b>最不像：</b>2017 進場時估值低（PE ~16x），本次進場估值已在 5Y 高檔（22x，故事已 price in）——這是報酬差異的關鍵。</td></tr>
+</table>
+<p class="reasoning"><b>校準：</b>歷史 PSR turnaround 年化 IRR 在「低估值進場」可達 15%+；但本次進場估值已高，故當前 ~4% 機率加權 IRR 估計與「故事已 price in」一致——pattern match 確認「對的公司、錯的價格」。內生天花板對照（§11.5）亦支持 Base 不依賴 re-rate。</p>
+
+<h3>§11 估值診斷結論</h3>
+<p>11.1 歷史分位（~84% → 偏熱）+ 11.2 PEG（1.64 含復甦 / steady-state ~2.8 偏貴）+ 11.4 同業（對最佳體質 UNP 反溢價、共識中位 $45.89 &lt; 現價）→ 綜合估值訊號 <b>🟠 偏貴</b>。完整裁決見 §14；倉位角色見 §14a。</p>
+
+<!-- ============ §12 ============ -->
+<h2 id="s12">§12｜矛盾辨識與強制裁決</h2>
+<div class="box-contra">
+<h3>1. 共識清單（方向一致的高信心區）</h3>
+<ul>
+<li>§7 護城河（不可複製軌道 + 雙寡占定價權）+ §9 利潤池核心位置 + §6.F AI 免疫 → <b>franchise 品質高、永續</b>（高信心）。</li>
+<li>§4 Q1'26 OR −5.6pp + §6 OR 谷底回升 + §10 Angel 營運紀律 → <b>turnaround 已啟動</b>（中高信心，但僅一季）。</li>
+<li>§11 估值偏熱 + §6.0 第 6 題最弱 + §3.C R1 + 共識中位 $45.89 &lt; 現價 → <b>現價偏貴、安全邊際不足</b>（高信心）。</li>
+</ul>
+<h3>2. 矛盾清單</h3>
+<table>
+<tr><th>#</th><th>矛盾點</th><th>章節 A</th><th>章節 B</th><th>性質</th></tr>
+<tr><td>1</td><td>好公司 vs 貴價格</td><td>§4/§6/§7：turnaround + 寬護城河（買進理由）</td><td>§11：ATH + Fwd PE 5Y 高檔 + 負 R:R（不買理由）</td><td><b>不可調和</b>（方向相反）</td></tr>
+<tr><td>2</td><td>護城河 holding vs ROIC 谷底破 WACC</td><td>§7：moat_trend →（結構完整）</td><td>§6.D：ROIC 嚴口徑曾跌破 WACC（惡化）</td><td>可調和（程度/循環差異）</td></tr>
+<tr><td>3</td><td>M&A 利多 vs 結構威脅</td><td>市場：UP-NS 骨牌 = CSX takeout 溢價</td><td>§3/§7：CSX 反對 UP-NS、被併是被動對沖、核准恐成泛太平洋對手</td><td>不可調和（雙刃，且 CSX 主動防守使利多打折）</td></tr>
+</table>
+<h3>3. 與上一份報告交叉矛盾</h3>
+<table>
+<tr><th>#</th><th>矛盾點</th><th>本次</th><th>上一份（v12.7, 06-15）</th><th>原因</th></tr>
+<tr><td>1</td><td>裁決</td><td>觀望（B）</td><td>觀望（B）</td><td>一致；本次對 turnaround credit 略升（Q1 確認）、但估值仍是障礙，方向不變</td></tr>
+</table>
+<h3>4. ⚖ 強制裁決</h3>
+<table>
+<tr><th>#</th><th>矛盾</th><th>我選哪邊</th><th>依據</th><th>會 settle 的硬數據點</th><th>裁決後執行路徑（≥2 if-then）</th></tr>
+<tr><td>1</td><td>好公司 vs 貴價格</td><td><b>章節 B（§11 估值）</b>——進場時機由估值/R:R 決定</td><td>franchise 品質不爭，但 4% 機率加權 IRR、負近期 R:R、共識中位 &lt; 現價 → 邊際資金在此價位報酬不足；turnaround 僅一季、估值已 price in 復甦</td><td>(a) Fwd PE ≤ 20x（約 $43）或回測 W52（~$39）；(b) OR 連 2 季 &lt; 62%（turnaround 確認）；(c) UP-NS STB 裁決方向</td><td>(a) 價回 $42-43 → 建核心倉 3-4%；(b) OR 連 2 季 &lt;62% 且量回正 → 即使價不便宜也可小倉起步（thesis de-risk）；(c) OR 連 2 季 &gt;65% → 續觀望/不進（H1 削弱）</td></tr>
+<tr><td>3</td><td>M&A 雙刃</td><td><b>視為下檔對沖而非利多</b></td><td>CSX 主動反對 UP-NS（csxstayingontrack.com），takeout 是被動 put 非管理層爭取；核准恐使 CSX 面臨泛太平洋對手</td><td>UP-NS STB 裁決（2027）</td><td>(a) 核准且 CSX 被點名併購標的 → 重評可博溢價；(b) 否決 → 投機溢價蒸發、回基本面 $43 → 維持觀望/減碼</td></tr>
+</table>
+<p>矛盾 2（可調和）：ROIC 谷底破 WACC 是 execution 循環谷底（Q1'26 已回升），非結構崩壞——程度差異，settle 點 = ROIC 回升 &gt; WACC（2026 在途）。<b>這些裁決帶入 §14。</b></p>
+</div>
+
+<!-- ============ §13 ============ -->
+<h2 id="s13">§13｜Pre-mortem 與 Max DD</h2>
+<h3>13a. 不確定假設</h3>
+<table>
+<tr><th>#</th><th>不確定假設</th><th>Thesis 成立前提</th><th>不成立的後果</th></tr>
+<tr><td>1</td><td>OR turnaround 可持續至 sub-60%（非單季）</td><td>Angel 成本紀律 + 量回升使 OR 結構性改善</td><td>OR 卡在 64-66% → EPS 不達標 + 估值 de-rate</td></tr>
+<tr><td>2</td><td>量能在 2026-27 由衰退底部回升</td><td>貨運景氣復甦 + intermodal 份額 + 製造業回流</td><td>關稅反噬延長 + coal 加速衰退 → 量持續弱、營收引擎熄火</td></tr>
+<tr><td>3</td><td>pricing power 不被 STB 監管侵蝕</td><td>互惠換車 NPRM 不落地或不擴大競爭接入</td><td>captive 鬆動 → 長期 yield 成長受限、護城河 −</td></tr>
+</table>
+<div class="box-pm">
+<h3>13b. Pre-mortem：失敗故事倒推</h3>
+<p>假設 5 年後這個部位虧 50%，最可能的故事是：<b>2026-27 貨運衰退未如預期復甦、關稅反噬使 intermodal 進口櫃量連續下滑、coal 加速衰退；Angel 的 OR 改善在量能不振下觸頂於 ~63%（成本下降空間用盡、量槓桿缺席）；UP-NS 合併 2027 獲 STB 核准，CSX 淪為面對泛太平洋直達對手的孤立東部玩家，且自身反對失敗失去戰略主動。市場認知到「turnaround 已盡、M&A 利多落空、結構威脅成真」，Fwd PE 由 22x de-rate 至 14-15x，疊加 EPS 不如預期 → 股價自 $48 回落至 $28-30（−40%）。</b></p>
+</div>
+<h3>13c. 路徑壓力測試（Max DD）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>估計 Max DD 範圍</td><td><b class="maxdd-num">−35% ~ −50%</b></td></tr>
+<tr><td>最可能觸發時點</td><td>2026-2027：貨運衰退延長 + turnaround 停滯 + UP-NS 裁決不利（核准使 CSX 孤立 或 否決使溢價蒸發，雙向皆可能觸發 de-rate）</td></tr>
+<tr><td>觸發後恢復時間</td><td>12-24 個月（若 franchise 完整、循環復甦）；若 reciprocal switching 結構侵蝕 pricing → thesis 部分破損、恢復更慢</td></tr>
+<tr><td>路徑風險評級</td><td><b>🟡 −30~−50%（需要強信念）</b></td></tr>
+</table>
+<div class="ddbar"></div>
+<p style="font-size:12px;color:#64748B;">0 ←——— −30%（綠/扛得住）———— −50%（琥珀/需強信念）———— &lt;−50%（紅）→</p>
+<p class="reasoning"><b>校驗：</b>若 Max DD 落在 −35~−50%，能否撐到復原？條件：部位 ≤ portfolio 4-5%、不用槓桿、§3.F（UP-NS）未轉成結構性護城河破損。<b>F2 倉位處理：</b>路徑風險 🟡（非 🔴），且 thesis 完整（moat_trend →、runway 🟢、非估值依賴型）→ 不因波動砍倉；但因裁決為觀望，本就不持倉，僅作為<b>進場後</b>的深回撤心理準備（−50% 區間）。dd-meta max_dd_pct = −50（範圍下界）。</p>
+
+<!-- ============ §14 ============ -->
+<section id="decision">
+<h2 style="scroll-margin-top:80px;">§14｜決策（統一裁決唯一居所）</h2>
+<div class="decision dec-watch">
+<span class="chip chip-watch">觀望</span>
+<div class="sub">等待條件：Fwd PE ≤ 20x（約 $43）或回測 W52（~$39）；或 OR 連 2 季 &lt; 62% 確認 turnaround。好公司、真實 turnaround，但已在 ATH 被 price in。</div>
+</div>
+<h3>決策矩陣套用</h3>
+<table>
+<tr><th>優先序</th><th>條件</th><th>本案</th><th>結果</th></tr>
+<tr><td>1 Hard Veto</td><td>signal = X</td><td>signal B</td><td>不觸發</td></tr>
+<tr><td>2 Hard Veto</td><td>§12 thesis 不可調和不成立</td><td>矛盾 1 可由估值/時機解（非 thesis 破）</td><td>不觸發</td></tr>
+<tr><td>3 Hard Veto</td><td>moat_trend ↓ 且 moat ≤ B</td><td>moat_trend →（非 ↓）</td><td>不觸發</td></tr>
+<tr><td>4 Soft Veto</td><td>Pure MA ❌</td><td>MA 🟡（減半進場，價 &gt; 所有均線）</td><td>不觸發</td></tr>
+<tr><td>5 節奏修飾</td><td>動能過熱（ATH、貼布林上軌、RSI 高）</td><td>是（$48.32 = ATH、近布林上軌 $49.7）</td><td>不改裁決頭銜，僅令進場節奏條件式分批 + 頁首掛「勿追高」</td></tr>
+<tr><td>6 Soft Veto</td><td>signal = C</td><td>signal B</td><td>不觸發</td></tr>
+<tr><td>7 Soft Veto</td><td>runway_post_y5 🔴</td><td>🟢</td><td>不觸發</td></tr>
+<tr><td>7a Soft Veto</td><td>估值依賴型且 §12 未給市場錯在哪</td><td>非估值依賴型（re-rate 為負貢獻）</td><td>不觸發</td></tr>
+<tr><td>7b</td><td>capalloc_grade = C</td><td>B</td><td>不觸發</td></tr>
+<tr><td><b>8 Baseline</b></td><td><b>無 Hard Veto + signal ≥ B + 估值 = 🟠</b></td><td><b>signal B + 估值 🟠</b></td><td><b>觀望（等估值）✓</b></td></tr>
+</table>
+<p class="reasoning"><b>裁決推導：</b>無 Hard/Soft Veto 命中；落 row 8（signal B + 估值 🟠 偏貴）→ <b>觀望（等估值）</b>。row 5 動能過熱（ATH）僅修飾進場節奏，不把裁決壓成觀望——但此處觀望本就由 row 8（估值）獨立得出，與 row 5 無關（對齊 QC-7b：技術面不主導裁決，估值才是）。dd-meta dca_verdict = 觀望。</p>
+
+<h3>14a. 倉位角色與進場計畫 + opportunity cost</h3>
+<table>
+<tr><th width="30%">項目</th><th>內容</th></tr>
+<tr><td>投資組合角色（dd-meta dca_role）</td><td><b>條件式核心持倉</b>（在對的價位是核心級寬護城河鐵路；現價條件未成立 → 追蹤）</td></tr>
+<tr><td>初始建倉倉位</td><td>0%（觀望，條件成立前不建倉）</td></tr>
+<tr><td>目標倉位</td><td>條件成立後 3-4%（核心級）</td></tr>
+<tr><td>進場價位區間</td><td>$39-43（Fwd PE ≤ 20x 或回測 W52）</td></tr>
+<tr><td>進場節奏</td><td>觸發條件：Fwd PE ≤ 20x 或 OR 連 2 季 &lt; 62%；屆時分 2-3 批建倉（首批 1/3）</td></tr>
+<tr><td><b>vs 現有組合同類曝險（opportunity cost）</b></td><td>CSX 屬「寬護城河、低成長、防禦複利」類。若組合已持 <b>UNP</b>（業界最佳 OR、最強 FCF、合理價 ~21x）或公用事業/必需消費等防禦複利，CSX 在 ATH 的 R:R（4% IRR）<b>明顯劣於</b>這些可在合理價買進的同類——<b>邊際資金不應在此價位投入 CSX</b>；若要鐵路曝險，UNP 在當前價的品質/估值組合更優。</td></tr>
+</table>
+<p class="note">實際組合佔比由 portfolio-manager skill 依組合配置紀律決定；此處的倉位角色與區間為決策輸入，非組合拍板。</p>
+<h3>14b. 加碼與減碼條件</h3>
+<table>
+<tr><th>行動</th><th>觸發條件</th><th>調整至倉位</th></tr>
+<tr><td>進場（首批）</td><td>Fwd PE ≤ 20x（~$43）或回測 W52（~$39）</td><td>1.5%（首批 1/3）</td></tr>
+<tr><td>加碼</td><td>OR 連 2 季 &lt; 62% + 量回正（H1+H2 確認）</td><td>3-4%（目標）</td></tr>
+<tr><td>減碼</td><td>OR 回升 &gt; 65% 或 EPS 共識連 2 季下修</td><td>減半</td></tr>
+<tr><td>清倉</td><td>reciprocal switching 結構落地侵蝕定價 或 OR 結構卡 65%+</td><td>0%</td></tr>
+</table>
+<h3>14c. 建議持有年限</h3>
+<table>
+<tr><th>持有年限</th><th>條件</th></tr>
+<tr><td>短期（&lt; 2 年）</td><td>若僅博 turnaround/M&A 事件——不建議（投機，非本報告 mandate）</td></tr>
+<tr><td>中期（2-5 年）</td><td>若 turnaround 兌現（OR 至 sub-62）+ 循環復甦——基本持有區間</td></tr>
+<tr><td>長期（5-10 年）</td><td>若 OR 至 sub-60 + franchise 永續複利成立——可長抱（Buffett BNSF 邏輯）</td></tr>
+</table>
+<p><strong>建議持有年限：中長期（2-5 年起，turnaround 兌現可延長至 5-10 年）。</strong>原因：franchise 永續（§6.A'' 🟢）+ 利潤池核心（§9）+ capalloc B（§10，不收緊年限）；惟須在對的價位進場。</p>
+<p class="note"><b>EPS 預測參考：</b>2026E $1.91 / 2027E $2.17 / 2028E $2.36（Excel consensus）/ 2030E 外推 ~$2.85-3.0（OR 改善 + 回購，steady-state ~8%）。<b>假設長期持有，現價適合嗎？</b>以 §11.5，現價 5Y 機率加權 IRR 僅 ~4%/yr、Base ~5.5%/yr——對長抱者報酬不足；等回檔至 $40-43 則 IRR 顯著改善（~8-10%）。<b>對的公司、等對的價。</b></p>
+</section>
+
+<!-- ============ §15 ============ -->
+<h2 id="s15">§15｜複審觸發與保質期</h2>
+<table>
+<tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間/條件</th></tr>
+<tr><td>1</td><td>Q2 FY2026 財報（OR、量、FCF、指引）</td><td>財報日期</td><td>2026-07（下次財報）</td></tr>
+<tr><td>2</td><td>UP-NS 合併 STB 進度（補件 7/27、裁決 2027）+ reciprocal switching NPRM</td><td>產業/監管事件</td><td>2026 下半-2027</td></tr>
+<tr><td>3</td><td>股價回檔至 Fwd PE ≤ 20x（~$43）或 W52（~$39）</td><td>價位觸發</td><td>進場窗口開啟</td></tr>
+<tr><td>4</td><td>§3.F Single Thing：UP-NS STB 最終裁決</td><td>binary 事件</td><td>2027</td></tr>
+</table>
+<p><strong>保質期：</strong>2026-07 下一次財報發布前有效（Q2 OR/量/FCF 將實質更新 turnaround 進度與 H1/H2 判定）。<br>
+<strong>最可能 upside：</strong>OR 連續改善至 sub-62 + 量回升驗證 turnaround；或 UP-NS 核准帶 takeout 投機。<br>
+<strong>最可能 downside：</strong>關稅反噬使 intermodal 量持續下滑 + OR 改善觸頂 + 估值 de-rate。</p>
+
+<!-- ============ 附錄 A ============ -->
+<details id="sA">
+<summary>附錄 A｜擇時（降級 · INFORMATIONAL ONLY，不主導 §14）</summary>
+<h3>基本面評級機制（品質分 → B，metadata-only）</h3>
+<p>底分 =（護城河 8.0 + 成長持久性 6.5）/ 2 = <b>7.25</b>。體質 veto 5 項：① 毛利率（OR）近 3 年惡化但 Q1'26 回升（邊界，不計嚴重）② FCF/NI 0.59 &lt; 0.7（觸發 1）③ EPS 共識上修（不觸發）④ 近 4 季營收 YoY 未全負（不觸發）⑤ Net Debt/EBITDA 2.9 ≤ 3.0（不觸發）→ <b>1-2 項，等級不變</b>。品質分 7.0 → <b>B 級</b>（6.0-7.4）。</p>
+<p>綜合訊號：quality B + 估值 🟠 + MA 🟡 + trap 🟡 → <b>signal = B</b>（衛星級/時機不到，thesis 完整但估值偏貴 + 動能過熱，非 C——無 QC-31 thesis 失敗證據）。輸出 dd-meta signal/verdict = B。</p>
+<h3>估值燈</h3>
+<p>Fwd PE 5Y 分位 ~84% + PEG 1.64 → 取較嚴：分位 84%（70-85% 區間）= <b>🟠 偏貴</b>。盲點 1 救援不適用（成長綜合評級 🟡 非 🟢，且非結構性高成長股）→ 維持 🟠。dd-meta val = 🟠。</p>
+<h3>Pure MA 六狀態機（週線）</h3>
+<p>現價 $48.32 &gt; W52 $38.54 &gt; W104 $35.18 &gt; W250 $32.89；W250 斜率（13週）+2.49%（持平區間 −3~+3%）。→ 狀態 = <b>🟡 減半進場</b>（四條件過但 W250 斜率持平）。價在所有均線之上 = 多頭結構但已大幅延伸。dd-meta ma = 🟡。</p>
+<h3>大盤豁免</h3>
+<p>^GSPC 現價 7425 &gt; W104 6311（未破線）→ 系統性風險正常，係數 ×1.0。</p>
+<h3>R:R 三時距（資訊性）</h3>
+<table>
+<tr><th>時距</th><th>計算</th><th>目標價</th><th>R:R / upside</th></tr>
+<tr><td>短期（1 年）</td><td>FY26 EPS $1.91 × 合理 20x</td><td>$38.2</td><td>−20.9%（負，已超漲）</td></tr>
+<tr><td>中期（2 年）</td><td>FY27 EPS $2.17 × 20x</td><td>$43.4</td><td>−10.2%</td></tr>
+<tr><td>5Y（長期）</td><td>FY31 EPS ~$2.9 × 19x</td><td>$55.1</td><td>+14%（5Y）</td></tr>
+</table>
+<p><b>Bear anchor：</b>Bear EPS = FY26 $1.91 × 0.9 = $1.72；Bear PE = 成長熄火「降至 ~5-8%」情境 ~15x；Bear 股價 ≈ $26-30（現價下行 ~−40%）。<b>QC-21 防禦：</b>短/中期 R:R 為負（現價高於公允）= 「市場已定價復甦」，不適合追高；非數學假象（下行距離 &gt; 15% 充足）。dd-meta stress = 1/2（5Y base 正、近期 R:R 負）；upside_short −21%、upside_mid −10%。</p>
+<p class="note"><b>附錄 B（循環交易鏡頭）未觸發：</b>QC-42 僅命中 1 項（capex/rev 20.6% &gt; 15%）；CSX 無 GAAP 虧損年、無 &gt;20pp 毛利擺動、非商品 ASP price-taker（為定價設定者）、產業不在記憶體/礦業/航運等清單——未達 ≥2 門檻，整段省略。</p>
+</details>
+
+<!-- ============ 版本修訂紀錄 ============ -->
+<h3>版本修訂紀錄</h3>
+<ul style="font-size:13px;color:#475569;">
+<li><b>2026-06-29（v14.2，本份）：</b>首份 v14.2（前份 2026-06-15 為 v12.7）。納入 Q1 FY2026 財報（OR 64.0%、EPS $0.43 +26%、指引上調）重新評估；獨立 critic 紅隊修正 4 處結構判讀：① Angel 定性由「賣盤 endgame」校正為「PSR 營運操盤手、被併是被動 put」；② H3 由「M&A 利多選擇權」改框為「防守方、CSX 反對 UP-NS」；③ 補入 STB 互惠換車 NPRM（2026-01）pricing power 監管風險（R3/§7）；④ H2 intermodal 由樂觀調為「待確認」（2026 北美前 10 週 −8.8% 關稅反噬）。裁決維持觀望（B），與前份一致。</li>
+</ul>
+<h3>假設驗證對照（vs 2026-06-15 v12.7）</h3>
+<table style="font-size:12.5px;">
+<tr><th>假設</th><th>上次（06-15）</th><th>本次（06-29）</th><th>邊際變化</th></tr>
+<tr><td>H1 OR turnaround</td><td>谷底待確認</td><td>Q1'26 OR 64.0% 確認啟動</td><td>🟢 兌現中（僅一季）</td></tr>
+<tr><td>H2 量能復甦</td><td>偏弱</td><td>Q1 +3% 但 2026 北美 intermodal −8.8%（關稅）</td><td>🟡 能見度仍低</td></tr>
+<tr><td>H3 M&A</td><td>BNSF 拒併、UP-NS 結構威脅</td><td>CSX 主動反對 UP-NS、被併是被動 put</td><td>→ 利多打折、防守框架</td></tr>
+<tr><td>裁決</td><td>B / 觀望</td><td>B / 觀望</td><td>持續觀望（等估值）</td></tr>
+</table>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+</div>
+</body>
+</html>
+
+
+
+
+
