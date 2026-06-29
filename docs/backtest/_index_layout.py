@@ -31,7 +31,7 @@ GREEN, RED, GREY = "#16a34a", "#dc2626", "#9ca3af"
 LIVE_CARD = {
     "name": "SMH/QQQ · STX50", "tag": "✓ 實倉中",
     "sub": "50/50 SMH/QQQ · E3 三訊號 + 週線 ST(10,3) 半倉出場閘門 · 進攻位",
-    "cagr": "+14.05%", "mdd": "-21.87%", "sharpe": "0.91", "calmar": "0.64",
+    "cagr": "+13.84%", "mdd": "-21.87%", "sharpe": "0.90", "calmar": "0.63",
     "url": "/backtest/long_track_smh/",
 }
 
