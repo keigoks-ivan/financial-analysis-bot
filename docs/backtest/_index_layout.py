@@ -80,7 +80,7 @@ def render():
   <div class="acn-title">其餘已採用 / 候補(未上實倉)</div>
   <ul>
     <li><a href="/backtest/long_track_ensemble/">SPY/QQQ E3 集成</a> — 合格候補(原列採用,未上實倉)· 核心防守</li>
-    <li><a href="/backtest/slope_filter/">SPY/AGG 斜率</a> — 合格候補 · 全站唯一近支配(SPY 特定)</li>
+    <li><a href="/backtest/slope_filter/">SPY/AGG 斜率</a> — 合格候補 · 勝 B&amp;H 風險調整(SPY 特定;2026-06 審計改還原日線 MDD −22.13% 後,「近支配」已撤回)</li>
   </ul>
 </div>"""
 
