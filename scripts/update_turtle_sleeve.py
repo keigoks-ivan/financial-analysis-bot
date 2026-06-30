@@ -552,7 +552,7 @@ def perf_section(yr_ret) -> str:
     引擎自 2006 重放至最新收盤的模型 NAV(月頻、含成本)。實線 = <b>實際在跑的組合
     80% STX50 + 20% 商品 sleeve(月底再平衡)</b>;虛線為兩條分解腿。
     <b>這是回測/紙上權益,非實倉損益</b> —— OOS 並行追蹤期間沒有真實成交。
-    sleeve 單腿波動大(MDD ≈ -28%),但只佔 20%;組合層 MDD 被 STX50 拉到約 -15%。
+    sleeve 單腿波動大(MDD ≈ -33%),但只佔 20%;組合層 MDD 被 STX50 拉到約 -16%。
     細節見 <a href="/backtest/turtle_adopt/">採用回測頁</a>。</div>
   <div class="chart-wrap"><canvas id="chart-perf"></canvas></div>
 </div>"""
