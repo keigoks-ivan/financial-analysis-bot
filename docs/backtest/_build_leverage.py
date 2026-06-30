@@ -30,15 +30,15 @@ ROWS = [
     ("✓ 唯一過關", ADOPT, [
         ("vol-target 疊加（MNQ 槓 QQQ 半邊，+0.4x）", "/backtest/leverage/",
          "依最近波動連續縮放槓桿 · 三個年代 Calmar 都小贏底倉、Sharpe 升、尾部不放大",
-         "+15.6%", "-23.3%", "0.94", "0.67 / 0.35 / 0.96", "候選 · 小 edge"),
+         "+15.4%", "-23.3%", "0.92", "0.66 / 0.33 / 0.96", "候選 · 小 edge"),
     ]),
     ("參照（放大整條 STX50，需 SMH 用 SOXL/保證金）", GREY, [
         ("vol-target 放大整條 STX50（→1.8x）", "/backtest/leverage/",
          "同規則但槓滿兩邊 · edge 略大但 SMH 半邊無期貨、要槓桿 ETF/保證金",
-         "+16.9%", "-24.3%", "0.92", "0.69 / 0.34 / 1.00", "參照"),
+         "+16.7%", "-24.3%", "0.91", "0.69 / 0.32 / 1.00", "參照"),
         ("常態 1.8x STX50（不挑時段、純放大）", "/backtest/leverage/",
          "固定槓桿只是同比例放大報酬與回撤 · Calmar ≈ 不變(基準對照)",
-         "+22.0%", "-36.4%", "0.84", "0.60 / 0.16 / 0.96", "基準對照"),
+         "+22.5%", "-36.4%", "0.85", "0.62 / 0.20 / 0.96", "基準對照"),
     ]),
     ("✗ 否決（輸底倉風險調整 — 挑錯時段 / 放大尾部）", RED, [
         ("趨勢閘門 Sys1 / fast-out / 低波動二元 MNQ 腿", "/backtest/leverage/",
@@ -52,7 +52,7 @@ ROWS = [
          "—", "—", "—", "0.56 / 0.25 / 0.83", "否決"),
     ]),
 ]
-BASE = ("1.0x STX50 底倉（不加槓桿）", "+14.1%", "-21.9%", "0.92", "0.65 / 0.27 / 0.95")
+BASE = ("1.0x STX50 底倉（不加槓桿）", "+13.8%", "-21.9%", "0.90", "0.63 / 0.24 / 0.95")
 
 # cross-ASSET generalization: same vol-target rule on genuinely low-correlation
 # asset classes (corr −0.31~+0.37, not the 0.79–0.92 of SPY/QQQ/SMH). Only equity
@@ -229,10 +229,10 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
   <div class="ac-name">vol-target 疊加（MNQ 只槓 QQQ 半邊,+0.4x）</div>
   <div class="ac-sub">依「最近波動 vs 平常波動」連續縮放槓桿:平靜才加、一亂就收。底倉 STX50 不動。</div>
   <div class="ac-metrics">
-    <div><span>CAGR</span><b style="color:var(--green)">+15.6%</b></div>
+    <div><span>CAGR</span><b style="color:var(--green)">+15.4%</b></div>
     <div><span>MDD</span><b>-23.3%</b></div>
-    <div><span>Sharpe</span><b>0.94</b></div>
-    <div><span>Calmar 全/06–15/15–now</span><b style="font-size:.82rem">0.67/0.35/0.96</b></div>
+    <div><span>Sharpe</span><b>0.92</b></div>
+    <div><span>Calmar 全/06–15/15–now</span><b style="font-size:.82rem">0.66/0.33/0.96</b></div>
   </div>
 </div>
 </div>
@@ -341,7 +341,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <div class="warn">
   <b>這是小 edge、股票特有、不是翻倍級的東西。</b>Sharpe 只 +0.02–0.05、Calmar +0.02–0.06,且只對股票(見 ③)。
   最大實質價值是<b>危機年自動收槓桿(不放大尾部)＋ 平靜年小幅加速</b>。<br>
-  · <b>已用真實期貨驗證(2026-06)</b>:之前 MNQ 是用 QQQ 還原報酬−現金「代理」;改用<b>真實 NQ 期貨</b>重跑,結果 Calmar 0.68/0.36/0.97,比代理(0.67/0.35/0.96)還略好 → 代理沒美化。<br>
+  · <b>已用真實期貨驗證(2026-06)</b>:之前 MNQ 是用 QQQ 還原報酬−現金「代理」;改用<b>真實 NQ 期貨</b>重跑,結果 Calmar 略勝代理(0.66/0.33/0.96)→ 代理沒美化。<br>
   · <b>工具/可執行性折扣</b>:純期貨只能槓 QQQ 半邊(+0.4x);且 <b>MNQ 微型 2019 才上市</b>,回測 65% 期間只能用全尺寸 NQ,小帳戶切不出這麼細的曝險(平均才 +0.09x)。要更大 edge 需 SOXL/保證金槓 SMH 半邊。<br>
   · <b>尚未做 walk-forward</b>:兩個年代是同一份資料的子區間,參數雖落在敏感度高原(15–40d,非針),但「沒過擬合」目前是論證、還沒用擴張窗 OOS 證明。<br>
   · <b>選擇權凸性試過</b>:模型上只小贏線性、且救不到 MDD,不值得。<b>期貨作空也試過(A/B/C)全否決</b>——救持續空頭但 V 轉/軋空賠更多。<br>
