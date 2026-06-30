@@ -4,7 +4,7 @@
 
 | 檔名 | 內容 | id-meta | 角色 |
 |---|---|---|---|
-| `ID_{Theme}_{YYYYMMDD}.html` | **精煉版決策卡**（~7 PARTS、≈45-55KB） | **有**（SSOT，索引/screener 認這份） | **canonical 入口** — 一點進來就是決策卡 |
+| `ID_{Theme}_{YYYYMMDD}.html` | **精煉版決策卡**（~6 PARTS、≈45-55KB） | **有**（SSOT，索引/screener 認這份） | **canonical 入口** — 一點進來就是決策卡 |
 | `ID_{Theme}_{YYYYMMDD}_full.html` | 完整考證版（9 章 + 一手 source、~170KB+） | **無**（validator 自動 skip、不重複列索引） | companion，由 canonical 連過去 |
 
 > **canonical = 精煉版**。完整版搬到 `_full.html`。兩份**雙向連結**：canonical 底部 xlinks「完整考證版 →」連 `_full.html`；`_full.html` 頂部「⚡ 趕時間？→ 2 頁精煉版決策卡」連回 canonical。完整版的 `<head>` 拿掉 id-meta（`<meta name="id-*">` + `<script id="id-meta">` 都不放），精煉版帶 id-meta。
@@ -24,7 +24,7 @@
 
 `--ink:#1c1916 · --ink-soft:#3d3833 · --paper:#faf7f2 · --paper-deep:#f0ebe1 · --paper-card:#f5f1e8 · --accent:#7a3d1c · --accent-deep:#4a2410 · --gold:#b08840 · --gold-soft:#d4b572 · --muted:#6e665a · --green:#2a5040 · --red:#8a3424 · --amber:#8a6420`。body Noto Serif TC/Crimson Pro 襯線、標籤 IBM Plex Mono。
 
-## Body 骨架 — 7 PARTS（**不含 system-integration 部分**）
+## Body 骨架 — 6 PARTS（PART I–VI；**不含 system-integration 部分**）
 
 `.container`（max-width 980，paper 底）包：
 
@@ -42,7 +42,7 @@
 
 ## 硬規則（critic 會抓）
 
-- **PART 數＝7（PART I-VII 內容，但不含舊草稿的「System Integration / Pure MA」那節）** — 賣出訊號併入 PART I `.monitor`，不另開系統整合章。
+- **PART 數＝6（PART I–VI；舊草稿的第 7 節「System Integration / Pure MA」已於 v2.3 移除）** — 賣出訊號併入 PART I `.monitor`，不另開系統整合章。golden reference `ID_AIComputeCapexCycle_20260611.html` 即 PART I–VI。
 - **個股非推薦**：PART VI + epilogue 必含「特徵/分類、買賣由個股 DD + 系統決定、非買入推薦」字句。
 - **決策層完整、證據層濃縮**：精煉版保留所有判斷（裁決 / KEY CALL / 三裂縫 / 三情境 / conviction tier / 監測點），砍的是考證厚度（逐條 source 推導留給 `_full.html`）。
 - **scenario 三情境必附主觀機率 + 觸發確認訊號**；inference 必附 `.deduction-chain` + 可證偽條件。

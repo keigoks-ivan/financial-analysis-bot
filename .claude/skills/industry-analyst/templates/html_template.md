@@ -18,28 +18,14 @@
 <meta name="robots" content="noindex,nofollow">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="id-skill-version" content="v2.0">
-<meta name="id-theme" content="{THEME_CAMELCASE}">
-<meta name="id-publish-date" content="{YYYY-MM-DD}">
-<title>產業深度 — {THEME}（{YYYY-MM-DD}）</title>
-<script id="id-meta" type="application/json">
-{
-  "theme": "{THEME}",
-  "skill_version": "v2.0",
-  "id_version": "v1.0",
-  "publish_date": "{YYYY-MM-DD}",
-  "thesis_type": "structural",
-  "ai_exposure": "🟡",
-  "oneliner": "{≤200 字，本 ID 核心 thesis 一句話 — 不可截斷}",
-  "related_tickers": [
-    {"ticker": "{TICKER}", "role": "{角色描述}", "depth": "🔴", "beneficiary": true}
-  ],
-  "quality_tier": "Q1",
-  "mega": "{semi | bio | ...}",
-  "sub_group": "{對應子群組}",
-  "sections_refreshed": {"technical": "{YYYY-MM-DD}", "market": "{YYYY-MM-DD}", "judgment": "{YYYY-MM-DD}"}
-}
-</script>
+<!-- ⚠ dual-output 規則：完整考證版（_full.html）是 companion，「不放任何 id-meta」——
+     ❌ 不要 <meta name="id-skill-version | id-theme | id-publish-date"> 三標
+     ❌ 不要 <script id="id-meta"> JSON block
+     id-meta 的 SSOT 只放在 canonical 精煉版（lean_template.md → ID_{Theme}_{YYYYMMDD}.html）。
+     原因：validate_id_meta.py 以 <meta name="id-*"> / id-meta script 判定「此檔是 ID 檔」；
+     _full 只要殘留任一個，就會被誤判成「缺 id-meta block 的 ID 檔」而 FAIL（CI strict gate 整 push 連坐）。
+     ∴ _full 的 <head> 只保留 robots / charset / viewport + <title> + <style>。 -->
+<title>產業深度（完整考證版）— {THEME}（{YYYY-MM-DD}）</title>
 <style>{SHARED_STYLES}</style>
 </head><body>
 <!-- ▼▼ canonical site header — 全站統一，由 scripts/site_nav.py full_nav_block('research','id') 生成。
