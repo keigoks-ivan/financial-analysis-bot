@@ -26,6 +26,12 @@ OUT = Path(__file__).parent / "multi" / "index.html"
 
 TEAL, GREEN, RED, GREY = "#0f766e", "#16a34a", "#dc2626", "#9ca3af"
 
+# Correlation quoted in prose is read LIVE from v7-backtest decompose.json
+# (calendar-month corr of the CMDTY2 sleeve vs STX50) — do not hardcode it;
+# the adopt page reads the same field, keeping the two pages same-source.
+_DECOMPOSE = Path.home() / "v7-backtest" / "results" / "turtle" / "decompose.json"
+CORR_M = json.loads(_DECOMPOSE.read_text())["l3"]["CMDTY2"]["corr_monthly"]["STX50"]
+
 # Adoption candidate spotlight: the 80/20 combined system (sleeve = L4-pending).
 LIVE_CARD = {
     "name": "組合系統 · STX50 + 商品 Sleeve（80/20）", "tag": "L4 候選 · OOS 並行追蹤",
@@ -50,7 +56,7 @@ SYSTEMS = [
          "+13.79%", "-16.31%", "1.04", "0.85", "有效交換", tag_cand()),
         ("🐢 商品/債/匯/股 唐奇安突破（55/20）", "/backtest/turtle/",
          "USO/GLD/DBA/FXE/TLT/SPY · 55/20 突破(2007 起)· 2026-06 修正:原 22.5% CAGR 是停損成交假象,"
-         "修正後全系統平庸(CAGR 7.61% / Calmar 0.15);殘餘價值僅 GLD/USO 低相關 sleeve(+20% → 組合 0.63→0.85),sleeve 即取自此",
+         "修正後全系統平庸(CAGR 7.61% / Calmar 0.15);殘餘價值僅 GLD/USO 低相關 sleeve（+20% → 組合 0.65→0.85，同 sleeve 視窗），sleeve 即取自此",
          "+7.61%", "-52.28%", "0.39", "0.15", "被支配", tag_ref()),
     ]),
     ("分散參照(資產池不同,僅供對照)", GREY, [
@@ -119,7 +125,7 @@ def render():
   <div class="acn-title">為什麼獨立分頁</div>
   <ul>
     <li>這些系統交易<b>不同資產池</b>(商品/債/匯/全球 ETF),報酬軸<b>不與單一股票池系統同尺</b> — 看的是分散與組合貢獻,不是 CAGR 對打。</li>
-    <li>商品 sleeve 對 STX50 月相關 ≈ -0.03、三次危機窗全正,<b>+20% 權重把組合 Calmar 0.63→0.85</b> — 採用與工具(需期貨)待 L4。</li>
+    <li>商品 sleeve 對 STX50 月相關 {CORR_M:+.2f}（decompose.json 實算）、五個危機窗四正一負（2011 -7.2%），<b>+20% 權重把組合 Calmar 0.65→0.85（同 sleeve 視窗）</b> — 採用與工具（需期貨）待 L4；靜態 +20% GLD 對照（0.81）為正式替代方案，見採用評估頁 Dumb 對照。</li>
     <li>跨資產防守腿對 QQQ 月相關僅 0.28,是真正的分散補位(非報酬來源)。</li>
   </ul>
 </div>"""
@@ -219,7 +225,8 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <tbody>%SYS_ROWS%</tbody></table>
 </div>
 <div class="note"><b>誠實歸因:</b>唐奇安突破舊報 CAGR +22.5% 是<b>停損成交假象</b>(收盤觸發、停損價成交);2026-06 修正後僅 +7.61% / Calmar 0.15,全系統平庸、MDD -52%。
-真正可用的只剩它的<b>GLD/USO 商品腿與股票核心低相關</b> — 取 20% 疊進 STX50 → 組合 Calmar 0.63→0.85(削回撤、不增報酬)。跨資產防守腿則用低相關換分散,CAGR 最低但 Calmar/Sharpe 全勝 GEM/Clenow。</div>
+真正可用的只剩它的<b>GLD/USO 商品腿與股票核心低相關</b> — 取 20% 疊進 STX50 → 組合 Calmar 0.65→0.85（同 sleeve 視窗，削回撤、不增報酬）；
+惟 +20% 靜態 GLD 買進持有已達 0.81，海龜引擎邊際僅 +0.04 Calmar（見採用評估頁 Dumb 對照）。跨資產防守腿則用低相關換分散,CAGR 最低但 Calmar/Sharpe 全勝 GEM/Clenow。</div>
 </div>
 
 <!-- CHART -->

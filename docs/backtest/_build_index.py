@@ -397,7 +397,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
        美股趨勢家族的礦脈已基本挖完 — E3 與 STX50 經 L1~L4 全流程採用(目前實倉只有 STX50 在跑,E3 待上線),
        W52 為防守對照(2026-06 審計後 MDD/Sharpe 改還原日線基準:真實 MDD −22.13%/2008、Sharpe 0.86、Calmar 0.48 — 仍勝 B&H 風險調整,但月底取樣造成的「近支配」已撤回);
        已否決:雙軌多空、做空、盤整 MR(被支配)。組合層的下一塊拼圖<strong>L3 檢驗待重評</strong>:
-       Turtle 商品腿(USO/GLD/DBA)與 STX50 相關 -0.03、三次危機窗全正報酬,+20% 權重使組合 Calmar 0.63 → 0.85;
+       Turtle 商品腿（GLD/USO）與 STX50 月相關 -0.01、五個危機窗四正一負（2011 -7.2%），+20% 權重使組合 Calmar 0.65 → 0.85（同 sleeve 視窗；+20% 靜態 GLD 對照已達 0.81）;
        (2026-06-29 修正止損成交後,Turtle 本身 CAGR 22.5%→7.6%、Calmar 0.59→0.15,原稱組合 →1.03 係止損過度樂觀的假象;
        疊加仍正向但效益縮小,採用與工具選擇待 L4 重新決策)。每行的「支配性」= 對該系統自然基準的
        <a href="/backtest/criteria/">L2 雙軸判定</a>:只有「被支配」才等於「策略不好」。</p>
