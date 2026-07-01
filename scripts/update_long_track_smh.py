@@ -29,6 +29,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import yfinance as yf
+from pandas.tseries.offsets import BDay
 
 # Canonical site header (single source: scripts/site_nav.py)
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -130,6 +131,14 @@ def compute_signals(px: pd.Series, cash: pd.Series,
                     st_dir_s=None, st_lvl_s=None) -> dict:
     wk = px.resample("W-FRI").last().dropna()
     mo = px.resample("ME").last().dropna()
+    # TSMOM timing sync with the backtest authority (ensemble_experiment
+    # signal_daily): the monthly signal is DECIDED at each month's last trading
+    # session and effective the next day; mid-month the effective signal is the
+    # last COMPLETED month's.  resample("ME") makes the trailing bar a partial
+    # month, so drop it unless today is the month-end session (BDay approx,
+    # same convention as update_turtle_sleeve.is_month_end_session).
+    if len(px) and (px.index[-1] + BDay(1)).month == px.index[-1].month:
+        mo = mo.iloc[:-1]
     cash_m = cash.resample("ME").last()
 
     ma40 = wk.rolling(40).mean()
@@ -413,7 +422,10 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
 ④ <b>ST 閘門</b>:週線 Supertrend(ATR 10、乘數 3,TradingView final-band 公式)方向 —
 翻空時受閘半倉出場、翻多時回來;<b>閘門只減倉、永不加倉</b><br>
 <span style="color:var(--muted);font-size:.78rem">E3 = 三訊號平均(0/33%/67%/100% 四檔);ST 關閘時倉位折半(0/17%/33%/50%)。
-兩標的各自獨立跑訊號與資金,日報酬 50/50 加權合成。成本單邊 7bps 計於 |倉位變動|。2026-06-13 採用,對照線為 E3。</span>
+兩標的各自獨立跑訊號與資金,日報酬 50/50 加權合成。成本單邊 7bps 計於 |倉位變動|。2026-06-13 採用,對照線為 E3。<br>
+ST(10,3) 的 3×3 參數格檢驗（2026-07-02）：方向穩健 —— 9 點中 8 點 Calmar 不輸同 CAGR 現金對照；
+幅度不穩健 —— (10,3) 的 +0.07 是單點最佳（次佳 +0.04、中位數 +0.02），headline 改善約一半來自恰好選中 (10,3)，
+詳見 <a href="/backtest/long_track_smh/">回測頁</a>。</span>
 </div>
 </div>
 

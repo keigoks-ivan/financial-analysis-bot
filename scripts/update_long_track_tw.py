@@ -36,6 +36,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import yfinance as yf
+from pandas.tseries.offsets import BDay
 
 # Canonical site header (single source: scripts/site_nav.py)
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -83,6 +84,13 @@ def twd_cash(index: pd.DatetimeIndex) -> pd.Series:
 def compute_signals(px: pd.Series, cash: pd.Series) -> dict:
     wk = px.resample("W-FRI").last().dropna()
     mo = px.resample("ME").last().dropna()
+    # TSMOM timing sync with the backtest authority (ensemble_experiment
+    # signal_daily): the monthly signal is DECIDED at each month's last trading
+    # session and effective the next day; mid-month the effective signal is the
+    # last COMPLETED month's.  resample("ME") makes the trailing bar a partial
+    # month, so drop it unless today is the month-end session (BDay approx).
+    if len(px) and (px.index[-1] + BDay(1)).month == px.index[-1].month:
+        mo = mo.iloc[:-1]
     cash_m = cash.resample("ME").last()
 
     ma40 = wk.rolling(40).mean()
@@ -333,8 +341,11 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
 ② <b>W52</b>:週線收盤 &gt; 52 週均線<br>
 ③ <b>TSMOM</b>:過去 12 個月總報酬 &gt; 現金(台幣 1%/年)同期 12 個月報酬,<b>月頻、月底判定</b><br>
 <span style="color:var(--muted);font-size:.78rem">E3 = 三訊號平均(0 / 33% / 67% / 100% 四檔);兩標的各自獨立跑訊號與資金,
-日報酬 50/50 加權合成。成本單邊 7bps 計於 |倉位變動|。週線訊號於每週最後交易日收盤決策,次日生效。
-無 ST 出場閘門(台股回測否決)。2026-06-23 採用,對照線為大盤 B&amp;H 與美股 E3。</span>
+日報酬 50/50 加權合成。成本單邊 7bps 計於 |倉位變動|,<b>未含台股證交稅（2330 賣方 0.3%、0050 0.1%）與券商手續費</b>——
+計入後寫實 CAGR 約低 0.2～0.4pp／年。週線訊號於每週最後交易日收盤決策,次日生效。
+無 ST 出場閘門(台股回測否決)。2026-06-23 採用,對照線為大盤 B&amp;H 與美股 E3。<br>
+Ch12 binary 組合對照 2026-07-02 首跑：Calmar 0.86 vs E3 0.85（雜訊級、含 Ch12 W250 暖身失真；2330 單腿 E3 明顯領先 0.91 vs 0.81），
+採用維持 E3、待擁有者重審 —— 詳見 <a href="/backtest/long_track_tw/">回測頁</a>。</span>
 </div>
 </div>
 

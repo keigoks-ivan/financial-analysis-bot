@@ -13,9 +13,18 @@ logs the daily signal so the close→next-open gap and slippage can be
 measured before the owner (Ivan) commits real capital. Sleeve adoption is an
 open L4 decision; see /backtest/turtle_adopt/.
 
+The page also tracks the adopt page's committed OOS control: 80% STX50 +
+20% STATIC GLD buy-and-hold (monthly rebalanced, same window) — the OOS
+question is whether the turtle engine keeps beating that line (backtest
+margin: +0.04 Calmar, 0.81 -> 0.85).
+
 ENGINE: the turtle block below (true_range / compute_indicators / Position /
 run_turtle) is a VERBATIM PORT of the backtest authority
   v7-backtest/src/turtle_backtest/strategy.py  (original System 2, 55/20)
+Synced 2026-07-02 to the post-audit authority: intraday stop trigger with
+gap worse-price fill (authority fix 2026-06-29) + MTM-equity sizing with the
+§2.5 account throttle.  §2.3 portfolio unit caps omitted (non-binding for
+the 2-market GLD/USO universe).
 Keep it in sync if the adopted rule ever changes. fab is a standalone repo
 (the GitHub Action only checks out fab), so the engine must be inlined here —
 same self-contained pattern as update_long_track_smh.py.
@@ -66,11 +75,23 @@ START = "2005-01-01"
 # ===========================================================================
 # Turtle engine — VERBATIM PORT of v7-backtest turtle_backtest/strategy.py
 # (original System 2: 55-day entry / 20-day exit, 2xATR stop, pyramide to 4u)
+# Synced 2026-07-02 to the post-audit authority:
+#   - stop loss triggers INTRADAY (bar Low/High pierces the stop) and fills at
+#     min(open, stop) for longs / max(open, stop) for shorts — a gap-through
+#     fills at the worse price (authority fix 2026-06-29; the old close-trigger
+#     + fill-at-stop was doubly optimistic).
+#   - unit sizing uses MARK-TO-MARKET equity with the §2.5 account throttle
+#     (>=10% below high-water mark -> size off 80% virtual equity), not
+#     realized capital.
+#   - §2.3 portfolio unit caps (6 corr / 10 same-dir / 12 total) are omitted:
+#     with only GLD+USO at max 4 units each (own corr group) they can never
+#     bind, so behavior is identical.
 # ===========================================================================
 DEFAULT_PARAMS = dict(
     entry_channel=55, exit_channel=20, atr_period=20,
     risk_per_trade=0.01, stop_loss_atr_multiple=2.0,
     max_units_per_market=4, add_unit_atr_multiple=0.5,
+    account_throttle=True, throttle_dd=0.10, throttle_factor=0.80,
     volume_filter=False, volume_threshold=1.5, confirmation_days=0,
     long_only=False, max_gross=None, cost_bps=2, initial_capital=1_000_000.0,
 )
@@ -118,26 +139,52 @@ def run_turtle(data_dict, params, start_date, end_date):
     capital = p["initial_capital"]
     positions = {tk: Position() for tk in markets}
     cost = p["cost_bps"] / 10_000
+    peak_equity = p["initial_capital"]   # §2.5 account-throttle state
+    throttle_on = False
     eq_dates, eq_vals, events = [], [], []
 
     for date in common_idx:
+        # mark-to-market at start of bar — sizing base + §2.5 throttle
+        # (authority: sizing off MTM "account equity", NOT realized capital)
+        pv = capital
+        for tk, pos in positions.items():
+            if pos.direction == 0 or date not in markets[tk].index:
+                continue
+            c0 = markets[tk]["Close"].loc[date]
+            for e, s, _ in pos.units:
+                pv += s * (c0 - e) * pos.direction
+        if pv > peak_equity:
+            peak_equity = pv
+            throttle_on = False
+        if p["account_throttle"] and peak_equity > 0 and \
+                (peak_equity - pv) / peak_equity >= p["throttle_dd"]:
+            throttle_on = True
+        equity_base = pv * (p["throttle_factor"] if throttle_on else 1.0)
+
         for tk, df in markets.items():
             if date not in df.index:
                 continue
             row = df.loc[date]
             close, atr = row["Close"], row["ATR"]
+            open_, day_high, day_low = row["Open"], row["High"], row["Low"]
             high_entry, low_entry = row["high_entry"], row["low_entry"]
             high_exit, low_exit = row["high_exit"], row["low_exit"]
             if pd.isna(atr) or pd.isna(high_entry) or pd.isna(low_entry):
                 continue
             pos = positions[tk]
 
-            # 1. stop
+            # 1. stop — realistic intraday trigger + fill (authority 2026-06-29):
+            #    trigger when the bar's Low (long) / High (short) pierces the
+            #    stop; fill at min(open, stop) / max(open, stop) so a gap-through
+            #    fills at the worse price, then cost.
             if pos.direction != 0:
-                hit = (pos.direction == 1 and close <= pos.stop) or \
-                      (pos.direction == -1 and close >= pos.stop)
+                hit = (pos.direction == 1 and day_low <= pos.stop) or \
+                      (pos.direction == -1 and day_high >= pos.stop)
                 if hit:
-                    ep = pos.stop * (1 - cost) if pos.direction == 1 else pos.stop * (1 + cost)
+                    if pos.direction == 1:
+                        ep = min(open_, pos.stop) * (1 - cost)   # gap-down fills lower
+                    else:
+                        ep = max(open_, pos.stop) * (1 + cost)   # gap-up fills higher
                     capital += sum(s * (ep - e) * pos.direction for e, s, _ in pos.units)
                     events.append((date, tk, "exit", pos.direction, ep, 0, "stop"))
                     positions[tk] = Position()
@@ -163,7 +210,7 @@ def run_turtle(data_dict, params, start_date, end_date):
                    (pos.direction == -1 and close <= last_ep - thr):
                     entry_eff = close * (1 + cost) if pos.direction == 1 else close * (1 - cost)
                     risk = p["stop_loss_atr_multiple"] * atr
-                    shares = (capital * p["risk_per_trade"]) / risk if risk > 0 else 0
+                    shares = (equity_base * p["risk_per_trade"]) / risk if risk > 0 else 0
                     if shares > 0:
                         pos.units.append((entry_eff, shares, atr))
                         pos.stop = (entry_eff - p["stop_loss_atr_multiple"] * atr
@@ -174,7 +221,7 @@ def run_turtle(data_dict, params, start_date, end_date):
             if pos.direction == 0:
                 if not pd.isna(high_entry) and close > high_entry:
                     risk = p["stop_loss_atr_multiple"] * atr
-                    shares = (capital * p["risk_per_trade"]) / risk if risk > 0 else 0
+                    shares = (equity_base * p["risk_per_trade"]) / risk if risk > 0 else 0
                     entry_eff = close * (1 + cost)
                     if shares > 0:
                         positions[tk] = Position(1, [(entry_eff, shares, atr)],
@@ -182,7 +229,7 @@ def run_turtle(data_dict, params, start_date, end_date):
                         events.append((date, tk, "entry", 1, entry_eff, 1, ""))
                 elif (not pd.isna(low_entry) and close < low_entry and not p["long_only"]):
                     risk = p["stop_loss_atr_multiple"] * atr
-                    shares = (capital * p["risk_per_trade"]) / risk if risk > 0 else 0
+                    shares = (equity_base * p["risk_per_trade"]) / risk if risk > 0 else 0
                     entry_eff = close * (1 - cost)
                     if shares > 0:
                         positions[tk] = Position(-1, [(entry_eff, shares, atr)],
@@ -368,6 +415,16 @@ def monthly_rebal_mix(base_r: pd.Series, sleeve_r: pd.Series, w: float) -> pd.Se
     return pd.Series(vals, index=idx)
 
 
+def _mets(eq: pd.Series) -> dict:
+    """CAGR / MDD / Calmar of an equity curve (for the OOS scoreboard)."""
+    yrs = (eq.index[-1] - eq.index[0]).days / 365.25
+    cagr = (float(eq.iloc[-1]) / float(eq.iloc[0])) ** (1 / yrs) - 1 if yrs > 0 else 0.0
+    rm = eq.cummax()
+    mdd = float(((eq - rm) / rm).min())
+    return {"cagr": round(cagr * 100, 2), "mdd": round(mdd * 100, 2),
+            "calmar": round(cagr / abs(mdd), 2) if mdd < 0 else 0.0}
+
+
 # ===========================================================================
 # Signal / live state
 # ===========================================================================
@@ -378,7 +435,9 @@ def fmt_pos(pos: Position) -> str:
     return f"{side} {len(pos.units)}u"
 
 
-def build_leg_state(data: dict, fut_px: dict, pos_now: dict, pos_prev: dict) -> list:
+def build_leg_state(data: dict, fut_px: dict, pos_now: dict, pos_prev: dict,
+                    today_events: list | None = None) -> list:
+    today_events = today_events or []
     legs = []
     for t in SIGNAL_TICKERS:
         df = data[t]
@@ -394,7 +453,15 @@ def build_leg_state(data: dict, fut_px: dict, pos_now: dict, pos_prev: dict) -> 
         event, event_kind = "—", None
         if pp.direction != pn.direction:
             if pn.direction == 0:
-                event, event_kind = "✂️ 今日收盤觸發出場 → 明日開盤平倉", "exit"
+                # stop exits fill intraday at the resting stop (or the worse
+                # open on a gap); channel exits are close signals -> next open
+                ev_reason = next((e[6] for e in today_events
+                                  if e[1] == t and e[2] == "exit"), "")
+                if ev_reason == "stop":
+                    event = "✂️ 今日盤中觸發停損（模型以觸價／開盤劣價成交，resting stop 已出場）"
+                else:
+                    event = "✂️ 今日收盤觸發通道出場 → 明日開盤平倉"
+                event_kind = "exit"
             else:
                 side = "做多" if pn.direction == 1 else "做空"
                 event, event_kind = f"🚀 今日收盤突破 → 明日開盤{side}", "entry"
@@ -412,7 +479,8 @@ def build_leg_state(data: dict, fut_px: dict, pos_now: dict, pos_prev: dict) -> 
         else:
             d = pn.direction
             ch_exit = lo20 if d == 1 else hi20
-            triggers.append(("停損", f"收盤 {'≤' if d == 1 else '≥'} {pn.stop:.2f} → 全部出場", "stop"))
+            triggers.append(("停損", f"盤中{'低點 ≤' if d == 1 else '高點 ≥'} {pn.stop:.2f} → 全部出場"
+                                     f"（掛 resting stop；gap 以開盤劣價成交）", "stop"))
             triggers.append(("通道出場", f"收盤 {'<' if d == 1 else '>'} {ch_exit:.2f} → 全部出場", "exit"))
             if len(pn.units) < P["max_units_per_market"]:
                 last_ep, _, last_atr = pn.units[-1]
@@ -537,32 +605,55 @@ def events_section(year_events) -> str:
     return f"""<div class="card">
   <h3>近一年訊號史 — 進場 / 加碼 / 出場({len(year_events)} 筆)</h3>
   <div style="font-size:.78rem;color:var(--muted);margin-bottom:.6rem">
-    由 replay 引擎逐日重放產生(回測訊號,非實單成交)。成交價為訊號日收盤含 2bps 成本;
-    實單為次日開盤,gap 列入並行比對。多空雙向,加碼每 0.5×ATR 一單位至 4 單位。</div>
+    由 replay 引擎逐日重放產生(回測訊號,非實單成交)。成交價：突破進場／通道出場為訊號日收盤，
+    停損為盤中觸價（gap 穿越以開盤劣價成交），均含 2bps 成本；
+    實單為次日開盤（停損掛 resting stop），gap 列入並行比對。多空雙向,加碼每 0.5×ATR 一單位至 4 單位。</div>
   {body}
 </div>"""
 
 
-def perf_section(yr_ret) -> str:
+def perf_section(yr_ret, ctrl_yr=None, cmp_stats=None) -> str:
     col = "green" if yr_ret >= 0 else "red"
+    cmp_html = ""
+    if ctrl_yr is not None and cmp_stats:
+        cm, ct = cmp_stats["combined"], cmp_stats["control"]
+        lead = "領先" if cm["calmar"] >= ct["calmar"] else "落後"
+        cmp_html = f"""
+  <table style="margin:.4rem 0 .6rem"><thead><tr><th>replay 曲線（同視窗）</th><th>近一年</th><th>CAGR</th><th>MDD</th><th>Calmar</th></tr></thead>
+  <tbody>
+  <tr style="font-weight:600"><td>組合 80/20（海龜 sleeve）</td><td>{yr_ret:+.1f}%</td><td>{cm['cagr']:+.2f}%</td><td>{cm['mdd']:.2f}%</td><td><b>{cm['calmar']:.2f}</b></td></tr>
+  <tr><td>對照：80% STX50＋20% 靜態 GLD 買進持有</td><td>{ctrl_yr:+.1f}%</td><td>{ct['cagr']:+.2f}%</td><td>{ct['mdd']:.2f}%</td><td><b>{ct['calmar']:.2f}</b></td></tr>
+  </tbody></table>
+  <div style="font-size:.76rem;color:var(--amber-text);background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:6px;padding:.45rem .7rem;margin-bottom:.5rem">
+  <b>OOS 記分板：</b>海龜 sleeve 版目前對靜態黃金對照<b>{lead}</b>（Calmar {cm['calmar']:.2f} vs {ct['calmar']:.2f}）。
+  回測裡海龜引擎的邊際僅 +0.04 Calmar（0.81 → 0.85）—— OOS 期間 sleeve 版若持續落後此對照線，依採用頁承諾降級為靜態黃金方案。</div>"""
     return f"""<div class="card">
   <h3>組合 80/20 績效曲線(replay 權益,起點=100)
     <span style="font-size:.8rem;font-weight:600;color:var(--{col})">· 近一年 {yr_ret:+.1f}%</span></h3>
   <div style="font-size:.78rem;color:var(--muted);margin-bottom:.6rem">
     引擎自 2006 重放至最新收盤的模型 NAV(月頻、含成本)。實線 = <b>實際在跑的組合
-    80% STX50 + 20% 商品 sleeve(月底再平衡)</b>;虛線為兩條分解腿。
+    80% STX50 + 20% 商品 sleeve(月底再平衡)</b>；細虛線為兩條分解腿；
+    灰虛線 = <b>「80% STX50＋20% 靜態 GLD 買進持有」對照</b>（採用頁承諾並行追蹤的正式替代方案，同視窗、同月底再平衡）。
     <b>這是回測/紙上權益,非實倉損益</b> —— OOS 並行追蹤期間沒有真實成交。
-    sleeve 單腿波動大(MDD ≈ -33%),但只佔 20%;組合層 MDD 被 STX50 拉到約 -16%。
+    sleeve 單腿波動大(MDD ≈ -33%),但只佔 20%;組合層 MDD 被 STX50 拉到約 -16%，
+    同視窗組合 Calmar 0.65 → 0.85、月報酬相關 −0.01。
     細節見 <a href="/backtest/turtle_adopt/">採用回測頁</a>。</div>
+  {cmp_html}
   <div class="chart-wrap"><canvas id="chart-perf"></canvas></div>
 </div>"""
 
 
-def perf_script(nav_labels, comb_vals, stx_vals, slv_vals) -> str:
+def perf_script(nav_labels, comb_vals, stx_vals, slv_vals, ctrl_vals=None) -> str:
+    ctrl_ds = ""
+    if ctrl_vals is not None:
+        ctrl_ds = ("{label:'對照 80/20(靜態 GLD)',data:" + json.dumps(ctrl_vals)
+                   + ",borderColor:'#6b7280',borderWidth:1.6,borderDash:[8,4],"
+                   "pointRadius:0,pointHoverRadius:3,tension:0.1},")
     return ("<script>new Chart(document.getElementById('chart-perf'),{type:'line',"
             "data:{labels:" + json.dumps(nav_labels) + ",datasets:["
             "{label:'組合 80/20',data:" + json.dumps(comb_vals) + ",borderColor:'#0f766e',"
             "borderWidth:2.4,pointRadius:0,pointHoverRadius:4,tension:0.1},"
+            + ctrl_ds +
             "{label:'STX50 (股核 80%)',data:" + json.dumps(stx_vals) + ",borderColor:'#1565c0',"
             "borderWidth:1.3,borderDash:[6,3],pointRadius:0,pointHoverRadius:3,tension:0.1},"
             "{label:'Sleeve (商品 20%)',data:" + json.dumps(slv_vals) + ",borderColor:'#d97706',"
@@ -576,7 +667,8 @@ def perf_script(nav_labels, comb_vals, stx_vals, slv_vals) -> str:
 
 
 def generate_html(legs, stx, combined, asof, changes, last_change_date, rebal_due,
-                  year_events, nav_labels, comb_vals, stx_vals, slv_vals, yr_ret):
+                  year_events, nav_labels, comb_vals, stx_vals, slv_vals, yr_ret,
+                  ctrl_vals=None, ctrl_yr=None, cmp_stats=None):
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
     sleeve_dir = ", ".join(f"{l['ticker']} {l['pos']}" for l in legs)
     cards = "".join(leg_card(l) for l in legs)
@@ -671,8 +763,12 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
 <div class="banner">
   <b>⚠ OOS 並行追蹤(紙上)· 非實倉。</b>
   這是 sleeve 採用前的並行測試 —— 記錄每日訊號以實測 close→次日開盤 gap 與滑點,
-  供擁有者決定何時投真錢。Sleeve 採用為未決的 L4 決策,評估見
-  <a href="/backtest/turtle_adopt/">組合回測頁</a>。口數依名目 sleeve NAV ${SLEEVE_NAV:,.0f} 計,按實際資金等比例縮放。
+  供擁有者決定何時投真錢。Sleeve 採用為未決的 L4 決策（兩問：要不要黃金腿／海龜引擎值不值操作成本），評估見
+  <a href="/backtest/turtle_adopt/">組合回測頁</a>。口數依名目 sleeve NAV ${SLEEVE_NAV:,.0f} 計,按實際資金等比例縮放。<br>
+  <b>OOS 期間要回答的問題不只是「sleeve 有沒有幫組合」，而是「海龜引擎有沒有持續打贏靜態黃金腿」</b>——
+  回測同視窗組合 Calmar 0.65 → 0.85，但其中「＋20% 靜態 GLD 買進持有」就拿到 0.81，海龜引擎邊際僅 +0.04；
+  月報酬相關 −0.01。本頁並行追蹤「80% STX50＋20% 靜態 GLD」對照線（下方記分板與灰虛線），
+  sleeve 版若持續落後即降級為靜態黃金方案。
 </div>
 
 <div class="hero">
@@ -703,7 +799,7 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
 
 {stx50_card(stx)}
 
-{perf_section(yr_ret)}
+{perf_section(yr_ret, ctrl_yr, cmp_stats)}
 
 {events_section(year_events)}
 
@@ -715,7 +811,10 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
   ③ <b>倉位大小</b>:每單位風險 = sleeve NAV 的 1% ÷ (2×ATR);波動定倉位<br>
   ④ <b>執行</b>:微型期貨 MGC(金)/MCL(油)為主(可空、SPAN 槓桿);或 IBKR margin 放空 ETF(回測拿回約 56% 效益)<br>
   ⑤ <b>再平衡</b>:每月最後交易日,sleeve ⇄ 股票核心回 20/80<br>
-  <span style="color:var(--muted);font-size:.78rem">引擎為 v7-backtest turtle_backtest/strategy.py 的 verbatim port(原始 System 2)。
+  ⑥ <b>OOS 對照線</b>：同視窗「80% STX50＋20% 靜態 GLD 買進持有（月底再平衡）」——
+  採用頁承諾並行追蹤的正式替代方案；海龜引擎若持續打不贏它，降級為靜態黃金<br>
+  <span style="color:var(--muted);font-size:.78rem">引擎為 v7-backtest turtle_backtest/strategy.py 的 verbatim port(原始 System 2,
+  2026-07-02 同步權威版：停損盤中觸發、gap 以開盤劣價成交；倉位以市值權益＋回撤節流（§2.5）定大小)。
   時間架構刻意維持日線 —— 與週線股票核心錯位是分散來源,週線化會抹掉危機 alpha(見回測頁)。</span>
   </div>
 </div>
@@ -725,7 +824,7 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
   &copy; {datetime.now().year} InvestMQuest Research · 商品 Sleeve + 組合系統(OOS 並行追蹤)·
   真實 yfinance 資料 · 引擎同步自 v7-backtest turtle_backtest/strategy.py · 每日美股收盤後自動更新
 </footer>
-{perf_script(nav_labels, comb_vals, stx_vals, slv_vals)}
+{perf_script(nav_labels, comb_vals, stx_vals, slv_vals, ctrl_vals)}
 </body>
 </html>"""
 
@@ -767,7 +866,8 @@ def main():
     prev_day = eq.index[-2]
     pos_prev, _, _ = run_turtle(data, P, START, str(prev_day.date()))
 
-    legs = build_leg_state(data, fut_px, pos_now, pos_prev)
+    today_events = [e for e in events if e[0] == eq.index[-1]]
+    legs = build_leg_state(data, fut_px, pos_now, pos_prev, today_events)
     for l in legs:
         print(f"  {l['ticker']}: {l['pos']} | event={l['event_kind']} | {l['n_contracts']} contracts")
 
@@ -792,17 +892,30 @@ def main():
         sr = stx_eq.reindex(common).pct_change().fillna(0)
         cr = eq.reindex(common).pct_change().fillna(0)
         combined_eq = monthly_rebal_mix(sr, cr, SLEEVE_W)          # 80% STX50 + 20% sleeve
+        # OOS control promised on the adopt page: 80% STX50 + 20% STATIC GLD
+        # buy-and-hold, same window & monthly-rebalance convention.  The OOS
+        # question is whether the turtle engine keeps beating this line
+        # (backtest margin: +0.04 Calmar, 0.81 -> 0.85).
+        gld_r = data["GLD"]["Close"].reindex(common).ffill().pct_change().fillna(0)
+        control_eq = monthly_rebal_mix(sr, gld_r, SLEEVE_W)        # 80% STX50 + 20% static GLD
         nav_labels, comb_vals = _mnav(combined_eq)
         _, stx_vals = _mnav(INIT_CAP * (1 + sr).cumprod())
         _, slv_vals = _mnav(INIT_CAP * (1 + cr).cumprod())
+        _, ctrl_vals = _mnav(control_eq)
         c1 = combined_eq.loc[combined_eq.index >= one_yr_ago]
         yr_ret = round((float(combined_eq.iloc[-1]) / float(c1.iloc[0]) - 1) * 100, 1)
-        print(f"  combined 80/20 replay NAV 1y {yr_ret:+.1f}% | STX50+sleeve decomposition built")
+        g1 = control_eq.loc[control_eq.index >= one_yr_ago]
+        ctrl_yr = round((float(control_eq.iloc[-1]) / float(g1.iloc[0]) - 1) * 100, 1)
+        cmp_stats = {"combined": _mets(combined_eq), "control": _mets(control_eq)}
+        print(f"  combined 80/20 replay NAV 1y {yr_ret:+.1f}% | control (static GLD) 1y {ctrl_yr:+.1f}%")
+        print(f"  window Calmar: combined {cmp_stats['combined']['calmar']:.2f} "
+              f"vs control {cmp_stats['control']['calmar']:.2f}")
     except Exception as exc:  # network / data hiccup → degrade to sleeve-only line
         print(f"  WARN: STX50/combined build failed ({exc}); sleeve-only curve")
         nav_labels, slv_vals = _mnav(eq)
         comb_vals = stx_vals = slv_vals
         yr_ret = sleeve_yr
+        ctrl_vals, ctrl_yr, cmp_stats = None, None, None
     print(f"  {len(year_events)} events in past year | sleeve 1y {sleeve_yr:+.1f}%")
 
     stx = read_stx50()
@@ -841,7 +954,8 @@ def main():
         print("No sleeve events.")
 
     html = generate_html(legs, stx, combined, asof_str, changes, last_change_date,
-                         rebal_due, year_events, nav_labels, comb_vals, stx_vals, slv_vals, yr_ret)
+                         rebal_due, year_events, nav_labels, comb_vals, stx_vals, slv_vals, yr_ret,
+                         ctrl_vals, ctrl_yr, cmp_stats)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(html, encoding="utf-8")
     print(f"Written {OUTPUT} ({len(html):,} bytes)")
@@ -855,6 +969,8 @@ def main():
         "stx50_exposure_pct": stx_exp,
         "sleeve_1y_replay_ret_pct": sleeve_yr,
         "combined_1y_replay_ret_pct": yr_ret,
+        "control_static_gld_1y_replay_ret_pct": ctrl_yr,
+        "replay_window_stats": cmp_stats,
         "events_1y": len(year_events),
         "legs": {
             l["ticker"]: {
