@@ -1,13 +1,16 @@
-"""DRAFT redesign of /backtest/ (US overview) — v2 preview, muted palette.
+"""LIVE renderer for /backtest/index.html (US overview) — muted palette.
 
-Renders docs/backtest/v2/index.html (does NOT touch the live page). Reuses
-data from _build_index.py.  Design per owner feedback:
+This is the layout that actually builds the live page: _build_index.py's
+main() calls render() here and writes docs/backtest/index.html.  Data
+(GROUPS/RET/SCATTER/BH_ROWS/PERIOD_CAGR...) still lives in _build_index.py;
+its legacy render()/TEMPLATE are DEAD code kept only as data helpers.
+Design per owner feedback:
   * US-only page (TW split to /backtest/tw/).  Sections: 波段 + 多資產.
   * One live card only (SMH/QQQ STX50); SPY/QQQ E3 card removed.
   * Restrained palette: green=adopted/live, red=rejected, grey=everything else.
     No per-system rainbow; charts default to live + benchmarks.
 
-Run: ~/.venvs/v7bt/bin/python3 _build_index_v2.py
+Run: python3 _build_index.py   (this module is imported, not run directly)
 """
 from __future__ import annotations
 import json

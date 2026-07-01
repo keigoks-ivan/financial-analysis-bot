@@ -263,6 +263,16 @@ def group_header(title: str) -> str:
             f'color:#1e40af;text-transform:uppercase;letter-spacing:.04em">{title}</td></tr>')
 
 
+# =========================================================================
+# DEAD CODE — legacy 20y dashboard renderer (render() + TEMPLATE below).
+# The live /backtest/index.html is rendered by _index_layout.render()
+# (see main()); it has NO hero section — do not diff the live page against
+# this TEMPLATE.  Kept because _build_10y/_build_tw/_index_layout import
+# data + helpers (RET/TAG/GROUPS/yearly_cell/group_header/sys_row) from
+# this module.  Pinned prose constants inside TEMPLATE (hero text) are
+# still kept in sync on audits, so an accidental render can't resurrect
+# retracted claims — but editing them does NOT change the live page.
+# =========================================================================
 def render() -> str:
     rows = ""
     for title, items in GROUPS:
@@ -308,6 +318,7 @@ def render() -> str:
 
 
 TEMPLATE = r"""<!DOCTYPE html>
+<!-- DEAD TEMPLATE: not rendered to the live page; see note above render(). -->
 <html lang="zh-Hant">
 <head>
   <meta name="robots" content="noindex,nofollow">
