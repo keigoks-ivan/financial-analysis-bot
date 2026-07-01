@@ -38,6 +38,7 @@ INDIVIDUAL_LINKS = [
     ("/backtest/slope_filter/", "SPY/AGG 斜率", "slope", None),
     ("/backtest/rsi2_mr/", "SPY/QQQ 均值回歸", "rsi2", "#d97706"),
     ("/backtest/supertrend/", "週線 Supertrend", "st", "#d97706"),
+    ("/backtest/leverage_voltarget/", "期貨槓桿疊加", "levvt", "#b45309"),
     ("/backtest/exit_switch/", "出場法切換（否決）", "exitsw", "#dc2626"),
     ("/backtest/short_system/", "指數做空（失敗）", "short", "#dc2626"),
     ("/backtest/cndr/", "Iron Condor（失敗）", "cndr", "#dc2626"),

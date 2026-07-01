@@ -38,8 +38,8 @@ ADOPT, GREY, RED = "#b45309", "#9ca3af", "#dc2626"
 # (name, sub, cagr, mdd, sharpe, calmar full/06-15/15-now, tag) — PINNED
 ROWS = [
     ("✓ 唯一過關（全樣本；2026-07 walk-forward 後降級，見④）", ADOPT, [
-        ("vol-target 疊加（MNQ 槓 QQQ 半邊，+0.4x）", "/backtest/leverage/",
-         "依最近波動連續縮放槓桿 · 全樣本三個年代 Calmar 都小贏底倉 · walk-forward OOS 風險調整改善為零（④）",
+        ("vol-target 疊加（MNQ 槓 QQQ 半邊，+0.4x）", "/backtest/leverage_voltarget/",
+         "依最近波動連續縮放槓桿 · 全樣本三個年代 Calmar 都小贏底倉 · walk-forward OOS 風險調整改善為零（④）· 證據主體見專頁 →",
          "+15.4%", "-23.3%", "0.92", "0.66 / 0.33 / 0.96", "候選 · WF 後降級"),
     ]),
     ("參照（放大整條 STX50，需 SMH 用 SOXL/保證金）", GREY, [
@@ -60,10 +60,10 @@ ROWS = [
         ("固定波動目標 / 選擇權凸性", "/backtest/leverage/",
          "固定目標比底倉還差;選擇權(模型)只小贏線性、救不到 MDD、成本一升就沒了",
          "—", "—", "—", "0.56 / 0.25 / 0.83", "否決"),
-        ("換偵測訊號：VIX／期限結構／VRP／下行半波動", "/backtest/leverage/",
+        ("換偵測訊號：VIX／期限結構／VRP／下行半波動", "/backtest/leverage_voltarget/",
          "四個替代訊號全數未過雙窗門檻——前瞻訊號（VIX）內嵌溢酬、收放都慢；表列為最強挑戰者 VRP：贏 06–15 但每個窗口設定都輸 15–now、MDD 最差",
          "+16.0%", "-24.0%", "0.91", "0.67 / 0.35 / 0.94", "否決 2026-07"),
-        ("短天期 MA 閘門（k=5–200，複合＋二元）", "/backtest/leverage/",
+        ("短天期 MA 閘門（k=5–200，複合＋二元）", "/backtest/leverage_voltarget/",
          "快開關不是解方——診斷表：閘門砍掉的日子（平靜回檔）隔日超額 7–10bps，比保留的 3–5bps 更賺；第 5 次趨勢閘門否決。表列為最接近的 MA20 複合版（仍輸 06–15）",
          "+14.7%", "-22.1%", "0.90", "0.66 / 0.27 / 0.99", "否決 2026-07"),
     ]),
@@ -265,7 +265,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
     <div><span>Calmar 全/06–15/15–now</span><b style="font-size:.82rem">0.66/0.33/0.96</b></div>
   </div>
   <div style="font-size:.8rem;color:var(--muted);margin-top:.7rem;border-top:1px solid var(--border);padding-top:.6rem">
-  ⚠ 上列為<b>全樣本</b>數字。2026-07 補上 walk-forward 驗證後，誠實定位降級：<b>OOS（2011–今）的風險調整改善為零</b>（Sharpe 1.036 vs 底倉 1.038、Calmar 平手），優勢幾乎全部來自 2008 那一次自動降槓桿——一個無法 out-of-sample 驗證的 n=1 危機保險論點。細節見④。</div>
+  ⚠ 上列為<b>全樣本</b>數字。2026-07 補上 walk-forward 驗證後，誠實定位降級：<b>OOS（2011–今）的風險調整改善為零</b>（Sharpe 1.036 vs 底倉 1.038、Calmar 平手），優勢幾乎全部來自 2008 那一次自動降槓桿——一個無法 out-of-sample 驗證的 n=1 危機保險論點。細節見④與<a href="/backtest/leverage_voltarget/">證據專頁</a>。</div>
 </div>
 </div>
 
@@ -374,7 +374,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <div class="warn">
   <b>2026-07 walk-forward 後的誠實定位：這是「n=1 危機保險論點」，不再是「小 edge、三個年代都贏」。</b>全樣本 Sharpe +0.02–0.05、Calmar +0.02–0.06（且只對股票，見 ③）；但 OOS 可驗證的部分為零（見下）。
   最大實質價值是<b>危機年自動收槓桿（尾部只小幅放大）＋ 平靜年小幅加速</b>。<br>
-  · <b style="color:#dc2626">walk-forward 已補（2026-07-02）——結果是降級，不是背書</b>：擴張窗逐年選參（參數格＝原敏感度掃過的範圍；訓練 2006–2010 起，OOS 2011–今逐年串鏈）後，誠實 OOS 版 Sharpe <b>1.036 vs 底倉 1.038</b>、Calmar <b>0.798 vs 0.798</b>——<b>OOS 風險調整改善為零</b>，只剩 +1.2pp CAGR 換 +1.5pp MDD（約 1:1 的交換）。參數本身穩定（2018 起收斂在 15d/1.8x、每年選的都在高原上，只小幅落後事後固定版 Sharpe 1.056），所以問題<b>不是參數過擬合，是 regime 集中</b>：全樣本的風險調整優勢幾乎全部來自 <b>2008 那一次自動降槓桿</b>，而 2008 落在最低訓練窗之內、<b>用一條歷史永遠無法 out-of-sample 驗證</b>。2011 後僅有的兩次壓力測試結果混合：2020 小贏底倉（+48.4% vs +47.4%）、2022 多賠（−16.7% vs −15.4%）——<b>快崩躲得掉、慢磨要付錢</b>；機制成立，優勢未證。程式：<code>leverage_walkforward.py</code>。<br>
+  · <b style="color:#dc2626">walk-forward 已補（2026-07-02）——結果是降級，不是背書</b>：擴張窗逐年選參（參數格＝原敏感度掃過的範圍；訓練 2006–2010 起，OOS 2011–今逐年串鏈）後，誠實 OOS 版 Sharpe <b>1.036 vs 底倉 1.038</b>、Calmar <b>0.798 vs 0.798</b>——<b>OOS 風險調整改善為零</b>，只剩 +1.2pp CAGR 換 +1.5pp MDD（約 1:1 的交換）。參數本身穩定（2018 起收斂在 15d/1.8x、每年選的都在高原上，只小幅落後事後固定版 Sharpe 1.056），所以問題<b>不是參數過擬合，是 regime 集中</b>：全樣本的風險調整優勢幾乎全部來自 <b>2008 那一次自動降槓桿</b>，而 2008 落在最低訓練窗之內、<b>用一條歷史永遠無法 out-of-sample 驗證</b>。2011 後僅有的兩次壓力測試結果混合：2020 小贏底倉（+48.4% vs +47.4%）、2022 多賠（−16.7% vs −15.4%）——<b>快崩躲得掉、慢磨要付錢</b>；機制成立，優勢未證。完整證據（逐年選參、OOS 逐年表、換訊號／短 MA 全表）見<a href="/backtest/leverage_voltarget/">專頁</a>；程式：<code>leverage_walkforward.py</code>。<br>
   · <b style="color:#dc2626">「真實期貨驗證」provenance 缺口(2026-07 誠實揭露)</b>:2026-06 曾宣稱改用真實 NQ 期貨重跑、結果略勝 QQQ-現金代理,但當時<b>沒有留下可重現的程式</b>——追查兩個 repo 的 <code>git log -p</code> 在該次修正前後都只改了文字數字,從未有對應的計算程式碼。後續一次跨頁引擎同步(2026-06-30,cash-splice 修正)又把這裡的數字直接覆寫成代理本身的重算值,現在這句話已經<b>沒有獨立於代理的真實期貨數字可查證</b>。本頁③的 6 資產類別普遍性檢驗已於 2026-07 用新程式(<code>cross_asset_voltarget.py</code>)重建、數字可重現;但「真實 NQ 期貨 vs QQQ 代理」這條證據目前無法回溯重建(續期合約的展倉成本/basis 換算需要額外的財務假設,貿然重算風險是再產生一組無法驗證的數字),誠實標記為<b>待補</b>,在補上可重現的真實期貨腳本前,本頁槓桿疊加的全部結論僅以 QQQ-現金代理版本為準。<br>
   · <b>工具/可執行性折扣</b>:純期貨只能槓 QQQ 半邊(+0.4x);且 <b>MNQ 微型 2019 才上市</b>,回測 65% 期間只能用全尺寸 NQ,小帳戶切不出這麼細的曝險(平均才 +0.09x)。要更大 edge 需 SOXL/保證金槓 SMH 半邊。<br>
   · <b>選擇權凸性試過</b>:模型上只小贏線性、且救不到 MDD,不值得。<b>期貨作空也試過(A/B/C)全否決</b>——救持續空頭但 V 轉/軋空賠更多。<b>換偵測訊號（VIX／期限結構／VRP／下行半波動）與短天期 MA 閘門（k=5–200）於 2026-07 全數否決</b>（見②表）——realized vol 經六個對照後仍是這個模板下最好的訊號。<br>
