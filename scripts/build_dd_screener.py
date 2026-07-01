@@ -1994,6 +1994,18 @@ def main() -> None:
     args = p.parse_args()
     build(top_n=args.top, skip_ma=args.no_ma, dry_run=args.dry_run, workers=args.workers)
 
+    # Discovery pool refresh (v2.4 chain): "ID 標 🔴 核心受益但尚未建 DD" 名單
+    # → docs/dd-screener/discovery_pool.json，供 /dd-screener/ 折疊區塊渲染。
+    # 純本地掃描（id-meta + DD 檔名），不碰網路；失敗只 warn 不 abort（同
+    # yfinance-failure 政策 — screener 主表永遠優先）。
+    if not args.dry_run:
+        try:
+            from list_breakout_candidates import write_pool
+            pool_path = write_pool()
+            print(f"  ✓ Discovery pool refreshed: {pool_path}")
+        except Exception as exc:  # noqa: BLE001
+            print(f"  ⚠ Discovery pool refresh failed (non-fatal): {exc}", file=sys.stderr)
+
 
 if __name__ == "__main__":
     main()

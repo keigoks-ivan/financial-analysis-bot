@@ -19,15 +19,19 @@ Usage:
   python3 scripts/list_breakout_candidates.py --all      # 含已有 DD 的 🔴
   python3 scripts/list_breakout_candidates.py --json     # machine-readable
   python3 scripts/list_breakout_candidates.py --top 30   # 只列前 N
+  python3 scripts/list_breakout_candidates.py --write    # 寫 docs/dd-screener/discovery_pool.json
+                                                         #（build_dd_screener.py 每次 build 後自動呼叫）
 """
 import argparse
 import json
 import re
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
 ID_DIR = ROOT / "docs" / "id"
 DD_DIR = ROOT / "docs" / "dd"
+POOL_PATH = ROOT / "docs" / "dd-screener" / "discovery_pool.json"
 
 ID_META_RE = re.compile(
     r'<script\s+id="id-meta"\s+type="application/json"\s*>(.*?)</script>',
@@ -126,12 +130,49 @@ def rank_key(row):
     )
 
 
+def build_pool_doc():
+    """Assemble the discovery-pool document consumed by /dd-screener/ FE."""
+    metas = load_id_metas()
+    dd_set = dd_universe()
+    rows = collect(metas, dd_set, include_dd=False)
+    for r in rows:
+        r["themes"] = list(dict.fromkeys(r["themes"]))
+        r.pop("roles", None)
+    now = datetime.now(timezone(timedelta(hours=8)))
+    return {
+        "as_of": now.strftime("%Y-%m-%d"),
+        "generated_at": now.isoformat(timespec="seconds"),
+        "id_files_scanned": len(metas),
+        "dd_universe_size": len(dd_set),
+        "total": len(rows),
+        "v24_ranked": sum(1 for r in rows
+                          if r["purity_pct"] is not None or r["mcap_bucket"] is not None),
+        "rows": rows,
+    }
+
+
+def write_pool(path: Path = POOL_PATH) -> Path:
+    doc = build_pool_doc()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(doc, ensure_ascii=False, indent=1), encoding="utf-8")
+    return path
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--all", action="store_true", help="include tickers that already have a DD")
     ap.add_argument("--json", action="store_true", help="JSON output")
     ap.add_argument("--top", type=int, default=0, help="limit to top N rows")
+    ap.add_argument("--write", action="store_true",
+                    help="write docs/dd-screener/discovery_pool.json (for the FE section)")
     args = ap.parse_args()
+
+    if args.write:
+        path = write_pool()
+        doc = json.loads(path.read_text(encoding="utf-8"))
+        print(f"✓ Wrote {path} ({path.stat().st_size:,} bytes, "
+              f"{doc['total']} tickers, v2.4-ranked {doc['v24_ranked']})")
+        return
 
     metas = load_id_metas()
     dd_set = dd_universe()

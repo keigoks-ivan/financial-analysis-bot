@@ -360,6 +360,26 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
     <div id="tab-all" class="tab-content"><p class="state-msg">載入中...</p></div>
   </div>
 
+  <!-- ══ Discovery Pool：ID 已標 🔴 核心受益、尚未建 DD ══════════════════════
+       資料源 discovery_pool.json（scripts/list_breakout_candidates.py --write，
+       build_dd_screener.py 每次 build 後自動刷新）。本表 universe 與主表互斥：
+       主表 = 已建 DD 的 242 檔；本池 = ID 層發現但還沒進 DD 漏斗的名字。
+  ═══════════════════════════════════════════════════════════════════════════ -->
+  <div id="discovery-pool" style="display:none;margin:18px 0 0">
+    <details style="background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:12px 18px">
+      <summary style="cursor:pointer;font-size:13px;font-weight:700;color:#92400e;letter-spacing:.02em">
+        🧭 多倍候選池 — ID 已標 🔴 核心受益、尚未建 DD（<span id="dp-count">0</span> 檔）
+      </summary>
+      <p style="font-size:11.5px;line-height:1.7;color:#78350f;margin:10px 0 8px">
+        產業報告（ID）§9 標為 <strong>🔴 核心受益</strong>但還沒做個股 DD 的名單 — 這些 ticker 不在上方主表 universe 內（主表只收已建 DD 者）。
+        排序鍵：市值級距（mid/small 優先）→ 純度% → 5Y 需求倍數 → 被標 🔴 的 ID 數。
+        「待補」＝來源 ID 為 v2.4 前的 legacy 報告，重跑後自動補齊；欄位定義見 industry-analyst v2.4（<code>purity_pct</code> / <code>mcap_bucket</code> / <code>demand_5y_multiple</code>）。
+        對池內名字跑 <code>ddreport {ticker}</code> 產 DD 後，該 ticker 自動移入主表。
+      </p>
+      <div id="dp-table" style="overflow-x:auto"></div>
+    </details>
+  </div>
+
   <!-- ══ Column Documentation Footnote ══════════════════════════════════════
        Placed outside .compare-wrap so JS table re-renders never move it.
   ═══════════════════════════════════════════════════════════════════════════ -->
@@ -1663,6 +1683,43 @@ fetch('./latest.json')
       '資料尚未產出。執行 <code>python3 scripts/build_dd_screener.py</code> 以建立 latest.json。'
     );
   });
+
+// ── Discovery pool（ID 🔴 未建 DD 候選池）─────────────────────────────────
+// 獨立 fetch，404 / parse 失敗時整個區塊保持隱藏，不影響主表。
+fetch('./discovery_pool.json')
+  .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+  .then(function(pool) {
+    var rows = pool.rows || [];
+    if (!rows.length) return;
+    var esc = function(s) {
+      return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    };
+    var pending = '<span style="color:#b45309;opacity:.55">待補</span>';
+    var html = '<table style="width:100%;border-collapse:collapse;font-size:11.5px;background:#fff;border-radius:6px">' +
+      '<thead><tr style="background:#fef3c7;color:#78350f;text-align:left">' +
+      '<th style="padding:6px 10px">Ticker</th><th style="padding:6px 8px">市值</th>' +
+      '<th style="padding:6px 8px">純度%</th><th style="padding:6px 8px">需求5Y×</th>' +
+      '<th style="padding:6px 8px">🔴 ID 數</th><th style="padding:6px 10px">主題</th>' +
+      '</tr></thead><tbody>';
+    rows.forEach(function(r, i) {
+      var themes = (r.themes || []).join('；');
+      html += '<tr style="border-top:1px solid #fde68a' + (i % 2 ? ';background:#fffdf5' : '') + '">' +
+        '<td style="padding:5px 10px;font-weight:700;color:#1e293b">' + esc(r.ticker) + '</td>' +
+        '<td style="padding:5px 8px">' + (r.mcap_bucket ? esc(r.mcap_bucket) : pending) + '</td>' +
+        '<td style="padding:5px 8px">' + (r.purity_pct != null ? esc(r.purity_pct) : pending) + '</td>' +
+        '<td style="padding:5px 8px">' + (r.best_demand_mult != null ? esc(r.best_demand_mult) : pending) + '</td>' +
+        '<td style="padding:5px 8px">' + esc(r.core_count) + '</td>' +
+        '<td style="padding:5px 10px;color:#475569;max-width:420px">' + esc(themes) + '</td>' +
+        '</tr>';
+    });
+    html += '</tbody></table>' +
+      '<p style="font-size:10.5px;color:#92400e;margin:8px 0 2px">as of ' + esc(pool.as_of || '—') +
+      '｜掃描 ' + esc(pool.id_files_scanned) + ' 份 ID｜v2.4 排序欄位就緒 ' + esc(pool.v24_ranked) + '/' + esc(pool.total) + ' 檔</p>';
+    document.getElementById('dp-table').innerHTML = html;
+    document.getElementById('dp-count').textContent = rows.length;
+    document.getElementById('discovery-pool').style.display = '';
+  })
+  .catch(function() { /* pool 未產出：區塊保持隱藏 */ });
 </script>
 </body>
 </html>
