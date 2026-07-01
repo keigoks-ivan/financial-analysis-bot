@@ -58,13 +58,27 @@ BASE = ("1.0x STX50 底倉（不加槓桿）", "+13.8%", "-21.9%", "0.90", "0.63
 # asset classes (corr −0.31~+0.37, not the 0.79–0.92 of SPY/QQQ/SMH). Only equity
 # improves → the edge is EQUITY-SPECIFIC, not a universal vol-targeting principle.
 # (BH Calmar, VT Calmar, BH Sharpe, VT Sharpe, improved?)
+#
+# PROVENANCE (2026-07 audit): the numbers below were originally computed ad hoc
+# (commit 7a7c7b3f, 2026-06-27) with no script committed to reproduce them.
+# `git log -p` on both repos around that commit confirmed only literal numbers
+# changed, no code. Reconstructed 2026-07 via a new standalone script using the
+# IDENTICAL rule + methodology already coded in stx50_mnq_overlay.py's
+# CROSS-MARKET section (just widened from SPY/QQQ/SMH to this 6-asset universe):
+# v7-backtest/src/long_track_backtest/cross_asset_voltarget.py. The correlation
+# range it recovers (−0.31~+0.37) matches the original claim exactly; the
+# qualitative finding (only SPY/equity improves, 1/6) also reproduces exactly.
+# Individual Calmar/Sharpe values shift slightly vs. the original ad hoc numbers
+# because later engine fixes (cash-splice correction, commit 6651f737 2026-06-30)
+# landed after this table was first computed — same pattern as the BASE/ADOPT
+# rows above, which were already re-pinned to that corrected engine.
 XASSET = [
-    ("SPY 美股", "0.22", "0.24", "0.64", "0.67", True),
-    ("GLD 黃金", "0.19", "0.16", "0.55", "0.53", False),
-    ("USO 原油", "−0.08", "−0.10", "−0.04", "−0.03", False),
-    ("DBA 農業", "−0.01", "−0.02", "0.06", "−0.01", False),
-    ("FXE 歐元", "−0.03", "−0.04", "−0.09", "−0.13", False),
-    ("TLT 長債", "0.05", "0.04", "0.24", "0.20", False),
+    ("SPY 美股", "0.20", "0.22", "0.64", "0.67", True),
+    ("GLD 黃金", "0.22", "0.19", "0.61", "0.60", False),
+    ("USO 原油", "−0.07", "−0.08", "−0.01", "−0.01", False),
+    ("DBA 農業", "0.02", "0.00", "0.16", "0.10", False),
+    ("FXE 歐元", "0.00", "−0.01", "0.06", "0.01", False),
+    ("TLT 長債", "0.06", "0.04", "0.27", "0.23", False),
 ]
 
 
@@ -315,7 +329,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <!-- EVIDENCE: ranking -->
 <div class="section">
 <h2 class="section-title">② 證據 · 全部試過的版本對打</h2>
-<div class="section-sub">過關門檻 = 兩個年代 Calmar 都贏底倉(0.65 全 / 0.27 在 2006–15 / 0.95 在 2015–now),且 2008/2022 尾部不被放大。色帶:<span style="color:#b45309">琥珀=過關</span> · 灰=參照 · <span style="color:var(--red)">紅=否決</span>。</div>
+<div class="section-sub">過關門檻 = 兩個年代 Calmar 都贏底倉(0.63 全 / 0.24 在 2006–15 / 0.95 在 2015–now),且 2008/2022 尾部不被放大。色帶:<span style="color:#b45309">琥珀=過關</span> · 灰=參照 · <span style="color:var(--red)">紅=否決</span>。</div>
 <div class="card">
 <table><thead><tr><th>版本</th><th>CAGR</th><th>MDD</th><th>Sharpe</th><th>Calmar 全/06–15/15–now</th><th>狀態</th></tr></thead>
 <tbody>%SYS_ROWS%</tbody></table>
@@ -341,11 +355,11 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <div class="warn">
   <b>這是小 edge、股票特有、不是翻倍級的東西。</b>Sharpe 只 +0.02–0.05、Calmar +0.02–0.06,且只對股票(見 ③)。
   最大實質價值是<b>危機年自動收槓桿(不放大尾部)＋ 平靜年小幅加速</b>。<br>
-  · <b>已用真實期貨驗證(2026-06)</b>:之前 MNQ 是用 QQQ 還原報酬−現金「代理」;改用<b>真實 NQ 期貨</b>重跑,結果 Calmar 略勝代理(0.66/0.33/0.96)→ 代理沒美化。<br>
+  · <b style="color:#dc2626">「真實期貨驗證」provenance 缺口(2026-07 誠實揭露)</b>:2026-06 曾宣稱改用真實 NQ 期貨重跑、結果略勝 QQQ-現金代理,但當時<b>沒有留下可重現的程式</b>——追查兩個 repo 的 <code>git log -p</code> 在該次修正前後都只改了文字數字,從未有對應的計算程式碼。後續一次跨頁引擎同步(2026-06-30,cash-splice 修正)又把這裡的數字直接覆寫成代理本身的重算值,現在這句話已經<b>沒有獨立於代理的真實期貨數字可查證</b>。本頁③的 6 資產類別普遍性檢驗已於 2026-07 用新程式(<code>cross_asset_voltarget.py</code>)重建、數字可重現;但「真實 NQ 期貨 vs QQQ 代理」這條證據目前無法回溯重建(續期合約的展倉成本/basis 換算需要額外的財務假設,貿然重算風險是再產生一組無法驗證的數字),誠實標記為<b>待補</b>,在補上可重現的真實期貨腳本前,本頁槓桿疊加的全部結論僅以 QQQ-現金代理版本為準。<br>
   · <b>工具/可執行性折扣</b>:純期貨只能槓 QQQ 半邊(+0.4x);且 <b>MNQ 微型 2019 才上市</b>,回測 65% 期間只能用全尺寸 NQ,小帳戶切不出這麼細的曝險(平均才 +0.09x)。要更大 edge 需 SOXL/保證金槓 SMH 半邊。<br>
   · <b>尚未做 walk-forward</b>:兩個年代是同一份資料的子區間,參數雖落在敏感度高原(15–40d,非針),但「沒過擬合」目前是論證、還沒用擴張窗 OOS 證明。<br>
   · <b>選擇權凸性試過</b>:模型上只小贏線性、且救不到 MDD,不值得。<b>期貨作空也試過(A/B/C)全否決</b>——救持續空頭但 V 轉/軋空賠更多。<br>
-  程式與全部數字:<code>v7-backtest/src/long_track_backtest/stx50_mnq_overlay.py</code>。
+  程式與全部數字:<code>v7-backtest/src/long_track_backtest/stx50_mnq_overlay.py</code>(STX50 疊加主體)、<code>v7-backtest/src/long_track_backtest/cross_asset_voltarget.py</code>(③ 6 資產類別普遍性檢驗)。
 </div>
 </div>
 
