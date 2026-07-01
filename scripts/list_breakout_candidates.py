@@ -42,6 +42,26 @@ DD_FILE_RE = re.compile(r"^DD_([A-Za-z0-9.\-]+)_\d{8}\.html$")
 MCAP_ORDER = {"small": 0, "mid": 1, "large": 2, "mega": 3}
 CONVICTION_ORDER = {"high": 0, "mid": 1, "low": 2}
 
+# Cross-listing aliases: id-meta may cite the local listing while the DD was
+# written on the US ADR (or vice versa). Map both directions onto one key so
+# the pool doesn't show phantom "no DD" candidates (e.g. 2330.TW when
+# DD_TSM_*.html exists).
+TICKER_ALIASES = {
+    "2330.TW": "TSM",
+    "2330": "TSM",
+}
+
+
+def norm_ticker(raw: str) -> str:
+    """Canonical ticker key: uppercase, dots stripped for TW/KS local listings
+    (DD filenames use 2308TW while id-meta uses 2308.TW), aliases applied."""
+    tk = str(raw).upper().strip()
+    tk = TICKER_ALIASES.get(tk, tk)
+    m = re.match(r"^(\d{4,6})\.(TW|KS|T|HK)$", tk)
+    if m:
+        tk = m.group(1) + m.group(2)
+    return TICKER_ALIASES.get(tk, tk)
+
 
 def load_id_metas():
     metas = []
@@ -66,7 +86,7 @@ def dd_universe():
     for p in DD_DIR.glob("DD_*.html"):
         m = DD_FILE_RE.match(p.name)
         if m:
-            tickers.add(m.group(1).upper())
+            tickers.add(norm_ticker(m.group(1)))
     return tickers
 
 
@@ -79,9 +99,10 @@ def collect(metas, dd_set, include_dd):
         for t in meta.get("related_tickers") or []:
             if not isinstance(t, dict) or t.get("depth") != "🔴":
                 continue
-            tk = str(t.get("ticker", "")).upper()
-            if not tk:
+            raw_tk = str(t.get("ticker", "")).upper().strip()
+            if not raw_tk:
                 continue
+            tk = norm_ticker(raw_tk)
             has_dd = tk in dd_set
             if has_dd and not include_dd:
                 continue
