@@ -92,10 +92,15 @@ TAXONOMY = {
 NUMERIC_RANGES = {
     "tam_usd_2030": (0, 10_000),
     "cagr_pct_5y": (-50, 200),
+    # v2.4: 5Y demand multiple = base-case 5Y TAM ÷ current TAM (§4 → §0 TL;DR).
+    # Optional at validator level (legacy exempt); required by skill flow for v2.4+.
+    "demand_5y_multiple": (0, 50),
 }
 
 ONELINER_HARD_CAP = 200
 TICKER_DEPTH_ALLOWED = {"🔴", "🟡", "🟢"}
+# v2.4 related_tickers optional keys — validated only when present (legacy exempt).
+TICKER_MCAP_BUCKETS = {"mega", "large", "mid", "small"}
 
 # v2.2 §0「三句話看完」— 現在 / 未來 / 怎麼做，同步寫進 id-meta。
 # v2.x ID 必填（validator 阻斷）；legacy v1.x 不受影響（startswith v2. 才觸發）。
@@ -173,6 +178,18 @@ def validate_meta(meta: dict) -> list:
                 errs.append(
                     f"related_tickers[{i}].beneficiary: must be bool, "
                     f"got {type(t['beneficiary']).__name__}"
+                )
+            # v2.4 optional keys: purity_pct (0-100 number) / mcap_bucket (enum)
+            if "purity_pct" in t:
+                pv = t["purity_pct"]
+                if not isinstance(pv, (int, float)) or isinstance(pv, bool) or not (0 <= pv <= 100):
+                    errs.append(
+                        f"related_tickers[{i}].purity_pct: must be number in [0, 100], got {pv!r}"
+                    )
+            if "mcap_bucket" in t and t["mcap_bucket"] not in TICKER_MCAP_BUCKETS:
+                errs.append(
+                    f"related_tickers[{i}].mcap_bucket: invalid {t['mcap_bucket']!r}, "
+                    f"allowed {sorted(TICKER_MCAP_BUCKETS)}"
                 )
 
     # sections_refreshed structure (optional)
