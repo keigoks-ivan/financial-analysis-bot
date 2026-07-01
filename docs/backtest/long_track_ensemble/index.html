@@ -176,13 +176,13 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
   <div class="hero-top">
     <span class="verdict-tag" style="background:#16a34a">✓ 2026-06-11 採用 — OOS 追蹤中</span>
     <h2>集成治得了盤整病,治不了 gap risk — MDD 換了形狀,系統擁有者接受這個交換</h2>
-    <p>假設:用三個獨立趨勢訊號的分數倉位(各 1/3)取代單一規則的全倉進出,降低 whipsaw 傷害。
+    <p>假設:用三個高相關但失效模式互補的中期趨勢訊號的分數倉位(各 1/3)取代單一規則的全倉進出,降低 whipsaw 傷害。
        結果部分成立:基準最痛的 2015-16 盤整從 -20.08% 收斂到 -17.86%、2011 從 -16.11% 到 -14.18%,
        Sharpe 0.81 → 0.87、Calmar 0.49 → 0.54,子期間 Calmar 從 0.32/0.76 失衡改善為 0.47/0.71。
        代價:MDD 搬到 2020 COVID(-21.15%),月頻 TSMOM 腿在快速崩跌中出場慢一拍。
        <strong>2026-06-11 經系統擁有者審視證據後決策採用(原為樣本內假設紀錄)。
        重審條件不變:下一次盤整叢集應較基準淺、下一次快速崩跌預期較基準深 — 兩個 OOS 事件後重審;
-       若 OOS 期間滾動 Calmar 持續低於 Ch12 基準,退回基準。</strong></p>
+       若 OOS 期間滾動 Calmar 持續低於 Ch12 基準,退回基準（量化門檻見下方採用決策紀錄，2026-07-02 成文化）。</strong></p>
   </div>
   <div class="hero-stats">
     <div><div class="hs-label">E3 CAGR (20Y)</div><div class="hs-value" style="color:var(--green)">+11.36%</div></div>
@@ -195,6 +195,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 <div class="note">
   <strong>實驗設計:</strong>訊號分散,不是參數網格。三個訊號取自兩個不同家族 — 均線位置(週線收盤 &gt; W40 / W52)
   與報酬符號(12 個月總報酬 &gt; 同期 T-bill 報酬,月頻,Moskowitz/Ooi/Pedersen 2012 的 TSMOM)。
+  三者高度相關（日頻三訊號同向約 85.0%），分散的是失效模式，不是彼此獨立的報酬來源；重疊統計見下方「訊號規則」明細。
   全部 stateless、long only;倉位 = 看多訊號數 ÷ 訊號總數;閒置部位持有 SHY/BIL;
   成本對 |Δ倉位| 收單邊 7bps;兩標的各自跑訊號後日報酬 50/50 加權合成;warmup 自 1999、模擬自 2006-01。
   方法與 <a href="/backtest/long_track/">Long Track 50/50 修正版</a>完全同基準,數字可直接對比。
@@ -237,8 +238,9 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 <tbody><tr><td>Ch12 基準(二元,對照組)</td><td>+9.75%</td><td>-20.08%</td><td>0.81</td><td>0.49</td><td>0.32</td><td>0.76</td></tr><tr><td>純 W52(二元)</td><td>+10.92%</td><td>-20.58%</td><td>0.85</td><td>0.53</td><td>0.35</td><td>0.73</td></tr><tr><td>純 TSMOM(二元)</td><td>+11.57%</td><td>-30.86%</td><td>0.76</td><td>0.37</td><td>0.47</td><td>0.47</td></tr><tr><td>集成 {W52, TSMOM} k/2</td><td>+11.35%</td><td>-23.18%</td><td>0.84</td><td>0.49</td><td>0.49</td><td>0.64</td></tr><tr style="background:var(--brand-light)"><td>集成 {W40, W52, TSMOM} k/3</td><td>+11.36%</td><td>-21.15%</td><td>0.87</td><td>0.54</td><td>0.47</td><td>0.71</td></tr><tr><td>50/50 SPY/QQQ Buy &amp; Hold</td><td>+13.55%</td><td>-53.66%</td><td>0.73</td><td>0.25</td><td>0.17</td><td>0.58</td></tr></tbody>
 </table>
 <div class="takeaway">交叉驗證的價值先於集成本身:純 TSMOM 的回撤窗口(2020/2018/2025)與 W52 家族(2015-16/2011)
-幾乎不重疊 — 證實兩個訊號家族捕捉的是同一個趨勢、不同的失效模式。集成的改善正是來自這個互補,
-不是來自任何參數的巧合。</div>
+幾乎不重疊 — 證實兩個訊號家族捕捉的是同一個趨勢、不同的失效模式。互補是真的，但要誠實計量：
+對基準 CAGR 改善 +1.61pp 中，主力 +1.17pp 來自 F1 的 stateless 進場（丟掉 score-5 斜率閘門），
+集成疊加（F1→E3）本身只貢獻 +0.44pp — 完整歸因見下方「採用決策紀錄」。</div>
 </div>
 </div>
 
@@ -340,15 +342,25 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 <h2 class="section-title">採用決策紀錄(2026-06-11)</h2>
 <div class="card">
 <ol class="issue-list">
-  <li><strong>證據方向</strong>:E3 在 Sharpe(0.88)、Calmar(0.54)、子期間平衡上全面優於基準,CAGR +1.74pp,
-      換手率相當 — 是股票趨勢核心所有變體中綜合最好的。</li>
-  <li><strong>已知保留意見(採用時一併記錄)</strong>:(a) 證據為樣本內,Calmar +0.06 的幅度單獨看不足以排除運氣;
+  <li><strong>證據方向</strong>：E3 在 Sharpe（0.87 vs 基準 0.81）、Calmar（0.54 vs 0.49）、
+      CAGR（+1.61pp）上優於基準，換手率相當（E3 2.17 vs 基準 2.35 邊/年）；
+      子期間平衡改善（H1 Calmar 0.32 → 0.47）但並非全面優於——H2 Calmar 略低於基準（0.71 vs 0.76）。
+      綜合看仍是股票趨勢核心所有變體中最好的。（本段數字由引擎即時渲染，2026-07-02 起不再硬編碼。）</li>
+  <li><strong>歸因分解（2026-07-02 補記）</strong>：E3−E0 的 CAGR 改善 +1.61pp 拆成兩段看：
+      E0→F1（純 W52 stateless）貢獻 +1.17pp，來自丟掉 score-5 斜率閘門後熊市底部再進場快
+      （2009 年：E0 +0.25% vs F1 +22.49%；2023 年：E0 +10.45% vs F1 +15.23%）；
+      F1→E3（加訊號集成）僅貢獻 +0.44pp，買到盤整減傷與 Sharpe 平滑，代價是 MDD 略加深（-20.58% → -21.15%）。
+      改善主力是 stateless 進場，不是集成本身。</li>
+  <li><strong>已知保留意見(採用時一併記錄)</strong>:(a) 證據為樣本內,Calmar +0.05 的幅度單獨看不足以排除運氣;
       (b) W40 引入新 lookback,是輕度參數選擇;(c) TSMOM 腿加深 gap risk(2020 -21.15% vs 基準 -18.75%),
       快市環境對它不利;(d) stateless 訊號放棄了 Ch12 score-5 的進場紀律,屬規則變更。</li>
   <li><strong>決策</strong>:2026-06-11 系統擁有者審視上述證據與保留意見後決定採用。
       原 Ch12 修正版基準保留為對照組,本頁兩線並列持續追蹤。</li>
-  <li><strong>OOS 重審條件</strong>:下一次盤整叢集(預期 E3 較基準淺)與下一次快速崩跌(預期 E3 較深,但 MDD 不應破 -30%)
-      — 兩個事件後重審;若 OOS 期間滾動 3 年 Calmar 持續低於基準,退回基準。</li>
+  <li><strong>OOS 重審條件（量化門檻 2026-07-02 成文化，定性方向不變）</strong>：
+      原文：下一次盤整叢集（預期 E3 較基準淺）與下一次快速崩跌（預期 E3 較深，但 MDD 不應破 -30%）— 兩個事件後重審。量化定義：
+      （i）盤整事件＝E0 對照線自高點回撤 ≥10% 且同期 SPY 自高點回落 &lt;15%；
+      （ii）快速崩跌事件＝SPY 於 20 個交易日內下跌 ≥15%；
+      （iii）退回條件＝E3 滾動 3 年 Calmar 低於 E0 連續 ≥6 個月，退回基準。</li>
   <li><strong>備援版本</strong>:E2(W52 + TSMOM,不含 W40)是不引入任何新參數的版本,
       但其 COVID 回撤 -23.18% 更深 — 取捨記錄在案。</li>
 </ol>
@@ -400,7 +412,11 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
     <strong>TSMOM</strong>:月底收盤的 12 個月總報酬 &gt; 同期 SHY/BIL 報酬 → 看多。月頻,Moskowitz/Ooi/Pedersen (2012)。<br>
     <strong>倉位</strong>:看多訊號數 ÷ 3,即 {0, ⅓, ⅔, 1};訊號在所屬 bar 的最後交易日收盤確認並執行,次日起生效。<br>
     <strong>其餘假設</strong>與 Long Track 修正版完全相同:閒置部位 SHY/BIL、|Δ倉位| 單邊 7bps、
-    兩標的獨立跑訊號後日報酬 50/50 加權、warmup 自 1999、模擬 2006-01 起。<br><br>
+    兩標的獨立跑訊號後日報酬 50/50 加權、warmup 自 1999、模擬 2006-01 起。<br>
+    <strong>訊號重疊（2006 起日頻，本次執行即時計算）</strong>：三訊號同向 SPY 85.0% / QQQ 84.8%；
+    W40↔W52 一致率 SPY 95.3% / QQQ 96.2%；W52↔TSMOM 一致率 SPY 89.4% / QQQ 88.4%。
+    三者是高相關的交叉驗證，不是獨立注碼；真實分散主要來自 TSMOM（報酬符號家族）。<br>
+    <strong>換手率（即時計算）</strong>：E0 基準 2.35 vs E3 集成 2.17 邊/年 — 集成沒有增加交易負擔，反而略低。<br><br>
     對照組:E0 = Ch12 修正版基準(score-5 進場 / W52 出場,二元);F1 / T1 = 單訊號二元版;E2 = 去掉 W40 的二訊號集成。
   </p>
 </div>
@@ -412,7 +428,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 <footer>
   <div class="container">
     &copy; 2026 InvestMQuest Research &middot; Ensemble Trend 訊號集成實驗 &middot; 真實 yfinance 資料 &middot;
-    頁面生成 2026-07-01 &middot; 2026-06-11 採用 · OOS 追蹤中 &middot; 僅供研究參考
+    頁面生成 2026-07-02 &middot; 2026-06-11 採用 · OOS 追蹤中 &middot; 僅供研究參考
   </div>
 </footer>
 
