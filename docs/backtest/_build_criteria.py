@@ -43,33 +43,33 @@ TH = {"cagr": 8.0, "mdd": -35.0, "sharpe": 0.5, "calmar": 0.3}
 
 # (name, url, cagr, mdd, sharpe, calmar, years_ok, note)  — 20Y, refreshed 2026-06-12
 SYSTEMS_20Y = [
-    ("Long Track Only", "/backtest/long_track/", 9.72, -20.08, 0.81, 0.48, True, ""),
+    ("Long Track Only", "/backtest/long_track/", 9.75, -20.08, 0.81, 0.49, True, ""),
     ("LTO QQQ only", "/backtest/long_track_qqq/", 10.80, -25.37, 0.75, 0.43, True, ""),
-    ("Ensemble E3", "/backtest/long_track_ensemble/", 11.47, -21.15, 0.89, 0.54, True, "2026-06-11 採用 · OOS"),
-    ("LT SMH/QQQ STX50", "/backtest/long_track_smh/", 14.05, -21.87, 0.91, 0.64, True, "2026-06-13 採用 STX50 · OOS"),
-    ("W52 斜率濾網", "/backtest/slope_filter/", 10.79, -18.96, 1.01, 0.57, True, "2026-06 審計完成 · MA 對齊修正後上修"),
-    ("GEM 雙動能", "/backtest/gem/", 8.95, -21.54, 0.57, 0.42, True, ""),
-    ("六狀態機 v1.1", "/backtest/six_state/", 14.77, -35.80, 0.86, 0.41, True, ""),
-    ("六狀態機 v1.0r1 實盤", "/backtest/six_state_v1r1/", 14.58, -49.29, 0.81, 0.30, True, "壓力路徑 -77%"),
+    ("Ensemble E3", "/backtest/long_track_ensemble/", 11.36, -21.15, 0.87, 0.54, True, "2026-06-11 採用 · OOS"),
+    ("LT SMH/QQQ STX50", "/backtest/long_track_smh/", 13.84, -21.87, 0.90, 0.63, True, "2026-06-13 採用 STX50 · OOS"),
+    ("W52 斜率濾網", "/backtest/slope_filter/", 10.62, -22.13, 0.86, 0.48, True, "2026-06 審計完成 · 改採還原日線 MDD/Sharpe"),
+    ("GEM 雙動能", "/backtest/gem/", 8.63, -21.54, 0.68, 0.40, True, ""),
+    ("六狀態機 v1.1", "/backtest/six_state/", 14.66, -37.78, 0.85, 0.39, True, ""),
+    ("六狀態機 v1.0r1 實盤", "/backtest/six_state_v1r1/", 14.51, -50.28, 0.80, 0.29, True, "壓力路徑 -77%"),
     ("雙軌多空", "/backtest/dual_track/", 4.35, -38.72, 0.37, 0.11, True, "已否決 · 2026-06-12 修正重檢"),
-    ("盤整 MR (RSI2)", "/backtest/rsi2_mr/", 3.12, -16.46, 0.50, 0.19, True, "實驗 · 未採用 · 組合互補性已否定(被現金壓制)"),
+    ("盤整 MR (RSI2)", "/backtest/rsi2_mr/", 4.48, -14.31, 0.71, 0.31, True, "實驗 · 未採用 · 2026-06-30 起計入閒置現金收益,CAGR 轉為領先現金組"),
     ("週線 Supertrend (SPY)", "/backtest/supertrend/", 8.11, -17.77, 0.77, 0.46, True, "實驗 · 未採用 · standalone 輸 W52,E4 成員候選"),
-    ("🐢 Turtle(多資產)", "/backtest/turtle/", 22.48, -38.12, 0.73, 0.59, True, "CAGR 進可疑帶"),
-    ("📈 Clenow(多資產)", "/backtest/clenow/", 13.28, -44.11, 0.69, 0.30, True, ""),
+    ("🐢 Turtle(多資產)", "/backtest/turtle/", 7.61, -52.28, 0.39, 0.15, True, "2026-06 修正:停損成交假象改正,全額版為平庸高回撤系統"),
+    ("📈 Clenow(多資產)", "/backtest/clenow/", 12.32, -41.01, 0.65, 0.30, True, ""),
 ]
 
-# (name, cagr, mdd, sharpe, calmar, verdict)  — 10Y, refreshed 2026-06-12
+# (name, cagr, mdd, sharpe, calmar, verdict)  — 10Y, refreshed 2026-07-01
 SYSTEMS_10Y = [
-    ("LT SMH/QQQ STX50", 25.60, -20.04, 1.31, 1.28, "warn", "CAGR 進可疑帶(>20%)— H2 半導體 regime"),
-    ("六狀態機 v1.1", 22.40, -28.49, 1.12, 0.79, "warn", "CAGR 進可疑帶(>20%)— 無 2008 的視窗"),
+    ("LT SMH/QQQ STX50", 25.74, -20.04, 1.31, 1.28, "warn", "CAGR 進可疑帶(>20%)— H2 半導體 regime"),
+    ("六狀態機 v1.1", 22.16, -28.48, 1.11, 0.78, "warn", "CAGR 進可疑帶(>20%)— 無 2008 的視窗"),
     ("LTO QQQ only", 18.81, -25.18, 1.10, 0.75, "good", "進攻型優秀"),
-    ("Ensemble E3", 16.29, -21.15, 1.12, 0.77, "good", "優秀(樣本內)"),
-    ("Long Track Only", 15.47, -18.75, 1.11, 0.83, "good", "優秀"),
-    ("W52 斜率濾網", 13.04, -18.96, 1.03, 0.69, "pass", "合格(穩定)· 2026-06 審計後上修"),
-    ("GEM 雙動能", 9.85, -21.54, 0.54, 0.46, "pass", "合格"),
+    ("Ensemble E3", 16.35, -21.15, 1.13, 0.77, "good", "優秀(樣本內)"),
+    ("Long Track Only", 15.53, -18.75, 1.12, 0.83, "good", "優秀"),
+    ("W52 斜率濾網", 13.16, -20.52, 1.01, 0.64, "pass", "合格(穩定)· 2026-06 審計(改日線重建)"),
+    ("GEM 雙動能", 9.88, -21.54, 0.72, 0.46, "pass", "合格"),
     ("雙軌多空", 9.26, -19.61, 0.73, 0.47, "fail", "10 年窗口仍墊底;全期已否決"),
     ("週線 Supertrend (SPY)", 11.86, -13.48, 1.09, 0.88, "pass", "實驗:10 年窗口合格,但全期輸 W52 · 未採用"),
-    ("盤整 MR (RSI2)", 3.29, -16.46, 0.51, 0.20, "fail", "實驗:CAGR 低於門檻 · standalone 暴險僅 13% · 未採用"),
+    ("盤整 MR (RSI2)", 4.48, -14.31, 0.71, 0.31, "fail", "實驗:CAGR 仍低於門檻(無獨立 10y 窗,沿用全期數字)· standalone 暴險僅 13% · 未採用"),
     ("QQQ Buy & Hold", 21.71, -35.12, 0.99, 0.62, "bh", "基準"),
     ("SPY Buy & Hold", 15.35, -33.72, 0.89, 0.46, "bh", "基準"),
 ]
@@ -79,30 +79,33 @@ SYSTEMS_10Y = [
 #   SPY 2006-26:        +11.01 / -55.19 / 0.64 / 0.20
 #   QQQ 2006-26:        +15.88 / -53.40 / 0.78 / 0.30
 #   SPY/QQQ 50/50:      +13.52 / -53.66 / 0.73 / 0.25
-#   SMH/QQQ 50/50:      +18.03 / -56.93 / 0.79 / 0.32
-#   SPY 2000-26 (W52 頁): +10.94 / -50.78 (Sharpe/Calmar 欄位版式不同,不引用)
-#   GEM 同期 SPY:        +10.99 / -50.78 / 0.60 / 0.22
+#   SMH/QQQ 50/50:      +18.09 / -56.93 / 0.79 / 0.32
+#   SPY 2000-26 (W52 頁,daily-recon 引擎): +11.04 / -55.19 / 0.64 / 0.20
+#   GEM 同期 SPY:        +11.17 / -50.78 / 0.73 / 0.22
 # (name, url, bench_label, sys(cagr,mdd,sharpe,calmar), bench(... or None), kind, note)
 DOMINANCE = [
     ("🐢 Turtle(多資產)", "/backtest/turtle/", "等權多資產 B&H",
-     (22.48, -38.12, 0.73, 0.59), (10.92, None, None, None), "domc",
-     "2026-06 審查完成:CAGR 來自平均 3.3× 名目曝險(期貨 sizing),不是過擬合 — H1/H2 Calmar 0.55/0.64 平衡、"
-     "ex-2024 仍 +19.1%;對無槓桿 B&H 不作支配判定。商品腿 L3 檢驗:+20% CMDTY → 組合 Calmar 0.64→1.03(見系統頁拆解節)"),
+     (7.61, -52.28, 0.39, 0.15), (10.92, None, None, None), "mixed",
+     "2026-06 修正:舊 ~22.5% CAGR 是停損成交假象(收盤觸發卻以停損價成交),非「3.3× 曝險」故事 — 已改盤中觸發 + 組合風險上限,"
+     "全額 6-ETF 版修正後 CAGR 只剩 +7.61%(平均曝險 2.5×,舊版無上限 3.31×),對無槓桿 B&H 兩軸皆輸,不作支配判定;"
+     "殘餘價值只在 GLD/USO 20% 危機 sleeve(標的 CMDTY2):+20% 月再平衡使 STX50 核心組合 Calmar 0.65→0.85(削回撤、不增報酬,"
+     "邊際效益遠小於舊頁誤植的 0.64→1.03)"),
     ("W52 斜率濾網", "/backtest/slope_filter/", "SPY B&H(同引擎)",
-     (10.79, -18.96, 1.01, 0.57), (11.02, -50.78, 0.73, 0.22), "neardom",
-     "2026-06 審計完成(MA 對齊修正後全指標上修):報酬只讓 0.23pp、Calmar 2.6 倍 — 近支配確認;"
-     "惟規則不可移植:QQQ 套用失敗、SMH 輸 Faber(見系統頁擴展節)"),
+     (10.62, -22.13, 0.86, 0.48), (11.04, -55.19, 0.64, 0.20), "trade",
+     "2026-06 審計完成(改採還原日線重建 MDD/Sharpe,月底取樣曾低估 MDD 至 -18.96%,真實日線 -22.13%):"
+     "報酬讓 0.42pp、Calmar 2.4 倍 — 仍是站內對 B&H 風險調整最強的交換之一,但「近支配」認定已撤回(全站同步修正,見首頁/系統頁);"
+     "規則不可移植:QQQ 套用失敗、SMH 輸 Faber(見系統頁擴展節)"),
     ("LT SMH/QQQ STX50", "/backtest/long_track_smh/", "SMH/QQQ 50/50 B&H",
-     (14.05, -21.87, 0.91, 0.64), (18.03, -56.93, 0.79, 0.32), "trade",
+     (13.84, -21.87, 0.90, 0.63), (18.09, -56.93, 0.79, 0.32), "trade",
      "★ 本版觸發案例 — 完整判讀見上方範例"),
     ("Ensemble E3", "/backtest/long_track_ensemble/", "SPY/QQQ 50/50 B&H",
-     (11.47, -21.15, 0.89, 0.54), (13.52, -53.66, 0.73, 0.25), "trade",
+     (11.36, -21.15, 0.87, 0.54), (13.52, -53.66, 0.73, 0.25), "trade",
      "讓 2pp 報酬換 Calmar 2.2 倍 — 站內風險效率最佳的核心交換"),
     ("Long Track Only", "/backtest/long_track/", "SPY/QQQ 50/50 B&H",
-     (9.72, -20.08, 0.81, 0.48), (13.52, -53.66, 0.73, 0.25), "trade", ""),
+     (9.75, -20.08, 0.81, 0.49), (13.52, -53.66, 0.73, 0.25), "trade", ""),
     ("六狀態機 v1.1", "/backtest/six_state/", "QQQ B&H",
-     (14.77, -35.80, 0.86, 0.41), (15.88, -53.40, 0.78, 0.30), "trade",
-     "支配性過關但 L1 門檻不過(MDD -35.8%)— 兩道關卡互相獨立,缺一不可"),
+     (14.66, -37.78, 0.85, 0.39), (15.88, -53.40, 0.78, 0.30), "trade",
+     "支配性過關但 L1 門檻不過(MDD -37.78%)— 兩道關卡互相獨立,缺一不可"),
     ("週線 Supertrend (SPY)", "/backtest/supertrend/", "SPY B&H",
      (8.11, -17.77, 0.77, 0.46), (11.01, -55.19, 0.64, 0.20), "trade",
      "對 B&H 是有效交換,但輸給同家族 W52(第二基準)→ 只剩組合互補一條活路(E4 候選)"),
@@ -110,20 +113,21 @@ DOMINANCE = [
      (10.80, -25.37, 0.75, 0.43), (15.88, -53.40, 0.78, 0.30), "mixed",
      "Calmar 贏 1.4 倍但 Sharpe 微輸 — 砍掉的是尾部,沒有提升波動效率;讓 5pp 報酬偏貴"),
     ("GEM 雙動能", "/backtest/gem/", "SPY B&H(同期)",
-     (8.95, -21.54, 0.57, 0.42), (10.99, -50.78, 0.60, 0.22), "mixed",
+     (8.63, -21.54, 0.68, 0.40), (11.17, -50.78, 0.73, 0.22), "mixed",
      "同為「砍尾部、波動效率打平」型"),
     ("📈 Clenow(多資產)", "/backtest/clenow/", "等權多資產 B&H",
-     (13.28, -44.11, 0.69, 0.30), (10.83, None, None, None), "mixed",
-     "報酬軸贏 2.5pp 但 MDD -44% 過深(L1 不合格);資產池不同僅參照"),
+     (12.32, -41.01, 0.65, 0.30), (10.83, None, None, None), "mixed",
+     "報酬軸贏 1.5pp 但 MDD -41% 過深(L1 不合格);資產池不同僅參照"),
     ("六狀態機 v1.0r1 實盤", "/backtest/six_state_v1r1/", "QQQ B&H",
-     (14.58, -49.29, 0.81, 0.30), (15.88, -53.40, 0.78, 0.30), "weak",
-     "讓 1.3pp 報酬,回撤只淺 4pp、Calmar 打平 — 付了趨勢系統的代價,沒拿到趨勢系統的保護"),
+     (14.51, -50.28, 0.80, 0.29), (15.88, -53.40, 0.78, 0.30), "weak",
+     "讓 1.4pp 報酬,回撤只淺 3pp、Calmar 打平 — 付了趨勢系統的代價,沒拿到趨勢系統的保護"),
     ("雙軌多空", "/backtest/dual_track/", "SPY/QQQ 50/50 B&H",
      (4.35, -38.72, 0.37, 0.11), (13.52, -53.66, 0.73, 0.25), "dominated",
      "報酬、Sharpe、Calmar、MDD 全軸輸 — 正式定義下唯一能說「不好」的判定;已否決"),
     ("盤整 MR (RSI2)", "/backtest/rsi2_mr/", "SPY B&H",
-     (3.12, -16.46, 0.50, 0.19), (11.01, -55.19, 0.64, 0.20), "dominated",
-     "全軸輸或打平;L3 組合互補性亦被現金支配 — 雙重否決(standalone 暴險僅 13%,曝險調整後仍無解)"),
+     (4.48, -14.31, 0.71, 0.31), (11.01, -55.19, 0.64, 0.20), "trade",
+     "2026-06-30 起閒置資金計入現金收益:Sharpe/Calmar/MDD 三軸皆勝 B&H,報酬軸讓分 — 由「全軸被支配」改判有效交換;"
+     "惟 standalone 暴險僅 13%,portfolio-level 互補性另待評估,候選系統仍未採用"),
 ]
 
 DOM_KINDS = {
@@ -341,7 +345,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
   <div class="hero-top">
     <span class="verdict-tag">📐 框架 v3 — 2026-06 修訂</span>
     <h2>「績效輸 Buy &amp; Hold,可以說這個策略不好嗎?」— v2 答不了這題,所以有 v3</h2>
-    <p>LT SMH/QQQ STX50 的 CAGR(+14.05%)輸給 SMH/QQQ B&amp;H(+18.03%)。這算不算「策略不好」?
+    <p>LT SMH/QQQ STX50 的 CAGR(+13.84%)輸給 SMH/QQQ B&amp;H(+18.09%)。這算不算「策略不好」?
        v2 的絕對門檻只能回答「能不能投」,從來沒有正式回答過「比最懶的替代方案好嗎」。
        v3 把評估重組為<strong>五層漏斗</strong>:數字有效性 → 絕對門檻 → <strong>相對基準雙軸支配性(新)</strong> →
        組合邊際貢獻(新成文)→ 採用決策。核心新規則只有一條:
@@ -406,7 +410,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
       採用紀錄必須包含日期、保留意見、OOS 重審與退場條件(詳見第 6 節)。</li>
   <li><strong>規則可移植性不可假設(v3 新增,2026-06 W52 移植實驗的教訓)</strong> —
       規則優勢是「規則結構 × 標的回撤-修復幾何」的交互作用,換標的 = 新系統,必須重走整個漏斗。
-      實證:W52 同規則零調整移植 — SPY 近支配 → QQQ 失敗(無效交換)→ SMH 輸 Faber。
+      實證:W52 同規則零調整移植 — SPY 有效交換(風險調整勝出,非近支配)→ QQQ 失敗(無效交換)→ SMH 輸 Faber。
       慢 U 型熊市(寬基)獎勵不對稱嚴進場;深 V 修復(高 beta 成長)讓嚴格進場變成結構性遲到。
       「在 A 標的驗證過」永遠不是 B 標的的證據。</li>
 </ol>
@@ -548,22 +552,22 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 <!-- worked example -->
 <div class="example">
 <h3>判讀範例:LT SMH/QQQ STX50 vs SMH/QQQ 50/50 B&amp;H — 「CAGR 輸 4pp,這策略不好嗎?」</h3>
-<div class="step"><span class="n">1</span><div><strong>兩軸事實。</strong>報酬軸:14.05% vs 18.03%,讓 3.98pp — B&amp;H 贏。
-  風險調整軸:Sharpe 0.91 vs 0.79、Calmar 0.64 vs 0.32(2 倍)、MDD -21.9% vs -56.9% — 策略全贏。
+<div class="step"><span class="n">1</span><div><strong>兩軸事實。</strong>報酬軸:13.84% vs 18.09%,讓 4.25pp — B&amp;H 贏。
+  風險調整軸:Sharpe 0.90 vs 0.79、Calmar 0.63 vs 0.32(2 倍)、MDD -21.9% vs -56.9% — 策略全贏。
   → 不是被支配,是<span class="tag tag-blue">有效交換</span>。「不好」這個詞在定義上就套不上。</div></div>
-<div class="step"><span class="n">2</span><div><strong>終值誠實。</strong>$1M、20 年:策略 13.9 倍 vs B&amp;H 27.5 倍 — 終值少一半,這是交換的真實代價,必須明說。</div></div>
-<div class="step"><span class="n">3</span><div><strong>槓桿等價。</strong>Calmar 0.64 vs 0.32:每承受 1 單位回撤,策略賺 2 倍。線性粗估 1.5× 曝險(期貨可行):
+<div class="step"><span class="n">2</span><div><strong>終值誠實。</strong>$1M、20 年:策略 14.2 倍 vs B&amp;H 約 29.8 倍 — 終值少了近一半,這是交換的真實代價,必須明說。</div></div>
+<div class="step"><span class="n">3</span><div><strong>槓桿等價。</strong>Calmar 0.63 vs 0.32:每承受 1 單位回撤,策略賺 2 倍。線性粗估 1.5× 曝險(期貨可行):
   CAGR ≈ 18~19%(已扣融資與波動拖累的量級)、MDD ≈ -31% — <strong>報酬追平 B&amp;H,回撤仍只有它的一半</strong>。
   B&amp;H 做不出反向操作(無法把 -57% 降下來而不犧牲更多報酬)→ 等風險座標系下,策略弱支配基準。</div></div>
 <div class="step"><span class="n">4</span><div><strong>可持有性。</strong>B&amp;H 的 18% 要求抱住 -57%(樣本內 SMH 段最深 -64%)。半導體單一產業 ETF 腰斬再加碼的路徑,
   對多數資金配置不可執行 — 基準的報酬軸優勢有一部分是紙上的。</div></div>
 <div class="step"><span class="n">5</span><div><strong>終點敏感性。</strong>本樣本終點(2026-06)落在 AI/半導體大多頭高點附近,B&amp;H 的 CAGR 被終點加持;
   終點若在 2022-10 或 2009-03,報酬軸差距大幅收斂甚至反轉。同一系統在 10 年窗(2016 起)對 QQQ B&amp;H
-  是<strong>兩軸全贏</strong>(25.6%/-20.0% vs 21.7%/-35.1%)— 窗口與基準的選擇就能改寫故事,
+  是<strong>兩軸全贏</strong>(25.7%/-20.0% vs 21.7%/-35.1%)— 窗口與基準的選擇就能改寫故事,
   所以判定必須:固定自然基準 + 兩個視窗取交集 + 標註終點位置。</div></div>
 <div class="step"><span class="n">6</span><div><strong>結論。</strong>有效交換 — 用 4pp CAGR 買回撤從 -57% 到 -22% 的壓縮。值不值取決於風險預算;
   此外它在組合裡是進攻位 sleeve(L3),最終考題是組合層的貢獻,不是 standalone 對 B&amp;H 的擂台。
-  Sharpe 差 0.12 在 20 年樣本接近雜訊邊緣,但 MDD 砍半是結構性的 — 交換的價值主要在尾部,這也與「混合」型系統劃清界線。</div></div>
+  Sharpe 差 0.11 在 20 年樣本接近雜訊邊緣,但 MDD 砍半是結構性的 — 交換的價值主要在尾部,這也與「混合」型系統劃清界線。</div></div>
 </div>
 
 <div class="card" style="overflow-x:auto">
@@ -575,10 +579,12 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 </tbody>
 </table>
 <div class="takeaway">
-讀法:<strong>13 個系統裡只有 2 個「被支配」</strong>(雙軌多空、RSI2)— 它們也正是已否決的系統,判定與決策史一致。
-有效交換是趨勢家族的常態型;「混合」型(LTO QQQ、GEM)提醒 Sharpe 與 Calmar 是兩種風險定義,不可混報;
+讀法:<strong>13 個系統裡只有 1 個「被支配」</strong>(雙軌多空)— 它正是已否決的系統,判定與決策史一致
+(2026-06-30 起 RSI2 因閒置現金收益改判有效交換,不再被支配)。
+有效交換是趨勢家族的常態型;「混合」型(LTO QQQ、GEM、Turtle、Clenow)提醒 Sharpe 與 Calmar 是兩種風險定義,不可混報;
 v1.0r1 的「無效交換」是最危險的象限 — 付了代價沒買到保護,比被支配更難察覺。
-Turtle 兩軸全贏反而觸發審查,這是可疑帶哲學在 L2 的延伸。
+本輪無系統觸發「支配候選 ⚠」(兩軸全贏);Turtle 修正前曾以停損成交假象兩軸全贏(舊 ~22.5% CAGR),
+修正後現為「混合」— 正印證可疑帶哲學:好到不像話的數字通常是訊號有誤,不是慶祝理由。
 </div>
 </div>
 </div>
@@ -618,8 +624,8 @@ Turtle 兩軸全贏反而觸發審查,這是可疑帶哲學在 L2 的延伸。
 %SCOREBOARD%
 </tbody>
 </table>
-<div class="takeaway">2026-06 修正後的變動:<strong>Long Track 從「優秀」降為「合格」</strong>(CAGR 9.59% &lt; 12%、Calmar 0.48 &lt; 0.5,各差一步);
-<strong>六狀態機 v1.1 以 0.8pp 之差跌出 MDD 門檻</strong>(-35.80% vs -35%)— 它已完成全站最完整的穩健性檢驗,
+<div class="takeaway">2026-06 修正後的變動:<strong>Long Track 從「優秀」降為「合格」</strong>(CAGR 9.75% &lt; 12%、Calmar 0.49 &lt; 0.5,各差一步);
+<strong>六狀態機 v1.1 以 2.78pp 之差跌出 MDD 門檻</strong>(-37.78% vs -35%)— 它已完成全站最完整的穩健性檢驗,
 出局原因單純是回撤太深,角色問題用部位大小解,不是用門檻豁免解;
 <strong>v1.0r1 實盤雙項不合格</strong>且 2000-02 壓力路徑 -77%,升級 v1.1 為待決事項。</div>
 </div>
@@ -650,17 +656,21 @@ Turtle 兩軸全贏反而觸發審查,這是可疑帶哲學在 L2 的延伸。
   <strong>已採用,待上實倉</strong>。採用 = 有記錄的決策;實倉 = 資金實際在跑,兩個狀態分開標示。<br>
   <strong>角色配置:</strong>防守主力 = E3;進攻位 = STX50;六狀態機 v1.1 L1 不合格但可用部位大小納入
   (56% 倉位 + 44% T-bill 即等效 -20% MDD 預算,代價是等風險下輸給 Long Track);
-  互補缺口 = 跨資產趨勢 — <strong>2026-06 L3 檢驗通過</strong>:Turtle CMDTY 腿(USO/GLD/DBA)與 STX50 相關 -0.03、
-  危機窗全正報酬(2008 +35.7%/COVID +61.6%/2022 +16.4%),+20% 權重使 E3+STX50 組合 Calmar 0.64 → 1.03(月再平衡下成立)。
-  <strong>待 L4 決策</strong>:採用與否、權重、工具(需期貨/管理期貨,現金 ETF 不可行 — 腿內部 3.3× 曝險)。<br>
+  互補缺口 = 跨資產趨勢 — <strong>2026-06 修正後 L3 檢驗仍有條件通過(削回撤、不增報酬)</strong>:Turtle CMDTY2 腿(GLD/USO)
+  與 STX50 全期相關 -0.01、危機窗全為正報酬(2008 GFC +19.8%、2020 COVID +13.3%、2022 熊市 +14.2%、2018 Q4 +9.7%;
+  量級遠小於舊頁停損成交假象下的 +35~62%),+20% 權重使 STX50 核心組合 Calmar 0.65 → 0.85、MDD -21.9% → -16.3%,
+  但 CAGR 幾乎不動(不再是舊頁誤植的 0.64 → 1.03)。
+  <strong>待 L4 決策</strong>:採用與否、權重、工具(需期貨微型合約 MGC/MCL;現金 ETF 版可空/槓桿受限,危機 alpha 大半流失)。
+  修正後全額 6-ETF Turtle 本身平均曝險降至 2.5×(舊版無上限曾達 3.31×),headline CAGR 僅 +7.61%,不能單獨持有。<br>
   <strong>已否決(L2/L3 判定與決策一致):</strong>雙軌多空(被支配 + 資金配置倒掛)、盤整 MR(被支配 + 互補性被現金支配)、
   做空系統(兩個獨立引擎均證偽)、參數式微調(緩衝/確認週數,實測更糟)。<br>
   <strong>原則:</strong>採用來自有記錄的決策,不來自漂亮的回測數字本身;每筆採用必須同時寫下「什麼情況下退場重審」。
 </div>
 <div class="note">
   <strong>審計進度:</strong>W52 斜率濾網已完成 2026-06 標準的 warmup / 分母審計(分母通過;
-  發現 MA 對齊過時 ~4 週並修正,全指標上修,「近支配」確認 — 全站第一個近支配系統,詳見系統頁審計節)。
-  同場擴展測試:同規則套 QQQ <strong>失敗</strong>(無效交換)、SMH 不優於 Faber — 近支配是 SPY 特定的,規則不可移植。
+  發現 MA 對齊過時並改採還原日線重建 MDD/Sharpe,月底取樣曾把 MDD 低估至 -18.96%,真實日線 -22.13%,詳見系統頁審計節)。
+  仍是站內對 SPY B&amp;H 風險調整最強的交換之一,但<strong>「近支配」認定已撤回</strong>(全站同步修正)。
+  同場擴展測試:同規則套 QQQ <strong>失敗</strong>(無效交換)、SMH 不優於 Faber — 規則不可移植。
   <strong>剩餘待辦:</strong>GEM 的 warmup / 分母審計(數字截至 2026-04,引擎獨立)。
 </div>
 </div>

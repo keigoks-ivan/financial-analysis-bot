@@ -26,6 +26,13 @@ v3.1 audit (2026-06-29) — correctness/comparability fixes:
   * Supertrend trade count now counts round trips (was entries+exits ≈ 2x).
   * Sortino switched to standard target-downside-deviation (shared engine).
 
+v3.2 fix (2026-07-01) — six_state timing-execution bug fix propagated:
+  * six_state engine now fills signals at next trading day's open (was
+    same-bar close), fixed a stale pre-cost NAV bug, and fixed a
+    holiday-Friday evaluation skip. Headline, period-window CAGR, scatter
+    point, and yearly RET series updated for ch8 and v1r1 only:
+    six_state 14.47%/-35.92%→14.66%/-37.78%; v1r1 14.35%/-49.29%→14.51%/-50.28%.
+
 Numbers are pinned with as-of dates, sourced from each system's generator.
 When a system page changes, update below and re-run:
     python3 _build_index.py
@@ -52,9 +59,12 @@ YEARS = list(range(2006, 2027))
 # Refreshed 2026-06-29 from overview_refresh.py, data through 2026-06-12. Fixes:
 # SHY→BIL cash splice rescaled (removed phantom +22% 2007-05-30); smh = STX50
 # (E3 + ST(10,3) half-book gate); w52 = daily-reconstructed; gem = cost-in-returns.
+# ch8/v1r1 refreshed again 2026-07-01: six_state engine now fills signals at
+# next day's open (was same-bar), fixed a stale pre-cost NAV bug, and fixed a
+# holiday-Friday evaluation skip — see six_state/ and six_state_v1r1/ pages.
 RET = {
-    "ch8":   [0.00, 13.76, -26.49, 33.68, 16.87, -8.11, 11.56, 30.17, 21.50, 4.58, 6.23, 31.52, -2.54, 33.64, 30.16, 31.09, -23.13, 41.41, 30.25, 23.58, 22.64],
-    "v1r1":  [6.64, 17.22, -36.57, 45.24, 16.74, -6.96, 13.36, 30.79, 18.21, 6.18, 4.47, 29.96, -0.24, 30.56, 40.06, 26.57, -24.35, 52.35, 25.23, 21.45, 12.28],
+    "ch8":   [-0.12, 13.76, -28.61, 34.17, 16.87, -6.39, 11.38, 30.18, 21.50, 4.98, 7.46, 31.52, -1.83, 33.31, 31.54, 31.19, -23.24, 42.28, 30.26, 24.15, 22.57],
+    "v1r1":  [6.63, 17.23, -37.81, 45.24, 16.86, -5.35, 13.15, 30.83, 18.22, 6.20, 5.53, 29.96, 0.38, 30.40, 41.67, 26.62, -24.73, 52.34, 25.03, 22.65, 12.25],
     "ch12":  [4.20, 10.71, -5.38, 0.25, 7.89, -9.57, 8.62, 31.28, 17.36, -5.30, 3.47, 26.09, -1.53, 20.81, 26.54, 30.01, -13.53, 10.45, 26.74, 17.59, 9.15],
     "ch12q": [-1.67, 18.81, -9.74, 0.25, 6.73, -14.44, 6.88, 33.49, 20.12, -0.91, -0.43, 31.49, 4.65, 19.92, 39.23, 29.24, -17.22, 20.14, 27.74, 19.06, 13.20],
     "e3":    [5.12, 9.59, -7.34, 19.63, 7.95, -9.89, 10.26, 31.10, 16.53, -2.40, 3.91, 26.09, -1.56, 20.19, 25.20, 30.01, -13.62, 19.54, 26.74, 17.20, 10.17],
@@ -116,11 +126,11 @@ GROUPS = [
     ]),
     ("L1 不合格但角色可用(部位大小解,不豁免門檻)", [
         ("QQQ＋SMH 六狀態機・三態無 Grid", "/backtest/six_state/",
-         "QQQ+SMH+BIL · 三狀態 · 無 Grid(2026-06 修正,含現金拼接修正)· MDD -35.9% 差 ~0.9pp 出局;56% 倉位+T-bill 可等效 -20% 預算",
-         "+14.47%", "-35.92%", "0.85", "0.40", "trade", "$15.82M", TAG["atk"]),
+         "QQQ+SMH+BIL · 三狀態 · 無 Grid(2026-06 修正,含現金拼接修正;2026-07 訊號改次日開盤成交)· MDD -37.8% 差 ~2.8pp 出局;56% 倉位+T-bill 可等效 -20% 預算",
+         "+14.66%", "-37.78%", "0.85", "0.39", "trade", "$16.36M", TAG["atk"]),
         ("QQQ 六狀態機・五態＋Grid・實盤", "/backtest/six_state_v1r1/",
-         "QQQ+IB01 · 五狀態+Grid · 2000-02 壓力路徑 -77% · 升級 v1.1 待決",
-         "+14.35%", "-49.29%", "0.80", "0.29", "weak", "$15.48M", TAG["live"]),
+         "QQQ+IB01 · 五狀態+Grid · 2000-02 壓力路徑 -77% · 升級 v1.1 待決(2026-07 訊號改次日開盤成交)",
+         "+14.51%", "-50.28%", "0.80", "0.29", "weak", "$15.94M", TAG["live"]),
     ]),
     ("🇹🇼 台股(2330/0050 E3 已採用 · 不同市場/幣別,不與美股同尺)", [
         ("2330/0050 三訊號趨勢集成（E3 · 實倉）", "/backtest/long_track_tw/",
@@ -183,8 +193,8 @@ BH_ROWS = [
 
 # 分期間 CAGR (全期 / 近15y / 近10y / 近5y) — refreshed 2026-06-12; w52 = 引擎 v2
 PERIOD_CAGR = [
-    ("QQQ+SMH 六狀態機", "#d32f2f", "+14.47%", "+17.93%", "+21.79%", "+20.44%"),
-    ("QQQ 六狀態機・實盤", "#b45309", "+14.35%", "+17.35%", "+20.53%", "+17.55%"),
+    ("QQQ+SMH 六狀態機", "#d32f2f", "+14.66%", "+18.40%", "+22.16%", "+20.66%"),
+    ("QQQ 六狀態機・實盤", "#b45309", "+14.51%", "+17.73%", "+20.84%", "+17.61%"),
     ("SPY/QQQ 長軌趨勢", "#2e7d32", "+9.75%", "+12.27%", "+15.53%", "+12.07%"),
     ("QQQ 長軌純攻", "#16a34a", "+10.83%", "+14.20%", "+18.87%", "+14.45%"),
     ("SPY/QQQ 集成(採用)", "#d97706", "+11.36%", "+13.21%", "+16.35%", "+13.97%"),
@@ -200,8 +210,8 @@ PERIOD_CAGR = [
 SCATTER = [
     ("SPY/QQQ RSI2 回歸", 16.46, 3.12, "#ca8a04"),
     ("SPY 週線 Supertrend", 17.77, 8.14, "#be185d"),
-    ("QQQ+SMH 六狀態", 35.92, 14.47, "#d32f2f"),
-    ("QQQ 六狀態實盤", 49.29, 14.35, "#b45309"),
+    ("QQQ+SMH 六狀態", 37.78, 14.66, "#d32f2f"),
+    ("QQQ 六狀態實盤", 50.28, 14.51, "#b45309"),
     ("SPY/QQQ 長軌", 20.08, 9.75, "#2e7d32"),
     ("QQQ 長軌純攻", 25.37, 10.83, "#16a34a"),
     ("SPY/QQQ 集成", 21.15, 11.36, "#d97706"),
