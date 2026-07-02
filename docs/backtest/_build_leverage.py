@@ -19,6 +19,19 @@ risk-adjusted OOS — the page's claim is downgraded from "small edge, all
 windows" to "crisis-insurance thesis, n=1 (2008)". §④ rewritten accordingly;
 two new rejected rows in §②; stale §① crisis-year prose fixed to match the
 page's own pinned decomp table (2008 −6.8 not −6.0; 2022 −16.2 not equal).
+
+2026-07-02b update (v7-backtest leverage_diversified_overlay.py /
+leverage_overnight_nq.py): AXIS CHANGE result added — instead of timing more
+of the same equity beta, stack 20% ZN + 20% GC notional (uncorrelated assets)
+on the unchanged base, each leg gated by the site's standard E3 trend signal.
+Gated version dominates base outright (CAGR +2.05pp AND shallower MDD, Calmar
+0.80/0.44/1.12 vs 0.63/0.24/0.95, all 25 grid cells pass all 3 windows).
+New #axis section + new ROWS group; overnight-NQ rejection row added (7th
+same-beta-timing kill); §④ "real futures" provenance gap CLOSED (real NQ=F
+re-run of vol-target ≈ proxy, 0.66/0.33/0.97 vs 0.66/0.33/0.96); Yahoo ZN=F
+unadjusted stitch drops roll carry (−1.6pp/y) → IEF−cash is the authority
+series for the bond leg. Charts gain the divgated line (_curves.json key
+"divgated", pinned from the same engine run).
 """
 from __future__ import annotations
 import json
@@ -37,7 +50,18 @@ ADOPT, GREY, RED = "#b45309", "#9ca3af", "#dc2626"
 
 # (name, sub, cagr, mdd, sharpe, calmar full/06-15/15-now, tag) — PINNED
 ROWS = [
-    ("✓ 唯一過關（全樣本；2026-07 walk-forward 後降級，見④）", ADOPT, [
+    ("✓ 換軸過關（2026-07-02）：加不相關資產，不是放大股票 beta — 見下方專節", "#16a34a", [
+        ("分散期貨疊加：+20% 公債 +20% 黃金，各掛趨勢閘門", "#axis",
+         "底倉不動，期貨疊上兩個不相關資產、腿訊號＝全站標準 E3 · 唯一「CAGR 升且 MDD 變淺」的結構 · 權重格 25/25 全過三窗 · 詳見專節 →",
+         "+15.9%", "-19.8%", "0.99", "0.80 / 0.44 / 1.12", "新候選 2026-07"),
+        ("同上，靜態版（不掛閘門）", "#axis",
+         "零參數最抗過擬合，但金債雙殺年流血（2013 −9.5pp、2022 −2.7pp vs 底倉）、MDD 視窗移到 2022 · 閘門版是更好的結構",
+         "+16.4%", "-22.6%", "1.01", "0.73 / 0.46 / 1.01", "參照"),
+        ("對照尺：同 notional +40% NQ（放大同一 beta）", "#axis",
+         "同樣加 40% 期貨曝險，加股票 beta 而非分散資產 → MDD −34%、Calmar 崩到 0.57 · 這條對照就是整個換軸故事",
+         "+19.5%", "-34.2%", "0.90", "0.57 / 0.25 / 0.91", "對照"),
+    ]),
+    ("✓ 擇時家族唯一過關（全樣本；2026-07 walk-forward 後降級，見④）", ADOPT, [
         ("vol-target 疊加（MNQ 槓 QQQ 半邊，+0.4x）", "/backtest/leverage_voltarget/",
          "依最近波動連續縮放槓桿 · 全樣本三個年代 Calmar 都小贏底倉 · walk-forward OOS 風險調整改善為零（④）· 證據主體見專頁 →",
          "+15.4%", "-23.3%", "0.92", "0.66 / 0.33 / 0.96", "候選 · WF 後降級"),
@@ -66,6 +90,9 @@ ROWS = [
         ("短天期 MA 閘門（k=5–200，複合＋二元）", "/backtest/leverage_voltarget/",
          "快開關不是解方——診斷表：閘門砍掉的日子（平靜回檔）隔日超額 7–10bps，比保留的 3–5bps 更賺；第 5 次趨勢閘門否決。表列為最接近的 MA20 複合版（仍輸 06–15）",
          "+14.7%", "-22.1%", "0.90", "0.66 / 0.27 / 0.99", "否決 2026-07"),
+        ("隔夜持倉 NQ（收盤買、開盤賣，只吃隔夜溢酬）", "#axis",
+         "異象本身是真的（QQQ 隔夜 11.2%/年 vs 日內 4.4%，四個五年段全正）但崩盤跳空在隔夜——繼承完整股票左尾（2008 −12.5% vs 底倉 −6.0、2022 −24.8% vs −16.7）；每日一進一出，1bp/side 成本即陣亡；同 beta 擇時第 7 殺。表列 +0.4x @0.5bp/side",
+         "+17.4%", "-27.8%", "0.96", "0.62 / 0.36 / 0.89", "否決 2026-07"),
     ]),
 ]
 BASE = ("1.0x STX50 底倉（不加槓桿）", "+13.8%", "-21.9%", "0.90", "0.63 / 0.24 / 0.95")
@@ -244,7 +271,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <div class="page-hdr"><div class="container">
   <div class="crumb"><a href="/">首頁</a> / 量化回測</div>
   <h1>槓桿疊加量化回測總覽</h1>
-  <div class="sub">用期貨把已採用的 STX50 股核槓到 1.8x · 目標是改善<b>風險調整後</b>報酬，不是衝 CAGR · <a href="/backtest/criteria/">評估標準</a></div>
+  <div class="sub">用期貨在已採用的 STX50 股核上加報酬——放大到 1.8x（擇時家族）或疊上不相關資產（換軸） · 目標是改善<b>風險調整後</b>報酬，不是衝 CAGR · <a href="/backtest/criteria/">評估標準</a></div>
   <div class="tabs"><a href="/backtest/">🇺🇸 美股</a><a href="/backtest/tw/">🇹🇼 台股</a><a href="/backtest/multi/">🧩 多資產</a><a class="on" href="/backtest/leverage/">🔧 槓桿疊加</a></div>
 </div></div>
 
@@ -252,8 +279,8 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 
 <!-- SPOTLIGHT -->
 <div class="section">
-<h2 class="section-title">唯一過關的方法 · 自適應 vol-target 疊加</h2>
-<div class="section-sub">一連串槓桿設計裡，只有這個三個年代（全樣本）都小贏底倉。先講它怎麼運作(對你是新方法),再給證據——以及 2026-07 walk-forward 之後它為什麼被降級。</div>
+<h2 class="section-title">擇時家族唯一過關 · 自適應 vol-target 疊加</h2>
+<div class="section-sub">在「挑時段放大同一股票 beta」的一連串設計裡，只有這個三個年代（全樣本）都小贏底倉。先講它怎麼運作(對你是新方法),再給證據——以及 2026-07 walk-forward 之後它為什麼被降級。<b>2026-07-02 換軸新結果（加不相關資產而非放大同 beta）以更小代價全面勝過本方法，見<a href="#axis">下一節</a>。</b></div>
 <div class="acard">
   <div class="ac-tag">候選 · 小 edge · 2026-07 walk-forward 後降級</div>
   <div class="ac-name">vol-target 疊加（MNQ 只槓 QQQ 半邊，+0.4x）</div>
@@ -269,6 +296,37 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </div>
 </div>
 
+<!-- AXIS CHANGE: diversified overlay -->
+<div class="section" id="axis">
+<h2 class="section-title">換軸新發現 · 分散資產期貨疊加（債＋黃金，2026-07-02）</h2>
+<div class="section-sub">本頁否決過的七個方案（vol-target 之外的六個擇時設計＋隔夜持倉）全屬同一家族：<b>在時間軸上挑時段，放大同一個股票 beta</b>。這一節換軸：底倉 100% 不動，用期貨的資金效率在上面疊 <b>+20% 公債（ZN）＋20% 黃金（GC）</b>的 notional——風險次線性的機制是<b>相關性 &lt;1</b>（疊加腿與底倉的月報酬相關：債 −0.10、金 +0.03），不靠任何擇時。</div>
+<div class="acard" style="border-color:#16a34a;box-shadow:0 0 0 1px #16a34a inset">
+  <div class="ac-tag" style="background:#16a34a">新候選 2026-07-02 · 未採用 · 待 OOS 並行追蹤</div>
+  <div class="ac-name">分散期貨疊加（+20% ZN +20% GC，各掛 E3 趨勢閘門）</div>
+  <div class="ac-sub">腿訊號＝全站標準 E3（W40·W52·TSMOM，鎖定既有參數、無新調參）；訊號不在就把該腿收掉。保證金只綁約 3–5% 資金。</div>
+  <div class="ac-metrics">
+    <div><span>CAGR</span><b style="color:#16a34a">+15.9%</b></div>
+    <div><span>MDD</span><b style="color:#16a34a">-19.8%（比底倉淺）</b></div>
+    <div><span>Sharpe</span><b>0.99</b></div>
+    <div><span>Calmar 全/06–15/15–now</span><b style="font-size:.82rem">0.80/0.44/1.12</b></div>
+  </div>
+  <div style="font-size:.8rem;color:var(--muted);margin-top:.7rem;border-top:1px solid var(--border);padding-top:.6rem">
+  底倉 13.84% / −21.87% / 0.90 / 0.63–0.24–0.95。這是本頁唯一「<b>CAGR 升 2pp 且 MDD 反而變淺 2pp</b>」的結構——其他所有方案都在用回撤換報酬。</div>
+</div>
+<div class="card">
+<table><thead><tr><th>系統</th><th>CAGR</th><th>MDD</th><th>Sharpe</th><th>Calmar 全/06–15/15–now</th><th>2008</th><th>2013</th><th>2022</th></tr></thead>
+<tbody>
+<tr><td><b>閘門版（headline）</b></td><td style="color:#16a34a;font-weight:700">+15.9%</td><td style="color:#16a34a;font-weight:700">-19.8%</td><td>0.99</td><td>0.80 / 0.44 / 1.12</td><td>-3.9%</td><td>+28.9%</td><td>-17.4%</td></tr>
+<tr><td>靜態版（不掛閘門）</td><td>+16.4%</td><td>-22.6%</td><td>1.01</td><td>0.73 / 0.46 / 1.01</td><td>-2.3%</td><td>+20.2%</td><td>-19.4%</td></tr>
+<tr><td>對照尺：同 notional +40% NQ</td><td>+19.5%</td><td style="color:#dc2626">-34.2%</td><td>0.90</td><td>0.57 / 0.25 / 0.91</td><td style="color:#dc2626">-22.9%</td><td>+40%+</td><td style="color:#dc2626">-29.0%</td></tr>
+<tr><td>對照尺：vol-matched NQ（同風險預算，僅撐 +4%）</td><td>+14.4%</td><td>-22.1%</td><td>0.90</td><td>0.65 / 0.27 / 0.97</td><td>-7.7%</td><td>—</td><td>-18.0%</td></tr>
+<tr style="background:#fafbfc"><td><b>1.0x STX50 底倉</b></td><td>+13.8%</td><td>-21.9%</td><td>0.90</td><td>0.63 / 0.24 / 0.95</td><td>-6.0%</td><td>+29.7%</td><td>-16.7%</td></tr>
+</tbody></table>
+</div>
+<div class="note"><b>對照尺講完了整個故事：</b>同樣加 40% notional，加「更多股票 beta」（NQ）Calmar 崩到 0.57、MDD −34%；同風險預算下 NQ 只撐得起 +4% notional（+0.6pp CAGR），分散疊加卻拿到 +2~2.6pp。<b>穩健性：</b>權重格 10–50% × 10–50% 閘門版 <b>25/25 全格</b>三窗都贏底倉（靜態版 20/36）——是高原不是單點；腿訊號沿用全站 E3、零新參數。<b>逐年 edge 分佈</b>（前次 vol-target 的死因是全部集中 2008 一次）：21 年中 11 年為正、最差年只 −3.3pp（2021）、獲利橫跨三個年代（2006–11 金債多頭、2019–20、2024–25）。</div>
+<div class="warn"><b>誠實警語：</b>①<b>金債雙殺年是天然死穴</b>——靜態版 2013 輸底倉 9.5pp、2022 輸 2.7pp（MDD 視窗也移到 2022）；閘門版把兩年都壓回底倉 ±1pp 內，這就是要掛閘門的理由。②<b>2012–2018 是七年乾涸期</b>（每年 −0.8～+0.7pp），2025 金價大年單年貢獻 +10.6pp——黃金過去 20 年的實現報酬美化了 CAGR，<b>前瞻主張是「分散」，不是「黃金會繼續漲」</b>。③1970s 式長期通膨 regime（股債齊跌數年）下閘門有滯後，會落後底倉。④資料：Yahoo 的連續期貨 ZN=F 未調整拼接<b>每季丟掉 roll carry（約 −1.6pp/年）</b>，債腿權威序列＝IEF−現金；GC=F 為 COMEX 13:30 結算時間差。真期貨與 proxy 兩版都跑、結論相同（閘門版 0.80 vs 0.80）。程式：<code>v7-backtest/src/long_track_backtest/leverage_diversified_overlay.py</code>（含權重格、對照尺、危機年、edge 分佈全表）、<code>leverage_overnight_nq.py</code>（隔夜否決紀錄）。</div>
+</div>
+
 <!-- PERF CURVES -->
 <div class="section">
 <h2 class="section-title">績效曲線 · 權益與回撤</h2>
@@ -282,7 +340,8 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
   <div style="position:relative;width:100%;height:240px"><canvas id="chart-dd"></canvas></div>
 </div>
 <div class="note"><b>讀法：</b>權益圖上「常態 1.8x」(灰虛線)終值最高，但回撤圖它的谷比 vol-target／底倉深得多、B&amp;H(點線)更是 −50% 級。
-<b>vol-target(琥珀)的回撤幾乎貼著底倉(藍)</b> —— 這就是「小 edge」的長相：多賺一點、痛幾乎沒多。(月頻略低估盤中回撤，精確值見下方表格。)</div>
+<b>vol-target(琥珀)的回撤幾乎貼著底倉(藍)</b> —— 這就是「小 edge」的長相：多賺一點、痛幾乎沒多。(月頻略低估盤中回撤，精確值見下方表格。)
+<b>綠線＝換軸分散疊加（閘門版，2026-07-02 新候選）</b>：權益比琥珀高、回撤谷比底倉還淺——詳見<a href="#axis">換軸專節</a>。</div>
 </div>
 
 <!-- YEARLY -->
@@ -375,10 +434,10 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
   <b>2026-07 walk-forward 後的誠實定位：這是「n=1 危機保險論點」，不再是「小 edge、三個年代都贏」。</b>全樣本 Sharpe +0.02–0.05、Calmar +0.02–0.06（且只對股票，見 ③）；但 OOS 可驗證的部分為零（見下）。
   最大實質價值是<b>危機年自動收槓桿（尾部只小幅放大）＋ 平靜年小幅加速</b>。<br>
   · <b style="color:#dc2626">walk-forward 已補（2026-07-02）——結果是降級，不是背書</b>：擴張窗逐年選參（參數格＝原敏感度掃過的範圍；訓練 2006–2010 起，OOS 2011–今逐年串鏈）後，誠實 OOS 版 Sharpe <b>1.036 vs 底倉 1.038</b>、Calmar <b>0.798 vs 0.798</b>——<b>OOS 風險調整改善為零</b>，只剩 +1.2pp CAGR 換 +1.5pp MDD（約 1:1 的交換）。參數本身穩定（2018 起收斂在 15d/1.8x、每年選的都在高原上，只小幅落後事後固定版 Sharpe 1.056），所以問題<b>不是參數過擬合，是 regime 集中</b>：全樣本的風險調整優勢幾乎全部來自 <b>2008 那一次自動降槓桿</b>，而 2008 落在最低訓練窗之內、<b>用一條歷史永遠無法 out-of-sample 驗證</b>。2011 後僅有的兩次壓力測試結果混合：2020 小贏底倉（+48.4% vs +47.4%）、2022 多賠（−16.7% vs −15.4%）——<b>快崩躲得掉、慢磨要付錢</b>；機制成立，優勢未證。完整證據（逐年選參、OOS 逐年表、換訊號／短 MA 全表）見<a href="/backtest/leverage_voltarget/">專頁</a>；程式：<code>leverage_walkforward.py</code>。<br>
-  · <b style="color:#dc2626">「真實期貨驗證」provenance 缺口(2026-07 誠實揭露)</b>:2026-06 曾宣稱改用真實 NQ 期貨重跑、結果略勝 QQQ-現金代理，但當時<b>沒有留下可重現的程式</b>——追查兩個 repo 的 <code>git log -p</code> 在該次修正前後都只改了文字數字，從未有對應的計算程式碼。後續一次跨頁引擎同步(2026-06-30,cash-splice 修正)又把這裡的數字直接覆寫成代理本身的重算值，現在這句話已經<b>沒有獨立於代理的真實期貨數字可查證</b>。本頁③的 6 資產類別普遍性檢驗已於 2026-07 用新程式(<code>cross_asset_voltarget.py</code>)重建、數字可重現；但「真實 NQ 期貨 vs QQQ 代理」這條證據目前無法回溯重建(續期合約的展倉成本/basis 換算需要額外的財務假設，貿然重算風險是再產生一組無法驗證的數字),誠實標記為<b>待補</b>,在補上可重現的真實期貨腳本前，本頁槓桿疊加的全部結論僅以 QQQ-現金代理版本為準。<br>
+  · <b style="color:#16a34a">「真實期貨驗證」provenance 缺口——已補（2026-07-02）</b>:2026-06 曾宣稱改用真實 NQ 期貨重跑但沒留下可重現的程式（追查 <code>git log -p</code> 只改過文字數字），一度誠實標記為「待補」。現在補上了：<code>leverage_diversified_overlay.py</code> §0b 先驗證 Yahoo 連續期貨資料品質（NQ=F vs QQQ−現金代理：相關 0.973、漂移 +0.96pp/年，離群日集中在 2020-03 漲跌停週與期貨/ETF 收盤時間差），再用<b>真 NQ=F 報酬</b>重跑採用版 vol-target：Calmar <b>0.66/0.33/0.97 vs 代理 0.66/0.33/0.96</b>（CAGR 15.51% vs 15.40%）——代理正式驗證通過，本頁結論不因換真期貨而改變。同場發現：<b>ZN=F（債）未調整拼接每季丟 roll carry（−1.6pp/年），債類期貨腿一律以 IEF−現金為權威序列</b>；GC=F 相關僅 0.887 為 COMEX 13:30 結算 vs NYSE 16:00 時間差。<br>
   · <b>工具/可執行性折扣</b>:純期貨只能槓 QQQ 半邊(+0.4x);且 <b>MNQ 微型 2019 才上市</b>,回測 65% 期間只能用全尺寸 NQ,小帳戶切不出這麼細的曝險(平均才 +0.09x)。要更大 edge 需 SOXL/保證金槓 SMH 半邊。<br>
   · <b>選擇權凸性試過</b>:模型上只小贏線性、且救不到 MDD,不值得。<b>期貨作空也試過(A/B/C)全否決</b>——救持續空頭但 V 轉/軋空賠更多。<b>換偵測訊號（VIX／期限結構／VRP／下行半波動）與短天期 MA 閘門（k=5–200）於 2026-07 全數否決</b>（見②表）——realized vol 經六個對照後仍是這個模板下最好的訊號。<br>
-  程式與全部數字：<code>v7-backtest/src/long_track_backtest/stx50_mnq_overlay.py</code>（STX50 疊加主體）、<code>cross_asset_voltarget.py</code>（③ 6 資產類別普遍性檢驗）、<code>leverage_detector_experiment.py</code>（換偵測訊號）、<code>leverage_shortma_experiment.py</code>（短 MA 閘門）、<code>leverage_walkforward.py</code>（walk-forward，皆在同目錄）。
+  程式與全部數字：<code>v7-backtest/src/long_track_backtest/stx50_mnq_overlay.py</code>（STX50 疊加主體）、<code>cross_asset_voltarget.py</code>（③ 6 資產類別普遍性檢驗）、<code>leverage_detector_experiment.py</code>（換偵測訊號）、<code>leverage_shortma_experiment.py</code>（短 MA 閘門）、<code>leverage_walkforward.py</code>（walk-forward）、<code>leverage_diversified_overlay.py</code>（換軸分散疊加＋真 NQ=F 複驗）、<code>leverage_overnight_nq.py</code>（隔夜持倉否決，皆在同目錄）。
 </div>
 </div>
 
@@ -389,7 +448,8 @@ var C=%JS_CURVES%, L=C.labels;
 function mk(id,field,logy){
   return new Chart(document.getElementById(id),{type:'line',
    data:{labels:L,datasets:[
-     {label:'vol-target 疊加(採用)',data:C.voltarget[field],borderColor:'#b45309',borderWidth:2.6,pointRadius:0,pointHoverRadius:3,tension:0.1},
+     {label:'分散疊加 閘門版(換軸新候選)',data:(C.divgated||{})[field],borderColor:'#16a34a',borderWidth:2.2,pointRadius:0,pointHoverRadius:3,tension:0.1},
+     {label:'vol-target 疊加(擇時家族)',data:C.voltarget[field],borderColor:'#b45309',borderWidth:2.0,pointRadius:0,pointHoverRadius:3,tension:0.1},
      {label:'1.0x STX50 底倉',data:C.base[field],borderColor:'#1565c0',borderWidth:1.6,pointRadius:0,pointHoverRadius:3,tension:0.1},
      {label:'常態 1.8x STX50',data:C.const18[field],borderColor:'#9ca3af',borderWidth:1.2,borderDash:[6,3],pointRadius:0,pointHoverRadius:3,tension:0.1},
      {label:'1.0x B&H 50/50',data:C.bh[field],borderColor:'#cbd5e1',borderWidth:1.1,borderDash:[2,3],pointRadius:0,pointHoverRadius:3,tension:0.1}
