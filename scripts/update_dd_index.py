@@ -1665,7 +1665,7 @@ def build_row_v12(entry: dict, dca_map: dict | None = None,
     if dca_href:
         dca_cell = (
             f'<td class="num-cell"><a href="{dca_href}" target="_blank" '
-            f'rel="noopener" title="Deep Conviction Analysis 投資決策報告" '
+            f'rel="noopener" title="投資決策層（DD §14 統一裁決 / legacy 決策報告）" '
             f'style="text-decoration:none">📋</a></td>'
         )
     else:
@@ -1817,11 +1817,11 @@ def build_row_dca_only(ticker: str, dca_href: str, dca_date: str,
         f' data-upside="0" data-upside5y="0" data-ev5y="{ev_num_attr}"'
         f' data-moat-trend="{_mt_num}" data-munger-gate="0">\n'
         f'  <td><a href="{dca_href}" class="ticker-link" target="_blank" '
-        f'rel="noopener" title="僅 DCA 報告，無對應 DD（DD 已輪替/未建檔）">'
+        f'rel="noopener" title="僅決策層報告，無對應 DD（DD 已輪替/未建檔）">'
         f'{ticker}</a></td>'
         f'{date_cell}'
         f'<td class="num-cell"><a href="{dca_href}" target="_blank" '
-        f'rel="noopener" title="Deep Conviction Analysis 投資決策報告" '
+        f'rel="noopener" title="投資決策層（DD §14 統一裁決 / legacy 決策報告）" '
         f'style="text-decoration:none">📋</a></td>'
         f'{ev_cell}'
         # 8 em-dashes: signal, trap, 四軸, §7門檻, fpe, pe2y, peg, eps-cagr

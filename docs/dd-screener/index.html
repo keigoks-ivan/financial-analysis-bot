@@ -1865,10 +1865,15 @@ fetch('./pre_id_scan.json')
         : (r.fwd_src === 'yf' ? 'yfinance 分析師 FY+1 營收預估' : '無分析師預估（零覆蓋＝真沒被發現）');
       var wk = r.weeks_on_list || 1;
       var isNew = r.first_seen && scan.as_of && r.first_seen === scan.as_of;
+      // ✅有DD 的覆蓋標籤連到該 DD §14 裁決錨點（雷達↔裁決一鍵；「懂它且剛轉強→直接看裁決」）
+      var covInner = '<span style="background:' + c.bg + ';color:' + c.fg + ';padding:1px 7px;border-radius:99px;font-size:10.5px;white-space:nowrap">' + c.t + '</span>';
+      var covCell = (r.coverage === 'dd' && r.dd_path)
+        ? '<a href="' + r.dd_path + '" target="_blank" style="text-decoration:none" title="跳該 DD §14 統一裁決">' + covInner + '</a>'
+        : covInner;
       html += '<tr style="border-top:1px solid #bae6fd' + (i % 2 ? ';background:#f8fdff' : '') + '">' +
         '<td style="padding:5px 10px;font-weight:700;color:#1e293b">' + esc(r.ticker) +
         (r.name ? ' <span style="font-weight:400;color:#64748b;font-size:10.5px">' + esc(r.name) + '</span>' : '') + '</td>' +
-        '<td style="padding:5px 8px"><span style="background:' + c.bg + ';color:' + c.fg + ';padding:1px 7px;border-radius:99px;font-size:10.5px;white-space:nowrap">' + c.t + '</span></td>' +
+        '<td style="padding:5px 8px">' + covCell + '</td>' +
         '<td style="padding:5px 8px">$' + (r.mcap_usd / 1e9).toFixed(1) + 'B <span style="color:#94a3b8;font-size:10px">' + esc(r.mcap_bucket || '') + '</span></td>' +
         '<td style="padding:5px 8px;color:#166534;font-weight:700">+' + Math.round(r.rev_growth * 100) + '%</td>' +
         '<td style="padding:5px 8px" title="' + esc(fwdTip) + '"><span style="background:' + f.bg + ';color:' + f.fg + ';padding:1px 7px;border-radius:99px;font-size:10.5px;white-space:nowrap;font-weight:600">' + fwdTxt + '</span></td>' +

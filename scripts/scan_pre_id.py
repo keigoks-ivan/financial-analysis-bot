@@ -70,7 +70,9 @@ SCREENER = ROOT / "docs" / "screener" / "latest.json"
 DD_SCREENER = ROOT / "docs" / "dd-screener" / "latest.json"
 
 sys.path.insert(0, str(Path(__file__).parent))
-from list_breakout_candidates import load_id_metas, dd_universe, norm_ticker  # noqa: E402
+from list_breakout_candidates import (  # noqa: E402
+    load_id_metas, dd_universe, norm_ticker, DD_DIR, DD_FILE_RE,
+)
 
 YF_FALLBACK_SCREENS = ("small_cap_gainers", "aggressive_small_caps", "growth_technology_stocks")
 US_EXCHANGES = ("NMS", "NYQ", "NGM", "NCM", "ASE")  # main boards only, no OTC/pink
@@ -115,6 +117,23 @@ def coverage_map():
             return "id"
         return ""
     return state
+
+
+def dd_path_map():
+    """norm_ticker → latest DD's #decision anchor (v13/v14 決策層 = §14 統一裁決).
+    Lets a ✅有DD shape-hit link straight to its verdict — the radar row and the
+    main-table verdict become one click apart（懂它且剛轉強→直接看裁決）."""
+    latest: dict = {}  # tk -> (date_str, filename)
+    for p in DD_DIR.glob("DD_*.html"):
+        m = DD_FILE_RE.match(p.name)
+        if not m:
+            continue
+        tk = norm_ticker(m.group(1))
+        date_str = p.name[-13:-5]  # YYYYMMDD before .html
+        prev = latest.get(tk)
+        if prev is None or date_str > prev[0]:
+            latest[tk] = (date_str, p.name)
+    return {tk: f"/dd/{fname}#decision" for tk, (_, fname) in latest.items()}
 
 
 def load_koyfin_fwd():
@@ -322,6 +341,7 @@ ACCEL_LABEL = {"up": "📈", "down": "📉", "flat": "➖", None: "—"}
 def main():
     dry = "--dry-run" in sys.argv
     state = coverage_map()
+    dd_paths = dd_path_map()
     koyfin = load_koyfin_fwd()
     cands = gather_candidates()
     all_cands = list(cands.values())
@@ -333,6 +353,9 @@ def main():
     for r in hits:
         r["coverage"] = state(r["ticker"])
         r["mcap_bucket"] = mcap_bucket(r.get("mcap_usd"))
+        # ✅有DD hits carry a link to their DD §14 verdict anchor（雷達↔裁決一鍵）
+        if r["coverage"] == "dd":
+            r["dd_path"] = dd_paths.get(r["ticker"])
     print(f"形狀命中 {len(hits)} 檔 → 抓前瞻預估（Koyfin 同源優先，盲區 yfinance 補）…")
     add_forward_layer(hits, koyfin)
     now = datetime.now(timezone(timedelta(hours=8)))
