@@ -1,17 +1,25 @@
 name: Weekly Fundamental Refresh
 
-# 基本面層每週日跑一次。
+# 基本面層 + 標的清單每週日跑一次。
 # 整合原先：weekly-alpha-jensen.yml (Sun 19:00 UTC)
 #
 # 跑 Sun 18:00 UTC = Mon 02:00 Taipei：
 #   - dd_alpha_ranker.py --layers fundamental → Angle 1 多因子 + 3 GARP + 4 護城河
 #   - dd_alpha_ranker.py --layers jensen      → Angle 6 Jensen α (5Y weekly OLS vs SPY)
+#   - scan_pre_id.py                          → 形狀掃描（爆發形狀 × 前瞻確認 × 覆蓋）
+#   - generate_targets.py                     → 跨層最強訊號標的清單 targets.html
 #
 # 為何週度而非每日：
 #   - 基本面層讀 dd-meta 內的 moat_score / quality_score / fpe_fy2 / pct_5y
 #     等靜態數字，DD/DCA 不重寫就不會變
 #   - Jensen 用 5Y weekly closes，day-over-day 幾乎不會變動
+#   - 形狀掃描過濾的是季營收成長（季度數字，不會日內變）+ 前瞻預估（月度 Excel），
+#     天天跑只是多撞 yfinance rate-limit；週度既符合定位又省額度
 #   - 每日跑只是反覆寫出同樣 JSON，浪費 ~5min Actions 時間
+#
+# Fail-safe：scan_pre_id / generate_targets 皆 continue-on-error，yfinance 抽風時
+#   scan 失敗不 abort job，pre_id_scan.json 維持上週版本（不寫壞），標的頁用
+#   「上週形狀 + 本週裁決」優雅降級重生。
 #
 # 即時刷新仍由 update_dd_index.py 在 DD/DCA 寫入時負責 cascade。
 # 非基本面（價格驅動）每日由 daily-non-fundamental-refresh.yml 處理。
@@ -38,13 +46,27 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install "yfinance>=0.2.40" pandas numpy
+        run: pip install "yfinance>=0.2.54" pandas numpy
 
       - name: Alpha-Rank fundamental layer (Angle 1 多因子 + 3 GARP + 4 護城河)
         run: python scripts/dd_alpha_ranker.py --layers fundamental
 
       - name: Alpha-Rank jensen layer (Angle 6 Jensen α)
         run: python scripts/dd_alpha_ranker.py --layers jensen
+        continue-on-error: true
+
+      # ── 標的產生器鏈（形狀掃描 → 標的頁）─────────────────────────────
+      # scan_pre_id.py 抓 ~272 檔 yfinance .info + 前瞻預估，重且會撞 rate-limit，
+      # 所以掛週度而非每日。continue-on-error：yfinance 抽風時 scan 失敗不 abort
+      # 整個 job；scan 失敗時 pre_id_scan.json 維持上週版本（不寫壞），
+      # generate_targets.py 照樣用「上週形狀 + 本週裁決」重生，優雅降級不斷鏈。
+      - name: Shape scan (爆發形狀 × 前瞻確認 × 覆蓋標籤)
+        run: python scripts/scan_pre_id.py
+        continue-on-error: true
+
+      # 純本地 JSON 合併、無網路，失敗率極低；仍加 continue-on-error 保證絕不擋 commit。
+      - name: Generate targets page (跨層最強訊號)
+        run: python scripts/generate_targets.py
         continue-on-error: true
 
       - name: Commit and push if changed
@@ -54,12 +76,14 @@ jobs:
           git add docs/dd-screener/alpha-rank.html \
                   docs/dd-screener/alpha-rank.json \
                   docs/dd-screener/alpha-rank-state/ \
-                  docs/dd-screener/alpha-rank-snapshots/
+                  docs/dd-screener/alpha-rank-snapshots/ \
+                  docs/dd-screener/pre_id_scan.json \
+                  docs/dd-screener/targets.html
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
             DATE=$(TZ=Asia/Taipei date +"%Y-%m-%d")
-            git commit -m "data: Weekly fundamental refresh ${DATE}
+            git commit -m "data: Weekly fundamental refresh + 標的清單 ${DATE}
 
             Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
             git push
