@@ -136,12 +136,13 @@ def collect(metas, dd_set, include_dd):
 
 
 def rank_key(row):
-    # v2.4-field-rich rows first (they carry real ranking signal), then:
-    # small/mid cap ahead of mega, higher purity, higher demand multiple,
-    # stronger conviction, more 🔴 appearances.
-    has_v24 = row["purity_pct"] is not None or row["mcap_bucket"] is not None
+    # Rank by attention-INDEPENDENT signals: small/mid cap first, then purity,
+    # demand multiple, conviction. core_count (how many IDs flag it 🔴) is
+    # deliberately demoted to last tiebreak — it measures ID overlap density
+    # (research attention), which anti-correlates with undiscovered multi-baggers:
+    # a cold-industry pure-play covered by exactly one ID must not lose to a
+    # steakhouse chain that five overlapping restaurant IDs all happen to name.
     return (
-        0 if has_v24 else 1,
         MCAP_ORDER.get(row["mcap_bucket"], 9),
         -(row["purity_pct"] or 0),
         -(row["best_demand_mult"] or 0),
@@ -151,11 +152,78 @@ def rank_key(row):
     )
 
 
+def yf_symbol(tk: str) -> str:
+    """Pool keys are normalized (2308TW); yfinance wants dotted (2308.TW)."""
+    m = re.match(r"^(\d{4,6})(TW|KS|T|HK)$", tk)
+    return f"{m.group(1)}.{m.group(2)}" if m else tk
+
+
+def bucket_mcap(mcap) -> str | None:
+    if not isinstance(mcap, (int, float)) or mcap <= 0:
+        return None
+    usd_b = mcap / 1e9
+    if usd_b > 200:
+        return "mega"
+    if usd_b > 10:
+        return "large"
+    if usd_b > 2:
+        return "mid"
+    return "small"
+
+
+def backfill_mcap(rows, prev_pool_path=None):
+    """Fill mcap_bucket mechanically via yfinance for rows the IDs left blank.
+
+    mcap needs no ID regen — it's mechanical data, and it is the single most
+    important attention-independent rank key. Failures fall back to the
+    previous pool file's value (MA-cache pattern), else stay None (待補).
+    Note: non-US local listings are bucketed on their native-currency mcap as
+    a rough proxy (KRW/TWD overstate size); acceptable for 4-bucket coarseness
+    of US-heavy pool, refined when ID v2.4 regen supplies authored buckets.
+    """
+    prev = {}
+    if prev_pool_path and Path(prev_pool_path).exists():
+        try:
+            for r in json.loads(Path(prev_pool_path).read_text())["rows"]:
+                if r.get("mcap_bucket"):
+                    prev[r["ticker"]] = r["mcap_bucket"]
+        except Exception:
+            pass
+    todo = [r for r in rows if r["mcap_bucket"] is None]
+    if not todo:
+        return 0
+    try:
+        import yfinance as yf
+        from concurrent.futures import ThreadPoolExecutor
+    except ImportError:
+        for r in todo:
+            r["mcap_bucket"] = prev.get(r["ticker"])
+        return 0
+
+    def fetch(r):
+        try:
+            mc = yf.Ticker(yf_symbol(r["ticker"])).fast_info["marketCap"]
+            return r, bucket_mcap(mc)
+        except Exception:
+            return r, None
+
+    filled = 0
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        for r, bucket in ex.map(fetch, todo):
+            r["mcap_bucket"] = bucket or prev.get(r["ticker"])
+            if r["mcap_bucket"]:
+                r["mcap_source"] = "yfinance" if bucket else "cache"
+                filled += 1
+    return filled
+
+
 def build_pool_doc():
     """Assemble the discovery-pool document consumed by /dd-screener/ FE."""
     metas = load_id_metas()
     dd_set = dd_universe()
     rows = collect(metas, dd_set, include_dd=False)
+    backfill_mcap(rows, prev_pool_path=POOL_PATH)
+    rows.sort(key=rank_key)
     for r in rows:
         r["themes"] = list(dict.fromkeys(r["themes"]))
         r.pop("roles", None)
@@ -198,6 +266,8 @@ def main():
     metas = load_id_metas()
     dd_set = dd_universe()
     rows = collect(metas, dd_set, include_dd=args.all)
+    backfill_mcap(rows, prev_pool_path=POOL_PATH)
+    rows.sort(key=rank_key)
     total = len(rows)
     n_v24 = sum(1 for r in rows if r["purity_pct"] is not None or r["mcap_bucket"] is not None)
     if args.top:
