@@ -252,6 +252,15 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
   <span class="ath-empty" id="ath-empty-placeholder" style="display:none">暫無 ticker 觸頂</span>
 </section>
 
+<!-- 爆發獵場 watch（v14.3 F4 AR Live）：runway 🟢 + moat ≠↓ 的觀望股，回檔使
+     ar_live ≥ 4 時自動亮燈——「等回檔」的系統掛單。資料 = latest.json stocks[].ar_live
+     / breakout_watch（build_dd_screener Step 4.6，每日 build 重算）。無命中時整條隱藏。 -->
+<section id="breakout-watch" aria-label="爆發獵場 watch" style="display:none;margin:10px 0;padding:9px 16px;background:linear-gradient(135deg,#fff7ed 0%,#ffedd5 100%);border:1px solid #fb923c;border-radius:10px;font-size:12.5px;line-height:1.9">
+  <span style="font-weight:700;color:#9a3412">🎯 爆發獵場 watch（AR Live ≥ 4 · runway 🟢 · moat ≠↓）：</span>
+  <span id="bw-chips"></span>
+  <span style="color:#c2410c;opacity:.75;font-size:11px">｜AR Live = 以今日價重算 §11.5 不對稱比;亮燈＝「觀望等回檔」的觸發條件已到，去讀該檔 DD §14b 重啟條款</span>
+</section>
+
 <div class="filter-row">
   <div class="filter-inner">
     <div class="filter-group">
@@ -1645,6 +1654,23 @@ document.addEventListener('click', function(e) {
   if (DATA) renderAll();
 });
 
+// ── 爆發獵場 watch（AR Live，v14.3 F4）─────────────────────────────────────
+function renderBreakoutWatch(stocks) {
+  var wrap = document.getElementById('breakout-watch');
+  var box = document.getElementById('bw-chips');
+  if (!wrap || !box) return;
+  var hits = stocks.filter(function(s) { return s.breakout_watch === true; })
+                   .sort(function(a, b) { return (b.ar_live || 0) - (a.ar_live || 0); });
+  if (!hits.length) { wrap.style.display = 'none'; return; }
+  var esc = function(t) { return String(t == null ? '' : t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+  box.innerHTML = hits.map(function(s) {
+    var px = (s.ma && s.ma.price != null) ? '$' + Number(s.ma.price).toFixed(0) : '';
+    return '<a href="' + esc(s.dca_path || s.dd_path || '#') + '" style="display:inline-block;margin:1px 6px 1px 0;padding:2px 11px;background:#9a3412;color:#fff;border-radius:99px;text-decoration:none;font-weight:700">'
+      + esc(s.ticker) + ' <span style="opacity:.85;font-weight:400">AR ' + esc(s.ar_live) + (px ? ' · ' + px : '') + '</span></a>';
+  }).join('');
+  wrap.style.display = '';
+}
+
 // ── Data fetch ────────────────────────────────────────────────────────────
 fetch('./latest.json')
   .then(function(r) {
@@ -1675,6 +1701,7 @@ fetch('./latest.json')
 
     updateHeroBadge();
     renderAthSpotlight(data.stocks || []);
+    renderBreakoutWatch(data.stocks || []);
     renderEpsSourceBanner();
     renderAll();
   })

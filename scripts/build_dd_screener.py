@@ -1892,6 +1892,33 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int) -> dict
             if d5y and isinstance(row.get("ma"), dict):
                 row["ma"].update(d5y)
 
+    # Step 4.6 (v1.9, v14.3 F4): AR Live — recompute the §11.5 asymmetry ratio
+    # at today's price for reports that emit bull/bear targets + probabilities.
+    # ar_live = (p_bull × upside%) / (p_bear × downside%); breakout_watch fires
+    # when a runway-🟢, moat-not-↓ name's pullback pushes ar_live ≥ 4 — the
+    # "觀望等回檔" verdict becomes a standing order instead of a memory item.
+    ar_live_count = watch_count = 0
+    for row in enriched:
+        row["ar_live"] = None
+        row["breakout_watch"] = False
+        price = (row.get("ma") or {}).get("price")
+        vals = (price, row.get("bull_5y_price"), row.get("bear_5y_price"),
+                row.get("p_bull_pct"), row.get("p_bear_pct"))
+        if not all(isinstance(v, (int, float)) and v > 0 for v in vals):
+            continue
+        price, bull, bear, p_b, p_br = vals
+        up, down = bull / price - 1, 1 - bear / price
+        if up <= 0 or down <= 0:
+            continue  # price outside [bear, bull] band — scenario tree stale, skip
+        row["ar_live"] = round((p_b * up) / (p_br * down), 1)
+        ar_live_count += 1
+        if (row["ar_live"] >= 4
+                and row.get("runway_post_y5") == "🟢"
+                and row.get("moat_trend") != "↓"):
+            row["breakout_watch"] = True
+            watch_count += 1
+    print(f"  Step 4.6  AR Live: {ar_live_count} tickers computed, {watch_count} on breakout watch")
+
     # Step 5: sort (pass/fail already computed above)
     enriched.sort(key=_sort_key)
 

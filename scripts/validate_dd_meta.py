@@ -121,6 +121,12 @@ V13_OPTIONAL_TYPES = {
     "max_dd_pct": (int, float),
     # v14.3: §11.5 asymmetry ratio (P_bull×|Bull 5Y%|)/(P_bear×|Bear 5Y%|)
     "asym_ratio": (int, float),
+    # v14.3 F4 (AR Live): §11.5 Bull/Bear 5Y target prices + scenario
+    # probabilities — lets dd-screener recompute ar_live at today's price.
+    "bull_5y_price": (int, float),
+    "bear_5y_price": (int, float),
+    "p_bull_pct": (int, float),
+    "p_bear_pct": (int, float),
 }
 
 

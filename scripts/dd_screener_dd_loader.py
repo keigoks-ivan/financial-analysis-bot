@@ -222,6 +222,16 @@ def load_dd_universe(
         # v1.3: price_at_dd 用於 live FwdPE drift 計算 (live_fpe ≈ fpe_fy2 × price_now/price_at_dd)
         price_at_dd = meta.get("price_at_dd")
 
+        # v1.9 (v14.3 F4): AR Live inputs — §11.5 Bull/Bear 5Y target prices +
+        # scenario probabilities. Optional; present only in v14.3+ reports.
+        # build_dd_screener recomputes ar_live daily from these + current price,
+        # turning a static 觀望 verdict into a standing breakout-watch order.
+        runway_post_y5 = meta.get("runway_post_y5")
+        bull_5y_price = meta.get("bull_5y_price")
+        bear_5y_price = meta.get("bear_5y_price")
+        p_bull_pct = meta.get("p_bull_pct")
+        p_bear_pct = meta.get("p_bear_pct")
+
         # ── dd_path / dd_date ─────────────────────────────────────────────
         dd_filename = path.name
         dd_path = f"/dd/{dd_filename}"
@@ -255,6 +265,11 @@ def load_dd_universe(
             "quality_score": quality_score,
             "ai_risk": ai_risk,
             "price_at_dd": price_at_dd,
+            "runway_post_y5": runway_post_y5,
+            "bull_5y_price": bull_5y_price,
+            "bear_5y_price": bear_5y_price,
+            "p_bull_pct": p_bull_pct,
+            "p_bear_pct": p_bear_pct,
             "dd_path": dd_path,
             "dd_date": dd_date,
             "dca_path": dca_path,
