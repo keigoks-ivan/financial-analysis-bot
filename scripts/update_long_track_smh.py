@@ -281,7 +281,7 @@ def recent_table(t: str, d: dict) -> str:
 <h3>{t} — 近 8 週軌跡(週線)</h3>
 <table><thead><tr><th>週五</th><th>收盤</th><th>40週均</th><th>距離</th><th>52週均</th><th>距離</th><th>Supertrend</th><th>週線訊號</th></tr></thead>
 <tbody>{rows}</tbody></table>
-<div style="font-size:.72rem;color:var(--muted);margin-top:.5rem">TSMOM 為月頻(月底判定),不在此週線表中;見上方卡片當前值。</div>
+<div style="font-size:.72rem;color:var(--muted);margin-top:.5rem">TSMOM 為月頻(月底判定),不在此週線表中；見上方卡片當前值。</div>
 </div>"""
 
 
@@ -398,17 +398,17 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
   <div class="status-date">數據截至 {data_date}(週五收盤)· 頁面更新 {now}</div>
 </div>
 
-{('<div style="background:var(--red-bg);border:2px solid var(--red-border);border-radius:10px;padding:.9rem 1.2rem;margin:.5rem 0 1rem;font-size:.9rem"><b style="color:var(--red-text)">⚡ 本週訊號變化</b><br>' + "<br>".join(changes) + '<br><span style="font-size:.78rem;color:var(--muted)">下一個交易日將部位調整至上列目標。</span></div>') if changes else ('<div style="text-align:center;font-size:.78rem;color:var(--muted);margin:.3rem 0 1rem">本週無訊號變化' + (f"(上次變化:{last_change_date})" if last_change_date else "") + '</div>')}
+{('<div style="background:var(--red-bg);border:2px solid var(--red-border);border-radius:10px;padding:.9rem 1.2rem;margin:.5rem 0 1rem;font-size:.9rem"><b style="color:var(--red-text)">⚡ 本週訊號變化</b><br>' + "<br>".join(changes) + '<br><span style="font-size:.78rem;color:var(--muted)">下一個交易日將部位調整至上列目標。</span></div>') if changes else ('<div style="text-align:center;font-size:.78rem;color:var(--muted);margin:.3rem 0 1rem">本週無訊號變化' + (f"(上次變化：{last_change_date})" if last_change_date else "") + '</div>')}
 
 <div class="banner">
   <b>STX50 長線訊號 · 2026-06-13 採用 · 實倉中。</b>
-  這是<b>曝險狀態讀數</b>,不是每日交易動作 —— 訊號為週/月頻,每標的年換手約 2.4 邊,
-  多數日子不會變化。SMH 為高 β 半導體,集中度高;此結構在半導體寒冬的 whipsaw 從未實測,
+  這是<b>曝險狀態讀數</b>,不是每日交易動作 —— 訊號為週/月頻，每標的年換手約 2.4 邊，
+  多數日子不會變化。SMH 為高 β 半導體，集中度高；此結構在半導體寒冬的 whipsaw 從未實測，
   解讀請對照 <a href="/backtest/long_track_smh/">回測頁</a> 的 caveat。
 </div>
 
 <div style="text-align:center;font-size:.82rem;margin:.2rem 0 1rem;padding:.6rem;background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px">
-  🔧 想在這上面用期貨疊一點槓桿? → <a href="/long-track-smh/leverage/" style="font-weight:600">vol-target 槓桿層(實驗·紙上讀數)</a>
+  🔧 想在這上面用期貨疊一點槓桿？ → <a href="/long-track-smh/leverage/" style="font-weight:600">vol-target 槓桿層(實驗·紙上讀數)</a>
 </div>
 
 <div class="tgrid">{cards}</div>
@@ -418,11 +418,11 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
 <div class="rule-list">
 ① <b>W40</b>:週線收盤 &gt; 40 週均線<br>
 ② <b>W52</b>:週線收盤 &gt; 52 週均線<br>
-③ <b>TSMOM</b>:過去 12 個月總報酬 &gt; 現金(SHY/BIL)同期 12 個月報酬,<b>月頻、月底判定</b><br>
+③ <b>TSMOM</b>:過去 12 個月總報酬 &gt; 現金(SHY/BIL)同期 12 個月報酬，<b>月頻、月底判定</b><br>
 ④ <b>ST 閘門</b>:週線 Supertrend(ATR 10、乘數 3,TradingView final-band 公式)方向 —
-翻空時受閘半倉出場、翻多時回來;<b>閘門只減倉、永不加倉</b><br>
+翻空時受閘半倉出場、翻多時回來；<b>閘門只減倉、永不加倉</b><br>
 <span style="color:var(--muted);font-size:.78rem">E3 = 三訊號平均(0/33%/67%/100% 四檔);ST 關閘時倉位折半(0/17%/33%/50%)。
-兩標的各自獨立跑訊號與資金,日報酬 50/50 加權合成。成本單邊 7bps 計於 |倉位變動|。2026-06-13 採用,對照線為 E3。<br>
+兩標的各自獨立跑訊號與資金，日報酬 50/50 加權合成。成本單邊 7bps 計於 |倉位變動|。2026-06-13 採用，對照線為 E3。<br>
 ST(10,3) 的 3×3 參數格檢驗（2026-07-02）：方向穩健 —— 9 點中 8 點 Calmar 不輸同 CAGR 現金對照；
 幅度不穩健 —— (10,3) 的 +0.07 是單點最佳（次佳 +0.04、中位數 +0.02），headline 改善約一半來自恰好選中 (10,3)，
 詳見 <a href="/backtest/long_track_smh/">回測頁</a>。</span>
@@ -432,26 +432,26 @@ ST(10,3) 的 3×3 參數格檢驗（2026-07-02）：方向穩健 —— 9 點中
 {tables}
 
 <div class="card">
-<h3>訊號流程說明 — 出場的半倉怎麼買回來?(以 2026 春季 QQQ 為實例)</h3>
+<h3>訊號流程說明 — 出場的半倉怎麼買回來？(以 2026 春季 QQQ 為實例)</h3>
 <div class="rule-list" style="font-size:.8rem">
 兩套訊號<b>完全獨立、各自演</b>:E3 的三個訊號自己進出(每跌破/收復一條線動 1/3),
 ST 閘門自己開關(受閘半倉跟著 E3 或歸零)。<b>買回訊號就是 Supertrend 自己翻多的那一週收盤</b>
-(週收上穿被棘輪壓低的上軌)— 不需要等均線重新給進場訊號,閘門是「狀態」不是一次性停損。<br>
-實務上每週五收盤只算一個數字:<b>目標倉位 = 0.5×E3 + 0.5×(ST開 ? E3 : 0)</b>,
+(週收上穿被棘輪壓低的上軌)— 不需要等均線重新給進場訊號，閘門是「狀態」不是一次性停損。<br>
+實務上每週五收盤只算一個數字：<b>目標倉位 = 0.5×E3 + 0.5×(ST開 ? E3 : 0)</b>,
 與上週目標的差額就是下一個交易日要下的單。本頁頂部的倉位數字即當前目標。
 </div>
 <table style="margin-top:.6rem">
 <thead><tr><th>決策日(週收盤)</th><th>部位</th><th>發生了什麼</th></tr></thead>
 <tbody>
-<tr><td>2026-03-20</td><td>100% → 67%</td><td>E3 自己先出了 ⅓(W40 跌破),ST 還在多方。兩個半邊都縮:0.5×⅔ + 0.5×⅔</td></tr>
-<tr><td>2026-03-27</td><td>67% → 17%</td><td><b>ST 翻空</b>(對應 TradingView 圖上的 Sell 標籤,週收 562.58)+ E3 再掉到 ⅓。受閘半倉歸零:0.5×⅓ + 0</td></tr>
+<tr><td>2026-03-20</td><td>100% → 67%</td><td>E3 自己先出了 ⅓(W40 跌破),ST 還在多方。兩個半邊都縮：0.5×⅔ + 0.5×⅔</td></tr>
+<tr><td>2026-03-27</td><td>67% → 17%</td><td><b>ST 翻空</b>(對應 TradingView 圖上的 Sell 標籤，週收 562.58)+ E3 再掉到 ⅓。受閘半倉歸零：0.5×⅓ + 0</td></tr>
 <tr><td>2026-04-02</td><td>17% → 33%</td><td>E3 回到 ⅔(W52 收復),ST 仍空 → 受閘半倉不跟</td></tr>
 <tr><td>2026-04-10</td><td>33% → 50%</td><td>E3 回滿 3/3,ST 仍空。未受閘半倉滿、受閘半倉仍是 0</td></tr>
-<tr><td>2026-04-17</td><td>50% → 100%</td><td><b>ST 翻多(對應 TradingView 圖上的 Buy 標籤,週收 648.85)→ 受閘半倉一次買回</b></td></tr>
+<tr><td>2026-04-17</td><td>50% → 100%</td><td><b>ST 翻多(對應 TradingView 圖上的 Buy 標籤，週收 648.85)→ 受閘半倉一次買回</b></td></tr>
 </tbody>
 </table>
 <div style="font-size:.74rem;color:var(--amber-text);background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:6px;padding:.5rem .8rem;margin-top:.6rem">
-<b>誠實帳單:</b>這次受閘半倉 562 附近出、648 買回 — V 型反轉裡閘門是付錢的(高 15% 追回)。
+<b>誠實帳單：</b>這次受閘半倉 562 附近出、648 買回 — V 型反轉裡閘門是付錢的(高 15% 追回)。
 ST 閘門賺錢的場景是 2022 型持續陰跌(出場後不必更高買回);全期統計淨賺(MDD -26.9% → -21.9%、Calmar 0.56 → 0.63),
 但個別 episode 會像這次一樣難看。OOS 重審追蹤的就是這個比例有沒有走樣 — 對照線為 E3,見
 <a href="/backtest/long_track_smh/">回測頁</a>。
@@ -528,14 +528,14 @@ def main():
         for c in changes:
             lines.append("• " + c.replace("<b>", "").replace("</b>", ""))
         lines += ["",
-                  "當前目標倉位:"]
+                  "當前目標倉位："]
         for t in TICKERS:
             d_ = sigs[t]
             lines.append(f"  {t}: {d_['pos']*100:.0f}%  "
                          f"(W40{'✓' if d_['w40'] else '✕'} W52{'✓' if d_['w52'] else '✕'} "
                          f"TSMOM{'✓' if d_['tsmom'] else '✕'} ST{'✓' if d_['st'] else '✕'})")
         lines += ["", "下一個交易日將部位調整至上列目標。",
-                  "", "詳細: https://research.investmquest.com/long-track-smh/"]
+                  "", "詳細： https://research.investmquest.com/long-track-smh/"]
         alert_file.write_text("\n".join(lines), encoding="utf-8")
         print(f"Alert file: {alert_file}")
     else:

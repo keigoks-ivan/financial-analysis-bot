@@ -1,10 +1,10 @@
 """Canonical /backtest/ sub-navigation (toggle pills) — single source of truth.
 
 Every backtest page header renders the same groups via make_toggle(active):
-    對比總覽:    20y | 10y | criteria
-    個別系統:    dual | long | long_qqq | ensemble | six_state | v1r1 | gem | slope | short
-    多資產:      turtle | clenow
-    日內交易:    txf_intra
+    對比總覽：    20y | 10y | criteria
+    個別系統：    dual | long | long_qqq | ensemble | six_state | v1r1 | gem | slope | short
+    多資產：      turtle | clenow
+    日內交易：    txf_intra
 
 Used by:
     docs/backtest/_build_system_pages.py    (dual_track, gem)

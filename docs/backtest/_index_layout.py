@@ -5,7 +5,7 @@ main() calls render() here and writes docs/backtest/index.html.  Data
 (GROUPS/RET/SCATTER/BH_ROWS/PERIOD_CAGR...) still lives in _build_index.py;
 its legacy render()/TEMPLATE are DEAD code kept only as data helpers.
 Design per owner feedback:
-  * US-only page (TW split to /backtest/tw/).  Sections: 波段 + 多資產.
+  * US-only page (TW split to /backtest/tw/).  Sections: 波段 + 多資產。
   * One live card only (SMH/QQQ STX50); SPY/QQQ E3 card removed.
   * Restrained palette: green=adopted/live, red=rejected, grey=everything else.
     No per-system rainbow; charts default to live + benchmarks.
@@ -82,8 +82,8 @@ def render():
 <div class="acard-note">
   <div class="acn-title">其餘已採用 / 候補(未上實倉)</div>
   <ul>
-    <li><a href="/backtest/long_track_ensemble/">SPY/QQQ E3 集成</a> — 合格候補(原列採用,未上實倉)· 核心防守</li>
-    <li><a href="/backtest/slope_filter/">SPY/AGG 斜率</a> — 合格候補 · 勝 B&amp;H 風險調整(SPY 特定;2026-06 審計改還原日線 MDD −22.13% 後,「近支配」已撤回)</li>
+    <li><a href="/backtest/long_track_ensemble/">SPY/QQQ E3 集成</a> — 合格候補(原列採用，未上實倉)· 核心防守</li>
+    <li><a href="/backtest/slope_filter/">SPY/AGG 斜率</a> — 合格候補 · 勝 B&amp;H 風險調整(SPY 特定；2026-06 審計改還原日線 MDD −22.13% 後，「近支配」已撤回)</li>
   </ul>
 </div>"""
 
@@ -224,20 +224,20 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <div class="container">
 
 <div style="margin:1rem 0;padding:.7rem 1rem;background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;font-size:.86rem">
-📖 看不懂 E3 / Ch12 / STX50 / VCP 這些代號?→ <a href="/backtest/glossary/" style="font-weight:700">術語對照表</a>
+📖 看不懂 E3 / Ch12 / STX50 / VCP 這些代號？→ <a href="/backtest/glossary/" style="font-weight:700">術語對照表</a>
 </div>
 
 <!-- LIVE -->
 <div class="section">
 <h2 class="section-title">現役系統</h2>
-<div class="section-sub">真正動到資金的只有「實倉中」這一個;其餘採用 / 候補列在右側,未上實倉。</div>
+<div class="section-sub">真正動到資金的只有「實倉中」這一個；其餘採用 / 候補列在右側，未上實倉。</div>
 <div class="live-wrap">%CARD%</div>
 </div>
 
 <!-- 波段 -->
 <div class="section">
 <h2 class="section-title">波段系統 · 風險調整排名</h2>
-<div class="section-sub">左色帶:<span style="color:var(--green)">綠=採用</span> · 灰=候補/角色可用 · <span style="color:var(--red)">紅=否決</span>。支配性 = 對自然基準的 <a href="/backtest/criteria/">L2 判定</a>。實驗/否決收在下方。</div>
+<div class="section-sub">左色帶：<span style="color:var(--green)">綠=採用</span> · 灰=候補/角色可用 · <span style="color:var(--red)">紅=否決</span>。支配性 = 對自然基準的 <a href="/backtest/criteria/">L2 判定</a>。實驗/否決收在下方。</div>
 <div class="card">
 <table><thead><tr><th>系統</th><th>CAGR</th><th>MDD</th><th>Calmar</th><th>支配性</th><th>狀態</th></tr></thead>
 <tbody>%MAIN_ROWS%%BH_ROWS%</tbody></table>
@@ -250,7 +250,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <!-- 研究 / 否決 -->
 <div class="section">
 <h2 class="section-title">研究筆記</h2>
-<div class="section-sub">探索性研究頁(分散結構 / 反例),非實倉候選,刻意不列入上方比較表。</div>
+<div class="section-sub">探索性研究頁(分散結構 / 反例),非實倉候選，刻意不列入上方比較表。</div>
 <a class="link-card" href="/backtest/dual_track_study/" style="border-left:3px solid var(--green)">
   <span style="font-size:1.3rem">🧪</span>
   <span><span class="lc-name">雙軌分散研究 · 短MR + 長趨勢 on SMH/QQQ</span><br><span class="lc-sub">過尺 · 真實引擎(E3 長軌 + RSI2 短軌)· Calmar 0.65→0.70、MDD −27%→−18% · 兩條軸(時間架構/驅動)收斂到雙軌 = v7 Ch12 設計</span></span>
@@ -258,7 +258,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </a>
 <a class="link-card" href="/backtest/minervini/" style="border-left:3px solid var(--red)">
   <span style="font-size:1.3rem">🔬</span>
-  <span><span class="lc-name">Minervini RS+VCP 機械回測 ·《超級績效》</span><br><span class="lc-sub">否決 · 存活者偏誤樂觀上界,非忠實回測 · 即使偏誤灌水 CAGR 仍輸大盤;三槓桿(出場/進場/部位)皆推不開報酬↔回撤前緣 → alpha 在裁量、不可機械化</span></span>
+  <span><span class="lc-name">Minervini RS+VCP 機械回測 ·《超級績效》</span><br><span class="lc-sub">否決 · 存活者偏誤樂觀上界，非忠實回測 · 即使偏誤灌水 CAGR 仍輸大盤；三槓桿(出場/進場/部位)皆推不開報酬↔回撤前緣 → alpha 在裁量、不可機械化</span></span>
   <span class="lc-arrow">→</span>
 </a>
 <a class="link-card" href="/backtest/slope_filter_global/" style="border-left:3px solid #1a56db">
@@ -268,37 +268,37 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </a>
 <a class="link-card" href="/backtest/smh_vcrash/" style="border-left:3px solid #d97706">
   <span style="font-size:1.3rem">🛡️</span>
-  <span><span class="lc-name">突發 V 崩防禦 · SMH/QQQ STX50</span><br><span class="lc-sub">同台股研究套到美股 · 唯一過尺仍是分散腿,但 2022 股債雙殺讓債券危機腿反向(TLT 只 10% 過、上不去)· 跨 regime 穩健只剩黃金(過尺 10–40%);純對沖股票(put/加速出場/vol-target)全失敗</span></span>
+  <span><span class="lc-name">突發 V 崩防禦 · SMH/QQQ STX50</span><br><span class="lc-sub">同台股研究套到美股 · 唯一過尺仍是分散腿，但 2022 股債雙殺讓債券危機腿反向(TLT 只 10% 過、上不去)· 跨 regime 穩健只剩黃金(過尺 10–40%);純對沖股票(put/加速出場/vol-target)全失敗</span></span>
   <span class="lc-arrow">→</span>
 </a>
 <a class="link-card" href="/backtest/daily_vs_weekly/" style="border-left:3px solid #1a56db">
   <span style="font-size:1.3rem">⏱️</span>
-  <span><span class="lc-name">日線 vs 週線長軌 · SPY/QQQ/SMH</span><br><span class="lc-sub">長軌規則搬到日線 D60/120/200,加遍出場確認/盤整閘門(ER·R²·ADX·CHOP)/多空/200日方向/MA組合 · 0/72 真過尺,週線 long-only 是最優;盤整閘門只是重建週線、空單任何濾網都救不活</span></span>
+  <span><span class="lc-name">日線 vs 週線長軌 · SPY/QQQ/SMH</span><br><span class="lc-sub">長軌規則搬到日線 D60/120/200,加遍出場確認/盤整閘門(ER·R²·ADX·CHOP)/多空/200日方向/MA組合 · 0/72 真過尺，週線 long-only 是最優；盤整閘門只是重建週線、空單任何濾網都救不活</span></span>
   <span class="lc-arrow">→</span>
 </a>
 <a class="link-card" href="/backtest/daily_vs_weekly_global/" style="border-left:3px solid #d97706">
   <span style="font-size:1.3rem">🌐</span>
-  <span><span class="lc-name">日線 vs 週線長軌 · 全球 14 國 ETF</span><br><span class="lc-sub">同調查推廣到 14 個國家股票 ETF · 長軌 edge 集中在強趨勢市場(美/0050),多數國家週線 Calmar 僅 0.05–0.30;日線「過尺」全擠在週線最弱的市場 = 弱基準假象,非日線 alpha</span></span>
+  <span><span class="lc-name">日線 vs 週線長軌 · 全球 14 國 ETF</span><br><span class="lc-sub">同調查推廣到 14 個國家股票 ETF · 長軌 edge 集中在強趨勢市場(美/0050),多數國家週線 Calmar 僅 0.05–0.30;日線「過尺」全擠在週線最弱的市場 = 弱基準假象，非日線 alpha</span></span>
   <span class="lc-arrow">→</span>
 </a>
 <a class="link-card" href="/backtest/daily_vs_weekly_deep/" style="border-left:3px solid #059669">
   <span style="font-size:1.3rem">🔬</span>
-  <span><span class="lc-name">深掘:長軌 edge 在哪、為什麼、能否輪動 · 18 市場</span><br><span class="lc-sub">市場趨勢度(週線ER)以 r=+0.88 預測長軌 Calmar(事前可算);弱市場=趨勢不持久(在場僅36-42%+被洗);但動態跨市場輪動全失敗(輸「只用美國」0.46 vs 0.09-0.16、追高加深MDD)→ 結構關係只能靜態選市場吃、不能輪動</span></span>
+  <span><span class="lc-name">深掘：長軌 edge 在哪、為什麼、能否輪動 · 18 市場</span><br><span class="lc-sub">市場趨勢度(週線ER)以 r=+0.88 預測長軌 Calmar(事前可算);弱市場=趨勢不持久(在場僅36-42%+被洗);但動態跨市場輪動全失敗(輸「只用美國」0.46 vs 0.09-0.16、追高加深MDD)→ 結構關係只能靜態選市場吃、不能輪動</span></span>
   <span class="lc-arrow">→</span>
 </a>
 <a class="link-card" href="/backtest/ma_deviation/" style="border-left:3px solid #1a56db">
   <span style="font-size:1.3rem">📐</span>
-  <span><span class="lc-name">乖離率擇時 · 微笑曲線 (QQQ/SMH/SPY/0050)</span><br><span class="lc-sub">價對均線偏離當買賣訊 · 買側是微笑曲線(兩端深超賣/強噴出有 edge、中段最沒用),最強格深超賣 in 上升趨勢 +22%/60d 但稀有;乖離當賣訊是反指標(高乖離續漲、低乖離反彈),出場 overlay 疊週線全是幻象/有害</span></span>
+  <span><span class="lc-name">乖離率擇時 · 微笑曲線 (QQQ/SMH/SPY/0050)</span><br><span class="lc-sub">價對均線偏離當買賣訊 · 買側是微笑曲線(兩端深超賣/強噴出有 edge、中段最沒用),最強格深超賣 in 上升趨勢 +22%/60d 但稀有；乖離當賣訊是反指標(高乖離續漲、低乖離反彈),出場 overlay 疊週線全是幻象/有害</span></span>
   <span class="lc-arrow">→</span>
 </a>
 <a class="link-card" href="/backtest/ma_cross/" style="border-left:3px solid #1a56db">
   <span style="font-size:1.3rem">✕</span>
-  <span><span class="lc-name">黃金/死亡交叉 · 慢晚回吐大 (QQQ/SMH/SPY/0050)</span><br><span class="lc-sub">快×慢均線交叉當進出訊 · 0/20 過尺 · CAGR 不輸週線但交叉出場太晚、MDD 一律更深(SMH 10/30 −44%);交叉事件前瞻邊際近零,死叉甚至不是乾淨賣訊(50/200 死叉後 120日 +2.5%);「站上家族」最後一塊,仍敗給週線</span></span>
+  <span><span class="lc-name">黃金/死亡交叉 · 慢晚回吐大 (QQQ/SMH/SPY/0050)</span><br><span class="lc-sub">快×慢均線交叉當進出訊 · 0/20 過尺 · CAGR 不輸週線但交叉出場太晚、MDD 一律更深(SMH 10/30 −44%);交叉事件前瞻邊際近零，死叉甚至不是乾淨賣訊(50/200 死叉後 120日 +2.5%);「站上家族」最後一塊，仍敗給週線</span></span>
   <span class="lc-arrow">→</span>
 </a>
 <a class="link-card" href="/backtest/ma_squeeze/" style="border-left:3px solid #1a56db">
   <span style="font-size:1.3rem">🪢</span>
-  <span><span class="lc-name">均線糾結→發散 · 糾結不加值 (QQQ/SMH/SPY/0050)</span><br><span class="lc-sub">多均線收斂後發散點火進場 · 點火 60日超額 −2.1%、比「無糾結純突破」對照(−0.8%)更差 = 糾結減值;系統 3/8 過尺但無糾結對照過得一樣好(QQQ 純突破 0.63≥糾結)→ 是底層突破持有+200日出場在做工,且全擠在弱週線市(QQQ/SPY)= 弱基準假象</span></span>
+  <span><span class="lc-name">均線糾結→發散 · 糾結不加值 (QQQ/SMH/SPY/0050)</span><br><span class="lc-sub">多均線收斂後發散點火進場 · 點火 60日超額 −2.1%、比「無糾結純突破」對照(−0.8%)更差 = 糾結減值；系統 3/8 過尺但無糾結對照過得一樣好(QQQ 純突破 0.63≥糾結)→ 是底層突破持有+200日出場在做工，且全擠在弱週線市(QQQ/SPY)= 弱基準假象</span></span>
   <span class="lc-arrow">→</span>
 </a>
 <a class="link-card" href="/backtest/ma_dynband/" style="border-left:3px solid #1a56db">

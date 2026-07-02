@@ -138,7 +138,7 @@ def render() -> str:
     rows += "".join(sys_row(*r) for r in MULTI)
     rows += ('<tr><td colspan="7" style="background:#ecfdf5;font-size:.75rem;font-weight:600;'
              'color:#065f46;text-transform:uppercase;letter-spacing:.04em">'
-             '🇹🇼 台股(2330/0050 E3 已採用 · NT$ · 不同市場/幣別,僅參照)</td></tr>'
+             '🇹🇼 台股(2330/0050 E3 已採用 · NT$ · 不同市場/幣別，僅參照)</td></tr>'
              '<tr><td><strong><a href="/backtest/long_track_tw/">2330/0050 E3（採用）</a></strong>'
              '<br><span style="font-size:.72rem;color:var(--muted)">50/50 · {W40·W52·TSMOM} 各⅓ · '
              '2026-06-23 實倉 · NT$ · 近 10 年(2016~) · 詳見 '
@@ -250,7 +250,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
   <div class="container">
     <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">量化回測</a> / 10 年</div>
     <h1>量化系統回測 — 10 年視角</h1>
-    <div class="sub">近 10 年滾動窗口(2016-06 ~ 2026-06)· 「無 2008」的壓力對照窗 — 本頁的工作是偵測 regime 集中,不是排名;判定 = 與 <a href="/backtest/">20 年頁</a>取交集</div>
+    <div class="sub">近 10 年滾動窗口(2016-06 ~ 2026-06)· 「無 2008」的壓力對照窗 — 本頁的工作是偵測 regime 集中，不是排名；判定 = 與 <a href="/backtest/">20 年頁</a>取交集</div>
     %TOGGLE%
   </div>
 </div>
@@ -259,7 +259,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 
 <div class="section">
 <h2 class="section-title">配置對比總表(近 10 年)</h2>
-<div class="section-sub">窗口 = 各系統最新數據日往回 10 年,起點重設 $1M。多資產系統使用不同資產池,僅供參考對照。</div>
+<div class="section-sub">窗口 = 各系統最新數據日往回 10 年，起點重設 $1M。多資產系統使用不同資產池，僅供參考對照。</div>
 <div class="card" style="overflow-x:auto">
 <table>
 <thead><tr><th>系統</th><th>10Y CAGR</th><th>10Y MDD</th><th>Sharpe</th><th>Calmar</th><th>期末資產</th><th></th></tr></thead>
@@ -271,19 +271,19 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 
 <div class="verdict">
   <strong>怎麼讀這一頁(2026-06 刷新):</strong>
-  這個窗口沒有 2008,終點落在 AI/半導體多頭高點 — 所有數字都被窗口加持,
-  <strong>每個 ⚠ 可疑帶(CAGR &gt; 20%)都是 regime 集中警報,不是慶祝理由</strong>。
-  讀法上有三件事是訊號:
+  這個窗口沒有 2008,終點落在 AI/半導體多頭高點 — 所有數字都被窗口加持，
+  <strong>每個 ⚠ 可疑帶(CAGR &gt; 20%)都是 regime 集中警報，不是慶祝理由</strong>。
+  讀法上有三件事是訊號：
   (1) <strong>主動系統在此窗反超 B&amp;H</strong>(STX50 +25.74%、六狀態 +22.16% &gt; QQQ B&amp;H +21.71%,MDD 低 7~8pp)—
-  與 20 年窗「讓報酬換回撤」的結論不同,正說明窗口與基準的選擇能改寫故事,所以判定取兩窗交集;
-  (2) <strong>防守組的數字在兩窗一致</strong>(Long Track Calmar 0.83 / W52 0.64,審計 v2)— 一致性本身就是 regime 不集中的證據;
-  (3) <strong>雙軌多空在最有利的窗口仍墊底</strong> — 被支配的判定對窗口穩健,否決不因窗口而改變。
+  與 20 年窗「讓報酬換回撤」的結論不同，正說明窗口與基準的選擇能改寫故事，所以判定取兩窗交集；
+  (2) <strong>防守組的數字在兩窗一致</strong>(Long Track Calmar 0.83 / W52 0.64,審計 v2)— 一致性本身就是 regime 不集中的證據；
+  (3) <strong>雙軌多空在最有利的窗口仍墊底</strong> — 被支配的判定對窗口穩健，否決不因窗口而改變。
 </div>
 </div>
 
 <div class="section">
 <h2 class="section-title">20 年 vs 10 年對比(regime 集中度檢查)</h2>
-<div class="section-sub">差異欄:CAGR 正值 = 近 10 年更好;MDD 正值 = 近 10 年回撤更淺。CAGR 差異越大 = 績效越集中在「無 2008 的科技牛市」這一個 regime — 差異小的系統(W52 +2.5pp、GEM +1.2pp)對 regime 最穩健,差異 8pp+ 的系統(STX50、六狀態)是 regime 賭注,部位大小要按此打折。</div>
+<div class="section-sub">差異欄：CAGR 正值 = 近 10 年更好；MDD 正值 = 近 10 年回撤更淺。CAGR 差異越大 = 績效越集中在「無 2008 的科技牛市」這一個 regime — 差異小的系統(W52 +2.5pp、GEM +1.2pp)對 regime 最穩健，差異 8pp+ 的系統(STX50、六狀態)是 regime 賭注，部位大小要按此打折。</div>
 <div class="card" style="overflow-x:auto">
 <table>
 <thead><tr><th>系統</th><th>20Y CAGR</th><th>10Y CAGR</th><th>差異</th><th>20Y MDD</th><th>10Y MDD</th><th>差異</th></tr></thead>
@@ -303,7 +303,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 </div>
 <div class="chart-card">
   <h3>Underwater Equity(年頻回撤)</h3>
-  <div class="chart-sub">年底相對前高;精確 MDD 以總表為準(年頻會低估盤中深度)</div>
+  <div class="chart-sub">年底相對前高；精確 MDD 以總表為準(年頻會低估盤中深度)</div>
   <div class="chart-wrap-sm"><canvas id="chart-dd"></canvas></div>
 </div>
 <div class="chart-card">
@@ -331,11 +331,11 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 <summary>數據截至日期與方法論說明</summary>
 <div class="d-body">
 <ul style="font-size:.85rem;color:#374151;line-height:1.9;padding-left:1.2rem">
-  <li>全部美股系統:截至 2026-06,統一修正基準(warmup 自上市起算、閒置資金計 SHY/BIL 利息);
-      W52 為 2026-06 審計引擎 v2(日線重建修正,10 年窗 CAGR +13.16% / MDD -20.52%)。</li>
+  <li>全部美股系統：截至 2026-06,統一修正基準(warmup 自上市起算、閒置資金計 SHY/BIL 利息);
+      W52 為 2026-06 審計引擎 v2(日線重建修正，10 年窗 CAGR +13.16% / MDD -20.52%)。</li>
   <li>10 年窗口 = 最新數據日往回 10 年(約 2016-06 起),起點重設 $1M;與 20 年頁的全期數字計算方式一致。</li>
   <li>* GEM 與 W52 斜率規格定義初始資金 $100,000;表中 $M 值為換算 $1M 起始的等效值。</li>
-  <li>逐年報酬與圖表使用年頻資料;精確 MDD / Sharpe 以各系統詳頁計算為準。</li>
+  <li>逐年報酬與圖表使用年頻資料；精確 MDD / Sharpe 以各系統詳頁計算為準。</li>
 </ul>
 </div>
 </details>

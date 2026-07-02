@@ -569,7 +569,7 @@ def stx50_card(s: dict | None) -> str:
   <h3>股票核心 — STX50 (50/50 SMH/QQQ) · 組合 80% 權重</h3>
   <div style="font-size:.82rem;color:var(--muted);margin-bottom:.6rem">
     當前股票曝險 <b style="color:var(--text);font-size:1.05rem">{exp:.0f}%</b> ·
-    數據截至 {s.get('data_date','—')} · 週/月頻訊號,變化由
+    數據截至 {s.get('data_date','—')} · 週/月頻訊號，變化由
     <a href="/long-track-smh/">長線訊號頁</a>另行 email 通知。</div>
   <table><thead><tr><th>標的</th><th>倉位</th><th>訊號</th></tr></thead><tbody>{rows}</tbody></table>
 </div>"""
@@ -605,9 +605,9 @@ def events_section(year_events) -> str:
     return f"""<div class="card">
   <h3>近一年訊號史 — 進場 / 加碼 / 出場({len(year_events)} 筆)</h3>
   <div style="font-size:.78rem;color:var(--muted);margin-bottom:.6rem">
-    由 replay 引擎逐日重放產生(回測訊號,非實單成交)。成交價：突破進場／通道出場為訊號日收盤，
+    由 replay 引擎逐日重放產生(回測訊號，非實單成交)。成交價：突破進場／通道出場為訊號日收盤，
     停損為盤中觸價（gap 穿越以開盤劣價成交），均含 2bps 成本；
-    實單為次日開盤（停損掛 resting stop），gap 列入並行比對。多空雙向,加碼每 0.5×ATR 一單位至 4 單位。</div>
+    實單為次日開盤（停損掛 resting stop），gap 列入並行比對。多空雙向，加碼每 0.5×ATR 一單位至 4 單位。</div>
   {body}
 </div>"""
 
@@ -628,13 +628,13 @@ def perf_section(yr_ret, ctrl_yr=None, cmp_stats=None) -> str:
   <b>OOS 記分板：</b>海龜 sleeve 版目前對靜態黃金對照<b>{lead}</b>（Calmar {cm['calmar']:.2f} vs {ct['calmar']:.2f}）。
   回測裡海龜引擎的邊際僅 +0.04 Calmar（0.81 → 0.85）—— OOS 期間 sleeve 版若持續落後此對照線，依採用頁承諾降級為靜態黃金方案。</div>"""
     return f"""<div class="card">
-  <h3>組合 80/20 績效曲線(replay 權益,起點=100)
+  <h3>組合 80/20 績效曲線(replay 權益，起點=100)
     <span style="font-size:.8rem;font-weight:600;color:var(--{col})">· 近一年 {yr_ret:+.1f}%</span></h3>
   <div style="font-size:.78rem;color:var(--muted);margin-bottom:.6rem">
     引擎自 2006 重放至最新收盤的模型 NAV(月頻、含成本)。實線 = <b>實際在跑的組合
     80% STX50 + 20% 商品 sleeve(月底再平衡)</b>；細虛線為兩條分解腿；
     灰虛線 = <b>「80% STX50＋20% 靜態 GLD 買進持有」對照</b>（採用頁承諾並行追蹤的正式替代方案，同視窗、同月底再平衡）。
-    <b>這是回測/紙上權益,非實倉損益</b> —— OOS 並行追蹤期間沒有真實成交。
+    <b>這是回測/紙上權益，非實倉損益</b> —— OOS 並行追蹤期間沒有真實成交。
     sleeve 單腿波動大(MDD ≈ -33%),但只佔 20%;組合層 MDD 被 STX50 拉到約 -16%，
     同視窗組合 Calmar 0.65 → 0.85、月報酬相關 −0.01。
     細節見 <a href="/backtest/turtle_adopt/">採用回測頁</a>。</div>
@@ -686,7 +686,7 @@ def generate_html(legs, stx, combined, asof, changes, last_change_date, rebal_du
     else:
         change_html = ('<div style="text-align:center;font-size:.78rem;color:var(--muted);margin:.3rem 0 1rem">'
                        '今日 sleeve 無事件'
-                       + (f'(上次:{last_change_date})' if last_change_date else '') + '</div>')
+                       + (f'(上次：{last_change_date})' if last_change_date else '') + '</div>')
 
     return f"""<!DOCTYPE html>
 <html lang="zh-Hant">
@@ -755,16 +755,16 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
   <div class="container">
     <div class="crumb"><a href="/">首頁</a> / 商品 Sleeve + 組合系統</div>
     <h1>商品 Sleeve + 組合系統 — 即時狀態</h1>
-    <div class="sub">80% STX50 股票核心 (SMH/QQQ) + 20% CMDTY2 商品 sleeve (GLD/USO 訊號 → MGC/MCL 微型期貨,原始 System 2 · 55/20 日線)</div>
+    <div class="sub">80% STX50 股票核心 (SMH/QQQ) + 20% CMDTY2 商品 sleeve (GLD/USO 訊號 → MGC/MCL 微型期貨，原始 System 2 · 55/20 日線)</div>
   </div>
 </div>
 <div class="container">
 
 <div class="banner">
   <b>⚠ OOS 並行追蹤(紙上)· 非實倉。</b>
-  這是 sleeve 採用前的並行測試 —— 記錄每日訊號以實測 close→次日開盤 gap 與滑點,
+  這是 sleeve 採用前的並行測試 —— 記錄每日訊號以實測 close→次日開盤 gap 與滑點，
   供擁有者決定何時投真錢。Sleeve 採用為未決的 L4 決策（兩問：要不要黃金腿／海龜引擎值不值操作成本），評估見
-  <a href="/backtest/turtle_adopt/">組合回測頁</a>。口數依名目 sleeve NAV ${SLEEVE_NAV:,.0f} 計,按實際資金等比例縮放。<br>
+  <a href="/backtest/turtle_adopt/">組合回測頁</a>。口數依名目 sleeve NAV ${SLEEVE_NAV:,.0f} 計，按實際資金等比例縮放。<br>
   <b>OOS 期間要回答的問題不只是「sleeve 有沒有幫組合」，而是「海龜引擎有沒有持續打贏靜態黃金腿」</b>——
   回測同視窗組合 Calmar 0.65 → 0.85，但其中「＋20% 靜態 GLD 買進持有」就拿到 0.81，海龜引擎邊際僅 +0.04；
   月報酬相關 −0.01。本頁並行追蹤「80% STX50＋20% 靜態 GLD」對照線（下方記分板與灰虛線），
@@ -792,7 +792,7 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
 <div class="card">
   <h3>商品 Sleeve — 每日持倉與明日觸發價</h3>
   <div style="font-size:.78rem;color:var(--muted);margin-bottom:.8rem">
-    每日收盤後 replay 引擎自 2005 重放到最新收盤 → 持倉即引擎狀態,永不漂移。
+    每日收盤後 replay 引擎自 2005 重放到最新收盤 → 持倉即引擎狀態，永不漂移。
     觸發價為次日決策線(突破/停損/通道/加碼),掛 resting order 即可。</div>
   <div class="tgrid">{cards}</div>
 </div>
@@ -810,12 +810,12 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
   ② <b>商品 sleeve</b>(20%):GLD/USO 各跑原始海龜 System 2 — 收盤突破 55 日高/低點進場、跌破 20 日反向通道或 2×ATR 停損出場、每 0.5×ATR 加碼至 4 單位<br>
   ③ <b>倉位大小</b>:每單位風險 = sleeve NAV 的 1% ÷ (2×ATR);波動定倉位<br>
   ④ <b>執行</b>:微型期貨 MGC(金)/MCL(油)為主(可空、SPAN 槓桿);或 IBKR margin 放空 ETF(回測拿回約 56% 效益)<br>
-  ⑤ <b>再平衡</b>:每月最後交易日,sleeve ⇄ 股票核心回 20/80<br>
+  ⑤ <b>再平衡</b>:每月最後交易日，sleeve ⇄ 股票核心回 20/80<br>
   ⑥ <b>OOS 對照線</b>：同視窗「80% STX50＋20% 靜態 GLD 買進持有（月底再平衡）」——
   採用頁承諾並行追蹤的正式替代方案；海龜引擎若持續打不贏它，降級為靜態黃金<br>
   <span style="color:var(--muted);font-size:.78rem">引擎為 v7-backtest turtle_backtest/strategy.py 的 verbatim port(原始 System 2,
   2026-07-02 同步權威版：停損盤中觸發、gap 以開盤劣價成交；倉位以市值權益＋回撤節流（§2.5）定大小)。
-  時間架構刻意維持日線 —— 與週線股票核心錯位是分散來源,週線化會抹掉危機 alpha(見回測頁)。</span>
+  時間架構刻意維持日線 —— 與週線股票核心錯位是分散來源，週線化會抹掉危機 alpha(見回測頁)。</span>
   </div>
 </div>
 
@@ -931,12 +931,12 @@ def main():
         lines = [f"商品 Sleeve 訊號事件 — 資料截至 {asof_str}", ""]
         for c in changes:
             lines.append("• " + c.replace("<b>", "").replace("</b>", ""))
-        lines += ["", "明日開盤依觸發執行。當前 sleeve 持倉:"]
+        lines += ["", "明日開盤依觸發執行。當前 sleeve 持倉："]
         for l in legs:
             stop_s = f" stop {l['stop']:.2f}" if l['stop'] is not None else ""
             lines.append(f"  {l['ticker']} → {l['fut']}: {l['pos']}{stop_s} · {l['n_contracts']} 口")
-        lines += ["", f"股票核心 STX50 曝險:{stx_exp:.0f}%(組合 80% 權重)",
-                  "", "詳細: https://research.investmquest.com/turtle-sleeve/"]
+        lines += ["", f"股票核心 STX50 曝險：{stx_exp:.0f}%(組合 80% 權重)",
+                  "", "詳細： https://research.investmquest.com/turtle-sleeve/"]
         ALERT_FILE.write_text("\n".join(lines), encoding="utf-8")
         print(f"ALERT written: {ALERT_FILE}")
     else:
@@ -946,7 +946,7 @@ def main():
                 f"🔁 月底再平衡提醒 — 資料截至 {asof_str}\n\n"
                 f"sleeve 與股票核心再平衡回 20/80。\n"
                 f"當前股票核心 STX50 曝險 {stx_exp:.0f}%。\n\n"
-                f"詳細: https://research.investmquest.com/turtle-sleeve/",
+                f"詳細： https://research.investmquest.com/turtle-sleeve/",
                 encoding="utf-8")
             print(f"REBALANCE reminder written: {ALERT_FILE}")
         elif ALERT_FILE.exists():

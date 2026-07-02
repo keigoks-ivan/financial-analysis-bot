@@ -52,13 +52,13 @@ ROWS = [
     ]),
     ("✗ 否決（輸底倉風險調整 — 挑錯時段 / 放大尾部）", RED, [
         ("趨勢閘門 Sys1 / fast-out / 低波動二元 MNQ 腿", "/backtest/leverage/",
-         "「趨勢還在」就加槓桿 → 被抱進頭部;低波動二元腿 2008 槓進去 −22%",
+         "「趨勢還在」就加槓桿 → 被抱進頭部；低波動二元腿 2008 槓進去 −22%",
          "+17.2%", "-33.4%", "0.78", "0.52 / 0.10 / 0.92", "否決"),
         ("權益曲線 >MA200 / 指數 >200日線體制", "/backtest/leverage/",
          "近常態槓桿 + 太慢的關閉開關 · 2022 一樣被放大到 −24%",
          "+21.0%", "-34.3%", "0.83", "0.61 / 0.15 / 0.98", "否決"),
         ("固定波動目標 / 選擇權凸性", "/backtest/leverage/",
-         "固定目標比底倉還差;選擇權(模型)只小贏線性、救不到 MDD、成本一升就沒了",
+         "固定目標比底倉還差；選擇權(模型)只小贏線性、救不到 MDD、成本一升就沒了",
          "—", "—", "—", "0.56 / 0.25 / 0.83", "否決"),
         ("換偵測訊號：VIX／期限結構／VRP／下行半波動", "/backtest/leverage_voltarget/",
          "四個替代訊號全數未過雙窗門檻——前瞻訊號（VIX）內嵌溢酬、收放都慢；表列為最強挑戰者 VRP：贏 06–15 但每個窗口設定都輸 15–now、MDD 最差",
@@ -244,7 +244,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <div class="page-hdr"><div class="container">
   <div class="crumb"><a href="/">首頁</a> / 量化回測</div>
   <h1>槓桿疊加量化回測總覽</h1>
-  <div class="sub">用期貨把已採用的 STX50 股核槓到 1.8x · 目標是改善<b>風險調整後</b>報酬,不是衝 CAGR · <a href="/backtest/criteria/">評估標準</a></div>
+  <div class="sub">用期貨把已採用的 STX50 股核槓到 1.8x · 目標是改善<b>風險調整後</b>報酬，不是衝 CAGR · <a href="/backtest/criteria/">評估標準</a></div>
   <div class="tabs"><a href="/backtest/">🇺🇸 美股</a><a href="/backtest/tw/">🇹🇼 台股</a><a href="/backtest/multi/">🧩 多資產</a><a class="on" href="/backtest/leverage/">🔧 槓桿疊加</a></div>
 </div></div>
 
@@ -253,11 +253,11 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <!-- SPOTLIGHT -->
 <div class="section">
 <h2 class="section-title">唯一過關的方法 · 自適應 vol-target 疊加</h2>
-<div class="section-sub">一連串槓桿設計裡,只有這個三個年代（全樣本）都小贏底倉。先講它怎麼運作(對你是新方法),再給證據——以及 2026-07 walk-forward 之後它為什麼被降級。</div>
+<div class="section-sub">一連串槓桿設計裡，只有這個三個年代（全樣本）都小贏底倉。先講它怎麼運作(對你是新方法),再給證據——以及 2026-07 walk-forward 之後它為什麼被降級。</div>
 <div class="acard">
   <div class="ac-tag">候選 · 小 edge · 2026-07 walk-forward 後降級</div>
-  <div class="ac-name">vol-target 疊加（MNQ 只槓 QQQ 半邊,+0.4x）</div>
-  <div class="ac-sub">依「最近波動 vs 平常波動」連續縮放槓桿:平靜才加、一亂就收。底倉 STX50 不動。</div>
+  <div class="ac-name">vol-target 疊加（MNQ 只槓 QQQ 半邊，+0.4x）</div>
+  <div class="ac-sub">依「最近波動 vs 平常波動」連續縮放槓桿：平靜才加、一亂就收。底倉 STX50 不動。</div>
   <div class="ac-metrics">
     <div><span>CAGR</span><b style="color:var(--green)">+15.4%</b></div>
     <div><span>MDD</span><b>-23.3%</b></div>
@@ -272,7 +272,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <!-- PERF CURVES -->
 <div class="section">
 <h2 class="section-title">績效曲線 · 權益與回撤</h2>
-<div class="section-sub">月頻 · 起點=100 · 2006–今。<b>重點是風險調整,不是終值</b>:常態 1.8x／B&amp;H 終值更高,但回撤深得多(見下圖);vol-target(琥珀)用最小的額外回撤把底倉小幅往上推。</div>
+<div class="section-sub">月頻 · 起點=100 · 2006–今。<b>重點是風險調整，不是終值</b>:常態 1.8x／B&amp;H 終值更高，但回撤深得多(見下圖);vol-target(琥珀)用最小的額外回撤把底倉小幅往上推。</div>
 <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.1rem;margin-bottom:1rem">
   <div style="font-size:.86rem;font-weight:600;color:var(--ink);margin-bottom:.3rem">權益曲線(NAV,起點=100,對數軸)</div>
   <div style="position:relative;width:100%;height:340px"><canvas id="chart-nav"></canvas></div>
@@ -281,14 +281,14 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
   <div style="font-size:.86rem;font-weight:600;color:var(--ink);margin-bottom:.3rem">回撤(月頻)</div>
   <div style="position:relative;width:100%;height:240px"><canvas id="chart-dd"></canvas></div>
 </div>
-<div class="note"><b>讀法:</b>權益圖上「常態 1.8x」(灰虛線)終值最高,但回撤圖它的谷比 vol-target／底倉深得多、B&amp;H(點線)更是 −50% 級。
-<b>vol-target(琥珀)的回撤幾乎貼著底倉(藍)</b> —— 這就是「小 edge」的長相:多賺一點、痛幾乎沒多。(月頻略低估盤中回撤,精確值見下方表格。)</div>
+<div class="note"><b>讀法：</b>權益圖上「常態 1.8x」(灰虛線)終值最高，但回撤圖它的谷比 vol-target／底倉深得多、B&amp;H(點線)更是 −50% 級。
+<b>vol-target(琥珀)的回撤幾乎貼著底倉(藍)</b> —— 這就是「小 edge」的長相：多賺一點、痛幾乎沒多。(月頻略低估盤中回撤，精確值見下方表格。)</div>
 </div>
 
 <!-- YEARLY -->
 <div class="section">
 <h2 class="section-title">逐年績效</h2>
-<div class="section-sub">日曆年報酬。黃底為股票危機年(2008/2011/2018/2020/2022)。末年 2026 為年初至今。常態 1.8x／B&amp;H 多數年更高,但崩盤年(2008/2022)被放大得多 —— 對照下方拆解看 vol-target 的槓桿在危機年幾乎關掉。</div>
+<div class="section-sub">日曆年報酬。黃底為股票危機年(2008/2011/2018/2020/2022)。末年 2026 為年初至今。常態 1.8x／B&amp;H 多數年更高，但崩盤年(2008/2022)被放大得多 —— 對照下方拆解看 vol-target 的槓桿在危機年幾乎關掉。</div>
 <div class="chart-card"><div class="chart-wrap"><canvas id="chart-yearly"></canvas></div></div>
 <div class="card">
 <table><thead><tr><th>年度</th><th>vol-target(採用)</th><th>1.0x STX50 底倉</th><th>常態 1.8x</th><th>B&amp;H 50/50</th></tr></thead>
@@ -299,29 +299,29 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <!-- DECOMPOSE SOURCE -->
 <div class="section">
 <h2 class="section-title">來源拆解 · 底倉 vs MNQ 槓桿腿</h2>
-<div class="section-sub">把 vol-target 每年的報酬<strong>加法拆成兩塊</strong>:底倉 STX50 的貢獻 ＋ MNQ 槓桿腿的貢獻(以年初 NAV 標準化,兩者相加 = vol-target 合計)。看槓桿腿到底在哪些年加了多少。</div>
+<div class="section-sub">把 vol-target 每年的報酬<strong>加法拆成兩塊</strong>:底倉 STX50 的貢獻 ＋ MNQ 槓桿腿的貢獻(以年初 NAV 標準化，兩者相加 = vol-target 合計)。看槓桿腿到底在哪些年加了多少。</div>
 <div class="chart-card"><div class="chart-wrap-sm"><canvas id="chart-decomp"></canvas></div></div>
 <div class="card">
 <table><thead><tr><th>年度</th><th>底倉 STX50 貢獻</th><th>MNQ 槓桿腿貢獻</th><th>vol-target 合計</th></tr></thead>
 <tbody>%DECOMP_ROWS%</tbody></table>
 </div>
-<div class="note"><b>讀法:</b>槓桿腿(琥珀)逐年貢獻其實很小 —— 最大幾年是 <b>2023 +9.3pp、2009 +7.9pp</b>(乾淨大多頭);
-而 <b>2008 只 −1.6pp、2022 只 −0.8pp</b>:危機年波動一升,vol-target 把槓桿關到接近 0,所以崩盤年的拖累極小。全期它<b>平均一年只加個位數 pp、且常常是 0</b> —— 這正是「危機自動關、平時小幅加速」的數字證據。</div>
+<div class="note"><b>讀法：</b>槓桿腿(琥珀)逐年貢獻其實很小 —— 最大幾年是 <b>2023 +9.3pp、2009 +7.9pp</b>(乾淨大多頭);
+而 <b>2008 只 −1.6pp、2022 只 −0.8pp</b>:危機年波動一升，vol-target 把槓桿關到接近 0,所以崩盤年的拖累極小。全期它<b>平均一年只加個位數 pp、且常常是 0</b> —— 這正是「危機自動關、平時小幅加速」的數字證據。</div>
 </div>
 
 <!-- METHOD (detailed) -->
 <div class="section">
 <h2 class="section-title">① 邏輯與做法（詳述）</h2>
 <div class="prose">
-<h3>核心概念:槓桿與波動成反比</h3>
-<p>傳統做法是「趨勢還在就加槓桿」——問題是趨勢訊號在<b>頭部、崩盤前的平靜</b>也常常還亮著,結果槓桿被抱進反轉。
-本方法換一個訊號:<b>波動本身</b>。市場<b>比平常平靜</b>時把槓桿放出來、<b>比平常亂</b>時收回。
-因為大跌幾乎都伴隨波動飆升,「波動一升就減槓桿」等於<b>崩盤啟動時人已經在減碼</b>——這是它和趨勢閘門最根本的差別。</p>
+<h3>核心概念：槓桿與波動成反比</h3>
+<p>傳統做法是「趨勢還在就加槓桿」——問題是趨勢訊號在<b>頭部、崩盤前的平靜</b>也常常還亮著，結果槓桿被抱進反轉。
+本方法換一個訊號：<b>波動本身</b>。市場<b>比平常平靜</b>時把槓桿放出來、<b>比平常亂</b>時收回。
+因為大跌幾乎都伴隨波動飆升，「波動一升就減槓桿」等於<b>崩盤啟動時人已經在減碼</b>——這是它和趨勢閘門最根本的差別。</p>
 
 <h3>精確規則(四步)</h3>
 <ol class="steps">
   <li><b>量最近波動</b>:σ = QQQ 過去 <b>20 日</b>報酬的年化標準差。</li>
-  <li><b>比平常波動</b>:基準 = σ 的<b>過去 252 日中位數</b>(自適應,不是釘死一個數字——這點很關鍵,固定數字會失敗)。</li>
+  <li><b>比平常波動</b>:基準 = σ 的<b>過去 252 日中位數</b>(自適應，不是釘死一個數字——這點很關鍵，固定數字會失敗)。</li>
   <li><b>算槓桿倍數</b>:<span style="white-space:nowrap">L = clip( 中位數 ÷ σ , 1.0 , 1.8 )</span>。比平常平靜 → L&gt;1(加);比平常亂 → L=1(完全不加)。</li>
   <li><b>換成 MNQ 口數</b>:用 MNQ 期貨<b>只槓 QQQ 半邊</b> → 實際加掛 f = (L−1)×0.5 的 MNQ,最多 +0.4x。每月(或每日)依 L 調口數。</li>
 </ol>
@@ -336,36 +336,36 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 
 <h3>它有多「省」</h3>
 <p>全期(2006–今)<b>平均槓桿只 +0.09x</b>、<b>51% 的交易日根本沒槓桿</b>、只有 <b>7% 的日子</b>放到 +0.4x 上限。
-槓桿是稀缺資源,只在最平靜時少量放出——所以尾部只被小幅放大而不是倍數放大（本頁逐年表：2008 全年 −6.8% vs 底倉 −5.2%、2022 −16.2% vs −15.4%——危機年多痛約 0.8~1.6pp，不是零成本）。</p>
+槓桿是稀缺資源，只在最平靜時少量放出——所以尾部只被小幅放大而不是倍數放大（本頁逐年表：2008 全年 −6.8% vs 底倉 −5.2%、2022 −16.2% vs −15.4%——危機年多痛約 0.8~1.6pp，不是零成本）。</p>
 
 <h3>怎麼執行</h3>
 <p>持有 STX50 的 SMH/QQQ ETF(底倉照舊),依 L 在 QQQ 半邊加掛 MNQ 微型那指期貨。財務成本 ≈ 現金利率(你閒置資金本來就收 SHY/BIL,對沖掉)+ 幾 bps 滾倉/價差。
-<b>注意:SMH(半導體)沒有流動期貨</b>,純 MNQ 只能槓那指(QQQ)半邊——這就是 +0.4x 上限的由來。要槓滿整條(→1.8x)得用 SOXL/保證金處理 SMH 半邊;本研究採用<b>誠實的半邊版</b>。</p>
+<b>注意：SMH(半導體)沒有流動期貨</b>,純 MNQ 只能槓那指(QQQ)半邊——這就是 +0.4x 上限的由來。要槓滿整條(→1.8x)得用 SOXL/保證金處理 SMH 半邊；本研究採用<b>誠實的半邊版</b>。</p>
 </div>
 </div>
 
 <!-- EVIDENCE: ranking -->
 <div class="section">
 <h2 class="section-title">② 證據 · 全部試過的版本對打</h2>
-<div class="section-sub">過關門檻 = 兩個年代 Calmar 都贏底倉(0.63 全 / 0.24 在 2006–15 / 0.95 在 2015–now),且 2008/2022 尾部不被放大。色帶:<span style="color:#b45309">琥珀=過關</span> · 灰=參照 · <span style="color:var(--red)">紅=否決</span>。</div>
+<div class="section-sub">過關門檻 = 兩個年代 Calmar 都贏底倉(0.63 全 / 0.24 在 2006–15 / 0.95 在 2015–now),且 2008/2022 尾部不被放大。色帶：<span style="color:#b45309">琥珀=過關</span> · 灰=參照 · <span style="color:var(--red)">紅=否決</span>。</div>
 <div class="card">
 <table><thead><tr><th>版本</th><th>CAGR</th><th>MDD</th><th>Sharpe</th><th>Calmar 全/06–15/15–now</th><th>狀態</th></tr></thead>
 <tbody>%SYS_ROWS%</tbody></table>
 </div>
-<div class="note"><b>為什麼別的都輸:</b>固定槓桿只是「同比例放大報酬與回撤」,Calmar 幾乎不變;而所有<b>挑時段</b>的趨勢閘門挑到的反而是比平均差的時段(趨勢尾端/崩盤前平靜),把 Calmar 挑低了。要靠槓桿加值,只能把它<b>集中在真正高 Sharpe 的時段</b>——「比平常平靜、連續縮放」是少數做得到的。<br>
+<div class="note"><b>為什麼別的都輸：</b>固定槓桿只是「同比例放大報酬與回撤」，Calmar 幾乎不變；而所有<b>挑時段</b>的趨勢閘門挑到的反而是比平均差的時段(趨勢尾端/崩盤前平靜),把 Calmar 挑低了。要靠槓桿加值，只能把它<b>集中在真正高 Sharpe 的時段</b>——「比平常平靜、連續縮放」是少數做得到的。<br>
 <b>2026-07 兩輪加測讓這條結論更硬：</b>①換偵測訊號——VIX、VIX 期限結構、VRP、下行半波動四個全輸 realized vol 現任版（前瞻的隱含波動內嵌風險溢酬，降槓桿慢、回槓桿也慢）；②短天期 MA 閘門（k=5–200）證明趨勢閘門的死因<b>從來不是開關速度、是前提本身</b>：把現任版放槓桿的日子按閘門拆開，被閘門砍掉的「平靜但跌破均線」日隔天平均賺 7–10bps，比保留的日子（3–5bps）更多——<b>趨勢閘門系統性剔除的正是槓桿最值錢的日子</b>（上升趨勢內平靜淺回檔的均值回歸）。</div>
 </div>
 
 <!-- EVIDENCE: cross-asset generalization (corrected) -->
 <div class="section">
 <h2 class="section-title">③ 普遍性檢驗 · 這是「股票特有」的小 edge,不是萬用原理</h2>
-<div class="section-sub"><b style="color:#dc2626">2026-06 review 修正:</b>之前宣稱「SPY/QQQ/SMH 9/9 → 普遍原理」<b>是錯的</b> —— 那三個都是高度相關的美股(日報酬相關 0.79–0.92),等於同一賭注測三次。放到<b>真正低相關</b>的資產類別(彼此相關 −0.31~+0.37)才見真章:</div>
+<div class="section-sub"><b style="color:#dc2626">2026-06 review 修正：</b>之前宣稱「SPY/QQQ/SMH 9/9 → 普遍原理」<b>是錯的</b> —— 那三個都是高度相關的美股(日報酬相關 0.79–0.92),等於同一賭注測三次。放到<b>真正低相關</b>的資產類別(彼此相關 −0.31~+0.37)才見真章：</div>
 <div class="card">
 <table><thead><tr><th>資產類別</th><th>B&amp;H Calmar</th><th>vol-target Calmar</th><th>B&amp;H Sharpe</th><th>vol-target Sharpe</th><th></th></tr></thead>
 <tbody>%XMKT_ROWS%</tbody></table>
 </div>
-<div class="note"><b>只有 1/6 改善,而且就是股票。</b>機制:vol-target 加值需要同時有「正的長期漂移」＋「低波動→續漲、高波動→崩的不對稱」——
-<b>股票兩個都有;黃金只有漂移,原油/匯/農兩個都弱,長債也不行。</b>所以它是<b>股票特有現象、不跨資產類別</b>,不是普遍的波動目標原理。窗口仍是 15–40 日一片高原(只有 10 日太雜訊破功)。</div>
+<div class="note"><b>只有 1/6 改善，而且就是股票。</b>機制：vol-target 加值需要同時有「正的長期漂移」＋「低波動→續漲、高波動→崩的不對稱」——
+<b>股票兩個都有；黃金只有漂移，原油/匯/農兩個都弱，長債也不行。</b>所以它是<b>股票特有現象、不跨資產類別</b>,不是普遍的波動目標原理。窗口仍是 15–40 日一片高原(只有 10 日太雜訊破功)。</div>
 </div>
 
 <!-- HONEST CAVEATS -->
@@ -375,7 +375,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
   <b>2026-07 walk-forward 後的誠實定位：這是「n=1 危機保險論點」，不再是「小 edge、三個年代都贏」。</b>全樣本 Sharpe +0.02–0.05、Calmar +0.02–0.06（且只對股票，見 ③）；但 OOS 可驗證的部分為零（見下）。
   最大實質價值是<b>危機年自動收槓桿（尾部只小幅放大）＋ 平靜年小幅加速</b>。<br>
   · <b style="color:#dc2626">walk-forward 已補（2026-07-02）——結果是降級，不是背書</b>：擴張窗逐年選參（參數格＝原敏感度掃過的範圍；訓練 2006–2010 起，OOS 2011–今逐年串鏈）後，誠實 OOS 版 Sharpe <b>1.036 vs 底倉 1.038</b>、Calmar <b>0.798 vs 0.798</b>——<b>OOS 風險調整改善為零</b>，只剩 +1.2pp CAGR 換 +1.5pp MDD（約 1:1 的交換）。參數本身穩定（2018 起收斂在 15d/1.8x、每年選的都在高原上，只小幅落後事後固定版 Sharpe 1.056），所以問題<b>不是參數過擬合，是 regime 集中</b>：全樣本的風險調整優勢幾乎全部來自 <b>2008 那一次自動降槓桿</b>，而 2008 落在最低訓練窗之內、<b>用一條歷史永遠無法 out-of-sample 驗證</b>。2011 後僅有的兩次壓力測試結果混合：2020 小贏底倉（+48.4% vs +47.4%）、2022 多賠（−16.7% vs −15.4%）——<b>快崩躲得掉、慢磨要付錢</b>；機制成立，優勢未證。完整證據（逐年選參、OOS 逐年表、換訊號／短 MA 全表）見<a href="/backtest/leverage_voltarget/">專頁</a>；程式：<code>leverage_walkforward.py</code>。<br>
-  · <b style="color:#dc2626">「真實期貨驗證」provenance 缺口(2026-07 誠實揭露)</b>:2026-06 曾宣稱改用真實 NQ 期貨重跑、結果略勝 QQQ-現金代理,但當時<b>沒有留下可重現的程式</b>——追查兩個 repo 的 <code>git log -p</code> 在該次修正前後都只改了文字數字,從未有對應的計算程式碼。後續一次跨頁引擎同步(2026-06-30,cash-splice 修正)又把這裡的數字直接覆寫成代理本身的重算值,現在這句話已經<b>沒有獨立於代理的真實期貨數字可查證</b>。本頁③的 6 資產類別普遍性檢驗已於 2026-07 用新程式(<code>cross_asset_voltarget.py</code>)重建、數字可重現;但「真實 NQ 期貨 vs QQQ 代理」這條證據目前無法回溯重建(續期合約的展倉成本/basis 換算需要額外的財務假設,貿然重算風險是再產生一組無法驗證的數字),誠實標記為<b>待補</b>,在補上可重現的真實期貨腳本前,本頁槓桿疊加的全部結論僅以 QQQ-現金代理版本為準。<br>
+  · <b style="color:#dc2626">「真實期貨驗證」provenance 缺口(2026-07 誠實揭露)</b>:2026-06 曾宣稱改用真實 NQ 期貨重跑、結果略勝 QQQ-現金代理，但當時<b>沒有留下可重現的程式</b>——追查兩個 repo 的 <code>git log -p</code> 在該次修正前後都只改了文字數字，從未有對應的計算程式碼。後續一次跨頁引擎同步(2026-06-30,cash-splice 修正)又把這裡的數字直接覆寫成代理本身的重算值，現在這句話已經<b>沒有獨立於代理的真實期貨數字可查證</b>。本頁③的 6 資產類別普遍性檢驗已於 2026-07 用新程式(<code>cross_asset_voltarget.py</code>)重建、數字可重現；但「真實 NQ 期貨 vs QQQ 代理」這條證據目前無法回溯重建(續期合約的展倉成本/basis 換算需要額外的財務假設，貿然重算風險是再產生一組無法驗證的數字),誠實標記為<b>待補</b>,在補上可重現的真實期貨腳本前，本頁槓桿疊加的全部結論僅以 QQQ-現金代理版本為準。<br>
   · <b>工具/可執行性折扣</b>:純期貨只能槓 QQQ 半邊(+0.4x);且 <b>MNQ 微型 2019 才上市</b>,回測 65% 期間只能用全尺寸 NQ,小帳戶切不出這麼細的曝險(平均才 +0.09x)。要更大 edge 需 SOXL/保證金槓 SMH 半邊。<br>
   · <b>選擇權凸性試過</b>:模型上只小贏線性、且救不到 MDD,不值得。<b>期貨作空也試過(A/B/C)全否決</b>——救持續空頭但 V 轉/軋空賠更多。<b>換偵測訊號（VIX／期限結構／VRP／下行半波動）與短天期 MA 閘門（k=5–200）於 2026-07 全數否決</b>（見②表）——realized vol 經六個對照後仍是這個模板下最好的訊號。<br>
   程式與全部數字：<code>v7-backtest/src/long_track_backtest/stx50_mnq_overlay.py</code>（STX50 疊加主體）、<code>cross_asset_voltarget.py</code>（③ 6 資產類別普遍性檢驗）、<code>leverage_detector_experiment.py</code>（換偵測訊號）、<code>leverage_shortma_experiment.py</code>（短 MA 閘門）、<code>leverage_walkforward.py</code>（walk-forward，皆在同目錄）。

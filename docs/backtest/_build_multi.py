@@ -50,18 +50,18 @@ def tag_bh():
 
 SYSTEMS = [
     ("L4 採用候選", TEAL, [
-        ("🧩 組合系統:STX50 + 商品 Sleeve（80/20）", "/backtest/turtle_adopt/",
+        ("🧩 組合系統：STX50 + 商品 Sleeve（80/20）", "/backtest/turtle_adopt/",
          "商品 sleeve 疊上股票核心 · Calmar 0.65→0.85、MDD -21.9%→-16.3%(sleeve 視窗)· 削回撤、不增報酬 · "
          "sleeve 採用待 L4 · 即時頁 <a href='/turtle-sleeve/'>/turtle-sleeve/</a>",
          "+13.79%", "-16.31%", "1.04", "0.85", "有效交換", tag_cand()),
         ("🐢 商品/債/匯/股 唐奇安突破（55/20）", "/backtest/turtle/",
-         "USO/GLD/DBA/FXE/TLT/SPY · 55/20 突破(2007 起)· 2026-06 修正:原 22.5% CAGR 是停損成交假象,"
+         "USO/GLD/DBA/FXE/TLT/SPY · 55/20 突破(2007 起)· 2026-06 修正：原 22.5% CAGR 是停損成交假象，"
          "修正後全系統平庸(CAGR 7.61% / Calmar 0.15);殘餘價值僅 GLD/USO 低相關 sleeve（+20% → 組合 0.65→0.85，同 sleeve 視窗），sleeve 即取自此",
          "+7.61%", "-52.28%", "0.39", "0.15", "被支配", tag_ref()),
     ]),
-    ("分散參照(資產池不同,僅供對照)", GREY, [
+    ("分散參照(資產池不同，僅供對照)", GREY, [
         ("🛡️ 跨資產防守趨勢（SPY/TLT/GLD/DBC）", "/backtest/crossasset_defense/",
-         "股/債/金/商品 各一條 · E3 趨勢 + Chandelier 回吐閘門 · 等權 · 防守端:CAGR 最低但 "
+         "股/債/金/商品 各一條 · E3 趨勢 + Chandelier 回吐閘門 · 等權 · 防守端：CAGR 最低但 "
          "Calmar 0.64/Sharpe 0.94 全勝 GEM/Clenow、對 QQQ 月相關僅 0.28 → 真分散補位",
          "+6.04%", "-9.39%", "0.94", "0.64", "有效交換", tag_ref()),
         ("📈 35 檔 ETF 跨資產趨勢（EMA＋突破）", "/backtest/clenow/",
@@ -124,7 +124,7 @@ def render():
 <div class="acard-note">
   <div class="acn-title">為什麼獨立分頁</div>
   <ul>
-    <li>這些系統交易<b>不同資產池</b>(商品/債/匯/全球 ETF),報酬軸<b>不與單一股票池系統同尺</b> — 看的是分散與組合貢獻,不是 CAGR 對打。</li>
+    <li>這些系統交易<b>不同資產池</b>(商品/債/匯/全球 ETF),報酬軸<b>不與單一股票池系統同尺</b> — 看的是分散與組合貢獻，不是 CAGR 對打。</li>
     <li>商品 sleeve 對 STX50 月相關 {CORR_M:+.2f}（decompose.json 實算）、五個危機窗四正一負（2011 -7.2%），<b>+20% 權重把組合 Calmar 0.65→0.85（同 sleeve 視窗）</b> — 採用與工具（需期貨）待 L4；靜態 +20% GLD 對照（0.81）為正式替代方案，見採用評估頁 Dumb 對照。</li>
     <li>跨資產防守腿對 QQQ 月相關僅 0.28,是真正的分散補位(非報酬來源)。</li>
   </ul>
@@ -212,27 +212,27 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <!-- SPOTLIGHT -->
 <div class="section">
 <h2 class="section-title">採用候選 · 組合系統(80/20)</h2>
-<div class="section-sub">多資產的價值在<b>組合貢獻</b>:商品 sleeve 疊上美股股票核心(STX50)後的 80/20 系統,是目前唯一進到 L4 決策的多資產拼圖。</div>
+<div class="section-sub">多資產的價值在<b>組合貢獻</b>:商品 sleeve 疊上美股股票核心(STX50)後的 80/20 系統，是目前唯一進到 L4 決策的多資產拼圖。</div>
 <div class="live-wrap">%CARD%</div>
 </div>
 
 <!-- RANKING -->
 <div class="section">
 <h2 class="section-title">多資產系統 · 風險調整排名</h2>
-<div class="section-sub">左色帶:<span style="color:#0f766e">藍綠=L4 候選</span> · 灰=分散參照。皆 2006/2007–2026 · 真實 yfinance · 報酬軸不與單一股票池同尺(資產池不同)。</div>
+<div class="section-sub">左色帶：<span style="color:#0f766e">藍綠=L4 候選</span> · 灰=分散參照。皆 2006/2007–2026 · 真實 yfinance · 報酬軸不與單一股票池同尺(資產池不同)。</div>
 <div class="card">
 <table><thead><tr><th>系統</th><th>CAGR</th><th>MDD</th><th>Sharpe</th><th>Calmar</th><th>狀態</th></tr></thead>
 <tbody>%SYS_ROWS%</tbody></table>
 </div>
-<div class="note"><b>誠實歸因:</b>唐奇安突破舊報 CAGR +22.5% 是<b>停損成交假象</b>(收盤觸發、停損價成交);2026-06 修正後僅 +7.61% / Calmar 0.15,全系統平庸、MDD -52%。
+<div class="note"><b>誠實歸因：</b>唐奇安突破舊報 CAGR +22.5% 是<b>停損成交假象</b>(收盤觸發、停損價成交);2026-06 修正後僅 +7.61% / Calmar 0.15,全系統平庸、MDD -52%。
 真正可用的只剩它的<b>GLD/USO 商品腿與股票核心低相關</b> — 取 20% 疊進 STX50 → 組合 Calmar 0.65→0.85（同 sleeve 視窗，削回撤、不增報酬）；
-惟 +20% 靜態 GLD 買進持有已達 0.81，海龜引擎邊際僅 +0.04 Calmar（見採用評估頁 Dumb 對照）。跨資產防守腿則用低相關換分散,CAGR 最低但 Calmar/Sharpe 全勝 GEM/Clenow。</div>
+惟 +20% 靜態 GLD 買進持有已達 0.81，海龜引擎邊際僅 +0.04 Calmar（見採用評估頁 Dumb 對照）。跨資產防守腿則用低相關換分散，CAGR 最低但 Calmar/Sharpe 全勝 GEM/Clenow。</div>
 </div>
 
 <!-- CHART -->
 <div class="section">
 <h2 class="section-title">風險 vs 報酬</h2>
-<div class="chart-card"><h3>MDD × CAGR</h3><div class="chart-sub">左上最佳 · 藍綠=候選 · 灰=單一股票池 B&amp;H(不同尺,僅供位置對照)</div><div class="chart-wrap"><canvas id="chart-scatter"></canvas></div></div>
+<div class="chart-card"><h3>MDD × CAGR</h3><div class="chart-sub">左上最佳 · 藍綠=候選 · 灰=單一股票池 B&amp;H(不同尺，僅供位置對照)</div><div class="chart-wrap"><canvas id="chart-scatter"></canvas></div></div>
 </div>
 
 <!-- RESEARCH NOTES -->
@@ -240,12 +240,12 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <h2 class="section-title">研究筆記</h2>
 <a href="/backtest/slope_filter_global/" style="display:flex;gap:.75rem;align-items:center;background:var(--card);border:1px solid var(--border);border-left:3px solid #0f766e;border-radius:8px;padding:1rem 1.25rem;text-decoration:none;color:inherit">
   <span style="font-size:1.3rem">🌍</span>
-  <span style="flex:1"><span style="font-weight:600;color:#0f766e">全球斜率穩健性 — W52 斜率規則跨市場移植</span><br><span style="font-size:.82rem;color:var(--muted)">把 SPY/AGG 斜率擇時搬到多個全球市場,測規則優勢是結構性還是 SPY 特定</span></span>
+  <span style="flex:1"><span style="font-weight:600;color:#0f766e">全球斜率穩健性 — W52 斜率規則跨市場移植</span><br><span style="font-size:.82rem;color:var(--muted)">把 SPY/AGG 斜率擇時搬到多個全球市場，測規則優勢是結構性還是 SPY 特定</span></span>
   <span style="color:#0f766e">→</span>
 </a>
 <a href="/turtle-sleeve/" style="display:flex;gap:.75rem;align-items:center;background:var(--card);border:1px solid var(--border);border-left:3px solid #d97706;border-radius:8px;padding:1rem 1.25rem;text-decoration:none;color:inherit;margin-top:.75rem">
   <span style="font-size:1.3rem">🐢</span>
-  <span style="flex:1"><span style="font-weight:600;color:#b45309">商品 Sleeve + 組合系統 — 即時狀態(OOS 並行追蹤)</span><br><span style="font-size:.82rem;color:var(--muted)">GLD/USO→MGC/MCL 日線訊號 + 80/20 STX50 組合曝險 · 每日美股收盤後更新 · 紙上權益,非實倉</span></span>
+  <span style="flex:1"><span style="font-weight:600;color:#b45309">商品 Sleeve + 組合系統 — 即時狀態(OOS 並行追蹤)</span><br><span style="font-size:.82rem;color:var(--muted)">GLD/USO→MGC/MCL 日線訊號 + 80/20 STX50 組合曝險 · 每日美股收盤後更新 · 紙上權益，非實倉</span></span>
   <span style="color:#b45309">→</span>
 </a>
 </div>
