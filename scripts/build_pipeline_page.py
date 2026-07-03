@@ -1,0 +1,729 @@
+#!/usr/bin/env python3
+"""Pipeline 漏斗總覽頁 — 個股部 25% 投資流程的活數字單頁.
+
+設計 source-of-truth: docs/_handoff_stock_sleeve_pipeline_20260703.md（Task 4）
+
+一頁呈現整條漏斗：發現 → 資格閘 → 三軌射擊名單 → 板機 → 回看鏡（發現力稽核）→ 隱私線。
+資料**全部來自既有 JSON**，不新增採集：
+  - docs/dd-screener/latest.json         （宇宙 / 資格閘 / 核心軌 / 結構軌）
+  - docs/dd-screener/cyclical-track.json （衛星·循環軌，Task 2 輸出）
+  - docs/dd-screener/sop-funnel/latest.json（板機現況）
+  - docs/dd-screener/sop-funnel/ledger.json（態②否決計數）
+  - docs/dd-screener/pre_id_scan.json    （六燈盲區 coverage）
+  - data/weekly_cache/{T}.json           （回看鏡 12M/24M 週線報酬）
+
+**資格閘自算口徑**（不依賴 latest.json 的 pass_count，Task 1 並行改動中該欄口徑可能新舊不一）：
+  fail_criteria 去掉 'de' 後為空  且  moat_grade∈{S,A,B}  且  moat_trend≠↓
+  D/E>0.7 顯示 ⚠ badge（advisory，不擋）。
+
+Usage:
+  python3 scripts/build_pipeline_page.py
+  python3 scripts/build_pipeline_page.py --dry-run
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from datetime import datetime, timedelta, timezone
+from html import escape
+from pathlib import Path
+from typing import Optional
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from site_nav import DD_SCREENER_SUBNAV, build_subnav, full_nav_block  # noqa: E402
+
+# ── paths ─────────────────────────────────────────────────────────────────────
+ROOT = Path(__file__).resolve().parent.parent
+DDS = ROOT / "docs" / "dd-screener"
+LATEST_JSON = DDS / "latest.json"
+CYCLICAL_JSON = DDS / "cyclical-track.json"
+SOP_LATEST = DDS / "sop-funnel" / "latest.json"
+SOP_LEDGER = DDS / "sop-funnel" / "ledger.json"
+PRE_ID_SCAN = DDS / "pre_id_scan.json"
+WEEKLY_CACHE_DIR = ROOT / "data" / "weekly_cache"
+HTML_OUT = DDS / "pipeline.html"
+
+NAV_BLOCK = full_nav_block(
+    "quant", "dds", build_subnav(DD_SCREENER_SUBNAV, "/dd-screener/pipeline.html")
+)
+
+TAIPEI_TZ = timezone(timedelta(hours=8))
+
+# ── 常數（口徑，與 build_cyclical_track / handoff 對齊）────────────────────────
+QUALITY_MOAT_GRADES = {"S", "A", "B"}
+DE_WARN_THRESHOLD = 0.7          # D/E 警示線（advisory，不擋）
+DD_STALE_DAYS = 90               # DD>90 天視為過舊（回看鏡盲區判定）
+LOOKBACK_TOP_N = 30              # 回看鏡 top N
+STRUCT_BULL_MULT = 15.0          # 結構軌排序：bull 倍數權重
+CORE_CAP_PCT = 10.0              # 核心單檔上限（個股部淨值）
+SATELLITE_CAP_PCT = 5.0          # 衛星單檔上限
+CYCLICAL_CAP_PCT = 3.0           # 循環衛星單檔上限
+
+
+def _now_taipei_iso() -> str:
+    return datetime.now(TAIPEI_TZ).isoformat(timespec="seconds")
+
+
+def _fmt_stamp(iso_str: Optional[str]) -> str:
+    if not iso_str or "T" not in iso_str:
+        return iso_str or "—"
+    date, time = iso_str.split("T", 1)
+    return f"{date} {time[:5]}"
+
+
+def _safe_float(x) -> Optional[float]:
+    if x is None:
+        return None
+    try:
+        f = float(x)
+    except (TypeError, ValueError):
+        return None
+    return None if f != f else f
+
+
+def _load(path: Path) -> Optional[dict]:
+    if not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
+# ── weekly return ─────────────────────────────────────────────────────────────
+def _weekly_return(ticker: str, n: int) -> Optional[float]:
+    """報酬 = close[-1]/close[-n]-1（附錄計算慣例；12M→n=53，24M→n=105）."""
+    p = WEEKLY_CACHE_DIR / f"{ticker}.json"
+    if not p.exists():
+        return None
+    try:
+        bars = json.loads(p.read_text(encoding="utf-8")).get("weekly_bars", []) or []
+    except (json.JSONDecodeError, OSError):
+        return None
+    if len(bars) < n:
+        return None
+    a = _safe_float(bars[-1].get("close"))
+    b = _safe_float(bars[-n].get("close"))
+    if not a or not b:
+        return None
+    return a / b - 1.0
+
+
+# ── 資格閘（自算，不依賴 pass_count）─────────────────────────────────────────
+def passes_gate(s: dict) -> bool:
+    fail = set(s.get("fail_criteria") or []) - {"de"}
+    return (len(fail) == 0
+            and s.get("moat_grade") in QUALITY_MOAT_GRADES
+            and s.get("moat_trend") != "↓")
+
+
+def _ev5y(s: dict) -> float:
+    v = _safe_float(s.get("live_ev5y_pct"))
+    if v is None:
+        v = _safe_float(s.get("ev5y_pct"))
+    return v or 0.0
+
+
+def _certainty(s: dict) -> float:
+    """確定性 = (moat_score + quality_score) / 20 ∈ [0,1]."""
+    return ((_safe_float(s.get("moat_score")) or 0.0)
+            + (_safe_float(s.get("quality_score")) or 0.0)) / 20.0
+
+
+def _bull_mult(s: dict) -> Optional[float]:
+    b = _safe_float(s.get("bull_5y_price"))
+    p = _safe_float(s.get("price_at_dd"))
+    if b and p:
+        return b / p
+    return None
+
+
+# ── HTML helpers ──────────────────────────────────────────────────────────────
+def _dd_link(s: dict, anchor: bool = True) -> str:
+    t = escape(s["ticker"])
+    dd = s.get("dd_path")
+    if dd:
+        href = dd if ("#" in dd or not anchor) else f"{dd}#decision"
+        return f'<a href="{escape(href)}">{t}</a>'
+    return t
+
+
+def _verdict_badge(v: Optional[str]) -> str:
+    if not v:
+        return '<span class="verdict v-none">待補 DD</span>'
+    cls = {"進場": "v-in", "觀望": "v-watch", "迴避": "v-avoid"}.get(v, "v-none")
+    return f'<span class="verdict {cls}">{escape(v)}</span>'
+
+
+def _de_badge(s: dict) -> str:
+    de = _safe_float(s.get("de"))
+    if de is not None and de > DE_WARN_THRESHOLD:
+        return f' <span class="de-warn" title="D/E {de:.2f} &gt; {DE_WARN_THRESHOLD} — advisory，不計分不擋">⚠ D/E {de:.1f}</span>'
+    return ""
+
+
+def _pct(v: Optional[float], decimals: int = 1, signed: bool = True) -> str:
+    if v is None:
+        return "—"
+    sign = "+" if (signed and v >= 0) else ""
+    return f"{sign}{v:.{decimals}f}%"
+
+
+# ── section renderers ─────────────────────────────────────────────────────────
+def render_universe(latest: dict, pre_id: Optional[dict], momentum_blind: list) -> str:
+    universe = latest.get("universe_size", len(latest.get("stocks", [])))
+    shape_blind = 0
+    if pre_id:
+        cc = pre_id.get("coverage_counts") or {}
+        shape_blind = cc.get("blind", 0)
+    mom_blind = len(momentum_blind)
+    return f"""<section class="block">
+  <h2 class="block-h"><span class="step">1</span> 宇宙 · 待研究隊列</h2>
+  <div class="block-sub">DD 宇宙規模與兩條「還沒被研究的候選」入口——形狀掃描的覆蓋盲區（六燈全滅＝零方法覆蓋），與下方回看鏡的動能盲區（高報酬卻無／舊 DD）。</div>
+  <div class="stat-row">
+    <div class="stat"><strong>{universe}</strong>DD 宇宙（latest.json）</div>
+    <div class="stat"><strong>{shape_blind}</strong>形狀掃描盲區 <a href="/dd-screener/targets.html" class="mini">→ 標的清單</a></div>
+    <div class="stat"><strong>{mom_blind}</strong>動能盲區 <a href="#lookback" class="mini">→ 回看鏡</a></div>
+  </div>
+</section>"""
+
+
+def render_gate(gated: list) -> str:
+    de_warn_n = sum(1 for s in gated if (_safe_float(s.get("de")) or 0) > DE_WARN_THRESHOLD)
+    # sort by certainty desc for a stable display
+    gsorted = sorted(gated, key=lambda s: (-_certainty(s), s["ticker"]))
+    tags = "".join(
+        f'<span class="gtag">{_dd_link(s)}<span class="gm">{escape(s.get("moat_grade") or "?")}{escape(s.get("moat_trend") or "")}</span>{_de_badge(s)}</span>'
+        for s in gsorted
+    )
+    return f"""<section class="block">
+  <h2 class="block-h"><span class="step">2</span> 資格閘 · 通過 {len(gated)} 檔</h2>
+  <div class="block-sub">
+    自算口徑（<b>不依賴 pass_count</b>）：<code>fail_criteria −{{de}} 為空</code> 且 <code>moat_grade∈{{S,A,B}}</code> 且 <code>moat_trend≠↓</code>。
+    D/E 為 advisory——<code>&gt;{DE_WARN_THRESHOLD}</code> 標 ⚠ 但<b>不計分、不擋</b>（持有人 2026-06-11 拍板的五條件無 D/E；本頁已把 de 退出閘）。
+    本閘通過 {len(gated)} 檔，其中 <b>{de_warn_n}</b> 檔帶 D/E ⚠。
+  </div>
+  <div class="gate-grid">{tags}</div>
+</section>"""
+
+
+def _core_row(s: dict) -> str:
+    return f"""<tr>
+  <td class="left">{_dd_link(s)}{_de_badge(s)}</td>
+  <td>{_verdict_badge(s.get("dca_verdict"))}</td>
+  <td>{escape(s.get("dca_role") or "—")}</td>
+  <td class="num"><strong>{s["_score"]:.2f}</strong></td>
+  <td class="num">{_pct(_ev5y(s), signed=False)}</td>
+  <td class="num">{_certainty(s):.2f}</td>
+  <td class="meta">{escape(s.get("moat_grade") or "?")}{escape(s.get("moat_trend") or "")} · {escape(s.get("runway_post_y5") or "—")}</td>
+</tr>"""
+
+
+def _core_table(rows: list, empty: str) -> str:
+    if not rows:
+        return f'<div class="empty">{empty}</div>'
+    body = "\n".join(_core_row(s) for s in rows)
+    return f"""<table>
+<thead><tr>
+  <th class="left">Ticker</th><th>裁決</th><th>角色</th>
+  <th class="num">EV5y×確定性</th><th class="num">EV5y</th><th class="num">確定性</th>
+  <th class="left">護城河 · runway</th>
+</tr></thead>
+<tbody>
+{body}
+</tbody></table>"""
+
+
+def render_core(core_sorted: list) -> str:
+    exe = [s for s in core_sorted if s.get("dca_verdict") == "進場"]
+    watch = [s for s in core_sorted if s.get("dca_verdict") == "觀望"]
+    nodd = [s for s in core_sorted if s.get("dca_verdict") not in ("進場", "觀望", "迴避")]
+    return f"""<div class="track-card track-core">
+  <h3>🎯 核心軌 <span class="cnt">{len(core_sorted)} 檔</span></h3>
+  <div class="track-desc">
+    軌別＝<b>過閘 ∪（DD 裁決＝進場 且 角色＝核心持倉）</b>；排序＝<b>EV5y × 確定性</b>
+    （確定性＝(moat_score+quality_score)/20）。EV5y 取 <code>live_ev5y_pct</code> 優先、缺則 <code>ev5y_pct</code>。
+    單檔上限 {CORE_CAP_PCT:.0f}%（個股部淨值）。
+  </div>
+  <div class="seg-h seg-in">✅ 可執行（裁決＝進場）· {len(exe)} 檔</div>
+  {_core_table(exe, "目前無可執行進場票。")}
+  <div class="seg-h seg-watch">⏸ 觀望板凳（裁決＝觀望）· {len(watch)} 檔</div>
+  {_core_table(watch, "板凳無觀望名字。")}
+  <div class="seg-h seg-none">🔍 無裁決 · 待補 DD · {len(nodd)} 檔</div>
+  {_core_table(nodd, "過閘者皆有站上裁決。")}
+</div>"""
+
+
+def _struct_row(s: dict) -> str:
+    bm = _bull_mult(s)
+    return f"""<tr>
+  <td class="left">{_dd_link(s)}{_de_badge(s)}</td>
+  <td>{_verdict_badge(s.get("dca_verdict"))}</td>
+  <td class="num"><strong>{s["_sscore"]:.1f}</strong></td>
+  <td class="num">{_pct(_ev5y(s), signed=False)}</td>
+  <td class="num">{('×%.2f' % bm) if bm else '—'}</td>
+  <td class="meta">{escape(s.get("moat_grade") or "?")}{escape(s.get("moat_trend") or "")} · runway {escape(s.get("runway_post_y5") or "—")}</td>
+</tr>"""
+
+
+def render_struct(struct_sorted: list) -> str:
+    if not struct_sorted:
+        body = '<div class="empty">目前無符合結構軌條件的名字。</div>'
+    else:
+        rows = "\n".join(_struct_row(s) for s in struct_sorted)
+        body = f"""<table>
+<thead><tr>
+  <th class="left">Ticker</th><th>裁決</th>
+  <th class="num">EV5y+bull×</th><th class="num">EV5y</th><th class="num">bull 倍數</th>
+  <th class="left">護城河 · runway</th>
+</tr></thead>
+<tbody>
+{rows}
+</tbody></table>"""
+    return f"""<div class="track-card track-struct">
+  <h3>🛰 衛星·結構軌 <span class="cnt">{len(struct_sorted)} 檔</span></h3>
+  <div class="track-desc">
+    軌別＝<b>runway_post_y5＝🟢</b> ＋ <code>eps2y</code>／<code>peg</code> 不 fail ＋ 護城河過（∈{{S,A,B}}、trend≠↓）＋ <b>非核心角色</b>（一檔一軌）。
+    排序＝<b>EV5y ＋ bull 倍數 ×{STRUCT_BULL_MULT:.0f}</b>（bull 倍數＝bull_5y_price/price_at_dd）。單檔上限 {SATELLITE_CAP_PCT:.0f}%。
+  </div>
+  {body}
+</div>"""
+
+
+def _cyc_row(r: dict) -> str:
+    dd = r.get("dd_path")
+    t = escape(r["ticker"])
+    link = f'<a href="{escape(dd)}#decision">{t}</a>' if dd else t
+    ret = r.get("ret_12m_pct")
+    ret_str = f"{'+' if (ret or 0) >= 0 else ''}{ret:.0f}%" if ret is not None else "—"
+    v = r.get("dca_verdict")
+    return f"""<tr>
+  <td class="left">{link}</td>
+  <td class="num"><strong>{(r.get("revision_rank_score") or 0):.1f}</strong></td>
+  <td class="num">{_pct(_safe_float(r.get("eps2y_revision_pp")))}</td>
+  <td class="num">{_pct(_safe_float(r.get("eps_fy_next_revision_pct")))}</td>
+  <td class="num {'ret-hot' if r.get('hot') else ''}">{ret_str}</td>
+  <td class="meta">{escape(r.get("moat_grade") or "?")}{escape(r.get("moat_trend") or "")}</td>
+  <td>{_verdict_badge(v)}</td>
+</tr>"""
+
+
+def _cyc_table(rows: list, empty: str) -> str:
+    if not rows:
+        return f'<div class="empty">{empty}</div>'
+    body = "\n".join(_cyc_row(r) for r in rows)
+    return f"""<table>
+<thead><tr>
+  <th class="left">Ticker</th><th class="num">排序分</th><th class="num">2Y修正pp</th>
+  <th class="num">FY+1修正%</th><th class="num">12M報酬</th><th class="left">護城河</th><th>裁決</th>
+</tr></thead>
+<tbody>
+{body}
+</tbody></table>"""
+
+
+def render_cyclical(cyc: Optional[dict]) -> str:
+    if not cyc:
+        return """<div class="track-card track-cyc">
+  <h3>🔄 衛星·循環軌</h3>
+  <div class="empty">cyclical-track.json 尚未產生 — 先跑 <code>scripts/build_cyclical_track.py</code>。</div>
+</div>"""
+    low = cyc.get("low_heat", [])
+    hot = cyc.get("hot", [])
+    return f"""<div class="track-card track-cyc">
+  <h3>🔄 衛星·循環軌 <span class="cnt">{cyc.get('qualified_total', 0)} 檔（低熱 {len(low)} / 🔥 {len(hot)}）</span></h3>
+  <div class="track-desc warn-inline">
+    <b>研究提名清單，非進場清單</b>——循環底部（FCF／ROIC 未過）× 分析師上修的候選池，交 DD（QC-42 循環鏡頭附錄 B）＋ 板機接手。
+    單檔上限 <b>{CYCLICAL_CAP_PCT:.0f}%</b>；🔥 標記者 12M 報酬 &gt; +250%，<b>明文不可追高</b>，等回踩。
+    詳見 <a href="/dd-screener/cyclical-track.html">循環軌全頁</a>。
+  </div>
+  <div class="seg-h seg-in">🟢 低熱可研究 · {len(low)} 檔</div>
+  {_cyc_table(low, "目前無低熱循環候選。")}
+  <div class="seg-h seg-hot">🔥 已熱等回踩（不可追）· {len(hot)} 檔</div>
+  {_cyc_table(hot, "目前無 🔥 已熱候選。")}
+</div>"""
+
+
+def render_tracks(core_sorted: list, struct_sorted: list, cyc: Optional[dict]) -> str:
+    return f"""<section class="block">
+  <h2 class="block-h"><span class="step">3</span> 三軌射擊名單</h2>
+  <div class="block-sub">過閘後依角色分三軌，一檔一軌。每檔 Ticker 連站上 DD 的 <code>#decision</code> 錨點；無裁決者標「待補 DD」＝研究隊列。</div>
+  {render_core(core_sorted)}
+  {render_struct(struct_sorted)}
+  {render_cyclical(cyc)}
+</section>"""
+
+
+def render_trigger(sop: Optional[dict], veto_by_reason: dict) -> str:
+    if not sop:
+        return """<section class="block">
+  <h2 class="block-h"><span class="step">4</span> 板機現況</h2>
+  <div class="empty">sop-funnel/latest.json 尚未產生。</div>
+</section>"""
+    today = sop.get("today_signals", []) or []
+    opens = sop.get("open_trades", []) or []
+    a1 = sop.get("standby_a1", []) or []
+    a2 = sop.get("standby_a2", []) or []
+    b = sop.get("standby_b", []) or []
+    base = sop.get("base_building", []) or []
+    veto2 = veto_by_reason.get("態②過熱", 0)
+    as_of = sop.get("as_of", "—")
+
+    def _names(lst):
+        return "、".join(escape(x.get("ticker", "?")) for x in lst) or "—"
+
+    def _open_names(lst):
+        parts = []
+        for x in lst:
+            t = escape(x.get("ticker", "?"))
+            st = x.get("sim", {}).get("current_state") if isinstance(x.get("sim"), dict) else None
+            parts.append(f"{t}<span class='st'>{escape(st or x.get('entry_type',''))}</span>")
+        return "、".join(parts) or "—"
+
+    return f"""<section class="block">
+  <h2 class="block-h"><span class="step">4</span> 板機現況 <span class="asof">sop-funnel as of {as_of}</span></h2>
+  <div class="block-sub">SOP 漏斗 T+1 執行層的當日燈號。態②過熱否決＝反動能硬閘擋下的訊號累計（ledger append-only 統計）。</div>
+  <div class="stat-row">
+    <div class="stat"><strong>{len(today)}</strong>今日訊號</div>
+    <div class="stat"><strong>{len(opens)}</strong>持倉中 open</div>
+    <div class="stat"><strong>{len(a1)}/{len(a2)}/{len(b)}</strong>待命 A1/A2/B</div>
+    <div class="stat"><strong>{len(base)}</strong>築底中</div>
+    <div class="stat warn"><strong>{veto2}</strong>態②過熱否決（累計）</div>
+  </div>
+  <div class="trigger-detail">
+    <div><span class="lbl">持倉中</span>{_open_names(opens)}</div>
+    <div><span class="lbl">待命 A2</span>{_names(a2)} <span class="sep">·</span> <span class="lbl">待命 B</span>{_names(b)}</div>
+    <div><span class="lbl">築底中</span>{_names(base)}</div>
+  </div>
+  <div class="block-foot"><a href="/dd-screener/sop-funnel.html">→ SOP Funnel 全頁</a></div>
+</section>"""
+
+
+def _lookback_row(entry: dict) -> str:
+    t = escape(entry["ticker"])
+    dd = entry.get("dd_path")
+    link = f'<a href="{escape(dd)}#decision">{t}</a>' if dd else t
+    cov = entry["cov"]
+    cov_html = {
+        "covered": '<span class="cov cov-ok">✅ 已覆蓋</span>',
+        "stale": f'<span class="cov cov-stale">⚠ DD {entry.get("dd_age_days")}天</span>',
+        "blind": '<span class="cov cov-blind">🔭 盲區·無 DD</span>',
+    }[cov]
+    return f"""<tr class="{'lb-queue' if cov != 'covered' else ''}">
+  <td class="num rk">{entry['rank']}</td>
+  <td class="left">{link}</td>
+  <td class="num big">{'+' if entry['ret'] >= 0 else ''}{entry['ret']*100:.0f}%</td>
+  <td>{cov_html}</td>
+</tr>"""
+
+
+def render_lookback(lb12: list, lb24: list, queue12: list, queue24: list) -> str:
+    def _tbl(rows):
+        body = "\n".join(_lookback_row(r) for r in rows)
+        return f"""<table>
+<thead><tr><th class="num">#</th><th class="left">Ticker</th><th class="num">報酬</th><th>覆蓋</th></tr></thead>
+<tbody>
+{body}
+</tbody></table>"""
+
+    q12 = "、".join(escape(r["ticker"]) for r in queue12) or "—（top30 皆已覆蓋）"
+    q24 = "、".join(escape(r["ticker"]) for r in queue24) or "—（top30 皆已覆蓋）"
+    return f"""<section class="block" id="lookback">
+  <h2 class="block-h"><span class="step">5</span> 回看鏡 · 發現力稽核</h2>
+  <div class="block-sub">
+    週線報酬 top {LOOKBACK_TOP_N}（<code>close[-1]/close[-53]</code>＝12M、<code>[-105]</code>＝24M），標覆蓋狀態＝「這些大漲的名字我抓到了嗎」的誠實稽核。
+    <b>盲區＋DD&gt;{DD_STALE_DAYS} 天</b>者＝<b>動能盲區研究隊列</b>（表中反白列）。SNDK／AXTI／BE 等 mandate-gap 循環贏家已回補新 DD＝已覆蓋，正是循環鏡頭補上的證據。
+  </div>
+  <div class="queue-note">
+    <b>12M 動能盲區隊列</b>（{len(queue12)}）：{q12}<br>
+    <b>24M 動能盲區隊列</b>（{len(queue24)}）：{q24}
+  </div>
+  <div class="lb-grid">
+    <div class="lb-col"><h4>12M 報酬 top {LOOKBACK_TOP_N}</h4>{_tbl(lb12)}</div>
+    <div class="lb-col"><h4>24M 報酬 top {LOOKBACK_TOP_N}</h4>{_tbl(lb24)}</div>
+  </div>
+</section>"""
+
+
+def render_privacy() -> str:
+    return f"""<section class="block privacy">
+  <h2 class="block-h"><span class="step">6</span> 隱私線</h2>
+  <div class="privacy-body">
+    本頁只呈現<b>研究層</b>：宇宙、資格閘、三軌候選、板機燈號、發現力稽核。
+    <b>實際持倉與權重不上站</b>（與 <code>/pm/</code> 封存同一原則）。射擊名單≠買入指令——每檔進場仍須
+    (a) 站上 DD 統一裁決＝進場、(b) sop-funnel 板機亮燈、(c) 部位在個股部上限內
+    （核心 ≤{CORE_CAP_PCT:.0f}%／衛星 ≤{SATELLITE_CAP_PCT:.0f}%／循環 ≤{CYCLICAL_CAP_PCT:.0f}%，分母＝個股部淨值）。
+  </div>
+</section>"""
+
+
+# ── page assembly ─────────────────────────────────────────────────────────────
+STYLE = """
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e3a5f;line-height:1.5}
+.hero{background:#fff;border-bottom:1px solid #dce8f5;padding:24px 32px 18px}
+.hero-inner{max-width:min(1400px,96vw);margin:0 auto}
+.hero-h1{font-size:22px;font-weight:600;color:#0f2a45;margin-bottom:6px}
+.hero-sub{font-size:12px;color:#5a7a9a;line-height:1.6;max-width:1000px}
+.hero-stats{display:flex;gap:12px;margin-top:12px;flex-wrap:wrap}
+.hero-stat{background:#f0f5fb;border:1px solid #dce8f5;border-radius:6px;padding:7px 11px;font-size:11px;color:#5a7a9a}
+.hero-stat strong{color:#1e3a5f;font-size:13px;display:block;margin-bottom:1px}
+.wrap{max-width:min(1400px,96vw);margin:0 auto;padding:18px 32px 0}
+.block{background:#fff;border:1px solid #dce8f5;border-radius:10px;padding:18px 20px;margin-bottom:18px}
+.block-h{font-size:16px;font-weight:700;color:#0f2a45;margin-bottom:6px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.block-h .step{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:6px;background:#1e3a5f;color:#fff;font-size:13px;font-weight:700}
+.block-h .asof{font-size:11px;font-weight:400;color:#94a3b8}
+.block-sub{font-size:12px;color:#5a7a9a;line-height:1.7;margin-bottom:12px}
+.block-foot{margin-top:10px;font-size:12px}
+.block-foot a,.block-sub a,.queue-note a,.track-desc a{color:#2563eb;text-decoration:none}
+.block-foot a:hover{text-decoration:underline}
+code{background:#f0f5fb;padding:1px 5px;border-radius:3px;font-size:11px;color:#1e3a5f}
+.stat-row{display:flex;gap:12px;flex-wrap:wrap}
+.stat{background:#f6faff;border:1px solid #dce8f5;border-radius:8px;padding:10px 14px;font-size:11px;color:#5a7a9a;min-width:110px}
+.stat strong{color:#0f2a45;font-size:20px;display:block;margin-bottom:2px;font-variant-numeric:tabular-nums}
+.stat.warn{background:#fef2f2;border-color:#fecaca}
+.stat.warn strong{color:#b91c1c}
+.stat .mini{display:inline-block;margin-top:3px;font-size:10px}
+/* gate grid */
+.gate-grid{display:flex;flex-wrap:wrap;gap:6px}
+.gtag{display:inline-flex;align-items:center;gap:5px;background:#f6faff;border:1px solid #dce8f5;border-radius:6px;padding:4px 8px;font-size:12px}
+.gtag a{color:#0f2a45;text-decoration:none;font-weight:700}
+.gtag a:hover{color:#2563eb;text-decoration:underline}
+.gtag .gm{font-size:10px;color:#5a7a9a;font-weight:600}
+.de-warn{font-size:9.5px;color:#b45309;background:#fef3c7;border-radius:4px;padding:0 4px}
+/* tracks */
+.track-card{border:1px solid #dce8f5;border-radius:10px;padding:14px 16px;margin-top:14px;background:#fbfdff}
+.track-core{border-left:4px solid #166534}
+.track-struct{border-left:4px solid #2563eb}
+.track-cyc{border-left:4px solid #c2410c}
+.track-card h3{font-size:15px;font-weight:700;color:#0f2a45;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.track-card h3 .cnt{font-size:11px;font-weight:600;color:#94a3b8}
+.track-desc{font-size:11.5px;color:#5a7a9a;line-height:1.7;margin-bottom:10px}
+.track-desc.warn-inline{background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:8px 10px;color:#991b1b}
+.seg-h{font-size:11.5px;font-weight:700;padding:6px 0 4px;margin-top:8px;border-top:1px dashed #e2ecf7}
+.seg-in{color:#166534}.seg-watch{color:#92400e}.seg-none{color:#64748b}.seg-hot{color:#9a3412}
+table{width:100%;border-collapse:collapse;font-size:12px;margin-top:4px}
+th{background:#f0f6ff;color:#5a7a9a;font-weight:700;padding:7px 9px;text-align:right;border-bottom:2px solid #dce8f5;font-size:10px;letter-spacing:.03em}
+th.left{text-align:left}
+td{padding:7px 9px;text-align:right;border-bottom:1px solid #f0f5fb;font-variant-numeric:tabular-nums}
+td.left{text-align:left;color:#0f2a45;font-weight:500}
+td.num{text-align:right}
+td a{color:#2563eb;text-decoration:none;font-weight:700}
+td a:hover{text-decoration:underline}
+td.meta{font-size:10.5px;color:#5a7a9a;text-align:left}
+.ret-hot{color:#c2410c;font-weight:700}
+.verdict{padding:1px 8px;border-radius:99px;font-size:10.5px;font-weight:700;white-space:nowrap}
+.v-in{background:#dcfce7;color:#166534}.v-watch{background:#fef3c7;color:#92400e}
+.v-avoid{background:#fee2e2;color:#991b1b}.v-none{background:#f1f5f9;color:#94a3b8;font-weight:600}
+.empty{padding:12px;text-align:center;color:#94a3b8;font-size:12px;font-style:italic}
+/* trigger */
+.trigger-detail{margin-top:12px;font-size:12px;color:#334e68;line-height:2}
+.trigger-detail .lbl{display:inline-block;min-width:64px;color:#94a3b8;font-size:11px;font-weight:700}
+.trigger-detail .st{font-size:9.5px;color:#94a3b8;margin-left:2px}
+.trigger-detail .sep{color:#cbd5e1;margin:0 6px}
+/* lookback */
+.queue-note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;font-size:11.5px;color:#78350f;line-height:1.9;margin-bottom:12px}
+.lb-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.lb-col h4{font-size:12px;color:#5a7a9a;margin-bottom:4px;font-weight:700}
+tr.lb-queue{background:#fffbeb}
+tr.lb-queue td{border-bottom-color:#fde68a}
+td.rk{color:#94a3b8;font-size:10px}
+td.big{font-weight:700;color:#166534}
+.cov{font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;white-space:nowrap}
+.cov-ok{background:#dcfce7;color:#166534}.cov-stale{background:#fef3c7;color:#92400e}.cov-blind{background:#e0e7ff;color:#3730a3}
+/* privacy */
+.privacy{border-color:#c7d7ea;background:#f6faff}
+.privacy-body{font-size:12.5px;color:#334e68;line-height:1.9}
+.footer{padding:24px 32px;font-size:11px;color:#94a3b8;line-height:1.7;max-width:min(1400px,96vw);margin:0 auto}
+.footer code{background:#eef4fb;padding:1px 5px;border-radius:3px;font-size:10px}
+@media(max-width:760px){.lb-grid{grid-template-columns:1fr}}
+"""
+
+
+def build(dry_run: bool = False) -> int:
+    print(f"=== Pipeline-page build · {_now_taipei_iso()} ===\n")
+    latest = _load(LATEST_JSON)
+    if not latest:
+        print(f"  ERR: {LATEST_JSON} missing — run build_dd_screener.py first", file=sys.stderr)
+        return 2
+    stocks = latest.get("stocks", []) or []
+    by_ticker = {s["ticker"]: s for s in stocks}
+    cyc = _load(CYCLICAL_JSON)
+    sop = _load(SOP_LATEST)
+    ledger = _load(SOP_LEDGER)
+    pre_id = _load(PRE_ID_SCAN)
+
+    # ── 資格閘 ──
+    gated = [s for s in stocks if passes_gate(s)]
+    gated_set = {s["ticker"] for s in gated}
+
+    # ── 核心軌 ── = 過閘 ∪ (進場 & 核心持倉)
+    core = {}
+    for s in stocks:
+        if s["ticker"] in gated_set or (s.get("dca_verdict") == "進場" and s.get("dca_role") == "核心持倉"):
+            core[s["ticker"]] = s
+    for s in core.values():
+        s["_score"] = _ev5y(s) * _certainty(s)
+    core_sorted = sorted(core.values(), key=lambda s: (-s["_score"], s["ticker"]))
+
+    # ── 衛星·結構軌 ── runway🟢 + eps2y/peg 不 fail + moat 過 + 非核心角色
+    # 一檔一軌：循環軌成員（trailing fcf/roic fail 形狀）優先歸循環軌，不重複列入結構軌
+    cyc_tickers = set()
+    if cyc:
+        for grp in ("low_heat", "hot"):
+            for r in (cyc.get(grp) or []):
+                cyc_tickers.add(r.get("ticker"))
+    struct = []
+    for s in stocks:
+        if s["ticker"] in core or s["ticker"] in cyc_tickers:
+            continue
+        if s.get("runway_post_y5") != "🟢":
+            continue
+        fail = set(s.get("fail_criteria") or [])
+        if "eps2y" in fail or "peg" in fail:
+            continue
+        if s.get("moat_grade") not in QUALITY_MOAT_GRADES or s.get("moat_trend") == "↓":
+            continue
+        bm = _bull_mult(s)
+        s["_sscore"] = _ev5y(s) + (bm * STRUCT_BULL_MULT if bm else 0.0)
+        struct.append(s)
+    struct_sorted = sorted(struct, key=lambda s: (-s["_sscore"], s["ticker"]))
+
+    # ── 態②否決計數 ──
+    veto_by_reason: dict = {}
+    if ledger:
+        for e in ledger.get("events", []) or []:
+            if e.get("status") == "vetoed":
+                for v in (e.get("vetoes") or []):
+                    veto_by_reason[v] = veto_by_reason.get(v, 0) + 1
+
+    # ── 回看鏡 ──
+    def _cov(ticker: str):
+        s = by_ticker.get(ticker)
+        if s is None or not s.get("dd_path"):
+            return "blind", None, None
+        age = s.get("dd_age_days")
+        cov = "stale" if (age is not None and age > DD_STALE_DAYS) else "covered"
+        return cov, s.get("dd_path"), age
+
+    def _top(n_bars: int):
+        rows = []
+        for p in WEEKLY_CACHE_DIR.glob("*.json"):
+            r = _weekly_return(p.stem, n_bars)
+            if r is not None:
+                rows.append((p.stem, r))
+        rows.sort(key=lambda x: -x[1])
+        out = []
+        for i, (t, r) in enumerate(rows[:LOOKBACK_TOP_N], 1):
+            cov, dd, age = _cov(t)
+            out.append({"rank": i, "ticker": t, "ret": r, "cov": cov,
+                        "dd_path": dd, "dd_age_days": age})
+        return out
+
+    lb12 = _top(53)
+    lb24 = _top(105)
+    queue12 = [r for r in lb12 if r["cov"] != "covered"]
+    queue24 = [r for r in lb24 if r["cov"] != "covered"]
+
+    # momentum blind (for universe section) = union of the two queues
+    momentum_blind = {r["ticker"] for r in queue12} | {r["ticker"] for r in queue24}
+
+    # ── console summary ──
+    print(f"  universe={latest.get('universe_size')} 過閘={len(gated)} "
+          f"(D/E⚠={sum(1 for s in gated if (_safe_float(s.get('de')) or 0)>DE_WARN_THRESHOLD)})")
+    print(f"  核心軌={len(core_sorted)} "
+          f"(進場={sum(1 for s in core_sorted if s.get('dca_verdict')=='進場')} "
+          f"觀望={sum(1 for s in core_sorted if s.get('dca_verdict')=='觀望')} "
+          f"待補={sum(1 for s in core_sorted if s.get('dca_verdict') not in ('進場','觀望','迴避'))})")
+    print(f"    可執行: {[s['ticker'] for s in core_sorted if s.get('dca_verdict')=='進場']}")
+    print(f"  結構軌={len(struct_sorted)}: {[s['ticker'] for s in struct_sorted]}")
+    if cyc:
+        print(f"  循環軌={cyc.get('qualified_total')} (低熱 {len(cyc.get('low_heat',[]))} / 🔥 {len(cyc.get('hot',[]))})")
+    print(f"  板機: today={len(sop.get('today_signals',[])) if sop else '?'} "
+          f"open={len(sop.get('open_trades',[])) if sop else '?'} 態②否決={veto_by_reason.get('態②過熱',0)}")
+    print(f"  回看鏡動能盲區: 12M={[r['ticker'] for r in queue12]} 24M={[r['ticker'] for r in queue24]}")
+
+    # ── assemble HTML ──
+    universe_html = render_universe(latest, pre_id, list(momentum_blind))
+    gate_html = render_gate(gated)
+    tracks_html = render_tracks(core_sorted, struct_sorted, cyc)
+    trigger_html = render_trigger(sop, veto_by_reason)
+    lookback_html = render_lookback(lb12, lb24, queue12, queue24)
+    privacy_html = render_privacy()
+
+    as_of = latest.get("as_of", "—")
+    run_ts = _now_taipei_iso()
+    n_exe = sum(1 for s in core_sorted if s.get("dca_verdict") == "進場")
+
+    html = f"""<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta name="robots" content="noindex,nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>個股部漏斗總覽 Pipeline — 發現 → 資格閘 → 三軌 → 板機 | InvestMQuest</title>
+<meta name="color-scheme" content="light">
+<style>{STYLE}</style>
+</head>
+<body>
+{NAV_BLOCK}
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-h1">🧭 個股部漏斗總覽 · Pipeline</div>
+    <div class="hero-sub">
+      個股部（總資產 25%，5～10 檔最有上漲潛力的組合）整條投資流程的活數字：
+      <b>發現 → 資格閘 → 三軌射擊名單 → 板機 → 監控 → 回看鏡</b>。所有數字來自既有 JSON，每週隨基本面刷新自動更新。
+      本頁只呈現<b>研究層</b>，實際持倉與權重不上站。
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><strong>{_fmt_stamp(run_ts)}</strong>最後更新（台北）</div>
+      <div class="hero-stat"><strong>{as_of}</strong>資料 as of</div>
+      <div class="hero-stat"><strong>{latest.get('universe_size')}</strong>DD 宇宙</div>
+      <div class="hero-stat"><strong>{len(gated)}</strong>過閘</div>
+      <div class="hero-stat"><strong>{n_exe}</strong>核心可執行</div>
+      <div class="hero-stat"><strong>{cyc.get('qualified_total',0) if cyc else 0}</strong>循環候選</div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+{universe_html}
+{gate_html}
+{tracks_html}
+{trigger_html}
+{lookback_html}
+{privacy_html}
+</div>
+
+<div class="footer">
+  <p><b>數據來源</b>：<code>latest.json</code>（宇宙／資格閘／核心軌／結構軌）·
+  <code>cyclical-track.json</code>（循環軌）· <code>sop-funnel/latest.json</code>＋<code>ledger.json</code>（板機／否決）·
+  <code>pre_id_scan.json</code>（形狀盲區）· <code>data/weekly_cache/</code>（回看鏡週線報酬）。</p>
+  <p style="margin-top:8px">資格閘為<b>自算口徑</b>（fail−de 為空 ∧ moat∈{{S,A,B}} ∧ trend≠↓），不依賴 latest.json 的 pass_count。
+  射擊名單≠買入指令，見「隱私線」三重前提。</p>
+  <p style="margin-top:10px;color:#cbd5e1">Generated by <code>scripts/build_pipeline_page.py</code></p>
+</div>
+</body>
+</html>
+"""
+
+    if dry_run:
+        print(f"\n  (dry-run) would write {HTML_OUT} ({len(html):,} bytes)")
+        return 0
+
+    HTML_OUT.write_text(html, encoding="utf-8")
+    print(f"\n  ✓ Wrote {HTML_OUT} ({HTML_OUT.stat().st_size:,} bytes)")
+    return 0
+
+
+def main() -> int:
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument("--dry-run", action="store_true", help="Don't write files")
+    args = p.parse_args()
+    return build(dry_run=args.dry_run)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

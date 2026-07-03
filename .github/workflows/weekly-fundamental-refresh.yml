@@ -69,6 +69,23 @@ jobs:
         run: python scripts/generate_targets.py
         continue-on-error: true
 
+      # ── 衛星·循環軌（循環底部 × 上修動能提名層）───────────────────────────
+      # 純本地：讀 latest.json + data/weekly_cache 週線，無網路。continue-on-error
+      # 比照 scan/targets：失敗不 abort job，cyclical-track.json 維持上週版本
+      # （build 只在成功結尾寫檔，不會寫壞）。
+      - name: Cyclical track (循環底部 × 上修動能)
+        run: python scripts/build_cyclical_track.py
+        continue-on-error: true
+
+      # ── Pipeline 漏斗總覽頁（整條漏斗的活數字單頁）────────────────────────
+      # 純本地：讀 latest.json + cyclical-track.json + sop-funnel latest/ledger
+      # + pre_id_scan.json + data/weekly_cache 週線，無網路。掛在循環軌之後，
+      # 消費上游剛產的 JSON。continue-on-error 比照 fail-safe 慣例：失敗不 abort
+      # job，pipeline.html 維持上週版本（build 只在成功結尾寫檔）。
+      - name: Pipeline overview page (漏斗總覽)
+        run: python scripts/build_pipeline_page.py
+        continue-on-error: true
+
       - name: Commit and push if changed
         run: |
           git config user.name "github-actions[bot]"
@@ -78,7 +95,11 @@ jobs:
                   docs/dd-screener/alpha-rank-state/ \
                   docs/dd-screener/alpha-rank-snapshots/ \
                   docs/dd-screener/pre_id_scan.json \
-                  docs/dd-screener/targets.html
+                  docs/dd-screener/targets.html \
+                  docs/dd-screener/cyclical-track.html \
+                  docs/dd-screener/cyclical-track.json \
+                  docs/dd-screener/cyclical-track-snapshots/ \
+                  docs/dd-screener/pipeline.html
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else

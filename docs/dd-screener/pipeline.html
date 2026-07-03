@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta name="robots" content="noindex,nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>個股部漏斗總覽 Pipeline — 發現 → 資格閘 → 三軌 → 板機 | InvestMQuest</title>
+<meta name="color-scheme" content="light">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e3a5f;line-height:1.5}
+.hero{background:#fff;border-bottom:1px solid #dce8f5;padding:24px 32px 18px}
+.hero-inner{max-width:min(1400px,96vw);margin:0 auto}
+.hero-h1{font-size:22px;font-weight:600;color:#0f2a45;margin-bottom:6px}
+.hero-sub{font-size:12px;color:#5a7a9a;line-height:1.6;max-width:1000px}
+.hero-stats{display:flex;gap:12px;margin-top:12px;flex-wrap:wrap}
+.hero-stat{background:#f0f5fb;border:1px solid #dce8f5;border-radius:6px;padding:7px 11px;font-size:11px;color:#5a7a9a}
+.hero-stat strong{color:#1e3a5f;font-size:13px;display:block;margin-bottom:1px}
+.wrap{max-width:min(1400px,96vw);margin:0 auto;padding:18px 32px 0}
+.block{background:#fff;border:1px solid #dce8f5;border-radius:10px;padding:18px 20px;margin-bottom:18px}
+.block-h{font-size:16px;font-weight:700;color:#0f2a45;margin-bottom:6px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.block-h .step{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:6px;background:#1e3a5f;color:#fff;font-size:13px;font-weight:700}
+.block-h .asof{font-size:11px;font-weight:400;color:#94a3b8}
+.block-sub{font-size:12px;color:#5a7a9a;line-height:1.7;margin-bottom:12px}
+.block-foot{margin-top:10px;font-size:12px}
+.block-foot a,.block-sub a,.queue-note a,.track-desc a{color:#2563eb;text-decoration:none}
+.block-foot a:hover{text-decoration:underline}
+code{background:#f0f5fb;padding:1px 5px;border-radius:3px;font-size:11px;color:#1e3a5f}
+.stat-row{display:flex;gap:12px;flex-wrap:wrap}
+.stat{background:#f6faff;border:1px solid #dce8f5;border-radius:8px;padding:10px 14px;font-size:11px;color:#5a7a9a;min-width:110px}
+.stat strong{color:#0f2a45;font-size:20px;display:block;margin-bottom:2px;font-variant-numeric:tabular-nums}
+.stat.warn{background:#fef2f2;border-color:#fecaca}
+.stat.warn strong{color:#b91c1c}
+.stat .mini{display:inline-block;margin-top:3px;font-size:10px}
+/* gate grid */
+.gate-grid{display:flex;flex-wrap:wrap;gap:6px}
+.gtag{display:inline-flex;align-items:center;gap:5px;background:#f6faff;border:1px solid #dce8f5;border-radius:6px;padding:4px 8px;font-size:12px}
+.gtag a{color:#0f2a45;text-decoration:none;font-weight:700}
+.gtag a:hover{color:#2563eb;text-decoration:underline}
+.gtag .gm{font-size:10px;color:#5a7a9a;font-weight:600}
+.de-warn{font-size:9.5px;color:#b45309;background:#fef3c7;border-radius:4px;padding:0 4px}
+/* tracks */
+.track-card{border:1px solid #dce8f5;border-radius:10px;padding:14px 16px;margin-top:14px;background:#fbfdff}
+.track-core{border-left:4px solid #166534}
+.track-struct{border-left:4px solid #2563eb}
+.track-cyc{border-left:4px solid #c2410c}
+.track-card h3{font-size:15px;font-weight:700;color:#0f2a45;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.track-card h3 .cnt{font-size:11px;font-weight:600;color:#94a3b8}
+.track-desc{font-size:11.5px;color:#5a7a9a;line-height:1.7;margin-bottom:10px}
+.track-desc.warn-inline{background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:8px 10px;color:#991b1b}
+.seg-h{font-size:11.5px;font-weight:700;padding:6px 0 4px;margin-top:8px;border-top:1px dashed #e2ecf7}
+.seg-in{color:#166534}.seg-watch{color:#92400e}.seg-none{color:#64748b}.seg-hot{color:#9a3412}
+table{width:100%;border-collapse:collapse;font-size:12px;margin-top:4px}
+th{background:#f0f6ff;color:#5a7a9a;font-weight:700;padding:7px 9px;text-align:right;border-bottom:2px solid #dce8f5;font-size:10px;letter-spacing:.03em}
+th.left{text-align:left}
+td{padding:7px 9px;text-align:right;border-bottom:1px solid #f0f5fb;font-variant-numeric:tabular-nums}
+td.left{text-align:left;color:#0f2a45;font-weight:500}
+td.num{text-align:right}
+td a{color:#2563eb;text-decoration:none;font-weight:700}
+td a:hover{text-decoration:underline}
+td.meta{font-size:10.5px;color:#5a7a9a;text-align:left}
+.ret-hot{color:#c2410c;font-weight:700}
+.verdict{padding:1px 8px;border-radius:99px;font-size:10.5px;font-weight:700;white-space:nowrap}
+.v-in{background:#dcfce7;color:#166534}.v-watch{background:#fef3c7;color:#92400e}
+.v-avoid{background:#fee2e2;color:#991b1b}.v-none{background:#f1f5f9;color:#94a3b8;font-weight:600}
+.empty{padding:12px;text-align:center;color:#94a3b8;font-size:12px;font-style:italic}
+/* trigger */
+.trigger-detail{margin-top:12px;font-size:12px;color:#334e68;line-height:2}
+.trigger-detail .lbl{display:inline-block;min-width:64px;color:#94a3b8;font-size:11px;font-weight:700}
+.trigger-detail .st{font-size:9.5px;color:#94a3b8;margin-left:2px}
+.trigger-detail .sep{color:#cbd5e1;margin:0 6px}
+/* lookback */
+.queue-note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;font-size:11.5px;color:#78350f;line-height:1.9;margin-bottom:12px}
+.lb-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.lb-col h4{font-size:12px;color:#5a7a9a;margin-bottom:4px;font-weight:700}
+tr.lb-queue{background:#fffbeb}
+tr.lb-queue td{border-bottom-color:#fde68a}
+td.rk{color:#94a3b8;font-size:10px}
+td.big{font-weight:700;color:#166534}
+.cov{font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;white-space:nowrap}
+.cov-ok{background:#dcfce7;color:#166534}.cov-stale{background:#fef3c7;color:#92400e}.cov-blind{background:#e0e7ff;color:#3730a3}
+/* privacy */
+.privacy{border-color:#c7d7ea;background:#f6faff}
+.privacy-body{font-size:12.5px;color:#334e68;line-height:1.9}
+.footer{padding:24px 32px;font-size:11px;color:#94a3b8;line-height:1.7;max-width:min(1400px,96vw);margin:0 auto}
+.footer code{background:#eef4fb;padding:1px 5px;border-radius:3px;font-size:10px}
+@media(max-width:760px){.lb-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#0f172a;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(59,130,246,.28);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/">個股 DD</a>
+          <a href="/research/synthesis/">期望落差綜合研判</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/">週報</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/long-track-smh/">長線訊號</a>
+          <a href="/long-track-tw/">台股長線</a>
+          <a href="/turtle-sleeve/">商品 Sleeve</a>
+        </div>
+      </div>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/">量化回測</a>
+          <a href="/dd-screener/" class="active">DD Screener</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/screener-tw.html">Screener 台股</a>
+          <a href="/screener-jp.html">Screener 日股</a>
+          <a href="/screener-my.html">Screener 馬股</a>
+          <a href="/cache/">🗄 Data Cache</a>
+          <a href="/tools/">期貨部位計算機</a>
+        </div>
+      </div>
+      <a href="/mental-models/">🧠 心智模型</a>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<div class="imq-subnav"><div class="imq-subnav-inner"><a href="/dd-screener/">總覽</a><a href="/dd-screener/pipeline.html" class="active">🧭 Pipeline</a><a href="/dd-screener/targets.html">🎯 標的清單</a><a href="/dd-screener/quality-entry.html">Quality-Entry</a><a href="/dd-screener/cyclical-track.html">衛星·循環軌</a><a href="/dd-screener/bottom-out.html">Bottom-Out</a><a href="/dd-screener/breakout.html">Breakout</a><a href="/dd-screener/earnings-acceleration.html">盈餘加速</a><a href="/dd-screener/entry-state.html">Entry-State</a><a href="/dd-screener/entry-state-backtest.html">Entry 回測</a><a href="/dd-screener/sop-funnel.html">SOP Funnel</a><a href="/dd-screener/sop-funnel-backtest.html">SOP 回測</a><a href="/dd-screener/alpha-rank.html">Alpha Rank</a></div></div>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-h1">🧭 個股部漏斗總覽 · Pipeline</div>
+    <div class="hero-sub">
+      個股部（總資產 25%，5～10 檔最有上漲潛力的組合）整條投資流程的活數字：
+      <b>發現 → 資格閘 → 三軌射擊名單 → 板機 → 監控 → 回看鏡</b>。所有數字來自既有 JSON，每週隨基本面刷新自動更新。
+      本頁只呈現<b>研究層</b>，實際持倉與權重不上站。
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><strong>2026-07-03 15:47</strong>最後更新（台北）</div>
+      <div class="hero-stat"><strong>2026-07-03</strong>資料 as of</div>
+      <div class="hero-stat"><strong>240</strong>DD 宇宙</div>
+      <div class="hero-stat"><strong>41</strong>過閘</div>
+      <div class="hero-stat"><strong>7</strong>核心可執行</div>
+      <div class="hero-stat"><strong>18</strong>循環候選</div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+<section class="block">
+  <h2 class="block-h"><span class="step">1</span> 宇宙 · 待研究隊列</h2>
+  <div class="block-sub">DD 宇宙規模與兩條「還沒被研究的候選」入口——形狀掃描的覆蓋盲區（六燈全滅＝零方法覆蓋），與下方回看鏡的動能盲區（高報酬卻無／舊 DD）。</div>
+  <div class="stat-row">
+    <div class="stat"><strong>240</strong>DD 宇宙（latest.json）</div>
+    <div class="stat"><strong>94</strong>形狀掃描盲區 <a href="/dd-screener/targets.html" class="mini">→ 標的清單</a></div>
+    <div class="stat"><strong>2</strong>動能盲區 <a href="#lookback" class="mini">→ 回看鏡</a></div>
+  </div>
+</section>
+<section class="block">
+  <h2 class="block-h"><span class="step">2</span> 資格閘 · 通過 41 檔</h2>
+  <div class="block-sub">
+    自算口徑（<b>不依賴 pass_count</b>）：<code>fail_criteria −{de} 為空</code> 且 <code>moat_grade∈{S,A,B}</code> 且 <code>moat_trend≠↓</code>。
+    D/E 為 advisory——<code>&gt;0.7</code> 標 ⚠ 但<b>不計分、不擋</b>（持有人 2026-06-11 拍板的五條件無 D/E；本頁已把 de 退出閘）。
+    本閘通過 41 檔，其中 <b>14</b> 檔帶 D/E ⚠。
+  </div>
+  <div class="gate-grid"><span class="gtag"><a href="/dd/DD_AMAT_20260626.html#decision">AMAT</a><span class="gm">S→</span></span><span class="gtag"><a href="/dd/DD_ASML_20260626.html#decision">ASML</a><span class="gm">S→</span></span><span class="gtag"><a href="/dd/DD_NVDA_20260624.html#decision">NVDA</a><span class="gm">S→</span></span><span class="gtag"><a href="/dd/DD_V_20260516.html#decision">V</a><span class="gm">S→</span></span><span class="gtag"><a href="/dd/DD_LLY_20260623.html#decision">LLY</a><span class="gm">S↑</span> <span class="de-warn" title="D/E 1.39 &gt; 0.7 — advisory，不計分不擋">⚠ D/E 1.4</span></span><span class="gtag"><a href="/dd/DD_TSM_20260623.html#decision">TSM</a><span class="gm">S↑</span></span><span class="gtag"><a href="/dd/DD_3653_20260526.html#decision">3653.TW</a><span class="gm">S↑</span></span><span class="gtag"><a href="/dd/DD_BESI_20260420.html#decision">BESI</a><span class="gm">S↑</span> <span class="de-warn" title="D/E 1.25 &gt; 0.7 — advisory，不計分不擋">⚠ D/E 1.3</span></span><span class="gtag"><a href="/dd/DD_HWM_20260418.html#decision">HWM</a><span class="gm">A↑</span> <span class="de-warn" title="D/E 0.88 &gt; 0.7 — advisory，不計分不擋">⚠ D/E 0.9</span></span><span class="gtag"><a href="/dd/DD_MA_20260516.html#decision">MA</a><span class="gm">A↑</span> <span class="de-warn" title="D/E 2.82 &gt; 0.7 — advisory，不計分不擋">⚠ D/E 2.8</span></span><span class="gtag"><a href="/dd/DD_META_20260418.html#decision">META</a><span class="gm">A→</span></span><span class="gtag"><a href="/dd/DD_2330TW_20260610.html#decision">2330.TW</a><span class="gm">S↑</span></span><span class="gtag"><a href="/dd/DD_ABBV_20260525.html#decision">ABBV</a><span class="gm">A→</span></span><span class="gtag"><a href="/dd/DD_ABNB_20260523.html#decision">ABNB</a><span class="gm">A→</span></span><span class="gtag"><a href="/dd/DD_CDNS_20260504.html#decision">CDNS</a><span class="gm">A→</span></span><span class="gtag"><a href="/dd/DD_GILD_20260525.html#decision">GILD</a><span class="gm">A↑</span> <span class="de-warn" title="D/E 0.95 &gt; 0.7 — advisory，不計分不擋">⚠ D/E 0.9</span></span><span class="gtag"><a href="/dd/DD_LRCX_20260620.html#decision">LRCX</a><span class="gm">A↑</span></span><span class="gtag"><a href="/dd/DD_MSFT_20260515.html#decision">MSFT</a><span class="gm">A→</span></span><span class="gtag"><a href="/dd/DD_MSI_20260524.html#decision">MSI</a><span class="gm">A↑</span> <span class="de-warn" title="D/E 3.74 &gt; 0.7 — advisory，不計分不擋">⚠ D/E 3.7</span></span><span class="gtag"><a href="/dd/DD_NFLX_20260516.html#decision">NFLX</a><span class="gm">A↑</span></span><span class="gtag"><a href="/dd/DD_PLTR_20260629.html#decision">PLTR</a><span class="gm">A→</span></span><span class="gtag"><a href="/dd/DD_APH_20260626.html#decision">APH</a><span class="gm">A→</span> <span class="de-warn" title="D/E 1.33 &gt; 0.7 — advisory，不計分不擋">⚠ D/E 1.3</span></span><span class="gtag"><a href="/dd/DD_AVGO_20260623.html#decision">AVGO</a><span class="gm">A→</span> <span class="de-warn" title="D/E 0.80 &gt; 0.7 — advisory，不計分不擋">⚠ D/E 0.8</span></span><span class="gtag"><a href="/dd/DD_BKNG_20260518.html#decision">BKNG</a><span class="gm">A→</span></span><span class="gtag"><a href="/dd/DD_3017_20260504.html#decision">3017.TW</a><span class="gm">A↑</span></span><span class="gtag"><a href="/dd/DD_CRDO_20260623.html#decision">CRDO</a><span class="gm">B→</span></span><span class="gtag"><a href="/dd/DD_FIX_20260516.html#decision">FIX</a><span class="gm">A↑</span></span><span class="gtag"><a href="/dd/DD_VRT_20260425.html#decision">VRT</a><span class="gm">B↑</span> <span class="de-warn" title="D/E 0.77 &gt; 0.7 — advisory，不計分不擋">⚠ D/E 0.8</span></span><span class="gtag"><a href="/dd/DD_ANET_20260506.html#decision">ANET</a><span class="gm">B→</span></span><span class="gtag"><a href="/dd/DD_ADBE_20260615.html#decision">ADBE</a><span class="gm">B→</span></span><span class="gtag"><a href="/dd/DD_2454_20260504.html#decision">2454.TW</a><span class="gm">A↑</span></span><span class="gtag"><a href="/dd/DD_MPWR_20260620.html#decision">MPWR</a><span class="gm">B→</span></span><span class="gtag"><a href="/dd/DD_ROK_20260620.html#decision">ROK</a><span class="gm">B→</span> <span class="de-warn" title="D/E 1.13 &gt; 0.7 — advisory，不計分不擋">⚠ D/E 1.1</span></span><span class="gtag"><a href="/dd/DD_APP_20260418.html#decision">APP</a><span class="gm">B↑</span> <span class="de-warn" title="D/E 1.63 &gt; 0.7 — advisory，不計分不擋">⚠ D/E 1.6</span></span><span class="gtag"><a href="/dd/DD_EBAY_20260516.html#decision">EBAY</a><span class="gm">B→</span> <span class="de-warn" title="D/E 1.63 &gt; 0.7 — advisory，不計分不擋">⚠ D/E 1.6</span></span><span class="gtag"><a href="/dd/DD_FSLR_20260608.html#decision">FSLR</a><span class="gm">B→</span></span><span class="gtag"><a href="/dd/DD_NTAP_20260518.html#decision">NTAP</a><span class="gm">B→</span> <span class="de-warn" title="D/E 2.02 &gt; 0.7 — advisory，不計分不擋">⚠ D/E 2.0</span></span><span class="gtag"><a href="/dd/DD_STX_20260629.html#decision">STX</a><span class="gm">B→</span> <span class="de-warn" title="D/E 3.82 &gt; 0.7 — advisory，不計分不擋">⚠ D/E 3.8</span></span><span class="gtag"><a href="/dd/DD_WDC_20260518.html#decision">WDC</a><span class="gm">B↑</span></span><span class="gtag"><a href="/dd/DD_STRL_20260505.html#decision">STRL</a><span class="gm">B↑</span></span><span class="gtag"><a href="/dd/DD_QCOM_20260504.html#decision">QCOM</a><span class="gm">B→</span></span></div>
+</section>
+<section class="block">
+  <h2 class="block-h"><span class="step">3</span> 三軌射擊名單</h2>
+  <div class="block-sub">過閘後依角色分三軌，一檔一軌。每檔 Ticker 連站上 DD 的 <code>#decision</code> 錨點；無裁決者標「待補 DD」＝研究隊列。</div>
+  <div class="track-card track-core">
+  <h3>🎯 核心軌 <span class="cnt">42 檔</span></h3>
+  <div class="track-desc">
+    軌別＝<b>過閘 ∪（DD 裁決＝進場 且 角色＝核心持倉）</b>；排序＝<b>EV5y × 確定性</b>
+    （確定性＝(moat_score+quality_score)/20）。EV5y 取 <code>live_ev5y_pct</code> 優先、缺則 <code>ev5y_pct</code>。
+    單檔上限 10%（個股部淨值）。
+  </div>
+  <div class="seg-h seg-in">✅ 可執行（裁決＝進場）· 7 檔</div>
+  <table>
+<thead><tr>
+  <th class="left">Ticker</th><th>裁決</th><th>角色</th>
+  <th class="num">EV5y×確定性</th><th class="num">EV5y</th><th class="num">確定性</th>
+  <th class="left">護城河 · runway</th>
+</tr></thead>
+<tbody>
+<tr>
+  <td class="left"><a href="/dd/DD_NVDA_20260624.html#decision">NVDA</a></td>
+  <td><span class="verdict v-in">進場</span></td>
+  <td>核心持倉</td>
+  <td class="num"><strong>19.57</strong></td>
+  <td class="num">19.6%</td>
+  <td class="num">1.00</td>
+  <td class="meta">S→ · 🟢</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_TSM_20260623.html#decision">TSM</a></td>
+  <td><span class="verdict v-in">進場</span></td>
+  <td>條件式核心持倉</td>
+  <td class="num"><strong>13.55</strong></td>
+  <td class="num">13.9%</td>
+  <td class="num">0.97</td>
+  <td class="meta">S↑ · 🟢</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_AVGO_20260623.html#decision">AVGO</a> <span class="de-warn" title="D/E 0.80 &gt; 0.7 — advisory，不計分不擋">⚠ D/E 0.8</span></td>
+  <td><span class="verdict v-in">進場</span></td>
+  <td>核心持倉</td>
+  <td class="num"><strong>11.64</strong></td>
+  <td class="num">13.7%</td>
+  <td class="num">0.85</td>
+  <td class="meta">A→ · 🟡</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_PLTR_20260629.html#decision">PLTR</a></td>
+  <td><span class="verdict v-in">進場</span></td>
+  <td>條件式核心持倉</td>
+  <td class="num"><strong>7.99</strong></td>
+  <td class="num">8.9%</td>
+  <td class="num">0.90</td>
+  <td class="meta">A→ · 🟢</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_GOOGL_20260623.html#decision">GOOGL</a></td>
+  <td><span class="verdict v-in">進場</span></td>
+  <td>核心持倉</td>
+  <td class="num"><strong>6.91</strong></td>
+  <td class="num">7.1%</td>
+  <td class="num">0.97</td>
+  <td class="meta">S→ · 🟢</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_APH_20260626.html#decision">APH</a> <span class="de-warn" title="D/E 1.33 &gt; 0.7 — advisory，不計分不擋">⚠ D/E 1.3</span></td>
+  <td><span class="verdict v-in">進場</span></td>
+  <td>條件式核心持倉</td>
+  <td class="num"><strong>6.81</strong></td>
+  <td class="num">7.8%</td>
+  <td class="num">0.88</td>
+  <td class="meta">A→ · 🟢</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_LLY_20260623.html#decision">LLY</a> <span class="de-warn" title="D/E 1.39 &gt; 0.7 — advisory，不計分不擋">⚠ D/E 1.4</span></td>
+  <td><span class="verdict v-in">進場</span></td>
+  <td>核心持倉</td>
+  <td class="num"><strong>6.43</strong></td>
+  <td class="num">6.6%</td>
+  <td class="num">0.97</td>
+  <td class="meta">S↑ · 🟢</td>
+</tr>
+</tbody></table>
+  <div class="seg-h seg-watch">⏸ 觀望板凳（裁決＝觀望）· 4 檔</div>
+  <table>
+<thead><tr>
+  <th class="left">Ticker</th><th>裁決</th><th>角色</th>
+  <th class="num">EV5y×確定性</th><th class="num">EV5y</th><th class="num">確定性</th>
+  <th class="left">護城河 · runway</th>
+</tr></thead>
+<tbody>
+<tr>
+  <td class="left"><a href="/dd/DD_CRDO_20260623.html#decision">CRDO</a></td>
+  <td><span class="verdict v-watch">觀望</span></td>
+  <td>條件式核心持倉</td>
+  <td class="num"><strong>7.42</strong></td>
+  <td class="num">9.0%</td>
+  <td class="num">0.82</td>
+  <td class="meta">B→ · 🟢</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_ASML_20260626.html#decision">ASML</a></td>
+  <td><span class="verdict v-watch">觀望</span></td>
+  <td>條件式核心持倉</td>
+  <td class="num"><strong>7.04</strong></td>
+  <td class="num">7.0%</td>
+  <td class="num">1.00</td>
+  <td class="meta">S→ · 🟢</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_AMAT_20260626.html#decision">AMAT</a></td>
+  <td><span class="verdict v-watch">觀望</span></td>
+  <td>條件式核心持倉</td>
+  <td class="num"><strong>3.07</strong></td>
+  <td class="num">3.1%</td>
+  <td class="num">1.00</td>
+  <td class="meta">S→ · 🟢</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_STX_20260629.html#decision">STX</a> <span class="de-warn" title="D/E 3.82 &gt; 0.7 — advisory，不計分不擋">⚠ D/E 3.8</span></td>
+  <td><span class="verdict v-watch">觀望</span></td>
+  <td>候選/追蹤池</td>
+  <td class="num"><strong>-6.76</strong></td>
+  <td class="num">-9.7%</td>
+  <td class="num">0.70</td>
+  <td class="meta">B→ · 🟡</td>
+</tr>
+</tbody></table>
+  <div class="seg-h seg-none">🔍 無裁決 · 待補 DD · 31 檔</div>
+  <table>
+<thead><tr>
+  <th class="left">Ticker</th><th>裁決</th><th>角色</th>
+  <th class="num">EV5y×確定性</th><th class="num">EV5y</th><th class="num">確定性</th>
+  <th class="left">護城河 · runway</th>
+</tr></thead>
+<tbody>
+<tr>
+  <td class="left"><a href="/dd/DD_3653_20260526.html#decision">3653.TW</a></td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+  <td>—</td>
+  <td class="num"><strong>16.62</strong></td>
+  <td class="num">17.5%</td>
+  <td class="num">0.95</td>
+  <td class="meta">S↑ · —</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_META_20260418.html#decision">META</a></td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+  <td>—</td>
+  <td class="num"><strong>16.56</strong></td>
+  <td class="num">17.4%</td>
+  <td class="num">0.95</td>
+  <td class="meta">A→ · —</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_ADBE_20260615.html#decision">ADBE</a></td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+  <td>—</td>
+  <td class="num"><strong>14.93</strong></td>
+  <td class="num">19.3%</td>
+  <td class="num">0.78</td>
+  <td class="meta">B→ · —</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_NFLX_20260516.html#decision">NFLX</a></td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+  <td>—</td>
+  <td class="num"><strong>11.27</strong></td>
+  <td class="num">12.5%</td>
+  <td class="num">0.90</td>
+  <td class="meta">A↑ · —</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_ABNB_20260523.html#decision">ABNB</a></td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+  <td>—</td>
+  <td class="num"><strong>10.97</strong></td>
+  <td class="num">12.2%</td>
+  <td class="num">0.90</td>
+  <td class="meta">A→ · —</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_GILD_20260525.html#decision">GILD</a> <span class="de-warn" title="D/E 0.95 &gt; 0.7 — advisory，不計分不擋">⚠ D/E 0.9</span></td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+  <td>—</td>
+  <td class="num"><strong>10.90</strong></td>
+  <td class="num">12.1%</td>
+  <td class="num">0.90</td>
+  <td class="meta">A↑ · —</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_MA_20260516.html#decision">MA</a> <span class="de-warn" title="D/E 2.82 &gt; 0.7 — advisory，不計分不擋">⚠ D/E 2.8</span></td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+  <td>—</td>
+  <td class="num"><strong>10.74</strong></td>
+  <td class="num">11.3%</td>
+  <td class="num">0.95</td>
+  <td class="meta">A↑ · —</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_BKNG_20260518.html#decision">BKNG</a></td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+  <td>—</td>
+  <td class="num"><strong>9.92</strong></td>
+  <td class="num">11.7%</td>
+  <td class="num">0.85</td>
+  <td class="meta">A→ · —</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_APP_20260418.html#decision">APP</a> <span class="de-warn" title="D/E 1.63 &gt; 0.7 — advisory，不計分不擋">⚠ D/E 1.6</span></td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+  <td>—</td>
+  <td class="num"><strong>9.55</strong></td>
+  <td class="num">13.2%</td>
+  <td class="num">0.72</td>
+  <td class="meta">B↑ · —</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_FSLR_20260608.html#decision">FSLR</a></td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+  <td>—</td>
+  <td class="num"><strong>8.80</strong></td>
+  <td class="num">12.6%</td>
+  <td class="num">0.70</td>
+  <td class="meta">B→ · —</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_2330TW_20260610.html#decision">2330.TW</a></td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+  <td>—</td>
+  <td class="num"><strong>8.60</strong></td>
+  <td class="num">9.2%</td>
+  <td class="num">0.94</td>
+  <td class="meta">S↑ · —</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_MSFT_20260515.html#decision">MSFT</a></td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+  <td>—</td>
+  <td class="num"><strong>7.73</strong></td>
+  <td class="num">8.6%</td>
+  <td class="num">0.90</td>
+  <td class="meta">A→ · —</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_3017_20260504.html#decision">3017.TW</a></td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+  <td>—</td>
+  <td class="num"><strong>7.59</strong></td>
+  <td class="num">9.2%</td>
+  <td class="num">0.82</td>
+  <td class="meta">A↑ · —</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_V_20260516.html#decision">V</a></td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+  <td>—</td>
+  <td class="num"><strong>7.22</strong></td>
+  <td class="num">7.2%</td>
+  <td class="num">1.00</td>
+  <td class="meta">S→ · —</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_MPWR_20260620.html#decision">MPWR</a></td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+  <td>—</td>
+  <td class="num"><strong>7.04</strong></td>
+  <td class="num">9.4%</td>
+  <td class="num">0.75</td>
+  <td class="meta">B→ · —</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_ROK_20260620.html#decision">ROK</a> <span class="de-warn" title="D/E 1.13 &gt; 0.7 — advisory，不計分不擋">⚠ D/E 1.1</span></td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+  <td>—</td>
+  <td class="num"><strong>6.35</strong></td>
+  <td class="num">8.5%</td>
+  <td class="num">0.75</td>
+  <td class="meta">B→ · —</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_MSI_20260524.html#decision">MSI</a> <span class="de-warn" title="D/E 3.74 &gt; 0.7 — advisory，不計分不擋">⚠ D/E 3.7</span></td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+  <td>—</td>
+  <td class="num"><strong>6.12</strong></td>
+  <td class="num">6.8%</td>
+  <td class="num">0.90</td>
+  <td class="meta">A↑ · —</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_VRT_20260425.html#decision">VRT</a> <span class="de-warn" title="D/E 0.77 &gt; 0.7 — advisory，不計分不擋">⚠ D/E 0.8</span></td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+  <td>—</td>
+  <td class="num"><strong>5.41</strong></td>
+  <td class="num">6.6%</td>
+  <td class="num">0.82</td>
+  <td class="meta">B↑ · —</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_QCOM_20260504.html#decision">QCOM</a></td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+  <td>—</td>
+  <td class="num"><strong>4.97</strong></td>
+  <td class="num">7.4%</td>
+  <td class="num">0.68</td>
+  <td class="meta">B→ · —</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_CDNS_20260504.html#decision">CDNS</a></td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+  <td>—</td>
+  <td class="num"><strong>4.67</strong></td>
+  <td class="num">5.2%</td>
+  <td class="num">0.90</td>
+  <td class="meta">A→ · —</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_ANET_20260506.html#decision">ANET</a></td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+  <td>—</td>
+  <td class="num"><strong>4.57</strong></td>
+  <td class="num">5.7%</td>
+  <td class="num">0.80</td>
+  <td class="meta">B→ · —</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_HWM_20260418.html#decision">HWM</a> <span class="de-warn" title="D/E 0.88 &gt; 0.7 — advisory，不計分不擋">⚠ D/E 0.9</span></td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+  <td>—</td>
+  <td class="num"><strong>4.46</strong></td>
+  <td class="num">4.7%</td>
+  <td class="num">0.95</td>
+  <td class="meta">A↑ · —</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_NTAP_20260518.html#decision">NTAP</a> <span class="de-warn" title="D/E 2.02 &gt; 0.7 — advisory，不計分不擋">⚠ D/E 2.0</span></td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+  <td>—</td>
+  <td class="num"><strong>2.86</strong></td>
+  <td class="num">4.1%</td>
+  <td class="num">0.70</td>
+  <td class="meta">B→ · —</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_BESI_20260420.html#decision">BESI</a> <span class="de-warn" title="D/E 1.25 &gt; 0.7 — advisory，不計分不擋">⚠ D/E 1.3</span></td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+  <td>—</td>
+  <td class="num"><strong>2.19</strong></td>
+  <td class="num">2.3%</td>
+  <td class="num">0.95</td>
+  <td class="meta">S↑ · —</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_EBAY_20260516.html#decision">EBAY</a> <span class="de-warn" title="D/E 1.63 &gt; 0.7 — advisory，不計分不擋">⚠ D/E 1.6</span></td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+  <td>—</td>
+  <td class="num"><strong>1.44</strong></td>
+  <td class="num">2.1%</td>
+  <td class="num">0.70</td>
+  <td class="meta">B→ · —</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_FIX_20260516.html#decision">FIX</a></td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+  <td>—</td>
+  <td class="num"><strong>0.62</strong></td>
+  <td class="num">0.8%</td>
+  <td class="num">0.82</td>
+  <td class="meta">A↑ · —</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_ABBV_20260525.html#decision">ABBV</a></td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+  <td>—</td>
+  <td class="num"><strong>0.00</strong></td>
+  <td class="num">0.0%</td>
+  <td class="num">0.90</td>
+  <td class="meta">A→ · —</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_STRL_20260505.html#decision">STRL</a></td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+  <td>—</td>
+  <td class="num"><strong>-0.19</strong></td>
+  <td class="num">-0.3%</td>
+  <td class="num">0.70</td>
+  <td class="meta">B↑ · —</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_2454_20260504.html#decision">2454.TW</a></td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+  <td>—</td>
+  <td class="num"><strong>-1.63</strong></td>
+  <td class="num">-2.2%</td>
+  <td class="num">0.75</td>
+  <td class="meta">A↑ · —</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_LRCX_20260620.html#decision">LRCX</a></td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+  <td>—</td>
+  <td class="num"><strong>-2.15</strong></td>
+  <td class="num">-2.4%</td>
+  <td class="num">0.90</td>
+  <td class="meta">A↑ · —</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_WDC_20260518.html#decision">WDC</a></td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+  <td>—</td>
+  <td class="num"><strong>-8.19</strong></td>
+  <td class="num">-11.7%</td>
+  <td class="num">0.70</td>
+  <td class="meta">B↑ · —</td>
+</tr>
+</tbody></table>
+</div>
+  <div class="track-card track-struct">
+  <h3>🛰 衛星·結構軌 <span class="cnt">5 檔</span></h3>
+  <div class="track-desc">
+    軌別＝<b>runway_post_y5＝🟢</b> ＋ <code>eps2y</code>／<code>peg</code> 不 fail ＋ 護城河過（∈{S,A,B}、trend≠↓）＋ <b>非核心角色</b>（一檔一軌）。
+    排序＝<b>EV5y ＋ bull 倍數 ×15</b>（bull 倍數＝bull_5y_price/price_at_dd）。單檔上限 5%。
+  </div>
+  <table>
+<thead><tr>
+  <th class="left">Ticker</th><th>裁決</th>
+  <th class="num">EV5y+bull×</th><th class="num">EV5y</th><th class="num">bull 倍數</th>
+  <th class="left">護城河 · runway</th>
+</tr></thead>
+<tbody>
+<tr>
+  <td class="left"><a href="/dd/DD_COHR_20260627.html#decision">COHR</a></td>
+  <td><span class="verdict v-in">進場</span></td>
+  <td class="num"><strong>44.9</strong></td>
+  <td class="num">12.0%</td>
+  <td class="num">×2.19</td>
+  <td class="meta">B↑ · runway 🟢</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_MRVL_20260623.html#decision">MRVL</a></td>
+  <td><span class="verdict v-watch">觀望</span></td>
+  <td class="num"><strong>35.3</strong></td>
+  <td class="num">9.1%</td>
+  <td class="num">×1.75</td>
+  <td class="meta">A→ · runway 🟢</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_VIK_20260629.html#decision">VIK</a> <span class="de-warn" title="D/E 5.25 &gt; 0.7 — advisory，不計分不擋">⚠ D/E 5.2</span></td>
+  <td><span class="verdict v-watch">觀望</span></td>
+  <td class="num"><strong>27.3</strong></td>
+  <td class="num">3.0%</td>
+  <td class="num">×1.62</td>
+  <td class="meta">A→ · runway 🟢</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_GLW_20260629.html#decision">GLW</a> <span class="de-warn" title="D/E 0.79 &gt; 0.7 — advisory，不計分不擋">⚠ D/E 0.8</span></td>
+  <td><span class="verdict v-watch">觀望</span></td>
+  <td class="num"><strong>25.4</strong></td>
+  <td class="num">3.0%</td>
+  <td class="num">×1.50</td>
+  <td class="meta">A→ · runway 🟢</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_AMD_20260627.html#decision">AMD</a></td>
+  <td><span class="verdict v-watch">觀望</span></td>
+  <td class="num"><strong>9.5</strong></td>
+  <td class="num">9.5%</td>
+  <td class="num">—</td>
+  <td class="meta">A↑ · runway 🟢</td>
+</tr>
+</tbody></table>
+</div>
+  <div class="track-card track-cyc">
+  <h3>🔄 衛星·循環軌 <span class="cnt">18 檔（低熱 13 / 🔥 5）</span></h3>
+  <div class="track-desc warn-inline">
+    <b>研究提名清單，非進場清單</b>——循環底部（FCF／ROIC 未過）× 分析師上修的候選池，交 DD（QC-42 循環鏡頭附錄 B）＋ 板機接手。
+    單檔上限 <b>3%</b>；🔥 標記者 12M 報酬 &gt; +250%，<b>明文不可追高</b>，等回踩。
+    詳見 <a href="/dd-screener/cyclical-track.html">循環軌全頁</a>。
+  </div>
+  <div class="seg-h seg-in">🟢 低熱可研究 · 13 檔</div>
+  <table>
+<thead><tr>
+  <th class="left">Ticker</th><th class="num">排序分</th><th class="num">2Y修正pp</th>
+  <th class="num">FY+1修正%</th><th class="num">12M報酬</th><th class="left">護城河</th><th>裁決</th>
+</tr></thead>
+<tbody>
+<tr>
+  <td class="left"><a href="/dd/DD_ORCL_20260703.html#decision">ORCL</a></td>
+  <td class="num"><strong>55.7</strong></td>
+  <td class="num">+20.0%</td>
+  <td class="num">+35.6%</td>
+  <td class="num ">-40%</td>
+  <td class="meta">B→</td>
+  <td><span class="verdict v-watch">觀望</span></td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_JBL_20260619.html#decision">JBL</a></td>
+  <td class="num"><strong>23.8</strong></td>
+  <td class="num">+9.0%</td>
+  <td class="num">+14.8%</td>
+  <td class="num ">+51%</td>
+  <td class="meta">B→</td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_FORM_20260629.html#decision">FORM</a></td>
+  <td class="num"><strong>20.8</strong></td>
+  <td class="num">+18.2%</td>
+  <td class="num">+2.6%</td>
+  <td class="num ">+242%</td>
+  <td class="meta">B→</td>
+  <td><span class="verdict v-watch">觀望</span></td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_GHM_20260524.html#decision">GHM</a></td>
+  <td class="num"><strong>12.6</strong></td>
+  <td class="num">—</td>
+  <td class="num">+12.6%</td>
+  <td class="num ">+119%</td>
+  <td class="meta">B↑</td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_ONTO_20260626.html#decision">ONTO</a></td>
+  <td class="num"><strong>9.9</strong></td>
+  <td class="num">+5.1%</td>
+  <td class="num">+4.7%</td>
+  <td class="num ">+196%</td>
+  <td class="meta">A↑</td>
+  <td><span class="verdict v-watch">觀望</span></td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_SOFI_20260525.html#decision">SOFI</a></td>
+  <td class="num"><strong>9.8</strong></td>
+  <td class="num">+4.7%</td>
+  <td class="num">+5.1%</td>
+  <td class="num ">-2%</td>
+  <td class="meta">B↑</td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_HOOD_20260522.html#decision">HOOD</a></td>
+  <td class="num"><strong>9.2</strong></td>
+  <td class="num">+4.2%</td>
+  <td class="num">+5.1%</td>
+  <td class="num ">+19%</td>
+  <td class="meta">B→</td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_HUBB_20260518.html#decision">HUBB</a></td>
+  <td class="num"><strong>7.9</strong></td>
+  <td class="num">+4.8%</td>
+  <td class="num">+3.1%</td>
+  <td class="num ">+19%</td>
+  <td class="meta">A↑</td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_NET_20260515.html#decision">NET</a></td>
+  <td class="num"><strong>6.5</strong></td>
+  <td class="num">+3.9%</td>
+  <td class="num">+2.6%</td>
+  <td class="num ">+27%</td>
+  <td class="meta">A→</td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_MP_20260525.html#decision">MP</a></td>
+  <td class="num"><strong>6.2</strong></td>
+  <td class="num">+16.7%</td>
+  <td class="num">-10.4%</td>
+  <td class="num ">+67%</td>
+  <td class="meta">B↑</td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_COIN_20260525.html#decision">COIN</a></td>
+  <td class="num"><strong>3.1</strong></td>
+  <td class="num">+3.5%</td>
+  <td class="num">-0.4%</td>
+  <td class="num ">-54%</td>
+  <td class="meta">B→</td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_8299.TW_20260601.html#decision">8299.TW</a></td>
+  <td class="num"><strong>0.2</strong></td>
+  <td class="num">-1.5%</td>
+  <td class="num">+1.7%</td>
+  <td class="num ">—</td>
+  <td class="meta">B→</td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_NUE_20260525.html#decision">NUE</a></td>
+  <td class="num"><strong>-1.5</strong></td>
+  <td class="num">-6.3%</td>
+  <td class="num">+4.7%</td>
+  <td class="num ">+62%</td>
+  <td class="meta">A→</td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+</tr>
+</tbody></table>
+  <div class="seg-h seg-hot">🔥 已熱等回踩（不可追）· 5 檔</div>
+  <table>
+<thead><tr>
+  <th class="left">Ticker</th><th class="num">排序分</th><th class="num">2Y修正pp</th>
+  <th class="num">FY+1修正%</th><th class="num">12M報酬</th><th class="left">護城河</th><th>裁決</th>
+</tr></thead>
+<tbody>
+<tr>
+  <td class="left"><a href="/dd/DD_MU_20260622.html#decision">MU</a></td>
+  <td class="num"><strong>28.6</strong></td>
+  <td class="num">+14.6%</td>
+  <td class="num">+13.9%</td>
+  <td class="num ret-hot">+700%</td>
+  <td class="meta">B→</td>
+  <td><span class="verdict v-watch">觀望</span></td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_2327_20260526.html#decision">2327.TW</a></td>
+  <td class="num"><strong>14.3</strong></td>
+  <td class="num">+6.4%</td>
+  <td class="num">+7.9%</td>
+  <td class="num ret-hot">+763%</td>
+  <td class="meta">A↑</td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_CIEN_20260612.html#decision">CIEN</a></td>
+  <td class="num"><strong>10.2</strong></td>
+  <td class="num">+1.6%</td>
+  <td class="num">+8.6%</td>
+  <td class="num ret-hot">+419%</td>
+  <td class="meta">B→</td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_VICR_20260524.html#decision">VICR</a></td>
+  <td class="num"><strong>7.0</strong></td>
+  <td class="num">+5.3%</td>
+  <td class="num">+1.6%</td>
+  <td class="num ret-hot">+512%</td>
+  <td class="meta">A↑</td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_2368TW_20260526.html#decision">2368.TW</a></td>
+  <td class="num"><strong>-4.2</strong></td>
+  <td class="num">-4.2%</td>
+  <td class="num">+0.0%</td>
+  <td class="num ret-hot">+337%</td>
+  <td class="meta">B↑</td>
+  <td><span class="verdict v-none">待補 DD</span></td>
+</tr>
+</tbody></table>
+</div>
+</section>
+<section class="block">
+  <h2 class="block-h"><span class="step">4</span> 板機現況 <span class="asof">sop-funnel as of 2026-07-02</span></h2>
+  <div class="block-sub">SOP 漏斗 T+1 執行層的當日燈號。態②過熱否決＝反動能硬閘擋下的訊號累計（ledger append-only 統計）。</div>
+  <div class="stat-row">
+    <div class="stat"><strong>0</strong>今日訊號</div>
+    <div class="stat"><strong>5</strong>持倉中 open</div>
+    <div class="stat"><strong>0/1/2</strong>待命 A1/A2/B</div>
+    <div class="stat"><strong>1</strong>築底中</div>
+    <div class="stat warn"><strong>87</strong>態②過熱否決（累計）</div>
+  </div>
+  <div class="trigger-detail">
+    <div><span class="lbl">持倉中</span>AMAT<span class='st'>②</span>、AVGO<span class='st'>④</span>、2330.TW<span class='st'>①</span>、FIX<span class='st'>①</span>、FSLR<span class='st'>①</span></div>
+    <div><span class="lbl">待命 A2</span>2330.TW <span class="sep">·</span> <span class="lbl">待命 B</span>WDC、STX</div>
+    <div><span class="lbl">築底中</span>APP</div>
+  </div>
+  <div class="block-foot"><a href="/dd-screener/sop-funnel.html">→ SOP Funnel 全頁</a></div>
+</section>
+<section class="block" id="lookback">
+  <h2 class="block-h"><span class="step">5</span> 回看鏡 · 發現力稽核</h2>
+  <div class="block-sub">
+    週線報酬 top 30（<code>close[-1]/close[-53]</code>＝12M、<code>[-105]</code>＝24M），標覆蓋狀態＝「這些大漲的名字我抓到了嗎」的誠實稽核。
+    <b>盲區＋DD&gt;90 天</b>者＝<b>動能盲區研究隊列</b>（表中反白列）。SNDK／AXTI／BE 等 mandate-gap 循環贏家已回補新 DD＝已覆蓋，正是循環鏡頭補上的證據。
+  </div>
+  <div class="queue-note">
+    <b>12M 動能盲區隊列</b>（2）：8299.TWO、5274.TWO<br>
+    <b>24M 動能盲區隊列</b>（0）：—（top30 皆已覆蓋）
+  </div>
+  <div class="lb-grid">
+    <div class="lb-col"><h4>12M 報酬 top 30</h4><table>
+<thead><tr><th class="num">#</th><th class="left">Ticker</th><th class="num">報酬</th><th>覆蓋</th></tr></thead>
+<tbody>
+<tr class="">
+  <td class="num rk">1</td>
+  <td class="left"><a href="/dd/DD_SNDK_20260622.html#decision">SNDK</a></td>
+  <td class="num big">+3660%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">2</td>
+  <td class="left"><a href="/dd/DD_AXTI_20260524.html#decision">AXTI</a></td>
+  <td class="num big">+2546%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">3</td>
+  <td class="left"><a href="/dd/DD_BE_20260429.html#decision">BE</a></td>
+  <td class="num big">+1018%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">4</td>
+  <td class="left"><a href="/dd/DD_2327_20260526.html#decision">2327.TW</a></td>
+  <td class="num big">+763%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">5</td>
+  <td class="left"><a href="/dd/DD_3037.TW_20260601.html#decision">3037.TW</a></td>
+  <td class="num big">+731%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">6</td>
+  <td class="left"><a href="/dd/DD_WDC_20260518.html#decision">WDC</a></td>
+  <td class="num big">+718%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">7</td>
+  <td class="left"><a href="/dd/DD_MU_20260622.html#decision">MU</a></td>
+  <td class="num big">+700%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">8</td>
+  <td class="left"><a href="/dd/DD_LITE_20260627.html#decision">LITE</a></td>
+  <td class="num big">+685%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">9</td>
+  <td class="left"><a href="/dd/DD_2383TW_20260601.html#decision">2383.TW</a></td>
+  <td class="num big">+567%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">10</td>
+  <td class="left"><a href="/dd/DD_VICR_20260524.html#decision">VICR</a></td>
+  <td class="num big">+512%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">11</td>
+  <td class="left"><a href="/dd/DD_STX_20260629.html#decision">STX</a></td>
+  <td class="num big">+453%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">12</td>
+  <td class="left"><a href="/dd/DD_INTC_20260523.html#decision">INTC</a></td>
+  <td class="num big">+435%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">13</td>
+  <td class="left"><a href="/dd/DD_CIEN_20260612.html#decision">CIEN</a></td>
+  <td class="num big">+419%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="lb-queue">
+  <td class="num rk">14</td>
+  <td class="left">8299.TWO</td>
+  <td class="num big">+386%</td>
+  <td><span class="cov cov-blind">🔭 盲區·無 DD</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">15</td>
+  <td class="left"><a href="/dd/DD_2308TW_20260514.html#decision">2308.TW</a></td>
+  <td class="num big">+356%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">16</td>
+  <td class="left"><a href="/dd/DD_ALAB_20260522.html#decision">ALAB</a></td>
+  <td class="num big">+348%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">17</td>
+  <td class="left"><a href="/dd/DD_2368TW_20260526.html#decision">2368.TW</a></td>
+  <td class="num big">+337%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">18</td>
+  <td class="left"><a href="/dd/DD_NBIS_20260523.html#decision">NBIS</a></td>
+  <td class="num big">+329%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">19</td>
+  <td class="left"><a href="/dd/DD_SIMO_20260427.html#decision">SIMO</a></td>
+  <td class="num big">+309%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">20</td>
+  <td class="left"><a href="/dd/DD_3443TW_20260526.html#decision">3443.TW</a></td>
+  <td class="num big">+303%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">21</td>
+  <td class="left"><a href="/dd/DD_TER_20260626.html#decision">TER</a></td>
+  <td class="num big">+298%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">22</td>
+  <td class="left"><a href="/dd/DD_AMD_20260627.html#decision">AMD</a></td>
+  <td class="num big">+275%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">23</td>
+  <td class="left"><a href="/dd/DD_GLW_20260629.html#decision">GLW</a></td>
+  <td class="num big">+275%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">24</td>
+  <td class="left"><a href="/dd/DD_COHR_20260627.html#decision">COHR</a></td>
+  <td class="num big">+267%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">25</td>
+  <td class="left"><a href="/dd/DD_2345.TW_20260526.html#decision">2345.TW</a></td>
+  <td class="num big">+261%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">26</td>
+  <td class="left"><a href="/dd/DD_3017_20260504.html#decision">3017.TW</a></td>
+  <td class="num big">+258%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">27</td>
+  <td class="left"><a href="/dd/DD_LRCX_20260620.html#decision">LRCX</a></td>
+  <td class="num big">+258%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">28</td>
+  <td class="left"><a href="/dd/DD_TTMI_20260518.html#decision">TTMI</a></td>
+  <td class="num big">+254%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">29</td>
+  <td class="left"><a href="/dd/DD_FORM_20260629.html#decision">FORM</a></td>
+  <td class="num big">+242%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="lb-queue">
+  <td class="num rk">30</td>
+  <td class="left">5274.TWO</td>
+  <td class="num big">+238%</td>
+  <td><span class="cov cov-blind">🔭 盲區·無 DD</span></td>
+</tr>
+</tbody></table></div>
+    <div class="lb-col"><h4>24M 報酬 top 30</h4><table>
+<thead><tr><th class="num">#</th><th class="left">Ticker</th><th class="num">報酬</th><th>覆蓋</th></tr></thead>
+<tbody>
+<tr class="">
+  <td class="num rk">1</td>
+  <td class="left"><a href="/dd/DD_BE_20260429.html#decision">BE</a></td>
+  <td class="num big">+2128%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">2</td>
+  <td class="left"><a href="/dd/DD_RKLB_20260702.html#decision">RKLB</a></td>
+  <td class="num big">+1959%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">3</td>
+  <td class="left"><a href="/dd/DD_AXTI_20260524.html#decision">AXTI</a></td>
+  <td class="num big">+1621%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">4</td>
+  <td class="left"><a href="/dd/DD_LITE_20260627.html#decision">LITE</a></td>
+  <td class="num big">+1216%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">5</td>
+  <td class="left"><a href="/dd/DD_2383TW_20260601.html#decision">2383.TW</a></td>
+  <td class="num big">+1140%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">6</td>
+  <td class="left"><a href="/dd/DD_SEZL_20260520.html#decision">SEZL</a></td>
+  <td class="num big">+1123%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">7</td>
+  <td class="left"><a href="/dd/DD_WDC_20260518.html#decision">WDC</a></td>
+  <td class="num big">+828%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">8</td>
+  <td class="left"><a href="/dd/DD_CIEN_20260612.html#decision">CIEN</a></td>
+  <td class="num big">+803%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">9</td>
+  <td class="left"><a href="/dd/DD_VICR_20260524.html#decision">VICR</a></td>
+  <td class="num big">+757%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">10</td>
+  <td class="left"><a href="/dd/DD_STX_20260629.html#decision">STX</a></td>
+  <td class="num big">+733%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">11</td>
+  <td class="left"><a href="/dd/DD_TTMI_20260518.html#decision">TTMI</a></td>
+  <td class="num big">+688%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">12</td>
+  <td class="left"><a href="/dd/DD_CRDO_20260623.html#decision">CRDO</a></td>
+  <td class="num big">+665%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">13</td>
+  <td class="left"><a href="/dd/DD_MU_20260622.html#decision">MU</a></td>
+  <td class="num big">+647%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">14</td>
+  <td class="left"><a href="/dd/DD_2327_20260526.html#decision">2327.TW</a></td>
+  <td class="num big">+596%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">15</td>
+  <td class="left"><a href="/dd/DD_ALAB_20260522.html#decision">ALAB</a></td>
+  <td class="num big">+584%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">16</td>
+  <td class="left"><a href="/dd/DD_GEV_20260504.html#decision">GEV</a></td>
+  <td class="num big">+534%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">17</td>
+  <td class="left"><a href="/dd/DD_STRL_20260505.html#decision">STRL</a></td>
+  <td class="num big">+516%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">18</td>
+  <td class="left"><a href="/dd/DD_APP_20260418.html#decision">APP</a></td>
+  <td class="num big">+507%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">19</td>
+  <td class="left"><a href="/dd/DD_2368TW_20260526.html#decision">2368.TW</a></td>
+  <td class="num big">+487%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">20</td>
+  <td class="left"><a href="/dd/DD_CLS_20260428.html#decision">CLS</a></td>
+  <td class="num big">+483%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">21</td>
+  <td class="left"><a href="/dd/DD_FIX_20260516.html#decision">FIX</a></td>
+  <td class="num big">+480%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">22</td>
+  <td class="left"><a href="/dd/DD_CRS_20260518.html#decision">CRS</a></td>
+  <td class="num big">+474%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">23</td>
+  <td class="left"><a href="/dd/DD_3037.TW_20260601.html#decision">3037.TW</a></td>
+  <td class="num big">+459%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">24</td>
+  <td class="left"><a href="/dd/DD_2308TW_20260514.html#decision">2308.TW</a></td>
+  <td class="num big">+449%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">25</td>
+  <td class="left"><a href="/dd/DD_GLW_20260629.html#decision">GLW</a></td>
+  <td class="num big">+430%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">26</td>
+  <td class="left"><a href="/dd/DD_2345.TW_20260526.html#decision">2345.TW</a></td>
+  <td class="num big">+407%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">27</td>
+  <td class="left"><a href="/dd/DD_HOOD_20260522.html#decision">HOOD</a></td>
+  <td class="num big">+397%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">28</td>
+  <td class="left"><a href="/dd/DD_PLTR_20260629.html#decision">PLTR</a></td>
+  <td class="num big">+375%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">29</td>
+  <td class="left"><a href="/dd/DD_FLEX_20260518.html#decision">FLEX</a></td>
+  <td class="num big">+364%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+<tr class="">
+  <td class="num rk">30</td>
+  <td class="left"><a href="/dd/DD_COHR_20260627.html#decision">COHR</a></td>
+  <td class="num big">+347%</td>
+  <td><span class="cov cov-ok">✅ 已覆蓋</span></td>
+</tr>
+</tbody></table></div>
+  </div>
+</section>
+<section class="block privacy">
+  <h2 class="block-h"><span class="step">6</span> 隱私線</h2>
+  <div class="privacy-body">
+    本頁只呈現<b>研究層</b>：宇宙、資格閘、三軌候選、板機燈號、發現力稽核。
+    <b>實際持倉與權重不上站</b>（與 <code>/pm/</code> 封存同一原則）。射擊名單≠買入指令——每檔進場仍須
+    (a) 站上 DD 統一裁決＝進場、(b) sop-funnel 板機亮燈、(c) 部位在個股部上限內
+    （核心 ≤10%／衛星 ≤5%／循環 ≤3%，分母＝個股部淨值）。
+  </div>
+</section>
+</div>
+
+<div class="footer">
+  <p><b>數據來源</b>：<code>latest.json</code>（宇宙／資格閘／核心軌／結構軌）·
+  <code>cyclical-track.json</code>（循環軌）· <code>sop-funnel/latest.json</code>＋<code>ledger.json</code>（板機／否決）·
+  <code>pre_id_scan.json</code>（形狀盲區）· <code>data/weekly_cache/</code>（回看鏡週線報酬）。</p>
+  <p style="margin-top:8px">資格閘為<b>自算口徑</b>（fail−de 為空 ∧ moat∈{S,A,B} ∧ trend≠↓），不依賴 latest.json 的 pass_count。
+  射擊名單≠買入指令，見「隱私線」三重前提。</p>
+  <p style="margin-top:10px;color:#cbd5e1">Generated by <code>scripts/build_pipeline_page.py</code></p>
+</div>
+</body>
+</html>

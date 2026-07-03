@@ -142,8 +142,10 @@ def full_nav_block(group=None, item=None, subnav=""):
 
 DD_SCREENER_SUBNAV = [
     ("/dd-screener/", "總覽"),
+    ("/dd-screener/pipeline.html", "🧭 Pipeline"),
     ("/dd-screener/targets.html", "🎯 標的清單"),
     ("/dd-screener/quality-entry.html", "Quality-Entry"),
+    ("/dd-screener/cyclical-track.html", "衛星·循環軌"),
     ("/dd-screener/bottom-out.html", "Bottom-Out"),
     ("/dd-screener/breakout.html", "Breakout"),
     ("/dd-screener/earnings-acceleration.html", "盈餘加速"),
