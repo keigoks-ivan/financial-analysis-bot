@@ -121,8 +121,9 @@ GROUPS = [
          "100% QQQ · Long Track 進攻變體(2026-06 修正)· Calmar 贏但 Sharpe 微輸 QQQ B&H",
          "+10.83%", "-25.37%", "0.75", "0.43", "mixed", "$8.18M", TAG["atk"]),
         ("SPY/ACWX/AGG 雙動能月切換", "/backtest/gem/",
-         "SPY/ACWX/AGG 月度切換 · 2026-06 審計：交易成本計入月報酬(CAGR 8.95→8.63)、Sharpe 改 rf=0 與全站同尺；MDD 為月底基準(月度系統，見星號)",
-         "+8.63%", "-21.54%", "0.68", "0.40", "mixed", "$5.42M*", TAG["def"]),
+         "SPY/ACWX/AGG 月度切換 · 2026-07 發表後 OOS：發表後(2014~2026)CAGR／Sharpe／Calmar 三維全輸買進持有，全樣本風險調整優勢整包來自 2008 單一事件；絕對動能閘門 6／6 假訊號、拖累 4.5pp／年 · headline 為全樣本(月底基準，見星號)",
+         "+8.63%", "-21.54%", "0.68", "0.40", "mixed", "$5.42M*",
+         '<span class="tag" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db">發表後 OOS 未存活</span>'),
     ]),
     ("L1 不合格但角色可用(部位大小解，不豁免門檻)", [
         ("QQQ＋SMH 六狀態機・三態無 Grid", "/backtest/six_state/",
