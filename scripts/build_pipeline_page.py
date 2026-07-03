@@ -492,6 +492,16 @@ def _prov_badge(prov: str) -> str:
     return '<span class="prov prov-heur">🟡 heur</span>'
 
 
+def _eps_incomplete(s: dict) -> bool:
+    """Koyfin 無 FY3 EPS 預估 → 過閘 eps2y／heur EV5y 可能失真（多為小型股無分析師覆蓋）。"""
+    return _safe_float(s.get("eps_fy3")) is None
+
+
+def _eps_flag(s: dict) -> str:
+    return ('<span class="eps-flag" title="Koyfin 無 FY3 EPS 預估：過閘 eps2y 與 heur EV5y 可能失真；'
+            '§11.5 情境不受影響">⚠ EPS 不全</span>') if _eps_incomplete(s) else ""
+
+
 def _lb_score_row(u: dict, rank: int) -> str:
     s = u["s"]
     fill = ""
@@ -505,7 +515,7 @@ def _lb_score_row(u: dict, rank: int) -> str:
   <td class="left">{_dd_link(s)}{_de_badge(s)}</td>
   <td class="num"><strong>{u['score']:.1f}</strong></td>
   <td class="num">{_pct(u['raw_ev'], signed=True)}</td>
-  <td>{_prov_badge(u['prov'])}</td>
+  <td>{_prov_badge(u['prov'])}{_eps_flag(s)}</td>
   <td class="num">{u['cert']:.2f}</td>
   <td>{verd}</td>
   <td class="num">{age_s}</td>
@@ -535,6 +545,7 @@ def render_leaderboard(univ: list, artifacts: list, n_total: int) -> str:
     <span class="prov prov-rig">🟢 §11.5</span> 機率加權情境（嚴謹、有反偏差防線）vs
     <span class="prov prov-heur">🟡 heur</span> 啟發式估計（僅方向性）。
     <b>用途</b>：🟡 高分票＝「看起來有潛力但 EV5y 未經 §11.5 嚴謹化」＝<b>下一個該補 v14 DD 的候選</b>（補了就把 🟡 轉 🟢）。
+    <br><span class="eps-flag">⚠ EPS 不全</span>＝Koyfin 無 FY3 EPS 預估（多為小型股無分析師覆蓋），此時<b>過閘 eps2y 與 heur EV5y 雙重不可信</b>——補 DD 用 §11.5 bottom-up 自建情境即可繞過（如 WLDN）。
   </div>
   {art_note}
   <div class="tbl-wrap"><table class="lb-score">
@@ -630,6 +641,7 @@ code{background:#f0f5fb;padding:1px 5px;border-radius:3px;font-size:11px;color:#
 .prov-rig{background:#e6f4ea;color:#1a7f37}
 .prov-heur{background:#fdf3e3;color:#a6730a}
 .lb-fill{font-size:10.5px;font-weight:700;color:#2563eb;white-space:nowrap}
+.eps-flag{display:inline-block;font-size:10px;font-weight:700;color:#b45309;background:#fef3c7;border-radius:4px;padding:1px 5px;margin-left:4px;white-space:nowrap;cursor:help}
 table.lb-score td,table.lb-score th{padding:5px 8px}
 .howto{background:#f0f6ff;border-color:#c9ddf7}
 .howto-list{margin:6px 0 0;padding-left:0;list-style:none}
