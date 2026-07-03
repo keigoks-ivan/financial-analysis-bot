@@ -58,6 +58,16 @@ LOOKBACK_TOP_N = 30              # 回看鏡 top N
 STRUCT_BULL_MULT = 15.0          # 結構軌排序：bull 倍數權重
 CORE_CAP_PCT = 10.0              # 核心單檔上限（個股部淨值）
 SATELLITE_CAP_PCT = 5.0          # 衛星單檔上限
+CORE_SLOTS = 5                   # 核心席位硬上限（章程 core ≤5）；超出落板凳
+
+
+def is_core_role(s: dict) -> bool:
+    """核心角色＝角色欄含「核心持倉」（涵蓋無條件核心持倉與條件式核心持倉）。"""
+    return "核心持倉" in (s.get("dca_role") or "")
+
+
+def _is_unconditional_core(s: dict) -> bool:
+    return (s.get("dca_role") or "") == "核心持倉"
 CYCLICAL_CAP_PCT = 3.0           # 循環衛星單檔上限
 
 
@@ -236,18 +246,32 @@ def _core_table(rows: list, empty: str) -> str:
 
 
 def render_core(core_sorted: list) -> str:
-    exe = [s for s in core_sorted if s.get("dca_verdict") == "進場"]
+    exe_all = [s for s in core_sorted if s.get("dca_verdict") == "進場"]
+    # 核心席位只認「進場＋核心角色」；角色優先＝無條件核心先佔位，再依潛力分補足 5 席
+    exe_core = [s for s in exe_all if is_core_role(s)]
+    exe_core.sort(key=lambda s: (0 if _is_unconditional_core(s) else 1, -s["_score"], s["ticker"]))
+    sleeve = exe_core[:CORE_SLOTS]
+    bench_core = exe_core[CORE_SLOTS:]
+    exe_noncore = [s for s in exe_all if not is_core_role(s)]   # 進場但角色非核心 → 歸衛星軌
     watch = [s for s in core_sorted if s.get("dca_verdict") == "觀望"]
     nodd = [s for s in core_sorted if s.get("dca_verdict") not in ("進場", "觀望", "迴避")]
+    noncore_note = ""
+    if exe_noncore:
+        names = "、".join(escape(s["ticker"]) for s in exe_noncore)
+        noncore_note = (f'<div class="seg-note">↪ 另有 {len(exe_noncore)} 檔進場但 DD 角色為衛星'
+                        f'（{names}）→ 走衛星倉上限 {SATELLITE_CAP_PCT:.0f}%，不佔核心席位。</div>')
     return f"""<div class="track-card track-core">
-  <h3>🎯 核心軌 <span class="cnt">{len(core_sorted)} 檔</span></h3>
+  <h3>🎯 核心軌 <span class="cnt">席位 {len(sleeve)}/{CORE_SLOTS}</span></h3>
   <div class="track-desc">
-    軌別＝<b>過閘 ∪（DD 裁決＝進場 且 角色＝核心持倉）</b>；排序＝<b>EV5y × 確定性</b>
-    （確定性＝(moat_score+quality_score)/20）。EV5y 取 <code>live_ev5y_pct</code> 優先、缺則 <code>ev5y_pct</code>。
-    單檔上限 {CORE_CAP_PCT:.0f}%（個股部淨值）。
+    軌別＝<b>DD 裁決＝進場 且 角色含「核心持倉」</b>；<b>席位硬上限 {CORE_SLOTS} 檔</b>（章程 core ≤5）。
+    選席＝<b>角色優先</b>：無條件核心持倉先佔位，餘席依 <b>EV5y × 確定性</b> 由條件式核心補足；超出落板凳。
+    EV5y 取 <code>live_ev5y_pct</code> 優先、缺則 <code>ev5y_pct</code>。單檔上限 {CORE_CAP_PCT:.0f}%（個股部淨值）。
   </div>
-  <div class="seg-h seg-in">✅ 可執行（裁決＝進場）· {len(exe)} 檔</div>
-  {_core_table(exe, "目前無可執行進場票。")}
+  <div class="seg-h seg-in">★ 核心席位（最終 {CORE_SLOTS}）· {len(sleeve)} 檔</div>
+  {_core_table(sleeve, "目前無可執行核心進場票。")}
+  {noncore_note}
+  <div class="seg-h seg-watch">🪑 核心板凳（進場核心·超出席位，等席位開遞補）· {len(bench_core)} 檔</div>
+  {_core_table(bench_core, "無溢出板凳名字。")}
   <div class="seg-h seg-watch">⏸ 觀望板凳（裁決＝觀望）· {len(watch)} 檔</div>
   {_core_table(watch, "板凳無觀望名字。")}
   <div class="seg-h seg-none">🔍 無裁決 · 待補 DD · {len(nodd)} 檔</div>
@@ -502,6 +526,7 @@ code{background:#f0f5fb;padding:1px 5px;border-radius:3px;font-size:11px;color:#
 .track-desc{font-size:11.5px;color:#5a7a9a;line-height:1.7;margin-bottom:10px}
 .track-desc.warn-inline{background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:8px 10px;color:#991b1b}
 .seg-h{font-size:11.5px;font-weight:700;padding:6px 0 4px;margin-top:8px;border-top:1px dashed #e2ecf7}
+.seg-note{font-size:11px;color:#5a7a9a;padding:4px 0 2px;line-height:1.6}
 .seg-in{color:#166534}.seg-watch{color:#92400e}.seg-none{color:#64748b}.seg-hot{color:#9a3412}
 table{width:100%;border-collapse:collapse;font-size:12px;margin-top:4px}
 th{background:#f0f6ff;color:#5a7a9a;font-weight:700;padding:7px 9px;text-align:right;border-bottom:2px solid #dce8f5;font-size:10px;letter-spacing:.03em}
@@ -558,10 +583,12 @@ def build(dry_run: bool = False) -> int:
     gated = [s for s in stocks if passes_gate(s)]
     gated_set = {s["ticker"] for s in gated}
 
-    # ── 核心軌 ── = 過閘 ∪ (進場 & 核心持倉)
+    # ── 核心軌 ── = 過閘池 ∪（裁決∈{進場,觀望} 且 角色含核心持倉）
+    # 條件式核心（如 COHR）即使未過數字閘也算核心角色，納入核心軌、不漏進衛星軌
     core = {}
     for s in stocks:
-        if s["ticker"] in gated_set or (s.get("dca_verdict") == "進場" and s.get("dca_role") == "核心持倉"):
+        v = s.get("dca_verdict")
+        if s["ticker"] in gated_set or (v in ("進場", "觀望") and is_core_role(s)):
             core[s["ticker"]] = s
     for s in core.values():
         s["_score"] = _ev5y(s) * _certainty(s)
@@ -576,7 +603,7 @@ def build(dry_run: bool = False) -> int:
                 cyc_tickers.add(r.get("ticker"))
     struct = []
     for s in stocks:
-        if s["ticker"] in core or s["ticker"] in cyc_tickers:
+        if s["ticker"] in core or s["ticker"] in cyc_tickers or is_core_role(s):
             continue
         if s.get("runway_post_y5") != "🟢":
             continue
@@ -654,7 +681,9 @@ def build(dry_run: bool = False) -> int:
 
     as_of = latest.get("as_of", "—")
     run_ts = _now_taipei_iso()
-    n_exe = sum(1 for s in core_sorted if s.get("dca_verdict") == "進場")
+    # 核心席位＝進場＋核心角色，硬上限 CORE_SLOTS（與 render_core 同口徑）
+    n_sleeve = min(CORE_SLOTS, sum(1 for s in core_sorted
+                                   if s.get("dca_verdict") == "進場" and is_core_role(s)))
 
     html = f"""<!DOCTYPE html>
 <html lang="zh-TW">
@@ -682,7 +711,7 @@ def build(dry_run: bool = False) -> int:
       <div class="hero-stat"><strong>{as_of}</strong>資料 as of</div>
       <div class="hero-stat"><strong>{latest.get('universe_size')}</strong>DD 宇宙</div>
       <div class="hero-stat"><strong>{len(gated)}</strong>過閘</div>
-      <div class="hero-stat"><strong>{n_exe}</strong>核心可執行</div>
+      <div class="hero-stat"><strong>{n_sleeve}/{CORE_SLOTS}</strong>核心席位</div>
       <div class="hero-stat"><strong>{cyc.get('qualified_total',0) if cyc else 0}</strong>循環候選</div>
     </div>
   </div>
