@@ -98,13 +98,26 @@ OUTPUT_PATH = OUTPUT_DIR / "latest.json"
 SCREENER_LATEST = ROOT / "docs" / "screener" / "latest.json"
 
 # Locked v1.0 criteria — matches scripts/dd_screener_schema.md
+#
+# 2026-07-03（Task 1）：D/E 退出 pass_count 計分，降為 advisory（`advisory: True`）。
+# 持有人 2026-06-11 拍板的質量五條件並無 D/E —— D/E≤0.7 是實作私加的第五條，
+# 在成長 / 循環贏家樣本誤殺 AVGO / LLY / APP / SEZL / STX（皆槓桿或資本結構因子，
+# 非品質本體缺陷）。改法：欄位照算照顯示，但 (1) 不計入 pass_count / fail_criteria
+# (2) 不進 FunnelRank QualityGate 分母 (3) 前端改成 D/E>0.7 顯示 ⚠ 警示 badge、不擋閘。
+# 質量閘回歸「四條件（FCF / ROIC / EPS CAGR / PEG）＋護城河 veto」。護城河 veto
+# （grade∉{C,X} 且 trend≠↓）在 sop_funnel.engine.quality_check 實作，故 pass_count
+# 維持四條件；前端文案如實寫「4 條件＋護城河 veto」。
 CRITERIA = [
     {"key": "fcf",   "label": "FCF≥10%",  "threshold": 10.0, "invert": False, "unit": "%"},
     {"key": "roic",  "label": "ROIC≥15%", "threshold": 15.0, "invert": False, "unit": "%"},
     {"key": "eps2y", "label": "FY+1→FY+3 CAGR≥15%",  "threshold": 15.0, "invert": False, "unit": "%"},
     {"key": "peg",   "label": "PEG≤2.0",  "threshold": 2.0,  "invert": True,  "unit": "x"},
-    {"key": "de",    "label": "D/E≤0.7",  "threshold": 0.7,  "invert": True,  "unit": "x"},
+    {"key": "de",    "label": "D/E≤0.7",  "threshold": 0.7,  "invert": True,  "unit": "x",
+     "advisory": True},
 ]
+
+# 進 pass_count / fail_criteria / QualityGate 計分的條件（排除 advisory 的 D/E）。
+SCORED_CRITERIA = [c for c in CRITERIA if not c.get("advisory")]
 
 PRESETS = {
     "MLB": {"fcf": 10.0, "roic": 15.0, "eps2y": 15.0, "peg": 2.0, "de": 0.7},
@@ -124,16 +137,18 @@ DEFAULT_FILTER = {"moat_min": 9.5, "directions": ["↑", "→"]}
 # 全部用既有欄位合成，不新增任何外部資料抓取。權重與映射值集中於此，方便調參。
 FUNNEL_WEIGHTS = {"quality": 0.40, "moat": 0.30, "revision": 0.30}
 
-# QualityGate 映射 — 帶「可原諒條件」：D/E、PEG fail 視為資本結構 / 估值問題，
-# 非品質本體缺陷，扣分較輕；FCF / ROIC / EPS CAGR fail 是品質本體缺陷，重扣。
+# QualityGate 映射 — 帶「可原諒條件」：PEG fail 視為估值問題，非品質本體缺陷，
+# 扣分較輕；FCF / ROIC / EPS CAGR fail 是品質本體缺陷，重扣。
+# 2026-07-03：D/E 退出計分（advisory），故不再列為 forgivable fail —— 它根本不進
+# QualityGate 分母。滿分現為四條件全過（ratio 1.0），唯一 fail 在 PEG → forgivable。
 FUNNEL_QUALITY_MAP = {
-    "pass5": 1.00,
-    "pass4_forgivable": 0.85,   # 唯一 fail 在 D/E 或 PEG
+    "pass5": 1.00,              # 四條件全過（key 名沿用歷史，不改以維持下游相容）
+    "pass4_forgivable": 0.85,   # 唯一 fail 在 PEG
     "pass4_core": 0.50,         # fail 在 FCF / ROIC / EPS CAGR
     "pass3": 0.30,
     "pass_le2": 0.10,
 }
-FUNNEL_FORGIVABLE_FAILS = {"de", "peg"}
+FUNNEL_FORGIVABLE_FAILS = {"peg"}
 
 # MoatScore：base = moat_score/10，再乘趨勢乘數，cap 1.0。
 FUNNEL_MOAT_TREND_MULT = {"↑": 1.10, "→": 1.00, "↓": 0.80}
@@ -147,7 +162,7 @@ FUNNEL_REVISION_STEEPENING_BONUS = 0.05   # FY3 上修幅度 > FY1 上修幅度 
 FUNNEL_REVISION_NO_BASELINE = 0.50        # 「新」chip / 無 baseline → 中性
 
 # Hard veto / cap（不進加權公式，直接處置）。
-FUNNEL_MOAT_DOWN_CAP = 0.50   # moat trend ↓ 且 pass_count ≤ 4 → FunnelRank cap
+FUNNEL_MOAT_DOWN_CAP = 0.50   # moat trend ↓ 且非四條件全過 → FunnelRank cap
 
 
 def compute_quality_gate(quality: dict) -> tuple[float, bool]:
@@ -158,13 +173,16 @@ def compute_quality_gate(quality: dict) -> tuple[float, bool]:
     *ratio* over the present criteria is mapped through the same anchor points,
     so a full-data 4/5 and a partial 3/4 (both ratio 0.75) score alike.
 
-    Anchor points (ratio → score) reproduce the full-data mapping exactly:
+    Anchor points (ratio → score) reproduce the full-data mapping exactly.
+    2026-07-03: scoring is over SCORED_CRITERIA (4 conditions — D/E excluded);
+    "forgivable" now means the sole fail is PEG.
         ratio 1.0          → 1.00
-        ratio [0.7, 1.0)   → 0.85 (forgivable: only D/E / PEG failed) else 0.50
+        ratio [0.7, 1.0)   → 0.85 (forgivable: only PEG failed) else 0.50
         ratio [0.5, 0.7)   → 0.30
         ratio < 0.5        → 0.10
     """
-    present = [c for c in CRITERIA if quality.get(c["key"]) is not None]
+    # 2026-07-03: score over SCORED_CRITERIA only (D/E advisory 已排除)。
+    present = [c for c in SCORED_CRITERIA if quality.get(c["key"]) is not None]
     n_present = len(present)
     if n_present == 0:
         # No quality data at all — bottom bucket, flagged partial.
@@ -177,7 +195,7 @@ def compute_quality_gate(quality: dict) -> tuple[float, bool]:
         if not ok:
             fails_present.append(c["key"])
     n_pass = n_present - len(fails_present)
-    partial = n_present < len(CRITERIA)
+    partial = n_present < len(SCORED_CRITERIA)
 
     forgivable = bool(fails_present) and set(fails_present) <= FUNNEL_FORGIVABLE_FAILS
     ratio = n_pass / n_present
@@ -258,7 +276,7 @@ def compute_funnel_rank(
     Two hard processes outside the weighted formula:
       1. FY1/FY2/FY3 三欄全部下修 → FunnelRank 強制歸 0（領先指標壓過落後的品質分），
          該列沉底 + veto_all_downgrade=True（FE 顯示 ⛔）。三欄須皆有資料且皆下修。
-      2. moat trend ↓ 且 pass_count ≤ 4 → FunnelRank cap 0.50。
+      2. moat trend ↓ 且非四條件全過（pass_count < len(SCORED_CRITERIA)）→ FunnelRank cap 0.50。
 
     Returns a dict of all funnel fields (rounded to 4dp so the FE can re-derive
     the weighted sum within < 0.001 for non-veto rows).
@@ -286,8 +304,11 @@ def compute_funnel_rank(
     cap_moat_down = False
     if all_down:
         funnel = 0.0
-    elif moat_trend == "↓" and pass_count <= 4:
-        # Veto 2: weakening moat without a clean 5/5 → cap.
+    elif moat_trend == "↓" and pass_count < len(SCORED_CRITERIA):
+        # Veto 2: weakening moat WITHOUT a clean full pass → cap.
+        # 2026-07-03: max pass_count 由 5→4（D/E 退出計分）。原條件硬編 `<= 4`
+        # ＝「非 5/5」；現改 `< len(SCORED_CRITERIA)`（＝「非 4/4」）以維持相同語義
+        # ——四條件全過的 ↓-trend 名字不被 cap，未全過的才 cap。
         cap_moat_down = funnel > FUNNEL_MOAT_DOWN_CAP
         funnel = min(funnel, FUNNEL_MOAT_DOWN_CAP)
 
@@ -312,12 +333,19 @@ def compute_funnel_rank(
 def evaluate_criteria(quality: dict) -> tuple[int, list[str]]:
     """Return (pass_count, fail_criteria) using locked MLB thresholds.
 
+    2026-07-03 (Task 1): scored over SCORED_CRITERIA — the four quality
+    conditions (FCF / ROIC / EPS CAGR / PEG). D/E is advisory and never
+    enters pass_count or fail_criteria (surfaced separately via
+    `de_advisory_flag()` so the FE renders a ⚠ badge, not a red fail cell).
+    pass_count therefore tops out at 4; the 5th condition (moat grade/trend
+    veto) lives in sop_funnel.engine.quality_check, not here.
+
     A null field is treated as a failed criterion (can't verify), recorded
     in fail_criteria so the front-end can show "—" rather than red.
     """
     fails: list[str] = []
     passes = 0
-    for c in CRITERIA:
+    for c in SCORED_CRITERIA:
         v = quality.get(c["key"])
         if v is None:
             fails.append(c["key"])
@@ -328,6 +356,22 @@ def evaluate_criteria(quality: dict) -> tuple[int, list[str]]:
         else:
             fails.append(c["key"])
     return passes, fails
+
+
+def de_advisory_flag(quality: dict) -> bool:
+    """True when D/E is present and breaches the advisory threshold (>0.7).
+
+    Advisory only — does NOT affect pass_count / fail_criteria. The FE turns
+    this into a ⚠ badge on the D/E cell (warn, don't gate).
+    """
+    de_crit = next((c for c in CRITERIA if c["key"] == "de"), None)
+    if de_crit is None:
+        return False
+    v = quality.get("de")
+    if v is None:
+        return False
+    # de is an "invert" criterion (pass = v <= threshold); advisory warn = fail side.
+    return v > de_crit["threshold"]
 
 
 # ---------------------------------------------------------------------------
@@ -1742,6 +1786,8 @@ def enrich_ticker(
         "moat_trend": moat_trend,
         "pass_count": pass_count,
         "fail_criteria": fails,
+        # 2026-07-03: D/E advisory flag (>0.7) — FE 顯示 ⚠ badge，不進 pass_count。
+        "de_advisory": de_advisory_flag(quality),
         "peg_fallback": peg_fallback,
         **funnel,   # funnel_rank + 3 sub-scores + veto/cap/partial flags
         "quality_source": source,

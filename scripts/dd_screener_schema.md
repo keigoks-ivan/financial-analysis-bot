@@ -45,8 +45,14 @@ preset alongside `起漲點`. All fields additive — pre-v1.3 consumers ignore 
     {"key": "roic",  "label": "ROIC≥15%", "threshold": 15.0, "invert": false, "unit": "%"},
     {"key": "eps2y", "label": "EPS≥15%",  "threshold": 15.0, "invert": false, "unit": "%"},
     {"key": "peg",   "label": "PEG≤2.0",  "threshold": 2.0,  "invert": true,  "unit": "x"},
-    {"key": "de",    "label": "D/E≤0.7",  "threshold": 0.7,  "invert": true,  "unit": "x"}
+    {"key": "de",    "label": "D/E≤0.7",  "threshold": 0.7,  "invert": true,  "unit": "x", "advisory": true}
   ],
+  // 2026-07-03 (Task 1): `de` carries "advisory": true — it is DISPLAYED but does
+  // NOT enter pass_count / fail_criteria / FunnelRank QualityGate. pass_count now
+  // scores over the 4 non-advisory criteria (FCF / ROIC / EPS CAGR / PEG), max 4.
+  // Per-stock `de_advisory` (bool) = D/E present and > 0.7 (FE renders ⚠ badge).
+  // summary.pass_5 is therefore always 0 (kept for backward-compat key stability);
+  // "fully passing" is now pass_4. 第五條「護城河」veto 由 sop_funnel 板機層把守。
 
   "presets": {
     "MLB": {"fcf": 10.0, "roic": 15.0, "eps2y": 15.0, "peg": 2.0, "de": 0.7}
@@ -91,6 +97,7 @@ Each entry in `stocks[]`:
   "eps2y":  54.3,
   "peg":     0.38,
   "de":      0.07,
+  "de_advisory": false,   // 2026-07-03: D/E > 0.7 → true（FE ⚠ badge）；advisory only, 不進 pass_count
 
   "pass_count": 5,
   "fail_criteria": [],
