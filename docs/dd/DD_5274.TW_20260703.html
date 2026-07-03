@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="dd-schema-version" content="v14.4">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DD｜信驊 Aspeed 5274.TW — 伺服器 BMC 壟斷者（v14.4）</title>
+<script id="dd-meta" type="application/json">
+{
+  "ticker": "5274.TW",
+  "schema": "v14.4",
+  "date": "2026-07-03",
+  "price_at_dd": 17265.0,
+  "signal": "B",
+  "trap": "🟢",
+  "trap_label": "🟢 非陷阱",
+  "moat": "A",
+  "val": "🟠",
+  "ma": "✅",
+  "fpe_fy2": 57.8,
+  "pct_5y": 88.0,
+  "peg_fy2": 0.88,
+  "upside_short_pct": -32.0,
+  "upside_mid_pct": -5.0,
+  "stress": {"pass": 2, "total": 2},
+  "moat_score": 8.5,
+  "growth_durability": 9.0,
+  "quality_score": 8.8,
+  "ai_risk": "🟢",
+  "long_term_confidence": "高",
+  "verdict": "B",
+  "oneliner": "BMC 全球 ~70% 壟斷 IP 複利機器（OM 51%／剔現金 ROIC ~237%）；FY26-28 EPS 197→299→473 高成長，但 Fwd PE 87x／5Y 分位 88% 極貴、5Y IRR ~8.6%，DC-SCM 模組化＋Nuvoton 二供侵蝕轉換成本；裁決觀望，等回檔或成長兌現。",
+  "dca_verdict": "觀望",
+  "dca_role": "條件式核心持倉",
+  "moat_trend": "→",
+  "runway_post_y5": "🟡",
+  "ev5y_pct": 51.0,
+  "irr_base_pct": 9.2,
+  "max_dd_pct": -60.0,
+  "asym_ratio": 3.3,
+  "bull_5y_price": 43000.0,
+  "bear_5y_price": 10700.0,
+  "p_bull_pct": 25.0,
+  "p_bear_pct": 30.0
+}
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1E3A5F;--accent:#3B82F6;--bg:#F8FAFC;--card:#FFFFFF;--row:#F1F5F9;--muted:#64748B;}
+*{box-sizing:border-box;}
+body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:#0F172A;margin:0;line-height:1.7;font-size:15px;}
+.wrap{max-width:1080px;margin:0 auto;padding:24px 18px 80px;}
+code,.mono,td .mono{font-family:'IBM Plex Mono',monospace;}
+h1{font-size:24px;color:var(--ink);margin:0 0 4px;}
+h2{font-size:20px;color:#fff;background:var(--ink);border-left:4px solid var(--accent);padding:10px 14px;margin:34px 0 14px;scroll-margin-top:80px;border-radius:2px;}
+h3{font-size:16px;color:var(--ink);margin:22px 0 8px;border-bottom:2px solid #E2E8F0;padding-bottom:4px;}
+h4{font-size:14px;color:#334155;margin:16px 0 6px;}
+.card{background:var(--card);border:1px solid #E2E8F0;border-radius:6px;padding:18px 20px;margin:14px 0;box-shadow:0 1px 2px rgba(0,0,0,.03);}
+table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13.5px;}
+th{background:var(--ink);color:#fff;padding:7px 9px;text-align:left;font-weight:500;}
+td{padding:7px 9px;border-bottom:1px solid #E2E8F0;vertical-align:top;}
+tbody tr:nth-child(even){background:var(--row);}
+.scroll{overflow-x:auto;}
+.reasoning{background:#F0F9FF;border-left:3px solid #0EA5E9;padding:8px 12px;margin:8px 0;font-size:13px;color:#334155;}
+.note{font-size:13px;color:var(--muted);}
+.thesis{font-size:28px;font-weight:700;text-align:center;color:var(--ink);margin:12px 0;line-height:1.4;}
+.status-bar{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;background:#F1F5F9;border-left:4px solid var(--accent);border-right:4px solid var(--accent);padding:12px;border-radius:4px;margin:10px 0;}
+.status-bar .cell{text-align:center;min-width:104px;}
+.status-bar .lbl{font-size:11px;color:var(--muted);display:block;}
+.status-bar .val{font-size:20px;font-weight:700;display:block;margin-top:2px;}
+.hypothesis-box{background:#EFF6FF;border-left:4px solid var(--accent);padding:14px 18px;border-radius:4px;margin:12px 0;}
+.hypothesis-box ul{margin:8px 0;padding-left:18px;}
+.hypothesis-box li{margin:5px 0;font-size:14px;}
+.tag-green{background:#DCFCE7;color:#166534;padding:1px 7px;border-radius:3px;font-weight:600;}
+.tag-red{background:#FEE2E2;color:#991B1B;padding:1px 7px;border-radius:3px;font-weight:600;}
+.tag-amber{background:#FEF9C3;color:#92400E;padding:1px 7px;border-radius:3px;font-weight:600;}
+.tag-blue{background:#EFF6FF;color:#1E40AF;padding:1px 7px;border-radius:3px;font-weight:600;}
+.verdict-chip{display:inline-block;padding:6px 20px;border-radius:4px;font-size:18px;font-weight:700;color:#fff;background:#92400E;border-left:4px solid #78350F;}
+.chip-sub{font-size:13px;color:#475569;font-style:italic;margin:6px 0 0;}
+.trap-box{background:#FFF0E6;border-left:4px solid #F97316;padding:12px 16px;border-radius:4px;}
+.trap-box h3{color:#C2410C;border:none;}
+.s3-box{background:#EFF6FF;border-left:4px solid var(--accent);padding:12px 16px;border-radius:4px;}
+#s14{background:#FEF9C3;border-left:4px solid #92400E;}
+.s12-box{background:#FFF7ED;border-left:4px solid #F97316;}
+.s13b-box{background:#FEF2F2;border-left:4px solid #DC2626;padding:12px 16px;border-radius:4px;}
+.s13c .bignum{font-size:32px;font-weight:700;color:#991B1B;font-family:'IBM Plex Mono',monospace;}
+.ddbar{height:16px;border-radius:3px;background:linear-gradient(90deg,#22C55E 0 33%,#F59E0B 33% 66%,#DC2626 66% 100%);position:relative;margin:8px 0;}
+.learn{background:#F0F9FF;border-left:4px solid #0284C7;padding:12px 16px;border-radius:4px;}
+.dd-toc{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0;}
+.dd-toc a{font-size:12px;background:#E2E8F0;color:#1E3A5F;padding:3px 10px;border-radius:12px;text-decoration:none;}
+.dd-toc a:hover{background:#CBD5E1;}
+.topbar{position:sticky;top:0;background:var(--ink);color:#fff;font-size:12.5px;padding:8px 14px;z-index:9;display:flex;gap:16px;flex-wrap:wrap;}
+.topbar b{color:#93C5FD;}
+.printbtn{position:fixed;right:18px;bottom:18px;background:var(--ink);color:#fff;border:none;padding:10px 16px;border-radius:6px;cursor:pointer;font-size:13px;z-index:20;}
+details{margin:10px 0;}summary{cursor:pointer;font-weight:600;color:var(--ink);padding:6px 0;}
+.pos{color:#166534;font-weight:600;}.neg{color:#991B1B;font-weight:600;}.neu{color:#64748B;}
+@media print{.topbar,.printbtn,.dd-toc{display:none;}details{open:true;}details>summary{display:none;}h2{background:#1E3A5F !important;-webkit-print-color-adjust:exact;}}
+@media (max-width:640px){.thesis{font-size:21px;}.status-bar{gap:8px;}}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#0f172a;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(59,130,246,.28);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/" class="active">個股 DD</a>
+          <a href="/research/synthesis/">期望落差綜合研判</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/">週報</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/long-track-smh/">長線訊號</a>
+          <a href="/long-track-tw/">台股長線</a>
+          <a href="/turtle-sleeve/">商品 Sleeve</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/">量化回測</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/screener-tw.html">Screener 台股</a>
+          <a href="/screener-jp.html">Screener 日股</a>
+          <a href="/screener-my.html">Screener 馬股</a>
+          <a href="/cache/">🗄 Data Cache</a>
+          <a href="/tools/">期貨部位計算機</a>
+        </div>
+      </div>
+      <a href="/mental-models/">🧠 心智模型</a>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+<div class="topbar">
+<span><b>信驊 Aspeed 5274.TW</b>（yfinance 5274.TWO）</span>
+<span>資料抓取：<b>2026-07-03</b></span>
+<span>最新股價：<b>NT$17,265</b></span>
+<span>最近財報：<b>Q1 FY26（2026-05-05 公告）</b></span>
+<span>DD Schema <b>v14.4</b>｜yfinance 批量 1 次 + web_search 8 次</span>
+</div>
+<div class="wrap">
+
+<h1>信驊科技 Aspeed（5274.TW）— 伺服器 BMC 全球壟斷者深度研究</h1>
+<p class="note">單一 v14.4 報告：Part I 基本面深度（§1-§11）＋ Part II 決策層（§12-§15）＋ 附錄 A 擇時。人面對的唯一裁決見 <a href="#decision">§14</a>。台股，全數以 TWD 計價。</p>
+
+<!-- ================= 頁首儀表板 ================= -->
+<div class="card">
+<div class="status-bar">
+<div class="cell"><span class="lbl">統一裁決</span><span class="val" style="color:#92400E;">觀望</span></div>
+<div class="cell"><span class="lbl">倉位角色</span><span class="val" style="font-size:15px;">條件式核心</span></div>
+<div class="cell"><span class="lbl">護城河趨勢</span><span class="val" style="color:#64748B;">A →</span></div>
+<div class="cell"><span class="lbl">Y5 後跑道</span><span class="val">🟡</span></div>
+<div class="cell"><span class="lbl">Max DD</span><span class="val" style="color:#991B1B;">−60%</span></div>
+<div class="cell"><span class="lbl">5Y EV／IRR</span><span class="val" style="font-size:15px;">+51%／8.6%</span></div>
+</div>
+<div class="hypothesis-box">
+<p class="thesis">伺服器裡那顆沒人看見、卻每台都要的「遠端管理大腦」——全球十台伺服器有七台用它，但股價已把三年成長先付清。</p>
+<ul>
+<li><strong>統一裁決 <span style="font-size:22px;color:#92400E;">觀望</span></strong>（<a href="#decision">§14</a>）｜倉位角色：條件式核心持倉｜判定理由：品質 A 級壟斷、成長真實（FY26-28 EPS 197→299→473），但 Fwd PE 87.6x／5Y 分位 88%、近中期 R:R 皆負、5Y 機率加權 IRR 僅 ~8.6%，估值把「好公司」壓成「此價不進」。</li>
+<li><strong>護城河趨勢 A <span style="color:#64748B;">→</span></strong>（<a href="#s7">§7</a> 權威）｜execution 趨勢 ↑（12nm AST2700 領先、韌體生態）｜pricing power／轉換成本趨勢 ↓（DC-SCM 模組化 + Nuvoton 二供）→ 一擴一縮，權威趨勢 → 持平。</li>
+<li><strong>Y5 後跑道 🟡 中</strong>（<a href="#s6">§6.A''</a>）｜S 曲線 中期｜Y5 末 AI 伺服器高值 BMC 滲透 ~50-60%｜第二曲線（PCIe／CAN／邊緣 Cupola360）早期未 sourced 落點。</li>
+<li><strong>Max DD −60%</strong>（<a href="#s13">§13c</a> 範圍 −45%~−60%，路徑風險 🔴）｜最快復原 12-24 個月（若下一世代 ramp 順利）；FY23 曾 −53% 有前例。</li>
+<li><strong>5Y 機率加權 EV +51%／IRR 8.6%/yr</strong>（<a href="#s11">§11.5</a>）｜Base IRR 9.2%/yr（三分量 <a href="#s11">§11.6</a>：EPS +35% / re-rate −19% / 股息+回購 +0.5%）｜AR 3.3（不對稱比 &lt;4，非爆發候選）。</li>
+<li><strong>opportunity cost：</strong>組合若已持 TSM（IRR 15.5%、moat S↑）或 ANET/AVGO 類 AI 受益核心，邊際資金放它們優於現價的 5274；5274 的 conviction 高但 R:R 因估值被壓（<a href="#decision">§14a</a>）。</li>
+<li><strong>基本面評級 B（A+/A/B/C/X，metadata）：</strong>品質 8.8/10｜估值燈 🟠 偏貴｜Pure MA ✅ 強勢｜陷阱定性 🟢 非陷阱（詳見附錄 A）。品質本質 A 級，因估值時機不到落 B。</li>
+<li><strong>長期持有信心：高</strong>（附錄 A I）｜建議持有年限：長期 5-10 年（若能在合理價進場，<a href="#decision">§14c</a>）。</li>
+<li><strong>Inception DD：</strong><code>DD_5274.TW_20260526.html</code>（2026-05-26）— 累積漂移對照基準（本份為第二份 v12.2+ 報告）。</li>
+<li><strong>下次年度對照倒數：</strong>2027-05-26（距今 327 天）— Inception + 365 天。</li>
+</ul>
+</div>
+<p class="note"><strong>讀法：</strong>本份報告的人面對結論是「統一裁決 觀望」（<a href="#decision">§14</a>）。基本面評級 A+/A/B/C/X 為 metadata（餵 screener），不是並列頭銜。倉位組合佔比由 portfolio-manager skill 依組合狀態決定。<strong>§0 archetype：</strong>品質複利成長／IP 型（primary，信心高）；財務指紋＝OM 51%、剔現金 ROIC ~237%、Capex/Rev 3.8%、fabless 淨現金——用預設「品質複利」gate-set，不換金融/未獲利/循環尺。單一產品需求週期性（FY23 −53%）以 §3.C R1 風險處理，非商品 archetype，不啟動附錄 B。</p>
+</div>
+
+<nav class="dd-toc">
+<a href="#s1">§1 結論</a><a href="#s2">§2 序章</a><a href="#s3">§3 論點</a><a href="#s4">§4 財報</a><a href="#s5">§5 門檻</a><a href="#s6">§6 成長</a><a href="#s7">§7 護城河</a><a href="#s8">§8 財務</a><a href="#s9">§9 產業</a><a href="#s10">§10 治理</a><a href="#s11">§11 估值</a><a href="#s12">§12 矛盾</a><a href="#s13">§13 pre-mortem</a><a href="#decision">§14 決策</a><a href="#s15">§15 複審</a><a href="#appA">附錄 A 擇時</a>
+</nav>
+
+<!-- ================= §1 ================= -->
+<section class="card" id="s1">
+<h2>§1｜投資結論詳述</h2>
+<p class="note">本結論基於以下完整分析得出，詳見各章節；人面對裁決見 <a href="#decision">§14</a>。</p>
+<p>信驊是一個罕見的組合：<strong>單一產品線的近乎壟斷（BMC 全球 ~70%+ 份額）＋ 極致資本效率（OM 51%、剔現金 ROIC ~237%、Capex/Rev 3.8%、fabless 淨現金）＋ 真實的 AI 順風</strong>（AI 伺服器每機架 BMC 顆數從個位數升到 ~120 顆、且高階 AST2700 ASP 是前代 1.5-2 倍）。FY26-28 EPS 共識 197→299→473（Excel snapshot 2026-06-23），3 年 CAGR ~66%，這是全市場最高品質的複利機器之一。</p>
+<p><strong>但這不是「該不該擁有」的問題，而是「此價該不該進」的問題。</strong>現價 NT$17,265 對 FY26 共識的 Fwd PE 為 87.6x（5Y 分位 ~88-92%），近期／中期用合理倍數推出的目標價分別為 −32%／−5%（見附錄 A），意即市場已把 <strong>FY2028 甚至更遠的成長先行付清</strong>。把 5 年機率加權後，EV +51%、年化 IRR 僅 ~8.6%——一台 66% 成長的機器，因入場倍數太高，五年只換來個位數 IRR（<a href="#s11">§11.5</a>）。同時 <strong>兩個結構性變數正在侵蝕它最脆弱的那道牆（轉換成本）</strong>：OCP DC-SCM 把 BMC 從主機板解耦成可插拔標準模組，設計初衷就是降低換 BMC 供應商的驗證成本；Nuvoton 拿到 Microsoft 共同開發的 BMC、2025 量產、在 cost-sensitive 雲端段擴份額（<a href="#s7">§7</a>、<a href="#s9">§9</a>）。裁決＝<strong>觀望</strong>：這是「好公司、貴價格、護城河底層有一條裂縫」的教科書型觀望，不是迴避（品質與壟斷都在），也不是進場（估值 + IRR + 二供威脅三支獨立支柱都指向等）。</p>
+
+<div class="trap-box">
+<h3>⚠️ 這是價值陷阱嗎？（強制回答題）</h3>
+<div class="scroll">
+<table>
+<tbody>
+<tr><td style="width:26%"><strong>最可能的價值陷阱模式是哪一種？</strong></td><td><strong>非陷阱</strong>（若真出事，最接近「護城河侵蝕型」——但屬於「未來可能」的觀察項，非「當下已發生」）</td></tr>
+<tr><td><strong>支持「這不是陷阱」的最強論據</strong></td><td>營收與獲利都在創新高（Q1 FY26 EPS 37.41，季增 18%、年增 59%，單季歷史新高；5 月營收 +68.7% YoY），OM 從 FY24 45.2% 擴到 FY25 51.3%，GM 68%，FCF/NI 106%，訂單能見度到 2027、供應鏈追不上出貨——這是壟斷者「量價齊揚」的財務指紋，與陷阱（定價下滑、市佔流失、FCF 背離）完全相反。它的問題是「太貴」不是「變壞」。</td></tr>
+<tr><td><strong>支持「這可能是陷阱」的最強反駁</strong></td><td>單一產品線 + 需求週期性強（FY23 營收/EPS 曾 −53%）。若 AI 資本支出進入消化期，加上 DC-SCM 降低換供應商成本、Nuvoton 二供在 hyperscaler 擴份額，可能同時發生「量的週期回檔 + 質的份額分散」，屆時 87x 的倍數會劇烈下修——這是「隱性週期性 + 護城河侵蝕」複合，而市場現價假設兩者都不會發生。</td></tr>
+<tr><td><strong>空頭最強一擊</strong></td><td>18 個月內造成 30%+ 虧損的最可能路徑＝<strong>一個大 hyperscaler 公告主力平台 BMC 導入 Nuvoton/Axiado（DC-SCM 模組化使切換成本大降）＋ AI 伺服器進入補庫存消化</strong>，月營收 YoY 由 +60% 掉到個位數，市場把 Fwd PE 由 88x 壓到 40x（監測 §3.C R1+R2；與 <a href="#s13">§13b</a> pre-mortem 故事呼應）。</td></tr>
+<tr><td><strong>如何在持有期間判斷陷阱是否正在發生？</strong></td><td>領先指標：① 月營收 YoY 連 2 月 &lt;+20%（cycle 轉弱）；② 任一 hyperscaler 主力平台 design-in 非信驊 BMC 公告（份額分散實錘）。任一觸發 → 重評 H1/H3。</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>最終定性：<span class="tag-green">🟢 非陷阱</span></strong>｜<em>當前所有財務領先指標處正面極值（營收創高、margin 擴張、共識連續上修、外資連調高目標）。它不是價值陷阱（不是便宜有原因），而是「品質溢價陷阱」的候選——貴到把好公司變成平庸報酬。定性 🟢 但估值燈 🟠、二供威脅 R2 需持續盯。</em></p>
+</div>
+
+<h3>最關鍵監測指標</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>月營收 YoY%（每月 10 日公告）</td><td>§3 H1</td><td>🔵 核心假設驗證信號</td><td>連 2 月 YoY &lt;+20%（vs FY26 上半 +60-70% baseline）→ 削弱 H1；連 3 月 &lt;0% → 反轉（cycle reset 實錘）</td></tr>
+<tr><td>2</td><td>AST2700 出貨占比 + 任一 hyperscaler 主力平台 BMC 供應商公告</td><td>§3 H2/H3、§7</td><td>🔵 長期成長 + 護城河領先信號</td><td>AST2700 FY26 占比 30%+ / FY27 60%+ 兌現 → 強化；任一 hyperscaler 主力平台導入 Nuvoton/Axiado BMC → 份額分散實錘，moat_trend 重評、削弱 H3</td></tr>
+<tr><td>3</td><td>Q2 FY26 法說會（估 2026-08 上旬）— 共識 Q2 EPS ~45.9、OI margin 趨勢</td><td>§4、§11</td><td>短期估值/財報信號</td><td>Q2 EPS &lt;40 → 削弱動能；OI margin 連 2 季 YoY −1.5pp → QC-26 結構性 margin 警示</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<!-- ================= §2 ================= -->
+<section class="card" id="s2">
+<h2>§2｜序章：第一性原理 × 逆向思考</h2>
+<h3>存在意義</h3>
+<p>每一台資料中心伺服器，在 CPU/GPU 還沒開機、作業系統還沒載入時，就需要一顆獨立的小晶片來「開機、監控溫度電壓、遠端重灌、在當機時把畫面傳回運維中心」——這就是 BMC（Baseboard Management Controller，基板管理控制器）。它是伺服器的「行車紀錄器 + 遠端遙控 + 生命維持系統」。沒有它，一座有數萬台伺服器的資料中心就無法遠端管理，運維成本會爆炸。信驊解決的痛點是<strong>「大規模伺服器的可管理性」</strong>——這個痛點隨著 AI 資料中心規模指數擴張而變得更不可逆：AI 機架功率密度高、液冷、GPU 托盤多，每機架需要的 BMC 顆數從個位數升到 ~120 顆（Digitimes 2026-05）。若信驊明天消失，全球伺服器 ODM/OEM 的新機種驗證會癱瘓 12-18 個月——因為 BMC 的韌體/驅動生態（OpenBMC 上游、Linux kernel 支援）已高度圍繞信驊的 AST 系列建立。</p>
+
+<h3>公司歷史路徑（25 年，護城河如何從 0 到壟斷）</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>階段</th><th>里程碑</th><th>護城河意涵</th></tr></thead>
+<tbody>
+<tr><td>2004 創立</td><td>由益華/慧榮等 IC 設計老將創立，專攻伺服器遠端管理晶片</td><td>切入被 Emulex/Renesas 等把持的利基，以專注 + 台系 ODM 地緣優勢突圍</td></tr>
+<tr><td>2012-2016</td><td>AST2400/2500 成為伺服器 BMC 事實標準，OpenBMC 生態圍繞其建立</td><td>從追趕者變標準制定者；韌體生態綁定開始累積</td></tr>
+<tr><td>2020</td><td>AST2600（28nm，世界首顆先進製程 BMC SoC）</td><td>製程領先確立；對手仍停在成熟製程</td></tr>
+<tr><td>2023</td><td>伺服器庫存調整，營收 −53%、EPS 腰斬</td><td>暴露「單一產品 + 需求週期」的脆弱面（R1 前例）</td></tr>
+<tr><td>2024-2026</td><td>AI 伺服器爆發；AST2700（12nm，8 代）發表→驗證→初期量產；股價創 6 年新高 19,880</td><td>從「伺服器週期受益者」升級為「AI capex 受益者」；但同期 DC-SCM + Nuvoton 二供威脅浮現</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note">25 年敘事＝「專注單一利基 → 做成事實標準 → 製程領先 → AI 放大」。護城河真實且累積，但 2023 的 −53% 與 2025-26 的二供威脅提醒：壟斷不等於免疫於週期，也不等於永久不被稀釋。</p>
+
+<h3>逆向推演（Munger Inversion）：如何在 3 年內虧損 50%+</h3>
+<ul>
+<li><strong>技術替代風險（主路徑）：</strong>不是「有人做出更好的 BMC」，而是<strong>「BMC 這道牆被架構性繞過或標準化」</strong>。DC-SCM 把 BMC 模組化、去主機板耦合，讓 hyperscaler 更容易多供應商化；若 CPU 廠（Intel/AMD）進一步把管理功能 chiplet 化整進 SoC，信驊的 SAM 會被侵蝕。歷史對標：獨立音效卡/網卡被整進主機板/CPU 的路徑（時間軸 5-8 年慢變數，見 §3.C R3）。</li>
+<li><strong>地緣政治曝險：</strong>fabless，晶圓由台積電代工（12nm/28nm）、封測在台。集中於台海供應鏈；但客戶全球分散、產品非受出口管制核心品項，地緣風險屬「系統性尾部」而非公司特有加速器。</li>
+<li><strong>管理層失職：</strong>壓成一行——信驊資本配置紀律極佳（fabless、無大型 M&A、股息 payout 50%、幾無舉債），自我毀滅路徑機率低（詳見 <a href="#s10">§10</a> 資本配置）。</li>
+<li><strong>價值陷阱路徑：</strong>四選一＝<strong>隱性週期性 × 護城河侵蝕複合</strong>——市場現價把「單一產品需求永遠向上 + 壟斷永不被稀釋」同時定價；只要其一破（AI capex 消化 或 二供上位），87x 倍數會系統性下修（架構性替代分級見 QC-23：DC-SCM 屬 🔴 生態攻擊、逼近 ⛔）。</li>
+</ul>
+<blockquote class="note">護城河如何累積而成，見 <a href="#s7">§7.D</a> 護城河變遷時間軸（不在此重複）。</blockquote>
+</section>
+
+<!-- ================= §3 ================= -->
+<section class="card" id="s3">
+<h2>§3｜投資論點錨定</h2>
+<div class="s3-box">
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<tbody>
+<tr><td style="width:26%"><strong>預設持有期</strong></td><td>長期 5-10 年（前提：在合理價進場；現價屬觀望，尚未建倉）</td></tr>
+<tr><td><strong>主驅動理由</strong></td><td>BMC 壟斷 + AI 伺服器 content 上升是 5-10 年結構故事；但入場倍數決定 5 年 IRR，故估值週期（回檔）是進場時間軸的關鍵變數。</td></tr>
+<tr><td><strong>訊號 vs 噪音</strong></td><td>持有期 &gt;2 年：護城河趨勢（execution vs pricing power 分歧）、月營收 YoY 趨勢、份額分散證據為訊號；單季 EPS beat/miss、外資目標價微調為噪音。</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>B｜三個核心假設 + 三層時間軸（sourced floor + 漂移觸發）</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>#</th><th>核心假設</th><th>2Y 驗證點</th><th>5Y 驗證點</th><th>10Y 驗證點</th><th>數字門檻 / 來源</th><th>漂移觸發</th></tr></thead>
+<tbody>
+<tr><td><strong>H1</strong></td><td>AI 伺服器 BMC 用量（每機架顆數 + 高值 mix）結構性上升，帶動信驊出貨量與 ASP 雙升</td><td>BMC 出貨量連 4 季 YoY ≥+40%</td><td>BMC 年出貨 2028 ~52.8M 顆（Goldman）；ASP 隨 AST2700 mix 升</td><td>每機架 BMC 顆數維持高位；AI capex 不進入結構衰退</td><td>Goldman 出貨估 29.5M/41.6M/52.8M（26/27/28，+56%/+41%/+27%）；Digitimes 每機架 ~120 顆｜來源：Goldman 2026、Digitimes 2026-05</td><td>連 2 季 TTM 出貨 YoY &lt;+40% → 削弱（QC-35 2Y）</td></tr>
+<tr><td><strong>H2</strong></td><td>AST2700（12nm、8 代）順利 ramp、鞏固製程/生態領先</td><td>FY26 AST2700 占 BMC 出貨 ≥30%</td><td>FY28 AST2700 與 AST2600 出貨交叉、占比過半</td><td>維持每 5-7 年代際升級節奏、無對手追上 12nm + 韌體生態</td><td>AST2700 占比｜來源：ServeTheHome AST2700 review、Linux/QEMU AST2700 支援、公司法說</td><td>法說推遲 AST2700 ramp 或良率公告 → 削弱/反轉</td></tr>
+<tr><td><strong>H3</strong></td><td>OI margin 維持 50%± 高位，不被 DC-SCM 模組化 + Nuvoton/Axiado 二供侵蝕定價權</td><td>FY26 OI margin ≥48%</td><td>FY27-30 OI margin 48-53% 穩定；主力 hyperscaler 平台仍以信驊 BMC 為主</td><td>轉換成本壁壘（韌體/驗證）在 DC-SCM 世界仍成立</td><td>OI margin ≥48%；hyperscaler 主力平台份額｜來源：季財報、Nuvoton NPCM8mnx/OCP S.A.F.E.、OCP DC-SCM 2.0 spec</td><td>連 2 季 TTM OI margin YoY −1.5pp（QC-26）或 hyperscaler 主力平台二供公告 → 削弱/反轉</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note"><strong>sourced floor：</strong>三假設皆帶具體數字門檻 + 機構來源 + 漂移條件。H3 為本份新增焦點（前版著重估值 timing，本份把「DC-SCM + Nuvoton 二供」正式列為 H3 的結構性削弱源）。</p>
+
+<h3>B'｜12 個月前報告對照</h3>
+<p class="note"><strong>狀態：</strong>Inception = 2026-05-26（前份 v12.x DD），距今 327 天，未滿一年。本欄位將於 2027-05-26 起首次有 YoY 對照。在此之前僅以 §3.B 戰術假設視角追蹤。<br><strong>vs 上一份（2026-05-26，非年度對照，供參）：</strong>前份裁決 B 觀望（5/19 ATH 19,195、Fwd PE FY+1 92.6x、5Y 分位 95%）；本份現價 17,265（−10% vs 前 ATH）、Fwd PE FY+1 87.6x、分位 ~88-92%——估值略降但仍極端，裁決維持觀望；<strong>本份實質變化＝把 Nuvoton 二供 + DC-SCM 模組化的結構威脅由「R2 泛稱」升格為 H3 核心假設 + moat_trend 由前版「雙線 widening」下修為「→ 持平」。</strong></p>
+
+<h3>C｜三個最可能推翻論點的風險（時間尺度分層）</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>#</th><th>風險</th><th>對應假設</th><th>時間尺度</th><th>監測指標</th><th>警戒閾值</th></tr></thead>
+<tbody>
+<tr><td>R1</td><td>單一產品 BMC 需求週期 reset（FY23 曾 −53%）+ AI 伺服器進入補庫存消化期</td><td>H1</td><td>🔥 中期（4-6 季）</td><td>Hyperscaler 合計 Capex YoY；信驊月營收 YoY</td><td>合計 capex YoY 連 2 季 &lt;+10% 或月營收 YoY 連 2 月 &lt;+20% → 警戒；連 3 季/月轉負 → 大動作</td></tr>
+<tr><td>R2</td><td><strong>Nuvoton（Microsoft 共同開發 BMC，2025 量產）/ Axiado（DC-SCM 2.0 安全模組）在 hyperscaler 二供加速</strong></td><td>H1 + H3</td><td>🔥 中期（4-6 季）</td><td>任一 hyperscaler 主力平台 BMC design-in 公告；信驊季 OI margin</td><td>任一 hyperscaler 主力平台導入非信驊 BMC；或 OI margin 連 2 季 −1pp → 份額分散 + 定價侵蝕實錘</td></tr>
+<tr><td>R3</td><td>DC-SCM 模組化長期降低換供應商成本 + CPU 廠把管理功能 chiplet 化整進 SoC</td><td>H2 + H3</td><td>🐢 長期（2+ 年慢變數）</td><td>DC-SCM 採用率；Intel/AMD 管理 chiplet roadmap</td><td>≥50% 機率判斷 BMC 被架構繞過 → 才砍倉（🐢 慢變數，不因單一新聞行動）</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<p class="note">新事件四問過濾：① 時間軸匹配？② 影響 H1/H2/H3 哪個？③ 邊際方向（＋/0/−）？④ 達重評閾值？——不影響任一假設且不改估值分位者＝噪音，不行動。例：某月外資微調目標價 500 點＝噪音；某 hyperscaler 主力平台 BMC 二供公告＝直接撞 H3，重評。</p>
+
+<h3>E｜可執行決策主線預設</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr></thead>
+<tbody>
+<tr><td><strong>進場</strong></td><td>估值：Fwd PE 回落至 5Y 分位 &lt;60%（約 FY27 EPS 對應 &lt;45x，或股價回測布林中軌 ~14,600 區）＋ 月營收 YoY 維持 &gt;+40%</td><td>建倉衛星起手（角色：條件式核心），分批</td></tr>
+<tr><td><strong>加碼</strong></td><td>H1（出貨量）+ H2（AST2700 占比）均兌現 + hyperscaler 份額未分散</td><td>加碼至目標倉位</td></tr>
+<tr><td><strong>減碼</strong></td><td>R2 觸發（二供實錘）或 OI margin 連 2 季 −1pp</td><td>減至一半，重評 H3</td></tr>
+<tr><td><strong>撤退</strong></td><td>H1 反轉（月營收連 3 月轉負）或 R3 架構替代 ≥50% 機率</td><td>清倉，記錄推翻理由</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>F｜Single Thing（唯一 binary trigger）</h3>
+<div class="scroll">
+<table>
+<tbody>
+<tr><td style="width:24%"><strong>Single Thing 描述</strong></td><td>任一「前五大」hyperscaler（AWS/Microsoft/Google/Meta/Oracle）公告其<strong>主力（非邊緣/衛星）</strong>伺服器平台 BMC 導入 Nuvoton/Axiado 等非信驊方案。</td></tr>
+<tr><td><strong>為何致命</strong></td><td>直接撞 H3（定價權）與 H1（份額）：一旦主力平台被二供攻破，DC-SCM 世界的「多供應商化」會從邊緣蔓延到核心，87x 倍數所依賴的「壟斷永續」假設瓦解，估值與 EPS 雙殺。</td></tr>
+<tr><td><strong>如果發生</strong></td><td>立刻重評 thesis：moat_trend 下修至 ↓、H3 反轉 → 由觀望轉向減碼/迴避傾向（視份額流失幅度）。</td></tr>
+<tr><td><strong>如何監測</strong></td><td>OCP Summit / hyperscaler 開放硬體揭露、ServeTheHome/Digitimes 供應鏈報導、公司法說 Q&A。頻率：每季 + 重大展會。目前離發生：Nuvoton 已在 cost-sensitive/衛星 BMC 段量產，但<strong>主力平台尚未實錘</strong>——這是 primary trigger 與現況的距離。</td></tr>
+<tr><td><strong>機率估計</strong></td><td>未來 12-24 個月主力平台被攻破：~20-30%（DC-SCM 降低切換成本使機率高於前版評估）。</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<!-- ================= §4 ================= -->
+<section class="card" id="s4">
+<h2>§4｜即時財報情報</h2>
+<p class="note">資料來源：Q1 FY26 財報（2026-05-05 董事會通過）+ 月營收公告 + 法說。</p>
+<h3>① 最新一季（Q1 FY2026）關鍵數字</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY</th></tr></thead>
+<tbody>
+<tr><td>Revenue</td><td>~NT$3.83B（季）</td><td>~NT$3.7B</td><td><span class="tag-green">Beat</span></td><td>+70.6%</td></tr>
+<tr><td>EPS</td><td><strong>NT$37.41</strong>（單季歷史新高）</td><td>~NT$35</td><td><span class="tag-green">Beat</span></td><td>+59%（季增 +18%）</td></tr>
+<tr><td>稅後淨利</td><td>NT$14.14 億</td><td>—</td><td><span class="tag-green">Beat</span></td><td>+59.4%</td></tr>
+<tr><td>Gross Margin</td><td>~67-68%</td><td>~66%</td><td><span class="tag-green">符合/優</span></td><td>+3-4pp</td></tr>
+<tr><td>Operating Margin</td><td>~50%</td><td>~48%</td><td><span class="tag-green">Beat</span></td><td>擴張</td></tr>
+</tbody>
+</table>
+</div>
+<div class="reasoning">Q1 FY26 EPS 37.41 → 年化 ~150（但 FY26 為前低後高，全年共識 197）→ Q2-Q4 逐季爬坡（Q2 共識 ~45.9）；QC-27 Rev/OI divergence：Rev YoY +70.6% vs OI YoY 更高（margin 擴張）→ divergence &lt;0（OI 快於 Rev）→ 無 margin 壓縮警示，屬正向營運槓桿。</div>
+
+<h3>財報對 §3 假設的邊際貢獻</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>假設</th><th>邊際方向</th><th>關鍵佐證</th></tr></thead>
+<tbody>
+<tr><td>H1（AI BMC 用量升）</td><td class="pos">＋</td><td>5 月營收 +68.7% YoY、訂單能見度到 2027、供應鏈追不上出貨</td></tr>
+<tr><td>H2（AST2700 ramp）</td><td class="pos">＋</td><td>AST2700 進客戶驗證 + 初期量產，2026H2-2027H1 規模放量</td></tr>
+<tr><td>H3（定價權維持）</td><td class="neu">0</td><td>OM 擴至 ~50%（正向），但 Nuvoton/DC-SCM 的長期侵蝕尚未在單季顯現（觀察）</td></tr>
+</tbody>
+</table>
+</div>
+<h3>② Earnings Call 語氣（持有期 &gt;2 年，屬噪音層，2 行）</h3>
+<ul>
+<li><strong>Guidance vs 共識：</strong>管理層維持全年強勁指引，強調 AI 伺服器 BMC content 上升 + AST2700 放量；共識 FY26 EPS 30/60/90 天持續上修（197 vs 90 天前 170）。</li>
+<li><strong>被迴避的問題：</strong>對「Nuvoton 於 Microsoft 平台份額、DC-SCM 對長期定價的影響」多以「主力平台仍以信驊為主」帶過，未給量化——正是本份列為 H3/R2 的觀察缺口。</li>
+</ul>
+<h3>③ 產業 Imply（1 行）</h3>
+<p>本次揭露最關鍵 imply＝<strong>AI 機架 BMC 顆數結構性上升</strong>（餵 <a href="#s9">§9</a>：TAM 從量增 + ASP 升雙軌擴張，但同一擴張也吸引 Nuvoton 進場搶衛星/二供段）。</p>
+</section>
+
+<!-- ================= §5 ================= -->
+<section class="card" id="s5">
+<h2>§5｜核心門檻檢核（Munger）</h2>
+<p class="note"><strong>EPS 來源：</strong>Excel buy-side consensus snapshot 2026-06-23（步驟零'）：FY26E 197.04 / FY27E 298.90 / FY28E 473.34（TWD，FX 31.83 回算）。基期 FY25A EPS ~103.7。3Y GAAP EPS CAGR = (473.34/103.7)^(1/3)−1 = <strong>65.9%</strong>。台股法定口徑，不分 GAAP/Non-GAAP。<strong>archetype = 品質複利成長（IP 型）→ 用預設 Munger 尺。</strong></p>
+<p class="note"><strong>FY28E（473.34）業務邏輯 sanity check：</strong>consensus FY28 隱含 FY27→28 +58%。以 §6.I 拆解：AST2700 由 FY27 ~60% → FY28 過半交叉（量加速）+ 高值 ASP mix 續升（OI margin +50-100bp）+ Goldman 出貨 41.6M→52.8M（+27% 量）。量 +27% × ASP mix × 營運槓桿 ≈ EPS +58% 可閉合，不依賴 re-rate——與 §6.D 內生天花板（&gt;30%，極輕資產 ROIIC 極高）相容。分歧：consensus 與業務邏輯無明顯矛盾；唯一風險＝「量增 27% 是否過度樂觀」（週期敏感），若 2028 AI capex 消化則 FY28 EPS 有 −15~20% 空間（即 §11.5 Bear 基礎）。</p>
+<div class="scroll">
+<table>
+<thead><tr><th>項目</th><th>標準</th><th>符合？</th><th>關鍵數據與趨勢</th></tr></thead>
+<tbody>
+<tr><td>FCF Margin（當前）</td><td>&gt;15%</td><td class="pos">✓✓</td><td>FY25 45.7%（FCF 4.15B / Rev 9.09B）；近 3 年 ↑（11.7%→45.3%→45.7%）</td></tr>
+<tr><td>正規化 FCF Margin</td><td>5Y 均 &gt;15%；谷底 &gt;10%</td><td class="pos">✓</td><td>5Y：41.2/11.7/45.3/45.7%（22-25）+ ~40%（21）；均 ~36%，谷底 FY23 11.7%（&gt;10% 過關，屬需求週期低點）</td></tr>
+<tr><td>ROIC（當前）</td><td>&gt;15% 且 &gt;WACC</td><td class="pos">✓✓</td><td>含現金 ROIC ~130%（GuruFocus）；<strong>剔淨現金 ROIC ~237-296%</strong>；WACC ~10% → 超額 &gt;220pp</td></tr>
+<tr><td>ROIC 穩定性</td><td>10 年 ≥70% 年份 &gt;15%</td><td class="pos">✓✓</td><td>fabless 高效資本模型，近 10 年幾乎年年 ROIC &gt;50%（含 FY23 低點仍遠 &gt;15%）</td></tr>
+<tr><td>毛利率定價能力</td><td>10 年 ≥70% 年份改善</td><td class="pos">✓</td><td>GM 65.1→64.2→64.3→68.0%（22-25），FY25 明顯上台階（AST2700 mix + AI 高值）</td></tr>
+<tr><td>資本密集度</td><td>Capex/Rev &lt;5% 優</td><td class="pos">✓✓</td><td>FY25 Capex/Rev <strong>3.8%</strong>（fabless，設計 IP 型，極輕）</td></tr>
+<tr><td>EPS CAGR（3 年）</td><td>&gt;20% 高成長</td><td class="pos">✓✓</td><td>65.9%（103.7→473.34，25→28E）；資料來源 Excel 2026-06-23</td></tr>
+<tr><td>PEG</td><td>&lt;2</td><td class="pos">✓</td><td>FY1 基礎 1.33、FY2 基礎 0.88（見 <a href="#s11">§11.2</a>）</td></tr>
+<tr><td>負債安全性</td><td>D/E &lt;0.7；現金/Rev 10-50%</td><td class="pos">✓✓</td><td>D/E 0.04（淨現金）；現金/Rev ~69%（偏高，現金充沛）</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是/否</td><td class="pos">是</td><td>總現金 7.73B vs 總負債 0.31B（覆蓋 25x）</td></tr>
+<tr><td>護城河強度</td><td>&gt;8 分，趨勢擴大</td><td class="tag-amber">⚠</td><td>合併分 8.5（A）；但趨勢 → 持平（execution ↑ / pricing power ↓），非「擴大」（見 <a href="#s7">§7</a>）</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>最大財務弱點：</strong>現金/Rev 偏高（69%），fabless 帳上大量現金稀釋名目 ROIC——某些自動篩選以含現金投入資本計，會把 ROIC「看似只有 ~130%」甚至因分母/分子口徑誤判成 fail，這是<strong>假陽性</strong>；剔淨現金後 ROIC ~237% 才是真實資本效率，屬全市場頂尖。<strong>Munger 三維護城河快速評級：<span class="tag-green">🟢</span></strong>（ROIC 穩定性 + 定價能力 + 資本密集度三項全達標）→ 傳遞至 §7 作定量起點。</p>
+</section>
+
+<!-- ================= §6 ================= -->
+<section class="card" id="s6">
+<h2>§6｜長期成長性評估</h2>
+<h3>0｜成長品質 7 問儀表板</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>#</th><th>拷問</th><th>裁決</th><th>關鍵數字</th><th>詳見</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>結構性 vs 週期反彈？</td><td>結構為主（AI content 上升）+ 疊加需求週期性</td><td>訂單能見度到 2027；但單一產品 FY23 −53% 前例</td><td>§6.A'</td></tr>
+<tr><td>2</td><td>需多少資本投入？</td><td>極輕資產（fabless IP）</td><td>Capex/Rev 3.8%、再投資率低</td><td>§6.D</td></tr>
+<tr><td>3</td><td>增量 ROIC &gt; 資金成本？</td><td>是（遠超）</td><td>剔現金 ROIC ~237% vs WACC ~10%</td><td>§6.D</td></tr>
+<tr><td>4</td><td>成長變現金流還是被吃掉？</td><td>變股東現金（FCF/NI 106%、股息 payout 50%）</td><td>FCF margin 45.7%</td><td>§10.E</td></tr>
+<tr><td>5 <span class="tag-red">最弱</span></td><td>競爭者會否被高成長吸引進來？</td><td><strong>已進（Nuvoton/Axiado）+ DC-SCM 降門檻</strong></td><td>Nuvoton Microsoft BMC 2025 量產、OCP S.A.F.E. 認證</td><td>§7 / §7.F</td></tr>
+<tr><td>6</td><td>股價反映多少期待？</td><td>過熱（透支 2-3 年）</td><td>Fwd PE FY26 87.6x、5Y 分位 ~88-92%</td><td>§11.1 / 附錄 A</td></tr>
+<tr><td>7</td><td>成長率下修估值撐得住？</td><td>不撐（倍數壓縮劇烈）</td><td>降至 15% 成長情境 −55%~−65%</td><td>§6.E / §11.5</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note">最弱一題＝第 5（競爭者已進場 + DC-SCM 降低進入門檻），標紅。與 §1 trap（🟢 但估值 🟠）+ §14（觀望）一致。</p>
+
+<h3>A'｜結構性 vs 週期性拆解（第 1 問深掘）</h3>
+<p>信驊的成長由三股力量疊加，各自的 durability 不同，混在一起看會誤判：</p>
+<div class="scroll">
+<table>
+<thead><tr><th>驅動力</th><th>性質</th><th>durability</th><th>證據</th></tr></thead>
+<tbody>
+<tr><td>① 伺服器出貨量週期</td><td>週期性</td><td>低（隨 capex 波動）</td><td>FY23 伺服器庫存調整 → 信驊營收 −53%；這是永遠存在的週期底噪</td></tr>
+<tr><td>② AI 機架 BMC 顆數上升</td><td>結構性</td><td>中高（AI 架構決定）</td><td>每機架 BMC 從個位數 → ~120 顆（Digitimes 2026-05）；GPU 托盤、液冷、電源域各需管理節點</td></tr>
+<tr><td>③ AST2700 高值 mix（ASP 升）</td><td>結構性（代際）</td><td>高（製程領先 5-7 年）</td><td>12nm 8 代 SoC，ASP 是通用款 1.5-2x；GM 64→68% 印證</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note"><strong>裁決：結構為主（②③）+ 週期底噪（①）。</strong>關鍵風險不是「結構故事假」，而是「當 ① 的週期回檔與 §7 的二供分食同時發生時，市場會把整個成長重新定價為週期性」——這正是 §13b pre-mortem 的失敗路徑。所以本案的 bear 不是「thesis 錯」，而是「結構 content 是真的，但 87x 倍數把週期波動的容錯空間耗盡了」。</p>
+
+<h3>A｜成長跑道（Runway）</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>維度</th><th>數據</th><th>推論</th></tr></thead>
+<tbody>
+<tr><td>當前 BMC TAM</td><td>~$0.5B（2024）→ ~$1.5B（2028E）</td><td>來源：Goldman 出貨估 + 產業推估；量增（顆數）+ ASP 升雙軌</td></tr>
+<tr><td>可達 TAM</td><td>~$2B+（含 AI 衛星 BMC、邊緣、CAN/電源管理）</td><td>每機架 BMC 顆數升至 ~120（AI 機架）</td></tr>
+<tr><td>當前市佔</td><td>BMC ~70%+（主力/host BMC 壟斷）</td><td>ServeTheHome、產業共識</td></tr>
+<tr><td>幾年達 30% 滲透放緩</td><td>BMC 附著率已近普及（每台伺服器都要）；成長靠 ASP + AI mix，非滲透率</td><td>「滲透」框架不完全適用——這是 content/ASP 故事</td></tr>
+<tr><td><strong>成長可持續年數（Runway）</strong></td><td><strong>~8-10 年</strong></td><td>AI content 上升 + 代際 ASP 升，但受 R2/R3 侵蝕封頂</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note">Runway ~8-10 年 → 中高可見度，支撐一定溢價但非無限；R2/R3 使 runway 上緣有結構封頂。</p>
+
+<h3>A''｜Y5 後跑道 runway_post_y5（必填，餵 dd-meta）</h3>
+<div class="scroll">
+<table>
+<tbody>
+<tr><td style="width:26%">S 曲線位置</td><td>中期（BMC 附著已普及；成長轉為 AI content/ASP 升 + 高值 mix）</td></tr>
+<tr><td>Y5 末滲透率預估</td><td>「AI 伺服器高值 BMC」占總伺服器 BMC ~50-60%（當前 ~15-20% × 5 年成長軌跡）</td></tr>
+<tr><td>下一條 S 曲線</td><td>PCIe（AST2700 內建 3 個 PCIe RC）、CAN/電源管理（AI 高功率機架）、邊緣 Cupola360——<strong>早期、未 sourced 明確量產落點/時程</strong>，屬選擇權非已兌現曲線</td></tr>
+<tr><td><strong>runway_post_y5</strong></td><td><strong><span class="tag-amber">🟡 中</span></strong></td></tr>
+</tbody>
+</table>
+</div>
+<div class="reasoning">判定：Y5 末高值 BMC 滲透 ~50-60%（落 35-70% 區間）→ 非 🟢（&gt;35%、且第二曲線未達「具體名 + 時點 + 來源」門檻，PCIe/CAN 屬選擇權）；亦非 🔴（未 &gt;70% 飽和、content 仍在升）→ <strong>🟡 中</strong>。🟡 中不觸發 §14 Soft Veto（僅 🔴 觸發），亦未達 row 8a 爆發候選必要條件（需 🟢）→ 不觸發 10Y 二段延伸必填、不走爆發候選路徑。誠實反映 critic 對「過度樂觀」的提醒。</div>
+
+<h3>B｜成長品質判斷</h3>
+<p><strong>① 有機 vs 無機：</strong>~100% 有機（fabless、近年無重大 M&A），無需列併購清單。</p>
+<div class="scroll">
+<table>
+<thead><tr><th>類型</th><th>判斷（含具體%）</th><th>3 年趨勢</th></tr></thead>
+<tbody>
+<tr><td>定價驅動（Price/mix）</td><td>ASP 隨 AST2700（12nm、8 代）取代 AST2600 上升，AI 高值 BMC ASP 是通用款 1.5-2x；GM 由 64%→68% 反映 mix 升</td><td>擴大</td></tr>
+<tr><td>量驅動（Volume）</td><td>出貨量 YoY：Goldman 估 +56%（26）/+41%（27）/+27%（28）；每機架顆數升</td><td>擴大（26-27 高峰後遞減）</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note"><strong>③ 營業槓桿：</strong>增量 OI margin FY24→FY25＝ΔOI 1.74B / ΔRev 2.63B = <strong>66%</strong>，遠高於存量 OM 51%→結構性擴張（規模槓桿 + mix）。前瞻結論：在 Rev +50% base case 下，此增量結構隱含合併 OM 每年 +50~100bp（餵 §6.D ROIIC 對賬 + §6.E 壓測 margin 假設）。</p>
+
+<h3>C｜成長護城河連動</h3>
+<p><strong>強化型（execution 面）</strong>：AI content 上升帶來更深的韌體/驗證生態綁定（OpenBMC 上游、kernel 支援圍繞 AST 建立）→ 規模與生態壁壘加深。<strong>但 pricing power 面偏中性/消耗風險</strong>：DC-SCM 模組化 + 二供使「同樣的成長」開始吸引 Nuvoton/Axiado 分食，成長未必等比轉成定價權加深。綜合＝execution 強化、pricing power 中性偏承壓。</p>
+
+<h3>D｜ROIC / FCF 長期可維持性 + ROIIC 內生天花板</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>指標</th><th>當前(FY25)</th><th>3 年前(FY22)</th><th>趨勢</th><th>門檻</th><th>符合</th></tr></thead>
+<tbody>
+<tr><td>ROIC（剔現金）</td><td>~237-296%</td><td>~130%+</td><td>↑</td><td>頂尖 &gt; WACC</td><td class="pos">✓✓</td></tr>
+<tr><td>ROIC − WACC</td><td>&gt;220pp</td><td>&gt;120pp</td><td>↑</td><td>持續正、擴大</td><td class="pos">✓✓</td></tr>
+<tr><td>FCF Margin</td><td>45.7%</td><td>41.2%</td><td>↑</td><td>&gt;15%</td><td class="pos">✓✓</td></tr>
+<tr><td>FCF/NI 轉換</td><td>106%</td><td>~102%</td><td>→</td><td>&gt;85%</td><td class="pos">✓✓</td></tr>
+<tr><td>再投資率</td><td>低（Capex 輕 + 無 M&A）</td><td>低</td><td>→</td><td>合理偏低</td><td class="pos">✓</td></tr>
+</tbody>
+</table>
+</div>
+<div class="scroll">
+<table>
+<thead><tr><th>ROIIC 列</th><th>計算</th><th>結果</th></tr></thead>
+<tbody>
+<tr><td>ROIIC（3Y，剔現金）</td><td>ΔNOPAT / ΔIC（剔現金）；ΔIC 很小（極輕資產）</td><td>&gt;100%（極高，屬「幾乎無增資本即擴利」型，剔 M&A 後仍成立）</td></tr>
+<tr><td>再投資率（3Y 均）</td><td>(Capex−D&A+ΔWC+收購)÷NOPAT</td><td>低（~10-15%）</td></tr>
+<tr><td>內生成長天花板</td><td>ROIIC × 再投資率</td><td>因 ROIIC 極高，內生天花板不受限（&gt;30%）——極輕資產模型的特徵</td></tr>
+<tr><td>共識對賬</td><td>共識 3Y EPS CAGR 65.9% − 內生天花板</td><td>可閉合（成長主要來自量增 + ASP/mix，非 re-rate 或槓桿）→ 「共識不依賴 re-rate」</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note">內生天花板 endo_growth_ceiling &gt;30%，&gt; Base 情境 EPS CAGR 貢獻（§11.6）→ §11.5 內生天花板 sanity check 在天花板內 ✅（不觸發 Bear ≥30% 強制）。</p>
+
+<h3>E｜成長熄火情境壓力測試</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>情境</th><th>特徵</th><th>合理 Fwd PE 壓縮至</th><th>潛在估值跌幅</th></tr></thead>
+<tbody>
+<tr><td>3 年後成長降至 15%</td><td>放緩但仍高於市場</td><td>~30x</td><td>約 −55%~−65%（vs 現 88x）</td></tr>
+<tr><td>3 年後成長降至 10%</td><td>回歸市場平均</td><td>~22x</td><td>約 −70%</td></tr>
+<tr><td>3 年後成長降至 5%</td><td>成熟低成長</td><td>~16x</td><td>約 −78%</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note">在 §11.5 Bear 與 §1 下行風險引用「降至 15%」情境（PE~30x）。此表凸顯超高倍數的下行不對稱：成長只要放緩一檔，倍數壓縮的殺傷力遠大於 EPS 本身。</p>
+
+<h3>⚠️ 衰退信號偵測表</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈？</th></tr></thead>
+<tbody>
+<tr><td>護城河侵蝕</td><td>GM 連 2 季 YoY 下滑</td><td>GM 擴張中（64→68%）</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>核心市佔縮減（12M）</td><td>主力 BMC ~70%+ 維持；但衛星/二供段有分散跡象（Nuvoton）</td><td class="neu">⬜（觀察）</td></tr>
+<tr><td>護城河侵蝕</td><td>提價後銷量下滑</td><td>ASP 升 + 量升並存（見定價事件帳）</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR ≫ Revenue CAGR &gt;5pp</td><td>EPS 66% vs Rev ~55% CAGR（差 ~11pp）</td><td class="tag-amber">🟡（margin 擴張驅動，非回購；可解釋）</td></tr>
+<tr><td>盈餘品質</td><td>FCF/NI &lt;0.75 連 2 年</td><td>FCF/NI 106%</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>SBC/Rev &gt;5% 且升</td><td>SBC 低（台股結構）</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>TAM 萎縮/被替代</td><td>TAM 擴張中（AI content）</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>產業倍數系統下移</td><td>無（AI 半導體倍數高位）</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>Maint capex/FCF &gt;60%</td><td>Capex 極輕</td><td>⬜</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>價值陷阱風險評級：<span class="tag-amber">🟡 中度警戒（1 個實質觀察燈：EPS≫Rev 可解釋 + 市佔分散跡象觀察）</span></strong>→ §7 已正面回應。<strong>長期成長綜合評級：<span class="tag-green">🟢 高確信</span></strong>（Runway 8-10 年、有機 + 量價雙驅、ROIC 擴大、衰退信號 ~0-1）→ 傳遞至 §11.5 / 附錄 A 合理 PE 基準與 §1。</p>
+
+<h3>H｜客戶結構深度</h3>
+<p class="note">信驊透過伺服器 ODM/OEM（廣達、緯創、鴻海、Supermicro、Dell、HPE 等）與 hyperscaler 間接出貨；BMC 常由 hyperscaler 在開放硬體規格中指定。</p>
+<div class="scroll">
+<table>
+<thead><tr><th>指標</th><th>數值/趨勢</th></tr></thead>
+<tbody>
+<tr><td>客戶集中度</td><td>透過眾多 ODM 出貨，直接客戶相對分散；但終端由少數 hyperscaler 規格決定（間接集中）</td></tr>
+<tr><td>議價權結構</td><td>對 ODM：Sole-source（歷史）；對 hyperscaler：由 grow-with 轉向 <strong>second-source 風險上升</strong>（Nuvoton/Microsoft）</td></tr>
+<tr><td>客戶生命週期定位</td><td><strong>「客戶可能 second-source」</strong>——DC-SCM + Nuvoton 使 hyperscaler 主動扶植二供，是最典型風險路徑</td></tr>
+<tr><td>留存經濟（半導體：平台 design win + attach）</td><td>主力平台 design-win 留存仍高（韌體綁定）；但衛星/cost-sensitive 段留存承壓</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>客戶結構風險：<span class="tag-amber">🟡 集中但 grow-with 邏輯仍強</span></strong>（主力平台留存高，但 second-source 扶植動作已出現 → 逼近 🟡/🔴 邊界，列 R2）。</p>
+
+<h3>F｜AI 取代風險評級</h3>
+<p><strong><span class="tag-green">🟢 AI 受益</span></strong>（評分 9）：核心業務因 AI 資料中心規模擴張直接受益——AI 機架 BMC 顆數 + 高值 ASP 上升是主成長引擎。AI 不威脅其業務，反而放大之。過去 2 年 AI 相關營收占比顯著上升（AI 伺服器 BMC content）。</p>
+
+<h3>I｜分部前瞻建模（BMC 單一主業，按產品世代拆解）</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>產品世代</th><th>FY25 角色</th><th>驅動式（量×價）</th><th>FY26E</th><th>FY27E</th><th>FY28E</th><th>對合併 EPS 成長貢獻</th></tr></thead>
+<tbody>
+<tr><td>AST2600（28nm）</td><td>營收主力</td><td>出貨量 +40-50% × ASP 平穩</td><td>仍為主力</td><td>占比下降</td><td>2028 與 2700 交叉</td><td>FY26-27 EPS 成長主引擎（~55-60%）</td></tr>
+<tr><td>AST2700（12nm，8 代）</td><td>初期量產</td><td>出貨量爆發（低基期）× ASP 1.5-2x（高值）</td><td>占比 ~30%（H2 放量）</td><td>~60%</td><td>過半交叉</td><td>FY27-28 接棒主引擎（~40%+）+ ASP mix 升 margin</td></tr>
+<tr><td>新品選擇權（PCIe/CAN/Cupola360）</td><td>萌芽</td><td>—</td><td>微小</td><td>試量產</td><td>選擇權</td><td>Y5 後跑道候選（未計入 base）</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note">主引擎：FY26-27 由 AST2600 量增 + AST2700 ramp 疊加；FY28 由 AST2700 高值 mix 接棒。各段貢獻加總對得上 §5 EPS CAGR 66%（量 ~40pp + ASP/mix ~20pp + 營運槓桿）。若 AST2700 ramp miss（H2 延後）→ FY27-28 EPS CAGR 降至 ~40%。</p>
+</section>
+
+<!-- ================= §7 ================= -->
+<section class="card" id="s7">
+<h2>§7｜護城河分析（報告核心）</h2>
+<p class="note">二維拆解（execution + pricing power）。§6 衰退信號有觀察燈（市佔分散跡象），本節正面回應。</p>
+<div class="scroll">
+<table>
+<thead><tr><th>維度</th><th>評分</th><th>關鍵佐證</th></tr></thead>
+<tbody>
+<tr><td><strong>Execution Moat</strong>（製程/研發/生態）</td><td>9/10</td><td>世界首顆 12nm BMC SoC（AST2700，8 代）；韌體/驅動生態（OpenBMC 上游、Linux/QEMU/Trusted Firmware AST 支援）圍繞信驊建立；每 5-7 年代際節奏無人跟上</td></tr>
+<tr><td><strong>Pricing Power Moat</strong>（轉換成本/依賴度）</td><td>8/10（承壓）</td><td>歷史 12-18 個月 system-level 驗證＝高轉換成本；<strong>但 DC-SCM 模組化 + Nuvoton 二供正結構性侵蝕此壁壘（−1）</strong></td></tr>
+<tr><td><strong>合併分</strong>（execution 主導、pricing 承壓，加權）</td><td><strong>8.5/10</strong></td><td>壟斷經濟體質頂尖，但轉換成本這道最脆弱的牆有裂縫</td></tr>
+<tr><td><strong>等級</strong></td><td><strong>A</strong></td><td>（10=S, 9=A, 7-8=B）；因 pricing power 結構性承壓，未達 S</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>護城河數字驗收（Moat-to-Numbers）</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>指標</th><th>信驊</th><th>最強直接同業</th><th>Spread</th><th>方向</th></tr></thead>
+<tbody>
+<tr><td>ROIC（剔現金）</td><td>~237%+</td><td>Nuvoton ~10-15%（集團口徑）</td><td>&gt;220pp</td><td>擴大</td></tr>
+<tr><td>OI Margin</td><td>51%</td><td>Nuvoton ~5-8%</td><td>&gt;43pp</td><td>擴大</td></tr>
+<tr><td>Gross Margin</td><td>68%</td><td>Nuvoton ~35%</td><td>+33pp</td><td>擴大</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note">ROIC/margin spread 為正且擴大 → 護城河合併分 ≥8 的必要條件滿足（execution 面）。三道數字閘（Moat-to-Numbers 正 + QC-26 margin 擴張 + QC-28 絕對規模領先）：均綠——<strong>純財務上護城河仍極寬</strong>；扣分來自「前瞻份額軌跡」（見下 moat_trend），非後照鏡數字。</p>
+
+<h3>護城河來源（sourced evidence）</h3>
+<ul>
+<li><strong>無形資產/生態：</strong>OpenBMC、Linux kernel、QEMU、Trusted Firmware-A 皆有 AST2600/AST2700 原生支援——換供應商＝重建整套韌體/驗證/工具鏈。</li>
+<li><strong>轉換成本（承壓中）：</strong>歷史上換 BMC 需 12-18 個月 system-level 認證。<strong>DC-SCM 正是為降低此成本而設計</strong>——把 BMC 從主機板解耦成標準可插拔模組，讓 OEM 換 BMC 供應商的驗證/切換成本結構性下降。這直接打到轉換成本壁壘的核心假設。</li>
+<li><strong>規模/製程：</strong>12nm BMC SoC 需台積電先進製程 + 多代 IP 累積；資本充足對手仍需 3-5 年 + 韌體生態才追得上（時間壁壘 + 認證壁壘）。</li>
+</ul>
+
+<h3>市佔競爭表（含 QC-39 前瞻份額 + 賽局判定）</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>競爭對手</th><th>目前市佔</th><th>回看 3 年 + 前瞻 2-3 年</th><th>核心威脅</th><th>誰在吃誰（sourced）</th><th>OI margin</th><th>戰爭承受力</th></tr></thead>
+<tbody>
+<tr><td><strong>信驊 Aspeed</strong></td><td>BMC ~70%+</td><td>主力 host BMC 穩；衛星/cost-sensitive 段前瞻份額 <strong>可能被分食</strong></td><td>—</td><td>—</td><td>51%</td><td>極高（淨現金、頂尖 margin）</td></tr>
+<tr><td><strong>Nuvoton 新唐（4919.TW）</strong></td><td>次位（衛星/二供成長中）</td><td>回看：Microsoft 共同開發 BMC 2024 貢獻營收、2025 量產；前瞻：cost-sensitive 雲端 + 每機架多顆衛星 BMC 擴份額</td><td><strong>hyperscaler 主動扶植二供</strong>（比 ODM 設計勝利更具結構威脅）</td><td>吃「新增衛星 BMC + cost-sensitive」增量；NPCM8mnx SiP、OCP S.A.F.E. 認證</td><td>~5-8%（集團）</td><td>中（集團大但 BMC 為小段）</td></tr>
+<tr><td><strong>Axiado</strong>（未上市）</td><td>小（安全導向 DC-SCM 模組）</td><td>前瞻：以 AI 驅動 TCU + DC-SCM 2.0 模組切入安全敏感段，ODM design-win</td><td>DC-SCM 安全模組差異化</td><td>切安全/信任根利基，非主力 BMC 正面對決</td><td>負（VC 期）</td><td>低（燒錢期）</td></tr>
+<tr><td>Huawei iBMC</td><td>中國內部</td><td>中國市場自用，海外滲透受限</td><td>地緣隔離</td><td>吃中國國產化增量</td><td>n/a</td><td>中</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note"><strong>賽局結構判定：</strong>理性寡占（信驊主導）+ <strong>紀律鬆動跡象</strong>——hyperscaler（尤其 Microsoft）主動介入矽方案、扶植 Nuvoton 二供，是比「單純對手降價」更具結構威脅的訊號（客戶端主動多供應商化）。sourced：Digitimes 2025-02（Nuvoton/Microsoft 共同開發 BMC 2025 量產）、2026-05（Nuvoton BMC 需求隨每機架 ~120 顆上升）。</p>
+
+<h3>定價事件帳</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>日期</th><th>提價/mix 幅度</th><th>量與留存反應</th><th>其後 GM 反應</th></tr></thead>
+<tbody>
+<tr><td>2024-25</td><td>AST2700 高值 mix，ASP 較通用款 1.5-2x</td><td>量升 + 留存高（主力平台）</td><td>GM 64%→68%</td></tr>
+<tr><td>2025-26</td><td>AI 高值 BMC content 上升</td><td>訂單能見度到 2027、供不應求</td><td>OM 45%→51%</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>D｜護城河變遷時間軸</h3>
+<p class="note">2016 AST2500（server BMC 標準確立）→ 2020 AST2600（28nm，世界首顆先進製程 BMC + OpenBMC 生態綁定）→ 2024 Computex AST2700 發表（12nm）→ 2025-26 AST2700 客戶驗證 + 初期量產。護城河由「製程代次領先 + 韌體生態累積 + design-win 綁定」逐層堆疊——execution 面持續加深。</p>
+
+<h3>E｜對手 Capex/R&D 對照</h3>
+<p class="note">信驊 R&D/Rev ~15-18%（fabless 全投研發）；Nuvoton R&D 絕對額大但分散於龐大 MCU/類比產品線，BMC 專注度低於信驊；Axiado 靠 VC 資金燒研發但無規模。信驊在「BMC 專用研發強度」上仍領先。</p>
+
+<h3>護城河趨勢（權威 moat_trend，餵 dd-meta）</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>維度</th><th>趨勢</th><th>12 個月內 sourced 變化</th></tr></thead>
+<tbody>
+<tr><td>Execution Moat 趨勢</td><td class="pos">擴大 ↑</td><td>AST2700（12nm、8 代）進量產、韌體生態進一步鞏固；ROIC/margin spread 對 Nuvoton 擴大到 &gt;220pp / &gt;43pp</td></tr>
+<tr><td>Pricing Power / 轉換成本趨勢</td><td class="neg">縮減 ↓</td><td>OCP DC-SCM 2.0 標準化 + 廣泛採用（Dell/HPE/Supermicro/Meta/Microsoft/NVIDIA）結構性降低換供應商成本；Nuvoton 拿 Microsoft 共同開發 BMC 2025 量產、在 cost-sensitive/衛星段擴份額</td></tr>
+<tr><td><strong>權威 moat_trend</strong></td><td><strong><span class="tag-amber">→ holding</span></strong></td><td>execution ↑ 與 pricing power ↓ 相抵——一擴一縮，以對長期 thesis 更關鍵的「壟斷定價可持續性」為準，取 <strong>→ 持平</strong>（不標 ↑）</td></tr>
+</tbody>
+</table>
+</div>
+<div class="reasoning">🔴 QC-39 閘 A（防過度樂觀）：Nuvoton 以 Microsoft 共同開發 BMC 在一線 hyperscaler 的 cost-sensitive/衛星段擴份額＝#1 玩家在最大客戶群的份額出現分散（sourced：Digitimes）→ <strong>moat_trend 不得標 ↑</strong>。反證檢視：總 TAM 擴張使信驊絕對出貨仍增（Goldman 52.8M 顆 2028）——但這只支撐「絕對額增」，不足以推翻「份額分散 + 轉換成本結構性下降」對定價可持續性的侵蝕，故不啟用 ↑ 例外，權威趨勢定為 →。moat_trend = → 且 moat 等級 A（高於 B）→ §14 Hard Veto（row 3 需 ↓ 且 ≤B）不成立。</div>
+
+<h3>24 個月最可能瓦解護城河的變化（QC-23 三級）</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>等級</th><th>事件</th><th>機率</th><th>影響</th></tr></thead>
+<tbody>
+<tr><td><span class="tag-red">🔴 生態攻擊（逼近 ⛔）</span></td><td><strong>OCP DC-SCM 把 BMC 模組化、降低換供應商成本 + Nuvoton/Axiado 以標準模組多供應商化</strong></td><td>中（結構已在發生）</td><td><strong>pricing power −1（已反映在合併分 8.5）</strong>；若蔓延到主力平台則升級為 ⛔、moat_trend 轉 ↓、§1 陷阱重評</td></tr>
+<tr><td><span class="tag-red">🔴 生態攻擊</span></td><td>Nuvoton 在一線 hyperscaler 主力平台（非衛星）取得 design-in</td><td>中低（12-24M ~20-30%）</td><td>H3 反轉觸發（＝§3.F Single Thing）</td></tr>
+<tr><td><span class="tag-amber">🟡 點對點</span></td><td>個別 ODM 導入替代 BMC 於特定機種</td><td>中</td><td>護城河不扣分（衛星段預期內）</td></tr>
+<tr><td><span class="tag-red">🔴 生態攻擊（慢）</span></td><td>CPU 廠將管理功能 chiplet 化整進 SoC</td><td>低（5-8 年）</td><td>SAM 侵蝕（§3.C R3）</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>F｜對手財務深度對照</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>指標</th><th>信驊 Aspeed</th><th>Nuvoton 新唐（集團）</th><th>Axiado（未上市）</th></tr></thead>
+<tbody>
+<tr><td>營收成長 YoY</td><td>+70%+（FY26 上半）</td><td>個位數-低雙位（集團；BMC 段高成長但小基期）</td><td>n/a（早期）</td></tr>
+<tr><td>Gross Margin</td><td>68%</td><td>~35%</td><td>n/a</td></tr>
+<tr><td>Operating Margin</td><td>51%</td><td>~5-8%</td><td>負</td></tr>
+<tr><td>R&D 強度</td><td>~15-18%（BMC 專注）</td><td>高絕對額但分散</td><td>VC 燒錢</td></tr>
+<tr><td>FCF Margin</td><td>46%</td><td>低個位</td><td>負</td></tr>
+<tr><td>淨現金/淨債</td><td>淨現金 7.4B</td><td>集團有債（含 Panasonic 半導體整併）</td><td>VC 融資</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Nuvoton：</strong>集團龐大但 BMC 為小段；靠 <strong>Microsoft 共同開發</strong>取得結構性入場券（不是靠 margin 打價格戰，而是「客戶主動要二供」）——這是最危險的攻擊形態，因為它繞過了信驊的技術/成本優勢，直接由客戶端拉。集團 margin 低但 BMC 段可享用集團規模與客戶關係，戰爭承受力中等。<strong>Axiado：</strong>安全/信任根導向的 DC-SCM 2.0 模組，切利基而非正面對決；燒錢期、承受力低，但代表「DC-SCM 模組化生態」正在成形——這個生態本身（而非單一對手）才是對信驊轉換成本的真正威脅。<strong>新進入者評估：</strong>Nuvoton 的 hyperscaler design-win 比 Axiado 的 ODM design-win 更具結構威脅，因為 hyperscaler 主動介入矽方案 = 需求端拉動的多供應商化。</p>
+
+<h3>DC-SCM 結構性威脅深度剖析（本份最關鍵漏判補正）</h3>
+<p>信驊護城河的核心敘事是「<strong>轉換成本極高——換 BMC 需 12-18 個月 system-level 認證</strong>」。這道牆是 87x 倍數與「壟斷永續」假設的地基。OCP DC-SCM（Datacenter Secure Control Module）正是為了拆掉這道牆而設計的產業標準：</p>
+<ul>
+<li><strong>機制：</strong>DC-SCM 把 BMC（連同 rear I/O、韌體映像、安全信任根）從主機板「反向解耦」成一張標準化、可插拔的模組卡（類似 OCP NIC 3.0 form factor）。BMC 不再與整台主機板的驗證綁死，而是收斂在一張標準模組上——<strong>設計初衷白紙黑字就是「降低 OEM 換 BMC 供應商的驗證/切換成本、在維持標準相容下降低硬體成本」</strong>（OCP DC-SCM 2.0 spec）。</li>
+<li><strong>採用廣度：</strong>AMD、Dell、Google、HPE、Jabil、Meta、Microsoft、NVIDIA、Ampere 皆支持 OCP DC-MHS/DC-SCM 倡議；HPE 在 Discover 2025 展示完整 DC-SCM（含 rear video/USB、韌體映像、控制處理器）；Dell/Supermicro/技嘉/緯創皆有 DC-SCM HFF 產品——<strong>「DC-SCM HFF is taking over」</strong>（ServeTheHome）。這不是提案，是正在鋪開的主流形態。</li>
+<li><strong>對信驊的雙面性（誠實拆解）：</strong>DC-SCM 標準化的是<strong>模組的形狀與連接介面，不是 BMC 矽晶片本身</strong>——信驊的 AST BMC 一樣可以裝在 DC-SCM 模組上，所以 DC-SCM <strong>不會直接替換掉信驊的產品類別</strong>（這點很重要，它不是 ⛔ 純架構替代）。但它做的事更陰險：<strong>把「換 BMC 供應商」的門檻從「整機重驗 12-18 個月」降到「換一張標準模組、僅重驗模組級」</strong>。轉換成本從「system-level」降到「module-level」，這正是信驊 pricing power 的來源被結構性抽掉。</li>
+<li><strong>分級裁決（QC-23）：</strong>因此 DC-SCM 定為 <span class="tag-red">🔴 生態攻擊（逼近 ⛔）</span>——它不是點對點的產品競爭，而是改變整個產業的採購結構、讓客戶得以低成本多供應商化。它本身不賣 BMC，但它為 Nuvoton/Axiado 這類二供鋪好了「客戶敢換」的路。護城河 pricing power 維度 −1（已反映在合併分 8.5，未達 S）；若 DC-SCM 世界的多供應商化由現在的衛星/cost-sensitive 段蔓延到主力 host BMC，則升級為 ⛔、moat_trend 轉 ↓、§1 陷阱定性重評為 🟡/🔴。</li>
+</ul>
+<p class="note"><strong>為何前版低估：</strong>前份 DD 把 moat 雙線標「widening（↑）」，只看了 execution（12nm 領先）這一維，漏了「轉換成本這道牆正被產業標準主動拆除」。本份把它升為 H3 核心假設 + moat_trend 下修 →，是這份報告相對前版最大的實質校正（QC-41 冷讀 critic 第 ③ 軸抓到的全新形狀）。</p>
+
+<h3>競爭鴻溝（具體 mechanism）</h3>
+<p>為何資本充足對手仍難跨越？① <strong>時間壁壘：</strong>12nm BMC SoC + 每代韌體/驗證累積需 3-5 年；② <strong>認證壁壘：</strong>OpenBMC 上游、Linux kernel、QEMU、Trusted Firmware-A 的 AST 支援是多年社群累積，對手矽晶片就算做出來，生態相容仍需長期打磨；③ <strong>但這兩道壁壘防的是「技術追趕」，防不了「客戶主動要二供 + DC-SCM 降低切換成本」</strong>——Nuvoton 靠 Microsoft 共同開發直接繞過技術追趕（客戶把 know-how 給你），這才是威脅的本質。三維中信驊仍守住兩維（時間 + 認證），但第三維（客戶依賴的不可替代性）正被 DC-SCM + hyperscaler 二供意願侵蝕。</p>
+</section>
+
+<!-- ================= §8 ================= -->
+<section class="card" id="s8">
+<h2>§8｜財務品質監測</h2>
+<h3>三年趨勢表（含同業對比）</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>指標</th><th>FY23</th><th>FY24</th><th>FY25</th><th>同業中位（Nuvoton）</th><th>相對</th></tr></thead>
+<tbody>
+<tr><td>FCF Margin</td><td>11.7%</td><td>45.3%</td><td>45.7%</td><td>低個位</td><td class="pos">優</td></tr>
+<tr><td>Operating Margin</td><td>34.5%</td><td>45.2%</td><td>51.3%</td><td>~5-8%</td><td class="pos">優</td></tr>
+<tr><td>Gross Margin</td><td>64.2%</td><td>64.3%</td><td>68.0%</td><td>~35%</td><td class="pos">優</td></tr>
+<tr><td>ROE</td><td>~26%</td><td>~46%</td><td>~52%（NI 3.93B / 均權益）</td><td>低雙位</td><td class="pos">優</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note">FY23 為需求週期低點（營收 3.13B、−53% vs FY22）——此表本身即證明「單一產品週期性」（R1）：FCF margin 一年內從 41%→12%→45%。</p>
+
+<h3>獲利品質警訊（四檢）</h3>
+<ul>
+<li><strong>NI vs OCF：</strong>OCF 4.50B vs NI 3.93B（FY25），OCF &gt; NI，無盈餘操縱疑慮。</li>
+<li><strong>AR vs 營收：</strong>AR 1.61B（+12% YoY）vs 營收 +41% → AR 成長 &lt; 營收，收現健康。</li>
+<li><strong>存貨 vs 營收：</strong>存貨 0.28B（−22% YoY）vs 營收升 → 去化乾淨、無積壓。</li>
+<li><strong>FCF 轉換：</strong>FCF/NI 106%，頂尖。</li>
+</ul>
+
+<h3>回購品質</h3>
+<p class="note">信驊以股息（payout ~50%、股利 80/股）而非回購為主；近年幾無回購，EPS 成長 100% 來自營運（非減股本撐 EPS）——盈餘品質乾淨。剔回購後 EPS CAGR = 原 CAGR（無回購貢獻）。</p>
+
+<h3>FCF lumpiness</h3>
+<div class="scroll">
+<table>
+<tbody>
+<tr><td>過去 5 年 FCF</td><td>~2.15/0.37/2.92/4.15B（FY22-25）+ ~1.8（21）</td></tr>
+<tr><td>最低谷</td><td>FY23 0.37B（占 5Y 均 ~15%）＝需求週期低點</td></tr>
+<tr><td>Maint capex（D&A 錨定）</td><td>~0.3B → Owner earnings ≈ OCF 4.50 − 0.3 ≈ 4.2B</td></tr>
+<tr><td>性質</td><td>業務隨伺服器/AI 週期天然 lumpy，非結構性惡化</td></tr>
+<tr><td>結論</td><td><span class="tag-green">🟢 屬正常週期</span>（但週期振幅大，見 §13c Max DD）</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>E｜長期趨勢 + DuPont + 營運資金</h3>
+<h4>① 關鍵指標 4 年趨勢（bn TWD 口徑）</h4>
+<div class="scroll">
+<table>
+<thead><tr><th>指標</th><th>FY22</th><th>FY23</th><th>FY24</th><th>FY25</th><th>結構判讀</th></tr></thead>
+<tbody>
+<tr><td>Revenue</td><td>5.21</td><td>3.13</td><td>6.46</td><td>9.09</td><td>V 型復甦後創高</td></tr>
+<tr><td>Gross Margin</td><td>65.1%</td><td>64.2%</td><td>64.3%</td><td>68.0%</td><td>升（AI mix）</td></tr>
+<tr><td>Operating Margin</td><td>47.0%</td><td>34.5%</td><td>45.2%</td><td>51.3%</td><td>營運槓桿明確</td></tr>
+<tr><td>Net Income</td><td>2.11</td><td>1.01</td><td>2.57</td><td>3.93</td><td>創高</td></tr>
+<tr><td>FCF</td><td>2.15</td><td>0.37</td><td>2.92</td><td>4.15</td><td>週期性 + 升</td></tr>
+</tbody>
+</table>
+</div>
+<h4>② ROIC DuPont 拆解（剔現金）</h4>
+<div class="scroll">
+<table>
+<thead><tr><th>年度</th><th>NOPAT margin</th><th>投入資本周轉（剔現金）</th><th>ROIC（剔現金）</th></tr></thead>
+<tbody>
+<tr><td>FY24</td><td>36.7%</td><td>~3.97x</td><td>~145%</td></tr>
+<tr><td>FY25</td><td>41.5%</td><td>~7.14x</td><td>~296%</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note">ROIC 由「獲利力（NOPAT margin 37→42%）」與「資本效率（周轉 4.0→7.1x）」雙升驅動——極輕資產 + 營運槓桿的乘積。保守以平均投入資本口徑計約 ~237%（task 引用值），期末口徑 ~296%；兩者皆遠超 WACC ~10%。</p>
+<h4>③ 營運資金（CCC 逐年實算）</h4>
+<div class="scroll">
+<table>
+<thead><tr><th>年度</th><th>DSO</th><th>DIO</th><th>DPO</th><th>CCC</th></tr></thead>
+<tbody>
+<tr><td>FY23</td><td>83.5</td><td>99.5</td><td>78.7</td><td>104.3</td></tr>
+<tr><td>FY24</td><td>81.2</td><td>56.5</td><td>67.4</td><td>70.3</td></tr>
+<tr><td>FY25</td><td>64.5</td><td>35.2</td><td>77.4</td><td><strong>22.3</strong></td></tr>
+</tbody>
+</table>
+</div>
+<p class="note">CCC 由 104 天→22 天大幅改善（存貨去化 + 收現加速 + 付款展延）→ 現金品質向好，非被營運資金佔用。</p>
+<h4>④ 債務到期</h4>
+<p class="note">總負債 0.31B、淨現金 7.4B → 無到期牆、無再融資風險（利率敏感度極低）。</p>
+</section>
+
+<!-- ================= §9 ================= -->
+<section class="card" id="s9">
+<h2>§9｜產業格局</h2>
+<p><strong>市場量化：</strong>BMC TAM ~$0.5B（2024）→ ~$1.5B（2028E），5Y CAGR ~25-30%；當前供需＝<strong>緊缺</strong>（信驊訂單到 2027、供應鏈追不上）。滲透（BMC 附著率）已近普及，成長來自 <strong>量（每機架顆數 + 伺服器出貨）× 價（AI 高值 mix）</strong>。</p>
+
+<h3>TAM 三角驗證（量 × 價 bottom-up）</h3>
+<p>把 BMC TAM 拆成「顆數 × 單價」交叉驗證 Goldman 的自上而下數字：</p>
+<div class="scroll">
+<table>
+<thead><tr><th>年度</th><th>BMC 出貨顆數（Goldman）</th><th>YoY</th><th>隱含 blended ASP（$）</th><th>推得 TAM</th></tr></thead>
+<tbody>
+<tr><td>2026E</td><td>29.5M</td><td>+56%</td><td>~$20-25（AST2600 為主 + 2700 起量）</td><td>~$0.7B</td></tr>
+<tr><td>2027E</td><td>41.6M</td><td>+41%</td><td>~$25-30（2700 mix 升）</td><td>~$1.1B</td></tr>
+<tr><td>2028E</td><td>52.8M</td><td>+27%</td><td>~$28-32（2700 過半）</td><td>~$1.5B</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note"><strong>三角驗證：</strong>量的成長由 56%→41%→27% 遞減（週期高峰後回落），ASP 由 mix 升撐——兩者相乘得 TAM ~$0.7→1.5B，與自上而下 ~$1.5B（2028）一致。信驊 ~70% 份額 × TAM ~$1.5B ≈ 營收 ~$1.05B（~NT$33B）——對應 FY28 EPS 473（× 37.8M 股 ≈ NT$17.9B 淨利、NM ~54%）。<strong>驗證重點：EPS 66% CAGR 依賴「量增 56% + ASP mix 升 + 營運槓桿」三者同時兌現；其中量增（①）是最會 miss 的一環（週期敏感），若 2026 量增由 56% 掉到 30%，FY26 EPS 197 會下修 ~15-20%。</strong></p>
+
+<h3>供需 durability 裁決（QC-39 閘 B）</h3>
+<p>當前緊缺＝<strong>結構性為主（AI content 上升）+ 週期性疊加</strong>。durability 依據（sourced）：AI 機架 BMC 顆數升至 ~120（Digitimes 2026-05）＝結構需求；但單一產品需求對伺服器/AI capex 週期高度敏感（FY23 −53% 前例），故 durability <strong>中等</strong>——不是純結構永續。<strong>裁決：結構性 content 升是真的（normalized 中樞可高於 FY23 谷底），但需求量的週期振幅不可忽略（§11.5 bear 機率須反映週期回檔可能，不因「現在在缺」壓低 bear）。</strong>此裁決直接餵 §6.E normalized 與 §11.5 bear。</p>
+
+<h3>利潤池地圖 + 位置/流向</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>價值鏈環節</th><th>代表公司</th><th>OI margin 代理</th><th>5 年占比遷移</th><th>方向</th></tr></thead>
+<tbody>
+<tr><td>晶圓代工（上游）</td><td>台積電</td><td>~45%</td><td>穩定高</td><td>→</td></tr>
+<tr><td><strong>BMC 晶片（本標的）</strong></td><td><strong>信驊</strong></td><td>51%</td><td>利潤池占比 ↑（AI content + ASP 升）</td><td class="pos">↑ 流入</td></tr>
+<tr><td>伺服器 ODM（下游）</td><td>廣達/緯創/鴻海</td><td>~4-6%</td><td>薄利、量大</td><td>→</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note"><strong>利潤池位置/流向結論：</strong>信驊環節 OI 池占比 <span class="pos">↑ 流入</span>（AI 高值 BMC 拉高單顆利潤）+ 1 sourced 證據（OM 45→51%）。對 §6.A Runway 含義：利潤池方向正向 → 不觸發 Runway 降檔。但需注意：DC-SCM 若使 BMC 商品化，長期利潤池可能由「壟斷租」向「模組化競爭」流出——這是 R2/R3 的利潤池版本。淨判斷：現流入，中長期流向取決於 moat_trend（→）。</p>
+
+<p class="note"><strong>利潤池可逆性（長抱者最關鍵）：</strong>信驊現在站在價值鏈利潤最肥的環節（BMC OI margin 51% vs ODM 4-6% vs 台積電代工 ~45%）。問題是這塊「壟斷租」是否可逆。上游（台積電）議價穩定；下游 ODM 薄利無力反噬；真正的可逆源在「客戶端（hyperscaler）＋ 產業標準（DC-SCM）」——當客戶得以低成本多供應商化，BMC 的定價會從「壟斷租」向「模組化競爭租」滑動。這不是明天會發生，但它是 87x 倍數 5-10 年最大的下行來源，也是 moat_trend 標 → 而非 ↑ 的產業層根據。</p>
+
+<h3>議價權（三段）</h3>
+<p><strong>① 對上游（台積電）：</strong>集中度高（先進製程仰賴台積電 12nm/28nm），替代難度 High；但信驊量小、非台積電產能爭奪主戰場，成本轉嫁能力尚可（GM 升即證）。</p>
+<p><strong>② 對下游（ODM/hyperscaler）：</strong>對 ODM 議價權強（sole-source 歷史 + 高留存）；<strong>對 hyperscaler 議價權正被 second-source 稀釋</strong>——DC-SCM + Nuvoton 使大客戶得以多供應商化，這是定價權最脆弱環節（H3/R2）。</p>
+<p><strong>③ 地緣曝險：</strong>fabless，晶圓/封測集中台灣；客戶全球分散；產品非受出口管制核心，地緣屬系統性尾部。</p>
+
+<h3>營收組成</h3>
+<p class="note"><strong>① 按業務段：</strong>BMC ~主力（server management SoC），其餘（Cupola360 智慧影像、PCIe/邊緣）小。<strong>② 按地區：</strong>透過台系 ODM 出貨全球雲端；終端美系 hyperscaler 為大宗。<strong>③ 按客戶集中：</strong>直接客戶（ODM）分散，終端 hyperscaler 間接集中——失去單一 hyperscaler 主力平台估影響營收 ~10-20%。</p>
+
+<h3>單位經濟（逐產品世代）</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>產品段</th><th>核心 unit 指標</th><th>數值</th><th>趨勢</th><th>段 OI margin</th><th>資本密集 proxy</th><th>結構洞察</th></tr></thead>
+<tbody>
+<tr><td>AST2600（28nm）</td><td>ASP/顆</td><td>~$15-20</td><td>→</td><td>~50%</td><td>極低（fabless，光罩已攤提）</td><td>成熟金牛，量大穩定貢獻</td></tr>
+<tr><td>AST2700（12nm）</td><td>ASP/顆</td><td>~$30-40（1.5-2x）</td><td>↑</td><td>~52%+（高值）</td><td>低（12nm 光罩前置，隨量攤薄）</td><td>ASP 升 = mix 拉高整體 GM/OM 的主引擎</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note"><strong>mix-shift 算術：</strong>以 AST2700 占比由 FY26 ~30% → FY28 ~60% 外推，高值 mix 使合併 OI margin 結構性 <strong>+50~100bp/yr</strong>。此與 §6.B③ 增量 OI margin 66% 互為驗證（增量遠高於存量 51% → mix 上移方向一致，差距在合理範圍內、無需重算）。這是「量價齊揚」壟斷者的教科書單位經濟：光罩/研發前置一次投入，隨出貨量攤薄 + ASP 隨代際升，OI margin 沿量能爬坡。</p>
+
+<h3>F｜逐段 TAM/SAM</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>業務段</th><th>段 TAM（現/28E）</th><th>當前滲透</th><th>段 CAGR</th><th>value chain 位置 + 風險</th></tr></thead>
+<tbody>
+<tr><td>Server BMC（主力）</td><td>$0.5B / ~$1.5B</td><td>附著近普及；AI 高值 mix ~15-20%</td><td>~25-30%</td><td>上游壟斷節點；被 DC-SCM 模組化 + 二供侵蝕轉換成本（中風險）</td></tr>
+<tr><td>衛星/cost-sensitive BMC</td><td>隨每機架 ~120 顆擴張</td><td>低</td><td>高</td><td>Nuvoton 主要切入點（份額分散）</td></tr>
+<tr><td>新品（PCIe/CAN/Cupola360）</td><td>小/選擇權</td><td>萌芽</td><td>—</td><td>第二曲線候選，未 sourced 落點</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note">主力段 TAM 大但利潤池的「壟斷租」部分正被 DC-SCM 世界的模組化威脅——TAM 增長真實，利潤率可持續性是問號。</p>
+</section>
+
+<!-- ================= §10 ================= -->
+<section class="card" id="s10">
+<h2>§10｜公司治理與資本配置</h2>
+<p><strong>股東結構：</strong>內部人持股 ~19%、機構 ~54%；股權相對集中於經營團隊 + 機構，無 dual-class。創辦人/經營團隊技術背景深厚。</p>
+<p><strong>資本配置軌跡：</strong>典型 fabless 高效模型——營收 100% 有機、Capex 極輕（3.8%）、<strong>過去 5 年無重大 M&A</strong>（金額 &gt; 市值 5%）、以現金股息回饋股東（payout ~50%、FY25 股利 80/股）。說法與行動一致：不亂併購、不亂擴張、把賺到的錢還股東。</p>
+<p><strong>管理層薪酬：</strong>台股結構，固定薪 + 績效獎金 + 員工酬勞（分紅），SBC 稀釋低。</p>
+
+<h3>SBC 真實稀釋</h3>
+<p class="note">台股員工酬勞費用化，SBC/Rev 低（個位數低段），GAAP 與實質 EPS 差距小；EPS 成長幾乎全來自營運。<strong>剔除稀釋後 EPS CAGR ≈ 名目 CAGR</strong>（無顯著稀釋）。</p>
+
+<h3>資本配置計分卡</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>項目</th><th>計算</th><th>過/不過</th></tr></thead>
+<tbody>
+<tr><td>M&A 已實現 ROIIC</td><td>5 年無重大 M&A</td><td>N/A 不計</td></tr>
+<tr><td>回購買入收益率</td><td>近年幾無回購（以股息為主）</td><td>N/A</td></tr>
+<tr><td>SBC 淨稀釋率</td><td>低（&lt;1.5%/yr）</td><td class="pos">過</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note"><strong>資本配置等級：A</strong>（適用項全過/中性）→ 不觸發 §14 Soft Veto（capalloc_grade ≠ C）、不打折內生天花板。<strong>QC-19 正面確認：<span class="tag-green">🟢 過去 12 個月無重大 M&A、無集體訴訟、無 SEC 調查、無財報重編、無 CEO/CFO 離職</span></strong>；主要事件＝AST2700 量產（正向）+ 競爭面 Nuvoton/DC-SCM（已納 §7/§9）。</p>
+
+<h3>D｜10 年資本配置 track record</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>面向</th><th>10 年軌跡</th><th>評價</th></tr></thead>
+<tbody>
+<tr><td>① M&A 全史</td><td>幾無重大併購（&gt;市值 5%）；成長 100% 有機、靠自研代際升級（AST2500→2600→2700）</td><td class="pos">A（不靠買成長，無減損/整合風險）</td></tr>
+<tr><td>② 股息軌跡</td><td>穩定現金股息、payout ~50%（FY25 股利 80/股，Cash Dividends Paid FY25 −1.97B / FY24 −0.76B / FY23 −1.70B）；隨獲利成長股息成長</td><td class="pos">A（紀律穩定，週期低點仍配息）</td></tr>
+<tr><td>③ 回購</td><td>近年幾無回購（FY22 少量 −0.13B），不以減股本美化 EPS</td><td class="pos">A（EPS 成長乾淨）</td></tr>
+<tr><td>④ 留存現金</td><td>FCF 扣股息後留存為淨現金（7.4B），無去債需求、無亂投資</td><td class="tag-amber">B（現金堆積，資本效率名目被稀釋，但保守無風險）</td></tr>
+<tr><td>⑤ 內部人/薪酬</td><td>無異常大額內部人賣壓；台股員工分紅制，薪酬與獲利掛鉤</td><td class="pos">A</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note">10 年敘事全面支撐計分卡 A 級——這是一支「管理層不會亂花錢」的公司。唯一可挑剔＝現金堆積（現金/Rev 69%）稀釋名目 ROIC，但這是「保守」不是「錯配」，且正是 §5 剔現金 ROIC 假陽性的來源。對長抱者，資本配置紀律是加分項：不亂併購、不高位回購、週期低點仍配息——與 §7 護城河「execution ↑」的自研文化一致。</p>
+
+<h3>E｜FCF 去向 + M&A 飛輪</h3>
+<p class="note">① FCF 去向（近 3-5 年）：股息 ~50%、其餘留存為淨現金（無去債需求、無 M&A 消耗、Capex 極輕）。② 無 M&A 飛輪（非連續併購型）。③ 一句結論：「這檔的成長最終<strong>變股東現金</strong>（FCF/NI 106% + 股息 50% payout），增量 ROIC ≫ WACC，無飛輪出價紀律風險——健康複利，唯一問題是市場給的入場價太高。」接 §6.0 第 4 問。</p>
+</section>
+
+<!-- ================= §11 ================= -->
+<section class="card" id="s11">
+<h2>§11｜估值與報酬</h2>
+<p class="note">EPS 用 Excel snapshot 2026-06-23（FY26 197.04 / FY27 298.90 / FY28 473.34）+ yfinance 倍數；5Y multiple band 與 consensus 同輪取得，Part II 不重搜。</p>
+
+<h3>11.1｜歷史估值分位（5 年框架）</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>指標</th><th>當前</th><th>5Y 低</th><th>5Y 中位</th><th>5Y 高</th><th>當前分位</th></tr></thead>
+<tbody>
+<tr><td>Trailing P/E</td><td>~167x</td><td>~20x</td><td>~55x</td><td>~180x</td><td>~92%</td></tr>
+<tr><td>Fwd P/E（FY26E 197）</td><td><strong>87.6x</strong></td><td>~25x</td><td>~50x</td><td>~93x</td><td><strong>~92%</strong></td></tr>
+<tr><td>Fwd P/E（FY27E 299）</td><td>57.8x</td><td>~18x</td><td>~38x</td><td>~62x</td><td>~88%</td></tr>
+<tr><td>EV/EBITDA</td><td>118x</td><td>~15x</td><td>~45x</td><td>~120x</td><td>~90%</td></tr>
+<tr><td>P/S</td><td>~50x</td><td>~10x</td><td>~28x</td><td>~52x</td><td>~90%</td></tr>
+</tbody>
+</table>
+</div>
+<div class="reasoning">Fwd PE（FY26）87.6x = (87.6−25)/(93−25) = 92% 分位；FY27 基礎 57.8x ≈ 88% 分位。無論用當年或次年口徑，估值皆在 5Y 極高端 → 情緒＝過熱／充分定價。與 GuruFocus/Simply Wall St（trailing PE 147-184x、fair PE ~58.5x）交叉一致。implication：附錄 A 估值燈 🟠/🔴。值得注意：5Y 高點（~93x FY1）本身出現在 2026 這波 AI 行情，意即「分位 92%」的參照上緣是被 AI 熱潮墊高的——若以更長期（pre-AI）伺服器週期股的 25-50x 常態帶為錨，現價的相對估值更極端。P/B 109x、EV/EBITDA 118x 均反映同一件事：市場給的是「壟斷 × AI × 永續高成長」三合一溢價，任一項打折都有大幅 mean-reversion 空間。</div>
+
+<h3>11.2｜PEG 診斷</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>指標</th><th>數值</th><th>判斷</th></tr></thead>
+<tbody>
+<tr><td>Fwd P/E（FY26E）</td><td>87.6x</td><td></td></tr>
+<tr><td>3 年 EPS CAGR（§5）</td><td>65.9%</td><td></td></tr>
+<tr><td>PEG（FY1 基礎，3 年）</td><td><strong>1.33</strong></td><td>1-2 合理（成長支撐）</td></tr>
+<tr><td>PEG（FY2 基礎 57.8/65.9）</td><td><strong>0.88</strong></td><td>&lt;1 便宜（次年口徑）</td></tr>
+<tr><td>3Y vs 5Y PEG 差異</td><td>5Y 成長遞減（Runway 後 ~20-30%）→ 5Y PEG 上升</td><td>近期成長不可線性外推</td></tr>
+</tbody>
+</table>
+</div>
+<div class="reasoning">PEG 是本案的關鍵張力：以「當年 Fwd PE / 3Y CAGR」PEG 1.33（合理），以「次年 Fwd PE」PEG 0.88（便宜）——成長之高使 PEG 看似不貴。但 PEG 便宜 ≠ 5Y IRR 高：因入場絕對倍數太高，未來倍數必然壓縮（見 §11.6 re-rate −19%/yr），PEG 的「便宜」會被 re-rate 吃掉。這是「PEG 陷阱」——高成長把超高倍數合理化，但持有人賺的是「EPS 成長 − 倍數壓縮」的差。</div>
+
+<h3>11.4｜同業估值比較</h3>
+<p class="note"><strong>業務模式 tier：</strong>IP/純設計壟斷（fabless BMC）。<strong>⚠️ 無 ideal peer group</strong>——信驊是單一產品全球壟斷，Nuvoton 是龐大分散的 MCU 集團（BMC 僅小段）、Axiado 未上市。全球可類比的「單一產品 IP 壟斷 + 高 margin」名字（ARM 40-70x、Cadence/Synopsys 40-60x fwd）也罕有此估值高度。本表僅供參考，溢折價需獨立推導。</p>
+<div class="scroll">
+<table>
+<thead><tr><th>公司</th><th>市值</th><th>Fwd P/E</th><th>OI Margin</th><th>EPS CAGR(3Y)</th><th>ROIC</th></tr></thead>
+<tbody>
+<tr><td><strong>信驊 5274</strong></td><td>~NT$653B（~$20.5B）</td><td>57.8x(FY2)/87.6x(FY1)</td><td>51%</td><td>66%</td><td>~237%（剔現金）</td></tr>
+<tr><td>Nuvoton 4919（BMC 競爭者/集團）</td><td>~NT$100B+</td><td>~15-25x</td><td>~5-8%</td><td>低雙位</td><td>~10-15%</td></tr>
+<tr><td>ARM（IP 壟斷參照）</td><td>~$150B+</td><td>~55-70x</td><td>~25%</td><td>~25%</td><td>高</td></tr>
+<tr><td>Cadence/Synopsys（EDA 壟斷參照）</td><td>大</td><td>~40-60x</td><td>~30-40%</td><td>~15-20%</td><td>高</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note"><strong>解讀：</strong>信驊 margin/ROIC/成長遠優於任何參照，壟斷溢價有基本面支撐；但 Fwd PE（FY1 87.6x）已高於最貴的 IP 壟斷名字（ARM ~70x），且信驊是<strong>單一產品 + 需求週期性 + 轉換成本承壓</strong>——溢價已 price 到「無瑕壟斷 + 永續高成長」，安全邊際薄。<strong>分析師目標價：</strong>HSBC NT$24,000 / Citi NT$22,500 / Goldman NT$22,000（12M；Goldman 今年第 4 度上修、Buy）；隱含上行 <strong>+27%~+39%</strong>。本報告不否認 12M 動能（外資 BMC 出貨估連調升），但這些是 12 個月目標；把時間拉到 5 年 + 納入倍數壓縮後 IRR 僅 ~8.6%（見下）——12M 動能與 5Y 報酬品質是兩件事。</p>
+
+<h3>11.5｜不對稱報酬 Bull/Base/Bear 5Y + 機率 + IRR</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據（EPS × 終端 PE）</th><th>機率</th></tr></thead>
+<tbody>
+<tr><td>Bull（thesis 對）</td><td>+150%（→ ~NT$43,000）</td><td class="pos">+20.1%/yr</td><td>2031 EPS ~1,100 × 40x；AI content 續升 + AST2700/2800 mix + 主力份額守住</td><td>25%</td></tr>
+<tr><td>Base</td><td>+55%（→ ~NT$26,800）</td><td>+9.2%/yr</td><td>2031 EPS ~885 × 30x；成長遞減至 ~20%、倍數正常化</td><td>45%</td></tr>
+<tr><td>Bear（thesis 錯）</td><td>−38%（→ ~NT$10,700）</td><td class="neg">−9.1%/yr</td><td>2031 EPS ~550（AI 消化 + 二供分食）× 22x（de-rate）</td><td>30%</td></tr>
+<tr><td><strong>機率加權期望值</strong></td><td><strong>+51% 5Y（= ev5y_pct）</strong></td><td><strong>IRR ≈ 8.6%/yr</strong></td><td></td><td>100%</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note"><strong>IRR 落點解讀：</strong>加權 IRR ~8.6%/yr 屬「弱-中」（約等於或略低於大盤長期平均）——一台 66% 成長的壟斷機器，因入場倍數太高，5 年只換來個位數 IRR。這正是觀望的量化核心。<strong>10Y 壓力測試：</strong>thesis 對但拉長到 10 年，若 EPS 續複利 + 倍數不再壓縮，10Y IRR 可回到 ~12-14%（機會成本：同期 TSM/AI 核心 IRR ~13-16%，5274 現價未明顯勝出）。</p>
+<p><strong>不對稱比 AR：</strong>AR = (P_bull × |Bull%|)/(P_bear × |Bear%|) = (0.25 × 150)/(0.30 × 38) = <strong>3.3</strong>（偏正但 &lt;4）→ <strong>未達爆發候選門檻（§14 row 8a 需 AR ≥ 4 + runway 🟢）</strong>；且 runway 為 🟡、估值 🟠——三重不滿足，非爆發候選，不觸發 QC-48。</p>
+<div class="reasoning">QC-39 閘 B durability 判讀：本案 Bear 機率 30% 主要依據＝<strong>searched durability（結構 content 升是真，但需求量週期振幅大 + 二供結構性侵蝕）與歷史 pattern（FY23 −53%）並重</strong>。產業有結構順風（AI content）→ 不把 bear 壓到 base 之上機械外推谷底；但 durability 中等（週期敏感 + 轉換成本承壓）→ 亦不因「現在在缺」壓低 bear。30% bear 反映「週期回檔 + 份額分散」雙尾。內生天花板 sanity：Base EPS CAGR 貢獻在 §6.D 內生天花板（&gt;30%）內 ✅，不強制 bear ≥30%（此處 30% 是獨立判斷）。反偏差防線：Bear 30%（≥20-30 帶）、Base 45%（≤50）、Bull/Bear 散布寬——皆過。</div>
+
+<h3>11.6｜IRR 三分量拆解</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息+淨回購</th><th>合計年化（複利）</th></tr></thead>
+<tbody>
+<tr><td>Bull</td><td>+38%/yr</td><td>−17%/yr</td><td>+0.5%/yr</td><td>+20.1%/yr</td></tr>
+<tr><td>Base</td><td>+35%/yr</td><td>−19%/yr</td><td>+0.5%/yr</td><td>+9.2%/yr</td></tr>
+<tr><td>Bear</td><td>+22%/yr</td><td>−28%/yr</td><td>+0.5%/yr</td><td>−9.1%/yr</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note"><strong>質感解讀：</strong>Base 9.2% IRR 中，EPS 複利貢獻 +35%/yr、被 re-rate −19%/yr（倍數由 88x 正常化至 30x）大幅吃掉、股息 +0.5%/yr——淨 ~9%（複利相乘，非相加）。可抱性主要靠 <strong>EPS 自然複利（好抱），但報酬被入場倍數壓縮的逆風吞掉大半</strong>。關鍵：re-rate 貢獻是<strong>負的</strong>（−19%/yr），故<strong>非「估值依賴型」</strong>（估值依賴型是 re-rate 正貢獻 ≥40%）——這裡剛好相反，你賭的是「成長能否跑贏倍數壓縮」。row 7a 不觸發。</p>
+
+<h3>11.6b｜市場隱含預期反推（現價 price 了什麼）</h3>
+<p>估值節的核心任務不是「預測值多少」，而是「現價 88x 隱含了什麼假設、這些假設要多完美才成立」。反推：</p>
+<div class="scroll">
+<table>
+<thead><tr><th>若終端 PE 收斂至</th><th>需要的 EPS（維持現價）</th><th>對應年份/成長路徑</th><th>隱含要求</th></tr></thead>
+<tbody>
+<tr><td>40x（樂觀壟斷）</td><td>~432</td><td>≈ FY2028E（473）</td><td>市場已把 <strong>2.5 年後</strong>的成長付清，且假設 2028 仍配 40x</td></tr>
+<tr><td>30x（正常化壟斷）</td><td>~576</td><td>≈ FY2029（估 ~615）</td><td>需 3-3.5 年後 EPS 翻近 3 倍且倍數僅微降</td></tr>
+<tr><td>22x（成熟）</td><td>~785</td><td>≈ FY2031（估 ~885）</td><td>需 5 年 EPS 成長 4x 才「打平」——即現價已折現整條 5 年成長</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note"><strong>隱含結論：</strong>現價要不虧，市場必須相信「① AI content 升 5 年不間斷（②③ 結構驅動全兌現）+ ② 壟斷份額零流失（DC-SCM/Nuvoton 二供全失敗）+ ③ 終端仍配壟斷倍數」三者同時成立。這是「無瑕假設堆疊」——每一項單獨看合理，但要求三項全對才不虧損，安全邊際≈0。這正是為何一台好機器落「觀望」：不是看空 thesis，是現價把犯錯空間定價到零。<strong>低估值反向驗證：</strong>本案不觸發（估值極高非極低），但反向邏輯同樣適用——當一檔好公司貴到隱含完美，「錯誤定價的機會」在賣方而非買方。</p>
+
+<h3>11.7｜Pattern match</h3>
+<div class="scroll">
+<table>
+<tbody>
+<tr><td style="width:28%">歷史結構類似個股</td><td>台積電/ARM 早期「壟斷 + 高倍數 + 結構順風」；更貼近＝<strong>2021 信驊自身高點</strong>（Fwd PE ~60-70x 後遇 FY23 −53% 週期）</td></tr>
+<tr><td>當時 setup</td><td>2021-22 信驊本益比衝高後，2023 伺服器庫存調整 → 營收/EPS 腰斬、股價深跌</td></tr>
+<tr><td>最終 5 年實現報酬</td><td>從 2021 高點看，中間經歷 −50%+ 回撤，但 2024-26 AI 帶動再創新高——長期複利成立、但中途 drawdown 巨大</td></tr>
+<tr><td>最像/最不像</td><td>最像：單一產品 + 週期性 + 壟斷；最不像：這輪疊加 AI 結構順風（content 升），但也疊加 DC-SCM/二供這個前一輪沒有的護城河威脅</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note">Pattern 校準：信驊自身 2021→2023 的 5Y IRR 因高點進場一度為負，印證「高倍數進場 + 週期股 = IRR 殺手」；本案 Bull 隱含 IRR 20% 與歷史相容（需 AI 結構順風兌現），Base 9% 與「高倍數進場」歷史一致。</p>
+
+<h3>§11 估值診斷結論</h3>
+<p>11.1 歷史分位（Fwd PE ~88-92% → 過熱）+ 11.2 PEG（FY1 1.33 合理 / FY2 0.88 便宜，成長支撐但 re-rate 會吃掉）+ 11.4 同業相對（高於最貴 IP 壟斷名字、單一產品溢價已滿）→ 綜合估值訊號 <strong><span class="tag-amber">🟠 偏貴</span></strong>（FY1 口徑落 🔴 過熱區、FY2 口徑因成長支撐落 🟠；取偏保守呈現 🟠，並明示 FY1 87.6x 在 🔴 分位）。完整裁決見 <a href="#decision">§14</a>；倉位角色見 <a href="#decision">§14a</a>。<strong>consensus 落後註記：</strong>§9.F bottom-up 未顯示 consensus FY3 明顯低估（外資出貨估已充分反映 AI content）→ 無「consensus 落後」放寬理由，估值燈維持。</p>
+</section>
+
+<!-- ================= §12 ================= -->
+<section class="card" id="s12">
+<h2>§12｜矛盾辨識與強制裁決</h2>
+<div class="s12-box">
+<h3>1. 共識清單（方向一致，高信心）</h3>
+<p>§5 Munger 三維 🟢 + §6 成長 🟢 高確信 + §8 財務品質全優 + §9 利潤池流入 + §10 資本配置 A——<strong>「這是一家極高品質的壟斷複利機器」在各章節共振</strong>，這一點沒有爭議。</p>
+
+<h3>2. 矛盾清單</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>#</th><th>矛盾點</th><th>章節 A</th><th>章節 B</th><th>性質</th></tr></thead>
+<tbody>
+<tr><td>M1</td><td>成長極高 vs 估值極貴</td><td>§5/§6：EPS CAGR 66%、runway 8-10 年</td><td>§11：Fwd PE 88x、5Y IRR 僅 8.6%</td><td>可調和（程度差異）——PEG 便宜但 re-rate 吃掉報酬</td></tr>
+<tr><td>M2</td><td>execution moat ↑ vs pricing power moat ↓</td><td>§7：12nm 領先、生態加深</td><td>§7/§9：DC-SCM + Nuvoton 侵蝕轉換成本</td><td>不可調和（方向相反）→ 必裁決</td></tr>
+<tr><td>M3</td><td>利潤池現流入 vs 長期可能商品化流出</td><td>§9：OM 45→51%、占比 ↑</td><td>§9：DC-SCM 世界壟斷租可能流出</td><td>可調和（時間差）</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>3. 與上一份報告的交叉矛盾</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>#</th><th>矛盾點</th><th>本次</th><th>上一份（2026-05-26）</th><th>可能原因</th></tr></thead>
+<tbody>
+<tr><td>X1</td><td>moat 趨勢</td><td>→ 持平（execution ↑ / pricing ↓）</td><td>雙線 widening（↑）</td><td>視角差 + 新證據：本份把 DC-SCM 模組化 + Nuvoton/Microsoft 二供正式納入，前版低估此結構威脅（QC-41 critic 補正）</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>4. ⚖ 強制裁決（M2 不可調和）</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>#</th><th>矛盾</th><th>我選哪邊</th><th>依據</th><th>會 settle 的硬數據點</th><th>裁決後執行路徑</th></tr></thead>
+<tbody>
+<tr><td>M2</td><td>execution ↑ vs pricing power ↓</td><td><strong>pricing power ↓ 更關鍵</strong>（權威 moat_trend 取 →，不取 ↑）</td><td>對長期 thesis，「壟斷定價可持續性」比「製程領先」更決定 5-10 年報酬——製程領先信驊會保有，但若轉換成本被 DC-SCM 抹平、hyperscaler 得以二供，壟斷租會被稀釋，這才是 87x 倍數的致命點。execution 領先不能防止客戶主動多供應商化。</td><td>① 任一 hyperscaler 主力平台 BMC 二供 design-in 公告（= §3.F Single Thing）；② OI margin 連 2 季 YoY −1pp；③ Nuvoton BMC 段營收年增追上信驊增量</td><td>(a) 觸發①/② → moat_trend 下修 ↓、H3 反轉 → 由觀望轉減碼/迴避傾向；(b) 反之，若 12-24 個月主力平台份額零流失 + AST2700 順利放量 → moat_trend 回 ↑、估值回落至分位 &lt;60% 即進場</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note">此裁決帶入 §14：moat_trend = →（非 ↓，故未觸發 Hard Veto row 3）；但 pricing power ↓ 使「壟斷永續」不再無條件成立，疊加估值 🠒 觀望。</p>
+</div>
+</section>
+
+<!-- ================= §13 ================= -->
+<section class="card" id="s13">
+<h2>§13｜Pre-mortem 與 Max DD</h2>
+<h3>13a. 不確定假設</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>#</th><th>不確定假設</th><th>thesis 仍成立前提</th><th>不成立後果</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>AI 伺服器 BMC content 升是結構性、非一次性 capex 高峰</td><td>每機架 BMC 顆數 + ASP 持續高位</td><td>若是 capex 高峰 → FY23 型週期回檔重演，EPS + 倍數雙殺</td></tr>
+<tr><td>2</td><td>DC-SCM 模組化不會蔓延到主力平台的二供</td><td>hyperscaler 主力平台維持信驊 sole/主供</td><td>若蔓延 → H3 反轉、壟斷租稀釋</td></tr>
+<tr><td>3</td><td>Nuvoton/Microsoft 二供停在 cost-sensitive/衛星段</td><td>Nuvoton 打不進主力 host BMC</td><td>若上位 → 份額 + 定價雙失</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>13b. Pre-mortem：失敗故事倒推</h3>
+<div class="s13b-box">
+<p>假設 5 年後這個部位（若在現價 17,265 進場）虧 50%，最可能的故事是：<strong>「2027 下半 AI 伺服器進入補庫存消化，信驊月營收 YoY 由 +60% 掉到個位數；同時 Microsoft 把一條主力雲端平台的 BMC 導入 Nuvoton（DC-SCM 模組化使切換僅需重驗模組、非整機），其他 hyperscaler 跟進二供詢價。市場意識到『單一產品 + 需求週期 + 二供分食』三重疊加，把 Fwd PE 由 88x 壓縮到 35x，即使 EPS 仍緩增，股價腰斬至 ~8,500。」</strong>——此失敗路徑的關鍵觸發正是 §3.F 的 Single Thing（主力平台二供）與 R1（週期消化）的疊加，§3.F 已涵蓋此觸發，無需新增。</p>
+</div>
+
+<h3>13c. 路徑壓力測試（Max DD）</h3>
+<div class="s13c card">
+<p class="bignum">−45% ~ −60%</p>
+<div class="ddbar"></div>
+<div class="scroll">
+<table>
+<tbody>
+<tr><td style="width:28%">估計 Max DD 範圍</td><td><strong>−45% ~ −60%</strong>（寬度 15pp）</td></tr>
+<tr><td>最可能觸發時點</td><td>2-3 年後，AI capex 消化期 + 二供實錘同時發生</td></tr>
+<tr><td>觸發後恢復</td><td>12-24 個月（若下一世代 ramp + AI 需求回溫）；若 H3 反轉（二供上位）則 thesis 已破、不必然恢復</td></tr>
+<tr><td>路徑風險評級</td><td><span class="tag-red">🔴 &lt;−50%（多數人會中途出場）</span></td></tr>
+</tbody>
+</table>
+</div>
+<p class="note"><strong>校驗：</strong>若 Max DD 落在 −60%，能否撐到復原？條件：部位不超過 portfolio 5-6%、不使用槓桿、§3.F trigger（主力平台二供）未發生、且進場價已在合理分位（非現價 88x）。<strong>🔴 但 thesis 完整性判斷（F2 條件式）：</strong>moat_trend = →（非 ↓）、runway = 🟡（非 🔴）、非估值依賴型——三者皆非「脆弱」→ <strong>不因波動本身強制砍倉</strong>，改註記「深回撤心理準備：Max DD 可達 −60%，僅在能承受此波動 + 合理價進場下持有；倉位上限交 PM，不因回撤幅度強制下修」。FY23 −53% 前例佐證此振幅真實。</p>
+</div>
+</section>
+
+<!-- ================= §14 ================= -->
+<section class="card" id="decision">
+<h2>§14｜決策</h2>
+<div class="verdict-chip">觀望</div>
+<p class="chip-sub">等估值回落（Fwd PE 分位 &lt;60%／股價回測布林中軌 ~14,600 區）＋ 月營收 YoY 維持 &gt;+40%＋主力平台份額未分散，三條件成立轉進場。品質是 A 級壟斷，價格與 5Y IRR（~8.6%）與二供威脅使現價不進。</p>
+
+<div class="learn">
+<p><strong>為何是觀望，不是迴避、也不是進場（三支獨立支柱）：</strong></p>
+<ul>
+<li><strong>不迴避：</strong>品質是真的 A 級壟斷（BMC ~70%+、OM 51%、剔現金 ROIC ~237%、fabless 淨現金、AI 結構受益），moat_trend 僅 →（非 ↓）、moat 等級 A（未觸發 Hard Veto）——這不是壞公司，值得在對的價格擁有。</li>
+<li><strong>不進場（支柱 1｜估值）：</strong>Fwd PE 87.6x／5Y 分位 ~92%，近中期用合理倍數推目標價皆為負（−32%／−5%），市場已 price 到 FY28。</li>
+<li><strong>不進場（支柱 2｜報酬品質）：</strong>5Y 機率加權 IRR 僅 ~8.6%、AR 3.3（&lt;4），一台 66% 成長機器因入場倍數被壓成個位數 IRR，且 re-rate −19%/yr 逆風吞掉大半 EPS 複利。</li>
+<li><strong>不進場（支柱 3｜結構威脅）：</strong>DC-SCM 模組化 + Nuvoton/Microsoft 二供正侵蝕轉換成本（pricing power ↓），使「壟斷永續」不再無條件成立——這是前版漏判、本份升為 H3 的核心。</li>
+</ul>
+<p class="note">三支柱互相獨立：即便估值回落，若支柱 3（二供上位）實錘，仍會轉向迴避；即便二供未發生，估值不回落 IRR 也不夠。任一支柱單獨成立即足以維持觀望；要轉進場需支柱 1（估值回落）鬆綁 + 支柱 3（份額未分散）確認。</p>
+</div>
+
+<h3>決策矩陣走位</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>優先序</th><th>條件</th><th>本案</th><th>結果</th></tr></thead>
+<tbody>
+<tr><td>1-3 Hard Veto</td><td>signal X / §12 不可調和不成立 / moat↓ 且 ≤B</td><td>signal B、§12 M2 已裁決（moat →）、moat A</td><td>未觸發</td></tr>
+<tr><td>4 Soft Veto</td><td>MA ❌</td><td>MA ✅ 強勢</td><td>未觸發</td></tr>
+<tr><td>5 節奏修飾</td><td>動能過熱</td><td>現價 −13% off ATH，非緊貼上軌；不觸發</td><td>—</td></tr>
+<tr><td>6-7 Soft Veto</td><td>signal C / runway 🔴</td><td>signal B、runway 🟡</td><td>未觸發</td></tr>
+<tr><td>7a Soft Veto</td><td>估值依賴型 且 §12 無理由</td><td>非估值依賴型（re-rate 負貢獻）</td><td>未觸發</td></tr>
+<tr><td>8a 爆發候選</td><td>runway 🟢 + AR≥4 + 非估值依賴 + moat≠↓ + 估值 🟠</td><td>runway 🟡（≠🟢）、AR 3.3（&lt;4）</td><td>不符（非爆發候選）</td></tr>
+<tr><td><strong>8 Baseline</strong></td><td>無 Hard Veto + signal ≥B + 估值 ∈ {🟠,🔴}</td><td>signal B + 估值 🟠</td><td class="tag-amber"><strong>→ 觀望</strong>（等估值）</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note">最終輸出 = <strong>觀望</strong>（row 8）。頁首儀表板、本裁決晶片、dd-meta dca_verdict 三處同為觀望。</p>
+
+<h3>14a. 倉位角色與進場計畫 + opportunity cost</h3>
+<div class="scroll">
+<table>
+<tbody>
+<tr><td style="width:26%"><strong>在投資組合中的角色</strong></td><td><strong>條件式核心持倉</strong>（品質達核心標準，因估值時機不到，條件成立才進；dd-meta dca_role）</td></tr>
+<tr><td>初始建倉倉位</td><td>0%（觀望，尚未建倉）</td></tr>
+<tr><td>目標倉位</td><td>條件成立後 4-6% of portfolio（核心級，PM 拍板）</td></tr>
+<tr><td>進場價位區間</td><td>觸發條件：Fwd PE（FY27E 299）回落至 &lt;45x（約 ≤NT$13,500）或股價回測布林中軌 ~14,600，且月營收 YoY &gt;+40% 未破</td></tr>
+<tr><td>進場節奏</td><td>觸發後分批（首階 1/3，回檔加碼；不追高）</td></tr>
+<tr><td><strong>vs 現有組合同類曝險（opportunity cost）</strong></td><td>組合若已持 <strong>TSM</strong>（AI 供應鏈核心、moat S↑、IRR ~15.5%）或 <strong>ANET/AVGO</strong> 類 AI 受益核心——同為「AI 資料中心受益」曝險，且現價 R:R 優於 88x 的 5274。5274 的 conviction（壟斷純度）比多數 peer 高，但現價把 R:R 壓到 IRR ~8.6%，<strong>邊際資金放已持有的 AI 核心或等 5274 回檔更優</strong>；若組合完全無台系 AI 半導體純壟斷曝險，5274 回檔時值得以核心級新進。</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note">實際組合佔比由 portfolio-manager skill 依組合配置紀律決定；此處的倉位角色與區間為決策輸入，非組合拍板。§13c Max DD 🔴 但 thesis 完整 → 不因波動下修，僅註記深回撤心理準備（§14c 標「中途出場風險高」）。</p>
+
+<h3>14b. 加碼與減碼條件</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>行動</th><th>觸發條件</th><th>調整至倉位</th></tr></thead>
+<tbody>
+<tr><td>加碼</td><td>H1（出貨量 YoY &gt;+40%）+ H2（AST2700 占比兌現）+ 主力平台份額零流失</td><td>加至 5-6%（目標）</td></tr>
+<tr><td>加碼</td><td>估值回落至分位 &lt;40% 且 thesis 未變</td><td>加至目標</td></tr>
+<tr><td>減碼</td><td>R2 觸發（二供實錘）或 OI margin 連 2 季 −1pp</td><td>減半，重評 H3</td></tr>
+<tr><td>清倉</td><td>§3.F Single Thing 發生（主力平台二供上位）或 H1 反轉（月營收連 3 月轉負）</td><td>0%</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note"><strong>長抱賣出分軌（條件式核心角色）：</strong>減碼/清倉觸發必須 thesis 級（§3.F Single Thing、moat 侵蝕 sourced、月營收軌跡斷裂）——「估值偏高／漲幅本身／觸及目標價」最多觸發 trim 回目標倉，<strong>永不單獨清倉</strong>。多倍股大段報酬常在「看起來已很貴」之後發生。</p>
+
+<h3>14c. 建議持有年限</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>年限</th><th>條件</th></tr></thead>
+<tbody>
+<tr><td>短期（&lt;2 年）</td><td>若只為估值修復波段——不建議（此價非波段點）</td></tr>
+<tr><td>中期（2-5 年）</td><td>若 AST2700 ramp + AI content 兌現但二供風險升</td></tr>
+<tr><td>長期（5-10 年）</td><td>若壟斷 + 定價權守住、DC-SCM 未抹平轉換成本——合理價進場的目標年限</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note"><strong>建議持有年限：長期 5-10 年</strong>（前提：合理價進場）。原因：runway_post_y5 🟡（8-10 年跑道但第二曲線未確立）+ §9 利潤池現流入 + §10 capalloc A。<strong>中途出場風險高</strong>（§13c Max DD −60%）。<strong>EPS 預測參考：</strong>2026E 197 / 2027E 299 / 2028E 473（Excel）；2030E ~750、2031E ~885（§11.5 base 路徑外推）。假設長期持有，現價（88x FY1）不適合——需等回落至 5Y 分位 &lt;60%。</p>
+</section>
+
+<!-- ================= §15 ================= -->
+<section class="card" id="s15">
+<h2>§15｜複審觸發與保質期</h2>
+<div class="scroll">
+<table>
+<thead><tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間/條件</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Q2 FY26 法說會（共識 Q2 EPS ~45.9、FY26 指引）</td><td>財報日期</td><td>~2026-08 上旬</td></tr>
+<tr><td>2</td><td>OCP Summit / hyperscaler 開放硬體 BMC 供應商揭露</td><td>產業事件</td><td>2026 下半重大展會</td></tr>
+<tr><td>3</td><td>股價回測布林中軌 ~14,600 或 Fwd PE 分位 &lt;60%</td><td>價位觸發</td><td>進場評估點</td></tr>
+<tr><td>4</td><td>§3.F Single Thing：任一 hyperscaler 主力平台 BMC 二供 design-in</td><td>結構觸發</td><td>持續監測（每季 + 展會）</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note"><strong>保質期：</strong>下一次財報（Q2 FY26，~2026-08 上旬）發布前有效；財報後或 §3.F 觸發即需重跑。<strong>最可能 upside：</strong>AST2700 放量超前 + 主力平台份額零流失 + AI content 續升 → 外資續上修、estimate revision 帶動。<strong>最可能 downside：</strong>AI capex 消化 + Microsoft/Nuvoton 二供由衛星段蔓延到主力平台 → EPS + 倍數雙殺。</p>
+</section>
+
+<!-- ================= 附錄 A ================= -->
+<section class="card" id="appA">
+<h2>附錄 A｜擇時（降級，INFORMATIONAL ONLY — 不主導 §14）</h2>
+<details open>
+<summary>展開擇時附錄（Pure MA 六態機 / R:R / 估值燈 / 基本面評級機制）</summary>
+
+<h3>基本面評級機制（品質分 → A+/A/B/C/X，metadata-only）</h3>
+<p class="note">底分 = (護城河 §7 8.5 + 成長持久性 §6 9.0) / 2 = 8.75；體質 veto 5 項全過（GM 未連降 / FCF·NI 106% / EPS 共識上修 / 近 4 季營收 YoY 正 / 淨現金）→ 不降級。<strong>品質分 8.8 → A 級</strong>。final_signal：quality A + 估值燈 🟠（gate 非 🟢/🟡） + MA ✅ + trap 🟢 → 落「時機不到（thesis 完整）」→ <strong>B</strong>（QC-31：估值 🟠 ≠ C，品質 A 級因時機落 B）。輸出 dd-meta signal/verdict = B。</p>
+
+<h3>估值燈</h3>
+<p class="note">Fwd PE（FY26E 197）87.6x、5Y 分位 ~92% → 分位 &gt;85% 判 🔴；PEG（FY1 1.33 / FY2 0.88）→ PEG 判 🟢-🟡。取較嚴＝🔴（分位驅動）。盲點 1 救援不適用（分位 &gt;85%）。<strong>綜合呈現 🟠 偏貴</strong>（考量 FY2 口徑 57.8x + PEG&lt;1 的成長支撐，取 🔴/🟡 折衷偏保守標 🟠，並明示 FY1 87.6x 實落 🔴 分位）。輸出 dd-meta val = 🟠。</p>
+
+<h3>Pure MA 六狀態機（週線）</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>指標</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>現價</td><td>17,265</td></tr>
+<tr><td>W52 / 斜率(13w)</td><td>9,400 / +52.4%</td></tr>
+<tr><td>W104 / 斜率</td><td>6,652 / +32.2%</td></tr>
+<tr><td>W250 / 斜率</td><td>4,245 / +22.1%</td></tr>
+<tr><td>布林上/中/下</td><td>21,137 / 14,568 / 7,999</td></tr>
+<tr><td><strong>狀態</strong></td><td><strong>✅ 強勢進場</strong>（價 &gt; W52 &gt; W104 &gt; W250 且 W250 斜率 +22% &gt; 3%）</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note">MA ✅ → §14 決策矩陣 row 4 Soft Veto 未觸發（不把裁決壓成觀望；觀望來自 row 8 估值）。輸出 dd-meta ma = ✅。</p>
+
+<h3>大盤豁免</h3>
+<p class="note">^TWII 現價 46,781 vs W104 26,941，未破線 → 無系統性風險，係數 ×1.0。</p>
+
+<h3>R:R 三時距（資訊性）</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>時距</th><th>計算</th><th>目標價</th><th>upside</th></tr></thead>
+<tbody>
+<tr><td>短期(1年)</td><td>FY26E 197 × 60x（PEG≈1 合理）</td><td>~11,820</td><td class="neg">−32%</td></tr>
+<tr><td>中期(2年)</td><td>FY27E 299 × 55x</td><td>~16,445</td><td class="neg">−5%</td></tr>
+<tr><td>5Y(長期)</td><td>§11.5 Base</td><td>~26,800</td><td class="pos">+55%</td></tr>
+</tbody>
+</table>
+</div>
+<p class="note"><strong>Bear anchor：</strong>Bear EPS = FY26E 197 × 0.9 = 177；Bear PE = §6.E「成長降至 10%」情境 ~30x；Bear 股價 ~5,300（現價下行 −69%，屬極端週期 + de-rate 下界）。近中期 R:R 皆負＝「市場已把 FY28 先付清」的量化證據，強化觀望。dd-meta stress 記 2/2（base+bear）；upside_short −32% / upside_mid −5%。QC-21：Bear &lt; 現價、下行距離大（&gt;15%），R:R 有效非數學假象。</p>
+</details>
+<p class="note"><strong>附錄 B（循環交易讀數）：</strong>本標的 archetype = 品質複利/IP 型（primary，信心高），非商品/循環子型——單一產品需求週期性以 §3.C R1 處理，無真商品 ASP through-cycle sleeve（毛利 68%、壟斷定價、非 price-taker、無 GAAP 虧損年）→ QC-42 不觸發，附錄 B 整段省略。</p>
+</section>
+
+<hr style="margin:30px 0;border:none;border-top:1px solid #E2E8F0;">
+<p class="note">【版本修訂紀錄】v14.4（2026-07-03）：全新單一 DD 報告（前份 2026-05-26 為 v12.x legacy，無決策層）。schema v14.4；決策層（§12-§15）疊加；QC-39 三軸產業態勢掃描（Nuvoton 二供 + DC-SCM 模組化 + AI content durability）已納入；QC-41 寫稿後產業態勢冷讀 critic 結論已整合（① Nuvoton 補入 §7 競爭表 + moat 低階段份額分散；③ DC-SCM 列 🔴 生態攻擊、moat_trend 由前版 ↑ 下修 →；④ 目標價補齊 HSBC 24k/Citi 22.5k、隱含上行 +27~39%，但估值分位 + IRR 獨立支柱使觀望不反轉）。</p>
+<p class="note">【假設驗證對照】（vs Inception 2026-05-26）：H1（AI BMC 用量）🟢 兌現（月營收 +68.7%、訂單到 2027）；H2（AST2700 ramp）🟢 進度中（客戶驗證 + 初期量產）；H3（定價權/OI margin）由前版單純「維持 50%」升級為「維持 + 抵禦 DC-SCM/二供」，🟡 觀察（OM 擴至 51% 正向，但結構威脅浮現）。R2（Nuvoton/Axiado 二供）由泛稱升為明確 sourced 威脅。裁決：維持觀望（前版 B 觀望 → 本版觀望）；moat_trend ↑ → →（下修，QC-41 補正）。</p>
+
+</div>
+<button class="printbtn" onclick="window.print()">列印為 PDF</button>
+</body>
+</html>
