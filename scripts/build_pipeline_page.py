@@ -549,6 +549,26 @@ def render_leaderboard(univ: list, artifacts: list, n_total: int) -> str:
 </section>"""
 
 
+def render_howto() -> str:
+    rules = [
+        ("這頁只排序，不下單", "潛力分決定「先研究／先考慮誰」，<b>不是買進訊號</b>。要買，等 sop-funnel 板機（A1 起漲／B 回踩）亮燈。"),
+        ("裁決是唯一權威", "能不能進候選，看 DD §14＝<b>進場／觀望／迴避</b>。沒裁決（待補 DD）＝還沒資格，不是可買。"),
+        ("席位鎖死：核心 5 ＋ 衛星 5", "核心軌固定 5 席（角色優先），衛星／循環另計。滿了要進，得<b>打贏現有最弱的</b>才換，不加席位。"),
+        ("三軌各有任務，別混", "核心＝耐久複利（上限 10%）；衛星結構＝runway🟢 數倍股（5%）；衛星循環＝底部×上修（3%，先等回踩）。"),
+        ("潛力榜是補 DD 導航，不是買入排行", "🟢 §11.5 才可信，<b>🟡 heur 只有方向性</b>。標「→ 補 DD」＝下一個該研究的名字，不是叫你買。"),
+        ("由左到右讀", "發現 → 資格閘 → 三軌裁決 → 板機 → 回看鏡 → 潛力榜。每一站只回答一個問題，別跳著看。"),
+        ("這頁不含實際持倉", "只呈現研究層。買了什麼、多少倉位，不在站上。"),
+    ]
+    items = "\n".join(
+        f'<li><b>{i}. {t}</b>　{d}</li>' for i, (t, d) in enumerate(rules, 1))
+    return f"""<section class="block howto">
+  <h2 class="block-h">📖 使用守則 · 30 秒讀懂這頁</h2>
+  <ol class="howto-list">
+{items}
+  </ol>
+</section>"""
+
+
 def render_privacy() -> str:
     return f"""<section class="block privacy">
   <h2 class="block-h"><span class="step">7</span> 隱私線</h2>
@@ -611,6 +631,11 @@ code{background:#f0f5fb;padding:1px 5px;border-radius:3px;font-size:11px;color:#
 .prov-heur{background:#fdf3e3;color:#a6730a}
 .lb-fill{font-size:10.5px;font-weight:700;color:#2563eb;white-space:nowrap}
 table.lb-score td,table.lb-score th{padding:5px 8px}
+.howto{background:#f0f6ff;border-color:#c9ddf7}
+.howto-list{margin:6px 0 0;padding-left:0;list-style:none}
+.howto-list li{font-size:12.5px;color:#3d5673;line-height:1.7;padding:5px 0;border-top:1px solid #dbe8f7}
+.howto-list li:first-child{border-top:none}
+.howto-list li b{color:#1a3a5c}
 .seg-in{color:#166534}.seg-watch{color:#92400e}.seg-none{color:#64748b}.seg-hot{color:#9a3412}
 table{width:100%;border-collapse:collapse;font-size:12px;margin-top:4px}
 th{background:#f0f6ff;color:#5a7a9a;font-weight:700;padding:7px 9px;text-align:right;border-bottom:2px solid #dce8f5;font-size:10px;letter-spacing:.03em}
@@ -782,6 +807,7 @@ def build(dry_run: bool = False) -> int:
     gate_html = render_gate(gated)
     tracks_html = render_tracks(core_sorted, struct_sorted, cyc)
     trigger_html = render_trigger(sop, veto_by_reason)
+    howto_html = render_howto()
     lookback_html = render_lookback(lb12, lb24, queue12, queue24)
     leaderboard_html = render_leaderboard(univ, artifacts, n_scored)
     privacy_html = render_privacy()
@@ -825,6 +851,7 @@ def build(dry_run: bool = False) -> int:
 </div>
 
 <div class="wrap">
+{howto_html}
 {universe_html}
 {gate_html}
 {tracks_html}
