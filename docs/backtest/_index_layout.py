@@ -250,7 +250,17 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <!-- 研究 / 否決 -->
 <div class="section">
 <h2 class="section-title">研究筆記</h2>
-<div class="section-sub">探索性研究頁(分散結構 / 反例),非實倉候選，刻意不列入上方比較表。</div>
+<div class="section-sub">探索性研究頁(分散結構 / 反例 / 文獻複驗),非實倉候選，刻意不列入上方比較表。</div>
+<a class="link-card" href="/backtest/multiasset_trend/" style="border-left:3px solid var(--grey)">
+  <span style="font-size:1.3rem">📈</span>
+  <span><span class="lc-name">多資產期貨・趨勢追蹤 · SG Trend Index 複製</span><br><span class="lc-sub">複驗(非發明)· 10 檔期貨/ETF 代理零參數搜索 · 對 SG 官方月報酬相關 0.647、2022 +21.92% ✓,驗收 2/3 過 · CAGR 2.79% 遠不及 SG(第3條深回撤不過 = universe 廣度不足非 bug)· 複製的是風格不是報酬水準；CL=F/SI=F 幻影拼接已審計剔除</span></span>
+  <span class="lc-arrow">→</span>
+</a>
+<a class="link-card" href="/backtest/mom_volscaling/" style="border-left:3px solid var(--grey)">
+  <span style="font-size:1.3rem">🌀</span>
+  <span><span class="lc-name">美股動能・波動率縮放 · Barroso & Santa-Clara (2015) 複驗</span><br><span class="lc-sub">複驗 · WML 動能用已實現波動事前削平崩盤 · 真 OOS 2014-2026 Sharpe 0.26→0.52、MDD −77.6%→−27.2%,bootstrap 95% CI [+0.04,+0.45] 不含 0(顯著)· 只答機制存活性、不答可交易性(無成本)· 2020-03 反彈期削獲利是雙面刃</span></span>
+  <span class="lc-arrow">→</span>
+</a>
 <a class="link-card" href="/backtest/dual_track_study/" style="border-left:3px solid var(--green)">
   <span style="font-size:1.3rem">🧪</span>
   <span><span class="lc-name">雙軌分散研究 · 短MR + 長趨勢 on SMH/QQQ</span><br><span class="lc-sub">過尺 · 真實引擎(E3 長軌 + RSI2 短軌)· Calmar 0.65→0.70、MDD −27%→−18% · 兩條軸(時間架構/驅動)收斂到雙軌 = v7 Ch12 設計</span></span>

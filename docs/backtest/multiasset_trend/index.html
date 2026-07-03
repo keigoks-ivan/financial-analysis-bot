@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta name="robots" content="noindex,nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>多資產期貨・趨勢追蹤（SG Trend Index 複製）| InvestMQuest Research</title>
+<style>
+:root{--brand:#4f46e5;--brand-light:#eef2ff;--bg:#f9fafb;--card:#fff;
+      --text:#111827;--muted:#6b7280;--border:#e5e7eb;
+      --green:#059669;--red:#dc2626;--amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fde68a;--amber-text:#92400e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1120px;margin:0 auto;padding:0 1.5rem}
+.page-hdr{padding:1.75rem 0 1.25rem;background:linear-gradient(180deg,#eef2ff 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
+.page-hdr h1{font-size:1.6rem;font-weight:700;letter-spacing:-.03em}
+.page-hdr .sub{color:var(--muted);font-size:.9rem;margin-top:.2rem}
+.crumb{font-size:.82rem;color:var(--muted);margin-bottom:.4rem}.crumb a{color:var(--muted)}
+.section{padding:1.5rem 0 0}
+.section-title{font-size:1.15rem;font-weight:700;margin-bottom:1rem;padding-bottom:.45rem;border-bottom:2px solid var(--brand)}
+.section-sub{font-size:.85rem;color:var(--muted);margin:-.5rem 0 1rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.card h3{font-size:1rem;font-weight:600;margin-bottom:.85rem}
+.card .takeaway{font-size:.88rem;margin-top:.75rem;padding:.6rem .9rem;border-radius:6px;background:var(--brand-light);border-left:3px solid var(--brand)}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{text-align:left;padding:.55rem .7rem;border-bottom:1px solid var(--border)}
+th{background:#f9fafb;font-weight:600;font-size:.76rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+td{font-variant-numeric:tabular-nums}
+tbody tr:hover td{background:#f3f4f6}
+.hero{margin:1.25rem 0;border:1px solid #c7d2fe;border-radius:12px;overflow:hidden;background:var(--card)}
+.hero-top{background:linear-gradient(135deg,#eef2ff 0%,#f5f3ff 100%);padding:1.4rem 1.6rem;border-bottom:1px solid #c7d2fe}
+.hero-top .verdict-tag{display:inline-block;background:var(--brand);color:#fff;font-size:.74rem;font-weight:700;letter-spacing:.05em;padding:.25rem .7rem;border-radius:99px;margin-bottom:.5rem}
+.hero-top h2{font-size:1.35rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.35rem}
+.hero-top p{font-size:.92rem;color:#374151;max-width:62rem}
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card)}
+.hero-stats > div{padding:1rem 1.2rem;text-align:center;border-right:1px solid var(--border)}
+.hero-stats > div:last-child{border-right:none}
+.hero-stats .hs-label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.hero-stats .hs-value{font-size:1.55rem;font-weight:800;letter-spacing:-.02em}
+.note{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;padding:.85rem 1.1rem;font-size:.84rem;color:var(--amber-text);margin:1rem 0}
+.pass{color:var(--green);font-weight:700}.faildot{color:var(--red);font-weight:700}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.chart-card h3{font-size:.95rem;font-weight:600;margin-bottom:.5rem}
+.chart-card img{width:100%;height:auto;border-radius:6px;border:1px solid var(--border)}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.rule-list{font-size:.88rem;color:#374151;padding-left:1.2rem;line-height:1.9}
+.xlinks{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:.5rem}
+.xlinks a{display:inline-block;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.6rem .9rem;font-size:.84rem;font-weight:600}
+.xlinks a:hover{border-color:var(--brand)}
+details{background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:.75rem}
+details summary{padding:.9rem 1.25rem;font-weight:600;font-size:.95rem;cursor:pointer;list-style:none;display:flex;align-items:center;gap:.5rem}
+details summary::before{content:'▸';color:var(--brand);transition:transform .15s}
+details[open] summary::before{transform:rotate(90deg)}
+details .d-body{padding:0 1.25rem 1.25rem;overflow-x:auto}
+footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);text-align:center;padding:1.25rem 0;font-size:.78rem;margin-top:2rem}
+@media(max-width:768px){.two-col{grid-template-columns:1fr}.hero-stats{grid-template-columns:repeat(2,1fr)}.hero-stats>div{border-bottom:1px solid var(--border)}table{font-size:.76rem}th,td{padding:.4rem .45rem}}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#0f172a;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(59,130,246,.28);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/">個股 DD</a>
+          <a href="/research/synthesis/">期望落差綜合研判</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/">週報</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/long-track-smh/">長線訊號</a>
+          <a href="/long-track-tw/">台股長線</a>
+          <a href="/turtle-sleeve/">商品 Sleeve</a>
+        </div>
+      </div>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/" class="active">量化回測</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/screener-tw.html">Screener 台股</a>
+          <a href="/screener-jp.html">Screener 日股</a>
+          <a href="/screener-my.html">Screener 馬股</a>
+          <a href="/cache/">🗄 Data Cache</a>
+          <a href="/tools/">期貨部位計算機</a>
+        </div>
+      </div>
+      <a href="/mental-models/">🧠 心智模型</a>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="page-hdr"><div class="container">
+  <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / 多資產期貨・趨勢追蹤</div>
+  <h1 style="color:var(--brand)">📈 多資產期貨・趨勢追蹤</h1>
+  <div class="sub">SG Trend Index／SG Trend Indicator 訊號複製 · 10 檔期貨／ETF 代理 · 零參數搜索 · vol-target 10% · 資料截至 2026-07-02</div>
+</div></div>
+
+<div class="container">
+
+<div class="hero">
+  <div class="hero-top">
+    <span class="verdict-tag">🔬 複驗 · 風格複製成立、報酬水準不及</span>
+    <h2>忠實複製 SG Trend 的訊號風格，不是發明新策略——複製到的是「風格」，不是「報酬水準」</h2>
+    <p>這是一份 replication（複驗），所有規格數字皆固定自 SG Trend Index／SG Trend Indicator 公開文獻，<strong>零參數搜索</strong>。
+       快慢均線交叉訊號、inverse-vol 權重、10% 組合 vol target、單資產風險貢獻上限 20%、t+1 執行滯後——全部照文獻走。
+       三條速度點（20/120、60/200、120/250）都跑完整回測，headline <strong>固定為官方的 20/120</strong>，不事後挑最好的當門面。
+       結論：<strong>風格複製成立</strong>——對 SG 官方月報酬相關 <strong>0.647</strong>（驗收 0.60–0.75 過關）、2022 年 <strong>+21.92%</strong>（官方 +27.35%，方向與量級同調）；
+       但<strong>報酬水準遠不及</strong>（CAGR 2.79% vs SG 指數 5.39%），且驗收第三條（2024–25 深回撤）不通過。
+       這頁是 <a href="/backtest/">美股回測</a> 之外的「edge 存活研究」候選之一，價值在 crisis alpha 與對股票的去相關，不在絕對報酬。</p>
+  </div>
+  <div class="hero-stats">
+    <div><div class="hs-label">對 SG 月相關</div><div class="hs-value" style="color:var(--brand)">0.647</div></div>
+    <div><div class="hs-label">CAGR（20/120）</div><div class="hs-value" style="color:var(--green)">+2.79%</div></div>
+    <div><div class="hs-label">Sharpe</div><div class="hs-value" style="color:var(--brand)">0.27</div></div>
+    <div><div class="hs-label">MDD</div><div class="hs-value" style="color:var(--red)">-24.87%</div></div>
+  </div>
+</div>
+
+<div class="section">
+<h2 class="section-title">驗收結果（三條先寫死，照實對答案）</h2>
+<div class="section-sub">驗收條件在跑之前就固定，不事後改門檻。三條中通過 2 條，第三條不過並附診斷。</div>
+<div class="card"><table>
+<thead><tr><th>#</th><th>驗收條件</th><th>目標</th><th>實測（期貨版 20/120）</th><th>結果</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>月報酬 vs SG Trend Index 官方月頻 Pearson 相關</td><td>0.60–0.75</td><td><strong>0.647</strong>（重疊 2001-05→2026-06，302 月）</td><td class="pass">✅ 通過</td></tr>
+<tr><td>2</td><td>2022 年報酬大幅正值（官方 +27.35%）</td><td>明顯正</td><td><strong>+21.92%</strong></td><td class="pass">✅ 通過</td></tr>
+<tr><td>3</td><td>2024/5–2025/5 深回撤（官方 −20.4%）</td><td>≤ −15%</td><td><strong>−8.45%</strong>（該窗最大回撤）</td><td class="faildot">❌ 不通過</td></tr>
+</tbody></table>
+<div class="takeaway"><strong>驗收 3 不通過的診斷（排查後判定非 bug，而是 universe 廣度 ＋ 波動尺度差）：</strong>
+① 引擎能產生深回撤（全期 MDD −24.87%、120/250 到 −42.30%），不是被 vol target 抹平；
+② SG 該窗回撤是其追蹤的 50+ 市場（農產／軟商品／能源／短率／全球債股／廣度 FX）整體 whipsaw 的長期陰跌；
+③ 該窗我的 10 標的月報酬 vs SG 相關僅 ~0.34（全期 0.65），2025-04 關稅月 SG −4.89% 但本組合 +2.85%（黃金／債券部位反而獲利，站在 SG 反方向）；
+④ 純波動尺度換算 −20.43%×(10/12.8) ≈ −15.92%，剩餘缺口仍歸 universe 廣度。10 標的無法覆蓋 SG 在該窗的驅動市場——這是誠實的複驗侷限，不是實作錯誤。</div>
+</div>
+</div>
+
+<div class="section">
+<h2 class="section-title">核心 metrics（期貨版 · 三速度點）</h2>
+<div class="section-sub">headline 固定 20/120（官方 SG Trend Indicator 速度）。60/200、120/250 為確認性檢驗，照報不挑。</div>
+<div class="card"><table>
+<thead><tr><th>速度點</th><th>CAGR</th><th>年化波動</th><th>Sharpe</th><th>Sortino</th><th>MDD</th><th>Calmar</th><th>對 SG 相關</th><th>成本拖累</th></tr></thead>
+<tbody>
+<tr style="background:var(--brand-light)"><td><strong>20/120（headline）</strong></td><td>+2.79%</td><td>10.52%</td><td>0.27</td><td>0.37</td><td>-24.87%</td><td>0.11</td><td><strong>0.647</strong></td><td>1.15 pp/年</td></tr>
+<tr><td>60/200</td><td>+3.04%</td><td>10.45%</td><td>0.29</td><td>0.40</td><td>-29.01%</td><td>0.10</td><td>0.621</td><td>0.74 pp/年</td></tr>
+<tr><td>120/250</td><td>+1.09%</td><td>10.44%</td><td>0.10</td><td>0.14</td><td>-42.30%</td><td>0.03</td><td>0.462</td><td>0.66 pp/年</td></tr>
+</tbody></table>
+<div class="takeaway">年化波動三者皆 ≈ 10%，vol target 命中。headline 平均槓桿 1.87、最大 3.0，平均在場 active 資產 9.0 檔。
+20/120 與 60/200 相關落在目標區間；120/250 速度過慢、訊號延遲，與 SG 訊號構成距離較遠（0.462，出區間）。</div>
+</div>
+</div>
+
+<div class="section">
+<h2 class="section-title">ETF 對照版（純還原股價，扣現金利率）</h2>
+<div class="section-sub">SPY／QQQ／TLT／IEF／GLD／DBC／UUP，共同起點約 2007-03。用來檢驗期貨 roll 是否造成方向性偏移。</div>
+<div class="card"><table>
+<thead><tr><th>速度點</th><th>CAGR</th><th>Sharpe</th><th>MDD</th><th>Calmar</th><th>對 SG 相關</th></tr></thead>
+<tbody>
+<tr style="background:var(--brand-light)"><td><strong>20/120</strong></td><td>+4.75%</td><td>0.45</td><td>-21.62%</td><td>0.22</td><td>0.623</td></tr>
+<tr><td>60/200</td><td>+4.20%</td><td>0.40</td><td>-26.03%</td><td>0.16</td><td>0.678</td></tr>
+<tr><td>120/250</td><td>+5.15%</td><td>0.48</td><td>-25.37%</td><td>0.20</td><td>0.501</td></tr>
+</tbody></table>
+<div class="takeaway"><strong>兩版月報酬相關 0.81–0.88，無災難級分歧</strong>——剔除 CL=F／SI=F、改用 USO／SLV 代理有效防堵了審計指出的最大污染源。
+但期貨版 CAGR（2.79%）持續低於 ETF 版（4.75%）：ETF 版含 SPY／QQQ／TLT／IEF 這些 2009 後長多趨勢極強的標的，
+期貨版含 USO（審計顯示 −7.86%／年）與 SLV 拖累。這是<strong>資產組成差</strong>，不是同資產的 roll 污染差。</div>
+</div>
+</div>
+
+<div class="section">
+<h2 class="section-title">資料審計：兩個標的被剔除</h2>
+<div class="section-sub">忠實回測的前提是資料乾淨。跑策略前先做資料審計，兩檔期貨連續合約被判不可用。</div>
+<div class="two-col">
+<div class="card"><h3>CL=F（原油）— 剔除</h3><ul class="rule-list">
+  <li>原始拼接序列有 <strong>+7.85%／年的幻影超額</strong>——連續合約拼接低估了 contango（正價差）的滾動損耗。</li>
+  <li>用真實還原股價 <strong>USO</strong> 取代（2006-04 上市起）。</li>
+</ul></div>
+<div class="card"><h3>SI=F（白銀）— 剔除</h3><ul class="rule-list">
+  <li>殭屍 bar（stale／重複值）貫穿全期。</li>
+  <li>用真實還原股價 <strong>SLV</strong> 取代（2006-04 上市起）。</li>
+</ul></div>
+</div>
+<div class="note"><strong>保留的：</strong>GC=F（黃金）roll 幻影僅 +0.44%／年，可接受、保留；6J=F 的 2001-12-17 小數點壞 bar 已在 loader 修復（6J 於 2005 才進場，對結果無實質影響，純防禦性處理）。
+其餘期貨 roll 幅度小於 3× 日內波動門檻，未造成離群級跳空——但不代表零污染，見侷限節。</div>
+</div>
+
+<div class="section">
+<h2 class="section-title">淨值與回撤</h2>
+<div class="chart-card"><h3>headline 20/120 權益曲線（log）＋回撤 · 疊 SG Trend Index 月頻 VAMI（正規化到同起點）</h3>
+<img src="equity_drawdown.png" alt="SG Trend 複製權益曲線與回撤，疊加 SG Trend Index VAMI">
+</div>
+</div>
+
+<div class="section">
+<h2 class="section-title">誠實侷限</h2>
+<div class="card"><ol class="rule-list">
+  <li><strong>Roll 未調整</strong>——期貨用 yfinance 連續合約 Close 的 pct_change 當 excess return 近似，未做 roll 調整。審計已量化最大污染源（CL=F +7.85%／年）並剔除。</li>
+  <li><strong>ETF 混用</strong>——期貨版把 USO／SLV（真實 roll-cost ETF）與純期貨並置在同一 universe，已用「扣現金利率」對齊 self-financing 性質，但兩者資料生成過程不同。</li>
+  <li><strong>費用假設</strong>——14 bps 往返為固定假設，未隨流動性／波動變動，未計市場衝擊、保證金利息、ETF expense ratio。</li>
+  <li><strong>CAGR 遠低於 SG 指數</strong>（2.79% vs 5.39%）——「10 標的窄 universe ＋ 10% vol target」的必然結果。本回測目標是複製<strong>風格（相關性）</strong>，不是報酬水準；相關 0.65 達標即成功。</li>
+  <li><strong>單一窗口回撤無法複製</strong>——驗收 3 不過的根因是 universe 廣度不足（SG 追蹤 50+ 市場），非 bug。</li>
+</ol></div>
+</div>
+
+<div class="section">
+<h2 class="section-title">相關頁</h2>
+<div class="xlinks">
+  <a href="/backtest/mom_volscaling/">🌀 美股動能・波動率縮放（複驗）</a>
+  <a href="/backtest/">🏠 量化回測總覽</a>
+  <a href="/backtest/multi/">🧩 多資產總覽</a>
+  <a href="/backtest/gem/">SPY/ACWX 雙動能</a>
+  <a href="/backtest/glossary/">📖 術語對照表</a>
+</div>
+</div>
+
+</div>
+<footer><div class="container">&copy; 2026 InvestMQuest Research · 多資產期貨・趨勢追蹤（SG Trend Index 複製）· 真實 yfinance · 產生於 2026-07-03 · 僅供研究，非投資建議</div></footer>
+</body></html>
