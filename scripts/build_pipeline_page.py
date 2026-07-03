@@ -55,6 +55,8 @@ QUALITY_MOAT_GRADES = {"S", "A", "B"}
 DE_WARN_THRESHOLD = 0.7          # D/E 警示線（advisory，不擋）
 DD_STALE_DAYS = 90               # DD>90 天視為過舊（回看鏡盲區判定）
 LOOKBACK_TOP_N = 30              # 回看鏡 top N
+LEADERBOARD_TOP_N = 25           # 全宇宙潛力榜 top N
+HEUR_EV5Y_ARTIFACT_CAP = 60.0    # heur 來源 EV5y 超過此值＝artifact，抽出排行單列人工檢視
 STRUCT_BULL_MULT = 15.0          # 結構軌排序：bull 倍數權重
 CORE_CAP_PCT = 10.0              # 核心單檔上限（個股部淨值）
 SATELLITE_CAP_PCT = 5.0          # 衛星單檔上限
@@ -139,6 +141,20 @@ def _certainty(s: dict) -> float:
     """確定性 = (moat_score + quality_score) / 20 ∈ [0,1]."""
     return ((_safe_float(s.get("moat_score")) or 0.0)
             + (_safe_float(s.get("quality_score")) or 0.0)) / 20.0
+
+
+def _ev5y_raw(s: dict):
+    """EV5y 原值（None 表無資料，不 fallback 0）。live 優先、缺則報告靜態值。"""
+    v = _safe_float(s.get("live_ev5y_pct"))
+    if v is None:
+        v = _safe_float(s.get("ev5y_pct"))
+    return v
+
+
+def _has_scenario(s: dict) -> bool:
+    """EV5y 是否來自 §11.5 機率加權情境（有 bull/bear 價＋機率）＝🟢 嚴謹；否則 heur。"""
+    return all(_safe_float(s.get(k)) is not None
+               for k in ("bull_5y_price", "bear_5y_price", "p_bull_pct", "p_bear_pct"))
 
 
 def _bull_mult(s: dict) -> Optional[float]:
@@ -470,9 +486,72 @@ def render_lookback(lb12: list, lb24: list, queue12: list, queue24: list) -> str
 </section>"""
 
 
+def _prov_badge(prov: str) -> str:
+    if prov == "rigorous":
+        return '<span class="prov prov-rig">🟢 §11.5</span>'
+    return '<span class="prov prov-heur">🟡 heur</span>'
+
+
+def _lb_score_row(u: dict, rank: int) -> str:
+    s = u["s"]
+    fill = ""
+    if u["prov"] == "heur" and not s.get("dca_verdict"):
+        fill = '<span class="lb-fill">→ 補 DD</span>'
+    verd = _verdict_badge(s.get("dca_verdict"))
+    age = s.get("dd_age_days")
+    age_s = f"{age}d" if age is not None else "—"
+    return f"""<tr>
+  <td class="num">{rank}</td>
+  <td class="left">{_dd_link(s)}{_de_badge(s)}</td>
+  <td class="num"><strong>{u['score']:.1f}</strong></td>
+  <td class="num">{_pct(u['raw_ev'], signed=True)}</td>
+  <td>{_prov_badge(u['prov'])}</td>
+  <td class="num">{u['cert']:.2f}</td>
+  <td>{verd}</td>
+  <td class="num">{age_s}</td>
+  <td class="meta">{escape(s.get("moat_grade") or "?")}{escape(s.get("moat_trend") or "")}</td>
+  <td>{fill}</td>
+</tr>"""
+
+
+def render_leaderboard(univ: list, artifacts: list, n_total: int) -> str:
+    top = univ[:LEADERBOARD_TOP_N]
+    body = "\n".join(_lb_score_row(u, i) for i, u in enumerate(top, 1)) or \
+        '<tr><td colspan="10" class="empty">無可排名的名字。</td></tr>'
+    fill_cnt = sum(1 for u in top if u["prov"] == "heur" and not u["s"].get("dca_verdict"))
+    art_note = ""
+    if artifacts:
+        items = "、".join(
+            f'{escape(u["s"]["ticker"])}（EV5y {_pct(u["raw_ev"], signed=True)}）' for u in artifacts)
+        art_note = (f'<div class="queue-note" style="border-color:#f0c9b8">'
+                    f'<b>⚠ EV5y 異常 · 抽出排行待人工檢視（{len(artifacts)}）</b>：{items}<br>'
+                    f'　來源＝heur 啟發式（無 §11.5 情境）且 EV5y &gt; {HEUR_EV5Y_ARTIFACT_CAP:.0f}%，'
+                    f'數值不可信（多為舊 DD 無 bull/bear 情境）→ 補 v14 DD 才有嚴謹 EV5y。</div>')
+    return f"""<section class="block" id="leaderboard">
+  <h2 class="block-h"><span class="step">6</span> 全宇宙潛力榜 · 補 DD 導航</h2>
+  <div class="block-sub">
+    把核心軌的<b>潛力分（EV5y × 確定性）</b>套到全宇宙 {n_total} 檔——<b>不是買入排行，是研究優先序</b>。
+    <b>確定性</b>（moat+quality/20）全宇宙皆有；<b>EV5y</b> 出處分兩級：
+    <span class="prov prov-rig">🟢 §11.5</span> 機率加權情境（嚴謹、有反偏差防線）vs
+    <span class="prov prov-heur">🟡 heur</span> 啟發式估計（僅方向性）。
+    <b>用途</b>：🟡 高分票＝「看起來有潛力但 EV5y 未經 §11.5 嚴謹化」＝<b>下一個該補 v14 DD 的候選</b>（補了就把 🟡 轉 🟢）。
+  </div>
+  {art_note}
+  <div class="tbl-wrap"><table class="lb-score">
+<thead><tr>
+  <th class="num">#</th><th class="left">Ticker</th><th class="num">潛力分</th><th class="num">EV5y</th>
+  <th>出處</th><th class="num">確定性</th><th>裁決</th><th class="num">DD齡</th><th>moat</th><th></th>
+</tr></thead>
+<tbody>
+{body}
+</tbody></table></div>
+  <div class="block-foot">榜上 top {LEADERBOARD_TOP_N} 中 <b>{fill_cnt} 檔標「→ 補 DD」</b>＝🟡 且無裁決，優先補齊到潛力序前段皆 🟢，核心/衛星席位才是在可信名單裡競爭。</div>
+</section>"""
+
+
 def render_privacy() -> str:
     return f"""<section class="block privacy">
-  <h2 class="block-h"><span class="step">6</span> 隱私線</h2>
+  <h2 class="block-h"><span class="step">7</span> 隱私線</h2>
   <div class="privacy-body">
     本頁只呈現<b>研究層</b>：宇宙、資格閘、三軌候選、板機燈號、發現力稽核。
     <b>實際持倉與權重不上站</b>（與 <code>/pm/</code> 封存同一原則）。射擊名單≠買入指令——每檔進場仍須
@@ -527,6 +606,11 @@ code{background:#f0f5fb;padding:1px 5px;border-radius:3px;font-size:11px;color:#
 .track-desc.warn-inline{background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:8px 10px;color:#991b1b}
 .seg-h{font-size:11.5px;font-weight:700;padding:6px 0 4px;margin-top:8px;border-top:1px dashed #e2ecf7}
 .seg-note{font-size:11px;color:#5a7a9a;padding:4px 0 2px;line-height:1.6}
+.prov{font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:4px;white-space:nowrap}
+.prov-rig{background:#e6f4ea;color:#1a7f37}
+.prov-heur{background:#fdf3e3;color:#a6730a}
+.lb-fill{font-size:10.5px;font-weight:700;color:#2563eb;white-space:nowrap}
+table.lb-score td,table.lb-score th{padding:5px 8px}
 .seg-in{color:#166534}.seg-watch{color:#92400e}.seg-none{color:#64748b}.seg-hot{color:#9a3412}
 table{width:100%;border-collapse:collapse;font-size:12px;margin-top:4px}
 th{background:#f0f6ff;color:#5a7a9a;font-weight:700;padding:7px 9px;text-align:right;border-bottom:2px solid #dce8f5;font-size:10px;letter-spacing:.03em}
@@ -656,6 +740,24 @@ def build(dry_run: bool = False) -> int:
     # momentum blind (for universe section) = union of the two queues
     momentum_blind = {r["ticker"] for r in queue12} | {r["ticker"] for r in queue24}
 
+    # ── 全宇宙潛力榜 ── 潛力分 = EV5y × 確定性；heur 來源且 EV5y>cap 抽出當 artifact
+    univ, artifacts = [], []
+    for s in stocks:
+        raw = _ev5y_raw(s)
+        if raw is None:
+            continue
+        rigorous = _has_scenario(s)
+        u = {"s": s, "raw_ev": raw, "cert": _certainty(s),
+             "prov": "rigorous" if rigorous else "heur",
+             "score": raw * _certainty(s)}
+        if (not rigorous) and raw > HEUR_EV5Y_ARTIFACT_CAP:
+            artifacts.append(u)
+        else:
+            univ.append(u)
+    univ.sort(key=lambda u: (-u["score"], u["s"]["ticker"]))
+    artifacts.sort(key=lambda u: -u["raw_ev"])
+    n_scored = len(univ) + len(artifacts)
+
     # ── console summary ──
     print(f"  universe={latest.get('universe_size')} 過閘={len(gated)} "
           f"(D/E⚠={sum(1 for s in gated if (_safe_float(s.get('de')) or 0)>DE_WARN_THRESHOLD)})")
@@ -670,6 +772,10 @@ def build(dry_run: bool = False) -> int:
     print(f"  板機: today={len(sop.get('today_signals',[])) if sop else '?'} "
           f"open={len(sop.get('open_trades',[])) if sop else '?'} 態②否決={veto_by_reason.get('態②過熱',0)}")
     print(f"  回看鏡動能盲區: 12M={[r['ticker'] for r in queue12]} 24M={[r['ticker'] for r in queue24]}")
+    print(f"  潛力榜: 可排 {len(univ)}/{n_scored} "
+          f"(🟢{sum(1 for u in univ if u['prov']=='rigorous')} 🟡{sum(1 for u in univ if u['prov']=='heur')}) "
+          f"artifact 抽出 {len(artifacts)}={[u['s']['ticker'] for u in artifacts]}")
+    print(f"    top5: {[(u['s']['ticker'], round(u['score'],1), u['prov']) for u in univ[:5]]}")
 
     # ── assemble HTML ──
     universe_html = render_universe(latest, pre_id, list(momentum_blind))
@@ -677,6 +783,7 @@ def build(dry_run: bool = False) -> int:
     tracks_html = render_tracks(core_sorted, struct_sorted, cyc)
     trigger_html = render_trigger(sop, veto_by_reason)
     lookback_html = render_lookback(lb12, lb24, queue12, queue24)
+    leaderboard_html = render_leaderboard(univ, artifacts, n_scored)
     privacy_html = render_privacy()
 
     as_of = latest.get("as_of", "—")
@@ -723,6 +830,7 @@ def build(dry_run: bool = False) -> int:
 {tracks_html}
 {trigger_html}
 {lookback_html}
+{leaderboard_html}
 {privacy_html}
 </div>
 
