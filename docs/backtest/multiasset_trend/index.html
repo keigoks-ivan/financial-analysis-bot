@@ -8,7 +8,9 @@
 <style>
 :root{--brand:#4f46e5;--brand-light:#eef2ff;--bg:#f9fafb;--card:#fff;
       --text:#111827;--muted:#6b7280;--border:#e5e7eb;
-      --green:#059669;--red:#dc2626;--amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fde68a;--amber-text:#92400e}
+      --green:#059669;--green-bg:#ecfdf5;--green-border:#a7f3d0;--green-text:#065f46;
+      --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;--red-text:#991b1b;
+      --amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fde68a;--amber-text:#92400e}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
 a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
@@ -40,6 +42,16 @@ tbody tr:hover td{background:#f3f4f6}
 .hero-stats .hs-value{font-size:1.55rem;font-weight:800;letter-spacing:-.02em}
 .note{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;padding:.85rem 1.1rem;font-size:.84rem;color:var(--amber-text);margin:1rem 0}
 .pass{color:var(--green);font-weight:700}.faildot{color:var(--red);font-weight:700}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.5rem;margin:1.25rem 0}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.85rem 1rem;text-align:center}
+.kpi .label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.25rem}
+.kpi .value{font-size:1.25rem;font-weight:700}
+.kpi .value.pos{color:var(--green)}.kpi .value.neg{color:var(--red)}.kpi .value.neu{color:var(--brand)}
+.tag{display:inline-block;padding:.15rem .55rem;border-radius:4px;font-size:.72rem;font-weight:600}
+.tag-best{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border)}
+.tag-fail{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red-border)}
+.tag-pass{background:#f3f4f6;color:#374151;border:1px solid #d1d5db}
+.corebox{border:2px solid var(--brand)}
 .chart-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
 .chart-card h3{font-size:.95rem;font-weight:600;margin-bottom:.5rem}
 .chart-card img{width:100%;height:auto;border-radius:6px;border:1px solid var(--border)}
@@ -167,15 +179,24 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
   </div>
 </div>
 
+<div class="kpi-grid">
+<div class="kpi"><div class="label">對 SG 月相關</div><div class="value neu">0.647</div></div>
+<div class="kpi"><div class="label">CAGR（20/120）</div><div class="value pos">+2.79%</div></div>
+<div class="kpi"><div class="label">Sharpe</div><div class="value neu">0.27</div></div>
+<div class="kpi"><div class="label">MDD</div><div class="value neg">-24.87%</div></div>
+<div class="kpi"><div class="label">2022 報酬</div><div class="value pos">+21.92%</div></div>
+<div class="kpi"><div class="label">驗收結果</div><div class="value neu">2 / 3 通過</div></div>
+</div>
+
 <div class="section">
-<h2 class="section-title">驗收結果（三條先寫死，照實對答案）</h2>
-<div class="section-sub">驗收條件在跑之前就固定，不事後改門檻。三條中通過 2 條，第三條不過並附診斷。</div>
-<div class="card"><table>
-<thead><tr><th>#</th><th>驗收條件</th><th>目標</th><th>實測（期貨版 20/120）</th><th>結果</th></tr></thead>
+<h2 class="section-title">驗收結果</h2>
+<div class="section-sub">三條驗收條件在跑回測之前就寫死、不事後改門檻，照實對答案：通過 2 條，第三條不通過並附診斷。</div>
+<div class="card corebox"><table>
+<thead><tr><th>#</th><th>驗收條件</th><th>文獻宣稱／目標</th><th>實測（期貨版 20/120）</th><th>判定</th></tr></thead>
 <tbody>
-<tr><td>1</td><td>月報酬 vs SG Trend Index 官方月頻 Pearson 相關</td><td>0.60–0.75</td><td><strong>0.647</strong>（重疊 2001-05→2026-06，302 月）</td><td class="pass">✅ 通過</td></tr>
-<tr><td>2</td><td>2022 年報酬大幅正值（官方 +27.35%）</td><td>明顯正</td><td><strong>+21.92%</strong></td><td class="pass">✅ 通過</td></tr>
-<tr><td>3</td><td>2024/5–2025/5 深回撤（官方 −20.4%）</td><td>≤ −15%</td><td><strong>−8.45%</strong>（該窗最大回撤）</td><td class="faildot">❌ 不通過</td></tr>
+<tr><td>1</td><td>月報酬 vs SG Trend Index 官方月頻 Pearson 相關</td><td>0.60–0.75</td><td><strong>0.647</strong>（重疊 2001-05→2026-06，302 月）</td><td><span class="tag tag-pass">✅ 通過</span></td></tr>
+<tr><td>2</td><td>2022 年報酬大幅正值（官方 +27.35%）</td><td>明顯正</td><td><strong>+21.92%</strong></td><td><span class="tag tag-pass">✅ 通過</span></td></tr>
+<tr><td>3</td><td>2024/5–2025/5 深回撤（官方 −20.4%）</td><td>≤ −15%</td><td><strong>−8.45%</strong>（該窗最大回撤）</td><td><span class="tag tag-fail">❌ 不通過</span></td></tr>
 </tbody></table>
 <div class="takeaway"><strong>驗收 3 不通過的診斷（排查後判定非 bug，而是 universe 廣度 ＋ 波動尺度差）：</strong>
 ① 引擎能產生深回撤（全期 MDD −24.87%、120/250 到 −42.30%），不是被 vol target 抹平；
@@ -186,7 +207,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </div>
 
 <div class="section">
-<h2 class="section-title">核心 metrics（期貨版 · 三速度點）</h2>
+<h2 class="section-title">核心績效指標（三速度點）</h2>
 <div class="section-sub">headline 固定 20/120（官方 SG Trend Indicator 速度）。60/200、120/250 為確認性檢驗，照報不挑。</div>
 <div class="card"><table>
 <thead><tr><th>速度點</th><th>CAGR</th><th>年化波動</th><th>Sharpe</th><th>Sortino</th><th>MDD</th><th>Calmar</th><th>對 SG 相關</th><th>成本拖累</th></tr></thead>
