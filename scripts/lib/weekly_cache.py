@@ -66,6 +66,21 @@ BARS_CAP = 270                   # keep at most ~5y + 1 quarter buffer per ticke
 
 SOURCE_TAG = "yfinance:5y:1wk auto_adjust=True"
 
+# ── epsilon-stable write tolerances ───────────────────────────────────────────
+# yfinance re-serializes adjusted closes with sub-cent drift at the 4th decimal
+# (e.g. 132.4611 → 132.461, 129.3356 → 129.3355) on every pull. Rewriting the
+# file with that noise produced 10k+ blob versions and nightly rebase collisions.
+# A bar whose close moves by less than *both* an absolute and a relative floor is
+# treated as unchanged: we keep the OLD serialized value so the file bytes (and
+# therefore the git diff) stay stable. Real daily/weekly moves are dollars, not
+# sub-cent, so genuine price tracking is unaffected.
+CLOSE_ABS_TOL = 0.005            # |Δ| < half a cent → noise
+CLOSE_REL_TOL = 1e-4             # OR |Δ|/price < 1e-4 → noise (covers high-$ names)
+# Metadata fields that, if changed, justify a rewrite even when bars are stable.
+# `last_full_refresh` is deliberately excluded: it is diagnostic-only (no consumer
+# reads it) and advancing it on a no-material-change day would reintroduce churn.
+_META_KEYS_FOR_SKIP = ("ticker", "rebackfill_slot", "source", "last_attempt_failed_at")
+
 
 # ── helpers ──────────────────────────────────────────────────────────────────
 def cache_path(ticker: str) -> Path:
@@ -122,6 +137,66 @@ def read_ticker_cache(ticker: str) -> Optional[dict]:
         return None
 
 
+def _round_bars(bars: list[dict]) -> list[dict]:
+    """Canonical 4-decimal rounding of every close (idempotent; upstream
+    df_to_bars already rounds, this is defensive so the write path is the
+    single source of truth for on-disk precision)."""
+    out: list[dict] = []
+    for b in bars:
+        nb = dict(b)
+        c = nb.get("close")
+        if c is not None:
+            try:
+                nb["close"] = round(float(c), 4)
+            except (TypeError, ValueError):
+                pass
+        out.append(nb)
+    return out
+
+
+def _close_equiv(a: Optional[float], b: Optional[float]) -> bool:
+    """True if two closes are equal within noise tolerance (abs OR rel)."""
+    if a is None or b is None:
+        return a == b
+    d = abs(a - b)
+    if d < CLOSE_ABS_TOL:
+        return True
+    denom = max(abs(a), abs(b))
+    return denom > 0 and (d / denom) < CLOSE_REL_TOL
+
+
+def _reconcile_bars(old_bars: list[dict], new_bars: list[dict]) -> list[dict]:
+    """Return `new_bars`, but for every bar whose week_end also exists in the
+    cache AND whose close is within noise tolerance, revert to the OLD cached
+    bar verbatim. This strips re-serialization drift from unchanged bars while
+    letting genuinely new bars, removed bars (window roll-off), and real moves
+    (> tolerance) flow through. Net effect: a full 5y pull that only jitters the
+    4th decimal produces byte-identical output; a true one-bar change produces a
+    one-bar diff instead of a whole-file rewrite."""
+    old_by = {b.get("week_end"): b for b in (old_bars or [])}
+    out: list[dict] = []
+    for nb in new_bars:
+        ob = old_by.get(nb.get("week_end"))
+        if ob is not None and _close_equiv(ob.get("close"), nb.get("close")):
+            # Preserve the old bar exactly (close value + any other fields).
+            out.append(dict(ob))
+        else:
+            out.append(nb)
+    return out
+
+
+def _is_noop_write(existing: Optional[dict], payload: dict) -> bool:
+    """True if writing `payload` would not change anything material relative to
+    the file already on disk — same bars (already reconciled to old values) and
+    same skip-relevant metadata. `last_full_refresh` is intentionally ignored so
+    a no-material-change refresh day leaves the file (and git) untouched."""
+    if existing is None:
+        return False
+    if (existing.get("weekly_bars") or []) != payload.get("weekly_bars"):
+        return False
+    return all(existing.get(k) == payload.get(k) for k in _META_KEYS_FOR_SKIP)
+
+
 def write_ticker_cache(
     ticker: str,
     weekly_bars: list[dict],
@@ -129,23 +204,34 @@ def write_ticker_cache(
     full_refresh: bool,
     last_attempt_failed_at: Optional[str] = None,
 ) -> None:
-    """Atomic write of the per-ticker cache JSON.
+    """Atomic, epsilon-stable write of the per-ticker cache JSON.
 
-    - `full_refresh=True` updates `last_full_refresh` to today
+    - `full_refresh=True` updates `last_full_refresh` to today (only when the
+      write actually lands — a no-op refresh leaves it stale, which is truthful)
     - `full_refresh=False` preserves prior `last_full_refresh` (incremental)
-    - bars trimmed to BARS_CAP newest entries
+    - bars trimmed to BARS_CAP newest entries, closes canonicalised to 4dp
+    - unchanged bars are reconciled to their old serialized value, and if the
+      resulting payload is materially identical to the file on disk, NO write
+      happens at all (old bytes preserved → zero git diff)
     """
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     today_str = date.today().isoformat()
 
+    weekly_bars = _round_bars(weekly_bars)
     if len(weekly_bars) > BARS_CAP:
         weekly_bars = weekly_bars[-BARS_CAP:]
+
+    existing = read_ticker_cache(ticker)
+
+    # Kill re-serialization drift: keep old close bytes for bars that didn't
+    # materially move, so only genuine adds/removes/moves ever hit disk.
+    if existing is not None:
+        weekly_bars = _reconcile_bars(existing.get("weekly_bars") or [], weekly_bars)
 
     # Preserve last_full_refresh across incremental writes
     if full_refresh:
         refresh_date = today_str
     else:
-        existing = read_ticker_cache(ticker)
         refresh_date = (existing or {}).get("last_full_refresh") or today_str
 
     payload: dict[str, Any] = {
@@ -156,9 +242,16 @@ def write_ticker_cache(
         "source": SOURCE_TAG,
         "weekly_bars": weekly_bars,
     }
-    # Compact JSON: tabular layout for bars (one bar per line) would help diff
-    # readability, but standard indent=2 is enough at this size — and avoids
-    # custom serialization fragility.
+
+    # Skip-if-equivalent: nothing material changed → leave the file untouched so
+    # the git blob is byte-stable across nightly rebuilds.
+    if _is_noop_write(existing, payload):
+        return
+
+    # Compact JSON: tabular layout for bars (one bar per line) helps diff
+    # readability, and indent=2 with the fixed key order above is already
+    # deterministic — no sort_keys needed (and sort_keys would reorder every
+    # bar's close/week_end, turning a one-bar change into a whole-file diff).
     p = cache_path(ticker)
     tmp = p.with_suffix(p.suffix + ".tmp")
     tmp.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
