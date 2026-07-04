@@ -1,0 +1,58 @@
+name: Daily Snapshot Freeze (pre-earnings anchors)
+
+# T-minus 鏈：每個交易日掃 calendar.json，對 5 天內進場持倉的財報事件
+# 自動凍結賽前共識快照（docs/catalyst/snapshots/）。敘事層 preview 由
+# pre-earnings-preview skill 消費這些錨（人工一句話觸發）。
+
+on:
+  schedule:
+    - cron: "10 22 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  freeze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install "yfinance>=0.2.40" requests
+
+      - name: Freeze pre-earnings snapshots (5-day window)
+        run: python3 scripts/snapshot_consensus.py --scan --window 5
+        continue-on-error: true
+
+      - name: Rebuild catalyst page (freeze/preview badges)
+        run: python3 scripts/build_catalyst_page.py
+        continue-on-error: true
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/catalyst/snapshots/ docs/catalyst/index.html
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            DATE=$(date -u +"%Y-%m-%d")
+            git commit -m "data: pre-earnings snapshot freeze ${DATE}
+
+            Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+            for i in 1 2 3; do
+              if git push; then
+                exit 0
+              fi
+              echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+              git pull --rebase origin main || { echo "Rebase failed"; exit 1; }
+            done
+            echo "Push failed after 3 attempts"
+            exit 1
+          fi

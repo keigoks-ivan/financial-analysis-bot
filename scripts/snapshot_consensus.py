@@ -424,13 +424,68 @@ def build(ticker: str, override_date: Optional[str]) -> int:
     return 0
 
 
+def scan(window_days: int) -> int:
+    """自動凍結掃描（cron 模式）：對 calendar.json 中未來 window_days 天內、
+    positioning.dca_verdict==進場 的 earnings 事件，若快照不存在就凍結。
+    已凍結（exit 3 情形）＝跳過不是錯誤；單檔失敗不中斷整批。"""
+    cal = _load_json(CALENDAR_JSON)
+    if not cal:
+        print("  ✗ calendar.json 不存在或無法解析，中止。", file=sys.stderr)
+        return 2
+    today = datetime.now(ZoneInfo("Asia/Taipei")).date()
+    horizon = today + timedelta(days=window_days)
+    targets = []
+    for e in cal.get("events", []):
+        if e.get("type") != "earnings":
+            continue
+        if (e.get("positioning") or {}).get("dca_verdict") != "進場":
+            continue
+        try:
+            d = date.fromisoformat(e["date"])
+        except (KeyError, ValueError):
+            continue
+        if today <= d <= horizon:
+            targets.append((e["ticker"], e["date"]))
+    print(f"=== snapshot scan · 今日 {today} · 視窗 {window_days} 天 · "
+          f"進場財報事件 {len(targets)} 筆 ===")
+    frozen = skipped = failed = 0
+    for ticker, edate in targets:
+        ymd = edate.replace("-", "")
+        out_path = SNAP_DIR / f"preview_{ticker.upper()}_{ymd}.json"
+        if out_path.exists():
+            print(f"  · {ticker} {edate}：已凍結，跳過")
+            skipped += 1
+            continue
+        try:
+            rc = build(ticker, edate)
+        except Exception as exc:  # 單檔失敗不中斷整批
+            print(f"  ✗ {ticker} {edate}：{exc}", file=sys.stderr)
+            failed += 1
+            continue
+        if rc == 0:
+            frozen += 1
+        else:
+            failed += 1
+    print(f"=== scan 完成：凍結 {frozen}、已存在 {skipped}、失敗 {failed} ===")
+    return 0 if failed == 0 else 1
+
+
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("ticker", help="標的代號（如 TSM、2330.TW）")
+    p.add_argument("ticker", nargs="?", default=None,
+                   help="標的代號（如 TSM、2330.TW）；--scan 模式下省略")
     p.add_argument("--earnings-date", default=None,
                    help="強制指定財報日 YYYY-MM-DD（否則自動解析）")
+    p.add_argument("--scan", action="store_true",
+                   help="自動凍結掃描：calendar.json 內 N 天內進場財報事件（cron 用）")
+    p.add_argument("--window", type=int, default=5,
+                   help="--scan 的前瞻天數（預設 5）")
     args = p.parse_args()
+    if args.scan:
+        return scan(args.window)
+    if not args.ticker:
+        p.error("需要 ticker（或改用 --scan）")
     return build(args.ticker, args.earnings_date)
 
 

@@ -64,9 +64,13 @@ python3 scripts/snapshot_consensus.py {TICKER}
 ```
 
 - **成功寫檔** → 記下 `docs/catalyst/snapshots/preview_{TICKER}_{YYYYMMDD}.json` 路徑，Step 4 直讀它渲染。
-- **回報「已凍結、拒絕覆寫」（exit 3）** → **不是錯誤**：代表今天已對這場財報凍過錨。**直接複用既有 JSON**
+- **回報「已凍結、拒絕覆寫」（exit 3）** → **不是錯誤**：代表已對這場財報凍過錨。**直接複用既有 JSON**
   重新渲染 HTML（idempotent re-render 允許；錨不可變，但報告可重生）。**絕不**為了重抓數字而刪檔重跑——
   刪掉賽前錨＝改寫事後複盤的基準，違反本 skill 前提。
+- **自動凍結（2026-07-05 起）**：`daily-snapshot-freeze.yml` 每交易日跑 `snapshot_consensus.py --scan
+  --window 5`，對 5 天內「進場」持倉的財報事件自動凍結錨——多數情況 Step 0 會直接命中 exit 3
+  （cron 已凍），這是預期路徑。日曆頁顯示「🔒 錨已凍結」徽章；本 skill 產出 HTML 後徽章轉為
+  「📋 前瞻」連結（`build_catalyst_page.py` 自動判斷，不用手動接）。
 - **exit 2（財報日無法解析）** → 回用戶要 `--earnings-date`，別瞎猜日期。
 - 快照裡任何 `null` 欄位（honest-fail）→ 在報告對應處誠實標「共識/現價/隱含波動：yfinance 當日未取得」，
   **不要**用記憶或估值回填凍結區。

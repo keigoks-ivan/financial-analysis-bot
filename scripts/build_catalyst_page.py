@@ -154,11 +154,30 @@ def render_highlight(events: list, today: date) -> str:
 </section>"""
 
 
+def _preview_link(e: dict) -> str:
+    """財報事件的 T-minus 狀態徽章：已有 preview HTML → 📋 前瞻連結；
+    只有凍結快照（cron 自動凍結）→ 🔒 錨已凍結（提示可觸發 preview skill）。"""
+    if e.get("type") != "earnings":
+        return ""
+    ymd = e["date"].replace("-", "")
+    fname = f"preview_{e['ticker'].replace('.', '')}_{ymd}.html"
+    fname_dot = f"preview_{e['ticker']}_{ymd}.html"
+    for f in (fname_dot, fname):
+        if (ROOT / "docs" / "earnings" / f).exists():
+            return f' <a class="pv-link" href="/earnings/{f}">📋 前瞻</a>'
+    for f in (f"preview_{e['ticker'].upper()}_{ymd}.json",
+              f"preview_{e['ticker'].upper().replace('.', '')}_{ymd}.json"):
+        if (ROOT / "docs" / "catalyst" / "snapshots" / f).exists():
+            return (f' <span class="pv-frozen" title="賽前共識已自動凍結（{f}）；'
+                    f'敘事層 preview 以「{e["ticker"]} 財報前瞻」觸發">🔒 錨已凍結</span>')
+    return ""
+
+
 def _fwd_row(e: dict) -> str:
     return f"""<tr>
   <td class="left nowrap">{_date_cell(e)}</td>
   <td class="left tk">{_ticker_link(e)}</td>
-  <td class="left ev">{escape(e["event"])}{_watch_html(e)}</td>
+  <td class="left ev">{escape(e["event"])}{_preview_link(e)}{_watch_html(e)}</td>
   <td>{_type_badge(e["type"])}</td>
   <td>{_impact_badge(e.get("impact",""))}</td>
   <td class="left">{_positioning_cell(e)}</td>
@@ -439,6 +458,9 @@ td.ev{color:#334e68;line-height:1.55;max-width:420px}
 .src-yfinance{background:#e0edff;color:#1d4ed8}.src-dd-meta{background:#e6f4ea;color:#15803d}
 .src-s15_static{background:#f1f5f9;color:#64748b}
 .stale-flag{font-size:9.5px;font-weight:700;color:#b45309;background:#fef3c7;border-radius:4px;padding:0 5px;white-space:nowrap;cursor:help}
+.pv-link{font-size:10.5px;font-weight:700;color:#1e40af;background:#dbeafe;border-radius:4px;padding:1px 6px;white-space:nowrap;text-decoration:none}
+.pv-link:hover{background:#bfdbfe;text-decoration:none}
+.pv-frozen{font-size:10.5px;font-weight:700;color:#475569;background:#e2e8f0;border-radius:4px;padding:1px 6px;white-space:nowrap;cursor:help}
 .dp{color:#94a3b8;cursor:help}
 .oc{font-size:11px;font-weight:700;padding:1px 7px;border-radius:4px;white-space:nowrap}
 .oc-pending{background:#f1f5f9;color:#94a3b8}.oc-done{background:#dcfce7;color:#166534}
