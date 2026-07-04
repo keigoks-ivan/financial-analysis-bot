@@ -127,6 +127,13 @@ V13_OPTIONAL_TYPES = {
     "bear_5y_price": (int, float),
     "p_bull_pct": (int, float),
     "p_bear_pct": (int, float),
+    # 2026-07-05 T-minus 鏈群組：catalyst 日程 + Base-case EPS 路徑 + 會計年度截止
+    # + EPS 口徑。型別檢查 only（消費端做 skip-and-log shape validation，
+    # validator 不擋回填與欄位演進，故不驗 list 元素 / dict 值的形狀）。
+    "catalysts": (list,),
+    "base_eps_path": (dict,),
+    "fy_end_month": (int,),
+    "eps_basis": (str,),
 }
 
 
