@@ -100,10 +100,11 @@ def render_seat_changes(changes: list[dict]) -> str:
             + "".join(rows) + "</tbody></table>")
 
 
-def load_light_rows(dd_tickers: set[str]) -> list[dict]:
+def load_light_rows(stocks_map: dict) -> list[dict]:
     """快審卡（qual_tier=light）→ 衛星席第二資格來源（2026-07-04 拍板）。
-    光卡只給衛星資格（核心席必須完整 DD）；GRP 數據取雷達主榜
-    （G＝FY+1 隱含成長、R＝30 天修正、P＝結構標籤）——與 DD 池口徑不同但同語意，頁面標 🪶。"""
+    光卡只給衛星資格（核心席必須完整 DD）。優先序：dd-meta 有裁決的名字光卡讓位；
+    池內「待補 DD」名字光卡可用（GRP 用 latest.json 全口徑）；池外用雷達主榜口徑
+    （G＝FY+1 隱含成長、R＝30 天修正），頁面標 🪶。"""
     cards_dir = OUT_DIR / "cards" / "data"
     try:
         radar = json.loads((OUT_DIR / "radar.json").read_text(encoding="utf-8"))
@@ -111,28 +112,32 @@ def load_light_rows(dd_tickers: set[str]) -> list[dict]:
         radar = {}
     board = {r["ticker"]: r for r in radar.get("grp_board") or []}
     stage2 = radar.get("stage2") or {}
+    verdict_tickers = {t for t, s in stocks_map.items() if s.get("dca_verdict")}
     rows = []
     for p in sorted(cards_dir.glob("*.json")):
         try:
             c = json.loads(p.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
             continue
-        if c.get("qual_tier") != "light" or c["ticker"] in dd_tickers:
-            continue   # DD 池名字以 dd-meta 為準，光卡不重複
+        if c.get("qual_tier") != "light" or c["ticker"] in verdict_tickers:
+            continue   # dd-meta 裁決優先，光卡不重複
         t = c["ticker"]
-        b = board.get(t) or {}
-        s2 = stage2.get(t) or {}
-        g = b.get("g_fy1_pct", s2.get("g_fy1_pct"))
-        rev = b.get("fy1_rev_30d_pct", s2.get("fy1_rev_30d_pct"))
-        p_label = b.get("p_label")
-        veto = rev is not None and rev <= -2.0
-        ok = (g is not None and g >= 15.0 and rev is not None and rev > 0
-              and not veto and p_label is not None)
-        grp = {"pass": ok, "veto": veto, "g": g, "r_fy1": rev, "r_2y": None,
-               "r_strength": rev or 0.0, "p_label": p_label,
-               "dist_hi": b.get("dist_ath"), "price": b.get("price"),
-               "score": round((rev or 0) + (g or 0) / 100.0, 3),
-               "why": [] if ok else ["雷達 GRP 資料不足或未過（隨主榜週更再驗）"]}
+        if t in stocks_map:
+            grp = grp_score(stocks_map[t])   # 池內待補 DD：全口徑
+        else:
+            b = board.get(t) or {}
+            s2 = stage2.get(t) or {}
+            g = b.get("g_fy1_pct", s2.get("g_fy1_pct"))
+            rev = b.get("fy1_rev_30d_pct", s2.get("fy1_rev_30d_pct"))
+            p_label = b.get("p_label")
+            veto = rev is not None and rev <= -2.0
+            ok = (g is not None and g >= 15.0 and rev is not None and rev > 0
+                  and not veto and p_label is not None)
+            grp = {"pass": ok, "veto": veto, "g": g, "r_fy1": rev, "r_2y": None,
+                   "r_strength": rev or 0.0, "p_label": p_label,
+                   "dist_hi": b.get("dist_ath"), "price": b.get("price"),
+                   "score": round((rev or 0) + (g or 0) / 100.0, 3),
+                   "why": [] if ok else ["雷達 GRP 資料不足或未過（隨主榜週更再驗）"]}
         rows.append({"ticker": t, "verdict": c.get("verdict"),
                      "role": c.get("role") or "衛星持倉",
                      "route": "satellite", "route_why": "快審卡（衛星限定）",
@@ -160,7 +165,7 @@ def main() -> int:
     # （moat B、循環/爆發型）。DD 角色與機械軌別衝突 → 標 ⚠ 供人裁。
     # GRP 未過的進場票落板凳並列原因——寧可席位空缺，不硬塞下修中的名字。
     entered = [row_dict(s) for s in stocks if s.get("dca_verdict") == "進場"]
-    light = load_light_rows({s["ticker"] for s in stocks})
+    light = load_light_rows({s["ticker"]: s for s in stocks})
     entered += [r for r in light if r["verdict"] == "進場"]
     passed = sorted([r for r in entered if r["grp"]["pass"]], key=lambda r: -r["score"])
     failed = sorted([r for r in entered if not r["grp"]["pass"]], key=lambda r: -r["score"])
