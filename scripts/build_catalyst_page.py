@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from datetime import date, datetime, timedelta, timezone
 from html import escape
@@ -569,11 +570,108 @@ def build(dry_run: bool = False) -> int:
 
     if dry_run:
         print(f"\n  (dry-run) would write {HTML_OUT} ({len(html):,} bytes)")
+        inject_earnings_preview_section(today, dry_run=True)
         return 0
 
     HTML_OUT.write_text(html, encoding="utf-8")
     print(f"\n  ✓ Wrote {HTML_OUT} ({HTML_OUT.stat().st_size:,} bytes)")
+    inject_earnings_preview_section(today)
     return 0
+
+
+# ── /earnings/ 首頁「財報前瞻」專區（marker 注入，全自動維護）─────────────
+PREVIEW_START = "<!-- PREVIEW_SECTION_START -->"
+PREVIEW_END = "<!-- PREVIEW_SECTION_END -->"
+EARNINGS_INDEX = ROOT / "docs" / "earnings" / "index.html"
+_PREVIEW_RE = re.compile(r"preview_([A-Z0-9.]+)_(\d{8})\.(html|json)$")
+
+
+def _preview_items(today: date) -> list:
+    """掃 preview HTML（已產）與 snapshots JSON（僅凍結），合併成狀態清單。"""
+    items = {}  # (ticker, ymd) -> {"html": path|None, "frozen": bool}
+    for f in sorted((ROOT / "docs" / "earnings").glob("preview_*.html")):
+        m = _PREVIEW_RE.search(f.name)
+        if m:
+            items[(m.group(1), m.group(2))] = {"html": f.name, "frozen": True}
+    for f in sorted((ROOT / "docs" / "catalyst" / "snapshots").glob("preview_*.json")):
+        m = _PREVIEW_RE.search(f.name)
+        if m:
+            items.setdefault((m.group(1), m.group(2)), {"html": None, "frozen": True})
+    out = []
+    for (ticker, ymd), st in items.items():
+        try:
+            d = date(int(ymd[:4]), int(ymd[4:6]), int(ymd[6:8]))
+        except ValueError:
+            continue
+        out.append({"ticker": ticker, "date": d, "ymd": ymd, **st})
+    # 未來事件在前（近→遠），過去事件在後（新→舊），過去只留 8 筆
+    future = sorted([i for i in out if i["date"] >= today], key=lambda i: i["date"])
+    past = sorted([i for i in out if i["date"] < today], key=lambda i: i["date"], reverse=True)[:8]
+    return future + past
+
+
+def _preview_lede(fname: str) -> str:
+    """抽 preview HTML 的 report-lede 首段做卡片摘要（純文字，截 110 字）。"""
+    try:
+        h = (ROOT / "docs" / "earnings" / fname).read_text(encoding="utf-8")
+        m = re.search(r'<div class="report-lede">(.*?)</div>', h, re.S)
+        if not m:
+            return ""
+        txt = re.sub(r"<[^>]+>", "", m.group(1)).strip()
+        return txt[:110] + ("…" if len(txt) > 110 else "")
+    except OSError:
+        return ""
+
+
+def inject_earnings_preview_section(today: date, dry_run: bool = False) -> None:
+    if not EARNINGS_INDEX.exists():
+        return
+    idx = EARNINGS_INDEX.read_text(encoding="utf-8")
+    if PREVIEW_START not in idx or PREVIEW_END not in idx:
+        print("  · earnings/index.html 無 PREVIEW_SECTION marker，跳過前瞻專區注入")
+        return
+    items = _preview_items(today)
+    if not items:
+        body = '<p class="preview-empty">目前無財報前瞻。持倉財報進入 5 天視窗時，賽前錨會自動凍結並顯示於此。</p>'
+    else:
+        lis = []
+        for it in items:
+            dstr = it["date"].strftime("%b %d, %Y")
+            wd = it["date"].strftime("%a")
+            if it["html"]:
+                lede = _preview_lede(it["html"])
+                lis.append(f'''      <li>
+        <a href="{it["html"]}">
+          <div class="date">{dstr}</div>
+          <div class="meta"><span class="preview-tag">📋 前瞻</span><span class="weekday">{wd}</span><span class="companies">{it["ticker"]}</span></div>
+          <div class="takeaway">{lede}</div>
+        </a>
+      </li>''')
+            else:
+                lis.append(f'''      <li class="preview-frozen-li">
+          <div class="date">{dstr}</div>
+          <div class="meta"><span class="preview-tag frozen">🔒 錨已凍結</span><span class="weekday">{wd}</span><span class="companies">{it["ticker"]}</span></div>
+          <div class="takeaway">賽前共識已自動凍結；敘事層以「{it["ticker"]} 財報前瞻」觸發產出。</div>
+      </li>''')
+        body = '<ul class="synthesis-list preview-list">\n' + "\n".join(lis) + "\n    </ul>"
+    block = f"""{PREVIEW_START}
+<div class="section synthesis-section" id="earnings-previews">
+  <div class="container">
+    <h2 class="section-title">📋 財報前瞻 · Pre-earnings Previews</h2>
+    {body}
+  </div>
+</div>
+{PREVIEW_END}"""
+    new = idx[: idx.index(PREVIEW_START)] + block + idx[idx.index(PREVIEW_END) + len(PREVIEW_END):]
+    n_fut = sum(1 for i in items if i["date"] >= today)
+    if dry_run:
+        print(f"  (dry-run) 前瞻專區：{len(items)} 筆（未來 {n_fut}）")
+        return
+    if new != idx:
+        EARNINGS_INDEX.write_text(new, encoding="utf-8")
+        print(f"  ✓ 注入 /earnings/ 前瞻專區：{len(items)} 筆（未來 {n_fut}）")
+    else:
+        print("  · 前瞻專區無變化")
 
 
 def main() -> int:

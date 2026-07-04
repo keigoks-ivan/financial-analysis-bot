@@ -25,7 +25,7 @@ description: "收到一個 ticker（或「本週財報 preview」）後，先用
 - 快照檔：`docs/catalyst/snapshots/preview_{TICKER}_{YYYYMMDD}.json`（YYYYMMDD = 財報日）
 - 前瞻報告：`docs/earnings/preview_{TICKER}_{YYYYMMDD}.html`（`preview_` 前綴，push-earnings 的
   `earnings_YYYY-MM-DD.html` regex 不會誤抓——同 `synthesis_` 前例）
-- 索引：`docs/earnings/index.html` 的 `<ul class="reports">`，最上方 insert 一張帶「財報前瞻」tag 的卡片
+- 索引：`docs/earnings/index.html` 頂部有專門的「📋 財報前瞻」marker 專區（`PREVIEW_SECTION_START/END`），由 `build_catalyst_page.py` 自動掃 preview HTML＋snapshots 重建（🔒 待產／📋 已產自動分流）——**skill 不手動編輯 index，產完 HTML 跑一次 `python3 scripts/build_catalyst_page.py` 即可**（日曆頁徽章同步轉 📋）
 - 日曆錨：`docs/catalyst/calendar.json`（財報日）、`docs/catalyst/variance.json`（承保 vs 共識漂移）
 - 預設**停下複審**：寫完、驗證通過後**不自動 commit**；把本地路徑給用戶看，待用戶說 push 才走 commit flow
 
@@ -117,7 +117,7 @@ python3 scripts/snapshot_consensus.py {TICKER}
 - 用戶說 push 後，`git add` **只加三檔**（先 `git status` 看 `??` 沒 orphan，**不要 `git add -A`**）：
   - `docs/earnings/preview_{TICKER}_{YYYYMMDD}.html`
   - `docs/catalyst/snapshots/preview_{TICKER}_{YYYYMMDD}.json`
-  - `docs/earnings/index.html`（新增的財報前瞻卡片）
+  - `docs/earnings/index.html` 與 `docs/catalyst/index.html`（由 `build_catalyst_page.py` 自動重建，一併 add）
 - commit 訊息：`Add {TICKER} 財報前瞻 (pre-earnings preview) + frozen consensus snapshot`，
   結尾 `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`。
 - **push 前先 `git pull --rebase origin main`**（並行 cron 常推），rebase 後重查卡片 + snapshot 都在，再 push。
@@ -194,8 +194,8 @@ python3 scripts/snapshot_consensus.py {TICKER}
 ## Plumbing 摘要
 
 - **凍結錨工具**：`scripts/snapshot_consensus.py`（deterministic、永不覆寫、honest-fail）。
-- **無 pre-commit validator**（同 comparisons / synthesis 政策）；索引卡片走 skill-append（同 push-earnings 模式）。
+- **無 pre-commit validator**（同 comparisons / synthesis 政策）；索引專區＝script 注入（marker 模式，同 risk-gauge），非 skill-append。
 - **size-floor gate 不適用**（非 `docs/dd|dca` 檔）。
-- **3 檔 commit**：preview HTML + snapshot JSON + earnings/index.html。
+- **4 檔 commit**：preview HTML + snapshot JSON + earnings/index.html + catalyst/index.html（後兩者 builder 自動重建）。
 - **前綴不撞**：`preview_` 不被 push-earnings 的 `earnings_YYYY-MM-DD.html` regex 誤抓（synthesis_ 前例）。
 - 賽後閉環：財報後人工回填 `docs/catalyst/archive.json` 的 `outcome`（cron 永不覆寫人工欄位）。
