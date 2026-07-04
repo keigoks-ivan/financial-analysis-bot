@@ -253,20 +253,23 @@ def render(payload: dict) -> str:
 
     body = f"""<div class="hero">
 <h1>📡 全市場雷達 · L0 發現層</h1>
-<div class="hero-sub">S&amp;P 500＋Nasdaq 100＋S&amp;P 400 中型股（~920 檔，2026-07-04 持有人拍板排除小型股）每週全掃 — 結構訊號批量計算，四形狀路由，
-候選再逐檔做 FY+1 EPS 30 天修正確認（★＝上修 ≥+{P['rev_confirm_pct']:.0f}%，拐點確認）。
+<div class="hero-sub">S&amp;P 500＋Nasdaq 100＋S&amp;P 400 中型股（~920 檔，2026-07-04 持有人拍板排除小型股）每週全掃。
+<b>主榜＝GRP 三閘</b>（高成長 × EPS 上修 × 位置適合，按上修幅度排）——這是選股準則本身；
+四形狀欄降為發現鏡頭（突破／循環轉折／動能／主題下沉，從不同角度找候選）。
 <b>這是研究導航不是買入清單</b>：池外名字＝候選入池補 DD；要進場一律走 DD 裁決＋板機。</div>
 <div class="asof">{payload['as_of']} 價格 as of ｜ universe {payload['universe_n']} 檔
 ｜ 可算 {payload['scored_n']} 檔 ｜ 修正確認覆蓋 {covered['stage2_ok']}/{covered['stage2_cand']} 檔</div>
 </div>
-{render_grp_board(payload)}
 <div class="stat-row">
+<div class="stat"><strong>{len(payload.get('grp_board') or [])}</strong><span>⭐ GRP 三閘全過</span></div>
+<div class="stat"><strong>{sum(1 for r in (payload.get('grp_board') or []) if not r.get('in_pool'))}</strong><span>主榜·池外</span></div>
 <div class="stat"><strong>{len(shapes['breakout_base'])}</strong><span>長基期突破帶</span></div>
 <div class="stat"><strong>{len(shapes['cyclical_turn'])}</strong><span>循環轉折</span></div>
 <div class="stat"><strong>{len(shapes['momentum_rerate'])}</strong><span>動能重估</span></div>
 <div class="stat"><strong>{len(shapes['theme_smallmid'])}</strong><span>主題下沉</span></div>
 <div class="stat"><strong>{payload['blind_total']}</strong><span>形狀命中·池外</span></div>
 </div>
+{render_grp_board(payload)}
 {''.join(cards)}
 <div class="note">熱產業（13 週報酬中位數 top {P['theme_hot_sectors']}）：{escape('、'.join(payload['hot_sectors']))}。
 形狀門檻 v1 於 2026-07-04 鎖定（PREREG 慣例，季檢才可調）；四形狀出身依據＝12M/24M 發現力驗屍
