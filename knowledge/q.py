@@ -57,9 +57,19 @@ def _load():
     if not DECISIONS.exists() or not GRAPH.exists():
         print("（衍生物不存在，先重建…）")
         _rebuild()
-    decisions = [json.loads(l) for l in DECISIONS.read_text(encoding="utf-8").splitlines() if l.strip()]
+    rows = [json.loads(l) for l in DECISIONS.read_text(encoding="utf-8").splitlines() if l.strip()]
+    # event_outcome（T-minus 鏈事件複盤）與決策分流：只在 cmd_entity 顯示，
+    # 不進 決策史/裁決分布/校準 統計。
+    decisions = [r for r in rows if r.get("kind") != "event_outcome"]
     graph = json.loads(GRAPH.read_text(encoding="utf-8"))
     return decisions, graph
+
+
+def _load_events():
+    if not DECISIONS.exists():
+        return []
+    rows = [json.loads(l) for l in DECISIONS.read_text(encoding="utf-8").splitlines() if l.strip()]
+    return [r for r in rows if r.get("kind") == "event_outcome"]
 
 
 def _node(graph, nid):
@@ -115,6 +125,22 @@ def cmd_entity(name):
                 print(f"      ▸ OUTCOME {o.get('reviewed_date','')}: "
                       f"realized {o.get('realized_return_pct','?')}%  held={o.get('verdict_held')}  "
                       f"{o.get('lesson','')}")
+
+    # T-minus 鏈事件複盤（kind=event_outcome：財報/催化劑 vs 凍結快照，人工回填）
+    events = sorted([e for e in _load_events()
+                     if (e.get("ticker") or "").upper() in members],
+                    key=lambda e: e.get("event_date") or "")
+    if events:
+        print(f"\n事件複盤（{len(events)} 筆）：")
+        for e in events:
+            print(f"  {e.get('event_date') or '????-??-??'}  [{e.get('verdict') or '—'}]"
+                  f"  {e.get('event_type') or ''}")
+            if e.get("expected"):
+                print(f"      預期：{e['expected']}")
+            if e.get("actual"):
+                print(f"      實際：{e['actual']}")
+            if e.get("snapshot"):
+                print(f"      錨：{e['snapshot']}")
 
     # 圖譜鄰居：此 ticker 屬於哪些產業/主題（belongs_to）
     themes = sorted({e["to"] for e in graph["edges"]

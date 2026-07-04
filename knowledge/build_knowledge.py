@@ -92,9 +92,9 @@ def _freshness(d):
 
 def _read_manual():
     """讀 ledger.manual.jsonl（真相）：略過 # 註解行與空行。"""
-    decisions, outcomes = [], {}
+    decisions, outcomes, event_outcomes = [], {}, []
     if not MANUAL_IN.exists():
-        return decisions, outcomes
+        return decisions, outcomes, event_outcomes
     for line in MANUAL_IN.read_text(encoding="utf-8").splitlines():
         s = line.strip()
         if not s or s.startswith("#"):
@@ -106,11 +106,17 @@ def _read_manual():
             continue
         if rec.get("kind") == "outcome" and rec.get("decision_id"):
             outcomes[rec["decision_id"]] = rec
+        elif rec.get("kind") == "event_outcome":
+            # T-minus 鏈事件複盤（財報/催化劑 vs 凍結快照），錨是 snapshot JSON，
+            # 不走價格結算（settle 只吃 kind=decision）、不進 calibration 裁決統計。
+            rec.setdefault("source", "manual")
+            rec.setdefault("entity_type", "event")
+            event_outcomes.append(rec)
         else:
             rec.setdefault("kind", "decision")
             rec.setdefault("source", "manual")
             decisions.append(rec)
-    return decisions, outcomes
+    return decisions, outcomes, event_outcomes
 
 
 def _load_sc_topics():
@@ -289,11 +295,12 @@ def build_graph(decisions, id_metas, sc_topics):
 
 
 def main():
-    manual_decisions, outcomes = _read_manual()
+    manual_decisions, outcomes, event_outcomes = _read_manual()
 
     decisions = build_decisions(manual_decisions, outcomes)
     DECISIONS_OUT.write_text(
-        "\n".join(json.dumps(r, ensure_ascii=False) for r in decisions) + "\n",
+        "\n".join(json.dumps(r, ensure_ascii=False)
+                  for r in decisions + event_outcomes) + "\n",
         encoding="utf-8",
     )
 
@@ -316,7 +323,7 @@ def main():
     sc_edges = [e for e in graph["edges"] if e.get("rel") == "supplies"]
     print(f"✅ decisions.jsonl  : {len(decisions)} 筆決策"
           f"（{n_verdict} 有 dca_verdict、{n_outcome} 有 outcome、"
-          f"{len(manual_decisions)} 人工）")
+          f"{len(manual_decisions)} 人工、{len(event_outcomes)} 事件複盤）")
     print(f"✅ graph.json       : {len(companies)} 公司 / {len(industries)} 產業 / "
           f"{len(sc_nodes)} 供應鏈 topic / {len(graph['edges'])} 邊（含 {len(sc_edges)} supplies）")
 
