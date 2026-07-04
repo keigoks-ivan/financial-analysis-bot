@@ -313,6 +313,8 @@ def main():
     # ── weekly history (homepage chart) ──
     wk_score = comp_daily.resample('W-FRI').last().dropna().round(3)
     wk_spx = px['^GSPC'].resample('W-FRI').last().reindex(wk_score.index).round(2)
+    wk_vix = px['^VIX'].resample('W-FRI').last().reindex(wk_score.index).round(2)
+    wk_vixhi = px['^VIX'].resample('W-FRI').max().reindex(wk_score.index).round(2)  # intraweek daily-close max, drives the >=40 panic-entry markers
     nfci = fetch_nfci()
     if nfci is not None:
         wk_nfci = nfci.reindex(wk_score.index).ffill(limit=4).round(2)
@@ -334,6 +336,8 @@ def main():
         'score': _nan_to_none(wk_score),
         'spx': _nan_to_none(wk_spx),
         'nfci': _nan_to_none(wk_nfci),
+        'vix': _nan_to_none(wk_vix),
+        'vixhi': _nan_to_none(wk_vixhi),
     }, ensure_ascii=False, separators=(',', ':')) + '\n', encoding='utf-8')
     print(f"  ✓ wrote {HISTORY_JSON.relative_to(ROOT)} ({len(wk_score)} weeks since {wk_score.index[0].date()})")
 

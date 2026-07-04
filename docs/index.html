@@ -308,8 +308,9 @@ footer a{color:var(--muted)}
   .rc-legend b{font-weight:600}
   #rcMain{height:290px}
   #rcSub{height:130px;border-top:1px solid var(--border-soft)}
+  #rcVix{height:104px;border-top:1px solid var(--border-soft)}
   .rc-note{font-size:.7rem;color:var(--muted);line-height:1.6;margin-top:.55rem;padding-bottom:.35rem}
-  @media(max-width:600px){#rcMain{height:220px}#rcSub{height:110px}}
+  @media(max-width:600px){#rcMain{height:220px}#rcSub{height:110px}#rcVix{height:88px}}
   </style>
   <div class="container">
     <div class="rc-card">
@@ -328,7 +329,8 @@ footer a{color:var(--muted)}
       <div class="rc-legend" id="rcLegend"></div>
       <div id="rcMain"></div>
       <div id="rcSub"></div>
-      <div class="rc-note">上欄<span style="color:#f59e0b;font-weight:600">橘線＝標普500 52週均線</span>；下欄色柱＝六訊號綜合分數（+1 ~ −1）：<span style="color:#16a34a;font-weight:600">綠 ≥ +0.34 風險偏好</span> · <span style="color:#b45309;font-weight:600">黃＝中性</span> · <span style="color:#dc2626;font-weight:600">紅 ≤ −0.34 風險趨避</span>；NFCI 線＝芝加哥聯儲金融條件指數（> 0 代表信用緊縮，發布有一週延遲）：<span style="color:#0d9488;font-weight:600">青綠＝下行（信用轉鬆）</span> · <span style="color:#e11d48;font-weight:600">紅＝上行（信用收緊中，對比四週前）</span>。儀表定位為環境描述——歷史回測顯示它擅長描述當下風險分布（Risk-Off 時左尾風險倍數放大），但不適合當機械化進出訊號。非投資建議。</div>
+      <div id="rcVix"></div>
+      <div class="rc-note">上欄<span style="color:#f59e0b;font-weight:600">橘線＝標普500 52週均線</span>；下欄色柱＝六訊號綜合分數（+1 ~ −1）：<span style="color:#16a34a;font-weight:600">綠 ≥ +0.34 風險偏好</span> · <span style="color:#b45309;font-weight:600">黃＝中性</span> · <span style="color:#dc2626;font-weight:600">紅 ≤ −0.34 風險趨避</span>；NFCI 線＝芝加哥聯儲金融條件指數（> 0 代表信用緊縮，發布有一週延遲）：<span style="color:#0d9488;font-weight:600">青綠＝下行（信用轉鬆）</span> · <span style="color:#e11d48;font-weight:600">紅＝上行（信用收緊中，對比四週前）</span>。最下欄＝VIX（<span style="color:#f59e0b;font-weight:600">橘 ≥ 30</span> · <span style="color:#dc2626;font-weight:600">紅 ≥ 40</span>），股價圖上的綠色 ▲＝當週 VIX 曾收在 40 以上的恐慌事件（1993 年來僅 10 次）：歷史統計買進後 12 個月勝率 97%、平均 +36%，但 1 個月內勝率僅 62%、常先再跌 10-15%——是中期買點參考，不是短線抄底訊號。儀表定位為環境描述——歷史回測顯示它擅長描述當下風險分布（Risk-Off 時左尾風險倍數放大），但不適合當機械化進出訊號。非投資建議。</div>
     </div>
   </div>
 </section>
@@ -516,6 +518,18 @@ footer a{color:var(--muted)}
       if(j.score[i]!=null)scoreData.push({time:W[i],value:j.score[i],color:barColor(j.score[i])});
       if(j.nfci[i]!=null)nfciData.push({time:W[i],value:j.nfci[i],color:nfciUp(i)?'#e11d48':'#0d9488'});
     }
+    function vixColor(v){return v>=40?'#dc2626':(v>=30?'#f59e0b':'#64748b');}
+    var vixData=[],vixMarkers=[];
+    for(var i=0;i<n;i++){
+      if(j.vix[i]==null)continue;
+      vixData.push({time:W[i],value:j.vix[i],color:vixColor(j.vix[i])});
+      if(j.vixhi[i]!=null&&j.vixhi[i]>=40){
+        var fresh=true;   // first >=40 week in 13w = one panic episode, one marker
+        for(var k2=Math.max(0,i-13);k2<i;k2++)if(j.vixhi[k2]!=null&&j.vixhi[k2]>=40){fresh=false;break;}
+        if(fresh)vixMarkers.push({time:W[i],position:'belowBar',color:'#16a34a',
+          shape:'arrowUp',text:'VIX '+Math.round(j.vixhi[i])});
+      }
+    }
     var ma52=new Array(n).fill(null),maData=[],_q=[],_sum=0;
     for(var i=0;i<n;i++){
       var v=j.spx[i];
@@ -543,7 +557,10 @@ footer a{color:var(--muted)}
     var elM=document.getElementById('rcMain'),elS=document.getElementById('rcSub');
     var chM=LWC.createChart(elM,Object.assign({},base,{height:elM.clientHeight,
       timeScale:{visible:false,borderColor:'#e5e7eb'}}));
-    var chS=LWC.createChart(elS,Object.assign({},base,{height:elS.clientHeight}));
+    var chS=LWC.createChart(elS,Object.assign({},base,{height:elS.clientHeight,
+      timeScale:{visible:false,borderColor:'#e5e7eb'}}));
+    var elV=document.getElementById('rcVix');
+    var chV=LWC.createChart(elV,Object.assign({},base,{height:elV.clientHeight}));
 
     var sSpx=chM.addLineSeries({color:'#2563eb',lineWidth:2,priceLineVisible:false,
       lastValueVisible:true,title:''});
@@ -563,6 +580,13 @@ footer a{color:var(--muted)}
     chS.priceScale('nfci').applyOptions({visible:false,scaleMargins:{top:.05,bottom:.05}});
     chS.priceScale('right').applyOptions({scaleMargins:{top:.12,bottom:.12}});
 
+    var sVix=chV.addLineSeries({color:'#64748b',lineWidth:2,priceLineVisible:false,lastValueVisible:false});
+    sVix.setData(vixData);
+    sVix.createPriceLine({price:40,color:'#dc2626',lineWidth:1,lineStyle:LWC.LineStyle.Dashed,axisLabelVisible:false});
+    sVix.createPriceLine({price:20,color:'#cbd5e1',lineWidth:1,lineStyle:LWC.LineStyle.Dashed,axisLabelVisible:false});
+    chV.priceScale('right').applyOptions({scaleMargins:{top:.12,bottom:.08}});
+    sSpx.setMarkers(vixMarkers);
+
     // ── sync visible range between panes ──
     var syncing=false;
     function link(a,b){
@@ -570,7 +594,8 @@ footer a{color:var(--muted)}
         if(syncing||!r)return;syncing=true;b.timeScale().setVisibleLogicalRange(r);syncing=false;
       });
     }
-    link(chM,chS);link(chS,chM);
+    var charts=[chM,chS,chV];
+    charts.forEach(function(a){charts.forEach(function(b){if(a!==b)link(a,b);});});
 
     // ── legend + crosshair sync ──
     var legend=document.getElementById('rcLegend');
@@ -580,20 +605,29 @@ footer a{color:var(--muted)}
         +'<span>標普500 <b style="color:#2563eb">'+(j.spx[i]!=null?j.spx[i].toLocaleString():'—')+'</b></span>'
         +'<span>52週均線 <b style="color:#f59e0b">'+(ma52[i]!=null?Math.round(ma52[i]).toLocaleString():'—')+'</b></span>'
         +'<span>儀表 <b style="color:'+(l?l[1]:'#94a3b8')+'">'+(s!=null?((s>0?'+':'')+s.toFixed(2)+' '+l[0]):'—')+'</b></span>'
-        +'<span>NFCI <b style="color:'+(nfciUp(i)?'#e11d48':'#0d9488')+'">'+(j.nfci[i]!=null?j.nfci[i].toFixed(2)+(nfciUp(i)?' ↑收緊中':''):'—')+'</b></span>';
+        +'<span>NFCI <b style="color:'+(nfciUp(i)?'#e11d48':'#0d9488')+'">'+(j.nfci[i]!=null?j.nfci[i].toFixed(2)+(nfciUp(i)?' ↑收緊中':''):'—')+'</b></span>'
+        +'<span>VIX <b style="color:'+(j.vix[i]!=null?vixColor(j.vix[i]):'#94a3b8')+'">'+(j.vix[i]!=null?j.vix[i].toFixed(1)+(j.vixhi[i]!=null&&j.vixhi[i]>=40?' ⚑恐慌買點':''):'—')+'</b></span>';
     }
     fmtLegend(n-1);
-    function onMove(other,otherSeries){return function(p){
-      if(!p.time){try{other.clearCrosshairPosition();}catch(e){}fmtLegend(n-1);return;}
-      var i=byTime[p.time];if(i==null)return;
-      fmtLegend(i);
-      try{
-        var v=(otherSeries===sSpx)?j.spx[i]:j.score[i];
-        if(v!=null)other.setCrosshairPosition(v,p.time,otherSeries);
-      }catch(e){}
-    };}
-    chM.subscribeCrosshairMove(onMove(chS,sScore));
-    chS.subscribeCrosshairMove(onMove(chM,sSpx));
+    var panes=[
+      {ch:chM,series:sSpx,val:function(i){return j.spx[i];}},
+      {ch:chS,series:sScore,val:function(i){return j.score[i];}},
+      {ch:chV,series:sVix,val:function(i){return j.vix[i];}}
+    ];
+    panes.forEach(function(src){
+      src.ch.subscribeCrosshairMove(function(p){
+        if(!p.time){
+          panes.forEach(function(o){if(o!==src){try{o.ch.clearCrosshairPosition();}catch(e){}}});
+          fmtLegend(n-1);return;
+        }
+        var i=byTime[p.time];if(i==null)return;
+        fmtLegend(i);
+        panes.forEach(function(o){
+          if(o===src)return;
+          try{var v=o.val(i);if(v!=null)o.ch.setCrosshairPosition(v,p.time,o.series);}catch(e){}
+        });
+      });
+    });
 
     // ── range buttons ──
     var btns=document.querySelectorAll('#rcRanges button');
@@ -615,6 +649,7 @@ footer a{color:var(--muted)}
     new ResizeObserver(function(){
       chM.applyOptions({width:elM.clientWidth});
       chS.applyOptions({width:elS.clientWidth});
+      chV.applyOptions({width:elV.clientWidth});
     }).observe(elM);
   }
 })();
