@@ -6,7 +6,7 @@ from <script id="dd-meta"> JSON. Output the work manifest seed (markdown table)
 or progress report.
 
 Usage:
-  python3 scripts/dd_v12_3_status.py              # write docs/dd/_v12_3_manifest.md (won't overwrite if exists)
+  python3 scripts/dd_v12_3_status.py              # write notes/site-internal/dd/_v12_3_manifest.md (won't overwrite if exists)
   python3 scripts/dd_v12_3_status.py --force      # overwrite manifest (DESTROYS in-flight claims)
   python3 scripts/dd_v12_3_status.py --report     # progress counts (reads existing manifest)
   python3 scripts/dd_v12_3_status.py --stdout     # print seed table to stdout, don't write
@@ -22,7 +22,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DD_DIR = ROOT / "docs" / "dd"
-MANIFEST = DD_DIR / "_v12_3_manifest.md"
+# Manifest is internal scaffolding — lives OUTSIDE the published docs/ tree.
+MANIFEST = ROOT / "notes" / "site-internal" / "dd" / "_v12_3_manifest.md"
 
 DD_META_RE = re.compile(
     r'<script\s+id="dd-meta"\s+type="application/json"\s*>(.*?)</script>',

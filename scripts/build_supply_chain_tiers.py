@@ -24,7 +24,7 @@ static and the block never drifts from this file):
 
 Source of the ranking: docs/supply-chain/audit-2026-06.json (full-site audit,
 40 maps / 749 nodes / 67 ⚑, Part 1 deterministic + Part 2 9-cluster sub-agents;
-earlier narrative pass: docs/supply-chain/_audit_20260529.md).
+earlier narrative pass: notes/site-internal/supply-chain/_audit_20260529.md, internal).
 """
 from __future__ import annotations
 
@@ -346,7 +346,7 @@ def build_block(dd_links) -> str:
              'DD 連結由 <code>data/dd_links.json</code> 自動解析。'
              '完整審計（40 maps / 749 nodes / 67 ⚑）見 '
              '<code>docs/supply-chain/audit-2026-06.json</code>'
-             '（早期敘述版 <code>_audit_20260529.md</code>）。</p>')
+             '（早期敘述版存 repo 內部 notes/site-internal/supply-chain/）。</p>')
     return "\n".join(h)
 
 

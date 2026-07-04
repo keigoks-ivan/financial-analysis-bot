@@ -487,7 +487,7 @@ single: "近獨佔 · <主張> （信心度 high · 多源證實）"
 - SPLIT 且超預算 → 用非替代性分排序，擠掉最弱者
 - 💎 mis-assignment（第二源 / oligopoly 一員 / 大集團）→ 移除該公司 `core_business` / 把 `supply_chain_lock` 降 `med`
 
-新 topic JSON 頂層標 `"single_point_framework": "v1.3"`，validator 才會強制硬預算。critic report 可選存 `docs/supply-chain/_critic_{topic}_{YYYYMMDD}.md`。
+新 topic JSON 頂層標 `"single_point_framework": "v1.3"`，validator 才會強制硬預算。critic report 可選存 `notes/site-internal/supply-chain/_critic_{topic}_{YYYYMMDD}.md`（repo 內部，不進 published docs/ 樹）。
 
 ### Step 2：寫 thin `docs/supply-chain/{topic}.html`（複製 cowos.html / cpo.html 改 3 處）
 

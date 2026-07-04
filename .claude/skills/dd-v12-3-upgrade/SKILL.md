@@ -1,6 +1,6 @@
 ---
 name: dd-v12-3-upgrade
-description: 對既有 DD 報告做 v12.3 升級的 batch worker。每呼叫一次處理 N 檔（預設 3），用 docs/dd/_v12_3_manifest.md claim 協調多 window 並行。對 legacy DD（v12.0/12.1/12.2/pre-v12）做 body patch + dd-meta bump；對已是 v12.3 的 DD 只做 DCA cascade audit。所有 patch 須通過 anti-laziness gate（DD ≥ 80KB / DCA ≥ 50KB / 數字必引 source / 章節 checklist 齊備）。每 5 batch 觸發 cold-review sub-agent 抽查品質。觸發語：「跑 v12.3 升級 N 檔」「v12.3 batch」「升級 DD 到 v12.3」「dd-v12-3-upgrade」「/dd-v12-3-upgrade [N]」。
+description: 對既有 DD 報告做 v12.3 升級的 batch worker。每呼叫一次處理 N 檔（預設 3），用 notes/site-internal/dd/_v12_3_manifest.md claim 協調多 window 並行。對 legacy DD（v12.0/12.1/12.2/pre-v12）做 body patch + dd-meta bump；對已是 v12.3 的 DD 只做 DCA cascade audit。所有 patch 須通過 anti-laziness gate（DD ≥ 80KB / DCA ≥ 50KB / 數字必引 source / 章節 checklist 齊備）。每 5 batch 觸發 cold-review sub-agent 抽查品質。觸發語：「跑 v12.3 升級 N 檔」「v12.3 batch」「升級 DD 到 v12.3」「dd-v12-3-upgrade」「/dd-v12-3-upgrade [N]」。
 version: v1.2
 ---
 
@@ -56,7 +56,7 @@ window-id 格式：`win-<YYYYMMDD-HHMM>-<隨機4字>`，例：`win-20260516-1430
 
 ### 3.2 讀 manifest 挑 N 個
 
-讀 `docs/dd/_v12_3_manifest.md`。挑選優先序：
+讀 `notes/site-internal/dd/_v12_3_manifest.md`。挑選優先序：
 1. **dca_only 優先**（工時短，先把 18 檔清掉）
 2. dca_only 清完後再挑 `pending`
 3. **legacy_full 內優先序**：v12.2 → v12.1 → v12.0 → pre-v12（pre-v12 工時最長，留最後）
@@ -70,7 +70,7 @@ window-id 格式：`win-<YYYYMMDD-HHMM>-<隨機4字>`，例：`win-20260516-1430
 ### 3.4 Push claim（**獨立 commit**）
 
 ```bash
-git add docs/dd/_v12_3_manifest.md
+git add notes/site-internal/dd/_v12_3_manifest.md
 git commit -m "claim: v12.3 batch <T1> <T2> <T3> by <window-id>"
 git push
 ```
@@ -329,7 +329,7 @@ grep -E '5\.F|8\.H|moat_execution|議價權.*上游|SBC' docs/dd/DD_<T>_*.html |
 ### 7.3 第三層：cold review
 
 **觸發條件**（任一即觸發）：
-- 每 5 batch 週期（讀 `docs/dd/_v12_3_manifest.md` 中 `done` 數，每除 3 為 5 整數倍）
+- 每 5 batch 週期（讀 `notes/site-internal/dd/_v12_3_manifest.md` 中 `done` 數，每除 3 為 5 整數倍）
 - **major-downgrade 強制**：該 batch 任一 ticker `notes` 標 `⚠️-major-downgrade`（verdict 從 A+/A 掉到 C/X）→ 不等 5 batch 週期，立即對該 ticker 觸發
 
 ```
@@ -347,7 +347,7 @@ Agent({
 (6) 若 §1 verdict 變更紀錄存在（『verdict 變更紀錄：v12.X → v12.3 由 X 改為 Y，主因：...』），理由是否與 §9 / §12 / §13.4 新增或重做的章節呼應（不是隨意改）
 
 輸出格式：PASS / WARN / FAIL + 每條的具體問題（含行號）。
-存報告到 docs/dd/_critic_v12_3_<ticker>_<YYYYMMDD>.md。"
+存報告到 notes/site-internal/dd/_critic_v12_3_<ticker>_<YYYYMMDD>.md。"
 })
 ```
 
@@ -382,9 +382,9 @@ git add docs/dd/DD_<T1>_*.html docs/dd/DD_<T2>_*.html docs/dd/DD_<T3>_*.html
 git add docs/dca/DCA_<T1>_*.html docs/dca/DCA_<T2>_*.html docs/dca/DCA_<T3>_*.html 2>/dev/null
 git add docs/research/index.html
 git add docs/dd-screener/latest.json
-git add docs/dd/_v12_3_manifest.md
+git add notes/site-internal/dd/_v12_3_manifest.md
 # 若觸發 cold review
-git add docs/dd/_critic_v12_3_*.md 2>/dev/null
+git add notes/site-internal/dd/_critic_v12_3_*.md 2>/dev/null
 
 git commit -m "$(cat <<'EOF'
 DD v12.3 upgrade batch: <T1> + <T2> + <T3> (+ DCA cascade)

@@ -572,7 +572,7 @@ Agent({
   prompt: "You are operating as the id-review sub-agent in DS mode. \
 Read spec at /Users/ivanchang/.claude/skills/id-review/SKILL.md. \
 Mode: --mode ds. DS file: docs/ds/DS_{Theme}_{YYYYMMDD}.html. \
-Save critic report to docs/ds/_critic_{Theme}_{YYYYMMDD}.md."
+Save critic report to notes/site-internal/ds/_critic_{Theme}_{YYYYMMDD}.md."
 })
 ```
 

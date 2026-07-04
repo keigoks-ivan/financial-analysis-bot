@@ -2,7 +2,7 @@
 """Validate ID + DS HTML files against source domain blacklist (M1 / QC-I27 / QC-DS15).
 
 Scans `<a href="...">` URLs in `docs/id/ID_*.html` and `docs/ds/DS_*.html`,
-flags any matching the blacklist defined in `docs/id/_source_tier_lists.md`.
+flags any matching the blacklist defined in `notes/site-internal/id/_source_tier_lists.md`.
 DS shares the same source-tier hierarchy as ID by design (industry-ds v1.1).
 
 Optionally reports `<span class="source-tag">[T1/T2/...]` tier distribution

@@ -17,7 +17,7 @@ Agent({
   description: "Cold review {theme} thesis",
   subagent_type: "general-purpose",
   model: "sonnet",
-  prompt: "You are operating as the industry-thesis-critic sub-agent. Read spec at /Users/ivanchang/.claude/agents/industry-thesis-critic.md. ID: {path}. Intent: {user 意圖}. Save report to docs/id/_critic_{Theme}_{YYYYMMDD}.md."
+  prompt: "You are operating as the industry-thesis-critic sub-agent. Read spec at /Users/ivanchang/.claude/agents/industry-thesis-critic.md. ID: {path}. Intent: {user 意圖}. Save report to notes/site-internal/id/_critic_{Theme}_{YYYYMMDD}.md."
 })
 ```
 
@@ -128,7 +128,7 @@ Agent({
 - 索引：`docs/research/synthesis/index.html` 列表頁（skill append 卡片）；nav「研究 ▾ → 期望落差綜合研判」入口已建於 `scripts/site_nav.py`
 - 上站路徑：`https://research.investmquest.com/research/synthesis/`
 
-**硬規則**（詳見 SKILL.md）：§2+§3 都要寫且 §Δ 必須收斂兩面、§5 只連出 DD/ID/供應鏈不複製、專業賣方口吻無 slang/自我對話、**每份報告獨立成立不跨檔對照**、股價＝最新收盤、大 PDF 一律先 `pdftotext`。內建**決策時 critic**（spawn `industry-thesis-critic`，存 `docs/id/_critic_{TICKER}_*.md`）。
+**硬規則**（詳見 SKILL.md）：§2+§3 都要寫且 §Δ 必須收斂兩面、§5 只連出 DD/ID/供應鏈不複製、專業賣方口吻無 slang/自我對話、**每份報告獨立成立不跨檔對照**、股價＝最新收盤、大 PDF 一律先 `pdftotext`。內建**決策時 critic**（spawn `industry-thesis-critic`，存 `notes/site-internal/id/_critic_{TICKER}_*.md`）。
 
 **Plumbing**：無 pre-commit validator（同 comparisons / DCA 政策）；列表卡片 skill-appended（同 push-earnings）。**預設停下複審**，用戶說 push 才走 3 檔 commit（synthesis 頁 + `research/synthesis/index.html` + critic md），push 前先 `git pull --rebase`。參考實作：`docs/research/synthesis/GLW_20260625.html`、`TSM_20260625.html`。
 
