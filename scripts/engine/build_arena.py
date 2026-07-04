@@ -28,8 +28,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from engine.common import OUT_DIR, ROOT, page_shell, pct  # noqa: E402
 from engine.build_scoreboard import _bars, classify_shape  # noqa: E402
-from engine.grp import P_LABEL_HTML, grp_score  # noqa: E402
-from build_pipeline_page import is_core_role  # noqa: E402
+from engine.grp import P_LABEL_HTML, grp_route, grp_score  # noqa: E402
 
 DD_LATEST = ROOT / "docs" / "dd-screener" / "latest.json"
 MARKET_STATE = ROOT / "docs" / "screener" / "market_state.json"
@@ -74,8 +73,12 @@ def shape_of(ticker: str) -> str:
 
 def row_dict(s: dict) -> dict:
     g = grp_score(s)
+    route, route_why = grp_route(s)
+    role = s.get("dca_role") or ""
+    mismatch = (route == "satellite" and "核心" in role) or (route == "core" and "衛星" in role)
     return {"ticker": s["ticker"], "verdict": s.get("dca_verdict"),
-            "role": s.get("dca_role"),
+            "role": role, "route": route, "route_why": route_why,
+            "role_mismatch": mismatch,
             "grp": g, "score": g["score"],
             "moat": f'{s.get("moat_grade") or "?"}{s.get("moat_trend") or ""}',
             "shape": shape_of(s["ticker"]),
@@ -94,22 +97,19 @@ def main() -> int:
     except (OSError, json.JSONDecodeError):
         card_stats = {}
 
-    # 席位資格（GRP v1，2026-07-04 拍板）：DD 裁決＝進場 ∩ GRP 三閘全過
-    # （高成長 CAGR≥15 × FY+1 上修≥+2%/2Y≥+1pp × 位置適合）；排序＝R 上修幅度。
+    # 席位資格（GRP v1，2026-07-04 拍板）：DD 裁決＝進場 ∩ GRP 三閘全過；排序＝R 上修幅度。
+    # 軌別路由（同日拍板）：核心＝護城河 S/A 非↓（複利耐久）；衛星＝其餘 GRP 全過者
+    # （moat B、循環/爆發型）。DD 角色與機械軌別衝突 → 標 ⚠ 供人裁。
     # GRP 未過的進場票落板凳並列原因——寧可席位空缺，不硬塞下修中的名字。
-    core_rows = [row_dict(s) for s in stocks
-                 if s.get("dca_verdict") == "進場" and is_core_role(s)]
-    core_pass = sorted([r for r in core_rows if r["grp"]["pass"]], key=lambda r: -r["score"])
+    entered = [row_dict(s) for s in stocks if s.get("dca_verdict") == "進場"]
+    passed = sorted([r for r in entered if r["grp"]["pass"]], key=lambda r: -r["score"])
+    failed = sorted([r for r in entered if not r["grp"]["pass"]], key=lambda r: -r["score"])
+    core_pass = [r for r in passed if r["route"] == "core"]
+    sat_pass = [r for r in passed if r["route"] == "satellite"]
     core_seats = core_pass[:CORE_SLOTS]
-    core_bench = core_pass[CORE_SLOTS:] + sorted([r for r in core_rows if not r["grp"]["pass"]],
-                                                 key=lambda r: -r["score"])
-
-    sat_rows = [row_dict(s) for s in stocks
-                if s.get("dca_verdict") == "進場" and not is_core_role(s)]
-    sat_pass = sorted([r for r in sat_rows if r["grp"]["pass"]], key=lambda r: -r["score"])
     sat_seats = sat_pass[:SAT_SLOTS]
-    sat_bench = sat_pass[SAT_SLOTS:] + sorted([r for r in sat_rows if not r["grp"]["pass"]],
-                                              key=lambda r: -r["score"])
+    core_bench = core_pass[CORE_SLOTS:] + [r for r in failed if "核心" in (r["role"] or "")]
+    sat_bench = sat_pass[SAT_SLOTS:] + [r for r in failed if "核心" not in (r["role"] or "")]
 
     seated = {r["ticker"] for r in core_seats + sat_seats}
     challengers = [r for r in (row_dict(s) for s in stocks
@@ -173,6 +173,8 @@ def main() -> int:
     def seat_tr(r, seat_no=None):
         g = r["grp"]
         link = f'<a href="{escape(r["dd_path"])}#decision">{escape(r["ticker"])}</a>' if r.get("dd_path") else escape(r["ticker"])
+        if r.get("role_mismatch"):
+            link += f'<span class="tag tag-blind" title="DD 角色：{escape(r["role"])}">⚠ DD 角色異</span>'
         dist = f'（距高 {g["dist_hi"]:+.0f}%）' if g["dist_hi"] is not None else ""
         return (f'<tr><td class="left">{f"{seat_no}." if seat_no else ""} <strong>{link}</strong></td>'
                 f'<td class="left">{SHAPE_LABELS.get(r["shape"], r["shape"])}</td>'
@@ -228,9 +230,10 @@ def main() -> int:
 <div class="hero-sub">組合才是產品：核心 {CORE_SLOTS} 席＋衛星 {SAT_SLOTS} 席，每席對決「同形狀最強挑戰者」。
 ⚔ 警報＝挑戰者分數超過席位 → 進<b>每月擂台的人工複審清單</b>。引擎不自動換席——換人是人的裁決。
 席位資格（GRP v1，2026-07-04 持有人拍板）＝DD 裁決進場 ∩ <b>三閘全過</b>：
-<b>G 高成長</b>（FY1→FY3 EPS CAGR ≥15%）× <b>R 上修</b>（FY+1 月修 ≥+2% 或 2Y ≥+1pp；下修否決）×
-<b>P 位置適合</b>（站上 52 週線且未過熱）。排序＝R 上修幅度——<b>不再依賴 5Y EV/IRR</b>
-（降級為 DD 內部資訊）。GRP 未過的進場票落板凳、寧缺勿濫。</div>
+<b>G 高成長</b>（FY1→FY3 EPS CAGR ≥15%）× <b>R 上修</b>（FY+1 月修 &gt;0 或 2Y &gt;0pp；下修 ≤-2% 否決）×
+<b>P 位置適合</b>（站上 52 週線且未過熱）。排序＝R 上修幅度——<b>不再依賴 5Y EV/IRR</b>。
+<b>軌別路由</b>：核心＝護城河 S/A 非↓（複利耐久）；衛星＝其餘 GRP 全過者（moat B／循環爆發型）。
+DD 角色與機械軌別衝突標 ⚠ 供人裁。GRP 未過的進場票落板凳、寧缺勿濫。</div>
 <div class="asof">資料源 dd-screener latest.json ｜ 席位口徑與 Pipeline 頁一致 ｜ 週更</div>
 </div>
 <div class="stat-row">

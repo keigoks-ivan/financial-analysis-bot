@@ -93,3 +93,18 @@ P_LABEL_HTML = {"breakout": '<span class="tag tag-up">🟢 突破帶</span>',
                 "pullback": '<span class="tag tag-up">🟢 回踩到位</span>',
                 "in_trend": '<span class="tag tag-pool">🟡 趨勢內</span>',
                 None: '<span class="tag tag-dn">🔴 不適合</span>'}
+
+
+# ── 軌別路由（核心 vs 衛星，v1 2026-07-04 鎖定）─────────────────────────────
+# 核心＝複利耐久性：GRP 全過 ∩ 護城河 S/A（趨勢非↓）。衛星＝其餘 GRP 全過者
+# （moat B、循環轉折、爆發型）。分工：DD 裁決＝資格、moat＝軌別、GRP＝排序。
+CORE_MOAT_GRADES = ("S", "A")
+
+
+def grp_route(s: dict) -> tuple[str, str]:
+    """回傳 (軌別 core|satellite, 理由)。前提：GRP 已 pass。"""
+    grade = s.get("moat_grade")
+    trend = s.get("moat_trend")
+    if grade in CORE_MOAT_GRADES and trend != "↓":
+        return "core", f"護城河 {grade}{trend or ''}＝複利耐久"
+    return "satellite", f"護城河 {grade or '?'}{trend or ''}＝爆發/循環型"
