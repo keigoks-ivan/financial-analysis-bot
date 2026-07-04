@@ -3,7 +3,8 @@
 
 設計 source-of-truth: docs/_handoff_stock_sleeve_pipeline_20260703.md（Task 4）
 
-一頁呈現整條漏斗：發現 → 資格閘 → 三軌射擊名單 → 板機 → 回看鏡（發現力稽核）→ 隱私線。
+一頁呈現整條漏斗：發現 → 資格閘 → 三軌射擊名單（＋觀望複審隊列）→ 板機（＋態②否決對照組）
+→ 回看鏡（發現力稽核）→ 隱私線。
 資料**全部來自既有 JSON**，不新增採集：
   - docs/dd-screener/latest.json         （宇宙 / 資格閘 / 核心軌 / 結構軌）
   - docs/dd-screener/cyclical-track.json （衛星·循環軌，Task 2 輸出）
@@ -61,6 +62,13 @@ STRUCT_BULL_MULT = 15.0          # 結構軌排序：bull 倍數權重
 CORE_CAP_PCT = 10.0              # 核心單檔上限（個股部淨值）
 SATELLITE_CAP_PCT = 5.0          # 衛星單檔上限
 CORE_SLOTS = 5                   # 核心席位硬上限（章程 core ≤5）；超出落板凳
+
+# ── 觀望複審隊列（裁決保鮮迴路，2026-07-04）──────────────────────────────────
+# 門檻全部沿用既有拍板值，不引入新調參：miss＝結算警報線（knowledge/ --calibration 同口徑）、
+# EPS 上修＝循環軌資格口徑（handoff Task 2）。命中＝裁決回爐複審，不是買進訊號。
+REREVIEW_MISS_PCT = 30.0         # 錯過成本：裁決後現價漲逾此值
+REREVIEW_EPS_FY1_PCT = 5.0       # FY+1 EPS 單月上修門檻
+REREVIEW_EPS2Y_PP = 3.0          # eps2y 修正 pp 門檻
 
 
 def is_core_role(s: dict) -> bool:
@@ -120,6 +128,56 @@ def _weekly_return(ticker: str, n: int) -> Optional[float]:
     if not a or not b:
         return None
     return a / b - 1.0
+
+
+def _weekly_bars(ticker: str) -> Optional[list]:
+    """weekly_cache 的 (week_end, close) 序列；無檔或壞檔回 None。"""
+    p = WEEKLY_CACHE_DIR / f"{ticker}.json"
+    if not p.exists():
+        return None
+    try:
+        raw = json.loads(p.read_text(encoding="utf-8")).get("weekly_bars", []) or []
+    except (json.JSONDecodeError, OSError):
+        return None
+    out = [(b.get("week_end"), _safe_float(b.get("close"))) for b in raw]
+    return [(d, c) for d, c in out if d and c] or None
+
+
+def veto_control_stats(ledger: Optional[dict]) -> Optional[dict]:
+    """態②否決對照組 — 每檔取「首次」否決，用 weekly_cache 結算否決之後的走勢：
+    to-date 報酬、最深回撤（等回踩到底等不等得到）。閘的年度複檢（91 天）看這組數字。"""
+    if not ledger:
+        return None
+    first: dict = {}
+    for e in sorted(ledger.get("events", []) or [], key=lambda e: e.get("signal_date") or ""):
+        if e.get("status") == "vetoed" and "態②過熱" in (e.get("vetoes") or []):
+            first.setdefault(e.get("ticker"), e)
+    rows = []
+    for t, e in first.items():
+        bars = _weekly_bars(t)
+        d0 = e.get("signal_date")
+        if not (bars and d0):
+            continue
+        p0 = None
+        for d, c in bars:
+            if d <= d0:
+                p0 = c
+            else:
+                break
+        after = [c for d, c in bars if d > d0]
+        if not (p0 and after):
+            continue
+        rows.append({"todate": after[-1] / p0 * 100 - 100,
+                     "maxdd": min(after) / p0 * 100 - 100})
+    if not rows:
+        return None
+    med = lambda xs: sorted(xs)[len(xs) // 2]  # noqa: E731
+    return {
+        "n": len(rows),
+        "med_todate": med([r["todate"] for r in rows]),
+        "med_maxdd": med([r["maxdd"] for r in rows]),
+        "pullback10_pct": sum(1 for r in rows if r["maxdd"] < -10) / len(rows) * 100,
+    }
 
 
 # ── 資格閘（自算，不依賴 pass_count）─────────────────────────────────────────
@@ -385,17 +443,80 @@ def render_cyclical(cyc: Optional[dict]) -> str:
 </div>"""
 
 
-def render_tracks(core_sorted: list, struct_sorted: list, cyc: Optional[dict]) -> str:
+def compute_rereview(stocks: list) -> list:
+    """觀望複審隊列 — 裁決保鮮迴路。觀望/迴避不是終局：錯過成本或上修動能命中門檻，
+    裁決強制回爐複審（stock-analyst）。複審≠改判，維持原判也是合法產出；不複審才是缺陷。"""
+    rows = []
+    for s in stocks:
+        if s.get("dca_verdict") not in ("觀望", "迴避"):
+            continue
+        reasons = []
+        p0 = _safe_float(s.get("price_at_dd"))
+        px = _safe_float((s.get("ma") or {}).get("price"))
+        miss = (px / p0 - 1) * 100 if (p0 and px) else None
+        if miss is not None and miss >= REREVIEW_MISS_PCT:
+            reasons.append(f"錯過成本 {miss:+.0f}%")
+        fy1 = _safe_float(s.get("eps_fy_next_revision_pct"))
+        if fy1 is not None and fy1 >= REREVIEW_EPS_FY1_PCT:
+            reasons.append(f"FY+1 上修 {fy1:+.1f}%")
+        pp = _safe_float(s.get("eps2y_revision_pp"))
+        if pp is not None and pp >= REREVIEW_EPS2Y_PP:
+            reasons.append(f"2Y CAGR 上修 {pp:+.1f}pp")
+        if reasons:
+            rows.append({"s": s, "miss": miss, "reasons": reasons})
+    rows.sort(key=lambda r: (-(r["miss"] if r["miss"] is not None else -999.0), r["s"]["ticker"]))
+    return rows
+
+
+def _rereview_row(r: dict) -> str:
+    s = r["s"]
+    age = s.get("dd_age_days")
+    return f"""<tr>
+  <td class="left">{_dd_link(s)}{_de_badge(s)}</td>
+  <td>{_verdict_badge(s.get("dca_verdict"))}</td>
+  <td class="left">{escape("；".join(r["reasons"]))}</td>
+  <td class="num">{f"{age:.0f}d" if age is not None else "—"}</td>
+</tr>"""
+
+
+def render_rereview(rows: list) -> str:
+    if not rows:
+        body = '<div class="empty">目前無觸發複審的觀望/迴避裁決。</div>'
+    else:
+        body = f"""<table>
+<thead><tr>
+  <th class="left">Ticker</th><th>現裁決</th><th class="left">觸發原因</th><th class="num">DD 齡</th>
+</tr></thead>
+<tbody>
+{"".join(_rereview_row(r) for r in rows)}
+</tbody></table>"""
+    return f"""<div class="track-card track-rereview">
+  <h3>⏰ 觀望複審隊列 <span class="cnt">{len(rows)} 檔</span></h3>
+  <div class="track-desc">
+    <b>裁決保鮮迴路</b>——觀望/迴避不是終局。命中任一門檻＝裁決回爐複審（跑 stock-analyst 複審，非重寫）：
+    ① 錯過成本 ≥ +{REREVIEW_MISS_PCT:.0f}%（裁決日價 → 現價）
+    ② FY+1 EPS 單月上修 ≥ +{REREVIEW_EPS_FY1_PCT:.0f}%
+    ③ 2Y CAGR 修正 ≥ +{REREVIEW_EPS2Y_PP:.0f}pp（②③＝循環軌同口徑）。
+    <b>複審≠追高</b>——維持原判也是合法產出；不複審才是缺陷（MU 型錯過的直接解）。
+  </div>
+  {body}
+</div>"""
+
+
+def render_tracks(core_sorted: list, struct_sorted: list, cyc: Optional[dict],
+                  rereview_rows: list) -> str:
     return f"""<section class="block">
   <h2 class="block-h"><span class="step">3</span> 三軌射擊名單</h2>
   <div class="block-sub">過閘後依角色分三軌，一檔一軌。每檔 Ticker 連站上 DD 的 <code>#decision</code> 錨點；無裁決者標「待補 DD」＝研究隊列。</div>
   {render_core(core_sorted)}
   {render_struct(struct_sorted)}
   {render_cyclical(cyc)}
+  {render_rereview(rereview_rows)}
 </section>"""
 
 
-def render_trigger(sop: Optional[dict], veto_by_reason: dict) -> str:
+def render_trigger(sop: Optional[dict], veto_by_reason: dict,
+                   veto_ctrl: Optional[dict] = None) -> str:
     if not sop:
         return """<section class="block">
   <h2 class="block-h"><span class="step">4</span> 板機現況</h2>
@@ -436,8 +557,20 @@ def render_trigger(sop: Optional[dict], veto_by_reason: dict) -> str:
     <div><span class="lbl">待命 A2</span>{_names(a2)} <span class="sep">·</span> <span class="lbl">待命 B</span>{_names(b)}</div>
     <div><span class="lbl">築底中</span>{_names(base)}</div>
   </div>
+  {_veto_ctrl_html(veto_ctrl)}
   <div class="block-foot"><a href="/dd-screener/sop-funnel.html">→ SOP Funnel 全頁</a></div>
 </section>"""
+
+
+def _veto_ctrl_html(vc: Optional[dict]) -> str:
+    """態②否決對照組一行 — 閘的成本/收益活數字（每檔首否決口徑，weekly_cache 結算）。"""
+    if not vc:
+        return ""
+    return (f'<div class="veto-ctrl">否決對照組（每檔首否決，n={vc["n"]}）：'
+            f'否決後 to-date 中位 <b>{vc["med_todate"]:+.1f}%</b> · '
+            f'最深回撤中位 <b>{vc["med_maxdd"]:+.1f}%</b> · '
+            f'曾回撤&gt;10% 比例 <b>{vc["pullback10_pct"]:.0f}%</b>'
+            f'　＝閘擋下的名字後來給不給回踩機會，91 天複檢閾值時看這行。</div>')
 
 
 def _lookback_row(entry: dict) -> str:
@@ -569,6 +702,7 @@ def render_howto() -> str:
         ("潛力榜是補 DD 導航，不是買入排行", "🟢 §11.5 才可信，<b>🟡 heur 只有方向性</b>。標「→ 補 DD」＝下一個該研究的名字，不是叫你買。"),
         ("由左到右讀", "發現 → 資格閘 → 三軌裁決 → 板機 → 回看鏡 → 潛力榜。每一站只回答一個問題，別跳著看。"),
         ("這頁不含實際持倉", "只呈現研究層。買了什麼、多少倉位，不在站上。"),
+        ("觀望不是終局", "觀望/迴避後錯過成本 ≥+30% 或 EPS 上修過門檻 → 進「⏰ 複審隊列」，裁決<b>必須回爐</b>。複審≠追高，維持原判也合法；不複審才是缺陷。"),
     ]
     items = "\n".join(
         f'<li><b>{i}. {t}</b>　{d}</li>' for i, (t, d) in enumerate(rules, 1))
@@ -631,6 +765,8 @@ code{background:#f0f5fb;padding:1px 5px;border-radius:3px;font-size:11px;color:#
 .track-core{border-left:4px solid #166534}
 .track-struct{border-left:4px solid #2563eb}
 .track-cyc{border-left:4px solid #c2410c}
+.track-rereview{border-left:4px solid #7c3aed}
+.veto-ctrl{margin-top:10px;font-size:12px;color:#475569;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px}
 .track-card h3{font-size:15px;font-weight:700;color:#0f2a45;margin-bottom:4px;display:flex;align-items:center;gap:8px}
 .track-card h3 .cnt{font-size:11px;font-weight:600;color:#94a3b8}
 .track-desc{font-size:11.5px;color:#5a7a9a;line-height:1.7;margin-bottom:10px}
@@ -738,13 +874,17 @@ def build(dry_run: bool = False) -> int:
         struct.append(s)
     struct_sorted = sorted(struct, key=lambda s: (-s["_sscore"], s["ticker"]))
 
-    # ── 態②否決計數 ──
+    # ── 態②否決計數 + 對照組結算 ──
     veto_by_reason: dict = {}
     if ledger:
         for e in ledger.get("events", []) or []:
             if e.get("status") == "vetoed":
                 for v in (e.get("vetoes") or []):
                     veto_by_reason[v] = veto_by_reason.get(v, 0) + 1
+    veto_ctrl = veto_control_stats(ledger)
+
+    # ── 觀望複審隊列（裁決保鮮迴路）──
+    rereview_rows = compute_rereview(stocks)
 
     # ── 回看鏡 ──
     def _cov(ticker: str):
@@ -808,6 +948,11 @@ def build(dry_run: bool = False) -> int:
         print(f"  循環軌={cyc.get('qualified_total')} (低熱 {len(cyc.get('low_heat',[]))} / 🔥 {len(cyc.get('hot',[]))})")
     print(f"  板機: today={len(sop.get('today_signals',[])) if sop else '?'} "
           f"open={len(sop.get('open_trades',[])) if sop else '?'} 態②否決={veto_by_reason.get('態②過熱',0)}")
+    print(f"  複審隊列={len(rereview_rows)}: "
+          f"{[(r['s']['ticker'], r['reasons']) for r in rereview_rows]}")
+    if veto_ctrl:
+        print(f"  態②對照組: n={veto_ctrl['n']} to-date中位={veto_ctrl['med_todate']:+.1f}% "
+              f"最深回撤中位={veto_ctrl['med_maxdd']:+.1f}% 回撤>10%={veto_ctrl['pullback10_pct']:.0f}%")
     print(f"  回看鏡動能盲區: 12M={[r['ticker'] for r in queue12]} 24M={[r['ticker'] for r in queue24]}")
     print(f"  潛力榜: 可排 {len(univ)}/{n_scored} "
           f"(🟢{sum(1 for u in univ if u['prov']=='rigorous')} 🟡{sum(1 for u in univ if u['prov']=='heur')}) "
@@ -817,8 +962,8 @@ def build(dry_run: bool = False) -> int:
     # ── assemble HTML ──
     universe_html = render_universe(latest, pre_id, list(momentum_blind))
     gate_html = render_gate(gated)
-    tracks_html = render_tracks(core_sorted, struct_sorted, cyc)
-    trigger_html = render_trigger(sop, veto_by_reason)
+    tracks_html = render_tracks(core_sorted, struct_sorted, cyc, rereview_rows)
+    trigger_html = render_trigger(sop, veto_by_reason, veto_ctrl)
     howto_html = render_howto()
     lookback_html = render_lookback(lb12, lb24, queue12, queue24)
     leaderboard_html = render_leaderboard(univ, artifacts, n_scored)
