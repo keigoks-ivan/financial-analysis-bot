@@ -296,7 +296,9 @@ def main() -> int:
         if -25.0 <= r["dist_ath"] <= -8.0:
             return "pullback"
         return "in_trend"
-    grp_struct = [r for r in rows if p_label(r)]
+    # REIT 排除（2026-07-04 壓力測試發現 Bug #1：GAAP EPS 對 REIT 無意義——CPT 案例：
+    # RealPage 和解費滾出製造 +26% 假成長、Core FFO 三年持平。成長 mandate 亦不含收益型 REIT）
+    grp_struct = [r for r in rows if p_label(r) and r["sector"] != "Real Estate"]
     grp_struct.sort(key=lambda r: -r["rs_pct"])
 
     # stage2 候選 = 各形狀 top N 聯集 ∪ GRP 結構資格 RS top 200
