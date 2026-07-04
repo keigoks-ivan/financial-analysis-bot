@@ -597,6 +597,21 @@ footer a{color:var(--muted)}
     var charts=[chM,chS,chV];
     charts.forEach(function(a){charts.forEach(function(b){if(a!==b)link(a,b);});});
 
+    // equalize right price-scale widths so the three panes' time axes align
+    var widthSyncPending=false;
+    function syncScaleWidths(){
+      if(widthSyncPending)return;
+      widthSyncPending=true;
+      requestAnimationFrame(function(){
+        widthSyncPending=false;
+        var w=0;
+        charts.forEach(function(c){w=Math.max(w,c.priceScale('right').width());});
+        if(w>0)charts.forEach(function(c){c.applyOptions({rightPriceScale:{minimumWidth:w}});});
+      });
+    }
+    charts.forEach(function(c){c.timeScale().subscribeVisibleLogicalRangeChange(syncScaleWidths);});
+    syncScaleWidths();
+
     // ── legend + crosshair sync ──
     var legend=document.getElementById('rcLegend');
     function fmtLegend(i){
@@ -650,6 +665,7 @@ footer a{color:var(--muted)}
       chM.applyOptions({width:elM.clientWidth});
       chS.applyOptions({width:elS.clientWidth});
       chV.applyOptions({width:elV.clientWidth});
+      syncScaleWidths();
     }).observe(elM);
   }
 })();
