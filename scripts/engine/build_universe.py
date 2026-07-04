@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
-"""決策引擎 L0 — 雷達 universe 名單（S&P 500 + 400 + 600 ≈ 1,500 檔）.
+"""決策引擎 L0 — 雷達 universe 名單（S&P 500 + Nasdaq 100 + S&P 400 中型股）.
 
+持有人 2026-07-04 拍板：排除 S&P 600 小型股（噪音多、不符合 mandate 的 size floor）；
+母體 = 大型（sp500 ∪ ndx100）＋中型（sp400），約 920 檔。
 來源 Wikipedia 成分股表 → data/engine/universe.json（含 sector 與指數層級）。
 Fail-safe：抓取失敗時保留舊檔（雷達照跑上一版名單），月更即可。
 
@@ -22,8 +24,8 @@ OUT = ROOT / "data" / "engine" / "universe.json"
 
 WIKI = {
     "sp500": "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies",
+    "ndx100": "https://en.wikipedia.org/wiki/Nasdaq-100",
     "sp400": "https://en.wikipedia.org/wiki/List_of_S%26P_400_companies",
-    "sp600": "https://en.wikipedia.org/wiki/List_of_S%26P_600_companies",
 }
 UA = {"User-Agent": "Mozilla/5.0 (imq-engine-universe; research script)"}
 
@@ -36,19 +38,20 @@ def fetch() -> list[dict]:
         html = urllib.request.urlopen(req, timeout=30).read().decode("utf-8")
         for tbl in pd.read_html(io.StringIO(html)):
             cols = {str(c).strip().lower() for c in tbl.columns}
-            if "symbol" not in cols:
+            sym = "symbol" if "symbol" in cols else ("ticker" if "ticker" in cols else None)
+            if sym is None:
                 continue
             tbl.columns = [str(c).strip().lower() for c in tbl.columns]
             sec = "gics sector" if "gics sector" in tbl.columns else None
             for _, r in tbl.iterrows():
-                t = str(r["symbol"]).strip()
+                t = str(r[sym]).strip()
                 if not t or t in seen:
-                    continue
+                    continue   # 重疊（ndx100 ∩ sp500）保留先見層級
                 seen.add(t)
                 rows.append({"ticker": t, "sector": str(r[sec]) if sec else "",
                              "tier": tier})
             break
-    if len(rows) < 1200:   # sanity：三表齊全應 ~1500
+    if len(rows) < 750:   # sanity：三表齊全應 ~920
         raise RuntimeError(f"成分股僅 {len(rows)} 檔，疑似表結構變動 — 保留舊檔")
     return rows
 

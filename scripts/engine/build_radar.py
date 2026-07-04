@@ -11,7 +11,8 @@
   breakout_base 長基期突破帶：基期 ≥26 週 ∩ 距 ATH ≥ -5% ∩ 站上 40 週線
   cyclical_turn 循環轉折：自高點深跌 ≤ -40% ∩ 13 週 ≥ +10% ∩ 距 ATH ≤ -25%（早段）
   momentum_rerate 動能重估：12M RS ≥ P90 ∩ 站上 40 週線 ∩ 距 ATH ≥ -15%
-  theme_smallmid 主題下沉：sp400/600 ∩ RS ≥ P75 ∩ 站上 40 週線 ∩ 產業 13 週熱度 top3
+  theme_smallmid 主題下沉：中型股（sp400）∩ RS ≥ P75 ∩ 站上 40 週線 ∩ 產業 13 週熱度 top3
+  （universe v1.1 2026-07-04 持有人拍板：sp500 ∪ ndx100 ∪ sp400，排除 sp600 小型股）
 
 輸出：docs/engine/radar.json + docs/engine/radar.html（成功才寫檔 — fail-safe 慣例）。
 Usage: python3 scripts/engine/build_radar.py [--skip-stage2]
@@ -55,7 +56,7 @@ SHAPES = {
     "momentum_rerate": ("🟪 動能重估", "s-momentum",
                         f"12M RS ≥P{P['mom_rs_pct']:.0f} ∩ 站上 40 週線 ∩ 距 ATH ≥{P['mom_dist_ath']:.0f}% — PLTR/APP 型出身"),
     "theme_smallmid": ("🟦 主題下沉", "s-theme",
-                       f"中小型（sp400/600）∩ RS ≥P{P['theme_rs_pct']:.0f} ∩ 熱產業 top{P['theme_hot_sectors']} — ICHR/UCTT 型出身（池外稽核最大缺口）"),
+                       f"中型股（sp400）∩ RS ≥P{P['theme_rs_pct']:.0f} ∩ 熱產業 top{P['theme_hot_sectors']} — 大主題的中型 beta（池外稽核最大缺口）"),
 }
 
 
@@ -128,7 +129,7 @@ def tag_shapes(rows: list[dict]) -> dict[str, list[dict]]:
             shapes["cyclical_turn"].append(r)
         if r["rs_pct"] >= P["mom_rs_pct"] and r["above_40w"] and r["dist_ath"] >= P["mom_dist_ath"]:
             shapes["momentum_rerate"].append(r)
-        if (r["tier"] in ("sp400", "sp600") and r["rs_pct"] >= P["theme_rs_pct"]
+        if (r["tier"] == "sp400" and r["rs_pct"] >= P["theme_rs_pct"]
                 and r["above_40w"] and r["sector"] in hot):
             shapes["theme_smallmid"].append(r)
     sort_key = {"breakout_base": lambda r: -r["base_age_w"],
@@ -204,7 +205,7 @@ def render(payload: dict) -> str:
 
     body = f"""<div class="hero">
 <h1>📡 全市場雷達 · L0 發現層</h1>
-<div class="hero-sub">S&amp;P 1500（500＋400＋600）每週全掃 — 結構訊號批量計算，四形狀路由，
+<div class="hero-sub">S&amp;P 500＋Nasdaq 100＋S&amp;P 400 中型股（~920 檔，2026-07-04 持有人拍板排除小型股）每週全掃 — 結構訊號批量計算，四形狀路由，
 候選再逐檔做 FY+1 EPS 30 天修正確認（★＝上修 ≥+{P['rev_confirm_pct']:.0f}%，拐點確認）。
 <b>這是研究導航不是買入清單</b>：池外名字＝候選入池補 DD；要進場一律走 DD 裁決＋板機。</div>
 <div class="asof">{payload['as_of']} 價格 as of ｜ universe {payload['universe_n']} 檔
