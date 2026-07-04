@@ -74,6 +74,35 @@ def shape_of(ticker: str) -> str:
     return classify_shape(bars, bars[-1][0])
 
 
+def _yf_rev_map() -> dict:
+    """雷達 stage2 的 yfinance 30 天修正（第二源，覆蓋主榜候選 ~250 檔）。"""
+    try:
+        radar = json.loads((OUT_DIR / "radar.json").read_text(encoding="utf-8"))
+        return {t: v.get("fy1_rev_30d_pct") for t, v in (radar.get("stage2") or {}).items()}
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def cross_check_r(r: dict, yf_rev) -> dict:
+    """兩源一致性防線（2026-07-04）：主源規則＝DD 池認 Koyfin、池外認 yfinance，計分不混用；
+    但「重下修 ≤-2% 一票否決」採**任一源觸發即否決**（保守聯集——源吵架時聽壞消息），
+    兩源方向相反（一正一負）標 ⚠ 源分歧供人工判讀。"""
+    if yf_rev is None:
+        return r
+    r["r_alt_yf30d"] = yf_rev
+    g = r["grp"]
+    koy = g.get("r_fy1")
+    if koy is not None and ((koy > 0) != (yf_rev > 0)) and abs(koy - yf_rev) > 2:
+        r["r_conflict"] = True
+    if yf_rev <= -2.0 and not g.get("veto"):
+        r["grp"] = g = dict(g)
+        g["veto"] = True
+        g["pass"] = False
+        g["why"] = [f"R 保守否決：yfinance 30d 重下修 {yf_rev:+.1f}%（Koyfin 正向不足以豁免）"] \
+                   + list(g["why"])
+    return r
+
+
 def row_dict(s: dict) -> dict:
     g = grp_score(s)
     route, route_why = grp_route(s)
@@ -170,8 +199,13 @@ def main() -> int:
     light = load_light_rows({s["ticker"]: s for s in stocks})
     entered += [r for r in light if r["verdict"] == "進場"]
 
+    # 兩源一致性防線：任一源重下修即否決＋方向矛盾標記
+    yf_map = _yf_rev_map()
+    entered = [cross_check_r(r, yf_map.get(r["ticker"])) for r in entered]
+
     # 市值門檻（持有人拍板 ≥$200 億）：席位/挑戰者資格層——未達或未知者降板凳並列原因
-    watch_rows = [row_dict(s) for s in stocks if s.get("dca_verdict") == "觀望"]
+    watch_rows = [cross_check_r(row_dict(s), yf_map.get(s["ticker"]))
+                  for s in stocks if s.get("dca_verdict") == "觀望"]
     caps = fetch_caps(sorted({r["ticker"] for r in entered + light + watch_rows}))
     def apply_cap(r):
         r["mktcap"] = caps.get(r["ticker"])
@@ -196,7 +230,8 @@ def main() -> int:
     sat_bench = sat_pass[SAT_SLOTS:] + [r for r in failed if "核心" not in (r["role"] or "")]
 
     seated = {r["ticker"] for r in core_seats + sat_seats}
-    challengers = [r for r in (apply_cap(row_dict(s)) for s in stocks
+    challengers = [r for r in (apply_cap(cross_check_r(row_dict(s), yf_map.get(s["ticker"])))
+                               for s in stocks
                                if s.get("dca_verdict") in ("進場", "觀望")
                                and s["ticker"] not in seated)
                    if r["grp"]["pass"]]
@@ -283,13 +318,18 @@ def main() -> int:
         cls = "tag-dn" if cs["n_breach"] else ("tag-blind" if cs["n_due"] else "tag-pool")
         return f'<a href="/engine/cards.html#{escape(t)}"><span class="tag {cls}">🗂 {"·".join(bits)}</span></a>'
 
-    def _rev_html(g):
+    def _rev_html(g, r=None):
         bits = []
         if g["r_fy1"] is not None:
             bits.append(f'FY+1 {pct(g["r_fy1"])}')
         if g["r_2y"] is not None:
             bits.append(f'2Y {g["r_2y"]:+.1f}pp')
-        return "　".join(bits) or '<span class="muted">—</span>'
+        if r is not None and r.get("r_alt_yf30d") is not None:
+            bits.append(f'<span class="muted">yf30d {r["r_alt_yf30d"]:+.1f}%</span>')
+        out = "　".join(bits) or '<span class="muted">—</span>'
+        if r is not None and r.get("r_conflict"):
+            out += ' <span class="tag tag-blind" title="Koyfin 與 yfinance 修正方向相反">⚠ 源分歧</span>'
+        return out
 
     def seat_tr(r, seat_no=None):
         g = r["grp"]
@@ -301,7 +341,7 @@ def main() -> int:
         dist = f'（距高 {g["dist_hi"]:+.0f}%）' if g["dist_hi"] is not None else ""
         return (f'<tr><td class="left">{f"{seat_no}." if seat_no else ""} <strong>{link}</strong></td>'
                 f'<td class="left">{SHAPE_LABELS.get(r["shape"], r["shape"])}</td>'
-                f'<td class="left">{_rev_html(g)}</td>'
+                f'<td class="left">{_rev_html(g, r)}</td>'
                 f'<td>{pct(g["g"], 0, False) if g["g"] is not None else "—"}</td>'
                 f'<td class="left">{P_LABEL_HTML.get(g["p_label"])}{dist}</td>'
                 f'<td class="left">{escape(r["moat"])}</td>'

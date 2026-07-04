@@ -103,6 +103,20 @@ def test_claim_settlement():
     ok(c["settle"] == "breach", "價格越線 → breach")
 
 
+def test_dual_source_r():
+    print("[5b] 兩源一致性防線（Koyfin × yfinance）")
+    from engine.build_arena import cross_check_r
+    base = {"grp": {"r_fy1": 1.0, "veto": False, "pass": True, "why": []}}
+    r = cross_check_r(json.loads(json.dumps(base)), -2.5)
+    ok(r["grp"]["veto"] and not r["grp"]["pass"], "yf 30d -2.5% → 保守否決（Koyfin 正也不豁免）")
+    r = cross_check_r(json.loads(json.dumps(base)), -1.5)
+    ok(r["grp"]["pass"] and r.get("r_conflict"), "yf -1.5%（未達否決線）→ 只標 ⚠ 源分歧不否決")
+    r = cross_check_r(json.loads(json.dumps(base)), 5.0)
+    ok(r["grp"]["pass"] and not r.get("r_conflict"), "兩源同向 → 無標記")
+    r = cross_check_r(json.loads(json.dumps(base)), None)
+    ok(r["grp"]["pass"] and "r_alt_yf30d" not in r, "第二源缺值 → 主源規則照舊，不誤傷")
+
+
 def test_light_merge():
     print("[5] 光卡合併優先序")
     from engine.build_arena import load_light_rows
@@ -143,6 +157,7 @@ def test_site_consistency():
 
 if __name__ == "__main__":
     for fn in (test_grp_gates, test_route, test_cap_floor,
-               test_claim_settlement, test_light_merge, test_site_consistency):
+               test_claim_settlement, test_dual_source_r, test_light_merge,
+               test_site_consistency):
         fn()
     print(f"\nALL PASS — {N_PASS} 斷言")
