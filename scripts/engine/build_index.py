@@ -101,6 +101,26 @@ def main() -> int:
 </div>
 
 <div class="block">
+<h2>名單為什麼會變（四個驅動力，按力度排）</h2>
+<table>
+<thead><tr><th class="left">驅動力</th><th class="left">頻率</th><th class="left">影響</th></tr></thead>
+<tbody>
+<tr><td class="left"><b>月度 EPS 修正刷新</b></td><td class="left">每月（Koyfin snapshot）＋每週（yfinance，雷達候選）</td>
+<td class="left">最大——席位排序按 R 上修幅度，每次刷新全體重排；勉強過閘的（R 貼近 0）一個小下修就下席</td></tr>
+<tr><td class="left"><b>財報季條件翻正</b></td><td class="left">季度</td>
+<td class="left">觀望票的翻正條件與決策卡宣稱到期潮集中在財報季——席位變動的主窗口</td></tr>
+<tr><td class="left"><b>新 DD／快審補齊</b></td><td class="left">持續</td>
+<td class="left">池內仍有大量無裁決名字＋主榜大型候選待審——每補一檔＝多一個挑戰者</td></tr>
+<tr><td class="left"><b>價格位置（P 閘）</b></td><td class="left">每週</td>
+<td class="left">破 52 週線下席、站回來回席——趨勢破壞的名字自動失格，修復自動恢復資格</td></tr>
+</tbody></table>
+<div class="note">變動是<b>不對稱設計</b>：衛星席＝快時鐘（爆發型，預期高輪動）；核心席＝慢時鐘
+（S/A 護城河是慢變數，若核心每週換人＝bug）。每次上席/下席都記入
+<a href="/engine/arena.html">席位變動帳本</a>（append-only）——2026-10 季檢時用帳本檢視換手率，
+過高則加換席緩衝（挑戰者連續兩週勝出才換），先裸跑用數據定緩衝厚度、不憑感覺預設。</div>
+</div>
+
+<div class="block">
 <h2>三條鐵律</h2>
 <div class="block-sub" style="font-size:13.5px;line-height:2">
 1. <b>看得見 ≠ 能買</b>——雷達只給研究順序，資格永遠要過審查。<br>
