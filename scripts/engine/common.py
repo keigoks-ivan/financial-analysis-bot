@@ -66,8 +66,40 @@ td a:hover{text-decoration:underline}
 .st-live{background:#dcfce7;color:#166534}
 .st-soon{background:#f1f5f9;color:#64748b}
 footer{margin-top:26px;font-size:12px;color:#94a3b8;text-align:center}
+.overview-wrap{overflow-x:auto;margin:16px 0 4px;border:1px solid #e2e8f0;
+               border-radius:12px;background:#fff}
+.overview-tbl{font-size:12.5px;margin-top:0}
+.overview-tbl th{padding:8px 10px}
+.overview-tbl td{padding:7px 10px}
+.overview-tbl a.tk-link{color:#0f2a45;font-weight:750;text-decoration:none}
+.overview-tbl a.tk-link:hover{text-decoration:underline;color:#1d4ed8}
+.gate-mini{white-space:nowrap;font-size:11px}
+.gate-mini b{font-weight:700;color:#94a3b8;margin:0 1px 0 6px}
+.gate-mini b:first-child{margin-left:0}
+.seat-section{font-size:16px;font-weight:800;color:#0f2a45;margin:24px 0 2px}
+.seat-section .cnt{font-size:12px;font-weight:600;color:#94a3b8;margin-left:6px}
+details.card-block{background:#fff;border:1px solid #e2e8f0;border-radius:12px;
+                    margin-top:10px}
+details.card-block>summary{list-style:none;cursor:pointer;padding:12px 16px;
+                            display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+details.card-block>summary::-webkit-details-marker{display:none}
+details.card-block>summary::before{content:"▸";color:#94a3b8;font-size:12px}
+details.card-block[open]>summary::before{content:"▾"}
+details.card-block>summary:hover{background:#f8fafc;border-radius:10px}
+.card-summary .cs-ticker{font-size:15.5px;font-weight:800;color:#0f2a45}
+.card-summary .cs-verdict{font-size:12.5px;font-weight:650;color:#64748b}
+.card-body{padding:0 20px 18px}
+details.bench-wrap{margin-top:22px;border:1px dashed #cbd5e1;border-radius:12px;
+                    background:#fbfdff;padding:2px 6px 8px}
+details.bench-wrap>summary{list-style:none;cursor:pointer;padding:12px 14px;
+                            font-size:16px;font-weight:800;color:#0f2a45}
+details.bench-wrap>summary::-webkit-details-marker{display:none}
+details.bench-wrap>summary::before{content:"▸ ";color:#94a3b8}
+details.bench-wrap[open]>summary::before{content:"▾ "}
+details.bench-wrap details.card-block{margin:8px 6px 0}
 @media(max-width:760px){.wrap{padding:16px 10px 40px}.block{padding:14px 12px}
-  table{display:block;overflow-x:auto}}
+  table{display:block;overflow-x:auto}
+  details.card-block>summary{padding:10px 12px}.card-body{padding:0 12px 14px}}
 """
 
 
