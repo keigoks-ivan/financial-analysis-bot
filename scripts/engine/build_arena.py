@@ -100,6 +100,49 @@ def render_seat_changes(changes: list[dict]) -> str:
             + "".join(rows) + "</tbody></table>")
 
 
+def load_light_rows(dd_tickers: set[str]) -> list[dict]:
+    """快審卡（qual_tier=light）→ 衛星席第二資格來源（2026-07-04 拍板）。
+    光卡只給衛星資格（核心席必須完整 DD）；GRP 數據取雷達主榜
+    （G＝FY+1 隱含成長、R＝30 天修正、P＝結構標籤）——與 DD 池口徑不同但同語意，頁面標 🪶。"""
+    cards_dir = OUT_DIR / "cards" / "data"
+    try:
+        radar = json.loads((OUT_DIR / "radar.json").read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        radar = {}
+    board = {r["ticker"]: r for r in radar.get("grp_board") or []}
+    stage2 = radar.get("stage2") or {}
+    rows = []
+    for p in sorted(cards_dir.glob("*.json")):
+        try:
+            c = json.loads(p.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            continue
+        if c.get("qual_tier") != "light" or c["ticker"] in dd_tickers:
+            continue   # DD 池名字以 dd-meta 為準，光卡不重複
+        t = c["ticker"]
+        b = board.get(t) or {}
+        s2 = stage2.get(t) or {}
+        g = b.get("g_fy1_pct", s2.get("g_fy1_pct"))
+        rev = b.get("fy1_rev_30d_pct", s2.get("fy1_rev_30d_pct"))
+        p_label = b.get("p_label")
+        veto = rev is not None and rev <= -2.0
+        ok = (g is not None and g >= 15.0 and rev is not None and rev > 0
+              and not veto and p_label is not None)
+        grp = {"pass": ok, "veto": veto, "g": g, "r_fy1": rev, "r_2y": None,
+               "r_strength": rev or 0.0, "p_label": p_label,
+               "dist_hi": b.get("dist_ath"), "price": b.get("price"),
+               "score": round((rev or 0) + (g or 0) / 100.0, 3),
+               "why": [] if ok else ["雷達 GRP 資料不足或未過（隨主榜週更再驗）"]}
+        rows.append({"ticker": t, "verdict": c.get("verdict"),
+                     "role": c.get("role") or "衛星持倉",
+                     "route": "satellite", "route_why": "快審卡（衛星限定）",
+                     "role_mismatch": False, "qual": "light",
+                     "grp": grp, "score": grp["score"],
+                     "moat": f'{c.get("moat_grade") or "?"}{c.get("moat_trend") or ""}',
+                     "shape": "other", "dd_path": None})
+    return rows
+
+
 def main() -> int:
     stocks = json.loads(DD_LATEST.read_text(encoding="utf-8"))["stocks"]
     try:
@@ -117,6 +160,8 @@ def main() -> int:
     # （moat B、循環/爆發型）。DD 角色與機械軌別衝突 → 標 ⚠ 供人裁。
     # GRP 未過的進場票落板凳並列原因——寧可席位空缺，不硬塞下修中的名字。
     entered = [row_dict(s) for s in stocks if s.get("dca_verdict") == "進場"]
+    light = load_light_rows({s["ticker"] for s in stocks})
+    entered += [r for r in light if r["verdict"] == "進場"]
     passed = sorted([r for r in entered if r["grp"]["pass"]], key=lambda r: -r["score"])
     failed = sorted([r for r in entered if not r["grp"]["pass"]], key=lambda r: -r["score"])
     core_pass = [r for r in passed if r["route"] == "core"]
@@ -131,6 +176,9 @@ def main() -> int:
                                if s.get("dca_verdict") in ("進場", "觀望")
                                and s["ticker"] not in seated)
                    if r["grp"]["pass"]]
+    challengers += [r for r in light
+                    if r["verdict"] == "觀望" and r["grp"]["pass"]
+                    and r["ticker"] not in seated]
     challengers.sort(key=lambda r: -r["score"])
 
     # 擂台配對（v2）：軌別配對——核心席 vs 核心向挑戰者、衛星席 vs 衛星向挑戰者
@@ -222,6 +270,8 @@ def main() -> int:
     def seat_tr(r, seat_no=None):
         g = r["grp"]
         link = f'<a href="{escape(r["dd_path"])}#decision">{escape(r["ticker"])}</a>' if r.get("dd_path") else escape(r["ticker"])
+        if r.get("qual") == "light":
+            link += f'<a href="/engine/cards.html#{escape(r["ticker"])}"><span class="tag tag-pool">🪶 快審</span></a>'
         if r.get("role_mismatch"):
             link += f'<span class="tag tag-blind" title="DD 角色：{escape(r["role"])}">⚠ DD 角色異</span>'
         dist = f'（距高 {g["dist_hi"]:+.0f}%）' if g["dist_hi"] is not None else ""
@@ -282,6 +332,7 @@ def main() -> int:
 <b>G 高成長</b>（FY1→FY3 EPS CAGR ≥15%）× <b>R 上修</b>（FY+1 月修 &gt;0 或 2Y &gt;0pp；下修 ≤-2% 否決）×
 <b>P 位置適合</b>（站上 52 週線且未過熱）。排序＝R 上修幅度——<b>不再依賴 5Y EV/IRR</b>。
 <b>軌別路由</b>：核心＝護城河 S/A 非↓（複利耐久）；衛星＝其餘 GRP 全過者（moat B／循環爆發型）。
+<b>兩級資格</b>：核心席必須完整 v14 DD；衛星席另接受 🪶 快審卡（週期位置＋陷阱＋護城河快評）。
 DD 角色與機械軌別衝突標 ⚠ 供人裁。GRP 未過的進場票落板凳、寧缺勿濫。</div>
 <div class="asof">資料源 dd-screener latest.json ｜ 席位口徑與 Pipeline 頁一致 ｜ 週更</div>
 </div>

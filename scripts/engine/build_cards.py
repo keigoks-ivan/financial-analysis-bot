@@ -58,14 +58,39 @@ def settle_claim(c: dict, ticker: str) -> dict:
     return out
 
 
-def grp_guard(ticker: str, latest_map: dict) -> dict | None:
-    """GRP 守門 — 席位存在理由的即時三閘（與擂台同一份活數據，週更自動結算）。"""
+def _radar_maps() -> tuple[dict, dict]:
+    try:
+        radar = json.loads((OUT_DIR / "radar.json").read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        radar = {}
+    return ({r["ticker"]: r for r in radar.get("grp_board") or []},
+            radar.get("stage2") or {})
+
+
+def grp_guard(ticker: str, latest_map: dict, radar_maps: tuple[dict, dict]) -> dict | None:
+    """GRP 守門 — 席位存在理由的即時三閘（與擂台同一份活數據，週更自動結算）。
+    DD 池名字用 latest.json（G=FY1→FY3 CAGR）；快審名字 fallback 雷達（G=FY+1 隱含成長）。"""
     s = latest_map.get(ticker)
-    if not s:
+    if s:
+        g = grp_score(s)
+        route, route_why = grp_route(s)
+        return {"grp": g, "route": route, "route_why": route_why, "src": "dd-pool"}
+    board, stage2 = radar_maps
+    b = board.get(ticker) or {}
+    s2 = stage2.get(ticker) or {}
+    gval = b.get("g_fy1_pct", s2.get("g_fy1_pct"))
+    rev = b.get("fy1_rev_30d_pct", s2.get("fy1_rev_30d_pct"))
+    p_label = b.get("p_label")
+    if gval is None and rev is None:
         return None
-    g = grp_score(s)
-    route, route_why = grp_route(s)
-    return {"grp": g, "route": route, "route_why": route_why}
+    veto = rev is not None and rev <= -2.0
+    ok = (gval is not None and gval >= 15.0 and rev is not None and rev > 0
+          and not veto and p_label is not None)
+    return {"grp": {"pass": ok, "veto": veto, "g": gval, "r_fy1": rev, "r_2y": None,
+                    "r_strength": rev or 0.0, "p_label": p_label,
+                    "dist_hi": b.get("dist_ath"), "price": b.get("price"),
+                    "score": round((rev or 0) + (gval or 0) / 100.0, 3), "why": []},
+            "route": "satellite", "route_why": "快審卡（衛星限定）", "src": "radar"}
 
 
 def load_cards() -> list[dict]:
@@ -74,6 +99,7 @@ def load_cards() -> list[dict]:
                       for s in json.loads(DD_LATEST.read_text(encoding="utf-8"))["stocks"]}
     except (OSError, json.JSONDecodeError, KeyError):
         latest_map = {}
+    radar_maps = _radar_maps()
     cards = []
     for p in sorted(CARDS_DIR.glob("*.json")):
         try:
@@ -88,7 +114,7 @@ def load_cards() -> list[dict]:
         bars = _bars(c["ticker"])
         if bars and c.get("price_at_dd"):
             c["ret_since_dd_pct"] = round(bars[-1][1] / c["price_at_dd"] * 100 - 100, 1)
-        c["guard"] = grp_guard(c["ticker"], latest_map)
+        c["guard"] = grp_guard(c["ticker"], latest_map, radar_maps)
         cards.append(c)
     return cards
 
@@ -157,11 +183,24 @@ def render_card(c: dict) -> str:
     seat_badge = {"core": '<span class="tag tag-up">🎯 核心席</span>',
                   "sat": '<span class="tag tag-pool">🛰 衛星席</span>'}.get(
         c.get("_seat"), '<span class="tag tag-blind">板凳</span>')
+    is_light = c.get("qual_tier") == "light"
+    tier_badge = '　<span class="tag tag-pool">🪶 快審（衛星限定）</span>' if is_light else ""
+    src_line = (f'快審卡 {escape(c.get("card_date") or "")}（無完整 DD——核心席需升級 v14 DD）'
+                if is_light else
+                f'DD {escape(c.get("dd_date") or "")}（<a href="{escape(c.get("source_dd") or "#")}#decision">原報告</a>）')
+    light_html = ""
+    if is_light:
+        cy = c.get("cycle_check") or {}
+        tp = c.get("trap_check") or {}
+        light_html = (f'<div class="note"><b>週期位置：{escape(cy.get("position") or "—")}</b>'
+                      f'　{escape(cy.get("evidence") or "")}<br>'
+                      f'<b>陷阱檢查：{escape(tp.get("flag") or "—")}</b>　{escape(tp.get("notes") or "")}</div>')
     return f"""<div class="block" id="{escape(c["ticker"])}">
-<h2>{escape(c["ticker"])}　{seat_badge}　<span style="font-size:13px;font-weight:600;color:#64748b">{escape(c.get("verdict") or "")}
+<h2>{escape(c["ticker"])}　{seat_badge}{tier_badge}　<span style="font-size:13px;font-weight:600;color:#64748b">{escape(c.get("verdict") or "")}
 · {escape(c.get("role") or "")}</span>　{alert}</h2>
-<div class="block-sub">DD {escape(c.get("dd_date") or "")}（<a href="{escape(c.get("source_dd") or "#")}#decision">原報告</a>）
+<div class="block-sub">{src_line}
 · 裁決價 ${c.get("price_at_dd")} · 至今 {pct(ret) if ret is not None else "—"}</div>
+{light_html}
 {guard_html}
 <ul style="margin:6px 0 10px 18px;font-size:13px">{thesis}</ul>
 <table><thead><tr><th class="left">DD 深層證偽宣稱（財報期人工結算）</th><th>門檻</th><th>期限</th>
@@ -201,8 +240,10 @@ def main() -> int:
 <h1>🗂 決策卡 · L2 判斷層</h1>
 <div class="hero-sub">一席一卡，兩層守門：<b>上層＝GRP 守門</b>——讓這檔坐上席位的三個理由
 （G 高成長／R 上修／P 位置）用活數據<b>每週自動結算</b>，任一破閘卡片自己亮 ⛔；
-<b>下層＝DD 深層證偽</b>——從報告 §13/§14 抽的基本面宣稱（帶數字帶期限，財報期人工結算）。
-5Y EV/IRR 降為 DD 內部參考附註。<b>宣稱沒有到期日就不是宣稱</b>。</div>
+<b>下層＝深層證偽</b>——基本面宣稱（帶數字帶期限，財報期人工結算）。
+卡片分兩級（研究深度 ∝ 倉位）：<b>完整 DD 抽取卡</b>（核心席資格，10% 倉）vs
+<b>🪶 快審卡</b>（衛星席限定資格，5% 倉——週期位置判定＋陷阱檢查＋護城河快評＋3 條宣稱，
+擋 MU 型「上修最猛處＝最危險處」）。5Y EV/IRR 降為 DD 內部參考附註。<b>宣稱沒有到期日就不是宣稱</b>。</div>
 <div class="asof">{len(cards)} 張卡 ｜ {n_claims} 條宣稱（❌ 觸發 {n_breach} · ⏰ 到期 {n_due}）｜ 週更結算</div>
 </div>
 {''.join(render_card(c) for c in cards)}
