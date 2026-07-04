@@ -19,8 +19,11 @@ from html import escape
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from engine.common import OUT_DIR, page_shell, pct  # noqa: E402
+from engine.common import OUT_DIR, ROOT, page_shell, pct  # noqa: E402
 from engine.build_scoreboard import _bars  # noqa: E402
+from engine.grp import G_MIN_CAGR, P_LABEL_HTML, R_VETO_FY1, grp_route, grp_score  # noqa: E402
+
+DD_LATEST = ROOT / "docs" / "dd-screener" / "latest.json"
 
 CARDS_DIR = OUT_DIR / "cards" / "data"
 CARDS_HTML = OUT_DIR / "cards.html"
@@ -55,7 +58,22 @@ def settle_claim(c: dict, ticker: str) -> dict:
     return out
 
 
+def grp_guard(ticker: str, latest_map: dict) -> dict | None:
+    """GRP 守門 — 席位存在理由的即時三閘（與擂台同一份活數據，週更自動結算）。"""
+    s = latest_map.get(ticker)
+    if not s:
+        return None
+    g = grp_score(s)
+    route, route_why = grp_route(s)
+    return {"grp": g, "route": route, "route_why": route_why}
+
+
 def load_cards() -> list[dict]:
+    try:
+        latest_map = {s["ticker"]: s
+                      for s in json.loads(DD_LATEST.read_text(encoding="utf-8"))["stocks"]}
+    except (OSError, json.JSONDecodeError, KeyError):
+        latest_map = {}
     cards = []
     for p in sorted(CARDS_DIR.glob("*.json")):
         try:
@@ -70,6 +88,7 @@ def load_cards() -> list[dict]:
         bars = _bars(c["ticker"])
         if bars and c.get("price_at_dd"):
             c["ret_since_dd_pct"] = round(bars[-1][1] / c["price_at_dd"] * 100 - 100, 1)
+        c["guard"] = grp_guard(c["ticker"], latest_map)
         cards.append(c)
     return cards
 
@@ -98,8 +117,40 @@ def render_card(c: dict) -> str:
     ret = c.get("ret_since_dd_pct")
     n_breach = sum(1 for cl in c["claims"] if cl["settle"] == "breach")
     n_due = sum(1 for cl in c["claims"] if cl["settle"] == "due")
+
+    # ── GRP 守門（席位存在理由的即時三閘；週更自動結算，與擂台同數據）──
+    guard_html = ""
+    grp_fail = False
+    gd = c.get("guard")
+    if gd:
+        g = gd["grp"]
+        grp_fail = not g["pass"]
+        g_ok = g["g"] is not None and g["g"] >= G_MIN_CAGR
+        r_val = g["r_fy1"] if g["r_fy1"] is not None else g["r_2y"]
+        r_ok = (not g["veto"]) and ((g["r_fy1"] or 0) > 0 or (g["r_2y"] or 0) > 0)
+        p_ok = g["p_label"] is not None
+        def cell(ok, veto=False):
+            if veto:
+                return '<span class="tag tag-dn">⛔ 下修否決</span>'
+            return '<span class="tag tag-up">✅</span>' if ok else '<span class="tag tag-dn">❌</span>'
+        dist = f'（距高 {g["dist_hi"]:+.0f}%）' if g["dist_hi"] is not None else ""
+        guard_html = f"""<table style="margin-bottom:8px"><thead><tr>
+<th class="left">GRP 守門（席位存在理由 · 週更自動）</th><th>現值</th><th>門檻</th><th>狀態</th><th class="left">破閘動作</th></tr></thead><tbody>
+<tr><td class="left">G 高成長（FY1→FY3 CAGR）</td><td>{pct(g["g"], 1, False) if g["g"] is not None else "—"}</td>
+<td>≥{G_MIN_CAGR:.0f}%</td><td>{cell(g_ok)}</td><td class="left">跌破 → 複審</td></tr>
+<tr><td class="left">R 上修（FY+1 月修／2Y pp）</td>
+<td>{pct(g["r_fy1"]) if g["r_fy1"] is not None else "—"}／{f'{g["r_2y"]:+.1f}pp' if g["r_2y"] is not None else "—"}</td>
+<td>&gt;0（≤{R_VETO_FY1:.0f}% 否決）</td><td>{cell(r_ok, g["veto"])}</td><td class="left">下修 → 減碼複審</td></tr>
+<tr><td class="left">P 位置（52 週線＋位置帶）</td>
+<td class="left">{P_LABEL_HTML.get(g["p_label"])}{dist}</td>
+<td>站上 52 週線</td><td>{cell(p_ok)}</td><td class="left">破線 → 複審</td></tr>
+</tbody></table>"""
+        _ = r_val
+
     alert = ""
-    if n_breach:
+    if grp_fail:
+        alert = '<span class="tag tag-dn">⛔ GRP 落席</span>'
+    elif n_breach:
         alert = f'<span class="tag tag-dn">❌ {n_breach} 條觸發</span>'
     elif n_due:
         alert = f'<span class="tag tag-blind">⏰ {n_due} 條到期</span>'
@@ -110,17 +161,17 @@ def render_card(c: dict) -> str:
 <h2>{escape(c["ticker"])}　{seat_badge}　<span style="font-size:13px;font-weight:600;color:#64748b">{escape(c.get("verdict") or "")}
 · {escape(c.get("role") or "")}</span>　{alert}</h2>
 <div class="block-sub">DD {escape(c.get("dd_date") or "")}（<a href="{escape(c.get("source_dd") or "#")}#decision">原報告</a>）
-· 裁決價 ${c.get("price_at_dd")} · 至今 {pct(ret) if ret is not None else "—"}
-· 5Y EV {pct(rg.get("ev_pct"), 0, False) if rg.get("ev_pct") is not None else "—"}
-／IRR {rg.get("irr_base_pct") if rg.get("irr_base_pct") is not None else "—"}%
-／Max DD {rg.get("max_dd_pct") if rg.get("max_dd_pct") is not None else "—"}%
-· 2Y upside {pct(c.get("upside_mid_pct"), 0) if c.get("upside_mid_pct") is not None else "—"}</div>
+· 裁決價 ${c.get("price_at_dd")} · 至今 {pct(ret) if ret is not None else "—"}</div>
+{guard_html}
 <ul style="margin:6px 0 10px 18px;font-size:13px">{thesis}</ul>
-<table><thead><tr><th class="left">可證偽宣稱</th><th>門檻</th><th>期限</th>
+<table><thead><tr><th class="left">DD 深層證偽宣稱（財報期人工結算）</th><th>門檻</th><th>期限</th>
 <th class="left">觸發動作</th><th>狀態</th></tr></thead><tbody>{claims}</tbody></table>
 <div style="margin-top:8px;font-size:12.5px;color:#64748b"><b>Pre-mortem</b>
 <ul style="margin:2px 0 6px 18px">{pm}</ul>
-<b>進場節奏</b>　{escape(c.get("entry_plan") or "—")}</div>
+<b>進場節奏</b>　{escape(c.get("entry_plan") or "—")}
+<span class="muted">｜DD 內部參考：5Y EV {rg.get("ev_pct") if rg.get("ev_pct") is not None else "—"}%
+／IRR {rg.get("irr_base_pct") if rg.get("irr_base_pct") is not None else "—"}%
+／Max DD {rg.get("max_dd_pct") if rg.get("max_dd_pct") is not None else "—"}%</span></div>
 </div>"""
 
 
@@ -148,9 +199,10 @@ def main() -> int:
 
     body = f"""<div class="hero">
 <h1>🗂 決策卡 · L2 判斷層</h1>
-<div class="hero-sub">一席一卡：thesis ≤5 句＋3–5 條<b>帶數字帶期限的可證偽宣稱</b>＋pre-mortem＋機率區間。
-卡片內容全部抽自對應 DD 的 §13/§14（只抽已寫的，不發明）；DD 複審後重抽。
-價格類宣稱每週自動結算，基本面類到期亮 ⏰ 等人工回填——<b>宣稱沒有到期日就不是宣稱</b>。</div>
+<div class="hero-sub">一席一卡，兩層守門：<b>上層＝GRP 守門</b>——讓這檔坐上席位的三個理由
+（G 高成長／R 上修／P 位置）用活數據<b>每週自動結算</b>，任一破閘卡片自己亮 ⛔；
+<b>下層＝DD 深層證偽</b>——從報告 §13/§14 抽的基本面宣稱（帶數字帶期限，財報期人工結算）。
+5Y EV/IRR 降為 DD 內部參考附註。<b>宣稱沒有到期日就不是宣稱</b>。</div>
 <div class="asof">{len(cards)} 張卡 ｜ {n_claims} 條宣稱（❌ 觸發 {n_breach} · ⏰ 到期 {n_due}）｜ 週更結算</div>
 </div>
 {''.join(render_card(c) for c in cards)}
