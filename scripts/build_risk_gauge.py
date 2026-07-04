@@ -1,5 +1,5 @@
 """
-Risk-On / Risk-Off composite gauge for markets.html
+Risk-On / Risk-Off composite gauge — markets.html section + homepage chart data.
 
 Six market-based signals, each scored +1 (risk-on) / 0 (neutral) / -1 (risk-off):
   1. Equity trend      — S&P 500 vs 200DMA + 200DMA slope
@@ -9,20 +9,32 @@ Six market-based signals, each scored +1 (risk-on) / 0 (neutral) / -1 (risk-off)
   5. Offense/defense   — XLY vs XLP 63-day relative return
   6. FX carry          — AUD/JPY vs 200DMA + 63-day direction
 
-Composite = mean of available component scores, mapped to a 5-level label.
-Outputs:
-  - injects a bilingual gauge section into docs/markets.html
-    between <!-- RISK_GAUGE:START --> / <!-- RISK_GAUGE:END --> markers
-  - writes docs/cache/risk_gauge.json (with 52-week history)
+Composite = mean of available component scores (>=4 required), 5-level label.
+Scoring is computed VECTORIZED over full history so the live reading and the
+homepage chart share one implementation (thresholds frozen; backtested 2026-07,
+see transcripts — useful as risk description, not as a mechanical timing signal).
 
-Runs in the weekly-market-update GitHub Actions workflow (Sat 00:00 UTC),
-same cadence as update_markets.py. Safe to run locally.
+Outputs:
+  - bilingual gauge section injected into docs/markets.html
+    between <!-- RISK_GAUGE:START --> / <!-- RISK_GAUGE:END -->
+  - docs/cache/risk_gauge.json     (current reading + 52-week history)
+  - docs/cache/risk_history.json   (weekly score/SPX/NFCI since 2004 for the
+                                    homepage interactive chart)
+
+NFCI (Chicago Fed, FRED free CSV) is fetched best-effort; on failure the
+previous NFCI history is reused so the chart degrades gracefully.
+
+Runs in the weekly-market-update GitHub Actions workflow (Sat 00:00 UTC).
 """
 
+import io
 import json
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+
+import numpy as np
+import pandas as pd
 
 try:
     import yfinance as yf
@@ -34,142 +46,135 @@ except ImportError:
 ROOT = Path(__file__).resolve().parent.parent
 MARKETS_HTML = ROOT / 'docs' / 'markets.html'
 GAUGE_JSON = ROOT / 'docs' / 'cache' / 'risk_gauge.json'
+HISTORY_JSON = ROOT / 'docs' / 'cache' / 'risk_history.json'
 
 MARKER_START = '<!-- RISK_GAUGE:START -->'
 MARKER_END = '<!-- RISK_GAUGE:END -->'
 
 TICKERS = ['^GSPC', '^VIX', '^VIX3M', 'HYG', 'IEF', 'XLY', 'XLP',
            'HG=F', 'GC=F', 'AUDJPY=X']
+NFCI_URL = 'https://fred.stlouisfed.org/graph/fredgraph.csv?id=NFCI'
 
 LOOKBACK_63D = 63   # ~3 months of trading days
 
 
 def fetch_closes():
-    """Batch-download 2y adjusted daily closes; return {ticker: pd.Series}."""
-    data = yf.download(TICKERS, period='2y', interval='1d', auto_adjust=True,
+    """Full-history adjusted daily closes per ticker (native calendars, NaN gaps)."""
+    data = yf.download(TICKERS, period='max', interval='1d', auto_adjust=True,
                        group_by='ticker', progress=False, threads=True)
-    closes = {}
+    px = pd.DataFrame()
     for t in TICKERS:
         try:
-            s = data[t]['Close'].dropna()
-            if len(s) >= 20:
-                closes[t] = s
+            px[t] = data[t]['Close']
         except Exception:
-            pass
-    return closes
+            px[t] = np.nan
+    px = px.sort_index()
+    if px.index.tz is not None:
+        px.index = px.index.tz_localize(None)
+    return px
 
 
-def rel_return_63d(a, b):
-    """63-trading-day return of a minus that of b, in %; None if insufficient."""
-    if a is None or b is None:
+def fetch_nfci():
+    """Weekly NFCI from FRED; None on any failure."""
+    try:
+        import requests
+        csv = requests.get(NFCI_URL, timeout=60).text
+        s = pd.read_csv(io.StringIO(csv), parse_dates=[0], index_col=0).iloc[:, 0]
+        s = pd.to_numeric(s, errors='coerce').dropna()
+        return s if len(s) > 100 else None
+    except Exception as e:
+        print(f"  ⚠ NFCI fetch failed: {e}")
         return None
-    if len(a) < LOOKBACK_63D + 1 or len(b) < LOOKBACK_63D + 1:
-        return None
-    ra = (a.iloc[-1] / a.iloc[-(LOOKBACK_63D + 1)] - 1) * 100
-    rb = (b.iloc[-1] / b.iloc[-(LOOKBACK_63D + 1)] - 1) * 100
-    return ra - rb
 
 
-def band_score(value, band):
-    """+1 above +band, -1 below -band, 0 inside."""
-    if value is None:
-        return None
-    if value > band:
-        return 1
-    if value < -band:
-        return -1
-    return 0
+def band(s, w):
+    return pd.Series(np.where(s > w, 1, np.where(s < -w, -1, 0)),
+                     index=s.index).where(s.notna())
 
 
-def build_components(closes):
-    """Return list of component dicts: key, name_en, name_zh, value_en, value_zh, score."""
+def calc_components(px):
+    """Each component scored on its own native trading calendar (same semantics
+    as computing per-ticker at 'today'), full history.
+
+    Returns (scores_df on union index, comps list for the markets.html chips).
+    Chip values = last point of the exact same series that produce the scores.
+    """
+    score_series = {}
     comps = []
 
-    # 1. Equity trend — S&P 500 vs 200DMA
-    spx = closes.get('^GSPC')
-    score = None
-    val_en = val_zh = 'n/a'
-    if spx is not None and len(spx) >= 221:
-        ma200 = spx.rolling(200).mean()
-        px, ma = spx.iloc[-1], ma200.iloc[-1]
-        gap = (px / ma - 1) * 100
-        slope_up = ma200.iloc[-1] > ma200.iloc[-22]
-        if px > ma and slope_up:
-            score = 1
-        elif px < ma:
-            score = -1
-        else:
-            score = 0
-        val_en = f"S&P 500 {gap:+.1f}% vs 200DMA"
-        val_zh = f"標普500 對200日線 {gap:+.1f}%"
-    comps.append(dict(key='trend', name_en='Equity trend', name_zh='股指趨勢',
-                      value_en=val_en, value_zh=val_zh, score=score))
+    def last(s):
+        s = s.dropna()
+        return float(s.iloc[-1]) if len(s) else None
 
-    # 2. Volatility — VIX level + term structure
-    vix, vix3m = closes.get('^VIX'), closes.get('^VIX3M')
-    score = None
-    val_en = val_zh = 'n/a'
-    if vix is not None:
-        v = vix.iloc[-1]
-        v3 = vix3m.iloc[-1] if vix3m is not None else None
-        contango = (v3 is not None and v < v3)
-        backwardation = (v3 is not None and v > v3)
-        if v >= 24 or backwardation:
-            score = -1
-        elif v < 17 and (v3 is None or contango):
-            score = 1
-        else:
-            score = 0
-        ts_en = ' · contango' if contango else (' · backwardation' if backwardation else '')
-        ts_zh = '，期限結構正價差' if contango else ('，期限結構逆價差' if backwardation else '')
-        val_en = f"VIX {v:.1f}{ts_en}"
-        val_zh = f"VIX {v:.1f}{ts_zh}"
-    comps.append(dict(key='vol', name_en='Volatility', name_zh='波動率',
-                      value_en=val_en, value_zh=val_zh, score=score))
+    def add(key, name_en, name_zh, s_score, value_en, value_zh):
+        score_series[key] = s_score
+        v = last(s_score)
+        comps.append(dict(key=key, name_en=name_en, name_zh=name_zh,
+                          value_en=value_en, value_zh=value_zh,
+                          score=None if v is None else int(v)))
 
-    # 3. Credit appetite — HYG vs IEF, 63d relative return, ±1% band
-    rr = rel_return_63d(closes.get('HYG'), closes.get('IEF'))
-    comps.append(dict(key='credit', name_en='Credit appetite', name_zh='信用偏好',
-                      value_en=('n/a' if rr is None else f"HYG−IEF 3M {rr:+.1f}%"),
-                      value_zh=('n/a' if rr is None else f"HYG−IEF 三個月相對 {rr:+.1f}%"),
-                      score=band_score(rr, 1.0)))
+    # 1. Equity trend — S&P 500 vs 200DMA (native SPX days)
+    spx = px['^GSPC'].dropna()
+    ma200 = spx.rolling(200).mean()
+    s = pd.Series(np.where((spx > ma200) & (ma200 > ma200.shift(22)), 1,
+                           np.where(spx < ma200, -1, 0)),
+                  index=spx.index).where(ma200.notna())
+    gap = last((spx / ma200 - 1) * 100)
+    add('trend', 'Equity trend', '股指趨勢', s,
+        'n/a' if gap is None else f"S&P 500 {gap:+.1f}% vs 200DMA",
+        'n/a' if gap is None else f"標普500 對200日線 {gap:+.1f}%")
 
-    # 4. Cyclical vs haven — Copper vs Gold, 63d relative return, ±3% band
-    rr = rel_return_63d(closes.get('HG=F'), closes.get('GC=F'))
-    comps.append(dict(key='commod', name_en='Copper / Gold', name_zh='銅金比',
-                      value_en=('n/a' if rr is None else f"Copper−Gold 3M {rr:+.1f}%"),
-                      value_zh=('n/a' if rr is None else f"銅−金 三個月相對 {rr:+.1f}%"),
-                      score=band_score(rr, 3.0)))
+    # 2. Volatility — VIX level + term structure (VIX3M aligned to VIX days)
+    vix = px['^VIX'].dropna()
+    v3 = px['^VIX3M'].dropna().reindex(vix.index).ffill(limit=10)
+    with_ts = np.where((vix >= 24) | (vix > v3), -1,
+                       np.where((vix < 17) & (vix < v3), 1, 0))
+    no_ts = np.where(vix >= 24, -1, np.where(vix < 17, 1, 0))
+    s = pd.Series(np.where(v3.notna(), with_ts, no_ts), index=vix.index)
+    v, v3l = last(vix), last(v3)
+    if v is None:
+        val_en = val_zh = 'n/a'
+    else:
+        contango = v3l is not None and v < v3l
+        backward = v3l is not None and v > v3l
+        ts_en = ' · contango' if contango else (' · backwardation' if backward else '')
+        ts_zh = '，期限結構正價差' if contango else ('，期限結構逆價差' if backward else '')
+        val_en, val_zh = f"VIX {v:.1f}{ts_en}", f"VIX {v:.1f}{ts_zh}"
+    add('vol', 'Volatility', '波動率', s, val_en, val_zh)
 
-    # 5. Offense / defense — XLY vs XLP, 63d relative return, ±2% band
-    rr = rel_return_63d(closes.get('XLY'), closes.get('XLP'))
-    comps.append(dict(key='sector', name_en='Offense / defense', name_zh='攻守類股',
-                      value_en=('n/a' if rr is None else f"XLY−XLP 3M {rr:+.1f}%"),
-                      value_zh=('n/a' if rr is None else f"可選消費−必需 三個月 {rr:+.1f}%"),
-                      score=band_score(rr, 2.0)))
+    # 3-5. Pairwise 63-day relative returns (inner-joined native calendars)
+    for key, a, b, w, ne, nz, fe, fz in [
+        ('credit', 'HYG', 'IEF', 1.0, 'Credit appetite', '信用偏好',
+         'HYG−IEF 3M {v:+.1f}%', 'HYG−IEF 三個月相對 {v:+.1f}%'),
+        ('commod', 'HG=F', 'GC=F', 3.0, 'Copper / Gold', '銅金比',
+         'Copper−Gold 3M {v:+.1f}%', '銅−金 三個月相對 {v:+.1f}%'),
+        ('sector', 'XLY', 'XLP', 2.0, 'Offense / defense', '攻守類股',
+         'XLY−XLP 3M {v:+.1f}%', '可選消費−必需 三個月 {v:+.1f}%'),
+    ]:
+        pair = pd.concat([px[a], px[b]], axis=1, join='inner').dropna()
+        sa, sb = pair.iloc[:, 0], pair.iloc[:, 1]
+        rr = ((sa / sa.shift(LOOKBACK_63D) - 1) - (sb / sb.shift(LOOKBACK_63D) - 1)) * 100
+        v = last(rr)
+        add(key, ne, nz, band(rr, w),
+            'n/a' if v is None else fe.format(v=v),
+            'n/a' if v is None else fz.format(v=v))
 
-    # 6. FX carry — AUD/JPY vs 200DMA + 63d direction
-    aj = closes.get('AUDJPY=X')
-    score = None
-    val_en = val_zh = 'n/a'
-    if aj is not None and len(aj) >= 200 + 1:
-        ma200 = aj.rolling(200).mean().iloc[-1]
-        px = aj.iloc[-1]
-        r63 = (px / aj.iloc[-(LOOKBACK_63D + 1)] - 1) * 100 if len(aj) > LOOKBACK_63D else 0
-        above = px > ma200
-        if above and r63 > 0:
-            score = 1
-        elif not above and r63 < 0:
-            score = -1
-        else:
-            score = 0
-        gap = (px / ma200 - 1) * 100
-        val_en = f"AUD/JPY {gap:+.1f}% vs 200DMA"
-        val_zh = f"澳幣兌日圓 對200日線 {gap:+.1f}%"
-    comps.append(dict(key='fx', name_en='FX carry', name_zh='套息貨幣',
-                      value_en=val_en, value_zh=val_zh, score=score))
+    # 6. FX carry — AUD/JPY vs 200DMA (native FX days)
+    aj = px['AUDJPY=X'].dropna()
+    ajma = aj.rolling(200).mean()
+    ajr = (aj / aj.shift(LOOKBACK_63D) - 1) * 100
+    s = pd.Series(np.where((aj > ajma) & (ajr > 0), 1,
+                           np.where((aj < ajma) & (ajr < 0), -1, 0)),
+                  index=aj.index).where(ajma.notna() & ajr.notna())
+    gap = last((aj / ajma - 1) * 100)
+    add('fx', 'FX carry', '套息貨幣', s,
+        'n/a' if gap is None else f"AUD/JPY {gap:+.1f}% vs 200DMA",
+        'n/a' if gap is None else f"澳幣兌日圓 對200日線 {gap:+.1f}%")
 
-    return comps
+    # union calendar; a score computed on its own last trading day persists
+    # up to 5 sessions so mixed holidays don't drop components
+    sc = pd.DataFrame(score_series).sort_index().ffill(limit=5)
+    return sc, comps
 
 
 def composite_label(score):
@@ -286,12 +291,14 @@ def main():
     as_of = now.strftime('%Y-%m-%d')
     print(f"=== Risk Gauge Build: {as_of} ===")
 
-    closes = fetch_closes()
-    missing = [t for t in TICKERS if t not in closes]
+    px = fetch_closes()
+    missing = [t for t in TICKERS if px[t].dropna().empty]
     if missing:
         print(f"  ⚠ missing data for: {', '.join(missing)}")
 
-    comps = build_components(closes)
+    sc, comps = calc_components(px)
+    avail = sc.notna().sum(axis=1)
+    comp_daily = sc.mean(axis=1).where(avail >= 4)
     scored = [c['score'] for c in comps if c['score'] is not None]
     if len(scored) < 4:
         print(f"  ✗ only {len(scored)}/6 components available — aborting, page left unchanged")
@@ -303,7 +310,41 @@ def main():
         print(f"  {c['name_en']:<18} {c['score'] if c['score'] is not None else 'n/a':>4}  {c['value_en']}")
     print(f"  → composite {score:+.2f} = {label_en}")
 
-    # ── JSON with history ──
+    # ── weekly history (homepage chart) ──
+    wk_score = comp_daily.resample('W-FRI').last().dropna().round(3)
+    wk_spx = px['^GSPC'].resample('W-FRI').last().reindex(wk_score.index).round(2)
+    nfci = fetch_nfci()
+    if nfci is not None:
+        wk_nfci = nfci.reindex(wk_score.index).ffill(limit=4).round(2)
+    elif HISTORY_JSON.exists():
+        old = json.loads(HISTORY_JSON.read_text(encoding='utf-8'))
+        old_n = pd.Series(old.get('nfci', []),
+                          index=pd.to_datetime(old.get('weeks', [])))
+        wk_nfci = old_n.reindex(wk_score.index).round(2)
+        print("  ⚠ reusing previous NFCI history")
+    else:
+        wk_nfci = pd.Series(np.nan, index=wk_score.index)
+
+    def _nan_to_none(s):
+        return [None if pd.isna(v) else float(v) for v in s]
+
+    HISTORY_JSON.write_text(json.dumps({
+        'as_of': as_of,
+        'weeks': [d.strftime('%Y-%m-%d') for d in wk_score.index],
+        'score': _nan_to_none(wk_score),
+        'spx': _nan_to_none(wk_spx),
+        'nfci': _nan_to_none(wk_nfci),
+    }, ensure_ascii=False, separators=(',', ':')) + '\n', encoding='utf-8')
+    print(f"  ✓ wrote {HISTORY_JSON.relative_to(ROOT)} ({len(wk_score)} weeks since {wk_score.index[0].date()})")
+
+    # prev week for the markets.html block
+    prev = None
+    if len(wk_score) >= 2:
+        ps = float(wk_score.iloc[-2])
+        pl_en, pl_zh, _ = composite_label(ps)
+        prev = {'score': ps, 'label_en': pl_en, 'label_zh': pl_zh}
+
+    # ── current-reading JSON (52-week rolling history, append style) ──
     state = {'history': []}
     if GAUGE_JSON.exists():
         try:
@@ -311,7 +352,6 @@ def main():
         except Exception:
             pass
     history = [h for h in state.get('history', []) if h.get('date') != as_of]
-    prev = history[-1] if history else None
     history.append({'date': as_of, 'score': round(score, 3),
                     'label_en': label_en, 'label_zh': label_zh})
     payload = {
@@ -325,7 +365,7 @@ def main():
     GAUGE_JSON.write_text(json.dumps(payload, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
     print(f"  ✓ wrote {GAUGE_JSON.relative_to(ROOT)}")
 
-    # ── Inject into markets.html ──
+    # ── inject into markets.html ──
     html = MARKETS_HTML.read_text(encoding='utf-8')
     block = render_block(score, label_en, label_zh, color, comps, as_of, prev)
     new_html = inject(html, block)

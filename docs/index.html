@@ -288,6 +288,51 @@ footer a{color:var(--muted)}
   </div>
 </section>
 
+<!-- Risk On/Off interactive chart -->
+<section class="risk-chart" id="risk-chart" style="padding:2.2rem 0 0">
+  <style>
+  .rc-card{background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-sm);padding:1.1rem 1.2rem 0.9rem}
+  .rc-head{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:.7rem}
+  .rc-title{font-size:1rem;font-weight:700;letter-spacing:-.01em;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+  .rc-badge{font-family:'IBM Plex Mono',monospace;font-size:.7rem;font-weight:600;padding:.18rem .55rem;border-radius:999px;letter-spacing:.06em}
+  .rc-sub{font-size:.76rem;color:var(--muted);margin-top:.15rem}
+  .rc-sub a{font-weight:500}
+  .rc-ctrl{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap}
+  .rc-ranges{display:flex;gap:2px;background:var(--bg);border:1px solid var(--border-soft);border-radius:7px;padding:2px}
+  .rc-ranges button{font-family:'IBM Plex Mono',monospace;font-size:.68rem;font-weight:600;color:var(--text-sec);background:none;border:0;border-radius:5px;padding:.28rem .55rem;cursor:pointer;transition:all .12s}
+  .rc-ranges button:hover{color:var(--text)}
+  .rc-ranges button.active{background:var(--card);color:var(--accent);box-shadow:var(--shadow-sm)}
+  .rc-tog{display:flex;align-items:center;gap:.35rem;font-size:.72rem;color:var(--text-sec);cursor:pointer;user-select:none}
+  .rc-tog input{accent-color:#7c3aed;cursor:pointer}
+  .rc-legend{font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--text-sec);margin-bottom:.35rem;min-height:1.1em;display:flex;gap:1.1rem;flex-wrap:wrap}
+  .rc-legend b{font-weight:600}
+  #rcMain{height:290px}
+  #rcSub{height:130px;border-top:1px solid var(--border-soft)}
+  .rc-note{font-size:.7rem;color:var(--muted);line-height:1.6;margin-top:.55rem;padding-bottom:.35rem}
+  @media(max-width:600px){#rcMain{height:220px}#rcSub{height:110px}}
+  </style>
+  <div class="container">
+    <div class="rc-card">
+      <div class="rc-head">
+        <div>
+          <div class="rc-title">市場風險儀表 <span class="rc-badge" id="rcBadge">載入中…</span></div>
+          <div class="rc-sub">六訊號 Risk-On/Off 綜合分數 × 標普500 × NFCI 信用壓力 · 週頻 2000 年至今 · 滾輪縮放、拖曳平移 · <a href="/markets.html">六訊號明細 →</a></div>
+        </div>
+        <div class="rc-ctrl">
+          <label class="rc-tog"><input type="checkbox" id="rcNfciTog" checked>NFCI</label>
+          <div class="rc-ranges" id="rcRanges">
+            <button data-w="52">1Y</button><button data-w="156">3Y</button><button data-w="260" class="active">5Y</button><button data-w="520">10Y</button><button data-w="0">ALL</button>
+          </div>
+        </div>
+      </div>
+      <div class="rc-legend" id="rcLegend"></div>
+      <div id="rcMain"></div>
+      <div id="rcSub"></div>
+      <div class="rc-note">下欄色柱＝六訊號綜合分數（+1 ~ −1）：<span style="color:#16a34a;font-weight:600">綠 ≥ +0.34 風險偏好</span> · <span style="color:#b45309;font-weight:600">黃＝中性</span> · <span style="color:#dc2626;font-weight:600">紅 ≤ −0.34 風險趨避</span>；紫線＝NFCI（芝加哥聯儲金融條件指數，> 0 代表信用緊縮，發布有一週延遲）。儀表定位為環境描述——歷史回測顯示它擅長描述當下風險分布（Risk-Off 時左尾風險倍數放大），但不適合當機械化進出訊號。非投資建議。</div>
+    </div>
+  </div>
+</section>
+
 <section class="features">
   <div class="container">
     <div class="features-head">
@@ -440,5 +485,124 @@ footer a{color:var(--muted)}
     由 AI 自動生成，僅供參考
   </div>
 </footer>
+<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.3/dist/lightweight-charts.standalone.production.js"></script>
+<script>
+(function(){
+  var sec=document.getElementById('risk-chart');
+  if(!sec||!window.LightweightCharts){if(sec)sec.style.display='none';return;}
+  fetch('/cache/risk_history.json').then(function(r){return r.json();}).then(init)
+    .catch(function(){sec.style.display='none';});
+
+  function labelOf(s){
+    if(s>=0.67)return['強風險偏好','#16a34a'];
+    if(s>=0.34)return['風險偏好','#16a34a'];
+    if(s<=-0.67)return['強風險趨避','#dc2626'];
+    if(s<=-0.34)return['風險趨避','#dc2626'];
+    return['中性','#d97706'];
+  }
+  function barColor(s){
+    return s>=0.34?'rgba(22,163,74,.75)':(s<=-0.34?'rgba(220,38,38,.8)':'rgba(217,119,6,.5)');
+  }
+
+  function init(j){
+    var W=j.weeks,n=W.length;
+    var spxData=[],scoreData=[],nfciData=[],byTime={};
+    for(var i=0;i<n;i++){
+      byTime[W[i]]=i;
+      if(j.spx[i]!=null)spxData.push({time:W[i],value:j.spx[i]});
+      if(j.score[i]!=null)scoreData.push({time:W[i],value:j.score[i],color:barColor(j.score[i])});
+      if(j.nfci[i]!=null)nfciData.push({time:W[i],value:j.nfci[i]});
+    }
+    var cur=j.score[n-1],lab=labelOf(cur);
+    var badge=document.getElementById('rcBadge');
+    badge.textContent=lab[0]+' '+(cur>0?'+':'')+cur.toFixed(2);
+    badge.style.background=lab[1]+'18';badge.style.color=lab[1];
+
+    var base={
+      layout:{background:{type:'solid',color:'transparent'},textColor:'#64748b',
+              fontFamily:"'IBM Plex Mono',monospace",fontSize:10},
+      grid:{vertLines:{color:'#f1f5f9'},horzLines:{color:'#f1f5f9'}},
+      crosshair:{mode:0,vertLine:{color:'#94a3b8',width:1,style:2,labelBackgroundColor:'#475569'},
+                 horzLine:{color:'#94a3b8',width:1,style:2,labelBackgroundColor:'#475569'}},
+      rightPriceScale:{borderColor:'#e5e7eb',minimumWidth:58},
+      timeScale:{borderColor:'#e5e7eb'},
+      handleScroll:true,handleScale:true
+    };
+    var LWC=window.LightweightCharts;
+    var elM=document.getElementById('rcMain'),elS=document.getElementById('rcSub');
+    var chM=LWC.createChart(elM,Object.assign({},base,{height:elM.clientHeight,
+      timeScale:{visible:false,borderColor:'#e5e7eb'}}));
+    var chS=LWC.createChart(elS,Object.assign({},base,{height:elS.clientHeight}));
+
+    var sSpx=chM.addLineSeries({color:'#2563eb',lineWidth:2,priceLineVisible:false,
+      lastValueVisible:true,title:''});
+    sSpx.setData(spxData);
+    chM.priceScale('right').applyOptions({mode:LWC.PriceScaleMode.Logarithmic});
+
+    var sScore=chS.addHistogramSeries({priceScaleId:'right',priceLineVisible:false,lastValueVisible:false});
+    sScore.setData(scoreData);
+    sScore.createPriceLine({price:0.34,color:'#86efac',lineWidth:1,lineStyle:LWC.LineStyle.Dashed,axisLabelVisible:false});
+    sScore.createPriceLine({price:-0.34,color:'#fca5a5',lineWidth:1,lineStyle:LWC.LineStyle.Dashed,axisLabelVisible:false});
+    var sNfci=chS.addLineSeries({priceScaleId:'nfci',color:'#7c3aed',lineWidth:1,
+      priceLineVisible:false,lastValueVisible:false});
+    sNfci.setData(nfciData);
+    chS.priceScale('nfci').applyOptions({visible:false,scaleMargins:{top:.05,bottom:.05}});
+    chS.priceScale('right').applyOptions({scaleMargins:{top:.12,bottom:.12}});
+
+    // ── sync visible range between panes ──
+    var syncing=false;
+    function link(a,b){
+      a.timeScale().subscribeVisibleLogicalRangeChange(function(r){
+        if(syncing||!r)return;syncing=true;b.timeScale().setVisibleLogicalRange(r);syncing=false;
+      });
+    }
+    link(chM,chS);link(chS,chM);
+
+    // ── legend + crosshair sync ──
+    var legend=document.getElementById('rcLegend');
+    function fmtLegend(i){
+      var s=j.score[i],l=s!=null?labelOf(s):null;
+      legend.innerHTML='<span>'+W[i]+'</span>'
+        +'<span>標普500 <b style="color:#2563eb">'+(j.spx[i]!=null?j.spx[i].toLocaleString():'—')+'</b></span>'
+        +'<span>儀表 <b style="color:'+(l?l[1]:'#94a3b8')+'">'+(s!=null?((s>0?'+':'')+s.toFixed(2)+' '+l[0]):'—')+'</b></span>'
+        +'<span>NFCI <b style="color:#7c3aed">'+(j.nfci[i]!=null?j.nfci[i].toFixed(2):'—')+'</b></span>';
+    }
+    fmtLegend(n-1);
+    function onMove(other,otherSeries){return function(p){
+      if(!p.time){try{other.clearCrosshairPosition();}catch(e){}fmtLegend(n-1);return;}
+      var i=byTime[p.time];if(i==null)return;
+      fmtLegend(i);
+      try{
+        var v=(otherSeries===sSpx)?j.spx[i]:j.score[i];
+        if(v!=null)other.setCrosshairPosition(v,p.time,otherSeries);
+      }catch(e){}
+    };}
+    chM.subscribeCrosshairMove(onMove(chS,sScore));
+    chS.subscribeCrosshairMove(onMove(chM,sSpx));
+
+    // ── range buttons ──
+    var btns=document.querySelectorAll('#rcRanges button');
+    function setRange(weeks){
+      if(!weeks){chM.timeScale().fitContent();return;}
+      chM.timeScale().setVisibleLogicalRange({from:Math.max(0,n-weeks),to:n+2});
+    }
+    btns.forEach(function(b){b.addEventListener('click',function(){
+      btns.forEach(function(x){x.classList.remove('active');});b.classList.add('active');
+      setRange(+b.dataset.w);
+    });});
+    setRange(260);
+
+    document.getElementById('rcNfciTog').addEventListener('change',function(){
+      sNfci.applyOptions({visible:this.checked});
+    });
+
+    // ── responsive width ──
+    new ResizeObserver(function(){
+      chM.applyOptions({width:elM.clientWidth});
+      chS.applyOptions({width:elS.clientWidth});
+    }).observe(elM);
+  }
+})();
+</script>
 </body>
 </html>
