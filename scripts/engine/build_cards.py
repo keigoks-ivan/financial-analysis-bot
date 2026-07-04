@@ -103,7 +103,7 @@ def render_card(c: dict) -> str:
         alert = f'<span class="tag tag-dn">❌ {n_breach} 條觸發</span>'
     elif n_due:
         alert = f'<span class="tag tag-blind">⏰ {n_due} 條到期</span>'
-    return f"""<div class="block">
+    return f"""<div class="block" id="{escape(c["ticker"])}">
 <h2>{escape(c["ticker"])}　<span style="font-size:13px;font-weight:600;color:#64748b">{escape(c.get("verdict") or "")}
 · {escape(c.get("role") or "")}</span>　{alert}</h2>
 <div class="block-sub">DD {escape(c.get("dd_date") or "")}（<a href="{escape(c.get("source_dd") or "#")}#decision">原報告</a>）
@@ -147,6 +147,14 @@ def main() -> int:
         "n_cards": len(cards), "n_claims": n_claims,
         "n_breach": n_breach, "n_due": n_due,
         "tickers": [c["ticker"] for c in cards],
+        # 卡餵擂台：每檔的宣稱狀態摘要（arena 席位表消費）
+        "by_ticker": {c["ticker"]: {
+            "n_claims": len(c["claims"]),
+            "n_breach": sum(1 for cl in c["claims"] if cl["settle"] == "breach"),
+            "n_due": sum(1 for cl in c["claims"] if cl["settle"] == "due"),
+            "next_deadline": min((cl.get("deadline") or "9999" for cl in c["claims"]
+                                  if cl["settle"] in ("watch", "due")), default=None),
+        } for c in cards},
     }, ensure_ascii=False, indent=1), encoding="utf-8")
     CARDS_HTML.write_text(
         page_shell("決策卡 · 決策引擎", "/engine/cards.html", body,

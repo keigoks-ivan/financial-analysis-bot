@@ -35,6 +35,7 @@ from build_pipeline_page import (  # noqa: E402
 DD_LATEST = ROOT / "docs" / "dd-screener" / "latest.json"
 MARKET_STATE = ROOT / "docs" / "screener" / "market_state.json"
 UNIVERSE = ROOT / "data" / "engine" / "universe.json"
+CARDS_JSON = OUT_DIR / "cards.json"
 ARENA_JSON = OUT_DIR / "arena.json"
 ARENA_HTML = OUT_DIR / "arena.html"
 
@@ -89,6 +90,10 @@ def main() -> int:
                    for r in json.loads(UNIVERSE.read_text(encoding="utf-8"))["tickers"]}
     except (OSError, json.JSONDecodeError, KeyError):
         sectors = {}
+    try:
+        card_stats = json.loads(CARDS_JSON.read_text(encoding="utf-8")).get("by_ticker", {})
+    except (OSError, json.JSONDecodeError):
+        card_stats = {}
 
     core_pool = [s for s in stocks if s.get("dca_verdict") == "進場" and is_core_role(s)]
     for s in core_pool:
@@ -138,6 +143,20 @@ def main() -> int:
     }
 
     # ── render ──
+    def card_cell(t: str) -> str:
+        cs = card_stats.get(t)
+        if not cs:
+            return '<span class="tag tag-blind">無卡 → 抽</span>'
+        bits = [f'{cs["n_claims"]} 宣稱']
+        if cs["n_breach"]:
+            bits.append(f'❌{cs["n_breach"]}')
+        if cs["n_due"]:
+            bits.append(f'⏰{cs["n_due"]}')
+        if cs.get("next_deadline"):
+            bits.append(f'下個到期 {cs["next_deadline"]}')
+        cls = "tag-dn" if cs["n_breach"] else ("tag-blind" if cs["n_due"] else "tag-pool")
+        return f'<a href="/engine/cards.html#{escape(t)}"><span class="tag {cls}">🗂 {"·".join(bits)}</span></a>'
+
     def seat_tr(r, seat_no=None):
         up = pct(r["upside_mid_pct"], 0) if r["upside_mid_pct"] is not None else '<span class="muted">—</span>'
         link = f'<a href="{escape(r["dd_path"])}#decision">{escape(r["ticker"])}</a>' if r.get("dd_path") else escape(r["ticker"])
@@ -145,7 +164,8 @@ def main() -> int:
                 f'<td class="left">{SHAPE_LABELS.get(r["shape"], r["shape"])}</td>'
                 f'<td>{r["score"]:.1f}</td><td>{pct(r["ev5y"], 1, False)}</td>'
                 f'<td>{r["cert"]:.2f}</td><td>{up}</td>'
-                f'<td class="left">{escape(r["moat"])}</td></tr>')
+                f'<td class="left">{escape(r["moat"])}</td>'
+                f'<td class="left">{card_cell(r["ticker"])}</td></tr>')
 
     def duel_tr(d):
         s, c = d["seat"], d["challenger"]
@@ -161,7 +181,7 @@ def main() -> int:
 
     head = ('<table><thead><tr><th class="left">席位</th><th class="left">形狀</th>'
             '<th>分數</th><th>EV5y</th><th>確定性</th><th>2Y upside</th><th class="left">護城河</th>'
-            '</tr></thead><tbody>')
+            '<th class="left">決策卡</th></tr></thead><tbody>')
     core_tbl = head + "".join(seat_tr(r, i) for i, r in enumerate(core_seats, 1)) + "</tbody></table>"
     sat_body = "".join(seat_tr(r, i) for i, r in enumerate(sat_seats, 1))
     for i in range(payload["sat_vacant"]):
