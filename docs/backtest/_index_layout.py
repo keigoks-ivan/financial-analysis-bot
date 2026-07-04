@@ -217,7 +217,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <div class="page-hdr"><div class="container">
   <div class="crumb"><a href="/">首頁</a> / 量化回測</div>
   <h1>美股量化回測總覽</h1>
-  <div class="sub">20 年全週期(2006~,含 2008/2020/2022 三熊)· 真實 yfinance · 起始 $1M · <a href="/backtest/criteria/">評估標準</a></div>
+  <div class="sub">20 年全週期(2006~,含 2008/2020/2022 三熊)· 真實 yfinance · 起始 $1M · <a href="/backtest/criteria/">評估標準</a> · <a href="/backtest/free_lunch/">📖 分散與免費午餐</a></div>
   <div class="tabs"><a class="on" href="/backtest/">🇺🇸 美股</a><a href="/backtest/tw/">🇹🇼 台股</a><a href="/backtest/multi/">🧩 多資產</a><a href="/backtest/leverage/">🔧 槓桿疊加</a></div>
 </div></div>
 

@@ -24,6 +24,7 @@ COMPARISON_LINKS = [
     ("/backtest/multi/", "🧩 多資產總覽", "multi20y", "#0f766e"),
     ("/backtest/leverage/", "🔧 槓桿疊加總覽", "lev20y", "#b45309"),
     ("/backtest/ma_sensitivity/", "MA 敏感度", "masens", "#6b7280"),
+    ("/backtest/free_lunch/", "📖 分散與免費午餐", "freelunch", "#6b7280"),
 ]
 
 INDIVIDUAL_LINKS = [

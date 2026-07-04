@@ -1,0 +1,303 @@
+"""
+Generator for /backtest/free_lunch/ — 觀念頁：分散、免費午餐與金融怪傑。
+
+Origin: 2026-07-04 owner conversation（v7-backtest session）— 從「ETF 投資
+美國＋台灣、要不錯的報酬又較低風險」的討論收斂出的觀念文章，owner 要求
+修飾後放上站。純散文觀念頁（同 criteria/glossary 一類），無 live 數據，
+所有引用數字為 pinned：
+  * SG Trend 複製回測 2022 +21.9% — v7-backtest commit 0b218af
+  * 管理期貨 ETF 費用率 ~0.85–0.9%（DBMF/KMLM，2026 年頭費率）
+Re-run any time: python3 _build_freelunch.py
+"""
+from __future__ import annotations
+import sys
+from datetime import datetime
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent))
+from _nav_common import make_toggle
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
+from site_nav import full_nav_block
+
+NAV_BLOCK = full_nav_block("quant", "bt")
+
+OUT = Path(__file__).parent / "free_lunch" / "index.html"
+
+
+def render() -> str:
+    html = TEMPLATE
+    for k, v in {
+        "%NAV%": NAV_BLOCK,
+        "%TOGGLE%": make_toggle("freelunch"),
+        "%NOW%": datetime.now().strftime("%Y-%m-%d"),
+    }.items():
+        html = html.replace(k, v)
+    return html
+
+
+TEMPLATE = r"""<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta name="robots" content="noindex,nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>分散、免費午餐與金融怪傑 | InvestMQuest Research</title>
+<style>
+:root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
+      --text:#111827;--muted:#6b7280;--border:#e5e7eb;
+      --green:#059669;--green-bg:#ecfdf5;--green-border:#a7f3d0;--green-text:#065f46;
+      --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;--red-text:#991b1b;
+      --amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fde68a;--amber-text:#92400e;
+      --blue-bg:#eff6ff;--blue-border:#bfdbfe;--blue-text:#1e40af}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.75;font-size:15px}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:880px;margin:0 auto;padding:0 1.5rem}
+.container-wide{max-width:1120px;margin:0 auto;padding:0 1.5rem}
+.page-hdr{padding:1.75rem 0 1.25rem;background:linear-gradient(180deg,#f0f4ff 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
+.page-hdr h1{font-size:1.6rem;font-weight:700;letter-spacing:-.03em}
+.page-hdr .sub{color:var(--muted);font-size:.9rem;margin-top:.2rem}
+.crumb{font-size:.82rem;color:var(--muted);margin-bottom:.4rem}
+.crumb a{color:var(--muted)}
+.section{padding:1.5rem 0 0}
+.section-title{font-size:1.15rem;font-weight:700;margin-bottom:1rem;
+               padding-bottom:.45rem;border-bottom:2px solid var(--brand)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.4rem 1.6rem;margin-bottom:1rem}
+.card h3{font-size:1rem;font-weight:600;margin-bottom:.6rem}
+.card p{margin-bottom:.85rem;color:#1f2937}
+.card p:last-child{margin-bottom:0}
+.takeaway{font-size:.9rem;margin-top:.5rem;padding:.7rem 1rem;border-radius:6px;
+          background:var(--brand-light);border-left:3px solid var(--brand)}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{text-align:left;padding:.6rem .75rem;border-bottom:1px solid var(--border);vertical-align:top}
+th{background:#f9fafb;font-weight:600;font-size:.78rem;letter-spacing:.04em;color:var(--muted)}
+tbody tr:hover td{background:#f3f4f6}
+.hero{margin:1.25rem 0;border:1px solid #bfdbfe;border-radius:12px;overflow:hidden;background:var(--card)}
+.hero-top{background:linear-gradient(135deg,#eff6ff 0%,#f0f7ff 100%);padding:1.5rem 1.7rem}
+.hero-top .verdict-tag{display:inline-block;background:var(--brand);color:#fff;font-size:.74rem;font-weight:700;
+                       letter-spacing:.05em;padding:.25rem .7rem;border-radius:99px;margin-bottom:.55rem}
+.hero-top h2{font-size:1.3rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.5rem}
+.hero-top p{font-size:.94rem;color:#374151;max-width:60rem}
+.note{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;
+      padding:.9rem 1.2rem;font-size:.86rem;color:var(--amber-text);margin:1rem 0;line-height:1.7}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.crit-box{background:var(--card);border:2px solid var(--red);border-radius:8px;padding:1.1rem 1.3rem}
+.crit-box.yes{border-color:var(--green)}
+.crit-box h3{font-size:.95rem;font-weight:700;margin-bottom:.6rem;color:var(--red-text)}
+.crit-box.yes h3{color:var(--green-text)}
+.crit-box ul{list-style:none}
+.crit-box li{padding:.35rem 0;font-size:.87rem;color:#374151;border-bottom:1px dashed #e5e7eb;line-height:1.6}
+.crit-box li:last-child{border-bottom:none}
+.crit-box li::before{content:'✗ ';color:var(--red);font-weight:700;margin-right:.3rem}
+.crit-box.yes li::before{content:'✓ ';color:var(--green)}
+.lesson{border:2px solid var(--brand);border-radius:10px;background:var(--card);padding:1.2rem 1.5rem;margin:1rem 0}
+.lesson h3{font-size:1rem;font-weight:700;color:var(--brand);margin-bottom:.5rem}
+.lesson h3 .n{display:inline-flex;width:1.6rem;height:1.6rem;border-radius:50%;background:var(--brand);
+              color:#fff;font-size:.82rem;font-weight:700;align-items:center;justify-content:center;
+              margin-right:.5rem;vertical-align:-.3rem}
+.lesson p{font-size:.92rem;color:#1f2937;margin-bottom:.6rem}
+.lesson p:last-child{margin-bottom:0}
+.verdict{background:var(--brand-light);border-left:4px solid var(--brand);
+         padding:1.1rem 1.4rem;border-radius:0 8px 8px 0;margin:1rem 0;font-size:.93rem;line-height:1.8}
+.verdict strong{color:var(--brand)}
+footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
+       text-align:center;padding:1.25rem 0;font-size:.78rem;margin-top:2rem}
+@media(max-width:768px){
+  .two-col{grid-template-columns:1fr}
+  table{font-size:.78rem}th,td{padding:.45rem .5rem}
+}
+</style>
+</head>
+<body>
+%NAV%
+
+<div class="page-hdr">
+  <div class="container-wide">
+    <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / 分散、免費午餐與金融怪傑</div>
+    <h1>📖 分散、免費午餐與金融怪傑</h1>
+    <div class="sub">觀念文章 · 免費午餐的精確定義 · Market Wizards 學得到與學不到的 · 2026-07</div>
+    %TOGGLE%
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ===== HERO ===== -->
+<div class="hero">
+  <div class="hero-top">
+    <span class="verdict-tag">💡 核心論點</span>
+    <h2>分散吃的是免費午餐；金融怪傑吃的是別人的午餐</h2>
+    <p>投資裡只有一頓「不需要技能、也不需要別人輸」的免費午餐——把彼此不相關的資產疊在一起。
+       《金融怪傑》裡那些人的報酬完全不是這回事：他們賺的是 edge，而 edge 是零和的，
+       每一分錢都有交易對手在虧。這是本質不同的兩種錢。分不清這兩種錢的來源，
+       就會誤把「需要對手」的錢當成「躺著領」的錢去追。</p>
+  </div>
+</div>
+
+<!-- ===== 1. FREE LUNCH ===== -->
+<div class="section">
+<h2 class="section-title">1. 免費午餐的精確定義</h2>
+<div class="card">
+<p>Markowitz 那句「diversification is the only free lunch」常被引用，原意卻常被講歪。
+   精確版本是：<strong>分散不提高你的期望報酬，它提高的是每單位風險換到的報酬（Sharpe）</strong>。
+   兩個期望報酬相同、彼此不相關的資產各持一半，組合的期望報酬不變，但波動下降——
+   你用零成本換到了更平滑的複利路徑。它「免費」的理由有兩個：不需要任何預測技能，
+   也不需要市場上有另一個人做錯事來供養你。</p>
+<p>其他常被說成免費午餐的東西，攤開看都是交易，不是白吃：</p>
+</div>
+<div class="card" style="overflow-x:auto">
+<table>
+<thead><tr><th style="width:11rem">常見說法</th><th>實際上你付了什麼</th><th>量級</th></tr></thead>
+<tbody>
+<tr><td><strong>再平衡紅利</strong></td><td>接近免費，但小到常被誇大；且在單邊大趨勢裡是負貢獻（不斷賣強買弱）</td><td>約 0.3～0.5pp／年</td></tr>
+<tr><td><strong>流動性溢價</strong></td><td>錢被鎖住——需要用錢時拿不出來的風險</td><td>視工具，非免費</td></tr>
+<tr><td><strong>長期持有溢價</strong></td><td>忍受中途 −50% 級別的波動而不棄船——付的是心理與現金流彈性</td><td>股權溢價本身</td></tr>
+<tr><td><strong>因子／動能溢價</strong></td><td>相信該現象在發表後、擁擠後仍存在——本站 <a href="/backtest/gem/">GEM 雙動能</a>的發表後 OOS 複驗就是溢價會衰減的實證</td><td>發表後普遍腰斬</td></tr>
+</tbody>
+</table>
+<div class="takeaway"><strong>結論：</strong>分散是唯一「不需技能、不需對手」的那頓。其餘每一項都在收一種你未必看得見的費用。</div>
+</div>
+</div>
+
+<!-- ===== 2. WIZARDS ===== -->
+<div class="section">
+<h2 class="section-title">2. 那金融怪傑們是怎麼做到的？</h2>
+<div class="card">
+<p>先講殘酷的事實：他們的報酬來自 <strong>edge</strong>——可被利用的市場無效率——而 edge 是零和的。
+   具體拆開來，書裡反覆出現的其實只有三件事。</p>
+</div>
+
+<div class="card">
+<h3>一、真實存在過的 edge</h3>
+<p>Richard Dennis 和海龜們做期貨趨勢跟蹤，Ed Thorp 做統計套利，Soros／Druckenmiller 做總體不對稱押注。
+   重點是時代背景：1970～90 年代的期貨市場參與者少、資訊慢、趨勢又長又乾淨。
+   那個環境的 edge 大部分已經被競爭掉了——趨勢跟蹤在 1980 年代動輒年化 20% 以上，
+   同樣的策略機構化之後，近十年的常態量級只剩中個位數。</p>
+</div>
+
+<div class="card">
+<h3>二、比 edge 更重要的：風險管理才是他們真正的系統</h3>
+<p>這是全書唯一每個怪傑都同意的東西。海龜每筆單位風險限制在資本的 1～2%、相關性部位有總量上限；
+   Paul Tudor Jones 說他每天假設自己手上的部位是錯的；Druckenmiller 說看不懂就空手。
+   他們共同的數學結構是<strong>不對稱</strong>：虧損砍得快又小、獲利放著跑——
+   所以單筆勝率往往不到五成，靠賠率賺錢，而不是靠看對。</p>
+</div>
+
+<div class="card">
+<h3>三、對高 Sharpe 的策略上槓桿</h3>
+<p>Thorp 的邏輯（Kelly 準則）：決定你長期財富的不是進場點，是<strong>倉位大小</strong>。
+   怪傑們敢在 edge 明確時下重注、在不明確時縮到很小——這個倉位的動態範圍，
+   是散戶在制度、資訊與心理上都複製不了的。</p>
+</div>
+
+<div class="note">
+<strong>書不會告訴你的：倖存者偏差。</strong>Schwager 訪的是活下來的贏家，
+同一年代做同樣事情爆掉的人沒有書。而且怪傑們後來也不是都好——
+Dennis 自己管理的基金在 1988 年大賠停業，John Henry 的公司 2012 年結束代客操作。
+edge 也會過期，連原創者本人都留不住它。
+</div>
+</div>
+
+<!-- ===== 3. LEARNABLE ===== -->
+<div class="section">
+<h2 class="section-title">3. 學得到的，和學不到的</h2>
+<div class="two-col">
+<div class="crit-box">
+<h3>學不到的——直接死心</h3>
+<ul>
+<li>他們的 edge：已衰減，且需要全職投入＋交易基礎設施</li>
+<li>他們年代的市場無效率：參與者結構回不去了</li>
+<li>下重注的資訊優勢與心理素質：讀書讀不來</li>
+<li>你不可能透過讀訪談變成 Druckenmiller</li>
+</ul>
+</div>
+<div class="crit-box yes">
+<h3>學得到的——恰好是 ETF 投資人用得上的</h3>
+<ul>
+<li>MDD 是設計約束，不是事後統計</li>
+<li>倉位大小的重要性大於進場時機</li>
+<li>不對稱性可以用買的（趨勢跟蹤已 ETF 化）</li>
+<li>有規則，然後服從規則</li>
+</ul>
+</div>
+</div>
+
+<div class="lesson">
+<h3><span class="n">1</span>MDD 是設計約束，不是事後統計</h3>
+<p>怪傑們全部先問「最壞會怎樣」再問「能賺多少」。如果你的出發點是「我無法承受深回撤」，
+   然後從這裡<strong>倒推</strong>配置——先定回撤預算、再決定股票權重——這就是怪傑的思考順序。
+   大部分散戶是反的：先看期望報酬選產品，回撤來了才發現自己承受不了，在谷底棄船。
+   本站<a href="/backtest/criteria/">評估標準</a>把 Calmar 列為最重要單一指標，就是同一個思想。</p>
+</div>
+
+<div class="lesson">
+<h3><span class="n">2</span>倉位大小 &gt; 進場時機</h3>
+<p>你的股票配多少百分比，比你何時買重要一個數量級。Thorp 的教訓翻成 ETF 語言：
+   <strong>股票權重就是你的 Kelly 分數</strong>——而 Kelly 的實務共識是下在理論值的一半，
+   因為對報酬分布的估計誤差在滿注時是毀滅性的。與其研究進場點，
+   不如把時間花在「這個權重的歷史最深回撤，我乘 1.3～1.5 倍之後還睡得著嗎」。</p>
+</div>
+
+<div class="lesson">
+<h3><span class="n">3</span>不對稱性可以用買的</h3>
+<p>海龜的趨勢跟蹤沒有消失，它機構化成了管理期貨（managed futures）。
+   買進 DBMF／KMLM 這類 ETF，本質上是用約 0.85～0.9% 的年費，
+   雇用 Richard Dennis 策略的後代替你執行「虧損砍快、獲利放跑」的不對稱結構。
+   這是散戶唯一能合法「繼承」怪傑 edge 的管道——而且它與股票低相關，
+   在 2022 年股債齊跌時是少數有正報酬紀錄的分散工具
+   （本站 <a href="/backtest/multiasset_trend/">SG Trend 複製回測</a>：2022 年 +21.9%）。
+   代價要誠實列出：費用率高、策略有自己的乾旱期（2012～2018 整體難看）、溢價已較全盛期大幅衰減。</p>
+</div>
+
+<div class="lesson">
+<h3><span class="n">4</span>有規則，然後服從規則</h3>
+<p>怪傑們一致認為他們的優勢一半來自「別人做不到的紀律」：再平衡照表執行、
+   跌 30% 時不棄守配置、漲三年時不加碼到超出設計。這一條是<strong>零成本的</strong>，
+   也是實務上最多人失敗的地方——回測裡的策略沒有情緒，真實資金有。
+   規則寫下來的那一天，就要同時寫下「什麼情況下允許自己改規則」（答案通常是：只在事前約定的重審日）。</p>
+</div>
+</div>
+
+<!-- ===== 4. TWO KINDS OF MONEY ===== -->
+<div class="section">
+<h2 class="section-title">4. 收尾：組合裡的兩種錢</h2>
+<div class="verdict">
+一個「股票＋現金＋黃金（＋管理期貨）」的 ETF 組合，其實同時在吃兩頓不同的午餐：<br>
+<strong>股／金／現金那部分吃的是分散這頓免費午餐</strong>——不需要相信任何人、任何訊號，只需要相關性結構大致成立；<br>
+<strong>管理期貨那條腿吃的是怪傑們留下的、已經打折但還沒歸零的趨勢溢價</strong>——它需要你相信趨勢跟蹤這個現象繼續存在。<br>
+兩種錢的來源不同，這正是它們加在一起有分散效果的原因。
+知道自己每一分報酬是從哪頓午餐來的，是風險管理的第一步。
+</div>
+<div class="note">
+<strong>本站相關實證：</strong>
+<a href="/backtest/gem/">GEM 雙動能</a>——動能溢價發表後衰減的站內複驗；
+<a href="/backtest/multiasset_trend/">多資產趨勢（SG Trend 複製）</a>——趨勢溢價的現存量級與 2022 危機表現；
+<a href="/backtest/crossasset_defense/">跨資產防守</a>——防禦性資產在組合層的邊際貢獻；
+<a href="/backtest/tw_crash/">台股含崩盤驗證</a>——「B&amp;H 難敗」在無崩盤樣本下的假象。
+</div>
+</div>
+
+</div>
+
+<footer>
+  <div class="container">
+    &copy; 2026 InvestMQuest Research &middot; 觀念文章 &middot; 源自 2026-07-04 研究討論 &middot;
+    頁面生成 %NOW% &middot; 僅供研究參考，不構成投資建議
+  </div>
+</footer>
+</body>
+</html>
+"""
+
+
+def main():
+    html = render()
+    OUT.parent.mkdir(parents=True, exist_ok=True)
+    OUT.write_text(html, encoding="utf-8")
+    print(f"Written {OUT} ({len(html):,} bytes)")
+
+
+if __name__ == "__main__":
+    main()
