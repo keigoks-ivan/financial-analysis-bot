@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""前瞻催化劑日曆 — 頁面渲染器（Phase 2）.
+"""前瞻催化劑日曆 — 頁面渲染器（Phase 2＋3）.
 
-讀 docs/catalyst/calendar.json ＋ archive.json（＋未來 Phase 3 的 variance.json，
-版面已預留 placeholder section），輸出 docs/catalyst/index.html。
+讀 docs/catalyst/calendar.json ＋ archive.json ＋ variance.json（Phase 3 承保差異），
+輸出 docs/catalyst/index.html。
 
 版面（沿用 build_pipeline_page.py 慣例：site_nav import、STYLE 常數、--dry-run）：
   · 標題 ＋ 一句話導言
@@ -10,7 +10,7 @@
   · 完整前瞻表：日期｜Ticker｜事件｜類型｜影響｜我們的立場｜來源
     （s15_static 列視覺標記「可能過期」）
   · 保質期警示 block（dd_expiry 事件）
-  · Phase 3 期望落差 variance placeholder section
+  · 承保差異 variance section（現共識 EPS vs DD base_eps_path，漂移%＋旗標）
   · 已過事件／archive：最近 10 筆，含 outcome 欄（未回填顯示「待複盤」）
   · Coverage footer：universe_count、skipped / errors 計數（誠實顯示）
   · noindex,nofollow
@@ -215,17 +215,110 @@ def render_expiry(events: list) -> str:
 </section>"""
 
 
-def render_variance_placeholder(variance: Optional[dict]) -> str:
-    if variance:
-        # Phase 3 上線後可在此渲染真實內容；目前保留最小掛點。
-        n = len(variance.get("items", []) or [])
-        inner = f'<div class="block-sub">已載入 variance.json（{n} 筆），詳細版面待 Phase 3 渲染器接手。</div>'
+def _flag_cell(flag: str) -> str:
+    cls = {"🔴": "vf-red", "🟡": "vf-amber", "🟢": "vf-green", "🟢↑": "vf-up",
+           "⚪": "vf-cur"}.get(flag, "vf-green")
+    return f'<span class="vflag {cls}">{escape(flag)}</span>'
+
+
+def _drift_cell(d, muted: bool = False) -> str:
+    try:
+        v = float(d)
+    except (TypeError, ValueError):
+        return "—"
+    if muted:            # ⚪ 幣別待確認：數字存疑，不上紅綠色
+        cls = "dr-muted"
     else:
-        inner = ('<div class="placeholder">Phase 3 期望落差對照（財報實際 vs 分析師預估的驚喜方向）尚未上線。'
-                 '本區塊已預留版位，variance.json 產出後自動填入。</div>')
-    return f"""<section class="block ph-block">
-  <h2 class="block-h"><span class="dot dot-ph"></span>期望落差對照 <span class="cnt">Phase 3</span></h2>
+        cls = "dr-neg" if v < -5 else ("dr-pos" if v > 5 else "dr-flat")
+    sign = "+" if v > 0 else ""
+    return f'<span class="drift {cls}">{sign}{v:.1f}%</span>'
+
+
+def _eps_cell(v) -> str:
+    if v is None:
+        return '<span class="na">—</span>'
+    try:
+        return f"{float(v):,.2f}"
+    except (TypeError, ValueError):
+        return escape(str(v))
+
+
+def _var_row(r: dict) -> str:
+    tk = escape(r.get("ticker", ""))
+    dd = r.get("dd_file")
+    tk_html = f'<a href="{escape(dd)}#decision">{tk}</a>' if dd else tk
+    fy = escape(str(r.get("fy_label", "")))
+    fy_end = escape(str(r.get("fy_end", "")))
+    cur = (r.get("currency") or "").upper()
+    cur_note = f' <span class="cur">{escape(cur)}</span>' if cur and cur != "USD" else ""
+    mm = ' <sup class="bmark" title="口徑為 GAAP，yfinance 共識通常為 adjusted，比較僅供方向參考">†</sup>' if r.get("basis_mismatch") else ""
+    basis_html = escape(str(r.get("eps_basis", "")))
+    if r.get("currency_suspect"):
+        fc = escape((r.get("financial_currency") or "?").upper())
+        basis_html += (f'<div class="cur-suspect">疑似幣別錯配（yfinance 共識疑為 {fc}），人工確認</div>')
+    return f"""<tr>
+  <td class="left tk">{tk_html}</td>
+  <td class="left nowrap">{fy}<span class="fye">（{fy_end}）</span></td>
+  <td class="num">{_eps_cell(r.get("base_eps"))}{cur_note}</td>
+  <td class="num">{_eps_cell(r.get("consensus_eps"))}{mm}</td>
+  <td class="num">{_eps_cell(r.get("actual_eps_ttd"))}</td>
+  <td class="num">{_drift_cell(r.get("drift_pct"), muted=bool(r.get("currency_suspect")))}</td>
+  <td>{_flag_cell(r.get("flag", ""))}</td>
+  <td class="left basis">{basis_html}</td>
+</tr>"""
+
+
+def render_variance(variance: Optional[dict]) -> str:
+    if not variance:
+        inner = ('<div class="placeholder">承保差異對照（現共識 EPS vs DD 承保 Base 路徑）尚無資料。'
+                 '本區塊已預留版位，<code>variance.json</code> 產出後自動填入。</div>')
+        return f"""<section class="block ph-block">
+  <h2 class="block-h"><span class="dot dot-ph"></span>承保差異（Variance vs Underwriting）</h2>
   {inner}
+</section>"""
+
+    rows = list(variance.get("rows", []) or [])
+    cov = variance.get("coverage", {}) or {}
+    with_bp = cov.get("with_base_path", 0)
+    n_rows = cov.get("rows", len(rows))
+    # worst drift first（build_variance_tracker 已排序，仍防禦式再排一次）
+    rows.sort(key=lambda r: (r.get("drift_pct") if isinstance(r.get("drift_pct"), (int, float)) else 0))
+    has_mismatch = any(r.get("basis_mismatch") for r in rows)
+
+    if not rows:
+        body = '<tr><td colspan="8" class="empty">目前無可比對之 FY 列。</td></tr>'
+    else:
+        body = "\n".join(_var_row(r) for r in rows)
+
+    mismatch_note = ('<span class="bmark">†</span> 該列 DD 口徑為 GAAP；yfinance 共識通常為 adjusted，'
+                     '漂移方向仍算但幅度僅供參考。') if has_mismatch else ""
+
+    return f"""<section class="block var-block">
+  <h2 class="block-h"><span class="dot dot-var"></span>承保差異（Variance vs Underwriting） <span class="cnt">{n_rows} 列</span></h2>
+  <div class="block-sub">
+    以財年<b>截止日對齊</b>，把 DD dd-meta 承保的 <code>base_eps_path</code>（我們進場時對未來 EPS 的估計）
+    對照<b>當下分析師共識</b>（yfinance）。<b>漂移% = 現共識 vs DD 承保 Base</b>，向下＝共識在下修、
+    thesis 開始承壓，向上＝正向修正。
+    <br><b>旗標</b>：
+    <span class="vflag vf-green">🟢</span> |漂移| ≤ 5%（貼合承保）·
+    <span class="vflag vf-up">🟢↑</span> 漂移 &gt; +5%（共識上修，不示警）·
+    <span class="vflag vf-amber">🟡</span> −15% ≤ 漂移 &lt; −5%（下修留意）·
+    <span class="vflag vf-red">🔴</span> 漂移 &lt; −15%（大幅下修）·
+    <span class="vflag vf-cur">⚪</span> 幣別待確認（yfinance financialCurrency 與 DD 口徑幣別不合且 |漂移| &gt; 10%，
+    疑為幣別假訊號，排除於 🔴/🟡 語義、交人工確認）。
+    <br>覆蓋率：追蹤宇宙 <code>{with_bp}</code> 檔有 <code>base_eps_path</code>，<code>{n_rows}</code> 列可比對
+    （超出 yfinance 0y/+1y 視野的 FY+2 及缺共識者記入 <code>variance.json</code> skipped[]）。
+    {mismatch_note}
+  </div>
+  <div class="tbl-wrap"><table>
+<thead><tr>
+  <th class="left">Ticker</th><th class="left">FY（截止）</th>
+  <th>DD Base EPS</th><th>現共識 EPS</th><th>已報 EPS 累計</th>
+  <th>漂移%</th><th>旗標</th><th class="left">口徑註記</th>
+</tr></thead>
+<tbody>
+{body}
+</tbody></table></div>
 </section>"""
 
 
@@ -285,13 +378,27 @@ body{font-family:system-ui,-apple-system,'Noto Sans TC',sans-serif;background:#f
 .block{background:#fff;border:1px solid #dce8f5;border-radius:10px;padding:18px 20px;margin-bottom:18px}
 .block-h{font-size:16px;font-weight:700;color:#0f2a45;margin-bottom:6px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
 .block-h .dot{width:10px;height:10px;border-radius:50%;background:#2563eb;flex-shrink:0}
-.block-h .dot-warn{background:#d97706}.block-h .dot-arch{background:#64748b}.block-h .dot-ph{background:#a855f7}
+.block-h .dot-warn{background:#d97706}.block-h .dot-arch{background:#64748b}.block-h .dot-ph{background:#a855f7}.block-h .dot-var{background:#0891b2}
 .block-h .cnt{font-size:11px;font-weight:600;color:#94a3b8}
 .block-sub{font-size:12px;color:#5a7a9a;line-height:1.7;margin-bottom:12px}
 code{background:#f0f5fb;padding:1px 5px;border-radius:3px;font-size:11px;color:#1e3a5f}
 .warn-block{border-color:#fde3c2;background:#fffcf7}
 .ph-block{border-style:dashed;border-color:#e2d6f5;background:#fbf8ff}
 .placeholder{font-size:12.5px;color:#8b6fb0;line-height:1.7;padding:6px 0}
+.var-block{border-color:#c7e9f1;background:#f6fdff}
+.var-block .dot-var{background:#0891b2}
+td.num{text-align:right;font-variant-numeric:tabular-nums;color:#334e68;font-weight:600;white-space:nowrap}
+.fye{color:#94a3b8;font-size:10.5px;font-weight:400}
+.cur{font-size:9.5px;font-weight:700;color:#0e7490;background:#cffafe;border-radius:4px;padding:0 4px}
+.na{color:#cbd5e1}
+.basis{font-size:10.5px;color:#64748b}
+.vflag{font-size:12px;white-space:nowrap}
+.drift{font-weight:700;font-size:11.5px;font-variant-numeric:tabular-nums}
+.dr-neg{color:#b91c1c}.dr-pos{color:#15803d}.dr-flat{color:#64748b}.dr-muted{color:#cbd5e1}
+.vf-cur{filter:grayscale(1);opacity:.85}
+.cur-suspect{font-size:10px;color:#b45309;line-height:1.5;margin-top:2px}
+.bmark{color:#b45309;font-weight:700;cursor:help}
+sup.bmark{font-size:9px}
 /* highlight grid */
 .hl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
 .hl-card{border:1px solid #dce8f5;border-left:3px solid #2563eb;border-radius:8px;padding:10px 12px;background:#f9fcff}
@@ -373,7 +480,7 @@ def build(dry_run: bool = False) -> int:
     highlight_html = render_highlight(events, today)
     forward_html = render_forward_table(events)
     expiry_html = render_expiry(events)
-    variance_html = render_variance_placeholder(variance)
+    variance_html = render_variance(variance)
     archive_html = render_archive(archive)
 
     gen = calendar.get("generated_at")

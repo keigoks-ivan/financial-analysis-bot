@@ -21,13 +21,27 @@ body{font-family:system-ui,-apple-system,'Noto Sans TC',sans-serif;background:#f
 .block{background:#fff;border:1px solid #dce8f5;border-radius:10px;padding:18px 20px;margin-bottom:18px}
 .block-h{font-size:16px;font-weight:700;color:#0f2a45;margin-bottom:6px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
 .block-h .dot{width:10px;height:10px;border-radius:50%;background:#2563eb;flex-shrink:0}
-.block-h .dot-warn{background:#d97706}.block-h .dot-arch{background:#64748b}.block-h .dot-ph{background:#a855f7}
+.block-h .dot-warn{background:#d97706}.block-h .dot-arch{background:#64748b}.block-h .dot-ph{background:#a855f7}.block-h .dot-var{background:#0891b2}
 .block-h .cnt{font-size:11px;font-weight:600;color:#94a3b8}
 .block-sub{font-size:12px;color:#5a7a9a;line-height:1.7;margin-bottom:12px}
 code{background:#f0f5fb;padding:1px 5px;border-radius:3px;font-size:11px;color:#1e3a5f}
 .warn-block{border-color:#fde3c2;background:#fffcf7}
 .ph-block{border-style:dashed;border-color:#e2d6f5;background:#fbf8ff}
 .placeholder{font-size:12.5px;color:#8b6fb0;line-height:1.7;padding:6px 0}
+.var-block{border-color:#c7e9f1;background:#f6fdff}
+.var-block .dot-var{background:#0891b2}
+td.num{text-align:right;font-variant-numeric:tabular-nums;color:#334e68;font-weight:600;white-space:nowrap}
+.fye{color:#94a3b8;font-size:10.5px;font-weight:400}
+.cur{font-size:9.5px;font-weight:700;color:#0e7490;background:#cffafe;border-radius:4px;padding:0 4px}
+.na{color:#cbd5e1}
+.basis{font-size:10.5px;color:#64748b}
+.vflag{font-size:12px;white-space:nowrap}
+.drift{font-weight:700;font-size:11.5px;font-variant-numeric:tabular-nums}
+.dr-neg{color:#b91c1c}.dr-pos{color:#15803d}.dr-flat{color:#64748b}.dr-muted{color:#cbd5e1}
+.vf-cur{filter:grayscale(1);opacity:.85}
+.cur-suspect{font-size:10px;color:#b45309;line-height:1.5;margin-top:2px}
+.bmark{color:#b45309;font-weight:700;cursor:help}
+sup.bmark{font-size:9px}
 /* highlight grid */
 .hl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
 .hl-card{border:1px solid #dce8f5;border-left:3px solid #2563eb;border-radius:8px;padding:10px 12px;background:#f9fcff}
@@ -765,9 +779,391 @@ td.ev{color:#334e68;line-height:1.55;max-width:420px}
 </tr>
 </tbody></table></div>
 </section>
-<section class="block ph-block">
-  <h2 class="block-h"><span class="dot dot-ph"></span>期望落差對照 <span class="cnt">Phase 3</span></h2>
-  <div class="placeholder">Phase 3 期望落差對照（財報實際 vs 分析師預估的驚喜方向）尚未上線。本區塊已預留版位，variance.json 產出後自動填入。</div>
+<section class="block var-block">
+  <h2 class="block-h"><span class="dot dot-var"></span>承保差異（Variance vs Underwriting） <span class="cnt">36 列</span></h2>
+  <div class="block-sub">
+    以財年<b>截止日對齊</b>，把 DD dd-meta 承保的 <code>base_eps_path</code>（我們進場時對未來 EPS 的估計）
+    對照<b>當下分析師共識</b>（yfinance）。<b>漂移% = 現共識 vs DD 承保 Base</b>，向下＝共識在下修、
+    thesis 開始承壓，向上＝正向修正。
+    <br><b>旗標</b>：
+    <span class="vflag vf-green">🟢</span> |漂移| ≤ 5%（貼合承保）·
+    <span class="vflag vf-up">🟢↑</span> 漂移 &gt; +5%（共識上修，不示警）·
+    <span class="vflag vf-amber">🟡</span> −15% ≤ 漂移 &lt; −5%（下修留意）·
+    <span class="vflag vf-red">🔴</span> 漂移 &lt; −15%（大幅下修）·
+    <span class="vflag vf-cur">⚪</span> 幣別待確認（yfinance financialCurrency 與 DD 口徑幣別不合且 |漂移| &gt; 10%，
+    疑為幣別假訊號，排除於 🔴/🟡 語義、交人工確認）。
+    <br>覆蓋率：追蹤宇宙 <code>18</code> 檔有 <code>base_eps_path</code>，<code>36</code> 列可比對
+    （超出 yfinance 0y/+1y 視野的 FY+2 及缺共識者記入 <code>variance.json</code> skipped[]）。
+    <span class="bmark">†</span> 該列 DD 口徑為 GAAP；yfinance 共識通常為 adjusted，漂移方向仍算但幅度僅供參考。
+  </div>
+  <div class="tbl-wrap"><table>
+<thead><tr>
+  <th class="left">Ticker</th><th class="left">FY（截止）</th>
+  <th>DD Base EPS</th><th>現共識 EPS</th><th>已報 EPS 累計</th>
+  <th>漂移%</th><th>旗標</th><th class="left">口徑註記</th>
+</tr></thead>
+<tbody>
+<tr>
+  <td class="left tk"><a href="/dd/DD_ONON_20260703.html#decision">ONON</a></td>
+  <td class="left nowrap">FY26<span class="fye">（2026-12）</span></td>
+  <td class="num">1.76</td>
+  <td class="num">1.41</td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-muted">-19.7%</span></td>
+  <td><span class="vflag vf-cur">⚪</span></td>
+  <td class="left basis">non-gaap-usd<div class="cur-suspect">疑似幣別錯配（yfinance 共識疑為 CHF），人工確認</div></td>
+</tr>
+<tr>
+  <td class="left tk"><a href="/dd/DD_ONON_20260703.html#decision">ONON</a></td>
+  <td class="left nowrap">FY27<span class="fye">（2027-12）</span></td>
+  <td class="num">2.16</td>
+  <td class="num">1.73</td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-muted">-19.7%</span></td>
+  <td><span class="vflag vf-cur">⚪</span></td>
+  <td class="left basis">non-gaap-usd<div class="cur-suspect">疑似幣別錯配（yfinance 共識疑為 CHF），人工確認</div></td>
+</tr>
+<tr>
+  <td class="left tk"><a href="/dd/DD_UBER_20260703.html#decision">UBER</a></td>
+  <td class="left nowrap">FY2026<span class="fye">（2026-12）</span></td>
+  <td class="num">3.46</td>
+  <td class="num">3.03 <sup class="bmark" title="口徑為 GAAP，yfinance 共識通常為 adjusted，比較僅供方向參考">†</sup></td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-neg">-12.4%</span></td>
+  <td><span class="vflag vf-amber">🟡</span></td>
+  <td class="left basis">gaap-usd</td>
+</tr>
+<tr>
+  <td class="left tk"><a href="/dd/DD_WLDN_20260703.html#decision">WLDN</a></td>
+  <td class="left nowrap">FY27<span class="fye">（2027-12）</span></td>
+  <td class="num">6.05</td>
+  <td class="num">5.30</td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-neg">-12.4%</span></td>
+  <td><span class="vflag vf-amber">🟡</span></td>
+  <td class="left basis">non-gaap-usd</td>
+</tr>
+<tr>
+  <td class="left tk"><a href="/dd/DD_NU_20260703.html#decision">NU</a></td>
+  <td class="left nowrap">FY26<span class="fye">（2026-12）</span></td>
+  <td class="num">0.88</td>
+  <td class="num">0.82 <sup class="bmark" title="口徑為 GAAP，yfinance 共識通常為 adjusted，比較僅供方向參考">†</sup></td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-neg">-7.2%</span></td>
+  <td><span class="vflag vf-amber">🟡</span></td>
+  <td class="left basis">gaap-usd</td>
+</tr>
+<tr>
+  <td class="left tk"><a href="/dd/DD_NU_20260703.html#decision">NU</a></td>
+  <td class="left nowrap">FY27<span class="fye">（2027-12）</span></td>
+  <td class="num">1.15</td>
+  <td class="num">1.08 <sup class="bmark" title="口徑為 GAAP，yfinance 共識通常為 adjusted，比較僅供方向參考">†</sup></td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-neg">-6.0%</span></td>
+  <td><span class="vflag vf-amber">🟡</span></td>
+  <td class="left basis">gaap-usd</td>
+</tr>
+<tr>
+  <td class="left tk"><a href="/dd/DD_META_20260703.html#decision">META</a></td>
+  <td class="left nowrap">FY27<span class="fye">（2027-12）</span></td>
+  <td class="num">36.25</td>
+  <td class="num">34.97</td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-flat">-3.5%</span></td>
+  <td><span class="vflag vf-green">🟢</span></td>
+  <td class="left basis">non-gaap-usd</td>
+</tr>
+<tr>
+  <td class="left tk"><a href="/dd/DD_WLDN_20260703.html#decision">WLDN</a></td>
+  <td class="left nowrap">FY26<span class="fye">（2026-12）</span></td>
+  <td class="num">4.95</td>
+  <td class="num">4.93</td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-flat">-0.3%</span></td>
+  <td><span class="vflag vf-green">🟢</span></td>
+  <td class="left basis">non-gaap-usd</td>
+</tr>
+<tr>
+  <td class="left tk"><a href="/dd/DD_ABNB_20260703.html#decision">ABNB</a></td>
+  <td class="left nowrap">FY27<span class="fye">（2027-12）</span></td>
+  <td class="num">6.06</td>
+  <td class="num">6.05</td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-flat">-0.2%</span></td>
+  <td><span class="vflag vf-green">🟢</span></td>
+  <td class="left basis">non-gaap-usd</td>
+</tr>
+<tr>
+  <td class="left tk"><a href="/dd/DD_NFLX_20260703.html#decision">NFLX</a></td>
+  <td class="left nowrap">FY26<span class="fye">（2026-12）</span></td>
+  <td class="num">3.60</td>
+  <td class="num">3.59 <sup class="bmark" title="口徑為 GAAP，yfinance 共識通常為 adjusted，比較僅供方向參考">†</sup></td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-flat">-0.2%</span></td>
+  <td><span class="vflag vf-green">🟢</span></td>
+  <td class="left basis">gaap-usd</td>
+</tr>
+<tr>
+  <td class="left tk"><a href="/dd/DD_NFLX_20260703.html#decision">NFLX</a></td>
+  <td class="left nowrap">FY27<span class="fye">（2027-12）</span></td>
+  <td class="num">3.84</td>
+  <td class="num">3.83 <sup class="bmark" title="口徑為 GAAP，yfinance 共識通常為 adjusted，比較僅供方向參考">†</sup></td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-flat">-0.2%</span></td>
+  <td><span class="vflag vf-green">🟢</span></td>
+  <td class="left basis">gaap-usd</td>
+</tr>
+<tr>
+  <td class="left tk"><a href="/dd/DD_MSFT_20260703.html#decision">MSFT</a></td>
+  <td class="left nowrap">FY26<span class="fye">（2026-06）</span></td>
+  <td class="num">16.84</td>
+  <td class="num">16.82</td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-flat">-0.1%</span></td>
+  <td><span class="vflag vf-green">🟢</span></td>
+  <td class="left basis">non-gaap-usd</td>
+</tr>
+<tr>
+  <td class="left tk"><a href="/dd/DD_AVGO_20260623.html#decision">AVGO</a></td>
+  <td class="left nowrap">FY26<span class="fye">（2026-10）</span></td>
+  <td class="num">11.62</td>
+  <td class="num">11.62</td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-flat">0.0%</span></td>
+  <td><span class="vflag vf-green">🟢</span></td>
+  <td class="left basis">non-gaap-usd</td>
+</tr>
+<tr>
+  <td class="left tk"><a href="/dd/DD_COHR_20260627.html#decision">COHR</a></td>
+  <td class="left nowrap">FY26<span class="fye">（2026-06）</span></td>
+  <td class="num">5.45</td>
+  <td class="num">5.45</td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-flat">0.0%</span></td>
+  <td><span class="vflag vf-green">🟢</span></td>
+  <td class="left basis">non-gaap-usd</td>
+</tr>
+<tr>
+  <td class="left tk"><a href="/dd/DD_GOOGL_20260623.html#decision">GOOGL</a></td>
+  <td class="left nowrap">FY26<span class="fye">（2026-12）</span></td>
+  <td class="num">14.22</td>
+  <td class="num">14.22 <sup class="bmark" title="口徑為 GAAP，yfinance 共識通常為 adjusted，比較僅供方向參考">†</sup></td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-flat">0.0%</span></td>
+  <td><span class="vflag vf-green">🟢</span></td>
+  <td class="left basis">gaap-usd</td>
+</tr>
+<tr>
+  <td class="left tk"><a href="/dd/DD_J_20260703.html#decision">J</a></td>
+  <td class="left nowrap">FY26<span class="fye">（2026-09）</span></td>
+  <td class="num">7.25</td>
+  <td class="num">7.25</td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-flat">-0.0%</span></td>
+  <td><span class="vflag vf-green">🟢</span></td>
+  <td class="left basis">non-gaap-usd</td>
+</tr>
+<tr>
+  <td class="left tk"><a href="/dd/DD_J_20260703.html#decision">J</a></td>
+  <td class="left nowrap">FY27<span class="fye">（2027-09）</span></td>
+  <td class="num">8.23</td>
+  <td class="num">8.23</td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-flat">0.0%</span></td>
+  <td><span class="vflag vf-green">🟢</span></td>
+  <td class="left basis">non-gaap-usd</td>
+</tr>
+<tr>
+  <td class="left tk"><a href="/dd/DD_LLY_20260623.html#decision">LLY</a></td>
+  <td class="left nowrap">FY26<span class="fye">（2026-12）</span></td>
+  <td class="num">36.21</td>
+  <td class="num">36.21</td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-flat">0.0%</span></td>
+  <td><span class="vflag vf-green">🟢</span></td>
+  <td class="left basis">non-gaap-usd</td>
+</tr>
+<tr>
+  <td class="left tk"><a href="/dd/DD_LLY_20260623.html#decision">LLY</a></td>
+  <td class="left nowrap">FY27<span class="fye">（2027-12）</span></td>
+  <td class="num">44.46</td>
+  <td class="num">44.47</td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-flat">0.0%</span></td>
+  <td><span class="vflag vf-green">🟢</span></td>
+  <td class="left basis">non-gaap-usd</td>
+</tr>
+<tr>
+  <td class="left tk"><a href="/dd/DD_MA_20260703.html#decision">MA</a></td>
+  <td class="left nowrap">FY26<span class="fye">（2026-12）</span></td>
+  <td class="num">19.66</td>
+  <td class="num">19.66</td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-flat">0.0%</span></td>
+  <td><span class="vflag vf-green">🟢</span></td>
+  <td class="left basis">non-gaap-usd</td>
+</tr>
+<tr>
+  <td class="left tk"><a href="/dd/DD_MA_20260703.html#decision">MA</a></td>
+  <td class="left nowrap">FY27<span class="fye">（2027-12）</span></td>
+  <td class="num">22.79</td>
+  <td class="num">22.79</td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-flat">-0.0%</span></td>
+  <td><span class="vflag vf-green">🟢</span></td>
+  <td class="left basis">non-gaap-usd</td>
+</tr>
+<tr>
+  <td class="left tk"><a href="/dd/DD_APH_20260626.html#decision">APH</a></td>
+  <td class="left nowrap">FY26<span class="fye">（2026-12）</span></td>
+  <td class="num">4.82</td>
+  <td class="num">4.82</td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-flat">+0.1%</span></td>
+  <td><span class="vflag vf-green">🟢</span></td>
+  <td class="left basis">non-gaap-usd</td>
+</tr>
+<tr>
+  <td class="left tk"><a href="/dd/DD_MSFT_20260703.html#decision">MSFT</a></td>
+  <td class="left nowrap">FY27<span class="fye">（2027-06）</span></td>
+  <td class="num">19.35</td>
+  <td class="num">19.37</td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-flat">+0.1%</span></td>
+  <td><span class="vflag vf-green">🟢</span></td>
+  <td class="left basis">non-gaap-usd</td>
+</tr>
+<tr>
+  <td class="left tk"><a href="/dd/DD_NVDA_20260624.html#decision">NVDA</a></td>
+  <td class="left nowrap">FY27<span class="fye">（2027-01）</span></td>
+  <td class="num">8.96</td>
+  <td class="num">8.97</td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-flat">+0.1%</span></td>
+  <td><span class="vflag vf-green">🟢</span></td>
+  <td class="left basis">non-gaap-usd</td>
+</tr>
+<tr>
+  <td class="left tk"><a href="/dd/DD_GOOGL_20260623.html#decision">GOOGL</a></td>
+  <td class="left nowrap">FY27<span class="fye">（2027-12）</span></td>
+  <td class="num">14.50</td>
+  <td class="num">14.53 <sup class="bmark" title="口徑為 GAAP，yfinance 共識通常為 adjusted，比較僅供方向參考">†</sup></td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-flat">+0.2%</span></td>
+  <td><span class="vflag vf-green">🟢</span></td>
+  <td class="left basis">gaap-usd</td>
+</tr>
+<tr>
+  <td class="left tk"><a href="/dd/DD_NVDA_20260624.html#decision">NVDA</a></td>
+  <td class="left nowrap">FY28<span class="fye">（2028-01）</span></td>
+  <td class="num">12.73</td>
+  <td class="num">12.76</td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-flat">+0.3%</span></td>
+  <td><span class="vflag vf-green">🟢</span></td>
+  <td class="left basis">non-gaap-usd</td>
+</tr>
+<tr>
+  <td class="left tk"><a href="/dd/DD_COHR_20260627.html#decision">COHR</a></td>
+  <td class="left nowrap">FY27<span class="fye">（2027-06）</span></td>
+  <td class="num">8.18</td>
+  <td class="num">8.21</td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-flat">+0.4%</span></td>
+  <td><span class="vflag vf-green">🟢</span></td>
+  <td class="left basis">non-gaap-usd</td>
+</tr>
+<tr>
+  <td class="left tk"><a href="/dd/DD_PLTR_20260629.html#decision">PLTR</a></td>
+  <td class="left nowrap">FY2026<span class="fye">（2026-12）</span></td>
+  <td class="num">1.47</td>
+  <td class="num">1.48</td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-flat">+0.4%</span></td>
+  <td><span class="vflag vf-green">🟢</span></td>
+  <td class="left basis">non-gaap-usd</td>
+</tr>
+<tr>
+  <td class="left tk"><a href="/dd/DD_UBER_20260703.html#decision">UBER</a></td>
+  <td class="left nowrap">FY2027<span class="fye">（2027-12）</span></td>
+  <td class="num">4.45</td>
+  <td class="num">4.47 <sup class="bmark" title="口徑為 GAAP，yfinance 共識通常為 adjusted，比較僅供方向參考">†</sup></td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-flat">+0.5%</span></td>
+  <td><span class="vflag vf-green">🟢</span></td>
+  <td class="left basis">gaap-usd</td>
+</tr>
+<tr>
+  <td class="left tk"><a href="/dd/DD_APH_20260626.html#decision">APH</a></td>
+  <td class="left nowrap">FY27<span class="fye">（2027-12）</span></td>
+  <td class="num">5.69</td>
+  <td class="num">5.73</td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-flat">+0.6%</span></td>
+  <td><span class="vflag vf-green">🟢</span></td>
+  <td class="left basis">non-gaap-usd</td>
+</tr>
+<tr>
+  <td class="left tk"><a href="/dd/DD_PLTR_20260629.html#decision">PLTR</a></td>
+  <td class="left nowrap">FY2027<span class="fye">（2027-12）</span></td>
+  <td class="num">2.08</td>
+  <td class="num">2.09</td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-flat">+0.7%</span></td>
+  <td><span class="vflag vf-green">🟢</span></td>
+  <td class="left basis">non-gaap-usd</td>
+</tr>
+<tr>
+  <td class="left tk"><a href="/dd/DD_ABNB_20260703.html#decision">ABNB</a></td>
+  <td class="left nowrap">FY26<span class="fye">（2026-12）</span></td>
+  <td class="num">5.04</td>
+  <td class="num">5.09</td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-flat">+0.9%</span></td>
+  <td><span class="vflag vf-green">🟢</span></td>
+  <td class="left basis">non-gaap-usd</td>
+</tr>
+<tr>
+  <td class="left tk"><a href="/dd/DD_TSM_20260623.html#decision">TSM</a></td>
+  <td class="left nowrap">FY26<span class="fye">（2026-12）</span></td>
+  <td class="num">15.76</td>
+  <td class="num">15.91 <sup class="bmark" title="口徑為 GAAP，yfinance 共識通常為 adjusted，比較僅供方向參考">†</sup></td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-flat">+1.0%</span></td>
+  <td><span class="vflag vf-green">🟢</span></td>
+  <td class="left basis">gaap-usd</td>
+</tr>
+<tr>
+  <td class="left tk"><a href="/dd/DD_META_20260703.html#decision">META</a></td>
+  <td class="left nowrap">FY26<span class="fye">（2026-12）</span></td>
+  <td class="num">32.18</td>
+  <td class="num">32.86</td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-flat">+2.1%</span></td>
+  <td><span class="vflag vf-green">🟢</span></td>
+  <td class="left basis">non-gaap-usd</td>
+</tr>
+<tr>
+  <td class="left tk"><a href="/dd/DD_TSM_20260623.html#decision">TSM</a></td>
+  <td class="left nowrap">FY27<span class="fye">（2027-12）</span></td>
+  <td class="num">19.66</td>
+  <td class="num">20.29 <sup class="bmark" title="口徑為 GAAP，yfinance 共識通常為 adjusted，比較僅供方向參考">†</sup></td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-flat">+3.2%</span></td>
+  <td><span class="vflag vf-green">🟢</span></td>
+  <td class="left basis">gaap-usd</td>
+</tr>
+<tr>
+  <td class="left tk"><a href="/dd/DD_AVGO_20260623.html#decision">AVGO</a></td>
+  <td class="left nowrap">FY27<span class="fye">（2027-10）</span></td>
+  <td class="num">17.93</td>
+  <td class="num">19.40</td>
+  <td class="num"><span class="na">—</span></td>
+  <td class="num"><span class="drift dr-pos">+8.2%</span></td>
+  <td><span class="vflag vf-up">🟢↑</span></td>
+  <td class="left basis">non-gaap-usd</td>
+</tr>
+</tbody></table></div>
 </section>
 <section class="block">
   <h2 class="block-h"><span class="dot dot-arch"></span>已過事件 · 複盤佇列 <span class="cnt">最近 8 / 共 8</span></h2>
