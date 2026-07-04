@@ -21,10 +21,36 @@ KDIR = Path(__file__).resolve().parent
 DECISIONS = KDIR / "decisions.jsonl"
 GRAPH = KDIR / "graph.json"
 BUILD = KDIR / "build_knowledge.py"
+SETTLE = KDIR / "settlement.json"
+SETTLE_BUILD = KDIR / "settle_outcomes.py"
 
 
 def _rebuild():
     subprocess.run([sys.executable, str(BUILD)], check=True)
+
+
+def _load_settlement():
+    """機械結算（settle_outcomes.py 產出）。無檔、或比 decisions.jsonl／週線 cache 舊
+    → 自動重跑（weekly cache 由 GitHub Actions 每週推、git pull 進來，pull 完首次查詢即重算）。
+    回傳 ({decision_id: row}, as_of)；結算失敗回傳 ({}, None)（不擋其他查詢）。"""
+    try:
+        stale = not SETTLE.exists()
+        if not stale:
+            t = SETTLE.stat().st_mtime
+            if DECISIONS.exists() and t < DECISIONS.stat().st_mtime:
+                stale = True
+            else:
+                import os
+                cache_dir = KDIR.parent / "data" / "weekly_cache"
+                with os.scandir(cache_dir) as it:
+                    stale = any(e.stat().st_mtime > t for e in it if e.name.endswith(".json"))
+        if stale:
+            subprocess.run([sys.executable, str(SETTLE_BUILD)], check=True)
+        data = json.loads(SETTLE.read_text(encoding="utf-8"))
+        return {r["id"]: r for r in data.get("rows", [])}, data.get("as_of")
+    except Exception as e:  # cache 缺漏等，降級為無結算
+        print(f"（結算不可用：{e}）")
+        return {}, None
 
 
 def _load():
@@ -67,6 +93,7 @@ def cmd_entity(name):
         print(f"━━ {canonical} ━━{alias_note}  （無 DD，只在產業圖中被引用）")
 
     if mine:
+        settlement, _ = _load_settlement()
         print(f"\n決策史（{len(mine)} 筆）：")
         for d in mine:
             exp = d.get("expected") or {}
@@ -74,8 +101,13 @@ def cmd_entity(name):
             ev = exp.get("ev5y_pct")
             tag = f" IRR~{irr}%/5Y EV~{ev}%" if (irr is not None or ev is not None) else ""
             px = d.get("price_at_decision")
+            st = settlement.get(d.get("id"))
+            sett = ""
+            if st:
+                mark = "⚠" if st.get("flags") else ""
+                sett = f"  ▸結算 {st['to_date_pct']:+.1f}%/{st['days']}d{mark}"
             print(f"  {d.get('date') or '????-??-??'}  [{d.get('verdict') or '—'}]"
-                  f"  ${px if px is not None else '—'}{tag}")
+                  f"  ${px if px is not None else '—'}{tag}{sett}")
             if d.get("thesis_one_line"):
                 print(f"      {d['thesis_one_line']}")
             if d.get("outcome"):
@@ -162,16 +194,63 @@ def cmd_verdicts():
         print(f"  {k:12s} {v}")
 
 
+def _pct_table(title, buckets, order):
+    """buckets: {label: [row, ...]}；每列印 n / 中位 / 平均 / 虧損比例（to-date），
+    及 h91 到期樣本的中位。"""
+    import statistics
+    print(title)
+    print(f"  {'':6s}{'n':>4}  {'中位%':>7}  {'平均%':>7}  {'虧損':>5}  {'h91中位%':>9}")
+    for label in order:
+        rows = buckets.get(label)
+        if not rows:
+            continue
+        rets = [r["to_date_pct"] for r in rows]
+        h91 = [r["h91"] for r in rows if r.get("h91") is not None]
+        h91_s = f"{statistics.median(h91):>8.1f}" if h91 else f"{'—':>8}"
+        print(f"  {label:6s}{len(rows):>4}  {statistics.median(rets):>7.1f}  "
+              f"{statistics.mean(rets):>7.1f}  {sum(1 for x in rets if x < 0)/len(rets)*100:>4.0f}%  {h91_s}")
+    print()
+
+
 def cmd_calibration():
     decisions, _ = _load()
+    settlement, as_of = _load_settlement()
+    print(f"決策總數 {len(decisions)}；機械結算 {len(settlement)} 筆（價格 as_of {as_of}）\n")
+
+    # ── 機械結算（settle_outcomes.py：weekly_cache 對答案）─────────────
+    if settlement:
+        MIN_DAYS = 28  # 太新鮮的裁決不進聚合（雜訊）
+        rows = [r for r in settlement.values() if r["days"] >= MIN_DAYS]
+        print(f"聚合樣本 = 結算齡 ≥ {MIN_DAYS} 天者 {len(rows)} 筆；報酬＝裁決日→as_of（各筆視窗不等長，方向可信、量級慎讀）\n")
+
+        by_v = defaultdict(list)
+        for r in rows:
+            by_v[r["verdict"] or "（無裁決）"].append(r)
+        _pct_table("依裁決（v13+ 才有；觀望/迴避的正報酬＝錯過成本）：",
+                   by_v, ["進場", "觀望", "迴避", "（無裁決）"])
+
+        by_g = defaultdict(list)
+        for r in rows:
+            by_g[r["grade"] or "—"].append(r)
+        _pct_table("依基本面評級：", by_g, ["A+", "A", "B", "C", "X", "—"])
+
+        # 錯過成本排行：說了觀望/迴避之後大漲的名字（觀望複審的觸發清單）。
+        # 警報性質、非統計 → 不吃 MIN_DAYS 門檻，全樣本掃。
+        missed = sorted((r for r in settlement.values()
+                         if r["verdict"] in ("觀望", "迴避") and r["to_date_pct"] > 30),
+                        key=lambda r: -r["to_date_pct"])
+        if missed:
+            print(f"⚠ 錯過成本 top（觀望/迴避後 > +30%，候選複審）：")
+            for r in missed[:10]:
+                print(f"  {r['entity']:8s} {r['date']}  [{r['verdict']}]  "
+                      f"{r['to_date_pct']:+.0f}% / {r['days']}d")
+            print()
+
+    # ── 人工 outcome（ledger.manual.jsonl：verdict_held / lesson 是人的判斷）──
     with_o = [d for d in decisions if d.get("outcome")]
-    print(f"決策總數 {len(decisions)}；有 outcome {len(with_o)}\n")
     if not with_o:
-        print("尚無 outcome 回填。覆蓋現況：")
-        v = Counter(d.get("verdict") or "（無裁決）" for d in decisions)
-        for k, val in v.most_common():
-            print(f"  {k:12s} {val}")
-        print("\n→ 回填方式：在 knowledge/ledger.manual.jsonl 加一行 kind=outcome（見 README）。")
+        print("人工 outcome 回填 0 筆（機械結算不取代人的複盤——lesson 仍要人寫）。")
+        print("→ 回填方式：在 knowledge/ledger.manual.jsonl 加一行 kind=outcome（見 README）。")
         return
     held = sum(1 for d in with_o if d["outcome"].get("verdict_held"))
     by_verdict = defaultdict(lambda: [0, 0])
@@ -179,7 +258,7 @@ def cmd_calibration():
         b = by_verdict[d.get("verdict") or "—"]
         b[0] += 1
         b[1] += 1 if d["outcome"].get("verdict_held") else 0
-    print(f"整體命中率：{held}/{len(with_o)} = {held/len(with_o)*100:.0f}%\n")
+    print(f"人工 outcome 命中率：{held}/{len(with_o)} = {held/len(with_o)*100:.0f}%\n")
     print("依裁決別：")
     for k, (tot, ok) in by_verdict.items():
         print(f"  {k:8s} {ok}/{tot} = {ok/tot*100:.0f}%")
