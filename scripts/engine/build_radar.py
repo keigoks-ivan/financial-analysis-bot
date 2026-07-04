@@ -142,7 +142,8 @@ def tag_shapes(rows: list[dict]) -> dict[str, list[dict]]:
 
 
 def stage2_revisions(cands: list[str], prev: dict[str, dict]) -> dict[str, dict]:
-    """FY+1 EPS 30 天修正%（yfinance eps_trend）；逐檔失敗 → 沿用上一版。"""
+    """FY+1 EPS 30 天修正%＋隱含成長率（yfinance eps_trend）；逐檔失敗 → 沿用上一版。
+    g_fy1_pct = (+1y EPS / 0y EPS − 1)×100 ＝ 前瞻一年 EPS 成長（GRP 主榜的 G 閘用）。"""
     import yfinance as yf
     out: dict[str, dict] = {}
     for i, t in enumerate(cands, 1):
@@ -151,7 +152,13 @@ def stage2_revisions(cands: list[str], prev: dict[str, dict]) -> dict[str, dict]
             row = tr.loc["+1y"] if "+1y" in tr.index else tr.iloc[-1]
             cur, d30 = float(row["current"]), float(row["30daysAgo"])
             rev = (cur / d30 - 1) * 100 if d30 else None
-            out[t] = {"fy1_rev_30d_pct": round(rev, 1) if rev is not None else None}
+            g = None
+            if "0y" in tr.index and "+1y" in tr.index:
+                e0, e1 = float(tr.loc["0y"]["current"]), float(tr.loc["+1y"]["current"])
+                if e0 > 0:
+                    g = (e1 / e0 - 1) * 100
+            out[t] = {"fy1_rev_30d_pct": round(rev, 1) if rev is not None else None,
+                      "g_fy1_pct": round(g, 1) if g is not None else None}
         except Exception:
             if t in prev:
                 out[t] = {**prev[t], "stale": True}
@@ -167,6 +174,35 @@ def load_pool() -> set[str]:
     except (OSError, json.JSONDecodeError):
         pass
     return pool
+
+
+P_LABEL_TXT = {"breakout": "🟢 突破帶", "pullback": "🟢 回踩帶", "in_trend": "🟡 趨勢內"}
+
+
+def render_grp_board(payload: dict) -> str:
+    board = payload.get("grp_board") or []
+    if not board:
+        return ""
+    trs = []
+    for r in board[:30]:
+        pool = ('<span class="tag tag-pool">池內</span>' if r.get("in_pool")
+                else '<span class="tag tag-blind">池外 → 補 DD</span>')
+        trs.append(f'<tr><td class="left"><strong>{escape(r["ticker"])}</strong></td>'
+                   f'<td class="left">{escape((r["sector"] or "")[:20])}</td>'
+                   f'<td>{escape(r["tier"].replace("sp", "").replace("ndx", "N"))}</td>'
+                   f'<td>{pct(r.get("g_fy1_pct"), 0, False)}</td>'
+                   f'<td><strong>{pct(r.get("fy1_rev_30d_pct"))}</strong></td>'
+                   f'<td class="left">{P_LABEL_TXT.get(r.get("p_label"), "—")}（距高 {r["dist_ath"]:+.0f}%）</td>'
+                   f'<td>{pct(r["ret_12m"], 0)}</td><td>{pool}</td></tr>')
+    return f"""<div class="shape-card" style="border-left-color:#b45309">
+<h3>⭐ GRP 主榜 <span class="cnt">{len(board)} 檔全過三閘（顯示 top 30，按上修幅度）</span></h3>
+<div class="shape-desc"><b>持有人選股準則（2026-07-04 拍板）：高成長 × EPS 上修 × 位置適合</b>——
+G＝FY+1 隱含 EPS 成長 ≥15% ｜ R＝FY+1 EPS 30 天修正 &gt;0（下修否決）｜ P＝站上 40 週線＋位置標籤。
+排序＝上修幅度。這是研究優先序，進場仍走 DD 裁決＋板機。</div>
+<table><thead><tr><th class="left">Ticker</th><th class="left">產業</th><th>層</th>
+<th>G 成長</th><th>R 30d修正</th><th class="left">P 位置</th><th>12M</th><th>DD池</th></tr></thead>
+<tbody>{''.join(trs)}</tbody></table>
+</div>"""
 
 
 def render(payload: dict) -> str:
@@ -211,6 +247,7 @@ def render(payload: dict) -> str:
 <div class="asof">{payload['as_of']} 價格 as of ｜ universe {payload['universe_n']} 檔
 ｜ 可算 {payload['scored_n']} 檔 ｜ 修正確認覆蓋 {covered['stage2_ok']}/{covered['stage2_cand']} 檔</div>
 </div>
+{render_grp_board(payload)}
 <div class="stat-row">
 <div class="stat"><strong>{len(shapes['breakout_base'])}</strong><span>長基期突破帶</span></div>
 <div class="stat"><strong>{len(shapes['cyclical_turn'])}</strong><span>循環轉折</span></div>
@@ -235,21 +272,43 @@ def main() -> int:
     rows, as_of = stage1(universe)
     shapes, hot = tag_shapes(rows)
 
-    # stage2 候選 = 各形狀 top N 聯集
+    # GRP 主榜的結構資格（P 閘，週線版）：站上 40 週線；位置標籤同 grp.py 語意
+    def p_label(r):
+        if not r["above_40w"]:
+            return None
+        if r["dist_ath"] >= -5.0:
+            return "breakout"
+        if -25.0 <= r["dist_ath"] <= -8.0:
+            return "pullback"
+        return "in_trend"
+    grp_struct = [r for r in rows if p_label(r)]
+    grp_struct.sort(key=lambda r: -r["rs_pct"])
+
+    # stage2 候選 = 各形狀 top N 聯集 ∪ GRP 結構資格 RS top 200
     cands: list[str] = []
     for k in SHAPES:
         cands.extend(r["ticker"] for r in shapes[k][:P["stage2_top_n"]])
+    cands.extend(r["ticker"] for r in grp_struct[:200])
     cands = list(dict.fromkeys(cands))
     prev: dict[str, dict] = {}
     if RADAR_JSON.exists():
         try:
             old = json.loads(RADAR_JSON.read_text(encoding="utf-8"))
-            prev = {r["ticker"]: {"fy1_rev_30d_pct": r.get("fy1_rev_30d_pct")}
-                    for lst in old.get("shapes", {}).values() for r in lst
-                    if r.get("fy1_rev_30d_pct") is not None}
+            prev = old.get("stage2") or {}
         except (OSError, json.JSONDecodeError):
             pass
     revs = {} if args.skip_stage2 else stage2_revisions(cands, prev)
+
+    # ── GRP 主榜（高成長 × 上修 × 位置；G 用 FY+1 隱含成長，R 用 30 天修正）──
+    grp_board = []
+    for r in grp_struct:
+        s2 = revs.get(r["ticker"]) or {}
+        g, rev = s2.get("g_fy1_pct"), s2.get("fy1_rev_30d_pct")
+        if g is None or rev is None:
+            continue
+        if g >= 15.0 and rev > 0 and rev > -2.0:
+            grp_board.append({**r, **s2, "p_label": p_label(r)})
+    grp_board.sort(key=lambda r: -(r["fy1_rev_30d_pct"] or 0))
 
     pool = load_pool()
     shape_counts = {k: len(v) for k, v in shapes.items()}   # 截斷前的真實命中數
@@ -259,15 +318,19 @@ def main() -> int:
             r.update(revs.get(r["ticker"], {}))
         shapes[k] = shapes[k][:P["display_top_n"] * 2]   # JSON 留 2 倍餘裕
 
+    for r in grp_board:
+        r["in_pool"] = r["ticker"] in pool
     blind_total = len({r["ticker"] for lst in shapes.values() for r in lst if not r["in_pool"]})
     payload = {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "run_timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "as_of": as_of, "universe_n": len(universe), "scored_n": len(rows),
         "params": P, "hot_sectors": hot, "shape_counts": shape_counts,
         "coverage": {"stage2_cand": len(cands),
                      "stage2_ok": sum(1 for t in cands if t in revs and revs[t].get("fy1_rev_30d_pct") is not None)},
         "blind_total": blind_total,
+        "grp_board": grp_board[:40],
+        "stage2": revs,
         "shapes": shapes,
     }
     OUT_DIR.mkdir(parents=True, exist_ok=True)

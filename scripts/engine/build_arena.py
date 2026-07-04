@@ -28,9 +28,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from engine.common import OUT_DIR, ROOT, page_shell, pct  # noqa: E402
 from engine.build_scoreboard import _bars, classify_shape  # noqa: E402
-from build_pipeline_page import (  # noqa: E402
-    _certainty, _ev5y, _is_unconditional_core, _safe_float, is_core_role,
-)
+from engine.grp import P_LABEL_HTML, grp_score  # noqa: E402
+from build_pipeline_page import is_core_role  # noqa: E402
 
 DD_LATEST = ROOT / "docs" / "dd-screener" / "latest.json"
 MARKET_STATE = ROOT / "docs" / "screener" / "market_state.json"
@@ -74,10 +73,10 @@ def shape_of(ticker: str) -> str:
 
 
 def row_dict(s: dict) -> dict:
+    g = grp_score(s)
     return {"ticker": s["ticker"], "verdict": s.get("dca_verdict"),
-            "role": s.get("dca_role"), "score": round(_ev5y(s) * _certainty(s), 2),
-            "ev5y": round(_ev5y(s), 1), "cert": round(_certainty(s), 2),
-            "upside_mid_pct": _safe_float(s.get("upside_mid_pct")),
+            "role": s.get("dca_role"),
+            "grp": g, "score": g["score"],
             "moat": f'{s.get("moat_grade") or "?"}{s.get("moat_trend") or ""}',
             "shape": shape_of(s["ticker"]),
             "dd_path": s.get("dd_path")}
@@ -95,22 +94,28 @@ def main() -> int:
     except (OSError, json.JSONDecodeError):
         card_stats = {}
 
-    core_pool = [s for s in stocks if s.get("dca_verdict") == "進場" and is_core_role(s)]
-    for s in core_pool:
-        s["_sc"] = _ev5y(s) * _certainty(s)
-    uncond = sorted([s for s in core_pool if _is_unconditional_core(s)], key=lambda s: -s["_sc"])
-    cond = sorted([s for s in core_pool if not _is_unconditional_core(s)], key=lambda s: -s["_sc"])
-    core_seats = [row_dict(s) for s in (uncond + cond)[:CORE_SLOTS]]
-    core_bench = [row_dict(s) for s in (uncond + cond)[CORE_SLOTS:]]
+    # 席位資格（GRP v1，2026-07-04 拍板）：DD 裁決＝進場 ∩ GRP 三閘全過
+    # （高成長 CAGR≥15 × FY+1 上修≥+2%/2Y≥+1pp × 位置適合）；排序＝R 上修幅度。
+    # GRP 未過的進場票落板凳並列原因——寧可席位空缺，不硬塞下修中的名字。
+    core_rows = [row_dict(s) for s in stocks
+                 if s.get("dca_verdict") == "進場" and is_core_role(s)]
+    core_pass = sorted([r for r in core_rows if r["grp"]["pass"]], key=lambda r: -r["score"])
+    core_seats = core_pass[:CORE_SLOTS]
+    core_bench = core_pass[CORE_SLOTS:] + sorted([r for r in core_rows if not r["grp"]["pass"]],
+                                                 key=lambda r: -r["score"])
 
-    sat_pool = [s for s in stocks if s.get("dca_verdict") == "進場" and not is_core_role(s)]
-    for s in sat_pool:
-        s["_sc"] = _ev5y(s) * _certainty(s)
-    sat_seats = [row_dict(s) for s in sorted(sat_pool, key=lambda s: -s["_sc"])[:SAT_SLOTS]]
+    sat_rows = [row_dict(s) for s in stocks
+                if s.get("dca_verdict") == "進場" and not is_core_role(s)]
+    sat_pass = sorted([r for r in sat_rows if r["grp"]["pass"]], key=lambda r: -r["score"])
+    sat_seats = sat_pass[:SAT_SLOTS]
+    sat_bench = sat_pass[SAT_SLOTS:] + sorted([r for r in sat_rows if not r["grp"]["pass"]],
+                                              key=lambda r: -r["score"])
 
     seated = {r["ticker"] for r in core_seats + sat_seats}
-    challengers = [row_dict(s) for s in stocks
-                   if s.get("dca_verdict") in ("進場", "觀望") and s["ticker"] not in seated]
+    challengers = [r for r in (row_dict(s) for s in stocks
+                               if s.get("dca_verdict") in ("進場", "觀望")
+                               and s["ticker"] not in seated)
+                   if r["grp"]["pass"]]
     challengers.sort(key=lambda r: -r["score"])
 
     # 擂台配對：每席 vs 同形狀最強挑戰者
@@ -157,13 +162,23 @@ def main() -> int:
         cls = "tag-dn" if cs["n_breach"] else ("tag-blind" if cs["n_due"] else "tag-pool")
         return f'<a href="/engine/cards.html#{escape(t)}"><span class="tag {cls}">🗂 {"·".join(bits)}</span></a>'
 
+    def _rev_html(g):
+        bits = []
+        if g["r_fy1"] is not None:
+            bits.append(f'FY+1 {pct(g["r_fy1"])}')
+        if g["r_2y"] is not None:
+            bits.append(f'2Y {g["r_2y"]:+.1f}pp')
+        return "　".join(bits) or '<span class="muted">—</span>'
+
     def seat_tr(r, seat_no=None):
-        up = pct(r["upside_mid_pct"], 0) if r["upside_mid_pct"] is not None else '<span class="muted">—</span>'
+        g = r["grp"]
         link = f'<a href="{escape(r["dd_path"])}#decision">{escape(r["ticker"])}</a>' if r.get("dd_path") else escape(r["ticker"])
+        dist = f'（距高 {g["dist_hi"]:+.0f}%）' if g["dist_hi"] is not None else ""
         return (f'<tr><td class="left">{f"{seat_no}." if seat_no else ""} <strong>{link}</strong></td>'
                 f'<td class="left">{SHAPE_LABELS.get(r["shape"], r["shape"])}</td>'
-                f'<td>{r["score"]:.1f}</td><td>{pct(r["ev5y"], 1, False)}</td>'
-                f'<td>{r["cert"]:.2f}</td><td>{up}</td>'
+                f'<td class="left">{_rev_html(g)}</td>'
+                f'<td>{pct(g["g"], 0, False) if g["g"] is not None else "—"}</td>'
+                f'<td class="left">{P_LABEL_HTML.get(g["p_label"])}{dist}</td>'
                 f'<td class="left">{escape(r["moat"])}</td>'
                 f'<td class="left">{card_cell(r["ticker"])}</td></tr>')
 
@@ -173,21 +188,33 @@ def main() -> int:
             rhs = '<span class="muted">同形狀無挑戰者</span>'
         else:
             link = f'<a href="{escape(c["dd_path"])}#decision">{escape(c["ticker"])}</a>' if c.get("dd_path") else escape(c["ticker"])
-            rhs = (f'{link}（{c["verdict"]}，分數 {c["score"]:.1f}）')
+            rhs = (f'{link}（{c["verdict"]}，R 分 {c["score"]:.1f}）')
         flag = '<span class="tag tag-dn">⚔ 警報</span>' if d["alert"] else '<span class="tag tag-up">守住</span>'
-        return (f'<tr><td class="left"><strong>{escape(s["ticker"])}</strong>（{s["score"]:.1f}）</td>'
+        return (f'<tr><td class="left"><strong>{escape(s["ticker"])}</strong>（R 分 {s["score"]:.1f}）</td>'
                 f'<td class="left">{SHAPE_LABELS.get(s["shape"], s["shape"])}</td>'
                 f'<td class="left">{rhs}</td><td>{flag}</td></tr>')
 
     head = ('<table><thead><tr><th class="left">席位</th><th class="left">形狀</th>'
-            '<th>分數</th><th>EV5y</th><th>確定性</th><th>2Y upside</th><th class="left">護城河</th>'
-            '<th class="left">決策卡</th></tr></thead><tbody>')
+            '<th class="left">R 上修</th><th>G 成長</th><th class="left">P 位置</th>'
+            '<th class="left">護城河</th><th class="left">決策卡</th></tr></thead><tbody>')
     core_tbl = head + "".join(seat_tr(r, i) for i, r in enumerate(core_seats, 1)) + "</tbody></table>"
+    for i in range(CORE_SLOTS - len(core_seats)):
+        core_tbl = core_tbl.replace("</tbody>", (
+            f'<tr><td class="left">{len(core_seats)+i+1}. <span class="muted">（空缺）</span></td>'
+            f'<td class="left muted" colspan="6">進場核心票中無 GRP 全過者遞補 — 寧缺勿濫</td></tr></tbody>'), 1)
     sat_body = "".join(seat_tr(r, i) for i, r in enumerate(sat_seats, 1))
     for i in range(payload["sat_vacant"]):
         sat_body += (f'<tr><td class="left">{len(sat_seats)+i+1}. <span class="muted">（空缺）</span></td>'
-                     f'<td class="left muted" colspan="6">等衛星候選拿到進場裁決 — 見補 DD 隊列</td></tr>')
+                     f'<td class="left muted" colspan="6">等衛星候選同時拿到進場裁決＋GRP 全過</td></tr>')
     sat_tbl = head + sat_body + "</tbody></table>"
+
+    def bench_line(rows):
+        parts = []
+        for r in rows[:10]:
+            g = r["grp"]
+            tag = "" if g["pass"] else f'（{("；".join(g["why"][:1])) or "GRP 未過"}）'
+            parts.append(f'{r["ticker"]}{tag}')
+        return escape("、".join(parts) or "—")
     duel_tbl = ('<table><thead><tr><th class="left">席位（分數）</th><th class="left">形狀</th>'
                 '<th class="left">同形狀最強挑戰者</th><th>裁定</th></tr></thead><tbody>'
                 + "".join(duel_tr(d) for d in duels) + "</tbody></table>")
@@ -200,7 +227,10 @@ def main() -> int:
 <h1>⚔ 席位擂台 · L3 組合層</h1>
 <div class="hero-sub">組合才是產品：核心 {CORE_SLOTS} 席＋衛星 {SAT_SLOTS} 席，每席對決「同形狀最強挑戰者」。
 ⚔ 警報＝挑戰者分數超過席位 → 進<b>每月擂台的人工複審清單</b>。引擎不自動換席——換人是人的裁決。
-分數＝EV5y×確定性；2Y upside 併列給 1–3 年 mandate 參照。</div>
+席位資格（GRP v1，2026-07-04 持有人拍板）＝DD 裁決進場 ∩ <b>三閘全過</b>：
+<b>G 高成長</b>（FY1→FY3 EPS CAGR ≥15%）× <b>R 上修</b>（FY+1 月修 ≥+2% 或 2Y ≥+1pp；下修否決）×
+<b>P 位置適合</b>（站上 52 週線且未過熱）。排序＝R 上修幅度——<b>不再依賴 5Y EV/IRR</b>
+（降級為 DD 內部資訊）。GRP 未過的進場票落板凳、寧缺勿濫。</div>
 <div class="asof">資料源 dd-screener latest.json ｜ 席位口徑與 Pipeline 頁一致 ｜ 週更</div>
 </div>
 <div class="stat-row">
@@ -219,8 +249,9 @@ def main() -> int:
 <div class="block-sub">每席 vs 同形狀最強未坐席挑戰者（裁決 ∈ {{進場, 觀望}}）。觀望挑戰者勝出＝先觸發它的複審，不是直接換。</div>
 {duel_tbl}</div>
 <div class="block"><h2>席位產業分布</h2><div class="block-sub">{conc_html}</div>{conc_warn}</div>
-<div class="note">板凳（核心第 6 席起）：{escape('、'.join(r['ticker'] for r in core_bench[:8]) or '—')}。
-挑戰者池 top：{escape('、'.join(r['ticker'] for r in payload['challengers_top'][:10]))}。</div>"""
+<div class="note">核心板凳（進場但未坐席）：{bench_line(core_bench)}。
+衛星板凳：{bench_line(sat_bench)}。
+挑戰者池 top（GRP 全過）：{escape('、'.join(r['ticker'] for r in payload['challengers_top'][:10]) or '—')}。</div>"""
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     ARENA_JSON.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
