@@ -2,18 +2,24 @@ name: Daily JP RS+VCP Screener
 
 on:
   schedule:
-    # Mon-Fri 08:00 UTC = 17:00 JST (TSE 15:00 close + 2hr buffer for yfinance sync)
-    # Same window as TW screener so the back-end only manages one cron slot.
+    # Mon-Fri 08:08 UTC = 17:08 JST (TSE 15:00 close + 2hr buffer for yfinance sync)
+    # Staggered 8 min after daily-screener-tw.yml (08:00 UTC) to avoid a same-minute
+    # cron collision + concurrent-push race (both push docs/screener/).
     # If JP market holiday, yfinance returns last trading day's data automatically.
-    - cron: "0 8 * * 1-5"
+    - cron: "8 8 * * 1-5"
   workflow_dispatch:  # Manual trigger
 
 permissions:
   contents: write
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
 jobs:
   run-jp-screener:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -40,12 +46,13 @@ jobs:
           git commit -m "data: JP screener update ${DATE}
 
           Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
-          for i in 1 2 3; do
+          for i in 1 2 3 4 5 6; do
             if git push; then
               exit 0
             fi
             echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
             git pull --rebase origin main || { echo "Rebase failed"; exit 1; }
+            sleep $((RANDOM % 20 + 5))
           done
-          echo "Push failed after 3 attempts"
+          echo "Push failed after 6 attempts"
           exit 1

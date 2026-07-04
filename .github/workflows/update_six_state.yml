@@ -4,12 +4,17 @@ on:
   schedule:
     # Every Friday 21:30 UTC (US market close 16:00 ET + 1.5h buffer)
     # = Saturday 05:30 Taiwan time
-    - cron: '30 21 * * 5'
+    - cron: '46 21 * * 5'
   workflow_dispatch:  # Manual trigger anytime
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
 
 jobs:
   update:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -29,12 +34,13 @@ jobs:
           git config user.name "GitHub Action"
           git add docs/backtest/six_state/status/index.html docs/six-state/state.json
           git diff --staged --quiet || git commit -m "Auto update six-state: $(date -u '+%Y-%m-%d')"
-          for i in 1 2 3; do
+          for i in 1 2 3 4 5 6; do
             if git push; then
               exit 0
             fi
             echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
             git pull --rebase origin main || { echo "Rebase failed"; exit 1; }
+            sleep $((RANDOM % 20 + 5))
           done
-          echo "Push failed after 3 attempts"
+          echo "Push failed after 6 attempts"
           exit 1

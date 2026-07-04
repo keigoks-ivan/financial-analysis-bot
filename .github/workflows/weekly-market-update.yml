@@ -2,15 +2,20 @@ name: Weekly Market Data Update
 
 on:
   schedule:
-    - cron: "0 0 * * 6"
+    - cron: "8 0 * * 6"
   workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
 jobs:
   update-markets:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -43,12 +48,13 @@ jobs:
           git add docs/markets.html docs/sectors.html docs/cache/risk_gauge.json docs/cache/risk_history.json
           DATE=$(date -u +"%Y-%m-%d")
           git commit -m "data: weekly market update ${DATE}"
-          for i in 1 2 3; do
+          for i in 1 2 3 4 5 6; do
             if git push; then
               exit 0
             fi
             echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
             git pull --rebase origin main || { echo "Rebase failed"; exit 1; }
+            sleep $((RANDOM % 20 + 5))
           done
-          echo "Push failed after 3 attempts"
+          echo "Push failed after 6 attempts"
           exit 1

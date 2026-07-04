@@ -12,6 +12,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
 jobs:
   freeze:
     runs-on: ubuntu-latest
@@ -46,13 +50,14 @@ jobs:
             git commit -m "data: pre-earnings snapshot freeze ${DATE}
 
             Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
-            for i in 1 2 3; do
+            for i in 1 2 3 4 5 6; do
               if git push; then
                 exit 0
               fi
               echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
               git pull --rebase origin main || { echo "Rebase failed"; exit 1; }
+              sleep $((RANDOM % 20 + 5))
             done
-            echo "Push failed after 3 attempts"
+            echo "Push failed after 6 attempts"
             exit 1
           fi

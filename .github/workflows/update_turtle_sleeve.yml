@@ -6,7 +6,7 @@ on:
     # = next-day 05:30 Taiwan time. The CMDTY2 turtle sleeve is a DAILY
     # timeframe system (55/20 breakout on GLD/USO), so it must be checked
     # every trading day — unlike the weekly STX50 page.
-    - cron: '30 21 * * 1-5'
+    - cron: '38 21 * * 1-5'
   workflow_dispatch:  # Manual trigger anytime
     inputs:
       test_email:
@@ -14,9 +14,14 @@ on:
         type: boolean
         default: false
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
 jobs:
   update:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -69,12 +74,13 @@ jobs:
           git config user.name "GitHub Action"
           git add docs/turtle-sleeve/index.html docs/turtle-sleeve/state.json
           git diff --staged --quiet || git commit -m "Auto update commodity sleeve: $(date -u '+%Y-%m-%d')"
-          for i in 1 2 3; do
+          for i in 1 2 3 4 5 6; do
             if git push; then
               exit 0
             fi
             echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
             git pull --rebase origin main || { echo "Rebase failed"; exit 1; }
+            sleep $((RANDOM % 20 + 5))
           done
-          echo "Push failed after 3 attempts"
+          echo "Push failed after 6 attempts"
           exit 1

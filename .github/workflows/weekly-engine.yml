@@ -18,6 +18,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
 jobs:
   engine:
     runs-on: ubuntu-latest
@@ -35,34 +39,59 @@ jobs:
         run: pip install "yfinance>=0.2.54" pandas numpy lxml
 
       - name: Universe (S&P 1500 constituents)
+        id: build_universe
         run: python scripts/engine/build_universe.py
         continue-on-error: true
 
       - name: Radar (L0 structure scan + L1 shape routing + stage2 revisions)
+        id: build_radar
         run: python scripts/engine/build_radar.py
         continue-on-error: true
 
       - name: Scoreboard (L4 shape settlement)
+        id: build_scoreboard
         run: python scripts/engine/build_scoreboard.py
         continue-on-error: true
 
       # arena ↔ cards 互相消費對方的 JSON（席位徽章 vs 卡狀態欄）：
       # arena 先跑定席位 → cards 拿到新席位徽章 → arena 再跑拿到新卡狀態（皆純本地、秒級）
       - name: Arena pass 1 (seat determination)
+        id: build_arena1
         run: python scripts/engine/build_arena.py
         continue-on-error: true
 
       - name: Cards (L2 claim settlement + seat badges)
+        id: build_cards
         run: python scripts/engine/build_cards.py
         continue-on-error: true
 
       - name: Arena pass 2 (fresh card status column)
+        id: build_arena2
         run: python scripts/engine/build_arena.py
         continue-on-error: true
 
       - name: Overview page (live numbers)
+        id: build_index
         run: python scripts/engine/build_index.py
         continue-on-error: true
+
+      # Fail-safe aggregation: partial builder failure stays GREEN by design (each
+      # build only writes on success, so a failed builder just keeps last week's file).
+      # But if EVERY builder failed, the run produced nothing new and must go RED
+      # instead of falsely green.
+      - name: Fail if ALL engine builders failed
+        if: always()
+        run: |
+          outcomes="${{ steps.build_universe.outcome }} ${{ steps.build_radar.outcome }} ${{ steps.build_scoreboard.outcome }} ${{ steps.build_arena1.outcome }} ${{ steps.build_cards.outcome }} ${{ steps.build_arena2.outcome }} ${{ steps.build_index.outcome }}"
+          echo "Builder outcomes: ${outcomes}"
+          for o in ${outcomes}; do
+            if [ "${o}" = "success" ]; then
+              echo "At least one builder succeeded — engine run is healthy."
+              exit 0
+            fi
+          done
+          echo "::error::All 7 engine builders failed — nothing was rebuilt; failing the run."
+          exit 1
 
       - name: Commit and push if changed
         run: |
@@ -77,13 +106,14 @@ jobs:
             git commit -m "data: Weekly decision engine refresh ${DATE}
 
             Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
-            for i in 1 2 3; do
+            for i in 1 2 3 4 5 6; do
               if git push; then
                 exit 0
               fi
               echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
               git pull --rebase origin main || { echo "Rebase failed"; exit 1; }
+              sleep $((RANDOM % 20 + 5))
             done
-            echo "Push failed after 3 attempts"
+            echo "Push failed after 6 attempts"
             exit 1
           fi
