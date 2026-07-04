@@ -29,4 +29,12 @@ jobs:
           git config user.name "GitHub Action"
           git add docs/backtest/six_state/status/index.html docs/six-state/state.json
           git diff --staged --quiet || git commit -m "Auto update six-state: $(date -u '+%Y-%m-%d')"
-          git push
+          for i in 1 2 3; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+            git pull --rebase origin main || { echo "Rebase failed"; exit 1; }
+          done
+          echo "Push failed after 3 attempts"
+          exit 1

@@ -69,4 +69,12 @@ jobs:
           git config user.name "GitHub Action"
           git add docs/turtle-sleeve/index.html docs/turtle-sleeve/state.json
           git diff --staged --quiet || git commit -m "Auto update commodity sleeve: $(date -u '+%Y-%m-%d')"
-          git push
+          for i in 1 2 3; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+            git pull --rebase origin main || { echo "Rebase failed"; exit 1; }
+          done
+          echo "Push failed after 3 attempts"
+          exit 1
