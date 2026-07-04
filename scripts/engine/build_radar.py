@@ -167,13 +167,21 @@ def stage2_revisions(cands: list[str], prev: dict[str, dict]) -> dict[str, dict]
     return out
 
 
-def load_pool() -> set[str]:
+def load_pool() -> tuple[set[str], dict[str, str]]:
+    """回傳 (池內 ticker 集合, ticker → 軌別標籤)。軌別＝moat 路由（S/A 非↓＝核心向）。"""
     pool: set[str] = {p.stem for p in WEEKLY_CACHE.glob("*.json")}
+    routes: dict[str, str] = {}
     try:
-        pool |= {s["ticker"] for s in json.loads(DD_LATEST.read_text(encoding="utf-8")).get("stocks", [])}
+        for s in json.loads(DD_LATEST.read_text(encoding="utf-8")).get("stocks", []):
+            pool.add(s["ticker"])
+            g, tr = s.get("moat_grade"), s.get("moat_trend")
+            if g in ("S", "A") and tr != "↓":
+                routes[s["ticker"]] = "core"
+            elif g:
+                routes[s["ticker"]] = "satellite"
     except (OSError, json.JSONDecodeError):
         pass
-    return pool
+    return pool, routes
 
 
 P_LABEL_TXT = {"breakout": "🟢 突破帶", "pullback": "🟢 回踩帶", "in_trend": "🟡 趨勢內"}
@@ -183,6 +191,9 @@ def render_grp_board(payload: dict) -> str:
     board = payload.get("grp_board") or []
     if not board:
         return ""
+    ROUTE_TXT = {"core": '<span class="tag tag-up">核心向</span>',
+                 "satellite": '<span class="tag tag-pool">衛星向</span>',
+                 None: '<span class="tag tag-blind">待 DD</span>'}
     trs = []
     for r in board[:30]:
         pool = ('<span class="tag tag-pool">池內</span>' if r.get("in_pool")
@@ -193,14 +204,15 @@ def render_grp_board(payload: dict) -> str:
                    f'<td>{pct(r.get("g_fy1_pct"), 0, False)}</td>'
                    f'<td><strong>{pct(r.get("fy1_rev_30d_pct"))}</strong></td>'
                    f'<td class="left">{P_LABEL_TXT.get(r.get("p_label"), "—")}（距高 {r["dist_ath"]:+.0f}%）</td>'
-                   f'<td>{pct(r["ret_12m"], 0)}</td><td>{pool}</td></tr>')
+                   f'<td>{pct(r["ret_12m"], 0)}</td>'
+                   f'<td>{ROUTE_TXT.get(r.get("route"))}</td><td>{pool}</td></tr>')
     return f"""<div class="shape-card" style="border-left-color:#b45309">
 <h3>⭐ GRP 主榜 <span class="cnt">{len(board)} 檔全過三閘（顯示 top 30，按上修幅度）</span></h3>
 <div class="shape-desc"><b>持有人選股準則（2026-07-04 拍板）：高成長 × EPS 上修 × 位置適合</b>——
 G＝FY+1 隱含 EPS 成長 ≥15% ｜ R＝FY+1 EPS 30 天修正 &gt;0（下修否決）｜ P＝站上 40 週線＋位置標籤。
 排序＝上修幅度。這是研究優先序，進場仍走 DD 裁決＋板機。</div>
 <table><thead><tr><th class="left">Ticker</th><th class="left">產業</th><th>層</th>
-<th>G 成長</th><th>R 30d修正</th><th class="left">P 位置</th><th>12M</th><th>DD池</th></tr></thead>
+<th>G 成長</th><th>R 30d修正</th><th class="left">P 位置</th><th>12M</th><th>軌別</th><th>DD池</th></tr></thead>
 <tbody>{''.join(trs)}</tbody></table>
 </div>"""
 
@@ -310,7 +322,7 @@ def main() -> int:
             grp_board.append({**r, **s2, "p_label": p_label(r)})
     grp_board.sort(key=lambda r: -(r["fy1_rev_30d_pct"] or 0))
 
-    pool = load_pool()
+    pool, routes = load_pool()
     shape_counts = {k: len(v) for k, v in shapes.items()}   # 截斷前的真實命中數
     for k in shapes:
         for r in shapes[k]:
@@ -320,6 +332,7 @@ def main() -> int:
 
     for r in grp_board:
         r["in_pool"] = r["ticker"] in pool
+        r["route"] = routes.get(r["ticker"])   # core/satellite/None（待 DD）
     blind_total = len({r["ticker"] for lst in shapes.values() for r in lst if not r["in_pool"]})
     payload = {
         "schema_version": "1.1",

@@ -46,11 +46,17 @@ jobs:
         run: python scripts/engine/build_scoreboard.py
         continue-on-error: true
 
-      - name: Cards (L2 claim settlement)
+      # arena ↔ cards 互相消費對方的 JSON（席位徽章 vs 卡狀態欄）：
+      # arena 先跑定席位 → cards 拿到新席位徽章 → arena 再跑拿到新卡狀態（皆純本地、秒級）
+      - name: Arena pass 1 (seat determination)
+        run: python scripts/engine/build_arena.py
+        continue-on-error: true
+
+      - name: Cards (L2 claim settlement + seat badges)
         run: python scripts/engine/build_cards.py
         continue-on-error: true
 
-      - name: Arena (L3 seats vs challengers + regime dial)
+      - name: Arena pass 2 (fresh card status column)
         run: python scripts/engine/build_arena.py
         continue-on-error: true
 

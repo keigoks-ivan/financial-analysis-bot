@@ -103,8 +103,11 @@ def render_card(c: dict) -> str:
         alert = f'<span class="tag tag-dn">❌ {n_breach} 條觸發</span>'
     elif n_due:
         alert = f'<span class="tag tag-blind">⏰ {n_due} 條到期</span>'
+    seat_badge = {"core": '<span class="tag tag-up">🎯 核心席</span>',
+                  "sat": '<span class="tag tag-pool">🛰 衛星席</span>'}.get(
+        c.get("_seat"), '<span class="tag tag-blind">板凳</span>')
     return f"""<div class="block" id="{escape(c["ticker"])}">
-<h2>{escape(c["ticker"])}　<span style="font-size:13px;font-weight:600;color:#64748b">{escape(c.get("verdict") or "")}
+<h2>{escape(c["ticker"])}　{seat_badge}　<span style="font-size:13px;font-weight:600;color:#64748b">{escape(c.get("verdict") or "")}
 · {escape(c.get("role") or "")}</span>　{alert}</h2>
 <div class="block-sub">DD {escape(c.get("dd_date") or "")}（<a href="{escape(c.get("source_dd") or "#")}#decision">原報告</a>）
 · 裁決價 ${c.get("price_at_dd")} · 至今 {pct(ret) if ret is not None else "—"}
@@ -126,6 +129,19 @@ def main() -> int:
     if not cards:
         print("⚠ 無卡片（docs/engine/cards/data/ 空）— 不寫頁面")
         return 0
+    # 席位分區（讀 arena.json；無檔則不分區）
+    seated: dict[str, str] = {}
+    try:
+        a = json.loads((OUT_DIR / "arena.json").read_text(encoding="utf-8"))
+        for r in a.get("core_seats", []):
+            seated[r["ticker"]] = "core"
+        for r in a.get("sat_seats", []):
+            seated[r["ticker"]] = "sat"
+    except (OSError, json.JSONDecodeError):
+        pass
+    for c in cards:
+        c["_seat"] = seated.get(c["ticker"])
+    cards.sort(key=lambda c: ({"core": 0, "sat": 1}.get(c["_seat"], 2), c["ticker"]))
     n_claims = sum(len(c["claims"]) for c in cards)
     n_breach = sum(1 for c in cards for cl in c["claims"] if cl["settle"] == "breach")
     n_due = sum(1 for c in cards for cl in c["claims"] if cl["settle"] == "due")
