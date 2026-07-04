@@ -161,6 +161,8 @@ DD_SCREENER_SUBNAV = [
 ENGINE_SUBNAV = [
     ("/engine/", "總覽 · 方法論"),
     ("/engine/radar.html", "📡 全市場雷達"),
+    ("/engine/cards.html", "🗂 決策卡"),
+    ("/engine/arena.html", "⚔ 席位擂台"),
     ("/engine/scoreboard.html", "🧾 形狀記分板"),
 ]
 

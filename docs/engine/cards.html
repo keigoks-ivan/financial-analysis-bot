@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>決策卡 · 決策引擎 | InvestMQuest Research</title>
+<meta name="description" content="一頁決策卡 — 可證偽宣稱與自動結算">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif;
+     background:#f7f8fa;color:#1a2332;font-size:14px;line-height:1.65}
+.wrap{max-width:1080px;margin:0 auto;padding:24px 20px 60px}
+.hero h1{font-size:24px;font-weight:800;color:#0f2a45;margin:14px 0 6px}
+.hero-sub{color:#475569;font-size:13.5px;max-width:860px}
+.asof{font-size:12px;color:#94a3b8;margin-top:6px}
+.block{background:#fff;border:1px solid #e2e8f0;border-radius:12px;
+       padding:18px 20px;margin-top:18px}
+.block h2{font-size:17px;font-weight:750;color:#0f2a45;margin-bottom:6px}
+.block-sub{color:#64748b;font-size:12.5px;margin-bottom:10px}
+.stat-row{display:flex;gap:12px;flex-wrap:wrap;margin:10px 0}
+.stat{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;
+      padding:10px 14px;min-width:110px}
+.stat strong{display:block;font-size:20px;color:#0f2a45}
+.stat span{font-size:11.5px;color:#64748b}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+th{font-size:11.5px;color:#64748b;text-align:right;padding:6px 8px;
+   border-bottom:2px solid #e2e8f0;white-space:nowrap}
+td{padding:6px 8px;text-align:right;border-bottom:1px solid #f1f5f9;white-space:nowrap}
+th.left,td.left{text-align:left}
+td a{color:#1d4ed8;text-decoration:none;font-weight:650}
+td a:hover{text-decoration:underline}
+.pos{color:#166534;font-weight:650}.neg{color:#b91c1c;font-weight:650}
+.muted{color:#94a3b8}
+.tag{display:inline-block;font-size:11px;font-weight:700;border-radius:5px;padding:1px 7px}
+.tag-pool{background:#dcfce7;color:#166534}
+.tag-blind{background:#fef3c7;color:#92400e}
+.tag-up{background:#dcfce7;color:#166534}
+.tag-dn{background:#fee2e2;color:#991b1b}
+.shape-card{border-left:4px solid #2563eb;margin-top:14px;background:#fbfdff;
+            border-top:1px solid #dce8f5;border-right:1px solid #dce8f5;
+            border-bottom:1px solid #dce8f5;border-radius:10px;padding:14px 16px}
+.shape-card h3{font-size:15px;font-weight:700;color:#0f2a45;margin-bottom:4px}
+.shape-card h3 .cnt{font-size:11px;font-weight:600;color:#94a3b8;margin-left:6px}
+.shape-desc{font-size:12px;color:#64748b;margin-bottom:6px}
+.s-breakout{border-left-color:#166534}
+.s-cyclical{border-left-color:#c2410c}
+.s-momentum{border-left-color:#7c3aed}
+.s-theme{border-left-color:#0e7490}
+.empty{color:#94a3b8;padding:14px 0;text-align:center}
+.note{font-size:12px;color:#64748b;background:#f8fafc;border:1px solid #e2e8f0;
+      border-radius:8px;padding:10px 12px;margin-top:10px}
+.warn{background:#fffbeb;border-color:#fde68a;color:#92400e}
+.layers{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-top:12px}
+.layer{background:#fbfdff;border:1px solid #dce8f5;border-radius:10px;padding:12px 14px}
+.layer .lno{font-size:11px;font-weight:800;color:#2563eb}
+.layer h3{font-size:14.5px;font-weight:750;color:#0f2a45;margin:2px 0 4px}
+.layer p{font-size:12px;color:#64748b}
+.layer .status{display:inline-block;margin-top:6px;font-size:11px;font-weight:700;
+               border-radius:5px;padding:1px 7px}
+.st-live{background:#dcfce7;color:#166534}
+.st-soon{background:#f1f5f9;color:#64748b}
+footer{margin-top:26px;font-size:12px;color:#94a3b8;text-align:center}
+@media(max-width:760px){.wrap{padding:16px 10px 40px}.block{padding:14px 12px}
+  table{display:block;overflow-x:auto}}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#0f172a;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(59,130,246,.28);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/">個股 DD</a>
+          <a href="/research/synthesis/">期望落差綜合研判</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/">週報</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/long-track-smh/">長線訊號</a>
+          <a href="/long-track-tw/">台股長線</a>
+          <a href="/turtle-sleeve/">商品 Sleeve</a>
+        </div>
+      </div>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/">量化回測</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/engine/" class="active">⚙ 決策引擎</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/screener-tw.html">Screener 台股</a>
+          <a href="/screener-jp.html">Screener 日股</a>
+          <a href="/screener-my.html">Screener 馬股</a>
+          <a href="/cache/">🗄 Data Cache</a>
+          <a href="/tools/">期貨部位計算機</a>
+        </div>
+      </div>
+      <a href="/mental-models/">🧠 心智模型</a>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<div class="imq-subnav"><div class="imq-subnav-inner"><a href="/engine/">總覽 · 方法論</a><a href="/engine/radar.html">📡 全市場雷達</a><a href="/engine/cards.html" class="active">🗂 決策卡</a><a href="/engine/arena.html">⚔ 席位擂台</a><a href="/engine/scoreboard.html">🧾 形狀記分板</a></div></div>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+<div class="wrap">
+<div class="hero">
+<h1>🗂 決策卡 · L2 判斷層</h1>
+<div class="hero-sub">一席一卡：thesis ≤5 句＋3–5 條<b>帶數字帶期限的可證偽宣稱</b>＋pre-mortem＋機率區間。
+卡片內容全部抽自對應 DD 的 §13/§14（只抽已寫的，不發明）；DD 複審後重抽。
+價格類宣稱每週自動結算，基本面類到期亮 ⏰ 等人工回填——<b>宣稱沒有到期日就不是宣稱</b>。</div>
+<div class="asof">5 張卡 ｜ 23 條宣稱（❌ 觸發 0 · ⏰ 到期 0）｜ 週更結算</div>
+</div>
+<div class="block">
+<h2>AVGO　<span style="font-size:13px;font-weight:600;color:#64748b">進場
+· 核心持倉</span>　</h2>
+<div class="block-sub">DD 2026-06-23（<a href="/dd/DD_AVGO_20260623.html#decision">原報告</a>）
+· 裁決價 $391.51 · 至今 <span class="neg">-7.9%</span>
+· 5Y EV <span class="pos">75%</span>
+／IRR 15.0%
+／Max DD -52.0%
+· 2Y upside <span class="pos">+33%</span></div>
+<ul style="margin:6px 0 10px 18px;font-size:13px"><li>Broadcom 為 AI 客製 ASIC（XPU）設計龍頭，份額約 60-70%，並以網路晶片（Tomahawk/Jericho）與 VMware 軟體共構三引擎護城河。</li><li>signal A／moat A（moat_trend →，因 Google 多供應商稀釋而非 ↑）／估值 🟡（FY27 PE 21.8x、PEG ~0.55）／MA ✅ → 決策矩陣命中 row 9/10，無 Hard/Soft Veto，裁決進場。</li><li>近 4 週 −12% 回檔為 Q2 財報後修正、非過熱，反而提供較佳加碼點。</li><li>Base IRR 15%/yr 主要由 EPS 複利＋股息回購驅動（三分量：EPS +13%／re-rate −1%／股東回報 +3%），非估值擴張型。</li><li>最關鍵監測指標為 custom ASIC 份額與 AI 營收 guidance；若份額流失 &gt;10pp 或大客戶轉自研，將觸發減碼／出場。</li></ul>
+<table><thead><tr><th class="left">可證偽宣稱</th><th>門檻</th><th>期限</th>
+<th class="left">觸發動作</th><th>狀態</th></tr></thead><tbody><tr><td class="left">custom ASIC（XPU）份額由現況 ~60-70% 顯著流失，觸及§3.C R1 監測門檻</td><td>custom_asic_share_loss_pp &gt;= 10</td><td>2026-09-30</td><td class="left">減碼</td><td><span class="tag tag-pool">監測中</span></td></tr><tr><td class="left">AI 半導體營收 guidance 連續兩季轉平（環比成長趨近於零），顯示 AI capex 急轉</td><td>ai_rev_guidance_qoq_growth_pct &lt;= 0</td><td>2026-09-30</td><td class="left">減碼</td><td><span class="tag tag-pool">監測中</span></td></tr><tr><td class="left">EU CISPE 訴訟（T-503/25）判決或 VMware 反壟斷程序強制軟體授權變更，壓縮 VMware 現金流 cushion</td><td>eu_cispe_ruling_forced_license_change &gt;= 1</td><td>2026-12-20（推定）</td><td class="left">複審</td><td><span class="tag tag-pool">監測中</span></td></tr><tr><td class="left">主力大客戶（Google 或 Meta）將其主力 AI 加速器 XPU 完全轉自研或轉他廠（Single Thing，§3.F）</td><td>primary_customer_xpu_switch_away &gt;= 1</td><td>2026-12-20（推定）</td><td class="left">出場</td><td><span class="tag tag-pool">監測中</span></td></tr></tbody></table>
+<div style="margin-top:8px;font-size:12.5px;color:#64748b"><b>Pre-mortem</b>
+<ul style="margin:2px 0 6px 18px"><li><b>2027 AI capex 增速見頂，Google/Meta 加速自研並把更多 XPU 量轉 MediaTek/Marvell</b>：Broadcom custom ASIC 份額由 ~65% 跌破 50%；同時 EU 強制 VMware 授權變更壓軟體 margin（AI rev 成長由 +40% 驟降至 +10%，市場把 forward PE 由 22x 壓縮到 12x，股價由 $391 跌至 ~$200（對應 Max DD −45%~−52%））</li><li><b>AI capex 急轉、雲端 ROI 不如預期</b>：四大雲端資本支出 push-out，XPU 出貨延後（AI rev guidance 連續轉平，成長引擎失速，估值承受雙殺）</li><li><b>VMware 軟體監管衝擊</b>：EU 強制授權變更或大客戶因漲價流失（軟體現金流 cushion 減弱，AVGO 相對純 AI fabless 的下行保護優勢削弱）</li></ul>
+<b>進場節奏</b>　現價 ~$391 分批（2-3 次）加碼至目標倉位，更深回檔至 ~$320（FY27 PE 18x）再加碼；續抱核心持倉，回檔為 friend、非追高。</div>
+</div><div class="block">
+<h2>GOOGL　<span style="font-size:13px;font-weight:600;color:#64748b">進場
+· 核心持倉</span>　</h2>
+<div class="block-sub">DD 2026-06-23（<a href="/dd/DD_GOOGL_20260623.html#decision">原報告</a>）
+· 裁決價 $349.68 · 至今 <span class="pos">+2.9%</span>
+· 5Y EV <span class="pos">45%</span>
+／IRR 7.3%
+／Max DD -48.0%
+· 2Y upside <span class="pos">+24%</span></div>
+<ul style="margin:6px 0 10px 18px;font-size:13px"><li>統一裁決進場、倉位角色核心持倉：S級護城河（信號A、品質9.5、估值🟡約Fwd PE 24x、MA✅未過熱）疊加自高點回檔14%、低於共識目標$432約24%，形成進場級風報比。</li><li>但因AdX反壟斷分拆裁決將至、FY27 capex尚未明朗，採分批進場並保留加碼彈藥而非全倉。</li><li>護城河趨勢S→（持平）：execution面因Gemini份額提升、Cloud +63%成長而轉強上升，但pricing power面因搜尋廣告AI轉型零點擊化與反壟斷侵蝕分銷獨家權而轉弱，兩力相抵。</li><li>Y5後跑道🟢寬，Cloud、Gemini平台、Waymo多條第二曲線仍處早中期擴張階段。</li><li>5Y機率加權EV +45%、Base IRR約7.3%/yr，報酬主要靠EPS複利而非估值擴張，惟FCF低谷期間可抱性須靠信念支撐。</li></ul>
+<table><thead><tr><th class="left">可證偽宣稱</th><th>門檻</th><th>期限</th>
+<th class="left">觸發動作</th><th>狀態</th></tr></thead><tbody><tr><td class="left">搜尋廣告營收YoY成長連2季降至10%以下，視為H1核心假設（搜尋挺過AI轉型）削弱訊號。</td><td>搜尋廣告營收YoY成長率 &lt; 10</td><td>2026-10-31（推定）</td><td class="left">複審</td><td><span class="tag tag-pool">監測中</span></td></tr><tr><td class="left">Google Cloud成長率連2季降至30%以下且營業利益率不再擴張，視為H2第二引擎假設削弱訊號。</td><td>Google Cloud營收YoY成長率 &lt; 30</td><td>2026-10-31（推定）</td><td class="left">複審</td><td><span class="tag tag-pool">監測中</span></td></tr><tr><td class="left">FY27資本支出guide超過$240B且FCF無復原路徑，觸發減碼至1/2。</td><td>FY27資本支出guide &gt; 240</td><td>2027-02-28（推定）</td><td class="left">減碼</td><td><span class="tag tag-pool">監測中</span></td></tr><tr><td class="left">Fwd PE超過30x（估值由24x顯著擴張至過熱區間），觸發減碼至1/2。</td><td>Fwd PE（FY+2共識） &gt; 30</td><td>2026-12-20（推定）</td><td class="left">減碼</td><td><span class="tag tag-pool">監測中</span></td></tr><tr><td class="left">搜尋廣告營收YoY轉負（結構性轉負，非單季波動），為§3.F Single Thing之一，觸發清倉/大幅減碼。</td><td>搜尋廣告營收YoY成長率 &lt; 0</td><td>2026-07-31</td><td class="left">出場</td><td><span class="tag tag-pool">監測中</span></td></tr></tbody></table>
+<div style="margin-top:8px;font-size:12.5px;color:#64748b"><b>Pre-mortem</b>
+<ul style="margin:2px 0 6px 18px"><li><b>AdX反壟斷裁決強制分拆＋FY27 capex加碼＋搜尋貨幣化轉弱三擊</b>：Brinkema法官判決AdX強制分拆（逾期隨時可落）；同時FY27 capex確認約$245B、FCF趨零，Alphabet可能二次募資（Fwd PE由24x壓至16x＋EPS下修約10%，股價自$350回落至約$200，帳面約−43%（§13b失敗故事倒推））</li><li><b>重資本ROI落空</b>：資本支出自FY26的$180-190B加碼至FY27約$240-250B，若Cloud/AI貨幣化不如預期（折舊吃掉營業利益、FCF多年趨零、ROIC由約32%結構下滑，市場由「複利機器」重估為「重資本公用事業」（§2 Munger Inversion））</li><li><b>搜尋廣告商業模式被自家AI替代</b>：AI Overviews／AI Mode把搜尋結果頁「零點擊化」，每查詢營收結構性下滑快於查詢量增長（約$210B現金牛熄火，搜尋廣告YoY成長降至個位數（§2序章／§13a不確定假設））</li></ul>
+<b>進場節奏</b>　現價$349可分批建立核心倉位（Fwd PE 24x、低於街價24%、MA✅未過熱），保留2-3%彈藥待AdX裁決明朗或FY27 capex清晰；回檔至$300-320為加碼甜蜜點（IRR約10%）。</div>
+</div><div class="block">
+<h2>LLY　<span style="font-size:13px;font-weight:600;color:#64748b">進場
+· 核心持倉</span>　</h2>
+<div class="block-sub">DD 2026-06-23（<a href="/dd/DD_LLY_20260623.html#decision">原報告</a>）
+· 裁決價 $1106.31 · 至今 <span class="pos">+9.7%</span>
+· 5Y EV <span class="pos">51%</span>
+／IRR 8.0%
+／Max DD -45.0%
+· 2Y upside <span class="pos">+20%</span></div>
+<ul style="margin:6px 0 10px 18px;font-size:13px"><li>GLP-1時代領導者——最佳療效、口服首發（orforglipron）與次世代pipeline（retatrutide）兼具，且相對自身歷史與共識PT難得不貴（FY+2 24.9x、PEG 0.87）。</li><li>護城河S級趨勢向上：tirzepatide美國份額由47%升至54.8%，屬份額奪取者而非流失者；MFN/Medicare定價壓單價但量目前完全對沖（Q1營收+56%、營業利益率45.6%）。</li><li>5年機率加權EV +51%、Base IRR約8%/yr，報酬主要靠EPS複利（+13%/yr）而非估值重估（僅−5%/yr輕微逆風）。</li><li>Max DD估計−32%至−45%（🟡路徑風險而非🔴），因beta 0.52防禦性＋起點便宜提供下檔緩衝；thesis完整（moat↑、runway🟢、非估值依賴型）→ 不因波動砍倉。</li><li>統一裁決：進場，倉位角色為核心持倉；因critic提醒MFN淨價深度與CagriSema 2027拐點風險，sizing採謹慎、分批建倉並留彈藥。</li></ul>
+<table><thead><tr><th class="left">可證偽宣稱</th><th>門檻</th><th>期限</th>
+<th class="left">觸發動作</th><th>狀態</th></tr></thead><tbody><tr><td class="left">tirzepatide美國肥胖/糖尿病份額連續2季下滑（被CagriSema奪回）</td><td>tirzepatide美國份額(%) &lt; 54.8</td><td>2026-12-20（推定）</td><td class="left">減碼</td><td><span class="tag tag-pool">監測中</span></td></tr><tr><td class="left">季度realized price（淨價）YoY跌幅擴大且量未補（連2季）</td><td>realized price YoY變動(%) &lt; -13</td><td>2026-08-06</td><td class="left">減碼</td><td><span class="tag tag-pool">監測中</span></td></tr><tr><td class="left">FY+2 EPS共識60天下修幅度超過7%</td><td>FY+2 EPS共識60日修正(%) &gt; 7</td><td>2026-12-20（推定）</td><td class="left">複審</td><td><span class="tag tag-pool">監測中</span></td></tr><tr><td class="left">Forward PE(FY+2)突破35x（過熱訊號）</td><td>Forward PE (FY+2) &gt; 35</td><td>2026-12-20（推定）</td><td class="left">減碼</td><td><span class="tag tag-pool">監測中</span></td></tr><tr><td class="left">股價跌破空頭情境目標價$756（對應−32%，multiple從25x壓回17x）</td><td>股價(USD) &lt;= 756</td><td>2027-12-23</td><td class="left">出場</td><td><span class="tag tag-pool">監測中</span></td></tr></tbody></table>
+<div style="margin-top:8px;font-size:12.5px;color:#64748b"><b>Pre-mortem</b>
+<ul style="margin:2px 0 6px 18px"><li><b>MFN/Medicare淨價下行加速，量未能完全對沖</b>：季度realized price YoY跌幅擴大且量未補（連2季）（利潤池成長停滯，EPS CAGR由28%降至20%，估值de-rate）</li><li><b>CagriSema於2027上市後奪回tirzepatide份額</b>：tirzepatide美國份額連2季下滑（CagriSema以23%減重+Novo既有Wegovy用戶轉換奪回份額）（H1核心假設減弱，成長與估值溢價打折）</li><li><b>retatrutide安全性瑕疵或GLP-1長期依從率崩壞</b>：Phase 3出現CV或精瘦組織流失訊號，或依從率（52% 1yr／85% 2yr停藥）進一步惡化（H2 pipeline溢價打折＋TAM滲透天花板下修）</li></ul>
+<b>進場節奏</b>　首階約1/3現在建，其餘待CagriSema份額影響明朗或retatrutide數據轉明朗後加碼；回檔至$950-1050（FY+2約21-24x）為加碼甜蜜點。</div>
+</div><div class="block">
+<h2>MA　<span style="font-size:13px;font-weight:600;color:#64748b">進場
+· 核心持倉</span>　</h2>
+<div class="block-sub">DD 2026-07-03（<a href="/dd/DD_MA_20260703.html#decision">原報告</a>）
+· 裁決價 $539.39 · 至今 <span class="">0.0%</span>
+· 5Y EV <span class="pos">75%</span>
+／IRR 13.0%
+／Max DD -45.0%
+· 2Y upside <span class="pos">+37%</span></div>
+<ul style="margin:6px 0 10px 18px;font-size:13px"><li>支付雙寡頭中「更敏捷的那一家」：A級世紀護城河（220B+筆/年受理規模、二維execution 9 + pricing power 9.5）＋三成長引擎兌現中（跨境+13%cc／VAS+18%cc／Mastercard Move B2B+32%）。</li><li>估值壓到5年低位（Fwd PE 23.7x vs 5Y區間24-40x），13% IRR且非估值依賴型（re-rate貢獻近零，報酬全靠EPS複利）。</li><li>護城河趨勢A↑widening：VAS占Rev 35%領先Visa、Brighterion AI深化；唯一長尾風險為穩定幣／A2A繞道（5-10年慢變數，MA正主動卡位）。</li><li>Y5後跑道🟢寬：Mastercard Move／商業B2B支付（$150T+流量、&lt;3%碼化）為第二曲線，sourced自MA Investor Day 2025。</li><li>Max DD −45%（路徑風險🟡）：thesis完整（moat↑／runway🟢／非估值依賴）故不因波動砍倉，僅需深回撤心理準備。</li></ul>
+<table><thead><tr><th class="left">可證偽宣稱</th><th>門檻</th><th>期限</th>
+<th class="left">觸發動作</th><th>狀態</th></tr></thead><tbody><tr><td class="left">跨境體積YoY（cc）連續季度成長率跌破8%門檻，全球旅遊／跨境電商假設削弱</td><td>跨境體積YoY(cc) &lt; 8.0</td><td>2026-07-31</td><td class="left">複審</td><td><span class="tag tag-pool">監測中</span></td></tr><tr><td class="left">VAS &amp; Solutions淨收入YoY（cc）連4季跌破15%或占Rev比停止上升，護城河升級引擎失速</td><td>VAS &amp; Solutions淨收入YoY(cc) &lt; 15.0</td><td>2027-01-31（推定）</td><td class="left">複審</td><td><span class="tag tag-pool">監測中</span></td></tr><tr><td class="left">Forward P/E再修復至32x以上（明顯偏貴）或跨境連2季&lt;+8%，觸發trim回目標倉</td><td>Forward P/E (FY+2 consensus) &gt;= 32.0</td><td>2027-07-03（推定）</td><td class="left">減碼</td><td><span class="tag tag-pool">監測中</span></td></tr><tr><td class="left">穩定幣／A2A結算量占MA處理量達5%以上或net take rate連4季下滑，繞道論由選擇權變成現實</td><td>穩定幣/A2A結算量占MA處理量 &gt;= 5.0</td><td>2031-07-03（推定）</td><td class="left">出場</td><td><span class="tag tag-pool">監測中</span></td></tr><tr><td class="left">一線商戶／發卡行≥20%量繞卡上線（Single Thing）或Capital One把≥20% credit卡量遷至Discover網路，thesis級清倉觸發</td><td>商戶/發卡行繞卡結算量占比（Single Thing） &gt;= 20.0</td><td>2031-07-03（推定）</td><td class="left">出場</td><td><span class="tag tag-pool">監測中</span></td></tr></tbody></table>
+<div style="margin-top:8px;font-size:12.5px;color:#64748b"><b>Pre-mortem</b>
+<ul style="margin:2px 0 6px 18px"><li><b>穩定幣/A2A在5-10年內跨越「跨境+服務」信任門檻，繞過卡網路完成結算</b>：2027-2028年GENIUS Act細則落地後，Walmart與大型發卡行聯手推出繞卡穩定幣結算方案並在美國主力商戶上線（MA net take rate首次出現連續下滑，moat_trend由↑轉↓，倍數殺向15-16x（Bear情境））</li><li><b>跨境動能是結構性放緩而非週期性噪音</b>：旅遊+跨境電商基底轉弱，4月起的減速延續而非季節性／基期效應（H1/H2持續削弱、EPS CAGR降至~10%、5Y目標下修）</li><li><b>interchange/反壟斷監管結構性壓低網路take rate</b>：MA遭consent decree或interchange上限（歐盟新規+美國CCCA通過）（pricing power軸受損，VAS定價避風港假設失效）</li></ul>
+<b>進場節奏</b>　條件式分批：首階1/3核心倉現在可建（現價$539），其餘2/3待回檔至BB中軌$502或W104$528站穩、或Q2 FY26跨境cc回升確認週期噪音後再加碼。</div>
+</div><div class="block">
+<h2>NVDA　<span style="font-size:13px;font-weight:600;color:#64748b">進場
+· 核心持倉</span>　</h2>
+<div class="block-sub">DD 2026-06-24（<a href="/dd/DD_NVDA_20260624.html#decision">原報告</a>）
+· 裁決價 $200.04 · 至今 <span class="neg">-2.6%</span>
+· 5Y EV <span class="pos">138%</span>
+／IRR 17.0%
+／Max DD -52.0%
+· 2Y upside <span class="pos">+70%</span></div>
+<ul style="margin:6px 0 10px 18px;font-size:13px"><li>AI 算力的事實標準，賣在歷史最便宜的倍數——成長噴發，市場卻只給 16x。</li><li>現價 $200.04（自 52 週高 $236.54 回檔 −15%、自 5/21 −10%），FY+2 PE 15.7x／PEG 0.32，低於分析師共識中位 PT ~$300 約 50%。</li><li>護城河 S 級、趨勢持平（→）：CUDA／NVLink／Rubin rack-scale 系統優勢仍在，但 merchant GPU 份額已自 ~80% 稀釋至 ~70-75%（custom ASIC 增速 44.6% 遠高於 GPU 16.1%）。</li><li>5Y 機率加權 EV +138%／IRR ~19%/yr，報酬幾乎全靠 EPS 複利，估值幾無逆風甚至有 re-rate 上行空間。</li><li>S 級龍頭＋TAM 翻倍卻交易在 15.7x，市場對中國禁售與 custom 折價已過頭，下檔有保護（Bear −16%）。</li></ul>
+<table><thead><tr><th class="left">可證偽宣稱</th><th>門檻</th><th>期限</th>
+<th class="left">觸發動作</th><th>狀態</th></tr></thead><tbody><tr><td class="left">資料中心加速器份額若跌破 65%，視為 training 結構性失守，觸發減碼。</td><td>資料中心加速器份額 &gt;= 65</td><td>2026-12-21（推定）</td><td class="left">減碼</td><td><span class="tag tag-pool">監測中</span></td></tr><tr><td class="left">Fwd PE(FY+2) 若突破 30x，觸發複審（估值優勢消失）。</td><td>Fwd PE (FY+2) &lt;= 30</td><td>2026-12-21（推定）</td><td class="left">複審</td><td><span class="tag tag-pool">監測中</span></td></tr><tr><td class="left">FY+2 EPS 共識若 60 天內下修超過 7%，觸發複審。</td><td>FY+2 EPS 共識 60 天修正幅度 &gt;= -7</td><td>2026-12-21（推定）</td><td class="left">複審</td><td><span class="tag tag-pool">監測中</span></td></tr><tr><td class="left">Q2 FY27（截至 2026-08-26 前後公布）營收須達 guide $91B，未達視為 DC 成長動能減弱。</td><td>Q2 FY27 營收 &gt;= 91</td><td>2026-08-26</td><td class="left">複審</td><td><span class="tag tag-pool">監測中</span></td></tr></tbody></table>
+<div style="margin-top:8px;font-size:12.5px;color:#64748b"><b>Pre-mortem</b>
+<ul style="margin:2px 0 6px 18px"><li><b>AI capex digestion + 電力瓶頸</b>：2027-2028 hyperscaler 發現 AI 投資 ROI 不如預期（廣告/SaaS AI 貨幣化低於預期）+ 電力瓶頸限制建設（capex 增速見頂並進入 digestion，NVDA 最大週期 beta 重挫）</li><li><b>custom ASIC/AMD 侵蝕 training</b>：Google TPU 外賣 + AWS Trainium + AMD MI400 不只在 inference、更開始在 training 分食份額，NVDA 加速器份額自 73% 跌破 60%（護城河論點崩、估值再 de-rate）</li><li><b>vendor financing 循環斷裂</b>：CoreWeave/neocloud 融資鏈在 AI 估值收縮下崩解（NVDA 認列投資減記（GAAP EPS 反轉）+ 需求端自增強崩解；三擊下 FY28 營收/EPS 共識下修 30%+，即便 15.7x 仍可壓至 10-12x，可破 −45%）</li></ul>
+<b>進場節奏</b>　分批建/加核心倉：首階可現在建（估值極吸引），$160-185（FY+2 ~13-15x）為加碼甜蜜點；初始倉位約 4-6%，目標 6-8%，條件為份額守 &gt;70%＋training 鎖定＋Rubin 順利。</div>
+</div>
+<div class="note">卡片維護協議：新席位入場 → 抽卡；DD 複審 → 重抽；宣稱觸發（❌）→ 按 action_on_fail
+處理並在卡片 JSON 回填 status；到期（⏰）→ 人工結算 pass/breach。卡片真相在
+<code>docs/engine/cards/data/*.json</code>，本頁只渲染。</div>
+<footer>InvestMQuest Research · 決策引擎（研究層；不含實際持倉）</footer>
+</div>
+</body>
+</html>

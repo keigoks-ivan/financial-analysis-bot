@@ -26,6 +26,12 @@ def main() -> int:
         sb_stat = f'已結算 {s["n_settled"]} 筆裁決'
     except (OSError, json.JSONDecodeError, KeyError):
         pass
+    cards_stat = ""
+    try:
+        c = json.loads((OUT_DIR / "cards.json").read_text(encoding="utf-8"))
+        cards_stat = f'{c["n_cards"]} 張卡／{c["n_claims"]} 條宣稱。'
+    except (OSError, json.JSONDecodeError, KeyError):
+        pass
 
     body = f"""<div class="hero">
 <h1>⚙ 決策引擎</h1>
@@ -59,11 +65,11 @@ def main() -> int:
 <p>突破帶／循環轉折／動能重估／主題下沉——四形狀分欄，門檻 PREREG 鎖定季檢。</p>
 <span class="status st-live">✅ 上線（雷達內）</span></div>
 <div class="layer"><div class="lno">L2</div><h3>一頁決策卡</h3>
-<p>thesis 五句話＋三個帶日期的可證偽數字＋pre-mortem＋機率區間。AI 產卡、人花 30 分鐘裁決。</p>
-<span class="status st-soon">Phase 2</span></div>
+<p>一席一卡：thesis ≤5 句＋3–5 條帶期限的可證偽宣稱（抽自 DD §13/§14）＋pre-mortem。價格宣稱週更自動結算。{cards_stat}</p>
+<span class="status st-live">✅ 上線</span> <a href="/engine/cards.html">→ 決策卡</a></div>
 <div class="layer"><div class="lno">L3</div><h3>席位擂台</h3>
-<p>10 席各配同形狀挑戰者，每月擂台：輸給挑戰者就換。因子集中度上限明碼。</p>
-<span class="status st-soon">Phase 2</span></div>
+<p>核心 5＋衛星 5 各配同形狀挑戰者，⚔ 警報進每月人工擂台；regime 撥盤＋產業集中度警戒。</p>
+<span class="status st-live">✅ 上線</span> <a href="/engine/arena.html">→ 擂台</a></div>
 <div class="layer"><div class="lno">L4</div><h3>結算所</h3>
 <p>每筆裁決 × 週線自動結算，按形狀分桶記分。{sb_stat}。季度校準以此為據。</p>
 <span class="status st-live">✅ 上線</span> <a href="/engine/scoreboard.html">→ 記分板</a></div>
