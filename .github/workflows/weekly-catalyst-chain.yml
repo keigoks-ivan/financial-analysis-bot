@@ -1,0 +1,58 @@
+name: Weekly Catalyst Calendar Chain
+
+on:
+  schedule:
+    - cron: "0 2 * * 6"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  catalyst-calendar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install "yfinance>=0.2.40" requests
+
+      - name: Build catalyst calendar data
+        run: python scripts/build_catalyst_calendar.py
+
+      # >>> PHASE 3 INSERTION POINT <<<
+      # When the expectations-variance feature lands, add a step here that runs
+      # scripts/build_catalyst_variance.py to produce docs/catalyst/variance.json,
+      # BEFORE the page render step below (the page reads variance.json if present).
+
+      - name: Render catalyst calendar page
+        run: python scripts/build_catalyst_page.py
+
+      - name: Commit and push if changed
+        run: |
+          if git status --porcelain docs/catalyst/ | grep -q .; then
+            echo "Changes detected"
+          else
+            echo "No changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/catalyst/
+          DATE=$(date -u +"%Y-%m-%d")
+          git commit -m "data: catalyst calendar weekly refresh ${DATE}"
+          for i in 1 2 3; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+            git pull --rebase origin main || { echo "Rebase failed"; exit 1; }
+          done
+          echo "Push failed after 3 attempts"
+          exit 1
