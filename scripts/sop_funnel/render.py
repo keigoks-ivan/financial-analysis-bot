@@ -271,9 +271,12 @@ def _closed_rows(evs) -> str:
 
 
 def _score_cards(sb) -> str:
-    label = {"A1": "A1 起漲型（主訊號）", "A2": "A2 續勢型（對照）", "B": "B 第二班車"}
+    label = {"A1": "A1 起漲型（主訊號）", "A2": "A2 續勢型（對照）", "B": "B 第二班車",
+             "C": "C 冷卻再武裝（觀察期）"}
     cards = []
-    for k in ("A1", "A2", "B"):
+    for k in ("A1", "A2", "B", "C"):
+        if k not in sb:
+            continue
         a = sb[k]
         conv = (a["entered"] / a["signals"] * 100) if a["signals"] else None
         thin = '<span class="thin-flag">樣本未熟（closed&lt;20）</span>' if a["thin"] else ""
@@ -385,6 +388,13 @@ def render_page(d: dict) -> str:
         ("已築基", lambda r: f'{r["ath_age_weeks"]:.0f}w', ""),
         ("DD", _dd_link, ""),
     ]
+    c_cols = [
+        ("ticker", lambda r: f'<strong>{_e(r["ticker"])}</strong>', "left"),
+        ("原訊號", lambda r: f'{_e(r["armed_type"])} @ {_e(r["armed_date"])}', ""),
+        ("武裝週數", lambda r: f'{r["weeks_since_armed"]:.0f}w', ""),
+        ("距+2σ帶", lambda r: _pct(r.get("dist_bb2_pct")), ""),
+        ("DD", _dd_link, ""),
+    ]
     standby_b_rows = [r for r in d["standby_b"]]
     b_html = _standby_table(
         [r for r in standby_b_rows if not r["exceeded"]], b_cols, "無 B 武裝中標的")
@@ -441,6 +451,7 @@ td.veto{{color:#b45309;font-size:11px}}
 .tag-a1{{background:#dcfce7;color:#166534}}
 .tag-a2{{background:#e0e7ff;color:#3730a3}}
 .tag-b{{background:#fef3c7;color:#92400e}}
+.tag-c{{background:#ede9fe;color:#5b21b6}}
 .grid3{{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}}
 .grid3 h3,.score-card h3{{font-size:13px;font-weight:700;color:#0f2a45;margin-bottom:8px}}
 .score-card{{background:#fff;border:1px solid #dce8f5;border-radius:10px;padding:14px 16px}}
@@ -525,10 +536,11 @@ footer{{text-align:center;font-size:10.5px;color:#8aa5c0;padding:24px}}
 
 <div class="section"><div class="card">
 <h2>§2 待命區</h2>
-<div class="desc">未扣板機的候選。A1 起漲待命 = 距 ATH ≤5% 且基期 ≥26 週；B 武裝 = A1 錨後 26 週內回踩中；築基中 = 距 ATH 5–25% 且 ATH 已站 ≥20 週（下一批 A1 孵化池）。</div>
+<div class="desc">未扣板機的候選。A1 起漲待命 = 距 ATH ≤5% 且基期 ≥26 週；B 武裝 = A1 錨後 26 週內回踩中；C 冷卻武裝 = 純態②否決後等「完成週收盤跌回 +2σ 帶內且守住 52週線」（2026-07-04 gate change，PREREG 觀察期）；築基中 = 距 ATH 5–25% 且 ATH 已站 ≥20 週（下一批 A1 孵化池）。</div>
 <div class="grid3">
 <div><h3>A1 起漲待命（{len(d["standby_a1"])}）</h3>{_standby_table(d["standby_a1"], a1_cols, "無起漲待命標的 — 等下一個長基期突破")}</div>
 <div><h3>B 武裝中（{len([r for r in d["standby_b"] if not r["exceeded"]])}）</h3>{b_html}</div>
+<div><h3>C 冷卻武裝中（{len(d.get("standby_c") or [])}）</h3>{_standby_table(d.get("standby_c") or [], c_cols, "無冷卻武裝中標的")}</div>
 <div><h3>築基中（{len(d["base_building"])}）</h3>{_standby_table(d["base_building"], bb_cols, "無築基中標的")}</div>
 </div>
 {a2_block}{insuf}

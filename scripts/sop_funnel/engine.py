@@ -12,10 +12,15 @@
    進場/減碼/出場價一律 = 訊號日的次一交易日收盤。
 4. 態⑤ 以「完成週的週收盤 < MA52w」判定，於次一交易日收盤執行。
 
-訊號分級（用戶 2026-06-11 拍板）：
+訊號分級（用戶 2026-06-11 拍板；C 型 2026-07-04 拍板）：
 - A1 起漲型：日收盤突破「已站立 ≥26 週」的 prior ATH（主訊號；≥52 週標 ⭐）
 - A2 續勢型：基期 <26 週的新高（記錄 + 降級顯示）
 - B 第二班車：A1 價格事件後 26 週內，首次回踩 60MA/前高後站回（每 A1 最多一次）
+- C 冷卻再武裝：純態②否決的訊號不丟棄 → 完成週收盤跌回 +2σ 帶內且守住 52週線
+  → C 板機（T+1 進）；完成週收盤破 52週線 → 取消；26 週未完成 → 過期。
+  依據：2022-2026 replay 1,574 個態②-only 否決訊號 — 現行「等回踩」54% 等不到
+  （均值 +12.9%），冷卻再武裝拿回追進的 95% 上檔（+24.6% vs +26.0%）且熊市年
+  仍優於追進（2022：+7.3% vs +4.0%）。裁決規則見 PREREG（轉正前為觀察期）。
 - 否決必記錄：創新高但 態②過熱 / 五條件 fail / 歷史不足 → vetoed 事件含原因
 
 態④減碼幅度參數化（t4_staged）：forward 帳本照 charter（一次減至核心 50%）；
@@ -48,6 +53,7 @@ PARAMS = {
     "near_ath_pct": 5.0,          # A 待命帶：距 ATH ≤5%
     "base_watch_min_weeks": 20,   # 築基中：ATH 已站 ≥20 週
     "base_watch_dist": (5.0, 25.0),  # 築基中：距 ATH 5-25%
+    "c_window_weeks": 26,         # C 冷卻武裝窗口（對稱 B 錨窗；replay 95%+ 數週內完成）
 }
 
 QUALITY_GATE = {  # 五條件閘門（用戶 2026-06-11 拍板；資料全取 dd-screener latest.json）
@@ -71,6 +77,13 @@ PREREG = {
         "A2 的中位報酬或平均 α 落後 A1 超過 5 個百分點 → A2 降為純觀察（停止模擬進場，"
         "僅記錄）；未落後 → A2 轉正為正式訊號。裁決前 A2 維持「記錄＋模擬進場」作為對照組；"
         "本規則於資料累積前鎖定，禁止看到結果後修改門檻。"
+    ),
+    "c_cooling_adjudication": (
+        "【鎖定 2026-07-04】C 冷卻再武裝裁決：C 平倉 ≥20 筆後執行一次 — C 的中位報酬 ≤0 "
+        "或平均 α ≤0 → C 退回純記錄（恢復態②否決終局）；否則轉正。設計依據 = 2022-2026 "
+        "replay（態②-only 否決 1,574 筆：冷卻再武裝均值 +24.6% vs 現行等回踩 +12.9%，"
+        "2022 熊市年 +7.3% vs 追進 +4.0%），惟樣本為今日過閘 40 檔（survivorship）且熊市"
+        "僅一年 — 故 forward 觀察期先行，本規則於資料累積前鎖定，禁止看結果後修改門檻。"
     ),
     "quarterly_review_items": [
         "26 週（A1 基期）與 20 週（築基中）兩個相近參數是否統一為一個",
@@ -225,6 +238,12 @@ def scan_ticker(frame: Frame, quality_pass: bool | None, quality_fails: list[str
     被否決/進場）。錨後 26 週內首次回踩（收盤 < 60MA 或 ≤ 錨 ATH 價）再站回
     （收盤回到 60MA 上 / 收復前高）→ B 板機；每錨一次；回踩中完成週收盤破
     52週線 → 錨作廢。
+
+    C 型冷卻規則（2026-07-04 gate change）：純態②否決（vetoes == ["態②過熱"]）的
+    訊號武裝 C 冷卻槽（每檔一槽，新者取代舊者；乾淨訊號解除）。之後每根「訊號日後
+    完成的週」檢查：週收盤 < MA52w → 取消；週收盤 < +2σ（過熱解除）且 ≥ MA52w →
+    C 板機（本日為訊號日，T+1 進場；同其他訊號過 state1＋五條件否決棧 — 若當日又
+    衝回過熱帶則記 vetoed C、保持武裝等下一冷卻週）。武裝逾 c_window_weeks 過期。
     """
     ev: list[dict] = []
     c, ma60 = frame.close, frame.ma60
@@ -236,9 +255,54 @@ def scan_ticker(frame: Frame, quality_pass: bool | None, quality_fails: list[str
     touched60 = False
     retested = False
     last_week_pos = -1       # 已檢查過的完成週位置（態⑤ 錨作廢用）
+    # C 冷卻槽
+    cool = None              # {date, close, type, base_age_weeks, base_star, anchor_a1_date}
+    cool_week_pos = -1       # C 槽已檢查過的完成週位置
+
+    def _veto_stack(d, px):
+        ok1, reasons1 = frame.state1(d, px)
+        vetoes = list(reasons1)
+        if quality_pass is None:
+            vetoes.append("五條件缺資料")
+        elif not quality_pass:
+            vetoes.append("五條件fail:" + ",".join(quality_fails))
+        return vetoes
 
     for i in range(1, len(idx)):
         d, px = idx[i], float(c.iloc[i])
+
+        # — C 冷卻槽：過期 → 新完成週檢查（取消 / 板機）—
+        if cool is not None and (d - cool["date"]).days / 7.0 > params["c_window_weeks"]:
+            cool = None
+        if cool is not None:
+            wpos_c = frame._frozen_pos(d)
+            while cool is not None and cool_week_pos < wpos_c:
+                cool_week_pos += 1
+                if frame.wclose.index[cool_week_pos] <= cool["date"]:
+                    continue
+                wc = float(frame.wclose.iloc[cool_week_pos])
+                w52 = frame.wma[52].iloc[cool_week_pos]
+                b2 = frame.bb2.iloc[cool_week_pos]
+                if pd.isna(w52) or pd.isna(b2):
+                    continue
+                if wc < float(w52):
+                    cool = None            # 趨勢破壞 → 取消
+                    break
+                if wc < float(b2):         # 過熱解除 → C 板機
+                    vetoes = _veto_stack(d, px)
+                    ev.append({
+                        "type": "C", "date": d, "close": px,
+                        "base_age_weeks": cool["base_age_weeks"],
+                        "base_star": cool["base_star"],
+                        "anchor_a1_date": cool["anchor_a1_date"],
+                        "cooled_from_type": cool["type"],
+                        "cooled_from_date": cool["date"],
+                        "cooled_from_close": cool["close"],
+                        "vetoes": vetoes,
+                    })
+                    if not vetoes:
+                        cool = None        # 完成；vetoed（如當日又過熱）→ 保持武裝
+                    break
 
         # — 錨作廢檢查：上次迭代後是否有完成週收盤破 52週線 —
         if anchor_d is not None and not b_used:
@@ -261,12 +325,7 @@ def scan_ticker(frame: Frame, quality_pass: bool | None, quality_fails: list[str
         if np.isfinite(ath) and px > ath and ath_d is not None:
             base_age_w = (d - ath_d).days / 7.0
             sig_class = "A1" if base_age_w >= params["base_age_min_weeks"] else "A2"
-            ok1, reasons1 = frame.state1(d, px)
-            vetoes = list(reasons1)
-            if quality_pass is None:
-                vetoes.append("五條件缺資料")
-            elif not quality_pass:
-                vetoes.append("五條件fail:" + ",".join(quality_fails))
+            vetoes = _veto_stack(d, px)
             ev.append({
                 "type": sig_class, "date": d, "close": px,
                 "base_age_weeks": round(base_age_w, 1),
@@ -278,6 +337,15 @@ def scan_ticker(frame: Frame, quality_pass: bool | None, quality_fails: list[str
                 anchor_d, anchor_lvl = d, ath
                 b_used, touched60, retested = False, False, False
                 last_week_pos = frame._frozen_pos(d)
+            # C 槽：純態②否決 → 武裝（新者取代舊者）；乾淨訊號 → 解除
+            if vetoes == ["態②過熱"]:
+                cool = {"date": d, "close": px, "type": sig_class,
+                        "base_age_weeks": round(base_age_w, 1),
+                        "base_star": base_age_w >= params["base_age_star_weeks"],
+                        "anchor_a1_date": None}
+                cool_week_pos = frame._frozen_pos(d)
+            elif not vetoes:
+                cool = None
             continue   # 創新高日不可能同時是 B 回踩站回日
 
         # — B 型：錨存活 + 窗口內 —
@@ -304,12 +372,7 @@ def scan_ticker(frame: Frame, quality_pass: bool | None, quality_fails: list[str
         elif (not touched60) and retested and prev_px <= anchor_lvl and px > anchor_lvl:
             trigger = True
         if trigger:
-            ok1, reasons1 = frame.state1(d, px)
-            vetoes = list(reasons1)
-            if quality_pass is None:
-                vetoes.append("五條件缺資料")
-            elif not quality_pass:
-                vetoes.append("五條件fail:" + ",".join(quality_fails))
+            vetoes = _veto_stack(d, px)
             ev.append({
                 "type": "B", "date": d, "close": px,
                 "base_age_weeks": None, "base_star": False,
@@ -317,6 +380,14 @@ def scan_ticker(frame: Frame, quality_pass: bool | None, quality_fails: list[str
                 "vetoes": vetoes,
             })
             b_used = True   # 每錨最多一次（charter「限突破後首次回測」）
+            # C 槽：純態②否決的 B 同樣武裝冷卻；乾淨 B → 解除
+            if vetoes == ["態②過熱"]:
+                cool = {"date": d, "close": px, "type": "B",
+                        "base_age_weeks": None, "base_star": False,
+                        "anchor_a1_date": anchor_d}
+                cool_week_pos = frame._frozen_pos(d)
+            elif not vetoes:
+                cool = None
     return ev
 
 

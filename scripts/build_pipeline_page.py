@@ -527,6 +527,7 @@ def render_trigger(sop: Optional[dict], veto_by_reason: dict,
     a1 = sop.get("standby_a1", []) or []
     a2 = sop.get("standby_a2", []) or []
     b = sop.get("standby_b", []) or []
+    c = sop.get("standby_c", []) or []
     base = sop.get("base_building", []) or []
     veto2 = veto_by_reason.get("態②過熱", 0)
     as_of = sop.get("as_of", "—")
@@ -548,13 +549,13 @@ def render_trigger(sop: Optional[dict], veto_by_reason: dict,
   <div class="stat-row">
     <div class="stat"><strong>{len(today)}</strong>今日訊號</div>
     <div class="stat"><strong>{len(opens)}</strong>持倉中 open</div>
-    <div class="stat"><strong>{len(a1)}/{len(a2)}/{len(b)}</strong>待命 A1/A2/B</div>
+    <div class="stat"><strong>{len(a1)}/{len(a2)}/{len(b)}/{len(c)}</strong>待命 A1/A2/B/C</div>
     <div class="stat"><strong>{len(base)}</strong>築底中</div>
     <div class="stat warn"><strong>{veto2}</strong>態②過熱否決（累計）</div>
   </div>
   <div class="trigger-detail">
     <div><span class="lbl">持倉中</span>{_open_names(opens)}</div>
-    <div><span class="lbl">待命 A2</span>{_names(a2)} <span class="sep">·</span> <span class="lbl">待命 B</span>{_names(b)}</div>
+    <div><span class="lbl">待命 A2</span>{_names(a2)} <span class="sep">·</span> <span class="lbl">待命 B</span>{_names(b)} <span class="sep">·</span> <span class="lbl">待命 C·冷卻</span>{_names(c)}</div>
     <div><span class="lbl">築底中</span>{_names(base)}</div>
   </div>
   {_veto_ctrl_html(veto_ctrl)}

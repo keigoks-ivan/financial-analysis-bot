@@ -54,6 +54,44 @@ def load_ledger() -> dict:
     return {"schema_version": "1.0", "events": [], "meta": {}}
 
 
+def c_watch(frame, events, today: pd.Timestamp, params=PARAMS) -> dict | None:
+    """C 冷卻武裝中（display 用）：最後一個純態②否決訊號，未完成/未取消/未過期。
+    邏輯鏡像 scan_ticker 的 C 槽：乾淨訊號解除；vetoed C 不重置原武裝日。"""
+    armed = None
+    for e in events:
+        v = e.get("vetoes") or []
+        if e["type"] == "C":
+            if not v:
+                armed = None          # C 完成
+            continue                  # vetoed C → 保持原武裝，不重置
+        if v == ["態②過熱"]:
+            armed = e
+        elif not v:
+            armed = None              # 乾淨訊號已進場 → 解除
+    if armed is None:
+        return None
+    weeks = (today - armed["date"]).days / 7.0
+    if weeks > params["c_window_weeks"]:
+        return None
+    # 取消檢查：武裝日後完成週收盤 < MA52w
+    pos = frame._frozen_pos(today)
+    w52s = frame.wma[52]
+    for j in range(pos + 1):
+        if frame.wclose.index[j] <= armed["date"]:
+            continue
+        if not pd.isna(w52s.iloc[j]) and float(frame.wclose.iloc[j]) < float(w52s.iloc[j]):
+            return None
+    px = float(frame.close.iloc[-1])
+    bb2 = frame.frozen("bb2", today)
+    return {
+        "armed_date": str(armed["date"].date()),
+        "armed_type": armed["type"],
+        "armed_close": round(armed["close"], 4),
+        "weeks_since_armed": round(weeks, 1),
+        "dist_bb2_pct": round((px / bb2 - 1) * 100, 1) if bb2 else None,
+    }
+
+
 def b_watch(frame, events, today: pd.Timestamp, params=PARAMS) -> dict | None:
     """B 第二班車待命狀態（display 用）：最近 A1 錨存活、未 fired、回踩中。"""
     a1s = [e for e in events if e["type"] == "A1"]
@@ -116,6 +154,7 @@ def main() -> int:
     standby_a1: list[dict] = []
     standby_a2: list[dict] = []
     standby_b: list[dict] = []
+    standby_c: list[dict] = []
     base_building: list[dict] = []
     population: list[dict] = []        # 五條件全過的母體（頁面 §6）
     moat_excluded: list[dict] = []     # 四質量過、卡護城河 gate（26→23 對帳）
@@ -163,6 +202,11 @@ def main() -> int:
                 "base_age_weeks": e["base_age_weeks"],
                 "base_star": e["base_star"],
                 "anchor_a1_date": str(e["anchor_a1_date"].date()) if e["anchor_a1_date"] is not None else None,
+                "cooled_from_type": e.get("cooled_from_type"),
+                "cooled_from_date": str(e["cooled_from_date"].date())
+                                    if e.get("cooled_from_date") is not None else None,
+                "cooled_from_close": round(e["cooled_from_close"], 4)
+                                     if e.get("cooled_from_close") is not None else None,
                 "signal_date": str(e["date"].date()),
                 "signal_close": round(e["close"], 4),
                 "stop_dist_pct": round(sd, 2) if sd is not None else None,
@@ -227,6 +271,9 @@ def main() -> int:
         bw = b_watch(frame, events, today)
         if bw:
             standby_b.append({**common, **bw})
+        cw = c_watch(frame, events, today)
+        if cw:
+            standby_c.append({**common, **cw})
 
     # ── T+1 進場 fill + 模擬（按訊號日時序處理；每 ticker 同時最多一筆 open）──
     occupied: dict[str, str] = {}   # ticker → 佔用至（exit_date 或 "open"）
@@ -351,6 +398,7 @@ def main() -> int:
         "standby_a1": sorted(standby_a1, key=lambda x: -x["ath_age_weeks"]),
         "standby_a2": sorted(standby_a2, key=lambda x: x["dist_ath_pct"], reverse=True),
         "standby_b": sorted(standby_b, key=lambda x: x["weeks_since_anchor"]),
+        "standby_c": sorted(standby_c, key=lambda x: x["weeks_since_armed"]),
         "base_building": sorted(base_building, key=lambda x: -x["ath_age_weeks"]),
         "insufficient_history": insufficient,
         "prereg": PREREG,
@@ -359,12 +407,20 @@ def main() -> int:
         "moat_excluded": moat_excluded,
         "open_trades": open_trades,
         "closed_trades": closed_trades,
-        "scoreboard": {k: agg(k) for k in ("A1", "A2", "B")},
+        "scoreboard": {k: agg(k) for k in ("A1", "A2", "B", "C")},
         "backtest": backtest,
     }
 
+    gate_changes = ledger["meta"].get("gate_changes") or []
+    if not any(g.get("id") == "c-cooling" for g in gate_changes):
+        gate_changes.append({
+            "id": "c-cooling", "date": today_str,
+            "change": "態②否決由終局改為 C 冷卻再武裝（PREREG c_cooling_adjudication）；"
+                      "記分板 C 型自本日起累積，歷史不重算",
+        })
     ledger["meta"] = {"last_run": latest["run_timestamp"], "as_of": today_str,
-                      "backfill_from": ledger["meta"].get("backfill_from") or args.backfill_from}
+                      "backfill_from": ledger["meta"].get("backfill_from") or args.backfill_from,
+                      "gate_changes": gate_changes}
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     LEDGER_PATH.write_text(json.dumps(ledger, ensure_ascii=False, indent=1),
                            encoding="utf-8")

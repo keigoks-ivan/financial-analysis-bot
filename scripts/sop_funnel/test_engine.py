@@ -274,6 +274,70 @@ def test_pending_action_exposed():
     ok(res["legs"] == [], "尚無已執行腿（時序正確，非漏執行）")
 
 
+def test_c_cooling_rearm():
+    print("[14] C 冷卻再武裝 — 態②否決 → 冷卻週完成 → C 板機")
+    # 長基期平台 → 急噴突破（衝出 +2σ 帶 → A1 被態②否決）→ 高檔緩跌不創新高
+    # （完成週收盤跌回 +2σ 帶內、遠高於 52週線）→ C 板機
+    ser = make_series([
+        (1500, 50, 100), (150, 99, 99.5),    # 基期平台 30 週
+        (10, 101, 130),                      # 急噴突破（過熱；沿途 A2 再武裝 C 槽）
+        (40, 124, 119),                      # 高檔緩跌不創新高 → 冷卻
+    ])
+    fr = build_frame(ser)
+    evs = scan_ticker(fr, True, [])
+    a1 = [e for e in evs if e["type"] == "A1"][-1]
+    ok(a1["vetoes"] == ["態②過熱"], "急噴 A1 被純態②否決（武裝 C 槽）")
+    cs = [e for e in evs if e["type"] == "C" and not e["vetoes"]]
+    ok(len(cs) == 1, f"冷卻週完成 → 乾淨 C 板機（{len(cs)} 筆）")
+    c0 = cs[0]
+    vetoed_dates = {e["date"] for e in evs if (e.get("vetoes") or []) == ["態②過熱"]
+                    and e["type"] != "C"}
+    ok(c0["cooled_from_date"] in vetoed_dates and c0["cooled_from_type"] in ("A1", "A2"),
+       "C 回鏈到態②否決訊號（每檔一槽、新者取代 → 鏈到簇內最後一筆）")
+    ok(c0["date"] > a1["date"], "C 訊號日在原訊號之後")
+    wpos = fr._frozen_pos(c0["date"])
+    wc = float(fr.wclose.iloc[wpos]); b2 = float(fr.bb2.iloc[wpos]); w52 = float(fr.wma[52].iloc[wpos])
+    ok(wc < b2 and wc > w52, "C 板機當下：完成週收盤已回 +2σ 帶內且守住 52週線")
+
+
+def test_c_cooling_cancel_on_trend_break():
+    print("[15] C 冷卻取消 — 完成週收盤破 52週線 → 槽作廢不發 C")
+    # 急噴被否決後一週內崩穿 52週線（假突破）：取消先於任何冷卻週 → 不得出現乾淨 C
+    ser = make_series([
+        (1500, 50, 100), (150, 99, 99.5),
+        (10, 101, 130),                      # 急噴（態②否決）
+        (5, 130, 92),                        # 一週內崩穿 52週線（~99.5）
+        (40, 92, 96),                        # 反彈（仍在 52週線下）
+    ])
+    fr = build_frame(ser)
+    evs = scan_ticker(fr, True, [])
+    a1 = [e for e in evs if e["type"] == "A1"][-1]
+    ok(a1["vetoes"] == ["態②過熱"], "假突破 A1 同樣先被態②否決")
+    cs = [e for e in evs if e["type"] == "C" and not e["vetoes"]]
+    ok(len(cs) == 0, "趨勢破壞 → C 槽取消，全程無乾淨 C（保住 2022 型保險）")
+
+
+def test_c_replay_anchor():
+    print("[16] C 回放錨 — 2330 2024-02 過熱簇由 2024-04-01 乾淨 C 接住")
+    if not WIDE.exists():
+        print("  SKIP: 寬表不存在")
+        return
+    df = pd.read_csv(WIDE, index_col=0, parse_dates=True)
+    fr = build_frame(df["2330.TW"])
+    evs = scan_ticker(fr, True, [])
+    a1 = {str(e["date"].date()): e for e in evs if e["type"] == "A1"}
+    ok("2024-02-15" in a1 and "態②過熱" in a1["2024-02-15"]["vetoes"],
+       "2330 2024-02-15 A1 仍被態②否決（既有錨不動）")
+    cs = [e for e in evs if e["type"] == "C" and not e["vetoes"]]
+    first_c = next((e for e in cs if e["date"] >= a1["2024-02-15"]["date"]), None)
+    ok(first_c is not None and str(first_c["date"].date()) == "2024-04-01",
+       "過熱簇的首筆乾淨 C = 2024-04-01（比舊系統 2024-08-09 B 早 ~4 個月）")
+    ok(str(first_c["cooled_from_date"].date()) == "2024-03-22",
+       "C 回鏈簇內最後一筆態②否決（2024-03-22 A2，每檔一槽新者取代）")
+    gap_w = (first_c["date"] - a1["2024-02-15"]["date"]).days / 7.0
+    ok(gap_w <= PARAMS["c_window_weeks"], f"距簇首 A1 {gap_w:.1f}w ≤ 26w 窗口")
+
+
 def test_earnings_guard_verdict():
     print("[13] 財報靜默期判定（純函數）")
     from sop_funnel.earnings_guard import _verdict
@@ -290,6 +354,8 @@ if __name__ == "__main__":
                test_b_second_train, test_t4_band_trim_and_rebuy, test_t4_consec3,
                test_t3_overheat_trim, test_t5_full_exit, test_t4_staged_ab,
                test_replay_anchors, test_quality_gate,
-               test_pending_action_exposed, test_earnings_guard_verdict]:
+               test_pending_action_exposed, test_c_cooling_rearm,
+               test_c_cooling_cancel_on_trend_break, test_c_replay_anchor,
+               test_earnings_guard_verdict]:
         fn()
     print(f"\nALL PASS — {N_PASS} 斷言")
