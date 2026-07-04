@@ -28,7 +28,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from engine.common import OUT_DIR, ROOT, page_shell, pct  # noqa: E402
 from engine.build_scoreboard import _bars, classify_shape  # noqa: E402
-from engine.grp import P_LABEL_HTML, grp_route, grp_score  # noqa: E402
+from engine.grp import (  # noqa: E402
+    MKTCAP_MIN, P_LABEL_HTML, cap_ok, fetch_caps, grp_route, grp_score,
+)
 
 DD_LATEST = ROOT / "docs" / "dd-screener" / "latest.json"
 MARKET_STATE = ROOT / "docs" / "screener" / "market_state.json"
@@ -167,6 +169,23 @@ def main() -> int:
     entered = [row_dict(s) for s in stocks if s.get("dca_verdict") == "進場"]
     light = load_light_rows({s["ticker"]: s for s in stocks})
     entered += [r for r in light if r["verdict"] == "進場"]
+
+    # 市值門檻（持有人拍板 ≥$200 億）：席位/挑戰者資格層——未達或未知者降板凳並列原因
+    watch_rows = [row_dict(s) for s in stocks if s.get("dca_verdict") == "觀望"]
+    caps = fetch_caps(sorted({r["ticker"] for r in entered + light + watch_rows}))
+    def apply_cap(r):
+        r["mktcap"] = caps.get(r["ticker"])
+        ok = cap_ok(r["mktcap"])
+        r["cap_ok"] = bool(ok)
+        if not ok:
+            r["grp"] = dict(r["grp"])
+            r["grp"]["pass"] = False
+            r["grp"]["why"] = (["市值未知（資格 fail-closed）"] if ok is None
+                               else [f"市值 {r['mktcap']/1e9:.0f}B < 門檻 {MKTCAP_MIN/1e9:.0f}B"]) \
+                              + list(r["grp"]["why"])
+        return r
+    entered = [apply_cap(r) for r in entered]
+
     passed = sorted([r for r in entered if r["grp"]["pass"]], key=lambda r: -r["score"])
     failed = sorted([r for r in entered if not r["grp"]["pass"]], key=lambda r: -r["score"])
     core_pass = [r for r in passed if r["route"] == "core"]
@@ -177,13 +196,13 @@ def main() -> int:
     sat_bench = sat_pass[SAT_SLOTS:] + [r for r in failed if "核心" not in (r["role"] or "")]
 
     seated = {r["ticker"] for r in core_seats + sat_seats}
-    challengers = [r for r in (row_dict(s) for s in stocks
+    challengers = [r for r in (apply_cap(row_dict(s)) for s in stocks
                                if s.get("dca_verdict") in ("進場", "觀望")
                                and s["ticker"] not in seated)
                    if r["grp"]["pass"]]
-    challengers += [r for r in light
-                    if r["verdict"] == "觀望" and r["grp"]["pass"]
-                    and r["ticker"] not in seated]
+    challengers += [r for r in (apply_cap(r) for r in light
+                                if r["verdict"] == "觀望" and r["ticker"] not in seated)
+                    if r["grp"]["pass"]]
     challengers.sort(key=lambda r: -r["score"])
 
     # 擂台配對（v2）：軌別配對——核心席 vs 核心向挑戰者、衛星席 vs 衛星向挑戰者
@@ -337,6 +356,7 @@ def main() -> int:
 <b>G 高成長</b>（FY1→FY3 EPS CAGR ≥15%）× <b>R 上修</b>（FY+1 月修 &gt;0 或 2Y &gt;0pp；下修 ≤-2% 否決）×
 <b>P 位置適合</b>（站上 52 週線且未過熱）。排序＝R 上修幅度——<b>不再依賴 5Y EV/IRR</b>。
 <b>軌別路由</b>：核心＝護城河 S/A 非↓（複利耐久）；衛星＝其餘 GRP 全過者（moat B／循環爆發型）。
+<b>市值門檻 ≥ ${MKTCAP_MIN/1e9:.0f}B</b>（持有人 2026-07-04 拍板：席位與主榜資格層；雷達發現層照掃全宇宙）。
 <b>兩級資格</b>：核心席必須完整 v14 DD；衛星席另接受 🪶 快審卡（週期位置＋陷阱＋護城河快評）。
 DD 角色與機械軌別衝突標 ⚠ 供人裁。GRP 未過的進場票落板凳、寧缺勿濫。</div>
 <div class="asof">資料源 dd-screener latest.json ｜ 席位口徑與 Pipeline 頁一致 ｜ 週更</div>
