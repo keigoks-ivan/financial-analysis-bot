@@ -1,0 +1,75 @@
+name: Weekly Decision Engine
+
+# 決策引擎（/engine/）週更：
+#   - build_universe.py   → S&P 1500 名單（月更級資料，週跑無害：抓失敗保留舊檔）
+#   - build_radar.py      → L0 全市場雷達（stage1 批量週線 + stage2 EPS 修正確認）
+#   - build_scoreboard.py → L4 形狀記分板（dd-meta 裁決 × weekly_cache 結算）
+#   - build_index.py      → 總覽頁活數字
+#
+# 跑 Sun 20:00 UTC = Mon 04:00 Taipei — 排在 weekly-fundamental-refresh（18:00 UTC）
+# 之後，錯開 yfinance 額度與 push 時段。
+# Fail-safe 慣例：每步 continue-on-error；build 只在成功結尾寫檔，失敗保留上週版本。
+
+on:
+  schedule:
+    - cron: "0 20 * * 0"  # Sun 20:00 UTC = Mon 04:00 Taipei
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  engine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install "yfinance>=0.2.54" pandas numpy lxml
+
+      - name: Universe (S&P 1500 constituents)
+        run: python scripts/engine/build_universe.py
+        continue-on-error: true
+
+      - name: Radar (L0 structure scan + L1 shape routing + stage2 revisions)
+        run: python scripts/engine/build_radar.py
+        continue-on-error: true
+
+      - name: Scoreboard (L4 shape settlement)
+        run: python scripts/engine/build_scoreboard.py
+        continue-on-error: true
+
+      - name: Overview page (live numbers)
+        run: python scripts/engine/build_index.py
+        continue-on-error: true
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/engine/universe.json \
+                  docs/engine/
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            DATE=$(TZ=Asia/Taipei date +"%Y-%m-%d")
+            git commit -m "data: Weekly decision engine refresh ${DATE}
+
+            Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+            for i in 1 2 3; do
+              if git push; then
+                exit 0
+              fi
+              echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+              git pull --rebase origin main || { echo "Rebase failed"; exit 1; }
+            done
+            echo "Push failed after 3 attempts"
+            exit 1
+          fi

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>決策引擎 · 總覽 | InvestMQuest Research</title>
+<meta name="description" content="結算驅動的選股決策機器 — 全市場雷達、形狀路由、決策卡、擂台、結算所">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif;
+     background:#f7f8fa;color:#1a2332;font-size:14px;line-height:1.65}
+.wrap{max-width:1080px;margin:0 auto;padding:24px 20px 60px}
+.hero h1{font-size:24px;font-weight:800;color:#0f2a45;margin:14px 0 6px}
+.hero-sub{color:#475569;font-size:13.5px;max-width:860px}
+.asof{font-size:12px;color:#94a3b8;margin-top:6px}
+.block{background:#fff;border:1px solid #e2e8f0;border-radius:12px;
+       padding:18px 20px;margin-top:18px}
+.block h2{font-size:17px;font-weight:750;color:#0f2a45;margin-bottom:6px}
+.block-sub{color:#64748b;font-size:12.5px;margin-bottom:10px}
+.stat-row{display:flex;gap:12px;flex-wrap:wrap;margin:10px 0}
+.stat{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;
+      padding:10px 14px;min-width:110px}
+.stat strong{display:block;font-size:20px;color:#0f2a45}
+.stat span{font-size:11.5px;color:#64748b}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+th{font-size:11.5px;color:#64748b;text-align:right;padding:6px 8px;
+   border-bottom:2px solid #e2e8f0;white-space:nowrap}
+td{padding:6px 8px;text-align:right;border-bottom:1px solid #f1f5f9;white-space:nowrap}
+th.left,td.left{text-align:left}
+td a{color:#1d4ed8;text-decoration:none;font-weight:650}
+td a:hover{text-decoration:underline}
+.pos{color:#166534;font-weight:650}.neg{color:#b91c1c;font-weight:650}
+.muted{color:#94a3b8}
+.tag{display:inline-block;font-size:11px;font-weight:700;border-radius:5px;padding:1px 7px}
+.tag-pool{background:#dcfce7;color:#166534}
+.tag-blind{background:#fef3c7;color:#92400e}
+.tag-up{background:#dcfce7;color:#166534}
+.tag-dn{background:#fee2e2;color:#991b1b}
+.shape-card{border-left:4px solid #2563eb;margin-top:14px;background:#fbfdff;
+            border-top:1px solid #dce8f5;border-right:1px solid #dce8f5;
+            border-bottom:1px solid #dce8f5;border-radius:10px;padding:14px 16px}
+.shape-card h3{font-size:15px;font-weight:700;color:#0f2a45;margin-bottom:4px}
+.shape-card h3 .cnt{font-size:11px;font-weight:600;color:#94a3b8;margin-left:6px}
+.shape-desc{font-size:12px;color:#64748b;margin-bottom:6px}
+.s-breakout{border-left-color:#166534}
+.s-cyclical{border-left-color:#c2410c}
+.s-momentum{border-left-color:#7c3aed}
+.s-theme{border-left-color:#0e7490}
+.empty{color:#94a3b8;padding:14px 0;text-align:center}
+.note{font-size:12px;color:#64748b;background:#f8fafc;border:1px solid #e2e8f0;
+      border-radius:8px;padding:10px 12px;margin-top:10px}
+.warn{background:#fffbeb;border-color:#fde68a;color:#92400e}
+.layers{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-top:12px}
+.layer{background:#fbfdff;border:1px solid #dce8f5;border-radius:10px;padding:12px 14px}
+.layer .lno{font-size:11px;font-weight:800;color:#2563eb}
+.layer h3{font-size:14.5px;font-weight:750;color:#0f2a45;margin:2px 0 4px}
+.layer p{font-size:12px;color:#64748b}
+.layer .status{display:inline-block;margin-top:6px;font-size:11px;font-weight:700;
+               border-radius:5px;padding:1px 7px}
+.st-live{background:#dcfce7;color:#166534}
+.st-soon{background:#f1f5f9;color:#64748b}
+footer{margin-top:26px;font-size:12px;color:#94a3b8;text-align:center}
+@media(max-width:760px){.wrap{padding:16px 10px 40px}.block{padding:14px 12px}
+  table{display:block;overflow-x:auto}}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#0f172a;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(59,130,246,.28);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/">個股 DD</a>
+          <a href="/research/synthesis/">期望落差綜合研判</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/">週報</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/long-track-smh/">長線訊號</a>
+          <a href="/long-track-tw/">台股長線</a>
+          <a href="/turtle-sleeve/">商品 Sleeve</a>
+        </div>
+      </div>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/">量化回測</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/engine/" class="active">⚙ 決策引擎</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/screener-tw.html">Screener 台股</a>
+          <a href="/screener-jp.html">Screener 日股</a>
+          <a href="/screener-my.html">Screener 馬股</a>
+          <a href="/cache/">🗄 Data Cache</a>
+          <a href="/tools/">期貨部位計算機</a>
+        </div>
+      </div>
+      <a href="/mental-models/">🧠 心智模型</a>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<div class="imq-subnav"><div class="imq-subnav-inner"><a href="/engine/" class="active">總覽 · 方法論</a><a href="/engine/radar.html">📡 全市場雷達</a><a href="/engine/scoreboard.html">🧾 形狀記分板</a></div></div>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+<div class="wrap">
+<div class="hero">
+<h1>⚙ 決策引擎</h1>
+<div class="hero-sub">結算驅動的選股決策機器 — 研究淺進深、判斷小而可證偽、每個判斷都被記分、
+記分改變下一輪規則。與 <a href="/dd-screener/pipeline.html">現行漏斗（Pipeline）</a>並存分工：
+引擎管「發現」與「校準」，進場資格仍由 DD 裁決＋sop-funnel 板機把守。研究層頁面，不含實際持倉。</div>
+</div>
+
+<div class="block">
+<h2>設計原則（為什麼長這樣）</h2>
+<div class="block-sub">出發點是三個第一性事實，全部來自本站自己的驗屍數據。</div>
+<table>
+<thead><tr><th class="left">事實</th><th class="left">設計回應</th></tr></thead>
+<tbody>
+<tr><td class="left">決策帶寬一年只有 10–15 次（10 席、1–3 年持有），<br>但研究系統一季能生產 388 個判斷</td>
+<td class="left"><b>廣掃自動化、深挖只給候選</b>——人只出現在「裁決」與「擂台」兩個點</td></tr>
+<tr><td class="left">1–3 年大贏家只有四種出身：循環反轉（MU/SNDK）、動能重估（PLTR/APP）、<br>長基期突破、主題中小型下沉（ICHR/UCTT）</td>
+<td class="left"><b>形狀路由取代單一資格閘</b>——四形狀各有入場檢查表、各自記分</td></tr>
+<tr><td class="left">池外贏家稽核：12M top 50 有 <b>54% 不在研究池內</b>，集中於主題中小型；<br>結算所建立前，388 筆判斷的 outcome 回填數＝0</td>
+<td class="left"><b>宇宙全掃（S&amp;P 1500）＋結算所置於中心</b>——每個判斷自動對答案，季度校準改規則</td></tr>
+</tbody></table>
+</div>
+
+<div class="block">
+<h2>五層架構</h2>
+<div class="layers">
+<div class="layer"><div class="lno">L0</div><h3>全市場雷達</h3>
+<p>S&amp;P 1500 週掃：結構訊號批量 → 候選逐檔 EPS 修正確認。週掃 1495 檔 ｜ 形狀命中 386 ｜ 池外 145</p>
+<span class="status st-live">✅ 上線</span> <a href="/engine/radar.html">→ 雷達</a></div>
+<div class="layer"><div class="lno">L1</div><h3>形狀路由</h3>
+<p>突破帶／循環轉折／動能重估／主題下沉——四形狀分欄，門檻 PREREG 鎖定季檢。</p>
+<span class="status st-live">✅ 上線（雷達內）</span></div>
+<div class="layer"><div class="lno">L2</div><h3>一頁決策卡</h3>
+<p>thesis 五句話＋三個帶日期的可證偽數字＋pre-mortem＋機率區間。AI 產卡、人花 30 分鐘裁決。</p>
+<span class="status st-soon">Phase 2</span></div>
+<div class="layer"><div class="lno">L3</div><h3>席位擂台</h3>
+<p>10 席各配同形狀挑戰者，每月擂台：輸給挑戰者就換。因子集中度上限明碼。</p>
+<span class="status st-soon">Phase 2</span></div>
+<div class="layer"><div class="lno">L4</div><h3>結算所</h3>
+<p>每筆裁決 × 週線自動結算，按形狀分桶記分。已結算 352 筆裁決。季度校準以此為據。</p>
+<span class="status st-live">✅ 上線</span> <a href="/engine/scoreboard.html">→ 記分板</a></div>
+</div>
+</div>
+
+<div class="block">
+<h2>與現行漏斗的分工</h2>
+<table>
+<thead><tr><th class="left"></th><th class="left">決策引擎（本區）</th><th class="left">現行漏斗（dd-screener）</th></tr></thead>
+<tbody>
+<tr><td class="left">宇宙</td><td class="left">S&amp;P 1500 全掃（發現池外）</td><td class="left">240 檔 DD 策展池（深研）</td></tr>
+<tr><td class="left">單位</td><td class="left">形狀 × 可證偽 claim</td><td class="left">DD 報告 × 統一裁決</td></tr>
+<tr><td class="left">進場資格</td><td class="left">不給——命中只代表「該研究」</td><td class="left">DD §14 裁決＋sop-funnel 板機（A1/B/C）</td></tr>
+<tr><td class="left">回饋迴路</td><td class="left">形狀記分板（本區 L4）</td><td class="left">knowledge 結算所＋觀望複審隊列＋板機對照組</td></tr>
+</tbody></table>
+<div class="note">雷達池外名字的正確用法：值得的話 → 入 DD 池補報告 → 拿裁決 → 走板機。
+引擎不提供任何「直接買」的路徑，這是刻意的。</div>
+</div>
+
+<div class="block">
+<h2>紀律</h2>
+<div class="block-sub">
+① 形狀門檻與確認閾值 PREREG 鎖定（2026-07-04），季檢憑記分板數據才可調，禁止盤中調參。
+② 記分板 append-only、gate 變更畫分段線、歷史不重算。
+③ 觀望／迴避同樣被結算——錯過成本與套牢成本同權重。
+④ 樣本未熟（n&lt;20 或齡&lt;91 天）標示「觀察期」，不給結論。
+</div>
+</div>
+
+<div class="block">
+<h2>路線圖</h2>
+<table>
+<thead><tr><th class="left">Phase</th><th class="left">內容</th><th class="left">狀態</th></tr></thead>
+<tbody>
+<tr><td class="left">1</td><td class="left">雷達（L0+L1）＋形狀記分板（L4）＋週更 workflow</td><td class="left">✅ 2026-07-04 上線</td></tr>
+<tr><td class="left">2</td><td class="left">一頁決策卡（L2 schema＋產卡流程）＋席位擂台（L3）＋regime 撥盤</td><td class="left">規劃中</td></tr>
+<tr><td class="left">3</td><td class="left">卡餵擂台、形狀檢查表首次季度校準（記分板滿 91 天後）</td><td class="left">2026-10—</td></tr>
+</tbody></table>
+</div>
+<footer>InvestMQuest Research · 決策引擎（研究層；不含實際持倉）</footer>
+</div>
+</body>
+</html>

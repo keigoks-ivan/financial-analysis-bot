@@ -89,6 +89,7 @@ MENU = {
     "quant": [
         ("bt", "/backtest/", "量化回測"),
         ("dds", "/dd-screener/", "DD Screener"),
+        ("eng", "/engine/", "⚙ 決策引擎"),
         ("qus", "/qgm/", "QGM 美股"),
         ("qtw", "/qgm-tw/", "QGM 台股"),
         ("scr_us", "/screener.html", "Screener 美股"),
@@ -157,6 +158,13 @@ DD_SCREENER_SUBNAV = [
 ]
 
 
+ENGINE_SUBNAV = [
+    ("/engine/", "總覽 · 方法論"),
+    ("/engine/radar.html", "📡 全市場雷達"),
+    ("/engine/scoreboard.html", "🧾 形狀記分板"),
+]
+
+
 def build_subnav(links, current):
     items = "".join(
         f'<a href="{href}"{" class=\"active\"" if href == current else ""}>{label}</a>'
@@ -188,6 +196,7 @@ PREFIX_ACTIVE = [
     ("turtle-sleeve/", ("market", "sleeve")),
     ("backtest/", ("quant", "bt")),
     ("dd-screener/", ("quant", "dds")),
+    ("engine/", ("quant", "eng")),
     ("qgm/", ("quant", "qus")),
     ("qgm-tw/", ("quant", "qtw")),
     ("screener.html", ("quant", "scr_us")),
@@ -263,6 +272,9 @@ def process(path: Path, check=False):
     subnav = ""
     if rel.startswith("dd-screener/"):
         subnav = build_subnav(DD_SCREENER_SUBNAV, "/" + rel)
+    elif rel.startswith("engine/"):
+        cur = "/engine/" if rel == "engine/index.html" else "/" + rel
+        subnav = build_subnav(ENGINE_SUBNAV, cur)
     block = full_nav_block(group, item, subnav)
 
     m = BODY_RE.search(stripped)
