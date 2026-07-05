@@ -51,7 +51,7 @@ Agent({
 - 同跑 `DD_STALE_FRESH` / `PM_LAST_RUN` / `PM_HOLDINGS` / `PM_ACTIONS` 五段標記注入
 - **自動觸發** `scripts/build_dd_screener.py`（rebuild `docs/dd-screener/latest.json`），讓 `/research/` 與 `/dd-screener/` 兩個頁面 universe 永遠一致。yfinance 失敗時 screener rebuild 會 warn 但不 abort research sync；要離線跑加 `--skip-dd-screener`。
 
-把 `docs/research/index.html`、`docs/dd-screener/latest.json`、DD 新檔**併入同一 commit**，避免任一頁面滯後於底層報告。stock-analyst v13 skill 的 HTML 輸出協議已內建此步（step 3 跑 update_dd_index.py），但**手動 patch / 補 metadata / 改 legacy DCA Verdict** 這類 skill-外路徑也必須遵守此規則。v13 DD 的決策層欄位（dca_verdict 等）在 dd-meta JSON，下游 dual-read 直接讀。
+把 `docs/research/index.html`、`docs/dd-screener/latest.json`、`docs/picks/candidates.json`（2026-07-05 起 update_dd_index 自動連鎖 build_picks.py，讓精選清單即時反映新裁決）、DD 新檔**併入同一 commit**，避免任一頁面滯後於底層報告。stock-analyst v13 skill 的 HTML 輸出協議已內建此步（step 3 跑 update_dd_index.py），但**手動 patch / 補 metadata / 改 legacy DCA Verdict** 這類 skill-外路徑也必須遵守此規則。v13 DD 的決策層欄位（dca_verdict 等）在 dd-meta JSON，下游 dual-read 直接讀。
 
 ## Workflow: push earnings / 發布財報
 

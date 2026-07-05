@@ -2749,6 +2749,22 @@ def main():
                 file=sys.stderr,
             )
 
+    # Event-driven trigger for the picks list (/picks/ 精選清單). Pure local JSON
+    # aggregation over latest.json + cyclical-track + id-meta — no network, sub-second.
+    # Without this hook, a fresh DD verdict would not reach /picks/ until the
+    # Saturday workflow (up to 7-day lag); with it, DD → sync → list is immediate.
+    picks_script = Path(__file__).resolve().parent / "build_picks.py"
+    if picks_script.exists():
+        print(f"\n→ Auto-trigger: {picks_script.name} (refresh /picks/ candidates + official)")
+        try:
+            subprocess.run([sys.executable, str(picks_script)], check=True)
+        except subprocess.CalledProcessError as e:
+            print(
+                f"\n⚠ picks rebuild failed (exit {e.returncode}). "
+                f"Rerun `python3 {picks_script}` manually if /picks/ needs to refresh.",
+                file=sys.stderr,
+            )
+
     # ARCHIVED: alpha-rank.html is archived (stub at URL). Auto-trigger for DD Alpha Ranker
     # is disabled so update_dd_index.py does not regenerate the page.
     # To re-enable: uncomment the block below and restore _archived/dd-screener/alpha-rank.html.
