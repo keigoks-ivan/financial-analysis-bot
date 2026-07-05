@@ -1,0 +1,59 @@
+name: Weekly ID Staleness Refresh
+
+# 把產業 ID 鮮度從「發布時蓋章」翻成週更動態翻牌：
+# 重算 docs/id/ID_*.html 的 sections_refreshed 三桶（tech 365d / market 90d / judgment 60d），
+# 更新 docs/id/INDEX.md 鮮度欄 + docs/id/index.html 的 judgment🔴 stale pill（冪等）。
+# 純 stdlib，無外部相依。零 churn：無變化不 commit。
+
+on:
+  schedule:
+    # 週一 08:00 台北（UTC+8）＝ 週一 00:00 UTC；避開夜間 cron 高峰
+    - cron: "0 0 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  id-staleness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Refresh ID staleness (INDEX.md 鮮度欄 + index.html stale pills)
+        run: python3 scripts/refresh_id_staleness.py
+
+      - name: Commit and push if changed
+        run: |
+          if git status --porcelain docs/id/INDEX.md docs/id/index.html | grep -q .; then
+            echo "Changes detected"
+          else
+            echo "No changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/id/INDEX.md docs/id/index.html
+          DATE=$(date -u +"%Y-%m-%d")
+          git commit -m "data: weekly ID staleness refresh ${DATE}"
+          for i in 1 2 3 4 5 6; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+            git pull --rebase origin main || { echo "Rebase failed"; exit 1; }
+            sleep $((RANDOM % 20 + 5))
+          done
+          echo "Push failed after 6 attempts"
+          exit 1
