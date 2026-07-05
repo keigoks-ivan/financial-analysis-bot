@@ -12,7 +12,7 @@ WHAT THIS IS
 市值太小、尚未經 DD 深度驗證，風險等級高於「長熬」「爆發」兩組。
 
 治理模型同 build_picks.py：規則自動上榜（rank by 營收成長）＋ 持有人 veto
-（讀 docs/picks/picks.json 的 veto[]，本檔只讀不寫）。SEAT_CAP_10X＝10 進正式榜，
+（讀 docs/picks/picks.json 的 veto[]，本檔只讀不寫）。SEAT_CAP_10X＝5 進正式榜，
 next 15 進候選區。
 
 CADENCE
@@ -72,7 +72,7 @@ BROWSER_UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
 WORKERS = 8
 CADENCE_DAYS = 21          # < 21 天且無 --force → skip（有效月頻）
 COVERAGE_FLOOR = 0.60      # coverage < 60% universe → fail-safe，保留舊檔
-SEAT_CAP_10X = 10          # 正式榜席位（持有人「寧缺勿濫」精神，同 build_picks SEAT_CAP 家族）
+SEAT_CAP_10X = 5           # 正式榜席位（持有人 2026-07-05 再拍板 10→5，與另兩組一致）
 CAND_CAP = 15             # 候選區席位（正式榜之後接續 15 檔）
 
 # ── 結構六條件 → gate-set v0（frozen constants，未調參）──────────────────
@@ -518,7 +518,7 @@ def main():
         "note": ("十倍・結構長坡＝發現層：S&P 400+600 universe 過結構六條件 gate-set v0"
                  "（市值 $10–200 億 × 營收成長≥25% × 毛利≥35% × 內部人≥5% × "
                  "稀釋≤3%/年 split-adjusted × 自籌資力 × EV/S≤15）；rank by 營收成長；"
-                 "SEAT_CAP=10 進正式榜、next 15 候選；持有人 veto 通用。"
+                 "SEAT_CAP=5 進正式榜、next 15 候選；持有人 veto 通用。"
                  "月頻刷新。未經 DD 深度驗證，風險高於前兩組。"),
         "official": official,
         "candidates": candidates,
