@@ -124,8 +124,8 @@ def run_screen():
                 return t, None
             cy, ny = tdf.loc['0y'], tdf.loc['+1y']
 
-            def rev(r):
-                cur, old = r.get('current'), r.get('90daysAgo')
+            def rev(r, col='90daysAgo'):
+                cur, old = r.get('current'), r.get(col)
                 if cur is None or old is None or pd.isna(cur) or pd.isna(old) or old == 0:
                     return None
                 return (cur / old - 1) * 100 * (1 if old > 0 else -1)
@@ -133,7 +133,11 @@ def run_screen():
             g = None
             if cy.get('current') and ny.get('current') and cy['current'] > 0:
                 g = (ny['current'] / cy['current'] - 1) * 100
-            return t, dict(rev_fy1=rev(cy), rev_fy2=rev(ny), growth=g,
+            # rev30_*: 30-day "freshness" companion metric — informational only,
+            # NOT part of the frozen composite (which stays on the 90-day window)
+            return t, dict(rev_fy1=rev(cy), rev_fy2=rev(ny),
+                           rev30_fy1=rev(cy, '30daysAgo'), rev30_fy2=rev(ny, '30daysAgo'),
+                           growth=g,
                            eps_fy1=float(cy['current']) if pd.notna(cy.get('current')) else None)
         except Exception:
             return t, None
@@ -236,12 +240,18 @@ def build():
         if ret12 is not None and ret12 > HEAT_RET12:
             flags.append('heat')
 
+        rev30_fy1 = g(t, 'rev30_fy1')
+        rev30_fy2 = g(t, 'rev30_fy2')
+        rev30_vals = [v for v in (rev30_fy1, rev30_fy2) if v is not None]
+        rev30_avg = sum(rev30_vals) / len(rev30_vals) if rev30_vals else None
+
         seats_out.append({
             'ticker': t,
             'close': round(close, 2) if close is not None else None,
             'ret_since_entry_pct': ret_since,
             'rev_fy1': round(rev_fy1, 1) if rev_fy1 is not None else None,
             'rev_fy2': round(rev_fy2, 1) if rev_fy2 is not None else None,
+            'rev30_avg': round(rev30_avg, 1) if rev30_avg is not None else None,
             'score': round(score, 2) if score is not None else None,
             'rank': int(rank) if rank is not None else None,
             'flags': flags,
@@ -279,6 +289,8 @@ def build():
             'sector': univ.at[t, 'sector'],
             'rev_fy1': round(float(univ.at[t, 'rev_fy1']), 1) if pd.notna(univ.at[t, 'rev_fy1']) else None,
             'rev_fy2': round(float(univ.at[t, 'rev_fy2']), 1) if pd.notna(univ.at[t, 'rev_fy2']) else None,
+            'rev30_avg': round(float(univ[['rev30_fy1', 'rev30_fy2']].astype(float).mean(axis=1).at[t]), 1)
+                         if pd.notna(univ[['rev30_fy1', 'rev30_fy2']].astype(float).mean(axis=1).at[t]) else None,
             'growth': round(float(univ.at[t, 'growth']), 1) if pd.notna(univ.at[t, 'growth']) else None,
             'relmom6_pct': round(float(univ.at[t, 'relmom6']) * 100, 1),
             'ret12_pct': round(float(univ.at[t, 'ret12']) * 100, 1),
