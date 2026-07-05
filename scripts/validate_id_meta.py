@@ -48,6 +48,10 @@ ENUM_FIELDS = {
     "growth_phase": {"early", "mid", "late", "declining"},
     "value_chain_position": {"upstream", "midstream", "downstream", "cross-tier"},
     "industry_structure": {"monopoly", "duopoly", "oligopoly", "fragmented"},
+    # v2.5: 趨勢結構化欄位（present 才驗；v2.5+ 另加必填閘，見下方）
+    "sd_verdict": {"shortage", "balanced", "surplus", "split"},
+    "clock_phase": {"I", "II", "III", "IV"},
+    "conviction": {"high", "mid", "low"},
     # v1.9: quality_tier — determines which retrofit mechanisms apply
     # Q0 Flagship: full FET + thesis-trace + redteam (≥30 verified T1)
     # Q1 Standard: FET required, thesis-trace warning, redteam light (≥10 T1)
@@ -109,6 +113,24 @@ THREE_SENTENCE_FIELDS = ("now_state", "future_state", "action")
 THREE_SENTENCE_HARD_CAP = 240
 V2_RE = re.compile(r"^v2\.")
 
+# v2.5 趨勢結構化欄位 — 供需裁決 / 投資時鐘 / conviction / 證偽表機器化。
+# 邏輯：present 時驗型 / 驗 enum（sd_verdict / clock_phase / conviction 已進 ENUM_FIELDS）；
+#       skill_version ≥ v2.5 時新欄位（含 v2.4 三欄）升為「必填阻斷」；v2.0–v2.4 present 才驗、
+#       absent 放行；v1.x legacy 全豁免（與 now_state 三欄的 V2_RE 模式同構，但門檻是 v2.5+）。
+V2_5_MIN = (2, 5)
+SD_VERDICT_DETAIL_CAP = 160
+KILL_METRICS_MIN = 3
+KILL_METRIC_STATUS = {"ok", "warning", "triggered", "unknown"}
+# kill_metrics[] 每項欄位長度上限（source / last_status 選填）
+KILL_FIELD_CAPS = {"metric": 120, "bear_threshold": 120, "window": 60, "source": 120}
+VERSION_TUPLE_RE = re.compile(r"^v(\d+)\.(\d+)")
+
+
+def _version_tuple(v):
+    """Parse skill_version 'vN.N[.N]' → (major, minor); None if malformed."""
+    m = VERSION_TUPLE_RE.match(str(v))
+    return (int(m.group(1)), int(m.group(2))) if m else None
+
 
 def validate_meta(meta: dict) -> list:
     errs = []
@@ -150,12 +172,69 @@ def validate_meta(meta: dict) -> list:
 
     # v2.2 §0 三句話（now_state / future_state / action）— v2.x 必填 + 長度上限。
     is_v2 = bool(V2_RE.match(str(meta.get("skill_version", ""))))
+    ver = _version_tuple(meta.get("skill_version", ""))
+    is_v25_plus = ver is not None and ver >= V2_5_MIN
     for field in THREE_SENTENCE_FIELDS:
         v = meta.get(field)
         if is_v2 and not (isinstance(v, str) and v.strip()):
             errs.append(f"{field}: required (non-empty) for skill_version v2.x (§0 三句話看完)")
         if isinstance(v, str) and len(v) > THREE_SENTENCE_HARD_CAP:
             errs.append(f"{field}: {len(v)} chars exceeds hard cap {THREE_SENTENCE_HARD_CAP}")
+
+    # v2.5 趨勢結構化欄位（sd_verdict / clock_phase / conviction / kill_metrics + v2.4 三欄升必填）。
+    # enum 驗證由 ENUM_FIELDS 迴圈負責；此處補「v2.5+ 必填」+ sd_verdict_detail + kill_metrics 結構。
+    if is_v25_plus:
+        for field in ("sd_verdict", "clock_phase", "conviction"):
+            v = meta.get(field)
+            if not (isinstance(v, str) and v.strip()):
+                errs.append(f"{field}: required (non-empty) for skill_version >= v2.5 (趨勢結構化欄位)")
+        dm = meta.get("demand_5y_multiple")
+        if not (isinstance(dm, (int, float)) and not isinstance(dm, bool)):
+            errs.append("demand_5y_multiple: required (number) for skill_version >= v2.5")
+
+    # sd_verdict_detail — split 時必填、任何時候有值都驗型/長度。
+    detail = meta.get("sd_verdict_detail")
+    if detail is not None:
+        if not isinstance(detail, str):
+            errs.append(f"sd_verdict_detail: expected str, got {type(detail).__name__}")
+        elif len(detail) > SD_VERDICT_DETAIL_CAP:
+            errs.append(f"sd_verdict_detail: {len(detail)} chars exceeds hard cap {SD_VERDICT_DETAIL_CAP}")
+    if meta.get("sd_verdict") == "split" and not (isinstance(detail, str) and detail.strip()):
+        errs.append("sd_verdict_detail: required (non-empty) when sd_verdict == 'split'")
+
+    # kill_metrics[] — present 才驗結構；v2.5+ 必填且 ≥3 items（對齊 §8 證偽表 3-5 條）。
+    km = meta.get("kill_metrics")
+    if km is None:
+        if is_v25_plus:
+            errs.append(
+                f"kill_metrics: required (array of ≥{KILL_METRICS_MIN}) for skill_version >= v2.5"
+            )
+    elif not isinstance(km, list):
+        errs.append(f"kill_metrics: expected array, got {type(km).__name__}")
+    else:
+        if is_v25_plus and len(km) < KILL_METRICS_MIN:
+            errs.append(
+                f"kill_metrics: requires ≥{KILL_METRICS_MIN} items for skill_version >= v2.5, got {len(km)}"
+            )
+        for i, k in enumerate(km):
+            if not isinstance(k, dict):
+                errs.append(f"kill_metrics[{i}]: must be object, got {type(k).__name__}")
+                continue
+            for key in ("metric", "bear_threshold", "window"):
+                if key not in k:
+                    errs.append(f"kill_metrics[{i}].{key}: required key missing")
+            for key, cap in KILL_FIELD_CAPS.items():
+                if key in k:
+                    vv = k[key]
+                    if not isinstance(vv, str):
+                        errs.append(f"kill_metrics[{i}].{key}: expected str, got {type(vv).__name__}")
+                    elif len(vv) > cap:
+                        errs.append(f"kill_metrics[{i}].{key}: {len(vv)} chars exceeds cap {cap}")
+            if "last_status" in k and k["last_status"] not in KILL_METRIC_STATUS:
+                errs.append(
+                    f"kill_metrics[{i}].last_status: invalid {k['last_status']!r}, "
+                    f"allowed {sorted(KILL_METRIC_STATUS)}"
+                )
 
     # related_tickers entries
     rt = meta.get("related_tickers")
@@ -191,6 +270,14 @@ def validate_meta(meta: dict) -> list:
                     f"related_tickers[{i}].mcap_bucket: invalid {t['mcap_bucket']!r}, "
                     f"allowed {sorted(TICKER_MCAP_BUCKETS)}"
                 )
+            # v2.5+: depth=🔴 的 pure-play 必附 purity_pct + mcap_bucket（多倍候選機器初篩）；
+            # 🟡🟢 邊緣股選填（全項強制會對邊緣股過苛）。
+            if is_v25_plus and t.get("depth") == "🔴":
+                for key in ("purity_pct", "mcap_bucket"):
+                    if key not in t:
+                        errs.append(
+                            f"related_tickers[{i}].{key}: required for depth=🔴 when skill_version >= v2.5"
+                        )
 
     # sections_refreshed structure (optional)
     sr = meta.get("sections_refreshed")

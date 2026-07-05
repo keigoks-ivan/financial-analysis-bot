@@ -1,8 +1,8 @@
-# industry-analyst v2.0 — Pre-Publish Gate Check（10 Gates）
+# industry-analyst v2.5 — Pre-Publish Gate Check（13 Gates）
 
-每份 v2.0 產業深度報告（ID）發布前必跑。寫好 HTML 草稿後（Step 8.5），讀取本檔逐條檢查，產出 `pre_publish_report.md`。
+每份 v2.x 產業深度報告（ID）發布前必跑。寫好 HTML 草稿後（Step 8.5），讀取本檔逐條檢查，產出 `pre_publish_report.md`。
 
-Gate 編號與 `SKILL.md`【Pre-Publish Gate（10 道）】表完全一致：
+Gate 編號與 `SKILL.md`【Pre-Publish Gate（13 道）】表完全一致：
 
 | Gate | 性質 | 檢查 | 來源 |
 |:---|:---|:---|:---|
@@ -17,8 +17,11 @@ Gate 編號與 `SKILL.md`【Pre-Publish Gate（10 道）】表完全一致：
 | **Gate 8** | 阻斷 | aside 來源 + T1 占比 ≥ 60% | DS Gate 12 碼，門檻 50%→60% |
 | **Gate 9** | 阻斷 | §1 錨點（日期 + 量化） | DS Gate 14/DS-9 對應碼 |
 | **Gate 10** | warning | 供需裁決三選一 + §9 depth 時間限定 + catalyst 雙路徑 + 原 ID warning gates 摘要 | 新（DS Gate 7 + Gate 14 + ID 3.1/5/6/7 摘要） |
+| **Gate 11** | 阻斷 | dual-output 完整性（canonical + `_full.html` 皆存在、marker + id-meta 各就位） | v2.5 新 |
+| **Gate 12** | 阻斷 | kill_metrics 同步（id-meta `kill_metrics[]` ≥3 對齊 §8；sd_verdict/clock_phase/conviction 一致 §0/§5） | v2.5 新 |
+| **Gate 13** | warning | purity 推導（§9 每檔 `purity_pct` 有 segment 營收推導行） | v2.5 新 |
 
-任一阻斷 Gate（1/2/2.1/3/4/5/6/7/8/9）fail → **阻斷發布** + 列修正項。阻斷全過、Gate 10（warning）fail → 允許發布但輸出 warning。
+任一阻斷 Gate（1/2/2.1/3/4/5/6/7/8/9/11/12）fail → **阻斷發布** + 列修正項。阻斷全過、warning Gate（10/13）fail → 允許發布但輸出 warning。
 
 > 下方所有出現 `docs/id/ID_{Theme}_{Date}.html` 的 path 在實跑時替換為實際檔案路徑（草稿階段可能在 staging path）。
 
@@ -545,6 +548,108 @@ PY
 
 ---
 
+## Gate 11 [必備 / 阻斷]｜Dual-Output 完整性
+
+**規則**（v2.5 新）：每跑一次 skill 必產**兩份**（見 `templates/lean_template.md`）：
+- canonical `ID_{Theme}_{date}.html` — 精煉版決策卡，**必含 lean template marker**（可機器檢查：`class="masthead"` + `class="dsum"`）**且含 id-meta**（`<script id="id-meta">`）。
+- `ID_{Theme}_{date}_full.html` — 完整考證版，**不含 id-meta**（validator 自動 skip、不重複列索引）。
+
+**為何阻斷**：v2.4 首發只產一檔、視覺回退 v2.0 紫版（無 masthead/dsum 精煉版元件），既有 10 道 gate 全無一條檢查「兩檔皆在 + 精煉版皮 + id-meta 分工正確」，缺口整份漏過。
+
+**檢查碼**：
+```bash
+python3 << 'PY'
+import os, re
+canon = "docs/id/ID_{Theme}_{Date}.html"
+full  = canon.replace(".html", "_full.html")
+ok = True
+# 1. 兩檔皆存在
+c_exists, f_exists = os.path.exists(canon), os.path.exists(full)
+print(f"canonical 存在: {'✅' if c_exists else '❌'} {canon}")
+print(f"_full 存在: {'✅' if f_exists else '❌'} {full}")
+ok &= c_exists and f_exists
+if c_exists:
+    ch = open(canon, encoding='utf-8').read()
+    # 2. canonical 含 lean template marker（masthead + dsum）
+    marker = ('class="masthead"' in ch) and ('class="dsum"' in ch)
+    print(f"canonical lean marker (masthead+dsum): {'✅' if marker else '❌ 視覺回退嫌疑'}")
+    # 3. canonical 含 id-meta
+    c_meta = bool(re.search(r'<script\s+id="id-meta"', ch))
+    print(f"canonical 含 id-meta: {'✅' if c_meta else '❌'}")
+    ok &= marker and c_meta
+if f_exists:
+    fh = open(full, encoding='utf-8').read()
+    # 4. _full 不含 id-meta
+    f_meta = bool(re.search(r'<script\s+id="id-meta"', fh))
+    print(f"_full 不含 id-meta: {'✅' if not f_meta else '❌ 重複 id-meta 會雙列索引'}")
+    ok &= not f_meta
+print("\nGate 11:", "PASS" if ok else "BLOCKED")
+PY
+```
+
+**Fail action**：只產一檔 → 補產缺的那份（canonical 走 `lean_template.md`、`_full` 走 `html_template.md`）。canonical 無 masthead/dsum → 視覺回退，重套精煉版皮。`_full` 帶了 id-meta → 移除（`<meta name="id-*">` + `<script id="id-meta">` 只放 canonical）。
+
+---
+
+## Gate 12 [必備 / 阻斷]｜kill_metrics 同步 + 三值一致
+
+**規則**（v2.5 新）：
+1. id-meta `kill_metrics[]` **≥3 條**，且與 §8 證偽表**逐條對得上**（metric 名與 bear 閾值一致，非另編一套）。
+2. id-meta `sd_verdict` / `clock_phase` / `conviction` 與 §0 6-box 卡片、§5 供需裁決**一致**（機器欄位不得與散文結論打架）。
+
+**為何阻斷**：v2.5 把證偽表 / 供需裁決 / 投資時鐘 / conviction 從散文升為機器欄位（position-thesis-monitor 直接掃 `kill_metrics`、跨 ID 趨勢排序讀三值）— 若 id-meta 與正文脫節，下游讀到的是假訊號。
+
+**檢查碼**：
+```bash
+python3 << 'PY'
+import re, json
+html = open("docs/id/ID_{Theme}_{Date}.html", encoding='utf-8').read()
+m = re.search(r'<script\s+id="id-meta"[^>]*>(.*?)</script>', html, re.DOTALL)
+meta = json.loads(m.group(1)) if m else {}
+km = meta.get("kill_metrics", [])
+print(f"kill_metrics 條數: {len(km)}（need ≥3）— {'✅' if len(km) >= 3 else '❌'}")
+# §8 證偽表逐條對齊（人工複核 metric 名 + bear 閾值；此處先列出供對照）
+s8 = re.search(r'<section[^>]*id="s8"[^>]*>(.*?)</section>', html, re.DOTALL)
+s8_txt = re.sub(r'<[^>]+>', ' ', s8.group(1)) if s8 else ''
+for i, k in enumerate(km):
+    metric = k.get("metric", "")
+    hit = metric[:6] in s8_txt if metric else False
+    print(f"  kill[{i}] metric={metric!r} bear={k.get('bear_threshold','')!r} → §8 對照 {'✅' if hit else '⚠ 人工複核'}")
+# 三值一致（§0 6-box / §5 裁決 — 人工複核，此處列 id-meta 值供對照）
+print(f"sd_verdict={meta.get('sd_verdict')} / clock_phase={meta.get('clock_phase')} / conviction={meta.get('conviction')}")
+print("→ 對照 §0 6-box + §5 裁決是否一致（人工複核）")
+print("\nGate 12:", "PASS（≥3）" if len(km) >= 3 else "BLOCKED（<3）")
+PY
+```
+
+**Fail action**：`kill_metrics` < 3 → 補齊至對齊 §8 證偽表 3-5 條。metric 名 / bear 閾值與 §8 對不上 → 二擇一改到一致。三值與 §0/§5 打架 → 修 id-meta 或修正文，以正文裁決為準。（`validate_id_meta.py` 已對 `skill_version` ≥ v2.5 阻斷 <3 條與缺三值，本 gate 額外驗「與正文對齊」。）
+
+---
+
+## Gate 13 [warning]｜§9 purity_pct segment 推導
+
+**規則**（v2.5 新）：§9 表每檔 `purity_pct` 必附一行 segment 營收推導（footnote 或敘事，「該檔 segment 營收 ÷ 總營收 → __%」式），比照 `demand_5y_multiple` 的推導鏈要求。
+
+**為何 warning**：v2.4 首發 ASMPT purity 標 85%，但其近半營收是 SMT（表面貼裝）非半導體後段封裝 — 無推導行就沒被攔，純度被灌水。有推導行才逼作者面對「85% 哪來的」。
+
+**檢查碼**（掃 §9 是否每個純度數字鄰近有推導標記）：
+```bash
+python3 << 'PY'
+import re
+html = open("docs/id/ID_{Theme}_{Date}.html", encoding='utf-8').read()
+m = re.search(r'<section[^>]*id="s9"[^>]*>(.*?)</section>', html, re.DOTALL)
+s9 = m.group(1) if m else ''
+purity_hits = len(re.findall(r'純度|purity', s9))
+derive_hits = len(re.findall(r'推導[：:]|÷|營收占比|segment', s9, re.IGNORECASE))
+print(f"§9 純度提及: {purity_hits} / 推導標記（推導/÷/segment）: {derive_hits}")
+print("PASS" if derive_hits >= 1 else "WARN: §9 purity 缺 segment 推導行")
+PY
+```
+
+**Fail action**：在 §9 表下方 footnote 或敘事補每檔一行 segment 推導（「XXX：封裝段營收 \$__B ÷ 總營收 \$__B → __%」）。
+
+---
+
 ## 輸出格式：pre_publish_report.md
 
 每次 gate check 產出一份報告：
@@ -592,15 +697,28 @@ T1 share {Z}% — {PASS/FAIL}；missing-aside sections: {list}
 ## Gate 10: Warning Checks
 {10-1..10-4} — {PASS/WARNED}
 
+## Gate 11: Dual-Output 完整性
+canonical 存在 / _full 存在 / lean marker / id-meta 分工: ✅ / ❌
+→ Gate 11: ✅ PASS / ❌ BLOCKED
+
+## Gate 12: kill_metrics 同步 + 三值一致
+kill_metrics {n} 條（≥3）/ §8 逐條對齊 / sd_verdict·clock_phase·conviction 一致 §0/§5: ✅ / ❌
+→ Gate 12: ✅ PASS / ❌ BLOCKED
+
+## Gate 13: §9 purity 推導
+每檔 purity_pct 有 segment 推導行: ✅ / ⚠
+→ Gate 13: ✅ PASS / ⚠ WARNED
+
 ## Final Status
 ✅ ALL BLOCKING GATES PASS - 允許發布
-⚠ WARNINGS (Gate 10): {list}
+⚠ WARNINGS (Gate 10/13): {list}
 ❌ BLOCKED at Gate {n}: {reason}
 ```
 
 ---
 
 ## 版本歷史
+- **v2.5（2026-07-05）**：新增 Gate 11（阻斷｜dual-output 完整性 — canonical + `_full.html` 皆存在、canonical 含 lean marker（masthead+dsum）+ id-meta、`_full` 不含 id-meta；治 v2.4 首發只產一檔 / 視覺回退）、Gate 12（阻斷｜kill_metrics 同步 — id-meta `kill_metrics[]` ≥3 對齊 §8 證偽表 + sd_verdict/clock_phase/conviction 一致 §0/§5）、Gate 13（warning｜§9 purity_pct segment 推導行）。共 10 → 13 道。配合 industry-analyst v2.5 趨勢結構化欄位 + `validate_id_meta.py` v2.5+ 阻斷。
 - **v2.0（2026-06-11）**：配合 industry-analyst v2.0（合併 ID + DS）完整重寫為 10 道 gate。Gate 1/2/2.1/3 從 ID v1.x 原文搬入；Gate 4（id-meta validate，原 ID Gate 8）/ Gate 5（PM 綠卡，原 ID Gate 9）保留；Gate 6（文字比 ≥55% + 表格 cap，搬 DS Gate 11+10、門檻 80%→55% / 表格 4→10）/ Gate 7（推導 regex，搬 DS Gate 13、掃 §4/§5/§7/§8/§9）/ Gate 8（aside 來源 + T1 ≥60%，搬 DS Gate 12、門檻 50%→60%）/ Gate 9（§1 錨點，搬 DS Gate 14/DS-9、阻斷）為 DS 移植；Gate 10（warning：供需裁決 + §9 depth 時間限定 + catalyst 雙路徑 + 原 ID 3.1/5/6/7 warning gates 摘要）。輸出 pre_publish_report.md 格式照舊。
 - v1.7（2026-05-03）：新增 Gate 9（§0.7 PM Implication 存在 + conviction 一致性）。
 - v1.6（2026-04-27）：新增 Gate 8（id-meta JSON Validation）。
