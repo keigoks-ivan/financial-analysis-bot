@@ -45,6 +45,12 @@ OUT = os.path.join(DOCS, "picks", "candidates.json")
 
 TW8 = timezone(timedelta(hours=8))
 
+# 每組正式榜席位上限——持有人 2026-07-05 拍板「寧缺勿濫」，額滿者按排序輪替回候選區
+SEAT_CAP = 5
+
+# 長熬席位排序用護城河分數（排序規則 v0 未調參）
+MOAT_PTS = {"S": 3, "A": 2, "B": 1}
+
 
 def warn(msg):
     print(f"[build_picks] WARN: {msg}", file=sys.stderr)
@@ -282,6 +288,7 @@ def build_trend_resolver(latest, registry):
                     "trend_status": "樣本不足",
                     "trend_evidence": f"{theme}：universe 內成員 < 3，寬度無法判定",
                     "id_theme": theme,
+                    "trend_breadth_avg": 0.0,  # 樣本不足視為 0（席位 tiebreak 用）
                 }
             verdict, rb, pb, n = res
             return {
@@ -290,6 +297,7 @@ def build_trend_resolver(latest, registry):
                     f"{theme}：上修寬度 {rb:.0f}%・站上年線 {pb:.0f}%・S曲線 {phase}（n={n}）"
                 ),
                 "id_theme": theme,
+                "trend_breadth_avg": round((rb + pb) / 2, 1),
             }
         # 無 ID 覆蓋 → sector 級
         sec = (sector or "").strip()
@@ -301,11 +309,13 @@ def build_trend_resolver(latest, registry):
                     f"sector 級・無 ID 覆蓋｜{sec}：上修寬度 {rb:.0f}%・站上年線 {pb:.0f}%（n={n}）"
                 ),
                 "id_theme": None,
+                "trend_breadth_avg": round((rb + pb) / 2, 1),
             }
         return {
             "trend_status": "樣本不足",
             "trend_evidence": "無 ID 覆蓋且 sector 樣本不足",
             "id_theme": None,
+            "trend_breadth_avg": 0.0,
         }
 
     return resolve, theme_verdicts
@@ -410,6 +420,7 @@ def build_changhao(latest, trigger_map, grp_set, trend_resolve):
             "trend_status": trend["trend_status"],
             "trend_evidence": trend["trend_evidence"],
             "id_theme": trend["id_theme"],
+            "trend_breadth_avg": trend.get("trend_breadth_avg", 0.0),
             "trigger": trig or None,
             "dd_path": s.get("dd_path"),
             "sources": chips,
@@ -612,6 +623,44 @@ def main():
 
     changhao, baofa = rest_changhao, rest_baofa
 
+    # ---- 席位上限 SEAT_CAP＝5（持有人 2026-07-05 拍板「寧缺勿濫」，額滿者輪替回候選區） ----
+    # 長熬席位排序（排序規則 v0 未調參）：品質優先——
+    #   護城河分數（S=3／A=2／B=1，趨勢 ↑ 加 0.5）→ 同分以產業趨勢寬度平均
+    #   （(上修寬度＋站上年線寬度)/2，樣本不足＝0）tiebreak → 最後 ticker 字母序（確定性）。
+    def changhao_rank_key(x):
+        pts = MOAT_PTS.get(x.get("moat_grade") or "", 0)
+        if (x.get("moat_trend") or "") == "↑":
+            pts += 0.5
+        return (-pts, -(x.get("trend_breadth_avg") or 0.0), x["ticker"])
+
+    official_changhao.sort(key=changhao_rank_key)
+
+    # 爆發席位排序（排序規則 v0 未調參）：沿用 cyclical-track 自身上修複合分
+    # （revision_rank_score，eps2y pp＋FY+1 上修% 合成）低熱在前的既有順序——直接取前 5。
+
+    # 候選區重排 key（塞回 bumped 名字後維持原本閱讀順序）
+    def changhao_cand_key(x):
+        weak = 1 if x.get("trend_status") == "弱" else 0
+        green = 0 if x.get("runway") == "🟢" else 1
+        ev = x.get("ev5y_pct")
+        ev = ev if ev is not None else -999
+        return (weak, green, -ev)
+
+    def baofa_cand_key(x):
+        s = x.get("revision_rank_score")
+        return (1 if x.get("hot") else 0, -(s if s is not None else -999))
+
+    def apply_cap(official, rest, resort_key):
+        kept, bumped = official[:SEAT_CAP], official[SEAT_CAP:]
+        for i, x in enumerate(bumped, start=SEAT_CAP + 1):
+            x["not_promoted_reason"] = f"席位額滿（排第 {i}）"
+            rest.append(x)
+        rest.sort(key=resort_key)
+        return kept, bumped
+
+    official_changhao, bumped_ch = apply_cap(official_changhao, changhao, changhao_cand_key)
+    official_baofa, bumped_bf = apply_cap(official_baofa, baofa, baofa_cand_key)
+
     # as_of：優先取來源的 as_of
     as_of = None
     for src in (latest, cyclical):
@@ -647,8 +696,17 @@ def main():
         f"[build_picks] as_of={as_of}  正式榜：長熬={len(official_changhao)} 爆發={len(official_baofa)}"
         f"  候選：長熬={len(changhao)} 爆發={len(baofa)}"
     )
-    print(f"[build_picks] 自動上榜・長熬（趨勢＝對）：{[x['ticker'] for x in official_changhao]}")
-    print(f"[build_picks] 自動上榜・爆發（非🔥＋站上年線）：{[x['ticker'] for x in official_baofa]}")
+    print(f"[build_picks] 正式榜・長熬（趨勢＝對，品質排序取前 {SEAT_CAP} 席）：")
+    for i, x in enumerate(official_changhao, 1):
+        pts = MOAT_PTS.get(x.get("moat_grade") or "", 0) + (0.5 if x.get("moat_trend") == "↑" else 0)
+        print(f"    #{i} {x['ticker']:<6} 護城河分 {pts:.1f}（{x['moat_grade']}{x['moat_trend']}）・寬度均 {x.get('trend_breadth_avg', 0):.1f}")
+    if bumped_ch:
+        print(f"[build_picks] 長熬席位額滿輪替回候選：{[x['ticker'] for x in bumped_ch]}")
+    print(f"[build_picks] 正式榜・爆發（非🔥＋站上年線，上修複合分取前 {SEAT_CAP} 席）：")
+    for i, x in enumerate(official_baofa, 1):
+        print(f"    #{i} {x['ticker']:<8} 上修分 {x.get('revision_rank_score')}")
+    if bumped_bf:
+        print(f"[build_picks] 爆發席位額滿輪替回候選：{[x['ticker'] for x in bumped_bf]}")
     print("[build_picks] 候選未上榜原因：")
     for x in changhao:
         print(f"    長熬 {x['ticker']:<8} {x['not_promoted_reason']}")

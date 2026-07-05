@@ -99,7 +99,6 @@ a:hover{color:var(--accent-hover)}
 .ddbadge.d-in{background:var(--green-soft);color:var(--green);border:1px solid #a7f3d0}
 .ddbadge.d-watch{background:var(--amber-soft);color:var(--amber);border:1px solid #fcd9a5}
 .ddbadge.d-none{background:#f1f5f9;color:var(--muted);border:1px solid var(--border)}
-.pc-note{font-size:.72rem;color:var(--muted);margin-top:.55rem;line-height:1.5}
 
 .group-block{margin-top:1.4rem}
 .group-title{display:flex;align-items:center;gap:.55rem;font-size:1.02rem;font-weight:700;margin-bottom:.7rem}
@@ -108,16 +107,17 @@ a:hover{color:var(--accent-hover)}
 .group-title.g2 .dot{background:var(--amber)}
 .group-title .sub{font-size:.76rem;font-weight:500;color:var(--muted)}
 
-/* Approved cards (正式榜) */
-.pick-card{background:var(--card);border:1px solid var(--border);border-radius:12px;
-           padding:1.1rem 1.3rem;margin-bottom:.85rem;box-shadow:var(--shadow-sm)}
-.pick-card .pc-head{display:flex;align-items:baseline;gap:.7rem;flex-wrap:wrap;margin-bottom:.7rem}
-.pick-card .pc-tkr{font-family:'IBM Plex Mono',monospace;font-size:1.15rem;font-weight:700}
-.pick-card .pc-name{font-size:.82rem;color:var(--muted)}
-.four{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:.7rem}
-.four .cell{background:var(--bg-soft);border:1px solid var(--border-soft);border-radius:8px;padding:.6rem .75rem}
-.four .cell .k{font-size:.64rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:.25rem}
-.four .cell .v{font-size:.84rem;color:var(--text);line-height:1.55}
+/* Official compact tables (正式榜) — 與候選表同族，視覺升一級 */
+.cand-wrap.offwrap{box-shadow:var(--shadow-sm);margin-bottom:.4rem}
+.cand-wrap.offwrap-g1{border-left:4px solid var(--green)}
+.cand-wrap.offwrap-g2{border-left:4px solid var(--amber)}
+.offwrap-g1 table.cand th{background:var(--green-soft)}
+.offwrap-g2 table.cand th{background:var(--amber-soft)}
+table.cand.official{min-width:820px}
+table.cand.official .tkr{font-size:1.02rem}
+table.cand.official td{padding:.6rem .75rem}
+.obadges{display:inline-flex;gap:.35rem;margin-top:.28rem;flex-wrap:wrap}
+.obadges .ddbadge{margin-left:0}
 
 /* Candidate tables */
 .cand-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px;background:var(--card)}
@@ -170,9 +170,7 @@ footer a{font-weight:600}
 @media(max-width:720px){
   .hero h1{font-size:1.7rem}
   .hero .twogroup{grid-template-columns:1fr}
-  .four{grid-template-columns:1fr 1fr}
 }
-@media(max-width:480px){.four{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -247,7 +245,7 @@ footer a{font-weight:600}
         <p>MU／SNDK 原型：循環拐點 × EPS 共識暴力上修。短時間可翻數倍，trailing 財務難看正是重點。</p>
       </div>
     </div>
-    <p class="gov"><b>治理：</b>候選與正式榜均由規則自動判定——長熬＝產業趨勢「對」自動上榜；爆發＝循環拐點形狀＋站上年線＋非過熱自動上榜。<b>持有人保留 veto</b>（<code>picks.json</code> veto[]，列入者永不自動上榜）；規則變更走 changelog 留痕。本頁正式榜在上、候選區在下（未達條件者標示差在哪一條）。</p>
+    <p class="gov"><b>治理：</b>候選與正式榜均由規則自動判定——長熬＝產業趨勢「對」自動上榜；爆發＝循環拐點形狀＋站上年線＋非過熱自動上榜。<b>每組至多 5 席，寧缺勿濫；額滿者按排序規則輪替。</b><b>持有人保留 veto</b>（<code>picks.json</code> veto[]，列入者永不自動上榜）；規則變更走 changelog 留痕。本頁正式榜在上、候選區在下（未達條件者標示差在哪一條）。</p>
     <p class="disc">本頁為研究紀錄與流程展示，非投資建議。</p>
   </div>
 </section>
@@ -297,7 +295,7 @@ footer a{font-weight:600}
   <div class="container foot-inner">
     <div><b>資料來源：</b>DD Screener（<code>dd-screener/latest.json</code>：DD 裁決、護城河、runway、EPS 上修）、循環軌（<code>cyclical-track.json</code>）、sop-funnel 板機狀態、決策引擎 GRP（<code>engine/radar.json · arena.json</code>）、產業深度 ID（<code>docs/id/</code> id-meta）。四件事草稿由 <code>scripts/build_picks.py</code> 純本地聚合，不含網路呼叫。</div>
     <div style="margin-top:.5rem"><b>產業趨勢判定：</b>ID 主題成員的上修寬度 × 站上年線寬度自動判定（v0 門檻 60/40 未調參）＋ S 曲線 phase 蓋帽（declining 不給「對」）；無 ID 覆蓋者以 sector 寬度代判，樣本不足則如實標示。</div>
-    <div style="margin-top:.5rem"><b>自動上榜規則（v0）：</b>長熬＝候選（DD 進場 ∩ 護城河閘）∩ 產業趨勢「對」；爆發＝cyclical-track 合格 ∩ 非過熱（🔥）∩ 站上年線——右側價格確認代替 DD 裁決（DD 框架結構性不納拐點循環股）。持有人 veto（<code>picks.json</code> veto[]）優先於一切規則；未達條件者留候選區並標示原因。</div>
+    <div style="margin-top:.5rem"><b>自動上榜規則（v0）：</b>長熬＝候選（DD 進場 ∩ 護城河閘）∩ 產業趨勢「對」；爆發＝cyclical-track 合格 ∩ 非過熱（🔥）∩ 站上年線——右側價格確認代替 DD 裁決（DD 框架結構性不納拐點循環股）。<b>每組至多 5 席（寧缺勿濫）</b>：長熬按護城河分數（S=3／A=2／B=1，趨勢 ↑ 加 0.5）＋趨勢寬度均值排序；爆發按上修複合分排序（排序規則 v0 未調參）；額滿者輪替回候選區並標示排名。持有人 veto（<code>picks.json</code> veto[]）優先於一切規則；未達條件者留候選區並標示原因。</div>
     <div style="margin-top:.5rem"><b>更新節奏：</b>正式榜與候選每週六隨市場資料同步重算；veto 與規則變更由持有人手改 <code>picks.json</code>＋changelog 留痕。</div>
     <a class="cockpit-link" href="/cockpit/">機房：完整漏斗與旗標 →</a>
   </div>
@@ -326,7 +324,7 @@ footer a{font-weight:600}
     else if(st==='對') cls='t-good';
     else if(st==='中性') cls='t-mid';
     else if(st==='弱') cls='t-weak';
-    return '<span class="tbadge '+cls+'" style="margin-left:.45rem;margin-bottom:0">'+esc(label)+'</span>';
+    return '<span class="tbadge '+cls+'" style="margin-bottom:0">'+esc(label)+'</span>';
   }
   function ddBadgeHtml(p){
     if(!p.dd_path) return '<span class="ddbadge d-none">待 DD</span>';
@@ -340,25 +338,23 @@ footer a{font-weight:600}
       el.innerHTML='<div class="empty"><b>本組目前 0 檔達自動上榜條件</b>——寧缺勿濫，規則不遷就；候選區標示各檔差在哪一條。</div>';
       return;
     }
-    var html=list.map(function(p){
+    var rows=list.map(function(p){
       var tkr=p.dd_path?'<a href="'+esc(p.dd_path)+'">'+esc(p.ticker)+'</a>':esc(p.ticker);
-      return '<div class="pick-card">'
-        +'<div class="pc-head"><span class="pc-tkr">'+tkr+'</span>'
-        +(p.name&&p.name!==p.ticker?'<span class="pc-name">'+esc(p.name)+'</span>':'')
-        +trendBadgeHtml(p)
-        +(isBaofa?ddBadgeHtml(p):'')
-        +'</div>'
-        +'<div class="four">'
-        +'<div class="cell"><div class="k">為什麼上榜</div><div class="v">'+esc(p.why)+'</div></div>'
-        +'<div class="cell"><div class="k">預期倍數與時間</div><div class="v">'+esc(p.multiple)+(p.horizon?'　·　'+esc(p.horizon):'')+'</div></div>'
-        +'<div class="cell"><div class="k">現在能不能買</div><div class="v">'+esc(p.position)+'</div></div>'
-        +'<div class="cell"><div class="k">什麼情況下架</div><div class="v">'+esc(p.exit)+'</div></div>'
-        +'</div>'
-        +(p.trend_evidence?'<div class="pc-note">產業趨勢：'+esc(p.trend_evidence)+'</div>':'')
-        +'</div>';
+      var badges='<span class="obadges">'+trendBadgeHtml(p)+(isBaofa?ddBadgeHtml(p):'')+'</span>';
+      return '<tr>'
+        +'<td class="tkr">'+tkr+'<br>'+badges+'</td>'
+        +'<td class="why">'+esc(p.why)+(p.trend_evidence?'<span class="tev" style="max-width:none;margin-top:.25rem">'+esc(p.trend_evidence)+'</span>':'')+'</td>'
+        +'<td class="nums">'+esc(p.multiple)+(p.horizon?'<br><span style="color:var(--muted)">'+esc(p.horizon)+'</span>':'')+'</td>'
+        +'<td class="pos">'+esc(p.position)+'</td>'
+        +'<td class="exit">'+esc(p.exit)+'</td>'
+        +'</tr>';
     }).join('');
+    var html='<div class="cand-wrap offwrap '+(isBaofa?'offwrap-g2':'offwrap-g1')+'">'
+      +'<table class="cand official">'
+      +'<thead><tr><th>Ticker</th><th>為什麼上榜</th><th>倍數 / 拐點數字</th><th>位置 · 板機</th><th>下架條件</th></tr></thead>'
+      +'<tbody>'+rows+'</tbody></table></div>';
     if(list.length<3){
-      html+='<div class="empty" style="margin-top:.2rem">本組僅 '+list.length+' 檔達條件——寧缺勿濫，規則不遷就。</div>';
+      html+='<div class="empty" style="margin-top:.4rem">本組僅 '+list.length+' 檔達條件——寧缺勿濫，規則不遷就。</div>';
     }
     el.innerHTML=html;
   }
