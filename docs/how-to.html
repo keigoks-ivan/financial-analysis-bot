@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>使用說明 — InvestMQuest Research</title>
-<meta name="description" content="如何呼喚 Claude skill / SOP：個股 DD / DCA / 產業 DD / DS / 多股對比 / 財報統整的完整指令清單">
+<meta name="description" content="如何讀懂本站：研究／市場／工具三大分區地圖、典型閱讀路徑（產業 ID → 個股 DD → Screener → 期望落差綜合研判）、GRP 排序語言">
 <style>
 body{font-family:-apple-system,'Noto Sans TC',sans-serif;background:#FAFAF9;color:#1E1B4B;margin:0;padding:0;font-size:14px;line-height:1.7}
 header{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);color:#fff;padding:.75rem 0;position:sticky;top:0;z-index:10;box-shadow:0 1px 3px rgba(0,0,0,.12)}
@@ -127,12 +127,15 @@ h1{color:#0F172A;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin:0
       <div class="imq-dd">
         <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
         <div class="imq-dd-menu">
+          <a href="/cockpit/">選股駕駛艙</a>
           <a href="/research/">個股 DD</a>
           <a href="/research/synthesis/">期望落差綜合研判</a>
           <a href="/id/">產業深度 ID</a>
           <a href="/comparisons/">多股對比</a>
           <a href="/supply-chain/">供應鏈地圖</a>
           <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
+          <a href="/picks/">精選清單</a>
+          <a href="/research/momentum-5/">Momentum-5</a>
         </div>
       </div>
       <div class="imq-dd">
@@ -174,731 +177,324 @@ h1{color:#0F172A;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin:0
 
 <div class="container">
   <div class="crumb"><a href="/">首頁</a> &rsaquo; 使用說明</div>
-  <h1>使用說明 — 如何呼喚 skill / SOP</h1>
-  <p class="sub">本站研究內容由 <strong>10 套 Claude skill</strong> + 多份 SOP 協作產出。本頁列出<strong>每個研究工作流對應的觸發指令</strong>，讓你知道「想要 X，該說什麼」。最後更新 2026-05-26。</p>
+  <h1>使用說明 — 如何讀懂這個網站</h1>
+  <p class="sub">InvestMQuest Research 是一個 AI 全自動產出的投資研究站，內容分成<strong>研究</strong>（個股／產業深度分析）、<strong>市場</strong>（即時行情與事件追蹤）、<strong>工具</strong>（量化篩選與決策引擎）三大分區，外加獨立的<strong>心智模型</strong>頁。本頁逐區說明「這裡放什麼、怎麼讀、跟其他分區的關係」，並給出建議的閱讀路徑。全站內容僅供研究參考，不構成投資建議。最後更新 2026-07-05。</p>
 
-  <!-- ========== Skill Map ========== -->
+  <!-- ========== 站點地圖 ========== -->
   <div class="skill-tree">
-    <h3>🗺️ 10 套 Skill 地圖</h3>
-    <p style="font-size:12.5px;color:#475569;margin:6px 0 0">分四層職責：<strong>研究產出</strong> · <strong>研究升級</strong> · <strong>消費端統整</strong> · <strong>發布 + 維運</strong>。</p>
+    <h3>🗺️ 站點地圖 — 頂部導覽三大分區</h3>
+    <p style="font-size:12.5px;color:#475569;margin:6px 0 0">對應頁首導覽列的「研究 ▾ / 市場 ▾ / 工具 ▾」三個下拉選單，外加「🧠 心智模型」與本頁「📘 使用說明」兩個常駐連結。</p>
     <div class="skill-tree-grid">
       <div class="skill-tree-col">
-        <div class="col-title">🔬 研究產出（生產端）</div>
+        <div class="col-title">📚 研究</div>
         <ul>
-          <li><code>stock-analyst</code> v13 — 個股深度報告（基本面 + 決策層，統一裁決）</li>
-          <li><code>deep-conviction-analyst</code> <span style="color:#9CA3AF">（legacy · 2026-06-22 併入 stock-analyst v13）</span></li>
-          <li><code>industry-analyst</code> v2.0 — 產業深度 ID（v2 敘事版，已併入 DS）</li>
-          <li><code>industry-ds</code> — 產業敘述 DS <span style="color:#9CA3AF">（legacy · 併入 ID v2）</span></li>
-          <li><code>geopolitics-dd</code> v1.0 — 地緣政治</li>
+          <li><a href="/cockpit/">選股駕駛艙</a> — 全站入口儀表板</li>
+          <li><a href="/research/">個股 DD</a> — 買側深度報告</li>
+          <li><a href="/research/synthesis/">期望落差綜合研判</a></li>
+          <li><a href="/id/">產業深度 ID</a></li>
+          <li><a href="/id/tier_matrix.html">🎯 Tier Matrix</a></li>
+          <li><a href="/comparisons/">多股對比</a></li>
+          <li><a href="/supply-chain/">供應鏈地圖</a></li>
+          <li><a href="/picks/">精選清單</a></li>
+          <li><a href="/research/momentum-5/">Momentum-5</a></li>
         </ul>
       </div>
       <div class="skill-tree-col">
-        <div class="col-title">🔧 研究升級 / 校驗</div>
+        <div class="col-title">📈 市場</div>
         <ul>
-          <li><code>id-review</code> v1.4 — ID / DS Cold-review critic</li>
+          <li><a href="/briefing/">每日簡報</a>（已暫停更新）</li>
+          <li><a href="/weekly/">週報</a></li>
+          <li><a href="/earnings/">財報分析</a> ＋ 財報前瞻</li>
+          <li><a href="/catalyst/">催化劑日曆</a></li>
+          <li><a href="/markets.html">Markets</a> / <a href="/sectors.html">Sectors</a></li>
+          <li><a href="/long-track-smh/">長線訊號</a> / <a href="/long-track-tw/">台股長線</a></li>
+          <li><a href="/turtle-sleeve/">商品 Sleeve</a></li>
         </ul>
       </div>
       <div class="skill-tree-col">
-        <div class="col-title">📊 消費端統整</div>
+        <div class="col-title">🛠 工具</div>
         <ul>
-          <li><code>multi-stock-comparator-v1</code> v1.5 — 多股對比</li>
-          <li><code>earnings-synthesis</code> v1.1 — 30 天財報統整</li>
+          <li><a href="/engine/">⚙ 決策引擎</a></li>
+          <li><a href="/dd-screener/">DD Screener</a></li>
+          <li><a href="/backtest/">量化回測</a></li>
+          <li><a href="/qgm/">QGM 美股</a> / <a href="/qgm-tw/">台股</a></li>
+          <li><a href="/screener.html">Screener</a>（美／台／日／馬）</li>
+          <li><a href="/cache/">🗄 Data Cache</a></li>
+          <li><a href="/tools/">期貨部位計算機</a></li>
         </ul>
       </div>
       <div class="skill-tree-col">
-        <div class="col-title">🚀 發布 / 維運</div>
+        <div class="col-title">🧠 心智模型</div>
         <ul>
-          <li><code>push-earnings</code> v1.0 — 發布財報 + 更新 index</li>
-          <li><code>refresh-eps-screener</code> v1.0 — DD Screener EPS 月度更新</li>
+          <li><a href="/mental-models/">Munger Latticework</a> — 20 個核心思考模型</li>
         </ul>
       </div>
     </div>
   </div>
 
-  <!-- ========== 1. Stock Analyst ========== -->
+  <!-- ========== 典型閱讀路徑 ========== -->
   <div class="skill-card">
     <div class="skill-head blue">
-      <div class="skill-icon">📊</div>
+      <div class="skill-icon">🧭</div>
       <div class="skill-title">
-        <h2 class="blue">stock-analyst · 個股 DD</h2>
-        <div class="sub">v12.4 — Excel buy-side consensus 接口；v12.3 雙軸護城河 + 估值瘦身 + 基本面擴充</div>
+        <h2 class="blue">典型閱讀路徑</h2>
+        <div class="sub">從產業趨勢定位到單一投資判斷的四步漏斗</div>
       </div>
-      <div class="skill-meta">~/skills/stock-analyst/ · v12.4</div>
     </div>
     <div class="skill-body">
-      <table>
-        <tr><th width="32%">你的意圖</th><th width="28%">觸發指令</th><th>會產出</th></tr>
-        <tr>
-          <td>研究單一股票</td>
-          <td><code>研究 NVDA</code><br><code>幫我做 2330 DD</code></td>
-          <td>docs/dd/DD_{ticker}_{date}.html（13 章完整 DD）+ INDEX append + research 頁同步 + dd-screener rebuild</td>
-        </tr>
-        <tr>
-          <td>刷新既有 DD</td>
-          <td><code>再做一次 TSLA DD</code><br><code>刷新 AVGO</code></td>
-          <td>新日期 DD；自動讀最近一份 DD 的 §5 假設 / §1 監測指標做 12M 對照；舊版保留</td>
-        </tr>
-        <tr>
-          <td>批次研究</td>
-          <td><code>研究 NVDA / AMD / AVGO</code></td>
-          <td>三份獨立 DD，依序執行；最後可附比較段</td>
-        </tr>
-      </table>
-      <div class="tips"><strong>⚡ v12.4 EPS 接 Excel</strong>：DD universe ≈141 ticker（含 US/ADR/TW 自動換 USD）走 Koyfin/Excel 月度 buy-side consensus（FY+1/+2/+3 + 2Y CAGR），優先於 yfinance / WebSearch。ADR / TW listings 自動換成 USD 避免 FX 陷阱。Excel 缺檔 → fallback yfinance → WebSearch。</div>
-      <div class="tips"><strong>⚡ v12.3 結構重排</strong>：估值章節（§2+§13）從 ~40% 砍至 ~18%（13.0/13.3/13.5 砍掉，只留 13.1/13.2/13.4 + 1 段結論）；基本面（§5+§8+§9+§11+§12）擴至 ~55%（§9 強制 execution + pricing power 雙軸拆解；§5.F 加 Single Thing；§8.H 加客戶結構深度；QC-23 三級威脅分類強制使用）。</div>
-      <div class="example">
-        <span class="you">你：</span> 「研究 3653」<br>
-        <span class="bot">Claude：</span> 跑 <code>get_eps_for_ticker.py</code> 查 Excel → fall back yfinance（3653.TW NOT in Excel）→ WebSearch Rubin / MCL / Q1 法說 → 寫 13 章 DD（91KB）→ append INDEX → push
+      <div class="flow">
+        <div class="step"><strong>產業深度 ID</strong>（/id/）— 先搞懂這個題材的供需循環、S 曲線位置、關聯個股清單（§9/§11），判斷「這條產業趨勢還在早段還是晚段」</div>
+        <div class="step"><strong>個股 DD</strong>（/research/）— 從 ID §9/§11 關聯個股點進對應公司的 v13/v14 深度報告：Part I 基本面（護城河、估值、財務體質）＋ Part II 決策層（§14 統一裁決：進場／觀望／迴避）</div>
+        <div class="step"><strong>DD Screener</strong>（/dd-screener/）— 把整個 DD universe 套 S 級護城河 + QGM MLB 條件分 tab 呈現，快速看哪些名字「完全符合」「差一條」，和 /research/ 表格互為對照視角</div>
+        <div class="step"><strong>期望落差綜合研判</strong>（/research/synthesis/）— 對已經鎖定的候選，疊上外部賣方報告與法說逐字稿，判斷「市場對未來 EPS 的預期是否已經過高或過低」，決定新資金追不追、還是等回檔</div>
       </div>
+      <div class="tips"><strong>⚡ 另一條路徑：先看今天該做什麼</strong>——<a href="/cockpit/">選股駕駛艙</a> 把上面四步 + 板機時機（sop-funnel）+ 風險儀表收斂到單一頁面，是每次開站的建議起點；<a href="/engine/">決策引擎</a> 則是背後驅動候選名單的結算式選股機器（見下方「GRP 排序語言」）。</div>
     </div>
   </div>
 
-  <!-- ========== 2. Deep Conviction Analyst (NEW) ========== -->
-  <div class="skill-card">
-    <div class="skill-head indigo">
-      <div class="skill-icon">🎯</div>
-      <div class="skill-title">
-        <h2 class="indigo">DCA 定見 → 已併入 stock-analyst v13<span style="background:#FEF9C3;color:#92400E;font-size:10px;padding:2px 8px;border-radius:10px;margin-left:8px;font-weight:600">2026-06-22 整併</span></h2>
-        <div class="sub">舊 DCA（獨立決策層報告）已併入 stock-analyst v13 的單一報告：基本面 Part I + 決策層 Part II（§12 矛盾裁決 / §13 pre-mortem+Max DD / §14 統一裁決 / §15 複審），收斂為一個人面對裁決：進場 / 觀望 / 迴避。dca/定見 觸發語改觸發 stock-analyst。</div>
-      </div>
-      <div class="skill-meta">~/skills/stock-analyst/ · v13（deep-conviction-analyst 已退役）</div>
-    </div>
-    <div class="skill-body">
-      <table>
-        <tr><th width="32%">你的意圖</th><th width="28%">觸發指令</th><th>會產出</th></tr>
-        <tr>
-          <td>單檔深度報告（基本面 + 決策）</td>
-          <td><code>幫我跑 NVDA DCA</code><br><code>{ticker} 定見</code><br><code>該不該進場 LLY</code><br><code>個股分析 / {ticker} DD</code></td>
-          <td>單一 docs/dd/DD_{ticker}_{date}.html（v13，含 §1-§11 基本面 + §12-§15 決策層 + §14 統一裁決 id="decision"）+ research 頁「定見」📋 連到 #decision 錨點</td>
-        </tr>
-        <tr>
-          <td>一鍵全套（報告 + 同步 + 提交）</td>
-          <td><code>ddreport {ticker}</code><br><code>{ticker} 全套</code></td>
-          <td>stock-analyst v13 → update_dd_index.py → size gate → commit/push（thin orchestrator）</td>
-        </tr>
-      </table>
-      <div class="tips"><strong>⚡ Status Bar 5 格機讀</strong>：DD 訊號燈 / Moat 趨勢 + 箭頭 / Runway Y5+ / Max DD / DCA 裁決（進場 / 觀望 / 迴避）— HTML <code>&lt;head&gt;</code> 內含 <code>dca-moat-trend</code> 與 <code>dca-verdict</code> 兩個機讀 marker，下游 research 頁 generator 自動解析。</div>
-      <div class="tips"><strong>⚡ Phase B 強制裁決</strong>：A1 / A2 / A3 三軸獨立搜尋，最常見偷懶 = 列了矛盾不下判決；本 skill 強制每個不可調和矛盾必須選邊 + 給「會 settle 的硬數據點」+ ≥ 2 條 if-then 反向路徑。</div>
-      <div class="example">
-        <span class="you">你：</span> 「2327 DCA」<br>
-        <span class="bot">Claude：</span> Phase A1 護城河（5 sourced points）+ A2 產業（5 points）+ A3 業務（6 points）→ Phase B 強制 2 矛盾下判決 → §7 觀望（4W +111% 動能 + R:R 雙負，等回測 NT$328 BB 中軌）+ §6c Max DD -55%~-70% 🔴 → push
-      </div>
-    </div>
-  </div>
-
-  <!-- ========== 3. Industry Analyst ========== -->
+  <!-- ========== 研究分區 ========== -->
   <div class="skill-card">
     <div class="skill-head purple">
-      <div class="skill-icon">🔷</div>
+      <div class="skill-icon">📚</div>
       <div class="skill-title">
-        <h2 class="purple">industry-analyst · 產業 DD（ID）</h2>
-        <div class="sub">v1.6 — 14 章 schema，<strong>敘述為主 + 表格為輔（每張表強制前言 + 後解讀）</strong>；含 S 曲線 + value chain + cross-ID 依賴圖 + 9 Gate pre-publish check</div>
+        <h2 class="purple">研究分區</h2>
+        <div class="sub">個股與產業的深度買側分析</div>
       </div>
-      <div class="skill-meta">~/skills/industry-analyst/ · v1.6</div>
     </div>
     <div class="skill-body">
       <table>
-        <tr><th width="32%">你的意圖</th><th width="28%">觸發指令</th><th>會產出</th></tr>
+        <tr><th width="22%">頁面</th><th width="38%">是什麼</th><th>怎麼讀</th></tr>
         <tr>
-          <td>建新產業母題 ID</td>
-          <td><code>研究 {主題} 產業</code><br><code>研究 GLP-1</code><br><code>研究玻璃基板封裝</code></td>
-          <td>docs/id/ID_{Topic}_{date}.html（14 章 ID）+ §11 關聯個股 + cross-ID 依賴圖</td>
+          <td><a href="/cockpit/">選股駕駛艙</a></td>
+          <td>全站五層選股體系的單一入口：市場環境、今日待辦裁決、漏斗活數字、組合記分板</td>
+          <td>開站先看這一頁，找「該我出手」的地方，再點進對應分區細看</td>
         </tr>
         <tr>
-          <td>建子題 ID（母題下分支）</td>
-          <td><code>{母題} 的 {子題名}</code><br><code>資安 SaaS M2 AI × 資安雙刃劍</code></td>
-          <td>子題 ID 自動關聯母題與兄弟 IDs</td>
+          <td><a href="/research/">個股 DD</a></td>
+          <td>買側深度報告，<strong>v13/v14 起把基本面研究與投資決策層合併成單一報告</strong>：Part I §1-§11 基本面（護城河、估值、財務體質、10-K/10-Q），Part II §12-§15 決策層（§12 矛盾裁決／§13 pre-mortem+Max DD／<strong>§14 統一裁決</strong>／§15 複審）。舊版 DCA（獨立決策報告）已於 2026-06-22 併入，不再新增</td>
+          <td>表格「定見」欄直接連到該 DD 的 <code>#decision</code> 錨點（§14）；「四軸」欄顯示護城河等級/趨勢箭頭、估值燈、MA 狀態</td>
         </tr>
         <tr>
-          <td>刷新既有 ID</td>
-          <td><code>刷新 ID_HBM</code></td>
-          <td>新版 ID；自動跑 8.7 mandatory critic gate</td>
+          <td><a href="/research/synthesis/">期望落差綜合研判</a></td>
+          <td>把站內 ID／供應鏈／DD／知識帳本，加上外部賣方報告（CLSA、Nomura、HSBC…）與法說逐字稿，收斂成單一投資判斷：市場對未來 EPS 的預估是否過高或過低</td>
+          <td>看 A 趨勢定位 + B 期望落差（§2 可能更好／§3 可能更差／§Δ 收斂）+ 退出觸發；§5 只連出 DD/ID/供應鏈不重複內容，可自行查證</td>
         </tr>
         <tr>
-          <td>局部補丁</td>
-          <td><code>更新 ID_AP 的 §4 TAM</code></td>
-          <td>只重寫該段（v1.5+ 支援）</td>
+          <td><a href="/id/">產業深度 ID</a></td>
+          <td>跨多檔個股共用的產業研究文件（HBM、CoWoS、AI ASIC、矽光子、GLP-1 等），敘事為骨、表格為窗，含供需循環判斷與關聯個股清單</td>
+          <td>先看每篇 ID 的決策層（thesis box / conviction tier），再從關聯個股清單跳去對應 DD</td>
         </tr>
         <tr>
-          <td>建新 Flagship</td>
-          <td><code>建 {產業} flagship</code>（需 ≥ 5 份 ID）</td>
-          <td>docs/id/theses-{category}.html + Library tab 啟用</td>
-        </tr>
-      </table>
-      <div class="tips"><strong>⚡ v1.6 敘述主導反轉</strong>：原則 4 從「Tables-heavy」改為「Narrative-led」；QC-I24 每張表強制前言 + 後解讀；敘述比例從 &lt; 30% → 50-60%。理由：使用者 feedback「表格看不懂要表達什麼」。</div>
-      <div class="tips"><strong>⚡ 九道 Gate（含 critic）</strong>：發布前自動跑 (1) core ticker financials &lt; 60 天 / (2) event thesis &lt; 14 天 / (2.1) Thesis Cornerstone Fact Verification（「獨家 / 首家 / 唯一」必獨立驗證）/ (2.2) base/bull/bear 三檔強制 / (3) cross-ID 一致 / (3.1) cross-ID thesis bias / (4) catalyst / (5) unit / (6) layer / (7) sub-topic value-add / Step 8.7 強制 spawn <code>id-review</code> 跑 critic。</div>
-    </div>
-  </div>
-
-  <!-- ========== 4. Industry DS (NEW) ========== -->
-  <div class="skill-card">
-    <div class="skill-head pink">
-      <div class="skill-icon">📖</div>
-      <div class="skill-title">
-        <h2 class="pink">industry-ds · 產業敘述 DS（Discourse）<span style="background:#F3F4F6;color:#6B7280;font-size:10px;padding:2px 8px;border-radius:10px;margin-left:8px;font-weight:600">LEGACY · 已併入 ID v2</span></h2>
-        <div class="sub">已於 <strong>2026-06</strong> 整併入 <code>industry-analyst</code> v2.0 — 所有 DS 觸發語（「{主題} ds」「敘述報告」「供需循環」「discourse」）現在改觸發 ID v2 敘事版。<code>docs/ds/</code> 8 份既有報告凍結為 legacy 存檔，維持可讀與更新。</div>
-      </div>
-      <div class="skill-meta">DEPRECATED · 併入 ID v2</div>
-    </div>
-    <div class="skill-body">
-      <table>
-        <tr><th width="32%">你的意圖</th><th width="28%">觸發指令</th><th>會產出</th></tr>
-        <tr>
-          <td>建敘述型產業報告（現走 ID v2）</td>
-          <td><code>{主題} ds</code><br><code>{產業} 敘述報告</code><br><code>分析 {產業} 供需循環</code></td>
-          <td>觸發 <code>industry-analyst</code> v2 → docs/id/ID_{Theme}_{date}.html（v2 敘事版；敘事為骨、表格為窗，併入原 DS 供需敘事弧）</td>
+          <td><a href="/id/tier_matrix.html">🎯 Tier Matrix</a></td>
+          <td>跨產業 DD 的個股投資 conviction 分級（Tier 1 真 Moat-core／Tier 2／Tier 3 Thesis-pure／Tier 4 Avoid），含 AI 顛覆檢核與估值 reset 度</td>
+          <td>半衰期 60 天，過期需重新校準；用來快速掃「哪些名字的 conviction 正在下降」</td>
         </tr>
         <tr>
-          <td>歷史/未來敘事研究（現走 ID v2）</td>
-          <td><code>{主題} 歷史與未來</code><br><code>discourse {industry}</code></td>
-          <td>同上；ID v2 涵蓋三情境 + 因果閉合 + §末 aside 來源系統</td>
-        </tr>
-      </table>
-      <div class="tips"><strong>⚡ 已併入 ID v2（2026-06）</strong>：DS 與 ID 不再是兩條線。新報告一律由 <code>industry-analyst</code> v2 產出，吸收原 DS 的敘事弧 + 因果閉合 + 推導鏈 + 來源系統，卡片帶「v2 敘事版」badge。<code>docs/ds/</code> 8 份歷史 DS 凍結為 legacy 存檔（頁面照常可讀）。</div>
-      <div class="tips"><strong>⚡ Legacy DS critic</strong>：既有 DS 報告仍可用 <code>id-review --mode ds</code> 跑 8 條 DS-specific 檢查；新報告走 ID v2 的 critic gate。</div>
-    </div>
-  </div>
-
-  <!-- ========== 5. Geopolitics DD ========== -->
-  <div class="skill-card">
-    <div class="skill-head red">
-      <div class="skill-icon">🌏</div>
-      <div class="skill-title">
-        <h2 class="red">geopolitics-dd · 地緣政治深度研究</h2>
-        <div class="sub">v1.0 跨域研究 — 母議題 Master overview + N 子議題 + 三線預警儀表板（經濟/軍事/政治 × D-180/D-30/D-7）+ 情境 × 產業投資決策矩陣</div>
-      </div>
-      <div class="skill-meta">~/skills/geopolitics-dd/ · v1.0</div>
-    </div>
-    <div class="skill-body">
-      <table>
-        <tr><th width="32%">你的意圖</th><th width="28%">觸發指令</th><th>會產出</th></tr>
-        <tr>
-          <td>建地緣政治母議題</td>
-          <td><code>研究 {地緣議題}</code><br><code>地緣政治研究 中台衝突</code></td>
-          <td>docs/geo/Master_{Topic}_{date}.html + N 子議題 HTML</td>
+          <td><a href="/comparisons/">多股對比</a></td>
+          <td>對 2-5 檔個股做四層時間框架（&lt;12M／2-3Y／3-5Y／5-10Y）橫向打分，每層獨立排序，給出推薦標的與不選其他檔的具體理由</td>
+          <td>讀取本地 DD 決策層數據，不重做個股研究；適合「這兩三檔哪個好」的取捨場景</td>
         </tr>
         <tr>
-          <td>戰爭 / 衝突機率分析</td>
-          <td><code>中台動武機率</code><br><code>俄烏停火情境</code></td>
-          <td>情境機率樹 + 三線預警 + 產業投資含義</td>
+          <td><a href="/supply-chain/">供應鏈地圖</a></td>
+          <td>把產業鏈拆成節點 × 廠商 × 競爭態勢 × 客戶獨家單點的互動圖，公司列表直接連到對應 DD 報告；CoWoS 先進封裝、CPO 兩個 topic 已上線</td>
+          <td>看 ⚑ 標記找「誰是脆弱依賴點」，與 ID 的敘事型供需分析互補（另一種產業視角）</td>
         </tr>
         <tr>
-          <td>組合地緣壓測</td>
-          <td><code>{情境} 對持倉的影響</code></td>
-          <td>情境 × 產業矩陣（buy / short / hedge）</td>
-        </tr>
-      </table>
-      <div class="tips"><strong>⚡ 涵蓋議題</strong>：中台動武、俄烏、中東、朝鮮半島、南海、印巴邊境、拉美政變。每個議題含 D-180 / D-30 / D-7 三線預警，可隨時間更新偵測信號。</div>
-    </div>
-  </div>
-
-  <!-- ========== 7. Multi-Stock Comparator (NEW) ========== -->
-  <div class="skill-card">
-    <div class="skill-head amber">
-      <div class="skill-icon">⚖️</div>
-      <div class="skill-title">
-        <h2 class="amber">multi-stock-comparator-v1 · 多股對比<span style="background:#FEE2E2;color:#991B1B;font-size:10px;padding:2px 8px;border-radius:10px;margin-left:8px;font-weight:600">NEW</span></h2>
-        <div class="sub">v1.5-cc-tuned — 2-5 檔個股四層時間框架對比（&lt;12M / 2-3Y / 3-5Y / 5-10Y）；從本地 dca/ 或 dd/ 讀最新報告，不重做個股研究</div>
-      </div>
-      <div class="skill-meta">~/skills/multi-stock-comparator-v1/ · v1.5</div>
-    </div>
-    <div class="skill-body">
-      <table>
-        <tr><th width="32%">你的意圖</th><th width="28%">觸發指令</th><th>會產出</th></tr>
-        <tr>
-          <td>2-5 檔同類比較</td>
-          <td><code>比較 NVDA 與 AVGO</code><br><code>2330 vs TSM vs ASML 用 DCA 對比</code><br><code>該選哪一家</code></td>
-          <td>docs/comparisons/MS_{tickers}_{date}.html（4 個時距各打分）+ index 卡片</td>
-        </tr>
-      </table>
-      <div class="tips"><strong>⚡ 消費端 skill</strong>：假設目標 ticker 的 DCA / DD 已存在於 docs/dca/ 或 docs/dd/，不自動觸發 stock-analyst 或 deep-conviction-analyst。報告日 &gt;3 天時走 WebSearch 重抓現價並重算 Fwd PE / PEG。</div>
-    </div>
-  </div>
-
-  <!-- ========== 8. Earnings Synthesis (NEW) ========== -->
-  <div class="skill-card">
-    <div class="skill-head teal">
-      <div class="skill-icon">📰</div>
-      <div class="skill-title">
-        <h2 class="teal">earnings-synthesis · 30 天財報統整<span style="background:#FEE2E2;color:#991B1B;font-size:10px;padding:2px 8px;border-radius:10px;margin-left:8px;font-weight:600">NEW</span></h2>
-        <div class="sub">v1.1 — 把過去 30 天的 earnings 日報串成產業/子產業 trend + investment implication；缺失交易日自動 web fill-gap 補大型公司</div>
-      </div>
-      <div class="skill-meta">~/skills/earnings-synthesis/ · v1.1</div>
-    </div>
-    <div class="skill-body">
-      <table>
-        <tr><th width="32%">你的意圖</th><th width="28%">觸發指令</th><th>會產出</th></tr>
-        <tr>
-          <td>30 天財報重點統整</td>
-          <td><code>跑最近財報的統整</code><br><code>earnings 統整</code><br><code>monthly earnings rollup</code></td>
-          <td>docs/earnings/synthesis_{date}.html（8 章節敘事為主表格為輔）+ 在 earnings/index.html hero 後 inject highlight card</td>
-        </tr>
-      </table>
-      <div class="tips"><strong>⚡ 消費端 + Web fill-gap</strong>：本地 earnings 日報 + 缺失交易日 web fill-gap 補 mkt cap ≥ $50B 公司（light WebFetch 取 EPS/rev/guidance/reaction，融入趨勢章節不另存日報檔）。本地深度料 vs web 補料明確分色標示（藍 vs 橘）+ 信心度註腳。</div>
-      <div class="tips"><strong>⚡ v1.1 強制三重檢查</strong>：Step 4.5 self-review gate + Step 5.5 post-write sanity check + Step 8.5 reflective review — 對 ticker completeness / 未來日期 fact-check / 本地 vs web 標籤 / 跨章節一致進行三重檢查。</div>
-    </div>
-  </div>
-
-  <!-- ========== 9. ID Review (NEW) ========== -->
-  <div class="skill-card">
-    <div class="skill-head grey">
-      <div class="skill-icon">🔍</div>
-      <div class="skill-title">
-        <h2 style="color:#0F172A">id-review · ID / DS Cold-review critic<span style="background:#FEE2E2;color:#991B1B;font-size:10px;padding:2px 8px;border-radius:10px;margin-left:8px;font-weight:600">NEW</span></h2>
-        <div class="sub">v1.4.1 — 對既有 ID / DS 跑 cold-review critic 並 patch 大錯；user-in-the-loop patch + commit & push 工作流；被 industry-analyst / industry-ds 強制呼叫做 mandatory critic gate</div>
-      </div>
-      <div class="skill-meta">~/skills/id-review/ · v1.4.1</div>
-    </div>
-    <div class="skill-body">
-      <table>
-        <tr><th width="32%">你的意圖</th><th width="28%">觸發指令</th><th>會產出</th></tr>
-        <tr>
-          <td>對既有 ID 跑 critic</td>
-          <td><code>review ID_HBM</code><br><code>audit {ID 主題}</code><br><code>這份 ID 還活著嗎</code></td>
-          <td>notes/site-internal/id/_critic_{Theme}_{date}.md（大錯 / cosmetic 分類）+ user 確認後直接 patch HTML</td>
+          <td><a href="/picks/">精選清單</a></td>
+          <td>兩組收斂輸出——長熬（品質成長 × 產業趨勢）與爆發（循環拐點 × EPS 暴力上修），每檔說明為什麼、倍數與年限、位置、下架條件</td>
+          <td>候選由機器生成，正式上榜需人工裁決</td>
         </tr>
         <tr>
-          <td>對 DS 跑 critic</td>
-          <td><code>review DS_{Theme} --mode ds</code></td>
-          <td>同上但走 DS-specific 8 條檢查（DS-1 表格比 / DS-2 因果閉合 / DS-3 供需平衡 / 等）</td>
-        </tr>
-      </table>
-      <div class="tips"><strong>⚡ Decision-time critic（CLAUDE.md 強制）</strong>：當用戶討論「考慮加倉 / 減倉 X 產業 theme」或「{theme} thesis 還活著嗎」時，主 agent 必須先 spawn id-review sub-agent 對相關 ID 跑冷讀，再給投資建議。Boris verify-app pattern 翻譯到投資決策層 — 寫 ID 的 agent 與驗 thesis 的 agent 不同。</div>
-    </div>
-  </div>
-
-  <!-- ========== 10. Push Earnings (NEW) ========== -->
-  <div class="skill-card">
-    <div class="skill-head grey">
-      <div class="skill-icon">📤</div>
-      <div class="skill-title">
-        <h2 style="color:#0F172A">push-earnings · 發布財報 + 更新 index<span style="background:#FEE2E2;color:#991B1B;font-size:10px;padding:2px 8px;border-radius:10px;margin-left:8px;font-weight:600">NEW</span></h2>
-        <div class="sub">v1.0 — 9-step 工作流：掃 docs/earnings/ 新增的 earnings_{date}.html，diff 對 index，提 takeaway/company count，建 &lt;li&gt; 並排序，commit & push</div>
-      </div>
-      <div class="skill-meta">~/skills/push-earnings/ · v1.0</div>
-    </div>
-    <div class="skill-body">
-      <table>
-        <tr><th width="32%">你的意圖</th><th>觸發指令</th></tr>
-        <tr>
-          <td>發布新財報日報</td>
-          <td><code>push earnings</code> / <code>發布財報</code> / <code>更新 earnings index</code></td>
+          <td><a href="/research/momentum-5/">Momentum-5</a></td>
+          <td>五席 S&amp;P 500 研究提名組合：EPS 修正動能 screen（週更）＋人工催化劑裁決，換席旗標制、對比 SPY 追蹤</td>
+          <td>非投資建議，用來觀察「動能排序」這個獨立鏡頭與 DD 裁決的異同</td>
         </tr>
       </table>
     </div>
   </div>
 
-  <!-- ========== 11. Refresh EPS Screener (NEW) ========== -->
-  <div class="skill-card">
-    <div class="skill-head grey">
-      <div class="skill-icon">📈</div>
-      <div class="skill-title">
-        <h2 style="color:#0F172A">refresh-eps-screener · DD Screener EPS 月度更新<span style="background:#FEE2E2;color:#991B1B;font-size:10px;padding:2px 8px;border-radius:10px;margin-left:8px;font-weight:600">NEW</span></h2>
-        <div class="sub">v1.0 — 用新 <code>DD_universe_EPS_estimates_YYYYMMDD.xlsx</code> 更新 /dd-screener/；同月內 intra-month refresh 自動保留前一份 snapshot 當 baseline 算 FY1/FY2/FY3 EPS revision%</div>
-      </div>
-      <div class="skill-meta">~/skills/refresh-eps-screener/ · v1.0</div>
-    </div>
-    <div class="skill-body">
-      <table>
-        <tr><th width="32%">你的意圖</th><th>觸發指令</th></tr>
-        <tr>
-          <td>用新 Excel 更新 screener</td>
-          <td><code>update eps screener</code> / <code>更新 dd-screener</code> / <code>refresh EPS estimates</code> / 直接丟 <code>DD_universe_EPS_estimates_*.xlsx</code> 並要 update</td>
-        </tr>
-      </table>
-      <div class="tips"><strong>⚡ FX pipeline</strong>：非美股 (TW/JP/HK/KS/CN/CH) 走既有 FX pipeline 自動換成 local currency 顯示。Spot-check 對照 Excel Notes 第 8 列「Updated EPS vs YYYY-MM-DD」是 hard gate，sanity 不過不要 commit。</div>
-    </div>
-  </div>
-
-  <!-- ========== Skill 之間的整合 ========== -->
-  <div class="skill-card">
-    <div class="skill-head grey">
-      <div class="skill-icon">🔗</div>
-      <div class="skill-title">
-        <h2 style="color:#0F172A">Skill 之間的整合關係</h2>
-        <div class="sub">11 套 skill 如何協作 — 兩條主動線</div>
-      </div>
-    </div>
-    <div class="skill-body">
-      <h4 style="color:#1E3A5F;margin:0 0 6px;font-size:13px">個股研究流：DD → DCA → comparator</h4>
-      <div class="flow">
-        <div class="step">stock-analyst 寫 DD（讀 docs/id/INDEX.md 命中 ID 則引用，不重寫產業通論）</div>
-        <div class="step">deep-conviction-analyst 跑 DCA — Phase A4 自動讀 dd-meta JSON 取 trap / signal / moat（fallback HTML extract）</div>
-        <div class="step">multi-stock-comparator-v1 讀本地 dca/ 或 dd/ 對 2-5 檔做四時距對比（不重做個股）</div>
-        <div class="step">portfolio-manager 複盤時掃 docs/dd/INDEX.md 與 docs/dca/INDEX.md → 計算組合的 ID 曝險矩陣 (§7.5)</div>
-      </div>
-      <h4 style="color:#1E3A5F;margin:12px 0 6px;font-size:13px">產業研究流：ID v2（已併入 DS）→ Flagship</h4>
-      <div class="flow">
-        <div class="step">industry-analyst 產 ID v2 敘事版（敘事為骨 + 表格為窗，併入原 DS 供需敘事弧）+ §11 列關聯個股 + §11.5 cross-ID 依賴圖</div>
-        <div class="step">2026-06 起 DS 線已併入 ID v2 — 不再另產 DS 報告；<code>docs/ds/</code> 8 份歷史 DS 凍結為 legacy 存檔（照常可讀）</div>
-        <div class="step">id-review 對 ID 跑 mandatory critic（Step 8.7 強制 spawn）；legacy DS 仍可用 <code>--mode ds</code></div>
-        <div class="step">geopolitics-dd 產情境 → industry-analyst 可建對應風險 ID；portfolio-manager 拿情境 × 產業矩陣做組合壓測</div>
-        <div class="step">多份 ID 累積 5+ → 建 flagship（跨 ID synthesis）</div>
-      </div>
-      <h4 style="color:#1E3A5F;margin:12px 0 6px;font-size:13px">維運流：發布 + 更新</h4>
-      <div class="flow">
-        <div class="step">earnings-synthesis 每月跑 30 天統整</div>
-        <div class="step">push-earnings 發新財報日報 + 更新 index</div>
-        <div class="step">refresh-eps-screener 每月用新 Excel 更新 /dd-screener/</div>
-      </div>
-      <p style="margin-top:12px;font-size:12.5px;color:#6B7280">10 套 skill 共用 <code>docs/dd/INDEX.md</code>、<code>docs/dca/INDEX.md</code>、<code>docs/id/INDEX.md</code>、<code>docs/ds/INDEX.md</code> 和 <code>references/</code> 作為單一事實源。任何一處更新會透過索引檔自動傳導。</p>
-    </div>
-  </div>
-
-  <!-- ========== 心智模型 ========== -->
-  <div class="skill-card">
-    <div class="skill-head teal">
-      <div class="skill-icon">🧠</div>
-      <div class="skill-title">
-        <h2 class="teal">心智模型 · Munger Latticework P1</h2>
-        <div class="sub">20 個核心模型 · 五大領域 · 文章閱讀式</div>
-      </div>
-      <div class="skill-meta">docs/mental-models/</div>
-    </div>
-    <div class="skill-body">
-      <p style="font-size:12.5px;color:#374151;margin-bottom:10px">心智模型頁依 Charlie Munger latticework 理念，整理 20 個 P1 核心模型，分屬五大領域：<strong>心理學</strong>（認知偏誤 / 激勵機制）、<strong>微觀經濟</strong>（護城河 / 激勵結構）、<strong>數學統計</strong>（複利 / 貝氏）、<strong>工程物理</strong>（臨界點 / 冗餘設計）、<strong>生物學</strong>（演化 / 生態競合）。</p>
-      <p style="font-size:12.5px;color:#374151;margin-bottom:10px">頁面採文章閱讀式設計：左側 sticky TOC 可快速跳轉各領域；每個模型為獨立可展開 section，含定義、Munger 原文引述、投資與商業實例、關聯模型 cross-reference；支援列印（展開全部 sections）。</p>
-      <div class="tips" style="margin:8px 0"><strong>⚡ 適用場景</strong>：投資決策前自檢思考偏誤（如可得性偏誤、確認偏誤）；商業案例分析時快速定位適用框架（如護城河五力、激勵機制）。P1 目前收錄 20 個模型，未來將擴充至 P2 / P3。</div>
-      <div class="example">
-        <span class="you">前往：</span> <a href="/mental-models/" style="color:#0F4C3A;font-weight:600">/mental-models/</a> 或點選頂部導覽「🧠 心智模型」
-      </div>
-    </div>
-  </div>
-
-  <!-- ========== Quick Reference ========== -->
-  <div class="quick-ref">
-    <h2>🚀 Quick Reference — 常用指令速查</h2>
-    <div class="qr-grid">
-      <div class="qr-item">
-        <div class="qr-intent">研究單一股票</div>
-        <div class="qr-phrase"><code>研究 {ticker}</code></div>
-        <div class="qr-note">例：研究 NVDA / 研究 2330</div>
-      </div>
-      <div class="qr-item">
-        <div class="qr-intent">DD + DCA 一起跑</div>
-        <div class="qr-phrase"><code>研究 {ticker} 然後跑 DCA</code></div>
-        <div class="qr-note">例：研究 LLY 然後跑 DCA</div>
-      </div>
-      <div class="qr-item">
-        <div class="qr-intent">單檔 DCA（已有 DD）</div>
-        <div class="qr-phrase"><code>{ticker} DCA</code> / <code>{ticker} 定見</code></div>
-        <div class="qr-note">DD 之上的投資決策報告 &gt;50KB</div>
-      </div>
-      <div class="qr-item">
-        <div class="qr-intent">多股對比</div>
-        <div class="qr-phrase"><code>比較 {T1} {T2} {T3}</code></div>
-        <div class="qr-note">例：比較 NVDA AVGO MRVL</div>
-      </div>
-      <div class="qr-item">
-        <div class="qr-intent">研究產業（母題 ID）</div>
-        <div class="qr-phrase"><code>研究 {主題} 產業</code></div>
-        <div class="qr-note">例：研究 AI ASIC 產業 / GLP-1 / Agentic AI</div>
-      </div>
-      <div class="qr-item">
-        <div class="qr-intent">產業敘述 DS</div>
-        <div class="qr-phrase"><code>{主題} ds</code> / <code>{產業} 敘述報告</code></div>
-        <div class="qr-note">與 ID 並列的姊妹報告 — 供需循環敘事</div>
-      </div>
-      <div class="qr-item">
-        <div class="qr-intent">產業子題</div>
-        <div class="qr-phrase"><code>{母題} 的 {子題名}</code></div>
-        <div class="qr-note">例：資安 SaaS M2 AI × 資安的雙刃劍</div>
-      </div>
-      <div class="qr-item">
-        <div class="qr-intent">研究地緣政治</div>
-        <div class="qr-phrase"><code>研究 {地緣議題}</code></div>
-        <div class="qr-note">例：研究中台衝突 / 俄烏停火情境</div>
-      </div>
-      <div class="qr-item">
-        <div class="qr-intent">30 天財報統整</div>
-        <div class="qr-phrase"><code>跑最近財報的統整</code></div>
-        <div class="qr-note">earnings 月度 rollup</div>
-      </div>
-      <div class="qr-item">
-        <div class="qr-intent">對 ID 跑 critic</div>
-        <div class="qr-phrase"><code>review ID_{主題}</code></div>
-        <div class="qr-note">user-in-the-loop patch + push</div>
-      </div>
-      <div class="qr-item">
-        <div class="qr-intent">DD Screener EPS 月更</div>
-        <div class="qr-phrase"><code>update eps screener</code></div>
-        <div class="qr-note">需有新 DD_universe_EPS_estimates_*.xlsx</div>
-      </div>
-      <div class="qr-item">
-        <div class="qr-intent">發布財報日報</div>
-        <div class="qr-phrase"><code>push earnings</code></div>
-        <div class="qr-note">掃 docs/earnings/ 新檔 + 更新 index</div>
-      </div>
-      <div class="qr-item">
-        <div class="qr-intent">刷新個股 DD</div>
-        <div class="qr-phrase"><code>再做一次 {ticker} DD</code></div>
-        <div class="qr-note">自動讀最近 DD 做 12M 對照</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ========== 進階：建議工作流 ========== -->
+  <!-- ========== 市場分區 ========== -->
   <div class="skill-card">
     <div class="skill-head indigo">
-      <div class="skill-icon">📅</div>
+      <div class="skill-icon">📈</div>
       <div class="skill-title">
-        <h2 class="indigo">建議工作流（週 / 月 / 季 節奏）</h2>
-        <div class="sub">讓 11 套 skill 運轉有規律</div>
+        <h2 class="indigo">市場分區</h2>
+        <div class="sub">即時行情、財報事件、系統訊號</div>
       </div>
     </div>
     <div class="skill-body">
       <table>
-        <tr><th width="18%">節奏</th><th width="32%">任務</th><th>觸發指令</th></tr>
+        <tr><th width="22%">頁面</th><th width="38%">是什麼</th><th>怎麼讀</th></tr>
         <tr>
-          <td><strong>重大財報後</strong></td>
-          <td>該 ticker 的 DD + DCA 檢查</td>
-          <td><code>研究 {ticker} 然後跑 DCA</code></td>
+          <td><a href="/briefing/">每日簡報</a></td>
+          <td>每日全球市場數據、新聞主題、央行政策、技術面與基本面綜合分析</td>
+          <td><strong>已於 2026-06-23 起暫停每日更新</strong>，既有各分頁簡報完整保留可查閱</td>
         </tr>
         <tr>
-          <td><strong>每月底</strong></td>
-          <td>30 天 earnings 統整 + DD Screener EPS 月更</td>
-          <td><code>跑最近財報的統整</code> + <code>update eps screener</code></td>
+          <td><a href="/earnings/">財報分析</a></td>
+          <td>美股每日 $50B+ 公司財報深度分析（公司重點、產業趨勢、贏家輸家）＋每月統整＋<strong>財報前瞻（Pre-earnings Previews）</strong></td>
+          <td>財報前瞻在財報公布前把市場共識 EPS/營收、現價、隱含波動凍結成快照，合成三情境 × 管理層 commentary 聽點的一頁式 setup，財報後可回頭複盤</td>
         </tr>
         <tr>
-          <td><strong>每月</strong></td>
-          <td>掃 docs/id/INDEX.md 檢查 🟡/🔴 stale；對重要 theme spawn id-review</td>
-          <td><code>幫我看哪些 ID 該 refresh 了</code></td>
+          <td><a href="/catalyst/">催化劑日曆</a></td>
+          <td>前瞻事件日曆：yfinance 即時財報日 × dd-meta 結構化催化劑 × DD §15 保質期三來源合流，週更</td>
+          <td>收斂成「未來哪天、哪檔、什麼事、現在立場」的時間表；日期過後的事件滾入 outcome 區等待人工回填結果，<strong>outcome 欄為人工所有，週更 cron 永不覆寫</strong>——這是事件複盤鏈的核心設計，避免自動化悄悄抹掉判斷紀錄</td>
         </tr>
         <tr>
-          <td><strong>每季</strong></td>
-          <td>Flagship B refresh（Status Bar 轉黃時）</td>
-          <td><code>季度 refresh flagship</code></td>
+          <td><a href="/markets.html">Markets</a></td>
+          <td>全球主要指數、貨幣、債券、商品即時行情與技術面快照</td>
+          <td>週更（每週六台北時間 08:00）</td>
         </tr>
         <tr>
-          <td><strong>每半年</strong></td>
-          <td>新產業 ID / DS 擴充（看當下市場熱點）</td>
-          <td><code>研究 {新主題}</code> / <code>{主題} ds</code></td>
+          <td><a href="/sectors.html">Sectors</a></td>
+          <td>11 個 SPDR 產業 ETF 相對強弱、輪動指標與 momentum 排名</td>
+          <td>同上排程，用來看 sector rotation</td>
         </tr>
         <tr>
-          <td><strong>每年</strong></td>
-          <td>Flagship 是否該進 v2.0</td>
-          <td><code>評估 flagship 是否需要 v2.0 重寫</code></td>
+          <td><a href="/long-track-smh/">長線訊號</a> / <a href="/long-track-tw/">台股長線</a></td>
+          <td>SystemProtocol v7 即時狀態：美股 50% SMH+50% QQQ／台股 50% 2330+50% 0050，E3 三訊號 long only</td>
+          <td>看目前訊號燈與部位狀態，不是每日交易指令</td>
+        </tr>
+        <tr>
+          <td><a href="/turtle-sleeve/">商品 Sleeve</a></td>
+          <td>80% STX50 股票核心 + 20% CMDTY2 商品 sleeve（GLD/USO 訊號 → MGC/MCL 微型期貨）組合系統即時狀態</td>
+          <td>OOS（樣本外）追蹤頁，觀察組合層級的商品曝險訊號</td>
         </tr>
       </table>
     </div>
   </div>
 
-  <!-- ========== Troubleshooting ========== -->
+  <!-- ========== 工具分區 ========== -->
   <div class="skill-card">
-    <div class="skill-head red">
-      <div class="skill-icon">🔧</div>
+    <div class="skill-head amber">
+      <div class="skill-icon">🛠</div>
       <div class="skill-title">
-        <h2 class="red">常見情境 / Troubleshooting</h2>
+        <h2 class="amber">工具分區</h2>
+        <div class="sub">量化篩選、決策引擎、部位計算</div>
       </div>
     </div>
     <div class="skill-body">
       <table>
-        <tr><th width="42%">情境</th><th>怎麼做</th></tr>
+        <tr><th width="22%">頁面</th><th width="38%">是什麼</th><th>怎麼讀</th></tr>
         <tr>
-          <td>我不確定該跑哪個 skill</td>
-          <td>describe 想要什麼結果即可（「我想知道 NVDA 現在該不該加倉」 → Claude 自動判斷該跑 DCA + PM）</td>
+          <td><a href="/engine/">⚙ 決策引擎</a></td>
+          <td>結算驅動的選股決策機器，見下方「GRP 排序語言」專節</td>
+          <td>與 sop-funnel／DD 裁決分工：引擎管發現與校準，進場資格仍走 DD 裁決 + 板機</td>
         </tr>
         <tr>
-          <td>Skill 執行到一半卡住</td>
-          <td>說「繼續」或「接下去」即可續跑；也可以說「換用 B 方案」讓 Claude 改路徑</td>
+          <td><a href="/dd-screener/">DD Screener</a></td>
+          <td>把 DD universe 套「S 級護城河 + QGM MLB 5 條件 + 護城河方向」分四 tab：完全符合／差一條／差兩條／全部；含 Pipeline、標的清單、Quality-Entry、循環軌、SOP Funnel 等子頁</td>
+          <td>Pipeline 子頁走 legacy EV5y 鏡頭（排序用 5 年期望值），與 /engine/ 的 GRP 鏡頭（排序用上修幅度）並存對照，2026-10 記分板成熟後由數據裁決兩者取捨</td>
         </tr>
         <tr>
-          <td>數據跑出來感覺過時</td>
-          <td>說「這個數字有更新嗎」→ Claude 重跑 WebSearch；或直接呼叫 B refresh</td>
+          <td><a href="/backtest/">量化回測</a></td>
+          <td>10+ 量化交易系統的完整 20 年回測（趨勢跟蹤、動量輪動、波動率加權、海龜系統等），真實 yfinance 資料</td>
+          <td>看歷史績效與最大回撤，非即時訊號</td>
         </tr>
         <tr>
-          <td>想同時跑多個產業研究</td>
-          <td>說「批次跑 ID_XX、ID_YY、ID_ZZ」但注意品質可能略降（參考：一個一個跑最穩）</td>
+          <td><a href="/qgm/">QGM 美股</a> / <a href="/qgm-tw/">QGM 台股</a></td>
+          <td>Quality Growth Momentum 每日篩選器：品質護欄 + 技術時機自動掃描候選標的</td>
+          <td>美股掃 S&amp;P 500 + NASDAQ 100，台股掃上市前 ~150 檔非金融股</td>
         </tr>
         <tr>
-          <td>發布前要確認沒錯</td>
-          <td>industry-analyst v1.6 自動跑 9 Gates + Step 8.7 mandatory critic；想手動 peer review 說「讓我看草稿，還不要 push」</td>
+          <td><a href="/screener.html">Screener</a>（美／台／日／馬）</td>
+          <td>多因子篩選器：品質、成長、動能、估值四向度自定條件，各市場依當地財報週期與資料特性調整門檻</td>
+          <td>日股／馬股走 RS 60% + VCP 40% 綜合排序，收盤後更新</td>
         </tr>
         <tr>
-          <td>想對既有 ID 跑 critic</td>
-          <td>說「review ID_{主題}」即跑 id-review skill，user-in-the-loop patch + push</td>
+          <td><a href="/cache/">🗄 Data Cache</a></td>
+          <td>4 個 cache JSON 的新鮮度、來源、覆蓋率狀態檢視 + per-ticker 查詢工具</td>
+          <td>純資料庫狀態頁（producer 階段，尚無 consumer 接線），排錯資料是否過期時看這裡</td>
         </tr>
         <tr>
-          <td>DD 寫好但忘記跑 DCA</td>
-          <td>說「{ticker} DCA」即可單獨跑 DCA（會自動讀剛寫好的 DD）</td>
+          <td><a href="/tools/">期貨部位計算機</a></td>
+          <td>台指期貨（TXF）與美股微型期貨（MES/MNQ/M2K）部位規模計算機，附交易日誌</td>
+          <td>依帳戶規模與風險容忍度換算建議口數</td>
         </tr>
-        <tr>
-          <td>想知道 thesis 還活著嗎</td>
-          <td>說「{theme} thesis 還活著嗎」會自動 spawn industry-thesis-critic（CLAUDE.md decision-time critic 機制）</td>
-        </tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ========== GRP 排序語言 ========== -->
+  <div class="skill-card">
+    <div class="skill-head green">
+      <div class="skill-icon">🎯</div>
+      <div class="skill-title">
+        <h2 class="green">GRP 排序語言 — 決策引擎的選股準則</h2>
+        <div class="sub">/engine/ 全市場雷達與主榜背後的三閘準則</div>
+      </div>
+      <div class="skill-meta">/engine/ · L0-L4 五層架構</div>
+    </div>
+    <div class="skill-body">
+      <p style="font-size:12.5px;color:#374151;margin-bottom:10px"><strong>GRP</strong> 是決策引擎（/engine/）用來排序全市場候選名單的三道閘：</p>
+      <table>
+        <tr><th width="12%">閘</th><th width="28%">全名</th><th>條件</th></tr>
+        <tr><td><strong>G</strong></td><td>Growth 成長</td><td>≥ 15%</td></tr>
+        <tr><td><strong>R</strong></td><td>Revision 上修</td><td>&gt; 0（下修即否決）</td></tr>
+        <tr><td><strong>P</strong></td><td>Position 位置</td><td>站上 52 週線但未過熱</td></tr>
+      </table>
+      <p style="font-size:12.5px;color:#374151;margin:10px 0">三閘皆過 + 市值 ≥ 20 億美元 → 進入 GRP 主榜，<strong>按上修幅度排序</strong>（不是按 5 年期望 IRR 排序——這是與 dd-screener legacy Pipeline 鏡頭最大的差異）。GRP 只負責「看得見」，能不能買仍要過兩級審查：核心席需完整 v13/v14 DD 裁決，衛星席可用快審卡（週期位置判定 + 陷阱檢查 + 護城河快評）。</p>
+      <div class="tips"><strong>⚡ 五層架構</strong>：L0 全市場雷達（結構訊號批量掃描 → EPS 修正確認）→ L1 GRP 準則 + moat 分軌（S/A 級=核心席，其餘=衛星席）→ L2 決策卡（一席一卡，GRP 守門自動結算 + DD 深層宣稱帶期限）→ L3 席位擂台（席位 vs 同軌最強挑戰者，⚔ 警報進每月人工擂台，席位變動帳本 append-only）→ L4 結算所（每筆裁決 × 週線自動結算按形狀分桶，季度校準判斷函數依據）。</div>
+      <div class="tips"><strong>⚡ 紀律</strong>：GRP 三閘與市值門檻已 PREREG 鎖定（2026-07-04 持有人拍板），季檢須憑記分板數據才可調整；記分板 append-only，gate 變更畫分段線、歷史不重算；樣本未熟（n&lt;20 或齡&lt;91 天）一律標「觀察期」不下結論。</div>
+      <div class="example">
+        <span class="you">想知道：</span>「先看誰」→ GRP 主榜（/engine/radar.html）；「能不能買」→ DD 裁決或快審卡（/engine/cards.html）；「核心還是衛星」→ 護城河評級（/engine/arena.html）；「規則能不能改」→ 記分板（/engine/scoreboard.html）
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 自動更新頁面 ========== -->
+  <div class="skill-card">
+    <div class="skill-head grey">
+      <div class="skill-icon">🤖</div>
+      <div class="skill-title">
+        <h2 style="color:#0F172A">資料更新節奏</h2>
+        <div class="sub">GitHub Actions 定時排程，無需人工介入</div>
+      </div>
+    </div>
+    <div class="skill-body">
+      <table>
+        <tr><th width="20%">頁面</th><th width="30%">更新內容</th><th>排程</th></tr>
+        <tr><td>Markets / Sectors</td><td>全球指數與板塊 ETF 行情</td><td>每週六 08:00 台北時間</td></tr>
+        <tr><td>Screener 美股</td><td>QGM 選股清單</td><td>每日 06:30 台北時間</td></tr>
+        <tr><td>Screener 台股</td><td>QGM 台股選股清單</td><td>每日 07:00 台北時間</td></tr>
+        <tr><td>Screener 日股</td><td>RS+VCP 日股選股清單</td><td>每日 16:00（東京收盤後）</td></tr>
+        <tr><td>Screener 馬股</td><td>RS+VCP 馬股選股清單</td><td>每日 19:00（馬股收盤後）</td></tr>
+        <tr><td>催化劑日曆</td><td>財報日 × dd-meta 催化劑合流</td><td>週更</td></tr>
+        <tr><td>決策引擎（雷達/擂台/記分板）</td><td>GRP 主榜、席位擂台、結算</td><td>每週一 04:00 台北時間</td></tr>
+        <tr><td>DD Screener</td><td>DD universe 的 QGM-MLB overlay</td><td>每次 DD 寫完自動觸發</td></tr>
+      </table>
+      <div class="tips" style="margin-top:8px"><strong>⚡ DD 與 Screener 永遠同步</strong>：任何 DD 新增或修改後會自動 rebuild <code>/dd-screener/latest.json</code>，讓 /research/ 與 /dd-screener/ 兩個頁面的 universe 保持一致。</div>
+    </div>
+  </div>
+
+  <!-- ========== Site Composition ========== -->
+  <div class="skill-card">
+    <div class="skill-head grey">
+      <div class="skill-icon">🏗️</div>
+      <div class="skill-title">
+        <h2 style="color:#0F172A">站點組成 · 4 repos 共生</h2>
+        <div class="sub">research.investmquest.com 由 4 個 repo 共同生成 docs/ 內容</div>
+      </div>
+    </div>
+    <div class="skill-body">
+      <table>
+        <tr><th width="20%">內容路徑</th><th>對應 repo</th></tr>
+        <tr><td><code>/qgm/</code>、<code>/qgm-tw/</code></td><td>minervini-quality-backtest</td></tr>
+        <tr><td><code>/briefing/YYYY-*</code>、<code>/weekly/</code></td><td>morning-briefing</td></tr>
+        <tr><td><code>/backtest/</code></td><td>v7-backtest</td></tr>
+        <tr><td>其餘（首頁、<code>/research/</code>、<code>/id/</code>、<code>/dd/</code>、<code>/comparisons/</code>、<code>/supply-chain/</code>、<code>/catalyst/</code>、<code>/engine/</code>、<code>/dd-screener/</code>、<code>/earnings/</code>、<code>/markets.html</code>、<code>/sectors.html</code>、<code>/screener*.html</code>、<code>/how-to.html</code>）</td><td><strong>financial-analysis-bot（本 repo）</strong></td></tr>
       </table>
     </div>
   </div>
 
   <div class="tips" style="margin-top:18px">
-    <strong>💡 最重要一句</strong>：你不需要記所有指令。描述想要的結果即可，Claude 會判斷該跑哪個 skill。這頁只是列出「最精準的指令」方便你想要精準控制時用。
+    <strong>💡 最重要一句</strong>：這是一個由 AI 全自動產出的研究筆記站，所有內容僅供參考、不構成投資建議，過往表現不代表未來績效。想快速找方向，從 <a href="/cockpit/">選股駕駛艙</a> 開始最省力。
+  </div>
+
+  <div class="footer">
+    InvestMQuest Research · 使用說明 · 最後更新 2026-07-05
   </div>
 </div>
 
-
-<!-- ========== 自動更新頁面 ========== -->
-<div class="container" style="padding-top:0">
-<div class="skill-card">
-  <div class="skill-head green">
-    <div class="skill-icon">🤖</div>
-    <div class="skill-title">
-      <h2 class="green">自動更新頁面 — Markets / Sectors / Screener</h2>
-      <div class="sub">GitHub Actions 定時排程，無需人工介入；亦可手動觸發</div>
-    </div>
-    <div class="skill-meta">scripts/ + .github/workflows/</div>
-  </div>
-  <div class="skill-body">
-    <table>
-      <tr><th width="18%">頁面</th><th width="20%">網址</th><th width="26%">更新內容</th><th width="18%">排程</th><th>手動觸發</th></tr>
-      <tr>
-        <td><strong>Markets</strong></td>
-        <td><code>/markets.html</code></td>
-        <td>28 個全球指數 level、YTD、RS + Trend（benchmark VT）</td>
-        <td>每週六 08:00 TW（00:00 UTC）</td>
-        <td rowspan="2">GitHub → Actions → <em>Weekly Market Update</em> → Run workflow</td>
-      </tr>
-      <tr>
-        <td><strong>Sectors</strong></td>
-        <td><code>/sectors.html</code></td>
-        <td>美股 23 檔板塊 ETF price、YTD、PE、AUM</td>
-        <td>每週六 08:00 TW（同上）</td>
-      </tr>
-      <tr>
-        <td><strong>Screener 美股</strong></td>
-        <td><code>/screener.html</code></td>
-        <td>QGM 選股清單（latest.json + fundamentals.json）</td>
-        <td>每日 06:30 TW</td>
-        <td>GitHub → Actions → <em>Daily Screener US</em> → Run workflow</td>
-      </tr>
-      <tr>
-        <td><strong>Screener 台股</strong></td>
-        <td><code>/screener-tw.html</code></td>
-        <td>QGM 台股選股清單</td>
-        <td>每日 07:00 TW</td>
-        <td>GitHub → Actions → <em>Daily Screener TW</em> → Run workflow</td>
-      </tr>
-      <tr>
-        <td><strong>Screener 日股</strong></td>
-        <td><code>/screener-jp.html</code></td>
-        <td>RS+VCP 日股選股清單（母體 TOPIX Core 30 + Nikkei 225）</td>
-        <td>每日 16:00 TW（東京收盤後）</td>
-        <td>GitHub → Actions → <em>Daily JP RS+VCP Screener</em> → Run workflow</td>
-      </tr>
-      <tr>
-        <td><strong>Screener 馬股</strong></td>
-        <td><code>/screener-my.html</code></td>
-        <td>RS+VCP 馬股選股清單（母體 FBM KLCI 30 + Mid 中型成長股）</td>
-        <td>每日 19:00 TW（馬股收盤後）</td>
-        <td>GitHub → Actions → <em>Daily MY RS+VCP Screener</em> → Run workflow</td>
-      </tr>
-      <tr>
-        <td><strong>DD Screener</strong></td>
-        <td><code>/dd-screener/</code></td>
-        <td>~210 檔 DD universe 的 QGM-MLB overlay（FCF / ROIC / EPS CAGR / PEG / D/E 五項打分）+ Earnings Acceleration / Quality Entry / Bottom Out / Breakout / Entry State 子頁</td>
-        <td>每次 DD 寫完自動觸發（debounce 60s）</td>
-        <td>本地 <code>python3 scripts/build_dd_screener.py</code></td>
-      </tr>
-      <tr>
-        <td><strong>Fundamentals 日股</strong></td>
-        <td><code>/screener/jp_fundamentals.json</code></td>
-        <td>EPS 1Y / Rev 1Y forward CAGR + ROIC + FCF%</td>
-        <td><em>手動觸發</em>（fundamentals 一季變一次）</td>
-        <td>GitHub → Actions → <em>Manual JP Fundamentals</em> → Run workflow</td>
-      </tr>
-    </table>
-
-    <div class="tips" style="margin-top:12px"><strong>⚡ 手動觸發步驟</strong>：GitHub repo 頁面 → 上方 <strong>Actions</strong> tab → 左側選對應 workflow → 右側 <strong>Run workflow</strong> 按鈕 → 選 <code>main</code> branch → <strong>Run workflow</strong>。約 1-3 分鐘後 commit 自動推上 main。</div>
-
-    <div class="tips" style="margin-top:8px"><strong>⚡ DD Screener 自動同步</strong>：任何 DD 寫完跑 <code>update_dd_index.py</code> 後會自動 trigger <code>build_dd_screener.py</code>（rebuild <code>docs/dd-screener/latest.json</code>），讓 /research/ 與 /dd-screener/ 兩個頁面 universe 永遠一致。yfinance 失敗時 screener rebuild 會 warn 但不 abort research sync。</div>
-
-    <div class="tips" style="margin-top:8px"><strong>⚡ 不更新的欄位</strong>：PE、PB、PEG、EPS 成長率、展望、P/NAV 等敘述欄位需人工維護，腳本只更新量化市場數據。</div>
-  </div>
-</div>
-
-<!-- ========== Site Composition (CLAUDE.md) ========== -->
-<div class="skill-card">
-  <div class="skill-head grey">
-    <div class="skill-icon">🏗️</div>
-    <div class="skill-title">
-      <h2 style="color:#0F172A">站點組成 · 4 repos 共生</h2>
-      <div class="sub">research.investmquest.com 由 4 個 repo 共同生成 docs/ 內容</div>
-    </div>
-  </div>
-  <div class="skill-body">
-    <table>
-      <tr><th width="20%">內容路徑</th><th>對應 repo</th></tr>
-      <tr>
-        <td><code>/qgm/</code>、<code>/qgm-tw/</code></td>
-        <td>minervini-quality-backtest</td>
-      </tr>
-      <tr>
-        <td><code>/briefing/YYYY-*</code>、<code>/weekly/</code></td>
-        <td>morning-briefing</td>
-      </tr>
-      <tr>
-        <td><code>/backtest/</code></td>
-        <td>v7-backtest</td>
-      </tr>
-      <tr>
-        <td>其他（首頁、<code>/earnings/</code>、<code>/research/</code>、<code>/pm/</code>、<code>/dd/</code>、<code>/dca/</code>、<code>/id/</code>、<code>/ds/</code>、<code>/comparisons/</code>、<code>/supply-chain/</code>、<code>/flow/</code>、<code>/markets.html</code>、<code>/sectors.html</code>、<code>/screener*.html</code>、<code>/how-to.html</code>）</td>
-        <td><strong>financial-analysis-bot（本 repo）</strong></td>
-      </tr>
-    </table>
-    <div class="tips" style="margin-top:10px"><strong>⚡ 不確定時</strong>：<code>git -C &lt;repo&gt; log --oneline -- docs/&lt;path&gt;</code> 看哪個 repo 有歷史。改外部 repo 是新的 commit/push 範圍，動手前先確認。</div>
-  </div>
-</div>
-
-<!-- ========== Skill 版本 Changelog ========== -->
-<div class="skill-card">
-  <div class="skill-head purple">
-    <div class="skill-icon">📜</div>
-    <div class="skill-title">
-      <h2 class="purple">Skill 版本 Changelog</h2>
-      <div class="sub">各 skill 當前版本 + 重要變更</div>
-    </div>
-  </div>
-  <div class="skill-body">
-
-    <h3 style="color:#5B21B6;margin:8px 0 4px;font-size:14px">當前版本一覽（2026-05-26）</h3>
-    <table>
-      <tr><th>Skill</th><th>版本</th><th>類型</th></tr>
-      <tr><td>stock-analyst</td><td><strong>v12.4</strong></td><td>研究產出</td></tr>
-      <tr><td>deep-conviction-analyst</td><td><strong>v1.3</strong></td><td>研究產出（NEW since 2026-05）</td></tr>
-      <tr><td>industry-analyst</td><td><strong>v1.6</strong></td><td>研究產出</td></tr>
-      <tr><td>industry-ds</td><td><strong>v1.2</strong></td><td>研究產出（NEW since 2026-05）</td></tr>
-      <tr><td>geopolitics-dd</td><td>v1.0</td><td>研究產出</td></tr>
-      <tr><td>portfolio-manager</td><td>v1.0</td><td>研究產出</td></tr>
-      <tr><td>multi-stock-comparator-v1</td><td><strong>v1.5</strong></td><td>消費端統整（NEW since 2026-05）</td></tr>
-      <tr><td>earnings-synthesis</td><td><strong>v1.1</strong></td><td>消費端統整（NEW since 2026-05）</td></tr>
-      <tr><td>id-review</td><td><strong>v1.4.1</strong></td><td>研究升級 / 校驗（NEW since 2026-04）</td></tr>
-      <tr><td>push-earnings</td><td>v1.0</td><td>發布維運（NEW since 2026-05）</td></tr>
-      <tr><td>refresh-eps-screener</td><td>v1.0</td><td>發布維運（NEW since 2026-05）</td></tr>
-    </table>
-
-    <h3 style="color:#5B21B6;margin:14px 0 4px;font-size:14px">stock-analyst 主要變更</h3>
-    <table>
-      <tr><th>版本</th><th>日期</th><th>主要變更</th></tr>
-      <tr><td><strong>v12.4</strong></td><td>2026-05</td><td><strong>EPS estimates 接 Excel buy-side consensus</strong>（Koyfin 月度匯出，DD universe ≈141 ticker 含 US/ADR/TW 自動換 USD）；ADR/TW listings 避免 FX 陷阱；FY+3 consensus 直接用，不再機械外推</td></tr>
-      <tr><td><strong>v12.3</strong></td><td>2026-05</td><td><strong>估值瘦身（§2+§13 ~40% → ~18%）+ 基本面擴充（§5+§8+§9+§11+§12 ~35% → ~55%）</strong>；§9 強制 execution + pricing power 雙軸拆解；§5.F 加 Single Thing；§8.H 加客戶結構深度；QC-23 三級威脅分類強制使用；§13.4 強制對的 peer group tier</td></tr>
-      <tr><td>v12.0-v12.2</td><td>2026-04~05</td><td>分析師 / 基金經理人分工（DD 輸出 final_signal A+/A/B/C/X，倉位交由 PM skill）；§2 四層判定矩陣；盲點救援；QC-22~36；dd-meta JSON 強制 schema</td></tr>
-    </table>
-
-    <h3 style="color:#5B21B6;margin:14px 0 4px;font-size:14px">industry-analyst 主要變更</h3>
-    <table>
-      <tr><th>版本</th><th>日期</th><th>主要變更</th></tr>
-      <tr><td><strong>v1.6</strong></td><td>2026-04-24</td><td><strong>敘述主導反轉</strong>（原則 4 從 Tables-heavy 改為 Narrative-led）；QC-I24 每張表強制前言 + 後解讀；敘述比例 &lt; 30% → 50-60%</td></tr>
-      <tr><td>v1.5</td><td>2026-04-21</td><td>Gate 2.1 Thesis Cornerstone Fact Verification + Gate 3.1 Cross-ID Thesis Bias Detection</td></tr>
-      <tr><td>v1.0-v1.4</td><td>2026-04-19~21</td><td>初版 11 章 → 14 章 schema；🟡 規則；QC-I1-I23；Insight-first；事件型 vs 結構型 thesis 分類；9 Gate pre-publish check</td></tr>
-    </table>
-
-    <p style="font-size:12px;color:#6B7280;margin-top:10px">Skill 版本升級的意義：<strong>新版 QC 規則回溯適用</strong>——舊版產的報告下次 refresh 時必須補齊新規則。已發布報告的原版內容不會追溯修改（除非觸發 A 級事件補丁或 90 天 B refresh）。</p>
-  </div>
-</div>
-
-<div class="footer">
-  InvestMQuest Research · 使用說明 v2.0 · 2026-05-26<br>
-  Skill 版本：stock-analyst v12.4 · deep-conviction-analyst v1.3 · industry-analyst v1.6 · industry-ds v1.2 · geopolitics-dd v1.0 · portfolio-manager v1.0 · multi-stock-comparator-v1 v1.5 · earnings-synthesis v1.1 · id-review v1.4.1 · push-earnings v1.0 · refresh-eps-screener v1.0
-</div>
-</div>
 </body>
 </html>

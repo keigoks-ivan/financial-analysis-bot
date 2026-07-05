@@ -68,6 +68,7 @@ NAV_SCRIPT = """<script>(function(){document.querySelectorAll('.imq-dd-btn').for
 # (group, item, href, label) — groups: home / research / market / quant / mm / howto
 MENU = {
     "research": [
+        ("cockpit", "/cockpit/", "選股駕駛艙"),
         ("dd", "/research/", "個股 DD"),
         ("syn", "/research/synthesis/", "期望落差綜合研判"),
         ("id", "/id/", "產業深度 ID"),
@@ -75,6 +76,8 @@ MENU = {
         ("cmp", "/comparisons/", "多股對比"),
         ("sc", "/supply-chain/", "供應鏈地圖"),
         ("tier", "/id/tier_matrix.html", "🎯 Tier Matrix"),
+        ("picks", "/picks/", "精選清單"),
+        ("mom5", "/research/momentum-5/", "Momentum-5"),
     ],
     "market": [
         ("brief", "/briefing/", "每日簡報"),
@@ -180,6 +183,7 @@ def build_subnav(links, current):
 
 PREFIX_ACTIVE = [
     ("research/synthesis/", ("research", "syn")),
+    ("research/momentum-5/", ("research", "mom5")),
     ("research/", ("research", "dd")),
     ("dd/", ("research", "dd")),
     ("dca/", ("research", "dd")),
@@ -189,6 +193,8 @@ PREFIX_ACTIVE = [
     ("ds/", ("research", "ds")),
     ("comparisons/", ("research", "cmp")),
     ("supply-chain/", ("research", "sc")),
+    ("cockpit/", ("research", "cockpit")),
+    ("picks/", ("research", "picks")),
     ("briefing/", ("market", "brief")),
     ("weekly/", ("market", "week")),
     ("earnings/", ("market", "earn")),
