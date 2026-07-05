@@ -69,7 +69,12 @@ CLIP_LO, CLIP_HI = 0.02, 0.98          # winsorize quantiles for z-score
 W_REV, W_MOM, W_GROWTH = 0.5, 0.3, 0.2  # composite factor weights
 VETO_RET12 = 2.5                        # 12M return > +250% -> veto
 CHALLENGER_MARGIN_Z = 0.5              # bench beats weakest seat by >= 0.5 z -> flag
-REVIEW_REV_AVG = -2.0                  # seat rev_avg <= -2 -> flag
+REVIEW_REV_AVG = -2.0                  # seat rev_avg (90D) <= -2 -> flag
+# spec v1.1 (2026-07-05, owner-approved): 30D window joins the DECISION RULES
+# (composite stays frozen on 90D — 30D has an earnings-calendar artifact and
+#  re-weighting is untestable without point-in-time data):
+REVIEW_REV30 = -2.0                    # seat rev30_avg <= -2 (fresh downgrade) -> early review flag
+                                       # threshold mirrors the 90D rule's -2, same convention, not tuned
 HEAT_RET12 = 2.5                       # seat 12M return > +250% -> flag
 MIN_EPS_COVERAGE = 300                 # fail-safe floor
 
@@ -236,6 +241,12 @@ def build():
         # "review": 3M consensus turned meaningfully negative
         if rev_avg is not None and rev_avg <= REVIEW_REV_AVG:
             flags.append('review')
+        # v1.1 "review_fresh": 30D consensus turned negative — earlier warning
+        # than the 90D window (fires independently so the human sees WHICH window)
+        rev30_pre = g(t, 'rev30_fy1'), g(t, 'rev30_fy2')
+        rev30_vals_pre = [v for v in rev30_pre if v is not None]
+        if rev30_vals_pre and sum(rev30_vals_pre) / len(rev30_vals_pre) <= REVIEW_REV30:
+            flags.append('review_fresh')
         # "heat": 12M return blew past +250%
         if ret12 is not None and ret12 > HEAT_RET12:
             flags.append('heat')
@@ -266,8 +277,13 @@ def build():
         bt = b['ticker']
         bs = g(bt, 'score')
         bench_scores[bt] = round(bs, 2) if bs is not None else None
+        # v1.1: challenger must ALSO have live 30D momentum (> 0) — a high score
+        # built on a stale 90D revision does not qualify to challenge a seat
+        b30 = [v for v in (g(bt, 'rev30_fy1'), g(bt, 'rev30_fy2')) if v is not None]
+        b30_avg = sum(b30) / len(b30) if b30 else None
         if (bs is not None and weakest_seat_score is not None
-                and bs - weakest_seat_score >= CHALLENGER_MARGIN_Z):
+                and bs - weakest_seat_score >= CHALLENGER_MARGIN_Z
+                and b30_avg is not None and b30_avg > 0):
             challenger_present = True
     if challenger_present and weakest_seat_score is not None:
         for so in seats_out:
