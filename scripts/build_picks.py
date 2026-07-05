@@ -9,8 +9,15 @@ build_picks.py — 精選清單「候選區」週更生成器。
   - 產業趨勢閘（自動）：ID id-meta 主題成員的「上修寬度 × 站上年線寬度」判 對/中性/弱，
     growth_phase=declining 蓋帽至中性；無 ID 覆蓋者以 sector 寬度代判，樣本不足則如實標示。
 
-每檔收斂成「四件事」草稿：為什麼上榜／預期倍數與時間／現在能不能買（位置與板機）／什麼情況下架。
-草稿僅供持有人裁決；正式榜由 picks.json（人工批准 + changelog）決定，本檔不碰 picks.json。
+每檔收斂成「四件事」：為什麼上榜／預期倍數與時間／現在能不能買（位置與板機）／什麼情況下架。
+
+正式榜（2026-07-05 治理變更：自動上榜＋持有人 veto）：
+  - 長熬自動上榜：候選 ∩ 產業趨勢＝「對」→ official_changhao[]；中性/弱/樣本不足留候選區。
+  - 爆發自動上榜：候選 ∩ 非過熱（🔥）∩ 站上年線（右側價格確認）→ official_baofa[]。
+    右側確認取代等 DD 裁決——DD 框架結構性不納拐點循環股（trailing 品質閘必不過）。
+  - veto：picks.json 的 veto[] 內 ticker 永不自動上榜（留候選區、標「持有人 veto」）。
+  - official 與候選互斥：同一 ticker 只出現在一邊；候選帶 not_promoted_reason。
+  - 本檔只讀 picks.json（veto），不寫它；規則變更走 picks.json changelog 留痕。
 
 Fail-safe：
   - 單一來源缺失/無法解析 → 印 warning 跳過該來源，仍寫出手上有的（exit 0）。
@@ -33,6 +40,7 @@ SOP = os.path.join(DOCS, "dd-screener", "sop-funnel", "latest.json")
 RADAR = os.path.join(DOCS, "engine", "radar.json")
 ARENA = os.path.join(DOCS, "engine", "arena.json")
 ID_GLOB = os.path.join(DOCS, "id", "ID_*.html")
+PICKS = os.path.join(DOCS, "picks", "picks.json")
 OUT = os.path.join(DOCS, "picks", "candidates.json")
 
 TW8 = timezone(timedelta(hours=8))
@@ -556,6 +564,54 @@ def main():
     changhao = build_changhao(latest, trigger_map, grp_set, trend_resolve)
     baofa = build_baofa(cyclical, trigger_map, grp_set, trend_resolve)
 
+    # ---- 自動上榜（2026-07-05 治理變更）＋ 持有人 veto ----
+    picks = load_json(PICKS, "picks.json (veto)")
+    veto = set()
+    if isinstance(picks, dict) and isinstance(picks.get("veto"), list):
+        veto = {t for t in picks["veto"] if isinstance(t, str)}
+    if veto:
+        print(f"[build_picks] veto 生效：{sorted(veto)}")
+
+    # 爆發需要站上年線（右側確認）——由 latest.json 補 above_w52
+    stock_idx = {}
+    if isinstance(latest, dict) and isinstance(latest.get("stocks"), list):
+        stock_idx = {s["ticker"]: s for s in latest["stocks"] if s.get("ticker")}
+    for x in baofa:
+        ma = (stock_idx.get(x["ticker"]) or {}).get("ma")
+        x["above_w52"] = ma.get("above_w52") if isinstance(ma, dict) else None
+
+    # 長熬：趨勢「對」→ 自動上榜
+    official_changhao, rest_changhao = [], []
+    for x in changhao:
+        if x["ticker"] in veto:
+            x["not_promoted_reason"] = "持有人 veto"
+            rest_changhao.append(x)
+        elif x["trend_status"] == "對":
+            official_changhao.append(x)
+        else:
+            x["not_promoted_reason"] = f"趨勢{x['trend_status']}"
+            rest_changhao.append(x)
+
+    # 爆發：非過熱 ∩ 站上年線 → 自動上榜（右側確認代替 DD 裁決）
+    official_baofa, rest_baofa = [], []
+    for x in baofa:
+        if x["ticker"] in veto:
+            x["not_promoted_reason"] = "持有人 veto"
+            rest_baofa.append(x)
+        elif x["hot"]:
+            x["not_promoted_reason"] = "🔥 等回踩"
+            rest_baofa.append(x)
+        elif x["above_w52"] is True:
+            official_baofa.append(x)
+        elif x["above_w52"] is False:
+            x["not_promoted_reason"] = "拐點未確認・年線下"
+            rest_baofa.append(x)
+        else:
+            x["not_promoted_reason"] = "年線資料缺"
+            rest_baofa.append(x)
+
+    changhao, baofa = rest_changhao, rest_baofa
+
     # as_of：優先取來源的 as_of
     as_of = None
     for src in (latest, cyclical):
@@ -568,8 +624,15 @@ def main():
     payload = {
         "as_of": as_of,
         "generated_at": datetime.now(TW8).isoformat(),
-        "note": "候選由 build_picks.py 週更生成；四件事為草稿，上榜/下架由持有人裁決（picks.json）。",
-        "counts": {"changhao": len(changhao), "baofa": len(baofa)},
+        "note": "正式榜與候選均由 build_picks.py 規則自動判定（長熬＝趨勢對；爆發＝循環形狀＋站上年線＋非過熱）；持有人保留 veto（picks.json）。official 與候選互斥。",
+        "counts": {
+            "official_changhao": len(official_changhao),
+            "official_baofa": len(official_baofa),
+            "changhao": len(changhao),
+            "baofa": len(baofa),
+        },
+        "official_changhao": official_changhao,
+        "official_baofa": official_baofa,
         "changhao": changhao,
         "baofa": baofa,
     }
@@ -580,8 +643,18 @@ def main():
 
     # --- console summary ---
     print(f"[build_picks] wrote {OUT}")
-    print(f"[build_picks] as_of={as_of}  長熬={len(changhao)}  爆發={len(baofa)}")
-    print("[build_picks] 長熬 first 3:")
+    print(
+        f"[build_picks] as_of={as_of}  正式榜：長熬={len(official_changhao)} 爆發={len(official_baofa)}"
+        f"  候選：長熬={len(changhao)} 爆發={len(baofa)}"
+    )
+    print(f"[build_picks] 自動上榜・長熬（趨勢＝對）：{[x['ticker'] for x in official_changhao]}")
+    print(f"[build_picks] 自動上榜・爆發（非🔥＋站上年線）：{[x['ticker'] for x in official_baofa]}")
+    print("[build_picks] 候選未上榜原因：")
+    for x in changhao:
+        print(f"    長熬 {x['ticker']:<8} {x['not_promoted_reason']}")
+    for x in baofa:
+        print(f"    爆發 {x['ticker']:<8} {x['not_promoted_reason']}")
+    print("[build_picks] 長熬候選 first 3:")
     for x in changhao[:3]:
         print(f"    {x['ticker']:<8} {x['why']}")
         print(f"             倍數：{x['multiple']}")

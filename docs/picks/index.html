@@ -85,6 +85,21 @@ a:hover{color:var(--accent-hover)}
 .badge-cand{font-family:'IBM Plex Mono',monospace;font-size:.64rem;font-weight:700;
             color:var(--amber);background:var(--amber-soft);border:1px solid #fcd9a5;
             padding:.18rem .5rem;border-radius:999px;letter-spacing:.05em}
+.badge-auto{font-family:'IBM Plex Mono',monospace;font-size:.64rem;font-weight:700;
+            color:var(--green);background:var(--green-soft);border:1px solid #a7f3d0;
+            padding:.18rem .5rem;border-radius:999px;letter-spacing:.05em}
+.transparency{font-size:.75rem;color:var(--text-sec);background:var(--amber-soft);
+              border:1px dashed #fcd9a5;border-radius:8px;padding:.55rem .85rem;
+              margin:-.2rem 0 .7rem;line-height:1.6}
+.npr{display:inline-block;font-size:.62rem;font-weight:600;color:var(--amber);
+     background:var(--amber-soft);border:1px solid #fcd9a5;border-radius:5px;
+     padding:.08rem .4rem;margin-top:.3rem;white-space:nowrap}
+.ddbadge{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:700;
+         padding:.12rem .5rem;border-radius:999px;margin-left:.45rem;white-space:nowrap;vertical-align:middle}
+.ddbadge.d-in{background:var(--green-soft);color:var(--green);border:1px solid #a7f3d0}
+.ddbadge.d-watch{background:var(--amber-soft);color:var(--amber);border:1px solid #fcd9a5}
+.ddbadge.d-none{background:#f1f5f9;color:var(--muted);border:1px solid var(--border)}
+.pc-note{font-size:.72rem;color:var(--muted);margin-top:.55rem;line-height:1.5}
 
 .group-block{margin-top:1.4rem}
 .group-title{display:flex;align-items:center;gap:.55rem;font-size:1.02rem;font-weight:700;margin-bottom:.7rem}
@@ -232,7 +247,7 @@ footer a{font-weight:600}
         <p>MU／SNDK 原型：循環拐點 × EPS 共識暴力上修。短時間可翻數倍，trailing 財務難看正是重點。</p>
       </div>
     </div>
-    <p class="gov"><b>治理：</b>候選名單由週更腳本機器生成（附四件事草稿）；<b>只有持有人親手批准</b>（手改 <code>picks.json</code>＋changelog 留痕）的名字才進正式榜。本頁正式榜在上、候選區在下（清楚標示「候選・待持有人裁決」）。</p>
+    <p class="gov"><b>治理：</b>候選與正式榜均由規則自動判定——長熬＝產業趨勢「對」自動上榜；爆發＝循環拐點形狀＋站上年線＋非過熱自動上榜。<b>持有人保留 veto</b>（<code>picks.json</code> veto[]，列入者永不自動上榜）；規則變更走 changelog 留痕。本頁正式榜在上、候選區在下（未達條件者標示差在哪一條）。</p>
     <p class="disc">本頁為研究紀錄與流程展示，非投資建議。</p>
   </div>
 </section>
@@ -242,14 +257,16 @@ footer a{font-weight:600}
   <div class="container">
     <div class="section-head">
       <h2>正式榜</h2>
-      <span class="tagline">持有人批准 · 每檔收斂四件事</span>
+      <span class="badge-auto">自動上榜・規則 v0</span>
+      <span class="tagline">規則判定 · 持有人保留 veto · 每檔收斂四件事</span>
     </div>
     <div id="official-changhao" class="group-block">
-      <div class="group-title g1"><span class="dot"></span>長熬・品質成長 <span class="sub">品質成長 × 產業趨勢</span></div>
+      <div class="group-title g1"><span class="dot"></span>長熬・品質成長 <span class="sub">上榜規則：DD 進場 ∩ 護城河閘 ∩ 產業趨勢「對」</span></div>
       <div id="off-changhao-body"></div>
     </div>
     <div id="official-baofa" class="group-block">
-      <div class="group-title g2"><span class="dot"></span>爆發・循環上修 <span class="sub">循環拐點 × EPS 暴力上修</span></div>
+      <div class="group-title g2"><span class="dot"></span>爆發・循環上修 <span class="sub">上榜規則：循環拐點形狀 ∩ 站上年線 ∩ 非過熱</span></div>
+      <p class="transparency">本組上榜＝循環拐點形狀＋站上年線的機械判定，非 DD 進場裁決（各檔 DD 狀態如標示）；投機軌性質，倉位紀律另計。</p>
       <div id="off-baofa-body"></div>
     </div>
     <p class="asof" id="official-asof"></p>
@@ -261,8 +278,8 @@ footer a{font-weight:600}
   <div class="container">
     <div class="section-head">
       <h2>候選區</h2>
-      <span class="badge-cand">候選 · 待持有人裁決</span>
-      <span class="tagline">機器生成的四件事草稿——尚未上榜</span>
+      <span class="badge-cand">候選 · 未達自動上榜條件</span>
+      <span class="tagline">未達自動上榜條件——差在哪一條如標示</span>
     </div>
     <div class="group-block">
       <div class="group-title g1"><span class="dot"></span>長熬候選 <span class="sub" id="cand-changhao-count"></span></div>
@@ -279,8 +296,9 @@ footer a{font-weight:600}
 <footer>
   <div class="container foot-inner">
     <div><b>資料來源：</b>DD Screener（<code>dd-screener/latest.json</code>：DD 裁決、護城河、runway、EPS 上修）、循環軌（<code>cyclical-track.json</code>）、sop-funnel 板機狀態、決策引擎 GRP（<code>engine/radar.json · arena.json</code>）、產業深度 ID（<code>docs/id/</code> id-meta）。四件事草稿由 <code>scripts/build_picks.py</code> 純本地聚合，不含網路呼叫。</div>
-    <div style="margin-top:.5rem"><b>產業趨勢判定：</b>ID 主題成員的上修寬度 × 站上年線寬度自動判定（v0 門檻 60/40 未調參）＋ S 曲線 phase 蓋帽（declining 不給「對」）；無 ID 覆蓋者以 sector 寬度代判，樣本不足則如實標示。趨勢「弱」不硬排除、僅沉底——批准權在持有人。</div>
-    <div style="margin-top:.5rem"><b>更新節奏：</b>候選每週六隨市場資料更新；正式榜僅在持有人批准/下架時異動。</div>
+    <div style="margin-top:.5rem"><b>產業趨勢判定：</b>ID 主題成員的上修寬度 × 站上年線寬度自動判定（v0 門檻 60/40 未調參）＋ S 曲線 phase 蓋帽（declining 不給「對」）；無 ID 覆蓋者以 sector 寬度代判，樣本不足則如實標示。</div>
+    <div style="margin-top:.5rem"><b>自動上榜規則（v0）：</b>長熬＝候選（DD 進場 ∩ 護城河閘）∩ 產業趨勢「對」；爆發＝cyclical-track 合格 ∩ 非過熱（🔥）∩ 站上年線——右側價格確認代替 DD 裁決（DD 框架結構性不納拐點循環股）。持有人 veto（<code>picks.json</code> veto[]）優先於一切規則；未達條件者留候選區並標示原因。</div>
+    <div style="margin-top:.5rem"><b>更新節奏：</b>正式榜與候選每週六隨市場資料同步重算；veto 與規則變更由持有人手改 <code>picks.json</code>＋changelog 留痕。</div>
     <a class="cockpit-link" href="/cockpit/">機房：完整漏斗與旗標 →</a>
   </div>
 </footer>
@@ -299,24 +317,50 @@ footer a{font-weight:600}
     }).join('');
   }
 
-  // ---- 正式榜 render ----
-  function renderApproved(list, mountId){
+  // ---- 正式榜 render（自動上榜：official_* from candidates.json） ----
+  function trendBadgeHtml(p){
+    var st=p.trend_status||'樣本不足';
+    var isSector=!!(p.trend_evidence && p.trend_evidence.indexOf('sector 級')===0);
+    var cls='t-na', label=st;
+    if(isSector){ label='sector 級・'+st; }
+    else if(st==='對') cls='t-good';
+    else if(st==='中性') cls='t-mid';
+    else if(st==='弱') cls='t-weak';
+    return '<span class="tbadge '+cls+'" style="margin-left:.45rem;margin-bottom:0">'+esc(label)+'</span>';
+  }
+  function ddBadgeHtml(p){
+    if(!p.dd_path) return '<span class="ddbadge d-none">待 DD</span>';
+    if(p.verdict==='進場') return '<span class="ddbadge d-in">DD 進場</span>';
+    if(p.verdict) return '<span class="ddbadge d-watch">DD '+esc(p.verdict)+'</span>';
+    return '<span class="ddbadge d-none">DD 無裁決</span>';
+  }
+  function renderOfficial(list, mountId, isBaofa){
     var el=document.getElementById(mountId);
     if(!list || !list.length){
-      el.innerHTML='<div class="empty"><b>正式榜空榜</b>——候選區已就緒，等持有人批准第一批。</div>';
+      el.innerHTML='<div class="empty"><b>本組目前 0 檔達自動上榜條件</b>——寧缺勿濫，規則不遷就；候選區標示各檔差在哪一條。</div>';
       return;
     }
-    el.innerHTML=list.map(function(p){
+    var html=list.map(function(p){
+      var tkr=p.dd_path?'<a href="'+esc(p.dd_path)+'">'+esc(p.ticker)+'</a>':esc(p.ticker);
       return '<div class="pick-card">'
-        +'<div class="pc-head"><span class="pc-tkr">'+esc(p.ticker)+'</span>'
-        +(p.name&&p.name!==p.ticker?'<span class="pc-name">'+esc(p.name)+'</span>':'')+'</div>'
+        +'<div class="pc-head"><span class="pc-tkr">'+tkr+'</span>'
+        +(p.name&&p.name!==p.ticker?'<span class="pc-name">'+esc(p.name)+'</span>':'')
+        +trendBadgeHtml(p)
+        +(isBaofa?ddBadgeHtml(p):'')
+        +'</div>'
         +'<div class="four">'
         +'<div class="cell"><div class="k">為什麼上榜</div><div class="v">'+esc(p.why)+'</div></div>'
         +'<div class="cell"><div class="k">預期倍數與時間</div><div class="v">'+esc(p.multiple)+(p.horizon?'　·　'+esc(p.horizon):'')+'</div></div>'
         +'<div class="cell"><div class="k">現在能不能買</div><div class="v">'+esc(p.position)+'</div></div>'
         +'<div class="cell"><div class="k">什麼情況下架</div><div class="v">'+esc(p.exit)+'</div></div>'
-        +'</div></div>';
+        +'</div>'
+        +(p.trend_evidence?'<div class="pc-note">產業趨勢：'+esc(p.trend_evidence)+'</div>':'')
+        +'</div>';
     }).join('');
+    if(list.length<3){
+      html+='<div class="empty" style="margin-top:.2rem">本組僅 '+list.length+' 檔達條件——寧缺勿濫，規則不遷就。</div>';
+    }
+    el.innerHTML=html;
   }
 
   // ---- 候選區 render ----
@@ -341,6 +385,7 @@ footer a{font-weight:600}
       var muted=isBaofa && c.hot;
       var tkrCell=esc(c.ticker)+(muted?'<span class="hotbadge">等回踩</span>':'');
       if(c.dd_path){ tkrCell='<a href="'+esc(c.dd_path)+'">'+esc(c.ticker)+'</a>'+(muted?'<span class="hotbadge">等回踩</span>':''); }
+      if(c.not_promoted_reason && !muted){ tkrCell+='<br><span class="npr">未上榜：'+esc(c.not_promoted_reason)+'</span>'; }
       return '<tr'+(muted?' class="muted"':'')+'>'
         +'<td class="tkr">'+tkrCell+'</td>'
         +'<td class="why">'+esc(c.why)+'</td>'
@@ -361,32 +406,46 @@ footer a{font-weight:600}
     if(el) el.innerHTML='<div class="datamsg">資料暫缺——稍後再試或聯繫維護者。</div>';
   }
 
-  // ---- 正式榜 (picks.json) ----
-  fetch('./picks.json',{cache:'no-store'}).then(function(r){
-    if(!r.ok) throw new Error('picks '+r.status); return r.json();
-  }).then(function(d){
-    var ap=(d&&d.approved)||{};
-    renderApproved(ap.changhao||[], 'off-changhao-body');
-    renderApproved(ap.baofa||[], 'off-baofa-body');
-    if(d&&d.changelog&&d.changelog.length){
-      document.getElementById('official-asof').textContent='最新異動：'+d.changelog[0].date+'　'+d.changelog[0].event;
-    }
-  }).catch(function(e){
-    dataErr('off-changhao-body'); dataErr('off-baofa-body');
-  });
-
-  // ---- 候選區 (candidates.json) ----
+  // ---- 正式榜 + 候選區（candidates.json：official_* 與候選互斥） ----
   fetch('./candidates.json',{cache:'no-store'}).then(function(r){
     if(!r.ok) throw new Error('candidates '+r.status); return r.json();
   }).then(function(d){
+    renderOfficial((d&&d.official_changhao)||[], 'off-changhao-body', false);
+    renderOfficial((d&&d.official_baofa)||[], 'off-baofa-body', true);
     renderCandidates((d&&d.changhao)||[], 'cand-changhao-body', false);
     renderCandidates((d&&d.baofa)||[], 'cand-baofa-body', true);
     document.getElementById('cand-changhao-count').textContent='共 '+(((d&&d.changhao)||[]).length)+' 檔';
     document.getElementById('cand-baofa-count').textContent='共 '+(((d&&d.baofa)||[]).length)+' 檔（🔥 已噴者沉底標「等回踩」）';
-    if(d&&d.as_of){ document.getElementById('cand-asof').textContent='候選資料 as of '+d.as_of; }
+    if(d&&d.as_of){
+      document.getElementById('cand-asof').textContent='候選資料 as of '+d.as_of;
+      var oa=document.getElementById('official-asof');
+      oa.textContent='規則判定 as of '+d.as_of+'　·　長熬 '+(((d&&d.official_changhao)||[]).length)+' 檔・爆發 '+(((d&&d.official_baofa)||[]).length)+' 檔';
+    }
   }).catch(function(e){
+    dataErr('off-changhao-body'); dataErr('off-baofa-body');
     dataErr('cand-changhao-body'); dataErr('cand-baofa-body');
   });
+
+  // ---- 治理狀態 (picks.json：changelog + veto) ----
+  fetch('./picks.json',{cache:'no-store'}).then(function(r){
+    if(!r.ok) throw new Error('picks '+r.status); return r.json();
+  }).then(function(d){
+    var oa=document.getElementById('official-asof');
+    var bits=[];
+    if(d&&d.changelog&&d.changelog.length){
+      bits.push('最新異動：'+d.changelog[0].date+'　'+d.changelog[0].event);
+    }
+    if(d&&d.veto&&d.veto.length){
+      bits.push('veto 中：'+d.veto.join('、'));
+    }
+    if(bits.length){
+      var div=document.createElement('div');
+      div.className='asof';
+      div.style.marginTop='.35rem';
+      div.textContent=bits.join('　|　');
+      oa.parentNode.insertBefore(div, oa.nextSibling);
+    }
+  }).catch(function(e){ /* 治理註記缺席不影響榜單呈現 */ });
 })();
 </script>
 </body>

@@ -1,17 +1,21 @@
 {
-  "schema_note": "approved.changhao[] 與 approved.baofa[] 每個項目的欄位：{ticker, group（changhao|baofa）, why（為什麼上榜，一句話）, multiple（預期倍數）, horizon（時間）, position（現在能不能買：位置與板機狀態）, exit（什麼情況下架，一句話）, approved_date（YYYY-MM-DD）}。上榜＝持有人從 candidates.json 挑一檔、把四件事草稿定稿後手動貼進對應陣列並補一筆 changelog；下架＝從陣列移除並補一筆 changelog。build_picks.py 只生成候選、永不改本檔。",
-  "approved": {
-    "changhao": [],
-    "baofa": []
-  },
+  "schema_note": "2026-07-05 治理變更後本檔只管兩件事：veto[]＝持有人否決名單（列入者永不自動上榜，留候選區並標「持有人 veto」）；changelog[]＝規則與名單異動留痕（新條目插在最前，頁面以第一條為最新異動）。正式榜不再人工逐檔批准——由 build_picks.py 規則自動判定並寫入 candidates.json 的 official_changhao[]/official_baofa[]。",
+  "mode": "auto-promotion v0（自動上榜＋持有人 veto）",
+  "veto": [],
   "changelog": [
+    {
+      "date": "2026-07-05",
+      "event": "治理變更：正式榜改自動上榜——長熬＝產業趨勢『對』；爆發＝循環形狀＋站上年線＋非過熱（右側確認代替 DD 裁決，因 DD 框架結構性不納拐點循環股）；持有人保留 veto 權"
+    },
     {
       "date": "2026-07-05",
       "event": "精選清單系統上線；正式榜空榜起步——候選區生成後由持有人逐檔批准"
     }
   ],
   "rules": {
-    "governance": "候選由 build_picks.py 週更生成；上榜/下架＝持有人手改本檔＋changelog 留痕",
-    "four_things": "每檔必填：why／multiple+horizon／position／exit"
+    "governance": "候選與正式榜均由 build_picks.py 規則自動判定；持有人保留 veto（本檔 veto[]）；規則變更走 changelog 留痕",
+    "auto_changhao": "候選（DD 進場 ∩ 護城河閘）∩ 產業趨勢＝對 → 自動上榜",
+    "auto_baofa": "cyclical-track 合格 ∩ 非過熱（🔥）∩ 站上年線 → 自動上榜（右側價格確認代替 DD 裁決）",
+    "four_things": "每檔必有：why／multiple+horizon／position／exit"
   }
 }
