@@ -106,7 +106,7 @@ a:hover{color:var(--accent-hover)}
 
 /* Candidate tables */
 .cand-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px;background:var(--card)}
-table.cand{width:100%;border-collapse:collapse;font-size:.8rem;min-width:720px}
+table.cand{width:100%;border-collapse:collapse;font-size:.8rem;min-width:880px}
 table.cand th{background:var(--bg-soft);text-align:left;padding:.55rem .7rem;font-size:.66rem;
               font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-sec);
               border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0}
@@ -128,6 +128,14 @@ tr.muted .tkr,tr.muted .why{color:var(--text-sec)}
 .hotbadge{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;
           padding:.1rem .42rem;border-radius:5px;background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;
           white-space:nowrap;margin-left:.35rem}
+.tbadge{display:inline-block;font-size:.66rem;font-weight:700;padding:.12rem .5rem;border-radius:999px;
+        white-space:nowrap;margin-bottom:.25rem}
+.tbadge.t-good{background:var(--green-soft);color:var(--green);border:1px solid #a7f3d0}
+.tbadge.t-mid{background:var(--amber-soft);color:var(--amber);border:1px solid #fcd9a5}
+.tbadge.t-weak{background:#fef2f2;color:#dc2626;border:1px solid #fca5a5}
+.tbadge.t-na{background:#f1f5f9;color:var(--muted);border:1px solid var(--border)}
+.tev{display:block;font-size:.68rem;color:var(--muted);line-height:1.45;max-width:210px}
+table.cand .trend{max-width:220px}
 
 .empty{border:1px dashed var(--border);border-radius:10px;padding:1.4rem 1.3rem;
        background:var(--bg-soft);color:var(--text-sec);font-size:.86rem;line-height:1.7}
@@ -270,7 +278,8 @@ footer a{font-weight:600}
 
 <footer>
   <div class="container foot-inner">
-    <div><b>資料來源：</b>DD Screener（<code>dd-screener/latest.json</code>：DD 裁決、護城河、runway、EPS 上修）、循環軌（<code>cyclical-track.json</code>）、sop-funnel 板機狀態、決策引擎 GRP（<code>engine/radar.json · arena.json</code>）。四件事草稿由 <code>scripts/build_picks.py</code> 純本地聚合，不含網路呼叫。</div>
+    <div><b>資料來源：</b>DD Screener（<code>dd-screener/latest.json</code>：DD 裁決、護城河、runway、EPS 上修）、循環軌（<code>cyclical-track.json</code>）、sop-funnel 板機狀態、決策引擎 GRP（<code>engine/radar.json · arena.json</code>）、產業深度 ID（<code>docs/id/</code> id-meta）。四件事草稿由 <code>scripts/build_picks.py</code> 純本地聚合，不含網路呼叫。</div>
+    <div style="margin-top:.5rem"><b>產業趨勢判定：</b>ID 主題成員的上修寬度 × 站上年線寬度自動判定（v0 門檻 60/40 未調參）＋ S 曲線 phase 蓋帽（declining 不給「對」）；無 ID 覆蓋者以 sector 寬度代判，樣本不足則如實標示。趨勢「弱」不硬排除、僅沉底——批准權在持有人。</div>
     <div style="margin-top:.5rem"><b>更新節奏：</b>候選每週六隨市場資料更新；正式榜僅在持有人批准/下架時異動。</div>
     <a class="cockpit-link" href="/cockpit/">機房：完整漏斗與旗標 →</a>
   </div>
@@ -317,6 +326,17 @@ footer a{font-weight:600}
       el.innerHTML='<div class="empty">此組目前沒有候選。</div>';
       return;
     }
+    var trendCell=function(c){
+      var st=c.trend_status||'樣本不足';
+      var isSector=!!(c.trend_evidence && c.trend_evidence.indexOf('sector 級')===0);
+      var cls='t-na', label=st;
+      if(isSector){ cls='t-na'; label='sector 級・'+st; }
+      else if(st==='對') cls='t-good';
+      else if(st==='中性') cls='t-mid';
+      else if(st==='弱') cls='t-weak';
+      return '<span class="tbadge '+cls+'">'+esc(label)+'</span>'
+        +(c.trend_evidence?'<span class="tev">'+esc(c.trend_evidence)+'</span>':'');
+    };
     var rows=list.map(function(c){
       var muted=isBaofa && c.hot;
       var tkrCell=esc(c.ticker)+(muted?'<span class="hotbadge">等回踩</span>':'');
@@ -325,13 +345,14 @@ footer a{font-weight:600}
         +'<td class="tkr">'+tkrCell+'</td>'
         +'<td class="why">'+esc(c.why)+'</td>'
         +'<td class="nums">'+esc(c.multiple)+(c.horizon?'<br><span style="color:var(--muted)">'+esc(c.horizon)+'</span>':'')+'</td>'
+        +'<td class="trend">'+trendCell(c)+'</td>'
         +'<td class="pos">'+esc(c.position)+'</td>'
         +'<td class="exit">'+esc(c.exit)+'</td>'
         +'<td>'+chipHtml(c.sources)+'</td>'
         +'</tr>';
     }).join('');
     el.innerHTML='<div class="cand-wrap"><table class="cand">'
-      +'<thead><tr><th>Ticker</th><th>為什麼（草稿）</th><th>倍數 / 拐點數字</th><th>位置 · 板機 · DD</th><th>下架條件</th><th>來源</th></tr></thead>'
+      +'<thead><tr><th>Ticker</th><th>為什麼（草稿）</th><th>倍數 / 拐點數字</th><th>產業趨勢</th><th>位置 · 板機 · DD</th><th>下架條件</th><th>來源</th></tr></thead>'
       +'<tbody>'+rows+'</tbody></table></div>';
   }
 

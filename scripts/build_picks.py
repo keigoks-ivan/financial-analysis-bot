@@ -4,8 +4,10 @@
 build_picks.py — 精選清單「候選區」週更生成器。
 
 從站內既有 JSON（純本地聚合，無網路呼叫）產出 docs/picks/candidates.json：
-  - 長熬・品質成長：DD 裁決＝進場 ∩ 護城河 S/A ∩ 趨勢非 ↓
+  - 長熬・品質成長：DD 裁決＝進場 ∩（護城河 S/A 且趨勢非 ↓，或 B 且趨勢 ↑）
   - 爆發・循環上修：cyclical-track 全數合格名單（低熱在前、🔥 沉底標「等回踩」）
+  - 產業趨勢閘（自動）：ID id-meta 主題成員的「上修寬度 × 站上年線寬度」判 對/中性/弱，
+    growth_phase=declining 蓋帽至中性；無 ID 覆蓋者以 sector 寬度代判，樣本不足則如實標示。
 
 每檔收斂成「四件事」草稿：為什麼上榜／預期倍數與時間／現在能不能買（位置與板機）／什麼情況下架。
 草稿僅供持有人裁決；正式榜由 picks.json（人工批准 + changelog）決定，本檔不碰 picks.json。
@@ -14,8 +16,10 @@ Fail-safe：
   - 單一來源缺失/無法解析 → 印 warning 跳過該來源，仍寫出手上有的（exit 0）。
   - 若兩個主來源（latest.json 與 cyclical-track.json）皆失敗 → exit 0 且不動 candidates.json。
 """
+import glob
 import json
 import os
+import re
 import sys
 from datetime import datetime, timezone, timedelta
 
@@ -28,6 +32,7 @@ CYCLICAL = os.path.join(DOCS, "dd-screener", "cyclical-track.json")
 SOP = os.path.join(DOCS, "dd-screener", "sop-funnel", "latest.json")
 RADAR = os.path.join(DOCS, "engine", "radar.json")
 ARENA = os.path.join(DOCS, "engine", "arena.json")
+ID_GLOB = os.path.join(DOCS, "id", "ID_*.html")
 OUT = os.path.join(DOCS, "picks", "candidates.json")
 
 TW8 = timezone(timedelta(hours=8))
@@ -123,10 +128,186 @@ def build_grp_set(radar, arena):
 
 
 # ---------------------------------------------------------------------------
+# 產業趨勢閘（自動）— ID id-meta 主題成員寬度判定
+# ---------------------------------------------------------------------------
+ID_META_RE = re.compile(r'id="id-meta"[^>]*>\s*(\{.*?\})\s*</script>', re.S)
+
+
+def parse_id_themes():
+    """掃 docs/id/ID_*.html 的 id-meta JSON，回傳 theme registry。
+
+    registry: theme -> {growth_phase, publish_date, members: [(ticker, depth)]}
+    187 檔中約 86 檔有合法 id-meta，其餘無 block 或 JSON 壞掉——如實跳過即可。
+    """
+    registry = {}
+    files = sorted(glob.glob(ID_GLOB))
+    if not files:
+        warn("docs/id/ID_*.html 找不到任何檔案，產業趨勢閘停用")
+        return registry
+    parsed = 0
+    for f in files:
+        try:
+            txt = open(f, encoding="utf-8").read()
+        except OSError:
+            continue
+        m = ID_META_RE.search(txt)
+        if not m:
+            continue
+        try:
+            meta = json.loads(m.group(1))
+        except json.JSONDecodeError:
+            continue
+        theme = (meta.get("theme") or "").strip()
+        rel = meta.get("related_tickers")
+        if not theme or not isinstance(rel, list):
+            continue
+        members = []
+        for r in rel:
+            if isinstance(r, dict) and r.get("ticker"):
+                members.append((r["ticker"], r.get("depth") or ""))
+        if not members:
+            continue
+        pub = meta.get("publish_date") or ""
+        prev = registry.get(theme)
+        # 同 theme 多檔（regen）→ 取 publish_date 最新的一份
+        if prev is None or pub > prev["publish_date"]:
+            registry[theme] = {
+                "growth_phase": meta.get("growth_phase") or "",
+                "publish_date": pub,
+                "members": members,
+            }
+        parsed += 1
+    print(f"[build_picks] id-meta 解析：{parsed}/{len(files)} 檔有效，themes={len(registry)}")
+    return registry
+
+
+def _breadth_verdict(members, stock_idx, growth_phase, min_n):
+    """members（ticker list）對 latest.json 算兩個寬度並給裁決。
+
+    v0 門檻（未調參，取整數 60/40）：
+      對：上修寬度 ≥ 60% 且 站上年線寬度 ≥ 60%
+      弱：上修寬度 ≤ 40% 且 站上年線寬度 ≤ 40%
+      其餘：中性；growth_phase=declining 蓋帽至中性（不可為 對）。
+    回傳 (verdict, rev_breadth, price_breadth, n) 或 None（樣本不足）。
+    """
+    rows = [stock_idx[t] for t in members if t in stock_idx]
+    rev_rows = [
+        r for r in rows
+        if fnum(r.get("eps_fy_next_revision_pct")) is not None
+        or fnum(r.get("eps2y_revision_pp")) is not None
+    ]
+    px_rows = [
+        r for r in rows
+        if isinstance(r.get("ma"), dict) and isinstance(r["ma"].get("above_w52"), bool)
+    ]
+    n = len(rows)
+    if n < min_n or not rev_rows or not px_rows:
+        return None
+    rev_up = sum(
+        1 for r in rev_rows
+        if (fnum(r.get("eps_fy_next_revision_pct")) or 0) > 0
+        or (fnum(r.get("eps2y_revision_pp")) or 0) > 0
+    )
+    px_up = sum(1 for r in px_rows if r["ma"]["above_w52"] is True)
+    rev_breadth = 100.0 * rev_up / len(rev_rows)
+    price_breadth = 100.0 * px_up / len(px_rows)
+    if rev_breadth >= 60 and price_breadth >= 60:
+        verdict = "對"
+    elif rev_breadth <= 40 and price_breadth <= 40:
+        verdict = "弱"
+    else:
+        verdict = "中性"
+    if growth_phase == "declining" and verdict == "對":
+        verdict = "中性"  # S 曲線 declining 蓋帽：寬度再好也不給「對」
+    return verdict, rev_breadth, price_breadth, n
+
+
+def build_trend_resolver(latest, registry):
+    """回傳 resolve(ticker) -> {trend_status, trend_evidence, id_theme}。
+
+    主題歸屬：含該 ticker 的 themes 中，depth 🔴 優先，再以 publish_date 最新者勝；
+    無 ID 覆蓋 → sector 級寬度代判（n ≥ 5），再不行 → 樣本不足。
+    """
+    stocks = latest.get("stocks") if isinstance(latest, dict) else None
+    if not isinstance(stocks, list):
+        stocks = []
+    stock_idx = {s["ticker"]: s for s in stocks if s.get("ticker")}
+
+    # theme verdicts（一次算完快取）
+    theme_verdicts = {}
+    for theme, info in registry.items():
+        res = _breadth_verdict(
+            [t for t, _ in info["members"]], stock_idx, info["growth_phase"], min_n=3
+        )
+        theme_verdicts[theme] = res  # None ＝ 樣本不足
+
+    # ticker -> [(is_core🔴, publish_date, theme)]
+    ticker_themes = {}
+    for theme, info in registry.items():
+        for t, depth in info["members"]:
+            ticker_themes.setdefault(t, []).append(
+                (0 if depth == "🔴" else 1, info["publish_date"], theme)
+            )
+
+    # sector 級 fallback（latest.json sector 欄大多為空，覆蓋有限——如實降級）
+    sector_groups = {}
+    for s in stocks:
+        sec = (s.get("sector") or "").strip()
+        if sec:
+            sector_groups.setdefault(sec, []).append(s["ticker"])
+    sector_verdicts = {
+        sec: _breadth_verdict(members, stock_idx, "", min_n=5)
+        for sec, members in sector_groups.items()
+    }
+
+    def resolve(ticker, sector=""):
+        cands = ticker_themes.get(ticker)
+        if cands:
+            # depth 🔴 優先、同深度取 publish_date 最新（stable sort 兩段式）
+            cands_sorted = sorted(cands, key=lambda x: x[1], reverse=True)
+            cands_sorted = sorted(cands_sorted, key=lambda x: x[0])
+            theme = cands_sorted[0][2]
+            res = theme_verdicts.get(theme)
+            phase = registry[theme]["growth_phase"] or "—"
+            if res is None:
+                return {
+                    "trend_status": "樣本不足",
+                    "trend_evidence": f"{theme}：universe 內成員 < 3，寬度無法判定",
+                    "id_theme": theme,
+                }
+            verdict, rb, pb, n = res
+            return {
+                "trend_status": verdict,
+                "trend_evidence": (
+                    f"{theme}：上修寬度 {rb:.0f}%・站上年線 {pb:.0f}%・S曲線 {phase}（n={n}）"
+                ),
+                "id_theme": theme,
+            }
+        # 無 ID 覆蓋 → sector 級
+        sec = (sector or "").strip()
+        if sec and sector_verdicts.get(sec):
+            verdict, rb, pb, n = sector_verdicts[sec]
+            return {
+                "trend_status": verdict,
+                "trend_evidence": (
+                    f"sector 級・無 ID 覆蓋｜{sec}：上修寬度 {rb:.0f}%・站上年線 {pb:.0f}%（n={n}）"
+                ),
+                "id_theme": None,
+            }
+        return {
+            "trend_status": "樣本不足",
+            "trend_evidence": "無 ID 覆蓋且 sector 樣本不足",
+            "id_theme": None,
+        }
+
+    return resolve, theme_verdicts
+
+
+# ---------------------------------------------------------------------------
 # 長熬・品質成長
 # ---------------------------------------------------------------------------
-def build_changhao(latest, trigger_map, grp_set):
-    """DD 裁決＝進場 ∩ 護城河 S/A ∩ 趨勢非 ↓。"""
+def build_changhao(latest, trigger_map, grp_set, trend_resolve):
+    """DD 裁決＝進場 ∩（護城河 S/A 且趨勢非 ↓，或 B 且趨勢 ↑）。"""
     if not isinstance(latest, dict):
         return []
     stocks = latest.get("stocks")
@@ -138,9 +319,10 @@ def build_changhao(latest, trigger_map, grp_set):
     for s in stocks:
         if s.get("dca_verdict") != "進場":
             continue
-        if s.get("moat_grade") not in ("S", "A"):
-            continue
-        if s.get("moat_trend") == "↓":
+        g, tr = s.get("moat_grade"), s.get("moat_trend")
+        # 護城河閘：S/A 且趨勢非 ↓；或 B 且趨勢 ↑——
+        # 護城河 B 但趨勢向上＝重評來源，等升到 A 市場已給完溢價。
+        if not ((g in ("S", "A") and tr != "↓") or (g == "B" and tr == "↑")):
             continue
 
         ticker = s.get("ticker")
@@ -200,6 +382,9 @@ def build_changhao(latest, trigger_map, grp_set):
         if runway:
             chips.append(f"runway {runway}")
 
+        # --- 產業趨勢（自動判定，取代舊「待人工認定」） ---
+        trend = trend_resolve(ticker, sector)
+
         out.append({
             "ticker": ticker,
             "name": s.get("name") or ticker,
@@ -214,18 +399,21 @@ def build_changhao(latest, trigger_map, grp_set):
             "runway": runway,
             "role": role,
             "ev5y_pct": ev5y,
-            "trend_gate": "待人工認定",  # tier_matrix 非機器可讀
+            "trend_status": trend["trend_status"],
+            "trend_evidence": trend["trend_evidence"],
+            "id_theme": trend["id_theme"],
             "trigger": trig or None,
             "dd_path": s.get("dd_path"),
             "sources": chips,
         })
 
-    # 排序：runway 🟢 在前，其次 ev5y 由高到低
+    # 排序：趨勢「弱」沉底（不硬排除——批准權在人）；其餘 runway 🟢 在前、ev5y 由高到低
     def sort_key(x):
+        weak = 1 if x.get("trend_status") == "弱" else 0
         green = 0 if x.get("runway") == "🟢" else 1
         ev = x.get("ev5y_pct")
         ev = ev if ev is not None else -999
-        return (green, -ev)
+        return (weak, green, -ev)
 
     out.sort(key=sort_key)
     return out
@@ -234,7 +422,7 @@ def build_changhao(latest, trigger_map, grp_set):
 # ---------------------------------------------------------------------------
 # 爆發・循環上修
 # ---------------------------------------------------------------------------
-def build_baofa(cyclical, trigger_map, grp_set):
+def build_baofa(cyclical, trigger_map, grp_set, trend_resolve):
     """cyclical-track 全數合格；低熱在前、🔥 沉底標『等回踩』。"""
     if not isinstance(cyclical, dict):
         return []
@@ -303,6 +491,9 @@ def build_baofa(cyclical, trigger_map, grp_set):
         if ticker in grp_set:
             chips.append("GRP")
 
+        # --- 產業趨勢（同一套證據對循環拐點同樣有用） ---
+        trend = trend_resolve(ticker, rec.get("sector") or "")
+
         return {
             "ticker": ticker,
             "name": rec.get("name") or ticker,
@@ -320,6 +511,9 @@ def build_baofa(cyclical, trigger_map, grp_set):
             "eps2y_revision_pp": rev_pp,
             "ret_12m_pct": ret12,
             "revision_rank_score": rank,
+            "trend_status": trend["trend_status"],
+            "trend_evidence": trend["trend_evidence"],
+            "id_theme": trend["id_theme"],
             "trigger": trig or None,
             "dd_path": dd_path,
             "dd_age_days": dd_age,
@@ -356,8 +550,11 @@ def main():
     if not grp_set:
         warn("GRP 名單無法解析（GRP source chip 將缺席）")
 
-    changhao = build_changhao(latest, trigger_map, grp_set)
-    baofa = build_baofa(cyclical, trigger_map, grp_set)
+    registry = parse_id_themes()
+    trend_resolve, theme_verdicts = build_trend_resolver(latest or {}, registry)
+
+    changhao = build_changhao(latest, trigger_map, grp_set, trend_resolve)
+    baofa = build_baofa(cyclical, trigger_map, grp_set, trend_resolve)
 
     # as_of：優先取來源的 as_of
     as_of = None
@@ -394,6 +591,12 @@ def main():
         print(f"    {x['ticker']:<8} {x['why']}")
         print(f"             倍數：{x['multiple']}")
         print(f"             位置：{x['position']}")
+    print("[build_picks] 長熬 產業趨勢裁決：")
+    for x in changhao:
+        print(f"    {x['ticker']:<8} [{x['trend_status']}] {x['trend_evidence']}")
+    print("[build_picks] 爆發 產業趨勢裁決：")
+    for x in baofa:
+        print(f"    {x['ticker']:<8} [{x['trend_status']}] {x['trend_evidence']}")
     return 0
 
 
