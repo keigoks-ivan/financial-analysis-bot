@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>選股駕駛艙 — InvestMQuest Research</title>
+<meta name="description" content="全站五層選股體系的單一決策入口：市場環境、今日待辦裁決、漏斗活數字、組合記分板。">
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#0f172a;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(59,130,246,.28);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<style>
+:root{
+  --bg:#f7f8fa;--card:#fff;--accent:#2563eb;--text:#0f172a;--text-sec:#334155;--muted:#64748b;
+  --border:#e5e7eb;--border-soft:#eef1f5;
+  --green:#16a34a;--red:#dc2626;--amber:#d97706;--orange:#ea580c;--teal:#0d9488;--purple:#7c3aed;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.mono{font-family:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace}
+.num{font-variant-numeric:tabular-nums}
+.wrap{max-width:1140px;margin:0 auto;padding:0 20px}
+.hero{padding:2.2rem 0 1rem}
+.hero h1{font-size:1.7rem;font-weight:800;letter-spacing:-.02em;margin:0 0 .4rem}
+.hero .sub{font-size:.86rem;color:var(--text-sec);margin:0;max-width:760px}
+.hero .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:.66rem;font-weight:600;letter-spacing:.14em;
+  color:var(--accent);text-transform:uppercase;display:inline-flex;align-items:center;gap:.4rem;margin-bottom:.55rem}
+.hero .eyebrow::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--accent)}
+section.block{padding:1.1rem 0}
+.sec-head{display:flex;align-items:baseline;gap:.7rem;margin-bottom:.85rem;flex-wrap:wrap}
+.sec-num{font-family:'IBM Plex Mono',monospace;font-size:.8rem;font-weight:700;color:#fff;background:var(--accent);
+  width:1.55rem;height:1.55rem;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.sec-title{font-size:1.12rem;font-weight:700;margin:0}
+.sec-desc{font-size:.76rem;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px}
+.placeholder{background:var(--card);border:1px dashed #cbd5e1;border-radius:12px;padding:1rem 1.2rem;
+  color:var(--muted);font-size:.82rem}
+
+/* ① strip */
+.env-strip{display:flex;flex-wrap:wrap;align-items:stretch;gap:0;overflow:hidden;padding:0}
+.env-cell{padding:.85rem 1.2rem;border-right:1px solid var(--border-soft);flex:1 1 auto;min-width:150px}
+.env-cell:last-child{border-right:0}
+.env-k{font-size:.66rem;font-weight:600;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;margin-bottom:.25rem}
+.env-v{font-size:1.15rem;font-weight:700;line-height:1.15}
+.env-v small{font-size:.72rem;font-weight:500;color:var(--muted)}
+.env-links{padding:.85rem 1.2rem;display:flex;flex-direction:column;gap:.25rem;justify-content:center;
+  background:#f8fafc;font-size:.76rem;min-width:120px}
+
+/* ② todo */
+.todo-list{display:flex;flex-direction:column;gap:.6rem}
+.todo{display:flex;gap:.85rem;align-items:flex-start;background:var(--card);border:1px solid var(--border);
+  border-left:4px solid var(--amber);border-radius:10px;padding:.85rem 1.1rem}
+.todo.grp{border-left-color:var(--purple)}
+.todo.mom{border-left-color:var(--accent)}
+.todo.trig{border-left-color:var(--orange)}
+.todo-ic{font-size:1.2rem;line-height:1.3;flex-shrink:0}
+.todo-body{flex:1;min-width:0}
+.todo-src{font-family:'IBM Plex Mono',monospace;font-size:.64rem;font-weight:600;letter-spacing:.05em;
+  color:var(--muted);text-transform:uppercase;margin-bottom:.15rem}
+.todo-txt{font-size:.88rem;color:var(--text);line-height:1.55}
+.todo-txt b{font-weight:700}
+.todo-link{font-size:.74rem;white-space:nowrap;flex-shrink:0;align-self:center}
+.todo-calm{background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:1px solid #bbf7d0;border-radius:12px;
+  padding:1.6rem 1.4rem;text-align:center}
+.todo-calm .big{font-size:1.15rem;font-weight:700;color:var(--green);margin-bottom:.3rem}
+.todo-calm .sm{font-size:.8rem;color:#15803d}
+
+/* ③ funnel */
+.funnel{display:flex;flex-direction:column;gap:.55rem}
+.flayer{background:var(--card);border:1px solid var(--border);border-radius:11px;padding:.9rem 1.1rem;
+  display:grid;grid-template-columns:minmax(210px,1.15fr) 2fr;gap:.6rem 1.2rem;align-items:center}
+.flayer .fl-l{min-width:0}
+.fl-name{font-size:.96rem;font-weight:700;margin-bottom:.15rem}
+.fl-q{font-size:.74rem;color:var(--muted)}
+.fl-r{display:flex;flex-wrap:wrap;gap:.4rem .55rem;align-items:center}
+.stat{display:inline-flex;flex-direction:column;background:#f8fafc;border:1px solid var(--border-soft);
+  border-radius:8px;padding:.3rem .6rem;min-width:0}
+.stat .sv{font-size:1.02rem;font-weight:700;line-height:1.1}
+.stat .sl{font-size:.64rem;color:var(--muted);margin-top:.1rem}
+.chip{display:inline-flex;align-items:center;font-size:.72rem;font-weight:500;background:#eef2ff;color:var(--accent);
+  border:1px solid #dbe4ff;border-radius:20px;padding:.2rem .65rem}
+.chip:hover{text-decoration:none;background:#e0e8ff}
+.dd-mini{display:inline-flex;gap:.45rem;font-size:.72rem;color:var(--text-sec);flex-wrap:wrap}
+.dd-mini b{font-weight:700}
+.v-in{color:var(--green)}.v-watch{color:var(--amber)}.v-avoid{color:var(--red)}
+
+/* ④ scoreboards */
+.sb{display:flex;flex-direction:column;gap:.8rem}
+.sb-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem 1.2rem}
+.sb-top{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;margin-bottom:.55rem}
+.sb-name{font-size:1.02rem;font-weight:700}
+.sb-badge{font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:600;letter-spacing:.05em;
+  padding:.15rem .5rem;border-radius:5px;background:#eef2ff;color:var(--accent)}
+.sb-note{font-size:.74rem;color:var(--muted)}
+.sb-metrics{display:flex;flex-wrap:wrap;gap:.5rem .7rem;margin:.5rem 0}
+.sb-seatlist{font-size:.8rem;color:var(--text-sec);line-height:1.7}
+.sb-seatlist .tk{display:inline-block;font-weight:600;background:#f1f5f9;border:1px solid var(--border-soft);
+  border-radius:6px;padding:.1rem .5rem;margin:.1rem .2rem .1rem 0}
+
+footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:1.5rem}
+.foot .flow{font-size:.82rem;color:var(--text-sec);line-height:1.8;margin-bottom:.8rem}
+.foot .flow b{color:var(--text)}
+.foot .disc{font-size:.72rem;color:var(--muted);line-height:1.7}
+.upd{font-size:.68rem;color:#94a3b8;margin-top:.4rem}
+@media(max-width:720px){
+  .flayer{grid-template-columns:1fr;gap:.5rem}
+  .env-cell{border-right:0;border-bottom:1px solid var(--border-soft)}
+}
+</style>
+</head>
+<body>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/">個股 DD</a>
+          <a href="/research/synthesis/">期望落差綜合研判</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/">週報</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/catalyst/">催化劑日曆</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/long-track-smh/">長線訊號</a>
+          <a href="/long-track-tw/">台股長線</a>
+          <a href="/turtle-sleeve/">商品 Sleeve</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/">量化回測</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/engine/">⚙ 決策引擎</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/screener-tw.html">Screener 台股</a>
+          <a href="/screener-jp.html">Screener 日股</a>
+          <a href="/screener-my.html">Screener 馬股</a>
+          <a href="/cache/">🗄 Data Cache</a>
+          <a href="/tools/">期貨部位計算機</a>
+        </div>
+      </div>
+      <a href="/mental-models/">🧠 心智模型</a>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="eyebrow">Stock-Selection Cockpit · 選股駕駛艙</div>
+    <h1>選股駕駛艙</h1>
+    <p class="sub">全站五層選股體系的單一決策入口。不是「有哪些系統」，而是「今天開站，我需要看什麼」——先看環境，再看今天該我裁決的事，接著是漏斗每一層的活數字與組合記分板。本頁為既有系統資料的即時聚合，無獨立資料管線。</p>
+  </div>
+
+  <!-- ① 環境條 -->
+  <section class="block">
+    <div class="sec-head">
+      <span class="sec-num">1</span>
+      <h2 class="sec-title">市場環境</h2>
+      <span class="sec-desc">風險偏好儀表 × 波動 × 金融條件——出手前先看天氣</span>
+    </div>
+    <div id="env-mount"><div class="placeholder">載入中⋯</div></div>
+  </section>
+
+  <!-- ② 今日待辦 -->
+  <section class="block">
+    <div class="sec-head">
+      <span class="sec-num">2</span>
+      <h2 class="sec-title">今日待辦——需要我裁決的事</h2>
+      <span class="sec-desc">旗標、換席挑戰、板機訊號——只列出等人工決策的項目</span>
+    </div>
+    <div id="todo-mount"><div class="placeholder">載入中⋯</div></div>
+  </section>
+
+  <!-- ③ 漏斗活數字 -->
+  <section class="block">
+    <div class="sec-head">
+      <span class="sec-num">3</span>
+      <h2 class="sec-title">漏斗活數字——五層選股體系</h2>
+      <span class="sec-desc">發現 → 判斷 → 組合 → 板機 → 監控，每層回答一個問題</span>
+    </div>
+    <div id="funnel-mount"><div class="placeholder">載入中⋯</div></div>
+  </section>
+
+  <!-- ④ 組合記分板 -->
+  <section class="block">
+    <div class="sec-head">
+      <span class="sec-num">4</span>
+      <h2 class="sec-title">組合記分板</h2>
+      <span class="sec-desc">目前在跑的組合——席位、軌別與表現</span>
+    </div>
+    <div id="sb-mount"><div class="placeholder">載入中⋯</div></div>
+  </section>
+
+  <footer class="foot">
+    <p class="flow">漏斗全景：<b>發現</b>（QGM＋形狀掃描）→ <b>判斷</b>（DD 裁決）→ <b>組合</b>（GRP 三軌席位）→ <b>板機</b>（sop-funnel）→ <b>監控</b>（風險儀表）；Momentum-5 為平行獨立對照實驗。</p>
+    <p class="disc">本頁所有數字皆為既有系統資料的即時聚合，無獨立資料管線，各區塊隨其來源系統的排程自動更新。內容僅供研究與紀錄用途，非投資建議。</p>
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var $ = function(id){return document.getElementById(id);};
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function fmt(n,d){if(n==null||isNaN(n))return '—';return Number(n).toLocaleString('en-US',{minimumFractionDigits:d||0,maximumFractionDigits:d||0});}
+  function ph(msg){return '<div class="placeholder">'+esc(msg||'資料暫缺')+'</div>';}
+  function getJSON(url){return fetch(url,{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error(r.status);return r.json();});}
+
+  // Kick off all fetches independently. Each block renders from settled results.
+  var sources = {
+    gauge:   '/cache/risk_gauge.json',
+    hist:    '/cache/risk_history.json',
+    mom:     '/research/momentum-5/data.json',
+    momPort: '/research/momentum-5/portfolio.json',
+    dd:      '/dd-screener/latest.json',
+    sop:     '/dd-screener/sop-funnel/latest.json',
+    arena:   '/engine/arena.json',
+    cyc:     '/dd-screener/cyclical-track.json'
+  };
+  var S = {};
+  var pending = Object.keys(sources).map(function(k){
+    return getJSON(sources[k]).then(function(d){S[k]=d;}).catch(function(){S[k]=null;});
+  });
+
+  Promise.all(pending).then(function(){
+    try{ renderEnv(); }catch(e){ $('env-mount').innerHTML=ph('環境資料暫缺'); }
+    try{ renderTodo(); }catch(e){ $('todo-mount').innerHTML=ph('待辦資料暫缺'); }
+    try{ renderFunnel(); }catch(e){ $('funnel-mount').innerHTML=ph('漏斗資料暫缺'); }
+    try{ renderScoreboard(); }catch(e){ $('sb-mount').innerHTML=ph('記分板資料暫缺'); }
+  });
+
+  // ---------- ① 環境條 ----------
+  function riskColor(sc){ if(sc>=0.34) return 'var(--green)'; if(sc<=-0.34) return 'var(--red)'; return 'var(--amber)'; }
+  function renderEnv(){
+    var g = S.gauge, h = S.hist;
+    if(!g){ $('env-mount').innerHTML = ph('環境資料暫缺'); return; }
+    var cells = '';
+    // risk gauge
+    var col = riskColor(g.score);
+    cells += '<div class="env-cell"><div class="env-k">風險儀表</div>'+
+      '<div class="env-v" style="color:'+col+'">'+esc(g.label_zh||'')+' <small class="num">'+fmt(g.score,3)+'</small></div></div>';
+    // vix / nfci from history
+    if(h && h.vix && h.vix.length){
+      var vix = h.vix[h.vix.length-1];
+      var vc = (vix>=40)?'var(--red)':(vix>=30)?'var(--orange)':'var(--text)';
+      cells += '<div class="env-cell"><div class="env-k">VIX 波動率</div>'+
+        '<div class="env-v num" style="color:'+vc+'">'+fmt(vix,1)+'</div></div>';
+    }
+    if(h && h.nfci && h.nfci.length){
+      var nfci = h.nfci[h.nfci.length-1];
+      var nc = (nfci>0)?'var(--red)':'var(--teal)';
+      var nl = (nfci>0)?'緊縮':'寬鬆';
+      cells += '<div class="env-cell"><div class="env-k">NFCI 金融條件</div>'+
+        '<div class="env-v num" style="color:'+nc+'">'+fmt(nfci,2)+' <small style="color:'+nc+'">'+nl+'</small></div></div>';
+    }
+    cells += '<div class="env-cell"><div class="env-k">更新日期</div>'+
+      '<div class="env-v num" style="font-size:.95rem;font-weight:600;color:var(--text-sec)">'+esc(g.as_of||'—')+'</div></div>';
+    var links = '<div class="env-links"><a href="/markets.html">詳細 →</a><a href="/#risk-chart">圖表 →</a></div>';
+    $('env-mount').innerHTML = '<div class="card env-strip">'+cells+links+'</div>';
+  }
+
+  // ---------- ② 今日待辦 ----------
+  function renderTodo(){
+    var items = [];
+
+    // GRP arena duels (seat-change challenges awaiting human adjudication)
+    if(S.arena && Array.isArray(S.arena.duels)){
+      var byChal = {};
+      S.arena.duels.forEach(function(d){
+        if(!d || !d.alert || !d.challenger) return;
+        var ck = d.challenger.ticker;
+        if(!byChal[ck]) byChal[ck] = {chal:d.challenger, seats:[]};
+        if(d.seat && d.seat.ticker) byChal[ck].seats.push(d.seat.ticker);
+      });
+      Object.keys(byChal).forEach(function(ck){
+        var o = byChal[ck];
+        var routeZh = (o.chal.route==='core')?'核心':(o.chal.route==='satellite')?'衛星':(o.chal.route||'');
+        var scr = (o.chal.grp && o.chal.grp.score!=null)?o.chal.grp.score:o.chal.score;
+        items.push({
+          cls:'grp', ic:'⚔️', src:'GRP · 決策引擎 · 席位擂台',
+          txt:'<b>'+esc(ck)+'</b>（GRP 分 '+fmt(scr,2)+'）挑戰'+routeZh+'軌 <b>'+esc(o.seats.join('／'))+'</b>——需人工裁決是否換席',
+          href:'/engine/arena.html', label:'席位擂台 →'
+        });
+      });
+    }
+
+    // Momentum-5 seat flags
+    if(S.mom && Array.isArray(S.mom.seats)){
+      var benchTop = null;
+      if(S.mom.bench_scores){
+        Object.keys(S.mom.bench_scores).forEach(function(t){
+          var v = S.mom.bench_scores[t];
+          if(benchTop==null || v>benchTop.v) benchTop={t:t,v:v};
+        });
+      }
+      var flagMeta = {
+        review:      {ic:'🔁', label:'複審（90D 修正轉負）'},
+        review_fresh:{ic:'🔻', label:'複審（30D 新鮮下修）'},
+        challenger:  {ic:'⚔️', label:'挑戰者出現'},
+        heat:        {ic:'🔥', label:'過熱'}
+      };
+      S.mom.seats.forEach(function(s){
+        (s.flags||[]).forEach(function(f){
+          var fm = flagMeta[f]; if(!fm) return;
+          var txt;
+          if(f==='challenger' && benchTop){
+            txt = '<b>'+esc(s.ticker)+'</b> 亮 ⚔️ 挑戰者（最強板凳 '+esc(benchTop.t)+' 分 '+fmt(benchTop.v,2)+
+                  ' vs 現任 '+fmt(s.score,2)+'）——月檢時裁決';
+          } else {
+            txt = '<b>'+esc(s.ticker)+'</b> 亮 '+fm.ic+' '+esc(fm.label)+'——強制人工重看 thesis';
+          }
+          items.push({cls:'mom', ic:fm.ic, src:'Momentum-5 · 上修動能組合', txt:txt,
+            href:'/research/momentum-5/', label:'看組合 →'});
+        });
+      });
+    }
+
+    // sop-funnel today signals (trigger layer)
+    if(S.sop && Array.isArray(S.sop.today_signals) && S.sop.today_signals.length>0){
+      var n = S.sop.today_signals.length;
+      items.push({cls:'trig', ic:'🎯', src:'sop-funnel · 板機層',
+        txt:'今日 <b>'+n+'</b> 檔觸發進場板機訊號——待人工確認執行',
+        href:'/dd-screener/sop-funnel.html', label:'看訊號 →'});
+    }
+
+    var mount = $('todo-mount');
+    if(items.length===0){
+      mount.innerHTML =
+        '<div class="todo-calm"><div class="big">✓ 今日無待辦</div>'+
+        '<div class="sm">沒有旗標、沒有訊號、沒有到期複審——各系統目前無等待人工裁決的項目。</div></div>';
+      return;
+    }
+    var html = '<div class="todo-list">';
+    items.forEach(function(it){
+      html += '<div class="todo '+it.cls+'">'+
+        '<div class="todo-ic">'+it.ic+'</div>'+
+        '<div class="todo-body"><div class="todo-src">'+esc(it.src)+'</div>'+
+        '<div class="todo-txt">'+it.txt+'</div></div>'+
+        '<a class="todo-link" href="'+it.href+'">'+esc(it.label)+'</a></div>';
+    });
+    html += '</div>';
+    mount.innerHTML = html;
+  }
+
+  // ---------- ③ 漏斗活數字 ----------
+  function statBox(v,l){return '<span class="stat"><span class="sv num">'+v+'</span><span class="sl">'+esc(l)+'</span></span>';}
+  function chip(href,txt){return '<a class="chip" href="'+href+'">'+esc(txt)+'</a>';}
+  function renderFunnel(){
+    var layers = [];
+
+    // 發現層
+    (function(){
+      var r='';
+      if(S.dd && S.dd.universe_size!=null) r+=statBox(fmt(S.dd.universe_size),'DD Screener universe');
+      if(S.mom && S.mom.coverage) r+=statBox(fmt(S.mom.coverage.eligible)+' / '+fmt(S.mom.coverage.constituents),'Momentum-5 過閘 / S&P500');
+      r+=chip('/screener.html','QGM 美股')+chip('/screener-tw.html','QGM 台股')+chip('/dd-screener/','形狀掃描');
+      if(!r) r=ph('資料暫缺');
+      layers.push({name:'發現層',q:'宇宙裡誰冒出來了？',r:r});
+    })();
+
+    // 判斷層
+    (function(){
+      var r='';
+      if(S.dd && Array.isArray(S.dd.stocks)){
+        var stocks=S.dd.stocks, nDD=0, vin=0,vwatch=0,vavoid=0;
+        stocks.forEach(function(s){
+          if(s.dd_path) nDD++;
+          if(s.dca_verdict==='進場') vin++;
+          else if(s.dca_verdict==='觀望') vwatch++;
+          else if(s.dca_verdict==='迴避') vavoid++;
+        });
+        r+=statBox(fmt(nDD),'已分析 DD 檔');
+        r+='<span class="stat"><span class="sv"><span class="dd-mini">'+
+           '<b class="v-in">'+vin+'</b> 進場 <b class="v-watch">'+vwatch+'</b> 觀望 <b class="v-avoid">'+vavoid+'</b> 迴避</span></span>'+
+           '<span class="sl">裁決分布（其餘未裁決）</span></span>';
+      }
+      r+=chip('/research/','個股 DD 全表')+chip('/id/tier_matrix.html','Tier Matrix');
+      if(!r) r=ph('資料暫缺');
+      layers.push({name:'判斷層',q:'這家公司值不值得進？',r:r});
+    })();
+
+    // 組合層
+    (function(){
+      var r='';
+      if(S.arena){
+        var nc = (S.arena.core_seats||[]).length, nb=(S.arena.core_bench||[]).length;
+        var ns = (S.arena.sat_seats||[]).length, sv=S.arena.sat_vacant;
+        r+=statBox(nc+' 席'+(nb?' + '+nb+' 板凳':''),'GRP 核心');
+        r+=statBox(ns+' 席'+(sv!=null?'（'+sv+' 從缺）':''),'GRP 衛星');
+      }
+      if(S.cyc && S.cyc.qualified_total!=null){
+        r+=statBox(fmt(S.cyc.qualified_total),'循環軌合格（'+fmt(S.cyc.low_heat_count)+' 低熱 / '+fmt(S.cyc.hot_count)+' 過熱）');
+      }
+      if(S.mom && Array.isArray(S.mom.seats)) r+=statBox(S.mom.seats.length+' 席','Momentum-5');
+      r+=chip('/engine/','決策引擎')+chip('/dd-screener/pipeline.html','三軌 Pipeline')+chip('/research/momentum-5/','Momentum-5');
+      if(!r) r=ph('資料暫缺');
+      layers.push({name:'組合層',q:'錢放哪幾檔？',r:r});
+    })();
+
+    // 板機層
+    (function(){
+      var r='';
+      if(S.sop){
+        var sig=(S.sop.today_signals||[]).length;
+        var standby=(S.sop.standby_a1||[]).length+(S.sop.standby_a2||[]).length+(S.sop.standby_b||[]).length+(S.sop.standby_c||[]).length;
+        var opn=(S.sop.open_trades||[]).length;
+        r+=statBox(fmt(sig),'今日訊號');
+        r+=statBox(fmt(standby),'standby 候選');
+        r+=statBox(fmt(opn),'模擬持倉');
+      }
+      r+=chip('/dd-screener/sop-funnel.html','sop-funnel')+chip('/dd-screener/targets.html','標的池');
+      if(!r) r=ph('資料暫缺');
+      layers.push({name:'板機層',q:'現在能不能買？',r:r});
+    })();
+
+    // 監控層
+    (function(){
+      var r='';
+      if(S.gauge){
+        var col=riskColor(S.gauge.score);
+        r+='<span class="stat"><span class="sv" style="color:'+col+'">'+esc(S.gauge.label_zh||'')+'</span>'+
+           '<span class="sl">風險儀表 '+fmt(S.gauge.score,3)+'（'+esc(S.gauge.as_of||'')+'）</span></span>';
+      }
+      r+=chip('/markets.html','市場環境')+chip('/#risk-chart','風險圖表');
+      if(!r) r=ph('資料暫缺');
+      layers.push({name:'監控層',q:'環境與持倉健檢？',r:r});
+    })();
+
+    var html='<div class="funnel">';
+    layers.forEach(function(L,i){
+      var indent = (i*10);
+      html+='<div class="flayer" style="margin-left:'+indent+'px;margin-right:'+indent+'px">'+
+        '<div class="fl-l"><div class="fl-name">'+esc(L.name)+'</div><div class="fl-q">'+esc(L.q)+'</div></div>'+
+        '<div class="fl-r">'+L.r+'</div></div>';
+    });
+    html+='</div>';
+    $('funnel-mount').innerHTML=html;
+  }
+
+  // ---------- ④ 組合記分板 ----------
+  function renderScoreboard(){
+    var cards=[];
+
+    // GRP 主榜 / 三軌
+    (function(){
+      if(!S.arena){ cards.push(ph('GRP 記分板資料暫缺')); return; }
+      var a=S.arena;
+      var seatNames=(a.core_seats||[]).map(function(s){return s.ticker;});
+      var satNames=(a.sat_seats||[]).map(function(s){return s.ticker;});
+      var regime = a.regime? (a.regime.label||'') : '';
+      var h='<div class="sb-card"><div class="sb-top">'+
+        '<span class="sb-name">GRP 主榜 · 三軌組合</span>'+
+        '<span class="sb-badge">個股部 mandate</span>';
+      if(regime) h+='<span class="sb-note">環境判讀：'+esc(regime)+'</span>';
+      h+='</div>';
+      h+='<div class="sb-seatlist"><b>核心 '+(seatNames.length)+' 席：</b>'+
+         (seatNames.length? seatNames.map(function(t){return '<span class="tk">'+esc(t)+'</span>';}).join(''):'（從缺）')+'</div>';
+      h+='<div class="sb-seatlist"><b>衛星 '+(satNames.length)+' 席'+(a.sat_vacant!=null?'（'+a.sat_vacant+' 從缺）':'')+'：</b>'+
+         (satNames.length? satNames.map(function(t){return '<span class="tk">'+esc(t)+'</span>';}).join(''):'（從缺）')+'</div>';
+      h+='<div class="sb-note" style="margin-top:.5rem">GRP 記分維度自 2026-07-04 起累積、歷史裁決不補算，故暫無獨立績效序列；席位為現任裁決快照。'+
+         ' <a href="/engine/arena.html">席位擂台 →</a></div>';
+      h+='</div>';
+      cards.push(h);
+    })();
+
+    // Momentum-5
+    (function(){
+      if(!S.mom || !S.mom.portfolio){ cards.push(ph('Momentum-5 資料暫缺')); return; }
+      var p=S.mom.portfolio;
+      var inc = (S.momPort && S.momPort.inception)? S.momPort.inception : (S.mom.as_of||'');
+      function pn(v){var s=(v>=0?'+':'');return s+fmt(v,2);}
+      function pcol(v){return v>0?'var(--green)':(v<0?'var(--red)':'var(--muted)');}
+      var h='<div class="sb-card"><div class="sb-top">'+
+        '<span class="sb-name">Momentum-5</span>'+
+        '<span class="sb-badge">S&amp;P 500 獨立對照組</span>'+
+        '<span class="sb-note">建倉 '+esc(inc)+' · 資料源在站外（S&amp;P 500 EPS 修正 screen）</span></div>';
+      h+='<div class="sb-metrics">'+
+        '<span class="stat"><span class="sv num" style="color:'+pcol(p.ret_pct)+'">'+pn(p.ret_pct)+'%</span><span class="sl">組合報酬</span></span>'+
+        '<span class="stat"><span class="sv num" style="color:'+pcol(p.spy_ret_pct)+'">'+pn(p.spy_ret_pct)+'%</span><span class="sl">SPY 同期</span></span>'+
+        '<span class="stat"><span class="sv num" style="color:'+pcol(p.alpha_pp)+'">'+pn(p.alpha_pp)+' pp</span><span class="sl">超額 α</span></span>'+
+        '</div>';
+      h+='<div class="sb-note">此為 <b>GRP 邏輯的 S&amp;P 500 獨立對照組（站外資料源）</b>——與 GRP 主榜是主控／對照關係，不是同一組合。建倉未滿一週，績效待累積。'+
+         ' <a href="/research/momentum-5/">看五席 →</a></div>';
+      h+='</div>';
+      cards.push(h);
+    })();
+
+    $('sb-mount').innerHTML='<div class="sb">'+cards.join('')+'</div>';
+  }
+})();
+</script>
+</body>
+</html>
