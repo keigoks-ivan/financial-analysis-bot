@@ -159,6 +159,21 @@ Agent({
 
 **現況**：CoWoS（31 nodes 3 列）+ CPO（19 nodes 5 列）兩個 topic 上線；剩下 13 個 topic 在 manifest 中標 `active: false`（HBM / 先進製程 / 矽光子 / 面板級封裝 / IC 設計 / 半導體材料 / ASIC / IC 基板 / 電源散熱 / AI 伺服器 ODM / 機器人 / 低軌衛星 / 軍工國防）。
 
+## Workflow: 擁擠交易監測（crowding monitor）
+
+當用戶說「跑擁擠交易監測」/「crowding monitor」/「擁擠交易月報」/「新一期 crowding」/「positioning monitor」時，自動觸發 `crowding-monitor` skill（`.claude/skills/crowding-monitor/`）。
+
+**定位**：消費端 skill — 產出新一期 `docs/crowding/CROWDING_YYYYMMDD.html`，把週更資料層＋情緒/資金流 web 掃描（FMS／Flow Show／GS positioning／AAII／VIX-SKEW）收斂成三層代理三角測量。**與首頁風險儀表同家族——描述器（describer）非擇時訊號**，衡量部位集中與下方緩衝、放大回撤與相關性，不預測轉折時點。
+
+**輸出**：
+- HTML：`docs/crowding/CROWDING_{YYYYMMDD}.html`（noindex；規格對齊創刊號 `CROWDING_20260705.html`：Exhibit 編號制、named trades 含 unwind 觸發器、COT 儀表、主題熱力圖、§7 組合 read-through 用 GRP／三軌語言禁 IRR 排序禁買賣指令、反向掃描、方法論血統與 gaps）
+- 索引：`docs/crowding/index.html` 期刊列表最上方 insert 卡片（不動 `<!-- CROWDING_AUTO_DASH_*-->` 標記間內容）
+- 上站路徑：`https://research.investmquest.com/crowding/`
+
+**週更 pipeline（另一 owner，skill 唯讀）**：`scripts/build_crowding.py`＋`.github/workflows/crowding-weekly.yml` cron 每週產 `docs/crowding/data/latest.json`（COT 15 市場＋64+ 主題分數＋15 檔 ETF＋gaps），並替換 index.html 的 AUTO_DASH 標記間即時儀表。**skill 不改 pipeline／data/／workflow。**
+
+**硬規則**：中文標點全形；描述器定位禁買賣指令句；§7 GRP／三軌語言禁 IRR 排序；COT as-of 與各層時效必標；低信心數據掛 lo、未取得數值進 gaps 不捏造；無鷹架語言；發布前 self-review gate（三重檢查）；git flow＝預設停下複審、持有人說 push 才 commit（比照 expectations-synthesis）。
+
 ## Report 篇幅 floor（depth gate，非灌水目標）
 
 DD 報告有 size floor，但**這是深度閘門，不是 byte 目標** — 達標的正道永遠是「真量化模組 × sourced 數字」，反灌水鐵律不變（skill：「寧可 105KB 全自算，不要 125KB 注水」）。v13 單檔含基本面 Part I + 決策層 Part II，floor 上修；下列 floor 留足餘裕，只攔真正偷懶的薄報告：

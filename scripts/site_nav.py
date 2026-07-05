@@ -75,6 +75,7 @@ MENU = {
         # ("ds", "/ds/", "產業敘述 DS"),  # 2026-06-25 封存 /ds/（已併入 ID）— 自 nav 移除
         ("cmp", "/comparisons/", "多股對比"),
         ("sc", "/supply-chain/", "供應鏈地圖"),
+        ("crowd", "/crowding/", "擁擠交易監測"),
         ("tier", "/id/tier_matrix.html", "🎯 Tier Matrix"),
         ("picks", "/picks/", "精選清單"),
         ("mom5", "/research/momentum-5/", "Momentum-5"),
@@ -193,6 +194,7 @@ PREFIX_ACTIVE = [
     ("ds/", ("research", "ds")),
     ("comparisons/", ("research", "cmp")),
     ("supply-chain/", ("research", "sc")),
+    ("crowding/", ("research", "crowd")),
     ("cockpit/", ("research", "cockpit")),
     ("picks/", ("research", "picks")),
     ("briefing/", ("market", "brief")),

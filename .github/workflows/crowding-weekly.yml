@@ -1,0 +1,68 @@
+name: Weekly Cross-Asset Crowding Refresh
+
+# CFTC Commitments of Traders publishes Friday ~15:30 ET (~19:30 UTC) and
+# yfinance weekly bars settle after the Friday US close, so we run Sunday.
+# 12:00 UTC (Sun 20:00 Taipei) sits in an empty slot — clear of the Sat
+# 00:00-02:00 UTC batch and the Sun 18:00/20:00 UTC pair — to avoid the
+# nightly cron push pile-up.
+on:
+  schedule:
+    - cron: "0 12 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  crowding:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install "yfinance>=0.2.40" pandas requests
+
+      - name: Build crowding data
+        run: python scripts/build_crowding.py
+
+      - name: Commit and push if changed
+        run: |
+          # Only track paths that actually exist (index.html is authored by a
+          # sibling pipeline and may not be present on early runs).
+          PATHS=""
+          for p in data/cot_history.json data/crowding_volume.json \
+                   docs/crowding/data/latest.json docs/crowding/index.html; do
+            [ -e "$p" ] && PATHS="$PATHS $p"
+          done
+          if git status --porcelain $PATHS | grep -q .; then
+            echo "Changes detected"
+          else
+            echo "No changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add $PATHS
+          DATE=$(date -u +"%Y-%m-%d")
+          git commit -m "crowding: weekly data refresh ${DATE}"
+          for i in 1 2 3 4 5 6; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+            git pull --rebase origin main || { echo "Rebase failed"; exit 1; }
+            sleep $((RANDOM % 20 + 5))
+          done
+          echo "Push failed after 6 attempts"
+          exit 1
