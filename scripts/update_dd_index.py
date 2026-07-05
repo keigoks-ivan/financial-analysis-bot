@@ -1248,6 +1248,9 @@ def verdict_badge(v: str) -> str:
         return '<span class="verdict-badge verdict-watch">觀望</span>'
     elif v == "迴避":
         return '<span class="verdict-badge verdict-avoid">迴避</span>'
+    elif v.startswith("進場"):
+        # v14.5 進場·條件式（循環衛星/爆發候選）— entry family, buy styling.
+        return f'<span class="verdict-badge verdict-buy">{v}</span>'
     return v
 
 
@@ -1312,7 +1315,8 @@ def _sort_keys(e):
     except (ValueError, TypeError):
         q_map_fallback = {"H": 1, "MH": 2, "M": 3, "W": 4, "A": 0, "B": 2}
         q_sort = q_map_fallback.get(e.get("quality", "").strip(), 9)
-    v_map = {"進場": 1, "觀望偏進場": 2, "觀望": 3, "迴避": 4}
+    v_map = {"進場": 1, "進場·條件式（循環衛星）": 1.5,
+             "進場·條件式（爆發候選）": 1.5, "觀望偏進場": 2, "觀望": 3, "迴避": 4}
     trap = e.get("trap", "")
     if "非陷阱" in trap:
         t_val = 1
@@ -2044,7 +2048,8 @@ def build_weekly_review(entries):
     Returns (candidates_html, downgrades_html, stale_html).
     """
     from datetime import date
-    v_map = {"進場": 1, "觀望偏進場": 2, "觀望": 3, "迴避": 4}
+    v_map = {"進場": 1, "進場·條件式（循環衛星）": 1.5,
+             "進場·條件式（爆發候選）": 1.5, "觀望偏進場": 2, "觀望": 3, "迴避": 4}
     today = date.today()
 
     # Dedupe to latest DD per ticker (by date desc; if tied, keep the one with newer version)

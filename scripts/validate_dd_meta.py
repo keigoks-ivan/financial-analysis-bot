@@ -99,7 +99,19 @@ V13_REQUIRED_FIELDS = {
 }
 
 V13_ENUM_FIELDS = {
-    "dca_verdict": {"進場", "觀望", "迴避"},
+    # v14.5 adds conditional-entry verdicts (§14 row 8b). Body text has long
+    # carried "進場·條件式" as prose; v14.5 promotes it to a first-class meta
+    # value with an archetype-qualifier suffix (全形括號＋間隔號 · style, matching
+    # the existing 「進場·條件式」 prose). Both flavours are treated as entry
+    # verdicts by downstream (爆發/循環 tracks). 進場·條件式（爆發候選）is
+    # whitelisted for parity even before the first report emits it.
+    "dca_verdict": {
+        "進場",
+        "進場·條件式（循環衛星）",
+        "進場·條件式（爆發候選）",
+        "觀望",
+        "迴避",
+    },
     # dca_role enum mirrors aggregate_dca_stats.py CATEGORY_ORDER (minus the
     # "缺資料" fallback, which must never be emitted by a real report).
     "dca_role": {
@@ -134,7 +146,41 @@ V13_OPTIONAL_TYPES = {
     "base_eps_path": (dict,),
     "fy_end_month": (int,),
     "eps_basis": (str,),
+    # v14.4/v14.5 archetype & QC-42 cyclical-lens metadata. Type-check only
+    # (same policy as eps_basis: consumers skip-and-log, validator never blocks
+    # field evolution). cycle_position / cycle_verdict / rearm_trigger are v14.5.
+    "archetype": (str,),
+    "rearm_trigger": (str,),
+    "cycle_position": (str,),
+    "cycle_verdict": (str,),
+    # Fundamental sub-grades surfaced to the screener (present in most v14 DDs;
+    # dd_screener_dd_loader already reads moat_execution / moat_pricing_power /
+    # upside_5y_pct). Previously unregistered — added so their type is checked.
+    # NB: moat_execution / moat_pricing_power are emitted as /10 numeric scores
+    # across the live corpus (one legacy str in pricing_power) — accept numeric
+    # AND str so no existing report turns red and future letter grades are OK.
+    "endo_growth_ceiling": (int, float),
+    "capalloc_grade": (str,),
+    "moat_execution": (int, float, str),
+    "moat_pricing_power": (int, float, str),
+    "upside_5y_pct": (int, float),
 }
+
+# Keys knowingly tolerated beyond required/optional — silences their warning.
+# Empty by design: ad-hoc descriptive keys (name / company / regime /
+# market_cap_b / inception_dd / …) SHOULD surface as warnings so schema drift
+# stays visible. Warnings are warn-only and never fail CI (see main()).
+WHITELIST_KEYS: set = set()
+
+
+def _known_keys() -> set:
+    """Union of required ∪ v13-required ∪ v13-optional ∪ whitelist keys."""
+    return (
+        set(REQUIRED_FIELDS)
+        | set(V13_REQUIRED_FIELDS)
+        | set(V13_OPTIONAL_TYPES)
+        | WHITELIST_KEYS
+    )
 
 
 def _is_v13(meta: dict) -> bool:
@@ -151,9 +197,24 @@ def _type_name(expected_type) -> str:
     )
 
 
-def validate_meta(meta: dict) -> list:
-    """Return list of error strings; empty list = valid."""
+def validate_meta(meta: dict):
+    """Return (errors, warnings). Empty errors = valid (warnings never fail CI)."""
     errs = []
+    warns = []
+
+    # Unknown-key sweep (warn-only): flag any top-level key not in the
+    # required ∪ v13-required ∪ v13-optional ∪ whitelist union. Scoped to the
+    # v13/v14 merged-report contract only — legacy v12 reports carry ~200 organic
+    # ad-hoc keys (frozen corpus) that we deliberately do NOT police. On v13+,
+    # ad-hoc descriptive keys (SE: name/inception_dd/regime, VIK: market_cap_b, …)
+    # are tolerated but surfaced so schema drift on new reports stays visible.
+    if _is_v13(meta):
+        known = _known_keys()
+        for k in meta:
+            if k not in known:
+                warns.append(
+                    f"unknown dd-meta key: {k!r} (not in required∪optional∪whitelist)"
+                )
 
     # Required fields: presence + type
     for field, expected_type in REQUIRED_FIELDS.items():
@@ -190,7 +251,10 @@ def validate_meta(meta: dict) -> list:
     # Schema format
     schema_v = meta.get("schema")
     if isinstance(schema_v, str) and not SCHEMA_RE.match(schema_v):
-        errs.append(f"schema: must match v12.X (e.g. v12.0), got {schema_v!r}")
+        errs.append(
+            f"schema: must match ^v1[234]\\.\\d+$ "
+            f"(e.g. v12.0 / v13.0 / v14.5), got {schema_v!r}"
+        )
 
     # Numeric ranges
     for field, (lo, hi) in NUMERIC_RANGES.items():
@@ -253,7 +317,13 @@ def validate_meta(meta: dict) -> list:
                     f"got {type(v).__name__} ({v!r})"
                 )
 
-    return errs
+        # fy_end_month must be a real calendar month — the T-minus catalyst
+        # consumer reads it, so a bad value (e.g. 13) is an error, not a warning.
+        fem = meta.get("fy_end_month")
+        if isinstance(fem, int) and not isinstance(fem, bool) and not (1 <= fem <= 12):
+            errs.append(f"fy_end_month: {fem} out of range [1, 12]")
+
+    return errs, warns
 
 
 def validate_file(path: Path) -> dict:
@@ -292,10 +362,16 @@ def validate_file(path: Path) -> dict:
     except json.JSONDecodeError as e:
         return {"status": "parse_error", "errors": [f"JSON parse error: {e}"]}
 
-    errs = validate_meta(meta)
+    errs, warns = validate_meta(meta)
+    result = {"ticker": meta.get("ticker")}
+    if warns:
+        result["warnings"] = warns
     if errs:
-        return {"status": "invalid", "errors": errs, "ticker": meta.get("ticker")}
-    return {"status": "ok", "ticker": meta.get("ticker")}
+        result["status"] = "invalid"
+        result["errors"] = errs
+    else:
+        result["status"] = "ok"
+    return result
 
 
 def main():
@@ -334,12 +410,16 @@ def main():
     for r in results:
         counts[r["status"]] = counts.get(r["status"], 0) + 1
 
+    n_warn_files = sum(1 for r in results if r.get("warnings"))
+    n_warn_total = sum(len(r.get("warnings", [])) for r in results)
+
     print(f"Scanned {len(results)} DD file(s):")
     print(f"  ✅ ok                : {counts['ok']}")
     print(f"  ⚠  missing dd-meta  : {counts.get('missing_block', 0)}")
     print(f"  ❌ JSON parse error : {counts.get('parse_error', 0)}")
     print(f"  ❌ validation error : {counts.get('invalid', 0)}")
     print(f"  ↪  non-v12 (skipped): {counts.get('non_v12', 0)}")
+    print(f"  ⚠  warnings         : {n_warn_total} across {n_warn_files} file(s) (non-blocking)")
 
     # Detailed report
     bad_statuses = ("missing_block", "parse_error", "invalid")
@@ -352,6 +432,17 @@ def main():
             print(f"\n[{r['status'].upper()}] {r['file']} (ticker={ticker})")
             for e in r.get("errors", []):
                 print(f"    - {e}")
+
+    # Warnings (warn-only; never affects exit code)
+    warned = [r for r in results if r.get("warnings")]
+    if warned:
+        print()
+        print("=" * 70)
+        print("WARNINGS (non-blocking):")
+        for r in warned:
+            print(f"\n[WARN] {r['file']} (ticker={r.get('ticker', '?')})")
+            for w in r["warnings"]:
+                print(f"    - {w}")
 
     if bad and not args.report:
         sys.exit(1)

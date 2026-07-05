@@ -45,6 +45,13 @@ _DD_META_RE = re.compile(
 def _norm(t: str) -> str:
     return re.sub(r"[^A-Za-z0-9]", "", t or "").upper()
 
+# v14.5 conditional-entry verdicts (§14 row 8b). Bucketed together and shown
+# right after 進場 in the distribution pill row + cross-tab. Rendered only when
+# ≥1 record carries one — zero churn for the current 進場/觀望/迴避-only corpus.
+ENTER_CONDITIONAL = ("進場·條件式（循環衛星）", "進場·條件式（爆發候選）")
+COND_VERDICT_LABEL = "進場·條件式"
+
+
 # Category order for display
 CATEGORY_ORDER = [
     "核心持倉",
@@ -241,11 +248,18 @@ def _role_bar(records: dict) -> str:
 def _verdict_pills(records: dict) -> str:
     counts: Counter = Counter(d["verdict"] for d in records.values())
     n_enter = counts.get("進場", 0)
+    n_cond = sum(counts.get(v, 0) for v in ENTER_CONDITIONAL)
     n_watch = counts.get("觀望", 0)
     n_avoid = counts.get("迴避", 0)
+    # Conditional-entry pill only when present (kept in the 進場 family colour).
+    cond_pill = (
+        f'<span class="sig-pill sig-enter">{COND_VERDICT_LABEL} · {n_cond}</span>'
+        if n_cond else ""
+    )
     return (
         f'<div class="signal-bar">'
         f'<span class="sig-pill sig-enter">進場 · {n_enter}</span>'
+        f'{cond_pill}'
         f'<span class="sig-pill sig-watch">觀望 · {n_watch}</span>'
         f'<span class="sig-pill sig-avoid">迴避 · {n_avoid}</span>'
         f'</div>'
@@ -270,11 +284,21 @@ def _ticker_list(items: list) -> str:
 def _cross_tab(records: dict) -> str:
     """Small role × verdict cross-tab table."""
     cats = [c for c in CATEGORY_ORDER if c != "缺資料"]
-    verdicts = ["進場", "觀望", "迴避", "—"]
+    # Insert 進場·條件式 column after 進場 only when a conditional-entry record
+    # exists; conditional verdicts are bucketed into that column so row totals
+    # stay consistent (no silent drop).
+    has_cond = any(d["verdict"] in ENTER_CONDITIONAL for d in records.values())
+    verdicts = (
+        ["進場"] + ([COND_VERDICT_LABEL] if has_cond else []) + ["觀望", "迴避", "—"]
+    )
+
+    def _bucket(v: str) -> str:
+        return COND_VERDICT_LABEL if v in ENTER_CONDITIONAL else v
+
     # build matrix
     matrix: dict = {cat: Counter() for cat in CATEGORY_ORDER}
     for d in records.values():
-        matrix[d["role_category"]][d["verdict"]] += 1
+        matrix[d["role_category"]][_bucket(d["verdict"])] += 1
 
     rows_html = ""
     for cat in CATEGORY_ORDER:
