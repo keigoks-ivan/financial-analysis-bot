@@ -202,9 +202,10 @@ def share_cagr_split_adjusted(tk, start_dt):
 
 
 # ---------------------------------------------------------------------------
-# Per-ticker fetch（two-phase：先 .info 全掃，稀釋（get_shares_full）只對前段
-# gate 存活者取。這樣 phase-1 每檔只打一支 endpoint，Yahoo rate-limit（Invalid
-# Crumb 401）壓力減半；配 retry + recovery sweep 把被限流的補回。）
+# Per-ticker fetch（三段式：.info 全掃 → income_stmt 只對 stage-1 存活者 →
+# 稀釋（balance_sheet/get_shares_full）只對 stage-2 存活者。phase-1 每檔只打
+# 一支 endpoint，Yahoo rate-limit（Invalid Crumb 401）壓力最小；配 retry +
+# recovery sweep 把被限流的補回。）
 # ---------------------------------------------------------------------------
 INFO_RETRIES = 3
 
@@ -268,46 +269,93 @@ def fetch_universe(universe):
     return out
 
 
+# 各 fetch phase 健康度（main 據此判「funnel 崩塌是限流不是真篩選」→ fail-safe）
+FETCH_HEALTH = {}
+GROWTH_FETCH_FLOOR = 0.70  # income_stmt 成功率 < 70% → 不寫檔（保留上一份好資料）
+
+
 def attach_growth(survivors):
     """Phase 2（v0.1）：只對 stage-1 存活者抓 annual income_stmt 算 3 年營收 CAGR。
 
-    income_stmt 是額外一支 call——先用 cap/margin/insider 卡到 ~200-400 檔再抓。
-    4 欄年報 → 3Y CAGR；3 欄 → 2Y 年化（rev_cagr_years=2 標示）；<3 欄（不足 2 個
-    區間）→ rev_cagr=None（史料不足，gate 淘汰）。
+    income_stmt 是額外一支 call——先用 cap/margin/insider 卡到 ~100-400 檔再抓。
+    4 欄年報 → 3Y CAGR；3 欄 → 2Y 年化（rev_cagr_years=2 標示）；有資料但 <3 欄
+    （不足 2 個年度區間）→ status=short_history（上市歷史不足，gate 淘汰）。
+
+    抗限流（2026-07-05 實跑教訓：1000 檔 info 掃描後緊接 income_stmt 被 Yahoo
+    限流到 14/124，「抓取失敗」被誤當「史料不足」殺掉 110 檔，差點寫出空榜）：
+      - fetch 失敗與史料不足分開記（status: ok / short_history / no_data），
+        funnel 各自一行，失敗永遠可見不沉默；
+      - 先冷卻 10s、低併發（2-4 workers）＋逐檔 retry/backoff；
+      - no_data 者再跑 2 輪 sequential recovery（逐檔間隔 1-2s，完整性優先於速度）；
+      - main 端：成功率 < GROWTH_FETCH_FLOOR → 不寫檔。
     """
     if not survivors:
+        FETCH_HEALTH["growth_success_frac"] = 1.0
         return
 
     def work(r):
         r["rev_cagr"], r["rev_cagr_years"] = None, None
-        try:
-            inc = yf.Ticker(r["ticker"]).income_stmt
-            if inc is None or inc.empty or "Total Revenue" not in inc.index:
-                return r
-            rev = inc.loc["Total Revenue"].dropna()
-            if len(rev) < 3:
-                return r  # <2 個年度區間 → 史料不足
-            rev = rev.sort_index()  # 由舊到新
-            oldest, newest = float(rev.iloc[0]), float(rev.iloc[-1])
-            n_int = len(rev) - 1  # 年度區間數（4 欄=3、3 欄=2）
-            if oldest <= 0 or newest <= 0:
-                return r
-            r["rev_cagr"] = (newest / oldest) ** (1.0 / n_int) - 1.0
-            r["rev_cagr_years"] = n_int
-        except Exception:
-            pass
+        r["rev_cagr_status"] = "no_data"
+        inc = None
+        for k in range(3):
+            try:
+                inc = yf.Ticker(r["ticker"]).income_stmt
+            except Exception:
+                inc = None
+            if inc is not None and not inc.empty:
+                break
+            time.sleep(1.5 * (k + 1))  # 限流退避
+        if inc is None or inc.empty:
+            return r  # 全部 retry 失敗 → no_data（抓取失敗，非史料不足）
+        if "Total Revenue" not in inc.index:
+            r["rev_cagr_status"] = "short_history"  # 有回資料但無營收列——當史料不足
+            return r
+        rev = inc.loc["Total Revenue"].dropna()
+        if len(rev) < 3:
+            r["rev_cagr_status"] = "short_history"  # <2 個年度區間 → 上市歷史不足
+            return r
+        rev = rev.sort_index()  # 由舊到新
+        oldest, newest = float(rev.iloc[0]), float(rev.iloc[-1])
+        n_int = len(rev) - 1  # 年度區間數（4 欄=3、3 欄=2）
+        if oldest <= 0 or newest <= 0:
+            r["rev_cagr_status"] = "short_history"  # 基期 ≤0 無法算 CAGR
+            return r
+        r["rev_cagr"] = (newest / oldest) ** (1.0 / n_int) - 1.0
+        r["rev_cagr_years"] = n_int
+        r["rev_cagr_status"] = "ok"
         return r
 
+    print(f"[build_tenbagger] income_stmt {len(survivors)} 檔：先冷卻 10s"
+          f"（避開 info 掃描後的限流窗），低併發抓取")
+    time.sleep(10)
     done = 0
-    with ThreadPoolExecutor(max_workers=WORKERS) as ex:
+    with ThreadPoolExecutor(max_workers=max(2, WORKERS // 2)) as ex:
         for _ in ex.map(work, survivors):
             done += 1
             if done % 50 == 0:
                 print(f"[build_tenbagger] income_stmt {done}/{len(survivors)}")
+
+    # recovery：no_data（疑似被限流）sequential 補 2 輪——完整性優先於速度
+    for rnd in (1, 2):
+        retry = [r for r in survivors if r.get("rev_cagr_status") == "no_data"]
+        if not retry:
+            break
+        print(f"[build_tenbagger] income_stmt recovery 第 {rnd} 輪："
+              f"{len(retry)} 檔 no_data，冷卻 15s 後逐檔重試（間隔 1.5s）")
+        time.sleep(15)
+        for r in retry:
+            work(r)
+            time.sleep(1.5)
+
     got = sum(1 for r in survivors if r.get("rev_cagr") is not None)
     two_y = sum(1 for r in survivors if r.get("rev_cagr_years") == 2)
+    short = sum(1 for r in survivors if r.get("rev_cagr_status") == "short_history")
+    nodata = sum(1 for r in survivors if r.get("rev_cagr_status") == "no_data")
+    # 成功率＝有拿到年報資料者（含史料不足——那也是成功的 fetch）
+    FETCH_HEALTH["growth_success_frac"] = (len(survivors) - nodata) / len(survivors)
     print(f"[build_tenbagger] 營收 CAGR（annual income_stmt）：{got}/{len(survivors)} "
-          f"檔取得（其中 2Y 年化 {two_y} 檔）")
+          f"檔算得（2Y 年化 {two_y}・上市歷史不足 {short}・抓取失敗 {nodata}・"
+          f"fetch 成功率 {FETCH_HEALTH['growth_success_frac']:.1%}）")
 
 
 def attach_dilution(survivors):
@@ -352,7 +400,7 @@ def attach_dilution(survivors):
             r["dilution_source"] = "shares_full"
         return r
 
-    with ThreadPoolExecutor(max_workers=WORKERS) as ex:
+    with ThreadPoolExecutor(max_workers=min(4, WORKERS)) as ex:
         list(ex.map(work, survivors))
     got = sum(1 for r in survivors if r.get("share_cagr") is not None)
     n_bs = sum(1 for r in survivors if r.get("dilution_source") == "balance_sheet")
@@ -369,8 +417,19 @@ def gate_cap(r):
     return mc is not None and CAP_LO <= mc < CAP_HI
 
 
+def gate_growth_fetch(r):
+    # 年報抓取失敗（全 retry 後仍 no_data）→ 淘汰，但在 funnel 獨立一行可見——
+    # 「抓取失敗」與「史料不足」是兩回事，失敗永遠不沉默
+    return r.get("rev_cagr_status") != "no_data"
+
+
+def gate_history(r):
+    # 上市歷史不足（年報 <3 欄＝不足 2 個年度區間，或基期 ≤0）→ 淘汰
+    return r.get("rev_cagr_status") == "ok"
+
+
 def gate_rev_cagr(r):
-    # 主閘：3 年營收 CAGR ≥ 20%；<2 個年度區間（年報 <3 欄）→ 史料不足淘汰
+    # 主閘：3 年營收 CAGR ≥ 20%
     c = r.get("rev_cagr")
     return c is not None and c >= MIN_REV_CAGR
 
@@ -423,7 +482,9 @@ GATES_STAGE1 = [
     ("內部人 ≥5%（缺→放行）", gate_insider),
 ]
 GATES_STAGE2 = [
-    ("營收 3Y CAGR ≥20%（<3 欄年報→淘汰）", gate_rev_cagr),
+    ("年報抓取失敗（fetch 失敗可見化）", gate_growth_fetch),
+    ("上市歷史不足（<3 欄年報）", gate_history),
+    ("營收 3Y CAGR ≥20%", gate_rev_cagr),
     ("最近季 yoy ≥15%（確認）", gate_rev_confirm),
 ]
 GATES_STAGE3 = [
@@ -595,6 +656,30 @@ def main():
 
     passers, funnel = run_funnel(recs, attach_growth, attach_dilution)
 
+    # fail-safe（2026-07-05 事故加設）：income_stmt 成功率 < 70% ＝ funnel 崩塌
+    # 是限流不是真篩選 → 不寫檔，保留上一份好資料。空榜若出自乾淨的 fetch
+    # （成功率 ≥ 70%）則是誠實結果（寧缺勿濫），照寫。
+    gsf = FETCH_HEALTH.get("growth_success_frac", 1.0)
+    if gsf < GROWTH_FETCH_FLOOR:
+        warn(f"income_stmt fetch 成功率 {gsf:.1%} < {GROWTH_FETCH_FLOOR:.0%}——"
+             f"資料層失敗（限流），不寫 tenbagger.json，保留上一份好資料，退出。")
+        return 0
+
+    # 診斷（不調參，僅回報給持有人判斷確認閘鬆緊）：CAGR 過但季 yoy 確認沒過
+    cagr_pass_yoy_fail = [
+        r for r in recs
+        if r.get("rev_cagr") is not None and r["rev_cagr"] >= MIN_REV_CAGR
+        and not gate_rev_confirm(r)
+    ]
+    if cagr_pass_yoy_fail:
+        print(f"[build_tenbagger] 診斷：3Y CAGR ≥20% 但最近季 yoy <15% 被確認閘擋下 "
+              f"{len(cagr_pass_yoy_fail)} 檔：")
+        for r in cagr_pass_yoy_fail:
+            g = r.get("revenueGrowth")
+            gtxt = f"{g*100:+.1f}%" if g is not None else "n/a"
+            print(f"    {r['ticker']:<7} CAGR {r['rev_cagr']*100:+.1f}%/y"
+                  f"（{r.get('rev_cagr_years')}Y）  季yoy {gtxt}")
+
     # veto（讀 picks.json，只讀不寫）
     veto = set()
     try:
@@ -650,7 +735,7 @@ def main():
     print(f"\n[build_tenbagger] wrote {OUT}")
     print(f"[build_tenbagger] universe={len(universe)}  coverage={coverage:.1%} "
           f"({len(recs)} 檔)")
-    print("[build_tenbagger] gate funnel（結構六條件 v0）：")
+    print(f"[build_tenbagger] gate funnel（結構六條件 {GATE_VERSION}）：")
     prev = None
     for name, n in funnel.items():
         drop = "" if prev is None else f"  (−{prev - n})"
@@ -658,13 +743,22 @@ def main():
         prev = n
     print(f"[build_tenbagger] passers={len(passers)}  正式榜={len(official)} "
           f"候選={len(candidates)}")
+
+    def _fmt(p):
+        yr = p.get("rev_cagr_years")
+        cagr_txt = f"CAGR{p['rev_cagr_3y']}%" + (f"({yr}Y)" if yr else "")
+        return (f"{p['ticker']:<7} {cagr_txt:<16} 季yoy{p['growth_pct']}% "
+                f"毛利{p['margin_pct']}% 內部人{p['insiders_pct']}% "
+                f"稀釋{p['dilution_cagr_pct']}%/y[{p['dilution_source']}] "
+                f"EV/S {p['ev_s']} 市值${p['cap_B']}B  12M {p['ret_12m_pct']}% "
+                f"{'站上' if p['above_w52'] else '跌破' if p['above_w52'] is False else '?'}年線")
+
     print(f"[build_tenbagger] 正式榜 {len(official)} 檔（rank by 營收成長）：")
     for i, p in enumerate(official, 1):
-        print(f"    #{i:>2} {p['ticker']:<7} 成長{p['growth_pct']}% 毛利{p['margin_pct']}% "
-              f"內部人{p['insiders_pct']}% 稀釋{p['dilution_cagr_pct']}%/y "
-              f"EV/S {p['ev_s']} 市值${p['cap_B']}B  12M {p['ret_12m_pct']}% "
-              f"{'站上' if p['above_w52'] else '跌破' if p['above_w52'] is False else '?'}年線")
-    print(f"[build_tenbagger] 候選 {len(candidates)} 檔：{[p['ticker'] for p in candidates]}")
+        print(f"    #{i:>2} {_fmt(p)}")
+    print(f"[build_tenbagger] 候選 {len(candidates)} 檔：")
+    for p in candidates:
+        print(f"        {_fmt(p)}")
     return 0
 
 

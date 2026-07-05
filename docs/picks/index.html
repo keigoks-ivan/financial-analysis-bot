@@ -91,11 +91,16 @@ a:hover{color:var(--accent-hover)}
 .offwrap-g1 table.cand th{background:var(--green-soft)}
 .offwrap-g2 table.cand th{background:var(--amber-soft)}
 .offwrap-g3 table.cand th{background:var(--purple-soft)}
-table.cand.official{min-width:820px}
+table.cand.official{min-width:880px}
 table.cand.official .tkr{font-size:1.02rem}
 table.cand.official td{padding:.6rem .75rem}
 .obadges{display:inline-flex;gap:.35rem;margin-top:.28rem;flex-wrap:wrap}
 .obadges .ddbadge{margin-left:0}
+/* 行動狀態徽章（正式榜專用；年線＝時點標記，非資格閘） */
+.actbadge{display:inline-block;font-size:.62rem;font-weight:700;padding:.1rem .45rem;border-radius:999px;
+          white-space:nowrap;margin-top:.28rem}
+.actbadge.act-go{background:var(--green-soft);color:var(--green);border:1px solid #a7f3d0}
+.actbadge.act-watch{background:var(--amber-soft);color:var(--amber);border:1px solid #fcd9a5}
 
 /* Candidate tables */
 .cand-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px;background:var(--card)}
@@ -289,7 +294,7 @@ footer a{font-weight:600}
       <span class="tagline">規則判定 · 持有人保留 veto · 每檔收斂四件事</span>
     </div>
     <div id="official-changhao" class="group-block">
-      <div class="group-title g1"><span class="dot"></span>長熬・品質成長 <span class="sub">上榜規則：DD 進場 ∩ 護城河閘 ∩ 產業趨勢「對」</span></div>
+      <div class="group-title g1"><span class="dot"></span>長熬・品質成長 <span class="sub">上榜規則：DD 進場 ∩ 護城河閘 ∩ 產業趨勢「對」・年線＝行動狀態標記（✅ 可行動／⏸ 觀察帶），不影響席位資格</span></div>
       <div id="off-changhao-body"></div>
     </div>
     <div id="official-baofa" class="group-block">
@@ -298,7 +303,7 @@ footer a{font-weight:600}
       <div id="off-baofa-body"></div>
     </div>
     <div id="official-tenbagger" class="group-block">
-      <div class="group-title g3"><span class="dot"></span>十倍・結構長坡 <span class="sub">上榜規則：S&amp;P 400+600 過結構六條件 gate-set v0，rank by 營收成長</span></div>
+      <div class="group-title g3"><span class="dot"></span>十倍・結構長坡 <span class="sub">上榜規則：S&amp;P 400+600 過結構六條件 gate-set v0.1，rank by 營收成長</span></div>
       <p class="transparency tenb">本組為發現層產物——市值低於 DD universe 門檻，未經 DD 深度驗證，風險等級高於前兩組。紀律：幾乎不換手；−50% 回撤是路費不是訊號；監控看營運指標非股價；五年才有成績單。月頻刷新。</p>
       <div id="off-tenbagger-body"></div>
       <p class="asof" id="tenbagger-asof"></p>
@@ -335,9 +340,10 @@ footer a{font-weight:600}
   <div class="container foot-inner">
     <div><b>資料來源：</b>DD Screener（<code>dd-screener/latest.json</code>：DD 裁決、護城河、runway、EPS 上修）、循環軌（<code>cyclical-track.json</code>）、sop-funnel 板機狀態、決策引擎 GRP（<code>engine/radar.json · arena.json</code>）、產業深度 ID（<code>docs/id/</code> id-meta）。四件事草稿由 <code>scripts/build_picks.py</code> 純本地聚合，不含網路呼叫。</div>
     <div style="margin-top:.5rem"><b>產業趨勢判定：</b>ID 主題成員的上修寬度 × 站上年線寬度自動判定（v0 門檻 60/40 未調參）＋ S 曲線 phase 蓋帽（declining 不給「對」）；無 ID 覆蓋者以 sector 寬度代判，樣本不足則如實標示。</div>
+    <div style="margin-top:.5rem"><b>行動狀態（年線）：</b>正式榜每檔依站上／跌破年線標「✅ 可行動」或「⏸ 觀察帶（年線下・分批或等回升）」——年線是<b>榜內時點標記，不是席位資格閘</b>（資格＝品質 × 裁決 × 趨勢）；觀察帶檔次仍在榜、列淡化呈現，正式榜長熬亦以可行動者在前排序，惟不影響席位歸屬。</div>
     <div style="margin-top:.5rem"><b>自動上榜規則（v0）：</b>長熬＝候選（DD 進場 ∩ 護城河閘）∩ 產業趨勢「對」；爆發＝cyclical-track 合格 ∩ 非過熱（🔥）∩ 站上年線——右側價格確認代替 DD 裁決（DD 框架結構性不納拐點循環股）。<b>每組至多 5 席（寧缺勿濫）</b>：長熬按護城河分數（S=3／A=2／B=1，趨勢 ↑ 加 0.5）＋趨勢寬度均值排序；爆發按上修複合分排序（排序規則 v0 未調參）；額滿者輪替回候選區並標示排名。持有人 veto（<code>picks.json</code> veto[]）優先於一切規則；未達條件者留候選區並標示原因。</div>
     <div style="margin-top:.5rem"><b>十倍・結構長坡資料來源：</b>S&amp;P 400（中型）+ S&amp;P 600（小型）Wikipedia constituents 約 1,000 檔 universe，逐檔 yfinance 擷取（市值、營收成長、毛利、內部人持股、FCF、現金、EV/S、股數稀釋）。稀釋以 <code>get_shares_full</code> 股數 CAGR 計，並<b>除掉區間分割因子</b>（否則 10:1 分割會被誤讀成假稀釋）。四件事草稿由 <code>scripts/build_tenbagger.py</code> 產生。</div>
-    <div style="margin-top:.5rem"><b>結構六條件 gate-set（v0，未調參）：</b>市值 $10–200 億（DD universe 地板之下）· 營收成長 ≥25% · 毛利率 ≥35% · 內部人持股 ≥5%（缺→放行）· 股數稀釋 ≤3%/年 split-adjusted（缺→淘汰）· 自籌資力（FCF>0 或 現金 ≥2×|FCF|）· EV/Sales ≤15。過閘者 rank by 營收成長，前 5 進正式榜（席位與另兩組一致）、其餘候選。</div>
+    <div style="margin-top:.5rem"><b>結構六條件 gate-set（v0.1，未調參）：</b>市值 $10–200 億（DD universe 地板之下）· 營收成長＝3 年 CAGR ≥20% 且最近季 yoy ≥15%（v0.1——濾除週期尖峰假陽性；年報不足 3 欄視為史料不足淘汰）· 毛利率 ≥35% · 內部人持股 ≥5%（缺→放行）· 股數稀釋 ≤3%/年（主源年報股數，fallback split-adjusted 股數序列；缺→淘汰）· 自籌資力（FCF>0 或 現金 ≥2×|FCF|）· EV/Sales ≤15。過閘者 rank by 營收成長，前 5 進正式榜（席位與另兩組一致）、其餘候選。</div>
     <div style="margin-top:.5rem"><b>更新節奏：</b>長熬與爆發兩組每週六隨市場資料同步重算；<b>十倍組月頻刷新</b>（掛週更工作流但 21 天 cadence guard 節流）。coverage &lt; universe 60% 時保留上一份好資料不覆蓋。veto 與規則變更由持有人手改 <code>picks.json</code>＋changelog 留痕。</div>
     <a class="cockpit-link" href="/cockpit/">機房：完整漏斗與旗標 →</a>
   </div>
@@ -357,23 +363,28 @@ footer a{font-weight:600}
     }).join('');
   }
 
-  // ---- 正式榜 render（自動上榜：official_* from candidates.json） ----
-  function trendBadgeHtml(p){
-    var st=p.trend_status||'樣本不足';
-    var isSector=!!(p.trend_evidence && p.trend_evidence.indexOf('sector 級')===0);
+  // ---- 產業趨勢 cell（正式榜與候選區共用，讀法一致） ----
+  function trendCellHtml(c){
+    var st=c.trend_status||'樣本不足';
+    var isSector=!!(c.trend_evidence && c.trend_evidence.indexOf('sector 級')===0);
     var cls='t-na', label=st;
-    if(isSector){ label='sector 級・'+st; }
+    if(isSector){ cls='t-na'; label='sector 級・'+st; }
     else if(st==='對') cls='t-good';
     else if(st==='中性') cls='t-mid';
     else if(st==='弱') cls='t-weak';
-    return '<span class="tbadge '+cls+'" style="margin-bottom:0">'+esc(label)+'</span>';
+    return '<span class="tbadge '+cls+'">'+esc(label)+'</span>'
+      +(c.trend_evidence?'<span class="tev">'+esc(c.trend_evidence)+'</span>':'');
   }
-  function ddBadgeHtml(p){
-    if(!p.dd_path) return '<span class="ddbadge d-none">待 DD</span>';
-    if(p.verdict==='進場') return '<span class="ddbadge d-in">DD 進場</span>';
-    if(p.verdict) return '<span class="ddbadge d-watch">DD '+esc(p.verdict)+'</span>';
-    return '<span class="ddbadge d-none">DD 無裁決</span>';
+
+  // ---- 行動狀態徽章（年線＝榜內時點標記，非資格閘；正式榜專用） ----
+  function actBadgeHtml(p){
+    if(p.above_w52===true) return '<span class="actbadge act-go">✅ 可行動</span>';
+    if(p.above_w52===false) return '<span class="actbadge act-watch">⏸ 觀察帶（年線下・分批或等回升）</span>';
+    return '';  // null → 年線資料缺，不掛徽章
   }
+
+  // ---- 正式榜 render（自動上榜：official_* from candidates.json） ----
+  // 版型與候選區逐欄一致；官方僅保留組色左框＋著色表頭＋自動上榜 badge 的輕量區隔。
   function renderOfficial(list, mountId, isBaofa){
     var el=document.getElementById(mountId);
     if(!list || !list.length){
@@ -381,19 +392,22 @@ footer a{font-weight:600}
       return;
     }
     var rows=list.map(function(p){
+      var dimmed=p.above_w52===false;  // 年線下＝觀察帶，套用淡化列樣式
       var tkr=p.dd_path?'<a href="'+esc(p.dd_path)+'">'+esc(p.ticker)+'</a>':esc(p.ticker);
-      var badges='<span class="obadges">'+trendBadgeHtml(p)+(isBaofa?ddBadgeHtml(p):'')+'</span>';
-      return '<tr>'
-        +'<td class="tkr">'+tkr+'<br>'+badges+'</td>'
-        +'<td class="why">'+esc(p.why)+(p.trend_evidence?'<span class="tev" style="max-width:none;margin-top:.25rem">'+esc(p.trend_evidence)+'</span>':'')+'</td>'
+      var act=actBadgeHtml(p);
+      return '<tr'+(dimmed?' class="muted"':'')+'>'
+        +'<td class="tkr">'+tkr+(act?'<br>'+act:'')+'</td>'
+        +'<td class="why">'+esc(p.why)+'</td>'
         +'<td class="nums">'+esc(p.multiple)+(p.horizon?'<br><span style="color:var(--muted)">'+esc(p.horizon)+'</span>':'')+'</td>'
+        +'<td class="trend">'+trendCellHtml(p)+'</td>'
         +'<td class="pos">'+esc(p.position)+'</td>'
         +'<td class="exit">'+esc(p.exit)+'</td>'
+        +'<td>'+chipHtml(p.sources)+'</td>'
         +'</tr>';
     }).join('');
     var html='<div class="cand-wrap offwrap '+(isBaofa?'offwrap-g2':'offwrap-g1')+'">'
       +'<table class="cand official">'
-      +'<thead><tr><th>Ticker</th><th>為什麼上榜</th><th>倍數 / 拐點數字</th><th>位置 · 板機</th><th>下架條件</th></tr></thead>'
+      +'<thead><tr><th>Ticker</th><th>為什麼上榜</th><th>倍數 / 拐點數字</th><th>產業趨勢</th><th>位置 · 板機 · DD</th><th>下架條件</th><th>來源</th></tr></thead>'
       +'<tbody>'+rows+'</tbody></table></div>';
     if(list.length<3){
       html+='<div class="empty" style="margin-top:.4rem">本組僅 '+list.length+' 檔達條件——寧缺勿濫，規則不遷就。</div>';
@@ -408,17 +422,7 @@ footer a{font-weight:600}
       el.innerHTML='<div class="empty">此組目前沒有候選。</div>';
       return;
     }
-    var trendCell=function(c){
-      var st=c.trend_status||'樣本不足';
-      var isSector=!!(c.trend_evidence && c.trend_evidence.indexOf('sector 級')===0);
-      var cls='t-na', label=st;
-      if(isSector){ cls='t-na'; label='sector 級・'+st; }
-      else if(st==='對') cls='t-good';
-      else if(st==='中性') cls='t-mid';
-      else if(st==='弱') cls='t-weak';
-      return '<span class="tbadge '+cls+'">'+esc(label)+'</span>'
-        +(c.trend_evidence?'<span class="tev">'+esc(c.trend_evidence)+'</span>':'');
-    };
+    var trendCell=trendCellHtml;
     var rows=list.map(function(c){
       var muted=isBaofa && c.hot;
       var tkrCell=esc(c.ticker)+(muted?'<span class="hotbadge">等回踩</span>':'');

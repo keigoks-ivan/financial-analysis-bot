@@ -417,6 +417,8 @@ def build_changhao(latest, trigger_map, grp_set, trend_resolve):
             "runway": runway,
             "role": role,
             "ev5y_pct": ev5y,
+            # 行動狀態——年線不是資格閘（資格＝品質×裁決×趨勢），是榜內時點標記
+            "above_w52": ma.get("above_w52") if ma else None,
             "trend_status": trend["trend_status"],
             "trend_evidence": trend["trend_evidence"],
             "id_theme": trend["id_theme"],
@@ -660,6 +662,10 @@ def main():
 
     official_changhao, bumped_ch = apply_cap(official_changhao, changhao, changhao_cand_key)
     official_baofa, bumped_bf = apply_cap(official_baofa, baofa, baofa_cand_key)
+
+    # DISPLAY-ONLY 穩定排序：可行動（站上年線）在前——品質排序在各狀態內維持不變、
+    # 席位 ASSIGNMENT 不受影響（apply_cap 已定案）。年線只是榜內時點標記，非資格閘。
+    official_changhao.sort(key=lambda x: 0 if x.get("above_w52") is True else 1)
 
     # as_of：優先取來源的 as_of
     as_of = None
