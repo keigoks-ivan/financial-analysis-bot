@@ -1,9 +1,9 @@
 name: Pages Auto-Heal
 
-# GitHub Pages 「從分支部署」管線的偶發故障自癒（2026-07-05 單日五次 flaky 後上線）：
-#   病 1：deploy 在 syncing_files 階段回 "Deployment failed, try again later"（build errored）
-#   病 2：push 到 main 後 Pages 根本沒觸發 build（latest build 落後 HEAD）
-# 兩者都用「請求重建最新 main」（POST /pages/builds）治療，最多延遲 15 分鐘自癒。
+# v2（2026-07-05）：站點已遷移至 Actions 部署管線（deploy-pages.yml），
+# 本工作流簡化為「最新 Deploy Pages run 失敗 → 自動 rerun」的兜底。
+# （legacy 時代的 POST /pages/builds 已不適用；漏觸發問題屬 legacy 管線特有，
+#  Actions push 觸發可靠，不再檢查。）
 
 on:
   schedule:
@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  pages: write
+  actions: write
   contents: read
 
 concurrency:
@@ -23,41 +23,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Check latest Pages build and heal if needed
+      - name: Rerun latest Deploy Pages run if it failed
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
         run: |
           set -e
-          B=$(gh api "repos/$REPO/pages/builds/latest")
-          STATUS=$(echo "$B" | jq -r .status)
-          BUILT_SHA=$(echo "$B" | jq -r .commit)
-          echo "latest pages build: $STATUS @ ${BUILT_SHA:0:8}"
-
-          if [ "$STATUS" = "errored" ]; then
-            echo "→ build errored; requesting rebuild"
-            gh api -X POST "repos/$REPO/pages/builds"
-            exit 0
-          fi
-
-          # 正在跑就不插手
-          if [ "$STATUS" = "building" ] || [ "$STATUS" = "queued" ]; then
-            echo "→ build in progress; nothing to do"
-            exit 0
-          fi
-
-          HEAD_SHA=$(gh api "repos/$REPO/commits/main" --jq .sha)
-          if [ "$BUILT_SHA" = "$HEAD_SHA" ]; then
-            echo "→ up to date"
-            exit 0
-          fi
-
-          # HEAD 比已部署新：給正常 build 10 分鐘窗口，超過視為漏觸發
-          HEAD_TIME=$(gh api "repos/$REPO/commits/main" --jq .commit.committer.date)
-          AGE=$(( $(date -u +%s) - $(date -u -d "$HEAD_TIME" +%s) ))
-          if [ "$AGE" -gt 600 ]; then
-            echo "→ HEAD ${HEAD_SHA:0:8} unbuilt for ${AGE}s; requesting rebuild"
-            gh api -X POST "repos/$REPO/pages/builds"
+          R=$(gh run list --repo "$REPO" --workflow deploy-pages.yml --branch main --limit 1 \
+              --json databaseId,status,conclusion \
+              --jq '.[0] | "\(.databaseId) \(.status) \(.conclusion)"' || true)
+          if [ -z "$R" ]; then echo "no deploy runs yet"; exit 0; fi
+          ID=$(echo "$R" | awk '{print $1}')
+          ST=$(echo "$R" | awk '{print $2}')
+          CC=$(echo "$R" | awk '{print $3}')
+          echo "latest deploy run: $ID $ST $CC"
+          if [ "$ST" = "completed" ] && [ "$CC" = "failure" ]; then
+            echo "→ rerunning failed deploy"
+            gh run rerun "$ID" --failed --repo "$REPO"
           else
-            echo "→ HEAD is ${AGE}s old; within normal build window, waiting"
+            echo "→ nothing to heal"
           fi
