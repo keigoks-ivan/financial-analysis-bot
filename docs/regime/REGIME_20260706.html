@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>大類資產 Regime 儀表 · Vol.1 · 2026-07-06 · InvestMQuest Research</title>
+<meta name="description" content="Cross-Asset Regime Dashboard 創刊號：六軸 regime 記分卡（利率／美元／信用／成長恐慌／股票胃納／商品）＋ CFTC COT 跨資產部位極端 ＋ 成長 vs 防禦比率。當前判讀——晚週期再通脹、美元自擁擠極端翻向回落，risk-on 傾斜但水面下防禦。描述器非配置指令。">
+<meta name="robots" content="noindex">
+<style>
+:root{
+ --page:#f6f5f1;--surface:#ffffff;--surface-2:#f3f2ee;--surface-3:#eceae4;
+ --border:#e3e2dc;--border-2:#d0cfc7;--ink-1:#161513;--ink-2:#4c4b46;--ink-3:#84827b;
+ --grid:#e8e7e1;--axis:#c7c6be;--track:#ebeae4;
+ --accent:#1c5cab;--pos:#137a49;--neg:#c0392f;--amber:#a86a00;--amber-bg:#fbf4e4;
+ --roff:#2f6fb0;--rmid:#d9d6cd;--ron:#d5892a;
+ --amberpill:#a86a00;--turnpill:#4a3aa7;--midpill:#5a5f6a;
+}
+@media(prefers-color-scheme:dark){:root{
+ --page:#0b0d11;--surface:#14181f;--surface-2:#1a1f28;--surface-3:#222834;
+ --border:#28303c;--border-2:#3a4351;--ink-1:#edeff3;--ink-2:#a6aebc;--ink-3:#717a8a;
+ --grid:#222a35;--axis:#39414f;--track:#232a34;
+ --accent:#5b9bff;--pos:#3ec77e;--neg:#f2726a;--amber:#e0a83a;--amber-bg:#221c10;
+ --roff:#5b9bff;--rmid:#3a4351;--ron:#e0a256;
+ --amberpill:#c78a2c;--turnpill:#9085e9;--midpill:#6b7280;
+}}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans TC','PingFang TC',sans-serif;font-size:15px;line-height:1.72;color:var(--ink-1);background:var(--page);-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.wrap{max-width:1040px;margin:0 auto;padding:0 22px 72px}
+.masthead{background:#0e1116;color:#f2f3f5;margin:0 -22px 0;padding:26px 30px 22px;border-bottom:3px solid var(--accent)}
+.masthead .top{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;font-family:ui-monospace,monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#8b93a3}
+.masthead h1{font-size:31px;font-weight:800;letter-spacing:-.02em;margin:12px 0 3px;color:#fff}
+.masthead .subt{font-size:14.5px;color:#aeb6c4;font-weight:500}
+.masthead .rule{height:1px;background:#2a303c;margin:16px 0 12px}
+.masthead .meta{font-family:ui-monospace,monospace;font-size:11.5px;color:#8b93a3;line-height:1.85}
+.masthead .meta b{color:#c9cfda;font-weight:600}
+.masthead .dist{margin-top:9px;font-size:11px;color:#727a88}
+.ourview{background:var(--surface);border:1px solid var(--border-2);border-left:4px solid var(--accent);border-radius:0 10px 10px 0;padding:18px 22px;margin:22px 0 8px}
+.ourview .h{font-family:ui-monospace,monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:8px}
+.ourview p{font-size:15px;line-height:1.74;color:var(--ink-1);margin-bottom:10px}
+.ourview b{font-weight:700}
+.mandate{font-size:12.5px;color:var(--ink-2);border-top:1px solid var(--border);margin-top:12px;padding-top:10px;line-height:1.65}
+.mandate b{color:var(--ink-1)}
+h2{font-size:20px;font-weight:750;letter-spacing:-.01em;margin:48px 0 6px;padding-bottom:8px;border-bottom:2px solid var(--border-2);scroll-margin-top:16px}
+h2 .exh{display:block;font-family:ui-monospace,monospace;font-size:11.5px;font-weight:700;letter-spacing:.06em;color:var(--accent);margin-bottom:3px}
+h3{font-size:16px;font-weight:650;margin:24px 0 7px}
+p{margin-bottom:12px}
+strong{font-weight:650;color:var(--ink-1)}
+.lead{font-size:14px;line-height:1.72;color:var(--ink-2);margin-bottom:10px}
+.lead b{color:var(--ink-1)}
+.exhibit{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px 14px;margin:14px 0}
+.exhibit .cap{font-weight:700;font-size:14px;color:var(--ink-1);margin-bottom:2px}
+.exhibit .capd{font-size:12.5px;color:var(--ink-2);margin-bottom:12px;line-height:1.6}
+.exhibit .esrc{font-family:ui-monospace,monospace;font-size:10px;letter-spacing:.02em;color:var(--ink-3);text-transform:uppercase;margin-top:10px;border-top:1px solid var(--border);padding-top:8px;line-height:1.6}
+.scroll{overflow-x:auto}
+/* svg text */
+svg .rax{fill:var(--ink-3);font:600 10px ui-monospace,monospace;letter-spacing:.04em}
+svg .raxh{fill:var(--ink-2);font:700 10px ui-monospace,monospace;letter-spacing:.03em}
+svg .rlbl{fill:var(--ink-1);font:700 13px system-ui}
+svg .rlblb{fill:var(--ink-1);font:800 13.5px system-ui}
+svg .rlbl2{fill:var(--ink-1);font:600 11.5px system-ui}
+svg .rsub{fill:var(--ink-3);font:9.5px ui-monospace,monospace;letter-spacing:.02em}
+svg .rread{fill:var(--ink-2);font:10.5px system-ui}
+svg .rpill{fill:#fff;font:700 9.5px ui-monospace,monospace}
+svg .rval2{fill:var(--ink-1);font:700 11px ui-monospace,monospace;font-variant-numeric:tabular-nums}
+svg .rtk{fill:var(--ink-3);font:600 9px ui-monospace,monospace}
+svg .rmedlbl{fill:var(--ink-3);font:700 9px ui-monospace,monospace;letter-spacing:.03em}
+svg .rnet{font:700 9.5px ui-monospace,monospace}
+svg .rflag{fill:var(--neg);font:800 9.5px ui-monospace,monospace}
+svg .rcomp{fill:var(--ink-1);font:800 14px system-ui}
+svg .rcompe{fill:var(--ink-3);font:600 10.5px ui-monospace,monospace}
+svg .up{fill:var(--pos)}svg .dn{fill:var(--roff)}
+svg .gl{stroke:var(--grid);stroke-width:1}
+svg .glf{stroke:var(--border);stroke-width:1;opacity:.6}
+svg .base{stroke:var(--axis);stroke-width:1.4}
+svg .rmed{stroke:var(--axis);stroke-width:1.2}
+svg .rmidtick{stroke:var(--ink-3);stroke-width:1.4;opacity:.5}
+.usage{background:var(--surface);border:1px solid var(--border-2);border-radius:12px;padding:4px 0;margin:16px 0}
+.usage .row{display:grid;grid-template-columns:120px 1fr;gap:14px;padding:13px 20px;border-bottom:1px solid var(--border);align-items:start}
+.usage .row:last-child{border-bottom:none}
+.usage .k{font-family:ui-monospace,monospace;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+.usage .k.do{color:var(--pos)}.usage .k.dont{color:var(--neg)}
+.usage .v{font-size:13.5px;line-height:1.62;color:var(--ink-2)}
+.usage .v b{color:var(--ink-1)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+@media(max-width:760px){.grid2{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:15px 17px}
+.card h4{font-family:ui-monospace,monospace;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);margin:0 0 9px}
+.arch{list-style:none;padding:0;margin:0}
+.arch li{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;line-height:1.55;color:var(--ink-2)}
+.arch li:last-child{border-bottom:none}
+.arch li b{color:var(--ink-1)}
+.tag{flex-shrink:0;font-family:ui-monospace,monospace;font-size:9.5px;font-weight:800;letter-spacing:.03em;padding:2px 8px;border-radius:12px;height:fit-content;white-space:nowrap;color:#fff}
+.tag.tw{background:var(--ron)}.tag.hw{background:var(--roff)}.tag.nt{background:var(--midpill)}
+.callout{background:var(--amber-bg);border-left:3px solid var(--amber);border-radius:0 8px 8px 0;padding:13px 16px;margin:16px 0;font-size:13px;line-height:1.66;color:var(--ink-2)}
+.callout b{color:var(--ink-1)}
+.callout.blue{background:color-mix(in srgb,var(--accent) 8%,var(--surface));border-color:var(--accent)}
+/* reading detail cards */
+.rd-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+@media(max-width:760px){.rd-grid{grid-template-columns:1fr}}
+.rd{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 15px}
+.rd-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px}
+.rd-name{font-weight:700;font-size:14px;color:var(--ink-1)}
+.rd-sub{font-family:ui-monospace,monospace;font-size:10px;color:var(--ink-3);margin-left:7px;font-weight:400}
+.rd-pill{flex-shrink:0;font-family:ui-monospace,monospace;font-size:10px;font-weight:800;color:#fff;padding:2px 9px;border-radius:11px;white-space:nowrap}
+.rd-body{font-size:12.8px;line-height:1.62;color:var(--ink-2);margin:0 0 8px}
+.rd-src{font-family:ui-monospace,monospace;font-size:9.5px;color:var(--ink-3);border-top:1px solid var(--border);padding-top:6px;line-height:1.5}
+/* tables */
+.tbl-wrap{overflow-x:auto;margin:12px 0;border:1px solid var(--border);border-radius:10px;background:var(--surface)}
+table{width:100%;border-collapse:collapse;font-size:12.8px}
+thead th{text-align:left;padding:9px 12px;background:var(--surface-2);font-family:ui-monospace,monospace;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2);border-bottom:1.5px solid var(--border-2)}
+tbody td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.55}
+tbody tr:last-child td{border-bottom:none}
+td.tx{font-weight:700;white-space:nowrap;color:var(--ink-1)}
+td.off{color:var(--roff)}td.on{color:var(--ron)}td.now{color:var(--ink-2)}
+.exec{background:var(--surface);border:1px solid var(--border-2);border-radius:12px;padding:6px 22px;margin:16px 0;counter-reset:e}
+.exec li{list-style:none;position:relative;padding:14px 0 14px 38px;border-bottom:1px solid var(--border);font-size:13.5px;line-height:1.64;color:var(--ink-2);counter-increment:e}
+.exec li:last-child{border-bottom:none}
+.exec li b{color:var(--ink-1)}
+.exec li::before{content:counter(e,upper-roman);position:absolute;left:0;top:14px;font-family:ui-monospace,monospace;font-weight:800;font-size:12px;color:var(--accent)}
+.disclaimer{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:15px 18px;font-size:11.5px;color:var(--ink-2);margin-top:32px;line-height:1.72}
+.disclaimer b{color:var(--ink-1)}
+ul.b{padding-left:19px;margin:6px 0 12px}ul.b li{margin-bottom:7px;font-size:13px;line-height:1.6;color:var(--ink-2)}
+ul.b li b{color:var(--ink-1)}
+footer{text-align:center;margin-top:22px;font-family:ui-monospace,monospace;font-size:11px;color:var(--ink-3)}
+@media(max-width:760px){.masthead h1{font-size:23px}h2{font-size:18px}.wrap{padding:0 15px 56px}.masthead{padding:20px 16px 18px;margin:0 -15px 0}.usage .row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <div class="top">
+    <span>InvestMQuest Research — Cross-Asset Strategy</span>
+    <span>Vol.1 · Regime Dashboard</span>
+  </div>
+  <h1>大類資產 Regime 儀表</h1>
+  <div class="subt">Cross-Asset Regime Dashboard ｜ 大類資產 regime 狀態判讀（描述器）</div>
+  <div class="rule"></div>
+  <div class="meta">
+    發布日 <b>2026-07-06</b>（週一）　·　COT as-of <b>2026-06-23</b>（6/30 期因美國國慶假期順延，撰稿時未發布）　·　跨資產 ETF as-of 2026-07-05　·　宏觀現貨／殖利率補查截至 2026-07-03<br>
+    資料層：<b>CFTC 大額投機淨部位 15 市場</b>　|　<b>跨資產 ETF 動能／乖離 15 檔</b>　|　<b>宏觀比率</b>（銅金比／HY-IG／小型-大型）　|　<b>7 月初現貨補查</b>（DXY／10Y／HY OAS）
+    <div class="dist">Distribution：InvestMQuest 內部研究文件　·　描述器非擇時／非配置訊號　·　非投資建議　·　數字均附來源與 as-of</div>
+  </div>
+</header>
+
+<div class="ourview">
+  <div class="h">Our View — 當前 regime 定調</div>
+  <p>當前大類資產處於<b>晚週期再通脹（late-cycle reflation）</b>、且<b>美元自擁擠極端見頂回落</b>的 regime——六軸中四軸偏暖、兩軸中性，綜合落在 <b>risk-on 傾斜</b>，但這是「平靜的皮、防禦的骨」而非乾淨的多頭。</p>
+  <p>最值得注意的三條軸：<b>（1）美元翻向</b>——COT 大額投機淨多在 6/23 前 4 週暴增 +21.5pp（擁擠做多），7/2 弱非農（6 月非農僅 +57K）後 DXY 由 101.5 跌破 101、9 月升息機率 64%→55%，極端多頭正在鬆動，對非美／EM／商品由逆風轉順風。<b>（2）商品部位極端</b>——銅 COT 落在 5 年第 96.9 百分位（觸極端旗）、黃金 86.2，金屬買盤沉重但已高度擁擠，去化風險升；WTI 原油僅第 10.4 百分位，再通脹是金屬與電氣化主導、非廣度能源。<b>（3）信用胃納完好</b>——HY OAS 2.78% 落在 10 年區間第 17 百分位（歷史性偏緊），是本表最明確的 risk-on 軸，惟已現微幅走闊的早警。</p>
+  <div class="mandate"><b>定位（mandate）：</b>本儀表為<b>描述器（describer），非配置指令、非擇時訊號</b>。它回答「現在是什麼 regime、哪個 archetype 有順逆風、哪個大類部位到極端」，<b>不對指數部（75%）下任何加碼債／減碼股／調整配置的指令</b>——指數部走總守則機械規則（regime QQQ＋IB01），不做裁量擇時。本頁對個股部的作用僅是<b>提供宏觀背景以選 archetype</b>。全篇不出現任何買賣或配置指令句。</div>
+</div>
+
+<ol class="exec">
+  <li><b>美元見頂翻向是本期最大的 regime 變化。</b>COT 大額投機在 6/23 前把美元淨多推到 4 週 +21.5pp 的擁擠極端，UUP 2y 動能第 98 百分位（全資產最延伸）；7/2 弱非農（+57K）成為催化劑，DXY 由 101.5 跌破 101、升息機率 64%→55%。極端多頭正在鬆動——這是把逆風轉順風給<b>非美、EM、商品</b>的樞紐。</li>
+  <li><b>商品部位是一把雙面刃：結構性順風、但擁擠到脆。</b>銅 COT 落在 5 年第 96.9 百分位（極端做多、觸旗），黃金 86.2；再通脹由金屬與 AI 電氣化主導（WTI 僅第 10.4 百分位，能源被落下）。順風真實，但擁擠去化是本 regime 最大的單點風險。</li>
+  <li><b>「平靜的皮、防禦的骨」——這是晚週期而非早週期。</b>信用歷史性偏緊（HY OAS 第 17 百分位）、VIX 低、小型股領先，表面 risk-on；但 Nasdaq-100 COT 淨空落第 8.1 百分位（極端偏空、部位面被低配）、IBIT 崩 44%、黃金極端偏多——水面下防禦、避險與投機軌斷裂並存。綜合落在 <b>risk-on 傾斜</b>，非乾淨多頭。</li>
+</ol>
+
+<h2 id="e1"><span class="exh">EXHIBIT 1 — 旗艦</span>Regime 記分卡（六軸 risk-off ↔ risk-on）</h2>
+<p class="lead">六條 regime 軸各一列，marker 落在 risk-off（冷藍）↔ 中性灰 ↔ risk-on（暖橙）連續軸上；每列附狀態標籤與讀數。<b>美元</b>列的虛線箭頭表 6/23→7/3 由擁擠做多翻向回落的移動方向。底列為六軸定性合成，<b>非可交易指數</b>。</p>
+<div class="exhibit">
+  <div class="cap">Exhibit 1｜大類資產 Regime 記分卡</div>
+  <div class="capd">marker 位置為基於 COT 部位、ETF 動能與 7 月初現貨的定性合成判讀（非時點預測）。冷↔暖為 regime 傾向，非漲跌方向。</div>
+  <div class="scroll"><svg viewBox="0 0 840 474" width="100%" xmlns="http://www.w3.org/2000/svg" font-family="system-ui" role="img" aria-label="Regime 記分卡"><defs><linearGradient id="rgdiv" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="var(--roff)"/><stop offset="0.5" stop-color="var(--rmid)"/><stop offset="1" stop-color="var(--ron)"/></linearGradient><marker id="ah" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="var(--ron)"/></marker></defs><text x="190" y="46" class="rax" text-anchor="start">◄ RISK-OFF</text><text x="376" y="46" class="rax" text-anchor="middle">中性 NEUTRAL</text><text x="562" y="46" class="rax" text-anchor="end">RISK-ON ►</text><text x="0" y="46" class="raxh">REGIME 軸</text><text x="584" y="46" class="raxh">狀態 · 讀數</text><line x1="0" y1="58" x2="840" y2="58" class="gl"/><text x="172" y="118.0" class="rlbl" text-anchor="end">利率／久期</text><text x="172" y="134.0" class="rsub" text-anchor="end">Rates / Duration</text><rect x="190" y="117.0" width="372" height="10" rx="5" fill="url(#rgdiv)" opacity="0.85"/><line x1="376.0" y1="113.0" x2="376.0" y2="131.0" class="rmidtick"/><circle cx="398" cy="122.0" r="7.5" fill="var(--ink-1)" stroke="var(--surface)" stroke-width="2.5"/><rect x="584" y="106.0" width="60.0" height="17" rx="8.5" fill="var(--ron)"/><text x="614" y="118.0" class="rpill" text-anchor="middle">中性偏暖</text><text x="584" y="137" class="rread">升息路徑降溫，久期逆風轉緩</text><line x1="0" y1="148" x2="840" y2="148" class="glf"/><text x="172" y="170.0" class="rlbl" text-anchor="end">美元</text><text x="172" y="186.0" class="rsub" text-anchor="end">US Dollar</text><rect x="190" y="169.0" width="372" height="10" rx="5" fill="url(#rgdiv)" opacity="0.85"/><line x1="376.0" y1="165.0" x2="376.0" y2="183.0" class="rmidtick"/><line x1="331" y1="174.0" x2="412" y2="174.0" stroke="var(--ron)" stroke-width="2" stroke-dasharray="2 2" marker-end="url(#ah)" opacity="0.8"/><circle cx="421" cy="174.0" r="7.5" fill="var(--ink-1)" stroke="var(--surface)" stroke-width="2.5"/><rect x="584" y="158.0" width="71.5" height="17" rx="8.5" fill="var(--turnpill)"/><text x="620" y="170.0" class="rpill" text-anchor="middle">轉暖／翻向</text><text x="584" y="189" class="rread">擁擠做多，翻向回落</text><line x1="0" y1="200" x2="840" y2="200" class="glf"/><text x="172" y="222.0" class="rlbl" text-anchor="end">信用</text><text x="172" y="238.0" class="rsub" text-anchor="end">Credit (HY vs IG)</text><rect x="190" y="221.0" width="372" height="10" rx="5" fill="url(#rgdiv)" opacity="0.85"/><line x1="376.0" y1="217.0" x2="376.0" y2="235.0" class="rmidtick"/><circle cx="480" cy="226.0" r="7.5" fill="var(--ink-1)" stroke="var(--surface)" stroke-width="2.5"/><rect x="584" y="210.0" width="37.0" height="17" rx="8.5" fill="var(--ron)"/><text x="602" y="222.0" class="rpill" text-anchor="middle">偏暖</text><text x="584" y="241" class="rread">HY spread 偏緊，胃納完好</text><line x1="0" y1="252" x2="840" y2="252" class="glf"/><text x="172" y="274.0" class="rlbl" text-anchor="end">成長 vs 恐慌</text><text x="172" y="290.0" class="rsub" text-anchor="end">Growth vs Fear</text><rect x="190" y="273.0" width="372" height="10" rx="5" fill="url(#rgdiv)" opacity="0.85"/><line x1="376.0" y1="269.0" x2="376.0" y2="287.0" class="rmidtick"/><circle cx="428" cy="278.0" r="7.5" fill="var(--ink-1)" stroke="var(--surface)" stroke-width="2.5"/><rect x="584" y="262.0" width="37.0" height="17" rx="8.5" fill="var(--ron)"/><text x="602" y="274.0" class="rpill" text-anchor="middle">偏暖</text><text x="584" y="293" class="rread">循環／小型領先，中段偏暖</text><line x1="0" y1="304" x2="840" y2="304" class="glf"/><text x="172" y="326.0" class="rlbl" text-anchor="end">股票風險胃納</text><text x="172" y="342.0" class="rsub" text-anchor="end">Equity Risk Appetite</text><rect x="190" y="325.0" width="372" height="10" rx="5" fill="url(#rgdiv)" opacity="0.85"/><line x1="376.0" y1="321.0" x2="376.0" y2="339.0" class="rmidtick"/><circle cx="376" cy="330.0" r="7.5" fill="var(--ink-1)" stroke="var(--surface)" stroke-width="2.5"/><rect x="584" y="314.0" width="37.0" height="17" rx="8.5" fill="var(--midpill)"/><text x="602" y="326.0" class="rpill" text-anchor="middle">中性</text><text x="584" y="345" class="rread">皮平靜、骨防禦</text><line x1="0" y1="356" x2="840" y2="356" class="glf"/><text x="172" y="378.0" class="rlbl" text-anchor="end">商品</text><text x="172" y="394.0" class="rsub" text-anchor="end">Commodities</text><rect x="190" y="377.0" width="372" height="10" rx="5" fill="url(#rgdiv)" opacity="0.85"/><line x1="376.0" y1="373.0" x2="376.0" y2="391.0" class="rmidtick"/><circle cx="450" cy="382.0" r="7.5" fill="var(--ink-1)" stroke="var(--surface)" stroke-width="2.5"/><rect x="584" y="366.0" width="71.5" height="17" rx="8.5" fill="var(--amberpill)"/><text x="620" y="378.0" class="rpill" text-anchor="middle">偏暖但擁擠</text><text x="584" y="397" class="rread">金屬買盤沉重但擁擠</text><line x1="0" y1="420" x2="840" y2="420" class="base"/><text x="172" y="436" class="rlblb" text-anchor="end">綜合判讀</text><text x="172" y="452" class="rsub" text-anchor="end">Composite（定性）</text><rect x="190" y="431" width="372" height="12" rx="6" fill="url(#rgdiv)"/><line x1="376.0" y1="425" x2="376.0" y2="449" class="rmidtick"/><circle cx="424" cy="437" r="9" fill="var(--ron)" stroke="var(--surface)" stroke-width="2.5"/><text x="584" y="430" class="rcomp">晚週期再通脹 · 美元見頂回落</text><text x="584" y="446" class="rcompe">risk-on 傾斜 · late-cycle reflation</text></svg></div>
+  <div class="esrc">SOURCE: CFTC COT futures-only（as-of 2026-06-23）· 跨資產 ETF yfinance（2026-07-05）· DXY／10Y／HY OAS 現貨補查（2026-07-02～03）。狀態欄為定性判讀，合成軸非可交易指數。</div>
+</div>
+
+<ul class="b">
+  <li><b>四軸偏暖、二軸中性，無單一軸落 risk-off</b>——信用最強、成長次之；沒有系統性避險訊號，故綜合是 risk-on 傾斜而非防禦。</li>
+  <li><b>唯一「轉向中」的軸是美元</b>：marker 帶方向箭頭，由 0.38 移向 0.62，是本期唯一有明確動能位移的軸——樞紐變化。</li>
+  <li><b>商品軸偏暖但標「擁擠」</b>：狀態暖、脆性高，與其他偏暖軸性質不同——順風真實但下方緩衝薄，去化即回撤。</li>
+</ul>
+
+<h3>六軸完整讀數</h3>
+<div class="rd-grid"><div class="rd"><div class="rd-h"><span class="rd-name">利率／久期<span class="rd-sub">Rates / Duration</span></span><span class="rd-pill" style="background:var(--ron)">中性偏暖</span></div><p class="rd-body">10Y 4.47%（7/2），弱非農後由 4.53% 回落；9 月升息機率 64%→55%。COT 公債各天期仍淨空（10Y 5y 第 24.6、30Y 20.8 百分位），升息路徑降溫、久期逆風轉緩。</p><div class="rd-src">10Y CNBC/dshort 2026-07-02 · CFTC COT 2026-06-23 · TLT/IEF yfinance 2026-07-05</div></div><div class="rd"><div class="rd-h"><span class="rd-name">美元<span class="rd-sub">US Dollar</span></span><span class="rd-pill" style="background:var(--turnpill)">轉暖／翻向</span></div><p class="rd-body">COT 美元淨多 4 週暴增 +21.5pp 至 6/23（擁擠做多），7/2 弱非農後 DXY 由 101.5 跌破 101（100.8）翻向回落。UUP 2y 動能第 98 百分位為全資產最延伸——極端多頭遇催化劑正在鬆動，對非美／EM／商品由逆風轉順風。</p><div class="rd-src">COT DX 2026-06-23（Δ4w +21.53）· DXY tradingeconomics 2026-07-03 · UUP yfinance 2026-07-05</div></div><div class="rd"><div class="rd-h"><span class="rd-name">信用<span class="rd-sub">Credit (HY vs IG)</span></span><span class="rd-pill" style="background:var(--ron)">偏暖</span></div><p class="rd-body">HY OAS 2.78%（6/25），落在 10 年區間第 17 百分位（歷史性偏緊）；IG OAS ~80bp。HYG 站上 52 週均線 +1.9%，信用胃納完好——本表最明確的 risk-on 軸；惟 spread 已現微幅走闊的早警。</p><div class="rd-src">ICE BofA HY OAS FRED 2026-06-25 · HYG/LQD yfinance 2026-07-05</div></div><div class="rd"><div class="rd-h"><span class="rd-name">成長 vs 恐慌<span class="rd-sub">Growth vs Fear</span></span><span class="rd-pill" style="background:var(--ron)">偏暖</span></div><p class="rd-body">銅金比 2y 第 56 百分位、近 13 週上行（成長訊號回溫）；小型股領先大型（IWM +34.8% vs SPY +20.4%，12m）。但黃金 COT 第 86 百分位同步偏多——再通脹與避險同時被買，屬「什麼都漲」的晚週期形狀。</p><div class="rd-src">銅金比 yfinance 2y 週線 2026-07-06 · IWM/SPY yfinance 2026-07-05 · Gold COT 2026-06-23</div></div><div class="rd"><div class="rd-h"><span class="rd-name">股票風險胃納<span class="rd-sub">Equity Risk Appetite</span></span><span class="rd-pill" style="background:var(--midpill)">中性</span></div><p class="rd-body">表面平靜——VIX 偏低、VIX 期貨淨空（5y 第 29.6 百分位）；但水面下偏防禦：Nasdaq-100 COT 淨空落在 5y 第 8.1 百分位（極端偏空），IBIT 12m −43.9% 高 β 投機軌已斷。平靜的皮、防禦的骨。</p><div class="rd-src">Nasdaq/VIX COT 2026-06-23 · IBIT yfinance 2026-07-05</div></div><div class="rd"><div class="rd-h"><span class="rd-name">商品<span class="rd-sub">Commodities</span></span><span class="rd-pill" style="background:var(--amberpill)">偏暖但擁擠</span></div><p class="rd-body">金屬買盤沉重但擁擠：銅 COT 5y 第 96.9 百分位（極端做多、觸旗）、黃金 86.2、白銀 48.5；WTI 原油僅第 10.4 百分位（能源被落下）。再通脹由金屬與 AI 電氣化主導，非廣度能源——多頭已高度擁擠，去化風險升。</p><div class="rd-src">Copper/Gold/Silver/WTI COT 2026-06-23 · USO yfinance 2026-07-05</div></div></div>
+
+<div class="callout blue"><b>合成方法（定性）：</b>綜合判讀非量化指數，而是六軸的<b>定性加權讀</b>——本期偏重<b>信用（歷史性偏緊，最明確 risk-on）</b>與<b>成長／恐慌（循環＋小型領先）</b>兩軸的 risk-on 訊號，扣抵<b>股票胃納（部位防禦）</b>的中性與<b>商品（擁擠脆性）</b>的折價；<b>美元</b>因翻向初期給予「轉暖」但不滿分。六軸中四偏暖、二中性，marker 落在 0.63（risk-on 傾斜）。此為描述器判讀，<b>不預測轉折時點、非可交易指數</b>；各軸 marker 位置可隨資料更新調整。</div>
+
+<h2 id="e2"><span class="exh">EXHIBIT 2</span>跨資產部位極端（COT 5 年百分位）</h2>
+<p class="lead">CFTC 大額投機淨部位占未平倉比，以 5 年百分位相對中位（50）呈現：向右＝相對偏多（暖）、向左＝相對偏空（冷）。<b>銅</b>觸極端做多旗（96.9）、<b>Nasdaq-100</b>觸極端偏空旗（8.1）——兩端同時極端，是本 regime 的部位指紋。</p>
+<div class="exhibit">
+  <div class="cap">Exhibit 2｜COT 大額投機淨部位 5 年百分位（相對中位偏離）</div>
+  <div class="capd">依 5y 百分位排序。⚑ 表 5y 百分位 ≥90（極端做多）或 ≤10（極端偏空）。美元 4 週淨部位暴增 +21.5pp 未反映於百分位（百分位為存量、非變動）。</div>
+  <div class="scroll"><svg viewBox="0 0 840 471" width="100%" xmlns="http://www.w3.org/2000/svg" font-family="system-ui" role="img" aria-label="COT 部位百分位"><text x="0" y="30" class="raxh">市場（依 5y 百分位排序）</text><text x="140" y="30" class="rax" text-anchor="start">← 相對偏空（低於中位）</text><text x="700" y="30" class="rax" text-anchor="end">相對偏多（高於中位）→</text><line x1="140" y1="60" x2="140" y2="457" class="gl"/><text x="140" y="54" class="rtk" text-anchor="middle">0</text><line x1="280" y1="60" x2="280" y2="457" class="gl"/><text x="280" y="54" class="rtk" text-anchor="middle">25</text><line x1="420" y1="60" x2="420" y2="457" class="rmed"/><line x1="560" y1="60" x2="560" y2="457" class="gl"/><text x="560" y="54" class="rtk" text-anchor="middle">75</text><line x1="700" y1="60" x2="700" y2="457" class="gl"/><text x="700" y="54" class="rtk" text-anchor="middle">100</text><text x="420" y="54" class="rmedlbl" text-anchor="middle">中位 50</text><rect x="420" y="82.5" width="263" height="12" rx="3" fill="var(--ron)" opacity="0.82"/><text x="128" y="92.5" class="rlbl2" text-anchor="end">銅 Copper</text><text x="690" y="92.5" class="rval2" text-anchor="start">97</text><text x="708" y="92.5" class="rflag" text-anchor="start">⚑ 極端做多</text><rect x="420" y="111.5" width="203" height="12" rx="3" fill="var(--ron)" opacity="0.82"/><text x="128" y="121.5" class="rlbl2" text-anchor="end">黃金 Gold</text><text x="630" y="121.5" class="rval2" text-anchor="start">86</text><text x="708" y="121.5" class="rnet up" text-anchor="start">淨多</text><rect x="420" y="140.5" width="105" height="12" rx="3" fill="var(--roff)" opacity="0.82"/><text x="128" y="150.5" class="rlbl2" text-anchor="end">S&P 500</text><text x="532" y="150.5" class="rval2" text-anchor="start">69</text><text x="708" y="150.5" class="rnet dn" text-anchor="start">淨空</text><rect x="413" y="169.5" width="7" height="12" rx="3" fill="var(--roff)" opacity="0.82"/><text x="128" y="179.5" class="rlbl2" text-anchor="end">美國 5Y 公債</text><text x="406" y="179.5" class="rval2" text-anchor="end">49</text><text x="708" y="179.5" class="rnet dn" text-anchor="start">淨空</text><rect x="412" y="198.5" width="8" height="12" rx="3" fill="var(--ron)" opacity="0.82"/><text x="128" y="208.5" class="rlbl2" text-anchor="end">白銀 Silver</text><text x="405" y="208.5" class="rval2" text-anchor="end">48</text><text x="708" y="208.5" class="rnet up" text-anchor="start">淨多</text><rect x="388" y="227.5" width="32" height="12" rx="3" fill="var(--ron)" opacity="0.82"/><text x="128" y="237.5" class="rlbl2" text-anchor="end">美元指數 DX</text><text x="381" y="237.5" class="rval2" text-anchor="end">44</text><text x="708" y="237.5" class="rnet up" text-anchor="start">淨多</text><rect x="344" y="256.5" width="76" height="12" rx="3" fill="var(--roff)" opacity="0.82"/><text x="128" y="266.5" class="rlbl2" text-anchor="end">美國 2Y 公債</text><text x="337" y="266.5" class="rval2" text-anchor="end">36</text><text x="708" y="266.5" class="rnet dn" text-anchor="start">淨空</text><rect x="315" y="285.5" width="105" height="12" rx="3" fill="var(--roff)" opacity="0.82"/><text x="128" y="295.5" class="rlbl2" text-anchor="end">日圓 JPY</text><text x="308" y="295.5" class="rval2" text-anchor="end">31</text><text x="708" y="295.5" class="rnet dn" text-anchor="start">淨空</text><rect x="306" y="314.5" width="114" height="12" rx="3" fill="var(--roff)" opacity="0.82"/><text x="128" y="324.5" class="rlbl2" text-anchor="end">VIX 期貨</text><text x="299" y="324.5" class="rval2" text-anchor="end">30</text><text x="708" y="324.5" class="rnet dn" text-anchor="start">淨空</text><rect x="278" y="343.5" width="142" height="12" rx="3" fill="var(--roff)" opacity="0.82"/><text x="128" y="353.5" class="rlbl2" text-anchor="end">美國 10Y 公債</text><text x="271" y="353.5" class="rval2" text-anchor="end">25</text><text x="708" y="353.5" class="rnet dn" text-anchor="start">淨空</text><rect x="256" y="372.5" width="164" height="12" rx="3" fill="var(--roff)" opacity="0.82"/><text x="128" y="382.5" class="rlbl2" text-anchor="end">美國 30Y 公債</text><text x="249" y="382.5" class="rval2" text-anchor="end">21</text><text x="708" y="382.5" class="rnet dn" text-anchor="start">淨空</text><rect x="198" y="401.5" width="222" height="12" rx="3" fill="var(--ron)" opacity="0.82"/><text x="128" y="411.5" class="rlbl2" text-anchor="end">WTI 原油</text><text x="191" y="411.5" class="rval2" text-anchor="end">10</text><text x="708" y="411.5" class="rnet up" text-anchor="start">淨多</text><rect x="185" y="430.5" width="235" height="12" rx="3" fill="var(--roff)" opacity="0.82"/><text x="128" y="440.5" class="rlbl2" text-anchor="end">Nasdaq-100</text><text x="178" y="440.5" class="rval2" text-anchor="end">8</text><text x="708" y="440.5" class="rflag" text-anchor="start">⚑ 極端偏空</text></svg></div>
+  <div class="esrc">SOURCE: CFTC Commitments of Traders, futures-only legacy（as-of 2026-06-23；6/30 期因美國國慶順延未發布）。百分位＝當前 net_pct_oi 於過去 260 週視窗之含端排名。</div>
+</div>
+<ul class="b">
+  <li><b>「兩端極端」的部位指紋</b>：商品端銅觸頂（第 96.9 百分位）、股指端 Nasdaq 觸底（第 8.1）——再通脹被擁擠做多，而大型科技被擁擠偏空。這是同一 regime 的一體兩面。</li>
+  <li><b>公債全天期落中位下方</b>（10Y 25、30Y 21、2Y 37）：投機仍押殖利率偏高、偏空久期，與升息 regime 一致；弱非農只是邊際降溫，未翻轉部位。</li>
+  <li><b>美元 44 百分位看似溫和，但流量極端</b>：4 週 Δ +21.5pp 是全表最急的部位變動——存量溫和、流量擁擠，故列為「翻向」風險點，非現狀溫和。</li>
+</ul>
+
+<h2 id="e3"><span class="exh">EXHIBIT 3</span>成長 vs 防禦比率（regime 訊號）</h2>
+<p class="lead">三條經典 regime 比率——銅金比、小型／大型、高收益／投等——三者均偏成長側，交叉確認「循環／廣度領導」的 risk-on 傾斜。但銅金比僅居中段、且金屬與避險同時被買，屬晚週期而非早週期的成長訊號。</p>
+<div class="exhibit">
+  <div class="cap">Exhibit 3｜成長 vs 防禦：三比率定位（偏防禦 ↔ 偏成長）</div>
+  <div class="capd">現貨比率代理，非官方 regime 指數。marker 為當前相對位置的定性判讀。</div>
+  <div class="scroll"><svg viewBox="0 0 840 282" width="100%" xmlns="http://www.w3.org/2000/svg" font-family="system-ui" role="img" aria-label="成長 vs 防禦比率"><defs><linearGradient id="rgdiv2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="var(--roff)"/><stop offset="0.5" stop-color="var(--rmid)"/><stop offset="1" stop-color="var(--ron)"/></linearGradient></defs><text x="168" y="46" class="rax" text-anchor="start">◄ 偏防禦 DEFENSIVE</text><text x="468" y="46" class="rax" text-anchor="end">GROWTH 偏成長 ►</text><line x1="0" y1="58" x2="840" y2="58" class="gl"/><text x="150" y="104.0" class="rlbl" text-anchor="end">銅／金比</text><text x="150" y="120.0" class="rsub" text-anchor="end">Copper / Gold</text><rect x="168" y="102.0" width="300" height="10" rx="5" fill="url(#rgdiv2)" opacity="0.85"/><line x1="318.0" y1="98.0" x2="318.0" y2="116.0" class="rmidtick"/><circle cx="336" cy="107.0" r="7.5" fill="var(--ink-1)" stroke="var(--surface)" stroke-width="2.5"/><text x="490" y="101" class="rread">2y 第 56 百分位，近 13 週上行 — 成長脈動回溫、</text><text x="490" y="115" class="rread">中段偏成長</text><line x1="0" y1="140" x2="840" y2="140" class="glf"/><text x="150" y="170.0" class="rlbl" text-anchor="end">小型／大型</text><text x="150" y="186.0" class="rsub" text-anchor="end">Russell 2000 / S&P 500</text><rect x="168" y="168.0" width="300" height="10" rx="5" fill="url(#rgdiv2)" opacity="0.85"/><line x1="318.0" y1="164.0" x2="318.0" y2="182.0" class="rmidtick"/><circle cx="390" cy="173.0" r="7.5" fill="var(--ink-1)" stroke="var(--surface)" stroke-width="2.5"/><text x="490" y="167" class="rread">小型明顯領先，IWM +34.8% vs SPY +20.4%（12m）</text><text x="490" y="181" class="rread">— 循環／廣度領導，risk-on</text><line x1="0" y1="206" x2="840" y2="206" class="glf"/><text x="150" y="236.0" class="rlbl" text-anchor="end">高收益／投等</text><text x="150" y="252.0" class="rsub" text-anchor="end">HY / IG credit</text><rect x="168" y="234.0" width="300" height="10" rx="5" fill="url(#rgdiv2)" opacity="0.85"/><line x1="318.0" y1="230.0" x2="318.0" y2="248.0" class="rmidtick"/><circle cx="348" cy="239.0" r="7.5" fill="var(--ink-1)" stroke="var(--surface)" stroke-width="2.5"/><text x="490" y="233" class="rread">HY OAS 2.78%（10y 第 17 百分位，</text><text x="490" y="247" class="rread">偏緊）、HYG 站上均線 — 信用胃納存，惟動能百分位低</text></svg></div>
+  <div class="esrc">SOURCE: 銅金比 yfinance HG=F/GC=F 2y 週線（2026-07-06）· IWM/SPY yfinance（2026-07-05）· ICE BofA HY OAS FRED（2026-06-25）+ HYG/LQD yfinance。比率為代理，非量化 regime 模型。</div>
+</div>
+
+<h2 id="trig">§ regime 觸發器與監測（什麼會翻轉各軸）</h2>
+<p class="lead">每軸的 risk-off／risk-on 翻向門檻與現狀。這是<b>監測清單</b>——用來在下一期更新時判斷 regime 是否位移，<b>非交易觸發、非配置指令</b>。門檻為定性參考位，非硬性訊號。</p>
+<div class="tbl-wrap"><table><thead><tr><th>Regime 軸</th><th>翻向 risk-off 若…</th><th>翻向 risk-on 若…</th><th>現狀監測</th></tr></thead><tbody><tr><td class="tx">利率／久期</td><td class="off">10Y 收上 4.7% 或升息機率回升</td><td class="on">10Y 跌破 4.2% 或轉降息預期</td><td class="now">4.47%、升息機率 55%，路徑降溫（偏暖）</td></tr><tr><td class="tx">美元</td><td class="off">DXY 收復 102、COT 淨多續增</td><td class="on">DXY 確認跌破 100、COT 淨多去化</td><td class="now">100.8、COT 仍擁擠多頭，翻向初期（轉暖）</td></tr><tr><td class="tx">信用</td><td class="off">HY OAS 走闊上破 3.5%</td><td class="on">HY OAS 維持 3% 以下</td><td class="now">2.78%、第 17 百分位偏緊，微幅早警（偏暖）</td></tr><tr><td class="tx">成長 vs 恐慌</td><td class="off">銅金比轉跌、黃金獨強</td><td class="on">銅金比上破前高、小型續領先</td><td class="now">銅金比 56 百分位上行（偏暖）</td></tr><tr><td class="tx">股票胃納</td><td class="off">VIX 上破 20、Nasdaq 空頭回補失敗</td><td class="on">Nasdaq 極端空頭軋空、VIX 續低</td><td class="now">VIX 低但 Nasdaq 部位防禦（中性）</td></tr><tr><td class="tx">商品</td><td class="off">銅 COT 自 97 百分位擁擠去化</td><td class="on">現貨續創高且部位不再增溫</td><td class="now">銅第 96.9 百分位極端擁擠，脆（偏暖但擁擠）</td></tr></tbody></table></div>
+<div class="callout"><b>本期最該盯的兩條：</b>（1）<b>美元 COT 淨多是否開始去化</b>——現貨已翻向，但 COT（停 6/23）仍顯示擁擠做多；下一期若見淨多回落，將確認美元見頂、放大非美順風。（2）<b>銅 COT 是否自第 97 百分位鬆動</b>——極端擁擠是商品軸由「偏暖」轉「去化 risk-off」的最脆單點。</div>
+
+<h2 id="arch">§ 對個股部 archetype 的 read-through</h2>
+<p class="lead">當前 regime 對不同個股 archetype 的順風／逆風背景如下。這是<b>宏觀背景</b>，供個股部選 archetype 參考；<b>不對任何持倉下加減碼指令</b>，個股進出另依 DD §14 統一裁決與 thesis 級證偽。</p>
+<ul class="arch">
+  <li><span class="tag tw">順風</span><div><b>品質複利（quality compounders）</b>：晚週期偏好定價權與現金流品質；升息路徑降溫給久期一點喘息，但 10Y 仍 ~4.5%，順風來自品質而非利率。</div></li>
+  <li><span class="tag tw">順風</span><div><b>循環／資本財／電氣化（銅鏈、電網、AI 電力）</b>：再通脹＋小型股領先＋銅結構性需求（資料中心）。惟銅 COT 已第 96.9 百分位極端擁擠，順風與擁擠去化風險並存。</div></li>
+  <li><span class="tag tw">順風</span><div><b>EM／非美（EEM +37.4%、EFA +20.6% 12m）</b>：美元自擁擠極端翻向回落是直接順風；歷史上弱美元對非美與商品出口國最有利。</div></li>
+  <li><span class="tag nt">中性偏順</span><div><b>大型科技（mega-cap tech）</b>：Nasdaq-100 COT 淨空落 5y 第 8.1 百分位（極端偏空）＝部位面「被低配」，痛苦交易方向偏上（軋空風險），非擁擠做多；但估值與久期敏感度仍在。</div></li>
+  <li><span class="tag nt">逆風轉緩</span><div><b>未獲利長久期成長</b>：升息機率由 64% 降至 55%、10Y 由 4.53% 回落，久期逆風邊際轉緩；但殖利率仍在 4.5% 高位，未到綠燈。</div></li>
+  <li><span class="tag hw">逆風</span><div><b>高 β 投機／加密相關</b>：IBIT 12m −43.9%、動能 5y 第 3.8 百分位，投機軌選擇性斷裂；高 β 風險胃納並非全面被買。</div></li>
+</ul>
+<div class="callout"><b>一句話背景：</b>順風集中在<b>非美、循環電氣化、品質複利</b>；逆風集中在<b>高 β 投機與加密</b>；大型科技在部位面被低配（軋空傾向）而非擁擠。擁擠去化的最大單點在<b>銅與美元多頭</b>。以上僅為 archetype 背景，<b>非個股買賣建議</b>。</div>
+
+<h2 id="usage">§ 用法框</h2>
+<div class="usage">
+  <div class="row"><div class="k do">用來回答</div><div class="v">現在是<b>什麼 regime</b>（晚週期再通脹、美元見頂）；哪個 <b>archetype 有順逆風</b>（非美／循環順風、高 β 投機逆風）；哪個<b>大類部位到極端</b>（銅極端做多、Nasdaq 極端偏空、美元擁擠翻向）。</div></div>
+  <div class="row"><div class="k dont">不要用來</div><div class="v">對<b>指數部（75%）下配置指令</b>——那走總守則機械規則（regime QQQ＋IB01），不做裁量擇時；不當<b>當日／高頻擇時</b>訊號（COT 週度、宏觀比率為慢變數）；不把 marker 位置當<b>漲跌預測</b>（它是 regime 傾向的定性判讀，非時點）。</div></div>
+</div>
+
+<h2 id="method">§ 方法論與血統</h2>
+<div class="grid2">
+  <div class="card">
+    <h4>資料層 as-of</h4>
+    <ul class="b">
+      <li><b>CFTC COT</b>：futures-only legacy，as-of <b>2026-06-23</b>；6/30 期因美國國慶假期順延，撰稿時未發布。百分位＝過去 260 週視窗含端排名。</li>
+      <li><b>跨資產 ETF</b>：yfinance 2y 週線 auto-adjust，as-of <b>2026-07-05</b>（動能／乖離百分位）。</li>
+      <li><b>宏觀比率</b>：銅金比 yfinance HG=F/GC=F 2y 週線（2026-07-06）；HY OAS ICE BofA FRED（2026-06-25）。</li>
+      <li><b>7 月初現貨補查</b>：DXY、10Y、升息機率、HY OAS 以現貨與殖利率確認美元／利率軸翻向（2026-07-02～03）。</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>代理侷限與缺口（誠實列）</h4>
+    <ul class="b">
+      <li><b>COT 落後 7 月翻向</b>：美元／利率軸的翻向以 7 月初現貨捕捉，COT（停 6/23）尚未反映；美元 COT 仍顯示擁擠做多。</li>
+      <li><b>無 prime-brokerage 曝險</b>：無 GS/MS PB 實際槓桿，positioning 僅 CFTC 大額投機＋ETF 動能三角，機構真實曝險不可見。</li>
+      <li><b>合成軸為定性</b>：Exhibit 1 底列與各軸 marker 位置為定性判讀，<b>非量化 regime 模型、非可交易指數</b>。</li>
+      <li><b>比率為代理</b>：銅金比／HY-IG／小型-大型為現貨比率，非官方 regime 指數；信用早警樣本短。</li>
+    </ul>
+  </div>
+</div>
+
+<div class="disclaimer">
+  <b>免責與定位：</b>本文件為 InvestMQuest 內部跨資產策略研究之 <b>pilot（創刊試作）</b>，屬<b>描述器（describer）</b>而非擇時或配置訊號。所有 regime 軸狀態為基於 CFTC COT 部位、跨資產 ETF 動能與 7 月初現貨的<b>定性合成判讀</b>，不預測轉折時點、不構成投資建議。指數部配置走總守則機械規則，不由本表驅動；個股部進出另依 DD §14 統一裁決與 thesis 級證偽。數字均附來源與 as-of；COT 停於 2026-06-23，7 月初翻向以現貨補查標註。
+</div>
+<footer>InvestMQuest Research · Cross-Asset Regime Dashboard · Vol.1 · 2026-07-06 · 描述器非擇時 · pilot</footer>
+
+</div>
+</body>
+</html>
