@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta name="robots" content="noindex,nofollow">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>產業輪動監測 — InvestMQuest Research</title>
+  <meta name="description" content="產業輪動監測 — RRG 相對強度四象限（相對 SPY 的位置與動能）× 成員站上年線廣度 × FY1 EPS 上修寬度 × GRP picks 落點。描述器非擇時訊號，描繪產業資金的相對位置與方向。">
+  <meta property="og:title" content="產業輪動監測 — InvestMQuest Research">
+  <meta property="og:site_name" content="InvestMQuest Research">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+:root{
+  --bg:#f7f8fa;--bg-card:#ffffff;--bg-card-hover:#fbfcfd;
+  --border:#e5e7eb;--border-light:#eef0f3;
+  --text:#0f172a;--text-secondary:#475569;--text-muted:#94a3b8;
+  --accent:#2563eb;--accent-hover:#1d4ed8;
+  --shadow-sm:0 1px 2px rgba(15,23,42,.04);
+  --shadow-md:0 4px 14px rgba(15,23,42,.07);
+  --radius:12px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#0b0d11;--bg-card:#14181f;--bg-card-hover:#1a1f28;
+    --border:#28303c;--border-light:#222834;
+    --text:#edeff3;--text-secondary:#a6aebc;--text-muted:#717a8a;
+    --accent:#5b9bff;--accent-hover:#7db0ff;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.3);
+    --shadow-md:0 4px 14px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme=dark]{
+  --bg:#0b0d11;--bg-card:#14181f;--bg-card-hover:#1a1f28;
+  --border:#28303c;--border-light:#222834;
+  --text:#edeff3;--text-secondary:#a6aebc;--text-muted:#717a8a;
+  --accent:#5b9bff;--accent-hover:#7db0ff;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.3);
+  --shadow-md:0 4px 14px rgba(0,0,0,.4);
+}
+:root[data-theme=light]{
+  --bg:#f7f8fa;--bg-card:#ffffff;--bg-card-hover:#fbfcfd;
+  --border:#e5e7eb;--border-light:#eef0f3;
+  --text:#0f172a;--text-secondary:#475569;--text-muted:#94a3b8;
+  --accent:#2563eb;--accent-hover:#1d4ed8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter','Noto Sans TC',system-ui,-apple-system,sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:14px;
+     -webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none;transition:color .15s}
+a:hover{color:var(--accent-hover)}
+.container{max-width:1200px;margin:0 auto;padding:0 1.5rem}
+
+/* Hero */
+.hero{padding:3rem 0 2.5rem;background:linear-gradient(180deg,var(--bg-card) 0%,var(--bg) 100%)}
+.hero .eyebrow{display:inline-block;padding:.28rem .75rem;background:color-mix(in srgb,var(--accent) 12%,transparent);
+               color:var(--accent);border-radius:999px;font-size:.68rem;font-weight:600;
+               letter-spacing:.1em;margin-bottom:.9rem;text-transform:uppercase;
+               font-family:'IBM Plex Mono',monospace}
+.hero h1{font-size:2rem;font-weight:800;letter-spacing:-.04em;color:var(--text)}
+.hero .sub{color:var(--text-secondary);font-size:.95rem;margin-top:.5rem;max-width:720px;line-height:1.7}
+.hero .mandate{margin-top:1rem;max-width:720px;border-left:3px solid var(--accent);
+               background:var(--bg-card);border-radius:0 8px 8px 0;padding:.85rem 1.1rem;
+               font-size:.85rem;color:var(--text-secondary);line-height:1.7}
+.hero .mandate strong{color:var(--text)}
+.crumb{font-size:.78rem;color:var(--text-muted);margin-bottom:.6rem}
+.crumb a{color:var(--text-muted)}
+.crumb a:hover{color:var(--accent)}
+
+/* Section */
+.section{padding:2.5rem 0 2rem}
+.section-title{font-size:1.15rem;font-weight:700;margin-bottom:1.2rem;color:var(--text);
+               display:flex;align-items:center;gap:.6rem}
+.section-title .count{font-size:.75rem;font-weight:600;color:var(--text-muted);
+                      background:var(--bg-card);padding:.2rem .7rem;border-radius:20px;
+                      border:1px solid var(--border)}
+
+/* Auto dashboard region (pipeline-managed) */
+.dash-section{padding:2rem 0 .5rem}
+
+/* Reports list (periodical) */
+.reports{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.65rem}
+.reports li{margin:0}
+.reports a{
+  display:grid;grid-template-columns:1fr auto;gap:.4rem 1.5rem;align-items:center;
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:1.15rem 1.35rem 1.1rem;
+  color:var(--text);text-decoration:none;position:relative;overflow:hidden;
+  transition:border-color .15s ease,transform .15s ease,box-shadow .15s ease;
+}
+.reports a::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--accent);transform:scaleY(0);transform-origin:top;
+  transition:transform .2s ease;
+}
+.reports a:hover{border-color:var(--text-muted);text-decoration:none;
+  box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.reports a:hover::before{transform:scaleY(1)}
+.reports a:hover .report-arrow{color:var(--accent);transform:translateX(3px)}
+.reports .report-date{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:.72rem;color:var(--text-muted);font-weight:600;
+  letter-spacing:.06em;text-transform:uppercase;grid-column:1;
+}
+.reports .report-title{
+  font-size:1.02rem;font-weight:700;color:var(--text);
+  letter-spacing:-.005em;grid-column:1;display:flex;align-items:center;gap:.5rem;
+}
+.reports .vol-tag{display:inline-block;padding:.14rem .5rem;border-radius:4px;
+  font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  background:var(--accent);color:#fff}
+.reports .report-lede{
+  font-size:.86rem;color:var(--text-secondary);
+  line-height:1.6;grid-column:1 / -1;margin-top:.2rem;
+}
+.reports .report-arrow{
+  grid-row:1 / span 2;grid-column:2;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:1.1rem;color:var(--text-muted);align-self:center;
+  transition:color .15s ease,transform .15s ease;
+}
+
+/* Disclaimer */
+.disclaimer{margin:2rem 0;padding:1.2rem 1.5rem;background:var(--bg-card);border:1px solid var(--border);
+            border-radius:10px;font-size:.78rem;color:var(--text-muted);line-height:1.7}
+.disclaimer strong{color:var(--text-secondary)}
+
+/* Footer */
+footer{padding:1.5rem 0;text-align:center;font-size:.75rem;color:var(--text-muted);
+       border-top:1px solid var(--border);margin-top:1rem}
+
+/* Mobile */
+@media(max-width:768px){
+  .hero h1{font-size:1.5rem}
+  .reports a{grid-template-columns:1fr auto;gap:.35rem 1rem;padding:1rem 1.15rem}
+  .reports .report-title{font-size:.96rem}
+  .reports .report-lede{font-size:.83rem}
+  header nav{gap:0}
+}
+  </style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#0f172a;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(59,130,246,.28);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/cockpit/">選股駕駛艙</a>
+          <a href="/research/">個股 DD</a>
+          <a href="/research/synthesis/">期望落差綜合研判</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/crowding/">擁擠交易監測</a>
+          <a href="/rotation/" class="active">產業輪動</a>
+          <a href="/regime/">大類資產 regime</a>
+          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
+          <a href="/picks/">精選清單</a>
+          <a href="/research/momentum-5/">Momentum-5</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/">週報</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/catalyst/">催化劑日曆</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/long-track-smh/">長線訊號</a>
+          <a href="/long-track-tw/">台股長線</a>
+          <a href="/turtle-sleeve/">商品 Sleeve</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/">量化回測</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/engine/">⚙ 決策引擎</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/screener-tw.html">Screener 台股</a>
+          <a href="/screener-jp.html">Screener 日股</a>
+          <a href="/screener-my.html">Screener 馬股</a>
+          <a href="/cache/">🗄 Data Cache</a>
+          <a href="/tools/">期貨部位計算機</a>
+        </div>
+      </div>
+      <a href="/mental-models/">🧠 心智模型</a>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="hero">
+  <div class="container">
+    <div class="crumb"><a href="/">首頁</a> &rsaquo; 產業輪動監測</div>
+    <span class="eyebrow">Sector Rotation Monitor</span>
+    <h1>產業輪動監測</h1>
+    <p class="sub">資金正輪進哪個產業、輪出哪個產業。以 RRG 相對強度輪動判讀本站產業主題——相對 SPY 的位置（RS-Ratio）與方向（RS-Momentum）落在四象限的哪一格，再疊上成員站上年線的價格廣度、FY1 EPS 上修寬度、與 GRP 精選清單的落點。收斂成「哪些主題在相對加速、哪些在頂部滾落、哪些廣度與上修背離」。</p>
+    <div class="mandate">
+      <strong>定位：</strong>本監測是<strong>描述器（describer），不是擇時訊號（timing signal）</strong>。它描繪產業資金的相對位置與方向，與首頁風險儀表、擁擠交易監測同家族——<strong>不產生任何個別的買進或賣出指令</strong>。象限位置不是買賣依據；個股與組合的進出仍走 DD 統一裁決與 thesis 級證偽，動產業部位前先跑 <code>industry-thesis-critic</code> 冷讀。
+    </div>
+  </div>
+</div>
+
+<!-- 自動儀表：內容由週更 pipeline（build_rotation.py）在下方兩個標記之間重生，勿手改標記間內容 -->
+<div class="section dash-section" id="live-dashboard">
+  <div class="container">
+    <h2 class="section-title">即時輪動儀表 <span class="count">週更</span></h2>
+    <!-- ROTATION_AUTO_DASH_START -->
+<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#12161f;border:1px solid #2a3242;border-radius:12px;padding:18px 20px;color:#e6e9ef;line-height:1.6;font-size:14px"><div style="font-family:ui-monospace,monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#5b9bff;margin-bottom:10px">產業輪動 · 自動儀表（RRG 相對 SPY）</div><div style="margin-bottom:8px"><b>象限分布</b>（64 主題入圖）：<br><span style="display:inline-block;font-family:ui-monospace,monospace;font-size:11px;padding:2px 9px;border-radius:5px;margin:2px 4px 2px 0;background:#12b31222;color:#12b312;border:1px solid #12b31255">領先 13</span><span style="display:inline-block;font-family:ui-monospace,monospace;font-size:11px;padding:2px 9px;border-radius:5px;margin:2px 4px 2px 0;background:#3987e522;color:#3987e5;border:1px solid #3987e555">改善 13</span><span style="display:inline-block;font-family:ui-monospace,monospace;font-size:11px;padding:2px 9px;border-radius:5px;margin:2px 4px 2px 0;background:#f0a82522;color:#f0a825;border:1px solid #f0a82555">走弱 30</span><span style="display:inline-block;font-family:ui-monospace,monospace;font-size:11px;padding:2px 9px;border-radius:5px;margin:2px 4px 2px 0;background:#e6676722;color:#e66767;border:1px solid #e6676755">落後 8</span></div><div style="margin:10px 0 6px"><b>相對強度 Top 6</b>（依 RS-Ratio 排序 · ●官方榜 ○候選榜）</div><table style="border-collapse:collapse;width:100%;font-size:12.5px"><tr style="color:#6b7484;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em"><th style="padding:3px 8px;text-align:left">#</th><th style="padding:3px 8px;text-align:left">主題（GRP 落點）</th><th style="padding:3px 8px;text-align:left">象限</th><th style="padding:3px 8px;text-align:right">RS-R</th><th style="padding:3px 8px;text-align:right">RS-M</th><th style="padding:3px 8px;text-align:right">廣度</th><th style="padding:3px 8px;text-align:right">上修</th></tr><tr><td style="padding:3px 8px;color:#9aa4b5;font-family:ui-monospace,monospace">1</td><td style="padding:3px 8px">AI × 資安雙刃<span style="color:#8fb3ff;font-family:ui-monospace,monospace;font-size:10.5px;margin-left:6px">○NET ○MSFT</span></td><td style="padding:3px 8px"><span style="font-size:10.5px;font-weight:700;color:#12b312">領先</span></td><td style="padding:3px 8px;text-align:right;font-family:ui-monospace,monospace;font-weight:700">102.0</td><td style="padding:3px 8px;text-align:right;font-family:ui-monospace,monospace;color:#9aa4b5">100.0</td><td style="padding:3px 8px;text-align:right;font-family:ui-monospace,monospace;color:#9aa4b5">83</td><td style="padding:3px 8px;text-align:right;font-family:ui-monospace,monospace;color:#9aa4b5">50</td></tr><tr><td style="padding:3px 8px;color:#9aa4b5;font-family:ui-monospace,monospace">2</td><td style="padding:3px 8px">資安 SaaS 平台化整併<span style="color:#8fb3ff;font-family:ui-monospace,monospace;font-size:10.5px;margin-left:6px">○MSFT ○NET ●GOOGL</span></td><td style="padding:3px 8px"><span style="font-size:10.5px;font-weight:700;color:#f0a825">走弱</span></td><td style="padding:3px 8px;text-align:right;font-family:ui-monospace,monospace;font-weight:700">102.0</td><td style="padding:3px 8px;text-align:right;font-family:ui-monospace,monospace;color:#9aa4b5">99.8</td><td style="padding:3px 8px;text-align:right;font-family:ui-monospace,monospace;color:#9aa4b5">86</td><td style="padding:3px 8px;text-align:right;font-family:ui-monospace,monospace;color:#9aa4b5">43</td></tr><tr><td style="padding:3px 8px;color:#9aa4b5;font-family:ui-monospace,monospace">3</td><td style="padding:3px 8px">資料安全 × 備份匯流<span style="color:#8fb3ff;font-family:ui-monospace,monospace;font-size:10.5px;margin-left:6px">○MSFT ○NET ●GOOGL</span></td><td style="padding:3px 8px"><span style="font-size:10.5px;font-weight:700;color:#f0a825">走弱</span></td><td style="padding:3px 8px;text-align:right;font-family:ui-monospace,monospace;font-weight:700">102.0</td><td style="padding:3px 8px;text-align:right;font-family:ui-monospace,monospace;color:#9aa4b5">99.8</td><td style="padding:3px 8px;text-align:right;font-family:ui-monospace,monospace;color:#9aa4b5">86</td><td style="padding:3px 8px;text-align:right;font-family:ui-monospace,monospace;color:#9aa4b5">43</td></tr><tr><td style="padding:3px 8px;color:#9aa4b5;font-family:ui-monospace,monospace">4</td><td style="padding:3px 8px">身份是新邊界<span style="color:#8fb3ff;font-family:ui-monospace,monospace;font-size:10.5px;margin-left:6px">○MSFT ●GOOGL ○NET</span></td><td style="padding:3px 8px"><span style="font-size:10.5px;font-weight:700;color:#f0a825">走弱</span></td><td style="padding:3px 8px;text-align:right;font-family:ui-monospace,monospace;font-weight:700">102.0</td><td style="padding:3px 8px;text-align:right;font-family:ui-monospace,monospace;color:#9aa4b5">99.8</td><td style="padding:3px 8px;text-align:right;font-family:ui-monospace,monospace;color:#9aa4b5">86</td><td style="padding:3px 8px;text-align:right;font-family:ui-monospace,monospace;color:#9aa4b5">43</td></tr><tr><td style="padding:3px 8px;color:#9aa4b5;font-family:ui-monospace,monospace">5</td><td style="padding:3px 8px">LLM 廠商資安經濟學<span style="color:#8fb3ff;font-family:ui-monospace,monospace;font-size:10.5px;margin-left:6px">○MSFT ○NET ●GOOGL ●NVDA</span></td><td style="padding:3px 8px"><span style="font-size:10.5px;font-weight:700;color:#f0a825">走弱</span></td><td style="padding:3px 8px;text-align:right;font-family:ui-monospace,monospace;font-weight:700">101.8</td><td style="padding:3px 8px;text-align:right;font-family:ui-monospace,monospace;color:#9aa4b5">99.5</td><td style="padding:3px 8px;text-align:right;font-family:ui-monospace,monospace;color:#9aa4b5">89</td><td style="padding:3px 8px;text-align:right;font-family:ui-monospace,monospace;color:#9aa4b5">56</td></tr><tr><td style="padding:3px 8px;color:#9aa4b5;font-family:ui-monospace,monospace">6</td><td style="padding:3px 8px">後段組裝與封裝設備<span style="color:#8fb3ff;font-family:ui-monospace,monospace;font-size:10.5px;margin-left:6px">●ONTO</span></td><td style="padding:3px 8px"><span style="font-size:10.5px;font-weight:700;color:#12b312">領先</span></td><td style="padding:3px 8px;text-align:right;font-family:ui-monospace,monospace;font-weight:700">101.7</td><td style="padding:3px 8px;text-align:right;font-family:ui-monospace,monospace;color:#9aa4b5">100.3</td><td style="padding:3px 8px;text-align:right;font-family:ui-monospace,monospace;color:#9aa4b5">100</td><td style="padding:3px 8px;text-align:right;font-family:ui-monospace,monospace;color:#9aa4b5">67</td></tr></table><div style="margin-top:12px;font-family:ui-monospace,monospace;font-size:11px;color:#6b7484">資料截至 2026-06-29（週線）· 更新 2026-07-06 · 描述器非擇時</div></div>
+<!-- ROTATION_AUTO_DASH_END -->
+  </div>
+</div>
+
+<div class="section" id="rotation-reports">
+  <div class="container">
+    <h2 class="section-title">期刊 · Rotation Issues</h2>
+
+    <ul class="reports">
+<!--
+  ADDING A NEW ISSUE:
+  Newest issue goes at the TOP (descending date order). Copy the block below INSIDE
+  <ul class="reports"> and update fields. Remove the .vol-tag "最新" from the previously
+  first entry when adding a newer one.
+-->
+      <li>
+        <a href="ROTATION_20260706.html">
+          <div class="report-date">2026-07-06</div>
+          <div class="report-title">創刊號 Vol.1 <span class="vol-tag">最新</span></div>
+          <div class="report-lede">領導群正在頂部滾落而非崩塌——AI 算力／半導體整條主軸 RS-Ratio 仍高懸於 100 之上（相對 SPY 領先），但 RS-Momentum 幾乎清一色跌破 100，集體落入「走弱」象限 · 資金外溢兩個去向：領先象限的非 AI 現金流（Stablecoin 支付動能全場最強、GLP-1、AI×資安）與改善象限的早週期名字（LATAM 電商、信用卡、AI 廣告） · 廣度滿格但上修參差——GlassSubstrate／AI Accelerator／Advanced Packaging 出現價漲、盈餘預估未跟的脆弱背離。</div>
+          <span class="report-arrow">&rarr;</span>
+        </a>
+      </li>
+    </ul>
+
+  </div>
+</div>
+
+<div class="container">
+  <div class="disclaimer">
+    <strong>免責與定位：</strong>
+    本監測為 InvestMQuest Research 內部研究文件，<strong>描述器非擇時訊號、非投資建議</strong>。
+    RS-Ratio／RS-Momentum 為相對本站週線宇宙的相對排名，非市場絕對輪動；本站週線宇宙偏 AI／半導體／消費龍頭，
+    覆蓋不足的主題屬未觀測而非無輪動。廣度取自成員站上 40 週均線比例、上修寬度取自 dd-screener FY1 EPS 修正。
+    過往統計關係不保證未來重演。內容由 AI 自動生成，僅供參考。
+  </div>
+</div>
+
+<footer>
+  <div class="container">
+    &copy; 2026 InvestMQuest Research &middot; Sector Rotation Monitor &middot; 描述器非擇時
+  </div>
+</footer>
+
+</body>
+</html>

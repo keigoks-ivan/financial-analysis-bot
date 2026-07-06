@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta name="robots" content="noindex,nofollow">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>大類資產 Regime 儀表 — InvestMQuest Research</title>
+  <meta name="description" content="大類資產 Regime 儀表 — 六軸 regime 記分卡（利率／美元／信用／成長恐慌／股票胃納／商品）× CFTC COT 跨資產部位極端 × 成長 vs 防禦比率。描述器非擇時訊號，判讀當前處於哪個大類資產 regime、哪個 archetype 有順逆風、哪個部位到極端。">
+  <meta property="og:title" content="大類資產 Regime 儀表 — InvestMQuest Research">
+  <meta property="og:site_name" content="InvestMQuest Research">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+:root{
+  --bg:#f7f8fa;--bg-card:#ffffff;--bg-card-hover:#fbfcfd;
+  --border:#e5e7eb;--border-light:#eef0f3;
+  --text:#0f172a;--text-secondary:#475569;--text-muted:#94a3b8;
+  --accent:#2563eb;--accent-hover:#1d4ed8;
+  --shadow-sm:0 1px 2px rgba(15,23,42,.04);
+  --shadow-md:0 4px 14px rgba(15,23,42,.07);
+  --radius:12px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#0b0d11;--bg-card:#14181f;--bg-card-hover:#1a1f28;
+    --border:#28303c;--border-light:#222834;
+    --text:#edeff3;--text-secondary:#a6aebc;--text-muted:#717a8a;
+    --accent:#5b9bff;--accent-hover:#7db0ff;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.3);
+    --shadow-md:0 4px 14px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme=dark]{
+  --bg:#0b0d11;--bg-card:#14181f;--bg-card-hover:#1a1f28;
+  --border:#28303c;--border-light:#222834;
+  --text:#edeff3;--text-secondary:#a6aebc;--text-muted:#717a8a;
+  --accent:#5b9bff;--accent-hover:#7db0ff;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.3);
+  --shadow-md:0 4px 14px rgba(0,0,0,.4);
+}
+:root[data-theme=light]{
+  --bg:#f7f8fa;--bg-card:#ffffff;--bg-card-hover:#fbfcfd;
+  --border:#e5e7eb;--border-light:#eef0f3;
+  --text:#0f172a;--text-secondary:#475569;--text-muted:#94a3b8;
+  --accent:#2563eb;--accent-hover:#1d4ed8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter','Noto Sans TC',system-ui,-apple-system,sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:14px;
+     -webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none;transition:color .15s}
+a:hover{color:var(--accent-hover)}
+.container{max-width:1200px;margin:0 auto;padding:0 1.5rem}
+
+/* Hero */
+.hero{padding:3rem 0 2.5rem;background:linear-gradient(180deg,var(--bg-card) 0%,var(--bg) 100%)}
+.hero .eyebrow{display:inline-block;padding:.28rem .75rem;background:color-mix(in srgb,var(--accent) 12%,transparent);
+               color:var(--accent);border-radius:999px;font-size:.68rem;font-weight:600;
+               letter-spacing:.1em;margin-bottom:.9rem;text-transform:uppercase;
+               font-family:'IBM Plex Mono',monospace}
+.hero h1{font-size:2rem;font-weight:800;letter-spacing:-.04em;color:var(--text)}
+.hero .sub{color:var(--text-secondary);font-size:.95rem;margin-top:.5rem;max-width:720px;line-height:1.7}
+.hero .mandate{margin-top:1rem;max-width:720px;border-left:3px solid var(--accent);
+               background:var(--bg-card);border-radius:0 8px 8px 0;padding:.85rem 1.1rem;
+               font-size:.85rem;color:var(--text-secondary);line-height:1.7}
+.hero .mandate strong{color:var(--text)}
+.crumb{font-size:.78rem;color:var(--text-muted);margin-bottom:.6rem}
+.crumb a{color:var(--text-muted)}
+.crumb a:hover{color:var(--accent)}
+
+/* Section */
+.section{padding:2.5rem 0 2rem}
+.section-title{font-size:1.15rem;font-weight:700;margin-bottom:1.2rem;color:var(--text);
+               display:flex;align-items:center;gap:.6rem}
+.section-title .count{font-size:.75rem;font-weight:600;color:var(--text-muted);
+                      background:var(--bg-card);padding:.2rem .7rem;border-radius:20px;
+                      border:1px solid var(--border)}
+
+/* Auto dashboard region (pipeline-managed) */
+.dash-section{padding:2rem 0 .5rem}
+
+/* Reports list (periodical) */
+.reports{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.65rem}
+.reports li{margin:0}
+.reports a{
+  display:grid;grid-template-columns:1fr auto;gap:.4rem 1.5rem;align-items:center;
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:1.15rem 1.35rem 1.1rem;
+  color:var(--text);text-decoration:none;position:relative;overflow:hidden;
+  transition:border-color .15s ease,transform .15s ease,box-shadow .15s ease;
+}
+.reports a::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--accent);transform:scaleY(0);transform-origin:top;
+  transition:transform .2s ease;
+}
+.reports a:hover{border-color:var(--text-muted);text-decoration:none;
+  box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.reports a:hover::before{transform:scaleY(1)}
+.reports a:hover .report-arrow{color:var(--accent);transform:translateX(3px)}
+.reports .report-date{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:.72rem;color:var(--text-muted);font-weight:600;
+  letter-spacing:.06em;text-transform:uppercase;grid-column:1;
+}
+.reports .report-title{
+  font-size:1.02rem;font-weight:700;color:var(--text);
+  letter-spacing:-.005em;grid-column:1;display:flex;align-items:center;gap:.5rem;
+}
+.reports .vol-tag{display:inline-block;padding:.14rem .5rem;border-radius:4px;
+  font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  background:var(--accent);color:#fff}
+.reports .report-lede{
+  font-size:.86rem;color:var(--text-secondary);
+  line-height:1.6;grid-column:1 / -1;margin-top:.2rem;
+}
+.reports .report-arrow{
+  grid-row:1 / span 2;grid-column:2;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:1.1rem;color:var(--text-muted);align-self:center;
+  transition:color .15s ease,transform .15s ease;
+}
+
+/* Disclaimer */
+.disclaimer{margin:2rem 0;padding:1.2rem 1.5rem;background:var(--bg-card);border:1px solid var(--border);
+            border-radius:10px;font-size:.78rem;color:var(--text-muted);line-height:1.7}
+.disclaimer strong{color:var(--text-secondary)}
+
+/* Footer */
+footer{padding:1.5rem 0;text-align:center;font-size:.75rem;color:var(--text-muted);
+       border-top:1px solid var(--border);margin-top:1rem}
+
+/* Mobile */
+@media(max-width:768px){
+  .hero h1{font-size:1.5rem}
+  .reports a{grid-template-columns:1fr auto;gap:.35rem 1rem;padding:1rem 1.15rem}
+  .reports .report-title{font-size:.96rem}
+  .reports .report-lede{font-size:.83rem}
+  header nav{gap:0}
+}
+  </style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#0f172a;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(59,130,246,.28);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/cockpit/">選股駕駛艙</a>
+          <a href="/research/">個股 DD</a>
+          <a href="/research/synthesis/">期望落差綜合研判</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/crowding/">擁擠交易監測</a>
+          <a href="/rotation/">產業輪動</a>
+          <a href="/regime/" class="active">大類資產 regime</a>
+          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
+          <a href="/picks/">精選清單</a>
+          <a href="/research/momentum-5/">Momentum-5</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/">週報</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/catalyst/">催化劑日曆</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/long-track-smh/">長線訊號</a>
+          <a href="/long-track-tw/">台股長線</a>
+          <a href="/turtle-sleeve/">商品 Sleeve</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/">量化回測</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/engine/">⚙ 決策引擎</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/screener-tw.html">Screener 台股</a>
+          <a href="/screener-jp.html">Screener 日股</a>
+          <a href="/screener-my.html">Screener 馬股</a>
+          <a href="/cache/">🗄 Data Cache</a>
+          <a href="/tools/">期貨部位計算機</a>
+        </div>
+      </div>
+      <a href="/mental-models/">🧠 心智模型</a>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="hero">
+  <div class="container">
+    <div class="crumb"><a href="/">首頁</a> &rsaquo; 大類資產 Regime</div>
+    <span class="eyebrow">Cross-Asset Regime Dashboard</span>
+    <h1>大類資產 Regime 儀表</h1>
+    <p class="sub">現在是什麼大類資產 regime。六條 regime 軸——利率／久期、美元、信用、成長 vs 恐慌、股票風險胃納、商品——各落在 risk-off ↔ risk-on 連續軸的哪一格，再疊上 CFTC COT 跨資產部位的 5 年百分位極端、與成長 vs 防禦三比率（銅金比／HY-IG／小型-大型）。收斂成「現在是什麼 regime、哪個 archetype 有順逆風、哪個大類部位到極端」。</p>
+    <div class="mandate">
+      <strong>定位：</strong>本儀表是<strong>描述器（describer），不是配置指令、非擇時訊號</strong>。它描繪大類資產 regime 的狀態與部位極端，與首頁風險儀表、擁擠交易監測、產業輪動監測同家族——<strong>不對指數部（75%）下任何加減碼指令</strong>（指數部走總守則機械規則），對個股部僅提供選 archetype 的宏觀背景。六軸 marker 位置與綜合判讀為定性合成，<strong>非可交易指數</strong>；COT 百分位與比率指標為機械可算並週更。
+    </div>
+  </div>
+</div>
+
+<!-- 自動儀表：內容由週更 pipeline（build_regime.py）在下方兩個標記之間重生，勿手改標記間內容 -->
+<div class="section dash-section" id="live-dashboard">
+  <div class="container">
+    <h2 class="section-title">即時 Regime 記分卡 <span class="count">週更</span></h2>
+    <!-- REGIME_AUTO_DASH_START -->
+<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#12161f;border:1px solid #2a3242;border-radius:12px;padding:18px 20px;color:#e6e9ef;line-height:1.6;font-size:14px"><div style="font-family:ui-monospace,monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#5b9bff;margin-bottom:12px">大類資產 Regime · 自動儀表</div><div style="overflow-x:auto;margin-bottom:14px"><svg viewBox="0 0 900 406" width="100%" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,-apple-system,sans-serif" role="img" aria-label="六軸 regime 記分卡"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5b9bff"/><stop offset="0.5" stop-color="#3a4351"/><stop offset="1" stop-color="#e0a256"/></linearGradient><marker id="ah" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#e0a256"/></marker></defs><text x="186" y="34" fill="#6b7484" font-size="10" font-family="ui-monospace,monospace" text-anchor="start">◄ RISK-OFF</text><text x="364" y="34" fill="#6b7484" font-size="10" font-family="ui-monospace,monospace" text-anchor="middle">中性</text><text x="542" y="34" fill="#6b7484" font-size="10" font-family="ui-monospace,monospace" text-anchor="end">RISK-ON ►</text><text x="0" y="34" fill="#9aa4b5" font-size="10" font-weight="700" font-family="ui-monospace,monospace">REGIME 軸</text><text x="566" y="34" fill="#9aa4b5" font-size="10" font-weight="700" font-family="ui-monospace,monospace">狀態 · 讀數</text><line x1="0" y1="44" x2="900" y2="44" stroke="#2a3242" stroke-width="1"/><text x="168" y="77" fill="#e6e9ef" font-size="13" font-weight="700" text-anchor="end">利率／久期</text><text x="168" y="92" fill="#6b7484" font-size="9" font-family="ui-monospace,monospace" text-anchor="end">Rates / Duration</text><rect x="186" y="75" width="356" height="10" rx="5" fill="url(#rg)" opacity="0.85"/><line x1="364" y1="71" x2="364" y2="89" stroke="#6b7484" stroke-width="1.2" opacity="0.55"/><circle cx="385" cy="80" r="7" fill="#e6e9ef" stroke="#12161f" stroke-width="2.5"/><rect x="566" y="64" width="64" height="17" rx="8.5" fill="#c78a2c"/><text x="598" y="76" fill="#fff" font-size="9.5" font-weight="700" font-family="ui-monospace,monospace" text-anchor="middle">中性偏暖</text><text x="566" y="94" fill="#9aa4b5" font-size="10.5">升息路徑降溫，久期逆風轉緩</text><line x1="0" y1="104" x2="900" y2="104" stroke="#2a3242" stroke-width="1" opacity="0.55"/><text x="168" y="125" fill="#e6e9ef" font-size="13" font-weight="700" text-anchor="end">美元</text><text x="168" y="140" fill="#6b7484" font-size="9" font-family="ui-monospace,monospace" text-anchor="end">US Dollar</text><rect x="186" y="123" width="356" height="10" rx="5" fill="url(#rg)" opacity="0.85"/><line x1="364" y1="119" x2="364" y2="137" stroke="#6b7484" stroke-width="1.2" opacity="0.55"/><line x1="321" y1="128" x2="398" y2="128" stroke="#e0a256" stroke-width="2" stroke-dasharray="2 2" marker-end="url(#ah)" opacity="0.85"/><circle cx="407" cy="128" r="7" fill="#e6e9ef" stroke="#12161f" stroke-width="2.5"/><rect x="566" y="112" width="76" height="17" rx="8.5" fill="#9085e9"/><text x="604" y="124" fill="#fff" font-size="9.5" font-weight="700" font-family="ui-monospace,monospace" text-anchor="middle">轉暖／翻向</text><text x="566" y="142" fill="#9aa4b5" font-size="10.5">擁擠做多，翻向回落</text><line x1="0" y1="152" x2="900" y2="152" stroke="#2a3242" stroke-width="1" opacity="0.55"/><text x="168" y="173" fill="#e6e9ef" font-size="13" font-weight="700" text-anchor="end">信用</text><text x="168" y="188" fill="#6b7484" font-size="9" font-family="ui-monospace,monospace" text-anchor="end">Credit (HY vs IG)</text><rect x="186" y="171" width="356" height="10" rx="5" fill="url(#rg)" opacity="0.85"/><line x1="364" y1="167" x2="364" y2="185" stroke="#6b7484" stroke-width="1.2" opacity="0.55"/><circle cx="464" cy="176" r="7" fill="#e6e9ef" stroke="#12161f" stroke-width="2.5"/><rect x="566" y="160" width="40" height="17" rx="8.5" fill="#c78a2c"/><text x="586" y="172" fill="#fff" font-size="9.5" font-weight="700" font-family="ui-monospace,monospace" text-anchor="middle">偏暖</text><text x="566" y="190" fill="#9aa4b5" font-size="10.5">HY spread 偏緊，胃納完好</text><line x1="0" y1="200" x2="900" y2="200" stroke="#2a3242" stroke-width="1" opacity="0.55"/><text x="168" y="221" fill="#e6e9ef" font-size="13" font-weight="700" text-anchor="end">成長 vs 恐慌</text><text x="168" y="236" fill="#6b7484" font-size="9" font-family="ui-monospace,monospace" text-anchor="end">Growth vs Fear</text><rect x="186" y="219" width="356" height="10" rx="5" fill="url(#rg)" opacity="0.85"/><line x1="364" y1="215" x2="364" y2="233" stroke="#6b7484" stroke-width="1.2" opacity="0.55"/><circle cx="414" cy="224" r="7" fill="#e6e9ef" stroke="#12161f" stroke-width="2.5"/><rect x="566" y="208" width="40" height="17" rx="8.5" fill="#c78a2c"/><text x="586" y="220" fill="#fff" font-size="9.5" font-weight="700" font-family="ui-monospace,monospace" text-anchor="middle">偏暖</text><text x="566" y="238" fill="#9aa4b5" font-size="10.5">循環／小型領先，中段偏暖</text><line x1="0" y1="248" x2="900" y2="248" stroke="#2a3242" stroke-width="1" opacity="0.55"/><text x="168" y="269" fill="#e6e9ef" font-size="13" font-weight="700" text-anchor="end">股票風險胃納</text><text x="168" y="284" fill="#6b7484" font-size="9" font-family="ui-monospace,monospace" text-anchor="end">Equity Risk Appetite</text><rect x="186" y="267" width="356" height="10" rx="5" fill="url(#rg)" opacity="0.85"/><line x1="364" y1="263" x2="364" y2="281" stroke="#6b7484" stroke-width="1.2" opacity="0.55"/><circle cx="364" cy="272" r="7" fill="#e6e9ef" stroke="#12161f" stroke-width="2.5"/><rect x="566" y="256" width="40" height="17" rx="8.5" fill="#6b7280"/><text x="586" y="268" fill="#fff" font-size="9.5" font-weight="700" font-family="ui-monospace,monospace" text-anchor="middle">中性</text><text x="566" y="286" fill="#9aa4b5" font-size="10.5">皮平靜、骨防禦</text><line x1="0" y1="296" x2="900" y2="296" stroke="#2a3242" stroke-width="1" opacity="0.55"/><text x="168" y="317" fill="#e6e9ef" font-size="13" font-weight="700" text-anchor="end">商品</text><text x="168" y="332" fill="#6b7484" font-size="9" font-family="ui-monospace,monospace" text-anchor="end">Commodities</text><rect x="186" y="315" width="356" height="10" rx="5" fill="url(#rg)" opacity="0.85"/><line x1="364" y1="311" x2="364" y2="329" stroke="#6b7484" stroke-width="1.2" opacity="0.55"/><circle cx="435" cy="320" r="7" fill="#e6e9ef" stroke="#12161f" stroke-width="2.5"/><rect x="566" y="304" width="76" height="17" rx="8.5" fill="#b3801f"/><text x="604" y="316" fill="#fff" font-size="9.5" font-weight="700" font-family="ui-monospace,monospace" text-anchor="middle">偏暖但擁擠</text><text x="566" y="334" fill="#9aa4b5" font-size="10.5">金屬買盤沉重但擁擠</text><line x1="0" y1="354" x2="900" y2="354" stroke="#6b7484" stroke-width="1.4"/><text x="168" y="369" fill="#e6e9ef" font-size="13.5" font-weight="800" text-anchor="end">綜合判讀</text><text x="168" y="384" fill="#6b7484" font-size="9" font-family="ui-monospace,monospace" text-anchor="end">Composite（定性）</text><rect x="186" y="364" width="356" height="12" rx="6" fill="url(#rg)"/><line x1="364" y1="359" x2="364" y2="381" stroke="#6b7484" stroke-width="1.2" opacity="0.55"/><circle cx="410" cy="370" r="8.5" fill="#e0a256" stroke="#12161f" stroke-width="2.5"/><text x="566" y="364" fill="#e6e9ef" font-size="13" font-weight="800">晚週期再通脹 · 美元見頂回落</text><text x="566" y="380" fill="#6b7484" font-size="10" font-family="ui-monospace,monospace">risk-on 傾斜 · late-cycle reflation</text></svg></div><div style="margin-bottom:8px"><b>COT 極端偏多（5y ≥ 90）：</b><br><span style="display:inline-block;font-family:ui-monospace,monospace;font-size:11px;padding:2px 8px;border-radius:5px;margin:2px 3px 2px 0;background:#7f1d1d;color:#fecaca">銅 Copper 97</span></div><div style="margin-bottom:8px"><b>COT 極端偏空（5y ≤ 10）：</b><br><span style="display:inline-block;font-family:ui-monospace,monospace;font-size:11px;padding:2px 8px;border-radius:5px;margin:2px 3px 2px 0;background:#0c4a6e;color:#bae6fd">Nasdaq-100 8</span></div><div style="margin:10px 0 6px"><b>成長 vs 防禦比率</b>（機械 value · 2y 百分位）</div><span style="display:inline-block;font-family:ui-monospace,monospace;font-size:11px;padding:2px 8px;border-radius:5px;margin:2px 3px 2px 0;background:#1e2a3a;color:#a9c7f0">銅／金比 0.002（2y 57）</span><span style="display:inline-block;font-family:ui-monospace,monospace;font-size:11px;padding:2px 8px;border-radius:5px;margin:2px 3px 2px 0;background:#1e2a3a;color:#a9c7f0">小型／大型 0.400（2y 96）</span><span style="display:inline-block;font-family:ui-monospace,monospace;font-size:11px;padding:2px 8px;border-radius:5px;margin:2px 3px 2px 0;background:#1e2a3a;color:#a9c7f0">高收益／投等 0.734（2y 97）</span><div style="margin-top:12px;font-family:ui-monospace,monospace;font-size:11px;color:#6b7484">COT as-of 2026-06-23 · 比率 as-of 2026-07-06 · 更新 2026-07-06 · 描述器非擇時</div></div>
+<!-- REGIME_AUTO_DASH_END -->
+  </div>
+</div>
+
+<div class="section" id="regime-reports">
+  <div class="container">
+    <h2 class="section-title">期刊 · Regime Issues</h2>
+
+    <ul class="reports">
+<!--
+  ADDING A NEW ISSUE:
+  Newest issue goes at the TOP (descending date order). Copy the block below INSIDE
+  <ul class="reports"> and update fields. Remove the .vol-tag "最新" from the previously
+  first entry when adding a newer one.
+-->
+      <li>
+        <a href="REGIME_20260706.html">
+          <div class="report-date">2026-07-06</div>
+          <div class="report-title">創刊號 Vol.1 <span class="vol-tag">最新</span></div>
+          <div class="report-lede">當前處於晚週期再通脹、且美元自擁擠極端見頂回落的 regime——六軸中四軸偏暖、兩軸中性，綜合落在 risk-on 傾斜，但這是「平靜的皮、防禦的骨」而非乾淨多頭 · 三條關鍵軸：美元 COT 淨多 4 週暴增 +21.5pp 後遇弱非農翻向（對非美／EM／商品由逆風轉順風）、商品部位極端（銅 COT 第 96.9 百分位觸旗）、信用歷史性偏緊（HY OAS 第 17 百分位） · 兩端極端的部位指紋：銅觸頂做多、Nasdaq-100 觸底偏空。</div>
+          <span class="report-arrow">&rarr;</span>
+        </a>
+      </li>
+    </ul>
+
+  </div>
+</div>
+
+<div class="container">
+  <div class="disclaimer">
+    <strong>免責與定位：</strong>
+    本儀表為 InvestMQuest Research 內部跨資產策略研究文件，<strong>描述器非擇時訊號、非投資建議</strong>。
+    六軸 regime 軸狀態與綜合判讀為基於 CFTC COT 部位、跨資產 ETF 動能與現貨的<strong>定性合成判讀</strong>，
+    非量化 regime 模型、非可交易指數；COT 5 年百分位與成長／防禦比率指標為機械可算並週更。
+    COT 為週度、比率為慢變數，不宜當日／高頻擇時。指數部配置走總守則機械規則不由本表驅動；
+    個股部進出另依 DD §14 統一裁決與 thesis 級證偽。過往統計關係不保證未來重演。內容由 AI 自動生成，僅供參考。
+  </div>
+</div>
+
+<footer>
+  <div class="container">
+    &copy; 2026 InvestMQuest Research &middot; Cross-Asset Regime Dashboard &middot; 描述器非擇時
+  </div>
+</footer>
+
+</body>
+</html>

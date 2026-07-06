@@ -1,20 +1,19 @@
-name: Weekly Cross-Asset Crowding Refresh
+name: Weekly Cross-Asset Crowding Refresh (superseded)
 
-# CFTC Commitments of Traders publishes Friday ~15:30 ET (~19:30 UTC) and
-# yfinance weekly bars settle after the Friday US close, so we run Sunday.
-# 12:00 UTC (Sun 20:00 Taipei) sits in an empty slot — clear of the Sat
-# 00:00-02:00 UTC batch and the Sun 18:00/20:00 UTC pair — to avoid the
-# nightly cron push pile-up.
+# SUPERSEDED 2026-07 by crossasset-weekly.yml, which runs build_crowding.py
+# alongside build_rotation.py + build_regime.py on the same Sunday cadence.
+# The schedule trigger here is DISABLED to avoid a duplicate COT refresh;
+# workflow_dispatch is kept so this crowding-only path can still be run
+# manually if needed.  Shares the crossasset-weekly concurrency group so a
+# manual run can never race the unified workflow.
 on:
-  schedule:
-    - cron: "0 12 * * 0"
   workflow_dispatch:
 
 permissions:
   contents: write
 
 concurrency:
-  group: ${{ github.workflow }}
+  group: crossasset-weekly
   cancel-in-progress: false
 
 jobs:

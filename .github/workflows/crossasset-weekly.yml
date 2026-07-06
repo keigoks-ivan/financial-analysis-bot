@@ -1,0 +1,102 @@
+name: Weekly Cross-Asset Refresh (crowding + rotation + regime)
+
+# Unified Sunday refresh for the three cross-asset describer pages that share
+# the same weekly data cadence:
+#   * crowding — CFTC COT + theme crowding engine
+#   * rotation — RRG relative-strength over site themes
+#   * regime   — cross-asset regime scorecard (COT extremes + ratios)
+#
+# CFTC Commitments of Traders publishes Friday ~15:30 ET (~19:30 UTC) and
+# yfinance weekly bars settle after the Friday US close, so we run Sunday.
+# 12:00 UTC (Sun 20:00 Taipei) sits in an empty slot — clear of the Sat
+# 00:00-02:00 UTC batch and the Sun 18:00/20:00 UTC pair — to avoid the
+# nightly cron push pile-up.  Supersedes crowding-weekly.yml (whose schedule
+# is disabled to avoid a duplicate COT refresh).
+on:
+  schedule:
+    - cron: "0 12 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Shared group across all cross-asset weekly workflows so a manual dispatch of
+# the (now schedule-disabled) crowding-weekly.yml can never race this one.
+concurrency:
+  group: crossasset-weekly
+  cancel-in-progress: false
+
+jobs:
+  crossasset:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install "yfinance>=0.2.40" pandas requests
+
+      - name: Build cross-asset data (warn-and-continue per build)
+        run: |
+          set +e
+          ok=0; fail=0
+          for s in build_crowding build_rotation build_regime; do
+            echo "::group::$s"
+            python scripts/$s.py
+            rc=$?
+            echo "::endgroup::"
+            if [ $rc -ne 0 ]; then
+              echo "::warning::scripts/$s.py exited $rc — continuing"
+              fail=$((fail+1))
+            else
+              ok=$((ok+1))
+            fi
+          done
+          echo "builds ok=$ok fail=$fail"
+          # Only fail the job if EVERY build failed; any success still commits.
+          if [ $ok -eq 0 ]; then
+            echo "All cross-asset builds failed"
+            exit 1
+          fi
+
+      - name: Commit and push if changed
+        run: |
+          # Track only paths that actually exist (index.html files are authored
+          # by their build scripts / sibling pipelines and are always present
+          # once bootstrapped; caches appear after first run).
+          PATHS=""
+          for p in \
+            data/cot_history.json data/crowding_volume.json \
+            data/rotation_bench.json data/regime_prices.json \
+            docs/crowding/data/latest.json docs/crowding/index.html \
+            docs/rotation/data/latest.json docs/rotation/index.html \
+            docs/regime/data/latest.json docs/regime/index.html; do
+            [ -e "$p" ] && PATHS="$PATHS $p"
+          done
+          if git status --porcelain $PATHS | grep -q .; then
+            echo "Changes detected"
+          else
+            echo "No changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add $PATHS
+          DATE=$(date -u +"%Y-%m-%d")
+          git commit -m "crossasset: weekly data refresh ${DATE}"
+          for i in 1 2 3 4 5 6; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+            git pull --rebase origin main || { echo "Rebase failed"; exit 1; }
+            sleep $((RANDOM % 20 + 5))
+          done
+          echo "Push failed after 6 attempts"
+          exit 1
