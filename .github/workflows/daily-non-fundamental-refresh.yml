@@ -11,20 +11,21 @@ name: Daily Non-Fundamental Refresh
 # 跑的順序：
 #   1. build_dd_screener.py                       → latest.json (MA + timing 重整；
 #                                                    fundamentals 重讀但無變更則 no-op diff)
-#   2. dd_alpha_ranker.py --layers momentum       → alpha-rank Angle 2 起漲點 + 5 RS
 #   3. build_quality_entry.py                     → entry sub-score 跟著 timing 漂移
-#   …（4-7 其餘 screener）…
 #   8. state_machine/study/write_daily_close.py   → 態④研究寬表 forward 切片
 #                                                    docs/.../study/closes_daily/{date}.json
 #                                                    (~4.6KB/日；本機 run_study.py --rebuild 併寬表)
+#   9. sop_funnel/build.py + alert.py             → 板機掃描 + email
 #
 # 涵蓋頁面：
 #   - /dd-screener/                  (client-side fetch latest.json)
-#   - /dd-screener/alpha-rank.html   (Angle 2/5 重新渲染；1/3/4/6 用既有 state)
 #   - /dd-screener/quality-entry.html
+#   - /dd-screener/sop-funnel.html
 #
-# 基本面層（dd_alpha_ranker --layers fundamental jensen）跑在
-# weekly-fundamental-refresh.yml，避免每日浪費 ~5min 算同樣的數字。
+# 2026-07-07 選股頁面整理（見 notes/site-internal/root/_proposal_stock_pages_cleanup_20260707.md）：
+# 原 Step 2（alpha momentum）、Step 4-7（bottom-out / breakout / earnings-acceleration /
+# entry-state）已隨頁面封存移除——四頁 JSON 零下游消費者，職能由 sop-funnel 板機 /
+# cyclical-track / GRP 上修閘接手；snapshots 凍結保留。step 編號保留原號不重排。
 
 on:
   schedule:
@@ -57,28 +58,8 @@ jobs:
       - name: Step 1 — DD Screener latest.json (MA + timing refresh)
         run: python scripts/build_dd_screener.py
 
-      - name: Step 2 — Alpha-Rank momentum layer (Angle 2 起漲點 + 5 RS)
-        run: python scripts/dd_alpha_ranker.py --layers momentum
-        continue-on-error: true
-
       - name: Step 3 — Quality-Entry screener
         run: python scripts/build_quality_entry.py
-        continue-on-error: true
-
-      - name: Step 4 — Bottom-Out screener
-        run: python scripts/build_bottom_out.py
-        continue-on-error: true
-
-      - name: Step 5 — Breakout screener
-        run: python scripts/build_breakout.py
-        continue-on-error: true
-
-      - name: Step 6 — Earnings Acceleration screener
-        run: python scripts/build_earnings_acceleration.py
-        continue-on-error: true
-
-      - name: Step 7 — Entry State Machine (進場狀態機)
-        run: python scripts/build_entry_state.py
         continue-on-error: true
 
       - name: Step 8 — Study daily closes slice (態④研究寬表 forward 切片)
@@ -132,26 +113,9 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/weekly_cache/ \
                   docs/dd-screener/latest.json \
-                  docs/dd-screener/alpha-rank.html \
-                  docs/dd-screener/alpha-rank.json \
-                  docs/dd-screener/alpha-rank-state/ \
-                  docs/dd-screener/alpha-rank-snapshots/ \
                   docs/dd-screener/quality-entry.html \
                   docs/dd-screener/quality-entry.json \
                   docs/dd-screener/quality-entry-snapshots/ \
-                  docs/dd-screener/bottom-out.html \
-                  docs/dd-screener/bottom-out.json \
-                  docs/dd-screener/bottom-out-snapshots/ \
-                  docs/dd-screener/breakout.html \
-                  docs/dd-screener/breakout.json \
-                  docs/dd-screener/breakout-snapshots/ \
-                  docs/dd-screener/earnings-acceleration.html \
-                  docs/dd-screener/earnings-acceleration.json \
-                  docs/dd-screener/earnings-acceleration-snapshots/ \
-                  docs/dd-screener/entry-state.html \
-                  docs/dd-screener/entry-state.json \
-                  docs/dd-screener/entry-state-snapshots/ \
-                  docs/dd-screener/entry-state-state/ \
                   docs/dd-screener/state-machine/data/study/closes_daily/ \
                   docs/dd-screener/sop-funnel.html \
                   docs/dd-screener/sop-funnel/

@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta name="robots" content="noindex,nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Entry State Machine — 進場狀態機 | InvestMQuest</title>
+<meta name="color-scheme" content="light">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e3a5f;line-height:1.5}
+.hero{background:#fff;border-bottom:1px solid #dce8f5;padding:24px 32px 18px}
+.hero-inner{max-width:min(1400px,96vw);margin:0 auto}
+.hero-h1{font-size:22px;font-weight:600;color:#0f2a45;margin-bottom:6px}
+.hero-sub{font-size:12px;color:#5a7a9a;line-height:1.6;max-width:920px}
+.hero-stats{display:flex;gap:14px;margin-top:12px;flex-wrap:wrap}
+.hero-stat{background:#f0f5fb;border:1px solid #dce8f5;border-radius:6px;padding:7px 11px;font-size:11px;color:#5a7a9a}
+.hero-stat strong{color:#1e3a5f;font-size:13px;display:block;margin-bottom:1px}
+.hero-stat.new-stat strong{color:#92400e}
+.section{max-width:min(1400px,96vw);margin:0 auto;padding:24px 32px}
+.caveat-panel{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:14px 18px;margin-bottom:20px;font-size:12px;color:#854d0e;line-height:1.65}
+.caveat-panel strong{color:#78350f;display:block;margin-bottom:6px}
+.caveat-panel ol,.caveat-panel ul{margin-left:20px}
+.warn-panel{background:#fef2f2;border-color:#fecaca;color:#991b1b}
+.warn-panel strong{color:#7f1d1d}
+.tier-card{background:#fff;border:1px solid #dce8f5;border-radius:10px;padding:16px 18px;margin-bottom:22px}
+.tier-card h2{font-size:16px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:#0f2a45}
+.tier-card h2 .badge{display:inline-block;padding:2px 9px;border-radius:5px;font-size:11px;font-weight:700;background:#dbeafe;color:#1e40af}
+.tier-card .desc{font-size:12px;color:#5a7a9a;margin-bottom:12px;line-height:1.6}
+.tier-card table{width:100%;border-collapse:collapse;font-size:11.5px}
+.tier-card th{background:#f0f6ff;color:#5a7a9a;font-weight:700;padding:7px 8px;text-align:right;border-bottom:2px solid #dce8f5;font-size:10px;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+.tier-card th.left{text-align:left}
+.tier-card td{padding:7px 8px;text-align:right;border-bottom:1px solid #f0f5fb;font-variant-numeric:tabular-nums;vertical-align:middle}
+.tier-card td.left{text-align:left;color:#0f2a45;font-weight:500}
+.tier-card td.left .sub{font-size:10px;color:#94a3b8;font-weight:400;margin-top:1px}
+.tier-card td a{color:#2563eb;text-decoration:none;font-weight:600}
+.tier-card td a:hover{text-decoration:underline}
+.school-cell{font-size:11px;color:#475569;font-weight:500}
+.fund-score{font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-weight:700;color:#0f2a45}
+.empty-row{padding:14px;text-align:center;color:#94a3b8;font-size:12px;font-style:italic}
+/* state row highlights for is_new actionable signals */
+tr.state-breakout_new{background:linear-gradient(90deg,#dcfce7 0%,transparent 60%)}
+tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60%)}
+/* color chips */
+.chip{display:inline-block;padding:2px 8px;border-radius:5px;font-size:10.5px;font-weight:700;white-space:nowrap;letter-spacing:.02em}
+.chip-breakout{background:#dcfce7;color:#166534}
+.chip-pullback-confirmed{background:#dbeafe;color:#1e40af}
+.chip-pullback-watch{background:#e0f2fe;color:#0c4a6e}
+.chip-riding{background:#f1f5f9;color:#475569}
+.chip-weak{background:#fee2e2;color:#991b1b}
+.new-badge{display:inline-block;padding:1px 6px;border-radius:4px;font-size:9.5px;font-weight:700;background:#fef3c7;color:#92400e;margin-left:3px;letter-spacing:.04em}
+.ma-chip{display:inline-block;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600;white-space:nowrap}
+.ma-green{color:#16a34a}
+.ma-yellow{color:#ca8a04}
+.ma-red{color:#dc2626}
+.ma-na{color:#94a3b8}
+.dd-fresh{color:#475569;font-size:11px}
+.dd-stale{color:#dc2626;font-weight:700;font-size:11px}
+.dd-unknown{color:#94a3b8;font-style:italic;font-size:11px}
+.watch-counting{color:#0c4a6e;font-size:11px}
+.watch-ready{color:#166534;font-weight:700;font-size:11px}
+.not-full-5y{color:#ca8a04;font-weight:700;cursor:help}
+.footer{padding:30px 32px;font-size:11px;color:#5a7a9a;line-height:1.7;max-width:min(1400px,96vw);margin:0 auto;border-top:1px solid #dce8f5}
+.footer h4{color:#1e3a5f;font-size:12px;margin-top:14px;margin-bottom:6px;font-weight:700}
+.footer code{background:#f0f5fb;padding:1px 5px;border-radius:3px;font-size:10px;color:#1e3a5f}
+.methodology{background:#fff;border:1px solid #dce8f5;border-radius:10px;padding:14px 18px;margin-bottom:20px}
+.methodology h3{font-size:13px;font-weight:700;color:#0f2a45;margin-bottom:8px}
+.methodology code{background:#f0f5fb;padding:1px 6px;border-radius:3px;font-size:11px;color:#1e3a5f}
+.methodology .row{font-size:12px;color:#334e68;line-height:1.9;margin-bottom:4px}
+/* v1.2 filter chips */
+.filter-bar{background:#fff;border:1px solid #dce8f5;border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:11.5px}
+.filter-label{color:#5a7a9a;font-weight:600;margin-right:4px}
+.filter-divider{color:#cbd5e1;margin:0 4px}
+.filter-count{color:#475569;font-weight:600;margin-left:auto;white-space:nowrap;font-variant-numeric:tabular-nums}
+.filter-count strong{color:#0f2a45}
+.filter-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border:1px solid #dce8f5;border-radius:999px;background:#fff;color:#94a3b8;font-size:11px;font-weight:600;cursor:pointer;user-select:none;transition:all .12s;font-family:inherit;line-height:1.4;letter-spacing:.01em}
+.filter-chip:hover:not(.disabled){border-color:#94a3b8;color:#475569}
+.filter-chip.active{background:#0f172a;color:#fff;border-color:#0f172a}
+.filter-chip.active.chip-breakout-tag{background:#16a34a;border-color:#16a34a}
+.filter-chip.active.chip-pb-watch-tag{background:#0c4a6e;border-color:#0c4a6e}
+.filter-chip.active.chip-pb-conf-tag{background:#1e40af;border-color:#1e40af}
+.filter-chip.active.chip-riding-tag{background:#64748b;border-color:#64748b}
+.filter-chip.active.chip-weak-tag{background:#dc2626;border-color:#dc2626}
+.filter-chip.active.chip-new-tag{background:#92400e;border-color:#92400e}
+.filter-chip.disabled{opacity:.4;cursor:not-allowed}
+.filter-chip .count{opacity:.7;font-weight:500;margin-left:1px}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#0f172a;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(59,130,246,.28);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/cockpit/">選股駕駛艙</a>
+          <a href="/research/">個股 DD</a>
+          <a href="/research/synthesis/">期望落差綜合研判</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/crowding/">擁擠交易監測</a>
+          <a href="/rotation/">產業輪動</a>
+          <a href="/regime/">大類資產 regime</a>
+          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
+          <a href="/picks/">精選清單</a>
+          <a href="/research/momentum-5/">Momentum-5</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/">週報</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/catalyst/">催化劑日曆</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/long-track-smh/">長線訊號</a>
+          <a href="/long-track-tw/">台股長線</a>
+          <a href="/turtle-sleeve/">商品 Sleeve</a>
+        </div>
+      </div>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/">量化回測</a>
+          <a href="/dd-screener/" class="active">DD Screener</a>
+          <a href="/engine/">⚙ 決策引擎</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/screener-tw.html">Screener 台股</a>
+          <a href="/screener-jp.html">Screener 日股</a>
+          <a href="/screener-my.html">Screener 馬股</a>
+          <a href="/cache/">🗄 Data Cache</a>
+          <a href="/tools/">期貨部位計算機</a>
+        </div>
+      </div>
+      <a href="/mental-models/">🧠 心智模型</a>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<div class="imq-subnav"><div class="imq-subnav-inner"><a href="/dd-screener/">總覽</a><a href="/dd-screener/pipeline.html">🧭 Pipeline</a><a href="/dd-screener/targets.html">🎯 標的清單</a><a href="/dd-screener/quality-entry.html">Quality-Entry</a><a href="/dd-screener/cyclical-track.html">衛星·循環軌</a><a href="/dd-screener/bottom-out.html">Bottom-Out</a><a href="/dd-screener/breakout.html">Breakout</a><a href="/dd-screener/earnings-acceleration.html">盈餘加速</a><a href="/dd-screener/entry-state.html" class="active">Entry-State</a><a href="/dd-screener/entry-state-backtest.html">Entry 回測</a><a href="/dd-screener/sop-funnel.html">SOP Funnel</a><a href="/dd-screener/sop-funnel-backtest.html">SOP 回測</a><a href="/dd-screener/alpha-rank.html">Alpha Rank</a></div></div>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-h1">Entry State Machine — 進場狀態機</div>
+    <div class="hero-sub">
+      雙邏輯接力 — <b>動能突破派</b>抓第一棒(BREAKOUT)、<b>回調買入派</b>抓後續棒(PULLBACK)。
+      前置一道 <b>W52/W250 週線 MA 大方向閘</b>(跌破即標 WEAK,不進第二層);
+      第二層用 <b>5 年週線 cycle context</b>(真 ATH 距離 + ATH 週齡)+ <b>4 週方向過濾</b>判定當下狀態。
+      與 <a href="/dd-screener/quality-entry.html" style="color:#2563eb">Quality-Entry</a>(單一逢回邏輯複合分)定位互補,<b>不重複</b>。
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><strong>2026-07-05 23:55</strong>最後更新(台北)</div>
+      <div class="hero-stat"><strong>2026-07-05</strong>資料 as-of</div>
+      <div class="hero-stat"><strong>50</strong>universe</div>
+      <div class="hero-stat new-stat"><strong>3</strong>今日新訊號(BK new + PB watch)</div>
+      <div class="hero-stat"><strong>0 / 3</strong>BREAKOUT new / 持續</div>
+      <div class="hero-stat"><strong>3 / 0</strong>PULLBACK watch / confirmed</div>
+      <div class="hero-stat"><strong>34</strong>RIDING(無新訊號)</div>
+      <div class="hero-stat"><strong>10</strong>WEAK(第一層否決)</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+
+  
+
+  <div class="caveat-panel">
+    <strong>讀法 8 點(動手前必讀)</strong>
+    <ol>
+      <li><b>與 Quality-Entry 的定位區別</b>:Quality-Entry 是「單一逢回邏輯」的複合評分;本頁是「突破派抓第一棒、回調派抓後續棒」的雙邏輯接力。兩者並存,服務不同進場哲學。</li>
+      <li><b>Universe 來源(v1.2 retune)</b>:`build_quality_entry.py` 全量 scored(post-veto)中,<b>新進門檻</b> Quality ≥ <code>0.75</code> ∩ Growth ≥ <code>0.6</code> ∩ archetype=成長型;<b>昨日已在 universe 者</b>只要 Q ≥ <code>0.7</code> / G ≥ <code>0.55</code>(hysteresis <b>保留</b>門檻)就維持,避免邊界 ticker 進出抖動。<b>v1.2 變更</b>:原 Q≥0.55/G≥0.50 → 83 太多;Q 實測 min=0.58 不發揮濾用,只 G 才是 dial。新門檻自然 universe ~49,過渡期含 hysteresis ~72。<b>archetype 分類純量化</b>(`growth_pillar ≥ 0.55` = 成長型),<b>不看 market cap</b>;V/MA/MSFT 等「mature 但仍成長」compounder 因 growth_durability 高,會被分到「成長型」(若想額外過濾大型權值股,需另起 mega-cap saturation filter,非本版)。</li>
+      <li><b>兩層結構</b>:第一層 W52/W250 週線 MA 閘(🟢/🟡/🔴/⚪)決定能否進入第二層;第二層才判 BREAKOUT/PULLBACK/RIDING 三狀態。</li>
+      <li><b>WEAK ≠ 第二層狀態</b>:WEAK 是第一層否決的標籤(跌破 W52 或 W250),不是第二層的進場狀態。它與三個進場狀態並列顯示是為了完整性。</li>
+      <li><b>突破派抓第一棒、回調派抓後續棒;<code>★ NEW</code> 才是新訊號</b>:`is_new=true` 表示今天剛從別狀態轉入此狀態。BREAKOUT 持續中(`is_new=false`)實質接近 RIDING,不是新訊號。</li>
+      <li><b>狀態判定用 5 年週線 cycle context + 4 週方向過濾</b>:不是單日 snapshot — `dist_250w_high_pct`(真 ATH 距離)+ `weeks_since_250w_high`(ATH 週齡 0-26 才算近期)+ `drift_4w_min_in_8w`(過去 8 週曾真跌過)是 backtest 證實的設計。</li>
+      <li><b>止跌確認需人工;DD 新鮮度紅標 ≠ 閘</b>:PULLBACK_WATCH 升級 PULLBACK_CONFIRMED 由人工看圖判讀(本頁 v1.0 不自動升級,只顯示 WATCH 計數)。DD &gt; 90 天紅標代表 quality 判定可能過期 — Ivan 自行決定是否重跑 DD,本頁不擋訊號。</li>
+      <li><b>【v1.2 新】Filter chips 預設只顯示 BREAKOUT / PULLBACK_WATCH / PULLBACK_CONFIRMED</b>(actionable 訊號)。點 ⚪ RIDING / 🔴 WEAK chip 可展開所有 universe;點「★ 只看新訊號」會再窄到只剩 `is_new=true` 列(BREAKOUT/PULLBACK 才會有 ★)。所有 filter 純 client-side,reload 重置。</li>
+    </ol>
+  </div>
+
+  <div class="methodology">
+    <h3>方法論(門檻全為圓整、寬鬆數值,backtest 驗證)</h3>
+    <div class="row"><b>第一層 MA 閘</b>:🟢 healthy = above_w52 ∩ above_w250 ∩ slope_w250 &gt; 0 · 🟡 mixed = 雙均線上但 slope 平/負 · 🔴 weak = 跌破任一均線(第一層否決)· 🟢 W250 N/A = &lt; 5y 上市但站上 W52(降級,關 BREAKOUT)</div>
+    <div class="row"><b>BREAKOUT</b>(僅 🟢 healthy):<code>dist_250w_high_pct ∈ [-3%, 0%]</code> ∩ <code>weeks_since_250w_high ≤ 2</code> ∩ <code>drift_4w_pct &gt; +5%</code> ∩ <code>ma50_pct ≥ 0</code> ∩ <code>rs_score ≥ 80</code></div>
+    <div class="row"><b>PULLBACK_WATCH</b>(🟢/🟡):<code>dist_250w_high_pct ∈ [-15%, -5%]</code> ∩ <code>weeks_since_250w_high ∈ [2, 26]</code> ∩ <code>drift_4w_min_in_8w &lt; -3%</code>(過去 8w 曾真跌過)∩ <code>ma50_pct ∈ [-3%, +3%]</code></div>
+    <div class="row"><b>排序鍵(v1.1)</b>:主鍵 = 狀態優先序(PULLBACK_CONFIRMED → PULLBACK_WATCH → BREAKOUT new → BREAKOUT 持續 → RIDING → WEAK);次鍵 = <code>FundScore = (0.40×Q + 0.30×G) / 0.70 = 0.571×Q + 0.429×G</code> 由高到低(缺 Q/G 視為 -∞ 沉底)。<b>RS 自 v1.1 起不再參與排序</b>,僅作顯示欄。</div>
+    <div class="row"><b>WATCH → CONFIRMED 升級</b>:WATCH 中累積 <code>builds_no_new_low ≥ 3</code> 顯示「✓ 可進場考慮」hint,但本頁 v1.0 <b>不自動升級</b>;由 Ivan 看圖判讀後手動進場。容忍式計數:離開 WATCH 區後 ≤ 7 build 內回來 → 計數延續;超過 → 視為這一波結束、清除狀態。</div>
+    <div class="row" style="color:#5a7a9a;margin-top:6px"><b>已知設計邊界</b>:MA 燈號只看 W250 斜率,不看 W52 斜率(避免 W52 抖動干擾大方向閘)— 趨勢早期警示由 🔴(跌破 W52)觸發。Backtest 結果(原 v1.1 5y × 23 ticker sample,Q≥0.55):PULLBACK 命中 ~6%(每檔每 ~17 週,合 ~3 次/年)/ BREAKOUT ~18%(production 加 RS≥80 gate 後實際降至 ~10%)。<b>v1.2 retune 後 universe 擴至 ~49 但同屬高品質區段,命中率應接近</b>;未在新 universe 上重 backtest,訊號量明顯異常時可再調 Q/G 門檻。</div>
+  </div>
+
+  <div class="filter-bar" id="entry-state-filters">
+    <span class="filter-label">顯示</span>
+    <button type="button" class="filter-chip chip-breakout-tag active" data-filter="BREAKOUT">🟢 BREAKOUT <span class="count">(3)</span></button>
+    <button type="button" class="filter-chip chip-pb-watch-tag active" data-filter="PULLBACK_WATCH">🔷 PB Watch <span class="count">(3)</span></button>
+    <button type="button" class="filter-chip chip-pb-conf-tag active" data-filter="PULLBACK_CONFIRMED">🔵 PB Conf <span class="count">(0)</span></button>
+    <button type="button" class="filter-chip chip-riding-tag" data-filter="RIDING">⚪ RIDING <span class="count">(34)</span></button>
+    <button type="button" class="filter-chip chip-weak-tag" data-filter="WEAK">🔴 WEAK <span class="count">(10)</span></button>
+    <span class="filter-divider">|</span>
+    <button type="button" class="filter-chip chip-new-tag" data-filter-newonly="1">★ 只看新訊號 <span class="count">(3)</span></button>
+    <span class="filter-count">顯示中 <strong id="filter-visible">0</strong>/<span id="filter-total">0</span></span>
+  </div>
+
+  <div class="tier-card">
+    <h2>狀態總表 <span class="badge">universe 50</span></h2>
+    <div class="desc">排序(v1.1):<b>狀態優先</b>(PB Conf → PB Watch → BREAKOUT new → BREAKOUT 持續 → RIDING → WEAK),同狀態內按 <b>FundScore 由高到低</b>(FundScore = 0.571×Q + 0.429×G;缺值沉底)。<b>RS 改為顯示欄,不參與排序</b>。Ticker 後綴「*」代表上市 &lt; 5 年(以上市以來高點取代真 5y high)。「距 ATH」 hover 顯示真 5 年高點價位。<br><b>預設只顯示 BREAKOUT / PB Watch / PB Conf</b>(actionable);點上方 chip 切換 RIDING / WEAK / 只看 ★ 新訊號。</div>
+    <table>
+    <thead>
+    <tr>
+      <th class="left">Ticker</th>
+      <th>MA 燈號</th>
+      <th>當前狀態</th>
+      <th class="left">進場派別</th>
+      <th>Q</th>
+      <th>G</th>
+      <th title="FundScore = 0.571×Q + 0.429×G(品質+成長重加權至 0-1)— 同狀態內排序主鍵">FundScore</th>
+      <th>距 ATH (250w)</th>
+      <th>ATH 週齡</th>
+      <th>4w drift</th>
+      <th>vs 50DMA</th>
+      <th title="顯示用,不參與排序(v1.1 排序鍵已改為 state → FundScore)">RS</th>
+      <th>WATCH 計數</th>
+      <th>DD 新鮮度</th>
+      <th class="left">Links</th>
+    </tr>
+    </thead>
+    <tbody>
+<tr class="state-pullback" data-state="PULLBACK_WATCH" data-is-new="0">
+  <td class="left"><a href="/dd/DD_2368TW_20260526.html">2368.TW</a></td>
+  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
+  <td><span class="chip chip-pullback-watch">🔷 PULLBACK · WATCH</span></td>
+  <td class="left school-cell">回調買入派</td>
+  <td>0.75</td>
+  <td>0.92</td>
+  <td class="fund-score">0.823</td>
+  <td title="真 5 年高點 = $1380.23">-5.5%</td>
+  <td>10</td>
+  <td>-0.1%</td>
+  <td>-1.9%</td>
+  <td>69.1%</td>
+  <td><span class="watch-ready" title="✓ 可進場考慮">9 build / 未破新低</span></td>
+  <td><span class="dd-fresh">DD 40 天</span></td>
+  <td class="left"><a href="/dd/DD_2368TW_20260526.html">DD</a> · <a href="/dca/DCA_2368TW_20260526.html">DCA</a></td>
+</tr>
+<tr class="state-pullback" data-state="PULLBACK_WATCH" data-is-new="0">
+  <td class="left"><a href="/dd/DD_5274.TW_20260703.html">5274.TW</a></td>
+  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
+  <td><span class="chip chip-pullback-watch">🔷 PULLBACK · WATCH</span></td>
+  <td class="left school-cell">回調買入派</td>
+  <td>0.79</td>
+  <td>0.76</td>
+  <td class="fund-score">0.780</td>
+  <td title="真 5 年高點 = $18872.95">-8.5%</td>
+  <td>2</td>
+  <td>-0.9%</td>
+  <td>-0.5%</td>
+  <td>72.8%</td>
+  <td><span class="watch-ready" title="✓ 可進場考慮">11 build / 未破新低</span></td>
+  <td><span class="dd-fresh">DD 2 天</span></td>
+  <td class="left"><a href="/dd/DD_5274.TW_20260703.html">DD</a> · <a href="/dd/DD_5274.TW_20260703.html#decision">DCA</a></td>
+</tr>
+<tr class="state-pullback" data-state="PULLBACK_WATCH" data-is-new="0">
+  <td class="left"><a href="/dd/DD_ANET_20260506.html">ANET</a></td>
+  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
+  <td><span class="chip chip-pullback-watch">🔷 PULLBACK · WATCH</span></td>
+  <td class="left school-cell">回調買入派</td>
+  <td>0.81</td>
+  <td>0.62</td>
+  <td class="fund-score">0.728</td>
+  <td title="真 5 年高點 = $176.91">-9.6%</td>
+  <td>10</td>
+  <td>+3.7%</td>
+  <td>+0.1%</td>
+  <td>60.4%</td>
+  <td><span class="watch-ready" title="✓ 可進場考慮">17 build / 未破新低</span></td>
+  <td><span class="dd-fresh">DD 60 天</span></td>
+  <td class="left"><a href="/dd/DD_ANET_20260506.html">DD</a> · <a href="/dca/DCA_ANET_20260511.html">DCA</a></td>
+</tr>
+<tr class="state-breakout" data-state="BREAKOUT" data-is-new="0">
+  <td class="left"><a href="/dd/DD_2383TW_20260601.html">2383.TW</a></td>
+  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
+  <td><span class="chip chip-breakout">🟢 BREAKOUT</span></td>
+  <td class="left school-cell">動能突破派</td>
+  <td>0.75</td>
+  <td>0.73</td>
+  <td class="fund-score">0.741</td>
+  <td title="真 5 年高點 = $6080.00">+0.0%</td>
+  <td>0</td>
+  <td>+24.5%</td>
+  <td>+21.3%</td>
+  <td>97.3%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 34 天</span></td>
+  <td class="left"><a href="/dd/DD_2383TW_20260601.html">DD</a> · <a href="/dca/DCA_2383TW_20260601.html">DCA</a></td>
+</tr>
+<tr class="state-breakout" data-state="BREAKOUT" data-is-new="0">
+  <td class="left"><a href="/dd/DD_2345.TW_20260526.html">2345.TW</a></td>
+  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
+  <td><span class="chip chip-breakout">🟢 BREAKOUT</span></td>
+  <td class="left school-cell">動能突破派</td>
+  <td>0.76</td>
+  <td>0.66</td>
+  <td class="fund-score">0.717</td>
+  <td title="真 5 年高點 = $2735.00">+0.0%</td>
+  <td>0</td>
+  <td>+9.8%</td>
+  <td>+11.6%</td>
+  <td>83.1%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 40 天</span></td>
+  <td class="left"><a href="/dd/DD_2345.TW_20260526.html">DD</a> · <a href="/dca/DCA_2345TW_20260526.html">DCA</a></td>
+</tr>
+<tr class="state-breakout" data-state="BREAKOUT" data-is-new="0">
+  <td class="left"><a href="/dd/DD_CRWD_20260703.html">CRWD</a></td>
+  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
+  <td><span class="chip chip-breakout">🟢 BREAKOUT</span></td>
+  <td class="left school-cell">動能突破派</td>
+  <td>0.75</td>
+  <td>0.62</td>
+  <td class="fund-score">0.695</td>
+  <td title="真 5 年高點 = $193.98">+0.0%</td>
+  <td>0</td>
+  <td>+15.6%</td>
+  <td>+25.0%</td>
+  <td>80.9%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 2 天</span></td>
+  <td class="left"><a href="/dd/DD_CRWD_20260703.html">DD</a> · <a href="/dd/DD_CRWD_20260703.html#decision">DCA</a></td>
+</tr>
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
+  <td class="left"><a href="/dd/DD_NVDA_20260624.html">NVDA</a></td>
+  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
+  <td><span class="chip chip-riding">⚪ RIDING</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.95</td>
+  <td>0.87</td>
+  <td class="fund-score">0.918</td>
+  <td title="真 5 年高點 = $225.06">-13.4%</td>
+  <td>7</td>
+  <td>-5.0%</td>
+  <td>-7.1%</td>
+  <td>42.9%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 11 天</span></td>
+  <td class="left"><a href="/dd/DD_NVDA_20260624.html">DD</a> · <a href="/dd/DD_NVDA_20260624.html#decision">DCA</a></td>
+</tr>
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
+  <td class="left"><a href="/dd/DD_BESI_20260420.html">BESI</a></td>
+  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
+  <td><span class="chip chip-riding">⚪ RIDING</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.90</td>
+  <td>0.83</td>
+  <td class="fund-score">0.865</td>
+  <td title="真 5 年高點 = $317.00">-13.8%</td>
+  <td>3</td>
+  <td>+0.6%</td>
+  <td>-1.2%</td>
+  <td>53.6%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 76 天</span></td>
+  <td class="left"><a href="/dd/DD_BESI_20260420.html">DD</a> · <a href="/dca/DCA_BESI_20260514.html">DCA</a></td>
+</tr>
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
+  <td class="left"><a href="/dd/DD_TSM_20260623.html">TSM</a></td>
+  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
+  <td><span class="chip chip-riding">⚪ RIDING</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.94</td>
+  <td>0.72</td>
+  <td class="fund-score">0.847</td>
+  <td title="真 5 年高點 = $462.12">-6.0%</td>
+  <td>2</td>
+  <td>+4.8%</td>
+  <td>+3.7%</td>
+  <td>57.2%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 12 天</span></td>
+  <td class="left"><a href="/dd/DD_TSM_20260623.html">DD</a> · <a href="/dd/DD_TSM_20260623.html#decision">DCA</a></td>
+</tr>
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
+  <td class="left"><a href="/dd/DD_2330TW_20260610.html">2330.TW</a></td>
+  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
+  <td><span class="chip chip-riding">⚪ RIDING</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.92</td>
+  <td>0.69</td>
+  <td class="fund-score">0.818</td>
+  <td title="真 5 年高點 = $2445.00">+0.0%</td>
+  <td>0</td>
+  <td>+3.7%</td>
+  <td>+6.0%</td>
+  <td>67.9%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 25 天</span></td>
+  <td class="left"><a href="/dd/DD_2330TW_20260610.html">DD</a> · <a href="/dca/DCA_2330TW_20260610.html">DCA</a></td>
+</tr>
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
+  <td class="left"><a href="/dd/DD_LLY_20260623.html">LLY</a></td>
+  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
+  <td><span class="chip chip-riding">⚪ RIDING</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.94</td>
+  <td>0.65</td>
+  <td class="fund-score">0.815</td>
+  <td title="真 5 年高點 = $1213.91">+0.0%</td>
+  <td>0</td>
+  <td>+7.3%</td>
+  <td>+15.1%</td>
+  <td>76.0%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 12 天</span></td>
+  <td class="left"><a href="/dd/DD_LLY_20260623.html">DD</a> · <a href="/dd/DD_LLY_20260623.html#decision">DCA</a></td>
+</tr>
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
+  <td class="left"><a href="/dd/DD_AVGO_20260623.html">AVGO</a></td>
+  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
+  <td><span class="chip chip-riding">⚪ RIDING</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.84</td>
+  <td>0.78</td>
+  <td class="fund-score">0.814</td>
+  <td title="真 5 年高點 = $446.06">-19.2%</td>
+  <td>5</td>
+  <td>-6.4%</td>
+  <td>-11.8%</td>
+  <td>45.6%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 12 天</span></td>
+  <td class="left"><a href="/dd/DD_AVGO_20260623.html">DD</a> · <a href="/dd/DD_AVGO_20260623.html#decision">DCA</a></td>
+</tr>
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
+  <td class="left"><a href="/dd/DD_ASML_20260626.html">ASML</a></td>
+  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
+  <td><span class="chip chip-riding">⚪ RIDING</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.95</td>
+  <td>0.63</td>
+  <td class="fund-score">0.812</td>
+  <td title="真 5 年高點 = $1929.68">-8.3%</td>
+  <td>2</td>
+  <td>+7.8%</td>
+  <td>+7.4%</td>
+  <td>55.6%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 9 天</span></td>
+  <td class="left"><a href="/dd/DD_ASML_20260626.html">DD</a> · <a href="/dd/DD_ASML_20260626.html#decision">DCA</a></td>
+</tr>
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
+  <td class="left"><a href="/dd/DD_VICR_20260524.html">VICR</a></td>
+  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
+  <td><span class="chip chip-riding">⚪ RIDING</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.78</td>
+  <td>0.83</td>
+  <td class="fund-score">0.798</td>
+  <td title="真 5 年高點 = $334.84">-15.5%</td>
+  <td>5</td>
+  <td>+4.4%</td>
+  <td>-5.2%</td>
+  <td>46.4%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 42 天</span></td>
+  <td class="left"><a href="/dd/DD_VICR_20260524.html">DD</a> · <a href="/dca/DCA_VICR_20260524.html">DCA</a></td>
+</tr>
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
+  <td class="left"><a href="/dd/DD_V_20260516.html">V</a></td>
+  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
+  <td><span class="chip chip-riding">⚪ RIDING</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.95</td>
+  <td>0.57</td>
+  <td class="fund-score">0.788</td>
+  <td title="真 5 年高點 = $367.32">-1.4%</td>
+  <td>56</td>
+  <td>+11.9%</td>
+  <td>+11.2%</td>
+  <td>66.1%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 50 天</span></td>
+  <td class="left"><a href="/dd/DD_V_20260516.html">DD</a> · <a href="/dca/DCA_V_20260516.html">DCA</a></td>
+</tr>
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
+  <td class="left"><a href="/dd/DD_MA_20260703.html">MA</a></td>
+  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
+  <td><span class="chip chip-riding">⚪ RIDING</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.90</td>
+  <td>0.62</td>
+  <td class="fund-score">0.780</td>
+  <td title="真 5 年高點 = $596.25">-9.5%</td>
+  <td>45</td>
+  <td>+9.8%</td>
+  <td>+8.4%</td>
+  <td>56.4%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 2 天</span></td>
+  <td class="left"><a href="/dd/DD_MA_20260703.html">DD</a> · <a href="/dd/DD_MA_20260703.html#decision">DCA</a></td>
+</tr>
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
+  <td class="left"><a href="/dd/DD_ALAB_20260522.html">ALAB</a></td>
+  <td><span class="ma-chip ma-green">🟢 W250 N/A</span></td>
+  <td><span class="chip chip-riding">⚪ RIDING</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.82</td>
+  <td>0.69</td>
+  <td class="fund-score">0.768</td>
+  <td title="真 5 年高點 = $417.07">-2.5%<span class="not-full-5y" title="上市以來高點 — &lt; 5 年歷史">*</span></td>
+  <td>2</td>
+  <td>+28.2%</td>
+  <td>+33.7%</td>
+  <td>82.0%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 44 天</span></td>
+  <td class="left"><a href="/dd/DD_ALAB_20260522.html">DD</a> · <a href="/dca/DCA_ALAB_20260522.html">DCA</a></td>
+</tr>
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
+  <td class="left"><a href="/dd/DD_2308TW_20260514.html">2308.TW</a></td>
+  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
+  <td><span class="chip chip-riding">⚪ RIDING</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.82</td>
+  <td>0.69</td>
+  <td class="fund-score">0.766</td>
+  <td title="真 5 年高點 = $2432.28">-14.7%</td>
+  <td>5</td>
+  <td>-9.3%</td>
+  <td>-3.8%</td>
+  <td>66.4%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 52 天</span></td>
+  <td class="left"><a href="/dd/DD_2308TW_20260514.html">DD</a> · <a href="/dca/DCA_2308TW_20260514.html">DCA</a></td>
+</tr>
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
+  <td class="left"><a href="/dd/DD_AMD_20260627.html">AMD</a></td>
+  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
+  <td><span class="chip chip-riding">⚪ RIDING</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.76</td>
+  <td>0.77</td>
+  <td class="fund-score">0.766</td>
+  <td title="真 5 年高點 = $537.37">-3.6%</td>
+  <td>2</td>
+  <td>+11.0%</td>
+  <td>+12.5%</td>
+  <td>72.8%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 8 天</span></td>
+  <td class="left"><a href="/dd/DD_AMD_20260627.html">DD</a> · <a href="/dd/DD_AMD_20260627.html#decision">DCA</a></td>
+</tr>
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
+  <td class="left"><a href="/dd/DD_MRVL_20260623.html">MRVL</a></td>
+  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
+  <td><span class="chip chip-riding">⚪ RIDING</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.79</td>
+  <td>0.71</td>
+  <td class="fund-score">0.757</td>
+  <td title="真 5 年高點 = $310.58">-21.0%</td>
+  <td>2</td>
+  <td>-6.9%</td>
+  <td>+9.7%</td>
+  <td>71.2%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 12 天</span></td>
+  <td class="left"><a href="/dd/DD_MRVL_20260623.html">DD</a> · <a href="/dd/DD_MRVL_20260623.html#decision">DCA</a></td>
+</tr>
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
+  <td class="left"><a href="/dd/DD_HWM_20260418.html">HWM</a></td>
+  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
+  <td><span class="chip chip-riding">⚪ RIDING</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.90</td>
+  <td>0.57</td>
+  <td class="fund-score">0.756</td>
+  <td title="真 5 年高點 = $277.66">-2.6%</td>
+  <td>2</td>
+  <td>+7.3%</td>
+  <td>+4.1%</td>
+  <td>54.7%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 78 天</span></td>
+  <td class="left"><a href="/dd/DD_HWM_20260418.html">DD</a> · <a href="/dca/DCA_HWM_20260512.html">DCA</a></td>
+</tr>
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
+  <td class="left"><a href="/dd/DD_LRCX_20260620.html">LRCX</a></td>
+  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
+  <td><span class="chip chip-riding">⚪ RIDING</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.88</td>
+  <td>0.59</td>
+  <td class="fund-score">0.755</td>
+  <td title="真 5 年高點 = $389.04">-9.7%</td>
+  <td>2</td>
+  <td>+15.9%</td>
+  <td>+9.5%</td>
+  <td>76.3%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 15 天</span></td>
+  <td class="left"><a href="/dd/DD_LRCX_20260620.html">DD</a> · <a href="/dca/DCA_LRCX_20260620.html">DCA</a></td>
+</tr>
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
+  <td class="left"><a href="/dd/DD_ABNB_20260703.html">ABNB</a></td>
+  <td><span class="ma-chip ma-yellow">🟡 mixed</span></td>
+  <td><span class="chip chip-riding">⚪ RIDING</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.86</td>
+  <td>0.60</td>
+  <td class="fund-score">0.751</td>
+  <td title="真 5 年高點 = $206.54">-27.9%</td>
+  <td>242</td>
+  <td>+11.5%</td>
+  <td>+8.0%</td>
+  <td>67.3%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 2 天</span></td>
+  <td class="left"><a href="/dd/DD_ABNB_20260703.html">DD</a> · <a href="/dd/DD_ABNB_20260703.html#decision">DCA</a></td>
+</tr>
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
+  <td class="left"><a href="/dd/DD_3017_20260504.html">3017.TW</a></td>
+  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
+  <td><span class="chip chip-riding">⚪ RIDING</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.80</td>
+  <td>0.69</td>
+  <td class="fund-score">0.749</td>
+  <td title="真 5 年高點 = $2945.00">-6.3%</td>
+  <td>10</td>
+  <td>+6.2%</td>
+  <td>+7.5%</td>
+  <td>70.5%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 62 天</span></td>
+  <td class="left"><a href="/dd/DD_3017_20260504.html">DD</a> · <a href="/dca/DCA_3017TW_20260514.html">DCA</a></td>
+</tr>
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
+  <td class="left"><a href="/dd/DD_DDOG_20260516.html">DDOG</a></td>
+  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
+  <td><span class="chip chip-riding">⚪ RIDING</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.82</td>
+  <td>0.65</td>
+  <td class="fund-score">0.748</td>
+  <td title="真 5 年高點 = $260.36">+0.0%</td>
+  <td>0</td>
+  <td>+11.2%</td>
+  <td>+25.2%</td>
+  <td>78.8%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 50 天</span></td>
+  <td class="left"><a href="/dd/DD_DDOG_20260516.html">DD</a> · <a href="/dca/DCA_DDOG_20260511.html">DCA</a></td>
+</tr>
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
+  <td class="left"><a href="/dd/DD_SU_20260525.html">SU</a></td>
+  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
+  <td><span class="chip chip-riding">⚪ RIDING</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.85</td>
+  <td>0.61</td>
+  <td class="fund-score">0.747</td>
+  <td title="真 5 年高點 = $289.25">-3.2%</td>
+  <td>2</td>
+  <td>+4.1%</td>
+  <td>+2.7%</td>
+  <td>56.2%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 41 天</span></td>
+  <td class="left"><a href="/dd/DD_SU_20260525.html">DD</a> · <a href="/dca/DCA_SU_20260525.html">DCA</a></td>
+</tr>
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
+  <td class="left"><a href="/dd/DD_CDNS_20260504.html">CDNS</a></td>
+  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
+  <td><span class="chip chip-riding">⚪ RIDING</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.88</td>
+  <td>0.58</td>
+  <td class="fund-score">0.747</td>
+  <td title="真 5 年高點 = $387.39">-3.7%</td>
+  <td>2</td>
+  <td>-0.8%</td>
+  <td>+1.5%</td>
+  <td>57.8%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 62 天</span></td>
+  <td class="left"><a href="/dd/DD_CDNS_20260504.html">DD</a> · <a href="/dca/DCA_CDNS_20260511.html">DCA</a></td>
+</tr>
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
+  <td class="left"><a href="/dd/DD_CRDO_20260623.html">CRDO</a></td>
+  <td><span class="ma-chip ma-green">🟢 W250 N/A</span></td>
+  <td><span class="chip chip-riding">⚪ RIDING</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.82</td>
+  <td>0.64</td>
+  <td class="fund-score">0.742</td>
+  <td title="真 5 年高點 = $271.83">-11.0%<span class="not-full-5y" title="上市以來高點 — &lt; 5 年歷史">*</span></td>
+  <td>2</td>
+  <td>+16.9%</td>
+  <td>+11.3%</td>
+  <td>63.4%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 12 天</span></td>
+  <td class="left"><a href="/dd/DD_CRDO_20260623.html">DD</a> · <a href="/dd/DD_CRDO_20260623.html#decision">DCA</a></td>
+</tr>
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
+  <td class="left"><a href="/dd/DD_KLAC_20260620.html">KLAC</a></td>
+  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
+  <td><span class="chip chip-riding">⚪ RIDING</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.85</td>
+  <td>0.60</td>
+  <td class="fund-score">0.742</td>
+  <td title="真 5 年高點 = $259.56">-9.2%</td>
+  <td>2</td>
+  <td>+22.1%</td>
+  <td>+12.9%</td>
+  <td>81.2%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 15 天</span></td>
+  <td class="left"><a href="/dd/DD_KLAC_20260620.html">DD</a> · <a href="/dca/DCA_KLAC_20260620.html">DCA</a></td>
+</tr>
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
+  <td class="left"><a href="/dd/DD_COHR_20260627.html">COHR</a></td>
+  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
+  <td><span class="chip chip-riding">⚪ RIDING</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.71</td>
+  <td>0.77</td>
+  <td class="fund-score">0.736</td>
+  <td title="真 5 年高點 = $389.57">-14.4%</td>
+  <td>2</td>
+  <td>-11.6%</td>
+  <td>-9.7%</td>
+  <td>60.8%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 8 天</span></td>
+  <td class="left"><a href="/dd/DD_COHR_20260627.html">DD</a> · <a href="/dd/DD_COHR_20260627.html#decision">DCA</a></td>
+</tr>
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
+  <td class="left"><a href="/dd/DD_VRT_20260425.html">VRT</a></td>
+  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
+  <td><span class="chip chip-riding">⚪ RIDING</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.81</td>
+  <td>0.62</td>
+  <td class="fund-score">0.728</td>
+  <td title="真 5 年高點 = $370.86">-19.0%</td>
+  <td>7</td>
+  <td>+0.0%</td>
+  <td>-7.4%</td>
+  <td>54.7%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 71 天</span></td>
+  <td class="left"><a href="/dd/DD_VRT_20260425.html">DD</a> · <a href="/dca/DCA_VRT_20260511.html">DCA</a></td>
+</tr>
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
+  <td class="left"><a href="/dd/DD_3653_20260703.html">3653.TW</a></td>
+  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
+  <td><span class="chip chip-riding">⚪ RIDING</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.72</td>
+  <td>0.73</td>
+  <td class="fund-score">0.727</td>
+  <td title="真 5 年高點 = $5380.00">-36.4%</td>
+  <td>9</td>
+  <td>-5.5%</td>
+  <td>-12.2%</td>
+  <td>21.2%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 2 天</span></td>
+  <td class="left"><a href="/dd/DD_3653_20260703.html">DD</a> · <a href="/dd/DD_3653_20260703.html#decision">DCA</a></td>
+</tr>
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
+  <td class="left"><a href="/dd/DD_NET_20260515.html">NET</a></td>
+  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
+  <td><span class="chip chip-riding">⚪ RIDING</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.77</td>
+  <td>0.65</td>
+  <td class="fund-score">0.714</td>
+  <td title="真 5 年高點 = $253.30">-4.3%</td>
+  <td>35</td>
+  <td>-3.1%</td>
+  <td>+7.5%</td>
+  <td>53.2%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 51 天</span></td>
+  <td class="left"><a href="/dd/DD_NET_20260515.html">DD</a> · <a href="/dca/DCA_NET_20260511.html">DCA</a></td>
+</tr>
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
+  <td class="left"><a href="/dd/DD_GEV_20260504.html">GEV</a></td>
+  <td><span class="ma-chip ma-green">🟢 W250 N/A</span></td>
+  <td><span class="chip chip-riding">⚪ RIDING</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.75</td>
+  <td>0.66</td>
+  <td class="fund-score">0.711</td>
+  <td title="真 5 年高點 = $1148.60">-3.1%<span class="not-full-5y" title="上市以來高點 — &lt; 5 年歷史">*</span></td>
+  <td>10</td>
+  <td>+19.3%</td>
+  <td>+6.9%</td>
+  <td>69.7%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 62 天</span></td>
+  <td class="left"><a href="/dd/DD_GEV_20260504.html">DD</a> · <a href="/dca/DCA_GEV_20260511.html">DCA</a></td>
+</tr>
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
+  <td class="left"><a href="/dd/DD_2454_20260504.html">2454.TW</a></td>
+  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
+  <td><span class="chip chip-riding">⚪ RIDING</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.76</td>
+  <td>0.65</td>
+  <td class="fund-score">0.710</td>
+  <td title="真 5 年高點 = $4390.00">-4.4%</td>
+  <td>2</td>
+  <td>-2.4%</td>
+  <td>+9.3%</td>
+  <td>73.0%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 62 天</span></td>
+  <td class="left"><a href="/dd/DD_2454_20260504.html">DD</a> · <a href="/dca/DCA_2454TW_20260511.html">DCA</a></td>
+</tr>
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
+  <td class="left"><a href="/dd/DD_SNOW_20260705.html">SNOW</a></td>
+  <td><span class="ma-chip ma-yellow">🟡 mixed</span></td>
+  <td><span class="chip chip-riding">⚪ RIDING</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.74</td>
+  <td>0.66</td>
+  <td class="fund-score">0.705</td>
+  <td title="真 5 年高點 = $392.15">-33.7%</td>
+  <td>241</td>
+  <td>+9.2%</td>
+  <td>+31.1%</td>
+  <td>77.9%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 0 天</span></td>
+  <td class="left"><a href="/dd/DD_SNOW_20260705.html">DD</a> · <a href="/dd/DD_SNOW_20260705.html#decision">DCA</a></td>
+</tr>
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
+  <td class="left"><a href="/dd/DD_ONTO_20260626.html">ONTO</a></td>
+  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
+  <td><span class="chip chip-riding">⚪ RIDING</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.74</td>
+  <td>0.64</td>
+  <td class="fund-score">0.697</td>
+  <td title="真 5 年高點 = $333.76">-7.8%</td>
+  <td>2</td>
+  <td>+21.5%</td>
+  <td>+4.8%</td>
+  <td>64.5%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 9 天</span></td>
+  <td class="left"><a href="/dd/DD_ONTO_20260626.html">DD</a> · <a href="/dd/DD_ONTO_20260626.html#decision">DCA</a></td>
+</tr>
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
+  <td class="left"><a href="/dd/DD_3661TW_20260514.html">3661.TW</a></td>
+  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
+  <td><span class="chip chip-riding">⚪ RIDING</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.70</td>
+  <td>0.68</td>
+  <td class="fund-score">0.692</td>
+  <td title="真 5 年高點 = $4895.00">-5.0%</td>
+  <td>6</td>
+  <td>+8.5%</td>
+  <td>+4.7%</td>
+  <td>79.8%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 52 天</span></td>
+  <td class="left"><a href="/dd/DD_3661TW_20260514.html">DD</a> · <a href="/dca/DCA_3661TW_20260514.html">DCA</a></td>
+</tr>
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
+  <td class="left"><a href="/dd/DD_ARM_20260627.html">ARM</a></td>
+  <td><span class="ma-chip ma-green">🟢 W250 N/A</span></td>
+  <td><span class="chip chip-riding">⚪ RIDING</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.74</td>
+  <td>0.61</td>
+  <td class="fund-score">0.683</td>
+  <td title="真 5 年高點 = $439.46">-28.3%<span class="not-full-5y" title="上市以來高點 — &lt; 5 年歷史">*</span></td>
+  <td>2</td>
+  <td>-8.1%</td>
+  <td>+5.5%</td>
+  <td>62.5%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 8 天</span></td>
+  <td class="left"><a href="/dd/DD_ARM_20260627.html">DD</a> · <a href="/dd/DD_ARM_20260627.html#decision">DCA</a></td>
+</tr>
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
+  <td class="left"><a href="/dd/DD_TER_20260626.html">TER</a></td>
+  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
+  <td><span class="chip chip-riding">⚪ RIDING</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.72</td>
+  <td>0.56</td>
+  <td class="fund-score">0.648</td>
+  <td title="真 5 年高點 = $437.92">-15.7%</td>
+  <td>2</td>
+  <td>+3.1%</td>
+  <td>-4.0%</td>
+  <td>67.3%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 9 天</span></td>
+  <td class="left"><a href="/dd/DD_TER_20260626.html">DD</a> · <a href="/dd/DD_TER_20260626.html#decision">DCA</a></td>
+</tr>
+<tr class="state-weak" data-state="WEAK" data-is-new="0">
+  <td class="left"><a href="/dd/DD_PLTR_20260629.html">PLTR</a></td>
+  <td><span class="ma-chip ma-red">🔴 weak</span></td>
+  <td><span class="chip chip-weak">🔴 WEAK</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.88</td>
+  <td>0.79</td>
+  <td class="fund-score">0.840</td>
+  <td title="真 5 年高點 = $200.47">-35.5%</td>
+  <td>35</td>
+  <td>-4.6%</td>
+  <td>-3.9%</td>
+  <td>21.4%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 6 天</span></td>
+  <td class="left"><a href="/dd/DD_PLTR_20260629.html">DD</a> · <a href="/dd/DD_PLTR_20260629.html#decision">DCA</a></td>
+</tr>
+<tr class="state-weak" data-state="WEAK" data-is-new="0">
+  <td class="left"><a href="/dd/DD_FICO_20260418.html">FICO</a></td>
+  <td><span class="ma-chip ma-red">🔴 weak</span></td>
+  <td><span class="chip chip-weak">🔴 WEAK</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.91</td>
+  <td>0.66</td>
+  <td class="fund-score">0.802</td>
+  <td title="真 5 年高點 = $2375.03">-46.5%</td>
+  <td>83</td>
+  <td>+11.7%</td>
+  <td>+11.0%</td>
+  <td>53.4%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 78 天</span></td>
+  <td class="left"><a href="/dd/DD_FICO_20260418.html">DD</a> · <a href="/dca/DCA_FICO_20260512.html">DCA</a></td>
+</tr>
+<tr class="state-weak" data-state="WEAK" data-is-new="0">
+  <td class="left"><a href="/dd/DD_MELI_20260513.html">MELI</a></td>
+  <td><span class="ma-chip ma-red">🔴 weak</span></td>
+  <td><span class="chip chip-weak">🔴 WEAK</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.76</td>
+  <td>0.80</td>
+  <td class="fund-score">0.773</td>
+  <td title="真 5 年高點 = $2584.92">-31.8%</td>
+  <td>59</td>
+  <td>+9.7%</td>
+  <td>+4.7%</td>
+  <td>48.7%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 53 天</span></td>
+  <td class="left"><a href="/dd/DD_MELI_20260513.html">DD</a> · <a href="/dca/DCA_MELI_20260513.html">DCA</a></td>
+</tr>
+<tr class="state-weak" data-state="WEAK" data-is-new="0">
+  <td class="left"><a href="/dd/DD_NU_20260703.html">NU</a></td>
+  <td><span class="ma-chip ma-red">🔴 W250 N/A</span></td>
+  <td><span class="chip chip-weak">🔴 WEAK</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.75</td>
+  <td>0.80</td>
+  <td class="fund-score">0.771</td>
+  <td title="真 5 年高點 = $18.04">-24.6%<span class="not-full-5y" title="上市以來高點 — &lt; 5 年歷史">*</span></td>
+  <td>23</td>
+  <td>+13.7%</td>
+  <td>+3.9%</td>
+  <td>51.6%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 2 天</span></td>
+  <td class="left"><a href="/dd/DD_NU_20260703.html">DD</a> · <a href="/dd/DD_NU_20260703.html#decision">DCA</a></td>
+</tr>
+<tr class="state-weak" data-state="WEAK" data-is-new="0">
+  <td class="left"><a href="/dd/DD_DASH_20260518.html">DASH</a></td>
+  <td><span class="ma-chip ma-red">🔴 weak</span></td>
+  <td><span class="chip chip-weak">🔴 WEAK</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.74</td>
+  <td>0.80</td>
+  <td class="fund-score">0.765</td>
+  <td title="真 5 年高點 = $271.22">-29.2%</td>
+  <td>39</td>
+  <td>+22.5%</td>
+  <td>+15.6%</td>
+  <td>80.0%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 48 天</span></td>
+  <td class="left"><a href="/dd/DD_DASH_20260518.html">DD</a> · <a href="/dca/DCA_DASH_20260518.html">DCA</a></td>
+</tr>
+<tr class="state-weak" data-state="WEAK" data-is-new="0">
+  <td class="left"><a href="/dd/DD_ONON_20260703.html">ONON</a></td>
+  <td><span class="ma-chip ma-red">🔴 weak</span></td>
+  <td><span class="chip chip-weak">🔴 WEAK</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.75</td>
+  <td>0.72</td>
+  <td class="fund-score">0.735</td>
+  <td title="真 5 年高點 = $60.15">-38.8%</td>
+  <td>75</td>
+  <td>-0.7%</td>
+  <td>-0.5%</td>
+  <td>37.4%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 2 天</span></td>
+  <td class="left"><a href="/dd/DD_ONON_20260703.html">DD</a> · <a href="/dd/DD_ONON_20260703.html#decision">DCA</a></td>
+</tr>
+<tr class="state-weak" data-state="WEAK" data-is-new="0">
+  <td class="left"><a href="/dd/DD_SE_20260703.html">SE</a></td>
+  <td><span class="ma-chip ma-red">🔴 weak</span></td>
+  <td><span class="chip chip-weak">🔴 WEAK</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.73</td>
+  <td>0.74</td>
+  <td class="fund-score">0.734</td>
+  <td title="真 5 年高點 = $357.78">-71.1%</td>
+  <td>243</td>
+  <td>+19.3%</td>
+  <td>+16.0%</td>
+  <td>86.8%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 2 天</span></td>
+  <td class="left"><a href="/dd/DD_SE_20260703.html">DD</a> · <a href="/dd/DD_SE_20260703.html#decision">DCA</a></td>
+</tr>
+<tr class="state-weak" data-state="WEAK" data-is-new="0">
+  <td class="left"><a href="/dd/DD_META_20260703.html">META</a></td>
+  <td><span class="ma-chip ma-red">🔴 weak</span></td>
+  <td><span class="chip chip-weak">🔴 WEAK</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.85</td>
+  <td>0.57</td>
+  <td class="fund-score">0.731</td>
+  <td title="真 5 年高點 = $782.66">-25.5%</td>
+  <td>46</td>
+  <td>-1.6%</td>
+  <td>-3.6%</td>
+  <td>31.0%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 2 天</span></td>
+  <td class="left"><a href="/dd/DD_META_20260703.html">DD</a> · <a href="/dd/DD_META_20260703.html#decision">DCA</a></td>
+</tr>
+<tr class="state-weak" data-state="WEAK" data-is-new="0">
+  <td class="left"><a href="/dd/DD_NOW_20260703.html">NOW</a></td>
+  <td><span class="ma-chip ma-red">🔴 weak</span></td>
+  <td><span class="chip chip-weak">🔴 WEAK</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.76</td>
+  <td>0.66</td>
+  <td class="fund-score">0.713</td>
+  <td title="真 5 年高點 = $225.00">-52.8%</td>
+  <td>75</td>
+  <td>-5.5%</td>
+  <td>+6.2%</td>
+  <td>28.9%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 2 天</span></td>
+  <td class="left"><a href="/dd/DD_NOW_20260703.html">DD</a> · <a href="/dd/DD_NOW_20260703.html#decision">DCA</a></td>
+</tr>
+<tr class="state-weak" data-state="WEAK" data-is-new="0">
+  <td class="left"><a href="/dd/DD_WDAY_20260522.html">WDAY</a></td>
+  <td><span class="ma-chip ma-red">🔴 weak</span></td>
+  <td><span class="chip chip-weak">🔴 WEAK</span></td>
+  <td class="left school-cell">—</td>
+  <td>0.76</td>
+  <td>0.62</td>
+  <td class="fund-score">0.702</td>
+  <td title="真 5 年高點 = $305.88">-55.7%</td>
+  <td>123</td>
+  <td>-6.2%</td>
+  <td>+6.0%</td>
+  <td>33.3%</td>
+  <td>—</td>
+  <td><span class="dd-fresh">DD 44 天</span></td>
+  <td class="left"><a href="/dd/DD_WDAY_20260522.html">DD</a> · <a href="/dca/DCA_WDAY_20260522.html">DCA</a></td>
+</tr>
+    </tbody>
+    </table>
+  </div>
+
+</div>
+
+<div class="footer">
+  <h4>資料來源</h4>
+  <ul style="margin-left:18px">
+    <li><code>docs/dd-screener/latest.json</code> — timing(<code>ma50_pct</code> / <code>rs_score</code>)+ MA(<code>above_w52/w250</code> / <code>slope_w250_pct</code> / <code>drift_4w_pct</code>)+ v1.6 5y cycle context(<code>dist_250w_high_pct</code> / <code>weeks_since_250w_high</code> / <code>drift_4w_min_in_8w</code> / <code>is_full_5y</code>)<small style="color:#94a3b8"> · v1.6 是 `latest.json.ma` block 的 schema 版號(不同於本頁面 feature 版本 v1.2)</small></li>
+    <li><code>docs/dd-screener/quality-entry.json</code> — Quality / Growth sub-scores + archetype(成長型/成熟型)</li>
+    <li>WATCH counter 狀態:<code>docs/dd-screener/entry-state-state/watch_counters.json</code>(build-count units)</li>
+  </ul>
+  <h4>機器可讀</h4>
+  <p>JSON sidecar: <a href="/dd-screener/entry-state.json"><code>/dd-screener/entry-state.json</code></a> · 每日快照: <code>/dd-screener/entry-state-snapshots/YYYY-MM-DD.json</code> · 計數狀態: <code>/dd-screener/entry-state-state/watch_counters.json</code></p>
+  <p style="margin-top:16px;color:#94a3b8">Generated by <code>scripts/build_entry_state.py</code> · schema v1.1</p>
+</div>
+<script>
+(function(){
+  // v1.2 filter chips — client-side row visibility toggle.
+  // State (predefined defaults, no localStorage — reload resets).
+  var filters = {
+    BREAKOUT: true, PULLBACK_WATCH: true, PULLBACK_CONFIRMED: true,
+    RIDING: false, WEAK: false, newOnly: false,
+  };
+  var rows = document.querySelectorAll('tbody tr[data-state]');
+  var totalEl = document.getElementById('filter-total');
+  var visEl = document.getElementById('filter-visible');
+  totalEl.textContent = rows.length;
+
+  function applyFilters(){
+    var visible = 0;
+    rows.forEach(function(tr){
+      var stateOk = filters[tr.dataset.state] === true;
+      var newOk = !filters.newOnly || tr.dataset.isNew === '1';
+      var show = stateOk && newOk;
+      tr.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+    visEl.textContent = visible;
+  }
+
+  function updateChipDisabledState(){
+    document.querySelectorAll('.filter-chip[data-filter]').forEach(function(btn){
+      var key = btn.dataset.filter;
+      var n = 0;
+      rows.forEach(function(tr){ if (tr.dataset.state === key) n++; });
+      if (n === 0) btn.classList.add('disabled');
+    });
+  }
+
+  document.querySelectorAll('.filter-chip[data-filter]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      if (btn.classList.contains('disabled')) return;
+      var key = btn.dataset.filter;
+      filters[key] = !filters[key];
+      btn.classList.toggle('active', filters[key]);
+      applyFilters();
+    });
+  });
+  var newBtn = document.querySelector('.filter-chip[data-filter-newonly]');
+  if (newBtn) newBtn.addEventListener('click', function(){
+    filters.newOnly = !filters.newOnly;
+    newBtn.classList.toggle('active', filters.newOnly);
+    applyFilters();
+  });
+
+  updateChipDisabledState();
+  applyFilters();
+})();
+</script>
+</body>
+</html>

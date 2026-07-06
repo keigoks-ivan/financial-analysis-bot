@@ -148,20 +148,16 @@ def full_nav_block(group=None, item=None, subnav=""):
 
 # ------------------------------------------------------------- section subnav
 
+# 2026-07-07 選股頁面整理：targets / bottom-out / breakout / 盈餘加速 /
+# entry-state（含回測）/ alpha-rank / state-machine 已封存（noindex stub），
+# 從子選單移除；見 notes/site-internal/root/_proposal_stock_pages_cleanup_20260707.md。
 DD_SCREENER_SUBNAV = [
     ("/dd-screener/", "總覽"),
     ("/dd-screener/pipeline.html", "🧭 Pipeline"),
-    ("/dd-screener/targets.html", "🎯 標的清單"),
     ("/dd-screener/quality-entry.html", "Quality-Entry"),
     ("/dd-screener/cyclical-track.html", "衛星·循環軌"),
-    ("/dd-screener/bottom-out.html", "Bottom-Out"),
-    ("/dd-screener/breakout.html", "Breakout"),
-    ("/dd-screener/earnings-acceleration.html", "盈餘加速"),
-    ("/dd-screener/entry-state.html", "Entry-State"),
-    ("/dd-screener/entry-state-backtest.html", "Entry 回測"),
     ("/dd-screener/sop-funnel.html", "SOP Funnel"),
     ("/dd-screener/sop-funnel-backtest.html", "SOP 回測"),
-    ("/dd-screener/alpha-rank.html", "Alpha Rank"),
 ]
 
 

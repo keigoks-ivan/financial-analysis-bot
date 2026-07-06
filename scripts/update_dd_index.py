@@ -2700,13 +2700,9 @@ def main():
                 print(
                     f"\n⏸ DD Screener cascade debounced — latest.json updated "
                     f"{age:.0f}s ago (< {DEBOUNCE_SEC}s window).\n"
-                    f"   Skipping build_dd_screener + quality-entry + bottom-out + breakout + earnings-acceleration + entry-state.\n"
+                    f"   Skipping build_dd_screener + quality-entry.\n"
                     f"   寫完整批後請手動跑：python3 scripts/build_dd_screener.py "
-                    f"&& python3 scripts/build_quality_entry.py "
-                    f"&& python3 scripts/build_bottom_out.py "
-                    f"&& python3 scripts/build_breakout.py "
-                    f"&& python3 scripts/build_earnings_acceleration.py "
-                    f"&& python3 scripts/build_entry_state.py"
+                    f"&& python3 scripts/build_quality_entry.py"
                 )
                 return
         except OSError:
@@ -2823,104 +2819,13 @@ def main():
             file=sys.stderr,
         )
 
-    # Event-driven trigger for Bottom-Out screener (深回檔逆向訊號).
-    # Reads latest.json (schema v1.2+) and emits docs/dd-screener/bottom-out.{html,json}
-    # plus a daily snapshot. Runs after Quality-Entry — its failure is non-fatal.
-    bo_script = Path(__file__).resolve().parent / "build_bottom_out.py"
-    if not bo_script.exists():
-        return
-    print(f"\n→ Auto-trigger: {bo_script.name}")
-    try:
-        subprocess.run(
-            [sys.executable, str(bo_script)],
-            check=True,
-        )
-    except subprocess.CalledProcessError as e:
-        print(
-            f"\n⚠ Bottom-Out build failed (exit {e.returncode}). "
-            f"Rerun `python3 {bo_script}` manually.",
-            file=sys.stderr,
-        )
-    except Exception as e:
-        print(
-            f"\n⚠ Bottom-Out errored: {e}.",
-            file=sys.stderr,
-        )
-
-    # Event-driven trigger for Breakout screener (突破動能追擊).
-    # Reads latest.json (schema v1.2+) and emits docs/dd-screener/breakout.{html,json}
-    # plus a daily snapshot. Runs after Bottom-Out — its failure is non-fatal.
-    brk_script = Path(__file__).resolve().parent / "build_breakout.py"
-    if not brk_script.exists():
-        return
-    print(f"\n→ Auto-trigger: {brk_script.name}")
-    try:
-        subprocess.run(
-            [sys.executable, str(brk_script)],
-            check=True,
-        )
-    except subprocess.CalledProcessError as e:
-        print(
-            f"\n⚠ Breakout build failed (exit {e.returncode}). "
-            f"Rerun `python3 {brk_script}` manually.",
-            file=sys.stderr,
-        )
-    except Exception as e:
-        print(
-            f"\n⚠ Breakout errored: {e}.",
-            file=sys.stderr,
-        )
-
-    # Event-driven trigger for Earnings Acceleration screener (EPS 加速篩選).
-    # Reads latest.json (schema v1.2+) + fetches yfinance eps_trend/earnings_history
-    # and emits docs/dd-screener/earnings-acceleration.{html,json} plus a daily snapshot.
-    # Runs after Breakout — its failure is non-fatal.
-    ea_script = Path(__file__).resolve().parent / "build_earnings_acceleration.py"
-    if not ea_script.exists():
-        return
-    print(f"\n→ Auto-trigger: {ea_script.name}")
-    try:
-        subprocess.run(
-            [sys.executable, str(ea_script)],
-            check=True,
-        )
-    except subprocess.CalledProcessError as e:
-        print(
-            f"\n⚠ Earnings Acceleration build failed (exit {e.returncode}). "
-            f"Rerun `python3 {ea_script}` manually.",
-            file=sys.stderr,
-        )
-    except Exception as e:
-        print(
-            f"\n⚠ Earnings Acceleration errored: {e}.",
-            file=sys.stderr,
-        )
-
-    # Event-driven trigger for Entry State screener (BREAKOUT / RIDING / WATCH classifier).
-    # Reads quality-entry.json (Q≥0.55 / G≥0.50 universe with archetype=成長型) +
-    # yfinance MA/RSI snapshots and emits docs/dd-screener/entry-state.{html,json}
-    # plus a daily snapshot + state_store (WATCH hysteresis counters).
-    # Runs after Earnings Acceleration — its failure is non-fatal.
-    es_script = Path(__file__).resolve().parent / "build_entry_state.py"
-    if not es_script.exists():
-        return
-    print(f"\n→ Auto-trigger: {es_script.name}")
-    try:
-        subprocess.run(
-            [sys.executable, str(es_script)],
-            check=True,
-        )
-    except subprocess.CalledProcessError as e:
-        print(
-            f"\n⚠ Entry State build failed (exit {e.returncode}). "
-            f"Rerun `python3 {es_script}` manually.",
-            file=sys.stderr,
-        )
-    except Exception as e:
-        print(
-            f"\n⚠ Entry State errored: {e}.",
-            file=sys.stderr,
-        )
+    # ARCHIVED 2026-07-07（選股頁面整理，見 notes/site-internal/root/
+    # _proposal_stock_pages_cleanup_20260707.md）：Bottom-Out / Breakout /
+    # Earnings Acceleration / Entry State 四個 timing screener 頁已封存
+    # （URL 留 noindex stub，原檔在 _archived/dd-screener/），其 JSON 零下游
+    # 消費者，職能由 sop-funnel 板機 / cyclical-track / GRP 上修閘接手。
+    # 此處的連鎖 rebuild 一併移除，避免 DD 同步把封存頁重生回來。
+    # 要復活：從 _archived/ 還原 HTML 並照 git history 還原本段 auto-trigger。
 
     # Self-heal pass for the canonical site header (scripts/site_nav.py):
     # any page newly written by a skill/generator since the last sync gets the

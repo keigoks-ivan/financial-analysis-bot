@@ -267,7 +267,7 @@ def render_universe(latest: dict, pre_id: Optional[dict], momentum_blind: list) 
   <div class="block-sub">DD 宇宙規模與兩條「還沒被研究的候選」入口——形狀掃描的覆蓋盲區（六燈全滅＝零方法覆蓋），與下方回看鏡的動能盲區（高報酬卻無／舊 DD）。</div>
   <div class="stat-row">
     <div class="stat"><strong>{universe}</strong>DD 宇宙（latest.json）</div>
-    <div class="stat"><strong>{shape_blind}</strong>形狀掃描盲區 <a href="/dd-screener/targets.html" class="mini">→ 標的清單</a></div>
+    <div class="stat"><strong>{shape_blind}</strong>形狀掃描盲區</div>
     <div class="stat"><strong>{mom_blind}</strong>動能盲區 <a href="#lookback" class="mini">→ 回看鏡</a></div>
   </div>
 </section>"""
@@ -996,6 +996,7 @@ def build(dry_run: bool = False) -> int:
       個股部（總資產 25%，5～10 檔最有上漲潛力的組合）整條投資流程的活數字：
       <b>發現 → 資格閘 → 三軌射擊名單 → 板機 → 監控 → 回看鏡</b>。所有數字來自既有 JSON，每週隨基本面刷新自動更新。
       本頁只呈現<b>研究層</b>，實際持倉與權重不上站。
+      <b>分工</b>：本頁管<b>流程與板機</b>；排序與席位見 <a href="/engine/">⚙ 決策引擎</a>，對外正式榜見 <a href="/picks/">精選清單</a>。
     </div>
     <div class="hero-stats">
       <div class="hero-stat"><strong>{_fmt_stamp(run_ts)}</strong>最後更新（台北）</div>
