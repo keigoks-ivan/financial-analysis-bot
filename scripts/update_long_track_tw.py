@@ -308,8 +308,8 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
     <h1>台股長線訊號 — 2330/0050(E3)即時狀態</h1>
     <div class="sub">SystemProtocol v7 · 50% 2330 + 50% 0050 · E3 三訊號各 1/3 · Long only</div>
     <div style="margin-top:.6rem;display:flex;gap:.4rem">
-      <a href="/long-track-smh/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">🇺🇸 美股</a>
-      <a href="/long-track-tw/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border-radius:6px;background:#16a34a;color:#fff;text-decoration:none">🇹🇼 台股</a>
+      <a href="/long-track-smh/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">美股</a>
+      <a href="/long-track-tw/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border-radius:6px;background:#16a34a;color:#fff;text-decoration:none">台股</a>
     </div>
   </div>
 </div>
@@ -322,7 +322,7 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
   <div class="status-date">數據截至 {data_date}(週五收盤)· 頁面更新 {now}</div>
 </div>
 
-{('<div style="background:var(--red-bg);border:2px solid var(--red-border);border-radius:10px;padding:.9rem 1.2rem;margin:.5rem 0 1rem;font-size:.9rem"><b style="color:var(--red-text)">⚡ 本週訊號變化</b><br>' + "<br>".join(changes) + '<br><span style="font-size:.78rem;color:var(--muted)">下一個交易日將部位調整至上列目標。</span></div>') if changes else ('<div style="text-align:center;font-size:.78rem;color:var(--muted);margin:.3rem 0 1rem">本週無訊號變化' + (f"(上次變化：{last_change_date})" if last_change_date else "") + '</div>')}
+{('<div style="background:var(--red-bg);border:2px solid var(--red-border);border-radius:10px;padding:.9rem 1.2rem;margin:.5rem 0 1rem;font-size:.9rem"><b style="color:var(--red-text)">本週訊號變化</b><br>' + "<br>".join(changes) + '<br><span style="font-size:.78rem;color:var(--muted)">下一個交易日將部位調整至上列目標。</span></div>') if changes else ('<div style="text-align:center;font-size:.78rem;color:var(--muted);margin:.3rem 0 1rem">本週無訊號變化' + (f"(上次變化：{last_change_date})" if last_change_date else "") + '</div>')}
 
 <div class="banner">
   <b>E3 台股長線訊號 · 2026-06-23 採用 · 實倉中。</b>
@@ -380,9 +380,9 @@ E3 本身對大盤 B&amp;H 已是經典趨勢交換 —— 讓出約 4pp CAGR、
 </div>
 
 </div>
-<footer>
-  &copy; {datetime.now().year} InvestMQuest Research · 台股長線訊號 2330/0050(E3)· 真實 yfinance 資料 ·
-  訊號定義同步自 v7-backtest ensemble_experiment.build_signals · 每週五台股收盤後自動更新
+<footer class="imq-foot">
+  <div>&copy; {datetime.now().year} InvestMQuest Research</div>
+  <div><a href="/disclosures.html">方法論與揭露</a> · 本站內容僅供研究參考，不構成投資建議</div>
 </footer>
 </body>
 </html>"""

@@ -230,7 +230,7 @@ footer{{text-align:center;font-size:10.5px;color:#8aa5c0;padding:24px}}
 <div class="honesty">
 <strong>⚠ 誠實邊界 — 先讀這個再看數字</strong>
 五條件閘門用的是<u>今天</u>的分析師預估與護城河評級（歷史版本不存在），universe 是<u>今天</u>策展的 DD 名單——2022 年的漏斗會選出不一樣的股票。因此：<u>所有絕對報酬數字（CAGR、終值、α）一律視為灰色參考</u>，它們繼承了「拿今天的贏家回去考古」的樂觀偏誤。
-<div class="ok-list">✅ 站得住的結論（同名單內部對照，偏誤兩邊抵銷）：① 斷路器死鎖 ② 靜默期影響 ③ 態④ A/B ④ 型態行為 ⑤ 閘門對照（殘留偏誤較大）。選股能力的無偏證據 = <a href="/dd-screener/sop-funnel.html">主頁 forward 帳本</a>。Phase 2（point-in-time 代理閘門）另議。</div>
+<div class="ok-list">站得住的結論（同名單內部對照，偏誤兩邊抵銷）：① 斷路器死鎖 ② 靜默期影響 ③ 態④ A/B ④ 型態行為 ⑤ 閘門對照（殘留偏誤較大）。選股能力的無偏證據 = <a href="/dd-screener/sop-funnel.html">主頁 forward 帳本</a>。Phase 2（point-in-time 代理閘門）另議。</div>
 </div>
 </div>
 
@@ -316,7 +316,10 @@ footer{{text-align:center;font-size:10.5px;color:#8aa5c0;padding:24px}}
 </ul></div>
 </div></div>
 
-<footer>InvestMQuest · SOP 漏斗 2022 回測 v1.1 · 生成 {d["run_timestamp"]} · 模擬非投資建議</footer>
+<footer class="imq-foot">
+  <div>© 2026 InvestMQuest Research</div>
+  <div><a href="/disclosures.html">方法論與揭露</a> · 本站內容僅供研究參考，不構成投資建議</div>
+</footer>
 </body></html>
 """
     OUT_HTML.write_text(_plain_states(page), encoding="utf-8")

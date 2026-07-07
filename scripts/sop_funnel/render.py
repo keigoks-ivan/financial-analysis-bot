@@ -73,7 +73,7 @@ def _state_badge(st) -> str:
 
 def _signal_rows(evs) -> str:
     if not evs:
-        return '<tr><td colspan="8" class="empty">今日無訊號 — 系統在等，不是壞了</td></tr>'
+        return '<tr><td colspan="8" class="empty">今日無訊號 — 尚未觸發，非系統異常</td></tr>'
     out = []
     for e in evs:
         star = " ⭐" if e.get("base_star") else ""
@@ -207,7 +207,7 @@ def _performance_block(p) -> str:
               f'<tbody>{prows}</tbody></table>') if p["positions"] else ""
     return (
         f'<div class="section"><div class="card">'
-        f'<h2>📈 6/1 起策略淨值 vs SPY（起始資金 {cap_m}）</h2>'
+        f'<h2>6/1 起策略淨值 vs SPY（起始資金 {cap_m}）</h2>'
         f'<div class="desc">起始 {cap_m} 個股部，照 SOP 全交易設定（T+1 進場 · 部位 = min(10%, 1.5%÷停損) · '
         f'態③減1/3 · 態④減碼+回補 · 態⑤全出）逐日 mark-to-market；未投入現金照 IBKR 閒置資金利率 '
         f'{p.get("cash_apr_pct", 0):.2f}% p.a.（{_e(rate_src)}，自動跟基準）計息（USD、&gt;$10k、Actual/360）。'
@@ -526,7 +526,7 @@ footer{{text-align:center;font-size:10.5px;color:#8aa5c0;padding:24px}}
 </div></div></div>
 
 <div class="section"><div class="card">
-<h2>§1 今日板機 🔫</h2>
+<h2>§1 今日板機</h2>
 <div class="desc">今天收盤觸發的進場訊號（執行 = 次一交易日收盤）。部位建議 = min(10%, 1.5% ÷ 停損距離)，分母 = 個股部淨值。</div>
 <table><thead><tr><th class="left">ticker</th><th>型態</th><th>基期/錨</th><th>訊號收盤</th><th>停損距離</th><th>建議部位</th><th>旗標</th><th>報告</th></tr></thead>
 <tbody>{_signal_rows(d["today_signals"])}</tbody></table>
@@ -558,12 +558,12 @@ footer{{text-align:center;font-size:10.5px;color:#8aa5c0;padding:24px}}
 <div class="section"><div class="card">
 <h2>§4 記分板</h2>
 <div class="desc">漏斗累積成績（半年後裁決依據）。統計只算已平倉 trades；closed &lt; 20 顯示「樣本未熟」不給結論。A1 vs A2 對照驗證「起漲優於續勢」假設本身。</div>
-<div class="prereg">🔒 <strong>預登記裁決（跑前鎖定）</strong>{_e(d["prereg"]["a2_adjudication"])}</div>
+<div class="prereg"><strong>預登記裁決（跑前鎖定）</strong>{_e(d["prereg"]["a2_adjudication"])}</div>
 <div class="grid3">{_score_cards(d["scoreboard"])}</div>
 <h4>已平倉明細</h4>
 <table><thead><tr><th class="left">ticker</th><th>型態</th><th>進場</th><th>出場</th><th>原因</th><th>報酬</th><th>R</th><th>α vs SPY</th><th>持有</th></tr></thead>
 <tbody>{_closed_rows(d["closed_trades"])}</tbody></table>
-<h4>5 年歷史回測參考（含態④減碼幅度 A/B，供 2026-09 季檢）　·　<a href="/dd-screener/sop-funnel-backtest.html">🧪 完整 2022 回測：斷路器死鎖發現 + NAV 曲線 + 規則實驗室 →</a></h4>
+<h4>5 年歷史回測參考（含態④減碼幅度 A/B，供 2026-09 季檢）　·　<a href="/dd-screener/sop-funnel-backtest.html">完整 2022 回測：斷路器死鎖發現 + NAV 曲線 + 規則實驗室 →</a></h4>
 {_backtest_block(d.get("backtest"))}
 </div></div>
 
@@ -597,6 +597,9 @@ footer{{text-align:center;font-size:10.5px;color:#8aa5c0;padding:24px}}
 {_population_block(d["population"], d.get("moat_excluded", []))}
 </div></div>
 
-<footer>InvestMQuest · Pure MA SOP 漏斗 v1.0 · 更新 {_updated_taipei(d["run_timestamp"])}（台北）· 模擬非投資建議</footer>
+<footer class="imq-foot">
+  <div>© 2026 InvestMQuest Research</div>
+  <div><a href="/disclosures.html">方法論與揭露</a> · 本站內容僅供研究參考，不構成投資建議</div>
+</footer>
 </body></html>
 """)

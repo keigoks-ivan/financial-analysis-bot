@@ -165,7 +165,7 @@ def render(payload: dict) -> str:
 
     gates = "".join(f'<li><b>{g["date"]}</b>　{escape(g["label"])}</li>' for g in GATE_CHANGES)
     body = f"""<div class="hero">
-<h1>🧾 形狀記分板 · L4 結算層</h1>
+<h1>形狀記分板 · L4 結算層</h1>
 <div class="hero-sub">每筆 DD 裁決 × 週線自動結算（裁決日 → 最新價），按「裁決當下的價格形狀」分桶。
 回答一個問題：<b>哪種形狀我判得準、哪種形狀我系統性錯過</b>。判斷函數的季度校準以此為據。</div>
 <div class="asof">價格 as of {payload['as_of']} ｜ 結算 {payload['n_settled']} 筆

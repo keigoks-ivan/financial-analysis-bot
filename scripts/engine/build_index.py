@@ -41,13 +41,13 @@ def main() -> int:
     n_alerts = sum(1 for d in arena.get("duels", []) if d.get("alert"))
     cap_b = f"{MKTCAP_MIN / 1e9:.0f}"
 
-    funnel = f"""① 發現    📡 雷達每週掃 S&P 500＋NDX＋中型股（{scored_n} 檔可算）
+    funnel = f"""① 發現    雷達每週掃 S&P 500＋NDX＋中型股（{scored_n} 檔可算）
              GRP 三閘：G 成長 ≥15% × R 上修 >0（下修否決）× P 站上 52 週線未過熱
-             ＋ 市值 ≥ ${cap_b} 億美元 ×10 → ⭐ 主榜（現 {board_n} 檔，按上修幅度排）
+             ＋ 市值 ≥ ${cap_b} 億美元 ×10 → 主榜（現 {board_n} 檔，按上修幅度排）
 
 ② 資格    兩級審查（研究深度 ∝ 倉位）
              核心席 → 完整 v14 DD（裁決：進場／觀望／迴避）
-             衛星席 → 🪶 快審卡即可（週期位置判定＋陷阱檢查＋護城河快評）
+             衛星席 → 快審卡即可（週期位置判定＋陷阱檢查＋護城河快評）
              ⚠ 這層專擋 GRP 看不見的：週期頂點假象、會計假成長、基期效應
 
 ③ 分軌    護城河定軌別
@@ -63,10 +63,10 @@ def main() -> int:
              觀望也被盯：錯過成本／上修觸發 → 強制複審（複審對 DD 扳機，不因上修就追）"""
 
     body = f"""<div class="hero">
-<h1>⚙ 決策引擎</h1>
+<h1>決策引擎</h1>
 <div class="hero-sub" style="font-size:15px"><b>一句話：全市場掃「高成長 × EPS 上修 × 位置適合」→ 審查擋陷阱 →
 護城河分軌 → 席位化組合 → 每個判斷自動對答案。</b></div>
-<div class="asof">研究層頁面，不含實際持倉 ｜ 週更 ｜ 分工：本引擎管排序與席位（機器擂台）；流程與板機見 <a href="/dd-screener/pipeline.html">🧭 Pipeline</a>，對外正式榜見 <a href="/picks/">精選清單</a> ｜ 已結算 {sb.get('n_settled', '—')} 筆歷史裁決</div>
+<div class="asof">研究層頁面，不含實際持倉 ｜ 週更 ｜ 分工：本引擎管排序與席位（機器擂台）；流程與板機見 <a href="/dd-screener/pipeline.html">Pipeline</a>，對外正式榜見 <a href="/picks/">精選清單</a> ｜ 已結算 {sb.get('n_settled', '—')} 筆歷史裁決</div>
 </div>
 
 <div class="block">
@@ -79,12 +79,12 @@ def main() -> int:
 <table>
 <thead><tr><th class="left">問題</th><th class="left">權威</th><th class="left">在哪看</th></tr></thead>
 <tbody>
-<tr><td class="left">先看誰</td><td class="left">GRP 主榜（市場活數據，週更）</td><td class="left"><a href="/engine/radar.html">📡 雷達</a></td></tr>
-<tr><td class="left">能不能買</td><td class="left">DD 裁決／🪶 快審卡（懂生意的否決權）</td><td class="left"><a href="/engine/cards.html">🗂 決策卡</a></td></tr>
-<tr><td class="left">核心還是衛星</td><td class="left">護城河評級（S/A＝核心、其餘＝衛星）</td><td class="left"><a href="/engine/arena.html">⚔ 擂台</a></td></tr>
+<tr><td class="left">先看誰</td><td class="left">GRP 主榜（市場活數據，週更）</td><td class="left"><a href="/engine/radar.html">雷達</a></td></tr>
+<tr><td class="left">能不能買</td><td class="left">DD 裁決／快審卡（懂生意的否決權）</td><td class="left"><a href="/engine/cards.html">決策卡</a></td></tr>
+<tr><td class="left">核心還是衛星</td><td class="left">護城河評級（S/A＝核心、其餘＝衛星）</td><td class="left"><a href="/engine/arena.html">擂台</a></td></tr>
 <tr><td class="left">何時買</td><td class="left">板機（A1/B/C）＋ regime 撥盤</td><td class="left"><a href="/dd-screener/sop-funnel.html">SOP Funnel</a>・<a href="/engine/arena.html">擂台</a></td></tr>
-<tr><td class="left">何時複審／出場</td><td class="left">決策卡宣稱（帶數字帶期限）</td><td class="left"><a href="/engine/cards.html">🗂 決策卡</a></td></tr>
-<tr><td class="left">規則能不能改</td><td class="left">記分板（91 天結算，季檢才調參）</td><td class="left"><a href="/engine/scoreboard.html">🧾 記分板</a></td></tr>
+<tr><td class="left">何時複審／出場</td><td class="left">決策卡宣稱（帶數字帶期限）</td><td class="left"><a href="/engine/cards.html">決策卡</a></td></tr>
+<tr><td class="left">規則能不能改</td><td class="left">記分板（91 天結算，季檢才調參）</td><td class="left"><a href="/engine/scoreboard.html">記分板</a></td></tr>
 </tbody></table>
 </div>
 
@@ -94,7 +94,7 @@ def main() -> int:
 <div class="stat"><strong>{len(core)}/{core_slots}</strong><span>核心席</span></div>
 <div class="stat"><strong>{len(sat)}/{sat_slots}</strong><span>衛星席</span></div>
 <div class="stat"><strong>{escape(regime.get('label') or '—')}</strong><span>Regime 撥盤</span></div>
-<div class="stat"><strong>{n_alerts}</strong><span>⚔ 擂台警報</span></div>
+<div class="stat"><strong>{n_alerts}</strong><span>擂台警報</span></div>
 </div>
 <div class="block-sub">核心：{escape('、'.join(core) or '—')}　｜　衛星：{escape('、'.join(sat) or '—')}
 （空席是刻意的——審查放行率低＋市值門檻＋regime 中性下，空席就是倉位管理）</div>
@@ -143,7 +143,7 @@ def main() -> int:
 <p>一席一卡：GRP 守門自動結算＋DD 深層宣稱帶期限。</p>
 <a href="/engine/cards.html">→ 決策卡</a></div>
 <div class="layer"><div class="lno">L3</div><h3>席位擂台</h3>
-<p>席位 vs 同軌最強挑戰者，⚔ 警報進每月人工擂台；席位變動帳本 append-only。</p>
+<p>席位 vs 同軌最強挑戰者，警報進每月人工擂台；席位變動帳本 append-only。</p>
 <a href="/engine/arena.html">→ 擂台</a></div>
 <div class="layer"><div class="lno">L4</div><h3>結算所</h3>
 <p>每筆裁決 × 週線自動結算、按形狀分桶——判斷函數的季度校準依據。</p>

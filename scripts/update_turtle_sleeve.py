@@ -676,12 +676,12 @@ def generate_html(legs, stx, combined, asof, changes, last_change_date, rebal_du
 
     change_html = ""
     if changes:
-        change_html = ('<div class="change-box"><b style="color:var(--red-text)">⚡ 今日 sleeve 事件</b><br>'
+        change_html = ('<div class="change-box"><b style="color:var(--red-text)">今日 sleeve 事件</b><br>'
                        + "<br>".join(changes)
                        + '<br><span style="font-size:.78rem;color:var(--muted)">明日開盤依上列觸發執行。</span></div>')
     elif rebal_due:
         change_html = ('<div class="change-box" style="background:var(--blue-bg);border-color:var(--blue-border)">'
-                       '<b style="color:var(--blue-text)">🔁 月底再平衡日</b><br>'
+                       '<b style="color:var(--blue-text)">月底再平衡日</b><br>'
                        'sleeve 與股票核心再平衡回 20 / 80(回測驗證的紀律)。</div>')
     else:
         change_html = ('<div style="text-align:center;font-size:.78rem;color:var(--muted);margin:.3rem 0 1rem">'
@@ -820,9 +820,9 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
 </div>
 
 </div>
-<footer>
-  &copy; {datetime.now().year} InvestMQuest Research · 商品 Sleeve + 組合系統(OOS 並行追蹤)·
-  真實 yfinance 資料 · 引擎同步自 v7-backtest turtle_backtest/strategy.py · 每日美股收盤後自動更新
+<footer class="imq-foot">
+  <div>&copy; {datetime.now().year} InvestMQuest Research</div>
+  <div><a href="/disclosures.html">方法論與揭露</a> · 本站內容僅供研究參考，不構成投資建議</div>
 </footer>
 {perf_script(nav_labels, comb_vals, stx_vals, slv_vals, ctrl_vals)}
 </body>

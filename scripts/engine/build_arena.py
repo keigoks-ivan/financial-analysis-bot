@@ -389,7 +389,7 @@ def main() -> int:
                  if payload["max_sector_share_pct"] > 50 else "")
 
     body = f"""<div class="hero">
-<h1>⚔ 席位擂台 · L3 組合層</h1>
+<h1>席位擂台 · L3 組合層</h1>
 <div class="hero-sub">組合才是產品：核心 {CORE_SLOTS} 席＋衛星 {SAT_SLOTS} 席，每席對決「同形狀最強挑戰者」。
 ⚔ 警報＝挑戰者分數超過席位 → 進<b>每月擂台的人工複審清單</b>。引擎不自動換席——換人是人的裁決。
 席位資格（GRP v1，2026-07-04 持有人拍板）＝DD 裁決進場 ∩ <b>三閘全過</b>：

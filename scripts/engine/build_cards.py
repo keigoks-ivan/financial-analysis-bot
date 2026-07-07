@@ -317,11 +317,11 @@ def main() -> int:
 
     sections = ""
     if core_cards:
-        sections += (f'<h2 class="seat-section">🎯 核心席'
+        sections += (f'<h2 class="seat-section">核心席'
                       f'<span class="cnt">（{len(core_cards)} 檔）</span></h2>'
                       + "".join(render_card(c, open_default=True) for c in core_cards))
     if sat_cards:
-        sections += (f'<h2 class="seat-section">🛰 衛星席'
+        sections += (f'<h2 class="seat-section">衛星席'
                       f'<span class="cnt">（{len(sat_cards)} 檔）</span></h2>'
                       + "".join(render_card(c, open_default=True) for c in sat_cards))
     if bench_cards:
@@ -331,7 +331,7 @@ def main() -> int:
                       f'{bench_inner}</details>')
 
     body = f"""<div class="hero">
-<h1>🗂 決策卡 · L2 判斷層</h1>
+<h1>決策卡 · L2 判斷層</h1>
 <div class="hero-sub">一席一卡，兩層守門：上層 GRP（G 高成長／R 上修／P 位置，週更自動結算，
 破閘自動亮 ⛔）＋下層深層證偽（基本面宣稱，財報期人工結算）。卡片分兩級：完整 DD 抽取卡
 （核心席）vs 🪶 快審卡（衛星席限定，5% 倉）。下表 30 秒掃全局，點 ticker 或卡片展開細節。</div>

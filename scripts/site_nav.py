@@ -74,9 +74,9 @@ MENU = {
     "pick": [
         ("cockpit", "/cockpit/", "選股駕駛艙"),
         ("picks", "/picks/", "精選清單"),
-        ("pipe", "/dd-screener/pipeline.html", "🧭 Pipeline 漏斗"),
+        ("pipe", "/dd-screener/pipeline.html", "Pipeline 漏斗"),
         ("dds", "/dd-screener/", "DD Screener"),
-        ("eng", "/engine/", "⚙ 決策引擎"),
+        ("eng", "/engine/", "決策引擎"),
         ("mom5", "/research/momentum-5/", "Momentum-5"),
         ("qus", "/qgm/", "QGM 美股"),
         ("qtw", "/qgm-tw/", "QGM 台股"),
@@ -87,7 +87,7 @@ MENU = {
         ("syn", "/research/synthesis/", "期望落差綜合研判"),
         ("cmp", "/comparisons/", "多股對比"),
         ("id", "/id/", "產業深度 ID"),
-        ("tier", "/id/tier_matrix.html", "🎯 Tier Matrix"),
+        ("tier", "/id/tier_matrix.html", "Tier Matrix"),
         ("sc", "/supply-chain/", "供應鏈地圖"),
     ],
     "market": [
@@ -106,7 +106,7 @@ MENU = {
         ("sleeve", "/turtle-sleeve/", "商品 Sleeve"),
         ("bt", "/backtest/", "量化回測"),
         ("tools", "/tools/", "期貨部位計算機"),
-        ("cache", "/cache/", "🗄 Data Cache"),
+        ("cache", "/cache/", "Data Cache"),
     ],
 }
 GROUP_LABELS = {"pick": "選股", "research": "研究", "market": "市場", "system": "系統"}
@@ -138,8 +138,8 @@ def build_nav(group=None, item=None):
 {dd("research")}
 {dd("market")}
 {dd("system")}
-      <a href="/mental-models/"{mm_cls}>🧠 心智模型</a>
-      <a href="/how-to.html"{howto_cls}>📘 使用說明</a>
+      <a href="/mental-models/"{mm_cls}>心智模型</a>
+      <a href="/how-to.html"{howto_cls}>使用說明</a>
     </nav>
   </div>
 </header>"""
@@ -156,7 +156,7 @@ def full_nav_block(group=None, item=None, subnav=""):
 # 從子選單移除；見 notes/site-internal/root/_proposal_stock_pages_cleanup_20260707.md。
 DD_SCREENER_SUBNAV = [
     ("/dd-screener/", "總覽"),
-    ("/dd-screener/pipeline.html", "🧭 Pipeline"),
+    ("/dd-screener/pipeline.html", "Pipeline"),
     ("/dd-screener/quality-entry.html", "Quality-Entry"),
     ("/dd-screener/cyclical-track.html", "衛星·循環軌"),
     ("/dd-screener/sop-funnel.html", "SOP Funnel"),
@@ -166,10 +166,10 @@ DD_SCREENER_SUBNAV = [
 
 ENGINE_SUBNAV = [
     ("/engine/", "總覽 · 方法論"),
-    ("/engine/radar.html", "📡 全市場雷達"),
-    ("/engine/cards.html", "🗂 決策卡"),
-    ("/engine/arena.html", "⚔ 席位擂台"),
-    ("/engine/scoreboard.html", "🧾 形狀記分板"),
+    ("/engine/radar.html", "全市場雷達"),
+    ("/engine/cards.html", "決策卡"),
+    ("/engine/arena.html", "席位擂台"),
+    ("/engine/scoreboard.html", "形狀記分板"),
 ]
 
 

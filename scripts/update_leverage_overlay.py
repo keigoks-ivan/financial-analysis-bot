@@ -102,7 +102,7 @@ def main():
 
     stx_line = (f"股票核心 STX50 目前曝險 <b>{stx_exp:.0f}%</b>(見 <a href='/long-track-smh/'>主頁</a>)。"
                 if stx_exp is not None else "")
-    combined_note = (f"組合圖像:你在股票約 {stx_exp:.0f}%(STX50),vol-target 建議在 QQQ/那指半邊"
+    combined_note = (f"組合圖像:股票核心約 {stx_exp:.0f}%(STX50),vol-target 建議在 QQQ/那指半邊"
                      f"<b>{'再加 +%.2fx MNQ' % f if on else '不額外加槓桿'}</b>。"
                      if stx_exp is not None else "")
 
@@ -202,7 +202,7 @@ td{{font-variant-numeric:tabular-nums}}
 <div class="rule-list">
 規則:<b>L = clip( 中位數 ÷ 20日波動 , 1.0 , 1.8 )</b>，疊加 <b>f = (L−1) × 0.5</b> 的 MNQ。
 波動<b>比平常低</b> → L&gt;1 加槓桿;<b>一變亂</b> → L=1 收回。<br>
-口數:以名目 NAV ${nav} 計，1 口 MNQ ≈ ${unit} 名目 → 目前約 <b>{contracts} 口</b>(按你實際 STX50 資金等比例縮放)。<br>
+口數:以名目 NAV ${nav} 計，1 口 MNQ ≈ ${unit} 名目 → 目前約 <b>{contracts} 口</b>(按實際 STX50 資金等比例縮放)。<br>
 {stx_line}
 </div>
 </div>
@@ -226,8 +226,9 @@ td{{font-variant-numeric:tabular-nums}}
 </div>
 
 </div>
-<footer style="background:#fff;border-top:1px solid var(--border);color:var(--muted);text-align:center;padding:1rem 0;font-size:.75rem;margin-top:1rem">
-  &copy; 2026 InvestMQuest Research · vol-target 槓桿層(實驗·紙上)· 真實 yfinance(QQQ/NQ)· 每日美股收盤後自動更新 · 證據見 <a href="/backtest/leverage/">/backtest/leverage/</a>
+<footer class="imq-foot">
+  <div>&copy; 2026 InvestMQuest Research</div>
+  <div><a href="/disclosures.html">方法論與揭露</a> · 本站內容僅供研究參考，不構成投資建議</div>
 </footer>
 </body></html>"""
 

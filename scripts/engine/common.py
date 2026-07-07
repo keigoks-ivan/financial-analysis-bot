@@ -65,7 +65,10 @@ td a:hover{text-decoration:underline}
                border-radius:5px;padding:1px 7px}
 .st-live{background:#dcfce7;color:#166534}
 .st-soon{background:#f1f5f9;color:#64748b}
-footer{margin-top:26px;font-size:12px;color:#94a3b8;text-align:center}
+.imq-foot{margin-top:26px;padding:14px 0;border-top:1px solid #e2e8f0;
+          color:#94a3b8;font-size:12px;text-align:center;line-height:1.8}
+.imq-foot a{color:#1d4ed8;text-decoration:none}
+.imq-foot a:hover{text-decoration:underline}
 .overview-wrap{overflow-x:auto;margin:16px 0 4px;border:1px solid #e2e8f0;
                border-radius:12px;background:#fff}
 .overview-tbl{font-size:12.5px;margin-top:0}
@@ -118,7 +121,10 @@ def page_shell(title: str, current: str, body: str, desc: str = "") -> str:
 {nav}
 <div class="wrap">
 {body}
-<footer>InvestMQuest Research · 決策引擎（研究層；不含實際持倉）</footer>
+<footer class="imq-foot">
+  <div>© 2026 InvestMQuest Research</div>
+  <div><a href="/disclosures.html">方法論與揭露</a> · 本站內容僅供研究參考，不構成投資建議</div>
+</footer>
 </div>
 </body>
 </html>"""

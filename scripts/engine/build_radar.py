@@ -207,7 +207,7 @@ def render_grp_board(payload: dict) -> str:
                    f'<td>{pct(r["ret_12m"], 0)}</td>'
                    f'<td>{ROUTE_TXT.get(r.get("route"))}</td><td>{pool}</td></tr>')
     return f"""<div class="shape-card" style="border-left-color:#b45309">
-<h3>⭐ GRP 主榜 <span class="cnt">{len(board)} 檔全過三閘（顯示 top 30，按上修幅度）</span></h3>
+<h3>GRP 主榜 <span class="cnt">{len(board)} 檔全過三閘（顯示 top 30，按上修幅度）</span></h3>
 <div class="shape-desc"><b>持有人選股準則（2026-07-04 拍板）：高成長 × EPS 上修 × 位置適合＋市值 ≥ $200 億</b>——
 G＝FY+1 隱含 EPS 成長 ≥15% ｜ R＝FY+1 EPS 30 天修正 &gt;0（下修否決）｜ P＝站上 40 週線＋位置標籤
 ｜市值門檻管主榜與席位資格（本輪另有 {payload.get('grp_subfloor_n', 0)} 檔過三閘但未達市值，留在形狀欄）。
@@ -253,7 +253,7 @@ def render(payload: dict) -> str:
 </div>""")
 
     body = f"""<div class="hero">
-<h1>📡 全市場雷達 · L0 發現層</h1>
+<h1>全市場雷達 · L0 發現層</h1>
 <div class="hero-sub">S&amp;P 500＋Nasdaq 100＋S&amp;P 400 中型股（~920 檔，2026-07-04 持有人拍板排除小型股）每週全掃。
 <b>主榜＝GRP 三閘</b>（高成長 × EPS 上修 × 位置適合，按上修幅度排）——這是選股準則本身；
 四形狀欄降為發現鏡頭（突破／循環轉折／動能／主題下沉，從不同角度找候選）。
@@ -262,7 +262,7 @@ def render(payload: dict) -> str:
 ｜ 可算 {payload['scored_n']} 檔 ｜ 修正確認覆蓋 {covered['stage2_ok']}/{covered['stage2_cand']} 檔</div>
 </div>
 <div class="stat-row">
-<div class="stat"><strong>{len(payload.get('grp_board') or [])}</strong><span>⭐ GRP 三閘全過</span></div>
+<div class="stat"><strong>{len(payload.get('grp_board') or [])}</strong><span>GRP 三閘全過</span></div>
 <div class="stat"><strong>{sum(1 for r in (payload.get('grp_board') or []) if not r.get('in_pool'))}</strong><span>主榜·池外</span></div>
 <div class="stat"><strong>{len(shapes['breakout_base'])}</strong><span>長基期突破帶</span></div>
 <div class="stat"><strong>{len(shapes['cyclical_turn'])}</strong><span>循環轉折</span></div>

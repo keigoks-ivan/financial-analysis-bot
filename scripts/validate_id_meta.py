@@ -52,6 +52,11 @@ ENUM_FIELDS = {
     "sd_verdict": {"shortage", "balanced", "surplus", "split"},
     "clock_phase": {"I", "II", "III", "IV"},
     "conviction": {"high", "mid", "low"},
+    # v2.6: priced-in 機器化（§7 priced-in 檢驗結論落欄；present 才驗、v2.6+ 必填）。
+    # WHY: calibration_id_20260707 — shortage×PhaseII（AI 硬體）勝率 7/25，
+    # sd_verdict 量物理供需非可投資性；priced_in 是 ID 層對「短缺陷阱」的機器可讀自我保護。
+    # low = 分歧大多未 priced（可操作空間大）/ mid / high = 多數利多已 priced（分歧對也不可操作）。
+    "priced_in": {"low", "mid", "high"},
     # v1.9: quality_tier — determines which retrofit mechanisms apply
     # Q0 Flagship: full FET + thesis-trace + redteam (≥30 verified T1)
     # Q1 Standard: FET required, thesis-trace warning, redteam light (≥10 T1)
@@ -118,6 +123,7 @@ V2_RE = re.compile(r"^v2\.")
 #       skill_version ≥ v2.5 時新欄位（含 v2.4 三欄）升為「必填阻斷」；v2.0–v2.4 present 才驗、
 #       absent 放行；v1.x legacy 全豁免（與 now_state 三欄的 V2_RE 模式同構，但門檻是 v2.5+）。
 V2_5_MIN = (2, 5)
+V2_6_MIN = (2, 6)
 SD_VERDICT_DETAIL_CAP = 160
 KILL_METRICS_MIN = 3
 KILL_METRIC_STATUS = {"ok", "warning", "triggered", "unknown"}
@@ -191,6 +197,12 @@ def validate_meta(meta: dict) -> list:
         dm = meta.get("demand_5y_multiple")
         if not (isinstance(dm, (int, float)) and not isinstance(dm, bool)):
             errs.append("demand_5y_multiple: required (number) for skill_version >= v2.5")
+
+    # v2.6 priced_in（§7 priced-in 檢驗機器化）— present 由 ENUM_FIELDS 驗；v2.6+ 必填。
+    if ver is not None and ver >= V2_6_MIN:
+        v = meta.get("priced_in")
+        if not (isinstance(v, str) and v.strip()):
+            errs.append("priced_in: required (low|mid|high) for skill_version >= v2.6 (§7 priced-in 落欄)")
 
     # sd_verdict_detail — split 時必填、任何時候有值都驗型/長度。
     detail = meta.get("sd_verdict_detail")
