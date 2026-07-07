@@ -329,8 +329,11 @@ def main():
         for note in notes:
             if note.get("entity"):
                 note["entity"] = aliases.get(note["entity"], note["entity"])
-            rel_note = note_rel_path(note)
-            _write_if_changed(VAULT / rel_note, render_note(note, entity_themes))
+            if note.get("vault_rel"):  # 用戶筆記本身就在 vault，絕不覆寫
+                rel_note = note["vault_rel"]
+            else:
+                rel_note = note_rel_path(note)
+                _write_if_changed(VAULT / rel_note, render_note(note, entity_themes))
             s = {k: note.get(k) for k in
                  ("id", "type", "entity", "theme", "title", "date", "verdict",
                   "grade", "oneliner", "tags", "url", "source", "parse_level",

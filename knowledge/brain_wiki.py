@@ -803,22 +803,39 @@ MUNGER = """<!DOCTYPE html>
 <title>決策前蒙格清單 · 第二大腦</title>
 <link rel="stylesheet" href="assets/wiki.css">
 <style>
-.mrow{display:flex;gap:10px;align-items:flex-start;padding:9px 14px;
-border:1px solid var(--line);border-radius:10px;margin:6px 0;background:var(--card)}
-.mrow input{margin-top:5px;accent-color:#5ea0ff;width:16px;height:16px}
-.mrow.done{opacity:.45}
-.mrow .ask{color:var(--ink);font-weight:600}
-.mrow .nm{font-size:12px;color:var(--sub)}
+.qcard{border:1px solid var(--line);border-radius:12px;background:var(--card);
+padding:14px 18px;margin:10px 0}
+.qcard .why{font-size:12px;color:#c4b5fd;background:rgba(167,139,250,.1);
+border-radius:6px;padding:3px 10px;display:inline-block;margin-bottom:6px}
+.qcard .ask{font-weight:700;font-size:15.5px;color:var(--ink)}
+.qcard .nm{font-size:12px;color:var(--sub);margin:4px 0 8px}
+.qcard textarea{width:100%;min-height:64px;background:rgba(10,14,26,.6);
+border:1px solid var(--line);border-radius:8px;color:var(--ink);
+padding:10px 12px;font-size:14px;font-family:inherit;line-height:1.6;resize:vertical}
+.qcard textarea:focus{outline:none;border-color:var(--accent);
+box-shadow:0 0 0 3px rgba(94,160,255,.15)}
+.qcard.ok{border-color:rgba(22,163,74,.45)}
+.qcard.ok .ask::after{content:" ✓";color:var(--go-t)}
+.wc{font-size:11px;color:#556180;text-align:right;font-family:var(--mono)}
 .prog{font-family:var(--mono);font-size:13px;color:var(--sub)}
 .hist td{padding:4px 12px 4px 0;font-size:13.5px;font-family:var(--mono)}
 .missflag{border:1px solid rgba(220,38,38,.5);background:rgba(220,38,38,.08);
 border-radius:10px;padding:10px 16px;margin:10px 0;font-size:13.5px}
+.pastbox{border:1px solid rgba(167,139,250,.4);background:rgba(167,139,250,.07);
+border-radius:12px;padding:12px 18px;margin:12px 0;font-size:13.5px}
+.pmbox{border:1px solid rgba(220,38,38,.35);background:rgba(220,38,38,.05);
+border-radius:12px;padding:14px 18px;margin:10px 0;font-size:13.5px;
+line-height:1.8;max-height:340px;overflow-y:auto;white-space:pre-wrap}
+.verdict-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.verdict-row select{background:var(--cardsolid);color:var(--ink);
+border:1px solid var(--line2);border-radius:8px;padding:8px 12px;font-size:14px}
 </style></head>
 <body><div class="top"><a href="index.html">🧠 <b>第二大腦</b></a>
 <span class="dim">🧭 決策前蒙格清單</span></div>
 <main>
 <h1>🧭 決策前蒙格清單</h1>
-<p class="cnt">「除非我能比對方更好地反駁我自己，否則我不配有這個觀點。」——動部位前把這頁走完。</p>
+<p class="cnt">勾選不會讓你變聰明——<b>寫下來</b>才會。這頁按這檔股票的實際狀態出題（不是 30 題全灌），
+每題要寫 ≥20 字才算過；寫完跟 pre-mortem 對質，最後留下裁決與殺手假設，匯出進第二大腦讓未來的你打臉。</p>
 <input class="search" id="tk" list="tkl" placeholder="輸入 ticker（如 NVDA、2330.TW）…" autocomplete="off">
 <datalist id="tkl"></datalist>
 <div id="out"></div>
@@ -828,93 +845,200 @@ border-radius:10px;padding:10px 16px;margin:10px 0;font-size:13.5px}
 <script id="d-themes" type="application/json">%%ENTTHEMES%%</script>
 <script id="d-notes" type="application/json">%%NOTESBY%%</script>
 <script id="d-settle" type="application/json">%%SETTLE%%</script>
+<script id="d-pm" type="application/json">%%PM%%</script>
 <script>
 const MODELS=JSON.parse(document.getElementById('d-models').textContent);
 const ENTS=JSON.parse(document.getElementById('d-ents').textContent);
 const ETH=JSON.parse(document.getElementById('d-themes').textContent);
 const NB=JSON.parse(document.getElementById('d-notes').textContent);
 const ST=JSON.parse(document.getElementById('d-settle').textContent);
+const PM=JSON.parse(document.getElementById('d-pm').textContent);
+const M={};MODELS.forEach(m=>M[m.id]=m);
 const ENTMAP={};ENTS.forEach(t=>ENTMAP[t.k]=t);
 document.getElementById('tkl').innerHTML=ENTS.map(t=>'<option value="'+t.k+'">').join('');
 function e_(s){const d=document.createElement('span');d.textContent=s==null?'':s;return d.innerHTML}
 const VCL={'進場':'v-go','觀望':'v-hold','迴避':'v-avoid'};
+const MIN=20;
 
+/* ── 對症出題引擎：依這檔的實際狀態選 6-9 題，每題帶「為什麼問你這題」 ── */
+function route(tk,ent,rows,ths,notes){
+  const picks=[],seen=new Set();
+  function add(ids,why){ids.forEach(id=>{if(!seen.has(id)&&M[id]){seen.add(id);
+    picks.push({m:M[id],why})}})}
+  add(['m6'],'核心題：反方論點是入場費，不是選配');
+  add(['m26','m24'],'核心題：沒有期望值與機會成本，其他都是敘事');
+  const missed=rows.filter(r=>(r[1]==='觀望'||r[1]==='迴避')&&r[2]>30);
+  if(missed.length)add(['m22','m16'],'你曾對這檔說「'+missed[0][1]+'」，之後 +'+missed[0][2]+
+    '%——先檢查你是在更新信念，還是在防衛舊立場');
+  const last=rows.length?rows[rows.length-1]:null;
+  if(last&&last[2]>50)add(['m9','m17'],'結算 +'+last[2]+'%——你的「還會漲」是絕對價值還是對比效應？');
+  if(last&&last[2]<-20)add(['m7','m22'],'結算 '+last[2]+'%——套牢時最容易凹單，檢查損失厭惡');
+  if(ent.v==='進場')add(['m2','m21','m18'],'現裁決是進場——樂觀時最該檢查從眾、過度自信與安全邊際');
+  if(ent.v==='觀望'||ent.v==='迴避')add(['m7','m23'],'現裁決偏空——檢查你是理性保守還是心理防衛');
+  if(ths.length>=4)add(['m10'],'這檔掛 '+ths.length+' 條 thesis——多重利多共振正是 lollapalooza 高發區');
+  if(ths.length<=1)add(['m30','m19'],'只掛 '+ths.length+' 條 thesis——單腳桌，檢查生態位與單點失敗');
+  if(notes.length<2)add(['m25','m3'],'這檔功課只有 '+notes.length+' 份——你的資訊優勢從哪來？');
+  if(ent.g==='A+'||ent.g==='A')add(['m12','m13'],'評級 '+ent.g+'——愈是好公司愈要問護城河能撐幾年、誰來毀滅它');
+  return picks.slice(0,9);
+}
+
+function store(tk){try{return JSON.parse(localStorage.getItem('munger2_'+tk)||'{}')}catch(e){return{}}}
+function save(tk,s){s.date=new Date().toISOString().slice(0,10);
+  localStorage.setItem('munger2_'+tk,JSON.stringify(s))}
+
+let CUR=null;
 function render(tk){
   tk=tk.toUpperCase();
-  const ent=ENTMAP[tk];
-  const out=document.getElementById('out');
-  if(!ent){out.innerHTML=tk?'<p class="cnt">庫裡沒有 '+e_(tk)+' —— 這就是能力圈的邊界：沒做過功課的名字，蒙格會放進「太難」籃子。</p>':'';return}
-  const notes=NB[tk]||[];
+  const ent=ENTMAP[tk],out=document.getElementById('out');
+  if(!ent){out.innerHTML=tk?'<p class="cnt">庫裡沒有 '+e_(tk)+
+    ' —— 這就是能力圈的邊界：沒做過功課的名字，蒙格會放進「太難」籃子。</p>':'';return}
+  const rows=ST[tk]||[],ths=ETH[tk]||[],notes=NB[tk]||[];
   const dd=notes.find(n=>n.t==='dd');
+  const S=store(tk);S.answers=S.answers||{};
+  const picks=route(tk,ent,rows,ths,notes);
+  CUR={tk,ent,picks,S};
   let h='';
 
-  /* A. 檔案 */
+  /* 檔案 + 上次的你 */
   h+='<div class="filecard"><h1 style="font-family:var(--mono)">'+e_(tk)+'</h1>'+
-    '<div class="meta">'+(ent.v?'<span class="'+(VCL[ent.v]||'')+'">現裁決：'+e_(ent.v)+'</span>':'<span>無現行裁決</span>')+
-    (ent.g?'<span>評級 <b>'+e_(ent.g)+'</b></span>':'')+'</div>'+
-    '<div class="actions"><a class="btn sec" href="'+ent.p+'">個股 hub</a>'+
-    (dd?'<a class="btn" href="'+dd.p+'">最新 DD（含 §13 pre-mortem）</a>':'')+'</div></div>';
+    '<div class="meta">'+(ent.v?'<span class="'+(VCL[ent.v]||'')+'">庫內現裁決：'+e_(ent.v)+'</span>'
+    :'<span>無現行裁決</span>')+(ent.g?'<span>評級 <b>'+e_(ent.g)+'</b></span>':'')+
+    '</div><div class="actions"><a class="btn sec" href="'+ent.p+'">個股 hub</a>'+
+    (dd?'<a class="btn sec" href="'+dd.p+'">最新 DD 筆記</a>':'')+'</div></div>';
+  if(S.verdict&&S.savedDate){
+    const cur=rows.length?rows[rows.length-1]:null;
+    h+='<div class="pastbox">🪞 <b>'+e_(S.savedDate)+' 的你</b>裁決「<b class="'+
+      (VCL[S.verdict]||'')+'">'+e_(S.verdict)+'</b>」，殺手假設：「'+e_(S.falsifier||'（沒寫）')+'」'+
+      (cur?' — 目前結算 '+(cur[2]>=0?'+':'')+cur[2]+'%。':'')+
+      '<br>先回答：殺手假設觸發了嗎？沒觸發的話，這次是新資訊還是舊情緒？</div>';
+  }
 
-  /* B. 反過來想 */
-  h+='<h2>① 反過來想 — 先跟自己的紀錄對質</h2>';
-  const rows=ST[tk]||[];
+  /* ① 對質資料 */
+  h+='<h2>① 先跟紀錄對質</h2>';
   if(rows.length){
     h+='<table class="hist">'+rows.map(r=>{
       const miss=(r[1]==='觀望'||r[1]==='迴避')&&r[2]>30;
       return '<tr><td>'+e_(r[0])+'</td><td class="'+(VCL[r[1]]||'')+'">'+e_(r[1]||'—')+
       '</td><td style="color:'+(r[2]>=0?'var(--go-t)':'var(--avoid-t)')+'">'+
-      (r[2]>=0?'+':'')+r[2]+'%</td><td class="cnt">'+r[3]+'d'+(miss?' ⚠':'')+'</td></tr>'}).join('')+'</table>';
-    const missed=rows.filter(r=>(r[1]==='觀望'||r[1]==='迴避')&&r[2]>30);
-    if(missed.length)h+='<div class="missflag">⚠ 錯過成本警報：你曾對這檔說「'+e_(missed[0][1])+
-      '」，之後 +'+missed[0][2]+'%。這次的反方論點比上次強在哪？（QC-50：找一個理由反駁你的觀望）</div>';
+      (r[2]>=0?'+':'')+r[2]+'%</td><td class="cnt">'+r[3]+'d'+(miss?' ⚠':'')+'</td></tr>'}).join('')+
+      '</table>';
   }else h+='<p class="cnt">尚無機械結算紀錄。</p>';
-  h+='<p class="cnt">自問：假設 3 年後這筆虧 50%，訃聞怎麼寫？（開上面的 DD 讀 §13 pre-mortem，不要憑印象）</p>';
+  h+=ths.length?'<div class="tickgrid">'+ths.map(t=>'<a href="'+t.p+'">'+e_(t.name)+'</a>').join('')+'</div>':'';
 
-  /* C. 格柵 */
-  h+='<h2>② 多元思維格柵 — 它掛在哪些 thesis 上</h2>';
-  const ths=ETH[tk]||[];
-  h+=ths.length?'<div class="tickgrid">'+ths.map(t=>'<a href="'+t.p+'">'+e_(t.name)+'</a>').join('')+'</div>'+
-    '<p class="cnt">自問：這些 thesis 有互相矛盾嗎？哪一條斷了會傳染到其他條？</p>'
-    :'<p class="cnt">不掛任何產業 thesis —— 單腳桌。</p>';
+  /* ② 對症題目（寫，不是勾） */
+  h+='<h2>② 這檔的題目 <span class="prog" id="prog"></span></h2>'+
+    '<p class="cnt">題目由這檔的裁決/結算/thesis 數/功課量路由出來，每題 ≥'+MIN+
+    ' 字。寫不出來＝你還沒想過。 <a href="#" id="more">＋隨機加 3 題</a></p>'+
+    '<div id="qs"></div>';
 
-  /* D. 相關報告 */
-  if(notes.length){
-    h+='<h2>③ 已有功課（'+notes.length+'）</h2>'+notes.slice(0,8).map(n=>
-      '<div class="card"><div class="t"><a href="'+n.p+'">'+e_(n.title)+'</a></div>'+
-      '<div class="m">'+e_(n.d||'')+(n.v?' · <b class="'+(VCL[n.v]||'')+'">'+e_(n.v)+'</b>':'')+'</div>'+
-      (n.one?'<div class="o">'+e_(n.one)+'</div>':'')+'</div>').join('');
-  }
+  /* ③ pre-mortem 對質 */
+  h+='<h2>③ 跟反方對質</h2>';
+  if(PM[tk]){
+    h+='<p class="cnt">下面是這檔 DD 的 pre-mortem（失敗劇本），讀完再答：</p>'+
+      '<div class="pmbox">'+e_(PM[tk])+'</div>';
+  }else h+='<p class="cnt">這檔沒有 v13+ pre-mortem'+(dd?'（開 DD 筆記找 §13）':'')+
+    '——那你自己先寫一個。</p>';
+  h+='<div class="qcard" id="duelcard"><div class="ask">反方最強的一擊是什麼？你怎麼接？</div>'+
+    '<div class="nm">規則：先把反方論點寫到「反方會點頭」的程度，才輪到你反駁。寫不出反方＝你不配有觀點。</div>'+
+    '<textarea id="duel" placeholder="反方最強一擊：… ／ 我的回應：…">'+e_(S.duel||'')+'</textarea>'+
+    '<div class="wc" id="duelwc"></div></div>';
 
-  /* E. 30 模型 checklist */
-  const key='munger_'+tk;
-  const saved=new Set(JSON.parse(localStorage.getItem(key)||'[]'));
-  h+='<h2>④ 30 模型過一遍 <span class="prog" id="prog"></span></h2>'+
-    '<p class="cnt">每題誠實回答。答不順的 → 打開模型筆記讀案例，或寫進 vault/notes/ 再回來。'+
-    '<a href="#" id="clear">清除本檔勾選</a></p>';
-  let curd='';
-  MODELS.forEach(m=>{
-    if(m.disc!==curd){curd=m.disc;h+='<div class="subh">'+e_(curd)+'</div>'}
-    h+='<label class="mrow'+(saved.has(m.id)?' done':'')+'"><input type="checkbox" data-m="'+m.id+'"'+
-      (saved.has(m.id)?' checked':'')+'><span><span class="ask">'+e_(m.ask)+'</span><br>'+
-      '<span class="nm">'+e_(m.zh)+' · '+e_(m.tag)+(m.p?' · <a href="'+m.p+'">模型筆記</a>':'')+'</span></span></label>';
-  });
+  /* ④ 裁決承諾 */
+  h+='<h2>④ 落裁決 — 給未來的你打臉用</h2>'+
+    '<div class="verdict-row"><b>我的裁決：</b><select id="vd">'+
+    ['','進場','觀望','迴避'].map(v=>'<option'+(S.verdict===v?' selected':'')+'>'+v+'</option>').join('')+
+    '</select></div>'+
+    '<div class="qcard"><div class="ask">殺手假設（falsifier）：出現什麼具體訊號，我承認這個裁決錯了？</div>'+
+    '<div class="nm">要可觀察、可證偽（「HOKA 連兩季 cc growth <10%」，不是「基本面變差」）。</div>'+
+    '<textarea id="fals" placeholder="若…，則我錯了，應…">'+e_(S.falsifier||'')+'</textarea></div>'+
+    '<div class="actions"><a class="btn" href="#" id="export">⬇ 匯出思考紀錄 .md</a>'+
+    '<span class="cnt">存到 knowledge/vault/notes/munger/ → 下次 rebuild 自動入腦（可搜尋、掛在 '+e_(tk)+' hub 下）</span></div>';
+
   out.innerHTML=h;
-
-  function prog(){const c=document.querySelectorAll('.mrow input:checked').length;
-    document.getElementById('prog').textContent=c+' / '+MODELS.length;}
-  prog();
-  document.querySelectorAll('.mrow input').forEach(cb=>cb.addEventListener('change',()=>{
-    cb.closest('.mrow').classList.toggle('done',cb.checked);
-    const on=[...document.querySelectorAll('.mrow input:checked')].map(x=>x.dataset.m);
-    localStorage.setItem(key,JSON.stringify(on));prog();}));
-  document.getElementById('clear').addEventListener('click',e=>{
-    e.preventDefault();localStorage.removeItem(key);render(tk);});
+  renderQs();
+  bind(tk);
 }
+
+function qcard(p,S){
+  const val=S.answers[p.m.id]||'';
+  return '<div class="qcard'+(val.length>=MIN?' ok':'')+'" data-m="'+p.m.id+'">'+
+    '<div class="why">'+e_(p.why)+'</div>'+
+    '<div class="ask">'+e_(p.m.ask)+'</div>'+
+    '<div class="nm">'+e_(p.m.zh)+' · '+e_(p.m.tag)+(p.m.p?' · <a href="'+p.m.p+'">模型筆記＋案例</a>':'')+'</div>'+
+    '<textarea placeholder="寫下你的答案（'+MIN+' 字起跳）…">'+e_(val)+'</textarea>'+
+    '<div class="wc"></div></div>';
+}
+function renderQs(){
+  document.getElementById('qs').innerHTML=CUR.picks.map(p=>qcard(p,CUR.S)).join('');
+  wire();
+  prog();
+}
+function prog(){
+  const done=CUR.picks.filter(p=>(CUR.S.answers[p.m.id]||'').length>=MIN).length;
+  const el=document.getElementById('prog');
+  if(el)el.textContent=done+' / '+CUR.picks.length+' 已寫';
+}
+function wire(){
+  document.querySelectorAll('#qs .qcard').forEach(c=>{
+    const ta=c.querySelector('textarea'),wc=c.querySelector('.wc'),id=c.dataset.m;
+    function upd(){wc.textContent=ta.value.length+' 字';
+      c.classList.toggle('ok',ta.value.length>=MIN);
+      CUR.S.answers[id]=ta.value;save(CUR.tk,CUR.S);prog();}
+    ta.addEventListener('input',upd);upd();
+  });
+}
+function bind(tk){
+  const duel=document.getElementById('duel'),dwc=document.getElementById('duelwc');
+  function dupd(){dwc.textContent=duel.value.length+' 字';
+    document.getElementById('duelcard').classList.toggle('ok',duel.value.length>=MIN);
+    CUR.S.duel=duel.value;save(tk,CUR.S);}
+  duel.addEventListener('input',dupd);dupd();
+  document.getElementById('vd').addEventListener('change',e=>{
+    CUR.S.verdict=e.target.value;CUR.S.savedDate=new Date().toISOString().slice(0,10);
+    save(tk,CUR.S)});
+  document.getElementById('fals').addEventListener('input',e=>{
+    CUR.S.falsifier=e.target.value;CUR.S.savedDate=new Date().toISOString().slice(0,10);
+    save(tk,CUR.S)});
+  document.getElementById('more').addEventListener('click',e=>{
+    e.preventDefault();
+    const have=new Set(CUR.picks.map(p=>p.m.id));
+    const rest=MODELS.filter(m=>!have.has(m.id));
+    for(let i=0;i<3&&rest.length;i++){
+      const j=Math.floor(Math.random()*rest.length);
+      CUR.picks.push({m:rest.splice(j,1)[0],why:'隨機抽題：格柵要跨學科，不能只答舒服的'});}
+    renderQs();
+  });
+  document.getElementById('export').addEventListener('click',e=>{
+    e.preventDefault();exportMd(tk);});
+}
+
+function exportMd(tk){
+  const S=CUR.S,today=new Date().toISOString().slice(0,10);
+  const lines=['---','type: usernote','title: "蒙格清單 · '+tk+' · '+today+'"',
+    'ticker: '+tk,'date: '+today,
+    (S.verdict?'verdict: '+S.verdict:''),'tags: [munger]','---','',
+    '# 蒙格清單 · '+tk+' · '+today,'','所屬：[['+tk+']]',''];
+  if(S.verdict)lines.push('## 我的裁決','',S.verdict+(S.falsifier?'\\\\n\\\\n殺手假設：'+S.falsifier:''),'');
+  lines.push('## 對症問答','');
+  CUR.picks.forEach(p=>{const a=S.answers[p.m.id];if(!a)return;
+    lines.push('### '+p.m.zh+' — '+p.m.ask,'',
+      '（出題理由：'+p.why+'）','',a,'');});
+  if(S.duel)lines.push('## 反方對質','',S.duel,'');
+  lines.push('---','（由 wiki/munger.html 匯出；存放 knowledge/vault/notes/munger/ 後 rebuild 入腦）');
+  const md=lines.filter(l=>l!==undefined&&l!=='undefined').join('\\\\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([md],{type:'text/markdown'}));
+  a.download='MUNGER_'+tk.replace(/[^A-Za-z0-9.]/g,'_')+'_'+today.replace(/-/g,'')+'.md';
+  a.click();
+}
+
 document.getElementById('tk').addEventListener('change',e=>render(e.target.value.trim()));
 document.getElementById('tk').addEventListener('keydown',e=>{
   if(e.key==='Enter')render(e.target.value.trim())});
-const h0=location.hash.slice(1);if(h0){document.getElementById('tk').value=h0;render(h0)}
-</script></main></body></html>"""
+const h0=decodeURIComponent(location.hash.slice(1));
+if(h0){document.getElementById('tk').value=h0;render(h0)}
+</script></main></body></html>
+"""
 
 
 def build_munger(summaries, stems, graph):
@@ -973,6 +1097,33 @@ def build_munger(summaries, stems, graph):
                      round(r.get("to_date_pct", 0)), r.get("days", 0)])
         except (json.JSONDecodeError, OSError):
             pass
+    for rows in settle.values():
+        rows.sort(key=lambda r: r[0] or "")
+
+    # pre-mortem 摘錄：每 entity 取最新 DD 筆記的 §13（對質區內嵌用，cap 2200 字）
+    pm = {}
+    for ent_k, lst in notes_by.items():
+        dd = next((n for n in lst if n["t"] == "dd"), None)
+        if not dd:
+            continue
+        md_rel = dd["p"][:-5] + ".md"
+        try:
+            body = (VAULT / md_rel).read_text(encoding="utf-8")
+        except OSError:
+            continue
+        m = re.search(r"^##\s+(§?13[^\n]*[Pp]re-mortem[^\n]*|[^\n]*[Pp]re-mortem[^\n]*)$",
+                      body, re.M)
+        if not m:
+            continue
+        seg = body[m.end():]
+        nxt = re.search(r"^##\s+", seg, re.M)
+        if nxt:
+            seg = seg[:nxt.start()]
+        seg = seg.strip()
+        if len(seg) > 2200:
+            seg = seg[:2200] + "\n…（全文開 DD 筆記）"
+        if seg:
+            pm[ent_k] = seg
 
     def payload(o):
         return json.dumps(o, ensure_ascii=False).replace("</", "<\\/")
@@ -982,7 +1133,8 @@ def build_munger(summaries, stems, graph):
               .replace("%%ENTS%%", payload(ents))
               .replace("%%ENTTHEMES%%", payload(ent_themes))
               .replace("%%NOTESBY%%", payload(notes_by))
-              .replace("%%SETTLE%%", payload(settle)), encoding="utf-8")
+              .replace("%%SETTLE%%", payload(settle))
+              .replace("%%PM%%", payload(pm)), encoding="utf-8")
 
 
 def main():

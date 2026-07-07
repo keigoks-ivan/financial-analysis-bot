@@ -525,6 +525,34 @@ def ex_internal_note(path):
     return ex_markdown(path, "internal-note", f"note-{area}", tag=area)
 
 
+def ex_usernote(path):
+    """knowledge/vault/notes/**/*.md — 用戶手寫筆記（真相，committed）。
+    不複製進 auto/（檔案本身就在 vault），只抽 frontmatter + 全文進索引/hub。"""
+    text = _read(path)
+    fm, body = {}, text
+    if text.startswith("---"):
+        parts = text.split("---", 2)
+        if len(parts) == 3:
+            for line in parts[1].splitlines():
+                m = re.match(r"(\w[\w-]*):\s*(.*)", line)
+                if m:
+                    fm[m.group(1)] = m.group(2).strip().strip('"')
+            body = parts[2]
+    p = Path(path)
+    vault_rel = str(p.relative_to(Path(__file__).resolve().parent / "vault"))
+    m = re.match(r"#\s+(.+)", body.lstrip()[:200])
+    title = fm.get("title") or (m.group(1).strip() if m else p.stem)
+    slug = re.sub(r"[^A-Za-z0-9._-]+", "-", vault_rel[:-3].replace("/", "--"))
+    note = _note(
+        f"usernote-{slug}", "usernote", title, _rel(path),
+        md_to_sections(body), "md",
+        entity=fm.get("ticker") or None,
+        date=fm.get("date") or _date_from_name(p.name),
+        verdict=fm.get("verdict") or None, tags=["我的筆記"])
+    note["vault_rel"] = vault_rel  # build 端據此跳過寫檔（檔案本身就在 vault）
+    return [note]
+
+
 def _sibling_ex(repo_name):
     def ex(path):
         p = Path(path)
@@ -626,6 +654,7 @@ def discover():
         out.append((str(p), "mental-model", ex_mental_models))
 
     add("notes/site-internal/**/*.md", "internal-note", ex_internal_note)
+    add("knowledge/vault/notes/**/*.md", "usernote", ex_usernote)
 
     # 外部 repo（registry；缺目錄由 build 端 warn）
     home = Path.home()
