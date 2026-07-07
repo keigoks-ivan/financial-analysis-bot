@@ -204,7 +204,7 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
   <div class="hero">
     <div class="eyebrow">Stock-Selection Cockpit · 選股駕駛艙</div>
     <h1>選股駕駛艙</h1>
-    <p class="sub">全站五層選股體系的單一決策入口。不是「有哪些系統」，而是「今天開站，我需要看什麼」——先看環境，再看今天該我裁決的事，接著是漏斗每一層的活數字與組合記分板。本頁為既有系統資料的即時聚合，無獨立資料管線。</p>
+    <p class="sub">全站選股體系的<b>單一整合入口</b>——所有選股輸出在這一頁一起看。先看環境，再看今天該我裁決的事，接著是漏斗每一層的活數字、精選清單正式榜與組合記分板；發現層工具（QGM／RS+VCP 各市場）也從這裡出發。本頁為既有系統資料的即時聚合，無獨立資料管線。</p>
   </div>
 
   <!-- ① 環境條 -->
@@ -237,10 +237,20 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     <div id="funnel-mount"><div class="placeholder">載入中⋯</div></div>
   </section>
 
-  <!-- ④ 組合記分板 -->
+  <!-- ④ 精選清單正式榜 -->
   <section class="block">
     <div class="sec-head">
       <span class="sec-num">4</span>
+      <h2 class="sec-title">精選清單——對外正式榜</h2>
+      <span class="sec-desc">整個系統收斂成的一張股票清單：長熬 × 爆發 × 十倍（規則自動上榜＋持有人 veto）</span>
+    </div>
+    <div id="picks-mount"><div class="placeholder">載入中⋯</div></div>
+  </section>
+
+  <!-- ⑤ 組合記分板 -->
+  <section class="block">
+    <div class="sec-head">
+      <span class="sec-num">5</span>
       <h2 class="sec-title">組合記分板</h2>
       <span class="sec-desc">目前在跑的組合——席位、軌別與表現</span>
     </div>
@@ -271,7 +281,10 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     dd:      '/dd-screener/latest.json',
     sop:     '/dd-screener/sop-funnel/latest.json',
     arena:   '/engine/arena.json',
-    cyc:     '/dd-screener/cyclical-track.json'
+    cyc:     '/dd-screener/cyclical-track.json',
+    picks:   '/picks/candidates.json',
+    tb:      '/picks/tenbagger.json',
+    veto:    '/picks/picks.json'
   };
   var S = {};
   var pending = Object.keys(sources).map(function(k){
@@ -282,6 +295,7 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     try{ renderEnv(); }catch(e){ $('env-mount').innerHTML=ph('環境資料暫缺'); }
     try{ renderTodo(); }catch(e){ $('todo-mount').innerHTML=ph('待辦資料暫缺'); }
     try{ renderFunnel(); }catch(e){ $('funnel-mount').innerHTML=ph('漏斗資料暫缺'); }
+    try{ renderPicks(); }catch(e){ $('picks-mount').innerHTML=ph('精選清單資料暫缺'); }
     try{ renderScoreboard(); }catch(e){ $('sb-mount').innerHTML=ph('記分板資料暫缺'); }
   });
 
@@ -409,7 +423,10 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
       var r='';
       if(S.dd && S.dd.universe_size!=null) r+=statBox(fmt(S.dd.universe_size),'DD Screener universe');
       if(S.mom && S.mom.coverage) r+=statBox(fmt(S.mom.coverage.eligible)+' / '+fmt(S.mom.coverage.constituents),'Momentum-5 過閘 / S&P500');
-      r+=chip('/screener.html','QGM 美股')+chip('/screener-tw.html','QGM 台股')+chip('/dd-screener/','形狀掃描');
+      r+=chip('/qgm/latest.html','QGM 美股')+chip('/qgm-tw/latest.html','QGM 台股')+
+         chip('/screener.html','RS+VCP 美')+chip('/screener-tw.html','RS+VCP 台')+
+         chip('/screener-jp.html','RS+VCP 日')+chip('/screener-my.html','RS+VCP 馬')+
+         chip('/dd-screener/pipeline.html','形狀掃描');
       if(!r) r=ph('資料暫缺');
       layers.push({name:'發現層',q:'宇宙裡誰冒出來了？',r:r});
     })();
@@ -445,7 +462,9 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
         r+=statBox(ns+' 席'+(sv!=null?'（'+sv+' 從缺）':''),'GRP 衛星');
       }
       if(S.cyc && S.cyc.qualified_total!=null){
-        r+=statBox(fmt(S.cyc.qualified_total),'循環軌合格（'+fmt(S.cyc.low_heat_count)+' 低熱 / '+fmt(S.cyc.hot_count)+' 過熱）');
+        var lowNames=(S.cyc.low_heat||[]).map(function(x){return x.ticker||x;}).slice(0,6);
+        var lowTxt=lowNames.length?('低熱：'+lowNames.join(' ')+(S.cyc.low_heat_count>lowNames.length?'…':'')):'';
+        r+=statBox(fmt(S.cyc.qualified_total),'循環軌合格（'+fmt(S.cyc.low_heat_count)+' 低熱 / '+fmt(S.cyc.hot_count)+' 過熱）'+(lowTxt?' · '+lowTxt:''));
       }
       if(S.mom && Array.isArray(S.mom.seats)) r+=statBox(S.mom.seats.length+' 席','Momentum-5');
       r+=chip('/engine/','決策引擎')+chip('/dd-screener/pipeline.html','三軌 Pipeline')+chip('/research/momentum-5/','Momentum-5');
@@ -493,7 +512,43 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     $('funnel-mount').innerHTML=html;
   }
 
-  // ---------- ④ 組合記分板 ----------
+  // ---------- ④ 精選清單正式榜 ----------
+  function renderPicks(){
+    var mount=$('picks-mount');
+    if(!S.picks && !S.tb){ mount.innerHTML=ph('精選清單資料暫缺'); return; }
+    function tickers(arr){
+      return (arr||[]).map(function(x){
+        var t=(x&&typeof x==='object')?(x.ticker||''):String(x||'');
+        return t?'<span class="tk">'+esc(t)+'</span>':'';
+      }).join('');
+    }
+    function groupCard(name,badge,official,candCount,note){
+      var h='<div class="sb-card"><div class="sb-top">'+
+        '<span class="sb-name">'+esc(name)+'</span>'+
+        '<span class="sb-badge">'+esc(badge)+'</span></div>';
+      h+='<div class="sb-seatlist"><b>正式榜 '+((official||[]).length)+' 檔：</b>'+
+         ((official||[]).length? tickers(official) : '（從缺——席位寧缺勿濫）')+'</div>';
+      if(candCount!=null) h+='<div class="sb-note">候選區 '+candCount+' 檔待升格';
+      else h+='<div class="sb-note">';
+      if(note) h+='　'+esc(note);
+      h+='　<a href="/picks/">四件事全文 →</a></div></div>';
+      return h;
+    }
+    var cards=[];
+    if(S.picks){
+      cards.push(groupCard('長熬 · 品質成長','複利 mandate',S.picks.official_changhao,(S.picks.changhao||[]).length,''));
+      cards.push(groupCard('爆發 · 循環上修','循環 mandate',S.picks.official_baofa,(S.picks.baofa||[]).length,''));
+    }
+    if(S.tb){
+      cards.push(groupCard('十倍 · 結構長坡','S&P 400+600 · gate '+esc(S.tb.gate_version||''),S.tb.official,(S.tb.candidates||[]).length,''));
+    }
+    var vetoN=(S.veto&&Array.isArray(S.veto.veto))?S.veto.veto.length:null;
+    var asOf=(S.picks&&S.picks.as_of)||(S.tb&&S.tb.as_of)||'';
+    var foot='<div class="sb-note" style="margin-top:.4rem">as of '+esc(asOf)+'　·　治理＝規則自動上榜＋持有人 veto'+(vetoN!=null?'（現 veto '+vetoN+' 檔）':'')+'　·　上榜 ≠ 板機：進場時點仍看 sop-funnel。</div>';
+    mount.innerHTML='<div class="sb">'+cards.join('')+'</div>'+foot;
+  }
+
+  // ---------- ⑤ 組合記分板 ----------
   function renderScoreboard(){
     var cards=[];
 
