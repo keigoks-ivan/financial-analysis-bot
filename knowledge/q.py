@@ -9,11 +9,20 @@ q.py — 知識層查詢介面（Phase 1，服務 a：自我導航）。
   python knowledge/q.py --calibration # 命中率 / 校準（需 outcome）；無 outcome 則給覆蓋報告
   python knowledge/q.py --rebuild     # 重建 decisions.jsonl + graph.json
 
+第二大腦（全文層，brain_build.py 衍生）：
+  python knowledge/q.py --search "先進封裝" [--type dd] [--limit 10]
+                                      # FTS 全文搜尋（DD/ID/earnings/notes/外部 repo 白皮書…）
+  python knowledge/q.py --note NVDA   # 列出某 entity / id 關鍵字對應的 vault 筆記路徑
+  python knowledge/q.py --rebrain     # 手動重建第二大腦（vault + FTS + wiki）
+
 decisions.jsonl / graph.json 不存在時會自動先 rebuild（衍生物，每台機本地重建）。
+--search 前會自動跑增量 brain build（no-op 約 0.1s），永遠查到最新內容。
 """
 import sys
 import json
+import sqlite3
 import subprocess
+import unicodedata
 from pathlib import Path
 from collections import Counter, defaultdict
 
@@ -23,6 +32,9 @@ GRAPH = KDIR / "graph.json"
 BUILD = KDIR / "build_knowledge.py"
 SETTLE = KDIR / "settlement.json"
 SETTLE_BUILD = KDIR / "settle_outcomes.py"
+BRAIN_BUILD = KDIR / "brain_build.py"
+BRAIN_DB = KDIR / "brain.db"
+VAULT = KDIR / "vault"
 
 
 def _rebuild():
@@ -290,14 +302,115 @@ def cmd_calibration():
         print(f"  {k:8s} {ok}/{tot} = {ok/tot*100:.0f}%")
 
 
+# ─────────────────────────── 第二大腦（全文層）───────────────────────────
+
+def _ensure_brain():
+    """搜尋前的 stale gate：直接跑一次增量 build（未變動時 ~0.1s no-op）。
+    比 mtime 比對更簡單也永遠正確；hook 沒裝、外部 repo 變動都接得住。"""
+    r = subprocess.run([sys.executable, str(BRAIN_BUILD), "--no-wiki"],
+                       capture_output=True, text=True)
+    if r.returncode != 0:
+        print(f"（brain build 失敗，用既有索引：{r.stderr.strip()[:200]}）")
+
+
+def cmd_search(query, type_=None, limit=10):
+    _ensure_brain()
+    if not BRAIN_DB.exists():
+        print("brain.db 不存在且重建失敗")
+        return
+    con = sqlite3.connect(BRAIN_DB)
+    fts5 = con.execute("SELECT v FROM meta WHERE k='fts5'").fetchone()[0] == "1"
+    qn = unicodedata.normalize("NFKC", query)
+    type_sql = " AND n.type = ?" if type_ else ""
+
+    if fts5 and len(qn) >= 3:
+        match = '"' + qn.replace('"', '""') + '"'
+        sql = f"""SELECT c.note_id, c.heading,
+                         snippet(chunks, 3, '【', '】', '…', 16),
+                         n.type, n.title, n.date, n.verdict, n.path, n.source
+                  FROM chunks c JOIN notes n ON n.id = c.note_id
+                  WHERE chunks MATCH ?{type_sql}
+                  ORDER BY rank LIMIT 200"""
+        rows = con.execute(sql, ([match, type_] if type_ else [match])).fetchall()
+        mode = "FTS"
+    else:
+        like = f"%{qn}%"
+        sql = f"""SELECT c.note_id, c.heading, c.text,
+                         n.type, n.title, n.date, n.verdict, n.path, n.source
+                  FROM chunks c JOIN notes n ON n.id = c.note_id
+                  WHERE (c.text LIKE ? OR c.heading LIKE ?){type_sql} LIMIT 200"""
+        rows = con.execute(sql, ([like, like, type_] if type_ else [like, like])).fetchall()
+        mode = "LIKE（<3 字或無 FTS5）"
+        clipped = []
+        for r in rows:
+            i = r[2].find(qn)
+            s = max(0, i - 40)
+            clipped.append(r[:2] + (("…" if s else "") + r[2][s:s + 110].replace("\n", " ") + "…",) + r[3:])
+        rows = clipped
+    con.close()
+
+    # 每則筆記只留最佳一個 chunk，湊滿 limit
+    seen, hits = set(), []
+    for r in rows:
+        if r[0] in seen:
+            continue
+        seen.add(r[0])
+        hits.append(r)
+        if len(hits) >= limit:
+            break
+
+    print(f"「{query}」共 {len(seen)}+ 筆記命中（{mode}，顯示 {len(hits)}）：\n")
+    for note_id, heading, snip, ntype, title, d, verdict, path, source in hits:
+        v = f" [{verdict}]" if verdict else ""
+        print(f"◆ [{ntype}]{v} {title}  ({d or '—'})")
+        if heading:
+            print(f"  §{heading}")
+        print(f"  {snip.replace(chr(10), ' ')}")
+        print(f"  ▸ {VAULT / path}  ← 來源 {source}\n")
+
+
+def cmd_note(kw):
+    _ensure_brain()
+    if not BRAIN_DB.exists():
+        return
+    con = sqlite3.connect(BRAIN_DB)
+    like = f"%{kw}%"
+    rows = con.execute(
+        """SELECT type, title, date, path FROM notes
+           WHERE entity = ? COLLATE NOCASE OR id LIKE ? OR title LIKE ?
+           ORDER BY date DESC LIMIT 40""",
+        (kw.upper(), like, like)).fetchall()
+    con.close()
+    hub = VAULT / "auto" / "entities" / f"{kw.upper()}.md"
+    if hub.exists():
+        print(f"[hub]  {hub}")
+    for ntype, title, d, path in rows:
+        print(f"[{ntype}] {d or '—'}  {title}\n        {VAULT / path}")
+    if not rows and not hub.exists():
+        print(f"找不到含「{kw}」的筆記")
+
+
 def main():
     args = sys.argv[1:]
     if not args:
         print(__doc__)
         return
     a0 = args[0]
+
+    def _opt(name, default=None):
+        return args[args.index(name) + 1] if name in args and args.index(name) + 1 < len(args) else default
+
     if a0 == "--rebuild":
         _rebuild()
+    elif a0 == "--rebrain":
+        subprocess.run([sys.executable, str(BRAIN_BUILD)] + args[1:], check=True)
+    elif a0 == "--search":
+        if len(args) < 2:
+            print(__doc__)
+            return
+        cmd_search(args[1], type_=_opt("--type"), limit=int(_opt("--limit", 10)))
+    elif a0 == "--note":
+        cmd_note(args[1] if len(args) > 1 else "")
     elif a0 == "--stale":
         cmd_stale(int(args[1]) if len(args) > 1 else 180)
     elif a0 == "--theme":

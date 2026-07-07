@@ -1,0 +1,24 @@
+#!/bin/sh
+# post-merge hook (2026-07-07)
+# git pull 拉進 cron 產物（briefing/weekly/qgm 日更、crowding/regime/rotation 週更、
+# 新 DD/ID…）後，自動把新內容增量餵進第二大腦（vault + FTS + wiki）與知識層。
+# 全部產物 gitignored，重建不會弄髒 working tree。
+#
+# post-merge 不能中止 merge，任何失敗靜默放行（exit 0）。
+# 啟用方式：bash scripts/install_hooks.sh（設 core.hooksPath=scripts/hooks）。
+
+REPO="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
+cd "$REPO" || exit 0
+
+changed="$(git diff-tree --no-commit-id --name-only -r ORIG_HEAD HEAD 2>/dev/null)"
+[ -n "$changed" ] || exit 0
+echo "$changed" | grep -qE '^docs/|^notes/|^CLAUDE\.md$|^\.claude/skills/' || exit 0
+
+if echo "$changed" | grep -qE '^docs/(dd|id|supply-chain)/'; then
+  [ -f knowledge/build_knowledge.py ] && python3 knowledge/build_knowledge.py >/dev/null 2>&1
+fi
+
+if [ -f knowledge/brain_build.py ]; then
+  python3 knowledge/brain_build.py 2>/dev/null | grep '^🧠' || true
+fi
+exit 0

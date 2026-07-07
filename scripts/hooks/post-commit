@@ -12,11 +12,18 @@ cd "$REPO" || exit 0
 
 # 只有動到知識來源時才重建（避免每筆 commit 都掃 700 檔）
 changed="$(git diff-tree --no-commit-id --name-only -r HEAD 2>/dev/null)"
-echo "$changed" | grep -qE '^docs/(dd|id|supply-chain)/' || exit 0
-[ -f knowledge/build_knowledge.py ] || exit 0
+echo "$changed" | grep -qE '^docs/(dd|dca|id|supply-chain|earnings|comparisons|research|crowding|regime|rotation|briefing|weekly|qgm|qgm-tw|picks|turtle-sleeve)/|^notes/|^CLAUDE\.md$|^\.claude/skills/' || exit 0
 
-if python3 knowledge/build_knowledge.py >/dev/null 2>&1 \
-   && python3 knowledge/build_dashboard.py >/dev/null 2>&1; then
-  echo "🔄 knowledge: 帳本 + 圖譜 + dashboard.html 已自動重建（open knowledge/dashboard.html）"
+if echo "$changed" | grep -qE '^docs/(dd|id|supply-chain)/' \
+   && [ -f knowledge/build_knowledge.py ]; then
+  if python3 knowledge/build_knowledge.py >/dev/null 2>&1 \
+     && python3 knowledge/build_dashboard.py >/dev/null 2>&1; then
+    echo "🔄 knowledge: 帳本 + 圖譜 + dashboard.html 已自動重建（open knowledge/dashboard.html）"
+  fi
+fi
+
+# 第二大腦：新內容增量入腦（vault + FTS + wiki；產物全 gitignored，無 commit loop）
+if [ -f knowledge/brain_build.py ]; then
+  python3 knowledge/brain_build.py 2>/dev/null | grep '^🧠' || true
 fi
 exit 0
