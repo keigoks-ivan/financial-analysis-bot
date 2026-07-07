@@ -486,6 +486,39 @@ def ex_data_summary(path):
     )]
 
 
+def ex_mental_models(path):
+    """mental_models_data.py → 30 則蒙格思維模型筆記（每模型一則，[[related]] 互連）。"""
+    import runpy
+    data = runpy.run_path(str(path))
+    models = data.get("MODELS", [])
+    disciplines = data.get("DISCIPLINES", {})
+    stem_by_id = {m["id"]: f"MM_{m['id']}_{m['zh']}" for m in models}
+    notes = []
+    for m in models:
+        disc = disciplines.get(m.get("d"), {})
+        secs = [("ask", "決策自問", m.get("ask") or ""),
+                ("body", "模型", m.get("body") or "")]
+        if m.get("quote"):
+            secs.append(("quote", "Munger 語錄", m["quote"]))
+        if m.get("cases"):
+            secs.append(("cases", "案例", "\n".join(f"- {c}" for c in m["cases"])))
+        rel = [stem_by_id[r] for r in (m.get("related") or []) if r in stem_by_id]
+        if rel:
+            secs.append(("related", "相關模型",
+                         " · ".join(f"[[{s}]]" for s in rel)))
+        note = _note(
+            f"mm-{m['id']}", "mental-model",
+            f"{m['zh']} {m.get('en', '')}".strip(), _rel(path), secs, "py",
+            oneliner=m.get("short"),
+            tags=[disc.get("zh") or m.get("d", ""), m.get("tag") or ""],
+            extra={"model_id": m["id"], "discipline": disc.get("zh", "")},
+            url=f"{SITE}/mental-models/",
+        )
+        note["note_stem"] = stem_by_id[m["id"]]  # 30 則共用來源檔 → 各自檔名
+        notes.append(note)
+    return notes
+
+
 def ex_internal_note(path):
     sub = _rel(path).split("/")  # notes/site-internal/<area>/x.md
     area = sub[2] if len(sub) > 3 else "root"
@@ -587,6 +620,10 @@ def discover():
         p = REPO / dp
         if p.exists():
             out.append((str(p), "strategy", ex_data_summary))
+
+    p = REPO / "mental_models_data.py"
+    if p.exists():
+        out.append((str(p), "mental-model", ex_mental_models))
 
     add("notes/site-internal/**/*.md", "internal-note", ex_internal_note)
 

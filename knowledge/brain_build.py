@@ -47,6 +47,7 @@ TYPE_DIR = {
     "supplychain": "supply-chain", "briefing": "briefing", "weekly": "weekly",
     "qgm": "qgm", "strategy": "strategy", "internal-note": "internal",
     "whitepaper": "kb", "repo-doc": "kb", "tools": "kb", "property": "kb",
+    "mental-model": "mental-models",
 }
 KB_TYPES = {"whitepaper", "repo-doc", "tools", "property"}
 
@@ -96,6 +97,8 @@ def note_rel_path(note):
     stem = re.sub(r"\.(html|md|py|json)$", "", base)
     if note["type"] == "strategy":
         stem = _safe_name(note["id"])
+    if note.get("note_stem"):  # 多筆記共用一個來源檔（mental models）
+        stem = note["note_stem"]
     return f"auto/{sub}/{_safe_name(stem)}.md"
 
 
