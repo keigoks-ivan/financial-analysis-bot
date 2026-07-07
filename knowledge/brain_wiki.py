@@ -1249,7 +1249,9 @@ const METRICS=[
 let bq=null;
 function blindPool(){return POOL.filter(x=>x.moat!=null&&x.pp!=null&&x.gd!=null)}
 function newBlind(){
-  bq=pick(blindPool());
+  const bp=blindPool();
+  if(!bp.length){document.getElementById('m-blind').innerHTML='<p class="cnt">題庫為空——先跑 python knowledge/brain_build.py --full</p>';return}
+  bq=pick(bp);
   const ms=METRICS.filter(m=>m.get(bq)!=null);
   let h='<div class="filecard"><div class="qhead">'+e_(bq.k)+'</div>'+
     '<div class="ctx">'+e_(bq.title)+'</div>'+
@@ -1481,12 +1483,20 @@ def build_dojo(summaries, stems, graph):
         if not hub or x.get("moat_score") is None:
             continue
         ddp = stems.get(Path(s["note"]).stem)
+
+        def num(key):
+            try:
+                v = float(x.get(key))
+                return round(v, 2)
+            except (TypeError, ValueError):
+                return None
+
         pool.append({
             "k": k, "title": (s.get("title") or "")[:110],
             "v": s.get("verdict"), "one": (s.get("oneliner") or "")[:220],
-            "moat": x.get("moat_score"), "pp": x.get("moat_pricing_power"),
-            "gd": x.get("growth_durability"), "qs": x.get("quality_score"),
-            "fpe": x.get("fpe_fy2"), "pct5": x.get("pct_5y"),
+            "moat": num("moat_score"), "pp": num("moat_pricing_power"),
+            "gd": num("growth_durability"), "qs": num("quality_score"),
+            "fpe": num("fpe_fy2"), "pct5": num("pct_5y"),
             "hub": hub, "dd": ddp, "themes": ent_themes.get(k, [])[:8]})
         notes_by[k] = [{"t": "dd", "p": ddp}] if ddp else []
     pm = _premortems(notes_by)
