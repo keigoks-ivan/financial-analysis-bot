@@ -208,6 +208,7 @@ linear-gradient(160deg,#0e1526,#0a0e1a)}
 #pal{position:fixed;inset:0;background:rgba(6,9,18,.66);backdrop-filter:blur(6px);
 z-index:100;display:flex;align-items:flex-start;justify-content:center;
 padding-top:14vh}
+#pal[hidden]{display:none!important}
 .palbox{width:min(640px,92vw);background:var(--cardsolid);
 border:1px solid var(--line2);border-radius:16px;overflow:hidden;
 box-shadow:0 24px 80px rgba(0,0,0,.6),0 0 40px rgba(94,160,255,.12)}
