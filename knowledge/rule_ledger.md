@@ -20,6 +20,10 @@
 | QC-51 同形狀 peer 裁決一致性對帳 | v14.6 | KLAC/AMAT/MU 同日三裁決無人對帳 | 兩輪從未觸發任何裁決修正或重審（＝純儀式）→ 降為選做 | — |
 | QC-42 反動能硬閘（晚循環禁新建、倍數 vs 自身歷史等） | v14.1-v14.4 | 防在 blow-off 喊買 | 擋下的建立點兩輪後續報酬中位 > +20%（擋錯方向） | — |
 | GRP R 閘單月 −2% 一票否決（scripts/engine/grp.py） | 2026-07-04 | 寧缺勿濫 mandate | 季檢記分板：被否決席位後續跑贏保留席位（owner＝GRP 季檢，非本 skill） | — |
-| DD↔ID 接線語意（sd_verdict 只當事實錨;Phase II 打折）※QC-52 落地時生效 | 提案中 | calibration_id_20260707：shortage×PhaseII 勝率 7/25 | Phase II 打折連兩輪無差別（ID 時鐘已修準）→ 移除打折 | — |
+| ID conviction pill 公式（high 需 §9 ≥2 🔴 且 falsification >2σ;industry-analyst） | v2.x | conviction 機械化防灌 | high/mid/low 分級與後續籃子超額無單調關係連兩輪（偽精確無資訊量）;或單純 play 產業被公式壓 mid 的誤判 ≥3 例 | — |
+| ID QC-6 T1 來源占比 ≥60% floor（industry-analyst） | v2.0 | 來源紀律 | macro 主題例外（floor 45%）落地後仍系統性卡稿;或 T1 占比與 ID 校準命中率無相關 | — |
+| ID sd_verdict 三選一反騎牆＋split 出口（industry-analyst） | v2.5 | 反騎牆強迫裁決 | split 佔比連兩輪 >30%（出口被當變相騎牆用） | — |
+| ID priced_in 落欄＋獵場鍵第四條件 priced_in ≠ high（industry-analyst v2.6） | 2026-07-08 | calibration_id：shortage×PhaseII 勝率 7/25，缺 priced-in 軸 | priced_in=high 的 shortage 籃子兩輪跑贏 priced_in=low（軸方向反了）;或兩輪全樣本 priced_in 與後續超額無相關 | — |
+| QC-52 DD↔ID 對帳（事實先讀結論後對;sd_verdict 只當事實錨;Phase II 打折） | v14.8 (2026-07-08) | calibration_id_20260707：shortage×PhaseII 勝率 7/25 | Phase II 打折連兩輪無差別（ID 時鐘已修準）→ 移除打折 | — |
 
 **登記規則**：新增判斷類規則 → 加一列（含 kill condition）＋提名一條既有規則候刪（寫進 PR/commit 訊息）；刪除規則 → 該列標 `KILLED @ 版本`（保留供 lineage，勿刪行）；每輪校準把審計結果回填最後一欄。

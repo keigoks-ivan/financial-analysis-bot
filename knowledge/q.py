@@ -158,9 +158,24 @@ def cmd_entity(name):
     themes = sorted({e["to"] for e in graph["edges"]
                      if e["from"] == canonical and e.get("rel") == "belongs_to"})
     if themes:
+        ind = {nd["id"]: nd for nd in graph["nodes"] if nd["type"] == "industry"}
         print(f"\n所屬產業/主題（{len(themes)}）：")
         for t in themes:
-            print(f"  • {t}")
+            nd = ind.get(t) or {}
+            bits = []
+            if nd.get("sd_verdict"):
+                bits.append(f"供需:{nd['sd_verdict']}")
+            if nd.get("clock_phase"):
+                bits.append(f"時鐘:Phase {nd['clock_phase']}")
+            if nd.get("conviction"):
+                bits.append(f"conviction:{nd['conviction']}")
+            if nd.get("priced_in"):
+                bits.append(f"priced-in:{nd['priced_in']}")
+            if nd.get("freshness"):
+                bits.append(nd["freshness"])
+            # QC-52 消費提醒：sd_verdict 是物理供需事實錨、非可投資性;
+            # clock_phase=II 引用須經 DD 自身位置閘交叉驗證（calibration_id_20260707）
+            print(f"  • {t}" + (f"  [{' | '.join(bits)}]" if bits else "  [legacy ID，無機器裁決欄]"))
 
     # 供應鏈位置（supplies）：此 ticker 在哪些供應鏈 topic 的哪個製程節點
     supplies = sorted({(e["to"], e.get("node") or "") for e in graph["edges"]
@@ -207,6 +222,13 @@ def cmd_theme(kw):
             print()
             continue
         print(f"━━ {nd['id']} ━━  ({nd.get('thesis_type') or '—'}, {nd.get('publish_date') or '—'}, {nd.get('freshness')})")
+        machine = [f"供需:{nd['sd_verdict']}" if nd.get("sd_verdict") else None,
+                   f"時鐘:Phase {nd['clock_phase']}" if nd.get("clock_phase") else None,
+                   f"conviction:{nd['conviction']}" if nd.get("conviction") else None,
+                   f"priced-in:{nd['priced_in']}" if nd.get("priced_in") else None]
+        machine = [m for m in machine if m]
+        if machine:
+            print(f"  [{' | '.join(machine)}]")
         if nd.get("oneliner"):
             print(f"  {nd['oneliner']}")
         if nd.get("action"):

@@ -228,6 +228,11 @@ def build_graph(decisions, id_metas, sc_topics):
             "thesis_type": meta.get("thesis_type"),
             "oneliner": meta.get("oneliner"),
             "action": meta.get("action"),
+            # v2.5/v2.6 趨勢結構化欄位（QC-52 DD↔ID 對帳消費;legacy ID 無值＝None）
+            "sd_verdict": meta.get("sd_verdict"),
+            "clock_phase": meta.get("clock_phase"),
+            "conviction": meta.get("conviction"),
+            "priced_in": meta.get("priced_in"),
             "publish_date": pub,
             "freshness": _freshness(pub),
             "source": _rel(path),
