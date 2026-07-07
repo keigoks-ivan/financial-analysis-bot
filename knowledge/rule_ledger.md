@@ -20,6 +20,8 @@
 | QC-51 同形狀 peer 裁決一致性對帳 | v14.6 | KLAC/AMAT/MU 同日三裁決無人對帳 | 兩輪從未觸發任何裁決修正或重審（＝純儀式）→ 降為選做 | — |
 | QC-42 反動能硬閘（晚循環禁新建、倍數 vs 自身歷史等） | v14.1-v14.4 | 防在 blow-off 喊買 | 擋下的建立點兩輪後續報酬中位 > +20%（擋錯方向） | — |
 | GRP R 閘單月 −2% 一票否決（scripts/engine/grp.py） | 2026-07-04 | 寧缺勿濫 mandate | 季檢記分板：被否決席位後續跑贏保留席位（owner＝GRP 季檢，非本 skill） | — |
+| GRP G 閘成長門檻（FY1→FY3 EPS CAGR ≥15%；scripts/engine/grp.py） | 2026-07-04 | GRP mandate：發現力驗屍證明贏家先現於高成長×修正欄；門檻承自漏斗五條件閘 | 邊界帶（CAGR 10–15%）被擋組後續 12M 超額中位 > 放行組，連兩輪（門檻過嚴誤殺）；或全樣本 G 通過與否與後續超額無單調關係（成長軸無資訊量）→ 降門檻或降為排序因子 | — |
+| GRP P 閘位置門檻（站上 52 週線＋未過熱；scripts/engine/grp.py） | 2026-07-04 | 與指數部同一條趨勢紀律：不接刀、不追 blow-off；避免另發明個股時鐘 | 兩半邊分開統計：「跌破 52 週線被擋組」或「過熱帶被擋組」任一組連兩輪超額中位 > 放行組（該半邊方向錯）→ 只降級錯的半邊，不整閘連坐 | — |
 | ID conviction pill 公式（high 需 §9 ≥2 🔴 且 falsification >2σ;industry-analyst） | v2.x | conviction 機械化防灌 | high/mid/low 分級與後續籃子超額無單調關係連兩輪（偽精確無資訊量）;或單純 play 產業被公式壓 mid 的誤判 ≥3 例 | — |
 | ID QC-6 T1 來源占比 ≥60% floor（industry-analyst） | v2.0 | 來源紀律 | macro 主題例外（floor 45%）落地後仍系統性卡稿;或 T1 占比與 ID 校準命中率無相關 | — |
 | ID sd_verdict 三選一反騎牆＋split 出口（industry-analyst） | v2.5 | 反騎牆強迫裁決 | split 佔比連兩輪 >30%（出口被當變相騎牆用） | — |
