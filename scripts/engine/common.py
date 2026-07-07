@@ -104,7 +104,7 @@ details.bench-wrap details.card-block{margin:8px 6px 0}
 
 
 def page_shell(title: str, current: str, body: str, desc: str = "") -> str:
-    nav = full_nav_block("quant", "eng", build_subnav(ENGINE_SUBNAV, current))
+    nav = full_nav_block("pick", "eng", build_subnav(ENGINE_SUBNAV, current))
     return f"""<!DOCTYPE html>
 <html lang="zh-TW">
 <head>

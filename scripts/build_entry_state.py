@@ -58,7 +58,7 @@ WATCH_COUNTERS_PATH = STATE_DIR / "watch_counters.json"
 
 # Canonical site header + dd-screener sub-nav (single source: scripts/site_nav.py)
 NAV_BLOCK = full_nav_block(
-    "quant", "dds", build_subnav(DD_SCREENER_SUBNAV, "/dd-screener/entry-state.html")
+    "pick", "dds", build_subnav(DD_SCREENER_SUBNAV, "/dd-screener/entry-state.html")
 )
 
 TAIPEI_TZ = timezone(timedelta(hours=8))

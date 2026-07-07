@@ -27,7 +27,7 @@ from site_nav import DD_SCREENER_SUBNAV, build_subnav, full_nav_block  # noqa: E
 
 # Canonical site header + dd-screener sub-nav for this page
 NAV_BLOCK = full_nav_block(
-    "quant", "dds",
+    "pick", "dds",
     build_subnav(DD_SCREENER_SUBNAV, "/dd-screener/sop-funnel-backtest.html"),
 )
 

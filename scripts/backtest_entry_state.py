@@ -89,7 +89,7 @@ JSON_OUT = OUTPUT_DIR / "entry-state-backtest.json"
 
 # Canonical site header + dd-screener sub-nav (single source: scripts/site_nav.py)
 NAV_BLOCK = full_nav_block(
-    "quant", "dds",
+    "pick", "dds",
     build_subnav(DD_SCREENER_SUBNAV, "/dd-screener/entry-state-backtest.html"),
 )
 

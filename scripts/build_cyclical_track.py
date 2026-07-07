@@ -50,7 +50,7 @@ JSON_OUT = OUTPUT_DIR / "cyclical-track.json"
 SNAPSHOT_DIR = OUTPUT_DIR / "cyclical-track-snapshots"
 
 NAV_BLOCK = full_nav_block(
-    "quant", "dds", build_subnav(DD_SCREENER_SUBNAV, "/dd-screener/cyclical-track.html")
+    "pick", "dds", build_subnav(DD_SCREENER_SUBNAV, "/dd-screener/cyclical-track.html")
 )
 
 TAIPEI_TZ = timezone(timedelta(hours=8))

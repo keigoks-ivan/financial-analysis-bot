@@ -89,7 +89,7 @@ SNAPSHOT_DIR = OUTPUT_DIR / "alpha-rank-snapshots"
 
 # Canonical site header + dd-screener sub-nav (single source: scripts/site_nav.py)
 NAV_BLOCK = full_nav_block(
-    "quant", "dds", build_subnav(DD_SCREENER_SUBNAV, "/dd-screener/alpha-rank.html")
+    "pick", "dds", build_subnav(DD_SCREENER_SUBNAV, "/dd-screener/alpha-rank.html")
 )
 
 # ── constants ─────────────────────────────────────────────────────────────────

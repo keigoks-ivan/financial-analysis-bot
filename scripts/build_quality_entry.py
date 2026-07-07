@@ -43,7 +43,7 @@ SNAPSHOT_DIR = OUTPUT_DIR / "quality-entry-snapshots"
 
 # Canonical site header + dd-screener sub-nav (single source: scripts/site_nav.py)
 NAV_BLOCK = full_nav_block(
-    "quant", "dds", build_subnav(DD_SCREENER_SUBNAV, "/dd-screener/quality-entry.html")
+    "pick", "dds", build_subnav(DD_SCREENER_SUBNAV, "/dd-screener/quality-entry.html")
 )
 
 TAIPEI_TZ = timezone(timedelta(hours=8))

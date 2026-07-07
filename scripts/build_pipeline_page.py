@@ -46,7 +46,7 @@ WEEKLY_CACHE_DIR = ROOT / "data" / "weekly_cache"
 HTML_OUT = DDS / "pipeline.html"
 
 NAV_BLOCK = full_nav_block(
-    "quant", "dds", build_subnav(DD_SCREENER_SUBNAV, "/dd-screener/pipeline.html")
+    "pick", "pipe", build_subnav(DD_SCREENER_SUBNAV, "/dd-screener/pipeline.html")
 )
 
 TAIPEI_TZ = timezone(timedelta(hours=8))
