@@ -186,6 +186,16 @@ DD 報告有 size floor，但**這是深度閘門，不是 byte 目標** — 達
 
 **只對「新增」檔生效**（`git diff --cached --diff-filter=A`）— 全新報告永遠是新 `*_YYYYMMDD.html`（Add），對 legacy 報告補 metadata 是 Modify，不會被擋。gate 寫在 `scripts/hooks/pre-commit`（v13 floor 對 `"schema":"v13` 檔生效，legacy v12 維持 80KB），真要放行 lean-but-complete 報告用 `git commit --no-verify`。
 
+## 規則治理：判斷類規則的加與刪（2026-07-07 起）
+
+任何 skill 中**會影響裁決輸出的規則**（veto / gate / 救援 / critic / hysteresis 這類「判斷類」；純 sourcing/格式/防灌水不在此列）適用三條治理鐵律：
+
+1. **無 kill condition 不准新增**——新規則必須同時登記進 `knowledge/rule_ledger.md`，寫明「什麼數據出現就該刪或降級」。說不出 kill condition 的規則是教條，不是紀律。
+2. **加一提刪一**——新增判斷類規則時，必須在 commit 訊息提名一條既有規則作候刪審查對象（可以審後保留，但必須過一次審視）。
+3. **每輪裁決校準附規則審計**——校準（下輪 2026-10，三份：legacy DCA / v13 DD / ID）同時回填 ledger 審計欄：零救援實績或誤傷 > 救援的規則直接 KILL，不辯護。
+
+WHY：2026-07 全鏈驗屍證實，五月那批僵化閘（MA Soft Veto / AR≥4 / 動能過熱）的共同點是**不可證偽**——沒人知道它們擋掉的名字後來怎樣，所以安穩活了三個月，錯過尾 3× 躲掉尾。教條與紀律的分界＝可證偽性。另：skill 結構膨脹時優先「核心＋references/ 條件載入」拆分（stock-analyst v14.7 模式），不要讓 always-on context 無限長大。
+
 ## Parallel-session git hygiene（commit 前自檢）
 
 常同時跑多個 session 對同一 working tree，歷史上多次被並行 session 清空 `_build`、catalog 掉條目、wrong-cwd commit、untracked sibling 被廣域 `git add` 掃進來（見 memory `feedback_supply_chain_precommit_sweeps_untracked` / `feedback_no_fixtures_in_docs`）。**commit 前固定四步**：
