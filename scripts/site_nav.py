@@ -65,49 +65,51 @@ NAV_STYLE = """<style id="imq-nav-style">
 
 NAV_SCRIPT = """<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>"""
 
-# (group, item, href, label) — groups: home / research / market / quant / mm / howto
+# (group, item, href, label) — groups: home / pick / research / market / system / mm / howto
+# 2026-07-07 整站 IA v2（見 notes/site-internal/root/_proposal_site_ia_20260707.md）：
+# 三群 catch-all（研究/市場/工具）改為四群意圖式（選股/研究/市場/系統）——
+# 選股系統原散在研究+工具兩選單，收斂為單一「選股」群；跨資產三頁（描述器）
+# 自研究移入市場；每日簡報已暫停自 nav 移除（/briefing/ 歸檔頁仍可直達）。
 MENU = {
-    "research": [
+    "pick": [
         ("cockpit", "/cockpit/", "選股駕駛艙"),
+        ("picks", "/picks/", "精選清單"),
+        ("pipe", "/dd-screener/pipeline.html", "🧭 Pipeline 漏斗"),
+        ("dds", "/dd-screener/", "DD Screener"),
+        ("eng", "/engine/", "⚙ 決策引擎"),
+        ("mom5", "/research/momentum-5/", "Momentum-5"),
+        ("qus", "/qgm/", "QGM 美股"),
+        ("qtw", "/qgm-tw/", "QGM 台股"),
+        ("scr", "/screeners.html", "RS+VCP Screener"),
+    ],
+    "research": [
         ("dd", "/research/", "個股 DD"),
         ("syn", "/research/synthesis/", "期望落差綜合研判"),
-        ("id", "/id/", "產業深度 ID"),
-        # ("ds", "/ds/", "產業敘述 DS"),  # 2026-06-25 封存 /ds/（已併入 ID）— 自 nav 移除
         ("cmp", "/comparisons/", "多股對比"),
-        ("sc", "/supply-chain/", "供應鏈地圖"),
-        ("crowd", "/crowding/", "擁擠交易監測"),
-        ("rot", "/rotation/", "產業輪動"),
-        ("regime", "/regime/", "大類資產 regime"),
+        ("id", "/id/", "產業深度 ID"),
         ("tier", "/id/tier_matrix.html", "🎯 Tier Matrix"),
-        ("picks", "/picks/", "精選清單"),
-        ("mom5", "/research/momentum-5/", "Momentum-5"),
+        ("sc", "/supply-chain/", "供應鏈地圖"),
     ],
     "market": [
-        ("brief", "/briefing/", "每日簡報"),
-        ("week", "/weekly/", "週報"),
         ("earn", "/earnings/", "財報分析"),
         ("cat", "/catalyst/", "催化劑日曆"),
         ("markets", "/markets.html", "Markets"),
         ("sectors", "/sectors.html", "Sectors"),
-        ("ltsmh", "/long-track-smh/", "長線訊號"),
+        ("crowd", "/crowding/", "擁擠交易監測"),
+        ("rot", "/rotation/", "產業輪動"),
+        ("regime", "/regime/", "大類資產 regime"),
+        ("week", "/weekly/", "週報"),
+    ],
+    "system": [
+        ("ltsmh", "/long-track-smh/", "長線訊號 SMH"),
         ("lttw", "/long-track-tw/", "台股長線"),
         ("sleeve", "/turtle-sleeve/", "商品 Sleeve"),
-    ],
-    "quant": [
         ("bt", "/backtest/", "量化回測"),
-        ("dds", "/dd-screener/", "DD Screener"),
-        ("eng", "/engine/", "⚙ 決策引擎"),
-        ("qus", "/qgm/", "QGM 美股"),
-        ("qtw", "/qgm-tw/", "QGM 台股"),
-        ("scr_us", "/screener.html", "Screener 美股"),
-        ("scr_tw", "/screener-tw.html", "Screener 台股"),
-        ("scr_jp", "/screener-jp.html", "Screener 日股"),
-        ("scr_my", "/screener-my.html", "Screener 馬股"),
-        ("cache", "/cache/", "🗄 Data Cache"),
         ("tools", "/tools/", "期貨部位計算機"),
+        ("cache", "/cache/", "🗄 Data Cache"),
     ],
 }
-GROUP_LABELS = {"research": "研究", "market": "市場", "quant": "工具"}
+GROUP_LABELS = {"pick": "選股", "research": "研究", "market": "市場", "system": "系統"}
 
 
 def build_nav(group=None, item=None):
@@ -132,9 +134,10 @@ def build_nav(group=None, item=None):
     <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
     <nav class="imq-menu">
       <a href="/"{home_cls}>首頁</a>
+{dd("pick")}
 {dd("research")}
 {dd("market")}
-{dd("quant")}
+{dd("system")}
       <a href="/mental-models/"{mm_cls}>🧠 心智模型</a>
       <a href="/how-to.html"{howto_cls}>📘 使用說明</a>
     </nav>
@@ -181,42 +184,49 @@ def build_subnav(links, current):
 # ----------------------------------------------------------- active mapping
 
 PREFIX_ACTIVE = [
+    # 選股群
+    ("cockpit/", ("pick", "cockpit")),
+    ("picks/", ("pick", "picks")),
+    ("dd-screener/pipeline.html", ("pick", "pipe")),
+    ("dd-screener/", ("pick", "dds")),
+    ("engine/", ("pick", "eng")),
+    ("research/momentum-5/", ("pick", "mom5")),
+    ("qgm/", ("pick", "qus")),
+    ("qgm-tw/", ("pick", "qtw")),
+    ("screeners.html", ("pick", "scr")),
+    ("screener.html", ("pick", "scr")),
+    ("screener-tw.html", ("pick", "scr")),
+    ("screener-jp.html", ("pick", "scr")),
+    ("screener-my.html", ("pick", "scr")),
+    # 研究群
     ("research/synthesis/", ("research", "syn")),
-    ("research/momentum-5/", ("research", "mom5")),
     ("research/", ("research", "dd")),
     ("dd/", ("research", "dd")),
     ("dca/", ("research", "dd")),
     ("report/", ("research", "dd")),
     ("id/tier_matrix.html", ("research", "tier")),
     ("id/", ("research", "id")),
-    ("ds/", ("research", "ds")),
+    ("ds/", ("research", "id")),
     ("comparisons/", ("research", "cmp")),
     ("supply-chain/", ("research", "sc")),
-    ("crowding/", ("research", "crowd")),
-    ("rotation/", ("research", "rot")),
-    ("regime/", ("research", "regime")),
-    ("cockpit/", ("research", "cockpit")),
-    ("picks/", ("research", "picks")),
-    ("briefing/", ("market", "brief")),
-    ("weekly/", ("market", "week")),
+    # 市場群
     ("earnings/", ("market", "earn")),
     ("catalyst/", ("market", "cat")),
     ("markets.html", ("market", "markets")),
     ("sectors.html", ("market", "sectors")),
-    ("long-track-smh/", ("market", "ltsmh")),
-    ("long-track-tw/", ("market", "lttw")),
-    ("turtle-sleeve/", ("market", "sleeve")),
-    ("backtest/", ("quant", "bt")),
-    ("dd-screener/", ("quant", "dds")),
-    ("engine/", ("quant", "eng")),
-    ("qgm/", ("quant", "qus")),
-    ("qgm-tw/", ("quant", "qtw")),
-    ("screener.html", ("quant", "scr_us")),
-    ("screener-tw.html", ("quant", "scr_tw")),
-    ("screener-jp.html", ("quant", "scr_jp")),
-    ("screener-my.html", ("quant", "scr_my")),
-    ("cache/", ("quant", "cache")),
-    ("tools/", ("quant", "tools")),
+    ("crowding/", ("market", "crowd")),
+    ("rotation/", ("market", "rot")),
+    ("regime/", ("market", "regime")),
+    ("weekly/", ("market", "week")),
+    ("briefing/", ("market", None)),  # 已暫停，nav 無項目，僅群高亮
+    # 系統群
+    ("long-track-smh/", ("system", "ltsmh")),
+    ("long-track-tw/", ("system", "lttw")),
+    ("turtle-sleeve/", ("system", "sleeve")),
+    ("backtest/", ("system", "bt")),
+    ("tools/", ("system", "tools")),
+    ("cache/", ("system", "cache")),
+    # 頂層
     ("mental-models/", ("mm", None)),
     ("how-to.html", ("howto", None)),
     ("index.html", ("home", None)),
