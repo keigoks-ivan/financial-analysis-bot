@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
-"""決策引擎 L0 — 雷達 universe 名單（S&P 500 + Nasdaq 100 + S&P 400 中型股）.
+"""決策引擎 L0 — 雷達 universe 名單（三指數 ∪ DD 池美國上市）.
 
-持有人 2026-07-04 拍板：排除 S&P 600 小型股（噪音多、不符合 mandate 的 size floor）；
+v1.1 持有人 2026-07-04 拍板：排除 S&P 600 小型股（噪音多、不符合 mandate 的 size floor）；
 母體 = 大型（sp500 ∪ ndx100）＋中型（sp400），約 920 檔。
-來源 Wikipedia 成分股表 → data/engine/universe.json（含 sector 與指數層級）。
+v1.2 持有人 2026-07-08 拍板：納入 DD 池（docs/dd-screener/latest.json）美國上市全員
+（tier=ddpool，約 +54 檔）——起因 TSM（核心持倉 ADR）對雷達隱形；機械規則零人工圈選，
+隨研究池自動維護。外國掛牌（含「.」後綴如 2330.TW）仍排除；小型股由下游 GRP 板
+市值閘（≥$20B）續擋，雷達層放行供衛星/循環發現。
+來源 Wikipedia 成分股表 ∪ DD 池 → data/engine/universe.json（含 sector 與層級）。
 Fail-safe：抓取失敗時保留舊檔（雷達照跑上一版名單），月更即可。
 
 Usage: python3 scripts/engine/build_universe.py
@@ -21,6 +25,7 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 OUT = ROOT / "data" / "engine" / "universe.json"
+DD_POOL = ROOT / "docs" / "dd-screener" / "latest.json"
 
 WIKI = {
     "sp500": "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies",
@@ -53,7 +58,27 @@ def fetch() -> list[dict]:
             break
     if len(rows) < 750:   # sanity：三表齊全應 ~920
         raise RuntimeError(f"成分股僅 {len(rows)} 檔，疑似表結構變動 — 保留舊檔")
+    seen = {r["ticker"] for r in rows}
+    rows.extend(dd_pool_extras(seen))
     return rows
+
+
+def dd_pool_extras(seen: set[str]) -> list[dict]:
+    """DD 池美國上市、不在三指數者（universe v1.2）。池檔缺失時不擋主流程。"""
+    try:
+        data = json.loads(DD_POOL.read_text(encoding="utf-8"))
+    except Exception as e:
+        print(f"⚠ DD 池讀取失敗（{e}）— 本輪僅三指數")
+        return []
+    pool = data if isinstance(data, list) else data.get("rows") or data.get("stocks") or []
+    extras = []
+    for r in pool:
+        t = str(r.get("ticker", "")).strip()
+        if not t or t in seen or "." in t:   # 外國掛牌（.TW 等）排除
+            continue
+        seen.add(t)
+        extras.append({"ticker": t, "sector": "", "tier": "ddpool"})
+    return extras
 
 
 def main() -> int:
@@ -69,7 +94,7 @@ def main() -> int:
         "fetched_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "n": len(rows), "tickers": rows,
     }, ensure_ascii=False, indent=1), encoding="utf-8")
-    tiers = {t: sum(1 for r in rows if r["tier"] == t) for t in WIKI}
+    tiers = {t: sum(1 for r in rows if r["tier"] == t) for t in [*WIKI, "ddpool"]}
     print(f"universe.json: {len(rows)} 檔 {tiers}")
     return 0
 

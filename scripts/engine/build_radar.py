@@ -13,6 +13,8 @@
   momentum_rerate 動能重估：12M RS ≥ P90 ∩ 站上 40 週線 ∩ 距 ATH ≥ -15%
   theme_smallmid 主題下沉：中型股（sp400）∩ RS ≥ P75 ∩ 站上 40 週線 ∩ 產業 13 週熱度 top3
   （universe v1.1 2026-07-04 持有人拍板：sp500 ∪ ndx100 ∪ sp400，排除 sp600 小型股）
+  （universe v1.2 2026-07-08 持有人拍板：∪ DD 池美國上市（tier=ddpool）——ADR 不再對雷達隱形；
+    外國掛牌仍排除，小型股由 GRP 板市值閘續擋。詳 build_universe.py docstring）
 
 輸出：docs/engine/radar.json + docs/engine/radar.html（成功才寫檔 — fail-safe 慣例）。
 Usage: python3 scripts/engine/build_radar.py [--skip-stage2]
@@ -200,7 +202,7 @@ def render_grp_board(payload: dict) -> str:
                 else '<span class="tag tag-blind">池外 → 補 DD</span>')
         trs.append(f'<tr><td class="left"><strong>{escape(r["ticker"])}</strong></td>'
                    f'<td class="left">{escape((r["sector"] or "")[:20])}</td>'
-                   f'<td>{escape(r["tier"].replace("sp", "").replace("ndx", "N"))}</td>'
+                   f'<td>{escape(r["tier"].replace("ddpool", "DD").replace("sp", "").replace("ndx", "N"))}</td>'
                    f'<td>{pct(r.get("g_fy1_pct"), 0, False)}</td>'
                    f'<td><strong>{pct(r.get("fy1_rev_30d_pct"))}</strong></td>'
                    f'<td class="left">{P_LABEL_TXT.get(r.get("p_label"), "—")}（距高 {r["dist_ath"]:+.0f}%）</td>'
@@ -230,7 +232,7 @@ def render(payload: dict) -> str:
                 else '<span class="tag tag-blind">池外</span>')
         return (f'<tr><td class="left"><strong>{escape(r["ticker"])}</strong>{star}</td>'
                 f'<td class="left">{escape(r["sector"][:20])}</td>'
-                f'<td>{escape(r["tier"].replace("sp", ""))}</td>'
+                f'<td>{escape(r["tier"].replace("ddpool", "DD").replace("sp", ""))}</td>'
                 f'<td>{pct(r["ret_12m"], 0)}</td><td>{pct(r["ret_13w"], 0)}</td>'
                 f'<td>{pct(r["dist_ath"], 0)}</td><td>{r["base_age_w"]}w</td>'
                 f'<td>{r["rs_pct"]:.0f}</td><td>{rev_html}</td><td>{pool}</td></tr>')
@@ -258,7 +260,7 @@ def render(payload: dict) -> str:
 <b>主榜＝GRP 三閘</b>（高成長 × EPS 上修 × 位置適合，按上修幅度排）——這是選股準則本身；
 四形狀欄降為發現鏡頭（突破／循環轉折／動能／主題下沉，從不同角度找候選）。
 <b>這是研究導航不是買入清單</b>：池外名字＝候選入池補 DD；要進場一律走 DD 裁決＋板機。</div>
-<div class="asof">{payload['as_of']} 價格 as of ｜ universe {payload['universe_n']} 檔
+<div class="asof">{payload['as_of']} 價格 as of ｜ universe {payload['universe_n']} 檔（S&amp;P 500 ∪ NDX 100 ∪ S&amp;P 400 ∪ DD 池美國上市含 ADR；不含外國掛牌）
 ｜ 可算 {payload['scored_n']} 檔 ｜ 修正確認覆蓋 {covered['stage2_ok']}/{covered['stage2_cand']} 檔</div>
 </div>
 <div class="stat-row">
