@@ -1768,59 +1768,188 @@ function revealReplay(myv,why){
   }));
 }
 
-/* ═══ 🎯 異常狩獵 ═══ */
+/* ═══ 🎯 異常狩獵（v2：五鏡頭＋認領快照＋收斂對帳＋記分板） ═══ */
 function pctRank(arr,v){const s=arr.filter(x=>x!=null).sort((a,b)=>a-b);
   return s.length?Math.round(100*s.filter(x=>x<=v).length/s.length):null}
-function renderHunt(){
+function median(a){const s=a.slice().sort((x,y)=>x-y);const m=Math.floor(s.length/2);
+  return s.length%2?s[m]:(s[m-1]+s[m])/2}
+function hash(s){let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return Math.abs(h)}
+
+/* 五種背離鏡頭；每個異常帶 snap（認領時凍結，回訪對帳用） */
+function buildAnomalies(){
   const pool=Object.values(latest).filter(x=>x.moat!=null&&x.fpe!=null&&x.fpe>0);
   const moats=pool.map(x=>x.moat),fpes=pool.map(x=>x.fpe);
-  const div1=pool.map(x=>{
-    const mp=pctRank(moats,x.moat),fp=pctRank(fpes,x.fpe);
-    return {x,score:fp-mp}}).sort((a,b)=>Math.abs(b.score)-Math.abs(a.score)).slice(0,20);
-  const div2=[];
+  const out=[];
+  /* ① 品質×倍數背離 */
+  pool.forEach(x=>{
+    const mp=pctRank(moats,x.moat),fp=pctRank(fpes,x.fpe),gap=fp-mp;
+    if(Math.abs(gap)>=35)out.push({key:'pq_'+x.k,tk:x.k,kind:'品質×倍數',score:Math.abs(gap),
+      desc:'護城河 '+x.moat+'（P'+mp+'）vs '+x.fpe+'x（P'+fp+'）→ '+
+        (gap>0?'市場給的倍數遠高於品質排名 🔺':'高品質但市場只給低倍數 🔻'),
+      snap:{gap,fpe:x.fpe,moat:x.moat}});});
+  /* ② 裁決×結算背離 */
   Object.entries(ST).forEach(([k,rows])=>{
     const ent=ENTMAP[k];if(!ent||!rows.length)return;
-    const last=rows[rows.length-1];
-    if(ent.v==='進場'&&last[2]<-15)div2.push({k,v:ent.v,pct:last[2]});
-    if((ent.v==='觀望'||ent.v==='迴避')&&last[2]>30)div2.push({k,v:ent.v,pct:last[2]});});
-  div2.sort((a,b)=>Math.abs(b.pct)-Math.abs(a.pct));
-  const claims=JSON.parse(localStorage.getItem('gym_hunt')||'{}');
-  function row(key,cells){
-    const claimed=claims[key];
-    return '<tr><td>'+cells+'</td><td>'+
-      (claimed?'<span class="cnt">已認領</span>':'<span class="claim" data-k="'+key+'">認領→解釋它</span>')+'</td></tr>';}
-  let h='<p class="ctx">敏銳度的高階形式是「會自己生問題」。下面是系統找出的背離——你的任務：<b>認領一個，寫下你的解釋</b>（市場錯了？還是評分錯了？還是有你沒看到的變數？）</p>';
-  h+='<h2>品質 × 倍數背離 top 20</h2><table class="hunt"><tr><th>異常</th><th></th></tr>'+
-    div1.map(({x,score})=>row('pq_'+x.k,
-      '<a href="'+(ENTMAP[x.k]?ENTMAP[x.k].p:'#')+'">'+e_(x.k)+'</a> 護城河 '+x.moat+'（P'+pctRank(moats,x.moat)+'） vs '+
-      x.fpe+'x（P'+pctRank(fpes,x.fpe)+'）→ '+(score>0?'市場給的倍數遠高於品質排名 🔺':'高品質但市場只給低倍數 🔻'))).join('')+'</table>';
-  h+='<h2>裁決 × 結算背離</h2><table class="hunt"><tr><th>異常</th><th></th></tr>'+
-    (div2.length?div2.slice(0,15).map(d=>row('vs_'+d.k,
-      '<a href="'+(ENTMAP[d.k]?ENTMAP[d.k].p:'#')+'">'+e_(d.k)+'</a> 裁決 '+d.v+' 但結算 '+
-      (d.pct>0?'+':'')+d.pct+'% → '+(d.pct>0?'錯過或早退？':'thesis 受傷還是市場錯殺？'))).join(''):
-      '<tr><td class="cnt">目前無重大背離</td><td></td></tr>')+'</table>';
-  h+='<div id="claimarea"></div><div class="btnrow"><a class="btn sec" href="#" id="hexp">⬇ 匯出全部認領 .md</a></div>';
+    const last=rows[rows.length-1],pct=last[2];
+    if(ent.v==='進場'&&pct<-15)out.push({key:'vs_'+k,tk:k,kind:'裁決×結算',score:Math.abs(pct),
+      desc:'裁決進場但結算 '+pct+'% → thesis 受傷還是市場錯殺？',snap:{pct}});
+    if((ent.v==='觀望'||ent.v==='迴避')&&pct>30)out.push({key:'vs_'+k,tk:k,kind:'裁決×結算',
+      score:pct,desc:'裁決'+ent.v+'但結算 +'+pct+'% → 錯過還是泡沫？',snap:{pct}});});
+  /* ③ 同主題離群 */
+  const themeMembers={};
+  Object.keys(latest).forEach(k=>(ETH[k]||[]).forEach(t=>{
+    (themeMembers[t.name]=themeMembers[t.name]||[]).push(latest[k])}));
+  Object.entries(themeMembers).forEach(([tm,ms])=>{
+    const withMoat=ms.filter(m=>m.moat!=null);
+    if(withMoat.length<3)return;
+    const med=median(withMoat.map(m=>m.moat));
+    withMoat.forEach(m=>{
+      const dev=m.moat-med;
+      if(Math.abs(dev)>=2.5)out.push({key:'th_'+m.k+'_'+hash(tm)%1e4,tk:m.k,kind:'主題離群',
+        score:Math.abs(dev)*10,
+        desc:'在「'+tm+'」中護城河 '+m.moat+' vs 同儕中位 '+med+'（'+(dev>0?'+':'')+dev.toFixed(1)+
+          '）→ 真的比同行'+(dev>0?'強':'弱')+'這麼多？',snap:{dev:+dev.toFixed(1),med}});});});
+  /* ④ 跨版本評分漂移 */
+  Object.entries(byEnt).forEach(([k,l])=>{
+    for(let i=1;i<l.length;i++){
+      const a=l[i-1],b=l[i];
+      if(a.moat!=null&&b.moat!=null&&Math.abs(b.moat-a.moat)>=2)
+        out.push({key:'dr_'+k+'_'+(b.d||i),tk:k,kind:'評分漂移',score:Math.abs(b.moat-a.moat)*8,
+          desc:a.d+' 護城河 '+a.moat+' → '+b.d+' 變 '+b.moat+' → 是新事實還是評分者換了心情？',
+          snap:{from:a.moat,to:b.moat}});}});
+  /* ⑤ 評分內部張力 */
+  pool.forEach(x=>{
+    if(x.pp!=null&&Math.abs(x.moat-x.pp)>=3)
+      out.push({key:'tn_'+x.k,tk:x.k,kind:'內部張力',score:Math.abs(x.moat-x.pp)*7,
+        desc:'護城河總分 '+x.moat+' 但定價權只有 '+x.pp+' → 沒有定價權的護城河是什麼做的？',
+        snap:{moat:x.moat,pp:x.pp}});});
+  /* 去重（同 ticker 多鏡頭保留，同 key 去重）＋排序 */
+  const seen=new Set();
+  return out.filter(a=>!seen.has(a.key)&&seen.add(a.key)).sort((a,b)=>b.score-a.score);
+}
+
+function huntClaims(){try{return JSON.parse(localStorage.getItem('gym_hunt2')||'{}')}catch(e){return{}}}
+function saveHuntClaims(c){localStorage.setItem('gym_hunt2',JSON.stringify(c))}
+
+/* 回訪對帳：認領時 snap vs 現在的同指標 → 收斂 / 擴大 */
+function drift(a,claim){
+  const s=claim.snap||{};
+  if(a==null)return '（此異常已從榜上消失——很可能已收斂）';
+  const n=a.snap;
+  if(s.gap!=null&&n.gap!=null)return 'P 差 '+s.gap+' → '+n.gap+(Math.abs(n.gap)<Math.abs(s.gap)?'（收斂中）':'（還在擴大）');
+  if(s.pct!=null&&n.pct!=null)return '結算 '+s.pct+'% → '+n.pct+'%';
+  if(s.dev!=null&&n.dev!=null)return '離群 '+s.dev+' → '+n.dev;
+  if(s.pp!=null&&n.pp!=null)return '張力 '+(s.moat-s.pp)+' → '+(n.moat-n.pp);
+  return '';
+}
+
+function renderHunt(){
+  const anomalies=buildAnomalies();
+  const byKey={};anomalies.forEach(a=>byKey[a.key]=a);
+  const claims=huntClaims();
+  const kinds=['品質×倍數','裁決×結算','主題離群','評分漂移','內部張力'];
+  const kindOn=window._huntKind||'*';
+
+  /* 今日獵物：日期種子確定性選一隻未認領的 */
+  const openA=anomalies.filter(a=>!claims[a.key]);
+  const daily=openA.length?openA[hash(today())%openA.length]:null;
+
+  /* 記分板 */
+  const cl=Object.values(claims);
+  const resolved=cl.filter(c=>c.judge);
+  const right=resolved.filter(c=>c.judge==='right').length;
+
+  let h='<p class="ctx">敏銳度的高階形式是「會自己生問題」。五種鏡頭掃出的背離——認領、寫解釋、'+
+    '<b>之後回來對帳</b>：背離收斂了嗎？你的解釋對了嗎？獵人跟評論家的差別就在有沒有對帳。</p>';
+  h+='<div class="tiles" style="margin:10px 0">'+
+    '<div class="tile"><div class="n">'+anomalies.length+'</div><div class="l">在榜異常</div></div>'+
+    '<div class="tile"><div class="n">'+cl.length+'</div><div class="l">已認領</div></div>'+
+    '<div class="tile"><div class="n">'+right+'/'+resolved.length+'</div><div class="l">對帳命中</div></div></div>';
+
+  if(daily){
+    h+='<div class="filecard" style="border-color:rgba(74,222,128,.4)"><b>🏹 今日獵物</b>'+
+      '<div style="margin:6px 0"><a href="'+(ENTMAP[daily.tk]?ENTMAP[daily.tk].p:'#')+
+      '" style="font-family:var(--mono);font-weight:700">'+e_(daily.tk)+'</a> '+
+      '<span class="badge">'+e_(daily.kind)+'</span></div>'+
+      '<div class="ctx">'+e_(daily.desc)+'</div>'+
+      '<div class="btnrow"><a class="btn" href="#" class="claim" id="dailyclaim" data-k="'+daily.key+'">認領這隻</a></div></div>';
+  }
+
+  /* 獵場日誌 */
+  if(cl.length){
+    h+='<h2>📓 獵場日誌（回訪對帳）</h2>';
+    Object.entries(claims).sort((a,b)=>(b[1].date||'').localeCompare(a[1].date||'')).forEach(([key,c])=>{
+      const cur=byKey[key];
+      h+='<div class="card"><div class="t"><a href="'+(ENTMAP[c.tk]?ENTMAP[c.tk].p:'#')+'">'+e_(c.tk)+'</a> '+
+        '<span class="badge">'+e_(c.kind||'')+'</span> <span class="cnt">'+e_(c.date)+' 認領</span>'+
+        (c.judge?' <b class="'+(c.judge==='right'?'v-go':c.judge==='wrong'?'v-avoid':'v-hold')+'">'+
+          (c.judge==='right'?'✓ 我對了':c.judge==='wrong'?'✗ 我錯了':'…觀察中')+'</b>':'')+'</div>'+
+        '<div class="o">'+e_(c.t)+'</div>'+
+        '<div class="m">'+e_(drift(cur,c))+'</div>'+
+        (!c.judge?'<div class="btnrow" style="margin:6px 0 0">'+
+          '<a href="#" class="claim" data-j="right" data-k="'+key+'">判定：我對了</a> · '+
+          '<a href="#" class="claim" data-j="wrong" data-k="'+key+'">我錯了</a> · '+
+          '<a href="#" class="claim" data-j="open" data-k="'+key+'">再觀察</a></div>':'')+
+        '</div>';});
+  }
+
+  /* 異常榜（鏡頭過濾） */
+  h+='<h2>背離榜</h2><div class="subtabs"><span class="'+(kindOn==='*'?'on':'')+'" data-kd="*">全部</span>'+
+    kinds.map(k=>'<span class="'+(kindOn===k?'on':'')+'" data-kd="'+k+'">'+k+'</span>').join('')+'</div>';
+  const rows=anomalies.filter(a=>kindOn==='*'||a.kind===kindOn).slice(0,30);
+  h+='<table class="hunt"><tr><th>異常</th><th></th></tr>'+rows.map(a=>{
+    const claimed=claims[a.key];
+    return '<tr><td><a href="'+(ENTMAP[a.tk]?ENTMAP[a.tk].p:'#')+'">'+e_(a.tk)+'</a> '+
+      '<span class="badge">'+e_(a.kind)+'</span> '+e_(a.desc)+'</td><td>'+
+      (claimed?'<span class="cnt">已認領</span>':'<span class="claim" data-k="'+a.key+'">認領</span>')+'</td></tr>';
+  }).join('')+'</table>';
+  h+='<div id="claimarea"></div><div class="btnrow"><a class="btn sec" href="#" id="hexp">⬇ 匯出獵場日誌 .md</a></div>';
+
   document.getElementById('m-hunt').innerHTML=h;
-  document.querySelectorAll('.claim').forEach(c=>c.addEventListener('click',()=>{
+
+  document.querySelectorAll('#m-hunt .subtabs span').forEach(s=>s.addEventListener('click',()=>{
+    window._huntKind=s.dataset.kd;renderHunt()}));
+
+  document.querySelectorAll('#m-hunt .claim, #dailyclaim').forEach(c=>c.addEventListener('click',ev=>{
+    ev.preventDefault();
     const key=c.dataset.k;
+    if(c.dataset.j){ /* 對帳判定 */
+      const cs=huntClaims();
+      if(c.dataset.j!=='open')cs[key].judge=c.dataset.j;
+      saveHuntClaims(cs);renderHunt();return;
+    }
+    const a=byKey[key];if(!a)return;
     document.getElementById('claimarea').innerHTML=
-      '<div class="claimbox"><h2>認領：'+e_(key.slice(3))+'</h2>'+
-      '<textarea id="cta" placeholder="你的解釋 ≥40 字：這個背離是市場錯、評分錯、還是有第三個變數？可證偽的判斷是什麼？"></textarea>'+
-      '<div class="btnrow"><a class="btn" href="#" id="csave">存下解釋</a></div></div>';
+      '<div class="claimbox"><h2>認領：'+e_(a.tk)+'（'+e_(a.kind)+'）</h2>'+
+      '<p class="ctx">'+e_(a.desc)+'</p>'+
+      '<p class="ctx">三種解法：①市場錯（背離會收斂）②評分錯（DD 該重跑）③<b>第三變數</b>——'+
+      '評分表沒有格子、但市場有在 price in 的東西。常見第三變數：'+
+      '<span class="chip">治理／關鍵人（一人決策）</span><span class="chip">股權結構（雙層股權）</span>'+
+      '<span class="chip">資本配置紀律（亂投資）</span><span class="chip">監管懸而未決</span>'+
+      '<span class="chip">週期位置（高點利潤）</span><span class="chip">會計品質</span>'+
+      '<span class="chip">地緣／制裁</span><span class="chip">客戶集中</span></p>'+
+      '<textarea id="cta" placeholder="≥40 字，寫成可證偽的判斷。範例：META 護城河 9 但倍數被壓——不是市場錯，是市場在 price in 執行長一人決策的治理折價；若 metaverse 資本開支紀律連兩季改善而倍數不修復，則我錯。"></textarea>'+
+      '<div class="btnrow"><a class="btn" href="#" id="csave">存進獵場日誌</a></div></div>';
     document.getElementById('claimarea').scrollIntoView({behavior:'smooth'});
-    document.getElementById('csave').addEventListener('click',e=>{
-      e.preventDefault();
+    document.getElementById('csave').addEventListener('click',e2=>{
+      e2.preventDefault();
       const t=document.getElementById('cta').value.trim();
       if(t.length<40){document.getElementById('cta').style.borderColor='var(--avoid)';return}
-      claims[key]={t,d:today()};localStorage.setItem('gym_hunt',JSON.stringify(claims));
-      renderHunt()});
+      const cs=huntClaims();
+      cs[key]={tk:a.tk,kind:a.kind,t,date:today(),snap:a.snap};
+      saveHuntClaims(cs);renderHunt();});
   }));
+
   document.getElementById('hexp').addEventListener('click',e=>{
     e.preventDefault();
-    const lines=['---','type: usernote','title: "異常狩獵認領 · '+today()+'"','date: '+today(),
-      'tags: [gym, hunt]','---','','# 異常狩獵認領 · '+today(),''];
-    Object.entries(claims).forEach(([k,v])=>{
-      lines.push('## [['+k.slice(3)+']]（'+v.d+'）','',v.t,'')});
+    const cs=huntClaims();
+    const lines=['---','type: usernote','title: "獵場日誌 · '+today()+'"','date: '+today(),
+      'tags: [gym, hunt]','---','','# 獵場日誌 · '+today(),''];
+    Object.entries(cs).forEach(([k,c])=>{
+      const cur=byKey[k];
+      lines.push('## [['+c.tk+']]（'+(c.kind||'')+'，'+c.date+' 認領'+
+        (c.judge?'，判定：'+(c.judge==='right'?'我對了':'我錯了'):'')+'）','',c.t,'',
+        '對帳：'+drift(cur,c),'')});
     exportMd('HUNT_'+today().replace(/-/g,'')+'.md',lines)});
 }
 
