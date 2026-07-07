@@ -292,10 +292,23 @@ def ex_dd(path):
         verdict=meta.get("dca_verdict"),
         grade=meta.get("signal"),
         oneliner=meta.get("oneliner"),
-        extra={k: meta[k] for k in ("schema", "dca_role", "moat_trend", "archetype",
-                                     "long_term_confidence") if meta.get(k)},
+        extra=_dd_extra(meta),
         url=_url(path),
     )]
+
+
+def _dd_extra(meta):
+    """dd-meta 決策層 + 商業體質數字（道場盲測/對決的答案卡）。"""
+    keys = ("schema", "dca_role", "moat_trend", "archetype", "long_term_confidence",
+            "moat", "moat_score", "moat_pricing_power", "moat_execution",
+            "growth_durability", "quality_score", "fpe_fy2", "peg_fy2", "pct_5y",
+            "upside_5y_pct", "gross_margin_pct", "roic_pct",
+            "fcf_margin_normalized_pct", "market_cap_b", "rev_yoy_cc_pct")
+    extra = {k: meta[k] for k in keys if meta.get(k) is not None}
+    m3 = meta.get("monitor_top3")
+    if isinstance(m3, list) and m3:
+        extra["monitor_top3"] = " ｜ ".join(str(x) for x in m3[:3])[:600]
+    return extra
 
 
 def ex_dca(path):

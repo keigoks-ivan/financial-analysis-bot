@@ -387,7 +387,8 @@ as of %%ASOF%%</span><span class="dim" style="margin-left:auto">⌘K 快速跳�
 <input class="search" id="q" placeholder="全庫搜：ticker / 主題 / 標題 / oneliner…（深度全文用 q.py --search）">
 <div class="secnav"><a href="#recent">🕐 最近更新</a><a href="#stocks">📈 個股導航</a>
 <a href="#themes">🗺 主題地圖</a><a href="#shelf">📚 閒讀書架</a><a href="#all">全部</a>
-<a href="munger.html" style="border-color:rgba(167,139,250,.5);color:#c4b5fd">🧭 蒙格清單</a></div>
+<a href="munger.html" style="border-color:rgba(167,139,250,.5);color:#c4b5fd">🧭 蒙格清單</a>
+<a href="dojo.html" style="border-color:rgba(34,211,238,.5);color:#67e8f9">🥋 道場</a></div>
 <div id="qresults"></div>
 
 <h2 id="recent">🕐 最近更新</h2>
@@ -1041,6 +1042,33 @@ if(h0){document.getElementById('tk').value=h0;render(h0)}
 """
 
 
+def _premortems(notes_by, cap=2200):
+    """每 entity 取最新 DD 筆記的 §13 pre-mortem 摘錄（munger 對質區 / 道場殺手題共用）。"""
+    pm = {}
+    for ent_k, lst in notes_by.items():
+        dd = next((n for n in lst if n["t"] == "dd"), None)
+        if not dd:
+            continue
+        try:
+            body = (VAULT / (dd["p"][:-5] + ".md")).read_text(encoding="utf-8")
+        except OSError:
+            continue
+        m = re.search(r"^##\s+(§?13[^\n]*[Pp]re-mortem[^\n]*|[^\n]*[Pp]re-mortem[^\n]*)$",
+                      body, re.M)
+        if not m:
+            continue
+        seg = body[m.end():]
+        nxt = re.search(r"^##\s+", seg, re.M)
+        if nxt:
+            seg = seg[:nxt.start()]
+        seg = seg.strip()
+        if len(seg) > cap:
+            seg = seg[:cap] + "\n…（全文開 DD 筆記）"
+        if seg:
+            pm[ent_k] = seg
+    return pm
+
+
 def build_munger(summaries, stems, graph):
     import runpy
     mm_path = REPO / "mental_models_data.py"
@@ -1100,30 +1128,7 @@ def build_munger(summaries, stems, graph):
     for rows in settle.values():
         rows.sort(key=lambda r: r[0] or "")
 
-    # pre-mortem 摘錄：每 entity 取最新 DD 筆記的 §13（對質區內嵌用，cap 2200 字）
-    pm = {}
-    for ent_k, lst in notes_by.items():
-        dd = next((n for n in lst if n["t"] == "dd"), None)
-        if not dd:
-            continue
-        md_rel = dd["p"][:-5] + ".md"
-        try:
-            body = (VAULT / md_rel).read_text(encoding="utf-8")
-        except OSError:
-            continue
-        m = re.search(r"^##\s+(§?13[^\n]*[Pp]re-mortem[^\n]*|[^\n]*[Pp]re-mortem[^\n]*)$",
-                      body, re.M)
-        if not m:
-            continue
-        seg = body[m.end():]
-        nxt = re.search(r"^##\s+", seg, re.M)
-        if nxt:
-            seg = seg[:nxt.start()]
-        seg = seg.strip()
-        if len(seg) > 2200:
-            seg = seg[:2200] + "\n…（全文開 DD 筆記）"
-        if seg:
-            pm[ent_k] = seg
+    pm = _premortems(notes_by)
 
     def payload(o):
         return json.dumps(o, ensure_ascii=False).replace("</", "<\\/")
@@ -1135,6 +1140,363 @@ def build_munger(summaries, stems, graph):
               .replace("%%NOTESBY%%", payload(notes_by))
               .replace("%%SETTLE%%", payload(settle))
               .replace("%%PM%%", payload(pm)), encoding="utf-8")
+
+
+DOJO = """<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>商業模式道場 · 第二大腦</title>
+<link rel="stylesheet" href="assets/wiki.css">
+<style>
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.tab{border:1px solid var(--line);background:var(--card);border-radius:999px;
+padding:6px 16px;font-size:13.5px;cursor:pointer;color:var(--sub);user-select:none}
+.tab.on{background:linear-gradient(92deg,#2f66c4,#5ea0ff);border-color:transparent;
+color:#fff;box-shadow:0 2px 12px rgba(94,160,255,.3)}
+.mode{display:none}.mode.on{display:block}
+.qhead{font-family:var(--mono);font-size:1.5rem;font-weight:800;margin:4px 0}
+.guessrow{display:grid;grid-template-columns:170px 1fr 90px;gap:12px;
+align-items:center;margin:8px 0;font-size:14px}
+.guessrow input[type=range]{width:100%;accent-color:#5ea0ff}
+.guessrow input[type=number]{width:84px;background:rgba(10,14,26,.6);color:var(--ink);
+border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:14px;
+font-family:var(--mono)}
+.gv{font-family:var(--mono);color:var(--ink);text-align:right}
+table.rvl{width:100%;border-collapse:collapse;margin:10px 0;font-size:13.5px}
+table.rvl td,table.rvl th{padding:6px 10px;border-bottom:1px solid var(--line);
+text-align:right;font-family:var(--mono)}
+table.rvl td:first-child,table.rvl th:first-child{text-align:left;font-family:inherit}
+.hit{color:var(--go-t);font-weight:700}.missx{color:var(--avoid-t);font-weight:700}
+.duelq{border:1px solid var(--line);border-radius:12px;background:var(--card);
+padding:12px 16px;margin:10px 0}
+.duelbtns{display:flex;gap:10px;margin-top:8px}
+.duelbtns button{flex:1;padding:10px;border-radius:10px;border:1px solid var(--line2);
+background:var(--cardsolid);color:var(--ink);font-size:15px;font-weight:700;
+font-family:var(--mono);cursor:pointer}
+.duelbtns button:hover{border-color:var(--accent)}
+.duelbtns button.win{border-color:var(--go);background:rgba(22,163,74,.15)}
+.duelbtns button.lose{border-color:var(--avoid);background:rgba(220,38,38,.12)}
+.streak{font-family:var(--mono);font-size:14px;color:var(--hold-t)}
+.pmbox{border:1px solid rgba(220,38,38,.35);background:rgba(220,38,38,.05);
+border-radius:12px;padding:14px 18px;margin:10px 0;font-size:13.5px;line-height:1.8;
+max-height:320px;overflow-y:auto;white-space:pre-wrap}
+.qcard textarea,textarea.big{width:100%;min-height:80px;background:rgba(10,14,26,.6);
+border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:10px 12px;
+font-size:14px;font-family:inherit;line-height:1.6;resize:vertical}
+.statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.mapwrap{position:relative;border:1px solid var(--line);border-radius:14px;overflow:hidden;
+background:linear-gradient(160deg,#0e1526,#0a0e1a)}
+.mapwrap canvas{display:block;width:100%;height:460px;cursor:crosshair}
+.maptip{position:absolute;pointer-events:none;background:var(--cardsolid);
+border:1px solid var(--line2);border-radius:8px;padding:6px 10px;font-size:12.5px;
+font-family:var(--mono);display:none;z-index:5}
+.ctx{color:var(--sub);font-size:13px;margin:4px 0 12px}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+</style></head>
+<body><div class="top"><a href="index.html">🧠 <b>第二大腦</b></a>
+<span class="dim">🥋 商業模式道場</span></div>
+<main>
+<h1>🥋 商業模式道場</h1>
+<p class="cnt">敏銳度＝先猜、再對答案、追蹤誤差。題庫是你自己的 DD（答案卡＝分析時落下的護城河評分與市場倍數）。
+先猜完才准看庫內答案——猜錯的痛感就是訓練。</p>
+<div class="tabs">
+<span class="tab on" data-m="blind">🎯 盲測</span>
+<span class="tab" data-m="duel">⚔️ 對決</span>
+<span class="tab" data-m="kill">💀 殺手題</span>
+<span class="tab" data-m="map">🗺 品質×倍數地圖</span>
+<span class="tab" data-m="stats">📊 校準紀錄</span>
+</div>
+
+<div class="mode on" id="m-blind"></div>
+<div class="mode" id="m-duel"></div>
+<div class="mode" id="m-kill"></div>
+<div class="mode" id="m-map">
+<p class="ctx">每個點＝一份最新 DD。橫軸護城河總分、縱軸市場給的 Fwd P/E（FY2）。
+先在腦中畫出「品質應該值幾倍」的線，再看哪些點偏離——偏離處就是市場觀點與你觀點的分歧。hover 看名字、點擊進 hub。</p>
+<div class="mapwrap"><canvas id="map"></canvas><div class="maptip" id="maptip"></div></div>
+</div>
+<div class="mode" id="m-stats"></div>
+
+<script id="d-dojo" type="application/json">%%DOJO%%</script>
+<script id="d-pm" type="application/json">%%PM%%</script>
+<script>
+const POOL=JSON.parse(document.getElementById('d-dojo').textContent);
+const PM=JSON.parse(document.getElementById('d-pm').textContent);
+function e_(s){const d=document.createElement('span');d.textContent=s==null?'':s;return d.innerHTML}
+const VCL={'進場':'v-go','觀望':'v-hold','迴避':'v-avoid'};
+function H(tk){return localStorage.getItem('dojo_'+tk)}
+function hist(){try{return JSON.parse(localStorage.getItem('dojo_hist')||'{}')}catch(e){return{}}}
+function saveHist(h){localStorage.setItem('dojo_hist',JSON.stringify(h))}
+function pick(arr){return arr[Math.floor(Math.random()*arr.length)]}
+
+/* tabs */
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.mode').forEach(x=>x.classList.remove('on'));
+  t.classList.add('on');document.getElementById('m-'+t.dataset.m).classList.add('on');
+  if(t.dataset.m==='stats')renderStats();
+  if(t.dataset.m==='map')drawMap();
+}));
+
+/* ═══ 🎯 盲測 ═══ */
+const METRICS=[
+  {id:'moat', name:'護城河總分', min:0,max:10,step:.5, tol:1, get:x=>x.moat},
+  {id:'pp',   name:'定價權',     min:0,max:10,step:.5, tol:1, get:x=>x.pp},
+  {id:'gd',   name:'成長持久度', min:0,max:10,step:.5, tol:1, get:x=>x.gd},
+  {id:'fpe',  name:'Fwd P/E（市場給幾倍）', min:0,max:80,step:.5, tol:'rel20', get:x=>x.fpe},
+  {id:'pct5', name:'5Y P/E 分位（現在貴嗎 0-100）', min:0,max:100,step:1, tol:15, get:x=>x.pct5}
+];
+let bq=null;
+function blindPool(){return POOL.filter(x=>x.moat!=null&&x.pp!=null&&x.gd!=null)}
+function newBlind(){
+  bq=pick(blindPool());
+  const ms=METRICS.filter(m=>m.get(bq)!=null);
+  let h='<div class="filecard"><div class="qhead">'+e_(bq.k)+'</div>'+
+    '<div class="ctx">'+e_(bq.title)+'</div>'+
+    (bq.themes.length?'<div class="ctx">掛在：'+bq.themes.slice(0,5).map(e_).join(' · ')+'</div>':'')+
+    '<p class="cnt">憑你對這門生意的理解作答（不要先開報告）：</p>'+
+    ms.map(m=>'<div class="guessrow"><span>'+m.name+'</span>'+
+      '<input type="range" min="'+m.min+'" max="'+m.max+'" step="'+m.step+'" value="'+((m.min+m.max)/2)+'" data-g="'+m.id+'">'+
+      '<span class="gv" data-v="'+m.id+'">'+((m.min+m.max)/2)+'</span></div>').join('')+
+    '<div class="btnrow"><a class="btn" href="#" id="rvl">揭曉答案卡</a>'+
+    '<a class="btn sec" href="#" id="skip">換一題</a></div>'+
+    '<div id="rvlout"></div></div>';
+  document.getElementById('m-blind').innerHTML=h;
+  document.querySelectorAll('#m-blind input[type=range]').forEach(r=>{
+    r.addEventListener('input',()=>{
+      document.querySelector('.gv[data-v="'+r.dataset.g+'"]').textContent=r.value})});
+  document.getElementById('skip').addEventListener('click',e=>{e.preventDefault();newBlind()});
+  document.getElementById('rvl').addEventListener('click',e=>{e.preventDefault();reveal(ms)});
+}
+function reveal(ms){
+  const h=hist();h.blind=h.blind||{};
+  let rows='',hits=0;
+  ms.forEach(m=>{
+    const g=parseFloat(document.querySelector('input[data-g="'+m.id+'"]').value);
+    const a=m.get(bq);
+    const err=Math.abs(g-a);
+    const ok=(m.tol==='rel20')?err<=Math.abs(a)*.2:err<=m.tol;
+    if(ok)hits++;
+    (h.blind[m.id]=h.blind[m.id]||[]).push(+err.toFixed(1));
+    if(h.blind[m.id].length>60)h.blind[m.id]=h.blind[m.id].slice(-60);
+    rows+='<tr><td>'+m.name+'</td><td>'+g+'</td><td>'+a+'</td>'+
+      '<td class="'+(ok?'hit':'missx')+'">'+(ok?'✓':'±'+err.toFixed(1))+'</td></tr>';
+  });
+  h.blindN=(h.blindN||0)+1;saveHist(h);
+  document.getElementById('rvlout').innerHTML=
+    '<table class="rvl"><tr><th></th><th>你猜</th><th>DD 答案</th><th>判定</th></tr>'+rows+'</table>'+
+    '<p class="cnt">本題 '+hits+'/'+ms.length+' 中。DD 的一句話：</p>'+
+    '<div class="filecard" style="margin:8px 0"><div class="ctx">'+e_(bq.one||'—')+'</div>'+
+    '<div class="actions"><a class="btn sec" href="'+bq.hub+'">個股 hub</a>'+
+    (bq.dd?'<a class="btn sec" href="'+bq.dd+'">DD 筆記</a>':'')+'</div></div>'+
+    '<p class="cnt">誤差大的那格，去讀報告找「你沒看到的東西」——那就是敏銳度的缺口。</p>'+
+    '<div class="btnrow"><a class="btn" href="#" id="nextb">下一題 →</a></div>';
+  document.getElementById('nextb').addEventListener('click',e=>{e.preventDefault();newBlind()});
+}
+
+/* ═══ ⚔️ 對決 ═══ */
+let duel=null,streak=0;
+const DUELQ=[
+  {name:'誰的護城河總分更高？',get:x=>x.moat},
+  {name:'市場給誰更高的 Fwd P/E？',get:x=>x.fpe},
+  {name:'誰的品質分更高？',get:x=>x.qs},
+  {name:'誰的成長持久度更高？',get:x=>x.gd}
+];
+function themePairs(){
+  const byTheme={};
+  POOL.forEach(x=>x.themes.forEach(t=>{(byTheme[t]=byTheme[t]||[]).push(x)}));
+  return Object.entries(byTheme).filter(([t,l])=>l.length>=2);
+}
+function newDuel(){
+  const cand=themePairs();
+  if(!cand.length){document.getElementById('m-duel').innerHTML='<p class="cnt">題庫不足。</p>';return}
+  for(let tries=0;tries<50;tries++){
+    const [theme,list]=pick(cand);
+    const a=pick(list);let b=pick(list);
+    if(a.k===b.k)continue;
+    const qs=DUELQ.filter(q=>q.get(a)!=null&&q.get(b)!=null&&q.get(a)!==q.get(b));
+    if(!qs.length)continue;
+    duel={theme,a,b,qs,i:0};break;
+  }
+  renderDuel();
+}
+function renderDuel(){
+  const d=duel,q=d.qs[d.i];
+  document.getElementById('m-duel').innerHTML=
+    '<p class="ctx">同主題對決：<b>'+e_(d.theme)+'</b> · <span class="streak">連勝 '+streak+'</span></p>'+
+    '<div class="duelq"><div class="ask" style="font-weight:700">'+q.name+'</div>'+
+    '<div class="duelbtns"><button data-s="a">'+e_(d.a.k)+'</button>'+
+    '<button data-s="b">'+e_(d.b.k)+'</button></div><div id="duelout"></div></div>';
+  document.querySelectorAll('.duelbtns button').forEach(btn=>btn.addEventListener('click',()=>{
+    const va=q.get(d.a),vb=q.get(d.b);
+    const win=(va>vb)?'a':'b';
+    const okpick=btn.dataset.s===win;
+    document.querySelectorAll('.duelbtns button').forEach(x=>{
+      x.disabled=true;
+      x.classList.add(x.dataset.s===win?'win':'lose');
+      x.textContent+=' — '+(x.dataset.s==='a'?va:vb);
+    });
+    const h=hist();h.duelN=(h.duelN||0)+1;h.duelWin=(h.duelWin||0)+(okpick?1:0);
+    streak=okpick?streak+1:0;h.duelBest=Math.max(h.duelBest||0,streak);saveHist(h);
+    document.getElementById('duelout').innerHTML=
+      '<p class="cnt">'+(okpick?'✓ 對。':'✗ 錯——記住這對比，這就是格柵的一格。')+
+      ' <a href="'+d.a.hub+'">'+e_(d.a.k)+' hub</a> · <a href="'+d.b.hub+'">'+e_(d.b.k)+' hub</a></p>'+
+      '<div class="btnrow"><a class="btn" href="#" id="nextd">下一局 →</a></div>';
+    document.getElementById('nextd').addEventListener('click',e=>{e.preventDefault();
+      d.i++;if(d.i<d.qs.length)renderDuel();else newDuel()});
+  }));
+}
+
+/* ═══ 💀 殺手題 ═══ */
+let kq=null;
+function newKill(){
+  const pool=POOL.filter(x=>PM[x.k]);
+  if(!pool.length){document.getElementById('m-kill').innerHTML='<p class="cnt">沒有 pre-mortem 題庫。</p>';return}
+  kq=pick(pool);
+  document.getElementById('m-kill').innerHTML=
+    '<div class="filecard"><div class="qhead">'+e_(kq.k)+'</div>'+
+    '<div class="ctx">'+e_(kq.title)+'</div>'+
+    (kq.themes.length?'<div class="ctx">掛在：'+kq.themes.slice(0,5).map(e_).join(' · ')+'</div>':'')+
+    '<p class="cnt"><b>這門生意 3 年後死掉，訃聞怎麼寫？</b>寫 ≥30 字（具體機制，不是「競爭變激烈」）：</p>'+
+    '<textarea class="big" id="killta"></textarea>'+
+    '<div class="btnrow"><a class="btn" href="#" id="killrvl">跟 DD 的 pre-mortem 對答案</a>'+
+    '<a class="btn sec" href="#" id="killskip">換一題</a></div><div id="killout"></div></div>';
+  document.getElementById('killskip').addEventListener('click',e=>{e.preventDefault();newKill()});
+  document.getElementById('killrvl').addEventListener('click',e=>{
+    e.preventDefault();
+    const ta=document.getElementById('killta');
+    if(ta.value.trim().length<30){ta.style.borderColor='var(--avoid)';return}
+    document.getElementById('killout').innerHTML=
+      '<div class="pmbox">'+e_(PM[kq.k])+'</div>'+
+      '<p class="cnt">自評：你寫的死法有出現在上面嗎？</p>'+
+      '<div class="btnrow"><a class="btn sec" href="#" data-sg="1">✓ 抓到核心死法</a>'+
+      '<a class="btn sec" href="#" data-sg="0">✗ 漏了——這是盲點</a></div>';
+    document.querySelectorAll('[data-sg]').forEach(b=>b.addEventListener('click',ev=>{
+      ev.preventDefault();
+      const h=hist();h.killN=(h.killN||0)+1;h.killHit=(h.killHit||0)+(+b.dataset.sg);saveHist(h);
+      document.getElementById('killout').insertAdjacentHTML('beforeend',
+        '<div class="btnrow"><a class="btn" href="#" id="nextk">下一題 →</a>'+
+        (kq.dd?'<a class="btn sec" href="'+kq.dd+'">開完整 DD</a>':'')+'</div>');
+      document.getElementById('nextk').addEventListener('click',x=>{x.preventDefault();newKill()});
+    }));
+  });
+}
+
+/* ═══ 📊 校準紀錄 ═══ */
+function renderStats(){
+  const h=hist();
+  let cards='';
+  cards+='<div class="tile"><div class="n">'+(h.blindN||0)+'</div><div class="l">盲測題數</div></div>';
+  (h.blind?METRICS:[]).forEach(m=>{
+    const arr=(h.blind[m.id]||[]);
+    if(!arr.length)return;
+    const mean=(arr.reduce((a,b)=>a+b,0)/arr.length);
+    const half=Math.floor(arr.length/2)||1;
+    const early=arr.slice(0,half),late=arr.slice(half);
+    const em=early.reduce((a,b)=>a+b,0)/early.length,lm=late.reduce((a,b)=>a+b,0)/(late.length||1);
+    const trend=late.length&&lm<em?'↓ 在進步':'→';
+    cards+='<div class="tile"><div class="n">±'+mean.toFixed(1)+'</div>'+
+      '<div class="l">'+m.name+' 平均誤差 '+trend+'</div></div>';
+  });
+  cards+='<div class="tile"><div class="n">'+(h.duelWin||0)+'/'+(h.duelN||0)+'</div><div class="l">對決勝率 · 最佳連勝 '+(h.duelBest||0)+'</div></div>';
+  cards+='<div class="tile"><div class="n">'+(h.killHit||0)+'/'+(h.killN||0)+'</div><div class="l">殺手題命中（自評）</div></div>';
+  document.getElementById('m-stats').innerHTML=
+    '<p class="ctx">敏銳度的證據不是感覺，是誤差在收斂。盲測誤差 ↓、對決勝率 ↑、殺手題命中 ↑ ＝格柵在長。</p>'+
+    '<div class="statgrid">'+cards+'</div>'+
+    '<div class="btnrow"><a class="btn sec" href="#" id="wipe">清空紀錄重練</a></div>';
+  document.getElementById('wipe').addEventListener('click',e=>{e.preventDefault();
+    localStorage.removeItem('dojo_hist');renderStats()});
+}
+
+/* ═══ 🗺 品質×倍數地圖 ═══ */
+const VC={'進場':'#16a34a','觀望':'#d97706','迴避':'#dc2626'};
+let mapPts=[];
+function drawMap(){
+  const cv=document.getElementById('map'),ctx=cv.getContext('2d'),DPR=devicePixelRatio;
+  const W=cv.width=cv.offsetWidth*DPR,Hh=cv.height=cv.offsetHeight*DPR;
+  const data=POOL.filter(x=>x.moat!=null&&x.fpe!=null&&x.fpe>0&&x.fpe<=80);
+  const padL=46*DPR,padB=34*DPR,padT=16*DPR,padR=16*DPR;
+  const X=v=>padL+(v/10)*(W-padL-padR);
+  const Y=v=>Hh-padB-(v/80)*(Hh-padT-padB);
+  ctx.clearRect(0,0,W,Hh);
+  ctx.strokeStyle='rgba(148,163,184,.12)';ctx.fillStyle='rgba(139,152,179,.8)';
+  ctx.font=(10.5*DPR)+'px SF Mono,Menlo,monospace';ctx.lineWidth=DPR;
+  for(let m=0;m<=10;m+=2){ctx.beginPath();ctx.moveTo(X(m),padT);ctx.lineTo(X(m),Hh-padB);ctx.stroke();
+    ctx.fillText(m,X(m)-3*DPR,Hh-padB+16*DPR)}
+  for(let p=0;p<=80;p+=20){ctx.beginPath();ctx.moveTo(padL,Y(p));ctx.lineTo(W-padR,Y(p));ctx.stroke();
+    ctx.fillText(p+'x',padL-30*DPR,Y(p)+4*DPR)}
+  ctx.fillText('護城河總分 →',W/2-40*DPR,Hh-6*DPR);
+  ctx.save();ctx.translate(12*DPR,Hh/2+40*DPR);ctx.rotate(-Math.PI/2);
+  ctx.fillText('Fwd P/E（FY2）→',0,0);ctx.restore();
+  mapPts=[];
+  data.forEach(x=>{
+    const jx=X(Math.min(10,x.moat+(hash(x.k)%100-50)/250)),jy=Y(x.fpe);
+    ctx.save();
+    ctx.fillStyle=VC[x.v]||'#3b5aa0';
+    ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=6*DPR;
+    ctx.globalAlpha=.9;
+    ctx.beginPath();ctx.arc(jx,jy,4.5*DPR,0,7);ctx.fill();ctx.restore();
+    mapPts.push({x:jx,y:jy,d:x});
+  });
+  cv.onmousemove=e=>{
+    const r=cv.getBoundingClientRect(),mx=(e.clientX-r.left)*DPR,my=(e.clientY-r.top)*DPR;
+    const hit=mapPts.find(p=>Math.hypot(p.x-mx,p.y-my)<8*DPR);
+    const tip=document.getElementById('maptip');
+    if(hit){tip.style.display='block';
+      tip.style.left=(e.clientX-r.left+14)+'px';tip.style.top=(e.clientY-r.top-10)+'px';
+      tip.innerHTML=e_(hit.d.k)+' · 護城河 '+hit.d.moat+' · '+hit.d.fpe+'x'+
+        (hit.d.v?' · '+e_(hit.d.v):'');cv.style.cursor='pointer'}
+    else{tip.style.display='none';cv.style.cursor='crosshair'}
+  };
+  cv.onclick=e=>{
+    const r=cv.getBoundingClientRect(),mx=(e.clientX-r.left)*DPR,my=(e.clientY-r.top)*DPR;
+    const hit=mapPts.find(p=>Math.hypot(p.x-mx,p.y-my)<8*DPR);
+    if(hit)location.href=hit.d.hub;
+  };
+}
+function hash(s){let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return Math.abs(h)}
+
+newBlind();newDuel();newKill();
+</script></main></body></html>
+"""
+
+
+def build_dojo(summaries, stems, graph):
+    """商業模式道場：盲測/對決/殺手題/品質×倍數地圖（答案卡＝dd-meta）。"""
+    latest = {}
+    for s in sorted(summaries, key=lambda s: s.get("date") or ""):
+        if s["type"] == "dd" and s.get("entity"):
+            latest[s["entity"]] = s
+    ent_themes = {}
+    for e in graph.get("edges", []):
+        if e.get("rel") == "belongs_to":
+            lst = ent_themes.setdefault(e["from"], [])
+            if e["to"] not in lst:
+                lst.append(e["to"])
+    pool = []
+    notes_by = {}
+    for k, s in latest.items():
+        x = s.get("extra") or {}
+        hub = stems.get(k)
+        if not hub or x.get("moat_score") is None:
+            continue
+        ddp = stems.get(Path(s["note"]).stem)
+        pool.append({
+            "k": k, "title": (s.get("title") or "")[:110],
+            "v": s.get("verdict"), "one": (s.get("oneliner") or "")[:220],
+            "moat": x.get("moat_score"), "pp": x.get("moat_pricing_power"),
+            "gd": x.get("growth_durability"), "qs": x.get("quality_score"),
+            "fpe": x.get("fpe_fy2"), "pct5": x.get("pct_5y"),
+            "hub": hub, "dd": ddp, "themes": ent_themes.get(k, [])[:8]})
+        notes_by[k] = [{"t": "dd", "p": ddp}] if ddp else []
+    pm = _premortems(notes_by)
+
+    def payload(o):
+        return json.dumps(o, ensure_ascii=False).replace("</", "<\\/")
+
+    (WIKI / "dojo.html").write_text(
+        DOJO.replace("%%DOJO%%", payload(pool)).replace("%%PM%%", payload(pm)),
+        encoding="utf-8")
 
 
 def main():
@@ -1168,7 +1530,7 @@ def main():
     n_pruned = 0
     for hp in WIKI.rglob("*.html"):
         rel = str(hp.relative_to(WIKI))
-        if rel in ("index.html", "munger.html"):
+        if rel in ("index.html", "munger.html", "dojo.html"):
             continue
         if rel[:-5] + ".md" not in md_files:
             hp.unlink()
@@ -1177,6 +1539,7 @@ def main():
     graph = json.loads(GRAPH.read_text(encoding="utf-8")) if GRAPH.exists() else {}
     build_index(summaries, stems)
     build_munger(summaries, stems, graph)
+    build_dojo(summaries, stems, graph)
     print(f"📖 wiki: {n_render} rendered, {n_skip} cached, {n_pruned} pruned "
           f"→ open {WIKI / 'index.html'}")
 

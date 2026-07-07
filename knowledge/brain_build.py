@@ -38,7 +38,7 @@ NOTES_DIR = VAULT / "notes"          # 用戶手寫筆記（committed），build
 CACHE = KDIR / "brain_cache.json"
 DB = KDIR / "brain.db"
 GRAPH = KDIR / "graph.json"
-CACHE_VERSION = 2
+CACHE_VERSION = 4  # v4: extra 擴為全覆蓋體質欄（moat 三分/品質/持久度/倍數/分位）
 
 # note type → vault/auto 下的子目錄
 TYPE_DIR = {
@@ -337,7 +337,7 @@ def main():
             s = {k: note.get(k) for k in
                  ("id", "type", "entity", "theme", "title", "date", "verdict",
                   "grade", "oneliner", "tags", "url", "source", "parse_level",
-                  "repo", "related_tickers", "tickers")}
+                  "repo", "related_tickers", "tickers", "extra")}
             s = {k: v for k, v in s.items() if v not in (None, [], "")}
             s["note"] = rel_note
             summaries.append(s)
