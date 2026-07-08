@@ -217,6 +217,7 @@ PREFIX_ACTIVE = [
     ("crowding/", ("market", "crowd")),
     ("rotation/", ("market", "rot")),
     ("regime/", ("market", "regime")),
+    ("macro/", ("market", None)),  # 總經深度報告（2026-07-08），nav 無項目，僅群高亮
     ("weekly/", ("market", "week")),
     ("briefing/", ("market", None)),  # 已暫停，nav 無項目，僅群高亮
     # 系統群

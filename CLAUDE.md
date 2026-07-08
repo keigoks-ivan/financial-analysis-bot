@@ -178,6 +178,16 @@ Agent({
 
 **硬規則**：中文標點全形；描述器定位禁買賣指令句；§7 GRP／三軌語言禁 IRR 排序；COT as-of 與各層時效必標；低信心數據掛 lo、未取得數值進 gaps 不捏造；無鷹架語言；發布前 self-review gate（三重檢查）；git flow＝預設停下複審、持有人說 push 才 commit（比照 expectations-synthesis）。
 
+## Workflow: 總經深度報告（macro-analyst）
+
+當用戶說「總經研究 {主題}」/「macro {topic}」/「{主題} 總經報告」/「總體經濟分析 {主題}」/「宏觀分析 {主題}」/「{主題} 宏觀傳導」時，自動觸發 `macro-analyst` skill（v1.0，`.claude/skills/macro-analyst/`）。
+
+**定位**：與 industry-analyst（產業 ID）平行的**總經深度研究層**——輸入跨資產／政策／利率／匯率／財政／流動性層級主題，四軸 web 研究（歷史 base rate／政策與流動性／盈餘傳導／市場定價），輸出「機制 → base rate → 數據錨 → 傳導鏈 → 情境樹 → 證偽表 → 組合 read-through」HTML。**描述器紀律＝憲法**（生於 2026-07-08 短期轉折判死裁決之後）：環境判讀與情境準備，禁擇時結論、禁買賣指令。主題有明確產業供需錨 → 走 industry-analyst，不觸發本 skill。
+
+**輸出**：`docs/macro/MACRO_{Slug}_{YYYYMMDD}.html`（macro-meta JSON schema=macro-v1）＋ `docs/macro/index.html` insert 卡片＋critic 報告 `notes/site-internal/macro/`；上站 `https://research.investmquest.com/macro/`。低頻深度層（每月 0-2 份，不做週期性自動產出）。
+
+**硬規則**：中文標點全形；T1（Fed/FRED/Treasury/BLS/IMF/BIS 一手）floor 45%；每數字帶來源＋as-of；寫稿後強制 cold-review critic（7 條 checklist）；判斷類規則已登記 rule_ledger（stance 反騎牆＋證偽表強制＋tool-level 90 天引用 kill）；git flow＝預設停下複審、用戶說 push 才 commit。
+
 ## Report 篇幅 floor（depth gate，非灌水目標）
 
 DD 報告有 size floor，但**這是深度閘門，不是 byte 目標** — 達標的正道永遠是「真量化模組 × sourced 數字」，反灌水鐵律不變（skill：「寧可 105KB 全自算，不要 125KB 注水」）。v13 單檔含基本面 Part I + 決策層 Part II，floor 上修；下列 floor 留足餘裕，只攔真正偷懶的薄報告：
