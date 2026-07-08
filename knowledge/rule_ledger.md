@@ -30,6 +30,8 @@
 | v14.9 判斷反萃取三件套（§12.4b 三檢:分母爭議/證據 L1-L3/steelman;§13b' 成功但劣化;§11 多尺矛盾） | v14.9 (2026-07-08) | 強模型 override 動作固化（ORCL/SNOW/TSLA/MU 四原型），防弱底座退化成合規清單 | 兩輪校準顯示三檢/13b' 從未改變任何裁決（純儀式）→ 逐項降為選做;或被三檢改變的裁決後續超額更差（程序在幫倒忙） | — |
 | QC-53 DD 情境判斷手冊（32 條，references/judgment-playbook.md）＋§14 四問＋§12 拓撲/三元歸因 | v14.10 (2026-07-08) | 18 份 DD 系統性挖掘（四 agent 去重），情境觸發式防注意力稀釋 | 逐條審計:觸發後從未改變裁決/倉位/觸發器的條目降選做或刪;整本兩輪零影響 → 廢除 QC-53 | — |
 | ID 情境判斷手冊（20 條，industry-analyst references/judgment-playbook.md，Gate 14） | v2.7 (2026-07-08) | 5 份高密度 ID 反萃取（過剩改道/敗局劇本化/錯殺型分歧等） | 同上逐條審計制 | — |
+| id-review V2-12~15（機器欄同步/熱產業時鐘施壓/kill 防呆/手冊實答抽查） | v1.6 (2026-07-08) | 守門員落後受檢對象三代＋校準教訓武器化（shortage×PhaseII 7/25） | 兩輪 critic 記錄顯示某條從未抓到任何 finding → 該條降選做;V2-13 若 ID 時鐘已修準（Phase II 失效格消失）→ 降級 | — |
+| 對比判斷手冊（18 條，multi-stock-comparator references/judgment-playbook.md） | v1.9 (2026-07-08) | 6 份 MS 報告反萃取（對比特有邏輯:opportunity-cost 鏈/便宜法醫學/原版勝複製版等） | 同 playbook 逐條審計制（觸發後從未改變排序/推薦 → 降選做） | — |
 | macro §0 stance 三選一反騎牆＋§7 證偽表強制（macro-analyst v1.0） | 2026-07-08 | 生於短期轉折判死裁決後；防 macro 報告淪為不可證偽的騎牆散文 | stance 與後續 6M 風險資產實際方向連兩輪無相關（stance 無資訊量）→ 降為純敘事欄;或證偽表 kill metric 兩輪從未被查核（純儀式） | — |
 | macro-analyst skill 本體（tool-level；描述器紀律＝禁擇時禁買賣指令） | 2026-07-08 | 系統缺總經深度研究層（描述器三頁只有資料層無敘事層） | 90 天內產出報告無任何 DD §11.5／ID／regime editorial／用戶決策討論實際引用 → skill 降級或砍（automatable ≠ valuable） | — |
 

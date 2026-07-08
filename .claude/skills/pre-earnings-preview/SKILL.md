@@ -165,6 +165,10 @@ python3 scripts/snapshot_consensus.py {TICKER}
 2. **反範圍蔓延（anti-scope-creep）**：本 skill 只讀 DD §3.B/§6.I/§11.5/§1 + calendar/variance/snapshot JSON
    + ≤4 次輕量 WebSearch。**不重做基本面、不抓 filing、不改任何 DD、不動 dd-meta、不開新 IRR/估值**。
    DD 假設疑似過時 → 一句「建議重跑 DD」標註，**不自行補研究救回**。
+   **升級路徑（2026-07-08，治「只註記不裁決」的結構缺口）**：若過時的是 §3.B 核心假設或 §11.5 情境機率（非邊緣參數），單靠註記不夠——事件常在重跑來得及之前發生。分兩級：
+   ① **輕度**（單一假設漂移、方向未反轉）→ 報告頂部加醒目 stale banner（列出哪條假設＋過時證據＋來源），三情境表照 DD 原值呈現但**該假設所在的情境列標 ⚠**;
+   ② **重度**（核心假設方向已被 sourced 事實推翻，如客戶已公開轉單、guidance 已撤回）→ 本 preview **降級為「僅事件觀察」**（同觀望/迴避 ticker 的 disclaimer 等級），頂部明文「DD 承保錨已失效，本頁不構成 setup 判讀」，並在 terminal 摘要輸出「⚠ 建議事件前重跑 {TICKER} DD」。
+   兩級都**不改 DD、不自行重算情境**（管轄權不變）——升級的只是本頁的自我標示等級，防止讀者拿失效的錨當 setup。
 3. **歷史股價反應必 WebSearch 查證**（近 4 季 beat/miss + 次日 %）——**禁用記憶**。反直覺數字先查證
    （見 repo memory：曾對 SNDK/MU 憑記憶斷言、方向全錯）。
 4. **資格閘**：非進場部位照跑但全篇標「非進場、僅事件觀察」；無 DD 直接拒絕導去 stock-analyst。
