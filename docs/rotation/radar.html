@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta name="robots" content="noindex,nofollow">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>資產輪動雷達 — InvestMQuest Research</title>
+  <meta name="description" content="資產輪動雷達 — 三宇宙（全球資產／美股板塊／全球市場）× 三時間框架（120／60／20 日）互動式 RRG 相對輪動圖。在圖上直接看資金往哪裡跑。描述器非擇時訊號。">
+  <meta property="og:title" content="資產輪動雷達 — InvestMQuest Research">
+  <meta property="og:site_name" content="InvestMQuest Research">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/imq-base.css">
+  <style>
+:root{
+  --bg:#faf8f3;--bg-card:#fffdf9;--bg-card-hover:#f7f4ec;
+  --border:#e7e2d6;--border-light:#f0ece1;
+  --text:#1c1b18;--text-secondary:#4f4b40;--text-muted:#a09a8c;
+  --accent:#1f513f;--accent-hover:#173d30;
+  --shadow-sm:0 1px 2px rgba(28,27,24,.05);
+  --shadow-md:0 6px 18px rgba(28,27,24,.07);
+  --radius:10px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#0b0d11;--bg-card:#14181f;--bg-card-hover:#1a1f28;
+    --border:#28303c;--border-light:#222834;
+    --text:#edeff3;--text-secondary:#a6aebc;--text-muted:#717a8a;
+    --accent:#5b9bff;--accent-hover:#7db0ff;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.3);
+    --shadow-md:0 4px 14px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme=dark]{
+  --bg:#0b0d11;--bg-card:#14181f;--bg-card-hover:#1a1f28;
+  --border:#28303c;--border-light:#222834;
+  --text:#edeff3;--text-secondary:#a6aebc;--text-muted:#717a8a;
+  --accent:#5b9bff;--accent-hover:#7db0ff;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.3);
+  --shadow-md:0 4px 14px rgba(0,0,0,.4);
+}
+:root[data-theme=light]{
+  --bg:#faf8f3;--bg-card:#fffdf9;--bg-card-hover:#f7f4ec;
+  --border:#e7e2d6;--border-light:#f0ece1;
+  --text:#1c1b18;--text-secondary:#4f4b40;--text-muted:#a09a8c;
+  --accent:#1f513f;--accent-hover:#173d30;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter','Noto Sans TC',system-ui,-apple-system,sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:14px;
+     -webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none;transition:color .15s}
+a:hover{color:var(--accent-hover)}
+.container{max-width:1120px;margin:0 auto;padding:0 1.5rem}
+
+/* Hero */
+.hero{padding:3rem 0 2rem;background:linear-gradient(180deg,var(--bg-card) 0%,var(--bg) 100%)}
+.hero .eyebrow{display:inline-block;color:var(--accent);font-size:.68rem;font-weight:600;
+               letter-spacing:.1em;margin-bottom:.9rem;text-transform:uppercase;
+               font-family:'IBM Plex Mono',monospace}
+.hero h1{font-family:var(--serif);font-size:2rem;font-weight:700;letter-spacing:-.01em;color:var(--text)}
+.hero .sub{color:var(--text-secondary);font-size:.95rem;margin-top:.6rem;max-width:760px;line-height:1.75}
+.hero .mandate{margin-top:1rem;max-width:760px;border-left:3px solid var(--accent);
+               background:var(--bg-card);border-radius:0 var(--radius) var(--radius) 0;padding:.85rem 1.1rem;
+               font-size:.85rem;color:var(--text-secondary);line-height:1.7}
+.hero .mandate strong{color:var(--text)}
+.crumb{font-size:.78rem;color:var(--text-muted);margin-bottom:.6rem}
+.crumb a{color:var(--text-muted)}
+.crumb a:hover{color:var(--accent)}
+
+/* Controls */
+.controls{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;justify-content:space-between;margin:1.6rem 0 1rem}
+.tabs{display:inline-flex;flex-wrap:wrap;gap:.35rem;background:var(--bg-card);border:1px solid var(--border);
+      border-radius:var(--radius);padding:.3rem}
+.tabs button{font-family:inherit;font-size:.82rem;font-weight:600;color:var(--text-secondary);
+      background:none;border:0;border-radius:7px;padding:.5rem .9rem;cursor:pointer;transition:all .15s;line-height:1.2}
+.tabs button:hover{color:var(--text);background:var(--bg-card-hover)}
+.tabs button.active{color:#fff;background:var(--accent)}
+.seg{display:inline-flex;gap:0;background:var(--bg-card);border:1px solid var(--border);
+     border-radius:var(--radius);padding:.3rem;font-family:'IBM Plex Mono',monospace}
+.seg button{font-family:inherit;font-size:.78rem;font-weight:600;color:var(--text-secondary);
+     background:none;border:0;border-radius:7px;padding:.5rem .85rem;cursor:pointer;transition:all .15s}
+.seg button:hover{color:var(--text);background:var(--bg-card-hover)}
+.seg button.active{color:#fff;background:var(--accent)}
+
+/* Chart panel — always dark for RRG legibility */
+.chart-wrap{position:relative;background:#0b0f17;border:1px solid #1c2432;border-radius:14px;
+            padding:14px;box-shadow:0 8px 28px rgba(0,0,0,.28)}
+.chart-inner{position:relative;width:100%;aspect-ratio:1/1;max-height:70vh}
+#rrg{width:100%;height:100%;display:block;border-radius:8px;touch-action:none}
+.chart-legend{display:flex;flex-wrap:wrap;gap:.5rem 1.1rem;margin-top:.7rem;padding:0 4px;
+              font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.05em;color:#8a94a6}
+.chart-legend span{display:inline-flex;align-items:center;gap:.35rem}
+.chart-legend i{width:9px;height:9px;border-radius:2px;display:inline-block}
+#tooltip{position:absolute;pointer-events:none;z-index:5;opacity:0;transition:opacity .12s;
+         background:rgba(10,14,22,.96);border:1px solid #2a3446;border-radius:8px;padding:.6rem .75rem;
+         font-size:.75rem;color:#e6e9ef;line-height:1.55;box-shadow:0 6px 20px rgba(0,0,0,.4);max-width:230px}
+#tooltip .tt-tk{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:.8rem}
+#tooltip .tt-q{font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.05em}
+#tooltip .tt-row{color:#9aa4b5;font-family:'IBM Plex Mono',monospace;font-size:.7rem}
+#tooltip .tt-row b{color:#e6e9ef}
+
+/* Positions table */
+.pos-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1rem;margin-top:1.6rem}
+.pos-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.1rem}
+.pos-card h3{font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.09em;text-transform:uppercase;
+             font-weight:700;margin-bottom:.7rem;display:flex;align-items:center;gap:.45rem}
+.pos-card h3 i{width:9px;height:9px;border-radius:2px;display:inline-block}
+.pos-card h3 .qn{color:var(--text-muted);font-weight:500;font-size:.62rem}
+.pos-table{width:100%;border-collapse:collapse;font-size:.78rem}
+.pos-table td{padding:.28rem .2rem;border-bottom:1px solid var(--border-light);vertical-align:baseline}
+.pos-table tr:last-child td{border-bottom:0}
+.pos-table .pt-tk{font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--text);white-space:nowrap}
+.pos-table .pt-lb{color:var(--text-secondary)}
+.pos-table .pt-n{font-family:'IBM Plex Mono',monospace;text-align:right;color:var(--text-secondary);white-space:nowrap;
+                 font-variant-numeric:tabular-nums}
+.pos-empty{color:var(--text-muted);font-size:.76rem;font-style:italic}
+
+/* Insufficient members */
+.insuff{margin-top:1.3rem;font-size:.76rem;color:var(--text-muted);line-height:1.7}
+.insuff b{color:var(--text-secondary);font-weight:600}
+.insuff .chip{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:.7rem;
+              padding:.1rem .5rem;margin:.15rem .25rem .15rem 0;border-radius:5px;
+              background:var(--border-light);color:var(--text-muted)}
+
+/* Meta line */
+.meta-line{margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--border);
+           font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--text-muted);line-height:1.9}
+.meta-line b{color:var(--text-secondary);font-weight:600}
+
+/* Loading / error */
+.state-msg{padding:3rem 1.5rem;text-align:center;color:var(--text-muted);font-size:.9rem}
+.state-msg.err{color:var(--warn,#92400e)}
+
+/* Method note */
+.method{margin:1.8rem 0;padding:1.1rem 1.4rem;background:var(--bg-card);border:1px solid var(--border);
+        border-radius:var(--radius);font-size:.78rem;color:var(--text-muted);line-height:1.75}
+.method strong{color:var(--text-secondary)}
+
+footer{padding:1.5rem 0;text-align:center;font-size:.75rem;color:var(--text-muted);
+       border-top:1px solid var(--border);margin-top:2rem;line-height:1.8}
+footer a{color:var(--accent)}
+
+@media(max-width:768px){
+  .hero h1{font-size:1.5rem}
+  .controls{flex-direction:column;align-items:stretch;gap:.7rem}
+  .tabs,.seg{justify-content:center}
+  header nav{gap:0}
+}
+  </style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#171512 0%,#26231e 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#c2a878}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(194,168,120,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#26231e;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(194,168,120,.18)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(194,168,120,.22);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#171512;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(194,168,120,.28);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">選股<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/cockpit/">選股駕駛艙</a>
+          <a href="/picks/">精選清單</a>
+          <a href="/dd-screener/pipeline.html">Pipeline 漏斗</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/engine/">決策引擎</a>
+          <a href="/research/momentum-5/">Momentum-5</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screeners.html">RS+VCP Screener</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/">個股 DD</a>
+          <a href="/research/synthesis/">期望落差綜合研判</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+        </div>
+      </div>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/earnings/">財報分析</a>
+          <a href="/catalyst/">催化劑日曆</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/crowding/">擁擠交易監測</a>
+          <a href="/rotation/" class="active">產業輪動</a>
+          <a href="/regime/">大類資產 regime</a>
+          <a href="/weekly/">週報</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track-smh/">長線訊號 SMH</a>
+          <a href="/long-track-tw/">台股長線</a>
+          <a href="/turtle-sleeve/">商品 Sleeve</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/cache/">Data Cache</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <a href="/how-to.html">使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="hero">
+  <div class="container">
+    <div class="crumb"><a href="/">首頁</a> &rsaquo; <a href="/rotation/">產業輪動</a> &rsaquo; 資產輪動雷達</div>
+    <span class="eyebrow">Asset Rotation Radar · RRG</span>
+    <h1>資產輪動雷達</h1>
+    <p class="sub">相對輪動圖（RRG）把每個資產相對基準的<strong>位置</strong>（RS-Ratio，橫軸）與<strong>動能</strong>（RS-Momentum，縱軸）畫在同一張四象限圖上：右上領先、左上改善、左下落後、右下弱化。資金的正常路徑是<strong>順時針輪動</strong>——由改善進入領先、於領先見頂後滑向弱化、落底後再由落後回到改善。三個時間框架（１２０／６０／２０ 日）分別對應中期、中短期與短期的打點視野；框架越短、彗尾越靈敏，越容易捕捉剛啟動或剛反轉的資產。不用一檔一檔看，直接在圖上看到資金往哪裡跑。</p>
+    <div class="mandate">
+      <strong>定位：</strong>本雷達是<strong>描述器（describer），不是擇時訊號（timing signal）</strong>。它描繪資產相對基準的位置與方向，與首頁風險儀表、擁擠交易監測同家族——<strong>不產生任何個別的買進或賣出指令</strong>。象限位置不是買賣依據；個股與組合的進出仍走 DD 統一裁決與 thesis 級證偽。
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="controls">
+    <div class="tabs" id="universe-tabs" role="tablist" aria-label="宇宙"></div>
+    <div class="seg" id="frame-seg" role="group" aria-label="時間框架"></div>
+  </div>
+
+  <div class="chart-wrap">
+    <div class="chart-inner">
+      <canvas id="rrg"></canvas>
+      <div id="tooltip"></div>
+    </div>
+    <div class="chart-legend">
+      <span><i style="background:#e5556b"></i>領先 LEADING（右上）</span>
+      <span><i style="background:#e0a53a"></i>弱化 WEAKENING（右下）</span>
+      <span><i style="background:#9b6ff0"></i>落後 LAGGING（左下）</span>
+      <span><i style="background:#38c6c9"></i>改善 IMPROVING（左上）</span>
+      <span style="color:#5b6577">彗頭＝現況　彗尾＝過往軌跡</span>
+    </div>
+  </div>
+
+  <div id="positions"></div>
+  <div id="insuff"></div>
+  <div class="meta-line" id="meta"></div>
+
+  <div class="method" id="method">
+    <strong>方法：</strong>RS-Ratio 為資產相對基準的相對強度標準化指標，RS-Momentum 為該相對強度的變化率，兩者皆以 100 為中心。軌跡點為日線、由舊至新，最末點為現況。象限與順時針輪動為統計描述，非買賣訊號。
+  </div>
+</div>
+
+<footer class="imq-foot">
+  <div class="container">
+    <div>© 2026 InvestMQuest Research</div>
+    <div><a href="/disclosures.html">方法論與揭露</a> · 本站內容僅供研究參考，不構成投資建議</div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  var QUAD = {
+    leading:   {key:"leading",   zh:"領先", en:"LEADING",   hue:352, sat:72, light:62},
+    weakening: {key:"weakening", zh:"弱化", en:"WEAKENING", hue:38,  sat:78, light:56},
+    lagging:   {key:"lagging",   zh:"落後", en:"LAGGING",   hue:262, sat:72, light:66},
+    improving: {key:"improving", zh:"改善", en:"IMPROVING", hue:182, sat:62, light:52}
+  };
+  var QUAD_ORDER = ["leading","improving","weakening","lagging"]; // table display order 領先/改善/弱化/落後
+
+  var state = {universe:"cross_asset", frame:"120"};
+  var DATA = null;
+  var view = {members:[], hitTargets:[], hover:null}; // current render cache
+
+  var canvas = document.getElementById("rrg");
+  var ctx = canvas.getContext("2d");
+  var tooltip = document.getElementById("tooltip");
+
+  function quadOf(r, m){
+    if(r>=100 && m>=100) return "leading";
+    if(r>=100 && m<100)  return "weakening";
+    if(r<100  && m>=100) return "improving";
+    return "lagging";
+  }
+  function memberColor(quad, idxInGroup, groupSize){
+    var base = QUAD[quad];
+    // vary lightness across the group so trails stay distinguishable
+    var span = 26;
+    var t = groupSize>1 ? (idxInGroup/(groupSize-1)) : 0.5;
+    var light = base.light - span/2 + t*span;
+    var hueShift = (t-0.5) * 16;
+    return "hsl(" + (base.hue+hueShift).toFixed(0) + "," + base.sat + "%," + light.toFixed(0) + "%)";
+  }
+
+  // ---------- hash sync ----------
+  function readHash(){
+    var h = (location.hash||"").replace(/^#/,"");
+    if(!h) return;
+    var parts = h.split("/");
+    if(parts[0]) state.universe = parts[0];
+    if(parts[1]) state.frame = parts[1];
+  }
+  function writeHash(){
+    var nh = "#" + state.universe + "/" + state.frame;
+    if(location.hash !== nh){
+      history.replaceState(null,"",nh);
+    }
+  }
+
+  // ---------- data access ----------
+  function currentUniverse(){
+    if(!DATA) return null;
+    var u = DATA.universes.filter(function(x){return x.key===state.universe;})[0];
+    if(!u){ u = DATA.universes[0]; state.universe = u.key; }
+    return u;
+  }
+  function validFrame(){
+    var frames = (DATA && DATA.frames) || ["120","60","20"];
+    if(frames.indexOf(state.frame)<0) state.frame = frames[0];
+    return state.frame;
+  }
+
+  // Build render model for current universe/frame
+  function buildModel(){
+    var u = currentUniverse();
+    if(!u) return {plot:[], insuff:[]};
+    var frame = validFrame();
+    var plot = [], insuff = [];
+    u.members.forEach(function(mem){
+      var fr = mem.frames && mem.frames[frame];
+      var trail = fr && fr.trail ? fr.trail : [];
+      if(mem.status==="insufficient" || !trail || trail.length===0){
+        insuff.push(mem);
+        return;
+      }
+      var last = trail[trail.length-1];
+      var quad = quadOf(last.r, last.m);
+      plot.push({ticker:mem.ticker, label:mem.label, trail:trail, last:last, quad:quad});
+    });
+    // assign colors grouped by quadrant
+    var groups = {};
+    plot.forEach(function(p){ (groups[p.quad]=groups[p.quad]||[]).push(p); });
+    Object.keys(groups).forEach(function(q){
+      var g = groups[q];
+      // stable order within group by ticker for deterministic lightness
+      g.sort(function(a,b){return a.ticker<b.ticker?-1:1;});
+      g.forEach(function(p,i){ p.color = memberColor(q, i, g.length); });
+    });
+    return {plot:plot, insuff:insuff, universe:u, frame:frame};
+  }
+
+  // ---------- viewport ----------
+  function computeDomain(plot){
+    var maxDev = 1.4; // minimum half-window
+    plot.forEach(function(p){
+      p.trail.forEach(function(pt){
+        maxDev = Math.max(maxDev, Math.abs(pt.r-100), Math.abs(pt.m-100));
+      });
+    });
+    var half = maxDev*1.16;
+    return {min:100-half, max:100+half, half:half};
+  }
+
+  var geom = null; // {w,h,pad,dom, toX, toY}
+  function setupGeom(dom){
+    var rect = canvas.getBoundingClientRect();
+    var pad = 34;
+    var w = rect.width, h = rect.height;
+    var plotW = w - pad*2, plotH = h - pad*2;
+    function toX(r){ return pad + (r-dom.min)/(dom.max-dom.min)*plotW; }
+    function toY(m){ return pad + (1-(m-dom.min)/(dom.max-dom.min))*plotH; }
+    geom = {w:w,h:h,pad:pad,dom:dom,toX:toX,toY:toY};
+    return geom;
+  }
+
+  // ---------- draw ----------
+  function resizeCanvas(){
+    var rect = canvas.getBoundingClientRect();
+    var dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(rect.width*dpr);
+    canvas.height = Math.round(rect.height*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+
+  function draw(){
+    var model = buildModel();
+    view.members = model.plot;
+    resizeCanvas();
+    var dom = computeDomain(model.plot);
+    setupGeom(dom);
+    var g = geom;
+
+    ctx.clearRect(0,0,g.w,g.h);
+    // panel bg
+    ctx.fillStyle = "#0b0f17";
+    ctx.fillRect(0,0,g.w,g.h);
+
+    var cx = g.toX(100), cy = g.toY(100);
+
+    // quadrant tints
+    var tint = 0.055;
+    // top-right leading (rose)
+    fillQuad(cx, g.pad, g.w-g.pad, cy, "229,85,107", tint);
+    // bottom-right weakening (amber)
+    fillQuad(cx, cy, g.w-g.pad, g.h-g.pad, "224,165,58", tint);
+    // bottom-left lagging (violet)
+    fillQuad(g.pad, cy, cx, g.h-g.pad, "155,111,240", tint);
+    // top-left improving (teal)
+    fillQuad(g.pad, g.pad, cx, cy, "56,198,201", tint);
+
+    drawGrid(g, dom, cx, cy);
+    drawQuadLabels(g, cx, cy);
+
+    // trails: dim non-hovered when hovering
+    var hoverTk = view.hover;
+    view.hitTargets = [];
+    model.plot.forEach(function(p){
+      var dim = hoverTk && hoverTk!==p.ticker;
+      drawTrail(p, g, dim);
+    });
+    // labels drawn after with collision avoidance
+    drawLabels(model.plot, g, hoverTk);
+
+    renderPositions(model);
+    renderInsuff(model);
+    renderMeta(model);
+  }
+
+  function fillQuad(x0,y0,x1,y1, rgb, a){
+    ctx.fillStyle = "rgba("+rgb+","+a+")";
+    ctx.fillRect(x0,y0,x1-x0,y1-y0);
+  }
+
+  function drawGrid(g, dom, cx, cy){
+    ctx.save();
+    ctx.font = "10px 'IBM Plex Mono',monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    var lo = Math.ceil(dom.min), hi = Math.floor(dom.max);
+    for(var v=lo; v<=hi; v++){
+      var isCenter = (v===100);
+      var x = g.toX(v), y = g.toY(v);
+      // vertical line
+      ctx.strokeStyle = isCenter ? "rgba(150,165,190,.55)" : "rgba(120,135,160,.10)";
+      ctx.lineWidth = isCenter ? 1.2 : 1;
+      ctx.beginPath(); ctx.moveTo(x, g.pad); ctx.lineTo(x, g.h-g.pad); ctx.stroke();
+      // horizontal line
+      ctx.beginPath(); ctx.moveTo(g.pad, y); ctx.lineTo(g.w-g.pad, y); ctx.stroke();
+      // tick labels on center axes
+      if(!isCenter){
+        ctx.fillStyle = "rgba(120,135,160,.5)";
+        ctx.fillText(String(v), x, g.h-g.pad+4);
+        ctx.save();
+        ctx.textAlign="right"; ctx.textBaseline="middle";
+        ctx.fillText(String(v), g.pad-5, y);
+        ctx.restore();
+      }
+    }
+    // axis titles
+    ctx.fillStyle = "rgba(150,165,190,.7)";
+    ctx.font = "600 10px 'IBM Plex Mono',monospace";
+    ctx.textAlign="right"; ctx.textBaseline="bottom";
+    ctx.fillText("RS-Ratio →", g.w-g.pad, cy-4);
+    ctx.save();
+    ctx.translate(cx+4, g.pad); ctx.rotate(0);
+    ctx.textAlign="left"; ctx.textBaseline="top";
+    ctx.fillText("↑ RS-Momentum", cx+5, g.pad);
+    ctx.restore();
+    ctx.restore();
+  }
+
+  function drawQuadLabels(g, cx, cy){
+    ctx.save();
+    ctx.font = "700 12px 'IBM Plex Mono',monospace";
+    var pad = g.pad+6;
+    // leading top-right
+    label(g.w-pad, g.pad+4, "領先 LEADING", "rgba(229,85,107,.85)", "right","top");
+    // improving top-left
+    label(pad, g.pad+4, "改善 IMPROVING", "rgba(56,198,201,.85)", "left","top");
+    // weakening bottom-right
+    label(g.w-pad, g.h-g.pad-6, "弱化 WEAKENING", "rgba(224,165,58,.85)", "right","bottom");
+    // lagging bottom-left
+    label(pad, g.h-g.pad-6, "落後 LAGGING", "rgba(155,111,240,.9)", "left","bottom");
+    function label(x,y,t,c,ax,ay){ ctx.fillStyle=c; ctx.textAlign=ax; ctx.textBaseline=ay; ctx.fillText(t,x,y); }
+    ctx.restore();
+  }
+
+  function drawTrail(p, g, dim){
+    var pts = p.trail.map(function(pt){ return {x:g.toX(pt.r), y:g.toY(pt.m)}; });
+    var n = pts.length;
+    var col = p.color;
+    var alphaMul = dim ? 0.22 : 1;
+
+    if(n>=2){
+      // smoothed tapering comet: quadratic curves through segment midpoints,
+      // width & alpha grow toward head
+      ctx.lineCap="round"; ctx.lineJoin="round";
+      var mid=[];
+      for(var k=0;k<n-1;k++) mid.push({x:(pts[k].x+pts[k+1].x)/2, y:(pts[k].y+pts[k+1].y)/2});
+      var seg = function(t, draw){
+        ctx.strokeStyle = withAlpha(col, (0.14 + t*0.86)*alphaMul);
+        ctx.lineWidth = 1 + t*3.6;   // 1 -> ~4.6
+        ctx.beginPath(); draw(); ctx.stroke();
+      };
+      if(n===2){
+        seg(1, function(){ ctx.moveTo(pts[0].x,pts[0].y); ctx.lineTo(pts[1].x,pts[1].y); });
+      } else {
+        seg(0, function(){ ctx.moveTo(pts[0].x,pts[0].y); ctx.lineTo(mid[0].x,mid[0].y); });
+        for(var i=1;i<n-1;i++){
+          (function(i){
+            var toX = (i<n-2) ? mid[i].x : pts[n-1].x;
+            var toY = (i<n-2) ? mid[i].y : pts[n-1].y;
+            seg(i/(n-2), function(){
+              ctx.moveTo(mid[i-1].x, mid[i-1].y);
+              ctx.quadraticCurveTo(pts[i].x, pts[i].y, toX, toY);
+            });
+          })(i);
+        }
+      }
+    }
+    // head glow + dot
+    var head = pts[n-1];
+    ctx.save();
+    if(!dim){
+      ctx.shadowColor = col;
+      ctx.shadowBlur = 12;
+    }
+    ctx.fillStyle = withAlpha(col, alphaMul);
+    ctx.beginPath();
+    ctx.arc(head.x, head.y, dim?3:5, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+    // inner bright core
+    ctx.fillStyle = withAlpha("#ffffff", (dim?0.15:0.55)*alphaMul);
+    ctx.beginPath();
+    ctx.arc(head.x, head.y, dim?1.1:1.8, 0, Math.PI*2);
+    ctx.fill();
+
+    view.hitTargets.push({ticker:p.ticker, x:head.x, y:head.y, p:p});
+  }
+
+  function drawLabels(plot, g, hoverTk){
+    // build label boxes at head, then nudge vertically to avoid overlap
+    var labels = plot.map(function(p){
+      var last = p.trail[p.trail.length-1];
+      return {p:p, x:g.toX(last.r), y:g.toY(last.m), text:p.label, color:p.color};
+    });
+    labels.sort(function(a,b){return a.y-b.y;});
+    var lineH = 13, minGap = 12;
+    for(var i=1;i<labels.length;i++){
+      // only nudge if x are near each other
+      var prev = labels[i-1], cur = labels[i];
+      if(Math.abs(cur.y-prev.y)<minGap && Math.abs(cur.x-prev.x)<70){
+        cur.y = prev.y + minGap;
+      }
+    }
+    ctx.save();
+    ctx.font = "600 10.5px 'Inter','Noto Sans TC',sans-serif";
+    ctx.textBaseline = "middle";
+    labels.forEach(function(l){
+      var dim = hoverTk && hoverTk!==l.p.ticker;
+      var right = l.x < g.w-90;
+      ctx.textAlign = right ? "left" : "right";
+      var tx = right ? l.x+9 : l.x-9;
+      var ty = Math.max(g.pad+6, Math.min(g.h-g.pad-6, l.y));
+      ctx.fillStyle = withAlpha(l.color, dim?0.25:1);
+      // subtle dark halo for legibility
+      ctx.shadowColor = "rgba(0,0,0,.85)"; ctx.shadowBlur = 3;
+      ctx.fillText(l.text, tx, ty);
+      ctx.shadowBlur = 0;
+    });
+    ctx.restore();
+  }
+
+  function withAlpha(color, a){
+    if(color[0]==="#"){
+      var r=parseInt(color.substr(1,2),16),gg=parseInt(color.substr(3,2),16),b=parseInt(color.substr(5,2),16);
+      return "rgba("+r+","+gg+","+b+","+a+")";
+    }
+    if(color.indexOf("hsl")===0){
+      return color.replace("hsl","hsla").replace(")",","+a+")");
+    }
+    return color;
+  }
+
+  // ---------- positions table ----------
+  function renderPositions(model){
+    var host = document.getElementById("positions");
+    var byQ = {leading:[],improving:[],weakening:[],lagging:[]};
+    model.plot.forEach(function(p){ byQ[p.quad].push(p); });
+    Object.keys(byQ).forEach(function(q){
+      byQ[q].sort(function(a,b){ return b.last.r-a.last.r; });
+    });
+    var html = '<div class="pos-grid">';
+    QUAD_ORDER.forEach(function(q){
+      var meta = QUAD[q];
+      var rows = byQ[q];
+      var swatch = quadSwatch(q);
+      html += '<div class="pos-card"><h3><i style="background:'+swatch+'"></i>'+meta.zh+
+              ' <span class="qn">'+meta.en+'</span></h3>';
+      if(rows.length===0){
+        html += '<div class="pos-empty">此象限目前無資產。</div>';
+      }else{
+        html += '<table class="pos-table"><tbody>';
+        rows.forEach(function(p){
+          html += '<tr>'+
+            '<td class="pt-tk" style="color:'+p.color+'">'+esc(p.ticker)+'</td>'+
+            '<td class="pt-lb">'+esc(p.label)+'</td>'+
+            '<td class="pt-n">'+p.last.r.toFixed(2)+'</td>'+
+            '<td class="pt-n">'+p.last.m.toFixed(2)+'</td>'+
+          '</tr>';
+        });
+        html += '</tbody></table>';
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+    host.innerHTML = html;
+  }
+  function quadSwatch(q){
+    var m=QUAD[q];
+    return "hsl("+m.hue+","+m.sat+"%,"+m.light+"%)";
+  }
+
+  function renderInsuff(model){
+    var host = document.getElementById("insuff");
+    if(!model.insuff || model.insuff.length===0){ host.innerHTML=""; return; }
+    var chips = model.insuff.map(function(m){
+      return '<span class="chip">'+esc(m.ticker)+'　'+esc(m.label)+'</span>';
+    }).join("");
+    host.innerHTML = '<div class="insuff"><b>資料不足（未入圖）：</b>'+chips+'</div>';
+  }
+
+  function renderMeta(model){
+    var host = document.getElementById("meta");
+    var u = model.universe;
+    var bm = u.benchmark || {};
+    var asof = (DATA && DATA.as_of) || "—";
+    host.innerHTML =
+      '<b>宇宙：</b>'+esc(u.label)+'　·　'+
+      '<b>基準：</b>'+esc(bm.label||bm.ticker||"—")+(bm.ticker?'（'+esc(bm.ticker)+'）':'')+'　·　'+
+      '<b>時間框架：</b>'+esc(model.frame)+' 日　·　'+
+      '<b>資料截至：</b>'+esc(asof)+'　·　更新頻率日更　·　'+
+      '<b>描述器非擇時</b>';
+  }
+
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+
+  // ---------- controls ----------
+  function renderControls(){
+    var tabs = document.getElementById("universe-tabs");
+    tabs.innerHTML = "";
+    DATA.universes.forEach(function(u){
+      var b = document.createElement("button");
+      b.textContent = u.label;
+      b.setAttribute("role","tab");
+      if(u.key===state.universe) b.className="active";
+      b.addEventListener("click", function(){
+        state.universe = u.key; view.hover=null; writeHash(); syncControls(); draw();
+      });
+      tabs.appendChild(b);
+    });
+    var seg = document.getElementById("frame-seg");
+    seg.innerHTML = "";
+    (DATA.frames||["120","60","20"]).forEach(function(f){
+      var b = document.createElement("button");
+      b.textContent = f+"日";
+      if(f===state.frame) b.className="active";
+      b.addEventListener("click", function(){
+        state.frame = f; view.hover=null; writeHash(); syncControls(); draw();
+      });
+      seg.appendChild(b);
+    });
+  }
+  function syncControls(){
+    var tabs = document.getElementById("universe-tabs").children;
+    var i;
+    for(i=0;i<tabs.length;i++){
+      tabs[i].className = (DATA.universes[i].key===state.universe)?"active":"";
+    }
+    var segs = document.getElementById("frame-seg").children;
+    var frames = DATA.frames||["120","60","20"];
+    for(i=0;i<segs.length;i++){
+      segs[i].className = (frames[i]===state.frame)?"active":"";
+    }
+  }
+
+  // ---------- interaction ----------
+  function onMove(ev){
+    if(!geom) return;
+    var rect = canvas.getBoundingClientRect();
+    var px, py;
+    if(ev.touches && ev.touches.length){ px = ev.touches[0].clientX-rect.left; py = ev.touches[0].clientY-rect.top; }
+    else { px = ev.clientX-rect.left; py = ev.clientY-rect.top; }
+    var best=null, bestD=1e9;
+    view.hitTargets.forEach(function(t){
+      var d = (t.x-px)*(t.x-px)+(t.y-py)*(t.y-py);
+      if(d<bestD){ bestD=d; best=t; }
+    });
+    var thresh = 22*22;
+    if(best && bestD<thresh){
+      if(view.hover!==best.ticker){ view.hover=best.ticker; draw(); }
+      showTooltip(best, px, py);
+    }else{
+      if(view.hover){ view.hover=null; draw(); }
+      tooltip.style.opacity="0";
+    }
+  }
+  function showTooltip(t, px, py){
+    var p=t.p, last=p.last, q=QUAD[p.quad];
+    var asof = last.d || (DATA&&DATA.as_of) || "—";
+    tooltip.innerHTML =
+      '<div class="tt-tk" style="color:'+p.color+'">'+esc(p.ticker)+'</div>'+
+      '<div style="color:#c7cdd8;margin-bottom:.25rem">'+esc(p.label)+'</div>'+
+      '<div class="tt-q" style="color:'+quadSwatch(p.quad)+'">'+q.zh+' '+q.en+'</div>'+
+      '<div class="tt-row">RS-Ratio <b>'+last.r.toFixed(2)+'</b></div>'+
+      '<div class="tt-row">RS-Mom <b>'+last.m.toFixed(2)+'</b></div>'+
+      '<div class="tt-row">截至 '+esc(asof)+'</div>';
+    tooltip.style.opacity="1";
+    var tw = tooltip.offsetWidth, th = tooltip.offsetHeight;
+    var host = canvas.parentElement.getBoundingClientRect();
+    var x = px+14, y = py+14;
+    if(x+tw > host.width) x = px-tw-14;
+    if(y+th > host.height) y = py-th-14;
+    tooltip.style.left = Math.max(2,x)+"px";
+    tooltip.style.top = Math.max(2,y)+"px";
+  }
+  function onLeave(){ if(view.hover){view.hover=null;draw();} tooltip.style.opacity="0"; }
+
+  canvas.addEventListener("mousemove", onMove);
+  canvas.addEventListener("mouseleave", onLeave);
+  canvas.addEventListener("touchstart", onMove, {passive:true});
+  canvas.addEventListener("touchmove", onMove, {passive:true});
+  canvas.addEventListener("touchend", onLeave);
+
+  var rt=null;
+  window.addEventListener("resize", function(){ clearTimeout(rt); rt=setTimeout(draw,120); });
+  window.addEventListener("hashchange", function(){
+    readHash(); if(!DATA) return; syncControls(); draw();
+  });
+
+  // ---------- boot ----------
+  function fail(msg){
+    var host = document.getElementById("positions");
+    document.querySelector(".chart-wrap").innerHTML =
+      '<div class="state-msg err">'+esc(msg)+'</div>';
+    host.innerHTML="";
+    document.getElementById("meta").innerHTML="";
+  }
+
+  fetch("data/radar.json", {cache:"no-cache"})
+    .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
+    .then(function(json){
+      DATA = json;
+      if(!DATA.universes || !DATA.universes.length){ fail("資料檔尚無宇宙內容。"); return; }
+      readHash();
+      // validate state against data
+      currentUniverse(); validFrame(); writeHash();
+      renderControls();
+      draw();
+    })
+    .catch(function(e){
+      fail("資料尚未就緒或載入失敗（"+esc(e.message)+"）。雷達資料由週更 pipeline 產生，請稍後再試。");
+    });
+})();
+</script>
+
+</body>
+</html>

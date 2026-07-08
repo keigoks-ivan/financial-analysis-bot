@@ -1,0 +1,73 @@
+name: Daily Asset Rotation Radar (RRG)
+
+# Daily refresh of the asset rotation radar (docs/rotation/data/radar.json):
+# three fixed ETF universes (cross-asset / US sectors / global markets), each an
+# RRG relative to its own benchmark, over three daily timeframes (120/60/20d).
+#
+# yfinance daily bars settle after the US close (~20:00-21:00 UTC), so we run at
+# 22:40 UTC on Tue-Sat (cron dow 2-6) to capture Mon-Fri US closes with headroom.
+# Zero-churn write means a run that finds no new settled bar (e.g. a weekend or a
+# US holiday) produces an empty diff and no commit, so this is idempotent — the
+# weekday-only schedule is a courtesy to avoid pointless runs, not a correctness
+# requirement.  22:40 UTC sits clear of the Sat 00:00-02:00 and Sun 18:00/20:00
+# UTC batches to avoid the nightly cron push pile-up.
+on:
+  schedule:
+    - cron: "40 22 * * 2-6"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rotation-radar-daily
+  cancel-in-progress: false
+
+jobs:
+  radar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install "yfinance>=0.2.40" pandas requests
+
+      - name: Build rotation radar data
+        run: python scripts/build_rotation_radar.py
+
+      - name: Commit and push if changed
+        run: |
+          PATHS=""
+          for p in \
+            data/rotation_radar_daily.json \
+            docs/rotation/data/radar.json; do
+            [ -e "$p" ] && PATHS="$PATHS $p"
+          done
+          if git status --porcelain $PATHS | grep -q .; then
+            echo "Changes detected"
+          else
+            echo "No changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add $PATHS
+          DATE=$(date -u +"%Y-%m-%d")
+          git commit -m "rotation-radar: daily data refresh ${DATE}"
+          for i in 1 2 3 4 5 6; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+            git pull --rebase origin main || { echo "Rebase failed"; exit 1; }
+            sleep $((RANDOM % 20 + 5))
+          done
+          echo "Push failed after 6 attempts"
+          exit 1
