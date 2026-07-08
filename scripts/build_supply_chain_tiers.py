@@ -347,6 +347,31 @@ def mechanical_html(mech, dd_links) -> str:
                  f'<td>${r["terminal"]:g}B</td><td><strong>{r["score"]:g}</strong></td>'
                  f'<td>{esc(" / ".join(r["tickers"]) or "—")}</td><td>{status}</td></tr>')
     h.append('</tbody></table></div>')
+
+    # 公司級聚合：同公司跨鏈稀缺節點分數加總（分攤同節點多供應商），
+    # 治「系統級瓶頸被節點×單鏈計分切碎」——TSMC 先進製程跨 N 鏈各算一次、
+    # 每鏈分數不高，公司級加總才還原其全局瓶頸地位（與節點視圖互補）。
+    comp = {}
+    for r in mech["rows"]:
+        n = max(len(r["tickers"]), 1)
+        for tk in r["tickers"]:
+            c = comp.setdefault(tk, {"score": 0.0, "chains": set(), "nodes": 0, "best": None})
+            c["score"] += r["score"] / n
+            c["chains"].add(r["topic"])
+            c["nodes"] += 1
+            if c["best"] is None or r["score"] > c["best"][1]:
+                c["best"] = (r["name"], r["score"])
+    top = sorted(comp.items(), key=lambda kv: -kv[1]["score"])[:10]
+    h.append('<h4 class="tier-mech-co">公司級聚合 · 跨鏈瓶頸分加總 top-10（同節點多供應商分攤計分）</h4>')
+    h.append('<div style="overflow-x:auto"><table class="tier-mech-tbl"><thead><tr>'
+             '<th>公司</th><th>聚合分</th><th>跨鏈數</th><th>稀缺節點數</th><th>最大單一瓶頸</th><th>編輯層</th></tr></thead><tbody>')
+    curated2 = curated
+    for tk, c in top:
+        status = '✓' if tk.upper() in curated2 else '<strong style="color:#b45309">未收錄</strong>'
+        h.append(f'<tr><td><strong>{esc(tk)}</strong></td><td><strong>{c["score"]:.0f}</strong></td>'
+                 f'<td>{len(c["chains"])}</td><td>{c["nodes"]}</td>'
+                 f'<td>{esc(c["best"][0][:26])}（{c["best"][1]:g}）</td><td>{status}</td></tr>')
+    h.append('</tbody></table></div>')
     return "\n".join(h)
 
 
