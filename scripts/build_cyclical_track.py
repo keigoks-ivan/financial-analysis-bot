@@ -343,7 +343,7 @@ def render_html(doc: dict, out_path: Path) -> None:
 <meta name="color-scheme" content="light">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Serif+TC:wght@600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/imq-base.css">
 <style>
 *{{margin:0;padding:0;box-sizing:border-box}}
@@ -360,7 +360,7 @@ body{{font-family:var(--sans);background:var(--paper);color:var(--body);line-hei
 .formula-panel h3{{font-family:var(--sans);font-size:13px;font-weight:700;color:var(--ink);margin-bottom:8px}}
 .formula-panel code{{background:var(--line-soft);padding:1px 6px;border-radius:5px;font-family:var(--mono);font-size:11.5px;color:var(--ink)}}
 .formula-row{{font-size:12px;color:var(--body);line-height:1.85}}
-.warn-panel{{background:#f8f1e2;border:1px solid rgba(138,109,31,.25);border-radius:var(--r);padding:14px 18px;margin-bottom:20px;font-size:12.5px;color:var(--warn);line-height:1.7}}
+.warn-panel{{background:#fbf3df;border:1px solid rgba(138,109,31,.25);border-radius:var(--r);padding:14px 18px;margin-bottom:20px;font-size:12.5px;color:var(--warn);line-height:1.7}}
 .warn-panel strong{{color:var(--warn);display:block;margin-bottom:6px;font-size:13px}}
 .warn-panel ul{{margin-left:18px;margin-top:6px}}
 .tier-card{{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh-1);padding:16px 18px;margin-bottom:22px}}
@@ -368,14 +368,14 @@ body{{font-family:var(--sans);background:var(--paper);color:var(--body);line-hei
 .tier-card.tier-low h2{{color:var(--pos)}}
 .tier-card.tier-hot h2{{color:var(--warn)}}
 .tier-card h2 .badge{{display:inline-block;padding:2px 9px;border-radius:5px;font-family:var(--mono);font-size:11px;font-weight:700}}
-.tier-card.tier-low h2 .badge{{background:#eaf5ef;color:var(--pos)}}
-.tier-card.tier-hot h2 .badge{{background:#f8f1e2;color:var(--warn)}}
+.tier-card.tier-low h2 .badge{{background:#eafaef;color:var(--pos)}}
+.tier-card.tier-hot h2 .badge{{background:#fbf3df;color:var(--warn)}}
 .tier-card .desc{{font-size:12px;color:var(--sec);margin-bottom:10px;line-height:1.6}}
 .tier-card table{{width:100%;border-collapse:collapse;font-size:12px}}
 .tier-card th{{font-family:var(--mono);background:none;color:var(--sec);font-weight:600;padding:8px 10px;text-align:right;border-bottom:1px solid var(--line);font-size:10px;letter-spacing:.08em;text-transform:uppercase}}
 .tier-card th.left{{text-align:left}}
 .tier-card td{{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line-soft);font-variant-numeric:tabular-nums;color:var(--body)}}
-.tier-card tbody tr:hover td{{background:#f7f4ec}}
+.tier-card tbody tr:hover td{{background:#fbf8f1}}
 .tier-card td.left{{text-align:left;color:var(--ink);font-weight:500}}
 .tier-card td.left .nm{{display:block;font-size:10px;color:var(--muted);font-weight:400;margin-top:1px}}
 .tier-card td:nth-child(3),.tier-card td:nth-child(4),.tier-card td:nth-child(5){{font-family:var(--mono)}}
@@ -386,11 +386,11 @@ body{{font-family:var(--sans);background:var(--paper);color:var(--body);line-hei
 .ret-pos{{color:var(--pos);font-family:var(--mono)}}
 .ret-neg{{color:var(--neg);font-family:var(--mono)}}
 .meta-cell{{font-size:10.5px;color:var(--sec);text-align:left !important}}
-.ftag{{display:inline-block;background:#faecea;color:var(--neg);padding:0 5px;border-radius:5px;font-size:9.5px;margin-left:2px}}
+.ftag{{display:inline-block;background:#fbeceb;color:var(--neg);padding:0 5px;border-radius:5px;font-size:9.5px;margin-left:2px}}
 .verdict{{padding:1px 8px;border-radius:5px;font-family:var(--mono);font-size:10.5px;font-weight:700}}
-.v-in{{background:#eaf5ef;color:var(--pos)}}
-.v-watch{{background:#f8f1e2;color:var(--warn)}}
-.v-avoid{{background:#faecea;color:var(--neg)}}
+.v-in{{background:#eafaef;color:var(--pos)}}
+.v-watch{{background:#fbf3df;color:var(--warn)}}
+.v-avoid{{background:#fbeceb;color:var(--neg)}}
 .v-none{{background:var(--line-soft);color:var(--muted);font-weight:600}}
 .empty-row{{padding:14px;text-align:center;color:var(--muted);font-size:12px;font-style:italic}}
 .meta-note{{padding:30px 32px 4px;font-size:11px;color:var(--sec);line-height:1.7;max-width:min(1400px,96vw);margin:0 auto;border-top:1px solid var(--line)}}

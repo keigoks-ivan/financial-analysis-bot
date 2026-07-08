@@ -698,15 +698,15 @@ def generate_html(legs, stx, combined, asof, changes, last_change_date, rebal_du
   <meta name="description" content="CMDTY2 唐奇安突破 sleeve (GLD/USO→MGC/MCL) 日線訊號 + 80/20 STX50 組合曝險">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Serif+TC:wght@600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/assets/imq-base.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
   <style>
-:root{{--brand:#1f513f;--bg:#faf8f3;--card:#fffdf9;--text:#1c1b18;--muted:#a09a8c;--border:#e7e2d6;
-  --green:#1f6a45;--green-bg:#eaf5ef;--green-border:var(--line);--green-text:#1f6a45;
-  --red:#8c2b23;--red-bg:#faecea;--red-border:var(--line);--red-text:#8c2b23;
-  --amber:#8a6d1f;--amber-bg:#f8f1e2;--amber-border:var(--line);--amber-text:#8a6d1f;
-  --blue:#1f6a45;--blue-bg:#ecf0e9;--blue-border:var(--line);--blue-text:#1f6a45}}
+:root{{--brand:#0d2244;--bg:#f7f3ea;--card:#ffffff;--text:#0c1521;--muted:#9aa7b8;--border:#e5dfd0;
+  --green:#15803d;--green-bg:#eafaef;--green-border:var(--line);--green-text:#15803d;
+  --red:#b91c1c;--red-bg:#fbeceb;--red-border:var(--line);--red-text:#b91c1c;
+  --amber:#a16207;--amber-bg:#fbf3df;--amber-border:var(--line);--amber-text:#a16207;
+  --blue:#15803d;--blue-bg:#e8eef5;--blue-border:var(--line);--blue-text:#15803d}}
 *{{box-sizing:border-box;margin:0;padding:0}}
 body{{font-family:var(--sans),-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   background:var(--bg);color:var(--text);line-height:1.65;font-size:14px}}

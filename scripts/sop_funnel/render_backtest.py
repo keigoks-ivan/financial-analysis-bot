@@ -98,14 +98,14 @@ def svg_chart(d: dict, w=1080, h=340) -> str:
         if y4 not in seen:
             seen.add(y4)
             x = pad_l + i / (len(dates) - 1) * iw
-            grid.append(f'<line x1="{x:.0f}" y1="8" x2="{x:.0f}" y2="{8 + ih}" stroke="#f0ece1"/>'
-                        f'<text x="{x + 3:.0f}" y="{h - 6}" font-size="10" fill="#a09a8c">{y4}</text>')
+            grid.append(f'<line x1="{x:.0f}" y1="8" x2="{x:.0f}" y2="{8 + ih}" stroke="#efe9da"/>'
+                        f'<text x="{x + 3:.0f}" y="{h - 6}" font-size="10" fill="#9aa7b8">{y4}</text>')
     for lv in (100, 150, 200, 250):
         if lo < lv < hi:
             y = 8 + (1 - (lv - lo) / (hi - lo)) * ih
-            grid.append(f'<line x1="{pad_l}" y1="{y:.0f}" x2="{w - 8}" y2="{y:.0f}" stroke="#f0ece1"/>'
-                        f'<text x="4" y="{y + 3:.0f}" font-size="10" fill="#a09a8c">{lv}</text>')
-    legend = (f'<g font-size="11"><rect x="{pad_l + 8}" y="14" width="430" height="20" fill="#fffdf9" opacity=".88"/>'
+            grid.append(f'<line x1="{pad_l}" y1="{y:.0f}" x2="{w - 8}" y2="{y:.0f}" stroke="#efe9da"/>'
+                        f'<text x="4" y="{y + 3:.0f}" font-size="10" fill="#9aa7b8">{lv}</text>')
+    legend = (f'<g font-size="11"><rect x="{pad_l + 8}" y="14" width="430" height="20" fill="#ffffff" opacity=".88"/>'
               f'<text x="{pad_l + 14}" y="28"><tspan fill="#059669" font-weight="bold">━ 現行配置</tspan>'
               f'<tspan fill="#dc2626" dx="10">━ charter原版</tspan>'
               f'<tspan fill="#7c3aed" dx="10">┅ 226純價格</tspan>'
@@ -180,7 +180,7 @@ def main() -> int:
 <meta name="color-scheme" content="light">
 <link rel="stylesheet" href="/assets/imq-base.css">
 <style>
-:root{{--tint-warn:#f8f1e2;--tint-warn-line:#eee0b8;--tint-neg:#faecea;--tint-neg-line:#f0c9c4;--tint-pos:#eaf5ef}}
+:root{{--tint-warn:#fbf3df;--tint-warn-line:rgba(161,98,7,.32);--tint-neg:#fbeceb;--tint-neg-line:rgba(185,28,28,.28);--tint-pos:#eafaef}}
 *{{margin:0;padding:0;box-sizing:border-box}}
 body{{font-family:var(--sans);background:var(--paper);color:var(--body);line-height:1.5}}
 .hero{{background:var(--card);border-bottom:1px solid var(--line);padding:24px 32px 18px}}
@@ -196,7 +196,7 @@ th{{color:var(--sec);font-family:var(--mono);font-weight:600;padding:7px 8px;tex
 th.left{{text-align:left}}
 td{{padding:7px 8px;text-align:right;border-bottom:1px solid var(--line-soft);color:var(--body);font-variant-numeric:tabular-nums}}
 td.left{{text-align:left;font-weight:500}}
-tbody tr:hover td{{background:#f7f4ec}}
+tbody tr:hover td{{background:#fbf8f1}}
 .pos{{color:var(--pos);font-weight:600}}.neg{{color:var(--neg);font-weight:600}}
 .muted-row td{{color:var(--muted)}}
 .warn-tag{{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:5px;font-size:9.5px;font-weight:700;background:var(--tint-warn);color:var(--warn)}}

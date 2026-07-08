@@ -8,22 +8,23 @@
 - 定位句（首頁 hero）：「獨立投資研究 —— 選股系統 × 個股與產業深度研究 × 市場狀態儀表」。
 - 禁用詞（對外頁面）：「AI 驅動」「一鍵」「開站」「玩」「爽」等口語；「AI 自動生成僅供參考」滿版重複（收進 /disclosures.html）。
 
-## 2. 色彩（tokens）—— v1.2 方向 A「編輯部象牙」（2026-07-09 持有人自三方向 mockup 裁決）
+## 2. 色彩（tokens）—— v1.3「奶油海軍藍×金」（2026-07-09 對齊 myproperty kl-theme 血統、收斂一級）
 
 | token | 值 | 用途 |
 |---|---|---|
-| `--ink` | `#1c1b18` | 標題（墨） |
-| `--body` | `#33312c` | 內文 |
-| `--sec` | `#6f6a5e` | 次要文字 |
-| `--muted` | `#a09a8c` | 弱化 |
-| `--paper` | `#faf8f3`（頁底）/ `#fffdf9`（卡） | 暖象牙背景 |
-| `--line` | `#e7e2d6` / soft `#f0ece1` | 邊框 |
-| `--accent` | `#1f513f`（深墨綠，hover `#173d30`） | 連結、強調（**單一 accent**） |
-| `--pos / --neg / --warn` | `#1f6a45` / `#8c2b23` / `#8a6d1f` | 僅限數據語意 |
-| nav | 暖炭漸層 `#171512→#26231e`，accent 黃銅 `rgba(194,168,120,…)`，logo 點 `#c2a878` | 全站頁首 |
+| `--ink` | `#0c1521` | 標題 |
+| `--body` | `#2a3a52` | 內文 |
+| `--sec` / `--muted` | `#6b7a92` / `#9aa7b8` | 次要／弱化 |
+| `--paper` | `#f7f3ea`（奶油紙）/ `#ffffff`（卡）/ soft `#fbf8f1` | 背景 |
+| `--line` | `#e5dfd0` / soft `#efe9da` | 邊框 |
+| `--accent` | `#0d2244`（深海軍藍，hover `#081832`） | 連結、強調 |
+| `--gold` 系 | `#b8924a` / deep `#8f6d2c` / soft `#f3e5c3` / bg `#fbf3df` / `--gold-line` 髮絲線漸層 | **只當標籤（overline）/髮絲線分隔/nav active——不做按鈕底、卡底、大面積** |
+| `--pos / --neg / --warn` | `#15803d` / `#b91c1c` / `#a16207`（淡底 `#eafaef/#fbeceb/#fbf3df`） | 僅限數據語意 |
+| 陰影 | navy 調層疊 `rgba(13,34,68,…)` | sm/md 兩級 |
+| nav | 深海軍藍漸層 `#081832→#173564`，金 active `rgba(184,146,74,…)`，logo 點 `#d4b576` | 全站頁首 |
 
-血統＝FT/Economist 印刷系研究館。舊藍灰調（#f7f9fc/#0f2a45/#1e4e8c 系）已全站退役——新頁面不得再引入。
-漸層限 nav 與 hero 極淡底；卡片不用彩色漸層底。
+展示字：`'Playfair Display','Noto Serif TC',Georgia,serif`（拉丁字得 Playfair、中文落 Noto Serif TC）。
+血統＝myproperty kl-theme（luxury navy/gold），「更專業」的收斂＝金的用量紀律；v1.2 象牙綠調已退役。
 
 ## 3. 字體
 

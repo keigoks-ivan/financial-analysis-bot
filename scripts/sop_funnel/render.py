@@ -426,7 +426,7 @@ def render_page(d: dict) -> str:
 <meta name="color-scheme" content="light">
 <link rel="stylesheet" href="/assets/imq-base.css">
 <style>
-:root{{--tint-warn:#f8f1e2;--tint-warn-line:#eee0b8;--tint-accent:#ecf0e9;--tint-accent-line:var(--line);--tint-pos:#eaf5ef}}
+:root{{--tint-warn:#fbf3df;--tint-warn-line:rgba(161,98,7,.32);--tint-accent:#e8eef5;--tint-accent-line:var(--line);--tint-pos:#eafaef}}
 *{{margin:0;padding:0;box-sizing:border-box}}
 body{{font-family:var(--sans);background:var(--paper);color:var(--body);line-height:1.5}}
 .hero{{background:var(--card);border-bottom:1px solid var(--line);padding:24px 32px 18px}}
@@ -445,7 +445,7 @@ th{{color:var(--sec);font-family:var(--mono);font-weight:600;padding:7px 8px;tex
 th.left{{text-align:left}}
 td{{padding:7px 8px;text-align:right;border-bottom:1px solid var(--line-soft);color:var(--body);font-variant-numeric:tabular-nums}}
 td.left{{text-align:left;font-weight:500}}
-tbody tr:hover td{{background:#f7f4ec}}
+tbody tr:hover td{{background:#fbf8f1}}
 td.legs{{font-size:10.5px;color:var(--sec)}}
 td.veto{{color:var(--warn);font-size:11px}}
 .pos{{color:var(--pos);font-weight:600}}.neg{{color:var(--neg);font-weight:600}}
@@ -473,7 +473,7 @@ td.veto{{color:var(--warn);font-size:11px}}
 .vd-wrap{{margin-top:11px;display:flex;flex-direction:column;gap:7px;max-width:580px}}
 .vd-row{{display:grid;grid-template-columns:92px 1fr auto;align-items:center;gap:10px;font-size:11px}}
 .vd-label{{color:var(--warn);font-weight:600;text-align:right;white-space:nowrap}}
-.vd-track{{background:#efe2c2;border-radius:5px;height:14px;overflow:hidden}}
+.vd-track{{background:#f3e5c3;border-radius:5px;height:14px;overflow:hidden}}
 .vd-fill{{height:100%;border-radius:5px;min-width:2px}}
 .vd-val{{color:var(--warn);white-space:nowrap;font-variant-numeric:tabular-nums}}
 .vd-rec{{color:var(--sec);margin-left:8px}}

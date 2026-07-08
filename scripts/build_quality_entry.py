@@ -652,8 +652,8 @@ body{{font-family:var(--sans);background:var(--paper);color:var(--body);line-hei
 .tier-card.tier-a h2{{color:var(--pos)}}
 .tier-card.tier-b h2{{color:var(--warn)}}
 .tier-card h2 .badge{{display:inline-block;padding:2px 9px;border-radius:5px;font-family:var(--mono);font-size:11px;font-weight:700}}
-.tier-card.tier-a h2 .badge{{background:#eaf5ef;color:var(--pos)}}
-.tier-card.tier-b h2 .badge{{background:#f8f1e2;color:var(--warn)}}
+.tier-card.tier-a h2 .badge{{background:#eafaef;color:var(--pos)}}
+.tier-card.tier-b h2 .badge{{background:#fbf3df;color:var(--warn)}}
 .tier-card .desc{{font-size:12px;color:var(--sec);margin-bottom:10px;line-height:1.6}}
 .tier-card table{{width:100%;border-collapse:collapse;font-size:12px;background:var(--card)}}
 .tier-card th{{background:transparent;color:var(--sec);font-family:var(--mono);font-weight:600;padding:8px 10px;text-align:right;border-bottom:1px solid var(--line);font-size:10px;letter-spacing:.1em;text-transform:uppercase}}
@@ -661,7 +661,7 @@ body{{font-family:var(--sans);background:var(--paper);color:var(--body);line-hei
 .tier-card td{{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line-soft);color:var(--body);font-family:var(--mono);font-variant-numeric:tabular-nums}}
 .tier-card td.left{{text-align:left;color:var(--ink);font-weight:500;font-family:var(--sans)}}
 .tier-card td.left .sub{{font-size:10px;color:var(--muted);font-weight:400;margin-top:1px}}
-.tier-card tbody tr:hover td{{background:#f7f4ec}}
+.tier-card tbody tr:hover td{{background:#fbf8f1}}
 .tier-card td a{{color:var(--accent);text-decoration:none;font-weight:700}}
 .tier-card td a:hover{{text-decoration:underline}}
 .score-cell{{color:var(--ink)}}
@@ -670,9 +670,9 @@ body{{font-family:var(--sans);background:var(--paper);color:var(--body);line-hei
 .meta-cell{{font-size:10.5px;color:var(--sec);text-align:left !important;font-family:var(--sans)}}
 .arch-badge{{display:inline-block;padding:1px 7px;border-radius:5px;font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.05em;vertical-align:1px;margin-left:6px}}
 .arch-growth{{background:var(--line-soft);color:var(--accent)}}
-.arch-mature{{background:#f8f1e2;color:var(--warn)}}
+.arch-mature{{background:#fbf3df;color:var(--warn)}}
 .empty-row{{padding:14px;text-align:center;color:var(--muted);font-size:12px;font-style:italic}}
-.caveat-panel{{background:#f8f1e2;border:1px solid rgba(138,109,31,.25);border-radius:var(--r);padding:14px 18px;margin-bottom:20px;font-size:12px;color:var(--warn);line-height:1.65}}
+.caveat-panel{{background:#fbf3df;border:1px solid rgba(138,109,31,.25);border-radius:var(--r);padding:14px 18px;margin-bottom:20px;font-size:12px;color:var(--warn);line-height:1.65}}
 .caveat-panel strong{{color:var(--warn);display:block;margin-bottom:6px}}
 .caveat-panel ul{{margin-left:18px}}
 .meta-note{{padding:30px 32px 4px;font-size:11px;color:var(--sec);line-height:1.7;max-width:min(1400px,96vw);margin:0 auto;border-top:1px solid var(--line)}}

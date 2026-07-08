@@ -199,11 +199,11 @@ def render_block(score, label_en, label_zh, color, comps, as_of, prev):
         if c['score'] is None:
             dot, dot_color, chip_bg = '–', 'var(--muted)', 'var(--line-soft)'
         elif c['score'] > 0:
-            dot, dot_color, chip_bg = '▲', 'var(--pos)', '#eaf5ef'
+            dot, dot_color, chip_bg = '▲', 'var(--pos)', '#eafaef'
         elif c['score'] < 0:
-            dot, dot_color, chip_bg = '▼', 'var(--neg)', '#faecea'
+            dot, dot_color, chip_bg = '▼', 'var(--neg)', '#fbeceb'
         else:
-            dot, dot_color, chip_bg = '●', 'var(--warn)', '#f8f1e2'
+            dot, dot_color, chip_bg = '●', 'var(--warn)', '#fbf3df'
         chips.append(
             f'<div class="rg-chip" style="background:{chip_bg}">'
             f'<div class="rg-chip-top"><span style="color:{dot_color}">{dot}</span>'
