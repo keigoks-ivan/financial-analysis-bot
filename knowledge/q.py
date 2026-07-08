@@ -181,12 +181,14 @@ def cmd_entity(name):
             print(f"  • {t}" + (f"  [{' | '.join(bits)}]" if bits else "  [legacy ID，無機器裁決欄]"))
 
     # 供應鏈位置（supplies）：此 ticker 在哪些供應鏈 topic 的哪個製程節點
-    supplies = sorted({(e["to"], e.get("node") or "") for e in graph["edges"]
+    supplies = sorted({(e["to"], e.get("node") or "", e.get("single") or "")
+                       for e in graph["edges"]
                        if e["from"] == canonical and e.get("rel") == "supplies"})
     if supplies:
         print(f"\n供應鏈位置（{len(supplies)}）：")
-        for tid, proc in supplies:
-            print(f"  • {tid}: {proc}")
+        for tid, proc, single in supplies:
+            flag = f"  ⚑ {single[:40]}" if single else ""
+            print(f"  • {tid}: {proc}{flag}")
 
 
 def cmd_stale(n):

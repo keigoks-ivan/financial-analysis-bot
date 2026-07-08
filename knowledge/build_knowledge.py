@@ -289,6 +289,8 @@ def build_graph(decisions, id_metas, sc_topics):
                         "node": proc,
                         "competition": comp,
                         "country": co.get("country"),
+                        # ⚑ 單點依賴旗標（鎖喉點/客戶獨家等，供 DD §5.G 商業模式解剖消費）
+                        "single": nd.get("single"),
                     })
 
     return {

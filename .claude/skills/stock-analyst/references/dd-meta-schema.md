@@ -90,6 +90,7 @@
 - `rearm_trigger`：str ≤120 字（v14.5;§14a 觀望分支「觸發條件:___」的機器可讀版——在等什麼:事件／估值門檻／回檔位。觀望裁決建議填，soft，不進 validator 必填）
 - `cycle_position`：str（v14.5;附錄 B B.1 循環位置 `深谷投降`｜`早循環`｜`中循環`｜`晚循環`｜`過熱頂部`;非循環 archetype 不填）
 - `cycle_verdict`：str（v14.5;附錄 B B.3 `右側可追蹤`｜`等回踩`｜`頂部觀望`｜`未觸發`;非循環 archetype 不填）
+- `industry_clock_phase`：str enum `I`｜`II`｜`III`｜`IV`（§9 產業時鐘，v14.11 全 archetype 必答;與 cycle_position 分工——那是循環股自身位置，本欄是產業層時鐘）
 
 **常見 alias 錯誤**（沿用 v12，照 canonical 名稱，禁用別名）：`schema_version`→`schema`、`report_date`→`date`、`current_price`→`price_at_dd`、`peg`/`peg_3y`→`peg_fy2`、`fwd_pe`→`fpe_fy2`、`fwd_pe_5y_percentile`→`pct_5y`、`val_gate`→`val`、`ma_status`→`ma`;省略 `verdict`/`trap_label` 必補;帶文字 emoji（`🟢 受益`）→ 純 emoji;`中高`→`中`/`高` 擇一。**v13 新增 alias 警示**：`role`→`dca_role`、`verdict_human`→`dca_verdict`、`ev_5y`/`ev_pct`→`ev5y_pct`、`moat_arrow`→`moat_trend`、`runway`→`runway_post_y5`、`ar`/`asymmetry_ratio`→`asym_ratio`。
 

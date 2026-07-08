@@ -125,6 +125,8 @@ V13_ENUM_FIELDS = {
     },
     "moat_trend": {"↑", "→", "↓"},
     "runway_post_y5": {"🟢", "🟡", "🔴"},
+    # v14.11 optional; validated only when present (legacy exempt).
+    "industry_clock_phase": {"I", "II", "III", "IV"},
 }
 
 # Optional v13 fields: validated for type only when present.
@@ -153,6 +155,10 @@ V13_OPTIONAL_TYPES = {
     "rearm_trigger": (str,),
     "cycle_position": (str,),
     "cycle_verdict": (str,),
+    # v14.11: industry-level investment-clock phase (§9 mandatory answer, all
+    # archetypes; distinct from cycle_position which is the *company's own*
+    # cycle slot for cyclical archetypes only). Enum checked below when present.
+    "industry_clock_phase": (str,),
     # Fundamental sub-grades surfaced to the screener (present in most v14 DDs;
     # dd_screener_dd_loader already reads moat_execution / moat_pricing_power /
     # upside_5y_pct). Previously unregistered — added so their type is checked.
