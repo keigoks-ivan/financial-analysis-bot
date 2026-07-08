@@ -98,21 +98,21 @@ def svg_chart(d: dict, w=1080, h=340) -> str:
         if y4 not in seen:
             seen.add(y4)
             x = pad_l + i / (len(dates) - 1) * iw
-            grid.append(f'<line x1="{x:.0f}" y1="8" x2="{x:.0f}" y2="{8 + ih}" stroke="#eef3fa"/>'
-                        f'<text x="{x + 3:.0f}" y="{h - 6}" font-size="10" fill="#8aa5c0">{y4}</text>')
+            grid.append(f'<line x1="{x:.0f}" y1="8" x2="{x:.0f}" y2="{8 + ih}" stroke="#f0ece1"/>'
+                        f'<text x="{x + 3:.0f}" y="{h - 6}" font-size="10" fill="#a09a8c">{y4}</text>')
     for lv in (100, 150, 200, 250):
         if lo < lv < hi:
             y = 8 + (1 - (lv - lo) / (hi - lo)) * ih
-            grid.append(f'<line x1="{pad_l}" y1="{y:.0f}" x2="{w - 8}" y2="{y:.0f}" stroke="#eef3fa"/>'
-                        f'<text x="4" y="{y + 3:.0f}" font-size="10" fill="#8aa5c0">{lv}</text>')
-    legend = (f'<g font-size="11"><rect x="{pad_l + 8}" y="14" width="430" height="20" fill="#fff" opacity=".88"/>'
+            grid.append(f'<line x1="{pad_l}" y1="{y:.0f}" x2="{w - 8}" y2="{y:.0f}" stroke="#f0ece1"/>'
+                        f'<text x="4" y="{y + 3:.0f}" font-size="10" fill="#a09a8c">{lv}</text>')
+    legend = (f'<g font-size="11"><rect x="{pad_l + 8}" y="14" width="430" height="20" fill="#fffdf9" opacity=".88"/>'
               f'<text x="{pad_l + 14}" y="28"><tspan fill="#059669" font-weight="bold">━ 現行配置</tspan>'
               f'<tspan fill="#dc2626" dx="10">━ charter原版</tspan>'
               f'<tspan fill="#7c3aed" dx="10">┅ 226純價格</tspan>'
               f'<tspan fill="#64748b" dx="10">━ SPY</tspan>'
               f'<tspan fill="#94a3b8" dx="10">┄ QQQ</tspan></text></g>')
-    return (f'<svg viewBox="0 0 {w} {h}" style="width:100%;background:#fff;'
-            f'border:1px solid #dce8f5;border-radius:8px">{"".join(grid)}{"".join(lines)}{legend}</svg>')
+    return (f'<svg viewBox="0 0 {w} {h}" style="width:100%;background:var(--card);'
+            f'border:1px solid var(--line);border-radius:8px">{"".join(grid)}{"".join(lines)}{legend}</svg>')
 
 
 def stat_row(label, m, muted=False):
@@ -196,7 +196,7 @@ th{{color:var(--sec);font-family:var(--mono);font-weight:600;padding:7px 8px;tex
 th.left{{text-align:left}}
 td{{padding:7px 8px;text-align:right;border-bottom:1px solid var(--line-soft);color:var(--body);font-variant-numeric:tabular-nums}}
 td.left{{text-align:left;font-weight:500}}
-tbody tr:hover td{{background:#fafcfe}}
+tbody tr:hover td{{background:#f7f4ec}}
 .pos{{color:var(--pos);font-weight:600}}.neg{{color:var(--neg);font-weight:600}}
 .muted-row td{{color:var(--muted)}}
 .warn-tag{{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:5px;font-size:9.5px;font-weight:700;background:var(--tint-warn);color:var(--warn)}}

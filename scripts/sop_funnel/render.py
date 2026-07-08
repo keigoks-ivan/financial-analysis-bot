@@ -346,7 +346,7 @@ def _population_block(pop, excluded) -> str:
             f'<tr><td class="left"><strong>{_e(r["ticker"])}</strong> {_e(r.get("name") or "")}'
             + ('<span class="warn-tag">待複檢</span>' if r.get("moat_review_due") else '')
             + f'</td>'
-            f'<td>{_grade_badge(r["moat_grade"], r["moat_trend"])} <span style="color:#94a3b8">{_e(r["moat_score"])}</span></td>'
+            f'<td>{_grade_badge(r["moat_grade"], r["moat_trend"])} <span style="color:var(--muted)">{_e(r["moat_score"])}</span></td>'
             f'<td>{_e(r.get("signal"))}</td>'
             f'<td>{_e(round(r["cagr"], 0)) if r.get("cagr") is not None else "—"}</td>'
             f'<td>{_e(round(r["roic"], 0)) if r.get("roic") is not None else "—"}</td>'
@@ -426,7 +426,7 @@ def render_page(d: dict) -> str:
 <meta name="color-scheme" content="light">
 <link rel="stylesheet" href="/assets/imq-base.css">
 <style>
-:root{{--tint-warn:#f8f1e2;--tint-warn-line:#eee0b8;--tint-accent:#eef4fb;--tint-accent-line:#cfe0f2;--tint-pos:#eaf5ef}}
+:root{{--tint-warn:#f8f1e2;--tint-warn-line:#eee0b8;--tint-accent:#ecf0e9;--tint-accent-line:var(--line);--tint-pos:#eaf5ef}}
 *{{margin:0;padding:0;box-sizing:border-box}}
 body{{font-family:var(--sans);background:var(--paper);color:var(--body);line-height:1.5}}
 .hero{{background:var(--card);border-bottom:1px solid var(--line);padding:24px 32px 18px}}
@@ -445,7 +445,7 @@ th{{color:var(--sec);font-family:var(--mono);font-weight:600;padding:7px 8px;tex
 th.left{{text-align:left}}
 td{{padding:7px 8px;text-align:right;border-bottom:1px solid var(--line-soft);color:var(--body);font-variant-numeric:tabular-nums}}
 td.left{{text-align:left;font-weight:500}}
-tbody tr:hover td{{background:#fafcfe}}
+tbody tr:hover td{{background:#f7f4ec}}
 td.legs{{font-size:10.5px;color:var(--sec)}}
 td.veto{{color:var(--warn);font-size:11px}}
 .pos{{color:var(--pos);font-weight:600}}.neg{{color:var(--neg);font-weight:600}}

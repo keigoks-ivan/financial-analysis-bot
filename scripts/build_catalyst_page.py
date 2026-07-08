@@ -156,7 +156,7 @@ def render_highlight(events: list, today: date) -> str:
 
 
 def _preview_link(e: dict) -> str:
-    """財報事件的 T-minus 狀態徽章：已有 preview HTML → 📋 前瞻連結；
+    """財報事件的 T-minus 狀態徽章：已有 preview HTML → 前瞻連結；
     只有凍結快照（cron 自動凍結）→ 🔒 錨已凍結（提示可觸發 preview skill）。"""
     if e.get("type") != "earnings":
         return ""
@@ -165,7 +165,7 @@ def _preview_link(e: dict) -> str:
     fname_dot = f"preview_{e['ticker']}_{ymd}.html"
     for f in (fname_dot, fname):
         if (ROOT / "docs" / "earnings" / f).exists():
-            return f' <a class="pv-link" href="/earnings/{f}">📋 前瞻</a>'
+            return f' <a class="pv-link" href="/earnings/{f}">前瞻</a>'
     for f in (f"preview_{e['ticker'].upper()}_{ymd}.json",
               f"preview_{e['ticker'].upper().replace('.', '')}_{ymd}.json"):
         if (ROOT / "docs" / "catalyst" / "snapshots" / f).exists():
@@ -395,7 +395,7 @@ body{font-family:var(--sans);background:var(--paper);color:var(--body);line-heig
 .hero-stats{display:flex;gap:12px;margin-top:12px;flex-wrap:wrap}
 .hero-stat{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:7px 11px;font-size:11px;color:var(--sec)}
 .hero-stat strong{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--ink);font-size:13px;display:block;margin-bottom:1px}
-.stale-banner{background:#faecea;border:1px solid #f0c9c3;color:var(--neg);border-radius:var(--r);padding:10px 14px;margin-top:12px;font-size:12.5px}
+.stale-banner{background:#faecea;border:1px solid var(--line);color:var(--neg);border-radius:var(--r);padding:10px 14px;margin-top:12px;font-size:12.5px}
 .wrap{max-width:min(1240px,96vw);margin:0 auto;padding:18px 32px 0}
 .block{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh-1);padding:18px 20px;margin-bottom:18px}
 .block-h{font-family:var(--serif);font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
@@ -404,7 +404,7 @@ body{font-family:var(--sans);background:var(--paper);color:var(--body);line-heig
 .block-h .cnt{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--muted)}
 .block-sub{font-size:12px;color:var(--sec);line-height:1.7;margin-bottom:12px}
 code{font-family:var(--mono);background:var(--line-soft);padding:1px 5px;border-radius:3px;font-size:11px;color:var(--body)}
-.warn-block{border-color:#e3cd9c}
+.warn-block{border-color:var(--line)}
 .ph-block{border-style:dashed;border-color:var(--line)}
 .placeholder{font-size:12.5px;color:var(--muted);line-height:1.7;padding:6px 0}
 .var-block{border-color:var(--line)}
@@ -435,7 +435,7 @@ table{width:100%;border-collapse:collapse;font-size:12px;margin-top:4px;backgrou
 th{background:transparent;font-family:var(--mono);color:var(--sec);font-weight:600;padding:7px 9px;text-align:center;border-bottom:1px solid var(--line);font-size:10px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
 th.left{text-align:left}
 td{padding:8px 9px;text-align:center;border-bottom:1px solid var(--line-soft);vertical-align:top;color:var(--body)}
-tbody tr:hover td{background:#fafcfe}
+tbody tr:hover td{background:#f7f4ec}
 td.left{text-align:left}
 td.nowrap{font-family:var(--mono);white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--body);font-weight:600}
 td.tk a{color:var(--accent);text-decoration:none;font-weight:700}
@@ -655,7 +655,7 @@ def inject_earnings_preview_section(today: date, dry_run: bool = False) -> None:
                 lis.append(f'''      <li>
         <a href="{it["html"]}">
           <div class="date">{dstr}</div>
-          <div class="meta"><span class="preview-tag">📋 前瞻</span><span class="weekday">{wd}</span><span class="companies">{it["ticker"]}</span></div>
+          <div class="meta"><span class="preview-tag">前瞻</span><span class="weekday">{wd}</span><span class="companies">{it["ticker"]}</span></div>
           <div class="takeaway">{lede}</div>
         </a>
       </li>''')
@@ -669,7 +669,7 @@ def inject_earnings_preview_section(today: date, dry_run: bool = False) -> None:
     block = f"""{PREVIEW_START}
 <div class="section synthesis-section" id="earnings-previews">
   <div class="container">
-    <h2 class="section-title">📋 財報前瞻 · Pre-earnings Previews</h2>
+    <h2 class="section-title">財報前瞻 · Pre-earnings Previews</h2>
     {body}
   </div>
 </div>

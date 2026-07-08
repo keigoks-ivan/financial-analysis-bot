@@ -87,7 +87,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--paper);colo
 .tbl th.sortable.sort-active{color:var(--ink)}
 .tbl td{padding:8px 12px;font-size:12px;border-bottom:1px solid var(--paper);text-align:right;font-variant-numeric:tabular-nums;color:var(--ink);white-space:nowrap}
 .tbl td.left{text-align:left;font-weight:600}
-.tbl tr:hover td{background:#fafcfe}
+.tbl tr:hover td{background:#f7f4ec}
 .pass-55{display:inline-block;padding:2px 8px;border-radius:5px;background:#eaf5ef;color:var(--pos);font-weight:800;font-size:11px}
 .pass-45{display:inline-block;padding:2px 8px;border-radius:5px;background:#f8f1e2;color:var(--warn);font-weight:700;font-size:11px}
 .pass-35{display:inline-block;padding:2px 8px;border-radius:5px;background:#f8f1e2;color:var(--warn);font-weight:700;font-size:11px}
@@ -775,8 +775,8 @@ function maIsGreen(ma) {
 }
 
 function cellStyle(flag) {
-  if (flag === null) return 'background:#f1f5f9;color:#94a3b8';
-  return flag ? 'background:#dcfce7;color:#166534' : 'background:#fee2e2;color:#dc2626';
+  if (flag === null) return 'background:var(--line-soft);color:var(--muted)';
+  return flag ? 'background:#eaf5ef;color:var(--pos)' : 'background:#faecea;color:var(--neg)';
 }
 
 // Timing cell formatters (v1.1) — colour bands aligned with 起漲點 sweet spots.
@@ -894,7 +894,7 @@ function _renderLivePECell(s) {
   if (v === null || v === undefined) return '<td>—</td>';
   var method = s.live_fpe_method;
   var mark = (method === 'drift')
-    ? '<sup style="font-size:8px;color:#94a3b8" title="yfinance EPS 未取得，用 price-drift 推算">*</sup>'
+    ? '<sup style="font-size:8px;color:var(--muted)" title="yfinance EPS 未取得，用 price-drift 推算">*</sup>'
     : '';
   return '<td style="font-variant-numeric:tabular-nums">' + v.toFixed(1) + mark + '</td>';
 }
@@ -907,7 +907,7 @@ function _renderLivePEGCell(s, flag) {
   }
   var display, tip;
   if (live === null || live === undefined) {
-    display = peg.toFixed(2) + 'x<span style="font-size:9px;color:#94a3b8;margin-left:3px">DD</span>';
+    display = peg.toFixed(2) + 'x<span style="font-size:9px;color:var(--muted);margin-left:3px">DD</span>';
     tip = ' title="Live PEG 估算失敗，暫顯示 DD frozen ' + peg.toFixed(2) + 'x"';
   } else {
     display = '<strong>' + live.toFixed(2) + 'x</strong>';
@@ -919,7 +919,7 @@ function _renderLivePEGCell(s, flag) {
   // fallback，分母 (YearAgo→FY+1 CAGR) 與主流前瞻 consensus 不可比。pass/fail
   // 照算（不改 QualityGate），僅標註 provenance。
   var fbMark = s.peg_fallback
-    ? '<sup style="font-size:8px;color:#b45309" title="PEG 分母與主流不可比：來自 yfinance YearAgo→FY+1 CAGR fallback">‡</sup>'
+    ? '<sup style="font-size:8px;color:var(--warn)" title="PEG 分母與主流不可比：來自 yfinance YearAgo→FY+1 CAGR fallback">‡</sup>'
     : '';
   // Color flag re-evaluated against live value if available (live primary semantics)
   var pegForFlag = (live !== null && live !== undefined) ? live : peg;
@@ -1091,7 +1091,7 @@ function _renderLiveEPSCell(s, flag) {
   // age count ("10D") which read as data staleness. Age stays in the tooltip.
   var cagrAgeSuffix = cagrDateShort ? (' (vs ' + cagrDateShort + ')') : '';
   if (revDir === '上修' || revDir === '下修') {
-    var revColor = revDir === '上修' ? '#166534' : '#991B1B';
+    var revColor = revDir === '上修' ? 'var(--pos)' : 'var(--neg)';
     var arrow = revDir === '上修' ? '↑' : '↓';
     var revSign = revPp > 0 ? '+' : '';
     // v1.11: chip renders on a NEW LINE below the CAGR % (block <div> with
@@ -1100,7 +1100,7 @@ function _renderLiveEPSCell(s, flag) {
     // suffix kept as "%" for visual consistency with the EPS revision chip.
     display += '<div style="font-size:9px;color:' + revColor + ';margin-top:1px;font-weight:600">' + arrow + revSign + revPp.toFixed(1) + '%' + cagrAgeSuffix + '</div>';
   } else if (revDir === '新增') {
-    display += '<div style="font-size:9px;color:#94a3b8;margin-top:1px">新</div>';
+    display += '<div style="font-size:9px;color:var(--muted);margin-top:1px">新</div>';
   }
   // tooltip
   var parts = ['Excel FY+1→FY+3 forward CAGR ' + cagr.toFixed(1) + '%'];
@@ -1130,7 +1130,7 @@ function _renderRawEpsCell(s, field) {
   // tooltip 列 USD 原值。eps_display_currency = "TWD"/"JPY"/"USD" 三選一。
   var v = s[field];
   if (v === null || v === undefined) {
-    return '<td style="color:#94a3b8">—</td>';
+    return '<td style="color:var(--muted)">—</td>';
   }
   var src = s.eps_source || 'yfinance';
   var ccy = s.eps_display_currency || 'USD';
@@ -1168,15 +1168,15 @@ function _renderRawEpsCell(s, field) {
     var ageSuffix = dateShort ? (' (vs ' + dateShort + ')') : '';
     var baseTipName = baseDate ? (_baselineDateClean(baseDate) + (ageLabel ? ' / ' + ageLabel + ' 前' : '')) : '?';
     if (rev === null || rev === undefined) {
-      chip = '<div style="font-size:9px;color:#94a3b8;margin-top:1px">新</div>';
+      chip = '<div style="font-size:9px;color:var(--muted);margin-top:1px">新</div>';
       tipBase += ' | baseline 無此 ticker 或首次部署';
     } else if (Math.abs(rev) < 0.5) {
       // 持平 — 不顯示箭頭
-      chip = '<div style="font-size:9px;color:#94a3b8;margin-top:1px">±0%' + ageSuffix + '</div>';
+      chip = '<div style="font-size:9px;color:var(--muted);margin-top:1px">±0%' + ageSuffix + '</div>';
       tipBase += ' | vs ' + baseTipName + ' 持平';
     } else {
       var up = rev > 0;
-      var color = up ? '#166534' : '#991B1B';
+      var color = up ? 'var(--pos)' : 'var(--neg)';
       var arrow = up ? '↑' : '↓';
       var sign = up ? '+' : '';
       chip = '<div style="font-size:9px;color:' + color + ';font-weight:600;margin-top:1px">'
@@ -1187,9 +1187,9 @@ function _renderRawEpsCell(s, field) {
   var tip = ' title="' + tipBase + '"';
   // v1.8.5: append tiny currency tag inline for foreign listings (TWD/JPY/etc.)
   var ccyTag = (ccy !== 'USD')
-    ? '<span style="font-size:9px;color:#94a3b8;margin-left:2px">' + ccy + '</span>'
+    ? '<span style="font-size:9px;color:var(--muted);margin-left:2px">' + ccy + '</span>'
     : '';
-  return '<td' + tip + ' style="font-variant-numeric:tabular-nums;color:#475569">'
+  return '<td' + tip + ' style="font-variant-numeric:tabular-nums;color:var(--sec)">'
        + v.toFixed(2) + ccyTag + chip + '</td>';
 }
 
@@ -1199,12 +1199,12 @@ function _renderGrowthCell(s, field, source) {
   // automatically via _sortStocks.
   var v = s[field];
   if (v === null || v === undefined) {
-    return '<td style="color:#94a3b8">—</td>';
+    return '<td style="color:var(--muted)">—</td>';
   }
   var color, weight;
-  if (v >= 15)      { color = '#166534'; weight = '600'; }
-  else if (v >= 0)  { color = '#475569'; weight = '400'; }
-  else              { color = '#991B1B'; weight = '600'; }
+  if (v >= 15)      { color = 'var(--pos)'; weight = '600'; }
+  else if (v >= 0)  { color = 'var(--sec)'; weight = '400'; }
+  else              { color = 'var(--neg)'; weight = '600'; }
   var labelMap = {
     'eps_fy1_fy3_cagr_pct': 'Excel FY1→FY3 forward 2Y CAGR',
     'eps_fy3_yoy_pct': 'Excel FY2→FY3 YoY growth %'
@@ -1225,13 +1225,13 @@ function _renderLiveIRRInner(s) {
     return '<span class="upside-na">—</span>';
   }
   var color;
-  if (shown >= 12)      color = '#166534';
-  else if (shown >= 8)  color = '#15803D';
-  else if (shown >= 0)  color = '#92400E';
-  else                  color = '#991B1B';
+  if (shown >= 12)      color = 'var(--pos)';
+  else if (shown >= 8)  color = 'var(--pos)';
+  else if (shown >= 0)  color = 'var(--warn)';
+  else                  color = 'var(--neg)';
   var sign = shown > 0 ? '+' : (shown < 0 ? '−' : '');
   var heurMark = ((live !== null && live !== undefined) && s.live_ev5y_method === 'heur')
-    ? '<sup style="font-size:8px;color:#94a3b8" title="heuristic — 用 (price_at_dd/price_now) 回推，假設 DD 決策層 terminal value 不變">*</sup>'
+    ? '<sup style="font-size:8px;color:var(--muted)" title="heuristic — 用 (price_at_dd/price_now) 回推，假設 DD 決策層 terminal value 不變">*</sup>'
     : '';
   return '<span style="color:' + color + ';font-weight:600">' + sign + Math.abs(shown).toFixed(1) + '%/yr</span>' + heurMark;
 }
@@ -1240,7 +1240,7 @@ function _renderLiveIRRInner(s) {
 function _renderFunnelCell(s) {
   var f = s.funnel_rank;
   if (f === null || f === undefined) {
-    return '<td class="left" style="color:#94a3b8">—</td>';
+    return '<td class="left" style="color:var(--muted)">—</td>';
   }
   var fmt3 = function(x){ return (x === null || x === undefined) ? '—' : x.toFixed(3); };
   var w = (DATA && DATA.funnel_config && DATA.funnel_config.weights)
@@ -1256,16 +1256,16 @@ function _renderFunnelCell(s) {
   else if (s.funnel_cap_moat_down) parts.push('護城河 ↓ 且 pass ≤ 4 → cap 0.50');
   var tip = ' title="' + parts.join('; ').replace(/"/g, '&quot;') + '"';
   var color;
-  if (f >= 0.75)      color = '#166534';
-  else if (f >= 0.55) color = '#15803D';
-  else if (f >= 0.35) color = '#92400E';
-  else                color = '#991B1B';
+  if (f >= 0.75)      color = 'var(--pos)';
+  else if (f >= 0.55) color = 'var(--pos)';
+  else if (f >= 0.35) color = 'var(--warn)';
+  else                color = 'var(--neg)';
   return '<td class="left"' + tip + ' style="font-variant-numeric:tabular-nums;'
        + 'font-weight:700;color:' + color + '">' + f.toFixed(3) + '</td>';
 }
 
 function buildTable(stocks) {
-  if (!stocks.length) return '<p style="padding:20px;color:#94a3b8;font-size:12px">（無符合資料）</p>';
+  if (!stocks.length) return '<p style="padding:20px;color:var(--muted);font-size:12px">（無符合資料）</p>';
 
   var criteria = getCriteria();
   stocks = _sortStocks(stocks);
@@ -1326,15 +1326,15 @@ function buildTable(stocks) {
         var thr = getThresholds()[c.key];
         if (thr === undefined) thr = c.threshold;
         if (dv === null || dv === undefined) {
-          html = '<td style="color:#94a3b8" title="無 D/E 資料（如負權益）">—</td>';
+          html = '<td style="color:var(--muted)" title="無 D/E 資料（如負權益）">—</td>';
         } else {
           var warn = dv > thr;
           var deDisp = dv.toFixed(2) + c.unit;
           html = warn
-            ? '<td style="background:#fef9c3;color:#854d0e;font-weight:600" ' +
+            ? '<td style="background:#f8f1e2;color:var(--warn);font-weight:600" ' +
               'title="D/E ' + deDisp + ' > ' + thr + ' — 高槓桿警示（advisory，不計入通過條件、不擋閘）">' +
               '⚠ ' + deDisp + '</td>'
-            : '<td style="color:#475569" title="D/E ' + deDisp + '（advisory，不計入通過條件）">' + deDisp + '</td>';
+            : '<td style="color:var(--sec)" title="D/E ' + deDisp + '（advisory，不計入通過條件）">' + deDisp + '</td>';
         }
       } else if (c.key === 'eps2y') {
         html = _renderLiveEPSCell(s, flag);
@@ -1378,15 +1378,15 @@ function buildTable(stocks) {
       : '';
 
     // 裁決 cell — v13/v14 dd-meta 的統一裁決；v12-only ticker 留 — 待重跑補上
-    var VERDICT_STYLE = {'進場': ['#dcfce7', '#166534'], '觀望': ['#fef3c7', '#92400e'], '迴避': ['#fee2e2', '#991b1b']};
+    var VERDICT_STYLE = {'進場': ['#eaf5ef', 'var(--pos)'], '觀望': ['#f8f1e2', 'var(--warn)'], '迴避': ['#faecea', 'var(--neg)']};
     var verdictHtml;
     if (s.dca_verdict) {
-      var vc = VERDICT_STYLE[s.dca_verdict] || ['#f1f5f9', '#475569'];
+      var vc = VERDICT_STYLE[s.dca_verdict] || ['var(--line-soft)', 'var(--sec)'];
       var vTitle = 'DD §14 統一裁決（' + (s.dca_date || '') + '）' + (s.dca_role ? '｜角色: ' + s.dca_role : '');
       verdictHtml = '<td class="left"><a href="' + (s.dca_path || s.dd_path) + '" target="_blank" style="text-decoration:none" title="' + vTitle.replace(/"/g, '&quot;') + '">' +
         '<span style="background:' + vc[0] + ';color:' + vc[1] + ';padding:1px 7px;border-radius:99px;font-size:10.5px;font-weight:700;white-space:nowrap">' + s.dca_verdict + '</span></a></td>';
     } else {
-      verdictHtml = '<td class="left" style="color:#cbd5e1" title="v12 舊報告無決策層 metadata — DD 重跑 v14 後自動補上">—</td>';
+      verdictHtml = '<td class="left" style="color:var(--muted)" title="v12 舊報告無決策層 metadata — DD 重跑 v14 後自動補上">—</td>';
     }
 
     // Moat cell
@@ -1399,7 +1399,7 @@ function buildTable(stocks) {
     // ⛔ veto 列：整列降透明度 + ticker 旁 ⛔（FY1/FY2/FY3 全下修，已沉底）。
     var rowStyle = s.veto_all_downgrade ? ' style="opacity:.45"' : '';
     var vetoMark = s.veto_all_downgrade
-      ? ' <span style="color:#991b1b" title="FY1/FY2/FY3 全下修 → FunnelRank 歸 0、沉底">⛔</span>'
+      ? ' <span style="color:var(--neg)" title="FY1/FY2/FY3 全下修 → FunnelRank 歸 0、沉底">⛔</span>'
       : '';
     return '<tr' + rowStyle + '>' +
       '<td class="left">' +
@@ -1430,9 +1430,9 @@ function renderEpsSourceBanner() {
   if (!src || !src.snapshot_date) {
     // Excel 缺檔 — 顯示警告（全 universe 走 yfinance fallback）
     el.style.display = 'block';
-    el.style.background = '#fef2f2';
-    el.style.border = '1px solid #fca5a5';
-    el.style.color = '#7f1d1d';
+    el.style.background = '#faecea';
+    el.style.border = '1px solid var(--line)';
+    el.style.color = 'var(--neg)';
     el.innerHTML = '<strong>⚠ EPS 預估資料源缺：</strong>找不到 <code>data/eps-estimates/DD_universe_EPS_estimates_*.xlsx</code>，'
                  + '全部 ' + (src ? src.fallback_yfinance_tickers.length : '?')
                  + ' 檔暫走 yfinance fallback（GAAP/non-GAAP 風險）。請補 Excel。';
@@ -1442,13 +1442,13 @@ function renderEpsSourceBanner() {
   // Threshold: ≤30 info（藍）/ 31-35 warning（橘）/ >35 alert（紅）
   var bg, border, color, extraMsg = '';
   if (days > 35) {
-    bg = '#fef2f2'; border = '#fca5a5'; color = '#7f1d1d';
+    bg = '#faecea'; border = 'var(--line)'; color = 'var(--neg)';
     extraMsg = ' <strong>請更新 EPS Excel</strong>（距上次 ' + days + ' 天 > 35 天門檻）。';
   } else if (days > 30) {
-    bg = '#fffbeb'; border = '#fcd34d'; color = '#78350f';
+    bg = '#f8f1e2'; border = 'var(--line)'; color = 'var(--warn)';
     extraMsg = ' 距上次 ' + days + ' 天，本月應更新。';
   } else {
-    bg = '#eff6ff'; border = '#93c5fd'; color = '#1e40af';
+    bg = '#ecf0e9'; border = 'var(--line)'; color = 'var(--accent-ink)';
     extraMsg = ' (' + days + ' 天前)';
   }
   el.style.display = 'block';
@@ -1457,7 +1457,7 @@ function renderEpsSourceBanner() {
   el.style.color = color;
   var missingHtml = '';
   if (src.missing_us_adr_tickers && src.missing_us_adr_tickers.length) {
-    missingHtml = ' <span style="color:#7f1d1d">Excel 未收錄（已從 watchlist 移除或命名不符，走 yfinance）：'
+    missingHtml = ' <span style="color:var(--neg)">Excel 未收錄（已從 watchlist 移除或命名不符，走 yfinance）：'
                 + src.missing_us_adr_tickers.map(function(t){return '<code>' + t + '</code>';}).join('、')
                 + '</span>';
   }
@@ -1570,7 +1570,7 @@ function renderSearch() {
   panel.classList.remove('hidden');
 
   if (!hits.length) {
-    body.innerHTML = '<p style="padding:20px;color:#94a3b8;font-size:12px">查無此 ticker。<br>'
+    body.innerHTML = '<p style="padding:20px;color:var(--muted);font-size:12px">查無此 ticker。<br>'
                    + '• 字首比對：<code>V</code> → V/VIK/VRT；<code>NV</code> → NVDA/NVMI<br>'
                    + '• 精準比對：<code>V&nbsp;</code>（後加空白）→ 只 Visa；<code>2330&nbsp;</code> → 只 2330.TW<br>'
                    + '• 多檔：<code>NVDA TSM AVGO</code>（空白分隔，前面自動精準、最後一檔字首）</p>';

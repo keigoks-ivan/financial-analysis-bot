@@ -35,7 +35,7 @@ th{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.06em;t
 td{padding:6px 8px;text-align:right;border-bottom:1px solid var(--line-soft);white-space:nowrap;
    font-family:var(--mono);font-variant-numeric:tabular-nums}
 th.left,td.left{text-align:left;font-family:inherit;font-variant-numeric:normal}
-tr:hover td{background:#fafcfe}
+tr:hover td{background:#f7f4ec}
 td a{color:var(--accent);text-decoration:none;font-weight:650}
 td a:hover{text-decoration:underline}
 .pos{color:var(--pos);font-weight:650}.neg{color:var(--neg);font-weight:650}

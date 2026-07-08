@@ -71,7 +71,7 @@ def main() -> int:
 
 <div class="block">
 <h2>五步漏斗</h2>
-<pre style="font-size:13px;line-height:1.8;overflow-x:auto;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px 16px">{funnel}</pre>
+<pre style="font-size:13px;line-height:1.8;overflow-x:auto;background:var(--line-soft);border:1px solid var(--line);border-radius:8px;padding:14px 16px">{funnel}</pre>
 </div>
 
 <div class="block">

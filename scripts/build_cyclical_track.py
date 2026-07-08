@@ -360,7 +360,7 @@ body{{font-family:var(--sans);background:var(--paper);color:var(--body);line-hei
 .formula-panel h3{{font-family:var(--sans);font-size:13px;font-weight:700;color:var(--ink);margin-bottom:8px}}
 .formula-panel code{{background:var(--line-soft);padding:1px 6px;border-radius:5px;font-family:var(--mono);font-size:11.5px;color:var(--ink)}}
 .formula-row{{font-size:12px;color:var(--body);line-height:1.85}}
-.warn-panel{{background:#f8f1e2;border:1px solid rgba(154,103,0,.25);border-radius:var(--r);padding:14px 18px;margin-bottom:20px;font-size:12.5px;color:var(--warn);line-height:1.7}}
+.warn-panel{{background:#f8f1e2;border:1px solid rgba(138,109,31,.25);border-radius:var(--r);padding:14px 18px;margin-bottom:20px;font-size:12.5px;color:var(--warn);line-height:1.7}}
 .warn-panel strong{{color:var(--warn);display:block;margin-bottom:6px;font-size:13px}}
 .warn-panel ul{{margin-left:18px;margin-top:6px}}
 .tier-card{{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh-1);padding:16px 18px;margin-bottom:22px}}
@@ -375,7 +375,7 @@ body{{font-family:var(--sans);background:var(--paper);color:var(--body);line-hei
 .tier-card th{{font-family:var(--mono);background:none;color:var(--sec);font-weight:600;padding:8px 10px;text-align:right;border-bottom:1px solid var(--line);font-size:10px;letter-spacing:.08em;text-transform:uppercase}}
 .tier-card th.left{{text-align:left}}
 .tier-card td{{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line-soft);font-variant-numeric:tabular-nums;color:var(--body)}}
-.tier-card tbody tr:hover td{{background:#fafcfe}}
+.tier-card tbody tr:hover td{{background:#f7f4ec}}
 .tier-card td.left{{text-align:left;color:var(--ink);font-weight:500}}
 .tier-card td.left .nm{{display:block;font-size:10px;color:var(--muted);font-weight:400;margin-top:1px}}
 .tier-card td:nth-child(3),.tier-card td:nth-child(4),.tier-card td:nth-child(5){{font-family:var(--mono)}}
@@ -452,7 +452,7 @@ body{{font-family:var(--sans);background:var(--paper);color:var(--body);line-hei
     <div class="formula-row">
       <b>4 排除已過品質閘者</b>（歸核心／結構軌，一檔一軌）：<code>fail_criteria −{{de}} 為空 且 moat∈{{S,A,B}} 且 trend≠↓</code>
     </div>
-    <div class="formula-row" style="margin-top:8px;color:#5a7a9a">
+    <div class="formula-row" style="margin-top:8px;color:var(--sec)">
       <b>熱度閘</b>：12M 報酬（週線 <code>close[-1]/close[-53]−1</code>）&gt; +250% → 🔥「等回踩」，排序沉底。
       <b>排序</b>：<code>eps2y_revision_pp + eps_fy_next_revision_pct</code> 降冪；低熱組整體置頂。
     </div>

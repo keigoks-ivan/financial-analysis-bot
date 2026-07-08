@@ -279,7 +279,7 @@ def render_card(c: dict, *, open_default: bool) -> str:
 <ul style="margin:6px 0 10px 18px;font-size:13px">{thesis}</ul>
 <table><thead><tr><th class="left">DD 深層證偽宣稱（財報期人工結算）</th><th>門檻</th><th>期限</th>
 <th class="left">觸發動作</th><th>狀態</th></tr></thead><tbody>{claims}</tbody></table>
-<div style="margin-top:8px;font-size:12.5px;color:#64748b"><b>Pre-mortem</b>
+<div style="margin-top:8px;font-size:12.5px;color:var(--sec)"><b>Pre-mortem</b>
 <ul style="margin:2px 0 6px 18px">{pm}</ul>
 <b>進場節奏</b>　{escape(c.get("entry_plan") or "—")}
 <span class="muted">｜DD 內部參考：5Y EV {rg.get("ev_pct") if rg.get("ev_pct") is not None else "—"}%

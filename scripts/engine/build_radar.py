@@ -208,7 +208,7 @@ def render_grp_board(payload: dict) -> str:
                    f'<td class="left">{P_LABEL_TXT.get(r.get("p_label"), "—")}（距高 {r["dist_ath"]:+.0f}%）</td>'
                    f'<td>{pct(r["ret_12m"], 0)}</td>'
                    f'<td>{ROUTE_TXT.get(r.get("route"))}</td><td>{pool}</td></tr>')
-    return f"""<div class="shape-card" style="border-left-color:#b45309">
+    return f"""<div class="shape-card" style="border-left-color:var(--warn)">
 <h3>GRP 主榜 <span class="cnt">{len(board)} 檔全過三閘（顯示 top 30，按上修幅度）</span></h3>
 <div class="shape-desc"><b>持有人選股準則（2026-07-04 拍板）：高成長 × EPS 上修 × 位置適合＋市值 ≥ $200 億</b>——
 G＝FY+1 隱含 EPS 成長 ≥15% ｜ R＝FY+1 EPS 30 天修正 &gt;0（下修否決）｜ P＝站上 40 週線＋位置標籤

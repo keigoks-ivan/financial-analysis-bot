@@ -702,17 +702,17 @@ def generate_html(legs, stx, combined, asof, changes, last_change_date, rebal_du
   <link rel="stylesheet" href="/assets/imq-base.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
   <style>
-:root{{--brand:#1e4e8c;--bg:#f7f9fc;--card:#fff;--text:#0f2a45;--muted:#8fa6bc;--border:#e3ecf5;
-  --green:#137a4c;--green-bg:#eaf5ef;--green-border:#bfe0d0;--green-text:#137a4c;
-  --red:#b3261e;--red-bg:#faecea;--red-border:#f0c4c0;--red-text:#b3261e;
-  --amber:#9a6700;--amber-bg:#f8f1e2;--amber-border:#ead9b3;--amber-text:#9a6700;
-  --blue:#1e4e8c;--blue-bg:#eef4fb;--blue-border:#c9dbee;--blue-text:#1e4e8c}}
+:root{{--brand:#1f513f;--bg:#faf8f3;--card:#fffdf9;--text:#1c1b18;--muted:#a09a8c;--border:#e7e2d6;
+  --green:#1f6a45;--green-bg:#eaf5ef;--green-border:var(--line);--green-text:#1f6a45;
+  --red:#8c2b23;--red-bg:#faecea;--red-border:var(--line);--red-text:#8c2b23;
+  --amber:#8a6d1f;--amber-bg:#f8f1e2;--amber-border:var(--line);--amber-text:#8a6d1f;
+  --blue:#1f6a45;--blue-bg:#ecf0e9;--blue-border:var(--line);--blue-text:#1f6a45}}
 *{{box-sizing:border-box;margin:0;padding:0}}
 body{{font-family:var(--sans),-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   background:var(--bg);color:var(--text);line-height:1.65;font-size:14px}}
 a{{color:var(--brand);text-decoration:none}}a:hover{{text-decoration:underline}}
 .container{{max-width:1140px;margin:0 auto;padding:0 1.5rem}}
-.page-hdr{{padding:1.5rem 0 1.2rem;background:#fff;border-bottom:1px solid var(--border)}}
+.page-hdr{{padding:1.5rem 0 1.2rem;background:var(--card);border-bottom:1px solid var(--border)}}
 .page-hdr h1{{font-family:var(--serif);font-size:1.5rem;font-weight:700;letter-spacing:-.01em}}
 .page-hdr .sub{{color:var(--muted);font-size:.85rem;margin-top:.2rem}}
 .crumb{{font-size:.8rem;color:var(--muted);margin-bottom:.35rem}}
@@ -723,29 +723,29 @@ table{{width:100%;border-collapse:collapse;font-size:.82rem}}
 th,td{{text-align:left;padding:.55rem .7rem;border-bottom:1px solid var(--border)}}
 th{{background:transparent;font-family:var(--mono);font-weight:600;font-size:.74rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}}
 td{{font-variant-numeric:tabular-nums}}
-footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);text-align:center;padding:1rem 0;font-size:.75rem;margin-top:1rem}}
+footer{{background:var(--card);border-top:1px solid var(--border);color:var(--muted);text-align:center;padding:1rem 0;font-size:.75rem;margin-top:1rem}}
 .banner{{background:var(--amber-bg);border:1px solid var(--amber-border);color:var(--amber-text);
   border-radius:var(--r);padding:.7rem 1rem;font-size:.8rem;margin:1rem 0}}
 .hero{{display:grid;grid-template-columns:1fr 1fr;gap:1rem;padding:1.5rem 0 .5rem}}
-.hero-box{{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:1.3rem 1.5rem;text-align:center}}
+.hero-box{{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:1.3rem 1.5rem;text-align:center}}
 .hero-box .lbl{{font-size:.8rem;color:var(--muted);font-weight:600}}
 .hero-box .big{{font-size:2rem;font-weight:800;margin:.25rem 0;letter-spacing:-.02em}}
 .hero-box .sub2{{font-size:.76rem;color:var(--muted)}}
 .change-box{{background:var(--red-bg);border:2px solid var(--red-border);border-radius:var(--r);padding:.9rem 1.2rem;margin:.5rem 0 1rem;font-size:.9rem}}
 .tgrid{{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}}
-.tcard{{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:1.1rem;box-shadow:var(--sh-1)}}
+.tcard{{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:1.1rem;box-shadow:var(--sh-1)}}
 .tcard-hdr{{display:flex;align-items:center;justify-content:space-between;margin-bottom:.3rem}}
 .tname{{font-size:1.2rem;font-weight:800;letter-spacing:-.02em}}
 .pos-badge{{font-size:.9rem;font-weight:700;padding:.25rem .7rem;border-radius:6px}}
 .pos-long{{background:var(--green-bg);color:var(--green-text)}}
 .pos-short{{background:var(--red-bg);color:var(--red-text)}}
-.pos-flat{{background:#f1f5f9;color:var(--muted)}}
+.pos-flat{{background:var(--line-soft);color:var(--muted)}}
 .tcard-sub{{font-size:.74rem;color:var(--muted);margin-bottom:.6rem;font-variant-numeric:tabular-nums}}
 .leg-event{{font-size:.82rem;font-weight:600;padding:.45rem .7rem;border-radius:6px;background:var(--amber-bg);
   border:1px solid var(--amber-border);color:var(--amber-text);margin-bottom:.6rem}}
 .trig-box{{display:grid;gap:.35rem}}
 .trig{{display:flex;justify-content:space-between;gap:.5rem;font-size:.78rem;padding:.35rem .55rem;
-  background:#f8fafc;border-radius:6px;border:1px solid var(--border)}}
+  background:var(--line-soft);border-radius:6px;border:1px solid var(--border)}}
 .trig-l{{font-weight:700}}
 .trig-d{{color:var(--muted);font-variant-numeric:tabular-nums;text-align:right}}
 .rule-list{{font-size:.82rem;line-height:1.9}}

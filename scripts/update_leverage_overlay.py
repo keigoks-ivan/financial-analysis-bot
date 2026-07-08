@@ -136,14 +136,14 @@ PAGE = """<!DOCTYPE html>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/assets/imq-base.css">
 <style>
-:root{{--brand:#1e4e8c;--bg:#f7f9fc;--card:#fff;--text:#0f2a45;--muted:#8fa6bc;--border:#e3ecf5;
-  --green:#137a4c;--green-bg:#eaf5ef;--green-border:#bfe0d0;--green-text:#137a4c;
-  --amber:#9a6700;--amber-bg:#f8f1e2;--amber-border:#ead9b3;--amber-text:#9a6700;--grey:#8fa6bc}}
+:root{{--brand:#1f513f;--bg:#faf8f3;--card:#fffdf9;--text:#1c1b18;--muted:#a09a8c;--border:#e7e2d6;
+  --green:#1f6a45;--green-bg:#eaf5ef;--green-border:var(--line);--green-text:#1f6a45;
+  --amber:#8a6d1f;--amber-bg:#f8f1e2;--amber-border:var(--line);--amber-text:#8a6d1f;--grey:#a09a8c}}
 *{{box-sizing:border-box;margin:0;padding:0}}
 body{{font-family:var(--sans),-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.65;font-size:14px}}
 a{{color:var(--brand);text-decoration:none}}a:hover{{text-decoration:underline}}
 .container{{max-width:1000px;margin:0 auto;padding:0 1.5rem}}
-.page-hdr{{padding:1.5rem 0 1.2rem;background:#fff;border-bottom:1px solid var(--border)}}
+.page-hdr{{padding:1.5rem 0 1.2rem;background:var(--card);border-bottom:1px solid var(--border)}}
 .page-hdr h1{{font-family:var(--serif);font-size:1.4rem;font-weight:700;letter-spacing:-.01em}}
 .page-hdr .sub{{color:var(--muted);font-size:.85rem;margin-top:.2rem}}
 .crumb{{font-size:.8rem;color:var(--muted);margin-bottom:.35rem}}.crumb a{{color:var(--muted)}}
@@ -164,10 +164,10 @@ td{{font-variant-numeric:tabular-nums}}
 .hero-green .dot{{background:var(--green)}}.hero-green .status-exposure{{color:var(--green)}}
 .hero-amber .status-badge{{background:var(--amber-bg);color:var(--amber-text);border:2px solid var(--amber-border)}}
 .hero-amber .dot{{background:var(--amber)}}.hero-amber .status-exposure{{color:var(--amber)}}
-.hero-grey .status-badge{{background:#f1f5f9;color:var(--muted);border:2px solid var(--border)}}
+.hero-grey .status-badge{{background:var(--line-soft);color:var(--muted);border:2px solid var(--border)}}
 .hero-grey .dot{{background:var(--grey)}}.hero-grey .status-exposure{{color:var(--muted)}}
 .kpi{{display:grid;grid-template-columns:repeat(4,1fr);gap:.7rem;margin:.5rem 0 1rem}}
-.kpi>div{{text-align:center;background:#fafbfc;border:1px solid var(--border);border-radius:var(--r);padding:.6rem .3rem}}
+.kpi>div{{text-align:center;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:.6rem .3rem}}
 .kpi span{{display:block;font-size:.64rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}}
 .kpi b{{font-size:1.2rem;font-weight:800}}
 .rule-list{{font-size:.82rem;line-height:1.9}}

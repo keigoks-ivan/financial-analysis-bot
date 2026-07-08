@@ -233,17 +233,17 @@ def generate_html(sigs: dict, changes=None, last_change_date=None) -> str:
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/assets/imq-base.css">
   <style>
-:root{{--brand:#1e4e8c;--bg:#f7f9fc;--card:#fff;--text:#0f2a45;--muted:#8fa6bc;--border:#e3ecf5;
-  --green:#137a4c;--green-bg:#eaf5ef;--green-border:#bfe0d0;--green-text:#137a4c;
-  --red:#b3261e;--red-bg:#faecea;--red-border:#f0c4c0;--red-text:#b3261e;
-  --amber:#9a6700;--amber-bg:#f8f1e2;--amber-border:#ead9b3;--amber-text:#9a6700;
-  --blue:#1e4e8c;--blue-bg:#eef4fb;--blue-border:#c9dbee;--blue-text:#1e4e8c}}
+:root{{--brand:#1f513f;--bg:#faf8f3;--card:#fffdf9;--text:#1c1b18;--muted:#a09a8c;--border:#e7e2d6;
+  --green:#1f6a45;--green-bg:#eaf5ef;--green-border:var(--line);--green-text:#1f6a45;
+  --red:#8c2b23;--red-bg:#faecea;--red-border:var(--line);--red-text:#8c2b23;
+  --amber:#8a6d1f;--amber-bg:#f8f1e2;--amber-border:var(--line);--amber-text:#8a6d1f;
+  --blue:#1f6a45;--blue-bg:#ecf0e9;--blue-border:var(--line);--blue-text:#1f6a45}}
 *{{box-sizing:border-box;margin:0;padding:0}}
 body{{font-family:var(--sans),-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',sans-serif;
   background:var(--bg);color:var(--text);line-height:1.65;font-size:14px}}
 a{{color:var(--brand);text-decoration:none}}a:hover{{text-decoration:underline}}
 .container{{max-width:1140px;margin:0 auto;padding:0 1.5rem}}
-.page-hdr{{padding:1.5rem 0 1.2rem;background:#fff;border-bottom:1px solid var(--border)}}
+.page-hdr{{padding:1.5rem 0 1.2rem;background:var(--card);border-bottom:1px solid var(--border)}}
 .page-hdr h1{{font-family:var(--serif);font-size:1.5rem;font-weight:700;letter-spacing:-.01em}}
 .page-hdr .sub{{color:var(--muted);font-size:.85rem;margin-top:.2rem}}
 .crumb{{font-size:.8rem;color:var(--muted);margin-bottom:.35rem}}
@@ -254,9 +254,9 @@ table{{width:100%;border-collapse:collapse;font-size:.82rem}}
 th,td{{text-align:left;padding:.55rem .7rem;border-bottom:1px solid var(--border)}}
 th{{background:transparent;font-family:var(--mono);font-weight:600;font-size:.74rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}}
 td{{font-variant-numeric:tabular-nums}}
-tbody tr:hover td{{background:#fafcfe}}
+tbody tr:hover td{{background:#f7f4ec}}
 .tag{{display:inline-block;padding:.12rem .5rem;border-radius:6px;font-size:.7rem;font-weight:600}}
-footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);text-align:center;padding:1rem 0;font-size:.75rem;margin-top:1rem}}
+footer{{background:var(--card);border-top:1px solid var(--border);color:var(--muted);text-align:center;padding:1rem 0;font-size:.75rem;margin-top:1rem}}
 .banner{{background:var(--amber-bg);border:1px solid var(--amber-border);color:var(--amber-text);
   border-radius:var(--r);padding:.7rem 1rem;font-size:.8rem;margin:1rem 0}}
 .status-hero{{padding:2rem 0 1rem;text-align:center}}
@@ -275,7 +275,7 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
 .hero-red .status-badge{{background:var(--red-bg);color:var(--red-text);border:2px solid var(--red-border)}}
 .hero-red .dot{{background:var(--red)}}.hero-red .status-exposure{{color:var(--red)}}
 .tgrid{{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}}
-.tcard{{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:1.1rem;box-shadow:var(--sh-1)}}
+.tcard{{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:1.1rem;box-shadow:var(--sh-1)}}
 .tcard-hdr{{display:flex;align-items:center;justify-content:space-between;margin-bottom:.2rem}}
 .tname{{font-size:1.15rem;font-weight:800;letter-spacing:-.02em}}
 .pos-badge{{font-size:.95rem;font-weight:700;padding:.25rem .7rem;border-radius:6px}}
@@ -285,7 +285,7 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
 .pos-red{{background:var(--red-bg);color:var(--red-text)}}
 .tcard-sub{{font-size:.75rem;color:var(--muted);margin-bottom:.75rem}}
 .sig-row{{display:grid;grid-template-columns:1fr;gap:.5rem}}
-.sig{{border:1px solid var(--border);border-radius:var(--r);padding:.55rem .7rem;background:#fff}}
+.sig{{border:1px solid var(--border);border-radius:var(--r);padding:.55rem .7rem;background:var(--card)}}
 .sig.on{{border-color:var(--green-border);background:var(--green-bg)}}
 .sig.off{{border-color:var(--red-border);background:var(--red-bg)}}
 .sig-top{{display:flex;align-items:center;gap:.5rem}}
