@@ -657,10 +657,15 @@ def discover():
     add("scripts/sop_funnel/*.py", "strategy", ex_py_docstring,
         exclude=lambda f: os.path.basename(f).startswith(("test_", "__")))
     for dp in ("docs/picks/picks.json", "docs/picks/candidates.json",
-               "docs/picks/tenbagger.json", "docs/turtle-sleeve/state.json"):
+               "docs/picks/tenbagger.json", "docs/turtle-sleeve/state.json",
+               "docs/catalyst/calendar.json", "docs/catalyst/archive.json",
+               "docs/catalyst/variance.json"):
         p = REPO / dp
         if p.exists():
             out.append((str(p), "strategy", ex_data_summary))
+    p = REPO / "knowledge" / "rule_ledger.md"
+    if p.exists():
+        out.append((str(p), "strategy", ex_strategy_md))
 
     p = REPO / "mental_models_data.py"
     if p.exists():

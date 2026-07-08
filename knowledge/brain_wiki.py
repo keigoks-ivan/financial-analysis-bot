@@ -1406,7 +1406,23 @@ function renderStats(){
   document.getElementById('m-stats').innerHTML=
     '<p class="ctx">敏銳度的證據不是感覺，是誤差在收斂。盲測誤差 ↓、對決勝率 ↑、殺手題命中 ↑ ＝格柵在長。</p>'+
     '<div class="statgrid">'+cards+'</div>'+
-    '<div class="btnrow"><a class="btn sec" href="#" id="wipe">清空紀錄重練</a></div>';
+    '<div class="btnrow"><a class="btn" href="#" id="bkup">⬇ 備份全部訓練紀錄 .md</a>'+
+    '<a class="btn sec" href="#" id="wipe">清空盲測紀錄重練</a>'+
+    '<span class="cnt">備份含道場/訓練場/蒙格清單全部 localStorage——收進 vault/notes/training/ 後兩台機都找得回</span></div>';
+  document.getElementById('bkup').addEventListener('click',e=>{
+    e.preventDefault();
+    const dump={};
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(/^(dojo_|gym_|munger2_)/.test(k))dump[k]=localStorage.getItem(k);}
+    const d=new Date().toISOString().slice(0,10);
+    const md=['---','type: usernote','title: "訓練紀錄備份 · '+d+'"','date: '+d,
+      'tags: [training-backup]','---','','# 訓練紀錄備份 · '+d,'',
+      '還原：開瀏覽器 console，對下面 JSON 逐 key 執行 localStorage.setItem(k, v)。','',
+      '```json',JSON.stringify(dump,null,1),'```'].join(String.fromCharCode(10));
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([md],{type:'text/markdown'}));
+    a.download='TRAINING_BACKUP_'+d.replace(/-/g,'')+'.md';a.click();});
   document.getElementById('wipe').addEventListener('click',e=>{e.preventDefault();
     localStorage.removeItem('dojo_hist');renderStats()});
 }

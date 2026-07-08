@@ -14,6 +14,9 @@ q.py — 知識層查詢介面（Phase 1，服務 a：自我導航）。
                                       # FTS 全文搜尋（DD/ID/earnings/notes/外部 repo 白皮書…）
   python knowledge/q.py --note NVDA   # 列出某 entity / id 關鍵字對應的 vault 筆記路徑
   python knowledge/q.py --rebrain     # 手動重建第二大腦（vault + FTS + wiki）
+  python knowledge/q.py --inbox       # 把 ~/Downloads 的訓練匯出（MUNGER_/HUNT_/REPLAY_/
+                                      #   FEYNMAN_/REDTEAM_/TRAINING_*.md）收進 vault/notes 並入腦
+  python knowledge/q.py --falsifiers  # 列出個人殺手假設/獵場認領（>90 天未對帳者標 ⚠）
 
 decisions.jsonl / graph.json 不存在時會自動先 rebuild（衍生物，每台機本地重建）。
 --search 前會自動跑增量 brain build（no-op 約 0.1s），永遠查到最新內容。
@@ -391,6 +394,63 @@ def cmd_search(query, type_=None, limit=10):
         print(f"  ▸ {VAULT / path}  ← 來源 {source}\n")
 
 
+# ~/Downloads 訓練匯出 → vault/notes 子資料夾
+INBOX_MAP = [("MUNGER_", "munger"), ("FEYNMAN_", "feynman"), ("HUNT_", "gym"),
+             ("REPLAY_", "gym"), ("REDTEAM_", "gym"), ("TRAINING_", "training")]
+
+
+def cmd_inbox():
+    import shutil
+    dl = Path.home() / "Downloads"
+    moved = 0
+    for pref, sub in INBOX_MAP:
+        for f in sorted(dl.glob(pref + "*.md")):
+            dest_dir = VAULT / "notes" / sub
+            dest_dir.mkdir(parents=True, exist_ok=True)
+            dest = dest_dir / f.name
+            i = 1
+            while dest.exists():
+                dest = dest_dir / f"{f.stem}-{i}.md"
+                i += 1
+            shutil.move(str(f), str(dest))
+            moved += 1
+            print(f"  ↳ {f.name} → vault/notes/{sub}/")
+    if not moved:
+        print("Downloads 沒有待收的訓練匯出（MUNGER_/HUNT_/REPLAY_/FEYNMAN_/REDTEAM_/TRAINING_*.md）")
+        return
+    print(f"收進 {moved} 份，重建入腦…")
+    subprocess.run([sys.executable, str(BRAIN_BUILD)], check=True)
+    print("✅ 完成——筆記已可搜尋（--search）、掛上 entity hub、wiki 可瀏覽")
+
+
+def cmd_falsifiers():
+    _ensure_brain()
+    fp = KDIR / "falsifiers.json"
+    if not fp.exists():
+        print("尚無 falsifiers.json（vault/notes 還沒有殺手假設/獵場認領）")
+        return
+    from datetime import datetime, date as _date
+    data = json.loads(fp.read_text(encoding="utf-8"))
+    items = data.get("items", [])
+    if not items:
+        print("目前 0 條個人殺手假設/獵場認領。去 wiki/munger.html 或 gym 獵場寫一條。")
+        return
+    print(f"個人假設帳本（{len(items)} 條，as_of {data.get('as_of')}）：\n")
+    for it in sorted(items, key=lambda x: x.get("date") or ""):
+        age = ""
+        try:
+            days = (_date.today() - datetime.strptime(it.get("date"), "%Y-%m-%d").date()).days
+            age = f"{days}d"
+            if days > 90:
+                age = f"⚠ {days}d 未對帳"
+        except (TypeError, ValueError):
+            pass
+        head = f"[{it.get('kind')}] {it.get('ticker') or '—'}  {it.get('date') or ''}  {age}"
+        print(f"◆ {head}")
+        print(f"  {(it.get('text') or '').splitlines()[0][:120]}")
+        print(f"  ▸ {it.get('source')}\n")
+
+
 def cmd_note(kw):
     _ensure_brain()
     if not BRAIN_DB.exists():
@@ -433,6 +493,10 @@ def main():
         cmd_search(args[1], type_=_opt("--type"), limit=int(_opt("--limit", 10)))
     elif a0 == "--note":
         cmd_note(args[1] if len(args) > 1 else "")
+    elif a0 == "--inbox":
+        cmd_inbox()
+    elif a0 == "--falsifiers":
+        cmd_falsifiers()
     elif a0 == "--stale":
         cmd_stale(int(args[1]) if len(args) > 1 else 180)
     elif a0 == "--theme":

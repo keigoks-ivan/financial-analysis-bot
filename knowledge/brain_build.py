@@ -262,6 +262,42 @@ def rebuild_fts(summaries):
     return fts5
 
 
+def build_falsifiers():
+    """掃 vault/notes/**（用戶手寫真相）抽「殺手假設」與獵場認領 →
+    knowledge/falsifiers.json（衍生，gitignore），供 q.py --falsifiers 與
+    position-thesis-monitor Check 8 機械對帳。"""
+    from datetime import date as _date
+    items = []
+    base = VAULT / "notes"
+    if base.is_dir():
+        for p in sorted(base.rglob("*.md")):
+            text = p.read_text(encoding="utf-8", errors="replace")
+            fm = {}
+            if text.startswith("---"):
+                parts = text.split("---", 2)
+                if len(parts) == 3:
+                    for line in parts[1].splitlines():
+                        m = re.match(r"(\w[\w-]*):\s*(.*)", line)
+                        if m:
+                            fm[m.group(1)] = m.group(2).strip().strip('"')
+            rel = str(p.relative_to(KDIR.parent))
+            for m in re.finditer(r"殺手假設[：:]\s*(.+)", text):
+                items.append({"kind": "falsifier", "ticker": fm.get("ticker"),
+                              "date": fm.get("date"), "verdict": fm.get("verdict"),
+                              "text": m.group(1).strip()[:400], "source": rel})
+            # 獵場日誌：## [[TK]]（鏡頭，日期 認領…）+ 解釋段
+            for m in re.finditer(
+                    r"^##\s+\[\[([^\]]+)\]\]（([^）]*)）\s*\n+(.+?)(?=\n##\s|\n---|\Z)",
+                    text, re.S | re.M):
+                items.append({"kind": "hunt-claim", "ticker": m.group(1),
+                              "date": fm.get("date"), "meta": m.group(2),
+                              "text": m.group(3).strip()[:400], "source": rel})
+    (KDIR / "falsifiers.json").write_text(
+        json.dumps({"as_of": _date.today().isoformat(), "items": items},
+                   ensure_ascii=False, indent=1), encoding="utf-8")
+    return len(items)
+
+
 # ─────────────────────────── main ───────────────────────────
 
 def main():
@@ -386,6 +422,7 @@ def main():
 
     CACHE.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
     NOTES_DIR.mkdir(parents=True, exist_ok=True)
+    n_fals = build_falsifiers()
 
     # 無變動且 DB 已在 → 跳過 FTS 重灌（post-commit/post-merge hook 常態路徑）
     if n_new or n_pruned or not DB.exists():
@@ -407,7 +444,7 @@ def main():
     print(f"🧠 brain: {n_new} extracted, {n_cached} cached, {n_pruned} pruned, "
           f"{n_err} errors；notes {len(all_summaries)}＋hubs "
           f"{len(hub_entities)} entities/{len(hub_themes)} themes；"
-          f"FTS={'trigram' if fts5 else 'fallback'}")
+          f"FTS={'trigram' if fts5 else 'fallback'}；falsifiers {n_fals}")
     if missing_repos:
         print(f"  ⚠ 外部 repo 不在本機（跳過）：{', '.join(missing_repos)}")
     if stats:
