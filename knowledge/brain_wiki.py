@@ -392,6 +392,9 @@ as of %%ASOF%%</span><span class="dim" style="margin-left:auto">⌘K 快速跳�
 <a href="gym.html" style="border-color:rgba(74,222,128,.5);color:#86efac">🏋️ 訓練場</a></div>
 <div id="qresults"></div>
 
+<h2>📬 今日重訪 <span class="cnt">大腦來找你——每天輪三樣</span></h2>
+<div id="revisit" class="shelf"></div>
+
 <h2 id="recent">🕐 最近更新</h2>
 <div id="recentlist"></div>
 <details id="recentmore"><summary class="cnt">更多近期報告…</summary>
@@ -432,6 +435,7 @@ as of %%ASOF%%</span><span class="dim" style="margin-left:auto">⌘K 快速跳�
 <script id="brain-data" type="application/json">%%DATA%%</script>
 <script id="ent-data" type="application/json">%%ENT%%</script>
 <script id="theme-data" type="application/json">%%THEMES%%</script>
+<script id="fals-data" type="application/json">%%FALS%%</script>
 <script id="kg-data" type="application/json">%%KG%%</script>
 <script>
 const DATA=JSON.parse(document.getElementById('brain-data').textContent);
@@ -458,6 +462,43 @@ document.getElementById('tk-go').innerHTML=grp['進場'].map(tick).join('');
 document.getElementById('tk-hold').innerHTML=grp['觀望'].map(tick).join('');
 document.getElementById('tk-avoid').innerHTML=grp['迴避'].map(tick).join('');
 document.getElementById('tk-rest').innerHTML=grp.rest.map(tick).join('');
+
+/* 📬 今日重訪：日期種子輪三樣（未對帳假設 / 思維模型 / 30 天前舊筆記） */
+(function(){
+  const FALS=JSON.parse(document.getElementById('fals-data').textContent);
+  function hsh(s){let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return Math.abs(h)}
+  const seed=hsh(new Date().toISOString().slice(0,10));
+  const cards=[];
+  if(FALS.length){
+    const f=FALS[seed%FALS.length];
+    const age=f.date?Math.round((Date.now()-new Date(f.date))/864e5):null;
+    cards.push('<div class="card"><div class="m"><span class="badge">未對帳假設</span> '+
+      e_(f.ticker||'')+(age!=null?' · '+age+' 天前寫下':'')+'</div>'+
+      '<div class="o">'+e_(f.text)+'</div>'+
+      '<div class="m">觸發了嗎？→ <a href="gym.html">獵場判定</a></div></div>');
+  }
+  const mms=DATA.filter(n=>n.t==='mental-model');
+  if(mms.length){
+    const m=mms[seed%mms.length];
+    cards.push('<div class="card"><div class="m"><span class="badge">今日模型</span></div>'+
+      '<div class="t"><a href="'+m.p+'">'+e_(m.title)+'</a></div>'+
+      (m.one?'<div class="o">'+e_(m.one)+'</div>':'')+
+      '<div class="m">今天在哪裡看到它？（bj 記一筆）</div></div>');
+  }
+  const old30=DATA.filter(n=>n.t==='usernote'&&n.d&&
+    (Date.now()-new Date(n.d))/864e5>=21);
+  const pastPool=old30.length?old30:DATA.filter(n=>n.t==='usernote');
+  if(pastPool.length){
+    const u=pastPool[seed%pastPool.length];
+    cards.push('<div class="card"><div class="m"><span class="badge">過去的你</span> '+e_(u.d||'')+'</div>'+
+      '<div class="t"><a href="'+u.p+'">'+e_(u.title)+'</a></div>'+
+      '<div class="m">現在還同意當時的自己嗎？</div></div>');
+  }else{
+    cards.push('<div class="card"><div class="m"><span class="badge">過去的你</span></div>'+
+      '<div class="o">還沒有你寫的筆記——去蒙格清單或訓練場寫第一則，30 天後它會回來找你。</div></div>');
+  }
+  document.getElementById('revisit').innerHTML=cards.join('');
+})();
 
 /* hero：count-up 統計磚 */
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -784,6 +825,16 @@ def build_index(summaries, stems):
     def payload(obj):
         return json.dumps(obj, ensure_ascii=False).replace("</", "<\\/")
 
+    fals = []
+    fp = KDIR / "falsifiers.json"
+    if fp.exists():
+        try:
+            fals = [{"ticker": i.get("ticker"), "date": i.get("date"),
+                     "text": (i.get("text") or "")[:200]}
+                    for i in json.loads(fp.read_text(encoding="utf-8")).get("items", [])]
+        except (json.JSONDecodeError, OSError):
+            pass
+
     n_repo = 1 + len({s["repo"] for s in summaries if s.get("repo")})
     (WIKI / "index.html").write_text(
         INDEX.replace("%%ASOF%%", date.today().isoformat())
@@ -796,7 +847,8 @@ def build_index(summaries, stems):
              .replace("%%DATA%%", payload(data))
              .replace("%%ENT%%", payload(ents))
              .replace("%%THEMES%%", payload(themes))
-             .replace("%%KG%%", payload(kg)), encoding="utf-8")
+             .replace("%%KG%%", payload(kg))
+             .replace("%%FALS%%", payload(fals)), encoding="utf-8")
 
 
 MUNGER = """<!DOCTYPE html>
