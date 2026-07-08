@@ -25,6 +25,8 @@ Agent({
 
 **並讀用戶自己的思考筆記**（2026-07-08 新增）：同時跑 `python knowledge/q.py --note <TICKER>` 撈該 ticker 的 usernote（用戶在蒙格清單/獵場/寫作間親手寫的裁決、殺手假設、費曼解釋——在 `knowledge/vault/notes/`），與 `--falsifiers` 看其未對帳假設。**用戶寫過的判斷是最高優先級的錨**：給建議時必須引用或明確反駁，不可無視；若其殺手假設已觸發，先指出這件事再談別的。
 
+**蒙格腦（第三隻錨，2026-07-08 新增）**：用戶說「問蒙格」/「蒙格會怎麼看 {X}」/「用蒙格的方法檢查 {ticker}」時，spawn `munger-mind` sub-agent（spec：`~/.claude/agents/munger-mind.md`；語料在 `knowledge/munger/`，corpus 缺檔先跑 `python3 knowledge/munger/fetch_corpus.py`）。它執行蒙格的判斷程序（能力圈→四過濾器→反過來想→激勵→傾向掃描→與庫內裁決對質），輸出存 `notes/site-internal/munger/`。與 critic（產業冷讀）、q.py（用戶歷史）互補；「太難籃子」是合法輸出。動大部位時三隻錨並用。
+
 **不觸發**（僅資訊查詢）：
 - 「ID_X 寫了什麼」/「{theme} 是什麼」/「介紹一下 {industry}」 — 純解釋型問題，直接回答即可
 - 寫稿過程中（that's a separate write-time critic, P2 未實作）

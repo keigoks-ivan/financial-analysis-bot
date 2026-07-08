@@ -47,7 +47,7 @@ TYPE_DIR = {
     "supplychain": "supply-chain", "briefing": "briefing", "weekly": "weekly",
     "qgm": "qgm", "strategy": "strategy", "internal-note": "internal",
     "whitepaper": "kb", "repo-doc": "kb", "tools": "kb", "property": "kb",
-    "mental-model": "mental-models",
+    "mental-model": "mental-models", "munger": "munger",
 }
 KB_TYPES = {"whitepaper", "repo-doc", "tools", "property"}
 

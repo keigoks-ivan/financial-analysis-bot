@@ -44,7 +44,7 @@ TYPE_LABEL = {
     "supplychain": "供應鏈", "briefing": "晨報", "weekly": "週報", "qgm": "QGM",
     "strategy": "策略規則", "internal-note": "內部筆記", "whitepaper": "白皮書",
     "repo-doc": "repo 文件", "tools": "置產/史詩", "property": "大馬房產",
-    "entity": "個股", "theme": "主題", "mental-model": "思維模型",
+    "entity": "個股", "theme": "主題", "mental-model": "思維模型", "munger": "蒙格腦",
 }
 
 CSS = """

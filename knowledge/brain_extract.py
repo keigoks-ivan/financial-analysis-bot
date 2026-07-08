@@ -443,9 +443,14 @@ def ex_qgm(path):
 
 def ex_markdown(path, ntype, nid_prefix, tag=None):
     text = _read(path)
-    secs = md_to_sections(text)
+    body = text
+    if text.startswith("---"):  # 跳過 frontmatter 再找 h1 標題
+        parts = text.split("---", 2)
+        if len(parts) == 3:
+            body = parts[2]
+    secs = md_to_sections(body)
     base = os.path.basename(path)
-    m = re.match(r"#\s+(.+)", text.lstrip()[:200])
+    m = re.match(r"#\s+(.+)", body.lstrip()[:200])
     title = m.group(1).strip() if m else base
     src = str(path)
     src = _rel(src) if str(REPO) in src else src.replace(str(Path.home()), "~")
@@ -670,6 +675,12 @@ def discover():
     p = REPO / "mental_models_data.py"
     if p.exists():
         out.append((str(p), "mental-model", ex_mental_models))
+
+    # 蒙格腦：公開語料（corpus/，gitignored 本機抓）＋提煉卡（cards/，committed）
+    add("knowledge/munger/corpus/*.md", "munger",
+        lambda f: ex_markdown(f, "munger", "munger", tag="蒙格腦"))
+    add("knowledge/munger/cards/*.md", "munger",
+        lambda f: ex_markdown(f, "munger", "munger-card", tag="蒙格腦"))
 
     add("notes/site-internal/**/*.md", "internal-note", ex_internal_note)
     add("knowledge/vault/notes/**/*.md", "usernote", ex_usernote)
