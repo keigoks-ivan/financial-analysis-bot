@@ -275,11 +275,12 @@ footer a{color:var(--accent)}
       <div id="tooltip"></div>
     </div>
     <div class="chart-legend">
+      <span style="color:#5b6577">象限底色：</span>
       <span><i style="background:#e5556b"></i>領先 LEADING（右上）</span>
       <span><i style="background:#e0a53a"></i>弱化 WEAKENING（右下）</span>
       <span><i style="background:#9b6ff0"></i>落後 LAGGING（左下）</span>
       <span><i style="background:#38c6c9"></i>改善 IMPROVING（左上）</span>
-      <span style="color:#5b6577">彗頭＝現況　彗尾＝過往軌跡</span>
+      <span style="color:#5b6577">軌跡色＝個別資產（對照下表色塊）　彗頭＝現況　彗尾＝過往軌跡</span>
     </div>
   </div>
 
@@ -325,15 +326,11 @@ footer a{color:var(--accent)}
     if(r<100  && m>=100) return "improving";
     return "lagging";
   }
-  function memberColor(quad, idxInGroup, groupSize){
-    var base = QUAD[quad];
-    // vary lightness across the group so trails stay distinguishable
-    var span = 26;
-    var t = groupSize>1 ? (idxInGroup/(groupSize-1)) : 0.5;
-    var light = base.light - span/2 + t*span;
-    var hueShift = (t-0.5) * 16;
-    return "hsl(" + (base.hue+hueShift).toFixed(0) + "," + base.sat + "%," + light.toFixed(0) + "%)";
-  }
+  // 固定逐成員分類色（對深底 #0b0f17 驗證通過：明度帶／彩度floor／CVD 相鄰分離／對比 4 檢全過；
+  // 排序經搜尋最大化相鄰色盲距離）。顏色跟著資產走，切換時框不變色；
+  // 象限語意由背景色塊、角落標籤與下方分組表承載，不再由軌跡色承載。
+  var PALETTE = ["#a3920f","#d55181","#c98500","#b273c7","#d95926","#199e70",
+                 "#9085e9","#6d9720","#3987e5","#22a3c4","#e66767"];
 
   // ---------- hash sync ----------
   function readHash(){
@@ -369,7 +366,7 @@ footer a{color:var(--accent)}
     if(!u) return {plot:[], insuff:[]};
     var frame = validFrame();
     var plot = [], insuff = [];
-    u.members.forEach(function(mem){
+    u.members.forEach(function(mem, mi){
       var fr = mem.frames && mem.frames[frame];
       var trail = fr && fr.trail ? fr.trail : [];
       if(mem.status==="insufficient" || !trail || trail.length===0){
@@ -378,16 +375,8 @@ footer a{color:var(--accent)}
       }
       var last = trail[trail.length-1];
       var quad = quadOf(last.r, last.m);
-      plot.push({ticker:mem.ticker, label:mem.label, trail:trail, last:last, quad:quad});
-    });
-    // assign colors grouped by quadrant
-    var groups = {};
-    plot.forEach(function(p){ (groups[p.quad]=groups[p.quad]||[]).push(p); });
-    Object.keys(groups).forEach(function(q){
-      var g = groups[q];
-      // stable order within group by ticker for deterministic lightness
-      g.sort(function(a,b){return a.ticker<b.ticker?-1:1;});
-      g.forEach(function(p,i){ p.color = memberColor(q, i, g.length); });
+      plot.push({ticker:mem.ticker, label:mem.label, trail:trail, last:last, quad:quad,
+                 color: PALETTE[mi % PALETTE.length]});
     });
     return {plot:plot, insuff:insuff, universe:u, frame:frame};
   }
@@ -808,7 +797,8 @@ footer a{color:var(--accent)}
         html += '<table class="pos-table"><tbody>';
         rows.forEach(function(p){
           html += '<tr>'+
-            '<td class="pt-tk" style="color:'+p.color+'">'+esc(p.ticker)+'</td>'+
+            '<td class="pt-tk"><i style="display:inline-block;width:8px;height:8px;border-radius:2px;'+
+            'margin-right:.45rem;vertical-align:baseline;background:'+p.color+'"></i>'+esc(p.ticker)+'</td>'+
             '<td class="pt-lb">'+esc(p.label)+'</td>'+
             '<td class="pt-n">'+p.last.r.toFixed(2)+'</td>'+
             '<td class="pt-n">'+p.last.m.toFixed(2)+'</td>'+
