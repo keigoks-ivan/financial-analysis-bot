@@ -1,4 +1,6 @@
-# macro-analyst skill v1.0 — 總經深度報告（macro ID）
+# macro-analyst skill v1.1 — 總經深度報告（macro ID）
+
+**v1.1（2026-07-09）**：首跑四份（USEconomy／TaiwanEconomy／USFiscalDeficit／GlobalLiquidity）critic 實證驅動的兩條新紀律——①證偽表每條必附現值＋as-of（GlobalLiquidity M1：兩大引信全篇無現值、其中一條十個月前已半觸發而報告未察）；②站內引用忠實性（GlobalLiquidity M4：把姊妹報告的「最大未解分歧」寫成「與其一致」）。均為 sourcing／格式紀律，非判斷類規則，不入 rule_ledger。
 
 ## 【定位】
 
@@ -28,7 +30,7 @@
 - **一句話判斷**＋ stance 三選一（對風險資產：順風／中性／逆風）——反騎牆，split 情境須在 §5 用情境樹呈現而非騎牆
 - 時間尺度（horizon，月為單位）＋機率詞彙級（沿用 industry-analyst 機率詞彙表，不寫偽精確百分比）
 - 對三軌組合的 read-through 摘要（2-3 句，描述器語言）
-- 證偽表摘要（top 2-3 kill metrics）＋ refresh_due（預設 +3 個月）
+- 證偽表摘要（top 2-3 kill metrics）——**每條必附現值＋as-of**，讓「引信與門檻的距離」在 §0 就可讀；＋ refresh_due（預設 +3 個月）
 
 ### §1 白話定義與機制（深入淺出入口）
 這個總經力量是什麼、為何現在重要；歷史雙錨點（沿用 DS-9 規則：一個結構錨＋一個近期錨）。
@@ -49,7 +51,7 @@
 市場現在定價了什麼（期貨曲線、breakeven、共識預測）vs 本報告判斷；分歧點必須可驗證。
 
 ### §7 Catalyst 時間表＋證偽表
-未來 6-12 個月的資料發布／政策節點（接催化劑日曆語言）；證偽表＝每條 kill metric 帶門檻、查核頻率、資料源——**說不出證偽條件的判斷不准寫進 §0**。
+未來 6-12 個月的資料發布／政策節點（接催化劑日曆語言）；證偽表＝每條 kill metric 帶門檻、查核頻率、資料源、**現值＋as-of**——**說不出證偽條件的判斷不准寫進 §0；查不到現值的 kill metric 不准上表**（現值缺席＝無法判斷引信距離門檻多遠，甚至可能已半觸發而不自知——v1.1 教訓）。該指標若近 12 個月內曾瞬時觸及或逼近門檻，必須明文記載該次事件。
 
 ### §8 對本站組合的 read-through
 三軌／GRP／regime 語言；明文連結 `/regime/`、`/crowding/`、相關 `docs/id/` 報告（連出不複製）；結尾固定一句描述器定位聲明。
@@ -61,7 +63,8 @@
 3. **來源紀律**：沿用 industry-analyst 來源階層（T1-T4 定義、QC-7 衝突處理）；T1 占比 floor **45%**（macro 例外檔，比照 QC-6 macro 例外先例）＋警語標註。
 4. **Claim taxonomy／🟡 判斷 ≤20%／機率詞彙級／§末 aside 來源系統**：沿用 industry-analyst 對應規則，不重抄（見該 skill SKILL.md）。
 5. **篇幅**：目標 60-90KB；文字 ≥60%、表格 ≤8 張；深度來自傳導鏈與 base rate 統計，不是灌指標。
-6. **macro-meta JSON**（嵌報告 `<script type="application/json" id="macro-meta">`）：
+6. **站內引用忠實性**：引用站內姊妹報告（macro／ID／DD／regime／crowding）的結論時，必須忠於原文的裁決語氣與保留——**原文標為「分歧／未解／低信心」的論點，不得轉述為「一致／已確認」**；引用時保留原文的限定詞。違反＝大錯（會讓站內文件互相洗白，比外部錯引更危險）。
+7. **macro-meta JSON**（嵌報告 `<script type="application/json" id="macro-meta">`）：
    ```json
    {"schema":"macro-v1","topic":"...","slug":"...","date":"YYYY-MM-DD",
     "horizon_months":N,"stance_risk_assets":"順風|中性|逆風",
@@ -81,8 +84,8 @@
 
 ## 【發稿流程】
 
-1. 寫稿完成 → **self-review gate**：數字皆有來源與 as-of／全形標點／禁語掃描／§0-§8 齊／macro-meta 欄位齊。
-2. **強制 cold-review critic**（比照 industry-analyst Step 8.7）：spawn general-purpose agent（sonnet），checklist 7 條——①§0 stance 與 §5 情境樹一致；②傳導鏈每環有來源；③base rate 統計非 cherry-pick；④證偽表可操作（門檻＋頻率＋源）；⑤描述器紀律無違反；⑥priced-in 分歧真非共識；⑦與 regime/crowding 現況無未解釋矛盾。報告存 `notes/site-internal/macro/_critic_{Slug}_{YYYYMMDD}.md`。大錯必修，cosmetic 記錄即可。
+1. 寫稿完成 → **self-review gate**：數字皆有來源與 as-of／全形標點／禁語掃描／§0-§8 齊／macro-meta 欄位齊／**證偽表每條現值齊**（缺現值的 metric 補查或下表）／**站內引用逐條回對原文**（開原檔比對裁決語氣，分歧不得寫成一致）。
+2. **強制 cold-review critic**（比照 industry-analyst Step 8.7）：spawn general-purpose agent（sonnet），checklist 7 條——①§0 stance 與 §5 情境樹一致；②傳導鏈每環有來源；③base rate 統計非 cherry-pick；④證偽表可操作（門檻＋頻率＋源＋**現值**；並查該指標近 12 個月是否曾觸及門檻而報告未載）；⑤描述器紀律無違反；⑥priced-in 分歧真非共識；⑦與 regime/crowding 現況無未解釋矛盾＋**站內引用忠實抽查 ≥2 處**（開被引原檔逐字比對）。另固定用 WebSearch 抽查 5-6 個關鍵數字（首跑實證：主要錯誤型態是「真數字但過時／錯標系列」，非幻覺）。報告存 `notes/site-internal/macro/_critic_{Slug}_{YYYYMMDD}.md`。大錯必修，cosmetic 記錄即可。
 3. index.html insert 卡片（比照 push-earnings 模式，skill-appended）。
 4. **預設停下複審**——用戶說 push 才 commit（報告＋index＋critic md 三檔一 commit），push 前 `git pull --rebase`。
 
