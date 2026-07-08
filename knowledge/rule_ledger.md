@@ -27,6 +27,7 @@
 | ID sd_verdict 三選一反騎牆＋split 出口（industry-analyst） | v2.5 | 反騎牆強迫裁決 | split 佔比連兩輪 >30%（出口被當變相騎牆用） | — |
 | ID priced_in 落欄＋獵場鍵第四條件 priced_in ≠ high（industry-analyst v2.6） | 2026-07-08 | calibration_id：shortage×PhaseII 勝率 7/25，缺 priced-in 軸 | priced_in=high 的 shortage 籃子兩輪跑贏 priced_in=low（軸方向反了）;或兩輪全樣本 priced_in 與後續超額無相關 | — |
 | QC-52 DD↔ID 對帳（事實先讀結論後對;sd_verdict 只當事實錨;Phase II 打折） | v14.8 (2026-07-08) | calibration_id_20260707：shortage×PhaseII 勝率 7/25 | Phase II 打折連兩輪無差別（ID 時鐘已修準）→ 移除打折 | — |
+| v14.9 判斷反萃取三件套（§12.4b 三檢:分母爭議/證據 L1-L3/steelman;§13b' 成功但劣化;§11 多尺矛盾） | v14.9 (2026-07-08) | 強模型 override 動作固化（ORCL/SNOW/TSLA/MU 四原型），防弱底座退化成合規清單 | 兩輪校準顯示三檢/13b' 從未改變任何裁決（純儀式）→ 逐項降為選做;或被三檢改變的裁決後續超額更差（程序在幫倒忙） | — |
 
 **登記規則**：新增判斷類規則 → 加一列（含 kill condition）＋提名一條既有規則候刪（寫進 PR/commit 訊息）；刪除規則 → 該列標 `KILLED @ 版本`（保留供 lineage，勿刪行）；每輪校準把審計結果回填最後一欄。
 

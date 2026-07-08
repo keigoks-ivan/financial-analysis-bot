@@ -11,7 +11,7 @@
 ```json
 {
   "ticker": "NVDA",
-  "schema": "v14.8",
+  "schema": "v14.9",
   "date": "2026-06-21",
   "price_at_dd": 223.47,
   "signal": "A+",
@@ -101,7 +101,7 @@
 5. `moat_trend` 是單一箭頭 ↑/→/↓（非文字）
 6. `dca_verdict` 與頁首儀表板 + §14 裁決晶片三處完全一致
 7. `oneliner` ≤ 200 chars
-8. `schema` = `v14.8`，且 HTML `<head>` 有 `<meta name="dd-schema-version" content="v14.8">`
+8. `schema` = `v14.9`，且 HTML `<head>` 有 `<meta name="dd-schema-version" content="v14.9">`
 9. `ev5y_pct` 是 5Y **累積** EV%（不是年化 IRR）
 
 **JSON 字串內禁止 HTML**：嚴禁 `<a>`/`<strong>`/`<br>` 嵌入 JSON value（引號未跳脫會 parse error）;跨 ID 引用寫純文字檔名;換行用 `\n` 或全形分號 `；`。
