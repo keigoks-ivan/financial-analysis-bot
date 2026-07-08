@@ -32,6 +32,7 @@
 | ID 情境判斷手冊（20 條，industry-analyst references/judgment-playbook.md，Gate 14） | v2.7 (2026-07-08) | 5 份高密度 ID 反萃取（過剩改道/敗局劇本化/錯殺型分歧等） | 同上逐條審計制 | — |
 | id-review V2-12~15（機器欄同步/熱產業時鐘施壓/kill 防呆/手冊實答抽查） | v1.6 (2026-07-08) | 守門員落後受檢對象三代＋校準教訓武器化（shortage×PhaseII 7/25） | 兩輪 critic 記錄顯示某條從未抓到任何 finding → 該條降選做;V2-13 若 ID 時鐘已修準（Phase II 失效格消失）→ 降級 | — |
 | 對比判斷手冊（18 條，multi-stock-comparator references/judgment-playbook.md） | v1.9 (2026-07-08) | 6 份 MS 報告反萃取（對比特有邏輯:opportunity-cost 鏈/便宜法醫學/原版勝複製版等） | 同 playbook 逐條審計制（觸發後從未改變排序/推薦 → 降選做） | — |
+| 供應鏈瓶頸兩層制（機械層＝替代難度×終端封鎖值 對帳 curated T0-T2;cartographer v1.1） | 2026-07-09 | 「最有價值最稀缺」缺跨鏈聚合＋小產業防偏誤（封鎖值用終端市場非節點規模） | 兩輪複審顯示機械提名 0 條被編輯層採納（純噪音）→ 機械段降為 console 輸出;或機械分與後續單點事件（斷供/認證突破）無相關 | — |
 | macro §0 stance 三選一反騎牆＋§7 證偽表強制（macro-analyst v1.0） | 2026-07-08 | 生於短期轉折判死裁決後；防 macro 報告淪為不可證偽的騎牆散文 | stance 與後續 6M 風險資產實際方向連兩輪無相關（stance 無資訊量）→ 降為純敘事欄;或證偽表 kill metric 兩輪從未被查核（純儀式） | — |
 | macro-analyst skill 本體（tool-level；描述器紀律＝禁擇時禁買賣指令） | 2026-07-08 | 系統缺總經深度研究層（描述器三頁只有資料層無敘事層） | 90 天內產出報告無任何 DD §11.5／ID／regime editorial／用戶決策討論實際引用 → skill 降級或砍（automatable ≠ valuable） | — |
 

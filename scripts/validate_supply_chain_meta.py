@@ -29,8 +29,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 SC_DATA_DIR = ROOT / "docs" / "supply-chain" / "data"
 
-# Files in data/ that this validator should skip (registry / generated).
-SKIP_FILES = {"topics.json", "dd_links.json"}
+# Files in data/ that this validator should skip (registry / generated / sidecar).
+# terminal_markets.json + substitution_lags.json = 機械層 sidecar（schema "sc-*"，
+# 供 build_supply_chain_tiers.py 對帳段消費），非 topic 地圖，不套 node/edge schema。
+SKIP_FILES = {"topics.json", "dd_links.json", "terminal_markets.json", "substitution_lags.json"}
 
 # Enum whitelists (must match the engine's COMP + FLAG dicts in engine.js).
 COMPETITION_VALUES = {"monopoly", "oligopoly", "redocean", "highgrowth", "emerging"}
@@ -325,7 +327,9 @@ def validate_file(path: Path) -> dict:
     if path.name == "topics.json":
         errs = validate_topics_manifest(path)
         return {"status": "invalid" if errs else "ok", "errors": errs, "topic": "registry"}
-    if path.name == "dd_links.json":
+    if path.name in SKIP_FILES:
+        # dd_links.json（generated）與機械層 sidecar（terminal_markets / substitution_lags，
+        # schema "sc-*"）皆非 topic 地圖，不套 node/edge schema。
         return {"status": "skipped_generated", "topic": path.stem}
 
     try:

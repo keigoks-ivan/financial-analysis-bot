@@ -1,8 +1,8 @@
 ---
 name: supply-chain-cartographer
-description: 建立「產業供應鏈互動地圖」— 把產業鏈拆成節點 × 廠商 × 競爭態勢 × 客戶獨家／關鍵單點的視覺化頁面，與 industry-analyst v2.0（敘事為骨、表格為窗的產業深度報告，含供需循環敘事 + 決策層）並列的另一種產業視角。輸入產業主題（如「HBM」「ASIC」「先進製程」「IC 設計」「人形機器人」），skill 執行多輪 WebSearch / WebFetch 研究（英文 + TW 中文雙語策略），輸出 docs/supply-chain/data/{topic}.json + 一支 thin {topic}.html template，引擎 (engine.css + engine.js) 已存在不需動。row 數量自由（3-6 列），由產業敘事決定；每個 single-point ⚑ 必須引用 ≥2 來源並標註信心度。觸發：使用者說「跑 {topic} 供應鏈地圖」/「{topic} supply chain map」/「畫 {topic} 供應鏈」/「{topic} supply-chain」/「supply-chain {topic}」。
-version: v1.0
-date: 2026-05-26
+description: 建立「產業供應鏈互動地圖」— 把產業鏈拆成節點 × 廠商 × 競爭態勢 × 客戶獨家／關鍵單點的視覺化頁面，與 industry-analyst v2.0（敘事為骨、表格為窗的產業深度報告，含供需循環敘事 + 決策層）並列的另一種產業視角。輸入產業主題（如「HBM」「ASIC」「先進製程」「IC 設計」「人形機器人」），skill 執行多輪 WebSearch / WebFetch 研究（英文 + TW 中文雙語策略），輸出 docs/supply-chain/data/{topic}.json + 一支 thin {topic}.html template，引擎 (engine.css + engine.js) 已存在不需動。row 數量自由（3-6 列），由產業敘事決定；每個 single-point ⚑ 必須引用 ≥2 來源並標註信心度。v1.1：新 topic 必餵機械層 sidecar（terminal_markets.json 終端封鎖值＋substitution_lags.json 替代難度四檔）——hub 瓶頸分級為編輯層（curated T0-T2/OVER）＋機械層對帳（漏網提名）兩層制。觸發：使用者說「跑 {topic} 供應鏈地圖」/「{topic} supply chain map」/「畫 {topic} 供應鏈」/「{topic} supply-chain」/「supply-chain {topic}」。
+version: v1.1
+date: 2026-07-09
 ---
 
 # supply-chain-cartographer skill v1.0
@@ -51,6 +51,15 @@ scripts/
                                    # 注入 index.html 的「全站 Top Picks 統整」區（TIERS_AUTO 標記）
 ```
 > 任何 map 的 ⚑/💎/`node_role` 改動後（含新增 topic），**重跑 `python3 scripts/build_supply_chain_tiers.py`** 刷新 hub 統整區，與 index.html 併入同一 commit。
+
+## 【機械層輸入（v1.1，2026-07-09——瓶頸強度兩層制）】
+
+Hub 的稀缺分級是兩層制：**編輯層**（tiers script 內 T0/T1/T2/OVER curated 清單）＋**機械層對帳**（替代難度 × 終端封鎖值，挑戰者角色——「機械高分 × 編輯未收」＝漏網提名，防小產業被編輯視野漏掉）。新 topic 上線時必須餵機械層兩個 sidecar：
+
+1. **`data/terminal_markets.json`** append 一筆：本鏈最下游產出品的年市場規模（USD B）＋basis＋source＋confidence。**定義紀律**：鏈的「直接產出」終端市場，不放大到全經濟；這是「下游封鎖值」權重——**刻意不用節點自身 marketSize**（防味之素 ABF 型「小節點大封鎖」被市場規模埋掉）。
+2. **`data/substitution_lags.json`** append 本鏈候選節點（monopoly ∪ ⚑ ∪ 終端市場前二大節點）的替代難度判定：`>5y`（十年級技術/生態壁壘，**此檔必附外部佐證**）/ `2-5y`（長認證週期材料/設備）/ `<2y`（第二源認證中）/ `replaceable`。不確定取較短 tier（防高估稀缺）；需求/買方層節點一律 `replaceable`。
+
+之後重跑 tiers script，機械對帳表自動吃進新鏈。**⚑ 的角色自 v1.1 起是排行榜輸入訊號之一**，不是獨立維護的 metadata——掛旗紀律（≥2 源）不變，但「本鏈最窄節點是誰、為什麼」的 KEY CALL 判斷以 substitution_lags 的 tier 為權威表達。
 
 ## 工作流（標準 5 輪研究 + 4 步輸出）
 

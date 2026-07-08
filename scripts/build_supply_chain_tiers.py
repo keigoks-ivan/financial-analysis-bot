@@ -261,6 +261,95 @@ OVER = [
 ]
 
 
+LAG_SCORE = {">5y": 3, "2-5y": 2, "<2y": 1, "replaceable": 0}
+LAG_LABEL = {">5y": ">5 年", "2-5y": "2-5 年", "<2y": "<2 年", "replaceable": "可替代"}
+
+
+def load_mechanical():
+    """機械層（2026-07-09 兩層制）：substitution_lags.json（替代難度，Opus 逐節點判定）
+    × terminal_markets.json（終端封鎖值，每鏈最下游產出市場）→ 節點瓶頸強度分。
+    任一 sidecar 缺 → 回傳 None（純 curated 模式，pre-commit 不受影響）。
+    分數 = 替代難度(0-3) × 終端市場(USD B)——刻意不用節點自身 marketSize，
+    防「小節點大封鎖」（味之素 ABF 型）被市場規模埋掉。"""
+    tm_p = DATA / "terminal_markets.json"
+    sl_p = DATA / "substitution_lags.json"
+    if not (tm_p.exists() and sl_p.exists()):
+        return None
+    try:
+        tm = {r["topic"]: r for r in json.loads(tm_p.read_text(encoding="utf-8"))["markets"]}
+        sl = json.loads(sl_p.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, KeyError):
+        return None
+    node_cache = {}
+    def node_info(topic, nid):
+        if topic not in node_cache:
+            p = DATA / f"{topic}.json"
+            try:
+                node_cache[topic] = {n.get("id"): n for n in json.loads(p.read_text(encoding="utf-8")).get("nodes", [])}
+            except Exception:
+                node_cache[topic] = {}
+        return node_cache[topic].get(nid) or {}
+    rows = []
+    for r in sl.get("lags", []):
+        w = (tm.get(r["topic"]) or {}).get("terminal_market_usd_b") or 0
+        score = LAG_SCORE.get(r.get("tier"), 0) * w
+        if score <= 0:
+            continue
+        nd = node_info(r["topic"], r.get("node_id"))
+        tickers = []
+        for c in nd.get("companies", []):
+            raw = (c.get("ticker") or "").strip()
+            for tk in re.split(r"[/,、]", raw):
+                tk = tk.strip()
+                if tk and tk not in {"—", "-", "–", "N/A", "n/a", "未上市"}:
+                    tickers.append(tk)
+        rows.append({"topic": r["topic"], "node_id": r.get("node_id"),
+                     "name": nd.get("name") or r.get("node_id"), "tier": r.get("tier"),
+                     "note": r.get("note", ""), "terminal": w, "score": score,
+                     "tickers": tickers[:4]})
+    rows.sort(key=lambda x: -x["score"])
+    return {"rows": rows, "as_of": sl.get("as_of", "?"), "n": len(rows)}
+
+
+def curated_ticker_set():
+    out = set()
+    for e in T0 + T1 + T2:
+        for _name, tk, _c in e.get("sup", []):
+            if tk:
+                out.add(tk.upper())
+    return out
+
+
+def mechanical_html(mech, dd_links) -> str:
+    """機械層對帳段：top-15 分數表＋curated 收錄狀態。提名不自動入榜——
+    「機械高分 × curated 未收」＝漏網提名（防小產業被編輯視野漏掉的系統性保險），
+    由持有人複審後手動改 T0/T1/T2 清單。"""
+    curated = curated_ticker_set()
+    h = ['<h3 class="tier-mech"><span class="ico">⚙️</span>機械層對帳 · '
+         f'替代難度 × 終端封鎖值（{mech["n"]} 節點打分，as-of {esc(mech["as_of"])}）</h3>']
+    h.append('<p class="lede">上方分級是<strong>編輯判斷</strong>；本表是機械層挑戰者——'
+             '分數 = 替代難度（>5 年 = 3 / 2-5 年 = 2 / <2 年 = 1）× 該鏈終端市場（USD B，'
+             '刻意不用節點自身規模，防小節點大封鎖被埋）。'
+             '<strong>「未收錄」= 漏網提名</strong>，複審後才入上方分級，不自動晉升。</p>')
+    h.append('<div style="overflow-x:auto"><table class="tier-mech-tbl"><thead><tr>'
+             '<th>節點</th><th>鏈</th><th>替代難度</th><th>終端市場</th><th>分數</th>'
+             '<th>關鍵廠商</th><th>編輯層</th></tr></thead><tbody>')
+    for r in mech["rows"][:15]:
+        if not r["tickers"]:
+            status = '私有/無 ticker（人工對帳）'
+        elif any(tk.upper() in curated for tk in r["tickers"]):
+            status = '✓ 已收錄'
+        else:
+            status = '<strong style="color:#b45309">未收錄 → 複審提名</strong>'
+        h.append(f'<tr><td>{esc(r["name"])}<br><small>{esc(r["note"][:48])}</small></td>'
+                 f'<td>{topic_chips([r["topic"]])}</td>'
+                 f'<td>{esc(LAG_LABEL.get(r["tier"], r["tier"]))}</td>'
+                 f'<td>${r["terminal"]:g}B</td><td><strong>{r["score"]:g}</strong></td>'
+                 f'<td>{esc(" / ".join(r["tickers"]) or "—")}</td><td>{status}</td></tr>')
+    h.append('</tbody></table></div>')
+    return "\n".join(h)
+
+
 def esc(s: str) -> str:
     return html.escape(str(s or ""), quote=True)
 
@@ -340,10 +429,15 @@ def build_block(dd_links) -> str:
              '③ 市場根本還不存在（DNP TGV）。<em>讀者不應據此 over-weight。</em></p>')
     h.append(table_html(OVER, "tier-over-tbl", dd_links, "被過度標示的節點"))
 
+    mech = load_mechanical()
+    if mech:
+        h.append(mechanical_html(mech, dd_links))
+
     h.append('<p class="gold-foot">稀缺分級為<strong>編輯判斷</strong>（可替代性 · 認證 / 切換時間 · '
              '產能 / 地理集中度 · 斷供爆炸半徑），單一資料源在 '
              '<code>scripts/build_supply_chain_tiers.py</code> 的 <code>T0/T1/T2/OVER</code> 清單，'
-             'DD 連結由 <code>data/dd_links.json</code> 自動解析。'
+             'DD 連結由 <code>data/dd_links.json</code> 自動解析；機械層輸入為 '
+             '<code>data/terminal_markets.json</code> ＋ <code>data/substitution_lags.json</code>。'
              '完整審計（40 maps / 749 nodes / 67 ⚑）見 '
              '<code>docs/supply-chain/audit-2026-06.json</code>'
              '（早期敘述版存 repo 內部 notes/site-internal/supply-chain/）。</p>')
