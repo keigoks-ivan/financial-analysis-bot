@@ -696,43 +696,47 @@ def generate_html(legs, stx, combined, asof, changes, last_change_date, rebal_du
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>商品 Sleeve + 組合系統即時狀態 (OOS) | InvestMQuest Research</title>
   <meta name="description" content="CMDTY2 唐奇安突破 sleeve (GLD/USO→MGC/MCL) 日線訊號 + 80/20 STX50 組合曝險">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/imq-base.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
   <style>
-:root{{--brand:#1a56db;--bg:#f8f9fa;--card:#fff;--text:#1a1a2e;--muted:#6b7280;--border:#e2e5e9;
-  --green:#059669;--green-bg:#ecfdf5;--green-border:#a7f3d0;--green-text:#065f46;
-  --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;--red-text:#991b1b;
-  --amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fde68a;--amber-text:#92400e;
-  --blue:#2563eb;--blue-bg:#eff6ff;--blue-border:#93c5fd;--blue-text:#1e40af}}
+:root{{--brand:#1e4e8c;--bg:#f7f9fc;--card:#fff;--text:#0f2a45;--muted:#8fa6bc;--border:#e3ecf5;
+  --green:#137a4c;--green-bg:#eaf5ef;--green-border:#bfe0d0;--green-text:#137a4c;
+  --red:#b3261e;--red-bg:#faecea;--red-border:#f0c4c0;--red-text:#b3261e;
+  --amber:#9a6700;--amber-bg:#f8f1e2;--amber-border:#ead9b3;--amber-text:#9a6700;
+  --blue:#1e4e8c;--blue-bg:#eef4fb;--blue-border:#c9dbee;--blue-text:#1e4e8c}}
 *{{box-sizing:border-box;margin:0;padding:0}}
-body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+body{{font-family:var(--sans),-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   background:var(--bg);color:var(--text);line-height:1.65;font-size:14px}}
 a{{color:var(--brand);text-decoration:none}}a:hover{{text-decoration:underline}}
 .container{{max-width:1140px;margin:0 auto;padding:0 1.5rem}}
 .page-hdr{{padding:1.5rem 0 1.2rem;background:#fff;border-bottom:1px solid var(--border)}}
-.page-hdr h1{{font-size:1.5rem;font-weight:700;letter-spacing:-.03em}}
+.page-hdr h1{{font-family:var(--serif);font-size:1.5rem;font-weight:700;letter-spacing:-.01em}}
 .page-hdr .sub{{color:var(--muted);font-size:.85rem;margin-top:.2rem}}
 .crumb{{font-size:.8rem;color:var(--muted);margin-bottom:.35rem}}
 .crumb a{{color:var(--muted)}}
-.card{{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,.04)}}
+.card{{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;margin-bottom:1rem;box-shadow:var(--sh-1)}}
 .card h3{{font-size:.95rem;font-weight:600;margin-bottom:.75rem}}
 table{{width:100%;border-collapse:collapse;font-size:.82rem}}
 th,td{{text-align:left;padding:.55rem .7rem;border-bottom:1px solid var(--border)}}
-th{{background:#f8f9fa;font-weight:600;font-size:.74rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}}
+th{{background:transparent;font-family:var(--mono);font-weight:600;font-size:.74rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}}
 td{{font-variant-numeric:tabular-nums}}
 footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);text-align:center;padding:1rem 0;font-size:.75rem;margin-top:1rem}}
 .banner{{background:var(--amber-bg);border:1px solid var(--amber-border);color:var(--amber-text);
-  border-radius:8px;padding:.7rem 1rem;font-size:.8rem;margin:1rem 0}}
+  border-radius:var(--r);padding:.7rem 1rem;font-size:.8rem;margin:1rem 0}}
 .hero{{display:grid;grid-template-columns:1fr 1fr;gap:1rem;padding:1.5rem 0 .5rem}}
-.hero-box{{background:#fff;border:1px solid var(--border);border-radius:12px;padding:1.3rem 1.5rem;text-align:center}}
+.hero-box{{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:1.3rem 1.5rem;text-align:center}}
 .hero-box .lbl{{font-size:.8rem;color:var(--muted);font-weight:600}}
 .hero-box .big{{font-size:2rem;font-weight:800;margin:.25rem 0;letter-spacing:-.02em}}
 .hero-box .sub2{{font-size:.76rem;color:var(--muted)}}
-.change-box{{background:var(--red-bg);border:2px solid var(--red-border);border-radius:10px;padding:.9rem 1.2rem;margin:.5rem 0 1rem;font-size:.9rem}}
+.change-box{{background:var(--red-bg);border:2px solid var(--red-border);border-radius:var(--r);padding:.9rem 1.2rem;margin:.5rem 0 1rem;font-size:.9rem}}
 .tgrid{{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}}
-.tcard{{background:#fff;border:1px solid var(--border);border-radius:10px;padding:1.1rem;box-shadow:0 1px 3px rgba(0,0,0,.04)}}
+.tcard{{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:1.1rem;box-shadow:var(--sh-1)}}
 .tcard-hdr{{display:flex;align-items:center;justify-content:space-between;margin-bottom:.3rem}}
 .tname{{font-size:1.2rem;font-weight:800;letter-spacing:-.02em}}
-.pos-badge{{font-size:.9rem;font-weight:700;padding:.25rem .7rem;border-radius:8px}}
+.pos-badge{{font-size:.9rem;font-weight:700;padding:.25rem .7rem;border-radius:6px}}
 .pos-long{{background:var(--green-bg);color:var(--green-text)}}
 .pos-short{{background:var(--red-bg);color:var(--red-text)}}
 .pos-flat{{background:#f1f5f9;color:var(--muted)}}

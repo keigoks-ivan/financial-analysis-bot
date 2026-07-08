@@ -178,44 +178,47 @@ def main() -> int:
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SOP 漏斗 2022 回測 — 技術執行層 × 規則實驗室 | InvestMQuest</title>
 <meta name="color-scheme" content="light">
+<link rel="stylesheet" href="/assets/imq-base.css">
 <style>
+:root{{--tint-warn:#f8f1e2;--tint-warn-line:#eee0b8;--tint-neg:#faecea;--tint-neg-line:#f0c9c4;--tint-pos:#eaf5ef}}
 *{{margin:0;padding:0;box-sizing:border-box}}
-body{{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e3a5f;line-height:1.5}}
-.hero{{background:#fff;border-bottom:1px solid #dce8f5;padding:24px 32px 18px}}
+body{{font-family:var(--sans);background:var(--paper);color:var(--body);line-height:1.5}}
+.hero{{background:var(--card);border-bottom:1px solid var(--line);padding:24px 32px 18px}}
 .hero-inner{{max-width:min(1320px,96vw);margin:0 auto}}
-.hero-h1{{font-size:22px;font-weight:600;color:#0f2a45;margin-bottom:6px}}
-.hero-sub{{font-size:12px;color:#5a7a9a;line-height:1.6;max-width:980px}}
+.hero-h1{{font-family:var(--serif);font-size:22px;font-weight:700;letter-spacing:-.01em;color:var(--ink);margin-bottom:6px}}
+.hero-sub{{font-size:12px;color:var(--sec);line-height:1.6;max-width:980px}}
 .section{{max-width:min(1320px,96vw);margin:0 auto;padding:20px 32px 4px}}
-.card{{background:#fff;border:1px solid #dce8f5;border-radius:10px;padding:16px 18px;margin-bottom:20px}}
-.card h2{{font-size:16px;font-weight:700;margin-bottom:4px;color:#0f2a45}}
-.card .desc{{font-size:12px;color:#5a7a9a;margin-bottom:12px;line-height:1.6}}
+.card{{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh-1);padding:16px 18px;margin-bottom:20px}}
+.card h2{{font-family:var(--serif);font-size:16px;font-weight:700;margin-bottom:4px;color:var(--ink)}}
+.card .desc{{font-size:12px;color:var(--sec);margin-bottom:12px;line-height:1.6}}
 table{{width:100%;border-collapse:collapse;font-size:11.5px}}
-th{{background:#f0f6ff;color:#5a7a9a;font-weight:700;padding:7px 8px;text-align:right;border-bottom:2px solid #dce8f5;font-size:10px;white-space:nowrap}}
+th{{color:var(--sec);font-family:var(--mono);font-weight:600;padding:7px 8px;text-align:right;border-bottom:1px solid var(--line);font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;white-space:nowrap}}
 th.left{{text-align:left}}
-td{{padding:7px 8px;text-align:right;border-bottom:1px solid #f0f5fb;font-variant-numeric:tabular-nums}}
+td{{padding:7px 8px;text-align:right;border-bottom:1px solid var(--line-soft);color:var(--body);font-variant-numeric:tabular-nums}}
 td.left{{text-align:left;font-weight:500}}
-.pos{{color:#059669;font-weight:600}}.neg{{color:#dc2626;font-weight:600}}
-.muted-row td{{color:#94a3b8}}
-.warn-tag{{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:4px;font-size:9.5px;font-weight:700;background:#fef3c7;color:#92400e}}
-.decided{{display:inline-block;padding:2px 9px;border-radius:5px;font-size:10.5px;font-weight:700;background:#dcfce7;color:#166534;margin-left:8px}}
-.honesty{{background:#fef2f2;border:2px solid #fca5a5;border-radius:10px;padding:16px 20px;font-size:13px;color:#7f1d1d;line-height:1.8;margin-bottom:20px}}
+tbody tr:hover td{{background:#fafcfe}}
+.pos{{color:var(--pos);font-weight:600}}.neg{{color:var(--neg);font-weight:600}}
+.muted-row td{{color:var(--muted)}}
+.warn-tag{{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:5px;font-size:9.5px;font-weight:700;background:var(--tint-warn);color:var(--warn)}}
+.decided{{display:inline-block;padding:2px 9px;border-radius:5px;font-size:10.5px;font-weight:700;background:var(--tint-pos);color:var(--pos);margin-left:8px}}
+.honesty{{background:var(--tint-neg);border:1px solid var(--tint-neg-line);border-radius:var(--r);padding:16px 20px;font-size:13px;color:var(--neg);line-height:1.8;margin-bottom:20px}}
 .honesty strong{{display:block;font-size:14px;margin-bottom:6px}}
-.honesty .ok-list{{color:#14532d;background:#f0fdf4;border-radius:6px;padding:8px 14px;margin-top:8px;font-size:12px}}
-.finding{{border-left:4px solid #dc2626;background:#fff;border-radius:0 10px 10px 0;border-top:1px solid #dce8f5;border-right:1px solid #dce8f5;border-bottom:1px solid #dce8f5;padding:14px 18px;margin-bottom:14px}}
-.finding h3{{font-size:14px;color:#0f2a45;margin-bottom:6px}}
-.finding p{{font-size:12px;color:#475569;line-height:1.7}}
-.finding .nums{{font-size:13px;font-weight:700;margin:6px 0;font-variant-numeric:tabular-nums}}
+.honesty .ok-list{{color:var(--pos);background:var(--tint-pos);border-radius:5px;padding:8px 14px;margin-top:8px;font-size:12px}}
+.finding{{border-left:3px solid var(--accent);background:var(--card);border-radius:0 var(--r) var(--r) 0;border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:14px 18px;margin-bottom:14px}}
+.finding h3{{font-family:var(--sans);font-size:14px;color:var(--ink);margin-bottom:6px}}
+.finding p{{font-size:12px;color:var(--body);line-height:1.7}}
+.finding .nums{{font-size:13px;font-weight:700;margin:6px 0;font-variant-numeric:tabular-nums;color:var(--ink)}}
 .finding table{{margin-top:8px;max-width:520px}}
 .kpi{{display:flex;gap:12px;flex-wrap:wrap;margin:10px 0}}
-.kpi div{{background:#f0f5fb;border:1px solid #dce8f5;border-radius:6px;padding:7px 12px;font-size:11px;color:#5a7a9a}}
-.kpi strong{{display:block;font-size:14px;color:#1e3a5f}}
-.kpi .main strong{{color:#059669}}
-.kpi .ghost strong{{color:#94a3b8}}
-.caveat{{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:14px 18px;font-size:12px;color:#854d0e;line-height:1.7}}
+.kpi div{{background:var(--paper);border:1px solid var(--line);border-radius:5px;padding:7px 12px;font-size:11px;color:var(--sec)}}
+.kpi strong{{display:block;font-size:14px;color:var(--ink)}}
+.kpi .main strong{{color:var(--pos)}}
+.kpi .ghost strong{{color:var(--muted)}}
+.caveat{{background:var(--tint-warn);border:1px solid var(--tint-warn-line);border-radius:var(--r);padding:14px 18px;font-size:12px;color:var(--warn);line-height:1.7}}
 .caveat ul{{margin-left:20px}}
-h4{{font-size:12px;color:#0f2a45;margin:14px 0 6px}}
-footer{{text-align:center;font-size:10.5px;color:#8aa5c0;padding:24px}}
-.ghost-note{{font-size:10.5px;color:#94a3b8}}
+h4{{font-family:var(--sans);font-size:12px;color:var(--ink);margin:14px 0 6px}}
+footer{{text-align:center;font-size:10.5px;color:var(--muted);padding:24px}}
+.ghost-note{{font-size:10.5px;color:var(--muted)}}
 </style>
 </head>
 <body>
@@ -241,23 +244,23 @@ footer{{text-align:center;font-size:10.5px;color:#8aa5c0;padding:24px}}
 <div class="nums">含斷路器終值 <span class="neg">{t2["final_nav"]:.0f}</span> vs 拿掉後 <span class="pos">{nb["final_nav"]:.0f}</span>（同訊號同名單，唯一變數 = 斷路器）</div>
 <p>2024-07 曝險 ~83% 遇急跌，NAV -10.1% 觸發斷路器（{t2["breaker_episodes"][0]["trigger"] if t2["breaker_episodes"] else "—"}）→ 五狀態機把部位停損至滿手現金 → NAV 凍在回撤區<strong>永遠回不到 -5% 解除線</strong> → 後續 {t2["blocked_entries"]} 筆進場被擋到期末。解除條件假設「部位反彈收復回撤」，但觸發時部位已被砍光——條文與狀態機交互產生死鎖。<strong>裁決：拿掉斷路器</strong>。代價是失去帳戶層保險絲（whipsaw 市況的連續停損無人喊停），列入季檢覆議。</p>
 </div>
-<div class="finding" style="border-left-color:#d97706">
+<div class="finding">
 <h3>發現② 財報靜默期 — 擋下 {g["n_silent_blocked"]}/{g["n_signals"]} 筆（{silent_pct}%）<span class="decided">已裁決 2026-06-11：標記不擋</span></h3>
 <div class="nums">有禁令：α {_pct(g["mean_alpha_pct"])} · R {g["mean_r"]} · NAV(無斷路器) {nb["final_nav"]:.0f}　vs　拿掉禁令：α {_pct(gns["mean_alpha_pct"])} · R {gns["mean_r"]} · NAV {ns["final_nav"]:.0f}</div>
 <p>被擋 14 筆中實際成交的 {len(d.get("silent_counterfactual", []))} 筆放行後<strong>全數獲利</strong>（下表）。⚠ 但此證據含重度 survivorship 偏誤：凍結名單 = 今日贏家，其歷史財報多為利多，「衝著財報買」在贏家名單上只剩好的一面；且 FIX 一筆 +186% 扛走大半差距。<strong>裁決：forward 系統改「標記不擋」</strong>——財報窗內進場照進、標 ⚠，累積無偏數據供季檢複驗是否恢復禁令。</p>
 <table><thead><tr><th class="left">ticker</th><th>訊號日</th><th>放行後報酬</th><th>下場</th></tr></thead><tbody>{cf_rows}</tbody></table>
 </div>
-<div class="finding" style="border-left-color:#2563eb">
+<div class="finding">
 <h3>發現③ 態④減碼幅度 A/B — 階梯小勝，不構成改規則的強證據</h3>
 <div class="nums">charter 一次 50%：α {_pct(g["mean_alpha_pct"])} · R {g["mean_r"]}　vs　階梯 25%+25%：α {_pct(st["mean_alpha_pct"])} · R {st["mean_r"]}</div>
 <p>與態④ trim-variants 舊研究（流程指標）合併讀，維持現行規則，供 2026-09 季檢。</p>
 </div>
-<div class="finding" style="border-left-color:#059669">
+<div class="finding">
 <h3>發現④ 型態行為 — A1 起漲樣本極稀但彈道不同</h3>
 <div class="nums">A1：{bt["A1"]["n_entered"]} 筆 · 平均 {_pct(bt["A1"]["mean_ret_pct"])} · α {_pct(bt["A1"]["mean_alpha_pct"])}　|　A2：{bt["A2"]["n_entered"]} 筆 · 平均 {_pct(bt["A2"]["mean_ret_pct"])} · α {_pct(bt["A2"]["mean_alpha_pct"])}　|　B：{bt["B"]["n_entered"]} 筆 · 平均 {_pct(bt["B"]["mean_ret_pct"])} · α {_pct(bt["B"]["mean_alpha_pct"])}</div>
 <p>4.4 年僅 {bt["A1"]["n_signals"]} 筆乾淨 A1（長基期突破本就稀有），樣本不足下結論——forward 帳本 A1 vs A2 預登記裁決（closed ≥20）才是正式裁判。</p>
 </div>
-<div class="finding" style="border-left-color:#7c3aed">
+<div class="finding">
 <h3>發現⑤ 226 檔純價格對照 — 閘門的價值主要在風險端</h3>
 <div class="nums">現行配置（23 檔過閘）：NAV {ns["final_nav"]:.0f} · MDD {_pct(ns["mdd_pct"])} · Sharpe {ns["sharpe"]}　vs　226 檔純價格（無閘門）：NAV {ung["final_nav"]:.0f} · MDD {_pct(ung["mdd_pct"])} · Sharpe {ung["sharpe"]}</div>
 <p>不看 ROIC/EPS/護城河、純價格規則跑全 universe：報酬相近（{ung["final_nav"]:.0f} vs {ns["final_nav"]:.0f}）但<strong>回撤深得多（{_pct(ung["mdd_pct"])} vs {_pct(ns["mdd_pct"])}）、曝險高得多（{ung["avg_exposure_pct"]:.0f}% vs {ns["avg_exposure_pct"]:.0f}%）</strong>——閘門在這份資料裡的作用不是挑出更會漲的票，是用更少的曝險、更淺的坑拿到相近報酬（風險調整後 Sharpe {ns["sharpe"]} vs {ung["sharpe"]}）。⚠ 仍含殘留偏誤：「今天過閘」與「過去表現好」相關；per-trade 口徑下無閘門組勝率僅 {_pct(ug_s["win_rate"], signed=False)}、中位 {_pct(ug_s["median_ret_pct"])}、α {_pct(ug_s["mean_alpha_pct"])}（vs 過閘組 {_pct(g["win_rate"], signed=False)} / {_pct(g["median_ret_pct"])} / {_pct(g["mean_alpha_pct"])}）。</p>

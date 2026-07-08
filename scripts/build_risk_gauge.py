@@ -180,14 +180,14 @@ def calc_components(px):
 def composite_label(score):
     """Map composite score [-1, +1] to (label_en, label_zh, color)."""
     if score >= 0.67:
-        return 'STRONG RISK-ON', '強風險偏好', '#16a34a'
+        return 'STRONG RISK-ON', '強風險偏好', 'var(--pos)'
     if score >= 0.34:
-        return 'RISK-ON', '風險偏好', '#16a34a'
+        return 'RISK-ON', '風險偏好', 'var(--pos)'
     if score <= -0.67:
-        return 'STRONG RISK-OFF', '強風險趨避', '#dc2626'
+        return 'STRONG RISK-OFF', '強風險趨避', 'var(--neg)'
     if score <= -0.34:
-        return 'RISK-OFF', '風險趨避', '#dc2626'
-    return 'NEUTRAL', '中性', '#d97706'
+        return 'RISK-OFF', '風險趨避', 'var(--neg)'
+    return 'NEUTRAL', '中性', 'var(--warn)'
 
 
 def render_block(score, label_en, label_zh, color, comps, as_of, prev):
@@ -197,13 +197,13 @@ def render_block(score, label_en, label_zh, color, comps, as_of, prev):
     chips = []
     for c in comps:
         if c['score'] is None:
-            dot, dot_color, chip_bg = '–', '#94a3b8', '#f1f5f9'
+            dot, dot_color, chip_bg = '–', 'var(--muted)', 'var(--line-soft)'
         elif c['score'] > 0:
-            dot, dot_color, chip_bg = '▲', '#16a34a', '#f0fdf4'
+            dot, dot_color, chip_bg = '▲', 'var(--pos)', '#eaf5ef'
         elif c['score'] < 0:
-            dot, dot_color, chip_bg = '▼', '#dc2626', '#fef2f2'
+            dot, dot_color, chip_bg = '▼', 'var(--neg)', '#faecea'
         else:
-            dot, dot_color, chip_bg = '●', '#d97706', '#fffbeb'
+            dot, dot_color, chip_bg = '●', 'var(--warn)', '#f8f1e2'
         chips.append(
             f'<div class="rg-chip" style="background:{chip_bg}">'
             f'<div class="rg-chip-top"><span style="color:{dot_color}">{dot}</span>'
@@ -224,23 +224,23 @@ def render_block(score, label_en, label_zh, color, comps, as_of, prev):
                      f'<span class="lang-zh">上週：{prev["label_zh"]}（{prev["score"]:+.2f}）{arrow}</span></div>')
 
     return f'''{MARKER_START}
-<section style="background:#f0f5fb">
+<section style="background:var(--paper)">
   <div class="section" style="padding-bottom:0">
     <style>
-    .rg-card{{background:#fff;border:1px solid #dce8f5;border-radius:12px;padding:20px 24px}}
+    .rg-card{{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px 24px}}
     .rg-head{{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:14px}}
     .rg-label{{font-size:22px;font-weight:700;letter-spacing:.04em}}
-    .rg-score{{font-size:13px;color:#5a7a9a;font-variant-numeric:tabular-nums}}
-    .rg-prev{{font-size:11px;color:#94a3b8}}
+    .rg-score{{font-size:13px;color:var(--sec);font-variant-numeric:tabular-nums}}
+    .rg-prev{{font-size:11px;color:var(--muted)}}
     .rg-bar-wrap{{position:relative;height:10px;border-radius:5px;margin:6px 2px 22px;
-      background:linear-gradient(90deg,#dc2626 0%,#f59e0b 40%,#e2e8f0 50%,#84cc16 60%,#16a34a 100%)}}
-    .rg-needle{{position:absolute;top:-5px;width:4px;height:20px;background:#0f2a45;border-radius:2px;transform:translateX(-50%)}}
-    .rg-bar-lbl{{position:absolute;top:14px;font-size:9px;letter-spacing:.08em;color:#94a3b8;font-weight:600}}
+      background:linear-gradient(90deg,var(--neg) 0%,#f59e0b 40%,var(--line) 50%,#84cc16 60%,var(--pos) 100%)}}
+    .rg-needle{{position:absolute;top:-5px;width:4px;height:20px;background:var(--ink);border-radius:2px;transform:translateX(-50%)}}
+    .rg-bar-lbl{{position:absolute;top:14px;font-size:9px;letter-spacing:.08em;color:var(--muted);font-weight:600}}
     .rg-chips{{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px}}
-    .rg-chip{{border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px}}
-    .rg-chip-top{{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:#1e3a5f}}
-    .rg-chip-val{{font-size:10px;color:#5a7a9a;margin-top:3px;font-variant-numeric:tabular-nums}}
-    .rg-note{{font-size:10px;color:#94a3b8;margin-top:12px;line-height:1.5}}
+    .rg-chip{{border:1px solid var(--line);border-radius:var(--r);padding:8px 10px}}
+    .rg-chip-top{{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--ink)}}
+    .rg-chip-val{{font-size:10px;color:var(--sec);margin-top:3px;font-variant-numeric:tabular-nums}}
+    .rg-note{{font-size:10px;color:var(--muted);margin-top:12px;line-height:1.5}}
     </style>
     <div class="section-hdr" style="margin-bottom:12px">
       <span class="section-title lang-en">RISK ON / RISK OFF GAUGE</span>

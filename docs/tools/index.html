@@ -11,26 +11,29 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+TC:wght@300;400;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/imq-base.css">
 <style>
 /* ── THEME ── */
+/* 2026-07-08 設計系統 v1.1：本頁維持自有變數名（JS 內嵌字串直接引用 var(--success)/var(--danger) 等，不可改名），
+   但色值收斂為與 imq-base.css tokens 一致（--accent≈站級 --accent、--success≈--pos、--danger≈--neg、--warn≈--warn）。 */
 :root {
-  --bg: #f5f5f0;
+  --bg: #f7f9fc;
   --surface: #ffffff;
-  --border: #e0ddd6;
-  --accent: #2c5f8a;
-  --accent2: #1a4060;
-  --danger: #c0392b;
-  --success: #1e7a4a;
-  --warn: #9a6200;
-  --text: #1a1a18;
-  --muted: #7a7a72;
+  --border: #e3ecf5;
+  --accent: #1e4e8c;
+  --accent2: #163a68;
+  --danger: #b3261e;
+  --success: #137a4c;
+  --warn: #9a6700;
+  --text: #0f2a45;
+  --muted: #5a7a9a;
   --card: #ffffff;
-  --cap-bg: #edf2f8;
-  --cap-border: #b8cfe0;
-  --tab-active-bg: #2c5f8a;
+  --cap-bg: #eef4fb;
+  --cap-border: #cdd9e8;
+  --tab-active-bg: #1e4e8c;
   --tab-active-text: #ffffff;
-  --tab-inactive-bg: #e8e5de;
-  --tab-inactive-text: #5a5a52;
+  --tab-inactive-bg: #eef3f9;
+  --tab-inactive-text: #5a7a9a;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 body {
@@ -93,7 +96,7 @@ body {
 
 /* ── PAGE HEADER ── */
 .page-header {
-  background: linear-gradient(135deg, #2c5f8a 0%, #1a4060 100%);
+  background: var(--accent);
   color: #ffffff;
   padding: 28px 20px 24px;
   text-align: center;
@@ -164,7 +167,7 @@ body {
 /* ── TOAST ── */
 .toast {
   position: fixed; top: 72px; left: 50%; transform: translateX(-50%) translateY(-80px);
-  background: rgba(44,95,138,0.1); border: 1px solid rgba(44,95,138,0.3);
+  background: rgba(30,78,140,0.1); border: 1px solid rgba(30,78,140,0.3);
   color: var(--accent); font-family: 'DM Mono', monospace; font-size: 11px;
   letter-spacing: 1px; padding: 8px 18px; border-radius: 20px;
   transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
@@ -194,7 +197,7 @@ body {
 .card-title .mem-dot::before {
   content: ''; display: inline-block; width: 5px; height: 5px;
   border-radius: 50%; background: var(--success);
-  box-shadow: 0 0 4px rgba(30,122,74,0.4);
+  box-shadow: 0 0 4px rgba(19,122,76,0.4);
 }
 
 /* ── FIELDS ── */
@@ -206,11 +209,11 @@ body {
 }
 .field label .unit {
   font-family: 'DM Mono', monospace; font-size: 10px; color: var(--accent);
-  background: rgba(44,95,138,0.07); padding: 2px 7px; border-radius: 4px;
-  border: 1px solid rgba(44,95,138,0.18);
+  background: rgba(30,78,140,0.07); padding: 2px 7px; border-radius: 4px;
+  border: 1px solid rgba(30,78,140,0.18);
 }
 input[type="number"] {
-  width: 100%; background: #f8f7f4; border: 1px solid var(--border);
+  width: 100%; background: #eef3f9; border: 1px solid var(--border);
   border-radius: 9px; color: var(--text); font-family: 'DM Mono', monospace;
   font-size: 18px; padding: 11px 14px; outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
@@ -218,13 +221,13 @@ input[type="number"] {
 }
 input[type="number"]:focus {
   border-color: var(--accent); background: #fff;
-  box-shadow: 0 0 0 3px rgba(44,95,138,0.1);
+  box-shadow: 0 0 0 3px rgba(30,78,140,0.1);
 }
-input[type="number"].readonly { opacity: 0.4; cursor: not-allowed; background: #eeecea; }
+input[type="number"].readonly { opacity: 0.4; cursor: not-allowed; background: #e6edf5; }
 
 /* ── CAPACITY BLOCK ── */
 .capacity-block {
-  background: linear-gradient(135deg, #edf2f8 0%, #f2f6fb 100%);
+  background: var(--cap-bg);
   border: 1px solid var(--cap-border); border-radius: 14px;
   padding: 16px; margin-bottom: 12px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.04);
@@ -256,15 +259,15 @@ input[type="number"].readonly { opacity: 0.4; cursor: not-allowed; background: #
   font-family: 'DM Mono', monospace; font-size: 12px;
   font-weight: 500; margin-bottom: 13px; letter-spacing: 0.5px;
 }
-.direction-badge.long  { background: rgba(30,122,74,0.1);  color: var(--success); border: 1px solid rgba(30,122,74,0.25); }
-.direction-badge.short { background: rgba(192,57,43,0.08); color: var(--danger);  border: 1px solid rgba(192,57,43,0.2); }
+.direction-badge.long  { background: rgba(19,122,76,0.1);  color: var(--success); border: 1px solid rgba(19,122,76,0.25); }
+.direction-badge.short { background: rgba(179,38,30,0.08); color: var(--danger);  border: 1px solid rgba(179,38,30,0.2); }
 
 /* ── TWO COL ── */
 .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 11px; }
-.big-box { background: #f8f7f4; border-radius: 11px; padding: 14px; border: 1px solid var(--border); }
-.big-box.primary-long  { border-color: rgba(30,122,74,0.4);  background: rgba(30,122,74,0.05); }
-.big-box.primary-short { border-color: rgba(192,57,43,0.35); background: rgba(192,57,43,0.04); }
-.big-box.secondary     { border-color: rgba(154,98,0,0.3);   background: rgba(154,98,0,0.04); }
+.big-box { background: #eef3f9; border-radius: 11px; padding: 14px; border: 1px solid var(--border); }
+.big-box.primary-long  { border-color: rgba(19,122,76,0.4);  background: rgba(19,122,76,0.05); }
+.big-box.primary-short { border-color: rgba(179,38,30,0.35); background: rgba(179,38,30,0.04); }
+.big-box.secondary     { border-color: rgba(154,103,0,0.3);   background: rgba(154,103,0,0.04); }
 .box-label { font-size: 10px; color: var(--muted); margin-bottom: 7px; line-height: 1.5; }
 .box-val   { font-family: 'DM Mono', monospace; font-size: 24px; font-weight: 500; line-height: 1; }
 .box-val.success { color: var(--success); }
@@ -275,7 +278,7 @@ input[type="number"].readonly { opacity: 0.4; cursor: not-allowed; background: #
 /* ── RESULT GRID ── */
 .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 13px; }
 .result-item {
-  background: #f8f7f4; border: 1px solid var(--border);
+  background: #eef3f9; border: 1px solid var(--border);
   border-radius: 10px; padding: 11px 12px;
 }
 .result-label { font-size: 10px; color: var(--muted); margin-bottom: 6px; line-height: 1.4; }
@@ -298,8 +301,8 @@ input[type="number"].readonly { opacity: 0.4; cursor: not-allowed; background: #
   display: flex; align-items: center; gap: 5px; padding: 5px 10px;
   border-radius: 7px; font-size: 11px; font-family: 'DM Mono', monospace;
 }
-.status-badge.pass { background: rgba(30,122,74,0.08);  color: var(--success); border: 1px solid rgba(30,122,74,0.2); }
-.status-badge.fail { background: rgba(192,57,43,0.07);  color: var(--danger);  border: 1px solid rgba(192,57,43,0.2); }
+.status-badge.pass { background: rgba(19,122,76,0.08);  color: var(--success); border: 1px solid rgba(19,122,76,0.2); }
+.status-badge.fail { background: rgba(179,38,30,0.07);  color: var(--danger);  border: 1px solid rgba(179,38,30,0.2); }
 .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 .dot.pass { background: var(--success); }
 .dot.fail { background: var(--danger); }
@@ -308,18 +311,18 @@ input[type="number"].readonly { opacity: 0.4; cursor: not-allowed; background: #
 .factor-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 9px; }
 .factor-tag {
   font-family: 'DM Mono', monospace; font-size: 10px; padding: 3px 9px;
-  border-radius: 5px; background: #f2f0eb;
+  border-radius: 5px; background: #eef3f9;
   border: 1px solid var(--border); color: var(--muted);
 }
 .factor-tag.binding {
-  border-color: var(--accent); color: var(--accent); background: rgba(44,95,138,0.06);
+  border-color: var(--accent); color: var(--accent); background: rgba(30,78,140,0.06);
 }
 
 /* ── NOTE ── */
 .note {
   font-size: 11px; color: var(--muted); line-height: 1.7;
-  padding: 11px 13px; background: rgba(154,98,0,0.04);
-  border: 1px solid rgba(154,98,0,0.15); border-radius: 9px;
+  padding: 11px 13px; background: rgba(154,103,0,0.04);
+  border: 1px solid rgba(154,103,0,0.15); border-radius: 9px;
 }
 
 /* ── MARKET TAG (US futures selector) ── */
@@ -327,7 +330,7 @@ input[type="number"].readonly { opacity: 0.4; cursor: not-allowed; background: #
 .market-tag {
   padding: 6px 14px; border-radius: 20px; font-family: 'DM Mono', monospace;
   font-size: 11px; cursor: pointer; transition: all 0.2s;
-  border: 1px solid var(--border); background: #f2f0eb; color: var(--muted);
+  border: 1px solid var(--border); background: #eef3f9; color: var(--muted);
 }
 .market-tag.active {
   background: var(--accent); color: #fff; border-color: var(--accent);
@@ -1057,7 +1060,7 @@ function renderLog() {
   el.innerHTML = log.map(e => {
     const isLong = e.dir === 'LONG';
     const dirColor = isLong ? 'var(--success)' : 'var(--danger)';
-    const dirBg    = isLong ? 'rgba(30,122,74,0.08)' : 'rgba(192,57,43,0.07)';
+    const dirBg    = isLong ? 'rgba(19,122,76,0.08)' : 'rgba(179,38,30,0.07)';
     const fmtLoss  = e.currency === 'NT$'
       ? e.loss1.toLocaleString('zh-TW') + ' 千'
       : '$' + Math.round(e.loss1).toLocaleString('en-US');
@@ -1074,11 +1077,11 @@ function renderLog() {
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;">
-        <div style="background:#f8f7f4;border-radius:8px;padding:8px;text-align:center;">
+        <div style="background:#eef3f9;border-radius:8px;padding:8px;text-align:center;">
           <div style="font-size:9px;color:var(--muted);margin-bottom:3px;">買入</div>
           <div style="font-family:'DM Mono',monospace;font-size:13px;">${e.entry}</div>
         </div>
-        <div style="background:#f8f7f4;border-radius:8px;padding:8px;text-align:center;">
+        <div style="background:#eef3f9;border-radius:8px;padding:8px;text-align:center;">
           <div style="font-size:9px;color:var(--muted);margin-bottom:3px;">停損</div>
           <div style="font-family:'DM Mono',monospace;font-size:13px;">${e.stop}</div>
         </div>
@@ -1086,7 +1089,7 @@ function renderLog() {
           <div style="font-size:9px;color:var(--muted);margin-bottom:3px;">1% 口數</div>
           <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:500;color:${dirColor};">${e.c1}</div>
         </div>
-        <div style="background:rgba(154,98,0,0.05);border-radius:8px;padding:8px;text-align:center;border:1px solid rgba(154,98,0,0.15);">
+        <div style="background:rgba(154,103,0,0.05);border-radius:8px;padding:8px;text-align:center;border:1px solid rgba(154,103,0,0.15);">
           <div style="font-size:9px;color:var(--muted);margin-bottom:3px;">2% 口數</div>
           <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:500;color:var(--warn);">${e.c2}</div>
         </div>

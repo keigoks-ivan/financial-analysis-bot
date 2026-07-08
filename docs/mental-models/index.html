@@ -9,35 +9,38 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/imq-base.css">
   <style>
-/* ── Token system (verbatim from colors_and_type.css) ── */
+/* ── Token system — 2026-07-08 設計系統 v1.1：值改引 imq-base.css 單一真相來源，
+   變數名保留（既有 class/JS 相容）。領域分類色（--imq-indigo-deep 等）屬資料語意
+   （見內嵌 JSON disciplines[].color/tint，驅動節點圖/矩陣/徽章渲染），故予保留不收斂。 ── */
 :root {
-  --imq-bg:           #f7f8fa;
-  --imq-bg-soft:      #fafbfc;
-  --imq-card:         #ffffff;
-  --imq-border:       #e5e7eb;
-  --imq-border-soft:  #eef0f3;
-  --imq-text:         #0f172a;
-  --imq-text-sec:     #475569;
-  --imq-text-muted:   #94a3b8;
-  --imq-accent:       #2563eb;
-  --imq-accent-hover: #1d4ed8;
+  --imq-bg:           var(--paper);
+  --imq-bg-soft:      var(--paper);
+  --imq-card:         var(--card);
+  --imq-border:       var(--line);
+  --imq-border-soft:  var(--line-soft);
+  --imq-text:         var(--ink);
+  --imq-text-sec:     var(--sec);
+  --imq-text-muted:   var(--muted);
+  --imq-accent:       var(--accent);
+  --imq-accent-hover: var(--accent-ink);
   --imq-indigo-deep:  #534AB7;
   --imq-green:        #0F6E56;
   --imq-brand:        #1a56db;
   --imq-amber:        #B45309;
   --imq-rose:         #C0392B;
-  --imq-shadow-sm:    0 1px 2px rgba(15,23,42,.04);
-  --imq-shadow-md:    0 4px 14px rgba(15,23,42,.07);
-  --imq-shadow-lg:    0 8px 24px rgba(15,23,42,.08);
-  --imq-r-sm:   4px;
-  --imq-r-md:   6px;
-  --imq-r-lg:   8px;
-  --imq-r-xl:   10px;
-  --imq-r-2xl:  12px;
+  --imq-shadow-sm:    var(--sh-1);
+  --imq-shadow-md:    var(--sh-2);
+  --imq-shadow-lg:    var(--sh-2);
+  --imq-r-sm:   var(--r);
+  --imq-r-md:   var(--r);
+  --imq-r-lg:   var(--r);
+  --imq-r-xl:   var(--r);
+  --imq-r-2xl:  var(--r);
   --imq-r-pill: 999px;
-  --imq-font-sans: 'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-  --imq-font-mono: 'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --imq-font-sans: var(--sans);
+  --imq-font-mono: var(--mono);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--imq-font-sans);background:var(--imq-bg);color:var(--imq-text);line-height:1.65;font-size:14px;min-height:100vh;-webkit-font-smoothing:antialiased}
@@ -73,15 +76,15 @@ a:hover{color:var(--imq-accent-hover)}
 /* ── Top chrome ── */
 .top-chrome{padding:20px 28px 14px;border-bottom:1px solid var(--imq-border-soft);background:var(--imq-card);display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .top-eyebrow{font-family:var(--imq-font-mono);font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--imq-accent);margin-bottom:6px}
-.top-title{font-family:'Noto Serif TC',Georgia,'Times New Roman',serif;color:#0f2a45;margin:0;font-size:28px;font-weight:700;letter-spacing:-.01em}
-.top-title em{font-style:italic;font-weight:500;color:#64748b}
-.top-sub{font-size:12px;color:#64748b;margin-top:4px}
+.top-title{font-family:'Noto Serif TC',Georgia,'Times New Roman',serif;color:var(--imq-text);margin:0;font-size:28px;font-weight:700;letter-spacing:-.01em}
+.top-title em{font-style:italic;font-weight:500;color:var(--imq-text-sec)}
+.top-sub{font-size:12px;color:var(--imq-text-sec);margin-top:4px}
 .top-controls{display:flex;gap:6px;flex-wrap:wrap;align-items:center;justify-content:flex-end}
 
 /* ── Filter chips ── */
 .filter-chip{
   padding:6px 11px;font-size:11px;font-family:var(--imq-font-mono);font-weight:600;letter-spacing:.05em;
-  background:#fff;border:1px solid var(--imq-border);border-radius:var(--imq-r-pill);
+  background:var(--imq-card);border:1px solid var(--imq-border);border-radius:var(--imq-r-pill);
   cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .15s
 }
 .filter-chip.active{color:#fff !important;border-color:currentColor}
@@ -90,26 +93,26 @@ a:hover{color:var(--imq-accent-hover)}
 /* ── Lollapalooza button ── */
 .lolla-btn{
   padding:6px 11px;font-size:11px;font-family:var(--imq-font-mono);font-weight:700;letter-spacing:.08em;
-  background:#fff;color:#0f172a;border:1px solid #0f172a;border-radius:var(--imq-r-pill);
+  background:var(--imq-card);color:var(--imq-text);border:1px solid var(--imq-text);border-radius:var(--imq-r-pill);
   cursor:pointer;margin-left:8px;transition:all .15s
 }
-.lolla-btn.active{background:#0f172a;color:#fff}
+.lolla-btn.active{background:var(--imq-text);color:#fff}
 .view-reset-btn{
   padding:6px 11px;font-size:11px;font-family:var(--imq-font-mono);font-weight:600;letter-spacing:.05em;
-  background:#fff;color:#475569;border:1px solid var(--imq-border);border-radius:var(--imq-r-pill);
+  background:var(--imq-card);color:var(--imq-text-sec);border:1px solid var(--imq-border);border-radius:var(--imq-r-pill);
   cursor:pointer;transition:all .15s
 }
-.view-reset-btn:hover{color:#0f172a;border-color:#0f172a}
+.view-reset-btn:hover{color:var(--imq-text);border-color:var(--imq-text)}
 
 /* ── Search input (Phase 2) ── */
 .model-search{
   padding:6px 11px;font-size:11px;font-family:var(--imq-font-mono);font-weight:500;letter-spacing:.02em;
-  background:#fff;color:#0f172a;border:1px solid var(--imq-border);border-radius:var(--imq-r-pill);
+  background:var(--imq-card);color:var(--imq-text);border:1px solid var(--imq-border);border-radius:var(--imq-r-pill);
   width:170px;outline:none;transition:all .15s
 }
-.model-search:focus{border-color:#0f172a;box-shadow:0 0 0 3px rgba(15,23,42,.08)}
-.model-search::placeholder{color:#94a3b8}
-.kbd-hint{font-family:var(--imq-font-mono);font-size:9px;color:#94a3b8;letter-spacing:.06em;padding:0 4px;align-self:center}
+.model-search:focus{border-color:var(--imq-text);box-shadow:0 0 0 3px rgba(15,23,42,.08)}
+.model-search::placeholder{color:var(--imq-text-muted)}
+.kbd-hint{font-family:var(--imq-font-mono);font-size:9px;color:var(--imq-text-muted);letter-spacing:.06em;padding:0 4px;align-self:center}
 
 /* ── Main layout ── */
 .main-grid{display:grid;grid-template-columns:1fr 380px;min-height:820px}
@@ -120,18 +123,18 @@ a:hover{color:var(--imq-accent-hover)}
 .list-view{display:none;padding:18px 18px 24px}
 .canvas-col.list-mode .graph-view{display:none}
 .canvas-col.list-mode .list-view{display:block}
-.list-group{margin-bottom:12px;border:1px solid var(--imq-border);border-radius:8px;overflow:hidden;background:#fff}
-.list-group-header{padding:10px 14px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;background:#f8fafc;user-select:none}
+.list-group{margin-bottom:12px;border:1px solid var(--imq-border);border-radius:var(--r);overflow:hidden;background:var(--imq-card)}
+.list-group-header{padding:10px 14px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;background:var(--imq-border-soft);user-select:none}
 .list-group.open .list-group-header{border-bottom:1px solid var(--imq-border)}
 .list-group-title{font-family:var(--imq-font-mono);font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;display:inline-flex;align-items:center;gap:8px}
-.list-group-meta{font-family:var(--imq-font-mono);font-size:10px;color:#94a3b8;display:inline-flex;align-items:center;gap:8px}
+.list-group-meta{font-family:var(--imq-font-mono);font-size:10px;color:var(--imq-text-muted);display:inline-flex;align-items:center;gap:8px}
 .list-group-toggle{display:inline-block;width:10px;text-align:center;transition:transform .15s}
 .list-group.open .list-group-toggle{transform:rotate(90deg)}
 .list-group-body{display:none;padding:10px 10px 12px;flex-wrap:wrap;gap:6px}
 .list-group.open .list-group-body{display:flex}
-.list-item{padding:7px 10px;border:1px solid var(--imq-border);border-radius:6px;background:#fff;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;gap:6px;transition:all .12s;font-family:inherit}
-.list-item:hover{border-color:#0f172a;background:#f8fafc}
-.list-item.selected{background:#0f172a;color:#fff;border-color:#0f172a}
+.list-item{padding:7px 10px;border:1px solid var(--imq-border);border-radius:6px;background:var(--imq-card);cursor:pointer;font-size:12px;display:inline-flex;align-items:center;gap:6px;transition:all .12s;font-family:inherit}
+.list-item:hover{border-color:var(--imq-text);background:var(--imq-border-soft)}
+.list-item.selected{background:var(--imq-text);color:#fff;border-color:var(--imq-text)}
 .list-item.selected .list-item-glyph{color:#fff !important}
 .list-item-glyph{font-family:var(--imq-font-mono);font-weight:700}
 
@@ -158,47 +161,47 @@ a:hover{color:var(--imq-accent-hover)}
 .node.flagship .node-label{font-size:16px;font-weight:700}
 .node.hovered:not(.flagship) circle,.node.selected:not(.flagship) circle{r:18}
 .node.hovered:not(.flagship) .glyph,.node.selected:not(.flagship) .glyph{font-size:16px}
-.node.hovered:not(.flagship) .node-label,.node.selected:not(.flagship) .node-label{font-size:17px;font-weight:700;fill:#0f172a}
+.node.hovered:not(.flagship) .node-label,.node.selected:not(.flagship) .node-label{font-size:17px;font-weight:700;fill:var(--imq-text)}
 .node.flagship.hovered circle,.node.flagship.selected circle{r:32}
 .node.flagship.hovered .glyph,.node.flagship.selected .glyph{font-size:22px}
-.node.flagship.hovered .node-label,.node.flagship.selected .node-label{font-size:20px;fill:#0f172a}
+.node.flagship.hovered .node-label,.node.flagship.selected .node-label{font-size:20px;fill:var(--imq-text)}
 .edge{transition:stroke .2s,stroke-width .2s,stroke-dasharray .2s,opacity .2s}
-.edge.active{stroke:#0f172a !important;stroke-width:1.4px !important;stroke-dasharray:0 !important}
+.edge.active{stroke:var(--imq-text) !important;stroke-width:1.4px !important;stroke-dasharray:0 !important}
 .edge.dimmed{opacity:.15}
 .edge.filtered-out{opacity:.05}
 
 /* ── Detail panel ── */
 .panel-discipline-badge{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;color:#fff;font-family:var(--imq-font-mono);font-size:14px;font-weight:700}
 .panel-tag-new{font-family:var(--imq-font-mono);font-size:9px;font-weight:700;letter-spacing:.12em;padding:1px 6px;background:#dc2626;color:#fff;border-radius:3px}
-.panel-tag-flagship{font-family:var(--imq-font-mono);font-size:9px;font-weight:700;letter-spacing:.12em;padding:1px 6px;background:#fbbf24;color:#0f172a;border-radius:3px}
-.panel-id-tag{font-family:var(--imq-font-mono);font-size:11px;color:#94a3b8;letter-spacing:.04em}
+.panel-tag-flagship{font-family:var(--imq-font-mono);font-size:9px;font-weight:700;letter-spacing:.12em;padding:1px 6px;background:#fbbf24;color:var(--imq-text);border-radius:3px}
+.panel-id-tag{font-family:var(--imq-font-mono);font-size:11px;color:var(--imq-text-muted);letter-spacing:.04em}
 .panel-zh{margin:4px 0 2px;font-size:28px;font-weight:800;letter-spacing:-.03em}
-.panel-en{font-size:13px;font-style:italic;color:#64748b;font-weight:500}
-.panel-body{margin-top:18px;padding:12px 14px;border-left:3px solid;border-radius:4px;font-size:13px;line-height:1.6;color:#1e293b}
-.panel-quote{margin:18px 0 0;padding:0 0 0 12px;border-left:2px solid var(--imq-border);font-size:12px;line-height:1.6;color:#475569;font-style:italic}
-.panel-section-label{font-family:var(--imq-font-mono);font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#94a3b8;margin-bottom:8px;margin-top:22px}
+.panel-en{font-size:13px;font-style:italic;color:var(--imq-text-sec);font-weight:500}
+.panel-body{margin-top:18px;padding:12px 14px;border-left:3px solid;border-radius:4px;font-size:13px;line-height:1.6;color:var(--imq-text)}
+.panel-quote{margin:18px 0 0;padding:0 0 0 12px;border-left:2px solid var(--imq-border);font-size:12px;line-height:1.6;color:var(--imq-text-sec);font-style:italic}
+.panel-section-label{font-family:var(--imq-font-mono);font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--imq-text-muted);margin-bottom:8px;margin-top:22px}
 .case-row{display:flex;gap:8px;padding:7px 0;font-size:12.5px;line-height:1.55}
 .case-row + .case-row{border-top:1px dashed var(--imq-border-soft)}
 .case-num{font-family:var(--imq-font-mono);font-size:10px;font-weight:700;min-width:18px}
 .related-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .related-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--imq-font-sans);border:1px solid;transition:opacity .15s}
 .related-chip:hover{opacity:.8}
-.ask-box{margin-top:22px;padding:14px;background:#0f172a;color:#fff;border-radius:8px}
+.ask-box{margin-top:22px;padding:14px;background:var(--imq-text);color:#fff;border-radius:var(--r)}
 .ask-label{font-family:var(--imq-font-mono);font-size:9px;font-weight:700;letter-spacing:.18em;color:#fbbf24;margin-bottom:6px}
 .ask-text{font-size:13px;line-height:1.55}
 
 /* ── Legend ── */
-.legend-box{position:absolute;bottom:16px;left:24px;background:#fff;border:1px solid var(--imq-border);border-radius:8px;padding:10px 14px;font-size:11px;box-shadow:var(--imq-shadow-sm)}
-.legend-title{font-family:var(--imq-font-mono);font-size:9px;font-weight:700;letter-spacing:.15em;color:#94a3b8;margin-bottom:8px}
+.legend-box{position:absolute;bottom:16px;left:24px;background:var(--imq-card);border:1px solid var(--imq-border);border-radius:var(--r);padding:10px 14px;font-size:11px;box-shadow:var(--imq-shadow-sm)}
+.legend-title{font-family:var(--imq-font-mono);font-size:9px;font-weight:700;letter-spacing:.15em;color:var(--imq-text-muted);margin-bottom:8px}
 .legend-row{display:flex;align-items:center;gap:6px;margin-bottom:4px}
 
 /* ── Lollapalooza meter ── */
-.lolla-meter{position:absolute;bottom:16px;right:24px;background:#0f172a;color:#fff;border-radius:10px;padding:14px 18px;min-width:280px;box-shadow:0 8px 24px rgba(15,23,42,.18);display:none}
+.lolla-meter{position:absolute;bottom:16px;right:24px;background:var(--imq-text);color:#fff;border-radius:var(--r);padding:14px 18px;min-width:280px;box-shadow:0 8px 24px rgba(15,23,42,.18);display:none}
 .lolla-meter.visible{display:block}
 .lolla-meter-label{font-family:var(--imq-font-mono);font-size:9px;font-weight:700;letter-spacing:.18em;color:#fbbf24;margin-bottom:6px}
 .lolla-count-row{display:flex;align-items:baseline;gap:8px}
 .lolla-count{font-family:var(--imq-font-mono);font-size:32px;font-weight:700;line-height:1}
-.lolla-count-sub{font-size:11px;color:#94a3b8}
+.lolla-count-sub{font-size:11px;color:var(--imq-text-muted)}
 .lolla-verdict{margin-top:8px;font-size:11px;line-height:1.5}
 .lolla-picks{margin-top:8px;display:flex;flex-wrap:wrap;gap:4px}
 .lolla-pick-chip{font-size:10px;padding:2px 7px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2)}
@@ -207,15 +210,15 @@ a:hover{color:var(--imq-accent-hover)}
 .matrix-section{background:var(--imq-bg)}
 .matrix-section-divider{max-width:1140px;margin:0 auto;padding:48px 32px 0}
 .matrix-eyebrow{font-family:var(--imq-font-mono);font-size:10px;font-weight:700;letter-spacing:.22em;color:var(--imq-accent);margin-bottom:8px}
-.matrix-section-title{font-family:'Noto Serif TC',Georgia,'Times New Roman',serif;color:#0f2a45;margin:0 0 6px;font-size:28px;font-weight:700;letter-spacing:-.01em}
-.matrix-section-sub{margin:0 0 24px;font-size:13px;color:#64748b;max-width:680px}
+.matrix-section-title{font-family:'Noto Serif TC',Georgia,'Times New Roman',serif;color:var(--imq-text);margin:0 0 6px;font-size:28px;font-weight:700;letter-spacing:-.01em}
+.matrix-section-sub{margin:0 0 24px;font-size:13px;color:var(--imq-text-sec);max-width:680px}
 .matrix-wrap{max-width:1240px;margin:0 auto;padding:0 32px 48px}
-.matrix-inner{background:#fff;border:1px solid var(--imq-border);border-radius:12px;overflow:hidden;box-shadow:var(--imq-shadow-sm)}
-.matrix-toolbar{padding:14px 20px;background:#fafbfc;border-bottom:1px solid #eef0f3;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-.matrix-toolbar-label{font-family:var(--imq-font-mono);font-size:10px;font-weight:700;letter-spacing:.18em;color:#94a3b8}
-.matrix-lolla-btn{padding:6px 12px;font-size:11px;font-family:var(--imq-font-mono);font-weight:700;letter-spacing:.1em;background:#fff;color:#0f172a;border:1px solid #0f172a;border-radius:6px;cursor:pointer;transition:all .15s}
-.matrix-lolla-btn.active{background:#0f172a;color:#fbbf24;border-color:#0f172a}
-.matrix-lolla-strip{background:#0f172a;color:#fff;padding:14px 32px;display:none;align-items:center;gap:24px;flex-wrap:wrap}
+.matrix-inner{background:var(--imq-card);border:1px solid var(--imq-border);border-radius:var(--r);overflow:hidden;box-shadow:var(--imq-shadow-sm)}
+.matrix-toolbar{padding:14px 20px;background:var(--imq-border-soft);border-bottom:1px solid var(--imq-border-soft);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.matrix-toolbar-label{font-family:var(--imq-font-mono);font-size:10px;font-weight:700;letter-spacing:.18em;color:var(--imq-text-muted)}
+.matrix-lolla-btn{padding:6px 12px;font-size:11px;font-family:var(--imq-font-mono);font-weight:700;letter-spacing:.1em;background:var(--imq-card);color:var(--imq-text);border:1px solid var(--imq-text);border-radius:6px;cursor:pointer;transition:all .15s}
+.matrix-lolla-btn.active{background:var(--imq-text);color:#fbbf24;border-color:var(--imq-text)}
+.matrix-lolla-strip{background:var(--imq-text);color:#fff;padding:14px 32px;display:none;align-items:center;gap:24px;flex-wrap:wrap}
 .matrix-lolla-strip.visible{display:flex}
 .matrix-lolla-strip-count-label{font-family:var(--imq-font-mono);font-size:9px;letter-spacing:.2em;color:#fbbf24;margin-bottom:2px}
 .matrix-lolla-strip-count{font-family:var(--imq-font-mono);font-size:26px;font-weight:700;line-height:1}
@@ -230,19 +233,19 @@ a:hover{color:var(--imq-accent-hover)}
 .matrix-band-glyph{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;color:#fff;font-family:var(--imq-font-mono);font-weight:700;font-size:14px;border-radius:4px;flex-shrink:0}
 .matrix-band-group-label{font-family:var(--imq-font-mono);font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;margin-bottom:2px}
 .matrix-band-zh{font-size:16px;font-weight:700;letter-spacing:-.02em}
-.matrix-band-zh-count{color:#94a3b8;font-weight:400;font-size:13px}
+.matrix-band-zh-count{color:var(--imq-text-muted);font-weight:400;font-size:13px}
 .matrix-band-rule{flex:1;height:1px}
 .matrix-cells{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
-.matrix-cell{text-align:left;background:#fff;border:1px solid #e5e7eb;border-radius:4px;padding:10px 12px 12px;cursor:pointer;position:relative;transition:background .15s,border-color .15s;font-family:inherit;width:100%}
+.matrix-cell{text-align:left;background:var(--imq-card);border:1px solid var(--imq-border);border-radius:4px;padding:10px 12px 12px;cursor:pointer;position:relative;transition:background .15s,border-color .15s;font-family:inherit;width:100%}
 .matrix-cell:hover{border-color:currentColor}
 .matrix-cell-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px}
-.matrix-cell-id{font-family:var(--imq-font-mono);font-size:10px;font-weight:600;letter-spacing:.05em;color:#94a3b8}
+.matrix-cell-id{font-family:var(--imq-font-mono);font-size:10px;font-weight:600;letter-spacing:.05em;color:var(--imq-text-muted)}
 .matrix-cell-badges{display:flex;gap:3px;align-items:center}
 .matrix-cell-flagship{font-size:9px;color:#fbbf24}
 .matrix-cell-new{font-family:var(--imq-font-mono);font-size:7px;font-weight:700;letter-spacing:.1em;padding:1px 4px;background:#dc2626;color:#fff;border-radius:2px}
-.matrix-cell-zh{font-size:16px;font-weight:700;letter-spacing:-.02em;line-height:1.15;color:#0f172a}
-.matrix-cell-en{font-size:10px;color:#64748b;font-style:italic;margin-top:2px;font-family:'Inter',sans-serif}
-.matrix-cell-divider{height:0;border:none;border-top:1px dashed #eef0f3;margin:8px 0 0}
+.matrix-cell-zh{font-size:16px;font-weight:700;letter-spacing:-.02em;line-height:1.15;color:var(--imq-text)}
+.matrix-cell-en{font-size:10px;color:var(--imq-text-sec);font-style:italic;margin-top:2px;font-family:'Inter',sans-serif}
+.matrix-cell-divider{height:0;border:none;border-top:1px dashed var(--imq-border-soft);margin:8px 0 0}
 .matrix-cell-tag{font-family:var(--imq-font-mono);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding-top:6px}
 /* picked state */
 .matrix-cell.picked .matrix-cell-id{color:rgba(255,255,255,.75)}
@@ -254,38 +257,38 @@ a:hover{color:var(--imq-accent-hover)}
 /* Matrix modal */
 .matrix-modal{position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(2px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:32px}
 .matrix-modal[hidden],.matrix-modal[style*="display:none"]{display:none!important}
-.matrix-modal-box{background:#fff;max-width:760px;width:100%;max-height:88vh;overflow:auto;border-radius:12px;box-shadow:0 24px 60px rgba(0,0,0,.3);position:relative}
+.matrix-modal-box{background:var(--imq-card);max-width:760px;width:100%;max-height:88vh;overflow:auto;border-radius:var(--r);box-shadow:0 24px 60px rgba(0,0,0,.3);position:relative}
 .matrix-modal-header{padding:26px 32px 22px;border-bottom:3px solid transparent}
 .matrix-modal-header-top{display:flex;justify-content:space-between;align-items:flex-start}
 .matrix-modal-discipline-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .matrix-modal-disc-badge{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;color:#fff;font-family:var(--imq-font-mono);font-weight:700;font-size:12px;border-radius:3px;flex-shrink:0}
 .matrix-modal-disc-label{font-family:var(--imq-font-mono);font-size:10px;font-weight:700;letter-spacing:.2em}
-.matrix-modal-tag-label{font-family:var(--imq-font-mono);font-size:10px;color:#94a3b8;letter-spacing:.1em}
+.matrix-modal-tag-label{font-family:var(--imq-font-mono);font-size:10px;color:var(--imq-text-muted);letter-spacing:.1em}
 .matrix-modal-zh{margin:0 0 2px;font-size:32px;font-weight:800;letter-spacing:-.03em}
-.matrix-modal-en{font-size:14px;font-style:italic;color:#64748b}
-.matrix-modal-close{background:transparent;border:1px solid #e5e7eb;width:32px;height:32px;border-radius:6px;font-size:16px;cursor:pointer;color:#475569;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.matrix-modal-en{font-size:14px;font-style:italic;color:var(--imq-text-sec)}
+.matrix-modal-close{background:transparent;border:1px solid var(--imq-border);width:32px;height:32px;border-radius:6px;font-size:16px;cursor:pointer;color:var(--imq-text-sec);flex-shrink:0;display:flex;align-items:center;justify-content:center}
 .matrix-modal-body{padding:24px 32px 32px}
-.matrix-modal-desc{margin:0 0 16px;font-size:14px;line-height:1.65;color:#1e293b;padding:12px 16px;border-left:3px solid transparent;border-radius:4px}
-.matrix-modal-quote{margin:0 0 24px;padding:12px 16px;border-left:3px solid transparent;font-size:13px;font-style:italic;color:#475569;line-height:1.55;background:#f9fafb}
+.matrix-modal-desc{margin:0 0 16px;font-size:14px;line-height:1.65;color:var(--imq-text);padding:12px 16px;border-left:3px solid transparent;border-radius:4px}
+.matrix-modal-quote{margin:0 0 24px;padding:12px 16px;border-left:3px solid transparent;font-size:13px;font-style:italic;color:var(--imq-text-sec);line-height:1.55;background:var(--imq-border-soft)}
 .matrix-modal-grid{display:grid;grid-template-columns:1fr 280px;gap:28px}
 @media(max-width:680px){.matrix-modal-grid{grid-template-columns:1fr}}
-.matrix-modal-section-label{font-family:var(--imq-font-mono);font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#94a3b8;margin-bottom:8px}
+.matrix-modal-section-label{font-family:var(--imq-font-mono);font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--imq-text-muted);margin-bottom:8px}
 .matrix-modal-case{display:flex;gap:8px;padding:6px 0;font-size:12.5px;line-height:1.55}
-.matrix-modal-case+.matrix-modal-case{border-top:1px dashed #eef0f3}
+.matrix-modal-case+.matrix-modal-case{border-top:1px dashed var(--imq-border-soft)}
 .matrix-modal-case-num{font-family:var(--imq-font-mono);font-size:10px;font-weight:700;min-width:18px}
 .matrix-modal-related-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px}
 .matrix-modal-related-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--imq-font-sans);border:1px solid;transition:opacity .15s;background:transparent}
 .matrix-modal-related-chip:hover{opacity:.8}
-.matrix-modal-ask{padding:12px 14px;background:#0f172a;color:#fff;border-radius:6px}
+.matrix-modal-ask{padding:12px 14px;background:var(--imq-text);color:#fff;border-radius:6px}
 .matrix-modal-ask-label{font-family:var(--imq-font-mono);font-size:9px;font-weight:700;letter-spacing:.18em;color:#fbbf24;margin-bottom:6px}
 .matrix-modal-ask-text{font-size:12.5px;line-height:1.55}
 
 /* ── Resonance heatmap (Phase 3) ── */
-.resonance-section{background:#fff;border-top:1px solid var(--imq-border-soft)}
+.resonance-section{background:var(--imq-card);border-top:1px solid var(--imq-border-soft)}
 .resonance-divider{max-width:1140px;margin:0 auto;padding:48px 32px 0}
 .resonance-eyebrow{font-family:var(--imq-font-mono);font-size:11px;font-weight:600;letter-spacing:.18em;color:var(--imq-accent);margin-bottom:8px;text-transform:uppercase}
-.resonance-title{font-family:'Noto Serif TC',Georgia,'Times New Roman',serif;color:#0f2a45;margin:0 0 6px;font-size:28px;font-weight:700;letter-spacing:-.01em}
-.resonance-sub{margin:0 0 24px;font-size:13px;color:#64748b;max-width:680px;line-height:1.65}
+.resonance-title{font-family:'Noto Serif TC',Georgia,'Times New Roman',serif;color:var(--imq-text);margin:0 0 6px;font-size:28px;font-weight:700;letter-spacing:-.01em}
+.resonance-sub{margin:0 0 24px;font-size:13px;color:var(--imq-text-sec);max-width:680px;line-height:1.65}
 .resonance-wrap{max-width:1140px;margin:0 auto;padding:0 32px 56px}
 .resonance-inner{overflow-x:auto;padding-bottom:8px}
 .rm-grid{display:inline-grid;gap:1px;font-family:var(--imq-font-mono)}
@@ -300,7 +303,7 @@ a:hover{color:var(--imq-accent-hover)}
 .rm-i3{background:#dc2626}
 .rm-i4{background:#7f1d1d}
 .rm-diag{width:18px;height:18px;background:repeating-linear-gradient(45deg,#e2e8f0 0 3px,transparent 3px 6px);border:0}
-.resonance-legend{display:flex;align-items:center;gap:14px;margin-top:14px;font-family:var(--imq-font-mono);font-size:10px;color:#64748b;letter-spacing:.06em;flex-wrap:wrap}
+.resonance-legend{display:flex;align-items:center;gap:14px;margin-top:14px;font-family:var(--imq-font-mono);font-size:10px;color:var(--imq-text-sec);letter-spacing:.06em;flex-wrap:wrap}
 .resonance-legend > span{display:inline-flex;align-items:center;gap:5px}
 .rl-cell{display:inline-block;width:14px;height:14px}
 .rl-cell.rl-0{background:#f1f5f9}
@@ -417,14 +420,14 @@ a:hover{color:var(--imq-accent-hover)}
     <div class="top-sub">跨學科框架網絡 · hover 節點高亮鄰居 · 點擊查看詳情</div>
   </div>
   <div class="top-controls">
-    <button class="filter-chip active" data-filter="all" style="color:#475569;border-color:#e5e7eb">全部</button>
-<button class="filter-chip" data-filter="psych" style="color:#534AB7;border-color:#e5e7eb"><span>◼</span>心理學</button>
-<button class="filter-chip" data-filter="micro" style="color:#0F6E56;border-color:#e5e7eb"><span>▲</span>微觀經濟</button>
-<button class="filter-chip" data-filter="math" style="color:#1a56db;border-color:#e5e7eb"><span>●</span>數學/統計</button>
-<button class="filter-chip" data-filter="eng" style="color:#B45309;border-color:#e5e7eb"><span>◆</span>工程/物理</button>
-<button class="filter-chip" data-filter="bio" style="color:#C0392B;border-color:#e5e7eb"><span>✚</span>生物學</button>
-<button class="filter-chip" data-filter="hist" style="color:#7c2d12;border-color:#e5e7eb"><span>✦</span>歷史學</button>
-<button class="filter-chip" data-filter="thermo" style="color:#0891B2;border-color:#e5e7eb"><span>∆</span>熱力學</button>
+    <button class="filter-chip active" data-filter="all" style="color:var(--imq-text-sec)">全部</button>
+<button class="filter-chip" data-filter="psych" style="color:#534AB7"><span>◼</span>心理學</button>
+<button class="filter-chip" data-filter="micro" style="color:#0F6E56"><span>▲</span>微觀經濟</button>
+<button class="filter-chip" data-filter="math" style="color:#1a56db"><span>●</span>數學/統計</button>
+<button class="filter-chip" data-filter="eng" style="color:#B45309"><span>◆</span>工程/物理</button>
+<button class="filter-chip" data-filter="bio" style="color:#C0392B"><span>✚</span>生物學</button>
+<button class="filter-chip" data-filter="hist" style="color:#7c2d12"><span>✦</span>歷史學</button>
+<button class="filter-chip" data-filter="thermo" style="color:#0891B2"><span>∆</span>熱力學</button>
 
     <input class="model-search" id="modelSearch" type="search" placeholder="搜尋模型... (按 / 聚焦)" autocomplete="off">
     <button class="view-reset-btn" id="viewModeToggle" title="切換 圖表 / 列表 檢視">列表</button>
@@ -452,13 +455,13 @@ a:hover{color:var(--imq-accent-hover)}
 
       <!-- Cluster labels -->
       <g id="clusterLabels">
-    <g class="cluster-label" data-d="psych"><text x="238.54" y="171.84" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;fill:#534AB7">I · Psychology</text><text x="238.54" y="187.84" text-anchor="middle" style="font-family:'Inter','Noto Sans TC',sans-serif;font-size:13px;font-weight:600;fill:#0f172a">心理學 <tspan fill="#94a3b8" font-weight="400">· 24</tspan></text></g>
-    <g class="cluster-label" data-d="micro"><text x="798.59" y="84.50" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;fill:#0F6E56">II · Microeconomics</text><text x="798.59" y="100.50" text-anchor="middle" style="font-family:'Inter','Noto Sans TC',sans-serif;font-size:13px;font-weight:600;fill:#0f172a">微觀經濟 <tspan fill="#94a3b8" font-weight="400">· 6</tspan></text></g>
-    <g class="cluster-label" data-d="math"><text x="842.04" y="374.50" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;fill:#1a56db">III · Math & Statistics</text><text x="842.04" y="390.50" text-anchor="middle" style="font-family:'Inter','Noto Sans TC',sans-serif;font-size:13px;font-weight:600;fill:#0f172a">數學/統計 <tspan fill="#94a3b8" font-weight="400">· 5</tspan></text></g>
-    <g class="cluster-label" data-d="eng"><text x="500.92" y="575.50" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;fill:#B45309">IV · Engineering</text><text x="500.92" y="591.50" text-anchor="middle" style="font-family:'Inter','Noto Sans TC',sans-serif;font-size:13px;font-weight:600;fill:#0f172a">工程/物理 <tspan fill="#94a3b8" font-weight="400">· 4</tspan></text></g>
-    <g class="cluster-label" data-d="bio"><text x="720.80" y="613.00" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;fill:#C0392B">V · Biology</text><text x="720.80" y="629.00" text-anchor="middle" style="font-family:'Inter','Noto Sans TC',sans-serif;font-size:13px;font-weight:600;fill:#0f172a">生物學 <tspan fill="#94a3b8" font-weight="400">· 2</tspan></text></g>
-    <g class="cluster-label" data-d="hist"><text x="1100" y="175" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;fill:#7c2d12">VI · History</text><text x="1100" y="191" text-anchor="middle" style="font-family:'Inter','Noto Sans TC',sans-serif;font-size:13px;font-weight:600;fill:#0f172a">歷史學 <tspan fill="#94a3b8" font-weight="400">· 4</tspan></text></g>
-    <g class="cluster-label" data-d="thermo"><text x="1030" y="705" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;fill:#0891B2">VII · Thermodynamics</text><text x="1030" y="721" text-anchor="middle" style="font-family:'Inter','Noto Sans TC',sans-serif;font-size:13px;font-weight:600;fill:#0f172a">熱力學 <tspan fill="#94a3b8" font-weight="400">· 3</tspan></text></g>
+    <g class="cluster-label" data-d="psych"><text x="238.54" y="171.84" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;fill:#534AB7">I · Psychology</text><text x="238.54" y="187.84" text-anchor="middle" style="font-family:'Inter','Noto Sans TC',sans-serif;font-size:13px;font-weight:600;fill:var(--imq-text)">心理學 <tspan fill="#94a3b8" font-weight="400">· 24</tspan></text></g>
+    <g class="cluster-label" data-d="micro"><text x="798.59" y="84.50" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;fill:#0F6E56">II · Microeconomics</text><text x="798.59" y="100.50" text-anchor="middle" style="font-family:'Inter','Noto Sans TC',sans-serif;font-size:13px;font-weight:600;fill:var(--imq-text)">微觀經濟 <tspan fill="#94a3b8" font-weight="400">· 6</tspan></text></g>
+    <g class="cluster-label" data-d="math"><text x="842.04" y="374.50" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;fill:#1a56db">III · Math & Statistics</text><text x="842.04" y="390.50" text-anchor="middle" style="font-family:'Inter','Noto Sans TC',sans-serif;font-size:13px;font-weight:600;fill:var(--imq-text)">數學/統計 <tspan fill="#94a3b8" font-weight="400">· 5</tspan></text></g>
+    <g class="cluster-label" data-d="eng"><text x="500.92" y="575.50" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;fill:#B45309">IV · Engineering</text><text x="500.92" y="591.50" text-anchor="middle" style="font-family:'Inter','Noto Sans TC',sans-serif;font-size:13px;font-weight:600;fill:var(--imq-text)">工程/物理 <tspan fill="#94a3b8" font-weight="400">· 4</tspan></text></g>
+    <g class="cluster-label" data-d="bio"><text x="720.80" y="613.00" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;fill:#C0392B">V · Biology</text><text x="720.80" y="629.00" text-anchor="middle" style="font-family:'Inter','Noto Sans TC',sans-serif;font-size:13px;font-weight:600;fill:var(--imq-text)">生物學 <tspan fill="#94a3b8" font-weight="400">· 2</tspan></text></g>
+    <g class="cluster-label" data-d="hist"><text x="1100" y="175" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;fill:#7c2d12">VI · History</text><text x="1100" y="191" text-anchor="middle" style="font-family:'Inter','Noto Sans TC',sans-serif;font-size:13px;font-weight:600;fill:var(--imq-text)">歷史學 <tspan fill="#94a3b8" font-weight="400">· 4</tspan></text></g>
+    <g class="cluster-label" data-d="thermo"><text x="1030" y="705" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;fill:#0891B2">VII · Thermodynamics</text><text x="1030" y="721" text-anchor="middle" style="font-family:'Inter','Noto Sans TC',sans-serif;font-size:13px;font-weight:600;fill:var(--imq-text)">熱力學 <tspan fill="#94a3b8" font-weight="400">· 3</tspan></text></g>
       </g>
 
       <!-- Lollapalooza glow -->
@@ -579,75 +582,75 @@ a:hover{color:var(--imq-accent-hover)}
     <line class="edge" data-a="m48" data-b="m49" x1="1090.00" y1="855.00" x2="970.00" y2="815.00" stroke="#cbd5e1" stroke-width="0.5" stroke-dasharray="2 3" style="transition:all .2s"/>
     <line class="edge" data-a="m48" data-b="m29" x1="1090.00" y1="855.00" x2="401.55" y2="690.00" stroke="#cbd5e1" stroke-width="0.5" stroke-dasharray="2 3" style="transition:all .2s"/>
     <line class="edge" data-a="m49" data-b="m10" x1="970.00" y1="815.00" x2="520.80" y2="410.00" stroke="#cbd5e1" stroke-width="0.5" stroke-dasharray="2 3" style="transition:all .2s"/>
-    <g class="node" data-id="m1" data-d="psych" data-related="m6,m2" transform="translate(200.80,253.50)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">激勵偏誤</text></g>
-    <g class="node" data-id="m2" data-d="psych" data-related="m8,m4,m10" transform="translate(293.26,203.84)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">社會認同</text></g>
-    <g class="node" data-id="m3" data-d="psych" data-related="m2,m4" transform="translate(338.98,284.62)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">權威偏誤</text></g>
-    <g class="node" data-id="m4" data-d="psych" data-related="m6,m3,m23" transform="translate(336.65,363.50)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">喜好傾向</text></g>
-    <g class="node" data-id="m5" data-d="psych" data-related="m4,m1" transform="translate(396.50,454.22)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">互惠傾向</text></g>
-    <g class="node" data-id="m6" data-d="psych" data-related="m1,m8,m16" transform="translate(319.00,513.42)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">確認偏誤</text></g>
-    <g class="node" data-id="m7" data-d="psych" data-related="m9,m6,m22" transform="translate(236.03,522.92)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">喪失過度反應</text></g>
-    <g class="node" data-id="m8" data-d="psych" data-related="m6,m9" transform="translate(148.23,593.27)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">可得性錯估</text></g>
-    <g class="node" data-id="m9" data-d="psych" data-related="m7,m8" transform="translate(75.74,521.17)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">對比錯誤反應</text></g>
-    <g class="node flagship" data-id="m10" data-d="psych" data-related="m1,m2,m4,m6,m21,m22" transform="translate(520.80,410.00)" style="cursor:pointer;transition:all .2s"><circle r="26" fill="#534AB7" fill-opacity="0.95"/><circle r="19" fill="#fff" opacity="0.18"/><text class="glyph" text-anchor="middle" dy="5" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">⚡</text><text x="0" y="44" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">多模型共振</text></g>
-    <g class="node" data-id="m21" data-d="psych" data-related="m6,m8,m16" transform="translate(75.22,364.75)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">過度自信</text></g>
-    <g class="node" data-id="m22" data-d="psych" data-related="m7,m6" transform="translate(37.07,266.98)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">承諾一致性</text></g>
-    <g class="node" data-id="m23" data-d="psych" data-related="m4,m6,m13" transform="translate(122.77,231.33)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">厭惡傾向</text></g>
-    <g class="node" data-id="m11" data-d="micro" data-related="m12,m15,m29" transform="translate(800.80,116.50)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#0F6E56" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">▲</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">規模優勢</text></g>
-    <g class="node" data-id="m12" data-d="micro" data-related="m11,m13" transform="translate(928.15,136.47)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#0F6E56" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">▲</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">護城河</text></g>
-    <g class="node" data-id="m13" data-d="micro" data-related="m12,m17,m20" transform="translate(908.27,272.05)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#0F6E56" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">▲</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">競爭毀滅</text></g>
-    <g class="node" data-id="m14" data-d="micro" data-related="m7,m18,m24" transform="translate(800.80,311.15)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#0F6E56" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">▲</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">市場先生</text></g>
-    <g class="node" data-id="m24" data-d="micro" data-related="m18,m15,m26" transform="translate(666.83,287.35)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#0F6E56" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">▲</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">機會成本</text></g>
-    <g class="node" data-id="m25" data-d="micro" data-related="m1,m12,m16" transform="translate(686.70,144.12)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#0F6E56" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">▲</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">資訊不對稱</text></g>
-    <g class="node" data-id="m15" data-d="math" data-related="m18,m11,m24" transform="translate(840.80,406.50)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#1a56db" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">●</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">複利</text></g>
-    <g class="node" data-id="m16" data-d="math" data-related="m6,m13,m21" transform="translate(980.65,454.56)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#1a56db" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">●</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">貝氏更新</text></g>
-    <g class="node" data-id="m17" data-d="math" data-related="m14,m13,m12" transform="translate(913.74,600.40)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#1a56db" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">●</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">均值回歸</text></g>
-    <g class="node" data-id="m26" data-d="math" data-related="m24,m18,m27" transform="translate(781.35,581.83)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#1a56db" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">●</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">期望值</text></g>
-    <g class="node" data-id="m27" data-d="math" data-related="m11,m12,m26" transform="translate(693.67,452.20)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#1a56db" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">●</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">冪次法則</text></g>
-    <g class="node" data-id="m18" data-d="eng" data-related="m14,m15,m19" transform="translate(490.80,607.50)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#B45309" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◆</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">安全邊際</text></g>
-    <g class="node" data-id="m19" data-d="eng" data-related="m18,m17" transform="translate(620.55,690.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#B45309" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◆</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">冗餘設計</text></g>
-    <g class="node" data-id="m28" data-d="eng" data-related="m18,m19,m10" transform="translate(490.80,799.50)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#B45309" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◆</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">倒推思考</text></g>
-    <g class="node" data-id="m29" data-d="eng" data-related="m11,m12,m27" transform="translate(401.55,690.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#B45309" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◆</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">臨界質量</text></g>
-    <g class="node" data-id="m20" data-d="bio" data-related="m13,m19,m30" transform="translate(720.80,645.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#C0392B" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">✚</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">紅皇后效應</text></g>
-    <g class="node" data-id="m30" data-d="bio" data-related="m12,m20,m13" transform="translate(720.80,786.50)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#C0392B" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">✚</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">生態棲位</text></g>
-    <g class="node" data-id="m31" data-d="psych" data-related="m6,m38,m7" transform="translate(50.00,165.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">避疑傾向</text></g>
-    <g class="node" data-id="m32" data-d="psych" data-related="m39,m10,m16" transform="translate(170.00,130.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">好奇傾向</text></g>
-    <g class="node" data-id="m33" data-d="psych" data-related="m5,m1,m34" transform="translate(270.00,110.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">公平期待傾向</text></g>
-    <g class="node" data-id="m34" data-d="psych" data-related="m2,m37,m10" transform="translate(375.00,130.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">嫉妒傾向</text></g>
-    <g class="node" data-id="m35" data-d="psych" data-related="m4,m3,m6" transform="translate(455.00,250.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">聯想偏誤</text></g>
-    <g class="node" data-id="m36" data-d="psych" data-related="m22,m7,m6" transform="translate(470.00,340.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">痛苦否認</text></g>
-    <g class="node" data-id="m37" data-d="psych" data-related="m21,m6,m31" transform="translate(440.00,460.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">過度樂觀</text></g>
-    <g class="node" data-id="m38" data-d="psych" data-related="m31,m7,m10" transform="translate(45.00,660.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">壓力扭曲</text></g>
-    <g class="node" data-id="m39" data-d="psych" data-related="m32,m21,m25" transform="translate(155.00,670.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">用進廢退</text></g>
-    <g class="node" data-id="m40" data-d="psych" data-related="m1,m34,m10" transform="translate(270.00,670.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">成癮性誤判</text></g>
-    <g class="node" data-id="m41" data-d="psych" data-related="m3,m6,m25" transform="translate(390.00,660.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">廢話傾向</text></g>
-    <g class="node" data-id="m43" data-d="hist" data-related="m44,m46,m13" transform="translate(1100.00,240.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#7c2d12" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">✦</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">帝國循環</text></g>
-    <g class="node" data-id="m44" data-d="hist" data-related="m43,m48,m14" transform="translate(1110.00,360.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#7c2d12" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">✦</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">反身性</text></g>
-    <g class="node" data-id="m45" data-d="hist" data-related="m49,m19,m38" transform="translate(1100.00,480.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#7c2d12" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">✦</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">黑天鵝</text></g>
-    <g class="node" data-id="m46" data-d="hist" data-related="m12,m29,m43" transform="translate(1080.00,600.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#7c2d12" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">✦</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">路徑依賴</text></g>
-    <g class="node" data-id="m47" data-d="thermo" data-related="m20,m13,m39" transform="translate(1080.00,745.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#0891B2" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">∆</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">熵增</text></g>
-    <g class="node" data-id="m48" data-d="thermo" data-related="m49,m44,m29" transform="translate(1090.00,855.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#0891B2" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">∆</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">相變</text></g>
-    <g class="node" data-id="m49" data-d="thermo" data-related="m45,m48,m10" transform="translate(970.00,815.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#0891B2" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">∆</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:#475569;pointer-events:none">自組織臨界</text></g>
+    <g class="node" data-id="m1" data-d="psych" data-related="m6,m2" transform="translate(200.80,253.50)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">激勵偏誤</text></g>
+    <g class="node" data-id="m2" data-d="psych" data-related="m8,m4,m10" transform="translate(293.26,203.84)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">社會認同</text></g>
+    <g class="node" data-id="m3" data-d="psych" data-related="m2,m4" transform="translate(338.98,284.62)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">權威偏誤</text></g>
+    <g class="node" data-id="m4" data-d="psych" data-related="m6,m3,m23" transform="translate(336.65,363.50)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">喜好傾向</text></g>
+    <g class="node" data-id="m5" data-d="psych" data-related="m4,m1" transform="translate(396.50,454.22)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">互惠傾向</text></g>
+    <g class="node" data-id="m6" data-d="psych" data-related="m1,m8,m16" transform="translate(319.00,513.42)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">確認偏誤</text></g>
+    <g class="node" data-id="m7" data-d="psych" data-related="m9,m6,m22" transform="translate(236.03,522.92)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">喪失過度反應</text></g>
+    <g class="node" data-id="m8" data-d="psych" data-related="m6,m9" transform="translate(148.23,593.27)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">可得性錯估</text></g>
+    <g class="node" data-id="m9" data-d="psych" data-related="m7,m8" transform="translate(75.74,521.17)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">對比錯誤反應</text></g>
+    <g class="node flagship" data-id="m10" data-d="psych" data-related="m1,m2,m4,m6,m21,m22" transform="translate(520.80,410.00)" style="cursor:pointer;transition:all .2s"><circle r="26" fill="#534AB7" fill-opacity="0.95"/><circle r="19" fill="#fff" opacity="0.18"/><text class="glyph" text-anchor="middle" dy="5" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">⚡</text><text x="0" y="44" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">多模型共振</text></g>
+    <g class="node" data-id="m21" data-d="psych" data-related="m6,m8,m16" transform="translate(75.22,364.75)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">過度自信</text></g>
+    <g class="node" data-id="m22" data-d="psych" data-related="m7,m6" transform="translate(37.07,266.98)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">承諾一致性</text></g>
+    <g class="node" data-id="m23" data-d="psych" data-related="m4,m6,m13" transform="translate(122.77,231.33)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">厭惡傾向</text></g>
+    <g class="node" data-id="m11" data-d="micro" data-related="m12,m15,m29" transform="translate(800.80,116.50)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#0F6E56" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">▲</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">規模優勢</text></g>
+    <g class="node" data-id="m12" data-d="micro" data-related="m11,m13" transform="translate(928.15,136.47)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#0F6E56" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">▲</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">護城河</text></g>
+    <g class="node" data-id="m13" data-d="micro" data-related="m12,m17,m20" transform="translate(908.27,272.05)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#0F6E56" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">▲</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">競爭毀滅</text></g>
+    <g class="node" data-id="m14" data-d="micro" data-related="m7,m18,m24" transform="translate(800.80,311.15)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#0F6E56" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">▲</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">市場先生</text></g>
+    <g class="node" data-id="m24" data-d="micro" data-related="m18,m15,m26" transform="translate(666.83,287.35)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#0F6E56" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">▲</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">機會成本</text></g>
+    <g class="node" data-id="m25" data-d="micro" data-related="m1,m12,m16" transform="translate(686.70,144.12)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#0F6E56" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">▲</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">資訊不對稱</text></g>
+    <g class="node" data-id="m15" data-d="math" data-related="m18,m11,m24" transform="translate(840.80,406.50)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#1a56db" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">●</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">複利</text></g>
+    <g class="node" data-id="m16" data-d="math" data-related="m6,m13,m21" transform="translate(980.65,454.56)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#1a56db" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">●</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">貝氏更新</text></g>
+    <g class="node" data-id="m17" data-d="math" data-related="m14,m13,m12" transform="translate(913.74,600.40)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#1a56db" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">●</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">均值回歸</text></g>
+    <g class="node" data-id="m26" data-d="math" data-related="m24,m18,m27" transform="translate(781.35,581.83)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#1a56db" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">●</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">期望值</text></g>
+    <g class="node" data-id="m27" data-d="math" data-related="m11,m12,m26" transform="translate(693.67,452.20)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#1a56db" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">●</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">冪次法則</text></g>
+    <g class="node" data-id="m18" data-d="eng" data-related="m14,m15,m19" transform="translate(490.80,607.50)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#B45309" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◆</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">安全邊際</text></g>
+    <g class="node" data-id="m19" data-d="eng" data-related="m18,m17" transform="translate(620.55,690.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#B45309" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◆</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">冗餘設計</text></g>
+    <g class="node" data-id="m28" data-d="eng" data-related="m18,m19,m10" transform="translate(490.80,799.50)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#B45309" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◆</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">倒推思考</text></g>
+    <g class="node" data-id="m29" data-d="eng" data-related="m11,m12,m27" transform="translate(401.55,690.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#B45309" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◆</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">臨界質量</text></g>
+    <g class="node" data-id="m20" data-d="bio" data-related="m13,m19,m30" transform="translate(720.80,645.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#C0392B" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">✚</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">紅皇后效應</text></g>
+    <g class="node" data-id="m30" data-d="bio" data-related="m12,m20,m13" transform="translate(720.80,786.50)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#C0392B" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">✚</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">生態棲位</text></g>
+    <g class="node" data-id="m31" data-d="psych" data-related="m6,m38,m7" transform="translate(50.00,165.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">避疑傾向</text></g>
+    <g class="node" data-id="m32" data-d="psych" data-related="m39,m10,m16" transform="translate(170.00,130.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">好奇傾向</text></g>
+    <g class="node" data-id="m33" data-d="psych" data-related="m5,m1,m34" transform="translate(270.00,110.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">公平期待傾向</text></g>
+    <g class="node" data-id="m34" data-d="psych" data-related="m2,m37,m10" transform="translate(375.00,130.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">嫉妒傾向</text></g>
+    <g class="node" data-id="m35" data-d="psych" data-related="m4,m3,m6" transform="translate(455.00,250.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">聯想偏誤</text></g>
+    <g class="node" data-id="m36" data-d="psych" data-related="m22,m7,m6" transform="translate(470.00,340.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">痛苦否認</text></g>
+    <g class="node" data-id="m37" data-d="psych" data-related="m21,m6,m31" transform="translate(440.00,460.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">過度樂觀</text></g>
+    <g class="node" data-id="m38" data-d="psych" data-related="m31,m7,m10" transform="translate(45.00,660.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">壓力扭曲</text></g>
+    <g class="node" data-id="m39" data-d="psych" data-related="m32,m21,m25" transform="translate(155.00,670.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">用進廢退</text></g>
+    <g class="node" data-id="m40" data-d="psych" data-related="m1,m34,m10" transform="translate(270.00,670.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">成癮性誤判</text></g>
+    <g class="node" data-id="m41" data-d="psych" data-related="m3,m6,m25" transform="translate(390.00,660.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#534AB7" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">◼</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">廢話傾向</text></g>
+    <g class="node" data-id="m43" data-d="hist" data-related="m44,m46,m13" transform="translate(1100.00,240.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#7c2d12" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">✦</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">帝國循環</text></g>
+    <g class="node" data-id="m44" data-d="hist" data-related="m43,m48,m14" transform="translate(1110.00,360.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#7c2d12" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">✦</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">反身性</text></g>
+    <g class="node" data-id="m45" data-d="hist" data-related="m49,m19,m38" transform="translate(1100.00,480.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#7c2d12" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">✦</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">黑天鵝</text></g>
+    <g class="node" data-id="m46" data-d="hist" data-related="m12,m29,m43" transform="translate(1080.00,600.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#7c2d12" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">✦</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">路徑依賴</text></g>
+    <g class="node" data-id="m47" data-d="thermo" data-related="m20,m13,m39" transform="translate(1080.00,745.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#0891B2" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">∆</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">熵增</text></g>
+    <g class="node" data-id="m48" data-d="thermo" data-related="m49,m44,m29" transform="translate(1090.00,855.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#0891B2" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">∆</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">相變</text></g>
+    <g class="node" data-id="m49" data-d="thermo" data-related="m45,m48,m10" transform="translate(970.00,815.00)" style="cursor:pointer;transition:all .2s"><circle r="12" fill="#0891B2" fill-opacity="0.85"/><text class="glyph" text-anchor="middle" dy="4" style="font-family:'IBM Plex Mono',monospace;font-weight:700;fill:#fff;pointer-events:none">∆</text><text x="0" y="30" text-anchor="middle" class="node-label" style="font-family:'Inter','Noto Sans TC',sans-serif;fill:var(--imq-text-sec);pointer-events:none">自組織臨界</text></g>
       </g>
     </svg>
 
     <!-- Legend -->
     <div class="legend-box">
       <div class="legend-title">圖例 · LEGEND</div>
-      <div style="display:flex;align-items:center;gap:5px;margin-bottom:4px"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#534AB7;flex-shrink:0"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;color:#534AB7;letter-spacing:.1em">I</span><span style="font-size:10px;color:#475569">心理學</span></div>
-<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#0F6E56;flex-shrink:0"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;color:#0F6E56;letter-spacing:.1em">II</span><span style="font-size:10px;color:#475569">微觀經濟</span></div>
-<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#1a56db;flex-shrink:0"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;color:#1a56db;letter-spacing:.1em">III</span><span style="font-size:10px;color:#475569">數學/統計</span></div>
-<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#B45309;flex-shrink:0"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;color:#B45309;letter-spacing:.1em">IV</span><span style="font-size:10px;color:#475569">工程/物理</span></div>
-<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#C0392B;flex-shrink:0"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;color:#C0392B;letter-spacing:.1em">V</span><span style="font-size:10px;color:#475569">生物學</span></div>
-<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#7c2d12;flex-shrink:0"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;color:#7c2d12;letter-spacing:.1em">VI</span><span style="font-size:10px;color:#475569">歷史學</span></div>
-<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#0891B2;flex-shrink:0"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;color:#0891B2;letter-spacing:.1em">VII</span><span style="font-size:10px;color:#475569">熱力學</span></div>
+      <div style="display:flex;align-items:center;gap:5px;margin-bottom:4px"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#534AB7;flex-shrink:0"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;color:#534AB7;letter-spacing:.1em">I</span><span style="font-size:10px;color:var(--imq-text-sec)">心理學</span></div>
+<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#0F6E56;flex-shrink:0"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;color:#0F6E56;letter-spacing:.1em">II</span><span style="font-size:10px;color:var(--imq-text-sec)">微觀經濟</span></div>
+<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#1a56db;flex-shrink:0"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;color:#1a56db;letter-spacing:.1em">III</span><span style="font-size:10px;color:var(--imq-text-sec)">數學/統計</span></div>
+<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#B45309;flex-shrink:0"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;color:#B45309;letter-spacing:.1em">IV</span><span style="font-size:10px;color:var(--imq-text-sec)">工程/物理</span></div>
+<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#C0392B;flex-shrink:0"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;color:#C0392B;letter-spacing:.1em">V</span><span style="font-size:10px;color:var(--imq-text-sec)">生物學</span></div>
+<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#7c2d12;flex-shrink:0"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;color:#7c2d12;letter-spacing:.1em">VI</span><span style="font-size:10px;color:var(--imq-text-sec)">歷史學</span></div>
+<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#0891B2;flex-shrink:0"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;color:#0891B2;letter-spacing:.1em">VII</span><span style="font-size:10px;color:var(--imq-text-sec)">熱力學</span></div>
 
       <div class="legend-row" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--imq-border-soft)">
-        <span style="display:inline-block;width:18px;height:0;border-top:1.4px solid #0f172a"></span>
-        <span style="font-size:10px;color:#475569">關聯邊</span>
+        <span style="display:inline-block;width:18px;height:0;border-top:1.4px solid var(--imq-text)"></span>
+        <span style="font-size:10px;color:var(--imq-text-sec)">關聯邊</span>
       </div>
       <div class="legend-row">
         <span style="font-size:13px">⚡</span>
-        <span style="font-size:10px;color:#475569">Lollapalooza 中樞</span>
+        <span style="font-size:10px;color:var(--imq-text-sec)">Lollapalooza 中樞</span>
       </div>
     </div>
 
@@ -805,7 +808,7 @@ a:hover{color:var(--imq-accent-hover)}
     var casesHtml = (m.cases || []).map(function(c, i) {
       return '<div class="case-row">'
         + '<span class="case-num" style="color:' + d.color + '">' + String(i+1).padStart(2,'0') + '</span>'
-        + '<span style="color:#1e293b">' + escHtml(c) + '</span>'
+        + '<span style="color:var(--imq-text)">' + escHtml(c) + '</span>'
         + '</div>';
     }).join('');
 
@@ -884,7 +887,7 @@ a:hover{color:var(--imq-accent-hover)}
           node.querySelector('circle').style.stroke = '';
         } else {
           lollaPicks.add(id);
-          node.querySelector('circle').style.stroke = '#0f172a';
+          node.querySelector('circle').style.stroke = 'var(--imq-text)';
           node.querySelector('circle').style.strokeWidth = '2';
         }
         updateLollaMeter();
@@ -905,7 +908,7 @@ a:hover{color:var(--imq-accent-hover)}
         var disc = DISCIPLINES[f];
         c.style.background = '';
         if (disc) c.style.color = disc.color;
-        else c.style.color = '#475569';
+        else c.style.color = 'var(--imq-text-sec)';
       });
       chip.classList.add('active');
       // set active background
@@ -914,7 +917,7 @@ a:hover{color:var(--imq-accent-hover)}
         chip.style.background = activeDisc.color;
         chip.style.color = '#fff';
       } else {
-        chip.style.background = '#475569';
+        chip.style.background = 'var(--imq-text-sec)';
         chip.style.color = '#fff';
       }
       applyFilter(filter);
@@ -1073,7 +1076,7 @@ a:hover{color:var(--imq-accent-hover)}
       var modelsInD = MODELS.filter(function(m){return m.d === dKey;});
       html += '<div class="list-group open" data-d="'+dKey+'">';
       html +=   '<div class="list-group-header">';
-      html +=     '<span class="list-group-title" style="color:'+d.color+'"><span style="font-size:13px">'+d.glyph+'</span>'+escHtml(d.zh)+' <span style="color:#94a3b8;font-weight:500;text-transform:none;letter-spacing:0">· '+escHtml(d.en)+'</span></span>';
+      html +=     '<span class="list-group-title" style="color:'+d.color+'"><span style="font-size:13px">'+d.glyph+'</span>'+escHtml(d.zh)+' <span style="color:var(--imq-text-muted);font-weight:500;text-transform:none;letter-spacing:0">· '+escHtml(d.en)+'</span></span>';
       html +=     '<span class="list-group-meta">'+modelsInD.length+' 個 <span class="list-group-toggle">▸</span></span>';
       html +=   '</div>';
       html +=   '<div class="list-group-body">';
@@ -1319,7 +1322,7 @@ a:hover{color:var(--imq-accent-hover)}
     mModalCases.innerHTML = (m.cases || []).map(function(c, i) {
       return '<div class="matrix-modal-case">'
         + '<span class="matrix-modal-case-num" style="color:' + d.color + '">' + String(i+1).padStart(2,'0') + '</span>'
-        + '<span style="color:#1e293b">' + mEsc(c) + '</span>'
+        + '<span style="color:var(--imq-text)">' + mEsc(c) + '</span>'
         + '</div>';
     }).join('');
 
@@ -1503,12 +1506,12 @@ a:hover{color:var(--imq-accent-hover)}
   // Header row
   grid += '<div class="rm-corner"></div>';
   MODELS.forEach(function(m){
-    var c = (DISCIPLINES[m.d]||{}).color || '#475569';
+    var c = (DISCIPLINES[m.d]||{}).color || 'var(--imq-text-sec)';
     grid += '<div class="rm-col-label" style="color:'+c+'" title="'+escHtml(m.zh)+' / '+escHtml(m.en)+'">'+escHtml(m.zh)+'</div>';
   });
   // Body rows
   MODELS.forEach(function(rowM){
-    var rc = (DISCIPLINES[rowM.d]||{}).color || '#475569';
+    var rc = (DISCIPLINES[rowM.d]||{}).color || 'var(--imq-text-sec)';
     grid += '<div class="rm-row-label" style="color:'+rc+'" title="'+escHtml(rowM.zh)+' / '+escHtml(rowM.en)+'">'+escHtml(rowM.zh)+'</div>';
     MODELS.forEach(function(colM){
       var s = intensity(rowM, colM);
@@ -1536,9 +1539,9 @@ a:hover{color:var(--imq-accent-hover)}
   });
 })();
 </script>
-<footer class="imq-foot" style="margin-top:2rem;padding:1rem 28px;border-top:1px solid var(--imq-border-soft);color:#64748b;font-size:.72rem;text-align:center;line-height:1.8">
+<footer class="imq-foot">
   <div>&copy; 2026 InvestMQuest Research</div>
-  <div><a href="/disclosures.html" style="color:var(--imq-accent)">方法論與揭露</a> · 本站內容僅供研究參考，不構成投資建議</div>
+  <div><a href="/disclosures.html">方法論與揭露</a> · 本站內容僅供研究參考，不構成投資建議</div>
 </footer>
 </body>
 </html>
