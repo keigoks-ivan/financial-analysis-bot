@@ -24,3 +24,5 @@
   - **規則治理**：conviction pill 公式與 QC-6 T1 60% floor 登記 knowledge/rule_ledger.md（kill condition 制，見 repo CLAUDE.md 治理條款）。
   - Legacy 豁免：v2.5- 報告 priced_in present 才驗、absent 放行；79 份 v2.5 backfill 檔不需回補（下次自然到期重審時補）。
 
+- **v2.7（2026-07-08）情境判斷手冊**：四個挖掘 agent 對 5 份高密度 ID（AI 算力旗艦/PublicBuilder/TokenEconomics/WFE/SpaceEconomy）反萃取 20 條強模型判斷動作 → `references/judgment-playbook.md`（觸發索引式:命中才必答）＋Gate 14 阻斷。代表:過剩改道偵測、最難造假指標優先＋領先性排序、會計自白＋擴散門檻 kill、敗局劇本化（時序＋前例＋buffer 耗損）、風險住 E 還是倍數、存量缺口 vs 流量需求、讓利永久性四判準、P×Q 拆解、瓶頸層裁決、換尺重估（含 sell-side 措辭訊號）、錯殺型分歧、sum-of-parts 雙向、反方吸收、Phase 雙閘、承諾剛性、週期底度量切換。審計制同 DD playbook（2026-10 逐條）。
+

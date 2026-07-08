@@ -1,7 +1,7 @@
 ---
 name: industry-analyst
-description: 建立「產業深度報告（Industry Deep Report / ID）」— 一份跨多檔個股共用、敘事為骨表格為窗的產業研究文件。輸入產業主題（如「玻璃基板封裝」「HBM 供需循環」「GLP-1 治療藍圖」「全球航運週期」），skill 執行四軸 WebSearch / WebFetch 研究（歷史 / 供給 / 需求 / 驗證），輸出一份 §0 決策層 + 三幕共 9 章節、文字 ≥55% / 表格 ≤10 張、以「白話定義 → 技術成熟 → 供需循環 → 供需裁決 → 估值傳導 → 分歧證偽 → catalyst → 關聯個股」為敘事骨架、嵌入決策資產（玩家矩陣 / 利潤池 / TAM 三角驗證 / 資本週期 / priced-in / 證偽表）的 HTML 報告；並把對應個股登記於 §9 關聯清單，供 stock-analyst（公司 DD）自動讀取引用。v2.0 合併 industry-ds（DS）— 吸收其敘事弧 + 因果閉合 + 推導鏈 + §末 aside 來源系統。v2.6：§7 priced-in 檢驗結論落 id-meta `priced_in`（low/mid/high，validator 阻斷）——供需裁決量物理供需、priced_in 量可操作性，獵場篩選鍵加 `priced_in ≠ high`；結構拆分（id-meta schema 全文與版本歷史移 references/ 條件載入）；判斷類規則登記 knowledge/rule_ledger.md。觸發：使用者提到「產業研究 / sector DD / 產業報告 / 產業藍圖 / industry landscape」「{主題} ds」「ds {主題}」「{產業} 敘述報告」「分析 {產業} 的供需循環」「{產業} 歷史與未來」「discourse {industry}」或具體主題（玻璃基板、HBM、CoWoS、AI ASIC、GLP-1、核融合、玻璃纖維基板、航運週期等）且尚未要求做個股 DD。
-version: v2.6
+description: 建立「產業深度報告（Industry Deep Report / ID）」— 一份跨多檔個股共用、敘事為骨表格為窗的產業研究文件。輸入產業主題（如「玻璃基板封裝」「HBM 供需循環」「GLP-1 治療藍圖」「全球航運週期」），skill 執行四軸 WebSearch / WebFetch 研究（歷史 / 供給 / 需求 / 驗證），輸出一份 §0 決策層 + 三幕共 9 章節、文字 ≥55% / 表格 ≤10 張、以「白話定義 → 技術成熟 → 供需循環 → 供需裁決 → 估值傳導 → 分歧證偽 → catalyst → 關聯個股」為敘事骨架、嵌入決策資產（玩家矩陣 / 利潤池 / TAM 三角驗證 / 資本週期 / priced-in / 證偽表）的 HTML 報告；並把對應個股登記於 §9 關聯清單，供 stock-analyst（公司 DD）自動讀取引用。v2.0 合併 industry-ds（DS）— 吸收其敘事弧 + 因果閉合 + 推導鏈 + §末 aside 來源系統。v2.6：§7 priced-in 落 id-meta（low/mid/high，validator 阻斷）＋結構拆分（references/ 條件載入）＋規則登記 rule_ledger。v2.7：情境判斷手冊 references/judgment-playbook.md（20 條反萃取判斷動作，觸發索引式必答，Gate 14 阻斷）。觸發：使用者提到「產業研究 / sector DD / 產業報告 / 產業藍圖 / industry landscape」「{主題} ds」「ds {主題}」「{產業} 敘述報告」「分析 {產業} 的供需循環」「{產業} 歷史與未來」「discourse {industry}」或具體主題（玻璃基板、HBM、CoWoS、AI ASIC、GLP-1、核融合、玻璃纖維基板、航運週期等）且尚未要求做個股 DD。
+version: v2.7
 date: 2026-07-08
 ---
 
@@ -736,6 +736,10 @@ Wikipedia（歷史時間軸，不用於數字）、Reddit / Twitter / Seeking Al
 
 ---
 
+## 【情境判斷手冊（v2.7，強模型判斷反萃取）】
+
+寫 §5/§6/§7/§8 動筆前 **Read `references/judgment-playbook.md`**，掃觸發索引——命中情境的條目逐條實際作答（答案融入章節敘事，不渲染手冊編號）。20 條動作自 5 份高密度 ID 反萃取（過剩改道偵測/最難造假指標優先/會計自白＋擴散門檻/敗局劇本化/風險住 E 還是倍數/存量 vs 流量/讓利四判準/P×Q 拆解/瓶頸層裁決/分母錯置/換尺重估/錯殺型分歧/sum-of-parts 雙向/反方吸收/Phase 雙閘/防套套邏輯/承諾剛性/週期底度量切換…）。條目個別可審計（2026-10 校準，rule_ledger）。
+
 ## 【QC 規則（QC-1 ~ QC-20）】
 
 ### QC-1｜🟡 判斷比例 ≤ 20%
@@ -853,6 +857,7 @@ Wikipedia（歷史時間軸，不用於數字）、Reddit / Twitter / Seeking Al
 | **Gate 11** | 阻斷 | dual-output 完整性 — canonical `ID_{Theme}_{date}.html`（含 lean template marker + id-meta）與 `_full.html`（不含 id-meta）兩檔皆存在（v2.4 首發只產一檔、視覺回退 v2.0 紫版而無 gate 攔）|
 | **Gate 12** | 阻斷 | kill_metrics 同步 — id-meta `kill_metrics[]` ≥3 條且與 §8 證偽表逐條對得上（metric 名 + bear 閾值一致）；`sd_verdict` / `clock_phase` / `conviction` 與 §0 6-box、§5 裁決一致；**`priced_in` 與 §7 各分歧 priced-in 檢驗的整體讀數一致（v2.6）** |
 | **Gate 13'** | 阻斷 | 條件載入閘（v2.6）— 寫 id-meta 之前已 Read `references/id-meta-schema.md`；`python3 scripts/validate_id_meta.py` 全綠 |
+| **Gate 14** | 阻斷 | 情境判斷手冊（v2.7）— 已 Read `references/judgment-playbook.md` 觸發索引，命中條目逐條實答且答案落在對應章節 |
 | **Gate 13** | warning | purity 推導 — §9 每檔 `purity_pct` 有一行 segment 營收推導 |
 
 任一阻斷 Gate (1/2/2.1/3/4/5/6/7/8/9/11/12) fail → 阻斷發布 + 列修正項。阻斷全過、warning Gate (10/13) fail → 允許發布但輸出 warning。輸出 `pre_publish_report.md` 記 pass/fail 明細。

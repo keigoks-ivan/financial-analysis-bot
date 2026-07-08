@@ -28,6 +28,8 @@
 | ID priced_in 落欄＋獵場鍵第四條件 priced_in ≠ high（industry-analyst v2.6） | 2026-07-08 | calibration_id：shortage×PhaseII 勝率 7/25，缺 priced-in 軸 | priced_in=high 的 shortage 籃子兩輪跑贏 priced_in=low（軸方向反了）;或兩輪全樣本 priced_in 與後續超額無相關 | — |
 | QC-52 DD↔ID 對帳（事實先讀結論後對;sd_verdict 只當事實錨;Phase II 打折） | v14.8 (2026-07-08) | calibration_id_20260707：shortage×PhaseII 勝率 7/25 | Phase II 打折連兩輪無差別（ID 時鐘已修準）→ 移除打折 | — |
 | v14.9 判斷反萃取三件套（§12.4b 三檢:分母爭議/證據 L1-L3/steelman;§13b' 成功但劣化;§11 多尺矛盾） | v14.9 (2026-07-08) | 強模型 override 動作固化（ORCL/SNOW/TSLA/MU 四原型），防弱底座退化成合規清單 | 兩輪校準顯示三檢/13b' 從未改變任何裁決（純儀式）→ 逐項降為選做;或被三檢改變的裁決後續超額更差（程序在幫倒忙） | — |
+| QC-53 DD 情境判斷手冊（32 條，references/judgment-playbook.md）＋§14 四問＋§12 拓撲/三元歸因 | v14.10 (2026-07-08) | 18 份 DD 系統性挖掘（四 agent 去重），情境觸發式防注意力稀釋 | 逐條審計:觸發後從未改變裁決/倉位/觸發器的條目降選做或刪;整本兩輪零影響 → 廢除 QC-53 | — |
+| ID 情境判斷手冊（20 條，industry-analyst references/judgment-playbook.md，Gate 14） | v2.7 (2026-07-08) | 5 份高密度 ID 反萃取（過剩改道/敗局劇本化/錯殺型分歧等） | 同上逐條審計制 | — |
 | macro §0 stance 三選一反騎牆＋§7 證偽表強制（macro-analyst v1.0） | 2026-07-08 | 生於短期轉折判死裁決後；防 macro 報告淪為不可證偽的騎牆散文 | stance 與後續 6M 風險資產實際方向連兩輪無相關（stance 無資訊量）→ 降為純敘事欄;或證偽表 kill metric 兩輪從未被查核（純儀式） | — |
 | macro-analyst skill 本體（tool-level；描述器紀律＝禁擇時禁買賣指令） | 2026-07-08 | 系統缺總經深度研究層（描述器三頁只有資料層無敘事層） | 90 天內產出報告無任何 DD §11.5／ID／regime editorial／用戶決策討論實際引用 → skill 降級或砍（automatable ≠ valuable） | — |
 
