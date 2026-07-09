@@ -98,6 +98,7 @@ MENU = {
         ("crowd", "/crowding/", "擁擠交易監測"),
         ("rot", "/rotation/", "產業輪動"),
         ("regime", "/regime/", "大類資產 regime"),
+        ("macro", "/macro/", "總經深度報告"),
         ("week", "/weekly/", "週報"),
     ],
     "system": [
@@ -217,7 +218,7 @@ PREFIX_ACTIVE = [
     ("crowding/", ("market", "crowd")),
     ("rotation/", ("market", "rot")),
     ("regime/", ("market", "regime")),
-    ("macro/", ("market", None)),  # 總經深度報告（2026-07-08），nav 無項目，僅群高亮
+    ("macro/", ("market", "macro")),  # 總經深度報告（2026-07-09），nav 已掛項目
     ("weekly/", ("market", "week")),
     ("briefing/", ("market", None)),  # 已暫停，nav 無項目，僅群高亮
     # 系統群
