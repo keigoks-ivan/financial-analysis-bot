@@ -1,5 +1,7 @@
 # knowledge/ — 決策帳本 + 實體圖譜（Phase 0）
 
+> 任何 agent／LLM 工具的入口協議見 repo 根目錄 `AGENTS.md`（本 README 是 knowledge/ 細節）。
+
 把鎖在 484 份 DD / 174 份 ID HTML 裡的判斷，抽成**一條可查的決策帳本 + 一張跨域實體圖**，
 讓「我」（`q.py`）和「Claude」（讀這兩個檔）共用同一份 ground truth。
 目標：**a 自我導航決策 + b Claude 協助更準**（不做對外發布，故不進 `docs/`、不上站）。
