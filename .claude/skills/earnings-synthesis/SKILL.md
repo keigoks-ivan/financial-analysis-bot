@@ -1,9 +1,10 @@
 ---
 name: earnings-synthesis
 description: 把過去 30 天 docs/earnings/earnings_YYYY-MM-DD.html 的所有日報串成一份產業/子產業 trend + investment implication 的統整 HTML。輕掃 per-company 重點，心力放產業 read-through。**缺失交易日自動 web fill-gap 補回重要公司精簡結果**（不另存日報檔，融入趨勢章節）+ 中量 web augmentation（3-5 輪/主題）+ **8 章節**敘事為主表格為輔（v1.1 拿掉 §8 Methodology，source citations 改為 inline）。**v1.1 強制 Step 4.5 self-review gate + Step 5.5 post-write sanity check + Step 8.5 reflective review 反思**：寫稿前/後對 ticker completeness、未來日期 fact-check、本地/web 標籤、跨章節一致進行三重檢查。觸發：用戶說「跑最近財報的統整」/「earnings 統整」/「30 天財報統整」/「月度財報統整」/「財報季統整」/「過去 30 天財報重點」/「earnings synthesis」/「earnings monthly recap」/「earnings 30-day recap」/「monthly earnings rollup」。
-version: v1.1
-date: 2026-05-22
+version: v1.2
+date: 2026-07-09
 changelog:
+  - v1.2 (2026-07-09)：§6 PM Implications 動筆前新增 ID 機器欄交叉（`python knowledge/q.py --theme`）— priced_in=high 的產業 add 建議須逐條指明未定價利多否則降 hold；clock_phase=II 熱產業依 QC-52 打折（calibration_id_20260707）；機器欄缺（legacy）不阻斷。
   - v1.1 (2026-05-22)：拿掉 §8 Methodology 章節；新增 Step 4.5 self-review、Step 5.5 post-write sanity、Step 8.5 reflective review；明確要求 ticker completeness sweep（top-20 mkt cap 個別 confirm 是否覆蓋）；明確要求未來日期必有 source URL（防 hallucinate dates）；明確要求本地 day-內盲點處理（earnings_YYYY-MM-DD.html 存在但漏該日重要 ticker 時，當作 in-day webfill 補回）。
   - v1.0 (2026-05-22)：initial release.
 ---
@@ -308,6 +309,10 @@ top_20_mkt_cap = [NVDA, MSFT, AAPL, AMZN, GOOGL, META, TSLA, BRK.B,
       - Hold/Watch: 3-5 檔
     - **Web 補料公司**：另列 confirm-only 名單，**不單獨做主 add/cut**，只在 rationale 段引用為輔證
   - 用 .confidence-note 區塊明確說「web 補料公司不單獨入 add/cut 主名單」
+  - **ID 機器欄交叉（v1.2 新增，動筆前必跑）**：§6 開寫前對每個涉及的產業跑 `python knowledge/q.py --theme {該節產業關鍵字}`，把 ID 機器欄（供需 / 時鐘 / priced-in）當交叉證據：
+    - `priced_in=high` 的產業 → add 建議**必須逐條指明「哪個利多是市場尚未定價的」**；答不出來 → 該檔降為 hold。
+    - `clock_phase=II`（熱產業）→ 依 QC-52 慣例對該產業 conviction 打折（熱產業時鐘系統性樂觀，見 calibration_id_20260707）。
+    - 機器欄缺（legacy ID 無 machine columns）→ 照舊不阻斷，正常出建議。
 
 §7 下 30 天 Watchlist
   - Catalysts ahead：
