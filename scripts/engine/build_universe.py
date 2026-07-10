@@ -27,35 +27,54 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 OUT = ROOT / "data" / "engine" / "universe.json"
 DD_POOL = ROOT / "docs" / "dd-screener" / "latest.json"
 
+# ndx100 成分表 2026-07-09 被 Wikipedia 搬到獨立條目；舊條目留作 fallback 防搬回
 WIKI = {
-    "sp500": "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies",
-    "ndx100": "https://en.wikipedia.org/wiki/Nasdaq-100",
-    "sp400": "https://en.wikipedia.org/wiki/List_of_S%26P_400_companies",
+    "sp500": ["https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"],
+    "ndx100": ["https://en.wikipedia.org/wiki/List_of_NASDAQ-100_companies",
+               "https://en.wikipedia.org/wiki/Nasdaq-100"],
+    "sp400": ["https://en.wikipedia.org/wiki/List_of_S%26P_400_companies"],
 }
+# 每層最低筆數：單層抓空（如成分表被搬走）不會被總量 sanity 蓋過，直接 raise 保留舊檔
+TIER_FLOOR = {"sp500": 450, "ndx100": 80, "sp400": 350}
 UA = {"User-Agent": "Mozilla/5.0 (imq-engine-universe; research script)"}
 
 
 def fetch() -> list[dict]:
     rows: list[dict] = []
     seen: set[str] = set()
-    for tier, url in WIKI.items():
-        req = urllib.request.Request(url, headers=UA)
-        html = urllib.request.urlopen(req, timeout=30).read().decode("utf-8")
-        for tbl in pd.read_html(io.StringIO(html)):
-            cols = {str(c).strip().lower() for c in tbl.columns}
-            sym = "symbol" if "symbol" in cols else ("ticker" if "ticker" in cols else None)
-            if sym is None:
+    for tier, urls in WIKI.items():
+        tier_n = 0
+        for url in urls:
+            try:
+                req = urllib.request.Request(url, headers=UA)
+                html = urllib.request.urlopen(req, timeout=30).read().decode("utf-8")
+                tables = pd.read_html(io.StringIO(html))
+            except Exception as e:
+                print(f"⚠ {tier} 抓取 {url} 失敗（{e}）— 試下一個來源")
                 continue
-            tbl.columns = [str(c).strip().lower() for c in tbl.columns]
-            sec = "gics sector" if "gics sector" in tbl.columns else None
-            for _, r in tbl.iterrows():
-                t = str(r[sym]).strip()
-                if not t or t in seen:
-                    continue   # 重疊（ndx100 ∩ sp500）保留先見層級
-                seen.add(t)
-                rows.append({"ticker": t, "sector": str(r[sec]) if sec else "",
-                             "tier": tier})
-            break
+            for tbl in tables:
+                cols = {str(c).strip().lower() for c in tbl.columns}
+                sym = "symbol" if "symbol" in cols else ("ticker" if "ticker" in cols else None)
+                if sym is None or len(tbl) < TIER_FLOOR[tier]:
+                    continue
+                tbl.columns = [str(c).strip().lower() for c in tbl.columns]
+                sec = "gics sector" if "gics sector" in tbl.columns else None
+                for _, r in tbl.iterrows():
+                    t = str(r[sym]).strip()
+                    if not t or t in seen:
+                        continue   # 重疊（ndx100 ∩ sp500）保留先見層級
+                    seen.add(t)
+                    rows.append({"ticker": t, "sector": str(r[sec]) if sec else "",
+                                 "tier": tier})
+                    tier_n += 1
+                break
+            if tier_n:
+                break
+        # 注意：tier_n 不含與前層重疊者（ndx100 ∩ sp500 約 80+ 檔記在 sp500），
+        # 所以 floor 檢查看的是「該層表格解析出的總列數」門檻已在上面 len(tbl) 把關；
+        # 這裡只擋整層抓空（成分表被搬走/改結構 → 0 檔）的靜默劣化
+        if tier_n == 0:
+            raise RuntimeError(f"{tier} 成分表 0 檔（來源結構變動？）— 保留舊檔")
     if len(rows) < 750:   # sanity：三表齊全應 ~920
         raise RuntimeError(f"成分股僅 {len(rows)} 檔，疑似表結構變動 — 保留舊檔")
     seen = {r["ticker"] for r in rows}
