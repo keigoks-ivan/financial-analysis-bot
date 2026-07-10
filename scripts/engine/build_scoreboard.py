@@ -25,13 +25,15 @@ from html import escape
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from engine.common import OUT_DIR, ROOT, page_shell, pct  # noqa: E402
+from engine.common import OUT_DIR, ROOT, page_embed_shell, pct  # noqa: E402
 
 DECISIONS = ROOT / "knowledge" / "decisions.jsonl"
 BUILD_KNOWLEDGE = ROOT / "knowledge" / "build_knowledge.py"
 WEEKLY_CACHE = ROOT / "data" / "weekly_cache"
 SB_JSON = OUT_DIR / "scoreboard.json"
-SB_HTML = OUT_DIR / "scoreboard.html"
+# 2026-07-10 席位分頁整併：輸出 nav-less 片段供 /cockpit/#seats-scoreboard 子分頁 iframe 嵌入；
+# /engine/scoreboard.html 已改為 redirect stub（見 site_nav SKIP_FILES）。
+SB_HTML = OUT_DIR / "_scoreboard_body.html"
 
 MIN_AGE_DAYS = 28          # 聚合最低結算齡（同 knowledge/ 口徑）
 GATE_CHANGES = [           # 記分板分段線（PREREG：gate 變更日，歷史不重算）
@@ -179,8 +181,8 @@ def render(payload: dict) -> str:
 <div class="note"><b>Gate 變更分段線</b>（append-only，歷史不重算）：<ul style="margin:4px 0 0 18px">{gates}</ul></div>
 <div class="note warn">誠實邊界：決策史自 2026-03 起（~4 個月）、單一多頭 regime、樣本仍薄——
 本頁的用途是「讓校準有地方看」，不是「已可下結論」。第一批裁決滿 91 天約在 2026-09 底。</div>"""
-    return page_shell("形狀記分板 · 決策引擎", "/engine/scoreboard.html", body,
-                      "DD 裁決 × 價格形狀的自動結算記分板 — 判斷函數的校準依據")
+    return page_embed_shell("形狀記分板 · 席位排序", body,
+                            "DD 裁決 × 價格形狀的自動結算記分板 — 判斷函數的校準依據")
 
 
 def main() -> int:

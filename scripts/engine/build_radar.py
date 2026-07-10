@@ -32,13 +32,15 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from engine.common import OUT_DIR, ROOT, page_shell, pct  # noqa: E402
+from engine.common import OUT_DIR, ROOT, page_embed_shell, pct  # noqa: E402
 
 UNIVERSE = ROOT / "data" / "engine" / "universe.json"
 DD_LATEST = ROOT / "docs" / "dd-screener" / "latest.json"
 WEEKLY_CACHE = ROOT / "data" / "weekly_cache"
 RADAR_JSON = OUT_DIR / "radar.json"
-RADAR_HTML = OUT_DIR / "radar.html"
+# 2026-07-10 席位分頁整併：輸出 nav-less 片段供 /cockpit/#seats-radar 子分頁 iframe 嵌入；
+# /engine/radar.html 已改為 redirect stub（見 site_nav SKIP_FILES）。
+RADAR_HTML = OUT_DIR / "_radar_body.html"
 
 # ── v1 形狀門檻（2026-07-04 鎖定；季檢才可調）────────────────────────────────
 P = {
@@ -277,8 +279,8 @@ def render(payload: dict) -> str:
 <div class="note">熱產業（13 週報酬中位數 top {P['theme_hot_sectors']}）：{escape('、'.join(payload['hot_sectors']))}。
 形狀門檻 v1 於 2026-07-04 鎖定（PREREG 慣例，季檢才可調）；四形狀出身依據＝12M/24M 發現力驗屍
 ＋池外贏家稽核（top50 有 54% 在池外、集中於主題中小型）。一檔可同時命中多形狀。</div>"""
-    return page_shell("全市場雷達 · 決策引擎", "/engine/radar.html", body,
-                      "S&P 1500 全市場結構掃描 × 四形狀路由 × EPS 修正拐點確認")
+    return page_embed_shell("全市場雷達 · 席位排序", body,
+                            "S&P 1500 全市場結構掃描 × 四形狀路由 × EPS 修正拐點確認")
 
 
 def main() -> int:

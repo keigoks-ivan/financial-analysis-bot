@@ -19,14 +19,16 @@ from html import escape
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from engine.common import OUT_DIR, ROOT, page_shell, pct  # noqa: E402
+from engine.common import OUT_DIR, ROOT, page_embed_shell, pct  # noqa: E402
 from engine.build_scoreboard import _bars  # noqa: E402
 from engine.grp import G_MIN_CAGR, P_LABEL_HTML, R_VETO_FY1, grp_route, grp_score  # noqa: E402
 
 DD_LATEST = ROOT / "docs" / "dd-screener" / "latest.json"
 
 CARDS_DIR = OUT_DIR / "cards" / "data"
-CARDS_HTML = OUT_DIR / "cards.html"
+# 2026-07-10 席位分頁整併：輸出 nav-less 片段供 /cockpit/#seats-cards 子分頁 iframe 嵌入；
+# /engine/cards.html 已改為 redirect stub（見 site_nav SKIP_FILES）。
+CARDS_HTML = OUT_DIR / "_cards_body.html"
 CARDS_JSON = OUT_DIR / "cards.json"
 
 TODAY = date.today().isoformat()
@@ -374,8 +376,8 @@ def main() -> int:
         } for c in cards},
     }, ensure_ascii=False, indent=1), encoding="utf-8")
     CARDS_HTML.write_text(
-        page_shell("決策卡 · 決策引擎", "/engine/cards.html", body,
-                   "一頁決策卡 — 可證偽宣稱與自動結算"),
+        page_embed_shell("決策卡 · 席位排序", body,
+                         "一頁決策卡 — 可證偽宣稱與自動結算"),
         encoding="utf-8")
     print(f"cards: {len(cards)} 張 {n_claims} 條宣稱（觸發 {n_breach}／到期 {n_due}）"
           f" {[c['ticker'] for c in cards]}")

@@ -50,6 +50,13 @@ section.block{padding:1.1rem 0}
   font-family:'IBM Plex Mono',monospace;letter-spacing:.06em;margin-top:.16rem;text-transform:uppercase}
 .tab-panel{display:none}
 .tab-panel.active{display:block}
+/* 席位排序第二層 sub-tab bar */
+.subtabbar{display:flex;gap:.2rem;flex-wrap:wrap;margin:.2rem 0 1rem}
+.subtab-btn{appearance:none;background:var(--border-soft);border:1px solid var(--border);
+  font-family:inherit;cursor:pointer;font-size:.78rem;font-weight:600;color:var(--text-sec);
+  padding:.34rem .8rem;border-radius:6px;letter-spacing:.01em}
+.subtab-btn:hover{color:var(--text);border-color:var(--accent)}
+.subtab-btn.active{color:#fff;background:var(--accent);border-color:var(--accent)}
 .embed-frame{width:100%;border:0;display:block;min-height:70vh;background:transparent}
 .embed-note{font-size:.72rem;color:var(--muted);margin:0 0 .5rem;font-family:'IBM Plex Mono',monospace}
 .embed-note a{color:var(--accent)}
@@ -166,11 +173,8 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
       <div class="imq-dd active">
         <button type="button" class="imq-dd-btn">選股<span class="imq-caret">▾</span></button>
         <div class="imq-dd-menu">
-          <a href="/cockpit/" class="active">選股駕駛艙</a>
-          <a href="/picks/">精選清單</a>
-          <a href="/dd-screener/pipeline.html">Pipeline 漏斗</a>
+          <a href="/cockpit/" class="active">選股主控台</a>
           <a href="/dd-screener/">DD Screener</a>
-          <a href="/engine/">決策引擎</a>
           <a href="/research/momentum-5/">Momentum-5</a>
           <a href="/qgm/">QGM 美股</a>
           <a href="/qgm-tw/">QGM 台股</a>
@@ -301,10 +305,17 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     <iframe class="embed-frame" data-src="/dd-screener/_pipeline_body.html" title="流程板機" scrolling="no" loading="lazy"></iframe>
   </div>
 
-  <!-- ═══ 分頁 4：席位排序 ═══ -->
+  <!-- ═══ 分頁 4：席位排序（含第二層 sub-tab：席位總表／雷達／擂台／卡片／記分板）═══ -->
   <div class="tab-panel" id="panel-seats">
-    <p class="embed-note">GRP 決策引擎：三閘排序 × 席位擂台 × 自動結算（深層明細雷達／擂台／決策卡／記分板從內文連入）· <a href="/engine/">獨立頁</a></p>
-    <iframe class="embed-frame" data-src="/engine/_index_body.html" title="席位排序" scrolling="no" loading="lazy"></iframe>
+    <p class="embed-note">GRP 決策引擎：三閘排序 × 席位擂台 × 自動結算 · 五個子分頁同一份底層資料 · <a href="/engine/">獨立頁</a></p>
+    <div class="subtabbar" role="tablist">
+      <button type="button" class="subtab-btn" data-sub="overview" data-src="/engine/_index_body.html" role="tab">席位總表</button>
+      <button type="button" class="subtab-btn" data-sub="radar" data-src="/engine/_radar_body.html" role="tab">雷達</button>
+      <button type="button" class="subtab-btn" data-sub="arena" data-src="/engine/_arena_body.html" role="tab">擂台</button>
+      <button type="button" class="subtab-btn" data-sub="cards" data-src="/engine/_cards_body.html" role="tab">卡片</button>
+      <button type="button" class="subtab-btn" data-sub="scoreboard" data-src="/engine/_scoreboard_body.html" role="tab">記分板</button>
+    </div>
+    <iframe class="embed-frame" id="seats-frame" data-src="/engine/_index_body.html" title="席位排序" scrolling="no" loading="lazy"></iframe>
   </div>
 
   <footer class="foot">
@@ -318,11 +329,13 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
 </div>
 
 <script>
-/* ── 分頁控制 + iframe 延遲載入 / 自動撐高 ─────────────────────────────── */
+/* ── 分頁控制 + 席位排序第二層 sub-tab + iframe 延遲載入 / 自動撐高 ──────────
+   hash 文法：#overview / #picks / #pipeline / #seats（＝席位總表）/ #seats-radar
+   / #seats-arena / #seats-cards / #seats-scoreboard（舊 engine 4 URL redirect 進來）*/
 (function(){
   "use strict";
   var TABS = ['overview','picks','pipeline','seats'];
-  var loaded = {};
+  var SEAT_SUBS = ['overview','radar','arena','cards','scoreboard'];
   function sizeFrame(fr){
     try{
       var d = fr.contentDocument || fr.contentWindow.document;
@@ -332,50 +345,92 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
       if(h > 0) fr.style.height = (h + 24) + 'px';
     }catch(e){/* same-origin 應可讀取；讀不到就保留 min-height */}
   }
-  function activate(tab){
-    if(TABS.indexOf(tab) < 0) tab = 'overview';
+  // 每個 iframe 只掛一次 load→量測（sub-tab 切換是換 src，不重掛 listener）
+  function wireSize(fr){
+    fr.addEventListener('load', function(){
+      sizeFrame(fr);
+      // 片段內部以 fetch 非同步渲染表格 → 載入後數秒內重量測數次
+      var n = 0, iv = setInterval(function(){ sizeFrame(fr); if(++n > 16) clearInterval(iv); }, 400);
+      try{
+        var d = fr.contentDocument;
+        if(d && window.ResizeObserver){
+          var ro = new ResizeObserver(function(){ sizeFrame(fr); });
+          if(d.documentElement) ro.observe(d.documentElement);
+          if(d.body) ro.observe(d.body);
+        }
+      }catch(e){}
+    });
+  }
+  document.querySelectorAll('iframe.embed-frame').forEach(wireSize);
+
+  // 載入指定 src；以 _loadedSrc 去重，換 src 時先歸零高度再交給 load 事件量測
+  function ensureLoaded(fr, src){
+    if(!fr || !src) return;
+    if(fr._loadedSrc === src){ sizeFrame(fr); return; }
+    fr._loadedSrc = src;
+    fr.style.height = '';
+    fr.src = src;
+  }
+
+  function activateSub(sub){
+    if(SEAT_SUBS.indexOf(sub) < 0) sub = 'overview';
+    var src = null;
+    document.querySelectorAll('#panel-seats .subtab-btn').forEach(function(b){
+      var on = b.getAttribute('data-sub') === sub;
+      b.classList.toggle('active', on);
+      if(on) src = b.getAttribute('data-src');
+    });
+    ensureLoaded(document.getElementById('seats-frame'), src || '/engine/_index_body.html');
+  }
+
+  function activate(tab, sub){
+    if(TABS.indexOf(tab) < 0){ tab = 'overview'; sub = null; }
     document.querySelectorAll('.tab-btn').forEach(function(b){
       b.classList.toggle('active', b.getAttribute('data-tab') === tab);
     });
     document.querySelectorAll('.tab-panel').forEach(function(p){
       p.classList.toggle('active', p.id === 'panel-' + tab);
     });
-    var fr = document.querySelector('#panel-' + tab + ' iframe.embed-frame');
-    if(fr && !loaded[tab]){
-      loaded[tab] = true;
-      fr.addEventListener('load', function(){
-        sizeFrame(fr);
-        // 片段內部以 fetch 非同步渲染表格 → 載入後數秒內重量測數次
-        var n = 0, iv = setInterval(function(){ sizeFrame(fr); if(++n > 16) clearInterval(iv); }, 400);
-        try{
-          var d = fr.contentDocument;
-          if(d && window.ResizeObserver){
-            var ro = new ResizeObserver(function(){ sizeFrame(fr); });
-            if(d.documentElement) ro.observe(d.documentElement);
-            if(d.body) ro.observe(d.body);
-          }
-        }catch(e){}
-      });
-      fr.src = fr.getAttribute('data-src');
-    } else if(fr){
-      sizeFrame(fr);
+    if(tab === 'seats'){
+      activateSub(sub || 'overview');
+    } else {
+      var fr = document.querySelector('#panel-' + tab + ' iframe.embed-frame');
+      if(fr){ ensureLoaded(fr, fr.getAttribute('data-src')); }
     }
   }
+
+  function parseHash(){
+    var raw = (location.hash || '#overview').slice(1);
+    var i = raw.indexOf('-');
+    if(i < 0) return {tab: raw, sub: null};
+    return {tab: raw.slice(0, i), sub: raw.slice(i + 1)};
+  }
+
+  // 頂層分頁按鈕
   document.querySelectorAll('.tab-btn').forEach(function(b){
     b.addEventListener('click', function(){
       var t = b.getAttribute('data-tab');
       if(('#' + t) !== location.hash){ location.hash = t; }
-      else { activate(t); }
+      else { activate(t, null); }
+    });
+  });
+  // 席位排序第二層 sub-tab 按鈕
+  document.querySelectorAll('#panel-seats .subtab-btn').forEach(function(b){
+    b.addEventListener('click', function(){
+      var s = b.getAttribute('data-sub');
+      var h = (s === 'overview') ? 'seats' : ('seats-' + s);
+      if(('#' + h) !== location.hash){ location.hash = h; }
+      else { activate('seats', s); }
     });
   });
   window.addEventListener('hashchange', function(){
-    activate((location.hash || '#overview').slice(1));
+    var p = parseHash(); activate(p.tab, p.sub);
   });
   window.addEventListener('resize', function(){
     var a = document.querySelector('.tab-panel.active iframe.embed-frame');
     if(a) sizeFrame(a);
   });
-  activate((location.hash || '#overview').slice(1));
+  var p0 = parseHash(); activate(p0.tab, p0.sub);
 })();
 </script>
 

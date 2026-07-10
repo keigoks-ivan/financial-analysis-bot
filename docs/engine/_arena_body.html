@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>席位擂台 · 席位排序 | InvestMQuest Research</title>
+<meta name="description" content="核心 5＋衛星 5 席位 vs 同形狀挑戰者的每月擂台 — regime 撥盤與集中度警戒">
+<link rel="stylesheet" href="/assets/imq-base.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--sans),-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif;
+     background:var(--paper);color:var(--body);font-size:14px;line-height:1.65}
+.wrap{max-width:1080px;margin:0 auto;padding:24px 20px 60px}
+.hero h1{font-family:var(--serif);font-size:24px;font-weight:700;color:var(--ink);margin:14px 0 6px}
+.hero-sub{color:var(--sec);font-size:13.5px;max-width:860px}
+.asof{font-size:12px;color:var(--muted);margin-top:6px}
+.block{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+       box-shadow:var(--sh-1);padding:18px 20px;margin-top:18px}
+.block h2{font-family:var(--serif);font-size:17px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.block-sub{color:var(--sec);font-size:12.5px;margin-bottom:10px}
+.stat-row{display:flex;gap:12px;flex-wrap:wrap;margin:10px 0}
+.stat{background:var(--paper);border:1px solid var(--line);border-radius:6px;
+      padding:10px 14px;min-width:110px}
+.stat strong{display:block;font-family:var(--mono);font-size:20px;color:var(--ink)}
+.stat span{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+th{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+   color:var(--sec);text-align:right;padding:6px 8px;
+   border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:6px 8px;text-align:right;border-bottom:1px solid var(--line-soft);white-space:nowrap;
+   font-family:var(--mono);font-variant-numeric:tabular-nums}
+th.left,td.left{text-align:left;font-family:inherit;font-variant-numeric:normal}
+tr:hover td{background:#fbf8f1}
+td a{color:var(--accent);text-decoration:none;font-weight:650}
+td a:hover{text-decoration:underline}
+.pos{color:var(--pos);font-weight:650}.neg{color:var(--neg);font-weight:650}
+.muted{color:var(--muted)}
+.tag{display:inline-block;font-family:var(--mono);font-size:11px;font-weight:600;
+     letter-spacing:.02em;border-radius:5px;padding:1px 7px}
+.tag-pool{background:#eafaef;color:var(--pos)}
+.tag-blind{background:#fbf3df;color:var(--warn)}
+.tag-up{background:#eafaef;color:var(--pos)}
+.tag-dn{background:#fbeceb;color:var(--neg)}
+.shape-card{border-left:3px solid var(--accent);margin-top:14px;background:var(--card);
+            border-top:1px solid var(--line);border-right:1px solid var(--line);
+            border-bottom:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.shape-card h3{font-family:var(--serif);font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px}
+.shape-card h3 .cnt{font-size:11px;font-weight:600;color:var(--muted);margin-left:6px}
+.shape-desc{font-size:12px;color:var(--sec);margin-bottom:6px}
+.s-breakout{border-left-color:var(--accent)}
+.s-cyclical{border-left-color:var(--accent)}
+.s-momentum{border-left-color:var(--accent)}
+.s-theme{border-left-color:var(--accent)}
+.empty{color:var(--muted);padding:14px 0;text-align:center}
+.note{font-size:12px;color:var(--sec);background:var(--paper);border:1px solid var(--line);
+      border-radius:6px;padding:10px 12px;margin-top:10px}
+.warn{background:#fbf3df;border-color:var(--warn);color:var(--warn)}
+.layers{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-top:12px}
+.layer{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.layer .lno{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--accent)}
+.layer h3{font-family:var(--serif);font-size:14.5px;font-weight:700;color:var(--ink);margin:2px 0 4px}
+.layer p{font-size:12px;color:var(--sec)}
+.layer .status{display:inline-block;margin-top:6px;font-family:var(--mono);font-size:11px;font-weight:600;
+               border-radius:5px;padding:1px 7px}
+.st-live{background:#eafaef;color:var(--pos)}
+.st-soon{background:var(--line-soft);color:var(--sec)}
+.imq-foot{margin-top:26px;padding:14px 0;border-top:1px solid var(--line);
+          color:var(--sec);font-size:12px;text-align:center;line-height:1.8}
+.imq-foot a{color:var(--accent);text-decoration:none}
+.imq-foot a:hover{text-decoration:underline}
+.overview-wrap{overflow-x:auto;margin:16px 0 4px;border:1px solid var(--line);
+               border-radius:var(--r);background:var(--card)}
+.overview-tbl{font-size:12.5px;margin-top:0}
+.overview-tbl th{padding:8px 10px}
+.overview-tbl td{padding:7px 10px}
+.overview-tbl a.tk-link{color:var(--ink);font-weight:700;text-decoration:none;font-family:inherit}
+.overview-tbl a.tk-link:hover{text-decoration:underline;color:var(--accent)}
+.gate-mini{white-space:nowrap;font-size:11px}
+.gate-mini b{font-weight:700;color:var(--muted);margin:0 1px 0 6px}
+.gate-mini b:first-child{margin-left:0}
+.seat-section{font-family:var(--serif);font-size:16px;font-weight:700;color:var(--ink);margin:24px 0 2px}
+.seat-section .cnt{font-size:12px;font-weight:600;color:var(--muted);margin-left:6px}
+details.card-block{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+                    box-shadow:var(--sh-1);margin-top:10px}
+details.card-block>summary{list-style:none;cursor:pointer;padding:12px 16px;
+                            display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+details.card-block>summary::-webkit-details-marker{display:none}
+details.card-block>summary::before{content:"▸";color:var(--muted);font-size:12px}
+details.card-block[open]>summary::before{content:"▾"}
+details.card-block>summary:hover{background:var(--paper);border-radius:var(--r)}
+.card-summary .cs-ticker{font-family:var(--mono);font-size:15.5px;font-weight:700;color:var(--ink)}
+.card-summary .cs-verdict{font-size:12.5px;font-weight:650;color:var(--sec)}
+.card-body{padding:0 20px 18px}
+details.bench-wrap{margin-top:22px;border:1px dashed var(--muted);border-radius:var(--r);
+                    background:var(--card);padding:2px 6px 8px}
+details.bench-wrap>summary{list-style:none;cursor:pointer;padding:12px 14px;
+                            font-family:var(--serif);font-size:16px;font-weight:700;color:var(--ink)}
+details.bench-wrap>summary::-webkit-details-marker{display:none}
+details.bench-wrap>summary::before{content:"▸ ";color:var(--muted)}
+details.bench-wrap[open]>summary::before{content:"▾ "}
+details.bench-wrap details.card-block{margin:8px 6px 0}
+@media(max-width:760px){.wrap{padding:16px 10px 40px}.block{padding:14px 12px}
+  table{display:block;overflow-x:auto}
+  details.card-block>summary{padding:10px 12px}.card-body{padding:0 12px 14px}}
+
+body{background:transparent}.wrap{padding-top:8px}</style>
+</head>
+<body>
+<div class="wrap">
+<div class="hero">
+<h1>席位擂台 · L3 組合層</h1>
+<div class="hero-sub">組合才是產品：核心 5 席＋衛星 5 席，每席對決「同形狀最強挑戰者」。
+⚔ 警報＝挑戰者分數超過席位 → 進<b>每月擂台的人工複審清單</b>。引擎不自動換席——換人是人的裁決。
+席位資格（GRP v1，2026-07-04 持有人拍板）＝DD 裁決進場 ∩ <b>三閘全過</b>：
+<b>G 高成長</b>（FY1→FY3 EPS CAGR ≥15%）× <b>R 上修</b>（FY+1 月修 &gt;0 或 2Y &gt;0pp；下修 ≤-2% 否決）×
+<b>P 位置適合</b>（站上 52 週線且未過熱）。排序＝R 上修幅度——<b>不再依賴 5Y EV/IRR</b>。
+<b>軌別路由</b>：核心＝護城河 S/A 非↓（複利耐久）；衛星＝其餘 GRP 全過者（moat B／循環爆發型）。
+<b>市值門檻 ≥ $20B</b>（持有人 2026-07-04 拍板：席位與主榜資格層；雷達發現層照掃全宇宙）。
+<b>兩級資格</b>：核心席必須完整 v14 DD；衛星席另接受 🪶 快審卡（週期位置＋陷阱＋護城河快評）。
+DD 角色與機械軌別衝突標 ⚠ 供人裁。GRP 未過的進場票落板凳、寧缺勿濫。</div>
+<div class="asof">資料源 dd-screener latest.json ｜ 席位口徑與 Pipeline 頁一致 ｜ 週更</div>
+</div>
+<div class="stat-row">
+<div class="stat"><strong>🛡 防守</strong><span>Regime 撥盤（0.25×）</span></div>
+<div class="stat"><strong>6</strong><span>⚔ 擂台警報</span></div>
+<div class="stat"><strong>4/5 · 2/5</strong><span>核心 · 衛星席位</span></div>
+<div class="stat"><strong>50%</strong><span>最大單一產業占席</span></div>
+</div>
+<div class="note">Regime：SPY under_pressure（2026-04-08 起）· 25 日 distribution 8 · vs 200DMA 8.8%（as of 2026-07-09）。
+撥盤規則 v1 鎖定：進攻 1.0＝confirmed_uptrend 且 distribution ≤3；中性 0.5＝under_pressure 或 4–7；
+防守 0.25＝correction／跌破 200DMA／≥8。<b>資訊性，不接倉位系統</b>——新倉節奏由人按撥盤自裁。
+形狀敏感度：突破帶/動能重估最敏感（防守時停新倉）、循環轉折次之（防守時只留回踩單）。</div>
+<div class="block"><h2>核心席位（4/5）</h2><table><thead><tr><th class="left">席位</th><th class="left">形狀</th><th class="left">R 上修</th><th>G 成長</th><th class="left">P 位置</th><th class="left">護城河</th><th class="left">決策卡</th></tr></thead><tbody><tr><td class="left">1. <strong><a href="/dd/DD_AVGO_20260623.html#decision">AVGO</a></strong></td><td class="left">⬜ 其他</td><td class="left">FY+1 <span class="pos">+1.7%</span>　2Y +0.3pp</td><td><span class="pos">49%</span></td><td class="left"><span class="tag tag-up">🟢 回踩到位</span>（距高 -17%）</td><td class="left">A→</td><td class="left"><a href="/engine/cards.html#AVGO"><span class="tag tag-pool">🗂 4 宣稱·下個到期 2026-09-30</span></a></td></tr><tr><td class="left">2. <strong><a href="/dd/DD_NVDA_20260624.html#decision">NVDA</a></strong></td><td class="left">⬜ 其他</td><td class="left">FY+1 <span class="pos">+0.6%</span>　2Y +0.7pp</td><td><span class="pos">33%</span></td><td class="left"><span class="tag tag-up">🟢 回踩到位</span>（距高 -14%）</td><td class="left">S→</td><td class="left"><a href="/engine/cards.html#NVDA"><span class="tag tag-pool">🗂 4 宣稱·下個到期 2026-08-26</span></a></td></tr><tr><td class="left">3. <strong><a href="/dd/DD_TSM_20260623.html#decision">TSM</a></strong></td><td class="left">🟪 動能重估</td><td class="left">FY+1 <span class="">0.0%</span>　2Y +0.6pp　<span class="muted">yf30d +4.0%</span> <span class="tag tag-blind" title="Koyfin 與 yfinance 修正方向相反">⚠ 源分歧</span></td><td><span class="pos">26%</span></td><td class="left"><span class="tag tag-up">🟢 回踩到位</span>（距高 -8%）</td><td class="left">S↑</td><td class="left"><a href="/engine/cards.html#TSM"><span class="tag tag-pool">🗂 5 宣稱·下個到期 2026-07-31</span></a></td></tr><tr><td class="left">4. <strong><a href="/dd/DD_ABNB_20260703.html#decision">ABNB</a></strong></td><td class="left">⬜ 其他</td><td class="left">FY+1 <span class="pos">+0.3%</span>　2Y +0.1pp</td><td><span class="pos">20%</span></td><td class="left"><span class="tag tag-up">🟢 突破帶</span>（距高 -1%）</td><td class="left">A→</td><td class="left"><a href="/engine/cards.html#ABNB"><span class="tag tag-pool">🗂 5 宣稱·下個到期 2026-08-15</span></a></td></tr><tr><td class="left">5. <span class="muted">（空缺）</span></td><td class="left muted" colspan="6">進場核心票中無 GRP 全過者遞補 — 寧缺勿濫</td></tr></tbody></table></div>
+<div class="block"><h2>衛星席位（2/5）</h2><table><thead><tr><th class="left">席位</th><th class="left">形狀</th><th class="left">R 上修</th><th>G 成長</th><th class="left">P 位置</th><th class="left">護城河</th><th class="left">決策卡</th></tr></thead><tbody><tr><td class="left">1. <strong><a href="/dd/DD_COHR_20260627.html#decision">COHR</a><span class="tag tag-blind" title="DD 角色：核心">⚠ DD 角色異</span></strong></td><td class="left">🟪 動能重估</td><td class="left">FY+1 <span class="pos">+1.0%</span>　2Y +1.7pp　<span class="muted">yf30d +1.4%</span></td><td><span class="pos">52%</span></td><td class="left"><span class="tag tag-up">🟢 回踩到位</span>（距高 -23%）</td><td class="left">B↑</td><td class="left"><a href="/engine/cards.html#COHR"><span class="tag tag-pool">🗂 5 宣稱·下個到期 2026-08-15</span></a></td></tr><tr><td class="left">2. <strong><a href="/dd/DD_VRT_20260710.html#decision">VRT</a></strong></td><td class="left">🟪 動能重估</td><td class="left">FY+1 <span class="pos">+0.1%</span>　2Y +0.3pp　<span class="muted">yf30d +0.2%</span></td><td><span class="pos">32%</span></td><td class="left"><span class="tag tag-up">🟢 回踩到位</span>（距高 -14%）</td><td class="left">B→</td><td class="left"><span class="tag tag-blind">無卡 → 抽</span></td></tr><tr><td class="left">3. <span class="muted">（空缺）</span></td><td class="left muted" colspan="6">等衛星候選同時拿到進場裁決＋GRP 全過</td></tr><tr><td class="left">4. <span class="muted">（空缺）</span></td><td class="left muted" colspan="6">等衛星候選同時拿到進場裁決＋GRP 全過</td></tr><tr><td class="left">5. <span class="muted">（空缺）</span></td><td class="left muted" colspan="6">等衛星候選同時拿到進場裁決＋GRP 全過</td></tr></tbody></table></div>
+<div class="block"><h2>擂台對戰表</h2>
+<div class="block-sub">軌別配對：核心席 vs 核心向挑戰者、衛星席 vs 衛星向挑戰者（moat 耐久性同級才有資格互換；
+挑戰者資格＝裁決 ∈ {進場, 觀望} ∩ GRP 全過）。觀望挑戰者勝出＝先觸發它的複審，不是直接換。</div>
+<table><thead><tr><th class="left">席位（分數）</th><th class="left">形狀</th><th class="left">同形狀最強挑戰者</th><th>裁定</th></tr></thead><tbody><tr><td class="left"><strong>AVGO</strong>（R 分 2.2）</td><td class="left">⬜ 其他</td><td class="left"><a href="/dd/DD_GLW_20260629.html#decision">GLW</a>（觀望，R 分 4.1）</td><td><span class="tag tag-dn">⚔ 警報</span></td></tr><tr><td class="left"><strong>NVDA</strong>（R 分 1.7）</td><td class="left">⬜ 其他</td><td class="left"><a href="/dd/DD_GLW_20260629.html#decision">GLW</a>（觀望，R 分 4.1）</td><td><span class="tag tag-dn">⚔ 警報</span></td></tr><tr><td class="left"><strong>TSM</strong>（R 分 1.5）</td><td class="left">🟪 動能重估</td><td class="left"><a href="/dd/DD_GLW_20260629.html#decision">GLW</a>（觀望，R 分 4.1）</td><td><span class="tag tag-dn">⚔ 警報</span></td></tr><tr><td class="left"><strong>ABNB</strong>（R 分 0.5）</td><td class="left">⬜ 其他</td><td class="left"><a href="/dd/DD_GLW_20260629.html#decision">GLW</a>（觀望，R 分 4.1）</td><td><span class="tag tag-dn">⚔ 警報</span></td></tr><tr><td class="left"><strong>COHR</strong>（R 分 3.9）</td><td class="left">🟪 動能重估</td><td class="left"><a href="/dd/DD_MU_20260705.html#decision">MU</a>（觀望，R 分 29.7）</td><td><span class="tag tag-dn">⚔ 警報</span></td></tr><tr><td class="left"><strong>VRT</strong>（R 分 0.9）</td><td class="left">🟪 動能重估</td><td class="left"><a href="/dd/DD_MU_20260705.html#decision">MU</a>（觀望，R 分 29.7）</td><td><span class="tag tag-dn">⚔ 警報</span></td></tr></tbody></table></div>
+<div class="block"><h2>席位變動帳本</h2>
+<div class="block-sub">append-only——席位組成變動才記一筆；有帳本，換席決策才能被結算（誰換對了、誰換錯了，91 天後對答案）。</div>
+<table><thead><tr><th>日期</th><th class="left">軌</th><th class="left">上席</th><th class="left">下席</th></tr></thead><tbody><tr><td>2026-07-10</td><td class="left">🛰 衛星</td><td class="left">VRT</td><td class="left">—</td></tr><tr><td>2026-07-10</td><td class="left">🎯 核心</td><td class="left">—</td><td class="left">MA</td></tr><tr><td>2026-07-04</td><td class="left">🛰 衛星</td><td class="left">—</td><td class="left">DY、SMTC</td></tr></tbody></table></div>
+<div class="block"><h2>席位產業分布</h2><div class="block-sub">Information Technology ×3、（未分類） ×1、Consumer Discretionary ×1、Industrials ×1</div></div>
+<div class="note">核心板凳（進場但未坐席）：UBER（P fail（52 週線下或無資料））、META（G fail（CAGR 13.8348））、FICO（P fail（52 週線下或無資料））、PLTR（P fail（52 週線下或無資料））、GOOGL（G fail（CAGR 9.9802））、APH（G fail（CAGR 14.6888））、MA（P fail（52 週線下或無資料））、MSFT（P fail（52 週線下或無資料））、LLY（R fail（FY+1 -0.02％／2Y -0.08pp））、ROP（G 用 eps2y fallback（無 FY3 預估））。
+衛星板凳：SMTC（市值 13B &lt; 門檻 20B）、NU（P fail（52 週線下或無資料））、DY（市值 13B &lt; 門檻 20B）、ONON（市值 12B &lt; 門檻 20B）、MOD（市值 12B &lt; 門檻 20B）、APP（R fail（FY+1 0.0％／2Y -0.0pp））、NFLX（G fail（CAGR 13.0388））、DECK（市值 14B &lt; 門檻 20B）、WLDN（市值 1B &lt; 門檻 20B）、CRM（G fail（CAGR 12.6783））。
+挑戰者池 top（GRP 全過）：MU、STRL、JBL、STX、CIEN、ROKU、GLW、AMD、CRDO、ARM。</div>
+</div>
+<!-- 主控台 iframe 嵌入：跨頁連結在頂層開啟，站內 #錨點留在 iframe 內滾動 -->
+<script>(function(){function fix(){var as=document.querySelectorAll('a[href]');for(var i=0;i<as.length;i++){var a=as[i],h=a.getAttribute('href');if(h&&h.charAt(0)!=='#'&&!a.hasAttribute('target'))a.setAttribute('target','_parent');}}if(document.readyState!=='loading')fix();else document.addEventListener('DOMContentLoaded',fix);window.addEventListener('load',fix);[400,1200,2500].forEach(function(t){setTimeout(fix,t);});})();</script>
+</body>
+</html>

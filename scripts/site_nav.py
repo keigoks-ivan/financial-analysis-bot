@@ -71,12 +71,14 @@ NAV_SCRIPT = """<script>(function(){document.querySelectorAll('.imq-dd-btn').for
 # 選股系統原散在研究+工具兩選單，收斂為單一「選股」群；跨資產三頁（描述器）
 # 自研究移入市場；每日簡報已暫停自 nav 移除（/briefing/ 歸檔頁仍可直達）。
 MENU = {
+    # 2026-07-10 選股主控台整併（見 notes/site-internal/root/_consolidation_stock_console_20260710.md）：
+    # 精選榜／流程板機／席位排序（＋原駕駛艙總覽）四頁已收斂進單一 /cockpit/ 四分頁，
+    # 故下拉移除 picks／pipe／eng 三個舊條目，只留單一「選股主控台」入口。
+    # 舊 URL 皆為活 redirect stub，外部書籤與外部 3 repo 舊 nav 仍可用。
+    # 非四頁條目（DD Screener 主表／Momentum-5／QGM／RS+VCP）保留不動。
     "pick": [
-        ("cockpit", "/cockpit/", "選股駕駛艙"),
-        ("picks", "/picks/", "精選清單"),
-        ("pipe", "/dd-screener/pipeline.html", "Pipeline 漏斗"),
+        ("cockpit", "/cockpit/", "選股主控台"),
         ("dds", "/dd-screener/", "DD Screener"),
-        ("eng", "/engine/", "決策引擎"),
         ("mom5", "/research/momentum-5/", "Momentum-5"),
         ("qus", "/qgm/", "QGM 美股"),
         ("qtw", "/qgm-tw/", "QGM 台股"),
@@ -188,10 +190,12 @@ def build_subnav(links, current):
 PREFIX_ACTIVE = [
     # 選股群
     ("cockpit/", ("pick", "cockpit")),
-    ("picks/", ("pick", "picks")),
-    ("dd-screener/pipeline.html", ("pick", "pipe")),
+    # picks/ · dd-screener/pipeline.html · engine/ 皆為 redirect stub / iframe 片段（全在 SKIP_FILES，
+    # 不會被注入 nav）；保留前綴僅為「選股群高亮」的語意錨，不再對應下拉條目（item=None）。
+    ("picks/", ("pick", None)),
+    ("dd-screener/pipeline.html", ("pick", None)),
     ("dd-screener/", ("pick", "dds")),
-    ("engine/", ("pick", "eng")),
+    ("engine/", ("pick", None)),
     ("research/momentum-5/", ("pick", "mom5")),
     ("qgm/", ("pick", "qus")),
     ("qgm-tw/", ("pick", "qtw")),
@@ -249,7 +253,17 @@ SKIP_FILES = {
     "engine/index.html",                        # redirect stub -> /cockpit/#seats
     "picks/_embed.html",                        # iframe 片段（精選榜分頁）
     "dd-screener/_pipeline_body.html",          # iframe 片段（流程板機分頁）
-    "engine/_index_body.html",                  # iframe 片段（席位排序分頁）
+    "engine/_index_body.html",                  # iframe 片段（席位排序·席位總表子分頁）
+    # 2026-07-10 engine 四子頁收編成 /cockpit/#seats 子分頁：
+    # 舊 4 URL → redirect stub；builder 改產 nav-less _*_body 片段（供子分頁 iframe）。
+    "engine/radar.html",                        # redirect stub -> /cockpit/#seats-radar
+    "engine/arena.html",                        # redirect stub -> /cockpit/#seats-arena
+    "engine/cards.html",                        # redirect stub -> /cockpit/#seats-cards
+    "engine/scoreboard.html",                   # redirect stub -> /cockpit/#seats-scoreboard
+    "engine/_radar_body.html",                  # iframe 片段（雷達子分頁）
+    "engine/_arena_body.html",                  # iframe 片段（擂台子分頁·M5 對照組 PREREG 凍結）
+    "engine/_cards_body.html",                  # iframe 片段（決策卡子分頁）
+    "engine/_scoreboard_body.html",             # iframe 片段（記分板子分頁）
 }
 
 
