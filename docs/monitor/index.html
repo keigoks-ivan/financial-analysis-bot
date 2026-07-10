@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta name="robots" content="noindex,nofollow">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>市場監測 — InvestMQuest Research</title>
+  <meta name="description" content="全資產市場監測 — 全球指數／美股產業／因子與風險胃納／利率通膨／波動情緒／信用／外匯／商品／資金管路近 100 條 series 日更明細，附統計異常偵測（z-score 閘／水位分位閘／結構事件）與近 60 天異常留痕。描述器非擇時訊號。">
+  <meta property="og:title" content="市場監測 — InvestMQuest Research">
+  <meta property="og:site_name" content="InvestMQuest Research">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Playfair+Display:wght@600;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/imq-base.css">
+  <style>
+:root{
+  --bg:#f7f3ea;--bg-card:#ffffff;--bg-card-hover:#fbf8f1;
+  --border:#e5dfd0;--border-light:#efe9da;
+  --text:#0c1521;--text-secondary:#2a3a52;--text-muted:#9aa7b8;
+  --accent:#0d2244;--accent-hover:#081832;
+  --gold:#b8924a;--gold-deep:#8f6d2c;
+  --pos:#15803d;--neg:#b91c1c;--warn:#a16207;
+  --pos-bg:#eafaef;--neg-bg:#fbeceb;--warn-bg:#fbf3df;
+  --shadow-sm:0 1px 2px rgba(13,34,68,.05);
+  --shadow-md:0 6px 18px rgba(13,34,68,.07);
+  --radius:10px;
+  --spark:#0d2244;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#0b0d11;--bg-card:#14181f;--bg-card-hover:#1a1f28;
+    --border:#28303c;--border-light:#222834;
+    --text:#edeff3;--text-secondary:#a6aebc;--text-muted:#717a8a;
+    --accent:#5b9bff;--accent-hover:#7db0ff;
+    --gold:#c9a55e;--gold-deep:#b8924a;
+    --pos:#34d399;--neg:#f87171;--warn:#fbbf24;
+    --pos-bg:rgba(52,211,153,.12);--neg-bg:rgba(248,113,113,.12);--warn-bg:rgba(251,191,36,.12);
+    --shadow-sm:0 1px 2px rgba(0,0,0,.3);
+    --shadow-md:0 4px 14px rgba(0,0,0,.4);
+    --spark:#5b9bff;
+  }
+}
+:root[data-theme=dark]{
+  --bg:#0b0d11;--bg-card:#14181f;--bg-card-hover:#1a1f28;
+  --border:#28303c;--border-light:#222834;
+  --text:#edeff3;--text-secondary:#a6aebc;--text-muted:#717a8a;
+  --accent:#5b9bff;--accent-hover:#7db0ff;
+  --gold:#c9a55e;--gold-deep:#b8924a;
+  --pos:#34d399;--neg:#f87171;--warn:#fbbf24;
+  --pos-bg:rgba(52,211,153,.12);--neg-bg:rgba(248,113,113,.12);--warn-bg:rgba(251,191,36,.12);
+  --shadow-sm:0 1px 2px rgba(0,0,0,.3);
+  --shadow-md:0 4px 14px rgba(0,0,0,.4);
+  --spark:#5b9bff;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;font-size:15px}
+.wrap{max-width:1140px;margin:0 auto;padding:0 20px}
+a{color:var(--accent)}
+.mono{font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums}
+
+.hero{padding:44px 0 26px}
+.overline{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-deep);font-weight:600}
+h1{font-family:'Playfair Display','Noto Serif TC',Georgia,serif;font-size:32px;font-weight:700;letter-spacing:-.01em;color:var(--text);margin:.35rem 0 .5rem}
+.hero p{color:var(--text-secondary);max-width:760px;font-size:14.5px}
+.asof{margin-top:.6rem;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-muted)}
+
+section{margin:26px 0}
+h2{font-family:'Playfair Display','Noto Serif TC',Georgia,serif;font-size:21px;font-weight:700;margin-bottom:.7rem;padding-bottom:.35rem;border-bottom:1px solid var(--border)}
+h2 .en{font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--text-muted);font-weight:400;letter-spacing:.1em;margin-left:.6rem;text-transform:uppercase}
+
+.alert-strip{border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-card);box-shadow:var(--shadow-sm);padding:14px 16px}
+.alert-row{display:flex;gap:.7rem;align-items:baseline;padding:.45rem .2rem;border-bottom:1px dashed var(--border-light);font-size:14px}
+.alert-row:last-child{border-bottom:none}
+.sev{flex-shrink:0;font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;letter-spacing:.08em;padding:.1rem .5rem;border-radius:4px}
+.sev.red{color:var(--neg);background:var(--neg-bg)}
+.sev.yellow{color:var(--warn);background:var(--warn-bg)}
+.alert-cat{flex-shrink:0;font-size:11.5px;color:var(--text-muted)}
+.alert-calm{color:var(--pos);font-size:14px;padding:.3rem .2rem}
+.alert-calm .sub{color:var(--text-muted);font-size:12.5px;margin-left:.5rem}
+
+.status-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.tile{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:14px 16px}
+.tile .lbl{font-size:11.5px;color:var(--text-muted);letter-spacing:.04em}
+.tile .val{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;margin:.15rem 0}
+.tile .st{font-size:12.5px;font-weight:600}
+.st.ok{color:var(--pos)}.st.bad{color:var(--neg)}.st.mid{color:var(--warn)}
+
+.timeline{display:flex;gap:4px;flex-wrap:wrap;align-items:flex-end}
+.day{width:26px;cursor:pointer;text-align:center;border-radius:6px;padding:4px 0 2px;border:1px solid transparent}
+.day:hover,.day.sel{border-color:var(--gold);background:var(--bg-card-hover)}
+.day .dot{width:12px;height:12px;border-radius:50%;margin:0 auto;background:var(--border)}
+.day.red .dot{background:var(--neg)}
+.day.yellow .dot{background:var(--warn)}
+.day .n{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted);display:block;margin-top:2px}
+.day .d{font-size:9px;color:var(--text-muted);display:block;transform:rotate(0)}
+.timeline-detail{margin-top:10px;font-size:13.5px;color:var(--text-secondary)}
+.timeline-detail .hd{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-muted);margin-bottom:.3rem}
+
+.cat-block{margin:18px 0}
+h3.cat{font-size:15px;font-weight:700;color:var(--text);margin-bottom:.45rem;display:flex;align-items:baseline;gap:.6rem}
+h3.cat .cnt{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-muted);font-weight:400}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-card);box-shadow:var(--shadow-sm)}
+table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:840px}
+th{font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);text-align:right;padding:.55rem .7rem;border-bottom:1px solid var(--border);white-space:nowrap}
+th:first-child{text-align:left}
+td{padding:.5rem .7rem;border-bottom:1px solid var(--border-light);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+td:first-child{text-align:left;font-weight:500}
+tr:last-child td{border-bottom:none}
+tr.hl-yellow td{background:var(--warn-bg)}
+tr.hl-red td{background:var(--neg-bg)}
+tr.stale td{opacity:.5}
+td.pos{color:var(--pos)}td.neg{color:var(--neg)}td.neu{color:var(--text-muted)}
+.z-chip{font-family:'IBM Plex Mono',monospace;font-size:12px}
+.z-chip.big{font-weight:700;color:var(--warn)}
+.z-chip.huge{font-weight:700;color:var(--neg)}
+.pct-cell{display:inline-flex;align-items:center;gap:.45rem;justify-content:flex-end}
+.pct-bar{width:52px;height:5px;border-radius:3px;background:var(--border-light);position:relative;overflow:hidden}
+.pct-bar i{position:absolute;left:0;top:0;bottom:0;background:var(--gold);border-radius:3px}
+.badge{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;padding:.05rem .35rem;border-radius:4px}
+.badge.hi{color:var(--pos);background:var(--pos-bg)}
+.badge.lo{color:var(--neg);background:var(--neg-bg)}
+.spark-td{padding:.3rem .7rem}
+.stale-note{font-size:10.5px;color:var(--text-muted);font-family:'IBM Plex Mono',monospace}
+
+.gaps{font-size:13px;color:var(--text-secondary);background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px}
+.method table{min-width:0}
+.method .tbl-wrap{margin-top:.4rem}
+.method td,.method th{white-space:normal;text-align:left}
+.method p{font-size:14px;color:var(--text-secondary);max-width:820px}
+.loading{color:var(--text-muted);font-size:14px;padding:2rem 0;text-align:center}
+
+footer.imq-foot{margin-top:44px;padding:22px 20px;border-top:1px solid var(--border);text-align:center;font-size:12.5px;color:var(--text-muted)}
+footer.imq-foot a{color:var(--text-secondary)}
+@media(max-width:768px){h1{font-size:26px}table{font-size:12.5px}}
+  </style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">選股<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/cockpit/">選股駕駛艙</a>
+          <a href="/picks/">精選清單</a>
+          <a href="/dd-screener/pipeline.html">Pipeline 漏斗</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/engine/">決策引擎</a>
+          <a href="/research/momentum-5/">Momentum-5</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screeners.html">RS+VCP Screener</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/">個股 DD</a>
+          <a href="/research/synthesis/">期望落差綜合研判</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+        </div>
+      </div>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/earnings/">財報分析</a>
+          <a href="/catalyst/">催化劑日曆</a>
+          <a href="/monitor/" class="active">市場監測</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/crowding/">擁擠交易監測</a>
+          <a href="/rotation/">產業輪動</a>
+          <a href="/regime/">大類資產 regime</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/weekly/">週報</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track-smh/">長線訊號 SMH</a>
+          <a href="/long-track-tw/">台股長線</a>
+          <a href="/turtle-sleeve/">商品 Sleeve</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/cache/">Data Cache</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <a href="/how-to.html">使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="overline">Market Monitor · Describer</div>
+    <h1>市場監測</h1>
+    <p>本頁提供全球指數、美股產業、因子與風險胃納、利率／通膨／期限溢價、波動情緒、信用（含 CCC 金絲雀）、外匯、商品與資金管路（SOFR−IORB、Fed 資產負債表、STLFSI）近 100 條 series 的日更明細，並以統計規則（變動 z-score、一年水位分位、結構事件）標出異常；資料來源 Yahoo Finance／FRED／CNN；每日美股收盤後更新。本頁為描述器（describer），衡量「今天什麼東西落在統計異常區」，非擇時訊號、不構成買賣指令。</p>
+    <div class="asof" id="asof">載入中…</div>
+  </div>
+
+  <section id="sec-alerts">
+    <h2>今日異常<span class="en">Today's Anomalies</span></h2>
+    <div class="alert-strip" id="alerts"><div class="loading">載入中…</div></div>
+  </section>
+
+  <section id="sec-status">
+    <h2>結構狀態<span class="en">Structural Status</span></h2>
+    <div class="status-grid" id="status"></div>
+  </section>
+
+  <section id="sec-timeline">
+    <h2>近 30 個交易日異常留痕<span class="en">Anomaly Log</span></h2>
+    <div class="timeline" id="timeline"></div>
+    <div class="timeline-detail" id="timeline-detail"></div>
+  </section>
+
+  <section id="sec-detail">
+    <h2>全資產明細<span class="en">All Series</span></h2>
+    <div id="categories"><div class="loading">載入中…</div></div>
+  </section>
+
+  <section id="sec-gaps" style="display:none">
+    <h2>資料缺口<span class="en">Gaps</span></h2>
+    <div class="gaps" id="gaps"></div>
+  </section>
+
+  <section class="method">
+    <h2>方法論<span class="en">Methodology</span></h2>
+    <p>所有異常皆為統計描述，規則與閾值如下；閾值寫死在 <span class="mono">scripts/build_monitor.py</span>，改動需過 commit。z-score 以該 series 過去一年的變動分布為基準（日頻 252 筆、週頻 52 筆）；水位分位為現值在一年區間內的百分位。週頻 series（NFCI、TGA、銀行準備金、STLFSI、Fed 資產負債表、初領失業金）不參與連漲跌規則。</p>
+    <div class="tbl-wrap"><table>
+      <tr><th>規則</th><th>條件</th><th>級別</th></tr>
+      <tr><td>單日變動 z-score</td><td>|z| ≥ 2 ／ |z| ≥ 3</td><td>黃 ／ 紅</td></tr>
+      <tr><td>高水位分位（壓力型 series：VIX 家族、MOVE、SKEW、HY／IG／CCC OAS、NFCI、STLFSI、SOFR−IORB、實質利率、期限溢價、金銀比、初領失業金；通膨預期雙向）</td><td>一年分位 ≥ 98</td><td>黃</td></tr>
+      <tr><td>低水位（HYG/LQD 信用比；風險胃納比：道氏運輸、區域銀行、住宅營建、XLY/XLP、SPHB/SPLV；通膨預期雙向）</td><td>一年分位 ≤ 2</td><td>黃</td></tr>
+      <tr><td>52 週新低（主要股指）</td><td>收盤觸及 252 日最低</td><td>紅</td></tr>
+      <tr><td>連漲跌</td><td>同方向連續 ≥ 5 日</td><td>黃</td></tr>
+      <tr><td>殖利率曲線翻轉</td><td>10Y−2Y 利差正負號單日翻轉</td><td>紅</td></tr>
+      <tr><td>VIX 期限結構倒掛</td><td>VIX9D／VIX &gt; 1（新轉倒掛＝紅，持續中＝黃）</td><td>紅／黃</td></tr>
+      <tr><td>股漲信用背離</td><td>S&amp;P 500 上漲且 HYG/LQD 日變動 z ≤ −2</td><td>黃</td></tr>
+      <tr><td>Fear &amp; Greed 極端</td><td>≤ 10（極端恐懼）或 ≥ 90（極端貪婪）</td><td>黃</td></tr>
+    </table></div>
+    <p style="margin-top:.6rem">利率曲線與信用 OAS 走 FRED 日更（落後一個交易日屬預期）；流動性四項（RRP／TGA／銀行準備金／NFCI）沿用本站早報時期的方向慣例合成單一評估。資料缺口誠實列出，不以舊值填充；落後超過時效門檻的 series 標灰、不參與異常判定。</p>
+  </section>
+</div>
+
+<footer class="imq-foot">
+  <div>© 2026 InvestMQuest Research</div>
+  <div><a href="/disclosures.html">方法論與揭露</a> · 本站內容僅供研究參考，不構成投資建議</div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  function el(tag, cls, html) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (html !== undefined) e.innerHTML = html;
+    return e;
+  }
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+
+  var CAT_LABELS = {};
+
+  // ── 今日異常 ──────────────────────────────────────────────
+  function renderAlerts(data) {
+    var box = document.getElementById("alerts");
+    box.innerHTML = "";
+    var alerts = data.alerts_today || [];
+    if (!alerts.length) {
+      box.appendChild(el("div", "alert-calm",
+        "今日無異常" +
+        '<span class="sub">全部 series 落在正常統計區間（規則見下方方法論）</span>'));
+      return;
+    }
+    alerts.forEach(function (a) {
+      var row = el("div", "alert-row");
+      row.appendChild(el("span", "sev " + a.sev, a.sev === "red" ? "紅色" : "黃色"));
+      row.appendChild(el("span", "alert-cat", esc(CAT_LABELS[a.cat] || a.cat)));
+      row.appendChild(el("span", "", esc(a.msg)));
+      box.appendChild(row);
+    });
+  }
+
+  // ── 結構狀態 tiles ────────────────────────────────────────
+  function renderStatus(data) {
+    var grid = document.getElementById("status");
+    grid.innerHTML = "";
+    var s = data.status || {};
+
+    if (s.vix_term) {
+      var inv = s.vix_term.state === "backwardation";
+      grid.appendChild(tile("VIX 期限結構（VIX9D/VIX）", s.vix_term.val.toFixed(3),
+        inv ? "倒掛（短期恐慌訂價高於中期）" : "正常 contango", inv ? "bad" : "ok"));
+    }
+    if (s.curve_10y2y) {
+      var neg = s.curve_10y2y.state === "inverted";
+      grid.appendChild(tile("殖利率曲線 10Y−2Y", s.curve_10y2y.val.toFixed(2) + "%",
+        neg ? "倒掛中" : "正斜率", neg ? "bad" : "ok"));
+    }
+    if (s.liquidity) {
+      var cls = s.liquidity.score >= 2 ? "ok" : (s.liquidity.score <= -2 ? "bad" : "mid");
+      grid.appendChild(tile("流動性合成（RRP／TGA／準備金／NFCI）",
+        (s.liquidity.score > 0 ? "+" : "") + s.liquidity.score,
+        s.liquidity.label, cls));
+    }
+    if (data.fear_greed) {
+      var fg = data.fear_greed;
+      var fgCls = fg.score <= 25 ? "bad" : (fg.score >= 75 ? "mid" : "ok");
+      grid.appendChild(tile("CNN Fear & Greed", String(fg.score),
+        esc(fg.rating) + "（前值 " + fg.prev + "）", fgCls));
+    }
+  }
+  function tile(lbl, val, st, cls) {
+    var t = el("div", "tile");
+    t.appendChild(el("div", "lbl", esc(lbl)));
+    t.appendChild(el("div", "val mono", esc(val)));
+    t.appendChild(el("div", "st " + cls, st));
+    return t;
+  }
+
+  // ── 30 日異常時間軸 ───────────────────────────────────────
+  function renderTimeline(log) {
+    var box = document.getElementById("timeline");
+    var detail = document.getElementById("timeline-detail");
+    box.innerHTML = "";
+    var days = Object.keys((log && log.days) || {}).sort().slice(-30);
+    if (!days.length) {
+      box.appendChild(el("div", "loading", "尚無留痕資料（隨每日更新累積）"));
+      return;
+    }
+    days.forEach(function (d) {
+      var alerts = log.days[d];
+      var sev = alerts.some(function (a) { return a.sev === "red"; }) ? "red"
+        : (alerts.length ? "yellow" : "");
+      var cell = el("div", "day " + sev);
+      cell.title = d + "：" + alerts.length + " 條異常";
+      cell.appendChild(el("span", "dot"));
+      cell.appendChild(el("span", "n", String(alerts.length || "")));
+      cell.appendChild(el("span", "d", d.slice(5).replace("-", "/")));
+      cell.addEventListener("click", function () {
+        Array.prototype.forEach.call(box.children, function (c) { c.classList.remove("sel"); });
+        cell.classList.add("sel");
+        detail.innerHTML = "";
+        detail.appendChild(el("div", "hd", d + " · " + alerts.length + " 條"));
+        if (!alerts.length) detail.appendChild(el("div", "", "當日無異常。"));
+        alerts.forEach(function (a) {
+          detail.appendChild(el("div", "",
+            '<span class="sev ' + a.sev + '">' + (a.sev === "red" ? "紅" : "黃") + "</span> " + esc(a.msg)));
+        });
+      });
+      box.appendChild(cell);
+    });
+  }
+
+  // ── sparkline（單序列，免 legend；線色走 --spark token）──
+  function sparkline(vals) {
+    if (!vals || vals.length < 2) return "";
+    var w = 110, h = 26, pad = 2;
+    var min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+    var span = (max - min) || 1;
+    var pts = vals.map(function (v, i) {
+      var x = pad + (w - 2 * pad) * i / (vals.length - 1);
+      var y = h - pad - (h - 2 * pad) * (v - min) / span;
+      return x.toFixed(1) + "," + y.toFixed(1);
+    });
+    var lastUp = vals[vals.length - 1] >= vals[0];
+    var endCol = lastUp ? "var(--pos)" : "var(--neg)";
+    var last = pts[pts.length - 1].split(",");
+    return '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + " " + h + '" aria-hidden="true">' +
+      '<polyline points="' + pts.join(" ") + '" fill="none" stroke="var(--spark)" stroke-width="1.5" stroke-linejoin="round" opacity=".75"/>' +
+      '<circle cx="' + last[0] + '" cy="' + last[1] + '" r="2.4" fill="' + endCol + '"/></svg>';
+  }
+
+  // ── 分類明細表 ────────────────────────────────────────────
+  function renderCategories(data) {
+    var host = document.getElementById("categories");
+    host.innerHTML = "";
+    (data.categories || []).forEach(function (cat) {
+      if (!cat.items || !cat.items.length) return;
+      var block = el("div", "cat-block");
+      block.appendChild(el("h3", "cat",
+        esc(cat.label) + '<span class="cnt">' + cat.items.length + " series</span>"));
+      var wrap = el("div", "tbl-wrap");
+      var t = el("table");
+      t.appendChild(el("tr", "",
+        "<th>名稱</th><th>現值</th><th>日變動</th><th>z</th><th>一年分位</th>" +
+        "<th>52週</th><th>連續</th><th>近 30 日</th>"));
+      cat.items.forEach(function (it) {
+        var absZ = it.z === null ? 0 : Math.abs(it.z);
+        var rowCls = it.stale ? "stale" : (absZ >= 3 ? "hl-red" : (absZ >= 2 ? "hl-yellow" : ""));
+        var tr = el("tr", rowCls);
+
+        var name = esc(it.label);
+        if (it.stale) name += ' <span class="stale-note">as of ' + it.date + "</span>";
+        tr.appendChild(el("td", "", name));
+        tr.appendChild(el("td", "mono", esc(it.val)));
+        tr.appendChild(el("td", "mono " + it.dir, esc(it.chg)));
+
+        var zCls = absZ >= 3 ? "huge" : (absZ >= 2 ? "big" : "");
+        tr.appendChild(el("td", "", it.z === null ? '<span class="z-chip">—</span>'
+          : '<span class="z-chip ' + zCls + '">' + (it.z > 0 ? "+" : "") + it.z.toFixed(2) + "</span>"));
+
+        tr.appendChild(el("td", "", it.pctile === null ? "—"
+          : '<span class="pct-cell"><span class="pct-bar"><i style="width:' + it.pctile +
+            '%"></i></span><span class="mono" style="font-size:12px">' + it.pctile.toFixed(0) + "</span></span>"));
+
+        var b = "";
+        if (it.hi52) b = '<span class="badge hi">新高</span>';
+        else if (it.lo52) b = '<span class="badge lo">新低</span>';
+        tr.appendChild(el("td", "", b || "—"));
+
+        var st = it.streak || 0;
+        tr.appendChild(el("td", "mono " + (Math.abs(st) >= 5 ? (st > 0 ? "pos" : "neg") : "neu"),
+          st ? (st > 0 ? "+" : "") + st + "日" : "—"));
+
+        var sp = el("td", "spark-td", sparkline(it.spark));
+        tr.appendChild(sp);
+        t.appendChild(tr);
+      });
+      wrap.appendChild(t);
+      block.appendChild(wrap);
+      host.appendChild(block);
+    });
+  }
+
+  function renderGaps(data) {
+    var gaps = data.gaps || [];
+    if (!gaps.length) return;
+    document.getElementById("sec-gaps").style.display = "";
+    document.getElementById("gaps").innerHTML =
+      "本次更新未取得：" + gaps.map(function (g) { return esc(g.label); }).join("、") +
+      "。缺口誠實列出，不以舊值或估值填充。";
+  }
+
+  // ── 載入 ─────────────────────────────────────────────────
+  Promise.all([
+    fetch("data/latest.json").then(function (r) { return r.json(); }),
+    fetch("data/alerts.json").then(function (r) { return r.json(); }).catch(function () { return null; })
+  ]).then(function (res) {
+    var data = res[0], log = res[1];
+    (data.categories || []).forEach(function (c) { CAT_LABELS[c.key] = c.label; });
+    CAT_LABELS.rates = CAT_LABELS.rates || "利率與債券";
+    document.getElementById("asof").textContent =
+      "資料日 " + data.as_of + " · 產出 " + (data.generated_at || "").replace("T", " ").replace("Z", " UTC") +
+      " · 每日美股收盤後更新";
+    renderAlerts(data);
+    renderStatus(data);
+    renderTimeline(log);
+    renderCategories(data);
+    renderGaps(data);
+  }).catch(function (e) {
+    document.getElementById("alerts").innerHTML =
+      '<div class="loading">資料載入失敗：' + esc(e.message) + "</div>";
+  });
+})();
+</script>
+</body>
+</html>
