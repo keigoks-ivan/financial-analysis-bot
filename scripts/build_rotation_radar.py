@@ -12,11 +12,14 @@ Compute (JdK-style RRG, same normalization as build_rotation.py but daily)
 -------------------------------------------------------------------------
   * RS       = 100 * price / benchmark_price  (aligned on the benchmark's
                trading-day grid, forward-filled).
-  * rs_ratio = 100 + (RS - SMA(RS, W)) / STD(RS, W).
-  * rs_mom   = 100 + (rs_ratio - SMA(rs_ratio, Wm)) / STD(rs_ratio, Wm).
+  * rs_ratio = 100 + (RS - SMA(RS, W)) / STD(RS, max(W, 60)).
+  * rs_mom   = 100 + (rs_ratio - SMA(rs_ratio, Wm)) / STD(rs_ratio, max(Wm, 24)).
+    The mean window stays at W / Wm, but the STD (denominator) uses a floored
+    window so the short frame's dispersion estimate is not whipped by too few
+    samples (a W=20 rolling std has only ~20 points — too noisy).
   * Three frames (all daily trail points, oldest -> newest, last = current):
-        "120" -> W=120, Wm=30, trail=15
-        "60"  -> W=60,  Wm=15, trail=12
+        "120" -> W=120, Wm=30, trail=30
+        "60"  -> W=60,  Wm=15, trail=20
         "20"  -> W=20,  Wm=8,  trail=10
 
 Data
@@ -53,6 +56,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, "data")
 CACHE = os.path.join(DATA, "rotation_radar_daily.json")
 OUT_JSON = os.path.join(ROOT, "docs", "rotation", "data", "radar.json")
+# 每日快照：累積歷史供未來長程輪動回放與復盤驗證（零 churn，週末 as_of 不變即 no-op）
+SNAP_DIR = os.path.join(ROOT, "docs", "rotation", "data", "snapshots")
 
 # ── Universe config (order preserved end-to-end; frontend keys color by it) ──
 UNIVERSES = [
@@ -92,12 +97,14 @@ UNIVERSES = [
 
 # Frame -> (W ratio window, Wm momentum window, trail length in trading days)
 FRAMES = {
-    "120": (120, 30, 15),
-    "60": (60, 15, 12),
+    "120": (120, 30, 30),
+    "60": (60, 15, 20),
     "20": (20, 8, 10),
 }
 FRAME_ORDER = ["120", "60", "20"]
 TRAIL_SMOOTH = 3   # 3 日 SMA 平滑 rs_ratio / rs_mom，彗尾才不會鋸齒
+STD_FLOOR = 60     # rs_ratio std 窗下限（樣本太少 std 抖）
+MOM_STD_FLOOR = 24  # rs_mom std 窗下限
 
 
 def warn(msg: str) -> None:
@@ -240,11 +247,39 @@ def _stooq_daily(ticker):
     return rows or None
 
 
+def _ratio_splice(cached_pts, new_pts, ticker):
+    """Scale new_pts (raw split-adjusted-only stooq closes) so they line up with
+    cached_pts (yfinance dividend-adjusted history) on their overlapping dates.
+
+    yfinance auto_adjust=True is dividend-adjusted; _stooq_daily() is not, so for
+    high-yield tickers (TLT/LQD/HYG/VNQ) merging the two raw would (a) distort RS
+    and (b) leave a seam jump in the trail where the two sources meet.  We take the
+    median (cached / stooq) ratio over the last ~10 overlapping dates and rescale
+    the whole stooq series by it — a level splice that removes the seam and the
+    systematic dividend-adjustment offset.  No overlap -> accept as-is + WARN."""
+    import statistics
+    cached = {d: c for d, c in cached_pts}
+    overlap = [(d, c) for d, c in new_pts if d in cached and c]
+    if not overlap:
+        warn(f"stooq splice {ticker}: no date overlap with cached yfinance history — "
+             f"accepting raw stooq closes as-is (possible dividend-adjustment seam)")
+        return new_pts
+    overlap.sort()  # new_pts is date-ascending, but be defensive
+    ratios = [cached[d] / c for d, c in overlap[-10:]]
+    k = statistics.median(ratios)
+    if not (k == k) or k <= 0:  # NaN / non-positive guard
+        warn(f"stooq splice {ticker}: degenerate ratio {k} — accepting as-is")
+        return new_pts
+    return [(d, round(c * k, 4)) for d, c in new_pts]
+
+
 def refresh_cache(tickers, skip_fetch):
     """Incrementally refresh per-ticker daily series cache.  Returns
     ({ticker: [(date, close), ...]}, set_of_stooq_fallback_tickers)."""
     cache = load_json(CACHE, {"meta": {}, "series": {}})
     series = dict(cache.get("series", {}))
+    prior_sources = dict((cache.get("meta") or {}).get("sources", {}))
+    sources = dict(prior_sources)
     stooq_used = set()
 
     if not skip_fetch:
@@ -278,12 +313,31 @@ def refresh_cache(tickers, skip_fetch):
                 fetched[t] = got
                 stooq_used.add(t)
                 info(f"stooq fallback used for {t} ({len(got)} bars)")
-        # Merge fetched into cached series (by date, sorted).
+        # Merge fetched into cached series (by date, sorted).  Stooq points get
+        # ratio-spliced onto any existing yfinance history first, and each
+        # ticker's source is recorded so a mixed-source state stays visible.
         for t, pts in fetched.items():
-            merged = {d: c for d, c in series.get(t, [])}
+            prior = series.get(t, [])
+            if t in stooq_used:
+                if prior:
+                    pts = _ratio_splice(prior, pts, t)
+                    sources[t] = "mixed"  # yfinance history + spliced stooq tail
+                else:
+                    sources[t] = "stooq"
+            else:
+                # yfinance path: brand-new ticker is pure yfinance; a top-up over
+                # a prior stooq/mixed series stays labelled mixed.
+                if prior_sources.get(t) in (None, "yfinance"):
+                    sources[t] = "yfinance"
+            merged = {d: c for d, c in prior}
             for d, c in pts:
                 merged[d] = c
             series[t] = sorted(merged.items())
+
+    # Any ticker in the cache without an explicit label predates source tracking
+    # and came from the yfinance batch path — default it so meta is complete.
+    for t in series:
+        sources.setdefault(t, "yfinance")
 
     cache["series"] = series
     n_bars = sum(len(v) for v in series.values())
@@ -291,7 +345,9 @@ def refresh_cache(tickers, skip_fetch):
         "built_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "n_tickers": len(series),
         "n_bars": n_bars,
-        "note": "daily adjusted closes for rotation radar RRG; yfinance->stooq; incremental.",
+        "sources": {t: sources[t] for t in sorted(sources) if t in series},
+        "note": "daily adjusted closes for rotation radar RRG; yfinance->stooq "
+                "(stooq tail ratio-spliced onto yfinance); incremental.",
     }
     wrote = write_json_if_changed(CACHE, cache)
     info(f"daily cache: {len(series)} tickers / {n_bars} bars, "
@@ -319,11 +375,16 @@ def _compute_frames(rs, pd):
     frames = {}
     for fk in FRAME_ORDER:
         W, Wm, trail_n = FRAMES[fk]
+        # Mean windows stay at W / Wm; STD windows are floored (max(W,60) /
+        # max(Wm,24)) so a short frame's dispersion isn't estimated from too few
+        # samples — that estimation noise is what whipped the short-frame trails.
+        Wstd = max(W, STD_FLOOR)
+        Wmstd = max(Wm, MOM_STD_FLOOR)
         rmean = rs.rolling(W).mean()
-        rstd = rs.rolling(W).std()
+        rstd = rs.rolling(Wstd).std()
         rs_ratio = 100.0 + (rs - rmean) / rstd
         mmean = rs_ratio.rolling(Wm).mean()
-        mstd = rs_ratio.rolling(Wm).std()
+        mstd = rs_ratio.rolling(Wmstd).std()
         rs_mom = 100.0 + (rs_ratio - mmean) / mstd
         # 3 日平滑：日線 z-score 逐日抖動大，不平滑畫出來是鋸齒折線
         rs_ratio = rs_ratio.rolling(TRAIL_SMOOTH).mean()
@@ -421,13 +482,22 @@ def main():
     empty_unis = [u["key"] for u in out_universes if u.get("_n_ok", 0) == 0]
 
     method = {
-        "rs_ratio": "JdK-style: 100+(RS-SMA(RS,W))/STD(RS,W); "
+        "rs_ratio": "JdK-style: 100+(RS-SMA(RS,W))/STD(RS,max(W,60)); "
                     "RS=100*price/benchmark_price aligned on benchmark grid (ffill)",
-        "rs_mom": "100+(rs_ratio-SMA(rs_ratio,Wm))/STD(rs_ratio,Wm); "
+        "rs_mom": "100+(rs_ratio-SMA(rs_ratio,Wm))/STD(rs_ratio,max(Wm,24)); "
                   f"both smoothed with SMA({TRAIL_SMOOTH}d) before trail extraction",
-        "frames": "120: W=120,Wm=30,trail=15 · 60: W=60,Wm=15,trail=12 · "
+        "frames": "120: W=120,Wm=30,trail=30 · 60: W=60,Wm=15,trail=20 · "
                   "20: W=20,Wm=8,trail=10 (daily trading days, oldest->newest, "
                   "last point = current)",
+        "std_window": "均值窗＝W／Wm，但標準差（分母）用有下限的窗："
+                      f"rs_ratio 用 max(W,{STD_FLOOR})、rs_mom 用 max(Wm,{MOM_STD_FLOOR})。"
+                      "短框架（20d）的離散度若只用 20 個樣本估計會過度抖動，"
+                      "拉高 std 窗讓歸一化分母穩定、彗尾不再因估計噪音亂甩。",
+        "semantics": "本圖為波動歸一化的 z-score 版 RRG——圖上距離代表相對強弱變化的"
+                     "統計顯著度，不是絕對超額報酬幅度；低波動資產（如投資級債）與"
+                     "高波動資產（如比特幣）在圖上移動相同距離，對應的實際報酬差異很大。"
+                     f"標準差窗採下限制（rs_ratio max(W,{STD_FLOOR})、rs_mom max(Wm,{MOM_STD_FLOOR})），"
+                     "使短框架的歸一化分母不被少樣本估計噪音放大。",
         "disclaimer": "描述器非擇時。相對輪動排名，衡量各資產／板塊相對其基準的"
                       "強度與動能方向，非買賣訊號、非市場絕對報酬預測。",
     }
@@ -442,6 +512,15 @@ def main():
 
     wrote = write_json_if_changed(OUT_JSON, payload, volatile=("generated_at",))
     info(f"radar.json: {'written' if wrote else 'no change'} (as_of {payload['as_of']})")
+
+    # Daily snapshot: same payload keyed by as_of — 累積歷史供未來長程輪動回放與復盤驗證.
+    # Zero-churn / idempotent: a re-run on the same as_of hits an identical file
+    # (generated_at stripped) so it is a no-op; weekends keep as_of unchanged so
+    # they naturally write nothing new.
+    if payload["as_of"]:
+        snap_path = os.path.join(SNAP_DIR, f"{payload['as_of']}.json")
+        snap_wrote = write_json_if_changed(snap_path, payload, volatile=("generated_at",))
+        info(f"snapshot {payload['as_of']}.json: {'written' if snap_wrote else 'no change'}")
 
     # Summary: per-universe quadrant placement using the mid frame ("60") current.
     print("\n── quadrant placement (frame 60, current point) ──")

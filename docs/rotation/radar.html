@@ -105,6 +105,9 @@ a:hover{color:var(--accent-hover)}
 #tooltip .tt-q{font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.05em}
 #tooltip .tt-row{color:#9aa4b5;font-family:'IBM Plex Mono',monospace;font-size:.7rem}
 #tooltip .tt-row b{color:#e6e9ef}
+#tooltip.pinned{border-color:#5b9bff;box-shadow:0 0 0 1px rgba(91,155,255,.35),0 6px 20px rgba(0,0,0,.45)}
+#tooltip .tt-pin{margin-top:.4rem;padding-top:.35rem;border-top:1px solid #2a3446;
+                 font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.04em;color:#7db0ff}
 
 /* Positions table */
 .pos-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1rem;margin-top:1.6rem}
@@ -121,6 +124,14 @@ a:hover{color:var(--accent-hover)}
 .pos-table .pt-n{font-family:'IBM Plex Mono',monospace;text-align:right;color:var(--text-secondary);white-space:nowrap;
                  font-variant-numeric:tabular-nums}
 .pos-empty{color:var(--text-muted);font-size:.76rem;font-style:italic}
+/* keep a wide table inside its own scroll box — page body never scrolls horizontally */
+.pos-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+/* clickable / pinnable rows */
+.pos-table tr[data-tk]{cursor:pointer;transition:background .12s}
+.pos-table tr[data-tk]:hover{background:var(--bg-card-hover)}
+.pos-table tr.pinned{background:rgba(91,155,255,.14)}
+.pos-table tr.pinned .pt-lb,.pos-table tr.pinned .pt-tk{color:var(--text)}
+.pos-table tr.pinned td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
 
 /* Insufficient members */
 .insuff{margin-top:1.3rem;font-size:.76rem;color:var(--text-muted);line-height:1.7}
@@ -143,6 +154,16 @@ a:hover{color:var(--accent-hover)}
         border-radius:var(--radius);font-size:.78rem;color:var(--text-muted);line-height:1.75}
 .method strong{color:var(--text-secondary)}
 
+/* Related pages (同族描述器) */
+.related{margin:1.8rem 0 .4rem;padding:1.15rem 1.4rem;background:var(--bg-card);border:1px solid var(--border);
+         border-radius:var(--radius)}
+.related h2{font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.11em;text-transform:uppercase;
+            font-weight:700;color:var(--text-secondary);margin-bottom:.7rem}
+.related ul{list-style:none}
+.related li{font-size:.82rem;color:var(--text-secondary);line-height:1.75;padding:.12rem 0}
+.related li a{font-weight:600}
+.related li .rl-desc{color:var(--text-muted)}
+
 footer{padding:1.5rem 0;text-align:center;font-size:.75rem;color:var(--text-muted);
        border-top:1px solid var(--border);margin-top:2rem;line-height:1.8}
 footer a{color:var(--accent)}
@@ -150,7 +171,10 @@ footer a{color:var(--accent)}
 @media(max-width:768px){
   .hero h1{font-size:1.5rem}
   .controls{flex-direction:column;align-items:stretch;gap:.7rem}
-  .tabs,.seg{justify-content:center}
+  .tabs,.seg{justify-content:center;max-width:100%}
+  /* fallback: if a universe row can't wrap short enough, let it scroll in its own box */
+  .tabs{flex-wrap:wrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .ctrl-right{flex-wrap:wrap;justify-content:center}
   header nav{gap:0}
 }
   </style>
@@ -291,7 +315,16 @@ footer a{color:var(--accent)}
   <div class="meta-line" id="meta"></div>
 
   <div class="method" id="method">
-    <strong>方法：</strong>RS-Ratio 為資產相對基準的相對強度標準化指標，RS-Momentum 為該相對強度的變化率，兩者皆以 100 為中心。軌跡點為日線、由舊至新，最末點為現況。象限與順時針輪動為統計描述，非買賣訊號。
+    <strong>方法：</strong>RS-Ratio 為資產相對基準的相對強度標準化指標，RS-Momentum 為該相對強度的變化率，兩者皆以 100 為中心。軌跡點為日線、由舊至新，最末點為現況。象限與順時針輪動為統計描述，非買賣訊號。<span id="method-semantics">本圖為波動歸一化的 z-score 版 RRG，圖上距離代表相對強弱變化的統計顯著度，非絕對超額報酬幅度。</span>
+  </div>
+
+  <div class="related" id="related">
+    <h2>同族描述器</h2>
+    <ul>
+      <li><a href="/rotation/">產業輪動監測</a><span class="rl-desc">——週線、站內 ID 主題宇宙 RRG，看資金在哪些產業主題間輪動。</span></li>
+      <li><a href="/regime/">大類資產 regime 記分卡</a><span class="rl-desc">——六軸跨資產風險胃納合成，描繪 risk-on／risk-off 的環境背景。</span></li>
+      <li><a href="/crowding/">擁擠交易監測</a><span class="rl-desc">——三層代理三角測量部位集中度，衡量下方緩衝與擁擠風險。</span></li>
+    </ul>
   </div>
 </div>
 
@@ -316,7 +349,10 @@ footer a{color:var(--accent)}
 
   var state = {universe:"cross_asset", frame:"120"};
   var DATA = null;
-  var view = {members:[], hitTargets:[], hover:null}; // current render cache
+  var view = {members:[], hitTargets:[], labelHits:[], hover:null, pinned:null}; // current render cache
+
+  // effective focus = pinned (sticky) overrides hover; used for dimming + labels
+  function focusTk(){ return view.pinned || view.hover; }
 
   var canvas = document.getElementById("rrg");
   var ctx = canvas.getContext("2d");
@@ -460,19 +496,22 @@ footer a{color:var(--accent)}
     drawBase(g);
     drawDateStamp(g, (DATA && DATA.as_of) || "");
 
-    // trails: dim non-hovered when hovering
-    var hoverTk = view.hover;
+    // trails: dim non-focused when a member is focused (hover or pinned)
+    var focus = focusTk();
     view.hitTargets = [];
+    view.labelHits = [];
     model.plot.forEach(function(p){
-      var dim = hoverTk && hoverTk!==p.ticker;
+      var dim = focus && focus!==p.ticker;
       drawTrail(p, g, dim);
     });
     // labels drawn after with collision avoidance
-    drawLabels(model.plot, g, hoverTk);
+    drawLabels(model.plot, g, focus);
 
     renderPositions(model);
     renderInsuff(model);
     renderMeta(model);
+    // keep the pinned member's tooltip anchored to its (possibly moved) head
+    anchorPinnedTooltip();
   }
 
   function fillQuad(x0,y0,x1,y1, rgb, a){
@@ -593,10 +632,10 @@ footer a{color:var(--accent)}
       var last = p.trail[p.trail.length-1];
       return {p:p, x:g.toX(last.r), y:g.toY(last.m), text:p.label, color:p.color};
     });
-    drawLabelList(labels, g, hoverTk);
+    drawLabelList(labels, g, hoverTk, view.labelHits);
   }
 
-  function drawLabelList(labels, g, hoverTk){
+  function drawLabelList(labels, g, hoverTk, hitOut){
     // label boxes at head positions, nudged vertically to avoid overlap
     labels.sort(function(a,b){return a.y-b.y;});
     var lineH = 13, minGap = 12;
@@ -621,6 +660,11 @@ footer a{color:var(--accent)}
       ctx.shadowColor = "rgba(0,0,0,.85)"; ctx.shadowBlur = 3;
       ctx.fillText(l.text, tx, ty);
       ctx.shadowBlur = 0;
+      if(hitOut){
+        var tw = ctx.measureText(l.text).width;
+        var x0 = right ? tx : tx-tw, x1 = right ? tx+tw : tx;
+        hitOut.push({ticker:l.p.ticker, p:l.p, x0:x0-4, y0:ty-8, x1:x1+4, y1:ty+8});
+      }
     });
     ctx.restore();
   }
@@ -796,9 +840,10 @@ footer a{color:var(--accent)}
       if(rows.length===0){
         html += '<div class="pos-empty">此象限目前無資產。</div>';
       }else{
-        html += '<table class="pos-table"><tbody>';
+        html += '<div class="pos-table-wrap"><table class="pos-table"><tbody>';
         rows.forEach(function(p){
-          html += '<tr>'+
+          var pinCls = (view.pinned===p.ticker) ? ' class="pinned"' : '';
+          html += '<tr data-tk="'+esc(p.ticker)+'"'+pinCls+'>'+
             '<td class="pt-tk"><i style="display:inline-block;width:8px;height:8px;border-radius:2px;'+
             'margin-right:.45rem;vertical-align:baseline;background:'+p.color+'"></i>'+esc(p.ticker)+'</td>'+
             '<td class="pt-lb">'+esc(p.label)+'</td>'+
@@ -806,7 +851,7 @@ footer a{color:var(--accent)}
             '<td class="pt-n">'+p.last.m.toFixed(2)+'</td>'+
           '</tr>';
         });
-        html += '</tbody></table>';
+        html += '</tbody></table></div>';
       }
       html += '</div>';
     });
@@ -852,7 +897,7 @@ footer a{color:var(--accent)}
       b.setAttribute("role","tab");
       if(u.key===state.universe) b.className="active";
       b.addEventListener("click", function(){
-        state.universe = u.key; view.hover=null; writeHash(); syncControls(); playView();
+        state.universe = u.key; view.hover=null; view.pinned=null; writeHash(); syncControls(); playView();
       });
       tabs.appendChild(b);
     });
@@ -863,7 +908,7 @@ footer a{color:var(--accent)}
       b.textContent = f+"日";
       if(f===state.frame) b.className="active";
       b.addEventListener("click", function(){
-        state.frame = f; view.hover=null; writeHash(); syncControls(); playView();
+        state.frame = f; view.hover=null; view.pinned=null; writeHash(); syncControls(); playView();
       });
       seg.appendChild(b);
     });
@@ -882,36 +927,84 @@ footer a{color:var(--accent)}
   }
 
   // ---------- interaction ----------
-  function onMove(ev){
-    if(!geom || animActive()) return; // hit-testing disabled while comets fly
-    var rect = canvas.getBoundingClientRect();
-    var px, py;
-    if(ev.touches && ev.touches.length){ px = ev.touches[0].clientX-rect.left; py = ev.touches[0].clientY-rect.top; }
-    else { px = ev.clientX-rect.left; py = ev.clientY-rect.top; }
-    var best=null, bestD=1e9;
+  // Locate the head hit-target for a ticker (for anchoring the pinned tooltip).
+  function coordsFor(tk){
+    for(var i=0;i<view.hitTargets.length;i++){ if(view.hitTargets[i].ticker===tk) return view.hitTargets[i]; }
+    return null;
+  }
+  // Pick a member near (px,py): nearest comet head within threshold, else any label box hit.
+  function pickTarget(px, py){
+    var best=null, bestD=22*22;
     view.hitTargets.forEach(function(t){
       var d = (t.x-px)*(t.x-px)+(t.y-py)*(t.y-py);
       if(d<bestD){ bestD=d; best=t; }
     });
-    var thresh = 22*22;
-    if(best && bestD<thresh){
+    if(best) return best;
+    for(var i=0;i<view.labelHits.length;i++){
+      var l=view.labelHits[i];
+      if(px>=l.x0 && px<=l.x1 && py>=l.y0 && py<=l.y1){
+        return coordsFor(l.ticker) || {ticker:l.ticker, p:l.p, x:(l.x0+l.x1)/2, y:(l.y0+l.y1)/2};
+      }
+    }
+    return null;
+  }
+  function evPos(ev){
+    var rect = canvas.getBoundingClientRect();
+    if(ev.touches && ev.touches.length) return {x:ev.touches[0].clientX-rect.left, y:ev.touches[0].clientY-rect.top};
+    if(ev.changedTouches && ev.changedTouches.length) return {x:ev.changedTouches[0].clientX-rect.left, y:ev.changedTouches[0].clientY-rect.top};
+    return {x:ev.clientX-rect.left, y:ev.clientY-rect.top};
+  }
+
+  // ----- pin control -----
+  function setPin(tk){
+    if(animActive()) cancelAnim();
+    view.pinned = tk || null;
+    view.hover = null;
+    if(!view.pinned){ tooltip.style.opacity="0"; tooltip.className=""; }
+    draw(); // draw() re-anchors the pinned tooltip via anchorPinnedTooltip()
+  }
+  function togglePin(tk){ setPin(view.pinned===tk ? null : tk); }
+  function anchorPinnedTooltip(){
+    if(!view.pinned) return;
+    var c = coordsFor(view.pinned);
+    if(c) showTooltip(c, c.x, c.y, true);
+    else tooltip.style.opacity="0"; // pinned member not currently plotted
+  }
+
+  function onMove(ev){
+    if(!geom || animActive()) return; // hit-testing disabled while comets fly
+    if(view.pinned) return;           // focus locked; pinned tooltip stays anchored
+    var pt = evPos(ev);
+    var best = pickTarget(pt.x, pt.y);
+    if(best){
       if(view.hover!==best.ticker){ view.hover=best.ticker; draw(); }
-      showTooltip(best, px, py);
+      showTooltip(best, pt.x, pt.y, false);
     }else{
       if(view.hover){ view.hover=null; draw(); }
       tooltip.style.opacity="0";
     }
   }
-  function showTooltip(t, px, py){
+  function onClick(ev){
+    if(!geom) return;
+    if(animActive()) return; // let the flying comets finish; ignore stray clicks
+    var pt = evPos(ev);
+    var best = pickTarget(pt.x, pt.y);
+    if(best) togglePin(best.ticker);   // head/label → toggle pin
+    else setPin(null);                 // empty chart area → unpin
+  }
+  function showTooltip(t, px, py, pinnedMode){
     var p=t.p, last=p.last, q=QUAD[p.quad];
     var asof = last.d || (DATA&&DATA.as_of) || "—";
-    tooltip.innerHTML =
+    var html =
       '<div class="tt-tk" style="color:'+p.color+'">'+esc(p.ticker)+'</div>'+
       '<div style="color:#c7cdd8;margin-bottom:.25rem">'+esc(p.label)+'</div>'+
       '<div class="tt-q" style="color:'+quadSwatch(p.quad)+'">'+q.zh+' '+q.en+'</div>'+
       '<div class="tt-row">RS-Ratio <b>'+last.r.toFixed(2)+'</b></div>'+
       '<div class="tt-row">RS-Mom <b>'+last.m.toFixed(2)+'</b></div>'+
       '<div class="tt-row">截至 '+esc(asof)+'</div>';
+    if(pinnedMode) html += '<div class="tt-pin">已釘選　·　點擊空白處或 Esc 取消</div>';
+    tooltip.innerHTML = html;
+    tooltip.className = pinnedMode ? "pinned" : "";
     tooltip.style.opacity="1";
     var tw = tooltip.offsetWidth, th = tooltip.offsetHeight;
     var host = canvas.parentElement.getBoundingClientRect();
@@ -921,13 +1014,29 @@ footer a{color:var(--accent)}
     tooltip.style.left = Math.max(2,x)+"px";
     tooltip.style.top = Math.max(2,y)+"px";
   }
-  function onLeave(){ if(view.hover){view.hover=null;draw();} tooltip.style.opacity="0"; }
+  function onLeave(){
+    if(view.pinned) return;           // keep the pinned tooltip visible
+    if(view.hover){ view.hover=null; draw(); }
+    tooltip.style.opacity="0";
+  }
 
   canvas.addEventListener("mousemove", onMove);
   canvas.addEventListener("mouseleave", onLeave);
+  canvas.addEventListener("click", onClick); // tap on touch devices also fires click → pin
   canvas.addEventListener("touchstart", onMove, {passive:true});
   canvas.addEventListener("touchmove", onMove, {passive:true});
   canvas.addEventListener("touchend", onLeave);
+
+  // click a positions-table row → pin the same member
+  document.getElementById("positions").addEventListener("click", function(ev){
+    var tr = ev.target.closest ? ev.target.closest("tr[data-tk]") : null;
+    if(!tr) return;
+    togglePin(tr.getAttribute("data-tk"));
+  });
+  // Esc unpins
+  document.addEventListener("keydown", function(ev){
+    if((ev.key==="Escape" || ev.key==="Esc") && view.pinned) setPin(null);
+  });
 
   var rt=null;
   window.addEventListener("resize", function(){
@@ -935,7 +1044,7 @@ footer a{color:var(--accent)}
     rt=setTimeout(function(){ cancelAnim(); draw(); },120); // resize mid-flight: settle to final
   });
   window.addEventListener("hashchange", function(){
-    readHash(); if(!DATA) return; syncControls(); playView();
+    readHash(); if(!DATA) return; view.hover=null; view.pinned=null; syncControls(); playView();
   });
   document.getElementById("replay-btn").addEventListener("click", function(){
     startAnim(); // manual replay always animates (even under reduced motion)
@@ -955,6 +1064,11 @@ footer a{color:var(--accent)}
     .then(function(json){
       DATA = json;
       if(!DATA.universes || !DATA.universes.length){ fail("資料檔尚無宇宙內容。"); return; }
+      // z-score semantics note: prefer data's method.semantics, else keep the baked-in fallback
+      if(DATA.method && DATA.method.semantics){
+        var sem = document.getElementById("method-semantics");
+        if(sem) sem.textContent = DATA.method.semantics;
+      }
       readHash();
       // validate state against data
       currentUniverse(); validFrame(); writeHash();

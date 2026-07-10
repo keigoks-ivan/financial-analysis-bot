@@ -56,10 +56,12 @@ STAGED_DD=$(echo "$STAGED" | grep -E '^docs/dd/DD_.*\.html$' || true)
 STAGED_ID=$(echo "$STAGED" | grep -E '^docs/id/ID_.*\.html$' || true)
 STAGED_CACHE=$(echo "$STAGED" | grep -E '^docs/cache/(fundamentals|prices)-(us|tw|jp)\.json$' || true)
 STAGED_SC=$(echo "$STAGED" | grep -E '^docs/supply-chain/data/.*\.json$' | grep -v 'dd_links\.json$' || true)
+STAGED_RADAR=$(echo "$STAGED" | grep -E '^docs/rotation/data/(radar\.json|snapshots/.*\.json)$' || true)
 DD_VALIDATOR_CHANGED=$(echo "$STAGED" | grep -E '^scripts/validate_dd_meta\.py$' || true)
 ID_VALIDATOR_CHANGED=$(echo "$STAGED" | grep -E '^scripts/validate_id_meta\.py$' || true)
 CACHE_VALIDATOR_CHANGED=$(echo "$STAGED" | grep -E '^scripts/validate_cache_schema\.py$' || true)
 SC_VALIDATOR_CHANGED=$(echo "$STAGED" | grep -E '^scripts/validate_supply_chain_meta\.py$' || true)
+RADAR_VALIDATOR_CHANGED=$(echo "$STAGED" | grep -E '^scripts/validate_rotation_radar\.py$' || true)
 
 # Size-floor gate operates on ADDED files only (diff-filter=A). A fresh report is
 # always a new DD_/DCA_<date>.html (an Add); metadata patches to legacy reports are
@@ -71,8 +73,9 @@ ADDED_DCA=$(echo "$ADDED" | grep -E '^docs/dca/DCA_.*\.html$' || true)
 
 # Bail early if nothing relevant in scope
 if [ -z "$STAGED_DD" ] && [ -z "$STAGED_ID" ] && [ -z "$STAGED_CACHE" ] && [ -z "$STAGED_SC" ] && \
-   [ -z "$DD_VALIDATOR_CHANGED" ] && [ -z "$ID_VALIDATOR_CHANGED" ] && [ -z "$CACHE_VALIDATOR_CHANGED" ] && \
-   [ -z "$SC_VALIDATOR_CHANGED" ] && [ -z "$ADDED_DCA" ]; then
+   [ -z "$STAGED_RADAR" ] && [ -z "$DD_VALIDATOR_CHANGED" ] && [ -z "$ID_VALIDATOR_CHANGED" ] && \
+   [ -z "$CACHE_VALIDATOR_CHANGED" ] && [ -z "$SC_VALIDATOR_CHANGED" ] && \
+   [ -z "$RADAR_VALIDATOR_CHANGED" ] && [ -z "$ADDED_DCA" ]; then
   exit 0
 fi
 
@@ -211,6 +214,37 @@ if [ -n "$TARGETS_SC" ]; then
     echo "❌ supply-chain schema validation FAILED — commit blocked."
     echo "   Tail of validator output:"
     tail -25 /tmp/_sc_validate.log | sed 's/^/   /'
+    echo ""
+    echo "   Fix locally then retry. Bypass with --no-verify only if intentional."
+    FAIL=1
+  fi
+fi
+
+# Rotation radar path: validator changed → full sweep (radar.json + all
+# snapshots); else staged only. Mirrors the supply-chain staged-only gating.
+TARGETS_RADAR=""
+MODE_RADAR=""
+if [ -n "$RADAR_VALIDATOR_CHANGED" ]; then
+  # No args → validator sweeps radar.json + every snapshot itself.
+  TARGETS_RADAR="sweep"
+  MODE_RADAR="full sweep (validator changed — clearing historical debt)"
+elif [ -n "$STAGED_RADAR" ]; then
+  TARGETS_RADAR="$STAGED_RADAR"
+  MODE_RADAR="staged only"
+fi
+
+if [ -n "$TARGETS_RADAR" ]; then
+  echo "→ pre-commit: validating rotation radar — $MODE_RADAR"
+  if [ "$TARGETS_RADAR" = "sweep" ]; then
+    RADAR_CMD="python3 scripts/validate_rotation_radar.py"
+  else
+    RADAR_CMD="python3 scripts/validate_rotation_radar.py $STAGED_RADAR"
+  fi
+  if ! $RADAR_CMD > /tmp/_radar_validate.log 2>&1; then
+    echo ""
+    echo "❌ rotation radar validation FAILED — commit blocked."
+    echo "   Tail of validator output:"
+    tail -25 /tmp/_radar_validate.log | sed 's/^/   /'
     echo ""
     echo "   Fix locally then retry. Bypass with --no-verify only if intentional."
     FAIL=1
