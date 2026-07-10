@@ -33,6 +33,7 @@ from typing import Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from site_nav import DD_SCREENER_SUBNAV, build_subnav, full_nav_block  # noqa: E402
+from engine.grp import grp_score  # noqa: E402  排序主幹＝GRP（2026-07-04 mandate）
 
 # ── paths ─────────────────────────────────────────────────────────────────────
 ROOT = Path(__file__).resolve().parent.parent
@@ -205,6 +206,20 @@ def _certainty(s: dict) -> float:
             + (_safe_float(s.get("quality_score")) or 0.0)) / 20.0
 
 
+def _grp_key(s: dict) -> tuple:
+    """GRP 排序鍵（對齊 2026-07-04 mandate：排序主幹＝GRP，EV5y×確定性降參考子訊號）。
+    回傳 (pass 1/0, GRP score)——GRP 全過者在前、pass 內按 GRP score（R 上修幅度）降冪。
+    grp.py 邏輯零改動，本頁僅取用其判定當席位排序主鍵。"""
+    g = grp_score(s)
+    return (1 if g.get("pass") else 0, g.get("score") or 0.0)
+
+
+def _grp_disp(s: dict) -> str:
+    """GRP 排序欄顯示：pass 標記 ＋ score（R 上修主鍵）。"""
+    gk = s.get("_grpk") or _grp_key(s)
+    return f'{"✓" if gk[0] else "·"} {gk[1]:.1f}'
+
+
 def _ev5y_raw(s: dict):
     """EV5y 原值（None 表無資料，不 fallback 0）。live 優先、缺則報告靜態值。"""
     v = _safe_float(s.get("live_ev5y_pct"))
@@ -304,9 +319,9 @@ def _core_row(s: dict) -> str:
   <td class="left">{_dd_link(s)}{_de_badge(s)}</td>
   <td>{_verdict_badge(s.get("dca_verdict"))}</td>
   <td>{escape(s.get("dca_role") or "—")}</td>
-  <td class="num"><strong>{s["_score"]:.2f}</strong></td>
+  <td class="num"><strong>{_grp_disp(s)}</strong></td>
+  <td class="num">{s["_score"]:.2f}</td>
   <td class="num">{_pct(_ev5y(s), signed=False)}</td>
-  <td class="num">{_certainty(s):.2f}</td>
   <td class="meta">{escape(s.get("moat_grade") or "?")}{escape(s.get("moat_trend") or "")} · {escape(s.get("runway_post_y5") or "—")}</td>
 </tr>"""
 
@@ -318,7 +333,7 @@ def _core_table(rows: list, empty: str) -> str:
     return f"""<table>
 <thead><tr>
   <th class="left">Ticker</th><th>裁決</th><th>角色</th>
-  <th class="num">EV5y×確定性</th><th class="num">EV5y</th><th class="num">確定性</th>
+  <th class="num">GRP 排序</th><th class="num">EV5y×確定<span style="font-weight:400">（參考）</span></th><th class="num">EV5y</th>
   <th class="left">護城河 · runway</th>
 </tr></thead>
 <tbody>
@@ -330,7 +345,11 @@ def render_core(core_sorted: list) -> str:
     exe_all = [s for s in core_sorted if s.get("dca_verdict") == "進場"]
     # 核心席位只認「進場＋核心角色」；角色優先＝無條件核心先佔位，再依潛力分補足 5 席
     exe_core = [s for s in exe_all if is_core_role(s)]
-    exe_core.sort(key=lambda s: (0 if _is_unconditional_core(s) else 1, -s["_score"], s["ticker"]))
+    # 角色優先（無條件核心先佔位）→ GRP 排序主幹 → EV5y×確定性 tiebreak
+    exe_core.sort(key=lambda s: (0 if _is_unconditional_core(s) else 1,
+                                 -(s.get("_grpk") or _grp_key(s))[0],
+                                 -(s.get("_grpk") or _grp_key(s))[1],
+                                 -s["_score"], s["ticker"]))
     sleeve = exe_core[:CORE_SLOTS]
     bench_core = exe_core[CORE_SLOTS:]
     exe_noncore = [s for s in exe_all if not is_core_role(s)]   # 進場但角色非核心 → 歸衛星軌
@@ -344,9 +363,9 @@ def render_core(core_sorted: list) -> str:
     return f"""<div class="track-card track-core">
   <h3>核心軌 <span class="cnt">席位 {len(sleeve)}/{CORE_SLOTS}</span></h3>
   <div class="track-desc">
-    軌別＝<b>DD 裁決＝進場 且 角色含「核心持倉」</b>；<b>席位硬上限 {CORE_SLOTS} 檔</b>（章程 core ≤5）。
-    選席＝<b>角色優先</b>：無條件核心持倉先佔位，餘席依 <b>EV5y × 確定性</b> 由條件式核心補足；超出落板凳。
-    EV5y 取 <code>live_ev5y_pct</code> 優先、缺則 <code>ev5y_pct</code>。單檔上限 {CORE_CAP_PCT:.0f}%（個股部淨值）。
+    <b>方式甲 · 結構長抱線的核心分軌。</b>軌別＝<b>DD 裁決＝進場 且 角色含「核心持倉」</b>；<b>席位硬上限 {CORE_SLOTS} 檔</b>（章程 core ≤5）。
+    選席＝<b>角色優先</b>：無條件核心持倉先佔位，餘席依 <b>GRP 排序</b>（R 上修幅度，2026-07-04 mandate 的排序主幹）補足；超出落板凳。
+    <b>EV5y × 確定性已降為參考子訊號</b>（僅列示、不再主導排序）；EV5y 取 <code>live_ev5y_pct</code> 優先、缺則 <code>ev5y_pct</code>。單檔上限 {CORE_CAP_PCT:.0f}%（個股部淨值）。
   </div>
   <div class="seg-h seg-in">核心席位（最終 {CORE_SLOTS}）· {len(sleeve)} 檔</div>
   {_core_table(sleeve, "目前無可執行核心進場票。")}
@@ -681,7 +700,7 @@ def render_leaderboard(univ: list, artifacts: list, n_total: int) -> str:
     return f"""<section class="block" id="leaderboard">
   <h2 class="block-h"><span class="step">6</span> 全宇宙潛力榜 · 補 DD 導航</h2>
   <div class="block-sub">
-    把核心軌的<b>潛力分（EV5y × 確定性）</b>套到全宇宙 {n_total} 檔——<b>不是買入排行，是研究優先序</b>。
+    把 <b>EV5y × 確定性</b> 套到全宇宙 {n_total} 檔——<b>這是研究補 DD 優先序，非席位排序</b>（席位排序主幹＝<a href="/engine/">GRP 決策引擎</a>，EV5y 在此僅作補 DD 導航的參考子訊號）。
     <b>確定性</b>（moat+quality/20）全宇宙皆有；<b>EV5y</b> 出處分兩級：
     <span class="prov prov-rig">🟢 §11.5</span> 機率加權情境（嚴謹、有反偏差防線）vs
     <span class="prov prov-heur">🟡 heur</span> 啟發式估計（僅方向性）。
@@ -853,8 +872,11 @@ def build(dry_run: bool = False) -> int:
         if s["ticker"] in gated_set or (v in ("進場", "觀望") and is_core_role(s)):
             core[s["ticker"]] = s
     for s in core.values():
-        s["_score"] = _ev5y(s) * _certainty(s)
-    core_sorted = sorted(core.values(), key=lambda s: (-s["_score"], s["ticker"]))
+        s["_score"] = _ev5y(s) * _certainty(s)   # EV5y×確定性：降為參考子訊號/tiebreak
+        s["_grpk"] = _grp_key(s)                  # GRP：排序主幹（2026-07-04 mandate）
+    # 排序主鍵＝GRP（pass 在前、score 降冪）；EV5y×確定性退為 tiebreak
+    core_sorted = sorted(core.values(),
+                         key=lambda s: (-s["_grpk"][0], -s["_grpk"][1], -s["_score"], s["ticker"]))
 
     # ── 衛星·結構軌 ── runway🟢 + eps2y/peg 不 fail + moat 過 + 非核心角色
     # 一檔一軌：循環軌成員（trailing fcf/roic fail 形狀）優先歸循環軌，不重複列入結構軌
@@ -1001,7 +1023,8 @@ body{{background:transparent}}</style>
       個股部（總資產 25%，5～10 檔最有上漲潛力的組合）整條投資流程的活數字：
       <b>發現 → 資格閘 → 三軌射擊名單 → 板機 → 監控 → 回看鏡</b>。所有數字來自既有 JSON，每週隨基本面刷新自動更新。
       本頁只呈現<b>研究層</b>，實際持倉與權重不上站。
-      <b>分工</b>：本頁管<b>流程與板機</b>；排序與席位見 <a href="/engine/">決策引擎</a>，對外正式榜見 <a href="/picks/">精選清單</a>。
+      <b>分工（兩條線＋一個板機＋一個對照）</b>：本頁是<b>方式甲（結構長抱線）</b>與<b>方式乙（循環時機線）</b>共用的<b>流程與板機</b>視圖——核心／衛星結構軌＝甲線，衛星循環軌＝乙線，sop-funnel＝兩線共用板機。
+      <b>席位排序主幹＝GRP</b>（見 <a href="/engine/">決策引擎</a>，EV5y×確定性已降參考子訊號），對外成品榜見 <a href="/picks/">精選清單</a>。
     </div>
     <div class="hero-stats">
       <div class="hero-stat"><strong>{_fmt_stamp(run_ts)}</strong>最後更新（台北）</div>

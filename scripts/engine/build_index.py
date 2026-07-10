@@ -66,7 +66,7 @@ def main() -> int:
 <h1>決策引擎</h1>
 <div class="hero-sub" style="font-size:15px"><b>一句話：全市場掃「高成長 × EPS 上修 × 位置適合」→ 審查擋陷阱 →
 護城河分軌 → 席位化組合 → 每個判斷自動對答案。</b></div>
-<div class="asof">研究層頁面，不含實際持倉 ｜ 週更 ｜ 分工：本引擎管排序與席位（機器擂台）；流程與板機見 <a href="/dd-screener/pipeline.html">Pipeline</a>，對外正式榜見 <a href="/picks/">精選清單</a> ｜ 已結算 {sb.get('n_settled', '—')} 筆歷史裁決</div>
+<div class="asof">研究層頁面，不含實際持倉 ｜ 週更 ｜ 分工：本引擎＝<b>方式甲（結構長抱線）的排序主幹</b>——GRP 三閘排序與席位（機器擂台）；流程與板機見 <a href="/dd-screener/pipeline.html">Pipeline</a>，對外成品榜見 <a href="/picks/">精選清單</a> ｜ 已結算 {sb.get('n_settled', '—')} 筆歷史裁決</div>
 </div>
 
 <div class="block">
@@ -152,8 +152,9 @@ def main() -> int:
 <div class="note" style="margin-top:12px">
 <b>紀律</b>：GRP 三閘與市值門檻（2026-07-04 持有人拍板）PREREG 鎖定，季檢憑記分板數據才可調；
 記分板 append-only、gate 變更畫分段線、歷史不重算；樣本未熟（n&lt;20 或齡&lt;91 天）標「觀察期」不給結論。
-<b>與 <a href="/dd-screener/pipeline.html">dd-screener Pipeline</a> 的關係</b>：那是 legacy EV5y 鏡頭
-（排序用 5 年期望值），本區是 GRP 鏡頭（排序用上修幅度）——兩鏡並存對照，2026-10 記分板成熟後由數據裁決。
+<b>與 <a href="/dd-screener/pipeline.html">dd-screener Pipeline</a> 的關係</b>：同屬<b>方式甲（結構長抱線）</b>，
+不是兩套並存的競爭排序——Pipeline 核心軌<b>已對齊 GRP 排序主幹</b>（EV5y×確定性降為參考子訊號，2026-07-04 mandate）。
+本區＝甲線排序主幹的機器擂台視圖，Pipeline＝同一條甲線的流程與板機視圖，兩者互指不重複。
 </div>
 </div>
 
