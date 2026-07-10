@@ -1,6 +1,8 @@
-# macro-analyst skill v1.1 — 總經深度報告（macro ID）
+# macro-analyst skill v1.2 — 總經深度報告（macro ID）
 
-**v1.1（2026-07-09）**：首跑四份（USEconomy／TaiwanEconomy／USFiscalDeficit／GlobalLiquidity）critic 實證驅動的兩條新紀律——①證偽表每條必附現值＋as-of（GlobalLiquidity M1：兩大引信全篇無現值、其中一條十個月前已半觸發而報告未察）；②站內引用忠實性（GlobalLiquidity M4：把姊妹報告的「最大未解分歧」寫成「與其一致」）。均為 sourcing／格式紀律，非判斷類規則，不入 rule_ledger。
+**v1.2（2026-07-10）**：八份實跑＋七輪 critic 的完整校準（素材：`notes/site-internal/macro/_v12_calibration_notes.md`）。新增八條 sourcing 紀律（見【數據紀律】一節）：非美／無官方統計主題的 T1 條款、T3 現值取捨、觸及紀錄強制查證、證據新鮮度標籤、carry-forward 數字二次查證、無 sourced base rate 出口、衝突數字割捨協議、數據窗標準動作；critic spawn 歸屬明文化。累計錯誤型態譜系（全部「真數字錯上下文」、幻覺 0）：①過時數字 ②錯標系列/口徑 ③時間標籤錯 ④引信無現值 ⑤站內引用美化 ⑥舊證據當新引信 ⑦當局行動漏記。stance 鑑別力議題（八份全中性）不動條文，forward 對帳日 2027-01。
+
+**v1.1（2026-07-09）**：首跑四份 critic 實證驅動——①證偽表每條必附現值＋as-of；②站內引用忠實性。均為 sourcing／格式紀律，非判斷類規則，不入 rule_ledger。
 
 ## 【定位】
 
@@ -73,6 +75,19 @@
    ```
    Validator 後補（建 DB 先單獨做、consumer 接線另案——先手動保證欄位齊）。
 
+## 【數據紀律（v1.2，八份實跑校準）】
+
+錯誤型態譜系（八份累計，幻覺 0）：全部是「**真數字、錯上下文**」——過時／錯標系列／時間標籤錯／舊證據當新引信／當局行動漏記。以下八條全部針對這個譜系：
+
+1. **非美／轉引 T1 條款**：T1 以**口徑**為準（官方數字＝T1），取得路徑若為轉引（官方頁不可達、經媒體轉發）須在來源標註；權威性與可驗證性分離者（如準官方序列只有轉載可查）保守降 T3。
+2. **結構性 T1 天花板聲明**：主題天然無官方統計者（FX 部位、AI capex、私人流動性指數類），floor 仍 45%，但須在來源總表明文「本主題 T1 結構性天花板」＋逐項標註，區別於偷懶。
+3. **T3 現值取捨**：kill metric 現值只有 T3 源時——若該指標是裁決變數，仍上表但標源級＋aside 註明「現值監控依賴轉引源」；非裁決變數則換代理指標或下表。
+4. **觸及紀錄強制查證**：「近 12 個月是否觸及門檻」不得憑寫稿記憶；**「政策當局行動」型 kill metric（干預／會議決策／監管變更）必須查一次官方 release**（YenCarry 教訓：MoF 創紀錄干預 ¥11.73 兆漏記，原稿誤寫「無干預」）。
+5. **證據新鮮度標籤**：觸及紀錄必附事件日期；「既存 tell（已亮燈 N 個月）」與「新事件」分開標，**不得把舊證據寫成新引信**（AICapexMacro 教訓：17 個月前的折舊年限縮短被標成近期觸發）。
+6. **Carry-forward 數字強制二次查證**：政策利率／利差／官方預測 vintage（IMF WEO、SEP 類）——這幾類「極易從記憶帶舊值」的數字，self-review 時強制 WebSearch 確認 current vintage（DollarCycle 教訓：IMF 增長差用了兩天前已被取代的舊 vintage；YenCarry 教訓：政策利差 325bp 過時）。
+7. **無 sourced base rate 的正式出口**：主題無量化文獻時允許質性合成（如「托底 5/5、再通脹 1.5/5」），但必須明文標註「非 sourced 統計」＋列出合成所依個案（ChinaEconomy 先例轉正）。
+8. **衝突數字割捨協議**：多源分歧顯著且未解（如三源差 150bp）→ 降格為區間或加權替代口徑並標註，不押單一數字；序列斷檔／口徑改版一律進「標籤精確聲明」段（報告 footer 標配）。
+
 ## 【研究流程（四軸，零素材啟動）】
 
 - **Step 0**：主題確認＋邊界判定（industry vs macro，見上）＋讀 `docs/regime/` 最新一期與 `docs/crowding/` 最新一期當現況底料（站內先讀，不重做）。
@@ -84,8 +99,8 @@
 
 ## 【發稿流程】
 
-1. 寫稿完成 → **self-review gate**：數字皆有來源與 as-of／全形標點／禁語掃描／§0-§8 齊／macro-meta 欄位齊／**證偽表每條現值齊**（缺現值的 metric 補查或下表）／**站內引用逐條回對原文**（開原檔比對裁決語氣，分歧不得寫成一致）。
-2. **強制 cold-review critic**（比照 industry-analyst Step 8.7）：spawn general-purpose agent（sonnet），checklist 7 條——①§0 stance 與 §5 情境樹一致；②傳導鏈每環有來源；③base rate 統計非 cherry-pick；④證偽表可操作（門檻＋頻率＋源＋**現值**；並查該指標近 12 個月是否曾觸及門檻而報告未載）；⑤描述器紀律無違反；⑥priced-in 分歧真非共識；⑦與 regime/crowding 現況無未解釋矛盾＋**站內引用忠實抽查 ≥2 處**（開被引原檔逐字比對）。另固定用 WebSearch 抽查 5-6 個關鍵數字（首跑實證：主要錯誤型態是「真數字但過時／錯標系列」，非幻覺）。報告存 `notes/site-internal/macro/_critic_{Slug}_{YYYYMMDD}.md`。大錯必修，cosmetic 記錄即可。
+1. 寫稿完成 → **self-review gate**：數字皆有來源與 as-of／全形標點／禁語掃描／§0-§8 齊／macro-meta 欄位齊／**證偽表每條現值齊**（缺現值的 metric 補查或下表）／**站內引用逐條回對原文**（開原檔比對裁決語氣，分歧不得寫成一致）／**carry-forward 數字二次查證**（政策利率／利差／預測 vintage，數據紀律第 6 條）／**當局行動型 kill metric 查官方 release**（數據紀律第 4 條）。
+2. **強制 cold-review critic**（比照 industry-analyst Step 8.7）：**必須是獨立 agent**——由主 session 或 writer spawn 皆可（實跑兩型皆有效），但 writer 不得自任 critic、critic 用不同 model tier（sonnet）、結果與修復記錄一律存檔。checklist 7 條——①§0 stance 與 §5 情境樹一致；②傳導鏈每環有來源；③base rate 統計非 cherry-pick；④證偽表可操作（門檻＋頻率＋源＋**現值**；並查該指標近 12 個月是否曾觸及門檻而報告未載）；⑤描述器紀律無違反；⑥priced-in 分歧真非共識；⑦與 regime/crowding 現況無未解釋矛盾＋**站內引用忠實抽查 ≥2 處**（開被引原檔逐字比對）。另固定用 WebSearch 抽查 5-6 個關鍵數字（首跑實證：主要錯誤型態是「真數字但過時／錯標系列」，非幻覺）。報告存 `notes/site-internal/macro/_critic_{Slug}_{YYYYMMDD}.md`。大錯必修，cosmetic 記錄即可。
 3. index.html insert 卡片（比照 push-earnings 模式，skill-appended）。
 4. **預設停下複審**——用戶說 push 才 commit（報告＋index＋critic md 三檔一 commit），push 前 `git pull --rebase`。
 
@@ -93,4 +108,5 @@
 
 - 判斷類規則已登記 `knowledge/rule_ledger.md`：①§0 stance 三選一反騎牆＋證偽表強制；②tool-level kill condition（90 天無任何決策引用→降級）。
 - 審計節奏：隨裁決校準輪（下輪 2026-10）。
+- **stance 鑑別力 forward 對帳（2027-01）**：首八份 stance 全為中性——若六個月後八份對應的資產路徑截然不同，代表 stance 無資訊量、真正載資訊的是證偽表，屆時裁決是否把 stance 降格、「引信距離」升格（素材與方法見 `notes/site-internal/macro/_v12_calibration_notes.md`）。
 - 產出頻率預期：於需求觸發，估每月 0-2 份；**不做週期性自動產出**（描述器三頁已覆蓋高頻資料層，本 skill 是低頻深度層）。

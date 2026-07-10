@@ -1,4 +1,6 @@
-# macro-analyst v1.2 校準素材（累積中，勿刪）
+# macro-analyst v1.2 校準素材（v1.2 已於 2026-07-10 落地，本檔轉為 lineage＋未結項追蹤）
+
+**v1.2 裁決結果**：下方「規則缺口」1-6 全數轉正入 SKILL.md【數據紀律】八條（含第二批新增的證據新鮮度標籤、carry-forward 二次查證、當局行動查證）；「觀察」7（stance 鑑別力）留檔待 2027-01 forward 對帳、8-9 已轉正。第二批（AICapexMacro／DollarCycle／YenCarry，2026-07-10）新增摩擦：①T1 結構性天花板（無官方統計主題）→ 數據紀律第 2 條；②「舊證據當新引信」錯誤型態 → 第 5 條；③carry-forward 數字（政策利率/利差/vintage）→ 第 6 條；④當局行動漏記（MoF 干預）→ 第 4 條；⑤writer 自 spawn critic 的獨立性 → 發稿流程明文（writer 不得自任 critic，spawn 歸屬兩型皆可）；⑥stance 對象 vs 主題變數的方向詞混淆（DollarCycle 雙標籤 workaround）→ 未入條文，個案處理，觀察累積。
 
 首跑五份（USEconomy／TaiwanEconomy／USFiscalDeficit／GlobalLiquidity／ChinaEconomy，2026-07-08~09）的規則摩擦記錄。v1.1 已吃掉「證偽表現值」與「站內引用忠實性」兩條；以下是 ChinaEconomy 壓力測試（刻意選最難主題）交回的未解項，v1.2 或季檢時裁決。
 
