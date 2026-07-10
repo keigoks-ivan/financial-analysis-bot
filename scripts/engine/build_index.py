@@ -13,7 +13,7 @@ from html import escape
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from engine.common import OUT_DIR, page_shell  # noqa: E402
+from engine.common import OUT_DIR, page_embed_shell  # noqa: E402
 from engine.grp import MKTCAP_MIN  # noqa: E402
 
 
@@ -166,12 +166,14 @@ def main() -> int:
 <tr><td class="left">3</td><td class="left">形狀檢查表與 GRP 閾值首次季度校準（記分板滿 91 天後）</td><td class="left">2026-10—</td></tr>
 </tbody></table>
 </div>"""
+    # 2026-07-10 選股主控台整併：engine 總覽改輸出 nav-less 片段，供 /cockpit/#seats
+    # 分頁 iframe 嵌入；/engine/index.html 已改為 redirect stub（見 site_nav SKIP_FILES）。
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    (OUT_DIR / "index.html").write_text(
-        page_shell("決策引擎 · 總覽", "/engine/", body,
-                   "選股邏輯一頁版：GRP 三閘 × 兩級審查 × 護城河分軌 × 席位擂台 × 自動結算"),
+    (OUT_DIR / "_index_body.html").write_text(
+        page_embed_shell("決策引擎 · 席位排序", body,
+                         "選股邏輯一頁版：GRP 三閘 × 兩級審查 × 護城河分軌 × 席位擂台 × 自動結算"),
         encoding="utf-8")
-    print("engine/index.html written (白話一頁版)")
+    print("engine/_index_body.html written (nav-less 片段，供主控台席位排序分頁)")
     return 0
 
 

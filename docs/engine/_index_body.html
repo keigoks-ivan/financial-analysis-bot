@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>決策引擎 · 席位排序 | InvestMQuest Research</title>
+<meta name="description" content="選股邏輯一頁版：GRP 三閘 × 兩級審查 × 護城河分軌 × 席位擂台 × 自動結算">
+<link rel="stylesheet" href="/assets/imq-base.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--sans),-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif;
+     background:var(--paper);color:var(--body);font-size:14px;line-height:1.65}
+.wrap{max-width:1080px;margin:0 auto;padding:24px 20px 60px}
+.hero h1{font-family:var(--serif);font-size:24px;font-weight:700;color:var(--ink);margin:14px 0 6px}
+.hero-sub{color:var(--sec);font-size:13.5px;max-width:860px}
+.asof{font-size:12px;color:var(--muted);margin-top:6px}
+.block{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+       box-shadow:var(--sh-1);padding:18px 20px;margin-top:18px}
+.block h2{font-family:var(--serif);font-size:17px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.block-sub{color:var(--sec);font-size:12.5px;margin-bottom:10px}
+.stat-row{display:flex;gap:12px;flex-wrap:wrap;margin:10px 0}
+.stat{background:var(--paper);border:1px solid var(--line);border-radius:6px;
+      padding:10px 14px;min-width:110px}
+.stat strong{display:block;font-family:var(--mono);font-size:20px;color:var(--ink)}
+.stat span{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+th{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+   color:var(--sec);text-align:right;padding:6px 8px;
+   border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:6px 8px;text-align:right;border-bottom:1px solid var(--line-soft);white-space:nowrap;
+   font-family:var(--mono);font-variant-numeric:tabular-nums}
+th.left,td.left{text-align:left;font-family:inherit;font-variant-numeric:normal}
+tr:hover td{background:#fbf8f1}
+td a{color:var(--accent);text-decoration:none;font-weight:650}
+td a:hover{text-decoration:underline}
+.pos{color:var(--pos);font-weight:650}.neg{color:var(--neg);font-weight:650}
+.muted{color:var(--muted)}
+.tag{display:inline-block;font-family:var(--mono);font-size:11px;font-weight:600;
+     letter-spacing:.02em;border-radius:5px;padding:1px 7px}
+.tag-pool{background:#eafaef;color:var(--pos)}
+.tag-blind{background:#fbf3df;color:var(--warn)}
+.tag-up{background:#eafaef;color:var(--pos)}
+.tag-dn{background:#fbeceb;color:var(--neg)}
+.shape-card{border-left:3px solid var(--accent);margin-top:14px;background:var(--card);
+            border-top:1px solid var(--line);border-right:1px solid var(--line);
+            border-bottom:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.shape-card h3{font-family:var(--serif);font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px}
+.shape-card h3 .cnt{font-size:11px;font-weight:600;color:var(--muted);margin-left:6px}
+.shape-desc{font-size:12px;color:var(--sec);margin-bottom:6px}
+.s-breakout{border-left-color:var(--accent)}
+.s-cyclical{border-left-color:var(--accent)}
+.s-momentum{border-left-color:var(--accent)}
+.s-theme{border-left-color:var(--accent)}
+.empty{color:var(--muted);padding:14px 0;text-align:center}
+.note{font-size:12px;color:var(--sec);background:var(--paper);border:1px solid var(--line);
+      border-radius:6px;padding:10px 12px;margin-top:10px}
+.warn{background:#fbf3df;border-color:var(--warn);color:var(--warn)}
+.layers{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-top:12px}
+.layer{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.layer .lno{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--accent)}
+.layer h3{font-family:var(--serif);font-size:14.5px;font-weight:700;color:var(--ink);margin:2px 0 4px}
+.layer p{font-size:12px;color:var(--sec)}
+.layer .status{display:inline-block;margin-top:6px;font-family:var(--mono);font-size:11px;font-weight:600;
+               border-radius:5px;padding:1px 7px}
+.st-live{background:#eafaef;color:var(--pos)}
+.st-soon{background:var(--line-soft);color:var(--sec)}
+.imq-foot{margin-top:26px;padding:14px 0;border-top:1px solid var(--line);
+          color:var(--sec);font-size:12px;text-align:center;line-height:1.8}
+.imq-foot a{color:var(--accent);text-decoration:none}
+.imq-foot a:hover{text-decoration:underline}
+.overview-wrap{overflow-x:auto;margin:16px 0 4px;border:1px solid var(--line);
+               border-radius:var(--r);background:var(--card)}
+.overview-tbl{font-size:12.5px;margin-top:0}
+.overview-tbl th{padding:8px 10px}
+.overview-tbl td{padding:7px 10px}
+.overview-tbl a.tk-link{color:var(--ink);font-weight:700;text-decoration:none;font-family:inherit}
+.overview-tbl a.tk-link:hover{text-decoration:underline;color:var(--accent)}
+.gate-mini{white-space:nowrap;font-size:11px}
+.gate-mini b{font-weight:700;color:var(--muted);margin:0 1px 0 6px}
+.gate-mini b:first-child{margin-left:0}
+.seat-section{font-family:var(--serif);font-size:16px;font-weight:700;color:var(--ink);margin:24px 0 2px}
+.seat-section .cnt{font-size:12px;font-weight:600;color:var(--muted);margin-left:6px}
+details.card-block{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+                    box-shadow:var(--sh-1);margin-top:10px}
+details.card-block>summary{list-style:none;cursor:pointer;padding:12px 16px;
+                            display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+details.card-block>summary::-webkit-details-marker{display:none}
+details.card-block>summary::before{content:"▸";color:var(--muted);font-size:12px}
+details.card-block[open]>summary::before{content:"▾"}
+details.card-block>summary:hover{background:var(--paper);border-radius:var(--r)}
+.card-summary .cs-ticker{font-family:var(--mono);font-size:15.5px;font-weight:700;color:var(--ink)}
+.card-summary .cs-verdict{font-size:12.5px;font-weight:650;color:var(--sec)}
+.card-body{padding:0 20px 18px}
+details.bench-wrap{margin-top:22px;border:1px dashed var(--muted);border-radius:var(--r);
+                    background:var(--card);padding:2px 6px 8px}
+details.bench-wrap>summary{list-style:none;cursor:pointer;padding:12px 14px;
+                            font-family:var(--serif);font-size:16px;font-weight:700;color:var(--ink)}
+details.bench-wrap>summary::-webkit-details-marker{display:none}
+details.bench-wrap>summary::before{content:"▸ ";color:var(--muted)}
+details.bench-wrap[open]>summary::before{content:"▾ "}
+details.bench-wrap details.card-block{margin:8px 6px 0}
+@media(max-width:760px){.wrap{padding:16px 10px 40px}.block{padding:14px 12px}
+  table{display:block;overflow-x:auto}
+  details.card-block>summary{padding:10px 12px}.card-body{padding:0 12px 14px}}
+
+body{background:transparent}.wrap{padding-top:8px}</style>
+</head>
+<body>
+<div class="wrap">
+<div class="hero">
+<h1>決策引擎</h1>
+<div class="hero-sub" style="font-size:15px"><b>一句話：全市場掃「高成長 × EPS 上修 × 位置適合」→ 審查擋陷阱 →
+護城河分軌 → 席位化組合 → 每個判斷自動對答案。</b></div>
+<div class="asof">研究層頁面，不含實際持倉 ｜ 週更 ｜ 分工：本引擎管排序與席位（機器擂台）；流程與板機見 <a href="/dd-screener/pipeline.html">Pipeline</a>，對外正式榜見 <a href="/picks/">精選清單</a> ｜ 已結算 352 筆歷史裁決</div>
+</div>
+
+<div class="block">
+<h2>五步漏斗</h2>
+<pre style="font-size:13px;line-height:1.8;overflow-x:auto;background:var(--line-soft);border:1px solid var(--line);border-radius:8px;padding:14px 16px">① 發現    雷達每週掃 S&P 500＋NDX＋中型股（962 檔可算）
+             GRP 三閘：G 成長 ≥15% × R 上修 >0（下修否決）× P 站上 52 週線未過熱
+             ＋ 市值 ≥ $20 億美元 ×10 → 主榜（現 40 檔，按上修幅度排）
+
+② 資格    兩級審查（研究深度 ∝ 倉位）
+             核心席 → 完整 v14 DD（裁決：進場／觀望／迴避）
+             衛星席 → 快審卡即可（週期位置判定＋陷阱檢查＋護城河快評）
+             ⚠ 這層專擋 GRP 看不見的：週期頂點假象、會計假成長、基期效應
+
+③ 分軌    護城河定軌別
+             S/A 級（複利耐久）→ 核心席，5 席 × 上限 10%
+             其餘（爆發／循環）→ 衛星席，5 席 × 上限 5%，寧缺勿濫
+
+④ 執行    席位 ≠ 買點
+             時點看板機（A1 突破／B 回踩／C 冷卻完成）＋ regime 撥盤（現 ⚖ 中性）
+
+⑤ 守門    一席一卡（現 35 張／127 條宣稱）
+             GRP 守門週更自動結算（成長跌破／轉下修／破線 → 卡片自己亮 ⛔）
+             ＋ DD 深層宣稱帶期限（到期亮 ⏰ 人工結算）
+             觀望也被盯：錯過成本／上修觸發 → 強制複審（複審對 DD 扳機，不因上修就追）</pre>
+</div>
+
+<div class="block">
+<h2>權力分工（誰說了算）</h2>
+<table>
+<thead><tr><th class="left">問題</th><th class="left">權威</th><th class="left">在哪看</th></tr></thead>
+<tbody>
+<tr><td class="left">先看誰</td><td class="left">GRP 主榜（市場活數據，週更）</td><td class="left"><a href="/engine/radar.html">雷達</a></td></tr>
+<tr><td class="left">能不能買</td><td class="left">DD 裁決／快審卡（懂生意的否決權）</td><td class="left"><a href="/engine/cards.html">決策卡</a></td></tr>
+<tr><td class="left">核心還是衛星</td><td class="left">護城河評級（S/A＝核心、其餘＝衛星）</td><td class="left"><a href="/engine/arena.html">擂台</a></td></tr>
+<tr><td class="left">何時買</td><td class="left">板機（A1/B/C）＋ regime 撥盤</td><td class="left"><a href="/dd-screener/sop-funnel.html">SOP Funnel</a>・<a href="/engine/arena.html">擂台</a></td></tr>
+<tr><td class="left">何時複審／出場</td><td class="left">決策卡宣稱（帶數字帶期限）</td><td class="left"><a href="/engine/cards.html">決策卡</a></td></tr>
+<tr><td class="left">規則能不能改</td><td class="left">記分板（91 天結算，季檢才調參）</td><td class="left"><a href="/engine/scoreboard.html">記分板</a></td></tr>
+</tbody></table>
+</div>
+
+<div class="block">
+<h2>組合快照（自動更新）</h2>
+<div class="stat-row">
+<div class="stat"><strong>5/5</strong><span>核心席</span></div>
+<div class="stat"><strong>1/5</strong><span>衛星席</span></div>
+<div class="stat"><strong>⚖ 中性</strong><span>Regime 撥盤</span></div>
+<div class="stat"><strong>6</strong><span>擂台警報</span></div>
+</div>
+<div class="block-sub">核心：AVGO、NVDA、TSM、ABNB、MA　｜　衛星：COHR
+（空席是刻意的——審查放行率低＋市值門檻＋regime 中性下，空席就是倉位管理）</div>
+</div>
+
+<div class="block">
+<h2>名單為什麼會變（四個驅動力，按力度排）</h2>
+<table>
+<thead><tr><th class="left">驅動力</th><th class="left">頻率</th><th class="left">影響</th></tr></thead>
+<tbody>
+<tr><td class="left"><b>月度 EPS 修正刷新</b></td><td class="left">每月（Koyfin snapshot）＋每週（yfinance，雷達候選）</td>
+<td class="left">最大——席位排序按 R 上修幅度，每次刷新全體重排；勉強過閘的（R 貼近 0）一個小下修就下席。
+<b>兩源主源規則</b>：DD 池認 Koyfin、池外認 yfinance，計分不混用；但重下修 ≤-2% 的否決<b>任一源觸發即生效</b>
+（源吵架時聽壞消息），方向相反標 ⚠ 源分歧供人工判讀</td></tr>
+<tr><td class="left"><b>財報季條件翻正</b></td><td class="left">季度</td>
+<td class="left">觀望票的翻正條件與決策卡宣稱到期潮集中在財報季——席位變動的主窗口</td></tr>
+<tr><td class="left"><b>新 DD／快審補齊</b></td><td class="left">持續</td>
+<td class="left">池內仍有大量無裁決名字＋主榜大型候選待審——每補一檔＝多一個挑戰者</td></tr>
+<tr><td class="left"><b>價格位置（P 閘）</b></td><td class="left">每週</td>
+<td class="left">破 52 週線下席、站回來回席——趨勢破壞的名字自動失格，修復自動恢復資格</td></tr>
+</tbody></table>
+<div class="note">變動是<b>不對稱設計</b>：衛星席＝快時鐘（爆發型，預期高輪動）；核心席＝慢時鐘
+（S/A 護城河是慢變數，若核心每週換人＝bug）。每次上席/下席都記入
+<a href="/engine/arena.html">席位變動帳本</a>（append-only）——2026-10 季檢時用帳本檢視換手率，
+過高則加換席緩衝（挑戰者連續兩週勝出才換），先裸跑用數據定緩衝厚度、不憑感覺預設。</div>
+</div>
+
+<div class="block">
+<h2>三條鐵律</h2>
+<div class="block-sub" style="font-size:13.5px;line-height:2">
+1. <b>看得見 ≠ 能買</b>——雷達只給研究順序，資格永遠要過審查。<br>
+2. <b>上修最猛處常是最危險處</b>——所以 GRP 之上必有週期位置判定（MU 檢查）。<br>
+3. <b>每個判斷都會被結算</b>——觀望的錯過和進場的套牢同權重記帳；數據改規則，不是感覺改規則。
+</div>
+</div>
+
+<div class="block">
+<h2>深一層：五層架構與紀律</h2>
+<div class="layers">
+<div class="layer"><div class="lno">L0</div><h3>全市場雷達</h3>
+<p>結構訊號批量 → 候選逐檔 EPS 修正確認。</p>
+<a href="/engine/radar.html">→ 雷達</a></div>
+<div class="layer"><div class="lno">L1</div><h3>GRP 準則＋軌別路由</h3>
+<p>三閘＝選股準則；moat 分軌。四形狀（突破／循環轉折／動能／主題下沉）降為發現鏡頭。</p></div>
+<div class="layer"><div class="lno">L2</div><h3>決策卡</h3>
+<p>一席一卡：GRP 守門自動結算＋DD 深層宣稱帶期限。</p>
+<a href="/engine/cards.html">→ 決策卡</a></div>
+<div class="layer"><div class="lno">L3</div><h3>席位擂台</h3>
+<p>席位 vs 同軌最強挑戰者，警報進每月人工擂台；席位變動帳本 append-only。</p>
+<a href="/engine/arena.html">→ 擂台</a></div>
+<div class="layer"><div class="lno">L4</div><h3>結算所</h3>
+<p>每筆裁決 × 週線自動結算、按形狀分桶——判斷函數的季度校準依據。</p>
+<a href="/engine/scoreboard.html">→ 記分板</a></div>
+</div>
+<div class="note" style="margin-top:12px">
+<b>紀律</b>：GRP 三閘與市值門檻（2026-07-04 持有人拍板）PREREG 鎖定，季檢憑記分板數據才可調；
+記分板 append-only、gate 變更畫分段線、歷史不重算；樣本未熟（n&lt;20 或齡&lt;91 天）標「觀察期」不給結論。
+<b>與 <a href="/dd-screener/pipeline.html">dd-screener Pipeline</a> 的關係</b>：那是 legacy EV5y 鏡頭
+（排序用 5 年期望值），本區是 GRP 鏡頭（排序用上修幅度）——兩鏡並存對照，2026-10 記分板成熟後由數據裁決。
+</div>
+</div>
+
+<div class="block">
+<h2>路線圖</h2>
+<table>
+<thead><tr><th class="left">Phase</th><th class="left">內容</th><th class="left">狀態</th></tr></thead>
+<tbody>
+<tr><td class="left">1-2</td><td class="left">雷達＋GRP 主榜＋擂台＋決策卡＋記分板＋快審層＋市值門檻＋系統測試（32 斷言）</td><td class="left">✅ 2026-07-04 上線</td></tr>
+<tr><td class="left">3</td><td class="left">形狀檢查表與 GRP 閾值首次季度校準（記分板滿 91 天後）</td><td class="left">2026-10—</td></tr>
+</tbody></table>
+</div>
+</div>
+<!-- 主控台 iframe 嵌入：跨頁連結在頂層開啟，站內 #錨點留在 iframe 內滾動 -->
+<script>(function(){function fix(){var as=document.querySelectorAll('a[href]');for(var i=0;i<as.length;i++){var a=as[i],h=a.getAttribute('href');if(h&&h.charAt(0)!=='#'&&!a.hasAttribute('target'))a.setAttribute('target','_parent');}}if(document.readyState!=='loading')fix();else document.addEventListener('DOMContentLoaded',fix);window.addEventListener('load',fix);[400,1200,2500].forEach(function(t){setTimeout(fix,t);});})();</script>
+</body>
+</html>

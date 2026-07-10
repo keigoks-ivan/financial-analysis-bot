@@ -43,8 +43,11 @@ SOP_LATEST = DDS / "sop-funnel" / "latest.json"
 SOP_LEDGER = DDS / "sop-funnel" / "ledger.json"
 PRE_ID_SCAN = DDS / "pre_id_scan.json"
 WEEKLY_CACHE_DIR = ROOT / "data" / "weekly_cache"
-HTML_OUT = DDS / "pipeline.html"
+# 2026-07-10 選股主控台整併：pipeline 改輸出 nav-less 片段，供 /cockpit/#pipeline
+# 分頁 iframe 嵌入；/dd-screener/pipeline.html 已改為 redirect stub（見 site_nav SKIP_FILES）。
+HTML_OUT = DDS / "_pipeline_body.html"
 
+# NAV_BLOCK 保留匯入相容性但不再注入片段（外殼 nav 屬 console）。
 NAV_BLOCK = full_nav_block(
     "pick", "pipe", build_subnav(DD_SCREENER_SUBNAV, "/dd-screener/pipeline.html")
 )
@@ -986,10 +989,10 @@ def build(dry_run: bool = False) -> int:
 <title>個股部漏斗總覽 Pipeline — 發現 → 資格閘 → 三軌 → 板機 | InvestMQuest</title>
 <meta name="color-scheme" content="light">
 <link rel="stylesheet" href="/assets/imq-base.css">
-<style>{STYLE}</style>
+<style>{STYLE}
+body{{background:transparent}}</style>
 </head>
 <body>
-{NAV_BLOCK}
 
 <div class="hero">
   <div class="hero-inner">
@@ -1035,6 +1038,8 @@ def build(dry_run: bool = False) -> int:
   <div>© 2026 InvestMQuest Research</div>
   <div><a href="/disclosures.html">方法論與揭露</a> · 本站內容僅供研究參考，不構成投資建議</div>
 </footer>
+<!-- 主控台 iframe 嵌入：跨頁連結（DD／engine 深頁）在頂層開啟，站內 #錨點留在 iframe 內滾動 -->
+<script>(function(){{function fix(){{var as=document.querySelectorAll('a[href]');for(var i=0;i<as.length;i++){{var a=as[i],h=a.getAttribute('href');if(h&&h.charAt(0)!=='#'&&!a.hasAttribute('target'))a.setAttribute('target','_parent');}}}}if(document.readyState!=='loading')fix();else document.addEventListener('DOMContentLoaded',fix);window.addEventListener('load',fix);[400,1200,2500,5000].forEach(function(t){{setTimeout(fix,t);}});}})();</script>
 </body>
 </html>
 """

@@ -135,6 +135,34 @@ def page_shell(title: str, current: str, body: str, desc: str = "") -> str:
 </html>"""
 
 
+def page_embed_shell(title: str, body: str, desc: str = "") -> str:
+    """Nav-less fragment for embedding inside the 選股主控台 console iframe.
+
+    No site nav / no subnav (那些屬 console 外殼)；`<base target="_parent">` 讓內部
+    跨頁連結（DD／engine 深頁）在頂層視窗開啟而非 iframe 內。noindex——正式入口是
+    /cockpit/#seats，本片段不獨立索引。"""
+    return f"""<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>{title} | InvestMQuest Research</title>
+<meta name="description" content="{desc}">
+<link rel="stylesheet" href="/assets/imq-base.css">
+<style>{PAGE_CSS}
+body{{background:transparent}}.wrap{{padding-top:8px}}</style>
+</head>
+<body>
+<div class="wrap">
+{body}
+</div>
+<!-- 主控台 iframe 嵌入：跨頁連結在頂層開啟，站內 #錨點留在 iframe 內滾動 -->
+<script>(function(){{function fix(){{var as=document.querySelectorAll('a[href]');for(var i=0;i<as.length;i++){{var a=as[i],h=a.getAttribute('href');if(h&&h.charAt(0)!=='#'&&!a.hasAttribute('target'))a.setAttribute('target','_parent');}}}}if(document.readyState!=='loading')fix();else document.addEventListener('DOMContentLoaded',fix);window.addEventListener('load',fix);[400,1200,2500].forEach(function(t){{setTimeout(fix,t);}});}})();</script>
+</body>
+</html>"""
+
+
 def pct(v, digits=1, signed=True):
     if v is None:
         return '<span class="muted">—</span>'

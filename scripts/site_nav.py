@@ -241,6 +241,15 @@ SKIP_FILES = {
     "pm/index.html",                            # archived stub, intentionally bare
     "six-state/index.html",                     # redirect stub -> /backtest/six_state/status/
     "backtest/six_state/status/index.html",     # live status sub-page, intentionally headerless
+    # 2026-07-10 選股主控台整併：舊 4 頁折進 /cockpit/ 四分頁。
+    # 這 3 個 redirect stub 與 3 個 nav-less iframe 片段一律不注入站 nav
+    # （片段被灌 nav 會在 iframe 內冒出整條站選單；stub 應保持極簡）。
+    "picks/index.html",                         # redirect stub -> /cockpit/#picks
+    "dd-screener/pipeline.html",                # redirect stub -> /cockpit/#pipeline
+    "engine/index.html",                        # redirect stub -> /cockpit/#seats
+    "picks/_embed.html",                        # iframe 片段（精選榜分頁）
+    "dd-screener/_pipeline_body.html",          # iframe 片段（流程板機分頁）
+    "engine/_index_body.html",                  # iframe 片段（席位排序分頁）
 }
 
 
