@@ -93,6 +93,7 @@ MENU = {
     "market": [
         ("earn", "/earnings/", "財報分析"),
         ("cat", "/catalyst/", "催化劑日曆"),
+        ("mon", "/monitor/", "市場監測"),
         ("markets", "/markets.html", "Markets"),
         ("sectors", "/sectors.html", "Sectors"),
         ("crowd", "/crowding/", "擁擠交易監測"),
@@ -213,6 +214,7 @@ PREFIX_ACTIVE = [
     # 市場群
     ("earnings/", ("market", "earn")),
     ("catalyst/", ("market", "cat")),
+    ("monitor/", ("market", "mon")),  # 全資產市場監測（2026-07-10）
     ("markets.html", ("market", "markets")),
     ("sectors.html", ("market", "sectors")),
     ("crowding/", ("market", "crowd")),
