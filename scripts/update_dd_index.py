@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import html
 import json
 import re
 import sys
@@ -1395,6 +1396,61 @@ _VERDICT_CSS = {
 }
 _TRAP_CSS = {"🟢": ("trap-ok", "🟢 非陷阱"), "🟡": ("trap-watch", "🟡 觀察期"), "🔴": ("trap-danger", "🔴 高風險")}
 
+# v14.12 裁決稅制 — 三詞裁決（進場/觀望/迴避）為研究目錄第一公民。
+# rank 供排序（進場最高，legacy 無裁決＝0 排底）；badge CSS 見 index.html <style>。
+_VERDICT_RANK = {"進場": 3, "觀望": 2, "迴避": 1}
+_VERDICT_BADGE_CSS = {"進場": "dec-enter", "觀望": "dec-watch", "迴避": "dec-avoid"}
+
+
+def _norm_dca_role(role: "str | None") -> str:
+    """v14.12 倉位角色四值歸一（核心/衛星/追蹤/不持有）；legacy 值映射。
+    Canonical 定義見 aggregate_dca_stats._categorize；與 build_catalyst_calendar
+    ／dd_screener_dd_loader 的 _norm_dca_role 對齊（下游 latest.json 同口徑）。"""
+    r = (role or "").strip()
+    if not r:
+        return ""
+    if r in ("核心", "衛星", "追蹤", "不持有"):
+        return r
+    if "候選" in r or "追蹤池" in r:
+        return "追蹤"
+    if r.startswith(("不持有", "暫不持有", "迴避")):
+        return "不持有"
+    if "核心" in r:
+        return "核心"
+    if "衛星" in r or "投機" in r or r.lower().startswith("satellite"):
+        return "衛星"
+    return r
+
+
+def _render_verdict_cell(href: str, verdict: str, role: str,
+                         rearm: str) -> "tuple[str, str]":
+    """(td_html, rank_attr) for the primary 裁決 column.
+
+    verdict: 進場/觀望/迴避（v13/v14 決策層）— empty for legacy v12 → 「—」.
+    role:    normalized 核心/衛星/追蹤/不持有（may be '').
+    rearm:   一行執行語（rearm_trigger，≤40 字；過長截斷 + title tooltip）.
+    The whole badge links to the DD's #decision anchor.
+    """
+    if verdict not in _VERDICT_RANK:
+        return ('<td class="verdict-cell verdict-none">—</td>', "0")
+    css = _VERDICT_BADGE_CSS[verdict]
+    role_html = f'<span class="dec-role">{html.escape(role)}</span>' if role else ""
+    rearm_html = ""
+    r = (rearm or "").strip()
+    if r:
+        disp = r if len(r) <= 40 else r[:39] + "…"
+        rearm_html = (
+            f'<div class="rearm" title="{html.escape(r, quote=True)}">'
+            f'{html.escape(disp)}</div>'
+        )
+    inner = (
+        f'<a href="{href}#decision" target="_blank" rel="noopener" '
+        f'title="投資決策層 §14 統一裁決">'
+        f'<span class="dec-badge {css}">{verdict}</span>{role_html}</a>'
+        f'{rearm_html}'
+    )
+    return (f'<td class="verdict-cell">{inner}</td>', str(_VERDICT_RANK[verdict]))
+
 
 def _verdict_to_signal(verdict_raw: str) -> str:
     """Map INDEX.md verdict column → v12 signal letter (fallback when DD HTML
@@ -1659,10 +1715,18 @@ def build_row_v12(entry: dict, dca_map: dict | None = None,
         pe2y_num_attr = f"{pe_2y:.1f}"
 
     # Date: compact MM-DD display with ISO tooltip; data-date keeps full ISO for sort.
+    # 新鮮度語意：> 60 天視覺降灰（.stale-date），提示資料較舊。
     date_iso = entry.get("date") or ""
+    _stale = False
     if date_iso and len(date_iso) == 10:
+        try:
+            _stale = (dt.date.today() - dt.date.fromisoformat(date_iso)).days > 60
+        except ValueError:
+            _stale = False
         date_compact = date_iso[5:]   # MM-DD
-        date_cell = f'<td class="num-cell"><span title="{date_iso}">{date_compact}</span></td>'
+        _dtitle = f"{date_iso}（逾 60 天，資料較舊）" if _stale else date_iso
+        _dcls = "num-cell stale-date" if _stale else "num-cell"
+        date_cell = f'<td class="{_dcls}"><span title="{_dtitle}">{date_compact}</span></td>'
     else:
         date_cell = f'<td class="num-cell">{date_iso or "—"}</td>'
 
@@ -1711,18 +1775,26 @@ def build_row_v12(entry: dict, dca_map: dict | None = None,
         _mt_arrow = (dca_moat_trend_map or {}).get(_t_norm)
     _mt_num = {"↑": "3", "→": "2", "↓": "1"}.get(_mt_arrow or "", "0")
 
-    # Four-axis cell: {moat}{arrow}/{val}/{ma}  e.g. "S↑/🟢/✅"
-    # Arrow is embedded inline with color span (tight to the moat letter, no space).
+    # 護城河 cell: {等級}{趨勢箭頭}  e.g. "S↑"（估值燈/MA 燈已移至 dd-screener 職能）
+    # 箭頭緊貼等級字母，色碼：↑ 綠＝擴大／→ 灰＝持平／↓ 紅＝收窄。
     if _mt_arrow == "↑":
-        arrow_span = '<span style="color:#166534">↑</span>'
+        arrow_span = '<span style="color:var(--green);font-weight:700">↑</span>'
     elif _mt_arrow == "→":
-        arrow_span = '<span style="color:#64748B">→</span>'
+        arrow_span = '<span style="color:var(--text-muted)">→</span>'
     elif _mt_arrow == "↓":
-        arrow_span = '<span style="color:#991B1B">↓</span>'
+        arrow_span = '<span style="color:var(--red);font-weight:700">↓</span>'
     else:
         arrow_span = ""
-    four_axis_html = f'{moat}{arrow_span}/{val_emoji}/{ma_state}'
-    four_axis_cell = f'<td class="num-cell">{four_axis_html}</td>'
+    moat_cell = f'<td class="num-cell moat-cell">{moat}{arrow_span}</td>'
+
+    # 訊號 chip — 基本面評級 A+/A/B/C/X 降為小型 metadata（非主位）
+    sig_chip_cell = f'<td><span class="sig-chip">{sig}</span></td>'
+
+    # 裁決 cell（v14.12 第一公民）：{進場/觀望/迴避}徽章 + 角色 + 執行語，整格連 #decision
+    verdict_cell, verdict_rank = _render_verdict_cell(
+        entry["href"], entry.get("dca_verdict", ""),
+        entry.get("dca_role", ""), entry.get("rearm_trigger", ""),
+    )
 
     # §7 門檻 cell: {emoji} {pass}/{total}, colour-coded background by pass %.
     # Thresholds are percentage-based so old-schema DDs (≠ 11 rows) render correctly:
@@ -1749,27 +1821,27 @@ def build_row_v12(entry: dict, dca_map: dict | None = None,
         gate_cell = '<td class="num-cell" style="color:#94A3B8">—</td>'
 
     _munger_gate_num = str(munger_pass) if munger_pass is not None else "0"
+    # 欄位契約（8 欄，與 docs/research/index.html thead 對齊）：
+    #   1 Ticker  2 DD日期  3 裁決  4 護城河  5 陷阱  6 訊號  7 §7門檻  8 5Y EV/IRR
+    # data-* 供排序/篩選：data-vrank（裁決，第一公民預設鍵）、data-rank（訊號）、
+    #   data-quality（護城河等級）、data-trap-rank、data-munger-gate、data-ev5y（單檔，非預設鍵）。
     return (
         f'<tr class="searchable" data-ticker="{entry["ticker"]}" data-date="{date_iso}"'
         f' data-signal="{sig}" data-trap="{trap_emoji}"'
+        f' data-vrank="{verdict_rank}"'
         f' data-rank="{rank}" data-trap-rank="{trap_rank}" data-quality="{quality}"'
-        f' data-fpe="{fpe_num}" data-pe2y="{pe2y_num_attr}" data-peg="{peg_num}"'
-        f' data-eps-cagr="{eps_num_attr}"'
         f' data-upside="{entry.get("upside", 0) or 0}" data-upside5y="{entry.get("upside_5y", 0) or 0}"'
         f' data-ev5y="{ev_num_attr}"'
         f' data-moat-trend="{_mt_num}" data-munger-gate="{_munger_gate_num}">\n'
-        f'  <td><a href="{entry["href"]}" class="ticker-link" target="_blank" rel="noopener">{entry["ticker"]}</a></td>'
+        f'  <td class="ticker-cell"><a href="{entry["href"]}" class="ticker-link" target="_blank" rel="noopener">{entry["ticker"]}</a>'
+        f'<a href="/dd-screener/#t={html.escape(entry["ticker"], quote=True)}" class="screener-x" title="在 DD Screener 查看此檔估值／EPS 數字">→ 數字</a></td>'
         f'{date_cell}'
-        f'{dca_cell}'
-        f'{ev_cell}'
-        f'<td><span class="{verdict_cls}"><strong>{sig}</strong></span></td>'
+        f'{verdict_cell}'
+        f'{moat_cell}'
         f'<td><span class="{trap_cls}">{trap_label}</span></td>'
-        f'{four_axis_cell}'
+        f'{sig_chip_cell}'
         f'{gate_cell}'
-        f'<td class="num-cell">{fpe_disp}</td>'
-        f'{pe2y_cell}'
-        f'<td class="num-cell">{peg_disp}</td>'
-        f'{eps_cell}\n'
+        f'{ev_cell}\n'
         f'</tr>'
     )
 
@@ -1780,12 +1852,13 @@ def build_row_dca_only(ticker: str, dca_href: str, dca_date: str,
     """Render a row for a ticker that has a DCA report but NO DD coverage.
 
     DD-derived columns render '—'. The ticker link points to the DCA file
-    (since there is no DD). data-rank=0 keeps these rows sorted to the
-    bottom in the default signal-desc view.
+    (since there is no DD). data-vrank=0 / data-rank=0 keeps these rows sorted
+    to the bottom in the default 裁決-desc view.
 
-    Column order (12 cols, matches build_row_v12 new schema):
-      1 Ticker  2 DD日期  3 定見  4 5Y IRR
-      5-12: signal trap 四軸 §7門檻 fpe pe2y peg eps-cagr (8 em-dashes)
+    Column order (8 cols, matches build_row_v12 new schema):
+      1 Ticker  2 DD日期  3 裁決  4 護城河  5 陷阱  6 訊號  7 §7門檻  8 5Y EV/IRR
+    裁決/護城河/陷阱/訊號/§7門檻 render '—'（legacy DCA 無 v14 決策層機器欄）；
+    只有 5Y EV/IRR 可能有值。
     """
     if ev_5y is None:
         ev_cell = '<td class="num-cell" style="color:#CBD5E1">—</td>'
@@ -1810,32 +1883,37 @@ def build_row_dca_only(ticker: str, dca_href: str, dca_date: str,
 
     _mt_num = {"↑": "3", "→": "2", "↓": "1"}.get(moat_trend_arrow or "", "0")
 
-    # Compact date display (MM-DD with ISO tooltip)
+    # Compact date display (MM-DD with ISO tooltip); >60d 降灰
+    _stale = False
     if dca_date and len(dca_date) == 10:
+        try:
+            _stale = (dt.date.today() - dt.date.fromisoformat(dca_date)).days > 60
+        except ValueError:
+            _stale = False
         date_compact = dca_date[5:]
-        date_cell = f'<td class="num-cell"><span title="{dca_date}">{date_compact}</span></td>'
+        _dtitle = f"{dca_date}（逾 60 天，資料較舊）" if _stale else dca_date
+        _dcls = "num-cell stale-date" if _stale else "num-cell"
+        date_cell = f'<td class="{_dcls}"><span title="{_dtitle}">{date_compact}</span></td>'
     else:
         date_cell = f'<td class="num-cell">{dca_date or "—"}</td>'
 
-    em = '<td class="num-cell" style="color:#CBD5E1">—</td>'
+    em = '<td class="num-cell" style="color:var(--text-muted)">—</td>'
+    _t_esc = html.escape(ticker, quote=True)
     return (
         f'<tr class="searchable" data-ticker="{ticker}" data-date="{dca_date}"'
         f' data-signal="" data-trap=""'
+        f' data-vrank="0"'
         f' data-rank="0" data-trap-rank="0" data-quality="0"'
-        f' data-fpe="0" data-pe2y="0" data-peg="0"'
-        f' data-eps-cagr="0"'
         f' data-upside="0" data-upside5y="0" data-ev5y="{ev_num_attr}"'
         f' data-moat-trend="{_mt_num}" data-munger-gate="0">\n'
-        f'  <td><a href="{dca_href}" class="ticker-link" target="_blank" '
+        f'  <td class="ticker-cell"><a href="{dca_href}" class="ticker-link" target="_blank" '
         f'rel="noopener" title="僅決策層報告，無對應 DD（DD 已輪替/未建檔）">'
-        f'{ticker}</a></td>'
+        f'{ticker}</a>'
+        f'<a href="/dd-screener/#t={_t_esc}" class="screener-x" title="在 DD Screener 查看此檔估值／EPS 數字">→ 數字</a></td>'
         f'{date_cell}'
-        f'<td class="num-cell"><a href="{dca_href}" target="_blank" '
-        f'rel="noopener" title="投資決策層（DD §14 統一裁決 / legacy 決策報告）" '
-        f'style="text-decoration:none">📋</a></td>'
-        f'{ev_cell}'
-        # 8 em-dashes: signal, trap, 四軸, §7門檻, fpe, pe2y, peg, eps-cagr
-        f'{em}{em}{em}{em}{em}{em}{em}{em}\n'
+        # 裁決 護城河 陷阱 訊號 §7門檻（legacy DCA 無 v14 決策層機器欄，5 個 —）
+        f'{em}{em}{em}{em}{em}'
+        f'{ev_cell}\n'
         f'</tr>'
     )
 
@@ -1929,6 +2007,10 @@ def collect_v12_entries(force_refresh_eps: bool = False):
                 "munger_emoji": munger_emoji,
                 "munger_pass": munger_pass,
                 "munger_total": munger_total,
+                # v14.12 決策層（v13/v14 dd-meta）— legacy v12 無此欄，渲染「—」
+                "dca_verdict": (meta.get("dca_verdict") or "").strip(),
+                "dca_role": _norm_dca_role(meta.get("dca_role")),
+                "rearm_trigger": (meta.get("rearm_trigger") or "").strip(),
             }
             entries.append(entry)
             continue
@@ -1962,6 +2044,10 @@ def collect_v12_entries(force_refresh_eps: bool = False):
             "munger_emoji": munger_emoji,
             "munger_pass": munger_pass,
             "munger_total": munger_total,
+            # legacy 無 dd-meta 決策層 → 空字串 → 裁決欄「—」優雅降級
+            "dca_verdict": "",
+            "dca_role": "",
+            "rearm_trigger": "",
         })
 
     # Persist cache if any ticker was fetched (auto-backfill on new DD or refresh)
@@ -1987,13 +2073,16 @@ def _ticker_key(t: str) -> str:
 def _sort_v12_entries(entries: list) -> list:
     """Sort v12 entries for the research index table.
 
-    Order (highest priority first):
-      1) signal rank descending (A+ → X)
-      2) trap rank descending (🟢 → 🔴)
-      3) upside_mid_pct descending (positive upside first)
-      4) date descending (newest first)
+    Order (highest priority first) — v14.12 裁決為第一公民：
+      1) 裁決 rank descending (進場 → 觀望 → 迴避 → legacy 無)
+      2) signal rank descending (A+ → X)
+      3) trap rank descending (🟢 → 🔴)
+      4) upside_mid_pct descending (positive upside first)
+      5) date descending (newest first)
+    JS 於載入時亦以 verdict 為預設鍵重排，此處對齊以保無-JS/初始 DOM 一致。
     """
     def key(e):
+        verdict_rank = _VERDICT_RANK.get(e.get("dca_verdict", ""), 0)
         sig_rank = _SIGNAL_RANK.get(e.get("signal", ""), 0)
         trap_rank = _TRAP_RANK.get(e.get("trap_emoji", ""), 0)
         try:
@@ -2002,7 +2091,7 @@ def _sort_v12_entries(entries: list) -> list:
             upside = 0.0
         date = e.get("date", "")
         # Negate values so default ascending sort yields desc order
-        return (-sig_rank, -trap_rank, -upside, date)
+        return (-verdict_rank, -sig_rank, -trap_rank, -upside, date)
     return sorted(entries, key=key, reverse=False)
 
 

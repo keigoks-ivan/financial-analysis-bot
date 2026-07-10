@@ -1507,6 +1507,24 @@ function renderAll() {
 }
 
 // ── Search panel (ticker lookup, bypasses all chip filters & tabs) ─────────
+// ── Cross-link 落點（/research/ 主表 → 本頁 #t=TICKER）───────────────────────
+// 進頁（或 hash 變更）時把 ticker 填入搜尋框（exact-match 格式「TICKER 」），
+// 借既有搜尋面板渲染——繞過所有 chip filter 與 tab，目標 ticker 保證可見。
+function applyHashTicker() {
+  var m = (window.location.hash || '').match(/^#t=([A-Za-z0-9.\-]+)$/);
+  if (!m) return;
+  var input = document.getElementById('search-ticker');
+  if (!input) return;
+  input.value = m[1].toUpperCase() + ' ';
+  state.searchQuery = input.value;
+  if (DATA) renderSearch();
+  var panel = document.getElementById('search-panel');
+  if (panel && !panel.classList.contains('hidden')) {
+    panel.scrollIntoView({behavior: 'smooth', block: 'start'});
+  }
+}
+window.addEventListener('hashchange', applyHashTicker);
+
 function renderSearch() {
   var panel = document.getElementById('search-panel');
   var body  = document.getElementById('search-panel-body');
@@ -1752,6 +1770,7 @@ fetch('./latest.json')
     renderAthSpotlight(data.stocks || []);
     renderEpsSourceBanner();
     renderAll();
+    applyHashTicker();
   })
   .catch(function(err) {
     showError(
