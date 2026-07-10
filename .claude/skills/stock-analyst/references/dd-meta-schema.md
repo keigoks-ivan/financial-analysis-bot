@@ -1,4 +1,4 @@
-# stock-analyst v14.11 — dd-meta-schema.md（條件載入 reference）
+# stock-analyst v14.12 — dd-meta-schema.md（條件載入 reference）
 
 > 本檔為 SKILL.md 的拆分模組（2026-07-07 v14.7 結構拆分，內容自 v14.6 原文搬移、語意零變更）。必讀時點見 SKILL.md 條件載入路由表。修改規則請同步 SKILL.md stub 與 references/changelog.md。
 
@@ -11,7 +11,7 @@
 ```json
 {
   "ticker": "NVDA",
-  "schema": "v14.11",
+  "schema": "v14.12",
   "date": "2026-06-21",
   "price_at_dd": 223.47,
   "signal": "A+",
@@ -35,7 +35,7 @@
   "oneliner": "≤ 200 chars 壓縮敘述",
 
   "dca_verdict": "進場",
-  "dca_role": "核心持倉",
+  "dca_role": "核心",
   "moat_trend": "↑",
   "runway_post_y5": "🟢",
   "ev5y_pct": 88.0,
@@ -67,7 +67,7 @@
 
 **v13 新增 5 個必填欄（schema 為 v13.x ∪ v14.x 時 validator 強制）+ Enum**：
 - `dca_verdict`：`進場` | `觀望` | `迴避`（取自 §14 統一裁決，與頁首儀表板 + §14 裁決晶片三處一致）
-- `dca_role`：`核心持倉` | `條件式核心持倉` | `衛星持倉` | `條件式衛星持倉` | `投機部位` | `不持有/迴避` | `候選/追蹤池`（取自 §14a，對齊 `aggregate_dca_stats.py` CATEGORY_ORDER）
+- `dca_role`：`核心` | `衛星` | `追蹤` | `不持有`（v14.12 四值稅制，2026-07-10 持有人拍板「大道至簡」；取自 §14a，對齊 `aggregate_dca_stats.py` CATEGORY_ORDER）。**legacy 值**（`核心持倉`/`條件式核心持倉`/`衛星持倉`/`條件式衛星持倉`/`投機部位`/`不持有/迴避`/`候選/追蹤池`）僅為既有報告 dual-read 保留——新報告禁用，「條件式」語意一律改由 §14a 執行語承載
 - `moat_trend`：`↑` | `→` | `↓`（**單一 Unicode 箭頭**，取自 §7 權威護城河趨勢;禁止寫「持平」「holding」等文字）
 - `runway_post_y5`：`🟢` | `🟡` | `🔴`（取自 §6 Y5 後跑道）
 - `ev5y_pct`：**number**（取自 §11.5 的 **5Y 累積機率加權期望值 %**，**不是**年化 IRR;下游 `compute_dca_irr` 會自行年化）
@@ -90,7 +90,7 @@
 - `rearm_trigger`：str ≤120 字（v14.5;§14a 觀望分支「觸發條件:___」的機器可讀版——在等什麼:事件／估值門檻／回檔位。觀望裁決建議填，soft，不進 validator 必填）
 - `cycle_position`：str（v14.5;附錄 B B.1 循環位置 `深谷投降`｜`早循環`｜`中循環`｜`晚循環`｜`過熱頂部`;非循環 archetype 不填）
 - `cycle_verdict`：str（v14.5;附錄 B B.3 `右側可追蹤`｜`等回踩`｜`頂部觀望`｜`未觸發`;非循環 archetype 不填）
-- `industry_clock_phase`：str enum `I`｜`II`｜`III`｜`IV`（§9 產業時鐘，v14.11 全 archetype 必答;與 cycle_position 分工——那是循環股自身位置，本欄是產業層時鐘）
+- `industry_clock_phase`：str enum `I`｜`II`｜`III`｜`IV`（§9 產業時鐘，v14.12 全 archetype 必答;與 cycle_position 分工——那是循環股自身位置，本欄是產業層時鐘）
 
 **常見 alias 錯誤**（沿用 v12，照 canonical 名稱，禁用別名）：`schema_version`→`schema`、`report_date`→`date`、`current_price`→`price_at_dd`、`peg`/`peg_3y`→`peg_fy2`、`fwd_pe`→`fpe_fy2`、`fwd_pe_5y_percentile`→`pct_5y`、`val_gate`→`val`、`ma_status`→`ma`;省略 `verdict`/`trap_label` 必補;帶文字 emoji（`🟢 受益`）→ 純 emoji;`中高`→`中`/`高` 擇一。**v13 新增 alias 警示**：`role`→`dca_role`、`verdict_human`→`dca_verdict`、`ev_5y`/`ev_pct`→`ev5y_pct`、`moat_arrow`→`moat_trend`、`runway`→`runway_post_y5`、`ar`/`asymmetry_ratio`→`asym_ratio`。
 
@@ -102,7 +102,7 @@
 5. `moat_trend` 是單一箭頭 ↑/→/↓（非文字）
 6. `dca_verdict` 與頁首儀表板 + §14 裁決晶片三處完全一致
 7. `oneliner` ≤ 200 chars
-8. `schema` = `v14.11`，且 HTML `<head>` 有 `<meta name="dd-schema-version" content="v14.11">`
+8. `schema` = `v14.12`，且 HTML `<head>` 有 `<meta name="dd-schema-version" content="v14.12">`
 9. `ev5y_pct` 是 5Y **累積** EV%（不是年化 IRR）
 
 **JSON 字串內禁止 HTML**：嚴禁 `<a>`/`<strong>`/`<br>` 嵌入 JSON value（引號未跳脫會 parse error）;跨 ID 引用寫純文字檔名;換行用 `\n` 或全形分號 `；`。

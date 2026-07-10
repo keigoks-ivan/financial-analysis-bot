@@ -1240,18 +1240,24 @@ def scan_files(index_data: dict):
 
 def verdict_badge(v: str) -> str:
     v = v.strip()
+    # v14.12 欄 4 格式「{裁決}｜{角色}·{執行語}」：裁決詞上徽章，其餘降為小字副標
+    sub = ""
+    if "｜" in v:
+        v, rest = v.split("｜", 1)
+        v = v.strip()
+        sub = f' <span style="font-size:11px;color:#64748B">{rest.strip()}</span>'
     if v == "進場":
-        return '<span class="verdict-badge verdict-buy">進場</span>'
+        return '<span class="verdict-badge verdict-buy">進場</span>' + sub
     elif v == "觀望偏進場":
-        return '<span class="verdict-badge verdict-lean-buy">觀望偏進場</span>'
+        return '<span class="verdict-badge verdict-lean-buy">觀望偏進場</span>' + sub
     elif v == "觀望":
-        return '<span class="verdict-badge verdict-watch">觀望</span>'
+        return '<span class="verdict-badge verdict-watch">觀望</span>' + sub
     elif v == "迴避":
-        return '<span class="verdict-badge verdict-avoid">迴避</span>'
+        return '<span class="verdict-badge verdict-avoid">迴避</span>' + sub
     elif v.startswith("進場"):
-        # v14.5 進場·條件式（循環衛星/爆發候選）— entry family, buy styling.
-        return f'<span class="verdict-badge verdict-buy">{v}</span>'
-    return v
+        # legacy v14.5 進場·條件式（循環衛星/爆發候選）— entry family, buy styling.
+        return f'<span class="verdict-badge verdict-buy">{v}</span>' + sub
+    return v + sub
 
 
 def quality_badge(q: str, score: str = "", moat: str = "", moat_trend: str = "") -> str:

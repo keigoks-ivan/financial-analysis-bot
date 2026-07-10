@@ -72,12 +72,13 @@ REREVIEW_EPS2Y_PP = 3.0          # eps2y 修正 pp 門檻
 
 
 def is_core_role(s: dict) -> bool:
-    """核心角色＝角色欄含「核心持倉」（涵蓋無條件核心持倉與條件式核心持倉）。"""
-    return "核心持倉" in (s.get("dca_role") or "")
+    """核心角色（v14.12 四值「核心」＋legacy 核心持倉/條件式核心持倉皆命中）。"""
+    return "核心" in (s.get("dca_role") or "")
 
 
 def _is_unconditional_core(s: dict) -> bool:
-    return (s.get("dca_role") or "") == "核心持倉"
+    # v14.12 起「條件式」語意廢除——新值「核心」視同無條件核心;legacy 僅精確「核心持倉」
+    return (s.get("dca_role") or "") in ("核心", "核心持倉")
 CYCLICAL_CAP_PCT = 3.0           # 循環衛星單檔上限
 
 

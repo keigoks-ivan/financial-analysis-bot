@@ -53,27 +53,23 @@ COND_VERDICT_LABEL = "進場·條件式"
 
 
 # Category order for display
+# v14.12 四值稅制（2026-07-10 持有人拍板「大道至簡」）：核心/衛星/追蹤/不持有。
+# legacy dd-meta 的 條件式*/投機部位/候選·追蹤池/不持有·迴避 由 _categorize 映射歸一，檔案不動。
 CATEGORY_ORDER = [
-    "核心持倉",
-    "條件式核心持倉",
-    "衛星持倉",
-    "條件式衛星持倉",
-    "投機部位",
-    "不持有/迴避",
-    "候選/追蹤池",
+    "核心",
+    "衛星",
+    "追蹤",
+    "不持有",
     "缺資料",
 ]
 
 # Bar segment colours (CSS inline — reuse sig-pill palette hues)
 _CAT_COLORS = {
-    "核心持倉":       "#1e40af",   # deep blue
-    "條件式核心持倉": "#3b82f6",   # blue
-    "衛星持倉":       "#15803d",   # green
-    "條件式衛星持倉": "#4ade80",   # light green
-    "投機部位":       "#dc2626",   # red
-    "不持有/迴避":    "#6b7280",   # grey
-    "候選/追蹤池":    "#d97706",   # amber
-    "缺資料":         "#e2e8f0",   # very light (won't crowd)
+    "核心":   "#1e40af",   # deep blue
+    "衛星":   "#15803d",   # green
+    "追蹤":   "#d97706",   # amber
+    "不持有": "#6b7280",   # grey
+    "缺資料": "#e2e8f0",   # very light (won't crowd)
 }
 
 
@@ -82,29 +78,26 @@ def _strip_tags(s: str) -> str:
 
 
 def _categorize(role: str) -> str:
+    """四值歸一：核心 / 衛星 / 追蹤 / 不持有（v14.12 canonical；legacy 值映射）。"""
     r = role.strip()
-    if r.startswith('條件式核心持倉'):
-        return '條件式核心持倉'
-    if r.startswith('核心持倉') and '候選' not in r and '追蹤池' not in r:
-        return '核心持倉'
-    if r.startswith('條件式衛星持倉'):
-        return '條件式衛星持倉'
-    if (
-        r.startswith('衛星持倉')
-        or r.startswith('衛星部位')
-        or r.startswith('小衛星持倉')
-        or r.lower().startswith('satellite tactical')
-    ):
-        if '候選' not in r:
-            return '衛星持倉'
-    if '投機' in r:
-        return '投機部位'
-    if r.startswith('不持有') or r.startswith('暫不持有') or r.startswith('迴避'):
-        return '不持有/迴避'
-    if '候選' in r or '追蹤池' in r:
-        return '候選/追蹤池'
     if not r:
         return '缺資料'
+    # v14.12 canonical（新報告直接命中）
+    if r in ('核心', '衛星', '追蹤', '不持有'):
+        return r
+    # legacy 映射（85 份既有 dd-meta，檔案凍結不改）
+    if '候選' in r or '追蹤池' in r or r == '追蹤池':
+        return '追蹤'
+    if r.startswith('不持有') or r.startswith('暫不持有') or r.startswith('迴避'):
+        return '不持有'
+    if '核心' in r:
+        return '核心'
+    if (
+        '衛星' in r
+        or '投機' in r
+        or r.lower().startswith('satellite')
+    ):
+        return '衛星'
     return '缺資料'
 
 

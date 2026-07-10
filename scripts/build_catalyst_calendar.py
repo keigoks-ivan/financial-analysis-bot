@@ -73,6 +73,24 @@ _ISO_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
 
 
 # ── small utils ───────────────────────────────────────────────────────────────
+
+def _norm_dca_role(role):
+    """v14.12 四值歸一（核心/衛星/追蹤/不持有）；legacy 值映射，canonical 定義見 aggregate_dca_stats._categorize。"""
+    r = (role or "").strip()
+    if not r:
+        return r
+    if r in ("核心", "衛星", "追蹤", "不持有"):
+        return r
+    if "候選" in r or "追蹤池" in r:
+        return "追蹤"
+    if r.startswith(("不持有", "暫不持有", "迴避")):
+        return "不持有"
+    if "核心" in r:
+        return "核心"
+    if "衛星" in r or "投機" in r or r.lower().startswith("satellite"):
+        return "衛星"
+    return r
+
 def _today() -> date:
     return date.today()
 
@@ -240,7 +258,7 @@ def parse_s15(path: Path) -> dict:
 def _positioning(meta: dict) -> dict:
     return {
         "dca_verdict": meta.get("dca_verdict"),
-        "dca_role": meta.get("dca_role"),
+        "dca_role": _norm_dca_role(meta.get("dca_role")),
         "holding": None,
     }
 

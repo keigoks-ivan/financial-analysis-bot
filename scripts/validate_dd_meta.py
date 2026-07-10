@@ -112,9 +112,14 @@ V13_ENUM_FIELDS = {
         "觀望",
         "迴避",
     },
-    # dca_role enum mirrors aggregate_dca_stats.py CATEGORY_ORDER (minus the
-    # "缺資料" fallback, which must never be emitted by a real report).
+    # v14.12 canonical 四值（核心/衛星/追蹤/不持有）；其餘為 legacy 值——
+    # 僅為既有報告 dual-read 保留，v14.12 起新報告不得產出（skill 端禁止）。
     "dca_role": {
+        "核心",
+        "衛星",
+        "追蹤",
+        "不持有",
+        # legacy（凍結相容，勿新增使用）
         "核心持倉",
         "條件式核心持倉",
         "衛星持倉",

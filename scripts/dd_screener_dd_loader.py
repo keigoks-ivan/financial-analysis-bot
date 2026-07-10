@@ -50,6 +50,24 @@ _DD_FILENAME_DATE_RE = re.compile(r"^DD_.+?_(\d{8})(?:_.*)?\.html$")
 
 # ── helpers ───────────────────────────────────────────────────────────────────
 
+
+def _norm_dca_role(role):
+    """v14.12 四值歸一（核心/衛星/追蹤/不持有）；legacy 值映射，canonical 定義見 aggregate_dca_stats._categorize。"""
+    r = (role or "").strip()
+    if not r:
+        return r
+    if r in ("核心", "衛星", "追蹤", "不持有"):
+        return r
+    if "候選" in r or "追蹤池" in r:
+        return "追蹤"
+    if r.startswith(("不持有", "暫不持有", "迴避")):
+        return "不持有"
+    if "核心" in r:
+        return "核心"
+    if "衛星" in r or "投機" in r or r.lower().startswith("satellite"):
+        return "衛星"
+    return r
+
 def _ticker_to_filename_stem(ticker: str) -> str:
     """Convert canonical ticker to filename stem (strip dots).
 
@@ -245,7 +263,7 @@ def load_dd_universe(
         if str(meta.get("schema", "")).startswith(("v13", "v14")):
             dca_path, dca_date = f"{dd_path}#decision", dd_date
             dca_verdict = meta.get("dca_verdict")
-            dca_role = meta.get("dca_role")
+            dca_role = _norm_dca_role(meta.get("dca_role"))
         else:
             dca_path, dca_date = _find_latest_dca(dca_dir, ticker)
             dca_verdict = dca_role = None
