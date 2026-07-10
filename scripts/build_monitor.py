@@ -393,6 +393,16 @@ def compute_stats(pts: list, unit: str, freq: str = "d") -> dict | None:
             z = round((changes[-1] - mean) / std, 2)
 
     # 一年水位分位／52 週高低
+    def pct_at(idx_from_end):
+        """以「當時」為終點的一年窗，算 vals[-idx_from_end-1] 的分位。"""
+        pos = len(vals) - 1 - idx_from_end
+        if pos < 0:
+            return None
+        w = vals[max(0, pos - win + 1):pos + 1]
+        if len(w) < min_obs:
+            return None
+        return round(sum(1 for v in w if v <= vals[pos]) / len(w) * 100, 1)
+
     window = vals[-win:]
     pctile = hi52 = lo52 = None
     if len(window) >= min_obs:
@@ -400,6 +410,9 @@ def compute_stats(pts: list, unit: str, freq: str = "d") -> dict | None:
         eps = abs(last) * 1e-9
         hi52 = last >= max(window) - eps
         lo52 = last <= min(window) + eps
+    # 分位軌跡：約 1 個月前／3 個月前的分位（週頻換算 4／12 筆）
+    off20, off60 = (20, 60) if freq == "d" else (4, 12)
+    p20, p60 = pct_at(off20), pct_at(off60)
 
     # 連漲跌（同號連續日數；正數＝連漲）
     streak = 0
@@ -413,6 +426,7 @@ def compute_stats(pts: list, unit: str, freq: str = "d") -> dict | None:
 
     spark = [round(v, 6) for v in vals[-30:]]
     return {"last": last, "chg": chg, "z": z, "pctile": pctile,
+            "p20": p20, "p60": p60,
             "hi52": hi52, "lo52": lo52, "streak": streak,
             "spark": spark, "date": dates[-1]}
 
@@ -498,13 +512,15 @@ def structural_alerts(items: dict, fear_greed: dict | None) -> tuple[list[dict],
             alerts.append({"sev": "red", "cat": "rates", "key": "t10y2y", "rule": "curve_flip",
                            "msg": f"10Y−2Y 利差正負翻轉：{prev:+.2f}% → {t['last']:+.2f}%"})
 
-    # 2) VIX 期限結構（VIX9D > VIX ＝倒掛＝短期恐慌訂價高於中期）
+    # 2) VIX 期限結構（VIX9D > VIX ＝倒掛＝短期恐慌訂價高於中期）。
+    # ^VIX9D 的 Yahoo 源偶爾滯後數日——成分 stale 時讀值照列但標旗、不發倒掛 alert。
     ts = items.get("vix_ts")
     if ts and ts.get("last") is not None:
         inverted = ts["last"] > 1.0
         status["vix_term"] = {"val": round(ts["last"], 3),
-                              "state": "backwardation" if inverted else "contango"}
-        if inverted:
+                              "state": "backwardation" if inverted else "contango",
+                              "stale": bool(ts.get("stale")), "date": ts.get("date")}
+        if inverted and not ts.get("stale"):
             prev_ratio = None
             if ts.get("chg") is not None:
                 prev_ratio = ts["last"] / (1 + ts["chg"] / 100)
@@ -644,6 +660,7 @@ def main() -> int:
             rows.append({"key": key, "label": sp["label"], "unit": sp["unit"],
                          "val": it["val_fmt"], "chg": it["chg_fmt"], "dir": it["dir"],
                          "z": it["z"], "pctile": it["pctile"],
+                         "p20": it["p20"], "p60": it["p60"],
                          "hi52": it["hi52"], "lo52": it["lo52"],
                          "streak": it["streak"], "spark": it["spark"],
                          "date": it["date"], "stale": it["stale"]})

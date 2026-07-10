@@ -178,6 +178,14 @@ Agent({
 
 **硬規則**：中文標點全形；描述器定位禁買賣指令句；§7 GRP／三軌語言禁 IRR 排序；COT as-of 與各層時效必標；低信心數據掛 lo、未取得數值進 gaps 不捏造；無鷹架語言；發布前 self-review gate（三重檢查）；git flow＝預設停下複審、持有人說 push 才 commit（比照 expectations-synthesis）。
 
+## Workflow: 市場監測解讀（monitor-read）
+
+當用戶說「解讀市場監測」/「解讀今天的市場監測」/「今天市場怎麼看」/「monitor 解讀」/「market read」/「跑 monitor read」時，自動觸發 `monitor-read` skill（`.claude/skills/monitor-read/`）。
+
+**定位**：`/monitor/` 是機械層（cron 日更 96 條 series＋統計異常，零 LLM）＋解讀層（本 skill）兩層結構。skill 唯讀機械層，把當日異常收斂成 3-5 個跨資產主題判讀＋watch list，寫 `docs/monitor/data/editorial.json`（monitor-editorial-v1）由頁面渲染；前端內建過期防呆（editorial.as_of ≠ latest.as_of 整塊標灰）。**機械層（build_monitor.py／latest.json／alerts.json／monitor-daily.yml）skill 不碰。**
+
+**硬規則**：描述器紀律（禁擇時結論、禁買賣指令）；每個判讀句錨定機械層具體數字；預設不上網；訊號矛盾明說不硬編故事；中文全形標點；git flow＝預設停下複審、用戶說 push 才 commit。
+
 ## Workflow: 總經深度報告（macro-analyst）
 
 當用戶說「總經研究 {主題}」/「macro {topic}」/「{主題} 總經報告」/「總體經濟分析 {主題}」/「宏觀分析 {主題}」/「{主題} 宏觀傳導」時，自動觸發 `macro-analyst` skill（v1.2，`.claude/skills/macro-analyst/`）。
