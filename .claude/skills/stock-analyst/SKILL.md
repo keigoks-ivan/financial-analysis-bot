@@ -696,8 +696,9 @@ Agent({
 ```
 QC-\d   硬接線   接線：   （必填   必填，餵   寫入 dd-meta   取下界   三處一致   Guardrail：   餵 §   餵 dd-meta
 （DCA…移入）   （吸收 DCA   （…DCA…合一   校驗紀錄   判定規則接線
+盲點 \d   row \d   （v1[0-9]\.
 ```
-命中章節標題的 lineage 括注（「（DCA Phase B 移入）」等）→ 直接刪除括注只留章節名（QC-40 第 6 項）;命中正文的鷹架語言 → 改寫為分析結論。**sweep 未過不得 Write。** WHY:規則寫了卻零 enforcement（2026-07-03 NU ×49 處洩漏），機械 sweep 把「執行於心」變成「Write 前硬攔」。
+命中章節標題的 lineage 括注（「（DCA Phase B 移入）」等）→ 直接刪除括注只留章節名（QC-40 第 6 項）;命中正文的鷹架語言 → 改寫為分析結論。內部代號改寫對照:「盲點 3 上修救援」→「共識上修救援條款」;「row 8a」→「爆發候選路徑」;「row 8b」→「循環衛星進場路徑」;「row 8」→「觀望（估值主因）」;其餘 row N → 該列的裁決語意;「（v14.x）」版本括注 → 直接刪除（schema 版號只留 `<title>`/`dd-schema-version`/dd-meta 三處）。**sweep 未過不得 Write。** WHY:規則寫了卻零 enforcement（2026-07-03 NU ×49 處洩漏;2026-07-09/10 ANET+DELL 正文漏 row N ×29、盲點 N ×7、版號括注 ×6——清單缺這三族 pattern），機械 sweep 把「執行於心」變成「Write 前硬攔」。
 
 ### 防壓縮指令
 
@@ -1970,7 +1971,7 @@ else: state = "🟡 觀察池"
 □ 基本面研究只在 Part I 做一次,Part II 無另起 web search？
 □ 頁首儀表板 + §14 裁決晶片 + dd-meta dca_verdict 三處進場/觀望/迴避完全一致？
 □ §14 <section> 帶 id="decision" 錨點 + h2 scroll-margin-top？
-□ dd-meta schema="v14.6" + <meta dd-schema-version v14.6>？
+□ dd-meta schema="v14.11" + <meta dd-schema-version v14.11>？
 □ dd-meta 5 個 v13 必填欄全在（dca_verdict/dca_role/moat_trend/runway_post_y5/ev5y_pct）且 enum 合法？
 □ moat_trend 單一箭頭 ↑/→/↓（非文字「持平」）且 §7 附 ≥1 個 12M sourced evidence？
 □ runway_post_y5 ∈ {🟢,🟡,🔴}？判定引用滲透率推導或 sourced 第二曲線（v14.3 量化邊界）？若 🔴，§14c 反映「持有年限 ≤ 3Y 警示」+ §14 決策矩陣 Soft Veto？若 🟢，§11.5「10Y 二段延伸」已填？
@@ -2005,7 +2006,7 @@ else: state = "🟡 觀察池"
 □ §5.G 商業模式解剖（v14.11）：單位經濟學表有量價拆解數字;供應鏈 ⚑ 節點已一體兩面處理（護城河 §7 或集中度 §13a）;營收品質拆解與 §11 倍數、§6.B 判分口徑一致?
 □ §9 產業時鐘（v14.11）：industry_clock_phase 已填（有 ID 引用且 Phase II 已交叉驗證/無 ID 自判附依據）?
 □ q.py 先讀後裁（v14.5）：Part II 動筆前已跑 `python knowledge/q.py {TICKER}`;若前次觀望/迴避且 to-date +30% → 錯過成本已入 §12.3 交叉矛盾且 §15 正面處理（非僅「估值更貴」）?
-□ dd-meta（v14.5 新增欄;版號現 v14.6）：schema=v14.6;archetype 選填欄已填 primary（7 類 enum）;觀望裁決建議填 rearm_trigger;循環股 cycle_position/cycle_verdict 已填、非循環省略?
+□ dd-meta（v14.5 新增欄;版號現 v14.11）：schema=v14.11;archetype 選填欄已填 primary（7 類 enum）;觀望裁決建議填 rearm_trigger;循環股 cycle_position/cycle_verdict 已填、非循環省略?
 □ long_term_confidence：依附錄 A I 定義（moat 等級×moat_trend×runway×§13 證偽距離）判高/中/低，且與 QC-31 A 級條件一致?
 □ QC-43~47：§0 已宣告 archetype（primary + secondary + 信心 + 證據，primary 落 dd-meta `archetype`）;若非品質複利，§5/§11/QC-31 已按路由換對應 gate-set（金融 QC-44 ROTCE/CET1/P-TBV｜未獲利 QC-45 Rule-of-40/NRR/EV-S 且 NI 負未誤觸發 X｜轉機·公用 QC-46 資產/DDM｜**EMS/ODM 第 7 類 ROIC+周轉+客戶集中+需求量週期+倍數均值回歸，非 FCF margin**）且明寫換了哪套;被取代的通用 PE/EPS/FCF tripwire 未重複機械套（QC-47）;支付網絡/資產輕金融科技未誤歸金融?
 □ 跨檔比較（§14a opportunity cost）用 GRP 三閘語言，未以 5Y IRR 作跨檔排序依據（v14.5 GRP mandate）?

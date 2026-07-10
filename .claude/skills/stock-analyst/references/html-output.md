@@ -1,4 +1,4 @@
-# stock-analyst v14.7 — html-output.md（條件載入 reference）
+# stock-analyst v14.11 — html-output.md（條件載入 reference）
 
 > 本檔為 SKILL.md 的拆分模組（2026-07-07 v14.7 結構拆分，內容自 v14.6 原文搬移、語意零變更）。必讀時點見 SKILL.md 條件載入路由表。修改規則請同步 SKILL.md stub 與 references/changelog.md。
 
@@ -50,20 +50,20 @@
 
 ### 功能規格
 
-- 頁首固定:標的代碼 ｜ 資料抓取時間 ｜ 最新股價 ｜ DD Schema v14.10
-- **版本一號到底（v14.0 起）**:frontmatter `version`、dd-meta `schema`、`<meta dd-schema-version>`、頁首字串、INDEX.md Schema 欄**全部一致（目前 = `v14.10`）**（沿用本 repo 歷史慣例:一個版號到底）。**下游相容**:validator（`^v1[234]\.\d+$`）、pre-commit floor（`"schema":"v1[34]`）、`aggregate_dca_stats` / `update_dd_index` / `dd_screener_dd_loader`（`startswith(("v13","v14"))`）已放寬接受 v13.x ∪ v14.x，既有 v13.0 報告照常運作，不需回溯重跑。**未來再升版時:bump 此 5 欄一致 + 放寬上述 6 個 pipeline 檢查多接受新版號。**
+- 頁首固定:標的代碼 ｜ 資料抓取時間 ｜ 最新股價 ｜ DD Schema v14.11
+- **版本一號到底（v14.0 起）**:frontmatter `version`、dd-meta `schema`、`<meta dd-schema-version>`、頁首字串、INDEX.md Schema 欄**全部一致（目前 = `v14.11`）**（沿用本 repo 歷史慣例:一個版號到底）。**下游相容**:validator（`^v1[234]\.\d+$`）、pre-commit floor（`"schema":"v1[34]`）、`aggregate_dca_stats` / `update_dd_index` / `dd_screener_dd_loader`（`startswith(("v13","v14"))`）已放寬接受 v13.x ∪ v14.x，既有 v13.0 報告照常運作，不需回溯重跑。**未來再升版時:bump 此 5 欄一致 + 放寬上述 6 個 pipeline 檢查多接受新版號 + `grep -rn "現 v14\|目前 = \|schema=\"v14\|schema = .v14\|content=\"v14\|Schema v14" SKILL.md references/`（排除 changelog.md）把所有現版戳一次換齊——血統註記（「（v14.6，…）」規則出生版）不動，只換「目前/現/schema=」類現版斷言。WHY:2026-07-10 SEZL 執行實驗發現自檢清單停在 v14.6、本檔停在 v14.10、reference 標頭停在 v14.7——照字面執行會產錯版號，validator 對域外版號靜默跳過、下游悄悄掉報告。**
 - **`<head>` 機讀標籤（全部必填）**:
   - `<meta charset="utf-8">` 之後緊接 `<meta name="robots" content="noindex,nofollow">`（私站防爬，research.investmquest.com noindex 政策）
-  - `<meta name="dd-schema-version" content="v14.10">`（= frontmatter version，一號到底）
+  - `<meta name="dd-schema-version" content="v14.11">`（= frontmatter version，一號到底）
 - **`<section id="decision">` 錨點**:§14 決策章節的 `<section>` 必須帶 `id="decision"`，h2 加 `scroll-margin-top: 80px`。research 頁「定見」欄 link 到 `/dd/DD_{ticker}_{date}.html#decision`，漏寫錨點 → 定見連結跳到頁首而非裁決。
 - **目錄導覽列（強制）**:頁首之後緊接 `<nav class="dd-toc">`，含 anchor 連結指向各章節（§1 結論 / §2 序章 / §3 論點 / §4 財報 / §5 門檻 / §6 成長 / §7 護城河 / §8 財務 / §9 產業 / §10 治理 / §11 估值 / §12 矛盾 / §13 pre-mortem / §14 決策 / §15 複審 / 附錄 A 擇時）。pill-shape badges 樣式;每個 `<section>` 有對應 `id`;@media print 時 `.dd-toc` 隱藏。**禁止省略**。
 - 右下角固定「列印為 PDF」按鈕（window.print()）
 - @media print CSS:隱藏頁首與按鈕，附錄 A 折疊區全部展開，確保列印整潔
 - 所有中文字型確保正常顯示
 
-### dd-meta JSON 區塊（schema v14.10，HTML `<head>` 內，必填）
+### dd-meta JSON 區塊（schema v14.11，HTML `<head>` 內，必填）
 
-HTML `<head>` 內必須含 `<script id="dd-meta" type="application/json">{...}</script>`，schema `v14.10`，含 22 個 v12 必填欄 + 5 個 v13 必填欄 + 20 個選填欄（完整 schema + enum 見 QC-32）。**生成後跑 QC-32 自驗腳本 + `python3 scripts/validate_dd_meta.py --report` 確認全綠才 commit。** 關鍵對映:`dca_verdict` = §14 裁決晶片;`dca_role` = §14a 角色;`moat_trend` = §7 權威趨勢（單一箭頭）;`runway_post_y5` = §6.A'';`ev5y_pct` = §11.5 5Y 累積機率加權 EV%（非年化）;`irr_base_pct` = §11.5 Base IRR;`max_dd_pct` = §13c 範圍下界;`asym_ratio` = §11.5 不對稱比 AR（選填）。
+HTML `<head>` 內必須含 `<script id="dd-meta" type="application/json">{...}</script>`，schema `v14.11`，含 22 個 v12 必填欄 + 5 個 v13 必填欄 + 20 個選填欄（完整 schema + enum 見 QC-32）。**生成後跑 QC-32 自驗腳本 + `python3 scripts/validate_dd_meta.py --report` 確認全綠才 commit。** 關鍵對映:`dca_verdict` = §14 裁決晶片;`dca_role` = §14a 角色;`moat_trend` = §7 權威趨勢（單一箭頭）;`runway_post_y5` = §6.A'';`ev5y_pct` = §11.5 5Y 累積機率加權 EV%（非年化）;`irr_base_pct` = §11.5 Base IRR;`max_dd_pct` = §13c 範圍下界;`asym_ratio` = §11.5 不對稱比 AR（選填）。
 
 ### 輸出規格（Claude Code 本地環境）
 
@@ -71,11 +71,11 @@ HTML `<head>` 內必須含 `<script id="dd-meta" type="application/json">{...}</
 - 使用 Write 工具輸出至 `docs/dd/`
 - **輸出完成後必須執行以下步驟，不得省略**:
   1. **生成後自驗**:跑 QC-32 自驗腳本 + `python3 scripts/validate_dd_meta.py --report`（確認 v13 五欄 + enum 全綠）;確認 `id="decision"` 錨點存在;確認 dca_verdict 三處（頁首/§14/dd-meta）一致。
-  2. **更新 INDEX.md**:Edit append 一行到 `docs/dd/INDEX.md`，8 欄格式:`| YYYY-MM-DD | TICKER | {同 frontmatter version（現 v14.10）} | 統一裁決(進場/觀望/迴避) | 陷阱定性 | 護城河等級/估值燈/MA | DD_TICKER_YYYYMMDD.html | 備註 |`。第 4 欄為**統一裁決**（取自 §14;基本面評級 A+/A/B/C/X 不放此欄，已在 dd-meta `signal`）。備註限 3 句，每句 30-50 字，`<br>` 分隔（第 1 句 產業位置+品質;第 2 句 估值+護城河趨勢;第 3 句 關鍵判斷/觀察點）。
-  3. **觸發網站同步**:執行 `python scripts/update_dd_index.py`（同步 research 頁主表 + dd-screener;v14.10 DD 報告由 script 直接讀 dd-meta 決策層欄位，定見欄連 `/dd/DD_X.html#decision`）。失敗則提示用戶手動執行，不得跳過。
+  2. **更新 INDEX.md**:Edit append 一行到 `docs/dd/INDEX.md`，8 欄格式:`| YYYY-MM-DD | TICKER | {同 frontmatter version（現 v14.11）} | 統一裁決(進場/觀望/迴避) | 陷阱定性 | 護城河等級/估值燈/MA | DD_TICKER_YYYYMMDD.html | 備註 |`。第 4 欄為**統一裁決**（取自 §14;基本面評級 A+/A/B/C/X 不放此欄，已在 dd-meta `signal`）。備註限 3 句，每句 30-50 字，`<br>` 分隔（第 1 句 產業位置+品質;第 2 句 估值+護城河趨勢;第 3 句 關鍵判斷/觀察點）。
+  3. **觸發網站同步**:執行 `python scripts/update_dd_index.py`（同步 research 頁主表 + dd-screener;v14.11 DD 報告由 script 直接讀 dd-meta 決策層欄位，定見欄連 `/dd/DD_X.html#decision`）。失敗則提示用戶手動執行，不得跳過。
   4. **terminal 摘要**（v14.5 格式）:
      ```
-     ✅ v14.10 DD 報告完成:[TICKER]
+     ✅ v14.11 DD 報告完成:[TICKER]
      📄 檔案:docs/dd/DD_TICKER_YYYYMMDD.html
      💰 最新股價:$__
      🎯 統一裁決:[進場 / 觀望 / 迴避]（倉位角色:__）
