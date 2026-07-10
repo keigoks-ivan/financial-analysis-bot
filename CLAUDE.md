@@ -1,5 +1,18 @@
 # Repo-wide instructions
 
+## 模型路由表（spawn sub-agent 預設模型）
+
+用戶未指定模型時照此表；用戶明講「用 opus / 用 sonnet」時以用戶為準。
+
+| 任務類型 | 預設 spawn 模型 |
+|---|---|
+| DD 深度報告批跑（stock-analyst / ddreport）、多檔並行生產批 | opus |
+| 產業 ID / 供應鏈 / macro 新報告寫稿（重研究、判斷密集） | opus |
+| 所有 cold-review critic（industry-thesis-critic、id-review、macro/synthesis 報告 critic） | sonnet（跨模型冷讀，writer 不得自任） |
+| 報告可讀性打磨 / 中文改寫潤色（如 macro 打磨） | sonnet |
+| 大型 PDF 平行讀取拆 digest | sonnet |
+| 網站樣板 / 資料同步 / 機械層 script（無判斷） | sonnet |
+
 ## Decision-time critic：思考產業 thesis 動部位前必先 spawn
 
 當用戶討論以下任一情境，**必須先 spawn `industry-thesis-critic` sub-agent** 對相關 ID 跑冷讀，再給投資建議。這是 Boris verify-app pattern 在投資決策的翻譯 — 寫 ID 的 agent 與驗 thesis 的 agent 不同。
@@ -96,15 +109,9 @@ Agent({
 
 **Legacy**：343 份既有 `docs/dca/DCA_*.html` 凍結保留、仍在站上，下游以 dual-read 支援（v13 dd-meta 優先，讀不到才 fall back legacy DCA）。設計細節見 `docs/_handoff_v13_dd_design_20260621.md`。
 
-## Workflow: 產業 DS（敘述型產業研究）— 【DEPRECATED 2026-06-11，已併入 industry-analyst v2.0】
+## Workflow: 產業 DS — 已退役（2026-06-11 併入 industry-analyst v2.0）
 
-`industry-ds`（DS 敘述報告）已於 2026-06-11 停用，**併入 `industry-analyst` v2.0**。v2.0 走「敘事為骨、表格為窗」單一架構，用 DS 的因果敘事弧當骨架、ID 的決策資產當器官嵌入，吸收了 DS 的敘事弧 / 因果閉合 / 推導鏈 / §末 aside 來源系統。
-
-**觸發語轉向**：原 DS 觸發語（「{主題} ds」/「ds {主題}」/「{產業} 敘述報告」/「分析 {產業} 的供需循環」/「{產業} 歷史與未來」/「discourse {industry}」）現在一律觸發 `industry-analyst`（v2.0），輸出寫 `docs/id/`（不再寫 `docs/ds/`）。
-
-**Legacy DS 報告**：既有 8 份 `docs/ds/DS_*.html` 凍結為 legacy，檔案不動、不 retrofit、不遷移，仍在 `https://research.investmquest.com/ds/` 上站。需 review / patch / 驗證 legacy DS 時走 `id-review --mode ds`（DS-mode 8 條檢查清單仍在）；**不要用 industry-ds 生新 DS**。
-
-**Plumbing（僅供 legacy DS 維護參考）**：`scripts/validate_ds_meta.py`（驗 `ds-meta`，pre-commit hook 仍跑）、`scripts/build_ds_category_pages.py`（重生 `docs/ds/cat-*.html`）、`scripts/init_ds_index.py`（一次性 bootstrap）。Taxonomy 與 ID 共用（`docs/id/taxonomy.md`）。
+DS 觸發語現一律觸發 `industry-analyst`；legacy DS 維護走 `id-review --mode ds`。全文見 `.claude/notes/deprecated-workflows.md`。
 
 ## Workflow: 多股對比（multi-stock comparator）
 
@@ -227,6 +234,10 @@ WHY：2026-07 全鏈驗屍證實，五月那批僵化閘（MA Soft Veto / AR≥4
 2. `git status` 看 `??` 區 — 確認沒有別的 session 留下的 orphan 檔會被一起 commit；只 `git add` 你這次真的要動的檔，**不要盲 `git add -A`**。
 3. push 前重查 `docs/research/index.html` / `docs/dd-screener/latest.json` / 相關 catalog 沒被並行 session 覆蓋掉你剛產的條目。
 4. 驗證 fixture 一律放 `/tmp`，**不要放 `docs/` 追蹤目錄**（並行 cron/session 會掃上線）。
+
+## QC gate：任何 commit 前跑 qc.py
+
+任何 commit 前必跑 `python3 scripts/qc.py`（預設 changed-files 模式，`--all` 全掃；exit non-zero = 不可 commit，先修完再 commit）。此為單一品質總閘，取代先前散落的「commit 前跑標點檢查」等 prose 提醒；pre-push hook 會強制擋。
 
 ## Git pre-commit hook
 

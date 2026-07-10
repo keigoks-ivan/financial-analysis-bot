@@ -1,0 +1,29 @@
+#!/bin/sh
+# Deterministic QC gate, run before every push (2026-07-11).
+#
+# Lives in scripts/hooks/ so it shares the repo's existing core.hooksPath
+# (scripts/hooks) alongside pre-commit / post-commit / post-merge — do NOT
+# switch core.hooksPath to a separate dir or those hooks silently stop firing.
+#
+# Runs scripts/qc.py in changed-files mode (staged + unstaged + committed-but-
+# unpushed). Fast (seconds): only touched docs/*.html and *.md are scanned.
+# Checks: dd-meta JSON schema (delegated to validate_dd_meta.py), v13/v14
+# #decision anchor, dead internal links, CJK half-width punctuation. Dead-link
+# / punctuation issues only block when introduced on newly-added lines, so the
+# legacy backlog never blocks a push.
+#
+# Bypass in emergency: git push --no-verify
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+python3 "$REPO_ROOT/scripts/qc.py"
+status=$?
+
+if [ "$status" -ne 0 ]; then
+  echo ""
+  echo "❌ Pre-push QC gate failed — push blocked."
+  echo "   Fix the errors listed above, or bypass with: git push --no-verify"
+  exit 1
+fi
+
+exit 0
