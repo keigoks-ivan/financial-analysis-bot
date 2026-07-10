@@ -1471,6 +1471,101 @@ def _verdict_to_signal(verdict_raw: str) -> str:
     return ""
 
 
+# Header th (or first-row) keyword that marks the "verdict/judgment" column of a
+# Munger gate table. Multi-era: 符合？/判定/結果/達標？/裁決/檢核/達成 all seen.
+# _JUDGE_TH_RE (full, incl. 裁決) → indexes the verdict column ONCE a table is chosen.
+# _STRONG_JUDGE_RE (no 裁決) → selects the gate TABLE. 裁決 is excluded from table
+# selection because non-gate decision tables reuse it (VEEV「成長品質拷問·裁決」quiz,
+# WLDN screener「本 DD 裁決」對帳) and would be grabbed as false gates.
+_JUDGE_TH_RE = re.compile(r"符合|判定|結果|達標|裁決|檢核|達成")
+_STRONG_JUDGE_RE = re.compile(r"符合|判定|結果|達標|檢核|達成")
+_HDR_TR_RE = re.compile(r"<tr[^>]*>(.*?)</tr>", re.DOTALL | re.IGNORECASE)
+_HDR_TH_RE = re.compile(r"<th[^>]*>(.*?)</th>", re.DOTALL | re.IGNORECASE)
+_HDR_TD_RE = re.compile(r"<td[^>]*>(.*?)</td>", re.DOTALL | re.IGNORECASE)
+_STRIP_TAGS = re.compile(r"<[^>]+>", re.DOTALL)
+
+
+def _gate_header_cells(tbl: str) -> "list[str]":
+    """Header cell texts of a table: first <tr> that has <th>, else first-row <td>."""
+    for trm in _HDR_TR_RE.finditer(tbl):
+        ths = _HDR_TH_RE.findall(trm.group(1))
+        if ths:
+            return [_STRIP_TAGS.sub("", x).strip() for x in ths]
+    trm = _HDR_TR_RE.search(tbl)
+    if trm:
+        tds = _HDR_TD_RE.findall(trm.group(1))
+        return [_STRIP_TAGS.sub("", x).strip() for x in tds]
+    return []
+
+
+def _find_judge_col(header_cells: "list[str]") -> "int | None":
+    """Index of the verdict column, by header keyword. None if no header matches."""
+    for i, h in enumerate(header_cells):
+        if _JUDGE_TH_RE.search(h):
+            return i
+    return None
+
+
+def _count_gate_rows(tbl: str) -> int:
+    """Number of body rows (>=3 <td>) — used to reject 3-row screener decoys."""
+    n = 0
+    for trm in _HDR_TR_RE.finditer(tbl):
+        if len(_HDR_TD_RE.findall(trm.group(1))) >= 3:
+            n += 1
+    return n
+
+
+def _classify_gate_cell(cell_text: str, cell_html: str) -> str:
+    """Classify a gate verdict cell → 'pass' / 'partial' / 'fail'.
+
+    Handles multi-era marker variants:
+      emoji:  ✅/✓/✔(U+2714)/🟢 = pass · ❌/🔴 = fail · 🟡/⚠/△ = partial
+      class:  pass/beat/badge-beat = pass · fail/badge-miss = fail · warn-cell = partial
+      text:   符合/達標/達成/是… = pass · 不符/不達標/未達/否/承壓/超標… = fail
+              部分/接近/邊界/勉強/近門檻/尚可/表面/失真… = partial (hedged)
+    Order matters: emoji > class > hedged-partial > fail-substring > pass-substring,
+    because 不達標 contains 達標 (a pass token).
+    """
+    t = cell_text
+    # 1) Emoji verdict (highest signal)
+    _has_pass_e = ("✅" in t) or ("🟢" in t)
+    _has_fail_e = ("❌" in t) or ("🔴" in t)
+    if _has_pass_e and _has_fail_e:
+        return "partial"  # split verdict, e.g. DIS「✅ D/E ｜ ❌ Cash」
+    if _has_fail_e:
+        return "fail"
+    if _has_pass_e:
+        return "pass"
+    if "🟡" in t or "🟠" in t or "⚠" in t or "△" in t:
+        return "partial"
+    if re.search(r"[✓✔]", t):  # U+2713 and U+2714 both → pass
+        return "pass"
+    # 2) HTML class cues
+    if 'class="pass"' in cell_html or 'class="beat"' in cell_html or "badge-beat" in cell_html:
+        return "pass"
+    if "warn-cell" in cell_html:
+        return "partial"
+    if 'class="fail"' in cell_html or "badge-miss" in cell_html:
+        return "fail"
+    # 3) Text-only — hedged/partial first
+    if any(k in t for k in (
+        "部分", "接近", "邊緣", "邊際", "邊界", "勉強", "近門檻", "尚可",
+        "表面", "失真", "需注解", "樣本短", "假陽性", "觀察中", "非改善",
+    )):
+        return "partial"
+    # 4) Text fail — must precede pass tokens (不達標 ⊃ 達標)
+    if any(k in t for k in (
+        "不達標", "不符", "未達", "未過", "嚴重", "承壓", "超標", "侵蝕", "惡化",
+    )):
+        return "fail"
+    if t.startswith("否") or t == "否":
+        return "fail"
+    # 5) Text pass
+    if t.startswith("是") or "符合" in t or "達標" in t or "達成" in t or "過關" in t:
+        return "pass"
+    return "fail"
+
+
 def extract_munger_threshold(dd_text: str) -> "tuple[str | None, int | None, int | None]":
     """Extract Munger §7 evaluation from a DD HTML file.
 
@@ -1505,27 +1600,78 @@ def extract_munger_threshold(dd_text: str) -> "tuple[str | None, int | None, int
         re.compile(r"<div[^>]*section-title[^>]*>[^<]*§7[^<]*</div>", re.IGNORECASE),
         # h2-level §7 section headers — covers APP, KEYS, 6146T, 6857T, BESI, CAMT, DELL etc.
         re.compile(r"<h2[^>]*>[^<]*§7[^<]*(?:門檻|核心門檻)[^<]*</h2>", re.IGNORECASE),
+        # v13/v14 起門檻檢核移到 §5（「§5｜核心門檻檢核（Munger）」，h2-h4 皆見）——
+        # 2026-07-10 發現 18 份新報告僅 FICO/DELL 因內層另有「門檻檢核表」小標被舊
+        # pattern 撿到，其餘全 miss → gate 0。
+        re.compile(r"<h[234][^>]*>[^<]*§5[^<]*核心門檻檢核[^<]*</h[234]>", re.IGNORECASE),
     ]
 
     gate_start: "int | None" = None
     gate_section: "str | None" = None
+    gate_col: int = 2  # verdict column index (default col-2, historic convention)
 
+    # PASS-2 fallback (old heuristic): first table with >=3 cols and >=3 marks
+    # or a 符合? header — catches legacy gate tables that lack a verdict-keyword th.
+    fb_start: "int | None" = None
+    fb_section: "str | None" = None
+
+    _mark_pat = re.compile(
+        r"✅|❌|✓|✔|⚠|🟢|🟡|🔴|badge-(?:beat|miss)|class=[\"']?(?:pass|fail)|>\s*是\s*<|>\s*否\s*<"
+    )
     for pat in h_patterns:
         m = pat.search(dd_text)
         if not m:
             continue
-        table_end = dd_text.find("</table>", m.end())
-        if table_end == -1:
-            continue
-        candidate = dd_text[m.start(): table_end + 8]
-        has_3col = any(
-            len(list(td_pat_check.finditer(tr.group(1)))) >= 3
-            for tr in tr_pat_check.finditer(candidate)
-        )
-        if has_3col:
-            gate_start = m.start()
-            gate_section = candidate
+        # 標題後最多掃 6 張表。優先取「真門檻表」＝表頭有判定欄關鍵字（符合/判定/結果/
+        # 達標/裁決）且 body ≥5 列 → 排除 EPS 共識表（無關鍵字）與 3 列 screener 對帳表
+        # （WLDN 型：有裁決欄但僅 3 列）。找不到才退回舊啟發式（PASS-2）。
+        search_pos = m.end()
+        for _ in range(6):
+            table_start = dd_text.find("<table", search_pos)
+            if table_start == -1:
+                break
+            table_end = dd_text.find("</table>", table_start)
+            if table_end == -1:
+                break
+            tbl = dd_text[table_start: table_end + 8]
+            search_pos = table_end + 8
+
+            header_cells = _gate_header_cells(tbl)
+            judge_col = _find_judge_col(header_cells)
+            nrows = _count_gate_rows(tbl)
+            strong = any(_STRONG_JUDGE_RE.search(h) for h in header_cells)
+
+            # PASS-1: strong verdict-keyword header + enough rows → the real gate table.
+            if strong and judge_col is not None and nrows >= 5:
+                gate_start = m.start()
+                gate_section = tbl
+                gate_col = judge_col
+                break
+
+            # PASS-2 candidate (record first only; do not stop scanning for PASS-1)
+            if fb_section is None:
+                has_3col = any(
+                    len(list(td_pat_check.finditer(tr.group(1)))) >= 3
+                    for tr in tr_pat_check.finditer(tbl)
+                )
+                is_gate_old = has_3col and (
+                    len(_mark_pat.findall(tbl)) >= 3
+                    or re.search(r"<th[^>]*>[^<]*符合[?？]", tbl)
+                )
+                if is_gate_old:
+                    fb_start = m.start()
+                    fb_section = tbl
+        if gate_section is not None:
             break
+
+    if gate_section is None:
+        # No PASS-1 table anywhere → fall back to legacy heuristic table (col-2).
+        if fb_section is not None:
+            gate_start = fb_start
+            gate_section = fb_section
+            # try header detection on the fallback too; else keep col-2
+            fb_col = _find_judge_col(_gate_header_cells(fb_section))
+            gate_col = fb_col if fb_col is not None else 2
 
     if gate_start is None or gate_section is None:
         return (None, None, None)
@@ -1547,12 +1693,14 @@ def extract_munger_threshold(dd_text: str) -> "tuple[str | None, int | None, int
         tds = list(td_pat.finditer(tr.group(1)))
         if len(tds) < 3:
             continue
-        raw3 = tds[2].group(1)
+        # Verdict cell = detected column; clamp to last cell if header/body ragged.
+        vcol = gate_col if gate_col < len(tds) else len(tds) - 1
+        raw3 = tds[vcol].group(1)
         cell_text = tag_pat.sub("", raw3).strip()
         cell_html = raw3
         label = tag_pat.sub("", tds[0].group(1)).strip()
 
-        # Special row: 護城河強度 — cell may be numeric score
+        # Special row: 護城河強度 — cell may be numeric score (e.g. "7 分" / "9/10")
         if any(k in label for k in ("護城河強度", "護城河強")):
             nums = re.findall(r"\d+", cell_text)
             if nums:
@@ -1563,39 +1711,21 @@ def extract_munger_threshold(dd_text: str) -> "tuple[str | None, int | None, int
                     partial_c += 1
                 else:
                     fail_c += 1
-            elif re.search(r"[✅✓]", cell_text):
-                pass_c += 1
-            elif "⚠️" in cell_text:
-                partial_c += 1
             else:
-                fail_c += 1
+                verdict = _classify_gate_cell(cell_text, cell_html)
+                if verdict == "pass":
+                    pass_c += 1
+                elif verdict == "partial":
+                    partial_c += 1
+                else:
+                    fail_c += 1
             continue
 
-        is_partial = (
-            "部分" in cell_text or "接近" in cell_text or "邊緣" in cell_text
-            or "warn-cell" in cell_html or "🟡" in cell_text or "⚠️" in cell_text
-        )
-        is_pass = (
-            "✅" in cell_text or "✓✓" in cell_text
-            or 'class="pass"' in cell_html or 'class="beat"' in cell_html
-            or "badge-beat" in cell_html
-        )
-        if not is_pass and not is_partial and re.search(r"✓", cell_text):
-            is_pass = True
-        if not is_pass and not is_partial and cell_text == "是":
-            is_pass = True
-        is_fail = (
-            "❌" in cell_text or cell_text in ("否", "高", "低", "擴張中")
-            or bool(re.match(r"^否", cell_text))
-            or 'class="fail"' in cell_html
-        )
-
-        if is_partial:
-            partial_c += 1
-        elif is_pass:
+        verdict = _classify_gate_cell(cell_text, cell_html)
+        if verdict == "pass":
             pass_c += 1
-        elif is_fail:
-            fail_c += 1
+        elif verdict == "partial":
+            partial_c += 1
         else:
             fail_c += 1
 
@@ -1927,14 +2057,19 @@ def collect_dca_only_rows(entries, dca_map: dict, dca_ev_map: dict,
     """
     if not dca_map:
         return []
+    # OTC/ADR ↔ 本地掛牌代碼對（DCA 檔名用無後綴 OTC 碼、DD 用交易所後綴碼）
+    _dca_aliases = {"LYCAU": "LYCAX"}  # Lynas：DCA_LYCAU ↔ DD_LYC.AX
     dd_tickers: set[str] = set()
     for e in entries:
         t = e["ticker"]
         dd_tickers.add(t)
         dd_tickers.add(re.sub(r"[^A-Za-z0-9]", "", t).upper())
+        # 後綴基底形（VACN.SW → VACN）——防 DCA 無後綴碼被誤判為孤兒而生重複行
+        dd_tickers.add(re.sub(r"[^A-Za-z0-9]", "", t.split(".")[0]).upper())
     rows: list[str] = []
     for ticker, href in sorted(dca_map.items()):
-        if ticker in dd_tickers:
+        norm = re.sub(r"[^A-Za-z0-9]", "", ticker).upper()
+        if ticker in dd_tickers or norm in dd_tickers or _dca_aliases.get(norm) in dd_tickers:
             continue
         m = re.search(r"DCA_[A-Z0-9]+_(\d{8})\.html", href)
         date_str = ""
