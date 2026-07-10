@@ -1,0 +1,87 @@
+{
+  "schema": "synth-ledger-v1",
+  "description": "expectations-synthesis 判讀校準帳本（append-only）。每份 docs/research/synthesis/{TICKER}_{DATE}.html 發布時 append 一筆凍結 entry，記錄發布當下的方向判讀（direction）、淨不對稱（asymmetry）、現價 vs 共識落差（gap_pct）、發布日價格與近端共識錨。outcome 欄發布時留 null，季度校準時（與 DD/ID 校準同輪，下輪 2026-10）回填實現值以量化『判讀方向是否命中』。目的：把 §Δ 淨判讀從不可證偽的散文變成可累積命中率的預測記錄——連續兩輪 direction 命中率 < 50% 的判讀維度，要檢討該維度的推理協議（非個案調參）。",
+  "field_notes": {
+    "ticker": "股票代號",
+    "date": "報告發布日 YYYY-MM-DD（同檔名日期）",
+    "direction": "近端 EPS 期望落差方向判讀（共識偏低=偏正 / 偏高=偏負 / 中性 / 中性偏正 / 雙向），讀自 §Δ 收斂句",
+    "asymmetry": "發布價下的淨風險報酬不對稱（正向 / 中性 / 負向），讀自 §Δ『對稱性/估值』列與『最重要的一句』",
+    "gap_pct": "發布現價 vs 近端共識錨的落差%（正=現價高於共識目標、負=現價低於共識目標）",
+    "price_at_publish": "發布日收盤價（ADR 個股記 ADR 價）",
+    "consensus_anchor": "近端共識錨（多為分析師均值/中位目標價，附現價相對位置）",
+    "outcome": "發布時 null；季度校準回填 {consensus_3m_delta_pct, price_3m_pct, direction_correct, notes}"
+  },
+  "outcome_schema": {
+    "consensus_3m_delta_pct": "發布後約 3 個月，近端共識 EPS（或目標價錨）相對發布時的變動%——驗 direction 判讀（偏正應對應共識上修、偏負應對應下修）",
+    "price_3m_pct": "發布後約 3 個月的價格報酬%——輔助驗 asymmetry",
+    "direction_correct": "布林：direction 判讀是否被 consensus_3m_delta_pct 的方向證實（偏正→上修 / 偏負→下修 / 中性→±5% 內 / 雙向→不計分，記 null）",
+    "notes": "校準備註（結構性因素、幣別、財報 re-rate 等）"
+  },
+  "calibration_protocol": {
+    "cadence": "季度，與 DD/ID 裁決校準同輪（下輪 2026-10）",
+    "backfill": "回填每筆 outcome{consensus_3m_delta_pct, price_3m_pct, direction_correct, notes}；雙向判讀 direction_correct 記 null 不計分",
+    "review_rule": "連續兩輪某判讀維度（direction 或 asymmetry）命中率 < 50% → 檢討該維度的推理協議（SKILL.md §Δ 收斂邏輯 / 機器欄先讀規則），不是個案調參"
+  },
+  "entries": [
+    {
+      "ticker": "TSM",
+      "date": "2026-06-25",
+      "direction": "偏正",
+      "asymmetry": "正向",
+      "gap_pct": -6.7,
+      "price_at_publish": 441.35,
+      "consensus_anchor": "分析師均值目標 $473（現價 −7%）；高 BofA $590 / 低 $354",
+      "outcome": null
+    },
+    {
+      "ticker": "GLW",
+      "date": "2026-06-25",
+      "direction": "中性偏正",
+      "asymmetry": "負向",
+      "gap_pct": 16.9,
+      "price_at_publish": 204.63,
+      "consensus_anchor": "共識均值/EW 公允下緣 ~$175（現價 +17%）；遠端 FY28 離散 $4.85–6.70",
+      "outcome": null
+    },
+    {
+      "ticker": "CRDO",
+      "date": "2026-06-25",
+      "direction": "偏正",
+      "asymmetry": "負向",
+      "gap_pct": 5.1,
+      "price_at_publish": 268.99,
+      "consensus_anchor": "共識均值目標 ~$256（現價 +5%）；近期上修 BofA $340 / Stifel $350",
+      "outcome": null
+    },
+    {
+      "ticker": "NVDA",
+      "date": "2026-06-26",
+      "direction": "偏正",
+      "asymmetry": "正向",
+      "gap_pct": -34.8,
+      "price_at_publish": 195.74,
+      "consensus_anchor": "共識中位 $300（現價 −35%）；均值 $299–309、高 $500、低 $180–250",
+      "outcome": null
+    },
+    {
+      "ticker": "AMD",
+      "date": "2026-07-01",
+      "direction": "中性偏正",
+      "asymmetry": "負向",
+      "gap_pct": 14.4,
+      "price_at_publish": 580.91,
+      "consensus_anchor": "分析師均值目標 $508（現價 +14%，共識已落後股價）；高 $700、低 $320",
+      "outcome": null
+    },
+    {
+      "ticker": "LLY",
+      "date": "2026-07-01",
+      "direction": "偏正",
+      "asymmetry": "中性",
+      "gap_pct": -1.6,
+      "price_at_publish": 1199.0,
+      "consensus_anchor": "分析師均值目標 $1,218（現價 −1.6%）；高 $1,500、低 $850–1,050",
+      "outcome": null
+    }
+  ]
+}

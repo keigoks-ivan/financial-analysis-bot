@@ -1,10 +1,17 @@
 <!DOCTYPE html>
 <!--
-  expectations-synthesis · template v1
+  expectations-synthesis · template v1.2（2026-07-10 對齊 v1.3「奶油海軍藍×金」設計系統）
   填法：把 {{TOKEN}} 與 <!-- FILL: ... --> 區塊換成內容。CSS/nav 不要動。
   TOKENS: {{TICKER}} {{COMPANY}} {{DATE}}(YYYY-MM-DD) {{PRICE_CLOSE}} {{PRICE_DATE}} {{LOCAL_PRICE_OR_BLANK}}
+          {{FAST_DAYS}} {{SLOW_QUARTERS}} {{REVIEW_DATE}}(YYYY-MM-DD) {{DD_DATE}} {{DD_VERDICT_DATE}}
   章節順序固定（§0 §A §1 §2 §3 §Δ §4 §5 §6 §7 §退出 §8 來源）。錨點 id 不要改（TOC 依賴）。
-  硬規則：§2+§3 都要寫；§Δ 必須收斂兩面成方向+不對稱；§5 只連出不複製 DD；專業賣方口吻、無 slang / 無 我·你 自我對話；不跨檔對照；股價=最新收盤。
+  硬規則（v1.2 新增以 ★ 標）：
+    · §2+§3 都要寫；§Δ 必須收斂兩面成方向+不對稱；§5 只連出不複製 DD；專業賣方口吻、無 slang / 無 我·你 自我對話；不跨檔對照；股價=最新收盤。
+    · ★ §6 開頭固定「賣方料等級聲明」pill 塊（A/B/C 三檔，第一眼即見證據等級）。
+    · ★ §8 必含「critic 對質」三欄小節 + 「DD 裁決覆核」行。
+    · ★ report-meta 必含「保質期行」（快變 N 週 / 慢變 M 季 / 下次強制複審日）。
+    · ★ §退出 拆兩表：風控項（部位管理）與 證偽項（thesis 級失效），兩層決策分開。
+    · ★ 收尾 <script id="synthesis-meta"> 機器欄必填（schema synth-v1.2，供 position-thesis-monitor 與校準帳本讀）。
 -->
 <html lang="zh-TW">
 <head>
@@ -15,61 +22,94 @@
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/imq-base.css">
 <style>
-:root{--bg:#ffffff;--bg-subtle:#fafaf9;--surface:#ffffff;--surface-2:#f7f7f5;--border:#e5e5e2;--border-strong:#1a1a1a;--text:#1a1a1a;--text-muted:#666;--text-dim:#999;--accent:#2563eb;--green:#15803d;--green-bg:#f0fdf4;--red:#b91c1c;--red-bg:#fef2f2;--amber:#b45309;--amber-bg:#fffbeb;--orange:#c2410c;--orange-bg:#fff7ed;--radius:8px}
+:root{
+  /* v1.3「奶油海軍藍×金」—— 本地別名 repoint 至 canonical tokens（imq-base.css 已 link 於前，此處保底自足） */
+  --bg:#f7f3ea;--bg-subtle:#fbf8f1;--surface:#ffffff;--surface-2:#fbf8f1;
+  --border:#e5dfd0;--border-soft:#efe9da;--border-strong:#0c1521;
+  --ink:#0c1521;--text:#2a3a52;--text-muted:#6b7a92;--text-dim:#9aa7b8;
+  --accent:#0d2244;--accent-ink:#081832;
+  --green:#15803d;--green-bg:#eafaef;--red:#b91c1c;--red-bg:#fbeceb;
+  --amber:#a16207;--amber-bg:#fbf3df;--orange:#8f6d2c;--orange-bg:#fbf3df;
+  --gold:#b8924a;--gold-deep:#8f6d2c;--gold-soft:#f3e5c3;--gold-bg:#fbf3df;
+  --gold-line:linear-gradient(90deg,transparent,#c9a96b 20%,#c9a96b 80%,transparent);
+  --serif:'Playfair Display','Noto Serif TC',Georgia,'Times New Roman',serif;
+  --radius:10px}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Inter','Noto Sans TC',-apple-system,sans-serif;font-size:15px;line-height:1.7;color:var(--text);background:var(--bg)}
-a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline;text-underline-offset:3px}
 .container{max-width:920px;margin:0 auto;padding:32px 24px 64px}
 .breadcrumb{font-size:12px;color:var(--text-dim);margin-bottom:24px;font-family:'IBM Plex Mono',monospace}
 .breadcrumb a{color:var(--text-dim)}
 .report-header{margin-bottom:28px}
-.report-header h1{font-size:30px;font-weight:700;letter-spacing:-0.03em;margin-bottom:6px;line-height:1.2}
-.report-meta{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-dim);margin-bottom:16px}
+.report-header h1{font-family:var(--serif);font-size:30px;font-weight:700;letter-spacing:-0.01em;margin-bottom:8px;line-height:1.2;color:var(--ink)}
+.report-meta{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-dim);margin-bottom:8px}
+.shelf-life{font-family:'IBM Plex Mono',monospace;font-size:11.5px;line-height:1.7;color:var(--text-muted);margin-bottom:16px;padding-top:8px;border-top:1px dashed var(--border)}
+.shelf-life b{color:var(--ink);font-weight:600}
 .report-lede{border-left:3px solid var(--accent);padding:14px 18px;background:var(--surface-2);border-radius:0 var(--radius) var(--radius) 0;font-size:14px;line-height:1.7}
 .toc{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin:28px 0 36px}
-.toc-title{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);margin-bottom:10px}
+.toc-title{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--gold-deep);margin-bottom:10px}
 .toc ol{padding-left:20px}.toc li{font-size:13px;margin-bottom:4px}
-h2{font-size:22px;font-weight:700;letter-spacing:-0.02em;margin:48px 0 18px;padding-bottom:10px;border-bottom:2px solid var(--border-strong);scroll-margin-top:60px}
-h3{font-size:17px;font-weight:600;margin:26px 0 10px}
-h4{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin:18px 0 6px}
+h2{font-family:var(--serif);font-size:23px;font-weight:700;letter-spacing:-0.01em;margin:48px 0 18px;padding-bottom:10px;color:var(--ink);scroll-margin-top:60px;background-image:var(--gold-line);background-repeat:no-repeat;background-position:bottom left;background-size:130px 2px}
+h3{font-size:17px;font-weight:700;margin:26px 0 10px;color:var(--ink)}
+h4{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--gold-deep);margin:18px 0 6px}
 p{margin-bottom:12px}
 strong{font-weight:600}
-table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px}
-thead th{text-align:left;padding:8px 10px;background:var(--surface-2);font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);border-bottom:1px solid var(--border-strong)}
-tbody td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px;background:var(--surface)}
+thead th{text-align:left;padding:8px 10px;font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);border-bottom:1px solid var(--border-strong);white-space:nowrap}
+tbody td{padding:9px 10px;border-bottom:1px solid var(--border-soft);vertical-align:top;color:var(--text);line-height:1.55}
 tbody tr:hover td{background:var(--surface-2)}
 tbody tr:last-child td{border-bottom:none}
+td.num,th.num{font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;text-align:right}
 ul.bullets{padding-left:22px;margin:6px 0 14px}
 ul.bullets li{margin-bottom:6px;font-size:14px;line-height:1.6}
 .mono{font-family:'IBM Plex Mono',monospace}
 .up{color:var(--green);font-weight:600}.down{color:var(--red);font-weight:600}
-.verdict{border:1px solid var(--border);border-top:4px solid var(--green);border-radius:var(--radius);padding:20px 22px;margin:24px 0;background:linear-gradient(180deg,#fbfbfa,#fff)}
-.verdict .badge{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;letter-spacing:.04em;padding:3px 10px;border-radius:5px;background:#ecfdf5;color:#166534;border:1px solid #a7f3d0}
+.verdict{border:1px solid var(--border);border-top:4px solid var(--green);border-radius:var(--radius);padding:20px 22px;margin:24px 0;background:var(--surface);box-shadow:0 1px 3px rgba(13,34,68,.05)}
+.verdict .badge{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;letter-spacing:.04em;padding:3px 10px;border-radius:5px;background:var(--green-bg);color:var(--green);border:1px solid #bbe6c8}
 .verdict h3{margin:12px 0 8px;font-size:18px}
 .verdict .kv{display:flex;flex-wrap:wrap;gap:8px 26px;margin:12px 0 4px;font-size:13.5px}
 .verdict .kv div span{color:var(--text-dim);font-family:'IBM Plex Mono',monospace;font-size:11px;display:block;text-transform:uppercase;letter-spacing:.05em}
-.verdict .kv div b{font-size:15px}
-.callout{background:var(--amber-bg);border-left:3px solid #f59e0b;border-radius:0 6px 6px 0;padding:12px 16px;margin:18px 0;font-size:13.5px;line-height:1.6}
-.callout strong{color:#92400e}
+.verdict .kv div b{font-size:15px;font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums}
+.callout{background:var(--surface-2);border-left:3px solid var(--gold-deep);border-radius:0 6px 6px 0;padding:12px 16px;margin:18px 0;font-size:13.5px;line-height:1.6}
+.callout strong{color:var(--ink)}
 .vec{border-radius:var(--radius);padding:14px 16px;margin:16px 0}
-.vec.good{background:var(--green-bg);border:1px solid #bbf7d0}
-.vec.bad{background:var(--red-bg);border:1px solid #fecaca}
+.vec.good{background:var(--green-bg);border:1px solid #bbe6c8}
+.vec.bad{background:var(--red-bg);border:1px solid #f0cfce}
 .vec ol{padding-left:18px;margin:0}
 .vec li{font-size:13px;line-height:1.55;margin-bottom:8px}
-.contradiction{background:var(--orange-bg);border-left:3px solid var(--orange);border-radius:0 var(--radius) var(--radius) 0;padding:14px 18px;margin:16px 0}
-.contradiction h4{color:var(--orange);text-transform:none;font-family:'Inter',sans-serif;font-size:14.5px;font-weight:600;letter-spacing:0;margin:0 0 8px}
+.contradiction{background:var(--gold-bg);border-left:3px solid var(--warn,#a16207);border-radius:0 var(--radius) var(--radius) 0;padding:14px 18px;margin:16px 0}
+.contradiction h4{color:var(--amber);text-transform:none;font-family:'Inter',sans-serif;font-size:14.5px;font-weight:600;letter-spacing:0;margin:0 0 8px}
 .contradiction ul{margin:6px 0 0;padding-left:20px}.contradiction li{margin-bottom:4px;font-size:13.5px;line-height:1.5}
 .tag-add{background:var(--green-bg);color:var(--green);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;font-family:'IBM Plex Mono',monospace}
 .tag-cut{background:var(--red-bg);color:var(--red);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;font-family:'IBM Plex Mono',monospace}
 .tag-hold{background:var(--amber-bg);color:var(--amber);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;font-family:'IBM Plex Mono',monospace}
-.src-local{color:#0369a1;font-size:.72rem;border:1px solid #bae6fd;background:#f0f9ff;padding:1px 5px;border-radius:3px;font-family:'IBM Plex Mono',monospace;white-space:nowrap}
-.src-broker{color:#6d28d9;font-size:.72rem;border:1px solid #ddd6fe;background:#f5f3ff;padding:1px 5px;border-radius:3px;font-family:'IBM Plex Mono',monospace;white-space:nowrap}
-.src-web{color:#9a3412;font-size:.72rem;border:1px solid #fed7aa;background:#fff7ed;padding:1px 5px;border-radius:3px;font-family:'IBM Plex Mono',monospace;white-space:nowrap}
+/* 來源標籤 —— 收斂為 navy / gold / neutral 三色，去除裝飾紫橘 */
+.src-local{color:#0d2244;font-size:.72rem;border:1px solid #cdd6e4;background:#eef2f8;padding:1px 5px;border-radius:3px;font-family:'IBM Plex Mono',monospace;white-space:nowrap}
+.src-broker{color:#8f6d2c;font-size:.72rem;border:1px solid #e6d3a3;background:#fbf3df;padding:1px 5px;border-radius:3px;font-family:'IBM Plex Mono',monospace;white-space:nowrap}
+.src-web{color:#6b7a92;font-size:.72rem;border:1px solid #e5dfd0;background:#f2ede1;padding:1px 5px;border-radius:3px;font-family:'IBM Plex Mono',monospace;white-space:nowrap}
+/* ★ §6 賣方料等級聲明 pill 塊 */
+.grade-block{display:flex;align-items:center;gap:16px;background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--gold-deep);border-radius:0 var(--radius) var(--radius) 0;padding:14px 18px;margin:6px 0 18px}
+.grade-pill{flex-shrink:0;text-align:center;font-family:'IBM Plex Mono',monospace;padding:8px 16px;border-radius:8px;background:var(--ink);color:#fff;line-height:1}
+.grade-pill .g{font-size:22px;font-weight:700;letter-spacing:.02em}
+.grade-pill .lbl{display:block;font-size:8.5px;font-weight:500;letter-spacing:.14em;opacity:.72;margin-top:4px}
+.grade-block .gd{font-size:13.5px;line-height:1.6;color:var(--text)}
+.grade-block .gd strong{color:var(--ink)}
+/* ★ critic 對質 三欄 */
+.critic-cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:14px 0}
+.critic-cols .cc{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px}
+.critic-cols .cc .h{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--gold-deep);margin-bottom:6px;font-weight:600}
+.critic-cols .cc p{font-size:13px;line-height:1.55;margin:0;color:var(--text)}
+/* ★ DD 裁決覆核行 */
+.dd-recheck{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;margin:16px 0;font-size:13.5px;line-height:1.65}
+.dd-recheck strong{color:var(--ink)}
 .disclaimer{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;font-size:12px;color:var(--text-muted);margin-top:48px;line-height:1.6}
-footer{text-align:center;margin-top:24px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim)}
-@media(max-width:720px){.container{padding:20px 16px 48px}.report-header h1{font-size:22px}h2{font-size:18px}table{font-size:12.5px}thead th,tbody td{padding:6px 7px}}
+.imq-foot{margin-top:32px;padding:24px 0 16px;border-top:0;background-image:var(--gold-line);background-repeat:no-repeat;background-size:100% 1px;background-position:top;font-size:.76rem;color:var(--text-muted);line-height:1.9;text-align:center}
+.imq-foot a{color:var(--text-muted);text-decoration:underline;text-underline-offset:3px}
+.imq-foot a:hover{color:var(--accent)}
+@media(max-width:720px){.container{padding:20px 16px 48px}.report-header h1{font-size:22px}h2{font-size:19px}table{font-size:12.5px}thead th,tbody td{padding:6px 7px}.critic-cols{grid-template-columns:1fr}.grade-block{flex-direction:column;align-items:flex-start;gap:10px}}
 </style>
 </head>
 <body>
@@ -144,12 +184,14 @@ footer{text-align:center;margin-top:24px;font-family:'IBM Plex Mono',monospace;f
 </header>
 <script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
 
-<div class="container">
+<div class="container imq-body">
   <div class="breadcrumb"><a href="/">首頁</a> / <a href="/research/">研究報告</a> / 趨勢 × 期望落差綜合研判 / {{TICKER}}</div>
 
   <div class="report-header">
     <h1>{{COMPANY}} ({{TICKER}}) — 趨勢 × 期望落差綜合研判</h1>
     <div class="report-meta">EXPECTATIONS-GAP SYNTHESIS · {{DATE}} · 最新收盤 {{PRICE_CLOSE}}（{{PRICE_DATE}}）{{LOCAL_PRICE_OR_BLANK}}</div>
+    <!-- ★ FILL 保質期行：程式化一句。快變數據=現價/共識/倍數（建議 {{FAST_DAYS}} 週內重查，典型 3；財報前更短）；慢變判斷=S 曲線位置/收費站/moat（半衰期約 {{SLOW_QUARTERS}} 季）；下次強制複審日 {{REVIEW_DATE}}=本報告日 + max(fast_days, slow_quarters×13週) 取近者，或財報日孰早。三個值須與收尾 synthesis-meta 的 shelf_life / review_after 一致。 -->
+    <div class="shelf-life">保質期：快變數據（現價／共識／倍數）建議 <b>{{FAST_DAYS}}</b> 週內重查；慢變判斷（S 曲線位置／收費站／moat）半衰期約 <b>{{SLOW_QUARTERS}}</b> 季。下次強制複審：<b>{{REVIEW_DATE}}</b>。</div>
     <div class="report-lede">
       <!-- FILL: 3 句。① 本文整合站內(ID/供應鏈/DD/帳本)+外部賣方+法說逐字稿，收斂為單一投資判斷。② 核心命題=市場對 {{TICKER}} 未來 EPS 的預估是否過高或過低（預期 vs 現實的落差）。③ 結論一句（裁決+進場節奏）。禁止與其他 ticker 對照。 -->
     </div>
@@ -179,8 +221,8 @@ footer{text-align:center;margin-top:24px;font-family:'IBM Plex Mono',monospace;f
     <span class="badge"><!-- FILL: 裁決標籤，如「進場·條件式 · 建立部位 · 退出紀律」或「觀望 · STARTER · 退出紀律」 --></span>
     <h3><!-- FILL: 一句裁決（依 mandate 取捨後的方向） --></h3>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0">
-      <div style="background:var(--green-bg);border:1px solid #bbf7d0;border-radius:6px;padding:10px 12px;font-size:13px;line-height:1.55"><strong style="color:#166534">趨勢鏡頭（A 層）</strong><br><!-- FILL: 收費站/S曲線/動能 → 動作 --></div>
-      <div style="background:var(--red-bg);border:1px solid #fecaca;border-radius:6px;padding:10px 12px;font-size:13px;line-height:1.55"><strong style="color:#991b1b">價值鏡頭（B 層）</strong><br><!-- FILL: PE/分位/共識 → 動作。若估值不貴改用 amber-bg/#92400e --></div>
+      <div style="background:var(--green-bg);border:1px solid #bbe6c8;border-radius:6px;padding:10px 12px;font-size:13px;line-height:1.55"><strong style="color:var(--green)">趨勢鏡頭（A 層）</strong><br><!-- FILL: 收費站/S曲線/動能 → 動作 --></div>
+      <div style="background:var(--red-bg);border:1px solid #f0cfce;border-radius:6px;padding:10px 12px;font-size:13px;line-height:1.55"><strong style="color:var(--red)">價值鏡頭（B 層）</strong><br><!-- FILL: PE/分位/共識 → 動作。若估值不貴改用 background:var(--gold-bg)、strong color:var(--amber) --></div>
     </div>
     <p style="font-size:13.5px;margin:4px 0 12px"><strong>融合裁決：</strong><!-- FILL: 依 mandate 取捨（趨勢 mandate→趨勢鏡頭主導）；說明建立部位/等回檔 + 加碼區間定位為非進場門檻 + 指向 §退出 --></p>
     <div class="kv">
@@ -221,11 +263,11 @@ footer{text-align:center;margin-top:24px;font-family:'IBM Plex Mono',monospace;f
   <h2 id="where">§1 市場 EPS 共識落點</h2>
   <p><!-- FILL: 先界定共識。共識是窄(一致)還是寬(分歧)？分歧在 EPS 水準還是估值/風險？標明 EPS 基準(ADR/本地/CL)。 --></p>
   <table>
-    <thead><tr><th>來源</th><th>FY+1e</th><th>FY+2e</th><th>FY+3e</th><th>立場 / 目標</th></tr></thead>
+    <thead><tr><th>來源</th><th class="num">FY+1e</th><th class="num">FY+2e</th><th class="num">FY+3e</th><th>立場 / 目標</th></tr></thead>
     <tbody>
-      <tr><td>DD（站內）</td><td><!-- --></td><td><!-- --></td><td><!-- --></td><td><!-- 裁決 + 目標 --></td></tr>
-      <tr><td>{{BROKER_1}} <span class="src-broker">券商</span></td><td><!-- --></td><td><!-- --></td><td><!-- --></td><td><!-- 評等 + 目標 --></td></tr>
-      <tr><td>市場共識</td><td><!-- --></td><td><!-- --></td><td><!-- --></td><td><!-- 評等分布 + 均值/高/低 --></td></tr>
+      <tr><td>DD（站內）</td><td class="num"><!-- --></td><td class="num"><!-- --></td><td class="num"><!-- --></td><td><!-- 裁決 + 目標 --></td></tr>
+      <tr><td>{{BROKER_1}} <span class="src-broker">券商</span></td><td class="num"><!-- --></td><td class="num"><!-- --></td><td class="num"><!-- --></td><td><!-- 評等 + 目標 --></td></tr>
+      <tr><td>市場共識</td><td class="num"><!-- --></td><td class="num"><!-- --></td><td class="num"><!-- --></td><td><!-- 評等分布 + 均值/高/低 --></td></tr>
     </tbody>
   </table>
   <div class="callout"><strong>關鍵點：</strong><!-- FILL: 離散度的意義；現價 vs 共識(被 price 到共識之上 or 之下)——這是判讀對稱性的關鍵事實。 --></div>
@@ -251,7 +293,7 @@ footer{text-align:center;margin-top:24px;font-family:'IBM Plex Mono',monospace;f
   </div>
 
   <h2 id="netgap">§Δ 期望落差淨判讀（收斂 §2/§3）</h2>
-  <p><!-- FILL: 把 §2/§3 收斂成一句方向判讀（不可停在「兩面都可能」）。 --></p>
+  <p><!-- FILL: 把 §2/§3 收斂成一句方向判讀（不可停在「兩面都可能」）。此處的方向/不對稱結論須與收尾 synthesis-meta 的 direction / asymmetry 欄一致。 --></p>
   <table>
     <thead><tr><th>時段 / 維度</th><th>讀數</th><th>方向</th></tr></thead>
     <tbody>
@@ -266,11 +308,11 @@ footer{text-align:center;margin-top:24px;font-family:'IBM Plex Mono',monospace;f
   <h2 id="reframe">§4 估值再框架</h2>
   <p><!-- FILL: 「現倍數」是哪一年 EPS 的數字？若 ramp 兌現倍數正常化多快。 --></p>
   <table>
-    <thead><tr><th>用哪一年 EPS</th><th>對應 EPS</th><th>現價的 PE</th><th>讀法</th></tr></thead>
+    <thead><tr><th>用哪一年 EPS</th><th class="num">對應 EPS</th><th class="num">現價的 PE</th><th>讀法</th></tr></thead>
     <tbody>
-      <tr><td>FY+1e（NTM）</td><td><!-- --></td><td><span class="down"><!-- --></span></td><td><!-- --></td></tr>
-      <tr><td>FY+2e</td><td><!-- --></td><td><!-- --></td><td><!-- PEG 註記 --></td></tr>
-      <tr><td>FY+3e</td><td><!-- --></td><td><span class="up"><!-- --></span></td><td><!-- --></td></tr>
+      <tr><td>FY+1e（NTM）</td><td class="num"><!-- --></td><td class="num"><span class="down"><!-- --></span></td><td><!-- --></td></tr>
+      <tr><td>FY+2e</td><td class="num"><!-- --></td><td class="num"><!-- --></td><td><!-- PEG 註記 --></td></tr>
+      <tr><td>FY+3e</td><td class="num"><!-- --></td><td class="num"><span class="up"><!-- --></span></td><td><!-- --></td></tr>
     </tbody>
   </table>
   <div class="callout"><!-- FILL: 賣方估值法對照(如 X× 某年 EPS、對某龍頭折溢價)；「便宜/貴」要看哪一年兌現。 --></div>
@@ -287,6 +329,13 @@ footer{text-align:center;margin-top:24px;font-family:'IBM Plex Mono',monospace;f
   </table>
 
   <h2 id="brokers">§6 賣方報告對照</h2>
+  <!-- ★ FILL 賣方料等級聲明（第一眼即見證據等級）：pill 內 .g 填 A/B/C 單字母；.gd 一句話說明本篇賣方料的實際來源結構。
+       A＝具名付費券商報告 N 份（做方法論比對，如 X× FY 某年 EPS vs 龍頭折溢價）；B＝法說/投資人日逐字稿為主，券商料零星；C＝僅公開報導的目標價聚合（無一手方法論）。
+       等級須誠實反映實際掌握的料，不得灌水；此等級對應收尾 synthesis-meta 的 broker_material_grade 欄。 -->
+  <div class="grade-block">
+    <div class="grade-pill"><span class="g"><!-- FILL: A|B|C --></span><span class="lbl">賣方料等級</span></div>
+    <div class="gd"><strong><!-- FILL: 一句等級定義，如「A｜具名付費券商報告 4 份（Jefferies／Barclays／BofA／JPM），逐份做方法論比對」 --></strong><br><!-- FILL: 一句補充——料的分布與可信度（如「另佐以 Q4 FY26 法說與 M&A 逐字稿，共識目標為公開彙整」）。 --></div>
+  </div>
   <table>
     <thead><tr><th>來源</th><th>評等</th><th>目標 / 立場</th><th>方法 / 重點</th><th>在現價的意涵</th></tr></thead>
     <tbody>
@@ -308,18 +357,50 @@ footer{text-align:center;margin-top:24px;font-family:'IBM Plex Mono',monospace;f
   </ul>
 
   <h2 id="exit">§退出觸發（依部位性質分軌）</h2>
-  <p><strong>部位性質：</strong><!-- FILL: 讀最新 DD dca_role + §14c 宣告——「長抱倉（核心/條件式核心/爆發候選）」或「趨勢倉（衛星/投機）」；一句說明據此適用哪一軌 -->。</p>
-  <p>趨勢股的超額報酬來自「在共識之前進、在飽和之前出」。進場價錯一點不致命，<strong>抱過頭才致命</strong>。<!-- FILL: 趨勢倉寫「下列任一觸發＝減碼／出場」；長抱倉寫「thesis 級訊號觸發減碼／清倉；技術項僅警訊、估值偏高最多 trim」 -->（不是「估值偏高即賣出」）：</p>
-  <ul class="bullets">
-    <!-- FILL: 4-6 條可監控的賣出訊號，各附「目前狀態」(全綠/需盯/AT_RISK) + 訊號級別標記。
-         趨勢倉：① 上修軌跡反轉(連兩月) ② 技術轉弱(RS/200MA) ③ 收費站侵蝕 ④ 趨勢成熟/滲透越過後段 ⑤ 不可回復尾部(若有)——任一觸發＝減碼。
-         長抱倉（對齊 DD v14.3 §14b/F2）：技術項標【警訊】不觸發減碼；上修反轉改「連兩季且歸因結構性」；觸發減碼/清倉的只有 thesis 級——收費站侵蝕、不可回復尾部、DD §13 證偽指標命中、滲透率/訂單軌跡斷裂；估值/漲幅【最多 trim】永不單獨清倉。 -->
-    <li><strong>① 上修反轉</strong>：<!-- -->。目前 <span class="up"><!-- --></span>。</li>
-  </ul>
-  <div class="callout"><strong>操作含義：</strong><!-- FILL: 訊號目前狀態總結；為何在訊號轉負前估值偏高本身不構成賣出。追蹤這些訊號較關注短期股價更關鍵。 --></div>
+  <p><strong>部位性質：</strong><!-- FILL: 讀最新 DD dca_role + §14c 宣告——「長抱倉（核心/條件式核心/爆發候選）」或「趨勢倉（衛星/投機）」；一句說明據此適用哪一軌。此判定對應收尾 synthesis-meta 的 position_nature（長抱|趨勢） -->。</p>
+  <p>趨勢股的超額報酬來自「在共識之前進、在飽和之前出」。進場價錯一點不致命，<strong>抱過頭才致命</strong>。</p>
+  <p style="font-size:13px;color:var(--text-muted)">下表分兩層決策，切勿混用：<strong>風控項</strong>屬部位管理——觸發＝減碼／回目標倉，thesis 不變、可再加回；<strong>證偽項</strong>屬 thesis 級——觸發＝本篇判斷失效，須清倉並回寫知識帳本。把「貴了修一下」誤當「錯了要跑」是最常見的執行錯誤。</p>
+
+  <h4>風控項 · 部位管理（減碼／回目標倉，thesis 不變）</h4>
+  <!-- ★ FILL 風控項表：3-5 列。趨勢倉主要靠這軌；長抱倉此軌多為【警訊/最多 trim】不觸發清倉。
+       典型列：技術轉弱(RS/200MA 跌破)、上修軌跡近端反轉(連兩月)、估值分位極端(最多 trim)、動能背離、超漲乖離。
+       每列「目前狀態」用 <span class="up">全綠</span> / 需盯 / <span class="down">AT_RISK</span>。每列對應收尾 synthesis-meta triggers[] 的一筆 type:"risk"。 -->
+  <table>
+    <thead><tr><th>觸發條件（部位管理）</th><th>目前狀態</th><th>操作含義</th></tr></thead>
+    <tbody>
+      <tr><td><!-- FILL: 如 RS 跌破 / 200MA 失守 --></td><td><span class="up"><!-- FILL: 全綠/需盯/AT_RISK --></span></td><td><!-- FILL: 減碼 X%／回目標倉 --></td></tr>
+      <tr><td><!-- --></td><td><span class="up"><!-- --></span></td><td><!-- --></td></tr>
+    </tbody>
+  </table>
+
+  <h4>證偽項 · thesis 級（本篇判斷失效，須清倉並回寫帳本）</h4>
+  <!-- ★ FILL 證偽項表：2-4 列。這些是「§Δ 方向判斷被推翻」的硬條件，不是估值/技術雜訊。
+       典型列：收費站被侵蝕(份額結構性流失)、DD §13 證偽指標命中、滲透率/訂單軌跡結構性斷裂、不可回復尾部事件(地緣/監管封鎖)、上修連兩季反轉且歸因結構性。
+       每列對應收尾 synthesis-meta triggers[] 的一筆 type:"falsify"。 -->
+  <table>
+    <thead><tr><th>觸發條件（thesis 失效）</th><th>目前狀態</th><th>操作含義</th></tr></thead>
+    <tbody>
+      <tr><td><!-- FILL: 如 收費站份額結構性流失 / DD §13 證偽命中 --></td><td><span class="up"><!-- FILL: 未觸發/接近/已觸發 --></span></td><td><!-- FILL: 清倉／大幅減碼並回寫帳本 --></td></tr>
+      <tr><td><!-- --></td><td><span class="up"><!-- --></span></td><td><!-- --></td></tr>
+    </tbody>
+  </table>
+  <div class="callout"><strong>操作含義：</strong><!-- FILL: 兩表目前狀態總結；為何在證偽項轉負前、估值偏高本身不構成清倉（最多 trim）。追蹤這些訊號較關注短期股價更關鍵。 --></div>
 
   <h2 id="decision">§8 投資結論與分批進場</h2>
   <p><!-- FILL: 幾個獨立錨點(帳本/DD/critic/賣方/逐字稿)收斂為同一結論；點明兩鏡頭同向 or 相反、依 mandate 取捨後的方向。 --></p>
+
+  <!-- ★ FILL DD 裁決覆核行：讀最新 DD §14 統一裁決與其日期。verdict 三選一(進場/觀望/迴避)須與收尾 synthesis-meta 的 verdict_dd 一致；一致/分歧 須與 consistency_with_dd 一致。分歧時一句理由要具體(時框差異/新料/估值起點不同)。 -->
+  <div class="dd-recheck"><strong>DD 裁決覆核：</strong>站內當前裁決：DD §14＝<strong><!-- FILL: 進場/觀望/迴避 --></strong>（{{DD_VERDICT_DATE}}）；本篇 §Δ 與其<strong><!-- FILL: 一致/分歧 --></strong>——<!-- FILL: 一句理由 -->。</div>
+
+  <h3>critic 對質</h3>
+  <p style="font-size:13px;color:var(--text-muted)">把決策時 industry-thesis-critic 冷讀結論與本篇 §Δ 正面對質，避免單邊自我確認。critic 報告存於 notes/site-internal/id/_critic_{{TICKER}}_{{DATE}} 系。</p>
+  <!-- ★ FILL critic 對質三欄：欄1=critic 的具體結論(含機率/條件，不可只寫「THESIS_INTACT」要帶理由與量化)；欄2=與本篇 §Δ 一致或分歧(明說哪個方向)；欄3=取捨與理由(採信誰、為何、對倉位的影響)。 -->
+  <div class="critic-cols">
+    <div class="cc"><div class="h">critic 具體結論</div><p><!-- FILL: 含機率/條件 --></p></div>
+    <div class="cc"><div class="h">與 §Δ 一致 / 分歧</div><p><!-- FILL --></p></div>
+    <div class="cc"><div class="h">取捨與理由</div><p><!-- FILL --></p></div>
+  </div>
+
   <h3>分批配置（趨勢加權）<!-- FILL: 一句策略 --></h3>
   <table>
     <thead><tr><th>動作</th><th>價位</th><th>對應邏輯</th></tr></thead>
@@ -346,7 +427,47 @@ footer{text-align:center;margin-top:24px;font-family:'IBM Plex Mono',monospace;f
   <div class="disclaimer">
     本頁為 InvestMQuest 內部研究綜合，僅供教育與紀錄用途，非投資建議，不構成要約或勸誘。所有數據截至 {{DATE}}；股價、共識與賣方目標價會隨時間變動，引用前請重新查核。賣方報告與分析師會議內容為私有訂閱來源，本頁僅引述要點、不公開原始檔。EPS 估計與情境分析含高度不確定性，實際結果可能顯著不同。投資人應自行判斷並承擔風險。
   </div>
-  <footer>InvestMQuest Research · 趨勢 × 期望落差綜合研判 · {{TICKER}} · {{DATE}}</footer>
+
+  <footer class="imq-foot">
+    <div>© 2026 InvestMQuest Research</div>
+    <div><a href="/disclosures.html">方法論與揭露</a> · 本站內容僅供研究參考，不構成投資建議</div>
+  </footer>
 </div>
+
+<!--
+  ★ synthesis-meta 機器欄（schema synth-v1.2）——供 position-thesis-monitor 與裁決校準帳本讀取。
+  填法（欄位一字不差，勿改 key）：
+    · schema：固定 "synth-v1.2"，勿改。
+    · ticker / date：{{TICKER}} / 報告日 {{YYYY-MM-DD}}。
+    · direction：取自 §Δ 淨判讀的方向——"上行"|"下行"|"中性"（EPS 相對共識的期望落差方向）。
+    · asymmetry：取自 §Δ 對稱性列——"正"|"負"|"平衡"（風險報酬不對稱方向）。
+    · gap_pct：近端 FY 共識 EPS vs 本站錨(DD)的百分比落差（本站 > 共識為正）；無法量化填 null。
+    · priced_vs_consensus_pct：現價 vs 共識均值目標價的 %（現價高於均值目標為正、即上檔已收斂）；無填 null。
+    · verdict_dd：DD §14 統一裁決——"進場"|"觀望"|"迴避"（須與 §8 DD 覆核行一致）。
+    · consistency_with_dd："一致"|"分歧"（須與 §8 DD 覆核行一致）。
+    · broker_material_grade："A"|"B"|"C"（須與 §6 賣方料等級 pill 一致）。
+    · position_nature："長抱"|"趨勢"（須與 §退出 部位性質一致）。
+    · triggers[]：與 §退出兩表一一對應。type="risk"(風控項)|"falsify"(證偽項)；desc=觸發條件一句；status 通常 "未觸發"(或 "接近"/"已觸發")；check=可自盯的量化指標。風控項與證偽項各至少一筆。
+    · shelf_life：fast_days=保質期行的快變週數×?  —— 注意：欄位單位為「天」，填 N 週×7（如 3 週→21）；slow_quarters=慢變半衰期季數。須與保質期行一致。
+    · review_after：{{REVIEW_DATE}}，須與保質期行「下次強制複審」一致。
+-->
+<script type="application/json" id="synthesis-meta">
+{
+  "schema": "synth-v1.2",
+  "ticker": "{{TICKER}}",
+  "date": "{{YYYY-MM-DD}}",
+  "direction": "上行|下行|中性",
+  "asymmetry": "正|負|平衡",
+  "gap_pct": null,
+  "priced_vs_consensus_pct": null,
+  "verdict_dd": "進場|觀望|迴避",
+  "consistency_with_dd": "一致|分歧",
+  "broker_material_grade": "A|B|C",
+  "position_nature": "長抱|趨勢",
+  "triggers": [{"type": "risk|falsify", "desc": "", "status": "未觸發", "check": ""}],
+  "shelf_life": {"fast_days": 21, "slow_quarters": 2},
+  "review_after": "{{YYYY-MM-DD}}"
+}
+</script>
 </body>
 </html>
