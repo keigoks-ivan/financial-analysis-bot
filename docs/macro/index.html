@@ -141,7 +141,7 @@ ul.reports .r-take{font-size:13px;color:var(--body)}
 
   <div class="clock-card">
     <h2>宏觀投資時鐘（美林框架）</h2>
-    <div class="clock-asof">針位 as-of 2026-07-10 · 兩軸判讀（增長 × 通膨），主錨＝美國經濟報告，其餘七份供邊界條件與殘影針 · 編輯層非機械訊號，隨報告 refresh 撥針</div>
+    <div class="clock-asof">機械針 as-of <span id="mcAsof">2026-06</span>（<span id="mcRead">G +0.23 · I +0.12 → 過熱</span>）· 週更，FRED 七序列兩軸合成（增長＝CFNAI＋非農動能−失業率／通膨＝核心 PCE＋CPI＋breakeven＋PPI 商品，6 個月方向動能 z 分數，PREREG 凍結）· 編輯針＝報告錨（美國經濟報告，隨 refresh 撥針）</div>
     <div class="clock-flex">
       <svg class="clock-svg" viewBox="0 0 420 440" role="img" aria-label="美林投資時鐘：指針位於過熱與滯脹邊界、滯脹淺處">
         <!-- 象限（縱軸＝增長方向、橫軸＝通膨方向） -->
@@ -166,17 +166,20 @@ ul.reports .r-take{font-size:13px;color:var(--body)}
         <text x="210" y="400" text-anchor="middle" font-size="11" fill="#5a7a9a">增長下行</text>
         <text x="395" y="205" text-anchor="start" font-size="11" fill="#5a7a9a" transform="rotate(90 395 205)">通膨上行</text>
         <text x="25" y="215" text-anchor="end" font-size="11" fill="#5a7a9a" transform="rotate(-90 25 215)">通膨下行</text>
-        <!-- 指針：105°（過熱→滯脹邊界帶、滯脹淺處） -->
-        <line x1="210" y1="210" x2="345" y2="246" stroke="#0f2a45" stroke-width="4" stroke-linecap="round"/>
-        <circle cx="345" cy="246" r="7" fill="#0f2a45"/>
+        <!-- 機械針（週更，JS 讀 data/clock.json；fallback＝build 當下針位） -->
+        <line id="mcNeedle" x1="210" y1="210" x2="272" y2="90" stroke="#0f2a45" stroke-width="4" stroke-linecap="round"/>
+        <circle id="mcTip" cx="272" cy="90" r="7" fill="#0f2a45"/>
         <circle cx="210" cy="210" r="6" fill="#0f2a45"/>
+        <!-- 編輯針（報告錨：過熱→滯脹邊界帶、滯脹淺處） -->
+        <line x1="210" y1="210" x2="330" y2="242" stroke="#1e3a5f" stroke-width="2.5" stroke-dasharray="7 5" stroke-linecap="round" opacity=".8"/>
+        <text x="338" y="252" text-anchor="start" font-size="10" fill="#1e3a5f">編輯針</text>
         <!-- 中國殘影針（對角：再通脹側） -->
         <line x1="210" y1="210" x2="120" y2="290" stroke="#5a7a9a" stroke-width="2" stroke-dasharray="4 4" opacity=".55"/>
         <text x="112" y="282" text-anchor="end" font-size="10" fill="#5a7a9a">中國</text>
-        <text x="352" y="238" text-anchor="start" font-size="11" font-weight="700" fill="#0f2a45">美國主導</text>
+        <text x="278" y="84" text-anchor="start" font-size="10" font-weight="700" fill="#0f2a45">機械針（週更）</text>
       </svg>
       <div class="clock-read">
-        <p><span class="pin">針位：過熱 → 滯脹邊界帶、滯脹淺處。</span>美國「名目熱、實質溫、政策緊」——增長動能邊際降溫（非農 +57K、實質 GDP 約 2.3%）疊加通膨黏著在 3-4%（核心 PCE 3.41%），但名目與盈餘引擎仍旺（Q2 EPS +23%），非 1970 式深滯脹。虛線為中國殘影針（通縮壓力＋政策托底＝再通脹側）——全球不同步，本鐘以美國主導的全球風險資產環境為座標。</p>
+        <p><span class="pin">雙針分歧是資訊不是誤差：</span>機械針量的是<strong>動能</strong>（各序列 vs 六個月前的方向）——現讀過熱淺處；編輯針量的是<strong>水位</strong>（報告裁決：非農 +57K 是弱水位、通膨黏著）——指滯脹淺處。動能尚正、水位已弱，正是晚週期的典型形態。<span class="pin">編輯針判讀：過熱 → 滯脹邊界帶、滯脹淺處。</span>美國「名目熱、實質溫、政策緊」——增長動能邊際降溫（非農 +57K、實質 GDP 約 2.3%）疊加通膨黏著在 3-4%（核心 PCE 3.41%），但名目與盈餘引擎仍旺（Q2 EPS +23%），非 1970 式深滯脹。虛線為中國殘影針（通縮壓力＋政策托底＝再通脹側）——全球不同步，本鐘以美國主導的全球風險資產環境為座標。</p>
         <p style="font-size:12.2px;color:var(--sec)">依據：<a href="/macro/MACRO_USEconomy_20260708.html">美國經濟</a>（增長／通膨軸）、<a href="/macro/MACRO_GlobalLiquidity_20260708.html">全球流動性</a>（管路邊際轉緊）、<a href="/macro/MACRO_ChinaEconomy_20260709.html">中國經濟</a>（殘影針）；橫切變數見其餘五份。</p>
         <p style="margin-bottom:.2rem"><strong>換位觸發（帶現值，詳見各報告證偽表）：</strong></p>
         <ul class="clock-trigs">
@@ -185,9 +188,10 @@ ul.reports .r-take{font-size:13px;color:var(--body)}
           <li><strong>向再通脹</strong>：失業率破 4.5%（Sahm 觸發，現 4.2%）→ 政策被迫轉向寬鬆</li>
           <li><strong>向復甦</strong>：核心 PCE 跌破 3.0% 且增長軟著陸（通膨解錨、政策空間打開）</li>
         </ul>
-        <div class="clock-note">描述器紀律：時鐘是環境定位不是擇時訊號——象限對應的資產偏好是歷史統計的傾向，不構成買賣指令；換位由觸發條件的數據自證，不做時點預測。針位精度＝象限與邊界帶層級（非角度級，指針位置勿過度解讀）；有效期跟隨主錨報告 refresh_due（2026-10-08），逾期未撥針視同過期。</div>
+        <div class="clock-note"><strong>54 年驗證（1972+／2000+ 雙窗、含出版時滯）：此鐘唯一經得起時滯考驗的訊號＝滯脹象限傷股票</strong>（時滯後滯脹月股票年化 +0.7%／2000 年後 −2.2%，對照其他象限 +8~14%；防禦端債券最佳）；次強＝過熱象限商品相對強。<strong>四象限完整資產輪動不獲數據支持</strong>（股票在四象限之三皆為最佳——長牛 beta 壓過象限效應），象限上的資產標籤僅為框架語彙、非輪動指令。驗證統計在 <a href="/macro/data/clock.json">clock.json</a> validation 欄可覆核。描述器紀律：時鐘是環境定位不是擇時訊號——象限對應的資產偏好是歷史統計的傾向，不構成買賣指令；換位由觸發條件的數據自證，不做時點預測。針位精度＝象限與邊界帶層級（非角度級，指針位置勿過度解讀）；有效期跟隨主錨報告 refresh_due（2026-10-08），逾期未撥針視同過期。</div>
       </div>
     </div>
+    <script>(function(){fetch('/macro/data/clock.json').then(function(r){return r.json()}).then(function(d){var a=d.angle_deg*Math.PI/180,r=135,x=210+r*Math.sin(a),y=210-r*Math.cos(a);var n=document.getElementById('mcNeedle');n.setAttribute('x2',x.toFixed(1));n.setAttribute('y2',y.toFixed(1));var t=document.getElementById('mcTip');t.setAttribute('cx',x.toFixed(1));t.setAttribute('cy',y.toFixed(1));document.getElementById('mcAsof').textContent=d.as_of;var g=d.growth_score,i=d.inflation_score;document.getElementById('mcRead').textContent='G '+(g>=0?'+':'')+g+' · I '+(i>=0?'+':'')+i+' → '+d.quadrant;}).catch(function(){});})();</script>
   </div>
 
   <ul class="reports">

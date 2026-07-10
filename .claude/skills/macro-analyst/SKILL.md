@@ -101,7 +101,7 @@
 
 1. 寫稿完成 → **self-review gate**：數字皆有來源與 as-of／全形標點／禁語掃描／§0-§8 齊／macro-meta 欄位齊／**證偽表每條現值齊**（缺現值的 metric 補查或下表）／**站內引用逐條回對原文**（開原檔比對裁決語氣，分歧不得寫成一致）／**carry-forward 數字二次查證**（政策利率／利差／預測 vintage，數據紀律第 6 條）／**當局行動型 kill metric 查官方 release**（數據紀律第 4 條）。
 2. **強制 cold-review critic**（比照 industry-analyst Step 8.7）：**必須是獨立 agent**——由主 session 或 writer spawn 皆可（實跑兩型皆有效），但 writer 不得自任 critic、critic 用不同 model tier（sonnet）、結果與修復記錄一律存檔。checklist 7 條——①§0 stance 與 §5 情境樹一致；②傳導鏈每環有來源；③base rate 統計非 cherry-pick；④證偽表可操作（門檻＋頻率＋源＋**現值**；並查該指標近 12 個月是否曾觸及門檻而報告未載）；⑤描述器紀律無違反；⑥priced-in 分歧真非共識；⑦與 regime/crowding 現況無未解釋矛盾＋**站內引用忠實抽查 ≥2 處**（開被引原檔逐字比對）。另固定用 WebSearch 抽查 5-6 個關鍵數字（首跑實證：主要錯誤型態是「真數字但過時／錯標系列」，非幻覺）。報告存 `notes/site-internal/macro/_critic_{Slug}_{YYYYMMDD}.md`。大錯必修，cosmetic 記錄即可。
-3. index.html insert 卡片（比照 push-earnings 模式，skill-appended）；**同步檢視 index 宏觀投資時鐘**——新報告若改變增長／通膨軸的判讀，撥針＋更新 as-of 與換位觸發現值（時鐘是編輯層，位置由報告裁決收斂，不做機械日更）。
+3. index.html insert 卡片（比照 push-earnings 模式，skill-appended）；**同步檢視 index 宏觀投資時鐘的編輯針**——機械針由 `scripts/build_macro_clock.py` 週更自動（weekly-market-update 班車，PREREG 方法凍結），skill 只管編輯針與判讀文字：新報告若改變增長／通膨軸的水位判讀，撥編輯針＋更新換位觸發現值；雙針分歧（動能 vs 水位）是資訊，照實呈現不強行對齊。
 4. **預設停下複審**——用戶說 push 才 commit（報告＋index＋critic md 三檔一 commit），push 前 `git pull --rebase`。
 
 ## 【治理登記】
