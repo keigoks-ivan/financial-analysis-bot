@@ -2991,6 +2991,27 @@ def main():
                 file=sys.stderr,
             )
 
+    # Event-driven triggers for the consumer layer (2026-07-11)：ticker hub（/t/）、
+    # 搜尋索引＋首頁最新發布 strip、RSS、DD 現值條注入（冪等）、裁決實績記分板。
+    # 皆為本地檔案聚合（track-record 會對缺覆蓋 ticker 補抓自己的價格快取——非致命）。
+    for _consumer in ("inject_dd_livebar.py", "build_ticker_hubs.py",
+                      "build_search_index.py", "build_rss.py",
+                      "build_track_record.py"):
+        _cs = Path(__file__).resolve().parent / _consumer
+        if not _cs.exists():
+            continue
+        print(f"\n→ Auto-trigger: {_consumer}")
+        try:
+            subprocess.run([sys.executable, str(_cs)], check=True)
+        except subprocess.CalledProcessError as e:
+            print(
+                f"\n⚠ {_consumer} failed (exit {e.returncode}). "
+                f"Rerun `python3 scripts/{_consumer}` manually.",
+                file=sys.stderr,
+            )
+        except Exception as e:
+            print(f"\n⚠ {_consumer} errored: {e}.", file=sys.stderr)
+
     # ARCHIVED: alpha-rank.html is archived (stub at URL). Auto-trigger for DD Alpha Ranker
     # is disabled so update_dd_index.py does not regenerate the page.
     # To re-enable: uncomment the block below and restore _archived/dd-screener/alpha-rank.html.
