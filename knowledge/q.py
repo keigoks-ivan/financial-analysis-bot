@@ -399,12 +399,22 @@ def cmd_search(query, type_=None, limit=10):
 # ~/Downloads 訓練匯出 → vault/notes 子資料夾
 INBOX_MAP = [("MUNGER_", "munger"), ("FEYNMAN_", "feynman"), ("HUNT_", "gym"),
              ("REPLAY_", "gym"), ("REDTEAM_", "gym"), ("TRAINING_", "training")]
+# 免終端機投遞資料夾（桌面＋iCloud——iPhone Files app 可直投）：
+# 丟任何 .md/.txt 進去 → 收進 vault/notes/inbox/（launchd WatchPaths 自動觸發本指令）
+DROP_DIRS = [Path.home() / "BrainInbox",
+             Path.home() / "Library/Mobile Documents/com~apple~CloudDocs/BrainInbox"]
 
 
-def cmd_inbox():
+def cmd_inbox(quiet=False):
+    import re
     import shutil
-    dl = Path.home() / "Downloads"
     moved = 0
+
+    def say(msg):
+        if not quiet:
+            print(msg)
+
+    dl = Path.home() / "Downloads"
     for pref, sub in INBOX_MAP:
         for f in sorted(dl.glob(pref + "*.md")):
             dest_dir = VAULT / "notes" / sub
@@ -416,13 +426,41 @@ def cmd_inbox():
                 i += 1
             shutil.move(str(f), str(dest))
             moved += 1
-            print(f"  ↳ {f.name} → vault/notes/{sub}/")
+            say(f"  ↳ {f.name} → vault/notes/{sub}/")
+
+    # 投遞資料夾：任何 .md/.txt（.txt 自動補 frontmatter 轉 .md）
+    from datetime import date as _date
+    for dd in DROP_DIRS:
+        if not dd.is_dir():
+            continue
+        for f in sorted(list(dd.glob("*.md")) + list(dd.glob("*.txt"))):
+            if f.name.startswith("."):
+                continue
+            dest_dir = VAULT / "notes" / "inbox"
+            dest_dir.mkdir(parents=True, exist_ok=True)
+            stem = re.sub(r"[^\w.一-鿿-]+", "-", f.stem)[:60] or "note"
+            dest = dest_dir / f"{stem}.md"
+            i = 1
+            while dest.exists():
+                dest = dest_dir / f"{stem}-{i}.md"
+                i += 1
+            text = f.read_text(encoding="utf-8", errors="replace")
+            if not text.startswith("---"):  # 補 frontmatter 讓入腦有 title/date
+                text = (f"---\ntype: usernote\ntitle: \"{f.stem}\"\n"
+                        f"date: {_date.today().isoformat()}\ntags: [inbox]\n---\n\n"
+                        f"# {f.stem}\n\n{text}")
+            dest.write_text(text, encoding="utf-8")
+            f.unlink()
+            moved += 1
+            say(f"  ↳ {f.name} → vault/notes/inbox/{dest.name}")
+
     if not moved:
-        print("Downloads 沒有待收的訓練匯出（MUNGER_/HUNT_/REPLAY_/FEYNMAN_/REDTEAM_/TRAINING_*.md）")
+        say("沒有待收的：Downloads 訓練匯出、BrainInbox 資料夾皆空")
         return
-    print(f"收進 {moved} 份，重建入腦…")
-    subprocess.run([sys.executable, str(BRAIN_BUILD)], check=True)
-    print("✅ 完成——筆記已可搜尋（--search）、掛上 entity hub、wiki 可瀏覽")
+    say(f"收進 {moved} 份，重建入腦…")
+    subprocess.run([sys.executable, str(BRAIN_BUILD)],
+                   check=True, capture_output=quiet)
+    say("✅ 完成——筆記已可搜尋（--search）、掛上 entity hub、wiki 可瀏覽")
 
 
 def cmd_falsifiers():
@@ -496,7 +534,7 @@ def main():
     elif a0 == "--note":
         cmd_note(args[1] if len(args) > 1 else "")
     elif a0 == "--inbox":
-        cmd_inbox()
+        cmd_inbox(quiet="--quiet" in args)
     elif a0 == "--falsifiers":
         cmd_falsifiers()
     elif a0 == "--stale":

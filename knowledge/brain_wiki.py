@@ -384,6 +384,30 @@ as of %%ASOF%%</span><span class="dim" style="margin-left:auto">⌘K 快速跳�
 <div class="vbar" id="vbar"></div><div class="vlegend" id="vlegend"></div>
 </div></div>
 
+<div style="display:flex;gap:8px;align-items:center;margin:16px 0 4px">
+<input class="search" id="feedin" style="flex:1;margin:0" placeholder="📥 餵大腦：一句話 → 收件匣（Enter 送出，免終端機）…">
+<button id="feedgo" style="padding:13px 20px;border:1px solid var(--line2);border-radius:12px;background:var(--accent);color:#0b1020;font-weight:700;font-size:15px;cursor:pointer;white-space:nowrap">送出</button></div>
+<div id="feedmsg" class="cnt" style="margin:0 0 8px;min-height:1.3em"></div>
+<script>
+(function(){
+  var inp=document.getElementById('feedin'),btn=document.getElementById('feedgo'),
+      msg=document.getElementById('feedmsg'),
+      // file:// 開的頁 origin=null，只能打絕對本機位址；經 server（bw http／Tailscale https）開則同源 /jot
+      API=(location.protocol==='file:')?'http://127.0.0.1:8873/jot':'/jot';
+  function send(){
+    var t=(inp.value||'').trim();
+    if(!t){inp.focus();return;}
+    btn.disabled=true;msg.style.color='';msg.textContent='入腦中…';
+    fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:t})
+      .then(function(r){if(!r.ok)throw 0;return r.json();})
+      .then(function(){msg.style.color='var(--accent)';msg.textContent='✅ 已入腦（'+t.slice(0,40)+(t.length>40?'…':'')+'）';inp.value='';})
+      .catch(function(){msg.style.color='#f0a35e';msg.textContent='⚠ server 未啟動——用 bj 或丟 BrainInbox 資料夾';})
+      .finally(function(){btn.disabled=false;inp.focus();});
+  }
+  btn.addEventListener('click',send);
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();send();}});
+})();
+</script>
 <input class="search" id="q" placeholder="全庫搜：ticker / 主題 / 標題 / oneliner…（深度全文用 q.py --search）">
 <div class="secnav"><a href="#recent">🕐 最近更新</a><a href="#stocks">📈 個股導航</a>
 <a href="#themes">🗺 主題地圖</a><a href="#shelf">📚 閒讀書架</a><a href="#all">全部</a>
