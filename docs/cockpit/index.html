@@ -50,6 +50,14 @@ section.block{padding:1.1rem 0}
   font-family:'IBM Plex Mono',monospace;letter-spacing:.06em;margin-top:.16rem;text-transform:uppercase}
 .tab-panel{display:none}
 .tab-panel.active{display:block}
+/* 決策鏈地圖：常駐一行，切分頁時高亮「你在這裡」——四分頁＝一條鏈的四站 */
+.chain-strip{display:flex;align-items:center;gap:.45rem;flex-wrap:wrap;margin:-.9rem 0 1.4rem;
+  font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--muted)}
+.chain-step{padding:.14rem .5rem;border-radius:4px;border:1px solid transparent;white-space:nowrap}
+.chain-step.on{color:var(--gold-deep);border-color:var(--gold);background:var(--card);font-weight:700}
+.chain-arrow{color:var(--border);flex-shrink:0}
+.chain-side{border-left:1px dashed var(--border);border-radius:0;margin-left:.2rem;padding-left:.7rem}
+.chain-side.on{border:1px solid var(--gold);border-radius:4px}
 /* 席位排序第二層 sub-tab bar */
 .subtabbar{display:flex;gap:.2rem;flex-wrap:wrap;margin:.2rem 0 1rem}
 .subtab-btn{appearance:none;background:var(--border-soft);border:1px solid var(--border);
@@ -243,15 +251,24 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
   <div class="hero">
     <div class="eyebrow">Stock-Selection Console · 選股主控台</div>
     <h1>選股主控台</h1>
-    <p class="sub">名單只回答「看誰」，不回答「買不買」與「何時」——四個分頁同一份底層資料，體系說明與使用邊界收在頁尾查閱區。</p>
+    <p class="sub">四個分頁是同一條決策鏈上的四站，不是四套方法——出手三關：<b>DD 裁決＝資格 → 席位＝陣容 → 板機＝時機</b>；榜單是對外櫥窗，不在決策鏈上。</p>
   </div>
 
-  <!-- 分頁列 -->
+  <!-- 分頁列（順序照決策鏈：今天 → 陣容 → 時機 → 櫥窗） -->
   <div class="tabbar" role="tablist">
-    <button type="button" class="tab-btn" data-tab="overview" role="tab">總覽<span class="tb-sub">Overview</span></button>
-    <button type="button" class="tab-btn" data-tab="picks" role="tab">精選榜<span class="tb-sub">The List</span></button>
-    <button type="button" class="tab-btn" data-tab="pipeline" role="tab">流程板機<span class="tb-sub">Pipeline</span></button>
-    <button type="button" class="tab-btn" data-tab="seats" role="tab">席位排序<span class="tb-sub">GRP Seats</span></button>
+    <button type="button" class="tab-btn" data-tab="overview" role="tab">總覽<span class="tb-sub">今天</span></button>
+    <button type="button" class="tab-btn" data-tab="seats" role="tab">席位排序<span class="tb-sub">該持有誰</span></button>
+    <button type="button" class="tab-btn" data-tab="pipeline" role="tab">流程板機<span class="tb-sub">能不能買</span></button>
+    <button type="button" class="tab-btn" data-tab="picks" role="tab">精選榜<span class="tb-sub">對外櫥窗</span></button>
+  </div>
+
+  <!-- 決策鏈地圖：你在哪一站（tab 切換時同步高亮） -->
+  <div class="chain-strip" aria-hidden="true">
+    <span class="chain-step" data-tab="">發現</span><span class="chain-arrow">→</span>
+    <span class="chain-step" data-tab="">資格 · DD 裁決</span><span class="chain-arrow">→</span>
+    <span class="chain-step" data-tab="seats">陣容 · 席位排序</span><span class="chain-arrow">→</span>
+    <span class="chain-step" data-tab="pipeline">時機 · 流程板機</span><span class="chain-arrow">→</span>
+    <span class="chain-step chain-side" data-tab="picks">櫥窗 · 精選榜（不在鏈上）</span>
   </div>
 
   <!-- ═══ 分頁 1：總覽 ═══ -->
@@ -280,8 +297,8 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
   <section class="block">
     <div class="sec-head">
       <span class="sec-num">3</span>
-      <h2 class="sec-title">正式榜</h2>
-      <span class="sec-desc">長熬 × 爆發 × 十倍（完整四件事見「精選榜」分頁）</span>
+      <h2 class="sec-title">正式榜（對外櫥窗）</h2>
+      <span class="sec-desc">長熬 × 爆發 × 十倍——櫥窗展示，不在決策鏈上；陣容看「席位排序」、時機看「流程板機」（完整四件事見「精選榜」分頁）</span>
     </div>
     <div id="picks-mount"><div class="placeholder">載入中⋯</div></div>
   </section>
@@ -428,6 +445,9 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     });
     document.querySelectorAll('.tab-panel').forEach(function(p){
       p.classList.toggle('active', p.id === 'panel-' + tab);
+    });
+    document.querySelectorAll('.chain-step').forEach(function(s){
+      s.classList.toggle('on', s.getAttribute('data-tab') === tab);
     });
     if(tab === 'seats'){
       activateSub(sub || 'overview');
