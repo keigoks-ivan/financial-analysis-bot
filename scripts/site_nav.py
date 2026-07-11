@@ -104,7 +104,8 @@ MENU = {
         ("cat", "/catalyst/", "催化劑日曆"),
         ("markets", "/markets.html", "Markets"),
         ("sectors", "/sectors.html", "Sectors"),
-        ("week", "/weekly/", "週報"),
+        # 2026-07-11 週報已停更，自頁首移除（/weekly/ 頁面保留可直達；
+        # PREFIX_ACTIVE 的 weekly/ 映射保留，使其頁面仍歸市場群 active）
     ],
     "system": [
         ("tr", "/track-record/", "裁決實績"),
