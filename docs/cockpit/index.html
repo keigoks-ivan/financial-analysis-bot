@@ -104,6 +104,14 @@ section.block{padding:1.1rem 0}
   font-family:inherit;font-size:.68rem;color:var(--muted);padding:.2rem .55rem;flex-shrink:0;align-self:center;margin-left:.4rem}
 .todo-done-btn:hover{color:var(--green);border-color:var(--green)}
 .todo-inv{font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--muted);margin-top:.55rem;line-height:1.7}
+/* ③ 陣容單一名單 */
+.roster-table{width:100%;border-collapse:collapse;font-size:.88rem}
+.roster-table th{font-family:'IBM Plex Mono',monospace;font-size:.64rem;font-weight:600;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;text-align:left;padding:.55rem .9rem;border-bottom:1px solid var(--border)}
+.roster-table td{padding:.55rem .9rem;border-bottom:1px solid var(--border-soft)}
+.roster-table tr:last-child td{border-bottom:0}
+.roster-seat{font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--muted);white-space:nowrap}
+.roster-tk{font-weight:700}
+.roster-note{font-size:.74rem;color:var(--muted);margin-top:.55rem;line-height:1.7}
 .todo-link{font-size:.74rem;white-space:nowrap;flex-shrink:0;align-self:center}
 .todo-calm{background:var(--green-soft);border:1px solid var(--border);border-radius:var(--r);
   padding:1.6rem 1.4rem;text-align:center}
@@ -293,14 +301,14 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     <div id="todo-mount"><div class="placeholder">載入中⋯</div></div>
   </section>
 
-  <!-- ③ 正式榜 -->
+  <!-- ③ 陣容——唯一的一張名單 -->
   <section class="block">
     <div class="sec-head">
       <span class="sec-num">3</span>
-      <h2 class="sec-title">正式榜（對外櫥窗）</h2>
-      <span class="sec-desc">長熬 × 爆發 × 十倍——櫥窗展示，不在決策鏈上；陣容看「席位排序」、時機看「流程板機」（完整四件事見「精選榜」分頁）</span>
+      <h2 class="sec-title">陣容</h2>
+      <span class="sec-desc">系統現在的唯一答案——每檔一行讀完整條鏈：席位 · DD 裁決 · 板機狀態（換席裁決見「席位排序」；此為研究層陣容，非帳戶持倉）</span>
     </div>
-    <div id="picks-mount"><div class="placeholder">載入中⋯</div></div>
+    <div id="roster-mount"><div class="placeholder">載入中⋯</div></div>
   </section>
 
   <!-- 查閱區：低頻說明與深層儀表，預設收合 -->
@@ -528,7 +536,7 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     try{ renderEnv(); }catch(e){ $('env-mount').innerHTML=ph('環境資料暫缺'); }
     try{ renderTodo(); }catch(e){ $('todo-mount').innerHTML=ph('待辦資料暫缺'); }
     try{ renderFunnel(); }catch(e){ $('funnel-mount').innerHTML=ph('漏斗資料暫缺'); }
-    try{ renderPicks(); }catch(e){ $('picks-mount').innerHTML=ph('精選清單資料暫缺'); }
+    try{ renderRoster(); }catch(e){ $('roster-mount').innerHTML=ph('陣容資料暫缺'); }
     try{ renderScoreboard(); }catch(e){ $('sb-mount').innerHTML=ph('記分板資料暫缺'); }
   });
 
@@ -733,7 +741,45 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     mount.innerHTML = html;
   }
 
-  // ---------- ③ 漏斗活數字 ----------
+  // ---------- ③ 陣容（唯一名單：席位 × 裁決 × 板機，一行一檔讀完整條鏈） ----------
+  function renderRoster(){
+    var mount = $('roster-mount');
+    if(!S.arena || !Array.isArray(S.arena.core_seats)){ mount.innerHTML = ph('陣容資料暫缺'); return; }
+    // 板機狀態查表（sop-funnel）
+    var trig = {};
+    if(S.sop){
+      (S.sop.today_signals||[]).forEach(function(x){ if(x&&x.ticker) trig[x.ticker]='🎯 板機亮'; });
+      (S.sop.standby_a2||[]).forEach(function(x){ if(x&&x.ticker&&!trig[x.ticker]) trig[x.ticker]='待命 A2'; });
+      (S.sop.standby_b||[]).forEach(function(x){ if(x&&x.ticker&&!trig[x.ticker]) trig[x.ticker]='待命 B'; });
+      (S.sop.standby_c||[]).forEach(function(x){ if(x&&x.ticker&&!trig[x.ticker]) trig[x.ticker]='待命 C'; });
+    }
+    function vCls(v){ return v==='進場'?'v-in':(v==='觀望'?'v-watch':(v==='迴避'?'v-avoid':'')); }
+    function row(seatLabel, s){
+      var grp = s.grp||{};
+      return '<tr><td class="roster-seat">'+esc(seatLabel)+'</td>'+
+        '<td class="roster-tk">'+esc(s.ticker)+'</td>'+
+        '<td class="'+vCls(s.verdict)+'">'+esc(s.verdict||'—')+'</td>'+
+        '<td class="num">'+(grp.score!=null?fmt(grp.score,2):'—')+(grp.p_label?(' <small style="color:var(--muted)">'+esc(grp.p_label)+'</small>'):'')+'</td>'+
+        '<td>'+esc(trig[s.ticker]||'－')+'</td></tr>';
+    }
+    var rows = '';
+    S.arena.core_seats.forEach(function(s,i){ rows += row('核心 '+(i+1), s); });
+    (S.arena.sat_seats||[]).forEach(function(s,i){ rows += row('衛星 '+(i+1), s); });
+    var vac = S.arena.sat_vacant||0;
+    if(vac>0) rows += '<tr><td class="roster-seat">衛星 '+((S.arena.sat_seats||[]).length+1)+'–5</td>'+
+      '<td colspan="4" style="color:var(--muted);font-size:.8rem">空 '+vac+' 席——空位是刻意的，空位即倉位管理</td></tr>';
+    var bench = (S.arena.core_bench||[]).map(function(b){return b.ticker;}).filter(Boolean);
+    var asof = S.arena.run_timestamp ? String(S.arena.run_timestamp).slice(0,10) : '';
+    mount.innerHTML =
+      '<div class="card" style="overflow-x:auto"><table class="roster-table">'+
+      '<tr><th>席</th><th>Ticker</th><th>DD 裁決</th><th>GRP 分 · 位置</th><th>板機</th></tr>'+rows+'</table></div>'+
+      '<div class="roster-note">'+
+      (bench.length?('板凳前排：'+esc(bench.join('、'))+' · '):'')+
+      (asof?('engine as-of '+esc(asof)+' · '):'')+
+      '換席裁決見「席位排序」 · 板機明細見「流程板機」 · 對外櫥窗榜（長熬 × 爆發 × 十倍）在「精選榜」分頁，不在決策鏈上</div>';
+  }
+
+  // ---------- 漏斗活數字 ----------
   function statBox(v,l){return '<span class="stat"><span class="sv num">'+v+'</span><span class="sl">'+esc(l)+'</span></span>';}
   function chip(href,txt){return '<a class="chip" href="'+href+'">'+esc(txt)+'</a>';}
   function renderFunnel(){
