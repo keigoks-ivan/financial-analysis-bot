@@ -82,6 +82,7 @@ section.block{padding:1.1rem 0}
   color:var(--muted);text-transform:uppercase;margin-bottom:.15rem}
 .todo-txt{font-size:.88rem;color:var(--text);line-height:1.55}
 .todo-txt b{font-weight:700}
+.todo-asof{font-family:'IBM Plex Mono',monospace;font-size:.66rem;color:var(--muted);margin-top:.3rem;letter-spacing:.03em}
 .todo-link{font-size:.74rem;white-space:nowrap;flex-shrink:0;align-self:center}
 .todo-calm{background:var(--green-soft);border:1px solid var(--border);border-radius:var(--r);
   padding:1.6rem 1.4rem;text-align:center}
@@ -475,6 +476,7 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
   var sources = {
     gauge:   '/cache/risk_gauge.json',
     hist:    '/cache/risk_history.json',
+    monitor: '/monitor/data/latest.json',
     mom:     '/research/momentum-5/data.json',
     momPort: '/research/momentum-5/portfolio.json',
     dd:      '/dd-screener/latest.json',
@@ -524,13 +526,29 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     }
     cells += '<div class="env-cell"><div class="env-k">更新日期</div>'+
       '<div class="env-v num" style="font-size:.95rem;font-weight:600;color:var(--text-sec)">'+esc(g.as_of||'—')+'</div></div>';
-    var links = '<div class="env-links"><a href="/markets.html">詳細 →</a><a href="/#risk-chart">圖表 →</a></div>';
+    // market monitor（日更）— 全資產異常掃描，職能不同於週更六訊號儀表；fetch 失敗時整格靜默隱藏
+    if(S.monitor){
+      var m = S.monitor, red = 0, yel = 0;
+      (m.alerts_today||[]).forEach(function(a){ if(!a) return; if(a.sev==='red') red++; else if(a.sev==='yellow') yel++; });
+      var alertHtml = (red||yel)
+        ? '<span class="num" style="color:var(--red)">'+red+'</span> <small>紅</small> <span style="color:var(--muted)">/</span> <span class="num" style="color:var(--amber)">'+yel+'</span> <small>黃</small>'
+        : '<span style="color:var(--text-sec)">無異常</span>';
+      var liq = (m.status && m.status.liquidity && m.status.liquidity.label) ? m.status.liquidity.label : '—';
+      cells += '<a class="env-cell" href="/monitor/" style="text-decoration:none;color:inherit;display:block">'+
+        '<div class="env-k">市場監測（日更）</div>'+
+        '<div class="env-v" style="font-size:1.02rem">'+alertHtml+'</div>'+
+        '<div style="font-size:.7rem;color:var(--muted);margin-top:.28rem">'+esc(liq)+' · <span class="num">'+esc(m.as_of||'—')+'</span></div></a>';
+    }
+    var links = '<div class="env-links"><a href="/markets.html">詳細 →</a><a href="/#risk-chart">圖表 →</a><a href="/monitor/">市場監測 →</a></div>';
     $('env-mount').innerHTML = '<div class="card env-strip">'+cells+links+'</div>';
   }
 
   // ---------- ② 今日待辦 ----------
   function renderTodo(){
     var items = [];
+    // 各來源資料時效（動態取自各自 JSON），供待辦項標示避免被誤讀成當日訊號
+    var arenaAsof = (S.arena && S.arena.run_timestamp) ? String(S.arena.run_timestamp).slice(0,10) : '';
+    var momAsof   = (S.mom && S.mom.as_of) ? String(S.mom.as_of) : '';
 
     // GRP arena duels (seat-change challenges awaiting human adjudication)
     if(S.arena && Array.isArray(S.arena.duels)){
@@ -548,7 +566,8 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
         items.push({
           cls:'grp', ic:'⚔️', src:'GRP · 決策引擎 · 席位擂台',
           txt:'<b>'+esc(ck)+'</b>（GRP 分 '+fmt(scr,2)+'）挑戰'+routeZh+'軌 <b>'+esc(o.seats.join('／'))+'</b>——需人工裁決是否換席',
-          href:'/engine/arena.html', label:'席位擂台 →'
+          href:'/engine/arena.html', label:'席位擂台 →',
+          asof: arenaAsof ? ('engine as-of '+arenaAsof) : ''
         });
       });
     }
@@ -579,7 +598,8 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
             txt = '<b>'+esc(s.ticker)+'</b> 亮 '+fm.ic+' '+esc(fm.label)+'——強制人工重看 thesis';
           }
           items.push({cls:'mom', ic:fm.ic, src:'Momentum-5 · 上修動能組合', txt:txt,
-            href:'/research/momentum-5/', label:'看組合 →'});
+            href:'/research/momentum-5/', label:'看組合 →',
+            asof: momAsof ? ('M5 as-of '+momAsof) : ''});
         });
       });
     }
@@ -604,7 +624,8 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
       html += '<div class="todo '+it.cls+'">'+
         '<div class="todo-ic">'+it.ic+'</div>'+
         '<div class="todo-body"><div class="todo-src">'+esc(it.src)+'</div>'+
-        '<div class="todo-txt">'+it.txt+'</div></div>'+
+        '<div class="todo-txt">'+it.txt+'</div>'+
+        (it.asof ? '<div class="todo-asof">'+esc(it.asof)+'</div>' : '')+'</div>'+
         '<a class="todo-link" href="'+it.href+'">'+esc(it.label)+'</a></div>';
     });
     html += '</div>';
