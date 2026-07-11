@@ -368,7 +368,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
     <td>Long Track 舊頁 +10.95% 分母缺 4.5 年 → 修正為 +9.59%</td></tr>
 <tr><td><strong>L1 絕對門檻</strong></td><td>這能不能投？(下限 + 過擬合警報)</td>
     <td>五指標門檻帶 + 可疑帶</td>
-    <td>六狀態機 v1.1 — MDD -35.8% 差 0.8pp 出局</td></tr>
+    <td>六狀態機 v1.1 — MDD -37.78% 差 2.78pp 出局(as-of 2026-07-10)</td></tr>
 <tr><td><strong>L2 相對支配性</strong></td><td>它比「最懶的可執行替代方案」好嗎？</td>
     <td>雙軸支配性判定 + 四工具(槓桿等價 / 可持有性 / 終值誠實 / 終點敏感性)</td>
     <td>雙軌多空 — 對 50/50 B&amp;H 全軸落敗 → 被支配，否決</td></tr>
