@@ -59,16 +59,28 @@ CSS = """
 --mono:'SF Mono','JetBrains Mono',ui-monospace,Menlo,monospace}
 *{box-sizing:border-box}
 ::selection{background:rgba(34,211,238,.32)}
+html{scrollbar-color:#3b5aa0 #070a14;scrollbar-width:thin}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:#070a14}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#1d3a6b,#3b5aa0);
+border-radius:5px;border:2px solid #070a14}
+::-webkit-scrollbar-thumb:hover{background:#5ea0ff}
 body{margin:0;color:var(--ink);font-size:15px;line-height:1.75;
 font-family:'Inter','Noto Sans TC',-apple-system,'Segoe UI',sans-serif;
 background:var(--bg);
 background-image:
+radial-gradient(1px 1px at 22% 34%,rgba(226,236,255,.6) 50%,transparent 51%),
+radial-gradient(1px 1px at 68% 12%,rgba(165,215,255,.45) 50%,transparent 51%),
+radial-gradient(1.4px 1.4px at 44% 78%,rgba(196,181,253,.4) 50%,transparent 51%),
+radial-gradient(1px 1px at 84% 56%,rgba(226,236,255,.28) 50%,transparent 51%),
 linear-gradient(var(--grid) 1px,transparent 1px),
 linear-gradient(90deg,var(--grid) 1px,transparent 1px),
-radial-gradient(1200px 600px at 85% -10%,rgba(167,139,250,.12),transparent 60%),
-radial-gradient(900px 500px at -10% 0%,rgba(34,211,238,.09),transparent 55%),
+radial-gradient(1200px 600px at 85% -10%,rgba(167,139,250,.14),transparent 60%),
+radial-gradient(900px 500px at -10% 0%,rgba(34,211,238,.10),transparent 55%),
+radial-gradient(1100px 520px at 60% 45%,rgba(99,72,190,.07),transparent 65%),
 radial-gradient(700px 700px at 50% 110%,rgba(94,160,255,.08),transparent 60%);
-background-size:46px 46px,46px 46px,100% 100%,100% 100%,100% 100%;
+background-size:190px 190px,290px 290px,410px 410px,530px 530px,
+46px 46px,46px 46px,100% 100%,100% 100%,100% 100%,100% 100%;
 background-attachment:fixed}
 a{color:var(--accent);text-decoration:none}
 a:hover{text-decoration:underline}
@@ -84,7 +96,7 @@ box-shadow:0 1px 0 rgba(34,211,238,.09)}
 main{max-width:1020px;margin:0 auto;padding:24px 20px 70px}
 h1{font-size:1.45rem;line-height:1.4;letter-spacing:-.01em;margin:.4em 0}
 h2{font-size:1.05rem;margin-top:2.4em;padding-bottom:8px;
-border-bottom:1px solid var(--line);letter-spacing:.02em;
+border-bottom:1px dashed rgba(148,163,184,.24);letter-spacing:.02em;
 display:flex;align-items:baseline;gap:10px}
 h2::before{content:"";width:22px;height:3px;border-radius:2px;align-self:center;
 background:linear-gradient(90deg,var(--cyan),var(--accent2));
@@ -98,10 +110,15 @@ border-radius:6px;padding:2px 9px;font-size:12.5px;margin:2px;color:var(--sub)}
 .v-avoid{color:var(--avoid-t);font-weight:700}
 /* ── hero ── */
 .hero{position:relative;border:1px solid var(--line);border-radius:18px;
-overflow:hidden;margin:18px 0 8px;
-background:
+overflow:hidden;margin:18px 0 8px;background-color:#070a14;
+background-image:
+radial-gradient(1px 1px at 18% 28%,rgba(226,236,255,.7) 50%,transparent 51%),
+radial-gradient(1px 1px at 72% 64%,rgba(165,215,255,.55) 50%,transparent 51%),
+radial-gradient(1.5px 1.5px at 46% 12%,rgba(196,181,253,.5) 50%,transparent 51%),
 repeating-linear-gradient(0deg,rgba(94,160,255,.028) 0 1px,transparent 1px 4px),
+radial-gradient(520px 280px at 82% -5%,rgba(167,139,250,.15),transparent 65%),
 linear-gradient(160deg,#0e1526,#070a14);
+background-size:170px 170px,240px 240px,330px 330px,auto,100% 100%,100% 100%;
 box-shadow:0 0 0 1px rgba(34,211,238,.06),0 22px 60px rgba(0,0,0,.42)}
 .hero::before,.hero::after{content:"";position:absolute;width:24px;height:24px;
 z-index:2;pointer-events:none}
@@ -111,6 +128,18 @@ border-left:2px solid var(--cyan);opacity:.55}
 border-right:2px solid var(--accent2);opacity:.55}
 .hero canvas{position:absolute;inset:0;width:100%;height:100%}
 .hero .inner{position:relative;padding:22px 28px 18px;z-index:1}
+/* 艙窗軌道環＋緩行光點（裝飾層，pointer-events:none） */
+.hero .inner::before{content:"";position:absolute;top:-96px;right:-70px;
+width:280px;height:280px;border-radius:50%;pointer-events:none;
+border:1px dashed rgba(34,211,238,.22);
+box-shadow:inset 0 0 40px rgba(34,211,238,.05)}
+.hero .inner::after{content:"";position:absolute;top:41px;right:67px;
+width:6px;height:6px;border-radius:50%;pointer-events:none;
+background:#7dd3fc;box-shadow:0 0 8px 2px rgba(125,211,252,.6);
+transform:rotate(35deg) translateX(140px);
+animation:orbit 26s linear infinite}
+@keyframes orbit{from{transform:rotate(0deg) translateX(140px)}
+to{transform:rotate(360deg) translateX(140px)}}
 .hero h1{font-size:1.8rem;margin:0;font-weight:800;letter-spacing:-.02em;
 background:linear-gradient(92deg,#7dd3fc 0%,#5ea0ff 40%,#a78bfa 80%);
 -webkit-background-clip:text;background-clip:text;color:transparent;
@@ -125,7 +154,13 @@ border-radius:14px;padding:10px 16px;position:relative;overflow:hidden;
 transition:transform .18s,border-color .18s,box-shadow .18s}
 .tile::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;
 background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.45}
-.tile:hover{transform:translateY(-3px);border-color:var(--line2);box-shadow:var(--glow)}
+.tile::after{content:"";position:absolute;top:8px;right:8px;width:9px;height:9px;
+pointer-events:none;opacity:.4;
+background:
+linear-gradient(var(--cyan),var(--cyan)) center/1px 9px no-repeat,
+linear-gradient(var(--cyan),var(--cyan)) center/9px 1px no-repeat}
+.tile:hover{transform:translateY(-3px);border-color:var(--line2);
+box-shadow:var(--glow),0 14px 34px rgba(2,5,16,.55)}
 .tile .n{font-size:1.75rem;font-weight:800;font-family:var(--mono);letter-spacing:-.02em;
 background:linear-gradient(120deg,#7dd3fc,#5ea0ff 55%,#a78bfa);
 -webkit-background-clip:text;background-clip:text;color:transparent;
@@ -193,7 +228,8 @@ padding:4px 14px;color:var(--sub);transition:all .15s}
 box-shadow:var(--glow-cy)}
 .card{background:var(--card);border:1px solid var(--line);border-radius:10px;
 padding:10px 16px;margin:8px 0;transition:transform .15s,border-color .15s}
-.card:hover{transform:translateY(-2px);border-color:var(--line2);box-shadow:var(--glow)}
+.card:hover{transform:translateY(-2px);border-color:var(--line2);
+box-shadow:var(--glow),0 12px 30px rgba(2,5,16,.5)}
 .card .t{font-weight:600}
 .card .m{font-size:12.5px;color:var(--sub);margin-top:2px}
 .card .o{font-size:13px;color:#aeb9cf;margin-top:4px}
@@ -231,10 +267,15 @@ font-family:var(--mono);animation:tape 70s linear infinite}
 @keyframes tape{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 /* 知識圖譜 */
 .graphwrap{position:relative;border:1px solid var(--line);border-radius:16px;
-overflow:hidden;background:
-radial-gradient(600px 300px at 70% 20%,rgba(167,139,250,.08),transparent 60%),
+overflow:hidden;background-color:#070a14;
+background-image:
+radial-gradient(1px 1px at 24% 42%,rgba(226,236,255,.55) 50%,transparent 51%),
+radial-gradient(1px 1px at 76% 18%,rgba(165,215,255,.45) 50%,transparent 51%),
+radial-gradient(1.4px 1.4px at 52% 72%,rgba(196,181,253,.4) 50%,transparent 51%),
+radial-gradient(600px 300px at 70% 20%,rgba(167,139,250,.09),transparent 60%),
 repeating-linear-gradient(0deg,rgba(94,160,255,.022) 0 1px,transparent 1px 5px),
-linear-gradient(160deg,#0e1526,#070a14)}
+linear-gradient(160deg,#0e1526,#070a14);
+background-size:180px 180px,260px 260px,360px 360px,100% 100%,auto,100% 100%}
 .graphwrap::before,.graphwrap::after{content:"";position:absolute;width:22px;height:22px;
 z-index:2;pointer-events:none}
 .graphwrap::before{top:12px;left:12px;border-top:2px solid var(--cyan);
@@ -462,7 +503,7 @@ as of %%ASOF%%</span><span class="dim" style="margin-left:auto">⌘K 快速跳�
 <details id="recentmore"><summary class="cnt">更多近期報告…</summary>
 <div id="recentrest"></div></details>
 
-<h2 id="graph">🕸 知識圖譜 <span class="cnt">現行裁決個股 × 產業主題 · hover 看連線 · 點節點跳 hub</span></h2>
+<h2 id="graph">🕸 知識星圖 <span class="cnt">現行裁決個股 × 產業主題 · hover 看連線 · 點節點跳 hub</span></h2>
 <div class="graphwrap"><canvas id="kg"></canvas></div>
 
 <h2>🧩 知識庫組成</h2>
@@ -744,6 +785,12 @@ if(!reduce)document.querySelectorAll('.tile').forEach(t=>{
       ctx.shadowBlur=0;
       ctx.strokeStyle=n.kind==='theme'?'#7dd3fc':(VT[n.v]||'#94a3b8');
       ctx.lineWidth=1.2*DPR;ctx.stroke();
+      /* 十字星芒（裝飾 flare，非資料色） */
+      const fl=r+5*DPR;
+      ctx.strokeStyle='rgba(226,236,255,'+(lit?0.5:0.16)+')';
+      ctx.lineWidth=DPR;
+      ctx.beginPath();ctx.moveTo(n.x-fl,n.y);ctx.lineTo(n.x+fl,n.y);
+      ctx.moveTo(n.x,n.y-fl);ctx.lineTo(n.x,n.y+fl);ctx.stroke();
       if(lit||n.kind==='ticker'||n.deg>=6){
         ctx.font=(lit?600:400)+' '+(11*DPR)+'px SF Mono,Menlo,monospace';
         ctx.fillStyle=lit?'#e5eaf3':'rgba(139,152,179,'+(dim?.3:.85)+')';
@@ -1302,9 +1349,13 @@ border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:10px 12p
 font-size:14px;font-family:inherit;line-height:1.6;resize:vertical}
 .statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
 .mapwrap{position:relative;border:1px solid var(--line);border-radius:14px;overflow:hidden;
-background:
+background-color:#070a14;
+background-image:
+radial-gradient(1px 1px at 30% 26%,rgba(226,236,255,.5) 50%,transparent 51%),
+radial-gradient(1px 1px at 70% 66%,rgba(165,215,255,.4) 50%,transparent 51%),
 repeating-linear-gradient(0deg,rgba(94,160,255,.022) 0 1px,transparent 1px 5px),
-linear-gradient(160deg,#0e1526,#070a14)}
+linear-gradient(160deg,#0e1526,#070a14);
+background-size:190px 190px,300px 300px,auto,100% 100%}
 .mapwrap::before,.mapwrap::after{content:"";position:absolute;width:20px;height:20px;
 z-index:2;pointer-events:none}
 .mapwrap::before{top:10px;left:10px;border-top:2px solid var(--cyan);
