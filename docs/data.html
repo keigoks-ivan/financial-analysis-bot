@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta name="robots" content="noindex,nofollow">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>公開資料端點 · Data API — InvestMQuest Research</title>
+  <meta name="description" content="InvestMQuest Research 公開 JSON 資料端點文件——DD screener、產業輪動、擁擠交易、精選清單、市場監測、大類資產 regime 與全站搜尋索引的 schema、更新頻率與穩定性說明。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/imq-base.css">
+  <style>
+/* ── Token system — 2026-07-08 設計系統 v1.1：值改引 imq-base.css 單一真相來源。 ── */
+:root {
+  --imq-bg:           var(--paper);
+  --imq-card:         var(--card);
+  --imq-border:       var(--line);
+  --imq-text:         var(--ink);
+  --imq-text-sec:     var(--sec);
+  --imq-text-muted:   var(--muted);
+  --imq-accent:       var(--accent);
+  --imq-accent-hover: var(--accent-ink);
+  --imq-r-sm:   var(--r);
+  --imq-font-sans: var(--sans);
+  --imq-font-mono: var(--mono);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--imq-font-sans);background:var(--paper);color:var(--body);line-height:1.7;font-size:14px;min-height:100vh;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none;transition:color .15s}
+a:hover{color:var(--accent-ink)}
+.serif{font-family:'Noto Serif TC',Georgia,'Times New Roman',serif}
+.mono{font-family:var(--mono)}
+
+.dt-wrap{max-width:1000px;margin:0 auto;padding:40px 32px 60px}
+.dt-overline{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-deep);margin-bottom:12px}
+.dt-title{font-family:'Noto Serif TC',Georgia,serif;font-weight:700;letter-spacing:-.01em;color:var(--ink);font-size:32px;line-height:1.15;margin-bottom:10px}
+.dt-sub{font-size:14px;color:var(--sec);max-width:720px;line-height:1.7;margin-bottom:16px}
+.dt-terms{font-size:12.5px;color:var(--body);background:var(--gold-bg,#faf6ec);border:1px solid var(--gold-soft,#e8dcbf);border-left:3px solid var(--gold,#b8924a);border-radius:var(--r);padding:11px 15px;margin-bottom:26px;line-height:1.7}
+.dt-terms b{color:var(--ink)}
+
+.dt-toc{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:32px;padding-bottom:22px;border-bottom:1px solid var(--line)}
+.dt-toc a{font-family:var(--mono);font-size:12px;font-weight:500;padding:5px 11px;background:var(--card);border:1px solid var(--line);border-radius:999px;color:var(--body)}
+.dt-toc a:hover{border-color:var(--accent);color:var(--accent)}
+
+.dt-ep{margin-bottom:40px;scroll-margin-top:80px}
+.dt-ep-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.dt-ep-head h2{font-family:'Noto Serif TC',Georgia,serif;font-size:21px;font-weight:700;color:var(--ink);letter-spacing:-.01em}
+.dt-path{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--accent);background:var(--accent-soft,#e8eef5);padding:3px 9px;border-radius:5px}
+.dt-purpose{font-size:13.5px;color:var(--sec);line-height:1.7;margin-bottom:12px}
+.dt-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px 18px;margin-bottom:14px}
+.dt-fact{font-size:12.5px;line-height:1.6}
+.dt-fact .k{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:1px}
+.dt-fact .v{color:var(--body)}
+.dt-fact .v code{font-family:var(--mono);font-size:11.5px;background:var(--card);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+.dt-tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);margin-bottom:10px}
+table.dt-schema{width:100%;border-collapse:collapse;font-size:12.5px;min-width:520px}
+table.dt-schema th{text-align:left;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--sec);background:var(--card);padding:9px 13px;border-bottom:1px solid var(--line)}
+table.dt-schema td{padding:8px 13px;border-bottom:1px solid var(--line-soft);vertical-align:top;line-height:1.55}
+table.dt-schema tr:last-child td{border-bottom:none}
+table.dt-schema td.f{font-family:var(--mono);font-size:11.5px;color:var(--ink);font-weight:600;white-space:nowrap}
+table.dt-schema td.ty{font-family:var(--mono);font-size:11px;color:var(--gold-deep);white-space:nowrap}
+.dt-note{font-size:12px;color:var(--muted);line-height:1.65;padding:9px 13px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);border-left:3px solid var(--line)}
+.dt-note b{color:var(--sec)}
+@media(max-width:640px){
+  .dt-wrap{padding:28px 16px 44px}
+  .dt-title{font-size:25px}
+}
+  </style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">選股<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/cockpit/">選股主控台</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/research/momentum-5/">Momentum-5</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screeners.html">RS+VCP Screener</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/">個股 DD</a>
+          <a href="/research/synthesis/">期望落差綜合研判</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/earnings/">財報分析</a>
+          <a href="/catalyst/">催化劑日曆</a>
+          <a href="/monitor/">市場監測</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/crowding/">擁擠交易監測</a>
+          <a href="/rotation/">產業輪動</a>
+          <a href="/regime/">大類資產 regime</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/weekly/">週報</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track-smh/">長線訊號 SMH</a>
+          <a href="/long-track-tw/">台股長線</a>
+          <a href="/turtle-sleeve/">商品 Sleeve</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/cache/">Data Cache</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <a href="/how-to.html">使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<main class="dt-wrap">
+  <div class="dt-overline">PUBLIC DATA · 公開資料端點</div>
+  <h1 class="dt-title">公開資料端點文件</h1>
+  <p class="dt-sub">本站選股與跨資產監測底層由一組公開 JSON 端點驅動，供程式化讀取。以下逐一說明每個端點的用途、更新頻率（來源 GitHub Actions workflow）、<code>as_of</code> 時效欄位語意與 schema。所有端點皆為靜態檔，直接 GET 即可，無需驗證、無速率限制。</p>
+  <p class="dt-terms"><b>使用條款</b>：資料僅供研究，無擔保（as-is, no warranty），來源請註明「InvestMQuest Research」。端點為靜態快照，時效以各檔 <code>as_of</code> / <code>generated_at</code> 為準。</p>
+
+  <div class="dt-toc">
+    <a href="#dd-screener">dd-screener</a>
+    <a href="#rotation">rotation/latest</a>
+    <a href="#radar">rotation/radar</a>
+    <a href="#crowding">crowding</a>
+    <a href="#picks">picks</a>
+    <a href="#monitor">monitor</a>
+    <a href="#regime">regime</a>
+    <a href="#search">search-index</a>
+  </div>
+
+  <!-- ══ DD SCREENER ══ -->
+  <section class="dt-ep" id="dd-screener">
+    <div class="dt-ep-head"><h2>DD 選股宇宙</h2><span class="dt-path">/dd-screener/latest.json</span></div>
+    <p class="dt-purpose">全站個股 DD 宇宙的機器可讀快照——約 240 檔已寫過 DD 報告的個股，帶基本面訊號（FCF／ROIC／EPS 成長／PEG／負債）、護城河評分、統一裁決（dca_verdict）、五年情境價與 EPS 估計。是 <code>/dd-screener/</code>、<code>/cockpit/</code>、<code>/research/</code> 三頁的共同資料源。</p>
+    <div class="dt-facts">
+      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">每日（Tue–Sat 09:00 台北）· workflow <code>daily-non-fundamental-refresh</code> 跑 <code>build_dd_screener.py</code>；每份新 DD 發布時亦即時重建</span></div>
+      <div class="dt-fact"><span class="k">as_of 語意</span><span class="v"><code>as_of</code> = 快照交易日；<code>eps_estimates_source.snapshot_date</code> = EPS 估計 Excel 快照日</span></div>
+    </div>
+    <div class="dt-tablewrap"><table class="dt-schema">
+      <thead><tr><th>欄位</th><th>型別</th><th>意義</th></tr></thead>
+      <tbody>
+        <tr><td class="f">schema_version</td><td class="ty">string</td><td>此檔 schema 版本（現 "1.3"）</td></tr>
+        <tr><td class="f">as_of</td><td class="ty">string</td><td>快照交易日 YYYY-MM-DD</td></tr>
+        <tr><td class="f">run_timestamp</td><td class="ty">string</td><td>產生時戳（ISO 8601，含時區）</td></tr>
+        <tr><td class="f">universe_size</td><td class="ty">int</td><td>宇宙成員數（現 241）</td></tr>
+        <tr><td class="f">criteria</td><td class="ty">array</td><td>五道基本面閘定義（key／label／threshold／invert／unit）</td></tr>
+        <tr><td class="f">funnel_config</td><td class="ty">object</td><td>漏斗排序權重、品質映射、可原諒失敗數、moat 趨勢乘數、修正門檻</td></tr>
+        <tr><td class="f">summary</td><td class="ty">object</td><td>通過閘數分布（pass_5／pass_4／pass_3／pass_lt3／no_data）</td></tr>
+        <tr><td class="f">eps_estimates_source</td><td class="ty">object</td><td>EPS 估計來源（snapshot_date／source_file／coverage_count／fallback 名單）</td></tr>
+        <tr><td class="f">stocks</td><td class="ty">array</td><td>個股列（見下方逐檔欄位）</td></tr>
+      </tbody>
+    </table></div>
+    <div class="dt-tablewrap"><table class="dt-schema">
+      <thead><tr><th>stocks[] 主要欄位</th><th>型別</th><th>意義</th></tr></thead>
+      <tbody>
+        <tr><td class="f">ticker / name / sector</td><td class="ty">string</td><td>代碼／名稱／產業</td></tr>
+        <tr><td class="f">signal</td><td class="ty">string</td><td>基本面評級 A+/A/B/C/X（metadata，非裁決）</td></tr>
+        <tr><td class="f">dca_verdict</td><td class="ty">string</td><td>統一裁決：進場／觀望／迴避</td></tr>
+        <tr><td class="f">dca_role</td><td class="ty">string</td><td>倉位角色（核心持倉／衛星…）</td></tr>
+        <tr><td class="f">moat_grade / moat_score / moat_trend</td><td class="ty">string/num</td><td>護城河評等（S/A/…）、分數、趨勢（↑→↓）</td></tr>
+        <tr><td class="f">fcf / roic / eps2y / peg / de</td><td class="ty">number</td><td>FCF%、ROIC%、2 年 EPS 成長%、PEG、負債比</td></tr>
+        <tr><td class="f">fpe_fy2 / pct_5y</td><td class="ty">number</td><td>FY+2 forward P/E、5 年 P/E 分位</td></tr>
+        <tr><td class="f">upside_mid_pct / upside_5y_pct / ev5y_pct</td><td class="ty">number</td><td>中期上檔%、5 年上檔%、5 年期望值%</td></tr>
+        <tr><td class="f">bull_5y_price / bear_5y_price / p_bull_pct / p_bear_pct</td><td class="ty">number</td><td>5 年多空情境價與機率</td></tr>
+        <tr><td class="f">pass_count / fail_criteria</td><td class="ty">int/array</td><td>通過閘數、未過閘清單</td></tr>
+        <tr><td class="f">eps_fy_curr / eps_fy_next / eps_fy3 + *_revision_pct</td><td class="ty">number</td><td>各財年 EPS 估計與修正幅度%</td></tr>
+        <tr><td class="f">eps_display_currency / eps_fx_rate</td><td class="ty">string/num</td><td>非美股顯示幣別與換算匯率</td></tr>
+        <tr><td class="f">dd_path / dd_date</td><td class="ty">string</td><td>對應 DD 報告路徑與日期</td></tr>
+        <tr><td class="f">live_fpe_est / pe_drift_pct / dd_age_days</td><td class="ty">number</td><td>即時 forward P/E 估計、相對 DD 當日漂移%、DD 齡</td></tr>
+      </tbody>
+    </table></div>
+    <p class="dt-note"><b>穩定性</b>：schema 隨 DD skill 版本演進為 additive（下游 dual-read）。<code>signal</code> 為基本面 metadata，投資裁決以 <code>dca_verdict</code> 為準。任何破壞性變更會列於本頁。</p>
+  </section>
+
+  <!-- ══ ROTATION LATEST ══ -->
+  <section class="dt-ep" id="rotation">
+    <div class="dt-ep-head"><h2>產業輪動（RRG 主題）</h2><span class="dt-path">/rotation/data/latest.json</span></div>
+    <p class="dt-purpose">64 個站內主題於週線宇宙的相對輪動位置（RRG：相對強度比值 × 動能），含四象限分類、產業時鐘相位、修正寬度與廣度。<b>描述器非擇時</b>——相對排名於本站宇宙內，非市場絕對輪動。</p>
+    <div class="dt-facts">
+      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">每週（週日 12:00 UTC）· workflow <code>crossasset-weekly</code> 跑 <code>build_rotation.py</code></span></div>
+      <div class="dt-fact"><span class="k">as_of 語意</span><span class="v"><code>as_of</code> / <code>data_asof_weekly</code> = 週線資料截止日；<code>generated_at</code> = 產生時戳</span></div>
+    </div>
+    <div class="dt-tablewrap"><table class="dt-schema">
+      <thead><tr><th>欄位</th><th>型別</th><th>意義</th></tr></thead>
+      <tbody>
+        <tr><td class="f">as_of</td><td class="ty">string</td><td>資料截止日 YYYY-MM-DD</td></tr>
+        <tr><td class="f">benchmark</td><td class="ty">string</td><td>相對基準（SPY）</td></tr>
+        <tr><td class="f">quadrant_counts</td><td class="ty">object</td><td>四象限成員數（leading／weakening／lagging／improving）</td></tr>
+        <tr><td class="f">method</td><td class="ty">object</td><td>方法定義（breadth／gate／quadrants／disclaimer 等）</td></tr>
+        <tr><td class="f">insufficient</td><td class="ty">array</td><td>因成員／覆蓋不足而未評分的主題</td></tr>
+        <tr><td class="f">themes</td><td class="ty">array</td><td>主題列（見下）</td></tr>
+      </tbody>
+    </table></div>
+    <div class="dt-tablewrap"><table class="dt-schema">
+      <thead><tr><th>themes[] 欄位</th><th>型別</th><th>意義</th></tr></thead>
+      <tbody>
+        <tr><td class="f">theme</td><td class="ty">string</td><td>主題名</td></tr>
+        <tr><td class="f">rs_ratio / rs_mom</td><td class="ty">number</td><td>RRG 相對強度比值、動能（100 為基準）</td></tr>
+        <tr><td class="f">quadrant</td><td class="ty">string</td><td>象限：leading／weakening／lagging／improving</td></tr>
+        <tr><td class="f">clock_phase / sd_verdict / conviction</td><td class="ty">string</td><td>產業時鐘相位、供需裁決、信心</td></tr>
+        <tr><td class="f">ret_12m / rev_med / rev_up_frac</td><td class="ty">number</td><td>12 月報酬、EPS 修正中位、上修成員占比</td></tr>
+        <tr><td class="f">breadth_ma40 / n_members</td><td class="ty">number/int</td><td>成員站上 40 週均線占比、成員數</td></tr>
+        <tr><td class="f">picks / trail</td><td class="ty">array</td><td>代表成員、RRG 尾跡座標序列</td></tr>
+      </tbody>
+    </table></div>
+    <p class="dt-note"><b>穩定性</b>：主題集合與方法門檻可隨校準調整；<code>method</code> 物件自帶當期定義，請以其為準。</p>
+  </section>
+
+  <!-- ══ ROTATION RADAR ══ -->
+  <section class="dt-ep" id="radar">
+    <div class="dt-ep-head"><h2>輪動雷達（多框架 RRG 尾跡）</h2><span class="dt-path">/rotation/data/radar.json</span></div>
+    <p class="dt-purpose">跨資產／產業／因子三個宇宙的多時間框架（120／60／20 交易日）RRG 尾跡動畫資料，日更。每日凍結副本存於 <code>/rotation/data/snapshots/{YYYY-MM-DD}.json</code>（同 schema）。</p>
+    <div class="dt-facts">
+      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">每日（Tue–Sat 22:40 UTC）· workflow <code>rotation-radar-daily</code></span></div>
+      <div class="dt-fact"><span class="k">as_of 語意</span><span class="v"><code>as_of</code> = 最新交易日；snapshots 檔名即該日</span></div>
+    </div>
+    <div class="dt-tablewrap"><table class="dt-schema">
+      <thead><tr><th>欄位</th><th>型別</th><th>意義</th></tr></thead>
+      <tbody>
+        <tr><td class="f">as_of</td><td class="ty">string</td><td>最新交易日</td></tr>
+        <tr><td class="f">frames</td><td class="ty">array</td><td>時間框架（交易日數）：["120","60","20"]</td></tr>
+        <tr><td class="f">method</td><td class="ty">object</td><td>RRG 計算方法定義</td></tr>
+        <tr><td class="f">universes</td><td class="ty">array</td><td>三個宇宙，各含 key／label／benchmark／members</td></tr>
+        <tr><td class="f">universes[].members[]</td><td class="ty">object</td><td>成員，含 <code>frames.{window}.trail[]</code>（{d 日期, r ratio, m momentum}）</td></tr>
+      </tbody>
+    </table></div>
+    <p class="dt-note"><b>穩定性</b>：框架與宇宙集合穩定；trail 座標每日追加最新點、滾動視窗。</p>
+  </section>
+
+  <!-- ══ CROWDING ══ -->
+  <section class="dt-ep" id="crowding">
+    <div class="dt-ep-head"><h2>擁擠交易監測</h2><span class="dt-path">/crowding/data/latest.json</span></div>
+    <p class="dt-purpose">三層代理三角測量的資料層：15 個期貨市場的 COT 部位極端、15 檔跨資產 ETF 的動能／偏離、64 個主題的四維擁擠分數。<b>描述器非擇時</b>——衡量部位集中與下方緩衝，不預測轉折時點。</p>
+    <div class="dt-facts">
+      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">每週（週日 12:00 UTC）· workflow <code>crossasset-weekly</code> 跑 <code>build_crowding.py</code></span></div>
+      <div class="dt-fact"><span class="k">as_of 語意</span><span class="v"><code>cot_as_of</code> = CFTC COT 報告日（常滯後數日）；<code>generated_at</code> = 產生時戳；ETF 時效見 <code>meta</code></span></div>
+    </div>
+    <div class="dt-tablewrap"><table class="dt-schema">
+      <thead><tr><th>欄位</th><th>型別</th><th>意義</th></tr></thead>
+      <tbody>
+        <tr><td class="f">cot_as_of</td><td class="ty">string</td><td>COT 報告 as-of 日</td></tr>
+        <tr><td class="f">cot</td><td class="ty">array</td><td>15 市場：market／net_pct_oi／pctile_3y／pctile_5y／delta_4w／delta_13w／direction／extreme</td></tr>
+        <tr><td class="f">etf</td><td class="ty">array</td><td>15 檔：ticker／label／ret_12m／momentum_pctile／deviation_pctile／volume_z</td></tr>
+        <tr><td class="f">themes</td><td class="ty">array</td><td>64 主題：name／rank／score／score_4dim／dims／members_covered／members_total／low_coverage</td></tr>
+        <tr><td class="f">gaps</td><td class="ty">array</td><td>未取得或低信心的資料點（誠實列出，不捏造）</td></tr>
+        <tr><td class="f">meta</td><td class="ty">object</td><td>各層時效與方法註記</td></tr>
+      </tbody>
+    </table></div>
+    <p class="dt-note"><b>穩定性</b>：COT 市場數與主題數可調；<code>gaps</code> 為刻意保留的缺口清單。</p>
+  </section>
+
+  <!-- ══ PICKS ══ -->
+  <section class="dt-ep" id="picks">
+    <div class="dt-ep-head"><h2>精選清單（候選 + 正式榜）</h2><span class="dt-path">/picks/candidates.json</span></div>
+    <p class="dt-purpose">由 <code>build_picks.py</code> 規則自動判定的兩軌清單：長熬（趨勢對）與爆發（循環形狀＋站上年線＋非過熱）。含正式榜（official）與候選，兩者互斥；持有人保留 veto。</p>
+    <div class="dt-facts">
+      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">事件驅動——每份 DD 發布／同步時經 <code>update_dd_index.py</code> 連鎖 <code>build_picks.py</code>；每日 <code>daily-non-fundamental-refresh</code> 亦刷新</span></div>
+      <div class="dt-fact"><span class="k">as_of 語意</span><span class="v"><code>as_of</code> = 判定基準交易日；<code>generated_at</code> = 產生時戳</span></div>
+    </div>
+    <div class="dt-tablewrap"><table class="dt-schema">
+      <thead><tr><th>欄位</th><th>型別</th><th>意義</th></tr></thead>
+      <tbody>
+        <tr><td class="f">counts</td><td class="ty">object</td><td>各清單成員數</td></tr>
+        <tr><td class="f">official_changhao / official_baofa</td><td class="ty">array</td><td>正式榜：長熬／爆發</td></tr>
+        <tr><td class="f">changhao / baofa</td><td class="ty">array</td><td>候選：長熬／爆發</td></tr>
+        <tr><td class="f">note</td><td class="ty">string</td><td>判定規則說明</td></tr>
+      </tbody>
+    </table></div>
+    <div class="dt-tablewrap"><table class="dt-schema">
+      <thead><tr><th>清單項目欄位</th><th>型別</th><th>意義</th></tr></thead>
+      <tbody>
+        <tr><td class="f">ticker / name / sector</td><td class="ty">string</td><td>代碼／名稱／產業</td></tr>
+        <tr><td class="f">why / trigger</td><td class="ty">string</td><td>入選理由、觸發條件</td></tr>
+        <tr><td class="f">multiple / horizon / position / exit</td><td class="ty">string</td><td>目標倍數、期程、倉位、退出條件</td></tr>
+        <tr><td class="f">moat_grade / moat_trend / runway / role</td><td class="ty">string</td><td>護城河等級／趨勢、跑道、角色</td></tr>
+        <tr><td class="f">ev5y_pct / above_w52 / trend_status</td><td class="ty">num/bool/str</td><td>5 年期望值%、是否站上年線、趨勢狀態</td></tr>
+        <tr><td class="f">id_theme / dd_path / sources</td><td class="ty">string/array</td><td>關聯產業主題、DD 路徑、來源</td></tr>
+        <tr><td class="f">not_promoted_reason</td><td class="ty">string</td><td>候選未升正式榜的原因（僅候選項目）</td></tr>
+      </tbody>
+    </table></div>
+    <p class="dt-note"><b>穩定性</b>：規則門檻於校準輪 PREREG 凍結；欄位為 additive。</p>
+  </section>
+
+  <!-- ══ MONITOR ══ -->
+  <section class="dt-ep" id="monitor">
+    <div class="dt-ep-head"><h2>全資產市場監測</h2><span class="dt-path">/monitor/data/latest.json</span></div>
+    <p class="dt-purpose">近百條跨資產序列（指數／類股／因子／利率／波動／信用／匯率／商品／加密／流動性）的日更明細＋統計異常偵測，含當日 alerts。schema=<code>monitor-v1</code>。<b>描述器非擇時</b>。</p>
+    <div class="dt-facts">
+      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">每日（Tue–Sat 22:52 UTC）· workflow <code>monitor-daily</code> 跑 <code>build_monitor.py</code></span></div>
+      <div class="dt-fact"><span class="k">as_of 語意</span><span class="v"><code>as_of</code> = 資料交易日；部分序列自帶 stale 旗標</span></div>
+    </div>
+    <div class="dt-tablewrap"><table class="dt-schema">
+      <thead><tr><th>欄位</th><th>型別</th><th>意義</th></tr></thead>
+      <tbody>
+        <tr><td class="f">schema</td><td class="ty">string</td><td>"monitor-v1"</td></tr>
+        <tr><td class="f">as_of</td><td class="ty">string</td><td>資料交易日</td></tr>
+        <tr><td class="f">categories</td><td class="ty">array</td><td>10 類（key／label／items[]）：indices／sectors／factors／rates／vol／credit／fx／commodities／crypto／liquidity</td></tr>
+        <tr><td class="f">alerts_today</td><td class="ty">array</td><td>當日異常：cat／key／msg／rule／sev（嚴重度）</td></tr>
+        <tr><td class="f">status</td><td class="ty">object</td><td>綜合狀態（殖利率曲線 curve_10y2y、流動性 liquidity、vix_term…）</td></tr>
+        <tr><td class="f">fear_greed</td><td class="ty">object</td><td>恐懼貪婪：score／prev／rating</td></tr>
+        <tr><td class="f">rules</td><td class="ty">object</td><td>異常偵測規則定義</td></tr>
+        <tr><td class="f">gaps</td><td class="ty">array</td><td>未取得資料點</td></tr>
+      </tbody>
+    </table></div>
+    <p class="dt-note"><b>穩定性</b>：schema 版本化為 <code>monitor-v1</code>；類別新增為 additive。另有 <code>/monitor/data/alerts.json</code> 留痕與 <code>editorial.json</code>（人工解讀層）。</p>
+  </section>
+
+  <!-- ══ REGIME ══ -->
+  <section class="dt-ep" id="regime">
+    <div class="dt-ep-head"><h2>大類資產 Regime</h2><span class="dt-path">/regime/data/latest.json</span></div>
+    <p class="dt-purpose">六軸記分卡（利率／成長／通脹／信用／美元／波動）的機械＋editorial 兩層讀數，收斂成單一 regime 綜合定位（0–1）。<b>非可交易指數</b>——環境判讀而非擇時訊號。</p>
+    <div class="dt-facts">
+      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">每週（週日 12:00 UTC）· workflow <code>crossasset-weekly</code> 跑 <code>build_regime.py</code></span></div>
+      <div class="dt-fact"><span class="k">as_of 語意</span><span class="v">各軸 <code>reading</code> 內含來源日期；<code>meta</code> 帶 cot_as_of／etf_as_of；<code>generated_at</code> = 產生時戳</span></div>
+    </div>
+    <div class="dt-tablewrap"><table class="dt-schema">
+      <thead><tr><th>欄位</th><th>型別</th><th>意義</th></tr></thead>
+      <tbody>
+        <tr><td class="f">composite</td><td class="ty">object</td><td>綜合定位：label_zh／label_en／pos_0to1／method</td></tr>
+        <tr><td class="f">axes</td><td class="ty">array</td><td>六軸：key／name／pos（0–1）／pill（狀態標籤）／reading（敘述含來源）／src</td></tr>
+        <tr><td class="f">cot_percentile_5y</td><td class="ty">object</td><td>各市場 COT 部位 5 年百分位</td></tr>
+        <tr><td class="f">growth_defense_ratios</td><td class="ty">object</td><td>成長／防禦相對比值</td></tr>
+        <tr><td class="f">triggers</td><td class="ty">array/obj</td><td>證偽／狀態轉換觸發條件</td></tr>
+        <tr><td class="f">meta / gaps</td><td class="ty">object/array</td><td>時效註記、未取得資料點</td></tr>
+      </tbody>
+    </table></div>
+    <p class="dt-note"><b>穩定性</b>：<code>pos_0to1</code> 為質化加權讀數，非回測指數；軸集合穩定。</p>
+  </section>
+
+  <!-- ══ SEARCH INDEX ══ -->
+  <section class="dt-ep" id="search">
+    <div class="dt-ep-head"><h2>全站搜尋索引</h2><span class="dt-path">/assets/search-index.json</span></div>
+    <p class="dt-purpose">全站報告的輕量檢索索引（短鍵，緊湊），驅動 <code>/search.html</code>。涵蓋個股 DD、產業 ID、總經、對比、期望綜合、財報、擁擠交易、產業輪動、供應鏈與 legacy DS/DCA。</p>
+    <div class="dt-facts">
+      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">隨報告發布重建（<code>build_search_index.py</code>）</span></div>
+      <div class="dt-fact"><span class="k">as_of 語意</span><span class="v">每筆 <code>d</code> = 報告日；供應鏈頁無日期（<code>d</code> 空字串）</span></div>
+    </div>
+    <div class="dt-tablewrap"><table class="dt-schema">
+      <thead><tr><th>欄位</th><th>型別</th><th>意義</th></tr></thead>
+      <tbody>
+        <tr><td class="f">v</td><td class="ty">int</td><td>索引 schema 版本（現 1）</td></tr>
+        <tr><td class="f">entries</td><td class="ty">array</td><td>報告條目（見下）</td></tr>
+        <tr><td class="f">entries[].u</td><td class="ty">string</td><td>相對 URL</td></tr>
+        <tr><td class="f">entries[].t</td><td class="ty">string</td><td>標題</td></tr>
+        <tr><td class="f">entries[].k</td><td class="ty">string</td><td>類型（個股DD／產業ID／總經／…）</td></tr>
+        <tr><td class="f">entries[].s</td><td class="ty">array</td><td>可搜尋關鍵字（tickers／slug）</td></tr>
+        <tr><td class="f">entries[].d</td><td class="ty">string</td><td>報告日 YYYY-MM-DD（可空）</td></tr>
+      </tbody>
+    </table></div>
+    <p class="dt-note"><b>穩定性</b>：短鍵 <code>{u,t,k,s,d}</code> 凍結；新類型加入 <code>k</code> 值集合為 additive。同一批發布內容不變則零改動（zero-churn）。同源 RSS：<a href="/rss.xml">/rss.xml</a>。</p>
+  </section>
+
+</main>
+
+<footer class="imq-foot">
+  <div>&copy; 2026 InvestMQuest Research</div>
+  <div><a href="/disclosures.html">方法論與揭露</a> · 本站內容僅供研究參考，不構成投資建議</div>
+</footer>
+</body>
+</html>

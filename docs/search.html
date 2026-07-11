@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta name="robots" content="noindex,nofollow">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>全站搜尋 · Search — InvestMQuest Research</title>
+  <meta name="description" content="即時搜尋 InvestMQuest Research 全站報告——個股 DD、產業 ID、總經、財報、對比與供應鏈，依代碼、公司或主題關鍵字查找。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/imq-base.css">
+  <style>
+/* ── Token system — 2026-07-08 設計系統 v1.1：值改引 imq-base.css 單一真相來源，
+   變數名保留（既有 class/JS 相容）。 ── */
+:root {
+  --imq-bg:           var(--paper);
+  --imq-bg-soft:      var(--paper);
+  --imq-card:         var(--card);
+  --imq-border:       var(--line);
+  --imq-border-soft:  var(--line-soft);
+  --imq-text:         var(--ink);
+  --imq-text-sec:     var(--sec);
+  --imq-text-muted:   var(--muted);
+  --imq-accent:       var(--accent);
+  --imq-accent-hover: var(--accent-ink);
+  --imq-shadow-sm:    var(--sh-1);
+  --imq-shadow-md:    var(--sh-2);
+  --imq-r-sm:   var(--r);
+  --imq-r-md:   var(--r);
+  --imq-r-pill: 999px;
+  --imq-font-sans: var(--sans);
+  --imq-font-mono: var(--mono);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--imq-font-sans);background:var(--paper);color:var(--body);line-height:1.7;font-size:14px;min-height:100vh;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none;transition:color .15s}
+a:hover{color:var(--accent-ink)}
+.serif{font-family:'Noto Serif TC',Georgia,'Times New Roman',serif}
+.mono{font-family:var(--imq-font-mono)}
+
+/* ── Search page ── */
+.sr-wrap{max-width:960px;margin:0 auto;padding:40px 32px 60px}
+.sr-overline{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-deep);margin-bottom:12px}
+.sr-title{font-family:'Noto Serif TC',Georgia,serif;font-weight:700;letter-spacing:-.01em;color:var(--ink);font-size:32px;line-height:1.15;margin-bottom:8px}
+.sr-sub{font-size:14px;color:var(--sec);max-width:640px;line-height:1.6;margin-bottom:22px}
+.sr-searchbox{position:relative;margin-bottom:18px}
+.sr-searchbox input{width:100%;padding:13px 16px 13px 42px;font-size:15px;font-family:var(--sans);background:var(--card);border:1px solid var(--line);border-radius:var(--r);color:var(--ink);outline:none;transition:border-color .15s,box-shadow .15s}
+.sr-searchbox input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(13,34,68,.08)}
+.sr-searchbox::before{content:"⌕";position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:18px;pointer-events:none}
+.sr-kbd{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:2px 7px;pointer-events:none}
+.sr-chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:20px}
+.sr-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;font-size:12.5px;font-weight:500;background:var(--card);border:1px solid var(--line);border-radius:999px;color:var(--body);cursor:pointer;transition:all .14s;font-family:var(--sans)}
+.sr-chip:hover{border-color:var(--accent)}
+.sr-chip .ct{font-family:var(--mono);font-size:11px;color:var(--muted);font-weight:600}
+.sr-chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.sr-chip.active .ct{color:rgba(255,255,255,.75)}
+.sr-count{font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:14px}
+.sr-list{display:flex;flex-direction:column;gap:2px}
+.sr-item{display:flex;align-items:center;gap:14px;padding:12px 14px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);color:var(--ink);transition:box-shadow .14s,border-color .14s}
+.sr-item:hover{text-decoration:none;box-shadow:var(--sh-1);border-color:var(--accent)}
+.sr-badge{flex-shrink:0;font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.04em;color:var(--accent);background:var(--accent-soft,#e8eef5);padding:3px 8px;border-radius:5px;white-space:nowrap;min-width:78px;text-align:center}
+.sr-body{flex:1;min-width:0}
+.sr-t{font-size:14px;font-weight:500;line-height:1.4;color:var(--ink)}
+.sr-tags{margin-top:3px;display:flex;flex-wrap:wrap;gap:5px}
+.sr-tag{font-family:var(--mono);font-size:10.5px;color:var(--sec)}
+.sr-d{flex-shrink:0;font-family:var(--mono);font-size:12px;color:var(--muted);white-space:nowrap}
+.sr-empty{display:none;text-align:center;padding:52px 20px;color:var(--muted);font-size:14px}
+.sr-empty.show{display:block}
+.sr-more{text-align:center;padding:18px;color:var(--muted);font-size:12.5px;font-family:var(--mono)}
+@media(max-width:640px){
+  .sr-wrap{padding:28px 16px 44px}
+  .sr-title{font-size:25px}
+  .sr-item{gap:10px;padding:11px 12px;flex-wrap:wrap}
+  .sr-badge{min-width:auto}
+  .sr-d{width:100%;order:3}
+  .sr-kbd{display:none}
+}
+  </style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">選股<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/cockpit/">選股主控台</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/research/momentum-5/">Momentum-5</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screeners.html">RS+VCP Screener</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/">個股 DD</a>
+          <a href="/research/synthesis/">期望落差綜合研判</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/earnings/">財報分析</a>
+          <a href="/catalyst/">催化劑日曆</a>
+          <a href="/monitor/">市場監測</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/crowding/">擁擠交易監測</a>
+          <a href="/rotation/">產業輪動</a>
+          <a href="/regime/">大類資產 regime</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/weekly/">週報</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track-smh/">長線訊號 SMH</a>
+          <a href="/long-track-tw/">台股長線</a>
+          <a href="/turtle-sleeve/">商品 Sleeve</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/cache/">Data Cache</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <a href="/how-to.html">使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<main class="sr-wrap">
+  <div class="sr-overline">SITE SEARCH · 全站檢索</div>
+  <h1 class="sr-title">全站搜尋</h1>
+  <p class="sr-sub">即時檢索全站研究報告——個股 DD、產業 ID、總經、財報、多股對比、期望綜合、供應鏈與 legacy 檔。輸入股票代碼（NVDA、2330.TW）、公司名或主題關鍵字。</p>
+
+  <div class="sr-searchbox">
+    <input id="q" type="search" placeholder="搜尋代碼、公司或主題 —— NVDA、玻璃基板、AI 加速器…" autocomplete="off" aria-label="全站搜尋">
+    <span class="sr-kbd">/</span>
+  </div>
+  <div class="sr-chips" id="chips"></div>
+  <div class="sr-count" id="count"></div>
+  <div class="sr-list" id="results"></div>
+  <div class="sr-empty" id="empty">找不到符合的報告——試試其他代碼或關鍵字。</div>
+  <div class="sr-more" id="more"></div>
+</main>
+
+<footer class="imq-foot">
+  <div>&copy; 2026 InvestMQuest Research</div>
+  <div><a href="/disclosures.html">方法論與揭露</a> · 本站內容僅供研究參考，不構成投資建議</div>
+</footer>
+
+<script>
+(function(){
+  var INDEX_URL = "/assets/search-index.json";
+  var CAP = 200; // max rendered results
+  var ALL = [], typeCounts = {}, activeType = "all", cur = "";
+  var qEl = document.getElementById("q");
+  var chipsEl = document.getElementById("chips");
+  var resEl = document.getElementById("results");
+  var countEl = document.getElementById("count");
+  var emptyEl = document.getElementById("empty");
+  var moreEl = document.getElementById("more");
+
+  function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+  function param(name){
+    var m = new RegExp("[?&]"+name+"=([^&]*)").exec(location.search);
+    return m ? decodeURIComponent(m[1].replace(/\+/g," ")) : "";
+  }
+
+  function buildChips(){
+    var types = Object.keys(typeCounts).sort(function(a,b){ return typeCounts[b]-typeCounts[a]; });
+    var html = '<button class="sr-chip active" data-t="all">全部 <span class="ct">'+ALL.length+'</span></button>';
+    types.forEach(function(t){
+      html += '<button class="sr-chip" data-t="'+esc(t)+'">'+esc(t)+' <span class="ct">'+typeCounts[t]+'</span></button>';
+    });
+    chipsEl.innerHTML = html;
+    chipsEl.querySelectorAll(".sr-chip").forEach(function(b){
+      b.addEventListener("click", function(){
+        activeType = b.getAttribute("data-t");
+        chipsEl.querySelectorAll(".sr-chip").forEach(function(x){ x.classList.remove("active"); });
+        b.classList.add("active");
+        render();
+      });
+    });
+  }
+
+  function matches(e, q){
+    if(!q) return true;
+    var hay = (e.t + " " + (e.s||[]).join(" ")).toLowerCase();
+    return hay.indexOf(q) >= 0;
+  }
+
+  function render(){
+    var q = cur.trim().toLowerCase();
+    var out = [];
+    for(var i=0;i<ALL.length;i++){
+      var e = ALL[i];
+      if(activeType !== "all" && e.k !== activeType) continue;
+      if(!matches(e, q)) continue;
+      out.push(e);
+    }
+    var total = out.length;
+    var shown = out.slice(0, CAP);
+    var html = "";
+    for(var j=0;j<shown.length;j++){
+      var e = shown[j];
+      var tags = (e.s||[]).length ? '<div class="sr-tags">'+(e.s.map(function(x){ return '<span class="sr-tag">'+esc(x)+'</span>'; }).join("")) +'</div>' : "";
+      html += '<a class="sr-item" href="'+esc(e.u)+'">'
+            + '<span class="sr-badge">'+esc(e.k)+'</span>'
+            + '<span class="sr-body"><span class="sr-t">'+esc(e.t)+'</span>'+tags+'</span>'
+            + '<span class="sr-d">'+esc(e.d||"—")+'</span></a>';
+    }
+    resEl.innerHTML = html;
+    emptyEl.classList.toggle("show", total === 0);
+    countEl.textContent = total ? (total + " 筆結果" + (q ? "（關鍵字「"+cur.trim()+"」）" : "")) : "";
+    moreEl.textContent = total > CAP ? ("僅顯示前 "+CAP+" 筆，請縮小關鍵字範圍") : "";
+  }
+
+  function setQuery(v, push){
+    cur = v;
+    if(qEl.value !== v) qEl.value = v;
+    render();
+  }
+
+  fetch(INDEX_URL).then(function(r){ return r.json(); }).then(function(data){
+    ALL = (data && data.entries) ? data.entries : [];
+    ALL.forEach(function(e){ typeCounts[e.k] = (typeCounts[e.k]||0)+1; });
+    buildChips();
+    var q0 = param("q");
+    setQuery(q0, false);
+    if(q0) qEl.focus();
+  }).catch(function(){
+    countEl.textContent = "索引載入失敗，請稍後再試。";
+  });
+
+  qEl.addEventListener("input", function(){ cur = qEl.value; render(); });
+
+  document.addEventListener("keydown", function(e){
+    if(e.key === "/" && document.activeElement !== qEl){
+      e.preventDefault();
+      qEl.focus();
+      qEl.select();
+    }
+  });
+})();
+</script>
+</body>
+</html>
