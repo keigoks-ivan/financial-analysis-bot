@@ -92,6 +92,10 @@ section.block{padding:1.1rem 0}
 .todo-txt{font-size:.88rem;color:var(--text);line-height:1.55}
 .todo-txt b{font-weight:700}
 .todo-asof{font-family:'IBM Plex Mono',monospace;font-size:.66rem;color:var(--muted);margin-top:.3rem;letter-spacing:.03em}
+.todo-done-btn{appearance:none;background:none;border:1px solid var(--border);border-radius:5px;cursor:pointer;
+  font-family:inherit;font-size:.68rem;color:var(--muted);padding:.2rem .55rem;flex-shrink:0;align-self:center;margin-left:.4rem}
+.todo-done-btn:hover{color:var(--green);border-color:var(--green)}
+.todo-inv{font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--muted);margin-top:.55rem;line-height:1.7}
 .todo-link{font-size:.74rem;white-space:nowrap;flex-shrink:0;align-self:center}
 .todo-calm{background:var(--green-soft);border:1px solid var(--border);border-radius:var(--r);
   padding:1.6rem 1.4rem;text-align:center}
@@ -267,7 +271,7 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     <div class="sec-head">
       <span class="sec-num">2</span>
       <h2 class="sec-title">今日待辦</h2>
-      <span class="sec-desc">只列出等人工裁決的項目</span>
+      <span class="sec-desc">板機訊號 · 宣稱到期 · kill 觸發 · 催化劑——只在該裁決的日子出現，處理完可勾除；週檢／月檢項在其週期日才浮上</span>
     </div>
     <div id="todo-mount"><div class="placeholder">載入中⋯</div></div>
   </section>
@@ -487,6 +491,9 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     dd:      '/dd-screener/latest.json',
     sop:     '/dd-screener/sop-funnel/latest.json',
     arena:   '/engine/arena.json',
+    cards:   '/engine/cards.json',
+    cal:     '/catalyst/calendar.json',
+    ed:      '/monitor/data/editorial.json',
     cyc:     '/dd-screener/cyclical-track.json',
     picks:   '/picks/candidates.json',
     tb:      '/picks/tenbagger.json',
@@ -548,14 +555,79 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     $('env-mount').innerHTML = '<div class="card env-strip">'+cells+links+'</div>';
   }
 
-  // ---------- ② 今日待辦 ----------
+  // ---------- ② 今日待辦（真觸發制 2026-07-11）----------
+  // 原則：只在該裁決的日子出現（日頻真事件天天查；週檢項只在資料剛刷新的窗口浮上；
+  // 月檢項只在月初窗口浮上），處理完可勾除（localStorage，資料換代自動復活）。
+  // 被節奏閘擋下的項目透明列在「庫存」小字——不假裝是今日的事，也不隱瞞它存在。
+  var DONE_KEY = 'cockpit_todo_done_v1';
+  function loadDone(){ try{ return JSON.parse(localStorage.getItem(DONE_KEY)||'{}'); }catch(e){ return {}; } }
+  window._todoDone = function(sig){
+    var d = loadDone(); d[sig] = new Date().toISOString().slice(0,10);
+    try{ localStorage.setItem(DONE_KEY, JSON.stringify(d)); }catch(e){}
+    try{ renderTodo(); }catch(e){}
+  };
+  function daysBetween(isoA, isoB){
+    var a = new Date(isoA+'T00:00:00'), b = new Date(isoB+'T00:00:00');
+    return Math.round((b-a)/86400000);
+  }
   function renderTodo(){
-    var items = [];
-    // 各來源資料時效（動態取自各自 JSON），供待辦項標示避免被誤讀成當日訊號
+    var items = [], inventory = [], done = loadDone();
+    var todayIso = new Date().toISOString().slice(0,10);
     var arenaAsof = (S.arena && S.arena.run_timestamp) ? String(S.arena.run_timestamp).slice(0,10) : '';
     var momAsof   = (S.mom && S.mom.as_of) ? String(S.mom.as_of) : '';
 
-    // GRP arena duels (seat-change challenges awaiting human adjudication)
+    function push(sig, it){ if(!done[sig]){ it.sig = sig; items.push(it); } }
+
+    // A. sop-funnel 板機訊號（日頻真事件）
+    if(S.sop && Array.isArray(S.sop.today_signals) && S.sop.today_signals.length>0){
+      push('sop:'+(S.sop.as_of||todayIso), {cls:'trig', ic:'🎯', src:'sop-funnel · 板機層',
+        txt:'今日 <b>'+S.sop.today_signals.length+'</b> 檔觸發進場板機訊號——待人工確認執行',
+        href:'/dd-screener/sop-funnel.html', label:'看訊號 →',
+        asof: S.sop.as_of ? ('sop as-of '+S.sop.as_of) : ''});
+    }
+
+    // B. 決策卡宣稱到期／破線（日頻檢查，dated）
+    if(S.cards && S.cards.by_ticker && (S.cards.n_due>0 || S.cards.n_breach>0)){
+      var dueList = [];
+      Object.keys(S.cards.by_ticker).forEach(function(t){
+        var c = S.cards.by_ticker[t];
+        if((c.n_due||0)>0 || (c.n_breach||0)>0) dueList.push({t:t, due:c.n_due||0, br:c.n_breach||0, dl:c.next_deadline||''});
+      });
+      dueList.slice(0,4).forEach(function(o){
+        var what = (o.br>0 ? o.br+' 條宣稱破線' : '') + (o.br>0 && o.due>0 ? '、' : '') + (o.due>0 ? o.due+' 條宣稱到期' : '');
+        push('due:'+o.t+':'+o.dl, {cls:'grp', ic:'⏰', src:'決策卡 · 宣稱複審',
+          txt:'<b>'+esc(o.t)+'</b> '+esc(what)+'——進複審隊列，裁決必須回爐',
+          href:'/engine/cards.html', label:'決策卡 →',
+          asof: o.dl ? ('deadline '+o.dl) : ''});
+      });
+    }
+
+    // C. monitor L3 kill 直接觸發（red；解讀須與資料同日才可信）
+    if(S.ed && S.monitor && S.ed.as_of === S.monitor.as_of && S.ed.trigger_scan){
+      (S.ed.trigger_scan.hits||[]).forEach(function(h, i){
+        if(!h || h.sev!=='red') return;
+        push('kill:'+S.ed.as_of+':'+i, {cls:'trig', ic:'⛔', src:'市場監測 · 證偽觸發',
+          txt:'站內 kill 條件被直接觸發——'+esc(String(h.text||'').slice(0,80))+'…',
+          href:'/monitor/', label:'看解讀 →', asof:'monitor as-of '+S.ed.as_of});
+      });
+    }
+
+    // D. 催化劑日曆：今明兩日事件（dated）
+    if(S.cal && Array.isArray(S.cal.events)){
+      S.cal.events.filter(function(ev){
+        if(!ev || !ev.date) return false;
+        var d = daysBetween(todayIso, ev.date);
+        return d>=0 && d<=1;
+      }).slice(0,4).forEach(function(ev){
+        var pos = ev.positioning||{};
+        var tag = pos.holding ? '持倉' : (pos.dca_role||'');
+        push('cat:'+(ev.id||ev.ticker+ev.date), {cls:'mom', ic:'📅', src:'催化劑日曆 · '+(ev.impact?('影響 '+ev.impact):''),
+          txt:'<b>'+esc(ev.ticker)+'</b> '+esc(ev.date.slice(5))+' '+esc(ev.event||'')+(tag?('（'+esc(tag)+'）'):''),
+          href:'/catalyst/', label:'日曆 →', asof:''});
+      });
+    }
+
+    // E. 席位擂台挑戰（週檢項：arena 剛刷新 ≤2 天才浮上，否則入庫存）
     if(S.arena && Array.isArray(S.arena.duels)){
       var byChal = {};
       S.arena.duels.forEach(function(d){
@@ -564,20 +636,25 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
         if(!byChal[ck]) byChal[ck] = {chal:d.challenger, seats:[]};
         if(d.seat && d.seat.ticker) byChal[ck].seats.push(d.seat.ticker);
       });
-      Object.keys(byChal).forEach(function(ck){
-        var o = byChal[ck];
-        var routeZh = (o.chal.route==='core')?'核心':(o.chal.route==='satellite')?'衛星':(o.chal.route||'');
-        var scr = (o.chal.grp && o.chal.grp.score!=null)?o.chal.grp.score:o.chal.score;
-        items.push({
-          cls:'grp', ic:'⚔️', src:'GRP · 決策引擎 · 席位擂台',
-          txt:'<b>'+esc(ck)+'</b>（GRP 分 '+fmt(scr,2)+'）挑戰'+routeZh+'軌 <b>'+esc(o.seats.join('／'))+'</b>——需人工裁決是否換席',
-          href:'/engine/arena.html', label:'席位擂台 →',
-          asof: arenaAsof ? ('engine as-of '+arenaAsof) : ''
-        });
-      });
+      var chalKeys = Object.keys(byChal);
+      var arenaFresh = arenaAsof && daysBetween(arenaAsof, todayIso) <= 2;
+      if(chalKeys.length){
+        if(arenaFresh){
+          chalKeys.forEach(function(ck){
+            var o = byChal[ck];
+            var routeZh = (o.chal.route==='core')?'核心':(o.chal.route==='satellite')?'衛星':(o.chal.route||'');
+            var scr = (o.chal.grp && o.chal.grp.score!=null)?o.chal.grp.score:o.chal.score;
+            push('duel:'+ck+':'+arenaAsof, {cls:'grp', ic:'⚔️', src:'GRP · 席位擂台 · 週檢',
+              txt:'<b>'+esc(ck)+'</b>（GRP 分 '+fmt(scr,2)+'）挑戰'+routeZh+'軌 <b>'+esc(o.seats.join('／'))+'</b>——需人工裁決是否換席',
+              href:'/engine/arena.html', label:'席位擂台 →', asof:'engine as-of '+arenaAsof});
+          });
+        } else {
+          inventory.push('週檢庫存：'+chalKeys.join('、')+' 擂台挑戰中（engine '+arenaAsof+'，下次週更浮上）');
+        }
+      }
     }
 
-    // Momentum-5 seat flags
+    // F. Momentum-5 旗標（challenger＝月檢項，月初 1–3 日浮上；review／heat＝資料剛刷新 ≤2 天浮上）
     if(S.mom && Array.isArray(S.mom.seats)){
       var benchTop = null;
       if(S.mom.bench_scores){
@@ -586,42 +663,40 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
           if(benchTop==null || v>benchTop.v) benchTop={t:t,v:v};
         });
       }
+      var momFresh = momAsof && daysBetween(momAsof, todayIso) <= 2;
+      var monthlyWindow = (new Date().getDate() <= 3);
       var flagMeta = {
         review:      {ic:'🔁', label:'複審（90D 修正轉負）'},
         review_fresh:{ic:'🔻', label:'複審（30D 新鮮下修）'},
         challenger:  {ic:'⚔️', label:'挑戰者出現'},
         heat:        {ic:'🔥', label:'過熱'}
       };
+      var gatedChal = [];
       S.mom.seats.forEach(function(s){
         (s.flags||[]).forEach(function(f){
           var fm = flagMeta[f]; if(!fm) return;
-          var txt;
-          if(f==='challenger' && benchTop){
-            txt = '<b>'+esc(s.ticker)+'</b> 亮 ⚔️ 挑戰者（最強板凳 '+esc(benchTop.t)+' 分 '+fmt(benchTop.v,2)+
-                  ' vs 現任 '+fmt(s.score,2)+'）——月檢時裁決';
-          } else {
-            txt = '<b>'+esc(s.ticker)+'</b> 亮 '+fm.ic+' '+esc(fm.label)+'——強制人工重看 thesis';
+          if(f==='challenger'){
+            if(monthlyWindow){
+              var txt = '<b>'+esc(s.ticker)+'</b> 亮 ⚔️ 挑戰者'+(benchTop?('（最強板凳 '+esc(benchTop.t)+' 分 '+fmt(benchTop.v,2)+' vs 現任 '+fmt(s.score,2)+'）'):'')+'——月檢裁決';
+              push('m5c:'+s.ticker+':'+momAsof.slice(0,7), {cls:'mom', ic:'⚔️', src:'Momentum-5 · 月檢',
+                txt:txt, href:'/research/momentum-5/', label:'看組合 →', asof:'M5 as-of '+momAsof});
+            } else { gatedChal.push(s.ticker); }
+          } else if(momFresh){
+            push('m5f:'+s.ticker+':'+f+':'+momAsof, {cls:'mom', ic:fm.ic, src:'Momentum-5 · 旗標',
+              txt:'<b>'+esc(s.ticker)+'</b> 亮 '+fm.ic+' '+esc(fm.label)+'——強制人工重看 thesis',
+              href:'/research/momentum-5/', label:'看組合 →', asof:'M5 as-of '+momAsof});
           }
-          items.push({cls:'mom', ic:fm.ic, src:'Momentum-5 · 上修動能組合', txt:txt,
-            href:'/research/momentum-5/', label:'看組合 →',
-            asof: momAsof ? ('M5 as-of '+momAsof) : ''});
         });
       });
-    }
-
-    // sop-funnel today signals (trigger layer)
-    if(S.sop && Array.isArray(S.sop.today_signals) && S.sop.today_signals.length>0){
-      var n = S.sop.today_signals.length;
-      items.push({cls:'trig', ic:'🎯', src:'sop-funnel · 板機層',
-        txt:'今日 <b>'+n+'</b> 檔觸發進場板機訊號——待人工確認執行',
-        href:'/dd-screener/sop-funnel.html', label:'看訊號 →'});
+      if(gatedChal.length) inventory.push('月檢庫存：M5 挑戰者 '+gatedChal.join('、')+'（下次月初 1–3 日浮上）');
     }
 
     var mount = $('todo-mount');
+    var invHtml = inventory.length ? '<div class="todo-inv">'+inventory.map(esc).join('<br>')+'</div>' : '';
     if(items.length===0){
       mount.innerHTML =
-        '<div class="todo-calm"><div class="big">✓ 今日無待辦</div>'+
-        '<div class="sm">沒有旗標、沒有訊號、沒有到期複審——各系統目前無等待人工裁決的項目。</div></div>';
+        '<div class="todo-calm"><div class="big">✓ 今日無需裁決</div>'+
+        '<div class="sm">板機、宣稱到期、kill 觸發、催化劑今明兩日——全部安靜。</div></div>'+invHtml;
       return;
     }
     var html = '<div class="todo-list">';
@@ -631,9 +706,10 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
         '<div class="todo-body"><div class="todo-src">'+esc(it.src)+'</div>'+
         '<div class="todo-txt">'+it.txt+'</div>'+
         (it.asof ? '<div class="todo-asof">'+esc(it.asof)+'</div>' : '')+'</div>'+
-        '<a class="todo-link" href="'+it.href+'">'+esc(it.label)+'</a></div>';
+        '<a class="todo-link" href="'+it.href+'">'+esc(it.label)+'</a>'+
+        '<button type="button" class="todo-done-btn" onclick="_todoDone(\''+esc(it.sig)+'\')" title="標記已處理（資料換代後自動復活）">✓ 已處理</button></div>';
     });
-    html += '</div>';
+    html += '</div>' + invHtml;
     mount.innerHTML = html;
   }
 
