@@ -149,9 +149,15 @@ GROUPS = [
          "週線 W52/104/250 score-5 · long only · 0050 上最強趨勢變體：Sharpe 1.10/Calmar 0.68 全面勝 B&H 風險調整(只讓出 CAGR);"
          "贏 STX50/六狀態/雙軌 · 有 W250 暖身偏誤 · CAGR 為 NT$",
          "+14.39%", "-21.30%", "1.10", "0.68", "trade", "$9.13M", TAG["exp"]),
+        # 權威來源：/backtest/tw_0050_six/ 頁面（v7-backtest src/tw_0050_backtest/
+        # extra_systems_tw.py::compute_sixstate → results/tw_0050_extra_systems.json
+        # 的 sixstate.0050.sys）。as-of 2026-07-11（cache last_date 2026-06-17）。
+        # 2026-07 前此列曾用 logic 修正前的 stale JSON 舊值（CAGR 高約 0.2pp、
+        # MDD 深約 3pp、Calmar 低），已對齊現值。更新六狀態機 logic 後務必同步
+        # 此列 + tw_0050_compare + 該 JSON 三處。
         ("0050 六狀態機（移植）", "/backtest/tw_0050_six/",
          "S1 95%/S2 47.5%/S5 漸進回補 · 0050 MA52 驅動 · 風險調整勝 B&H 但輸純長軌；SMH 攻擊腿缺席 · CAGR 為 NT$",
-         "+14.34%", "-26.68%", "0.97", "0.54", "trade", "$9.07M", TAG["exp"]),
+         "+14.14%", "-23.73%", "0.97", "0.60", "trade", "$8.81M", TAG["exp"]),
         ("0050 週線進攻趨勢（移植）", "/backtest/tw_0050/",
          "100% 台股 0050(NT$ 含息)· STX50 方法原樣移植 · 升級在 0050 不複現(Ch12 binary>E3>STX50);"
          "樣本自 2009 無崩盤故 B&H 難敗 · 趨勢價值見 ^TWII 長歷史(2008 GFC -12.7% vs B&H -54%)· CAGR 為 NT$,不與美股系統同尺",

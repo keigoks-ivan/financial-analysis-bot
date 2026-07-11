@@ -8,6 +8,8 @@ Every backtest page header renders the same groups via make_toggle(active):
     台股波段：    tw0050cmp | twcrash | tw0050 | tw0050lt | lttw | tw0050six
                   | tw_vcrash | tw0050d
     日內交易：    txf_intra | txf_chips | ssf_xsec | txf_basis
+    研究筆記：    dvw | dvw_deep | dvw_global | dvw_tw | ma_cross | ma_dev
+                  | ma_dynband | ma_squeeze | smh_vcrash
 
 Design (2026-07-11 redesign):
   * Colour discipline — every pill is neutral (grey fill, dark-grey text); the
@@ -53,7 +55,7 @@ COMPARISON_LINKS = [
 ]
 
 INDIVIDUAL_LINKS = [
-    ("/backtest/dual_track/", "SPY/QQQ 雙軌多空", "dual", None),
+    ("/backtest/dual_track/", "SPY/QQQ 雙軌多空", "dual", "否決"),
     ("/backtest/long_track/", "SPY/QQQ 長軌", "long", None),
     ("/backtest/long_track_qqq/", "QQQ 長軌純攻", "long_qqq", None),
     ("/backtest/long_track_ensemble/", "SPY/QQQ 集成", "ensemble", None),
@@ -94,6 +96,22 @@ INTRADAY_LINKS = [
     ("/backtest/txf_chips/", "籌碼偏向", "txf_chips", "觀察"),
     ("/backtest/ssf_xsec/", "個股期橫斷面", "ssf_xsec", "未過"),
     ("/backtest/txf_basis/", "基差偏向", "txf_basis", "否決"),
+]
+
+# 研究筆記：機制/方法探索頁，非可交易系統排名的一部分。收攏原本落在
+# pill 清單之外、無法從導航進入的 9 顆孤兒頁（2026-07-11）。daily_vs_weekly
+# 主頁對三個子頁無前向連結，故不採「單一代表 pill＋頁內互連」而給每頁各一
+# 顆自有 pill，確保每頁皆可從導航到達且自身高亮（代價：本群較寬，維持單列）。
+RESEARCH_LINKS = [
+    ("/backtest/daily_vs_weekly/", "日/週線", "dvw", None),
+    ("/backtest/daily_vs_weekly_deep/", "日/週·深掘", "dvw_deep", None),
+    ("/backtest/daily_vs_weekly_global/", "日/週·全球", "dvw_global", None),
+    ("/backtest/daily_vs_weekly_tw/", "日/週·台股", "dvw_tw", None),
+    ("/backtest/ma_cross/", "MA 交叉", "ma_cross", None),
+    ("/backtest/ma_deviation/", "MA 乖離", "ma_dev", None),
+    ("/backtest/ma_dynband/", "MA 動態帶", "ma_dynband", None),
+    ("/backtest/ma_squeeze/", "MA 擠壓", "ma_squeeze", None),
+    ("/backtest/smh_vcrash/", "SMH V崩", "smh_vcrash", None),
 ]
 
 # One <style> block per page (make_toggle is embedded once). Scoped under
@@ -162,4 +180,5 @@ def make_toggle(active: str) -> str:
             + _row("多資產", MULTI_LINKS, active)
             + _row("台股波段", TAIWAN_LINKS, active)
             + _row("日內交易", INTRADAY_LINKS, active)
+            + _row("研究筆記", RESEARCH_LINKS, active)
             + '</nav>')
