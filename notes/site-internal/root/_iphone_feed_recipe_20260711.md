@@ -147,3 +147,14 @@ launchctl load ~/Library/LaunchAgents/com.ivanchang.brain-inbox.plist
 curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8873/knowledge/wiki/index.html   # 期望 200
 curl -s -X POST http://127.0.0.1:8873/jot --data-binary '測試'                              # 期望 {"ok": true, ...}
 ```
+
+
+## 公開頁餵腦框（2026-07-11 下午上線，任何裝置零安裝）
+
+- 前門：https://research.investmquest.com/jot.html（noindex、無 nav、可加 iPhone 主畫面）。
+- 接收器：cPanel 主機 `https://investmquest.com/brain/{jot,drain}.php`（investmquest.com apex 指向 A2 主機；
+  **myproperty 子網域實際由 Cloudflare Pages 服務，cPanel 上那份是舊部署**——接收器必須放 apex 路徑）。
+  spool 與通行碼 hash 在 `/home/investmq/brain_spool/`（docroot 之外，hash 值 {REDACTED}）。
+- Mac 收取：`knowledge/brain_drain.py` ＋ launchd `com.ivanchang.brain-drain`（每 300 秒）→ ~/BrainInbox → 既有管線入腦。
+- 通行碼：`~/.brain_relay.json`（600 權限，不進 git）；手機第一次用時輸入一次存 localStorage。
+- 安全模型：頁面零內容、單向流入；錯通行碼 403；文字上限 20000 字；spool 超過 2MB 拒收（429）。
