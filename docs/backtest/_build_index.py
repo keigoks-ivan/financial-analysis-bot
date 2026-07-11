@@ -179,6 +179,9 @@ GROUPS = [
         ("Iron Condor 盤整・CBOE CNDR 指數", "/backtest/cndr/",
          "CBOE CNDR 指數 · 翼封住左尾但 beta ≈ 0",
          "+1.19%", "-19.72%", "0.18", "0.06", "na", "—", TAG["fail"]),
+        ("Covered Call 覆蓋・BXN/BXM/PUT 指數", "/backtest/covered_call/",
+         "STX50 QQQ 腿疊 ATM 月 covered call · 三變體全部淨負貢獻 · 保費是效用交換非報酬(全 cover 8.01x→2.51x)",
+         "+5.64%", "-16.00%", "0.61", "0.35", "dominated", "$2.51M", TAG["fail"]),
         ("SMH/QQQ 出場法斜率切換（否決）", "/backtest/exit_switch/",
          "依上漲斜率在 W52 ↔ ST(10,3) 出場間切換 · 四判別×門檻掃描×兩進場全測 · "
          "從不勝純 W52、切換方向相反、ST 優勢屬跨時代非跨斜率",

@@ -43,6 +43,7 @@ INDIVIDUAL_LINKS = [
     ("/backtest/exit_switch/", "出場法切換（否決）", "exitsw", "#dc2626"),
     ("/backtest/short_system/", "指數做空（失敗）", "short", "#dc2626"),
     ("/backtest/cndr/", "Iron Condor（失敗）", "cndr", "#dc2626"),
+    ("/backtest/covered_call/", "Covered Call（負貢獻）", "cc", "#dc2626"),
 ]
 
 MULTI_LINKS = [
