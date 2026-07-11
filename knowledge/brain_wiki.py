@@ -749,18 +749,21 @@ if(!reduce)document.querySelectorAll('.tile').forEach(t=>{
     if(k<.005)return;
     for(let i=0;i<N.length;i++)for(let j=i+1;j<N.length;j++){
       const a=N[i],b=N[j];let dx=a.x-b.x,dy=a.y-b.y,d2=dx*dx+dy*dy+40;
-      const f=1400*DPR*DPR/d2*k;const d=Math.sqrt(d2);
+      const f=850*DPR*DPR/d2*k;const d=Math.sqrt(d2);
       dx/=d;dy/=d;a.vx+=dx*f;a.vy+=dy*f;b.vx-=dx*f;b.vy-=dy*f;}
     L.forEach(l=>{const a=N[l.a],b=N[l.b];
       const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1;
-      const f=(d-90*DPR)*.004*k;
-      a.vx+=dx/d*f*d;a.vy+=dy/d*f*d;b.vx-=dx/d*f*d;b.vy-=dy/d*f*d;});
+      const f=Math.max(-6*DPR,Math.min(6*DPR,(d-90*DPR)*.02*k));
+      a.vx+=dx/d*f;a.vy+=dy/d*f;b.vx-=dx/d*f;b.vy-=dy/d*f;});
     N.forEach(n=>{
-      n.vx+=(W/2-n.x)*.0012*k;n.vy+=(H/2-n.y)*.0012*k;
-      n.vx*=.86;n.vy*=.86;n.x+=n.vx;n.y+=n.vy;
-      const m=14*DPR;
+      const g=.0012+.0006*Math.min(6,n.deg);n.vx+=(W/2-n.x)*g*k;n.vy+=(H/2-n.y)*g*k;
+      n.vx*=.86;n.vy*=.86;
+      const vm=4*DPR,vv=Math.hypot(n.vx,n.vy);
+      if(vv>vm){n.vx*=vm/vv;n.vy*=vm/vv}
+      n.x+=n.vx;n.y+=n.vy;
+      const m=34*DPR;
       n.x=Math.max(m,Math.min(W-m,n.x));n.y=Math.max(m,Math.min(H-m,n.y));});
-    alpha*=.999;
+    alpha*=.9975;
   }
   function draw(){
     tickPhys();
