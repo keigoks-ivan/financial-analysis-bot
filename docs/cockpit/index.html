@@ -57,6 +57,15 @@ section.block{padding:1.1rem 0}
   padding:.34rem .8rem;border-radius:6px;letter-spacing:.01em}
 .subtab-btn:hover{color:var(--text);border-color:var(--accent)}
 .subtab-btn.active{color:#fff;background:var(--accent);border-color:var(--accent)}
+/* 查閱區摺疊（低頻說明與深層儀表，預設收合——大道至簡：首屏只留天氣／待辦／正式榜） */
+.ref-fold{background:var(--card);border:1px solid var(--border);border-radius:var(--r);margin-bottom:.6rem;box-shadow:var(--sh-1)}
+.ref-fold summary{cursor:pointer;padding:.75rem 1.1rem;font-size:.88rem;font-weight:600;color:var(--text-sec);list-style:none;display:flex;align-items:center;gap:.5rem}
+.ref-fold summary::-webkit-details-marker{display:none}
+.ref-fold summary::before{content:"▸";font-size:.72rem;color:var(--gold-deep);transition:transform .15s}
+.ref-fold[open] summary::before{transform:rotate(90deg)}
+.ref-fold[open] summary{border-bottom:1px solid var(--border-soft)}
+.ref-fold summary small{font-family:'IBM Plex Mono',monospace;font-size:.64rem;font-weight:500;color:var(--muted)}
+.ref-fold .ref-body{padding:.9rem 1.1rem}
 .embed-frame{width:100%;border:0;display:block;min-height:70vh;background:transparent}
 .embed-note{font-size:.72rem;color:var(--muted);margin:0 0 .5rem;font-family:'IBM Plex Mono',monospace}
 .embed-note a{color:var(--accent)}
@@ -230,8 +239,7 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
   <div class="hero">
     <div class="eyebrow">Stock-Selection Console · 選股主控台</div>
     <h1>選股主控台</h1>
-    <p class="sub">全站選股體系收斂成<b>兩條線＋一個板機＋一個對照</b>，呈現在<b>單一主控台、四個分頁同一份底層資料</b>：<b>總覽</b>看環境、今日待辦裁決與漏斗活數字；<b>精選榜</b>是對外成品名單（甲線成品＝長熬、乙線成品＝爆發、甲線延伸＝十倍）；<b>流程板機</b>是兩線共用的完整漏斗、三軌射擊名單與板機現況；<b>席位排序</b>是甲線排序主幹＝GRP 決策引擎。即時聚合既有系統資料，無獨立資料管線。</p>
-    <p class="sub" style="margin-top:.45rem"><b>各層名單的使用邊界</b>：多層同時亮的名字＝高信心觀察池；各層態度分歧的名字＝研究隊列。「值得投資」的最終判定不歸任何聚合層——一律走 DD §14 裁決 → 決策三錨（產業冷讀 critic × 知識帳本 × 持有人筆記）→ sop-funnel 板機。名單只回答「看誰」，不回答「買不買」與「何時」。</p>
+    <p class="sub">名單只回答「看誰」，不回答「買不買」與「何時」——四個分頁同一份底層資料，體系說明與使用邊界收在頁尾查閱區。</p>
   </div>
 
   <!-- 分頁列 -->
@@ -244,13 +252,43 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
 
   <!-- ═══ 分頁 1：總覽 ═══ -->
   <div class="tab-panel" id="panel-overview">
-  <!-- ⓪ 選股體系分工宣言（兩條線＋一個板機＋一個對照）— 2026-07-11 選股方式整併 Option A -->
-  <section class="block" id="taxonomy">
+  <!-- ① 環境條（天氣）-->
+  <section class="block">
     <div class="sec-head">
-      <span class="sec-num">◎</span>
-      <h2 class="sec-title">選股體系——兩條線＋一個板機＋一個對照</h2>
-      <span class="sec-desc">每個分頁與成品榜各屬哪條線的什麼角色</span>
+      <span class="sec-num">1</span>
+      <h2 class="sec-title">天氣</h2>
+      <span class="sec-desc">風險偏好 × 波動 × 金融條件 × 日更監測——出手前先看</span>
     </div>
+    <div id="env-mount"><div class="placeholder">載入中⋯</div></div>
+  </section>
+
+  <!-- ② 今日待辦 -->
+  <section class="block">
+    <div class="sec-head">
+      <span class="sec-num">2</span>
+      <h2 class="sec-title">今日待辦</h2>
+      <span class="sec-desc">只列出等人工裁決的項目</span>
+    </div>
+    <div id="todo-mount"><div class="placeholder">載入中⋯</div></div>
+  </section>
+
+  <!-- ③ 正式榜 -->
+  <section class="block">
+    <div class="sec-head">
+      <span class="sec-num">3</span>
+      <h2 class="sec-title">正式榜</h2>
+      <span class="sec-desc">長熬 × 爆發 × 十倍（完整四件事見「精選榜」分頁）</span>
+    </div>
+    <div id="picks-mount"><div class="placeholder">載入中⋯</div></div>
+  </section>
+
+  <!-- 查閱區：低頻說明與深層儀表，預設收合 -->
+  <section class="block" id="reference">
+  <details class="ref-fold" id="taxonomy">
+    <summary>選股體系說明與使用邊界<small>兩條線＋一個板機＋一個對照</small></summary>
+    <div class="ref-body">
+    <p style="font-size:.82rem;color:var(--text-sec);margin:0 0 .7rem;line-height:1.65">全站選股體系收斂成<b>兩條線＋一個板機＋一個對照</b>，呈現在單一主控台、四個分頁同一份底層資料：<b>總覽</b>看天氣、今日待辦與正式榜；<b>精選榜</b>是對外成品名單（甲線成品＝長熬、乙線成品＝爆發、甲線延伸＝十倍）；<b>流程板機</b>是兩線共用的完整漏斗、三軌射擊名單與板機現況；<b>席位排序</b>是甲線排序主幹＝GRP 決策引擎。即時聚合既有系統資料，無獨立資料管線。</p>
+    <p style="font-size:.82rem;color:var(--text-sec);margin:0 0 .9rem;line-height:1.65"><b>各層名單的使用邊界</b>：多層同時亮的名字＝高信心觀察池；各層態度分歧的名字＝研究隊列。「值得投資」的最終判定不歸任何聚合層——一律走 DD §14 裁決 → 決策三錨（產業冷讀 critic × 知識帳本 × 持有人筆記）→ sop-funnel 板機。名單只回答「看誰」，不回答「買不買」與「何時」。</p>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:.7rem">
       <div style="background:var(--card);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--r);padding:.85rem 1.1rem">
         <div style="font-family:'IBM Plex Mono',monospace;font-size:.64rem;font-weight:700;letter-spacing:.08em;color:var(--gold-deep);text-transform:uppercase;margin-bottom:.3rem">方式甲 · 結構長抱線</div>
@@ -270,55 +308,22 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
       </div>
     </div>
     <p style="font-size:.72rem;color:var(--muted);margin-top:.6rem;line-height:1.6">已退役／封存、不再視為選股方式：<b>AR-Live</b>（2026-07-07 退役，僅存參考欄）、<b>alpha-rank</b>（已封存）、5 月世代 4 個 timing screener（bottom-out／breakout／earnings-acceleration／entry-state，職能已由 sop-funnel／循環軌／GRP 上修閘接手）。</p>
-  </section>
-  <!-- ① 環境條 -->
-  <section class="block">
-    <div class="sec-head">
-      <span class="sec-num">1</span>
-      <h2 class="sec-title">市場環境</h2>
-      <span class="sec-desc">風險偏好儀表 × 波動 × 金融條件——出手前先看天氣</span>
     </div>
-    <div id="env-mount"><div class="placeholder">載入中⋯</div></div>
-  </section>
+  </details>
 
-  <!-- ② 今日待辦 -->
-  <section class="block">
-    <div class="sec-head">
-      <span class="sec-num">2</span>
-      <h2 class="sec-title">今日待辦——需要我裁決的事</h2>
-      <span class="sec-desc">旗標、換席挑戰、板機訊號——只列出等人工決策的項目</span>
-    </div>
-    <div id="todo-mount"><div class="placeholder">載入中⋯</div></div>
-  </section>
-
-  <!-- ③ 漏斗活數字 -->
-  <section class="block">
-    <div class="sec-head">
-      <span class="sec-num">3</span>
-      <h2 class="sec-title">漏斗活數字——五層選股體系</h2>
-      <span class="sec-desc">發現 → 判斷 → 組合 → 板機 → 監控，每層回答一個問題（完整明細見「流程板機」分頁）</span>
-    </div>
+  <details class="ref-fold">
+    <summary>漏斗活數字——五層選股體系<small>完整明細見「流程板機」分頁</small></summary>
+    <div class="ref-body">
     <div id="funnel-mount"><div class="placeholder">載入中⋯</div></div>
-  </section>
-
-  <!-- ④ 精選清單正式榜 -->
-  <section class="block">
-    <div class="sec-head">
-      <span class="sec-num">4</span>
-      <h2 class="sec-title">精選清單——對外正式榜</h2>
-      <span class="sec-desc">整個系統收斂成的一張股票清單：長熬（甲線成品）× 爆發（乙線成品）× 十倍（甲線延伸）（完整四件事見「精選榜」分頁）</span>
     </div>
-    <div id="picks-mount"><div class="placeholder">載入中⋯</div></div>
-  </section>
+  </details>
 
-  <!-- ⑤ 組合記分板 -->
-  <section class="block">
-    <div class="sec-head">
-      <span class="sec-num">5</span>
-      <h2 class="sec-title">組合記分板</h2>
-      <span class="sec-desc">目前在跑的組合——席位、軌別與表現（GRP 排序全貌見「席位排序」分頁）</span>
-    </div>
+  <details class="ref-fold">
+    <summary>組合記分板<small>席位、軌別與表現；GRP 排序全貌見「席位排序」分頁</small></summary>
+    <div class="ref-body">
     <div id="sb-mount"><div class="placeholder">載入中⋯</div></div>
+    </div>
+  </details>
   </section>
   </div>
 
