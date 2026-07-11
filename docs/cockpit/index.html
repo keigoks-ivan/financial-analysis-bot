@@ -742,10 +742,13 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
   }
 
   // ---------- ③ 陣容（唯一名單：席位 × 裁決 × 板機，一行一檔讀完整條鏈） ----------
+  // 時機路由（2026-07-11 持有人拍板，登記 knowledge/rule_ledger.md）：
+  // 核心席＝sop-funnel 板機；衛星席＝cyclical-track 位置閘（sop 品質閘系統性排除
+  // 爆發/循環型，衛星在 sop 裡永遠不亮）。低熱名單外的衛星席誠實標「未覆蓋」不猜。
   function renderRoster(){
     var mount = $('roster-mount');
     if(!S.arena || !Array.isArray(S.arena.core_seats)){ mount.innerHTML = ph('陣容資料暫缺'); return; }
-    // 板機狀態查表（sop-funnel）
+    // 核心席板機：sop-funnel
     var trig = {};
     if(S.sop){
       (S.sop.today_signals||[]).forEach(function(x){ if(x&&x.ticker) trig[x.ticker]='🎯 板機亮'; });
@@ -753,18 +756,32 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
       (S.sop.standby_b||[]).forEach(function(x){ if(x&&x.ticker&&!trig[x.ticker]) trig[x.ticker]='待命 B'; });
       (S.sop.standby_c||[]).forEach(function(x){ if(x&&x.ticker&&!trig[x.ticker]) trig[x.ticker]='待命 C'; });
     }
+    // 衛星席位置閘：cyclical-track 低熱名單
+    var cycGate = {};
+    if(S.cyc && Array.isArray(S.cyc.low_heat)){
+      S.cyc.low_heat.forEach(function(x){ if(x&&x.ticker) cycGate[x.ticker] = x.hot ? '🔥 等回踩' : '低熱 · 可執行'; });
+    }
+    // 現行裁決（日更 dd-screener）：顯示層即時；席位歸屬仍歸週更 engine
+    var liveV = {};
+    if(S.dd && Array.isArray(S.dd.stocks)){
+      S.dd.stocks.forEach(function(x){ if(x&&x.ticker&&x.dca_verdict) liveV[x.ticker]=x.dca_verdict; });
+    }
     function vCls(v){ return v==='進場'?'v-in':(v==='觀望'?'v-watch':(v==='迴避'?'v-avoid':'')); }
-    function row(seatLabel, s){
+    function row(seatLabel, s, isSat){
       var grp = s.grp||{};
+      var v = liveV[s.ticker] || s.verdict || '—';
+      var drift = (liveV[s.ticker] && s.verdict && liveV[s.ticker] !== s.verdict)
+        ? ' <span style="color:var(--amber)" title="現行 DD 裁決與週更快照不同——換席裁決待下次週更 engine">⚠</span>' : '';
+      var gate = isSat ? (cycGate[s.ticker] || '位置閘未覆蓋') : (trig[s.ticker] || '－');
       return '<tr><td class="roster-seat">'+esc(seatLabel)+'</td>'+
         '<td class="roster-tk">'+esc(s.ticker)+'</td>'+
-        '<td class="'+vCls(s.verdict)+'">'+esc(s.verdict||'—')+'</td>'+
+        '<td class="'+vCls(v)+'">'+esc(v)+drift+'</td>'+
         '<td class="num">'+(grp.score!=null?fmt(grp.score,2):'—')+(grp.p_label?(' <small style="color:var(--muted)">'+esc(grp.p_label)+'</small>'):'')+'</td>'+
-        '<td>'+esc(trig[s.ticker]||'－')+'</td></tr>';
+        '<td>'+esc(gate)+(gate==='位置閘未覆蓋'?' <small style="color:var(--muted)">結構型衛星，循環軌未提名</small>':'')+'</td></tr>';
     }
     var rows = '';
-    S.arena.core_seats.forEach(function(s,i){ rows += row('核心 '+(i+1), s); });
-    (S.arena.sat_seats||[]).forEach(function(s,i){ rows += row('衛星 '+(i+1), s); });
+    S.arena.core_seats.forEach(function(s,i){ rows += row('核心 '+(i+1), s, false); });
+    (S.arena.sat_seats||[]).forEach(function(s,i){ rows += row('衛星 '+(i+1), s, true); });
     var vac = S.arena.sat_vacant||0;
     if(vac>0) rows += '<tr><td class="roster-seat">衛星 '+((S.arena.sat_seats||[]).length+1)+'–5</td>'+
       '<td colspan="4" style="color:var(--muted);font-size:.8rem">空 '+vac+' 席——空位是刻意的，空位即倉位管理</td></tr>';
@@ -775,8 +792,10 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
       '<tr><th>席</th><th>Ticker</th><th>DD 裁決</th><th>GRP 分 · 位置</th><th>板機</th></tr>'+rows+'</table></div>'+
       '<div class="roster-note">'+
       (bench.length?('板凳前排：'+esc(bench.join('、'))+' · '):'')+
-      (asof?('engine as-of '+esc(asof)+' · '):'')+
-      '換席裁決見「席位排序」 · 板機明細見「流程板機」 · 對外櫥窗榜（長熬 × 爆發 × 十倍）在「精選榜」分頁，不在決策鏈上</div>';
+      (asof?('席位歸屬 engine as-of '+esc(asof)+'（週更）· '):'')+
+      '裁決欄＝日更 dd-screener 現值（⚠＝與週更快照分歧，換席待週更）· '+
+      '時機路由：核心席＝sop-funnel 板機、衛星席＝cyclical-track 位置閘（2026-07-11 拍板）· '+
+      '對外櫥窗榜（長熬 × 爆發 × 十倍）在「精選榜」分頁，不在決策鏈上</div>';
   }
 
   // ---------- 漏斗活數字 ----------
