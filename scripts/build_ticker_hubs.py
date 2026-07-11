@@ -382,10 +382,20 @@ def render_snapshot(stock, as_of):
     return f'<div class="snap">{inner}</div>\n{asof}'
 
 
+_CJK_HALF_PUNCT = re.compile(r'([一-鿿])([,:;!?.])')
+_PUNCT_MAP = {",": "，", ":": "：", ";": "；", "!": "！", "?": "？", ".": "。"}
+
+
+def normalize_punct(text):
+    """中文字後的半形標點轉全形（QC gate 鐵律）——來源 dd-meta oneliner
+    是 legacy 自由文字，標點不保證乾淨，顯示前正規化。"""
+    return _CJK_HALF_PUNCT.sub(lambda m: m.group(1) + _PUNCT_MAP[m.group(2)], text)
+
+
 def render_ticker_page(ticker, dd_rows, cur, ids, sc, comps, syns, stock, as_of):
     oneliner = ""
     if cur and cur["meta"]:
-        oneliner = cur["meta"].get("oneliner") or ""
+        oneliner = normalize_punct(cur["meta"].get("oneliner") or "")
     head = page_head(
         f"{ticker} 個股研究總覽 — InvestMQuest Research",
         f"{ticker} 在 InvestMQuest 站內的全部研究聚合：個股 DD、所屬產業 ID、供應鏈位置、對比與期望落差綜合研判。",
