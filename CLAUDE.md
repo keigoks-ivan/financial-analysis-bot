@@ -46,6 +46,8 @@ Agent({
 
 **例外**：用戶明確說「不用跑 critic」/「我自己看就好」可跳過。
 
+**聚合層名單的使用邊界（2026-07-11 持有人拍板）**：站上各聚合層（三軌架構／picks 精選榜／engine GRP 席位／quality-entry 等）對同一名字的態度常不一致，這是職能分工不是 bug。使用鐵律：**多層交集＝高信心觀察池；層間分歧＝研究隊列**（分歧才有邊際資訊——資格在但榜上降溫、或動能亮但架構未收，都是該查原因的訊號，不是矛盾要修）。「值得投資」的最終判定不歸任何聚合層——一律走 DD §14 裁決 → 決策三錨（critic × q.py × usernote）→ sop-funnel 板機。**名單只回答「看誰」，不回答「買不買」與「何時」**；任何 session 不得因交集強就縮短這條裁決鏈，也不得提議再蓋新的收斂面（2026-07-07 拍板）。此為流程紀律非裁決閘，不適用 rule_ledger kill-condition 登記。
+
 ## Site composition：4 repos 共同產生 docs/
 
 公開站 `https://research.investmquest.com/` 由 4 個 repo 共同生成 `docs/` 內容。任何「整站樣板/頁首/頁尾」這類任務，第一步要先判斷該頁路徑屬於哪個 repo，再去對應 repo 改 generator template。
