@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="餵大腦">
+<title>📥</title>
+<style>
+:root{--bg:#0a0e1a;--card:#131a2e;--ink:#e5eaf3;--sub:#8b98b3;
+--line:rgba(148,163,184,.2);--accent:#5ea0ff}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--ink);
+font-family:'Inter','Noto Sans TC',-apple-system,'Segoe UI',sans-serif;
+display:flex;flex-direction:column;align-items:center;justify-content:center;
+padding:20px;padding-bottom:max(20px, env(safe-area-inset-bottom))}
+.box{width:100%;max-width:560px}
+h1{font-size:1.1rem;font-weight:700;letter-spacing:.02em;margin:0 0 4px;
+color:var(--sub)}
+textarea{width:100%;min-height:38vh;background:var(--card);color:var(--ink);
+border:1px solid var(--line);border-radius:14px;padding:16px;font-size:16px;
+line-height:1.7;font-family:inherit;resize:vertical;outline:none}
+textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(94,160,255,.18)}
+textarea::placeholder{color:#556180}
+button{width:100%;margin-top:12px;padding:15px;border:none;border-radius:12px;
+background:linear-gradient(92deg,#2f66c4,#5ea0ff);color:#fff;font-size:16px;
+font-weight:700;cursor:pointer}
+button:active{filter:brightness(1.15)}
+button:disabled{opacity:.5}
+.msg{margin-top:12px;font-size:13.5px;color:var(--sub);text-align:center;min-height:1.4em}
+.msg.ok{color:#4ade80}
+.msg.err{color:#f87171}
+.hint{margin-top:20px;font-size:11.5px;color:#3d4763;text-align:center}
+</style>
+</head>
+<body>
+<div class="box">
+<h1>📥 餵大腦</h1>
+<textarea id="t" placeholder="貼文章、打想法⋯順手加一句「為什麼存」——那句才是知識點。"></textarea>
+<button id="go">送出</button>
+<div class="msg" id="m"></div>
+<div class="hint">內容單向送往私人收件匣，本頁不顯示任何資料。</div>
+</div>
+<script>
+const ENDPOINT = 'https://myproperty.investmquest.com/brain/jot.php';
+const t = document.getElementById('t'), go = document.getElementById('go'),
+      m = document.getElementById('m');
+function pass(reset){
+  if(reset) localStorage.removeItem('brain_pass');
+  let p = localStorage.getItem('brain_pass');
+  if(!p){
+    p = prompt('第一次使用：輸入通行碼（之後不用再輸）');
+    if(p) localStorage.setItem('brain_pass', p.trim());
+  }
+  return (p || '').trim();
+}
+async function send(){
+  const text = t.value.trim();
+  if(!text){ m.textContent = '空的'; m.className = 'msg err'; return; }
+  const p = pass();
+  if(!p){ m.textContent = '沒有通行碼無法送出'; m.className = 'msg err'; return; }
+  go.disabled = true;
+  m.textContent = '送出中…'; m.className = 'msg';
+  try{
+    const r = await fetch(ENDPOINT, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({pass: p, text})
+    });
+    if(r.status === 403){
+      pass(true);
+      m.textContent = '通行碼錯誤——下次送出會重新詢問';
+      m.className = 'msg err';
+    }else if(r.ok){
+      t.value = '';
+      m.textContent = '✅ 已送出——回到 Mac 幾分鐘內自動入腦';
+      m.className = 'msg ok';
+    }else{
+      m.textContent = '收件匣回了 ' + r.status + '——稍後再試';
+      m.className = 'msg err';
+    }
+  }catch(e){
+    m.textContent = '接收器連不上（可能尚未部署或斷網）';
+    m.className = 'msg err';
+  }
+  go.disabled = false;
+}
+go.addEventListener('click', send);
+t.addEventListener('keydown', e => {
+  if((e.metaKey || e.ctrlKey) && e.key === 'Enter') send();
+});
+</script>
+</body>
+</html>

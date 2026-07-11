@@ -242,6 +242,7 @@ PREFIX_ACTIVE = [
 
 SKIP_DIRS = {"_archived", "private"}
 SKIP_FILES = {
+    "jot.html",                                 # 私人餵腦框（noindex 獨立小頁，不掛站 nav）
     "pm/index.html",                            # archived stub, intentionally bare
     "six-state/index.html",                     # redirect stub -> /backtest/six_state/status/
     "backtest/six_state/status/index.html",     # live status sub-page, intentionally headerless
