@@ -682,6 +682,17 @@ def discover():
     add("knowledge/munger/cards/*.md", "munger",
         lambda f: ex_markdown(f, "munger", "munger-card", tag="蒙格腦"))
 
+    # 智慧語料（wisdom/，corpus gitignored 本機抓；cards committed 原創提煉）
+    add("knowledge/wisdom/corpus/buffett/*.md", "buffett",
+        lambda f: ex_markdown(f, "buffett", "buffett", tag="巴菲特信"))
+    add("knowledge/wisdom/corpus/marks/*.md", "marks",
+        lambda f: ex_markdown(f, "marks", "marks", tag="Marks 備忘錄"))
+    # 蒙格問答併入既有蒙格家族（type=munger）
+    add("knowledge/wisdom/corpus/munger_qa/*.md", "munger",
+        lambda f: ex_markdown(f, "munger", "munger-qa", tag="蒙格腦"))
+    add("knowledge/wisdom/cards/*.md", "wisdom-card",
+        lambda f: ex_markdown(f, "wisdom-card", "wisdom-card", tag="判斷卡"))
+
     add("notes/site-internal/**/*.md", "internal-note", ex_internal_note)
     add("knowledge/vault/notes/**/*.md", "usernote", ex_usernote)
 

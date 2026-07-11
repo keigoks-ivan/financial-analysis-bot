@@ -125,6 +125,23 @@ hook 沒裝或外部 repo 變動也接得住）。
 morning-briefing / tools / malaysia-property / dotfiles），加新 repo = 加一行 glob；
 目錄不在本機（另一台 Mac）= warn 跳過，不是 error。
 
+**智慧語料模組 `knowledge/wisdom/`（2026-07-11 起）— 判斷語料層**：仿 `knowledge/munger/`
+慣例——manifest（`sources.json`）＋ `fetch_corpus.py` committed、`corpus/` 全文 gitignored
+（repo 公開，受版權文本不重新出版，另一台機 pull 後 `python3 knowledge/wisdom/fetch_corpus.py`
+本機重抓；`berkshirehathaway.com` 走 Sucuri CDN 強制 brotli，需 `pip install brotli`）、`cards/`
+原創提煉 committed。三個 collection：
+
+| collection | 內容 | 入腦 type | 消費迴路 |
+|---|---|---|---|
+| `buffett/` | Berkshire 股東信全集（1977–2024，48 封） | `buffett`（巴菲特信） | 蒙格腦旁證＋DD 對質：`q.py --search "…" --type buffett` |
+| `marks/` | Howard Marks 備忘錄（bubble.com/Race to the Bottom/On Bubble Watch… 22 篇） | `marks`（Marks 備忘錄） | 蒙格腦旁證＋DD 對質：`--type marks`（鐘擺／週期語言） |
+| `munger_qa/` | 蒙格決策現場問答（Daily Journal 逐字稿＋UCSB 2003 Academic Economics） | `munger`（併入既有蒙格家族） | 蒙格腦本體語料，補 `knowledge/munger` 的 TODO |
+| `cards/` | **原創**判斷卡（`capital_cycle.md` 資本週期理論／`bubble_cases.md` 泡沫案例集） | `wisdom-card`（判斷卡） | 治循環股裁決盲點——接 QC-42 循環位置錶（尤其 shortage×Phase II 那格）與獵場「第三變數」鏡頭：`--type wisdom-card` |
+
+判斷卡是治盲點的正主：對循環股「對結構性順風給 credit 不足／缺 priced-in 軸／用品質尺量商品股」
+的系統性 miss，由資本週期（看供給不看需求）＋泡沫歷史對照組（AI capex ↔ 2000 光纖）兩張卡對症。
+munger-mind agent 語料節第 6 條已把 `--type buffett|marks|wisdom-card` 掛為對質旁證。
+
 **Obsidian**：直接開 `knowledge/vault/` 當 vault；auto/ 會被 rebuild 覆寫，
 自己的筆記寫 `vault/notes/`。
 

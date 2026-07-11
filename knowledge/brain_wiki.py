@@ -45,6 +45,7 @@ TYPE_LABEL = {
     "strategy": "策略規則", "internal-note": "內部筆記", "whitepaper": "白皮書",
     "repo-doc": "repo 文件", "tools": "置產/史詩", "property": "大馬房產",
     "entity": "個股", "theme": "主題", "mental-model": "思維模型", "munger": "蒙格腦",
+    "buffett": "巴菲特信", "marks": "Marks 備忘錄", "wisdom-card": "判斷卡",
 }
 
 CSS = """

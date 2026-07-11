@@ -48,6 +48,8 @@ TYPE_DIR = {
     "qgm": "qgm", "strategy": "strategy", "internal-note": "internal",
     "whitepaper": "kb", "repo-doc": "kb", "tools": "kb", "property": "kb",
     "mental-model": "mental-models", "munger": "munger",
+    "buffett": "wisdom/buffett", "marks": "wisdom/marks",
+    "wisdom-card": "wisdom/cards",
 }
 KB_TYPES = {"whitepaper", "repo-doc", "tools", "property"}
 
