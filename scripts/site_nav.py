@@ -85,32 +85,36 @@ MENU = {
         ("scr", "/screeners.html", "RS+VCP Screener"),
     ],
     "research": [
+        ("thub", "/t/", "個股總覽"),
         ("dd", "/research/", "個股 DD"),
-        ("syn", "/research/synthesis/", "期望落差綜合研判"),
-        ("cmp", "/comparisons/", "多股對比"),
         ("id", "/id/", "產業深度 ID"),
         ("tier", "/id/tier_matrix.html", "Tier Matrix"),
         ("sc", "/supply-chain/", "供應鏈地圖"),
+        ("cmp", "/comparisons/", "多股對比"),
+        ("syn", "/research/synthesis/", "期望落差綜合研判"),
     ],
     "market": [
-        ("earn", "/earnings/", "財報分析"),
-        ("cat", "/catalyst/", "催化劑日曆"),
         ("mon", "/monitor/", "市場監測"),
-        ("markets", "/markets.html", "Markets"),
-        ("sectors", "/sectors.html", "Sectors"),
-        ("crowd", "/crowding/", "擁擠交易監測"),
+        ("radar", "/rotation/radar.html", "資產輪動雷達"),
         ("rot", "/rotation/", "產業輪動"),
+        ("crowd", "/crowding/", "擁擠交易監測"),
         ("regime", "/regime/", "大類資產 regime"),
         ("macro", "/macro/", "總經深度報告"),
+        ("earn", "/earnings/", "財報分析"),
+        ("cat", "/catalyst/", "催化劑日曆"),
+        ("markets", "/markets.html", "Markets"),
+        ("sectors", "/sectors.html", "Sectors"),
         ("week", "/weekly/", "週報"),
     ],
     "system": [
+        ("tr", "/track-record/", "裁決實績"),
         ("ltsmh", "/long-track-smh/", "長線訊號 SMH"),
         ("lttw", "/long-track-tw/", "台股長線"),
         ("sleeve", "/turtle-sleeve/", "商品 Sleeve"),
         ("bt", "/backtest/", "量化回測"),
         ("tools", "/tools/", "期貨部位計算機"),
         ("cache", "/cache/", "Data Cache"),
+        ("data", "/data.html", "公開資料"),
     ],
 }
 GROUP_LABELS = {"pick": "選股", "research": "研究", "market": "市場", "system": "系統"}
@@ -133,17 +137,19 @@ def build_nav(group=None, item=None):
     home_cls = ' class="active"' if group == "home" else ""
     mm_cls = ' class="active"' if group == "mm" else ""
     howto_cls = ' class="active"' if group == "howto" else ""
+    search_cls = ' class="active"' if group == "search" else ""
     return f"""<header class="imq-nav-root">
   <div class="imq-nav-inner">
     <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
     <nav class="imq-menu">
       <a href="/"{home_cls}>首頁</a>
+{dd("market")}
 {dd("pick")}
 {dd("research")}
-{dd("market")}
-{dd("system")}
       <a href="/mental-models/"{mm_cls}>心智模型</a>
-      <a href="/how-to.html"{howto_cls}>使用說明</a>
+{dd("system")}
+      <a href="/how-to.html"{howto_cls}>使用指南</a>
+      <a href="/search.html"{search_cls}>搜尋</a>
     </nav>
   </div>
 </header>"""
@@ -205,6 +211,7 @@ PREFIX_ACTIVE = [
     ("screener-jp.html", ("pick", "scr")),
     ("screener-my.html", ("pick", "scr")),
     # 研究群
+    ("t/", ("research", "thub")),  # 個股總覽（2026-07-11 新增）
     ("research/synthesis/", ("research", "syn")),
     ("research/", ("research", "dd")),
     ("dd/", ("research", "dd")),
@@ -222,25 +229,38 @@ PREFIX_ACTIVE = [
     ("markets.html", ("market", "markets")),
     ("sectors.html", ("market", "sectors")),
     ("crowding/", ("market", "crowd")),
+    # rotation/radar.html 是「資產輪動雷達」獨立項目；須排在 rotation/ 之前，
+    # 否則會被 rotation/ 前綴吃掉。index.html 與 ROTATION_*.html 仍歸「產業輪動」。
+    ("rotation/radar.html", ("market", "radar")),  # 資產輪動雷達（2026-07-11 新增）
     ("rotation/", ("market", "rot")),
     ("regime/", ("market", "regime")),
     ("macro/", ("market", "macro")),  # 總經深度報告（2026-07-09），nav 已掛項目
     ("weekly/", ("market", "week")),
     ("briefing/", ("market", None)),  # 已暫停，nav 無項目，僅群高亮
     # 系統群
+    ("track-record/", ("system", "tr")),  # 裁決實績（2026-07-11 新增）
     ("long-track-smh/", ("system", "ltsmh")),
     ("long-track-tw/", ("system", "lttw")),
     ("turtle-sleeve/", ("system", "sleeve")),
     ("backtest/", ("system", "bt")),
     ("tools/", ("system", "tools")),
     ("cache/", ("system", "cache")),
+    ("data.html", ("system", "data")),  # 公開資料（2026-07-11 新增）
     # 頂層
     ("mental-models/", ("mm", None)),
     ("how-to.html", ("howto", None)),
+    ("search.html", ("search", None)),  # 搜尋（2026-07-11 新增頂層連結）
     ("index.html", ("home", None)),
 ]
 
 SKIP_DIRS = {"_archived", "private"}
+# 外部三 repo（+ 其 cron）擁有的 docs/ 子樹（見 .claude/notes/site-composition.md）：
+#   qgm / qgm-tw → minervini-quality-backtest；briefing / weekly → morning-briefing；
+#   backtest → v7-backtest。這些頁面的 nav 由各自 repo 內嵌的 canonical literal 重生，
+#   本 repo 的 re-inject sweep 必須跳過整棵樹（否則會在工作區改動 400+ 支外部檔，
+#   且下次外部 cron push 會覆蓋）。改 nav 時：本 repo re-inject 只動自有頁面，
+#   外部樹靠 step「re-sync 三個外部 repo 的 synced literal」重生 byte-identical。
+EXTERNAL_TREES = {"qgm", "qgm-tw", "briefing", "weekly", "backtest"}
 SKIP_FILES = {
     "jot.html",                                 # 私人餵腦框（noindex 獨立小頁，不掛站 nav）
     "pm/index.html",                            # archived stub, intentionally bare
@@ -302,8 +322,11 @@ BODY_RE = re.compile(r"<body[^>]*>")
 
 def process(path: Path, check=False):
     rel = str(path.relative_to(ROOT))
-    if any(part in SKIP_DIRS for part in path.relative_to(ROOT).parts):
+    parts = path.relative_to(ROOT).parts
+    if any(part in SKIP_DIRS for part in parts):
         return "skip"
+    if parts and parts[0] in EXTERNAL_TREES:
+        return "skip-external"
     if rel in SKIP_FILES:
         return "skip"
     try:
