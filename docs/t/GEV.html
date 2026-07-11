@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>GEV 個股研究總覽 — InvestMQuest Research</title>
+  <meta name="description" content="GEV 在 InvestMQuest 站內的全部研究聚合：個股 DD、所屬產業 ID、供應鏈位置、對比與期望落差綜合研判。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/imq-base.css">
+  <style>
+:root {
+  --imq-bg:           var(--paper);
+  --imq-bg-soft:      var(--paper);
+  --imq-card:         var(--card);
+  --imq-border:       var(--line);
+  --imq-border-soft:  var(--line-soft);
+  --imq-text:         var(--ink);
+  --imq-text-sec:     var(--sec);
+  --imq-text-muted:   var(--muted);
+  --imq-accent:       var(--accent);
+  --imq-accent-hover: var(--accent-ink);
+  --imq-indigo-deep:  #534AB7;
+  --imq-green:        #0F6E56;
+  --imq-brand:        #1a56db;
+  --imq-amber:        #B45309;
+  --imq-rose:         #C0392B;
+  --imq-shadow-sm:    var(--sh-1);
+  --imq-shadow-md:    var(--sh-2);
+  --imq-shadow-lg:    var(--sh-2);
+  --imq-r-sm:   var(--r);
+  --imq-r-md:   var(--r);
+  --imq-r-lg:   var(--r);
+  --imq-r-xl:   var(--r);
+  --imq-r-2xl:  var(--r);
+  --imq-r-pill: 999px;
+  --imq-font-sans: var(--sans);
+  --imq-font-mono: var(--mono);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--imq-font-sans);background:var(--paper);color:var(--body);line-height:1.7;font-size:14px;min-height:100vh;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none;transition:color .15s}
+a:hover{color:var(--accent-ink)}
+.serif{font-family:'Noto Serif TC',Georgia,'Times New Roman',serif}
+.mono{font-family:var(--imq-font-mono)}
+.wrap{max-width:960px;margin:0 auto;padding:40px 28px 64px}
+.overline{font-family:var(--imq-font-mono);font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-deep);margin-bottom:12px}
+h1.tk{font-family:'Noto Serif TC',Georgia,serif;font-weight:700;letter-spacing:-.01em;color:var(--ink);font-size:34px;line-height:1.15;margin-bottom:8px}
+.oneliner{color:var(--sec);font-size:14px;line-height:1.7;margin:10px 0 18px;max-width:760px}
+.verdict-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:20px}
+.chip{display:inline-flex;align-items:center;gap:.35em;font-size:12px;font-weight:600;padding:.3rem .7rem;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);white-space:nowrap}
+.chip.v-in{background:rgba(15,110,86,.10);border-color:rgba(15,110,86,.35);color:var(--imq-green)}
+.chip.v-out{background:rgba(192,57,43,.08);border-color:rgba(192,57,43,.32);color:var(--imq-rose)}
+.chip.v-hold{background:rgba(180,83,9,.08);border-color:rgba(180,83,9,.30);color:var(--imq-amber)}
+.chip.muted{color:var(--muted)}
+.snap{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--line);border-radius:var(--r);background:var(--card);overflow:hidden;margin-bottom:8px}
+.snap .cell{flex:1 1 auto;min-width:96px;padding:10px 14px;border-right:1px solid var(--line-soft)}
+.snap .cell:last-child{border-right:0}
+.snap .lbl{font-family:var(--imq-font-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.snap .val{font-size:14px;font-weight:600;color:var(--ink)}
+.asof{font-size:11px;color:var(--muted);margin-bottom:30px}
+section.blk{margin-top:30px}
+section.blk > h2{font-family:'Noto Serif TC',Georgia,serif;font-size:18px;font-weight:700;color:var(--ink);border-bottom:2px solid var(--line);padding-bottom:7px;margin-bottom:4px}
+section.blk > .cnt{font-family:var(--imq-font-mono);font-size:11px;color:var(--muted);margin-bottom:12px}
+ul.items{list-style:none;display:flex;flex-direction:column;gap:2px}
+ul.items li{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;padding:8px 4px;border-bottom:1px solid var(--line-soft)}
+ul.items li:last-child{border-bottom:0}
+.dt{font-family:var(--imq-font-mono);font-size:12px;color:var(--sec);flex-shrink:0;min-width:82px}
+.it-main{flex:1 1 260px}
+.it-main a{font-weight:600}
+.it-sub{color:var(--sec);font-size:12.5px}
+.tag{font-family:var(--imq-font-mono);font-size:10.5px;padding:.12rem .45rem;border-radius:4px;background:var(--paper);border:1px solid var(--line);color:var(--sec);white-space:nowrap}
+.foot-note{margin-top:44px;padding-top:16px;border-top:1px solid var(--line);font-size:11.5px;color:var(--muted)}
+/* directory */
+.dir-stats{display:flex;flex-wrap:wrap;gap:14px;margin:18px 0 22px}
+.stat{border:1px solid var(--line);border-radius:var(--r);background:var(--card);padding:12px 18px;min-width:120px}
+.stat .n{font-family:'Noto Serif TC',Georgia,serif;font-size:26px;font-weight:700;color:var(--ink);line-height:1}
+.stat .k{font-family:var(--imq-font-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:5px}
+#flt{width:100%;max-width:360px;padding:10px 14px;font-size:14px;font-family:var(--imq-font-sans);border:1px solid var(--line);border-radius:var(--r);background:var(--card);color:var(--ink);margin-bottom:18px}
+#flt:focus{outline:none;border-color:var(--accent)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:10px}
+a.tcard{display:flex;flex-direction:column;gap:6px;border:1px solid var(--line);border-radius:var(--r);background:var(--card);padding:12px 14px;transition:border-color .15s,box-shadow .15s}
+a.tcard:hover{border-color:var(--accent);box-shadow:var(--sh-1)}
+a.tcard .tk{font-family:var(--imq-font-mono);font-size:15px;font-weight:700;color:var(--ink);letter-spacing:.01em}
+a.tcard .meta{display:flex;align-items:center;justify-content:space-between;gap:8px}
+a.tcard .rc{font-family:var(--imq-font-mono);font-size:10.5px;color:var(--muted)}
+.nores{color:var(--muted);font-size:13px;padding:20px 4px;display:none}
+@media(max-width:600px){.wrap{padding:28px 16px 48px}h1.tk{font-size:27px}}
+  </style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">選股<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/cockpit/">選股主控台</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/research/momentum-5/">Momentum-5</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screeners.html">RS+VCP Screener</a>
+        </div>
+      </div>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/">個股 DD</a>
+          <a href="/research/synthesis/">期望落差綜合研判</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/earnings/">財報分析</a>
+          <a href="/catalyst/">催化劑日曆</a>
+          <a href="/monitor/">市場監測</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/crowding/">擁擠交易監測</a>
+          <a href="/rotation/">產業輪動</a>
+          <a href="/regime/">大類資產 regime</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/weekly/">週報</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track-smh/">長線訊號 SMH</a>
+          <a href="/long-track-tw/">台股長線</a>
+          <a href="/turtle-sleeve/">商品 Sleeve</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/cache/">Data Cache</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <a href="/how-to.html">使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<main class="wrap">
+<div class="overline">Ticker Hub · 個股研究總覽</div>
+<h1 class="tk mono">GEV</h1>
+<p class="oneliner">Q1 26 orders +71%／100GW backlog／triple guidance raise｜估值🟠(FPE 43.9x／PEG 1.57／EV/EBITDA 82x)·MA✅ 但 BB 上軌邊緣／12M +167% 透支｜短中 R:R -0.35x/-0.23x、5Y +32%｜訊號 B 觀望，等回測 BB 中軌 $818 或 W52 $660 再分批。</p>
+<div class="verdict-row"><span class="chip muted">訊號〔legacy〕｜B</span><span class="chip muted">裁決日期 2026-05-04</span></div>
+<div class="snap"><div class="cell"><div class="lbl">訊號</div><div class="val">B</div></div><div class="cell"><div class="lbl">估值</div><div class="val">🟠</div></div><div class="cell"><div class="lbl">護城河</div><div class="val">A</div></div><div class="cell"><div class="lbl">FY+2 fPE</div><div class="val">43.9</div></div><div class="cell"><div class="lbl">5Y PE 分位</div><div class="val">85%</div></div><div class="cell"><div class="lbl">PEG</div><div class="val">1.85</div></div><div class="cell"><div class="lbl">中期 upside</div><div class="val">-8.8%</div></div></div>
+<div class="asof">Screener 快照 as-of 2026-07-10（估值欄隨週更管線刷新）。</div>
+<section class="blk"><h2>個股研究</h2><div class="cnt">5 筆</div><ul class="items"><li><span class="dt">2026-05-04</span><span class="it-main"><a href="/dd/DD_GEV_20260504.html">DD 報告</a> <span class="it-sub">訊號〔legacy〕</span></span><span class="tag">B</span></li><li><span class="dt">2026-04-25</span><span class="it-main"><a href="/dd/DD_GEV_20260425.html">DD 報告</a> <span class="it-sub">訊號〔legacy〕</span></span><span class="tag">B</span></li><li><span class="dt">2026-04-18</span><span class="it-main"><a href="/dd/DD_GEV_20260418.html">DD 報告</a> <span class="it-sub">訊號〔legacy〕</span></span><span class="tag">X</span></li><li><span class="dt">2026-04-17</span><span class="it-main"><a href="/dd/DD_GEV_20260417.html">DD 報告</a></span></li><li><span class="dt">2026-03-25</span><span class="it-main"><a href="/dd/DD_GEV_20260325.html">DD 報告</a></span></li></ul></section>
+<section class="blk"><h2>所屬產業研究</h2><div class="cnt">5 筆</div><ul class="items"><li><span class="dt">2026-06-29</span><span class="it-main"><a href="/id/ID_DataCenterREITDuopoly_20260629.html">Data Center REIT Duopoly</a><span class="it-sub"> · 供需 shortage · 時鐘 II</span></span></li><li><span class="dt">2026-05-05</span><span class="it-main"><a href="/id/ID_FusionCommercialization_20260505.html">核融合商業化（Fusion Commercialization）</a><span class="it-sub"> · 供需 balanced · 時鐘 I</span></span></li><li><span class="dt">2026-04-30</span><span class="it-main"><a href="/id/ID_NuclearRenaissance_20260430.html">Nuclear Renaissance</a><span class="it-sub"> · 供需 shortage · 時鐘 II</span></span></li><li><span class="dt">2026-04-27</span><span class="it-main"><a href="/id/ID_DataCenterREITDuopoly_20260427.html">Data Center REIT Duopoly</a></span></li><li><span class="dt">2026-04-19</span><span class="it-main"><a href="/id/ID_AIDataCenter_20260419.html">AI Data Center</a><span class="it-sub"> · 供需 shortage · 時鐘 II</span></span></li></ul></section>
+<section class="blk"><h2>供應鏈位置</h2><div class="cnt">4 筆</div><ul class="items"><li><span class="it-main"><a href="/supply-chain/datacenter.html">AI 資料中心 實體建置（Facility Buildout）供應鏈</a><span class="it-sub"> · 大型電力變壓器 LPT (&gt;100MVA)、大型燃氣渦輪機（自帶發電）</span></span></li><li><span class="it-main"><a href="/supply-chain/grid-power.html">電網 / 變壓器 / 開關設備供應鏈</a><span class="it-sub"> · 高壓套管、超高壓電力變壓器 LPT / GSU、HVDC 換流站、SF6-free 開關</span></span></li><li><span class="it-main"><a href="/supply-chain/nuclear.html">核能 / SMR + AI 電力供應鏈</a><span class="it-sub"> · 轉化 / 燃料棒製造、大型反應爐、核電廠冷卻 / 熱交換</span></span></li><li><span class="it-main"><a href="/supply-chain/power.html">AI 資料中心 電源 / 散熱供應鏈</a><span class="it-sub"> · Grid / Substation / SOFC</span></span></li></ul></section>
+<div class="foot-note">頁面由站內研究自動聚合，裁決以個別報告為準。</div>
+</main>
+<footer class="imq-foot">
+  <div>&copy; 2026 InvestMQuest Research</div>
+  <div><a href="/disclosures.html">方法論與揭露</a> · 本站內容僅供研究參考，不構成投資建議</div>
+</footer>
+</body>
+</html>
