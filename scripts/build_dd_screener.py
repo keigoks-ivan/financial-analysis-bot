@@ -1560,6 +1560,50 @@ def _compute_live_ev5y(entry: dict, ma: dict) -> dict:
     }
 
 
+def compute_asym_flag(row: dict) -> str | None:
+    """正不對稱三級標記（◆ 好球帶／★★／★）— 純下游機械描述器，非裁決。
+
+    單一權威實作。全部從既有欄位機械算，現價重算值優先：
+      ar_live         — 現價重算的不對稱比（§11.5 asymmetry ratio at today's price）
+      live_ev5y_pct   — 現價重算的 5Y 年化 IRR %（本檔已是年化，非累積 EV；
+                        源自 _ev5y_for→compute_dca_irr 已年化，再經 _compute_live_ev5y
+                        依股價漂移重新年化，值域 13-18 即年化 IRR，直接用）
+      trap / moat_trend / dca_verdict / dd_age_days — dd-meta 決策層欄位
+
+    三級門檻（PREREG 凍結至 2026-10；見 knowledge/rule_ledger.md）：
+      ◆（好球帶·重壓複審候選）: ar_live≥9 且 liveIRR≥13 且 trap=🟢
+                                 且 moat_trend≠↓ 且 dca_verdict=進場 且報告齡≤90 天
+      ★★（乾淨不對稱）        : ar_live≥6 且 liveIRR≥12 且 trap=🟢 且 moat_trend≠↓
+      ★（不對稱但陷阱疑慮未決）: ar_live≥4 且 liveIRR≥10 且 trap≠🔴 且 moat_trend≠↓
+
+    取最高符合級。判定欄位（ar_live/liveIRR/trap/moat_trend）缺任一 → 無標記（None）。
+    描述器非加倉指令：只描述現價下的不對稱狀態，不下買賣單。
+    """
+    ar = row.get("ar_live")
+    irr = row.get("live_ev5y_pct")
+    trap = row.get("trap")
+    moat_trend = row.get("moat_trend")
+    # 判定欄位缺任一 → 無標記
+    if ar is None or irr is None or trap is None or moat_trend is None:
+        return None
+    if moat_trend == "↓":
+        return None
+    verdict = row.get("dca_verdict")
+    age = row.get("dd_age_days")
+    # ◆ 好球帶（最嚴）
+    if (ar >= 9 and irr >= 13 and trap == "🟢"
+            and verdict == "進場"
+            and age is not None and age <= 90):
+        return "◆"
+    # ★★ 乾淨不對稱
+    if ar >= 6 and irr >= 12 and trap == "🟢":
+        return "★★"
+    # ★ 不對稱但陷阱疑慮未決
+    if ar >= 4 and irr >= 10 and trap != "🔴":
+        return "★"
+    return None
+
+
 def _compute_fy_eps_revision(ticker: str, eps_curr: float | None,
                               eps_next: float | None, eps_fy3: float | None,
                               prev_snapshot: dict) -> dict:
@@ -1964,6 +2008,15 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int) -> dict
             row["breakout_watch"] = True
             watch_count += 1
     print(f"  Step 4.6  AR Live: {ar_live_count} tickers computed, {watch_count} on breakout watch")
+
+    # Step 4.7: 正不對稱三級標記（◆/★★/★）— 純機械描述器，須在 ar_live 算完後跑。
+    # 單一權威實作在 compute_asym_flag（門檻與 PREREG 見該 docstring + rule_ledger）。
+    asym_counts = Counter()
+    for row in enriched:
+        row["asym_flag"] = compute_asym_flag(row)
+        asym_counts[row["asym_flag"]] += 1
+    print(f"  Step 4.7  Asym flags: ◆={asym_counts.get('◆', 0)} "
+          f"★★={asym_counts.get('★★', 0)} ★={asym_counts.get('★', 0)}")
 
     # Step 5: sort (pass/fail already computed above)
     enriched.sort(key=_sort_key)

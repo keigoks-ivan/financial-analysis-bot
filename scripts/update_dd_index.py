@@ -2860,6 +2860,91 @@ def refresh_upsides(entries: list) -> int:
     return refreshed
 
 
+# ── 正不對稱三級標記（◆/★★/★）研究頁 post-pass ────────────────────────────
+# chain 順序問題：research 頁 tbody 是在 build_dd_screener **之前**重生的，
+# 那一刻 latest.json 還沒有 asym_flag。故本 post-pass 在 screener rebuild
+# 成功之後跑——讀新 latest.json 的 asym_flag，把標記注入已寫好的 tbody row
+# 裁決欄（verdict badge 旁一個小 span）＋在 <tr> 掛 data-asym 供未來排序篩選。
+# 描述器非加倉指令：只描述現價下的不對稱狀態，不下買賣單。
+_ASYM_LABEL = {
+    "◆": "好球帶·重壓複審候選——描述器非加倉指令",
+    "★★": "乾淨不對稱",
+    "★": "不對稱但陷阱疑慮未決",
+}
+# 金色 ◆、深灰 ★（沿用機構風低調 accent，inline 以免動生成產物 CSS）
+_ASYM_STYLE = {
+    "◆": "margin-left:5px;font-size:0.9em;color:#B8860B;cursor:help",
+    "★★": "margin-left:5px;font-size:0.82em;color:#475569;cursor:help;letter-spacing:-1px",
+    "★": "margin-left:5px;font-size:0.82em;color:#64748B;cursor:help",
+}
+
+
+def inject_asym_flags(index_path: "Path", latest_path: "Path") -> int:
+    """把 latest.json 的 asym_flag 注入 docs/research/index.html tbody-v12 rows。
+
+    冪等：先剝除既有 data-asym 與 asym-flag span 再重注，重跑不會疊加。
+    回傳注入的 row 數。latest.json 缺 asym_flag 欄（舊版）→ 0 注入。
+    """
+    if not index_path.exists() or not latest_path.exists():
+        return 0
+    try:
+        data = json.loads(latest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return 0
+    # ticker → (flag, ar_live, live_ev5y_pct)
+    fmap: dict[str, tuple] = {}
+    for s in data.get("stocks", []):
+        flag = s.get("asym_flag")
+        if flag:
+            fmap[s.get("ticker")] = (flag, s.get("ar_live"), s.get("live_ev5y_pct"))
+    if not fmap:
+        return 0
+
+    txt = index_path.read_text(encoding="utf-8")
+    m = re.search(r'(<tbody id="dd-tbody-v12">)(.*?)(</tbody>)', txt, re.DOTALL)
+    if not m:
+        return 0
+    head, body, tail = m.group(1), m.group(2), m.group(3)
+
+    # 冪等：先剝除上輪注入
+    body = re.sub(r'\s+data-asym="[^"]*"', "", body)
+    body = re.sub(r'<span class="asym-flag[^"]*"[^>]*>.*?</span>', "", body)
+
+    injected = 0
+
+    def _repl(tr_m):
+        nonlocal injected
+        tr = tr_m.group(0)
+        tk_m = re.search(r'data-ticker="([^"]+)"', tr)
+        if not tk_m:
+            return tr
+        rec = fmap.get(tk_m.group(1))
+        if not rec:
+            return tr
+        flag, ar, irr = rec
+        ar_txt = f"{ar:.1f}" if isinstance(ar, (int, float)) else "—"
+        irr_txt = f"{irr:.1f}%" if isinstance(irr, (int, float)) else "—"
+        title = f"{flag} {_ASYM_LABEL.get(flag, '')}｜AR_live {ar_txt}／liveIRR {irr_txt}"
+        span = (f'<span class="asym-flag" style="{_ASYM_STYLE.get(flag, "")}" '
+                f'title="{html.escape(title, quote=True)}">{flag}</span>')
+        # 1) <tr> 掛 data-asym（緊跟 data-ticker 後）供未來排序篩選
+        tr = tr.replace(f'data-ticker="{tk_m.group(1)}"',
+                        f'data-ticker="{tk_m.group(1)}" data-asym="{flag}"', 1)
+        # 2) verdict badge 旁 append 標記 span
+        tr2, n = re.subn(r'(<span class="dec-badge[^"]*">[^<]*</span>)',
+                         r'\1' + span, tr, count=1)
+        if n:
+            tr = tr2
+        injected += 1
+        return tr
+
+    body = re.sub(r'<tr class="searchable".*?</tr>', _repl, body, flags=re.DOTALL)
+    if injected:
+        new_txt = txt[:m.start()] + head + body + tail + txt[m.end():]
+        index_path.write_text(new_txt, encoding="utf-8")
+    return injected
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -2959,6 +3044,18 @@ def main():
             f"/research/ sync succeeded.",
             file=sys.stderr,
         )
+
+    # Post-pass: 正不對稱三級標記（◆/★★/★）注入 research 頁裁決欄。必須在
+    # screener rebuild 之後——asym_flag 是 build_dd_screener 才寫進 latest.json 的。
+    # screener 失敗（yfinance 斷線）時 latest.json 是舊檔，仍用舊 asym_flag 注入
+    # （offline `--skip-dd-screener` 路徑早已在上方 return，不會到這）。
+    try:
+        n_asym = inject_asym_flags(INDEX_HTML, DOCS / "dd-screener" / "latest.json")
+        if n_asym:
+            print(f"→ 正不對稱標記：注入 research 頁 {n_asym} 檔（◆/★★/★）")
+    except Exception as e:
+        print(f"\n⚠ 正不對稱標記注入失敗：{e}（非致命，research 頁其餘正常）",
+              file=sys.stderr)
 
     # Event-driven trigger for supply-chain DD link map. Independent of screener
     # — pure file glob, no network. Always run so /supply-chain/ company tables

@@ -40,6 +40,7 @@
 | priced_in=high 上行閘（機器欄先讀：priced_in=high 且答不出未定價向量 → §Δ 不得偏多；expectations-synthesis Step 4） | 2026-07 (v1.1) | calibration_id：shortage×PhaseII 唯一系統性失效格；物理短缺為真但股價已 price 時偏多判讀最易默默失效 | 閘擋下的偏多判讀，3 個月後方向實證為對的比例 > 60% → 降級為警語（閘系統性壓對的偏多＝過嚴） | — |
 | 賣方料等級聲明（格式類但影響判讀權重：等級 C 降 §6 深度可信度；expectations-synthesis 硬規則 12） | 2026-07 (v1.1) | AMD 教訓：公開報導被包裝成「賣方對照」誇大料源深度，讀者高估 §6 權重 | 等級 C 報告的方向命中率（synthesis_ledger）與等級 A 無差異 ≥2 輪（料源等級對判讀品質無資訊量）→ 簡化為腳注 | — |
 | 衛星席時機路由＝cyclical-track 位置閘（核心席仍走 sop-funnel 板機；低熱名單外衛星席顯性標「未覆蓋」不猜；/cockpit/ 陣容表） | 2026-07-11 | sop population 品質閘系統性排除爆發/循環型（COHR 不在 25 檔 population）＝衛星席時機層無板機覆蓋，QC-42 mandate gap 在時機層重演 | 循環衛星按此閘執行的樣本連兩輪超額 < 0；或位置閘連續兩季令衛星席「有名單無時機」僵死（可執行時機 0 次）；或「未覆蓋」的結構型衛星（如 COHR）漏掉的時機事後顯著優於閘內樣本（＝該補結構型閘而非留白） | — |
+| 正不對稱三級標記（◆ 好球帶／★★／★；描述器類，`build_dd_screener.py::compute_asym_flag`，注入 /research/＋/dd-screener/）。門檻：◆＝AR_live≥9 且 liveIRR≥13% 且 trap🟢 且 moat≠↓ 且裁決＝進場 且齡≤90 天；★★＝AR_live≥6 且 liveIRR≥12% 且 trap🟢 且 moat≠↓；★＝AR_live≥4 且 liveIRR≥10% 且 trap≠🔴 且 moat≠↓。**PREREG 凍結至 2026-10** | 2026-07-12 | AR≥4 資格閘 v14.6 被殺的教訓＝閘不可證偽（沒人知道它擋掉的名字後來怎樣，安穩活三個月）。本標記刻意設計為**描述器**（非閘、不改裁決）＋**現價驅動**（隨股價漂移重算）＋**可證偽**（亮燈組可對帳 forward return），是教條的反面 | ◆ 亮燈組 12M forward return 未跑贏「非◆的進場組」，或 ◆ 組出現一檔 thesis 級虧損 → 驗屍防呆（收緊 ◆ 門檻）或直接刪 ◆ 級；★★/★ 兩級與後續超額無單調關係連兩輪 → 併級或降為純資訊註記 | — |
 
 **登記規則**：新增判斷類規則 → 加一列（含 kill condition）＋提名一條既有規則候刪（寫進 PR/commit 訊息）；刪除規則 → 該列標 `KILLED @ 版本`（保留供 lineage，勿刪行）；每輪校準把審計結果回填最後一欄。
 

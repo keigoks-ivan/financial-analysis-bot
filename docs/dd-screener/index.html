@@ -467,6 +467,13 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--paper);colo
         <br><em>注意：</em>裁決是<strong>寫報告當下</strong>的判斷，凍結於 DD 日期——股價漂移後宜搭配 5Y IRR（live 回推）與 26 週位置閘判讀，過舊的裁決以重跑 DD 為準。
       </li>
 
+      <li><strong>正不對稱三級標記（<span style="color:#B8860B;font-weight:700">◆</span> 好球帶／<span style="color:#475569;font-weight:700;letter-spacing:-1px">★★</span>／<span style="color:#64748B;font-weight:700">★</span>）</strong>：緊貼裁決 badge 的一枚描述器標記，衡量<strong>現價下</strong>的正不對稱程度。全部從既有欄位機械計算（<strong>現價重算值優先</strong>），取最高符合級；判定欄位缺任一即無標記。
+        <br><span style="color:#B8860B;font-weight:700">◆ 好球帶·重壓複審候選</span>：<code>AR_live ≥ 9</code> 且 <code>liveIRR ≥ 13%</code> 且陷阱 🟢 且護城河非收窄 且裁決＝進場 且報告齡 ≤ 90 天 — 稀有訊號·現價驅動·<strong>非加倉指令</strong>（只提示值得重新複審，不代表買賣動作）。
+        <br><span style="color:#475569;font-weight:700;letter-spacing:-1px">★★ 乾淨不對稱</span>：<code>AR_live ≥ 6</code> 且 <code>liveIRR ≥ 12%</code> 且陷阱 🟢 且護城河非收窄。
+        <br><span style="color:#64748B;font-weight:700">★ 不對稱但陷阱疑慮未決</span>：<code>AR_live ≥ 4</code> 且 <code>liveIRR ≥ 10%</code> 且陷阱非 🔴 且護城河非收窄。
+        <br><em>來源：</em><code>scripts/build_dd_screener.py</code> 的 <code>compute_asym_flag()</code>（單一權威實作）build 時算好寫進 <code>latest.json</code> 的 <code>asym_flag</code> 欄；<code>AR_live</code> ＝ 現價重算的不對稱比、<code>liveIRR</code> ＝ 現價重算的 5Y 年化報酬。hover 看兩者數值。門檻自 2026-07 起 PREREG 凍結至下輪校準。
+      </li>
+
       <li><strong>Moat（護城河等級 + 分數 + 趨勢）</strong>：護城河評等，格式 <code>等級 分數 趨勢</code>，例如 <code>S 9.8 ↑</code>。
         <br><em>來源：</em><code>dd-meta JSON</code>（<code>moat_grade</code> / <code>moat_score</code>）；趨勢箭頭 v13/v14 以 <code>dd-meta</code> 的 <code>moat_trend</code> 為權威，v12 legacy 過渡期間 fallback 舊 DCA Phase A1 箭頭（<code>collect_dca_moat_trend_map()</code>），兩者皆無時 fallback <code>→</code>（保守假設：穩定）
         <br><em>等級：</em><code>S</code>（≥ 9.5）/ <code>A</code>（≥ 8）/ <code>B</code>（≥ 6）/ <code>C</code>（≥ 4）/ <code>X</code>（護城河存疑）
@@ -1382,14 +1389,26 @@ function buildTable(stocks) {
 
     // 裁決 cell — v13/v14 dd-meta 的統一裁決；v12-only ticker 留 — 待重跑補上
     var VERDICT_STYLE = {'進場': ['#eafaef', 'var(--pos)'], '觀望': ['#fbf3df', 'var(--warn)'], '迴避': ['#fbeceb', 'var(--neg)']};
+    // 正不對稱三級標記（◆/★★/★）— 純機械描述器，非加倉指令。緊貼裁決 badge。
+    // 金色 ◆、深灰 ★（沿用 design token 低調 accent）。
+    var ASYM_LABEL = {'◆': '好球帶·重壓複審候選——描述器非加倉指令', '★★': '乾淨不對稱', '★': '不對稱但陷阱疑慮未決'};
+    var ASYM_STYLE = {'◆': 'color:#B8860B', '★★': 'color:#475569;letter-spacing:-1px', '★': 'color:#64748B'};
+    var asymHtml = '';
+    if (s.asym_flag) {
+      var af = s.asym_flag;
+      var arT = (typeof s.ar_live === 'number') ? s.ar_live.toFixed(1) : '—';
+      var irrT = (typeof s.live_ev5y_pct === 'number') ? s.live_ev5y_pct.toFixed(1) + '%' : '—';
+      var aTitle = af + ' ' + (ASYM_LABEL[af] || '') + '｜AR_live ' + arT + '／liveIRR ' + irrT;
+      asymHtml = '<span class="asym-flag" style="margin-left:4px;font-size:11px;cursor:help;' + (ASYM_STYLE[af] || '') + '" title="' + aTitle.replace(/"/g, '&quot;') + '">' + af + '</span>';
+    }
     var verdictHtml;
     if (s.dca_verdict) {
       var vc = VERDICT_STYLE[s.dca_verdict] || ['var(--line-soft)', 'var(--sec)'];
       var vTitle = 'DD §14 統一裁決（' + (s.dca_date || '') + '）' + (s.dca_role ? '｜角色: ' + s.dca_role : '');
       verdictHtml = '<td class="left"><a href="' + (s.dca_path || s.dd_path) + '" target="_blank" style="text-decoration:none" title="' + vTitle.replace(/"/g, '&quot;') + '">' +
-        '<span style="background:' + vc[0] + ';color:' + vc[1] + ';padding:1px 7px;border-radius:99px;font-size:10.5px;font-weight:700;white-space:nowrap">' + s.dca_verdict + '</span></a></td>';
+        '<span style="background:' + vc[0] + ';color:' + vc[1] + ';padding:1px 7px;border-radius:99px;font-size:10.5px;font-weight:700;white-space:nowrap">' + s.dca_verdict + '</span></a>' + asymHtml + '</td>';
     } else {
-      verdictHtml = '<td class="left" style="color:var(--muted)" title="v12 舊報告無決策層 metadata — DD 重跑 v14 後自動補上">—</td>';
+      verdictHtml = '<td class="left" style="color:var(--muted)" title="v12 舊報告無決策層 metadata — DD 重跑 v14 後自動補上">—' + asymHtml + '</td>';
     }
 
     // Moat cell
