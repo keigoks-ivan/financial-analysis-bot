@@ -400,7 +400,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--paper);colo
           <span style="color:var(--sec)">有個股深度報告（DD）的名字才進主表。<strong style="color:var(--ink)">FunnelRank</strong>（品質 × 護城河趨勢 × EPS 修正動能）綜合排序 ＋ <strong style="color:var(--ink)">MLB 五條硬閘</strong>（FCF/ROIC/EPS CAGR/PEG/D-E）＋ 每份 DD 的<strong style="color:var(--ink)">統一裁決（進場 / 觀望 / 迴避）</strong>。這是判斷層——爆發候選路徑會在此判斷該價位是否仍有不對稱 upside。<em style="color:var(--sec);font-style:normal">用途：判斷該不該進、扮演什麼角色。</em></span></div>
         </div>
         <div style="display:flex;gap:12px;align-items:flex-start;padding:10px 14px;background:var(--line-soft);border-left:3px solid var(--muted);border-radius:6px">
-          <div><strong style="color:var(--warn)">管線③ AR Live watch —（已退役 2026-07-07）</strong><br>          <span style="color:var(--sec)">原機制＝觀望股回檔使 <code>AR ≥ 4</code> 時自動亮進 watch。上線期間實檔零命中，v14.6 已將 AR 降為參考資訊；「等回檔」改由 DD §14 row 8a 的 26 週位置閘與 sop-funnel 態②C 冷卻再武裝管理。<em style="color:var(--sec);font-style:normal">AR 數值仍在主表欄位供參考，不再作為掛單觸發。</em></span></div>
+          <div><strong style="color:var(--warn)">管線③ AR Live watch —（已退役 2026-07-07）</strong><br>          <span style="color:var(--sec)">原機制＝觀望股回檔使 <code>AR ≥ 4</code> 時自動亮進 watch。上線期間實檔零命中，已將 AR 降為參考資訊；「等回檔」改由 DD §14 裁決層的 26 週位置閘、以及 SOP 漏斗子頁的「冷卻後再武裝」流程管理。<em style="color:var(--sec);font-style:normal">AR 數值仍在主表欄位供參考，不再作為掛單觸發。</em></span></div>
         </div>
       </div>
 
@@ -463,6 +463,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--paper);colo
         <span style="background:#fbf3df;color:var(--warn);padding:0 6px;border-radius:99px;font-weight:700">觀望</span>
         <span style="background:#fbeceb;color:var(--neg);padding:0 6px;border-radius:99px;font-weight:700">迴避</span>。點擊跳該 DD 的 <code>#decision</code> 錨點。
         <br><em>來源：</em>v13/v14 <code>dd-meta</code> 的 <code>dca_verdict</code>（欄位名沿用舊稱，資料是合併報告 Part II 決策層，非已退役的獨立 DCA 檔）；hover 看裁決日期與倉位角色（<code>dca_role</code>）。
+        <br><em>三詞制：</em>裁決只有<strong>進場／觀望／迴避</strong>三態，不含第四種。<strong>倉位角色</strong>是獨立的第二維（<code>核心</code>／<code>衛星</code>／<code>追蹤</code>／<code>不持有</code>，hover 於裁決 badge 上可見）——同一個「進場」可能扮演核心複利或衛星爆發，角色由 DD 決定、不改變裁決本身。過去的「條件式」不再是裁決狀態；條件進場的門檻與執行語意改由報告 §14a 的執行語承載。
         <br><em>顯示 —：</em>v12 舊 schema 報告無決策層 metadata，該 ticker 重跑 v14 DD 後自動補上；不 fallback 讀 legacy DCA（2026-07 起 DCA 不再作為裁決來源）。
         <br><em>注意：</em>裁決是<strong>寫報告當下</strong>的判斷，凍結於 DD 日期——股價漂移後宜搭配 5Y IRR（live 回推）與 26 週位置閘判讀，過舊的裁決以重跑 DD 為準。
       </li>
@@ -491,14 +492,14 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--paper);colo
       </li>
 
       <li><strong>FY+1→FY+3 CAGR</strong>：Excel buy-side forward 2Y CAGR（%）— <strong>v1.9 起改用 Excel snapshot</strong>。
-        <br><em>來源：</em>Excel <code>cagr_fy1_fy3_pct</code>（FY+1 → FY+3 純前瞻 2 年期複合成長率，目前 202/204 ticker 覆蓋，動態隨 Koyfin watchlist 增刪）；少數 yfinance-only ticker（6146.T / 6857.T 等無 Excel 資料）fallback yfinance「+1y / +2y」row；SU / ABB 因 Koyfin export 資料異常於 <code>scripts/load_eps_estimates_xlsx.py</code> <code>_SKIP_TICKERS</code> 名單中略過。
+        <br><em>來源：</em>Excel <code>cagr_fy1_fy3_pct</code>（FY+1 → FY+3 純前瞻 2 年期複合成長率，目前約 219/241 ticker 覆蓋，動態隨 Koyfin watchlist 增刪）；少數 yfinance-only ticker（6146.T / 6857.T 等無 Excel 資料）fallback yfinance「+1y / +2y」row；SU / ABB 因 Koyfin export 資料異常於 <code>scripts/load_eps_estimates_xlsx.py</code> <code>_SKIP_TICKERS</code> 名單中略過。
         <br><em>窗口語意：</em>跟舊版「yearAgo → FY+1」(含 1 個過去實際 EPS) 不同；現在是 2 個前瞻 estimate (FY+1 vs FY+3) — buy-side 對未來 2 年的純前瞻 expectation。
         <br><em>修正動能：</em>右方小字 <span style="color:var(--pos);font-weight:600">↑+X.X% (vs 5/26)</span>（綠 = 上修）/ <span style="color:var(--neg);font-weight:600">↓-X.X% (vs 4/30)</span>（紅 = 下修）= 本份 Excel CAGR vs 上一份 Excel snapshot 差值（絕對 pp 差，標 % 為視覺一致）；尾段 <code>(vs M/D)</code> 是**比較基準的日期**（hover 看距今幾天）；|diff| &lt; 0.5 視為持平；「新」chip = 此 ticker 上份 baseline 未收錄。詳見上方「EPS 修正動能」callout。
         <br><em>QGM MLB 門檻：</em><code>≥ 15%</code>（顏色基於 Excel forward CAGR；server 端 <code>pass_count</code> 同一欄位 — v1.9 已與 UI 顯示對齊）
       </li>
 
       <li><strong>Curr FY / Next FY / FY+3 EPS</strong>：當前 / 下一 / 兩年後會計年度 consensus EPS（純資訊欄無 pass/fail）— <strong>v1.8 起 Excel buy-side 為主，yfinance fallback；v1.10 加 FY+3 revision chip + 動態 baseline 間距標籤</strong>。
-        <br><em>來源優先順序：</em>(1) Koyfin Excel <code>FY1E / FY2E / FY3E</code> consensus mean — 主路徑，202/204 ticker；(2) yfinance <code>.earnings_estimate</code> <code>0y / +1y / +2y</code> row — fallback（JP 股、SU/ABB、Excel 缺值）。<code>eps_source</code> 欄記載每個 ticker 走哪一路。
+        <br><em>來源優先順序：</em>(1) Koyfin Excel <code>FY1E / FY2E / FY3E</code> consensus mean — 主路徑，約 219/241 ticker；(2) yfinance <code>.earnings_estimate</code> <code>0y / +1y / +2y</code> row — fallback（JP 股、SU/ABB、Excel 缺值）。<code>eps_source</code> 欄記載每個 ticker 走哪一路。
         <br><em>對應曆年：</em>多數 US Dec-FY 公司：Curr FY ≈ 本曆年、Next FY ≈ 下個曆年；非 Dec-FY 例外（NVDA Jan：Curr = FY27 / Next = FY28；JP 公司 Mar：差約半年）。
         <br><em>每欄底下修正動能 chip：</em><span style="color:var(--pos);font-weight:600">↑+X.X% (vs 5/26)</span> / <span style="color:var(--neg);font-weight:600">↓-X.X% (vs 4/30)</span> = 此 FY EPS vs 上一份 Excel snapshot 的相對變動 %；<code>(vs M/D)</code> 是**比較基準的日期**（即上一份 Excel snapshot 日；hover tooltip 列距今天數）。「新」chip = 此 ticker 在 prior snapshot 還不在 universe（新加入）。詳見上方「EPS 修正動能」callout。
         <br><em>非美股 native currency 顯示：</em><code>.TW / .T / .HK / .KS / .SS / .SZ</code> 後綴的 ticker 自動 back-compute FX（從 yfinance financialCurrency vs Excel USD），表格直接顯示 TWD / JPY / HKD / KRW / CNY 數字 + 後綴 chip；hover 看 USD 原值與 FX rate。
@@ -1288,7 +1289,7 @@ function buildTable(stocks) {
   var criteriaHeaders = criteria.map(function(c) {
     var sortKey = LIVE_SORT_KEY[c.key] || c.key;
     var title;
-    if (c.key === 'eps2y') title = 'Excel FY+1→FY+3 forward 2Y CAGR — buy-side consensus, 144/146 ticker 覆蓋';
+    if (c.key === 'eps2y') title = 'Excel FY+1→FY+3 forward 2Y CAGR — buy-side consensus，覆蓋隨 Koyfin watchlist 動態變動';
     else if (c.key === 'peg') title = '即時 PEG = live FwdPE / live EPS CAGR — sort 按 live 數值';
     var th = _thSortable(c.label, sortKey, title ? {title: title} : undefined);
     if (c.key === 'eps2y') {
@@ -1399,7 +1400,7 @@ function buildTable(stocks) {
       var arT = (typeof s.ar_live === 'number') ? s.ar_live.toFixed(1) : '—';
       var irrT = (typeof s.live_ev5y_pct === 'number') ? s.live_ev5y_pct.toFixed(1) + '%' : '—';
       var aTitle = af + ' ' + (ASYM_LABEL[af] || '') + '｜AR_live ' + arT + '／liveIRR ' + irrT;
-      asymHtml = '<span class="asym-flag" style="margin-left:4px;font-size:11px;cursor:help;' + (ASYM_STYLE[af] || '') + '" title="' + aTitle.replace(/"/g, '&quot;') + '">' + af + '</span>';
+      asymHtml = '<span class="asym-flag" style="margin-left:4px;font-size:11px;cursor:help;' + (ASYM_STYLE[af] || '') + '" title="' + aTitle.replace(/"/g, '&quot;') + '">' + af + ' ' + arT + (irrT !== '—' ? '·' + irrT : '') + '</span>';
     }
     var verdictHtml;
     if (s.dca_verdict) {

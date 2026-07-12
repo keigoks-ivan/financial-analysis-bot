@@ -2891,12 +2891,13 @@ def inject_asym_flags(index_path: "Path", latest_path: "Path") -> int:
         data = json.loads(latest_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return 0
-    # ticker → (flag, ar_live, live_ev5y_pct)
+    # ticker → (flag, ar_live, live_ev5y_pct)；flag 可為 None——
+    # AR_live 數字對「全部」有資料的 row 顯示（掃全場不對稱分布），標記僅三級命中者
     fmap: dict[str, tuple] = {}
     for s in data.get("stocks", []):
-        flag = s.get("asym_flag")
-        if flag:
-            fmap[s.get("ticker")] = (flag, s.get("ar_live"), s.get("live_ev5y_pct"))
+        if s.get("ar_live") is None and not s.get("asym_flag"):
+            continue
+        fmap[s.get("ticker")] = (s.get("asym_flag"), s.get("ar_live"), s.get("live_ev5y_pct"))
     if not fmap:
         return 0
 
@@ -2909,6 +2910,7 @@ def inject_asym_flags(index_path: "Path", latest_path: "Path") -> int:
     # 冪等：先剝除上輪注入
     body = re.sub(r'\s+data-asym="[^"]*"', "", body)
     body = re.sub(r'<span class="asym-flag[^"]*"[^>]*>.*?</span>', "", body)
+    body = re.sub(r'\s*<span class="ar-live"[^>]*>.*?</span>', "", body)
 
     injected = 0
 
@@ -2924,17 +2926,26 @@ def inject_asym_flags(index_path: "Path", latest_path: "Path") -> int:
         flag, ar, irr = rec
         ar_txt = f"{ar:.1f}" if isinstance(ar, (int, float)) else "—"
         irr_txt = f"{irr:.1f}%" if isinstance(irr, (int, float)) else "—"
-        title = f"{flag} {_ASYM_LABEL.get(flag, '')}｜AR_live {ar_txt}／liveIRR {irr_txt}"
-        span = (f'<span class="asym-flag" style="{_ASYM_STYLE.get(flag, "")}" '
-                f'title="{html.escape(title, quote=True)}">{flag}</span>')
-        # 1) <tr> 掛 data-asym（緊跟 data-ticker 後）供未來排序篩選
-        tr = tr.replace(f'data-ticker="{tk_m.group(1)}"',
-                        f'data-ticker="{tk_m.group(1)}" data-asym="{flag}"', 1)
-        # 2) verdict badge 旁 append 標記 span
-        tr2, n = re.subn(r'(<span class="dec-badge[^"]*">[^<]*</span>)',
-                         r'\1' + span, tr, count=1)
-        if n:
-            tr = tr2
+        if flag:
+            title = f"{flag} {_ASYM_LABEL.get(flag, '')}｜AR_live {ar_txt}／liveIRR {irr_txt}"
+            span = (f'<span class="asym-flag" style="{_ASYM_STYLE.get(flag, "")}" '
+                    f'title="{html.escape(title, quote=True)}">{flag}</span>')
+            # 1) <tr> 掛 data-asym（緊跟 data-ticker 後）供未來排序篩選
+            tr = tr.replace(f'data-ticker="{tk_m.group(1)}"',
+                            f'data-ticker="{tk_m.group(1)}" data-asym="{flag}"', 1)
+            # 2) verdict badge 旁 append 標記 span
+            tr2, n = re.subn(r'(<span class="dec-badge[^"]*">[^<]*</span>)',
+                             r'\1' + span, tr, count=1)
+            if n:
+                tr = tr2
+        # 3) AR_live 數字明面顯示：注入最後一欄（5Y EV/IRR）尾端，全部有資料的 row
+        if isinstance(ar, (int, float)):
+            ar_span = (f' <span class="ar-live" style="font-size:10.5px;color:#94A3B8;'
+                       f'white-space:nowrap" title="AR_live（現價重算的機率加權上檔/下檔比）">'
+                       f'AR {ar_txt}</span>')
+            k = tr.rfind('</td>')
+            if k != -1:
+                tr = tr[:k] + ar_span + tr[k:]
         injected += 1
         return tr
 
