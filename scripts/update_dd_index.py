@@ -2871,6 +2871,8 @@ _ASYM_LABEL = {
     "★★": "乾淨不對稱",
     "★": "不對稱但陷阱疑慮未決",
 }
+# 不對稱層級數值化（供 research 頁預設排序：◆>★★>★>無）
+_ASYM_RANK = {"◆": 3, "★★": 2, "★": 1}
 # 金色 ◆、深灰 ★（沿用機構風低調 accent，inline 以免動生成產物 CSS）
 _ASYM_STYLE = {
     "◆": "margin-left:5px;font-size:0.9em;color:#B8860B;cursor:help",
@@ -2882,7 +2884,7 @@ _ASYM_STYLE = {
 def inject_asym_flags(index_path: "Path", latest_path: "Path") -> int:
     """把 latest.json 的 asym_flag 注入 docs/research/index.html tbody-v12 rows。
 
-    冪等：先剝除既有 data-asym 與 asym-flag span 再重注，重跑不會疊加。
+    冪等：先剝除既有 data-asym／data-asym-rank／data-ar 與 asym-flag span 再重注，重跑不會疊加。
     回傳注入的 row 數。latest.json 缺 asym_flag 欄（舊版）→ 0 注入。
     """
     if not index_path.exists() or not latest_path.exists():
@@ -2907,8 +2909,11 @@ def inject_asym_flags(index_path: "Path", latest_path: "Path") -> int:
         return 0
     head, body, tail = m.group(1), m.group(2), m.group(3)
 
-    # 冪等：先剝除上輪注入
+    # 冪等：先剝除上輪注入（三個 data 屬性各自剝除；data-asym 與 data-asym-rank
+    # 是不同 token，前者 regex 不會誤剝後者，故分開列出）
+    body = re.sub(r'\s+data-asym-rank="[^"]*"', "", body)
     body = re.sub(r'\s+data-asym="[^"]*"', "", body)
+    body = re.sub(r'\s+data-ar="[^"]*"', "", body)
     body = re.sub(r'<span class="asym-flag[^"]*"[^>]*>.*?</span>', "", body)
     body = re.sub(r'\s*<span class="ar-live"[^>]*>.*?</span>', "", body)
 
@@ -2926,14 +2931,21 @@ def inject_asym_flags(index_path: "Path", latest_path: "Path") -> int:
         flag, ar, irr = rec
         ar_txt = f"{ar:.1f}" if isinstance(ar, (int, float)) else "—"
         irr_txt = f"{irr:.1f}%" if isinstance(irr, (int, float)) else "—"
+        # <tr> 排序屬性（緊跟 data-ticker 後）：data-asym-rank/data-asym 僅命中者，
+        # data-ar 對「全部」有 AR_live 的 row，供 research 頁預設「正不對稱優先」排序
+        attrs = ""
+        if flag:
+            attrs += f' data-asym="{flag}" data-asym-rank="{_ASYM_RANK.get(flag, 0)}"'
+        if isinstance(ar, (int, float)):
+            attrs += f' data-ar="{ar}"'
+        if attrs:
+            tr = tr.replace(f'data-ticker="{tk_m.group(1)}"',
+                            f'data-ticker="{tk_m.group(1)}"{attrs}', 1)
         if flag:
             title = f"{flag} {_ASYM_LABEL.get(flag, '')}｜AR_live {ar_txt}／liveIRR {irr_txt}"
             span = (f'<span class="asym-flag" style="{_ASYM_STYLE.get(flag, "")}" '
                     f'title="{html.escape(title, quote=True)}">{flag}</span>')
-            # 1) <tr> 掛 data-asym（緊跟 data-ticker 後）供未來排序篩選
-            tr = tr.replace(f'data-ticker="{tk_m.group(1)}"',
-                            f'data-ticker="{tk_m.group(1)}" data-asym="{flag}"', 1)
-            # 2) verdict badge 旁 append 標記 span
+            # verdict badge 旁 append 標記 span
             tr2, n = re.subn(r'(<span class="dec-badge[^"]*">[^<]*</span>)',
                              r'\1' + span, tr, count=1)
             if n:
