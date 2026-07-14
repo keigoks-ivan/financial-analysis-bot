@@ -223,6 +223,8 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 
 <div class="container">
 
+%TOGGLE%
+
 <div style="margin:1rem 0;padding:.7rem 1rem;background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;font-size:.86rem">
 📖 看不懂 E3 / Ch12 / STX50 / VCP 這些代號？→ <a href="/backtest/glossary/" style="font-weight:700">術語對照表</a>
 </div>

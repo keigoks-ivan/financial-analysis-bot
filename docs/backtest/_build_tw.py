@@ -254,6 +254,8 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 
 <div class="container">
 
+%TOGGLE%
+
 <!-- LIVE -->
 <div class="section">
 <h2 class="section-title">現役系統</h2>

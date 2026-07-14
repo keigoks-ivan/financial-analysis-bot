@@ -7,6 +7,7 @@ Every backtest page header renders the same groups via make_toggle(active):
     多資產：      turtle | clenow | slope_global | xadef
     台股波段：    tw0050cmp | twcrash | tw0050 | tw0050lt | lttw | tw0050six
                   | tw_vcrash | tw0050d
+    台股選擇權：  tw_opt | txo_vs | txo_ps | txo_ic | txo_cc0050 | txo_th
     日內交易：    txf_intra | txf_chips | ssf_xsec | txf_basis
     研究筆記：    dvw | dvw_deep | dvw_global | dvw_tw | ma_cross | ma_dev
                   | ma_dynband | ma_squeeze | smh_vcrash
@@ -69,22 +70,32 @@ INDIVIDUAL_LINKS = [
     ("/backtest/slope_filter/", "SPY/AGG 斜率", "slope", None),
     ("/backtest/rsi2_mr/", "SPY/QQQ 均值回歸", "rsi2", None),
     ("/backtest/supertrend/", "週線 Supertrend", "st", None),
+    ("/backtest/minervini/", "Minervini RS+VCP", "minervini", None),
+    ("/backtest/mom_volscaling/", "動能·波動縮放", "momvs", None),
+    ("/backtest/dual_track_study/", "雙軌分散研究", "dtstudy", None),
     ("/backtest/leverage_voltarget/", "期貨槓桿疊加", "levvt", None),
     ("/backtest/exit_switch/", "出場法切換", "exitsw", "否決"),
     ("/backtest/short_system/", "指數做空", "short", "失敗"),
     ("/backtest/cndr/", "Iron Condor", "cndr", "失敗"),
     ("/backtest/covered_call/", "Covered Call", "cc", "負貢獻"),
-    ("/backtest/txo_vol_seller/", "台指選擇權賣方", "txo_vs", "模擬中"),
+]
+
+# 台股選擇權專區：TXO 短波動/賣方/避險策略群，共用 TAIEX/TWVIX/TXO 資料層 +
+# Black-76 引擎（見 tw_options hub）。自成一個 pill 群，不與美股個別系統混列。
+OPTIONS_LINKS = [
     ("/backtest/tw_options/", "台股選擇權專區", "tw_opt", "專區"),
+    ("/backtest/txo_vol_seller/", "台指選擇權賣方", "txo_vs", "模擬中"),
     ("/backtest/txo_put_seller/", "台指賣方下檔", "txo_ps", "研究"),
     ("/backtest/txo_iron_condor/", "台指雙賣", "txo_ic", "研究"),
-    ("/backtest/txo_tail_hedge/", "台指尾端避險", "txo_th", "研究"),
     ("/backtest/txo_covered_call_0050/", "台指 Covered Call", "txo_cc0050", "研究"),
+    ("/backtest/txo_tail_hedge/", "台指尾端避險", "txo_th", "研究"),
 ]
 
 MULTI_LINKS = [
     ("/backtest/turtle/", "唐奇安突破", "turtle", None),
     ("/backtest/clenow/", "跨資產趨勢", "clenow", None),
+    ("/backtest/multiasset_trend/", "SG Trend 複製", "matrend", None),
+    ("/backtest/turtle_adopt/", "組合採用 Sleeve", "turtle_adopt", None),
     ("/backtest/slope_filter_global/", "全球斜率穩健性", "slope_global", None),
     ("/backtest/crossasset_defense/", "跨資產防守", "xadef", None),
 ]
@@ -188,6 +199,7 @@ def make_toggle(active: str) -> str:
             + _row("個別系統", INDIVIDUAL_LINKS, active)
             + _row("多資產", MULTI_LINKS, active)
             + _row("台股波段", TAIWAN_LINKS, active)
+            + _row("台股選擇權", OPTIONS_LINKS, active)
             + _row("日內交易", INTRADAY_LINKS, active)
             + _row("研究筆記", RESEARCH_LINKS, active)
             + '</nav>')
