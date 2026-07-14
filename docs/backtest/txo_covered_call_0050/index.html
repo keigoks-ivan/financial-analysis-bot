@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta name="robots" content="noindex,nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>台指多頭上賣 call（Covered Call）| InvestMQuest Research</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+:root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
+      --text:#111827;--muted:#6b7280;--border:#e5e7eb;
+      --green:#059669;--green-bg:#ecfdf5;--green-border:#a7f3d0;--green-text:#065f46;
+      --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;--red-text:#991b1b;
+      --amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fde68a;--amber-text:#92400e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1120px;margin:0 auto;padding:0 1.5rem}
+.page-hdr{padding:1.75rem 0 1.25rem;background:linear-gradient(180deg,#eff6ff 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
+.page-hdr h1{font-size:1.6rem;font-weight:700;letter-spacing:-.03em}
+.page-hdr .sub{color:var(--muted);font-size:.9rem;margin-top:.2rem}
+.crumb{font-size:.82rem;color:var(--muted);margin-bottom:.4rem}
+.crumb a{color:var(--muted)}
+.section{padding:1.5rem 0 0}
+.section-title{font-size:1.15rem;font-weight:700;margin-bottom:1rem;
+               padding-bottom:.45rem;border-bottom:2px solid var(--brand)}
+.section-sub{font-size:.85rem;color:var(--muted);margin:-.5rem 0 1rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.card h3{font-size:1rem;font-weight:600;margin-bottom:.85rem}
+.card .takeaway{font-size:.88rem;margin-top:.75rem;padding:.6rem .9rem;border-radius:6px;
+                background:var(--brand-light);border-left:3px solid var(--brand)}
+.card p{font-size:.9rem;color:#374151;margin-bottom:.6rem}
+.card p:last-child{margin-bottom:0}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{text-align:left;padding:.6rem .75rem;border-bottom:1px solid var(--border)}
+th{background:#f9fafb;font-weight:600;font-size:.78rem;text-transform:uppercase;
+   letter-spacing:.04em;color:var(--muted)}
+td{font-variant-numeric:tabular-nums}
+tbody tr:hover td{background:#f3f4f6}
+.hero{margin:1.25rem 0;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--card)}
+.hero-top{background:linear-gradient(135deg,#eff6ff 0%,#f5f8ff 100%);padding:1.4rem 1.6rem;border-bottom:1px solid var(--border)}
+.hero-top .verdict-tag{display:inline-block;color:#fff;font-size:.74rem;font-weight:700;
+                       letter-spacing:.05em;padding:.25rem .7rem;border-radius:99px;margin-bottom:.5rem}
+.hero-top h2{font-size:1.35rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.35rem}
+.hero-top p{font-size:.92rem;color:#374151;max-width:62rem}
+.hero-stats{display:grid;grid-template-columns:repeat(3,1fr);background:var(--card)}
+.hero-stats > div{padding:1rem 1.2rem;text-align:center;border-right:1px solid var(--border)}
+.hero-stats > div:last-child{border-right:none}
+.hero-stats .hs-label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.hero-stats .hs-value{font-size:1.5rem;font-weight:800;letter-spacing:-.02em}
+.note{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;
+      padding:.85rem 1.1rem;font-size:.84rem;color:var(--amber-text);margin:1rem 0}
+.warn-loud{background:var(--red-bg);border:2px solid var(--red-border);border-radius:8px;
+      padding:1rem 1.2rem;font-size:.9rem;color:var(--red-text);margin:1rem 0}
+.warn-loud strong{color:var(--red)}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.chart-card h3{font-size:.95rem;font-weight:600;margin-bottom:.5rem}
+.chart-wrap{position:relative;width:100%;height:380px}
+.chart-wrap-sm{position:relative;width:100%;height:260px}
+details{background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:.75rem}
+details summary{padding:.9rem 1.25rem;font-weight:600;font-size:.95rem;cursor:pointer;list-style:none;display:flex;align-items:center;gap:.5rem}
+details summary::before{content:'▸';color:var(--brand);transition:transform .15s}
+details[open] summary::before{transform:rotate(90deg)}
+details .d-body{padding:0 1.25rem 1.25rem;overflow-x:auto}
+.issue-list{font-size:.88rem;color:#374151;padding-left:1.2rem;line-height:1.9}
+.persona{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.persona > div{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem 1.15rem}
+.persona h4{font-size:.92rem;font-weight:700;margin-bottom:.4rem;color:var(--brand)}
+.persona p{font-size:.85rem;color:#374151;margin:0}
+.tile-row{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-bottom:1rem}
+.tile{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.85rem 1rem;text-align:center}
+.tile .t-label{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.tile .t-value{font-size:1.15rem;font-weight:800;margin-top:.15rem}
+.cards3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
+       text-align:center;padding:1.25rem 0;font-size:.78rem;margin-top:2rem}
+@media(max-width:768px){
+  .hero-stats{grid-template-columns:repeat(1,1fr)}
+  .hero-stats > div{border-bottom:1px solid var(--border);border-right:none}
+  .persona{grid-template-columns:1fr}
+  .cards3{grid-template-columns:1fr}
+  .tile-row{grid-template-columns:repeat(2,1fr)}
+  table{font-size:.78rem}th,td{padding:.45rem .5rem}
+}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/monitor/">市場監測</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/rotation/">產業輪動</a>
+          <a href="/crowding/">擁擠交易監測</a>
+          <a href="/regime/">大類資產 regime</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/catalyst/">催化劑日曆</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">選股<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/cockpit/">選股主控台</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/research/momentum-5/">Momentum-5</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screeners.html">RS+VCP Screener</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">個股總覽</a>
+          <a href="/research/">個股 DD</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/research/synthesis/">期望落差綜合研判</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/track-record/">裁決實績</a>
+          <a href="/long-track-smh/">長線訊號 SMH</a>
+          <a href="/long-track-tw/">台股長線</a>
+          <a href="/turtle-sleeve/">商品 Sleeve</a>
+          <a href="/backtest/" class="active">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/cache/">Data Cache</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="page-hdr">
+  <div class="container">
+    <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / 台指多頭上賣 call（Covered Call）</div>
+    <h1>台指多頭上賣 call（Covered Call）</h1>
+    <div class="sub">持 0050/台指多頭 + 賣 call 收租・資料截至 2026-07-14</div>
+    <style id="bt-subnav-style">.bt-subnav{margin-top:.75rem;border:1px solid var(--border,#e5e7eb);border-radius:8px;overflow:hidden;font-size:.78rem;line-height:1.3}.bt-subnav-row{display:flex;align-items:flex-start;gap:.55rem;padding:.32rem .55rem;border-top:1px solid var(--border,#e5e7eb)}.bt-subnav-row:first-child{border-top:0}.bt-subnav-lbl{flex:0 0 5.4em;font-size:.64rem;font-weight:700;color:var(--muted,#6b7280);text-transform:uppercase;letter-spacing:.04em;padding-top:.34rem}.bt-subnav-pills{display:flex;flex-wrap:wrap;gap:.3rem;min-width:0}.bt-subnav-pills a{display:inline-flex;align-items:center;gap:.28rem;padding:.26rem .6rem;background:#eef1f4;color:#374151;border-radius:999px;text-decoration:none;font-weight:500;white-space:nowrap;transition:background .12s}.bt-subnav-pills a:hover{background:#e1e6ea}.bt-subnav-pills a.bt-dead{color:#7a828d;background:#f2f3f5}.bt-subnav-pills a.bt-on{background:linear-gradient(135deg,#081832,#173564);color:#fff;font-weight:600}.bt-subnav-pills a.bt-on:hover{background:linear-gradient(135deg,#081832,#173564)}.bt-tag{font-size:.6rem;font-weight:600;padding:.02rem .3rem;border-radius:4px;line-height:1.4}.bt-tag-dead{background:rgba(220,38,38,.12);color:#b42318}.bt-tag-watch{background:rgba(180,118,20,.15);color:#986a12}.bt-on .bt-tag-dead{background:rgba(255,255,255,.22);color:#fff}.bt-on .bt-tag-watch{background:rgba(255,255,255,.22);color:#fff}@media(max-width:640px){.bt-subnav-row{flex-direction:column;gap:.28rem;padding:.4rem .55rem}.bt-subnav-lbl{flex-basis:auto;padding-top:0}}</style><nav class="bt-subnav" aria-label="回測子導航"><div class="bt-subnav-row"><div class="bt-subnav-lbl">對比總覽</div><div class="bt-subnav-pills"><a href="/backtest/">20 年</a><a href="/backtest/10y/">10 年</a><a href="/backtest/criteria/">評估標準</a><a href="/backtest/tw/">台股總覽</a><a href="/backtest/multi/">多資產總覽</a><a href="/backtest/leverage/">槓桿疊加總覽</a><a href="/backtest/ma_sensitivity/">MA 敏感度</a><a href="/backtest/free_lunch/">分散與免費午餐</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">個別系統</div><div class="bt-subnav-pills"><a href="/backtest/long_track/">SPY/QQQ 長軌</a><a href="/backtest/long_track_qqq/">QQQ 長軌純攻</a><a href="/backtest/long_track_ensemble/">SPY/QQQ 集成</a><a href="/backtest/long_track_smh/">SMH/QQQ 進攻</a><a href="/backtest/six_state/">QQQ＋SMH 六狀態</a><a href="/backtest/six_state_v1r1/">QQQ 六狀態實盤</a><a href="/backtest/gem/">SPY/ACWX 雙動能</a><a href="/backtest/slope_filter/">SPY/AGG 斜率</a><a href="/backtest/rsi2_mr/">SPY/QQQ 均值回歸</a><a href="/backtest/supertrend/">週線 Supertrend</a><a href="/backtest/leverage_voltarget/">期貨槓桿疊加</a><a href="/backtest/txo_vol_seller/">台指選擇權賣方<span class="bt-tag bt-tag-watch">模擬中</span></a><a href="/backtest/dual_track/" class="bt-dead">SPY/QQQ 雙軌多空<span class="bt-tag bt-tag-dead">否決</span></a><a href="/backtest/exit_switch/" class="bt-dead">出場法切換<span class="bt-tag bt-tag-dead">否決</span></a><a href="/backtest/short_system/" class="bt-dead">指數做空<span class="bt-tag bt-tag-dead">失敗</span></a><a href="/backtest/cndr/" class="bt-dead">Iron Condor<span class="bt-tag bt-tag-dead">失敗</span></a><a href="/backtest/covered_call/" class="bt-dead">Covered Call<span class="bt-tag bt-tag-dead">負貢獻</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">多資產</div><div class="bt-subnav-pills"><a href="/backtest/turtle/">唐奇安突破</a><a href="/backtest/clenow/">跨資產趨勢</a><a href="/backtest/slope_filter_global/">全球斜率穩健性</a><a href="/backtest/crossasset_defense/">跨資產防守</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">台股波段</div><div class="bt-subnav-pills"><a href="/backtest/tw_0050_compare/">0050 總覽·台美差異</a><a href="/backtest/tw_crash/">台股含崩盤驗證</a><a href="/backtest/tw_0050/">0050 進攻趨勢（移植）</a><a href="/backtest/tw_0050_lt/">0050 長軌趨勢</a><a href="/backtest/long_track_tw/">2330/0050 E3 長軌</a><a href="/backtest/tw_0050_six/">0050 六狀態機</a><a href="/backtest/tw_vcrash/">V崩防禦研究</a><a href="/backtest/tw_0050_dual/" class="bt-dead">0050 雙軌多空<span class="bt-tag bt-tag-dead">否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">日內交易</div><div class="bt-subnav-pills"><a href="/backtest/txf_intraday/">台指當沖<span class="bt-tag bt-tag-watch">未過</span></a><a href="/backtest/txf_chips/">籌碼偏向<span class="bt-tag bt-tag-watch">觀察</span></a><a href="/backtest/ssf_xsec/">個股期橫斷面<span class="bt-tag bt-tag-watch">未過</span></a><a href="/backtest/txf_basis/" class="bt-dead">基差偏向<span class="bt-tag bt-tag-dead">否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究筆記</div><div class="bt-subnav-pills"><a href="/backtest/daily_vs_weekly/">日/週線</a><a href="/backtest/daily_vs_weekly_deep/">日/週·深掘</a><a href="/backtest/daily_vs_weekly_global/">日/週·全球</a><a href="/backtest/daily_vs_weekly_tw/">日/週·台股</a><a href="/backtest/ma_cross/">MA 交叉</a><a href="/backtest/ma_deviation/">MA 乖離</a><a href="/backtest/ma_dynband/">MA 動態帶</a><a href="/backtest/ma_squeeze/">MA 擠壓</a><a href="/backtest/smh_vcrash/">SMH V崩</a></div></div></nav>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ===== HERO ===== -->
+<div class="hero">
+  <div class="hero-top">
+    <span class="verdict-tag" style="background:var(--green)">今日判定：GO（可執行）</span>
+    <h2>用上檔換權利金：多頭持股不動，每月賣一口價外 call 收租。</h2>
+    <p>用上檔換權利金：多頭持股不動，每月賣一口價外 call 收租，IV 貴的時候租金特別肥，代價是急漲會被封頂。
+       這裡賣的是 44,738 附近的 TAIEX 多頭部位上檔——把「漲得比履約價還多」的那一段讓給買方，換一筆每月固定的權利金。
+       <strong>這不是一個高勝率、高報酬的策略，是一個用有限收益換取「大多數時候小賺、少數時候封頂或吃到股票下檔」路徑的策略。</strong></p>
+  </div>
+  <div class="hero-stats">
+    <div><div class="hs-label">今日 IV／RV（利差）</div>
+      <div class="hs-value" style="color:var(--brand)">36.61%</div>
+      <div style="font-size:.82rem;color:var(--muted);margin-top:.15rem">RV 24.32%　利差 <span style="color:var(--green);font-weight:600">+12.29pt</span>　regime=RICH</div>
+    </div>
+    <div><div class="hs-label">年化收租率（權利金／資金，年化，已扣手續費）</div><div class="hs-value" style="color:var(--green)">23.9%／年</div></div>
+    <div><div class="hs-label">今日判定</div><div class="hs-value" style="color:var(--green)">GO</div></div>
+  </div>
+</div>
+
+<div class="note">
+  <strong>資料限制（務必先讀）：</strong>TWVIX 官方歷史僅約 3.5 個月（2026-04-01 起），無歷史 TXO 選擇權鏈；今日結構的權利金已用 TAIFEX 即時結算價校正（real_settle，快照日 2026-07-13），但研究區段的歷史滾動全部是 Black-76 模型 mark，非真實成交，樣本亦僅 3 個高度相關的完整月度週期，不構成統計顯著的 edge 驗證。
+</div>
+
+<!-- ===== TODAY'S VIEW ===== -->
+<div class="section">
+<h2 class="section-title">今日觀點</h2>
+<div class="card">
+<p>TWVIX-RV（yang_zhang,20d）價差 +12.3 點，regime=RICH：賣方權利金相對『這波實際波動有多大』偏貴，對收租方有利，年化收租率因此顯著墊高。但誠實地說，RICH IV 常常和盤面波動放大（含急漲／melt-up）同時出現 —— covered call 在這種情境下會提早封頂、把最肥的那段漲幅讓給買方，『租金好收』和『放棄上檔的代價變大』是同一件事的兩面，不是只挑好的講。</p>
+<div class="takeaway">今日 regime＝<strong>RICH</strong>（IV 36.61% 對 RV 24.32%，利差 +12.29pt）：IV 偏貴對賣方有利，
+但 RICH 常常和盤面波動放大（含急漲／melt-up）同時出現——這正是 covered call 最容易提早封頂、把最肥漲幅讓給買方的情境。
+「今天適合賣」和「賣了之後最痛的情境更容易發生」，是同一組數字的兩面。</div>
+</div>
+</div>
+
+<!-- ===== SUGGESTED STRUCTURE ===== -->
+<div class="section">
+<h2 class="section-title">建議結構</h2>
+<div class="card">
+<h3>賣 1 口　2026-08-19（36 天到期）</h3>
+<table>
+<thead><tr><th>方向</th><th>類型</th><th>履約價</th><th>權利金</th><th>Delta</th></tr></thead>
+<tbody><tr><td style="color:var(--red);font-weight:700">賣出</td><td>Call</td><td>47,800</td><td>1180.0 點</td><td>+0.329</td></tr>
+</tbody>
+</table>
+<p style="margin-top:.85rem">持有 TAIEX（0050 對應）滿倉部位不動，賣 1 口 202608 到期 K=47,800 的價外 call（Δ≈0.30 目標，實選定 K 對應模型 delta 0.302），約 36 天到期。覆蓋率 89.5%（2,236,897 / 2,500,000 名目，殘餘 263,103 未覆蓋、之上仍全額參與漲幅）。</p>
+<table style="margin-top:.5rem">
+<tbody>
+<tr><td>淨收權利金</td><td style="color:var(--green);font-weight:700">+NT$58,900</td></tr>
+<tr><td>最大虧損（極端歸零情境，非典型止損）</td><td style="color:var(--red);font-weight:700">NT$2,441,100</td></tr>
+<tr><td>最大獲利</td><td>無乾淨上限（殘餘未覆蓋名目仍全額參與漲幅，見下方覆蓋率）</td></tr>
+<tr><td>損益兩平（下檔緩衝邊界）</td><td>43,684（緩衝 2.36%）</td></tr>
+<tr><td>年化收租率（權利金／資金，年化，已扣手續費）</td><td style="font-weight:700">23.9%／年</td></tr>
+</tbody>
+</table>
+<div class="takeaway"><strong>誠實看最大虧損：</strong>這裡的最大虧損不是一個乾淨的已知止損數字——covered call 沒有長腳保護，
+下檔風險等於「持有股票的下檔風險減一點權利金」，理論上可以跌到 0（雖然實務上不會）。上面列的數字只是「整個部位歸零」這種
+極端情境的名目量級，用來讓風險有個尺度感，不是這個策略真正的風控機制。</div>
+</div>
+<div class="card">
+<h3>覆蓋率與定價校正</h3>
+<table>
+<tbody>
+<tr><td>可用資金</td><td>NT$2,500,000</td></tr>
+<tr><td>已覆蓋名目 ／ 覆蓋率</td><td>NT$2,236,897　（89.5%）</td></tr>
+<tr><td>殘餘未覆蓋名目</td><td>NT$263,103（每點指數 NT$5.88 持續參與漲幅）</td></tr>
+<tr><td>定價方法</td><td>real_settle（鏈快照日 2026-07-13）</td></tr>
+<tr><td>模型價／模型 IV</td><td>930.4 點 ／ 36.61%</td></tr>
+<tr><td>市場結算反推 IV／Delta</td><td>41.05% ／ +0.329（模型 Delta +0.302）</td></tr>
+</tbody>
+</table>
+<div class="takeaway">口數是用「資金 ÷ (指數 × 乘數)」無條件捨去算出來的整數口，所以覆蓋率通常不會剛好等於 100%——
+殘餘的未覆蓋名目在履約價之上會繼續全額跟漲，「封頂」因此不是數學上絕對的頂，只是大部分部位的頂。</div>
+</div>
+</div>
+
+<!-- ===== STRESS TEST ===== -->
+<div class="section">
+<h2 class="section-title">壓力測試</h2>
+<div class="section-sub">covered call 沒有長腳保護，對這個結構最致命的方向是<strong>現貨急跌</strong>——上檔就算封頂，損益仍是正的（少賺，不是虧錢）；
+真正會讓資金明顯縮水的，是股票本身的下檔風險。</div>
+<div class="card">
+<table>
+<thead><tr><th>情境</th><th>現貨變動</th><th>波動變動</th><th>損益</th><th>佔資本</th></tr></thead>
+<tbody><tr><td>Base：橫盤到到期（純 theta 收斂）</td><td>+0.0%</td><td>+0pt</td><td style="color:var(--green);font-weight:600">+NT$58,900</td><td style="color:var(--green)">+2.36%</td></tr>
+<tr><td>小漲 +3%，IV 回落至 RV 附近（正常收租情境）</td><td>+3.0%</td><td>-8pt</td><td style="color:var(--green);font-weight:600">+NT$133,900</td><td style="color:var(--green)">+5.36%</td></tr>
+<tr><td>漲到履約價附近 +6.8%（接近封頂邊界）</td><td>+6.8%</td><td>-3pt</td><td style="color:var(--green);font-weight:600">+NT$228,900</td><td style="color:var(--green)">+9.16%</td></tr>
+<tr><td>melt-up：急漲 +15%，IV 不降反升（RICH→更 RICH，2 週）</td><td>+15.0%</td><td>+8pt</td><td style="color:var(--green);font-weight:600">+NT$211,005</td><td style="color:var(--green)">+8.44%</td></tr>
+<tr><td>melt-up 到期：+20% 到期時已遠 ITM（封頂全額啟動）</td><td>+20.0%</td><td>+5pt</td><td style="color:var(--green);font-weight:600">+NT$264,623</td><td style="color:var(--green)">+10.58%</td></tr>
+<tr><td>急跌 -8%，IV 急升 +15（避險買盤，1 週）</td><td>-8.0%</td><td>+15pt</td><td style="color:var(--red);font-weight:600">-NT$166,491</td><td style="color:var(--red)">-6.66%</td></tr>
+<tr><td>修正 -15%，IV 飆升 +20（權利金緩衝有限，2 週）</td><td>-15.0%</td><td>+20pt</td><td style="color:var(--red);font-weight:600">-NT$322,261</td><td style="color:var(--red)">-12.89%</td></tr>
+<tr style="background:var(--red-bg)"><td>崩盤式 -25%（權利金對本金杯水車薪，3 週）　⚠ 最致命方向</td><td>-25.0%</td><td>+25pt</td><td style="color:var(--red);font-weight:600">-NT$566,270</td><td style="color:var(--red)">-22.65%</td></tr>
+</tbody>
+</table>
+<div class="takeaway"><strong>最致命方向：「崩盤式 -25%（權利金對本金杯水車薪，3 週）」→ -NT$566,270（-22.65%）。</strong>
+留意規律：現貨上漲的情境（含 melt-up）損益仍然是<strong>正的</strong>——賣方少賺了原本股票該有的漲幅，但不是帳面上的虧損；
+真正把資金往下拉的，是現貨<strong>下跌</strong>的情境，跌幅愈大、權利金這點緩衝愈顯得杯水車薪。這是 covered call 的本質，
+不是這次的結構設計錯了。</div>
+</div>
+</div>
+
+<!-- ===== RESEARCH ===== -->
+<div class="section">
+<h2 class="section-title">研究</h2>
+<div class="card">
+<p>TWVIX 有歷史的 70 個交易日窗口（2026-04-01 ～ 2026-07-14）切出 3 段完整的 21 交易日滾動週期（2026-04-01 ～ 2026-07-03）。這段剛好是一段急漲行情：純 buy-hold 累計 +41.0%，covered call（每段重新賣一口 Δ0.30 call）累計只有 +19.3%，單段平均報酬 +12.5%（buy-hold）對 +6.1%（covered call）。落差主要來自第一段：指數單月 +22.9%、遠遠超過所賣 call 的履約價，封頂把大半漲幅讓給了買方 —— 這正是策略設計的取捨（收租換上檔），在這種急漲樣本裡會系統性跑輸，不是策略『失靈』。</p>
+</div>
+<div class="warn-loud">
+  <strong>先讀這個再看下面的圖與表：</strong>樣本極小、不是可信 edge：TWVIX 官方歷史僅約 3.5 個月，只夠切出 3 個非重疊週期，且彼此高度相關（同一段急漲行情的不同切片），有效獨立樣本接近 1、不是 3。所有歷史選擇權價格都是 Black-76 模型 mark（用當日 TWVIX 當 sigma 代入，非真實成交價），今日的即時結構才有真實TXO 結算價可以核對。這裡的報酬/波動比較僅供『流程展示』，不能外推成長期 CAGR、Sharpe 或任何統計顯著的優劣結論。
+</div>
+<div class="tile-row">
+  <div class="tile"><div class="t-label">Covered Call 累計</div><div class="t-value" style="color:var(--red)">+19.29%</div></div>
+  <div class="tile"><div class="t-label">Buy &amp; Hold 累計</div><div class="t-value" style="color:var(--green)">+41.01%</div></div>
+  <div class="tile"><div class="t-label">單段平均（Covered Call）</div><div class="t-value">+6.09%</div></div>
+  <div class="tile"><div class="t-label">單段平均（Buy &amp; Hold）</div><div class="t-value">+12.51%</div></div>
+</div>
+<div class="chart-card">
+  <h3>Covered Call vs 純 Buy &amp; Hold（指數化＝100，逐日）</h3>
+  <div class="chart-wrap"><canvas id="chart-covered_call_0050"></canvas></div>
+</div>
+<div class="card">
+<h3>滾動週期明細</h3>
+<table>
+<thead><tr><th>週期</th><th>指數 F0 → F1</th><th>履約價 K</th><th>股票報酬</th><th>選擇權報酬</th><th>合併報酬</th></tr></thead>
+<tbody><tr><td>2026-04-01 → 2026-05-05</td><td>33,174.8 → 40,769.3</td><td>35,100</td><td style="color:var(--green)">+22.89%</td><td style="color:var(--red)">-15.26%</td><td style="color:var(--green);font-weight:600">+7.64%</td></tr>
+<tr><td>2026-05-05 → 2026-06-03</td><td>40,769.3 → 46,459.2</td><td>43,300</td><td style="color:var(--green)">+13.96%</td><td style="color:var(--red)">-5.84%</td><td style="color:var(--green);font-weight:600">+8.12%</td></tr>
+<tr><td>2026-06-03 → 2026-07-03</td><td>46,459.2 → 46,780.6</td><td>49,200</td><td style="color:var(--green)">+0.69%</td><td style="color:var(--green)">+1.82%</td><td style="color:var(--green);font-weight:600">+2.51%</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<!-- ===== HONEST SUMMARY ===== -->
+<div class="section">
+<h2 class="section-title">誠實結尾</h2>
+<div class="card">
+<ol class="issue-list">
+  <li><strong>這頁證明了什麼：</strong>今天這一刻的結構是可信的——履約價、權利金、覆蓋率、壓力測試全部串起來，
+  且權利金已用 TAIFEX 即時結算價（real_settle）校正過，不是純模型 mark。</li>
+  <li><strong>這頁沒有證明什麼：</strong>研究區段只有 3 個高度相關的完整月度週期（同一段急漲行情的不同切片），
+  有效獨立樣本接近 1，不足以支撐「這個策略長期優於／劣於 buy-hold」的任何統計結論。</li>
+  <li><strong>這段樣本剛好是策略最不利的情境：</strong>急漲行情下 covered call 累計 +19.29% 遠遠跑輸
+  buy-hold 的 +41.01%——這是設計上「收租換上檔」的必然代價，不是策略失靈，但也提醒不要只挑好的月份講故事。</li>
+  <li><strong>下檔風險沒有乾淨的止損：</strong>最大虧損只是「整個部位歸零」的名目量級，實際下檔跟裸持股票幾乎一樣，
+  權利金只提供 2.36% 的緩衝，遇到修正或崩盤式下跌時杯水車薪。</li>
+  <li><strong>覆蓋率不是 100%，封頂也不是絕對的頂：</strong>口數用資金整除取整數，殘餘未覆蓋名目在履約價之上仍全額參與漲幅，
+  這個殘值揭露在頁面上，不要假裝這個部位是乾淨的滿倉封頂。</li>
+  <li><strong>要讓這件事變真，下一步是：</strong>累積更長的 TWVIX 歷史與真實 TXO 歷史成交鏈，
+  才能把「模型 mark 的 3 個週期」換成足夠樣本的可信回測；在那之前，這頁只是誠實的桌邊筆記，不是已驗證的 edge。</li>
+</ol>
+</div>
+</div>
+
+</div>
+
+<footer>
+  <div class="container">
+    &copy; 2026 InvestMQuest Research &middot; 台指多頭上賣 call（Covered Call）&middot;
+    0050 多頭 ＋ 每月滾賣 TXO Call・資料截至 2026-07-14・頁面生成 2026-07-15 &middot; 僅供研究參考
+  </div>
+</footer>
+
+<script>
+Chart.defaults.font.family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif";
+Chart.defaults.font.size=11;
+
+var CHART_LABELS=["2026-04-01", "2026-04-02", "2026-04-07", "2026-04-08", "2026-04-09", "2026-04-10", "2026-04-13", "2026-04-14", "2026-04-15", "2026-04-16", "2026-04-17", "2026-04-20", "2026-04-21", "2026-04-22", "2026-04-23", "2026-04-24", "2026-04-27", "2026-04-28", "2026-04-29", "2026-04-30", "2026-05-04", "2026-05-05", "2026-05-06", "2026-05-07", "2026-05-08", "2026-05-11", "2026-05-12", "2026-05-13", "2026-05-14", "2026-05-15", "2026-05-18", "2026-05-19", "2026-05-20", "2026-05-21", "2026-05-22", "2026-05-25", "2026-05-26", "2026-05-27", "2026-05-28", "2026-05-29", "2026-06-01", "2026-06-02", "2026-06-03", "2026-06-04", "2026-06-05", "2026-06-08", "2026-06-09", "2026-06-10", "2026-06-11", "2026-06-12", "2026-06-15", "2026-06-16", "2026-06-17", "2026-06-18", "2026-06-22", "2026-06-23", "2026-06-24", "2026-06-25", "2026-06-26", "2026-06-29", "2026-06-30", "2026-07-01", "2026-07-02", "2026-07-03"];
+var CHART_S0_NAME="Covered Call\uff08\u6a21\u578b\u6efe\u52d5 \u03940.30\uff09";
+var CHART_S0_DATA=[100.0, 98.591, 100.587, 103.883, 104.233, 105.313, 105.371, 106.483, 106.827, 107.032, 106.97, 107.159, 107.42, 107.531, 107.474, 107.597, 107.636, 107.637, 107.636, 107.636, 107.635, 107.635, 108.195, 109.658, 109.228, 110.003, 110.039, 109.17, 109.797, 108.94, 108.629, 107.218, 107.097, 110.159, 111.991, 114.231, 114.298, 115.033, 114.49, 115.621, 116.228, 116.336, 116.373, 114.98, 113.76, 110.214, 113.059, 109.636, 109.541, 111.903, 114.784, 115.755, 116.09, 117.287, 120.007, 118.912, 116.847, 117.416, 113.596, 114.802, 117.599, 119.811, 119.197, 119.292];
+var CHART_S1_NAME="TAIEX Buy & Hold";
+var CHART_S1_DATA=[100.0, 98.184, 100.166, 104.782, 105.083, 106.761, 106.88, 109.409, 110.693, 111.928, 110.941, 111.406, 113.354, 114.178, 113.683, 117.355, 119.418, 119.132, 118.474, 117.338, 122.699, 122.892, 124.006, 126.402, 125.408, 125.969, 126.295, 124.716, 125.853, 124.107, 123.261, 121.102, 120.636, 124.697, 127.41, 131.559, 131.2, 133.405, 131.535, 134.84, 136.663, 137.325, 140.043, 137.687, 135.858, 131.132, 134.754, 130.296, 130.066, 133.14, 136.841, 138.084, 138.289, 140.061, 143.908, 141.977, 138.79, 139.428, 134.354, 135.644, 139.038, 141.731, 140.902, 141.012];
+
+new Chart(document.getElementById('chart-covered_call_0050'),{
+  type:'line',
+  data:{labels:CHART_LABELS,datasets:[
+    {label:CHART_S0_NAME,data:CHART_S0_DATA,borderColor:'#1a56db',borderWidth:2.2,pointRadius:0,tension:.1,fill:false},
+    {label:CHART_S1_NAME,data:CHART_S1_DATA,borderColor:'#9ca3af',borderWidth:1.8,borderDash:[4,3],pointRadius:0,tension:.1,fill:false}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:true,position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'line',padding:14}},
+      tooltip:{callbacks:{label:function(c){return c.dataset.label+': '+c.parsed.y.toFixed(2)}}}},
+    scales:{x:{grid:{display:false},ticks:{font:{size:9},maxRotation:45,minRotation:45,autoSkip:true,maxTicksLimit:14}},
+      y:{grid:{color:'rgba(0,0,0,0.06)'},ticks:{font:{size:10}}}}
+  }
+});
+</script>
+</body>
+</html>

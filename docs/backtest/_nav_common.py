@@ -42,6 +42,8 @@ _STATUS = {
     "未過": ("watch", False),
     "觀察": ("watch", False),
     "模擬中": ("watch", False),
+    "專區": ("watch", False),
+    "研究": ("watch", False),
 }
 
 COMPARISON_LINKS = [
@@ -73,6 +75,11 @@ INDIVIDUAL_LINKS = [
     ("/backtest/cndr/", "Iron Condor", "cndr", "失敗"),
     ("/backtest/covered_call/", "Covered Call", "cc", "負貢獻"),
     ("/backtest/txo_vol_seller/", "台指選擇權賣方", "txo_vs", "模擬中"),
+    ("/backtest/tw_options/", "台股選擇權專區", "tw_opt", "專區"),
+    ("/backtest/txo_put_seller/", "台指賣方下檔", "txo_ps", "研究"),
+    ("/backtest/txo_iron_condor/", "台指雙賣", "txo_ic", "研究"),
+    ("/backtest/txo_tail_hedge/", "台指尾端避險", "txo_th", "研究"),
+    ("/backtest/txo_covered_call_0050/", "台指 Covered Call", "txo_cc0050", "研究"),
 ]
 
 MULTI_LINKS = [
