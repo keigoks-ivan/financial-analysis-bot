@@ -369,10 +369,19 @@ def quadrant(r, m):
     return "improving"
 
 
-def _compute_frames(rs, pd):
-    """Given an RS series (already aligned/ffilled on the bench grid), return
-    {frame: [{"d","r","m"}, ...]} for each frame (trail possibly empty)."""
+# 象限 -> 廣度計數欄位（L 領先／I 改善／W 走弱／G 落後）
+QUAD_KEY = {"leading": "L", "improving": "I", "weakening": "W", "lagging": "G"}
+
+
+def _compute_frames(rs, aligned, bench, pd):
+    """Given an RS series (already aligned/ffilled on the bench grid) plus the
+    member's aligned price and the benchmark price on the same grid, return
+    ({frame: {"trail":[{"d","r","m"},...], "exc": float|None}, ...},
+     {frame: smoothed(rs_ratio,rs_mom) DataFrame})  — the second value carries the
+    full SMA(3d)-smoothed series (same one the trail is a tail of) for breadth."""
     frames = {}
+    series_by_frame = {}
+    n_grid = len(bench)
     for fk in FRAME_ORDER:
         W, Wm, trail_n = FRAMES[fk]
         # Mean windows stay at W / Wm; STD windows are floored (max(W,60) /
@@ -390,12 +399,21 @@ def _compute_frames(rs, pd):
         rs_ratio = rs_ratio.rolling(TRAIL_SMOOTH).mean()
         rs_mom = rs_mom.rolling(TRAIL_SMOOTH).mean()
         valid = pd.concat([rs_ratio, rs_mom], axis=1).dropna()
+        series_by_frame[fk] = valid
         tail = valid.iloc[-trail_n:] if len(valid) else valid
         trail = [{"d": d.strftime("%Y-%m-%d"),
                   "r": round(float(r), 3), "m": round(float(m), 3)}
                  for d, (r, m) in zip(tail.index, tail.values)]
-        frames[fk] = {"trail": trail}
-    return frames
+        # 超額報酬：本檔對基準在該框架名目窗（W 個交易日）的滾動總報酬差（%），
+        # 用同一組還原價序列，重連 z-score RRG 丟失的實際幅度。歷史不足窗長則 null，不捏造。
+        exc = None
+        if n_grid >= W + 1:
+            m0, m1 = aligned.iloc[-1 - W], aligned.iloc[-1]
+            b0, b1 = bench.iloc[-1 - W], bench.iloc[-1]
+            if all(pd.notna(x) and x > 0 for x in (m0, m1, b0, b1)):
+                exc = round(((float(m1) / float(m0)) - (float(b1) / float(b0))) * 100.0, 1)
+        frames[fk] = {"trail": trail, "exc": exc}
+    return frames, series_by_frame
 
 
 def compute(series):
@@ -409,12 +427,15 @@ def compute(series):
 
     out_universes = []
     latest_date = None
+    breadth_out = {}
 
     for uni in UNIVERSES:
         bench_tk = uni["benchmark"]["ticker"]
         bench = cache_s.get(bench_tk)
         members_out = []
         n_ok = 0
+        # 廣度累積器：{frame: {date: {"L","I","W","G"}}}，每檔逐日投入其象限計數
+        breadth_acc = {fk: {} for fk in FRAME_ORDER}
 
         if bench is None or len(bench) < FRAMES["20"][0] + FRAMES["20"][1] + 1:
             warn(f"universe {uni['key']}: benchmark {bench_tk} unavailable/short")
@@ -424,6 +445,7 @@ def compute(series):
                 "key": uni["key"], "label": uni["label"],
                 "benchmark": uni["benchmark"], "members": members_out,
             })
+            breadth_out[uni["key"]] = {fk: [] for fk in FRAME_ORDER}
             continue
 
         grid = bench.index
@@ -439,7 +461,7 @@ def compute(series):
             aligned = s.reindex(grid).ffill()
             rs = 100.0 * aligned / bench
             rs = rs.dropna()
-            frames = _compute_frames(rs, pd)
+            frames, series_by_frame = _compute_frames(rs, aligned, bench, pd)
             has_any = any(frames[fk]["trail"] for fk in FRAME_ORDER)
             if not has_any:
                 members_out.append({"ticker": tk, "label": label, "status": "insufficient"})
@@ -448,6 +470,14 @@ def compute(series):
             members_out.append({
                 "ticker": tk, "label": label, "status": "ok", "frames": frames,
             })
+            # 該檔各框每日 smoothed（r,m）投入廣度計數（僅該檔當日有值才計，作分母 n）
+            for fk in FRAME_ORDER:
+                vf = series_by_frame[fk]
+                for d, (rr, mm) in zip(vf.index, vf.values):
+                    q = quadrant(rr, mm)
+                    day = breadth_acc[fk].setdefault(
+                        d.strftime("%Y-%m-%d"), {"L": 0, "I": 0, "W": 0, "G": 0})
+                    day[QUAD_KEY[q]] += 1
 
         out_universes.append({
             "key": uni["key"], "label": uni["label"],
@@ -455,7 +485,20 @@ def compute(series):
             "_n_ok": n_ok,
         })
 
-    return out_universes, latest_date
+        # 收斂該宇宙廣度時序：每框取最近 up-to-120 個交易日，oldest->newest，末點＝as_of
+        uni_breadth = {}
+        for fk in FRAME_ORDER:
+            dates = sorted(breadth_acc[fk].keys())[-120:]
+            ser = []
+            for d in dates:
+                c = breadth_acc[fk][d]
+                n = c["L"] + c["I"] + c["W"] + c["G"]
+                ser.append({"d": d, "L": c["L"], "I": c["I"],
+                            "W": c["W"], "G": c["G"], "n": n})
+            uni_breadth[fk] = ser
+        breadth_out[uni["key"]] = uni_breadth
+
+    return out_universes, latest_date, breadth_out
 
 
 # ───────────────────────────────────────────────────────────────────────────
@@ -476,7 +519,7 @@ def main():
                 tickers.append(t)
 
     series, stooq_used = refresh_cache(tickers, args.skip_fetch)
-    out_universes, latest_date = compute(series)
+    out_universes, latest_date, breadth_out = compute(series)
 
     # Zero-ok gate: exit non-zero only if a whole universe has no ok members.
     empty_unis = [u["key"] for u in out_universes if u.get("_n_ok", 0) == 0]
@@ -500,6 +543,8 @@ def main():
                      "使短框架的歸一化分母不被少樣本估計噪音放大。",
         "disclaimer": "描述器非擇時。相對輪動排名，衡量各資產／板塊相對其基準的"
                       "強度與動能方向，非買賣訊號、非市場絕對報酬預測。",
+        "excess": "每檔對基準的滾動超額總報酬 %，重連 z-score RRG 丟失的實際幅度。",
+        "breadth": "各宇宙每框每日四象限人數，衡量 leadership 擴散／收斂；描述器非訊號。",
     }
 
     payload = {
@@ -507,6 +552,7 @@ def main():
         "as_of": latest_date or "",
         "frames": FRAME_ORDER,
         "universes": [{k: v for k, v in u.items() if k != "_n_ok"} for u in out_universes],
+        "breadth": breadth_out,
         "method": method,
     }
 

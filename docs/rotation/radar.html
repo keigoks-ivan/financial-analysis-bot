@@ -120,7 +120,8 @@ a:hover{color:var(--accent-hover)}
 .pos-table td{padding:.28rem .2rem;border-bottom:1px solid var(--border-light);vertical-align:baseline}
 .pos-table tr:last-child td{border-bottom:0}
 .pos-table .pt-tk{font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--text);white-space:nowrap}
-.pos-table .pt-lb{color:var(--text-secondary)}
+.pos-table .pt-lb{color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+                  max-width:9em;min-width:3.2em}
 .pos-table .pt-n{font-family:'IBM Plex Mono',monospace;text-align:right;color:var(--text-secondary);white-space:nowrap;
                  font-variant-numeric:tabular-nums}
 .pos-empty{color:var(--text-muted);font-size:.76rem;font-style:italic}
@@ -132,6 +133,29 @@ a:hover{color:var(--accent-hover)}
 .pos-table tr.pinned{background:rgba(91,155,255,.14)}
 .pos-table tr.pinned .pt-lb,.pos-table tr.pinned .pt-tk{color:var(--text)}
 .pos-table tr.pinned td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
+
+/* Positions table — build-5 additions: excess-return column + cross-frame divergence star */
+.pos-table thead td{font-family:'IBM Plex Mono',monospace;font-size:.6rem;letter-spacing:.04em;
+                    color:var(--text-muted);text-transform:uppercase;padding-bottom:.35rem}
+.pt-exc{font-size:.72rem;white-space:nowrap}
+.exc-none{color:var(--text-muted)}
+.tb-star{color:#e0a53a;font-weight:700;margin-left:3px;font-size:.85rem}
+.exc-val{font-family:'IBM Plex Mono',monospace;color:var(--text-secondary);font-variant-numeric:tabular-nums}
+
+/* Breadth summary strip + recent cross-quadrant events (build-5 additions) */
+.breadth-strip{margin-top:1.4rem;padding:.9rem 1.15rem;background:var(--bg-card);border:1px solid var(--border);
+               border-radius:var(--radius);font-size:.79rem;color:var(--text-secondary);
+               display:flex;flex-wrap:wrap;gap:.5rem 1.5rem;align-items:center;line-height:1.8}
+.breadth-strip b{color:var(--text);font-weight:600}
+.bd-ratio{display:inline-flex;align-items:center;gap:.45rem}
+.bd-ratio-n{font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--text)}
+.bd-spark{color:var(--accent);vertical-align:middle;opacity:.85}
+.crossings{margin-top:.8rem;padding:.75rem 1.15rem;background:var(--bg-card);border:1px solid var(--border);
+          border-radius:var(--radius);font-size:.78rem;color:var(--text-secondary);line-height:2.1}
+.crossings b{color:var(--text);font-weight:600}
+.cx-item{display:inline-block;margin-right:1.1rem;white-space:nowrap}
+.cx-item b{font-family:'IBM Plex Mono',monospace;font-weight:600}
+.cx-empty{color:var(--text-muted);font-style:italic}
 
 /* Insufficient members */
 .insuff{margin-top:1.3rem;font-size:.76rem;color:var(--text-muted);line-height:1.7}
@@ -307,16 +331,21 @@ footer a{color:var(--accent)}
       <span><i style="background:#e0a53a"></i>弱化 WEAKENING（右下）</span>
       <span><i style="background:#9b6ff0"></i>落後 LAGGING（左下）</span>
       <span><i style="background:#38c6c9"></i>改善 IMPROVING（左上）</span>
-      <span style="color:#5b6577">軌跡色＝個別資產（對照下表色塊）　彗頭＝現況　彗尾＝過往軌跡</span>
+      <span style="color:#5b6577">軌跡色＝個別資產（對照下表色塊）　彗頭＝現況　彗尾＝過往軌跡　彗頭旁小箭頭＝近 5 日方向與速度</span>
     </div>
   </div>
 
+  <div id="breadth"></div>
+  <div id="crossings"></div>
   <div id="positions"></div>
   <div id="insuff"></div>
   <div class="meta-line" id="meta"></div>
 
   <div class="method" id="method">
     <strong>方法：</strong>RS-Ratio 為資產相對基準的相對強度標準化指標，RS-Momentum 為該相對強度的變化率，兩者皆以 100 為中心。軌跡點為日線、由舊至新，最末點為現況。象限與順時針輪動為統計描述，非買賣訊號。<span id="method-semantics">本圖為波動歸一化的 z-score 版 RRG，圖上距離代表相對強弱變化的統計顯著度，非絕對超額報酬幅度。</span>
+    <div style="margin-top:.6rem">
+      <strong>新增描述器：</strong>「動勢」為近 5 日 RS-Ratio／RS-Momentum 位移換算的方向與速度描述（強化／動能轉弱／走弱／動能回升；速度落在同宇宙同框架後四分之一者標記為盤整），彗頭旁箭頭為同一方向的視覺化，非買賣訊號。「跨框」比較 120／60／20 日同一資產所在象限（表格分歧者標 ✱，hover 看三格明細）：三格一致為對齊，不同為分歧——短框架領先於長框架時，可能是較早的轉向跡象，仍非買賣依據。「超額」為相對基準之區間累積超額報酬，純屬敘述量值（表格常駐，讓歸一化 RRG 位置重連實際幅度）。下方寬度摘要之「risk-on 象限占比」＝（領先＋改善）／樣本數，同樣是環境描述，不做擇時判斷。
+    </div>
   </div>
 
   <div class="related" id="related">
@@ -399,6 +428,57 @@ footer a{color:var(--accent)}
     return state.frame;
   }
 
+  // ---------- build-5: rotation velocity / heading (descriptor, not a signal) ----------
+  // K = min(5, trail.length-1) trailing segments; speed = mean per-day RRG-point step.
+  function computeSpeedMotion(trail){
+    if(!trail || trail.length<2) return null;
+    var n = trail.length, K = Math.min(5, n-1);
+    var last = trail[n-1], base = trail[n-1-K];
+    var dr = last.r - base.r, dm = last.m - base.m;
+    var sum = 0;
+    for(var i=n-K; i<n; i++){
+      sum += Math.hypot(trail[i].r-trail[i-1].r, trail[i].m-trail[i-1].m);
+    }
+    var speed = sum / K;
+    var baseMotion;
+    if(dr>=0 && dm>=0) baseMotion = "強化";
+    else if(dr>=0 && dm<0) baseMotion = "動能轉弱";
+    else if(dr<0 && dm<0) baseMotion = "走弱";
+    else baseMotion = "動能回升";
+    return {speed: Math.round(speed*100)/100, heading: Math.atan2(dm, dr),
+            dr:dr, dm:dm, motion: baseMotion, motionFinal: baseMotion, overridden:false};
+  }
+  function percentile(vals, p){
+    if(!vals.length) return 0;
+    var s = vals.slice().sort(function(a,b){return a-b;});
+    var idx = (p/100)*(s.length-1), lo = Math.floor(idx), hi = Math.ceil(idx);
+    if(lo===hi) return s[lo];
+    return s[lo] + (s[hi]-s[lo])*(idx-lo);
+  }
+  // canvas Y is inverted relative to RS-Momentum: screen-dy = -dm direction
+  function headingToCanvasAngle(heading){
+    return Math.atan2(-Math.sin(heading), Math.cos(heading));
+  }
+
+  // ---------- build-5: cross-frame alignment (120/60/20 quadrant per member) ----------
+  function crossFrameQuads(mem){
+    var order = (DATA && DATA.frames) || ["120","60","20"];
+    return order.map(function(fk){
+      var fr = mem.frames && mem.frames[fk];
+      var trail = fr && fr.trail;
+      if(trail && trail.length){
+        var last = trail[trail.length-1];
+        return {frame:fk, quad:quadOf(last.r, last.m)};
+      }
+      return {frame:fk, quad:null};
+    });
+  }
+  function isDivergent(cq){
+    var qs = cq.map(function(c){return c.quad;}).filter(function(q){return !!q;});
+    if(qs.length<2) return false;
+    return qs.some(function(q){return q!==qs[0];});
+  }
+
   // Build render model for current universe/frame
   function buildModel(){
     var u = currentUniverse();
@@ -414,9 +494,22 @@ footer a{color:var(--accent)}
       }
       var last = trail[trail.length-1];
       var quad = quadOf(last.r, last.m);
-      plot.push({ticker:mem.ticker, label:mem.label, trail:trail, last:last, quad:quad,
-                 color: PALETTE[mi % PALETTE.length]});
+      var exc = (fr && typeof fr.exc==="number") ? fr.exc : null;
+      plot.push({ticker:mem.ticker, label:mem.label, trail:trail, last:last, quad:quad, frame:frame,
+                 color: PALETTE[mi % PALETTE.length],
+                 speedInfo: computeSpeedMotion(trail), crossQuads: crossFrameQuads(mem), exc: exc});
     });
+    // 25th-percentile speed floor within this universe+frame → below it, tag as 盤整 (consolidating)
+    var speeds = plot.filter(function(p){return p.speedInfo;}).map(function(p){return p.speedInfo.speed;});
+    if(speeds.length){
+      var p25 = percentile(speeds, 25);
+      plot.forEach(function(p){
+        if(p.speedInfo && p.speedInfo.speed < p25){
+          p.speedInfo.overridden = true;
+          p.speedInfo.motionFinal = "盤整";
+        }
+      });
+    }
     return {plot:plot, insuff:insuff, universe:u, frame:frame};
   }
 
@@ -511,6 +604,8 @@ footer a{color:var(--accent)}
     renderPositions(model);
     renderInsuff(model);
     renderMeta(model);
+    renderBreadth(model);
+    renderCrossings(model);
     // keep the pinned member's tooltip anchored to its (possibly moved) head
     anchorPinnedTooltip();
   }
@@ -625,7 +720,29 @@ footer a{color:var(--accent)}
     ctx.arc(head.x, head.y, dim?1.1:1.8, 0, Math.PI*2);
     ctx.fill();
 
+    // build-5: subtle heading chevron at the head — direction only, purely descriptive
+    if(p.speedInfo){
+      drawHeadingArrow(head.x, head.y, headingToCanvasAngle(p.speedInfo.heading), col, alphaMul*(dim?0.4:0.8));
+    }
+
     view.hitTargets.push({ticker:p.ticker, x:head.x, y:head.y, p:p});
+  }
+
+  // small chevron pointing along the recent-motion heading; kept subtle so it never competes with the head dot
+  function drawHeadingArrow(x, y, angle, color, alpha){
+    var off = 9, len = 8;
+    var sx = x + Math.cos(angle)*off, sy = y + Math.sin(angle)*off;
+    var tx = sx + Math.cos(angle)*len, ty = sy + Math.sin(angle)*len;
+    var back1 = angle + Math.PI - 0.5, back2 = angle + Math.PI + 0.5;
+    var b1x = tx + Math.cos(back1)*4.5, b1y = ty + Math.sin(back1)*4.5;
+    var b2x = tx + Math.cos(back2)*4.5, b2y = ty + Math.sin(back2)*4.5;
+    ctx.save();
+    ctx.strokeStyle = withAlpha(color, alpha);
+    ctx.lineWidth = 1.4;
+    ctx.lineCap = "round"; ctx.lineJoin = "round";
+    ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(tx,ty); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(tx,ty); ctx.lineTo(b1x,b1y); ctx.moveTo(tx,ty); ctx.lineTo(b2x,b2y); ctx.stroke();
+    ctx.restore();
   }
 
   function drawLabels(plot, g, hoverTk){
@@ -807,6 +924,7 @@ footer a{color:var(--accent)}
     anim = {model:model, dates:dates, heads:heads, start:0, dur:5600, raf:null, active:true};
     // table / meta show final values immediately
     renderPositions(model); renderInsuff(model); renderMeta(model);
+    renderBreadth(model); renderCrossings(model);
     anim.raf = requestAnimationFrame(function step(now){
       if(!anim.active) return;
       if(!anim.start) anim.start = now;
@@ -841,15 +959,21 @@ footer a{color:var(--accent)}
       if(rows.length===0){
         html += '<div class="pos-empty">此象限目前無資產。</div>';
       }else{
-        html += '<div class="pos-table-wrap"><table class="pos-table"><tbody>';
+        html += '<div class="pos-table-wrap"><table class="pos-table">'+
+                '<thead><tr><td></td><td></td><td class="pt-n">R</td>'+
+                '<td>超額</td></tr></thead><tbody>';
         rows.forEach(function(p){
           var pinCls = (view.pinned===p.ticker) ? ' class="pinned"' : '';
+          // build-5: table stays slim (tooltip carries full 速度/動勢/跨框架/超額 detail);
+          // only a small ✱ next to the ticker flags cross-frame divergence at a glance
+          var star = isDivergent(p.crossQuads) ?
+            '<i class="tb-star" title="跨框架不一致，hover 看細節">✱</i>' : '';
           html += '<tr data-tk="'+esc(p.ticker)+'"'+pinCls+'>'+
             '<td class="pt-tk"><i style="display:inline-block;width:8px;height:8px;border-radius:2px;'+
-            'margin-right:.45rem;vertical-align:baseline;background:'+p.color+'"></i>'+esc(p.ticker)+'</td>'+
+            'margin-right:.45rem;vertical-align:baseline;background:'+p.color+'"></i>'+esc(p.ticker)+star+'</td>'+
             '<td class="pt-lb">'+esc(p.label)+'</td>'+
             '<td class="pt-n">'+p.last.r.toFixed(2)+'</td>'+
-            '<td class="pt-n">'+p.last.m.toFixed(2)+'</td>'+
+            '<td class="pt-exc">'+excCellHtml(p.exc)+'</td>'+
           '</tr>';
         });
         html += '</tbody></table></div>';
@@ -862,6 +986,91 @@ footer a{color:var(--accent)}
   function quadSwatch(q){
     var m=QUAD[q];
     return "hsl("+m.hue+","+m.sat+"%,"+m.light+"%)";
+  }
+
+  // ---------- build-5: excess-return cell renderer (descriptor, no trade language) ----------
+  function fmtExcText(v){
+    if(v==null || isNaN(v)) return "—";
+    var arrow = v>0 ? "▲" : (v<0 ? "▼" : "·");
+    return arrow+" "+(v>=0?"+":"−")+Math.abs(v).toFixed(1)+"%";
+  }
+  function excCellHtml(v){
+    if(v==null || isNaN(v)) return '<span class="exc-none">—</span>';
+    return '<span class="exc-val">'+fmtExcText(v)+'</span>';
+  }
+
+  // ---------- build-5: rotation breadth summary (universe-level, from DATA.breadth) ----------
+  function sparklineSvg(vals){
+    if(!vals || vals.length<2) return "";
+    var w=64, h=16, pad=1.5;
+    var mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals);
+    var rng = (mx-mn) || 1;
+    var pts = vals.map(function(v,i){
+      var x = pad + i*(w-2*pad)/(vals.length-1);
+      var y = h-pad - (v-mn)/rng*(h-2*pad);
+      return x.toFixed(1)+","+y.toFixed(1);
+    }).join(" ");
+    return '<svg class="bd-spark" width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" aria-hidden="true">'+
+           '<polyline points="'+pts+'" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>';
+  }
+  function renderBreadth(model){
+    var host = document.getElementById("breadth");
+    if(!host) return;
+    var bAll = DATA && DATA.breadth;
+    var series = bAll && bAll[state.universe] && bAll[state.universe][model.frame];
+    if(!series || !series.length){ host.innerHTML=""; return; }
+    var today = series[series.length-1];
+    var ratioPct = today.n ? Math.round((today.L+today.I)/today.n*100) : 0;
+    var idxPrev = Math.max(0, series.length-1-5);
+    var prev = series[idxPrev];
+    var todaySum = today.L+today.I, prevSum = prev.L+prev.I;
+    var trendWord = todaySum>prevSum ? "擴散" : (todaySum<prevSum ? "收斂" : "持平");
+    var spark = sparklineSvg(series.map(function(d){ return d.n ? (d.L+d.I)/d.n : 0; }));
+    host.innerHTML =
+      '<div class="breadth-strip">'+
+        '<div><b>寬度：</b>'+
+          '<span style="color:'+quadSwatch("leading")+'">領先 '+today.L+'</span>／'+
+          '<span style="color:'+quadSwatch("improving")+'">改善 '+today.I+'</span>／'+
+          '<span style="color:'+quadSwatch("weakening")+'">弱化 '+today.W+'</span>／'+
+          '<span style="color:'+quadSwatch("lagging")+'">落後 '+today.G+'</span>'+
+          '（共 '+today.n+'）</div>'+
+        '<div class="bd-ratio"><b>risk-on 象限占比：</b><span class="bd-ratio-n">'+ratioPct+'%</span>'+spark+'</div>'+
+        '<div><b>vs 一週前：</b>領先＋改善 '+prevSum+'→'+todaySum+'（'+trendWord+'）</div>'+
+      '</div>';
+  }
+
+  // ---------- build-5: recent cross-quadrant events (current-frame trail crossings) ----------
+  function scanCrossings(model){
+    var events = [];
+    model.plot.forEach(function(p){
+      var trail = p.trail;
+      for(var i=1; i<trail.length; i++){
+        var qa = quadOf(trail[i-1].r, trail[i-1].m);
+        var qb = quadOf(trail[i].r, trail[i].m);
+        if(qa!==qb){
+          events.push({ticker:p.ticker, label:p.label, color:p.color, from:qa, to:qb,
+                       daysAgo:(trail.length-1)-i});
+        }
+      }
+    });
+    events.sort(function(a,b){ return a.daysAgo-b.daysAgo; });
+    return events.slice(0,8);
+  }
+  function renderCrossings(model){
+    var host = document.getElementById("crossings");
+    if(!host) return;
+    var events = scanCrossings(model);
+    if(!events.length){
+      host.innerHTML = '<div class="crossings"><b>近期跨象限：</b><span class="cx-empty">窗內無跨象限事件。</span></div>';
+      return;
+    }
+    var items = events.map(function(e){
+      return '<span class="cx-item"><b style="color:'+e.color+'">'+esc(e.ticker)+'</b> '+
+        '<span style="color:'+quadSwatch(e.from)+'">'+esc(QUAD[e.from].zh)+'</span>→'+
+        '<span style="color:'+quadSwatch(e.to)+'">'+esc(QUAD[e.to].zh)+'</span>'+
+        '　·　'+e.daysAgo+' 日前</span>';
+    }).join("");
+    host.innerHTML = '<div class="crossings"><b>近期跨象限：</b>'+items+'</div>';
   }
 
   function renderInsuff(model){
@@ -1003,6 +1212,24 @@ footer a{color:var(--accent)}
       '<div class="tt-row">RS-Ratio <b>'+last.r.toFixed(2)+'</b></div>'+
       '<div class="tt-row">RS-Mom <b>'+last.m.toFixed(2)+'</b></div>'+
       '<div class="tt-row">截至 '+esc(asof)+'</div>';
+    // build-5: rotation velocity + motion tag (descriptor)
+    if(p.speedInfo){
+      html += '<div class="tt-row">速度 <b>'+p.speedInfo.speed.toFixed(2)+'</b>／<span style="color:'+
+              quadSwatch(p.quad)+'">'+esc(p.speedInfo.motionFinal)+'</span></div>';
+    } else {
+      html += '<div class="tt-row">速度 <b>—</b></div>';
+    }
+    // build-5: cross-frame (120/60/20) quadrant alignment
+    if(p.crossQuads){
+      var divergent = isDivergent(p.crossQuads);
+      var parts = p.crossQuads.map(function(c){
+        return c.frame+"日 "+(c.quad ? esc(QUAD[c.quad].zh) : "—");
+      }).join("　");
+      html += '<div class="tt-row">跨框架　'+parts+'　'+
+              (divergent ? '<span style="color:#e0a53a">✱ 分歧</span>' : '一致')+'</div>';
+    }
+    // build-5: excess return vs benchmark, current frame window
+    html += '<div class="tt-row">超額報酬（vs 基準，'+esc(p.frame)+'日）<b>'+fmtExcText(p.exc)+'</b></div>';
     if(pinnedMode) html += '<div class="tt-pin">已釘選　·　點擊空白處或 Esc 取消</div>';
     tooltip.innerHTML = html;
     tooltip.className = pinnedMode ? "pinned" : "";
