@@ -27,6 +27,7 @@
   --radius:10px;
   --spark:#0d2244;
   --internals:#6d43c9;
+  --internals-short:#9d7be0;
 }
 @media(prefers-color-scheme:dark){
   :root{
@@ -42,6 +43,7 @@
     --shadow-md:0 4px 14px rgba(0,0,0,.4);
     --spark:#5b9bff;
     --internals:#a78bfa;
+    --internals-short:#c4b5fd;
   }
 }
 :root[data-theme=dark]{
@@ -57,6 +59,7 @@
   --shadow-md:0 4px 14px rgba(0,0,0,.4);
   --spark:#5b9bff;
   --internals:#a78bfa;
+  --internals-short:#c4b5fd;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;font-size:15px}
@@ -330,7 +333,8 @@ footer.imq-foot a{color:var(--text-secondary)}
       <div class="score-legend">
         <span><i style="background:var(--accent)"></i>跨資產壓力分數（左軸 0–100）</span>
         <span><i style="background:var(--text-muted)"></i>S&amp;P 500（右軸，對數刻度，僅供對照）</span>
-        <span id="score-legend-internals" style="display:none"><i style="background:var(--internals)"></i>市場內部（3 年，高＝內部 risk-off）</span>
+        <span id="score-legend-internals" style="display:none"><i style="background:var(--internals)"></i>市場內部（3 年，長窗）</span>
+        <span id="score-legend-internals-short" style="display:none"><i style="background:var(--internals-short);background-image:linear-gradient(90deg,var(--internals-short) 60%,transparent 60%);background-size:4px 100%"></i>市場內部（3 月，短窗，高＝內部 risk-off）</span>
       </div>
     </div>
     <details class="method score-details">
@@ -955,6 +959,17 @@ footer.imq-foot a{color:var(--text-secondary)}
     var intLegend = document.getElementById("score-legend-internals");
     if (intLegend) intLegend.style.display = hasIntLine ? "" : "none";
 
+    // 市場內部（短窗，63td）：僅在 int_s != null 處繪製，null 處斷線
+    var intShortPath = "", intShortBreak = true, hasIntShortLine = false;
+    pts.forEach(function (p, i) {
+      if (typeof p.int_s !== "number") { intShortBreak = true; return; }
+      hasIntShortLine = true;
+      intShortPath += (intShortBreak ? "M" : "L") + xAt(i).toFixed(1) + "," + yScore(p.int_s).toFixed(1) + " ";
+      intShortBreak = false;
+    });
+    var intShortLegend = document.getElementById("score-legend-internals-short");
+    if (intShortLegend) intShortLegend.style.display = hasIntShortLine ? "" : "none";
+
     var spxMax = Math.max.apply(null, spxVals), spxMin = Math.min.apply(null, spxVals);
     var rightLabels =
       '<text x="' + (padL + plotW + 4) + '" y="' + (padT + 4) + '" font-size="9" text-anchor="start" fill="var(--text-muted)" font-family="IBM Plex Mono,monospace">' + Math.round(spxMax) + '</text>' +
@@ -969,6 +984,7 @@ footer.imq-foot a{color:var(--text-secondary)}
     var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet">' +
       bandRects + gridLines +
       '<path d="' + spxPath + '" fill="none" stroke="var(--text-muted)" stroke-width="1.2" opacity="0.55"/>' +
+      (hasIntShortLine ? '<path d="' + intShortPath + '" fill="none" stroke="var(--internals-short)" stroke-width="1.1" opacity="0.65" stroke-dasharray="3 2"/>' : "") +
       (hasIntLine ? '<path d="' + intPath + '" fill="none" stroke="var(--internals)" stroke-width="1.4" opacity="0.85"/>' : "") +
       '<path d="' + scorePath + '" fill="none" stroke="var(--accent)" stroke-width="1.6"/>' +
       rightLabels + dateLabels +
@@ -1001,8 +1017,9 @@ footer.imq-foot a{color:var(--text-secondary)}
       chCircle.setAttribute("cx", x); chCircle.setAttribute("cy", yScore(p.s));
       crosshair.style.display = "";
       var b = bandOfScore(sd.bands, p.s);
-      tip.innerHTML = "<b>" + esc(p.d) + "</b><br>分數 " + p.s.toFixed(1) + "（" + esc(BAND_LABELS[b] || b) + "）<br>內部 " +
-        (typeof p.int === "number" ? p.int.toFixed(1) : "—") + "<br>S&amp;P 500 " + (p.spx ? p.spx.toFixed(1) : "—");
+      tip.innerHTML = "<b>" + esc(p.d) + "</b><br>分數 " + p.s.toFixed(1) + "（" + esc(BAND_LABELS[b] || b) + "）<br>內部長線 " +
+        (typeof p.int === "number" ? p.int.toFixed(1) : "—") + "<br>內部近窗 " +
+        (typeof p.int_s === "number" ? p.int_s.toFixed(1) : "—") + "<br>S&amp;P 500 " + (p.spx ? p.spx.toFixed(1) : "—");
       var hostRect = host.getBoundingClientRect();
       var tipX = (x / W) * hostRect.width;
       tip.style.left = Math.min(Math.max(tipX + 8, 4), Math.max(hostRect.width - 150, 4)) + "px";
