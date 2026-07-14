@@ -6,10 +6,33 @@ name: Deploy Pages
 # 連續快速 push 自動收斂到最新版（舊部署取消，不再互相踩踏）。
 # 自訂網域設定在 Pages settings，不受此遷移影響；docs/CNAME 保留無害。
 
+# Deploy triggers — four layers so the live site can never silently lag behind
+# committed docs/ (see 2026-07-14 monitor incident):
+#   1. push docs/**        — external-repo crons push via PAT → instant deploy.
+#   2. workflow_run        — same-repo daily describer crons (monitor / rotation)
+#                            commit via github-actions[bot]; a GITHUB_TOKEN push
+#                            does NOT retrigger `push` workflows (GitHub anti-
+#                            recursion), so those bot commits would otherwise
+#                            never deploy on their own. workflow_run is exempt
+#                            from that restriction and fires the moment the cron
+#                            completes (~07:35 Taipei for the 23:30 UTC monitor).
+#   3. schedule            — name-independent safety net every 6h: catches ANY
+#                            other bot-committed docs/ change (screeners /
+#                            fundamentals / weekly crons) without having to
+#                            enumerate every workflow here. Future crons are
+#                            covered automatically.
+#   4. workflow_dispatch   — manual redeploy.
 on:
   push:
     branches: [main]
     paths: ["docs/**"]
+  workflow_run:
+    workflows:
+      - "Daily Market Monitor"
+      - "Daily Asset Rotation Radar (RRG)"
+    types: [completed]
+  schedule:
+    - cron: "0 */6 * * *"
   workflow_dispatch:
 
 permissions:
@@ -31,6 +54,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          # Always deploy the latest main HEAD. Under workflow_run the default
+          # checkout ref is the triggering run's START sha (i.e. BEFORE the cron's
+          # data commit), which would deploy stale docs — pin main explicitly.
+          ref: main
 
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3
