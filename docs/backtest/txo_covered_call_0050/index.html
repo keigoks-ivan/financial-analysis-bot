@@ -323,6 +323,46 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 </div>
 </div>
 
+<!-- ===== PAPER TRADING ===== -->
+<div class="section">
+<h2 class="section-title">模擬實單（真實結算價 mark）</h2>
+<div class="section-sub">2026-04-01 ～ 2026-07-14 逐日回放，起始資本 NT$2,500,000。</div>
+<div class="note">
+  <strong>明確標注：</strong>回放為 Black-76 模型 mark（無歷史選擇權鏈）；往後 --daily 用真實 TXO 結算價。
+  下表損益已扣交易成本——call 腳每次滾動（平倉買回、重新賣出）都計手續費，股票腿僅在最初開倉扣一次性成本，
+  之後視為連續持有、不重複計費。回放區間全程是模型 mark，不要跟往後 <code>--daily</code> 累積、用真實結算價 mark 的紀錄混為一談。
+</div>
+<div class="tile-row">
+  <div class="tile"><div class="t-label">交易次數</div><div class="t-value">5</div></div>
+  <div class="tile"><div class="t-label">勝率</div><div class="t-value">80%</div></div>
+  <div class="tile"><div class="t-label">報酬率</div><div class="t-value" style="color:var(--green)">+15.35%</div></div>
+  <div class="tile"><div class="t-label">最差單筆</div><div class="t-value" style="color:var(--red)">-NT$68,074</div></div>
+</div>
+<div class="chart-card">
+  <h3>模擬淨值曲線（虛線＝起始資本）</h3>
+  <div class="chart-wrap"><canvas id="chart-covered_call_0050-paper"></canvas></div>
+</div>
+<div class="card">
+<h3>交易帳表</h3>
+<table>
+<thead><tr><th>進場 → 出場</th><th>結構</th><th>損益</th><th>出場原因</th><th>持有天數</th></tr></thead>
+<tbody><tr><td>2026-04-01 → 2026-04-29</td><td style="font-size:.82rem">多頭 TAIEX x1（F=33175）＋ 賣1口 202605 call K=35800（Δ0.3 目標）</td><td style="color:var(--green);font-weight:600">+NT$160,248</td><td>月滾（roll）</td><td>28</td></tr>
+<tr><td>2026-04-29 → 2026-05-27</td><td style="font-size:.82rem">多頭 TAIEX x1（F=39304）＋ 賣1口 202606 call K=42100（Δ0.3 目標）</td><td style="color:var(--green);font-weight:600">+NT$151,285</td><td>月滾（roll）</td><td>28</td></tr>
+<tr><td>2026-05-27 → 2026-06-24</td><td style="font-size:.82rem">多頭 TAIEX x1（F=44257）＋ 賣1口 202607 call K=47700（Δ0.3 目標）</td><td style="color:var(--green);font-weight:600">+NT$84,246</td><td>月滾（roll）</td><td>28</td></tr>
+<tr><td>2026-06-24 → 2026-06-25</td><td style="font-size:.82rem">多頭 TAIEX x1（F=46044）＋ 賣1口 202607 call K=48700（Δ0.3 目標）</td><td style="color:var(--green);font-weight:600">+NT$10,092</td><td>月滾（roll）</td><td>1</td></tr>
+<tr><td>2026-06-25 → 2026-06-26</td><td style="font-size:.82rem">多頭 TAIEX x1（F=46255）＋ 賣1口 202607 call K=48800（Δ0.3 目標）</td><td style="color:var(--red);font-weight:600">-NT$68,074</td><td>月滾（roll）</td><td>1</td></tr>
+</tbody>
+</table>
+<div class="takeaway">淨損益 +NT$337,797，最差單筆 -NT$68,074（出場原因「月滾（roll）」）。
+這支月滾策略沒有停損／停利邏輯，唯一的訊號是到期日將近就平倉重開下一口——盈虧幾乎全部來自股票腿本身的漲跌，
+call 腳的收租只是持續的小幅正向貢獻，這與 covered call「收租換上檔」的設計一致，不代表這是一個已驗證的 edge。</div>
+</div>
+<div class="card">
+<h3>目前未平倉部位</h3>
+<table><tbody><tr><td>結構</td><td>多頭 TAIEX x1（F=44572）＋ 賣1口 202608 call K=49400（Δ0.3 目標）</td></tr><tr><td>合約月份</td><td>202608（2026-08-19 到期）</td></tr><tr><td>進場日 ／ 進場現貨</td><td>2026-06-26 @ 44,572</td></tr><tr><td>進場現金流</td><td>-NT$2,161,969</td></tr><tr><td>Call 履約價</td><td>49,400</td></tr><tr><td>進場定價方法</td><td>model</td></tr></tbody></table>
+</div>
+</div>
+
 <!-- ===== HONEST SUMMARY ===== -->
 <div class="section">
 <h2 class="section-title">誠實結尾</h2>
@@ -375,6 +415,25 @@ new Chart(document.getElementById('chart-covered_call_0050'),{
       tooltip:{callbacks:{label:function(c){return c.dataset.label+': '+c.parsed.y.toFixed(2)}}}},
     scales:{x:{grid:{display:false},ticks:{font:{size:9},maxRotation:45,minRotation:45,autoSkip:true,maxTicksLimit:14}},
       y:{grid:{color:'rgba(0,0,0,0.06)'},ticks:{font:{size:10}}}}
+  }
+});
+
+var PAPER_DATES=["2026-04-01", "2026-04-02", "2026-04-07", "2026-04-08", "2026-04-09", "2026-04-10", "2026-04-13", "2026-04-14", "2026-04-15", "2026-04-16", "2026-04-17", "2026-04-20", "2026-04-21", "2026-04-22", "2026-04-23", "2026-04-24", "2026-04-27", "2026-04-28", "2026-04-29", "2026-04-30", "2026-05-04", "2026-05-05", "2026-05-06", "2026-05-07", "2026-05-08", "2026-05-11", "2026-05-12", "2026-05-13", "2026-05-14", "2026-05-15", "2026-05-18", "2026-05-19", "2026-05-20", "2026-05-21", "2026-05-22", "2026-05-25", "2026-05-26", "2026-05-27", "2026-05-28", "2026-05-29", "2026-06-01", "2026-06-02", "2026-06-03", "2026-06-04", "2026-06-05", "2026-06-08", "2026-06-09", "2026-06-10", "2026-06-11", "2026-06-12", "2026-06-15", "2026-06-16", "2026-06-17", "2026-06-18", "2026-06-22", "2026-06-23", "2026-06-24", "2026-06-25", "2026-06-26", "2026-06-29", "2026-06-30", "2026-07-01", "2026-07-02", "2026-07-03", "2026-07-06", "2026-07-07", "2026-07-08", "2026-07-09", "2026-07-13", "2026-07-14"];
+var PAPER_NAV=[2499950, 2475698, 2508851, 2566771, 2573224, 2594289, 2593024, 2617623, 2625932, 2631025, 2628311, 2630907, 2640767, 2646709, 2640181, 2649102, 2656954, 2657731, 2660198, 2641367, 2701918, 2701816, 2709022, 2732265, 2725981, 2740180, 2738608, 2724880, 2733264, 2721237, 2716511, 2695044, 2696730, 2745028, 2772328, 2801881, 2803410, 2811483, 2787060, 2827638, 2848855, 2856910, 2889831, 2867058, 2845895, 2779649, 2832518, 2768796, 2767978, 2810359, 2861121, 2878148, 2886099, 2904142, 2945142, 2927692, 2895729, 2905821, 2837746, 2868825, 2912938, 2943973, 2937664, 2943892, 2939488, 2899370, 2910462, 2900730, 2907454, 2883720];
+var PAPER_START_LINE=[2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000];
+
+new Chart(document.getElementById('chart-covered_call_0050-paper'),{
+  type:'line',
+  data:{labels:PAPER_DATES,datasets:[
+    {label:'模擬淨值',data:PAPER_NAV,borderColor:'#1a56db',borderWidth:2.2,pointRadius:0,tension:.1,fill:false},
+    {label:'起始資本',data:PAPER_START_LINE,borderColor:'#9ca3af',borderWidth:1.3,borderDash:[5,3],pointRadius:0,fill:false}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:true,position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'line',padding:14}},
+      tooltip:{callbacks:{label:function(c){return c.dataset.label+': NT$'+c.parsed.y.toLocaleString()}}}},
+    scales:{x:{grid:{display:false},ticks:{font:{size:9},maxRotation:45,minRotation:45,autoSkip:true,maxTicksLimit:14}},
+      y:{grid:{color:'rgba(0,0,0,0.06)'},ticks:{callback:function(v){return 'NT$'+(v/1000).toFixed(0)+'K'},font:{size:10}}}}
   }
 });
 </script>

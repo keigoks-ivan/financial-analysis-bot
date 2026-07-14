@@ -285,6 +285,58 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 </div>
 </div>
 
+<!-- ===== PAPER TRADING ===== -->
+<div class="section">
+<h2 class="section-title">模擬實單（真實結算價 mark）</h2>
+<div class="section-sub">2026-04-01 ～ 2026-07-14 逐日回放，起始資本 NT$2,500,000。</div>
+<div class="warn-loud">
+  <strong>mark 方法務必先讀：</strong>回放為 Black-76 模型 mark（無歷史選擇權鏈）；往後 --daily 用真實 TXO 結算價。
+  這段回放全程是 Black-76 <strong>模型 mark</strong>（沒有歷史選擇權鏈可查），不是真實成交價；
+  往後執行 <code>put_seller_paper.py --daily</code> 會優先用真實 TAIFEX TXO 結算價 mark，模型價只在查無報價時 fallback。
+  下面每一筆損益都<strong>已扣交易成本</strong>（開倉／平倉各一次的手續費＋交易稅），不是毛損益。
+</div>
+<div class="tile-row" style="grid-template-columns:repeat(4,1fr)">
+  <div class="tile"><div class="t-label">交易次數</div><div class="t-value">16</div></div>
+  <div class="tile"><div class="t-label">勝率</div><div class="t-value">62%</div></div>
+  <div class="tile"><div class="t-label">報酬率</div><div class="t-value" style="color:var(--green)">+2.23%</div></div>
+  <div class="tile"><div class="t-label">最差單筆</div><div class="t-value" style="color:var(--red)">-NT$15,896</div></div>
+</div>
+<div class="chart-card">
+  <h3>模擬淨值曲線（虛線 = 起始資本）</h3>
+  <div class="chart-wrap"><canvas id="chart-put_seller-paper"></canvas></div>
+</div>
+<div class="card">
+<h3>交易紀錄</h3>
+<table>
+<thead><tr><th>進場 → 出場</th><th>結構</th><th>進場淨收</th><th>損益</th><th>出場原因</th><th>持有天數</th></tr></thead>
+<tbody><tr><td>2026-04-01 → 2026-04-08</td><td>P28,400 / P27,400 × 3</td><td>NT$14,488</td><td style="color:var(--green);font-weight:600">+NT$11,250</td><td>獲利了結</td><td>7</td></tr>
+<tr><td>2026-04-08 → 2026-04-14</td><td>P30,600 / P29,600 × 3</td><td>NT$13,361</td><td style="color:var(--green);font-weight:600">+NT$10,359</td><td>獲利了結</td><td>6</td></tr>
+<tr><td>2026-04-14 → 2026-04-27</td><td>P33,300 / P32,300 × 3</td><td>NT$19,518</td><td style="color:var(--green);font-weight:600">+NT$15,877</td><td>獲利了結</td><td>13</td></tr>
+<tr><td>2026-04-27 → 2026-05-11</td><td>P33,600 / P32,600 × 3</td><td>NT$15,563</td><td style="color:var(--green);font-weight:600">+NT$11,878</td><td>獲利了結</td><td>14</td></tr>
+<tr><td>2026-05-11 → 2026-05-18</td><td>P36,400 / P35,400 × 3</td><td>NT$14,555</td><td style="color:var(--red);font-weight:600">-NT$5,947</td><td style="color:var(--red);font-weight:600">價格停損</td><td>7</td></tr>
+<tr><td>2026-05-18 → 2026-05-20</td><td>P35,600 / P34,600 × 3</td><td>NT$14,092</td><td style="color:var(--red);font-weight:600">-NT$2,630</td><td style="color:var(--red);font-weight:600">價格停損</td><td>2</td></tr>
+<tr><td>2026-05-20 → 2026-05-22</td><td>P35,300 / P34,300 × 3</td><td>NT$13,892</td><td style="color:var(--green);font-weight:600">+NT$11,216</td><td>獲利了結</td><td>2</td></tr>
+<tr><td>2026-05-22 → 2026-05-27</td><td>P37,900 / P36,900 × 3</td><td>NT$13,288</td><td style="color:var(--green);font-weight:600">+NT$9,154</td><td>時間出場</td><td>5</td></tr>
+<tr><td>2026-05-27 → 2026-06-10</td><td>P37,900 / P36,900 × 3</td><td>NT$15,707</td><td style="color:var(--red);font-weight:600">-NT$8,529</td><td style="color:var(--red);font-weight:600">價格停損</td><td>14</td></tr>
+<tr><td>2026-06-10 → 2026-06-15</td><td>P36,700 / P35,700 × 3</td><td>NT$15,950</td><td style="color:var(--green);font-weight:600">+NT$11,483</td><td>獲利了結</td><td>5</td></tr>
+<tr><td>2026-06-15 → 2026-06-22</td><td>P39,500 / P38,500 × 3</td><td>NT$15,101</td><td style="color:var(--green);font-weight:600">+NT$11,907</td><td>獲利了結</td><td>7</td></tr>
+<tr><td>2026-06-22 → 2026-06-24</td><td>P42,400 / P41,400 × 3</td><td>NT$13,738</td><td style="color:var(--red);font-weight:600">-NT$13,723</td><td>時間出場</td><td>2</td></tr>
+<tr><td>2026-06-24 → 2026-06-25</td><td>P40,800 / P39,800 × 3</td><td>NT$14,040</td><td style="color:var(--green);font-weight:600">+NT$1,787</td><td>時間出場</td><td>1</td></tr>
+<tr><td>2026-06-25 → 2026-06-26</td><td>P41,200 / P40,200 × 3</td><td>NT$14,141</td><td style="color:var(--red);font-weight:600">-NT$15,896</td><td>時間出場</td><td>1</td></tr>
+<tr><td>2026-06-26 → 2026-07-01</td><td>P36,400 / P35,400 × 3</td><td>NT$17,381</td><td style="color:var(--green);font-weight:600">+NT$12,364</td><td>獲利了結</td><td>5</td></tr>
+<tr><td>2026-07-01 → 2026-07-07</td><td>P39,700 / P38,700 × 3</td><td>NT$16,046</td><td style="color:var(--red);font-weight:600">-NT$5,977</td><td style="color:var(--red);font-weight:600">價格停損</td><td>6</td></tr>
+</tbody>
+</table>
+<div class="takeaway"><strong>誠實看整段結果：</strong>淨損益 <span style="color:var(--green);font-weight:700">+NT$54,573</span>，
+最差單筆 -NT$15,896（出場原因「時間出場」）。樣本只有 16 筆、集中在同一段市場狀態，
+不足以宣稱這是穩定邊際——只是管線通了、且用真實結算價校準的前瞻紀錄會持續累積。</div>
+</div>
+<div class="card">
+<h3>目前未平倉部位</h3>
+<table><tbody><tr><td>合約月份</td><td>202608（2026-08-19 到期）</td></tr><tr><td>結構</td><td>賣 3× P38,700 ／ 買 3× P37,700</td></tr><tr><td>進場日 / 進場現貨</td><td>2026-07-07 @ 45,479</td></tr><tr><td>進場淨收（已扣開倉成本）</td><td>NT$15,436</td></tr><tr><td>進場權利金（點）</td><td>104.9 點</td></tr><tr><td>進場 IV</td><td>38.47%</td></tr></tbody></table>
+</div>
+</div>
+
 <!-- ===== HONEST SUMMARY ===== -->
 <div class="section">
 <h2 class="section-title">誠實結尾</h2>
@@ -335,6 +387,25 @@ new Chart(document.getElementById('chart-put_seller'),{
       tooltip:{callbacks:{label:function(c){return c.dataset.label+': '+c.parsed.y.toFixed(2)+'%'}}}},
     scales:{x:{grid:{display:false},ticks:{font:{size:9},maxRotation:45,minRotation:45,autoSkip:true,maxTicksLimit:14}},
       y:{grid:{color:'rgba(0,0,0,0.06)'},ticks:{callback:function(v){return v+'%'},font:{size:10}}}}
+  }
+});
+
+var PAPER_DATES=["2026-04-01", "2026-04-02", "2026-04-07", "2026-04-08", "2026-04-09", "2026-04-10", "2026-04-13", "2026-04-14", "2026-04-15", "2026-04-16", "2026-04-17", "2026-04-20", "2026-04-21", "2026-04-22", "2026-04-23", "2026-04-24", "2026-04-27", "2026-04-28", "2026-04-29", "2026-04-30", "2026-05-04", "2026-05-05", "2026-05-06", "2026-05-07", "2026-05-08", "2026-05-11", "2026-05-12", "2026-05-13", "2026-05-14", "2026-05-15", "2026-05-18", "2026-05-19", "2026-05-20", "2026-05-21", "2026-05-22", "2026-05-25", "2026-05-26", "2026-05-27", "2026-05-28", "2026-05-29", "2026-06-01", "2026-06-02", "2026-06-03", "2026-06-04", "2026-06-05", "2026-06-08", "2026-06-09", "2026-06-10", "2026-06-11", "2026-06-12", "2026-06-15", "2026-06-16", "2026-06-17", "2026-06-18", "2026-06-22", "2026-06-23", "2026-06-24", "2026-06-25", "2026-06-26", "2026-06-29", "2026-06-30", "2026-07-01", "2026-07-02", "2026-07-03", "2026-07-06", "2026-07-07", "2026-07-08", "2026-07-09", "2026-07-13", "2026-07-14"];
+var PAPER_NAV=[2499700, 2494255, 2503519, 2510950, 2513333, 2518539, 2517836, 2521309, 2525214, 2527270, 2526435, 2527599, 2531874, 2534595, 2531366, 2534550, 2537186, 2537668, 2540445, 2535980, 2544980, 2544625, 2544922, 2547668, 2547345, 2549064, 2548028, 2544813, 2546553, 2544259, 2543118, 2538880, 2540487, 2549249, 2551703, 2559452, 2560246, 2560858, 2556698, 2562990, 2565881, 2566995, 2571080, 2569161, 2566675, 2554865, 2564905, 2552328, 2552802, 2558837, 2563812, 2567230, 2569533, 2571730, 2575719, 2571313, 2561996, 2563783, 2547887, 2554223, 2558652, 2560251, 2559753, 2561540, 2561501, 2554274, 2556128, 2555937, 2558322, 2555867];
+var PAPER_START_LINE=[2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0];
+
+new Chart(document.getElementById('chart-put_seller-paper'),{
+  type:'line',
+  data:{labels:PAPER_DATES,datasets:[
+    {label:'模擬淨值',data:PAPER_NAV,borderColor:'#1a56db',borderWidth:2.2,pointRadius:0,tension:.1,fill:false},
+    {label:'起始資本',data:PAPER_START_LINE,borderColor:'#9ca3af',borderWidth:1.3,borderDash:[5,3],pointRadius:0,fill:false}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:true,position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'line',padding:14}},
+      tooltip:{callbacks:{label:function(c){return c.dataset.label+': NT$'+c.parsed.y.toLocaleString()}}}},
+    scales:{x:{grid:{display:false},ticks:{font:{size:9},maxRotation:45,minRotation:45,autoSkip:true,maxTicksLimit:14}},
+      y:{grid:{color:'rgba(0,0,0,0.06)'},ticks:{callback:function(v){return 'NT$'+(v/1000).toFixed(0)+'K'},font:{size:10}}}}
   }
 });
 </script>

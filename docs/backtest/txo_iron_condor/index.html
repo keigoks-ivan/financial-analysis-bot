@@ -293,6 +293,53 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 
 </div>
 
+<!-- ===== PAPER TRADING ===== -->
+<div class="section">
+<h2 class="section-title">模擬實單（真實結算價 mark）</h2>
+<div class="section-sub">2026-04-01 ～ 2026-07-14 逐日回放，起始資本 NT$2,500,000。</div>
+<div class="warn-loud">
+  <strong>先讀這個再看下面的圖表與帳表：</strong>回放為 Black-76 模型 mark（無歷史選擇權鏈）；往後 --daily 用真實 TXO 結算價。
+  這段回放全程是 Black-76 模型 mark（無歷史 TXO 選擇權鏈可用）；往後每天用 <code>--daily</code> 累積的紀錄，
+  會改用真實 TAIFEX TXO 結算價 mark——模型 mark 與真實 mark 在資料上永遠分開標註，不會混用充數。
+  下方所有損益數字都已扣除進出場交易成本，不是毛權利金差。
+</div>
+<div class="tile-row">
+  <div class="tile"><div class="t-label">交易次數</div><div class="t-value">12</div></div>
+  <div class="tile"><div class="t-label">勝率</div><div class="t-value">75%</div></div>
+  <div class="tile"><div class="t-label">報酬率</div><div class="t-value" style="color:var(--green)">+0.09%</div></div>
+  <div class="tile"><div class="t-label">淨損益</div><div class="t-value" style="color:var(--green)">+NT$1,693</div></div>
+  <div class="tile"><div class="t-label">最差單筆</div><div class="t-value" style="color:var(--red)">-NT$31,142</div></div>
+</div>
+<div class="chart-card">
+  <h3>模擬淨值曲線（虛線 = 起始資本 NT$2,500,000）</h3>
+  <div class="chart-wrap"><canvas id="chart-iron_condor-paper"></canvas></div>
+</div>
+<div class="card">
+<h3>交易帳表</h3>
+<table>
+<thead><tr><th>進場 → 出場</th><th>結構</th><th>損益</th><th>出場原因</th><th>持有天數</th></tr></thead>
+<tbody><tr><td>2026-04-01 → 2026-04-08</td><td style="font-size:.82rem">IC 202605 SELL3xCALL39400/BUY3xCALL40400 + SELL3xPUT28400/BUY3xPUT27400（DTE=49.0, model mark, credit=164.4pt）</td><td style="color:var(--green);font-weight:600">+NT$7,959</td><td>獲利了結</td><td>7</td></tr>
+<tr><td>2026-04-08 → 2026-04-10</td><td style="font-size:.82rem">IC 202605 SELL3xCALL39900/BUY3xCALL40900 + SELL3xPUT30600/BUY3xPUT29600（DTE=42.0, model mark, credit=157.8pt）</td><td style="color:var(--green);font-weight:600">+NT$6,311</td><td>獲利了結</td><td>2</td></tr>
+<tr><td>2026-04-10 → 2026-04-24</td><td style="font-size:.82rem">IC 202605 SELL3xCALL39100/BUY3xCALL40100 + SELL3xPUT32400/BUY3xPUT31400（DTE=40.0, model mark, credit=235.1pt）</td><td style="color:var(--red);font-weight:600">-NT$31,142</td><td style="color:var(--red);font-weight:600">價格停損（call 側逼近）</td><td>14</td></tr>
+<tr><td>2026-04-24 → 2026-04-29</td><td style="font-size:.82rem">IC 202605 SELL3xCALL44300/BUY3xCALL45300 + SELL3xPUT34500/BUY3xPUT33500（DTE=26.0, model mark, credit=158.3pt）</td><td style="color:var(--green);font-weight:600">+NT$10,705</td><td>近到期強制平倉</td><td>5</td></tr>
+<tr><td>2026-04-29 → 2026-05-20</td><td style="font-size:.82rem">IC 202606 SELL3xCALL46100/BUY3xCALL47100 + SELL3xPUT34000/BUY3xPUT33000（DTE=49.0, model mark, credit=169.2pt）</td><td style="color:var(--green);font-weight:600">+NT$7,947</td><td>獲利了結</td><td>21</td></tr>
+<tr><td>2026-05-20 → 2026-05-27</td><td style="font-size:.82rem">IC 202606 SELL3xCALL45900/BUY3xCALL46900 + SELL3xPUT35300/BUY3xPUT34300（DTE=28.0, model mark, credit=162.0pt）</td><td style="color:var(--red);font-weight:600">-NT$18,281</td><td>近到期強制平倉</td><td>7</td></tr>
+<tr><td>2026-05-27 → 2026-06-16</td><td style="font-size:.82rem">IC 202607 SELL3xCALL52600/BUY3xCALL53600 + SELL3xPUT37900/BUY3xPUT36900（DTE=49.0, model mark, credit=176.0pt）</td><td style="color:var(--green);font-weight:600">+NT$7,453</td><td>獲利了結</td><td>20</td></tr>
+<tr><td>2026-06-16 → 2026-06-24</td><td style="font-size:.82rem">IC 202607 SELL3xCALL53100/BUY3xCALL54100 + SELL3xPUT40000/BUY3xPUT39000（DTE=29.0, model mark, credit=167.7pt）</td><td style="color:var(--green);font-weight:600">+NT$5,860</td><td>近到期強制平倉</td><td>8</td></tr>
+<tr><td>2026-06-24 → 2026-06-25</td><td style="font-size:.82rem">IC 202607 SELL3xCALL52500/BUY3xCALL53500 + SELL3xPUT40800/BUY3xPUT39800（DTE=21.0, model mark, credit=164.8pt）</td><td style="color:var(--green);font-weight:600">+NT$1,243</td><td>近到期強制平倉</td><td>1</td></tr>
+<tr><td>2026-06-25 → 2026-06-26</td><td style="font-size:.82rem">IC 202607 SELL3xCALL52400/BUY3xCALL53400 + SELL3xPUT41200/BUY3xPUT40200（DTE=20.0, model mark, credit=167.8pt）</td><td style="color:var(--red);font-weight:600">-NT$11,858</td><td>近到期強制平倉</td><td>1</td></tr>
+<tr><td>2026-06-26 → 2026-06-29</td><td style="font-size:.82rem">IC 202608 SELL3xCALL56200/BUY3xCALL57200 + SELL3xPUT36400/BUY3xPUT35400（DTE=54.0, model mark, credit=184.8pt）</td><td style="color:var(--green);font-weight:600">+NT$7,287</td><td>獲利了結</td><td>3</td></tr>
+<tr><td>2026-06-29 → 2026-07-06</td><td style="font-size:.82rem">IC 202608 SELL3xCALL55100/BUY3xCALL56100 + SELL3xPUT37600/BUY3xPUT36600（DTE=51.0, model mark, credit=180.3pt）</td><td style="color:var(--green);font-weight:600">+NT$8,209</td><td>獲利了結</td><td>7</td></tr>
+</tbody>
+</table>
+<div class="takeaway"><strong>誠實看整段結果：</strong>12 筆交易、勝率 75%，但單筆最差是 2026-04-10 → 2026-04-24 那筆（-NT$31,142，出場原因「價格停損（call 側逼近）」）——一筆尾部情境吃掉多筆順風單的收益，這正是雙賣結構的固有性格，不是運氣不好。樣本仍短（2026-04-01 ～ 2026-07-14），不足以宣稱這是已驗證的邊際。</div>
+</div>
+<div class="card">
+<h3>目前未平倉部位</h3>
+<p style="font-size:.9rem;color:#374151">IC 202608 SELL3xCALL55300/BUY3xCALL56300 + SELL3xPUT39800/BUY3xPUT38800（DTE=44.0, model mark, credit=173.9pt）（進場 2026-07-06，2026-08-19 到期）</p>
+</div>
+</div>
+
 <!-- ===== HONEST SUMMARY ===== -->
 <div class="section">
 <h2 class="section-title">誠實結尾</h2>
@@ -346,6 +393,26 @@ new Chart(document.getElementById('chart-iron_condor'),{
       tooltip:{callbacks:{label:function(c){return c.dataset.label+': '+c.parsed.y.toFixed(2)+'%'}}}},
     scales:{x:{grid:{display:false},ticks:{font:{size:9},maxRotation:45,minRotation:45,autoSkip:true,maxTicksLimit:14}},
       y:{grid:{color:'rgba(0,0,0,0.06)'},ticks:{callback:function(v){return v+'%'},font:{size:10}}}}
+  }
+});
+
+
+var PAPER_DATES=["2026-04-01", "2026-04-02", "2026-04-07", "2026-04-08", "2026-04-09", "2026-04-10", "2026-04-13", "2026-04-14", "2026-04-15", "2026-04-16", "2026-04-17", "2026-04-20", "2026-04-21", "2026-04-22", "2026-04-23", "2026-04-24", "2026-04-27", "2026-04-28", "2026-04-29", "2026-04-30", "2026-05-04", "2026-05-05", "2026-05-06", "2026-05-07", "2026-05-08", "2026-05-11", "2026-05-12", "2026-05-13", "2026-05-14", "2026-05-15", "2026-05-18", "2026-05-19", "2026-05-20", "2026-05-21", "2026-05-22", "2026-05-25", "2026-05-26", "2026-05-27", "2026-05-28", "2026-05-29", "2026-06-01", "2026-06-02", "2026-06-03", "2026-06-04", "2026-06-05", "2026-06-08", "2026-06-09", "2026-06-10", "2026-06-11", "2026-06-12", "2026-06-15", "2026-06-16", "2026-06-17", "2026-06-18", "2026-06-22", "2026-06-23", "2026-06-24", "2026-06-25", "2026-06-26", "2026-06-29", "2026-06-30", "2026-07-01", "2026-07-02", "2026-07-03", "2026-07-06", "2026-07-07", "2026-07-08", "2026-07-09", "2026-07-13", "2026-07-14"];
+var PAPER_NAV=[2499400, 2495598, 2505518, 2507359, 2510575, 2513670, 2511249, 2515257, 2512774, 2507581, 2513079, 2511749, 2505209, 2503892, 2502175, 2482528, 2485934, 2488206, 2493233, 2488138, 2490245, 2488850, 2485911, 2484250, 2486861, 2491225, 2488305, 2490664, 2488139, 2492576, 2495555, 2497459, 2501180, 2504805, 2502689, 2491230, 2494500, 2482899, 2480176, 2483231, 2484027, 2484483, 2485845, 2487928, 2487540, 2478087, 2486878, 2476819, 2477999, 2484073, 2490003, 2490351, 2494300, 2494614, 2495968, 2497256, 2496212, 2497454, 2485596, 2492883, 2496423, 2496812, 2498270, 2500635, 2501092, 2496812, 2498844, 2500210, 2504197, 2502194];
+var PAPER_START_LINE=[2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0, 2500000.0];
+
+new Chart(document.getElementById('chart-iron_condor-paper'),{
+  type:'line',
+  data:{labels:PAPER_DATES,datasets:[
+    {label:'模擬淨值',data:PAPER_NAV,borderColor:'#1a56db',borderWidth:2.2,pointRadius:0,tension:.1,fill:false},
+    {label:'起始資本',data:PAPER_START_LINE,borderColor:'#9ca3af',borderWidth:1.3,borderDash:[5,3],pointRadius:0,fill:false}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:true,position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'line',padding:14}},
+      tooltip:{callbacks:{label:function(c){return c.dataset.label+': NT$'+c.parsed.y.toLocaleString()}}}},
+    scales:{x:{grid:{display:false},ticks:{font:{size:9},maxRotation:45,minRotation:45,autoSkip:true,maxTicksLimit:14}},
+      y:{grid:{color:'rgba(0,0,0,0.06)'},ticks:{callback:function(v){return 'NT$'+(v/1000).toFixed(0)+'K'},font:{size:10}}}}
   }
 });
 
