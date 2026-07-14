@@ -41,6 +41,7 @@ _STATUS = {
     "負貢獻": ("dead", True),
     "未過": ("watch", False),
     "觀察": ("watch", False),
+    "模擬中": ("watch", False),
 }
 
 COMPARISON_LINKS = [
@@ -71,6 +72,7 @@ INDIVIDUAL_LINKS = [
     ("/backtest/short_system/", "指數做空", "short", "失敗"),
     ("/backtest/cndr/", "Iron Condor", "cndr", "失敗"),
     ("/backtest/covered_call/", "Covered Call", "cc", "負貢獻"),
+    ("/backtest/txo_vol_seller/", "台指選擇權賣方", "txo_vs", "模擬中"),
 ]
 
 MULTI_LINKS = [

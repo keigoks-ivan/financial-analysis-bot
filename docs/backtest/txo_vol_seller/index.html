@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta name="robots" content="noindex,nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>台指選擇權賣方 | InvestMQuest Research</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+:root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
+      --text:#111827;--muted:#6b7280;--border:#e5e7eb;
+      --green:#059669;--green-bg:#ecfdf5;--green-border:#a7f3d0;--green-text:#065f46;
+      --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;--red-text:#991b1b;
+      --amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fde68a;--amber-text:#92400e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1120px;margin:0 auto;padding:0 1.5rem}
+.page-hdr{padding:1.75rem 0 1.25rem;background:linear-gradient(180deg,#eff6ff 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
+.page-hdr h1{font-size:1.6rem;font-weight:700;letter-spacing:-.03em}
+.page-hdr .sub{color:var(--muted);font-size:.9rem;margin-top:.2rem}
+.crumb{font-size:.82rem;color:var(--muted);margin-bottom:.4rem}
+.crumb a{color:var(--muted)}
+.section{padding:1.5rem 0 0}
+.section-title{font-size:1.15rem;font-weight:700;margin-bottom:1rem;
+               padding-bottom:.45rem;border-bottom:2px solid var(--brand)}
+.section-sub{font-size:.85rem;color:var(--muted);margin:-.5rem 0 1rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.card h3{font-size:1rem;font-weight:600;margin-bottom:.85rem}
+.card .takeaway{font-size:.88rem;margin-top:.75rem;padding:.6rem .9rem;border-radius:6px;
+                background:var(--brand-light);border-left:3px solid var(--brand)}
+.card p{font-size:.9rem;color:#374151;margin-bottom:.6rem}
+.card p:last-child{margin-bottom:0}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{text-align:left;padding:.6rem .75rem;border-bottom:1px solid var(--border)}
+th{background:#f9fafb;font-weight:600;font-size:.78rem;text-transform:uppercase;
+   letter-spacing:.04em;color:var(--muted)}
+td{font-variant-numeric:tabular-nums}
+tbody tr:hover td{background:#f3f4f6}
+.hero{margin:1.25rem 0;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--card)}
+.hero-top{background:linear-gradient(135deg,#eff6ff 0%,#f5f8ff 100%);padding:1.4rem 1.6rem;border-bottom:1px solid var(--border)}
+.hero-top .verdict-tag{display:inline-block;background:#1a56db;color:#fff;font-size:.74rem;font-weight:700;
+                       letter-spacing:.05em;padding:.25rem .7rem;border-radius:99px;margin-bottom:.5rem}
+.hero-top h2{font-size:1.35rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.35rem}
+.hero-top p{font-size:.92rem;color:#374151;max-width:62rem}
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card)}
+.hero-stats > div{padding:1rem 1.2rem;text-align:center;border-right:1px solid var(--border)}
+.hero-stats > div:last-child{border-right:none}
+.hero-stats .hs-label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.hero-stats .hs-value{font-size:1.5rem;font-weight:800;letter-spacing:-.02em}
+.note{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;
+      padding:.85rem 1.1rem;font-size:.84rem;color:var(--amber-text);margin:1rem 0}
+.warn-loud{background:var(--red-bg);border:2px solid var(--red-border);border-radius:8px;
+      padding:1rem 1.2rem;font-size:.9rem;color:var(--red-text);margin:1rem 0}
+.warn-loud strong{color:var(--red)}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.chart-card h3{font-size:.95rem;font-weight:600;margin-bottom:.5rem}
+.chart-wrap{position:relative;width:100%;height:380px}
+.chart-wrap-sm{position:relative;width:100%;height:260px}
+details{background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:.75rem}
+details summary{padding:.9rem 1.25rem;font-weight:600;font-size:.95rem;cursor:pointer;list-style:none;display:flex;align-items:center;gap:.5rem}
+details summary::before{content:'▸';color:var(--brand);transition:transform .15s}
+details[open] summary::before{transform:rotate(90deg)}
+details .d-body{padding:0 1.25rem 1.25rem;overflow-x:auto}
+.issue-list{font-size:.88rem;color:#374151;padding-left:1.2rem;line-height:1.9}
+.persona{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.persona > div{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem 1.15rem}
+.persona h4{font-size:.92rem;font-weight:700;margin-bottom:.4rem;color:var(--brand)}
+.persona p{font-size:.85rem;color:#374151;margin:0}
+.tile-row{display:grid;grid-template-columns:repeat(5,1fr);gap:.75rem;margin-bottom:1rem}
+.tile{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.85rem 1rem;text-align:center}
+.tile .t-label{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.tile .t-value{font-size:1.15rem;font-weight:800;margin-top:.15rem}
+.cards3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
+       text-align:center;padding:1.25rem 0;font-size:.78rem;margin-top:2rem}
+@media(max-width:768px){
+  .hero-stats{grid-template-columns:repeat(2,1fr)}
+  .hero-stats > div{border-bottom:1px solid var(--border)}
+  .persona{grid-template-columns:1fr}
+  .cards3{grid-template-columns:1fr}
+  .tile-row{grid-template-columns:repeat(2,1fr)}
+  table{font-size:.78rem}th,td{padding:.45rem .5rem}
+}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/monitor/">市場監測</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/rotation/">產業輪動</a>
+          <a href="/crowding/">擁擠交易監測</a>
+          <a href="/regime/">大類資產 regime</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/catalyst/">催化劑日曆</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">選股<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/cockpit/">選股主控台</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/research/momentum-5/">Momentum-5</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screeners.html">RS+VCP Screener</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">個股總覽</a>
+          <a href="/research/">個股 DD</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/research/synthesis/">期望落差綜合研判</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/track-record/">裁決實績</a>
+          <a href="/long-track-smh/">長線訊號 SMH</a>
+          <a href="/long-track-tw/">台股長線</a>
+          <a href="/turtle-sleeve/">商品 Sleeve</a>
+          <a href="/backtest/" class="active">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/cache/">Data Cache</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="page-hdr">
+  <div class="container">
+    <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / 台指選擇權賣方</div>
+    <h1>台指選擇權賣方</h1>
+    <div class="sub">TXO 短波動・賣的是變異數風險溢價 VRP，不是 theta・資料截至 2026-07-14</div>
+    <style id="bt-subnav-style">.bt-subnav{margin-top:.75rem;border:1px solid var(--border,#e5e7eb);border-radius:8px;overflow:hidden;font-size:.78rem;line-height:1.3}.bt-subnav-row{display:flex;align-items:flex-start;gap:.55rem;padding:.32rem .55rem;border-top:1px solid var(--border,#e5e7eb)}.bt-subnav-row:first-child{border-top:0}.bt-subnav-lbl{flex:0 0 5.4em;font-size:.64rem;font-weight:700;color:var(--muted,#6b7280);text-transform:uppercase;letter-spacing:.04em;padding-top:.34rem}.bt-subnav-pills{display:flex;flex-wrap:wrap;gap:.3rem;min-width:0}.bt-subnav-pills a{display:inline-flex;align-items:center;gap:.28rem;padding:.26rem .6rem;background:#eef1f4;color:#374151;border-radius:999px;text-decoration:none;font-weight:500;white-space:nowrap;transition:background .12s}.bt-subnav-pills a:hover{background:#e1e6ea}.bt-subnav-pills a.bt-dead{color:#7a828d;background:#f2f3f5}.bt-subnav-pills a.bt-on{background:linear-gradient(135deg,#081832,#173564);color:#fff;font-weight:600}.bt-subnav-pills a.bt-on:hover{background:linear-gradient(135deg,#081832,#173564)}.bt-tag{font-size:.6rem;font-weight:600;padding:.02rem .3rem;border-radius:4px;line-height:1.4}.bt-tag-dead{background:rgba(220,38,38,.12);color:#b42318}.bt-tag-watch{background:rgba(180,118,20,.15);color:#986a12}.bt-on .bt-tag-dead{background:rgba(255,255,255,.22);color:#fff}.bt-on .bt-tag-watch{background:rgba(255,255,255,.22);color:#fff}@media(max-width:640px){.bt-subnav-row{flex-direction:column;gap:.28rem;padding:.4rem .55rem}.bt-subnav-lbl{flex-basis:auto;padding-top:0}}</style><nav class="bt-subnav" aria-label="回測子導航"><div class="bt-subnav-row"><div class="bt-subnav-lbl">對比總覽</div><div class="bt-subnav-pills"><a href="/backtest/">20 年</a><a href="/backtest/10y/">10 年</a><a href="/backtest/criteria/">評估標準</a><a href="/backtest/tw/">台股總覽</a><a href="/backtest/multi/">多資產總覽</a><a href="/backtest/leverage/">槓桿疊加總覽</a><a href="/backtest/ma_sensitivity/">MA 敏感度</a><a href="/backtest/free_lunch/">分散與免費午餐</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">個別系統</div><div class="bt-subnav-pills"><a href="/backtest/long_track/">SPY/QQQ 長軌</a><a href="/backtest/long_track_qqq/">QQQ 長軌純攻</a><a href="/backtest/long_track_ensemble/">SPY/QQQ 集成</a><a href="/backtest/long_track_smh/">SMH/QQQ 進攻</a><a href="/backtest/six_state/">QQQ＋SMH 六狀態</a><a href="/backtest/six_state_v1r1/">QQQ 六狀態實盤</a><a href="/backtest/gem/">SPY/ACWX 雙動能</a><a href="/backtest/slope_filter/">SPY/AGG 斜率</a><a href="/backtest/rsi2_mr/">SPY/QQQ 均值回歸</a><a href="/backtest/supertrend/">週線 Supertrend</a><a href="/backtest/leverage_voltarget/">期貨槓桿疊加</a><a href="/backtest/txo_vol_seller/" class="bt-on">台指選擇權賣方<span class="bt-tag bt-tag-watch">模擬中</span></a><a href="/backtest/dual_track/" class="bt-dead">SPY/QQQ 雙軌多空<span class="bt-tag bt-tag-dead">否決</span></a><a href="/backtest/exit_switch/" class="bt-dead">出場法切換<span class="bt-tag bt-tag-dead">否決</span></a><a href="/backtest/short_system/" class="bt-dead">指數做空<span class="bt-tag bt-tag-dead">失敗</span></a><a href="/backtest/cndr/" class="bt-dead">Iron Condor<span class="bt-tag bt-tag-dead">失敗</span></a><a href="/backtest/covered_call/" class="bt-dead">Covered Call<span class="bt-tag bt-tag-dead">負貢獻</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">多資產</div><div class="bt-subnav-pills"><a href="/backtest/turtle/">唐奇安突破</a><a href="/backtest/clenow/">跨資產趨勢</a><a href="/backtest/slope_filter_global/">全球斜率穩健性</a><a href="/backtest/crossasset_defense/">跨資產防守</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">台股波段</div><div class="bt-subnav-pills"><a href="/backtest/tw_0050_compare/">0050 總覽·台美差異</a><a href="/backtest/tw_crash/">台股含崩盤驗證</a><a href="/backtest/tw_0050/">0050 進攻趨勢（移植）</a><a href="/backtest/tw_0050_lt/">0050 長軌趨勢</a><a href="/backtest/long_track_tw/">2330/0050 E3 長軌</a><a href="/backtest/tw_0050_six/">0050 六狀態機</a><a href="/backtest/tw_vcrash/">V崩防禦研究</a><a href="/backtest/tw_0050_dual/" class="bt-dead">0050 雙軌多空<span class="bt-tag bt-tag-dead">否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">日內交易</div><div class="bt-subnav-pills"><a href="/backtest/txf_intraday/">台指當沖<span class="bt-tag bt-tag-watch">未過</span></a><a href="/backtest/txf_chips/">籌碼偏向<span class="bt-tag bt-tag-watch">觀察</span></a><a href="/backtest/ssf_xsec/">個股期橫斷面<span class="bt-tag bt-tag-watch">未過</span></a><a href="/backtest/txf_basis/" class="bt-dead">基差偏向<span class="bt-tag bt-tag-dead">否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究筆記</div><div class="bt-subnav-pills"><a href="/backtest/daily_vs_weekly/">日/週線</a><a href="/backtest/daily_vs_weekly_deep/">日/週·深掘</a><a href="/backtest/daily_vs_weekly_global/">日/週·全球</a><a href="/backtest/daily_vs_weekly_tw/">日/週·台股</a><a href="/backtest/ma_cross/">MA 交叉</a><a href="/backtest/ma_deviation/">MA 乖離</a><a href="/backtest/ma_dynband/">MA 動態帶</a><a href="/backtest/ma_squeeze/">MA 擠壓</a><a href="/backtest/smh_vcrash/">SMH V崩</a></div></div></nav>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ===== HERO ===== -->
+<div class="hero">
+  <div class="hero-top">
+    <span class="verdict-tag">模擬中 — 管線與形狀展示，非已驗證的 edge</span>
+    <h2>它對方向沒有看法。它最有價值的輸出，是告訴你不要交易。</h2>
+    <p>這是一個賣 TAIEX 指數選擇權權利金的風險定價引擎，照真正的波動桌會蓋的方式蓋，而不是照散戶「covered call 收租」內容講的方式蓋。
+       核心規則只有一條：<strong>先問 IV − RV 是否過門檻，過了才准問要賣哪個履約價</strong>；門檻沒過，不管 theta 看起來多甜，一律不交易。
+       部位大小用 vega／gamma／最大虧損取最小值決定，不是「覆蓋比例」；結構永遠是定義風險的價差，不是裸賣。
+       <strong>本頁誠實揭露：樣本只有 3.5 個月、有效獨立樣本約 2～3 個，100% 命中率在此樣本下與雜訊無法區分——這不是行銷頁，是誠實的桌邊筆記。</strong></p>
+  </div>
+  <div class="hero-stats">
+    <div><div class="hs-label">今日 IV（TWVIX）</div><div class="hs-value" style="color:var(--brand)">36.61%</div></div>
+    <div><div class="hs-label">RV（YZ20）／利差</div><div class="hs-value">24.32% <span style="color:var(--green);font-size:1rem">+12.29pt</span></div></div>
+    <div><div class="hs-label">損益兩平勝率</div><div class="hs-value" style="color:var(--red)">93.1%</div></div>
+    <div><div class="hs-label">模擬回放報酬（3.5 月）</div><div class="hs-value" style="color:var(--red)">-1.67%</div></div>
+  </div>
+</div>
+
+<div class="note">
+  <strong>資料限制（務必先讀）：</strong>免費 TWVIX 只有 3.5 個月，無 2006 起長歷史、無歷史選擇權鏈。本頁的 VRP 檢查與模擬回放皆為『管線／形狀』展示，非可信 edge；往後的模擬實單用真實 TXO 結算價 mark。
+</div>
+
+<!-- ===== WHAT IS BEING SOLD ===== -->
+<div class="section">
+<h2 class="section-title">這在賣什麼</h2>
+<div class="cards3">
+  <div class="card">
+    <h3>VRP 不是 theta</h3>
+    <p>「我收時間價值，時間不管我看不看盤都在流逝」描述的是<strong>機制</strong>，不是<strong>邊際</strong>。
+    真正的邊際來自隱含波動長期高於<strong>之後實現</strong>的波動——那個利差才是錢的來源。
+    若 IV ≤ RV，你是在低於成本賣保險，theta 照樣累積，你照樣虧。沒有任何履約價選擇或紀律能救一個負邊際。</p>
+  </div>
+  <div class="card">
+    <h3>用 vega／gamma／最大虧損定量，不是覆蓋比例</h3>
+    <p>「我有 NT$2000 萬現貨，所以賣 45% 覆蓋」對波動狀態是瞎的。IV=15 時賣 6 口與 IV=40 時賣 6 口是完全不同的部位——
+    後者 vega 約 2.7 倍、每單位權利金承擔的 gamma 遠高於前者。本引擎用 vega、gamma、最大虧損三者<strong>取最小值</strong>定量；
+    IV 升高時部位自動縮小，覆蓋比例法做的正是相反的事——那正是波動急升時爆倉的路徑。</p>
+  </div>
+  <div class="card">
+    <h3>高勝率是必要，不是厲害</h3>
+    <p>今天這張單的損益兩平勝率是 <strong>93.1%</strong>——你必須贏 93.1% 才打平，這是風報比 1:13.4 結構下的必然，
+    不是策略優越的證明。連續贏 15～20 次會讓人覺得自己是天才，接著一次輸單全部吐回。那不是運氣不好，
+    是你選的分布本來就長這樣，只是你之前沒去看它。</p>
+  </div>
+</div>
+</div>
+
+<!-- ===== TODAY'S GATE ===== -->
+<div class="section">
+<h2 class="section-title">今日閘門</h2>
+<div class="section-sub">閘門規則：IV − RV ≥ 2.0（RV 用 20 日窗口）。四個估計法全部同意 = RICH = PASS，才輪到問履約價。</div>
+<div class="card">
+<table>
+<thead><tr><th>RV 估計法</th><th>RV</th><th>IV − RV 利差</th><th>狀態</th><th>可交易</th></tr></thead>
+<tbody><tr style="background:var(--brand-light)"><td>Yang-Zhang（含隔夜跳空，本站預設）　★ 採用</td><td>24.32%</td><td style="color:var(--green);font-weight:600">+12.29</td><td>RICH</td><td><span style="color:var(--green);font-weight:700">PASS</span></td></tr>
+<tr><td>Close-to-Close（看得到跳空，較雜訊）</td><td>27.73%</td><td style="color:var(--green);font-weight:600">+8.88</td><td>RICH</td><td><span style="color:var(--green);font-weight:700">PASS</span></td></tr>
+<tr><td>Parkinson（僅讀高低，完全漏跳空）</td><td>22.89%</td><td style="color:var(--green);font-weight:600">+13.72</td><td>RICH</td><td><span style="color:var(--green);font-weight:700">PASS</span></td></tr>
+<tr><td>Garman-Klass（僅讀高低，完全漏跳空）</td><td>22.30%</td><td style="color:var(--green);font-weight:600">+14.31</td><td>RICH</td><td><span style="color:var(--green);font-weight:700">PASS</span></td></tr>
+</tbody>
+</table>
+<div class="takeaway">今日 IV（TWVIX）= 36.61%。四個估計法（含對隔夜跳空敏感的 Yang-Zhang、只看不到跳空的 Parkinson／Garman-Klass、雜訊較大的 Close-to-Close）
+一致判定為 RICH，閘門 PASS。任一估計法 BLOCK，引擎就不出單——這不是取平均，是要求一致同意。</div>
+</div>
+</div>
+
+<!-- ===== TODAY'S TRADE ===== -->
+<div class="section">
+<h2 class="section-title">今天引擎會下的單</h2>
+<div class="card">
+<h3>賣 3× 52,200 Call @ 230.7 點／買 3× 53,200 Call @ 161.5 點</h3>
+<table>
+<tbody>
+<tr><td>現貨（TAIEX）</td><td>44,738</td></tr>
+<tr><td>到期</td><td>2026-08-19（36 天）</td></tr>
+<tr><td>淨收權利金</td><td style="color:var(--green);font-weight:700">NT$10,395（= 資本的 0.42%）</td></tr>
+<tr><td>最大虧損</td><td style="color:var(--red);font-weight:700">NT$139,605</td></tr>
+<tr><td>損益兩平指數</td><td>52,269</td></tr>
+<tr><td>風報比</td><td>1 : 13.4</td></tr>
+<tr><td>淨 Vega ／ 淨 Theta</td><td>-NT$743 ／ +NT$378</td></tr>
+<tr><td>限制口數者</td><td><strong>MAX_LOSS</strong>（三者取最小值後，是這個因子決定了只能賣 3 口）</td></tr>
+<tr><td>可用資本</td><td>NT$2,500,000</td></tr>
+</tbody>
+</table>
+<div class="takeaway"><strong>誠實看收入量級：</strong>淨收權利金是資本的 0.42%，36 天到期——換算年化粗估約 4.2%，
+且這是<strong>毛收入</strong>，不是扣掉尾部風險後的期望值。損益兩平勝率 93.1% 代表這張單的容錯空間很窄：
+只要方向和波動同時走錯，一次的虧損就可能吃掉多次的收益（見下方壓力測試）。</div>
+</div>
+</div>
+
+<!-- ===== STRESS TEST ===== -->
+<div class="section">
+<h2 class="section-title">壓力測試</h2>
+<div class="section-sub">賣方怕的不是慢慢跌，是急漲＋急升的波動同時發生——melt-up／軋空正是殺死 call 賣方的組合。</div>
+<div class="card">
+<table>
+<thead><tr><th>情境</th><th>現貨變動</th><th>波動變動</th><th>損益</th><th>佔資本</th></tr></thead>
+<tbody><tr><td>Base: nothing happens (1 week decay)</td><td>+0%</td><td>+0pt</td><td style="color:var(--green);font-weight:600">+NT$2,772</td><td style="color:var(--green)">+0.11%</td></tr>
+<tr><td>Grind up 2%, vol bleeds (best case)</td><td>+2%</td><td>-3pt</td><td style="color:var(--green);font-weight:600">+NT$1,577</td><td style="color:var(--green)">+0.06%</td></tr>
+<tr><td>Drift down 3%, vol up (good for us)</td><td>-3%</td><td>+5pt</td><td style="color:var(--green);font-weight:600">+NT$3,897</td><td style="color:var(--green)">+0.16%</td></tr>
+<tr><td>TSMC-led melt-up +5%, vol FLAT</td><td>+5%</td><td>+0pt</td><td style="color:var(--red);font-weight:600">-NT$10,930</td><td style="color:var(--red)">-0.44%</td></tr>
+<tr><td>TSMC-led melt-up +5%, call skew BIDS +8</td><td>+5%</td><td>+8pt</td><td style="color:var(--red);font-weight:600">-NT$17,144</td><td style="color:var(--red)">-0.69%</td></tr>
+<tr><td>Squeeze +8%, vol +12 (the real killer)</td><td>+8%</td><td>+12pt</td><td style="color:var(--red);font-weight:600">-NT$28,150</td><td style="color:var(--red)">-1.13%</td></tr>
+<tr><td>Overnight gap +10%, vol +15</td><td>+10%</td><td>+15pt</td><td style="color:var(--red);font-weight:600">-NT$35,397</td><td style="color:var(--red)">-1.42%</td></tr>
+<tr><td>Sustained rally +12% over 2 weeks</td><td>+12%</td><td>+5pt</td><td style="color:var(--red);font-weight:600">-NT$33,541</td><td style="color:var(--red)">-1.34%</td></tr>
+<tr style="background:var(--red-bg)"><td>Extreme: +15% gap, vol +20　⚠ 最差情境</td><td>+15%</td><td>+20pt</td><td style="color:var(--red);font-weight:600">-NT$51,192</td><td style="color:var(--red)">-2.05%</td></tr>
+</tbody>
+</table>
+<div class="takeaway"><strong>最差情境：「Extreme: +15% gap, vol +20」→ -NT$51,192（-2.05%）。</strong>
+注意規律：現貨下跌、波動上升的情境（如「下跌 3%、波動走升」）對賣方反而是<strong>好事</strong>——
+價外 call 更價外、vega 虧損被 delta 收益蓋過；真正致命的是現貨<strong>上漲</strong>同時波動<strong>也上漲</strong>的組合
+（軋空／melt-up／隔夜跳空），因為 delta 與 vega 同時逆風，這正是「always a spread, never a naked short」與
+「用最大虧損定量、不是覆蓋比例」這兩條設計規則要防的事。</div>
+</div>
+</div>
+
+<!-- ===== VRP SHAPE CHECK ===== -->
+<div class="section">
+<h2 class="section-title">VRP 形狀檢查</h2>
+<div class="warn-loud">
+  <strong>先讀這個再看下面兩張圖：</strong>樣本僅 3.5 個月（49 個進場日的 21 日前瞻窗），
+  且窗口彼此重疊 &gt;90%，49 個進場日的 21 日前瞻窗互相重疊 >90%，有效獨立樣本約 2–3 個、屬同一段波動事件；100% 命中率在此樣本下與雜訊無法區分。
+  命中率 100% 在這個樣本下<strong>與雜訊無法區分</strong>——這不是一個已驗證的 edge，只是管線與形狀的展示。
+</div>
+<div class="chart-card">
+  <h3>IV vs 已實現波動（回顧窗 vs 前瞻窗），逐日</h3>
+  <div class="chart-wrap"><canvas id="chart-vrp-series"></canvas></div>
+</div>
+<div class="chart-card">
+  <h3>IV（x軸）vs 前瞻已實現波動（y軸）— 落在 45° 線下方 = IV 高估了之後的 RV = 賣方贏</h3>
+  <div class="chart-wrap-sm"><canvas id="chart-vrp-scatter"></canvas></div>
+</div>
+<div class="card">
+<div class="takeaway">平均捕獲利差 6.14pt（中位數 5.25pt，最差 0.73pt）——
+方向上與「賣方在這段期間持續贏」一致，但樣本量不足以宣稱這是穩定邊際。3.5 個月全落在同一段波動事件裡，
+換一段市場狀態（例如低波盤整或急跌）結果可能完全不同。</div>
+</div>
+</div>
+
+<!-- ===== PAPER TRADING ===== -->
+<div class="section">
+<h2 class="section-title">模擬實單</h2>
+<div class="section-sub">2026-04-01 ～ 2026-07-14 逐日回放，起始資本 NT$2,500,000。回放為 Black-76 模型 mark（無歷史選擇權報價）；往後每日改用真實 TXO 結算價。</div>
+<div class="tile-row">
+  <div class="tile"><div class="t-label">交易次數</div><div class="t-value">5</div></div>
+  <div class="tile"><div class="t-label">勝率</div><div class="t-value">40%</div></div>
+  <div class="tile"><div class="t-label">淨損益</div><div class="t-value" style="color:var(--red)">-NT$41,345</div></div>
+  <div class="tile"><div class="t-label">報酬率</div><div class="t-value" style="color:var(--red)">-1.67%</div></div>
+  <div class="tile"><div class="t-label">最差單筆</div><div class="t-value" style="color:var(--red)">-NT$47,985</div></div>
+</div>
+<div class="chart-card">
+  <h3>模擬淨值曲線（虛線 = 起始資本）</h3>
+  <div class="chart-wrap"><canvas id="chart-paper-equity"></canvas></div>
+</div>
+<div class="card">
+<h3>交易紀錄</h3>
+<table>
+<thead><tr><th>進場 → 出場</th><th>結構</th><th>進場淨收</th><th>損益</th><th>出場原因</th><th>持有天數</th></tr></thead>
+<tbody><tr><td>2026-04-01 → 2026-04-24</td><td>39,400C / 40,400C × 3</td><td>NT$9,870</td><td style="color:var(--red);font-weight:600">-NT$47,985</td><td style="color:var(--red);font-weight:600">價格停損</td><td>23</td></tr>
+<tr><td>2026-05-25 → 2026-06-24</td><td>51,800C / 52,800C × 3</td><td>NT$10,235</td><td style="color:var(--red);font-weight:600">-NT$3,724</td><td>到期平倉</td><td>30</td></tr>
+<tr><td>2026-06-24 → 2026-06-25</td><td>52,500C / 53,500C × 3</td><td>NT$10,376</td><td style="color:var(--red);font-weight:600">-NT$544</td><td>到期平倉</td><td>1</td></tr>
+<tr><td>2026-06-25 → 2026-06-26</td><td>52,400C / 53,400C × 3</td><td>NT$10,723</td><td style="color:var(--green);font-weight:600">+NT$4,038</td><td>到期平倉</td><td>1</td></tr>
+<tr><td>2026-06-26 → 2026-07-14</td><td>56,200C / 57,200C × 3</td><td>NT$10,041</td><td style="color:var(--green);font-weight:600">+NT$6,871</td><td>獲利了結</td><td>18</td></tr>
+</tbody>
+</table>
+<div class="takeaway"><strong>誠實看整段結果：</strong>4/1 那一筆 melt-up 觸發的價格停損（-NT$47,985，出場原因「price_stop」）
+主導了整段模擬的結果——這<strong>正是這個策略的性格</strong>，不是運氣不好。定義風險的價差把最大虧損鎖在有限範圍內，
+但範圍本身仍然遠大於單筆典型收益，一次尾部事件就能吃掉數筆順風單的獲利。</div>
+</div>
+<div class="card">
+<h3>目前未平倉部位</h3>
+<table><tbody><tr><td>合約月份</td><td>202608（2026-08-19 到期）</td></tr><tr><td>結構</td><td>賣 3× 52,200C ／ 買 3× 53,200C</td></tr><tr><td>進場日 / 進場現貨</td><td>2026-07-14 @ 44,738</td></tr><tr><td>進場淨收</td><td>NT$10,395</td></tr><tr><td>最大虧損</td><td style="color:var(--red)">NT$139,605</td></tr><tr><td>損益兩平指數</td><td>52,269</td></tr><tr><td>進場 IV / RV</td><td>36.61% / 24.32%</td></tr></tbody></table>
+</div>
+</div>
+
+<!-- ===== HONEST SUMMARY ===== -->
+<div class="section">
+<h2 class="section-title">誠實總結</h2>
+<div class="card">
+<ol class="issue-list">
+  <li><strong>低個位數年報酬、真實的尾巴。</strong>這不是一個高報酬策略，是一個用有限收益換取「大多數時候小賺、少數時候大賠」路徑的策略——
+  賣方收到的權利金量級（今天約資本的 0.42%／36 天）注定了上檔有限，下檔由最大虧損定義但仍然真實存在。</li>
+  <li><strong>相對於已部署的現貨組合，是邊際貢獻者。</strong>這個引擎管理的資本（NT$2,500,000）相對於既有現貨部位是一個小 sleeve，
+  它的角色是額外的現金流來源，不是取代既有配置的核心部位。</li>
+  <li><strong>扣掉尾巴後，超額報酬很薄。</strong>損益兩平勝率 93.1% 意味著這張結構本身在市場自身的機率測度下期望值接近零；
+  真正的邊際只能來自 IV 系統性高於之後實現的 RV，而這個利差本身並不大、也不保證持續。</li>
+  <li><strong>這頁證明了什麼：</strong>管線是通的——閘門、履約價選擇、部位大小、壓力測試、模擬回放全部串起來且邏輯一致；
+  且<strong>今天</strong>這一刻 IV 確實偏貴（四個估計法一致同意）。</li>
+  <li><strong>這頁沒有證明什麼：</strong>沒有驗證任何持續性邊際。3.5 個月、有效獨立樣本約 2～3 個、100% 命中率，
+  這些數字在統計上等同「還不知道」，不是「已驗證能賺錢」。</li>
+  <li><strong>要讓這件事變真，下一步是：</strong>補上 2006 年起的 TWVIX 長歷史與真實選擇權成交價（chain marks），
+  才能做出可信的回測；同時持續用 <code>paper_trade.py --daily</code> 往後累積使用真實 TXO 結算價 mark 的前瞻紀錄——
+  用時間換出真正的樣本量，而不是回頭校準參數去擬合這 3.5 個月。</li>
+</ol>
+</div>
+</div>
+
+</div>
+
+<footer>
+  <div class="container">
+    &copy; 2026 InvestMQuest Research &middot; 台指選擇權賣方（模擬中，非已驗證 edge）&middot;
+    TXO 短波動決策引擎・資料截至 2026-07-14・頁面生成 2026-07-14 &middot; 僅供研究參考
+  </div>
+</footer>
+
+<script>
+Chart.defaults.font.family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif";
+Chart.defaults.font.size=11;
+
+var VRP_DATES=["2026-04-01", "2026-04-02", "2026-04-07", "2026-04-08", "2026-04-09", "2026-04-10", "2026-04-13", "2026-04-14", "2026-04-15", "2026-04-16", "2026-04-17", "2026-04-20", "2026-04-21", "2026-04-22", "2026-04-23", "2026-04-24", "2026-04-27", "2026-04-28", "2026-04-29", "2026-04-30", "2026-05-04", "2026-05-05", "2026-05-06", "2026-05-07", "2026-05-08", "2026-05-11", "2026-05-12", "2026-05-13", "2026-05-14", "2026-05-15", "2026-05-18", "2026-05-19", "2026-05-20", "2026-05-21", "2026-05-22", "2026-05-25", "2026-05-26", "2026-05-27", "2026-05-28", "2026-05-29", "2026-06-01", "2026-06-02", "2026-06-03", "2026-06-04", "2026-06-05", "2026-06-08", "2026-06-09", "2026-06-10", "2026-06-11"];
+var VRP_IV=[34.85, 36.45, 33.62, 30.53, 29.35, 27.32, 29.43, 27.7, 28.14, 29.53, 28.55, 29.99, 30.49, 29.52, 32.81, 36.44, 36.46, 35.89, 32.55, 35.16, 35.59, 36.72, 38.31, 37.8, 37.55, 35.46, 37.58, 38.21, 39.33, 38.59, 39.07, 39.53, 36.91, 34.37, 33.09, 33.94, 32.9, 35.09, 36.29, 35.87, 36.54, 36.56, 34.95, 35.23, 36.28, 42.43, 38.66, 43.91, 43.58];
+var VRP_RVBWD=[29.17, 27.65, 27.54, 23.27, 21.76, 20.92, 20.39, 19.69, 19.86, 19.58, 19.54, 19.65, 19.5, 18.62, 20.45, 20.05, 21.42, 21.29, 21.41, 21.57, 21.66, 20.77, 21.4, 21.24, 21.86, 22.02, 22.34, 22.75, 22.76, 23.98, 24.88, 24.81, 24.71, 25.22, 22.94, 22.87, 21.59, 21.8, 22.91, 22.71, 22.81, 23.33, 22.84, 22.68, 23.58, 26.93, 26.89, 27.02, 28.2];
+var VRP_RVFWD=[26.84, 24.83, 24.79, 22.31, 22.26, 22.19, 23.21, 22.49, 23.5, 23.78, 24.59, 24.74, 26.38, 27.02, 28.31, 26.99, 26.94, 27.66, 28.24, 27.74, 24.17, 24.61, 25.86, 26.07, 29.14, 30.41, 32.98, 32.61, 33.37, 33.84, 33.61, 32.59, 32.44, 31.9, 32.17, 32.0, 31.95, 34.36, 34.08, 34.07, 34.38, 34.46, 33.81, 33.28, 34.0, 31.42, 30.27, 27.58, 28.15];
+
+new Chart(document.getElementById('chart-vrp-series'),{
+  type:'line',
+  data:{labels:VRP_DATES,datasets:[
+    {label:'IV（TWVIX）',data:VRP_IV,borderColor:'#1a56db',borderWidth:2.2,pointRadius:0,tension:.15},
+    {label:'RV 回顧窗（20日）',data:VRP_RVBWD,borderColor:'#6b7280',borderWidth:1.6,borderDash:[4,3],pointRadius:0,tension:.15},
+    {label:'RV 前瞻窗（21日，事後才知道）',data:VRP_RVFWD,borderColor:'#dc2626',borderWidth:1.8,pointRadius:0,tension:.15}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:true,position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'line',padding:14}},
+      tooltip:{callbacks:{label:function(c){return c.dataset.label+': '+c.parsed.y.toFixed(2)+'%'}}}},
+    scales:{x:{grid:{display:false},ticks:{font:{size:9},maxRotation:45,minRotation:45,autoSkip:true,maxTicksLimit:14}},
+      y:{grid:{color:'rgba(0,0,0,0.06)'},ticks:{callback:function(v){return v+'%'},font:{size:10}}}}
+  }
+});
+
+var SC_IV=[34.85, 36.45, 33.62, 30.53, 29.35, 27.32, 29.43, 27.7, 28.14, 29.53, 28.55, 29.99, 30.49, 29.52, 32.81, 36.44, 36.46, 35.89, 32.55, 35.16, 35.59, 36.72, 38.31, 37.8, 37.55, 35.46, 37.58, 38.21, 39.33, 38.59, 39.07, 39.53, 36.91, 34.37, 33.09, 33.94, 32.9, 35.09, 36.29, 35.87, 36.54, 36.56, 34.95, 35.23, 36.28, 42.43, 38.66, 43.91, 43.58];
+var SC_RVFWD=[26.84, 24.83, 24.79, 22.31, 22.26, 22.19, 23.21, 22.49, 23.5, 23.78, 24.59, 24.74, 26.38, 27.02, 28.31, 26.99, 26.94, 27.66, 28.24, 27.74, 24.17, 24.61, 25.86, 26.07, 29.14, 30.41, 32.98, 32.61, 33.37, 33.84, 33.61, 32.59, 32.44, 31.9, 32.17, 32.0, 31.95, 34.36, 34.08, 34.07, 34.38, 34.46, 33.81, 33.28, 34.0, 31.42, 30.27, 27.58, 28.15];
+var scatterPts=SC_IV.map(function(v,i){return {x:v,y:SC_RVFWD[i]}});
+var lo=Math.min.apply(null,SC_IV.concat(SC_RVFWD))-2;
+var hi=Math.max.apply(null,SC_IV.concat(SC_RVFWD))+2;
+
+new Chart(document.getElementById('chart-vrp-scatter'),{
+  type:'scatter',
+  data:{datasets:[
+    {label:'進場日（IV, 前瞻RV）',data:scatterPts,backgroundColor:'#1a56dbaa',borderColor:'#1a56db',pointRadius:4},
+    {label:'45° 參考線（IV = 前瞻RV）',data:[{x:lo,y:lo},{x:hi,y:hi}],type:'line',borderColor:'#9ca3af',borderWidth:1.5,borderDash:[5,3],pointRadius:0,fill:false}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:true,position:'top',align:'start',labels:{usePointStyle:true,padding:14}},
+      tooltip:{callbacks:{label:function(c){return 'IV '+c.parsed.x.toFixed(1)+'% / 前瞻RV '+c.parsed.y.toFixed(1)+'%'}}}},
+    scales:{x:{title:{display:true,text:'IV（進場當日）'},grid:{color:'rgba(0,0,0,0.06)'}},
+      y:{title:{display:true,text:'前瞻已實現波動（21日）'},grid:{color:'rgba(0,0,0,0.06)'}}}
+  }
+});
+
+var PAPER_DATES=["2026-04-01", "2026-04-02", "2026-04-07", "2026-04-08", "2026-04-09", "2026-04-10", "2026-04-13", "2026-04-14", "2026-04-15", "2026-04-16", "2026-04-17", "2026-04-20", "2026-04-21", "2026-04-22", "2026-04-23", "2026-04-24", "2026-04-27", "2026-04-28", "2026-04-29", "2026-04-30", "2026-05-04", "2026-05-05", "2026-05-06", "2026-05-07", "2026-05-08", "2026-05-11", "2026-05-12", "2026-05-13", "2026-05-14", "2026-05-15", "2026-05-18", "2026-05-19", "2026-05-20", "2026-05-21", "2026-05-22", "2026-05-25", "2026-05-26", "2026-05-27", "2026-05-28", "2026-05-29", "2026-06-01", "2026-06-02", "2026-06-03", "2026-06-04", "2026-06-05", "2026-06-08", "2026-06-09", "2026-06-10", "2026-06-11", "2026-06-12", "2026-06-15", "2026-06-16", "2026-06-17", "2026-06-18", "2026-06-22", "2026-06-23", "2026-06-24", "2026-06-25", "2026-06-26", "2026-06-29", "2026-06-30", "2026-07-01", "2026-07-02", "2026-07-03", "2026-07-06", "2026-07-07", "2026-07-08", "2026-07-09", "2026-07-13", "2026-07-14"];
+var PAPER_NAV=[2499700, 2501342, 2502000, 2497009, 2497865, 2496510, 2495136, 2490133, 2485526, 2479535, 2485068, 2483174, 2474677, 2472082, 2472063, 2452015, 2452015, 2452015, 2452015, 2452015, 2452015, 2452015, 2452015, 2452015, 2452015, 2452015, 2452015, 2452015, 2452015, 2452015, 2452015, 2452015, 2452015, 2452015, 2452015, 2451715, 2453191, 2448980, 2450744, 2446866, 2444375, 2443573, 2440195, 2444842, 2447381, 2450504, 2448733, 2451311, 2452156, 2449921, 2447214, 2446341, 2447909, 2444663, 2438269, 2442579, 2447991, 2447447, 2451485, 2453635, 2451849, 2449643, 2451037, 2452061, 2453348, 2455328, 2455185, 2456781, 2457859, 2458355];
+var PAPER_START_LINE=[2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000, 2500000];
+
+new Chart(document.getElementById('chart-paper-equity'),{
+  type:'line',
+  data:{labels:PAPER_DATES,datasets:[
+    {label:'模擬淨值',data:PAPER_NAV,borderColor:'#1a56db',borderWidth:2.2,pointRadius:0,tension:.1,fill:false},
+    {label:'起始資本',data:PAPER_START_LINE,borderColor:'#9ca3af',borderWidth:1.3,borderDash:[5,3],pointRadius:0,fill:false}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:true,position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'line',padding:14}},
+      tooltip:{callbacks:{label:function(c){return c.dataset.label+': NT$'+c.parsed.y.toLocaleString()}}}},
+    scales:{x:{grid:{display:false},ticks:{font:{size:9},maxRotation:45,minRotation:45,autoSkip:true,maxTicksLimit:14}},
+      y:{grid:{color:'rgba(0,0,0,0.06)'},ticks:{callback:function(v){return 'NT$'+(v/1000).toFixed(0)+'K'},font:{size:10}}}}
+  }
+});
+</script>
+</body>
+</html>
