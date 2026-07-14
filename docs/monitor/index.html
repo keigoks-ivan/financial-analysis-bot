@@ -26,6 +26,7 @@
   --shadow-md:0 6px 18px rgba(13,34,68,.07);
   --radius:10px;
   --spark:#0d2244;
+  --internals:#6d43c9;
 }
 @media(prefers-color-scheme:dark){
   :root{
@@ -40,6 +41,7 @@
     --shadow-sm:0 1px 2px rgba(0,0,0,.3);
     --shadow-md:0 4px 14px rgba(0,0,0,.4);
     --spark:#5b9bff;
+    --internals:#a78bfa;
   }
 }
 :root[data-theme=dark]{
@@ -54,6 +56,7 @@
   --shadow-sm:0 1px 2px rgba(0,0,0,.3);
   --shadow-md:0 4px 14px rgba(0,0,0,.4);
   --spark:#5b9bff;
+  --internals:#a78bfa;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;font-size:15px}
@@ -164,6 +167,15 @@ td.pos{color:var(--pos)}td.neg{color:var(--neg)}td.neu{color:var(--text-muted)}
 .score-velobreadth .vb-item{display:flex;align-items:baseline;gap:.4rem;color:var(--text-secondary)}
 .score-velobreadth .vb-label{color:var(--text-muted)}
 .score-velobreadth .vb-item b{font-family:'IBM Plex Mono',monospace;font-weight:700}
+.score-internals{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:14px 30px;margin-top:2px;padding-top:10px;border-top:1px dashed var(--border-light)}
+.score-internals .si-col{min-width:160px}
+.score-internals .si-lbl{font-size:11px;color:var(--text-muted);letter-spacing:.02em;margin-bottom:.25rem}
+.score-internals .si-val{display:flex;align-items:center;gap:.5rem}
+.score-internals .si-val b{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:700}
+.score-internals .si-val .band-chip{margin:0;padding:.15rem .55rem;font-size:10.5px}
+.score-internals .si-sub{margin-top:.2rem;font-size:11.5px;color:var(--text-secondary)}
+.score-internals .si-spark{margin-top:.15rem;line-height:0}
+.score-internals .si-note{flex:1 1 100%;font-size:12.5px;color:var(--text-secondary);margin-top:.2rem}
 .score-chart-card{margin-top:14px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:16px 18px}
 .range-toggle{display:flex;gap:6px;margin-bottom:10px}
 .range-toggle button{font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;padding:.32rem .7rem;border-radius:6px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-secondary);cursor:pointer}
@@ -304,6 +316,7 @@ footer.imq-foot a{color:var(--text-secondary)}
       </div>
       <div class="score-buckets" id="score-buckets"></div>
       <div class="score-velobreadth" id="score-velobreadth"></div>
+      <div class="score-internals" id="score-internals"></div>
     </div>
     <div class="score-disclaim">本分數為環境描述器，非擇時訊號——衡量當下跨資產壓力在歷史中的分位位置，不構成進出場指令。與首頁風險儀表同家族；方法論見下方摺疊。</div>
     <div class="score-chart-card">
@@ -317,6 +330,7 @@ footer.imq-foot a{color:var(--text-secondary)}
       <div class="score-legend">
         <span><i style="background:var(--accent)"></i>跨資產壓力分數（左軸 0–100）</span>
         <span><i style="background:var(--text-muted)"></i>S&amp;P 500（右軸，對數刻度，僅供對照）</span>
+        <span id="score-legend-internals" style="display:none"><i style="background:var(--internals)"></i>市場內部（3 年，高＝內部 risk-off）</span>
       </div>
     </div>
     <details class="method score-details">
@@ -327,7 +341,8 @@ footer.imq-foot a{color:var(--text-secondary)}
       <p>coverage 誠實協議：信用桶自 2008-04 起才點亮（ICE BofA HY／IG／CCC OAS 系列受 FRED 免費端點約 3 年滾動窗限制，僅自 2024 年年中暖機後才對總分有貢獻；信用桶的長史錨為 Baa10Y〔Moody's Baa 級與 10Y 公債利差〕，全史可回溯）。DXY／黃金／通膨預期／殖利率曲線斜率等雙向語意 series 明文排除於合成之外，不納入任一桶。</p>
       <p><b>動能</b>：分數與 20 交易日前之差，衡量壓力正在加速累積還是逐漸熄火。</p>
       <p><b>廣度</b>：5 桶中達「緊張」帶（≥60）的桶數，衡量當下壓力是單點還是系統性；動能與廣度皆為描述器、非訊號，不構成進出場指令。</p>
-      <p class="score-disclaim">本分數為環境描述器，非擇時訊號——衡量當下跨資產壓力在歷史中的分位位置，不構成進出場指令。與首頁風險儀表同家族。</p>
+      <p><b>市場內部</b>：獨立於合成壓力分數的另一描述器，量股市內部領導權——同 5 條股票內部比值（半導體、高 beta、成長、小型股、循環消費 vs 防禦），全部 falling＝內部 risk-off，與壓力分數同軸（高＝風險），不進合成、非訊號。以兩個百分位窗並列出值：長窗（756 個交易日，約 3 年）衡量持續性輪動，其與系統性分數的分歧（int−s）是核心讀法（2022 全年成長／科技熊市 int−s 峰約 +21.2〔2022-12〕；2023 年中窄基 mega-cap 領軍、breadth 極差時峰約 +23.9〔2023-05〕——兩者皆為內部先行、合成未及的例子。2023-03 SVB 屬系統性資金事件，合成分數自身已抓到，內部分歧當週僅約 +1~+4 且旋即轉負，並非內部先行）；短窗（63 個交易日，約一季）反映較新鮮的輪動，長窗百分位對數日級的回落太鈍，短窗會先亮，但也較敏感、雜訊較高。</p>
+      <p class="score-disclaim">本分數為環境描述器，非擇時訊號——衡量當下跨資產壓力在歷史中的分位位置，不構成進出場指令。與首頁風險儀表同家族。單「日」等級的急跌仍看今日異常層（z-score）；市場內部長窗／短窗二者皆為描述器、非訊號，不構成進出場指令；短窗較敏感、雜訊亦較高。</p>
     </details>
   </section>
 
@@ -560,7 +575,9 @@ footer.imq-foot a{color:var(--text-secondary)}
   }
 
   // ── sparkline（單序列，免 legend；線色走 --spark token）──
-  function sparkline(vals) {
+  // endColor：末點顏色。預設走漲綠跌紅（價格語意，如分類表）；壓力型序列（漲＝
+  // 惡化）應傳中性色避免綠紅誤讀（見內部近窗 sparkline）。
+  function sparkline(vals, endColor) {
     if (!vals || vals.length < 2) return "";
     var w = 110, h = 26, pad = 2;
     var min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
@@ -571,7 +588,7 @@ footer.imq-foot a{color:var(--text-secondary)}
       return x.toFixed(1) + "," + y.toFixed(1);
     });
     var lastUp = vals[vals.length - 1] >= vals[0];
-    var endCol = lastUp ? "var(--pos)" : "var(--neg)";
+    var endCol = endColor || (lastUp ? "var(--pos)" : "var(--neg)");
     var last = pts[pts.length - 1].split(",");
     return '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + " " + h + '" aria-hidden="true">' +
       '<polyline points="' + pts.join(" ") + '" fill="none" stroke="var(--spark)" stroke-width="1.5" stroke-linejoin="round" opacity=".75"/>' +
@@ -727,6 +744,7 @@ footer.imq-foot a{color:var(--text-secondary)}
     });
 
     renderScoreVeloBreadth(sd, last);
+    renderScoreInternals(sd, last);
   }
 
   // ── 動能／廣度：純前端由已載入的 series 算出，不另發 fetch ──
@@ -783,6 +801,66 @@ footer.imq-foot a{color:var(--text-secondary)}
     var breadthHtml = '<div class="vb-item"><b>' + esc(breadthText) + '</b></div>';
 
     host.innerHTML = veloHtml + breadthHtml;
+  }
+
+  // ── 市場內部（3 年長窗 / 3 月短窗）：獨立於合成壓力分數的描述器 ──
+  function renderScoreInternals(sd, last) {
+    var host = document.getElementById("score-internals");
+    if (!host) return;
+    var il = sd.internals_latest;
+    if (!il || typeof il.score !== "number") { host.innerHTML = ""; return; }
+
+    var labels = (sd.method && sd.method.internals && sd.method.internals.labels) || {};
+    var tenseBound = sd.bands.tense[0];
+    var sVal = last.s;
+    var intVal = il.score;
+    var intSVal = typeof il.score_short === "number" ? il.score_short : null;
+
+    var bandS = bandOfScore(sd.bands, sVal);
+    var bandInt = bandOfScore(sd.bands, intVal);
+    var bandIntS = intSVal !== null ? bandOfScore(sd.bands, intSVal) : null;
+
+    var html = "";
+
+    html += '<div class="si-col"><div class="si-lbl">內部（3 年，長窗）</div>' +
+      '<div class="si-val"><b style="color:' + bandColorVar(bandInt) + '">' + intVal.toFixed(1) + '</b>' +
+      '<span class="band-chip b-' + bandInt + '">' + esc(BAND_LABELS[bandInt] || bandInt) + '</span></div>' +
+      '<div class="si-sub">vs 系統性 ' + fmtSignedScore(intVal - sVal) + '</div></div>';
+
+    if (intSVal !== null) {
+      html += '<div class="si-col"><div class="si-lbl">內部（3 月，短窗）</div>' +
+        '<div class="si-val"><b style="color:' + bandColorVar(bandIntS) + '">' + intSVal.toFixed(1) + '</b>' +
+        '<span class="band-chip b-' + bandIntS + '">' + esc(BAND_LABELS[bandIntS] || bandIntS) + '</span></div>' +
+        '<div class="si-sub">vs 長線 ' + fmtSignedScore(intSVal - intVal) + '</div></div>';
+    }
+
+    var ms = il.members_short || {};
+    var entries = Object.keys(ms).map(function (k) { return { k: k, v: ms[k] }; })
+      .sort(function (a, b) { return b.v - a.v; });
+    var top = entries.filter(function (e) { return e.v >= tenseBound; }).slice(0, 3);
+    var leadText = top.length
+      ? top.map(function (e) { return esc(labels[e.k] || e.k); }).join("、")
+      : "無明顯領跌族群";
+    html += '<div class="si-col"><div class="si-lbl">領跌族群（近窗）</div>' +
+      '<div class="si-val"><b>' + leadText + '</b></div></div>';
+
+    var sparkVals = sd.series
+      .filter(function (r) { return typeof r.int_s === "number"; })
+      .slice(-120)
+      .map(function (r) { return r.int_s; });
+    if (sparkVals.length >= 2) {
+      html += '<div class="si-col"><div class="si-lbl">近窗走勢（近 ' + sparkVals.length + ' 個交易日）</div>' +
+        '<div class="si-spark">' + sparkline(sparkVals, "var(--internals)") + '</div></div>';
+    }
+
+    var synth = "系統性 " + esc(BAND_LABELS[bandS] || bandS) + " · 內部長線 " + esc(BAND_LABELS[bandInt] || bandInt);
+    if (bandIntS !== null) synth += " · 近窗 " + esc(BAND_LABELS[bandIntS] || bandIntS);
+    if (intSVal !== null && intSVal >= tenseBound && sVal < tenseBound) {
+      synth += " · 內部近窗已入緊張帶、系統性尚在" + esc(BAND_LABELS[bandS] || bandS);
+    }
+    html += '<div class="si-note">' + synth + '</div>';
+
+    host.innerHTML = html;
   }
 
   function renderScoreMethod(sd) {
@@ -866,6 +944,17 @@ footer.imq-foot a{color:var(--text-secondary)}
       spxPath += (spxPath === "" ? "M" : "L") + xAt(i).toFixed(1) + "," + ySpx(p.spx).toFixed(1) + " ";
     });
 
+    // 市場內部（長窗，756td）：僅在 int != null 處繪製，null 處斷線
+    var intPath = "", intBreak = true, hasIntLine = false;
+    pts.forEach(function (p, i) {
+      if (typeof p.int !== "number") { intBreak = true; return; }
+      hasIntLine = true;
+      intPath += (intBreak ? "M" : "L") + xAt(i).toFixed(1) + "," + yScore(p.int).toFixed(1) + " ";
+      intBreak = false;
+    });
+    var intLegend = document.getElementById("score-legend-internals");
+    if (intLegend) intLegend.style.display = hasIntLine ? "" : "none";
+
     var spxMax = Math.max.apply(null, spxVals), spxMin = Math.min.apply(null, spxVals);
     var rightLabels =
       '<text x="' + (padL + plotW + 4) + '" y="' + (padT + 4) + '" font-size="9" text-anchor="start" fill="var(--text-muted)" font-family="IBM Plex Mono,monospace">' + Math.round(spxMax) + '</text>' +
@@ -880,6 +969,7 @@ footer.imq-foot a{color:var(--text-secondary)}
     var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet">' +
       bandRects + gridLines +
       '<path d="' + spxPath + '" fill="none" stroke="var(--text-muted)" stroke-width="1.2" opacity="0.55"/>' +
+      (hasIntLine ? '<path d="' + intPath + '" fill="none" stroke="var(--internals)" stroke-width="1.4" opacity="0.85"/>' : "") +
       '<path d="' + scorePath + '" fill="none" stroke="var(--accent)" stroke-width="1.6"/>' +
       rightLabels + dateLabels +
       '<g id="score-crosshair" style="display:none">' +
@@ -911,7 +1001,8 @@ footer.imq-foot a{color:var(--text-secondary)}
       chCircle.setAttribute("cx", x); chCircle.setAttribute("cy", yScore(p.s));
       crosshair.style.display = "";
       var b = bandOfScore(sd.bands, p.s);
-      tip.innerHTML = "<b>" + esc(p.d) + "</b><br>分數 " + p.s.toFixed(1) + "（" + esc(BAND_LABELS[b] || b) + "）<br>S&amp;P 500 " + (p.spx ? p.spx.toFixed(1) : "—");
+      tip.innerHTML = "<b>" + esc(p.d) + "</b><br>分數 " + p.s.toFixed(1) + "（" + esc(BAND_LABELS[b] || b) + "）<br>內部 " +
+        (typeof p.int === "number" ? p.int.toFixed(1) : "—") + "<br>S&amp;P 500 " + (p.spx ? p.spx.toFixed(1) : "—");
       var hostRect = host.getBoundingClientRect();
       var tipX = (x / W) * hostRect.width;
       tip.style.left = Math.min(Math.max(tipX + 8, 4), Math.max(hostRect.width - 150, 4)) + "px";

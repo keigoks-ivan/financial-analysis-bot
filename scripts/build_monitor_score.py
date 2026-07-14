@@ -112,6 +112,31 @@ MIN_MEMBERS = {b[0]: b[1] for b in BUCKETS}
 MEMBERS = [(k, src, spec, ris, b[0]) for b in BUCKETS for (k, src, spec, ris) in b[2]]
 N_MEMBERS = len(MEMBERS)   # 21（v1 amendment：credit 桶加 baa10y 長史錨）
 
+# ───────────────────────────────────────────────────────────────────────────
+# 市場內部風險偏好（Market Internals）——與合成壓力分數「並列但獨立」的描述器。
+# 量的是股市「內部」領導權：風險偏好族群（半導體／高 beta／成長／小型／循環）
+# 在領漲還是領跌。全部方向 falling＝內部 risk-off（score＝100−percentile），與壓
+# 力分數同軸（高＝風險）故可疊圖比較；兩線分歧＝「系統性平靜、內部 risk-off」。
+# 刻意獨立於 BUCKETS——絕不進合成分數（避免污染「系統性」語意，亦免被當擇時訊
+# 號）。≥3/5 成員才出值。成分皆 yfinance ratio，多數腳已在胃納桶抓過。
+INTERNALS = [
+    ("sox_ndx",   "ratio", ("^SOX", "^NDX"),  False),   # 半導體 vs 大型科技
+    ("sphb_splv", "ratio", ("SPHB", "SPLV"),  False),   # 高 beta vs 低波
+    ("xly_xlp",   "ratio", ("XLY", "XLP"),    False),   # 循環 vs 防禦消費
+    ("vug_vtv",   "ratio", ("VUG", "VTV"),    False),   # 成長 vs 價值
+    ("iwm_spy",   "ratio", ("IWM", "SPY"),    False),   # 小型 vs 大型
+]
+INT_MEMBERS = [(k, src, spec, ris, "_int") for (k, src, spec, ris) in INTERNALS]
+INT_MIN = 3                              # ≥3/5 成員才出內部值（長短窗共用）
+INT_LABELS = {"sox_ndx": "半導體", "sphb_splv": "高beta", "xly_xlp": "循環消費",
+              "vug_vtv": "成長", "iwm_spy": "小型股"}
+# 短窗內部序列（int_s）：同 5 條內部 ratio、同定向（falling＝risk-off），但百分位窗
+# 縮成 63 交易日（≈3 個月／一季），窗內 ≥40 筆才貢獻。動機＝長窗 756td 對「新鮮」
+# 輪動太鈍（2 天半導體跌不動 3 年百分位）；一季窗能反映數週齡的輪動。純附加，絕不
+# 進合成分數，也不動長窗 int。單「日」等級的位移仍歸 anomaly 層（latest.json z-score）。
+INT_SHORT_WINDOW = 63                    # 短窗百分位（≈一季交易日）
+INT_SHORT_MIN = 40                       # 短窗內最低樣本數，不足則該日不貢獻
+
 
 def warn(msg: str) -> None:
     print(f"[score][WARN] {msg}", file=sys.stderr)
@@ -236,9 +261,10 @@ def align(series, master, tol_days):
     return s.reindex(master, method="ffill", tolerance=pd.Timedelta(days=tol_days))
 
 
-def rolling_pctile(x):
-    """x：numpy 1-D（含 NaN）。回傳同長度 numpy，每格＝該日水位在滾動 756 窗的
-    百分位（窗內非 NaN ≥ 252 才出值，否則 NaN）。百分位＝窗內 ≤ 當日值的比例。"""
+def rolling_pctile(x, window=WINDOW_TD, minobs=MIN_OBS):
+    """x：numpy 1-D（含 NaN）。回傳同長度 numpy，每格＝該日水位在滾動 window 窗的
+    百分位（窗內非 NaN ≥ minobs 才出值，否則 NaN）。百分位＝窗內 ≤ 當日值的比例。
+    預設 (756, 252) 保持既有長窗行為 byte-unchanged；短窗內部序列以 (63, 40) 呼叫。"""
     import numpy as np
     n = len(x)
     out = np.full(n, np.nan)
@@ -249,9 +275,9 @@ def rolling_pctile(x):
         xi = x[i]
         if xi != xi:  # NaN
             continue
-        w = x[max(0, i - WINDOW_TD + 1):i + 1]
+        w = x[max(0, i - window + 1):i + 1]
         wv = w[~np.isnan(w)]
-        if len(wv) >= MIN_OBS:
+        if len(wv) >= minobs:
             out[i] = (wv <= xi).sum() / len(wv) * 100.0
     return out
 
@@ -264,8 +290,8 @@ def build():
     """回傳 (master_dates[list iso], spx[np], member_score{key:np}, rows[list])。"""
     import numpy as np
 
-    # 1) 抓 yfinance（GSPC 定曆＋所有 yf 腳一次批次）
-    yf_tickers = sorted({t for _, src, spec, _, _ in MEMBERS
+    # 1) 抓 yfinance（GSPC 定曆＋所有 yf 腳一次批次；含內部序列的 ratio 腳）
+    yf_tickers = sorted({t for _, src, spec, _, _ in (MEMBERS + INT_MEMBERS)
                          for t in ((spec,) if src == "yf" else
                                    (spec if src == "ratio" else ()))} | {"^GSPC"})
     info(f"fetching {len(yf_tickers)} yfinance tickers（period=max）…")
@@ -304,7 +330,7 @@ def build():
         return align(s, master, FRED_W_TOL if weekly else FRED_TOL) if s is not None else None
 
     level = {}
-    for key, src, spec, _ris, _b in MEMBERS:
+    for key, src, spec, _ris, _b in (MEMBERS + INT_MEMBERS):
         try:
             if src == "yf":
                 lv = yf_aligned(spec)
@@ -333,15 +359,27 @@ def build():
         else:
             warn(f"  {key}：缺資料")
 
-    # 4) 每個成員 → 定向壓力分數（滾動百分位）
+    # 4) 每個成員 → 定向壓力分數（滾動百分位）；含內部序列成員
     member_score = {}
-    for key, _src, _spec, ris, _b in MEMBERS:
+    for key, _src, _spec, ris, _b in (MEMBERS + INT_MEMBERS):
         lv = level.get(key)
         if lv is None:
             member_score[key] = np.full(len(master), np.nan)
             continue
         pct = rolling_pctile(lv.to_numpy(dtype="float64"))
         member_score[key] = pct if ris else (100.0 - pct)
+
+    # 4b) 內部序列成員 → 短窗（63td）定向分數，供 int_s。同一批已對齊的內部 ratio
+    #     水位，只換百分位窗（63/40）；定向與長窗一致（falling＝risk-off→100−pctile）。
+    member_score_short = {}
+    for key, _src, _spec, ris, _b in INT_MEMBERS:
+        lv = level.get(key)
+        if lv is None:
+            member_score_short[key] = np.full(len(master), np.nan)
+            continue
+        pct = rolling_pctile(lv.to_numpy(dtype="float64"),
+                             window=INT_SHORT_WINDOW, minobs=INT_SHORT_MIN)
+        member_score_short[key] = pct if ris else (100.0 - pct)
 
     # 5) 逐日聚合桶／合成／coverage
     spx = gspc.to_numpy(dtype="float64")
@@ -366,17 +404,41 @@ def build():
         if first_composite is None:
             first_composite = i
         b_out = {bk: (round(bvals[bk], 1) if bk in bvals else None) for bk in BUCKET_ORDER}
+        # 內部風險偏好（獨立於合成；≥INT_MIN 成員才出值）
+        int_vals = [member_score[k][i] for (k, *_r) in INT_MEMBERS
+                    if member_score[k][i] == member_score[k][i]]
+        int_val = round(sum(int_vals) / len(int_vals), 1) if len(int_vals) >= INT_MIN else None
+        # 短窗內部風險偏好（int_s；同 ≥INT_MIN 成員門檻，只換 63td 百分位窗）
+        int_s_vals = [member_score_short[k][i] for (k, *_r) in INT_MEMBERS
+                      if member_score_short[k][i] == member_score_short[k][i]]
+        int_s_val = round(sum(int_s_vals) / len(int_s_vals), 1) if len(int_s_vals) >= INT_MIN else None
         rows.append({
             "d": dates[i],
             "s": round(composite, 1) if composite is not None else None,
             "b": b_out,
+            "int": int_val,
+            "int_s": int_s_val,
             "cov": round(avail / N_MEMBERS, 2),
             "spx": round(float(spx[i]), 2) if spx[i] == spx[i] else None,
         })
-    return dates, spx, member_score, rows, master
+
+    # 內部序列最新成員拆分（供 hero 指名領跌族群）——取 master 最末日
+    li = len(master) - 1
+    int_members_latest = {}
+    int_members_short_latest = {}
+    for (k, *_r) in INT_MEMBERS:
+        sc = member_score[k][li]
+        int_members_latest[k] = round(float(sc), 1) if sc == sc else None
+        scs = member_score_short[k][li]
+        int_members_short_latest[k] = round(float(scs), 1) if scs == scs else None
+    internals_latest = {"as_of": dates[li], "score": rows[-1]["int"] if rows else None,
+                        "members": int_members_latest,
+                        "score_short": rows[-1]["int_s"] if rows else None,
+                        "members_short": int_members_short_latest}
+    return dates, spx, member_score, rows, master, internals_latest
 
 
-def assemble(rows) -> dict:
+def assemble(rows, internals_latest=None) -> dict:
     method_buckets = {}
     for bkey, minm, members in BUCKETS:
         method_buckets[bkey] = {
@@ -397,7 +459,20 @@ def assemble(rows) -> dict:
             "buckets": method_buckets,
             "excluded_note": "DXY／黃金／BEI／曲線斜率等雙向語意 series 明文排除",
             "ice_oas_note": "ICE BofA HY／IG／CCC OAS 受 FRED 免費端授權限縮為約 3 年滾動窗（2023-07 起、~2024 年中暖機後才貢獻），屬資料可得性非 bug；credit 桶的長史錨＝baa10y（Moody's Baa−10Y 利差，1986 起全史），與 hyg_lqd 讓桶自 2008-04 起亮",
+            "internals": {
+                "min_members": INT_MIN,
+                "members": {k: "falling" for (k, *_r) in INTERNALS},
+                "labels": INT_LABELS,
+                "window_long_td": WINDOW_TD,
+                "min_obs_long": MIN_OBS,
+                "window_short_td": INT_SHORT_WINDOW,
+                "min_obs_short": INT_SHORT_MIN,
+                "note": "市場內部風險偏好：獨立於合成壓力分數的描述器，量股市內部領導權（半導體／高beta／成長／小型／循環 vs 防禦）。全部 falling＝內部 risk-off（100−percentile），與壓力分數同軸（高＝風險）。同 5 條內部 ratio 以兩個百分位窗並列出值，皆 ≥3/5 成員才出值；不進合成、非訊號。",
+                "note_long": "長窗（756td／3 年）＝series[].int：衡量『持續、多週齡』的內部輪動；其與系統性分數的分歧 int−s 是核心指標（2022 全年成長／科技熊市 int−s 峰約 +21.2〔2022-12〕；2023 年中窄基 mega-cap 領軍、breadth 極差時峰約 +23.9〔2023-05〕）——系統性平靜但 int 抬高＝表面平靜、內部已 risk-off。註：2023-03 SVB 屬系統性資金事件、合成分數自身已抓到，內部分歧當週僅 +1~+4 且旋即轉負，故非內部先行案例。",
+                "note_short": "短窗（63td／≈一季）＝series[].int_s：反映『較新鮮、僅數週齡』的輪動；長窗百分位對 2 天級的半導體回落太鈍（不動 3 年分位），短窗會先亮。單『日』等級的位移不在此層，仍歸 anomaly 層（latest.json 的 z-score）。int_s 純附加，不影響 s 與長窗 int。",
+            },
         },
+        "internals_latest": internals_latest,
         "series": rows,
     }
 
@@ -416,11 +491,11 @@ def main() -> int:
         _validate()
         return 0
 
-    dates, spx, member_score, rows, master = build()
+    dates, spx, member_score, rows, master, internals_latest = build()
     if not rows:
         warn("無任何合成分數列——不寫檔")
         return 1
-    obj = assemble(rows)
+    obj = assemble(rows, internals_latest)
     changed = write_json_if_changed(OUT_PATH, obj)
     sz = os.path.getsize(OUT_PATH)
     info(f"score_history.json {'written' if changed else 'unchanged'}；"
@@ -431,7 +506,7 @@ def main() -> int:
 def _spotcheck(date_iso=None):
     """印某日 20 成員分數＋桶運算，供手驗合成。"""
     import numpy as np
-    dates, spx, member_score, rows, master = build()
+    dates, spx, member_score, rows, master, _il = build()
     if date_iso is None:
         date_iso = dates[-1]
     if date_iso not in dates:
@@ -468,7 +543,7 @@ def _spotcheck(date_iso=None):
 def _validate():
     """跑覆蓋率時間軸＋episode／calm sanity（描述性，無回測）。"""
     import numpy as np
-    dates, spx, member_score, rows, master = build()
+    dates, spx, member_score, rows, master, _il = build()
     by_year = {}
     for r in rows:
         y = r["d"][:4]
@@ -521,10 +596,49 @@ def _validate():
               f"<40 佔比={100*sum(1 for s in seg if s < 40)/len(seg):.0f}%  "
               f"<20 佔比={100*sum(1 for s in seg if s < 20)/len(seg):.0f}%")
 
-    print("\n=== 5) 最新讀數 ===")
+    print("\n=== 4) 內部風險偏好（int）episode／分歧檢查 ===")
+    iseries = [r for r in rows if r.get("int") is not None]
+    if iseries:
+        print(f"int 起點 {iseries[0]['d']}（共 {len(iseries)} 列有值）")
+        for name, a, b in episodes:
+            seg = [r for r in rows if a <= r["d"] <= b and r.get("int") is not None]
+            if not seg:
+                continue
+            pk = max(seg, key=lambda r: r["int"])
+            # 同日系統性分數，看兩者分歧
+            print(f"{name:<18} int峰={pk['int']:>5.1f} @ {pk['d']}  "
+                  f"（同日 s={pk['s']}, 分歧 int−s={pk['int'] - (pk['s'] or 0):+.1f}）")
+
+    print("\n=== 4b) 長短窗內部並列（每 episode 各自峰值：s／int／int_s）===")
+    isseries = [r for r in rows if r.get("int_s") is not None]
+    if isseries:
+        print(f"int_s 起點 {isseries[0]['d']}（共 {len(isseries)} 列有值）")
+    print(f"{'episode':<18}{'s峰':>7}{'int峰':>8}{'int_s峰':>9}")
+    for name, a, b in episodes:
+        segs = [r for r in rows if a <= r["d"] <= b and r["s"] is not None]
+        segi = [r for r in rows if a <= r["d"] <= b and r.get("int") is not None]
+        segis = [r for r in rows if a <= r["d"] <= b and r.get("int_s") is not None]
+        if not segs:
+            print(f"{name:<18} 無資料")
+            continue
+        s_pk = max(r["s"] for r in segs)
+        i_pk = max((r["int"] for r in segi), default=None)
+        is_pk = max((r["int_s"] for r in segis), default=None)
+        print(f"{name:<18}{s_pk:>7.1f}"
+              f"{(f'{i_pk:.1f}' if i_pk is not None else '—'):>8}"
+              f"{(f'{is_pk:.1f}' if is_pk is not None else '—'):>9}")
+
+    print("\n=== 5) 最新讀數（三向：s／int／int_s）===")
     last = rows[-1]
     print(f"{last['d']}  score={last['s']}（{band(last['s']) if last['s'] is not None else '—'}）"
           f"  cov={last['cov']}  buckets={last['b']}")
+    print(f"           長窗 int={last.get('int')}"
+          + (f"（{band(last['int'])}）" if last.get('int') is not None else "")
+          + f"  分歧 int−s={((last.get('int') or 0) - (last['s'] or 0)):+.1f}")
+    print(f"           短窗 int_s={last.get('int_s')}"
+          + (f"（{band(last['int_s'])}）" if last.get('int_s') is not None else "")
+          + f"  分歧 int_s−s={((last.get('int_s') or 0) - (last['s'] or 0)):+.1f}"
+          + f"  int_s−int={((last.get('int_s') or 0) - (last.get('int') or 0)):+.1f}")
 
 
 if __name__ == "__main__":
