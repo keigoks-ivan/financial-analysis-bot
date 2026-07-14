@@ -160,6 +160,10 @@ td.pos{color:var(--pos)}td.neg{color:var(--neg)}td.neu{color:var(--text-muted)}
 .bucket-row .lbl b{font-family:'IBM Plex Mono',monospace;color:var(--text);font-weight:600}
 .bucket-bar{width:100%;height:6px;border-radius:3px;background:var(--border-light);margin-top:.28rem;position:relative;overflow:hidden}
 .bucket-bar i{position:absolute;left:0;top:0;bottom:0;border-radius:3px}
+.score-velobreadth{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:8px 28px;margin-top:4px;padding-top:10px;border-top:1px dashed var(--border-light);font-size:12.5px}
+.score-velobreadth .vb-item{display:flex;align-items:baseline;gap:.4rem;color:var(--text-secondary)}
+.score-velobreadth .vb-label{color:var(--text-muted)}
+.score-velobreadth .vb-item b{font-family:'IBM Plex Mono',monospace;font-weight:700}
 .score-chart-card{margin-top:14px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:16px 18px}
 .range-toggle{display:flex;gap:6px;margin-bottom:10px}
 .range-toggle button{font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;padding:.32rem .7rem;border-radius:6px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-secondary);cursor:pointer}
@@ -299,6 +303,7 @@ footer.imq-foot a{color:var(--text-secondary)}
         <div class="score-sub" id="score-asof"></div>
       </div>
       <div class="score-buckets" id="score-buckets"></div>
+      <div class="score-velobreadth" id="score-velobreadth"></div>
     </div>
     <div class="score-disclaim">本分數為環境描述器，非擇時訊號——衡量當下跨資產壓力在歷史中的分位位置，不構成進出場指令。與首頁風險儀表同家族；方法論見下方摺疊。</div>
     <div class="score-chart-card">
@@ -320,6 +325,8 @@ footer.imq-foot a{color:var(--text-secondary)}
       <div class="score-method-list" id="score-bucket-detail"></div>
       <p>分級帶固定為 0–20 平靜／20–40 常態／40–60 升溫／60–80 緊張／80–100 極端，已凍結、不隨校準調整。</p>
       <p>coverage 誠實協議：信用桶自 2008-04 起才點亮（ICE BofA HY／IG／CCC OAS 系列受 FRED 免費端點約 3 年滾動窗限制，僅自 2024 年年中暖機後才對總分有貢獻；信用桶的長史錨為 Baa10Y〔Moody's Baa 級與 10Y 公債利差〕，全史可回溯）。DXY／黃金／通膨預期／殖利率曲線斜率等雙向語意 series 明文排除於合成之外，不納入任一桶。</p>
+      <p><b>動能</b>：分數與 20 交易日前之差，衡量壓力正在加速累積還是逐漸熄火。</p>
+      <p><b>廣度</b>：5 桶中達「緊張」帶（≥60）的桶數，衡量當下壓力是單點還是系統性；動能與廣度皆為描述器、非訊號，不構成進出場指令。</p>
       <p class="score-disclaim">本分數為環境描述器，非擇時訊號——衡量當下跨資產壓力在歷史中的分位位置，不構成進出場指令。與首頁風險儀表同家族。</p>
     </details>
   </section>
@@ -718,6 +725,64 @@ footer.imq-foot a{color:var(--text-secondary)}
         '<b>' + (v === null || v === undefined ? "—" : v.toFixed(1)) + '</b></div>' + barHtml;
       host.appendChild(row);
     });
+
+    renderScoreVeloBreadth(sd, last);
+  }
+
+  // ── 動能／廣度：純前端由已載入的 series 算出，不另發 fetch ──
+  function fmtSignedScore(v) {
+    var r = Math.round(v * 10) / 10;
+    var sign = r < 0 ? "−" : "+";
+    return sign + Math.abs(r).toFixed(1);
+  }
+  function scoreVeloTag(delta) {
+    if (delta >= 15) return "快速升壓";
+    if (delta >= 6) return "升溫中";
+    if (delta > -6) return "持平";
+    if (delta > -15) return "降溫中";
+    return "快速降壓";
+  }
+  function scoreVeloColor(delta) {
+    if (delta > 0.1) return "var(--warn)";
+    if (delta < -0.1) return "var(--accent)";
+    return "var(--text-secondary)";
+  }
+  function renderScoreVeloBreadth(sd, last) {
+    var host = document.getElementById("score-velobreadth");
+    if (!host) return;
+
+    // 動能（20 交易日 Δ）：以 hero 同一批「分數非 null」列為準，index-based 回看 20 列
+    var scored = sd.series.filter(function (r) { return typeof r.s === "number"; });
+    var m = scored.length;
+    var veloHtml;
+    if (m < 21) {
+      veloHtml = '<div class="vb-item"><span class="vb-label">動能（20 日）</span><b>—</b></div>';
+    } else {
+      var prev = scored[m - 21];
+      var curr = scored[m - 1];
+      var delta = curr.s - prev.s;
+      var glyph = Math.abs(delta) <= 0.1 ? "→" : (delta > 0 ? "▲" : "▼");
+      var tag = scoreVeloTag(delta);
+      var color = scoreVeloColor(delta);
+      veloHtml = '<div class="vb-item"><span class="vb-label">動能（20 日）</span>' +
+        '<b style="color:' + color + '">' + glyph + " " + fmtSignedScore(delta) + '</b>' +
+        '<span style="color:' + color + '">' + esc(tag) + '</span></div>';
+    }
+
+    // 廣度：5 桶中達「緊張」帶（sd.bands.tense[0]，非硬編 60）的桶數
+    var LIT = sd.bands.tense[0];
+    var nMembers = 0, nLit = 0, litNames = [];
+    BUCKET_ORDER.forEach(function (k) {
+      var v = last.b ? last.b[k] : null;
+      if (v === null || v === undefined) return;
+      nMembers++;
+      if (v >= LIT) { nLit++; litNames.push(BUCKET_LABELS[k]); }
+    });
+    var breadthText = "廣度 " + nLit + "/" + nMembers + " 桶";
+    breadthText += nLit === 0 ? " · 無桶達緊張" : " · " + litNames.join("、");
+    var breadthHtml = '<div class="vb-item"><b>' + esc(breadthText) + '</b></div>';
+
+    host.innerHTML = veloHtml + breadthHtml;
   }
 
   function renderScoreMethod(sd) {
