@@ -7,13 +7,14 @@ name: Daily Market Monitor
 # scripts/build_monitor.py.
 #
 # yfinance daily bars settle after the US close (~20:00-21:00 UTC), so we run at
-# 22:52 UTC on Tue-Sat (cron dow 2-6) — same window as rotation-radar-daily
-# (22:40) but offset to avoid the simultaneous-push pile-up.  Zero-churn write
-# means a run with no new settled bar (weekend / US holiday) produces an empty
-# diff and no commit, so this is idempotent.
+# 23:30 UTC on Mon-Fri (cron dow 1-5) = 07:30 Taiwan time Tue-Sat.  Capturing at
+# 23:30 UTC of each US trading day means every session Mon-Fri gets its own
+# snapshot (the prior 22:52 UTC Tue-Sat schedule systematically skipped Monday's
+# US session).  Zero-churn write means a run with no new settled bar (US holiday)
+# produces an empty diff and no commit, so this is idempotent.
 on:
   schedule:
-    - cron: "52 22 * * 2-6"
+    - cron: "30 23 * * 1-5"
   workflow_dispatch:
 
 permissions:
