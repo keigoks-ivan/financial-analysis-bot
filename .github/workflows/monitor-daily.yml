@@ -43,12 +43,19 @@ jobs:
       - name: Build monitor data
         run: python scripts/build_monitor.py
 
+      # 跨資產壓力分數（0-100 描述器，非擇時訊號）：756td rolling percentile ×
+      # 5 桶等權，全量重算＋零 churn 寫入，失敗不擋 monitor 本體（分數層是
+      # 衍生物，機械層 latest.json 優先保住）。
+      - name: Build cross-asset stress score
+        run: python scripts/build_monitor_score.py || echo "::warning::stress score build failed; monitor data unaffected"
+
       - name: Commit and push if changed
         run: |
           PATHS=""
           for p in \
             docs/monitor/data/latest.json \
-            docs/monitor/data/alerts.json; do
+            docs/monitor/data/alerts.json \
+            docs/monitor/data/score_history.json; do
             [ -e "$p" ] && PATHS="$PATHS $p"
           done
           if git status --porcelain $PATHS | grep -q .; then
