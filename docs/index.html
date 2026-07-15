@@ -142,6 +142,16 @@ header nav a.active{color:#fff;background:rgba(59,130,246,.18);font-weight:600}
 .mp-trend{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:600;padding:.1rem .4rem;border-radius:4px;margin-left:.4rem;border:1px solid var(--border);color:var(--muted);vertical-align:middle}
 .mp-trend.reversing{color:var(--amber);border-color:var(--amber)}
 .mp-trend.mixed{color:var(--purple);border-color:var(--purple)}
+.mp-more{margin-top:.7rem;border-top:1px solid var(--border-soft);padding-top:.6rem}
+.mp-more>summary{cursor:pointer;font-size:.76rem;font-weight:600;color:var(--accent);list-style:none;display:inline-flex;align-items:center;gap:.3rem;user-select:none}
+.mp-more>summary::-webkit-details-marker{display:none}
+.mp-more>summary::before{content:'▸';font-size:.7rem;transition:transform .15s}
+.mp-more[open]>summary::before{content:'▾'}
+.mp-detail{margin-top:.6rem}
+.mp-detail p{font-size:.82rem;line-height:1.7;color:var(--text-sec);margin:.35rem 0}
+.mp-detail .mp-dl{margin:.7rem 0 .15rem;font-size:.72rem;font-weight:700;color:var(--muted)}
+.mp-fl{font-size:.78rem;line-height:1.55;color:var(--text-sec);padding:.28rem 0;border-top:1px dashed var(--border-soft)}
+.mp-fl b{color:var(--text);font-weight:600}
 .mp-links{margin-top:.95rem;padding-top:.75rem;border-top:1px solid var(--border-soft);font-size:.78rem;color:var(--text-sec)}
 .mp-links a{font-weight:500}
 .mp-stale{margin-bottom:.75rem;font-size:.76rem;color:var(--amber);background:var(--bg-soft);border:1px solid var(--amber);border-radius:6px;padding:.45rem .7rem;line-height:1.5}
@@ -403,6 +413,10 @@ footer a{color:var(--muted)}
         <div class="mp-lbl"><span class="mp-tag rot">輪動</span><span id="mpRadTrend"></span></div>
         <ul class="mp-pts" id="mpRadPts"></ul>
       </div>
+      <details class="mp-more" id="mpMore" hidden>
+        <summary>展開詳情</summary>
+        <div class="mp-detail" id="mpDetail"></div>
+      </details>
       <div class="mp-links">
         <a href="/monitor/">市場監測</a><span class="lf-sep">·</span><a href="/rotation/radar.html#cross_asset/120">資產輪動雷達</a><span class="lf-sep">·</span><span class="mp-asof">描述器 · 非擇時訊號 · 每交易日更新</span>
       </div>
@@ -426,6 +440,12 @@ footer a{color:var(--muted)}
     document.getElementById('mpRadTrend').innerHTML=chip(rad.trend);
     bullets(document.getElementById('mpMonPts'),mon.points);
     bullets(document.getElementById('mpRadPts'),rad.points);
+    var dh='';
+    if(mon.detail)dh+='<p class="mp-dl"><span class="mp-tag mon">監測</span></p><p>'+esc(mon.detail)+'</p>';
+    if(rad.detail)dh+='<p class="mp-dl"><span class="mp-tag rot">輪動</span></p><p>'+esc(rad.detail)+'</p>';
+    var fl=p.reversal_flags||[];
+    if(fl.length){dh+='<p class="mp-dl">過門檻反轉</p>';fl.forEach(function(f){dh+='<div class="mp-fl"><b>'+esc(f.axis)+'</b> '+esc(f.from)+'→'+esc(f.to)+' · '+esc(f.evidence)+'</div>';});}
+    if(dh){document.getElementById('mpDetail').innerHTML=dh;document.getElementById('mpMore').hidden=false;}
     var asof=p.monitor_as_of||'';
     if(p.radar_as_of&&p.radar_as_of!==p.monitor_as_of)asof+=' · 輪動 '+p.radar_as_of;
     document.getElementById('mpAsof').textContent='監測 '+asof;

@@ -29,7 +29,7 @@
 
 ## 輸出：`docs/home/pulse.json`（schema=home-pulse-v2）— 精簡 bullet 版
 
-**呈現原則（持有人 2026-07-15 拍板：太擠了，講重點就好）**：首頁只給「5 秒讀完」的骨幹，不是段落。headline 一句 TLDR，監測／輪動各 2-3 條短 bullet，每條**一個數字錨、砍連接詞與修飾**。反轉直接在 bullet 講，不另開 flag 列。
+**呈現原則（持有人 2026-07-15 拍板：太擠了，講重點就好；深度內容放更深一層）**：首頁**表面**只給「5 秒讀完」的骨幹——headline 一句 TLDR，監測／輪動各 2-3 條短 bullet（每條一個數字錨、砍連接詞）。**深層完整敘事收進「展開詳情」`<details>`**（點開才顯示 monitor.detail / radar.detail / reversal_flags 證據）——表面精簡、深度不丟。所以 points（表面）與 detail（深層）**都要寫**：points 是濃縮結論，detail 是帶完整三點分位/象限的敘事。
 
 ```json
 {
@@ -40,11 +40,13 @@
   "headline": "一句話 TLDR（≤ ~40 字）：當前主軸是延續還是反轉，只講最重要的一件事",
   "monitor": {
     "trend": "extending|reversing|mixed",
-    "points": ["2-3 條 bullet，每條 ≤ ~26 字、一個數字錨（分位/z/三點軌跡），無連接詞堆疊"]
+    "points": ["2-3 條 bullet，每條 ≤ ~26 字、一個數字錨（分位/z/三點軌跡），無連接詞堆疊"],
+    "detail": "深層完整敘事（2-3 句，帶三點分位與 z）——首頁『展開詳情』才顯示，表面只給 points"
   },
   "radar": {
     "trend": "extending|reversing|mixed",
-    "points": ["2-3 條 bullet：領先/落後結構＋誰翻面，每條 ≤ ~26 字、一個數字錨（象限/RS-M）"]
+    "points": ["2-3 條 bullet：領先/落後結構＋誰翻面，每條 ≤ ~26 字、一個數字錨（象限/RS-M）"],
+    "detail": "深層完整敘事（2-3 句，帶象限/RS-M/翻面交易日）——首頁『展開詳情』才顯示"
   },
   "reversal_flags": [
     {"axis": "如 黃金動能 / 新興市場股", "from": "舊態", "to": "新態", "evidence": "象限跨界交易日＋位移（機器留存；首頁靠 bullets 呈現、不另 render 此列）"}
