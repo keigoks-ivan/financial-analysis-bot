@@ -1,4 +1,7 @@
-# 首頁「市場脈動」每日生成規格（home-pulse）— routine 每交易日照此跑
+# 首頁「市場脈動」生成規格（home-pulse）— 純機械引擎
+
+**引擎（2026-07-15 定案）**：`scripts/build_home_pulse.py`——**純 Python、零 LLM、確定性**。由 GitHub Actions `home-pulse-daily.yml`（`workflow_run` 事件驅動：monitor 或 radar 日更 workflow 跑完就重生；cron `0 1 * * 2-6` fallback）自動跑並 push main，zero-churn 寫入。
+**為何機械而非 LLM**：內容是「只陳述事實＋機械偵測轉折」（見下），不需要判斷；且雲端 LLM routine 有 push-to-main 403 bug（#58141）推不上 main，而站上「會自動更新的一律是機械層、LLM 分析一律手動」是既定模式。原雲端 routine `trig_01JcweZyEd74QKZeFq4ri6UC` 已停用（enabled=false）。本檔＝腳本行為的權威文件（演算法＋哲學）。
 
 **定位**：首頁整合摘要，把兩個**日更**源收斂成簡短的市場現況陳述。
 
@@ -69,14 +72,8 @@
 - monitor 與 radar 各自 as_of 可差一交易日，分別標注，不強制同日。
 - 只覆寫 `docs/home/pulse.json` 單檔，不動 index.html（首頁靠 JS 讀此檔渲染，帶過期防呆）。
 
-## routine 每日流程
-1. 讀上述兩源原始檔（親自核對每個數字）。
-2. 產出 pulse.json（事實 bullet ＋ 轉折提醒）。
-3. `python3 -c "import json;json.load(open('docs/home/pulse.json'))"` 驗證。
-4. commit（訊息 `home-pulse: 每日市場脈動 YYYY-MM-DD`）→ rebase-retry push（比照 repo canonical push 迴圈）。
-
-## 品質防線（無 critic gate，但自檢四題）
-1. 事實題：每條 bullet 是不是純陳述（數字＋狀態）？有沒有偷渡判讀語／投資結論？有就刪改成事實。
-2. 轉折題：今天有沒有可能的轉折（已確認或接近中）？有就進 reversal_flags 並如實分級；沒有就空陣列、不硬湊。
-3. 軌跡題：軌跡句逐句自證 p60→p20→今 方向沒寫反。
-4. 誠實題：接近中的轉折有沒有寫清「未站穩／接近」，沒有誇大成已完成？
+## 引擎與自動化（機械，確定性）
+- **生成**：`python scripts/build_home_pulse.py`——讀 monitor `latest.json`（含 status／fear_greed）＋ radar `radar.json`（cross_asset 120d），套事實模板產 points、跑象限跨界演算法產 reversal_flags，zero-churn 寫 `docs/home/pulse.json`。無資料變動＝空 diff、不 commit。
+- **轉折演算法（腳本內建，權威）**：偵測近 8 交易日內 RS-M 穿越 100 → `held`（跨界後交易日數）、`disp`=|m−100|；`confirmed = held≥5 或（held≥3 且 disp≥0.5）`，否則 `approaching`（evidence 標「未站穩、接近」）；`disp<0.15 且 held<2` 視雜訊濾除。同 from→to／同級的成員合併成一條 flag。
+- **發布**：GitHub Actions `home-pulse-daily.yml`（`workflow_run` 監聽 Daily Market Monitor／Daily Asset Rotation Radar 完成 + cron fallback），rebase-retry push main（比照 monitor-daily）。
+- **確定性保證**（取代 LLM 的自檢——腳本天生做到）：只輸出模板化事實、絕不生成判讀語；轉折分級由門檻決定不靠判斷；軌跡永遠照 p60→p20→今 欄位順序印出，不會寫反。要改行為＝改腳本＋本檔同步。
