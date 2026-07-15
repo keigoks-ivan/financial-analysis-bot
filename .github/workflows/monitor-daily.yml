@@ -38,7 +38,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install "yfinance>=0.2.40" pandas requests
+        run: pip install "yfinance>=0.2.40" pandas requests openpyxl
 
       - name: Build monitor data
         run: python scripts/build_monitor.py
@@ -49,13 +49,21 @@ jobs:
       - name: Build cross-asset stress score
         run: python scripts/build_monitor_score.py || echo "::warning::stress score build failed; monitor data unaffected"
 
+      # 市場偵測器 v2 Phase 1（internals 38 series：breadth／options-vol／
+      # macro kill 級／positioning）：獨立 collector，失敗不擋 monitor 核心。
+      - name: Build monitor internals (Phase 1)
+        run: python scripts/build_monitor_internals.py || echo "::warning::internals build failed; monitor core unaffected"
+
       - name: Commit and push if changed
         run: |
           PATHS=""
           for p in \
             docs/monitor/data/latest.json \
             docs/monitor/data/alerts.json \
-            docs/monitor/data/score_history.json; do
+            docs/monitor/data/score_history.json \
+            docs/monitor/data/internals.json \
+            docs/monitor/data/internals_history.json \
+            docs/monitor/data/internals_alerts.json; do
             [ -e "$p" ] && PATHS="$PATHS $p"
           done
           if git status --porcelain $PATHS | grep -q .; then
