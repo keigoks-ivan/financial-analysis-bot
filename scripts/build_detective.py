@@ -42,6 +42,7 @@ import os
 import re
 from datetime import date, timedelta
 
+import detective_rules as drules
 import detective_state as dstate
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -476,6 +477,8 @@ def render_signals(state):
                  if t.get("to") == "escalated" and t.get("date") == state.get("as_of")}
     out = []
     for key, e in state.get("keys", {}).items():
+        if key.startswith("composite:"):
+            continue  # composite 鍵走狀態機做 lifecycle，但由 composites[] 呈現，不入 signals[]
         disp = e.get("display", {})
         members = e.get("composite_members", [])
         score = round(disp.get("score_base", 0.0)
@@ -499,6 +502,92 @@ def render_signals(state):
     return out
 
 
+# ── Phase 3：複合規則層（規則評估在 detective_rules，本處只做狀態機接線）──
+
+def _prospective_streak(state, key):
+    """預估本 tick advance 後該 composite 鍵的 met_streak（與 advance 結果一致），
+    供升級 (c) 需在 advance 前先知道是否 fire。"""
+    e = (state.get("keys") or {}).get(key)
+    if e is None:
+        return 1                        # absent／revive → 首日算 1
+    if e.get("state") == "cooling":
+        return 1                        # 寬限內重滿足 → 重置為 1
+    return int(e.get("met_streak", 0)) + 1
+
+
+def inject_composites(met, rule_evals, state):
+    """把 base_met 的 active 規則以 composite:R{n} 鍵注入 met（進同一狀態機）；
+    fire 紅級時對其 series 型成員對應的當日 primitive 鍵標 composite_red，觸發升級 (c)。"""
+    for ev in rule_evals:
+        if ev["status"] != "active" or not ev["base_met"]:
+            continue
+        ckey = f"composite:{ev['id']}"
+        csev = ev["sev"]
+        cscore = 10.0 if csev == "red" else 5.0
+        met[ckey] = {
+            "sev": csev, "score": cscore,
+            "display": {"source": "composite", "cat": ev["id"],
+                        "label": ev["name"], "fact": ev["narrative"],
+                        "context": f"成員 {ev['met_count']}/{ev['min_true']} 成立",
+                        "score_base": cscore}}
+        fired = _prospective_streak(state, ckey) >= ev["confirm_days"]
+        if fired and csev == "red":
+            for pref in ev["monitor_prefixes"]:
+                for mk in list(met):
+                    if mk.startswith("composite:"):
+                        continue
+                    if mk == pref or mk.startswith(pref + ":"):
+                        met[mk]["composite_red"] = True
+
+
+def fill_composite_members(state, rule_evals):
+    """post-advance：把當日 fire 紅級 composite 的 id 回填至其 primitive 成員鍵的
+    composite_members（供 +1.0 加成與呈現）。空則移除欄位以維持零 churn。"""
+    keys = state.get("keys", {})
+    linkage = {k: [] for k in keys}
+    for ev in rule_evals:
+        if ev["status"] != "active" or not ev["base_met"] or ev["sev"] != "red":
+            continue
+        e = keys.get(f"composite:{ev['id']}")
+        if not e or e.get("met_streak", 0) < ev["confirm_days"]:
+            continue                     # 未 fire（confirm 未滿）
+        for pref in ev["monitor_prefixes"]:
+            for k in keys:
+                if k.startswith("composite:"):
+                    continue
+                if k == pref or k.startswith(pref + ":"):
+                    linkage[k].append(ev["id"])
+    for k, e in keys.items():
+        mem = sorted(set(linkage.get(k, [])))
+        if mem:
+            e["composite_members"] = mem
+        else:
+            e.pop("composite_members", None)
+
+
+def build_composites_output(rule_evals, state, as_of):
+    """由規則評估＋狀態機導出 latest.json 的 composites[]（每次 build 都重算）。"""
+    log = state.get("as_of_log", [])
+    keys = state.get("keys", {})
+    out = []
+    for ev in rule_evals:
+        entry = keys.get(f"composite:{ev['id']}")
+        fired, fired_since = False, None
+        if ev["status"] == "active" and ev["base_met"] and entry:
+            M, C = entry.get("met_streak", 0), ev["confirm_days"]
+            if M >= C:
+                fired = True
+                idx = M - C + 1
+                fired_since = (log[-idx] if 0 < idx <= len(log)
+                               else entry.get("first_seen"))
+        out.append({
+            "id": ev["id"], "name": ev["name"], "status": ev["status"],
+            "members": ev["members"], "met_count": ev["met_count"],
+            "min_true": ev["min_true"], "fired": fired, "fired_since": fired_since,
+            "sev": ev["sev"], "narrative": ev["narrative"]})
+    return out
+
+
 def main():
     latest = _load("monitor/data/latest.json", {})
     alerts = _load("monitor/data/alerts.json", {})
@@ -519,14 +608,23 @@ def main():
         print("detective: no dated source available and no prior state — abort")
         return
 
+    # 複合規則評估：純函數、確定性，tick／replay 皆算（供 composites[] 呈現）
+    rule_sources = {"monitor": latest, "crowding": crowd,
+                    "rotation": radar, "macro_clock": clock}
+    rule_evals = drules.evaluate_rules(rule_sources)
+
     is_tick = as_of > (state.get("as_of") or "")
     if is_tick:
         snaps = state.get("source_snapshots", {})
         met, new_snaps = collect_met(latest, alerts, crowd, radar,
                                      regime, clock, var, snaps, as_of)
+        inject_composites(met, rule_evals, state)  # composite 鍵入狀態機＋升級 (c) 標記
         state = dstate.advance(state, met, as_of)
         state["source_snapshots"] = new_snaps  # 只在真推進時更新（replay 守則）
+        fill_composite_members(state, rule_evals)  # 回填 primitive 成員 → +1.0 加成
     # replay（as_of 未推進）：state 與 source_snapshots 原樣沿用 → 冪等
+
+    composites_out = build_composites_output(rule_evals, state, as_of)
 
     signals = render_signals(state)
     sev_red = [s for s in signals if s["sev"] == "red"]
@@ -555,7 +653,7 @@ def main():
                    "escalated": by_state["escalated"],
                    "cooling": by_state["cooling"]},
         "signals": signals,
-        "composites": [],           # Phase 3 佔位
+        "composites": composites_out,
         "sources": sources,
         "sources_stale": stale,
         # v1 鏡射欄位（現頁 as-of 列相容，附加不移除）
