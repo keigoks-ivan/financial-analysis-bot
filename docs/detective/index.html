@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>市場偵探 — InvestMQuest Research</title>
-  <meta name="description" content="市場偵探 — 聚合全站三個偵測層（市場監測異常引擎、跨資產擁擠交易、資產輪動象限翻轉）成單一事實警報網。描述器非擇時訊號，只陳述事實不給買賣指令。">
+  <meta name="description" content="市場偵探 — 聚合全站偵測層（市場監測異常引擎、分位翻折、跨資產擁擠交易、資產輪動象限翻轉、regime 位移、總經時鐘、財測落差）成單一事實警報網，每條訊號帶持續狀態（新增／持續／升級／冷卻）。描述器非擇時訊號，只陳述事實不給買賣指令。">
   <meta property="og:title" content="市場偵探 — InvestMQuest Research">
   <meta property="og:site_name" content="InvestMQuest Research">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -137,6 +137,14 @@ a:hover{color:var(--accent-hover)}
 .sev-dot.yellow{background:var(--warn)}
 .sig-label{font-weight:700;font-size:.88rem;color:var(--text)}
 .new-badge{font-size:.7rem;font-weight:700;color:var(--accent)}
+.state-badge{font-family:'IBM Plex Mono',monospace;font-size:.64rem;font-weight:700;
+             padding:.14rem .55rem;border-radius:5px;background:var(--border-light);color:var(--text-secondary)}
+.state-badge.new{color:var(--accent);background:var(--c-mon-bg)}
+.state-badge.escalated{color:var(--neg);background:var(--neg-bg)}
+.state-badge.cooling{color:var(--text-muted)}
+.sig-card.cooling{opacity:.55}
+.src-chip.reversal,.src-chip.regime,.src-chip.macro_clock,.src-chip.variance,.src-chip.composite{
+  color:var(--text-secondary);background:var(--border-light)}
 .score-tag{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--text-muted)}
 .sig-fact{font-size:.9rem;color:var(--text);line-height:1.6}
 .sig-ctx{font-size:.76rem;color:var(--text-muted);margin-top:.3rem}
@@ -258,9 +266,9 @@ footer.imq-foot a{color:var(--accent)}
     <div class="crumb"><a href="/">首頁</a> &rsaquo; 市場偵探</div>
     <span class="eyebrow">Market Detective · 事實警報網</span>
     <h1>市場偵探</h1>
-    <p class="sub">聚合全站偵測層的事實警報網 · 描述器非擇時——把「已經在跑、卻沒人盯著被觸發」的三個偵測層（市場監測異常引擎、跨資產擁擠交易、資產輪動象限翻轉）收斂成單一按嚴重度排序的訊號清單。</p>
+    <p class="sub">聚合全站偵測層的事實警報網 · 描述器非擇時——把「已經在跑、卻沒人盯著被觸發」的偵測層（市場監測異常引擎、分位翻折、跨資產擁擠交易、資產輪動象限翻轉、regime 位移、總經時鐘、財測落差）收斂成單一按嚴重度排序的訊號清單；每條訊號帶跨日持續狀態（新增／持續／升級／冷卻）。</p>
     <div class="mandate">
-      <strong>定位：</strong>本頁是<strong>描述器（describer），不是擇時訊號（timing signal）</strong>。每條訊號只陳述機械層已經算出的事實（z-score／分位／COT／象限翻轉），<strong>不判斷、不擇時、不給買賣指令</strong>。三個底層偵測層各自獨立維護，本頁只做彙整與排序。
+      <strong>定位：</strong>本頁是<strong>描述器（describer），不是擇時訊號（timing signal）</strong>。每條訊號只陳述機械層已經算出的事實（z-score／分位／COT／象限翻轉／快照位移），<strong>不判斷、不擇時、不給買賣指令</strong>。底層偵測層各自獨立維護，本頁只做彙整、狀態追蹤與排序；「冷卻」表示條件已消失、處於寬限觀察期。
     </div>
     <div class="asof-row" id="asofRow" hidden>
       <span>監測 as-of <b id="asofMon">—</b></span>
@@ -279,6 +287,8 @@ footer.imq-foot a{color:var(--accent)}
       <div class="stat-tile red"><div class="lbl">紅燈</div><div class="val" id="statRed">—</div></div>
       <div class="stat-tile yellow"><div class="lbl">黃燈</div><div class="val" id="statYellow">—</div></div>
       <div class="stat-tile new"><div class="lbl">今日新增</div><div class="val" id="statNew">—</div></div>
+      <div class="stat-tile"><div class="lbl">持續</div><div class="val" id="statActive">—</div></div>
+      <div class="stat-tile"><div class="lbl">冷卻</div><div class="val" id="statCooling">—</div></div>
     </div>
   </div>
 </div>
@@ -289,8 +299,12 @@ footer.imq-foot a{color:var(--accent)}
     <div class="filter-row" id="filterRow">
       <button type="button" class="filter-chip sel" data-filter="all">全部</button>
       <button type="button" class="filter-chip" data-filter="monitor">監測</button>
+      <button type="button" class="filter-chip" data-filter="reversal">翻折</button>
       <button type="button" class="filter-chip" data-filter="crowding">擁擠</button>
       <button type="button" class="filter-chip" data-filter="rotation">輪動</button>
+      <button type="button" class="filter-chip" data-filter="regime">Regime</button>
+      <button type="button" class="filter-chip" data-filter="macro_clock">時鐘</button>
+      <button type="button" class="filter-chip" data-filter="variance">財測落差</button>
     </div>
     <div class="sig-list" id="sigList"></div>
   </div>
@@ -300,7 +314,7 @@ footer.imq-foot a{color:var(--accent)}
   <div class="disclaimer">
     <strong>免責與定位：</strong>
     本頁為 InvestMQuest Research 內部研究文件，<strong>描述器非擇時訊號、非投資建議</strong>。
-    所有訊號來自三個獨立機械層（<a href="/monitor/">市場監測</a>／<a href="/crowding/">擁擠交易監測</a>／<a href="/rotation/radar.html">資產輪動雷達</a>）已計算的事實，本頁只做聚合與嚴重度排序，
+    所有訊號來自站內獨立機械層（<a href="/monitor/">市場監測</a>／<a href="/crowding/">擁擠交易監測</a>／<a href="/rotation/radar.html">資產輪動雷達</a>／<a href="/regime/">大類資產 regime</a>／<a href="/macro/">總經深度報告</a>／<a href="/catalyst/">催化劑日曆</a>）已計算的事實，本頁只做聚合、狀態追蹤與嚴重度排序，
     不新增判斷、不預測轉折時點。過往統計關係不保證未來重演。
   </div>
 </div>
@@ -315,7 +329,9 @@ footer.imq-foot a{color:var(--accent)}
 <script>
 (function(){
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
-  var SRC_LABEL={monitor:'監測',crowding:'擁擠',rotation:'輪動'};
+  var SRC_LABEL={monitor:'監測',crowding:'擁擠',rotation:'輪動',reversal:'翻折',
+                 regime:'Regime',macro_clock:'時鐘',variance:'財測落差',composite:'綜合'};
+  var STATE_LABEL={'new':'新增',active:'持續',escalated:'升級',cooling:'冷卻'};
   var allSignals=[];
   var curFilter='all';
 
@@ -328,12 +344,21 @@ footer.imq-foot a{color:var(--accent)}
     }
     var h='';
     items.forEach(function(s){
-      h+='<div class="sig-card">'
+      // v2：state 徽章（新增／持續／升級／冷卻）；v1 fallback：new 布林
+      var badge='';
+      if(s.state&&STATE_LABEL[s.state]){
+        var txt=STATE_LABEL[s.state];
+        if(s.state==='active'&&s.days_active>1)txt+=' '+s.days_active+' 日';
+        badge='<span class="state-badge '+esc(s.state)+'">'+esc(txt)+'</span>';
+      }else if(s['new']){
+        badge='<span class="new-badge">今日新增</span>';
+      }
+      h+='<div class="sig-card'+(s.state==='cooling'?' cooling':'')+'">'
         +'<div class="sig-top">'
         +'<span class="sev-dot '+esc(s.sev)+'"></span>'
         +'<span class="src-chip '+esc(s.source)+'">'+esc(SRC_LABEL[s.source]||s.source)+'</span>'
         +'<span class="sig-label">'+esc(s.label)+'</span>'
-        +(s['new']?'<span class="new-badge">🆕 今日新增</span>':'')
+        +badge
         +'<span class="score-tag">score '+esc(s.score)+'</span>'
         +'</div>'
         +'<div class="sig-fact">'+esc(s.fact)+'</div>'
@@ -365,10 +390,11 @@ footer.imq-foot a{color:var(--accent)}
     }
     allSignals=(det.signals||[]).slice().sort(function(a,b){return (b.score||0)-(a.score||0);});
 
-    // as-of 列
-    document.getElementById('asofMon').textContent=det.monitor_as_of||'—';
-    document.getElementById('asofCrowd').textContent=det.crowding_as_of||'—';
-    document.getElementById('asofRad').textContent=det.radar_as_of||'—';
+    // as-of 列（v2 讀 sources、v1 fallback 舊欄位）
+    var src=det.sources||{};
+    document.getElementById('asofMon').textContent=src.monitor||det.monitor_as_of||'—';
+    document.getElementById('asofCrowd').textContent=src.crowding||det.crowding_as_of||'—';
+    document.getElementById('asofRad').textContent=src.rotation||det.radar_as_of||'—';
     document.getElementById('asofRow').hidden=false;
 
     // 過期防呆：與 monitor 機械層現值 as_of 對比
@@ -378,12 +404,14 @@ footer.imq-foot a{color:var(--accent)}
       sb.hidden=false;
     }
 
-    // 統計列
+    // 統計列（active／cooling 為 v2 欄位，v1 資料時顯示 —）
     var c=det.counts||{};
     document.getElementById('statTotal').textContent=c.total!=null?c.total:allSignals.length;
     document.getElementById('statRed').textContent=c.red!=null?c.red:0;
     document.getElementById('statYellow').textContent=c.yellow!=null?c.yellow:0;
     document.getElementById('statNew').textContent=c.new!=null?c.new:0;
+    document.getElementById('statActive').textContent=c.active!=null?c.active:'—';
+    document.getElementById('statCooling').textContent=c.cooling!=null?c.cooling:'—';
     document.getElementById('statGrid').hidden=false;
 
     document.getElementById('sigCount').textContent=allSignals.length+' 條';
