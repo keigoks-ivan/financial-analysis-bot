@@ -1,0 +1,66 @@
+name: Weekly Kill-Metrics Watch
+
+# 市場偵測器 v2 Phase 6 — kill_metrics 週更純機械對帳（零 LLM）。
+# 讀 docs/detective/data/kill_registry.json 的 mechanical 條目（LLM backfill 一次
+# 凍結），取 monitor/internals latest.json 現值（缺者 fallback FRED CSV／yfinance），
+# 依凍結的 op/value 比對 → green｜near｜breached｜unknown｜stale_needs_reparse，
+# 寫 docs/detective/data/kill_watch.json（scripts/build_kill_watch.py）。
+# 下游：build_detective.py 第 8 源讀 breached → 紅燈訊號（附「建議 spawn
+# industry-thesis-critic 複審」）；near 只留頁面對帳表。
+#
+# 排程：週日 13:00 UTC（在 crossasset-weekly 12:00 之後）。build_kill_watch 是
+# zero-churn 寫入——資料沒動就空 diff、不 commit，重複觸發冪等。
+on:
+  schedule:
+    - cron: '0 13 * * 0'   # 週日 13:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kill-watch-weekly
+  cancel-in-progress: false
+
+jobs:
+  kill-watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install --quiet requests
+
+      - name: Build kill-metrics watch
+        run: python scripts/build_kill_watch.py
+
+      - name: Commit and push if changed
+        run: |
+          if git status --porcelain docs/detective/data/kill_watch.json | grep -q .; then
+            echo "Changes detected"
+          else
+            echo "No changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/detective/data/kill_watch.json
+          DATE=$(date -u +"%Y-%m-%d")
+          git commit -m "kill-watch: weekly kill-metrics reconciliation ${DATE}"
+          for i in 1 2 3 4 5 6; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+            git pull --rebase origin main || { echo "Rebase failed"; exit 1; }
+            sleep $((RANDOM % 20 + 5))
+          done
+          echo "Push failed after 6 attempts"
+          exit 1
