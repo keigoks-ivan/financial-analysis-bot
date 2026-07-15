@@ -95,6 +95,7 @@ MENU = {
     ],
     "market": [
         ("mon", "/monitor/", "市場監測"),
+        ("det", "/detective/", "偵測警報網"),
         ("radar", "/rotation/radar.html", "資產輪動雷達"),
         ("rot", "/rotation/", "產業輪動"),
         ("crowd", "/crowding/", "擁擠交易監測"),
@@ -227,6 +228,7 @@ PREFIX_ACTIVE = [
     ("earnings/", ("market", "earn")),
     ("catalyst/", ("market", "cat")),
     ("monitor/", ("market", "mon")),  # 全資產市場監測（2026-07-10）
+    ("detective/", ("market", "det")),  # 市場偵測器 v2 警報網（2026-07-16；noindex 保留）
     ("markets.html", ("market", "markets")),
     ("sectors.html", ("market", "sectors")),
     ("crowding/", ("market", "crowd")),
