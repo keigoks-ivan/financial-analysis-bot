@@ -4,23 +4,29 @@ name: Daily Market Detective
 # 聚合三個既有偵測層成單一警報網：monitor 異常引擎（alerts.json 紅/黃燈）×
 # 擁擠交易（crowding latest.json：COT 5 年分位極端／ETF 動能極端／主題擁擠）×
 # 資產輪動（rotation radar.json：cross_asset 120d 象限翻轉），scripts/build_detective.py。
+# 狀態機（scripts/detective_state.py）把每條訊號的跨日生命週期記在
+# docs/detective/data/state.json（含 notify 帳）。
 #
-# 事件驅動：monitor 或 rotation radar 任一 workflow 跑完就重生一次，讓偵探
-# 永遠跟著最新資料層。build_detective.py 是 zero-churn 寫入——資料沒動就空
-# diff、不 commit，故重複觸發是冪等的。cron 為 fallback。
+# Phase 4：統一通知模組（scripts/notify_render.py）把 build 端的機械帳消費成
+# 三級 email——immediate（新紅燈／escalated 至紅／composite 新 fire 紅，7 日
+# 最小間隔＋mute 節流）／digest（平日彙總）／weekly（週六恆產），寄送層走
+# composite action .github/actions/send-notify/。
 #
-# 有紅燈或今日新增訊號時寫 detective_alert.txt（repo 根、未 commit）供本
-# workflow 讀取後 email 推播；無警報則不產檔、不寄信。
+# 事件驅動：monitor 或 rotation radar 任一 workflow 跑完就重生一次。
+# cron 平日（週二～週六台灣時間清晨）為 fallback＋寄 digest；
+# cron 週六另一班次為週報班次。build_detective.py 是 zero-churn 寫入——資料
+# 沒動就空 diff、不 commit，故重複觸發是冪等的。
 on:
   workflow_run:
     workflows: ["Daily Market Monitor", "Daily Asset Rotation Radar (RRG)"]
     types: [completed]
   schedule:
-    - cron: '0 1 * * 2-6'
+    - cron: '0 1 * * 2-6'   # 平日 fallback + digest 班次
+    - cron: '0 2 * * 6'     # 週六週報班次
   workflow_dispatch:
     inputs:
       test_email:
-        description: 'Send a test email even without signal changes'
+        description: 'Send a test email even without signal changes (all three tiers, forced)'
         type: boolean
         default: false
 
@@ -47,38 +53,45 @@ jobs:
       - name: Build detective alert network
         run: python scripts/build_detective.py
 
-      - name: Read change alert
-        id: alert
+      - name: Determine run mode
+        id: mode
         run: |
-          if [ -f detective_alert.txt ]; then
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-            {
-              echo "body<<ALERT_EOF"
-              cat detective_alert.txt
-              echo "ALERT_EOF"
-            } >> "$GITHUB_OUTPUT"
+          if [ "${{ github.event.inputs.test_email }}" == "true" ]; then
+            echo "force=true" >> "$GITHUB_OUTPUT"
           else
-            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "force=false" >> "$GITHUB_OUTPUT"
+          fi
+          if [ "${{ github.event_name }}" == "schedule" ] && [ "${{ github.event.schedule }}" == "0 2 * * 6" ]; then
+            echo "weekly_cron=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "weekly_cron=false" >> "$GITHUB_OUTPUT"
+          fi
+          if [ "${{ github.event_name }}" == "schedule" ] && [ "${{ github.event.schedule }}" != "0 2 * * 6" ]; then
+            echo "weekday_cron=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "weekday_cron=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Email detective alert
-        if: steps.alert.outputs.changed == 'true' || inputs.test_email == true
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 465
-          secure: true
-          username: ${{ secrets.MAIL_USERNAME }}
-          password: ${{ secrets.MAIL_APP_PASSWORD }}
-          subject: "🕵️ 市場偵探警報 ${{ steps.alert.outputs.changed == 'true' && '' || '(測試信)' }}"
-          to: keigoks@gmail.com
-          from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
-          body: |
-            ${{ steps.alert.outputs.changed == 'true' && steps.alert.outputs.body || '這是測試信 — 市場偵探 email 推播管線正常。目前無紅燈或新增訊號。' }}
+      - name: Render immediate tier
+        run: |
+          if [ "${{ steps.mode.outputs.force }}" == "true" ]; then
+            python scripts/notify_render.py --tier immediate --force
+          else
+            python scripts/notify_render.py --tier immediate
+          fi
 
-            —
-            InvestMQuest · monitor / rotation radar 更新後自動檢查
-            描述器：只陳述事實，非擇時訊號。詳見 https://research.investmquest.com/detective/
+      - name: Render digest tier
+        if: steps.mode.outputs.weekday_cron == 'true' || steps.mode.outputs.force == 'true'
+        run: |
+          if [ "${{ steps.mode.outputs.force }}" == "true" ]; then
+            python scripts/notify_render.py --tier digest --force
+          else
+            python scripts/notify_render.py --tier digest
+          fi
+
+      - name: Render weekly tier
+        if: steps.mode.outputs.weekly_cron == 'true' || steps.mode.outputs.force == 'true'
+        run: python scripts/notify_render.py --tier weekly
 
       - name: Commit and push if changed
         run: |
@@ -103,3 +116,33 @@ jobs:
           done
           echo "Push failed after 6 attempts"
           exit 1
+
+      - name: Send immediate notification
+        if: ${{ always() && hashFiles('detective_mail_immediate.txt') != '' }}
+        uses: ./.github/actions/send-notify
+        with:
+          subject: "🕵️ 市場偵探 · 即時警報 ${{ steps.mode.outputs.force == 'true' && '【測試】' || '' }}"
+          body_file: detective_mail_immediate.txt
+          tier: immediate
+          mail_username: ${{ secrets.MAIL_USERNAME }}
+          mail_password: ${{ secrets.MAIL_APP_PASSWORD }}
+
+      - name: Send digest notification
+        if: ${{ always() && hashFiles('detective_mail_digest.txt') != '' }}
+        uses: ./.github/actions/send-notify
+        with:
+          subject: "🕵️ 市場偵探 · 每日摘要 ${{ steps.mode.outputs.force == 'true' && '【測試】' || '' }}"
+          body_file: detective_mail_digest.txt
+          tier: digest
+          mail_username: ${{ secrets.MAIL_USERNAME }}
+          mail_password: ${{ secrets.MAIL_APP_PASSWORD }}
+
+      - name: Send weekly notification
+        if: ${{ always() && hashFiles('detective_mail_weekly.txt') != '' }}
+        uses: ./.github/actions/send-notify
+        with:
+          subject: "🕵️ 市場偵探 · 週報 ${{ steps.mode.outputs.force == 'true' && '【測試】' || '' }}"
+          body_file: detective_mail_weekly.txt
+          tier: weekly
+          mail_username: ${{ secrets.MAIL_USERNAME }}
+          mail_password: ${{ secrets.MAIL_APP_PASSWORD }}

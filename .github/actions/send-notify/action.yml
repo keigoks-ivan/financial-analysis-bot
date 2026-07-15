@@ -1,0 +1,53 @@
+name: "Detective: Send Notification"
+description: >
+  市場偵探統一通知寄送層。檢查 body_file 是否存在（notify_render.py 依資格判定
+  產出；不存在＝該層今天不寄）。存在才呼叫 dawidd6/action-send-mail@v3 寄出。
+  Composite action 不能直接讀 secrets，SMTP 帳密由呼叫端 workflow 以
+  mail_username / mail_password input 傳入（值仍是 ${{ secrets.* }}，只是
+  由呼叫端解析後轉交）。
+
+inputs:
+  subject:
+    description: "完整郵件主旨（含層級標記／測試信標記，由呼叫端組好）"
+    required: true
+  body_file:
+    description: "郵件內文檔路徑（notify_render.py 產出；含固定 footer）"
+    required: true
+  tier:
+    description: "通知層級：immediate | digest | weekly（僅供 log 標記，不影響邏輯）"
+    required: true
+  mail_username:
+    description: "SMTP 帳號，呼叫端傳入 secrets.MAIL_USERNAME"
+    required: true
+  mail_password:
+    description: "SMTP 應用程式密碼，呼叫端傳入 secrets.MAIL_APP_PASSWORD"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check body file
+      id: check
+      shell: bash
+      run: |
+        if [ -s "${{ inputs.body_file }}" ]; then
+          echo "send=true" >> "$GITHUB_OUTPUT"
+          echo "send-notify[${{ inputs.tier }}]: body file found (${{ inputs.body_file }}) — will send"
+        else
+          echo "send=false" >> "$GITHUB_OUTPUT"
+          echo "send-notify[${{ inputs.tier }}]: no body file (${{ inputs.body_file }}) — skip, no-op"
+        fi
+
+    - name: Send mail
+      if: steps.check.outputs.send == 'true'
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 465
+        secure: true
+        username: ${{ inputs.mail_username }}
+        password: ${{ inputs.mail_password }}
+        subject: ${{ inputs.subject }}
+        to: keigoks@gmail.com
+        from: InvestMQuest Detective <${{ inputs.mail_username }}>
+        body: file://${{ inputs.body_file }}
