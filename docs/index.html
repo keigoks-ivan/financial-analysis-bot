@@ -122,6 +122,39 @@ header nav a.active{color:#fff;background:rgba(59,130,246,.18);font-weight:600}
 .lf-links .lf-sep{color:var(--muted);margin:0 .5rem}
 @media(max-width:600px){.latest-feed{padding:1.4rem 0 0}}
 
+/* 市場脈動 pulse（讀 /home/pulse.json） */
+.mkt-pulse{padding:2.2rem 0 0}
+.mp-card{background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-sm);padding:1.1rem 1.3rem 1.15rem;position:relative}
+.mp-card.is-stale{opacity:.62}
+.mp-head{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;flex-wrap:wrap;
+         margin-bottom:.75rem;padding-bottom:.6rem;border-bottom:1px solid var(--border-soft)}
+.mp-head h2{font-family:'Playfair Display','Noto Serif TC',Georgia,serif;font-size:1.05rem;font-weight:700;color:var(--text);letter-spacing:.01em}
+.mp-asof{font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--muted)}
+.mp-headline{font-family:'Playfair Display','Noto Serif TC',Georgia,serif;font-size:1.02rem;line-height:1.6;color:var(--text);margin-bottom:.9rem;font-weight:600}
+.mp-row{display:flex;gap:.6rem;align-items:flex-start;margin:.5rem 0;font-size:.85rem;line-height:1.65;color:var(--text-sec)}
+.mp-tag{flex-shrink:0;font-family:'IBM Plex Mono',monospace;font-size:.63rem;font-weight:600;letter-spacing:.05em;padding:.22rem .5rem;border-radius:5px;white-space:nowrap;margin-top:.12rem}
+.mp-tag.mon{color:var(--accent);background:var(--accent-soft)}
+.mp-tag.rot{color:#fff;background:var(--teal)}
+.mp-trend{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:600;padding:.1rem .4rem;border-radius:4px;margin-left:.4rem;border:1px solid var(--border);color:var(--muted);vertical-align:middle}
+.mp-trend.reversing{color:var(--amber);border-color:var(--amber)}
+.mp-trend.mixed{color:var(--purple);border-color:var(--purple)}
+.mp-flags{margin-top:.85rem;padding-top:.7rem;border-top:1px solid var(--border-soft);display:flex;flex-wrap:wrap;gap:.45rem}
+.mp-flag{font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--text-sec);background:var(--bg-soft);border:1px solid var(--border-soft);border-radius:999px;padding:.22rem .62rem}
+.mp-flag b{color:var(--text);font-weight:600}
+.mp-none{margin-top:.85rem;padding-top:.7rem;border-top:1px solid var(--border-soft);font-size:.8rem;color:var(--muted)}
+.mp-links{margin-top:.95rem;font-size:.78rem;color:var(--text-sec)}
+.mp-links a{font-weight:500}
+.mp-stale{margin-bottom:.75rem;font-size:.76rem;color:var(--amber);background:var(--bg-soft);border:1px solid var(--amber);border-radius:6px;padding:.45rem .7rem;line-height:1.5}
+
+/* 最近 DD 縮排單行 */
+.lf-strip{display:flex;flex-wrap:wrap;align-items:center;gap:.45rem}
+.lf-chip{display:inline-flex;align-items:center;gap:.4rem;font-size:.8rem;color:var(--text);
+         background:var(--bg-soft);border:1px solid var(--border-soft);border-radius:7px;padding:.28rem .6rem;transition:color .15s,border-color .15s}
+.lf-chip:hover{text-decoration:none;color:var(--accent);border-color:var(--accent)}
+.lf-chip .lf-badge{font-size:.55rem;padding:.1rem .35rem}
+.lf-chip .lf-d{font-size:.64rem}
+.lf-more{font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:600;color:var(--accent);padding:.28rem .3rem}
+
 /* Features */
 .features{padding:3.5rem 0 2rem;flex:1}
 .features-head{display:flex;align-items:baseline;justify-content:space-between;
@@ -352,24 +385,73 @@ footer a{color:var(--muted)}
   </div>
 </section>
 
+<!-- MARKET_PULSE (靜態容器；JS 讀 /home/pulse.json 渲染，失敗則整塊隱藏) -->
+<section class="mkt-pulse" id="market-pulse" hidden>
+  <div class="container">
+    <div class="mp-card" id="mpCard">
+      <div class="mp-head">
+        <h2>市場脈動</h2>
+        <span class="mp-asof" id="mpAsof"></span>
+      </div>
+      <div class="mp-stale" id="mpStale" hidden></div>
+      <p class="mp-headline" id="mpHeadline"></p>
+      <div class="mp-row"><span class="mp-tag mon">監測</span><span id="mpMonitor"></span></div>
+      <div class="mp-row"><span class="mp-tag rot">輪動</span><span id="mpRadar"></span></div>
+      <div id="mpFlagsWrap"></div>
+      <div class="mp-links">
+        <a href="/monitor/">市場監測</a><span class="lf-sep">·</span><a href="/rotation/radar.html#cross_asset/120">資產輪動雷達</a><span class="lf-sep">·</span><span class="mp-asof">描述器 · 非擇時訊號 · 每交易日更新</span>
+      </div>
+    </div>
+  </div>
+</section>
+<script>
+(function(){
+  var TREND={extending:'延續',reversing:'反轉',mixed:'混合'};
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function chip(t){if(!t)return'';var l=TREND[t]||t;return' <span class="mp-trend '+esc(t)+'">'+esc(l)+'</span>';}
+  Promise.all([
+    fetch('/home/pulse.json').then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}),
+    fetch('/monitor/data/latest.json').then(function(r){return r.ok?r.json():null;}).catch(function(){return null;})
+  ]).then(function(res){
+    var p=res[0]; if(!p||!p.headline)return; var latest=res[1];
+    document.getElementById('mpHeadline').textContent=p.headline;
+    var mon=p.monitor_line||{}, rad=p.radar_line||{};
+    document.getElementById('mpMonitor').innerHTML=esc(mon.text)+chip(mon.trend);
+    document.getElementById('mpRadar').innerHTML=esc(rad.text)+chip(rad.trend);
+    var asof=p.monitor_as_of||'';
+    if(p.radar_as_of&&p.radar_as_of!==p.monitor_as_of)asof+=' · 輪動 '+p.radar_as_of;
+    document.getElementById('mpAsof').textContent='監測 '+asof;
+    var flags=p.reversal_flags||[]; var w=document.getElementById('mpFlagsWrap');
+    if(flags.length){var h='<div class="mp-flags">';flags.forEach(function(f){h+='<span class="mp-flag"><b>'+esc(f.axis)+'</b> '+esc(f.from)+'→'+esc(f.to)+'</span>';});h+='</div>';w.innerHTML=h;}
+    else{w.innerHTML='<div class="mp-none">趨勢延續、無過門檻的反轉訊號。</div>';}
+    if(latest&&latest.as_of&&p.monitor_as_of&&p.monitor_as_of!==latest.as_of){
+      var st=document.getElementById('mpStale');
+      st.textContent='⚠ 脈動解讀基於 '+p.monitor_as_of+'，監測資料層已更新至 '+latest.as_of+'——內容可能過期。';
+      st.hidden=false; document.getElementById('mpCard').classList.add('is-stale');
+    }
+    document.getElementById('market-pulse').hidden=false;
+  });
+})();
+</script>
 <!-- LATEST_FEED_START -->
 <section class="latest-feed">
   <div class="container">
     <div class="lf-head">
-      <h2>最新發布</h2>
+      <h2>最近發布</h2>
       <form class="lf-search" action="/search.html" method="get" role="search">
         <input type="search" name="q" placeholder="搜尋代碼、公司或主題 —— NVDA、玻璃基板…" aria-label="全站搜尋" autocomplete="off">
       </form>
     </div>
-    <div class="lf-list">
-        <a class="lf-item" href="/dd/DD_NET_20260714.html"><span class="lf-badge">個股DD</span><span class="lf-t">NET 個股 DD｜觀望｜追蹤</span><span class="lf-d">2026-07-14</span></a>
-        <a class="lf-item" href="/dd/DD_HOOD_20260714.html"><span class="lf-badge">個股DD</span><span class="lf-t">HOOD 個股 DD｜觀望｜追蹤</span><span class="lf-d">2026-07-14</span></a>
-        <a class="lf-item" href="/dd/DD_GHM_20260714.html"><span class="lf-badge">個股DD</span><span class="lf-t">GHM 個股 DD｜觀望｜追蹤</span><span class="lf-d">2026-07-14</span></a>
-        <a class="lf-item" href="/dd/DD_SPOT_20260711.html"><span class="lf-badge">個股DD</span><span class="lf-t">SPOT 個股 DD｜觀望｜追蹤</span><span class="lf-d">2026-07-11</span></a>
-        <a class="lf-item" href="/dd/DD_SBUX_20260711.html"><span class="lf-badge">個股DD</span><span class="lf-t">SBUX 個股 DD｜觀望｜追蹤</span><span class="lf-d">2026-07-11</span></a>
-        <a class="lf-item" href="/dd/DD_GEV_20260711.html"><span class="lf-badge">個股DD</span><span class="lf-t">GEV 個股 DD｜觀望｜追蹤</span><span class="lf-d">2026-07-11</span></a>
-        <a class="lf-item" href="/dd/DD_EAT_20260711.html"><span class="lf-badge">個股DD</span><span class="lf-t">EAT 個股 DD｜進場｜衛星</span><span class="lf-d">2026-07-11</span></a>
-        <a class="lf-item" href="/dd/DD_COST_20260711.html"><span class="lf-badge">個股DD</span><span class="lf-t">COST 個股 DD｜觀望｜追蹤</span><span class="lf-d">2026-07-11</span></a>
+    <div class="lf-strip">
+        <a class="lf-chip" href="/dd/DD_NET_20260714.html" title="NET 個股 DD｜觀望｜追蹤"><span class="lf-badge">個股DD</span>NET<span class="lf-d">2026-07-14</span></a>
+        <a class="lf-chip" href="/dd/DD_HOOD_20260714.html" title="HOOD 個股 DD｜觀望｜追蹤"><span class="lf-badge">個股DD</span>HOOD<span class="lf-d">2026-07-14</span></a>
+        <a class="lf-chip" href="/dd/DD_GHM_20260714.html" title="GHM 個股 DD｜觀望｜追蹤"><span class="lf-badge">個股DD</span>GHM<span class="lf-d">2026-07-14</span></a>
+        <a class="lf-chip" href="/dd/DD_SPOT_20260711.html" title="SPOT 個股 DD｜觀望｜追蹤"><span class="lf-badge">個股DD</span>SPOT<span class="lf-d">2026-07-11</span></a>
+        <a class="lf-chip" href="/dd/DD_SBUX_20260711.html" title="SBUX 個股 DD｜觀望｜追蹤"><span class="lf-badge">個股DD</span>SBUX<span class="lf-d">2026-07-11</span></a>
+        <a class="lf-chip" href="/dd/DD_GEV_20260711.html" title="GEV 個股 DD｜觀望｜追蹤"><span class="lf-badge">個股DD</span>GEV<span class="lf-d">2026-07-11</span></a>
+        <a class="lf-chip" href="/dd/DD_EAT_20260711.html" title="EAT 個股 DD｜進場｜衛星"><span class="lf-badge">個股DD</span>EAT<span class="lf-d">2026-07-11</span></a>
+        <a class="lf-chip" href="/dd/DD_COST_20260711.html" title="COST 個股 DD｜觀望｜追蹤"><span class="lf-badge">個股DD</span>COST<span class="lf-d">2026-07-11</span></a>
+        <a class="lf-more" href="/t/">全部 &rarr;</a>
     </div>
     <div class="lf-links">
       <a href="/search.html">全站搜尋</a><span class="lf-sep">·</span><a href="/t/">個股總覽 /t/</a><span class="lf-sep">·</span><a href="/track-record/">裁決實績</a><span class="lf-sep">·</span><a href="/data.html">公開資料</a><span class="lf-sep">·</span><a href="/rss.xml">RSS</a>

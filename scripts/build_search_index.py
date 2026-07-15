@@ -252,12 +252,12 @@ def build_homepage_strip(entries: list[dict]) -> str:
     dated = [e for e in entries if e["d"]][:8]
     rows = []
     for e in dated:
+        label = str(e["t"]).split()[0] if e["t"] else e["k"]
         rows.append(
-            '        <a class="lf-item" href="%s">'
-            '<span class="lf-badge">%s</span>'
-            '<span class="lf-t">%s</span>'
+            '        <a class="lf-chip" href="%s" title="%s">'
+            '<span class="lf-badge">%s</span>%s'
             '<span class="lf-d">%s</span></a>'
-            % (_esc(e["u"]), _esc(e["k"]), _esc(e["t"]), _esc(e["d"]))
+            % (_esc(e["u"]), _esc(e["t"]), _esc(e["k"]), _esc(label), _esc(e["d"]))
         )
     items = "\n".join(rows)
     return (
@@ -265,13 +265,14 @@ def build_homepage_strip(entries: list[dict]) -> str:
         '<section class="latest-feed">\n'
         '  <div class="container">\n'
         '    <div class="lf-head">\n'
-        "      <h2>最新發布</h2>\n"
+        "      <h2>最近發布</h2>\n"
         '      <form class="lf-search" action="/search.html" method="get" role="search">\n'
         '        <input type="search" name="q" placeholder="搜尋代碼、公司或主題 —— NVDA、玻璃基板…" aria-label="全站搜尋" autocomplete="off">\n'
         "      </form>\n"
         "    </div>\n"
-        '    <div class="lf-list">\n'
+        '    <div class="lf-strip">\n'
         f"{items}\n"
+        '        <a class="lf-more" href="/t/">全部 &rarr;</a>\n'
         "    </div>\n"
         '    <div class="lf-links">\n'
         '      <a href="/search.html">全站搜尋</a><span class="lf-sep">·</span>'
