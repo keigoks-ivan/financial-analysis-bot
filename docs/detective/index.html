@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta name="robots" content="noindex">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>市場偵探 — InvestMQuest Research</title>
+  <meta name="description" content="市場偵探 — 聚合全站三個偵測層（市場監測異常引擎、跨資產擁擠交易、資產輪動象限翻轉）成單一事實警報網。描述器非擇時訊號，只陳述事實不給買賣指令。">
+  <meta property="og:title" content="市場偵探 — InvestMQuest Research">
+  <meta property="og:site_name" content="InvestMQuest Research">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Playfair+Display:wght@600;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/imq-base.css">
+  <style>
+:root{
+  --bg:#f7f3ea;--bg-card:#ffffff;--bg-card-hover:#fbf8f1;
+  --border:#e5dfd0;--border-light:#efe9da;
+  --text:#0c1521;--text-secondary:#2a3a52;--text-muted:#9aa7b8;
+  --accent:#0d2244;--accent-hover:#081832;
+  --pos:#15803d;--neg:#b91c1c;--warn:#a16207;
+  --pos-bg:#eafaef;--neg-bg:#fbeceb;--warn-bg:#fbf3df;
+  --c-mon:#0d2244;--c-mon-bg:#e8eef5;
+  --c-crowd:#6d43c9;--c-crowd-bg:#f1ebfb;
+  --c-rot:#8f6d2c;--c-rot-bg:#faf3e2;
+  --shadow-sm:0 1px 2px rgba(13,34,68,.05);
+  --shadow-md:0 6px 18px rgba(13,34,68,.07);
+  --radius:10px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#0b0d11;--bg-card:#14181f;--bg-card-hover:#1a1f28;
+    --border:#28303c;--border-light:#222834;
+    --text:#edeff3;--text-secondary:#a6aebc;--text-muted:#717a8a;
+    --accent:#5b9bff;--accent-hover:#7db0ff;
+    --pos:#34d399;--neg:#f87171;--warn:#fbbf24;
+    --pos-bg:rgba(52,211,153,.12);--neg-bg:rgba(248,113,113,.12);--warn-bg:rgba(251,191,36,.12);
+    --c-mon:#5b9bff;--c-mon-bg:rgba(91,155,255,.14);
+    --c-crowd:#a78bfa;--c-crowd-bg:rgba(167,139,250,.14);
+    --c-rot:#c9a55e;--c-rot-bg:rgba(201,165,94,.14);
+    --shadow-sm:0 1px 2px rgba(0,0,0,.3);
+    --shadow-md:0 4px 14px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme=dark]{
+  --bg:#0b0d11;--bg-card:#14181f;--bg-card-hover:#1a1f28;
+  --border:#28303c;--border-light:#222834;
+  --text:#edeff3;--text-secondary:#a6aebc;--text-muted:#717a8a;
+  --accent:#5b9bff;--accent-hover:#7db0ff;
+  --pos:#34d399;--neg:#f87171;--warn:#fbbf24;
+  --pos-bg:rgba(52,211,153,.12);--neg-bg:rgba(248,113,113,.12);--warn-bg:rgba(251,191,36,.12);
+  --c-mon:#5b9bff;--c-mon-bg:rgba(91,155,255,.14);
+  --c-crowd:#a78bfa;--c-crowd-bg:rgba(167,139,250,.14);
+  --c-rot:#c9a55e;--c-rot-bg:rgba(201,165,94,.14);
+  --shadow-sm:0 1px 2px rgba(0,0,0,.3);
+  --shadow-md:0 4px 14px rgba(0,0,0,.4);
+}
+:root[data-theme=light]{
+  --bg:#f7f3ea;--bg-card:#ffffff;--bg-card-hover:#fbf8f1;
+  --border:#e5dfd0;--border-light:#efe9da;
+  --text:#0c1521;--text-secondary:#2a3a52;--text-muted:#9aa7b8;
+  --accent:#0d2244;--accent-hover:#081832;
+  --pos:#15803d;--neg:#b91c1c;--warn:#a16207;
+  --pos-bg:#eafaef;--neg-bg:#fbeceb;--warn-bg:#fbf3df;
+  --c-mon:#0d2244;--c-mon-bg:#e8eef5;
+  --c-crowd:#6d43c9;--c-crowd-bg:#f1ebfb;
+  --c-rot:#8f6d2c;--c-rot-bg:#faf3e2;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter','Noto Sans TC',system-ui,-apple-system,sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:14px;
+     -webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none;transition:color .15s}
+a:hover{color:var(--accent-hover)}
+.container{max-width:1120px;margin:0 auto;padding:0 1.5rem}
+.mono{font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums}
+
+/* Hero */
+.hero{padding:3rem 0 2.5rem;background:linear-gradient(180deg,var(--bg-card) 0%,var(--bg) 100%)}
+.hero .eyebrow{display:inline-block;color:var(--accent);font-size:.68rem;font-weight:600;
+               letter-spacing:.1em;margin-bottom:.9rem;text-transform:uppercase;
+               font-family:'IBM Plex Mono',monospace}
+.hero h1{font-family:var(--serif);font-size:2rem;font-weight:700;letter-spacing:-.01em;color:var(--text)}
+.hero .sub{color:var(--text-secondary);font-size:.95rem;margin-top:.5rem;max-width:720px;line-height:1.7}
+.hero .mandate{margin-top:1rem;max-width:760px;border-left:3px solid var(--accent);
+               background:var(--bg-card);border-radius:0 var(--radius) var(--radius) 0;padding:.85rem 1.1rem;
+               font-size:.85rem;color:var(--text-secondary);line-height:1.7}
+.hero .mandate strong{color:var(--text)}
+.crumb{font-size:.78rem;color:var(--text-muted);margin-bottom:.6rem}
+.crumb a{color:var(--text-muted)}
+.crumb a:hover{color:var(--accent)}
+.asof-row{display:flex;flex-wrap:wrap;gap:1.4rem;margin-top:1.1rem;font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--text-muted)}
+.asof-row b{color:var(--text-secondary);font-weight:600}
+
+/* Stale banner */
+.stale-banner{margin:1.2rem 0 0;background:var(--warn-bg);color:var(--warn);border-radius:6px;
+             padding:.55rem .85rem;font-size:.8rem;font-weight:600;max-width:760px;line-height:1.6}
+
+/* Section */
+.section{padding:2rem 0 2rem}
+.section-title{font-family:var(--serif);font-size:1.15rem;font-weight:700;margin-bottom:1.1rem;color:var(--text);
+               display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+.section-title .count{font-size:.75rem;font-weight:600;color:var(--text-muted);
+                      background:var(--bg-card);padding:.2rem .7rem;border-radius:5px;
+                      border:1px solid var(--border)}
+
+/* Stats row */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat-tile{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
+           box-shadow:var(--shadow-sm);padding:14px 18px}
+.stat-tile .lbl{font-size:11.5px;color:var(--text-muted);letter-spacing:.04em;text-transform:uppercase}
+.stat-tile .val{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:700;margin-top:.2rem}
+.stat-tile.red .val{color:var(--neg)}
+.stat-tile.yellow .val{color:var(--warn)}
+.stat-tile.new .val{color:var(--accent)}
+
+/* Filter chips */
+.filter-row{display:flex;flex-wrap:wrap;gap:.5rem;margin:1.4rem 0 1.2rem}
+.filter-chip{font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:600;
+            padding:.32rem .8rem;border-radius:999px;border:1px solid var(--border);
+            background:var(--bg-card);color:var(--text-secondary);cursor:pointer;transition:all .12s}
+.filter-chip:hover{border-color:var(--accent)}
+.filter-chip.sel{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* Signal list */
+.sig-list{display:flex;flex-direction:column;gap:.6rem}
+.sig-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
+         box-shadow:var(--shadow-sm);padding:.9rem 1.1rem}
+.sig-top{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.4rem}
+.src-chip{font-family:'IBM Plex Mono',monospace;font-size:.64rem;font-weight:700;letter-spacing:.04em;
+          padding:.14rem .55rem;border-radius:5px}
+.src-chip.monitor{color:var(--c-mon);background:var(--c-mon-bg)}
+.src-chip.crowding{color:var(--c-crowd);background:var(--c-crowd-bg)}
+.src-chip.rotation{color:var(--c-rot);background:var(--c-rot-bg)}
+.sev-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.sev-dot.red{background:var(--neg)}
+.sev-dot.yellow{background:var(--warn)}
+.sig-label{font-weight:700;font-size:.88rem;color:var(--text)}
+.new-badge{font-size:.7rem;font-weight:700;color:var(--accent)}
+.score-tag{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--text-muted)}
+.sig-fact{font-size:.9rem;color:var(--text);line-height:1.6}
+.sig-ctx{font-size:.76rem;color:var(--text-muted);margin-top:.3rem}
+.empty-state{padding:2rem;text-align:center;color:var(--text-muted);font-size:.9rem;
+            background:var(--bg-card);border:1px dashed var(--border);border-radius:var(--radius)}
+.loading{color:var(--text-muted);font-size:.9rem;padding:2rem 0;text-align:center}
+
+/* Disclaimer / footer */
+.disclaimer{margin:2rem 0;padding:1.2rem 1.5rem;background:var(--bg-card);border:1px solid var(--border);
+            border-radius:var(--radius);font-size:.78rem;color:var(--text-muted);line-height:1.7}
+.disclaimer strong{color:var(--text-secondary)}
+footer.imq-foot{padding:1.5rem 0;text-align:center;font-size:.75rem;color:var(--text-muted);
+       border-top:1px solid var(--border);margin-top:1rem;line-height:1.8}
+footer.imq-foot a{color:var(--accent)}
+
+@media(max-width:768px){
+  .hero h1{font-size:1.5rem}
+}
+  </style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/monitor/">市場監測</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/rotation/">產業輪動</a>
+          <a href="/crowding/">擁擠交易監測</a>
+          <a href="/regime/">大類資產 regime</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/catalyst/">催化劑日曆</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">選股<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/cockpit/">選股主控台</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/research/momentum-5/">Momentum-5</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screeners.html">RS+VCP Screener</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">個股總覽</a>
+          <a href="/research/">個股 DD</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/research/synthesis/">期望落差綜合研判</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/track-record/">裁決實績</a>
+          <a href="/long-track-smh/">長線訊號 SMH</a>
+          <a href="/long-track-tw/">台股長線</a>
+          <a href="/turtle-sleeve/">商品 Sleeve</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/cache/">Data Cache</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')});})})();</script>
+
+<div class="hero">
+  <div class="container">
+    <div class="crumb"><a href="/">首頁</a> &rsaquo; 市場偵探</div>
+    <span class="eyebrow">Market Detective · 事實警報網</span>
+    <h1>市場偵探</h1>
+    <p class="sub">聚合全站偵測層的事實警報網 · 描述器非擇時——把「已經在跑、卻沒人盯著被觸發」的三個偵測層（市場監測異常引擎、跨資產擁擠交易、資產輪動象限翻轉）收斂成單一按嚴重度排序的訊號清單。</p>
+    <div class="mandate">
+      <strong>定位：</strong>本頁是<strong>描述器（describer），不是擇時訊號（timing signal）</strong>。每條訊號只陳述機械層已經算出的事實（z-score／分位／COT／象限翻轉），<strong>不判斷、不擇時、不給買賣指令</strong>。三個底層偵測層各自獨立維護，本頁只做彙整與排序。
+    </div>
+    <div class="asof-row" id="asofRow" hidden>
+      <span>監測 as-of <b id="asofMon">—</b></span>
+      <span>擁擠 as-of <b id="asofCrowd">—</b></span>
+      <span>輪動 as-of <b id="asofRad">—</b></span>
+    </div>
+    <div class="stale-banner" id="staleBanner" hidden></div>
+  </div>
+</div>
+
+<div class="section" id="detective-stats">
+  <div class="container">
+    <div class="loading" id="loadingMsg">載入偵測層資料中…</div>
+    <div class="stat-grid" id="statGrid" hidden>
+      <div class="stat-tile"><div class="lbl">總訊號</div><div class="val" id="statTotal">—</div></div>
+      <div class="stat-tile red"><div class="lbl">紅燈</div><div class="val" id="statRed">—</div></div>
+      <div class="stat-tile yellow"><div class="lbl">黃燈</div><div class="val" id="statYellow">—</div></div>
+      <div class="stat-tile new"><div class="lbl">今日新增</div><div class="val" id="statNew">—</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="section" id="detective-signals" hidden>
+  <div class="container">
+    <h2 class="section-title">訊號清單 <span class="count" id="sigCount">— 條</span></h2>
+    <div class="filter-row" id="filterRow">
+      <button type="button" class="filter-chip sel" data-src="all">全部</button>
+      <button type="button" class="filter-chip" data-src="monitor">監測</button>
+      <button type="button" class="filter-chip" data-src="crowding">擁擠</button>
+      <button type="button" class="filter-chip" data-src="rotation">輪動</button>
+    </div>
+    <div class="sig-list" id="sigList"></div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="disclaimer">
+    <strong>免責與定位：</strong>
+    本頁為 InvestMQuest Research 內部研究文件，<strong>描述器非擇時訊號、非投資建議</strong>。
+    所有訊號來自三個獨立機械層（<a href="/monitor/">市場監測</a>／<a href="/crowding/">擁擠交易監測</a>／<a href="/rotation/radar.html">資產輪動雷達</a>）已計算的事實，本頁只做聚合與嚴重度排序，
+    不新增判斷、不預測轉折時點。過往統計關係不保證未來重演。
+  </div>
+</div>
+
+<footer class="imq-foot">
+  <div class="container">
+    <div>© 2026 InvestMQuest Research</div>
+    <div><a href="/disclosures.html">方法論與揭露</a> · 本站內容僅供研究參考，不構成投資建議</div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  var SRC_LABEL={monitor:'監測',crowding:'擁擠',rotation:'輪動'};
+  var allSignals=[];
+  var curFilter='all';
+
+  function renderList(){
+    var list=document.getElementById('sigList');
+    var items=curFilter==='all'?allSignals:allSignals.filter(function(s){return s.source===curFilter;});
+    if(!items.length){
+      list.innerHTML='<div class="empty-state">此分類目前無訊號。</div>';
+      return;
+    }
+    var h='';
+    items.forEach(function(s){
+      h+='<div class="sig-card">'
+        +'<div class="sig-top">'
+        +'<span class="sev-dot '+esc(s.sev)+'"></span>'
+        +'<span class="src-chip '+esc(s.source)+'">'+esc(SRC_LABEL[s.source]||s.source)+'</span>'
+        +'<span class="sig-label">'+esc(s.label)+'</span>'
+        +(s['new']?'<span class="new-badge">🆕 今日新增</span>':'')
+        +'<span class="score-tag">score '+esc(s.score)+'</span>'
+        +'</div>'
+        +'<div class="sig-fact">'+esc(s.fact)+'</div>'
+        +(s.context?'<div class="sig-ctx">'+esc(s.context)+'</div>':'')
+        +'</div>';
+    });
+    list.innerHTML=h;
+  }
+
+  document.getElementById('filterRow').addEventListener('click',function(e){
+    var btn=e.target.closest('.filter-chip');
+    if(!btn)return;
+    curFilter=btn.getAttribute('data-src');
+    document.querySelectorAll('.filter-chip').forEach(function(b){b.classList.toggle('sel',b===btn);});
+    renderList();
+  });
+
+  Promise.all([
+    fetch('/detective/data/latest.json').then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}),
+    fetch('/monitor/data/latest.json').then(function(r){return r.ok?r.json():null;}).catch(function(){return null;})
+  ]).then(function(res){
+    var det=res[0], monLatest=res[1];
+    document.getElementById('loadingMsg').hidden=true;
+    if(!det||!det.signals){
+      document.getElementById('statGrid').hidden=true;
+      document.getElementById('loadingMsg').hidden=false;
+      document.getElementById('loadingMsg').textContent='偵探資料層暫時無法載入。';
+      return;
+    }
+    allSignals=(det.signals||[]).slice().sort(function(a,b){return (b.score||0)-(a.score||0);});
+
+    // as-of 列
+    document.getElementById('asofMon').textContent=det.monitor_as_of||'—';
+    document.getElementById('asofCrowd').textContent=det.crowding_as_of||'—';
+    document.getElementById('asofRad').textContent=det.radar_as_of||'—';
+    document.getElementById('asofRow').hidden=false;
+
+    // 過期防呆：與 monitor 機械層現值 as_of 對比
+    if(monLatest&&monLatest.as_of&&det.monitor_as_of&&monLatest.as_of!==det.monitor_as_of){
+      var sb=document.getElementById('staleBanner');
+      sb.textContent='⚠ 本頁彙整基於監測 '+det.monitor_as_of+'，監測資料層已更新至 '+monLatest.as_of+'——內容可能過期，以下訊號僅供參考。';
+      sb.hidden=false;
+    }
+
+    // 統計列
+    var c=det.counts||{};
+    document.getElementById('statTotal').textContent=c.total!=null?c.total:allSignals.length;
+    document.getElementById('statRed').textContent=c.red!=null?c.red:0;
+    document.getElementById('statYellow').textContent=c.yellow!=null?c.yellow:0;
+    document.getElementById('statNew').textContent=c.new!=null?c.new:0;
+    document.getElementById('statGrid').hidden=false;
+
+    document.getElementById('sigCount').textContent=allSignals.length+' 條';
+    document.getElementById('detective-signals').hidden=false;
+    renderList();
+  });
+})();
+</script>
+
+</body>
+</html>
