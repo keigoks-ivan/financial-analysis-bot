@@ -27,37 +27,41 @@
 - 反轉訊號＝最近 ~5–10 個交易日內跨象限（領先→轉弱＝動能見頂滾落；落後→改善＝落後股回神）。用 trail 倒數兩段的 r、m 變化量判斷，不是只看最後一天位置。
 - 至少點出「哪個資產剛翻面」與「誰仍在延續」。
 
-## 輸出：`docs/home/pulse.json`（schema=home-pulse-v1）
+## 輸出：`docs/home/pulse.json`（schema=home-pulse-v2）— 精簡 bullet 版
+
+**呈現原則（持有人 2026-07-15 拍板：太擠了，講重點就好）**：首頁只給「5 秒讀完」的骨幹，不是段落。headline 一句 TLDR，監測／輪動各 2-3 條短 bullet，每條**一個數字錨、砍連接詞與修飾**。反轉直接在 bullet 講，不另開 flag 列。
 
 ```json
 {
-  "schema": "home-pulse-v1",
+  "schema": "home-pulse-v2",
   "monitor_as_of": "YYYY-MM-DD",   // = monitor latest.json as_of
   "radar_as_of": "YYYY-MM-DD",     // = radar.json as_of（可與 monitor 差一交易日）
   "written_at": "ISO8601",
-  "headline": "一句話：當前哪條趨勢正在／剛反轉（趨勢語言，非漲跌快照）",
-  "monitor_line": {
-    "text": "2-3 句：貼現率／胃納／流動性主軸的趨勢與今日是延續或反轉，每句帶三點分位",
-    "trend": "extending|reversing|mixed"
+  "headline": "一句話 TLDR（≤ ~40 字）：當前主軸是延續還是反轉，只講最重要的一件事",
+  "monitor": {
+    "trend": "extending|reversing|mixed",
+    "points": ["2-3 條 bullet，每條 ≤ ~26 字、一個數字錨（分位/z/三點軌跡），無連接詞堆疊"]
   },
-  "radar_line": {
-    "text": "2-3 句：cross_asset 120d 領先／落後結構，誰剛翻面誰仍延續",
-    "trend": "extending|reversing|mixed"
+  "radar": {
+    "trend": "extending|reversing|mixed",
+    "points": ["2-3 條 bullet：領先/落後結構＋誰翻面，每條 ≤ ~26 字、一個數字錨（象限/RS-M）"]
   },
   "reversal_flags": [
-    {"axis": "如 實質利率 / 新興市場股 / 高收益債", "from": "舊態", "to": "新態", "evidence": "三點分位或象限跨界＋當日錨"}
+    {"axis": "如 黃金動能 / 新興市場股", "from": "舊態", "to": "新態", "evidence": "象限跨界交易日＋位移（機器留存；首頁靠 bullets 呈現、不另 render 此列）"}
   ]
 }
 ```
 
-- `reversal_flags` 空陣列合法（沒有反轉就誠實空著，headline 改寫成「趨勢延續、無反轉」）。
-- 不硬湊反轉；沒反轉時價值在「確認趨勢仍完整」。
+- **精簡鐵律**：headline ≤ ~40 字只講一件事；每 block 2-3 條 bullet、每條 ≤ ~26 字一個數字錨；寧可少一條也不要塞長句。
+- `reversal_flags` 為結構化留存（下游可讀），首頁不另 render；空陣列合法。
+- 過門檻的反轉若有，寫成 radar/monitor 的其中一條 bullet（如「黃金/比特幣 落後→改善，持穩 6 日」）；沒反轉就大方少一條、headline 用延續語言。
 
 ## 硬規則
 - 描述器紀律：禁「即將反轉／見頂／該買該賣」作結論；「反轉」只描述已發生的軌跡翻折，不預測未來轉折時點。
 - 每個判讀句錨定機械層數字（分位／z／RS-M／象限）；無錨形容詞禁用。
 - 軌跡句嚴格 p60→p20→今 時間順序（p20＝1 月前、p60＝3 月前，寫反＝全錯）。
 - 中文全形標點；機構研究語調；無鷹架語言。
+- **精簡優先**：bullet 不寫成完整段落；一條 bullet 一個重點一個數字；砍「同期／同步／延續」這類連接堆疊，能省則省。
 - monitor 與 radar 各自 as_of 可差一交易日，分別標注，不強制同日。
 - 只覆寫 `docs/home/pulse.json` 單檔，不動 index.html（首頁靠 JS 讀此檔渲染，帶過期防呆）。
 

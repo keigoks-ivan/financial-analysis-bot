@@ -131,18 +131,18 @@ header nav a.active{color:#fff;background:rgba(59,130,246,.18);font-weight:600}
 .mp-head h2{font-family:'Playfair Display','Noto Serif TC',Georgia,serif;font-size:1.05rem;font-weight:700;color:var(--text);letter-spacing:.01em}
 .mp-asof{font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--muted)}
 .mp-headline{font-family:'Playfair Display','Noto Serif TC',Georgia,serif;font-size:1.02rem;line-height:1.6;color:var(--text);margin-bottom:.9rem;font-weight:600}
-.mp-row{display:flex;gap:.6rem;align-items:flex-start;margin:.5rem 0;font-size:.85rem;line-height:1.65;color:var(--text-sec)}
-.mp-tag{flex-shrink:0;font-family:'IBM Plex Mono',monospace;font-size:.63rem;font-weight:600;letter-spacing:.05em;padding:.22rem .5rem;border-radius:5px;white-space:nowrap;margin-top:.12rem}
+.mp-block{margin:.7rem 0}
+.mp-lbl{display:flex;align-items:center;gap:.5rem;margin-bottom:.35rem}
+.mp-pts{list-style:none;margin:0;padding:0}
+.mp-pts li{position:relative;padding-left:.95rem;margin:.28rem 0;font-size:.85rem;line-height:1.5;color:var(--text-sec)}
+.mp-pts li::before{content:'›';position:absolute;left:.05rem;color:var(--accent);font-weight:700}
+.mp-tag{flex-shrink:0;font-family:'IBM Plex Mono',monospace;font-size:.63rem;font-weight:600;letter-spacing:.05em;padding:.22rem .5rem;border-radius:5px;white-space:nowrap}
 .mp-tag.mon{color:var(--accent);background:var(--accent-soft)}
 .mp-tag.rot{color:#fff;background:var(--teal)}
 .mp-trend{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:600;padding:.1rem .4rem;border-radius:4px;margin-left:.4rem;border:1px solid var(--border);color:var(--muted);vertical-align:middle}
 .mp-trend.reversing{color:var(--amber);border-color:var(--amber)}
 .mp-trend.mixed{color:var(--purple);border-color:var(--purple)}
-.mp-flags{margin-top:.85rem;padding-top:.7rem;border-top:1px solid var(--border-soft);display:flex;flex-wrap:wrap;gap:.45rem}
-.mp-flag{font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--text-sec);background:var(--bg-soft);border:1px solid var(--border-soft);border-radius:999px;padding:.22rem .62rem}
-.mp-flag b{color:var(--text);font-weight:600}
-.mp-none{margin-top:.85rem;padding-top:.7rem;border-top:1px solid var(--border-soft);font-size:.8rem;color:var(--muted)}
-.mp-links{margin-top:.95rem;font-size:.78rem;color:var(--text-sec)}
+.mp-links{margin-top:.95rem;padding-top:.75rem;border-top:1px solid var(--border-soft);font-size:.78rem;color:var(--text-sec)}
 .mp-links a{font-weight:500}
 .mp-stale{margin-bottom:.75rem;font-size:.76rem;color:var(--amber);background:var(--bg-soft);border:1px solid var(--amber);border-radius:6px;padding:.45rem .7rem;line-height:1.5}
 
@@ -395,9 +395,14 @@ footer a{color:var(--muted)}
       </div>
       <div class="mp-stale" id="mpStale" hidden></div>
       <p class="mp-headline" id="mpHeadline"></p>
-      <div class="mp-row"><span class="mp-tag mon">監測</span><span id="mpMonitor"></span></div>
-      <div class="mp-row"><span class="mp-tag rot">輪動</span><span id="mpRadar"></span></div>
-      <div id="mpFlagsWrap"></div>
+      <div class="mp-block">
+        <div class="mp-lbl"><span class="mp-tag mon">監測</span><span id="mpMonTrend"></span></div>
+        <ul class="mp-pts" id="mpMonPts"></ul>
+      </div>
+      <div class="mp-block">
+        <div class="mp-lbl"><span class="mp-tag rot">輪動</span><span id="mpRadTrend"></span></div>
+        <ul class="mp-pts" id="mpRadPts"></ul>
+      </div>
       <div class="mp-links">
         <a href="/monitor/">市場監測</a><span class="lf-sep">·</span><a href="/rotation/radar.html#cross_asset/120">資產輪動雷達</a><span class="lf-sep">·</span><span class="mp-asof">描述器 · 非擇時訊號 · 每交易日更新</span>
       </div>
@@ -415,15 +420,15 @@ footer a{color:var(--muted)}
   ]).then(function(res){
     var p=res[0]; if(!p||!p.headline)return; var latest=res[1];
     document.getElementById('mpHeadline').textContent=p.headline;
-    var mon=p.monitor_line||{}, rad=p.radar_line||{};
-    document.getElementById('mpMonitor').innerHTML=esc(mon.text)+chip(mon.trend);
-    document.getElementById('mpRadar').innerHTML=esc(rad.text)+chip(rad.trend);
+    var mon=p.monitor||{}, rad=p.radar||{};
+    function bullets(el,pts){var h='';(pts||[]).forEach(function(x){h+='<li>'+esc(x)+'</li>';});el.innerHTML=h;}
+    document.getElementById('mpMonTrend').innerHTML=chip(mon.trend);
+    document.getElementById('mpRadTrend').innerHTML=chip(rad.trend);
+    bullets(document.getElementById('mpMonPts'),mon.points);
+    bullets(document.getElementById('mpRadPts'),rad.points);
     var asof=p.monitor_as_of||'';
     if(p.radar_as_of&&p.radar_as_of!==p.monitor_as_of)asof+=' · 輪動 '+p.radar_as_of;
     document.getElementById('mpAsof').textContent='監測 '+asof;
-    var flags=p.reversal_flags||[]; var w=document.getElementById('mpFlagsWrap');
-    if(flags.length){var h='<div class="mp-flags">';flags.forEach(function(f){h+='<span class="mp-flag"><b>'+esc(f.axis)+'</b> '+esc(f.from)+'→'+esc(f.to)+'</span>';});h+='</div>';w.innerHTML=h;}
-    else{w.innerHTML='<div class="mp-none">趨勢延續、無過門檻的反轉訊號。</div>';}
     if(latest&&latest.as_of&&p.monitor_as_of&&p.monitor_as_of!==latest.as_of){
       var st=document.getElementById('mpStale');
       st.textContent='⚠ 脈動解讀基於 '+p.monitor_as_of+'，監測資料層已更新至 '+latest.as_of+'——內容可能過期。';
