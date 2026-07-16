@@ -61,6 +61,48 @@ SHORT = {
     "高收益債": "高收益",
 }
 
+# ── 市場維度對映（DIM_MAP）：signals[] 每條的 dim key（前端維度熱力牆分區）──
+# 七值枚舉。規則層級：monitor／reversal 按底層 monitor cat 走 _MON_CAT_DIM
+# （reversal 直讀同一 latest.json series，故沿用）；其餘 source 固定對映。
+# regime／macro_clock 歸 rates_liquidity（宏觀環境代理）；sector 歸股票結構；
+# crowding／rotation 歸部位；variance／kill 歸 thesis 對帳。對映不到 → DIM_FALLBACK
+# 並由 main 回報（非 silent）。
+DIM_VALUES = ("equity_structure", "credit", "vol_options", "rates_liquidity",
+              "commod_fx_crypto", "positioning", "thesis")
+_MON_CAT_DIM = {
+    "indices": "equity_structure", "sectors": "equity_structure",
+    "factors": "equity_structure", "credit": "credit",
+    "vol": "vol_options",
+    "rates": "rates_liquidity",       # monitor rates 類含利率／通膨／期限溢價
+    "liquidity": "rates_liquidity",
+    "commodities": "commod_fx_crypto", "fx": "commod_fx_crypto",
+    "crypto": "commod_fx_crypto",
+}
+DIM_MAP = {
+    "monitor": _MON_CAT_DIM,          # 按 monitor cat 細分
+    "reversal": _MON_CAT_DIM,         # reversal 直讀同一 series → 沿用 monitor cat
+    "crowding": "positioning",        # COT／ETF 動能／主題擁擠＝部位擁擠
+    "rotation": "positioning",        # cross_asset 象限翻轉＝跨資產部位輪動
+    "sector": "equity_structure",     # 產業結構分歧＝股票與產業結構
+    "regime": "rates_liquidity",      # 大類資產 regime＝宏觀環境
+    "macro_clock": "rates_liquidity",  # 總經時鐘象限＝宏觀環境
+    "variance": "thesis",             # 財測落差紅旗＝thesis 對帳
+    "kill": "thesis",                 # ID／macro kill 指標越線＝thesis 對帳
+}
+DIM_FALLBACK = "equity_structure"
+
+
+def signal_dim(source, cat):
+    """回傳 (dim, is_fallback)。monitor／reversal 按 monitor cat，其餘按 source；
+    對映不到給 DIM_FALLBACK 並標 is_fallback=True（由 main 回報，非 silent）。"""
+    entry = DIM_MAP.get(source)
+    if isinstance(entry, dict):
+        dim = entry.get(cat)
+        return (dim, False) if dim else (DIM_FALLBACK, True)
+    if isinstance(entry, str):
+        return entry, False
+    return DIM_FALLBACK, True
+
 # 各源新鮮度閾值（日曆天，頻率×2；超過即進 sources_stale[]）
 SOURCE_FRESH_DAYS = {
     "monitor": 4, "crowding": 16, "rotation": 4,
@@ -659,9 +701,11 @@ def render_signals(state):
                             PERSIST_BONUS_CAP)
                       + (COMPOSITE_BONUS if members else 0.0), 2)
         st = "escalated" if key in esc_today else e.get("state", "active")
+        src = disp.get("source", key.split(":")[0])
         out.append({
-            "key": key, "source": disp.get("source", key.split(":")[0]),
-            "cat": disp.get("cat", ""), "label": disp.get("label", key),
+            "key": key, "source": src,
+            "cat": disp.get("cat", ""), "dim": signal_dim(src, disp.get("cat", ""))[0],
+            "label": disp.get("label", key),
             "fact": disp.get("fact", ""), "sev": e.get("sev", "yellow"),
             "score": score, "context": disp.get("context", ""),
             "state": st, "first_seen": e.get("first_seen"),
@@ -753,11 +797,14 @@ def build_composites_output(rule_evals, state, as_of):
                 idx = M - C + 1
                 fired_since = (log[-idx] if 0 < idx <= len(log)
                                else entry.get("first_seen"))
+        # proximity（0-1 排序鍵，非判斷閘）：fired→1.0、dormant→0、否則用規則評估值。
+        prox = 1.0 if fired else (0.0 if ev["status"] != "active"
+                                  else ev.get("proximity", 0.0))
         out.append({
             "id": ev["id"], "name": ev["name"], "status": ev["status"],
             "members": ev["members"], "met_count": ev["met_count"],
             "min_true": ev["min_true"], "fired": fired, "fired_since": fired_since,
-            "sev": ev["sev"], "narrative": ev["narrative"]})
+            "sev": ev["sev"], "proximity": prox, "narrative": ev["narrative"]})
     return out
 
 
@@ -890,6 +937,11 @@ def main():
     composites_out = build_composites_output(rule_evals, state, as_of)
 
     signals = render_signals(state)
+    # dim 覆蓋回報（非 silent）：任何走 fallback 的 (source, cat) 印出待補對映
+    dim_fallbacks = sorted({(s["source"], s["cat"]) for s in signals
+                            if signal_dim(s["source"], s["cat"])[1]})
+    if dim_fallbacks:
+        print(f"detective WARN: dim fallback（{DIM_FALLBACK}）used for {dim_fallbacks}")
     sev_red = [s for s in signals if s["sev"] == "red"]
     by_state = {"new": 0, "active": 0, "escalated": 0, "cooling": 0}
     for s in signals:

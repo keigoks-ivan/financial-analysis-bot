@@ -22,6 +22,14 @@ signal   型：當日 primitive 訊號集是否存在符合條件者（跨源 jo
   {"type":"signal","selector":"cot_extreme","params":{"pctile_min":90},"desc":"…"}
   · selector 註冊在 _SELECTORS；供 R6 擁擠×動能翻轉的 COT↔rotation join。
 
+── 逼近度機器欄（proximity machine columns，重構輪新增）──────────────
+每個成員在評估結果附純渲染層機器欄，供前端靶盤呈現「還差多少才觸發」：
+  current_num／threshold_num／op／scale（pctile｜z｜val｜cat｜subgroup｜event）／
+  distance（正=未達、0=已達，clamp≥0）／distance_label（人話）／ref（該成員對應
+  primitive 訊號鍵前綴 {source}:{cat}:{key}，供前端點規則高亮熱力牆格子）。
+規則層附 proximity（0-1 排序鍵，公式見 _rule_proximity docstring）——非判斷閘、
+不推狀態機、不登 rule_ledger；純機械確定性，replay 冪等。
+
 ── 規則欄位 ──────────────────────────────────────────────────
 id/name/members[]/min_true/fire_sev/confirm_days/narrative/kill_condition/status。
 fire_sev：字串 "red"/"yellow"，或分級 dict {"yellow":2,"red":3}（供 R2 2/3 黃 3/3 紅）。
@@ -208,33 +216,161 @@ def _eval_conds(ctx, src, conds):
     return met, "、".join(parts)
 
 
+# ── 逼近度機器欄（proximity）─────────────────────────────────────
+# scale：pctile｜z｜val（數值型，各有正規化分母）；cat（類別型 dir／quadrant，
+# 無數值距離）；subgroup（k-of-n 計數）；event（signal 型，事件觸發）。
+_SCALE_BY_FIELD = {"pctile": "pctile", "p20": "pctile", "p60": "pctile",
+                   "z": "z", "val": "val"}
+# closeness 正規化分母（把 distance 換成 0-1 接近度）；val 無穩定尺度→退化處理。
+_SCALE_DENOM = {"pctile": 100.0, "z": 4.0}
+# signal 型 selector → primitive 源前綴（前端高亮用）。
+_SELECTOR_REF = {"cot_extreme": "crowding:cot",
+                 "cot_rotation_weak_join": "rotation:quadrant"}
+
+
+def _member_ref(sources, src, key):
+    """成員對應 primitive 訊號鍵前綴 {source}:{cat}:{key}（前端點規則高亮格子）。"""
+    if src == "monitor":
+        return f"monitor:{_mon_cat(sources.get('monitor'), key) or '?'}:{key}"
+    if src == "internals":
+        return f"internals:{_mon_cat(sources.get('internals'), key) or '?'}:{key}"
+    if src == "macro_clock":
+        return "macro_clock:clock:quadrant"
+    if src == "crowding_cot":
+        return "crowding:cot"
+    return f"{src}:{key}"
+
+
+def _signed_distance(op, cur, thr):
+    """還差多少才達標（正=未達、負=已達超過）；op／值非數值→None。"""
+    if cur is None or thr is None:
+        return None
+    if op in (">=", ">"):
+        return thr - cur
+    if op in ("<=", "<"):
+        return cur - thr
+    if op == "==":
+        return abs(cur - thr)
+    return None
+
+
+def _distance_label(scale, d):
+    if d is None:
+        return None
+    if d <= 0:
+        return "已達標"
+    if scale == "pctile":
+        return f"差 {d:.1f} 分位點"
+    if scale == "z":
+        return f"差 {d:.1f}σ"
+    return f"差 {d:.2f}"
+
+
+def _closeness(scale, d, met):
+    """0-1 接近度（1=已達／最近，0=最遠）；未達時 1−clamp(distance/denom)。"""
+    if met:
+        return 1.0
+    if d is None or d <= 0:
+        return 1.0 if d is not None else 0.0    # 類別未達→0；數值已達→1
+    denom = _SCALE_DENOM.get(scale) or max(1.0, abs(d))  # val：無穩定尺度→粗略歸一
+    return round(max(0.0, min(1.0, 1.0 - d / denom)), 4)
+
+
+def _series_prox(sources, mem, ctx, met, avail):
+    field, op = mem["field"], mem["op"]
+    scale = _SCALE_BY_FIELD.get(field, "cat")
+    thr = mem.get("value")
+    ref = _member_ref(sources, mem["src"], mem["key"])
+    thr_num = thr if isinstance(thr, (int, float)) else None
+    if not avail or scale == "cat":
+        return {"scale": scale, "op": op, "current_num": None,
+                "threshold_num": thr_num, "distance": None,
+                "distance_label": ("缺席" if not avail else
+                                   ("已達標" if met else "未達標")),
+                "ref": ref, "_closeness": (0.0 if not avail else
+                                           (1.0 if met else 0.0))}
+    raw = _field_value(ctx, mem["src"], field)
+    cur = abs(raw) if mem.get("transform") == "abs" and isinstance(raw, (int, float)) else raw
+    cur = cur if isinstance(cur, (int, float)) else None
+    d = _signed_distance(op, cur, thr_num)
+    return {"scale": scale, "op": op,
+            "current_num": None if cur is None else round(cur, 2),
+            "threshold_num": thr_num,
+            "distance": None if d is None else round(max(d, 0.0), 2),
+            "distance_label": _distance_label(scale, d),
+            "ref": ref, "_closeness": _closeness(scale, d, met)}
+
+
+def _cond_closeness(ctx, c, met):
+    scale = _SCALE_BY_FIELD.get(c["field"], "cat")
+    raw = _field_value(ctx, c["src"], c["field"])
+    cur = abs(raw) if c.get("transform") == "abs" and isinstance(raw, (int, float)) else raw
+    cur = cur if isinstance(cur, (int, float)) else None
+    thr = c["value"] if isinstance(c["value"], (int, float)) else None
+    return _closeness(scale, _signed_distance(c["op"], cur, thr), met)
+
+
+def _subgroup_prox(sources, mem, sub_met, avail, sub_cl):
+    need, n = mem["min"], len(mem["conds"])
+    met = avail and sub_met >= need
+    ref = _member_ref(sources, mem["conds"][0]["src"], mem["conds"][0]["key"])
+    if not avail:
+        cl = 0.0
+    elif met:
+        cl = 1.0
+    else:
+        best = max((c for m, c in sub_cl if not m), default=0.0)
+        cl = round(max(0.0, min(1.0, (sub_met + best) / need)), 4)
+    return {"scale": "subgroup", "op": ">=",
+            "current_num": None if not avail else sub_met, "threshold_num": need,
+            "distance": None if (not avail or met) else float(need - sub_met),
+            "distance_label": ("缺席" if not avail else
+                               ("已達標" if met else f"差 {need - sub_met} 個子條件")),
+            "ref": ref, "_closeness": cl}
+
+
+def _signal_prox(mem, met):
+    return {"scale": "event", "op": None, "current_num": None,
+            "threshold_num": None, "distance": None, "distance_label": "事件型",
+            "ref": _SELECTOR_REF.get(mem["selector"], ""),
+            "_closeness": (1.0 if met else 0.0)}
+
+
+# ── 成員評估（附逼近度機器欄）─────────────────────────────────────
+
 def _eval_series_member(sources, mem):
     src, key = mem["src"], mem["key"]
     ctx, avail = _series_fetch(sources, src, key)
     if not avail:
-        return {"met": False, "current": "缺席", "available": False}
+        return {"met": False, "current": "缺席", "available": False,
+                "prox": _series_prox(sources, mem, None, False, False)}
     conds = [{"field": mem["field"], "op": mem["op"], "value": mem["value"],
               "transform": mem.get("transform")}] + list(mem.get("and", []))
     met, cur = _eval_conds(ctx, src, conds)
-    return {"met": met, "current": cur, "available": True}
+    return {"met": met, "current": cur, "available": True,
+            "prox": _series_prox(sources, mem, ctx, met, True)}
 
 
 def _eval_subgroup_member(sources, mem):
-    sub_met, parts, avail = 0, [], True
+    sub_met, parts, avail, sub_cl = 0, [], True, []
     for c in mem["conds"]:
         ctx, ok = _series_fetch(sources, c["src"], c["key"])
         if not ok:
             avail = False
             parts.append(f"{c['key']} 缺席")
+            sub_cl.append((False, 0.0))
             continue
         m, cur = _eval_conds(ctx, c["src"], [c])
         sub_met += 1 if m else 0
         parts.append(f"{c['key']} {cur}{'✓' if m else '✗'}")
+        sub_cl.append((m, _cond_closeness(ctx, c, m)))
+    prox = _subgroup_prox(sources, mem, sub_met, avail, sub_cl)
     if not avail:
-        return {"met": False, "current": "、".join(parts), "available": False}
+        return {"met": False, "current": "、".join(parts), "available": False,
+                "prox": prox}
     met = sub_met >= mem["min"]
     return {"met": met, "current": f"{'、'.join(parts)} → {sub_met}/{len(mem['conds'])}",
-            "available": True}
+            "available": True, "prox": prox}
 
 
 # ── signal 型 selector 註冊表（R6 join）─────────────────────────
@@ -278,7 +414,14 @@ _SELECTORS = {
 
 def _eval_signal_member(sources, mem):
     fn = _SELECTORS[mem["selector"]]
-    return fn(sources, mem.get("params", {}))
+    r = fn(sources, mem.get("params", {}))
+    r["prox"] = _signal_prox(mem, r["met"])
+    return r
+
+
+# 成員輸出機器欄（供 composites[] 直接渲染；_closeness 為內部排序用，不輸出）。
+MEMBER_PUBLIC = ("desc", "current", "met", "current_num", "threshold_num",
+                 "op", "scale", "distance", "distance_label", "ref")
 
 
 def _eval_member(sources, mem):
@@ -291,8 +434,11 @@ def _eval_member(sources, mem):
         r = _eval_signal_member(sources, mem)
     else:
         raise ValueError(f"unknown member type {t}")
-    return {"desc": mem["desc"], "current": r["current"],
-            "met": r["met"], "_available": r["available"]}
+    prox = r["prox"]
+    out = {"desc": mem["desc"], "current": r["current"], "met": r["met"],
+           "_available": r["available"], "_closeness": prox["_closeness"]}
+    out.update({k: prox[k] for k in prox if k != "_closeness"})
+    return out
 
 
 # ── sev 分級 ───────────────────────────────────────────────────
@@ -334,6 +480,25 @@ def rule_monitor_prefixes(rule, monitor):
 
 # ── 規則評估 ───────────────────────────────────────────────────
 
+def _rule_proximity(ev, met_count, min_true):
+    """規則逼近度 0-1（排序鍵，非判斷閘、不登 rule_ledger）.
+
+    proximity = met_fraction*0.7 + nearest_unmet_closeness*0.3
+      · met_fraction＝min(1, met_count/min_true)（朝觸發門檻的進度）。
+      · nearest_unmet_closeness＝未達成員中最接近者的正規化接近度（0-1；pctile
+        距離 /100、z 距離 /4，clamp 0-1）；全達（met_count≥min_true）時取 1.0。
+    dormant 由呼叫端給 0；fired（confirm_days 滿）由 build 端覆寫為 1.0。"""
+    met_fraction = min(1.0, met_count / min_true) if min_true else 0.0
+    unmet = [m["_closeness"] for m in ev if not m["met"]]
+    nearest = max(unmet) if unmet else 1.0
+    return round(met_fraction * 0.7 + nearest * 0.3, 4)
+
+
+def _pub_members(ev):
+    """把 _eval_member 結果收斂為輸出用成員（含逼近度機器欄，去內部欄）。"""
+    return [{k: m.get(k) for k in MEMBER_PUBLIC} for m in ev]
+
+
 def evaluate_rule(sources, rule):
     """評估單一規則；回傳含成員快照的 dict（不含 fired／fired_since，那需狀態機）。"""
     n = len(rule["members"])
@@ -341,24 +506,24 @@ def evaluate_rule(sources, rule):
             "confirm_days": rule["confirm_days"], "fire_sev": rule["fire_sev"],
             "narrative": rule["narrative"]}
     if rule.get("status") == "dormant":
-        members = [{"desc": m["desc"], "current": "—（未上線）", "met": False}
-                   for m in rule["members"]]
+        members = [{"desc": m["desc"], "current": "—（未上線）", "met": False,
+                    "current_num": None, "threshold_num": None, "op": None,
+                    "scale": None, "distance": None, "distance_label": "未上線",
+                    "ref": None} for m in rule["members"]]
         return {**base, "status": "dormant", "members": members,
                 "met_count": 0, "base_met": False, "sev": None,
-                "monitor_prefixes": []}
+                "proximity": 0.0, "monitor_prefixes": []}
     ev = [_eval_member(sources, m) for m in rule["members"]]
     if any(not m["_available"] for m in ev):
-        members = [{"desc": m["desc"], "current": m["current"], "met": False}
-                   for m in ev]
-        return {**base, "status": "dormant", "members": members,
+        return {**base, "status": "dormant", "members": _pub_members(ev),
                 "met_count": 0, "base_met": False, "sev": None,
-                "monitor_prefixes": []}
+                "proximity": 0.0, "monitor_prefixes": []}
     met_count = sum(1 for m in ev if m["met"])
     base_met = met_count >= rule["min_true"]
     sev = _compute_sev(rule["fire_sev"], met_count, rule["min_true"], n) if base_met else None
-    members = [{"desc": m["desc"], "current": m["current"], "met": m["met"]} for m in ev]
-    return {**base, "status": "active", "members": members,
+    return {**base, "status": "active", "members": _pub_members(ev),
             "met_count": met_count, "base_met": base_met, "sev": sev,
+            "proximity": _rule_proximity(ev, met_count, rule["min_true"]),
             "monitor_prefixes": rule_monitor_prefixes(rule, sources.get("monitor"))}
 
 
