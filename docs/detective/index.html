@@ -117,10 +117,10 @@ a:hover{color:var(--accent-hover)}
 .gauge-band-chip{font-family:'IBM Plex Mono',monospace;font-size:.78rem;font-weight:700;
                  padding:.3rem .8rem;border-radius:20px;background:var(--border-light);color:var(--text-secondary)}
 .gauge-band-chip.b-calm{color:var(--pos);background:var(--pos-bg)}
-.gauge-band-chip.b-normal{color:var(--accent);background:var(--border-light)}
+.gauge-band-chip.b-watch{color:var(--accent);background:var(--border-light)}
 .gauge-band-chip.b-warming{color:var(--warn);background:var(--warn-bg)}
 .gauge-band-chip.b-tense{color:var(--tense);background:var(--tense-bg)}
-.gauge-band-chip.b-extreme{color:var(--neg);background:var(--neg-bg)}
+.gauge-band-chip.b-alert{color:var(--neg);background:var(--neg-bg)}
 .gauge-meta{margin-top:.5rem;font-family:'IBM Plex Mono',monospace;font-size:.74rem;color:var(--text-muted);line-height:1.7}
 .gauge-fallback-note{margin-top:.6rem;font-size:.74rem;color:var(--warn);background:var(--warn-bg);
                      padding:.5rem .75rem;border-radius:6px;max-width:520px;line-height:1.6}
@@ -149,6 +149,20 @@ a:hover{color:var(--accent-hover)}
 .gauge-trend-tip b{color:var(--text);font-size:.78rem}
 .gauge-trend-empty{font-size:.78rem;color:var(--text-muted);font-style:italic;padding:.6rem 0}
 .gauge-trend-note{margin-top:.4rem;font-size:.7rem;color:var(--text-muted)}
+/* 雙軌（回測近似虛線＋實盤實線）圖例 / range toggle（2026-07-16 新增，樣式抄 monitor range-toggle） */
+.gauge-trend-toggle{display:flex;flex-wrap:wrap;gap:6px;margin:.3rem 0 .55rem}
+.gauge-trend-toggle button{font-family:'IBM Plex Mono',monospace;font-size:.68rem;font-weight:600;
+                          padding:.26rem .65rem;border-radius:6px;border:1px solid var(--border);
+                          background:var(--bg-card);color:var(--text-secondary);cursor:pointer}
+.gauge-trend-toggle button:hover{background:var(--bg-card-hover)}
+.gauge-trend-toggle button.sel{background:var(--accent);border-color:var(--accent);color:#fff}
+.gauge-trend-legend{display:flex;flex-wrap:wrap;gap:1.1rem;margin:0 0 .5rem;
+                    font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--text-muted)}
+.gauge-trend-legend span.lg-item{display:inline-flex;align-items:center}
+.gauge-trend-legend .lg-dash{display:inline-block;width:16px;height:0;border-top:2px dashed var(--text-muted);
+                            margin-right:.35rem;opacity:.8}
+.gauge-trend-legend .lg-solid{display:inline-block;width:16px;height:0;border-top:2px solid var(--accent);
+                             margin-right:.35rem}
 
 /* ── ② 維度儀表列（原熱力樹圖） ───────────────────────────── */
 .src-chip{font-family:'IBM Plex Mono',monospace;font-size:.64rem;font-weight:700;letter-spacing:.04em;
@@ -633,12 +647,17 @@ footer.imq-foot a{color:var(--accent)}
   var FREQ_LABEL={monitor:'日更',reversal:'日更',crowding:'週更',rotation:'日更',
                   regime:'週更',macro_clock:'月頻',variance:'週更',sector:'定期更新'};
   var STATE_LABEL={'new':'新增',active:'持續',escalated:'升級',cooling:'冷卻'};
-  var BAND_LABEL_ZH={calm:'平靜',normal:'留意',warming:'升溫',tense:'緊張',extreme:'警戒'};
-  var BAND_COLOR_VAR={calm:'var(--pos)',normal:'var(--accent)',warming:'var(--warn)',tense:'var(--tense)',extreme:'var(--neg)'};
-  // alert_history.json 的 band 值來自機械層 ALERT_BANDS（calm/watch/warming/tense/alert），
-  // 與上面 BAND_LABEL_ZH（fallback 粗算用 calm/normal/warming/tense/extreme）鍵名不同源，
-  // 歷史趨勢圖 tooltip 獨立用此表對映，不臆測補齊上表。
-  var ALERT_BAND_ZH={calm:'平靜',watch:'留意',warming:'升溫',tense:'緊張',alert:'警戒'};
+  // alert_history_backfill.json 的 components_excluded[].name 是機械層內部識別碼（英文，
+  // 見 scripts/backfill_alert_history.py），非人讀標籤；沿用 SRC_LABEL 已有的對映，
+  // 其餘（composite_R6/R8、sector_rotation_quadrant 等）另建對映，查不到才退回原始碼。
+  var BACKFILL_COMPONENT_LABEL_ZH={composite_R6:'綜合規則 R6',composite_R8:'綜合規則 R8',
+    sector_rotation_quadrant:'產業輪動象限',fear_and_greed:'恐懼與貪婪指數',
+    internals_breadth_naaim_finra:'市場內部廣度（NAAIM／FINRA）'};
+  // band 鍵名統一採機械層 ALERT_BANDS 命名（calm/watch/warming/tense/alert）——
+  // 2026-07-16 修正：先前 fallback 粗算與指針針色曾各自誤用 normal/extreme，
+  // 與後端鍵名不一致導致 watch／alert 檔的 chip class／針色退回預設，此表為唯一權威對映。
+  var BAND_LABEL_ZH={calm:'平靜',watch:'留意',warming:'升溫',tense:'緊張',alert:'警戒'};
+  var BAND_COLOR_VAR={calm:'var(--pos)',watch:'var(--accent)',warming:'var(--warn)',tense:'var(--tense)',alert:'var(--neg)'};
   // 維度儀表列：分區維度改由 dim 決定（非 source）；訊號缺 dim 一律歸「其他」，不捏造維度。
   var DIM_ORDER=['equity_structure','credit','vol_options','rates_liquidity','commod_fx_crypto','positioning','thesis','other'];
   var DIM_LABEL={equity_structure:'股票與產業結構',credit:'信用',vol_options:'波動與選擇權',
@@ -646,6 +665,10 @@ footer.imq-foot a{color:var(--accent)}
                 positioning:'擁擠與部位',thesis:'thesis 對帳',other:'其他'};
   var allSignals=[];
   var lastComposites=[]; // 供 composite 卡片互連點擊時查 members[].ref 用
+  // 警戒度歷史趨勢雙軌狀態（2026-07-16 新增）：backfillPts＝回測近似段（可能缺檔，[] 表示沒有）、
+  // livePts＝實盤累積段；range toggle 選擇跨重渲染保留在 trendRange，不隨每輪 fetch 重置。
+  var trendState={backfillPts:[],livePts:[],hasBackfillFile:false,excludedNote:''};
+  var trendRange='1y';
 
   function fetchJSON(url){
     return fetch(url).then(function(r){return r&&r.ok?r.json():null;}).catch(function(){return null;});
@@ -719,12 +742,12 @@ footer.imq-foot a{color:var(--accent)}
     return 'M'+p1.x.toFixed(2)+' '+p1.y.toFixed(2)+' A'+r+' '+r+' 0 0 1 '+p2.x.toFixed(2)+' '+p2.y.toFixed(2);
   }
   function bandOfScore(score){
-    if(score==null||isNaN(score))return 'normal';
+    if(score==null||isNaN(score))return 'watch';
     if(score<20)return 'calm';
-    if(score<40)return 'normal';
+    if(score<40)return 'watch';
     if(score<60)return 'warming';
     if(score<80)return 'tense';
-    return 'extreme';
+    return 'alert';
   }
   function countNearFire(comps){
     if(!comps||!comps.length)return 0;
@@ -859,12 +882,31 @@ footer.imq-foot a{color:var(--accent)}
     }
   }
 
-  // ── 警戒度歷史趨勢圖（威脅指針卡內、drivers 下方，2026-07-16 新增）──────
-  // points：[date,score,band][]（band 值見 ALERT_BAND_ZH），機械層 alert_history.json
-  // 逐日累積、不回填。五檔 band 底色帶固定用分數區間（0-20/20-40/40-60/60-80/80-100），
-  // 與指針半圓的分色邏輯一致；顯示最近 ≤120 點，點數再少（甚至 1 點）也照畫。
-  function buildAlertTrendSVG(points){
-    var pts=(points||[]).slice(-120);
+  // ── 警戒度歷史趨勢圖（威脅指針卡內、drivers 下方）── 2026-07-16 改雙軌渲染：
+  // 回測近似段（backfillPts，來自 alert_history_backfill.json，可能缺檔）＋實盤累積段
+  // （livePts，來自 alert_history.json，逐日累積不回填）。缺 backfill 檔＝splitN 恆為 0，
+  // 完全退化為原單軌渲染（不影響既有行為）。band 底色帶固定用分數區間（0-20/…/80-100），
+  // 與指針半圓的分色邏輯一致。
+  var TREND_RANGES=[{key:'3m',label:'3M',months:3},{key:'1y',label:'1年',months:12},{key:'all',label:'全部',months:null}];
+
+  function trendSliceByMonths(backfillPts,livePts,months){
+    if(months==null)return {pts:backfillPts.concat(livePts),splitN:backfillPts.length};
+    var all=backfillPts.concat(livePts);
+    if(!all.length)return {pts:[],splitN:0};
+    var asOf=all[all.length-1][0];
+    var cutoff=new Date(String(asOf).slice(0,10)+'T00:00:00Z');
+    cutoff.setUTCMonth(cutoff.getUTCMonth()-months);
+    var cutoffStr=cutoff.toISOString().slice(0,10);
+    var slicedBf=backfillPts.filter(function(p){return p[0]>=cutoffStr;});
+    var slicedLv=livePts.filter(function(p){return p[0]>=cutoffStr;});
+    return {pts:slicedBf.concat(slicedLv),splitN:slicedBf.length};
+  }
+
+  // splitN：pts[0..splitN-1] 為回測近似（虛線降飽和），pts[splitN..] 為實盤（實線 accent）。
+  // splitN===0（無 backfill 或該 range 切不到任何回測點）＝完全等同原單軌畫法。
+  function buildAlertTrendSVG(pts,splitN){
+    pts=pts||[];
+    splitN=Math.max(0,Math.min(splitN||0,pts.length));
     var W=640,H=170,padL=6,padR=34,padT=10,padB=20;
     var plotW=W-padL-padR, plotH=H-padT-padB;
     var n=pts.length;
@@ -889,9 +931,17 @@ footer.imq-foot a{color:var(--accent)}
       var y=yAt(v);
       return '<line x1="'+padL+'" y1="'+y.toFixed(1)+'" x2="'+(padL+plotW)+'" y2="'+y.toFixed(1)+'" stroke="var(--border-light)" stroke-width="1"/>';
     }).join('');
-    var path='';
-    pts.forEach(function(p,i){
-      path+=(i===0?'M':'L')+xAt(i).toFixed(1)+','+yAt(p[1]).toFixed(1)+' ';
+    // 回測段（0..splitN-1，含）：虛線＋降飽和 muted 色。實盤段（splitN-1..end）：實線 accent，
+    // 刻意共用邊界點（splitN-1）讓兩段線視覺相接，不留斷點。
+    var bfPath='', lvPath='';
+    if(splitN>0){
+      pts.slice(0,splitN).forEach(function(p,i){
+        bfPath+=(i===0?'M':'L')+xAt(i).toFixed(1)+','+yAt(p[1]).toFixed(1)+' ';
+      });
+    }
+    var lvStart=splitN>0?splitN-1:0;
+    pts.slice(lvStart).forEach(function(p,i){
+      lvPath+=(i===0?'M':'L')+xAt(lvStart+i).toFixed(1)+','+yAt(p[1]).toFixed(1)+' ';
     });
     var dateLabels='';
     if(n){
@@ -899,35 +949,68 @@ footer.imq-foot a{color:var(--accent)}
         '<text x="'+(padL+plotW)+'" y="'+(H-6)+'" font-size="9" text-anchor="end" fill="var(--text-muted)" font-family="IBM Plex Mono,monospace">'+esc(pts[n-1][0])+'</text>';
     }
     var lastX=xAt(n-1), lastY=yAt(n?pts[n-1][1]:0);
-    var lineAndDot=n?(
-      '<path d="'+path+'" fill="none" stroke="var(--accent)" stroke-width="1.6"/>'+
-      '<circle cx="'+lastX.toFixed(1)+'" cy="'+lastY.toFixed(1)+'" r="3.4" fill="var(--accent)" stroke="var(--bg-card)" stroke-width="1.5"/>'
-    ):'';
-    var svg='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" role="img" aria-label="警戒度歷史趨勢">'
-      +bandRects+gridLines+bandLabels+lineAndDot+dateLabels
+    var bfPathSvg=(splitN>0)?('<path d="'+bfPath+'" fill="none" stroke="var(--text-muted)" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.75"/>'):'';
+    var lvPathSvg=(n>lvStart)?('<path d="'+lvPath+'" fill="none" stroke="var(--accent)" stroke-width="1.6"/>'):'';
+    var lastDot=n?('<circle cx="'+lastX.toFixed(1)+'" cy="'+lastY.toFixed(1)+'" r="3.4" fill="var(--accent)" stroke="var(--bg-card)" stroke-width="1.5"/>'):'';
+    // 接縫：實盤起點分界線＋小標，僅在該切片同時含回測與實盤點時畫（splitN 在 0 與 n 之間）。
+    var seamSvg='';
+    if(splitN>0&&splitN<n){
+      var seamX=xAt(splitN);
+      seamSvg='<line x1="'+seamX.toFixed(1)+'" y1="'+padT+'" x2="'+seamX.toFixed(1)+'" y2="'+(padT+plotH)+'" stroke="var(--text-muted)" stroke-width="1" stroke-dasharray="1,2" opacity="0.6"/>'
+        +'<text x="'+seamX.toFixed(1)+'" y="'+(padT-2)+'" font-size="8" text-anchor="middle" fill="var(--text-muted)" font-family="IBM Plex Mono,monospace">實盤起點</text>';
+    }
+    var svg='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" role="img" aria-label="警戒度歷史趨勢（回測近似＋實盤）">'
+      +bandRects+gridLines+bandLabels+bfPathSvg+lvPathSvg+lastDot+seamSvg+dateLabels
       +'<g id="trendCrosshair" style="display:none">'
       +'<line x1="0" y1="'+padT+'" x2="0" y2="'+(padT+plotH)+'" stroke="var(--text-muted)" stroke-width="1" stroke-dasharray="2,2"/>'
       +'<circle r="3" fill="var(--accent)"/></g></svg>';
-    return {svg:svg,pts:pts,xAt:xAt,yAt:yAt,geom:{W:W,plotW:plotW,padL:padL}};
+    return {svg:svg,pts:pts,splitN:splitN,xAt:xAt,yAt:yAt,geom:{W:W,plotW:plotW,padL:padL}};
   }
 
-  function renderGaugeTrend(history){
+  function excludedLabelOf(name){
+    return SRC_LABEL[name]||BACKFILL_COMPONENT_LABEL_ZH[name]||name;
+  }
+  function buildExcludedNote(bf){
+    if(!bf)return '';
+    var names=(bf.components_excluded||[]).map(function(c){return c&&c.name;}).filter(Boolean).map(excludedLabelOf);
+    if(!names.length)return '回測線分數為下界近似（部分成分不可重建）。';
+    return '回測線未含'+esc(names.join('、'))+'成分，分數為下界近似。';
+  }
+
+  // 依 trendRange 從 trendState 重算並重繪；不重新 fetch，供 range toggle 點擊與
+  // 每輪 loadAndRender 共用。host（#gaugeTrendWrap）本身不隨此函式重建，故 range toggle
+  // 的 click 監聽掛在 host 上做事件代理，跨重渲染仍有效、不重複綁定。
+  function renderGaugeTrendPanel(){
     var host=document.getElementById('gaugeTrendWrap');
     if(!host)return;
-    var pts=(history&&history.points)||[];
-    if(!pts.length){
+    var bf=trendState.backfillPts, lv=trendState.livePts;
+    if(!bf.length&&!lv.length){
       host.innerHTML='<div class="gauge-trend-hd"><h3>警戒度歷史軌跡（描述器）</h3></div>'
         +'<div class="gauge-trend-empty">歷史累積中（尚無資料點，明日起逐日累積）。</div>';
       return;
     }
-    var built=buildAlertTrendSVG(pts);
+    var rangeDef=TREND_RANGES.filter(function(r){return r.key===trendRange;})[0]||TREND_RANGES[1];
+    var sliced=trendSliceByMonths(bf,lv,rangeDef.months);
+    var built=buildAlertTrendSVG(sliced.pts,sliced.splitN);
     var n=built.pts.length;
-    var sub=n<120?('近 '+n+' 個交易日'):'近 120 個交易日';
+    var bfN=built.splitN, lvN=n-bfN;
+    var sub=trendState.hasBackfillFile?('共 '+n+' 個交易日（回測 '+bfN+'・實盤 '+lvN+'）'):('近 '+n+' 個交易日');
     var noteHtml=n<8?('<div class="gauge-trend-note">歷史累積中（第 '+n+' 個交易日，資料點尚少，圖形將隨每日累積趨於完整）。</div>'):'';
+    var toggleHtml='<div class="gauge-trend-toggle" id="gaugeTrendRangeToggle">'
+      +TREND_RANGES.map(function(r){
+        return '<button type="button" data-range="'+r.key+'" class="'+(r.key===trendRange?'sel':'')+'">'+esc(r.label)+'</button>';
+      }).join('')+'</div>';
+    var legendHtml=trendState.hasBackfillFile?(
+      '<div class="gauge-trend-legend"><span class="lg-item"><span class="lg-dash"></span>回測近似（部分成分不可重建，下界）</span>'
+      +'<span class="lg-item"><span class="lg-solid"></span>實盤</span></div>'
+    ):'';
+    var excludedHtml=trendState.hasBackfillFile&&trendState.excludedNote?
+      '<div class="gauge-trend-note">'+esc(trendState.excludedNote)+'</div>':'';
     host.innerHTML='<div class="gauge-trend-hd"><h3>警戒度歷史軌跡（描述器）</h3>'
       +'<span class="gauge-trend-sub">'+esc(sub)+'</span></div>'
+      +toggleHtml+legendHtml
       +'<div class="gauge-trend-chart" id="gaugeTrendChart">'+built.svg+'</div>'
-      +noteHtml;
+      +excludedHtml+noteHtml;
     var chartHost=document.getElementById('gaugeTrendChart');
     var svgEl=chartHost&&chartHost.querySelector('svg');
     if(!svgEl)return;
@@ -948,11 +1031,12 @@ footer.imq-foot a{color:var(--accent)}
       chLine.setAttribute('x1',x);chLine.setAttribute('x2',x);
       chCircle.setAttribute('cx',x);chCircle.setAttribute('cy',y);
       crosshair.style.display='';
-      var bandLbl=ALERT_BAND_ZH[p[2]]||p[2]||'—';
-      tip.innerHTML='<b>'+esc(p[0])+'</b><br>分數 '+esc(p[1])+'（'+esc(bandLbl)+'）';
+      var bandLbl=BAND_LABEL_ZH[p[2]]||p[2]||'—';
+      var trackLbl=i<built.splitN?'回測近似':'實盤';
+      tip.innerHTML='<b>'+esc(p[0])+'</b>（'+esc(trackLbl)+'）<br>分數 '+esc(p[1])+'（'+esc(bandLbl)+'）';
       var hostRect=chartHost.getBoundingClientRect();
       var tipX=(x/built.geom.W)*hostRect.width;
-      tip.style.left=Math.min(Math.max(tipX+8,4),Math.max(hostRect.width-140,4))+'px';
+      tip.style.left=Math.min(Math.max(tipX+8,4),Math.max(hostRect.width-150,4))+'px';
       tip.style.top='2px';
       tip.style.opacity='1';
     }
@@ -961,6 +1045,38 @@ footer.imq-foot a{color:var(--accent)}
     svgEl.addEventListener('mouseleave',hide);
     svgEl.addEventListener('touchstart',function(e){if(e.touches&&e.touches[0])showAt(e.touches[0].clientX);},{passive:true});
   }
+
+  // 入口：由 loadAndRender 呼叫。history＝實盤 alert_history.json（可能為 null）、
+  // backfill＝回測近似 alert_history_backfill.json（可能缺檔／並行 agent 尚未產出，
+  // 缺檔完全不影響現有單軌渲染——backfillPts 留空、hasBackfillFile=false 即完全退化為原行為）。
+  function renderGaugeTrend(history,backfill){
+    trendState.livePts=(history&&history.points)||[];
+    if(backfill&&backfill.points&&backfill.points.length){
+      trendState.backfillPts=backfill.points;
+      trendState.hasBackfillFile=true;
+      trendState.excludedNote=buildExcludedNote(backfill);
+    }else{
+      trendState.backfillPts=[];
+      trendState.hasBackfillFile=false;
+      trendState.excludedNote='';
+    }
+    renderGaugeTrendPanel();
+  }
+
+  // range toggle 事件代理：掛在 #gaugeTrendWrap（靜態容器，innerHTML 只在其內部重建，
+  // 容器本身不被替換）上，只需綁一次，跨每輪 renderGaugeTrend 重渲染仍有效。
+  (function(){
+    var trendHost=document.getElementById('gaugeTrendWrap');
+    if(!trendHost)return;
+    trendHost.addEventListener('click',function(e){
+      var btn=e.target.closest('[data-range]');
+      if(!btn)return;
+      var r=btn.getAttribute('data-range');
+      if(r===trendRange)return;
+      trendRange=r;
+      renderGaugeTrendPanel();
+    });
+  })();
 
   // ── ② 維度儀表列渲染（原熱力樹圖 v3：七維度恆顯示水平溫度卡）───
   // 分區依 signal.dim（機械層欄，equity_structure/credit/vol_options/rates_liquidity/
@@ -1605,14 +1721,15 @@ footer.imq-foot a{color:var(--accent)}
       fetchJSON(cacheBust('/detective/data/state.json')),
       fetchJSON(cacheBust('/detective/data/kill_watch.json')),
       fetchJSON(cacheBust('/detective/data/editorial.json')),
-      fetchJSON(cacheBust('/detective/data/alert_history.json'))
+      fetchJSON(cacheBust('/detective/data/alert_history.json')),
+      fetchJSON(cacheBust('/detective/data/alert_history_backfill.json'))
     ]).then(function(res){
-      var det=res[0], monLatest=res[1], state=res[2], killWatch=res[3], editorial=res[4], alertHistory=res[5];
+      var det=res[0], monLatest=res[1], state=res[2], killWatch=res[3], editorial=res[4], alertHistory=res[5], alertBackfill=res[6];
       document.getElementById('loadingMsg').hidden=true;
       if(!det||!det.signals){
         document.getElementById('legacyListDetails').hidden=true;
         try{renderGauge(null);}catch(e){}
-        try{renderGaugeTrend(alertHistory);}catch(e){}
+        try{renderGaugeTrend(alertHistory,alertBackfill);}catch(e){}
         try{renderHeatWall(null);}catch(e){}
         try{renderTodayChanges(state,null);}catch(e){}
         try{renderComposites(null);}catch(e){
@@ -1651,7 +1768,7 @@ footer.imq-foot a{color:var(--accent)}
       try{renderGauge(det);}catch(e){
         document.getElementById('gaugeMeta').textContent='指針資料格式異常，暫無法渲染。';
       }
-      try{renderGaugeTrend(alertHistory);}catch(e){
+      try{renderGaugeTrend(alertHistory,alertBackfill);}catch(e){
         document.getElementById('gaugeTrendWrap').innerHTML='<div class="gauge-trend-hd"><h3>警戒度歷史軌跡（描述器）</h3></div><div class="gauge-trend-empty">歷史資料格式異常，暫無法渲染。</div>';
       }
 
