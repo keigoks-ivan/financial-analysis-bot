@@ -1354,10 +1354,13 @@ footer.imq-foot a{color:var(--accent)}
     killCands.sort(function(a,b){return a.relGap-b.relGap;});
     killCands.slice(0,2).forEach(function(x){
       var it=x.it;
-      var curTxt=(it.current!=null?it.current:'—')+(it.unit?(' '+it.unit):'');
+      var curNum=(typeof it.current==='number')?(Math.round(it.current*100)/100):it.current;
+      var curTxt=(curNum!=null?curNum:'—')+(it.unit?(' '+it.unit):'');
+      var thrNum=(typeof it.value==='number')?(Math.round(it.value*100)/100):null;
+      var thrTxt=thrNum!=null?((it.op||'')+' '+thrNum):factTrunc(it.threshold_text||'—',24);
       items.push({type:'kill',icon:'⚠',
-        text:(it.theme||'—')+'：'+(it.metric_text||'—')+' 現值 '+curTxt+' 距 kill 門檻 '
-          +factTrunc(it.threshold_text||'—',40)+' 差 '+(x.relGap*100).toFixed(1)+'%'});
+        text:(it.theme||'—')+'：'+factTrunc(it.metric_text||'—',18)+' 現值 '+curTxt
+          +'，距 kill 門檻（'+thrTxt+'）差 '+(x.relGap*100).toFixed(1)+'%'});
     });
 
     // 上限 6 條：紅燈類全保留（超過 6 不裁切），其餘類別依序補到滿 6
