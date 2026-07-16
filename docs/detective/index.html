@@ -79,6 +79,7 @@ a:hover{color:var(--accent-hover)}
 .crumb a:hover{color:var(--accent)}
 .asof-row{display:flex;flex-wrap:wrap;gap:1.4rem;margin-top:1.1rem;font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--text-muted)}
 .asof-row b{color:var(--text-secondary);font-weight:600}
+.genat-note{margin-top:.35rem;font-size:.68rem;color:var(--text-muted);font-family:'IBM Plex Mono',monospace}
 
 /* Stale banner */
 .stale-banner{margin:1.2rem 0 0;background:var(--warn-bg);color:var(--warn);border-radius:6px;
@@ -124,7 +125,7 @@ a:hover{color:var(--accent-hover)}
 .gauge-fallback-note{margin-top:.6rem;font-size:.74rem;color:var(--warn);background:var(--warn-bg);
                      padding:.5rem .75rem;border-radius:6px;max-width:520px;line-height:1.6}
 .gauge-drivers{margin-top:1.1rem}
-.gauge-drivers h3{font-family:var(--serif);font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:.5rem}
+.gauge-drivers h3{font-family:var(--serif);font-size:.86rem;font-weight:700;color:var(--text);margin-bottom:.5rem}
 .gauge-drivers ul{list-style:none;display:flex;flex-direction:column;gap:.35rem}
 .gauge-drivers li{font-size:.82rem;color:var(--text-secondary);display:flex;justify-content:space-between;
                   gap:.6rem;padding:.35rem .6rem;background:var(--bg);border:1px solid var(--border-light);border-radius:6px}
@@ -159,6 +160,14 @@ a:hover{color:var(--accent-hover)}
 .heat-cell .sc{font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--text-muted)}
 .heat-empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--text-muted);
            font-size:.78rem;border:1px dashed var(--border);border-radius:6px;min-height:120px}
+.quiet-sources-row{display:flex;flex-wrap:wrap;gap:.55rem;margin-top:.7rem}
+.quiet-chip{display:flex;align-items:center;gap:.5rem;padding:.4rem .7rem;border-radius:8px;
+           border:1px dashed var(--border);background:var(--bg-card);font-size:.74rem;color:var(--text-secondary)}
+.quiet-chip .qdot{width:6px;height:6px;border-radius:50%;background:var(--border);flex-shrink:0}
+.quiet-chip .qname{font-weight:700;color:var(--text-secondary)}
+.quiet-chip .qmeta{font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--text-muted)}
+.quiet-chip .qstate{font-style:italic;color:var(--text-muted);margin-left:.15rem}
+@media(max-width:640px){.quiet-chip{width:100%}}
 #heatDetailPanel{margin-top:.9rem;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
                 box-shadow:var(--shadow-sm);padding:.9rem 1.1rem}
 #heatDetailPanel .ph{color:var(--text-muted);font-size:.8rem}
@@ -249,6 +258,12 @@ details.legacy-list summary{cursor:pointer;font-weight:700;font-size:.85rem;colo
 .comp-member .cur{font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--text-muted);white-space:nowrap}
 .comp-narrative{margin-top:.65rem;font-size:.8rem;color:var(--text);line-height:1.65;
                padding-top:.55rem;border-top:1px solid var(--border-light)}
+@media(max-width:480px){
+  .dial-grid{grid-template-columns:1fr}
+  .comp-member{flex-wrap:wrap}
+  .comp-member .desc{min-width:0;flex:1 1 100%}
+  .comp-member .cur{margin-left:1.55rem}
+}
 
 /* ── ④ Kill 覆蓋環 ─────────────────────────────────────────── */
 .kill-hero{display:flex;gap:1.6rem;flex-wrap:wrap;align-items:center;margin-top:.9rem}
@@ -415,7 +430,9 @@ footer.imq-foot a{color:var(--accent)}
       <span>監測 as-of <b id="asofMon">—</b></span>
       <span>擁擠 as-of <b id="asofCrowd">—</b></span>
       <span>輪動 as-of <b id="asofRad">—</b></span>
+      <span>資料時間 <b id="genAtVal">—</b>（台北）</span>
     </div>
+    <div class="genat-note" id="genAtNote" hidden>頁面每 10 分鐘自動更新資料</div>
     <div class="stale-banner" id="staleBanner" hidden></div>
     <nav class="panel-nav">
       <a href="#panel-gauge">① 威脅指針</a>
@@ -460,8 +477,9 @@ footer.imq-foot a{color:var(--accent)}
 <div class="section" id="detective-heat">
   <div class="container">
     <h2 class="section-title">訊號熱力樹圖 <span class="count" id="heatCount">— 條</span></h2>
-    <p class="section-note">依來源分區（監測／翻折／擁擠／輪動／Regime／時鐘／財測落差），格子大小 ∝ 分數、顏色 ＝ 嚴重度（紅／黃），同源內按分數降冪排列。點擊任一格展開詳情；空白來源顯示「—」。</p>
+    <p class="section-note">依來源分區（監測／翻折／擁擠／輪動／Regime／時鐘／財測落差），格子大小 ∝ 分數、顏色 ＝ 嚴重度（紅／黃），同源內按分數降冪排列；只顯示有 ≥1 條訊號的來源，0 訊號來源列於下方「安靜來源」狀態列。點擊任一格展開詳情，預設顯示分數最高的一條。</p>
     <div class="heatwall" id="heatWall"><div class="loading">載入訊號中…</div></div>
+    <div class="quiet-sources-row" id="quietSourcesRow"></div>
     <div id="heatDetailPanel"><span class="ph">點擊上方任一格查看該訊號詳情。</span></div>
 
     <details class="legacy-list" id="legacyListDetails" hidden>
@@ -546,8 +564,12 @@ footer.imq-foot a{color:var(--accent)}
 (function(){
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
   var SRC_LABEL={monitor:'監測',crowding:'擁擠',rotation:'輪動',reversal:'翻折',
-                 regime:'Regime',macro_clock:'時鐘',variance:'財測落差',composite:'綜合'};
-  var SRC_ORDER=['monitor','reversal','crowding','rotation','regime','macro_clock','variance'];
+                 regime:'Regime',macro_clock:'時鐘',variance:'財測落差',composite:'綜合',
+                 sector:'產業結構'};
+  var SRC_ORDER=['monitor','reversal','crowding','rotation','regime','macro_clock','variance','sector'];
+  // 更新頻率標註（安靜來源狀態列用）；sector 為並行引擎新源，頻率未定先用中性字樣，不捏造
+  var FREQ_LABEL={monitor:'日更',reversal:'日更',crowding:'週更',rotation:'日更',
+                  regime:'週更',macro_clock:'月頻',variance:'週更',sector:'定期更新'};
   var STATE_LABEL={'new':'新增',active:'持續',escalated:'升級',cooling:'冷卻'};
   var GROUP_ORDER={escalated:0,'new':1,active:2,cooling:3};
   var GROUP_LABEL={escalated:'升級','new':'新增',active:'持續',cooling:'冷卻（寬限中）'};
@@ -558,6 +580,25 @@ footer.imq-foot a{color:var(--accent)}
 
   function fetchJSON(url){
     return fetch(url).then(function(r){return r&&r.ok?r.json():null;}).catch(function(){return null;});
+  }
+
+  // cache-bust：繞過 CDN 邊緣快取，確保 10 分鐘自動重抓真的拿到最新檔
+  function cacheBust(url){
+    return url+(url.indexOf('?')>=0?'&':'?')+'t='+Date.now();
+  }
+
+  // UTC ISO → 台北時間（Asia/Taipei）'YYYY-MM-DD HH:mm'；解析失敗回傳 null（防呆，不拋錯）
+  function fmtTaipei(iso){
+    if(!iso)return null;
+    try{
+      var d=new Date(iso);
+      if(isNaN(d.getTime()))return null;
+      var fmt=new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});
+      var parts=fmt.formatToParts(d), m={};
+      parts.forEach(function(p){m[p.type]=p.value;});
+      if(!m.year||!m.month||!m.day||!m.hour||!m.minute)return null;
+      return m.year+'-'+m.month+'-'+m.day+' '+m.hour+':'+m.minute;
+    }catch(e){return null;}
   }
 
   function toMD(d){
@@ -750,11 +791,16 @@ footer.imq-foot a{color:var(--accent)}
   }
 
   // ── ② 訊號熱力樹圖渲染 ────────────────────────────────────
+  // v2：只渲染有 ≥1 條訊號的來源（欄寬自動重分配，flex:1 1 0 已處理）；
+  // 0 訊號來源改渲染到下方「安靜來源」狀態列，而非空欄。
+  // sector 為並行引擎新源：det.sources 尚無 sector 欄位前，quiet 列也不顯示它（防禦，不假裝有資料）。
   function renderHeatWall(det){
     var host=document.getElementById('heatWall');
+    var quietHost=document.getElementById('quietSourcesRow');
     if(!det||!det.signals){
       host.innerHTML='<div class="empty-state">偵測層資料暫時無法載入，熱力樹圖暫停渲染。</div>';
       document.getElementById('heatCount').textContent='— 條';
+      if(quietHost)quietHost.innerHTML='';
       return;
     }
     document.getElementById('heatCount').textContent=allSignals.length+' 條';
@@ -765,24 +811,45 @@ footer.imq-foot a{color:var(--accent)}
       if(!bySrc[src])bySrc[src]=[];
       bySrc[src].push(s);
     });
+    var srcMeta=(det&&det.sources)||{};
+    var activeSrcs=SRC_ORDER.filter(function(s){return (bySrc[s]||[]).length>0;});
+    var quietSrcs=SRC_ORDER.filter(function(s){
+      if((bySrc[s]||[]).length>0)return false;
+      if(s==='sector'&&srcMeta.sector==null)return false; // sector 尚未上線，不虛構安靜列
+      return true;
+    });
     var h='';
-    SRC_ORDER.forEach(function(src){
+    activeSrcs.forEach(function(src){
       var items=(bySrc[src]||[]).slice().sort(function(a,b){return (b.score||0)-(a.score||0);});
       h+='<div class="heat-col">';
       h+='<div class="heat-col-hd"><span>'+esc(SRC_LABEL[src]||src)+'</span><span class="cnt">'+items.length+'</span></div>';
       h+='<div class="heat-cells">';
-      if(!items.length){
-        h+='<div class="heat-empty">—</div>';
-      }else{
-        items.forEach(function(s){
-          var grow=Math.max(1,(s.score||1));
-          h+='<div class="heat-cell '+esc(s.sev==='red'?'red':'yellow')+'" style="flex-grow:'+grow+'" data-key="'+esc(s.key)+'" title="'+esc(s.fact||s.label)+'">'
-            +'<span class="lbl">'+esc(s.label)+'</span><span class="sc">score '+esc(s.score)+'</span></div>';
-        });
-      }
+      items.forEach(function(s){
+        var grow=Math.max(1,(s.score||1));
+        h+='<div class="heat-cell '+esc(s.sev==='red'?'red':'yellow')+'" style="flex-grow:'+grow+'" data-key="'+esc(s.key)+'" title="'+esc(s.fact||s.label)+'">'
+          +'<span class="lbl">'+esc(s.label)+'</span><span class="sc">score '+esc(s.score)+'</span></div>';
+      });
       h+='</div></div>';
     });
-    host.innerHTML=h;
+    host.innerHTML=h.length?h:'<div class="empty-state">目前所有來源皆無訊號。</div>';
+
+    if(quietHost){
+      if(!quietSrcs.length){
+        quietHost.innerHTML='';
+      }else{
+        var qh='';
+        quietSrcs.forEach(function(s){
+          var asOf=srcMeta[s]||'—';
+          var freq=FREQ_LABEL[s]||'';
+          qh+='<div class="quiet-chip"><span class="qdot"></span>'
+            +'<span class="qname">'+esc(SRC_LABEL[s]||s)+'</span>'
+            +(freq?'<span class="qmeta">'+esc(freq)+'</span>':'')
+            +'<span class="qmeta">as-of '+esc(asOf)+'</span>'
+            +'<span class="qstate">本期無事件</span></div>';
+        });
+        quietHost.innerHTML=qh;
+      }
+    }
   }
 
   function renderHeatDetail(sig){
@@ -1085,78 +1152,116 @@ footer.imq-foot a{color:var(--accent)}
     }
   });
 
-  Promise.all([
-    fetchJSON('/detective/data/latest.json'),
-    fetchJSON('/monitor/data/latest.json'),
-    fetchJSON('/detective/data/state.json'),
-    fetchJSON('/detective/data/kill_watch.json'),
-    fetchJSON('/detective/data/editorial.json')
-  ]).then(function(res){
-    var det=res[0], monLatest=res[1], state=res[2], killWatch=res[3], editorial=res[4];
-    document.getElementById('loadingMsg').hidden=true;
-    if(!det||!det.signals){
-      document.getElementById('legacyListDetails').hidden=true;
-      try{renderGauge(null);}catch(e){}
-      try{renderHeatWall(null);}catch(e){}
-      try{renderComposites(null);}catch(e){
-        document.getElementById('compGrid').innerHTML='<div class="empty-state">偵探資料層暫時無法載入，Composite 面板暫停渲染。</div>';
+  var AUTO_REFRESH_MS=10*60*1000;
+  var lastFetchAt=0;
+
+  // 單一入口：抓 5 個 JSON（cache-bust 繞過 CDN 邊緣快取）→ 全面重渲染。
+  // 每個 render* 函式都是整段 innerHTML= 覆蓋（非 append），重複呼叫不會疊加；
+  // filterRow／heatWall 的 click listener 掛在容器本身（事件代理），跨重渲染仍有效不須重掛。
+  function loadAndRender(){
+    lastFetchAt=Date.now();
+    Promise.all([
+      fetchJSON(cacheBust('/detective/data/latest.json')),
+      fetchJSON(cacheBust('/monitor/data/latest.json')),
+      fetchJSON(cacheBust('/detective/data/state.json')),
+      fetchJSON(cacheBust('/detective/data/kill_watch.json')),
+      fetchJSON(cacheBust('/detective/data/editorial.json'))
+    ]).then(function(res){
+      var det=res[0], monLatest=res[1], state=res[2], killWatch=res[3], editorial=res[4];
+      document.getElementById('loadingMsg').hidden=true;
+      if(!det||!det.signals){
+        document.getElementById('legacyListDetails').hidden=true;
+        try{renderGauge(null);}catch(e){}
+        try{renderHeatWall(null);}catch(e){}
+        try{renderComposites(null);}catch(e){
+          document.getElementById('compGrid').innerHTML='<div class="empty-state">偵探資料層暫時無法載入，Composite 面板暫停渲染。</div>';
+        }
+        try{renderKillWatch(killWatch);}catch(e){}
+        try{renderEditorial(null, editorial);}catch(e){}
+        return;
       }
-      try{renderKillWatch(killWatch);}catch(e){}
-      try{renderEditorial(null, editorial);}catch(e){}
-      return;
-    }
-    allSignals=(det.signals||[]).slice().sort(function(a,b){return (b.score||0)-(a.score||0);});
+      allSignals=(det.signals||[]).slice().sort(function(a,b){return (b.score||0)-(a.score||0);});
 
-    // as-of 列（v2 讀 sources）
-    var src=det.sources||{};
-    document.getElementById('asofMon').textContent=src.monitor||'—';
-    document.getElementById('asofCrowd').textContent=src.crowding||'—';
-    document.getElementById('asofRad').textContent=src.rotation||'—';
-    document.getElementById('asofRow').hidden=false;
+      // as-of 列（v2 讀 sources）
+      var src=det.sources||{};
+      document.getElementById('asofMon').textContent=src.monitor||'—';
+      document.getElementById('asofCrowd').textContent=src.crowding||'—';
+      document.getElementById('asofRad').textContent=src.rotation||'—';
+      document.getElementById('asofRow').hidden=false;
 
-    // 過期防呆：與 monitor 機械層現值 as_of 對比
-    if(monLatest&&monLatest.as_of&&src.monitor&&monLatest.as_of!==src.monitor){
+      // 資料時間（台北）＋自動更新提示；generated_at 缺欄或格式異常時顯示 '—'，不拋錯
+      var genAtTxt=fmtTaipei(det.generated_at);
+      document.getElementById('genAtVal').textContent=genAtTxt||'—';
+      document.getElementById('genAtNote').hidden=false;
+
+      // 過期防呆：與 monitor 機械層現值 as_of 對比。事件驅動重建通常數分鐘內追上，
+      // 故這裡每輪重新判斷（含 else 復原），避免自動更新追上後 banner 卡著不消。
       var sb=document.getElementById('staleBanner');
-      sb.textContent='⚠ 本頁彙整基於監測 '+src.monitor+'，監測資料層已更新至 '+monLatest.as_of+'——內容可能過期，以下訊號僅供參考。';
-      sb.hidden=false;
-    }
+      if(monLatest&&monLatest.as_of&&src.monitor&&monLatest.as_of!==src.monitor){
+        sb.textContent='⚠ 本頁彙整資料截至監測 '+src.monitor+'，市場監測層已更新至 '+monLatest.as_of+'（通常於監測完成後數分鐘內事件驅動重建追上）——下方訊號可能落後於最新監測值，僅供參考。';
+        sb.hidden=false;
+      }else{
+        sb.hidden=true;
+        sb.textContent='';
+      }
 
-    // ① 威脅指針
-    try{renderGauge(det);}catch(e){
-      document.getElementById('gaugeMeta').textContent='指針資料格式異常，暫無法渲染。';
-    }
+      // ① 威脅指針
+      try{renderGauge(det);}catch(e){
+        document.getElementById('gaugeMeta').textContent='指針資料格式異常，暫無法渲染。';
+      }
 
-    // ② 訊號熱力樹圖
-    try{renderHeatWall(det);}catch(e){
-      document.getElementById('heatWall').innerHTML='<div class="empty-state">熱力樹圖資料格式異常，暫無法渲染。</div>';
-    }
+      // ② 訊號熱力樹圖
+      try{renderHeatWall(det);}catch(e){
+        document.getElementById('heatWall').innerHTML='<div class="empty-state">熱力樹圖資料格式異常，暫無法渲染。</div>';
+      }
 
-    // 舊版完整清單（收合區）
-    document.getElementById('legacyListDetails').hidden=false;
-    var c=det.counts||{};
-    document.getElementById('statTotal').textContent=c.total!=null?c.total:allSignals.length;
-    document.getElementById('statRed').textContent=c.red!=null?c.red:0;
-    document.getElementById('statYellow').textContent=c.yellow!=null?c.yellow:0;
-    document.getElementById('statNew').textContent=c.new!=null?c.new:0;
-    document.getElementById('statActive').textContent=c.active!=null?c.active:'—';
-    document.getElementById('statCooling').textContent=c.cooling!=null?c.cooling:'—';
-    document.getElementById('statGrid').hidden=false;
-    renderList();
-    try{renderHistory(state, det.as_of);}catch(e){
-      document.getElementById('historyDetails').hidden=true;
-    }
+      // 熱力樹圖詳情：預設顯示分數最高一條，不留空盒等點擊
+      document.querySelectorAll('.heat-cell.sel').forEach(function(c){c.classList.remove('sel');});
+      if(allSignals.length){
+        renderHeatDetail(allSignals[0]);
+        var topKey=allSignals[0].key;
+        document.querySelectorAll('#heatWall .heat-cell').forEach(function(c){
+          if(c.getAttribute('data-key')===topKey)c.classList.add('sel');
+        });
+      }else{
+        renderHeatDetail(null);
+      }
 
-    // ③ Composite 靶盤
-    try{renderComposites(det);}catch(e){
-      document.getElementById('compGrid').innerHTML='<div class="empty-state">Composite 資料格式異常，暫無法渲染。</div>';
-    }
-    // ④ Kill 覆蓋環
-    try{renderKillWatch(killWatch);}catch(e){
-      document.getElementById('killBox').innerHTML='<div class="empty-state">kill 對帳資料格式異常，暫無法渲染。</div>';
-    }
-    // ⑤ 判讀
-    try{renderEditorial(det, editorial);}catch(e){
-      document.getElementById('editorialBox').innerHTML='<div class="empty-state">判讀資料格式異常，暫無法渲染。</div>';
+      // 舊版完整清單（收合區）
+      document.getElementById('legacyListDetails').hidden=false;
+      var c=det.counts||{};
+      document.getElementById('statTotal').textContent=c.total!=null?c.total:allSignals.length;
+      document.getElementById('statRed').textContent=c.red!=null?c.red:0;
+      document.getElementById('statYellow').textContent=c.yellow!=null?c.yellow:0;
+      document.getElementById('statNew').textContent=c.new!=null?c.new:0;
+      document.getElementById('statActive').textContent=c.active!=null?c.active:'—';
+      document.getElementById('statCooling').textContent=c.cooling!=null?c.cooling:'—';
+      document.getElementById('statGrid').hidden=false;
+      renderList();
+      try{renderHistory(state, det.as_of);}catch(e){
+        document.getElementById('historyDetails').hidden=true;
+      }
+
+      // ③ Composite 靶盤
+      try{renderComposites(det);}catch(e){
+        document.getElementById('compGrid').innerHTML='<div class="empty-state">Composite 資料格式異常，暫無法渲染。</div>';
+      }
+      // ④ Kill 覆蓋環
+      try{renderKillWatch(killWatch);}catch(e){
+        document.getElementById('killBox').innerHTML='<div class="empty-state">kill 對帳資料格式異常，暫無法渲染。</div>';
+      }
+      // ⑤ 判讀
+      try{renderEditorial(det, editorial);}catch(e){
+        document.getElementById('editorialBox').innerHTML='<div class="empty-state">判讀資料格式異常，暫無法渲染。</div>';
+      }
+    });
+  }
+
+  loadAndRender();
+  setInterval(loadAndRender, AUTO_REFRESH_MS);
+  document.addEventListener('visibilitychange',function(){
+    if(document.visibilityState==='visible'&&(Date.now()-lastFetchAt)>5*60*1000){
+      loadAndRender();
     }
   });
 })();
