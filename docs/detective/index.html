@@ -140,7 +140,7 @@ a:hover{color:var(--accent-hover)}
 .gauge-trend-hd{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:.4rem;margin-bottom:.5rem}
 .gauge-trend-hd h3{font-family:var(--serif);font-size:.86rem;font-weight:700;color:var(--text)}
 .gauge-trend-sub{font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--text-muted)}
-.gauge-trend-chart{position:relative;width:100%;max-width:640px}
+.gauge-trend-chart{position:relative;width:100%}
 .gauge-trend-chart svg{width:100%;height:auto;display:block}
 .gauge-trend-tip{position:absolute;pointer-events:none;background:var(--bg-card);border:1px solid var(--border);
                  border-radius:6px;box-shadow:var(--shadow-md);padding:.4rem .6rem;font-size:.7rem;
@@ -904,10 +904,10 @@ footer.imq-foot a{color:var(--accent)}
 
   // splitN：pts[0..splitN-1] 為回測近似（虛線降飽和），pts[splitN..] 為實盤（實線 accent）。
   // splitN===0（無 backfill 或該 range 切不到任何回測點）＝完全等同原單軌畫法。
-  function buildAlertTrendSVG(pts,splitN){
+  function buildAlertTrendSVG(pts,splitN,fitW){
     pts=pts||[];
     splitN=Math.max(0,Math.min(splitN||0,pts.length));
-    var W=640,H=170,padL=6,padR=34,padT=10,padB=20;
+    var W=Math.max(560,Math.min(1200,fitW||640)),H=170,padL=6,padR=34,padT=10,padB=20;
     var plotW=W-padL-padR, plotH=H-padT-padB;
     var n=pts.length;
     function xAt(i){return n<=1?(padL+plotW/2):(padL+plotW*i/(n-1));}
@@ -991,7 +991,7 @@ footer.imq-foot a{color:var(--accent)}
     }
     var rangeDef=TREND_RANGES.filter(function(r){return r.key===trendRange;})[0]||TREND_RANGES[1];
     var sliced=trendSliceByMonths(bf,lv,rangeDef.months);
-    var built=buildAlertTrendSVG(sliced.pts,sliced.splitN);
+    var built=buildAlertTrendSVG(sliced.pts,sliced.splitN,host.clientWidth||640);
     var n=built.pts.length;
     var bfN=built.splitN, lvN=n-bfN;
     var sub=trendState.hasBackfillFile?('共 '+n+' 個交易日（回測 '+bfN+'・實盤 '+lvN+'）'):('近 '+n+' 個交易日');
