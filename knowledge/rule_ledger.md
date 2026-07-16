@@ -49,6 +49,7 @@
 | detective 複合規則 R6 擁擠×動能翻轉（`detective_rules.py`；黃、min_true 2、confirm 1；COT↔rotation join、對不上市場不評估） | 2026-07-15 | detective v2 Phase 3：擁擠部位與價格動能背離須 COT 5 年分位極端×同資產輪動轉弱 join，單看擁擠無 unwind 觸發訊號 | fire 資產 20 日回撤中位不劣於未 fire 極端 → 刪 | — |
 | detective 複合規則 R7 窄領導（`detective_rules.py`；黃、min_true 2、confirm 2；subgroup 三取二） | 2026-07-15 | detective v2 Phase 3：少數權值撐盤須指數高位×｛小型／區域銀行／運輸｝三取二走弱，單一廣度比噪音大 | fire 後 20 交易日對應資產回撤中位不劣於未 fire 基準，連兩輪審計 → 刪或降黃 | — |
 | detective 複合規則 R8 晚週期滯脹組合（`detective_rules.py`；黃、min_true 3、confirm 1；macro_clock 象限閘） | 2026-07-15 | detective v2 Phase 3：晚週期＋通膨黏性須時鐘象限×銅金比走弱×通膨預期偏高同現；承接宏觀時鐘滯脹象限傷股票的驗證 | 滯脹象限條件劣勢在時鐘審計消失 → 連動降級 | — |
+| detective 複合規則 R9 自滿組合（`detective_rules.py`；黃、min_true 3、confirm 1；pc_equity〔internals〕分位≤5×SKEW 分位≥90×VIX 分位≤10；status dormant→active） | 2026-07-16 | options 資料層（internals.json pc_equity，309 交易日 backfill）上線後啟用 Phase 3 預留的自滿組合——選擇權與波動面同時反映極度自滿須三面同現才成立，單面低分位噪音大 | fire 後 20 交易日 SPX 回撤中位不劣於未 fire 基準，連兩輪審計 → 刪或降黃 | — |
 
 **登記規則**：新增判斷類規則 → 加一列（含 kill condition）＋提名一條既有規則候刪（寫進 PR/commit 訊息）；刪除規則 → 該列標 `KILLED @ 版本`（保留供 lineage，勿刪行）；每輪校準把審計結果回填最後一欄。
 

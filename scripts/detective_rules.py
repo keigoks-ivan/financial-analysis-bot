@@ -129,6 +129,12 @@ def _series_fetch(sources, src, key):
         if it is None or it.get("stale"):
             return None, False
         return it, True
+    if src == "internals":
+        # internals.json 與 monitor latest.json 同 categories/items 結構
+        it = _mon_item(sources.get("internals"), key)
+        if it is None or it.get("stale"):
+            return None, False
+        return it, True
     if src == "macro_clock":
         clk = sources.get("macro_clock") or {}
         if not clk.get("quadrant"):
@@ -141,7 +147,7 @@ def _series_fetch(sources, src, key):
 
 
 def _field_value(ctx, src, field):
-    if src == "monitor":
+    if src in ("monitor", "internals"):
         if field == "val":
             return _num(ctx.get("val"))
         return ctx.get(field)
@@ -156,7 +162,7 @@ def _fmt_field(src, field, raw):
     """成員現值的人類可讀字串（描述器：全形、只陳述值）。"""
     if raw is None:
         return "缺"
-    if src == "monitor":
+    if src in ("monitor", "internals"):
         if field == "pctile":
             return f"分位 {raw:.1f}"
         if field in ("p20", "p60"):
@@ -370,6 +376,14 @@ def _mon(key, field, op, value, desc, **extra):
     return d
 
 
+def _intl(key, field, op, value, desc, **extra):
+    """internals.json 序列成員（結構同 monitor，src=internals）。"""
+    d = {"src": "internals", "key": key, "field": field, "op": op,
+         "value": value, "desc": desc}
+    d.update(extra)
+    return d
+
+
 RULES = [
     {
         "id": "R1", "name": "股高位×信用背離×廣度走弱", "status": "active",
@@ -483,15 +497,16 @@ RULES = [
         "kill_condition": "滯脹象限條件劣勢在時鐘審計消失 → 連動降級",
     },
     {
-        "id": "R9", "name": "自滿組合", "status": "dormant",
+        "id": "R9", "name": "自滿組合", "status": "active",
         "members": [
-            _mon("pc_equity", "pctile", "<=", 5, "股票 put／call 比 一年分位 ≤5（極度自滿）"),
+            _intl("pc_equity", "pctile", "<=", 5, "股票 put／call 比 一年分位 ≤5（極度自滿）"),
             _mon("skew", "pctile", ">=", 90, "SKEW 偏斜 一年分位 ≥90"),
             _mon("vix", "pctile", "<=", 10, "VIX 一年分位 ≤10（波動極低）"),
         ],
         "min_true": 3, "fire_sev": "yellow", "confirm_days": 1,
-        "narrative": ("（待 Phase 1 internals 上線）put／call、偏斜與 VIX 同時反映"
-                      "極度自滿的組合狀態。"),
-        "kill_condition": "（dormant：待 internals pc_equity 序列上線後登記）",
+        "narrative": ("股票 put／call 比處一年極低分位、SKEW 偏斜偏高、VIX 一年分位極低"
+                      "三者同現，描述選擇權與波動面同時反映極度自滿的組合狀態；三項齊發為黃。"),
+        "kill_condition": ("fire 後 20 交易日 SPX 回撤中位不劣於未 fire 基準，"
+                           "連兩輪審計 → 刪或降黃"),
     },
 ]
