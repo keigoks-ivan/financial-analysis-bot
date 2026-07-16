@@ -158,6 +158,7 @@ def main() -> int:
     base_building: list[dict] = []
     population: list[dict] = []        # 五條件全過的母體（頁面 §6）
     moat_excluded: list[dict] = []     # 四質量過、卡護城河 gate（26→23 對帳）
+    errors: list[dict] = []            # 單票模擬例外（不連坐其餘 universe）
     n_qpass = n_state1 = 0
     new_events = 0
 
@@ -275,44 +276,72 @@ def main() -> int:
         if cw:
             standby_c.append({**common, **cw})
 
+    # ── 缺格盤點（輕量可見性；不深改 load_closes 資料流，不做 stale-fill）──
+    # 今日 as_of 那格缺席的票（疑似 rate-limit 缺格）數量與名單，log 一行供排查。
+    missing_today = [t for t in universe
+                     if t in closes.columns and pd.isna(closes.loc[today, t])]
+    if missing_today:
+        print(f"WARN: {len(missing_today)} tickers missing today's bar "
+              f"(rate-limit gap?): {missing_today}", file=sys.stderr)
+
     # ── T+1 進場 fill + 模擬（按訊號日時序處理；每 ticker 同時最多一筆 open）──
     occupied: dict[str, str] = {}   # ticker → 佔用至（exit_date 或 "open"）
     for ev in sorted(ledger["events"], key=lambda x: x["signal_date"]):
-        t = ev["ticker"]
-        frame = frames.get(t)
-        if frame is None or ev["status"] in ("vetoed", "closed", "skipped"):
-            if ev["status"] == "closed" and ev.get("sim"):
-                occupied[t] = ev["sim"].get("exit_date") or "open"
+        try:
+            t = ev["ticker"]
+            frame = frames.get(t)
+            if frame is None or ev["status"] in ("vetoed", "closed", "skipped"):
+                if ev["status"] == "closed" and ev.get("sim"):
+                    occupied[t] = ev["sim"].get("exit_date") or "open"
+                continue
+            sig_d = pd.Timestamp(ev["signal_date"])
+            occ = occupied.get(t)
+            if occ == "open" or (occ and ev["signal_date"] <= occ):
+                ev["status"] = "skipped"   # 已持倉中（charter：每 ticker 單筆）
+                ev["vetoes"] = ["已持倉"]
+                continue
+            if ev["status"] == "pending":
+                ntc = next_trading_close(frame.close, sig_d)
+                if ntc is None:
+                    continue   # T+1 收盤未到
+                ev["status"] = "entered"
+                ev["entry_date"] = str(ntc[0].date())
+            entry_d = pd.Timestamp(ev["entry_date"])
+            res = simulate_trade(frame, entry_d)
+            if res.get("status") == "stale_gap":
+                # 缺格降級（2026-07-16）：entry_date 那格本輪缺席且無法對齊最近交易日
+                # → 不 fabricate，沿用帳本既有 sim，僅補掛 data_gap 供頁面標示；
+                #   無既有 sim 才標記 open 佔位。單票缺格不連坐其餘 universe。
+                if ev.get("sim"):
+                    ev["sim"]["data_gap"] = res["data_gap"]
+                    occupied[t] = ev["sim"].get("exit_date") or "open"
+                else:
+                    ev["sim"] = {"status": "open", "current_state": "—",
+                                 "ret_pct": None, "alpha_pct": None,
+                                 "r_multiple": None, "data_gap": res["data_gap"]}
+                    occupied[t] = "open"
+                errors.append({"ticker": t, "id": ev.get("id"),
+                               "err": "stale_gap: " + res["data_gap"]["reason"]})
+                continue
+            end_d = pd.Timestamp(res["exit_date"]) if res["exit_date"] else today
+            spy_ret = prices.benchmark_ret_pct(spy, entry_d, end_d)
+            res["spy_ret_pct"] = round(spy_ret, 2) if spy_ret is not None else None
+            res["alpha_pct"] = round(res["ret_pct"] - spy_ret, 2) \
+                if (res["ret_pct"] is not None and spy_ret is not None) else None
+            ev["sim"] = res
+            ev["fixed"] = {
+                "ret_13w": fixed_horizon_ret(frame.close, entry_d, 91),
+                "ret_26w": fixed_horizon_ret(frame.close, entry_d, 182),
+            }
+            if res["status"] == "closed":
+                ev["status"] = "closed"   # 凍結
+                occupied[t] = res["exit_date"] or "open"
+            else:
+                occupied[t] = "open"
+        except Exception as e:   # noqa: BLE001 — 單票任何例外隔離，不殺整輪
+            errors.append({"ticker": ev.get("ticker"), "id": ev.get("id"),
+                           "err": str(e)})
             continue
-        sig_d = pd.Timestamp(ev["signal_date"])
-        occ = occupied.get(t)
-        if occ == "open" or (occ and ev["signal_date"] <= occ):
-            ev["status"] = "skipped"   # 已持倉中（charter：每 ticker 單筆）
-            ev["vetoes"] = ["已持倉"]
-            continue
-        if ev["status"] == "pending":
-            ntc = next_trading_close(frame.close, sig_d)
-            if ntc is None:
-                continue   # T+1 收盤未到
-            ev["status"] = "entered"
-            ev["entry_date"] = str(ntc[0].date())
-        entry_d = pd.Timestamp(ev["entry_date"])
-        res = simulate_trade(frame, entry_d)
-        end_d = pd.Timestamp(res["exit_date"]) if res["exit_date"] else today
-        spy_ret = prices.benchmark_ret_pct(spy, entry_d, end_d)
-        res["spy_ret_pct"] = round(spy_ret, 2) if spy_ret is not None else None
-        res["alpha_pct"] = round(res["ret_pct"] - spy_ret, 2) \
-            if (res["ret_pct"] is not None and spy_ret is not None) else None
-        ev["sim"] = res
-        ev["fixed"] = {
-            "ret_13w": fixed_horizon_ret(frame.close, entry_d, 91),
-            "ret_26w": fixed_horizon_ret(frame.close, entry_d, 182),
-        }
-        if res["status"] == "closed":
-            ev["status"] = "closed"   # 凍結
-            occupied[t] = res["exit_date"] or "open"
-        else:
-            occupied[t] = "open"
 
     # ── 記分板聚合 ──
     def agg(etype: str) -> dict:
@@ -409,6 +438,8 @@ def main() -> int:
         "closed_trades": closed_trades,
         "scoreboard": {k: agg(k) for k in ("A1", "A2", "B", "C")},
         "backtest": backtest,
+        "build_errors": errors,           # 單票模擬例外/缺格降級（頁面可見）
+        "missing_today_bar": missing_today,   # 今日 as_of 缺格票（rate-limit 疑似）
     }
 
     gate_changes = ledger["meta"].get("gate_changes") or []
@@ -430,6 +461,12 @@ def main() -> int:
     print(f"sop-funnel: as_of={today_str} universe={len(universe)} 五條件pass={n_qpass} "
           f"新事件={new_events} 持倉={len(open_trades)} 已平倉={len(closed_trades)} "
           f"今日板機={len(today_signals)} 今日否決={len(today_vetoed)}")
+    if missing_today:
+        print(f"sop-funnel: 缺今日 bar {len(missing_today)} 檔（疑 rate-limit）：{missing_today}",
+              file=sys.stderr)
+    if errors:
+        print(f"sop-funnel: {len(errors)} 檔模擬例外/缺格降級（已隔離，未連坐）：{errors}",
+              file=sys.stderr)
     return 0
 
 

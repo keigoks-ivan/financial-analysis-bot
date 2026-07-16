@@ -411,8 +411,31 @@ def simulate_trade(frame: Frame, entry_date: pd.Timestamp, params: dict = PARAMS
     current_state、current_fraction、exit_date、exit_reason。
     """
     c, ma60 = frame.close, frame.ma60
+    data_gap = None
     if entry_date not in c.index:
-        raise ValueError(f"entry_date {entry_date} 不在價格序列內")
+        # 缺格降級（2026-07-16）：entry_date 那格在本輪抓回的價格序列缺席
+        # （疑似 yfinance rate-limit 缺格被 build_frame 的 dropna 剔掉）。不再直接
+        # raise —— 改用 asof 對齊到 ≤entry_date 的最近交易日；缺太多則降級不模擬。
+        pos = c.index.asof(entry_date)
+        if pd.isna(pos) or (entry_date - pos).days > 7:
+            # pos 無效或差距過大 → 不 fabricate，回傳降級 dict 讓呼叫端沿用帳本既有結果
+            return {
+                "status": "stale_gap",
+                "sim": None,
+                "data_gap": {
+                    "orig_entry": str(entry_date),
+                    "used": None if pd.isna(pos) else str(pos),
+                    "reason": "entry_date 超出價格序列或缺格過大（疑似抓取缺格），"
+                              "本輪不重新模擬，沿用帳本既有結果",
+                },
+            }
+        # pos 有效且差距 ≤7 曆日 → 用最近交易日當模擬起點續跑，並記錄對齊
+        data_gap = {
+            "orig_entry": str(entry_date),
+            "used": str(pos),
+            "reason": "entry_date bar missing this run（疑似抓取缺格），對齊至最近交易日",
+        }
+        entry_date = pos
     p0 = float(c.loc[entry_date])
     sd0 = stop_dist_pct(frame, entry_date, p0)
     pos0 = position_pct(sd0, params)
@@ -551,7 +574,7 @@ def simulate_trade(frame: Frame, entry_date: pd.Timestamp, params: dict = PARAMS
     _ACTION_LABEL = {"exit": "態⑤全出", "trim_t3": "態③減1/3",
                      "trim_t4": "態④減碼", "rebuy": "態④回補"}
     pending_action = _ACTION_LABEL.get(pending[0][0]) if pending else None
-    return {
+    result = {
         "status": "closed" if closed else "open",
         "entry_date": str(entry_date.date()), "entry_close": round(p0, 4),
         "stop_dist_pct": round(sd0, 2) if sd0 is not None else None,
@@ -567,6 +590,11 @@ def simulate_trade(frame: Frame, entry_date: pd.Timestamp, params: dict = PARAMS
         "holding_days": int((holding_end - entry_date).days),
         "last_price": round(last_px, 4),
     }
+    # 正常路徑（entry_date 存在於序列）data_gap 為 None → 回傳 dict 逐欄與改前相同；
+    # 僅在缺格對齊時附掛 data_gap，不污染既有 trade 的輸出。
+    if data_gap is not None:
+        result["data_gap"] = data_gap
+    return result
 
 
 def fixed_horizon_ret(close: pd.Series, entry_date: pd.Timestamp,
