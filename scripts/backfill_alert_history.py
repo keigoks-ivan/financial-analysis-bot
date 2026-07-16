@@ -8,6 +8,11 @@ docs/detective/data/alert_history_backfill.json（schema detective-alert-backfil
 與實盤線（docs/detective/data/alert_history.json，2026-07-15 起累積）不重疊：
 回測 end 固定 2026-07-14。
 
+points 元素＝[date, score, band, spx_close]（2026-07-16 新增第 4 欄）；
+spx_close 為 ^GSPC 當日真實歷史收盤（raw_full["sp500"]，yfinance 全史直取，
+非重建近似），供頁面趨勢圖疊 SPY 對照線，取不到給 null、不影響分數計算
+（分數邏輯零改動，僅多此一欄）。
+
 單一真相源：不複製任何權重／閾值／規則／狀態機邏輯，全部 import 自現行 build：
   · build_monitor        — 96 series 定義（S）、compute_stats、series_alerts、
                            structural_alerts、RULES、fmt_*、CATEGORIES、STALE_DAYS
@@ -483,7 +488,10 @@ def run_backtest(raw, verbose_anchors):
         if not recording:
             continue
         band = alert_level["band"]
-        points.append([D, alert_level["score"], band])
+        # spx_close：^GSPC 真實歷史收盤（raw_full["sp500"]，yfinance 全史，非重建/估算），
+        # 供頁面疊圖對照；_last_leq 與 kill_asof／monitor_asof 同一 as-of 語意（<=D 最後一筆）。
+        spx_close = _last_leq(raw_full.get("sp500"), D)
+        points.append([D, alert_level["score"], band, spx_close])
         band_counts[band] = band_counts.get(band, 0) + 1
 
         if D in anchor_set or D in calm_probe:
@@ -497,6 +505,7 @@ def run_backtest(raw, verbose_anchors):
             anchors[D] = {
                 "score": alert_level["score"], "band": band,
                 "band_label": alert_level["band_label"],
+                "spx": spx_close,
                 "red": n_red, "yellow": n_yel,
                 "composites_fired": fired, "composites_near": near_c,
                 "kill_breached": len(kw["breached"]), "kill_near": len(kw["near"]),
@@ -598,7 +607,8 @@ def main():
     log("anchor-day scores:")
     for d in sorted(anchors):
         a = anchors[d]
-        log(f"  {d}  score={a['score']:3d} {a['band']:8s}  "
+        spx_s = f"{a['spx']:.2f}" if isinstance(a.get("spx"), (int, float)) else "—"
+        log(f"  {d}  score={a['score']:3d} {a['band']:8s} spx={spx_s}  "
             f"red={a['red']} yel={a['yellow']} "
             f"comp_fired={a['composites_fired']} comp_near={a['composites_near']} "
             f"kill_br={a['kill_breached']} kill_near={a['kill_near']} esc={a['escalated']}")

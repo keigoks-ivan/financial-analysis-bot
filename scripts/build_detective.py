@@ -40,8 +40,9 @@ workflow_run 重複觸發因此安全。
   · docs/detective/data/latest.json — schema detective-v2（頁面渲染）
   · docs/detective/data/state.json  — schema detective-state-v1（狀態機真相源）
   · docs/detective/data/alert_history.json — schema detective-alert-history-v1
-    （警戒度歷史軌跡，[date, score, band] 逐點累積，供頁面趨勢圖；從落地當日
-    起累積，不回填過去——見 update_alert_history docstring）
+    （警戒度歷史軌跡，[date, score, band, spx_close] 逐點累積，供頁面趨勢圖
+    疊圖 S&P 500 對照；spx_close 取不到為 null；從落地當日起累積，不回填
+    過去——見 update_alert_history docstring）
   · detective_alert.txt（未 commit）— 紅燈級＋今日新增＋今日升級（扣除 mute），
     供 GitHub Actions email 步驟
 
@@ -904,9 +905,32 @@ ALERT_HISTORY_SCHEMA = "detective-alert-history-v1"
 ALERT_HISTORY_CAP = 400
 
 
-def update_alert_history(as_of, alert_level):
-    """把當日 alert_level 壓成 [date, score, band] 累加進 alert_history.json，
-    供頁面威脅指針下方的歷史趨勢圖。
+def spx_close_now(latest):
+    """從已載入的 monitor latest.json 取當日 S&P 500 收盤（sp500 series 的
+    spark 末點——spark 是原始未格式化的價位序列，spark[-1] 即當日收盤，與
+    'val' 格式化字串同源但保留 float 精度）。取不到（缺 series／缺 spark／
+    非數值）一律回傳 None，不炸、不外推。"""
+    it = _mon_series(latest, "indices", "sp500")
+    if not it:
+        return None
+    spark = it.get("spark")
+    if not isinstance(spark, list) or not spark:
+        return None
+    try:
+        v = float(spark[-1])
+    except (TypeError, ValueError):
+        return None
+    return round(v, 4) if v == v else None  # v==v 排除 NaN
+
+
+def update_alert_history(as_of, alert_level, spx_close=None):
+    """把當日 alert_level 壓成 [date, score, band, spx_close] 累加進
+    alert_history.json，供頁面威脅指針下方的歷史趨勢圖（含 SPY 疊圖對照）。
+
+    第 4 元素 spx_close＝當日 S&P 500 收盤（float，取不到給 None/null，
+    JSON 序列化為 null）。**向後相容**：既有舊點（3 元素，落地於加 SPY 欄位
+    之前）不回改——只有本次新寫入／覆寫的點帶第 4 元素；前端讀取需容忍
+    len(point)==3 的舊點（spx 視為 null）。
 
     冪等規則（精確對齊 build_monitor.py 零 churn 協議）：
       · 檔不存在／schema 不符 → 視為空、建立新檔（今天首跑即 seed 第 1 點）
@@ -925,7 +949,7 @@ def update_alert_history(as_of, alert_level):
     if not hist or hist.get("schema") != ALERT_HISTORY_SCHEMA:
         hist = {"schema": ALERT_HISTORY_SCHEMA, "points": []}
     points = list(hist.get("points") or [])
-    point = [as_of, alert_level.get("score"), alert_level.get("band")]
+    point = [as_of, alert_level.get("score"), alert_level.get("band"), spx_close]
     if points and points[-1][0] == as_of:
         points[-1] = point
     elif points and points[-1][0] > as_of:
@@ -1007,7 +1031,8 @@ def main():
     gen = radar.get("generated_at") or latest.get("generated_at")
 
     alert_level = compute_alert_level(signals, composites_out, kw, as_of)
-    ch_history = update_alert_history(as_of, alert_level)
+    spx_close = spx_close_now(latest)
+    ch_history = update_alert_history(as_of, alert_level, spx_close)
 
     out = {
         "schema": "detective-v2",

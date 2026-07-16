@@ -163,6 +163,9 @@ a:hover{color:var(--accent-hover)}
                             margin-right:.35rem;opacity:.8}
 .gauge-trend-legend .lg-solid{display:inline-block;width:16px;height:0;border-top:2px solid var(--accent);
                              margin-right:.35rem}
+/* SPY 疊圖圖例（2026-07-16 新增）：muted 細線，與回測虛線／實盤實線並列 */
+.gauge-trend-legend .lg-spy{display:inline-block;width:16px;height:0;border-top:1.2px solid var(--text-muted);
+                           margin-right:.35rem;opacity:.65}
 
 /* ── ② 維度儀表列（原熱力樹圖） ───────────────────────────── */
 .src-chip{font-family:'IBM Plex Mono',monospace;font-size:.64rem;font-weight:700;letter-spacing:.04em;
@@ -912,6 +915,14 @@ footer.imq-foot a{color:var(--accent)}
     var n=pts.length;
     function xAt(i){return n<=1?(padL+plotW/2):(padL+plotW*i/(n-1));}
     function yAt(v){v=(typeof v==='number'&&!isNaN(v))?v:0;return padT+plotH*(1-Math.max(0,Math.min(100,v))/100);}
+    // SPY（S&P 500）疊圖：point[3]＝spx_close，容忍 3 元素舊點（undefined→null 語意，
+    // 視同缺值）。對「當前顯示窗口」（本次 pts）獨立 min-max 正規化到圖高——與警戒度
+    // 0-100 各用各的尺度，右尺度不畫（僅供對照走勢，非同軸讀值）。
+    var spyVals=pts.map(function(p){return p[3];}).filter(function(v){return typeof v==='number'&&!isNaN(v);});
+    var hasSpy=spyVals.length>=2;
+    var spyMin=hasSpy?Math.min.apply(null,spyVals):0, spyMax=hasSpy?Math.max.apply(null,spyVals):1;
+    var spySpan=(spyMax-spyMin)||1;
+    function ySpy(v){return padT+plotH*(1-(v-spyMin)/spySpan);}
     var bandDefs=[
       {lo:0,hi:20,color:'var(--pos)',label:'平靜'},
       {lo:20,hi:40,color:'var(--accent)',label:'留意'},
@@ -943,12 +954,24 @@ footer.imq-foot a{color:var(--accent)}
     pts.slice(lvStart).forEach(function(p,i){
       lvPath+=(i===0?'M':'L')+xAt(lvStart+i).toFixed(1)+','+yAt(p[1]).toFixed(1)+' ';
     });
+    // SPY 疊線：一條連續 muted 線（不分回測／實盤軌——SPY 本身是真實歷史，非近似），
+    // 缺值（null／舊 3 元素點）處斷線不亂連，抄 monitor 頁 intPath 的斷線寫法。
+    var spyPath='', spyBreak=true;
+    if(hasSpy){
+      pts.forEach(function(p,i){
+        var v=p[3];
+        if(typeof v!=='number'||isNaN(v)){spyBreak=true;return;}
+        spyPath+=(spyBreak?'M':'L')+xAt(i).toFixed(1)+','+ySpy(v).toFixed(1)+' ';
+        spyBreak=false;
+      });
+    }
     var dateLabels='';
     if(n){
       dateLabels='<text x="'+padL+'" y="'+(H-6)+'" font-size="9" text-anchor="start" fill="var(--text-muted)" font-family="IBM Plex Mono,monospace">'+esc(pts[0][0])+'</text>'+
         '<text x="'+(padL+plotW)+'" y="'+(H-6)+'" font-size="9" text-anchor="end" fill="var(--text-muted)" font-family="IBM Plex Mono,monospace">'+esc(pts[n-1][0])+'</text>';
     }
     var lastX=xAt(n-1), lastY=yAt(n?pts[n-1][1]:0);
+    var spyPathSvg=(hasSpy&&spyPath)?('<path d="'+spyPath+'" fill="none" stroke="var(--text-muted)" stroke-width="1.2" opacity="0.55"/>'):'';
     var bfPathSvg=(splitN>0)?('<path d="'+bfPath+'" fill="none" stroke="var(--text-muted)" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.75"/>'):'';
     var lvPathSvg=(n>lvStart)?('<path d="'+lvPath+'" fill="none" stroke="var(--accent)" stroke-width="1.6"/>'):'';
     var lastDot=n?('<circle cx="'+lastX.toFixed(1)+'" cy="'+lastY.toFixed(1)+'" r="3.4" fill="var(--accent)" stroke="var(--bg-card)" stroke-width="1.5"/>'):'';
@@ -959,12 +982,12 @@ footer.imq-foot a{color:var(--accent)}
       seamSvg='<line x1="'+seamX.toFixed(1)+'" y1="'+padT+'" x2="'+seamX.toFixed(1)+'" y2="'+(padT+plotH)+'" stroke="var(--text-muted)" stroke-width="1" stroke-dasharray="1,2" opacity="0.6"/>'
         +'<text x="'+seamX.toFixed(1)+'" y="'+(padT-2)+'" font-size="8" text-anchor="middle" fill="var(--text-muted)" font-family="IBM Plex Mono,monospace">實盤起點</text>';
     }
-    var svg='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" role="img" aria-label="警戒度歷史趨勢（回測近似＋實盤）">'
-      +bandRects+gridLines+bandLabels+bfPathSvg+lvPathSvg+lastDot+seamSvg+dateLabels
+    var svg='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" role="img" aria-label="警戒度歷史趨勢（回測近似＋實盤＋S&amp;P 500 對照）">'
+      +bandRects+gridLines+bandLabels+spyPathSvg+bfPathSvg+lvPathSvg+lastDot+seamSvg+dateLabels
       +'<g id="trendCrosshair" style="display:none">'
       +'<line x1="0" y1="'+padT+'" x2="0" y2="'+(padT+plotH)+'" stroke="var(--text-muted)" stroke-width="1" stroke-dasharray="2,2"/>'
       +'<circle r="3" fill="var(--accent)"/></g></svg>';
-    return {svg:svg,pts:pts,splitN:splitN,xAt:xAt,yAt:yAt,geom:{W:W,plotW:plotW,padL:padL}};
+    return {svg:svg,pts:pts,splitN:splitN,xAt:xAt,yAt:yAt,hasSpy:hasSpy,geom:{W:W,plotW:plotW,padL:padL}};
   }
 
   function excludedLabelOf(name){
@@ -1000,10 +1023,15 @@ footer.imq-foot a{color:var(--accent)}
       +TREND_RANGES.map(function(r){
         return '<button type="button" data-range="'+r.key+'" class="'+(r.key===trendRange?'sel':'')+'">'+esc(r.label)+'</button>';
       }).join('')+'</div>';
-    var legendHtml=trendState.hasBackfillFile?(
-      '<div class="gauge-trend-legend"><span class="lg-item"><span class="lg-dash"></span>回測近似（部分成分不可重建，下界）</span>'
-      +'<span class="lg-item"><span class="lg-solid"></span>實盤</span></div>'
-    ):'';
+    var legendItems=[];
+    if(trendState.hasBackfillFile){
+      legendItems.push('<span class="lg-item"><span class="lg-dash"></span>回測近似（部分成分不可重建，下界）</span>');
+      legendItems.push('<span class="lg-item"><span class="lg-solid"></span>實盤</span>');
+    }
+    if(built.hasSpy){
+      legendItems.push('<span class="lg-item"><span class="lg-spy"></span>S&amp;P 500（右尺度隱藏，僅供對照走勢）</span>');
+    }
+    var legendHtml=legendItems.length?('<div class="gauge-trend-legend">'+legendItems.join('')+'</div>'):'';
     var excludedHtml=trendState.hasBackfillFile&&trendState.excludedNote?
       '<div class="gauge-trend-note">'+esc(trendState.excludedNote)+'</div>':'';
     host.innerHTML='<div class="gauge-trend-hd"><h3>警戒度歷史軌跡（描述器）</h3>'
@@ -1033,7 +1061,9 @@ footer.imq-foot a{color:var(--accent)}
       crosshair.style.display='';
       var bandLbl=BAND_LABEL_ZH[p[2]]||p[2]||'—';
       var trackLbl=i<built.splitN?'回測近似':'實盤';
-      tip.innerHTML='<b>'+esc(p[0])+'</b>（'+esc(trackLbl)+'）<br>分數 '+esc(p[1])+'（'+esc(bandLbl)+'）';
+      var spyVal=p[3];
+      var spyLine=(typeof spyVal==='number'&&!isNaN(spyVal))?('<br>S&amp;P 500 '+esc(spyVal.toFixed(2))):'';
+      tip.innerHTML='<b>'+esc(p[0])+'</b>（'+esc(trackLbl)+'）<br>分數 '+esc(p[1])+'（'+esc(bandLbl)+'）'+spyLine;
       var hostRect=chartHost.getBoundingClientRect();
       var tipX=(x/built.geom.W)*hostRect.width;
       tip.style.left=Math.min(Math.max(tipX+8,4),Math.max(hostRect.width-150,4))+'px';
