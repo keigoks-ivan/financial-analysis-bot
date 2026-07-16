@@ -42,13 +42,20 @@ jobs:
       - name: Build rotation radar data
         run: python scripts/build_rotation_radar.py
 
+      # 首頁市場脈動（docs/home/pulse.json）：來源＝本 workflow 剛更新的
+      # radar.json ＋ monitor latest.json，跟輪動雷達同一次 run／同一個 commit
+      # 更新（zero-churn）。失敗不擋輪動核心。
+      - name: Build home pulse
+        run: python scripts/build_home_pulse.py || echo "::warning::home pulse build failed; rotation core unaffected"
+
       - name: Commit and push if changed
         run: |
           PATHS=""
           for p in \
             data/rotation_radar_daily.json \
             docs/rotation/data/radar.json \
-            docs/rotation/data/snapshots; do
+            docs/rotation/data/snapshots \
+            docs/home/pulse.json; do
             [ -e "$p" ] && PATHS="$PATHS $p"
           done
           if git status --porcelain $PATHS | grep -q .; then

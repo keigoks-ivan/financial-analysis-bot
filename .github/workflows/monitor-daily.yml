@@ -54,6 +54,12 @@ jobs:
       - name: Build monitor internals (Phase 1)
         run: python scripts/build_monitor_internals.py || echo "::warning::internals build failed; monitor core unaffected"
 
+      # 首頁市場脈動（docs/home/pulse.json）：來源＝本 workflow 剛更新的
+      # monitor latest.json ＋ radar.json，跟監測資料同一次 run／同一個 commit
+      # 更新（zero-churn）。失敗不擋 monitor 核心。
+      - name: Build home pulse
+        run: python scripts/build_home_pulse.py || echo "::warning::home pulse build failed; monitor core unaffected"
+
       - name: Commit and push if changed
         run: |
           PATHS=""
@@ -63,7 +69,8 @@ jobs:
             docs/monitor/data/score_history.json \
             docs/monitor/data/internals.json \
             docs/monitor/data/internals_history.json \
-            docs/monitor/data/internals_alerts.json; do
+            docs/monitor/data/internals_alerts.json \
+            docs/home/pulse.json; do
             [ -e "$p" ] && PATHS="$PATHS $p"
           done
           if git status --porcelain $PATHS | grep -q .; then
