@@ -142,6 +142,31 @@ a:hover{color:var(--accent-hover)}
 .sev-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
 .sev-dot.red{background:var(--neg)}
 .sev-dot.yellow{background:var(--warn)}
+
+/* 今日變化列 */
+.today-changes{margin:.7rem 0 1rem}
+.tc-summary{font-family:'IBM Plex Mono',monospace;font-size:.78rem;font-weight:600;color:var(--text-secondary);
+           background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:.5rem .9rem;
+           cursor:pointer;display:inline-flex;align-items:center;gap:.4rem;transition:border-color .12s,color .12s}
+.tc-summary:hover{border-color:var(--accent);color:var(--accent)}
+.tc-summary.tc-empty{cursor:default;color:var(--text-muted)}
+.tc-summary.tc-empty:hover{border-color:var(--border);color:var(--text-muted)}
+.tc-caret{font-size:.62rem;opacity:.7;transition:transform .12s}
+.tc-summary[aria-expanded="true"] .tc-caret{transform:rotate(180deg)}
+.tc-detail{margin-top:.55rem;background:var(--bg-card);border:1px solid var(--border-light);border-radius:8px;
+          padding:.7rem .95rem;font-size:.8rem;color:var(--text-secondary);line-height:1.85;max-width:760px}
+.tc-group{margin-bottom:.25rem}
+.tc-group:last-child{margin-bottom:0}
+.tc-group b{color:var(--text)}
+
+/* 生命週期圖例 */
+.heat-legend{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;font-size:.72rem;color:var(--text-muted);margin:0 0 .8rem}
+.lc-swatch{display:inline-block;width:13px;height:13px;border-radius:3px;background:var(--bg-card);
+          border:1px solid var(--border);margin-right:.3rem;vertical-align:middle}
+.lc-swatch.lc-new{outline:2px solid var(--accent);outline-offset:1px}
+.lc-swatch.lc-escalated{outline:2px solid var(--neg);box-shadow:0 0 6px -1px var(--neg)}
+.lc-swatch.lc-cooling{outline:2px dashed var(--border);opacity:.6}
+
 .heatwall{display:flex;gap:10px;align-items:stretch;overflow-x:auto;padding-bottom:.2rem}
 .heat-col{flex:1 1 0;min-width:130px;display:flex;flex-direction:column}
 .heat-col-hd{font-size:.7rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted);
@@ -158,6 +183,14 @@ a:hover{color:var(--accent-hover)}
 .heat-cell.yellow{background:var(--warn-bg);border-left-color:var(--warn)}
 .heat-cell .lbl{font-size:.74rem;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .heat-cell .sc{font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--text-muted)}
+.heat-cell .cell-src-chip{align-self:flex-start;font-family:'IBM Plex Mono',monospace;font-size:.56rem;font-weight:700;
+                          color:var(--text-muted);background:var(--border-light);padding:.04rem .32rem;
+                          border-radius:4px;margin-bottom:1px}
+/* 生命週期邊框編碼：new 實線環／escalated 發光／cooling 虛線灰化／active 無環（既有 sel 沿用 accent 實線，優先權以後渲染為準） */
+.heat-cell.lc-new{outline-color:var(--accent)}
+.heat-cell.lc-escalated{outline-color:var(--neg);box-shadow:0 0 14px -4px var(--neg)}
+.heat-cell.lc-cooling{outline:2px dashed var(--border);opacity:.6}
+.heat-cell.linked{outline-color:var(--accent);box-shadow:0 0 0 3px rgba(13,34,68,.1)}
 .heat-empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--text-muted);
            font-size:.78rem;border:1px dashed var(--border);border-radius:6px;min-height:120px}
 .quiet-sources-row{display:flex;flex-wrap:wrap;gap:.55rem;margin-top:.7rem}
@@ -258,6 +291,34 @@ details.legacy-list summary{cursor:pointer;font-weight:700;font-size:.85rem;colo
 .comp-member .cur{font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--text-muted);white-space:nowrap}
 .comp-narrative{margin-top:.65rem;font-size:.8rem;color:var(--text);line-height:1.65;
                padding-top:.55rem;border-top:1px solid var(--border-light)}
+.dial-gap{margin-top:.6rem;font-size:.76rem;color:var(--tense);padding-top:.5rem;border-top:1px dashed var(--border-light)}
+.member-nomatch{display:block;flex:1 1 100%;margin-left:1.5rem;font-size:.66rem;color:var(--text-muted);font-style:italic}
+
+/* composite 卡片可點擊互連（不論 legacy／v2 皆適用） */
+.dial-card[data-comp-id]{cursor:pointer}
+.dial-card.linked-active{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ── 靶盤 v2：逼近度排序 — 榜首放大卡＋子彈條 ─────────────── */
+.dial-card.dormant-summary{grid-column:1/-1;text-align:center;color:var(--text-muted);
+                          font-size:.82rem;padding:.9rem;font-style:italic;cursor:default}
+.dial-card.spotlight{grid-column:1/-1;border:2px solid var(--accent);padding:1.35rem 1.55rem}
+.spotlight-hd{display:flex;align-items:center;gap:.65rem;margin-bottom:.25rem;flex-wrap:wrap}
+.spotlight-tag{font-size:.7rem;font-weight:700;color:#fff;background:var(--accent);
+              padding:.22rem .65rem;border-radius:5px;letter-spacing:.02em}
+.spotlight-prox{font-family:'IBM Plex Mono',monospace;font-size:.78rem;color:var(--text-secondary);margin:.15rem 0 .8rem}
+.bmember-list{display:flex;flex-direction:column;gap:.75rem;margin-top:.3rem}
+.bmember-row{position:relative;font-size:.8rem;color:var(--text-secondary)}
+.bmember-desc{font-weight:600;color:var(--text);margin-bottom:.3rem}
+.bullet-track{position:relative;height:8px;border-radius:4px;background:var(--border-light)}
+.bullet-fill{position:absolute;left:0;top:0;height:100%;border-radius:4px;transition:width .15s}
+.bullet-fill.met{background:var(--pos)}
+.bullet-fill.unmet{background:var(--tense)}
+.bullet-threshold{position:absolute;top:-3px;width:2px;height:14px;background:var(--text);transform:translateX(-1px)}
+.bmember-meta{display:flex;flex-wrap:wrap;gap:.7rem;margin-top:.35rem;font-family:'IBM Plex Mono',monospace;
+             font-size:.68rem;color:var(--text-muted)}
+.bmember-gap{color:var(--tense)}
+.bmember-event{display:flex;justify-content:space-between;gap:.6rem;padding:.45rem .65rem;
+              background:var(--bg);border:1px dashed var(--border-light);border-radius:6px}
 @media(max-width:480px){
   .dial-grid{grid-template-columns:1fr}
   .comp-member{flex-wrap:wrap}
@@ -477,7 +538,14 @@ footer.imq-foot a{color:var(--accent)}
 <div class="section" id="detective-heat">
   <div class="container">
     <h2 class="section-title">訊號熱力樹圖 <span class="count" id="heatCount">— 條</span></h2>
-    <p class="section-note">依來源分區（監測／翻折／擁擠／輪動／Regime／時鐘／財測落差），格子大小 ∝ 分數、顏色 ＝ 嚴重度（紅／黃），同源內按分數降冪排列；只顯示有 ≥1 條訊號的來源，0 訊號來源列於下方「安靜來源」狀態列。點擊任一格展開詳情，預設顯示分數最高的一條。</p>
+    <p class="section-note">依市場維度分區（股票與產業結構／信用／波動與選擇權／利率與流動性／商品外匯加密／擁擠與部位／thesis 對帳，缺維度標記歸「其他」），格子大小 ∝ 分數、顏色 ＝ 嚴重度（紅／黃），同維度內按分數降冪排列；每區頭列出訊號數與該區溫度（紅燈數或最高分），格內小標籤標示原始來源。只顯示有 ≥1 條訊號的維度，0 訊號來源列於下方「安靜來源」狀態列。點擊任一格展開詳情，預設顯示分數最高的一條。</p>
+    <div class="today-changes" id="todayChanges"><span class="tc-summary tc-empty">今日變化載入中…</span></div>
+    <div class="heat-legend" id="heatLegend">
+      生命週期：<span class="lc-swatch lc-new"></span>新增（實線框）
+      <span class="lc-swatch lc-escalated"></span>升級（發光）
+      <span class="lc-swatch lc-cooling"></span>冷卻（虛線灰化）
+      <span class="lc-swatch"></span>持續（無框）
+    </div>
     <div class="heatwall" id="heatWall"><div class="loading">載入訊號中…</div></div>
     <div class="quiet-sources-row" id="quietSourcesRow"></div>
     <div id="heatDetailPanel"><span class="ph">點擊上方任一格查看該訊號詳情。</span></div>
@@ -515,7 +583,7 @@ footer.imq-foot a{color:var(--accent)}
 <div class="section" id="detective-composites">
   <div class="container">
     <h2 class="section-title">Composite 靶盤</h2>
-    <p class="section-note">多條件組合規則——單一訊號各自獨立時不足以構成組合狀態描述，需 min_true 項同時滿足才 fired。靶盤填充比例 ＝ met_count / min_true；滿環＝FIRED 發光，差一項＝近觸發（醒目標示），dormant 代表上游資料層尚未上線、暫不計入判斷。</p>
+    <p class="section-note">多條件組合規則——單一訊號各自獨立時不足以構成組合狀態描述，需 min_true 項同時滿足才 fired。已 FIRED 規則發光釘頂；其餘依「逼近度」（proximity）降冪排列，最接近觸發者放大為子彈條卡片；dormant 代表上游資料層尚未上線、暫不計入判斷，摺疊為單行。點擊任一規則卡可與上方熱力樹圖對應格互相高亮。若機械層尚未提供逼近度資料，本面板退回舊版 met_count 環顯示。</p>
     <div class="dial-grid" id="compGrid">
       <div class="loading">載入 composite 規則中…</div>
     </div>
@@ -575,8 +643,14 @@ footer.imq-foot a{color:var(--accent)}
   var GROUP_LABEL={escalated:'升級','new':'新增',active:'持續',cooling:'冷卻（寬限中）'};
   var BAND_LABEL_ZH={calm:'平靜',normal:'留意',warming:'升溫',tense:'緊張',extreme:'警戒'};
   var BAND_COLOR_VAR={calm:'var(--pos)',normal:'var(--accent)',warming:'var(--warn)',tense:'var(--tense)',extreme:'var(--neg)'};
+  // 熱力牆 v2：分區維度改由 dim 決定（非 source）；訊號缺 dim 一律歸「其他」，不捏造維度。
+  var DIM_ORDER=['equity_structure','credit','vol_options','rates_liquidity','commod_fx_crypto','positioning','thesis','other'];
+  var DIM_LABEL={equity_structure:'股票與產業結構',credit:'信用',vol_options:'波動與選擇權',
+                rates_liquidity:'利率與流動性',commod_fx_crypto:'商品外匯加密',
+                positioning:'擁擠與部位',thesis:'thesis 對帳',other:'其他'};
   var allSignals=[];
   var curFilter='all';
+  var lastComposites=[]; // 供 composite 卡片互連點擊時查 members[].ref 用
 
   function fetchJSON(url){
     return fetch(url).then(function(r){return r&&r.ok?r.json():null;}).catch(function(){return null;});
@@ -790,10 +864,10 @@ footer.imq-foot a{color:var(--accent)}
     }
   }
 
-  // ── ② 訊號熱力樹圖渲染 ────────────────────────────────────
-  // v2：只渲染有 ≥1 條訊號的來源（欄寬自動重分配，flex:1 1 0 已處理）；
-  // 0 訊號來源改渲染到下方「安靜來源」狀態列，而非空欄。
-  // sector 為並行引擎新源：det.sources 尚無 sector 欄位前，quiet 列也不顯示它（防禦，不假裝有資料）。
+  // ── ② 訊號熱力樹圖渲染（v2：市場維度分區）─────────────────
+  // 分區依 signal.dim（機械層新欄，equity_structure/credit/vol_options/rates_liquidity/
+  // commod_fx_crypto/positioning/thesis）；缺 dim（現行資料尚未提供）一律歸「其他」桶，
+  // 不臆測維度。安靜來源列仍照舊以 source（監測/擁擠/輪動…）為單位判斷，與分區維度分離。
   function renderHeatWall(det){
     var host=document.getElementById('heatWall');
     var quietHost=document.getElementById('quietSourcesRow');
@@ -804,6 +878,17 @@ footer.imq-foot a{color:var(--accent)}
       return;
     }
     document.getElementById('heatCount').textContent=allSignals.length+' 條';
+
+    // 維度分桶（面板主分區）
+    var byDim={};
+    DIM_ORDER.forEach(function(d){byDim[d]=[];});
+    allSignals.forEach(function(s){
+      var dim=(s.dim&&DIM_LABEL.hasOwnProperty(s.dim))?s.dim:'other';
+      byDim[dim].push(s);
+    });
+    var activeDims=DIM_ORDER.filter(function(d){return (byDim[d]||[]).length>0;});
+
+    // 來源分桶（僅供下方「安靜來源」列判斷用，與分區無關）
     var bySrc={};
     SRC_ORDER.forEach(function(s){bySrc[s]=[];});
     allSignals.forEach(function(s){
@@ -812,26 +897,32 @@ footer.imq-foot a{color:var(--accent)}
       bySrc[src].push(s);
     });
     var srcMeta=(det&&det.sources)||{};
-    var activeSrcs=SRC_ORDER.filter(function(s){return (bySrc[s]||[]).length>0;});
     var quietSrcs=SRC_ORDER.filter(function(s){
       if((bySrc[s]||[]).length>0)return false;
       if(s==='sector'&&srcMeta.sector==null)return false; // sector 尚未上線，不虛構安靜列
       return true;
     });
+
     var h='';
-    activeSrcs.forEach(function(src){
-      var items=(bySrc[src]||[]).slice().sort(function(a,b){return (b.score||0)-(a.score||0);});
+    activeDims.forEach(function(dim){
+      var items=(byDim[dim]||[]).slice().sort(function(a,b){return (b.score||0)-(a.score||0);});
+      var redN=items.filter(function(s){return s.sev==='red';}).length;
+      var maxScore=items.reduce(function(m,s){var sc=(typeof s.score==='number')?s.score:0;return sc>m?sc:m;},0);
+      var tempTxt=redN?('紅 '+redN):('最高 '+maxScore.toFixed(1));
       h+='<div class="heat-col">';
-      h+='<div class="heat-col-hd"><span>'+esc(SRC_LABEL[src]||src)+'</span><span class="cnt">'+items.length+'</span></div>';
+      h+='<div class="heat-col-hd"><span class="dim-name">'+esc(DIM_LABEL[dim]||dim)+'</span>'
+        +'<span class="cnt">'+items.length+' 條・'+esc(tempTxt)+'</span></div>';
       h+='<div class="heat-cells">';
       items.forEach(function(s){
         var grow=Math.max(1,(s.score||1));
-        h+='<div class="heat-cell '+esc(s.sev==='red'?'red':'yellow')+'" style="flex-grow:'+grow+'" data-key="'+esc(s.key)+'" title="'+esc(s.fact||s.label)+'">'
+        var lcCls=s.state==='new'?'lc-new':(s.state==='escalated'?'lc-escalated':(s.state==='cooling'?'lc-cooling':''));
+        h+='<div class="heat-cell '+esc(s.sev==='red'?'red':'yellow')+(lcCls?' '+lcCls:'')+'" style="flex-grow:'+grow+'" data-key="'+esc(s.key)+'" title="'+esc(s.fact||s.label)+'">'
+          +'<span class="cell-src-chip">'+esc(SRC_LABEL[s.source]||s.source||'—')+'</span>'
           +'<span class="lbl">'+esc(s.label)+'</span><span class="sc">score '+esc(s.score)+'</span></div>';
       });
       h+='</div></div>';
     });
-    host.innerHTML=h.length?h:'<div class="empty-state">目前所有來源皆無訊號。</div>';
+    host.innerHTML=h.length?h:'<div class="empty-state">目前所有維度皆無訊號。</div>';
 
     if(quietHost){
       if(!quietSrcs.length){
@@ -849,6 +940,55 @@ footer.imq-foot a{color:var(--accent)}
         });
         quietHost.innerHTML=qh;
       }
+    }
+  }
+
+  // ── 今日變化列（讀 state.json transitions_today）──────────
+  // to==='new' → 新增；to==='escalated' → 升級；to==='resolved' → 解除。
+  // active/cooling 等中繼轉移不計入（三桶只反映使用者關心的生命週期事件）。
+  // label 優先查當日 signals（det.signals key→label），resolved 鍵通常已從機械層移除，
+  // 查不到就直接顯示 key（不臆測 label）。
+  function renderTodayChanges(state, det){
+    var host=document.getElementById('todayChanges');
+    if(!host)return;
+    if(!state||!state.transitions_today){
+      host.innerHTML='<span class="tc-summary tc-empty">今日變化資料暫時無法載入。</span>';
+      return;
+    }
+    var trans=state.transitions_today||[];
+    var buckets={added:[],escalated:[],resolved:[]};
+    trans.forEach(function(t){
+      if(!t)return;
+      if(t.to==='new')buckets.added.push(t);
+      else if(t.to==='escalated')buckets.escalated.push(t);
+      else if(t.to==='resolved')buckets.resolved.push(t);
+    });
+    var total=buckets.added.length+buckets.escalated.length+buckets.resolved.length;
+    if(!total){
+      host.innerHTML='<span class="tc-summary tc-empty">今日狀態機無變化</span>';
+      return;
+    }
+    var labelMap={};
+    ((det&&det.signals)||[]).forEach(function(s){labelMap[s.key]=s.label;});
+    function labelOf(k){return labelMap[k]||k;}
+    var summaryTxt='今日變化：新增 '+buckets.added.length+' ・升級 '+buckets.escalated.length+' ・解除 '+buckets.resolved.length;
+    var html='<button type="button" class="tc-summary" id="tcToggle" aria-expanded="false">'
+      +esc(summaryTxt)+' <span class="tc-caret">▾</span></button>'
+      +'<div class="tc-detail" id="tcDetail" hidden>';
+    if(buckets.added.length)html+='<div class="tc-group"><b>新增</b>：'+buckets.added.map(function(t){return esc(labelOf(t.key));}).join('、')+'</div>';
+    if(buckets.escalated.length)html+='<div class="tc-group"><b>升級</b>：'+buckets.escalated.map(function(t){return esc(labelOf(t.key));}).join('、')+'</div>';
+    if(buckets.resolved.length)html+='<div class="tc-group"><b>解除</b>：'+buckets.resolved.map(function(t){return esc(labelOf(t.key));}).join('、')+'</div>';
+    html+='</div>';
+    host.innerHTML=html;
+    var toggleBtn=document.getElementById('tcToggle');
+    if(toggleBtn){
+      toggleBtn.addEventListener('click',function(){
+        var d=document.getElementById('tcDetail');
+        if(!d)return;
+        var willShow=d.hidden;
+        d.hidden=!willShow;
+        toggleBtn.setAttribute('aria-expanded',willShow?'true':'false');
+      });
     }
   }
 
@@ -953,7 +1093,8 @@ footer.imq-foot a{color:var(--accent)}
   }
 
   // ── ③ Composite 靶盤渲染 ──────────────────────────────────
-  function renderComposites(det){
+  // v1（legacy，met_count 環）— 保留不動，proximity/distance 欄未到位時的安全網。
+  function renderCompositesLegacy(det){
     var wrap=document.getElementById('compGrid');
     var comps=(det&&det.composites)||[];
     if(!comps.length){
@@ -972,7 +1113,7 @@ footer.imq-foot a{color:var(--accent)}
       var dialColor=isDormant?'var(--text-muted)':(fired?(sev==='red'?'var(--neg)':'var(--warn)'):(isNear?'var(--tense)':'var(--accent)'));
       var cardCls=isDormant?'dormant':(fired&&sev?('fired-'+sev):(isNear?'near':''));
       var dialSvg=buildDonutSVG([{frac:frac,color:dialColor}],{size:70,sw:9,centerText:(c.met_count!=null?c.met_count:'—')+'/'+(c.min_true!=null?c.min_true:'—'),centerFontSize:14});
-      h+='<div class="dial-card '+esc(cardCls)+'">';
+      h+='<div class="dial-card '+esc(cardCls)+'"'+(isDormant?'':' data-comp-id="'+esc(c.id||'')+'"')+'>';
       h+='<div class="dial-top">';
       h+='<div class="dial-svg">'+dialSvg+'</div>';
       h+='<div class="dial-info">';
@@ -989,9 +1130,11 @@ footer.imq-foot a{color:var(--accent)}
       h+='</div>';
       h+='<div class="comp-members">';
       (c.members||[]).forEach(function(m){
-        h+='<div class="comp-member"><span class="comp-light '+(m.met?'met':'unmet')+'"></span>'
+        h+='<div class="comp-member" data-ref="'+esc(m.ref||'')+'"><span class="comp-light '+(m.met?'met':'unmet')+'"></span>'
           +'<span class="desc">'+esc(m.desc)+'</span>'
-          +'<span class="cur">'+esc(m.current)+'</span></div>';
+          +'<span class="cur">'+esc(m.current)+'</span>'
+          +(m.ref?'<span class="member-nomatch" hidden>成員未在今日訊號中</span>':'')
+          +'</div>';
       });
       h+='</div>';
       if(fired&&c.narrative){
@@ -1000,6 +1143,149 @@ footer.imq-foot a{color:var(--accent)}
       h+='</div>';
     });
     wrap.innerHTML=h;
+  }
+
+  // v2（逼近度排序）是否可用：至少一條非 dormant composite 帶數值型 proximity。
+  // 缺這個欄位就整面板退回 legacy——寧可少功能也不要用臆測值畫假的排序/子彈條。
+  function compositesHaveV2(comps){
+    if(!comps||!comps.length)return false;
+    return comps.some(function(c){return c&&c.status!=='dormant'&&typeof c.proximity==='number';});
+  }
+
+  // 非 event 型成員的子彈條位置：distance（0=已達門檻／1=最遠）→ frac=1-distance。
+  // 缺 distance 時退化為 met?1:0.5 的粗略估計，不假裝有精確逼近度。
+  // current_num/threshold_num/distance 的實際單位隨 scale 而異（pctile＝分位點、z＝σ、
+  // val＝原始值），distance 本身不是正規化 0-1（例：分位差 74.2、σ差 2.36），故不可直接
+  // 拿來當寬度比例。改採「以現值與閾值為中心、各自局部正規化」的軌道：track 只表達
+  // 該成員自己的現值 vs 閾值相對位置，不同成員間的軌道長度不互相比較（描述器夠用即可，
+  // 不追求跨尺度可比的精確度）。scale='event' 或缺數值錨（current_num/threshold_num 任一
+  // 非數字，含 cat 類）一律退化為純文字列，不畫條，不假裝有精確位置。
+  function buildBulletBar(m){
+    m=m||{};
+    var refAttr=' data-ref="'+esc(m.ref||'')+'"';
+    var nomatchHtml=m.ref?'<span class="member-nomatch" hidden>成員未在今日訊號中</span>':'';
+    var hasNumericAnchor=m.scale!=='event'&&typeof m.current_num==='number'&&typeof m.threshold_num==='number';
+    if(!hasNumericAnchor){
+      return '<div class="bmember-row bmember-event-wrap"'+refAttr+'>'
+        +'<div class="bmember-event"><span class="bmember-desc">'+esc(m.desc||'')+'</span>'
+        +'<span class="bmember-cur">'+esc(m.current!=null?m.current:'—')+'</span></div>'
+        +(!m.met&&m.distance_label?('<div class="bmember-gap" style="margin-top:.25rem">差 '+esc(m.distance_label)+'</div>'):'')
+        +nomatchHtml+'</div>';
+    }
+    var cur=m.current_num, thr=m.threshold_num;
+    var rawLo=Math.min(cur,thr), rawHi=Math.max(cur,thr);
+    var span=(rawHi-rawLo)||1;
+    var pad=Math.max(span*0.35,0.5);
+    var lo=rawLo-pad, hi=rawHi+pad;
+    function pos(v){return Math.max(0,Math.min(1,(v-lo)/(hi-lo)));}
+    var curPct=(pos(cur)*100).toFixed(1);
+    var thrPct=(pos(thr)*100).toFixed(1);
+    var fillCls=m.met?'met':'unmet';
+    var thrTxt=(m.op?esc(m.op)+' ':'')+esc(m.threshold_num);
+    return '<div class="bmember-row"'+refAttr+'>'
+      +'<div class="bmember-desc">'+esc(m.desc||'')+'</div>'
+      +'<div class="bullet-track"><div class="bullet-fill '+fillCls+'" style="width:'+curPct+'%"></div>'
+      +'<div class="bullet-threshold" style="left:'+thrPct+'%" title="閾值 '+thrTxt+'"></div></div>'
+      +'<div class="bmember-meta"><span class="bmember-cur">現值 '+esc(m.current!=null?m.current:cur)+'</span>'
+      +'<span class="bmember-thr">閾值 '+thrTxt+'</span>'
+      +(!m.met&&m.distance_label?('<span class="bmember-gap">差 '+esc(m.distance_label)+'</span>'):'')
+      +'</div>'
+      +nomatchHtml
+      +'</div>';
+  }
+
+  // 其餘小卡「最近缺口」：取未達成員中 distance 最小（最接近門檻）者的 distance_label。
+  function nearestGapLabel(c){
+    var unmet=(c.members||[]).filter(function(m){return m&&!m.met;});
+    if(!unmet.length)return null;
+    unmet.sort(function(a,b){
+      var da=(typeof a.distance==='number')?a.distance:1;
+      var db=(typeof b.distance==='number')?b.distance:1;
+      return da-db;
+    });
+    return unmet[0].distance_label||unmet[0].desc||null;
+  }
+
+  // 榜首規則放大卡：最高 proximity 的未 fired 規則，逐成員畫子彈條。
+  function buildSpotlightCard(c){
+    var membersHtml=(c.members||[]).map(buildBulletBar).join('');
+    var proxTxt=(typeof c.proximity==='number')?('逼近度 '+(c.proximity*100).toFixed(0)+'%'):'';
+    return '<div class="dial-card spotlight" data-comp-id="'+esc(c.id||'')+'">'
+      +'<div class="spotlight-hd"><span class="spotlight-tag">最接近觸發</span>'
+      +'<span class="comp-id">'+esc(c.id||'')+'</span></div>'
+      +'<div class="comp-name">'+esc(c.name||'')+'</div>'
+      +(proxTxt?'<div class="spotlight-prox">'+esc(proxTxt)+'</div>':'')
+      +'<div class="bmember-list">'+membersHtml+'</div>'
+      +(c.narrative?'<div class="comp-narrative">'+esc(c.narrative)+'</div>':'')
+      +'</div>';
+  }
+
+  // 其餘規則小卡（含 FIRED、含非榜首的近觸發）：沿用徑向環＋加一行「最近缺口」。
+  function buildSmallDialCardV2(c,isFired){
+    var sev=c.sev==='red'?'red':(c.sev==='yellow'?'yellow':'');
+    var metCount=c.met_count!=null?c.met_count:0;
+    var minTrue=c.min_true!=null&&c.min_true>0?c.min_true:1;
+    var frac=metCount/minTrue;
+    var dialColor=isFired?(sev==='red'?'var(--neg)':'var(--warn)'):'var(--accent)';
+    var cardCls=isFired&&sev?('fired-'+sev):'';
+    var dialSvg=buildDonutSVG([{frac:frac,color:dialColor}],{size:70,sw:9,centerText:(c.met_count!=null?c.met_count:'—')+'/'+(c.min_true!=null?c.min_true:'—'),centerFontSize:14});
+    var h='<div class="dial-card '+esc(cardCls)+'" data-comp-id="'+esc(c.id||'')+'">';
+    h+='<div class="dial-top"><div class="dial-svg">'+dialSvg+'</div><div class="dial-info">';
+    h+='<div class="comp-id">'+esc(c.id||'')+'</div><div class="comp-name">'+esc(c.name||'')+'</div>';
+    if(isFired)h+='<span class="comp-tag '+(sev||'yellow')+'">FIRED'+(c.fired_since?'・'+esc(c.fired_since):'')+'</span>';
+    h+='</div></div>';
+    h+='<div class="comp-members">';
+    (c.members||[]).forEach(function(m){
+      h+='<div class="comp-member" data-ref="'+esc(m.ref||'')+'"><span class="comp-light '+(m.met?'met':'unmet')+'"></span>'
+        +'<span class="desc">'+esc(m.desc)+'</span><span class="cur">'+esc(m.current)+'</span>'
+        +(m.ref?'<span class="member-nomatch" hidden>成員未在今日訊號中</span>':'')
+        +'</div>';
+    });
+    h+='</div>';
+    if(isFired&&c.narrative){
+      h+='<div class="comp-narrative">'+esc(c.narrative)+'</div>';
+    }else{
+      var gap=nearestGapLabel(c);
+      if(gap)h+='<div class="dial-gap">最近缺口：'+esc(gap)+'</div>';
+    }
+    h+='</div>';
+    return h;
+  }
+
+  // v2 主渲染：fired 釘頂 → 非 fired 依 proximity 降冪（榜首放大＋子彈條）→ dormant 摺疊單行。
+  function renderCompositesV2(det,comps){
+    var wrap=document.getElementById('compGrid');
+    var fired=[],nonFired=[],dormant=[];
+    comps.forEach(function(c){
+      if(!c)return;
+      if(c.status==='dormant')dormant.push(c);
+      else if(c.fired)fired.push(c);
+      else nonFired.push(c);
+    });
+    fired.sort(function(a,b){return (b.proximity||0)-(a.proximity||0);});
+    nonFired.sort(function(a,b){return (b.proximity||0)-(a.proximity||0);});
+    var h='';
+    fired.forEach(function(c){h+=buildSmallDialCardV2(c,true);});
+    if(nonFired.length){
+      h+=buildSpotlightCard(nonFired[0]);
+      nonFired.slice(1).forEach(function(c){h+=buildSmallDialCardV2(c,false);});
+    }
+    if(dormant.length){
+      var ids=dormant.map(function(c){return c.id||'?';}).join('、');
+      h+='<div class="dial-card dormant-summary">休眠：'+esc(ids)+' 等待資料層</div>';
+    }
+    wrap.innerHTML=h||'<div class="empty-state">目前無 composite 規則資料。</div>';
+  }
+
+  // 分派：proximity 欄齊備才走 v2，否則整面板退回 legacy（不炸、不半套）。
+  function renderComposites(det){
+    var comps=(det&&det.composites)||[];
+    lastComposites=comps;
+    if(compositesHaveV2(comps)){
+      renderCompositesV2(det,comps);
+    }else{
+      renderCompositesLegacy(det);
+    }
   }
 
   // ── ④ Kill 覆蓋環渲染 ─────────────────────────────────────
@@ -1152,6 +1438,32 @@ footer.imq-foot a{color:var(--accent)}
     }
   });
 
+  // 靶盤 ↔ 熱力牆互連：點規則卡 → members[].ref 前綴匹配的熱力格高亮；再點取消。
+  // 找不到對應格（該 series 今天沒出訊號）在卡片內對應成員列顯示「成員未在今日訊號中」。
+  // 掛在 #compGrid 容器本身（事件代理），跨 renderComposites 重渲染仍有效，不須重掛。
+  document.getElementById('compGrid').addEventListener('click',function(e){
+    var card=e.target.closest('.dial-card[data-comp-id]');
+    if(!card)return;
+    var wasSel=card.classList.contains('linked-active');
+    document.querySelectorAll('#compGrid .dial-card.linked-active').forEach(function(c){c.classList.remove('linked-active');});
+    document.querySelectorAll('#heatWall .heat-cell.linked').forEach(function(c){c.classList.remove('linked');});
+    document.querySelectorAll('#compGrid .member-nomatch').forEach(function(n){n.hidden=true;});
+    if(wasSel)return; // 再點同一張卡＝取消
+    card.classList.add('linked-active');
+    var heatCells=document.querySelectorAll('#heatWall .heat-cell');
+    card.querySelectorAll('[data-ref]').forEach(function(row){
+      var ref=row.getAttribute('data-ref');
+      if(!ref)return;
+      var matched=false;
+      heatCells.forEach(function(cell){
+        var k=cell.getAttribute('data-key');
+        if(k&&(k===ref||k.indexOf(ref)===0)){cell.classList.add('linked');matched=true;}
+      });
+      var note=row.querySelector('.member-nomatch');
+      if(note)note.hidden=matched;
+    });
+  });
+
   var AUTO_REFRESH_MS=10*60*1000;
   var lastFetchAt=0;
 
@@ -1173,6 +1485,7 @@ footer.imq-foot a{color:var(--accent)}
         document.getElementById('legacyListDetails').hidden=true;
         try{renderGauge(null);}catch(e){}
         try{renderHeatWall(null);}catch(e){}
+        try{renderTodayChanges(state,null);}catch(e){}
         try{renderComposites(null);}catch(e){
           document.getElementById('compGrid').innerHTML='<div class="empty-state">偵探資料層暫時無法載入，Composite 面板暫停渲染。</div>';
         }
@@ -1213,6 +1526,11 @@ footer.imq-foot a{color:var(--accent)}
       // ② 訊號熱力樹圖
       try{renderHeatWall(det);}catch(e){
         document.getElementById('heatWall').innerHTML='<div class="empty-state">熱力樹圖資料格式異常，暫無法渲染。</div>';
+      }
+
+      // 今日變化列（state.json transitions_today）
+      try{renderTodayChanges(state,det);}catch(e){
+        document.getElementById('todayChanges').innerHTML='<span class="tc-summary tc-empty">今日變化資料格式異常，暫無法渲染。</span>';
       }
 
       // 熱力樹圖詳情：預設顯示分數最高一條，不留空盒等點擊
