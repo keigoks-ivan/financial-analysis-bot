@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>市場偵探 — InvestMQuest Research</title>
-  <meta name="description" content="市場偵探 — 聚合全站偵測層（市場監測異常引擎、分位翻折、跨資產擁擠交易、資產輪動象限翻轉、regime 位移、總經時鐘、財測落差）成單一事實警報網，威脅指針＋維度儀表列＋Composite 靶盤一目了然。描述器非擇時訊號，只陳述事實不給買賣指令。">
+  <meta name="description" content="市場偵探 — 聚合全站偵測層（市場監測異常引擎、分位翻折、跨資產擁擠交易、資產輪動象限翻轉、regime 位移、總經時鐘、財測落差）成單一事實警報網，威脅指針＋當日焦點＋維度速讀＋Composite 靶盤一目了然。描述器非擇時訊號，只陳述事實不給買賣指令。">
   <meta property="og:title" content="市場偵探 — InvestMQuest Research">
   <meta property="og:site_name" content="InvestMQuest Research">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -198,29 +198,61 @@ a:hover{color:var(--accent-hover)}
 .lc-chip.lc-escalated{color:var(--neg);background:var(--neg-bg)}
 .lc-chip.lc-cooling{color:var(--text-muted);background:var(--border-light)}
 
-/* ── 維度儀表列（2026-07-16 由熱力樹圖改版）：每個市場維度一列水平溫度卡，
-   七個核心維度恆顯示（0 訊號＝細靜音列），高度不受訊號數影響——
-   取代舊版「格高∝分數」的熱力格牆（該設計在單訊號欄會把格子撐成巨大空柱，見上次崩版修正）。 */
-.dimrow-list{display:flex;flex-direction:column;gap:.6rem}
+/* ── 當日焦點（2026-07-16 新增）：機械排序的當日最突出事實 top list（≤6 條），
+   取代「維度列本身當焦點」的舊設計——用戶二次改版後仍反映「抓不到重點」，
+   診斷為面板只做分類展示、沒有優先序。焦點清單是純機械排序（見 buildFocusItems），
+   不含任何判斷或買賣暗示；一律陳述句。 */
+.focus-panel{margin:.7rem 0 1.3rem}
+.focus-list{display:flex;flex-direction:column;gap:.4rem}
+.focus-row{display:flex;align-items:center;gap:.65rem;padding:.55rem .8rem;border-radius:8px;
+          background:var(--bg-card);border:1px solid var(--border);border-left:3px solid var(--border);
+          cursor:pointer;transition:border-color .12s,filter .12s}
+.focus-row:hover{border-color:var(--accent);filter:brightness(.98)}
+.focus-row:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.focus-row.focus-red{border-left-color:var(--neg)}
+.focus-row.focus-escalated{border-left-color:var(--warn)}
+.focus-row.focus-composite{border-left-color:var(--tense)}
+.focus-row.focus-kill{border-left-color:var(--accent)}
+.focus-icon{font-size:.85rem;flex-shrink:0;width:1.1rem;text-align:center;line-height:1}
+.focus-text{flex:1 1 auto;min-width:0;font-size:.83rem;color:var(--text-secondary);line-height:1.55}
+.focus-dim-chip{font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:700;
+               padding:.1rem .5rem;border-radius:5px;color:var(--text-secondary);
+               background:var(--border-light);white-space:nowrap;flex-shrink:0}
+.focus-dim-chip.focus-dim-cross{color:var(--accent)}
+.focus-empty{padding:1.1rem 1.3rem;background:var(--bg-card);border:1px dashed var(--border);
+            border-radius:var(--radius);font-size:.84rem;color:var(--text-muted);line-height:1.75}
+@media(max-width:640px){
+  .focus-row{flex-wrap:wrap}
+  .focus-text{flex-basis:100%;white-space:normal}
+}
+
+/* ── 維度速讀（2026-07-16 由「維度儀表列」改版）：七個核心維度恆顯示，
+   每列預設收合只留一行機械摘要（🔴N 🟡M＋最強/次強一句），點列展開才看完整訊號明細——
+   取代舊版「預設顯示 top 2-3 條＋再看 N 條」的部分展開設計；速讀列本身就是摘要，
+   細節一律按需展開，高度不受訊號數影響。 */
+.dimread-title{font-family:var(--serif);font-size:.95rem;font-weight:700;color:var(--text);
+              margin:1.1rem 0 .6rem;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+.dimrow-list{display:flex;flex-direction:column;gap:.5rem}
 .dim-row{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
-        box-shadow:var(--shadow-sm);padding:.7rem .95rem}
-.dim-row.muted{padding:.5rem .95rem;box-shadow:none}
-.dim-row-hd{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap}
+        box-shadow:var(--shadow-sm);overflow:hidden}
+.dim-row.muted{box-shadow:none}
+.dim-row-hd{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;width:100%;
+           background:none;border:0;padding:.7rem .95rem;font:inherit;color:inherit;
+           text-align:left;cursor:pointer}
+.dim-row.muted .dim-row-hd{cursor:default;padding:.55rem .95rem}
 .dim-row-hd .dim-name{font-size:.82rem;font-weight:700;color:var(--text);min-width:132px;flex-shrink:0}
 .dim-row.muted .dim-name{color:var(--text-muted);font-weight:600}
-.dim-temp-track{flex:1 1 100px;max-width:200px;height:7px;border-radius:4px;background:var(--border-light);overflow:hidden}
-.dim-temp-fill{display:block;height:100%;border-radius:4px;background:var(--accent)}
-.dim-temp-fill.has-red{background:var(--neg)}
-.dim-count{font-family:'IBM Plex Mono',monospace;font-size:.7rem;font-weight:600;color:var(--text-secondary);white-space:nowrap}
-.dim-redbadge{font-size:.66rem;font-weight:700;color:var(--neg);background:var(--neg-bg);
-             padding:.08rem .45rem;border-radius:5px;white-space:nowrap}
-.dim-muted-note{margin-left:.2rem;font-size:.78rem;color:var(--text-muted);font-style:italic}
-.dim-row-body{display:flex;flex-direction:column;gap:.32rem;margin-top:.6rem}
-.dim-more-body{display:flex;flex-direction:column;gap:.32rem;margin-top:.32rem}
-.dim-more-toggle{align-self:flex-start;font-family:'IBM Plex Mono',monospace;font-size:.7rem;font-weight:600;
-                 color:var(--accent);background:none;border:1px dashed var(--border);border-radius:6px;
-                 padding:.28rem .7rem;cursor:pointer;margin-top:.1rem;transition:border-color .12s}
-.dim-more-toggle:hover{border-color:var(--accent)}
+.dim-badges{display:flex;gap:.35rem;flex-shrink:0}
+.dim-badge{font-size:.66rem;font-weight:700;padding:.08rem .45rem;border-radius:5px;white-space:nowrap}
+.dim-badge-red{color:var(--neg);background:var(--neg-bg)}
+.dim-badge-yellow{color:var(--warn);background:var(--warn-bg)}
+.dim-summary-txt{flex:1 1 200px;min-width:0;font-size:.78rem;color:var(--text-secondary);
+                overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dim-row.muted .dim-summary-txt{color:var(--text-muted);font-style:italic}
+.dim-caret{font-size:.68rem;color:var(--text-muted);flex-shrink:0;transition:transform .12s}
+.dim-row-hd[aria-expanded="true"] .dim-caret{transform:rotate(90deg)}
+.dim-row-body{display:flex;flex-direction:column;gap:.32rem;padding:0 .95rem .75rem}
+.dim-row-body[hidden]{display:none}
 .sig-row{display:flex;align-items:center;gap:.6rem;padding:.4rem .6rem;border-radius:6px;cursor:pointer;
         background:var(--bg);border-left:3px solid var(--border);outline:2px solid transparent;outline-offset:1px;
         transition:filter .12s,outline-color .12s}
@@ -265,7 +297,7 @@ a:hover{color:var(--accent-hover)}
 @media(max-width:640px){
   .dim-row-hd{gap:.5rem}
   .dim-row-hd .dim-name{min-width:0;flex-basis:100%}
-  .dim-temp-track{order:2;flex:1 1 auto;max-width:none}
+  .dim-summary-txt{white-space:normal;flex-basis:100%}
   .sig-row{flex-wrap:wrap}
   .sig-row .sig-row-fact{flex-basis:100%;white-space:normal}
 }
@@ -513,7 +545,7 @@ footer.imq-foot a{color:var(--accent)}
     <div class="crumb"><a href="/">首頁</a> &rsaquo; 市場偵探</div>
     <span class="eyebrow">Market Detective · 事實警報網 · 日更 ‧ 事件驅動</span>
     <h1>市場偵探</h1>
-    <p class="sub">聚合全站偵測層的事實警報網 · 描述器非擇時——把「已經在跑、卻沒人盯著被觸發」的偵測層（市場監測異常引擎、分位翻折、跨資產擁擠交易、資產輪動象限翻轉、regime 位移、總經時鐘、財測落差）收斂成威脅指針、維度儀表列與 composite 靶盤，一眼看出當日警戒度與最靠近觸發的組合規則。</p>
+    <p class="sub">聚合全站偵測層的事實警報網 · 描述器非擇時——把「已經在跑、卻沒人盯著被觸發」的偵測層（市場監測異常引擎、分位翻折、跨資產擁擠交易、資產輪動象限翻轉、regime 位移、總經時鐘、財測落差）收斂成威脅指針、當日焦點、維度速讀與 composite 靶盤，一眼看出當日警戒度與最靠近觸發的組合規則。</p>
     <div class="mandate">
       <strong>定位：</strong>本頁是<strong>描述器（describer），不是擇時訊號（timing signal）</strong>。每條訊號只陳述機械層已經算出的事實（z-score／分位／COT／象限翻轉／快照位移），<strong>不判斷、不擇時、不給買賣指令</strong>。底層偵測層各自獨立維護、更新頻率不一（監測／輪動日更，擁擠／regime 週更，總經時鐘月頻，財測落差事件觸發），本頁只做彙整、狀態追蹤與視覺化排序；「冷卻」表示條件已消失、處於寬限觀察期。
     </div>
@@ -527,7 +559,7 @@ footer.imq-foot a{color:var(--accent)}
     <div class="stale-banner" id="staleBanner" hidden></div>
     <nav class="panel-nav">
       <a href="#panel-gauge">① 威脅指針</a>
-      <a href="#panel-heat">② 維度儀表</a>
+      <a href="#panel-heat">② 當日焦點</a>
       <a href="#panel-composite">③ Composite 靶盤</a>
       <a href="#panel-kill">④ Kill 對帳</a>
       <a href="#panel-editorial">⑤ 判讀</a>
@@ -571,9 +603,16 @@ footer.imq-foot a{color:var(--accent)}
 <a id="panel-heat"></a>
 <div class="section" id="detective-heat">
   <div class="container">
-    <h2 class="section-title">維度儀表列 <span class="count" id="heatCount">— 條</span></h2>
-    <p class="section-note">七個市場維度（股票與產業結構／信用／波動與選擇權／利率與流動性／商品外匯加密／擁擠與部位／thesis 對帳）各一列水平溫度卡恆常顯示，缺維度的訊號歸「其他」（僅有訊號時才出現）；條長 ∝ 該維度訊號數／全維度最大數，有紅燈時標 🔴N，0 訊號維度顯示細的靜音列。每列預設列出分數最高的 2-3 條事實（紅燈永遠顯示、不被摺疊），其餘可展開「再看 N 條」；生命週期以文字 chip 標示新增／升級／冷卻，冷卻整列灰化。點擊任一訊號行展開完整詳情。</p>
+    <h2 class="section-title">當日焦點 <span class="count" id="focusCount">— 條</span></h2>
+    <p class="section-note">機械排序的當日最突出數據事實，非行動建議——依序：①全部紅燈訊號（score 降冪）②今日升級事件③最接近觸發的 composite 規則（未 fired、met_count≥1 中 proximity 最高 1-2 條）④kill 對帳最緊 1-2 條；上限 6 條（紅燈超過 6 全保留，其他類別依序讓出名額）。點任一條可捲動並高亮下方對應明細。</p>
     <div class="today-changes" id="todayChanges"><span class="tc-summary tc-empty">今日變化載入中…</span></div>
+
+    <div class="focus-panel" id="focusPanel">
+      <div class="focus-list" id="focusList"><div class="loading">載入焦點清單中…</div></div>
+    </div>
+
+    <h3 class="dimread-title">維度速讀 <span class="count" id="heatCount">— 條</span></h3>
+    <p class="section-note">七個市場維度（股票與產業結構／信用／波動與選擇權／利率與流動性／商品外匯加密／擁擠與部位／thesis 對帳）各恆常顯示一行機械摘要（🔴紅燈數 🟡黃燈數＋分數最高 1-2 條事實），缺維度的訊號歸「其他」（僅有訊號時才出現）；0 訊號維度顯示「無異常」靜音列。展開該列可看該維度全部訊號明細；生命週期以文字 chip 標示新增／升級／冷卻，冷卻整列灰化。</p>
     <div class="heat-legend" id="heatLegend">
       生命週期：<span class="lc-chip lc-new">新增</span>
       <span class="lc-chip lc-escalated">升級</span>
@@ -1115,9 +1154,10 @@ footer.imq-foot a{color:var(--accent)}
   // 擁擠/輪動…）為單位判斷，與分區維度分離，邏輯不變。
   var CORE_DIMS=DIM_ORDER.filter(function(d){return d!=='other';});
 
-  function factTrunc(s){
+  function factTrunc(s,maxLen){
     s=String(s==null?'':s);
-    return s.length<=48?s:(s.slice(0,48)+'…');
+    maxLen=maxLen||48;
+    return s.length<=maxLen?s:(s.slice(0,maxLen)+'…');
   }
 
   function sortSigsForDim(items){
@@ -1143,35 +1183,44 @@ footer.imq-foot a{color:var(--accent)}
       +chip+'</div>';
   }
 
-  // 單一維度列：0 訊號＝細靜音列；有訊號＝溫度條頭＋預設 top 2-3（紅燈永遠全顯示，
-  // 不被摺疊：visibleN = max(min(3,總數), 紅燈數)）＋其餘收進「再看 N 條」。
-  function buildDimRow(dimKey,label,items,maxCount){
+  // 摘要句（機械合成，禁自由發揮）：取該維度 score 最高 1-2 條 →
+  // 「最強：{label} {fact 截斷 ~30 字}；次：{label2}」；sorted 已由 sortSigsForDim 排序
+  // （紅燈優先、同級再依 score 降冪），故 sorted[0]/[1] 即最強／次強。
+  function summarizeDimSignals(sorted){
+    if(!sorted.length)return '無異常';
+    var top=sorted[0];
+    var txt='最強：'+(top.label||'')+' '+factTrunc(top.fact||top.label||'',30);
+    if(sorted.length>1){
+      txt+='；次：'+(sorted[1].label||'');
+    }
+    return txt;
+  }
+
+  // 單一維度列：0 訊號＝細靜音列（顯示「無異常」）；有訊號＝一行機械摘要
+  // （🔴N 🟡M＋summarizeDimSignals）＋▸ 展開鈕，預設全部收合——速讀列本身就是摘要，
+  // 完整訊號明細一律按需展開（見 #heatWall 的 dim-row-toggle 事件代理）。
+  function buildDimRow(dimKey,label,items){
     if(!items.length){
       return '<div class="dim-row muted" data-dim="'+esc(dimKey)+'">'
         +'<div class="dim-row-hd"><span class="dim-name">'+esc(label)+'</span>'
-        +'<span class="dim-muted-note">─ 無異常</span></div></div>';
+        +'<span class="dim-summary-txt">無異常</span></div></div>';
     }
     var sorted=sortSigsForDim(items);
     var redN=sorted.filter(function(s){return s.sev==='red';}).length;
-    var count=sorted.length;
-    var widthPct=maxCount>0?Math.max(4,Math.round(count/maxCount*100)):100;
-    var visibleN=Math.max(Math.min(3,count),redN);
-    var visible=sorted.slice(0,visibleN);
-    var rest=sorted.slice(visibleN);
+    var yellowN=sorted.length-redN;
+    var summary=summarizeDimSignals(sorted);
     var h='<div class="dim-row" data-dim="'+esc(dimKey)+'">';
-    h+='<div class="dim-row-hd"><span class="dim-name">'+esc(label)+'</span>'
-      +'<span class="dim-temp-track"><span class="dim-temp-fill'+(redN?' has-red':'')+'" style="width:'+widthPct+'%"></span></span>'
-      +'<span class="dim-count">'+count+' 條</span>'
-      +(redN?'<span class="dim-redbadge">🔴'+redN+'</span>':'')
-      +'</div>';
-    h+='<div class="dim-row-body">';
-    visible.forEach(function(s){h+=buildSigRow(s);});
-    if(rest.length){
-      h+='<button type="button" class="dim-more-toggle" aria-expanded="false">▸ 再看 '+rest.length+' 條</button>';
-      h+='<div class="dim-more-body" hidden>';
-      rest.forEach(function(s){h+=buildSigRow(s);});
-      h+='</div>';
-    }
+    h+='<button type="button" class="dim-row-hd dim-row-toggle" aria-expanded="false">';
+    h+='<span class="dim-name">'+esc(label)+'</span>';
+    h+='<span class="dim-badges">'
+      +(redN?'<span class="dim-badge dim-badge-red">🔴'+redN+'</span>':'')
+      +(yellowN?'<span class="dim-badge dim-badge-yellow">🟡'+yellowN+'</span>':'')
+      +'</span>';
+    h+='<span class="dim-summary-txt">'+esc(summary)+'</span>';
+    h+='<span class="dim-caret">▸</span>';
+    h+='</button>';
+    h+='<div class="dim-row-body" hidden>';
+    sorted.forEach(function(s){h+=buildSigRow(s);});
     h+='</div></div>';
     return h;
   }
@@ -1180,7 +1229,7 @@ footer.imq-foot a{color:var(--accent)}
     var host=document.getElementById('heatWall');
     var quietHost=document.getElementById('quietSourcesRow');
     if(!det||!det.signals){
-      host.innerHTML='<div class="empty-state">偵測層資料暫時無法載入，維度儀表列暫停渲染。</div>';
+      host.innerHTML='<div class="empty-state">偵測層資料暫時無法載入，維度速讀暫停渲染。</div>';
       document.getElementById('heatCount').textContent='— 條';
       if(quietHost)quietHost.innerHTML='';
       return;
@@ -1196,9 +1245,6 @@ footer.imq-foot a{color:var(--accent)}
       if(dim&&byDim.hasOwnProperty(dim))byDim[dim].push(s);
       else otherItems.push(s);
     });
-    var maxCount=0;
-    CORE_DIMS.forEach(function(d){if(byDim[d].length>maxCount)maxCount=byDim[d].length;});
-    if(otherItems.length>maxCount)maxCount=otherItems.length;
 
     // 來源分桶（僅供下方「安靜來源」列判斷用，與分區無關）
     var bySrc={};
@@ -1216,8 +1262,8 @@ footer.imq-foot a{color:var(--accent)}
     });
 
     var h='';
-    CORE_DIMS.forEach(function(d){h+=buildDimRow(d,DIM_LABEL[d],byDim[d],maxCount);});
-    if(otherItems.length)h+=buildDimRow('other',DIM_LABEL.other,otherItems,maxCount);
+    CORE_DIMS.forEach(function(d){h+=buildDimRow(d,DIM_LABEL[d],byDim[d]);});
+    if(otherItems.length)h+=buildDimRow('other',DIM_LABEL.other,otherItems);
     host.innerHTML=h;
 
     if(quietHost){
@@ -1238,6 +1284,177 @@ footer.imq-foot a{color:var(--accent)}
       }
     }
   }
+
+  // ── 當日焦點渲染（純機械優先序，無擇時判斷）──────────────────
+  // 排序規則：①全部紅燈訊號（allSignals 已整體依 score 降冪排序，filter 保持相對順序）
+  // ②今日升級事件（state==='escalated' 或 transitions_today 含 to==='escalated'，已在①出現者去重）
+  // ③最接近觸發的 composite（未 fired、status!=='dormant'、met_count≥1 才算「接近」，
+  // proximity 降冪取前 2 條）④kill_watch.near 中相對差距（|current-threshold|/threshold）
+  // 最小的前 2 條。上限 6 條：紅燈超過 6 全保留、其他類別依序讓出名額。
+  function isEscalatedToday(sig,transToday){
+    if(!sig)return false;
+    if(sig.state==='escalated')return true;
+    return (transToday||[]).some(function(t){return t&&t.to==='escalated'&&t.key===sig.key;});
+  }
+
+  // 焦點行右側維度小 chip：signal 型直接用其 dim；composite 本質跨維度（規則定義即橫跨
+  // 多個 series），標「跨維度」而非硬塞進某一維度；kill 型＝thesis 對帳（kill_metrics 本來
+  // 就是站內 ID／DD 證偽表條目，歸 thesis 維度是事實不是猜測）。
+  function focusDimChipHtml(it){
+    if(it.type==='composite')return '<span class="focus-dim-chip focus-dim-cross">跨維度</span>';
+    if(it.type==='kill')return '<span class="focus-dim-chip">'+esc(DIM_LABEL.thesis)+'</span>';
+    var d=(it.dim&&DIM_LABEL[it.dim])?it.dim:'other';
+    return '<span class="focus-dim-chip">'+esc(DIM_LABEL[d])+'</span>';
+  }
+
+  function buildFocusItems(det,state,killWatch){
+    var items=[];
+    var usedKeys={};
+    var transToday=(state&&state.transitions_today)||[];
+
+    // ① 全部紅燈
+    allSignals.filter(function(s){return s.sev==='red';}).forEach(function(s){
+      usedKeys[s.key]=true;
+      items.push({type:'red',icon:'🔴',dim:s.dim,sig:s,
+        text:(s.label||'')+'——'+factTrunc(s.fact||s.label||'',60)});
+    });
+
+    // ② 今日升級事件（去重：已在紅燈列出者不重複）
+    allSignals.filter(function(s){return !usedKeys[s.key]&&isEscalatedToday(s,transToday);}).forEach(function(s){
+      usedKeys[s.key]=true;
+      items.push({type:'escalated',icon:'↑',dim:s.dim,sig:s,
+        text:(s.label||'')+'——'+factTrunc(s.fact||s.label||'',60)});
+    });
+
+    // ③ composite 最接近觸發（未 fired、met_count≥1，proximity 降冪取前 2）
+    var comps=(det&&det.composites)||[];
+    var nearComps=comps.filter(function(c){
+      return c&&c.status!=='dormant'&&!c.fired&&typeof c.proximity==='number'&&(c.met_count||0)>=1;
+    });
+    nearComps.sort(function(a,b){return (b.proximity||0)-(a.proximity||0);});
+    nearComps.slice(0,2).forEach(function(c){
+      var gap=nearestGapLabel(c)||'—';
+      items.push({type:'composite',icon:'◎',comp:c,
+        text:(c.id||'')+' '+(c.name||'')+'——最近缺口：'+gap});
+    });
+
+    // ④ kill near 最緊（相對差距最小）取前 2
+    var nearRefs=(killWatch&&killWatch.near)||[];
+    var killCands=nearRefs.map(function(ref){
+      var it=resolveKillItem(killWatch,ref)||{};
+      var cur=(typeof it.current==='number')?it.current:null;
+      var thr=(typeof it.value==='number')?it.value:null;
+      var relGap=null;
+      if(cur!=null&&thr!=null){
+        var denom=Math.abs(thr)>1e-9?Math.abs(thr):Math.max(Math.abs(cur),1e-6);
+        relGap=Math.abs(cur-thr)/denom;
+      }
+      return {it:it,relGap:relGap};
+    }).filter(function(x){return x.relGap!=null;});
+    killCands.sort(function(a,b){return a.relGap-b.relGap;});
+    killCands.slice(0,2).forEach(function(x){
+      var it=x.it;
+      var curTxt=(it.current!=null?it.current:'—')+(it.unit?(' '+it.unit):'');
+      items.push({type:'kill',icon:'⚠',
+        text:(it.theme||'—')+'：'+(it.metric_text||'—')+' 現值 '+curTxt+' 距 kill 門檻 '
+          +factTrunc(it.threshold_text||'—',40)+' 差 '+(x.relGap*100).toFixed(1)+'%'});
+    });
+
+    // 上限 6 條：紅燈類全保留（超過 6 不裁切），其餘類別依序補到滿 6
+    var reds=items.filter(function(it){return it.type==='red';});
+    var others=items.filter(function(it){return it.type!=='red';});
+    return reds.length>=6?reds:reds.concat(others.slice(0,6-reds.length));
+  }
+
+  function buildFocusRow(it){
+    var dataAttr='';
+    if(it.type==='red'||it.type==='escalated')dataAttr=' data-focus-sig="'+esc(it.sig.key)+'"';
+    else if(it.type==='composite')dataAttr=' data-focus-comp="'+esc(it.comp.id||'')+'"';
+    else if(it.type==='kill')dataAttr=' data-focus-kill="1"';
+    return '<div class="focus-row focus-'+esc(it.type)+'" tabindex="0" role="button"'+dataAttr+'>'
+      +'<span class="focus-icon">'+it.icon+'</span>'
+      +'<span class="focus-text">'+esc(it.text)+'</span>'
+      +focusDimChipHtml(it)
+      +'</div>';
+  }
+
+  function renderFocus(det,state,killWatch){
+    var host=document.getElementById('focusList');
+    var countEl=document.getElementById('focusCount');
+    if(!host)return;
+    if(!det||!det.signals){
+      host.innerHTML='<div class="focus-empty">當日焦點資料暫時無法載入。</div>';
+      if(countEl)countEl.textContent='— 條';
+      return;
+    }
+    var items=buildFocusItems(det,state,killWatch);
+    if(!items.length){
+      var yellowN=(det.counts&&det.counts.yellow!=null)?det.counts.yellow:allSignals.filter(function(s){return s.sev==='yellow';}).length;
+      host.innerHTML='<div class="focus-empty">今日無焦點事件——全網 '+yellowN+' 條黃燈皆為常規水位異常，無需特別注意的組合狀態。</div>';
+      if(countEl)countEl.textContent='0 條';
+      return;
+    }
+    host.innerHTML=items.map(buildFocusRow).join('');
+    if(countEl)countEl.textContent=items.length+' 條';
+  }
+
+  // 找對應 DOM 節點：不用 CSS.escape（key／id 可能含冒號等字元），直接走屬性比對迴圈，
+  // 與既有 heatWall/compGrid 選取邏輯同風格。
+  function findSigRowEl(key){
+    var rows=document.querySelectorAll('#heatWall .sig-row');
+    for(var i=0;i<rows.length;i++){if(rows[i].getAttribute('data-key')===key)return rows[i];}
+    return null;
+  }
+  function findCompCardEl(compId){
+    var cards=document.querySelectorAll('#compGrid [data-comp-id]');
+    for(var i=0;i<cards.length;i++){if(cards[i].getAttribute('data-comp-id')===compId)return cards[i];}
+    return null;
+  }
+
+  // 焦點行點擊：捲動＋高亮到對應下方明細；找不到對應 DOM（理論上不該發生，防呆用）靜默忽略。
+  function revealAndScrollToSigRow(key){
+    var row=findSigRowEl(key);
+    if(!row)return;
+    var body=row.closest('.dim-row-body');
+    if(body&&body.hidden){
+      body.hidden=false;
+      var toggle=body.previousElementSibling;
+      if(toggle&&toggle.classList&&toggle.classList.contains('dim-row-toggle'))toggle.setAttribute('aria-expanded','true');
+    }
+    try{row.scrollIntoView({behavior:'smooth',block:'center'});}catch(e){}
+    document.querySelectorAll('#heatWall .sig-row.sel').forEach(function(c){c.classList.remove('sel');});
+    row.classList.add('sel');
+    var sig=allSignals.filter(function(s){return s.key===key;})[0];
+    if(sig)renderHeatDetail(sig);
+  }
+  function revealAndScrollToComposite(compId){
+    var card=findCompCardEl(compId);
+    if(!card)return;
+    try{card.scrollIntoView({behavior:'smooth',block:'center'});}catch(e){}
+    card.click(); // 復用既有 composite ↔ 訊號互連高亮邏輯（見 #compGrid click 代理）
+  }
+
+  // #focusList 事件代理：signal 型→捲動高亮訊號行；composite 型→捲動並觸發互連；
+  // kill 型無對應單條 DOM（kill 對帳表是彙總表非逐條卡片），錨點跳轉到 Kill 對帳面板即可。
+  document.getElementById('focusList').addEventListener('click',function(e){
+    var row=e.target.closest('.focus-row');
+    if(!row)return;
+    if(row.hasAttribute('data-focus-sig')){
+      revealAndScrollToSigRow(row.getAttribute('data-focus-sig'));
+    }else if(row.hasAttribute('data-focus-comp')){
+      revealAndScrollToComposite(row.getAttribute('data-focus-comp'));
+    }else if(row.hasAttribute('data-focus-kill')){
+      var panel=document.getElementById('panel-kill');
+      if(panel)try{panel.scrollIntoView({behavior:'smooth',block:'start'});}catch(e2){}
+    }
+  });
+  document.getElementById('focusList').addEventListener('keydown',function(e){
+    if(e.key!=='Enter'&&e.key!==' ')return;
+    var row=e.target.closest('.focus-row');
+    if(!row)return;
+    e.preventDefault();
+    row.click();
+  });
 
   // ── 今日變化列（讀 state.json transitions_today）──────────
   // to==='new' → 新增；to==='escalated' → 升級；to==='resolved' → 解除。
@@ -1686,18 +1903,17 @@ footer.imq-foot a{color:var(--accent)}
     }
   }
 
-  // 維度儀表列容器事件代理：(a) 「▸ 再看 N 條」展開/收合該維度其餘訊號行；
-  // (b) 點任一訊號行展開完整詳情。掛在 #heatWall 容器本身，跨 renderHeatWall 重渲染仍有效不須重掛。
+  // 維度速讀容器事件代理：(a) 點該維度列標頭（.dim-row-toggle）展開/收合完整訊號明細
+  // （預設全收合，caret 旋轉由 CSS 依 aria-expanded 驅動）；(b) 點任一訊號行展開完整詳情。
+  // 掛在 #heatWall 容器本身，跨 renderHeatWall 重渲染仍有效不須重掛。
   document.getElementById('heatWall').addEventListener('click',function(e){
-    var toggle=e.target.closest('.dim-more-toggle');
+    var toggle=e.target.closest('.dim-row-toggle');
     if(toggle){
       var body=toggle.nextElementSibling;
       if(!body)return;
       var willShow=body.hidden;
       body.hidden=!willShow;
       toggle.setAttribute('aria-expanded',willShow?'true':'false');
-      var n=body.querySelectorAll('.sig-row').length;
-      toggle.textContent=willShow?'▴ 收合':('▸ 再看 '+n+' 條');
       return;
     }
     var row=e.target.closest('.sig-row');
@@ -1761,6 +1977,7 @@ footer.imq-foot a{color:var(--accent)}
         try{renderGauge(null);}catch(e){}
         try{renderGaugeTrend(alertHistory,alertBackfill);}catch(e){}
         try{renderHeatWall(null);}catch(e){}
+        try{renderFocus(null,state,killWatch);}catch(e){}
         try{renderTodayChanges(state,null);}catch(e){}
         try{renderComposites(null);}catch(e){
           document.getElementById('compGrid').innerHTML='<div class="empty-state">偵探資料層暫時無法載入，Composite 面板暫停渲染。</div>';
@@ -1802,9 +2019,16 @@ footer.imq-foot a{color:var(--accent)}
         document.getElementById('gaugeTrendWrap').innerHTML='<div class="gauge-trend-hd"><h3>警戒度歷史軌跡（描述器）</h3></div><div class="gauge-trend-empty">歷史資料格式異常，暫無法渲染。</div>';
       }
 
-      // ② 維度儀表列
+      // ② 維度速讀
       try{renderHeatWall(det);}catch(e){
-        document.getElementById('heatWall').innerHTML='<div class="empty-state">維度儀表列資料格式異常，暫無法渲染。</div>';
+        document.getElementById('heatWall').innerHTML='<div class="empty-state">維度速讀資料格式異常，暫無法渲染。</div>';
+      }
+
+      // 當日焦點（依賴 det.composites／killWatch，故排在 renderHeatWall 之後、
+      // renderComposites／renderKillWatch 之前也沒關係——buildFocusItems 直接讀原始 JSON 物件，
+      // 不依賴其他 render* 函式先跑過）
+      try{renderFocus(det,state,killWatch);}catch(e){
+        document.getElementById('focusList').innerHTML='<div class="focus-empty">當日焦點資料格式異常，暫無法渲染。</div>';
       }
 
       // 今日變化列（state.json transitions_today）
