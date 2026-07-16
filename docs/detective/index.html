@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>市場偵探 — InvestMQuest Research</title>
-  <meta name="description" content="市場偵探 — 聚合全站偵測層（市場監測異常引擎、分位翻折、跨資產擁擠交易、資產輪動象限翻轉、regime 位移、總經時鐘、財測落差）成單一事實警報網，威脅指針＋當日焦點＋維度速讀＋Composite 靶盤一目了然。描述器非擇時訊號，只陳述事實不給買賣指令。">
+  <meta name="description" content="市場偵探 — 聚合全站偵測層（市場監測異常引擎、分位翻折、跨資產擁擠交易、資產輪動象限翻轉、regime 位移、總經時鐘、財測落差）成單一事實警報網，威脅指針＋當日焦點＋市場全景磚牆＋Composite 靶盤一目了然。市場全景磚牆把當日近百條全維度指標的數值、漲跌與異常程度（|z|）同時攤開，一眼看出今天哪裡變動最大最異常。描述器非擇時訊號，只陳述事實不給買賣指令。">
   <meta property="og:title" content="市場偵探 — InvestMQuest Research">
   <meta property="og:site_name" content="InvestMQuest Research">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -276,9 +276,54 @@ a:hover{color:var(--accent-hover)}
 .quiet-chip .qmeta{font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--text-muted)}
 .quiet-chip .qstate{font-style:italic;color:var(--text-muted);margin-left:.15rem}
 @media(max-width:640px){.quiet-chip{width:100%}}
-#heatDetailPanel{margin-top:.9rem;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
+#heatDetailPanel,#panoDetailPanel{margin-top:.9rem;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
                 box-shadow:var(--shadow-sm);padding:.9rem 1.1rem}
-#heatDetailPanel .ph{color:var(--text-muted);font-size:.8rem}
+#heatDetailPanel .ph,#panoDetailPanel .ph{color:var(--text-muted);font-size:.8rem}
+
+/* ── 市場全景磚牆（2026-07-16 新增，第四版）：取代「維度速讀」作為主視覺——
+   monitor 96 條 series ＋ internals 精選代表性 series 全數攤開成磚，每磚恆顯示數值＋漲跌
+   （基本資訊層，不管有無異常都顯示），視覺強度 ∝ |z|（含 pctile 代理）分四級發光，
+   當日 |z| 最大前三磚掛 TOP 角標。舊「維度速讀」訊號明細清單降為 <details> 收合區，
+   仍是磚點擊 / 焦點跳轉的展開落點，機制不變。 */
+.pano-legend{font-size:.72rem;color:var(--text-muted);margin:0 0 .8rem;display:flex;flex-wrap:wrap;align-items:center;gap:.6rem}
+.pano-legend-chip{display:inline-flex;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:.64rem;font-weight:700;
+                  padding:.12rem .55rem;border-radius:5px;border:1px solid var(--border)}
+.pano-legend-chip.lgd-mild{background:var(--border-light);background:color-mix(in srgb,var(--warn-bg) 45%,var(--bg-card));
+                          border-color:var(--warn);color:var(--warn)}
+.pano-legend-chip.lgd-yellow{background:var(--warn-bg);border-color:var(--warn);color:var(--warn)}
+.pano-legend-chip.lgd-red{background:var(--neg-bg);border:2px solid var(--neg);color:var(--neg)}
+.pano-legend-chip.lgd-top{background:var(--border-light);border-color:var(--accent);color:var(--accent)}
+.pano-wall{display:flex;flex-direction:column;gap:1.3rem;margin:.9rem 0 1rem}
+.pano-dim-title{font-family:var(--serif);font-size:.86rem;font-weight:700;color:var(--text);margin-bottom:.5rem;
+               display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+.pano-dim-count{font-size:.66rem;font-weight:600;color:var(--text-muted);background:var(--bg-card);
+                padding:.1rem .5rem;border-radius:5px;border:1px solid var(--border)}
+.pano-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px}
+.pano-tile{position:relative;display:flex;flex-direction:column;gap:.22rem;padding:.55rem .6rem;border-radius:8px;
+          background:var(--bg-card);border:1px solid var(--border);cursor:pointer;text-align:left;
+          font:inherit;color:inherit;transition:filter .12s;min-width:0;overflow:visible}
+.pano-tile:hover{filter:brightness(.97)}
+.pano-tile:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.pano-tile.sel{outline:2px solid var(--accent);outline-offset:1px}
+/* t0（安靜，|z|<1.5）＝預設卡底，無額外樣式 */
+.pano-tile.pano-t1{background:var(--border-light);background:color-mix(in srgb,var(--warn-bg) 45%,var(--bg-card));
+                  border-color:var(--warn)}
+.pano-tile.pano-t2{background:var(--warn-bg);border-color:var(--warn)}
+.pano-tile.pano-t3{background:var(--neg-bg);border:2px solid var(--neg);box-shadow:0 0 14px -5px var(--neg)}
+.pano-tile.pano-top{box-shadow:0 0 0 2px var(--accent) inset}
+.pano-tile.pano-t3.pano-top{box-shadow:0 0 0 2px var(--accent) inset,0 0 14px -5px var(--neg)}
+.pano-top-badge{position:absolute;top:-7px;right:-6px;font-size:.56rem;font-weight:700;color:#fff;background:var(--accent);
+                padding:.06rem .34rem;border-radius:4px;letter-spacing:.03em;z-index:2}
+.pano-label{font-size:.68rem;font-weight:700;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pano-val{font-family:'IBM Plex Mono',monospace;font-size:.92rem;font-weight:600;color:var(--text);
+         white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pano-chg{font-family:'IBM Plex Mono',monospace;font-size:.68rem;font-weight:600;color:var(--text-muted)}
+.pano-chg.pos{color:var(--pos)}
+.pano-chg.neg{color:var(--neg)}
+@media(max-width:480px){.pano-grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr))}}
+.pano-detail-sig{margin-top:.5rem;font-size:.82rem;color:var(--text-secondary);line-height:1.6}
+.pano-spark{margin-top:.55rem}
+.pano-spark-svg{width:100%;height:54px;display:block}
 .sig-top{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.4rem}
 .sig-label{font-weight:700;font-size:.88rem;color:var(--text)}
 .state-badge{font-family:'IBM Plex Mono',monospace;font-size:.64rem;font-weight:700;
@@ -545,7 +590,7 @@ footer.imq-foot a{color:var(--accent)}
     <div class="crumb"><a href="/">首頁</a> &rsaquo; 市場偵探</div>
     <span class="eyebrow">Market Detective · 事實警報網 · 日更 ‧ 事件驅動</span>
     <h1>市場偵探</h1>
-    <p class="sub">聚合全站偵測層的事實警報網 · 描述器非擇時——把「已經在跑、卻沒人盯著被觸發」的偵測層（市場監測異常引擎、分位翻折、跨資產擁擠交易、資產輪動象限翻轉、regime 位移、總經時鐘、財測落差）收斂成威脅指針、當日焦點、維度速讀與 composite 靶盤，一眼看出當日警戒度與最靠近觸發的組合規則。</p>
+    <p class="sub">聚合全站偵測層的事實警報網 · 描述器非擇時——把「已經在跑、卻沒人盯著被觸發」的偵測層（市場監測異常引擎、分位翻折、跨資產擁擠交易、資產輪動象限翻轉、regime 位移、總經時鐘、財測落差）收斂成威脅指針、當日焦點、市場全景磚牆與 composite 靶盤，一眼看出當日警戒度、哪裡變動最大最異常，以及最靠近觸發的組合規則。</p>
     <div class="mandate">
       <strong>定位：</strong>本頁是<strong>描述器（describer），不是擇時訊號（timing signal）</strong>。每條訊號只陳述機械層已經算出的事實（z-score／分位／COT／象限翻轉／快照位移），<strong>不判斷、不擇時、不給買賣指令</strong>。底層偵測層各自獨立維護、更新頻率不一（監測／輪動日更，擁擠／regime 週更，總經時鐘月頻，財測落差事件觸發），本頁只做彙整、狀態追蹤與視覺化排序；「冷卻」表示條件已消失、處於寬限觀察期。
     </div>
@@ -559,7 +604,7 @@ footer.imq-foot a{color:var(--accent)}
     <div class="stale-banner" id="staleBanner" hidden></div>
     <nav class="panel-nav">
       <a href="#panel-gauge">① 威脅指針</a>
-      <a href="#panel-heat">② 當日焦點</a>
+      <a href="#panel-heat">② 當日焦點 · 市場全景</a>
       <a href="#panel-composite">③ Composite 靶盤</a>
       <a href="#panel-kill">④ Kill 對帳</a>
       <a href="#panel-editorial">⑤ 判讀</a>
@@ -611,16 +656,30 @@ footer.imq-foot a{color:var(--accent)}
       <div class="focus-list" id="focusList"><div class="loading">載入焦點清單中…</div></div>
     </div>
 
-    <h3 class="dimread-title">維度速讀 <span class="count" id="heatCount">— 條</span></h3>
-    <p class="section-note">七個市場維度（股票與產業結構／信用／波動與選擇權／利率與流動性／商品外匯加密／擁擠與部位／thesis 對帳）各恆常顯示一行機械摘要（🔴紅燈數 🟡黃燈數＋分數最高 1-2 條事實），缺維度的訊號歸「其他」（僅有訊號時才出現）；0 訊號維度顯示「無異常」靜音列。展開該列可看該維度全部訊號明細；生命週期以文字 chip 標示新增／升級／冷卻，冷卻整列灰化。</p>
-    <div class="heat-legend" id="heatLegend">
-      生命週期：<span class="lc-chip lc-new">新增</span>
-      <span class="lc-chip lc-escalated">升級</span>
-      <span class="lc-chip lc-cooling">冷卻</span>（整列灰化）・無標記＝持續
+    <h3 class="dimread-title">市場全景 <span class="count" id="panoCount">— 磚</span></h3>
+    <p class="section-note">當日近百條全維度指標（市場監測 96 條 series ＋監測內部精選代表性指標）全數攤開成磚，每磚恆顯示標籤／現值／漲跌（基本資訊層，不論有無異常都顯示）；磚的視覺強度 ∝ 當日 |z-score|（缺 z 者以一年分位粗略代理）——安靜、微溫、黃燈、紅燈四級，紅燈亦含「該指標當日已觸發紅燈訊號」的情況；全場 |z| 最大前 3 磚掛「TOP」角標，直接標出今天哪裡變動最大最異常。磚依維度分組，組內按 |z| 降冪排列；點擊任一磚展開該指標近期走勢與詳情。</p>
+    <div class="pano-legend" id="panoLegend">
+      強度分級：<span class="pano-legend-chip">安靜（|z|&lt;1.5）</span>
+      <span class="pano-legend-chip lgd-mild">微溫（1.5≤|z|&lt;2）</span>
+      <span class="pano-legend-chip lgd-yellow">黃燈（2≤|z|&lt;3）</span>
+      <span class="pano-legend-chip lgd-red">紅燈（|z|≥3 或當日已觸發紅燈訊號）</span>
+      <span class="pano-legend-chip lgd-top">TOP＝全場 |z| 最大前 3</span>
     </div>
-    <div class="dimrow-list" id="heatWall"><div class="loading">載入訊號中…</div></div>
-    <div class="quiet-sources-row" id="quietSourcesRow"></div>
-    <div id="heatDetailPanel"><span class="ph">點擊上方任一列查看該訊號詳情。</span></div>
+    <div class="pano-wall" id="panoWall"><div class="loading">載入市場全景中…</div></div>
+    <div id="panoDetailPanel"><span class="ph">點擊上方任一磚查看該指標詳情。</span></div>
+
+    <details class="legacy-list" id="dimDetailsWrap">
+      <summary>訊號明細（依維度展開） <span class="count" id="heatCount">— 條</span></summary>
+      <p class="section-note" style="margin-top:.8rem">七個市場維度（股票與產業結構／信用／波動與選擇權／利率與流動性／商品外匯加密／擁擠與部位／thesis 對帳）各恆常顯示一行機械摘要（🔴紅燈數 🟡黃燈數＋分數最高 1-2 條事實），缺維度的訊號歸「其他」（僅有訊號時才出現）；0 訊號維度顯示「無異常」靜音列。展開該列可看該維度全部訊號明細；生命週期以文字 chip 標示新增／升級／冷卻，冷卻整列灰化。</p>
+      <div class="heat-legend" id="heatLegend">
+        生命週期：<span class="lc-chip lc-new">新增</span>
+        <span class="lc-chip lc-escalated">升級</span>
+        <span class="lc-chip lc-cooling">冷卻</span>（整列灰化）・無標記＝持續
+      </div>
+      <div class="dimrow-list" id="heatWall"><div class="loading">載入訊號中…</div></div>
+      <div class="quiet-sources-row" id="quietSourcesRow"></div>
+      <div id="heatDetailPanel"><span class="ph">點擊上方任一列查看該訊號詳情。</span></div>
+    </details>
 
     <details class="legacy-list" id="legacyListDetails" hidden>
       <summary>近 30 天已解除訊號（resolved episode） <span class="count" id="historyCount">— 筆</span></summary>
@@ -705,6 +764,30 @@ footer.imq-foot a{color:var(--accent)}
   var DIM_LABEL={equity_structure:'股票與產業結構',credit:'信用',vol_options:'波動與選擇權',
                 rates_liquidity:'利率與流動性',commod_fx_crypto:'商品外匯加密',
                 positioning:'擁擠與部位',thesis:'thesis 對帳',other:'其他'};
+  // ── 市場全景磚牆專用對映（2026-07-16 新增）───────────────────
+  // monitor/data/latest.json 十個 category → 七維度中的六個（thesis／other 不適用於原始市場數
+  // 據磚牆，只用於訊號層）。與既有 DIM_LABEL／DIM_ORDER 共用維度鍵名，不另造一套。
+  var PANO_MONITOR_CAT_DIM={indices:'equity_structure',sectors:'equity_structure',factors:'equity_structure',
+    rates:'rates_liquidity',liquidity:'rates_liquidity',vol:'vol_options',credit:'credit',
+    fx:'commod_fx_crypto',commodities:'commod_fx_crypto',crypto:'commod_fx_crypto'};
+  var PANO_DIMS=['equity_structure','credit','vol_options','rates_liquidity','commod_fx_crypto','positioning'];
+  // internals.json 挑選的代表性 series（38 條裡選資訊價值最高的 10 條，非全收）——
+  // 分佈依內容歸位：市場內部結構→equity_structure、選擇權面→vol_options、
+  // 部位與情緒→positioning（本來就是該維度定義的資料）。
+  var PANO_INTERNALS_SEL=[
+    {cat:'breadth',key:'brd_above200',dim:'equity_structure'},
+    {cat:'breadth',key:'brd_adv_dec',dim:'equity_structure'},
+    {cat:'breadth',key:'brd_new_hi',dim:'equity_structure'},
+    {cat:'options_vol',key:'pc_total',dim:'vol_options'},
+    {cat:'options_vol',key:'vix1d',dim:'vol_options'},
+    {cat:'macro',key:'sahm',dim:'rates_liquidity'},
+    {cat:'macro',key:'cpi_yoy',dim:'rates_liquidity'},
+    {cat:'positioning',key:'naaim',dim:'positioning'},
+    {cat:'positioning',key:'short_vol_ratio',dim:'positioning'},
+    {cat:'positioning',key:'eps_rev_breadth',dim:'positioning'}
+  ];
+  var panoTilesIndex={}; // tileKey → tile 物件，供點擊展開詳情查表用
+
   var allSignals=[];
   var lastComposites=[]; // 供 composite 卡片互連點擊時查 members[].ref 用
   // 警戒度歷史趨勢雙軌狀態（2026-07-16 新增）：backfillPts＝回測近似段（可能缺檔，[] 表示沒有）、
@@ -1285,6 +1368,179 @@ footer.imq-foot a{color:var(--accent)}
     }
   }
 
+  // ── 市場全景磚牆渲染（2026-07-16 新增，第四版）────────────────
+  // 缺 z 的 series（如 internals breadth 多數欄位）用一年分位粗略換算成代理 z，
+  // 僅供磚牆分級視覺使用，非機械正式 z-score；換算公式：(pctile-50)/50*2.5
+  // （分位 100→+2.5、分位 0→−2.5、分位 50→0），刻意保守不誇大到 ±3 門檻。
+  function pctileToZProxy(p){
+    if(typeof p!=='number'||isNaN(p))return null;
+    return (p-50)/50*2.5;
+  }
+  function severityRank(sev){return sev==='red'?2:(sev==='yellow'?1:0);}
+  // 建 "cat:itemKey" → 當日最高嚴重度訊號 的索引，僅收 source==='monitor'（reversal／composite
+  // 等衍生訊號不直接對應原始 series 磚，避免張冠李戴）。signal.key 格式＝monitor:{cat}:{key}[:dir]。
+  function buildPanoSignalIndex(sigs){
+    var idx={};
+    (sigs||[]).forEach(function(s){
+      if(!s||s.source!=='monitor')return;
+      var parts=String(s.key).split(':');
+      if(parts.length<3)return;
+      var k=parts[1]+':'+parts[2];
+      if(!idx[k]||severityRank(s.sev)>severityRank(idx[k].sev))idx[k]=s;
+    });
+    return idx;
+  }
+  function makePanoTile(it,dim,srcType,catKey,matchedSig){
+    it=it||{};
+    var z=(typeof it.z==='number'&&!isNaN(it.z))?it.z:null;
+    var pctile=(typeof it.pctile==='number'&&!isNaN(it.pctile))?it.pctile:null;
+    var zProxy=z!=null?z:pctileToZProxy(pctile);
+    var absZ=zProxy!=null?Math.abs(zProxy):null;
+    var forcedRed=!!(matchedSig&&matchedSig.sev==='red');
+    var tier=0;
+    if(forcedRed)tier=3;
+    else if(absZ!=null){
+      if(absZ>=3)tier=3;else if(absZ>=2)tier=2;else if(absZ>=1.5)tier=1;
+    }
+    return {dim:dim,source:srcType,cat:catKey,key:it.key,label:it.label||it.key,
+      val:(it.val!=null?it.val:'—'),chg:it.chg||'',dir:it.dir||null,
+      z:z,zProxy:zProxy,absZ:absZ,pctile:pctile,tier:tier,forcedRed:forcedRed,
+      hi52:!!it.hi52,lo52:!!it.lo52,spark:it.spark||[],unit:it.unit||'',
+      matchedSig:matchedSig||null,tileKey:srcType+':'+catKey+':'+(it.key||'')};
+  }
+  function buildPanoTiles(monLatest,internalsLatest,sigs){
+    var sigIdx=buildPanoSignalIndex(sigs);
+    var tiles=[];
+    ((monLatest&&monLatest.categories)||[]).forEach(function(cat){
+      var dim=PANO_MONITOR_CAT_DIM[cat.key]||'other';
+      (cat.items||[]).forEach(function(it){
+        var matched=sigIdx[cat.key+':'+it.key]||null;
+        tiles.push(makePanoTile(it,dim,'monitor',cat.key,matched));
+      });
+    });
+    if(internalsLatest&&internalsLatest.categories){
+      var byCat={};
+      internalsLatest.categories.forEach(function(c){if(c&&c.key)byCat[c.key]=c;});
+      PANO_INTERNALS_SEL.forEach(function(sel){
+        var c=byCat[sel.cat];
+        if(!c)return;
+        var it=(c.items||[]).filter(function(x){return x&&x.key===sel.key;})[0];
+        if(!it)return;
+        var matched=sigIdx[sel.cat+':'+sel.key]||null;
+        tiles.push(makePanoTile(it,sel.dim,'internals',sel.cat,matched));
+      });
+    }
+    return tiles;
+  }
+  function sortPanoTiles(items){
+    return items.slice().sort(function(a,b){
+      var az=a.absZ==null?-1:a.absZ, bz=b.absZ==null?-1:b.absZ;
+      return bz-az;
+    });
+  }
+  function computePanoTop3(tiles){
+    var withZ=tiles.filter(function(t){return t.absZ!=null;}).slice().sort(function(a,b){return b.absZ-a.absZ;});
+    var keys={};
+    withZ.slice(0,3).forEach(function(t){keys[t.tileKey]=true;});
+    return keys;
+  }
+  function buildPanoTileHtml(t,isTop){
+    var cls='pano-tile pano-t'+t.tier+(isTop?' pano-top':'');
+    var dirCls=t.dir==='pos'?'pos':(t.dir==='neg'?'neg':'');
+    return '<button type="button" class="'+cls+'" data-pano-key="'+esc(t.tileKey)+'" title="'+esc(t.label)+'">'
+      +(isTop?'<span class="pano-top-badge">TOP</span>':'')
+      +'<span class="pano-label">'+esc(t.label)+'</span>'
+      +'<span class="pano-val">'+esc(t.val)+'</span>'
+      +'<span class="pano-chg '+dirCls+'">'+esc(t.chg||'—')+'</span>'
+      +'</button>';
+  }
+  function buildPanoDimSection(dimKey,label,items,topKeys){
+    if(!items||!items.length)return '';
+    var sorted=sortPanoTiles(items);
+    var tilesHtml=sorted.map(function(t){return buildPanoTileHtml(t,!!topKeys[t.tileKey]);}).join('');
+    return '<div class="pano-dim" data-pano-dim="'+esc(dimKey)+'">'
+      +'<h4 class="pano-dim-title">'+esc(label)+' <span class="pano-dim-count">'+items.length+' 磚</span></h4>'
+      +'<div class="pano-grid">'+tilesHtml+'</div></div>';
+  }
+  function renderPanorama(monLatest,internalsLatest,sigs){
+    var host=document.getElementById('panoWall');
+    var countEl=document.getElementById('panoCount');
+    if(!host)return;
+    if(!monLatest||!monLatest.categories){
+      host.innerHTML='<div class="empty-state">市場全景資料暫時無法載入。</div>';
+      if(countEl)countEl.textContent='— 磚';
+      panoTilesIndex={};
+      return;
+    }
+    var tiles=buildPanoTiles(monLatest,internalsLatest,sigs);
+    var idx={};
+    tiles.forEach(function(t){idx[t.tileKey]=t;});
+    panoTilesIndex=idx;
+    var topKeys=computePanoTop3(tiles);
+    var byDim={};
+    PANO_DIMS.forEach(function(d){byDim[d]=[];});
+    tiles.forEach(function(t){(byDim[t.dim]||(byDim[t.dim]=[])).push(t);});
+    var h='';
+    PANO_DIMS.forEach(function(d){h+=buildPanoDimSection(d,DIM_LABEL[d]||d,byDim[d],topKeys);});
+    host.innerHTML=h||'<div class="empty-state">目前無市場全景資料。</div>';
+    if(countEl)countEl.textContent=tiles.length+' 磚';
+    // 重渲染後清掉舊選取態的詳情面板（tile 節點已重建，舊 .sel 參照已失效）
+    renderPanoDetail(null);
+  }
+  // spark 折線只在磚展開（點擊）當下才畫，避免 100+ 磚初載就產生等量 SVG。
+  function buildPanoSparkSVG(spark){
+    var vals=(spark||[]).filter(function(v){return typeof v==='number'&&!isNaN(v);});
+    if(vals.length<2)return '';
+    var W=260,H=54,pad=4;
+    var min=Math.min.apply(null,vals),max=Math.max.apply(null,vals);
+    var span=(max-min)||1;
+    var n=vals.length;
+    var pts=vals.map(function(v,i){
+      var x=pad+(W-2*pad)*(n<=1?0:i/(n-1));
+      var y=pad+(H-2*pad)*(1-(v-min)/span);
+      return x.toFixed(1)+','+y.toFixed(1);
+    }).join(' ');
+    return '<svg viewBox="0 0 '+W+' '+H+'" class="pano-spark-svg" role="img" aria-label="近期走勢迷你圖">'
+      +'<polyline points="'+pts+'" fill="none" stroke="var(--accent)" stroke-width="1.6"/></svg>';
+  }
+  function renderPanoDetail(t){
+    var panel=document.getElementById('panoDetailPanel');
+    if(!panel)return;
+    if(!t){
+      panel.innerHTML='<span class="ph">點擊上方任一磚查看該指標詳情。</span>';
+      return;
+    }
+    var zTxt=t.z!=null?t.z.toFixed(2):(t.zProxy!=null?('≈'+t.zProxy.toFixed(2)+'（由一年分位推估，非機械 z）'):'—');
+    var pctTxt=t.pctile!=null?t.pctile.toFixed(1)+'%':'—';
+    var hiloParts=[];
+    if(t.hi52)hiloParts.push('近 52 週高');
+    if(t.lo52)hiloParts.push('近 52 週低');
+    var sparkHtml=buildPanoSparkSVG(t.spark);
+    var sigHtml='';
+    if(t.matchedSig){
+      var s=t.matchedSig;
+      var stTxt=STATE_LABEL[s.state]||s.state||'';
+      sigHtml='<div class="pano-detail-sig"><span class="state-badge '+esc(s.state||'')+'">'+esc(stTxt)+'</span> '
+        +esc(s.fact||'')+'</div>';
+    }
+    panel.innerHTML='<div class="sig-top"><span class="src-chip">'+esc(t.source==='monitor'?'監測':'監測內部')+'</span>'
+      +'<span class="sig-label">'+esc(t.label)+'</span>'
+      +'<span class="score-tag">'+esc(DIM_LABEL[t.dim]||t.dim)+'</span></div>'
+      +'<div class="sig-fact">數值 '+esc(t.val)+(t.chg?'（'+esc(t.chg)+'）':'')
+      +' · z '+esc(zTxt)+' · 一年分位 '+esc(pctTxt)+(hiloParts.length?(' · '+esc(hiloParts.join('／'))):'')+'</div>'
+      +(sparkHtml?'<div class="pano-spark">'+sparkHtml+'</div>':'')
+      +sigHtml;
+  }
+  // #panoWall 事件代理：點擊磚 → 高亮＋展開詳情面板（含 spark，延遲到點擊才畫）。
+  document.getElementById('panoWall').addEventListener('click',function(e){
+    var tile=e.target.closest('.pano-tile');
+    if(!tile)return;
+    var key=tile.getAttribute('data-pano-key');
+    document.querySelectorAll('#panoWall .pano-tile.sel').forEach(function(c){c.classList.remove('sel');});
+    tile.classList.add('sel');
+    renderPanoDetail(panoTilesIndex[key]);
+  });
+
   // ── 當日焦點渲染（純機械優先序，無擇時判斷）──────────────────
   // 排序規則：①全部紅燈訊號（allSignals 已整體依 score 降冪排序，filter 保持相對順序）
   // ②今日升級事件（state==='escalated' 或 transitions_today 含 to==='escalated'，已在①出現者去重）
@@ -1418,6 +1674,10 @@ footer.imq-foot a{color:var(--accent)}
   function revealAndScrollToSigRow(key){
     var row=findSigRowEl(key);
     if(!row)return;
+    // 訊號明細清單已降為收合區（<details id="dimDetailsWrap">）——跳轉前先展開，
+    // 否則 scrollIntoView 對 hidden 內容無效。
+    var detailsWrap=document.getElementById('dimDetailsWrap');
+    if(detailsWrap&&!detailsWrap.open)detailsWrap.open=true;
     var body=row.closest('.dim-row-body');
     if(body&&body.hidden){
       body.hidden=false;
@@ -1971,15 +2231,21 @@ footer.imq-foot a{color:var(--accent)}
       fetchJSON(cacheBust('/detective/data/kill_watch.json')),
       fetchJSON(cacheBust('/detective/data/editorial.json')),
       fetchJSON(cacheBust('/detective/data/alert_history.json')),
-      fetchJSON(cacheBust('/detective/data/alert_history_backfill.json'))
+      fetchJSON(cacheBust('/detective/data/alert_history_backfill.json')),
+      fetchJSON(cacheBust('/monitor/data/internals.json'))
     ]).then(function(res){
-      var det=res[0], monLatest=res[1], state=res[2], killWatch=res[3], editorial=res[4], alertHistory=res[5], alertBackfill=res[6];
+      var det=res[0], monLatest=res[1], state=res[2], killWatch=res[3], editorial=res[4], alertHistory=res[5], alertBackfill=res[6], internalsLatest=res[7];
       document.getElementById('loadingMsg').hidden=true;
       if(!det||!det.signals){
         document.getElementById('legacyListDetails').hidden=true;
         try{renderGauge(null);}catch(e){}
         try{renderGaugeTrend(alertHistory,alertBackfill);}catch(e){}
         try{renderHeatWall(null);}catch(e){}
+        // 全景磚牆讀原始 monitor/internals series，不依賴 det 是否可用——det 掛掉時
+        // 仍可顯示基本市場數據磚牆（只是磚上不會有 matchedSig 的紅燈標記）。
+        try{renderPanorama(monLatest,internalsLatest,null);}catch(e){
+          document.getElementById('panoWall').innerHTML='<div class="empty-state">市場全景資料格式異常，暫無法渲染。</div>';
+        }
         try{renderFocus(null,state,killWatch);}catch(e){}
         try{renderTodayChanges(state,null);}catch(e){}
         try{renderComposites(null);}catch(e){
@@ -2022,9 +2288,14 @@ footer.imq-foot a{color:var(--accent)}
         document.getElementById('gaugeTrendWrap').innerHTML='<div class="gauge-trend-hd"><h3>警戒度歷史軌跡（描述器）</h3></div><div class="gauge-trend-empty">歷史資料格式異常，暫無法渲染。</div>';
       }
 
-      // ② 維度速讀
+      // ② 維度速讀（訊號明細清單，收合區）
       try{renderHeatWall(det);}catch(e){
         document.getElementById('heatWall').innerHTML='<div class="empty-state">維度速讀資料格式異常，暫無法渲染。</div>';
+      }
+
+      // ② 市場全景磚牆（主視覺——monitor 96 條 series ＋ internals 精選代表性 series）
+      try{renderPanorama(monLatest,internalsLatest,allSignals);}catch(e){
+        document.getElementById('panoWall').innerHTML='<div class="empty-state">市場全景資料格式異常，暫無法渲染。</div>';
       }
 
       // 當日焦點（依賴 det.composites／killWatch，故排在 renderHeatWall 之後、
