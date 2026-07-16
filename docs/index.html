@@ -416,6 +416,14 @@ footer a{color:var(--muted)}
 <script>
 (function(){
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function twTime(iso){
+    if(!iso)return '';
+    try{
+      var parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date(iso));
+      var o={};parts.forEach(function(x){o[x.type]=x.value;});
+      return o.year+'-'+o.month+'-'+o.day+' '+o.hour+':'+o.minute;
+    }catch(e){return '';}
+  }
   Promise.all([
     fetch('/home/pulse.json').then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}),
     fetch('/monitor/data/latest.json').then(function(r){return r.ok?r.json():null;}).catch(function(){return null;})
@@ -434,7 +442,8 @@ footer a{color:var(--muted)}
     }
     var asof=p.monitor_as_of||'';
     if(p.radar_as_of&&p.radar_as_of!==p.monitor_as_of)asof+=' · 輪動 '+p.radar_as_of;
-    document.getElementById('mpAsof').textContent='監測 '+asof;
+    var upd=twTime(p.generated_at);
+    document.getElementById('mpAsof').textContent='監測 '+asof+(upd?' · 更新 '+upd+' 台北':'');
     if(latest&&latest.as_of&&p.monitor_as_of&&p.monitor_as_of!==latest.as_of){
       var st=document.getElementById('mpStale');
       st.textContent='⚠ 脈動解讀基於 '+p.monitor_as_of+'，監測資料層已更新至 '+latest.as_of+'——內容可能過期。';
