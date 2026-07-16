@@ -71,6 +71,42 @@ PERSIST_BONUS_PER_DAY = 0.2   # 持續加成：days_active×0.2，上限 2.0
 PERSIST_BONUS_CAP = 2.0
 COMPOSITE_BONUS = 1.0         # composite 成員加成（Phase 3 掛鉤）
 
+# ── 警戒度描述器（alert_level）常數 ─────────────────────────────────────
+# 純視覺聚合描述器：把警報網當前狀態壓成單一 0-100 溫度數字，餵頁面半圓威脅
+# 指針。**非擇時訊號、非決策閘、不改任何裁決**，故不登記 rule_ledger（見
+# compute_alert_level docstring）。權重集中於此，PREREG 凍結至下輪校準
+# （2026-10）；校準時只在此調 pts／cap，公式結構不動。
+# 每成分＝命中數 × pts，各自封頂 cap，加總後 clamp 0-100。黃燈 cap 是關鍵：
+# 今日 26 條黃燈也只計 18 分，多黃燈**不得單獨把指針頂到緊張/警戒**。
+ALERT_WEIGHTS = {
+    "red_signal":       {"pts": 8.0,  "cap": 30.0},   # 紅燈 signal（重）
+    "yellow_signal":    {"pts": 0.7,  "cap": 18.0},   # 黃燈 signal（輕＋硬封頂）
+    "composite_red":    {"pts": 12.0, "cap": 36.0},   # composite fired 紅（重）
+    "composite_yellow": {"pts": 6.0,  "cap": 18.0},   # composite fired 黃
+    "composite_near":   {"pts": 6.0,  "cap": 15.0},   # near-fire（met==min_true−1，中）
+    "kill_breached":    {"pts": 14.0, "cap": 42.0},   # kill breached（很重）
+    "kill_near":        {"pts": 2.5,  "cap": 15.0},   # kill near（輕）
+    "escalated":        {"pts": 4.0,  "cap": 16.0},   # 今日升級狀態數
+    "sustained":        {"pts": 2.0,  "cap": 12.0},   # 持續紅燈（days_active 高）
+}
+ALERT_SUSTAINED_DAYS = 5      # 紅燈 days_active ≥ 此值算「持續」
+ALERT_BANDS = [               # (上界 exclusive, band, 中文標籤)；calm 0-20 … alert 80-100
+    (20.0, "calm", "平靜"), (40.0, "watch", "留意"),
+    (60.0, "warming", "升溫"), (80.0, "tense", "緊張"),
+    (float("inf"), "alert", "警戒"),
+]
+ALERT_DRIVER_LABELS = {
+    "red_signal":       lambda n: f"{n} 條紅燈訊號",
+    "yellow_signal":    lambda n: f"{n} 條黃燈訊號（封頂計分）",
+    "composite_red":    lambda n: f"{n} 項複合規則觸發（紅）",
+    "composite_yellow": lambda n: f"{n} 項複合規則觸發（黃）",
+    "composite_near":   lambda n: f"{n} 項複合規則距觸發差 1 個成員",
+    "kill_breached":    lambda n: f"{n} 條 kill 指標越線",
+    "kill_near":        lambda n: f"{n} 條 kill 指標接近閾值",
+    "escalated":        lambda n: f"{n} 條訊號今日升級",
+    "sustained":        lambda n: f"{n} 條紅燈持續 ≥{ALERT_SUSTAINED_DAYS} 日",
+}
+
 
 # ── zero-churn IO（協議抄 build_monitor.py）──────────────────────────────
 
@@ -631,6 +667,93 @@ def build_composites_output(rule_evals, state, as_of):
     return out
 
 
+# ── 警戒度描述器（alert_level）─────────────────────────────────────────
+
+def _alert_band(score):
+    for hi, band, label in ALERT_BANDS:
+        if score < hi:
+            return band, label
+    return "alert", "警戒"
+
+
+def compute_alert_level(signals, composites, kw, as_of):
+    """警戒度 0-100 描述器（環境溫度計，非擇時訊號、非決策閘）.
+
+    把警報網當前狀態聚合成單一總覽數字，餵頁面半圓威脅指針。純機械、確定性、
+    冪等（同 state／同 kw 重跑同分；signals 由 state 導出，故 replay 不變）。
+    **是 describer 不是 signal**：不預測轉折時點、不給買賣指令、不改任何裁決；
+    band_label 一律用環境溫度語言（平靜/留意/升溫/緊張/警戒），drivers 是事實
+    陳述（「X 條紅燈」「N 項複合規則距觸發差 1 成員」）非建議。因此不登記
+    rule_ledger（它不是 veto/gate/救援/hysteresis 這類判斷類閘）。
+
+    公式（權重集中於模組頂部 ALERT_WEIGHTS，PREREG 凍結至 2026-10 校準）：
+      score = clamp_0_100( Σ min(命中數 × pts, cap) )，各成分：
+        · red_signal      紅燈 signal 數（重）
+        · yellow_signal   黃燈 signal 數（輕，**硬封頂 18**——今日 26 條黃燈
+                          也只計 18 分，多黃燈不得單獨把指針頂到緊張/警戒）
+        · composite_red / composite_yellow  composite fired（重／中）
+        · composite_near  near-fire＝met_count==min_true−1 且 active 未 fire（中）
+        · kill_breached   kill 越線（很重）／ kill_near  接近閾值（輕）
+        · escalated       今日升級狀態數 ／ sustained  紅燈 days_active≥5（持續）
+    band 對映：calm 0-20 / watch 20-40 / warming 40-60 / tense 60-80 /
+    alert 80-100（下界含、上界不含）。缺檔／缺欄的成分 fail-soft 給 0、不炸。
+
+    校準錨（as_of 2026-07-14 真實資料：1 紅 26 黃、9 composite 全未 fire（R7
+    near）、kill 0 breached 6 near）刻意落在 warming 中段（約 47 分）——這是
+    「有東西在動但沒觸發」的典型日常態，指針該指中間而非警戒。
+    """
+    w = ALERT_WEIGHTS
+    comps = {}                              # 成分名 -> (命中數, 加總分)
+
+    def add(name, hits):
+        pts = min(hits * w[name]["pts"], w[name]["cap"])
+        comps[name] = (hits, round(pts, 2))
+        return pts
+
+    signals = signals or []
+    n_red = sum(1 for s in signals if s.get("sev") == "red")
+    n_yellow = sum(1 for s in signals if s.get("sev") != "red")
+    n_esc = sum(1 for s in signals if s.get("state") == "escalated")
+    n_sustained = sum(1 for s in signals if s.get("sev") == "red"
+                      and (s.get("days_active") or 0) >= ALERT_SUSTAINED_DAYS)
+
+    c_red = c_yellow = c_near = 0
+    for c in (composites or []):
+        if c.get("fired"):
+            if c.get("sev") == "red":
+                c_red += 1
+            else:
+                c_yellow += 1
+        elif (c.get("status") == "active" and (c.get("min_true") or 0) >= 1
+              and c.get("met_count", 0) == (c.get("min_true") or 0) - 1):
+            c_near += 1
+
+    kw = kw or {}
+    n_kill_breached = len(kw.get("breached") or [])
+    n_kill_near = len(kw.get("near") or [])
+
+    score = 0.0
+    score += add("red_signal", n_red)
+    score += add("yellow_signal", n_yellow)
+    score += add("composite_red", c_red)
+    score += add("composite_yellow", c_yellow)
+    score += add("composite_near", c_near)
+    score += add("kill_breached", n_kill_breached)
+    score += add("kill_near", n_kill_near)
+    score += add("escalated", n_esc)
+    score += add("sustained", n_sustained)
+    score_i = max(0, min(100, int(round(score))))
+
+    band, label = _alert_band(score_i)
+
+    drivers = [{"label": ALERT_DRIVER_LABELS[name](hits), "points": int(round(pts))}
+               for name, (hits, pts) in comps.items() if hits > 0 and pts > 0]
+    drivers.sort(key=lambda d: (-d["points"], d["label"]))
+
+    return {"score": score_i, "band": band, "band_label": label,
+            "drivers": drivers[:5], "as_of": as_of}
+
+
 def main():
     latest = _load("monitor/data/latest.json", {})
     alerts = _load("monitor/data/alerts.json", {})
@@ -688,10 +811,13 @@ def main():
     stale = source_staleness(as_of, sources)
     gen = radar.get("generated_at") or latest.get("generated_at")
 
+    alert_level = compute_alert_level(signals, composites_out, kw, as_of)
+
     out = {
         "schema": "detective-v2",
         "as_of": as_of,
         "generated_at": gen,
+        "alert_level": alert_level,
         "counts": {"total": len(signals), "red": len(sev_red),
                    "yellow": len(signals) - len(sev_red),
                    "new": by_state["new"], "active": by_state["active"],

@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>市場偵探 — InvestMQuest Research</title>
-  <meta name="description" content="市場偵探 — 聚合全站偵測層（市場監測異常引擎、分位翻折、跨資產擁擠交易、資產輪動象限翻轉、regime 位移、總經時鐘、財測落差）成單一事實警報網，每條訊號帶持續狀態（新增／持續／升級／冷卻）。描述器非擇時訊號，只陳述事實不給買賣指令。">
+  <meta name="description" content="市場偵探 — 聚合全站偵測層（市場監測異常引擎、分位翻折、跨資產擁擠交易、資產輪動象限翻轉、regime 位移、總經時鐘、財測落差）成單一事實警報網，威脅指針＋熱力樹圖＋Composite 靶盤一目了然。描述器非擇時訊號，只陳述事實不給買賣指令。">
   <meta property="og:title" content="市場偵探 — InvestMQuest Research">
   <meta property="og:site_name" content="InvestMQuest Research">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,11 +18,8 @@
   --border:#e5dfd0;--border-light:#efe9da;
   --text:#0c1521;--text-secondary:#2a3a52;--text-muted:#9aa7b8;
   --accent:#0d2244;--accent-hover:#081832;
-  --pos:#15803d;--neg:#b91c1c;--warn:#a16207;
-  --pos-bg:#eafaef;--neg-bg:#fbeceb;--warn-bg:#fbf3df;
-  --c-mon:#0d2244;--c-mon-bg:#e8eef5;
-  --c-crowd:#6d43c9;--c-crowd-bg:#f1ebfb;
-  --c-rot:#8f6d2c;--c-rot-bg:#faf3e2;
+  --pos:#15803d;--neg:#b91c1c;--warn:#a16207;--tense:#c2410c;
+  --pos-bg:#eafaef;--neg-bg:#fbeceb;--warn-bg:#fbf3df;--tense-bg:#fdf1e7;
   --shadow-sm:0 1px 2px rgba(13,34,68,.05);
   --shadow-md:0 6px 18px rgba(13,34,68,.07);
   --radius:10px;
@@ -33,11 +30,8 @@
     --border:#28303c;--border-light:#222834;
     --text:#edeff3;--text-secondary:#a6aebc;--text-muted:#717a8a;
     --accent:#5b9bff;--accent-hover:#7db0ff;
-    --pos:#34d399;--neg:#f87171;--warn:#fbbf24;
-    --pos-bg:rgba(52,211,153,.12);--neg-bg:rgba(248,113,113,.12);--warn-bg:rgba(251,191,36,.12);
-    --c-mon:#5b9bff;--c-mon-bg:rgba(91,155,255,.14);
-    --c-crowd:#a78bfa;--c-crowd-bg:rgba(167,139,250,.14);
-    --c-rot:#c9a55e;--c-rot-bg:rgba(201,165,94,.14);
+    --pos:#34d399;--neg:#f87171;--warn:#fbbf24;--tense:#fb923c;
+    --pos-bg:rgba(52,211,153,.12);--neg-bg:rgba(248,113,113,.12);--warn-bg:rgba(251,191,36,.12);--tense-bg:rgba(251,146,60,.12);
     --shadow-sm:0 1px 2px rgba(0,0,0,.3);
     --shadow-md:0 4px 14px rgba(0,0,0,.4);
   }
@@ -47,11 +41,8 @@
   --border:#28303c;--border-light:#222834;
   --text:#edeff3;--text-secondary:#a6aebc;--text-muted:#717a8a;
   --accent:#5b9bff;--accent-hover:#7db0ff;
-  --pos:#34d399;--neg:#f87171;--warn:#fbbf24;
-  --pos-bg:rgba(52,211,153,.12);--neg-bg:rgba(248,113,113,.12);--warn-bg:rgba(251,191,36,.12);
-  --c-mon:#5b9bff;--c-mon-bg:rgba(91,155,255,.14);
-  --c-crowd:#a78bfa;--c-crowd-bg:rgba(167,139,250,.14);
-  --c-rot:#c9a55e;--c-rot-bg:rgba(201,165,94,.14);
+  --pos:#34d399;--neg:#f87171;--warn:#fbbf24;--tense:#fb923c;
+  --pos-bg:rgba(52,211,153,.12);--neg-bg:rgba(248,113,113,.12);--warn-bg:rgba(251,191,36,.12);--tense-bg:rgba(251,146,60,.12);
   --shadow-sm:0 1px 2px rgba(0,0,0,.3);
   --shadow-md:0 4px 14px rgba(0,0,0,.4);
 }
@@ -60,11 +51,8 @@
   --border:#e5dfd0;--border-light:#efe9da;
   --text:#0c1521;--text-secondary:#2a3a52;--text-muted:#9aa7b8;
   --accent:#0d2244;--accent-hover:#081832;
-  --pos:#15803d;--neg:#b91c1c;--warn:#a16207;
-  --pos-bg:#eafaef;--neg-bg:#fbeceb;--warn-bg:#fbf3df;
-  --c-mon:#0d2244;--c-mon-bg:#e8eef5;
-  --c-crowd:#6d43c9;--c-crowd-bg:#f1ebfb;
-  --c-rot:#8f6d2c;--c-rot-bg:#faf3e2;
+  --pos:#15803d;--neg:#b91c1c;--warn:#a16207;--tense:#c2410c;
+  --pos-bg:#eafaef;--neg-bg:#fbeceb;--warn-bg:#fbf3df;--tense-bg:#fdf1e7;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Inter','Noto Sans TC',system-ui,-apple-system,sans-serif;
@@ -111,51 +99,76 @@ a:hover{color:var(--accent-hover)}
                       background:var(--bg-card);padding:.2rem .7rem;border-radius:5px;
                       border:1px solid var(--border)}
 .section-note{font-size:.78rem;color:var(--text-muted);margin:-.6rem 0 1rem;max-width:760px;line-height:1.6}
+.empty-state{padding:2rem;text-align:center;color:var(--text-muted);font-size:.9rem;
+            background:var(--bg-card);border:1px dashed var(--border);border-radius:var(--radius)}
+.loading{color:var(--text-muted);font-size:.9rem;padding:1.2rem 0;text-align:center}
 
-/* Stats row */
-.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
-.stat-tile{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
-           box-shadow:var(--shadow-sm);padding:14px 18px}
-.stat-tile .lbl{font-size:11.5px;color:var(--text-muted);letter-spacing:.04em;text-transform:uppercase}
-.stat-tile .val{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:700;margin-top:.2rem}
-.stat-tile.red .val{color:var(--neg)}
-.stat-tile.yellow .val{color:var(--warn)}
-.stat-tile.new .val{color:var(--accent)}
+/* ── ① 威脅指針（gauge） ──────────────────────────────────── */
+.gauge-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
+            box-shadow:var(--shadow-sm);padding:1.4rem 1.6rem;margin-top:1.4rem}
+.gauge-wrap{display:flex;flex-wrap:wrap;gap:1.8rem 2.2rem;align-items:center}
+.gauge-visual{flex:0 0 auto;width:260px;max-width:100%;margin:0 auto}
+.gauge-visual svg{width:100%;height:auto;display:block}
+.gauge-readout{flex:1 1 260px;min-width:220px}
+.gauge-score-row{display:flex;align-items:baseline;gap:.85rem;flex-wrap:wrap}
+.gauge-score-num{font-family:var(--serif);font-size:2.6rem;font-weight:700;color:var(--text);
+                 font-variant-numeric:tabular-nums;line-height:1}
+.gauge-band-chip{font-family:'IBM Plex Mono',monospace;font-size:.78rem;font-weight:700;
+                 padding:.3rem .8rem;border-radius:20px;background:var(--border-light);color:var(--text-secondary)}
+.gauge-band-chip.b-calm{color:var(--pos);background:var(--pos-bg)}
+.gauge-band-chip.b-normal{color:var(--accent);background:var(--border-light)}
+.gauge-band-chip.b-warming{color:var(--warn);background:var(--warn-bg)}
+.gauge-band-chip.b-tense{color:var(--tense);background:var(--tense-bg)}
+.gauge-band-chip.b-extreme{color:var(--neg);background:var(--neg-bg)}
+.gauge-meta{margin-top:.5rem;font-family:'IBM Plex Mono',monospace;font-size:.74rem;color:var(--text-muted);line-height:1.7}
+.gauge-fallback-note{margin-top:.6rem;font-size:.74rem;color:var(--warn);background:var(--warn-bg);
+                     padding:.5rem .75rem;border-radius:6px;max-width:520px;line-height:1.6}
+.gauge-drivers{margin-top:1.1rem}
+.gauge-drivers h3{font-family:var(--serif);font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:.5rem}
+.gauge-drivers ul{list-style:none;display:flex;flex-direction:column;gap:.35rem}
+.gauge-drivers li{font-size:.82rem;color:var(--text-secondary);display:flex;justify-content:space-between;
+                  gap:.6rem;padding:.35rem .6rem;background:var(--bg);border:1px solid var(--border-light);border-radius:6px}
+.gauge-drivers li b{font-family:'IBM Plex Mono',monospace;color:var(--text);white-space:nowrap}
+.gauge-drivers li.empty{color:var(--text-muted);font-style:italic;justify-content:flex-start}
+@media(max-width:640px){
+  .gauge-wrap{flex-direction:column;align-items:stretch}
+  .gauge-score-num{font-size:2.1rem}
+}
 
-/* Filter chips */
-.filter-row{display:flex;flex-wrap:wrap;gap:.5rem;margin:1.4rem 0 1.2rem}
-.filter-chip{font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:600;
-            padding:.32rem .8rem;border-radius:999px;border:1px solid var(--border);
-            background:var(--bg-card);color:var(--text-secondary);cursor:pointer;transition:all .12s}
-.filter-chip:hover{border-color:var(--accent)}
-.filter-chip.sel{background:var(--accent);border-color:var(--accent);color:#fff}
-
-/* Signal list */
-.sig-list{display:flex;flex-direction:column;gap:.6rem}
-.state-group-title{font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
-                   color:var(--text-muted);margin:1.1rem 0 .5rem}
-.state-group-title:first-child{margin-top:0}
-.sig-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
-         box-shadow:var(--shadow-sm);padding:.9rem 1.1rem}
-.sig-top{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.4rem}
+/* ── ② 訊號熱力樹圖（heat wall） ─────────────────────────── */
 .src-chip{font-family:'IBM Plex Mono',monospace;font-size:.64rem;font-weight:700;letter-spacing:.04em;
-          padding:.14rem .55rem;border-radius:5px}
-.src-chip.monitor{color:var(--c-mon);background:var(--c-mon-bg)}
-.src-chip.crowding{color:var(--c-crowd);background:var(--c-crowd-bg)}
-.src-chip.rotation{color:var(--c-rot);background:var(--c-rot-bg)}
+          padding:.14rem .55rem;border-radius:5px;color:var(--text-secondary);background:var(--border-light)}
 .sev-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
 .sev-dot.red{background:var(--neg)}
 .sev-dot.yellow{background:var(--warn)}
+.heatwall{display:flex;gap:10px;align-items:stretch;overflow-x:auto;padding-bottom:.2rem}
+.heat-col{flex:1 1 0;min-width:130px;display:flex;flex-direction:column}
+.heat-col-hd{font-size:.7rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted);
+            display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;
+            padding-bottom:.35rem;border-bottom:1px solid var(--border-light)}
+.heat-col-hd .cnt{font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--text-secondary)}
+.heat-cells{flex:1;display:flex;flex-direction:column;gap:3px;min-height:280px}
+.heat-cell{border-radius:6px;padding:.4rem .55rem;cursor:pointer;min-height:34px;
+          display:flex;flex-direction:column;justify-content:center;gap:1px;
+          border-left:3px solid var(--border);transition:filter .12s,outline-color .12s;outline:2px solid transparent;outline-offset:1px}
+.heat-cell:hover{filter:brightness(.97)}
+.heat-cell.sel{outline-color:var(--accent)}
+.heat-cell.red{background:var(--neg-bg);border-left-color:var(--neg)}
+.heat-cell.yellow{background:var(--warn-bg);border-left-color:var(--warn)}
+.heat-cell .lbl{font-size:.74rem;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.heat-cell .sc{font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--text-muted)}
+.heat-empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--text-muted);
+           font-size:.78rem;border:1px dashed var(--border);border-radius:6px;min-height:120px}
+#heatDetailPanel{margin-top:.9rem;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
+                box-shadow:var(--shadow-sm);padding:.9rem 1.1rem}
+#heatDetailPanel .ph{color:var(--text-muted);font-size:.8rem}
+.sig-top{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.4rem}
 .sig-label{font-weight:700;font-size:.88rem;color:var(--text)}
-.new-badge{font-size:.7rem;font-weight:700;color:var(--accent)}
 .state-badge{font-family:'IBM Plex Mono',monospace;font-size:.64rem;font-weight:700;
              padding:.14rem .55rem;border-radius:5px;background:var(--border-light);color:var(--text-secondary)}
-.state-badge.new{color:var(--accent);background:var(--c-mon-bg)}
+.state-badge.new{color:var(--accent);background:var(--border-light)}
 .state-badge.escalated{color:var(--neg);background:var(--neg-bg)}
 .state-badge.cooling{color:var(--text-muted)}
-.sig-card.cooling{opacity:.55}
-.src-chip.reversal,.src-chip.regime,.src-chip.macro_clock,.src-chip.variance,.src-chip.composite{
-  color:var(--text-secondary);background:var(--border-light)}
 .score-tag{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--text-muted)}
 .sig-fact{font-size:.9rem;color:var(--text);line-height:1.6}
 .sig-ctx{font-size:.76rem;color:var(--text-muted);margin-top:.3rem}
@@ -164,11 +177,38 @@ a:hover{color:var(--accent-hover)}
 .esc-timeline{display:inline-flex;gap:4px;align-items:center}
 .esc-dot{width:7px;height:7px;border-radius:50%;background:var(--warn);display:inline-block;cursor:help}
 .esc-dot.hi{background:var(--neg)}
-.empty-state{padding:2rem;text-align:center;color:var(--text-muted);font-size:.9rem;
-            background:var(--bg-card);border:1px dashed var(--border);border-radius:var(--radius)}
-.loading{color:var(--text-muted);font-size:.9rem;padding:2rem 0;text-align:center}
+@media(max-width:820px){
+  .heatwall{flex-direction:column;overflow-x:visible}
+  .heat-col{min-width:0}
+  .heat-cells{flex-direction:row;flex-wrap:wrap;min-height:0}
+  .heat-cell{flex-grow:0 !important;flex:0 0 auto;min-width:130px}
+}
 
-/* Resolved history */
+/* 舊版完整清單（收合區） */
+details.legacy-list{margin-top:1.4rem}
+details.legacy-list summary{cursor:pointer;font-weight:700;font-size:.85rem;color:var(--text);
+                         list-style:revert;padding:.3rem 0}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:.8rem}
+.stat-tile{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
+           box-shadow:var(--shadow-sm);padding:14px 18px}
+.stat-tile .lbl{font-size:11.5px;color:var(--text-muted);letter-spacing:.04em;text-transform:uppercase}
+.stat-tile .val{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:700;margin-top:.2rem}
+.stat-tile.red .val{color:var(--neg)}
+.stat-tile.yellow .val{color:var(--warn)}
+.stat-tile.new .val{color:var(--accent)}
+.filter-row{display:flex;flex-wrap:wrap;gap:.5rem;margin:1.2rem 0 1.2rem}
+.filter-chip{font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:600;
+            padding:.32rem .8rem;border-radius:999px;border:1px solid var(--border);
+            background:var(--bg-card);color:var(--text-secondary);cursor:pointer;transition:all .12s}
+.filter-chip:hover{border-color:var(--accent)}
+.filter-chip.sel{background:var(--accent);border-color:var(--accent);color:#fff}
+.sig-list{display:flex;flex-direction:column;gap:.6rem}
+.state-group-title{font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+                   color:var(--text-muted);margin:1.1rem 0 .5rem}
+.state-group-title:first-child{margin-top:0}
+.sig-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
+         box-shadow:var(--shadow-sm);padding:.9rem 1.1rem}
+.sig-card.cooling{opacity:.55}
 .history-details{margin-top:1.5rem}
 .history-details summary{cursor:pointer;font-weight:700;font-size:.85rem;color:var(--text);
                          list-style:revert;padding:.2rem 0}
@@ -182,34 +222,43 @@ a:hover{color:var(--accent-hover)}
 .history-row .peak-sev.yellow{color:var(--warn);background:var(--warn-bg)}
 .history-row .m{font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--text-muted)}
 
-/* Composite panel */
-.comp-list{display:flex;flex-direction:column;gap:.7rem}
-.comp-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
-          box-shadow:var(--shadow-sm);padding:1rem 1.2rem}
-.comp-card.fired-red{border-color:var(--neg);box-shadow:0 0 0 1px var(--neg) inset}
-.comp-card.fired-yellow{border-color:var(--warn);box-shadow:0 0 0 1px var(--warn) inset}
-.comp-card.dormant{opacity:.55}
-.comp-top{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:.3rem}
-.comp-id{font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--text-muted);font-weight:700}
-.comp-name{font-weight:700;font-size:.92rem;color:var(--text)}
-.comp-progress{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--text-muted)}
-.comp-tag{font-size:.68rem;font-weight:700;padding:.14rem .55rem;border-radius:5px}
+/* ── ③ Composite 靶盤 ─────────────────────────────────────── */
+.dial-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+.dial-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
+          box-shadow:var(--shadow-sm);padding:1rem 1.15rem}
+.dial-card.fired-red{border-color:var(--neg);box-shadow:0 0 0 1px var(--neg) inset,0 0 18px -6px var(--neg)}
+.dial-card.fired-yellow{border-color:var(--warn);box-shadow:0 0 0 1px var(--warn) inset,0 0 18px -6px var(--warn)}
+.dial-card.near{border-color:var(--tense)}
+.dial-card.dormant{opacity:.55}
+.dial-top{display:flex;align-items:center;gap:.85rem;margin-bottom:.3rem}
+.dial-svg{flex:0 0 auto;width:70px;height:70px}
+.dial-info{flex:1;min-width:0}
+.comp-id{font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--text-muted);font-weight:700}
+.comp-name{font-weight:700;font-size:.9rem;color:var(--text);line-height:1.3;margin:.1rem 0 .3rem}
+.comp-tag{font-size:.66rem;font-weight:700;padding:.14rem .55rem;border-radius:5px;display:inline-block}
 .comp-tag.dormant{color:var(--text-muted);background:var(--border-light)}
 .comp-tag.red{color:#fff;background:var(--neg)}
 .comp-tag.yellow{color:#111;background:var(--warn)}
-.comp-members{display:flex;flex-direction:column;gap:.34rem;margin-top:.55rem}
-.comp-member{display:flex;align-items:flex-start;gap:.55rem;font-size:.8rem;color:var(--text-secondary)}
+.comp-tag.near{color:var(--tense);background:var(--tense-bg)}
+.comp-members{display:flex;flex-direction:column;gap:.34rem;margin-top:.6rem}
+.comp-member{display:flex;align-items:flex-start;gap:.55rem;font-size:.78rem;color:var(--text-secondary)}
 .comp-light{width:9px;height:9px;border-radius:50%;margin-top:.3rem;flex-shrink:0}
 .comp-light.met{background:var(--pos)}
 .comp-light.unmet{background:var(--border)}
-.comp-member .desc{flex:1;min-width:180px}
-.comp-member .cur{font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--text-muted);white-space:nowrap}
-.comp-narrative{margin-top:.65rem;font-size:.82rem;color:var(--text);line-height:1.65;
+.comp-member .desc{flex:1;min-width:160px}
+.comp-member .cur{font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--text-muted);white-space:nowrap}
+.comp-narrative{margin-top:.65rem;font-size:.8rem;color:var(--text);line-height:1.65;
                padding-top:.55rem;border-top:1px solid var(--border-light)}
 
-/* Kill watch panel */
+/* ── ④ Kill 覆蓋環 ─────────────────────────────────────────── */
+.kill-hero{display:flex;gap:1.6rem;flex-wrap:wrap;align-items:center;margin-top:.9rem}
+.kill-donut{width:130px;height:130px;flex:0 0 auto;margin:0 auto}
+.kill-legend{flex:1;min-width:200px;display:flex;flex-direction:column;gap:.5rem}
+.kl-row{display:flex;align-items:center;gap:.55rem;font-size:.84rem;color:var(--text-secondary)}
+.kl-row b{margin-left:auto;font-family:'IBM Plex Mono',monospace;color:var(--text)}
+.kl-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
 .kill-table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);
-                 background:var(--bg-card);box-shadow:var(--shadow-sm);margin-top:.9rem}
+                 background:var(--bg-card);box-shadow:var(--shadow-sm);margin-top:1.1rem}
 table.kill-table{width:100%;border-collapse:collapse;font-size:.8rem;min-width:640px}
 table.kill-table th{text-align:left;padding:.55rem .8rem;background:var(--border-light);color:var(--text-muted);
                     font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
@@ -218,11 +267,14 @@ table.kill-table td{padding:.55rem .8rem;border-top:1px solid var(--border-light
 .kill-row-sev.red{background:var(--neg)}
 .kill-row-sev.yellow{background:var(--warn)}
 .kill-footnote{font-size:.76rem;color:var(--text-muted);margin-top:.8rem;line-height:1.6}
+@media(max-width:640px){.kill-hero{flex-direction:column;text-align:center}.kill-legend{width:100%}}
 
-/* Editorial panel */
+/* ── ⑤ 判讀（偵探手記） ───────────────────────────────────── */
 .editorial-box{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
               box-shadow:var(--shadow-sm);padding:1.2rem 1.4rem}
 .editorial-box.stale{opacity:.5}
+.editorial-overline{font-family:'IBM Plex Mono',monospace;font-size:.66rem;font-weight:600;letter-spacing:.12em;
+                    text-transform:uppercase;color:var(--gold-deep,var(--accent));margin-bottom:.6rem}
 .editorial-headline{font-size:.95rem;font-weight:700;color:var(--text);line-height:1.75}
 .editorial-sec{margin-top:.9rem}
 .editorial-sec h3{font-family:var(--serif);font-size:.86rem;font-weight:700;color:var(--text);margin-bottom:.3rem}
@@ -250,7 +302,6 @@ footer.imq-foot a{color:var(--accent)}
 
 @media(max-width:768px){
   .hero h1{font-size:1.5rem}
-  .comp-progress{margin-left:0;width:100%}
 }
   </style>
 </head>
@@ -356,9 +407,9 @@ footer.imq-foot a{color:var(--accent)}
     <div class="crumb"><a href="/">首頁</a> &rsaquo; 市場偵探</div>
     <span class="eyebrow">Market Detective · 事實警報網 · 日更 ‧ 事件驅動</span>
     <h1>市場偵探</h1>
-    <p class="sub">聚合全站偵測層的事實警報網 · 描述器非擇時——把「已經在跑、卻沒人盯著被觸發」的偵測層（市場監測異常引擎、分位翻折、跨資產擁擠交易、資產輪動象限翻轉、regime 位移、總經時鐘、財測落差）收斂成單一按嚴重度排序的訊號清單；每條訊號帶跨日持續狀態（新增／持續／升級／冷卻）。</p>
+    <p class="sub">聚合全站偵測層的事實警報網 · 描述器非擇時——把「已經在跑、卻沒人盯著被觸發」的偵測層（市場監測異常引擎、分位翻折、跨資產擁擠交易、資產輪動象限翻轉、regime 位移、總經時鐘、財測落差）收斂成威脅指針、訊號熱力樹圖與 composite 靶盤，一眼看出當日警戒度與最靠近觸發的組合規則。</p>
     <div class="mandate">
-      <strong>定位：</strong>本頁是<strong>描述器（describer），不是擇時訊號（timing signal）</strong>。每條訊號只陳述機械層已經算出的事實（z-score／分位／COT／象限翻轉／快照位移），<strong>不判斷、不擇時、不給買賣指令</strong>。底層偵測層各自獨立維護、更新頻率不一（監測／輪動日更，擁擠／regime 週更，總經時鐘月頻，財測落差事件觸發），本頁只做彙整、狀態追蹤與排序；「冷卻」表示條件已消失、處於寬限觀察期。
+      <strong>定位：</strong>本頁是<strong>描述器（describer），不是擇時訊號（timing signal）</strong>。每條訊號只陳述機械層已經算出的事實（z-score／分位／COT／象限翻轉／快照位移），<strong>不判斷、不擇時、不給買賣指令</strong>。底層偵測層各自獨立維護、更新頻率不一（監測／輪動日更，擁擠／regime 週更，總經時鐘月頻，財測落差事件觸發），本頁只做彙整、狀態追蹤與視覺化排序；「冷卻」表示條件已消失、處於寬限觀察期。
     </div>
     <div class="asof-row" id="asofRow" hidden>
       <span>監測 as-of <b id="asofMon">—</b></span>
@@ -367,46 +418,77 @@ footer.imq-foot a{color:var(--accent)}
     </div>
     <div class="stale-banner" id="staleBanner" hidden></div>
     <nav class="panel-nav">
-      <a href="#panel-status">① 狀態板</a>
-      <a href="#panel-composite">② Composite 規則</a>
-      <a href="#panel-kill">③ Kill 對帳</a>
-      <a href="#panel-editorial">④ 判讀</a>
+      <a href="#panel-gauge">① 威脅指針</a>
+      <a href="#panel-heat">② 訊號熱力</a>
+      <a href="#panel-composite">③ Composite 靶盤</a>
+      <a href="#panel-kill">④ Kill 對帳</a>
+      <a href="#panel-editorial">⑤ 判讀</a>
     </nav>
   </div>
 </div>
 
-<a id="panel-status"></a>
-<div class="section" id="detective-stats">
+<div class="container">
+  <div class="loading" id="loadingMsg">載入偵測層資料中…</div>
+</div>
+
+<a id="panel-gauge"></a>
+<div class="section" id="detective-gauge">
   <div class="container">
-    <div class="loading" id="loadingMsg">載入偵測層資料中…</div>
-    <div class="stat-grid" id="statGrid" hidden>
-      <div class="stat-tile"><div class="lbl">總訊號</div><div class="val" id="statTotal">—</div></div>
-      <div class="stat-tile red"><div class="lbl">紅燈</div><div class="val" id="statRed">—</div></div>
-      <div class="stat-tile yellow"><div class="lbl">黃燈</div><div class="val" id="statYellow">—</div></div>
-      <div class="stat-tile new"><div class="lbl">今日新增</div><div class="val" id="statNew">—</div></div>
-      <div class="stat-tile"><div class="lbl">持續</div><div class="val" id="statActive">—</div></div>
-      <div class="stat-tile"><div class="lbl">冷卻</div><div class="val" id="statCooling">—</div></div>
+    <h2 class="section-title">威脅指針 · 當日警戒度</h2>
+    <p class="section-note">指針位置＝機械層 alert_level 分數（0-100），5 檔刻度平靜／留意／升溫／緊張／警戒；下方列出當日推高分數的具體事實驅動項目。分數本身仍是描述器，不代表擇時或買賣建議。</p>
+    <div class="gauge-panel">
+      <div class="gauge-wrap">
+        <div class="gauge-visual" id="gaugeSvgWrap"></div>
+        <div class="gauge-readout">
+          <div class="gauge-score-row">
+            <span class="gauge-score-num" id="gaugeScoreNum">—</span>
+            <span class="gauge-band-chip" id="gaugeBandChip">載入中</span>
+          </div>
+          <div class="gauge-meta" id="gaugeMeta">載入中…</div>
+          <div class="gauge-fallback-note" id="gaugeFallbackNote" hidden></div>
+          <div class="gauge-drivers">
+            <h3>驅動項目</h3>
+            <ul id="gaugeDrivers"><li class="empty">載入中…</li></ul>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
-<div class="section" id="detective-signals" hidden>
+<a id="panel-heat"></a>
+<div class="section" id="detective-heat">
   <div class="container">
-    <h2 class="section-title">狀態板 · 訊號清單 <span class="count" id="sigCount">— 條</span></h2>
-    <div class="filter-row" id="filterRow">
-      <button type="button" class="filter-chip sel" data-filter="all">全部</button>
-      <button type="button" class="filter-chip" data-filter="monitor">監測</button>
-      <button type="button" class="filter-chip" data-filter="reversal">翻折</button>
-      <button type="button" class="filter-chip" data-filter="crowding">擁擠</button>
-      <button type="button" class="filter-chip" data-filter="rotation">輪動</button>
-      <button type="button" class="filter-chip" data-filter="regime">Regime</button>
-      <button type="button" class="filter-chip" data-filter="macro_clock">時鐘</button>
-      <button type="button" class="filter-chip" data-filter="variance">財測落差</button>
-    </div>
-    <div class="sig-list" id="sigList"></div>
-    <details class="history-details" id="historyDetails" hidden>
-      <summary>近 30 天已解除訊號（resolved episode） <span class="count" id="historyCount">— 筆</span></summary>
-      <div class="history-list" id="historyList"></div>
+    <h2 class="section-title">訊號熱力樹圖 <span class="count" id="heatCount">— 條</span></h2>
+    <p class="section-note">依來源分區（監測／翻折／擁擠／輪動／Regime／時鐘／財測落差），格子大小 ∝ 分數、顏色 ＝ 嚴重度（紅／黃），同源內按分數降冪排列。點擊任一格展開詳情；空白來源顯示「—」。</p>
+    <div class="heatwall" id="heatWall"><div class="loading">載入訊號中…</div></div>
+    <div id="heatDetailPanel"><span class="ph">點擊上方任一格查看該訊號詳情。</span></div>
+
+    <details class="legacy-list" id="legacyListDetails" hidden>
+      <summary>完整訊號清單（含狀態分類、篩選、30 天已解除歷史）</summary>
+      <div class="stat-grid" id="statGrid" hidden>
+        <div class="stat-tile"><div class="lbl">總訊號</div><div class="val" id="statTotal">—</div></div>
+        <div class="stat-tile red"><div class="lbl">紅燈</div><div class="val" id="statRed">—</div></div>
+        <div class="stat-tile yellow"><div class="lbl">黃燈</div><div class="val" id="statYellow">—</div></div>
+        <div class="stat-tile new"><div class="lbl">今日新增</div><div class="val" id="statNew">—</div></div>
+        <div class="stat-tile"><div class="lbl">持續</div><div class="val" id="statActive">—</div></div>
+        <div class="stat-tile"><div class="lbl">冷卻</div><div class="val" id="statCooling">—</div></div>
+      </div>
+      <div class="filter-row" id="filterRow">
+        <button type="button" class="filter-chip sel" data-filter="all">全部</button>
+        <button type="button" class="filter-chip" data-filter="monitor">監測</button>
+        <button type="button" class="filter-chip" data-filter="reversal">翻折</button>
+        <button type="button" class="filter-chip" data-filter="crowding">擁擠</button>
+        <button type="button" class="filter-chip" data-filter="rotation">輪動</button>
+        <button type="button" class="filter-chip" data-filter="regime">Regime</button>
+        <button type="button" class="filter-chip" data-filter="macro_clock">時鐘</button>
+        <button type="button" class="filter-chip" data-filter="variance">財測落差</button>
+      </div>
+      <div class="sig-list" id="sigList"></div>
+      <details class="history-details" id="historyDetails" hidden>
+        <summary>近 30 天已解除訊號（resolved episode） <span class="count" id="historyCount">— 筆</span></summary>
+        <div class="history-list" id="historyList"></div>
+      </details>
     </details>
   </div>
 </div>
@@ -414,9 +496,9 @@ footer.imq-foot a{color:var(--accent)}
 <a id="panel-composite"></a>
 <div class="section" id="detective-composites">
   <div class="container">
-    <h2 class="section-title">Composite 規則面板</h2>
-    <p class="section-note">多條件組合規則——單一訊號各自獨立時不足以構成組合狀態描述，需 min_true 項同時滿足才 fired。narrative 僅在 fired 時顯示；dormant 規則代表上游資料層尚未上線，暫不計入判斷。</p>
-    <div class="comp-list" id="compList">
+    <h2 class="section-title">Composite 靶盤</h2>
+    <p class="section-note">多條件組合規則——單一訊號各自獨立時不足以構成組合狀態描述，需 min_true 項同時滿足才 fired。靶盤填充比例 ＝ met_count / min_true；滿環＝FIRED 發光，差一項＝近觸發（醒目標示），dormant 代表上游資料層尚未上線、暫不計入判斷。</p>
+    <div class="dial-grid" id="compGrid">
       <div class="loading">載入 composite 規則中…</div>
     </div>
   </div>
@@ -426,7 +508,7 @@ footer.imq-foot a{color:var(--accent)}
 <div class="section" id="detective-killwatch">
   <div class="container">
     <h2 class="section-title">Kill 對帳表</h2>
-    <p class="section-note">把站內各 ID／DD 證偽表的 kill_metrics 與當日機械層數值對帳，區分機械日頻可覆蓋與僅靠週頻 LLM 掃描覆蓋兩類；此為決策紀律的被動監測，非擇時訊號。</p>
+    <p class="section-note">把站內各 ID／DD 證偽表的 kill_metrics 與當日機械層數值對帳，甜甜圈顯示機械層可日頻覆蓋 vs 僅靠週頻 LLM 掃描覆蓋的比例；此為決策紀律的被動監測，非擇時訊號。</p>
     <div id="killBox">
       <div class="loading">載入 kill 對帳資料中…</div>
     </div>
@@ -448,7 +530,7 @@ footer.imq-foot a{color:var(--accent)}
   <div class="disclaimer">
     <strong>免責與定位：</strong>
     本頁為 InvestMQuest Research 內部研究文件，<strong>描述器非擇時訊號、非投資建議</strong>。
-    所有訊號來自站內獨立機械層（<a href="/monitor/">市場監測</a>／<a href="/crowding/">擁擠交易監測</a>／<a href="/rotation/radar.html">資產輪動雷達</a>／<a href="/regime/">大類資產 regime</a>／<a href="/macro/">總經深度報告</a>／<a href="/catalyst/">催化劑日曆</a>）已計算的事實，本頁只做聚合、狀態追蹤與嚴重度排序，
+    所有訊號來自站內獨立機械層（<a href="/monitor/">市場監測</a>／<a href="/crowding/">擁擠交易監測</a>／<a href="/rotation/radar.html">資產輪動雷達</a>／<a href="/regime/">大類資產 regime</a>／<a href="/macro/">總經深度報告</a>／<a href="/catalyst/">催化劑日曆</a>）已計算的事實，本頁只做聚合、狀態追蹤與視覺化排序，
     不新增判斷、不預測轉折時點。過往統計關係不保證未來重演。
   </div>
 </div>
@@ -465,9 +547,12 @@ footer.imq-foot a{color:var(--accent)}
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
   var SRC_LABEL={monitor:'監測',crowding:'擁擠',rotation:'輪動',reversal:'翻折',
                  regime:'Regime',macro_clock:'時鐘',variance:'財測落差',composite:'綜合'};
+  var SRC_ORDER=['monitor','reversal','crowding','rotation','regime','macro_clock','variance'];
   var STATE_LABEL={'new':'新增',active:'持續',escalated:'升級',cooling:'冷卻'};
   var GROUP_ORDER={escalated:0,'new':1,active:2,cooling:3};
   var GROUP_LABEL={escalated:'升級','new':'新增',active:'持續',cooling:'冷卻（寬限中）'};
+  var BAND_LABEL_ZH={calm:'平靜',normal:'留意',warming:'升溫',tense:'緊張',extreme:'警戒'};
+  var BAND_COLOR_VAR={calm:'var(--pos)',normal:'var(--accent)',warming:'var(--warn)',tense:'var(--tense)',extreme:'var(--neg)'};
   var allSignals=[];
   var curFilter='all';
 
@@ -511,7 +596,220 @@ footer.imq-foot a{color:var(--accent)}
     return '<span class="esc-timeline">'+dots+'</span>';
   }
 
-  // ── Panel 1：狀態板 ──────────────────────────────────────────────
+  // ── 共用：極座標 / 弧線 / 甜甜圈 SVG builder ──────────────────
+  // t：0..1 的分數比例；半圓從 180°（左，t=0）掃到 0°（右，t=1），頂點在正上方（t=0.5）
+  function polar(cx,cy,r,t){
+    var deg=180-t*180;
+    var rad=deg*Math.PI/180;
+    return {x:cx+r*Math.cos(rad), y:cy-r*Math.sin(rad)};
+  }
+  function arcPath(cx,cy,r,t1,t2){
+    if(t2<=t1)t2=t1+0.0001;
+    var p1=polar(cx,cy,r,t1), p2=polar(cx,cy,r,t2);
+    return 'M'+p1.x.toFixed(2)+' '+p1.y.toFixed(2)+' A'+r+' '+r+' 0 0 1 '+p2.x.toFixed(2)+' '+p2.y.toFixed(2);
+  }
+  function bandOfScore(score){
+    if(score==null||isNaN(score))return 'normal';
+    if(score<20)return 'calm';
+    if(score<40)return 'normal';
+    if(score<60)return 'warming';
+    if(score<80)return 'tense';
+    return 'extreme';
+  }
+  function countNearFire(comps){
+    if(!comps||!comps.length)return 0;
+    var n=0;
+    comps.forEach(function(c){
+      if(!c||c.status==='dormant')return;
+      if(c.fired)return;
+      if(c.met_count!=null&&c.min_true!=null&&c.met_count===c.min_true-1)n++;
+    });
+    return n;
+  }
+  function computeFallbackAlertLevel(det){
+    var c=(det&&det.counts)||{};
+    var red=c.red||0, yellow=c.yellow||0;
+    var nearFire=countNearFire((det&&det.composites)||[]);
+    var score=red*8+Math.min(yellow,20)+nearFire*5;
+    score=Math.max(0,Math.min(100,score));
+    var band=bandOfScore(score);
+    var drivers=[];
+    if(red)drivers.push({label:red+' 條紅燈訊號',points:red*8});
+    if(yellow)drivers.push({label:yellow+' 條黃燈訊號（採計上限 20 分）',points:Math.min(yellow,20)});
+    if(nearFire)drivers.push({label:nearFire+' 條 composite 規則近觸發（差一項成立）',points:nearFire*5});
+    if(!drivers.length)drivers.push({label:'目前無顯著驅動項目',points:0});
+    return {score:score,band:band,band_label:BAND_LABEL_ZH[band],drivers:drivers,as_of:det&&det.as_of,_fallback:true};
+  }
+
+  // 半圓威脅指針 SVG（5 色段背景弧＋指針三角形＋樞紐圓）
+  function buildGaugeSVG(score,band){
+    score=(typeof score==='number'&&!isNaN(score))?Math.max(0,Math.min(100,score)):0;
+    var cx=150,cy=148,r=116,sw=22,gap=0.006;
+    var segs=[
+      {t1:0,t2:.2,color:'var(--pos)'},
+      {t1:.2,t2:.4,color:'var(--accent)'},
+      {t1:.4,t2:.6,color:'var(--warn)'},
+      {t1:.6,t2:.8,color:'var(--tense)'},
+      {t1:.8,t2:1,color:'var(--neg)'}
+    ];
+    var arcs=segs.map(function(s){
+      return '<path d="'+arcPath(cx,cy,r,s.t1+gap,s.t2-gap)+'" fill="none" stroke="'+s.color+'" stroke-width="'+sw+'" stroke-linecap="round"/>';
+    }).join('');
+    var labels=[[.1,'平靜'],[.3,'留意'],[.5,'升溫'],[.7,'緊張'],[.9,'警戒']].map(function(pair){
+      var p=polar(cx,cy,r+24,pair[0]);
+      return '<text x="'+p.x.toFixed(1)+'" y="'+p.y.toFixed(1)+'" font-size="10" text-anchor="middle" fill="var(--text-muted)" font-family="IBM Plex Mono,monospace">'+pair[1]+'</text>';
+    }).join('');
+    var needleColor=BAND_COLOR_VAR[band]||'var(--accent)';
+    var t=score/100;
+    var tip=polar(cx,cy,r-sw/2-8,t);
+    var base1=polar(cx,cy,11,Math.max(0,t-0.035));
+    var base2=polar(cx,cy,11,Math.min(1,t+0.035));
+    var needlePath='M'+base1.x.toFixed(1)+' '+base1.y.toFixed(1)+' L'+tip.x.toFixed(1)+' '+tip.y.toFixed(1)+' L'+base2.x.toFixed(1)+' '+base2.y.toFixed(1)+' Z';
+    return '<svg viewBox="0 0 300 190" role="img" aria-label="威脅指針，分數 '+score.toFixed(0)+'">'
+      +arcs+labels
+      +'<path d="'+needlePath+'" fill="'+needleColor+'"/>'
+      +'<circle cx="'+cx+'" cy="'+cy+'" r="9" fill="'+needleColor+'" stroke="var(--bg-card)" stroke-width="2.5"/>'
+      +'</svg>';
+  }
+
+  // 通用甜甜圈：segments=[{frac,color}]（依序疊加，未填滿部分露出底色）
+  function buildDonutSVG(segments,opts){
+    opts=opts||{};
+    var size=opts.size||120, sw=opts.sw||16;
+    var cx=size/2, cy=size/2, r=(size-sw)/2;
+    var circ=2*Math.PI*r;
+    var offsetAcc=0, arcs='';
+    (segments||[]).forEach(function(seg){
+      var frac=Math.max(0,Math.min(1,(seg&&seg.frac)||0));
+      if(frac<=0)return;
+      var len=circ*frac;
+      arcs+='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="'+seg.color+'" stroke-width="'+sw+
+        '" stroke-dasharray="'+len.toFixed(2)+' '+(circ-len).toFixed(2)+'" stroke-dashoffset="'+(-offsetAcc).toFixed(2)+
+        '" transform="rotate(-90 '+cx+' '+cy+')" stroke-linecap="butt"/>';
+      offsetAcc+=len;
+    });
+    var centerHtml='';
+    if(opts.centerText){
+      centerHtml='<text x="'+cx+'" y="'+(cy-1)+'" text-anchor="middle" font-size="'+(opts.centerFontSize||17)+
+        '" font-weight="700" fill="var(--text)" font-family="IBM Plex Mono,monospace">'+esc(opts.centerText)+'</text>';
+      if(opts.centerSub)centerHtml+='<text x="'+cx+'" y="'+(cy+15)+'" text-anchor="middle" font-size="9" fill="var(--text-muted)" font-family="IBM Plex Mono,monospace">'+esc(opts.centerSub)+'</text>';
+    }
+    return '<svg viewBox="0 0 '+size+' '+size+'" width="100%" height="100%" role="img" aria-label="donut">'
+      +'<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="var(--border-light)" stroke-width="'+sw+'"/>'
+      +arcs+centerHtml+'</svg>';
+  }
+
+  // ── ① 威脅指針渲染 ────────────────────────────────────────
+  function renderGaugeDrivers(list){
+    if(!list||!list.length)return '<li class="empty">目前無明確驅動項目。</li>';
+    return list.map(function(d){
+      if(typeof d==='string')return '<li>'+esc(d)+'</li>';
+      d=d||{};
+      return '<li><span>'+esc(d.label||'')+'</span>'+(d.points!=null?'<b>+'+esc(d.points)+'</b>':'')+'</li>';
+    }).join('');
+  }
+
+  function renderGauge(det){
+    var svgHost=document.getElementById('gaugeSvgWrap');
+    var chip=document.getElementById('gaugeBandChip');
+    if(!det||!det.signals){
+      svgHost.innerHTML=buildGaugeSVG(0,'calm');
+      document.getElementById('gaugeScoreNum').textContent='—';
+      chip.className='gauge-band-chip';
+      chip.textContent='資料暫缺';
+      document.getElementById('gaugeMeta').textContent='偵測層資料暫時無法載入，指針顯示為預設狀態。';
+      document.getElementById('gaugeDrivers').innerHTML='<li class="empty">—</li>';
+      document.getElementById('gaugeFallbackNote').hidden=true;
+      return;
+    }
+    var al=det.alert_level;
+    var fallback=false;
+    if(!al||typeof al.score!=='number'){
+      al=computeFallbackAlertLevel(det);
+      fallback=true;
+    }
+    var band=al.band||bandOfScore(al.score);
+    var bandLabel=al.band_label||BAND_LABEL_ZH[band]||band;
+    svgHost.innerHTML=buildGaugeSVG(al.score,band);
+    document.getElementById('gaugeScoreNum').textContent=Math.round(al.score);
+    chip.className='gauge-band-chip b-'+band;
+    chip.textContent=bandLabel;
+    var redN=(det.counts&&det.counts.red)!=null?det.counts.red:0;
+    var yellowN=(det.counts&&det.counts.yellow)!=null?det.counts.yellow:0;
+    var nearFireN=countNearFire(det.composites);
+    document.getElementById('gaugeMeta').textContent=
+      '紅燈 '+redN+' 條 · 黃燈 '+yellowN+' 條 · composite 近觸發 '+nearFireN+' 條'+(al.as_of?(' · as-of '+al.as_of):'');
+    document.getElementById('gaugeDrivers').innerHTML=renderGaugeDrivers(al.drivers);
+    var note=document.getElementById('gaugeFallbackNote');
+    if(fallback){
+      note.hidden=false;
+      note.textContent='註：alert_level 尚未由機械層產出，以上為前端暫用紅／黃燈數與 composite 近觸發數粗算的警戒度估計，非機械正式分數，僅供頁面先行可用。';
+    }else{
+      note.hidden=true;
+    }
+  }
+
+  // ── ② 訊號熱力樹圖渲染 ────────────────────────────────────
+  function renderHeatWall(det){
+    var host=document.getElementById('heatWall');
+    if(!det||!det.signals){
+      host.innerHTML='<div class="empty-state">偵測層資料暫時無法載入，熱力樹圖暫停渲染。</div>';
+      document.getElementById('heatCount').textContent='— 條';
+      return;
+    }
+    document.getElementById('heatCount').textContent=allSignals.length+' 條';
+    var bySrc={};
+    SRC_ORDER.forEach(function(s){bySrc[s]=[];});
+    allSignals.forEach(function(s){
+      var src=s.source;
+      if(!bySrc[src])bySrc[src]=[];
+      bySrc[src].push(s);
+    });
+    var h='';
+    SRC_ORDER.forEach(function(src){
+      var items=(bySrc[src]||[]).slice().sort(function(a,b){return (b.score||0)-(a.score||0);});
+      h+='<div class="heat-col">';
+      h+='<div class="heat-col-hd"><span>'+esc(SRC_LABEL[src]||src)+'</span><span class="cnt">'+items.length+'</span></div>';
+      h+='<div class="heat-cells">';
+      if(!items.length){
+        h+='<div class="heat-empty">—</div>';
+      }else{
+        items.forEach(function(s){
+          var grow=Math.max(1,(s.score||1));
+          h+='<div class="heat-cell '+esc(s.sev==='red'?'red':'yellow')+'" style="flex-grow:'+grow+'" data-key="'+esc(s.key)+'" title="'+esc(s.fact||s.label)+'">'
+            +'<span class="lbl">'+esc(s.label)+'</span><span class="sc">score '+esc(s.score)+'</span></div>';
+        });
+      }
+      h+='</div></div>';
+    });
+    host.innerHTML=h;
+  }
+
+  function renderHeatDetail(sig){
+    var panel=document.getElementById('heatDetailPanel');
+    if(!sig){
+      panel.innerHTML='<span class="ph">點擊上方任一格查看該訊號詳情。</span>';
+      return;
+    }
+    var badge='';
+    if(sig.state&&STATE_LABEL[sig.state]){
+      var txt=STATE_LABEL[sig.state];
+      if(sig.state==='active'&&sig.days_active>1)txt+=' '+sig.days_active+' 日';
+      badge='<span class="state-badge '+esc(sig.state)+'">'+esc(txt)+'</span>';
+    }
+    var lifeText='首見 '+toMD(sig.first_seen)+' ・持續 '+(sig.days_active!=null?sig.days_active:1)+' 日';
+    panel.innerHTML='<div class="sig-top">'
+      +'<span class="sev-dot '+esc(sig.sev)+'"></span>'
+      +'<span class="src-chip">'+esc(SRC_LABEL[sig.source]||sig.source)+'</span>'
+      +'<span class="sig-label">'+esc(sig.label)+'</span>'
+      +badge+'<span class="score-tag">score '+esc(sig.score)+'</span>'
+      +'</div>'
+      +'<div class="sig-fact">'+esc(sig.fact)+'</div>'
+      +(sig.context?'<div class="sig-ctx">'+esc(sig.context)+'</div>':'')
+      +'<div class="sig-life"><span>'+esc(lifeText)+'</span>'+buildEscTimeline(sig.escalations)+'</div>';
+  }
+
+  // ── 舊版完整清單（收合區內，state 分類＋filter＋30 天歷史）──
   function renderList(){
     var list=document.getElementById('sigList');
     var items=(curFilter==='all'?allSignals.slice():allSignals.filter(function(s){return s.source===curFilter;}));
@@ -544,7 +842,7 @@ footer.imq-foot a{color:var(--accent)}
       h+='<div class="sig-card'+(s.state==='cooling'?' cooling':'')+'">'
         +'<div class="sig-top">'
         +'<span class="sev-dot '+esc(s.sev)+'"></span>'
-        +'<span class="src-chip '+esc(s.source)+'">'+esc(SRC_LABEL[s.source]||s.source)+'</span>'
+        +'<span class="src-chip">'+esc(SRC_LABEL[s.source]||s.source)+'</span>'
         +'<span class="sig-label">'+esc(s.label)+'</span>'
         +badge
         +'<span class="score-tag">score '+esc(s.score)+'</span>'
@@ -587,9 +885,9 @@ footer.imq-foot a{color:var(--accent)}
     details.hidden=false;
   }
 
-  // ── Panel 2：Composite 規則面板 ──────────────────────────────────
+  // ── ③ Composite 靶盤渲染 ──────────────────────────────────
   function renderComposites(det){
-    var wrap=document.getElementById('compList');
+    var wrap=document.getElementById('compGrid');
     var comps=(det&&det.composites)||[];
     if(!comps.length){
       wrap.innerHTML='<div class="empty-state">目前無 composite 規則資料。</div>';
@@ -600,17 +898,27 @@ footer.imq-foot a{color:var(--accent)}
       var isDormant=c.status==='dormant';
       var fired=!!c.fired;
       var sev=c.sev==='red'?'red':(c.sev==='yellow'?'yellow':'');
-      var cardCls=isDormant?'dormant':(fired&&sev?('fired-'+sev):'');
-      h+='<div class="comp-card '+esc(cardCls)+'">';
-      h+='<div class="comp-top">';
-      h+='<span class="comp-id">'+esc(c.id||'')+'</span>';
-      h+='<span class="comp-name">'+esc(c.name||'')+'</span>';
+      var metCount=c.met_count!=null?c.met_count:0;
+      var minTrue=c.min_true!=null&&c.min_true>0?c.min_true:1;
+      var frac=metCount/minTrue;
+      var isNear=!isDormant&&!fired&&c.met_count!=null&&c.min_true!=null&&c.met_count===c.min_true-1;
+      var dialColor=isDormant?'var(--text-muted)':(fired?(sev==='red'?'var(--neg)':'var(--warn)'):(isNear?'var(--tense)':'var(--accent)'));
+      var cardCls=isDormant?'dormant':(fired&&sev?('fired-'+sev):(isNear?'near':''));
+      var dialSvg=buildDonutSVG([{frac:frac,color:dialColor}],{size:70,sw:9,centerText:(c.met_count!=null?c.met_count:'—')+'/'+(c.min_true!=null?c.min_true:'—'),centerFontSize:14});
+      h+='<div class="dial-card '+esc(cardCls)+'">';
+      h+='<div class="dial-top">';
+      h+='<div class="dial-svg">'+dialSvg+'</div>';
+      h+='<div class="dial-info">';
+      h+='<div class="comp-id">'+esc(c.id||'')+'</div>';
+      h+='<div class="comp-name">'+esc(c.name||'')+'</div>';
       if(isDormant){
         h+='<span class="comp-tag dormant">等待資料層上線</span>';
       }else if(fired){
         h+='<span class="comp-tag '+(sev||'yellow')+'">FIRED'+(c.fired_since?'・'+esc(c.fired_since):'')+'</span>';
+      }else if(isNear){
+        h+='<span class="comp-tag near">近觸發</span>';
       }
-      h+='<span class="comp-progress">'+(c.met_count!=null?c.met_count:'—')+' / '+(c.min_true!=null?c.min_true:'—')+' 項符合</span>';
+      h+='</div>';
       h+='</div>';
       h+='<div class="comp-members">';
       (c.members||[]).forEach(function(m){
@@ -627,25 +935,31 @@ footer.imq-foot a{color:var(--accent)}
     wrap.innerHTML=h;
   }
 
-  // ── Panel 3：Kill 對帳表 ─────────────────────────────────────────
-  function statTile(lbl,val){
-    return '<div class="stat-tile"><div class="lbl">'+esc(lbl)+'</div><div class="val">'+(val!=null?esc(val):'—')+'</div></div>';
+  // ── ④ Kill 覆蓋環渲染 ─────────────────────────────────────
+  function resolveKillItem(kw, ref){
+    if(ref&&typeof ref==='object')return ref;
+    var items=(kw&&kw.items)||[];
+    for(var i=0;i<items.length;i++){
+      if(items[i]&&items[i].id===ref)return items[i];
+    }
+    return {theme:null,metric_text:String(ref),threshold_text:null,current:null,doc:null,id:ref};
   }
 
-  function killRow(it,tag){
-    if(typeof it==='string'||typeof it==='number'){
-      return '<tr><td><span class="kill-row-sev '+tag+'"></span></td><td colspan="5">'+esc(it)+'</td></tr>';
-    }
-    it=it||{};
-    var srcCell=it.source_url
-      ?('<a href="'+esc(it.source_url)+'" target="_blank" rel="noopener">'+esc(it.source_id||'來源')+'</a>')
-      :esc(it.source_id||'—');
+  function killRow(kw,ref,tag){
+    var it=resolveKillItem(kw,ref)||{};
+    var metric=it.metric_text||it.metric||'—';
+    var threshold=it.threshold_text||it.threshold||'—';
+    var current=(it.current!=null?it.current:(it.value!=null?it.value:'—'));
+    var unit=it.unit?(' '+it.unit):'';
+    var srcHref=it.doc?('/'+String(it.doc).replace(/^docs\//,'')):it.source_url;
+    var srcLabel=it.doc?(it.theme||'查看來源'):(it.source_id||'—');
+    var srcCell=srcHref?('<a href="'+esc(srcHref)+'" target="_blank" rel="noopener">'+esc(srcLabel)+'</a>'):esc(it.theme||'—');
     return '<tr>'
       +'<td><span class="kill-row-sev '+tag+'"></span></td>'
       +'<td>'+esc(it.theme||'—')+'</td>'
-      +'<td>'+esc(it.metric||'—')+'</td>'
-      +'<td>'+esc(it.threshold!=null?it.threshold:'—')+'</td>'
-      +'<td>'+esc(it.current!=null?it.current:'—')+'</td>'
+      +'<td>'+esc(metric)+'</td>'
+      +'<td>'+esc(threshold)+'</td>'
+      +'<td>'+esc(current)+esc(unit)+'</td>'
       +'<td>'+srcCell+'</td>'
       +'</tr>';
   }
@@ -653,7 +967,7 @@ footer.imq-foot a{color:var(--accent)}
   function renderKillWatch(kw){
     var box=document.getElementById('killBox');
     if(!kw){
-      box.innerHTML='<div class="empty-state">kill 對帳管線建置中，資料層尚未產出。</div>';
+      box.innerHTML='<div class="empty-state">對帳管線建置中，資料層尚未產出。</div>';
       return;
     }
     try{
@@ -662,33 +976,41 @@ footer.imq-foot a{color:var(--accent)}
       var mech=cov.mechanical!=null?cov.mechanical:kw.mechanical;
       var llm=cov.llm_only!=null?cov.llm_only:kw.llm_only;
       var stale=cov.stale!=null?cov.stale:kw.stale;
-      var statsHtml='<div class="stat-grid">'
-        +statTile('總 kill 條目',total)
-        +statTile('機械層覆蓋',mech)
-        +statTile('僅 LLM 覆蓋',llm)
-        +statTile('已過期',stale)
-        +'</div>';
+      var fracMech=(total&&mech!=null)?(mech/total):0;
+      var donut=buildDonutSVG([{frac:fracMech,color:'var(--accent)'}],{
+        size:120,sw:15,
+        centerText:(mech!=null?mech:'—')+'/'+(total!=null?total:'—'),
+        centerSub:'機械覆蓋',centerFontSize:17
+      });
+      var heroHtml='<div class="kill-hero">'
+        +'<div class="kill-donut">'+donut+'</div>'
+        +'<div class="kill-legend">'
+        +'<div class="kl-row"><span class="kl-dot" style="background:var(--accent)"></span>機械層覆蓋<b>'+esc(mech!=null?mech:'—')+'</b></div>'
+        +'<div class="kl-row"><span class="kl-dot" style="background:var(--border-light)"></span>僅 LLM 覆蓋<b>'+esc(llm!=null?llm:'—')+'</b></div>'
+        +'<div class="kl-row"><span class="kl-dot" style="background:var(--warn)"></span>已過期<b>'+esc(stale!=null?stale:'—')+'</b></div>'
+        +'<div class="kl-row"><span>總 kill 條目</span><b>'+esc(total!=null?total:'—')+'</b></div>'
+        +'</div></div>';
       var breached=kw.breached||[];
       var near=kw.near||[];
       var tableHtml;
       if(breached.length||near.length){
         var rows='';
-        breached.forEach(function(it){rows+=killRow(it,'red');});
-        near.forEach(function(it){rows+=killRow(it,'yellow');});
+        breached.forEach(function(it){rows+=killRow(kw,it,'red');});
+        near.forEach(function(it){rows+=killRow(kw,it,'yellow');});
         tableHtml='<div class="kill-table-wrap"><table class="kill-table">'
           +'<thead><tr><th></th><th>主題</th><th>指標</th><th>閾值</th><th>現值</th><th>來源</th></tr></thead>'
           +'<tbody>'+rows+'</tbody></table></div>';
       }else{
-        tableHtml='<div class="empty-state" style="margin-top:.9rem">目前無 breached／near 條目。</div>';
+        tableHtml='<div class="empty-state" style="margin-top:1.1rem">目前無 breached／near 條目。</div>';
       }
-      box.innerHTML=statsHtml+tableHtml
+      box.innerHTML=heroHtml+tableHtml
         +'<div class="kill-footnote">註：「僅 LLM 覆蓋」條目由週頻 LLM 掃描層對帳，非本頁日更機械層直接覆蓋；breached＝已觸及閾值（紅），near＝方向逼近但未觸及（黃）。</div>';
     }catch(e){
       box.innerHTML='<div class="empty-state">kill 對帳資料格式異常，暫無法渲染。</div>';
     }
   }
 
-  // ── Panel 4：判讀區（schema detective-editorial-v1：headline／themes[]／watch[]／stance_note）──
+  // ── ⑤ 判讀區渲染（schema detective-editorial-v1：headline／themes[]／watch[]／stance_note）──
   function renderEditorial(det, ed){
     var box=document.getElementById('editorialBox');
     var counts=(det&&det.counts)||{};
@@ -704,7 +1026,7 @@ footer.imq-foot a{color:var(--accent)}
       var detAsOf=det&&det.as_of;
       var gap=(detAsOf&&ed.as_of)?daysBetween(ed.as_of,detAsOf):null;
       var isStale=gap!=null&&Math.abs(gap)>7;
-      var h='';
+      var h='<div class="editorial-overline">偵探手記 · as-of '+esc(ed.as_of||'—')+'</div>';
       if(isStale){
         h+='<span class="editorial-stale-tag">判讀已過期（as_of '+esc(ed.as_of)+'，機械層已至 '+esc(detAsOf)+'）</span>';
       }
@@ -751,6 +1073,18 @@ footer.imq-foot a{color:var(--accent)}
     renderList();
   });
 
+  document.getElementById('heatWall').addEventListener('click',function(e){
+    var cell=e.target.closest('.heat-cell');
+    if(!cell)return;
+    var key=cell.getAttribute('data-key');
+    var sig=allSignals.filter(function(s){return s.key===key;})[0];
+    document.querySelectorAll('.heat-cell.sel').forEach(function(c){c.classList.remove('sel');});
+    if(sig){
+      cell.classList.add('sel');
+      renderHeatDetail(sig);
+    }
+  });
+
   Promise.all([
     fetchJSON('/detective/data/latest.json'),
     fetchJSON('/monitor/data/latest.json'),
@@ -761,10 +1095,12 @@ footer.imq-foot a{color:var(--accent)}
     var det=res[0], monLatest=res[1], state=res[2], killWatch=res[3], editorial=res[4];
     document.getElementById('loadingMsg').hidden=true;
     if(!det||!det.signals){
-      document.getElementById('statGrid').hidden=true;
-      document.getElementById('loadingMsg').hidden=false;
-      document.getElementById('loadingMsg').textContent='偵探資料層暫時無法載入。';
-      document.getElementById('compList').innerHTML='<div class="empty-state">偵探資料層暫時無法載入，Composite 面板暫停渲染。</div>';
+      document.getElementById('legacyListDetails').hidden=true;
+      try{renderGauge(null);}catch(e){}
+      try{renderHeatWall(null);}catch(e){}
+      try{renderComposites(null);}catch(e){
+        document.getElementById('compGrid').innerHTML='<div class="empty-state">偵探資料層暫時無法載入，Composite 面板暫停渲染。</div>';
+      }
       try{renderKillWatch(killWatch);}catch(e){}
       try{renderEditorial(null, editorial);}catch(e){}
       return;
@@ -785,7 +1121,18 @@ footer.imq-foot a{color:var(--accent)}
       sb.hidden=false;
     }
 
-    // 統計列
+    // ① 威脅指針
+    try{renderGauge(det);}catch(e){
+      document.getElementById('gaugeMeta').textContent='指針資料格式異常，暫無法渲染。';
+    }
+
+    // ② 訊號熱力樹圖
+    try{renderHeatWall(det);}catch(e){
+      document.getElementById('heatWall').innerHTML='<div class="empty-state">熱力樹圖資料格式異常，暫無法渲染。</div>';
+    }
+
+    // 舊版完整清單（收合區）
+    document.getElementById('legacyListDetails').hidden=false;
     var c=det.counts||{};
     document.getElementById('statTotal').textContent=c.total!=null?c.total:allSignals.length;
     document.getElementById('statRed').textContent=c.red!=null?c.red:0;
@@ -794,20 +1141,20 @@ footer.imq-foot a{color:var(--accent)}
     document.getElementById('statActive').textContent=c.active!=null?c.active:'—';
     document.getElementById('statCooling').textContent=c.cooling!=null?c.cooling:'—';
     document.getElementById('statGrid').hidden=false;
-
-    document.getElementById('sigCount').textContent=allSignals.length+' 條';
-    document.getElementById('detective-signals').hidden=false;
     renderList();
-
     try{renderHistory(state, det.as_of);}catch(e){
       document.getElementById('historyDetails').hidden=true;
     }
+
+    // ③ Composite 靶盤
     try{renderComposites(det);}catch(e){
-      document.getElementById('compList').innerHTML='<div class="empty-state">Composite 資料格式異常，暫無法渲染。</div>';
+      document.getElementById('compGrid').innerHTML='<div class="empty-state">Composite 資料格式異常，暫無法渲染。</div>';
     }
+    // ④ Kill 覆蓋環
     try{renderKillWatch(killWatch);}catch(e){
       document.getElementById('killBox').innerHTML='<div class="empty-state">kill 對帳資料格式異常，暫無法渲染。</div>';
     }
+    // ⑤ 判讀
     try{renderEditorial(det, editorial);}catch(e){
       document.getElementById('editorialBox').innerHTML='<div class="empty-state">判讀資料格式異常，暫無法渲染。</div>';
     }
