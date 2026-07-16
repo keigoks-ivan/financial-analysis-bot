@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta name="robots" content="noindex,nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SPY/QQQ 買 put 避險 | InvestMQuest Research</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+:root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
+      --text:#111827;--muted:#6b7280;--border:#e5e7eb;
+      --green:#059669;--green-bg:#ecfdf5;--green-border:#a7f3d0;--green-text:#065f46;
+      --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;--red-text:#991b1b;
+      --amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fde68a;--amber-text:#92400e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1120px;margin:0 auto;padding:0 1.5rem}
+.page-hdr{padding:1.75rem 0 1.25rem;background:linear-gradient(180deg,#eff6ff 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
+.page-hdr h1{font-size:1.6rem;font-weight:700;letter-spacing:-.03em}
+.page-hdr .sub{color:var(--muted);font-size:.9rem;margin-top:.2rem}
+.crumb{font-size:.82rem;color:var(--muted);margin-bottom:.4rem}
+.crumb a{color:var(--muted)}
+.section{padding:1.5rem 0 0}
+.section-title{font-size:1.15rem;font-weight:700;margin-bottom:1rem;
+               padding-bottom:.45rem;border-bottom:2px solid var(--brand)}
+.section-sub{font-size:.85rem;color:var(--muted);margin:-.5rem 0 1rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.card h3{font-size:1rem;font-weight:600;margin-bottom:.85rem}
+.card .takeaway{font-size:.88rem;margin-top:.75rem;padding:.6rem .9rem;border-radius:6px;
+                background:var(--brand-light);border-left:3px solid var(--brand)}
+.card p{font-size:.9rem;color:#374151;margin-bottom:.6rem}
+.card p:last-child{margin-bottom:0}
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+th,td{text-align:left;padding:.55rem .7rem;border-bottom:1px solid var(--border)}
+th{background:#f9fafb;font-weight:600;font-size:.76rem;text-transform:uppercase;
+   letter-spacing:.03em;color:var(--muted)}
+td{font-variant-numeric:tabular-nums}
+td.num,th.num{text-align:right}
+tbody tr:hover td{background:#f3f4f6}
+.neg{color:var(--red);font-weight:600}
+.pos{color:var(--green);font-weight:600}
+.rowhl td{background:var(--brand-light)!important}
+.hero{margin:1.25rem 0;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--card)}
+.hero-top{background:linear-gradient(135deg,#eff6ff 0%,#f5f8ff 100%);padding:1.4rem 1.6rem;border-bottom:1px solid var(--border)}
+.hero-top .verdict-tag{display:inline-block;background:#991b1b;color:#fff;font-size:.74rem;font-weight:700;
+                       letter-spacing:.05em;padding:.25rem .7rem;border-radius:99px;margin-bottom:.5rem}
+.hero-top h2{font-size:1.35rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.35rem}
+.hero-top p{font-size:.92rem;color:#374151;max-width:64rem}
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card)}
+.hero-stats > div{padding:1rem 1.2rem;text-align:center;border-right:1px solid var(--border)}
+.hero-stats > div:last-child{border-right:none}
+.hero-stats .hs-label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.hero-stats .hs-value{font-size:1.5rem;font-weight:800;letter-spacing:-.02em}
+.note{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;
+      padding:.85rem 1.1rem;font-size:.84rem;color:var(--amber-text);margin:1rem 0}
+.warn-loud{background:var(--red-bg);border:2px solid var(--red-border);border-radius:8px;
+      padding:1rem 1.2rem;font-size:.9rem;color:var(--red-text);margin:1rem 0}
+.warn-loud strong{color:var(--red)}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.chart-card h3{font-size:.95rem;font-weight:600;margin-bottom:.5rem}
+.chart-wrap{position:relative;width:100%;height:400px}
+.chart-wrap-sm{position:relative;width:100%;height:300px}
+details{background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:.75rem}
+details summary{padding:.9rem 1.25rem;font-weight:600;font-size:.95rem;cursor:pointer;list-style:none;display:flex;align-items:center;gap:.5rem}
+details summary::before{content:'▸';color:var(--brand);transition:transform .15s}
+details[open] summary::before{transform:rotate(90deg)}
+details .d-body{padding:0 1.25rem 1.25rem;overflow-x:auto}
+.issue-list{font-size:.88rem;color:#374151;padding-left:1.2rem;line-height:1.9}
+.cards3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+.tbl-wrap{overflow-x:auto}
+footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
+       text-align:center;padding:1.25rem 0;font-size:.78rem;margin-top:2rem}
+@media(max-width:768px){
+  .hero-stats{grid-template-columns:repeat(2,1fr)}
+  .hero-stats > div{border-bottom:1px solid var(--border)}
+  .cards3{grid-template-columns:1fr}
+  table{font-size:.78rem}th,td{padding:.4rem .45rem}
+}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/monitor/">市場監測</a>
+          <a href="/detective/">偵測警報網</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/rotation/">產業輪動</a>
+          <a href="/crowding/">擁擠交易監測</a>
+          <a href="/regime/">大類資產 regime</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/catalyst/">催化劑日曆</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">選股<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/cockpit/">選股主控台</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/research/momentum-5/">Momentum-5</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screeners.html">RS+VCP Screener</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">個股總覽</a>
+          <a href="/research/">個股 DD</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/research/synthesis/">期望落差綜合研判</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/track-record/">裁決實績</a>
+          <a href="/long-track-smh/">長線訊號 SMH</a>
+          <a href="/long-track-tw/">台股長線</a>
+          <a href="/turtle-sleeve/">商品 Sleeve</a>
+          <a href="/backtest/" class="active">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/cache/">Data Cache</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="page-hdr">
+  <div class="container">
+    <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / SPY/QQQ 買 put 避險</div>
+    <h1>SPY/QQQ 買 put 避險</h1>
+    <div class="sub">長期持有下「何時買 put 有利」・三輪研究、100+ 配置・誠實負結果・評估窗 2004–2026</div>
+    <style id="bt-subnav-style">.bt-subnav{margin-top:.75rem;border:1px solid var(--border,#e5e7eb);border-radius:8px;overflow:hidden;font-size:.78rem;line-height:1.3}.bt-subnav-row{display:flex;align-items:flex-start;gap:.55rem;padding:.32rem .55rem;border-top:1px solid var(--border,#e5e7eb)}.bt-subnav-row:first-child{border-top:0}.bt-subnav-lbl{flex:0 0 5.4em;font-size:.64rem;font-weight:700;color:var(--muted,#6b7280);text-transform:uppercase;letter-spacing:.04em;padding-top:.34rem}.bt-subnav-pills{display:flex;flex-wrap:wrap;gap:.3rem;min-width:0}.bt-subnav-pills a{display:inline-flex;align-items:center;gap:.28rem;padding:.26rem .6rem;background:#eef1f4;color:#374151;border-radius:999px;text-decoration:none;font-weight:500;white-space:nowrap;transition:background .12s}.bt-subnav-pills a:hover{background:#e1e6ea}.bt-subnav-pills a.bt-dead{color:#7a828d;background:#f2f3f5}.bt-subnav-pills a.bt-on{background:linear-gradient(135deg,#081832,#173564);color:#fff;font-weight:600}.bt-subnav-pills a.bt-on:hover{background:linear-gradient(135deg,#081832,#173564)}.bt-tag{font-size:.6rem;font-weight:600;padding:.02rem .3rem;border-radius:4px;line-height:1.4}.bt-tag-dead{background:rgba(220,38,38,.12);color:#b42318}.bt-tag-watch{background:rgba(180,118,20,.15);color:#986a12}.bt-on .bt-tag-dead{background:rgba(255,255,255,.22);color:#fff}.bt-on .bt-tag-watch{background:rgba(255,255,255,.22);color:#fff}@media(max-width:640px){.bt-subnav-row{flex-direction:column;gap:.28rem;padding:.4rem .55rem}.bt-subnav-lbl{flex-basis:auto;padding-top:0}}</style><nav class="bt-subnav" aria-label="回測子導航"><div class="bt-subnav-row"><div class="bt-subnav-lbl">對比總覽</div><div class="bt-subnav-pills"><a href="/backtest/">20 年</a><a href="/backtest/10y/">10 年</a><a href="/backtest/criteria/">評估標準</a><a href="/backtest/tw/">台股總覽</a><a href="/backtest/multi/">多資產總覽</a><a href="/backtest/leverage/">槓桿疊加總覽</a><a href="/backtest/ma_sensitivity/">MA 敏感度</a><a href="/backtest/free_lunch/">分散與免費午餐</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">個別系統</div><div class="bt-subnav-pills"><a href="/backtest/long_track/">SPY/QQQ 長軌</a><a href="/backtest/long_track_qqq/">QQQ 長軌純攻</a><a href="/backtest/long_track_ensemble/">SPY/QQQ 集成</a><a href="/backtest/long_track_smh/">SMH/QQQ 進攻</a><a href="/backtest/six_state/">QQQ＋SMH 六狀態</a><a href="/backtest/six_state_v1r1/">QQQ 六狀態實盤</a><a href="/backtest/gem/">SPY/ACWX 雙動能</a><a href="/backtest/slope_filter/">SPY/AGG 斜率</a><a href="/backtest/rsi2_mr/">SPY/QQQ 均值回歸</a><a href="/backtest/supertrend/">週線 Supertrend</a><a href="/backtest/minervini/">Minervini RS+VCP</a><a href="/backtest/mom_volscaling/">動能·波動縮放</a><a href="/backtest/dual_track_study/">雙軌分散研究</a><a href="/backtest/leverage_voltarget/">期貨槓桿疊加</a><a href="/backtest/dual_track/" class="bt-dead">SPY/QQQ 雙軌多空<span class="bt-tag bt-tag-dead">否決</span></a><a href="/backtest/exit_switch/" class="bt-dead">出場法切換<span class="bt-tag bt-tag-dead">否決</span></a><a href="/backtest/short_system/" class="bt-dead">指數做空<span class="bt-tag bt-tag-dead">失敗</span></a><a href="/backtest/cndr/" class="bt-dead">Iron Condor<span class="bt-tag bt-tag-dead">失敗</span></a><a href="/backtest/covered_call/" class="bt-dead">Covered Call<span class="bt-tag bt-tag-dead">負貢獻</span></a><a href="/backtest/put_timing/" class="bt-on">SPY/QQQ 買 put 避險<span class="bt-tag bt-tag-dead">負貢獻</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">多資產</div><div class="bt-subnav-pills"><a href="/backtest/turtle/">唐奇安突破</a><a href="/backtest/clenow/">跨資產趨勢</a><a href="/backtest/multiasset_trend/">SG Trend 複製</a><a href="/backtest/turtle_adopt/">組合採用 Sleeve</a><a href="/backtest/slope_filter_global/">全球斜率穩健性</a><a href="/backtest/crossasset_defense/">跨資產防守</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">台股波段</div><div class="bt-subnav-pills"><a href="/backtest/tw_0050_compare/">0050 總覽·台美差異</a><a href="/backtest/tw_crash/">台股含崩盤驗證</a><a href="/backtest/tw_0050/">0050 進攻趨勢（移植）</a><a href="/backtest/tw_0050_lt/">0050 長軌趨勢</a><a href="/backtest/long_track_tw/">2330/0050 E3 長軌</a><a href="/backtest/tw_0050_six/">0050 六狀態機</a><a href="/backtest/tw_vcrash/">V崩防禦研究</a><a href="/backtest/tw_0050_dual/" class="bt-dead">0050 雙軌多空<span class="bt-tag bt-tag-dead">否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">台股選擇權</div><div class="bt-subnav-pills"><a href="/backtest/tw_options/">台股選擇權專區<span class="bt-tag bt-tag-watch">專區</span></a><a href="/backtest/txo_vol_seller/">台指選擇權賣方<span class="bt-tag bt-tag-watch">模擬中</span></a><a href="/backtest/txo_put_seller/">台指賣方下檔<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_iron_condor/">台指雙賣<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_covered_call_0050/">台指 Covered Call<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_tail_hedge/">台指尾端避險<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">日內交易</div><div class="bt-subnav-pills"><a href="/backtest/txf_intraday/">台指當沖<span class="bt-tag bt-tag-watch">未過</span></a><a href="/backtest/txf_chips/">籌碼偏向<span class="bt-tag bt-tag-watch">觀察</span></a><a href="/backtest/ssf_xsec/">個股期橫斷面<span class="bt-tag bt-tag-watch">未過</span></a><a href="/backtest/txf_basis/" class="bt-dead">基差偏向<span class="bt-tag bt-tag-dead">否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究筆記</div><div class="bt-subnav-pills"><a href="/backtest/daily_vs_weekly/">日/週線</a><a href="/backtest/daily_vs_weekly_deep/">日/週·深掘</a><a href="/backtest/daily_vs_weekly_global/">日/週·全球</a><a href="/backtest/daily_vs_weekly_tw/">日/週·台股</a><a href="/backtest/ma_cross/">MA 交叉</a><a href="/backtest/ma_deviation/">MA 乖離</a><a href="/backtest/ma_dynband/">MA 動態帶</a><a href="/backtest/ma_squeeze/">MA 擠壓</a><a href="/backtest/smh_vcrash/">SMH V崩</a></div></div></nav>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ===== HERO ===== -->
+<div class="hero">
+  <div class="hero-top">
+    <span class="verdict-tag">誠實負結果 — 沒有穩健贏家</span>
+    <h2>事前擇時買 put 無法穩定地「有利」。put 是保險支出，不是能改善長期風險調整報酬的 alpha。</h2>
+    <p>問題：長期持有 SPY／QQQ 之下，什麼條件買 put 有利？三輪研究、100+ 配置，答案分兩層，都不樂觀。
+       <strong>絕對面</strong>：56 個 Stage-1 配置的 put 本身平均損益全部為負（付 $1 權利金拿回 $0.20–$0.80），這是波動率風險溢價 VRP 的另一面，符合事前預期。
+       <strong>組合面</strong>：以「MDD 改善 ≥2pp 且 CAGR 代價 &lt;1pp」的事前門檻篩，只有 2 個 QQQ 配置通過——一個是路徑運氣（最需要的三次大跌全漏接），一個只跟 B&amp;H 打平。
+       Round 3 用趨勢閘門把陰跌用正 carry 避掉、只讓 put 保急崩盲區，機制驗證完全成立（9/9 急崩補上），但 18 個配置無一把 Calmar 買回 trend-only 的水準。</p>
+  </div>
+  <div class="hero-stats">
+    <div><div class="hs-label">測試配置（三輪）</div><div class="hs-value" style="color:var(--brand)">100+</div></div>
+    <div><div class="hs-label">Stage-1 put EV</div><div class="hs-value neg">56/56 全負</div></div>
+    <div><div class="hs-label">通過事前門檻</div><div class="hs-value" style="color:var(--amber)">2（皆脆弱）</div></div>
+    <div><div class="hs-label">Round 3 趨勢閘門+put</div><div class="hs-value neg">18 配置無一回本</div></div>
+  </div>
+</div>
+
+<div class="note">
+  <strong>方法與合成定價偏差揭露（誠實框架是這頁的賣點，務必先讀）：</strong>
+  無免費歷史選擇權鏈，全部 put 以 Black-Scholes 歐式合成定價。隱波代理 σ_ATM = ^VIX（SPY）／^VXN（QQQ），
+  VIX／VXN 本身已含 skew 溢價、略高估 ATM put 成本（方向上對買方保守）。Skew 用線性 bump（每低於 S 1% 加 0.5 vol pt），
+  另跑 {0.0, 1.0} 敏感度——flat-vol（skew=0）會系統性<strong>低估</strong> OTM put 成本、讓避險看起來比實際吸引人（tw_options 稽核教訓）。
+  期限結構 flat（30 天 IV 當 60 天用）為已知偏差。成本：權利金 1%／邊、股票挪倉 7 bps／邊。
+  執行 t 日算訊號、t+1 收盤成交（無 look-ahead）；股息 DRIP、無交易的 run 可精確重現 total-return B&amp;H。
+  兩 put 規格固定不調參：P1 = 5% OTM 60 天、P2 = ATM 30 天。
+</div>
+
+<!-- ===== WHAT IS TESTED ===== -->
+<div class="section">
+<h2 class="section-title">這在測什麼</h2>
+<div class="cards3">
+  <div class="card">
+    <h3>問題與兩層判準</h3>
+    <p>底倉 SPY／QQQ 長期持有（B&amp;H、股息再投入）。從隱波水位、布林、乖離率、VRP、期限結構、價格狀態六個面向切入，
+    每個面向獨立測試。<strong>絕對面</strong>看訊號觸發後 put 本身的平均損益（putEV = pnl_per_prem）；
+    <strong>組合面</strong>看疊加後 vs 純 B&amp;H 的 CAGR／MDD／Calmar。headline 用組合面。</p>
+  </div>
+  <div class="card">
+    <h3>已知前提：VRP 的另一面</h3>
+    <p>無條件買 put 長期是負期望值——這是波動率風險溢價的另一面，事前就知道。真正的問題不是「買不買」，
+    而是「有沒有一個條件訊號能<strong>只在該買時買</strong>，把負 EV 翻正、或至少換到划算的 MDD 改善」。
+    所有條件訊號要打敗的基準是：純 B&amp;H、與無條件 put ladder（永遠避險）。</p>
+  </div>
+  <div class="card">
+    <h3>為什麼是誠實負結果頁</h3>
+    <p>這頁的價值不在 headline 贏，而在<strong>過程嚴謹</strong>：每個亮眼格都做逐筆解剖（樂透分解）、
+    標注多重比較警告（100+ 配置下小樣本「正 EV」是雜訊的預期行為）、跑 IS／OOS 一致性與 skew 敏感度。
+    結論的一致性本身就是資訊：put 擇時的失敗不是訊號選得不好，是<strong>負 carry 在結構上壓過任何免費資訊能給的擇時精度</strong>。</p>
+  </div>
+</div>
+</div>
+
+<!-- ===== ROUND 1 GRID ===== -->
+<div class="section">
+<h2 class="section-title">Round 1：全面向格點（2 標的 × 2 規格 × 14 訊號 = 56 格）</h2>
+<div class="section-sub">全部 56 格 putEV 皆為負。僅 2 格通過事前門檻（皆 QQQ），且拆開都站不住。下表為 best-of ＋基準。</div>
+<div class="card">
+<div class="tbl-wrap">
+<table>
+<thead><tr><th>標的｜規格｜訊號</th><th class="num">CAGR</th><th class="num">MDD</th><th class="num">Calmar</th><th class="num">putEV</th><th>判讀</th></tr></thead>
+<tbody>
+<tr class="rowhl"><td>QQQ｜5%OTM 60d｜bb_z25（布林 2.5σ）</td><td class="num">15.02%</td><td class="num">−42.29%</td><td class="num">0.355</td><td class="num neg">−0.608</td><td>全表 Calmar 冠軍，但路徑運氣（見下節）</td></tr>
+<tr class="rowhl"><td>QQQ｜ATM 30d｜bias200_15（乖離 15%）</td><td class="num">14.56%</td><td class="num">−51.21%</td><td class="num">0.284</td><td class="num neg">−0.196</td><td>通過門檻但 IS／OOS 皆僅打平 B&amp;H</td></tr>
+<tr><td>SPY｜ATM 30d｜iv_high80（高隱波買）</td><td class="num">7.48%</td><td class="num">−32.51%</td><td class="num">0.230</td><td class="num neg">−0.409</td><td>SPY 唯一 Calmar 贏 B&amp;H，但是反應式避險、OOS 落後</td></tr>
+<tr><td>QQQ｜5%OTM 60d｜always（無條件永遠避險）</td><td class="num">7.04%</td><td class="num">−38.76%</td><td class="num">0.182</td><td class="num neg">−0.727</td><td>100% 到場，代價 CAGR −7.9pp</td></tr>
+<tr><td>SPY｜5%OTM 60d｜bias200_15（乖離 15%）</td><td class="num">10.00%</td><td class="num">−55.19%</td><td class="num">0.181</td><td class="num neg">−1.000</td><td>8 筆幾乎全損，統計無意義</td></tr>
+<tr style="border-top:2px solid var(--border)"><td><strong>SPY B&amp;H（基準）</strong></td><td class="num">10.85%</td><td class="num">−55.19%</td><td class="num">0.197</td><td class="num">—</td><td>股息再投入</td></tr>
+<tr><td><strong>QQQ B&amp;H（基準）</strong></td><td class="num">14.94%</td><td class="num">−53.40%</td><td class="num">0.280</td><td class="num">—</td><td>股息再投入</td></tr>
+</tbody>
+</table>
+</div>
+<div class="takeaway"><strong>面向別速讀：</strong>「便宜時買」（VRP 低、低隱波）確實讓 put 少虧，但少虧的負 EV 還是負 EV；
+「高隱波追買」（iv_high80）是危機已爆才追保險，急跌有效、陰跌倒貼；「乖離／布林」門檻低則被成本拖死、門檻高則樣本消失；
+「破 MA50／期限倒掛」追殺跌、把長期複利砍掉一大塊。<strong>沒有任何訊號把負 EV 翻正。</strong></div>
+</div>
+
+<div class="chart-card">
+  <h3>Round 1 putEV：QQQ 5% OTM 60 天，14 個訊號全部落在零線下方</h3>
+  <div class="chart-wrap"><canvas id="chart-putev"></canvas></div>
+</div>
+</div>
+
+<!-- ===== EXIT MECHANISM ===== -->
+<div class="section">
+<h2 class="section-title">Stage 2 出場機制：X2＝昂貴的什麼都沒做</h2>
+<div class="section-sub">X0 持有到期｜X1 權利金 3× 獲利了結｜X2 訊號消滅即平倉（結構性比較、非調參）。以 QQQ 為例。</div>
+<div class="card">
+<div class="tbl-wrap">
+<table>
+<thead><tr><th>配置</th><th class="num">CAGR</th><th class="num">MDD</th><th class="num">Calmar</th><th class="num">putEV</th><th class="num">tHedg</th></tr></thead>
+<tbody>
+<tr><td>always（無條件）｜X0</td><td class="num">7.04%</td><td class="num">−38.76%</td><td class="num">0.182</td><td class="num neg">−0.727</td><td class="num">100%</td></tr>
+<tr class="rowhl"><td>always｜<strong>X1（3× 了結）</strong></td><td class="num">9.99%</td><td class="num">−42.38%</td><td class="num">0.236</td><td class="num neg">−0.351</td><td class="num">100%</td></tr>
+<tr><td>bb_z25｜X0</td><td class="num">15.02%</td><td class="num">−42.29%</td><td class="num">0.355</td><td class="num neg">−0.608</td><td class="num">21.3%</td></tr>
+<tr><td>bb_z25｜X1</td><td class="num">14.64%</td><td class="num">−49.85%</td><td class="num">0.294</td><td class="num neg">−0.053</td><td class="num">19.3%</td></tr>
+<tr><td>bb_z25｜X2（訊號消滅）</td><td class="num">14.93%</td><td class="num">−53.72%</td><td class="num">0.278</td><td class="num neg">−0.021</td><td class="num">0.7%</td></tr>
+</tbody>
+</table>
+</div>
+<div class="takeaway">
+<strong>X2 成功「不虧錢地買 put」，代價是「買了等於沒買」：</strong>bb_z25 的 tHedg 由 21%→0.7%、putEV 拉回 ≈0，但 MDD 也從 −42.29% 退回 −53.72%（≈B&amp;H），保護同步歸零。
+<strong>X1（3× 了結）對無條件 ladder 真有救</strong>（always Calmar 0.182→0.236），把波動尖峰的紙上獲利變現；
+<strong>但 X1 會毀掉 bb_z25 的大贏</strong>（Calmar 0.355→0.294）——它那幾次「見頂後保險一路增值到崩盤底」的長尾獲利被提前了結，印證下節：bb_z25 的優勢本質上依賴少數幾筆抱到底的部位，禁不起機械化變現。</div>
+</div>
+</div>
+
+<!-- ===== LOTTERY DISSECTION ===== -->
+<div class="section">
+<h2 class="section-title">樂透解剖：為什麼全表 Calmar 冠軍 bb_z25 是路徑運氣、不是結構優勢</h2>
+<div class="warn-loud">
+  <strong>QQQ bb_z25（0.355）拆事件後站不住：評估窗內 3 次 &gt;20% 的大跌，peak 當下都沒有持 put，跌幅一成都沒被抵消。</strong>
+  超買訊號（漲太兇才觸發）在這些「先陰跌、再破位」的下跌前根本沒亮，最需要保險的三次它全部缺席。
+</div>
+<div class="card">
+<div class="tbl-wrap">
+<table>
+<thead><tr><th>大跌事件（peak→trough）</th><th class="num">B&amp;H 跌幅</th><th class="num">overlay 跌幅</th><th class="num">抵消</th><th>peak 時有避險？</th></tr></thead>
+<tbody>
+<tr><td>2020-02 COVID</td><td class="num">−28.6%</td><td class="num">−28.6%</td><td class="num neg">0.0%</td><td>否</td></tr>
+<tr><td>2021-12→2022-11 熊市</td><td class="num">−35.1%</td><td class="num">−35.1%</td><td class="num neg">0.0%</td><td>否</td></tr>
+<tr><td>2025-02 春季</td><td class="num">−22.8%</td><td class="num">−22.8%</td><td class="num neg">0.0%</td><td>否</td></tr>
+</tbody>
+</table>
+</div>
+<div class="takeaway"><strong>逐筆實現損益（引擎重跑覆核）：</strong>29 筆中僅 5 筆實現獲利，前三大（2018-08 +$404k、2008-08 +$218k、2012-09 +$116k）佔全部正實現損益約 93%；
+<strong>2020-10 之後進場的 8 筆全數虧損（合計約 −$1.83M）</strong>。其中 2021-01 與 2024-06 兩筆在回檔視窗內帳面一度大賺（+$374k／+$610k），到期前反彈全數回吐、實現反虧——「紙上獲利不變現就蒸發」的實證。漂亮的 Calmar 來自「保險恰好在幾次見頂時在場」的路徑運氣，不可外推。</div>
+</div>
+</div>
+
+<!-- ===== YEARLY PULLBACK SLICE ===== -->
+<div class="section">
+<h2 class="section-title">每年正常回檔切片：普通回檔救不救得到？</h2>
+<div class="section-sub">在 total-return 曲線上找出所有 ≥5% 的 peak-to-trough 回檔（QQQ 37 個、SPY 26 個），逐一檢查避險是否在場、抵消幾成跌幅。</div>
+<div class="card">
+<div class="tbl-wrap">
+<table>
+<thead><tr><th>標的｜配置</th><th class="num">全事件覆蓋</th><th class="num">正常回檔 5–15% 覆蓋</th><th class="num">平均抵消</th><th class="num">大跌 &gt;15% 覆蓋</th><th class="num">平均抵消</th></tr></thead>
+<tbody>
+<tr class="rowhl"><td>QQQ｜always｜X1</td><td class="num">100%</td><td class="num">28/28（100%）</td><td class="num">21%</td><td class="num">9/9（100%）</td><td class="num">33%</td></tr>
+<tr><td>QQQ｜bb_z25｜X0</td><td class="num">30%</td><td class="num">10/28（36%）</td><td class="num">5%</td><td class="num">1/9（11%）</td><td class="num">10%</td></tr>
+<tr><td>QQQ｜bias200_15｜X0</td><td class="num">35%</td><td class="num">10/28（36%）</td><td class="num">15%</td><td class="num">3/9（33%）</td><td class="num">12%</td></tr>
+<tr class="rowhl"><td>SPY｜always｜X1</td><td class="num">100%</td><td class="num">21/21（100%）</td><td class="num">21%</td><td class="num">5/5（100%）</td><td class="num">34%</td></tr>
+<tr><td>SPY｜bb_z25｜X0</td><td class="num">19%</td><td class="num">4/21（19%）</td><td class="num">2%</td><td class="num">1/5（20%）</td><td class="num">0%</td></tr>
+<tr><td>SPY｜bias200_15｜X0</td><td class="num">0%</td><td class="num">0/21（0%）</td><td class="num">1%</td><td class="num">0/5（0%）</td><td class="num">0%</td></tr>
+</tbody>
+</table>
+</div>
+<div class="takeaway"><strong>條件訊號在普通回檔多半缺席</strong>（覆蓋率 19–36%，平均抵消個位數 %，形同無保護）；
+<strong>唯一 100% 到場的是無條件 ladder</strong>，正常回檔平均抵消約 21%、大跌約 33%，但代價是 CAGR 每年約 4–5pp。
+想「普通回檔也接得住」就得付「永遠在場」的固定成本；想省成本用條件訊號，就得接受多數普通回檔沒保險——<strong>兩者不可兼得</strong>。</div>
+</div>
+</div>
+
+<!-- ===== ROUND 2 ===== -->
+<div class="section">
+<h2 class="section-title">Round 2：週線訊號與複合條件——所有「正 EV」格都塌縮成 2020-02 樂透</h2>
+<div class="section-sub">加測週乖離、週布林、更高日線門檻，及三個「保險便宜 AND 市場過熱」複合條件。兩輪合計 80+ 配置——多重比較之下，小樣本正 EV 是雜訊的預期行為。</div>
+<details>
+<summary>展開 Round 2 逐項解剖</summary>
+<div class="d-body">
+<p style="font-size:.9rem;color:#374151;margin:.75rem 0">
+<strong>週布林（20 週，z ≥ 2.0／2.5／3.0）：死路。</strong>z ≥ 3.0 兩標的 22 年一次都沒觸發；z ≥ 2.5 只觸發 3–8 筆、putEV ≈ −1.00；週線平滑掉了日線布林賴以觸發的短期過熱。比日線版更沒有東西。</p>
+<p style="font-size:.9rem;color:#374151;margin:.75rem 0">
+<strong>週乖離（週收盤 vs 52 週均線 ≥20%）：一格亮、解剖後是樂透。</strong>唯一亮格 QQQ ATM｜wbias52_20（CAGR 16.31%、putEV +0.28、IS／OOS 兩窗都贏），但 23 筆中 +$1.75M 幾乎全來自兩張樂透（2020-02-18 進場 +$1.74M、2024-07-08 +$2.01M）；扣掉這兩筆其餘 21 筆合計 −$2.00M。COVID 復甦漲勢中連虧 7 筆 −$2.7M。SPY 版 22 年零觸發、無法跨標的驗證。<strong>倖存者偏誤，不是結構優勢。</strong></p>
+<p style="font-size:.9rem;color:#374151;margin:.75rem 0">
+<strong>複合條件（便宜 AND 過熱）：理論最順、實證仍倒。</strong>「只在保險便宜且市場過熱時買」讓 putEV 從深負收斂到 0 附近——但收斂到 0 之後就停了。SPY cheap_stretch（VRP 低 AND 乖離 ≥10%）putEV +0.14，但最大一筆（2020-02-13 進場）佔正報酬 95%；扣掉它其餘 10 筆 −$0.98M。QQQ lowiv_hi 的 EV ≈ 0 但 Calmar 仍輸 B&amp;H：「不虧錢的保險」依然拖累組合。</p>
+<div class="takeaway" style="margin-top:1rem"><strong>Round 2 總結：</strong>週線化、更極端門檻、複合條件三條路都試過，沒有推翻結論。能複製、能跨標的、能跨規格的穩健贏家仍然是零。</div>
+</div>
+</details>
+</div>
+
+<!-- ===== ROUND 3 ===== -->
+<div class="section">
+<h2 class="section-title">Round 3：趨勢閘門＋殘餘尾部避險——機制對，經濟上不划算</h2>
+<div class="section-sub">問題改形狀：趨勢出場已用「正 carry」把陰跌避掉，put 只需保「閘門來不及反應的急崩」。閘門 e3（複製實盤核心 {W40, W52, TSMOM}）與 ma200（日線 200MA），put 只在趨勢在場時掛。</div>
+
+<div class="card">
+<h3>1. trend-only 基準本身就是壓倒性贏家（免保費的合成 put）</h3>
+<div class="tbl-wrap">
+<table>
+<thead><tr><th>trend-only</th><th class="num">CAGR</th><th class="num">MDD</th><th class="num">Calmar（vs B&amp;H）</th><th class="num">IS / OOS Calmar</th></tr></thead>
+<tbody>
+<tr><td>SPY e3</td><td class="num">8.46%</td><td class="num">−21.39%</td><td class="num pos">0.396（0.197）</td><td class="num">0.311 / 0.691</td></tr>
+<tr><td>SPY ma200</td><td class="num">7.79%</td><td class="num">−22.06%</td><td class="num pos">0.353（0.197）</td><td class="num">0.272 / 0.552</td></tr>
+<tr><td>QQQ e3</td><td class="num">10.86%</td><td class="num">−29.57%</td><td class="num pos">0.367（0.280）</td><td class="num">0.354 / 0.521</td></tr>
+<tr><td>QQQ ma200</td><td class="num">10.89%</td><td class="num">−27.45%</td><td class="num pos">0.397（0.280）</td><td class="num">0.218 / 0.761</td></tr>
+</tbody>
+</table>
+</div>
+<div class="takeaway">趨勢閘門把 Calmar 翻倍、MDD 砍半、兩窗一致——這就是「免保費的合成 put」，代價是 whipsaw 而非權利金。</div>
+</div>
+
+<div class="card">
+<h3>2. 機制驗證成立：閘門在急崩全盲，put 恰好補洞（9/9）</h3>
+<p>急崩事件定義：B&amp;H 從 peak 起 ≤45 曆日內跌 ≥10%（SPY 2 次、QQQ 9 次）。QQQ 的 9 次急崩，trend-only 全部跟 B&amp;H 一起吃滿（閘門週線級反應不及）；
+加上 put ladder（e3｜5%OTM 60d｜linked｜X1）後 <strong>9/9 次 peak 當下都有避險在場</strong>：</p>
+<div class="tbl-wrap">
+<table>
+<thead><tr><th>急崩事件</th><th class="num">trend-only 跌幅</th><th class="num">+put 跌幅</th><th>覆蓋</th></tr></thead>
+<tbody>
+<tr><td>QQQ 2020-02 COVID</td><td class="num">−28.6%</td><td class="num pos">−14.0%</td><td>是</td></tr>
+<tr><td>QQQ 2024-08</td><td class="num">−13.6%</td><td class="num pos">−8.8%</td><td>是</td></tr>
+<tr><td>QQQ 2011-08</td><td class="num">−16.1%</td><td class="num pos">−7.6%</td><td>是</td></tr>
+<tr><td>SPY 2020-02 COVID</td><td class="num">−33.7%</td><td class="num pos">+0.7%</td><td>是（put +$295k ＋閘門後續出場）</td></tr>
+</tbody>
+</table>
+</div>
+<div class="takeaway">「殘餘尾部存在、put 能精準蓋住」的機制假說<strong>完全成立</strong>（9/9 覆蓋 vs trend-only 0/9）。</div>
+</div>
+
+<div class="card">
+<h3>3. 但帳算下來仍不划算：18 個配置無一把 Calmar 買回 trend-only</h3>
+<div class="tbl-wrap">
+<table>
+<thead><tr><th>代表配置</th><th class="num">CAGR</th><th class="num">MDD</th><th class="num">Calmar</th><th>vs trend-only</th></tr></thead>
+<tbody>
+<tr class="rowhl"><td>SPY e3｜5%OTM 60d｜linked｜X1（全場最佳）</td><td class="num">5.93%</td><td class="num pos">−15.95%</td><td class="num">0.372</td><td class="neg">低於 0.396</td></tr>
+<tr><td>QQQ e3｜5%OTM 60d｜linked｜X1</td><td class="num">7.11%</td><td class="num">−24.27%</td><td class="num">0.293</td><td class="neg">低於 0.367</td></tr>
+<tr><td>SPY e3｜ATM 30d｜linked｜X0</td><td class="num neg">−1.26%</td><td class="num">−43.06%</td><td class="num neg">−0.029</td><td class="neg">災難（ATM theta 最重）</td></tr>
+</tbody>
+</table>
+</div>
+<div class="takeaway"><strong>純粹的頻率算術：</strong>急崩約每 2–3 年一次，但趨勢在場時間約七成、保費照付。
+E3／趨勢閘門已經拿走了 put 能提供的大部分價值（陰跌保護）且是正 carry；為剩下的急崩盲區付連續保費，以免費資料能測到的所有形狀來看都不值得。
+<strong>唯一的例外性用途</strong>：極度 MDD 厭惡者可用 SPY e3＋5% OTM 60d＋linked＋X1 把 MDD 從 −21.4% 買到 −16.0%，代價 CAGR −2.5pp——這是效用取捨，不是統計優勢。</div>
+</div>
+
+<div class="chart-card">
+  <h3>Round 3：Calmar 比較——趨勢閘門是免費午餐，再疊 put 反而倒退</h3>
+  <div class="chart-wrap-sm"><canvas id="chart-calmar"></canvas></div>
+</div>
+</div>
+
+<!-- ===== CONCLUSION ===== -->
+<div class="section">
+<h2 class="section-title">結論：put 是保險，不是 alpha</h2>
+<div class="card">
+<p><strong>核心結論：</strong>在長期持有 SPY／QQQ 之下，沒有任何條件訊號讓事前擇時買 put 變成穩定有利。
+絕對面全部負 EV；組合面唯二通過門檻的配置一個是路徑運氣、一個只跟 B&amp;H 打平；SPY 唯一贏 Calmar 的 iv_high80 是危機後反應式避險、對 skew 敏感、對陰跌倒貼。
+<strong>不推薦</strong>把 put overlay 當作提升風險調整報酬的手段。</p>
+<p>若目的純粹是保險（願意付確定成本換取尾部緩衝），資料支持的唯一誠實選項是<strong>無條件 ladder ＋ X1（3× 了結）</strong>，因為只有它 100% 到場、能被普通回檔接住。已知成本收益如下（<strong>列出，非推薦</strong>）：</p>
+<div class="tbl-wrap">
+<table>
+<thead><tr><th></th><th class="num">QQQ always｜X1</th><th class="num">QQQ B&amp;H</th><th class="num">SPY always｜X1</th><th class="num">SPY B&amp;H</th></tr></thead>
+<tbody>
+<tr><td>CAGR</td><td class="num">9.99%</td><td class="num">14.94%</td><td class="num">6.43%</td><td class="num">10.85%</td></tr>
+<tr><td>CAGR 代價</td><td class="num neg">−4.95pp/年</td><td class="num">—</td><td class="num neg">−4.42pp/年</td><td class="num">—</td></tr>
+<tr><td>MDD</td><td class="num">−42.38%</td><td class="num">−53.40%</td><td class="num">−44.07%</td><td class="num">−55.19%</td></tr>
+<tr><td>Calmar</td><td class="num neg">0.236</td><td class="num">0.280</td><td class="num neg">0.146</td><td class="num">0.197</td></tr>
+<tr><td>正常回檔平均抵消</td><td class="num">21%</td><td class="num">—</td><td class="num">21%</td><td class="num">—</td></tr>
+<tr><td>大跌平均抵消</td><td class="num">33%</td><td class="num">—</td><td class="num">34%</td><td class="num">—</td></tr>
+</tbody>
+</table>
+</div>
+<div class="takeaway"><strong>即使是這個「最誠實」的選項，Calmar 仍低於純 B&amp;H</strong>（QQQ 0.236 vs 0.280、SPY 0.146 vs 0.197）——
+以「單位 MDD 換到的報酬」衡量，長期持有加無條件 put 保險依然不如什麼都不做地長期持有。
+買 put 是純粹的保險支出，不是能改善長期風險調整報酬的 alpha。是否購買，取決於使用者對「每年約 4–5pp 確定成本 vs 把最深回檔砍去約兩到三成」的效用取捨，而非任何統計上的擇時優勢。</div>
+</div>
+
+<div class="card">
+<h3>誠實限制與下一步</h3>
+<ol class="issue-list">
+  <li><strong>合成定價、無真實選擇權鏈</strong>：全部 put 為 Black-Scholes 合成，沒有任何一筆用真實成交價驗證；VIX／VXN 含 skew 溢價，ATM 結果的絕對水位不可過度當真。</li>
+  <li><strong>skew 敏感度只跑 {0, 0.5, 1.0} 線性 bump</strong>，非真實逐日 smile；flat-vol 足以翻轉 otm5_60d｜iv_high80 的結論（ATM 版因 K=S、skew bump 為零、到期以內在價值結算，對 skew 參數不敏感）。</li>
+  <li><strong>低樣本配置統計無意義</strong>：bias200_15（SPY 8–12 筆）、bb_z25（SPY 17–18 筆）交易數過少，單一好／壞事件即主導結果。</li>
+  <li><strong>回檔視窗損益含未實現 MTM</strong>（偏樂觀）；真正的實現 EV 看 pnl_per_prem（全負）。無滑價／流動性衝擊模型、稅務未計。</li>
+  <li><strong>下一步需要真實鏈資料</strong>：若真要蓋急崩盲區，方向是「事件前廉價凸性」（深 OTM put spread、VIX call）——那需要真實選擇權成交價才能誠實定價，免費資料能測到的所有形狀都已測盡。</li>
+</ol>
+</div>
+</div>
+
+</div>
+
+<footer>
+  <div class="container">
+    &copy; 2026 InvestMQuest Research &middot; SPY/QQQ 買 put 避險（誠實負結果，非可交易系統）&middot;
+    Put Timing 三輪研究・評估窗 2004–2026・頁面生成 2026-07-17 &middot; 僅供研究參考
+  </div>
+</footer>
+
+<script>
+Chart.defaults.font.family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif";
+Chart.defaults.font.size=11;
+
+var PUTEV_LABELS=['永遠避險','低隱波買','高隱波買','布林2σ','布林2.5σ','乖離5%','乖離10%','乖離15%','VRP低','VRP高','期限倒掛','極端contango','創年高','破MA50'];
+var PUTEV_VALS=[-0.727,-0.269,-0.688,-0.311,-0.608,-0.690,-0.679,-0.651,-0.607,-0.739,-0.745,-0.386,-0.301,-0.633];
+
+new Chart(document.getElementById('chart-putev'),{
+  type:'bar',
+  data:{labels:PUTEV_LABELS,datasets:[
+    {label:'putEV（付 $1 權利金的淨回收）',data:PUTEV_VALS,
+     backgroundColor:'rgba(220,38,38,0.72)',borderColor:'#dc2626',borderWidth:1}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:true,position:'top',align:'start',labels:{usePointStyle:true,padding:12}},
+      tooltip:{callbacks:{label:function(c){return 'putEV '+c.parsed.y.toFixed(3)+'（虧 '+((1+c.parsed.y)*100).toFixed(0)+'% 拿回）'}}}},
+    scales:{x:{grid:{display:false},ticks:{font:{size:9},maxRotation:45,minRotation:45}},
+      y:{max:0,min:-1.05,grid:{color:'rgba(0,0,0,0.06)'},title:{display:true,text:'putEV（全部 < 0）'},
+         ticks:{callback:function(v){return v.toFixed(1)},font:{size:10}}}}
+  }
+});
+
+new Chart(document.getElementById('chart-calmar'),{
+  type:'bar',
+  data:{labels:['SPY','QQQ'],datasets:[
+    {label:'B&H',data:[0.197,0.280],backgroundColor:'rgba(107,114,128,0.7)',borderColor:'#6b7280',borderWidth:1},
+    {label:'趨勢閘門 trend-only（e3）',data:[0.396,0.367],backgroundColor:'rgba(5,150,105,0.75)',borderColor:'#059669',borderWidth:1},
+    {label:'趨勢閘門 + put overlay',data:[0.372,0.293],backgroundColor:'rgba(26,86,219,0.7)',borderColor:'#1a56db',borderWidth:1}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:true,position:'top',align:'start',labels:{usePointStyle:true,padding:12}},
+      tooltip:{callbacks:{label:function(c){return c.dataset.label+': Calmar '+c.parsed.y.toFixed(3)}}}},
+    scales:{x:{grid:{display:false}},
+      y:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.06)'},title:{display:true,text:'Calmar'},ticks:{font:{size:10}}}}
+  }
+});
+</script>
+</body>
+</html>

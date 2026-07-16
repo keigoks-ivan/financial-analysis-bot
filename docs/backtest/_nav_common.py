@@ -78,6 +78,7 @@ INDIVIDUAL_LINKS = [
     ("/backtest/short_system/", "指數做空", "short", "失敗"),
     ("/backtest/cndr/", "Iron Condor", "cndr", "失敗"),
     ("/backtest/covered_call/", "Covered Call", "cc", "負貢獻"),
+    ("/backtest/put_timing/", "SPY/QQQ 買 put 避險", "put_timing", "負貢獻"),
 ]
 
 # 台股選擇權專區：TXO 短波動/賣方/避險策略群，共用 TAIEX/TWVIX/TXO 資料層 +
