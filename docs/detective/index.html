@@ -167,32 +167,33 @@ a:hover{color:var(--accent-hover)}
 .lc-swatch.lc-escalated{outline:2px solid var(--neg);box-shadow:0 0 6px -1px var(--neg)}
 .lc-swatch.lc-cooling{outline:2px dashed var(--border);opacity:.6}
 
-.heatwall{display:flex;gap:10px;align-items:stretch;overflow-x:auto;padding-bottom:.2rem}
+/* 佈局鐵律（2026-07-16 崩版修正）：欄高各自獨立（align-items:flex-start），
+   格高由 JS 依 score 給定並設上下限（46-78px）——不再用「共享容器高度＋flex-grow」，
+   否則最長欄（如 positioning 14 條）會把單訊號欄的格子撐成巨大空柱。 */
+.heatwall{display:flex;gap:10px;align-items:flex-start;overflow-x:auto;padding-bottom:.2rem}
 .heat-col{flex:1 1 0;min-width:130px;display:flex;flex-direction:column}
 .heat-col-hd{font-size:.7rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted);
             display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;
             padding-bottom:.35rem;border-bottom:1px solid var(--border-light)}
 .heat-col-hd .cnt{font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--text-secondary)}
-.heat-cells{flex:1;display:flex;flex-direction:column;gap:3px;min-height:280px}
-.heat-cell{border-radius:6px;padding:.4rem .55rem;cursor:pointer;min-height:34px;
-          display:flex;flex-direction:column;justify-content:center;gap:1px;
+.heat-cells{display:flex;flex-direction:column;gap:3px}
+.heat-cell{border-radius:6px;padding:.4rem .55rem;cursor:pointer;min-height:46px;flex:0 0 auto;
+          display:flex;flex-direction:column;justify-content:center;gap:1px;overflow:hidden;
           border-left:3px solid var(--border);transition:filter .12s,outline-color .12s;outline:2px solid transparent;outline-offset:1px}
 .heat-cell:hover{filter:brightness(.97)}
 .heat-cell.sel{outline-color:var(--accent)}
 .heat-cell.red{background:var(--neg-bg);border-left-color:var(--neg)}
 .heat-cell.yellow{background:var(--warn-bg);border-left-color:var(--warn)}
-.heat-cell .lbl{font-size:.74rem;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.heat-cell .sc{font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--text-muted)}
-.heat-cell .cell-src-chip{align-self:flex-start;font-family:'IBM Plex Mono',monospace;font-size:.56rem;font-weight:700;
-                          color:var(--text-muted);background:var(--border-light);padding:.04rem .32rem;
-                          border-radius:4px;margin-bottom:1px}
+.heat-cell .lbl{font-size:.74rem;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.3}
+.heat-cell .sc{font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--text-muted);line-height:1.3;white-space:nowrap}
+.heat-cell .cell-src-chip{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:.56rem;font-weight:700;
+                          color:var(--text-muted);background:var(--border-light);padding:.02rem .32rem;
+                          border-radius:4px;margin-right:.35rem;vertical-align:middle}
 /* 生命週期邊框編碼：new 實線環／escalated 發光／cooling 虛線灰化／active 無環（既有 sel 沿用 accent 實線，優先權以後渲染為準） */
 .heat-cell.lc-new{outline-color:var(--accent)}
 .heat-cell.lc-escalated{outline-color:var(--neg);box-shadow:0 0 14px -4px var(--neg)}
 .heat-cell.lc-cooling{outline:2px dashed var(--border);opacity:.6}
 .heat-cell.linked{outline-color:var(--accent);box-shadow:0 0 0 3px rgba(13,34,68,.1)}
-.heat-empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--text-muted);
-           font-size:.78rem;border:1px dashed var(--border);border-radius:6px;min-height:120px}
 .quiet-sources-row{display:flex;flex-wrap:wrap;gap:.55rem;margin-top:.7rem}
 .quiet-chip{display:flex;align-items:center;gap:.5rem;padding:.4rem .7rem;border-radius:8px;
            border:1px dashed var(--border);background:var(--bg-card);font-size:.74rem;color:var(--text-secondary)}
@@ -222,8 +223,8 @@ a:hover{color:var(--accent-hover)}
 @media(max-width:820px){
   .heatwall{flex-direction:column;overflow-x:visible}
   .heat-col{min-width:0}
-  .heat-cells{flex-direction:row;flex-wrap:wrap;min-height:0}
-  .heat-cell{flex-grow:0 !important;flex:0 0 auto;min-width:130px}
+  .heat-cells{flex-direction:row;flex-wrap:wrap}
+  .heat-cell{min-width:130px}
 }
 
 /* 舊版完整清單（收合區） */
@@ -292,7 +293,13 @@ details.legacy-list summary{cursor:pointer;font-weight:700;font-size:.85rem;colo
 .comp-narrative{margin-top:.65rem;font-size:.8rem;color:var(--text);line-height:1.65;
                padding-top:.55rem;border-top:1px solid var(--border-light)}
 .dial-gap{margin-top:.6rem;font-size:.76rem;color:var(--tense);padding-top:.5rem;border-top:1px dashed var(--border-light)}
-.member-nomatch{display:block;flex:1 1 100%;margin-left:1.5rem;font-size:.66rem;color:var(--text-muted);font-style:italic}
+/* 互連時才顯示的「無對應格」註記：常態（primitive 未觸發）不是異常，
+   平時隱藏（hidden），僅在點擊該卡做互連高亮且找不到對應格時出現，小字 chip 不佔整行。
+   注意 [hidden] 規則必須在此明寫——author 的 display 宣告會蓋掉 UA 的 [hidden]{display:none}。 */
+.member-nomatch{display:inline-block;font-size:.62rem;color:var(--text-muted);
+               background:var(--border-light);padding:.05rem .4rem;border-radius:4px;
+               margin-top:.2rem;white-space:nowrap}
+.member-nomatch[hidden]{display:none}
 
 /* composite 卡片可點擊互連（不論 legacy／v2 皆適用） */
 .dial-card[data-comp-id]{cursor:pointer}
@@ -310,9 +317,11 @@ details.legacy-list summary{cursor:pointer;font-weight:700;font-size:.85rem;colo
 .bmember-row{position:relative;font-size:.8rem;color:var(--text-secondary)}
 .bmember-desc{font-weight:600;color:var(--text);margin-bottom:.3rem}
 .bullet-track{position:relative;height:8px;border-radius:4px;background:var(--border-light)}
+/* 填充語意：越滿＝越接近觸發。met＝accent（已越線）；unmet＝中性灰（JS 依接近度給 opacity，越近越深）——
+   刻意不用紅／橘，避免「滿條暖色」誤讀成危險警報。 */
 .bullet-fill{position:absolute;left:0;top:0;height:100%;border-radius:4px;transition:width .15s}
-.bullet-fill.met{background:var(--pos)}
-.bullet-fill.unmet{background:var(--tense)}
+.bullet-fill.met{background:var(--accent)}
+.bullet-fill.unmet{background:var(--text-muted)}
 .bullet-threshold{position:absolute;top:-3px;width:2px;height:14px;background:var(--text);transform:translateX(-1px)}
 .bmember-meta{display:flex;flex-wrap:wrap;gap:.7rem;margin-top:.35rem;font-family:'IBM Plex Mono',monospace;
              font-size:.68rem;color:var(--text-muted)}
@@ -538,7 +547,7 @@ footer.imq-foot a{color:var(--accent)}
 <div class="section" id="detective-heat">
   <div class="container">
     <h2 class="section-title">訊號熱力樹圖 <span class="count" id="heatCount">— 條</span></h2>
-    <p class="section-note">依市場維度分區（股票與產業結構／信用／波動與選擇權／利率與流動性／商品外匯加密／擁擠與部位／thesis 對帳，缺維度標記歸「其他」），格子大小 ∝ 分數、顏色 ＝ 嚴重度（紅／黃），同維度內按分數降冪排列；每區頭列出訊號數與該區溫度（紅燈數或最高分），格內小標籤標示原始來源。只顯示有 ≥1 條訊號的維度，0 訊號來源列於下方「安靜來源」狀態列。點擊任一格展開詳情，預設顯示分數最高的一條。</p>
+    <p class="section-note">依市場維度分區（股票與產業結構／信用／波動與選擇權／利率與流動性／商品外匯加密／擁擠與部位／thesis 對帳，缺維度標記歸「其他」），格高 ∝ 分數（設上下限）、顏色 ＝ 嚴重度（紅／黃），同維度內按分數降冪排列、各維度欄高獨立；每區頭列出訊號數與該區溫度（紅燈數或最高分），格內小標籤標示原始來源。只顯示有 ≥1 條訊號的維度，0 訊號來源列於下方「安靜來源」狀態列。點擊任一格展開詳情，預設顯示分數最高的一條。</p>
     <div class="today-changes" id="todayChanges"><span class="tc-summary tc-empty">今日變化載入中…</span></div>
     <div class="heat-legend" id="heatLegend">
       生命週期：<span class="lc-swatch lc-new"></span>新增（實線框）
@@ -914,11 +923,14 @@ footer.imq-foot a{color:var(--accent)}
         +'<span class="cnt">'+items.length+' 條・'+esc(tempTxt)+'</span></div>';
       h+='<div class="heat-cells">';
       items.forEach(function(s){
-        var grow=Math.max(1,(s.score||1));
+        // 格高 ∝ 分數但設上下限（46-78px；下限＝兩行內容實際所需高度）：欄高＝Σ格高，
+        // 各欄獨立，單訊號欄不會被撐成巨大空柱（2026-07-16 崩版修正）。
+        var sc=(typeof s.score==='number'&&!isNaN(s.score))?s.score:6;
+        var hpx=Math.round(Math.max(46,Math.min(78,26+sc*2.2)));
         var lcCls=s.state==='new'?'lc-new':(s.state==='escalated'?'lc-escalated':(s.state==='cooling'?'lc-cooling':''));
-        h+='<div class="heat-cell '+esc(s.sev==='red'?'red':'yellow')+(lcCls?' '+lcCls:'')+'" style="flex-grow:'+grow+'" data-key="'+esc(s.key)+'" title="'+esc(s.fact||s.label)+'">'
-          +'<span class="cell-src-chip">'+esc(SRC_LABEL[s.source]||s.source||'—')+'</span>'
-          +'<span class="lbl">'+esc(s.label)+'</span><span class="sc">score '+esc(s.score)+'</span></div>';
+        h+='<div class="heat-cell '+esc(s.sev==='red'?'red':'yellow')+(lcCls?' '+lcCls:'')+'" style="height:'+hpx+'px" data-key="'+esc(s.key)+'" title="'+esc(s.fact||s.label)+'">'
+          +'<span class="lbl">'+esc(s.label)+'</span>'
+          +'<span class="sc"><span class="cell-src-chip">'+esc(SRC_LABEL[s.source]||s.source||'—')+'</span>score '+esc(s.score)+'</span></div>';
       });
       h+='</div></div>';
     });
@@ -1133,7 +1145,7 @@ footer.imq-foot a{color:var(--accent)}
         h+='<div class="comp-member" data-ref="'+esc(m.ref||'')+'"><span class="comp-light '+(m.met?'met':'unmet')+'"></span>'
           +'<span class="desc">'+esc(m.desc)+'</span>'
           +'<span class="cur">'+esc(m.current)+'</span>'
-          +(m.ref?'<span class="member-nomatch" hidden>成員未在今日訊號中</span>':'')
+          +(m.ref?'<span class="member-nomatch" hidden>ⓘ 今日無對應格</span>':'')
           +'</div>';
       });
       h+='</div>';
@@ -1154,41 +1166,55 @@ footer.imq-foot a{color:var(--accent)}
 
   // 非 event 型成員的子彈條位置：distance（0=已達門檻／1=最遠）→ frac=1-distance。
   // 缺 distance 時退化為 met?1:0.5 的粗略估計，不假裝有精確逼近度。
-  // current_num/threshold_num/distance 的實際單位隨 scale 而異（pctile＝分位點、z＝σ、
-  // val＝原始值），distance 本身不是正規化 0-1（例：分位差 74.2、σ差 2.36），故不可直接
-  // 拿來當寬度比例。改採「以現值與閾值為中心、各自局部正規化」的軌道：track 只表達
-  // 該成員自己的現值 vs 閾值相對位置，不同成員間的軌道長度不互相比較（描述器夠用即可，
-  // 不追求跨尺度可比的精確度）。scale='event' 或缺數值錨（current_num/threshold_num 任一
-  // 非數字，含 cat 類）一律退化為純文字列，不畫條，不假裝有精確位置。
+  // 子彈條語意鐵律（2026-07-16 修正）：填充比例＝「接近觸發的程度」——越滿＝越接近觸發，
+  // 已達標＝越過閾值刻度線。軌道方向一律把「觸發方向」擺右邊：op 含 '<' 時把數值軸鏡射
+  // （例：分位 ≤25 的成員，現值分位 99.2 → 填充僅 0.8%，幾乎空＝離觸發很遠）。
+  // 軸範圍隨 scale 取：pctile＝[0,100]、z＝[-3,+3]（夾限）、val 與其他數值型＝以閾值為中心、
+  // 依現閾差距開窗的局部軸（無普適單位，只求方向與遠近直覺正確）。
+  // scale='event' 或缺數值錨（current_num/threshold_num 任一非數字，含 cat 類）退化為
+  // 純文字列，不畫條，不假裝有精確位置。distance_label 引擎端已含「差」字（如「差 74.2 分位點」
+  // 「已達標」），前端直接顯示、不再加前綴。
   function buildBulletBar(m){
     m=m||{};
     var refAttr=' data-ref="'+esc(m.ref||'')+'"';
-    var nomatchHtml=m.ref?'<span class="member-nomatch" hidden>成員未在今日訊號中</span>':'';
+    var nomatchHtml=m.ref?'<span class="member-nomatch" hidden>ⓘ 今日無對應格</span>':'';
     var hasNumericAnchor=m.scale!=='event'&&typeof m.current_num==='number'&&typeof m.threshold_num==='number';
     if(!hasNumericAnchor){
       return '<div class="bmember-row bmember-event-wrap"'+refAttr+'>'
         +'<div class="bmember-event"><span class="bmember-desc">'+esc(m.desc||'')+'</span>'
         +'<span class="bmember-cur">'+esc(m.current!=null?m.current:'—')+'</span></div>'
-        +(!m.met&&m.distance_label?('<div class="bmember-gap" style="margin-top:.25rem">差 '+esc(m.distance_label)+'</div>'):'')
+        +(!m.met&&m.distance_label?('<div class="bmember-gap" style="margin-top:.25rem">'+esc(m.distance_label)+'</div>'):'')
         +nomatchHtml+'</div>';
     }
     var cur=m.current_num, thr=m.threshold_num;
-    var rawLo=Math.min(cur,thr), rawHi=Math.max(cur,thr);
-    var span=(rawHi-rawLo)||1;
-    var pad=Math.max(span*0.35,0.5);
-    var lo=rawLo-pad, hi=rawHi+pad;
-    function pos(v){return Math.max(0,Math.min(1,(v-lo)/(hi-lo)));}
-    var curPct=(pos(cur)*100).toFixed(1);
-    var thrPct=(pos(thr)*100).toFixed(1);
+    var flip=(typeof m.op==='string'&&m.op.indexOf('<')>=0); // 觸發方向朝下 → 鏡射軸，讓「觸發」恆在右
+    var lo,hi;
+    if(m.scale==='pctile'){lo=0;hi=100;}
+    else if(m.scale==='z'){lo=-3;hi=3;}
+    else{
+      var w=Math.max(Math.abs(cur-thr)*1.25,Math.abs(thr)*0.5,1e-6);
+      lo=thr-w;hi=thr+w;
+    }
+    function pos(v){
+      var t=(v-lo)/(hi-lo);
+      t=Math.max(0,Math.min(1,t));
+      return flip?1-t:t;
+    }
+    var closeness=pos(cur);          // 填充＝接近觸發程度
+    var thrPos=pos(thr);             // 閾值刻度線位置
+    var curPct=(closeness*100).toFixed(1);
+    var thrPct=(thrPos*100).toFixed(1);
     var fillCls=m.met?'met':'unmet';
+    // 未達成員：中性灰、distance 越小（越接近）越深
+    var fillStyle=m.met?'':(';opacity:'+(0.3+0.55*closeness).toFixed(2));
     var thrTxt=(m.op?esc(m.op)+' ':'')+esc(m.threshold_num);
     return '<div class="bmember-row"'+refAttr+'>'
       +'<div class="bmember-desc">'+esc(m.desc||'')+'</div>'
-      +'<div class="bullet-track"><div class="bullet-fill '+fillCls+'" style="width:'+curPct+'%"></div>'
+      +'<div class="bullet-track"><div class="bullet-fill '+fillCls+'" style="width:'+curPct+'%'+fillStyle+'"></div>'
       +'<div class="bullet-threshold" style="left:'+thrPct+'%" title="閾值 '+thrTxt+'"></div></div>'
       +'<div class="bmember-meta"><span class="bmember-cur">現值 '+esc(m.current!=null?m.current:cur)+'</span>'
       +'<span class="bmember-thr">閾值 '+thrTxt+'</span>'
-      +(!m.met&&m.distance_label?('<span class="bmember-gap">差 '+esc(m.distance_label)+'</span>'):'')
+      +(!m.met&&m.distance_label?('<span class="bmember-gap">'+esc(m.distance_label)+'</span>'):'')
       +'</div>'
       +nomatchHtml
       +'</div>';
@@ -1238,7 +1264,7 @@ footer.imq-foot a{color:var(--accent)}
     (c.members||[]).forEach(function(m){
       h+='<div class="comp-member" data-ref="'+esc(m.ref||'')+'"><span class="comp-light '+(m.met?'met':'unmet')+'"></span>'
         +'<span class="desc">'+esc(m.desc)+'</span><span class="cur">'+esc(m.current)+'</span>'
-        +(m.ref?'<span class="member-nomatch" hidden>成員未在今日訊號中</span>':'')
+        +(m.ref?'<span class="member-nomatch" hidden>ⓘ 今日無對應格</span>':'')
         +'</div>';
     });
     h+='</div>';
@@ -1439,7 +1465,7 @@ footer.imq-foot a{color:var(--accent)}
   });
 
   // 靶盤 ↔ 熱力牆互連：點規則卡 → members[].ref 前綴匹配的熱力格高亮；再點取消。
-  // 找不到對應格（該 series 今天沒出訊號）在卡片內對應成員列顯示「成員未在今日訊號中」。
+  // 找不到對應格（該 series 今天沒出 primitive 訊號，屬常態）僅於高亮期間在對應成員列顯示小字「ⓘ 今日無對應格」，取消高亮即隱回。
   // 掛在 #compGrid 容器本身（事件代理），跨 renderComposites 重渲染仍有效，不須重掛。
   document.getElementById('compGrid').addEventListener('click',function(e){
     var card=e.target.closest('.dial-card[data-comp-id]');
