@@ -320,8 +320,44 @@ a:hover{color:var(--accent-hover)}
 .pano-chg{font-family:'IBM Plex Mono',monospace;font-size:.68rem;font-weight:600;color:var(--text-muted)}
 .pano-chg.pos{color:var(--pos)}
 .pano-chg.neg{color:var(--neg)}
-@media(max-width:480px){.pano-grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr))}}
+.pano-chg-row{display:flex;align-items:center;gap:.4rem}
+.pano-persist{font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:600;color:var(--text-muted);
+             background:var(--border-light);padding:.02rem .34rem;border-radius:4px;white-space:nowrap}
+/* 磚右上角關聯徽章（◎ composite 成員／⚑ kill 監測中，2026-07-16 新增）：刻意極小極 muted，
+   不搶異常發光（tier 底色／TOP 角標）的視覺層級，沿用既有 text-muted token 不發明新色。 */
+.pano-badges{position:absolute;top:3px;right:4px;display:flex;gap:2px;z-index:1;pointer-events:none}
+.pano-badge{font-size:.6rem;line-height:1;color:var(--text-muted);opacity:.85}
+/* ── 系統核心列（2026-07-16 新增）：重要性＝位置＋大小，磚放大約 1.4-1.6 倍、grid 欄寬加大 ── */
+.pano-core-title{color:var(--accent)}
+.pano-grid-core{display:grid;grid-template-columns:repeat(auto-fill,minmax(172px,1fr));gap:10px}
+.pano-tile-core{padding:.78rem .85rem;gap:.32rem}
+.pano-tile-core .pano-label{font-size:.78rem}
+.pano-tile-core .pano-val{font-size:1.22rem}
+.pano-tile-core .pano-chg{font-size:.78rem}
+/* ── 關聯異常聚類條（2026-07-16 新增）：curated 資產族 display grouping（非判斷規則），
+   置於牆頂圖例下方；點 chip 高亮同族磚，語言與 composite 卡片互連高亮一致。 ── */
+.pano-cluster-row{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin:0 0 .9rem}
+.cluster-row-label{font-family:'IBM Plex Mono',monospace;font-size:.68rem;font-weight:700;color:var(--text-muted);margin-right:.2rem}
+.cluster-chip{font-family:'IBM Plex Mono',monospace;font-size:.7rem;font-weight:600;color:var(--text-secondary);
+             background:var(--bg-card);border:1px solid var(--border);border-radius:20px;
+             padding:.32rem .85rem;cursor:pointer;transition:border-color .12s,color .12s,background .12s}
+.cluster-chip:hover{border-color:var(--accent);color:var(--accent)}
+.cluster-chip.sel{border-color:var(--accent);color:#fff;background:var(--accent)}
+.cluster-empty{font-size:.78rem;color:var(--text-muted);font-style:italic;padding:.4rem 0}
+.pano-tile.cluster-hi{outline:2px solid var(--accent);outline-offset:1px;box-shadow:0 0 0 3px rgba(13,34,68,.1)}
+@media(max-width:480px){
+  .pano-grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr))}
+  .pano-grid-core{grid-template-columns:repeat(auto-fill,minmax(100px,1fr))}
+  .pano-tile-core{padding:.55rem .6rem;gap:.22rem}
+  .pano-tile-core .pano-label{font-size:.68rem}
+  .pano-tile-core .pano-val{font-size:.92rem}
+  .pano-tile-core .pano-chg{font-size:.68rem}
+}
 .pano-detail-sig{margin-top:.5rem;font-size:.82rem;color:var(--text-secondary);line-height:1.6}
+.pano-detail-rel{margin-top:.6rem;padding-top:.55rem;border-top:1px solid var(--border-light)}
+.pano-detail-rel-hd{font-size:.68rem;font-weight:700;color:var(--text-muted);margin-bottom:.3rem;
+                    text-transform:uppercase;letter-spacing:.04em;font-family:'IBM Plex Mono',monospace}
+.pano-detail-rel-row{font-size:.8rem;color:var(--text-secondary);line-height:1.65}
 .pano-spark{margin-top:.55rem}
 .pano-spark-svg{width:100%;height:54px;display:block}
 .sig-top{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.4rem}
@@ -665,6 +701,7 @@ footer.imq-foot a{color:var(--accent)}
       <span class="pano-legend-chip lgd-red">紅燈（|z|≥3 或當日已觸發紅燈訊號）</span>
       <span class="pano-legend-chip lgd-top">TOP＝全場 |z| 最大前 3</span>
     </div>
+    <div class="pano-cluster-row" id="panoClusterRow"><span class="cluster-row-label">關聯異常載入中…</span></div>
     <div class="pano-wall" id="panoWall"><div class="loading">載入市場全景中…</div></div>
     <div id="panoDetailPanel"><span class="ph">點擊上方任一磚查看該指標詳情。</span></div>
 
@@ -786,6 +823,49 @@ footer.imq-foot a{color:var(--accent)}
     {cat:'positioning',key:'short_vol_ratio',dim:'positioning'},
     {cat:'positioning',key:'eps_rev_breadth',dim:'positioning'}
   ];
+  // ── 系統核心列（2026-07-16 新增）：curated 16 檔跨資產核心指標，重要性＝位置＋大小
+  // （磚放大＋排最前）。key 對 monitor/data/latest.json 實際 categories/items 逐一驗證存在後
+  // 收斂的最終清單（全數存在，無剔除）；只用 srcType='monitor'（全部來自原始 monitor series）。
+  var SYSTEMIC_CORE=[
+    {cat:'indices',key:'sp500'},{cat:'indices',key:'ndx'},{cat:'indices',key:'sox'},
+    {cat:'rates',key:'dgs10'},{cat:'rates',key:'t10y2y'},{cat:'fx',key:'dxy'},
+    {cat:'credit',key:'hy_oas'},{cat:'vol',key:'vix'},{cat:'commodities',key:'gold'},
+    {cat:'commodities',key:'wti'},{cat:'commodities',key:'copper'},{cat:'fx',key:'usdjpy'},
+    {cat:'crypto',key:'btc'},{cat:'credit',key:'hyg_lqd'},{cat:'rates',key:'real10y'},
+    {cat:'vol',key:'move'}
+  ];
+  var SYSTEMIC_CORE_KEYSET=(function(){
+    var o={};
+    SYSTEMIC_CORE.forEach(function(c){o['monitor:'+c.cat+':'+c.key]=true;});
+    return o;
+  })();
+  // ── 關聯異常聚類（2026-07-16 新增）：curated 資產族——純 display grouping（分組展示），
+  // 不是判斷規則或交易訊號，只回答「今天是否同族多檔一起異常」。key 對實檔驗證存在性後收斂
+  // （農產品複合體原擬 corn/wheat/soybean/sugar，sugar 在 monitor commodities 無對應 series，剔除）。
+  var CLUSTER_MAP=[
+    {name:'農產品複合體',members:['monitor:commodities:corn','monitor:commodities:wheat','monitor:commodities:soybean']},
+    {name:'能源',members:['monitor:commodities:wti','monitor:commodities:brent','monitor:commodities:natgas']},
+    {name:'貴金屬',members:['monitor:commodities:gold','monitor:commodities:silver']},
+    {name:'波動家族',members:['monitor:vol:vix','monitor:vol:vix9d','monitor:vol:vvix','monitor:vol:skew','monitor:vol:move','internals:options_vol:vix1d']},
+    {name:'美元複合體',members:['monitor:fx:dxy','monitor:fx:usdjpy','monitor:fx:usdcny','monitor:fx:eurusd','monitor:fx:gbpusd']},
+    {name:'利率結構',members:['monitor:rates:dgs2','monitor:rates:dgs10','monitor:rates:dgs30','monitor:rates:t10y2y','monitor:rates:tp10y','monitor:rates:real10y','monitor:rates:bei5y']},
+    {name:'信用三件套',members:['monitor:credit:hy_oas','monitor:credit:ig_oas','monitor:credit:ccc_oas','monitor:credit:hyg_lqd']},
+    {name:'流動性管路',members:['monitor:liquidity:reserves','monitor:liquidity:tga','monitor:liquidity:rrp','monitor:liquidity:sofr_iorb','monitor:liquidity:nfci','monitor:liquidity:stlfsi']},
+    {name:'股票廣度',members:['monitor:factors:rsp_spy','monitor:factors:iwm_spy','internals:breadth:brd_above200','internals:breadth:brd_adv_dec']}
+  ];
+  function buildPanoClusterNameIndex(clusters){
+    var idx={}; // tileKey → [族名,...]（正常情況每 key 只屬一族，但不強制唯一）
+    (clusters||[]).forEach(function(cl){
+      (cl.members||[]).forEach(function(k){
+        if(!idx[k])idx[k]=[];
+        idx[k].push(cl.name);
+      });
+    });
+    return idx;
+  }
+  var CLUSTER_KEY_TO_NAMES=buildPanoClusterNameIndex(CLUSTER_MAP);
+  var activeClusterName=null; // 目前高亮中的資產族（點 chip 切換），重渲染時歸零不跨輪保留
+
   var panoTilesIndex={}; // tileKey → tile 物件，供點擊展開詳情查表用
 
   var allSignals=[];
@@ -1377,6 +1457,30 @@ footer.imq-foot a{color:var(--accent)}
     return (p-50)/50*2.5;
   }
   function severityRank(sev){return sev==='red'?2:(sev==='yellow'?1:0);}
+  // composites[].members[].ref 與 kill_watch items[].data_source 都直接／間接對映到磚牆的
+  // tileKey（srcType:cat:key），建成 tileKey → [關聯物件] 索引，供磚上徽章與詳情面板關聯行查表。
+  function buildPanoCompositeIndex(comps){
+    var idx={};
+    (comps||[]).forEach(function(c){
+      (c.members||[]).forEach(function(m){
+        if(!m||!m.ref)return;
+        if(!idx[m.ref])idx[m.ref]=[];
+        idx[m.ref].push(c);
+      });
+    });
+    return idx;
+  }
+  function buildPanoKillIndex(kw){
+    var idx={};
+    ((kw&&kw.items)||[]).forEach(function(it){
+      var ds=it&&it.data_source;
+      if(!ds||!ds.key||!ds.type)return;
+      var tk=ds.type+':'+String(ds.key).replace('/',':'); // 'monitor'/'internals' + 'cat/key' → tileKey 格式
+      if(!idx[tk])idx[tk]=[];
+      idx[tk].push(it);
+    });
+    return idx;
+  }
   // 建 "cat:itemKey" → 當日最高嚴重度訊號 的索引，僅收 source==='monitor'（reversal／composite
   // 等衍生訊號不直接對應原始 series 磚，避免張冠李戴）。signal.key 格式＝monitor:{cat}:{key}[:dir]。
   function buildPanoSignalIndex(sigs){
@@ -1390,7 +1494,7 @@ footer.imq-foot a{color:var(--accent)}
     });
     return idx;
   }
-  function makePanoTile(it,dim,srcType,catKey,matchedSig){
+  function makePanoTile(it,dim,srcType,catKey,matchedSig,compIdx,killIdx){
     it=it||{};
     var z=(typeof it.z==='number'&&!isNaN(it.z))?it.z:null;
     var pctile=(typeof it.pctile==='number'&&!isNaN(it.pctile))?it.pctile:null;
@@ -1402,20 +1506,24 @@ footer.imq-foot a{color:var(--accent)}
     else if(absZ!=null){
       if(absZ>=3)tier=3;else if(absZ>=2)tier=2;else if(absZ>=1.5)tier=1;
     }
+    var tileKey=srcType+':'+catKey+':'+(it.key||'');
     return {dim:dim,source:srcType,cat:catKey,key:it.key,label:it.label||it.key,
       val:(it.val!=null?it.val:'—'),chg:it.chg||'',dir:it.dir||null,
       z:z,zProxy:zProxy,absZ:absZ,pctile:pctile,tier:tier,forcedRed:forcedRed,
       hi52:!!it.hi52,lo52:!!it.lo52,spark:it.spark||[],unit:it.unit||'',
-      matchedSig:matchedSig||null,tileKey:srcType+':'+catKey+':'+(it.key||'')};
+      matchedSig:matchedSig||null,tileKey:tileKey,
+      compMatches:(compIdx&&compIdx[tileKey])||[],
+      killMatches:(killIdx&&killIdx[tileKey])||[],
+      clusterNames:CLUSTER_KEY_TO_NAMES[tileKey]||[]};
   }
-  function buildPanoTiles(monLatest,internalsLatest,sigs){
+  function buildPanoTiles(monLatest,internalsLatest,sigs,compIdx,killIdx){
     var sigIdx=buildPanoSignalIndex(sigs);
     var tiles=[];
     ((monLatest&&monLatest.categories)||[]).forEach(function(cat){
       var dim=PANO_MONITOR_CAT_DIM[cat.key]||'other';
       (cat.items||[]).forEach(function(it){
         var matched=sigIdx[cat.key+':'+it.key]||null;
-        tiles.push(makePanoTile(it,dim,'monitor',cat.key,matched));
+        tiles.push(makePanoTile(it,dim,'monitor',cat.key,matched,compIdx,killIdx));
       });
     });
     if(internalsLatest&&internalsLatest.categories){
@@ -1427,7 +1535,7 @@ footer.imq-foot a{color:var(--accent)}
         var it=(c.items||[]).filter(function(x){return x&&x.key===sel.key;})[0];
         if(!it)return;
         var matched=sigIdx[sel.cat+':'+sel.key]||null;
-        tiles.push(makePanoTile(it,sel.dim,'internals',sel.cat,matched));
+        tiles.push(makePanoTile(it,sel.dim,'internals',sel.cat,matched,compIdx,killIdx));
       });
     }
     return tiles;
@@ -1444,48 +1552,135 @@ footer.imq-foot a{color:var(--accent)}
     withZ.slice(0,3).forEach(function(t){keys[t.tileKey]=true;});
     return keys;
   }
-  function buildPanoTileHtml(t,isTop){
-    var cls='pano-tile pano-t'+t.tier+(isTop?' pano-top':'');
+  function buildPanoTileHtml(t,isTop,isCore){
+    var cls='pano-tile pano-t'+t.tier+(isTop?' pano-top':'')+(isCore?' pano-tile-core':'');
     var dirCls=t.dir==='pos'?'pos':(t.dir==='neg'?'neg':'');
+    var badges='';
+    if(t.compMatches&&t.compMatches.length)badges+='<span class="pano-badge pano-badge-comp" title="composite 成員">◎</span>';
+    if(t.killMatches&&t.killMatches.length)badges+='<span class="pano-badge pano-badge-kill" title="kill 監測中">⚑</span>';
+    var badgeHtml=badges?'<span class="pano-badges">'+badges+'</span>':'';
+    var persistHtml='';
+    if(t.tier>=2&&t.matchedSig&&typeof t.matchedSig.days_active==='number'&&t.matchedSig.days_active>=2){
+      persistHtml='<span class="pano-persist" title="對應訊號已連續判定活躍 '+t.matchedSig.days_active+' 天">'+t.matchedSig.days_active+' 日</span>';
+    }
     return '<button type="button" class="'+cls+'" data-pano-key="'+esc(t.tileKey)+'" title="'+esc(t.label)+'">'
       +(isTop?'<span class="pano-top-badge">TOP</span>':'')
+      +badgeHtml
       +'<span class="pano-label">'+esc(t.label)+'</span>'
       +'<span class="pano-val">'+esc(t.val)+'</span>'
-      +'<span class="pano-chg '+dirCls+'">'+esc(t.chg||'—')+'</span>'
+      +'<span class="pano-chg-row"><span class="pano-chg '+dirCls+'">'+esc(t.chg||'—')+'</span>'+persistHtml+'</span>'
       +'</button>';
   }
   function buildPanoDimSection(dimKey,label,items,topKeys){
     if(!items||!items.length)return '';
     var sorted=sortPanoTiles(items);
-    var tilesHtml=sorted.map(function(t){return buildPanoTileHtml(t,!!topKeys[t.tileKey]);}).join('');
+    var tilesHtml=sorted.map(function(t){return buildPanoTileHtml(t,!!topKeys[t.tileKey],false);}).join('');
     return '<div class="pano-dim" data-pano-dim="'+esc(dimKey)+'">'
       +'<h4 class="pano-dim-title">'+esc(label)+' <span class="pano-dim-count">'+items.length+' 磚</span></h4>'
       +'<div class="pano-grid">'+tilesHtml+'</div></div>';
   }
-  function renderPanorama(monLatest,internalsLatest,sigs){
+  // 系統核心列（2026-07-16 新增）：第一組、磚放大，從各維度組抽離不重複顯示。
+  function buildPanoCoreSection(items,topKeys){
+    if(!items||!items.length)return '';
+    var sorted=sortPanoTiles(items);
+    var tilesHtml=sorted.map(function(t){return buildPanoTileHtml(t,!!topKeys[t.tileKey],true);}).join('');
+    return '<div class="pano-dim pano-core" data-pano-dim="core">'
+      +'<h4 class="pano-dim-title pano-core-title">系統核心 <span class="pano-dim-count">'+items.length+' 磚</span></h4>'
+      +'<div class="pano-grid pano-grid-core">'+tilesHtml+'</div></div>';
+  }
+  // ── 關聯異常聚類條（2026-07-16 新增）：純 display grouping，非判斷規則──
+  // 對每個 curated 族，取其在今日磚牆中實際存在的成員；≥2 檔 |z|≥1.5 才視為「同族聚集異常」。
+  function computeClusterAlerts(tilesIdxByKey){
+    var out=[];
+    CLUSTER_MAP.forEach(function(cl){
+      var members=cl.members.map(function(k){return tilesIdxByKey[k];}).filter(Boolean);
+      if(!members.length)return;
+      var anomalous=members.filter(function(t){return t.absZ!=null&&t.absZ>=1.5;});
+      if(anomalous.length<2)return;
+      var top3=members.slice().sort(function(a,b){
+        var az=a.absZ==null?-1:a.absZ, bz=b.absZ==null?-1:b.absZ;
+        return bz-az;
+      }).slice(0,3);
+      out.push({name:cl.name,anomalousCount:anomalous.length,total:members.length,top3:top3});
+    });
+    out.sort(function(a,b){return b.anomalousCount-a.anomalousCount;});
+    return out;
+  }
+  function fmtSigmaLabel(t){
+    if(t.absZ==null)return t.label+' —';
+    return t.label+' '+t.absZ.toFixed(1)+'σ';
+  }
+  function buildClusterChipHtml(c){
+    var top3Txt=c.top3.map(fmtSigmaLabel).join('、');
+    return '<button type="button" class="cluster-chip" data-cluster-name="'+esc(c.name)+'">'
+      +esc(c.name)+' '+c.anomalousCount+'/'+c.total+' 檔異常（'+esc(top3Txt)+'）</button>';
+  }
+  function applyPanoClusterHighlight(){
+    var memberSet=null;
+    if(activeClusterName){
+      var cl=CLUSTER_MAP.filter(function(c){return c.name===activeClusterName;})[0];
+      if(cl){memberSet={};cl.members.forEach(function(k){memberSet[k]=true;});}
+    }
+    document.querySelectorAll('#panoWall .pano-tile').forEach(function(el){
+      var k=el.getAttribute('data-pano-key');
+      el.classList.toggle('cluster-hi',!!(memberSet&&memberSet[k]));
+    });
+  }
+  function renderPanoClusterRow(tilesIdxByKey){
+    var host=document.getElementById('panoClusterRow');
+    if(!host)return;
+    var alerts=computeClusterAlerts(tilesIdxByKey||{});
+    if(!alerts.length){
+      host.innerHTML='<div class="cluster-empty">今日無同族聚集異常——異常皆為單點。</div>';
+      return;
+    }
+    var h='<span class="cluster-row-label">關聯異常：</span>';
+    alerts.forEach(function(c){h+=buildClusterChipHtml(c);});
+    host.innerHTML=h;
+  }
+  document.getElementById('panoClusterRow').addEventListener('click',function(e){
+    var btn=e.target.closest('.cluster-chip');
+    if(!btn)return;
+    var name=btn.getAttribute('data-cluster-name')||'';
+    activeClusterName=(activeClusterName===name)?null:name;
+    document.querySelectorAll('#panoClusterRow .cluster-chip').forEach(function(b){
+      b.classList.toggle('sel',b.getAttribute('data-cluster-name')===activeClusterName);
+    });
+    applyPanoClusterHighlight();
+  });
+  function renderPanorama(monLatest,internalsLatest,sigs,comps,killWatch){
     var host=document.getElementById('panoWall');
     var countEl=document.getElementById('panoCount');
     if(!host)return;
+    activeClusterName=null;
     if(!monLatest||!monLatest.categories){
       host.innerHTML='<div class="empty-state">市場全景資料暫時無法載入。</div>';
       if(countEl)countEl.textContent='— 磚';
       panoTilesIndex={};
+      renderPanoClusterRow({});
       return;
     }
-    var tiles=buildPanoTiles(monLatest,internalsLatest,sigs);
+    var compIdx=buildPanoCompositeIndex(comps);
+    var killIdx=buildPanoKillIndex(killWatch);
+    var tiles=buildPanoTiles(monLatest,internalsLatest,sigs,compIdx,killIdx);
     var idx={};
     tiles.forEach(function(t){idx[t.tileKey]=t;});
     panoTilesIndex=idx;
     var topKeys=computePanoTop3(tiles);
+    // 系統核心列先抽離，剩餘才依維度分組——核心磚不在維度組重複出現。
+    var coreTiles=tiles.filter(function(t){return SYSTEMIC_CORE_KEYSET[t.tileKey];});
+    var restTiles=tiles.filter(function(t){return !SYSTEMIC_CORE_KEYSET[t.tileKey];});
     var byDim={};
     PANO_DIMS.forEach(function(d){byDim[d]=[];});
-    tiles.forEach(function(t){(byDim[t.dim]||(byDim[t.dim]=[])).push(t);});
+    restTiles.forEach(function(t){(byDim[t.dim]||(byDim[t.dim]=[])).push(t);});
     var h='';
+    if(coreTiles.length)h+=buildPanoCoreSection(coreTiles,topKeys);
     PANO_DIMS.forEach(function(d){h+=buildPanoDimSection(d,DIM_LABEL[d]||d,byDim[d],topKeys);});
     host.innerHTML=h||'<div class="empty-state">目前無市場全景資料。</div>';
     if(countEl)countEl.textContent=tiles.length+' 磚';
     // 重渲染後清掉舊選取態的詳情面板（tile 節點已重建，舊 .sel 參照已失效）
     renderPanoDetail(null);
+    renderPanoClusterRow(idx);
   }
   // spark 折線只在磚展開（點擊）當下才畫，避免 100+ 磚初載就產生等量 SVG。
   function buildPanoSparkSVG(spark){
@@ -1529,7 +1724,32 @@ footer.imq-foot a{color:var(--accent)}
       +'<div class="sig-fact">數值 '+esc(t.val)+(t.chg?'（'+esc(t.chg)+'）':'')
       +' · z '+esc(zTxt)+' · 一年分位 '+esc(pctTxt)+(hiloParts.length?(' · '+esc(hiloParts.join('／'))):'')+'</div>'
       +(sparkHtml?'<div class="pano-spark">'+sparkHtml+'</div>':'')
-      +sigHtml;
+      +sigHtml
+      +buildPanoRelHtml(t);
+  }
+  // 詳情面板「關聯」行（2026-07-16 新增）：◎ composite 成員進度／⚑ kill 對帳距門檻／所屬資產族。
+  // 三者皆無關聯時整段不顯示，避免無意義的「無」噪音。
+  function buildPanoRelHtml(t){
+    var lines=[];
+    (t.compMatches||[]).forEach(function(c){
+      var total=(c.members||[]).length;
+      var met=c.met_count!=null?c.met_count:'—';
+      lines.push('◎ '+esc(c.id||'')+' '+esc(c.name||'')+' 成員（'+esc(met)+'/'+total+' 已成立）');
+    });
+    (t.killMatches||[]).forEach(function(k){
+      var metric=k.metric_text||k.metric||'—';
+      var threshold=k.threshold_text||k.threshold||'—';
+      var current=(k.current!=null?k.current:(k.value!=null?k.value:'—'));
+      var unit=k.unit?(' '+k.unit):'';
+      lines.push('⚑ '+esc(k.theme||'—')+'：'+esc(metric)+' 距門檻 現 '+esc(current)+esc(unit)+'／'+esc(threshold));
+    });
+    if(t.clusterNames&&t.clusterNames.length){
+      lines.push('所屬資產族：'+esc(t.clusterNames.join('、')));
+    }
+    if(!lines.length)return '';
+    return '<div class="pano-detail-rel"><div class="pano-detail-rel-hd">關聯</div>'
+      +lines.map(function(l){return '<div class="pano-detail-rel-row">'+l+'</div>';}).join('')
+      +'</div>';
   }
   // #panoWall 事件代理：點擊磚 → 高亮＋展開詳情面板（含 spark，延遲到點擊才畫）。
   document.getElementById('panoWall').addEventListener('click',function(e){
@@ -2243,7 +2463,7 @@ footer.imq-foot a{color:var(--accent)}
         try{renderHeatWall(null);}catch(e){}
         // 全景磚牆讀原始 monitor/internals series，不依賴 det 是否可用——det 掛掉時
         // 仍可顯示基本市場數據磚牆（只是磚上不會有 matchedSig 的紅燈標記）。
-        try{renderPanorama(monLatest,internalsLatest,null);}catch(e){
+        try{renderPanorama(monLatest,internalsLatest,null,null,killWatch);}catch(e){
           document.getElementById('panoWall').innerHTML='<div class="empty-state">市場全景資料格式異常，暫無法渲染。</div>';
         }
         try{renderFocus(null,state,killWatch);}catch(e){}
@@ -2294,7 +2514,7 @@ footer.imq-foot a{color:var(--accent)}
       }
 
       // ② 市場全景磚牆（主視覺——monitor 96 條 series ＋ internals 精選代表性 series）
-      try{renderPanorama(monLatest,internalsLatest,allSignals);}catch(e){
+      try{renderPanorama(monLatest,internalsLatest,allSignals,det.composites,killWatch);}catch(e){
         document.getElementById('panoWall').innerHTML='<div class="empty-state">市場全景資料格式異常，暫無法渲染。</div>';
       }
 
