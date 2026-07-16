@@ -39,6 +39,9 @@ workflow_run 重複觸發因此安全。
 輸出：
   · docs/detective/data/latest.json — schema detective-v2（頁面渲染）
   · docs/detective/data/state.json  — schema detective-state-v1（狀態機真相源）
+  · docs/detective/data/alert_history.json — schema detective-alert-history-v1
+    （警戒度歷史軌跡，[date, score, band] 逐點累積，供頁面趨勢圖；從落地當日
+    起累積，不回填過去——見 update_alert_history docstring）
   · detective_alert.txt（未 commit）— 紅燈級＋今日新增＋今日升級（扣除 mute），
     供 GitHub Actions email 步驟
 
@@ -895,6 +898,49 @@ def compute_alert_level(signals, composites, kw, as_of):
             "drivers": drivers[:5], "as_of": as_of}
 
 
+# ── 警戒度歷史趨勢（alert_history）───────────────────────────────────────
+
+ALERT_HISTORY_SCHEMA = "detective-alert-history-v1"
+ALERT_HISTORY_CAP = 400
+
+
+def update_alert_history(as_of, alert_level):
+    """把當日 alert_level 壓成 [date, score, band] 累加進 alert_history.json，
+    供頁面威脅指針下方的歷史趨勢圖。
+
+    冪等規則（精確對齊 build_monitor.py 零 churn 協議）：
+      · 檔不存在／schema 不符 → 視為空、建立新檔（今天首跑即 seed 第 1 點）
+      · 末點 date == as_of → 覆寫末點（同日重跑／replay 產生相同內容
+        → write_json_if_changed 判定零 churn，不寫入不觸發 commit）
+      · 末點 date < as_of  → append 新點
+      · 末點 date > as_of（不應發生，防倒退）→ 不動檔、只印 warning
+      · points 封頂 ALERT_HISTORY_CAP（超過從頭裁掉，保留最近窗）
+
+    只從落地當日起累積，刻意不回填過去——alert_level 公式（ALERT_WEIGHTS）
+    是 2026-07 才定案，用現行公式重建歷史會產生假訊號，不誠實。
+
+    回傳是否有寫入（供 main() 的 zero-churn 狀態列印）。"""
+    path = os.path.join(DOCS, "detective", "data", "alert_history.json")
+    hist = load_json(path)
+    if not hist or hist.get("schema") != ALERT_HISTORY_SCHEMA:
+        hist = {"schema": ALERT_HISTORY_SCHEMA, "points": []}
+    points = list(hist.get("points") or [])
+    point = [as_of, alert_level.get("score"), alert_level.get("band")]
+    if points and points[-1][0] == as_of:
+        points[-1] = point
+    elif points and points[-1][0] > as_of:
+        print(f"detective WARN: alert_history as_of regression "
+              f"({as_of} < {points[-1][0]}) — history not updated")
+        return False
+    else:
+        points.append(point)
+    if len(points) > ALERT_HISTORY_CAP:
+        points = points[-ALERT_HISTORY_CAP:]
+    hist["schema"] = ALERT_HISTORY_SCHEMA
+    hist["points"] = points
+    return write_json_if_changed(path, hist, volatile=())
+
+
 def main():
     latest = _load("monitor/data/latest.json", {})
     alerts = _load("monitor/data/alerts.json", {})
@@ -961,6 +1007,7 @@ def main():
     gen = radar.get("generated_at") or latest.get("generated_at")
 
     alert_level = compute_alert_level(signals, composites_out, kw, as_of)
+    ch_history = update_alert_history(as_of, alert_level)
 
     out = {
         "schema": "detective-v2",
@@ -1031,7 +1078,8 @@ def main():
     print(f"detective as_of={as_of} tick={'yes' if is_tick else 'no (replay)'} "
           f"stale={stale or '[]'}")
     print(f"latest.json: {'written' if ch_latest else 'zero-churn'} · "
-          f"state.json: {'written' if ch_state else 'zero-churn'}")
+          f"state.json: {'written' if ch_state else 'zero-churn'} · "
+          f"alert_history.json: {'written' if ch_history else 'zero-churn'}")
 
 
 if __name__ == "__main__":
