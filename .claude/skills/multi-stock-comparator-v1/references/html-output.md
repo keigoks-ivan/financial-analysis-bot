@@ -4,7 +4,7 @@
 
 ### 視覺規格(對齊 InvestMQuest research.investmquest.com 風格)
 
-CSS 規格詳見 `HTML_TEMPLATE.md`。核心要點:
+CSS 規格詳見 `HTML_TEMPLATE.md`。核心要點：
 
 - **背景**:`#ffffff`(白底)
 - **主文字**:`#1a1d24`
@@ -24,7 +24,7 @@ CSS 規格詳見 `HTML_TEMPLATE.md`。核心要點:
 - 🔴 警示 / 窄 / 昂貴
 - ⚫ X(迴避)
 
-排序視覺:
+排序視覺：
 - 🥇 第一名(綠底)
 - 🥈 第二名(灰底)
 - 🥉 第三名(橘底)
@@ -35,12 +35,12 @@ CSS 規格詳見 `HTML_TEMPLATE.md`。核心要點:
 §A Dashboard 頂部必須有「綜合裁決卡片」:
 
 ```
-推薦標的:[Ticker]
-適用時間框架:3-5 年
+推薦標的：[Ticker]
+適用時間框架：3-5 年
 主要理由(三條):
 1. [一行]
 2. [一行]
 3. [一行]
-進場條件:[Pure MA 確認 / 拐點催化 / 等等]
+進場條件：[Pure MA 確認 / 拐點催化 / 等等]
 ```
 

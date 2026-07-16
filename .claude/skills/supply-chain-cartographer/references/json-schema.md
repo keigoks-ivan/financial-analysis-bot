@@ -9,7 +9,7 @@
 | `id` | ✓ | topic 短代碼，等於檔名（cowos / cpo / hbm…） |
 | `tab` | ✓ | tab 文字（短，6 字內：CoWoS / CPO / HBM） |
 | `title` | ✓ | 完整中文標題 |
-| `subtitle` | ✓ | 1-3 句敘述本 topic 的核心 thesis，**禁止 stingtao 殘留 voice**（如「本版補齊...」）|
+| `subtitle` | ✓ | 1-3 句敘述本 topic 的核心 thesis，**禁止 stingtao 殘留 voice**（如「本版補齊。..」）|
 | `stats` | ✓ | 3 個 stat cards（節點數 / 廠商數 / single 數 + sub） |
 | `rows` | ✓ | row 陣列（3-6 列，由產業決定） |
 | `nodes` | ✓ | 節點陣列 |
