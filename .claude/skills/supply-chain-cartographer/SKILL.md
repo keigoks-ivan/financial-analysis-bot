@@ -1,11 +1,26 @@
 ---
 name: supply-chain-cartographer
 description: 建立「產業供應鏈互動地圖」— 把產業鏈拆成節點 × 廠商 × 競爭態勢 × 客戶獨家／關鍵單點的視覺化頁面，與 industry-analyst v2.0（敘事為骨、表格為窗的產業深度報告，含供需循環敘事 + 決策層）並列的另一種產業視角。輸入產業主題（如「HBM」「ASIC」「先進製程」「IC 設計」「人形機器人」），skill 執行多輪 WebSearch / WebFetch 研究（英文 + TW 中文雙語策略），輸出 docs/supply-chain/data/{topic}.json + 一支 thin {topic}.html template，引擎 (engine.css + engine.js) 已存在不需動。row 數量自由（3-6 列），由產業敘事決定；每個 single-point ⚑ 必須引用 ≥2 來源並標註信心度。v1.1：新 topic 必餵機械層 sidecar（terminal_markets.json 終端封鎖值＋substitution_lags.json 替代難度四檔）——hub 瓶頸分級為編輯層（curated T0-T2/OVER）＋機械層對帳（漏網提名）兩層制。觸發：使用者說「跑 {topic} 供應鏈地圖」/「{topic} supply chain map」/「畫 {topic} 供應鏈」/「{topic} supply-chain」/「supply-chain {topic}」。
-version: v1.1
-date: 2026-07-09
+version: v1.2
+date: 2026-07-16
 ---
 
-# supply-chain-cartographer skill v1.0
+# supply-chain-cartographer skill v1.2
+
+## 條件載入路由表（v1.2 結構拆分：核心 = always-on，references/ = 按需載入）
+
+> v1.2 把 5 輪研究細則、💎/Tier pick 框架、JSON schema、HTML template、輸出機械層、版本沿革搬到 `references/`（內容自 v1.1 原文零語意變更搬移），核心從 724 行減到 ~290 行——目的是把注意力預算還給研究深度與 ⚑ 掛旗判斷。核心保留：定位/觸發語、既有架構、機械層 sidecar 紀律、工作流骨架、⚑ Single-Point Framework（掛旗閘）、信心度標註 convention、品質 Gate、stingtao 殘留檢查。
+
+| 時點 | 條件 | 必 Read |
+|---|---|---|
+| 研究階段（Round 0 開始） | 一律 | `references/research-rounds.md`（5 輪研究搜尋詞範本＋TW 中文源清單＋DD 對照指令） |
+| Step 1 寫 JSON | 一律 | `references/json-schema.md`（頂層/Node/Company 欄位表＋範例 node） |
+| 寫 JSON 標註 core_business / supply_chain_lock / node_role 時 | 有候選 💎/🐘/🔒 | `references/pick-frameworks.md`（💎 Top Picks v1.3 + 三層 Tier 全文） |
+| Step 2 寫 {topic}.html | 一律 | `references/html-template.md`（thin template 全文） |
+| Step 3 之後（manifest 翻牌→hub→build→push→驗證） | 一律 | `references/output-plumbing.md`（Step 3/3.5/4/5 全文） |
+| 修改本 skill 規則 / 查動機與 gap 時 | — | `references/changelog.md`（預期效益＋已知限制＋版本沿革） |
+
+標準流程只需載入 research-rounds（研究階段）、json-schema（Step 1）、html-template + output-plumbing（Step 2 之後）；有 💎 候選才載入 pick-frameworks。
 
 ## 定位
 
@@ -61,121 +76,16 @@ Hub 的稀缺分級是兩層制：**編輯層**（tiers script 內 T0/T1/T2/OVER
 
 之後重跑 tiers script，機械對帳表自動吃進新鏈。**⚑ 的角色自 v1.1 起是排行榜輸入訊號之一**，不是獨立維護的 metadata——掛旗紀律（≥2 源）不變，但「本鏈最窄節點是誰、為什麼」的 KEY CALL 判斷以 substitution_lags 的 tier 為權威表達。
 
-## 工作流（標準 5 輪研究 + 4 步輸出）
+## 工作流骨架（標準 5 輪研究 + 4 步輸出）
 
-### Round 0：先看現況
+> 每輪的搜尋詞範本、TW 中文源清單、DD 對照指令 → 研究階段開始時載入 `references/research-rounds.md`（此處只列骨架）。
 
-```
-# 1. 確認 topic 在 manifest（不在就要加）
-grep '"id": "{topic}"' docs/supply-chain/data/topics.json
-
-# 2. 看既有 topic 範例
-ls docs/supply-chain/data/   # cowos.json, cpo.json
-
-# 3. 估計研究時間
-- 半導體製造 topic（HBM、先進製程、ASIC）：~60-90 min
-- 跨產業 topic（機器人、衛星、軍工）：~90-120 min
-```
-
-### Round 1：產業 Overview + 主玩家（4-5 平行 WebSearch）
-
-英文 sources 優先（覆蓋面廣、行業報告多）。
-
-```python
-parallel_search([
-    "{topic} supply chain 2026 主要玩家 architecture",
-    "{topic} market size 2026 2030 IDTechEx Yole forecast",
-    "{topic} key technology 鎖喉點 single-source bottleneck",
-    "{topic} hyperscaler customer adoption timeline",
-    "{topic} TSMC Samsung foundry partner 2026",
-])
-```
-
-抓出：
-- 產業骨架（哪幾個製程環節、產品段）
-- 全球 majors（美/日/歐/韓大廠）
-- 預期上量時間（2025/2026/2027）
-- 關鍵客戶（hyperscaler、AI 晶片廠）
-
-### Round 2：TW 中文供應鏈（5-8 中文 WebSearch）
-
-**這是 stingtao 種子最強、純自研最弱的環節**。必須用中文搜尋找 TW 小型股的客戶獨家。
-
-優先源：
-1. **TechNews 科技新報**（technews.tw）
-2. **Money Weekly 理財周刊**（moneyweekly.com.tw）
-3. **TrendForce**（中文版報導）
-4. **Digitimes**（digitimes.com）
-5. **工商時報** / **經濟日報**（chinatimes.com / udn.com）
-6. **數位時代**（bnext.com.tw）
-7. **鉅亨網**（cnyes.com）
-8. **Vocus** / **Pocket** / **StatementDog**（個股法說會整理）
-
-```python
-parallel_search([
-    "{TW player 1} {topic} TSMC NVIDIA 供應鏈 2026",
-    "{TW player 2} {topic} 獨家 客戶 送樣",
-    "{TW player 3} {topic} 法說 市佔",
-    # 通用詞
-    "{topic} 台廠 受惠股 供應鏈",
-    "{topic} 客戶獨家 鎖喉點 台灣",
-])
-```
-
-抓出：
-- TW 小/中型股對 TSMC / NVDA / AMD 的客戶獨家狀態
-- 法說會公開數字（最強信心度來源）
-- 送樣 / 驗證 / 量產時程
-
-### Round 3：垂直深度（3-5 平行 WebSearch）
-
-針對 topic 特定的關鍵環節做深掘。例：
-- HBM → DRAM 三強市佔 / TC bonder / HBM4 base die
-- CPO → DFB 雷射 / III-V epi / MLA / FAU
-- ASIC → EDA / 設計服務 / IP / chiplet
-- 機器人 → 致動器 / 減速機 / 感測器
-
-```python
-parallel_search([
-    "{topic} 關鍵環節 1 supplier market share 2026",
-    "{topic} 關鍵環節 2 bottleneck monopoly",
-    "{topic} downstream demand hyperscaler",
-    "{topic} new entrant disruptor 2026",
-    "{topic} OFC SEMICON {year} announcement",  # 重大會議
-])
-```
-
-### Round 4：競爭驗證（2-3 focused WebSearch）
-
-對每個你打算標 ⚑ 的 single-point，**強制找第二個獨立來源**驗證。
-
-```python
-parallel_search([
-    "{single-point 1} confirmed 2026 sole supplier",
-    "{single-point 2} 法說 確認",
-    "{single-point 3} second source alternative challenger",
-])
-```
-
-**規則**：
-- 高信心 ⚑：≥2 來源（含 1 個權威源 = 法說會 / 公司公告 / 大行報告）
-- 中信心 ⚑：1 個權威源 或 2 個次要源 — 在 single 欄位明標「送樣中 / 待量產 / 單一來源」
-- 低信心 ⚑（謠傳 / 單一 substack）：**不要標 ⚑**，放主表但不打旗
-
-### Round 5：DD universe 對照
-
-```bash
-# 跑 build script 確保 dd_links.json 是最新
-python3 scripts/build_supply_chain_dd_index.py
-
-# 列出本 topic 涵蓋的 ticker 中哪些有 DD
-for t in <list of tickers>; do
-  f=$(ls docs/dd/DD_${t}_*.html 2>/dev/null | sort -r | head -1)
-  if [ -n "$f" ]; then echo "✓ $t → $(basename $f)"; else echo "✗ $t (no DD)"; fi
-done
-```
-
-→ 沒有 DD 的小型 ticker **不是問題**（supply chain map 就是要 surface 這些 gap）。但要在 commit message 列出來，作為未來 DD 工作的待補清單。
+- **Round 0 · 先看現況**：確認 topic 在 manifest（不在就加）、看既有範例（cowos/cpo）、估研究時間（半導體製造 ~60-90 min / 跨產業 ~90-120 min）。
+- **Round 1 · 產業 Overview + 主玩家**（4-5 平行 WebSearch，英文優先）：抓產業骨架、全球 majors、上量時間、關鍵客戶。
+- **Round 2 · TW 中文供應鏈**（5-8 中文 WebSearch）：這是純自研最弱環節，**必須用中文源**（TechNews / Money Weekly / TrendForce / Digitimes / 工商時報 / 經濟日報 / 數位時代 / 鉅亨 / Vocus / StatementDog）找 TW 小型股客戶獨家與法說數字。
+- **Round 3 · 垂直深度**（3-5 平行 WebSearch）：對 topic 特定關鍵環節深掘（HBM→DRAM 三強/TC bonder；CPO→DFB 雷射/MLA/FAU 等）。
+- **Round 4 · 競爭驗證**（2-3 focused WebSearch）：對每個要標 ⚑ 的 single-point **強制找第二個獨立來源**。高信心 ⚑≥2 源（含 1 權威源）；中信心明標「送樣中/待量產/單一來源」；低信心（謠傳/單一 substack）**不標 ⚑**。
+- **Round 5 · DD universe 對照**：跑 `build_supply_chain_dd_index.py`，列出本 topic ticker 哪些有 DD。沒 DD 的小型 ticker 不是問題（正是要 surface 的 gap），但要在 commit message 列為未來 DD 待補清單。
 
 ## Row 數量決策表
 
@@ -282,93 +192,7 @@ critic 投 KEEP / DEMOTE / SPLIT；SPLIT 由主 agent 最終定奪並在 commit 
 | **鎖喉點** | A2 ✓ + B2 ✓ | TSMC CoWoS-L、Broadcom Jericho 4 inter-DC router、NVLink scale-up |
 | **封裝級單點** | A2/A3 + B2 ✓ | 健策 CoWoS lid/IHS、Mitsui EUV pellicle ASML license |
 
-## 💎 Top Picks Framework — v1.3 收緊（3 條件 AND + 每 topic 上限 3-5）
-
-> **v1.3 變更**：(1) `supply_chain_lock="tight"` 從「5 訊號任一」改「**≥2 訊號**」；(2) `core_business` 砍掉「管理層公開定位 flagship」敘事後門，只留可查的 ≥20% rev / pure-play；(3) **每 topic 💎 硬上限 3-5 檔**（validator 在 `single_point_framework:"v1.3"` 下強制 ≤5）；(4) **禁止把「第二供應源 / oligopoly 互打的一員 / 大集團一小 segment」標 💎** — 即使所在節點是 ⚑。hbm 三宗實例：Amkor（CoWoS 第二來源）、欣興/南電/景碩（互打 oligopoly）、Ajinomoto（食品集團）。根因都是「把**受惠於鎖喉的人**，誤當**鎖喉本身**」— 兩者投資 thesis 可能都成立，但 supply-chain map 的 💎 只標後者。
-
-⚑ 是「strategic single-point」但**單獨用會把 TSMC / Corning / Broadcom 也標出來** — 那些是「太大太分散，部位推不動 EPS」的大象。投資視角需要更嚴格的篩子：
-
-**isGolden(node, company) = node.single AND company.core_business AND company.supply_chain_lock == "tight"**
-
-三條件同時滿足才是 💎 Top Pick，缺一不可。引擎 (`engine.js`) 自動算交集、在頁面底部 hero section 列表，drawer 公司表的 Top Pick row 加 💎 prefix + 淡金色背景。
-
-**為何用 `supply_chain_lock` 取代之前的 `growth_trajectory`**：YoY 高成長是 momentum 信號（股價已漲完？），不是「供應鏈緊俏」信號。ASML 整體 +15% YoY 但 EUV backlog $30B+ 全球必經，TSMC corporate +25% YoY 但 N2/CoWoS sold out 到 2027 — 這些是「客戶離不開」的結構性 lock，比 YoY 強得多。換成 lock 後 false negatives 大幅下降。
-
-### 判準（明確化、減少主觀）
-
-**`core_business: true` 的條件（任一即過）**：
-- 當前 ≥ **20% revenue** 來自此 segment（從財報 / 法說資料）
-- **Pure-play** 純玩家（整家公司就做這個，如 Lumentum / Coherent / FOCI / Browave）
-- ~~公司管理層公開定位 flagship / 未來主成長引擎~~ **（v1.3 移除：純敘事後門，管理層永遠這樣講；要 forward 例外走下方 Forward-Core 三 hard gate）**
-
-**`core_business: false` 的條件（任一即否決）**：
-- 大集團一小 segment（如 TSMC COUPE 占 <1%、Corning AI fiber 占 <20%、Broadcom CPO 占 <5%）
-- 主業在別處（味之素 Ajinomoto 雖然 ABF 膜 95% 獨佔，但味之素是大食品/化工集團）
-
-**Forward-Core 例外（用 `core_business_trajectory: "high"`）**：
-
-預設規則：用「**今天**的 segment revenue %」判 `core_business`。但少數高確信案例可開 forward 例外 — 即使 segment 當前 <20% rev，仍可標 `core_business: true` + 加 `core_business_trajectory: "high"` 升 💎。
-
-**三條件必須全過**（任一缺 → 不開 forward 例外）：
-
-1. **管理層公開 guide 具體金額** — 必須是「2027 ASIC > $10 億美元」這種**具體數字** + 時間點，不是「策略佈局」「未來重點」這類空話。
-2. **已 signed 多年合約 ≥3 年** — 必須是公開揭露的 binding contract、非 MOU / LOI。
-3. **已有 named hyperscaler 級客戶** — Apple / NVIDIA / Google / AWS / Meta / MSFT / OpenAI / Anthropic / Tesla 任一具名 + 公開承諾。
-
-**已批准的 forward-core 案例**：
-- **MediaTek 2454 (asic ds-mtk-others)**：(i) 自報 ASIC 2026 >$10 億、2027 target $10B+；(ii) Google TPU v8i 合約鎖到 2031；(iii) Google + AWS 公開命名。當前 ASIC ~10% MTK 營收，三條件全過 → forward 例外升 💎。
-
-**不通過的反例**（即使 narrative 漂亮）：
-- **鴻海 2317 humanoid**：humanoid <1% Foxconn 營收、Foxconn 集團 $200B → 要做到 20% 需 humanoid 業務 $40B，數學上 5 年內不可能。
-- **Hoya 7741 EUV mask blank**：沒具體金額 guide、沒 signed 合約、客戶經 ASML 中介非直接 named。
-- **京鼎 3413 AMAT OEM**：80%+ 已經 AMAT 營收（current core 過），但結構是 supplier-captive（AMAT 可換 OEM）不是 customer-exclusive，是 ⚑ 框架誤用不是 forward 問題。
-
-→ Forward-core **是「升級加分項」**、不是「萬用救生圈」。三條件 hard gate。寧可漏 alpha 也不要 false positive。
-
-**`supply_chain_lock: "tight"` 的條件（v1.3：**≥2 訊號**過 — 舊版「任一即過」太鬆，2026 半導體隨便一家緊俏廠都有「訂單能見 ≥12 月」這條）**：
-1. 📅 **訂單能見度 ≥ 12 個月** — ASML EUV backlog $30B+；京鼎 3413 訂單看到 9 個月；Apple 鎖 TSMC N2 三年
-2. 🚫 **Sold out / capacity-constrained** — TSMC CoWoS 2026 月產能 120K 仍緊；SK Hynix HBM sold out through 2026
-3. 🤝 **多年 exclusive 公開命名** — NVIDIA → Navitas 800V Kyber；Meta → Broadcom 1GW（2031 合約）；Anthropic → Google TPU 3.5GW；Tesla → Samsung AI6 ₩22 兆
-4. 💰 **Pricing power demonstrated** — HBM3E → HBM4 ASP \$300 → \$500/stack；EUV pellicle 每片 \$300-500K
-5. 🎯 **客戶公開多代 supplier** — AWS → Alchip Trainium 3+4；Apple → TSMC N2/N2P/A16；NVIDIA Rubin → 健策/AVC/Cooler Master/Delta（centralized procurement）
-
-**`supply_chain_lock: "med"`**：有部分鎖喉但沒過 5 訊號（如雙占之一非絕對 lead、補位廠商）
-**`supply_chain_lock: "loose"`**：替代源多、紅海、無多年 visibility
-
-### 標註時機
-
-寫 JSON 時，**只在你已有具體證據時才標 `core_business` / `supply_chain_lock`**。Missing 視為 false / unknown — 不會誤判為 💎。寧可漏標也不要錯標。Validator (`scripts/validate_supply_chain_meta.py`) 會驗 enum 值合法（`tight` / `med` / `loose`）。
-
-### 為什麼這個交集有 alpha
-
-- ⚑ 單獨 → 把大象（broad 集團）也標出來
-- ⚑ + core_business → 排除「side bet」非核心業務
-- + supply_chain_lock=tight → 排除「YoY 高但客戶可換」的雜訊 + 抓「YoY 普通但 backlog 鎖死」的真緊俏（如 ASML）
-- 三個 AND → 留下 **真客戶離不開、EPS 推力結構性 high-conviction 的 5-15 檔**
-
-worked example 的 💎 池：
-- **HBM（v1.3 re-graded：⚑ 11→5、💎 12→4）**：ASML（EUV 唯一）/ SK Hynix + Micron（DRAM cartel 鎖定者，pricing power + sold-out）/ 欣興 Unimicron（AI-grade ABF #2，NVDA Blackwell 命名、結構性缺口）。砍掉的 8 檔多是 demoted-node 連帶（Lam/Disco/BESI/Onto/GUC）或第二源/oligopoly 互打（Amkor/南電/景碩）。
-- **CoWoS（6 檔，**仍 v1.2 未 re-grade**）**：健策 3653 / 家登 3680 / 弘塑 3131 / 新應材 4749 / 萬潤 6187 / Amkor AMKR — 待 v1.3 雙軸 + critic 重評（含 Amkor 是否為第二源的同類檢查）。
-
-這些正好是 sell-side / activist（Hunterbrook、Ming-Chi Kuo、Citrini）反覆推的標的 — 不是巧合，他們用類似框架。
-
-## 三層 Tier — 鎖喉 ≠ 可買（v1.4 起，2026-05-29）
-
-> **動機**：💎 單獨用會把「最不可或缺的節點 owner」誤判 — 因為最深的鎖喉（TSMC、Ajinomoto、ZEISS）往往**太大或不可投資**，反而過不了 💎 的 core_business gate。但「不是 💎」不代表「不重要」。v1.4 把坐在 ⚑ 節點上的公司分三層，讓「最不可或缺」與「最 top pick」**分開呈現**。
-
-| Tier | 判準 | 怎麼評 | 範例 |
-|---|---|---|---|
-| 💎 **Satellite** | ⚑ 節點 × `core_business:true` × `supply_chain_lock:"tight"` — 鎖喉**推得動該股 EPS**（純玩家 / 純度高） | satellite alpha，部位推得動 | ASML、家登、台光電、ASPEED |
-| 🐘 **Elephant** | `node_role:"elephant"` — **它就是鎖喉本身**（壟斷／近獨佔）但身處大型多角化集團，單節點 <~30% 營收推不動 EPS | **core-holding 框架**（估值/整體成長/週期），非 single-point | TSMC、Ajinomoto、Mitsui Chemicals |
-| 🔒 **Uninvestable** | `node_role:"uninvestable"` — sole-source 但**買不到純曝險**：未上市，或已是某上市母體的次組件 | 透過母體 / 客戶玩 | ZEISS+Cymer+Trumpf（→ ASML）、Namics、Crusoe |
-
-**標註規則**：
-- `node_role` 是 optional enum（`elephant` / `uninvestable`），**只標在 ⚑ 節點**上的公司。
-- 與 💎 satellite **互斥**：標了 `node_role` 就不能同時 `core_business:true`+`tight`（validator 強制；標 node_role 時應移除 cb/lock）。
-- 💎 satellite **不另設欄位**，仍由 `isGolden()` = `core_business`×`supply_chain_lock` 推導。
-- 判斷「elephant vs satellite」的關鍵問句：**「這個鎖喉節點占這家公司營收多少 %？」** ≥~30% 或純玩家 → satellite；個位數 %（大集團一小塊）→ elephant。
-- 判斷「uninvestable」：沒有可買的獨立 equity（ticker `—`／私人／已併入母體）。
-- engine 在頁尾 `#goldBlock` **分三區渲染**（💎 / 🐘 / 🔒），各自獨立表格與顏色。
+> 💎 Top Picks Framework（坐在 ⚑ 節點上的公司如何升 💎）+ 三層 Tier（💎 satellite / 🐘 elephant / 🔒 uninvestable）全文 → 有 💎/🐘/🔒 候選時載入 `references/pick-frameworks.md`。⚑ 判掛旗、pick-frameworks 判投資層級，兩者分工。
 
 ## 信心度標註 convention（在 `single` 與 `note` 欄位）
 
@@ -390,100 +214,13 @@ single: "近獨佔 · <主張> （信心度 high · 多源證實）"
 "single": "近乎獨佔 · Himax 為 TSMC COUPE Gen1 + Gen2 唯一 MLA 供應（Hunterbrook + Ming-Chi Kuo 多源證實）"
 ```
 
-## JSON Schema
-
-### 頂層
-
-| 欄位 | 必填 | 說明 |
-|---|---|---|
-| `id` | ✓ | topic 短代碼，等於檔名（cowos / cpo / hbm…） |
-| `tab` | ✓ | tab 文字（短，6 字內：CoWoS / CPO / HBM） |
-| `title` | ✓ | 完整中文標題 |
-| `subtitle` | ✓ | 1-3 句敘述本 topic 的核心 thesis，**禁止 stingtao 殘留 voice**（如「本版補齊...」）|
-| `stats` | ✓ | 3 個 stat cards（節點數 / 廠商數 / single 數 + sub） |
-| `rows` | ✓ | row 陣列（3-6 列，由產業決定） |
-| `nodes` | ✓ | 節點陣列 |
-| `edges` | ✓ | 邊陣列（`[[from_id, to_id], ...]`） |
-
-### Node 欄位
-
-| 欄位 | 必填 | 說明 |
-|---|---|---|
-| `id` | ✓ | 唯一短 ID（`eq-` 開頭=設備、`f-` 開頭=主流、`m-` 開頭=材料、`d-` 開頭=demand） |
-| `row` | ✓ | 必須對應到 `rows[].id` |
-| `col` | ✓ | 1-based 起始 column |
-| `span` | ✓ | 占幾個 column（1-3） |
-| `kind` | ✓ | `rail` / `stage` / `demand`（影響卡片背景） |
-| `name` | ✓ | 中文節點名 |
-| `nameEn` | ✓ | 英文節點名 |
-| `competition` | ✓ | `monopoly` / `oligopoly` / `redocean` / `highgrowth` / `emerging` |
-| `single` | (opt) | 4-bucket 之一的 single-point 描述，含信心度 |
-| `desc` | ✓ | 1-2 句說明這環節在做什麼 |
-| `marketSize` | (opt) | TAM / 戰略地位短描述（顯示在卡片底部） |
-| `growth` | ✓ | CAGR or 短描述（顯示在卡片底部，狀態色） |
-| `analysis` | ✓ | 1-3 句競爭態勢分析（drawer 中顯示） |
-| `companies` | ✓ | 廠商陣列（≥1） |
-| `upstream` | ✓ | `[{id: "..."}]` |
-| `downstream` | ✓ | `[{id: "..."}]` |
-| `sources` | ✓ | `[{label: "...", url: "https://..."}]` ≥1 |
-
-### Company 欄位
-
-| 欄位 | 必填 | 說明 |
-|---|---|---|
-| `name` | ✓ | 公司名（中英混排 OK） |
-| `ticker` | ✓ | Yahoo-style ticker（`2330.TW`、`6146.T`、`AMAT`） |
-| `country` | ✓ | ISO 大寫（TW/US/JP/CN/KR/EU/IL/SE/SG/DE/FR/AT/HK/NL/UK/CH/DK/GLOBAL） |
-| `share` | ✓ | 市佔短描述（可含數字 % 或描述「TSMC 獨家」） |
-| `products` | (opt) | 具體產品線 |
-| `note` | (opt) | 1-2 句說明這家在本節點的角色 |
-| `src` | (opt) | 該廠商獨家來源 URL（drawer 中顯示 ↗ 小圖示） |
-| `core_business` | (opt) | **Top Pick（💎）標註用** — bool；TRUE = 此 segment 是該公司核心業務（≥20% revenue / pure-play / 公司公開定位 flagship）。FALSE 或省略視為「side bet / 大集團一小塊」 |
-| `supply_chain_lock` | (opt) | **Top Pick（💎）標註用** — enum `"tight"` / `"med"` / `"loose"`：TIGHT = 5 訊號任一過（≥12 月訂單能見 / sold out / 多年 exclusive 命名 / pricing power demonstrated / 客戶多代 supplier）；MED = 雙占 #2 或補位；LOOSE = 替代源多 / 紅海。**用 lock 取代舊 `growth_trajectory`** 是為了抓真正客戶離不開的供應商（YoY growth 是噪音）。|
-| `growth_trajectory` | (legacy) | 舊版欄位，已被 `supply_chain_lock` 取代。仍可標但 isGolden() 不再使用。|
-
-### 範例：
-
-```json
-{
-  "id": "m-mla",
-  "row": "optics",
-  "col": 1, "span": 2,
-  "kind": "rail",
-  "name": "微透鏡陣列 MLA",
-  "nameEn": "Microlens Array (MLA)",
-  "competition": "monopoly",
-  "single": "客戶獨家 · Himax 為 TSMC COUPE Gen1 + Gen2 唯一 MLA 供應（Hunterbrook + Ming-Chi Kuo 多源證實）",
-  "desc": "把 PIC grating coupler 出來的散射光收成平行光、再聚焦進光纖核心的微小光學陣列；nanoimprint lithography（NIL）製程。",
-  "marketSize": "鎖喉點",
-  "growth": "Himax 2028 EPS $3.40e",
-  "analysis": "Himax 透過獨家 NIL 製程在玻璃晶圓上做 V-groove + 微透鏡 + 微稜鏡，是 TSMC COUPE Gen1/2 的唯一 MLA 供應；玉晶光在 1.6T 光模組 MLA 已進入美系資料中心客戶供應鏈（不同路線）。",
-  "companies": [
-    {
-      "name": "Himax 奇景",
-      "ticker": "HIMX",
-      "country": "TW",
-      "share": "COUPE Gen1/2 唯一",
-      "products": "WLO MLA + V-groove glass wafer (NIL)",
-      "note": "與 FOCI 合作 FAU 整合，鎖喉點",
-      "src": "https://hntrbrk.com/himax/"
-    },
-    { "name": "玉晶光 Genius Electronic", "ticker": "3406.TW", "country": "TW", "share": "1.6T MLA 美系 DC", "products": "Pancake Lens 衍生 MLA", "note": "已進美系 DC 供應鏈" }
-  ],
-  "upstream": [],
-  "downstream": [{ "id": "f-assembly" }],
-  "sources": [
-    { "label": "Hunterbrook: Himax stealth supplier for NVIDIA optics", "url": "https://hntrbrk.com/himax/" },
-    { "label": "Ming-Chi Kuo: Himax key AI upstream winner in TSMC COUPE", "url": "https://medium.com/@mingchikuo/himax-emerging-as-a-key-ai-upstream-winner-in-tsmcs-coupe-silicon-photonics-significantly-baf39a9393c9" }
-  ]
-}
-```
-
 ## 輸出步驟
+
+> JSON schema 全文 → Step 1 載入 `references/json-schema.md`；thin HTML template → Step 2 載入 `references/html-template.md`；Step 3/3.5/4/5 機械層全文 → Step 3 起載入 `references/output-plumbing.md`。以下為留在核心的 Step 1 + Step 1.5（掛旗閘）。
 
 ### Step 1：寫 `docs/supply-chain/data/{topic}.json`
 
-按上面 schema 寫。確認：
+按 `references/json-schema.md` 的 schema 寫。確認：
 - 每個 ⚑ 節點 `single` 欄位有信心度標註
 - 每個節點 `sources` ≥1 個權威 URL
 - `edges` 中每個 ID 都對應到 `nodes[].id`
@@ -498,177 +235,9 @@ single: "近獨佔 · <主張> （信心度 high · 多源證實）"
 
 新 topic JSON 頂層標 `"single_point_framework": "v1.3"`，validator 才會強制硬預算。critic report 可選存 `notes/site-internal/supply-chain/_critic_{topic}_{YYYYMMDD}.md`（repo 內部，不進 published docs/ 樹）。
 
-### Step 2：寫 thin `docs/supply-chain/{topic}.html`（複製 cowos.html / cpo.html 改 3 處）
+### Step 2-5：thin HTML template → manifest 翻牌 → hub 入口 → build → commit/push → live URL 驗證
 
-```html
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-<meta name="robots" content="noindex,nofollow">
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{Topic 完整標題} — InvestMQuest Research</title>
-<meta name="description" content="{1-2 句描述 nodes 數 + 單點數 + 核心 thesis}">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/engine.css">
-</head>
-<body data-topic="{topic-id}">
-
-<header class="site">...</header>  <!-- 從 cowos.html 複製，無改動 -->
-
-<main class="shell">
-  <div class="crumb"><a href="/">首頁</a> / <a href="/research/">研究</a> / <a href="/supply-chain/">供應鏈地圖</a> / {Topic 完整標題}</div>
-  <div class="sc-head">
-    <h1 class="sc-title" id="topicTitle"><span class="spark"></span>{Topic 完整標題}</h1>
-    <p class="sc-sub" id="topicSub"></p>
-  </div>
-  <div class="topic-tabs" id="topicTabs"></div>
-  <div class="sc-toolbar">
-    <div class="legend" id="legend"></div>
-    <label class="sc-search">
-      <input id="sc-search-input" type="text" placeholder="搜尋節點 / 公司 / 代號…" autocomplete="off">
-    </label>
-  </div>
-  <div class="stats-row" id="statsRow"></div>
-  <div class="map-wrap">
-    <div class="map-canvas" id="mapCanvas">
-      <svg class="edges-svg" id="edges"></svg>
-      <div class="grid" id="grid"></div>
-    </div>
-  </div>
-  <div class="def-block" id="defBlock"></div>
-</main>
-
-<div class="scrim" id="scrim"></div>
-<aside class="drawer" id="drawer" aria-hidden="true">...</aside>  <!-- 從 cowos.html 複製 -->
-
-<footer class="site">...</footer>
-
-<script src="assets/engine.js"></script>
-</body>
-</html>
-```
-
-→ **3 處修改點**：`<title>`、`<meta description>`、`<body data-topic="...">`、`<crumb>` 與 `<h1>` 的 topic 名 — 其他完全 copy-paste from cowos.html。
-
-### Step 3：翻 `docs/supply-chain/data/topics.json` 中該 topic 的 `active`
-
-```json
-{ "id": "{topic}", "tab": "...", "title": "...", "active": true }
-```
-
-### Step 3.5：更新 hub 入口頁 `docs/supply-chain/index.html`（**必做、容易漏**）
-
-`index.html` 是 **hardcoded HTML**（不是從 `topics.json` 動態渲染），所以新 topic 的 `passive.html` / `passive.json` / `active: true` 都備齊後，如果不手動補入口，從 https://research.investmquest.com/supply-chain/ 進來看不到連結 — 用戶會問「為什麼沒看到」。歷史踩雷：MLCC commit 230bcff1 漏這一步，靠 bfab4e82 補救。
-
-對於落在 **8 功能模組 × 5 終端市場** 框架內的 topic（多數情況），改 4 處：
-
-1. **Hero meta**（檔頭附近的 `<div class="meta">`）：
-   - `<b id="liveCount">N</b>` → N+1
-   - `<b id="soonCount">M</b>` → M-1
-
-2. **覆蓋矩陣 cell**（`<div class="matrix">` 內，定位到該 topic 所屬的 row × col 格子）：
-   ```html
-   <!-- before -->
-   <div class="cell lvl-soon"><div class="c-tag"><span class="dot"></span>規劃中</div><div class="c-title">{title}</div><div class="c-sub">{vendors}</div></div>
-   <!-- after -->
-   <div class="cell lvl-on"><a href="{topic}.html"><div class="c-tag"><span class="dot"></span>已上線</div><div class="c-title">{title}</div><div class="c-sub">{vendors}</div><div class="arrow">→</div></a></div>
-   ```
-
-3. **Module 卡片**（`<div class="module-block">` 的 `.card-grid` 內）：
-   ```html
-   <!-- before -->
-   <div class="tcard soon">
-     <span class="t-tag"><span class="dot"></span>規劃中</span>
-     <h4>{title}</h4>
-     <div class="t-en">{title_en}</div>
-     <div class="t-vendors">{vendors}</div>
-     <div class="t-foot">即將推出</div>
-   </div>
-   <!-- after -->
-   <a class="tcard live" href="{topic}.html">
-     <span class="t-tag"><span class="dot"></span>已上線</span>
-     <h4>{title}</h4>
-     <div class="t-en">{title_en}</div>
-     <div class="t-vendors">{vendors}</div>
-     <div class="t-foot">查看供應鏈地圖 →</div>
-   </a>
-   ```
-
-4. **Module 計數**（`<div class="module-head">` 內的 `.mod-count`）：
-   - `<b>K</b> 子產業 · <b>X</b> 已上線` → X+1
-
-對於 **跨主題 topic**（robot / leosat / spacedc / siph 等，落在底部「跨主題地圖」section）：只改 hero `liveCount`，並在 `<!-- Topical / cross-cutting maps -->` section 的 `<div class="card-grid">` 內 append 一張 `<a class="tcard live" href="{topic}.html">` 卡片（不用動矩陣與模組計數）。
-
-`index.html` 也要併進 Step 4 的 `git add` 清單。
-
-### Step 4：跑 build script + 本機驗證 + commit + push
-
-```bash
-# 重建 dd_links（DD 新增過就要跑）
-python3 scripts/build_supply_chain_dd_index.py
-
-# 【必跑】重生 hub 跨站統整（💎/🐘/🔒 三層）— 任何 ⚑/💎/node_role 改動都要刷新，
-# 否則 /supply-chain/ 的「全站 Top Picks 統整」會 stale。會改寫 index.html。
-python3 scripts/build_supply_chain_tiers.py
-
-# 本機測試
-python3 -m http.server 8765 --directory docs &
-# 開瀏覽器訪問 http://localhost:8765/supply-chain/{topic}.html
-# 或用 chrome headless
-"$CHROME_PATH" --headless --window-size=2200,1800 --screenshot=/tmp/sc_{topic}.png "http://localhost:8765/supply-chain/{topic}.html"
-pkill -f "http.server 8765"
-
-# JSON schema audit（手寫小 Python 腳本，或拷 cpo audit pattern）
-python3 -c "
-import json
-d = json.load(open('docs/supply-chain/data/{topic}.json'))
-node_ids = {n['id'] for n in d['nodes']}
-for e in d['edges']:
-    assert e[0] in node_ids and e[1] in node_ids, f'edge {e}'
-single_count = sum(1 for n in d['nodes'] if n.get('single'))
-assert single_count == d['stats'][2]['v'], f'single count mismatch'
-print(f'OK: {len(d[\"nodes\"])} nodes / {len(d[\"edges\"])} edges / {single_count} single')
-"
-
-# 提交（用 HEREDOC 維持格式）
-git add docs/supply-chain/{topic}.html docs/supply-chain/data/{topic}.json docs/supply-chain/data/topics.json docs/supply-chain/index.html
-git commit -m "$(cat <<'EOF'
-supply-chain: add {Topic} topic — {N} nodes, {K} single-points
-
-<3-5 句說明本 topic 的 thesis、row 結構、最重要的 single-points>
-
-Row structure: {row1} / {row2} / {row3} ...
-
-K single-points (⚑) with confidence levels:
-  - {single-point 1}  <bucket>  <confidence>  <evidence>
-  ...
-
-DD cross-link coverage: {X} of {N} nodes' companies have ≥1 DD match.
-Tickers without DD coverage (candidates for future DD work): <list>
-
-Flipped {topic}.active=true in topics.json.
-
-Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
-EOF
-)"
-
-git push origin main
-```
-
-### Step 5（必）：Live URL 驗證
-
-deploy 完後（GitHub Pages 通常 1-2 min），跑：
-
-```bash
-for url in /supply-chain/{topic}.html /supply-chain/data/{topic}.json; do
-  echo "$(curl -sI -o /dev/null -w '%{http_code}' https://research.investmquest.com${url}) $url"
-done
-```
-
-兩個都要 **200**。
+全文載入 `references/html-template.md`（Step 2）＋ `references/output-plumbing.md`（Step 3 翻 topics.json active / Step 3.5 更新 hub index.html 四處 / Step 4 build script + 本機驗證 + commit + push / Step 5 live URL 驗證）。**Step 3.5 hub 入口更新容易漏**（MLCC 踩雷史），index.html 併進 Step 4 git add 清單。
 
 ## 品質 Gate（commit 前必查）
 
@@ -705,20 +274,4 @@ done
 
 讀其中一份 + 看對應的 .html 渲染結果，就能照葫蘆畫瓢做新 topic。
 
-## 預期效益（為什麼這個 skill 存在）
-
-每個 topic 平均 60-120 分鐘研究 + 30 分鐘寫入 + 10 分鐘驗證 = ~2 小時內完成一份高品質供應鏈圖。
-
-15 個 topic 全部上線後：
-- 全站建立**第三種產業視角**（補 ID 表格 + DS 敘述的盲點）
-- 每個 topic 平均揭露 5-10 個被市場忽略的 single-point（TW 小型股）
-- 自動 cross-link 既有 DD universe，highlight 沒做過 DD 的 ticker 作為 PM 後續工作清單
-
-## v1.0 已知限制 + 未來改進
-
-1. **無 pre-commit validator**（像 dd / id / ds 有 validate_*.py）— 目前靠 commit 前手跑 audit script。v1.1 可加 `scripts/validate_supply_chain_meta.py`。
-2. **dd_links.json 沒有 sync hook** — DD 新增/重命名後要記得手動跑 `build_supply_chain_dd_index.py`。可考慮把它整進 `update_dd_index.py` 一起跑。
-3. **無 critic gate**（像 id-review）— 目前靠雙源規則 (Gate G3) 自我約束。v1.1 可加 spawn sub-agent 抽查單點主張。
-4. **Topic 之間沒交叉**（HBM 的 TSMC 跟 CoWoS 的 TSMC 是同一個節點概念但獨立 JSON）— 可接受重複，每個 topic 從自己視角描述 TSMC 角色。
-
-→ 這些都是「能做更好但目前不阻斷」的 nice-to-have，v1.0 不處理。
+> 預期效益（skill 存在動機）＋ v1.0 已知限制 ＋ 版本沿革（含 v1.2 結構拆分）→ `references/changelog.md`。
