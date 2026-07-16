@@ -298,6 +298,12 @@ a:hover{color:var(--accent-hover)}
                display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
 .pano-dim-count{font-size:.66rem;font-weight:600;color:var(--text-muted);background:var(--bg-card);
                 padding:.1rem .5rem;border-radius:5px;border:1px solid var(--border)}
+/* ── 維度組內固定關聯順序 run（2026-07-17 新增）：族＝一個 run，族名極小 muted caption，
+   讓「同族相鄰」的固定順序看得見；不新增顏色，沿用 --text-muted／--accent 既有 token。 ── */
+.pano-run+.pano-run{margin-top:.65rem}
+.pano-run-caption{font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:600;
+                  letter-spacing:.05em;color:var(--text-muted);margin:0 0 .32rem}
+.pano-run-caption.cluster-hi{color:var(--accent)}
 .pano-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px}
 .pano-tile{position:relative;display:flex;flex-direction:column;gap:.22rem;padding:.55rem .6rem;border-radius:8px;
           background:var(--bg-card);border:1px solid var(--border);cursor:pointer;text-align:left;
@@ -693,7 +699,7 @@ footer.imq-foot a{color:var(--accent)}
     </div>
 
     <h3 class="dimread-title">市場全景 <span class="count" id="panoCount">— 磚</span></h3>
-    <p class="section-note">當日近百條全維度指標（市場監測 96 條 series ＋監測內部精選代表性指標）全數攤開成磚，每磚恆顯示標籤／現值／漲跌（基本資訊層，不論有無異常都顯示）；磚的視覺強度 ∝ 當日 |z-score|（缺 z 者以一年分位粗略代理）——安靜、微溫、黃燈、紅燈四級，紅燈亦含「該指標當日已觸發紅燈訊號」的情況；全場 |z| 最大前 3 磚掛「TOP」角標，直接標出今天哪裡變動最大最異常。磚依維度分組，組內按 |z| 降冪排列；點擊任一磚展開該指標近期走勢與詳情。</p>
+    <p class="section-note">當日近百條全維度指標（市場監測 96 條 series ＋監測內部精選代表性指標）全數攤開成磚，每磚恆顯示標籤／現值／漲跌（基本資訊層，不論有無異常都顯示）；磚的視覺強度 ∝ 當日 |z-score|（缺 z 者以一年分位粗略代理）——安靜、微溫、黃燈、紅燈四級，紅燈亦含「該指標當日已觸發紅燈訊號」的情況；全場 |z| 最大前 3 磚掛「TOP」角標，直接標出今天哪裡變動最大最異常。磚的<strong>位置固定</strong>——依資產族關聯排列（同族相鄰、族名以極小標籤標示於磚上方，族外散磚依原生順序殿後），不隨當日數據變動，便於建立空間記憶；當日異常改由<strong>發光強度</strong>與 TOP 角標表達，位置本身不再編碼異常。點擊任一磚展開該指標近期走勢與詳情。</p>
     <div class="pano-legend" id="panoLegend">
       強度分級：<span class="pano-legend-chip">安靜（|z|&lt;1.5）</span>
       <span class="pano-legend-chip lgd-mild">微溫（1.5≤|z|&lt;2）</span>
@@ -823,20 +829,30 @@ footer.imq-foot a{color:var(--accent)}
     {cat:'positioning',key:'short_vol_ratio',dim:'positioning'},
     {cat:'positioning',key:'eps_rev_breadth',dim:'positioning'}
   ];
-  // ── 系統核心列（2026-07-16 新增）：curated 16 檔跨資產核心指標，重要性＝位置＋大小
-  // （磚放大＋排最前）。key 對 monitor/data/latest.json 實際 categories/items 逐一驗證存在後
-  // 收斂的最終清單（全數存在，無剔除）；只用 srcType='monitor'（全部來自原始 monitor series）。
+  // ── 系統核心列（2026-07-16 新增，2026-07-17 改固定關聯順序）：curated 16 檔跨資產核心指標，
+  // 重要性＝位置＋大小（磚放大＋排最前）。key 對 monitor/data/latest.json 實際 categories/items
+  // 逐一驗證存在後收斂的最終清單（全數存在，無剔除）；只用 srcType='monitor'（全部來自原始
+  // monitor series）。陣列順序即渲染順序（固定不變，不再依當日 |z| 排序）——
+  // 股票（sp500→ndx→sox）→利率（dgs10→t10y2y→real10y→move）→信用（hy_oas→hyg_lqd）→
+  // 匯率（dxy→usdjpy）→商品（gold→wti→copper）→波動（vix）→加密（btc）。
   var SYSTEMIC_CORE=[
     {cat:'indices',key:'sp500'},{cat:'indices',key:'ndx'},{cat:'indices',key:'sox'},
-    {cat:'rates',key:'dgs10'},{cat:'rates',key:'t10y2y'},{cat:'fx',key:'dxy'},
-    {cat:'credit',key:'hy_oas'},{cat:'vol',key:'vix'},{cat:'commodities',key:'gold'},
-    {cat:'commodities',key:'wti'},{cat:'commodities',key:'copper'},{cat:'fx',key:'usdjpy'},
-    {cat:'crypto',key:'btc'},{cat:'credit',key:'hyg_lqd'},{cat:'rates',key:'real10y'},
-    {cat:'vol',key:'move'}
+    {cat:'rates',key:'dgs10'},{cat:'rates',key:'t10y2y'},{cat:'rates',key:'real10y'},{cat:'vol',key:'move'},
+    {cat:'credit',key:'hy_oas'},{cat:'credit',key:'hyg_lqd'},
+    {cat:'fx',key:'dxy'},{cat:'fx',key:'usdjpy'},
+    {cat:'commodities',key:'gold'},{cat:'commodities',key:'wti'},{cat:'commodities',key:'copper'},
+    {cat:'vol',key:'vix'},
+    {cat:'crypto',key:'btc'}
   ];
   var SYSTEMIC_CORE_KEYSET=(function(){
     var o={};
     SYSTEMIC_CORE.forEach(function(c){o['monitor:'+c.cat+':'+c.key]=true;});
+    return o;
+  })();
+  // tileKey → 固定順位索引，供系統核心列渲染時做穩定排序（純依此常數陣列，不依當日數據）。
+  var SYSTEMIC_CORE_ORDER_INDEX=(function(){
+    var o={};
+    SYSTEMIC_CORE.forEach(function(c,i){o['monitor:'+c.cat+':'+c.key]=i;});
     return o;
   })();
   // ── 關聯異常聚類（2026-07-16 新增）：curated 資產族——純 display grouping（分組展示），
@@ -1540,11 +1556,27 @@ footer.imq-foot a{color:var(--accent)}
     }
     return tiles;
   }
-  function sortPanoTiles(items){
-    return items.slice().sort(function(a,b){
-      var az=a.absZ==null?-1:a.absZ, bz=b.absZ==null?-1:b.absZ;
-      return bz-az;
+  // ── PANO_ORDER：維度組內固定關聯順序（2026-07-17 取代 |z| 動態排序）──────────
+  // 原則：位置＝結構、發光＝當日異常，磚的位置不該再編碼異常。維度組內固定為
+  // 「CLUSTER_MAP 族（族順序固定＝CLUSTER_MAP 陣列順序、族內成員順序＝該族 members 陣列順序）
+  // →族外散磚（照 monitor/internals 原生 series 順序，殿後）」。純穩定排序，同一份資料
+  // 竄改 z 值也不改變磚序；新 series 未列在任何 cluster 時自動落在「其他」尾端不消失。
+  function buildPanoOrderRuns(items){
+    var byKey={};
+    items.forEach(function(t){byKey[t.tileKey]=t;});
+    var used={};
+    var runs=[]; // [{name, tiles:[...]}]，name=null 保留供未來擴充，目前恆有值
+    CLUSTER_MAP.forEach(function(cl){
+      var members=[];
+      (cl.members||[]).forEach(function(k){
+        var t=byKey[k];
+        if(t&&!used[k]){members.push(t);used[k]=true;}
+      });
+      if(members.length)runs.push({name:cl.name,tiles:members});
     });
+    var rest=items.filter(function(t){return !used[t.tileKey];}); // 保留原生（curated 穩定）順序
+    if(rest.length)runs.push({name:'其他',tiles:rest});
+    return runs;
   }
   function computePanoTop3(tiles){
     var withZ=tiles.filter(function(t){return t.absZ!=null;}).slice().sort(function(a,b){return b.absZ-a.absZ;});
@@ -1573,16 +1605,26 @@ footer.imq-foot a{color:var(--accent)}
   }
   function buildPanoDimSection(dimKey,label,items,topKeys){
     if(!items||!items.length)return '';
-    var sorted=sortPanoTiles(items);
-    var tilesHtml=sorted.map(function(t){return buildPanoTileHtml(t,!!topKeys[t.tileKey],false);}).join('');
+    var runs=buildPanoOrderRuns(items);
+    var runsHtml=runs.map(function(r){
+      var tilesHtml=r.tiles.map(function(t){return buildPanoTileHtml(t,!!topKeys[t.tileKey],false);}).join('');
+      return '<div class="pano-run">'
+        +'<div class="pano-run-caption" data-pano-run-name="'+esc(r.name)+'">'+esc(r.name)+'</div>'
+        +'<div class="pano-grid">'+tilesHtml+'</div></div>';
+    }).join('');
     return '<div class="pano-dim" data-pano-dim="'+esc(dimKey)+'">'
       +'<h4 class="pano-dim-title">'+esc(label)+' <span class="pano-dim-count">'+items.length+' 磚</span></h4>'
-      +'<div class="pano-grid">'+tilesHtml+'</div></div>';
+      +runsHtml+'</div>';
   }
-  // 系統核心列（2026-07-16 新增）：第一組、磚放大，從各維度組抽離不重複顯示。
+  // 系統核心列（2026-07-16 新增，2026-07-17 改固定順序）：第一組、磚放大，從各維度組抽離不
+  // 重複顯示；順序恆＝SYSTEMIC_CORE 陣列順序（穩定排序，不依當日 |z|）。
   function buildPanoCoreSection(items,topKeys){
     if(!items||!items.length)return '';
-    var sorted=sortPanoTiles(items);
+    var sorted=items.slice().sort(function(a,b){
+      var ai=SYSTEMIC_CORE_ORDER_INDEX.hasOwnProperty(a.tileKey)?SYSTEMIC_CORE_ORDER_INDEX[a.tileKey]:999;
+      var bi=SYSTEMIC_CORE_ORDER_INDEX.hasOwnProperty(b.tileKey)?SYSTEMIC_CORE_ORDER_INDEX[b.tileKey]:999;
+      return ai-bi;
+    });
     var tilesHtml=sorted.map(function(t){return buildPanoTileHtml(t,!!topKeys[t.tileKey],true);}).join('');
     return '<div class="pano-dim pano-core" data-pano-dim="core">'
       +'<h4 class="pano-dim-title pano-core-title">系統核心 <span class="pano-dim-count">'+items.length+' 磚</span></h4>'
@@ -1623,6 +1665,11 @@ footer.imq-foot a{color:var(--accent)}
     document.querySelectorAll('#panoWall .pano-tile').forEach(function(el){
       var k=el.getAttribute('data-pano-key');
       el.classList.toggle('cluster-hi',!!(memberSet&&memberSet[k]));
+    });
+    // 族名 caption 一併高亮（強化「這一區就是這族」——與磚本身高亮同步）。
+    document.querySelectorAll('#panoWall .pano-run-caption').forEach(function(el){
+      var name=el.getAttribute('data-pano-run-name');
+      el.classList.toggle('cluster-hi',!!(activeClusterName&&name===activeClusterName));
     });
   }
   function renderPanoClusterRow(tilesIdxByKey){
