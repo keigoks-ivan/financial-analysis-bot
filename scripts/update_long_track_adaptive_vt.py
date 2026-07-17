@@ -61,7 +61,7 @@ try:                                       # fab: scripts/site_nav.py
 except ImportError:                        # v7-backtest: repo-root snippet
     from site_nav_snippet import full_nav_block  # noqa: E402
 
-NAV_BLOCK = full_nav_block("system", "ltadvt")
+NAV_BLOCK = full_nav_block("system", "voltrack")
 
 # ---- output dir: <repo_root>/docs/long-track-adaptive-vt/ ------------------
 _cand = [HERE.parent / "docs", HERE.parents[2] / "docs" if len(HERE.parents) >= 3 else HERE / "docs"]
