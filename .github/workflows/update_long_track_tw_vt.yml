@@ -38,6 +38,12 @@ jobs:
       - name: Run TW 0050+2330 vol-target update
         run: python scripts/update_long_track_tw_vt.py
 
+      - name: Run TW 0050+2330 adaptive-sigma sub-page update
+        # Adaptive-sigma sibling sub-page (docs/long-track-tw-vt/adaptive.html).
+        # Same schedule; no email of its own — actionable-change notifications
+        # are covered by /long-track-adaptive-vt/ (avoid double-notify).
+        run: python scripts/update_long_track_tw_vt_adaptive.py
+
       - name: Read change alert
         id: alert
         run: |
@@ -95,8 +101,8 @@ jobs:
         run: |
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
-          git add docs/long-track-tw-vt/index.html docs/long-track-tw-vt/state.json
-          git diff --staged --quiet || git commit -m "Auto update long-track TW 0050+2330 vol-target: $(date -u '+%Y-%m-%d')"
+          git add docs/long-track-tw-vt/index.html docs/long-track-tw-vt/state.json docs/long-track-tw-vt/adaptive.html docs/long-track-tw-vt/adaptive_state.json
+          git diff --staged --quiet || git commit -m "Auto update long-track TW 0050+2330 vol-target (+adaptive sub-page): $(date -u '+%Y-%m-%d')"
           for i in 1 2 3 4 5 6; do
             if git push; then
               exit 0

@@ -609,7 +609,7 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
     <div style="margin-top:.6rem;display:flex;gap:.4rem;flex-wrap:wrap">
       <a href="/long-track-qs-vt/adaptive.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border-radius:6px;background:var(--text);color:#fff;text-decoration:none">自適應 σ 版（本頁）</a>
       <a href="/long-track-qs-vt/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">固定 σ 版</a>
-      <a href="/long-track-tw-vt/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">0050+2330 波動率</a>
+      <a href="/long-track-tw-vt/adaptive.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">0050+2330 自適應子頁</a>
       <a href="/long-track-adaptive-vt/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">自適應美台總覽</a>
       <a href="/long-track-smh/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">SMH/QQQ STX50（實倉）</a>
       <a href="/backtest/vol_targeting/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">波動率目標回測</a>

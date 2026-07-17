@@ -132,6 +132,7 @@ DIRECTORY = {
         ]),
         ("前瞻追蹤", [
             ("/long-track-tw-vt/", "0050+2330 波動率", "追蹤中", False),
+            ("/long-track-tw-vt/adaptive.html", "自適應 σ", "追蹤中", False),
             ("/long-track-adaptive-vt/", "自適應美台總覽", "追蹤中", False),
         ]),
     ],
