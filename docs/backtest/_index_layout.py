@@ -98,9 +98,10 @@ DIRECTORY = {
             ("/backtest/smh_vcrash/", "SMH V崩", None, False),
         ]),
         ("前瞻追蹤", [
-            ("/long-track-qs-vt/", "QQQ+SMH 波動率（固定 σ）", "追蹤中", False),
-            ("/long-track-qs-vt/adaptive.html", "自適應 σ", "追蹤中", False),
-            ("/long-track-adaptive-vt/", "自適應美台總覽", "追蹤中", False),
+            ("/long-track-w52-adaptive/", "W52 × 自適應波動率（現行主系統）", "追蹤中", False),
+            ("/long-track-qs-vt/", "QQQ+SMH 固定 σ（歸檔）", None, False),
+            ("/long-track-qs-vt/adaptive.html", "QQQ+SMH 自適應（歸檔）", None, False),
+            ("/long-track-adaptive-vt/", "自適應美台總覽（歸檔）", None, False),
         ]),
     ],
     "tw": [
@@ -133,9 +134,10 @@ DIRECTORY = {
             ("/backtest/daily_vs_weekly_tw/", "日/週·台股", None, False),
         ]),
         ("前瞻追蹤", [
-            ("/long-track-tw-vt/", "0050+2330 波動率", "追蹤中", False),
-            ("/long-track-tw-vt/adaptive.html", "自適應 σ", "追蹤中", False),
-            ("/long-track-adaptive-vt/", "自適應美台總覽", "追蹤中", False),
+            ("/long-track-w52-adaptive/", "W52 × 自適應波動率（現行主系統）", "追蹤中", False),
+            ("/long-track-tw-vt/", "0050+2330 固定 σ（歸檔）", None, False),
+            ("/long-track-tw-vt/adaptive.html", "0050+2330 自適應（歸檔）", None, False),
+            ("/long-track-adaptive-vt/", "自適應美台總覽（歸檔）", None, False),
         ]),
     ],
     "multi": [

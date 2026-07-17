@@ -24,6 +24,9 @@ Usage:
 
 Change log:
     2026-07-17：系統群 11→8，三波動率追蹤條整併為單一「波動率追蹤家族」入口。
+    2026-07-17 晚：voltrack 入口改指現行主系統 W52 × 自適應波動率
+        （/long-track-w52-adaptive/），label 簡化為「波動率追蹤」；舊三頁歸檔，
+        PREFIX_ACTIVE 映射保留供歸檔頁高亮，並新增 long-track-w52-adaptive/ 映射。
 """
 
 import re
@@ -118,7 +121,7 @@ MENU = {
         ("tr", "/track-record/", "裁決實績"),
         ("ltsmh", "/long-track-smh/", "長線訊號 SMH"),
         ("lttw", "/long-track-tw/", "台股長線"),
-        ("voltrack", "/long-track-qs-vt/", "波動率追蹤家族"),
+        ("voltrack", "/long-track-w52-adaptive/", "波動率追蹤"),
         ("sleeve", "/turtle-sleeve/", "商品 Sleeve"),
         ("bt", "/backtest/", "量化回測"),
         ("tools", "/tools/", "期貨部位計算機"),
@@ -249,8 +252,9 @@ PREFIX_ACTIVE = [
     # 系統群
     ("track-record/", ("system", "tr")),  # 裁決實績（2026-07-11 新增）
     ("long-track-smh/", ("system", "ltsmh")),
-    # 2026-07-17 波動率追蹤家族整併：三條路徑同映射單一 voltrack 入口
-    # （下拉只留一條，但三頁各自仍是獨立 active 頁面，故群仍高亮）
+    # 2026-07-17 波動率追蹤家族整併：voltrack 入口 2026-07-17 晚間改指現行主系統
+    # W52 × 自適應波動率（/long-track-w52-adaptive/）；舊三頁歸檔但映射保留供其頁面高亮。
+    ("long-track-w52-adaptive/", ("system", "voltrack")),
     ("long-track-qs-vt/", ("system", "voltrack")),
     ("long-track-adaptive-vt/", ("system", "voltrack")),
     ("long-track-tw-vt/", ("system", "voltrack")),
