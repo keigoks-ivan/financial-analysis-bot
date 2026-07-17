@@ -113,6 +113,7 @@ MENU = {
         ("ltsmh", "/long-track-smh/", "長線訊號 SMH"),
         ("ltqsvt", "/long-track-qs-vt/", "QQQ+SMH 波動率"),
         ("lttw", "/long-track-tw/", "台股長線"),
+        ("lttwvt", "/long-track-tw-vt/", "0050+2330 波動率"),
         ("sleeve", "/turtle-sleeve/", "商品 Sleeve"),
         ("bt", "/backtest/", "量化回測"),
         ("tools", "/tools/", "期貨部位計算機"),
@@ -245,6 +246,7 @@ PREFIX_ACTIVE = [
     ("track-record/", ("system", "tr")),  # 裁決實績（2026-07-11 新增）
     ("long-track-smh/", ("system", "ltsmh")),
     ("long-track-qs-vt/", ("system", "ltqsvt")),
+    ("long-track-tw-vt/", ("system", "lttwvt")),
     ("long-track-tw/", ("system", "lttw")),
     ("turtle-sleeve/", ("system", "sleeve")),
     ("backtest/", ("system", "bt")),

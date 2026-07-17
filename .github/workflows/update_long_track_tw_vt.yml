@@ -1,0 +1,109 @@
+name: Update Long Track TW 0050+2330 Vol-Target Signal
+
+on:
+  schedule:
+    # Weekdays 11:30 UTC = 19:30 Taipei (TW close 13:30 local / 05:30 UTC,
+    # ~6h buffer for yfinance .TW end-of-day data to settle). The vol-target
+    # sleeve reads off daily realized vol (RV20), so it updates every trading
+    # day; the weekly long-track gate only flips on Fridays. If the day's bar
+    # is not in yet, the run simply records through the prior day — the
+    # date-keyed idempotent history merge self-heals on the next run.
+    # Forward OOS paper tracking (TW counterpart of update_long_track_qs_vt).
+    - cron: '30 11 * * 1-5'
+  workflow_dispatch:  # Manual trigger anytime
+    inputs:
+      test_email:
+        description: 'Send a test email even without an actionable change'
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'  # site_nav.py uses 3.12+ f-string syntax
+
+      - name: Install dependencies
+        run: pip install "yfinance>=0.2.40" pandas numpy
+
+      - name: Run TW 0050+2330 vol-target update
+        run: python scripts/update_long_track_tw_vt.py
+
+      - name: Read change alert
+        id: alert
+        run: |
+          if [ -f lt_tw_vt_alert.txt ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            {
+              echo "body<<ALERT_EOF"
+              cat lt_tw_vt_alert.txt
+              echo "ALERT_EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Fail-safe: probe SMTP secret presence via env (the `secrets` context is
+      # not reliable inside `if:`), then gate the email step on the result so a
+      # missing secret never fails the workflow. The MAIL_USERNAME /
+      # MAIL_APP_PASSWORD pair is already configured (shared with
+      # update_long_track_qs_vt.yml and 7 other workflows) — no user action needed.
+      - name: Check mail secrets
+        id: mailcfg
+        env:
+          MU: ${{ secrets.MAIL_USERNAME }}
+          MP: ${{ secrets.MAIL_APP_PASSWORD }}
+        run: |
+          if [ -n "$MU" ] && [ -n "$MP" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false (SMTP secrets missing — email skipped)" >&2
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Email actionable change
+        if: (steps.alert.outputs.changed == 'true' || inputs.test_email == true) && steps.mailcfg.outputs.ready == 'true'
+        continue-on-error: true
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_APP_PASSWORD }}
+          subject: "⚡ 台股 0050+2330 波動率長線 可行動變化 ${{ steps.alert.outputs.changed == 'true' && '' || '(測試信)' }}"
+          to: keigoks@gmail.com
+          from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
+          body: |
+            ${{ steps.alert.outputs.changed == 'true' && steps.alert.outputs.body || '這是測試信 — email 推播管線正常。目前無可行動變化。' }}
+
+            —
+            InvestMQuest · 台股 0050+2330 長線 × 波動率目標（前瞻 OOS 追蹤・未採用）
+            每交易日台股收盤後自動檢查 · 可行動變化＝閘門翻轉或任一標的最終權重變動 ≥ 10pp
+            退訂: 移除 repo secret MAIL_APP_PASSWORD 或編輯 update_long_track_tw_vt.yml
+
+      - name: Commit and push
+        run: |
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
+          git add docs/long-track-tw-vt/index.html docs/long-track-tw-vt/state.json
+          git diff --staged --quiet || git commit -m "Auto update long-track TW 0050+2330 vol-target: $(date -u '+%Y-%m-%d')"
+          for i in 1 2 3 4 5 6; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+            git pull --rebase origin main || { echo "Rebase failed"; exit 1; }
+            sleep $((RANDOM % 20 + 5))
+          done
+          echo "Push failed after 6 attempts"
+          exit 1
