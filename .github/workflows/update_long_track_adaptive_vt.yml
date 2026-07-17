@@ -1,0 +1,112 @@
+name: Update Long Track Adaptive-Sigma Vol-Target Signal (US+TW)
+
+on:
+  schedule:
+    # Two runs/day so both markets settle: 11:30 UTC = 19:30 Taipei (TW close
+    # 13:30 local / 05:30 UTC, ~6h buffer for yfinance .TW EOD) and 21:35 UTC
+    # (~4h after US close 20:00 UTC). The adaptive sleeve reads off daily RV20
+    # and its rolling-median σ_t, so it updates every trading day; the weekly
+    # long-track gate only flips on Fridays. The date-keyed idempotent history
+    # merge makes running twice a day safe (same-date live record wins, no dup).
+    # Forward OOS paper tracking — fixed-vs-adaptive parallel with
+    # update_long_track_qs_vt / update_long_track_tw_vt.
+    - cron: '30 11 * * 1-5'   # after TW close
+    - cron: '35 21 * * 1-5'   # after US close
+  workflow_dispatch:  # Manual trigger anytime
+    inputs:
+      test_email:
+        description: 'Send a test email even without an actionable change'
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'  # site_nav.py uses 3.12+ f-string syntax
+
+      - name: Install dependencies
+        run: pip install "yfinance>=0.2.40" pandas numpy
+
+      - name: Run adaptive-sigma US+TW vol-target update
+        run: python scripts/update_long_track_adaptive_vt.py
+
+      - name: Read change alert
+        id: alert
+        run: |
+          if [ -f lt_adaptive_vt_alert.txt ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            {
+              echo "body<<ALERT_EOF"
+              cat lt_adaptive_vt_alert.txt
+              echo "ALERT_EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Fail-safe: probe SMTP secret presence via env (the `secrets` context is
+      # not reliable inside `if:`), then gate the email step on the result so a
+      # missing secret never fails the workflow. The MAIL_USERNAME /
+      # MAIL_APP_PASSWORD pair is already configured (shared with
+      # update_long_track_qs_vt.yml / update_long_track_tw_vt.yml and others).
+      - name: Check mail secrets
+        id: mailcfg
+        env:
+          MU: ${{ secrets.MAIL_USERNAME }}
+          MP: ${{ secrets.MAIL_APP_PASSWORD }}
+        run: |
+          if [ -n "$MU" ] && [ -n "$MP" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false (SMTP secrets missing — email skipped)" >&2
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Email actionable change
+        if: (steps.alert.outputs.changed == 'true' || inputs.test_email == true) && steps.mailcfg.outputs.ready == 'true'
+        continue-on-error: true
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_APP_PASSWORD }}
+          subject: "⚡ 自適應σ 波動率長線（美+台）可行動變化 ${{ steps.alert.outputs.changed == 'true' && '' || '(測試信)' }}"
+          to: keigoks@gmail.com
+          from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
+          body: |
+            ${{ steps.alert.outputs.changed == 'true' && steps.alert.outputs.body || '這是測試信 — email 推播管線正常。目前無可行動變化。' }}
+
+            —
+            InvestMQuest · 自適應 σ 長線 × 波動率目標（美+台，前瞻 OOS 對照・未採用）
+            固定 vs 自適應 並行 OOS，與 /long-track-qs-vt/、/long-track-tw-vt/ 並讀 · 2027-01 複審
+            每交易日台股收盤後與美股收盤後各檢查一次 · 可行動變化＝任一腿閘門翻轉或最終權重變動 ≥ 10pp
+            退訂: 移除 repo secret MAIL_APP_PASSWORD 或編輯 update_long_track_adaptive_vt.yml
+
+      - name: Commit and push
+        run: |
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
+          git add docs/long-track-adaptive-vt/index.html docs/long-track-adaptive-vt/state.json
+          git diff --staged --quiet || git commit -m "Auto update long-track adaptive-sigma US+TW vol-target: $(date -u '+%Y-%m-%d')"
+          for i in 1 2 3 4 5 6; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+            git pull --rebase origin main || { echo "Rebase failed"; exit 1; }
+            sleep $((RANDOM % 20 + 5))
+          done
+          echo "Push failed after 6 attempts"
+          exit 1
