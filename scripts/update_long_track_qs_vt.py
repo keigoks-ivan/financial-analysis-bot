@@ -8,7 +8,7 @@ QQQ + SMH 長線 × 波動率目標 — 前瞻 OOS 追蹤（paper tracking）訊
   2. 波動率套袖 w = min(1, σ目標／RV20)，RV20＝20 日對數報酬年化波動。
   3. 最終目標權重 = 0.5 × 閘門 × 套袖（兩標的各自計算，合成即等權每日再平衡）。
 
-凍結規則（永久，2026-07-17）：σ目標 QQQ 20%、SMH 25%；成本 7 bps／邊；
+正式追蹤規則（2026-07-17 定案後不再調整）：σ目標 QQQ 20%、SMH 25%；成本 7 bps／邊；
 t 收盤訊號、t+1 收盤生效。定位＝前瞻 OOS 追蹤，非實盤採用。
 
 閘門定義逐位元對齊回測授權（v7-backtest
@@ -58,7 +58,7 @@ FREEZE_DATE = "2026-07-17"
 BACKTEST = {
     "window": "2005-01 – 2026-07",
     "rows": [                              # (label, cagr, mdd, calmar, ui, martin)
-        ("凍結 σ Q20/S25（本頁追蹤）", 11.90, -21.8, 0.547, 8.21, 1.45),
+        ("正式追蹤版 σ Q20/S25（本頁追蹤）", 11.90, -21.8, 0.547, 8.21, 1.45),
         ("50/50 買進持有", 17.65, -56.9, 0.310, 13.99, 1.26),
         ("純長軌（無套袖）", 12.36, -34.0, 0.363, 9.77, 1.27),
         ("掃描最佳 σ Q15/S30", 12.13, -21.3, 0.569, 7.78, 1.56),
@@ -239,7 +239,7 @@ def recent_table(t: str, d: dict) -> str:
 def backtest_section() -> str:
     rows = ""
     for lab, cagr, mdd, calmar, ui, martin in BACKTEST["rows"]:
-        hl = "rowhl" if "凍結" in lab else ("rowbh" if "買進持有" in lab else "")
+        hl = "rowhl" if "正式追蹤" in lab else ("rowbh" if "買進持有" in lab else "")
         rows += (f'<tr class="{hl}"><td>{lab}</td><td class="num">{cagr:.2f}%</td>'
                  f'<td class="num">{mdd:.1f}%</td><td class="num">{calmar:.3f}</td>'
                  f'<td class="num">{ui:.2f}</td><td class="num">{martin:.2f}</td></tr>\n')
@@ -256,26 +256,26 @@ def backtest_section() -> str:
         eras += (f'<tr><td>{lab}</td><td class="num {cc}">{dc:+.1f}pp</td>'
                  f'<td class="num {cm}">{dm:+.1f}pp</td></tr>\n')
     return f"""<div class="card">
-<h3>回測摘要（凍結版 vs 三基準・共同窗 {BACKTEST['window']}）</h3>
+<h3>回測摘要（正式追蹤版 vs 三基準・共同窗 {BACKTEST['window']}）</h3>
 <p style="font-size:.8rem;color:var(--muted);margin-bottom:.7rem">
 兩標的日報酬 50/50 加權合成（等效每日再平衡，如實揭露）。判準基準＝<b>純長軌組合</b>（非買進持有）。</p>
 <table><thead><tr><th>配置</th><th class="num">CAGR</th><th class="num">MDD</th><th class="num">Calmar</th><th class="num">Ulcer</th><th class="num">Martin</th></tr></thead>
 <tbody>{rows}</tbody></table>
 <div class="takeaway">套袖把純長軌的 Calmar 0.363 → <b>0.547</b>、MDD −34.0% → <b>−21.8%</b>，CAGR 只付 0.46pp；
-對 50/50 買進持有則是「風險調整支配、CAGR 讓步」（B&amp;H 17.65%／−56.9%）。凍結 σ（0.547）貼近掃描最佳（Q15/S30 0.569），
+對 50/50 買進持有則是「風險調整支配、CAGR 讓步」（B&amp;H 17.65%／−56.9%）。正式版 σ（0.547）貼近掃描最佳（Q15/S30 0.569），
 不靠選中特定 σ 才成立。<b>唯一系統性代價集中在 AI 牛（單期 CAGR −7.1pp，高波急彈仍減碼、漏接反彈）。</b></div>
 </div>
 
 <div class="card">
 <h3>σ 目標敏感度對照（僅回測參考，不追蹤）</h3>
 <p style="font-size:.8rem;color:var(--muted);margin-bottom:.7rem">
-QQQ σ × SMH σ 網格的組合 Calmar。凍結格 Q20/S25 高亮；最佳 Q15/S35（0.582）與凍結差距小，故採原則法 σ（各自長期 RV 中位取整）。</p>
+QQQ σ × SMH σ 網格的組合 Calmar。正式版格 Q20/S25 高亮；最佳 Q15/S35（0.582）與正式版差距小，故採原則法 σ（各自長期 RV 中位取整）。</p>
 <table><thead><tr><th>σ 組合</th><th class="num">Calmar</th><th class="num">CAGR</th><th class="num">MDD</th><th class="num">Martin</th></tr></thead>
 <tbody>{grid}</tbody></table>
 </div>
 
 <div class="card">
-<h3>分期（凍結 vs 純長軌；ΔCAGR／ΔMDD，正＝套袖較優）</h3>
+<h3>分期（正式追蹤版 vs 純長軌；ΔCAGR／ΔMDD，正＝套袖較優）</h3>
 <table><thead><tr><th>期間</th><th class="num">Δ CAGR</th><th class="num">Δ MDD</th></tr></thead>
 <tbody>{eras}</tbody></table>
 <div style="font-size:.75rem;color:var(--muted);margin-top:.5rem">五期 MDD 全數改善（+0.0～+14.5pp）；CAGR 代價集中在 AI 牛（−7.1pp）。</div>
@@ -400,8 +400,8 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 
 <div class="oos-banner">
   <span class="tag-loud">前瞻 OOS 追蹤中・未採用（PAPER TRACKING）</span>
-  <div style="font-size:.86rem">這<b>不是實盤系統</b>，是把一組<b>凍結規則（{FREEZE_DATE}）</b>往前逐日記錄，看真實 OOS 表現是否與回測分布一致的紙上追蹤頁。
-  規則永久凍結、不再調參。<b>複審條件：2027-01 或滿 120 個追蹤交易日</b>後，比對 OOS 與回測分布。
+  <div style="font-size:.86rem">這<b>不是實盤系統</b>，是把一組<b>{FREEZE_DATE} 定案的正式規則</b>往前逐日記錄，看真實 OOS 表現是否與回測分布一致的紙上追蹤頁。
+  規則定案後不再調整、不再調參（前瞻樣本外驗證的前提）。<b>複審條件：2027-01 或滿 120 個追蹤交易日</b>後，比對 OOS 與回測分布。
   實倉的長線攻擊位請見 <a href="/long-track-smh/">SMH/QQQ STX50 頁</a>；本頁的回測邏輯見 <a href="/backtest/vol_targeting/">波動率目標回測</a>。</div>
 </div>
 
@@ -417,12 +417,12 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 <div class="tgrid">{cards}</div>
 
 <div class="card">
-<h3>凍結規則（永久，{FREEZE_DATE}）</h3>
+<h3>正式追蹤規則（{FREEZE_DATE} 定案，此後不再調整）</h3>
 <div class="rule-list">
 ① <b>兩標的各 50%</b>，日報酬加權合成（<b>絕不直接相加 equity curve</b>；50/50 日報酬加權＝等效每日再平衡，如實揭露此假設）。<br>
 ② <b>週線長軌閘門</b>（W-FRI）：進場＝週收盤 &gt; W52／W104／W250 且 W104／W250 四週斜率 &gt; 0（score5）；出場＝一根週收盤 &lt; W52；<b>長多 only</b>，閘門輸出 0／1。<br>
 ③ <b>波動率套袖</b>：w = min(1, σ目標／RV20)，RV20＝20 日對數報酬年化波動；<b>只降不加</b>（上限 1.0）。<br>
-④ <b>σ 凍結（原則法）</b>：QQQ 20%、SMH 25%（各自長期 RV 中位數取整到 5%）。掃描最佳版 Q15/S30 只放回測敏感度對照，<b>不追蹤</b>。<br>
+④ <b>σ 定案（原則法）</b>：QQQ 20%、SMH 25%（各自長期 RV 中位數取整到 5%）。掃描最佳版 Q15/S30 只放回測敏感度對照，<b>不追蹤</b>。<br>
 ⑤ <b>執行</b>：t 收盤訊號、t+1 收盤生效；成本 7 bps／邊。<br>
 ⑥ <b>最終權重</b> = 0.5 × 閘門(0/1) × 套袖權重，兩標的各自計算。<br>
 <span style="color:var(--muted);font-size:.78rem">閘門為週頻（僅週五可能翻轉），套袖 RV20 為日頻（每日可能微調），故本頁每交易日更新。「可行動變化」＝閘門翻轉或任一標的最終權重變動 ≥ 10pp，觸發 email 通知。</span>
