@@ -50,6 +50,8 @@
 | detective 複合規則 R7 窄領導（`detective_rules.py`；黃、min_true 2、confirm 2；subgroup 三取二） | 2026-07-15 | detective v2 Phase 3：少數權值撐盤須指數高位×｛小型／區域銀行／運輸｝三取二走弱，單一廣度比噪音大 | fire 後 20 交易日對應資產回撤中位不劣於未 fire 基準，連兩輪審計 → 刪或降黃 | — |
 | detective 複合規則 R8 晚週期滯脹組合（`detective_rules.py`；黃、min_true 3、confirm 1；macro_clock 象限閘） | 2026-07-15 | detective v2 Phase 3：晚週期＋通膨黏性須時鐘象限×銅金比走弱×通膨預期偏高同現；承接宏觀時鐘滯脹象限傷股票的驗證 | 滯脹象限條件劣勢在時鐘審計消失 → 連動降級 | — |
 | detective 複合規則 R9 自滿組合（`detective_rules.py`；黃、min_true 3、confirm 1；pc_equity〔internals〕分位≤5×SKEW 分位≥90×VIX 分位≤10；status dormant→active） | 2026-07-16 | options 資料層（internals.json pc_equity，309 交易日 backfill）上線後啟用 Phase 3 預留的自滿組合——選擇權與波動面同時反映極度自滿須三面同現才成立，單面低分位噪音大 | fire 後 20 交易日 SPX 回撤中位不劣於未 fire 基準，連兩輪審計 → 刪或降黃 | — |
+| PM-QC-2 長抱賣出分軌（portfolio-manager v2.0；清倉建議必須指名 thesis 級觸發物，估值偏高/漲幅本身最多 trim 回目標倉、永不單獨清倉） | 2026-07-17 | v1.0 機械超漲止盈（>mid_target×1.2 → 減碼 30%）退役；calibration_legacy_dca_20260707 實證強勢段機械保守成本 ≈ 3× 其收益 | 兩輪校準顯示「thesis 級觸發前若機械止盈可保住的回吐」規模中位 > 「續抱多賺」（＝機械止盈其實在救人）；或 thesis 級觸發系統性太慢（觸發時已回吐超過機械止盈保住額的 2×）→ 恢復分級止盈 | — |
+| PM-QC-1 direction override 禁止（portfolio-manager v2.0；PM 不得反 §14 裁決，L4 唯一出路＝重跑 DD；L1-L3 sizing/horizon/information 允許但強制 reversal condition） | 2026-07-17 | v1.0 override 4 級協議繼承；分工純粹（PM 不做單股研究）防組合層情緒繞過裁決鏈 | 出現 ≥3 例「新資訊明確、重跑 DD 的延遲造成實質錯失、且 L3 資訊通道未能補位」→ 開 PM 層條件式 direction override（附強制事後 DD 對帳）；或兩輪 L4 攔下的意圖事後全部正確（禁令在害人） | — |
 
 **登記規則**：新增判斷類規則 → 加一列（含 kill condition）＋提名一條既有規則候刪（寫進 PR/commit 訊息）；刪除規則 → 該列標 `KILLED @ 版本`（保留供 lineage，勿刪行）；每輪校準把審計結果回填最後一欄。
 

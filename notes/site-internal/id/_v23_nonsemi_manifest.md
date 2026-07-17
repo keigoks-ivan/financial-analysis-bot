@@ -5,6 +5,8 @@
 **⚙ 2026-06-21 雙視窗分工**：本檔=**視窗 A**=Wave A 剩餘（A2 LLMVendor + A3 agentic + A4 cross-domain + A5 Publishers）+ Wave F（consumer 13）+ Wave G（agri/housing/reits/space 6），**且擁有 catalog**。**視窗 B**=Waves B/C/D/E（27 篇 + 1 stub），獨立工作簿見 `docs/id/_v23_nonsemi_manifest_BCDE.md`。兩視窗只寫各自 report body，catalog 由視窗 A serialize、絕不 `git add -A`。
 
 **🚀 2026-06-21 用戶指示：Wave A 完成即 commit + push**（解除 Wave A 的 catalog 凍結）。Wave A 14 篇全完成後：① 整合 cloud sub_groups（cybersecurity 5 + agentic_ai 3 + ai_cross_domain 4 + media_publishing 1）到 index.html 卡片（v2 badge + `_full` 連結）+ INDEX.md rows；② 跑 `python3 scripts/build_id_category_pages.py` 重建 cat-cloud.html；③ **選擇性 git add 只加 Wave A 的 docs/id 檔 + index.html + INDEX.md + cat-cloud.html（絕不 -A）**；④ commit + push。⚠ push 前 git status 確認：(a) 沒掃到 semi 視窗 B2 / 並行視窗 B 的未提交檔；(b) push 會帶出 origin 落後的 semi 提交（B5）——若有 foreign 未提交 catalog 變動或不確定，先回報用戶再 push。Wave F/G + 視窗 B 的 B/C/D/E catalog 仍各自完成後再整合。
+**⚠ 2026-07-17 對帳更正**：Waves B/C/D/E 的狀態欄以 `docs/id/_v23_nonsemi_manifest_BCDE.md` 為準——視窗 B 已於 2026-06-21 全數完成 ✅ 並 commit，catalog 亦已整合；Wave A/F 各列的「待 catalog」同為舊帳（INDEX.md／index.html 均已收錄）。**Wave G 六篇亦已於 2026-06-29 以新日期檔完成 regen**（`ID_*_20260629.html`，v2.3；舊日期檔 20260427/0430/0505 保留原檔）。**本表已無任何待跑批次。**任何 session 觸發 regen 前，先查 BCDE 工作簿、`ls docs/id/ID_{Theme}_*.html` 全部日期版本、與實檔 id-meta `skill_version`，勿重跑已完成批。
+
 
 啟動 2026-06-21（本視窗）。範圍：全部 `mega != semi` 且非 CNTW = **58 篇** legacy v1.5–v1.8 → industry-analyst v2.x dual-output（就地覆蓋 canonical + 新增 `_full`，零斷鏈）。
 
@@ -39,49 +41,49 @@
 
 | 批 | 報告 | sub | 狀態 |
 |---|---|---|---|
-| B1 | CardNetworkDuopoly_20260428 | payment_network | ⬜ |
-| B1 | CobrandCardEcosystem_20260429 | payment_network | ⬜ |
-| B1 | GlobalBankROE_20260428 | banks | ⬜ |
-| B2 | StablecoinPayments_20260430 | stablecoin | ⬜ |
-| B2 | WealthTransfer25Year_20260429 | wealth_mgmt | ⬜ |
-| B3 | GLP1Master_20260429 | glp1 | ⬜ |
-| B3 | GLP1Treatment_20260428 | glp1 | ⬜ |
+| B1 | CardNetworkDuopoly_20260428 | payment_network | ✅（視窗 B 2026-06-21，見 BCDE 工作簿） |
+| B1 | CobrandCardEcosystem_20260429 | payment_network | ✅（視窗 B 2026-06-21，見 BCDE 工作簿） |
+| B1 | GlobalBankROE_20260428 | banks | ✅（視窗 B 2026-06-21，見 BCDE 工作簿） |
+| B2 | StablecoinPayments_20260430 | stablecoin | ✅（視窗 B 2026-06-21，見 BCDE 工作簿） |
+| B2 | WealthTransfer25Year_20260429 | wealth_mgmt | ✅（視窗 B 2026-06-21，見 BCDE 工作簿） |
+| B3 | GLP1Master_20260429 | glp1 | ✅（視窗 B 2026-06-21，見 BCDE 工作簿） |
+| B3 | GLP1Treatment_20260428 | glp1 | ✅（視窗 B 2026-06-21，見 BCDE 工作簿） |
 
 ## Wave C — transport（6）
 
 | 批 | 報告 | sub | 狀態 |
 |---|---|---|---|
-| C1 | BoomerTravelSupercycle_20260429 | travel_master | ⬜ |
-| C1 | HotelChains_20260429 | hotel_lodging | ⬜ |
-| C1 | LuxuryTravelCruise_20260427 | cruise_luxury_travel | ⬜ |
-| C2 | OTAandAITravel_20260429 | ota_distribution | ⬜ |
-| C2 | AirlineLoyaltyRepricing_20260429 | airline | ⬜ |
-| C2 | CasinoGamingIR_20260429 | casino_gaming | ⬜ |
+| C1 | BoomerTravelSupercycle_20260429 | travel_master | ✅（視窗 B 2026-06-21，見 BCDE 工作簿） |
+| C1 | HotelChains_20260429 | hotel_lodging | ✅（視窗 B 2026-06-21，見 BCDE 工作簿） |
+| C1 | LuxuryTravelCruise_20260427 | cruise_luxury_travel | ✅（視窗 B 2026-06-21，見 BCDE 工作簿） |
+| C2 | OTAandAITravel_20260429 | ota_distribution | ✅（視窗 B 2026-06-21，見 BCDE 工作簿） |
+| C2 | AirlineLoyaltyRepricing_20260429 | airline | ✅（視窗 B 2026-06-21，見 BCDE 工作簿） |
+| C2 | CasinoGamingIR_20260429 | casino_gaming | ✅（視窗 B 2026-06-21，見 BCDE 工作簿） |
 
 ## Wave D — industrial（7→6）+ materials（2）
 
 | 批 | 報告 | sub | 狀態 |
 |---|---|---|---|
-| D1 | DefenseModernization_20260430 (M1 master ← AerospaceUpgrade) | defense | ⬜ |
-| D1 | CommercialAerospace_20260427 | commercial_aero | ⬜ |
-| D1 | RobotaxiAutonomous_20260429 | autonomous_driving | ⬜ |
-| D2 | HumanoidIndustrialRobotics_20260427 | robotics | ⬜ |
-| D2 | IndustrialAutomation_20260427 | robotics | ⬜ |
-| D2 | HeavyMachineryMining_20260427 | heavy_machinery | ⬜ |
-| D3 | CopperSupercycle_20260428 | industrial_metals | ⬜ |
-| D3 | AerospaceMetals_20260427 | aerospace_defense_metals | ⬜ |
+| D1 | DefenseModernization_20260430 (M1 master ← AerospaceUpgrade) | defense | ✅（視窗 B 2026-06-21，見 BCDE 工作簿） |
+| D1 | CommercialAerospace_20260427 | commercial_aero | ✅（視窗 B 2026-06-21，見 BCDE 工作簿） |
+| D1 | RobotaxiAutonomous_20260429 | autonomous_driving | ✅（視窗 B 2026-06-21，見 BCDE 工作簿） |
+| D2 | HumanoidIndustrialRobotics_20260427 | robotics | ✅（視窗 B 2026-06-21，見 BCDE 工作簿） |
+| D2 | IndustrialAutomation_20260427 | robotics | ✅（視窗 B 2026-06-21，見 BCDE 工作簿） |
+| D2 | HeavyMachineryMining_20260427 | heavy_machinery | ✅（視窗 B 2026-06-21，見 BCDE 工作簿） |
+| D3 | CopperSupercycle_20260428 | industrial_metals | ✅（視窗 B 2026-06-21，見 BCDE 工作簿） |
+| D3 | AerospaceMetals_20260427 | aerospace_defense_metals | ✅（視窗 B 2026-06-21，見 BCDE 工作簿） |
 | —  | DefenseAerospaceUpgrade_20260427 → **stub (M1)** | defense | ⬜ |
 
 ## Wave E — energy（3）+ staples（3）
 
 | 批 | 報告 | sub | 狀態 |
 |---|---|---|---|
-| E1 | NuclearRenaissance_20260430 | nuclear | ⬜ |
-| E1 | FusionCommercialization_20260505 | nuclear | ⬜ |
-| E1 | HydrogenFuelCell_20260505 | hydrogen | ⬜ |
-| E2 | BeverageEnergyDrink_20260428 | beverage | ⬜ |
-| E2 | GLP1PackagedFood_20260428 | packaged_food | ⬜ |
-| E2 | GLP1RestaurantImpact_20260427 | restaurant_glp1 | ⬜ |
+| E1 | NuclearRenaissance_20260430 | nuclear | ✅（視窗 B 2026-06-21，見 BCDE 工作簿） |
+| E1 | FusionCommercialization_20260505 | nuclear | ✅（視窗 B 2026-06-21，見 BCDE 工作簿） |
+| E1 | HydrogenFuelCell_20260505 | hydrogen | ✅（視窗 B 2026-06-21，見 BCDE 工作簿） |
+| E2 | BeverageEnergyDrink_20260428 | beverage | ✅（視窗 B 2026-06-21，見 BCDE 工作簿） |
+| E2 | GLP1PackagedFood_20260428 | packaged_food | ✅（視窗 B 2026-06-21，見 BCDE 工作簿） |
+| E2 | GLP1RestaurantImpact_20260427 | restaurant_glp1 | ✅（視窗 B 2026-06-21，見 BCDE 工作簿） |
 
 ## Wave F — consumer（13）
 
@@ -105,12 +107,12 @@
 
 | 批 | 報告 | sub | 狀態 |
 |---|---|---|---|
-| G1 | BeefSupercycle_20260427 | livestock_meat | ⬜ |
-| G1 | GrainsOilseeds_20260505 | grains_oilseeds | ⬜ |
-| G1 | FertilizerSeeds_20260505 | fertilizer_seeds | ⬜ |
-| G2 | PublicBuilderEntryLevel_20260427 | us_builders | ⬜ |
-| G2 | DataCenterREITDuopoly_20260427 | data_center | ⬜ |
-| G2 | SpaceEconomy_20260430 | launch | ⬜ |
+| G1 | BeefSupercycle_20260427 | livestock_meat | ✅（2026-06-29 新日期檔 ID_*_20260629.html，v2.3） |
+| G1 | GrainsOilseeds_20260505 | grains_oilseeds | ✅（2026-06-29 新日期檔 ID_*_20260629.html，v2.3） |
+| G1 | FertilizerSeeds_20260505 | fertilizer_seeds | ✅（2026-06-29 新日期檔 ID_*_20260629.html，v2.3） |
+| G2 | PublicBuilderEntryLevel_20260427 | us_builders | ✅（2026-06-29 新日期檔 ID_*_20260629.html，v2.3） |
+| G2 | DataCenterREITDuopoly_20260427 | data_center | ✅（2026-06-29 新日期檔 ID_*_20260629.html，v2.3） |
+| G2 | SpaceEconomy_20260430 | launch | ✅（2026-06-29 新日期檔 ID_*_20260629.html，v2.3） |
 
 ---
 
@@ -186,3 +188,4 @@
 - 2026-06-21：**連續自動模式（/loop dynamic）啟動**。A1 #2 AICybersecurityDoubleEdge canonical+_full 寫完（16.0k 字、validate exit0、char caps 全過、第一版即套 5 lessons）。pilot lessons 已內化、品質穩。
 - 2026-06-21：A1 #3 IdentityNewPerimeter canonical+_full 寫完（14.8k 字——略近 floor，後續報告目標拉回 16k+、validate exit0、char caps 全過）。**A1 cyber 3 篇 body 全完成**；對 #2+#3 launch Sonnet batch critic（背景，#1 已單獨 critic 過）。下一輪：等 batch critic → 修 🔴/🟡 → 開 A2（DataSecurityBackupConvergence + LLMVendorSecurityEconomics）。
 - 2026-06-21：**A1 batch critic（#2+#3）完成 + 全修**。critic 抓：報告 A 1🔴（§7 priced-in 缺分位×3）+ 2🟡（IBM 98 天是 2024 版、'25 為 80 天/$1.9M；PANW depth _full↔meta 不一致）；報告 B 1🔴（**OKTA NRR 107% 已破自身 §8 bear 閾值 110%**——已改為「下調 OKTA 個股 conviction、Identity 主題 thesis 不變」並下修 falsification 至 105%）+ 2🟡（TAM $100B 缺起點拆解、ZT 81% 是計畫非成熟、$5.2M 對照 IBM 2025 $4.44M）。全部已修 + re-validate exit0、_full 16.4k/15.2k。**A1 cyber 3/3 完成（body+critic+fix），待 catalog 解凍。** 新 lesson：跨期統計（IBM breach 報告、NRR 閾值）要釘年份 + 對照當期，避免用過期數字。**下一輪：A2（DataSecurityBackupConvergence + LLMVendorSecurityEconomics）。**
+- 2026-07-17：主線程對帳——B/C/D/E 27 列 ⬜ 為舊帳（實際已由視窗 B 完成，見 BCDE 工作簿），A/F「待 catalog」亦早已整合。Wave G 六篇亦已於 2026-06-29 以新日期檔（ID_*_20260629.html，v2.3）完成——初判「輕度刷新」有誤，實為新日期 regen。全 manifest 無待跑批次；後續維護走 60 天 judgment 過期潮的 refresh 隊列（見 _regen_priority_queue_20260717.md）。
