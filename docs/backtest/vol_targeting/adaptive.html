@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta name="robots" content="noindex,nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>波動率目標（自適應 σ）｜固定值 vs 跟著走勢走 | InvestMQuest Research</title>
+<style>
+:root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
+      --text:#111827;--muted:#6b7280;--border:#e5e7eb;
+      --green:#059669;--green-bg:#ecfdf5;--green-border:#a7f3d0;--green-text:#065f46;
+      --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;--red-text:#991b1b;
+      --amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fde68a;--amber-text:#92400e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1120px;margin:0 auto;padding:0 1.5rem}
+.page-hdr{padding:1.75rem 0 1.25rem;background:linear-gradient(180deg,#eff6ff 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
+.page-hdr h1{font-size:1.6rem;font-weight:700;letter-spacing:-.03em}
+.page-hdr .sub{color:var(--muted);font-size:.9rem;margin-top:.2rem}
+.crumb{font-size:.82rem;color:var(--muted);margin-bottom:.4rem}
+.crumb a{color:var(--muted)}
+.section{padding:1.5rem 0 0}
+.section-title{font-size:1.15rem;font-weight:700;margin-bottom:1rem;
+               padding-bottom:.45rem;border-bottom:2px solid var(--brand)}
+.section-sub{font-size:.85rem;color:var(--muted);margin:-.5rem 0 1rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.card h3{font-size:1rem;font-weight:600;margin-bottom:.85rem}
+.card .takeaway{font-size:.88rem;margin-top:.75rem;padding:.6rem .9rem;border-radius:6px;
+                background:var(--brand-light);border-left:3px solid var(--brand)}
+.card p{font-size:.9rem;color:#374151;margin-bottom:.6rem}
+.card p:last-child{margin-bottom:0}
+.fine{font-size:.8rem;color:var(--muted);margin-top:.55rem}
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+th,td{text-align:left;padding:.55rem .7rem;border-bottom:1px solid var(--border)}
+th{background:#f9fafb;font-weight:600;font-size:.76rem;letter-spacing:.03em;color:var(--muted)}
+td{font-variant-numeric:tabular-nums}
+td.num,th.num{text-align:right}
+tbody tr:hover td{background:#f3f4f6}
+.neg{color:var(--red);font-weight:600}
+.pos{color:var(--green);font-weight:600}
+.rowhl td{background:var(--brand-light)!important}
+.rowpass td{background:var(--green-bg)!important}
+.rowbh td{background:#f9fafb;color:var(--muted)}
+.note{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;
+      padding:.85rem 1.1rem;font-size:.84rem;color:var(--amber-text);margin:1rem 0}
+.good-loud{background:var(--green-bg);border:2px solid var(--green-border);border-radius:8px;
+      padding:1rem 1.2rem;font-size:.9rem;color:var(--green-text);margin:1rem 0}
+.good-loud strong{color:var(--green)}
+.bad-loud{background:var(--red-bg);border:2px solid var(--red-border);border-radius:8px;
+      padding:1rem 1.2rem;font-size:.9rem;color:var(--red-text);margin:1rem 0}
+.bad-loud strong{color:var(--red)}
+.cards2{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem}
+.tbl-wrap{overflow-x:auto}
+.verdict-pill{display:inline-block;font-size:.7rem;font-weight:700;padding:.1rem .5rem;border-radius:99px;margin-left:.35rem}
+.vp-yes{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border)}
+.vp-no{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red-border)}
+.mkt-tag{display:inline-block;font-size:.72rem;font-weight:700;padding:.15rem .6rem;border-radius:6px;margin-left:.5rem;vertical-align:middle}
+.mkt-fail{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red-border)}
+.mkt-pass{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border)}
+footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
+       text-align:center;padding:1.25rem 0;font-size:.78rem;margin-top:2rem}
+@media(max-width:768px){
+  .cards2{grid-template-columns:1fr}
+  table{font-size:.78rem}th,td{padding:.4rem .45rem}
+}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/monitor/">市場監測</a>
+          <a href="/detective/">偵測警報網</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/rotation/">產業輪動</a>
+          <a href="/crowding/">擁擠交易監測</a>
+          <a href="/regime/">大類資產 regime</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/catalyst/">催化劑日曆</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">選股<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/cockpit/">選股主控台</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/research/momentum-5/">Momentum-5</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screeners.html">RS+VCP Screener</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">個股總覽</a>
+          <a href="/research/">個股 DD</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/research/synthesis/">期望落差綜合研判</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/track-record/">裁決實績</a>
+          <a href="/long-track-smh/">長線訊號 SMH</a>
+          <a href="/long-track-qs-vt/">QQQ+SMH 波動率</a>
+          <a href="/long-track-tw/">台股長線</a>
+          <a href="/long-track-tw-vt/">0050+2330 波動率</a>
+          <a href="/long-track-adaptive-vt/">自適應波動率</a>
+          <a href="/turtle-sleeve/">商品 Sleeve</a>
+          <a href="/backtest/" class="active">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/cache/">Data Cache</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="page-hdr">
+  <div class="container">
+    <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / <a href="/backtest/vol_targeting/">波動率目標倉位</a> / 自適應 σ</div>
+    <h1>波動率目標（自適應 σ）——固定值 vs 跟著走勢走</h1>
+    <div class="sub">預註冊 2026-07-17・研究頁（非追蹤系統）・滾動中位數 σ（3y／5y 雙窗）與趨勢連動 σ（零參數）vs 固定 σ 正式版・美股 QQQ50/SMH50（2005 起）＋台股 0050/2330（2014 起）・引擎同源＝週線長軌閘門 × 套袖、t+1 執行、7 bps／邊・過關與否都如實發布</div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ===== 問題陳述 ===== -->
+<div class="section">
+<h2 class="section-title">問題：固定 σ 的病灶，能不能讓 σ「跟著走勢走」補起來</h2>
+<div class="cards2">
+  <div class="card">
+    <h3>固定 σ 的已知病灶</h3>
+    <p>正式版用固定 σ 目標（美股 QQQ 20%／SMH 25%、台股 0050 15%／2330 25%），有兩個結構性漏洞：</p>
+    <p>一、<strong>結構性高波標的長期欠載</strong>：SMH、2330 這類天生波動大的標的，RV20 常年高於固定 σ，於是常年被壓在滿倉以下、白白少載貨。</p>
+    <p>二、<strong>AI 牛高波急漲段漏接</strong>：牛市噴出時波動與價格同時飆高，固定 σ 只看到「很晃」就減碼，錯過了漲幅（美股 −7.1pp、台股 −8.9pp）。</p>
+    <div class="takeaway">用戶提問（2026-07-17）：σ 若「跟著波動走」而非釘死一個值，能不能設計出來、又不變成事後擬合？</div>
+  </div>
+  <div class="card">
+    <h3>兩個預註冊機制（定案後不掃參擇優）</h3>
+    <p><strong>A. 滾動中位數 σ</strong>——把原則法「全史 RV20 中位數」改成滾動版：<br>
+    σ_t ＝ median(RV20, 過去 N 日)，w ＝ min(1, σ_t／RV20)。<br>
+    N 取 <strong>3 年（756）與 5 年（1260）雙窗並列</strong>，要求兩窗同向才算過（穩健帶、非擇優）。語義從「絕對風險預算」變成「相對自身 regime 的尖峰偵測器」。</p>
+    <p><strong>B. 趨勢連動 σ</strong>——零參數連續式，σ 跟著趨勢延伸度走：<br>
+    ext ＝ max(1, 週收／W52)、σ_t ＝ σ_base × ext、w ＝ min(1, σ_t／RV20)。<br>
+    函數形狀（線性、下限 1）事前固定，無任何掃描。</p>
+    <div class="takeaway">判準（vs 固定 σ 正式版）：Calmar 與 Martin 雙指標不劣，且分期 MDD 不系統性惡化；中位數版另須 3y／5y 兩窗同向。全為 ex ante 判準。</div>
+  </div>
+</div>
+</div>
+
+<!-- ===== 美股矩陣 ===== -->
+<div class="section">
+<h2 class="section-title">美股 QQQ50/SMH50 六列矩陣<span class="mkt-tag mkt-fail">全數 FAIL</span></h2>
+<div class="section-sub">評估窗 2005-01-03 ～ 2026-07-10。基準列＝固定 σ 正式版（藍底）；過關機制以綠底標示（本市場無）。</div>
+<div class="card">
+<div class="tbl-wrap"><table><thead><tr><th>配置</th><th class="num">CAGR</th><th class="num">MDD</th><th class="num">Calmar</th><th class="num">Ulcer</th><th class="num">Martin</th></tr></thead><tbody><tr class="rowhl"><td>固定 σ（正式版·基準）</td><td class="num">11.90%</td><td class="num neg">−21.75%</td><td class="num">0.547</td><td class="num">8.21</td><td class="num">1.45</td></tr><tr><td>滾動中位數 σ｜3 年窗 <span class="verdict-pill vp-no">未過</span></td><td class="num">11.51%</td><td class="num neg">−21.31%</td><td class="num">0.540</td><td class="num">7.95</td><td class="num">1.45</td></tr><tr><td>滾動中位數 σ｜5 年窗 <span class="verdict-pill vp-no">未過</span></td><td class="num">11.57%</td><td class="num neg">−21.48%</td><td class="num">0.539</td><td class="num">7.79</td><td class="num">1.48</td></tr><tr><td>趨勢連動 σ｜零參數 <span class="verdict-pill vp-no">未過</span></td><td class="num">12.41%</td><td class="num neg">−21.80%</td><td class="num">0.569</td><td class="num">8.61</td><td class="num">1.44</td></tr><tr class="rowbh"><td>純長軌（無套袖）</td><td class="num">12.36%</td><td class="num neg">−34.02%</td><td class="num">0.363</td><td class="num">9.77</td><td class="num">1.27</td></tr><tr class="rowbh"><td>50/50 買進持有</td><td class="num">17.65%</td><td class="num neg">−56.93%</td><td class="num">0.310</td><td class="num">13.99</td><td class="num">1.26</td></tr></tbody></table></div>
+</div>
+<h3 class="section-title" style="font-size:1rem;border-bottom-width:1px">美股分期 Δ（vs 固定 σ）</h3>
+<div class="card">
+<div class="tbl-wrap"><table><thead><tr><th rowspan="2">分期</th><th class="num" colspan="2">中位數 3y</th><th class="num" colspan="2">中位數 5y</th><th class="num" colspan="2">趨勢連動</th></tr><tr><th class="num">ΔCAGR</th><th class="num">ΔMDD</th><th class="num">ΔCAGR</th><th class="num">ΔMDD</th><th class="num">ΔCAGR</th><th class="num">ΔMDD</th></tr></thead><tbody><tr><td>2005-08 GFC</td><td class="num pos">+0.26%</td><td class="num pos">+0.64%</td><td class="num pos">+0.21%</td><td class="num pos">+0.34%</td><td class="num neg">−0.09%</td><td class="num ">+0.00%</td></tr><tr><td>2009-13 QE</td><td class="num neg">−0.10%</td><td class="num pos">+0.35%</td><td class="num pos">+0.12%</td><td class="num pos">+0.23%</td><td class="num neg">−0.05%</td><td class="num neg">−0.30%</td></tr><tr><td>2014-18 低波</td><td class="num neg">−2.27%</td><td class="num pos">+0.44%</td><td class="num neg">−1.94%</td><td class="num pos">+0.27%</td><td class="num pos">+0.40%</td><td class="num neg">−0.05%</td></tr><tr><td>2019-23 COVID</td><td class="num neg">−0.27%</td><td class="num pos">+3.77%</td><td class="num neg">−0.85%</td><td class="num pos">+4.27%</td><td class="num pos">+0.63%</td><td class="num neg">−1.74%</td></tr><tr><td>2024- AI 牛</td><td class="num pos">+1.78%</td><td class="num neg">−1.40%</td><td class="num pos">+2.48%</td><td class="num neg">−1.34%</td><td class="num pos">+3.16%</td><td class="num neg">−1.86%</td></tr></tbody></table></div><p class="fine">Δ ＝該機制 − 固定 σ。ΔMDD 正值（綠）＝回撤變淺（改善），負值（紅）＝回撤加深（惡化）；ΔCAGR 正值＝報酬提升。</p>
+</div>
+</div>
+
+<!-- ===== 台股矩陣 ===== -->
+<div class="section">
+<h2 class="section-title">台股 0050 50/2330 50 六列矩陣<span class="mkt-tag mkt-pass">機制全數 PASS</span></h2>
+<div class="section-sub">評估窗 2014-01-01 ～ 2026-07-17。基準列＝固定 σ 正式版（藍底）；過關機制以綠底標示。</div>
+<div class="card">
+<div class="tbl-wrap"><table><thead><tr><th>配置</th><th class="num">CAGR</th><th class="num">MDD</th><th class="num">Calmar</th><th class="num">Ulcer</th><th class="num">Martin</th></tr></thead><tbody><tr class="rowhl"><td>固定 σ（正式版·基準）</td><td class="num">18.54%</td><td class="num neg">−21.48%</td><td class="num">0.863</td><td class="num">9.05</td><td class="num">2.05</td></tr><tr class="rowpass"><td>滾動中位數 σ｜3 年窗 <span class="verdict-pill vp-yes">過關</span></td><td class="num">18.53%</td><td class="num neg">−19.55%</td><td class="num">0.948</td><td class="num">8.60</td><td class="num">2.16</td></tr><tr class="rowpass"><td>滾動中位數 σ｜5 年窗 <span class="verdict-pill vp-yes">過關</span></td><td class="num">18.37%</td><td class="num neg">−19.62%</td><td class="num">0.936</td><td class="num">8.54</td><td class="num">2.15</td></tr><tr class="rowpass"><td>趨勢連動 σ｜零參數 <span class="verdict-pill vp-yes">過關</span></td><td class="num">19.32%</td><td class="num neg">−22.16%</td><td class="num">0.872</td><td class="num">9.13</td><td class="num">2.12</td></tr><tr class="rowbh"><td>純長軌（無套袖）</td><td class="num">21.40%</td><td class="num neg">−23.45%</td><td class="num">0.913</td><td class="num">9.38</td><td class="num">2.28</td></tr><tr class="rowbh"><td>50/50 買進持有</td><td class="num">26.38%</td><td class="num neg">−39.47%</td><td class="num">0.668</td><td class="num">9.85</td><td class="num">2.68</td></tr></tbody></table></div>
+</div>
+<h3 class="section-title" style="font-size:1rem;border-bottom-width:1px">台股分期 Δ（vs 固定 σ）</h3>
+<div class="card">
+<div class="tbl-wrap"><table><thead><tr><th rowspan="2">分期</th><th class="num" colspan="2">中位數 3y</th><th class="num" colspan="2">中位數 5y</th><th class="num" colspan="2">趨勢連動</th></tr><tr><th class="num">ΔCAGR</th><th class="num">ΔMDD</th><th class="num">ΔCAGR</th><th class="num">ΔMDD</th><th class="num">ΔCAGR</th><th class="num">ΔMDD</th></tr></thead><tbody><tr><td>2014-16 陸股貶值/整理</td><td class="num neg">−1.02%</td><td class="num pos">+1.19%</td><td class="num neg">−1.00%</td><td class="num pos">+0.72%</td><td class="num pos">+0.50%</td><td class="num ">+0.00%</td></tr><tr><td>2017-19 平順多頭</td><td class="num pos">+0.35%</td><td class="num pos">+1.77%</td><td class="num pos">+0.36%</td><td class="num pos">+1.23%</td><td class="num ">+0.00%</td><td class="num ">+0.00%</td></tr><tr><td>2020-22 COVID/升息</td><td class="num neg">−0.05%</td><td class="num pos">+2.52%</td><td class="num neg">−0.38%</td><td class="num pos">+1.86%</td><td class="num pos">+0.42%</td><td class="num neg">−0.68%</td></tr><tr><td>2023- AI 台積電牛</td><td class="num pos">+0.78%</td><td class="num neg">−1.33%</td><td class="num pos">+0.44%</td><td class="num neg">−0.56%</td><td class="num pos">+2.17%</td><td class="num neg">−3.65%</td></tr></tbody></table></div><p class="fine">Δ ＝該機制 − 固定 σ。ΔMDD 正值（綠）＝回撤變淺（改善），負值（紅）＝回撤加深（惡化）；ΔCAGR 正值＝報酬提升。</p>
+</div>
+</div>
+
+<!-- ===== 判定 ===== -->
+<div class="section">
+<h2 class="section-title">判定（誠實）</h2>
+
+<div class="note">
+<strong>先定調判準性質：</strong>本判準是<strong>替換門檻</strong>——現任是固定 σ 正式版，挑戰者要「雙指標不劣＋分期 MDD 不系統性惡化」才值得替換，平手則留任現任。
+因此「FAIL」＝<strong>「沒有證據值得替換現任」，不是「更差」</strong>；很多 FAIL 其實是打平或互有勝負。
+</div>
+
+<div class="bad-loud">
+<strong>美股：全數 FAIL（＝無證據值得替換，非更差）。</strong>兩個中位數版的整體 Calmar 微劣（3y 0.540、5y 0.539，皆低於固定 σ 的 0.547），
+雙指標不劣的門檻沒過——但同組 <strong>Ulcer 反而更低</strong>（7.95／7.79 vs 固定 8.21）、<strong>5 期分期 MDD 有 4 期改善</strong>，是「互有勝負、總帳打平」而非落敗。
+趨勢連動版整體 Calmar 雖略高（0.569），但分期 MDD 5 期裡只有 1 期不惡化——
+規格事前預告的「與長軌閘門重複計算趨勢、趨勢頂點曝險最重、左尾放大」在數字上成真（2019-23 COVID 窗 ΔMDD −1.74pp、2024- AI 牛窗 ΔMDD −1.86pp）。三機制皆不進入採用討論。
+</div>
+
+<div class="good-loud">
+<strong>台股：全數 PASS。</strong>中位數 3y 版 Calmar 0.948／Martin 2.16，均高於固定 σ 的 0.863／2.05，
+且 3y／5y 兩窗同向（5y 為 0.936／2.15）；分期 MDD 4 期裡 3 期改善（僅 2023- AI 牛窗小幅加深）。趨勢連動版亦過雙指標門檻。
+</div>
+
+<div class="note">
+<strong>不得過度宣稱：</strong>台股中位數 3y 版的 Calmar 0.948 連純長軌的 0.913 都超過，
+但它的 Martin 2.16 仍低於純長軌的 2.28——兩指標指向不同贏家，屬<strong>混合訊號</strong>，
+不能宣稱「全面支配純長軌」。台股結論只是「相對固定 σ 過關」，不是「相對所有對照組最優」。
+</div>
+</div>
+
+<!-- ===== 2330 長窗補測 ===== -->
+<div class="section">
+<h2 class="section-title">2330 長窗補測（含 2008，架構驗證）</h2>
+<div class="section-sub">正式版台股窗自 2014 起（0050 免費歷史限制）不含深熊。2330 有 2005 起資料，單腿拉長到 2005-06-01 把 2008 GFC 收進來，用來看清「深熊保護是誰扛的、含崩盤樣本時自適應 σ 怎麼動」。</div>
+<div class="card">
+<div class="tbl-wrap"><table><thead><tr><th>配置（單腿 2330）</th><th class="num">全窗 CAGR</th><th class="num">全窗 MDD</th><th class="num">全窗 Calmar</th><th class="num">全窗 Martin</th><th class="num">GFC 分期 MDD</th></tr></thead><tbody><tr class="rowhl"><td>固定 σ25%（正式版·基準）</td><td class="num">16.09%</td><td class="num neg">−34.75%</td><td class="num">0.463</td><td class="num">1.15</td><td class="num neg">−34.75%</td></tr><tr><td>滾動中位數 σ｜3 年窗</td><td class="num">15.94%</td><td class="num neg">−35.38%</td><td class="num">0.451</td><td class="num">1.15</td><td class="num neg">−35.38%</td></tr><tr><td>滾動中位數 σ｜5 年窗</td><td class="num">15.51%</td><td class="num neg">−36.02%</td><td class="num">0.431</td><td class="num">1.10</td><td class="num neg">−36.02%</td></tr><tr><td>趨勢連動 σ｜零參數</td><td class="num">16.43%</td><td class="num neg">−34.75%</td><td class="num">0.473</td><td class="num">1.17</td><td class="num neg">−34.75%</td></tr><tr class="rowbh"><td>純長軌（無套袖）</td><td class="num">17.02%</td><td class="num neg">−38.57%</td><td class="num">0.441</td><td class="num">1.10</td><td class="num neg">−38.57%</td></tr></tbody></table></div><p class="fine">窗 2005-06-01 ～ 2026-07-17（含 2008 GFC）。GFC 分期＝2005-06-01 ～ 2008-12-31，塊內正規化。基準列＝固定 σ25%（藍底）。數字由 committed code <code>run_adaptive_sigma.py</code> 的 leg_2330_long_window_appendix 重現。</p>
+<div class="takeaway">兩個讀數定調下面的討論：一、<strong>純長軌全窗 MDD −38.6%，任一套袖版只再把它改善 3～4pp</strong>——深熊的大頭是 W52 閘門扛的，不是套袖。二、<strong>GFC 分期 MDD：滾動中位數只比固定 σ 讓回 0.6～1.2pp</strong>（3y −35.4、5y −36.0 vs 固定 −34.8），影響小、非否決級。</div>
+</div>
+</div>
+
+<!-- ===== 為什麼美台相反 ===== -->
+<div class="section">
+<h2 class="section-title">為什麼美股不過、台股過</h2>
+<div class="card">
+<h3>差別在「窗裡有沒有深熊」，但深熊保護不是套袖的工作</h3>
+<p><strong>一、這個架構裡，深熊保護是 W52 閘門的工作。</strong>一根週收破 W52 就出場——2330 含 GFC 的長窗裡純長軌 MDD 已是 −38.6%，任一套袖版只再改善 3～4pp，證明擋深熊的大頭是閘門，不是套袖。</p>
+<p><strong>二、套袖的邊際價值在「閘門來不及反應的地方」：</strong>快崩（閘門是週頻、套袖是日頻，COVID 型的日內急殺）與「不破 W52 的高波修正」。這兩處才是套袖真正加值的區域。</p>
+<p><strong>三、滾動中位數是慢變數（3～5 年），半年的崩盤推不動它。</strong>所以崩盤期它的行為幾乎等同固定 σ（GFC 補測 MDD 只差 0.6～1.2pp）；反而在快崩前的平靜期它比固定 σ 更緊（平靜 regime 中位數低）——這正是美股 COVID 分期 MDD 比固定版淺 3.8～4.3pp 的來源。</p>
+<p><strong>四、美股 Calmar 差距的真正來源不是崩盤，是 2014-18 低波期。</strong>那段滾動中位數掉到固定值以下、平靜牛市欠載 −2.3pp。所以中位數版的語義是「各 regime 等負載」：總帳與固定版打平，只是把負載的分布挪了位置。</p>
+<p><strong>五、真正的殘餘風險是「從已高波的 regime 直接開崩」</strong>（中位數被墊高 → 開崩瞬間套袖較鬆）。這點用 2330 長窗補測過：GFC MDD 只讓回 0.6～1.2pp（median 3y／5y），影響小、非否決級。</p>
+<p><strong>六、綜合：含崩盤樣本的窗，固定 σ 微幅領先</strong>（美股組合、2330 長窗一致）；<strong>無崩盤樣本的窗，自適應明確領先</strong>（台股 2014+）。而且兩個方向的差距都在雜訊邊緣。</p>
+<div class="takeaway">和站上統一定律呼應：套袖的邊際價值 ≈ 底層還剩多少水下面積。閘門把深熊的水下面積吸走大半，剩給套袖的就是「閘門反應不及」那一角；那一角在含崩盤的窗裡小到讓固定 σ 微幅領先，在無崩盤的窗裡（慢性欠載）就換自適應領先。</div>
+</div>
+<div class="note">
+<strong>誠實警語：</strong>台股 PASS 建立在「窗內無崩盤樣本」之上。2330 長窗補測顯示自適應在深熊裡的殘餘風險小、非否決級，但那是<strong>單腿</strong>驗證；
+組合層級遇到 2008 級深熊的完整行為仍未經測試。台股的過關不宜無條件外推到深熊情境。
+</div>
+</div>
+
+<!-- ===== 尾卡 ===== -->
+<div class="section">
+<h2 class="section-title">預註冊聲明與後續</h2>
+<div class="card">
+<p><strong>預註冊聲明：</strong>本回測的兩個機制形狀（滾動中位數雙窗、趨勢連動零參數）與全部判準，均於 2026-07-17 規格定案時 ex ante 寫定
+（見 <code>docs/Adaptive_Sigma_Spec.md</code>）。<strong>無掃參、無擇優、無事後改機制形狀重跑、不以單一分期挑結果。</strong>過關與否都如實發布——這頁就是美股不過關的公開紀錄。</p>
+<p><strong>後續：</strong>台股機制過關只代表「進入是否另立追蹤頁的討論」，複審與是否採用留待用戶決定。本頁維持研究定位，不改動任何實盤配置。</p>
+<p><strong>延伸閱讀：</strong>
+<a href="/backtest/vol_targeting/">← 波動率目標倉位（母頁：固定 σ 全套證據）</a>　·
+<a href="/long-track-qs-vt/">QQQ+SMH 波動率（前瞻 OOS 追蹤頁）</a>　·
+<a href="/long-track-tw-vt/">0050+2330 波動率（前瞻 OOS 追蹤頁）</a></p>
+</div>
+</div>
+
+</div>
+
+<footer>
+  <div class="container">
+    &copy; 2026 InvestMQuest Research &middot; 波動率目標（自適應 σ，研究結論非實盤採用）&middot;
+    滾動中位數 σ（3y／5y 雙窗）＋趨勢連動 σ（零參數）vs 固定 σ 正式版・美股 FAIL／台股 PASS・預註冊 2026-07-17・頁面生成 2026-07-17 &middot; 僅供研究參考
+  </div>
+</footer>
+</body>
+</html>
