@@ -8,7 +8,7 @@ QQQ + SMH 長線 × 波動率目標 — 前瞻 OOS 追蹤（paper tracking）訊
   2. 波動率套袖 w = min(1, σ目標／RV20)，RV20＝20 日對數報酬年化波動。
   3. 最終目標權重 = 0.5 × 閘門 × 套袖（兩標的各自計算，合成即等權每日再平衡）。
 
-正式追蹤規則（2026-07-17 定案後不再調整）：σ目標 QQQ 20%、SMH 25%；成本 7 bps／邊；
+正式追蹤版規則（2026-07-17 定案後不再調整）：σ目標 QQQ 20%、SMH 25%；成本 7 bps／邊；
 t 收盤訊號、t+1 收盤生效。定位＝前瞻 OOS 追蹤，非實盤採用。
 
 閘門定義逐位元對齊回測授權（v7-backtest
@@ -51,7 +51,7 @@ ALERT_FILE = DOCS.parent / "lt_qs_vt_alert.txt"
 
 TICKERS = ["QQQ", "SMH"]
 WEIGHTS = {"QQQ": 0.5, "SMH": 0.5}
-SIGMA = {"QQQ": 0.20, "SMH": 0.25}         # 凍結 2026-07-17
+SIGMA = {"QQQ": 0.20, "SMH": 0.25}         # 規則 2026-07-17 定案，此後不再調整
 FREEZE_DATE = "2026-07-17"
 
 # 回測（results/vol_targeting/combo_qs.json，window 2005-01-03 起）— 轉錄
@@ -61,7 +61,7 @@ BACKTEST = {
         ("正式追蹤版 σ Q20/S25（本頁追蹤）", 11.90, -21.8, 0.547, 8.21, 1.45),
         ("50/50 買進持有", 17.65, -56.9, 0.310, 13.99, 1.26),
         ("純長軌（無套袖）", 12.36, -34.0, 0.363, 9.77, 1.27),
-        ("掃描最佳 σ Q15/S30", 12.13, -21.3, 0.569, 7.78, 1.56),
+        ("參數對照 σ Q15/S30（僅敏感度用）", 12.13, -21.3, 0.569, 7.78, 1.56),
     ],
     "grid": [                              # (qσ, sσ, calmar, cagr, mdd, martin)
         (15, 25, 0.549, 11.66, -21.3, 1.54), (15, 30, 0.569, 12.13, -21.3, 1.56),
@@ -262,14 +262,14 @@ def backtest_section() -> str:
 <table><thead><tr><th>配置</th><th class="num">CAGR</th><th class="num">MDD</th><th class="num">Calmar</th><th class="num">Ulcer</th><th class="num">Martin</th></tr></thead>
 <tbody>{rows}</tbody></table>
 <div class="takeaway">套袖把純長軌的 Calmar 0.363 → <b>0.547</b>、MDD −34.0% → <b>−21.8%</b>，CAGR 只付 0.46pp；
-對 50/50 買進持有則是「風險調整支配、CAGR 讓步」（B&amp;H 17.65%／−56.9%）。正式版 σ（0.547）貼近掃描最佳（Q15/S30 0.569），
+對 50/50 買進持有則是「風險調整支配、CAGR 讓步」（B&amp;H 17.65%／−56.9%）。正式追蹤版 σ（0.547）貼近參數對照最佳（Q15/S30 0.569），
 不靠選中特定 σ 才成立。<b>唯一系統性代價集中在 AI 牛（單期 CAGR −7.1pp，高波急彈仍減碼、漏接反彈）。</b></div>
 </div>
 
 <div class="card">
 <h3>σ 目標敏感度對照（僅回測參考，不追蹤）</h3>
 <p style="font-size:.8rem;color:var(--muted);margin-bottom:.7rem">
-QQQ σ × SMH σ 網格的組合 Calmar。正式版格 Q20/S25 高亮；最佳 Q15/S35（0.582）與正式版差距小，故採原則法 σ（各自長期 RV 中位取整）。</p>
+QQQ σ × SMH σ 網格的組合 Calmar。正式追蹤版格 Q20/S25 高亮；參數對照最佳 Q15/S35（0.582）與正式追蹤版差距小，故採原則法 σ（各自長期 RV 中位取整）。此格僅敏感度用、不追蹤。</p>
 <table><thead><tr><th>σ 組合</th><th class="num">Calmar</th><th class="num">CAGR</th><th class="num">MDD</th><th class="num">Martin</th></tr></thead>
 <tbody>{grid}</tbody></table>
 </div>
@@ -417,12 +417,12 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 <div class="tgrid">{cards}</div>
 
 <div class="card">
-<h3>正式追蹤規則（{FREEZE_DATE} 定案，此後不再調整）</h3>
+<h3>正式追蹤版規則（{FREEZE_DATE} 定案，此後不再調整）</h3>
 <div class="rule-list">
 ① <b>兩標的各 50%</b>，日報酬加權合成（<b>絕不直接相加 equity curve</b>；50/50 日報酬加權＝等效每日再平衡，如實揭露此假設）。<br>
 ② <b>週線長軌閘門</b>（W-FRI）：進場＝週收盤 &gt; W52／W104／W250 且 W104／W250 四週斜率 &gt; 0（score5）；出場＝一根週收盤 &lt; W52；<b>長多 only</b>，閘門輸出 0／1。<br>
 ③ <b>波動率套袖</b>：w = min(1, σ目標／RV20)，RV20＝20 日對數報酬年化波動；<b>只降不加</b>（上限 1.0）。<br>
-④ <b>σ 定案（原則法）</b>：QQQ 20%、SMH 25%（各自長期 RV 中位數取整到 5%）。掃描最佳版 Q15/S30 只放回測敏感度對照，<b>不追蹤</b>。<br>
+④ <b>σ 定案（原則法）</b>：QQQ 20%、SMH 25%（各自長期 RV 中位數取整到 5%）。參數對照版 Q15/S30 只作敏感度用，<b>不追蹤</b>。<br>
 ⑤ <b>執行</b>：t 收盤訊號、t+1 收盤生效；成本 7 bps／邊。<br>
 ⑥ <b>最終權重</b> = 0.5 × 閘門(0/1) × 套袖權重，兩標的各自計算。<br>
 <span style="color:var(--muted);font-size:.78rem">閘門為週頻（僅週五可能翻轉），套袖 RV20 為日頻（每日可能微調），故本頁每交易日更新。「可行動變化」＝閘門翻轉或任一標的最終權重變動 ≥ 10pp，觸發 email 通知。</span>
@@ -530,7 +530,7 @@ def main():
     state_json = {
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "data_date": data_date,
-        "freeze_date": FREEZE_DATE,
+        "ruleset_locked_date": FREEZE_DATE,
         "status": "forward OOS paper tracking, not adopted",
         "last_change_date": last_change_date,
         "last_change_desc": last_change_desc,
