@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta name="robots" content="noindex,nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>波動率目標倉位（vol targeting） | InvestMQuest Research</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+:root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
+      --text:#111827;--muted:#6b7280;--border:#e5e7eb;
+      --green:#059669;--green-bg:#ecfdf5;--green-border:#a7f3d0;--green-text:#065f46;
+      --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;--red-text:#991b1b;
+      --amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fde68a;--amber-text:#92400e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1120px;margin:0 auto;padding:0 1.5rem}
+.page-hdr{padding:1.75rem 0 1.25rem;background:linear-gradient(180deg,#eff6ff 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
+.page-hdr h1{font-size:1.6rem;font-weight:700;letter-spacing:-.03em}
+.page-hdr .sub{color:var(--muted);font-size:.9rem;margin-top:.2rem}
+.crumb{font-size:.82rem;color:var(--muted);margin-bottom:.4rem}
+.crumb a{color:var(--muted)}
+.section{padding:1.5rem 0 0}
+.section-title{font-size:1.15rem;font-weight:700;margin-bottom:1rem;
+               padding-bottom:.45rem;border-bottom:2px solid var(--brand)}
+.section-sub{font-size:.85rem;color:var(--muted);margin:-.5rem 0 1rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.card h3{font-size:1rem;font-weight:600;margin-bottom:.85rem}
+.card .takeaway{font-size:.88rem;margin-top:.75rem;padding:.6rem .9rem;border-radius:6px;
+                background:var(--brand-light);border-left:3px solid var(--brand)}
+.card p{font-size:.9rem;color:#374151;margin-bottom:.6rem}
+.card p:last-child{margin-bottom:0}
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+th,td{text-align:left;padding:.55rem .7rem;border-bottom:1px solid var(--border)}
+th{background:#f9fafb;font-weight:600;font-size:.76rem;text-transform:uppercase;
+   letter-spacing:.03em;color:var(--muted)}
+td{font-variant-numeric:tabular-nums}
+td.num,th.num{text-align:right}
+tbody tr:hover td{background:#f3f4f6}
+.neg{color:var(--red);font-weight:600}
+.pos{color:var(--green);font-weight:600}
+.rowhl td{background:var(--brand-light)!important}
+.rowbh td{background:#f9fafb;color:var(--muted)}
+.hero{margin:1.25rem 0;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--card)}
+.hero-top{background:linear-gradient(135deg,#ecfdf5 0%,#f5fbff 100%);padding:1.4rem 1.6rem;border-bottom:1px solid var(--border)}
+.hero-top .verdict-tag{display:inline-block;background:#1a56db;color:#fff;font-size:.74rem;font-weight:700;
+                       letter-spacing:.05em;padding:.25rem .7rem;border-radius:99px;margin-bottom:.5rem}
+.hero-top h2{font-size:1.35rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.35rem}
+.hero-top p{font-size:.92rem;color:#374151;max-width:64rem}
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card)}
+.hero-stats > div{padding:1rem 1.2rem;text-align:center;border-right:1px solid var(--border)}
+.hero-stats > div:last-child{border-right:none}
+.hero-stats .hs-label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.hero-stats .hs-value{font-size:1.5rem;font-weight:800;letter-spacing:-.02em}
+.hero-stats .hs-sub{font-size:.7rem;color:var(--muted);margin-top:.15rem}
+.note{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;
+      padding:.85rem 1.1rem;font-size:.84rem;color:var(--amber-text);margin:1rem 0}
+.good-loud{background:var(--green-bg);border:2px solid var(--green-border);border-radius:8px;
+      padding:1rem 1.2rem;font-size:.9rem;color:var(--green-text);margin:1rem 0}
+.good-loud strong{color:var(--green)}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.chart-card h3{font-size:.95rem;font-weight:600;margin-bottom:.5rem}
+.chart-wrap{position:relative;width:100%;height:400px}
+.chart-wrap-sm{position:relative;width:100%;height:320px}
+details{background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:.75rem}
+details summary{padding:.9rem 1.25rem;font-weight:600;font-size:.95rem;cursor:pointer;list-style:none;display:flex;align-items:center;gap:.5rem}
+details summary::before{content:'\25B8';color:var(--brand);transition:transform .15s}
+details[open] summary::before{transform:rotate(90deg)}
+details .d-body{padding:0 1.25rem 1.25rem;overflow-x:auto}
+.issue-list{font-size:.88rem;color:#374151;padding-left:1.2rem;line-height:1.9}
+.cards3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+.cards2{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem}
+.tbl-wrap{overflow-x:auto}
+.verdict-pill{display:inline-block;font-size:.72rem;font-weight:700;padding:.12rem .55rem;border-radius:99px;margin-left:.4rem}
+.vp-yes{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border)}
+.vp-no{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red-border)}
+footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
+       text-align:center;padding:1.25rem 0;font-size:.78rem;margin-top:2rem}
+@media(max-width:768px){
+  .hero-stats{grid-template-columns:repeat(2,1fr)}
+  .hero-stats > div{border-bottom:1px solid var(--border)}
+  .cards3,.cards2{grid-template-columns:1fr}
+  table{font-size:.78rem}th,td{padding:.4rem .45rem}
+}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/monitor/">市場監測</a>
+          <a href="/detective/">偵測警報網</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/rotation/">產業輪動</a>
+          <a href="/crowding/">擁擠交易監測</a>
+          <a href="/regime/">大類資產 regime</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/catalyst/">催化劑日曆</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">選股<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/cockpit/">選股主控台</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/research/momentum-5/">Momentum-5</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screeners.html">RS+VCP Screener</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">個股總覽</a>
+          <a href="/research/">個股 DD</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/research/synthesis/">期望落差綜合研判</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/track-record/">裁決實績</a>
+          <a href="/long-track-smh/">長線訊號 SMH</a>
+          <a href="/long-track-tw/">台股長線</a>
+          <a href="/turtle-sleeve/">商品 Sleeve</a>
+          <a href="/backtest/" class="active">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/cache/">Data Cache</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="page-hdr">
+  <div class="container">
+    <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / 波動率目標倉位</div>
+    <h1>波動率目標倉位（vol targeting）</h1>
+    <div class="sub">降槓桿版 w = min(1, σ目標／RV20)・免保費降 DD 工具・單獨版四關穩健性 ＋ 疊實盤引擎邊際貢獻・SPY／QQQ／SMH／0050・評估窗 2002–2026</div>
+    <style id="bt-subnav-style">.bt-subnav{margin-top:.75rem;border:1px solid var(--border,#e5e7eb);border-radius:8px;overflow:hidden;font-size:.78rem;line-height:1.3}.bt-subnav-row{display:flex;align-items:flex-start;gap:.55rem;padding:.32rem .55rem;border-top:1px solid var(--border,#e5e7eb)}.bt-subnav-row:first-child{border-top:0}.bt-subnav-lbl{flex:0 0 5.4em;font-size:.64rem;font-weight:700;color:var(--muted,#6b7280);text-transform:uppercase;letter-spacing:.04em;padding-top:.34rem}.bt-subnav-pills{display:flex;flex-wrap:wrap;gap:.3rem;min-width:0}.bt-subnav-pills a{display:inline-flex;align-items:center;gap:.28rem;padding:.26rem .6rem;background:#eef1f4;color:#374151;border-radius:999px;text-decoration:none;font-weight:500;white-space:nowrap;transition:background .12s}.bt-subnav-pills a:hover{background:#e1e6ea}.bt-subnav-pills a.bt-dead{color:#7a828d;background:#f2f3f5}.bt-subnav-pills a.bt-on{background:linear-gradient(135deg,#081832,#173564);color:#fff;font-weight:600}.bt-subnav-pills a.bt-on:hover{background:linear-gradient(135deg,#081832,#173564)}.bt-tag{font-size:.6rem;font-weight:600;padding:.02rem .3rem;border-radius:4px;line-height:1.4}.bt-tag-dead{background:rgba(220,38,38,.12);color:#b42318}.bt-tag-watch{background:rgba(180,118,20,.15);color:#986a12}.bt-on .bt-tag-dead{background:rgba(255,255,255,.22);color:#fff}.bt-on .bt-tag-watch{background:rgba(255,255,255,.22);color:#fff}@media(max-width:640px){.bt-subnav-row{flex-direction:column;gap:.28rem;padding:.4rem .55rem}.bt-subnav-lbl{flex-basis:auto;padding-top:0}}</style><nav class="bt-subnav" aria-label="回測子導航"><div class="bt-subnav-row"><div class="bt-subnav-lbl">對比總覽</div><div class="bt-subnav-pills"><a href="/backtest/">20 年</a><a href="/backtest/10y/">10 年</a><a href="/backtest/criteria/">評估標準</a><a href="/backtest/tw/">台股總覽</a><a href="/backtest/multi/">多資產總覽</a><a href="/backtest/leverage/">槓桿疊加總覽</a><a href="/backtest/ma_sensitivity/">MA 敏感度</a><a href="/backtest/free_lunch/">分散與免費午餐</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">個別系統</div><div class="bt-subnav-pills"><a href="/backtest/long_track/">SPY/QQQ 長軌</a><a href="/backtest/long_track_qqq/">QQQ 長軌純攻</a><a href="/backtest/long_track_ensemble/">SPY/QQQ 集成</a><a href="/backtest/long_track_smh/">SMH/QQQ 進攻</a><a href="/backtest/six_state/">QQQ＋SMH 六狀態</a><a href="/backtest/six_state_v1r1/">QQQ 六狀態實盤</a><a href="/backtest/gem/">SPY/ACWX 雙動能</a><a href="/backtest/slope_filter/">SPY/AGG 斜率</a><a href="/backtest/rsi2_mr/">SPY/QQQ 均值回歸</a><a href="/backtest/supertrend/">週線 Supertrend</a><a href="/backtest/minervini/">Minervini RS+VCP</a><a href="/backtest/mom_volscaling/">動能·波動縮放</a><a href="/backtest/dual_track_study/">雙軌分散研究</a><a href="/backtest/leverage_voltarget/">期貨槓桿疊加</a><a href="/backtest/vol_targeting/" class="bt-on">波動目標倉位<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/dual_track/" class="bt-dead">SPY/QQQ 雙軌多空<span class="bt-tag bt-tag-dead">否決</span></a><a href="/backtest/exit_switch/" class="bt-dead">出場法切換<span class="bt-tag bt-tag-dead">否決</span></a><a href="/backtest/short_system/" class="bt-dead">指數做空<span class="bt-tag bt-tag-dead">失敗</span></a><a href="/backtest/cndr/" class="bt-dead">Iron Condor<span class="bt-tag bt-tag-dead">失敗</span></a><a href="/backtest/covered_call/" class="bt-dead">Covered Call<span class="bt-tag bt-tag-dead">負貢獻</span></a><a href="/backtest/put_timing/" class="bt-dead">SPY/QQQ 買 put 避險<span class="bt-tag bt-tag-dead">負貢獻</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">多資產</div><div class="bt-subnav-pills"><a href="/backtest/turtle/">唐奇安突破</a><a href="/backtest/clenow/">跨資產趨勢</a><a href="/backtest/multiasset_trend/">SG Trend 複製</a><a href="/backtest/turtle_adopt/">組合採用 Sleeve</a><a href="/backtest/slope_filter_global/">全球斜率穩健性</a><a href="/backtest/crossasset_defense/">跨資產防守</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">台股波段</div><div class="bt-subnav-pills"><a href="/backtest/tw_0050_compare/">0050 總覽·台美差異</a><a href="/backtest/tw_crash/">台股含崩盤驗證</a><a href="/backtest/tw_0050/">0050 進攻趨勢（移植）</a><a href="/backtest/tw_0050_lt/">0050 長軌趨勢</a><a href="/backtest/long_track_tw/">2330/0050 E3 長軌</a><a href="/backtest/tw_0050_six/">0050 六狀態機</a><a href="/backtest/tw_vcrash/">V崩防禦研究</a><a href="/backtest/tw_0050_dual/" class="bt-dead">0050 雙軌多空<span class="bt-tag bt-tag-dead">否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">台股選擇權</div><div class="bt-subnav-pills"><a href="/backtest/tw_options/">台股選擇權專區<span class="bt-tag bt-tag-watch">專區</span></a><a href="/backtest/txo_vol_seller/">台指選擇權賣方<span class="bt-tag bt-tag-watch">模擬中</span></a><a href="/backtest/txo_put_seller/">台指賣方下檔<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_iron_condor/">台指雙賣<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_covered_call_0050/">台指 Covered Call<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_tail_hedge/">台指尾端避險<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">日內交易</div><div class="bt-subnav-pills"><a href="/backtest/txf_intraday/">台指當沖<span class="bt-tag bt-tag-watch">未過</span></a><a href="/backtest/txf_chips/">籌碼偏向<span class="bt-tag bt-tag-watch">觀察</span></a><a href="/backtest/ssf_xsec/">個股期橫斷面<span class="bt-tag bt-tag-watch">未過</span></a><a href="/backtest/txf_basis/" class="bt-dead">基差偏向<span class="bt-tag bt-tag-dead">否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究筆記</div><div class="bt-subnav-pills"><a href="/backtest/daily_vs_weekly/">日/週線</a><a href="/backtest/daily_vs_weekly_deep/">日/週·深掘</a><a href="/backtest/daily_vs_weekly_global/">日/週·全球</a><a href="/backtest/daily_vs_weekly_tw/">日/週·台股</a><a href="/backtest/ma_cross/">MA 交叉</a><a href="/backtest/ma_deviation/">MA 乖離</a><a href="/backtest/ma_dynband/">MA 動態帶</a><a href="/backtest/ma_squeeze/">MA 擠壓</a><a href="/backtest/smh_vcrash/">SMH V崩</a></div></div></nav>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ===== HERO ===== -->
+<div class="hero">
+  <div class="hero-top">
+    <span class="verdict-tag">研究結論 · 未採用為實盤變更</span>
+    <h2>六輪付費保險（買 put）研究全滅之後，波動率目標倉位是唯一通過全部穩健性關卡的免保費降 DD 工具。</h2>
+    <p>機制極簡：用過去 20 日已實現波動 RV20 反推倉位，<strong>波動高就自動減碼、波動低就滿倉，永不加槓桿</strong>（w = min(1, σ目標／RV20)）。
+       純價格規則、零合成選擇權定價風險，也不必付任何權利金。<strong>單獨疊在買進持有（B&amp;H）上</strong>：QQQ／SPY 在整條 σ 目標曲線都同時打贏 B&amp;H 的 Calmar 與 Martin，寬鬆端連純 CAGR 都打平（QQQ σ25%：CAGR 15.21% vs 15.19%、MDD −42.0% vs −53.4%）。
+       但這頁的核心問題更嚴格——<strong>把它疊在用戶的實盤趨勢引擎（E3／STX50）上還剩多少</strong>？答案是一道清楚的梯度：SPY／QQQ 仍值得（Calmar／Martin 雙升），SMH／0050 不值得（增量歸零轉負）。原因是<strong>趨勢閘門本身已隱含做掉了大部分 vol targeting 的工作</strong>。</p>
+    <p style="font-size:.9rem;color:#374151;max-width:64rem;margin-top:.6rem">與隔壁的
+       <a href="/backtest/put_timing/">買 put 避險</a>研究對照最能說明它的位置：在同一場 13 方法「降 DD」總決賽裡，put 家族雙標的墊底（Martin 0.45～0.80），而 vol targeting 是<strong>唯一在兩個指標、整條參數曲線都通過的方法</strong>（QQQ 疊 B&amp;H Martin 1.51）。降回撤要花錢買 put 買不到的，用一條免費的價格規則反而拿得到——只是這條規則的增量，在已經降過風險的趨勢引擎上會被大幅壓縮。</p>
+  </div>
+  <div class="hero-stats">
+    <div><div class="hs-label">QQQ σ25% 純 CAGR</div><div class="hs-value pos">打平</div><div class="hs-sub">15.21% vs B&amp;H 15.19%</div></div>
+    <div><div class="hs-label">QQQ σ25% 最深回撤</div><div class="hs-value pos">−42.0%</div><div class="hs-sub">vs B&amp;H −53.4%</div></div>
+    <div><div class="hs-label">疊 B&amp;H 判定</div><div class="hs-value" style="color:var(--brand)">四關全過</div><div class="hs-sub">σ／窗口／成本／分期</div></div>
+    <div><div class="hs-label">疊實盤引擎</div><div class="hs-value" style="color:var(--amber)">梯度</div><div class="hs-sub">SPY／QQQ 值得・SMH／0050 不值得</div></div>
+  </div>
+</div>
+
+<div class="note">
+  <strong>方法與近似揭露（先讀）：</strong>
+  引擎為權重驅動、t+1 收盤執行（無前視）、7 bps／邊、0.5% 再平衡帶、DRIP 還原股息；現金袖賺 ^IRX（美股）或固定 1%（台股）。
+  <strong>E3 flavor 差異</strong>：全標的統一用 put_timing 家族的 E3 複製（週線 {收盤&gt;SMA40w、收盤&gt;SMA52w、52 週價格位移} 三訊號分數倉），其 TSMOM 用 52 週價格位移、無現金門檻；站上 SMH 頁的實盤 STX50 用的是「月頻 12 月總報酬 vs 現金 12 月報酬」的 TSMOM——兩者精神同、細節異，本研究為引擎一致性統一用前者，此差異在此揭露。
+  <strong>σ目標為事前化</strong>：SPY 15%／QQQ 20% 為指定；SMH 25%／0050 15% 由「全歷史 RV20 中位數取整到最近 5% 檔位」定出，不偷看策略績效。
+  <strong>0050 樣本</strong>：yfinance 免費歷史自 2009、回測自 2010，<strong>不含 2008 GFC</strong>（台股無崩盤樣本，見下方折扣聲明）。
+  <strong>SMH 自 2002</strong>：扣週線暖身後起評，2000 年 dot-com 崩盤大半在暖身期外。跨標的起點不同（2005／2002／2010），標的間絕對數字不可直接互比；每格內部「疊加 vs 純引擎」的比較才是本研究主軸。RV 用收盤計（非還原），股息缺口對波動估計可忽略。
+</div>
+
+<!-- ===== WHAT IS TESTED ===== -->
+<div class="section">
+<h2 class="section-title">這在測什麼</h2>
+<div class="cards3">
+  <div class="card">
+    <h3>定義與機制</h3>
+    <p>降槓桿版 vol targeting：<strong>w = min(1, σ目標／RV20)</strong>。RV20＝過去 20 日對數報酬年化標準差。當市場波動高於目標，權重&lt;1（減碼）；波動低於目標，clip 到 1.0（滿倉、<strong>永不加槓桿</strong>）。</p>
+    <p>經濟學根據是 <strong>Moreira-Muir（2017）</strong>「Volatility-Managed Portfolios」：波動有群聚性（今天高波預示明天高波），但未來報酬<strong>不</strong>隨波動等比放大——所以在高波時減碼，砍掉的風險多於砍掉的報酬，改善風險調整比率。</p>
+  </div>
+  <div class="card">
+    <h3>兩個層次的問題</h3>
+    <p><strong>單獨版（疊 B&amp;H）</strong>：把套袖直接疊在買進持有上，量它降 DD 的能力與代價。這是文獻標準做法，也是它最亮的舞台。</p>
+    <p><strong>疊實盤引擎（本頁核心）</strong>：用戶實盤核心是趨勢閘門（E3；SMH 進攻位再加 weekly Supertrend 半倉出場閘門＝STX50）。閘門本身就在做降風險。所以真正要誠實量測的是<strong>疊在引擎上的邊際貢獻</strong>——若邊際≈0，那本身就是重要結論。</p>
+  </div>
+  <div class="card">
+    <h3>為什麼它跟買 put 不同</h3>
+    <p>買 put 是<strong>付保費</strong>買凸性，長期是負 carry（VRP 的另一面），六輪研究證明沒有訊號能把它翻正。vol targeting 是<strong>免保費</strong>的價格規則：不買任何合約、不付權利金，只調整自己的曝險。</p>
+    <p>代價換了形狀：不是每年固定的保費，而是<strong>牛市期少賺的機會成本</strong>（高波急彈時仍在減碼、漏接 V 型反彈）。是否划算，取決於底層還剩多少「便宜的風險」可削。</p>
+  </div>
+</div>
+</div>
+
+<!-- ===== STANDALONE ROBUSTNESS ===== -->
+<div class="section">
+<h2 class="section-title">單獨版（疊 B&amp;H）：四關穩健性</h2>
+<div class="section-sub">2005 起、t+1 執行、7 bps／邊。基準＝總報酬 B&amp;H（QQQ CAGR 15.19%／MDD −53.4%／Calmar 0.284／Martin 1.21；SPY 10.88%／−55.2%／0.197／0.88）。</div>
+
+<div class="good-loud">
+  <strong>整條 σ 目標曲線雙指標全部贏 B&amp;H，無孤峰。</strong>QQQ（σ 15–25%）、SPY（σ 10–20%）不論目標水位選在哪，Calmar 與 Martin 都同時高於 B&amp;H；寬鬆端連純 CAGR 都追平（QQQ σ25% 15.21% vs 15.19%、SPY σ20% 10.87% vs 10.88%），而 MDD 各砍掉 11～13pp。結論不靠特定 σ 才成立。
+</div>
+
+<div class="cards2">
+  <div class="card">
+    <h3>關 1｜σ 目標掃描（QQQ，RV20 窗）</h3>
+    <div class="tbl-wrap">
+    <table>
+    <thead><tr><th>σ目標</th><th class="num">CAGR</th><th class="num">MDD</th><th class="num">Calmar</th><th class="num">Martin</th></tr></thead>
+    <tbody>
+    <tr><td>15.0%</td><td class="num">13.08%</td><td class="num pos">−29.7%</td><td class="num pos">0.440</td><td class="num pos">1.66</td></tr>
+    <tr><td>17.5%</td><td class="num">14.02%</td><td class="num pos">−34.2%</td><td class="num pos">0.411</td><td class="num pos">1.59</td></tr>
+    <tr><td>20.0%</td><td class="num">14.68%</td><td class="num pos">−38.3%</td><td class="num pos">0.384</td><td class="num pos">1.51</td></tr>
+    <tr><td>22.5%</td><td class="num">15.03%</td><td class="num pos">−40.8%</td><td class="num pos">0.368</td><td class="num pos">1.46</td></tr>
+    <tr class="rowhl"><td>25.0%</td><td class="num">15.21%</td><td class="num pos">−42.0%</td><td class="num pos">0.362</td><td class="num pos">1.45</td></tr>
+    <tr class="rowbh"><td>B&amp;H</td><td class="num">15.19%</td><td class="num">−53.4%</td><td class="num">0.284</td><td class="num">1.21</td></tr>
+    </tbody>
+    </table>
+    </div>
+  </div>
+  <div class="card">
+    <h3>關 1｜σ 目標掃描（SPY，RV20 窗）</h3>
+    <div class="tbl-wrap">
+    <table>
+    <thead><tr><th>σ目標</th><th class="num">CAGR</th><th class="num">MDD</th><th class="num">Calmar</th><th class="num">Martin</th></tr></thead>
+    <tbody>
+    <tr><td>10.0%</td><td class="num">8.09%</td><td class="num pos">−24.3%</td><td class="num pos">0.333</td><td class="num pos">1.29</td></tr>
+    <tr><td>12.5%</td><td class="num">9.25%</td><td class="num pos">−29.5%</td><td class="num pos">0.313</td><td class="num pos">1.24</td></tr>
+    <tr><td>15.0%</td><td class="num">10.04%</td><td class="num pos">−34.0%</td><td class="num pos">0.296</td><td class="num pos">1.18</td></tr>
+    <tr><td>17.5%</td><td class="num">10.51%</td><td class="num pos">−37.6%</td><td class="num pos">0.280</td><td class="num pos">1.14</td></tr>
+    <tr class="rowhl"><td>20.0%</td><td class="num">10.87%</td><td class="num pos">−39.9%</td><td class="num pos">0.273</td><td class="num pos">1.15</td></tr>
+    <tr class="rowbh"><td>B&amp;H</td><td class="num">10.88%</td><td class="num">−55.2%</td><td class="num">0.197</td><td class="num">0.88</td></tr>
+    </tbody>
+    </table>
+    </div>
+  </div>
+</div>
+
+<div class="chart-card">
+  <h3>關 1 視覺化：QQQ 整條 σ 曲線的 Calmar 與 Martin 都在 B&amp;H 之上（虛線＝B&amp;H）</h3>
+  <div class="chart-wrap-sm"><canvas id="chart-sigma"></canvas></div>
+</div>
+
+<div class="cards2">
+  <div class="card">
+    <h3>關 2｜RV 窗口掃描</h3>
+    <div class="tbl-wrap">
+    <table>
+    <thead><tr><th>窗口</th><th class="num">QQQ Calmar</th><th class="num">QQQ Martin</th><th class="num">SPY Calmar</th><th class="num">SPY Martin</th></tr></thead>
+    <tbody>
+    <tr><td>10d</td><td class="num">0.406</td><td class="num">1.56</td><td class="num">0.277</td><td class="num">1.08</td></tr>
+    <tr class="rowhl"><td>20d（基準）</td><td class="num">0.384</td><td class="num">1.51</td><td class="num">0.296</td><td class="num">1.18</td></tr>
+    <tr><td>60d</td><td class="num">0.361</td><td class="num">1.39</td><td class="num">0.305</td><td class="num">1.20</td></tr>
+    </tbody>
+    </table>
+    </div>
+    <div class="takeaway">三個窗口<strong>方向一致</strong>（都贏 B&amp;H）；rv20 反應快、多數格較優，但結論不是靠特定窗口挑出來的。QQQ σ20%、SPY σ15%。</div>
+  </div>
+  <div class="card">
+    <h3>關 3｜換手與成本</h3>
+    <p>年均單邊換手：QQQ 約 <strong>2.2x</strong>、SPY 約 <strong>2.5x</strong>。以 7 bps／邊計，成本拖累約 <strong>0.15～0.17pp／年</strong>。</p>
+    <p>成本翻倍（14 bps／邊）也只吃掉約 <strong>0.31pp／年</strong>——這是低換手的降槓桿套袖，不是高頻策略，成本敏感度極低，不會吃掉上面看到的 MDD 改善。</p>
+    <div class="takeaway">結論對交易成本<strong>穩健</strong>：即使成本假設加倍，四關的結論方向不變。</div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>關 4｜分期（五期）：MDD 全改善，CAGR 代價付在牛市</h3>
+  <div class="section-sub" style="margin-top:-.3rem">各期「CAGR 差／MDD 差」vs B&amp;H（正＝優於 B&amp;H）。分期＝GFC｜QE｜低波｜COVID 通膨｜AI。</div>
+  <div class="tbl-wrap">
+  <table>
+  <thead><tr><th>標的</th><th class="num">GFC</th><th class="num">QE</th><th class="num">低波</th><th class="num">COVID 通膨</th><th class="num">AI 牛</th></tr></thead>
+  <tbody>
+  <tr><td>QQQ　CAGR 差</td><td class="num pos">+5.5</td><td class="num neg">−2.9</td><td class="num neg">−0.3</td><td class="num neg">−2.1</td><td class="num neg">−4.2</td></tr>
+  <tr><td>QQQ　MDD 差</td><td class="num pos">+17</td><td class="num pos">+3</td><td class="num pos">+5</td><td class="num pos">+8</td><td class="num pos">+3</td></tr>
+  <tr><td>SPY　CAGR 差</td><td class="num pos">+5.5</td><td class="num neg">−2.9</td><td class="num neg">−0.9</td><td class="num neg">−2.5</td><td class="num neg">−4.6</td></tr>
+  <tr><td>SPY　MDD 差</td><td class="num pos">+22</td><td class="num pos">+12</td><td class="num pos">+4</td><td class="num pos">+15</td><td class="num pos">+3</td></tr>
+  </tbody>
+  </table>
+  </div>
+  <div class="takeaway"><strong>五期 MDD 全部改善（+3～+22pp），無一期倒退。</strong>誠實代價很清楚：CAGR 的減損集中在牛市期，AI 牛市最貴（QQQ −4.2pp／SPY −4.6pp）——高波急彈時套袖仍壓低權重、漏接反彈。GFC 期反而 CAGR 也贏 B&amp;H（+5.5pp），因為在崩盤中減碼保住了本金。這不是免費午餐，是「用牛市機會成本換全期回撤收窄」的取捨。</div>
+</div>
+</div>
+
+<!-- ===== OVERLAY ON LIVE ENGINE (CORE) ===== -->
+<div class="section">
+<h2 class="section-title">疊實盤引擎（本頁核心）：四標的矩陣</h2>
+<div class="section-sub">每格：CAGR／MDD／Calmar／Martin／Ulcer／平均DD／水下&gt;10%時間／最長水下。判準基準＝<strong>純引擎</strong>（SPY／QQQ／0050＝E3；SMH＝STX50），非 B&amp;H。「值得」須同時滿足：Calmar 與 Martin 皆不劣、且分期 MDD 改善過半。</div>
+
+<div class="good-loud" style="background:var(--brand-light);border-color:var(--brand);color:#1e3a8a">
+  <strong>判定梯度：</strong>SPY <span class="verdict-pill vp-yes">值得</span> QQQ <span class="verdict-pill vp-yes">值得</span> SMH <span class="verdict-pill vp-no">不值得</span> 0050 <span class="verdict-pill vp-no">不值得</span>。
+  值得的是殘餘回撤仍大的廣義大盤（純 E3 MDD −21%～−30%）；不值得的是已加 Supertrend 二層閘門的 SMH STX50（MDD 已收到 −35%）與 Calmar 本就 0.53 的 0050 E3。閘門把回撤收得越乾淨，vol targeting 能再削的越少。
+</div>
+
+<div class="card">
+  <h3>SPY（σ目標 15%，2005–）<span class="verdict-pill vp-yes">值得</span></h3>
+  <div class="tbl-wrap">
+  <table>
+  <thead><tr><th>策略</th><th class="num">CAGR</th><th class="num">MDD</th><th class="num">Calmar</th><th class="num">Martin</th><th class="num">Ulcer</th><th class="num">平均DD</th><th class="num">水下&gt;10%</th><th class="num">最長水下</th></tr></thead>
+  <tbody>
+  <tr class="rowbh"><td>B&amp;H</td><td class="num">10.88%</td><td class="num">−55.2%</td><td class="num">0.197</td><td class="num">0.88</td><td class="num">12.4</td><td class="num">−7.07%</td><td class="num">24.1%</td><td class="num">1223天</td></tr>
+  <tr><td>E3（純引擎）</td><td class="num">8.77%</td><td class="num">−21.4%</td><td class="num">0.410</td><td class="num">1.13</td><td class="num">7.8</td><td class="num">−5.67%</td><td class="num">28.7%</td><td class="num">530天</td></tr>
+  <tr><td>voltgt（疊 B&amp;H）</td><td class="num">10.04%</td><td class="num">−34.0%</td><td class="num">0.296</td><td class="num">1.18</td><td class="num">8.5</td><td class="num">−5.34%</td><td class="num">20.4%</td><td class="num">814天</td></tr>
+  <tr class="rowhl"><td><strong>E3 × voltgt</strong></td><td class="num">8.34%</td><td class="num">−17.9%</td><td class="num pos">0.466</td><td class="num pos">1.22</td><td class="num">6.9</td><td class="num">−5.10%</td><td class="num">16.3%</td><td class="num">557天</td></tr>
+  </tbody>
+  </table>
+  </div>
+  <div class="takeaway">Calmar 0.410→<strong>0.466</strong>、Martin 1.13→<strong>1.22</strong> 皆升，MDD −21.4%→−17.9%，5／5 分期 MDD 收窄。<strong>值得。</strong></div>
+</div>
+
+<div class="card">
+  <h3>QQQ（σ目標 20%，2005–）<span class="verdict-pill vp-yes">值得</span></h3>
+  <div class="tbl-wrap">
+  <table>
+  <thead><tr><th>策略</th><th class="num">CAGR</th><th class="num">MDD</th><th class="num">Calmar</th><th class="num">Martin</th><th class="num">Ulcer</th><th class="num">平均DD</th><th class="num">水下&gt;10%</th><th class="num">最長水下</th></tr></thead>
+  <tbody>
+  <tr class="rowbh"><td>B&amp;H</td><td class="num">15.19%</td><td class="num">−53.4%</td><td class="num">0.284</td><td class="num">1.21</td><td class="num">12.5</td><td class="num">−7.50%</td><td class="num">24.4%</td><td class="num">781天</td></tr>
+  <tr><td>E3（純引擎）</td><td class="num">11.28%</td><td class="num">−29.6%</td><td class="num">0.381</td><td class="num">1.16</td><td class="num">9.7</td><td class="num">−7.28%</td><td class="num">33.2%</td><td class="num">597天</td></tr>
+  <tr><td>voltgt（疊 B&amp;H）</td><td class="num">14.68%</td><td class="num">−38.3%</td><td class="num">0.384</td><td class="num">1.51</td><td class="num">9.7</td><td class="num">−6.18%</td><td class="num">21.0%</td><td class="num">612天</td></tr>
+  <tr class="rowhl"><td><strong>E3 × voltgt</strong></td><td class="num">11.28%</td><td class="num">−22.4%</td><td class="num pos">0.504</td><td class="num pos">1.27</td><td class="num">8.9</td><td class="num">−6.72%</td><td class="num">30.0%</td><td class="num">600天</td></tr>
+  </tbody>
+  </table>
+  </div>
+  <div class="takeaway">Calmar 0.381→<strong>0.504</strong>、Martin 1.16→<strong>1.27</strong> 皆升，MDD −29.6%→−22.4%，5／5 分期收窄。<strong>CAGR 幾乎不變（11.28%）而 MDD 大幅收窄，是四標的中最漂亮的一格。值得。</strong></div>
+</div>
+
+<div class="card">
+  <h3>SMH（σ目標 25%，2002–）<span class="verdict-pill vp-no">不值得</span></h3>
+  <div class="tbl-wrap">
+  <table>
+  <thead><tr><th>策略</th><th class="num">CAGR</th><th class="num">MDD</th><th class="num">Calmar</th><th class="num">Martin</th><th class="num">Ulcer</th><th class="num">平均DD</th><th class="num">水下&gt;10%</th><th class="num">最長水下</th></tr></thead>
+  <tbody>
+  <tr class="rowbh"><td>B&amp;H</td><td class="num">15.33%</td><td class="num">−70.5%</td><td class="num">0.217</td><td class="num">0.56</td><td class="num">27.6</td><td class="num">−21.41%</td><td class="num">63.3%</td><td class="num">3084天</td></tr>
+  <tr><td>E3</td><td class="num">12.96%</td><td class="num">−40.1%</td><td class="num">0.323</td><td class="num">0.63</td><td class="num">20.7</td><td class="num">−16.93%</td><td class="num">65.1%</td><td class="num">2563天</td></tr>
+  <tr><td>voltgt（疊 B&amp;H）</td><td class="num">14.19%</td><td class="num">−53.1%</td><td class="num">0.267</td><td class="num">0.77</td><td class="num">18.6</td><td class="num">−14.02%</td><td class="num">54.2%</td><td class="num">2347天</td></tr>
+  <tr><td>E3 × voltgt</td><td class="num">11.97%</td><td class="num">−37.8%</td><td class="num">0.316</td><td class="num">0.66</td><td class="num">18.0</td><td class="num">−14.41%</td><td class="num">59.9%</td><td class="num">2543天</td></tr>
+  <tr><td><strong>STX50（純引擎）</strong></td><td class="num">12.95%</td><td class="num">−35.3%</td><td class="num">0.367</td><td class="num">0.67</td><td class="num">19.4</td><td class="num">−16.11%</td><td class="num">66.7%</td><td class="num">2563天</td></tr>
+  <tr class="rowhl"><td>STX50 × voltgt</td><td class="num">11.76%</td><td class="num">−33.6%</td><td class="num neg">0.349</td><td class="num">0.68</td><td class="num">17.3</td><td class="num">−14.00%</td><td class="num">60.6%</td><td class="num">2548天</td></tr>
+  </tbody>
+  </table>
+  </div>
+  <div class="takeaway">相對純引擎 STX50，疊加後 Calmar 0.367→<strong>0.349（降）</strong>、Martin 0.67→0.68（幾乎持平）——雙指標未同時不劣。雖然 MDD −35.3%→−33.6% 且 5／5 分期 MDD 收窄，但 CAGR 代價（−1.2pp）在比率上勝過 MDD 收益。Supertrend 半倉閘門已先做掉一輪降風險。<strong>不值得。</strong></div>
+</div>
+
+<div class="card">
+  <h3>0050（σ目標 15%，2010–）<span class="verdict-pill vp-no">不值得</span></h3>
+  <div class="tbl-wrap">
+  <table>
+  <thead><tr><th>策略</th><th class="num">CAGR</th><th class="num">MDD</th><th class="num">Calmar</th><th class="num">Martin</th><th class="num">Ulcer</th><th class="num">平均DD</th><th class="num">水下&gt;10%</th><th class="num">最長水下</th></tr></thead>
+  <tbody>
+  <tr class="rowbh"><td>B&amp;H</td><td class="num">16.36%</td><td class="num">−33.8%</td><td class="num">0.484</td><td class="num">1.65</td><td class="num">9.9</td><td class="num">−7.29%</td><td class="num">31.5%</td><td class="num">787天</td></tr>
+  <tr><td>E3（純引擎）</td><td class="num">13.06%</td><td class="num">−24.6%</td><td class="num">0.531</td><td class="num">1.24</td><td class="num">10.5</td><td class="num">−8.26%</td><td class="num">39.2%</td><td class="num">920天</td></tr>
+  <tr><td>voltgt（疊 B&amp;H）</td><td class="num">12.13%</td><td class="num">−29.1%</td><td class="num">0.417</td><td class="num">1.25</td><td class="num">9.7</td><td class="num">−7.39%</td><td class="num">32.3%</td><td class="num">780天</td></tr>
+  <tr class="rowhl"><td>E3 × voltgt</td><td class="num">10.26%</td><td class="num">−22.9%</td><td class="num neg">0.449</td><td class="num neg">1.04</td><td class="num">9.9</td><td class="num">−7.95%</td><td class="num">38.6%</td><td class="num">878天</td></tr>
+  </tbody>
+  </table>
+  </div>
+  <div class="takeaway">Calmar 0.531→<strong>0.449（降）</strong>、Martin 1.24→<strong>1.04（降）</strong>，雙指標皆劣。<strong>不值得。</strong>注意 0050 樣本自 2010、無 2008 GFC，此窗口下連 B&amp;H 都難被超越（Martin 1.65 全場最高），趨勢閘門與 vol targeting 都在「削一個本來就沒出大事的樣本」，增量自然為負——見下方折扣聲明。</div>
+</div>
+
+<div class="chart-card">
+  <h3>核心讀數：疊加後 Calmar 相對純引擎的變化——SPY／QQQ 升、SMH／0050 降</h3>
+  <div class="chart-wrap-sm"><canvas id="chart-verdict"></canvas></div>
+</div>
+</div>
+
+<!-- ===== E3 ALREADY IMPLIES VOL TARGETING ===== -->
+<div class="section">
+<h2 class="section-title">核心解釋：E3 趨勢閘門已隱含做掉了 vol targeting 的工作</h2>
+<div class="section-sub">判定：是，且程度足以讓額外的 vol-targeting 套袖在多數實盤引擎上變成邊際≈0 或微負。</div>
+
+<div class="card">
+<h3>證據 1｜同一套袖，疊 B&amp;H 很有用，疊引擎後歸零</h3>
+<p>vol targeting 疊在<strong>未降風險的 B&amp;H</strong> 上對 Martin 的提升巨大；但一旦底層換成<strong>已降風險的趨勢閘門</strong>，同一套袖的增量被壓縮到接近 0 甚至變負。這是「閘門已先做掉 vol-targeting 工作」的直接證據。</p>
+<div class="tbl-wrap">
+<table>
+<thead><tr><th>標的｜Martin</th><th class="num">B&amp;H</th><th class="num">疊 B&amp;H（voltgt）</th><th class="num">疊 B&amp;H 增量</th><th class="num">純引擎</th><th class="num">疊引擎</th><th class="num">疊引擎增量</th></tr></thead>
+<tbody>
+<tr><td>SPY</td><td class="num">0.88</td><td class="num">1.18</td><td class="num pos">+0.30</td><td class="num">1.13</td><td class="num">1.22</td><td class="num pos">+0.09</td></tr>
+<tr><td>QQQ</td><td class="num">1.21</td><td class="num">1.51</td><td class="num pos">+0.30</td><td class="num">1.16</td><td class="num">1.27</td><td class="num pos">+0.11</td></tr>
+<tr><td>SMH</td><td class="num">0.56</td><td class="num">0.77</td><td class="num pos">+0.21</td><td class="num">0.67</td><td class="num">0.68</td><td class="num">+0.01</td></tr>
+<tr><td>0050</td><td class="num">1.65</td><td class="num">1.25</td><td class="num neg">−0.40</td><td class="num">1.24</td><td class="num">1.04</td><td class="num neg">−0.20</td></tr>
+</tbody>
+</table>
+</div>
+<div class="takeaway">SPY／QQQ 疊 B&amp;H 增量 +0.30，但疊引擎剩 +0.09／+0.11——引擎已吃掉大半。SMH 疊 B&amp;H 還有 +0.21，疊引擎（STX50）只剩 +0.01。<strong>同一機制，疊在已降過風險的閘門上就沒剩多少。</strong>（0050 疊 B&amp;H 本身即為負，因為該窗口 B&amp;H 已是全場最強，見折扣聲明。）</div>
+</div>
+
+<div class="card">
+<h3>證據 2｜MDD 仍普遍改善，但「比率」不改善——關鍵區分</h3>
+<p><strong>四標的、全分期，疊加都讓 MDD 更淺（d_mdd 全為正）</strong>——vol targeting 對「最壞情境深度」的削減是穩定、廣泛、非集中於單期的。代表性大改善：QQQ 2020–24 −29.6%→−18.0%（+11.6pp）、SMH 2022–26 −24.5%→−17.0%（+7.5pp）、SPY 2020–24 −16.5%→−11.7%（+4.8pp）。</p>
+<p>但<strong>CAGR 代價隨時間增大且集中在 V 型反彈期</strong>：崩盤底部因實現波動仍高而壓低權重，錯過急彈。最極端是 0050 2025 部分年 dCAGR <strong>−23.9pp</strong>（2025 關稅震盪後 0050 急彈，套袖仍降槓桿）。這正是 SMH／0050 判定翻負的機轉：MDD 好處是實的，但 V 彈的 CAGR 漏接在比率上更貴。</p>
+<div class="takeaway"><strong>結論的兩面：</strong>若目標是<strong>再壓一層尾部深度</strong>且願付 CAGR 對價，vol targeting 在任何標的都能把 MDD 再削幾個百分點；但以 <strong>Calmar／Martin 這種每單位風險報酬</strong>衡量，趨勢閘門已把「便宜的那段風險削減」拿走了，剩下要 vol targeting 削的是「貴的那段」（V 彈漏接）——所以比率層面的增量只在殘餘回撤仍大的 SPY／QQQ 才為正。</div>
+</div>
+
+<div class="chart-card">
+  <h3>證據視覺化：Martin 增量從「疊 B&amp;H」到「疊引擎」的塌縮</h3>
+  <div class="chart-wrap-sm"><canvas id="chart-uplift"></canvas></div>
+</div>
+
+<details>
+<summary>展開：穩健性摘要（σ ±5%、RV 窗口 20 vs 60）</summary>
+<div class="d-body">
+<p style="font-size:.9rem;color:#374151;margin:.75rem 0"><strong>σ 目標 ±5%（疊在 E3／STX50 上的 Calmar／Martin／MDD）</strong></p>
+<div class="tbl-wrap">
+<table>
+<thead><tr><th>標的</th><th>−5%</th><th>基準</th><th>+5%</th></tr></thead>
+<tbody>
+<tr><td>SPY</td><td>Cal .414／Mar 1.23／−16.7%</td><td><strong>Cal .466／Mar 1.22／−17.9%</strong></td><td>Cal .442／Mar 1.18／−19.9%</td></tr>
+<tr><td>QQQ</td><td>Cal .558／Mar 1.35／−18.5%</td><td><strong>Cal .504／Mar 1.27／−22.4%</strong></td><td>Cal .506／Mar 1.23／−22.8%</td></tr>
+<tr><td>SMH</td><td>Cal .327／Mar 0.70／−32.4%</td><td><strong>Cal .316／Mar 0.66／−37.8%</strong></td><td>Cal .322／Mar 0.65／−39.8%</td></tr>
+<tr><td>0050</td><td>Cal .450／Mar 1.06／−17.3%</td><td><strong>Cal .449／Mar 1.04／−22.9%</strong></td><td>Cal .461／Mar 1.07／−24.6%</td></tr>
+</tbody>
+</table>
+</div>
+<p style="font-size:.88rem;color:#374151;margin:.75rem 0">結論穩健、無刀鋒：σ 越低（降槓桿越積極）MDD 越淺、CAGR 代價越大，關係單調。SPY／QQQ 在整條 σ 帶都優於純引擎，SMH／0050 在整條帶都劣——梯度判定不隨 ±5% 翻轉。</p>
+<p style="font-size:.9rem;color:#374151;margin:1rem 0 .75rem"><strong>RV 窗口 20 vs 60</strong></p>
+<div class="tbl-wrap">
+<table>
+<thead><tr><th>標的</th><th class="num">rv20 Calmar</th><th class="num">rv20 Martin</th><th class="num">rv60 Calmar</th><th class="num">rv60 Martin</th></tr></thead>
+<tbody>
+<tr><td>SPY</td><td class="num">0.466</td><td class="num">1.22</td><td class="num">0.432</td><td class="num">1.14</td></tr>
+<tr><td>QQQ</td><td class="num">0.504</td><td class="num">1.27</td><td class="num">0.484</td><td class="num">1.16</td></tr>
+<tr><td>SMH</td><td class="num">0.316</td><td class="num">0.66</td><td class="num">0.317</td><td class="num">0.64</td></tr>
+<tr><td>0050</td><td class="num">0.449</td><td class="num">1.04</td><td class="num">0.418</td><td class="num">0.99</td></tr>
+</tbody>
+</table>
+</div>
+<p style="font-size:.88rem;color:#374151;margin:.75rem 0">rv20 一致優於 rv60（反應較快），但兩窗口的<strong>方向結論相同</strong>（SPY／QQQ 有益、SMH／0050 無益），不是窗口挑出來的。疊加順序 w_E3 × w_vt 與 w_vt × w_E3 因乘法可交換而逐位元相同（程式內 assert np.allclose 通過），順序敏感度依建構為 no-op。</p>
+</div>
+</details>
+
+<div class="note">
+  <strong>0050 無崩盤樣本折扣聲明：</strong>0050 的負增量帶有樣本偏誤。yfinance 免費歷史自 2009、回測自 2010，<strong>不含 2008 GFC</strong>（記憶：「台股 B&amp;H 難敗」＝無崩盤樣本假象）。此窗口下連 B&amp;H 的 Martin 都是全場最高（1.65），趨勢閘門與 vol targeting 都在削一個本來就沒出大事的樣本，增量自然為負。台股結論待更長／含深崩盤樣本重審，不宜外推。
+</div>
+</div>
+
+<!-- ===== VS PUT RESEARCH ===== -->
+<div class="section">
+<h2 class="section-title">與買 put 研究的對照：同一個「降 DD」目標，兩種答案</h2>
+<div class="section-sub">在同一場 13 方法「降低整體回檔經驗」總決賽（Ulcer／Martin，2005–2026）裡，兩條路徑的結局完全相反。</div>
+<div class="card">
+<p>隔壁的 <a href="/backtest/put_timing/">SPY／QQQ 買 put 避險</a>研究用六輪、100+ 配置問「付保費買凸性能不能穩定降 DD」，結論是<strong>不能</strong>——put 家族在總決賽雙標的墊底。同一張表裡，vol targeting 是唯一在兩個指標、整條參數曲線都通過的方法。降回撤這件事，免費的價格規則做得到，付費的保險做不到。</p>
+<div class="tbl-wrap">
+<table>
+<thead><tr><th>方法（SPY，依 Martin）</th><th class="num">CAGR</th><th class="num">MDD</th><th class="num">Ulcer</th><th class="num">Martin</th><th class="num">最長水下</th></tr></thead>
+<tbody>
+<tr class="rowhl"><td>vol targeting（疊 B&amp;H）</td><td class="num">10.04%</td><td class="num">−33.97%</td><td class="num">8.5</td><td class="num pos">1.18</td><td class="num">814天</td></tr>
+<tr><td>E3 × vol targeting</td><td class="num">8.34%</td><td class="num">−17.89%</td><td class="num">6.9</td><td class="num pos">1.22</td><td class="num">557天</td></tr>
+<tr class="rowbh"><td>B&amp;H（基準）</td><td class="num">10.88%</td><td class="num">−55.19%</td><td class="num">12.4</td><td class="num">0.88</td><td class="num">1223天</td></tr>
+<tr><td class="neg">put 反應式（高隱波追買）</td><td class="num">7.35%</td><td class="num">−32.51%</td><td class="num">9.1</td><td class="num neg">0.81</td><td class="num">625天</td></tr>
+<tr><td class="neg">put 階梯（無條件＋X1）</td><td class="num">6.53%</td><td class="num">−44.07%</td><td class="num neg">14.7</td><td class="num neg">0.45</td><td class="num neg">1667天</td></tr>
+</tbody>
+</table>
+</div>
+<div class="takeaway"><strong>put 階梯 Martin 0.45（比什麼都不做的 B&amp;H 0.88 還糟）vs vol targeting 疊 B&amp;H 的 QQQ Martin 1.51</strong>——保費持續失血讓 NAV 更慢創新高、把淺回檔拖成漫長水下；vol targeting 免保費、只在高波減碼，反而縮短水下。兩者同樣想降 DD，一個加重痛苦、一個減輕痛苦。詳見 <a href="/backtest/put_timing/">買 put 避險</a>頁的 Round 6 總決賽。</div>
+</div>
+</div>
+
+<!-- ===== HONEST LIMITS ===== -->
+<div class="section">
+<h2 class="section-title">誠實限制</h2>
+<div class="card">
+<ol class="issue-list">
+  <li><strong>未採用為實盤變更</strong>：本頁為研究結論。若未來要落地，須按 charter 流程（含 OOS 重審條件），不是看到這頁就加倉位規則。</li>
+  <li><strong>Calmar／Martin 是風險調整指標，純 CAGR 最多打平</strong>：vol targeting 的價值全在「用少賺換回撤收窄」。若只看絕對報酬，它永遠不會贏 B&amp;H（結構上 clip 到 1.0、只降不加）。適合的人是願意付牛市機會成本換睡得著的降回撤者。</li>
+  <li><strong>牛市機會成本真實存在</strong>：代價集中在 V 型反彈期（高波急彈時仍減碼）。AI 牛市單期 CAGR 代價達 −4.2～−4.6pp（疊 B&amp;H）、0050 2025 部分年極端到 −23.9pp（疊引擎）。這是換來的，不是免費午餐。</li>
+  <li><strong>0050 樣本偏誤</strong>：無 2008 GFC，台股結論待更長／含深崩盤樣本重審。</li>
+  <li><strong>稅務未計、無滑價／流動性衝擊模型</strong>：換手雖低（2.2～2.5x／年），但實盤稅負與衝擊未納入。</li>
+  <li><strong>跨標的窗口不同不可互比</strong>：起點 2005／2002／2010 各異，標的間絕對數字不可直接比較；每格內部「疊加 vs 純引擎」才是本研究主軸。E3 flavor 與站上 SMH 頁的實盤 STX50 有細節差異（見上方揭露）。</li>
+</ol>
+</div>
+</div>
+
+<!-- ===== POSITIONING ===== -->
+<div class="section">
+<h2 class="section-title">定位聲明</h2>
+<div class="card">
+<p><strong>這是研究結論，不是實盤採用建議。</strong>vol targeting 是六輪買 put 研究全滅之後，唯一通過全部穩健性關卡的免保費降 DD 工具——單獨疊 B&amp;H 時四關全過、整條 σ 曲線雙指標贏 B&amp;H。但本頁的核心問題（疊在實盤趨勢引擎上）給出更誠實的答案：<strong>只有殘餘回撤仍大的 SPY／QQQ 值得疊，SMH STX50 與 0050 不值得——E3／STX50 已隱含做掉了該做的</strong>。</p>
+<p>底線二選一：若目標是<strong>風險調整比率</strong>，只在 SPY／QQQ 疊；若目標是<strong>再壓尾部 MDD 深度</strong>且接受 CAGR 對價，vol targeting 在四標的、全分期都能再削 MDD——但這是換來的。無論採用與否，<strong>若未來要納入實盤，須走 charter 的採用決策流程（附 OOS 重審條件）</strong>，本研究本身不構成該決策。</p>
+</div>
+</div>
+
+</div>
+
+<footer>
+  <div class="container">
+    &copy; 2026 InvestMQuest Research &middot; 波動率目標倉位（vol targeting，研究結論非實盤採用）&middot;
+    降槓桿版 w = min(1, σ目標／RV20)・單獨版四關穩健性 ＋ 疊實盤引擎邊際貢獻・評估窗 2002–2026・頁面生成 2026-07-17 &middot; 僅供研究參考
+  </div>
+</footer>
+
+<script>
+Chart.defaults.font.family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif";
+Chart.defaults.font.size=11;
+
+// Chart 1: QQQ sigma scan — Calmar & Martin across sigma vs B&H dashed refs
+var SIG_LABELS=['σ15%','σ17.5%','σ20%','σ22.5%','σ25%'];
+var SIG_CALMAR=[0.440,0.411,0.384,0.368,0.362];
+var SIG_MARTIN=[1.66,1.59,1.51,1.46,1.45];
+var BH_CALMAR=0.284, BH_MARTIN=1.21;
+new Chart(document.getElementById('chart-sigma'),{
+  type:'line',
+  data:{labels:SIG_LABELS,datasets:[
+    {label:'Calmar',data:SIG_CALMAR,borderColor:'#1a56db',backgroundColor:'rgba(26,86,219,0.08)',
+     borderWidth:2,tension:.2,pointRadius:4,yAxisID:'y'},
+    {label:'Martin',data:SIG_MARTIN,borderColor:'#059669',backgroundColor:'rgba(5,150,105,0.08)',
+     borderWidth:2,tension:.2,pointRadius:4,yAxisID:'y1'},
+    {label:'B&H Calmar',data:[BH_CALMAR,BH_CALMAR,BH_CALMAR,BH_CALMAR,BH_CALMAR],borderColor:'rgba(26,86,219,0.55)',
+     borderWidth:1.5,borderDash:[6,4],pointRadius:0,yAxisID:'y'},
+    {label:'B&H Martin',data:[BH_MARTIN,BH_MARTIN,BH_MARTIN,BH_MARTIN,BH_MARTIN],borderColor:'rgba(5,150,105,0.55)',
+     borderWidth:1.5,borderDash:[6,4],pointRadius:0,yAxisID:'y1'}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:true,position:'top',align:'start',labels:{usePointStyle:true,padding:12}},
+      tooltip:{mode:'index',intersect:false}},
+    scales:{x:{grid:{display:false}},
+      y:{position:'left',grid:{color:'rgba(0,0,0,0.06)'},title:{display:true,text:'Calmar（藍）'},
+         suggestedMin:0.25,suggestedMax:0.5},
+      y1:{position:'right',grid:{display:false},title:{display:true,text:'Martin（綠）'},
+          suggestedMin:1.1,suggestedMax:1.75}}
+  }
+});
+
+// Chart 2: overlay verdict — Calmar engine vs overlay, 4 assets
+var VLABELS=['SPY','QQQ','SMH','0050'];
+var CAL_ENGINE=[0.410,0.381,0.367,0.531];
+var CAL_OVERLAY=[0.466,0.504,0.349,0.449];
+new Chart(document.getElementById('chart-verdict'),{
+  type:'bar',
+  data:{labels:VLABELS,datasets:[
+    {label:'純引擎 Calmar',data:CAL_ENGINE,backgroundColor:'rgba(107,114,128,0.72)',borderColor:'#6b7280',borderWidth:1},
+    {label:'疊 vol targeting Calmar',data:CAL_OVERLAY,
+     backgroundColor:['rgba(5,150,105,0.78)','rgba(5,150,105,0.78)','rgba(220,38,38,0.7)','rgba(220,38,38,0.7)'],
+     borderColor:'rgba(0,0,0,0.15)',borderWidth:1}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:true,position:'top',align:'start',labels:{usePointStyle:true,padding:12}},
+      tooltip:{callbacks:{
+        label:function(c){return c.dataset.label+': '+c.parsed.y.toFixed(3)},
+        afterBody:function(items){var i=items[0].dataIndex;var d=CAL_OVERLAY[i]-CAL_ENGINE[i];
+          return (d>=0?'升 +':'降 ')+d.toFixed(3)+(d>=0?'（值得）':'（不值得）');}}}},
+    scales:{x:{grid:{display:false}},
+      y:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.06)'},title:{display:true,text:'Calmar'}}}
+  }
+});
+
+// Chart 3: Martin uplift collapse — B&H → 疊B&H → 疊引擎
+var ULABELS=['SPY','QQQ','SMH','0050'];
+var M_BH=[0.88,1.21,0.56,1.65];
+var M_VTBH=[1.18,1.51,0.77,1.25];
+var M_ENGINE=[1.13,1.16,0.67,1.24];
+var M_VTENG=[1.22,1.27,0.68,1.04];
+new Chart(document.getElementById('chart-uplift'),{
+  type:'bar',
+  data:{labels:ULABELS,datasets:[
+    {label:'B&H',data:M_BH,backgroundColor:'rgba(107,114,128,0.55)',borderWidth:1},
+    {label:'疊 B&H（voltgt）',data:M_VTBH,backgroundColor:'rgba(26,86,219,0.72)',borderWidth:1},
+    {label:'純引擎',data:M_ENGINE,backgroundColor:'rgba(180,140,20,0.55)',borderWidth:1},
+    {label:'疊引擎（E3/STX50 × voltgt）',data:M_VTENG,backgroundColor:'rgba(5,150,105,0.78)',borderWidth:1}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:true,position:'top',align:'start',labels:{usePointStyle:true,padding:10}},
+      tooltip:{callbacks:{label:function(c){return c.dataset.label+': Martin '+c.parsed.y.toFixed(2)}}}},
+    scales:{x:{grid:{display:false}},
+      y:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.06)'},title:{display:true,text:'Martin 比（CAGR／Ulcer）'}}}
+  }
+});
+</script>
+</body>
+</html>

@@ -74,6 +74,7 @@ INDIVIDUAL_LINKS = [
     ("/backtest/mom_volscaling/", "動能·波動縮放", "momvs", None),
     ("/backtest/dual_track_study/", "雙軌分散研究", "dtstudy", None),
     ("/backtest/leverage_voltarget/", "期貨槓桿疊加", "levvt", None),
+    ("/backtest/vol_targeting/", "波動目標倉位", "vol_targeting", "研究"),
     ("/backtest/exit_switch/", "出場法切換", "exitsw", "否決"),
     ("/backtest/short_system/", "指數做空", "short", "失敗"),
     ("/backtest/cndr/", "Iron Condor", "cndr", "失敗"),
