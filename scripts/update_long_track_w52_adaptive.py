@@ -563,6 +563,7 @@ def _market_data(mkt: dict, sigs: dict, history: list, exec_replay: dict) -> dic
     }
     combined = sum(sigs[t]["final"] for t in legs) * 100            # 今日目標（訊號）
     exec_combined = round(exec_replay["combined"][-1], 1) if exec_replay["combined"] else combined  # 現持（執行層）
+    exec_finals = [round(exec_replay["last"].get(t, 0.0), 1) for t in legs]   # 每腿現持（執行層）
     ccol = fill_color(combined / 100)
     slot = {t: WEIGHTS[t] * 100 for t in legs}
     finals = [round(sigs[t]["final"] * 100, 1) for t in legs]
@@ -572,7 +573,8 @@ def _market_data(mkt: dict, sigs: dict, history: list, exec_replay: dict) -> dic
     n_live = sum(1 for r in history if r["source"] == "live")
     span = (f"{history[0]['date']} → {history[-1]['date']}" if history else "—")
     return {
-        "legs": legs, "a": a, "b": b, "combined": combined, "exec_combined": exec_combined, "ccol": ccol,
+        "legs": legs, "a": a, "b": b, "combined": combined, "exec_combined": exec_combined,
+        "exec_finals": exec_finals, "ccol": ccol,
         "finals": finals,
         "C_FINALS": json.dumps(finals, separators=(",", ":")),
         "C_SLEEVE": json.dumps(sleeve_cut, separators=(",", ":")),
@@ -585,14 +587,28 @@ def _market_data(mkt: dict, sigs: dict, history: list, exec_replay: dict) -> dic
     }
 
 
+def _dual_breakdown(legs, finals, exec_finals):
+    """組合層目標/現持並排＋每腿拆分。合計＝每腿顯示值（四捨五入後）之和，確保
+    「腿＋腿＝合計」自洽。回傳 (html、目標合計、現持合計)。"""
+    tf = [round(f) for f in finals]
+    ef = [round(e) for e in exec_finals]
+    td, ed = sum(tf), sum(ef)
+    tgt = "＋".join(f"{legs[i]} {tf[i]}%" for i in range(len(legs)))
+    exe = "＋".join(f"{legs[i]} {ef[i]}%" for i in range(len(legs)))
+    html = (f"<b>目標 {td}%</b>＝{tgt}（訊號，每日隨波動微調）／"
+            f"<b>現持 {ed}%</b>＝{exe}（執行層；"
+            f"<b>|目標−現持| 未達 10pp 不調，故兩者常有幾 % 差、是設計非錯誤</b>）")
+    return html, td, ed
+
+
 def market_html(mkt: dict, sigs: dict, md: dict) -> str:
     legs = mkt["legs"]
-    combined = md["combined"]
-    exec_combined = md["exec_combined"]
+    exec_finals = md["exec_finals"]
     ccol = md["ccol"]
     finals = md["finals"]
     suf = mkt["key"]
     cards = "".join(ticker_card(t, sigs[t]) for t in legs)
+    dual, combined, exec_combined = _dual_breakdown(legs, finals, exec_finals)
     return f"""<div class="mkt-hd"><span class="mkt-tag">{mkt['name']}</span></div>
 
 <div class="status-hero hero-{ccol}">
@@ -602,7 +618,7 @@ def market_html(mkt: dict, sigs: dict, md: dict) -> str:
     <span style="opacity:.55;font-size:.7em">／</span>
     <span>現持 {exec_combined:.0f}%<span style="font-size:.4em;color:var(--muted);font-weight:600"> 執行層</span></span>
   </div>
-  <div style="font-size:.8rem;color:var(--muted)"><b>目標曝險（訊號）</b>＝0.5×閘門×套袖合計（每日隨波動微調）；<b>現持（執行層）</b>＝10pp 門檻＋5% 取整後的實際持股——<b>|目標−現持| 未達 10pp 就不調，故兩者常有幾 % 差、這是設計、非錯誤</b>。</div>
+  <div style="font-size:.8rem;color:var(--muted)">{dual}。</div>
 </div>
 
 <div class="card">
@@ -625,7 +641,7 @@ def market_html(mkt: dict, sigs: dict, md: dict) -> str:
 <h3>{mkt['short']} 近三年權重時間軸 — 現持（執行層）vs 每日理論目標</h3>
 <p style="font-size:.8rem;color:var(--muted);margin-bottom:.5rem">
 <b style="color:var(--text)">粗階梯線＝現持（執行層）</b>＝10pp 門檻＋5% 取整的實際持股率（跨門檻才動）；<b>細線＝每日理論目標（訊號）</b>（未過門檻不調）。
-<b>末端值：現持 {exec_combined:.0f}% ／ 目標 {combined:.0f}%</b>——上方量表的「目標 {combined:.0f}%」＝細線末端、「現持 {exec_combined:.0f}%」＝粗階梯末端，兩者差 {exec_combined-combined:+.0f}pp（未達 10pp 門檻不調，故有差、非錯誤）。
+末端值：{dual}。
 線段<b>實線＝每日實錄</b>、<b>虛線＝規則回放</b>（首次生成往回重算，誠實區隔）。窗 {md['span']}，共 {md['nhist']} 個交易日（回放 {md['n_replay']}／實錄 {md['n_live']}）。</p>
 <div class="chart-wrap"><canvas id="chart-weights-{suf}"></canvas></div>
 <div class="legend-note">
