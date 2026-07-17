@@ -36,9 +36,14 @@ financial-analysis-bot（scripts/）兩處逐位元相同——nav 匯入以 try
 排程：每交易日台股收盤（13:30 台北）後數小時（套袖 RV20 為日頻量，閘門為週頻，
 故日更）。
 
+執行層（與規則同日凍結 2026-07-17）：|目標 − 現持| ≥ 10pp 才調整、調整取整至 5% 格；
+band_exec_replay 從 history 確定性重放，供時間軸粗階梯線、事件表、通知與 state 的
+executed_pct 用（回測主數字亦含此執行層，見 BACKTEST 常數）。
+
 圖像化（Chart.js）：合成曝險量表＋每腿乘法鏈 bar（閘門×套袖→最終權重）、近三年
-權重時間軸（兩腿最終權重＋合成曝險）＋ RV20 vs σ 目標、回測縮圖（對數淨值＋
-回撤，BT_NAV 靜態快照）。時間軸資料存於 state.json 的 history 陣列：首次生成以
+權重時間軸（粗階梯＝執行層持股率＋細線＝每日理論目標）＋ RV20 vs σ 目標、執行層
+變化事件表、回測縮圖（對數淨值＋回撤，BT_NAV 靜態快照＝執行版月度 NAV）。時間軸
+資料存於 state.json 的 history 陣列：首次生成以
 build_backfill 規則回放近 756 交易日＝約三年（source='replay'），此後 CI 逐日以 _daily_record
 追加當日實錄（source='live'）；merge_history 以日期為 key 冪等（同日重跑不重複、實錄
 不被回放覆蓋），上限 HISTORY_CAP。回放與實錄在圖上以虛線／實線區隔（誠實紀律，回放
@@ -81,7 +86,8 @@ FREEZE_DATE = "2026-07-17"
 BACKTEST = {
     "window": "2014-01 – 2026-07",
     "rows": [                              # (label, cagr, mdd, calmar, ui, martin)
-        ("正式追蹤版 σ 0050 15/2330 25（本頁追蹤）", 18.54, -21.5, 0.863, 9.05, 2.05),
+        ("正式追蹤版 σ 0050 15/2330 25・含 10pp＋5% 取整執行層（本頁追蹤）", 18.90, -20.9, 0.904, 8.59, 2.20),
+        ("每日照調（理論・對照）", 18.54, -21.5, 0.863, 9.05, 2.05),
         ("50/50 買進持有", 26.38, -39.5, 0.668, 9.85, 2.68),
         ("純長軌（無套袖）", 21.40, -23.5, 0.913, 9.38, 2.28),
         ("參數對照 σ 0050 15/2330 20（僅敏感度用）", 17.51, -19.8, 0.884, 8.38, 2.09),
@@ -103,7 +109,7 @@ BACKTEST = {
 # 用於本頁「回測縮圖」對數淨值＋回撤）。
 BT_NAV = {
     "labels": ["2014-01","2014-02","2014-03","2014-04","2014-05","2014-06","2014-07","2014-08","2014-09","2014-10","2014-11","2014-12","2015-01","2015-02","2015-03","2015-04","2015-05","2015-06","2015-07","2015-08","2015-09","2015-10","2015-11","2015-12","2016-01","2016-02","2016-03","2016-04","2016-05","2016-06","2016-07","2016-08","2016-09","2016-10","2016-11","2016-12","2017-01","2017-02","2017-03","2017-04","2017-05","2017-06","2017-07","2017-08","2017-09","2017-10","2017-11","2017-12","2018-01","2018-02","2018-03","2018-04","2018-05","2018-06","2018-07","2018-08","2018-09","2018-10","2018-11","2018-12","2019-01","2019-02","2019-03","2019-04","2019-05","2019-06","2019-07","2019-08","2019-09","2019-10","2019-11","2019-12","2020-01","2020-02","2020-03","2020-04","2020-05","2020-06","2020-07","2020-08","2020-09","2020-10","2020-11","2020-12","2021-01","2021-02","2021-03","2021-04","2021-05","2021-06","2021-07","2021-08","2021-09","2021-10","2021-11","2021-12","2022-01","2022-02","2022-03","2022-04","2022-05","2022-06","2022-07","2022-08","2022-09","2022-10","2022-11","2022-12","2023-01","2023-02","2023-03","2023-04","2023-05","2023-06","2023-07","2023-08","2023-09","2023-10","2023-11","2023-12","2024-01","2024-02","2024-03","2024-04","2024-05","2024-06","2024-07","2024-08","2024-09","2024-10","2024-11","2024-12","2025-01","2025-02","2025-03","2025-04","2025-05","2025-06","2025-07","2025-08","2025-09","2025-10","2025-11","2025-12","2026-01","2026-02","2026-03","2026-04","2026-05","2026-06","2026-07"],
-    "combo": [1.0,1.0173,1.0812,1.0894,1.1128,1.1706,1.1658,1.1993,1.1462,1.2383,1.3038,1.2948,1.2963,1.3536,1.318,1.3474,1.3397,1.3192,1.2854,1.2295,1.2305,1.2266,1.2117,1.229,1.1994,1.2242,1.2772,1.1914,1.2093,1.2751,1.3464,1.3706,1.4136,1.4425,1.4087,1.4004,1.4306,1.4596,1.4652,1.4951,1.5474,1.6345,1.6748,1.6993,1.6757,1.8249,1.7295,1.742,1.8884,1.8162,1.8087,1.707,1.6767,1.6871,1.8126,1.8652,1.8869,1.6781,1.6715,1.6729,1.6743,1.678,1.6732,1.758,1.6132,1.6368,1.7286,1.7171,1.7959,1.9418,1.9781,2.1293,2.0468,2.0284,1.7453,1.7916,1.7616,1.8823,2.3741,2.3471,2.371,2.3666,2.6179,2.8613,3.1746,3.255,3.2232,3.3254,3.2217,3.244,3.174,3.3097,3.1869,3.1983,3.2402,3.3881,3.4394,3.3134,3.2193,3.1362,3.1388,3.1414,3.144,3.1469,3.1495,3.152,3.1548,3.1575,3.1591,3.1614,3.1643,3.1664,3.1692,3.1259,3.1152,3.0336,2.9336,2.9337,3.1862,3.2888,3.4108,3.6645,3.9873,3.9504,4.025,4.5479,4.4661,4.4241,4.5259,4.7322,4.601,4.8753,5.0978,4.8377,4.3515,4.355,4.3394,4.513,4.8734,4.9115,5.4423,6.125,5.8761,6.2493,7.064,7.81,7.2156,8.1117,8.698,8.8274,8.5594],
+    "combo": [1.0,1.0205,1.0855,1.0938,1.1173,1.1755,1.17,1.2062,1.1528,1.2553,1.3219,1.3134,1.3168,1.3745,1.3411,1.3758,1.3689,1.3479,1.3116,1.253,1.254,1.25,1.2347,1.2535,1.2242,1.2503,1.3044,1.2165,1.2341,1.303,1.3788,1.4029,1.447,1.48,1.4503,1.4455,1.4752,1.5036,1.5089,1.5389,1.5908,1.6764,1.7162,1.7397,1.718,1.8661,1.7716,1.7847,1.9296,1.8617,1.8539,1.7523,1.7212,1.732,1.8607,1.9142,1.9382,1.7192,1.7122,1.7136,1.715,1.7188,1.7138,1.8008,1.6524,1.6768,1.7683,1.7568,1.8324,1.9724,2.0073,2.1514,2.0739,2.0541,1.7744,1.8138,1.7903,1.9093,2.3932,2.3747,2.3991,2.3972,2.6382,2.8711,3.1501,3.2517,3.2342,3.3294,3.2419,3.2566,3.1905,3.3254,3.2101,3.2204,3.2594,3.3934,3.4373,3.3265,3.2515,3.1653,3.1679,3.1705,3.1732,3.1761,3.1787,3.1813,3.184,3.1868,3.1885,3.1907,3.1937,3.1958,3.1986,3.1547,3.147,3.0695,2.9744,2.9716,3.2182,3.3166,3.4297,3.6851,3.9905,3.9608,4.0554,4.6344,4.5425,4.5432,4.63,4.8206,4.6983,4.9658,5.1729,4.9214,4.4163,4.4198,4.4084,4.5884,4.9477,5.0024,5.5172,6.235,5.9929,6.3666,7.2187,7.9919,7.3176,8.377,9.0214,9.174,8.8956],
     "bh": [1.0,1.0205,1.0854,1.0937,1.1172,1.1753,1.1699,1.206,1.1527,1.2653,1.3398,1.3313,1.3434,1.4115,1.376,1.4074,1.3993,1.3779,1.3408,1.2522,1.2587,1.3183,1.3094,1.3234,1.3046,1.3571,1.454,1.3659,1.4127,1.4942,1.5854,1.614,1.6664,1.7063,1.6709,1.6654,1.7013,1.7358,1.7425,1.778,1.8402,1.9437,1.9918,2.0208,1.9927,2.1702,2.0567,2.0717,2.2457,2.1758,2.1827,2.061,2.0572,2.0682,2.2694,2.3346,2.3639,2.1092,2.0602,2.0436,2.039,2.1672,2.2179,2.3303,2.1633,2.2502,2.3827,2.3669,2.4755,2.6766,2.7267,2.9351,2.8249,2.787,2.4175,2.7011,2.6291,2.8199,3.5482,3.5185,3.5761,3.5722,3.9517,4.3221,4.7258,4.882,4.8395,4.9986,4.9241,4.9597,4.8528,5.072,4.8828,4.9028,4.9678,5.1944,5.2682,5.0789,5.0551,4.634,4.7476,4.1458,4.3629,4.343,3.7348,3.5149,4.272,3.9892,4.5102,4.4725,4.6343,4.4195,4.8308,4.9772,4.9602,4.8306,4.6709,4.6692,5.0781,5.2415,5.4353,5.8851,6.5663,6.636,6.9295,7.9825,7.7514,7.8048,7.933,8.4057,8.1683,8.6954,9.1242,8.5425,7.5887,7.4903,7.9832,8.6929,9.423,9.5117,10.609,12.04,11.5783,12.3438,13.9957,15.6888,13.9375,17.1716,19.4701,19.9497,18.9252],
 }
 
@@ -270,6 +276,43 @@ def merge_history(prev_history: list, backfill: list, today_rec: dict,
 
 
 # ---------------------------------------------------------------------------
+# Execution layer — 10pp 門檻＋5% 取整（與規則同日凍結 2026-07-17）
+# 從 history 確定性重放，冪等可重現。band／grid 以組合 pp 為單位（每腿滿載＝50 pp）。
+# ---------------------------------------------------------------------------
+def band_exec_replay(history: list, legs: list | None = None) -> dict:
+    """對每腿的最終權重（組合 pp）重放執行層：executed 初始 0，逐日若
+    |target − executed| ≥ 10pp 則 executed = round(target/5)×5，否則不變。
+    回傳每腿每日 executed、組合合計、事件清單（日期、腿、from→to、原因＝該日
+    閘門翻轉則「閘門翻轉」否則「波動調整」、當日組合執行曝險）與各腿當前值。"""
+    legs = legs or TICKERS
+    executed = {t: [] for t in legs}
+    combined, events = [], []
+    cur = {t: 0.0 for t in legs}
+    prev_gate = {t: None for t in legs}
+    for r in history:
+        for t in legs:
+            tk = r["tickers"][t]
+            target = tk["final_pct"]
+            gate = bool(tk["gate"])
+            if abs(target - cur[t]) >= 10.0:
+                new = round(target / 5.0) * 5.0
+                if new != cur[t]:
+                    flipped = prev_gate[t] is not None and gate != prev_gate[t]
+                    events.append({"date": r["date"], "leg": t,
+                                   "from": cur[t], "to": new,
+                                   "reason": "閘門翻轉" if flipped else "波動調整"})
+                    cur[t] = new
+            executed[t].append(cur[t])
+            prev_gate[t] = gate
+        combined.append(round(sum(cur[t] for t in legs), 1))
+    date_idx = {r["date"]: i for i, r in enumerate(history)}
+    for ev in events:
+        ev["combined_exec_pct"] = combined[date_idx[ev["date"]]]
+    last = {t: (executed[t][-1] if executed[t] else 0.0) for t in legs}
+    return {"executed": executed, "combined": combined, "events": events, "last": last}
+
+
+# ---------------------------------------------------------------------------
 # HTML
 # ---------------------------------------------------------------------------
 def fmt_pct(v, dp=2):
@@ -367,13 +410,14 @@ def backtest_section() -> str:
     return f"""<div class="card">
 <h3>回測摘要（正式追蹤版 vs 三基準・共同窗 {BACKTEST['window']}）</h3>
 <p style="font-size:.8rem;color:var(--muted);margin-bottom:.7rem">
-兩標的日報酬 50/50 加權合成（等效每日再平衡，如實揭露）。判準基準＝<b>純長軌組合</b>（非買進持有）。
+兩標的日報酬 50/50 加權合成（等效每日再平衡，如實揭露）。判準基準＝<b>純長軌組合</b>（非買進持有）。<b>主列已含 10pp 門檻＋5% 取整執行層</b>（與本頁追蹤操作同規則）；「每日照調」為理論對照。
 共同窗自 2014 起：0050 免費史 2009 起、W250 需約 250 週暖機。</p>
 <table><thead><tr><th>配置</th><th class="num">CAGR</th><th class="num">MDD</th><th class="num">Calmar</th><th class="num">Ulcer</th><th class="num">Martin</th></tr></thead>
 <tbody>{rows}</tbody></table>
-<div class="takeaway"><b>台股版回測判定＝套袖不值得（worth_it=False）</b>：vs 純長軌 Calmar 0.913 → 0.863、Martin 2.28 → 2.05 雙劣化，
-只換到 MDD −23.5% → −21.5% 與四分期 MDD 全數改善；CAGR 代價集中在 AI 台積電牛（單期 −8.9pp，高波急漲仍減碼、漏接主升段）。
-與美股版（Calmar 0.363 → 0.547，判定值得）相反——符合統一定律：台股純長軌殘餘 Ulcer（0050 8.0）多半低於門檻 9~10，套袖無深水可救。
+<div class="takeaway"><b>台股版判定＝套袖對純長軌無明確加值</b>：主列（含執行層）Calmar 0.904、Martin 2.20，仍略低於純長軌（0.913／2.28），
+只換到 MDD −23.5% → −20.9% 與四分期 MDD 全數改善；CAGR 代價集中在 AI 台積電牛（高波急漲仍減碼、漏接主升段）。
+執行層（10pp＋5% 取整）把每日照調的 Calmar 0.863 拉近到 0.904（近乎免費甚至略優），但方向不變：雙指標仍未過純長軌。
+與美股版（判定值得）相反——符合統一定律：台股純長軌殘餘 Ulcer（0050 8.0）多半低於門檻 9~10，套袖無深水可救。
 唯一加值出現在 2330 含 2008 崩盤的長窗（2005-06 起：Calmar +0.022、GFC 期 MDD −38.6% → −34.8%）。
 本頁與美股版並行追蹤，檢驗兩個相反判定的樣本外有效性。</div>
 </div>
@@ -387,17 +431,40 @@ def backtest_section() -> str:
 </div>
 
 <div class="card">
-<h3>分期（正式追蹤版 vs 純長軌；ΔCAGR／ΔMDD，正＝套袖較優）</h3>
+<h3>分期（每日照調 vs 純長軌；ΔCAGR／ΔMDD，正＝套袖較優）</h3>
 <table><thead><tr><th>期間</th><th class="num">Δ CAGR</th><th class="num">Δ MDD</th></tr></thead>
 <tbody>{eras}</tbody></table>
 <div style="font-size:.75rem;color:var(--muted);margin-top:.5rem">四期 MDD 全數改善（+0.2～+7.8pp）；CAGR 代價集中在 AI 台積電牛（−8.9pp）。</div>
 </div>"""
 
 
+def events_card(exec_replay: dict) -> str:
+    events = exec_replay.get("events", []) if exec_replay else []
+    if not events:
+        body = ('<tr><td colspan="5" style="text-align:center;color:var(--muted)">'
+                '近三年窗內無執行層調整事件（皆未跨 10pp 門檻）</td></tr>')
+    else:
+        body = ""
+        for ev in reversed(events):                 # 倒序（最新在上）
+            rc = "var(--blue-text)" if ev["reason"] == "閘門翻轉" else "var(--amber-text)"
+            body += (f'<tr><td>{ev["date"]}</td><td><b>{ev["leg"]}</b></td>'
+                     f'<td>{ev["from"]:.0f}% → {ev["to"]:.0f}%</td>'
+                     f'<td style="color:{rc}">{ev["reason"]}</td>'
+                     f'<td class="num">{ev["combined_exec_pct"]:.0f}%</td></tr>\n')
+    return f"""<div class="card">
+<h3>近三年執行層訊號變化事件（10pp 門檻＋5% 取整）</h3>
+<p style="font-size:.8rem;color:var(--muted);margin-bottom:.6rem">
+只有當某腿目標與現持差 ≥ 10pp 才調整（取整到 5% 格），故事件遠少於每日微調。倒序全列；「變化」為該腿最終權重（組合 pp，滿載 50%）；原因＝當日閘門翻轉則「閘門翻轉」否則「波動調整」。</p>
+<table><thead><tr><th>日期</th><th>腿</th><th>變化</th><th>原因</th><th class="num">當日組合執行曝險</th></tr></thead>
+<tbody>{body}</tbody></table>
+</div>"""
+
+
 def generate_html(sigs: dict, changes: list | None, last_change_date: str | None,
-                  history: list | None = None) -> str:
+                  history: list | None = None, exec_replay: dict | None = None) -> str:
     changes = changes or []
     history = history or []
+    exec_replay = exec_replay or {"executed": {t: [] for t in TICKERS}, "combined": [], "events": [], "last": {}}
     combined = sum(sigs[t]["final"] for t in TICKERS) * 100
     ccol = fill_color(combined / 100)
     data_date = max(sigs[t]["wk_date"] for t in TICKERS)
@@ -415,6 +482,10 @@ def generate_html(sigs: dict, changes: list | None, last_change_date: str | None
     H_ARV = _col(lambda r: r["tickers"][TICKERS[0]]["rv20_pct"])
     H_BRV = _col(lambda r: r["tickers"][TICKERS[1]]["rv20_pct"])
     H_SRC = _col(lambda r: r["source"])
+    # executed layer (10pp band + 5% round) — deterministic replay
+    H_CEXE = json.dumps(exec_replay["combined"], separators=(",", ":"))
+    H_AEXE = json.dumps(exec_replay["executed"].get(TICKERS[0], []), separators=(",", ":"))
+    H_BEXE = json.dumps(exec_replay["executed"].get(TICKERS[1], []), separators=(",", ":"))
     n_replay = sum(1 for r in history if r["source"] == "replay")
     n_live = sum(1 for r in history if r["source"] == "live")
     span = (f"{history[0]['date']} → {history[-1]['date']}" if history else "—")
@@ -444,7 +515,7 @@ def generate_html(sigs: dict, changes: list | None, last_change_date: str | None
          '<br><span style="font-size:.78rem;color:var(--muted)">下一個交易日將部位調整至上列目標。</span></div>')
         if changes else
         ('<div style="text-align:center;font-size:.78rem;color:var(--muted);margin:.3rem 0 1rem">'
-         '無可行動變化（閘門未翻轉、且無標的最終權重變動 ≥ 10pp）' +
+         '無可行動變化（閘門未翻轉、且無標的目標與現持差 ≥ 10pp）' +
          (f'（上次變化：{last_change_date}）' if last_change_date else '') + '</div>'))
 
     return f"""<!DOCTYPE html>
@@ -595,12 +666,15 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 </div>
 
 <div class="card">
-<h3>近三年權重時間軸 — 兩腿最終權重 ＋ 合成曝險</h3>
+<h3>近三年權重時間軸 — 執行層持股率 ＋ 每日理論目標</h3>
 <p style="font-size:.8rem;color:var(--muted);margin-bottom:.5rem">
-逐日目標權重。<b style="color:var(--text)">實線＝每日實錄</b>（CI 逐日追加），<b>虛線＝規則回放</b>（首次生成時以完全相同的規則往回重算，非當日實錄，誠實區隔）。
+<b style="color:var(--text)">粗階梯線＝10pp 門檻＋5% 取整的實際執行持股率</b>（跨門檻才動、取整到 5% 格）；<b>細線＝每日理論目標</b>（未過門檻）。
+線段<b>實線＝每日實錄</b>（CI 逐日追加），<b>虛線＝規則回放</b>（首次生成時以完全相同的規則往回重算，非當日實錄，誠實區隔）。
 窗 {span}，共 {len(history)} 個交易日（回放 {n_replay}／實錄 {n_live}）。</p>
 <div class="chart-wrap"><canvas id="chart-weights"></canvas></div>
 <div class="legend-note">
+  <span class="ln-item"><span class="ln-line" style="border-top-width:3px"></span>執行層（粗階梯）</span>
+  <span class="ln-item"><span class="ln-line" style="border-top-color:rgba(120,120,120,.5)"></span>每日理論目標（細）</span>
   <span class="ln-item"><span class="ln-line"></span>每日實錄</span>
   <span class="ln-item"><span class="ln-line ln-dash"></span>規則回放</span>
 </div>
@@ -609,6 +683,8 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 當 RV20（實線）升破 σ 目標（水平虛線），套袖開始按比例減碼；RV20 ≤ σ 目標時滿載。對照上圖即可看出每次減碼的來源。</p>
 <div class="chart-wrap-sm"><canvas id="chart-rv"></canvas></div>
 </div>
+
+{events_card(exec_replay)}
 
 <div class="tgrid">{cards}</div>
 
@@ -623,17 +699,18 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 ⑥ <b>最終權重</b> = 0.5 × 閘門(0/1) × 套袖權重，兩標的各自計算。<br>
 ⑦ <b>資料揭露</b>：yfinance auto-adjust（還原股價）；0050.TW 2014-01-02 幻影分割壞 bar 由腳本自動修復（回溯縮放，門檻單日 ±40%，台股漲跌停 ±10% 不可能誤觸）；0050 免費歷史約 2009 起。<br>
 ⑧ <b>集中度揭露</b>：2330 佔 0050 權重約五成，50/50 組合等效台積電曝險 ≈ 0.5 ＋ 0.5×0.5 = 75%。<b>這不是分散組合</b>，是台積電 beta 的兩種包裝。<br>
-<span style="color:var(--muted);font-size:.78rem">閘門為週頻（僅週五可能翻轉），套袖 RV20 為日頻（每日可能微調），故本頁每交易日更新。「可行動變化」＝閘門翻轉或任一標的最終權重變動 ≥ 10pp，觸發 email 通知。</span>
+⑨ <b>執行層（{FREEZE_DATE} 與規則同日凍結）</b>：|目標 − 現持| ≥ 10pp 才調整，調整取整至 5% 格；<b>回測主數字含此執行層</b>，與追蹤操作同規則。<br>
+<span style="color:var(--muted);font-size:.78rem">閘門為週頻（僅週五可能翻轉），套袖 RV20 為日頻（每日可能微調），故本頁每交易日更新。「可行動變化」＝閘門翻轉，或今日目標與現持（執行層 executed）差 ≥ 10pp，觸發 email 通知（顯示取整後的建議動作）。</span>
 </div>
 </div>
 
 {tables}
 
 <div class="card">
-<h3>回測縮圖 — 正式追蹤版 vs 50/50 B&amp;H（對數淨值＋回撤）</h3>
+<h3>回測縮圖 — 正式追蹤版（含執行層）vs 50/50 B&amp;H（對數淨值＋回撤）</h3>
 <p style="font-size:.8rem;color:var(--muted);margin-bottom:.6rem">
 回測快照（{BT_NAV['labels'][0]} → {BT_NAV['labels'][-1]}，與 v7-backtest results/vol_targeting/tw_combo.json 同源、靜態轉錄）。
-美股版深度分析（純長軌對照、σ 敏感度、分期、年報酬）見 <a href="/backtest/vol_targeting/">波動率目標回測</a>。</p>
+淨值線＝<b>正式追蹤版（含 10pp 門檻＋5% 取整執行層，與追蹤操作同規則）</b>；B&amp;H 線不變。美股版深度分析（純長軌對照、σ 敏感度、分期、年報酬）見 <a href="/backtest/vol_targeting/">波動率目標回測</a>。</p>
 <div class="grid2">
   <div class="chart-wrap-sm"><canvas id="chart-bt-nav"></canvas></div>
   <div class="chart-wrap-sm"><canvas id="chart-bt-dd"></canvas></div>
@@ -688,16 +765,19 @@ new Chart(document.getElementById('chart-chain'),{{
   }}
 }});
 
-// ---- 3-year weight timeline (replay=dashed, live=solid) ----
+// ---- 3-year weight timeline: executed step lines (thick) + raw target (thin) ----
 var W_LAB={H_LABELS},W_SRC={H_SRC};
 function segDash(ctx){{return W_SRC[ctx.p1DataIndex]==='live'?undefined:[3,3];}}
 new Chart(document.getElementById('chart-weights'),{{
   type:'line',
   data:{{labels:W_LAB,datasets:[
-    {{label:'合成曝險',data:{H_COMB},borderColor:GREEN,backgroundColor:'rgba(22,163,74,0.07)',
-     borderWidth:2.4,pointRadius:0,pointHoverRadius:3,tension:0.15,fill:'origin',segment:{{borderDash:segDash}}}},
-    {{label:'{TICKERS[0]} 腿',data:{H_A},borderColor:BLUE,borderWidth:1.5,pointRadius:0,pointHoverRadius:3,tension:0.15,segment:{{borderDash:segDash}}}},
-    {{label:'{TICKERS[1]} 腿',data:{H_B},borderColor:AMBER,borderWidth:1.5,pointRadius:0,pointHoverRadius:3,tension:0.15,segment:{{borderDash:segDash}}}}
+    {{label:'合成執行',data:{H_CEXE},borderColor:GREEN,backgroundColor:'rgba(22,163,74,0.09)',
+     borderWidth:2.8,stepped:true,pointRadius:0,pointHoverRadius:3,fill:'origin',segment:{{borderDash:segDash}}}},
+    {{label:'{TICKERS[0]} 執行',data:{H_AEXE},borderColor:BLUE,borderWidth:2,stepped:true,pointRadius:0,pointHoverRadius:3,segment:{{borderDash:segDash}}}},
+    {{label:'{TICKERS[1]} 執行',data:{H_BEXE},borderColor:AMBER,borderWidth:2,stepped:true,pointRadius:0,pointHoverRadius:3,segment:{{borderDash:segDash}}}},
+    {{label:'合成目標（理論）',data:{H_COMB},borderColor:'rgba(22,163,74,0.40)',borderWidth:1,pointRadius:0,pointHoverRadius:2,tension:0.15}},
+    {{label:'{TICKERS[0]} 目標',data:{H_A},borderColor:'rgba(21,101,192,0.35)',borderWidth:1,pointRadius:0,pointHoverRadius:2,tension:0.15}},
+    {{label:'{TICKERS[1]} 目標',data:{H_B},borderColor:'rgba(217,119,6,0.35)',borderWidth:1,pointRadius:0,pointHoverRadius:2,tension:0.15}}
   ]}},
   options:{{responsive:true,maintainAspectRatio:false,interaction:{{mode:'index',intersect:false}},
     plugins:{{legend:{{display:true,position:'top',align:'start',labels:{{usePointStyle:true,pointStyle:'line',padding:12}}}},
@@ -763,7 +843,9 @@ new Chart(document.getElementById('chart-bt-dd'),{{
 # change detection
 # ---------------------------------------------------------------------------
 def detect_changes(prev: dict, sigs: dict) -> list:
-    """可行動變化＝閘門翻轉，或任一標的最終權重變動 ≥ 10pp（vs 前一日 state）。"""
+    """可行動變化＝閘門翻轉，或 |今日目標 − 現持（執行層 executed_pct）| ≥ 10pp。
+    改為與現持比（非與前一日目標比），才不會漏掉緩慢累積的漂移。alert 顯示取整後
+    的建議動作（現持 → round(目標/5)×5）。"""
     if not prev or "tickers" not in prev:
         return []
     out = []
@@ -772,15 +854,16 @@ def detect_changes(prev: dict, sigs: dict) -> list:
         if not pt:
             continue
         gate_flip = bool(pt.get("gate")) != bool(sigs[t]["gate"])
-        new_final = round(sigs[t]["final"] * 100, 1)
-        old_final = pt.get("final_weight_pct")
-        big_move = old_final is not None and abs(old_final - new_final) >= 10.0
-        if gate_flip or big_move:
+        target = round(sigs[t]["final"] * 100, 1)
+        held = pt.get("executed_pct")
+        drift = held is not None and abs(target - held) >= 10.0
+        if gate_flip or drift:
+            new_exec = round(target / 5.0) * 5.0
             parts = []
             if gate_flip:
                 parts.append("閘門 " + ("出場→在場" if sigs[t]["gate"] else "在場→出場"))
-            arrow = (f"最終權重 {old_final:.0f}% → {new_final:.0f}%"
-                     if old_final is not None else f"最終權重 {new_final:.0f}%")
+            arrow = (f"最終權重 {held:.0f}% → {new_exec:.0f}%"
+                     if held is not None else f"最終權重 → {new_exec:.0f}%")
             out.append(f"<b>{t}</b>：{'、'.join(parts) + ' → ' if parts else ''}{arrow}")
     return out
 
@@ -817,6 +900,11 @@ def main():
     print(f"History: {len(history)} days (backfill {len(backfill)}, "
           f"span {history[0]['date']}→{history[-1]['date']})")
 
+    # ---- execution layer replay (deterministic from history) ----
+    exec_replay = band_exec_replay(history)
+    print(f"Exec layer: {len(exec_replay['events'])} events, "
+          f"current executed " + ", ".join(f"{t} {exec_replay['last'][t]:.0f}%" for t in TICKERS))
+
     if changes:
         last_change_date = data_date
         last_change_desc = "; ".join(c.replace("<b>", "").replace("</b>", "") for c in changes)
@@ -840,7 +928,7 @@ def main():
             ALERT_FILE.unlink()
         print("No actionable change vs last run.")
 
-    html = generate_html(sigs, changes, last_change_date, history)
+    html = generate_html(sigs, changes, last_change_date, history, exec_replay)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(html, encoding="utf-8")
     print(f"Written {OUTPUT} ({len(html):,} bytes)")
@@ -861,6 +949,7 @@ def main():
                 "rv20_pct": round(sigs[t]["rv20"] * 100, 2),
                 "sleeve_weight": round(sigs[t]["sleeve"], 4),
                 "final_weight_pct": round(sigs[t]["final"] * 100, 1),
+                "executed_pct": exec_replay["last"][t],
                 "wk_date": sigs[t]["wk_date"],
                 "wk_close": round(sigs[t]["wk_close"], 2),
                 "w52": round(sigs[t]["w52"], 2),
