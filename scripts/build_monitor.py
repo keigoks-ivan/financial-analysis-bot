@@ -24,6 +24,7 @@ import json
 import os
 import sys
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_DIR = os.path.join(ROOT, "docs", "monitor", "data")
@@ -624,14 +625,31 @@ def main() -> int:
             else:
                 raw[key] = [(d, round(v - bm[d], 8)) for d, v in a if d in bm]
 
-    # as_of ＝ S&P 500 最後一根 bar 的日期（美股收盤＝當日快照的錨）。必須在統計
-    # 之前決定：任何 series 都不得使用晚於 as_of 的 bar，截斷要發生在算 val／chg／
-    # z／pctile／spark／streak 之前，否則未來 bar 的行情會被算進今日的統計。
+    # as_of ＝ S&P 500 最後一根 bar 的日期（美股收盤＝當日快照的錨），再夾住不得
+    # 晚於「今天（ET）」。必須在統計之前決定：任何 series 都不得使用晚於 as_of 的
+    # bar，截斷要發生在算 val／chg／z／pctile／spark／streak 之前，否則未來 bar 的
+    # 行情會被算進今日的統計。
+    #
+    # 時鐘取 America/New_York 而非 UTC，因為 as_of 本來就錨在美股收盤——ET 的
+    # 「今天」恆等於當前的美股交易日；UTC 會在美股收盤後、當日尚未結束時就換日
+    # （cron 排 23:30 UTC 但 GitHub Actions 實際常延遲到 00:00–02:00 UTC 才跑，
+    # 此時 UTC 已是隔天、ET 仍是當天），拿 UTC 當夾子會鬆一天、形同不夾。
+    #
+    # 這個夾子只在異常時才咬：正常 cron（23:30 UTC ＝ ET 當天 19:30、美股已收）
+    # sp500 最後 bar 就是 ET 今天，min() 取的還是它，行為完全不變。只有 yfinance
+    # 把 bar 戳到未來時才生效——若不夾，未來的美股 bar 會把 as_of 一起往前推，
+    # 亞股的未來 bar 就變成「合法 ≤ as_of」而再度漏過 clip_to_as_of（原 bug 的
+    # 第二條路徑）。夾住後 sp500 自己的未來 bar 也會被下方 clip 迴圈截掉。
     sp500_pts = raw.get("sp500")
     if not sp500_pts:
         warn("no S&P 500 data — aborting without write")
         return 1
-    as_of = sp500_pts[-1][0]
+    today_et = datetime.now(ZoneInfo("America/New_York")).strftime("%Y-%m-%d")
+    sp500_last = sp500_pts[-1][0]
+    as_of = min(sp500_last, today_et)
+    if as_of != sp500_last:
+        warn(f"sp500 最後 bar {sp500_last} 晚於今天（ET）{today_et}——as_of 夾為 "
+             f"{as_of}；晚於此的 bar（含 sp500 自身）全部在統計前截斷")
     as_of_dt = datetime.strptime(as_of, "%Y-%m-%d")
 
     items, gaps = {}, []
