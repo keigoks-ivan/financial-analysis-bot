@@ -89,6 +89,15 @@ FAIL=0
 # Real v12.7 output is DD ~105-108KB; v13 folds in the decision layer (~+25-35KB).
 # The hard floor leaves margin and only fires on genuinely thin new reports
 # (the "偷懶" pattern). NOT a byte target — anti-灌水 rule still governs upward.
+#
+# 2026-07-17 recalibration (QC-38): the skill's TARGET band is now mode-split —
+#   standard mode (no attached docs):        ~110-135KB  (measured: JNJ 117 / ASML 125)
+#   attached-doc mode (§4.5 triggered):      ~250-400KB  (measured: NFLX 308 / TSM 356
+#                                                          / ISRG 364 / GE 384)
+# These gate NUMBERS are deliberately UNCHANGED: they are LOWER bounds only, and the
+# 110KB floor still correctly passes lean-but-complete standard reports (JNJ 117KB).
+# There is NO upper gate by design — over-band is an editorial matter (writer must
+# explain it in self-check), not a commit blocker. Only the skill prose moved.
 # Bypass a legitimately-lean report with: git commit --no-verify
 check_report_size() {  # $1=file  $2=hardBytes  $3=warnBytes  $4=label
   _b=$(wc -c < "$1" 2>/dev/null || echo 0)

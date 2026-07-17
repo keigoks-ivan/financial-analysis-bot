@@ -19,7 +19,7 @@ description: "收到股票 ticker 後，產出單一 v14.12 DD 報告（docs/dd/
 | **章節重編** | 舊 DD §4-§13 統一 **−2 位移**（§4→§2、§5→§3、§6→§4、§7→§5、§8→§6、§9→§7、§10→§8、§11→§9、§12→§10、§13→§11），**子節字母全保留**（§5.F→§3.F、§8.I→§6.I、§9.F→§7.F、§10.E→§8.E、§11.F→§9.F、§12.D→§10.D、§12.E→§10.E）。舊 DD §1→v13 §1。舊 DD §2 擇時機制→附錄 A。舊 DD §3 三方辯論已砍（v12.5 起）。 |
 | **Single Thing 統一** | 舊 DD §5.F 與舊 DCA §5 統一成 **v13 §3.F 的「一個」binary trigger**；§13b pre-mortem 必須 cross-check 並可修正它。 |
 | **dd-meta v13** | `schema: "v14.12"`、`<meta name="dd-schema-version" content="v14.12">`；保留 22 個 v12 欄 + 5 個 v13 必填欄（`dca_verdict`/`dca_role`/`moat_trend`/`runway_post_y5`/`ev5y_pct`）+ 20 個選填欄（`irr_base_pct`/`max_dd_pct`/`asym_ratio`/… + v14.5 新增 `archetype`/`rearm_trigger`/`cycle_position`/`cycle_verdict`）。見 QC-32。 |
-| **size floor** | v13 單檔 hard ~110KB / soft ~125KB（added-only）。Part I 基本面 ≥60%；Part II 決策層是淨增深度（非灌水）。pre-commit gate 對 `schema":"v13` 檔強制 110KB。見 QC-38。 |
+| **size floor** | v13 單檔 hard ~110KB（added-only，下界深度地板）。目標帶依模式分流：**標準模式 ~110-135KB／隨附文獻模式（§4.5 觸發）~250-400KB**（2026-07-17 實測校準）。Part I 基本面 ≥60%；Part II 決策層是淨增深度（非灌水）。pre-commit gate 對 `schema":"v13` 檔強制 110KB。見 QC-38。 |
 
 **設計守則（不可違反）**：① 只有**一個**人面對裁決（§14 進場/觀望/迴避）；A+/A/B/C/X 是 metadata，不重複當頭銜。② 基本面研究 Part I 做一次，Part II 不重搜（明確標注引用來源章節）。③ 反灌水鐵律不變（QC-38）：篇幅是深度的結果，不是目標。④ moat_trend（§7）為**權威趨勢線**，對齊 memory `dca_trend_authoritative` — 下游聚合器一律以 dd-meta.moat_trend 為準。
 
@@ -429,9 +429,9 @@ dd-meta = 8 個下游 pipeline 的資料契約：22 個 v12 必填欄 + 5 個 v1
 5. **Part I 佔比 ≥ 60%**;檔案 < 110KB（與 hard floor 一致）→ 深度不足，優先補上表缺的量化表格。
 6. Part II 是否真的疊加（決策矩陣 / opportunity cost / Max DD / pre-mortem 三段倒推都到位），而非把 Part I 結論換句話重貼？
 
-**反灌水（不變的底線）**:篇幅是深度的結果，不是目標本身。達 ~115KB 的正道是「五個基本面模組 × 真量化表格 + 四個決策模組 × 真決策內容」，**不是**同一數字換句話重寫、無 source 的長篇定性、或回填估值/技術。寧可 105KB 全自算，不要 125KB 注水。
+**反灌水（不變的底線）**:篇幅是深度的結果，不是目標本身。達標的正道是「五個基本面模組 × 真量化表格 + 四個決策模組 × 真決策內容」，**不是**同一數字換句話重寫、無 source 的長篇定性、或回填估值/技術。寧可 105KB 全自算，不要 125KB 注水;隨附文獻模式同理——寧可 250KB 每點都對得上原文，不要 400KB 把 PDF 抄一遍（§4.5 是壓縮成 read-through，逐頁摘要＝違規）。
 
-**深度標竿（flagship 全深度，v14.2 起預設）**:每份新 DD **第一次生成就要達 flagship 全深度**（~110KB hard floor 不是事後補、更不是用 `--no-verify` 放行 lean 版）。參考範本 = `docs/dd/DD_TSM_20260623.html`（110KB）：五個量化模組全部「yfinance 三表自算的真數字表」——§8.E（DuPont 三因子 + CCC 逐年 DSO/DIO/DPO + ROIC 含/剔現金時序）、§10.D（多年 capex/股息/FCF/折舊 track + M&A 全史）、§6.I（分部 量×價 $ build）、§7.F（對手完整 P&L + 市佔演變 + 各對手策略敘述）、§9.F（逐段 TAM/SAM + 利潤池 OI margin 代理 + 三維營收 + 單位經濟）。**執行紀律**:搜尋階段就把 §8.E/§10.D 需要的多年三表（income/balance/cashflow 全欄 + AR/Inv/AP 營運資金項）一次抓齊（見【即時數據協議】yfinance 腳本），章節撰寫時直接建表，不要先寫精簡版再回頭補。`--no-verify` 僅限「純驗證/拋棄用、不上站」的報告;要上站的報告一律走 flagship 全深度 + 正常 commit 過 floor。
+**深度標竿（flagship 全深度，v14.2 起預設）**:每份新 DD **第一次生成就要達 flagship 全深度**（~110KB hard floor 不是事後補、更不是用 `--no-verify` 放行 lean 版）。參考範本——**標準模式** = `docs/dd/DD_TSM_20260623.html`（110KB）;**隨附文獻模式** = `docs/dd/DD_NFLX_20260717.html`（308KB，1 份逐字稿）或 `docs/dd/DD_TSM_20260717.html`（356KB，5 份文獻），其 §4.5 為壓縮 read-through ＋跨文件分歧裁決之範例。兩模式的模組要求相同：五個量化模組全部「yfinance 三表自算的真數字表」——§8.E（DuPont 三因子 + CCC 逐年 DSO/DIO/DPO + ROIC 含/剔現金時序）、§10.D（多年 capex/股息/FCF/折舊 track + M&A 全史）、§6.I（分部 量×價 $ build）、§7.F（對手完整 P&L + 市佔演變 + 各對手策略敘述）、§9.F（逐段 TAM/SAM + 利潤池 OI margin 代理 + 三維營收 + 單位經濟）。**執行紀律**:搜尋階段就把 §8.E/§10.D 需要的多年三表（income/balance/cashflow 全欄 + AR/Inv/AP 營運資金項）一次抓齊（見【即時數據協議】yfinance 腳本），章節撰寫時直接建表，不要先寫精簡版再回頭補。`--no-verify` 僅限「純驗證/拋棄用、不上站」的報告;要上站的報告一律走 flagship 全深度 + 正常 commit 過 floor。
 
 ### QC-39｜產業態勢變化雙向掃描（v14.0，AVGO / SNDK 教訓）
 

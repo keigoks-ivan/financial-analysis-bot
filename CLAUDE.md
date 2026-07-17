@@ -211,9 +211,12 @@ DD 報告有 size floor，但**這是深度閘門，不是 byte 目標** — 達
 
 | 類型 | hard floor（commit 擋下） | soft warn（放行但提示） | skill 目標 |
 |---|---|---|---|
-| **v13 DD**（`"schema":"v13`，含決策層） | < 110KB | < 125KB | ~110–125KB（Part I 基本面 ≥ 60%；Part II 決策層淨增深度） |
+| **v13 DD·標準模式**（`"schema":"v13`，無隨附文獻） | < 110KB | < 125KB | **~110–135KB**（Part I 基本面 ≥ 60%；Part II 決策層淨增深度） |
+| **v13 DD·隨附文獻模式**（§4.5 觸發：附券商報告／逐字稿） | < 110KB | < 125KB | **~250–400KB**（2026-07-17 實測校準；gate 未變，僅目標帶分流） |
 | legacy v12 DD（`docs/dd/DD_*.html`） | < 80KB | < 90KB | ~90–100KB（§5+§8+§9+§10+§11+§12 ≥ 60%） |
 | legacy DCA（`docs/dca/DCA_*.html`，已退役不再新增） | < 50KB | < 55KB | — |
+
+**兩模式分流的由來（2026-07-17）**：舊規格只有單一 `~110–125KB` 目標帶，**從未為隨附文獻模式建模**。2026-07 六份實測為雙峰且成因明確——無附件的 JNJ 117KB／ASML 125KB **精準落在舊帶內**（規格對標準模式有效，故不動）；四份帶 §4.5 的報告全部落 **308–384KB**（NFLX 308／TSM 356／ISRG 364／GE 384）。兩個獨立執行者各自做過完整壓縮重寫（NFLX 345→308、ISRG 386→364）後回報同一結論：**再壓需砍約 60% 的「分析」而非「修辭」**，因為 §4.5 逐點 read-through ＋ 跨文件分歧裁決 ＋ 證據等級標註 ＋ 下游回填本身就撐開篇幅。**不是四份各自失控，是規格漏了一個模式**。本次**只擴目標帶、不動任何實質規則**（hard floor／Part I ≥60%／反灌水鐵律／七個量化表格全部原封不動）；**gate 全為下界、無上界**，超帶不阻斷 commit，但寫手須於自檢說明超帶原因。新帶**不是新配額**：標準模式無附件卻寫到 250KB+ ＝ 灌水嫌疑。
 
 **只對「新增」檔生效**（`git diff --cached --diff-filter=A`）— 全新報告永遠是新 `*_YYYYMMDD.html`（Add），對 legacy 報告補 metadata 是 Modify，不會被擋。gate 寫在 `scripts/hooks/pre-commit`（v13 floor 對 `"schema":"v13` 檔生效，legacy v12 維持 80KB），真要放行 lean-but-complete 報告用 `git commit --no-verify`。
 
