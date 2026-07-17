@@ -36,6 +36,12 @@ jobs:
       - name: Run W52 × adaptive vol-target update
         run: python scripts/update_long_track_w52_adaptive.py
 
+      - name: Run W52 × adaptive leverage shadow sub-page
+        # Shadow (paper) leverage tracker (docs/long-track-w52-adaptive/leverage.html).
+        # Same two-cron schedule; NO email of its own — notifications are covered by
+        # the cap 1.0 main system.
+        run: python scripts/update_long_track_w52_adaptive_leverage.py
+
       - name: Read change alert
         id: alert
         run: |
@@ -93,7 +99,7 @@ jobs:
         run: |
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
-          git add docs/long-track-w52-adaptive/index.html docs/long-track-w52-adaptive/state.json
+          git add docs/long-track-w52-adaptive/index.html docs/long-track-w52-adaptive/state.json docs/long-track-w52-adaptive/leverage.html docs/long-track-w52-adaptive/leverage_state.json
           git diff --staged --quiet || git commit -m "Auto update W52 × adaptive vol-target (US+TW): $(date -u '+%Y-%m-%d')"
           for i in 1 2 3 4 5 6; do
             if git push; then
