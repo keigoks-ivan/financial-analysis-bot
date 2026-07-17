@@ -113,6 +113,16 @@ SOURCE_FRESH_DAYS = {
     "regime": 16, "macro_clock": 62, "variance": 16, "kill": 10,
     "sector": 4,   # as_of＝monitor as_of（日更）
 }
+# 未來源容忍度（日曆天）：源 as_of 超前 ref 在此天數內視為正常時鐘偏移，不標
+# stale；超過才當資料完整性問題。實測與結構上界皆 ≤ 3 天（見 source_staleness
+# docstring 的時鐘分岔清單），最小的可信損壞特徵是月份解析錯誤（≈28-31 天），
+# 故 7 天落在 4..27 天的空窗區內——寬到不誤殺任何時鐘偏移，窄到仍抓得住損壞。
+SOURCE_FUTURE_TOL_DAYS = 7
+# 月頻投影源（macro_clock 的 YYYY-MM → 月底）的未來上限：合法投影最多領先 ref
+# ~31 天（ref 落在月初、當月 31 天），故 40 天不誤殺任何合法投影；而年月打錯的
+# 特徵遠在其外（月份錯 ≈168 天、年份錯 ≈1476 天）仍抓得住。豁免要有界——無上限
+# 的豁免等於對這條源永久關掉損壞守衛。
+PROJECTED_FUTURE_TOL_DAYS = 40
 
 REVERSAL_FLIP_PCTL = 30.0     # 三點翻折門檻（分位點，兩腿皆須 ≥ 此值）
 # ── 源 9：sector（產業結構分歧）門檻常數 ────────────────────────────────
@@ -640,7 +650,42 @@ def _month_end(ym):
 
 
 def source_staleness(as_of, sources):
-    """回傳 stale source 名單。>頻率×2（日曆天）或缺檔 → stale。"""
+    """回傳 stale source 名單。>頻率×2（日曆天）或缺檔 → stale。
+
+    ⚠ 負 age（源日期晚於 ref）**不等於 stale**——改這裡前請先讀完本段。
+
+    這與 build_monitor／build_monitor_internals 的「未來 bar」守衛語意相反，
+    不要照套：那兩處的未來 bar ＝**錯資料**（拿明天的收盤價算今天的 z），必須
+    排除；此處的 sources 是**姊妹 pipeline 的 as_of 標籤**，不是拿來計算的資料
+    點——標籤超前只代表兩邊時鐘不同，資料本身仍是最新的。把它標 stale ＝對著
+    最新鮮的資料喊過期。
+
+    時鐘為什麼天生會分岔：ref ＝ monitor as_of ＝ min(sp500_last, today_et)
+    （build_monitor），釘在**最後一根收盤**；而各源各有自己的時戳法——
+
+      * rotation：取自己 cache 的最後交易日，可能比 monitor 早一天收到當日 bar
+        → age = −1（實測常態，2026-07-14／07-15 皆是）。
+      * variance：as_of 取 generated_at ＝**執行日戳**，且走台北 UTC+8；cron
+        週六 02:00 UTC 跑而 ref 停在週五收盤 → age = −1（實測 2026-07-10）。
+      * regime：同為執行日戳（UTC），cron 週日 12:00 UTC 跑而 ref 停在週五收盤
+        → age = −2，**每週一常態**；長週末／耶誕週（週四收盤後接假日再接週末）
+        可達 −3。
+
+    macro_clock 是月頻源：as_of ＝ "YYYY-MM"，被 _month_end() **投影**成月底，
+    而月底本來就可能落在 ref 之後（設計本意，不是資料損壞）。投影出來的日期不是
+    觀測時戳，對它套時鐘偏移守衛是範疇錯誤，故月頻投影改用自己的上限
+    （PROJECTED_FUTURE_TOL_DAYS，看月底領先量而非時鐘偏移）——**豁免有界**：
+    無上限的豁免＝對這條源永久關掉損壞守衛，年份打錯（如 "2030-07"）將永遠
+    抓不到。（現況其實觸不到：
+    build_macro_clock 的增長軸序列 CFNAI／PAYEMS／UNRATE 都有出版時滯，
+    axes.dropna() 會擋掉只有 T10YIE 有值的當月列，as_of 因此永遠取不到當月。此
+    豁免是**結構保險**——上游哪天加了當月 nowcast 序列，當月就會整個月被誤判
+    過期。）
+
+    真正該抓、而 `age > thr` 永遠抓不到的，是**任何時鐘偏移都解釋不了的未來**
+    （年月打錯／解析錯誤／資料損壞）——那才是資料完整性問題，門檻見
+    SOURCE_FUTURE_TOL_DAYS。
+    """
     stale = []
     ref = date.fromisoformat(as_of)
     for name, sdate in sources.items():
@@ -649,14 +694,21 @@ def source_staleness(as_of, sources):
             stale.append(name)
             continue
         d = sdate
+        projected = False   # 月頻→月底＝投影日期，非觀測時戳（見 docstring）
         if name == "macro_clock" and len(sdate) == 7:  # YYYY-MM → 月底
             d = _month_end(sdate)
+            projected = True
         try:
             age = (ref - date.fromisoformat(d[:10])).days
         except ValueError:
             stale.append(name)
             continue
+        # 未來容忍度：觀測時戳看時鐘偏移（≤3 天），月頻投影看月底領先量（≤31 天）。
+        tol = PROJECTED_FUTURE_TOL_DAYS if projected else SOURCE_FUTURE_TOL_DAYS
         if age > thr:
+            stale.append(name)
+        elif age < -tol:
+            # 超出該源能解釋的未來 → 資料完整性問題（非過期，但同樣不可信）
             stale.append(name)
     return sorted(stale)
 
