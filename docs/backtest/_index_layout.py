@@ -158,6 +158,7 @@ DIRECTORY = {
     "lev": [
         ("系統", [
             ("/backtest/leverage_voltarget/", "期貨槓桿疊加", None, False),
+            ("/backtest/vol_targeting/leverage.html", "W52×自適應 150% 槓桿", "研究", False),
         ]),
     ],
 }
