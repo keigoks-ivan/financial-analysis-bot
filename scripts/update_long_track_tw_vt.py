@@ -36,10 +36,10 @@ financial-analysis-bot（scripts/）兩處逐位元相同——nav 匯入以 try
 排程：每交易日台股收盤（13:30 台北）後數小時（套袖 RV20 為日頻量，閘門為週頻，
 故日更）。
 
-圖像化（Chart.js）：合成曝險量表＋每腿乘法鏈 bar（閘門×套袖→最終權重）、近 12
-個月權重時間軸（兩腿最終權重＋合成曝險）＋ RV20 vs σ 目標、回測縮圖（對數淨值＋
+圖像化（Chart.js）：合成曝險量表＋每腿乘法鏈 bar（閘門×套袖→最終權重）、近三年
+權重時間軸（兩腿最終權重＋合成曝險）＋ RV20 vs σ 目標、回測縮圖（對數淨值＋
 回撤，BT_NAV 靜態快照）。時間軸資料存於 state.json 的 history 陣列：首次生成以
-build_backfill 規則回放近 252 交易日（source='replay'），此後 CI 逐日以 _daily_record
+build_backfill 規則回放近 756 交易日＝約三年（source='replay'），此後 CI 逐日以 _daily_record
 追加當日實錄（source='live'）；merge_history 以日期為 key 冪等（同日重跑不重複、實錄
 不被回放覆蓋），上限 HISTORY_CAP。回放與實錄在圖上以虛線／實線區隔（誠實紀律，回放
 不偽裝成實錄）。回放計算與每日腳本完全一致（共用 _gate_core 與同式 RV20）。
@@ -107,8 +107,8 @@ BT_NAV = {
     "bh": [1.0,1.0205,1.0854,1.0937,1.1172,1.1753,1.1699,1.206,1.1527,1.2653,1.3398,1.3313,1.3434,1.4115,1.376,1.4074,1.3993,1.3779,1.3408,1.2522,1.2587,1.3183,1.3094,1.3234,1.3046,1.3571,1.454,1.3659,1.4127,1.4942,1.5854,1.614,1.6664,1.7063,1.6709,1.6654,1.7013,1.7358,1.7425,1.778,1.8402,1.9437,1.9918,2.0208,1.9927,2.1702,2.0567,2.0717,2.2457,2.1758,2.1827,2.061,2.0572,2.0682,2.2694,2.3346,2.3639,2.1092,2.0602,2.0436,2.039,2.1672,2.2179,2.3303,2.1633,2.2502,2.3827,2.3669,2.4755,2.6766,2.7267,2.9351,2.8249,2.787,2.4175,2.7011,2.6291,2.8199,3.5482,3.5185,3.5761,3.5722,3.9517,4.3221,4.7258,4.882,4.8395,4.9986,4.9241,4.9597,4.8528,5.072,4.8828,4.9028,4.9678,5.1944,5.2682,5.0789,5.0551,4.634,4.7476,4.1458,4.3629,4.343,3.7348,3.5149,4.272,3.9892,4.5102,4.4725,4.6343,4.4195,4.8308,4.9772,4.9602,4.8306,4.6709,4.6692,5.0781,5.2415,5.4353,5.8851,6.5663,6.636,6.9295,7.9825,7.7514,7.8048,7.933,8.4057,8.1683,8.6954,9.1242,8.5425,7.5887,7.4903,7.9832,8.6929,9.423,9.5117,10.609,12.04,11.5783,12.3438,13.9957,15.6888,13.9375,17.1716,19.4701,19.9497,18.9252],
 }
 
-BACKFILL_DAYS = 252                        # 首次生成回放窗（近 12 個月交易日）
-HISTORY_CAP = 400                          # state.json history 陣列上限，防肥大
+BACKFILL_DAYS = 756                        # 回放窗（近三年交易日；2026-07-17 自 252 擴）
+HISTORY_CAP = 820                          # state.json history 陣列上限（>756 留實錄餘裕），防肥大
 
 
 # ---------------------------------------------------------------------------
@@ -405,7 +405,7 @@ def generate_html(sigs: dict, changes: list | None, last_change_date: str | None
     cards = "".join(ticker_card(t, sigs[t]) for t in TICKERS)
     tables = "".join(recent_table(t, sigs[t]) for t in TICKERS)
 
-    # ---- timeline data (last ~12 months, replay + live) ----
+    # ---- timeline data (last ~3 years, replay + live) ----
     def _col(fn):
         return json.dumps([fn(r) for r in history], separators=(",", ":"))
     H_LABELS = _col(lambda r: r["date"])
@@ -595,7 +595,7 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 </div>
 
 <div class="card">
-<h3>近 12 個月權重時間軸 — 兩腿最終權重 ＋ 合成曝險</h3>
+<h3>近三年權重時間軸 — 兩腿最終權重 ＋ 合成曝險</h3>
 <p style="font-size:.8rem;color:var(--muted);margin-bottom:.5rem">
 逐日目標權重。<b style="color:var(--text)">實線＝每日實錄</b>（CI 逐日追加），<b>虛線＝規則回放</b>（首次生成時以完全相同的規則往回重算，非當日實錄，誠實區隔）。
 窗 {span}，共 {len(history)} 個交易日（回放 {n_replay}／實錄 {n_live}）。</p>
@@ -688,7 +688,7 @@ new Chart(document.getElementById('chart-chain'),{{
   }}
 }});
 
-// ---- 12-month weight timeline (replay=dashed, live=solid) ----
+// ---- 3-year weight timeline (replay=dashed, live=solid) ----
 var W_LAB={H_LABELS},W_SRC={H_SRC};
 function segDash(ctx){{return W_SRC[ctx.p1DataIndex]==='live'?undefined:[3,3];}}
 new Chart(document.getElementById('chart-weights'),{{
@@ -810,7 +810,7 @@ def main():
 
     # ---- history: rule-replay backfill (once) + idempotent daily live append ----
     prev_history = prev_state.get("history", [])
-    backfill = build_backfill(px_map) if not prev_history else []
+    backfill = build_backfill(px_map) if len(prev_history) < BACKFILL_DAYS else []
     daily_date = max(px_map[t].index[-1] for t in TICKERS)
     today_rec = _daily_record(px_map, daily_date, "live")
     history = merge_history(prev_history, backfill, today_rec)

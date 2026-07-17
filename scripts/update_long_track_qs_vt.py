@@ -22,10 +22,10 @@ financial-analysis-bot（scripts/）兩處逐位元相同——nav 匯入以 try
 
 排程：每交易日美股收盤後（套袖 RV20 為日頻量，閘門為週頻，故日更）。
 
-圖像化（Chart.js）：合成曝險量表＋每腿乘法鏈 bar（閘門×套袖→最終權重）、近 12
-個月權重時間軸（兩腿最終權重＋合成曝險）＋ RV20 vs σ 目標、回測縮圖（對數淨值＋
+圖像化（Chart.js）：合成曝險量表＋每腿乘法鏈 bar（閘門×套袖→最終權重）、近三年
+權重時間軸（兩腿最終權重＋合成曝險）＋ RV20 vs σ 目標、回測縮圖（對數淨值＋
 回撤，BT_NAV 靜態快照）。時間軸資料存於 state.json 的 history 陣列：首次生成以
-build_backfill 規則回放近 252 交易日（source='replay'），此後 CI 逐日以 _daily_record
+build_backfill 規則回放近 756 交易日＝約三年（source='replay'），此後 CI 逐日以 _daily_record
 追加當日實錄（source='live'）；merge_history 以日期為 key 冪等（同日重跑不重複、實錄
 不被回放覆蓋），上限 HISTORY_CAP。回放與實錄在圖上以虛線／實線區隔（誠實紀律，回放
 不偽裝成實錄）。回放計算與每日腳本完全一致（共用 _gate_core 與同式 RV20）。
@@ -93,8 +93,8 @@ BT_NAV = {
     "bh": [1.0,1.0414,1.01,0.9616,1.0601,1.0313,1.1272,1.113,1.1194,1.0591,1.1518,1.1302,1.1628,1.1462,1.1475,1.1674,1.0691,1.0511,1.0066,1.0717,1.0997,1.121,1.1495,1.1238,1.1388,1.1393,1.1251,1.2109,1.2318,1.2573,1.2519,1.2716,1.3118,1.2911,1.205,1.2072,1.056,1.0382,1.0512,1.1274,1.1993,1.0867,1.0584,1.0775,0.9222,0.7779,0.6561,0.6836,0.6631,0.6372,0.7134,0.7941,0.8194,0.8388,0.9423,0.9588,0.9891,0.9466,1.0016,1.076,0.9803,1.035,1.1044,1.1393,1.0665,1.0056,1.0708,0.9819,1.1165,1.1883,1.2182,1.2761,1.331,1.3786,1.3527,1.4134,1.3895,1.3404,1.3111,1.2186,1.1763,1.3061,1.2668,1.2582,1.3753,1.4394,1.5031,1.4691,1.3425,1.3921,1.3995,1.4517,1.4286,1.3784,1.4086,1.427,1.4897,1.5101,1.5418,1.5945,1.6499,1.6173,1.6871,1.6525,1.7534,1.8254,1.8579,1.9285,1.8815,1.9867,2.0031,1.9794,2.0609,2.163,2.1601,2.279,2.2575,2.2957,2.44,2.4063,2.3398,2.5187,2.4529,2.4804,2.6049,2.4574,2.4571,2.3125,2.2947,2.5257,2.5709,2.5192,2.3487,2.3471,2.5358,2.4356,2.5918,2.5649,2.8029,2.8771,2.9799,2.9327,2.999,3.0412,3.1794,3.2907,3.3955,3.4416,3.6442,3.5144,3.6714,3.7682,3.8625,4.1225,4.1359,4.1271,4.4923,4.4644,4.326,4.1876,4.5221,4.4514,4.5849,4.7836,4.723,4.232,4.3019,3.943,4.3337,4.5498,4.7059,5.0555,4.4535,4.8943,5.1055,4.9993,5.125,5.4177,5.6436,5.9784,5.9874,5.6856,5.163,5.9185,6.278,6.7384,7.2841,7.8826,7.627,7.5272,8.6707,9.1203,9.3084,9.5976,9.7388,10.0145,10.0819,10.6627,10.8364,11.2248,10.6055,11.3826,12.1386,12.3221,11.1225,10.7297,11.0155,9.4532,9.6756,8.4303,9.6542,8.9471,7.8619,8.1089,9.1435,8.281,9.4178,9.4492,10.3702,10.0788,11.3194,11.9891,12.5526,12.2899,11.5362,11.178,12.6477,13.6092,14.1612,15.5222,16.1017,15.3645,16.7829,18.0381,17.4251,17.4084,17.7183,17.5133,17.9963,18.083,18.3491,17.698,16.2215,16.3392,18.191,20.2405,20.8494,21.0066,22.8691,24.6987,24.1468,24.3765,25.973,25.7687,24.43,30.221,34.5695,36.2044,34.699],
 }
 
-BACKFILL_DAYS = 252                        # 首次生成回放窗（近 12 個月交易日）
-HISTORY_CAP = 400                          # state.json history 陣列上限，防肥大
+BACKFILL_DAYS = 756                        # 回放窗（近三年交易日；2026-07-17 自 252 擴）
+HISTORY_CAP = 820                          # state.json history 陣列上限（>756 留實錄餘裕），防肥大
 
 
 # ---------------------------------------------------------------------------
@@ -370,7 +370,7 @@ def generate_html(sigs: dict, changes: list | None, last_change_date: str | None
     cards = "".join(ticker_card(t, sigs[t]) for t in TICKERS)
     tables = "".join(recent_table(t, sigs[t]) for t in TICKERS)
 
-    # ---- timeline data (last ~12 months, replay + live) ----
+    # ---- timeline data (last ~3 years, replay + live) ----
     def _col(fn):
         return json.dumps([fn(r) for r in history], separators=(",", ":"))
     H_LABELS = _col(lambda r: r["date"])
@@ -557,7 +557,7 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 </div>
 
 <div class="card">
-<h3>近 12 個月權重時間軸 — 兩腿最終權重 ＋ 合成曝險</h3>
+<h3>近三年權重時間軸 — 兩腿最終權重 ＋ 合成曝險</h3>
 <p style="font-size:.8rem;color:var(--muted);margin-bottom:.5rem">
 逐日目標權重。<b style="color:var(--text)">實線＝每日實錄</b>（CI 逐日追加），<b>虛線＝規則回放</b>（首次生成時以完全相同的規則往回重算，非當日實錄，誠實區隔）。
 窗 {span}，共 {len(history)} 個交易日（回放 {n_replay}／實錄 {n_live}）。</p>
@@ -647,7 +647,7 @@ new Chart(document.getElementById('chart-chain'),{{
   }}
 }});
 
-// ---- 12-month weight timeline (replay=dashed, live=solid) ----
+// ---- 3-year weight timeline (replay=dashed, live=solid) ----
 var W_LAB={H_LABELS},W_SRC={H_SRC};
 function segDash(ctx){{return W_SRC[ctx.p1DataIndex]==='live'?undefined:[3,3];}}
 new Chart(document.getElementById('chart-weights'),{{
@@ -769,7 +769,7 @@ def main():
 
     # ---- history: rule-replay backfill (once) + idempotent daily live append ----
     prev_history = prev_state.get("history", [])
-    backfill = build_backfill(px_map) if not prev_history else []
+    backfill = build_backfill(px_map) if len(prev_history) < BACKFILL_DAYS else []
     daily_date = max(px_map[t].index[-1] for t in TICKERS)
     today_rec = _daily_record(px_map, daily_date, "live")
     history = merge_history(prev_history, backfill, today_rec)
