@@ -888,9 +888,10 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
     <h1>自適應 σ 長線 × 波動率目標 — 前瞻 OOS 追蹤</h1>
     <div class="sub">美股 QQQ+SMH ＋ 台股 0050+2330 · 週線長軌閘門 × 自適應 σ 套袖（σ_t＝近 3 年 RV20 中位數）· Long only · 固定 vs 自適應 對照（未採用）</div>
     <div style="margin-top:.6rem;display:flex;gap:.4rem;flex-wrap:wrap">
-      <a href="/long-track-adaptive-vt/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border-radius:6px;background:var(--text);color:#fff;text-decoration:none">自適應波動率（本頁）</a>
-      <a href="/long-track-qs-vt/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">固定 σ QQQ+SMH</a>
-      <a href="/long-track-tw-vt/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">固定 σ 0050+2330</a>
+      <a href="/long-track-adaptive-vt/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border-radius:6px;background:var(--text);color:#fff;text-decoration:none">自適應美台總覽（本頁）</a>
+      <a href="/long-track-qs-vt/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">QQQ+SMH 波動率（固定 σ）</a>
+      <a href="/long-track-qs-vt/adaptive.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">自適應 σ 版美股子頁</a>
+      <a href="/long-track-tw-vt/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">0050+2330 波動率（固定 σ）</a>
       <a href="/backtest/vol_targeting/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">波動率目標回測</a>
     </div>
   </div>

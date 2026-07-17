@@ -1,15 +1,32 @@
-"""LIVE renderer for /backtest/index.html (US overview) — muted palette.
+"""LIVE renderer for /backtest/index.html — four-tab categorised directory.
 
 This is the layout that actually builds the live page: _build_index.py's
 main() calls render() here and writes docs/backtest/index.html.  Data
 (GROUPS/RET/SCATTER/BH_ROWS/PERIOD_CAGR...) still lives in _build_index.py;
 its legacy render()/TEMPLATE are DEAD code kept only as data helpers.
-Design per owner feedback:
-  * US-only page (TW split to /backtest/tw/).  Sections: 波段 + 多資產。
-  * One live card only (SMH/QQQ STX50); SPY/QQQ E3 card removed.
-  * Restrained palette: green=adopted/live, red=rejected, grey=everything else.
-    No per-system rainbow; charts default to live + benchmarks.
 
+2026-07-17 redesign — four-tab true filtering
+=============================================
+Owner feedback: the four top tabs (美股/台股/多資產/槓桿疊加) used to be plain
+page-links while the shared make_toggle pill bar dumped ALL seven groups
+(多資產/台股波段/台股選擇權/日內…) onto every page — so the 美股 page showed
+台股/多資產/日內 rows.  Now the index is a single page whose four tabs are
+pure front-end JS filters over a per-tab directory:
+
+  * Every navigable entry (pill / link) lives in EXACTLY ONE tab.  The only
+    cross-tab links are the always-visible 方法論 utilities (評估標準/術語表)
+    and /long-track-adaptive-vt/ (自適應美台總覽 — legitimately US+TW).
+  * Tabs switch client-side (showTab); the standalone /backtest/{tw,multi,
+    leverage}/ overview pages still exist and are reached via each tab's CTA.
+  * Classification (2026-07): GEM(SPY/ACWX 雙動能) → 多資產 (global-rotation
+    nature); 全球/18-市場 日週研究(dvw_global/dvw_deep) → 多資產; SG Trend /
+    全球斜率 → 多資產; all TXO + 台指日內 → 台股.  The US-overview comparison
+    ANALYTICS (波段 ranking, 完整比較表, scatter, 逐年/分期 CAGR) are left
+    exactly as the pinned data defines them — GEM stays there only as a
+    benchmarked 參照 row/column, its NAV pill lives under 多資產.  完整比較表
+    is filtered to US groups (🇹🇼 group belongs to the 台股 tab/page).
+
+No sub-page generator is re-run; only index.html is regenerated.
 Run: python3 _build_index.py   (this module is imported, not run directly)
 """
 from __future__ import annotations
@@ -19,7 +36,6 @@ from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from _nav_common import make_toggle
 import _build_index as idx
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
@@ -38,6 +54,135 @@ LIVE_CARD = {
     "url": "/backtest/long_track_smh/",
 }
 
+# ── per-tab directory ────────────────────────────────────────────────────
+# tab -> [ (row_label, [ (url, text, status_or_None, is_current), ... ]) ]
+# status ∈ 否決/失敗/負貢獻 (red) · 未過/觀察/研究/模擬中/專區 (amber) · 追蹤中/即將 (blue)
+DIRECTORY = {
+    "us": [
+        ("總覽・工具", [
+            ("/backtest/", "20 年總覽", None, True),
+            ("/backtest/10y/", "10 年對比", None, False),
+            ("/backtest/ma_sensitivity/", "MA 敏感度", None, False),
+            ("/backtest/free_lunch/", "分散與免費午餐", None, False),
+        ]),
+        ("個別系統", [
+            ("/backtest/long_track_smh/", "SMH/QQQ 進攻", None, False),
+            ("/backtest/long_track_ensemble/", "SPY/QQQ 集成", None, False),
+            ("/backtest/slope_filter/", "SPY/AGG 斜率", None, False),
+            ("/backtest/long_track/", "SPY/QQQ 長軌", None, False),
+            ("/backtest/long_track_qqq/", "QQQ 長軌純攻", None, False),
+            ("/backtest/six_state/", "QQQ＋SMH 六狀態", None, False),
+            ("/backtest/six_state_v1r1/", "QQQ 六狀態實盤", None, False),
+            ("/backtest/supertrend/", "週線 Supertrend", None, False),
+            ("/backtest/minervini/", "Minervini RS+VCP", None, False),
+            ("/backtest/mom_volscaling/", "動能·波動縮放", None, False),
+            ("/backtest/dual_track_study/", "雙軌分散研究", None, False),
+            ("/backtest/vol_targeting/", "波動目標倉位", "研究", False),
+            ("/backtest/rsi2_mr/", "SPY/QQQ 均值回歸", None, False),
+            ("/backtest/dual_track/", "SPY/QQQ 雙軌多空", "否決", False),
+            ("/backtest/exit_switch/", "出場法切換", "否決", False),
+            ("/backtest/short_system/", "指數做空", "失敗", False),
+        ]),
+        ("選擇權研究", [
+            ("/backtest/cndr/", "Iron Condor", "失敗", False),
+            ("/backtest/covered_call/", "Covered Call", "負貢獻", False),
+            ("/backtest/put_timing/", "SPY/QQQ 買 put 避險", "負貢獻", False),
+        ]),
+        ("研究筆記", [
+            ("/backtest/daily_vs_weekly/", "日/週線", None, False),
+            ("/backtest/ma_cross/", "MA 交叉", None, False),
+            ("/backtest/ma_deviation/", "MA 乖離", None, False),
+            ("/backtest/ma_dynband/", "MA 動態帶", None, False),
+            ("/backtest/ma_squeeze/", "MA 擠壓", None, False),
+            ("/backtest/smh_vcrash/", "SMH V崩", None, False),
+        ]),
+        ("前瞻追蹤", [
+            ("/long-track-qs-vt/", "QQQ+SMH 波動率（固定 σ）", "追蹤中", False),
+            ("/long-track-qs-vt/adaptive.html", "自適應 σ", "追蹤中", False),
+            ("/long-track-adaptive-vt/", "自適應美台總覽", "追蹤中", False),
+        ]),
+    ],
+    "tw": [
+        ("波段", [
+            ("/backtest/tw_0050_compare/", "0050 總覽·台美差異", None, False),
+            ("/backtest/tw_crash/", "台股含崩盤驗證", None, False),
+            ("/backtest/tw_0050/", "0050 進攻趨勢", None, False),
+            ("/backtest/tw_0050_lt/", "0050 長軌趨勢", None, False),
+            ("/backtest/long_track_tw/", "2330/0050 E3 長軌", None, False),
+            ("/backtest/tw_0050_six/", "0050 六狀態機", None, False),
+            ("/backtest/tw_vcrash/", "V崩防禦研究", None, False),
+            ("/backtest/tw_0050_dual/", "0050 雙軌多空", "否決", False),
+        ]),
+        ("選擇權", [
+            ("/backtest/tw_options/", "台股選擇權專區", "專區", False),
+            ("/backtest/txo_vol_seller/", "台指選擇權賣方", "模擬中", False),
+            ("/backtest/txo_put_seller/", "台指賣方下檔", "研究", False),
+            ("/backtest/txo_iron_condor/", "台指雙賣", "研究", False),
+            ("/backtest/txo_covered_call_0050/", "台指 Covered Call", "研究", False),
+            ("/backtest/txo_tail_hedge/", "台指尾端避險", "研究", False),
+        ]),
+        ("日內交易", [
+            ("/backtest/txf_intraday/", "台指當沖", "未過", False),
+            ("/backtest/txf_chips/", "籌碼偏向", "觀察", False),
+            ("/backtest/ssf_xsec/", "個股期橫斷面", "未過", False),
+            ("/backtest/txf_basis/", "基差偏向", "否決", False),
+        ]),
+        ("研究筆記", [
+            ("/backtest/daily_vs_weekly_tw/", "日/週·台股", None, False),
+        ]),
+        ("前瞻追蹤", [
+            ("/long-track-tw-vt/", "0050+2330 波動率", "追蹤中", False),
+            ("/long-track-adaptive-vt/", "自適應美台總覽", "追蹤中", False),
+        ]),
+    ],
+    "multi": [
+        ("系統", [
+            ("/backtest/turtle/", "唐奇安突破", None, False),
+            ("/backtest/clenow/", "跨資產趨勢", None, False),
+            ("/backtest/multiasset_trend/", "SG Trend 複製", None, False),
+            ("/backtest/turtle_adopt/", "組合採用 Sleeve", None, False),
+            ("/backtest/slope_filter_global/", "全球斜率穩健性", None, False),
+            ("/backtest/crossasset_defense/", "跨資產防守", None, False),
+            ("/backtest/gem/", "SPY/ACWX 雙動能", None, False),
+        ]),
+        ("研究筆記", [
+            ("/backtest/daily_vs_weekly_global/", "日/週·全球", None, False),
+            ("/backtest/daily_vs_weekly_deep/", "日/週·深掘（18 市場）", None, False),
+        ]),
+    ],
+    "lev": [
+        ("系統", [
+            ("/backtest/leverage_voltarget/", "期貨槓桿疊加", None, False),
+        ]),
+    ],
+}
+
+
+def _badge(status):
+    if not status:
+        return ""
+    if status in ("否決", "失敗", "負貢獻"):
+        kind = "d"
+    elif status in ("追蹤中", "即將"):
+        kind = "t"
+    else:
+        kind = "w"
+    return f'<span class="b b-{kind}">{status}</span>'
+
+
+def _pill(url, text, status=None, current=False):
+    cls = ' class="on"' if current else ""
+    return f'<a href="{url}"{cls}>{text}{_badge(status)}</a>'
+
+
+def _dir(tab):
+    rows = ""
+    for label, items in DIRECTORY[tab]:
+        pills = "".join(_pill(*p) for p in items)
+        rows += (f'<div class="dir-row"><div class="dir-lbl">{label}</div>'
+                 f'<div class="dir-pills">{pills}</div></div>')
+    return f'<div class="dir">{rows}</div>'
+
 
 def lane(title):
     if "採用" in title:
@@ -47,7 +192,7 @@ def lane(title):
     return GREY
 
 
-def is_position(title):   # US 波段 (exclude multi-asset + TW)
+def is_position(title):   # US 波段 (exclude multi-asset + TW group)
     return "🇹🇼" not in title and "多資產" not in title
 
 
@@ -63,6 +208,76 @@ def section_header(title, lc):
     return (f'<tr><td colspan="6" style="background:#f8fafc;border-left:3px solid {lc};'
             f'font-size:.74rem;font-weight:700;color:#475569;text-transform:uppercase;'
             f'letter-spacing:.04em">{title}</td></tr>')
+
+
+# US research link-cards (verbatim) — only US-scoped notes belong to 美股 tab.
+US_RESEARCH = r"""<a class="link-card" href="/backtest/mom_volscaling/" style="border-left:3px solid var(--grey)">
+  <span style="font-size:1.3rem">🌀</span>
+  <span><span class="lc-name">美股動能・波動率縮放 · Barroso & Santa-Clara (2015) 複驗</span><br><span class="lc-sub">複驗 · WML 動能用已實現波動事前削平崩盤 · 真 OOS 2014-2026 Sharpe 0.26→0.52、MDD −77.6%→−27.2%,bootstrap 95% CI [+0.04,+0.45] 不含 0(顯著)· 只答機制存活性、不答可交易性(無成本)· 2020-03 反彈期削獲利是雙面刃</span></span>
+  <span class="lc-arrow">→</span>
+</a>
+<a class="link-card" href="/backtest/dual_track_study/" style="border-left:3px solid var(--green)">
+  <span style="font-size:1.3rem">🧪</span>
+  <span><span class="lc-name">雙軌分散研究 · 短MR + 長趨勢 on SMH/QQQ</span><br><span class="lc-sub">過尺 · 真實引擎(E3 長軌 + RSI2 短軌)· Calmar 0.65→0.70、MDD −27%→−18% · 兩條軸(時間架構/驅動)收斂到雙軌 = v7 Ch12 設計</span></span>
+  <span class="lc-arrow">→</span>
+</a>
+<a class="link-card" href="/backtest/minervini/" style="border-left:3px solid var(--red)">
+  <span style="font-size:1.3rem">🔬</span>
+  <span><span class="lc-name">Minervini RS+VCP 機械回測 ·《超級績效》</span><br><span class="lc-sub">否決 · 存活者偏誤樂觀上界，非忠實回測 · 即使偏誤灌水 CAGR 仍輸大盤；三槓桿(出場/進場/部位)皆推不開報酬↔回撤前緣 → alpha 在裁量、不可機械化</span></span>
+  <span class="lc-arrow">→</span>
+</a>
+<a class="link-card" href="/backtest/smh_vcrash/" style="border-left:3px solid #d97706">
+  <span style="font-size:1.3rem">🛡️</span>
+  <span><span class="lc-name">突發 V 崩防禦 · SMH/QQQ STX50</span><br><span class="lc-sub">同台股研究套到美股 · 唯一過尺仍是分散腿，但 2022 股債雙殺讓債券危機腿反向(TLT 只 10% 過、上不去)· 跨 regime 穩健只剩黃金(過尺 10–40%);純對沖股票(put/加速出場/vol-target)全失敗</span></span>
+  <span class="lc-arrow">→</span>
+</a>
+<a class="link-card" href="/backtest/daily_vs_weekly/" style="border-left:3px solid #1a56db">
+  <span style="font-size:1.3rem">⏱️</span>
+  <span><span class="lc-name">日線 vs 週線長軌 · SPY/QQQ/SMH</span><br><span class="lc-sub">長軌規則搬到日線 D60/120/200,加遍出場確認/盤整閘門(ER·R²·ADX·CHOP)/多空/200日方向/MA組合 · 0/72 真過尺，週線 long-only 是最優；盤整閘門只是重建週線、空單任何濾網都救不活</span></span>
+  <span class="lc-arrow">→</span>
+</a>
+<a class="link-card" href="/backtest/ma_deviation/" style="border-left:3px solid #1a56db">
+  <span style="font-size:1.3rem">📐</span>
+  <span><span class="lc-name">乖離率擇時 · 微笑曲線 (QQQ/SMH/SPY/0050)</span><br><span class="lc-sub">價對均線偏離當買賣訊 · 買側是微笑曲線(兩端深超賣/強噴出有 edge、中段最沒用),最強格深超賣 in 上升趨勢 +22%/60d 但稀有；乖離當賣訊是反指標(高乖離續漲、低乖離反彈),出場 overlay 疊週線全是幻象/有害</span></span>
+  <span class="lc-arrow">→</span>
+</a>
+<a class="link-card" href="/backtest/ma_cross/" style="border-left:3px solid #1a56db">
+  <span style="font-size:1.3rem">✕</span>
+  <span><span class="lc-name">黃金/死亡交叉 · 慢晚回吐大 (QQQ/SMH/SPY/0050)</span><br><span class="lc-sub">快×慢均線交叉當進出訊 · 0/20 過尺 · CAGR 不輸週線但交叉出場太晚、MDD 一律更深(SMH 10/30 −44%);交叉事件前瞻邊際近零，死叉甚至不是乾淨賣訊(50/200 死叉後 120日 +2.5%);「站上家族」最後一塊，仍敗給週線</span></span>
+  <span class="lc-arrow">→</span>
+</a>
+<a class="link-card" href="/backtest/ma_squeeze/" style="border-left:3px solid #1a56db">
+  <span style="font-size:1.3rem">🪢</span>
+  <span><span class="lc-name">均線糾結→發散 · 糾結不加值 (QQQ/SMH/SPY/0050)</span><br><span class="lc-sub">多均線收斂後發散點火進場 · 點火 60日超額 −2.1%、比「無糾結純突破」對照(−0.8%)更差 = 糾結減值；系統 3/8 過尺但無糾結對照過得一樣好(QQQ 純突破 0.63≥糾結)→ 是底層突破持有+200日出場在做工，且全擠在弱週線市(QQQ/SPY)= 弱基準假象</span></span>
+  <span class="lc-arrow">→</span>
+</a>
+<a class="link-card" href="/backtest/ma_dynband/" style="border-left:3px solid #1a56db">
+  <span style="font-size:1.3rem">📊</span>
+  <span><span class="lc-name">ATR/σ 動態乖離帶 · 解決稀有沒解決可交易 (QQQ/SMH/SPY/0050)</span><br><span class="lc-sub">把固定% 乖離門檻換波動標準化(布林/肯特納) · 深超賣訊號 n 1-2→70-110 變密 ✓,但揭穿固定−15%「深超賣神格」是門檻錯覺(σ 單位下極端反轉負、甜蜜點移到中度−1~−2σ);跨標的仍不一致、曝險僅 8-33%,系統 1/32 過尺幻象 — MA 進場方法系列收尾</span></span>
+  <span class="lc-arrow">→</span>
+</a>"""
+
+# Multi-asset / global research link-cards (verbatim) — moved to 多資產 tab.
+MULTI_RESEARCH = r"""<a class="link-card" href="/backtest/multiasset_trend/" style="border-left:3px solid var(--grey)">
+  <span style="font-size:1.3rem">📈</span>
+  <span><span class="lc-name">多資產期貨・趨勢追蹤 · SG Trend Index 複製</span><br><span class="lc-sub">複驗(非發明)· 10 檔期貨/ETF 代理零參數搜索 · 對 SG 官方月報酬相關 0.647、2022 +21.92% ✓,驗收 2/3 過 · CAGR 2.79% 遠不及 SG(第3條深回撤不過 = universe 廣度不足非 bug)· 複製的是風格不是報酬水準；CL=F/SI=F 幻影拼接已審計剔除</span></span>
+  <span class="lc-arrow">→</span>
+</a>
+<a class="link-card" href="/backtest/slope_filter_global/" style="border-left:3px solid #1a56db">
+  <span style="font-size:1.3rem">🌍</span>
+  <span><span class="lc-name">W52 斜率濾網 · 全球 15 國 ETF 穩健性</span><br><span class="lc-sub">穩健性地圖 · 同規則套 15 國指數 ETF · MDD 控制 15/15 普世(平均淺 +25.7pp)、CAGR 0/15 全輸 B&amp;H、Sharpe 9/15 只在乾淨週期市 · 換倉↔折損 corr −0.79(澳洲 41 次極端)、慢熊到處有效/急殺月度太慢</span></span>
+  <span class="lc-arrow">→</span>
+</a>
+<a class="link-card" href="/backtest/daily_vs_weekly_global/" style="border-left:3px solid #d97706">
+  <span style="font-size:1.3rem">🌐</span>
+  <span><span class="lc-name">日線 vs 週線長軌 · 全球 14 國 ETF</span><br><span class="lc-sub">同調查推廣到 14 個國家股票 ETF · 長軌 edge 集中在強趨勢市場(美/0050),多數國家週線 Calmar 僅 0.05–0.30;日線「過尺」全擠在週線最弱的市場 = 弱基準假象，非日線 alpha</span></span>
+  <span class="lc-arrow">→</span>
+</a>
+<a class="link-card" href="/backtest/daily_vs_weekly_deep/" style="border-left:3px solid #059669">
+  <span style="font-size:1.3rem">🔬</span>
+  <span><span class="lc-name">深掘：長軌 edge 在哪、為什麼、能否輪動 · 18 市場</span><br><span class="lc-sub">市場趨勢度(週線ER)以 r=+0.88 預測長軌 Calmar(事前可算);弱市場=趨勢不持久(在場僅36-42%+被洗);但動態跨市場輪動全失敗(輸「只用美國」0.46 vs 0.09-0.16、追高加深MDD)→ 結構關係只能靜態選市場吃、不能輪動</span></span>
+  <span class="lc-arrow">→</span>
+</a>"""
 
 
 def render():
@@ -87,7 +302,7 @@ def render():
   </ul>
 </div>"""
 
-    # 波段 table (position systems; experimental/rejected collapsed)
+    # 波段 table (US position systems; experimental/rejected collapsed)
     main_rows, tail_rows = "", ""
     for title, items in idx.GROUPS:
         if not is_position(title):
@@ -108,8 +323,11 @@ def render():
         f'<tr><td style="font-weight:600">{name}</td><td>{a}</td><td>{b}</td><td>{c}</td><td>{d}</td></tr>'
         for name, _color, a, b, c, d in idx.PERIOD_CAGR)
 
+    # 完整比較表 — US groups only (🇹🇼 group has its own 台股 tab/page)
     full_rows = ""
     for title, items in idx.GROUPS:
+        if not is_position(title):
+            continue
         full_rows += idx.group_header(title) + "".join(idx.sys_row(*r) for r in items)
     full_rows += idx.group_header("基準(Buy &amp; Hold)") + "".join(
         f'<tr style="background:#fafbfc"><td>{n}</td><td>{c}</td><td style="color:var(--muted)">{m}</td>'
@@ -134,8 +352,11 @@ def render():
 
     html = TEMPLATE
     for k, v in {
-        "%NAV%": NAV_BLOCK, "%TOGGLE%": make_toggle("20y"),
+        "%NAV%": NAV_BLOCK,
+        "%US_DIR%": _dir("us"), "%TW_DIR%": _dir("tw"),
+        "%MULTI_DIR%": _dir("multi"), "%LEV_DIR%": _dir("lev"),
         "%CARD%": card, "%MAIN_ROWS%": main_rows, "%TAIL_ROWS%": tail_rows, "%BH_ROWS%": bh,
+        "%US_RESEARCH%": US_RESEARCH, "%MULTI_RESEARCH%": MULTI_RESEARCH,
         "%PERIOD_ROWS%": period,
         "%FULL_ROWS%": full_rows, "%YEARLY_HEAD%": yhead, "%YEARLY_ROWS%": yrows,
         "%JS_RET%": json.dumps(idx.RET), "%JS_SCATTER%": json.dumps(scatter),
@@ -150,7 +371,7 @@ TEMPLATE = r"""<!DOCTYPE html>
 <head>
   <meta name="robots" content="noindex,nofollow">
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>美股量化回測總覽 | InvestMQuest Research</title>
+<title>量化回測總覽 | InvestMQuest Research</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--ink:#1f2937;--text:#374151;--muted:#6b7280;--border:#e5e7eb;--bg:#f7f8fa;--card:#fff;
@@ -163,13 +384,33 @@ a{color:var(--ink);text-decoration:none}a:hover{text-decoration:underline}
 .page-hdr h1{font-size:1.45rem;font-weight:800;letter-spacing:-.03em;color:var(--ink)}
 .page-hdr .sub{color:var(--muted);font-size:.85rem;margin-top:.15rem}
 .crumb{font-size:.8rem;color:var(--muted);margin-bottom:.35rem}.crumb a{color:var(--muted)}
-.draft{display:inline-block;background:#f3f4f6;color:#6b7280;border:1px solid var(--border);font-size:.72rem;font-weight:700;padding:.1rem .5rem;border-radius:4px;margin-left:.5rem}
-.tabs{display:flex;gap:.4rem;margin-top:.9rem}
-.tabs a{font-size:.86rem;font-weight:600;padding:.4rem .9rem;border:1px solid var(--border);border-radius:7px;color:var(--muted);background:#fff}
+.tabs{display:flex;gap:.4rem;margin-top:.9rem;flex-wrap:wrap}
+.tabs a{font-size:.86rem;font-weight:600;padding:.4rem .9rem;border:1px solid var(--border);border-radius:7px;color:var(--muted);background:#fff;cursor:pointer}
+.tabs a:hover{text-decoration:none;border-color:var(--ink)}
 .tabs a.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.methods{display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;margin-top:.6rem;font-size:.8rem}
+.methods .m-lbl{font-size:.66rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.methods a{padding:.2rem .6rem;background:#eef2ff;border:1px solid #c7d2fe;border-radius:999px;color:#3730a3;font-weight:600}
 .section{padding:1.5rem 0 0}
 .section-title{font-size:1.05rem;font-weight:700;color:var(--ink);margin-bottom:.85rem;padding-bottom:.4rem;border-bottom:1px solid var(--border)}
 .section-sub{font-size:.82rem;color:var(--muted);margin:-.45rem 0 .9rem}
+.dir{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin:1.1rem 0}
+.dir-row{display:flex;align-items:flex-start;gap:.55rem;padding:.34rem .6rem;border-top:1px solid var(--border)}
+.dir-row:first-child{border-top:0}
+.dir-lbl{flex:0 0 5em;font-size:.64rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;padding-top:.4rem}
+.dir-pills{display:flex;flex-wrap:wrap;gap:.32rem;min-width:0}
+.dir-pills a{display:inline-flex;align-items:center;gap:.3rem;padding:.28rem .62rem;background:#eef1f4;color:#374151;border-radius:999px;font-size:.76rem;font-weight:500;white-space:nowrap}
+.dir-pills a:hover{background:#e1e6ea;text-decoration:none}
+.dir-pills a.on{background:linear-gradient(135deg,#081832,#173564);color:#fff;font-weight:600}
+.b{font-size:.6rem;font-weight:700;padding:.03rem .32rem;border-radius:4px;line-height:1.5}
+.b-d{background:rgba(220,38,38,.12);color:#b42318}
+.b-w{background:rgba(180,118,20,.15);color:#986a12}
+.b-t{background:rgba(37,99,235,.14);color:#1d4ed8}
+.dir-pills a.on .b{background:rgba(255,255,255,.22);color:#fff}
+.cta{display:flex;align-items:center;gap:.7rem;background:var(--ink);color:#fff;border-radius:10px;padding:1rem 1.3rem;margin:1.1rem 0;font-weight:700}
+.cta:hover{text-decoration:none;opacity:.94}
+.cta .cta-sub{font-size:.76rem;font-weight:500;color:#cbd5e1;margin-top:.15rem}
+.cta .arr{margin-left:auto;font-size:1.1rem}
 .live-wrap{display:grid;grid-template-columns:1.3fr 1fr;gap:1rem;margin-top:1rem}
 .acard{background:var(--card);border:1px solid var(--green);border-radius:12px;padding:1.2rem 1.3rem;box-shadow:0 0 0 1px var(--green) inset}
 .ac-tag{display:inline-block;font-size:.72rem;font-weight:700;padding:.2rem .6rem;border-radius:99px;margin-bottom:.5rem;background:var(--green);color:#fff}
@@ -209,37 +450,45 @@ details summary::before{content:'▸';color:var(--grey);transition:transform .15
 details[open] summary::before{transform:rotate(90deg)}
 details .d-body{padding:0 1.2rem 1.2rem;overflow-x:auto}
 footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);text-align:center;padding:1.2rem 0;font-size:.78rem;margin-top:2rem}
-@media(max-width:820px){.live-wrap{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}table{font-size:.76rem}th,td{padding:.4rem .45rem}}
+@media(max-width:820px){.live-wrap{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}table{font-size:.76rem}th,td{padding:.4rem .45rem}
+.dir-row{flex-direction:column;gap:.3rem}.dir-lbl{flex-basis:auto;padding-top:0}}
 </style>
 </head>
 <body>
 %NAV%
 <div class="page-hdr"><div class="container">
   <div class="crumb"><a href="/">首頁</a> / 量化回測</div>
-  <h1>美股量化回測總覽</h1>
-  <div class="sub">20 年全週期(2006~,含 2008/2020/2022 三熊)· 真實 yfinance · 起始 $1M · <a href="/backtest/criteria/">評估標準</a> · <a href="/backtest/free_lunch/">📖 分散與免費午餐</a></div>
-  <div class="tabs"><a class="on" href="/backtest/">🇺🇸 美股</a><a href="/backtest/tw/">🇹🇼 台股</a><a href="/backtest/multi/">🧩 多資產</a><a href="/backtest/leverage/">🔧 槓桿疊加</a></div>
+  <h1>量化回測總覽</h1>
+  <div class="sub">20 年全週期(2006~,含 2008/2020/2022 三熊)· 真實 yfinance · 起始 $1M · 依市場/資產類別分四類，點 tab 切換</div>
+  <div class="tabs">
+    <a data-tabkey="us" href="#us" onclick="return showTab('us')">🇺🇸 美股</a>
+    <a data-tabkey="tw" href="#tw" onclick="return showTab('tw')">🇹🇼 台股</a>
+    <a data-tabkey="multi" href="#multi" onclick="return showTab('multi')">🧩 多資產</a>
+    <a data-tabkey="lev" href="#lev" onclick="return showTab('lev')">🔧 槓桿疊加</a>
+  </div>
+  <div class="methods">
+    <span class="m-lbl">方法論（跨類通用）</span>
+    <a href="/backtest/criteria/">評估標準</a>
+    <a href="/backtest/glossary/">術語對照表</a>
+    <a href="/backtest/free_lunch/">分散與免費午餐</a>
+  </div>
 </div></div>
 
 <div class="container">
 
-%TOGGLE%
+<!-- ══════════════ 🇺🇸 美股 ══════════════ -->
+<div class="tabpane" data-tab="us">
+%US_DIR%
 
-<div style="margin:1rem 0;padding:.7rem 1rem;background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;font-size:.86rem">
-📖 看不懂 E3 / Ch12 / STX50 / VCP 這些代號？→ <a href="/backtest/glossary/" style="font-weight:700">術語對照表</a>
-</div>
-
-<!-- LIVE -->
 <div class="section">
 <h2 class="section-title">現役系統</h2>
 <div class="section-sub">真正動到資金的只有「實倉中」這一個；其餘採用 / 候補列在右側，未上實倉。</div>
 <div class="live-wrap">%CARD%</div>
 </div>
 
-<!-- 波段 -->
 <div class="section">
 <h2 class="section-title">波段系統 · 風險調整排名</h2>
-<div class="section-sub">左色帶：<span style="color:var(--green)">綠=採用</span> · 灰=候補/角色可用 · <span style="color:var(--red)">紅=否決</span>。支配性 = 對自然基準的 <a href="/backtest/criteria/">L2 判定</a>。實驗/否決收在下方。</div>
+<div class="section-sub">左色帶：<span style="color:var(--green)">綠=採用</span> · 灰=候補/角色可用 · <span style="color:var(--red)">紅=否決</span>。支配性 = 對自然基準的 <a href="/backtest/criteria/">L2 判定</a>。實驗/否決收在下方。<br>(雙動能 GEM 的導覽已歸「多資產」tab；此表仍保留其為對美股 B&amp;H 的參照列。)</div>
 <div class="card">
 <table><thead><tr><th>系統</th><th>CAGR</th><th>MDD</th><th>Calmar</th><th>支配性</th><th>狀態</th></tr></thead>
 <tbody>%MAIN_ROWS%%BH_ROWS%</tbody></table>
@@ -249,87 +498,12 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <tbody>%TAIL_ROWS%</tbody></table></div></details>
 </div>
 
-<!-- 研究 / 否決 -->
 <div class="section">
 <h2 class="section-title">研究筆記</h2>
-<div class="section-sub">探索性研究頁(分散結構 / 反例 / 文獻複驗),非實倉候選，刻意不列入上方比較表。</div>
-<a class="link-card" href="/backtest/multiasset_trend/" style="border-left:3px solid var(--grey)">
-  <span style="font-size:1.3rem">📈</span>
-  <span><span class="lc-name">多資產期貨・趨勢追蹤 · SG Trend Index 複製</span><br><span class="lc-sub">複驗(非發明)· 10 檔期貨/ETF 代理零參數搜索 · 對 SG 官方月報酬相關 0.647、2022 +21.92% ✓,驗收 2/3 過 · CAGR 2.79% 遠不及 SG(第3條深回撤不過 = universe 廣度不足非 bug)· 複製的是風格不是報酬水準；CL=F/SI=F 幻影拼接已審計剔除</span></span>
-  <span class="lc-arrow">→</span>
-</a>
-<a class="link-card" href="/backtest/mom_volscaling/" style="border-left:3px solid var(--grey)">
-  <span style="font-size:1.3rem">🌀</span>
-  <span><span class="lc-name">美股動能・波動率縮放 · Barroso & Santa-Clara (2015) 複驗</span><br><span class="lc-sub">複驗 · WML 動能用已實現波動事前削平崩盤 · 真 OOS 2014-2026 Sharpe 0.26→0.52、MDD −77.6%→−27.2%,bootstrap 95% CI [+0.04,+0.45] 不含 0(顯著)· 只答機制存活性、不答可交易性(無成本)· 2020-03 反彈期削獲利是雙面刃</span></span>
-  <span class="lc-arrow">→</span>
-</a>
-<a class="link-card" href="/backtest/dual_track_study/" style="border-left:3px solid var(--green)">
-  <span style="font-size:1.3rem">🧪</span>
-  <span><span class="lc-name">雙軌分散研究 · 短MR + 長趨勢 on SMH/QQQ</span><br><span class="lc-sub">過尺 · 真實引擎(E3 長軌 + RSI2 短軌)· Calmar 0.65→0.70、MDD −27%→−18% · 兩條軸(時間架構/驅動)收斂到雙軌 = v7 Ch12 設計</span></span>
-  <span class="lc-arrow">→</span>
-</a>
-<a class="link-card" href="/backtest/minervini/" style="border-left:3px solid var(--red)">
-  <span style="font-size:1.3rem">🔬</span>
-  <span><span class="lc-name">Minervini RS+VCP 機械回測 ·《超級績效》</span><br><span class="lc-sub">否決 · 存活者偏誤樂觀上界，非忠實回測 · 即使偏誤灌水 CAGR 仍輸大盤；三槓桿(出場/進場/部位)皆推不開報酬↔回撤前緣 → alpha 在裁量、不可機械化</span></span>
-  <span class="lc-arrow">→</span>
-</a>
-<a class="link-card" href="/backtest/slope_filter_global/" style="border-left:3px solid #1a56db">
-  <span style="font-size:1.3rem">🌍</span>
-  <span><span class="lc-name">W52 斜率濾網 · 全球 15 國 ETF 穩健性</span><br><span class="lc-sub">穩健性地圖 · 同規則套 15 國指數 ETF · MDD 控制 15/15 普世(平均淺 +25.7pp)、CAGR 0/15 全輸 B&amp;H、Sharpe 9/15 只在乾淨週期市 · 換倉↔折損 corr −0.79(澳洲 41 次極端)、慢熊到處有效/急殺月度太慢</span></span>
-  <span class="lc-arrow">→</span>
-</a>
-<a class="link-card" href="/backtest/smh_vcrash/" style="border-left:3px solid #d97706">
-  <span style="font-size:1.3rem">🛡️</span>
-  <span><span class="lc-name">突發 V 崩防禦 · SMH/QQQ STX50</span><br><span class="lc-sub">同台股研究套到美股 · 唯一過尺仍是分散腿，但 2022 股債雙殺讓債券危機腿反向(TLT 只 10% 過、上不去)· 跨 regime 穩健只剩黃金(過尺 10–40%);純對沖股票(put/加速出場/vol-target)全失敗</span></span>
-  <span class="lc-arrow">→</span>
-</a>
-<a class="link-card" href="/backtest/daily_vs_weekly/" style="border-left:3px solid #1a56db">
-  <span style="font-size:1.3rem">⏱️</span>
-  <span><span class="lc-name">日線 vs 週線長軌 · SPY/QQQ/SMH</span><br><span class="lc-sub">長軌規則搬到日線 D60/120/200,加遍出場確認/盤整閘門(ER·R²·ADX·CHOP)/多空/200日方向/MA組合 · 0/72 真過尺，週線 long-only 是最優；盤整閘門只是重建週線、空單任何濾網都救不活</span></span>
-  <span class="lc-arrow">→</span>
-</a>
-<a class="link-card" href="/backtest/daily_vs_weekly_global/" style="border-left:3px solid #d97706">
-  <span style="font-size:1.3rem">🌐</span>
-  <span><span class="lc-name">日線 vs 週線長軌 · 全球 14 國 ETF</span><br><span class="lc-sub">同調查推廣到 14 個國家股票 ETF · 長軌 edge 集中在強趨勢市場(美/0050),多數國家週線 Calmar 僅 0.05–0.30;日線「過尺」全擠在週線最弱的市場 = 弱基準假象，非日線 alpha</span></span>
-  <span class="lc-arrow">→</span>
-</a>
-<a class="link-card" href="/backtest/daily_vs_weekly_deep/" style="border-left:3px solid #059669">
-  <span style="font-size:1.3rem">🔬</span>
-  <span><span class="lc-name">深掘：長軌 edge 在哪、為什麼、能否輪動 · 18 市場</span><br><span class="lc-sub">市場趨勢度(週線ER)以 r=+0.88 預測長軌 Calmar(事前可算);弱市場=趨勢不持久(在場僅36-42%+被洗);但動態跨市場輪動全失敗(輸「只用美國」0.46 vs 0.09-0.16、追高加深MDD)→ 結構關係只能靜態選市場吃、不能輪動</span></span>
-  <span class="lc-arrow">→</span>
-</a>
-<a class="link-card" href="/backtest/ma_deviation/" style="border-left:3px solid #1a56db">
-  <span style="font-size:1.3rem">📐</span>
-  <span><span class="lc-name">乖離率擇時 · 微笑曲線 (QQQ/SMH/SPY/0050)</span><br><span class="lc-sub">價對均線偏離當買賣訊 · 買側是微笑曲線(兩端深超賣/強噴出有 edge、中段最沒用),最強格深超賣 in 上升趨勢 +22%/60d 但稀有；乖離當賣訊是反指標(高乖離續漲、低乖離反彈),出場 overlay 疊週線全是幻象/有害</span></span>
-  <span class="lc-arrow">→</span>
-</a>
-<a class="link-card" href="/backtest/ma_cross/" style="border-left:3px solid #1a56db">
-  <span style="font-size:1.3rem">✕</span>
-  <span><span class="lc-name">黃金/死亡交叉 · 慢晚回吐大 (QQQ/SMH/SPY/0050)</span><br><span class="lc-sub">快×慢均線交叉當進出訊 · 0/20 過尺 · CAGR 不輸週線但交叉出場太晚、MDD 一律更深(SMH 10/30 −44%);交叉事件前瞻邊際近零，死叉甚至不是乾淨賣訊(50/200 死叉後 120日 +2.5%);「站上家族」最後一塊，仍敗給週線</span></span>
-  <span class="lc-arrow">→</span>
-</a>
-<a class="link-card" href="/backtest/ma_squeeze/" style="border-left:3px solid #1a56db">
-  <span style="font-size:1.3rem">🪢</span>
-  <span><span class="lc-name">均線糾結→發散 · 糾結不加值 (QQQ/SMH/SPY/0050)</span><br><span class="lc-sub">多均線收斂後發散點火進場 · 點火 60日超額 −2.1%、比「無糾結純突破」對照(−0.8%)更差 = 糾結減值；系統 3/8 過尺但無糾結對照過得一樣好(QQQ 純突破 0.63≥糾結)→ 是底層突破持有+200日出場在做工，且全擠在弱週線市(QQQ/SPY)= 弱基準假象</span></span>
-  <span class="lc-arrow">→</span>
-</a>
-<a class="link-card" href="/backtest/ma_dynband/" style="border-left:3px solid #1a56db">
-  <span style="font-size:1.3rem">📊</span>
-  <span><span class="lc-name">ATR/σ 動態乖離帶 · 解決稀有沒解決可交易 (QQQ/SMH/SPY/0050)</span><br><span class="lc-sub">把固定% 乖離門檻換波動標準化(布林/肯特納) · 深超賣訊號 n 1-2→70-110 變密 ✓,但揭穿固定−15%「深超賣神格」是門檻錯覺(σ 單位下極端反轉負、甜蜜點移到中度−1~−2σ);跨標的仍不一致、曝險僅 8-33%,系統 1/32 過尺幻象 — MA 進場方法系列收尾</span></span>
-  <span class="lc-arrow">→</span>
-</a>
+<div class="section-sub">探索性研究頁(分散結構 / 反例 / 文獻複驗),非實倉候選，刻意不列入上方比較表。跨資產 / 全球市場的研究已歸「多資產」tab。</div>
+%US_RESEARCH%
 </div>
 
-<!-- TW link -->
-<div class="section">
-<a class="link-card" href="/backtest/tw/">
-  <span style="font-size:1.3rem">🇹🇼</span>
-  <span><span class="lc-name">台股總覽</span><br><span class="lc-sub">2330/0050 E3 已採用 · 0050 四系統 · 台指期/個股期日內 · 含崩盤驗證</span></span>
-  <span class="lc-arrow">→</span>
-</a>
-</div>
-
-<!-- CHARTS -->
 <div class="section">
 <h2 class="section-title">淨值與風險</h2>
 <div class="grid2">
@@ -342,21 +516,71 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </div>
 </div>
 
-<!-- DETAILS -->
 <div class="section">
 <h2 class="section-title">明細</h2>
-<details><summary>完整比較表(全系統 · 8 欄)</summary><div class="d-body">
+<details><summary>完整比較表(美股全系統 · 8 欄)</summary><div class="d-body">
 <table><thead><tr><th>系統</th><th>CAGR</th><th>MDD</th><th>Sharpe</th><th>Calmar</th><th>支配性</th><th>期末</th><th>狀態</th></tr></thead>
 <tbody>%FULL_ROWS%</tbody></table></div></details>
 <details><summary>逐年報酬表(2006–2026)</summary><div class="d-body">
 <table><thead><tr><th>Year</th>%YEARLY_HEAD%</tr></thead><tbody>%YEARLY_ROWS%</tbody></table></div></details>
 </div>
+</div>
+
+<!-- ══════════════ 🇹🇼 台股 ══════════════ -->
+<div class="tabpane" data-tab="tw" style="display:none">
+<a class="cta" href="/backtest/tw/">
+  <span style="font-size:1.3rem">🇹🇼</span>
+  <span>台股總覽<div class="cta-sub">2330/0050 E3 已採用 · 0050 四系統 · 含崩盤驗證 · 完整比較表與圖表</div></span>
+  <span class="arr">→</span>
+</a>
+%TW_DIR%
+<div class="section">
+<div class="section-sub">2330/0050 E3 為現行實倉台股攻擊位(NT$，自 2010，不與美股同尺)。波段 / 選擇權 / 日內三線各自獨立追蹤；完整數字見上方「台股總覽」。</div>
+</div>
+</div>
+
+<!-- ══════════════ 🧩 多資產 ══════════════ -->
+<div class="tabpane" data-tab="multi" style="display:none">
+<a class="cta" href="/backtest/multi/">
+  <span style="font-size:1.3rem">🧩</span>
+  <span>多資產總覽<div class="cta-sub">唐奇安 / Clenow / SG Trend / 跨資產防守 · 資產池不同，僅供組合互補參照</div></span>
+  <span class="arr">→</span>
+</a>
+%MULTI_DIR%
+<div class="section">
+<h2 class="section-title">研究筆記</h2>
+<div class="section-sub">跨資產 / 全球市場的機制與穩健性研究 — 組合層互補缺口與弱基準假象的反例庫。</div>
+%MULTI_RESEARCH%
+</div>
+</div>
+
+<!-- ══════════════ 🔧 槓桿疊加 ══════════════ -->
+<div class="tabpane" data-tab="lev" style="display:none">
+<a class="cta" href="/backtest/leverage/">
+  <span style="font-size:1.3rem">🔧</span>
+  <span>槓桿疊加總覽<div class="cta-sub">在現役趨勢引擎上疊加期貨槓桿 / 波動目標 · 換軸互補研究(未採用)</div></span>
+  <span class="arr">→</span>
+</a>
+%LEV_DIR%
+<div class="section">
+<div class="section-sub">槓桿疊加皆為研究線(非實盤)：擇時家族全否決，換軸 +ZN+GC 的 E3 閘門 overlay 三窗全勝但仍待 L4 決策。完整數字見上方「槓桿疊加總覽」。</div>
+</div>
+</div>
 
 </div>
-<footer><div class="container">&copy; 2026 InvestMQuest Research · 美股量化回測總覽 · 真實 yfinance · 生成 %NOW%</div></footer>
+<footer><div class="container">&copy; 2026 InvestMQuest Research · 量化回測總覽 · 真實 yfinance · 生成 %NOW%</div></footer>
 
 <script>
 var YEARS=%JS_YEARS%,RET=%JS_RET%,SCATTER=%JS_SCATTER%;
+function showTab(t){
+  var panes=document.querySelectorAll('.tabpane');
+  for(var i=0;i<panes.length;i++){panes[i].style.display=(panes[i].getAttribute('data-tab')===t)?'':'none';}
+  var tabs=document.querySelectorAll('.tabs a');
+  for(var j=0;j<tabs.length;j++){tabs[j].classList.toggle('on',tabs[j].getAttribute('data-tabkey')===t);}
+  if(window.history&&history.replaceState)history.replaceState(null,'','#'+t);
+  if(t==='us')window.dispatchEvent(new Event('resize'));
+  return false;
+}
 function toNAV(r){var n=[],v=1;for(var i=0;i<r.length;i++){if(r[i]===null){n.push(null);continue}v*=1+r[i]/100;n.push(v)}return n}
 Chart.defaults.font.family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif";Chart.defaults.font.size=11;
 new Chart(document.getElementById('chart-nav'),{type:'line',
@@ -374,6 +598,7 @@ new Chart(document.getElementById('chart-scatter'),{type:'scatter',
  options:{responsive:true,maintainAspectRatio:false,
   plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.dataset.label+': MDD '+c.parsed.x+'% / CAGR '+c.parsed.y+'%'}}}},
   scales:{x:{title:{display:true,text:'Max Drawdown (%)'},grid:{color:'rgba(0,0,0,.05)'}},y:{title:{display:true,text:'CAGR (%)'},grid:{color:'rgba(0,0,0,.05)'}}}}});
+(function(){var h=(location.hash||'#us').slice(1);if(!/^(us|tw|multi|lev)$/.test(h))h='us';showTab(h);})();
 </script>
 </body></html>
 """

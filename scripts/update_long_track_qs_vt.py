@@ -589,7 +589,10 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
     <h1>QQQ + SMH 長線 × 波動率目標 — 前瞻 OOS 追蹤</h1>
     <div class="sub">50% QQQ + 50% SMH · 週線長軌閘門 × 波動率目標套袖（σ QQQ 20%／SMH 25%）· Long only · 紙上追蹤（未採用）</div>
     <div style="margin-top:.6rem;display:flex;gap:.4rem;flex-wrap:wrap">
-      <a href="/long-track-qs-vt/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border-radius:6px;background:var(--text);color:#fff;text-decoration:none">QQQ+SMH 波動率</a>
+      <a href="/long-track-qs-vt/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border-radius:6px;background:var(--text);color:#fff;text-decoration:none">QQQ+SMH 波動率（本頁）</a>
+      <a href="/long-track-qs-vt/adaptive.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">自適應 σ 版</a>
+      <a href="/long-track-tw-vt/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">0050+2330 波動率</a>
+      <a href="/long-track-adaptive-vt/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">自適應美台總覽</a>
       <a href="/long-track-smh/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">SMH/QQQ STX50（實倉）</a>
       <a href="/backtest/vol_targeting/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">波動率目標回測</a>
     </div>
