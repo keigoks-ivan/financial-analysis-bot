@@ -633,7 +633,8 @@ def _market_data(mkt: dict, sigs: dict, history: list, exec_replay: dict) -> dic
         "aexe": json.dumps(exec_replay["executed"].get(a, []), separators=(",", ":")),
         "bexe": json.dumps(exec_replay["executed"].get(b, []), separators=(",", ":")),
     }
-    combined = sum(sigs[t]["final"] for t in legs) * 100
+    combined = sum(sigs[t]["final"] for t in legs) * 100            # 今日目標（訊號）
+    exec_combined = round(exec_replay["combined"][-1], 1) if exec_replay["combined"] else combined  # 現持（執行層）
     ccol = fill_color(combined / 100)
     slot = {t: WEIGHTS[t] * 100 for t in legs}
     finals = [round(sigs[t]["final"] * 100, 1) for t in legs]
@@ -643,7 +644,7 @@ def _market_data(mkt: dict, sigs: dict, history: list, exec_replay: dict) -> dic
     n_live = sum(1 for r in history if r["source"] == "live")
     span = (f"{history[0]['date']} → {history[-1]['date']}" if history else "—")
     return {
-        "legs": legs, "a": a, "b": b, "combined": combined, "ccol": ccol,
+        "legs": legs, "a": a, "b": b, "combined": combined, "exec_combined": exec_combined, "ccol": ccol,
         "finals": finals,
         "C_FINALS": json.dumps(finals, separators=(",", ":")),
         "C_SLEEVE": json.dumps(sleeve_cut, separators=(",", ":")),
@@ -659,6 +660,7 @@ def _market_data(mkt: dict, sigs: dict, history: list, exec_replay: dict) -> dic
 def market_html(mkt: dict, sigs: dict, md: dict) -> str:
     legs = mkt["legs"]
     combined = md["combined"]
+    exec_combined = md["exec_combined"]
     ccol = md["ccol"]
     finals = md["finals"]
     suf = mkt["key"]
@@ -666,9 +668,13 @@ def market_html(mkt: dict, sigs: dict, md: dict) -> str:
     return f"""<div class="mkt-hd"><span class="mkt-tag">{mkt['name']}</span></div>
 
 <div class="status-hero hero-{ccol}">
-  <div class="status-badge"><span class="dot"></span><span>{mkt['short']} 組合當前目標曝險</span></div>
-  <div class="status-exposure">{combined:.0f}%</div>
-  <div style="font-size:.8rem;color:var(--muted)">0.5 × 閘門 × 套袖，兩標的相加 · 閒置部分持現金 · 此組合獨立追蹤（100%）</div>
+  <div class="status-badge"><span class="dot"></span><span>{mkt['short']} 組合曝險</span></div>
+  <div class="status-exposure" style="display:flex;gap:1.4rem;justify-content:center;align-items:baseline;flex-wrap:wrap">
+    <span>目標 {combined:.0f}%<span style="font-size:.4em;color:var(--muted);font-weight:600"> 訊號</span></span>
+    <span style="opacity:.55;font-size:.7em">／</span>
+    <span>現持 {exec_combined:.0f}%<span style="font-size:.4em;color:var(--muted);font-weight:600"> 執行層</span></span>
+  </div>
+  <div style="font-size:.8rem;color:var(--muted)"><b>目標曝險（訊號）</b>＝0.5×閘門×套袖合計（每日隨波動微調）；<b>現持（執行層）</b>＝10pp 門檻＋5% 取整後的實際持股——<b>|目標−現持| 未達 10pp 就不調，故兩者常有幾 % 差、這是設計、非錯誤</b>。</div>
 </div>
 
 <div class="card">
@@ -677,7 +683,7 @@ def market_html(mkt: dict, sigs: dict, md: dict) -> str:
   <div>
     <div class="gauge-box">
       <canvas id="chart-gauge-{suf}"></canvas>
-      <div class="gauge-center"><div class="g-num hero-{ccol}" style="color:var(--{ccol})">{combined:.0f}%</div><div class="g-lab">合成目標曝險（0～100%）</div></div>
+      <div class="gauge-center"><div class="g-num hero-{ccol}" style="color:var(--{ccol})">{combined:.0f}%</div><div class="g-lab">目標曝險（訊號）· 現持 {exec_combined:.0f}%</div></div>
     </div>
   </div>
   <div>
@@ -688,11 +694,11 @@ def market_html(mkt: dict, sigs: dict, md: dict) -> str:
 </div>
 
 <div class="card">
-<h3>{mkt['short']} 近三年權重時間軸 — 執行層持股率 ＋ 每日理論目標</h3>
+<h3>{mkt['short']} 近三年權重時間軸 — 現持（執行層）vs 每日理論目標</h3>
 <p style="font-size:.8rem;color:var(--muted);margin-bottom:.5rem">
-<b style="color:var(--text)">粗階梯線＝10pp 門檻＋5% 取整的實際執行持股率</b>（跨門檻才動、取整到 5% 格）；<b>細線＝每日理論目標</b>（未過門檻）。
-線段<b>實線＝每日實錄</b>（CI 逐日追加），<b>虛線＝規則回放</b>（首次生成時以完全相同的規則往回重算，非當日實錄，誠實區隔）。
-窗 {md['span']}，共 {md['nhist']} 個交易日（回放 {md['n_replay']}／實錄 {md['n_live']}）。</p>
+<b style="color:var(--text)">粗階梯線＝現持（執行層）</b>＝10pp 門檻＋5% 取整的實際持股率（跨門檻才動）；<b>細線＝每日理論目標（訊號）</b>（未過門檻不調）。
+<b>末端值：現持 {exec_combined:.0f}% ／ 目標 {combined:.0f}%</b>——上方量表顯示的「目標 {combined:.0f}%」＝細線末端，「現持 {exec_combined:.0f}%」＝粗階梯末端，兩者差 {exec_combined-combined:+.0f}pp（未達 10pp 門檻不調，故有差、非錯誤）。
+線段<b>實線＝每日實錄</b>、<b>虛線＝規則回放</b>（首次生成往回重算，誠實區隔）。窗 {md['span']}，共 {md['nhist']} 個交易日（回放 {md['n_replay']}／實錄 {md['n_live']}）。</p>
 <div class="chart-wrap"><canvas id="chart-weights-{suf}"></canvas></div>
 <div class="legend-note">
   <span class="ln-item"><span class="ln-line" style="border-top-width:3px"></span>執行層（粗階梯）</span>
