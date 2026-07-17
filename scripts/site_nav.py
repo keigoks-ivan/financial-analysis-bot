@@ -21,6 +21,9 @@ re-sync those templates too (see .claude/notes/site-composition.md).
 Usage:
     python3 scripts/site_nav.py            # apply to docs/
     python3 scripts/site_nav.py --check    # report variants, change nothing
+
+Change log:
+    2026-07-17：系統群 11→8，三波動率追蹤條整併為單一「波動率追蹤家族」入口。
 """
 
 import re
@@ -108,17 +111,17 @@ MENU = {
         # 2026-07-11 週報已停更，自頁首移除（/weekly/ 頁面保留可直達；
         # PREFIX_ACTIVE 的 weekly/ 映射保留，使其頁面仍歸市場群 active）
     ],
+    # 2026-07-17 系統群整併（11→8）：ltqsvt/lttwvt/ltadvt 三條波動率追蹤條
+    # 收斂為單一「波動率追蹤家族」入口（五頁 pill 已互連，一個入口即達全家族）；
+    # 獨立 cache 條目移除，Data Cache 併入公開資料（PREFIX_ACTIVE 見下方判斷）。
     "system": [
         ("tr", "/track-record/", "裁決實績"),
         ("ltsmh", "/long-track-smh/", "長線訊號 SMH"),
-        ("ltqsvt", "/long-track-qs-vt/", "QQQ+SMH 波動率"),
         ("lttw", "/long-track-tw/", "台股長線"),
-        ("lttwvt", "/long-track-tw-vt/", "0050+2330 波動率"),
-        ("ltadvt", "/long-track-adaptive-vt/", "自適應波動率"),
+        ("voltrack", "/long-track-qs-vt/", "波動率追蹤家族"),
         ("sleeve", "/turtle-sleeve/", "商品 Sleeve"),
         ("bt", "/backtest/", "量化回測"),
         ("tools", "/tools/", "期貨部位計算機"),
-        ("cache", "/cache/", "Data Cache"),
         ("data", "/data.html", "公開資料"),
     ],
 }
@@ -246,14 +249,20 @@ PREFIX_ACTIVE = [
     # 系統群
     ("track-record/", ("system", "tr")),  # 裁決實績（2026-07-11 新增）
     ("long-track-smh/", ("system", "ltsmh")),
-    ("long-track-qs-vt/", ("system", "ltqsvt")),
-    ("long-track-adaptive-vt/", ("system", "ltadvt")),
-    ("long-track-tw-vt/", ("system", "lttwvt")),
+    # 2026-07-17 波動率追蹤家族整併：三條路徑同映射單一 voltrack 入口
+    # （下拉只留一條，但三頁各自仍是獨立 active 頁面，故群仍高亮）
+    ("long-track-qs-vt/", ("system", "voltrack")),
+    ("long-track-adaptive-vt/", ("system", "voltrack")),
+    ("long-track-tw-vt/", ("system", "voltrack")),
     ("long-track-tw/", ("system", "lttw")),
     ("turtle-sleeve/", ("system", "sleeve")),
     ("backtest/", ("system", "bt")),
     ("tools/", ("system", "tools")),
-    ("cache/", ("system", "cache")),
+    # 2026-07-17 cache/ 獨立條目移除（併入公開資料）；保留前綴映射避免
+    # /cache/ 頁面失去群/項高亮 —— 判斷：cache 是全站資料層新鮮度儀表板
+    # （4 個 cache JSON 通用狀態，非 backtest 專屬），與 /data.html（公開
+    # 資料端點文件）同屬「資料層」語意，故映射到 data 而非 bt。
+    ("cache/", ("system", "data")),
     ("data.html", ("system", "data")),  # 公開資料（2026-07-11 新增）
     # 頂層
     ("mental-models/", ("mm", None)),
