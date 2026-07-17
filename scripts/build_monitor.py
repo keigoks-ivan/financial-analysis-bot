@@ -35,6 +35,7 @@ STAT_WINDOW = 252       # 一年統計窗（交易日）
 MIN_OBS = 60            # 統計窗最低樣本數，不足則不出 z/分位
 ALERTS_RETENTION_DAYS = 60
 STALE_DAYS = 5          # series 最新 bar 落後 as_of 超過此天數 → 標 stale、不進異常
+                        # （as_of 之後的 bar 一律在統計前截掉，見 clip_to_as_of）
 
 # 異常規則閾值（頁面方法論段同步顯示；改這裡要同步改 docs/monitor/index.html 方法論）
 RULES = {
@@ -362,6 +363,23 @@ def fetch_fear_greed() -> dict | None:
 # 統計
 # ───────────────────────────────────────────────────────────────────────────
 
+def clip_to_as_of(pts: list, as_of: str) -> tuple[list, int]:
+    """丟掉日期晚於 as_of 的 bar，回傳 (截斷後 pts, 丟掉的根數)。
+
+    跨市場對齊的單一收口：亞洲盤先開先收，日經／KOSPI 在美股 as_of 當天就可能
+    已有隔日 bar。那根 bar 是「明天的行情」，不屬於當日快照——若不截掉，它的
+    變動／z 會被當成今日的數字餵進異常引擎（2026-07 實例：as_of 07-15 時 n225
+    掛 07-16 的 bar 且 stale=False）。統計必須用 ≤ as_of 的最後一根重算，只改
+    date 欄不夠。
+
+    日期是 ISO YYYY-MM-DD，字典序＝時序，故可直接字串比較。
+    """
+    if not pts:
+        return [], 0
+    kept = [p for p in pts if p[0] <= as_of]
+    return kept, len(pts) - len(kept)
+
+
 def compute_stats(pts: list, unit: str, freq: str = "d") -> dict | None:
     """pts = [(date, val), ...] 升冪。回傳統計 dict；樣本不足回 None。
     統計窗按頻率換算成「一年」：日頻 252 筆、週頻 52 筆。"""
@@ -606,13 +624,29 @@ def main() -> int:
             else:
                 raw[key] = [(d, round(v - bm[d], 8)) for d, v in a if d in bm]
 
+    # as_of ＝ S&P 500 最後一根 bar 的日期（美股收盤＝當日快照的錨）。必須在統計
+    # 之前決定：任何 series 都不得使用晚於 as_of 的 bar，截斷要發生在算 val／chg／
+    # z／pctile／spark／streak 之前，否則未來 bar 的行情會被算進今日的統計。
+    sp500_pts = raw.get("sp500")
+    if not sp500_pts:
+        warn("no S&P 500 data — aborting without write")
+        return 1
+    as_of = sp500_pts[-1][0]
+    as_of_dt = datetime.strptime(as_of, "%Y-%m-%d")
+
     items, gaps = {}, []
     for key, sp in S.items():
-        st = compute_stats(raw.get(key) or [], sp["unit"], sp["freq"])
+        pts_all = raw.get(key) or []
+        pts, dropped = clip_to_as_of(pts_all, as_of)
+        if dropped:
+            info(f"{key}: 截掉 {dropped} 根晚於 as_of {as_of} 的 bar，"
+                 f"改用 {pts[-1][0] if pts else '—'} 重算統計")
+        st = compute_stats(pts, sp["unit"], sp["freq"])
         if st is None:
             if sp["cat"] != "_hidden":
-                gaps.append({"key": key, "label": sp["label"],
-                             "reason": "no data from source"})
+                reason = ("no bar on or before as_of" if pts_all and not pts
+                          else "no data from source")
+                gaps.append({"key": key, "label": sp["label"], "reason": reason})
             continue
         st["val_fmt"] = fmt_val(st["last"], sp)
         st["chg_fmt"] = fmt_chg(st["chg"], sp["unit"])
@@ -624,15 +658,21 @@ def main() -> int:
         items[key] = st
 
     if "sp500" not in items:
-        warn("no S&P 500 data — aborting without write")
+        warn("no S&P 500 stats — aborting without write")
         return 1
-    as_of = items["sp500"]["date"]
 
-    # stale 標記（落後 as_of 太多的 series 不進異常；週頻 series 門檻放寬）
-    as_of_dt = datetime.strptime(as_of, "%Y-%m-%d")
+    # stale 標記（落後 as_of 太多的 series 不進異常；週頻 series 門檻放寬）。
+    # lag_days ＝ as_of − bar 日期，截斷後恆 ≥ 0，讓「這格其實是前一日的資料」
+    # 對下游／頁面可見。負值分支是防禦：有號差在 bar 晚於 as_of 時為負，永遠不會
+    # > limit，未來 bar 因此會靜默過關（原 bug）——明確判死而非靠減法。
     for key, it in items.items():
         limit = STALE_DAYS if S[key]["freq"] == "d" else 12
-        it["stale"] = (as_of_dt - datetime.strptime(it["date"], "%Y-%m-%d")).days > limit
+        lag = (as_of_dt - datetime.strptime(it["date"], "%Y-%m-%d")).days
+        it["lag_days"] = lag
+        if lag < 0:
+            warn(f"{key}: bar {it['date']} 晚於 as_of {as_of}（截斷後不該發生）"
+                 f"— 標 stale 排除於異常之外")
+        it["stale"] = lag < 0 or lag > limit
 
     # 異常
     alerts = []
@@ -663,7 +703,8 @@ def main() -> int:
                          "p20": it["p20"], "p60": it["p60"],
                          "hi52": it["hi52"], "lo52": it["lo52"],
                          "streak": it["streak"], "spark": it["spark"],
-                         "date": it["date"], "stale": it["stale"]})
+                         "date": it["date"], "stale": it["stale"],
+                         "lag_days": it["lag_days"]})
         categories.append({"key": cat_key, "label": cat_label, "items": rows})
 
     latest = {
