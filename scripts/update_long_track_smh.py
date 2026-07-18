@@ -291,7 +291,7 @@ def generate_html(sigs: dict, changes: list[str] | None = None,
     combined = sum(WEIGHTS[t] * sigs[t]["pos"] for t in TICKERS) * 100
     ccol = pos_color(combined / 100)
     data_date = max(sigs[t]["wk_date"] for t in TICKERS)
-    now = datetime.now().strftime("%Y-%m-%d %H:%M")
+    now = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M")
 
     cards = "".join(ticker_card(t, sigs[t]) for t in TICKERS)
     tables = "".join(recent_table(t, sigs[t]) for t in TICKERS)
@@ -401,7 +401,7 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
   <div class="status-badge"><span class="dot"></span><span>組合當前曝險</span></div>
   <div class="status-exposure">{combined:.0f}%</div>
   <div style="font-size:.8rem;color:var(--muted)">50% SMH + 50% QQQ · 閒置部分持 SHY/BIL</div>
-  <div class="status-date">數據截至 {data_date}(週五收盤)· 頁面更新 {now}</div>
+  <div class="status-date">數據截至 {data_date}(週五收盤)· 頁面更新 {now} 台北時間</div>
 </div>
 
 {('<div style="background:var(--red-bg);border:2px solid var(--red-border);border-radius:10px;padding:.9rem 1.2rem;margin:.5rem 0 1rem;font-size:.9rem"><b style="color:var(--red-text)">本週訊號變化</b><br>' + "<br>".join(changes) + '<br><span style="font-size:.78rem;color:var(--muted)">下一個交易日將部位調整至上列目標。</span></div>') if changes else ('<div style="text-align:center;font-size:.78rem;color:var(--muted);margin:.3rem 0 1rem">本週無訊號變化' + (f"(上次變化：{last_change_date})" if last_change_date else "") + '</div>')}
