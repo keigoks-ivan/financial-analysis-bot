@@ -27,6 +27,12 @@ Change log:
     2026-07-17 晚：voltrack 入口改指現行主系統 W52 × 自適應波動率
         （/long-track-w52-adaptive/），label 簡化為「波動率追蹤」；舊三頁歸檔，
         PREFIX_ACTIVE 映射保留供歸檔頁高亮，並新增 long-track-w52-adaptive/ 映射。
+    2026-07-19：復活兩張孤兒頁並掛 nav——(1) 頂層新增「投資流程」(/flow/) 連結，
+        置於「使用指南」旁（howto 模式，group key "flow"）；(2) 系統群 tr 之後新增
+        「持倉週掃」("pm", "/pm/")＝position-thesis-monitor 週掃報告索引。PREFIX_ACTIVE
+        加 pm/ 與 flow/ 映射；pm/index.html 自 SKIP_FILES 移除（改為可注入 nav）。
+        v7-backtest/site_nav_snippet.py 同步（build_nav flow_cls＋MENU system pm），
+        full_nav_block 輸出對 canonical byte-identical。
 """
 
 import re
@@ -119,6 +125,7 @@ MENU = {
     # 獨立 cache 條目移除，Data Cache 併入公開資料（PREFIX_ACTIVE 見下方判斷）。
     "system": [
         ("tr", "/track-record/", "裁決實績"),
+        ("pm", "/pm/", "持倉週掃"),
         ("ltsmh", "/long-track-smh/", "長線訊號 SMH"),
         ("lttw", "/long-track-tw/", "台股長線"),
         ("voltrack", "/long-track-w52-adaptive/", "波動率追蹤"),
@@ -147,6 +154,7 @@ def build_nav(group=None, item=None):
 
     home_cls = ' class="active"' if group == "home" else ""
     mm_cls = ' class="active"' if group == "mm" else ""
+    flow_cls = ' class="active"' if group == "flow" else ""
     howto_cls = ' class="active"' if group == "howto" else ""
     search_cls = ' class="active"' if group == "search" else ""
     return f"""<header class="imq-nav-root">
@@ -159,6 +167,7 @@ def build_nav(group=None, item=None):
 {dd("research")}
       <a href="/mental-models/"{mm_cls}>心智模型</a>
 {dd("system")}
+      <a href="/flow/"{flow_cls}>投資流程</a>
       <a href="/how-to.html"{howto_cls}>使用指南</a>
       <a href="/search.html"{search_cls}>搜尋</a>
     </nav>
@@ -251,6 +260,7 @@ PREFIX_ACTIVE = [
     ("briefing/", ("market", None)),  # 已暫停，nav 無項目，僅群高亮
     # 系統群
     ("track-record/", ("system", "tr")),  # 裁決實績（2026-07-11 新增）
+    ("pm/", ("system", "pm")),  # 持倉週掃（2026-07-19 復活：position-thesis-monitor 週掃輸出索引）
     ("long-track-smh/", ("system", "ltsmh")),
     # 2026-07-17 波動率追蹤家族整併：voltrack 入口 2026-07-17 晚間改指現行主系統
     # W52 × 自適應波動率（/long-track-w52-adaptive/）；舊三頁歸檔但映射保留供其頁面高亮。
@@ -269,6 +279,7 @@ PREFIX_ACTIVE = [
     ("cache/", ("system", "data")),
     ("data.html", ("system", "data")),  # 公開資料（2026-07-11 新增）
     # 頂層
+    ("flow/", ("flow", None)),  # 投資流程（2026-07-19 復活孤兒頁；頂層連結，howto 模式）
     ("mental-models/", ("mm", None)),
     ("how-to.html", ("howto", None)),
     ("search.html", ("search", None)),  # 搜尋（2026-07-11 新增頂層連結）
@@ -285,7 +296,6 @@ SKIP_DIRS = {"_archived", "private"}
 EXTERNAL_TREES = {"qgm", "qgm-tw", "briefing", "weekly", "backtest"}
 SKIP_FILES = {
     "jot.html",                                 # 私人餵腦框（noindex 獨立小頁，不掛站 nav）
-    "pm/index.html",                            # archived stub, intentionally bare
     "six-state/index.html",                     # redirect stub -> /backtest/six_state/status/
     "backtest/six_state/status/index.html",     # live status sub-page, intentionally headerless
     # 2026-07-10 選股主控台整併：舊 4 頁折進 /cockpit/ 四分頁。

@@ -2,23 +2,311 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>此頁已封存 · InvestMQuest Research</title>
+<title>持倉週掃｜InvestMQuest Research</title>
+<meta name="description" content="position-thesis-monitor 每週掃全持倉與近期研究 DD 的否證指標、催化劑時程、thesis 老化與產業 ID kill 門檻——手動/cron 觸發的分流報告索引。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/imq-base.css">
 <style>
-body{margin:0;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f172a;color:#e2e8f0;display:flex;min-height:100vh;align-items:center;justify-content:center}
-.box{max-width:520px;padding:40px 28px;text-align:center}
-.box h1{font-size:20px;margin:0 0 12px;color:#fff}
-.box p{font-size:14px;line-height:1.7;color:#94a3b8;margin:0 0 22px}
-.box a{display:inline-block;color:#fff;background:rgba(59,130,246,.22);padding:10px 20px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600}
-.box a:hover{background:rgba(59,130,246,.35)}
+:root{--brand:#0d2244;--bg:#f7f3ea;--card:#fff;--text:#0c1521;--muted:#8a94a3;--border:#e5dfd0;
+  --green:#15803d;--red:#b91c1c;--amber:#a16207;--blue:#1d4ed8;--r:12px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:var(--bg);color:var(--text);line-height:1.7;font-size:14px}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:960px;margin:0 auto;padding:0 1.5rem}
+.page-hdr{padding:1.6rem 0 1.2rem;background:var(--card);border-bottom:1px solid var(--border)}
+.page-hdr h1{font-family:'Noto Serif TC',serif;font-size:1.55rem;font-weight:700}
+.page-hdr .sub{color:var(--muted);font-size:.86rem;margin-top:.3rem;max-width:720px}
+.crumb{font-size:.8rem;color:var(--muted);margin-bottom:.35rem}.crumb a{color:var(--muted)}
+.badge{display:inline-block;font-size:.72rem;font-weight:700;padding:.16rem .6rem;border-radius:99px;background:#e8eef5;color:var(--blue);margin-top:.5rem}
+.hist{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.2rem;margin:1.1rem 0}
+.hist h3{font-size:.9rem;margin-bottom:.5rem}
+.hist ul{list-style:none;display:flex;flex-wrap:wrap;gap:.4rem}
+.hist li a{font-size:.82rem;font-weight:600;padding:.3rem .7rem;border:1px solid var(--border);border-radius:6px;display:inline-block}
+.hist li.cur a{background:var(--text);color:#fff;border-color:var(--text)}
+.report{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:1.3rem 1.5rem;margin:1.1rem 0}
+.report h2{font-family:'Noto Serif TC',serif;font-size:1.25rem;color:var(--brand);margin:1.1rem 0 .5rem;padding-bottom:.25rem;border-bottom:1px solid var(--border)}
+.report h3{font-size:1.02rem;margin:.9rem 0 .4rem;color:var(--brand)}
+.report h4{font-size:.92rem;margin:.7rem 0 .3rem}
+.report h5{font-size:.85rem;margin:.6rem 0 .25rem;color:#41505f}
+.report p{margin:.45rem 0;font-size:.88rem}
+.report ul,.report ol{margin:.4rem 0 .6rem 1.4rem}
+.report li{margin:.2rem 0;font-size:.87rem}
+.report hr{border:0;border-top:1px solid var(--border);margin:1rem 0}
+.report code{background:#f2efe6;padding:.05rem .3rem;border-radius:4px;font-size:.85em;font-family:ui-monospace,Menlo,monospace}
+.report blockquote{border-left:3px solid var(--amber);background:#fbf3df;padding:.5rem .8rem;margin:.5rem 0;border-radius:6px;font-size:.86rem}
+.report .tbl{overflow-x:auto;margin:.6rem 0}
+.report table{width:100%;border-collapse:collapse;font-size:.8rem}
+.report th,.report td{border:1px solid var(--border);padding:.4rem .55rem;text-align:left;vertical-align:top}
+.report th{background:#faf7f0;font-weight:700;white-space:nowrap}
+footer{background:var(--card);border-top:1px solid var(--border);color:var(--muted);text-align:center;padding:1.1rem 0;font-size:.76rem;margin-top:1.4rem}
 </style>
 </head>
 <body>
-  <div class="box">
-    <h1>📦 此頁已封存</h1>
-    <p>本頁（基金經理人 PM 組合複盤）已下架封存，暫不公開。如需重新啟用請洽站方。</p>
-    <a href="/">← 回到首頁</a>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/monitor/">市場監測</a>
+          <a href="/detective/">偵測警報網</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/rotation/">產業輪動</a>
+          <a href="/crowding/">擁擠交易監測</a>
+          <a href="/regime/">大類資產 regime</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/catalyst/">催化劑日曆</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">選股<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/cockpit/">選股主控台</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/research/momentum-5/">Momentum-5</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screeners.html">RS+VCP Screener</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">個股總覽</a>
+          <a href="/research/">個股 DD</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/research/synthesis/">期望落差綜合研判</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/track-record/">裁決實績</a>
+          <a href="/pm/" class="active">持倉週掃</a>
+          <a href="/long-track-smh/">長線訊號 SMH</a>
+          <a href="/long-track-tw/">台股長線</a>
+          <a href="/long-track-w52-adaptive/">波動率追蹤</a>
+          <a href="/turtle-sleeve/">商品 Sleeve</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/flow/">投資流程</a>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
   </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+<div class="page-hdr">
+  <div class="container">
+    <div class="crumb"><a href="/">首頁</a> / <a href="/track-record/">系統</a> / 持倉週掃</div>
+    <h1>持倉週掃</h1>
+    <div class="sub">position-thesis-monitor 週掃輸出：逐一檢查每個持倉與近期研究 DD 的否證指標、催化劑時程、DD／ID 老化，並獨立掃每張產業 ID 的 kill 門檻，標出「沉默衰退」（催化劑錯過、指標破線、thesis 過半衰期、ID kill 門檻跨越）供人工重審。<b>手動 / cron 觸發，非即時。</b></div>
+    <div class="badge">最新報告：2026-07-17　·　頁面更新 2026-07-19 06:59</div>
+  </div>
+</div>
+<div class="container">
+<div class="hist"><h3>歷史週掃報告（共 1 份）</h3><ul><li class="cur"><a href="/pm/MONITOR_20260717.md">2026-07-17（最新）</a></li>
+</ul><div style="font-size:.76rem;color:var(--muted);margin-top:.5rem">點日期開啟該週原始 Markdown 報告。</div></div>
+<div class="report"><h2>Position Thesis Monitor — 2026-07-17</h2>
+<p>由 position-thesis-monitor sub-agent 自動產生。</p>
+<p>Holdings source：explicit args（三軌研究名單 2026-07-03，非實際持倉）— 核心軌 NVDA/TSM/AVGO/GOOGL/LLY、衛星·結構 PLTR/COHR/APH。</p>
+<p>Fleet 鮮度：掃到 86 份 canonical ID（有 id-meta），其中 judgment 已 stale（&gt; 60 天）0 份（79 份 v2.x ID 的 judgment 集中 2026-06 刷新，8 月底才會同時逼近 60 天門檻，本輪尚未堆積）；ID kill 表掃描本輪覆蓋 32 份（scope 三條件過濾後與現持倉 8 檔有 related_tickers 重疊者，見下方方法論註記），另有 48 份同樣通過 scope 三條件但與本輪持倉無重疊、6 份未過 scope 三條件，本輪皆未掃（非「無風險」，只是本輪未查）。</p>
+<p><strong>方法論偏離揭露（誠實揭露，非隱藏）</strong>：Check 7 spec 原定掃描全部 ~80 份 scope 合格 ID；本輪因 WebSearch 額度與時間資源限制，<strong>優先掃描與本次 8 檔持倉 related_tickers 有重疊的 32 份</strong>（更貼近本次 monitor 目的），其餘 48 份留待下輪。此外，即使在 32 份範圍內，3 份 ID（HumanoidIndustrialRobotics／IdentityNewPerimeter／RobotaxiAutonomous，共 12 條 kill_metrics）因執行 agent 的 WebSearch 額度於 session 中途耗盡（200 次上限），<strong>完全未查證</strong>，全數標記 <code>unknown</code>，非因查無資料——下輪需優先補這 3 份。另有 13 條散落在其他 ID 中的 kill_metrics 因同一額度限制標記 unknown。</p>
+<hr>
+<h3>Triage 摘要</h3>
+<div class="tbl"><table><thead><tr><th>緊急度</th><th>數量</th><th>Tickers / ID 主題</th></tr></thead><tbody>
+<tr><td>🚨 EMERGENCY</td><td>0</td><td>—</td></tr>
+<tr><td>🔴 ACTION_REQUIRED</td><td>1</td><td>LLY</td></tr>
+<tr><td>🟠 ATTENTION</td><td>2</td><td>AVGO, GOOGL</td></tr>
+<tr><td>⚠ WATCH</td><td>1</td><td>NVDA</td></tr>
+<tr><td>✓ HEALTHY</td><td>4</td><td>TSM, PLTR, COHR, APH</td></tr>
+</tbody></table></div>
+<p><strong>Top 3 立即動作</strong>：</p>
+<ol>
+<li><strong>LLY</strong> — 連結 ID <code>ID_GLP1Treatment_20260428.html</code>（thesis_type=event-triggered）judgment 最後刷新 2026-06-21，距今 26 天，超過 event-triggered 14 天鮮度規則 → 🔴 EVENT_THESIS_DECAYED；同一 ID 內另查到 Foundayo 口服首季 run-rate 明顯低於 $500M/季門檻、VANQUISH-2 主要 readout 由 2026-Q3 滑至 2027，兩者皆是催化劑時程實質延後，非單純鮮度過期。</li>
+<li><strong>GOOGL</strong> — AdX 反壟斷裁決（Brinkema 法官）原訂 3/31 期限已逾期 3.5 個月以上仍未正式落判，是本檔 thesis 最重磅的 binary catalyst 且懸而未決；同時 FY27 資本支出質性訊號（CFO 2026-07-03 證實「顯著更高」但未給數字）正逼近 DD 熊市情境 $240B 門檻，加上 7/22 財報將至（5 個交易日靜默期已進入）。建議優先重跑。</li>
+<li><strong>AVGO</strong> — 兩個 🟡 同時浮現：(a) 分析師預測 Broadcom 在 Google TPU 營收份額將由 ~95%（2026）降至 ~80%（2027）/~65%（2028），隱含流失幅度已超過監測指標 10pp 閾值（惟屬前瞻預測非已實現財報數字）；(b) EU CISPE 已於 2026-03-19 正式向歐盟執委會提出緊急申訴要求暫停 Broadcom 終止 VCSP 政策，執委會受理中。DD 內部 QC-39 閘 A 本身已因此將 moat_trend 由 ↑ 下修為 →。</li>
+</ol>
+<hr>
+<h3>🔴 ACTION_REQUIRED</h3>
+<h4>LLY — 連結 ID 之 event-triggered thesis 已過鮮度窗口</h4>
+<ul>
+<li>DD: <code>docs/dd/DD_LLY_20260623.html</code>（age 24 天，signal A+）</li>
+<li>紅燈 checks：</li>
+<li><strong>Check 4 紅燈（EVENT_THESIS_DECAYED）</strong>：dd-meta <code>related_id</code> 連結 <code>ID_GLP1Treatment_20260428.html</code>（thesis_type="event-triggered"）與 <code>ID_GLP1Master_20260429.html</code>（thesis_type="mixed"）。前者 <code>sections_refreshed.judgment</code> = 2026-06-21，距今 26 天 &gt; 14 天事件驅動鮮度規則門檻 → 🔴。後者非 event-triggered，未觸發此規則（judgment 同為 26 天，遠低於一般 60 天門檻，本身 🟢）。</li>
+<li>附帶查證（Check 7 fleet 掃描交叉印證，非本檔獨立紅燈但強化複審急迫性）：<code>ID_GLP1Treatment</code> 內的 kill_metrics 中，Foundayo（orforglipron）口服首季 run-rate 賣方估 $100-400M（多數估 $130-220M），明顯低於 $500M/季門檻（雖測試視窗要連兩季、且正式視窗在 2027-Q1 才到期）；VANQUISH-2 次世代讀出由原訂 2026-Q3 已滑到 2027，晚了整整一年。</li>
+<li>Check 2（監測指標）：3 項中 2 項 🟢，1 項 🟡（Fwd PE FY+2 現落在 ~28.9-31.1x，較 DD 寫稿時 24.9x 明顯上升，逼近 35x 減碼門檻，惟來源口徑可能非嚴格 FY+2 需下次覆核）。</li>
+<li>Check 6（承保差異）：🟢🟢（FY26 漂移 -0.1%、FY27 漂移 +0.8%，皆貼合承保，無 THESIS_DRIFT）。</li>
+<li>建議動作：spawn <code>industry-thesis-critic</code> on <code>docs/id/ID_GLP1Treatment_20260428.html</code>，intent「thesis 是否還活著 — event-triggered 鮮度已過期，且 Foundayo/VANQUISH-2 兩條 kill_metrics 皆顯示時程延後」。此為建議複審，非賣出訊號。</li>
+</ul>
+<hr>
+<h3>🟠 ATTENTION / ⚠ WATCH</h3>
+<div class="tbl"><table><thead><tr><th>Ticker</th><th>Yellow flags</th><th>Suggested next</th></tr></thead><tbody>
+<tr><td>GOOGL</td><td>Check2 🟡（FY27 capex 質性逼近 $240B 熊市門檻，CFO 已證實「顯著更高」但未給數字）；Check3 🟡（AdX 裁決逾期 3.5+ 月未決，binary catalyst 懸而未決）</td><td>7/22 財報為下個資料點；建議 spawn industry-thesis-critic 複查 AdX 裁決走向與 capex 正式數字公布後重估 §11.5 情境。附註：catalyst calendar.json 記載財報日 7/24，但本次 WebSearch 查得實際日期為 7/22——建議下次 calendar 週更時校正。</td></tr>
+<tr><td>AVGO</td><td>Check2 🟡（Google TPU 份額稀釋預測 95%→80%→65%，已超過 10pp 閾值但屬前瞻預測）；Check5 🟡（DD 內部 QC-39 閘 A 已因客戶集中度風險將 moat_trend 由 ↑ 下修為 →，屬報告自身已標註的結構性審慎，非本次外部新發現，但符合 spec「額外 QC 警語」定義）</td><td>續盯 Q3 FY26 財報（~9 月）AI 營收 guidance 軌跡是否維持加速；EU CISPE 申訴進度無明確判決期限，需人工週期性複查歐盟執委會網站。</td></tr>
+<tr><td>NVDA</td><td>Check2 🟡（custom ASIC 占加速器出貨份額 27.8%，逼近 30% 閾值，TrendForce 2026-05；NVDA 自身份額 ~70-75% 仍遠高於 65% 下限）</td><td>下次驗證點在 ASIC 份額是否於 2026 Q4 前突破 30%；無需即時行動，列入下輪常規複查。</td></tr>
+</tbody></table></div>
+<hr>
+<h3>✓ HEALTHY</h3>
+<div class="tbl"><table><thead><tr><th>Ticker</th><th>DD age</th><th>Signal</th><th>Last refresh</th></tr></thead><tbody>
+<tr><td>TSM</td><td>0 天（2026-07-17 當日發布）</td><td>A</td><td>2026-07-17（同日；dd-meta 自行揭露 trap 由 🟢→🟡 觀察期、moat_trend ↑→→，已內化於本次 signal=A，非本次外部新發現）</td></tr>
+<tr><td>PLTR</td><td>18 天</td><td>A</td><td>2026-06-29</td></tr>
+<tr><td>COHR</td><td>20 天</td><td>B（&lt; 30 天未觸發 WEAK_SIGNAL_AGING，續盯 30 天分界）</td><td>2026-06-27</td></tr>
+<tr><td>APH</td><td>21 天</td><td>B（&lt; 30 天未觸發 WEAK_SIGNAL_AGING，續盯 30 天分界；7/29 同時有財報＋DD 保質期屆滿，未來 14 天內財報前 5 個交易日靜默期禁新倉）</td><td>2026-06-26</td></tr>
+</tbody></table></div>
+<p><strong>COHR 補充</strong>：Check3 過去催化劑（archive.json：2026-05-07 財報，outcome 尚未回填）已查證——Q3 FY2026 實際營收 $1.81B（+21% YoY，超共識）、Non-GAAP EPS $1.41（超共識），beat/beat，但盤後因毛利率環比擴張放緩一度重挫 ~6%（Barclays 質疑 margin 節奏）。數據已完整併入現行 DD，與現行 thesis 無矛盾，非 CATALYST_MISS。<strong>建議 outcome 回填文字</strong>（供人工填入 archive.json，未自動編輯）：</p>
+<blockquote>2026-05-06 公布 Q3 FY2026：營收$1.81B(+21% YoY,超共識~1.5%)/Non-GAAP EPS $1.41(超共識~3.7%)/GM 39.6%(YoY+105bp)/DCC $1.4B(+40% YoY)；Q4 FY26財測營收$1.91-2.05B、EPS $1.52-1.72、GM 39-41%。beat/beat但盤後因GM環比擴張放緩一度跌~6%(Barclays評margin節奏疑慮)。數據已完整併入2026-06-27版DD，與現行thesis無矛盾，非CATALYST_MISS。</blockquote>
+<p><strong>GOOGL 補充</strong>（見上表，過去催化劑仍待決非 HEALTHY 分類但附於此供對照）：<strong>建議 outcome 回填文字</strong>（供人工填入 archive.json，未自動編輯）：</p>
+<blockquote>PENDING（尚未裁決，2026-07-17 查證）——Brinkema 法官自訂 3/31 裁決期限已逾期逾 3.5 個月，正式書面裁決尚未公布。2025-11 結辯庭訊中法官口頭傾向懷疑強制分拆可行性（監管執行複雜度／Google 上訴曠日／DOJ 未提出具體買家），傾向 behavioral remedies 而非結構分拆，但屬庭訊觀察非正式判決，仍可能翻轉。DD 原始情境「若強制分拆→護城河削弱、Fwd PE 24x 壓至 16-18x」尚未觸發也未證偽。建議 watch 延長並改標記為 pending_overdue（非單純 null），待正式書面裁決出爐後依分拆／behavioral 二分回填。</blockquote>
+<p><strong>逐檔 Check 1/4/6 摘要</strong>（全數 🟢 或 N/A，未再重複列入上方表格）：</p>
+<ul>
+<li>Check 1（DD 鮮度）：全部 8 檔皆 🟢（0-24 天，遠低於 30 天門檻）。</li>
+<li>Check 4（連結 ID 鮮度）：除 LLY（見上方 ACTION_REQUIRED）外，NVDA/TSM/AVGO/GOOGL/PLTR/COHR/APH 之 dd-meta <code>related_id</code> 欄皆為空 → <strong>N/A（結構性缺口，非主動風險）</strong>；建議下次 DD 更新時補 ID 連結。</li>
+<li>Check 6（承保差異 vs variance.json）：8 檔、16 列 FY 對齊全數 🟢 或 🟢↑（AVGO FY27 +8.2% 🟢↑ 上修最明顯），無 🟡 無 🔴，不觸發 THESIS_DRIFT。註：<code>variance.json</code>（2026-07-11 生成）內 TSM 對齊的 <code>dd_file</code> 仍指向 <code>DD_TSM_20260623.html</code>，而本輪 TSM 最新 DD 已是同日發布的 <code>DD_TSM_20260717.html</code>（364KB，含附隨文獻）；漂移數字本身仍 🟢，但下次 variance 週更應重新對齊新版 DD 的 base_eps_path。</li>
+</ul>
+<hr>
+<h3>產業 ID kill 表掃描（Check 7，fleet-level）</h3>
+<p>掃描母體：本輪 32 份（與現持倉 8 檔 related_tickers 重疊之 scope-合格 ID，見上方方法論偏離揭露）；另 48 份 scope 合格但本輪未掃、6 份未過 scope 三條件過濾。</p>
+<h4>🔴 ID_KILL_TRIGGERED</h4>
+<p>無 ID 在其<strong>核心結構性 bull thesis</strong> 上出現明確越線的 kill_metric。唯一一條技術上越線的案例屬於雙面型（描述贏家/輸家並存）指標，列出但註明性質：</p>
+<h5>ID: AI 廣告 / 零售媒體 — <code>docs/id/ID_AIAdRetailMedia_20260429.html</code>（conviction high，judgment 26 天）</h5>
+<ul>
+<li>kill_metric「AI 自動化採用＋代理商營收」：WPP 2026 organic revenue -5.9%（近 2020 年以來最深），guided H1'26 中高個位數續降；WPP/OMC/Publicis/IPG 股價 2026-02 因自動化恐慌重挫雙位數 → <strong>已觸發 agency 側的 named-loser bear case</strong>。但同一指標的 platform 側（Amazon+Walmart 囊括 89% 零售媒體增量支出）仍 🟢，此為 ID 敘事本身「贏家/輸家並存」的雙刃結構，非結構性 thesis 破裂。</li>
+<li>related_tickers（🔴 depth）：META, GOOGL, AMZN, WMT, TTD, WPP, OMC</li>
+<li>DD 狀態：META/GOOGL/AMZN/WMT 已建 DD；TTD/WPP/OMC 無 DD（agency 輸家側缺乏持倉端接手，但這些本非本站看多對象）</li>
+<li>建議動作：不需 spawn critic（thesis 本身按設計運作），列入 fleet 觀察即可。</li>
+</ul>
+<h4>🟡 接近閾值（20% 以內或方向明確逼近，摘錄較重要者）</h4>
+<div class="tbl"><table><thead><tr><th>ID 主題</th><th>metric</th><th>bear 閾值</th><th>當前值</th><th>距閾值</th></tr></thead><tbody>
+<tr><td>Edge AI</td><td>AMBA 純 play YoY</td><td>連兩季 &lt;+20%</td><td>Q1 FY27 已 +16.9%，Q2 guide 隱含近持平</td><td>一季已破，第二季待 8 月確認——全掃描最接近轉紅</td></tr>
+<tr><td>AI EDA + IP</td><td>美中 EDA 出口管制</td><td>再凍結＝砍 SNPS/CDNS 中國敞口</td><td>二手源指 2026-07-01 有新一輪雲端存取限縮，未經 BIS 一手確認</td><td>需下輪對 BIS.gov／10-Q 一手複驗</td></tr>
+<tr><td>GLP-1 Treatment</td><td>Foundayo 口服季 run-rate</td><td>連兩季 &lt;$500M</td><td>首季估 $130-220M，遠低於門檻</td><td>視窗 2027-Q1 才到期，惟軌跡明顯偏弱</td></tr>
+<tr><td>GLP-1 Treatment</td><td>VANQUISH-2 讀出時程</td><td>2026-Q3</td><td>已滑至 2027</td><td>整整延後一年</td></tr>
+<tr><td>HBM Supercycle</td><td>Samsung 1c DRAM yield</td><td>2026-Q2 視窗、分配需 ≥20%</td><td>yield 仍低於 Samsung 自身 80% 目標，落在視窗到期點</td><td>視窗剛好到期，資料混雜</td></tr>
+<tr><td>Leading Edge Node</td><td>Intel 14A 客戶簽約</td><td>2027-Q4 前需簽</td><td>目前 0 家正式簽約，2 家評估中，決策預期 2026 H2</td><td>尚有 ~18 個月跑道</td></tr>
+<tr><td>Foundry Geography</td><td>Samsung Taylor 2nm yield</td><td>&lt;70%</td><td>mid-50s%（2026-04 數據），落後 TSMC</td><td>window 未到 2027 H2</td></tr>
+<tr><td>CUDA/ROCm Moat</td><td>ROCm 訓練側 parity</td><td>出箱可用＝護城河蝕擴大</td><td>AMD+Meta 2026-07-06 發 PyTorch Monarch on ROCm，訓練側有實質進展但未達出箱可用</td><td>方向朝門檻靠近</td></tr>
+<tr><td>TTD (AI Ad)</td><td>開放網路份額成長</td><td>描述器</td><td>Q1'26 rev +12% YoY，明顯低於歷史 20%+ 步調</td><td>放緩明顯非崩潰</td></tr>
+<tr><td>Quantum Computing</td><td>Microsoft Majorana</td><td>兩量子位元閘＋同儕審查 by 2027</td><td>Majorana 2 仍 preprint-only，無同儕審查、無雙位元閘展示</td><td>未達標但視窗未關</td></tr>
+<tr><td>Space Economy</td><td>Rocket Lab Neutron 首飛</td><td>2026 Q4 前</td><td>官方確認「不早於 2026 Q4」，前有多次延遲史</td><td>卡在視窗邊緣</td></tr>
+</tbody></table></div>
+<h4>unknown（查不到資料或 WebSearch 額度耗盡，不計為 failure）</h4>
+<p>共 25+ 條 kill_metrics（詳見各 ID 區塊），集中在：</p>
+<ul>
+<li><strong>完全未掃</strong>（額度耗盡前未觸及）：<code>ID_HumanoidIndustrialRobotics</code>（4 條全 unknown）、<code>ID_IdentityNewPerimeter</code>（4 條全 unknown）、<code>ID_RobotaxiAutonomous</code>（4 條全 unknown）、<code>ID_HyperscalerCloudBigThree</code>（4 條全 unknown）、<code>ID_LLMVendorSecurityEconomics</code>（4 條全 unknown）——<strong>下輪應優先補這 5 份、共 20 條</strong>。</li>
+<li>部分未查：<code>ID_AppleIntelligencePlatformThreat</code>（3/4 unknown）、<code>ID_DefenseModernization</code>（2/4 unknown，Anduril IPO 路徑＋FY27 appropriations）、<code>ID_GLP1Master</code>（1/4，旅遊/保險 EPS model 納入進度）、<code>ID_PublishersStructuralReset</code>（2/4，NYT net-adds 口徑＋AI 摘要點擊率更新版）、<code>ID_CybersecurityPlatformConsolidation</code>（1/4，MSFT Security 精確增速差）、<code>ID_AINetworking</code>（1/4，AVGO networking 占比拆分）、<code>ID_AIEDAIP</code>（1/4，ARM CSS royalty 占比）、<code>ID_DataSecurityBackupConvergence</code>（1/4，平台廠 attach rate）、<code>ID_CUDARocmMoat</code>（1/4，hyperscaler 自研矽滲透率，來源矛盾非一手）。</li>
+</ul>
+<h4>監測孤兒（conviction=high 且 🔴-depth ticker 全數無 DD）</h4>
+<div class="tbl"><table><thead><tr><th>ID 主題</th><th>頭號 pick（🔴 無 DD）</th><th>建議</th></tr></thead><tbody>
+<tr><td>Publishers 結構性重置</td><td>NYT, NWS, NWSA, DJCO（4/4 全無 DD）</td><td>建議建 DD 閉環：本 ID 首要 kill metric（NYT net-adds）本身也查無最新數據，監測鏈兩頭皆斷，優先度較高</td></tr>
+</tbody></table></div>
+<p><strong>接近孤兒（未達嚴格定義但覆蓋明顯偏薄，供參考）</strong>：</p>
+<ul>
+<li><code>ID_DefenseModernization</code>（high）：6 檔 🔴-depth 僅 PLTR 有 DD，實際扛著 book-to-bill／backlog 兩條 kill metric 的四大軍工股（LMT/RTX/NOC/RHM.DE）全無 DD。</li>
+<li><code>ID_GLP1Master</code>（high）：7 檔 🔴-depth 僅 LLY 有 DD，保險/航空腿（MET/RGA/DAL）零覆蓋。</li>
+<li><code>ID_GLP1RestaurantImpact</code>（high）：9 檔僅 SBUX/CMG 有 DD。</li>
+<li><code>ID_DataSecurityBackupConvergence</code>（high）：純玩家 RBRK/VRNS/CVLT 全無 DD（僅平台廠 CRWD/PANW 有）。</li>
+<li><code>ID_AIEDAIP</code>（high）：本 ID 第一主角 SNPS 無 DD（僅 CDNS 有）。</li>
+</ul>
+<hr>
+<h3>ID priced-in 翻面掃描（Check 9，fleet-level）</h3>
+<p>矛盾條件：<code>priced_in == "high"</code> 且 related_ticker 有進場裁決。<strong>查證結果：86 份 canonical ID 的 <code>priced_in</code> 欄位目前全數為 <code>null</code></strong>（v2.6+ 才有此欄，backfill 尚未開始）→ 本輪無矛盾可報，非「無矛盾」而是「欄位尚未填充」。下輪待 backfill 進度後重掃。</p>
+<hr>
+<h3>產業時鐘 vs 裁決錯位（Check 10，per-DD，全站掃描）</h3>
+<p>錯位條件：<code>industry_clock_phase ∈ {III, IV}</code> 且 <code>dca_verdict == 進場</code> 且報告日 &gt; 45 天。<strong>全站掃描結果</strong>（非僅本次 8 檔持倉，因該欄位散落於全體 <code>docs/dd/</code>）：4 檔命中 phase III/IV + 進場（EAT phase IV/age 6 天、COF phase IV/age 6 天、ASML phase III/age 1 天、RMS phase IV/age 7 天），<strong>全數 age ≤ 7 天，遠低於 45 天門檻，本輪無觸發</strong>。本次持倉 8 檔中僅 TSM 帶 <code>industry_clock_phase</code> 欄位（= II，未達 III/IV），其餘 7 檔 v14.2 schema 尚無此欄位（結構性缺口，非風險）。</p>
+<div class="tbl"><table><thead><tr><th>Ticker</th><th>clock_phase</th><th>裁決</th><th>DD age</th><th>建議</th></tr></thead><tbody>
+<tr><td>（本輪無觸發項目）</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+</tbody></table></div>
+<hr>
+<h3>供應鏈瓶頸破格掃描（Check 11，輪抽）</h3>
+<p>本週輪抽 node_id（本輪為首次執行，游標從陣列開頭起算）：eq-litho, eq-metro, u-cu-foil, c-m8m9, ip-arm, fp-foundry, fp-pkg, fp-substrate, a-soc, p-logic。</p>
+<div class="tbl"><table><thead><tr><th>node（topic）</th><th>tier</th><th>破格證據</th><th>判定</th><th>建議</th></tr></thead><tbody>
+<tr><td>eq-litho（advanced）</td><td>&gt;5y</td><td>中國 SMEE 仍停留 28nm-class DUV，無 EUV 替代路徑</td><td>not-yet</td><td>維持現 tier</td></tr>
+<tr><td>eq-metro（advanced）</td><td>2-5y</td><td>KLA ~75-80% patterned-wafer share 確認，Onto/AMAT 為既有次源</td><td>not-yet</td><td>維持現 tier</td></tr>
+<tr><td>u-cu-foil（ai-pcb）</td><td>2-5y</td><td>Mitsui HVLP4 產能（~490t/mo）將低於 H2'26 需求（~560t/mo）——瓶頸<strong>收緊非鬆動</strong></td><td>not-yet（反向強化）</td><td>維持現 tier</td></tr>
+<tr><td>c-m8m9（ai-pcb）</td><td>2-5y</td><td>台燿/聯茂被工商時報稱「積極超車」M8/M9，惟未見正式 qualification 公告</td><td><strong>watch/soft-flag</strong></td><td>方向性訊號，非確認破格，續盯</td></tr>
+<tr><td>ip-arm（asic）</td><td>&gt;5y</td><td>RISC-V ~25% 整體處理器份額但預測 2029-2030 仍 ~90% custom AI server 用 Arm</td><td>not-yet</td><td>維持現 tier</td></tr>
+<tr><td>fp-foundry（asic）</td><td>&gt;5y</td><td><strong>Samsung 2nm 確認為 Anthropic 客製晶片代工（2026-07-14），Meta 洽談中；yield 數字來源矛盾（55-60% vs &gt;60%）</strong></td><td><strong>FLAG — 疑似破格</strong></td><td>建議降 tier 複審（AI-ASIC 代工用途，2-5y 較符現況）＋通知 supply-chain hub</td></tr>
+<tr><td>fp-pkg（asic）</td><td>2-5y</td><td>TSMC 已將 CoWoS 溢出訂單實際外包 ASE/Amkor（非僅認證階段，已量產）</td><td>not-yet（既有 tier 獲確認強化）</td><td>維持現 tier</td></tr>
+<tr><td>fp-substrate（asic）</td><td>2-5y</td><td>Ibiden/Unimicron 雙占確認；SEMC/AT&amp;S 擴產但窗口正收窄</td><td>not-yet</td><td>維持現 tier</td></tr>
+<tr><td>a-soc（ate）</td><td>2-5y</td><td>Advantest SoC 測試份額升至 66%（雙占集中度加深，非分散）</td><td>not-yet</td><td>維持現 tier</td></tr>
+<tr><td>p-logic（ate）</td><td>2-5y</td><td>Technoprobe/FormFactor 雙占確認，份額互有消長但皆已 qualified（既有狀態）</td><td>not-yet</td><td>維持現 tier</td></tr>
+</tbody></table></div>
+<p><strong>本輪重點</strong>：<code>fp-foundry</code>（Samsung 2nm 拿下具名 AI ASIC 客戶）是唯一有實質證據支持 tier 下修複審的節點，建議列入下次供應鏈校準；<code>c-m8m9</code>（台廠 M8/M9 追趕）屬方向性訊號續盯。</p>
+<p><strong>輪抽游標</strong>：下週從 <code>node_id = c-pin</code> 繼續（全量 84 個約 9 週一輪；下一批預告：c-pin, f-idm-fab, ip-cpu, aec-credo, f-interposer, m-wafer, m-film, f-foundry, m-mla, m-iiiv）。</p>
+<hr>
+<h3>期望落差綜合研判複審掃描（Check 12，fleet-level）</h3>
+<p>掃 <code>docs/research/synthesis/*.html</code>（6 份：AMD_20260701, CRDO_20260625, GLW_20260625, LLY_20260701, NVDA_20260626, TSM_20260625）。<strong>查證結果：6 份報告皆為 pre-v1.2（無內嵌 <code>synthesis-meta</code> script block，schema synth-v1.2 尚未套用於這批已發布報告）</strong> → 本輪無可掃機器欄項目，跳過不算失敗。下次這些 ticker 有新 synthesis 報告或針對既有報告補 meta 後，本 check 才會生效。</p>
+<h4>🔴 SYNTH_TRIGGER_HIT / SYNTH_DD_DIVERGED（如有）</h4>
+<p>無（本輪無合格報告可查）。</p>
+<h4>⚠ SYNTH_STALE</h4>
+<p>無（本輪無合格報告可查）。</p>
+<h4>疑似觸發（不確定，供人工複核）</h4>
+<p>無（本輪無合格報告可查）。</p>
+<hr>
+<h3>個人 falsifier 對帳（Check 8）</h3>
+<p>讀 <code>knowledge/falsifiers.json</code>：<code>items: []</code>。<strong>個人假設帳本為空</strong>，本輪無條目可對帳。</p>
+<hr>
+<h3>Methodology / 限制</h3>
+<ul>
+<li>未越線不代表 thesis 必活；只代表 metric 沒被觸發。<strong>結構性質變仍可能未反映在 metric 上</strong>。</li>
+<li>WebSearch 數據以 sub-agent 執行當下（2026-07-17）為準；可能晚 1-3 天，部分數字來自分析師前瞻預測而非已實現財報（已在各處註明）。</li>
+<li>Check 7 本輪<strong>未依 spec 掃描全部 ~80 份 scope 合格 ID</strong>，改為優先掃描與本次持倉重疊的 32 份（見報告頂部方法論偏離揭露）；另有 5 份 ID（共 20 條 kill_metrics）因執行 agent WebSearch 額度中途耗盡完全未查，皆標記待下輪優先補齊，非「無風險」。</li>
+<li>Check 9（priced-in）與 Check 12（synthesis 複審）本輪皆因欄位/schema 尚未 backfill 至可查證的範圍而回報「無可掃項目」，非「查證後無矛盾」——兩者性質不同，未來欄位填充後才具備偵測力。</li>
+<li>ID_KILL_TRIGGERED 是 fleet-level 訊號，掛在 ID 主題不掛持倉；仍是「建議 spawn industry-thesis-critic」的 flag，非賣出/減碼指令。</li>
+<li>此 monitor 不取代 industry-thesis-critic（決策當下深度冷讀）或 pm_weekly_review（組合層裁決，現已退役，組合層決策現行走三軌架構＋GRP＋個股 DD §14）。</li>
+</ul></div>
+</div>
+<footer>
+  &copy; 2026 InvestMQuest Research · 持倉週掃（position-thesis-monitor）· 本頁為研究監控輸出，不構成投資建議
+</footer>
 </body>
 </html>
