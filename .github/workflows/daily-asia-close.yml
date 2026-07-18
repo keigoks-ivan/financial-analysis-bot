@@ -1,0 +1,115 @@
+name: Daily Asia Close Band
+
+# ─────────────────────────────────────────────────────────────────────────
+# 時段帶 C — 亞股收盤帶（2026-07-18 整合建立）
+#
+# 目的：把亞洲各市場收盤後的每日 screener 收斂成單一 workflow，兩個班次錯開，
+# 減少同時起跑與 concurrent-push 競態。
+#
+# 兩個班次（cron）：
+#   0 8  * * 1-5  台/日收盤後（台北 16:00 / 東京 17:00）— screener-tw → -jp → prices-cache-tw
+#   0 11 * * 1-5  馬股收盤後（吉隆坡 19:00）           — screener-my
+# 非該班次的 steps 用 github.event.schedule 閘門跳過；workflow_dispatch 手動觸發時
+# 兩班全跑。兩班相隔 3 小時，最後共用同一個 commit step（沒跑的班次不產生 diff）。
+#
+# 整合對照表（舊 workflow → 本帶 steps）：
+#   daily-screener-tw.yml     → screener_tw.py            （08:00 班次）
+#   daily-screener-jp.yml     → screener_jp.py            （08:00 班次）
+#   daily-prices-cache-tw.yml → build_prices_cache.py --region tw （08:00 班次）
+#   daily-screener-my.yml     → screener_my.py            （11:00 班次）
+#
+# 全站每日排程總表（整合後）：
+#   11:30 / 21:35 UTC  update_long_track_w52_adaptive（實盤主系統，未整合）
+#   21:45 UTC          帶 A · Daily US Close Band
+#   23:00 UTC          daily_analysis（旗艦每日分析，未整合）
+#   01:00 UTC          帶 B · Daily Taipei Morning Band
+#   08:00 / 11:00 UTC  帶 C · Daily Asia Close Band（本檔）
+#
+# 被整合的舊 workflow 保留 workflow_dispatch，可隨時手動觸發（排程已停用）。
+# ─────────────────────────────────────────────────────────────────────────
+
+on:
+  schedule:
+    - cron: "0 8 * * 1-5"   # 台/日收盤後（台北 16:00 / 東京 17:00）
+    - cron: "0 11 * * 1-5"  # 馬股收盤後（吉隆坡 19:00）
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-asia-close
+  cancel-in-progress: false
+
+jobs:
+  asia-close-band:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies (union of merged workflows)
+        run: pip install "yfinance>=0.2.40" pandas numpy requests
+
+      # ── 08:00 班次：台/日收盤 ──
+      - name: "[screener-tw] Run TW screener"
+        if: github.event.schedule == '0 8 * * 1-5' || github.event_name == 'workflow_dispatch'
+        run: python scripts/screener_tw.py
+        continue-on-error: true
+
+      - name: "[screener-jp] Run JP screener"
+        if: github.event.schedule == '0 8 * * 1-5' || github.event_name == 'workflow_dispatch'
+        run: python scripts/screener_jp.py
+        continue-on-error: true
+
+      - name: "[prices-cache-tw] Build TW prices cache"
+        if: github.event.schedule == '0 8 * * 1-5' || github.event_name == 'workflow_dispatch'
+        run: python scripts/build_prices_cache.py --region tw
+        continue-on-error: true
+
+      # ── 11:00 班次：馬股收盤 ──
+      - name: "[screener-my] Run MY screener"
+        if: github.event.schedule == '0 11 * * 1-5' || github.event_name == 'workflow_dispatch'
+        run: python scripts/screener_my.py
+        continue-on-error: true
+
+      # ── 收斂：單一 commit + push（路徑＝各原 workflow commit 路徑聯集）──
+      - name: Commit and push if changed
+        run: |
+          PATHS=""
+          for p in \
+            docs/screener/ \
+            docs/cache/prices-tw.json; do
+            [ -e "$p" ] && PATHS="$PATHS $p"
+          done
+          if [ -z "$PATHS" ]; then
+            echo "No output paths present; nothing to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add $PATHS
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          DATE=$(date -u +"%Y-%m-%d")
+          git commit -m "data: Asia close band update ${DATE}
+
+          Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+          for i in 1 2 3 4 5 6; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+            git pull --rebase origin main || { echo "Rebase failed"; exit 1; }
+            sleep $((RANDOM % 20 + 5))
+          done
+          echo "Push failed after 6 attempts"
+          exit 1

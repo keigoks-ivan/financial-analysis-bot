@@ -1,0 +1,225 @@
+name: Daily US Close Band
+
+# ─────────────────────────────────────────────────────────────────────────
+# 時段帶 A — 美股收盤帶（2026-07-18 整合建立）
+#
+# 目的：把美股收盤後跑的多個每日 workflow 收斂成單一 sequential job，錯開
+# 同時起跑與 concurrent-push 競態。原本各 workflow 靠 22:00~23:30 UTC 的
+# 分鐘級錯峰彼此讓路；改成順序執行後天然無競態，且每日只產生一個 commit。
+#
+# 排程：Mon-Fri 21:45 UTC（美股收盤 21:00 UTC + 45 分 settle）。刻意錯開
+# 21:35 起跑的 update_long_track_w52_adaptive（實盤主系統，不在整合範圍）。
+#
+# 整合對照表（舊 workflow → 本帶 steps）：
+#   daily-screener-us.yml       → screener.py / market_state.py / rs_peaks.py
+#   daily-snapshot-freeze.yml   → snapshot_consensus.py --scan / build_catalyst_page.py
+#   daily-prices-cache-us.yml   → build_prices_cache.py --region us
+#   daily-fundamentals-us.yml   → fundamentals_us.py（吃 screener 的 latest.json）
+#   rotation-radar-daily.yml    → build_rotation_radar.py / build_home_pulse.py
+#   update_turtle_sleeve.yml    → update_turtle_sleeve.py（含 sleeve 訊號 email）
+#   update_leverage_overlay.yml → update_leverage_overlay.py
+#   update-risk-gauge-daily.yml → build_risk_gauge.py
+#   monitor-daily.yml           → build_monitor.py / _score / _internals / _home_pulse
+#
+# 順序理由：daily-screener-us 的 docs/screener/latest.json 是
+# daily-fundamentals-us 的輸入。原本靠 45 分鐘錯峰保證先後，現在改成同一 job
+# 內順序執行天然滿足依賴。
+#
+# 全站每日排程總表（整合後）：
+#   11:30 / 21:35 UTC  update_long_track_w52_adaptive（實盤主系統，未整合）
+#   21:45 UTC          帶 A · Daily US Close Band（本檔）
+#   23:00 UTC          daily_analysis（旗艦每日分析，未整合）
+#   01:00 UTC          帶 B · Daily Taipei Morning Band
+#   08:00 / 11:00 UTC  帶 C · Daily Asia Close Band
+#
+# 被整合的舊 workflow 都保留 workflow_dispatch，可隨時手動觸發（排程已停用）。
+# ─────────────────────────────────────────────────────────────────────────
+
+on:
+  schedule:
+    - cron: "45 21 * * 1-5"  # Mon-Fri 21:45 UTC (US close + 45min settle)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-us-close
+  cancel-in-progress: false
+
+jobs:
+  us-close-band:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies (union of merged workflows)
+        run: pip install "yfinance>=0.2.40" pandas numpy requests lxml openpyxl
+
+      # ── 1. daily-screener-us (RS+VCP 美股) ──
+      - name: "[screener-us] Run screener"
+        id: screener
+        run: python scripts/screener.py --quick
+        continue-on-error: true
+
+      - name: "[screener-us] Run market state engine"
+        run: python scripts/market_state.py
+        continue-on-error: true
+
+      - name: "[screener-us] Run RS peaks aggregator"
+        run: python scripts/rs_peaks.py
+        continue-on-error: true
+
+      # ── 2. daily-snapshot-freeze (財報前快照) ──
+      - name: "[snapshot-freeze] Freeze pre-earnings snapshots (5-day window)"
+        run: python3 scripts/snapshot_consensus.py --scan --window 5
+        continue-on-error: true
+
+      - name: "[snapshot-freeze] Rebuild catalyst page (freeze/preview badges)"
+        run: python3 scripts/build_catalyst_page.py
+        continue-on-error: true
+
+      # ── 3. daily-prices-cache-us ──
+      - name: "[prices-cache-us] Build US prices cache"
+        run: python scripts/build_prices_cache.py --region us
+        continue-on-error: true
+
+      # ── 4. daily-fundamentals-us (吃 screener 的 latest.json) ──
+      - name: "[fundamentals-us] Run US fundamentals fetcher"
+        run: python scripts/fundamentals_us.py
+        continue-on-error: true
+
+      # ── 5. rotation-radar-daily (RRG) ──
+      - name: "[rotation-radar] Build rotation radar data"
+        run: python scripts/build_rotation_radar.py
+        continue-on-error: true
+
+      # 首頁市場脈動（原 workflow 已 || echo 容錯，保留原樣不疊加）
+      - name: "[rotation-radar] Build home pulse"
+        run: python scripts/build_home_pulse.py || echo "::warning::home pulse build failed; rotation core unaffected"
+
+      # ── 6. update_turtle_sleeve (含 signal email) ──
+      - name: "[turtle-sleeve] Run commodity sleeve update"
+        run: python scripts/update_turtle_sleeve.py
+        continue-on-error: true
+
+      - name: "[turtle-sleeve] Read change alert"
+        id: alert
+        continue-on-error: true
+        run: |
+          if [ -f turtle_sleeve_alert.txt ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            {
+              echo "body<<ALERT_EOF"
+              cat turtle_sleeve_alert.txt
+              echo "ALERT_EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: "[turtle-sleeve] Email sleeve event"
+        if: steps.alert.outputs.changed == 'true' || inputs.test_email == true
+        continue-on-error: true
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_APP_PASSWORD }}
+          subject: "🐢 商品 Sleeve 訊號 ${{ steps.alert.outputs.changed == 'true' && '' || '(測試信)' }}"
+          to: keigoks@gmail.com
+          from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
+          body: |
+            ${{ steps.alert.outputs.changed == 'true' && steps.alert.outputs.body || '這是測試信 — 商品 sleeve email 管線正常。今日無 sleeve 事件。' }}
+
+            —
+            InvestMQuest · 商品 Sleeve (OOS 並行追蹤) · 每個交易日美股收盤後自動檢查
+            退訂: 移除 repo secret MAIL_APP_PASSWORD 或編輯 update_turtle_sleeve.yml
+
+      # ── 7. update_leverage_overlay ──
+      - name: "[leverage-overlay] Run vol-target leverage overlay update"
+        run: python scripts/update_leverage_overlay.py
+        continue-on-error: true
+
+      # ── 8. update-risk-gauge-daily (市場風險儀表) ──
+      - name: "[risk-gauge] Build risk on/off gauge"
+        run: python scripts/build_risk_gauge.py
+        continue-on-error: true
+
+      # ── 9. monitor-daily (build_monitor / score / internals / home_pulse) ──
+      - name: "[monitor] Build monitor data"
+        run: python scripts/build_monitor.py
+        continue-on-error: true
+
+      # 原 workflow 已 || echo 容錯，保留原樣不疊加
+      - name: "[monitor] Build cross-asset stress score"
+        run: python scripts/build_monitor_score.py || echo "::warning::stress score build failed; monitor data unaffected"
+
+      - name: "[monitor] Build monitor internals (Phase 1)"
+        run: python scripts/build_monitor_internals.py || echo "::warning::internals build failed; monitor core unaffected"
+
+      - name: "[monitor] Build home pulse"
+        run: python scripts/build_home_pulse.py || echo "::warning::home pulse build failed; monitor core unaffected"
+
+      # ── 收斂：單一 commit + push（路徑＝各原 workflow commit 路徑聯集）──
+      - name: Commit and push if changed
+        run: |
+          PATHS=""
+          for p in \
+            data/rotation_radar_daily.json \
+            docs/screener/ \
+            docs/catalyst/snapshots/ \
+            docs/catalyst/index.html \
+            docs/cache/prices-us.json \
+            docs/rotation/data/radar.json \
+            docs/rotation/data/snapshots \
+            docs/home/pulse.json \
+            docs/turtle-sleeve/index.html \
+            docs/turtle-sleeve/state.json \
+            docs/long-track-smh/leverage/index.html \
+            docs/long-track-smh/leverage/state.json \
+            docs/markets.html \
+            docs/cache/risk_gauge.json \
+            docs/cache/risk_history.json \
+            docs/monitor/data/latest.json \
+            docs/monitor/data/alerts.json \
+            docs/monitor/data/score_history.json \
+            docs/monitor/data/internals.json \
+            docs/monitor/data/internals_history.json \
+            docs/monitor/data/internals_alerts.json; do
+            [ -e "$p" ] && PATHS="$PATHS $p"
+          done
+          if [ -z "$PATHS" ]; then
+            echo "No output paths present; nothing to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add $PATHS
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          DATE=$(date -u +"%Y-%m-%d")
+          git commit -m "data: US close band update ${DATE}
+
+          Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+          for i in 1 2 3 4 5 6; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+            git pull --rebase origin main || { echo "Rebase failed"; exit 1; }
+            sleep $((RANDOM % 20 + 5))
+          done
+          echo "Push failed after 6 attempts"
+          exit 1

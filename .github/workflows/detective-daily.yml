@@ -21,8 +21,12 @@ on:
     workflows: ["Daily Market Monitor", "Daily Asset Rotation Radar (RRG)"]
     types: [completed]
   schedule:
-    - cron: '0 1 * * 2-6'   # 平日 fallback + digest 班次
-    - cron: '0 2 * * 6'     # 週六週報班次
+    # 2026-07-18 維持獨立（未併入時段帶 B）：本 workflow 帶 workflow_run 事件驅動
+    # ＋兩班次＋三級 email tier 與 schedule 深度耦合，併入風險高。平日 cron 由
+    # 01:00 錯開到 01:30 UTC，避開時段帶 B（daily-taipei-morning，01:00 UTC）的
+    # 同時起跑與 concurrent-push 競態。週六週報班次不變。
+    - cron: '30 1 * * 2-6'   # 平日 fallback + digest 班次（原 01:00，錯峰後 01:30）
+    - cron: '0 2 * * 6'      # 週六週報班次
   workflow_dispatch:
     inputs:
       test_email:

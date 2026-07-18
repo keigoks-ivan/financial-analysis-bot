@@ -1,0 +1,154 @@
+name: Daily Taipei Morning Band
+
+# ─────────────────────────────────────────────────────────────────────────
+# 時段帶 B — 台北早晨帶（2026-07-18 整合建立）
+#
+# 目的：把台北早晨（美股 settle 完、台股開盤前）跑的每日刷新收斂成單一 job，
+# 減少 01:00 UTC 附近的同時起跑與 concurrent-push 競態。
+#
+# 排程：Tue-Sat 01:00 UTC ＝ 台北 09:00。
+#
+# 整合對照表（舊 workflow → 本帶 steps）：
+#   daily-non-fundamental-refresh.yml → build_dd_screener.py / build_quality_entry.py
+#                                       / state_machine/study/write_daily_close.py
+#                                       / sop_funnel/build.py + alert.py（含 SOP email）
+#
+# detective-daily.yml 的處理決定：維持獨立、不併入本帶。理由——detective 帶有
+# workflow_run 事件驅動觸發（monitor / rotation radar 跑完就重生）＋兩個 cron 班次
+# ＋三級 email tier 邏輯與 github.event.schedule 深度耦合，併入風險高。改為把它的
+# 平日 cron 從 01:00 錯開到 01:30 UTC（見 detective-daily.yml 檔頭）。
+#
+# 全站每日排程總表（整合後）：
+#   11:30 / 21:35 UTC  update_long_track_w52_adaptive（實盤主系統，未整合）
+#   21:45 UTC          帶 A · Daily US Close Band
+#   23:00 UTC          daily_analysis（旗艦每日分析，未整合）
+#   01:00 UTC          帶 B · Daily Taipei Morning Band（本檔）
+#   01:30 UTC          detective-daily（獨立，錯峰後）
+#   08:00 / 11:00 UTC  帶 C · Daily Asia Close Band
+#
+# 被整合的舊 workflow 保留 workflow_dispatch，可隨時手動觸發（排程已停用）。
+# ─────────────────────────────────────────────────────────────────────────
+
+on:
+  schedule:
+    - cron: "0 1 * * 2-6"  # Tue-Sat 01:00 UTC = Tue-Sat 09:00 Taipei
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-taipei-morning
+  cancel-in-progress: false
+
+jobs:
+  taipei-morning-band:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies (union of merged workflows)
+        run: pip install "yfinance>=0.2.40" pandas numpy lxml
+
+      # ── daily-non-fundamental-refresh ──
+      - name: "[non-fundamental] Step 1 — DD Screener latest.json (MA + timing refresh)"
+        run: python scripts/build_dd_screener.py
+        continue-on-error: true
+
+      - name: "[non-fundamental] Step 3 — Quality-Entry screener"
+        run: python scripts/build_quality_entry.py
+        continue-on-error: true
+
+      - name: "[non-fundamental] Step 8 — Study daily closes slice (態④研究寬表 forward 切片)"
+        run: python scripts/state_machine/study/write_daily_close.py
+        continue-on-error: true
+
+      - name: "[non-fundamental] Step 9 — Pure MA SOP 漏斗（訊號掃描 + 帳本 + 記分板頁）"
+        run: python scripts/sop_funnel/build.py
+        continue-on-error: true
+
+      - name: "[non-fundamental] Step 9b — SOP 漏斗板機 alert 檔"
+        run: python scripts/sop_funnel/alert.py
+        continue-on-error: true
+
+      - name: "[non-fundamental] Read SOP funnel alert"
+        id: sop_alert
+        continue-on-error: true
+        run: |
+          if [ -f sop_funnel_alert.txt ]; then
+            echo "triggered=true" >> "$GITHUB_OUTPUT"
+            {
+              echo "body<<ALERT_EOF"
+              cat sop_funnel_alert.txt
+              echo "ALERT_EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "triggered=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: "[non-fundamental] Email SOP funnel trigger"
+        if: steps.sop_alert.outputs.triggered == 'true'
+        uses: dawidd6/action-send-mail@v3
+        continue-on-error: true
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_APP_PASSWORD }}
+          subject: "🎯 SOP 漏斗板機 — 今日有通過全部 veto 的進場訊號"
+          to: keigoks@gmail.com
+          from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
+          body: |
+            ${{ steps.sop_alert.outputs.body }}
+
+            —
+            InvestMQuest · 每日收盤後自動掃描
+
+      # ── 收斂：單一 commit + push（路徑＝原 workflow commit 路徑）──
+      - name: Commit and push if changed
+        run: |
+          PATHS=""
+          for p in \
+            data/weekly_cache/ \
+            docs/dd-screener/latest.json \
+            docs/dd-screener/quality-entry.html \
+            docs/dd-screener/quality-entry.json \
+            docs/dd-screener/quality-entry-snapshots/ \
+            docs/dd-screener/state-machine/data/study/closes_daily/ \
+            docs/dd-screener/sop-funnel.html \
+            docs/dd-screener/sop-funnel/; do
+            [ -e "$p" ] && PATHS="$PATHS $p"
+          done
+          if [ -z "$PATHS" ]; then
+            echo "No output paths present; nothing to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add $PATHS
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          DATE=$(TZ=Asia/Taipei date +"%Y-%m-%d")
+          git commit -m "data: Taipei morning band update ${DATE}
+
+          Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+          for i in 1 2 3 4 5 6; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+            git pull --rebase --autostash origin main || { echo "Rebase failed"; exit 1; }
+            sleep $((RANDOM % 20 + 5))
+          done
+          echo "Push failed after 6 attempts"
+          exit 1
