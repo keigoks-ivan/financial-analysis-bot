@@ -24,7 +24,9 @@ Outputs:
 NFCI (Chicago Fed, FRED free CSV) is fetched best-effort; on failure the
 previous NFCI history is reused so the chart degrades gracefully.
 
-Runs in the weekly-market-update GitHub Actions workflow (Sat 00:00 UTC).
+Runs daily in update-risk-gauge-daily.yml (Tue-Sat 01:10 UTC, after US close);
+weekly-market-update.yml (Sat) still runs it as a redundant backup — the
+script is idempotent (gauge history dedupes by date).
 """
 
 import io
@@ -264,8 +266,8 @@ def render_block(score, label_en, label_zh, color, comps, as_of, prev):
         {''.join(chips)}
       </div>
       <div class="rg-note">
-        <span class="lang-en">Each signal scores +1 / 0 / −1: S&amp;P 500 vs 200DMA · VIX level &amp; term structure · HYG−IEF 3-month relative return · copper−gold 3-month · XLY−XLP 3-month · AUD/JPY vs 200DMA. Composite = average. Weekly auto-update, same cadence as the table below. Not investment advice.</span>
-        <span class="lang-zh">每個訊號各打 +1／0／−1 分：標普500 對200日線、VIX 水位與期限結構、HYG−IEF 三個月相對報酬、銅金比三個月、可選消費−必需消費三個月、澳幣兌日圓對200日線。綜合分數＝六者平均。每週六與下方表格同步自動更新。非投資建議。</span>
+        <span class="lang-en">Each signal scores +1 / 0 / −1: S&amp;P 500 vs 200DMA · VIX level &amp; term structure · HYG−IEF 3-month relative return · copper−gold 3-month · XLY−XLP 3-month · AUD/JPY vs 200DMA. Composite = average. Auto-updated daily after the US close; the market tables below still refresh weekly (Sat). Not investment advice.</span>
+        <span class="lang-zh">每個訊號各打 +1／0／−1 分：標普500 對200日線、VIX 水位與期限結構、HYG−IEF 三個月相對報酬、銅金比三個月、可選消費−必需消費三個月、澳幣兌日圓對200日線。綜合分數＝六者平均。每日美股收盤後自動更新；下方市場表格仍為每週六更新。非投資建議。</span>
       </div>
     </div>
   </div>
