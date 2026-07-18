@@ -84,7 +84,7 @@ def main():
     contracts = int((f * NOMINAL_NAV) / unit) if unit > 0 else 0
     stx_exp = read_stx_exposure()
     asof_str = pd.Timestamp(asof).strftime("%Y-%m-%d")
-    now = datetime.now().strftime("%Y-%m-%d %H:%M")
+    now = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M")
 
     on = f > 0.005
     hero = "green" if f >= 0.25 else ("amber" if on else "grey")
@@ -194,7 +194,7 @@ td{{font-variant-numeric:tabular-nums}}
   <div class="status-badge"><span class="dot"></span><span>vol-target 目前建議槓桿</span></div>
   <div class="status-exposure">{big}</div>
   <div style="font-size:.82rem;color:var(--muted)">MNQ 疊加(QQQ/那指半邊，上限 +0.40x)· {calm}</div>
-  <div class="status-date">資料截至 {asof}(收盤)· 頁面更新 {now}</div>
+  <div class="status-date">資料截至 {asof}(收盤)· 頁面更新 {now} 台北時間</div>
 </div>
 
 <div class="card">

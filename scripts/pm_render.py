@@ -33,7 +33,7 @@ JSON 輸入 schema（Opus 要產出的）：
 import json
 import re
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
@@ -66,12 +66,25 @@ def render_risk(r):
     return f"• {r}"
 
 
+def _fmt_taipei(iso):
+    """ISO 時戳（UTC 或帶時區）→ 顯示層台北時間 'YYYY-MM-DD HH:MM 台北時間'。"""
+    if not iso:
+        return "—"
+    try:
+        dt = datetime.fromisoformat(str(iso).replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M 台北時間")
+    except (ValueError, TypeError):
+        return str(iso)
+
+
 def render_html(d):
     date = d["report_date"]
     mode_label = {"proposal": "新組合提案", "review": "標準複盤"}.get(d.get("mode", "review"), "複盤")
     spx = d.get("spx_regime", "normal")
     spx_label = "破 W104 ⚠️" if spx == "below_w104" else "正常"
-    fetched = d.get("fetched_at", "")
+    fetched = _fmt_taipei(d.get("fetched_at", ""))
 
     rows = [render_holding_row(r, "Core") for r in d.get("core", [])]
     rows += [render_holding_row(r, "Satellite") for r in d.get("satellite", [])]
@@ -181,7 +194,7 @@ def update_research_page(d):
     text = path.read_text()
     holdings_new = render_holdings_marker(d)
     actions_new = render_actions_marker(d)
-    last_run = datetime.now(tz=timezone.utc).astimezone().strftime("%Y-%m-%d %H:%M %Z")
+    last_run = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M 台北時間")
 
     text = re.sub(
         r"<!-- PM_HOLDINGS_START -->.*?<!-- PM_HOLDINGS_END -->",

@@ -477,7 +477,7 @@ def generate_html(sigs: dict, changes: list | None, last_change_date: str | None
     combined = sum(sigs[t]["final"] for t in TICKERS) * 100
     ccol = fill_color(combined / 100)
     data_date = max(sigs[t]["wk_date"] for t in TICKERS)
-    now = datetime.now().strftime("%Y-%m-%d %H:%M")
+    now = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M")
     cards = "".join(ticker_card(t, sigs[t]) for t in TICKERS)
     tables = "".join(recent_table(t, sigs[t]) for t in TICKERS)
 
@@ -654,7 +654,7 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
   <div class="status-badge"><span class="dot"></span><span>組合當前目標曝險</span></div>
   <div class="status-exposure">{combined:.0f}%</div>
   <div style="font-size:.8rem;color:var(--muted)">0.5 × 閘門 × 自適應套袖，兩標的相加 · 閒置部分持現金</div>
-  <div class="status-date">數據截至 {data_date}（週五收盤）· 頁面更新 {now}</div>
+  <div class="status-date">數據截至 {data_date}（週五收盤）· 頁面更新 {now} 台北時間</div>
 </div>
 
 {change_html}

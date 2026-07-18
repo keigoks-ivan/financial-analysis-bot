@@ -2423,16 +2423,16 @@ def parse_latest_pm():
 
 
 def _pm_mtime_cst(path: Path) -> str:
-    """Return file mtime in CST (UTC+8) as 'YYYY-MM-DD HH:MM CST'."""
+    """Return file mtime in 台北時間 (UTC+8) as 'YYYY-MM-DD HH:MM 台北時間'."""
     import datetime
     mtime = path.stat().st_mtime
     utc_dt = datetime.datetime.utcfromtimestamp(mtime)
-    cst_dt = utc_dt + datetime.timedelta(hours=8)
-    return cst_dt.strftime("%Y-%m-%d %H:%M CST")
+    tpe_dt = utc_dt + datetime.timedelta(hours=8)
+    return tpe_dt.strftime("%Y-%m-%d %H:%M 台北時間")
 
 
 def inject_pm_last_run(html: str, pm_path: Path) -> str:
-    """Inject PM_LAST_RUN_START/END with file mtime in CST."""
+    """Inject PM_LAST_RUN_START/END with file mtime in 台北時間."""
     try:
         ts = _pm_mtime_cst(pm_path)
         new_html = re.sub(

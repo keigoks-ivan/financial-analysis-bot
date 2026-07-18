@@ -32,7 +32,7 @@ script is idempotent (gauge history dedupes by date).
 import io
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 import numpy as np
@@ -289,7 +289,7 @@ def inject(html, block):
 
 
 def main():
-    now = datetime.now(timezone.utc)
+    now = datetime.now(timezone(timedelta(hours=8)))  # 台北時間，錨定顯示更新戳與 as_of 日曆日
     as_of = now.strftime('%Y-%m-%d')
     print(f"=== Risk Gauge Build: {as_of} ===")
 

@@ -312,7 +312,7 @@ def generate_html(d):
     def active(st):
         return " active" if st == s else ""
 
-    now = datetime.now().strftime("%Y-%m-%d %H:%M")
+    now = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M")
 
     html = f"""<!DOCTYPE html>
 <html lang="zh-Hant">
@@ -450,7 +450,7 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
   <div class="status-sub">{si['desc']}</div>
   <div class="status-exposure">{si['exposure']}%</div>
   <div style="font-size:.8rem;color:var(--muted)">股票曝險</div>
-  <div class="status-date">數據截至 {d['last_date']} (週五收盤) &middot; 頁面更新 {now}</div>
+  <div class="status-date">數據截至 {d['last_date']} (週五收盤) &middot; 頁面更新 {now} 台北時間</div>
 </div>
 
 <!-- Allocation Bar -->

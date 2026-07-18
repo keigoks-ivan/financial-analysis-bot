@@ -669,7 +669,7 @@ def perf_script(nav_labels, comb_vals, stx_vals, slv_vals, ctrl_vals=None) -> st
 def generate_html(legs, stx, combined, asof, changes, last_change_date, rebal_due,
                   year_events, nav_labels, comb_vals, stx_vals, slv_vals, yr_ret,
                   ctrl_vals=None, ctrl_yr=None, cmp_stats=None):
-    now = datetime.now().strftime("%Y-%m-%d %H:%M")
+    now = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M")
     sleeve_dir = ", ".join(f"{l['ticker']} {l['pos']}" for l in legs)
     cards = "".join(leg_card(l) for l in legs)
     stx_exp = stx.get("combined_exposure_pct", 0.0) if stx else 0.0
@@ -789,7 +789,7 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 </div>
 
 <div style="text-align:center;font-size:.8rem;color:var(--muted);margin:.2rem 0 1rem">
-  訊號資料截至 {asof}(收盤)· 頁面更新 {now}</div>
+  訊號資料截至 {asof}(收盤)· 頁面更新 {now} 台北時間</div>
 
 {change_html}
 

@@ -672,6 +672,16 @@ footer.imq-foot a{color:var(--text-secondary)}
   }
 
   // ── 載入 ─────────────────────────────────────────────────
+  function twStamp(iso) {
+    if (!iso) return "";
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return String(iso).replace("T", " ").replace("Z", "");
+    var p = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Taipei", year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", hourCycle: "h23"
+    }).formatToParts(d).reduce(function (o, x) { o[x.type] = x.value; return o; }, {});
+    return p.year + "-" + p.month + "-" + p.day + " " + p.hour + ":" + p.minute + " 台北時間";
+  }
   Promise.all([
     fetch("data/latest.json").then(function (r) { return r.json(); }),
     fetch("data/alerts.json").then(function (r) { return r.json(); }).catch(function () { return null; }),
@@ -681,7 +691,7 @@ footer.imq-foot a{color:var(--text-secondary)}
     (data.categories || []).forEach(function (c) { CAT_LABELS[c.key] = c.label; });
     CAT_LABELS.rates = CAT_LABELS.rates || "利率與債券";
     document.getElementById("asof").textContent =
-      "資料日 " + data.as_of + " · 產出 " + (data.generated_at || "").replace("T", " ").replace("Z", " UTC") +
+      "資料日 " + data.as_of + " · 產出 " + twStamp(data.generated_at) +
       " · 每日美股收盤後更新";
     renderAlerts(data);
     renderEditorial(ed, data);

@@ -787,7 +787,7 @@ new Chart(document.getElementById('chart-bt-dd-{suf}'),{{
 def generate_html(sigs: dict, changes: list | None, last_change_date: str | None,
                   hist_map: dict, exec_map: dict) -> str:
     changes = changes or []
-    now = datetime.now().strftime("%Y-%m-%d %H:%M")
+    now = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M")
     data_date = max(sigs[t]["wk_date"] for t in ALL_TICKERS)
 
     md_map = {m["key"]: _market_data(m, sigs, hist_map.get(m["key"], []), exec_map[m["key"]]) for m in MARKETS}
@@ -939,7 +939,7 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
   <div class="ds"><div class="dsn hero-{md_map['us']['ccol']}" style="color:var(--{md_map['us']['ccol']})">{exp_us:.0f}%</div><div class="dsl">美股 QQQ+SMH 組合目標曝險</div></div>
   <div class="ds"><div class="dsn hero-{md_map['tw']['ccol']}" style="color:var(--{md_map['tw']['ccol']})">{exp_tw:.0f}%</div><div class="dsl">台股 0050+2330 組合目標曝險</div></div>
 </div>
-<div class="status-date" style="text-align:center;margin-bottom:.5rem">數據截至 {data_date}（週五收盤）· 頁面更新 {now} · 兩組合各自獨立追蹤（各 100%）</div>
+<div class="status-date" style="text-align:center;margin-bottom:.5rem">數據截至 {data_date}（週五收盤）· 頁面更新 {now} 台北時間 · 兩組合各自獨立追蹤（各 100%）</div>
 
 {change_html}
 
