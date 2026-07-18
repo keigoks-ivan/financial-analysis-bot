@@ -50,25 +50,6 @@ jobs:
             echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Email signal change
-        if: steps.alert.outputs.changed == 'true' || inputs.test_email == true
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 465
-          secure: true
-          username: ${{ secrets.MAIL_USERNAME }}
-          password: ${{ secrets.MAIL_APP_PASSWORD }}
-          subject: "⚡ 台股長軌 2330/0050 訊號變化 ${{ steps.alert.outputs.changed == 'true' && '' || '(測試信)' }}"
-          to: keigoks@gmail.com
-          from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
-          body: |
-            ${{ steps.alert.outputs.changed == 'true' && steps.alert.outputs.body || '這是測試信 — email 推播管線正常。本週無訊號變化。' }}
-
-            —
-            InvestMQuest · 每週六台股收盤後自動檢查
-            退訂: 移除 repo secret MAIL_APP_PASSWORD 或編輯 update_long_track_tw.yml
-
       - name: Commit and push
         run: |
           git config user.email "action@github.com"

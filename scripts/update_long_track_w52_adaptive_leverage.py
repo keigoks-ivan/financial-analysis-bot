@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
-"""W52 × 自適應波動率 × 150% 槓桿（美股 QQQ+SMH ＋ 台股 0050+2330）— 影子追蹤產生器
+"""W52 × 自適應波動率 100%（美股 QQQ+SMH ＋ 台股 0050+2330）— cap 1.0 影子對照產生器
 ================================================================================
-主系統（update_long_track_w52_adaptive.py，cap 1.0）的槓桿影子子頁：訊號完全相同
-（W52 閘門 × 自適應 σ_t × 執行層），唯曝險層改 cap 1.5（w = gate × clip(σ_t/RV20, 上限 1.5)，
-真波動率目標，只在平靜 regime σ_t/RV > 1 才借錢、可上到 150%；執行層刻度 0~150）。
-定位＝影子追蹤（paper shadow）：無獨立 email，可行動變化通知由主系統 cap 1.0 覆蓋（三處註明）；
-台股＝槓桿候選、美股＝對照組（研究判定：美股任何融資利差都不划算）。輸出 leverage.html＋
-leverage_state.json（兩 history 各 756 回放，_daily_record 每腿記 sigma_t_pct＋raw_ratio＋executed）。
-槓桿回測數字由 results/vol_targeting/w52_adaptive_leverage.json 轉錄為 LEV 常數（fab 副本無法讀
-v7 results，比照主頁 BT_US/BT_TW 慣例）；影子曝險/燃料表由 history raw_ratio 即時推導，自足可重現。
+2026-07-18 主從對調：cap 1.5 版採為實單主系統（update_long_track_w52_adaptive.py，輸出 index.html），
+本檔（cap 1.0、100%）由原主系統降為影子對照頁，輸出 leverage.html＋leverage_state.json，無獨立 email
+（可行動變化通知由 cap 1.5 主系統覆蓋）。訊號與主系統完全相同（W52 單線閘門 × 自適應 σ_t × 執行層），
+唯一差異＝曝險上限收回 1.0（w = gate × min(1, σ_t/RV20)，封頂 100%、不借錢加碼）。用途＝複審對照基準
+（隔離訊號 vs 槓桿貢獻）與降槓桿預案。研究代號＝變體 C（見 docs/Adaptive_Sigma_Spec.md）。舊追蹤家族
+（固定 σ／自適應 A）已歸檔凍結。
 每交易日抓四腿日線（美股 QQQ、SMH auto-adjust；台股 0050.TW、2330.TW auto-adjust
 ＋幻影分割修復），兩市場各自獨立追蹤（各 100%），逐腿算：
   1. 週線 W52 單線閘門（W-FRI；週收 > SMA52w 在場、< 出場；無 W104/W250 斜率滯後條件；
@@ -28,7 +26,7 @@ run_adaptive_sigma.vt_weight_adaptive_median(n_days=756)。規則若變更，各
 CANONICAL COPY：本檔在 v7-backtest（src/vol_target_backtest/）與 financial-analysis-bot
 （scripts/）兩處逐位元相同——nav 匯入以 try/except 兼容兩 repo，輸出路徑自動解析為
 <repo_root>/docs/long-track-w52-adaptive/。CI 由 fab 執行（update_long_track_w52_adaptive.yml，
-台股收盤後 + 美股收盤後各跑一次，date-keyed merge 冪等所以安全，email 提醒可行動變化）。
+台股收盤後 + 美股收盤後各跑一次，date-keyed merge 冪等所以安全）。本影子頁無獨立 email。
 
 執行層（與規則同日凍結 2026-07-17）：|目標 − 現持| ≥ 10pp 才調整、調整取整至 5% 格；
 兩市場各自以 band_exec_replay 從 history_us／history_tw 確定性重放，供時間軸粗階梯線、
@@ -67,10 +65,7 @@ _cand = [HERE.parent / "docs", HERE.parents[2] / "docs" if len(HERE.parents) >= 
 DOCS = next((c for c in _cand if c.exists()), _cand[0])
 OUTPUT = DOCS / "long-track-w52-adaptive" / "leverage.html"
 STATE_JSON = DOCS / "long-track-w52-adaptive" / "leverage_state.json"
-# 無 email／alert：影子追蹤（paper shadow），可行動變化通知由主頁 cap 1.0 覆蓋。
-# 槓桿回測數字由 results/vol_targeting/w52_adaptive_leverage.json 轉錄為下方 LEV 常數
-# （fab 副本無法讀 v7 results，故轉錄；比照主頁 BT_US/BT_TW 慣例）。影子曝險/燃料表
-# 由本頁 history 的 raw_ratio 即時推導（cap1.0=min(1,raw)、cap1.5=min(1.5,raw)），自足可重現。
+# 無 email／alert：cap 1.0 影子對照頁（100% 版，供複審對照）；可行動變化 email 由主系統 cap 1.5 覆蓋。
 
 US_TICKERS = ["QQQ", "SMH"]
 TW_TICKERS = ["0050", "2330"]
@@ -100,7 +95,7 @@ BT_US = {
         ("W52×自適應（每日照調・理論）", 12.68, -21.3, 0.5948, 8.45, 1.499),
         ("W52 閘門無套袖", 13.54, -34.0, 0.3979, 10.03, 1.349),
         ("score5×自適應＋執行層（舊追蹤系統）", 11.59, -22.1, 0.5242, 7.87, 1.472),
-        ("實倉引擎 STX50（同權重對照）", 12.91, -21.2, 0.6089, 9.53, 1.354),
+        ("舊實倉引擎 STX50（2026-07-18 前・對照）", 12.91, -21.2, 0.6089, 9.53, 1.354),
         ("50/50 買進持有", 17.65, -56.9, 0.3100, 13.99, 1.262),
     ],
     "eras": [                              # (label, ΔCAGR vs score5, ΔMDD pp) — W52 − score5
@@ -108,7 +103,7 @@ BT_US = {
         ("2014-18 低波", +0.0, +0.0), ("2019-23 COVID", +1.9, -0.0),
         ("2024- AI 牛", -0.0, +0.0),
     ],
-    # 頭對頭 vs 實倉引擎 STX50（同權重）：本頁 W52×自適應 vs STX50
+    # 頭對頭 vs 舊實倉引擎 STX50（同權重）：本頁 W52×自適應 vs STX50
     "h2h": {"engine": "STX50", "c_expo": 77, "e_expo": 71,
             "c": (0.5727, -22.1, 12.66), "e": (0.6089, -21.2, 12.91),
             "c_weak": "盤整鞭打（W52 反覆穿越、頻繁進出）", "e_weak": "急跌年（半倉出場閘門滯後）"},
@@ -121,7 +116,7 @@ BT_TW = {
         ("W52×自適應（每日照調・理論）", 19.49, -19.0, 1.0280, 8.05, 2.422),
         ("W52 閘門無套袖", 22.39, -23.5, 0.9547, 8.83, 2.536),
         ("score5×自適應＋執行層（舊追蹤系統）", 18.53, -18.6, 0.9948, 8.41, 2.203),
-        ("實倉引擎 E3（同權重對照）", 22.33, -25.0, 0.8947, 8.76, 2.548),
+        ("舊實倉引擎 E3（2026-07-18 前・對照）", 22.33, -25.0, 0.8947, 8.76, 2.548),
         ("50/50 買進持有", 26.38, -39.5, 0.6683, 9.85, 2.677),
     ],
     "eras": [
@@ -167,42 +162,6 @@ MARKETS = [
      "legs": TW_TICKERS, "hist_key": "history_tw", "bt": BT_TW, "bt_nav": BT_NAV_TW},
 ]
 MKT = {m["key"]: m for m in MARKETS}
-
-# 槓桿回測轉錄（results/vol_targeting/w52_adaptive_leverage.json，2026-07-17 版）
-LEV = {
-  "us": {
-    "window": ['2005-01-03', '2026-07-10'],
-    "fullstack": [
-      ('cap 1.0（不加槓桿）', 12.68, -21.3, 0.5948, 1.499, 71.0, 100.0, None),
-      ('cap 1.0＋執行層（＝主系統對帳）', 12.66, -22.1, 0.5727, 1.501, 71.0, 100.0, 11.9),
-      ('靜態 1.5×（無腦放大）', 16.95, -30.8, 0.5497, 1.25, 106.0, 150.0, None),
-      ('cap 1.5（真波動率目標·每日）', 14.05, -24.5, 0.5731, 1.369, 85.0, 150.0, None),
-      ('cap 1.5＋執行層（本頁追蹤）', 14.31, -25.3, 0.5666, 1.365, 85.0, 150.0, 28.4),
-    ],
-    "era_labels": ['2005-08 GFC', '2009-13 QE', '2014-18 低波', '2019-23 COVID', '2024- AI 牛'],
-    "dist_cap10": {"avg": 71, "avg3y": 86, "gt100": 0, "ge145": 0, "peak": 100, "eras": [52, 75, 79, 66, 84]},
-    "dist_cap15": {"avg": 85, "avg3y": 104, "gt100": 46, "ge145": 11, "peak": 150, "eras": [66, 95, 92, 78, 98]},
-    "stress": {"cap10": (-6.35, -15.91), "cap15": (-7.31, -17.12)},
-    "cap10_calmar": 0.595,
-    "sensitivity": [(0.0, 14.3, 0.584), (1.5, 14.05, 0.573), (3.0, 13.8, 0.562), (6.0, 13.3, 0.541)],
-  },
-  "tw": {
-    "window": ['2014-01-01', '2026-07-17'],
-    "fullstack": [
-      ('cap 1.0（不加槓桿）', 19.49, -19.0, 1.028, 2.422, 73.0, 100.0, None),
-      ('cap 1.0＋執行層（＝主系統對帳）', 19.51, -18.6, 1.0477, 2.472, 73.0, 100.0, 13.0),
-      ('靜態 1.5×（無腦放大）', 28.19, -27.3, 1.0309, 2.292, 110.0, 150.0, None),
-      ('cap 1.5（真波動率目標·每日）', 22.17, -19.2, 1.1524, 2.637, 83.0, 150.0, None),
-      ('cap 1.5＋執行層（本頁追蹤）', 22.62, -18.9, 1.1984, 2.641, 83.0, 150.0, 26.8),
-    ],
-    "era_labels": ['2014-16 陸股貶值/整理', '2017-19 平順多頭', '2020-22 COVID/升息', '2023- AI 台積電牛'],
-    "dist_cap10": {"avg": 73, "avg3y": 80, "gt100": 0, "ge145": 0, "peak": 100, "eras": [76, 76, 59, 80]},
-    "dist_cap15": {"avg": 83, "avg3y": 88, "gt100": 39, "ge145": 5, "peak": 150, "eras": [87, 91, 64, 90]},
-    "stress": {"cap10": (-6.2, -14.7), "cap15": (-6.2, -14.7)},
-    "cap10_calmar": 1.028,
-    "sensitivity": [(0.0, 22.35, 1.162), (1.5, 22.17, 1.152), (3.0, 21.99, 1.143), (6.0, 21.64, 1.125)],
-  },
-}
 
 
 # ---------------------------------------------------------------------------
@@ -287,39 +246,32 @@ def gate_state(px: pd.Series) -> dict:
 # Sleeve — adaptive median (verbatim port of
 #          run_adaptive_sigma.vt_weight_adaptive_median with n_days=756)
 # ---------------------------------------------------------------------------
-CAP = 1.5   # 曝險上限（本頁＝真波動率目標 cap 1.5；主頁＝1.0）
-
-
 def _sleeve_from(px: pd.Series, win: int = 20):
-    """Returns (rv20_now, sigma_t_now, sleeve, raw_ratio). σ_t ＝ RV20 的
-    rolling(756, min_periods=252).median()；raw_ratio ＝ σ_t/RV20（未 clip）；
-    w = clip(raw_ratio, upper=CAP=1.5)（真波動率目標，可上到 150%）。因果、無前視。"""
+    """Returns (rv20_now, sigma_t_now, sleeve). σ_t ＝ RV20 的 rolling(756,
+    min_periods=252).median()；w = min(1, σ_t/RV20)，NaN → 1（滿載）。因果、無前視。"""
     lr = np.log(px / px.shift(1))
     rv = lr.rolling(win).std() * np.sqrt(252)
     sigma = rv.rolling(MED_WIN, min_periods=MIN_PERIODS).median()
     rv_now = float(rv.iloc[-1])
     sig_now = float(sigma.iloc[-1])
     if rv_now > 0 and not np.isnan(sig_now):
-        raw = sig_now / rv_now
-        w = min(CAP, raw)
+        w = min(1.0, sig_now / rv_now)
     else:
-        raw, w = 1.0, 1.0
+        w = 1.0
         if np.isnan(sig_now):
             sig_now = rv_now
-    return rv_now, sig_now, w, raw
+    return rv_now, sig_now, w
 
 
 def sleeve_state(px: pd.Series) -> dict:
-    rv_now, sig_now, w, raw = _sleeve_from(px)
-    # 距離開槓桿：raw < 1 時波動還要降 (1-raw) 才到 1.0（開始借錢）；raw ≥ 1 已在借
-    return {"rv20": rv_now, "sigma_t": sig_now, "sleeve": w, "raw_ratio": raw,
-            "levered": bool(raw > 1.0), "dist_to_lever": max(0.0, 1.0 - raw)}
+    rv_now, sig_now, w = _sleeve_from(px)
+    return {"rv20": rv_now, "sigma_t": sig_now, "sleeve": w}
 
 
 def compute_ticker(t: str, px: pd.Series) -> dict:
     g = gate_state(px)
     s = sleeve_state(px)
-    fill = (1 if g["gate"] else 0) * s["sleeve"]        # 0..1.5 fill of the 0.5 slot
+    fill = (1 if g["gate"] else 0) * s["sleeve"]        # 0..1 fill of the 0.5 slot
     final = WEIGHTS[t] * fill
     return {**g, **s, "sigma_base": SIGMA_BASE[t], "fill": fill, "final": final}
 
@@ -337,16 +289,15 @@ def _daily_record(px_map: dict, legs: list, d: pd.Timestamp, source: str) -> dic
         pxd = px_map[t].loc[:d]
         _, pos, *_ = _gate_core(pxd)
         gate = bool(pos.iloc[-1])
-        rv_now, sig_now, sleeve, raw = _sleeve_from(pxd)
+        rv_now, sig_now, sleeve = _sleeve_from(pxd)
         final = WEIGHTS[t] * ((1 if gate else 0) * sleeve)
         combined += final
         rec["tickers"][t] = {
             "gate": gate,
             "rv20_pct": round(rv_now * 100, 2),
             "sigma_t_pct": round(sig_now * 100, 2),
-            "raw_ratio": round(raw, 4),
             "sleeve": round(sleeve, 4),
-            "final_pct": round(final * 100, 1),   # 組合 pp，0..75（每腿滿槓桿 75）
+            "final_pct": round(final * 100, 1),
         }
     rec["combined_pct"] = round(combined * 100, 1)
     return rec
@@ -475,13 +426,13 @@ def ticker_card(t: str, d: dict) -> str:
         ｜W104 {d['w104']:.2f} <b style="color:var(--{'green' if d104>=0 else 'red'})">{fmt_pct(d104,1)}</b>
         ｜W250 {d['w250']:.2f} <b style="color:var(--{'green' if d250>=0 else 'red'})">{fmt_pct(d250,1)}</b>
         ｜W104斜率 {'↑' if d['s104_pos'] else '↓'}｜W250斜率 {'↑' if d['s250_pos'] else '↓'}
-        <br><span style="font-size:.72rem">W52 單線閘門：週收 &gt; W52 在場、&lt; W52 出場（W104/W250 僅供背景參考，不入閘門決策）。</span></div>
+        <br><span style="font-size:.72rem">進場 score5＝週收在三線上且 W104/W250 四週斜率為正；出場＝一根週收 &lt; W52。</span></div>
     </div>
-    <div class="sig {'on' if d['levered'] else ('off' if d['sleeve']<0.999 else '')}">
-      <div class="sig-top"><span class="sig-dot"></span><span class="sig-name">自適應套袖 × cap 1.5（可到 150%）</span><span class="sig-mark">{d['sleeve']*100:.0f}%</span></div>
-      <div class="sig-detail">RV20 <b>{rv:.1f}%</b> vs σ_t <b>{sig:.1f}%</b> → σ_t/RV20 原始比率 <b>{d['raw_ratio']:.2f}</b>
-        → w = clip({d['raw_ratio']:.2f}, 上限 1.5) = <b>{d['sleeve']:.2f}</b>
-        <br><span style="font-size:.72rem">{('<b style=color:var(--green)>已開槓桿</b>：波動低於自身近 3 年中位，加碼到 %.0f%%。' % (d['sleeve']*100)) if d['levered'] else ('未開槓桿（σ_t/RV &lt; 1，減碼中）：波動<b>再降 %.0f%%</b>才到 1.0 開始借錢。' % (d['dist_to_lever']*100))}</span></div>
+    <div class="sig {'on' if d['sleeve']>=0.999 else 'off'}">
+      <div class="sig-top"><span class="sig-dot"></span><span class="sig-name">自適應波動率套袖（動態 σ_t）</span><span class="sig-mark">{d['sleeve']*100:.0f}%</span></div>
+      <div class="sig-detail">RV20（20日年化波動）<b>{rv:.1f}%</b> vs σ_t <b>{sig:.1f}%</b>（σ目標＝近 3 年 RV20 中位數，動態）
+        → w = min(1, {sig:.1f}%／{rv:.1f}%) = <b>{d['sleeve']:.2f}</b>
+        <br><span style="font-size:.72rem">{'波動 ≤ 近 3 年中位，滿載。' if d['sleeve']>=0.999 else '波動高於自身近 3 年中位，按比例減碼（只降不加）。'} 固定 σ 版對照 σ＝{d['sigma_base']*100:.0f}%。</span></div>
     </div>
   </div>
 </div>"""
@@ -512,70 +463,58 @@ def recent_table(t: str, d: dict) -> str:
 
 
 def backtest_section(mkt: dict) -> str:
-    """槓桿全堆疊回測（fullstack）＋曝險分布＋融資敏感度＋壓力，數字轉錄自 LEV 常數。"""
-    L = LEV[mkt["key"]]
-    dead = " · 對照組（研究判定：美股任何利差都不划算）" if mkt["key"] == "us" else ""
-    fs = ""
-    for lab, cagr, mdd, calmar, martin, avg, peak, py in L["fullstack"]:
-        hl = ("rowhl" if "本頁追蹤" in lab else ("rowbh" if "不加槓桿）" in lab else ""))
-        yr = f"{py:.0f}" if py is not None else "—"
-        fs += (f'<tr class="{hl}"><td>{lab}</td><td class="num">{cagr:.2f}%</td>'
-               f'<td class="num">{mdd:.1f}%</td><td class="num">{calmar:.3f}</td>'
-               f'<td class="num">{martin:.2f}</td><td class="num">{avg:.0f}%</td>'
-               f'<td class="num">{peak:.0f}%</td><td class="num">{yr}</td></tr>\n')
-    # 曝險分布 + 分期
-    d10, d15 = L["dist_cap10"], L["dist_cap15"]
-    dist = (f'<tr class="rowbh"><td>cap 1.0</td><td class="num">{d10["avg"]}%</td><td class="num">{d10["avg3y"]}%</td>'
-            f'<td class="num">{d10["gt100"]}%</td><td class="num">{d10["ge145"]}%</td><td class="num">{d10["peak"]}%</td></tr>'
-            f'<tr class="rowhl"><td>cap 1.5</td><td class="num">{d15["avg"]}%</td><td class="num">{d15["avg3y"]}%</td>'
-            f'<td class="num">{d15["gt100"]}%</td><td class="num">{d15["ge145"]}%</td><td class="num">{d15["peak"]}%</td></tr>')
-    era_head = "".join(f'<th class="num">{lab}</th>' for lab in L["era_labels"])
-    era_cells = "".join(f'<td class="num">{v}%</td>' for v in d15["eras"])
-    storm = ('<div class="takeaway"><b>風暴期自動收槓桿</b>：台股 2020-22 COVID/升息平均曝險只有 <b>64%</b>'
-             '（vs 平順期 87～91%）——σ_t/RV 在波動飆升時跌破 1，cap 1.5 自動退回。這是「真波動率目標」與「無腦放大」的根本差別。</div>'
-             if mkt["key"] == "tw" else
-             '<div class="takeaway">cap 1.5 平均曝險僅 85%（不是常態滿槓桿）；GFC 分期只 66%——風暴期靠 σ_t/RV 跌破 1 自動收槓桿。</div>')
-    # 融資敏感度
-    c10 = L["cap10_calmar"]
-    sens = ""
-    for sp, cg, cal in L["sensitivity"]:
-        warn = ' style="background:var(--red-bg)"' if sp >= 6 else ""
-        inc = cal - c10
-        icls = "pos" if inc > 1e-9 else ("neg" if inc < -1e-9 else "")
-        sens += (f'<tr{warn}><td>{sp:.1f}%{" （台股融資）" if sp>=6 else ""}</td><td class="num">{cg:.2f}%</td>'
-                 f'<td class="num">{cal:.3f}</td><td class="num {icls}">{inc:+.3f}</td></tr>\n')
-    st = L["stress"]
-    return f"""<div class="card">
-<h3>回測全堆疊 — {mkt['short']}（訊號 → 曝險 → 執行・窗 {L['window'][0]} ～ {L['window'][1]}）{dead}</h3>
-<p style="font-size:.8rem;color:var(--muted);margin-bottom:.7rem">
-主列（藍底）＝<b>cap 1.5 ＋ 執行層（本頁追蹤）</b>；「cap 1.0 ＋ 執行層」＝<b>主系統對帳列</b>（美 0.573／台 1.048，可與 <a href="/long-track-w52-adaptive/">主系統頁</a>對帳）。曝險欄可見 cap 1.5 平均僅 83～85%、非常態滿槓桿。數字轉錄自 results/vol_targeting/w52_adaptive_leverage.json。{'<b>台股數字為 7 bps 均一成本；真實成本版（證交稅）約再降 0.5pp CAGR，見 <a href="/backtest/vol_targeting/tw.html">台股實驗室</a>。</b>' if mkt['key'] == 'tw' else ''}</p>
-<table><thead><tr><th>層級</th><th class="num">CAGR</th><th class="num">MDD</th><th class="num">Calmar</th><th class="num">Martin</th><th class="num">平均曝險</th><th class="num">峰值</th><th class="num">年動手</th></tr></thead>
-<tbody>{fs}</tbody></table>
-</div>
-
-<div class="card">
-<h3>{mkt['short']} 曝險分布統計</h3>
-<table><thead><tr><th>設計</th><th class="num">全窗均</th><th class="num">近三年均</th><th class="num">&gt;100% 天數</th><th class="num">≥145% 天數</th><th class="num">峰值</th></tr></thead>
-<tbody>{dist}</tbody></table>
-<table style="margin-top:.5rem"><thead><tr><th>cap 1.5 分期平均曝險</th>{era_head}</tr></thead><tbody><tr><td>平均曝險</td>{era_cells}</tr></tbody></table>
-{storm}
-</div>
-
-<div class="card">
-<h3>{mkt['short']} 融資利差敏感度（cap 1.5・cap 1.0 Calmar 基準 {c10:.3f}）</h3>
-<table><thead><tr><th>融資利差</th><th class="num">CAGR</th><th class="num">Calmar</th><th class="num">增量 vs cap 1.0</th></tr></thead>
-<tbody>{sens}</tbody></table>
-<div class="takeaway"><b>誠實更正</b>：原預期「6% 融資 → 增益歸零」<b>不成立</b>——真波動率目標只借一點點（平均曝險 83～85%），6% 利差下台股仍領先 cap 1.0 約 +0.10 Calmar；<b>美股則任何利差都不如 cap 1.0</b>。「必須用期貨」的真正理由是<b>保證金／強制平倉機制與台股散戶實務</b>，不是融資吃掉增益。</div>
-</div>
-
-<div class="card">
-<h3>{mkt['short']} 壓力統計（歷史最差）</h3>
-<table><thead><tr><th>設計</th><th class="num">最差單日</th><th class="num">最差 20 日</th></tr></thead>
+    bt = mkt["bt"]
+    h2h = bt["h2h"]
+    rows = ""
+    for lab, cagr, mdd, calmar, ui, martin in bt["rows"]:
+        hl = ("rowhl" if "本頁追蹤" in lab else
+              ("rowbh" if "買進持有" in lab else ""))
+        rows += (f'<tr class="{hl}"><td>{lab}</td><td class="num">{cagr:.2f}%</td>'
+                 f'<td class="num">{mdd:.1f}%</td><td class="num">{calmar:.3f}</td>'
+                 f'<td class="num">{ui:.2f}</td><td class="num">{martin:.2f}</td></tr>\n')
+    eras = ""
+    for lab, dc, dm in bt["eras"]:
+        cc = "pos" if dc >= 0 else "neg"
+        cm = "pos" if dm >= 0 else "neg"
+        eras += (f'<tr><td>{lab}</td><td class="num {cc}">{dc:+.1f}pp</td>'
+                 f'<td class="num {cm}">{dm:+.1f}pp</td></tr>\n')
+    if mkt["key"] == "tw":
+        take = ('<b>台股：W52 × 自適應波動率＋執行層 Calmar 1.048</b>，高於舊追蹤系統 '
+                'score5×自適應（0.995）；增益主要在 2023 AI 台積電牛（快速再進場 ΔCAGR +3.8pp）。'
+                '<b>但台股 2014 窗無深熊崩盤樣本、1.048 含 5% 取整的路徑運氣成分</b>（見下方誠實區塊與 2330 長窗）。')
+    else:
+        take = ('<b>美股：W52 × 自適應波動率＋執行層 Calmar 0.573</b>，高於舊追蹤系統 '
+                'score5×自適應（0.524）。<b>增益全集中在 2009-13 QE 的快速再進場（ΔCAGR +5.5pp），'
+                '代價在 GFC（ΔCAGR −3.3／ΔMDD −3.7pp）</b>——W52 單線把 score5「深熊後再進場遲到數年」縮短，'
+                '但慢熊保護較弱。含崩盤樣本的深熊檢驗見台股 2330 長窗（W52 版反而略劣）。')
+    ec, em, eg = h2h["c"]
+    ee_c, ee_m, ee_g = h2h["e"]
+    h2h_card = f"""<div class="card">
+<h3>{mkt['short']} 頭對頭 — 本頁 W52 × 自適應波動率 vs 舊實倉引擎 {h2h['engine']}（同權重、同窗）</h3>
+<table><thead><tr><th>系統</th><th class="num">Calmar</th><th class="num">MDD</th><th class="num">CAGR</th></tr></thead>
 <tbody>
-<tr class="rowbh"><td>cap 1.0</td><td class="num">{st['cap10'][0]:.1f}%</td><td class="num">{st['cap10'][1]:.1f}%</td></tr>
-<tr class="rowhl"><td>cap 1.5</td><td class="num">{st['cap15'][0]:.1f}%</td><td class="num">{st['cap15'][1]:.1f}%</td></tr>
+<tr class="rowhl"><td>W52 × 自適應波動率（本頁）</td><td class="num">{ec:.3f}</td><td class="num">{em:.1f}%</td><td class="num">{eg:.2f}%</td></tr>
+<tr><td>舊實倉引擎 {h2h['engine']}（分數倉）</td><td class="num">{ee_c:.3f}</td><td class="num">{ee_m:.1f}%</td><td class="num">{ee_g:.2f}%</td></tr>
 </tbody></table>
-<div style="font-size:.75rem;color:var(--muted);margin-top:.5rem"><b>槓桿算術</b>：150% 滿載時標的單日 −7% ＝ 權益 −10.5%；故實際峰值建議壓 140% 留保證金緩衝。</div>
+<div class="takeaway">兩者<b>長期平均曝險相近（皆約七成）</b>、分期 MDD 本頁多期較淺；<b>弱點期錯開</b>——本頁怕{h2h['c_weak']}、{h2h['engine']} 怕{h2h['e_weak']}。這是<b>不同機制、互補而非替代</b>：本頁把「水下體驗」擺第一（門檻式減碼＋快速再進場），舊實倉引擎把「趨勢報酬」擺第一。</div>
+</div>"""
+    return f"""<div class="card">
+<h3>回測摘要 — {mkt['short']}（W52 × 自適應波動率 vs 對照・窗 {bt['window']}）</h3>
+<p style="font-size:.8rem;color:var(--muted);margin-bottom:.7rem">
+兩標的日報酬 50/50 加權合成（等效每日再平衡，如實揭露）。<b>主列＝本頁系統（含 10pp＋5% 取整執行層，與追蹤操作同規則）</b>；判準基準＝舊追蹤系統 score5×自適應（同執行層）。「每日照調」為理論對照。
+數字轉錄自 results/vol_targeting/w52_adaptive.json、舊實倉引擎自 live_engine_compare.json。</p>
+<table><thead><tr><th>配置</th><th class="num">CAGR</th><th class="num">MDD</th><th class="num">Calmar</th><th class="num">Ulcer</th><th class="num">Martin</th></tr></thead>
+<tbody>{rows}</tbody></table>
+<div class="takeaway">{take}</div>
+</div>
+
+{h2h_card}
+
+<div class="card">
+<h3>分期（{mkt['short']} W52 vs score5・同執行層；ΔCAGR／ΔMDD，正＝W52 較優）</h3>
+<table><thead><tr><th>期間</th><th class="num">Δ CAGR</th><th class="num">Δ MDD</th></tr></thead>
+<tbody>{eras}</tbody></table>
+<div style="font-size:.75rem;color:var(--muted);margin-top:.5rem">Δ ＝ W52 − score5（同自適應套袖、同執行層）。增益的位置（快速再進場）與代價的位置（慢熊保護）一眼可辨。</div>
 </div>"""
 
 
@@ -598,7 +537,7 @@ def appendix_2330_section() -> str:
 <tbody>{rows}</tbody></table>
 <div class="takeaway"><b>深熊退化證實</b>：含崩盤樣本時 W52 × 自適應波動率 Calmar <b>0.433 反而略劣於舊系統 score5×自適應（0.441）</b>；
 GFC 段兩者 MDD 同為 −36.4%，純 W52 閘門更深（−38.6%）。與美股 GFC 分期一致：<b>W52 的優勢是無崩盤期的快速再進場，
-對慢熊誘多（跌破 W52 又拉回、反覆穿越）的抵抗較弱</b>。故台股 2014+ 全窗較優<b>不可外推</b>到未見的下一次深熊——這正是本頁列為「傾向採用、但實單前須經回撤檢驗」的核心理由。</div>
+對慢熊誘多（跌破 W52 又拉回、反覆穿越）的抵抗較弱</b>。故台股 2014+ 全窗較優<b>不可外推</b>到未見的下一次深熊——這也是實單主系統（cap 1.5）設「上線後回顧點」的核心理由；本頁 cap 1.0 為其收回槓桿的對照基準。</div>
 </div>"""
 
 
@@ -621,13 +560,6 @@ def _market_data(mkt: dict, sigs: dict, history: list, exec_replay: dict) -> dic
         "asig": _col(lambda r: r["tickers"][a]["sigma_t_pct"]),
         "bsig": _col(lambda r: r["tickers"][b]["sigma_t_pct"]),
         "src": _col(lambda r: r["source"]),
-        # 影子：cap 1.0 組合曝險（由 raw_ratio 推導，min(1,raw)），與 cap 1.5 對照
-        "cshadow": _col(lambda r: round(sum(
-            (50.0 if r["tickers"][t]["gate"] else 0.0) * min(1.0, r["tickers"][t].get("raw_ratio", 1.0))
-            for t in (a, b)), 1)),
-        # 燃料表：組合 σ_t/RV 原始比率均值（clip 顯示 2.5）
-        "fuel": _col(lambda r: round(min(2.5, 0.5 * (r["tickers"][a].get("raw_ratio", 1.0)
-                                                     + r["tickers"][b].get("raw_ratio", 1.0))), 2)),
         # executed layer (10pp band + 5% round) — deterministic replay
         "cexe": json.dumps(exec_replay["combined"], separators=(",", ":")),
         "aexe": json.dumps(exec_replay["executed"].get(a, []), separators=(",", ":")),
@@ -726,10 +658,6 @@ def market_html(mkt: dict, sigs: dict, md: dict) -> str:
 <p style="font-size:.8rem;color:var(--muted);margin-bottom:.5rem">
 本頁 σ_t 是<b>動態線</b>（近 3 年 RV20 滾動中位數），不是固定 σ 版的水平虛線。當 RV20（實線）升破自身 σ_t（虛線）時套袖按比例減碼；RV20 ≤ σ_t 時滿載。regime 抬升時 σ_t 跟著上移，是這頁與固定 σ 版的唯一機制差異。</p>
 <div class="chart-wrap-sm"><canvas id="chart-rv-{suf}"></canvas></div>
-<h3 style="margin-top:1.1rem">{mkt['short']} 槓桿燃料表 — σ_t/RV 原始比率</h3>
-<p style="font-size:.8rem;color:var(--muted);margin-bottom:.5rem">
-σ_t/RV &gt; <b>1.0</b>（下虛線）＝當下比自身近 3 年平靜、cap 1.5 開始借錢；&gt; <b>1.5</b>（上虛線）＝連 cap 1.5 也滿載 150%。崩盤時比率暴跌到 1 以下、槓桿自動關閉。上方時間軸的<b>藍虛線＝cap 1.0 影子</b>（＝主系統曝險），綠粗階梯＝本頁 cap 1.5 執行，兩者差距就是「借的錢」。</p>
-<div class="chart-wrap-sm"><canvas id="chart-fuel-{suf}"></canvas></div>
 </div>
 
 {events_card(mkt, md['events'])}
@@ -762,11 +690,10 @@ def market_js(mkt: dict, md: dict) -> str:
     H = md["H"]
     return f"""
 // ===== market: {suf} =====
-// 0~150 刻度：base（≤100）＋ 槓桿段（>100，紅）＋ 現金
 new Chart(document.getElementById('chart-gauge-{suf}'),{{
   type:'doughnut',
-  data:{{labels:['曝險','槓桿 (&gt;100%)','現金'],datasets:[{{data:[{min(100.0,combined):.1f},{max(0.0,combined-100):.1f},{max(0.0,150-combined):.1f}],
-    backgroundColor:['{CCOL_HEX}','#dc2626','#ece7db'],borderWidth:0}}]}},
+  data:{{labels:['曝險','現金'],datasets:[{{data:[{combined:.1f},{100-combined:.1f}],
+    backgroundColor:['{CCOL_HEX}','#ece7db'],borderWidth:0}}]}},
   options:{{rotation:-90,circumference:180,cutout:'72%',responsive:true,maintainAspectRatio:false,
     plugins:{{legend:{{display:false}},tooltip:{{callbacks:{{label:function(c){{return c.label+': '+c.parsed.toFixed(1)+'%'}}}}}}}}}}
 }});
@@ -791,20 +718,20 @@ function segDash_{suf}(ctx){{return W_SRC_{suf}[ctx.p1DataIndex]==='live'?undefi
 new Chart(document.getElementById('chart-weights-{suf}'),{{
   type:'line',
   data:{{labels:W_LAB_{suf},datasets:[
-    {{label:'合成執行 cap 1.5',data:{H['cexe']},borderColor:GREEN,backgroundColor:'rgba(22,163,74,0.09)',
+    {{label:'合成執行',data:{H['cexe']},borderColor:GREEN,backgroundColor:'rgba(22,163,74,0.09)',
      borderWidth:2.8,stepped:true,pointRadius:0,pointHoverRadius:3,fill:'origin',segment:{{borderDash:segDash_{suf}}}}},
-    {{label:'{legs[0]} 執行',data:{H['aexe']},borderColor:BLUE,borderWidth:1.6,stepped:true,pointRadius:0,pointHoverRadius:3,segment:{{borderDash:segDash_{suf}}}}},
-    {{label:'{legs[1]} 執行',data:{H['bexe']},borderColor:AMBER,borderWidth:1.6,stepped:true,pointRadius:0,pointHoverRadius:3,segment:{{borderDash:segDash_{suf}}}}},
-    {{label:'cap 1.0 影子（主系統）',data:{H['cshadow']},borderColor:'#1a56db',borderWidth:1.3,borderDash:[4,3],pointRadius:0,pointHoverRadius:2,tension:0.15}},
-    {{label:'100% 分界',data:W_LAB_{suf}.map(function(){{return 100;}}),borderColor:'rgba(120,120,120,0.55)',borderWidth:1,borderDash:[2,3],pointRadius:0}},
-    {{label:'合成目標（理論）',data:{H['comb']},borderColor:'rgba(22,163,74,0.35)',borderWidth:1,pointRadius:0,pointHoverRadius:2,tension:0.15}}
+    {{label:'{legs[0]} 執行',data:{H['aexe']},borderColor:BLUE,borderWidth:2,stepped:true,pointRadius:0,pointHoverRadius:3,segment:{{borderDash:segDash_{suf}}}}},
+    {{label:'{legs[1]} 執行',data:{H['bexe']},borderColor:AMBER,borderWidth:2,stepped:true,pointRadius:0,pointHoverRadius:3,segment:{{borderDash:segDash_{suf}}}}},
+    {{label:'合成目標（理論）',data:{H['comb']},borderColor:'rgba(22,163,74,0.40)',borderWidth:1,pointRadius:0,pointHoverRadius:2,tension:0.15}},
+    {{label:'{legs[0]} 目標',data:{H['a']},borderColor:'rgba(21,101,192,0.35)',borderWidth:1,pointRadius:0,pointHoverRadius:2,tension:0.15}},
+    {{label:'{legs[1]} 目標',data:{H['b']},borderColor:'rgba(217,119,6,0.35)',borderWidth:1,pointRadius:0,pointHoverRadius:2,tension:0.15}}
   ]}},
   options:{{responsive:true,maintainAspectRatio:false,interaction:{{mode:'index',intersect:false}},
     plugins:{{legend:{{display:true,position:'top',align:'start',labels:{{usePointStyle:true,pointStyle:'line',padding:12}}}},
       tooltip:{{callbacks:{{title:function(c){{return c[0].label+' · '+(W_SRC_{suf}[c[0].dataIndex]==='live'?'每日實錄':'規則回放')}},
         label:function(c){{return c.dataset.label+': '+c.parsed.y.toFixed(1)+'%'}}}}}}}},
     scales:{{x:{{grid:{{display:false}},ticks:{{maxTicksLimit:12,font:{{size:10}},maxRotation:0,autoSkip:true}}}},
-      y:{{min:0,max:155,grid:{{color:'rgba(0,0,0,0.06)'}},ticks:{{callback:function(v){{return v+'%'}},font:{{size:10}}}}}}}}
+      y:{{min:0,max:100,grid:{{color:'rgba(0,0,0,0.06)'}},ticks:{{callback:function(v){{return v+'%'}},font:{{size:10}}}}}}}}
   }}
 }});
 
@@ -821,22 +748,6 @@ new Chart(document.getElementById('chart-rv-{suf}'),{{
       tooltip:{{callbacks:{{label:function(c){{return c.dataset.label+': '+c.parsed.y.toFixed(1)+'%'}}}}}}}},
     scales:{{x:{{grid:{{display:false}},ticks:{{maxTicksLimit:12,font:{{size:10}},maxRotation:0,autoSkip:true}}}},
       y:{{beginAtZero:true,grid:{{color:'rgba(0,0,0,0.06)'}},ticks:{{callback:function(v){{return v+'%'}},font:{{size:10}}}}}}}}
-  }}
-}});
-
-// 槓桿燃料表：σ_t/RV 比率 vs 1.0/1.5 參考線
-new Chart(document.getElementById('chart-fuel-{suf}'),{{
-  type:'line',
-  data:{{labels:W_LAB_{suf},datasets:[
-    {{label:'σ_t/RV',data:{H['fuel']},borderColor:AMBER,borderWidth:1.5,pointRadius:0,pointHoverRadius:3,tension:0.1}},
-    {{label:'1.0（開始借錢）',data:W_LAB_{suf}.map(function(){{return 1.0;}}),borderColor:'rgba(22,163,74,0.7)',borderWidth:1,borderDash:[5,4],pointRadius:0}},
-    {{label:'1.5（滿載 150%）',data:W_LAB_{suf}.map(function(){{return 1.5;}}),borderColor:'rgba(220,38,38,0.7)',borderWidth:1,borderDash:[5,4],pointRadius:0}}
-  ]}},
-  options:{{responsive:true,maintainAspectRatio:false,interaction:{{mode:'index',intersect:false}},
-    plugins:{{legend:{{display:true,position:'top',align:'start',labels:{{usePointStyle:true,pointStyle:'line',padding:10}}}},
-      tooltip:{{callbacks:{{label:function(c){{return c.dataset.label+': '+c.parsed.y.toFixed(2)}}}}}}}},
-    scales:{{x:{{grid:{{display:false}},ticks:{{maxTicksLimit:12,font:{{size:10}},maxRotation:0,autoSkip:true}}}},
-      y:{{beginAtZero:true,suggestedMax:2.5,grid:{{color:'rgba(0,0,0,0.06)'}},ticks:{{font:{{size:10}}}}}}}}
   }}
 }});
 
@@ -902,8 +813,8 @@ def generate_html(sigs: dict, changes: list | None, last_change_date: str | None
   <meta name="robots" content="noindex,nofollow">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>W52 × 自適應波動率 × 150% 槓桿｜影子追蹤 | InvestMQuest Research</title>
-  <meta name="description" content="W52 × 自適應波動率 cap 1.5（150% 槓桿）· 影子追蹤（無 email，通知由主系統覆蓋）· 台股候選、美股對照">
+  <title>W52 × 自適應波動率 100%｜cap 1.0 影子對照 | InvestMQuest Research</title>
+  <meta name="description" content="美股 QQQ+SMH ＋ 台股 0050+2330 · 週線 W52 單線閘門 × 自適應 σ 波動率目標 × 執行層 · cap 1.0（100%）影子對照頁（2026-07-18 主從對調；實單主系統為 cap 1.5）· 無 email">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Serif+TC:wght@600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
@@ -1002,25 +913,26 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 {NAV_BLOCK}
 <div class="page-hdr">
   <div class="container">
-    <div class="crumb"><a href="/">首頁</a> / <a href="/long-track-w52-adaptive/">W52 × 自適應波動率</a> / 150% 槓桿・影子追蹤</div>
-    <h1>W52 × 自適應波動率 × 150% 槓桿 — 影子追蹤</h1>
-    <div class="sub">美股 QQQ+SMH ＋ 台股 0050+2330 · 曝險層改 <b>cap 1.5</b>（w = 閘門 × clip(σ_t/RV20, 上限 1.5)）× 執行層 · <b>影子追蹤（paper shadow）</b>：無獨立 email、通知由主系統 cap 1.0 覆蓋 · 台股＝槓桿候選、美股＝對照組 · <span style="opacity:.7">研究代號 變體 C 槓桿版</span></div>
+    <div class="crumb"><a href="/">首頁</a> / <a href="/long-track-w52-adaptive/">W52 × 自適應波動率 150%（實單主系統）</a> / cap 1.0 影子對照</div>
+    <h1>W52 × 自適應波動率 100% — 影子對照</h1>
+    <div class="sub">美股 QQQ+SMH ＋ 台股 0050+2330 · 週線 W52 單線閘門 × 自適應 σ 波動率目標 × 執行層 · <b>cap 1.0（100%）影子對照頁</b>：訊號與<a href="/long-track-w52-adaptive/">實單主系統（cap 1.5）</a>完全相同、只把曝險上限收回 1.0 · 無獨立 email · <span style="opacity:.7">研究代號 變體 C</span></div>
     <div style="margin-top:.6rem;display:flex;gap:.4rem;flex-wrap:wrap">
-      <a href="/long-track-w52-adaptive/leverage.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border-radius:6px;background:var(--text);color:#fff;text-decoration:none">150% 槓桿影子（本頁）</a>
-      <a href="/long-track-w52-adaptive/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">主系統 cap 1.0</a>
-      <a href="/backtest/vol_targeting/leverage.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">槓桿研究頁</a>
+      <a href="/long-track-w52-adaptive/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">實單主系統 cap 1.5</a>
+      <a href="/long-track-w52-adaptive/leverage.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border-radius:6px;background:var(--text);color:#fff;text-decoration:none">cap 1.0 影子對照（本頁）</a>
       <a href="/backtest/vol_targeting/adaptive.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">美股變體實驗室</a>
       <a href="/backtest/vol_targeting/tw.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">台股變體實驗室</a>
+      <a href="/long-track-smh/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">SMH/QQQ STX50（舊實倉・對照）</a>
+      <a href="/long-track-tw/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">台股長線 2330/0050（舊實倉・對照）</a>
     </div>
   </div>
 </div>
 <div class="container">
 
 <div class="oos-banner">
-  <span class="tag-loud">影子追蹤（PAPER SHADOW）・cap 1.5・無 email・台股候選/美股對照</span>
-  <div style="font-size:.86rem">本頁是<a href="/long-track-w52-adaptive/">主系統（cap 1.0）</a>的<b>槓桿影子版</b>：訊號完全相同（W52 閘門 × 自適應 σ_t × 執行層），<b>只把曝險上限從 1.0 放到 1.5</b>（真波動率目標＝只在平靜 regime σ_t/RV &gt; 1 時借錢，波動一高自動降回）。定位＝<b>影子追蹤（paper shadow）</b>：<b>無獨立 email</b>，可行動變化通知仍由主系統 cap 1.0 覆蓋（三處註明），本頁純為屆時採用決策累積影子 OOS。
-  <b>台股＝槓桿候選</b>（cap 1.5 Calmar 1.048 → 1.198、MDD 幾乎不動＝Moreira-Muir）；<b>美股＝對照組</b>（研究判定：任何融資利差下 cap 1.5 都不如 cap 1.0，槓桿在美股不划算，欄位以對照樣式呈現）。
-  <br><br><b>誠實定位（必讀）</b>：槓桿放大所有模型誤差、深熊未實測、台股須用期貨非融資、實際峰值壓 140%。<b>前置順序＝主系統 1× 版先過複審關卡（60 交易日 OR 一次 ≥10% 回撤實錄），採用時槓桿版寫進同一份 charter 規格</b>（見頁尾）。</div>
+  <span class="tag-loud">cap 1.0（100%）影子對照・無 email・供複審對照</span>
+  <div style="font-size:.86rem"><b>2026-07-18 主從對調</b>：用戶正式將 <b>cap 1.5 版採為實單主系統</b>（<a href="/long-track-w52-adaptive/">主系統頁</a>），本頁（cap 1.0、100%）<b>由原主系統降為影子對照頁</b>，保留供複審對照——<b>訊號完全相同</b>（W52 單線閘門 × 自適應 σ 波動率目標 × 10pp＋5% 取整執行層），<b>唯一差異是曝險上限收回 1.0（不借錢加碼、封頂 100%）</b>。設計取向＝水下體驗優先（門檻式減碼＋跌破 W52 快速出場／收復快速再進場）。
+  每交易日台股／美股收盤後更新，<b>但本頁無獨立 email</b>——可行動變化通知由<a href="/long-track-w52-adaptive/">實單主系統 cap 1.5</a> 覆蓋。舊追蹤家族（固定 σ／自適應 A）已歸檔凍結，回測證據保留於<a href="/backtest/vol_targeting/adaptive.html">美股</a>／<a href="/backtest/vol_targeting/tw.html">台股</a>變體實驗室。
+  <br><br><b>誠實定位（必讀）：本系統是 2026-07-17 樣本內迭代的產物</b>（規則同日凍結）——score5→快閘門 W52 是看了樣本內診斷後的選擇、非先驗；<b>快閘門的慢熊保護較弱</b>（見誠實揭露與 2330 長窗）。本頁 cap 1.0 是主系統 cap 1.5 收回槓桿後的對照基準，方便隔離「槓桿貢獻」與「訊號貢獻」。</div>
 </div>
 
 <div class="dual-stat">
@@ -1038,50 +950,41 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 <div class="rule-list">
 ① <b>四腿、兩市場</b>：美股 {{QQQ, SMH}} 各 50%、台股 {{0050, 2330}} 各 50%（.TW，內嵌幻影分割修復）。兩組合各自獨立追蹤（各 100%），日報酬 50/50 加權合成（<b>絕不直接相加 equity curve</b>）。<br>
 ② <b>週線 W52 單線閘門</b>（W-FRI）：<b>週收盤 &gt; SMA52w 在場、&lt; SMA52w 出場</b>；<b>無 W104／W250 斜率滯後條件</b>（此為與舊 score5 系統的唯一結構差異，換取深熊後快速再進場）；<b>長多 only</b>，閘門輸出 0／1。卡片仍顯示 W104／W250 供參考背景，但<b>閘門決策只用 W52</b>。<br>
-③ <b>自適應波動率套袖 × cap 1.5（本頁與主系統唯一差異，凍結 {FREEZE_DATE}）</b>：σ_t＝RV20 的 <b>rolling(756, min_periods=252).median()</b>；raw＝σ_t／RV20；<b>w = clip(raw, 上限 1.5)</b>——σ_t/RV &lt; 1 減碼（同主系統），&gt; 1 <b>才借錢加碼、上到 150%</b>（真波動率目標）。融資＝現金利率＋利差 1.5%/年；台股實作須用期貨。<br>
+③ <b>自適應波動率套袖（凍結 {FREEZE_DATE}）</b>：σ_t＝RV20 的 <b>rolling(756, min_periods=252).median()</b>（近 3 年 RV20 中位數，首年 expanding）；w = min(1, σ_t／RV20)，RV20＝20 日對數報酬年化波動；<b>只降不加</b>（上限 1.0）。語義＝相對自身 regime 的尖峰偵測器。<br>
 ④ <b>機制與視窗凍結</b>：W52 閘門、滾動中位數 3 年（756／252）、執行層皆鎖死，<b>此後不再調整</b>；不掃參擇優、不改機制形狀、不加濾網後重跑。固定 σ 對照值（QQQ 20%／SMH 25%／0050 15%／2330 25%）僅供卡片顯示，套袖不使用。<br>
 ⑤ <b>執行</b>：t 收盤訊號、t+1 收盤生效；成本 7 bps／邊。<br>
 ⑥ <b>最終權重</b> = 0.5 × 閘門(0/1) × 套袖權重，每市場兩腿各自計算。<br>
 ⑦ <b>資料揭露</b>：yfinance auto-adjust（還原股價）；0050.TW 2014-01-02 幻影分割壞 bar 由腳本自動修復（回溯縮放，門檻單日 ±40%，台股漲跌停 ±10% 不可能誤觸）；0050 免費歷史約 2009 起。台股 2330 佔 0050 約五成，50/50 組合等效台積電曝險 ≈ 75%，非分散組合。<br>
 ⑧ <b>執行層（{FREEZE_DATE} 與規則同日凍結）</b>：|目標 − 現持| ≥ 10pp 才調整，調整取整至 5% 格；<b>回測主數字含此執行層</b>，與追蹤操作同規則（兩市場各自獨立重放）。<br>
-<span style="color:var(--muted);font-size:.78rem">閘門為週頻（僅週五可能翻轉），套袖 RV20／σ_t 為日頻，故本頁每交易日更新（date-keyed 冪等）。<b>本頁為影子追蹤（paper shadow）、無獨立 email</b>——可行動變化通知由<a href="/long-track-w52-adaptive/">主系統 cap 1.0</a> 覆蓋。本頁純為屆時採用決策累積影子 OOS。</span>
+<span style="color:var(--muted);font-size:.78rem">閘門為週頻（僅週五可能翻轉），套袖 RV20／σ_t 為日頻（每日可能微調），故本頁每交易日更新（台股收盤後、美股收盤後各一次，date-keyed 冪等）。「可行動變化」＝任一腿閘門翻轉，或今日目標與現持（執行層 executed）差 ≥ 10pp，觸發 email 通知（訊息標市場前綴、顯示取整後的建議動作）。</span>
 </div>
 </div>
 
 {appendix_2330_section()}
 
-<div class="card">
-<h3>期貨實務實作（研究，非下單指令）</h3>
-<div class="rule-list" style="font-size:.86rem">
-<b>美股</b>：IBKR portfolio margin，或 <b>MNQ 微型 Nasdaq 期貨</b>加曝險。<span style="color:var(--amber-text)">MNQ 對 SMH 腿有 tracking 偏差（MNQ ≈ NDX、非半導體），以 MNQ 複製 SMH 槓桿會有基差／beta 落差。</span>——<b>但美股是對照組，研究判定不值得加槓桿。</b><br>
-<b>台股（候選）</b>：<b>不能用融資（利率 6～7%）</b>，改用 <b>2330 小型個股期</b>（100 股/口 ≈ NT$11 萬名目）＋<b>小台指</b>。<b>口數換算例</b>（NT$10M sleeve、峰值 140% ＝ 額外 40% ＝ NT$4M）：2330 約 NT$2M ÷ 11 萬 ≈ <b>18 口</b>小型個股期；大盤約 NT$2M 以小台（每點 50 元、指數 ~23000 ≈ 名目 115 萬/口）≈ <b>1～2 口</b>。實際依當時價格與保證金重算。<br>
-<b>峰值上限壓 140%</b>（非研究理論值 150%）留保證金緩衝；<b>轉倉／基差摩擦估 0.3～0.5pp/年</b>未計入回測，實際增益要再打折。
-</div>
-</div>
-
 <div class="card" style="border:2px solid var(--amber-border);background:var(--amber-bg)">
 <h3 style="color:var(--amber-text)">誠實揭露（採用前必讀）</h3>
 <div class="rule-list" style="font-size:.82rem">
-① <b>槓桿放大所有模型誤差</b>：W52 樣本內迭代、自適應慢變數、5% 取整路徑成分——全被 ×1.5。<br>
-② <b>深熊退化的直接證據</b>：含 2008 的 2330 長窗裡 W52 × 自適應 Calmar <b>0.433 反而略劣於 score5×自適應 0.441</b>；快閘門對慢熊誘多抵抗較弱，<b>加槓桿只會更痛</b>。<br>
-③ <b>台股數字含取整路徑成分＋ 2014+ 無崩盤樣本</b>：cap 1.5 Calmar 1.198 不宜當「穩定勝出」；組合層級遇 2008 級深熊的槓桿行為未測試。<br>
-④ <b>台股須用期貨、峰值壓 140%</b>：融資 6～7% 不可行；但注意——真波動率目標借得少，融資利差不是主殺手（見敏感度表），用期貨的真正理由是保證金／強制平倉機制。<br>
-⑤ <b>美股槓桿不划算（對照組）</b>：任何利差下 cap 1.5 Calmar 都不如 cap 1.0——槓桿的價值只在台股這種低波乾淨多頭樣本，且該樣本無崩盤。
+① <b>本頁是 2026-07-17 樣本內迭代的產物</b>：把舊系統 score5 閘門換成快閘門 W52，是「看了樣本內診斷（score5 深熊後再進場遲到數年）之後」的規則選擇，<b>非先驗設計</b>。規則同日凍結，此後不調——但這不能消除「樣本內迭代」的本質，只有前瞻 OOS 能。<br>
+② <b>深熊退化的直接證據</b>：含 2008 的 2330 長窗裡，W52 × 自適應 Calmar <b>0.433 反而略劣於舊系統 score5×自適應 0.441</b>；純 W52 閘門 GFC MDD −38.6%（更深）。<b>快閘門對慢熊誘多（跌破 W52 又拉回、反覆穿越）的抵抗較弱</b>——這是換取「快速再進場」的代價。<br>
+③ <b>台股數字含取整路徑成分</b>：台股 Calmar 1.048 建立在 2014+ 無崩盤樣本 ＋ 5% 取整的路徑運氣上，不宜當「穩定勝出」；美股 0.573 的優勢主要來自 2009-13 QE 一段。<br>
+④ <b>全窗較優不可外推</b>：本系統的長處是「無崩盤期的快速再進場＋門檻式減碼＝好的水下體驗」；它沒有證明能在下一次深熊做得比舊系統好。
 </div>
 </div>
 
 <div class="card" style="border:2px solid var(--blue-border)">
-<h3 style="color:var(--blue-text)">前置順序鐵律（影子累積中）</h3>
+<h3 style="color:var(--blue-text)">本頁定位：影子對照（2026-07-18 主從對調後）</h3>
 <div class="rule-list" style="font-size:.82rem">
-本頁是<b>影子追蹤（paper shadow）</b>，為屆時採用決策累積影子 OOS，<b>不獨立寄信、不構成倉位建議</b>。<b>前置順序：</b><br>
-• <b>先讓主系統 1× 版（<a href="/long-track-w52-adaptive/">cap 1.0</a>）過複審關卡</b>——滿 <b>60 個追蹤交易日</b>前瞻 OOS 實錄，<b>或</b>經歷一次 <b>≥ 10% 組合回撤事件</b>的實錄檢驗；<br>
-• 通過後，<b>槓桿版寫進同一份 charter 規格</b>（部位、資金比例、期貨複製方式、峰值 140% 上限），才由研究轉實盤。<b>不得跳過 1× 直接上槓桿。</b>
+用戶已於 <b>2026-07-18 將 cap 1.5 版採為實單主系統</b>（見<a href="/long-track-w52-adaptive/">主系統頁</a>；原「實單前複審關卡」改為上線後回顧點）。本頁 <b>cap 1.0（100%）保留為影子對照</b>，用途：<br>
+• <b>複審對照基準</b>——與主系統 cap 1.5 逐日並排，隔離「訊號貢獻」與「槓桿貢獻」；主系統頁的「cap 1.0＋執行層＝主系統對帳」列即對應本頁。<br>
+• <b>降槓桿預案</b>——若回顧點發現 cap 1.5 水下體驗背離預期，可據本頁 cap 1.0 行為決定是否降回 100%。<br>
+本頁<b>無獨立 email、不構成倉位建議</b>；可行動變化通知由實單主系統 cap 1.5 覆蓋。
 </div>
 </div>
 
 </div>
 <footer class="imq-foot">
-  <div>&copy; {datetime.now().year} InvestMQuest Research · W52 × 自適應波動率 × 150% 槓桿（影子追蹤・研究・台股候選/美股對照）</div>
+  <div>&copy; {datetime.now().year} InvestMQuest Research · W52 × 自適應波動率 100%（cap 1.0 影子對照・實單主系統為 cap 1.5）</div>
   <div><a href="/disclosures.html">方法論與揭露</a> · 本站內容僅供研究參考，不構成投資建議</div>
 </footer>
 <script>
@@ -1171,15 +1074,16 @@ def main():
         print(f"{m['short']} exec layer: {len(er['events'])} events, current executed " +
               ", ".join(f"{t} {er['last'][t]:.0f}%" for t in m["legs"]))
 
-    # 影子追蹤（paper shadow）：無獨立 email／alert，通知由主頁 cap 1.0 覆蓋。
+    # cap 1.0 影子對照頁：無 email／alert（可行動變化通知由主系統 cap 1.5 覆蓋）；
+    # 仍記錄 last_change_date／desc 供頁面 change_html 與 state 對帳用。
     if changes:
         last_change_date = data_date
         last_change_desc = "; ".join(c.replace("<b>", "").replace("</b>", "") for c in changes)
-        print(f"CHANGES: {last_change_desc}（影子追蹤，不發 email；通知由主頁 cap 1.0 覆蓋）")
+        print(f"CHANGES (shadow, no email): {last_change_desc}")
     else:
         last_change_date = prev_state.get("last_change_date")
         last_change_desc = prev_state.get("last_change_desc")
-        print("No actionable change vs last run.")
+        print("No actionable change vs last run (shadow).")
 
     html = generate_html(sigs, changes, last_change_date, hist_map, exec_map)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
@@ -1190,9 +1094,8 @@ def main():
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "data_date": data_date,
         "ruleset_locked_date": FREEZE_DATE,
-        "mechanism": "W52 gate x adaptive σ_t x cap 1.5 (真波動率目標) x exec layer 10pp+5%round (scale 0~150)",
-        "status": "paper SHADOW leverage tracker (cap 1.5); no email (covered by cap 1.0 main); TW=candidate, US=control (leverage not worth it)",
-        "leverage": "cap 1.5: w = gate x clip(σ_t/RV20, upper=1.5); financing = cash rate + spread 1.5%/yr; TW must use futures not margin",
+        "mechanism": "W52 single-line gate x adaptive median σ_t rolling(756,252) x cap 1.0 x exec layer 10pp+5%round (scale 0~100)",
+        "status": "cap 1.0 (100%) SHADOW control page since 2026-07-18 (main/shadow swapped; LIVE main is now cap 1.5); no email (covered by cap 1.5 main)",
         "last_change_date": last_change_date,
         "last_change_desc": last_change_desc,
         "weights": WEIGHTS,
@@ -1205,8 +1108,6 @@ def main():
                 "sigma_base_pct": round(SIGMA_BASE[t] * 100, 1),
                 "sigma_t_pct": round(sigs[t]["sigma_t"] * 100, 2),
                 "rv20_pct": round(sigs[t]["rv20"] * 100, 2),
-                "raw_ratio": round(sigs[t]["raw_ratio"], 4),
-                "levered": sigs[t]["levered"],
                 "sleeve_weight": round(sigs[t]["sleeve"], 4),
                 "final_weight_pct": round(sigs[t]["final"] * 100, 1),
                 "executed_pct": exec_last[t],

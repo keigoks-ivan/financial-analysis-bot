@@ -82,7 +82,7 @@ TAG = {
     "live": '<span class="tag" style="background:#fffbeb;color:#92400e;border:1px solid #fde68a">實盤 ⚠</span>',
     "exp":  '<span class="tag" style="background:#fffbeb;color:#92400e;border:1px solid #fde68a">🔬 實驗·未採用</span>',
     "adopt": '<span class="tag" style="background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0">✓ 採用 · OOS</span>',
-    "live_now": '<span class="tag" style="background:#065f46;color:#fff;border:1px solid #065f46">✓ 實倉中</span>',
+    "live_now": '<span class="tag" style="background:#475569;color:#fff;border:1px solid #475569">舊實倉 · 對照</span>',
     "adopt_wait": '<span class="tag" style="background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0">✓ 採用 · 待上實倉</span>',
     "fail": '<span class="tag tag-fail">失敗</span>',
     "ma":   '<span class="tag" style="background:#f0fdfa;color:#115e59;border:1px solid #99f6e4">多資產</span>',
@@ -104,7 +104,7 @@ DOM = {
 GROUPS = [
     ("✓ 採用(2026-06 · OOS 追蹤中)", [
         ("SMH/QQQ 週線趨勢＋Supertrend 出場（進攻位）", "/backtest/long_track_smh/",
-         "50/50 SMH/QQQ · E3 + 週線 ST(10,3) 半倉出場閘門 · 2026-06-13 採用 · 美股唯一實倉系統 · 重審：滾動 3 年 Calmar 落後 SPY/QQQ 版",
+         "50/50 SMH/QQQ · E3 + 週線 ST(10,3) 半倉出場閘門 · 2026-06-13 採用 · 美股舊實倉（2026-07-18 起改對照，實單改用 W52 × 自適應波動率 150%）· 重審：滾動 3 年 Calmar 落後 SPY/QQQ 版",
          "+13.84%", "-21.87%", "0.90", "0.63", "trade", "$14.15M", TAG["live_now"]),
     ]),
     ("合格候補(通過 L1 門檻，未採用)", [
@@ -134,8 +134,8 @@ GROUPS = [
          "+14.51%", "-50.28%", "0.80", "0.29", "weak", "$15.94M", TAG["live"]),
     ]),
     ("🇹🇼 台股(2330/0050 E3 已採用 · 不同市場/幣別，不與美股同尺)", [
-        ("2330/0050 三訊號趨勢集成（E3 · 實倉）", "/backtest/long_track_tw/",
-         "50/50 2330/0050 · {W40·W52·TSMOM} 各⅓ · 2026-06-23 採用 · 實倉中 · 過尺 Calmar 0.85 vs 稀釋B&H 0.60 · NT$ · 自 2010-07(無 2008)· 詳見 <a href='/backtest/tw/'>台股總覽</a>",
+        ("2330/0050 三訊號趨勢集成（E3 · 舊實倉）", "/backtest/long_track_tw/",
+         "50/50 2330/0050 · {W40·W52·TSMOM} 各⅓ · 2026-06-23 採用 · 舊實倉（實單改用 W52 × 自適應波動率 150%）· 過尺 Calmar 0.85 vs 稀釋B&H 0.60 · NT$ · 自 2010-07(無 2008)· 詳見 <a href='/backtest/tw/'>台股總覽</a>",
          "+20.19%", "-23.75%", "1.16", "0.85", "trade", "$19.0M", TAG["live_now"]),
         ("0050 四系統總覽・台股 vs 美股差異", "/backtest/tw_0050_compare/",
          "四系統風險調整排名 + matched-window 檢驗：把美股關進同 2010+ 窗口，連 QQQ B&H 也反贏趨勢 → 「B&H 難敗」主因是樣本無崩盤，非台股特性",
@@ -413,7 +413,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 <div class="hero">
   <div class="hero-top">
     <span class="verdict-tag">研究線現狀 — 2026-06</span>
-    <h2>實倉中：STX50(SMH/QQQ 進攻位)· 已採用待上實倉：E3(SPY/QQQ 核心)· 防守對照：W52 · 互補缺口：跨資產趨勢</h2>
+    <h2>實單：W52 × 自適應波動率 150%(美+台，2026-07-18 起)· 舊實倉對照：STX50(SMH/QQQ)、E3(2330/0050)· 互補缺口：跨資產趨勢</h2>
     <p>20 年全週期是<strong>主判定窗</strong>(10 年頁是「無 2008」的壓力對照窗，兩窗取交集)。
        美股趨勢家族的礦脈已基本挖完 — E3 與 STX50 經 L1~L4 全流程採用(目前實倉只有 STX50 在跑，E3 待上線),
        W52 為防守對照(2026-06 審計後 MDD/Sharpe 改還原日線基準：真實 MDD −22.13%/2008、Sharpe 0.86、Calmar 0.48 — 仍勝 B&H 風險調整，但月底取樣造成的「近支配」已撤回);

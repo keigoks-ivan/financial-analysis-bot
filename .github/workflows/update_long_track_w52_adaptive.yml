@@ -36,10 +36,11 @@ jobs:
       - name: Run W52 × adaptive vol-target update
         run: python scripts/update_long_track_w52_adaptive.py
 
-      - name: Run W52 × adaptive leverage shadow sub-page
-        # Shadow (paper) leverage tracker (docs/long-track-w52-adaptive/leverage.html).
-        # Same two-cron schedule; NO email of its own — notifications are covered by
-        # the cap 1.0 main system.
+      - name: Run W52 × adaptive cap 1.0 shadow control page
+        # cap 1.0 (100%) shadow control page (docs/long-track-w52-adaptive/leverage.html).
+        # Since 2026-07-18 main/shadow swap: LIVE main is now cap 1.5 (index.html);
+        # this script writes the cap 1.0 shadow. Same two-cron schedule; NO email of its
+        # own — notifications are covered by the cap 1.5 main system (alert file below).
         run: python scripts/update_long_track_w52_adaptive_leverage.py
 
       - name: Read change alert
@@ -84,14 +85,14 @@ jobs:
           secure: true
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_APP_PASSWORD }}
-          subject: "⚡ W52×自適應波動率（美+台）可行動變化 ${{ steps.alert.outputs.changed == 'true' && '' || '(測試信)' }}"
+          subject: "⚡ W52×自適應波動率 150%（美+台・實單）可行動變化 ${{ steps.alert.outputs.changed == 'true' && '' || '(測試信)' }}"
           to: keigoks@gmail.com
           from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
           body: |
             ${{ steps.alert.outputs.changed == 'true' && steps.alert.outputs.body || '這是測試信 — email 推播管線正常。目前無可行動變化。' }}
 
             —
-            InvestMQuest · W52 × 自適應波動率（美+台）前瞻 OOS 追蹤主系統
+            InvestMQuest · W52 × 自適應波動率 150%（美+台）實單主系統
             每交易日台股/美股收盤後自動檢查 · 可行動變化＝任一腿閘門翻轉或最終權重與現持差 ≥ 10pp
             退訂：移除 repo secret MAIL_APP_PASSWORD 或編輯 update_long_track_w52_adaptive.yml
 

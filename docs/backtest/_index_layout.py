@@ -48,8 +48,8 @@ GREEN, RED, GREY = "#16a34a", "#dc2626", "#9ca3af"
 
 # the single live card
 LIVE_CARD = {
-    "name": "SMH/QQQ · STX50", "tag": "✓ 實倉中",
-    "sub": "50/50 SMH/QQQ · E3 三訊號 + 週線 ST(10,3) 半倉出場閘門 · 進攻位",
+    "name": "SMH/QQQ · STX50", "tag": "舊實倉（2026-07-18 前）",
+    "sub": "50/50 SMH/QQQ · E3 三訊號 + 週線 ST(10,3) 半倉出場閘門 · 舊進攻位（實單已改用 W52 × 自適應波動率 150%）",
     "cagr": "+13.84%", "mdd": "-21.87%", "sharpe": "0.90", "calmar": "0.63",
     "url": "/backtest/long_track_smh/",
 }
@@ -98,7 +98,7 @@ DIRECTORY = {
             ("/backtest/smh_vcrash/", "SMH V崩", None, False),
         ]),
         ("前瞻追蹤", [
-            ("/long-track-w52-adaptive/", "W52 × 自適應波動率（現行主系統）", "追蹤中", False),
+            ("/long-track-w52-adaptive/", "W52 × 自適應波動率 150%（實單主系統）", "實單", False),
             ("/long-track-qs-vt/", "QQQ+SMH 固定 σ（歸檔）", None, False),
             ("/long-track-qs-vt/adaptive.html", "QQQ+SMH 自適應（歸檔）", None, False),
             ("/long-track-adaptive-vt/", "自適應美台總覽（歸檔）", None, False),
@@ -134,7 +134,7 @@ DIRECTORY = {
             ("/backtest/daily_vs_weekly_tw/", "日/週·台股", None, False),
         ]),
         ("前瞻追蹤", [
-            ("/long-track-w52-adaptive/", "W52 × 自適應波動率（現行主系統）", "追蹤中", False),
+            ("/long-track-w52-adaptive/", "W52 × 自適應波動率 150%（實單主系統）", "實單", False),
             ("/long-track-tw-vt/", "0050+2330 固定 σ（歸檔）", None, False),
             ("/long-track-tw-vt/adaptive.html", "0050+2330 自適應（歸檔）", None, False),
             ("/long-track-adaptive-vt/", "自適應美台總覽（歸檔）", None, False),
@@ -488,7 +488,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 
 <div class="section">
 <h2 class="section-title">現役系統</h2>
-<div class="section-sub">真正動到資金的只有「實倉中」這一個；其餘採用 / 候補列在右側，未上實倉。</div>
+<div class="section-sub">實單攻擊位 2026-07-18 起改為 <a href="/long-track-w52-adaptive/">W52 × 自適應波動率 150%</a>；本表 STX50／E3 為其前身（舊實倉・對照）。其餘採用 / 候補列在右側，未上實倉。</div>
 <div class="live-wrap">%CARD%</div>
 </div>
 
@@ -541,7 +541,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </a>
 %TW_DIR%
 <div class="section">
-<div class="section-sub">2330/0050 E3 為現行實倉台股攻擊位(NT$，自 2010，不與美股同尺)。波段 / 選擇權 / 日內三線各自獨立追蹤；完整數字見上方「台股總覽」。</div>
+<div class="section-sub">2330/0050 E3 為<b>舊實倉</b>台股攻擊位(NT$，自 2010，不與美股同尺；實單已改用 W52 × 自適應波動率 150%)。波段 / 選擇權 / 日內三線各自獨立追蹤；完整數字見上方「台股總覽」。</div>
 </div>
 </div>
 
@@ -591,7 +591,7 @@ function toNAV(r){var n=[],v=1;for(var i=0;i<r.length;i++){if(r[i]===null){n.pus
 Chart.defaults.font.family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif";Chart.defaults.font.size=11;
 new Chart(document.getElementById('chart-nav'),{type:'line',
  data:{labels:YEARS.map(String),datasets:[
-  {label:'SMH/QQQ STX50(實倉)',data:toNAV(RET.smh),borderColor:'#16a34a',borderWidth:2.4,pointRadius:0,tension:.1},
+  {label:'SMH/QQQ STX50(舊實倉)',data:toNAV(RET.smh),borderColor:'#16a34a',borderWidth:2.4,pointRadius:0,tension:.1},
   {label:'QQQ B&H',data:toNAV(RET.qqq),borderColor:'#94a3b8',borderWidth:1.3,borderDash:[5,3],pointRadius:0,tension:.1},
   {label:'SPY B&H',data:toNAV(RET.spy),borderColor:'#cbd5e1',borderWidth:1.3,borderDash:[5,3],pointRadius:0,tension:.1}
  ]},

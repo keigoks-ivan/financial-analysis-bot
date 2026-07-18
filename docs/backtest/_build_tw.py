@@ -25,15 +25,15 @@ OUT = Path(__file__).parent / "tw" / "index.html"
 GREEN, RED, GREY = "#16a34a", "#dc2626", "#9ca3af"
 
 LIVE_CARD = {
-    "name": "2330/0050 · E3", "tag": "✓ 實倉中",
-    "sub": "50/50 2330/0050 · {W40·W52·TSMOM} 各⅓ · 美股長軌的台股鏡像 · 純 E3(ST 閘門否決)",
+    "name": "2330/0050 · E3", "tag": "舊實倉（2026-07-18 前）",
+    "sub": "50/50 2330/0050 · {W40·W52·TSMOM} 各⅓ · 美股長軌的台股鏡像 · 純 E3(ST 閘門否決) · 舊實倉，實單改用 W52 × 自適應波動率 150%",
     "cagr": "+20.19%", "mdd": "-23.75%", "sharpe": "1.16", "calmar": "0.85",
     "url": "/backtest/long_track_tw/",
 }
 
 # 波段 systems: (name, url, sub, cagr, mdd, calmar, dom, status_tag, lane)
 def tag_adopt():
-    return '<span class="tag tag-best">✓ 實倉中</span>'
+    return '<span class="tag tag-best">舊實倉 · 對照</span>'
 def tag_cand():
     return '<span class="tag">候補 · 未採用</span>'
 def tag_fail():
@@ -259,7 +259,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <!-- LIVE -->
 <div class="section">
 <h2 class="section-title">現役系統</h2>
-<div class="section-sub">台股採用 2330/0050 E3 · <b>實倉中</b>。即時訊號見 <a href="/long-track-tw/">每日狀態頁</a>。</div>
+<div class="section-sub">台股 2330/0050 E3 為<b>舊實倉</b>（2026-07-18 起改為對照，實單改用 <a href="/long-track-w52-adaptive/">W52 × 自適應波動率 150%</a>）。即時訊號見 <a href="/long-track-tw/">每日狀態頁</a>。</div>
 <div class="live-wrap">%CARD%</div>
 </div>
 
