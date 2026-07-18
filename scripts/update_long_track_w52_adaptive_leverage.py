@@ -548,7 +548,7 @@ def backtest_section(mkt: dict) -> str:
     return f"""<div class="card">
 <h3>回測全堆疊 — {mkt['short']}（訊號 → 曝險 → 執行・窗 {L['window'][0]} ～ {L['window'][1]}）{dead}</h3>
 <p style="font-size:.8rem;color:var(--muted);margin-bottom:.7rem">
-主列（藍底）＝<b>cap 1.5 ＋ 執行層（本頁追蹤）</b>；「cap 1.0 ＋ 執行層」＝<b>主系統對帳列</b>（美 0.573／台 1.048，可與 <a href="/long-track-w52-adaptive/">主系統頁</a>對帳）。曝險欄可見 cap 1.5 平均僅 83～85%、非常態滿槓桿。數字轉錄自 results/vol_targeting/w52_adaptive_leverage.json。</p>
+主列（藍底）＝<b>cap 1.5 ＋ 執行層（本頁追蹤）</b>；「cap 1.0 ＋ 執行層」＝<b>主系統對帳列</b>（美 0.573／台 1.048，可與 <a href="/long-track-w52-adaptive/">主系統頁</a>對帳）。曝險欄可見 cap 1.5 平均僅 83～85%、非常態滿槓桿。數字轉錄自 results/vol_targeting/w52_adaptive_leverage.json。{'<b>台股數字為 7 bps 均一成本；真實成本版（證交稅）約再降 0.5pp CAGR，見 <a href="/backtest/vol_targeting/tw.html">台股實驗室</a>。</b>' if mkt['key'] == 'tw' else ''}</p>
 <table><thead><tr><th>層級</th><th class="num">CAGR</th><th class="num">MDD</th><th class="num">Calmar</th><th class="num">Martin</th><th class="num">平均曝險</th><th class="num">峰值</th><th class="num">年動手</th></tr></thead>
 <tbody>{fs}</tbody></table>
 </div>
