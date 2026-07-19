@@ -75,6 +75,13 @@ jobs:
         run: python scripts/engine/build_index.py
         continue-on-error: true
 
+      # PM 出場閉環 L0：系統組合快照（席位擂台在席者＋W52 指數部＋挑戰者）。
+      # 排在 arena/index 之後——消費剛更新的 docs/engine/arena.json。zero-churn 寫入。
+      - name: PM holdings snapshot (system-selected portfolio)
+        id: build_holdings
+        run: python scripts/build_holdings.py
+        continue-on-error: true
+
       # Fail-safe aggregation: partial builder failure stays GREEN by design (each
       # build only writes on success, so a failed builder just keeps last week's file).
       # But if EVERY builder failed, the run produced nothing new and must go RED
@@ -98,7 +105,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/engine/universe.json \
-                  docs/engine/
+                  docs/engine/ \
+                  docs/pm/holdings.json
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
