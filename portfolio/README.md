@@ -9,7 +9,7 @@
 | `watchlist.txt` | 手動編輯 | 強制納入 PM 候選池的 ticker（一行一檔，# 開頭為註解） |
 | `prices.json` | GitHub Actions | 最新一次收盤現價 + 前日 close + 成交量 |
 | `history.json` | GitHub Actions | 近 300 日 OHLC，供 PM 計算 W52 / W104 MA |
-| `current_holdings.yaml` | 手動編輯 | 當前持倉（ticker × cost × current_pct × tier） |
+| `current_holdings.yaml` | 手動編輯 | 由 `docs/pm/holdings.json` 取代（2026-07-19 P0 升級，見 CLAUDE.md 選股體系治理節） |
 
 ## GitHub Actions 取價流程
 
