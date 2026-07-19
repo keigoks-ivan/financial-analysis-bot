@@ -252,11 +252,15 @@ def _dd_link(s: dict, anchor: bool = True) -> str:
     return t
 
 
-def _verdict_badge(v: Optional[str]) -> str:
+def _verdict_badge(v: Optional[str], source: Optional[str] = None) -> str:
     if not v:
         return '<span class="verdict v-none">待補 DD</span>'
     cls = {"進場": "v-in", "觀望": "v-watch", "迴避": "v-avoid"}.get(v, "v-none")
-    return f'<span class="verdict {cls}">{escape(v)}</span>'
+    # P1: overlay_extracted＝機器抽取自 v12 舊 DD 結論（非 v13/v14 決策層原生），標「※」小記。
+    mark = ('<sup class="v-overlay" title="機器抽取自 v12 舊報告結論，非 v13/v14 原生；'
+            'medium/low 信心待人工複審" style="font-size:9px;color:#94a3b8;cursor:help">※抽取</sup>'
+            if source == "overlay_extracted" else "")
+    return f'<span class="verdict {cls}">{escape(v)}</span>{mark}'
 
 
 def _de_badge(s: dict) -> str:
@@ -317,7 +321,7 @@ def render_gate(gated: list) -> str:
 def _core_row(s: dict) -> str:
     return f"""<tr>
   <td class="left">{_dd_link(s)}{_de_badge(s)}</td>
-  <td>{_verdict_badge(s.get("dca_verdict"))}</td>
+  <td>{_verdict_badge(s.get("dca_verdict"), s.get("dca_verdict_source"))}</td>
   <td>{escape(s.get("dca_role") or "—")}</td>
   <td class="num"><strong>{_grp_disp(s)}</strong></td>
   <td class="num">{s["_score"]:.2f}</td>
@@ -383,7 +387,7 @@ def _struct_row(s: dict) -> str:
     bm = _bull_mult(s)
     return f"""<tr>
   <td class="left">{_dd_link(s)}{_de_badge(s)}</td>
-  <td>{_verdict_badge(s.get("dca_verdict"))}</td>
+  <td>{_verdict_badge(s.get("dca_verdict"), s.get("dca_verdict_source"))}</td>
   <td class="num"><strong>{s["_sscore"]:.1f}</strong></td>
   <td class="num">{_pct(_ev5y(s), signed=False)}</td>
   <td class="num">{('×%.2f' % bm) if bm else '—'}</td>
@@ -499,7 +503,7 @@ def _rereview_row(r: dict) -> str:
     age = s.get("dd_age_days")
     return f"""<tr>
   <td class="left">{_dd_link(s)}{_de_badge(s)}</td>
-  <td>{_verdict_badge(s.get("dca_verdict"))}</td>
+  <td>{_verdict_badge(s.get("dca_verdict"), s.get("dca_verdict_source"))}</td>
   <td class="left">{escape("；".join(r["reasons"]))}</td>
   <td class="num">{f"{age:.0f}d" if age is not None else "—"}</td>
 </tr>"""

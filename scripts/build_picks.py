@@ -337,6 +337,13 @@ def build_changhao(latest, trigger_map, grp_set, trend_resolve):
     for s in stocks:
         if s.get("dca_verdict") != "進場":
             continue
+        # P1 防護：機器抽取自 v12 舊 DD 的裁決（dca_verdict_source == overlay_extracted）
+        # 不進「進場」自動候選池——這些是 90 天前舊報告的機器抽取結論（37 檔明列待人工
+        # 複審），當作即時「進場」買入候選上長熬名單並不合理。它們仍完整存在於 latest.json
+        # 與 dd-screener／pipeline 透明檢視，只是不自動晉升為 picks 買入候選。欄位缺失
+        # （舊版 latest.json）→ 視為原生 dd_meta，行為與 overlay 上線前完全一致。
+        if s.get("dca_verdict_source") == "overlay_extracted":
+            continue
         g, tr = s.get("moat_grade"), s.get("moat_trend")
         # 護城河閘：S/A 且趨勢非 ↓；或 B 且趨勢 ↑——
         # 護城河 B 但趨勢向上＝重評來源，等升到 A 市場已給完溢價。

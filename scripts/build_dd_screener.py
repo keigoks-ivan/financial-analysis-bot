@@ -73,7 +73,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = ROOT / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
-from dd_screener_dd_loader import load_dd_universe  # noqa: E402
+from dd_screener_dd_loader import load_dd_universe, _norm_dca_role  # noqa: E402
 from dd_screener_quality import (  # noqa: E402
     EU_SUFFIX_MAP,
     TICKER_YF_OVERRIDE,
@@ -96,6 +96,9 @@ from load_eps_estimates_xlsx import (  # noqa: E402
 OUTPUT_DIR = ROOT / "docs" / "dd-screener"
 OUTPUT_PATH = OUTPUT_DIR / "latest.json"
 SCREENER_LATEST = ROOT / "docs" / "screener" / "latest.json"
+# P1: 機器抽取的 v12 舊 DD 裁決 overlay（僅補 dd-meta 沒有原生 dca_verdict 的 ticker）。
+# 缺檔／壞檔一律靜默降級（見 apply_verdict_overlay），screener 行為回到現狀。
+VERDICT_OVERLAY_PATH = ROOT / "docs" / "dd" / "verdict_overlay.json"
 
 # Locked v1.0 criteria — matches scripts/dd_screener_schema.md
 #
@@ -1866,6 +1869,88 @@ def enrich_ticker(
     }
 
 
+def apply_verdict_overlay(universe: list[dict]) -> dict:
+    """P1: 對 dd-meta 沒有原生 dca_verdict 的 ticker，補上機器抽取自 v12 舊 DD 的裁決。
+
+    每筆 universe entry 一律標 `dca_verdict_source`：
+      - dd-meta 原生（v13/v14 報告自帶 dca_verdict）→ "dd_meta"
+      - overlay 補上 → "overlay_extracted"（另帶 dca_verdict_confidence）
+      - 兩者皆無 → None
+
+    防呆：overlay 以 DD 檔名（file）為鍵比對——只有當 overlay 記錄的 file 與該
+    ticker「當前最新 DD 檔名」一致時才生效。未來出了新版 DD（自帶裁決或換檔名）後，
+    舊 overlay 記錄自動失效，不會蓋過新報告。
+
+    失敗安全：overlay 檔不存在／解析失敗／格式非預期 → 印一行警告後靜默降級
+    （原生裁決照標 dd_meta，其餘留 None），screener 行為回到現狀。
+
+    回傳統計 dict 供 build() 印出。
+    """
+    stats = {"dd_meta": 0, "overlay_extracted": 0, "none": 0,
+             "overlay_stale_skipped": 0, "overlay_loaded": 0}
+
+    # 先為所有 entry 標記來源，確保 overlay 缺檔時行為仍一致（additive、向後相容）。
+    for e in universe:
+        e["dca_verdict_source"] = "dd_meta" if e.get("dca_verdict") is not None else None
+        e.setdefault("dca_verdict_confidence", None)
+
+    index: dict[str, dict] = {}
+    try:
+        with open(VERDICT_OVERLAY_PATH, encoding="utf-8") as f:
+            raw = json.load(f)
+        entries = raw.get("entries", {})
+        if not isinstance(entries, dict):
+            raise ValueError("entries 非物件")
+        for rec in entries.values():
+            fname = rec.get("file")
+            if fname:
+                index[fname] = rec
+        stats["overlay_loaded"] = len(index)
+    except FileNotFoundError:
+        print(f"  [overlay] {VERDICT_OVERLAY_PATH.name} 不存在 — 略過 overlay，"
+              f"裁決回到現狀", file=sys.stderr)
+        return _finalize_overlay_stats(universe, stats)
+    except Exception as exc:  # noqa: BLE001 — 任何解析/格式錯誤都必須失敗安全
+        print(f"  [overlay] 讀取失敗（{exc}）— 略過 overlay，裁決回到現狀",
+              file=sys.stderr)
+        return _finalize_overlay_stats(universe, stats)
+
+    for e in universe:
+        if e.get("dca_verdict") is not None:
+            continue  # 原生裁決優先，overlay 永不覆蓋
+        dd_path = e.get("dd_path") or ""
+        cur_filename = dd_path.rsplit("/", 1)[-1]
+        rec = index.get(cur_filename)
+        if rec is None:
+            continue
+        verdict = rec.get("extracted_verdict")
+        if verdict is None:
+            continue
+        # 防呆已由 file 為鍵天然涵蓋：index 命中即代表 file 與當前 DD 檔名一致。
+        e["dca_verdict"] = verdict
+        e["dca_role"] = _norm_dca_role(rec.get("extracted_role"))
+        e["dca_verdict_source"] = "overlay_extracted"
+        e["dca_verdict_confidence"] = rec.get("confidence")
+
+    # 統計 overlay 記錄中「file 與當前 DD 不符」而被跳過的筆數（防呆生效證據）。
+    applied_files = {(e.get("dd_path") or "").rsplit("/", 1)[-1]
+                     for e in universe if e.get("dca_verdict_source") == "overlay_extracted"}
+    stats["overlay_stale_skipped"] = sum(1 for fn in index if fn not in applied_files)
+    return _finalize_overlay_stats(universe, stats)
+
+
+def _finalize_overlay_stats(universe: list[dict], stats: dict) -> dict:
+    for e in universe:
+        src = e.get("dca_verdict_source")
+        if src == "dd_meta":
+            stats["dd_meta"] += 1
+        elif src == "overlay_extracted":
+            stats["overlay_extracted"] += 1
+        else:
+            stats["none"] += 1
+    return stats
+
+
 def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int) -> dict:
     print(f"=== DD Screener build · {datetime.now().isoformat(timespec='seconds')} ===\n")
     t0 = time.time()
@@ -1884,6 +1969,12 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int) -> dict
     if top_n:
         universe = universe[:top_n]
     print(f"  Step 1-2  DD universe: {len(universe)} tickers")
+
+    # Step 1-2b: P1 — 補機器抽取的 v12 舊 DD 裁決（失敗安全；overlay 缺檔則行為回到現狀）
+    ov = apply_verdict_overlay(universe)
+    print(f"  Step 1-2  verdict source: dd_meta={ov['dd_meta']} "
+          f"overlay_extracted={ov['overlay_extracted']} none={ov['none']} "
+          f"(overlay 記錄 {ov['overlay_loaded']}，file 不符跳過 {ov['overlay_stale_skipped']})")
 
     # Step 3 prep
     qgm_index = load_qgm_index()

@@ -1408,9 +1408,22 @@ function buildTable(stocks) {
     var verdictHtml;
     if (s.dca_verdict) {
       var vc = VERDICT_STYLE[s.dca_verdict] || ['var(--line-soft)', 'var(--sec)'];
-      var vTitle = 'DD §14 統一裁決（' + (s.dca_date || '') + '）' + (s.dca_role ? '｜角色: ' + s.dca_role : '');
+      // P1: overlay_extracted＝機器抽取自 v12 舊 DD 報告結論文字（非 v13/v14 決策層原生），
+      // 標「※抽取」小記；medium/low 信心屬待人工複審。dd_meta 原生無此標記。
+      var isOverlay = s.dca_verdict_source === 'overlay_extracted';
+      var vTitle;
+      if (isOverlay) {
+        vTitle = '※機器抽取自 v12 舊 DD 報告自身結論（' + (s.dca_date || '') + '，信心 '
+          + (s.dca_verdict_confidence || '—') + '）｜非 v13/v14 決策層原生，medium/low 信心待人工複審'
+          + (s.dca_role ? '｜角色: ' + s.dca_role : '');
+      } else {
+        vTitle = 'DD §14 統一裁決（' + (s.dca_date || '') + '）' + (s.dca_role ? '｜角色: ' + s.dca_role : '');
+      }
+      var overlayMark = isOverlay
+        ? '<span style="margin-left:3px;font-size:9px;color:var(--muted);cursor:help" title="機器抽取自 v12 舊報告結論，非 v13/v14 決策層原生；medium/low 信心待人工複審">※抽取</span>'
+        : '';
       verdictHtml = '<td class="left"><a href="' + (s.dca_path || s.dd_path) + '" target="_blank" style="text-decoration:none" title="' + vTitle.replace(/"/g, '&quot;') + '">' +
-        '<span style="background:' + vc[0] + ';color:' + vc[1] + ';padding:1px 7px;border-radius:99px;font-size:10.5px;font-weight:700;white-space:nowrap">' + s.dca_verdict + '</span></a>' + asymHtml + '</td>';
+        '<span style="background:' + vc[0] + ';color:' + vc[1] + ';padding:1px 7px;border-radius:99px;font-size:10.5px;font-weight:700;white-space:nowrap">' + s.dca_verdict + '</span></a>' + overlayMark + asymHtml + '</td>';
     } else {
       verdictHtml = '<td class="left" style="color:var(--muted)" title="v12 舊報告無決策層 metadata — DD 重跑 v14 後自動補上">—' + asymHtml + '</td>';
     }
