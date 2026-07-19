@@ -57,6 +57,12 @@ jobs:
       - name: Build detective alert network
         run: python scripts/build_detective.py
 
+      # PM 出場閉環 L1：交叉持倉檔（系統組合）與 detective 當日警報／kill 指標，
+      # 命中則寫 docs/pm/flags.json（accumulating）。零 churn；失敗不擋主流程。
+      - name: PM flags (holdings × detective alerts)
+        run: python scripts/build_pm_flags.py
+        continue-on-error: true
+
       - name: Determine run mode
         id: mode
         run: |
@@ -99,7 +105,7 @@ jobs:
 
       - name: Commit and push if changed
         run: |
-          if git status --porcelain docs/detective/data/latest.json docs/detective/data/state.json docs/detective/data/alert_history.json | grep -q .; then
+          if git status --porcelain docs/detective/data/latest.json docs/detective/data/state.json docs/detective/data/alert_history.json docs/pm/flags.json | grep -q .; then
             echo "Changes detected"
           else
             echo "No changes to commit"
@@ -107,7 +113,7 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/detective/data/latest.json docs/detective/data/state.json docs/detective/data/alert_history.json
+          git add docs/detective/data/latest.json docs/detective/data/state.json docs/detective/data/alert_history.json docs/pm/flags.json
           DATE=$(date -u +"%Y-%m-%d")
           git commit -m "detective: daily alert network refresh ${DATE}"
           for i in 1 2 3 4 5 6; do
