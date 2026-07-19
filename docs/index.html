@@ -515,9 +515,18 @@ footer a{color:var(--muted)}
     if(d.data_date)el('ms1date').textContent='資料日 '+d.data_date;
     // delta（中性灰，曝險變動無好壞）＋雙線 sparkline（美主線／台次線）
     var hu=d.history_us||[], ht=d.history_tw||[];
+    // 只有最後兩筆 source 同源（皆 live）才算 delta——避免 replay→live 接縫被當成單日變動放大誤導；
+    // 未來累積到 ≥2 個 live 點後自動恢復，無需再改碼。
+    function mktDelta(h,label){
+      if(h.length<2)return null;
+      var a=h[h.length-1], b=h[h.length-2];
+      if(a.source!==b.source)return null; // 跨接縫，隱藏
+      var dd=fmtDelta(a.combined_pct,b.combined_pct,1,'neutral');
+      return dd?{txt:label+' '+dd.txt,color:'muted'}:null;
+    }
     var segs=[];
-    if(hu.length>=2){var du=fmtDelta(hu[hu.length-1].combined_pct,hu[hu.length-2].combined_pct,1,'neutral'); if(du)segs.push({txt:'美 '+du.txt,color:'muted'});}
-    if(ht.length>=2){var dt=fmtDelta(ht[ht.length-1].combined_pct,ht[ht.length-2].combined_pct,1,'neutral'); if(dt)segs.push({txt:'台 '+dt.txt,color:'muted'});}
+    var du=mktDelta(hu,'美'); if(du)segs.push(du);
+    var dt=mktDelta(ht,'台'); if(dt)segs.push(dt);
     if(segs.length)setDelta('ms1delta',segs);
     var uv=hu.slice(-DAILY_N).map(function(x){return x.combined_pct;});
     var tv=ht.slice(-DAILY_N).map(function(x){return x.combined_pct;});
