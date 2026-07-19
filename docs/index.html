@@ -367,6 +367,144 @@ footer a{color:var(--muted)}
   </div>
 </section>
 
+<!-- MARKET_STATUS — 市場現況四磚 KPI（JS 讀四個現有 JSON 渲染，任何一源失敗該磚顯示 —；全失敗整段保持 hidden） -->
+<section class="mkt-status" id="market-status" hidden>
+  <style>
+  .mkt-status{padding:2.2rem 0 0}
+  .ms-head{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;flex-wrap:wrap;
+           margin-bottom:1rem;padding-bottom:.65rem;border-bottom:1px solid var(--border-soft)}
+  .ms-head h2{font-family:'Playfair Display','Noto Serif TC',Georgia,serif;font-size:1.05rem;font-weight:700;color:var(--text);letter-spacing:.01em}
+  .ms-head .ms-hint{font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--muted);letter-spacing:.02em}
+  .ms-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem}
+  @media(max-width:900px){.ms-grid{grid-template-columns:1fr 1fr}}
+  @media(max-width:560px){.ms-grid{grid-template-columns:1fr}}
+  .ms-tile{display:flex;flex-direction:column;background:var(--card);border:1px solid var(--border);
+           border-radius:10px;box-shadow:var(--shadow-sm);padding:1.05rem 1.15rem 1rem;
+           color:var(--text);text-decoration:none;cursor:pointer;transition:all .18s ease;min-height:150px}
+  .ms-tile:hover{text-decoration:none;color:var(--text);border-color:#d1d5db;box-shadow:var(--shadow-md);transform:translateY(-2px)}
+  .ms-top{display:flex;align-items:baseline;justify-content:space-between;gap:.5rem;margin-bottom:.7rem}
+  .ms-name{font-size:.78rem;font-weight:700;color:var(--text-sec);letter-spacing:-.01em}
+  .ms-src{font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--muted);letter-spacing:.03em;white-space:nowrap}
+  .ms-val{font-size:1.7rem;font-weight:600;line-height:1.15;color:var(--text);letter-spacing:-.01em;margin-bottom:.15rem}
+  .ms-val .ms-div{color:var(--muted);font-weight:400;margin:0 .18em;font-size:.85em}
+  .ms-val .ms-unit{font-size:.6em;color:var(--muted);font-weight:500;margin-left:.08em}
+  .ms-val .ms-accent{color:var(--accent);white-space:nowrap}
+  #ms1val{font-size:1.45rem}
+  .ms-sub{font-size:.72rem;color:var(--muted);line-height:1.5;margin-bottom:.55rem}
+  .ms-chip{align-self:flex-start;font-family:'IBM Plex Mono',monospace;font-size:.68rem;font-weight:600;
+           padding:.18rem .55rem;border-radius:999px;letter-spacing:.05em;margin-top:auto}
+  .ms-date{font-family:'IBM Plex Mono',monospace;font-size:.64rem;color:var(--muted);margin-top:.6rem}
+  </style>
+  <div class="container">
+    <div class="ms-head">
+      <h2>市場現況</h2>
+      <span class="ms-hint">實單曝險 · 風險儀表 · 威脅指針 · 壓力分數</span>
+    </div>
+    <div class="ms-grid">
+      <a class="ms-tile" id="msT1" href="/long-track-w52-adaptive/">
+        <div class="ms-top"><span class="ms-name">實單執行層目標</span><span class="ms-src">長線 W52 自適應</span></div>
+        <div class="ms-val" id="ms1val">—</div>
+        <div class="ms-sub" id="ms1sub"></div>
+        <span class="ms-chip" id="ms1chip" style="color:var(--accent);background:var(--accent-soft)">實單主系統</span>
+        <div class="ms-date" id="ms1date"></div>
+      </a>
+      <a class="ms-tile" id="msT2" href="#risk-chart">
+        <div class="ms-top"><span class="ms-name">市場風險儀表</span><span class="ms-src">六訊號綜合</span></div>
+        <div class="ms-val" id="ms2val">—</div>
+        <div class="ms-sub" id="ms2sub"></div>
+        <span class="ms-chip" id="ms2chip" hidden></span>
+        <div class="ms-date" id="ms2date"></div>
+      </a>
+      <a class="ms-tile" id="msT3" href="/detective/">
+        <div class="ms-top"><span class="ms-name">威脅指針 · 當日警戒度</span><span class="ms-src">市場偵探</span></div>
+        <div class="ms-val" id="ms3val">—</div>
+        <div class="ms-sub" id="ms3sub"></div>
+        <span class="ms-chip" id="ms3chip" hidden></span>
+        <div class="ms-date" id="ms3date"></div>
+      </a>
+      <a class="ms-tile" id="msT4" href="/monitor/">
+        <div class="ms-top"><span class="ms-name">跨資產壓力分數</span><span class="ms-src">市場監測</span></div>
+        <div class="ms-val" id="ms4val">—</div>
+        <div class="ms-sub" id="ms4sub"></div>
+        <span class="ms-chip" id="ms4chip" hidden></span>
+        <div class="ms-date" id="ms4date"></div>
+      </a>
+    </div>
+  </div>
+</section>
+<script>
+(function(){
+  var anyData=false;
+  function el(id){return document.getElementById(id);}
+  function f1(n){return (Math.round(n*10)/10).toFixed(1);}
+  // chip 底色（亮色版，抄自 detective/monitor 的 *-bg token）
+  var BG={'#0d2244':'var(--accent-soft)','#16a34a':'#e7f6ec','#b45309':'#fbf3df','#dc2626':'#fbeceb',
+          '#15803d':'#eafaef','#a16207':'#fbf3df','#c2410c':'#fdf1e7','#b91c1c':'#fbeceb'};
+  function setChip(id,label,color){
+    var c=el(id); if(!c)return; c.textContent=label;
+    c.style.color=color; c.style.background=BG[color]||'var(--accent-soft)'; c.hidden=false;
+  }
+  function getJSON(u){return fetch(u).then(function(r){return r.ok?r.json():Promise.reject();});}
+
+  // 磚 1 — 實單執行層目標（/long-track-w52-adaptive/state.json）
+  var p1=getJSON('/long-track-w52-adaptive/state.json').then(function(d){
+    var tu=d.combined_exposure_us_pct, tt=d.combined_exposure_tw_pct;
+    var eu=0,et=0,t=d.tickers||{};
+    for(var k in t){var v=t[k]; if(v.market==='美股')eu+=v.executed_pct||0; else if(v.market==='台股')et+=v.executed_pct||0;}
+    el('ms1val').innerHTML='<span class="ms-accent">美 '+f1(tu)+'%</span><span class="ms-div">｜</span><span class="ms-accent">台 '+f1(tt)+'%</span>';
+    el('ms1sub').textContent='現持 美 '+f1(eu)+'%／台 '+f1(et)+'%';
+    if(d.data_date)el('ms1date').textContent='資料日 '+d.data_date;
+    anyData=true;
+  }).catch(function(){});
+
+  // 磚 2 — 市場風險儀表（/cache/risk_gauge.json；band 語意抄首頁 risk-chart legend）
+  var p2=getJSON('/cache/risk_gauge.json').then(function(d){
+    var g=d.history[d.history.length-1], s=g.score;
+    var color = s>=0.34 ? '#16a34a' : (s<=-0.34 ? '#dc2626' : '#b45309');
+    el('ms2val').textContent=(s>=0?'+':'')+s.toFixed(2);
+    setChip('ms2chip', g.label_zh, color);
+    if(g.date)el('ms2date').textContent='資料日 '+g.date;
+    anyData=true;
+  }).catch(function(){});
+
+  // 磚 3 — 威脅指針（/detective/data/alert_history.json；label/color 抄 detective 頁 BAND_LABEL_ZH/BAND_COLOR）
+  var DET_LABEL={calm:'平靜',watch:'留意',warming:'升溫',tense:'緊張',alert:'警戒'};
+  var DET_COLOR={calm:'#15803d',watch:'#0d2244',warming:'#a16207',tense:'#c2410c',alert:'#b91c1c'};
+  var p3=getJSON('/detective/data/alert_history.json').then(function(d){
+    var pt=d.points[d.points.length-1], date=pt[0], score=pt[1], level=pt[2];
+    el('ms3val').textContent=score;
+    setChip('ms3chip', DET_LABEL[level]||level, DET_COLOR[level]||'#0d2244');
+    if(date)el('ms3date').textContent='資料日 '+date;
+    anyData=true;
+  }).catch(function(){});
+
+  // 磚 4 — 跨資產壓力分數（/monitor/data/score_history.json；label/color 抄 monitor 頁 BAND_LABELS/bandColor）
+  var MON_LABEL={calm:'平靜',normal:'常態',warming:'升溫',tense:'緊張',extreme:'極端'};
+  var MON_COLOR={calm:'#15803d',normal:'#0d2244',warming:'#a16207',tense:'#c2410c',extreme:'#b91c1c'};
+  var p4=getJSON('/monitor/data/score_history.json').then(function(d){
+    var s=d.series[d.series.length-1], sc=s.s, bands=d.bands||{}, band='';
+    for(var b in bands){ if(sc>=bands[b][0] && sc<bands[b][1]){band=b;break;} }
+    if(!band && bands.extreme && sc>=bands.extreme[0]) band='extreme';
+    el('ms4val').textContent=f1(sc);
+    setChip('ms4chip', MON_LABEL[band]||band, MON_COLOR[band]||'#0d2244');
+    if(s.d)el('ms4date').textContent='資料日 '+s.d;
+    anyData=true;
+  }).catch(function(){});
+
+  // 磚 2 頁內平滑捲動
+  var t2=el('msT2');
+  if(t2)t2.addEventListener('click',function(ev){
+    ev.preventDefault();
+    var tgt=document.getElementById('risk-chart');
+    if(tgt)tgt.scrollIntoView({behavior:'smooth',block:'start'});
+  });
+
+  Promise.allSettled([p1,p2,p3,p4]).then(function(){
+    if(anyData)el('market-status').hidden=false;
+  });
+})();
+</script>
+
 <!-- Primary CTA — 常用工具 -->
 <section class="primary-cta">
   <div class="container">
