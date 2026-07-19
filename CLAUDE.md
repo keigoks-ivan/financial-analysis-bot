@@ -62,6 +62,15 @@ Agent({
 
 詳細 4-repo 表格 + 每個 repo 的 generator/workflow/commit author：見 `.claude/notes/site-composition.md`。
 
+## 選股體系治理（2026-07-19）
+
+1. **QGM（姊妹 repo minervini-quality-backtest 推入）與 RS+VCP screener（本 repo `scripts/screener*.py`）＝刻意雙軌**：前者是基本面品質 × 成長閘門後再做動能篩選，後者是純技術結構雷達；兩者定位不同，不合併——發現層本來就要雙鏡頭。
+2. **`engine/`（甲線，GRP 結構長抱席位）與 `scripts/build_cyclical_track.py`（乙線，循環時機）＝刻意雙軌**：甲乙兩線體系共用 `cyclical_turn` 詞彙，但各自獨立產線，不合併。
+3. `scripts/state_machine/study/` 是活的（`daily-taipei-morning.yml` Step 8 呼叫 `write_daily_close.py`）；`scripts/state_machine/` 下其餘檔案已於 2026-07-19 稽核——**除 `test_state_machine.py`（純測試檔，零下游引用，已歸檔）外，`run_daily.py`／`config.py`／`price_cache.py`／`indicators.py`／`state_machine.py` 皆是 `write_daily_close.py` 的 import 依賴鏈，不得移動**。生產六態頁由 `scripts/update_six_state.py` 負責（已退役、僅手動）。
+4. 舊 `daily-screener-{jp,my,tw,us}.yml` 等殭屍 workflow 檔＝刻意保留（schedule 已停用、`workflow_dispatch` 留作手動備援，檔頭有整合對照註記），勿誤判為現行排程並刪除。
+
+`scripts/dd_alpha_ranker.py`、`scripts/pm_render.py`、`scripts/state_machine/test_state_machine.py` 於 2026-07-19 歸檔至 `_archived/scripts/`（`dd_alpha_ranker.py` 的 HTML/JSON 輸出 `docs/dd-screener/alpha-rank.*` 沿用既有「noindex stub 留 docs/、完整內容存 `_archived/dd-screener/`」慣例，不另移動——與 targets/bottom-out/breakout/earnings-acceleration 等已封存頁面待遇一致）。
+
 ## Workflow: 每次 DD / DCA 必同步 research 頁（DD 組合快照）
 
 任何 DD（`docs/dd/`）或 DCA（`docs/dca/`）的新增、修改、補 patch 後，**commit 前必跑** `python scripts/update_dd_index.py`，以同時更新：
