@@ -52,7 +52,13 @@
   "catalysts": [{"date": "2026-09-10", "type": "product", "event": "Rubin CPX 出貨節點", "impact": "高", "watch": "若延後一季 → §11.5 Bull 機率下修"}],
   "base_eps_path": {"FY26": 4.95, "FY27": 6.00, "FY28": 7.25},
   "fy_end_month": 1,
-  "eps_basis": "non-gaap-usd"
+  "eps_basis": "non-gaap-usd",
+
+  "kill_metrics": [
+    {"metric": "AI 加速器訓練份額", "bear_threshold": "跌破 65%（當前 ~73%）→ 減半", "window": "", "last_status": "ok"},
+    {"metric": "DC 營收年成長", "bear_threshold": "掉到 < 6% 連兩季 → 減碼", "window": "2 季", "last_status": "ok"},
+    {"metric": "CUDA 護城河", "bear_threshold": "被 custom ASIC 結構繞過（training 崩）→ 清倉", "window": ""}
+  ]
 }
 ```
 
@@ -91,6 +97,7 @@
 - `cycle_position`：str（v14.5;附錄 B B.1 循環位置 `深谷投降`｜`早循環`｜`中循環`｜`晚循環`｜`過熱頂部`;非循環 archetype 不填）
 - `cycle_verdict`：str（v14.5;附錄 B B.3 `右側可追蹤`｜`等回踩`｜`頂部觀望`｜`未觸發`;非循環 archetype 不填）
 - `industry_clock_phase`：str enum `I`｜`II`｜`III`｜`IV`（§9 產業時鐘，v14.12 全 archetype 必答;與 cycle_position 分工——那是循環股自身位置，本欄是產業層時鐘）
+- `kill_metrics`：list（P2，2026-07-19;結構化證偽表——把 §14b 減碼／清倉條件 + §15 複審觸發抽成機器可讀條目，供市場偵測器 kill-watch 監控。**選填不阻斷**，但新 DD、**尤其裁決＝進場者，應填 3–5 條**。與 ID 的 `kill_metrics[]` 同結構;詳見下方「結構化證偽表」小節）
 
 **常見 alias 錯誤**（沿用 v12，照 canonical 名稱，禁用別名）：`schema_version`→`schema`、`report_date`→`date`、`current_price`→`price_at_dd`、`peg`/`peg_3y`→`peg_fy2`、`fwd_pe`→`fpe_fy2`、`fwd_pe_5y_percentile`→`pct_5y`、`val_gate`→`val`、`ma_status`→`ma`;省略 `verdict`/`trap_label` 必補;帶文字 emoji（`🟢 受益`）→ 純 emoji;`中高`→`中`/`高` 擇一。**v13 新增 alias 警示**：`role`→`dca_role`、`verdict_human`→`dca_verdict`、`ev_5y`/`ev_pct`→`ev5y_pct`、`moat_arrow`→`moat_trend`、`runway`→`runway_post_y5`、`ar`/`asymmetry_ratio`→`asym_ratio`。
 
@@ -128,4 +135,19 @@ python3 scripts/validate_dd_meta.py --report   # 確認 v13 欄位 + enum 全綠
 - **`eps_basis`**（str）：格式 `{gaap|non-gaap}-{幣別小寫}`（如 `non-gaap-usd`、`gaap-twd`）,依 §6.I 用的 EPS 口徑判定。
 
 **提醒**:yfinance 批量採集抓到的「下次財報日期」繼續**只進 §15，不進 dd-meta**（動態資料不落底稿）。
+
+#### 結構化證偽表 `kill_metrics[]`（P2，2026-07-19 新增）
+
+把散文裡的證偽／減碼／清倉條件抽成機器可讀條目,讓市場偵測器 kill-watch（`docs/detective/data/kill_registry.json` → `scripts/build_kill_watch.py`）能持續盯這檔的 thesis 是否被打破。與產業 ID 的 `kill_metrics[]` 同結構（`scripts/validate_id_meta.py`），validator 對 DD 端**只驗形狀、永遠選填、不設最少條數**——既有 v13/v14 全庫不受影響。
+
+**何時填**:新 DD 都建議填;**裁決＝進場（`dca_verdict: "進場"`）者應填 3–5 條**——進場就等於押注 thesis，必須同時交出「什麼會證明我錯」。來源限本報告 §14b（加碼與減碼條件）、§15（複審觸發與保質期）、§11.5 Bear 情境已寫出的觸發點。
+
+每條欄位（與 ID 端 byte 對齊）:
+- `metric`（str ≤120，必填）：被監測量的短標籤，如 `"AI 加速器訓練份額"`。
+- `bear_threshold`（str ≤120，必填）：證偽水位＋方向＋當前值，如 `"跌破 65%（當前 ~73%）→ 減半"`。可量化的把數字寫進來;純質性的直接寫結構性事件。
+- `window`（str ≤60，必填）：報告給的時間窗，如 `"下次財報 ~2026-08-26"`、`"2 季"`;沒有就填 `""`。
+- `source`（str ≤120，選填）：出處／series 提示。
+- `last_status`（enum，選填）：`ok`｜`warning`｜`triggered`｜`unknown`。
+
+**紀律**:每條必須來自報告原文寫過的觸發條件,**禁止為填欄位發明新的證偽門檻**（與 catalysts 的 honest-fail 同規）。可量化就給明確數字＋方向;純質性（如「CUDA 護城河被結構繞過」）照寫,不硬湊數字。寧缺勿造——3 條紮實勝過 5 條注水。
 

@@ -84,6 +84,19 @@ NUMERIC_RANGES = {
 
 ONELINER_HARD_CAP = 200  # hard cap; ≤ 120 is the soft target per skill spec
 
+# ── kill_metrics[] (P2, 2026-07-19) — OPTIONAL structured falsification rows ──
+# Mirror of the ID schema's kill_metrics[] (see validate_id_meta.py): a DD may
+# carry a machine-readable falsification table so the market detector's
+# kill-watch can monitor it (backfilled into docs/detective/data/kill_registry.json).
+# Field names/types are byte-aligned with the ID contract on purpose so one
+# backfill/parse path serves both corpora. UNLIKE the ID (where v2.5+ makes it
+# required, ≥3 items), the DD field is ALWAYS OPTIONAL — never required, never
+# a minimum count — so the frozen 445-file corpus stays valid with zero change.
+# Each item: metric / bear_threshold / window required; source / last_status
+# optional. last_status enum matches the ID exactly.
+KILL_METRIC_STATUS = {"ok", "warning", "triggered", "unknown"}
+KILL_FIELD_CAPS = {"metric": 120, "bear_threshold": 120, "window": 60, "source": 120}
+
 # ── v13 (merged DD+DCA) additions ──────────────────────────────────────────
 # The v13 report folds the former DCA decision layer into the DD. These fields
 # are REQUIRED only when schema is v13.x; v12 reports never carry them, so the
@@ -175,6 +188,10 @@ V13_OPTIONAL_TYPES = {
     "moat_execution": (int, float, str),
     "moat_pricing_power": (int, float, str),
     "upside_5y_pct": (int, float),
+    # P2 (2026-07-19): OPTIONAL structured falsification table (see block above).
+    # Type-checked here (must be list when present); per-item shape validated in
+    # validate_meta(). Always optional — never promoted to required.
+    "kill_metrics": (list,),
 }
 
 # Keys knowingly tolerated beyond required/optional — silences their warning.
@@ -333,6 +350,41 @@ def validate_meta(meta: dict):
         fem = meta.get("fy_end_month")
         if isinstance(fem, int) and not isinstance(fem, bool) and not (1 <= fem <= 12):
             errs.append(f"fy_end_month: {fem} out of range [1, 12]")
+
+        # kill_metrics[] — OPTIONAL; validate item shape only when present (the
+        # list type itself is checked via V13_OPTIONAL_TYPES above). No minimum
+        # count is enforced — a DD may omit it entirely. Mirrors the ID contract
+        # (metric / bear_threshold / window required per item; source /
+        # last_status optional; last_status enum identical).
+        km = meta.get("kill_metrics")
+        if isinstance(km, list):
+            for i, k in enumerate(km):
+                if not isinstance(k, dict):
+                    errs.append(
+                        f"kill_metrics[{i}]: must be object, got {type(k).__name__}"
+                    )
+                    continue
+                for key in ("metric", "bear_threshold", "window"):
+                    if key not in k:
+                        errs.append(f"kill_metrics[{i}].{key}: required key missing")
+                for key, cap in KILL_FIELD_CAPS.items():
+                    if key in k:
+                        vv = k[key]
+                        if not isinstance(vv, str):
+                            errs.append(
+                                f"kill_metrics[{i}].{key}: expected str, "
+                                f"got {type(vv).__name__}"
+                            )
+                        elif len(vv) > cap:
+                            errs.append(
+                                f"kill_metrics[{i}].{key}: {len(vv)} chars "
+                                f"exceeds cap {cap}"
+                            )
+                if "last_status" in k and k["last_status"] not in KILL_METRIC_STATUS:
+                    errs.append(
+                        f"kill_metrics[{i}].last_status: invalid "
+                        f"{k['last_status']!r}, allowed {sorted(KILL_METRIC_STATUS)}"
+                    )
 
     return errs, warns
 

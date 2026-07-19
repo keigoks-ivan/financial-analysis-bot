@@ -259,6 +259,42 @@ header (`FUNNEL_*`) and are mirrored into the top-level `funnel_config` block.
   - 時機 (v1.3): `[回調帶]` (pullback — requires `dist_52w_high_pct ∈ [-15, -7]` ∩ MA badge 🟢 [`above_w52 && above_w250 && slope_w250_pct>0`, or `<5y` listing with `above_w52`] ∩ `ma50_pct ∈ [-3, +5]`; rows with null `timing` filtered out). 日線版 `PULLBACK_WATCH` (週線版見 entry-state.html)
   - Custom mode reveals 5 sliders + S-tier toggle, recomputes `pass_count` client-side using either `presets.MLB` thresholds or user-mutated Custom values
 
+## dd-meta `kill_metrics[]` (optional, P2 · 2026-07-19)
+
+Structured falsification table carried in the DD's `<script id="dd-meta">` JSON.
+**Not** propagated into `latest.json` (the screener does not render it); documented
+here because this file is the DD-meta field reference and downstream consumers key
+off it. Enforced by `scripts/validate_dd_meta.py`; mirrors the ID schema's
+`kill_metrics[]` (`scripts/validate_id_meta.py`) byte-for-byte so a single
+backfill/parse path serves both corpora.
+
+**Always optional** for DDs — unlike the ID (v2.5+ requires ≥ 3 items), a DD may
+omit the field entirely and no minimum count applies. The frozen v13/v14 corpus is
+unaffected. New DDs (especially 裁決＝進場) SHOULD carry 3–5 rows so the market
+detector's kill-watch (`docs/detective/data/kill_registry.json` →
+`scripts/build_kill_watch.py`) can monitor the thesis.
+
+Each item:
+
+| Key | Type | Required | Notes |
+|---|---|---|---|
+| `metric` | string ≤120 | ✅ | Short label of the watched quantity (e.g. `"AI 加速器訓練份額"`) |
+| `bear_threshold` | string ≤120 | ✅ | Falsification level + direction + current value (e.g. `"跌破 65%（當前 ~73%）→ 減半"`) |
+| `window` | string ≤60 | ✅ | Timeframe the DD attaches (e.g. `"下次財報 ~2026-08-26"`); `""` if none |
+| `source` | string ≤120 | optional | Provenance / series hint |
+| `last_status` | enum | optional | one of `ok` / `warning` / `triggered` / `unknown` |
+
+```json
+"kill_metrics": [
+  {"metric": "AI 加速器訓練份額", "bear_threshold": "跌破 65%（當前 ~73%）→ 減半", "window": "", "last_status": "ok"},
+  {"metric": "CUDA 護城河", "bear_threshold": "被 custom ASIC 結構繞過（training 崩）→ 清倉", "window": ""}
+]
+```
+
+The 32 existing 進場 DDs were backfilled into the kill registry as `llm_only`
+entries (`source: "dd_backfill_2026-07-19"`) without touching the published HTML —
+future DDs emit the field natively.
+
 ## File location
 
 ```
