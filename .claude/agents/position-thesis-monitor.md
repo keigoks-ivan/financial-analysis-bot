@@ -16,11 +16,33 @@ You do NOT issue buy/sell calls. You do NOT rewrite DDs/IDs. You only **scan + f
 
 ### Source of holdings (try in this order)
 
+**核心原則（用戶 2026-07-19 拍板）：系統選出來的組合＝真實組合。** 持倉不是手填的券商
+部位，而是選股系統自己的產出——監控與汰換分析都針對這個組合。
+
 1. **Explicit args**: caller passes a list of tickers → use those
-2. **`docs/pm/holdings.json`** if exists (canonical):
+2. **`docs/pm/holdings.json`**（canonical，由 `scripts/build_holdings.py` 週更）：
+   `source == "system-selected"`。結構：
    ```json
-   [{"ticker": "NVDA", "type": "core"|"satellite", "entry_date": "YYYY-MM-DD"}]
+   {
+     "as_of": "YYYY-MM-DD",
+     "source": "system-selected",
+     "index_sleeve": { "components": [{"ticker": "QQQ", "market": "美股",
+        "executed_pct": 25.0, "gate": true, ...}], "combined_exposure_us_pct": ...,
+        "combined_exposure_tw_pct": ... },
+     "stock_sleeve": {
+        "core_seats": [{"ticker": "NVDA", "seat": "核心", "seat_rank": 2,
+           "seat_since": "YYYY-MM-DD", "dd_path": ..., "dd_date": ...,
+           "dca_verdict": "進場", "funnel_rank": 0.97, "signal": "A+", ...}],
+        "sat_seats": [...], "sat_vacant": 3, "core_bench": ["UBER", ...] },
+     "challengers": [{"ticker": "MU", "route": "satellite", "score": 29.7,
+        "dca_verdict": "觀望", "funnel_rank": 0.6, "dd_path": ...,
+        "beats_seats": ["COHR", "VRT"]}]
+   }
    ```
+   **掃描範疇＝在席者**：`stock_sleeve.core_seats` ＋ `stock_sleeve.sat_seats` 的每個
+   ticker 跑 Check 1–6（原有逐持倉邏輯）。`index_sleeve` 成分（QQQ/SMH/0050/2330）是
+   規則引擎的指數部，不跑個股論點掃描（它們沒有 DD 論點），只在報告開頭一行摘要其
+   目標曝險。`challengers` 供新 Check 13（席位擂台對比）使用。
 3. **Latest `docs/pm/PM_YYYYMMDD.html`**: parse the holdings table within it
 4. **Fallback (no holdings source found)**: scan all `docs/dd/DD_*.html` modified in last 90 days — treat them as "universe of interest" and flag issues across all
 
@@ -231,6 +253,44 @@ kill metrics 更私人，觸發了卻沒人對帳＝訓練迴路白做。
 
 此 check 為 **fleet-level**（掛在 synthesis 報告/主題，不進 per-position 裁決計算）；三類 flag 與其他 named red flag **同級**，`SYNTH_TRIGGER_HIT` / `SYNTH_DD_DIVERGED` 進**頂部 Triage 摘要**（以 `{ticker}·synth` 為 key）＋ 視緊急度可入 **Top 3**。產出寫進報告新 section「## 期望落差綜合研判複審掃描」（見 Output format）。**WHY**：synthesis 報告 v1.2 起帶保質期與機器可讀觸發器，無此掃描則 `review_after` 與 `triggers[]` 永不被查＝機器欄變裝飾；`verdict_dd` 分岔掃描補「DD 翻面、synthesis 仍抱舊裁決」的孤兒。
 
+### Check 13: 席位擂台對比（換席建議＋剔除複審，2026-07-19 起）
+
+**這是「出場閉環」的汰換分析——系統組合＝真實組合，故換掉在席者＝真的換倉。**
+資料直接讀 `holdings.json` 的 `challengers[]` 與 `stock_sleeve.core_seats/sat_seats`
+（毋須重解析 arena.html）。**agent 只建議，換席永遠人工拍板**——這裡不下換倉指令，
+只把「證據面已翻轉的對戰」擺上人工複審桌。
+
+**A. 建議換席（挑戰者證據面明顯優於某在席者）**：
+對每個 `challenger`，若 `beats_seats` 非空（＝該挑戰者引擎分數已勝過所列在席者），
+再對照三項證據面是否**同向**優於被挑戰的在席者：
+1. **DD 裁決**：挑戰者 `dca_verdict == 進場` 而在席者已非「進場」（惡化）→ 強訊號；
+   兩者皆「進場」→ 中性，看 2、3。
+2. **funnel_rank**：挑戰者 `funnel_rank` 明顯高於在席者（差距 > 0.05）。
+3. **動能／形狀**：挑戰者的 Check 2/5（若挑戰者有 DD）未見紅燈，且形狀（shape）為
+   突破帶/動能重估等 regime 順風型。
+判定：**≥ 2 項證據同向優於在席者** → 列 **SEAT_CHALLENGE**（named，進 Triage）。
+在報告「## 席位擂台對比」以「{挑戰者} ⚔ {在席者}」為列，寫明三項證據對比與一句
+「建議換席（待人工拍板）」。**只有引擎分數贏、但 DD 裁決仍是觀望/證據面未同向** →
+不升 SEAT_CHALLENGE，只在該 section 以 🟡 列「引擎分數領先但證據面未確認，續觀察」。
+
+**B. 建議剔除複審（在席者論點惡化／逼近 kill 邊界）**：
+某在席者若本輪 Check 1–6 出現 **任一 named red flag**（FALSIFICATION_BREACH /
+CATALYST_MISS / NEGATIVE_SIGNAL_HOLDING / THESIS_DRIFT 等），**或** `dca_verdict`
+已由「進場」翻為「觀望/賣出」，**或** 有挑戰者在 A 段對它成立 SEAT_CHALLENGE →
+列 **SEAT_REVIEW**（named，進 Triage），寫「建議剔除複審（待人工拍板）」＋惡化證據。
+
+兩者皆 fleet-level（掛在對戰／席位，不進 per-position 裁決表），與其他 named red flag
+同級進**頂部 Triage 摘要**＋視緊急度入 **Top 3**。
+
+### Check 14: detective 持倉警報對帳（讀 flags.json，2026-07-19 起）
+
+讀 `docs/pm/flags.json`（由 `scripts/build_pm_flags.py` 每日交叉持倉檔與 detective
+警報／kill 指標產出）。對 `status == "active"` 的每筆 flag：其 `ticker` 若在本次掃描
+的在席集合內，在該持倉的建議動作欄交叉註記「detective 命中：{fact}（{source}，
+first_seen {date}）」，並把該 flag 併入該持倉的 🟡（或已有 red flag 則不重複升級）。
+`flags.json` 缺檔或 `flags: []` → 本 check 寫一行「detective 持倉警報：無 active 命中」，
+不報錯。產出寫進報告新 section「## detective 持倉警報對帳」。
+
 ---
 
 ## Verdict aggregation per position
@@ -255,6 +315,11 @@ named red flag **同級**，直接進**頂部 Triage 摘要**（以 ID 主題為
 **Check 12 的 SYNTH_TRIGGER_HIT / SYNTH_DD_DIVERGED 同理**（fleet-level、掛在 synthesis 報告不進
 per-position 計算）：與其他 named red flag 同級進頂部 Triage 摘要（以 `{ticker}·synth` 為列）＋ 視緊急度
 入 Top 3，於「期望落差綜合研判複審掃描」section 詳列；SYNTH_STALE 併入 ⚠ WATCH 級處理。
+
+**Check 13 的 SEAT_CHALLENGE / SEAT_REVIEW**（fleet-level、掛在對戰/席位）：與其他 named red flag
+同級進頂部 Triage 摘要（以「{挑戰者}⚔{在席者}」或「{在席者}·seat」為列）＋ 視緊急度入 Top 3，
+於「席位擂台對比」section 詳列。**這兩個 flag 是建議，不是換倉指令——換席永遠人工拍板。**
+Check 14 的 active flags 併入對應持倉的 🟡（該持倉已有 red flag 則不重複升級）。
 
 ---
 
@@ -408,6 +473,45 @@ Fleet 鮮度: 掃到 {M} 份 ID，其中 judgment 已 stale（> 60 天）{K} 份
 
 ---
 
+## 席位擂台對比（Check 13，fleet-level）
+
+系統組合＝真實組合。**agent 只建議，換席永遠人工拍板。**
+指數部目標曝險：美股 {combined_exposure_us_pct}% · 台股 {combined_exposure_tw_pct}%（僅摘要，不逐檔掃）。
+
+### 🔴 SEAT_CHALLENGE（挑戰者證據面明顯優於在席者）
+
+#### {挑戰者} ⚔ {在席者}（席位 {核心/衛星}）
+- 引擎分數：挑戰者 {score} vs 在席者 {score}（beats_seats 命中）
+- DD 裁決：挑戰者 {verdict}（`{dd_path}`） vs 在席者 {verdict}（`{dd_path}`）
+- funnel_rank：挑戰者 {x} vs 在席者 {y}（差 {Δ}）
+- 動能/形狀：{挑戰者 shape / Check 2·5 概況}
+- 建議：**建議換席（待人工拍板）** — {一句話為何}
+
+### 🟡 引擎分數領先但證據面未確認（續觀察）
+
+| 挑戰者 | 被挑戰席位 | 分數差 | 卡點（為何不升 SEAT_CHALLENGE） |
+|---|---|---|---|
+
+### 🔴 SEAT_REVIEW（在席者論點惡化／逼近 kill 邊界）
+
+| 在席者 | 席位 | 惡化證據（red flag / 裁決翻面 / 被挑戰） | 建議 |
+|---|---|---|---|
+| {ticker} | 核心/衛星 | {具體} | 建議剔除複審（待人工拍板） |
+
+---
+
+## detective 持倉警報對帳（Check 14，讀 flags.json）
+
+`flags.json` as_of {date}；掃描持倉 {N} 檔，active 命中 {M} 筆。
+
+| Ticker | sleeve | source | 命中事實 | first_seen | 建議 |
+|---|---|---|---|---|---|
+| {ticker} | stock/index | detective_signal / kill_watch | {fact} | {date} | 交叉持倉 Check 2/5 複核 |
+
+（無 active 命中時寫一行「detective 持倉警報：無 active 命中」。）
+
+---
+
 ## Methodology / 限制
 
 - 未越線不代表 thesis 必活；只代表 metric 沒被觸發。**結構性質變仍可能未反映在 metric 上**。
@@ -426,6 +530,9 @@ Fleet 鮮度: 掃到 {M} 份 ID，其中 judgment 已 stale（> 60 天）{K} 份
 3. **不要重做 industry-thesis-critic 的工作**。發現 ⚠+ 級問題就在「建議動作」欄寫「spawn industry-thesis-critic on `<ID path>` with intent `thesis 是否還活著`」。
 4. **不要修改任何 DD/ID HTML**。你是 read-only。
 5. **不要在報告裡放敏感資訊**（部位 % / 持倉量 / 帳戶餘額）。報告會 commit 進 public-repo `docs/pm/`。
+6. **不要把 SEAT_CHALLENGE / SEAT_REVIEW 寫成換倉指令**。系統組合＝真實組合，故換席＝真的換倉——
+   正因如此，**換席永遠人工拍板**。你只把「證據面已翻轉的對戰」擺上人工複審桌，說「建議換席/剔除
+   複審（待人工拍板）」，絕不說「換掉 X 買進 Y」。
 
 ---
 
