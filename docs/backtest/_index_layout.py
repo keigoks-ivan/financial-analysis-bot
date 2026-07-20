@@ -89,14 +89,20 @@ DIRECTORY = {
             ("/backtest/covered_call/", "Covered Call", "負貢獻", False),
             ("/backtest/put_timing/", "SPY/QQQ 買 put 避險", "負貢獻", False),
         ]),
-        ("研究筆記", [
-            ("/backtest/us_active_etf/", "美股主動式 ETF 因子分析", "研究", False),
+        ("研究・主動式ETF", [
             ("/backtest/active_etf/", "主動式 ETF 研究總結（台美）", "專區", False),
+            ("/backtest/us_active_etf/", "美股主動式 ETF 因子分析", "研究", False),
+        ]),
+        ("研究・頻率", [
             ("/backtest/daily_vs_weekly/", "日/週線", None, False),
+        ]),
+        ("研究・均線", [
             ("/backtest/ma_cross/", "MA 交叉", None, False),
             ("/backtest/ma_deviation/", "MA 乖離", None, False),
             ("/backtest/ma_dynband/", "MA 動態帶", None, False),
             ("/backtest/ma_squeeze/", "MA 擠壓", None, False),
+        ]),
+        ("研究・崩盤", [
             ("/backtest/smh_vcrash/", "SMH V崩", None, False),
         ]),
         ("前瞻追蹤", [
@@ -109,13 +115,11 @@ DIRECTORY = {
     "tw": [
         ("波段", [
             ("/backtest/tw_0050_compare/", "0050 總覽·台美差異", None, False),
-            ("/backtest/tw_crash/", "台股含崩盤驗證", None, False),
             ("/backtest/tw_0050/", "0050 進攻趨勢", None, False),
             ("/backtest/tw_0050_lt/", "0050 長軌趨勢", None, False),
             ("/backtest/long_track_tw/", "2330/0050 E3 長軌", None, False),
             ("/backtest/vol_targeting/tw.html", "0050+2330 波動率變體", "研究", False),
             ("/backtest/tw_0050_six/", "0050 六狀態機", None, False),
-            ("/backtest/tw_vcrash/", "V崩防禦研究", None, False),
             ("/backtest/tw_0050_dual/", "0050 雙軌多空", "否決", False),
         ]),
         ("選擇權", [
@@ -132,10 +136,16 @@ DIRECTORY = {
             ("/backtest/ssf_xsec/", "個股期橫斷面", "未過", False),
             ("/backtest/txf_basis/", "基差偏向", "否決", False),
         ]),
-        ("研究筆記", [
-            ("/backtest/tw_active_etf/", "台股主動式 ETF 因子分析", "研究", False),
+        ("研究・主動式ETF", [
             ("/backtest/active_etf/", "主動式 ETF 研究總結（台美）", "專區", False),
+            ("/backtest/tw_active_etf/", "台股主動式 ETF 因子分析", "研究", False),
+        ]),
+        ("研究・頻率", [
             ("/backtest/daily_vs_weekly_tw/", "日/週·台股", None, False),
+        ]),
+        ("研究・崩盤", [
+            ("/backtest/tw_vcrash/", "台股 V崩防禦", None, False),
+            ("/backtest/tw_crash/", "台股含崩盤驗證", None, False),
         ]),
         ("前瞻追蹤", [
             ("/long-track-w52-adaptive/", "W52 × 自適應波動率 150%（實單主系統）", "實單", False),
@@ -154,7 +164,7 @@ DIRECTORY = {
             ("/backtest/crossasset_defense/", "跨資產防守", None, False),
             ("/backtest/gem/", "SPY/ACWX 雙動能", None, False),
         ]),
-        ("研究筆記", [
+        ("研究・頻率", [
             ("/backtest/daily_vs_weekly_global/", "日/週·全球", None, False),
             ("/backtest/daily_vs_weekly_deep/", "日/週·深掘（18 市場）", None, False),
         ]),

@@ -104,12 +104,10 @@ MULTI_LINKS = [
 
 TAIWAN_LINKS = [
     ("/backtest/tw_0050_compare/", "0050 總覽·台美差異", "tw0050cmp", None),
-    ("/backtest/tw_crash/", "台股含崩盤驗證", "twcrash", None),
     ("/backtest/tw_0050/", "0050 進攻趨勢（移植）", "tw0050", None),
     ("/backtest/tw_0050_lt/", "0050 長軌趨勢", "tw0050lt", None),
     ("/backtest/long_track_tw/", "2330/0050 E3 長軌", "lttw", None),
     ("/backtest/tw_0050_six/", "0050 六狀態機", "tw0050six", None),
-    ("/backtest/tw_vcrash/", "V崩防禦研究", "tw_vcrash", None),
     ("/backtest/tw_0050_dual/", "0050 雙軌多空", "tw0050d", "否決"),
 ]
 
@@ -124,20 +122,38 @@ INTRADAY_LINKS = [
 # pill 清單之外、無法從導航進入的 9 顆孤兒頁（2026-07-11）。daily_vs_weekly
 # 主頁對三個子頁無前向連結，故不採「單一代表 pill＋頁內互連」而給每頁各一
 # 顆自有 pill，確保每頁皆可從導航到達且自身高亮（代價：本群較寬，維持單列）。
-RESEARCH_LINKS = [
-    ("/backtest/daily_vs_weekly/", "日/週線", "dvw", None),
-    ("/backtest/daily_vs_weekly_deep/", "日/週·深掘", "dvw_deep", None),
-    ("/backtest/daily_vs_weekly_global/", "日/週·全球", "dvw_global", None),
-    ("/backtest/daily_vs_weekly_tw/", "日/週·台股", "dvw_tw", None),
-    ("/backtest/ma_cross/", "MA 交叉", "ma_cross", None),
-    ("/backtest/ma_deviation/", "MA 乖離", "ma_dev", None),
-    ("/backtest/ma_dynband/", "MA 動態帶", "ma_dynband", None),
-    ("/backtest/ma_squeeze/", "MA 擠壓", "ma_squeeze", None),
-    ("/backtest/smh_vcrash/", "SMH V崩", "smh_vcrash", None),
+# 研究筆記依主題拆為四群（2026-07-20 重分類）。原本 12 條混雜四個互不相關的主題，
+# 且 smh_vcrash 落在研究筆記、同性質的 tw_vcrash／tw_crash 卻在台股波段。現以
+# 「研究主題」為軸，與「可交易系統」（個別系統／台股波段）明確區隔。
+RESEARCH_ETF_LINKS = [
     ("/backtest/active_etf/", "主動式ETF總結", "active_etf", "專區"),
     ("/backtest/tw_active_etf/", "台股主動式ETF", "tw_active_etf", "研究"),
     ("/backtest/us_active_etf/", "美股主動式ETF", "us_active_etf", "研究"),
 ]
+
+RESEARCH_FREQ_LINKS = [
+    ("/backtest/daily_vs_weekly/", "日/週線", "dvw", None),
+    ("/backtest/daily_vs_weekly_deep/", "日/週·深掘", "dvw_deep", None),
+    ("/backtest/daily_vs_weekly_global/", "日/週·全球", "dvw_global", None),
+    ("/backtest/daily_vs_weekly_tw/", "日/週·台股", "dvw_tw", None),
+]
+
+RESEARCH_MA_LINKS = [
+    ("/backtest/ma_cross/", "MA 交叉", "ma_cross", None),
+    ("/backtest/ma_deviation/", "MA 乖離", "ma_dev", None),
+    ("/backtest/ma_dynband/", "MA 動態帶", "ma_dynband", None),
+    ("/backtest/ma_squeeze/", "MA 擠壓", "ma_squeeze", None),
+]
+
+RESEARCH_CRASH_LINKS = [
+    ("/backtest/smh_vcrash/", "SMH V崩", "smh_vcrash", None),
+    ("/backtest/tw_vcrash/", "台股 V崩防禦", "tw_vcrash", None),
+    ("/backtest/tw_crash/", "台股含崩盤驗證", "twcrash", None),
+]
+
+# 向後相容：舊名保留為四群之串接，供外部引用者使用。
+RESEARCH_LINKS = (RESEARCH_ETF_LINKS + RESEARCH_FREQ_LINKS
+                  + RESEARCH_MA_LINKS + RESEARCH_CRASH_LINKS)
 
 # One <style> block per page (make_toggle is embedded once). Scoped under
 # .bt-subnav so it can never collide with page CSS.
@@ -206,5 +222,8 @@ def make_toggle(active: str) -> str:
             + _row("台股波段", TAIWAN_LINKS, active)
             + _row("台股選擇權", OPTIONS_LINKS, active)
             + _row("日內交易", INTRADAY_LINKS, active)
-            + _row("研究筆記", RESEARCH_LINKS, active)
+            + _row("研究・主動式ETF", RESEARCH_ETF_LINKS, active)
+            + _row("研究・頻率", RESEARCH_FREQ_LINKS, active)
+            + _row("研究・均線", RESEARCH_MA_LINKS, active)
+            + _row("研究・崩盤", RESEARCH_CRASH_LINKS, active)
             + '</nav>')
