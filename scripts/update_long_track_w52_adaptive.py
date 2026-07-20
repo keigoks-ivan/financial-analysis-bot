@@ -683,7 +683,8 @@ def market_html(mkt: dict, sigs: dict, md: dict) -> str:
     suf = mkt["key"]
     cards = "".join(ticker_card(t, sigs[t]) for t in legs)
     dual, combined, exec_combined = _dual_breakdown(legs, finals, exec_finals)
-    return f"""<div class="mkt-hd"><span class="mkt-tag">{mkt['name']}</span></div>
+    return f"""<div class="mkt-section" id="mkt-{suf}" data-market="{suf}">
+<div class="mkt-hd"><span class="mkt-tag">{mkt['name']}</span></div>
 
 <div class="status-hero hero-{ccol}">
   <div class="status-badge"><span class="dot"></span><span>{mkt['short']} 組合曝險</span></div>
@@ -751,6 +752,7 @@ def market_html(mkt: dict, sigs: dict, md: dict) -> str:
 {"".join(recent_table(t, sigs[t]) for t in legs)}
 
 {backtest_section(mkt)}
+</div>
 """
 
 
@@ -872,6 +874,18 @@ new Chart(document.getElementById('chart-bt-dd-{suf}'),{{
 """
 
 
+def market_switch_buttons() -> str:
+    """一鍵切換美股／台股的 pill 按鈕列（沿用頁首既有 pill 視覺語言）。純前端切換
+    ——兩市場區塊仍全部由伺服器端產生，JS 只負責顯示／隱藏＋localStorage 記憶；
+    無 JS 時兩市場皆維持可見（降級安全）。預設美股（MARKETS[0]）為 active。"""
+    btns = ""
+    for i, m in enumerate(MARKETS):
+        active = " active" if i == 0 else ""
+        btns += (f'<button type="button" class="mkt-switch-btn{active}" data-mkt="{m["key"]}" '
+                 f'onclick="switchMarket(\'{m["key"]}\')">{m["name"]}</button>\n')
+    return btns
+
+
 # ---------------------------------------------------------------------------
 # Full HTML
 # ---------------------------------------------------------------------------
@@ -897,6 +911,7 @@ def generate_html(sigs: dict, changes: list | None, last_change_date: str | None
 
     markets_html = "\n".join(market_html(m, sigs, md_map[m["key"]]) for m in MARKETS)
     markets_js = "\n".join(market_js(m, md_map[m["key"]]) for m in MARKETS)
+    mkt_keys_js = json.dumps([m["key"] for m in MARKETS])   # 切換白名單，順序即預設優先序
 
     return f"""<!DOCTYPE html>
 <html lang="zh-Hant">
@@ -942,6 +957,12 @@ tbody tr:hover td{{background:#fbf8f1}}
 footer{{background:var(--card);border-top:1px solid var(--border);color:var(--muted);text-align:center;padding:1rem 0;font-size:.75rem;margin-top:1rem}}
 .mkt-hd{{margin:1.6rem 0 .8rem;border-bottom:2px solid var(--brand);padding-bottom:.4rem}}
 .mkt-tag{{font-family:var(--serif);font-size:1.15rem;font-weight:700;color:var(--brand)}}
+.mkt-switch-row{{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;margin-top:.6rem}}
+.mkt-switch-label{{font-size:.78rem;color:var(--muted);margin-right:.1rem}}
+.mkt-switch-btn{{font:inherit;font-size:.82rem;font-weight:600;padding:.35rem .8rem;border-radius:6px;
+  border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;line-height:1.3}}
+.mkt-switch-btn.active{{background:var(--text);color:#fff;border-color:var(--text)}}
+.mkt-switch-btn:hover{{border-color:var(--brand)}}
 .status-hero{{padding:1.4rem 0 1rem;text-align:center}}
 .status-badge{{display:inline-flex;align-items:center;gap:.75rem;padding:.8rem 2rem;border-radius:var(--r);font-size:1.15rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.5rem}}
 .status-badge .dot{{width:14px;height:14px;border-radius:50%;animation:pulse 2s infinite}}
@@ -1013,6 +1034,11 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
       <a href="/backtest/vol_targeting/leverage.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">槓桿研究頁</a>
       <a href="/backtest/vol_targeting/adaptive.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">美股變體實驗室</a>
       <a href="/backtest/vol_targeting/tw.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">台股變體實驗室</a>
+    </div>
+    <div class="mkt-switch-row" role="group" aria-label="市場切換（美股／台股）">
+      <span class="mkt-switch-label">看單一市場：</span>
+      {market_switch_buttons()}
+      <noscript><span style="font-size:.76rem;color:var(--muted)">（JS 關閉中：以下同時顯示美股與台股全部區塊）</span></noscript>
     </div>
   </div>
 </div>
@@ -1093,6 +1119,39 @@ Chart.defaults.font.size=11;
 var GREEN="#16a34a",BLUE="#1565c0",AMBER="#d97706";
 function _dd(nav){{var dd=[],pk=0;for(var i=0;i<nav.length;i++){{if(nav[i]>pk)pk=nav[i];dd.push((nav[i]/pk-1)*100);}}return dd;}}
 {markets_js}
+
+// ---- 一鍵切換美股／台股（純前端，兩市場區塊皆由伺服器端產出，僅切顯示；
+//      務必等所有 Chart.js 圖表建立完成後才隱藏非選取市場，避免隱藏容器內
+//      canvas 量到 0 寬高）----
+var MKT_LS_KEY = 'ltw52_market';
+function switchMarket(key){{
+  document.querySelectorAll('.mkt-section').forEach(function(el){{
+    el.style.display = (el.getAttribute('data-market') === key) ? '' : 'none';
+  }});
+  document.querySelectorAll('.mkt-switch-btn').forEach(function(b){{
+    b.classList.toggle('active', b.getAttribute('data-mkt') === key);
+  }});
+  try {{ localStorage.setItem(MKT_LS_KEY, key); }} catch(e) {{}}
+}}
+// 合法市場 key 由 MARKETS 推導；未通過白名單的值一律落回預設，避免 MARKETS 增減
+// 或改 key 後，老訪客殘留的 localStorage 值讓每個區塊都被隱藏（整頁空白）。
+var MKT_KEYS = {mkt_keys_js};
+function _mktValid(k){{ return MKT_KEYS.indexOf(k) !== -1; }}
+(function(){{
+  var saved = MKT_KEYS[0];
+  try {{
+    var v = localStorage.getItem(MKT_LS_KEY);
+    if (_mktValid(v)) saved = v;
+    else if (v !== null) localStorage.removeItem(MKT_LS_KEY);   // 清掉失效的殘留值
+  }} catch(e) {{}}
+  var h = (location.hash || '').replace('#', '');
+  if (_mktValid(h)) saved = h;   // 頁內／外部若帶 #us 或 #tw 錨點，切到對應市場
+  switchMarket(saved);
+}})();
+window.addEventListener('hashchange', function(){{
+  var h = (location.hash || '').replace('#', '');
+  if (_mktValid(h)) switchMarket(h);
+}});
 </script>
 </body>
 </html>"""
@@ -1190,7 +1249,10 @@ def main():
                          f"σ_t {d['sigma_t']*100:.1f}%, 套袖 {d['sleeve']:.2f})")
         lines += ["", f"美股組合曝險 {exp['us']:.0f}% · 台股組合曝險 {exp['tw']:.0f}% · 下一個交易日調整至上列目標。", "",
                   "W52 × 自適應波動率 150% 實單主系統。詳細： https://research.investmquest.com/long-track-w52-adaptive/"]
-        ALERT_FILE.write_text("\n".join(lines), encoding="utf-8")
+        # 結尾必帶換行：workflow 的 `cat lt_w52a_alert.txt` 後緊接 `echo "ALERT_EOF"`，
+        # 若檔尾無換行，最後一行內容會與 ALERT_EOF 黏在同列，$GITHUB_OUTPUT heredoc
+        # 找不到匹配分隔符而讓整個 job 失敗（只在真有可行動變化的日子才觸發，故隱蔽）。
+        ALERT_FILE.write_text("\n".join(lines) + "\n", encoding="utf-8")
         print(f"Alert file: {ALERT_FILE}")
     else:
         last_change_date = prev_state.get("last_change_date")
