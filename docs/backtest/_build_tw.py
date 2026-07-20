@@ -25,10 +25,10 @@ OUT = Path(__file__).parent / "tw" / "index.html"
 GREEN, RED, GREY = "#16a34a", "#dc2626", "#9ca3af"
 
 LIVE_CARD = {
-    "name": "2330/0050 · E3", "tag": "舊實倉（2026-07-18 前）",
-    "sub": "50/50 2330/0050 · {W40·W52·TSMOM} 各⅓ · 美股長軌的台股鏡像 · 純 E3(ST 閘門否決) · 舊實倉，實單改用 W52 × 自適應波動率 150%",
-    "cagr": "+20.19%", "mdd": "-23.75%", "sharpe": "1.16", "calmar": "0.85",
-    "url": "/backtest/long_track_tw/",
+    "name": "0050/2330 · W52×自適應波動率（cap 1.5）", "tag": "實單主系統（2026-07-18 起）",
+    "sub": "50/50 0050/2330 · W52 週線閘門 × 自適應 σ 波動率目標 cap 1.5 × 執行層(10pp+5%取整) · 美台同引擎、可上槓桿至 150%",
+    "cagr": "+22.62%", "mdd": "-18.9%", "martin": "2.64", "calmar": "1.198",
+    "url": "/backtest/vol_targeting/tw.html", "live_url": "/long-track-w52-adaptive/",
 }
 
 # 波段 systems: (name, url, sub, cagr, mdd, calmar, dom, status_tag, lane)
@@ -154,17 +154,18 @@ def render():
   <div class="ac-metrics">
     <div><span>CAGR</span><b style="color:var(--green)">{c['cagr']}</b></div>
     <div><span>MDD</span><b>{c['mdd']}</b></div>
-    <div><span>Sharpe</span><b>{c['sharpe']}</b></div>
+    <div><span>Martin</span><b>{c['martin']}</b></div>
     <div><span>Calmar</span><b>{c['calmar']}</b></div>
   </div>
-  <a class="ac-link" href="{c['url']}">回測詳細頁 →</a> &nbsp;·&nbsp; <a href="/long-track-tw/" style="font-size:.82rem">即時訊號 →</a>
+  <a class="ac-link" href="{c['url']}">回測詳細頁 →</a> &nbsp;·&nbsp; <a href="{c['live_url']}" style="font-size:.82rem">即時訊號 →</a>
 </div>
 <div class="acard-note">
-  <div class="acn-title">採用備註</div>
+  <div class="acn-title">實單備註</div>
   <ul>
-    <li>美股 06-13 加掛的 <b>ST 半倉出場閘門(STX50)在台股否決</b>(Calmar 0.83 輸稀釋 E3 0.85)。</li>
-    <li>NT$ · 自 2010-07(0050 資料起點)· <b>2008 GFC 不在主樣本</b>。</li>
-    <li>趨勢的抗崩盤價值見 <a href="/backtest/tw_crash/">含崩盤頁</a>(2000/2008 OOS)。</li>
+    <li><b>前代 2330/0050 E3 已於 2026-07-18 降為對照線</b>，不再是實倉，效能列在下方「波段系統」表(Calmar 0.85)。</li>
+    <li>回測共同窗 2014-01～2026-07(0050+2330)· NT$ · <b>尚未含 2008 級深熊樣本</b>。</li>
+    <li>美股同引擎同日採 cap 1.5 為<b>知情決策</b>(研究顯示美股槓桿 Calmar 較低仍選兩市場一致性)，細節見<a href="/long-track-w52-adaptive/">追蹤主頁</a>。</li>
+    <li>前代引擎的抗崩盤研究見 <a href="/backtest/tw_crash/">含崩盤頁</a>(2000/2008 OOS，針對 E3)。</li>
   </ul>
 </div>"""
 
@@ -259,7 +260,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <!-- LIVE -->
 <div class="section">
 <h2 class="section-title">現役系統</h2>
-<div class="section-sub">台股 2330/0050 E3 為<b>舊實倉</b>（2026-07-18 起改為對照，實單改用 <a href="/long-track-w52-adaptive/">W52 × 自適應波動率 150%</a>）。即時訊號見 <a href="/long-track-tw/">每日狀態頁</a>。</div>
+<div class="section-sub">台股實單主系統為 <a href="/long-track-w52-adaptive/">W52 週線閘門 × 自適應波動率目標（cap 1.5）</a>，0050/2330 各 50%，2026-07-18 起生效。前代 2330/0050 E3 已同日降為對照線，效能列在下方「波段系統」表。即時訊號見 <a href="/long-track-w52-adaptive/">每日狀態頁</a>。</div>
 <div class="live-wrap">%CARD%</div>
 </div>
 

@@ -550,7 +550,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <div class="tabpane" data-tab="tw" style="display:none">
 <a class="cta" href="/backtest/tw/">
   <span style="font-size:1.3rem">🇹🇼</span>
-  <span>台股總覽<div class="cta-sub">2330/0050 E3 已採用 · 0050 四系統 · 含崩盤驗證 · 完整比較表與圖表</div></span>
+  <span>台股總覽<div class="cta-sub">0050+2330 W52×自適應波動率(實單)· 前代 E3 對照 · 0050 四系統 · 含崩盤驗證 · 完整比較表與圖表</div></span>
   <span class="arr">→</span>
 </a>
 %TW_DIR%
