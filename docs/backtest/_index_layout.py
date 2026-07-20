@@ -47,11 +47,14 @@ OUT = Path(__file__).parent / "index.html"
 GREEN, RED, GREY = "#16a34a", "#dc2626", "#9ca3af"
 
 # the single live card
+# 現役卡片必須掛「當下的實單主系統」。2026-07-18 起美台皆為 W52×自適應 cap 1.5;
+# 前代的 STX50（美）與 E3（台）同日降為對照線,不再佔用現役卡位。
 LIVE_CARD = {
-    "name": "SMH/QQQ · STX50", "tag": "舊實倉（2026-07-18 前）",
-    "sub": "50/50 SMH/QQQ · E3 三訊號 + 週線 ST(10,3) 半倉出場閘門 · 舊進攻位（實單已改用 W52 × 自適應波動率 150%）",
-    "cagr": "+13.84%", "mdd": "-21.87%", "sharpe": "0.90", "calmar": "0.63",
-    "url": "/backtest/long_track_smh/",
+    "name": "QQQ/SMH · W52 × 自適應波動率 cap 1.5", "tag": "實單主系統",
+    "sub": "50/50 QQQ/SMH · 週線 W52 單線閘門 × 自適應 σ 目標 × 曝險上限 150% · "
+           "執行層 10pp 門檻＋5% 取整（2026-07-18 起;前代 STX50 已降為對照）",
+    "cagr": "+14.31%", "mdd": "-25.3%", "sharpe": "1.36", "calmar": "0.567",
+    "url": "/long-track-w52-adaptive/",
 }
 
 # ── per-tab directory ────────────────────────────────────────────────────

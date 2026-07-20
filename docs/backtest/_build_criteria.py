@@ -45,8 +45,8 @@ TH = {"cagr": 8.0, "mdd": -35.0, "sharpe": 0.5, "calmar": 0.3}
 SYSTEMS_20Y = [
     ("Long Track Only", "/backtest/long_track/", 9.75, -20.08, 0.81, 0.49, True, ""),
     ("LTO QQQ only", "/backtest/long_track_qqq/", 10.80, -25.37, 0.75, 0.43, True, ""),
-    ("Ensemble E3", "/backtest/long_track_ensemble/", 11.36, -21.15, 0.87, 0.54, True, "2026-06-11 採用 · OOS"),
-    ("LT SMH/QQQ STX50", "/backtest/long_track_smh/", 13.84, -21.87, 0.90, 0.63, True, "2026-06-13 採用 STX50 · OOS"),
+    ("Ensemble E3", "/backtest/long_track_ensemble/", 11.36, -21.15, 0.87, 0.54, True, "2026-06-11 原列採用,未上實倉 · OOS"),
+    ("LT SMH/QQQ STX50", "/backtest/long_track_smh/", 13.84, -21.87, 0.90, 0.63, True, "2026-06-13 採用,2026-07-18 起降為對照(實單改用 W52×自適應 cap 1.5) · OOS"),
     ("W52 斜率濾網", "/backtest/slope_filter/", 10.62, -22.13, 0.86, 0.48, True, "2026-06 審計完成 · 改採還原日線 MDD/Sharpe"),
     ("GEM 雙動能", "/backtest/gem/", 8.63, -21.54, 0.68, 0.40, True, ""),
     ("六狀態機 v1.1", "/backtest/six_state/", 14.66, -37.78, 0.85, 0.39, True, ""),
@@ -160,7 +160,11 @@ def scoreboard_rows() -> str:
         c4 = check(calmar, TH["calmar"])
         n_pass = sum([c1, c2, c3, c4, yrs])
         qualified = n_pass == 5
-        if qualified and "採用" in note:
+        # 子字串比對會把「未採用」誤判為「採用」——「週線 Supertrend」的備註寫
+        # 「實驗 · 未採用」卻被渲染成「合格 · 已採用」，意思完全相反（2026-07-20 修）。
+        DEMOTED = ("未採用", "未上實倉", "降為對照", "已否決")
+        adopted = ("採用" in note) and not any(x in note for x in DEMOTED)
+        if qualified and adopted:
             verdict = '<span class="tag tag-best">合格 · 已採用</span>'
         elif qualified:
             verdict = '<span class="tag tag-best">合格</span>'
