@@ -142,6 +142,7 @@ DIRECTORY = {
         ("研究・主動式ETF", [
             ("/backtest/active_etf/", "主動式 ETF 研究總結（台美）", "專區", False),
             ("/backtest/tw_active_etf/", "台股主動式 ETF 因子分析", "研究", False),
+            ("/backtest/tw_mutual_fund/", "台股共同基金有沒有 alpha", "研究", False),
         ]),
         ("研究・頻率", [
             ("/backtest/daily_vs_weekly_tw/", "日/週·台股", None, False),

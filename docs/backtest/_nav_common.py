@@ -129,6 +129,7 @@ RESEARCH_ETF_LINKS = [
     ("/backtest/active_etf/", "主動式ETF總結", "active_etf", "專區"),
     ("/backtest/tw_active_etf/", "台股主動式ETF", "tw_active_etf", "研究"),
     ("/backtest/us_active_etf/", "美股主動式ETF", "us_active_etf", "研究"),
+    ("/backtest/tw_mutual_fund/", "台股共同基金", "tw_mutual_fund", "研究"),
 ]
 
 RESEARCH_FREQ_LINKS = [
