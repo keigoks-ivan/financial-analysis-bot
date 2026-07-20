@@ -112,16 +112,19 @@ TICKER_DEPTH_ALLOWED = {"🔴", "🟡", "🟢"}
 TICKER_MCAP_BUCKETS = {"mega", "large", "mid", "small"}
 
 # v2.2 §0「三句話看完」— 現在 / 未來 / 怎麼做，同步寫進 id-meta。
-# v2.x ID 必填（validator 阻斷）；legacy v1.x 不受影響（startswith v2. 才觸發）。
+# v2.0+ ID 必填（validator 阻斷）；legacy v1.x 不受影響。
+# v3.0 修正：由 regex 域（^v2\.）改為數值域（≥ (2,0)）——regex 域會在版號升 major 時
+# 靜默關閉必填閘（skill_version="v3.0" 不 match ^v2\. → 三句話不再檢查而 CI 綠燈），
+# 與 DD 側版號域外事故同型。
 # 每句「一句結論 + 一個證據子句」，硬上限比 oneliner 略寬以容納證據錨點。
 THREE_SENTENCE_FIELDS = ("now_state", "future_state", "action")
 THREE_SENTENCE_HARD_CAP = 240
-V2_RE = re.compile(r"^v2\.")
+V2_MIN = (2, 0)
 
 # v2.5 趨勢結構化欄位 — 供需裁決 / 投資時鐘 / conviction / 證偽表機器化。
 # 邏輯：present 時驗型 / 驗 enum（sd_verdict / clock_phase / conviction 已進 ENUM_FIELDS）；
 #       skill_version ≥ v2.5 時新欄位（含 v2.4 三欄）升為「必填阻斷」；v2.0–v2.4 present 才驗、
-#       absent 放行；v1.x legacy 全豁免（與 now_state 三欄的 V2_RE 模式同構，但門檻是 v2.5+）。
+#       absent 放行；v1.x legacy 全豁免（與 now_state 三欄的 V2_MIN 模式同構，但門檻是 v2.5+）。
 V2_5_MIN = (2, 5)
 V2_6_MIN = (2, 6)
 SD_VERDICT_DETAIL_CAP = 160
@@ -176,14 +179,14 @@ def validate_meta(meta: dict) -> list:
     if isinstance(one, str) and len(one) > ONELINER_HARD_CAP:
         errs.append(f"oneliner: {len(one)} chars exceeds hard cap {ONELINER_HARD_CAP}")
 
-    # v2.2 §0 三句話（now_state / future_state / action）— v2.x 必填 + 長度上限。
-    is_v2 = bool(V2_RE.match(str(meta.get("skill_version", ""))))
+    # v2.2 §0 三句話（now_state / future_state / action）— v2.0+ 必填 + 長度上限。
     ver = _version_tuple(meta.get("skill_version", ""))
+    is_v2 = ver is not None and ver >= V2_MIN
     is_v25_plus = ver is not None and ver >= V2_5_MIN
     for field in THREE_SENTENCE_FIELDS:
         v = meta.get(field)
         if is_v2 and not (isinstance(v, str) and v.strip()):
-            errs.append(f"{field}: required (non-empty) for skill_version v2.x (§0 三句話看完)")
+            errs.append(f"{field}: required (non-empty) for skill_version >= v2.0 (§0 三句話看完)")
         if isinstance(v, str) and len(v) > THREE_SENTENCE_HARD_CAP:
             errs.append(f"{field}: {len(v)} chars exceeds hard cap {THREE_SENTENCE_HARD_CAP}")
 

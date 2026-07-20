@@ -1,4 +1,4 @@
-# industry-analyst v2.6 — changelog.md（條件載入 reference）
+# industry-analyst — changelog.md（條件載入 reference；版本隨 SKILL.md frontmatter）
 
 > 本檔為 SKILL.md 的拆分模組（2026-07-08 v2.6 結構拆分，內容自 v2.5 原文搬移）。必讀時點見 SKILL.md 對應 stub。
 
@@ -23,6 +23,12 @@
   - **結構拆分**（stock-analyst v14.7 同款）：id-meta schema 全文（9k）與版本歷史（6k）移 references/ 條件載入，核心 62k→~48k 字元；Gate 13' 載入閘。語意零變更。
   - **規則治理**：conviction pill 公式與 QC-6 T1 60% floor 登記 knowledge/rule_ledger.md（kill condition 制，見 repo CLAUDE.md 治理條款）。
   - Legacy 豁免：v2.5- 報告 priced_in present 才驗、absent 放行；79 份 v2.5 backfill 檔不需回補（下次自然到期重審時補）。
+
+- **v3.0（2026-07-20）呈現層改版＋研究引擎 workflow 化**（持有人拍板：dual-output 選合併單檔、書面顯示改外資 sell-side、存量隨 refresh 潮逐檔升、workflow 引擎常設授權）：
+  - **單檔輸出**：廢 dual-output（`_full` 層 37 種 CSS 變體漂移＋零 id-meta 機器不可見＝根因）。八段 sell-side 架構（summary/thesis/debates/mechanics/valuation/risks/stocks/appendix 機器錨點），Key Debates 前置、背景考證後置收 `.evidence-fold`、Exhibit 驅動。§N 改稱內容模組編號（義務不減、按映射表換位）。`templates/report_template.md` 取代 lean/html 雙 template（藍本＝AIInferenceEconomics sell-side sample，含中國 open-weight 補洞版）。
+  - **研究引擎**：五軸 fan-out（新增 Axis E 替代/圈外機械掃描）＋承重數字 3-skeptic 對抗查證＋completeness critic，Gate 15 阻斷；僅新 ID／裁決級 refresh（成本：單題 deep-research 實測 ~590 萬 tokens）。Gate 16 替代威脅 debate 席。兩閘已登記 rule_ledger（kill condition 制）。WHY：AIInferenceEconomics 漏中國 open-weight ＝寫手與自己 checklist 共享盲點；Kimi K3 案例＝承重數字第一印象方向會錯。
+  - **版號域修正**（DD 同型事故預防）：validate_id_meta.py 三句話閘 `^v2\.` regex → 數值域 ≥(2,0)；id-review 分派 `^v2` → 數值比較；position-thesis-monitor（repo＋本機兩副本）v2.x 列舉 → ≥v2.0。規格矛盾同日清理（版號單一真相＝frontmatter、字數 16-22K 收斂、Gate 5 認 class 不認色票、validator unknown-key 描述改正）。
+  - **存量**：188 檔不批次遷移；隨 60 天 refresh 潮輪到時合併升 v3.0，舊 `_full` 轉 redirect stub。首發 pilot 完成前 v3.0 未經實戰（防 v2.6/v2.7 規格-生產斷層重演——那兩版從未產出過實檔）。
 
 - **v2.7（2026-07-08）情境判斷手冊**：四個挖掘 agent 對 5 份高密度 ID（AI 算力旗艦/PublicBuilder/TokenEconomics/WFE/SpaceEconomy）反萃取 20 條強模型判斷動作 → `references/judgment-playbook.md`（觸發索引式:命中才必答）＋Gate 14 阻斷。代表:過剩改道偵測、最難造假指標優先＋領先性排序、會計自白＋擴散門檻 kill、敗局劇本化（時序＋前例＋buffer 耗損）、風險住 E 還是倍數、存量缺口 vs 流量需求、讓利永久性四判準、P×Q 拆解、瓶頸層裁決、換尺重估（含 sell-side 措辭訊號）、錯殺型分歧、sum-of-parts 雙向、反方吸收、Phase 雙閘、承諾剛性、週期底度量切換。審計制同 DD playbook（2026-10 逐條）。
 

@@ -1,6 +1,6 @@
 ---
 name: id-review
-description: 對既有產業報告（Industry DD / ID 或 Industry Discourse / DS）跑 cold-review critic 並 patch 大錯。觸發：用戶要求「改 / review / audit / patch / 驗證」某份既存 ID / DS 報告，或詢問「這份 ID 還活著嗎 / 哪裡有大錯 / 要改什麼」。本 skill 把「critic 跑 + 大錯/cosmetic 分類 + user-in-the-loop patch + commit & push」這個工作流固化下來。**不寫新 ID 或 DS**（那是 industry-analyst skill；industry-ds 已 deprecated 併入 industry-analyst v2.0）；**也被 industry-analyst Step 8.7 強制呼叫**做新報告寫稿後的 mandatory critic gate。v1.5（搭配 industry-analyst v2.0）：**讀目標 HTML id-meta `skill_version` 自動判別模式** — `v2.x` → v2 checklist（cornerstone 6 條 + thesis box sync + V2-1~V2-15 共 15 條——含 3 條 v2 模組抽查（三角對帳/資本週期/priced-in）＋ v1.6 新增 4 條：V2-12 機器欄↔內文同步（sd_verdict/clock_phase/priced_in 等六欄，下游直讀機器欄故矛盾比散文錯更危險）/ V2-13 熱產業時鐘施壓（校準教訓：shortage×Phase II 唯一系統性失效格，勝率 7/25）/ V2-14 kill 套套邏輯與口徑防呆 / V2-15 v2.7 情境手冊實答抽查）；`v1.x` → 現行 ID checklist（legacy 不動）；`--mode ds` → DS-mode 8 條（8 份 legacy DS 仍可 review）。v1.4.1：DS-mode 檢查清單 8 條（DS-1 表格比 / DS-2 因果閉合 / DS-3 供需平衡 / DS-4 §6 三情境 / DS-5 §10 雙路徑 / DS-6 §11 一致性 / DS-8 §6 推導抽查 / DS-9 §1 雙錨點）。v1.6.1：核心 SKILL.md 結構拆分——DS-mode 檢查清單全文與版本歷史移至條件載入的 `references/`（載入時點見核心 Mode Dispatch 段的條件載入路由表），ID v2 檢查清單與 Step 1-7 patch flow 留在核心。
+description: 對既有產業報告（Industry DD / ID 或 Industry Discourse / DS）跑 cold-review critic 並 patch 大錯。觸發：用戶要求「改 / review / audit / patch / 驗證」某份既存 ID / DS 報告，或詢問「這份 ID 還活著嗎 / 哪裡有大錯 / 要改什麼」。本 skill 把「critic 跑 + 大錯/cosmetic 分類 + user-in-the-loop patch + commit & push」這個工作流固化下來。**不寫新 ID 或 DS**（那是 industry-analyst skill；industry-ds 已 deprecated 併入 industry-analyst v2.0）；**也被 industry-analyst Step 8.7 強制呼叫**做新報告寫稿後的 mandatory critic gate。v1.5（搭配 industry-analyst v2.0）：**讀目標 HTML id-meta `skill_version` 自動判別模式** — ≥ v2.0（數值比較；v2.x／v3.x 皆是，v3.0 報告為八段 sell-side 呈現＋§N 內容模組映射）→ v2 checklist（cornerstone 6 條 + thesis box sync + V2-1~V2-15 共 15 條——含 3 條 v2 模組抽查（三角對帳/資本週期/priced-in）＋ v1.6 新增 4 條：V2-12 機器欄↔內文同步（sd_verdict/clock_phase/priced_in 等六欄，下游直讀機器欄故矛盾比散文錯更危險）/ V2-13 熱產業時鐘施壓（校準教訓：shortage×Phase II 唯一系統性失效格，勝率 7/25）/ V2-14 kill 套套邏輯與口徑防呆 / V2-15 v2.7 情境手冊實答抽查）；`v1.x` → 現行 ID checklist（legacy 不動）；`--mode ds` → DS-mode 8 條（8 份 legacy DS 仍可 review）。v1.4.1：DS-mode 檢查清單 8 條（DS-1 表格比 / DS-2 因果閉合 / DS-3 供需平衡 / DS-4 §6 三情境 / DS-5 §10 雙路徑 / DS-6 §11 一致性 / DS-8 §6 推導抽查 / DS-9 §1 雙錨點）。v1.6.1：核心 SKILL.md 結構拆分——DS-mode 檢查清單全文與版本歷史移至條件載入的 `references/`（載入時點見核心 Mode Dispatch 段的條件載入路由表），ID v2 檢查清單與 Step 1-7 patch flow 留在核心。
 version: v1.6.1
 date: 2026-07-09
 ---
@@ -23,8 +23,8 @@ date: 2026-07-09
 
 1. **檔名前綴 = `DS_*.html`** → `--mode ds`（8 份 legacy DS，不讀 id-meta）。
 2. **檔名前綴 = `ID_*.html`** → 進一步**讀目標 HTML 的 `<script id="id-meta">` JSON 取 `skill_version`**：
-   - `skill_version` 以 `v2`（v2.0、v2.x）開頭 → **ID v2 mode**（套用本檔末「【ID v2 Mode 檢查清單】」段，cornerstone 6 條 + thesis box sync + V2-1~V2-15）。
-   - `skill_version` 以 `v1`（或缺欄位 / 解析失敗）開頭 → **ID v1 mode（legacy，現行流程不動）**。
+   - `skill_version` **≥ v2.0（數值比較；v2.x 與 v3.x 皆是）** → **ID v2 mode**（套用本檔末「【ID v2 Mode 檢查清單】」段，cornerstone 6 條 + thesis box sync + V2-1~V2-15）。v3.0 報告＝同一套內容模組換 sell-side 八段呈現（summary/thesis/debates/mechanics/valuation/risks/stocks/appendix），critic 定位章節時用 industry-analyst SKILL.md【章節骨架】的 §N→八段映射表。
+   - `skill_version` < v2.0（或缺欄位 / 解析失敗） → **ID v1 mode（legacy，現行流程不動）**。**禁用「以 v2 開頭」字串判別**——v3.0 曾因 `^v2` regex 域外險些被誤路由到 v1 checklist（品管閘用錯清單照樣綠燈）。
 3. `--mode {id|ds}` 顯式參數**覆寫**檔名/skill_version 判別；但 `--mode id` 不強迫 v1 — 仍走 skill_version 子判別（v2 報告即使被傳 `--mode id` 也套 v2 checklist）。若要強制 legacy v1 行為，傳 `--mode id-v1`。
 
 | Mode | 對象 | id-meta | 檢查清單 |
@@ -53,7 +53,9 @@ if m:
         sv = json.loads(m.group(1)).get("skill_version", "v1.0")
     except Exception:
         pass
-print("MODE=" + ("id-v2" if re.match(r'^v2', sv) else "id-v1"), "skill_version=" + sv)
+mv = re.match(r'^v(\d+)\.(\d+)', sv)
+v2plus = bool(mv) and (int(mv.group(1)), int(mv.group(2))) >= (2, 0)
+print("MODE=" + ("id-v2" if v2plus else "id-v1"), "skill_version=" + sv)
 PY
 ```
 
@@ -750,7 +752,7 @@ industry-analyst skill 在 publish 前必須跑 critic gate（Step 8.7，介於 
 
 ## 【ID v2 Mode 檢查清單】（v1.5 新增）
 
-當 id-meta `skill_version` 以 `v2` 開頭（industry-analyst v2.0 產出的「敘事為骨表格為窗」§0-§9 九章報告），跑 Step 1-7 patch flow，但**檢查清單 = cornerstone 6 條 + thesis box sync（保留）+ 以下 V2-1~V2-15（15 條;V2-12~14 僅 skill_version ≥ v2.5、V2-15 僅 ≥ v2.7 適用，對舊 v2.0-v2.4 報告跳過不失敗）**。
+當 id-meta `skill_version` ≥ v2.0（數值比較，v2.x／v3.x 皆是；industry-analyst v2.0+ 產出的「敘事為骨表格為窗」報告——v2.x 為 §0-§9 九章、v3.0+ 為八段 sell-side 呈現＋§N 內容模組映射），跑 Step 1-7 patch flow，但**檢查清單 = cornerstone 6 條 + thesis box sync（保留）+ 以下 V2-1~V2-15（15 條;V2-12~14 僅 skill_version ≥ v2.5、V2-15 僅 ≥ v2.7 適用，對舊 v2.0-v2.4 報告跳過不失敗）**。
 
 v2 報告的章節與 legacy ID 對映（critic 與 patch 都用 v2 章號）：
 

@@ -1,17 +1,18 @@
-# ID v2.0 Schema — §0-§9 章節必填 / 選填欄位 + 字數 target
+# ID Schema — §0-§9 內容模組必填 / 選填欄位 + 字數 target
 
 每章列出：**必填元素**（lede / 強制表 / 強制模組 / 💡 / aside；critic + pre-publish gate 會檢查）、**選填強化**、**字數 target**（照 SKILL.md 骨架表）。
 
-> 全文可見字數 target：**8,000–12,000 字**（深於 DS 4,000-6,500、短於舊 ID）。
-> 順序硬性：§0 → §1 → … → §9，不可重排、不可刪節。
+> **v3.0 呈現映射（2026-07-20）**：本檔 §0–§9 為**內容模組規格**——必填元素與字數義務一條不減，但呈現落點按 SKILL.md【章節骨架：sell-side 八段架構】映射表落入單一輸出檔的八段機器錨點：§0→`summary`（＋`thesis`）、§1→`appendix`、§2→`mechanics` 3.3、§3→`mechanics` 3.2、§4→`mechanics` 3.1、§5→`mechanics` 3.4、§6→`valuation`、§7→`debates`、§8→`risks`、§9→`stocks`。HTML 錨點一律用新 id（不再有 `id="s0"`~`id="s9"`）；逐節來源（`.ds-refs`）與長考證段收 `<details class="evidence-fold">` 折疊；視覺樣板見 `templates/report_template.md`。
+> 全文可見字數 target：**16,000–22,000 字**（v2.1 上修，低於 14,000 視為偷懶）。本檔逐章字數＝SKILL.md【章節骨架】表的展開，兩處必須同步（歷史教訓：v2.1 上修時本檔漏更，兩套字數並存一年）。
+> 順序硬性（v3.0）：呈現層八段 summary → thesis → debates → mechanics → valuation → risks → stocks → appendix 不可重排；§N 內容模組不可刪節，只能按上方映射換位。
 
 ---
 
-## §0 決策摘要層 + id-meta（200-400 字）
+## §0 決策摘要層 + id-meta（500-800 字）
 
 | 欄位 | 必填 / 選填 | 內容規格 |
 |:---|:---:|:---|
-| `<meta name="id-skill-version">` | 必填 | content="v2.0" |
+| `<meta name="id-skill-version">` | 必填 | content="{當前 skill 版本，見 SKILL.md frontmatter}" |
 | `<meta name="id-theme">` / `id-publish-date` | 必填 | CamelCase theme / YYYY-MM-DD |
 | `<script id="id-meta">` JSON | 必填 | 見下方 schema；`<title>` 後、第一個 `<style>` 前 |
 | Claim Taxonomy reader banner | 必填 | `.claim-banner`，v2 必加 |
@@ -19,17 +20,17 @@
 | 6-box TL;DR 卡片 | 必填 | TAM / 5Y CAGR / 投資時鐘 Phase / **供需裁決（過剩/平衡/短缺三選一）** / conviction pill / top picks |
 | 一句話 thesis box | 必填 | `.id-thesis` ≤200 字，**必帶 [I:] 或 [X:] tag**；同步寫入 id-meta `oneliner` |
 | legacy cross-link callout | 條件必填 | 若同 theme 有 legacy ID/DS → `.id-crosslink`，標本份為 v2 敘事版 |
-| **PM Implication 綠卡** | **必填（Gate 5 阻斷）** | 綠 `judgment-card` #F0FDF4 / #16A34A：五 bullet + ①②③④ 四行動 + conviction pill；§7/§8/§9 完成後才寫 |
+| **PM Implication 綠卡** | **必填（Gate 5 阻斷）** | `judgment-card`（樣式見 templates/report_template.md；Gate 5 認 class 不認色票）：五 bullet + ①②③④ 四行動 + conviction pill；§7/§8/§9 完成後才寫 |
 
 **PM 綠卡五 bullet（缺任一 = 未完成）**：thesis 方向 / 個股 conviction tier 變化（點名 ticker）/ 關鍵新監測點（可量化）/ multiple·估值·週期定位風險（含當前 Phase + 下個 Phase 轉換條件）/ Entry 時機（現在 / 等 catalyst / 等回調三選一）。
 **conviction pill**：high（§9 ≥2 🔴 + §8 falsification 距離 >2 sigma）/ mid（≥1 🔴 + ≥1 kill 未排除）/ low（thesis AT_RISK/BROKEN）。
 
-### id-meta JSON 欄位（schema 零改動，沿用 ID v1.x；validator reject unknown key）
+### id-meta JSON 欄位（v2.0 時點基礎欄速查；**權威 schema ＝ `references/id-meta-schema.md`**，v2.4–v2.6 新增欄位與必填升級只在該檔維護。validator **不** reject unknown key——實測，僅 `sections_refreshed` 子鍵走白名單）
 
 | key | 型別 | 必填 | 規格 |
 |:---|:---|:---:|:---|
 | `theme` | str | 必 | 產業主題 |
-| `skill_version` | str | 必 | v2 填 `"v2.0"`（新格式標記） |
+| `skill_version` | str | 必 | 填當前 skill 版本（見 SKILL.md frontmatter；validator regex 驗 vN.N） |
 | `id_version` | str | 必 | 此 ID 自身版本（`"v1.0"` 初版） |
 | `publish_date` | str | 必 | YYYY-MM-DD |
 | `thesis_type` | enum | 必 | `structural` / `event-triggered` / `mixed`（禁複合如 `structural+event`） |
@@ -48,7 +49,7 @@
 
 ---
 
-## §1 產業白話定義 + 歷史脈絡（900-1,400 字）
+## §1 產業白話定義 + 歷史脈絡（1,800-2,800 字）
 
 | 必填元素 | 規格 |
 |:---|:---|
@@ -65,7 +66,7 @@
 
 ---
 
-## §2 技術成熟度 + S 曲線（600-900 字）
+## §2 技術成熟度 + S 曲線（1,200-1,800 字）
 
 | 必填元素 | 規格 |
 |:---|:---|
@@ -80,7 +81,7 @@
 
 ---
 
-## §3 供給側 + 利潤池（1,200-1,800 字）
+## §3 供給側 + 利潤池（2,400-3,600 字）
 
 | 必填元素 | 規格 |
 |:---|:---|
@@ -98,7 +99,7 @@
 
 ---
 
-## §4 需求側 + 三角驗證（1,000-1,500 字）
+## §4 需求側 + 三角驗證（2,000-3,000 字）
 
 | 必填元素 | 規格 |
 |:---|:---|
@@ -114,7 +115,7 @@
 
 ---
 
-## §5 供需裁決 + 推估 + 投資時鐘（1,200-1,800 字）
+## §5 供需裁決 + 推估 + 投資時鐘（2,400-3,600 字）
 
 | 必填元素 | 規格 |
 |:---|:---|
@@ -132,7 +133,7 @@
 
 ---
 
-## §6 產業經濟學 + 估值傳導（700-1,100 字）
+## §6 產業經濟學 + 估值傳導（1,400-2,200 字）
 
 | 必填元素 | 規格 |
 |:---|:---|
@@ -146,7 +147,7 @@
 
 ---
 
-## §7 Non-Consensus + Priced-in + Kill（900-1,400 字）
+## §7 Non-Consensus + Priced-in + Kill（1,800-2,800 字）
 
 | 必填元素 | 規格 |
 |:---|:---|
@@ -161,7 +162,7 @@
 
 ---
 
-## §8 Catalyst Timeline + 證偽表（700-1,100 字）
+## §8 Catalyst Timeline + 證偽表（1,000-1,600 字）
 
 | 必填元素 | 規格 |
 |:---|:---|
@@ -176,7 +177,7 @@
 
 ---
 
-## §9 關聯個股（400-700 字）
+## §9 關聯個股（800-1,400 字）
 
 | 必填元素 | 規格 |
 |:---|:---|
@@ -196,7 +197,7 @@
 
 | 配額項 | 上限 / 下限 | Gate |
 |:---|:---|:---|
-| 總可見字數 | 8,000–12,000 字 | — |
+| 總可見字數 | 16,000–22,000 字 | — |
 | 文字字元比例 | ≥ **55%** | Gate 6 / QC-2 |
 | 表格數 | ≤ **10** 張 | Gate 6 / QC-2 |
 | 每張表行數 | ≤ **8** 行（不含表頭）；**§9 例外 ≤ 16** | Gate 6 / QC-2 |

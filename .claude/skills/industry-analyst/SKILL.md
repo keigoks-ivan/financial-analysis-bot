@@ -1,11 +1,13 @@
 ---
 name: industry-analyst
-description: 建立「產業深度報告（Industry Deep Report / ID）」— 一份跨多檔個股共用、敘事為骨表格為窗的產業研究文件。輸入產業主題（如「玻璃基板封裝」「HBM 供需循環」「GLP-1 治療藍圖」「全球航運週期」），skill 執行四軸 WebSearch / WebFetch 研究（歷史 / 供給 / 需求 / 驗證），輸出一份 §0 決策層 + 三幕共 9 章節、文字 ≥55% / 表格 ≤10 張、以「白話定義 → 技術成熟 → 供需循環 → 供需裁決 → 估值傳導 → 分歧證偽 → catalyst → 關聯個股」為敘事骨架、嵌入決策資產（玩家矩陣 / 利潤池 / TAM 三角驗證 / 資本週期 / priced-in / 證偽表）的 HTML 報告；並把對應個股登記於 §9 關聯清單，供 stock-analyst（公司 DD）自動讀取引用。v2.0 合併 industry-ds（DS）— 吸收其敘事弧 + 因果閉合 + 推導鏈 + §末 aside 來源系統。v2.6：§7 priced-in 落 id-meta（low/mid/high，validator 阻斷）＋結構拆分（references/ 條件載入）＋規則登記 rule_ledger。v2.7：情境判斷手冊 references/judgment-playbook.md（20 條反萃取判斷動作，觸發索引式必答，Gate 14 阻斷）。觸發：使用者提到「產業研究 / sector DD / 產業報告 / 產業藍圖 / industry landscape」「{主題} ds」「ds {主題}」「{產業} 敘述報告」「分析 {產業} 的供需循環」「{產業} 歷史與未來」「discourse {industry}」或具體主題（玻璃基板、HBM、CoWoS、AI ASIC、GLP-1、核融合、玻璃纖維基板、航運週期等）且尚未要求做個股 DD。
-version: v2.7
-date: 2026-07-08
+description: 建立「產業深度報告（Industry Deep Report / ID）」— 一份跨多檔個股共用、敘事為骨表格為窗的產業研究文件。輸入產業主題（如「玻璃基板封裝」「HBM 供需循環」「GLP-1 治療藍圖」「全球航運週期」），skill 執行五軸研究（歷史 / 供給 / 需求 / 驗證 / 替代圈外掃描；新 ID 走 workflow 引擎），輸出一份 sell-side 八段架構（Page-1 摘要層 → Investment Thesis → Key Debates → 產業機制與供需 → 估值傳導 → 風險與證偽 → 個股含意 → 附錄折疊）、文字 ≥55% / 表格 ≤10 張、嵌入決策資產（玩家矩陣 / 利潤池 / TAM 三角驗證 / 資本週期 / priced-in / 證偽表）的單檔 HTML 報告；並把對應個股登記於個股含意段（§9 內容模組）關聯清單，供 stock-analyst（公司 DD）自動讀取引用。v2.0 合併 industry-ds（DS）— 吸收其敘事弧 + 因果閉合 + 推導鏈 + §末 aside 來源系統。v2.6：§7 priced-in 落 id-meta（low/mid/high，validator 阻斷）＋結構拆分（references/ 條件載入）＋規則登記 rule_ledger。v2.7：情境判斷手冊 references/judgment-playbook.md（20 條反萃取判斷動作，觸發索引式必答，Gate 14 阻斷）。v3.0（2026-07-20）：呈現層改版＝單檔 sell-side 八段架構（廢 dual-output；Key Debates 前置＋附錄證據折疊；templates/report_template.md）＋workflow 研究引擎（五軸 fan-out＋承重數字對抗查證＋completeness critic，新 ID／裁決級 refresh 常設授權，Gate 15）＋替代威脅 debate 必備席（Gate 16）。觸發：使用者提到「產業研究 / sector DD / 產業報告 / 產業藍圖 / industry landscape」「{主題} ds」「ds {主題}」「{產業} 敘述報告」「分析 {產業} 的供需循環」「{產業} 歷史與未來」「discourse {industry}」或具體主題（玻璃基板、HBM、CoWoS、AI ASIC、GLP-1、核融合、玻璃纖維基板、航運週期等）且尚未要求做個股 DD。
+version: v3.0
+date: 2026-07-20
 ---
 
-# industry-analyst skill v2.0 — 敘事為骨、表格為窗
+# industry-analyst skill v3.0 — 敘事為骨、表格為窗、sell-side 呈現
+
+> **版號單一真相＝frontmatter `version:`**。本檔內文、templates/、pre_publish_check.md 的版號戳一律隨 frontmatter 同步（升版時全域 grep 換戳）。內文「vN.N 新增」字樣是歷史沿革註記，非現行版號。
 
 ## 【v2.0 定位：合併 ID + DS 的單一產業深度報告】
 
@@ -32,13 +34,14 @@ v2.0 把兩者合成一個 skill：**用 DS 的因果敘事弧當骨架（讀者
 
 ```
 ~/.claude/skills/industry-analyst/
-  SKILL.md                         # 本檔（v2.0）
+  SKILL.md                         # 本檔（現行版本見 frontmatter）
   templates/
-    html_template.md               # 完整版 _full.html 的 HTML 視覺 & 樣式（精煉版編輯風 CSS；§2 含 S 曲線 ASCII）
-    lean_template.md               # ★ canonical 精煉版（決策卡）template — 6 PARTS (I–VI) + dual-output 規則
+    report_template.md             # ★ v3.0 單檔 sell-side template（八段架構＋設計 token CSS；視覺唯一權威）
+    html_template.md               # deprecation stub（v2.x 完整版 template，v3.0 廢除）
+    lean_template.md               # deprecation stub（v2.x 精煉版 template，v3.0 廢除）
     schema_fields.md               # §0-§9 章節必填 / 選填欄位 + 字數 target
     value_chain_svg.md             # 利潤池語境 value chain inline SVG 樣板
-  pre_publish_check.md             # 預發布 10 道 gate
+  pre_publish_check.md             # 預發布 13 道 gate（+ Gate 13'/14 條件載入閘）
   references/                      # 跨 ID 共享事實卡與 best practice
 ```
 
@@ -49,31 +52,30 @@ financial-analysis-bot/
   docs/id/
     INDEX.md                          # 產業深度報告索引
     index.html                        # 產業列表首頁（v2 卡片加「v2 敘事版」badge）
-    ID_{Theme}_{YYYYMMDD}.html        # ★ canonical = 精煉版決策卡（帶 id-meta；索引/screener 認這份）
-    ID_{Theme}_{YYYYMMDD}_full.html   # 完整考證版（9 章；無 id-meta、companion；由 canonical 連過去）
+    ID_{Theme}_{YYYYMMDD}.html        # ★ v3.0 單一報告（sell-side 八段架構＋附錄證據折疊；帶 id-meta）
     cat-{mega}.html                   # 分類 drilldown 頁（build_id_category_pages.py 生成）
 ```
 
-> **v2.3 dual-output**：每跑一次 skill 產**兩份** — canonical（精煉版，`lean_template.md`）+ `_full.html`（完整版，`html_template.md`）。**canonical 是精煉版**（一點進來就是決策卡），完整版搬到 `_full.html` 當 companion。兩份同皮（精煉版編輯風）、雙向連結。詳見 `templates/lean_template.md`。
+> **v3.0 單檔輸出**：dual-output 廢除（v2.3–v2.7 的精煉＋`_full` 雙檔是 `_full` 層 37 種 CSS 變體漂移與機器不可見的根因）。每跑一次 skill 只產**一份** `ID_{Theme}_{YYYYMMDD}.html`：正文閱讀線精煉（決策與分歧前置）、考證與逐節來源收 `.evidence-fold` 折疊——一檔同時取代舊兩檔。**存量 80 對雙檔不批次遷移**：隨 60 天 refresh 潮輪到時順勢合併升 v3.0，舊 `_full` 屆時轉 redirect stub（比照既有 11 檔先例）。禁止再產 `_full.html`（Gate 11）。
 
 ---
 
-## 【章節骨架：§0 決策層 + 三幕共 9 章】
+## 【章節骨架：sell-side 八段架構（v3.0）＋ §N 內容模組】
 
-設計原則：**DS 的因果敘事弧當骨架，ID 的決策資產當器官嵌入對應章節**。
+v3.0 呈現架構＝外資 sell-side 報告動線：**決策與分歧前置、背景與考證後置、每節 Exhibit 驅動**。八段固定順序、機器錨點固定 id（Gate 11 驗）：
 
-| § | 標題 | 幕 | 主要形式 | 嵌入決策資產 | 字數目標 |
-|:---|:---|:---|:---|:---|:---|
-| **§0** | 決策摘要層 | 摘要 | **三句話看完** + 最重要的一個判斷 + 6-box 卡片 + thesis + PM 綠卡 | 三句話（現在/未來/怎麼做）/ 結論 / TL;DR / oneliner / PM Implication | 500-800 |
-| **§1** | 產業白話定義 + 歷史脈絡 | 一 | 敘事 + 1 表 | 歷史 cycle 統計表 | 1,800-2,800 |
-| **§2** | 技術成熟度 + S 曲線 | 一 | 敘事 + S 曲線 + 1 小表 | S-curve（強制）+ kingmaker 小表 | 1,200-1,800 |
-| **§3** | 供給側：現在與未來 + 利潤池 | 二 | 敘事 + 2-3 表 | 玩家矩陣 / 利潤池遷移 / 成本曲線 | 2,400-3,600 |
-| **§4** | 需求側：現在與未來 + 三角驗證 | 二 | 敘事 + 1-2 表 | TAM 三情境推導 / 需求三角對帳 | 2,000-3,000 |
-| **§5** | 供需裁決 + 短中長期推估 + 投資時鐘 | 二 | 敘事 + 1-2 表 | 資本週期證據 / 三視野×三情境 / 庫存訂單指標 / phase 判定 | 2,400-3,600 |
-| **§6** | 產業經濟學與估值傳導 | 三 | 敘事 + 1 表 | unit economics / ASP / multiple pass-through | 1,400-2,200 |
-| **§7** | Non-Consensus + Priced-in + Kill Scenario | 三 | 敘事 / bullet | 3 分歧（含 priced-in）+ 3 steel-man | 1,800-2,800 |
-| **§8** | Catalyst Timeline + 證偽表 | 三 | bullet + 1 表 | 5-8 catalyst 雙路徑 + 證偽表 | 1,000-1,600 |
-| **§9** | 關聯個股 | 三 | 表格 + 敘事 | 🔴🟡🟢 表（≤16 行）+ non-obvious | 800-1,400 |
+| # | 錨點 id | 段落 | 承接內容模組（原 §N，義務一條不減） | 字數目標 |
+|:---|:---|:---|:---|:---|
+| **S** | `summary` | Page-1 摘要層：masthead＋rating strip（sd_verdict／clock_phase／conviction／priced_in／demand_5y_multiple 五格，直讀 id-meta）＋Key Points 4-6 條＋Exhibit 1 關鍵數據表＋NOW/NEXT/ACTION 三句話＋一句話 thesis＋PM 行動框（五 bullet＋①②③④） | §0 全部 | 600-900 |
+| **1** | `thesis` | Investment Thesis：KEY CALL＋裁決敘事合成 3-5 段論證 | §0 KEY CALL＋§5 裁決敘事 | 1,200-1,800 |
+| **2** | `debates` | Key Debates：3-4 張 debate 卡（市場認為 X → 我們認為 Y → 判別訊號 Z），每卡內嵌 priced-in 檢驗、steel-man 併入各卡；**≥1 張圈外／替代威脅卡（Gate 16 阻斷）** | §7 全部 | 2,400-3,600 |
+| **3** | `mechanics` | 產業機制與供需：3.1 需求（TAM 三情境＋三角對帳）／3.2 供給（玩家矩陣＋利潤池＋成本曲線）／3.3 技術根（S 曲線＋kingmaker）／3.4 裁決（資本週期＋三視野×三情境＋庫存訂單＋投資時鐘） | §4＋§3＋§2＋§5 | 6,000-9,000 |
+| **4** | `valuation` | 產業經濟學與估值傳導：unit economics／ASP／multiple pass-through | §6 | 1,400-2,200 |
+| **5** | `risks` | 風險與證偽：catalyst timeline 雙路徑＋證偽表（kill_metrics）＋PM 監測點 | §8 | 1,200-1,800 |
+| **6** | `stocks` | 個股含意：🔴🟡🟢 表＋純度%／市值級距＋非顯而易見受益者＋營運槓桿最大者 | §9 | 1,000-1,600 |
+| **A** | `appendix` | 附錄：白話定義＋歷史脈絡／類比＋歷史 cycle 統計表＋方法論；逐節來源與長考證段收 `.evidence-fold`（預設收合） | §1＋各節 ds-refs | 2,000-3,200 |
+
+> **§N 編號在本檔其餘規則中繼續使用**：QC／Gate／判斷手冊觸發點全部以 §N 指涉**內容義務**（例如「寫 §5 前讀判斷手冊」＝寫 3.4 裁決前讀），落點按上表映射。內容義務一條不減，只是換位呈現。
 
 **全文可見字數 target：16,000–22,000 字**（v2.1 上修 — 8-12K 經 pilot 驗證對母題級主題太薄、每章只剩 2-3 段、論證層被壓縮；**低於 14,000 可見字視為偷懶**，對齊 DD ≥80KB / DCA ≥50KB 的 anti-laziness 政策）。擴展靠文字不靠表格 — 表格上限不變。
 
@@ -92,9 +94,9 @@ financial-analysis-bot/
 
 ### 章節順序硬性規則
 
-§0 → §1 → §2 → §3 → §4 → §5 → §6 → §7 → §8 → §9，**不可重排、不可刪節**。
+summary → thesis → debates → mechanics → valuation → risks → stocks → appendix，**八段不可重排；§N 內容模組不可刪節**（只能按映射表換位）。
 
-特別地，§3 現供→未供 與 §4 現需→未需 必須在 §5 開頭合流出供需裁決；§5 投資時鐘 phase 是供需裁決的自然結論，放在裁決後因果才順。
+特別地，mechanics 內 3.1 需求與 3.2 供給必須在 3.4 開頭合流出供需裁決；投資時鐘 phase 是供需裁決的自然結論，放在裁決後因果才順。thesis 與 summary 雖排最前，**寫作順序在最後**（見【寫稿順序】）。
 
 ---
 
@@ -107,10 +109,10 @@ financial-analysis-bot/
    - **未來**：3-5 年走向 + 最大的那條結構裂縫（一句）。
    - **怎麼做**：標的層級 + 動作。**允許且鼓勵寫「都不買 / 現價非進場點 / 等回調 X%」** — 不得被結構性逼著一定點名買標的（這正是與 6-box『top picks 一格永遠要填』的關鍵差異，避免報告結構性偏多）。
    每行「一句結論 + 一個證據子句」，硬上限 ≤2 行（過長就退化成段落）。三行**同步寫進 id-meta `now_state` / `future_state` / `action`**（v2.x 必填、`validate_id_meta.py` 阻斷、各 ≤240 字元）。
-2. **最重要的一個判斷（原「結論先行段」，v2.1→v2.2 reframe，必填）**：3-6 句純白話，放**那一條最反直覺、三句話濃縮不下的深層非共識判斷**（不是重述三句話的裁決）— 講清因果機制、市場為何看錯、訊號該盯哪裡。視覺用紫框白底，標題「📌 本報告最重要的一個判斷」。**禁止**：重述三句話的裁決字句（短缺/過剩別講第二遍）；用卡片 / pill / bullet 替代這段文字；埋伏筆（「詳見 §5」不算結論）；騎牆語。
+2. **最重要的一個判斷（原「結論先行段」，v2.1→v2.2 reframe，必填）**：3-6 句純白話，放**那一條最反直覺、三句話濃縮不下的深層非共識判斷**（不是重述三句話的裁決）— 講清因果機制、市場為何看錯、訊號該盯哪裡。視覺依 templates/html_template.md 的 `.key-judgment`（KEY CALL 框），標題「📌 本報告最重要的一個判斷」。**禁止**：重述三句話的裁決字句（短缺/過剩別講第二遍）；用卡片 / pill / bullet 替代這段文字；埋伏筆（「詳見 §5」不算結論）；騎牆語。
 3. **TL;DR 6-box 卡片**：TAM / 5Y CAGR / 投資時鐘 Phase / **供需裁決（過剩/平衡/短缺三選一）** / conviction pill（high/mid/low）/ top picks（2-3 ticker）。**TAM 格必附 5Y 需求倍數（×__，v2.4）**：= §4 base 情境 5Y TAM ÷ 現 TAM，同步寫進 id-meta `demand_5y_multiple`——這是「哪些 ID 是多倍股獵場」的跨 ID 排序鍵（`demand_5y_multiple ≥ 2 + 供需裁決＝短缺 + conviction ≥ mid` 即爆發獵場）。**三個裁決值同步寫進 id-meta（v2.5，比照 now_state 三句話）**：供需裁決 → `sd_verdict`（`shortage` / `balanced` / `surplus` / `split`；商業段與政府段等分段結論不一致時填 `split` 並在 `sd_verdict_detail` 一句寫清「哪段短缺、哪段過剩」）；投資時鐘 Phase → `clock_phase`（`I` / `II` / `III` / `IV`）；conviction pill → `conviction`（`high` / `mid` / `low`，與下方 PM 綠卡 conviction pill 同值）。這三值 + `demand_5y_multiple` 讓「跨 ID 趨勢排序」機器可讀（`sd_verdict==shortage ∧ demand_5y_multiple ≥ 2 ∧ conviction ≥ mid` 即獵場篩選鍵），`skill_version` ≥ v2.5 時 `validate_id_meta.py` 阻斷缺漏。**v2.6 再加 `priced_in`（low/mid/high，§7 priced-in 檢驗整體結論，v2.6+ validator 阻斷）**——供需裁決量物理供需、priced_in 量「還剩多少沒 price」，兩軸缺一不可（校準實證：shortage 且 fully-priced 是最危險形狀）；獵場篩選鍵加第四條件 `priced_in ≠ high`。
 4. **一句話 thesis**（≤200 字，必帶 [I:] 或 [X:] tag）→ 同步寫進 id-meta `oneliner`。這是本 ID 最核心的非共識觀點。
-5. **PM Implication 綠卡**（沿用舊 §0.7，**必填，缺即 Gate 9 阻斷**）：五 bullet + ①②③④ 四行動 + conviction pill。
+5. **PM Implication 綠卡**（沿用舊 §0.7，**必填，缺即 Gate 5 阻斷**）：五 bullet + ①②③④ 四行動 + conviction pill。
 6. **legacy cross-link callout**（若同主題已有 legacy ID / DS）：頂部加 callout 連回去，標明本份為 v2 敘事版。
 
 **PM Implication 綠卡五 bullet + j-logic**（缺任一 = 未完成）：
@@ -125,7 +127,7 @@ financial-analysis-bot/
 
 **conviction pill**：`high`（§9 ≥2 個 🔴 且 §8 falsification 距離 >2 sigma）/ `mid`（≥1 🔴 + 至少 1 條 kill 未排除）/ `low`（thesis AT_RISK 或 BROKEN 跡象明顯）。**conviction 與爆發等級正交（v2.4）**：conviction 量 thesis 穩固度、`demand_5y_multiple` 量 upside 量級，一個 5Y 需求 1.3x 的穩產業可以是 high conviction——兩軸都寫 id-meta，不要混用。**j-logic**：四行動 ①②③④，格式「動詞 + 具體標的（ticker）+ 觸發條件或時機」。
 
-HTML 樣板（綠卡，沿用 DS 綠 #16A34A 點綴）：
+HTML 樣板（綠卡；視覺樣式由 templates/html_template.md 的 `.judgment-card` 統一定義，此處只定結構，不寫 inline 色票）：
 
 ```html
 <h2>§0 決策摘要層</h2>
@@ -141,16 +143,16 @@ HTML 樣板（綠卡，沿用 DS 綠 #16A34A 點綴）：
 <!-- ② KEY CALL 最重要的一個判斷（.key-judgment navy 框，放三句話濃縮不下的深層非共識判斷，勿重述裁決）-->
 <!-- ③ 6-box TL;DR 卡片 + ④ 一句話 thesis（帶 [I:]/[X:] tag）-->
 <!-- masthead stance band（Sector stance + 供需裁決 + Conviction + Top picks）+ 頁尾 Disclosures 見 templates/html_template.md -->
-<div class="judgment-card" style="background:#F0FDF4;border-left:4px solid #16A34A">
+<div class="judgment-card">
   <div class="j-head">📊 <strong>Portfolio Implication（PM 級行動結論）</strong> <span class="j-conf high">conviction：{{level}}</span></div>
-  <ul class="j-facts" style="color:#14532D">
+  <ul class="j-facts">
     <li><strong>thesis 方向</strong>：{{保持 / 強化 / 降級 — 說明}}</li>
     <li><strong>個股 conviction tier 變化</strong>：{{ticker A 從 X → Y；含 cross-ID sync 註記}}</li>
     <li><strong>關鍵新監測點</strong>：{{§8 falsification metric / catalyst（可量化）}}</li>
     <li><strong>multiple / 估值 / 週期定位風險</strong>：{{de-rating window / cycle-peak proximity / 現價 vs entry 區間}}</li>
     <li><strong>Entry 時機</strong>：{{現在追高 / 等 sector correction X% / 等具體 catalyst}}</li>
   </ul>
-  <div class="j-logic" style="background:rgba(22,163,74,.1);color:#14532D">→ PM 級行動：① {{action 1}}；② {{action 2}}；③ {{action 3}}；④ {{action 4}}</div>
+  <div class="j-logic">→ PM 級行動：① {{action 1}}；② {{action 2}}；③ {{action 3}}；④ {{action 4}}</div>
 </div>
 ```
 
@@ -341,7 +343,7 @@ HTML 樣板（綠卡，沿用 DS 綠 #16A34A 點綴）：
 | **每章末 💡 對投資的意義 box** | 把該章事實連回投資判斷 | DS（ID 的 💡 insight bullets 併入）|
 | **來源全部走節末 `<aside class="ds-refs">`，正文零 inline tag** | 每個含量化斷言的 section 末加 aside，按 URL 去重 | DS v1.2 |
 | **敘事 / 條列 hybrid** | 因果鏈用段落、≥3 平行同類項用 bullet | DS v1.3 |
-| **全文長度 target 8,000–12,000 可見字** | 深於 DS、短於舊 ID | 新 |
+| **全文長度 target 16,000–22,000 可見字** | v2.1 上修，與【章節骨架】表同步；低於 14,000 視為偷懶 | 新 |
 
 ### 敘述 vs 條列判準（v1.3 hybrid，搬自 DS §360-399）
 
@@ -689,9 +691,15 @@ Wikipedia（歷史時間軸，不用於數字）、Reddit / Twitter / Seeking Al
 
 ---
 
-## 【研究流程（四軸，零素材啟動）】
+## 【研究流程（五軸 workflow 引擎，零素材啟動）】
 
-收到主題後執行四軸研究。每軸 3-5 輪 WebSearch，T1 優先；玩家矩陣與利潤池補 2-3 輪 T1。
+v3.0 起，**新 ID 與裁決級 refresh** 的研究段以 Workflow 多 agent 編排執行（**持有人 2026-07-20 常設授權，寫入本 skill——執行時不需逐次徵求同意**；措辭級 refresh 免跑引擎，沿用單線 WebSearch）。引擎三件套：
+
+1. **五軸並行 fan-out**：Axis A–E 各一個獨立 agent（互不知彼此結果，避免共享盲點），每軸 3-5 輪 WebSearch／WebFetch，T1 優先；玩家矩陣與利潤池補 2-3 輪 T1。
+2. **承重數字對抗查證**：草稿完成時寫手列「承重數字清單」（10-15 個直接支撐裁決／debate 結論的數字；清單為空＝Gate 15 不過）——每個數字 3 個獨立 skeptic agent 試圖反駁，≥2 票反駁即該數字降級或除名並回改正文。
+3. **Completeness critic**：獨立 agent（**不讀草稿論證，只知主題**）先自列「本主題應有的一階變數」（競爭替代／地緣供給／需求方自供／監管／相鄰棧顛覆），再對照草稿找缺席者；缺席的一階變數必須補研究，或在 debates 明文「考慮過、排除，因為…」（Gate 15 阻斷）。
+
+> **WHY（2026-07-20）**：AIInferenceEconomics（2026-04-30）整份漏掉中國 open-weight 模型——寫手與自己的 checklist 共享同一個盲點，可靠的缺席偵測只能來自獨立腦。同日 Kimi K3 案例證明承重數字需要對抗查證（「開源便宜」的表面定價會漏掉 2.8T 總參數的硬體地板，第一印象方向就錯）。成本分級依據：聚焦單題 deep-research 實測約 590 萬 tokens，全 ID 引擎估 2-4 倍——故僅新 ID／裁決級 refresh 開啟。三件套 kill condition 已登記 `knowledge/rule_ledger.md`。
 
 > **歷史筆記**：v1.11 曾插入 Step 0 Evidence Prefetch（自動撈 EDGAR + IR + arXiv），同日跑 HBM4 ID 驗證失敗 — 自動 fetcher 結構性錯位於 ID 真正需要的 primary source（韓國 IR、付費 SemiAnalysis/Yole、投資人日 deck、法說 Q&A 音訊）。v1.12 移除，v2.0 沿用純 WebSearch / WebFetch 流程。Lesson：別把「自動化好玩」誤當成「自動化有用」。
 
@@ -728,11 +736,21 @@ Wikipedia（歷史時間軸，不用於數字）、Reddit / Twitter / Seeking Al
 - **庫存/訂單指標**：`{theme} book-to-bill`、`{theme} channel inventory weeks`、`{theme} backlog visibility`（軟體服務類找 NRR/RPO）。
 - 產出：§4 三角驗證、§5 資本週期 + 庫存指標、§7 priced-in 分位。
 
+### Axis E — 替代與圈外掃描（v3.0 新軸，3-5 輪）
+
+不依賴寫手先驗的**機械化查詢模板**（每項至少一輪，不得因「顯然無關」跳過）：
+
+- `{theme} China competitors open source alternative`、`{theme} 中國 替代 國產`
+- `{theme} substitute technology disruption`、`{theme} leapfrog next generation`
+- `{theme} in-house self-supply hyperscaler`（需求方自供／垂直整合）
+- `{theme} regulation export control antitrust`（監管／地緣）
+- 產出：debates 替代威脅卡素材（Gate 16）＋ completeness critic 的對照基準。**查無實質威脅時，威脅卡寫「已掃描、現階段無一階威脅，判別訊號＝…」——掃描本身不可省，空白結論也是結論。**
+
 ### 寫稿順序
 
-研究完成後：**§0 thesis sketch（一句話 thesis ≤200 字 + id-meta JSON block 草稿）→ §1-§9 依序寫 → §0 定稿（6-box + PM 綠卡，基於 §7/§8/§9 完成的素材）**。
+研究完成後：**thesis sketch（一句話 thesis ≤200 字 + id-meta JSON 草稿）→ appendix（背景先落地）→ mechanics → valuation → debates → risks → stocks → 承重數字對抗查證＋completeness critic（Gate 15，查證結果回改正文）→ thesis 定稿 → summary 定稿（rating strip＋Key Points＋PM 行動框最後寫）**。
 
-§0 PM 綠卡必須在 §7（Non-Consensus）/ §8（證偽 metric）/ §9（conviction tier）完成後才寫，因為那是把這三章壓縮為「PM 今天能做什麼決定」的橋接段。
+summary 的 PM 行動框必須在 debates（分歧）／risks（證偽 metric）／stocks（conviction tier）完成後才寫，因為那是把這三段壓縮為「PM 今天能做什麼決定」的橋接段。
 
 ---
 
@@ -854,13 +872,15 @@ Wikipedia（歷史時間軸，不用於數字）、Reddit / Twitter / Seeking Al
 | **Gate 8** | 阻斷 | aside 來源 — 每個含量化斷言的 section 末必有 `<aside class="ds-refs">` 且 ≥1 條；全文 aside T1+T1-zh 占比 ≥ 60%（搬自 DS Gate 12，T1 門檻取 ID 嚴值 60%）|
 | **Gate 9** | 阻斷 | §1 錨點 — §1 每個 inflection 段含具體日期 + 量化錨點（搬自 DS Gate；正則 `\b(19|20)\d{2}\b` + 數字）|
 | **Gate 10** | warning | 供需裁決明確（§5 過剩/平衡/短缺三選一）+ §9 ticker depth 時間限定 + Catalyst 雙路徑齊備 |
-| **Gate 11** | 阻斷 | dual-output 完整性 — canonical `ID_{Theme}_{date}.html`（含 lean template marker + id-meta）與 `_full.html`（不含 id-meta）兩檔皆存在（v2.4 首發只產一檔、視覺回退 v2.0 紫版而無 gate 攔）|
+| **Gate 11** | 阻斷 | 單檔完整性（v3.0）— 唯一輸出 `ID_{Theme}_{date}.html` 含 id-meta＋八段機器錨點（summary/thesis/debates/mechanics/valuation/risks/stocks/appendix）＋appendix 內 ≥1 個 `.evidence-fold`；**禁止產 `_full.html`**（v2.x dual-output 已廢）|
 | **Gate 12** | 阻斷 | kill_metrics 同步 — id-meta `kill_metrics[]` ≥3 條且與 §8 證偽表逐條對得上（metric 名 + bear 閾值一致）；`sd_verdict` / `clock_phase` / `conviction` 與 §0 6-box、§5 裁決一致；**`priced_in` 與 §7 各分歧 priced-in 檢驗的整體讀數一致（v2.6）** |
 | **Gate 13'** | 阻斷 | 條件載入閘（v2.6）— 寫 id-meta 之前已 Read `references/id-meta-schema.md`；`python3 scripts/validate_id_meta.py` 全綠 |
 | **Gate 14** | 阻斷 | 情境判斷手冊（v2.7）— 已 Read `references/judgment-playbook.md` 觸發索引，命中條目逐條實答且答案落在對應章節 |
+| **Gate 15** | 阻斷 | 研究引擎三件套（v3.0，僅新 ID／裁決級 refresh）— 五軸 fan-out 已跑；承重數字清單非空（10-15 個）且逐個過 3-skeptic 對抗查證（≥2 票反駁者已降級/除名並回改正文）；completeness critic 報告無未處置缺席變數 |
+| **Gate 16** | 阻斷 | 替代威脅 debate 席（v3.0）— debates 內 ≥1 張圈外／替代威脅卡（Axis E 掃描結論＋判別訊號；「已掃描、無一階威脅」為合法結論，未掃描不是）|
 | **Gate 13** | warning | purity 推導 — §9 每檔 `purity_pct` 有一行 segment 營收推導 |
 
-任一阻斷 Gate (1/2/2.1/3/4/5/6/7/8/9/11/12) fail → 阻斷發布 + 列修正項。阻斷全過、warning Gate (10/13) fail → 允許發布但輸出 warning。輸出 `pre_publish_report.md` 記 pass/fail 明細。
+任一阻斷 Gate (1/2/2.1/3/4/5/6/7/8/9/11/12/13'/14/15/16) fail → 阻斷發布 + 列修正項。阻斷全過、warning Gate (10/13) fail → 允許發布但輸出 warning。輸出 `pre_publish_report.md` 記 pass/fail 明細。
 
 ---
 
@@ -919,11 +939,10 @@ id-meta = 下游（stock-analyst / earnings-synthesis / position-thesis-monitor 
 
 寫好 + 過 Pre-Publish Gate + 過 Step 8.7 critic 後：
 
-1. **寫 HTML（dual-output 兩份）**：
-   - `docs/id/ID_{Theme}_{YYYYMMDD}.html` = **canonical 精煉版決策卡**（`templates/lean_template.md` 的 6 PARTS (I–VI)；`<head>` **必含 id-meta JSON** + Google Fonts link）。
-   - `docs/id/ID_{Theme}_{YYYYMMDD}_full.html` = **完整考證版**（`templates/html_template.md` 的 9 章；`<head>` **不放** id-meta / `<meta name="id-*">` → 當 companion）。
-   - 兩份雙向連結（canonical xlinks「完整版 →」；full 頂部「趕時間？→ 精煉版」），同皮（精煉版編輯風）。
-2. **本地驗證**：`python3 scripts/validate_id_meta.py docs/id/ID_{Theme}_{YYYYMMDD}.html`（canonical 帶 id-meta 須 exit 0；`_full.html` 無 id-meta 會被 skip，正常）。
+1. **寫 HTML（v3.0 單檔）**：
+   - `docs/id/ID_{Theme}_{YYYYMMDD}.html` = **唯一輸出**（`templates/report_template.md` 八段架構；`<head>` **必含 id-meta JSON** + Google Fonts link；考證與逐節來源收 `.evidence-fold`）。
+   - **禁止產 `_full.html`**（Gate 11 驗；refresh 舊雙檔主題時順勢合併、舊 `_full` 轉 redirect stub）。
+2. **本地驗證**：`python3 scripts/validate_id_meta.py docs/id/ID_{Theme}_{YYYYMMDD}.html` 須 exit 0。
 3. **append INDEX.md** 一行（欄位規格見下）。
 4. **insert index.html 卡片**：找對應的 `<!-- subgroup-anchor: {mega}.{sub_group} -->`，插入新 article 卡片；**卡片加 `v2 敘事版` badge pill**（舊卡片不動）。
 5. **跑分類頁**：`python3 scripts/build_id_category_pages.py`（整塊複製 index.html category block，badge 自動帶過去，不需改 script）。
@@ -963,21 +982,20 @@ id-meta = 下游（stock-analyst / earnings-synthesis / position-thesis-monitor 
 
 ## 【HTML 視覺規格】
 
-沿用紫色主視覺（住在 `/id/`），💡 implication box 用 DS 綠：
+**視覺唯一權威＝`templates/report_template.md`**（v3.0：sell-side 印刷風——白紙面＋navy 單 accent＋標題襯線內文 sans＋Exhibit 深藍標題列編號表＋設計 token `:root` 變數）。本段只定「結構性必備元素」，**不定色票**——改視覺只改 template，不回頭改本段（歷史教訓：本段曾殘留 v2.0 紫色主視覺描述與 template 打架三個版本沒人發現）。
 
-- 頁首 badge：`產業深度 · Industry Deep Report`（紫色 #7C3AED）+ `v2 敘事版` pill。
-- 章節標題左邊加 accent 直線（紫色）。
+- 頁首 badge：`產業深度 · Industry Deep Report` + `v2 敘事版` pill。
+- 章節標題帶 accent 直線。
 - 判斷層章節（§5 裁決 / §7 / §8）頂部加 🟡 banner：「本章含 judgment，已標信心度」。
-- 每個 🟡 bullet 用卡片樣式（淡黃底 #FEF9C3 + border-left #EAB308）。
-- **💡 對投資的意義 box 用 DS 綠**（背景 #F0FDF4 / border-left #16A34A）。
-- **§0 PM Implication 綠卡**用 DS 綠（同上）。
+- 每個 🟡 bullet 用卡片樣式。
+- **💡 對投資的意義 box**（`.id-implication`）與 **§0 PM Implication 綠卡**（`.judgment-card`）：結構必備，樣式由 template 統一定義。
 - **`ds-refs` aside CSS 搬入**（每節末來源區塊；`.ds-refs` / `.ds-refs-label` / `.tier` / `.source-warning` 全套，見 templates）。
 - 🔴 核心 / 🟡 次要 / 🟢 邊緣 tier 用 pill 標籤。
 - **S 曲線強制保留**：優先 `<pre>` ASCII（IBM Plex Mono）；複雜情境改 inline SVG。
 - **Value chain SVG 改為利潤池語境**：水平 3-box layout（上游 / 中游 / 下游）+ 箭頭，box 內標利潤池占比（不只毛利率）+ 遷移方向箭頭。
 - Claim Taxonomy reader banner（v2 ID 必加，見【Claim Taxonomy】段）。
 
-**頁尾固定**：`產業深度報告 · industry-analyst v2.0（敘事版）· 主題：{theme} · 發布日：{date} · 🟡 占比：{pct}% · 文字比：{ratio}%`
+**頁尾固定**：`產業深度報告 · industry-analyst {版本號，隨 frontmatter} · 主題：{theme} · 發布日：{date} · 🟡 占比：{pct}% · 文字比：{ratio}%`
 
 ---
 

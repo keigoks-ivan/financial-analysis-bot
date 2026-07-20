@@ -13,7 +13,7 @@
 | 欄位 | 型別 | 說明 |
 |:---|:---|:---|
 | `theme` | string | 產業主題（e.g. `"AI EDA + IP"`、`"HBM 供需循環"`）|
-| `skill_version` | string | 建立時 skill 版本（填當前版本，現 = `"v2.5"`）|
+| `skill_version` | string | 建立時 skill 版本（填當前版本＝SKILL.md frontmatter `version:`，現 = `"v2.7"`）|
 | `id_version` | string | 此 ID 自身版本（`"v1.0"` 初版）|
 | `publish_date` | string | `"YYYY-MM-DD"` |
 | `thesis_type` | enum | `"structural"` / `"event-triggered"` / `"mixed"` |

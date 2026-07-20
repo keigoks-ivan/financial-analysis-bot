@@ -53,6 +53,9 @@
 | PM-QC-2 長抱賣出分軌（portfolio-manager v2.0；清倉建議必須指名 thesis 級觸發物，估值偏高/漲幅本身最多 trim 回目標倉、永不單獨清倉） | 2026-07-17 | v1.0 機械超漲止盈（>mid_target×1.2 → 減碼 30%）退役；calibration_legacy_dca_20260707 實證強勢段機械保守成本 ≈ 3× 其收益 | 兩輪校準顯示「thesis 級觸發前若機械止盈可保住的回吐」規模中位 > 「續抱多賺」（＝機械止盈其實在救人）；或 thesis 級觸發系統性太慢（觸發時已回吐超過機械止盈保住額的 2×）→ 恢復分級止盈 | — |
 | PM-QC-1 direction override 禁止（portfolio-manager v2.0；PM 不得反 §14 裁決，L4 唯一出路＝重跑 DD；L1-L3 sizing/horizon/information 允許但強制 reversal condition） | 2026-07-17 | v1.0 override 4 級協議繼承；分工純粹（PM 不做單股研究）防組合層情緒繞過裁決鏈 | 出現 ≥3 例「新資訊明確、重跑 DD 的延遲造成實質錯失、且 L3 資訊通道未能補位」→ 開 PM 層條件式 direction override（附強制事後 DD 對帳）；或兩輪 L4 攔下的意圖事後全部正確（禁令在害人） | — |
 
+| ID 研究引擎三件套（industry-analyst v3.0 Gate 15：五軸 fan-out〔含 Axis E 替代/圈外〕＋承重數字 3-skeptic 對抗查證＋completeness critic；僅新 ID／裁決級 refresh，措辭級免） | v3.0 (2026-07-20) | AIInferenceEconomics 整份漏中國 open-weight（寫手與自己 checklist 共享盲點，缺席偵測需獨立腦）；Kimi K3 案例證明承重數字第一印象方向會錯（開源便宜 vs 2.8T 硬體地板） | 逐件審計：兩輪內 completeness critic 零「補研究後改變 debate/裁決」實績 → critic 降選做；對抗查證兩輪內零「數字被 ≥2 票反駁且除名後影響結論」→ 降為抽查制；Axis E 兩輪掃描全部「無一階威脅」且無一次事後被打臉 → 降為 checklist 項 | — |
+| ID 替代威脅 debate 席（industry-analyst v3.0 Gate 16：debates ≥1 張圈外/替代威脅卡，「已掃描無威脅＋判別訊號」為合法結論） | v3.0 (2026-07-20) | 同上中國模型盲點；結構保留席＝把「搜尋義務」變成版面必填格，成本最低的 forcing function | 兩輪校準內威脅卡全部流於「無威脅」樣板且無任一判別訊號後續被觸發 → 降為 Axis E 附屬輸出、撤 gate | — |
+
 **登記規則**：新增判斷類規則 → 加一列（含 kill condition）＋提名一條既有規則候刪（寫進 PR/commit 訊息）；刪除規則 → 該列標 `KILLED @ 版本`（保留供 lineage，勿刪行）；每輪校準把審計結果回填最後一欄。
 
 ## 思考訓練工具使用對帳（2026-07-08 起）

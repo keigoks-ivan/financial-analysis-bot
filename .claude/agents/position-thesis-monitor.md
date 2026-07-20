@@ -1,6 +1,6 @@
 ---
 name: position-thesis-monitor
-description: Weekly thesis-health scanner for ALL holdings + recently-researched DDs, plus a fleet-level scan of canonical industry IDs' structured kill tables. Runs through every DD's falsification metrics, catalyst timeline (version-aware: v2.x ID §8 / v1.x ID §10.5), DD/ID staleness, and — independent of any DD/holding — every eligible ID's id-meta `kill_metrics[]` — flagging silent decay (catalyst missed, metric breached, thesis age past half-life, ID kill threshold crossed on a theme with no DD closure). Output is a triage report (`docs/pm/MONITOR_YYYYMMDD.md`) that surfaces positions AND monitoring-orphan themes demanding human re-review. NEVER replaces industry-thesis-critic (decision-time deep review) or pm_weekly_review (portfolio-level CCR) — this is the passive monitor catching things the user otherwise wouldn't notice. Triggered by /schedule cron, manually via Agent tool, or when user asks "any of my thesis broken / aging silently".
+description: Weekly thesis-health scanner for ALL holdings + recently-researched DDs, plus a fleet-level scan of canonical industry IDs' structured kill tables. Runs through every DD's falsification metrics, catalyst timeline (version-aware: ≥v2.0 ID §8〔v3.x 落 id="risks" 段〕/ v1.x ID §10.5), DD/ID staleness, and — independent of any DD/holding — every eligible ID's id-meta `kill_metrics[]` — flagging silent decay (catalyst missed, metric breached, thesis age past half-life, ID kill threshold crossed on a theme with no DD closure). Output is a triage report (`docs/pm/MONITOR_YYYYMMDD.md`) that surfaces positions AND monitoring-orphan themes demanding human re-review. NEVER replaces industry-thesis-critic (decision-time deep review) or pm_weekly_review (portfolio-level CCR) — this is the passive monitor catching things the user otherwise wouldn't notice. Triggered by /schedule cron, manually via Agent tool, or when user asks "any of my thesis broken / aging silently".
 model: sonnet
 ---
 
@@ -74,7 +74,7 @@ For each ticker, run these 6 checks in order. Each check produces 🟢 / 🟡 / 
 
 The section name differs by skill format:
 - **stock-analyst v12.0 DD HTML**: look for **「最關鍵監測指標」表** (usually in Summary/§1 area) + **「假設驗證對照」** table
-- **industry-analyst ID HTML**: 依 id-meta `skill_version` 定位證偽表 — **v2.x → §8 Catalyst Timeline + 證偽表**（催化劑與 kill 條件同段）；**v1.x → `§13 Falsification Test` 表**
+- **industry-analyst ID HTML**: 依 id-meta `skill_version` 定位證偽表 — **≥v2.0（v2.x／v3.x 皆是，數值比較勿用「v2 開頭」字串判別）→ §8 Catalyst Timeline + 證偽表**（催化劑與 kill 條件同段；v3.x 八段呈現時在 `id="risks"` 段）；**v1.x → `§13 Falsification Test` 表**
 - Try both; whichever exists is the source of truth
 
 For each row (metric / threshold / time window):
@@ -110,7 +110,7 @@ If ≥ 1 metric is 🔴 → flag as **FALSIFICATION_BREACH**.
 **Fallback（僅限催化劑日曆未涵蓋的 ticker，例如 v12 legacy 無 dd-meta catalysts[]）**：
 退回既有 ad-hoc 流程 —
 - **stock-analyst v12.0 DD**: catalyst events appear inside **「最關鍵監測指標」表 + §5 假設邏輯** (look for explicit dates like "Q1 2026 財報", "5/29 公告", etc.)
-- **industry-analyst ID**: 依 id-meta `skill_version` 版本感知定位 catalyst — **v2.x → §8 Catalyst Timeline + 證偽表**（催化劑與 kill 條件同段）；**v1.x → `§10.5 Catalyst Timeline` 表**。（v2.x 報告的 catalyst 已從舊 §10.5 移至 §8，直接定位舊章節號會撲空。）
+- **industry-analyst ID**: 依 id-meta `skill_version` 版本感知定位 catalyst — **≥v2.0（v2.x／v3.x）→ §8 Catalyst Timeline + 證偽表**（催化劑與 kill 條件同段；v3.x 八段呈現時在 `id="risks"` 段）；**v1.x → `§10.5 Catalyst Timeline` 表**。（v2.x 報告的 catalyst 已從舊 §10.5 移至 §8，直接定位舊章節號會撲空；v3.0 起勿用「v2 開頭」字串判別版本。）
 - Filter catalysts where date < today；for each past-due catalyst WebSearch 實際結果、比對
   「若達成 / 若落空」期望；≥ 1 falsifies → **CATALYST_MISS**。
 
@@ -554,6 +554,6 @@ When you finish, the main agent should:
 | Output | THESIS_INTACT/AT_RISK/BROKEN per ID | Triage table per ticker ＋ ID kill 表掃描 section |
 | Action | Detailed action plan | Flag + recommend deeper review |
 | Cost | Higher (deep WebSearch + ecosystem checks) | Lower (lighter checks per ticker) |
-| Read | 1 ID end-to-end | DD + linked IDs metadata + 版本感知 catalyst/證偽表（v2.x §8 / v1.x §10.5·§13）+ id-meta `kill_metrics[]` + catalyst/{archive,calendar,variance}.json |
+| Read | 1 ID end-to-end | DD + linked IDs metadata + 版本感知 catalyst/證偽表（≥v2.0 §8〔v3.x=risks 段〕/ v1.x §10.5·§13）+ id-meta `kill_metrics[]` + catalyst/{archive,calendar,variance}.json |
 
 You are the **first-line scanner** — your job is to surface, not solve.

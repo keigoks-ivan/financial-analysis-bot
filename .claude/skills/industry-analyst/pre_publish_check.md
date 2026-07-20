@@ -1,8 +1,8 @@
-# industry-analyst v2.5 — Pre-Publish Gate Check（13 Gates）
+# industry-analyst v3.0 — Pre-Publish Gate Check（15 Gates）
 
-每份 v2.x 產業深度報告（ID）發布前必跑。寫好 HTML 草稿後（Step 8.5），讀取本檔逐條檢查，產出 `pre_publish_report.md`。
+每份產業深度報告（ID，現行 v3.0 單檔 sell-side 八段架構）發布前必跑。寫好 HTML 草稿後（Step 8.5），讀取本檔逐條檢查，產出 `pre_publish_report.md`。
 
-Gate 編號與 `SKILL.md`【Pre-Publish Gate（13 道）】表完全一致：
+Gate 編號與 `SKILL.md`【Pre-Publish Gate】表一致（Gate 13'／Gate 14 為條件載入閘與情境判斷手冊閘，在寫稿流程中執行，細節在 SKILL.md，不在本檔展開）：
 
 | Gate | 性質 | 檢查 | 來源 |
 |:---|:---|:---|:---|
@@ -17,13 +17,17 @@ Gate 編號與 `SKILL.md`【Pre-Publish Gate（13 道）】表完全一致：
 | **Gate 8** | 阻斷 | aside 來源 + T1 占比 ≥ 60% | DS Gate 12 碼，門檻 50%→60% |
 | **Gate 9** | 阻斷 | §1 錨點（日期 + 量化） | DS Gate 14/DS-9 對應碼 |
 | **Gate 10** | warning | 供需裁決三選一 + §9 depth 時間限定 + catalyst 雙路徑 + 原 ID warning gates 摘要 | 新（DS Gate 7 + Gate 14 + ID 3.1/5/6/7 摘要） |
-| **Gate 11** | 阻斷 | dual-output 完整性（canonical + `_full.html` 皆存在、marker + id-meta 各就位） | v2.5 新 |
+| **Gate 11** | 阻斷 | 單檔完整性（v3.0）— 唯一輸出 `ID_{Theme}_{date}.html` 含 id-meta＋八段機器錨點（summary/thesis/debates/mechanics/valuation/risks/stocks/appendix）＋appendix 內 ≥1 個 `.evidence-fold`；**禁止產 `_full.html`**（v2.x dual-output 已廢） | v3.0 改 |
 | **Gate 12** | 阻斷 | kill_metrics 同步（id-meta `kill_metrics[]` ≥3 對齊 §8；sd_verdict/clock_phase/conviction 一致 §0/§5） | v2.5 新 |
 | **Gate 13** | warning | purity 推導（§9 每檔 `purity_pct` 有 segment 營收推導行） | v2.5 新 |
+| **Gate 15** | 阻斷 | 研究引擎三件套（v3.0，僅新 ID／裁決級 refresh）— 五軸 fan-out 已跑；承重數字清單非空（10-15 個）且逐個過 3-skeptic 對抗查證（≥2 票反駁者已降級/除名並回改正文）；completeness critic 報告無未處置缺席變數 | v3.0 新 |
+| **Gate 16** | 阻斷 | 替代威脅 debate 席（v3.0）— debates 內 ≥1 張圈外／替代威脅卡（Axis E 掃描結論＋判別訊號；「已掃描、無一階威脅」為合法結論，未掃描不是） | v3.0 新 |
 
-任一阻斷 Gate（1/2/2.1/3/4/5/6/7/8/9/11/12）fail → **阻斷發布** + 列修正項。阻斷全過、warning Gate（10/13）fail → 允許發布但輸出 warning。
+任一阻斷 Gate（1/2/2.1/3/4/5/6/7/8/9/11/12/15/16）fail → **阻斷發布** + 列修正項。阻斷全過、warning Gate（10/13）fail → 允許發布但輸出 warning。
 
 > 下方所有出現 `docs/id/ID_{Theme}_{Date}.html` 的 path 在實跑時替換為實際檔案路徑（草稿階段可能在 staging path）。
+
+> **v3.0 HTML 定位總則**：呈現層為八段機器錨點（`summary`／`thesis`／`debates`／`mechanics`／`valuation`／`risks`／`stocks`／`appendix`），下方檢查碼一律以錨點切段，不再有 `id="s0"`~`id="s9"`。規則文字中的 §N 稱呼是**內容模組編號**（義務不變），落點按 SKILL.md【章節骨架】映射：§0→summary（＋thesis）、§1→appendix、§2→mechanics 3.3、§3→mechanics 3.2、§4→mechanics 3.1、§5→mechanics 3.4、§6→valuation、§7→debates、§8→risks、§9→stocks。
 
 ---
 
@@ -165,7 +169,7 @@ $ python3 scripts/validate_id_meta.py docs/id/ID_XXX_YYYYMMDD.html
 
 ## Gate 5 [必備 / 阻斷]｜§0 PM Implication 綠卡存在 + conviction 一致性
 
-**規則**：每份 ID HTML 的 §0 內（決策摘要層）必須存在 `<h2>` 含「Portfolio Implication」及對應的綠色 `judgment-card`（`background:#F0FDF4;border-left:4px solid #16A34A`），且內容必須通過以下一致性查驗。
+**規則**：每份 ID HTML 的 §0 內（決策摘要層）必須存在 `<h2>` 含「Portfolio Implication」及對應的 `judgment-card`（**存在性認 class，不認色票**——視覺由 templates/html_template.md 統一，配色改版不得打斷本 gate），且內容必須通過以下一致性查驗。
 
 **為何阻斷**：
 §9 conviction tier / §6 de-rating window / §8 falsification metric 這三個判斷層完成後，PM 的行動結論必須在同一文件明文化 — 否則讀者得自己從三個不同章節拼湊，增加誤讀風險。
@@ -173,8 +177,8 @@ $ python3 scripts/validate_id_meta.py docs/id/ID_XXX_YYYYMMDD.html
 **檢查步驟**：
 
 1. **存在性查驗**（阻斷）
-   - HTML 中搜尋 `Portfolio Implication`（或 §0 內 `judgment-card` 綠卡）
-   - 搜尋 `background:#F0FDF4` + `border-left:4px solid #16A34A`
+   - HTML 中搜尋 `Portfolio Implication` 標題
+   - 搜尋 `class="judgment-card"`（認 class 不認 hex 色票）
    - 缺任一 → **阻斷發布**：「§0 PM Implication 綠卡 missing」
 
 2. **五 bullet 完整性**（阻斷）
@@ -212,8 +216,8 @@ $ python3 scripts/validate_id_meta.py docs/id/ID_XXX_YYYYMMDD.html
 python3 << 'PY'
 import re
 html = open("docs/id/ID_{Theme}_{Date}.html").read()
-# 1. 綠卡存在
-card = bool(re.search(r'#F0FDF4', html)) and bool(re.search(r'border-left:4px solid #16A34A', html))
+# 1. 綠卡存在（認 class 不認色票——視覺改版不得打斷本 gate）
+card = bool(re.search(r'class="judgment-card"', html))
 title = bool(re.search(r'Portfolio Implication', html))
 print(f"綠卡存在: {'✅' if (card and title) else '❌ MISSING'}")
 # 2. 五 bullet
@@ -304,9 +308,9 @@ PY
 
 ---
 
-## Gate 7 [必備 / 阻斷]｜推導鏈 regex（§4/§5/§7/§8/§9）
+## Gate 7 [必備 / 阻斷]｜推導鏈 regex（§4/§5/§7/§8/§9 → mechanics/valuation/debates/risks/stocks）
 
-**規則**（搬自 DS Gate 13，章節對應改為 §4/§5/§7/§8/§9）：以下章節的結論數字必附「推導：」行或等效標記（「→」「換算」「計算」開頭的短行）：
+**規則**（搬自 DS Gate 13；內容義務仍以 §N 模組表述，HTML 掃描段＝mechanics/valuation/debates/risks/stocks 五段——mechanics 承接 §3/§4/§5、valuation 承接 §6 一併納掃、debates 承接 §7、risks 承接 §8、stocks 承接 §9）：以下內容模組的結論數字必附「推導：」行或等效標記（「→」「換算」「計算」開頭的短行）：
 - §4 TAM 三情境（base/bull/bear）+ CAGR + 三角驗證對帳缺口
 - §5 三 horizon × 三 case 全部 cell；資本週期指標換算；phase 轉換量化閾值
 - §7 估值分位、現價隱含成長假設的 reverse 推算（priced-in）
@@ -315,26 +319,34 @@ PY
 
 **為何阻斷**：source-tag 標「數字來自哪裡」；推導行標「為什麼是這個數字而不是別的」。PM 看不出 bull case +20% 來自哪個 input 變動 → 無法獨立驗證。
 
-**檢查碼**（搬自 DS Gate 13，`required` 改 `[4,5,7,8,9]`，匹配 v2 `<h2>§N` 標題）：
+**檢查碼**（v3.0：以八段機器錨點切段，掃 mechanics/valuation/debates/risks/stocks）：
 ```bash
 python3 << 'PY'
 import re
 html = open("docs/id/ID_{Theme}_{Date}.html").read()
-# Locate each section by <h2>§N
-sections = {}
-for m in re.finditer(r'<h2[^>]*>§(\d+)\s*[^<]+</h2>(.*?)(?=<h2[^>]*>§|\Z)', html, re.DOTALL):
-    sections[int(m.group(1))] = m.group(2)
+# 以八段機器錨點切段（id 可落在 <section> 或 <h2> 上，故用 id 出現位置切）
+anchors = ['summary', 'thesis', 'debates', 'mechanics', 'valuation', 'risks', 'stocks', 'appendix']
+pos = {}
+for a in anchors:
+    m = re.search(r'id="%s"' % a, html)
+    if m:
+        pos[a] = m.start()
+ordered = sorted(pos.items(), key=lambda kv: kv[1])
+seg = {}
+for i, (a, p) in enumerate(ordered):
+    end = ordered[i + 1][1] if i + 1 < len(ordered) else len(html)
+    seg[a] = html[p:end]
 
-required = [4, 5, 7, 8, 9]
+required = ['mechanics', 'valuation', 'debates', 'risks', 'stocks']
 any_fail = False
-for sec in required:
-    body = sections.get(sec, '')
+for name in required:
+    body = seg.get(name, '')
     derive_count = len(re.findall(r'推導[：:]', body))
     arrow_count = len(re.findall(r'→', body))
     num_count = len(re.findall(r'\$\d|\d+%|\d+\s?GW|\d+\.\d+\s?倍|\d+\s?x\b', body))
-    print(f"§{sec}: 量化數字 {num_count} 處, 推導行 {derive_count} 條, → 箭頭 {arrow_count} 個")
+    print(f"{name}: 量化數字 {num_count} 處, 推導行 {derive_count} 條, → 箭頭 {arrow_count} 個")
     if num_count > 3 and derive_count == 0 and arrow_count < num_count // 2:
-        print(f"  FAIL §{sec}: 結論數字無對應推導行")
+        print(f"  FAIL {name}: 結論數字無對應推導行")
         any_fail = True
 print("\nGate 7:", "FAIL" if any_fail else "PASS")
 PY
@@ -349,7 +361,7 @@ PY
 ## Gate 8 [必備 / 阻斷]｜aside 來源 + T1 占比 ≥ 60%
 
 **規則**（搬自 DS Gate 12，T1 門檻 50%→60%）：
-- 每個含量化斷言（%、$、GW、倍數、市占、增長率、TAM、用戶數、capex 等）的 `<section>` 末必有 `<aside class="ds-refs">` 且 ≥ 1 條 `<li>`。
+- 每個含量化斷言（%、$、GW、倍數、市占、增長率、TAM、用戶數、capex 等）的八段段落末必有 `<aside class="ds-refs">` 且 ≥ 1 條 `<li>`（v3.0 起 aside 可收於該段的 `<details class="evidence-fold">` 內——逐節來源與長考證走折疊，不佔閱讀線）。
 - 全文所有 `.ds-refs` 條目的 T1 + T1-zh 占比 ≥ **60%**。
 - 正文中**不應有** `<span class="source-tag">` — 視為遷移未完成的殘留，需清除。
 
@@ -380,25 +392,37 @@ if inline_tags:
 PY
 ```
 
-**Part B — 每個含量化斷言的 `<section>` 都有 aside**（搬自 DS Gate 12 Part B 原文）：
+**Part B — 每個含量化斷言的八段段落都有 aside（或段內 evidence-fold 收納來源）**（搬自 DS Gate 12 Part B，v3.0 改八段錨點切段；summary 為摘要層不掃，其來源錨在正文段）：
 ```bash
 python3 << 'PY'
 import re
 html = open("docs/id/ID_{Theme}_{Date}.html").read()
 quant_pat = re.compile(r'\$\s?\d|\d+(\.\d+)?\s?%|\d+\s?(GW|TW|MW|B|T)|\d+(\.\d+)?\s?(倍|x|×)')
-sections = re.finditer(r'<section[^>]*id="(s\d+)"[^>]*>(.*?)</section>', html, re.DOTALL)
+anchors = ['summary', 'thesis', 'debates', 'mechanics', 'valuation', 'risks', 'stocks', 'appendix']
+pos = {}
+for a in anchors:
+    m = re.search(r'id="%s"' % a, html)
+    if m:
+        pos[a] = m.start()
+ordered = sorted(pos.items(), key=lambda kv: kv[1])
+seg = {}
+for i, (a, p) in enumerate(ordered):
+    end = ordered[i + 1][1] if i + 1 < len(ordered) else len(html)
+    seg[a] = html[p:end]
+
 missing_aside = []
-for m in sections:
-    sec_id = m.group(1)
-    body = m.group(2)
+for name in ['thesis', 'debates', 'mechanics', 'valuation', 'risks', 'stocks', 'appendix']:
+    body = seg.get(name, '')
+    if not body:
+        continue
     has_quant = bool(quant_pat.search(body))
-    has_aside = bool(re.search(r'<aside class="ds-refs">', body))
-    if has_quant and not has_aside:
-        missing_aside.append(sec_id)
+    has_refs = bool(re.search(r'<aside class="ds-refs">', body)) or ('evidence-fold' in body)
+    if has_quant and not has_refs:
+        missing_aside.append(name)
 if missing_aside:
-    print(f"FAIL: 以下節含量化斷言但無 aside: {missing_aside}")
+    print(f"FAIL: 以下段含量化斷言但無 aside / evidence-fold: {missing_aside}")
 else:
-    print("PASS: 所有含量化斷言的節都有 aside")
+    print("PASS: 所有含量化斷言的段都有 aside（或 evidence-fold 收納）")
 PY
 ```
 
@@ -408,22 +432,22 @@ PY
 
 ## Gate 9 [必備 / 阻斷]｜§1 歷史錨點（日期 + 量化）
 
-**規則**（搬自 DS Gate 14 / DS-9，阻斷性質）：§1 中每個 inflection point 段落必須同時包含：
+**規則**（搬自 DS Gate 14 / DS-9，阻斷性質；§1 為內容模組編號，v3.0 落點＝appendix 段的歷史脈絡部分）：§1 中每個 inflection point 段落必須同時包含：
 1. **具體日期或月份**：YYYY 或 YYYY-MM 格式（不允許「過去幾年」「最近」「近期」模糊表述）。
 2. **至少一個量化錨點**：價格、性能指標（TFLOPS / GB / 頻寬）、市占、capacity（GW / wafers）、用戶數、營收。
 
 **為何阻斷**：歷史敘事是 v2.0 因果骨架的起點；缺日期 + 量化的歷史段是「口語回憶」不是可用於 timing 的分析。
 
-**檢查碼**（每段檢查 `\b(19|20)\d{2}\b` 日期 + 至少一個數字單位）：
+**檢查碼**（v3.0：取 appendix 段，逐段檢查 `\b(19|20)\d{2}\b` 日期 + 至少一個數字單位）：
 ```bash
 python3 << 'PY'
 import re
 html = open("docs/id/ID_{Theme}_{Date}.html").read()
-m = re.search(r'<section[^>]*id="s1"[^>]*>(.*?)</section>', html, re.DOTALL)
+m = re.search(r'id="appendix"', html)
 if not m:
-    print("FAIL: §1 (s1) not found"); raise SystemExit
-s1 = m.group(1)
-# 抓 §1 內所有 <p> 段（排除 lede 與 implication / aside）
+    print("FAIL: appendix 段錨點 not found"); raise SystemExit
+s1 = html[m.start():]  # appendix 為八段最末段，取至檔尾
+# 抓 appendix 內所有 <p> 段（排除 lede 與 implication / aside；歷史 inflection 敘事落在此段）
 paras = re.findall(r'<p[^>]*>(.*?)</p>', s1, re.DOTALL)
 date_pat = re.compile(r'\b(19|20)\d{2}\b')
 num_pat = re.compile(r'\d+(\.\d+)?\s?(%|\$|x|×|倍|GW|TW|MW|TFLOPS|GB|TB|MAU|DAU|億|萬|B\b|M\b|nm)')
@@ -442,13 +466,13 @@ for i, p in enumerate(paras):
         checked += 1
         if not (has_date and has_num):
             fails.append((i, '缺日期' if not has_date else '缺量化錨點', txt[:50]))
-print(f"§1 檢查 inflection 段: {checked} 段")
+print(f"appendix（§1 歷史脈絡）檢查 inflection 段: {checked} 段")
 if fails:
     print("FAIL: 以下段落缺日期或量化錨點（阻斷）：")
     for idx, why, snip in fails:
         print(f"  段 {idx}: {why} — 「{snip}...」")
 else:
-    print("PASS: §1 所有 inflection 段含日期 + 量化錨點")
+    print("PASS: appendix 內所有 inflection 段含日期 + 量化錨點")
 PY
 ```
 
@@ -475,11 +499,18 @@ PY
 python3 << 'PY'
 import re
 html = open("docs/id/ID_{Theme}_{Date}.html").read()
-m = re.search(r'<section[^>]*id="s5"[^>]*>(.*?)</section>', html, re.DOTALL)
-s5 = m.group(1) if m else ''
+# §5 裁決 v3.0 落點＝mechanics 段（3.4 裁決）
+anchors = ['summary', 'thesis', 'debates', 'mechanics', 'valuation', 'risks', 'stocks', 'appendix']
+pos = sorted((m.start(), a) for a in anchors for m in [re.search(r'id="%s"' % a, html)] if m)
+def segment(name):
+    for i, (p, a) in enumerate(pos):
+        if a == name:
+            return html[p:pos[i + 1][0]] if i + 1 < len(pos) else html[p:]
+    return ''
+s5 = segment('mechanics')
 verdict = re.findall(r'過剩|平衡|短缺|surplus|oversupply|shortage|undersupply|balance|偏寬鬆|偏緊', s5)
-print(f"§5 裁決字眼: {set(verdict) if verdict else '無'}")
-print("PASS" if verdict else "WARN: §5 缺明確供需裁決")
+print(f"§5（mechanics 3.4）裁決字眼: {set(verdict) if verdict else '無'}")
+print("PASS" if verdict else "WARN: §5（mechanics 3.4）缺明確供需裁決")
 PY
 ```
 
@@ -491,10 +522,17 @@ PY
 python3 << 'PY'
 import re
 html = open("docs/id/ID_{Theme}_{Date}.html").read()
-m = re.search(r'<section[^>]*id="s9"[^>]*>(.*?)</section>', html, re.DOTALL)
-if not m:
-    print("WARN: §9 not found"); raise SystemExit
-s9 = m.group(1)
+# §9 v3.0 落點＝stocks 段
+anchors = ['summary', 'thesis', 'debates', 'mechanics', 'valuation', 'risks', 'stocks', 'appendix']
+pos = sorted((m.start(), a) for a in anchors for m in [re.search(r'id="%s"' % a, html)] if m)
+def segment(name):
+    for i, (p, a) in enumerate(pos):
+        if a == name:
+            return html[p:pos[i + 1][0]] if i + 1 < len(pos) else html[p:]
+    return ''
+s9 = segment('stocks')
+if not s9:
+    print("WARN: stocks 段 not found"); raise SystemExit
 threshold_words = re.findall(r'≥\s*\d+%|>\s*\d+%|≥\s*\$\d+', s9)
 time_markers = re.findall(r'as of \d{4}|by 20\d{2}|20\d{2}[Q-]?\d?\s?actual|current|當前|forward.looking|forecast|projected', s9, re.IGNORECASE)
 print(f"§9 閾值字樣: {len(threshold_words)}  時間限定字樣: {len(time_markers)}")
@@ -513,11 +551,18 @@ PY
 python3 << 'PY'
 import re
 html = open("docs/id/ID_{Theme}_{Date}.html").read()
-m = re.search(r'<section[^>]*id="s8"[^>]*>(.*?)</section>', html, re.DOTALL)
-s8 = m.group(1) if m else ''
+# §8 v3.0 落點＝risks 段
+anchors = ['summary', 'thesis', 'debates', 'mechanics', 'valuation', 'risks', 'stocks', 'appendix']
+apos = sorted((m.start(), a) for a in anchors for m in [re.search(r'id="%s"' % a, html)] if m)
+def segment(name):
+    for i, (p, a) in enumerate(apos):
+        if a == name:
+            return html[p:apos[i + 1][0]] if i + 1 < len(apos) else html[p:]
+    return ''
+s8 = segment('risks')
 pos = len(re.findall(r'若達成|ds-path-positive', s8))
 neg = len(re.findall(r'若落空|ds-path-negative', s8))
-print(f"§8 catalyst 雙路徑: 若達成 {pos} / 若落空 {neg}")
+print(f"§8（risks 段）catalyst 雙路徑: 若達成 {pos} / 若落空 {neg}")
 print("PASS" if pos >= 3 and neg >= 3 else "WARN: catalyst 雙路徑不齊（<3 對）")
 PY
 ```
@@ -548,46 +593,52 @@ PY
 
 ---
 
-## Gate 11 [必備 / 阻斷]｜Dual-Output 完整性
+## Gate 11 [必備 / 阻斷]｜單檔完整性（v3.0）
 
-**規則**（v2.5 新）：每跑一次 skill 必產**兩份**（見 `templates/lean_template.md`）：
-- canonical `ID_{Theme}_{date}.html` — 精煉版決策卡，**必含 lean template marker**（可機器檢查：`class="masthead"` + `class="dsum"`）**且含 id-meta**（`<script id="id-meta">`）。
-- `ID_{Theme}_{date}_full.html` — 完整考證版，**不含 id-meta**（validator 自動 skip、不重複列索引）。
+**規則**（v3.0 改寫，取代 v2.5 dual-output gate）：每跑一次 skill 只產**一份** `ID_{Theme}_{date}.html`（見 `templates/report_template.md`），必須同時滿足：
+1. 唯一輸出檔含 `<script id="id-meta">`。
+2. 八段機器錨點 id 全部存在：`summary`／`thesis`／`debates`／`mechanics`／`valuation`／`risks`／`stocks`／`appendix`（mechanics 段內另含 3.1 需求／3.2 供給／3.3 技術根／3.4 裁決四個 `<h3>`）。
+3. `.evidence-fold` ≥ 1（appendix 內至少一個 `<details class="evidence-fold">`；各節末亦可用）。
+4. 同日期同 theme 的 `_full.html` **不存在**（存在＝fail；dual-output 已廢，**禁止再產** `_full.html`）。
 
-**為何阻斷**：v2.4 首發只產一檔、視覺回退 v2.0 紫版（無 masthead/dsum 精煉版元件），既有 10 道 gate 全無一條檢查「兩檔皆在 + 精煉版皮 + id-meta 分工正確」，缺口整份漏過。
+**為何阻斷**：v2.3–v2.7 的 dual-output（精煉＋`_full` 雙檔）是 `_full` 層 37 種 CSS 變體漂移與機器不可見的根因，v3.0 廢除、一檔取代兩檔。八段錨點是下游機器讀段落的唯一定位面，缺錨點＝全部依錨點切段的 gate（7/8/9/10/12/13/16）失去定位。
 
 **檢查碼**：
 ```bash
 python3 << 'PY'
 import os, re
 canon = "docs/id/ID_{Theme}_{Date}.html"
-full  = canon.replace(".html", "_full.html")
 ok = True
-# 1. 兩檔皆存在
-c_exists, f_exists = os.path.exists(canon), os.path.exists(full)
-print(f"canonical 存在: {'✅' if c_exists else '❌'} {canon}")
-print(f"_full 存在: {'✅' if f_exists else '❌'} {full}")
-ok &= c_exists and f_exists
+# 1. 唯一輸出檔存在且含 id-meta
+c_exists = os.path.exists(canon)
+print(f"單檔存在: {'✅' if c_exists else '❌'} {canon}")
+ok &= c_exists
 if c_exists:
     ch = open(canon, encoding='utf-8').read()
-    # 2. canonical 含 lean template marker（masthead + dsum）
-    marker = ('class="masthead"' in ch) and ('class="dsum"' in ch)
-    print(f"canonical lean marker (masthead+dsum): {'✅' if marker else '❌ 視覺回退嫌疑'}")
-    # 3. canonical 含 id-meta
     c_meta = bool(re.search(r'<script\s+id="id-meta"', ch))
-    print(f"canonical 含 id-meta: {'✅' if c_meta else '❌'}")
-    ok &= marker and c_meta
-if f_exists:
-    fh = open(full, encoding='utf-8').read()
-    # 4. _full 不含 id-meta
-    f_meta = bool(re.search(r'<script\s+id="id-meta"', fh))
-    print(f"_full 不含 id-meta: {'✅' if not f_meta else '❌ 重複 id-meta 會雙列索引'}")
-    ok &= not f_meta
+    print(f"含 id-meta: {'✅' if c_meta else '❌'}")
+    ok &= c_meta
+    # 2. 八段機器錨點全部存在
+    anchors = ['summary', 'thesis', 'debates', 'mechanics', 'valuation', 'risks', 'stocks', 'appendix']
+    missing = [a for a in anchors if not re.search(r'id="%s"' % a, ch)]
+    print(f"八段錨點: {'✅ all present' if not missing else '❌ missing: ' + str(missing)}")
+    ok &= not missing
+    h3s = [x for x in ['3.1', '3.2', '3.3', '3.4'] if re.search(r'<h3[^>]*>[^<]*' + re.escape(x), ch)]
+    print(f"mechanics 3.1–3.4 h3: {len(h3s)}/4 — {'✅' if len(h3s) == 4 else '⚠ 人工複核（標號寫法可能不同）'}")
+    # 3. evidence-fold ≥1
+    folds = len(re.findall(r'class="[^"]*evidence-fold', ch))
+    print(f"evidence-fold: {folds} 個 — {'✅' if folds >= 1 else '❌ 附錄/各節考證未收折疊'}")
+    ok &= folds >= 1
+# 4. 同日期同 theme 的 _full.html 不得存在
+full = canon.replace(".html", "_full.html")
+f_exists = os.path.exists(full)
+print(f"_full.html 不存在: {'✅' if not f_exists else '❌ 禁產 _full（dual-output 已廢）— 刪除或依 refresh 慣例轉 redirect stub'}")
+ok &= not f_exists
 print("\nGate 11:", "PASS" if ok else "BLOCKED")
 PY
 ```
 
-**Fail action**：只產一檔 → 補產缺的那份（canonical 走 `lean_template.md`、`_full` 走 `html_template.md`）。canonical 無 masthead/dsum → 視覺回退，重套精煉版皮。`_full` 帶了 id-meta → 移除（`<meta name="id-*">` + `<script id="id-meta">` 只放 canonical）。
+**Fail action**：缺 id-meta → 按 `references/id-meta-schema.md` 補齊。缺八段錨點 → 對照 `templates/report_template.md` 補錨點 id（勿改動內容順序，八段不可重排）。`evidence-fold` = 0 → 把逐節來源與長考證段收進 `<details class="evidence-fold">`。產出了 `_full.html` → 刪除（新報告不得再產；存量 legacy `_full` 於 refresh 輪到時轉 redirect stub，比照既有 11 檔先例）。
 
 ---
 
@@ -608,9 +659,15 @@ m = re.search(r'<script\s+id="id-meta"[^>]*>(.*?)</script>', html, re.DOTALL)
 meta = json.loads(m.group(1)) if m else {}
 km = meta.get("kill_metrics", [])
 print(f"kill_metrics 條數: {len(km)}（need ≥3）— {'✅' if len(km) >= 3 else '❌'}")
-# §8 證偽表逐條對齊（人工複核 metric 名 + bear 閾值；此處先列出供對照）
-s8 = re.search(r'<section[^>]*id="s8"[^>]*>(.*?)</section>', html, re.DOTALL)
-s8_txt = re.sub(r'<[^>]+>', ' ', s8.group(1)) if s8 else ''
+# §8 證偽表逐條對齊（v3.0 落點＝risks 段；人工複核 metric 名 + bear 閾值；此處先列出供對照）
+anchors = ['summary', 'thesis', 'debates', 'mechanics', 'valuation', 'risks', 'stocks', 'appendix']
+apos = sorted((mm.start(), a) for a in anchors for mm in [re.search(r'id="%s"' % a, html)] if mm)
+def segment(name):
+    for i, (p, a) in enumerate(apos):
+        if a == name:
+            return html[p:apos[i + 1][0]] if i + 1 < len(apos) else html[p:]
+    return ''
+s8_txt = re.sub(r'<[^>]+>', ' ', segment('risks'))
 for i, k in enumerate(km):
     metric = k.get("metric", "")
     hit = metric[:6] in s8_txt if metric else False
@@ -632,21 +689,92 @@ PY
 
 **為何 warning**：v2.4 首發 ASMPT purity 標 85%，但其近半營收是 SMT（表面貼裝）非半導體後段封裝 — 無推導行就沒被攔，純度被灌水。有推導行才逼作者面對「85% 哪來的」。
 
-**檢查碼**（掃 §9 是否每個純度數字鄰近有推導標記）：
+**檢查碼**（掃 §9——v3.0 落點＝stocks 段——是否每個純度數字鄰近有推導標記）：
 ```bash
 python3 << 'PY'
 import re
 html = open("docs/id/ID_{Theme}_{Date}.html", encoding='utf-8').read()
-m = re.search(r'<section[^>]*id="s9"[^>]*>(.*?)</section>', html, re.DOTALL)
-s9 = m.group(1) if m else ''
+anchors = ['summary', 'thesis', 'debates', 'mechanics', 'valuation', 'risks', 'stocks', 'appendix']
+apos = sorted((m.start(), a) for a in anchors for m in [re.search(r'id="%s"' % a, html)] if m)
+def segment(name):
+    for i, (p, a) in enumerate(apos):
+        if a == name:
+            return html[p:apos[i + 1][0]] if i + 1 < len(apos) else html[p:]
+    return ''
+s9 = segment('stocks')
 purity_hits = len(re.findall(r'純度|purity', s9))
 derive_hits = len(re.findall(r'推導[：:]|÷|營收占比|segment', s9, re.IGNORECASE))
-print(f"§9 純度提及: {purity_hits} / 推導標記（推導/÷/segment）: {derive_hits}")
+print(f"§9（stocks 段）純度提及: {purity_hits} / 推導標記（推導/÷/segment）: {derive_hits}")
 print("PASS" if derive_hits >= 1 else "WARN: §9 purity 缺 segment 推導行")
 PY
 ```
 
 **Fail action**：在 §9 表下方 footnote 或敘事補每檔一行 segment 推導（「XXX：封裝段營收 \$__B ÷ 總營收 \$__B → __%」）。
+
+---
+
+## Gate 15 [必備 / 阻斷]｜研究引擎三件套（v3.0；僅新 ID／裁決級 refresh）
+
+**適用範圍**：新 ID 與裁決級 refresh 必跑；**措辭級 refresh 本 gate 標 N/A**（不觸發引擎，沿用單線 WebSearch）。
+
+**規則**（v3.0 新，對應 SKILL.md【研究流程（五軸 workflow 引擎）】三件套）：
+1. **五軸 fan-out 已跑**：Axis A–E 各一獨立 agent（互不知彼此結果），每軸 3-5 輪 WebSearch／WebFetch；Axis E 的機械化查詢模板每項至少一輪，不得因「顯然無關」跳過。
+2. **承重數字清單存在且 10-15 項**：直接支撐裁決／debate 結論的數字（清單為空＝本 gate 不過），skill 執行時輸出到 `pre_publish_report.md` 的「承重數字清單」段。
+3. **每項標注 3-skeptic 對抗查證結果**：**pass ／ 降級 ／ 除名** 三態之一；≥2 票反駁的數字必須已降級或除名**並回改正文**（清單標注與正文現狀對得上）。
+4. **completeness critic 報告存在且缺席變數全部處置**：獨立 agent（不讀草稿論證、只知主題）列出的缺席一階變數，每條落在兩種處置之一——**補研究**（正文有對應段落），或 **debates 明文排除**（「考慮過、排除，因為…」）。
+
+**為何阻斷**：AIInferenceEconomics（2026-04-30）整份漏掉中國 open-weight 模型——寫手與自己的 checklist 共享同一個盲點，可靠的缺席偵測只能來自獨立腦。同日 Kimi K3 案例證明承重數字需要對抗查證（「開源便宜」的表面定價會漏掉 2.8T 總參數的硬體地板，第一印象方向就錯）。三件套 kill condition 已登記 `knowledge/rule_ledger.md`。
+
+**檢查步驟**（流程性 gate，對照三份產物，無單一 inline 檢查碼）：
+1. 確認五軸 fan-out 執行紀錄（Axis A–E 各軸輪數；Axis E 模板逐項至少一輪）。
+2. 打開 `pre_publish_report.md` 草稿的承重數字清單段 → 數項數（10-15）→ 逐項確認三態標注齊全。
+3. 對「降級／除名」項逐條回查正文：正文該數字已同步降級或移除（標注與正文脫節＝fail）。
+4. 打開 completeness critic 報告 → 逐條缺席變數確認處置落點（正文補研究段落 or debates 排除明文）；任一條懸空＝fail。
+
+**輸出格式**：
+```
+## Gate 15: 研究引擎三件套
+適用性: 新 ID／裁決級 refresh（適用）/ 措辭級 refresh（N/A，下列免填）
+五軸 fan-out: ✅ A{n}/B{n}/C{n}/D{n}/E{n} 輪 / ❌ 缺軸: {list}
+承重數字清單: {n} 項（need 10-15）— pass {a} / 降級 {b} / 除名 {c}（降級/除名已回改正文: ✅/❌）
+Completeness critic: ✅ 缺席變數 {m} 條全處置（補研究 {x} / debates 排除 {y}）/ ❌ 未處置: {list}
+→ Gate 15: ✅ PASS / ❌ BLOCKED / N/A
+```
+
+**Fail action**：清單 <10 項 → 回頭圈出裁決依賴的數字補列（不是硬湊到 10，是裁決真的該有 10+ 個承重點；湊不出來＝裁決本身證據太薄，返工）。查證未跑 → 補跑 3-skeptic。缺席變數懸空 → 補研究或在 debates 補排除明文。
+
+---
+
+## Gate 16 [必備 / 阻斷]｜替代威脅 debate 席（v3.0）
+
+**規則**（v3.0 新）：debates 段內 debate 卡 ≥ 3 張，且其中 **≥1 張為圈外／替代威脅卡**（Axis E 掃描結論），以 `data-debate="external-threat"` 屬性標記（**與 templates/report_template.md 同步**——若 template 定義了不同標記，以 template 為準並回改本檔）。**「已掃描、現階段無一階威脅」是合法結論**（未掃描不是）——但無論結論為何，**判別訊號必填**（威脅升級成一階時該盯什麼數字）。
+
+**為何阻斷**：替代威脅是寫手最容易與自己的 checklist 共享盲點的軸（AIInferenceEconomics 教訓）；強制保留一張席位，讓「沒有威脅」也必須是掃描後的明文結論而非缺席。
+
+**檢查碼**：
+```bash
+python3 << 'PY'
+import re
+html = open("docs/id/ID_{Theme}_{Date}.html", encoding='utf-8').read()
+anchors = ['summary', 'thesis', 'debates', 'mechanics', 'valuation', 'risks', 'stocks', 'appendix']
+apos = sorted((m.start(), a) for a in anchors for m in [re.search(r'id="%s"' % a, html)] if m)
+def segment(name):
+    for i, (p, a) in enumerate(apos):
+        if a == name:
+            return html[p:apos[i + 1][0]] if i + 1 < len(apos) else html[p:]
+    return ''
+deb = segment('debates')
+cards = len(re.findall(r'class="[^"]*debate-card', deb))
+ext = len(re.findall(r'data-debate="external-threat"', deb))
+print(f"debates 段 debate-card: {cards} 張（need ≥3）— {'✅' if cards >= 3 else '❌'}")
+print(f"替代威脅卡（data-debate=\"external-threat\"）: {ext} 張（need ≥1）— {'✅' if ext >= 1 else '❌'}")
+has_signal = '判別訊號' in deb
+print(f"判別訊號字樣: {'✅' if has_signal else '❌ 替代威脅卡判別訊號必填（含「已掃描無一階威脅」結論）'}")
+print("\nGate 16:", "PASS" if (cards >= 3 and ext >= 1 and has_signal) else "BLOCKED")
+PY
+```
+
+**Fail action**：debate 卡 <3 → 從 §7 內容模組義務（3 個分歧 + priced-in + steel-man）補卡。無 external-threat 卡 → 用 Axis E 素材補一張；查無實質威脅時寫「已掃描、現階段無一階威脅，判別訊號＝…」（掃描本身不可省，空白結論也是結論）。標記屬性與 report_template.md 不一致 → 以 template 為準，同步修正本檔檢查碼。
 
 ---
 
@@ -697,8 +825,8 @@ T1 share {Z}% — {PASS/FAIL}；missing-aside sections: {list}
 ## Gate 10: Warning Checks
 {10-1..10-4} — {PASS/WARNED}
 
-## Gate 11: Dual-Output 完整性
-canonical 存在 / _full 存在 / lean marker / id-meta 分工: ✅ / ❌
+## Gate 11: 單檔完整性
+單檔存在 + id-meta / 八段錨點 / evidence-fold ≥1 / _full.html 不存在: ✅ / ❌
 → Gate 11: ✅ PASS / ❌ BLOCKED
 
 ## Gate 12: kill_metrics 同步 + 三值一致
@@ -709,6 +837,20 @@ kill_metrics {n} 條（≥3）/ §8 逐條對齊 / sd_verdict·clock_phase·conv
 每檔 purity_pct 有 segment 推導行: ✅ / ⚠
 → Gate 13: ✅ PASS / ⚠ WARNED
 
+## Gate 15: 研究引擎三件套
+適用性 / 五軸 fan-out / 承重數字清單（10-15 項，逐項 pass·降級·除名）/ completeness critic 缺席變數處置: ✅ / ❌ / N/A
+
+### 承重數字清單
+| # | 數字 | 支撐的裁決/debate | 3-skeptic 結果（pass/降級/除名） |
+|:--|:--|:--|:--|
+| 1 | {數字＋來源} | {結論} | {三態＋一句理由} |
+
+→ Gate 15: ✅ PASS / ❌ BLOCKED / N/A（措辭級 refresh）
+
+## Gate 16: 替代威脅 debate 席
+debate-card {n} 張（≥3）/ external-threat 卡 {m} 張（≥1）/ 判別訊號: ✅ / ❌
+→ Gate 16: ✅ PASS / ❌ BLOCKED
+
 ## Final Status
 ✅ ALL BLOCKING GATES PASS - 允許發布
 ⚠ WARNINGS (Gate 10/13): {list}
@@ -718,6 +860,7 @@ kill_metrics {n} 條（≥3）/ §8 逐條對齊 / sd_verdict·clock_phase·conv
 ---
 
 ## 版本歷史
+- **v3.0（2026-07-20）**：配合 industry-analyst v3.0 呈現層改版（單檔 sell-side 八段架構）。Gate 11 由「dual-output 完整性」改寫為「單檔完整性」（唯一輸出含 id-meta＋八段機器錨點 summary/thesis/debates/mechanics/valuation/risks/stocks/appendix＋`.evidence-fold` ≥1＋禁 `_full.html`）；新增 Gate 15（阻斷｜研究引擎三件套——五軸 fan-out＋承重數字清單 10-15 項逐項 3-skeptic 對抗查證＋completeness critic 缺席變數全處置；僅新 ID／裁決級 refresh 適用，措辭級標 N/A）、Gate 16（阻斷｜替代威脅 debate 席——debates 內 debate-card ≥3 且 ≥1 張 `data-debate="external-threat"`，判別訊號必填，「已掃描無一階威脅」為合法結論）。全檔檢查碼的 HTML 定位由 `id="s0"`~`id="s9"`／`<h2>§N` 改為八段錨點切段（§N 稱呼保留為內容模組編號，落點按 SKILL.md 映射表）。共 13 → 15 道。
 - **v2.5（2026-07-05）**：新增 Gate 11（阻斷｜dual-output 完整性 — canonical + `_full.html` 皆存在、canonical 含 lean marker（masthead+dsum）+ id-meta、`_full` 不含 id-meta；治 v2.4 首發只產一檔 / 視覺回退）、Gate 12（阻斷｜kill_metrics 同步 — id-meta `kill_metrics[]` ≥3 對齊 §8 證偽表 + sd_verdict/clock_phase/conviction 一致 §0/§5）、Gate 13（warning｜§9 purity_pct segment 推導行）。共 10 → 13 道。配合 industry-analyst v2.5 趨勢結構化欄位 + `validate_id_meta.py` v2.5+ 阻斷。
 - **v2.0（2026-06-11）**：配合 industry-analyst v2.0（合併 ID + DS）完整重寫為 10 道 gate。Gate 1/2/2.1/3 從 ID v1.x 原文搬入；Gate 4（id-meta validate，原 ID Gate 8）/ Gate 5（PM 綠卡，原 ID Gate 9）保留；Gate 6（文字比 ≥55% + 表格 cap，搬 DS Gate 11+10、門檻 80%→55% / 表格 4→10）/ Gate 7（推導 regex，搬 DS Gate 13、掃 §4/§5/§7/§8/§9）/ Gate 8（aside 來源 + T1 ≥60%，搬 DS Gate 12、門檻 50%→60%）/ Gate 9（§1 錨點，搬 DS Gate 14/DS-9、阻斷）為 DS 移植；Gate 10（warning：供需裁決 + §9 depth 時間限定 + catalyst 雙路徑 + 原 ID 3.1/5/6/7 warning gates 摘要）。輸出 pre_publish_report.md 格式照舊。
 - v1.7（2026-05-03）：新增 Gate 9（§0.7 PM Implication 存在 + conviction 一致性）。
