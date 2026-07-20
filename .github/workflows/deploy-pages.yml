@@ -9,18 +9,25 @@ name: Deploy Pages
 # Deploy triggers — four layers so the live site can never silently lag behind
 # committed docs/ (see 2026-07-14 monitor incident):
 #   1. push docs/**        — external-repo crons push via PAT → instant deploy.
-#   2. workflow_run        — same-repo daily describer crons (monitor / rotation)
-#                            commit via github-actions[bot]; a GITHUB_TOKEN push
-#                            does NOT retrigger `push` workflows (GitHub anti-
-#                            recursion), so those bot commits would otherwise
-#                            never deploy on their own. workflow_run is exempt
-#                            from that restriction and fires the moment the cron
-#                            completes (~07:35 Taipei for the 23:30 UTC monitor).
+#   2. workflow_run        — same-repo crons that commit via github-actions[bot];
+#                            a GITHUB_TOKEN push does NOT retrigger `push`
+#                            workflows (GitHub anti-recursion), so those bot
+#                            commits would otherwise never deploy on their own.
+#                            workflow_run is exempt from that restriction and
+#                            fires the moment the cron completes (~07:35 Taipei
+#                            for the 23:30 UTC monitor). Weekly Decision Engine
+#                            added 2026-07-20: its docs/engine/ refresh sat
+#                            un-deployed for 4.5h waiting on layer 3, and an
+#                            Actions runner outage that night swallowed the
+#                            scheduled sweep entirely — the site served
+#                            week-old engine data for ~7h. Layer 3 alone is not
+#                            enough for weekly crons whose output the cockpit
+#                            reads directly.
 #   3. schedule            — name-independent safety net every 6h: catches ANY
 #                            other bot-committed docs/ change (screeners /
 #                            fundamentals / weekly crons) without having to
 #                            enumerate every workflow here. Future crons are
-#                            covered automatically.
+#                            covered automatically, but with up to 6h of lag.
 #   4. workflow_dispatch   — manual redeploy.
 on:
   push:
@@ -30,6 +37,7 @@ on:
     workflows:
       - "Daily Market Monitor"
       - "Daily Asset Rotation Radar (RRG)"
+      - "Weekly Decision Engine"
     types: [completed]
   schedule:
     - cron: "0 */6 * * *"
