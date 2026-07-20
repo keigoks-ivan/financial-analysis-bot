@@ -90,6 +90,8 @@ DIRECTORY = {
             ("/backtest/put_timing/", "SPY/QQQ 買 put 避險", "負貢獻", False),
         ]),
         ("研究筆記", [
+            ("/backtest/us_active_etf/", "美股主動式 ETF 因子分析", "研究", False),
+            ("/backtest/active_etf/", "主動式 ETF 研究總結（台美）", "專區", False),
             ("/backtest/daily_vs_weekly/", "日/週線", None, False),
             ("/backtest/ma_cross/", "MA 交叉", None, False),
             ("/backtest/ma_deviation/", "MA 乖離", None, False),
@@ -131,6 +133,8 @@ DIRECTORY = {
             ("/backtest/txf_basis/", "基差偏向", "否決", False),
         ]),
         ("研究筆記", [
+            ("/backtest/tw_active_etf/", "台股主動式 ETF 因子分析", "研究", False),
+            ("/backtest/active_etf/", "主動式 ETF 研究總結（台美）", "專區", False),
             ("/backtest/daily_vs_weekly_tw/", "日/週·台股", None, False),
         ]),
         ("前瞻追蹤", [
