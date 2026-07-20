@@ -134,6 +134,7 @@ RESEARCH_LINKS = [
     ("/backtest/ma_dynband/", "MA 動態帶", "ma_dynband", None),
     ("/backtest/ma_squeeze/", "MA 擠壓", "ma_squeeze", None),
     ("/backtest/smh_vcrash/", "SMH V崩", "smh_vcrash", None),
+    ("/backtest/tw_active_etf/", "台股主動式ETF", "tw_active_etf", "研究"),
 ]
 
 # One <style> block per page (make_toggle is embedded once). Scoped under
