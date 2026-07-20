@@ -65,6 +65,7 @@ ul.plain li{margin-bottom:.45rem}
 .tag{display:inline-block;font-size:.68rem;font-weight:700;padding:.08rem .42rem;border-radius:4px}
 .tag-disc{background:#ede9fe;color:#5b21b6}
 .tag-sys{background:#ecfdf5;color:#065f46}
+.tag-bad{background:#fef2f2;color:#991b1b}
 .xlink{display:grid;grid-template-columns:1fr 1fr;gap:.9rem;margin:1.5rem 0}
 .xlink a{display:block;background:var(--card);border:1px solid var(--border);border-radius:8px;
          padding:.9rem 1.1rem;text-decoration:none}
@@ -277,7 +278,31 @@ ul.plain li{margin-bottom:.45rem}
 <p>問題是：<b>「如果我挑出過去表現最好的基金，接下來它們會繼續好嗎？」</b></p>
 <p>「等級相關」接近 0，代表前半期的名次對後半期的名次<b>完全沒有預測力</b>——等於隨機。而更值得注意的是「贏家組後半 α」那一欄全部是負的：<b>把前半期的贏家挑出來，接下來它們平均是輸的。</b></p>
 </div>
-<div class="takeaway">三個時間跨度的等級相關全部 ≈ 0（p 皆 &gt; 0.35）。而且<b>前半段贏家組的後半段 alpha 全部是負的</b>，贏家維持正 alpha 的比率在兩個跨度比擲硬幣還差。≥4 年組的 Pearson r 為<b>顯著負值</b>——不只是沒有持續性，而是均值回歸。</div>
+<div class="takeaway">三個時間跨度的等級相關全部 ≈ 0（p 皆 &gt; 0.35）。而且<b>前半段贏家組的後半段 alpha 全部是負的</b>，贏家維持正 alpha 的比率在兩個跨度比擲硬幣還差。</div>
+</div>
+
+<div class="card">
+<h3>但「顯著反轉」這個宣稱撐不住——本頁原本說得太滿</h3>
+<p>原版用紅字強調「≥4 年組 Pearson r = −0.359 顯著（p=0.012）」。對抗式審查對切點做敏感度測試後，這個顯著<b>只出現在中間幾個切點</b>：</p>
+<div class="tbl-wrap"><table style="max-width:600px">
+<thead><tr><th>切點</th><th class="num">Spearman ρ</th><th class="num">p</th><th class="num">Pearson r</th><th class="num">p</th></tr></thead>
+<tbody>
+<tr><td>30/70</td><td class="num">+0.055</td><td class="num">0.734</td><td class="num ">-0.197</td><td class="num ">0.224</td></tr>
+<tr><td>40/60</td><td class="num">-0.024</td><td class="num">0.884</td><td class="num neg">-0.428</td><td class="num neg">0.006</td></tr>
+<tr style="background:#fef2f2"><td>50/50（頁面原採用）</td><td class="num">-0.189</td><td class="num">0.243</td><td class="num neg">-0.495</td><td class="num neg">0.001</td></tr>
+<tr><td>60/40</td><td class="num">-0.116</td><td class="num">0.477</td><td class="num neg">-0.470</td><td class="num neg">0.002</td></tr>
+<tr><td>70/30</td><td class="num">-0.031</td><td class="num">0.851</td><td class="num ">-0.281</td><td class="num ">0.079</td></tr>
+</tbody></table></div>
+<ul class="plain">
+<li><b>Spearman 等級相關在任何切點下都從未顯著</b>（p 全部 &gt; 0.35）。等級相關對離群值更穩健，它才是這裡較可信的指標。</li>
+<li>單獨拿掉 <b>ARKQ</b> 一檔基金，Pearson 的 p 值就從 0.012 跳到 <b>0.035</b>，跨過顯著線。</li>
+</ul>
+<div class="plain-box">
+<div class="pb-h">白話解釋：這代表什麼</div>
+<p>「切點」是指把樣本從中間切成前後兩半的位置。如果一個結論只在「正中間切」時成立，往前或往後挪一點就消失，那它<b>反映的是那個特定切法碰巧產生的樣態，不是穩定的現象</b>。</p>
+<p>同理，如果拿掉一檔基金就讓結論翻盤，代表整個結論其實靠那一檔在撐。</p>
+<p><b>修正後的說法：</b>資料支持「贏家不會繼續贏」（贏家組後半 alpha 全為負、維持正 alpha 的比率低於擲硬幣），但<b>不足以支持「顯著反轉」這個更強的宣稱</b>。原版的呈現過度自信，已降級。</p>
+</div>
 </div>
 </section>
 
@@ -300,18 +325,86 @@ ul.plain li{margin-bottom:.45rem}
 </section>
 
 <section class="section">
-<h2 class="section-title">六、方法論：模型自己也要先被驗證</h2>
-<div class="section-sub">用純被動指數 ETF 當安慰劑——它們的真實 alpha 必須 ≈ 負的費用率。模型若給它們正 alpha，就是模型在造假。</div>
-<div class="tbl-wrap"><table style="max-width:640px">
-<thead><tr><th>因子模型</th><th class="num">安慰劑檔數</th><th class="num">偏誤均值</th><th class="num">偏誤中位</th><th>判定</th></tr></thead>
+<h2 class="section-title">六、模型自己也有偏誤——而且會偏向本頁的「贏家」</h2>
+<div class="section-sub">用純被動指數 ETF 當安慰劑：它們沒有經理人、不做任何選股，真實 alpha 必須約等於「負的費用率」。模型若給它們正 alpha，就是模型在造假。</div>
+
+<div class="plain-box">
+<div class="pb-h">白話解釋：為什麼要拿指數基金來測模型</div>
+<p>因子模型的工作，是把一檔基金的報酬拆成「可以用已知風險來源解釋的部分」和「剩下的部分（alpha）」。如果模型是好的，那麼一檔<b>純粹追蹤指數</b>的基金，剩下的部分應該剛好等於它收的管理費（負值）——因為它什麼額外的事都沒做。</p>
+<p>所以把指數基金丟進模型，就等於在檢查這把尺準不準。<b>尺不準的話，用它量出來的所有 alpha 都不可信。</b></p>
+</div>
+
+<div class="warn-loud">
+<b>本頁最初的安慰劑清單漏掉了 QQQ，因此「模型乾淨」的驗證通過了。補上之後結論改變：</b><br><br>
+QQQ 是純被動的那斯達克 100 指數基金，費用率 0.20%，理論 alpha 應為 −0.20%。
+本模型給它 <b>+5.21%／年，t = 2.52（統計顯著）</b>。
+</div>
+
+<div class="tbl-wrap"><table>
+<thead><tr><th>純被動標的</th><th class="num">費用率</th><th class="num">模型 α</th><th class="num">t</th><th class="num">β<sub>MKT</sub></th><th class="num">偏誤</th></tr></thead>
 <tbody>
-<tr><td>美國 FF5+MOM</td><td class="num">8</td><td class="num">-0.45pp</td><td class="num">-0.31pp</td><td class="pos">可用</td></tr>
-<tr style="background:#fef2f2"><td>已開發 ex-US FF5+MOM</td><td class="num">6</td><td class="num neg">+1.88pp</td><td class="num neg">+1.93pp</td><td class="neg">系統性高估（6/6 全正）</td></tr>
+<tr><td><b>QQQ</b> <span class="tag tag-bad">模型偏誤</span></td><td class="num">0.20%</td><td class="num neg">+5.21%</td><td class="num neg">+2.52</td><td class="num">1.09</td><td class="num neg">+5.41</td></tr>
+<tr><td><b>IWF</b></td><td class="num">0.19%</td><td class="num ">+0.81%</td><td class="num ">+0.97</td><td class="num">1.03</td><td class="num ">+1.00</td></tr>
+<tr><td><b>VTI</b></td><td class="num">0.03%</td><td class="num ">-0.18%</td><td class="num ">-0.46</td><td class="num">0.99</td><td class="num ">-0.15</td></tr>
+<tr><td><b>SPY</b></td><td class="num">0.09%</td><td class="num ">-0.51%</td><td class="num ">-0.84</td><td class="num">1.00</td><td class="num ">-0.42</td></tr>
+<tr><td><b>IJH</b></td><td class="num">0.05%</td><td class="num ">-0.49%</td><td class="num ">-0.49</td><td class="num">1.01</td><td class="num ">-0.44</td></tr>
+<tr><td><b>IJR</b></td><td class="num">0.06%</td><td class="num ">-1.11%</td><td class="num ">-1.24</td><td class="num">1.01</td><td class="num ">-1.05</td></tr>
+<tr><td><b>IWM</b></td><td class="num">0.19%</td><td class="num ">-1.29%</td><td class="num ">-1.55</td><td class="num">1.04</td><td class="num ">-1.10</td></tr>
+<tr><td><b>IWD</b></td><td class="num">0.19%</td><td class="num ">-1.78%</td><td class="num ">-2.22</td><td class="num">0.94</td><td class="num ">-1.59</td></tr>
 </tbody></table></div>
+
 <div class="card">
-<p>美國模型最乾淨的兩檔安慰劑偏誤只有 −0.08pp 與 −0.15pp，模型可信。但<b>已開發 ex-US 模型給 6 檔純被動國際 ETF 全部正 alpha，平均高估 +1.88pp/年</b>。</p>
-<p>成因是<b>非同步交易</b>：美國掛牌的國際 ETF 在紐約 16:00 收盤時，歐亞市場已收盤數小時。我試過 Dimson 落後因子校正——β 只從 0.82 修到 0.87、R² 僅升 2pp，<b>alpha 反而更高</b>，校正無效。</p>
-<div class="takeaway">因此本頁的國際型基金（15 檔）alpha 一律需扣掉 <b>+1.88pp 的假 alpha 地板</b>。扣除後 alpha 為正者從 6/15 降至 5/15，且無一達統計顯著。<b>免費資料下沒有可信的國際因子模型，這點本頁不假裝已解決。</b></div>
+<h3>為什麼是 QQQ？</h3>
+<p>Fama-French 五因子加動量，涵蓋的是市場、規模、價值、獲利能力、投資保守度、動量。<b>沒有一個因子在描述「科技股」或「大型成長股」。</b>QQQ 幾乎全押這一塊，它的超額報酬因此無處可歸，被整包算成 alpha。</p>
+<div class="plain-box">
+<div class="pb-h">這對本頁的結論有什麼影響</div>
+<p>如果模型會給「科技成長傾斜」的組合虛假的正 alpha，那麼<b>樣本裡凡是偏向科技成長的基金，它們的 alpha 都有一部分不是能力，而是模型的漏洞。</b></p>
+<p>檢驗方式很直接：看基金的市場 beta 和它拿到的 alpha 有沒有關係。</p>
+</div>
+</div>
+
+<div class="card">
+<h3>檢驗結果：beta 越高，量到的 alpha 越高</h3>
+<div class="kbox">
+  <div><div class="kv neg">+0.516</div><div class="kl">corr(β<sub>MKT</sub>, alpha)　p = 0.0003</div></div>
+  <div><div class="kv">+1.18pp</div><div class="kl">β 每高 0.1，量到的 alpha 平均高</div></div>
+  <div><div class="kv">+0.22pp</div><div class="kl">裁量型平均 beta 所對應的預測偏誤</div></div>
+</div>
+<p>樣本內 t 值最高的兩檔正是高 beta：<b>1.95（β=1.22，α=+9.5%）、1.78（β=0.88，α=+3.7%）</b>。它們的 alpha 有相當部分可能是模型偏誤而非選股能力。</p>
+<div class="takeaway">
+<b>但有一個反向的細節必須同時說清楚，否則會過度歸因。</b>裁量型與系統性因子型的 β<sub>MKT</sub> 中位數幾乎相同（1.01 vs 1.00），該 beta 水準對應的預測偏誤只有 +0.22pp——<b>不足以解釋兩組 alpha 均值的差距</b>。所以「模型偏誤」可以削弱個別榜首基金的可信度，但不能解釋整個裁量型群組的表現。<br><br>
+淨效果：<b>本頁的頭條結論不變，而且更強</b>——排名最前的基金其 alpha 有一部分是量錯的，真正的技能證據比表面看到的更薄弱。
+</div>
+</div>
+
+<div class="card">
+<h3>國際型基金：模型完全不能用</h3>
+<div class="tbl-wrap"><table>
+<thead><tr><th>純被動國際標的</th><th class="num">費用率</th><th class="num">模型 α</th><th class="num">t</th><th class="num">β</th><th class="num">偏誤</th></tr></thead>
+<tbody>
+<tr><td><b>IEFA</b></td><td class="num">0.07%</td><td class="num ">+2.79%</td><td class="num ">+1.15</td><td class="num">nan</td><td class="num ">+2.86</td></tr>
+<tr><td><b>VXUS</b></td><td class="num">0.05%</td><td class="num ">+2.67%</td><td class="num ">+1.09</td><td class="num">nan</td><td class="num ">+2.72</td></tr>
+<tr><td><b>SCZ</b></td><td class="num">0.40%</td><td class="num ">+1.71%</td><td class="num ">+0.55</td><td class="num">nan</td><td class="num ">+2.11</td></tr>
+<tr><td><b>VEA</b></td><td class="num">0.03%</td><td class="num ">+1.72%</td><td class="num ">+0.62</td><td class="num">nan</td><td class="num ">+1.75</td></tr>
+<tr><td><b>EFA</b></td><td class="num">0.33%</td><td class="num ">+0.61%</td><td class="num ">+0.24</td><td class="num">nan</td><td class="num ">+0.94</td></tr>
+<tr><td><b>SPDW</b></td><td class="num">0.03%</td><td class="num ">+0.90%</td><td class="num ">+0.33</td><td class="num">nan</td><td class="num ">+0.93</td></tr>
+</tbody></table></div>
+<p>六檔純被動國際 ETF 的偏誤<b>全部為正</b>，平均高估約 1.89pp／年。</p>
+<div class="plain-box">
+<div class="pb-h">白話解釋：時差造成的假象</div>
+<p>這些 ETF 在美國掛牌、用紐約時間 16:00 的價格收盤。但它們持有的是歐洲和亞洲的股票，那些市場<b>早在幾小時前就收盤了</b>。</p>
+<p>結果是：ETF 的當日價格，混進了外國市場收盤後才發生的美股資訊。因子模型拿「外國市場當天的因子報酬」去解釋「含有美股資訊的 ETF 報酬」，自然對不上，對不上的部分就被算成 alpha。</p>
+</div>
+<p>標準的修法是加入落後一期、兩期的因子（Dimson 校正）。<b>但這裡修不好：</b></p>
+<div class="tbl-wrap"><table style="max-width:560px">
+<thead><tr><th>標的</th><th class="num">無校正 α</th><th class="num">β 合計</th><th class="num">加 2 期落後 α</th><th class="num">β 合計</th></tr></thead>
+<tbody>
+<tr><td><b>EFA</b></td><td class="num">+0.10%</td><td class="num">0.815</td><td class="num neg">+0.99%</td><td class="num">0.855</td></tr>
+<tr><td><b>VEA</b></td><td class="num">+0.87%</td><td class="num">0.844</td><td class="num neg">+2.05%</td><td class="num">0.887</td></tr>
+<tr><td><b>VWO</b></td><td class="num">+3.34%</td><td class="num">0.738</td><td class="num neg">+4.52%</td><td class="num">0.778</td></tr>
+</tbody></table></div>
+<div class="takeaway">加了落後因子後，β 只從約 0.82 修到 0.86（離應有的 1.0 還很遠），而 <b>alpha 不降反升</b>。校正失敗。<br><br>
+因此本頁的 14 檔國際型基金，alpha 一律需扣掉 +1.89pp 的假 alpha 地板；扣除後為正者僅 4/14，且無一達統計顯著。<b>免費資料下沒有可信的國際因子模型，本頁不假裝已解決。</b></div>
 </div>
 </section>
 
@@ -488,6 +581,12 @@ ul.plain li{margin-bottom:.45rem}
 <li>Dimensional 七檔為 2021-2022 年由共同基金改組而來，本研究僅使用改組後之 ETF 報價序列</li>
 <li>主動/被動分類以發行商揭露與 R² 診斷為據，SEC 註冊書逐檔覆核尚未完成</li>
 <li>殘差有負一階自相關（微結構雜訊），HAC 標準誤反小於 OLS；本研究以 OLS 為主、HAC 為對照，兩者結論一致</li>
+<li>六因子模型對科技／大型成長傾斜的投資組合系統性高估 alpha：純被動的 QQQ 在此模型下顯示 +5.2%/年、t=2.5 的「alpha」。樣本內 β_MKT 與 alpha 顯著正相關（r=0.52, p=0.0003），故高 beta 基金（含排名最前的 ARKW／ARKQ）的 alpha 有一部分屬模型假象</li>
+<li>持續性檢定的「顯著反轉」僅在部分切點成立，且對單一基金刪除敏感；Spearman 等級相關在任何切點下皆不顯著。方向性結論成立，但不應視為確定</li>
+<li>active fee 原以 SPY 為全體共同基準，對小型／價值型基金不公平；現改為各基金風格對應基準，並同時列出對 SPY 的版本供對照</li>
+<li>六因子模型對科技／大型成長傾斜的投資組合系統性高估 alpha：純被動的 QQQ 在此模型下顯示 +5.2%/年、t=2.5 的「alpha」。樣本內 β_MKT 與 alpha 顯著正相關（r=0.52, p=0.0003），故高 beta 基金（含排名最前的 ARKW／ARKQ）的 alpha 有一部分屬模型假象</li>
+<li>持續性檢定的「顯著反轉」僅在部分切點成立，且對單一基金刪除敏感；Spearman 等級相關在任何切點下皆不顯著。方向性結論成立，但不應視為確定</li>
+<li>active fee 原以 SPY 為全體共同基準，對小型／價值型基金不公平；現改為各基金風格對應基準，並同時列出對 SPY 的版本供對照</li>
 </ul></div>
 <div class="note"><b>本頁不構成投資建議。</b>「無法拒絕虛無假設」不等於「證明所有經理人都沒有技能」——它的意思是：在這個樣本、這個模型、這段期間下，資料不足以把技能與運氣區分開。</div>
 </section>
