@@ -183,7 +183,7 @@ ul.plain li{margin-bottom:.45rem}
   <div class="container">
     <div class="crumb"><a href="/backtest/">回測研究</a> / 研究筆記 / 美股主動式 ETF</div>
     <h1>美股主動式 ETF：alpha 存在嗎？</h1>
-    <div class="sub">78 檔實測 · Fama-French 5 factor + Momentum (Ken French, daily) · 資料截至 2026-05-29</div>
+    <div class="sub">78 檔篩選、44 檔實測 · Fama-French 5 factor + Momentum (Ken French, daily) · 資料截至 2026-05-29</div>
   </div>
 </header>
 
@@ -201,6 +201,11 @@ ul.plain li{margin-bottom:.45rem}
     <div><div class="hs-label">運氣世界最大 t</div><div class="hs-value">2.03</div></div>
     <div><div class="hs-label">裁量型 alpha 為正</div><div class="hs-value">13/22</div></div>
   </div>
+</div>
+
+<div class="plain-box">
+<div class="pb-h">白話解釋：44 這個數字怎麼來的（母體鏈）</div>
+<p>起點是 86 檔有足夠歷史資料的美國掛牌基金。先扣掉 8 檔純被動指數 ETF（它們是用來校準模型的安慰劑基準，不是研究對象），剩 <b>78 檔</b>跑六因子迴歸。接著依 SEC N-CEN 法定分類拆開：<b>44 檔純美股主動</b>（22 裁量＋22 系統性）構成本頁的頭條樣本；<b>14 檔國際型</b>因模型有假 alpha 地板而另案處理（見第六節）；另有 <b>8 檔法定指數型</b>與 <b>12 檔非純股票基金</b>（股債混合、選擇權緩衝等）被排除。44＋14＋8＋12＝78。</p>
 </div>
 
 <section class="section">
@@ -227,6 +232,18 @@ ul.plain li{margin-bottom:.45rem}
 <section class="section">
 <h2 class="section-title">二、FF2010 Bootstrap：整個橫斷面都在運氣範圍內</h2>
 <div class="section-sub">把估計到的 alpha 從報酬中扣除使虛無為真，再以聯合日期 block 重抽（保留基金間橫斷面相關）模擬 1,000 次。</div>
+<div class="card">
+<h3>參數揭露</h3>
+<div class="tbl-wrap"><table style="max-width:640px">
+<thead><tr><th>參數</th><th>設定</th><th>作用（白話）</th></tr></thead>
+<tbody>
+<tr><td>重抽次數 B</td><td class="num">1,000</td><td>模擬「沒有人有技能」的世界 1,000 遍，每遍記下最強基金的 t</td></tr>
+<tr><td>區塊長度 block</td><td class="num">10 交易日</td><td>整段兩週一起搬動，保留報酬的短期序列相關（不是逐日打散）</td></tr>
+<tr><td>抽樣方式</td><td>聯合日期重抽</td><td>全體基金抽同一批日期，保留基金彼此間的橫斷面相關（同漲同跌）</td></tr>
+<tr><td>虛無建構</td><td>per-fund 扣 alpha</td><td>每檔各自減掉自己估到的 alpha，變成真技能為零、但波動與相關性照舊</td></tr>
+</tbody></table></div>
+<div class="takeaway"><b>一個關鍵不對稱：</b>虛無是「每檔各扣自己的 alpha」建的，所以虛無分布對「模型給了多少水準的 alpha」是<b>免疫的</b>——不管模型偏誤把大家墊高多少，扣掉後基準都歸零。可是<b>現實世界的最大 t（1.95）身上還帶著第六節那管成長偏誤的灌水</b>，灌了水仍然輸給虛無的 2.03。換句話說，證據比表面數字更強。</div>
+</div>
 <div class="card">
 <div class="kbox">
   <div><div class="kv">1.95</div><div class="kl">實際最大 t</div></div>
@@ -255,9 +272,27 @@ ul.plain li{margin-bottom:.45rem}
 <td class="num">-0.68%</td><td class="num">6/22</td><td class="num">0</td><td class="num">—</td><td class="num neg">0</td></tr>
 </tbody></table></div>
 <div class="card">
-<p><b>裁量型 alpha 為正的比例是 13/22——就是擲硬幣。</b></p>
-<p>系統性因子型的 alpha 中位數 <b>-0.68%</b>，<b>恰好約等於它們的費用率</b>。這正是理論預期：因子基金的報酬被因子模型完全解釋後，剩下的就只有負的費用。<b>這同時是模型正確運作的驗證。</b></p>
-<div class="takeaway">系統性因子型從不宣稱有 alpha——它們公開說自己賣的是因子曝險。結果顯示它們誠實地交付了這件事。裁量型宣稱有選股能力，結果與擲硬幣無異。</div>
+<p><b>裁量型 alpha 為正的比例是 13/22——就是擲硬幣。</b>而那個看起來還算正的 α 均值 +0.93%，一拆開就露餡。</p>
+
+<h3>裁量組的正 α 全部來自單一發行商的 6 檔 ARK</h3>
+<p>把 22 檔裁量基金拆成「ARK 系列」與「其餘」兩堆：</p>
+<div class="tbl-wrap"><table style="max-width:620px">
+<thead><tr><th>子群</th><th class="num">檔數</th><th class="num">α 合計 / 均值</th><th>說明</th></tr></thead>
+<tbody>
+<tr><td><b>ARK 系列</b>（ARKK/ARKW/ARKG/ARKQ/ARKF/ARKX）</td><td class="num">6</td>
+<td class="num pos">合計 +28.29%</td><td>單一發行商、清一色高成長科技押注</td></tr>
+<tr><td><b>其餘裁量基金</b></td><td class="num">16</td>
+<td class="num neg">均值 -0.50%</td><td>與系統性因子型的 -0.58% 幾乎無異</td></tr>
+</tbody></table></div>
+<div class="takeaway">裁量組「看似有正 α」是假象：正的部分整包來自 ARK 這一家。<b>把 ARK 拿掉，其餘 16 檔裁量基金的均值 -0.50%，和系統性因子型的 -0.58% 沒有差別。</b>而第六節會證明，ARK 那管 α 有一大部分是六因子模型對成長曝險送的分——不是選股能力。<b>這讓「無技能」的頭條更強，不是更弱。</b></div>
+
+<h3>系統性因子型的負 α：不只是費用</h3>
+<p>系統性因子型的 α 中位數 -0.68%、均值 -0.58%。一個直覺的說法是「這剛好等於費用率、代表因子被完全解釋後只剩費用」——<b>但這說法不成立</b>：這批基金的費用率中位數其實只有 0.205%，負 α 的量級是費用中位數的三倍有餘，可見它<b>不只是費用</b>。</p>
+<div class="plain-box">
+<div class="pb-h">那負 α 從哪來？</div>
+<p>有一部分來自<b>模型本身對價值／小型的負偏誤</b>：第六節的安慰劑顯示，純被動的 IWD（大型價值）在此模型下的偏誤是 −1.59pp 且統計顯著（t=−2.22），IWM、IJR（小型）也各約 −1.0pp。系統性因子型多半正是價值／小型傾斜，模型會系統性地扣它們的分。<b>所以這個負 α 是「真費用」與「模型扣分」的混合，不是純費用。</b></p>
+</div>
+<div class="takeaway">系統性因子型從不宣稱有 alpha——它們公開說自己賣的是因子曝險，結果誠實交付。裁量型宣稱有選股能力，扣掉 ARK 後與擲硬幣無異。</div>
 </div>
 </section>
 
@@ -268,9 +303,9 @@ ul.plain li{margin-bottom:.45rem}
 <thead><tr><th>樣本</th><th class="num">n</th><th class="num">Spearman ρ</th><th class="num">p</th>
 <th class="num">贏家組後半 α</th><th class="num">輸家組後半 α</th><th>贏家維持正 α</th></tr></thead>
 <tbody>
-<tr><td>≥8年</td><td class="num">18</td><td class="num">+0.042</td><td class="num">0.868</td><td class="num neg">-0.71%</td><td class="num">-1.10%</td><td class="num">4/9</td></tr>
-<tr><td>≥5年</td><td class="num">32</td><td class="num">+0.158</td><td class="num">0.387</td><td class="num neg">-1.36%</td><td class="num">-1.25%</td><td class="num">6/16</td></tr>
-<tr><td>≥4年</td><td class="num">48</td><td class="num">-0.137</td><td class="num">0.355</td><td class="num neg">-1.72%</td><td class="num">-0.91%</td><td class="num">6/24　<span style="color:var(--red)">Pearson r=-0.359 (p=0.012)</span></td></tr>
+<tr><td>≥8年</td><td class="num">13</td><td class="num">-0.121</td><td class="num">0.694</td><td class="num neg">-0.70%</td><td class="num">+0.05%</td><td class="num">2/6</td></tr>
+<tr><td>≥5年</td><td class="num">27</td><td class="num">+0.175</td><td class="num">0.382</td><td class="num neg">-0.74%</td><td class="num">-1.54%</td><td class="num">5/13</td></tr>
+<tr><td>≥4年</td><td class="num">40</td><td class="num">-0.189</td><td class="num">0.243</td><td class="num neg">-1.76%</td><td class="num">-0.78%</td><td class="num">6/20　<span style="color:var(--red)">Pearson r=-0.495 (p=0.001)</span></td></tr>
 </tbody></table></div>
 <div class="card">
 <div class="plain-box">
@@ -278,12 +313,16 @@ ul.plain li{margin-bottom:.45rem}
 <p>問題是：<b>「如果我挑出過去表現最好的基金，接下來它們會繼續好嗎？」</b></p>
 <p>「等級相關」接近 0，代表前半期的名次對後半期的名次<b>完全沒有預測力</b>——等於隨機。而更值得注意的是「贏家組後半 α」那一欄全部是負的：<b>把前半期的贏家挑出來，接下來它們平均是輸的。</b></p>
 </div>
-<div class="takeaway">三個時間跨度的等級相關全部 ≈ 0（p 皆 &gt; 0.35）。而且<b>前半段贏家組的後半段 alpha 全部是負的</b>，贏家維持正 alpha 的比率在兩個跨度比擲硬幣還差。</div>
+<div class="takeaway">三個時間跨度的等級相關全部 ≈ 0（p 皆 &gt; 0.24，皆不顯著）。而且<b>前半段贏家組的後半段 alpha 全部是負的</b>，贏家維持正 alpha 的比率在三個跨度都低於擲硬幣。</div>
 </div>
 
 <div class="card">
-<h3>但「顯著反轉」這個宣稱撐不住——本頁原本說得太滿</h3>
-<p>原版用紅字強調「≥4 年組 Pearson r = −0.359 顯著（p=0.012）」。對抗式審查對切點做敏感度測試後，這個顯著<b>只出現在中間幾個切點</b>：</p>
+<div class="plain-box">
+<div class="pb-h">白話解釋：這一版換了乾淨的樣本池</div>
+<p>本頁先前的持續性檢定沿用一份<b>過時的手動清單</b>來界定「美股主動基金」，那份清單混進了指數型與非純股票的基金——是分類清單陳舊造成的 bug。這一版改為統一從 SEC N-CEN 法定分類導出的 44 檔乾淨池子（與其他各節同源）。因此持續性主表的樣本數從舊版變成 <b>13／27／40</b>（≥8／≥5／≥4 年）。</p>
+</div>
+<h3>換池後：反轉更強了，但仍只是 Pearson、且仍撐不成「確定結論」</h3>
+<p>用乾淨池子重跑，≥4 年組的 Pearson 反而更強：<b>r = -0.495（p = 0.001）</b>，且在 40/60、50/50、60/40 三個切點都顯著。但對抗式審查要看的三件事仍然指向「不該說滿」：</p>
 <div class="tbl-wrap"><table style="max-width:600px">
 <thead><tr><th>切點</th><th class="num">Spearman ρ</th><th class="num">p</th><th class="num">Pearson r</th><th class="num">p</th></tr></thead>
 <tbody>
@@ -294,14 +333,13 @@ ul.plain li{margin-bottom:.45rem}
 <tr><td>70/30</td><td class="num">-0.031</td><td class="num">0.851</td><td class="num ">-0.281</td><td class="num ">0.079</td></tr>
 </tbody></table></div>
 <ul class="plain">
-<li><b>Spearman 等級相關在任何切點下都從未顯著</b>（p 全部 &gt; 0.35）。等級相關對離群值更穩健，它才是這裡較可信的指標。</li>
-<li>單獨拿掉 <b>ARKQ</b> 一檔基金，Pearson 的 p 值就從 0.012 跳到 <b>0.035</b>，跨過顯著線。</li>
+<li><b>Spearman 等級相關在任何切點下都從未顯著</b>（p 最低 0.24）。等級相關對離群值更穩健，它才是這裡較可信的指標——而它從頭到尾沒站起來過。</li>
+<li>顯著只由 Pearson 撐，而 Pearson 對離群值敏感。單獨拿掉 <b>ARKQ</b> 一檔基金，50/50 切點的 Pearson p 值就從 0.001 一口氣弱到 <b>0.035</b>（差一個數量級）。</li>
 </ul>
 <div class="plain-box">
 <div class="pb-h">白話解釋：這代表什麼</div>
-<p>「切點」是指把樣本從中間切成前後兩半的位置。如果一個結論只在「正中間切」時成立，往前或往後挪一點就消失，那它<b>反映的是那個特定切法碰巧產生的樣態，不是穩定的現象</b>。</p>
-<p>同理，如果拿掉一檔基金就讓結論翻盤，代表整個結論其實靠那一檔在撐。</p>
-<p><b>修正後的說法：</b>資料支持「贏家不會繼續贏」（贏家組後半 alpha 全為負、維持正 alpha 的比率低於擲硬幣），但<b>不足以支持「顯著反轉」這個更強的宣稱</b>。原版的呈現過度自信，已降級。</p>
+<p>「切點」是把樣本從中間切成前後兩半的位置。一個結論若只在某些切法下成立、換個切法就變弱，或拿掉一檔基金 p 值就掉一個數量級，代表它靠少數樣態在撐，不是穩定現象。</p>
+<p><b>修正後的說法：</b>資料明確支持「贏家不會繼續贏」（贏家組後半 alpha 三個跨度全為負、維持正 alpha 的比率全低於擲硬幣、Pearson 反向且在多個切點顯著）。但<b>「顯著反轉」這個更強的宣稱只由對離群值敏感的 Pearson 撐、Spearman 全程不顯著</b>，因此仍維持降級處理，不當成確定結論。</p>
 </div>
 </div>
 </section>
@@ -372,8 +410,19 @@ QQQ 是純被動的那斯達克 100 指數基金，費用率 0.20%，理論 alph
 </div>
 <p>樣本內 t 值最高的兩檔正是高 beta：<b>1.95（β=1.22，α=+9.5%）、1.78（β=0.88，α=+3.7%）</b>。它們的 alpha 有相當部分可能是模型偏誤而非選股能力。</p>
 <div class="takeaway">
-<b>但有一個反向的細節必須同時說清楚，否則會過度歸因。</b>裁量型與系統性因子型的 β<sub>MKT</sub> 中位數幾乎相同（1.01 vs 1.00），該 beta 水準對應的預測偏誤只有 +0.22pp——<b>不足以解釋兩組 alpha 均值的差距</b>。所以「模型偏誤」可以削弱個別榜首基金的可信度，但不能解釋整個裁量型群組的表現。<br><br>
+<b>但要避免用一個錯誤的方式打發這個偏誤。</b>常見的反駁是：「裁量型與系統性因子型的 β<sub>MKT</sub> 中位數幾乎一樣（1.01 vs 1.00），所以偏誤不可能造成組間差距。」<b>這個反駁站不住</b>——偏誤的驅動變數不是 β 的高低，而是<b>成長／科技曝險</b>：純被動的 QQQ β 只有 1.09（幾乎就是市場水準），偏誤卻高達 +5.41pp。β 中位數相同，不代表成長曝險相同。第三節已經看到裁量組的正 α 整包來自 ARK 那 6 檔重成長基金——正是模型最會送分的那一類。<br><br>
 淨效果：<b>本頁的頭條結論不變，而且更強</b>——排名最前的基金其 alpha 有一部分是量錯的，真正的技能證據比表面看到的更薄弱。
+</div>
+</div>
+
+<div class="card">
+<h3>偏誤是雙向的：對成長高估，也對價值／小型低估</h3>
+<p>成長那一側已經看過（QQQ +5.41pp、t=+2.52）。對稱的另一側是：純被動的價值與小型指數，模型會系統性地<b>扣</b>它們的分。</p>
+<p>純被動標的的模型偏誤：<b>IWD（-1.59pp，t=-2.22 顯著）、IWM（-1.10pp）、IJR（-1.05pp）</b>。IWD（大型價值）的 −1.59pp 已達統計顯著。</p>
+<div class="plain-box">
+<div class="pb-h">這對頭條有兩層意義（一正一負，都要講）</div>
+<p><b>① 更強的「無技能」證據。</b>一個會主動對成長基金<b>送分</b>的模型，跑遍全 44 檔樣本，仍然找不到任何一檔有統計顯著的正 α。連被灌了水的成長基金都過不了關，這比用一把中性的尺得到同樣結論更有力。</p>
+<p><b>② 但「補上死亡名單後對每一檔都只會更差」並不成立。</b>偏誤既然會<b>低估</b>價值／小型基金的 α，那麼個別價值／小型基金的真實 α 可能比本頁量到的更高（更接近 0、甚至為正）。存活者偏誤讓<b>整體樣本</b>偏樂觀沒錯，但<b>逐檔</b>來看方向並不一致——這是誠實的但書。</p>
 </div>
 </div>
 
@@ -405,6 +454,27 @@ QQQ 是純被動的那斯達克 100 指數基金，費用率 0.20%，理論 alph
 </tbody></table></div>
 <div class="takeaway">加了落後因子後，β 只從約 0.82 修到 0.86（離應有的 1.0 還很遠），而 <b>alpha 不降反升</b>。校正失敗。<br><br>
 因此本頁的 14 檔國際型基金，alpha 一律需扣掉 +1.89pp 的假 alpha 地板；扣除後為正者僅 4/14，且無一達統計顯著。<b>免費資料下沒有可信的國際因子模型，本頁不假裝已解決。</b></div>
+
+<h3>14 檔國際型逐檔（扣地板前後）</h3>
+<div class="section-sub">「扣地板後 α」＝ 原始 α 減去 +1.89pp 假 alpha 地板。扣除前為正者 5/14，扣除後 4/14。</div>
+<div class="tbl-wrap"><table style="max-width:640px">
+<thead><tr><th>標的</th><th class="num">年數</th><th class="num">原始 α</th><th class="num">t</th><th class="num">扣地板後 α</th></tr></thead>
+<tbody>
+<tr><td><b>EYLD</b> <span class="tag tag-sys">系統</span></td><td class="num">9.8</td><td class="num pos">+3.82%</td><td class="num">+0.64</td><td class="num pos">+1.93%</td></tr>
+<tr><td><b>AVDV</b> <span class="tag tag-sys">系統</span></td><td class="num">6.7</td><td class="num pos">+3.11%</td><td class="num">+0.71</td><td class="num pos">+1.22%</td></tr>
+<tr><td><b>DFIV</b> <span class="tag tag-sys">系統</span></td><td class="num">4.7</td><td class="num pos">+2.71%</td><td class="num">+0.58</td><td class="num pos">+0.82%</td></tr>
+<tr><td><b>DFIC</b> <span class="tag tag-sys">系統</span></td><td class="num">4.2</td><td class="num pos">+1.98%</td><td class="num">+0.42</td><td class="num pos">+0.09%</td></tr>
+<tr><td><b>AVEM</b> <span class="tag tag-sys">系統</span></td><td class="num">6.7</td><td class="num pos">+1.10%</td><td class="num">+0.22</td><td class="num neg">-0.79%</td></tr>
+<tr><td><b>DFAX</b> <span class="tag tag-sys">系統</span></td><td class="num">4.7</td><td class="num neg">-0.15%</td><td class="num">-0.03</td><td class="num neg">-2.04%</td></tr>
+<tr><td><b>AVDE</b> <span class="tag tag-sys">系統</span></td><td class="num">6.7</td><td class="num neg">-0.76%</td><td class="num">-0.20</td><td class="num neg">-2.65%</td></tr>
+<tr><td><b>CGGO</b> <span class="tag tag-disc">裁量</span></td><td class="num">4.2</td><td class="num neg">-1.12%</td><td class="num">-0.37</td><td class="num neg">-3.01%</td></tr>
+<tr><td><b>DWLD</b> <span class="tag tag-disc">裁量</span></td><td class="num">9.3</td><td class="num neg">-1.36%</td><td class="num">-0.38</td><td class="num neg">-3.25%</td></tr>
+<tr><td><b>FYLD</b> <span class="tag tag-sys">系統</span></td><td class="num">12.5</td><td class="num neg">-1.37%</td><td class="num">-0.44</td><td class="num neg">-3.26%</td></tr>
+<tr><td><b>DSTX</b> <span class="tag tag-sys">系統</span></td><td class="num">5.4</td><td class="num neg">-2.04%</td><td class="num">-0.45</td><td class="num neg">-3.93%</td></tr>
+<tr><td><b>IMOM</b> <span class="tag tag-sys">系統</span></td><td class="num">10.4</td><td class="num neg">-3.19%</td><td class="num">-0.73</td><td class="num neg">-5.08%</td></tr>
+<tr><td><b>CGXU</b> <span class="tag tag-disc">裁量</span></td><td class="num">4.2</td><td class="num neg">-3.27%</td><td class="num">-0.63</td><td class="num neg">-5.16%</td></tr>
+<tr><td><b>IVAL</b> <span class="tag tag-sys">系統</span></td><td class="num">11.4</td><td class="num neg">-3.44%</td><td class="num">-0.96</td><td class="num neg">-5.33%</td></tr>
+</tbody></table></div>
 </div>
 </section>
 
@@ -412,7 +482,8 @@ QQQ 是純被動的那斯達克 100 指數基金，費用率 0.20%，理論 alph
 <h2 class="section-title">七、存活者偏誤：本研究的樣本是倖存者</h2>
 <div class="card">
 <p>探測 16 個代號，發現 <b>3 個已下市</b>（如 QED 止於 2023-01、FRAK 止於 2021-10、SLIM 止於 2020-03），且 <b>yfinance 保留了它們的歷史資料</b>。</p>
-<div class="takeaway">這代表存活者偏誤<b>是可以量化的</b>——只要補上完整的死亡名單。本研究沒有該名單，因此樣本為存活者，<b>alpha 估計系統性偏高</b>。換言之，真實情況只會比本頁呈現的更差，不會更好。</div>
+<div class="takeaway">這代表存活者偏誤<b>是可以量化的</b>——只要補上完整的死亡名單。本研究沒有該名單，因此樣本為存活者，整體 <b>alpha 估計大概率系統性偏高</b>，真實情況<b>大概率比本頁呈現的更差</b>。<br><br>
+之所以是「大概率」而非「必然」：ETF 清算的原因有一部分與績效並不完全相關——發行商可能整條產品線退場（如策略轉向、併購後精簡），或利基型基金純粹募不到足夠規模而關閉，這些與基金本身有沒有 alpha 是部分正交的。加上第六節的模型對價值／小型基金會低估 α，逐檔而言方向不保證一致。整體偏樂觀成立，「對每一檔都只會更差」則言過其實。</div>
 </div>
 </section>
 
@@ -582,9 +653,7 @@ QQQ 是純被動的那斯達克 100 指數基金，費用率 0.20%，理論 alph
 <li>主動/被動分類以發行商揭露與 R² 診斷為據，SEC 註冊書逐檔覆核尚未完成</li>
 <li>殘差有負一階自相關（微結構雜訊），HAC 標準誤反小於 OLS；本研究以 OLS 為主、HAC 為對照，兩者結論一致</li>
 <li>六因子模型對科技／大型成長傾斜的投資組合系統性高估 alpha：純被動的 QQQ 在此模型下顯示 +5.2%/年、t=2.5 的「alpha」。樣本內 β_MKT 與 alpha 顯著正相關（r=0.52, p=0.0003），故高 beta 基金（含排名最前的 ARKW／ARKQ）的 alpha 有一部分屬模型假象</li>
-<li>持續性檢定的「顯著反轉」僅在部分切點成立，且對單一基金刪除敏感；Spearman 等級相關在任何切點下皆不顯著。方向性結論成立，但不應視為確定</li>
-<li>active fee 原以 SPY 為全體共同基準，對小型／價值型基金不公平；現改為各基金風格對應基準，並同時列出對 SPY 的版本供對照</li>
-<li>六因子模型對科技／大型成長傾斜的投資組合系統性高估 alpha：純被動的 QQQ 在此模型下顯示 +5.2%/年、t=2.5 的「alpha」。樣本內 β_MKT 與 alpha 顯著正相關（r=0.52, p=0.0003），故高 beta 基金（含排名最前的 ARKW／ARKQ）的 alpha 有一部分屬模型假象</li>
+<li>但同一模型有對稱的另一面：對價值／小型傾斜的投資組合系統性<b>低估</b> alpha——純被動的 IWD 偏誤 −1.59pp（t=−2.22 顯著）、IWM −1.10pp、IJR −1.05pp。因此系統性因子型的負 α 有一部分是模型扣分而非真實費用，且「補上死亡名單後對每一檔都只會更差」並不成立：個別價值／小型基金的 α 可能被低估</li>
 <li>持續性檢定的「顯著反轉」僅在部分切點成立，且對單一基金刪除敏感；Spearman 等級相關在任何切點下皆不顯著。方向性結論成立，但不應視為確定</li>
 <li>active fee 原以 SPY 為全體共同基準，對小型／價值型基金不公平；現改為各基金風格對應基準，並同時列出對 SPY 的版本供對照</li>
 </ul></div>
@@ -602,7 +671,7 @@ QQQ 是純被動的那斯達克 100 指數基金，費用率 0.20%，理論 alph
 
 <div class="footer">
   <div>因子資料：Kenneth R. French Data Library（美國／已開發／已開發 ex-US，日頻）。價格：yfinance 還原收盤。</div>
-  <div>產生於 2026-07-20 · InvestMQuest Research</div>
+  <div>產生於 2026-07-21 · InvestMQuest Research</div>
 </div>
 
 </div>
