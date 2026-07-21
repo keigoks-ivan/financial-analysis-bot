@@ -28,6 +28,17 @@ name: Deploy Pages
 #                            LIVE sleeve's email alerts, so an up-to-6h deploy lag
 #                            meant the live-system page (target exposures the user
 #                            acts on) trailed its own committed data every day.
+#                            Daily US Close Band + Daily Market Detective added
+#                            2026-07-21: the 2026-07-18 consolidation folded
+#                            monitor-daily / rotation-radar-daily into "Daily US
+#                            Close Band" (dispatch-only now), so the two entries
+#                            below inherited from them stopped firing on schedule
+#                            — monitor / rotation / detective data deployed only
+#                            via layer 3's 6h sweep. "Daily US Close Band" (the
+#                            real nightly refresh of monitor+rotation) and "Daily
+#                            Market Detective" (its own alert-network commit) are
+#                            now listed directly. The two dormant entries are kept
+#                            so a manual dispatch of either still deploys.
 #   3. schedule            — name-independent safety net every 6h: catches ANY
 #                            other bot-committed docs/ change (screeners /
 #                            fundamentals / weekly crons) without having to
@@ -40,10 +51,12 @@ on:
     paths: ["docs/**"]
   workflow_run:
     workflows:
-      - "Daily Market Monitor"
-      - "Daily Asset Rotation Radar (RRG)"
+      - "Daily US Close Band"                          # 主要夜間刷新（monitor＋rotation＋home pulse，2026-07-18 併入）
+      - "Daily Market Detective"                       # detective 警報網自身 commit
       - "Weekly Decision Engine"
       - "Update W52 × Adaptive Vol-Target Signal (US+TW)"
+      - "Daily Market Monitor"                         # dispatch-only：手動刷新時仍部署
+      - "Daily Asset Rotation Radar (RRG)"             # dispatch-only：手動刷新時仍部署
     types: [completed]
   schedule:
     - cron: "0 */6 * * *"
