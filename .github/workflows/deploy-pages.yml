@@ -22,7 +22,12 @@ name: Deploy Pages
 #                            scheduled sweep entirely — the site served
 #                            week-old engine data for ~7h. Layer 3 alone is not
 #                            enough for weekly crons whose output the cockpit
-#                            reads directly.
+#                            reads directly. W52 adaptive vol-target added
+#                            2026-07-21: it commits docs/long-track-w52-adaptive/
+#                            TWICE per trading day (TW + US close) and drives the
+#                            LIVE sleeve's email alerts, so an up-to-6h deploy lag
+#                            meant the live-system page (target exposures the user
+#                            acts on) trailed its own committed data every day.
 #   3. schedule            — name-independent safety net every 6h: catches ANY
 #                            other bot-committed docs/ change (screeners /
 #                            fundamentals / weekly crons) without having to
@@ -38,6 +43,7 @@ on:
       - "Daily Market Monitor"
       - "Daily Asset Rotation Radar (RRG)"
       - "Weekly Decision Engine"
+      - "Update W52 × Adaptive Vol-Target Signal (US+TW)"
     types: [completed]
   schedule:
     - cron: "0 */6 * * *"
