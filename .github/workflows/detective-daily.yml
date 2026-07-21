@@ -12,13 +12,22 @@ name: Daily Market Detective
 # 最小間隔＋mute 節流）／digest（平日彙總）／weekly（週六恆產），寄送層走
 # composite action .github/actions/send-notify/。
 #
-# 事件驅動：monitor 或 rotation radar 任一 workflow 跑完就重生一次。
+# 事件驅動：市場資料刷新的 workflow 跑完就重生一次 immediate 層（即時紅燈複查）。
+# 2026-07-21 修：2026-07-18 monitor-daily／rotation-radar-daily 的排程已併入
+# daily-us-close.yml（"Daily US Close Band"，Mon-Fri 21:45 UTC），兩支原 workflow
+# 改為 dispatch-only、不再自行排程跑完，故舊的 workflow_run 只掛這兩支＝事件觸發
+# 實質失效，detective 一度只剩自身 cron 撐、且漏掉週一收盤的即時複查。改以
+# "Daily US Close Band" 為主要事件源：美股收盤資料一刷新（~21:50 UTC）就即時複查
+# 紅燈並寄 immediate；保留原兩支名稱，支援其被手動 dispatch 刷新資料時仍觸發。
 # cron 平日（週二～週六台灣時間清晨）為 fallback＋寄 digest；
 # cron 週六另一班次為週報班次。build_detective.py 是 zero-churn 寫入——資料
 # 沒動就空 diff、不 commit，故重複觸發是冪等的。
 on:
   workflow_run:
-    workflows: ["Daily Market Monitor", "Daily Asset Rotation Radar (RRG)"]
+    workflows:
+      - "Daily US Close Band"                 # 主要事件源（2026-07-18 起 monitor／rotation 資料併入此支）
+      - "Daily Market Monitor"                # dispatch-only：手動刷新 monitor 時仍觸發
+      - "Daily Asset Rotation Radar (RRG)"    # dispatch-only：手動刷新 rotation 時仍觸發
     types: [completed]
   schedule:
     # 2026-07-18 維持獨立（未併入時段帶 B）：本 workflow 帶 workflow_run 事件驅動
