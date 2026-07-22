@@ -894,6 +894,16 @@ def generate_html(sigs: dict, changes: list | None, last_change_date: str | None
     changes = changes or []
     now = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M")
     data_date = max(sigs[t]["wk_date"] for t in ALL_TICKERS)
+    # 週線 bar 由 pandas 以「週結束的週五」為標籤，故週間跑時 data_date 會是本週五
+    # （尚未到）。用日線最新交易日判斷本週是否已收：daily < 週五標記＝本週進行中，
+    # 顯示須誠實標暫定，不可寫成「週五收盤」（見 2026-07-22 用戶回報）。
+    daily_dates = [hist_map[m["key"]][-1]["date"] for m in MARKETS if hist_map.get(m["key"])]
+    latest_daily = max(daily_dates) if daily_dates else data_date
+    week_provisional = latest_daily < data_date
+    data_asof_label = (
+        f"數據截至 {latest_daily}（本週最新交易日｜週線 bar 進行中，週五 {data_date} 收盤前為暫定）"
+        if week_provisional else
+        f"數據截至 {data_date}（週五收盤）")
 
     md_map = {m["key"]: _market_data(m, sigs, hist_map.get(m["key"], []), exec_map[m["key"]]) for m in MARKETS}
     exp_us = md_map["us"]["combined"]
@@ -1054,7 +1064,7 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
   <div class="ds"><div class="dsn hero-{md_map['us']['ccol']}" style="color:var(--{md_map['us']['ccol']})">{exp_us:.0f}%</div><div class="dsl">美股 QQQ+SMH 組合目標曝險</div></div>
   <div class="ds"><div class="dsn hero-{md_map['tw']['ccol']}" style="color:var(--{md_map['tw']['ccol']})">{exp_tw:.0f}%</div><div class="dsl">台股 0050+2330 組合目標曝險</div></div>
 </div>
-<div class="status-date" style="text-align:center;margin-bottom:.5rem">數據截至 {data_date}（週五收盤）· 頁面更新 {now} 台北時間 · 兩組合各自獨立追蹤（各 100%）</div>
+<div class="status-date" style="text-align:center;margin-bottom:.5rem">{data_asof_label} · 頁面更新 {now} 台北時間 · 兩組合各自獨立追蹤（各 100%）</div>
 
 {change_html}
 
