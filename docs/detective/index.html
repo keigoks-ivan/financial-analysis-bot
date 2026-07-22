@@ -642,6 +642,9 @@ footer.imq-foot a{color:var(--accent)}
       <span>監測 as-of <b id="asofMon">—</b></span>
       <span>擁擠 as-of <b id="asofCrowd">—</b></span>
       <span>輪動 as-of <b id="asofRad">—</b></span>
+      <span>Kill as-of <b id="asofKill">—</b></span>
+      <span>Regime as-of <b id="asofRegime">—</b></span>
+      <span>Variance as-of <b id="asofVar">—</b></span>
       <span>資料時間 <b id="genAtVal">—</b>（台北）</span>
     </div>
     <div class="genat-note" id="genAtNote" hidden>頁面每 10 分鐘自動更新資料</div>
@@ -2530,6 +2533,14 @@ footer.imq-foot a{color:var(--accent)}
       document.getElementById('asofMon').textContent=src.monitor||'—';
       document.getElementById('asofCrowd').textContent=src.crowding||'—';
       document.getElementById('asofRad').textContent=src.rotation||'—';
+      var staleSet={};(det.sources_stale||[]).forEach(function(n){staleSet[n]=1;});
+      function setAsof(id,val,srcName){var e=document.getElementById(id);if(!e)return;e.textContent=val||'—';if(staleSet[srcName]){e.textContent=(val||'—')+' ⚠';e.style.color='var(--warn,#b45309)';}else{e.style.color='';}}
+      setAsof('asofMon',src.monitor,'monitor');
+      setAsof('asofCrowd',src.crowding,'crowding');
+      setAsof('asofRad',src.rotation,'rotation');
+      setAsof('asofKill',src.kill,'kill');
+      setAsof('asofRegime',src.regime,'regime');
+      setAsof('asofVar',src.variance,'variance');
       document.getElementById('asofRow').hidden=false;
 
       // 資料時間（台北）＋自動更新提示；generated_at 缺欄或格式異常時顯示 '—'，不拋錯
@@ -2537,11 +2548,25 @@ footer.imq-foot a{color:var(--accent)}
       document.getElementById('genAtVal').textContent=genAtTxt||'—';
       document.getElementById('genAtNote').hidden=false;
 
-      // 過期防呆：與 monitor 機械層現值 as_of 對比。事件驅動重建通常數分鐘內追上，
-      // 故這裡每輪重新判斷（含 else 復原），避免自動更新追上後 banner 卡著不消。
+      // 過期防呆：與 monitor 機械層對比。事件驅動重建通常數分鐘內追上，故每輪重新
+      // 判斷（含 else 復原）避免 banner 卡著不消。三種觸發：
+      //  (a) as_of 日期落後（監測已到新交易日、detective 尚未重建）；
+      //  (b) as_of 同日但 generated_at 不同＝monitor 值被同日重生（如亞歐/換月假訊號
+      //      修正），detective baked 的是污染前的值——舊防呆只比 as_of 會無聲呈現污染；
+      //  (c) 後端 sources_stale[] 非空（含 kill_watch 生產者卡死的絕對年齡閘）。
       var sb=document.getElementById('staleBanner');
+      var msgs=[];
       if(monLatest&&monLatest.as_of&&src.monitor&&monLatest.as_of!==src.monitor){
-        sb.textContent='⚠ 本頁彙整資料截至監測 '+src.monitor+'，市場監測層已更新至 '+monLatest.as_of+'（通常於監測完成後數分鐘內事件驅動重建追上）——下方訊號可能落後於最新監測值，僅供參考。';
+        msgs.push('本頁彙整截至監測 '+src.monitor+'，監測層已更新至 '+monLatest.as_of+'（通常數分鐘內事件驅動重建追上）——下方訊號可能落後於最新監測值。');
+      }else if(monLatest&&monLatest.generated_at&&det.monitor_generated_at&&monLatest.generated_at!==det.monitor_generated_at){
+        msgs.push('本頁彙整的監測快照（'+src.monitor+'）之後已被同日重生（值修正，如亞歐指數／期貨換月假訊號校正）——下方部分訊號可能反映修正前的舊值，重建追上後即消。');
+      }
+      var ss=det.sources_stale||[];
+      if(ss.length){
+        msgs.push('下列上游源時效落後或生產者卡死：'+ss.join('／')+'（相關訊號／Kill 對帳以其最後可得值呈現，非當日現值）。');
+      }
+      if(msgs.length){
+        sb.textContent='⚠ '+msgs.join(' ');
         sb.hidden=false;
       }else{
         sb.hidden=true;

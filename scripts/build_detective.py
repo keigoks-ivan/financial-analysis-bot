@@ -1104,6 +1104,15 @@ def main():
         "monitor_as_of": sources["monitor"],
         "crowding_as_of": sources["crowding"],
         "radar_as_of": sources["rotation"],
+        # 值感知過期防呆：烘焙「所消費 monitor 快照的 generated_at」，前端比對 live
+        # monitor 的 generated_at——as_of 相同但值被重生（如同日修正）時也能亮 banner
+        # （2026-07-21 教訓：monitor 同日修正亞歐/換月假訊號後，detective baked 的
+        # 污染值與現行 monitor as_of 日期相同，舊防呆只比 as_of 故無聲呈現污染）。
+        "monitor_generated_at": latest.get("generated_at"),
+        # 其餘源 as_of 鏡射（前端 asof-row 補顯，讓 kill/regime/variance 時效可見）
+        "kill_as_of": sources["kill"],
+        "regime_as_of": sources["regime"],
+        "variance_as_of": sources["variance"],
     }
 
     latest_path = os.path.join(DOCS, "detective", "data", "latest.json")
