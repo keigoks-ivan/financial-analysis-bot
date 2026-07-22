@@ -17,7 +17,8 @@ v7 results，比照主頁 BT_US/BT_TW 慣例）；曝險/燃料表由 history ra
      長多 only）→ 0/1。與舊 score5 系統的唯一結構差異，換取深熊後快速再進場。
   2. 自適應波動率套袖（凍結 2026-07-17）：σ_t ＝ RV20 的 rolling(756, min_periods=252).median()
      （近三年 RV20 中位數，首年 expanding）；w = min(1, σ_t／RV20)。RV20＝20 日對數報酬年化波動。
-  3. 執行層 10pp 門檻＋5% 取整；最終目標權重 = 0.5 × 閘門 × 套袖（每市場兩腿各自計算）。
+  3. 執行層 A2（2026-07-22 由 10pp/5% 升格）：20pp 門檻＋10% 取整＋取整後 clamp 於
+     50×cap（cap1.5→75pp／組合 150%）；最終目標權重 = 0.5 × 閘門 × 套袖（每市場兩腿各自計算）。
 
 規則凍結（2026-07-17 定案後不調、不調參、不加濾網）：成本 7 bps／邊、t+1、台股現金 1%。
 誠實定位＝樣本內迭代第一圈（score5→W52 是看了樣本內診斷後的選擇，非先驗）；快閘門的慢熊
@@ -32,9 +33,10 @@ CANONICAL COPY：本檔在 v7-backtest（src/vol_target_backtest/）與 financia
 <repo_root>/docs/long-track-w52-adaptive/。CI 由 fab 執行（update_long_track_w52_adaptive.yml，
 台股收盤後 + 美股收盤後各跑一次，date-keyed merge 冪等所以安全，email 提醒可行動變化）。
 
-執行層（與規則同日凍結 2026-07-17）：|目標 − 現持| ≥ 10pp 才調整、調整取整至 5% 格；
-兩市場各自以 band_exec_replay 從 history_us／history_tw 確定性重放，供時間軸粗階梯線、
-事件表、通知與 state 的 executed_pct 用（回測主數字亦含此執行層，見 BT_US／BT_TW 常數）。
+執行層（規則凍結 2026-07-17；執行層 2026-07-22 升格 A2）：|目標 − 現持| ≥ 20pp 才調整、
+調整取整至 10% 格後 clamp 於 50×cap（cap1.5→75pp／組合 150%）；兩市場各自以 band_exec_replay
+從 history_us／history_tw 確定性重放，供時間軸粗階梯線、事件表、通知與 state 的 executed_pct 用
+（回測主數字亦含此執行層，見 LEV 常數）。整數 pp 空間 ≥ 比較，不在 0..1 浮點空間重寫。
 
 圖像化（Chart.js）：兩市場各一個合成曝險量表＋每腿乘法鏈 bar、近三年權重時間軸（粗階梯
 ＝執行層持股率＋細線＝每日理論目標）＋ RV20 vs σ_t（σ_t 本頁是動態線，非水平虛線）、
@@ -176,10 +178,11 @@ LEV = {
     "window": ['2005-01-03', '2026-07-10'],
     "fullstack": [
       ('cap 1.0（不加槓桿）', 12.68, -21.3, 0.5948, 1.499, 71.0, 100.0, None),
-      ('cap 1.0＋執行層（＝主系統對帳）', 12.66, -22.1, 0.5727, 1.501, 71.0, 100.0, 11.9),
+      ('cap 1.0＋執行層 A2（＝影子頁對帳）', 12.67, -22.4, 0.5662, 1.438, 71.0, 100.0, 7.2),
       ('靜態 1.5×（無腦放大）', 16.95, -30.8, 0.5497, 1.25, 106.0, 150.0, None),
       ('cap 1.5（真波動率目標·每日）', 14.05, -24.5, 0.5731, 1.369, 85.0, 150.0, None),
-      ('cap 1.5＋執行層（本頁追蹤）', 14.31, -25.3, 0.5666, 1.365, 85.0, 150.0, 28.4),
+      ('cap 1.5＋執行層 A2（本頁追蹤）', 14.10, -23.7, 0.5953, 1.284, 85.0, 150.0, 12.5),
+      ('cap 1.5＋舊執行層 10pp/5%（2026-07-22 前・對照）', 14.31, -25.3, 0.5666, 1.365, 85.0, 150.0, 28.4),
     ],
     "era_labels": ['2005-08 GFC', '2009-13 QE', '2014-18 低波', '2019-23 COVID', '2024- AI 牛'],
     "dist_cap10": {"avg": 71, "avg3y": 86, "gt100": 0, "ge145": 0, "peak": 100, "eras": [52, 75, 79, 66, 84]},
@@ -192,10 +195,11 @@ LEV = {
     "window": ['2014-01-01', '2026-07-17'],
     "fullstack": [
       ('cap 1.0（不加槓桿）', 19.49, -19.0, 1.028, 2.422, 73.0, 100.0, None),
-      ('cap 1.0＋執行層（＝主系統對帳）', 19.51, -18.6, 1.0477, 2.472, 73.0, 100.0, 13.0),
+      ('cap 1.0＋執行層 A2（＝影子頁對帳）', 18.98, -19.1, 0.9924, 2.470, 73.0, 100.0, 5.7),
       ('靜態 1.5×（無腦放大）', 28.19, -27.3, 1.0309, 2.292, 110.0, 150.0, None),
       ('cap 1.5（真波動率目標·每日）', 22.17, -19.2, 1.1524, 2.637, 83.0, 150.0, None),
-      ('cap 1.5＋執行層（本頁追蹤）', 22.62, -18.9, 1.1984, 2.641, 83.0, 150.0, 26.8),
+      ('cap 1.5＋執行層 A2（本頁追蹤）', 22.98, -18.9, 1.2173, 2.544, 83.0, 150.0, 12.3),
+      ('cap 1.5＋舊執行層 10pp/5%（2026-07-22 前・對照）', 22.62, -18.9, 1.1984, 2.641, 83.0, 150.0, 26.8),
     ],
     "era_labels": ['2014-16 陸股貶值/整理', '2017-19 平順多頭', '2020-22 COVID/升息', '2023- AI 台積電牛'],
     "dist_cap10": {"avg": 73, "avg3y": 80, "gt100": 0, "ge145": 0, "peak": 100, "eras": [76, 76, 59, 80]},
@@ -291,6 +295,13 @@ def gate_state(px: pd.Series) -> dict:
 # ---------------------------------------------------------------------------
 CAP = 1.5   # 曝險上限（本頁＝真波動率目標 cap 1.5；主頁＝1.0）
 
+# 執行層常數（2026-07-22 由 10pp/5% 升格 A2：門檻 20pp／格 10%／取整後 clamp 於
+# 50×cap；cap1.5→75pp／組合 150%）。band／grid／clamp 皆組合 pp；整數 pp 空間比較。
+EXEC_BAND = 20.0
+EXEC_GRID = 10.0
+EXEC_CLAMP = 50.0 * CAP           # cap1.5→75pp（單腿滿載）；組合上限 150%
+EXEC_UPGRADE_DATE = "2026-07-22"  # 執行層升格 A2 之日（規則凍結日仍為 FREEZE_DATE）
+
 
 def _sleeve_from(px: pd.Series, win: int = 20):
     """Returns (rv20_now, sigma_t_now, sleeve, raw_ratio). σ_t ＝ RV20 的
@@ -378,15 +389,16 @@ def merge_history(prev_history: list, backfill: list, today_rec: dict,
 
 
 # ---------------------------------------------------------------------------
-# Execution layer — 10pp 門檻＋5% 取整（與規則同日凍結 2026-07-17）
+# Execution layer — A2：20pp 門檻＋10% 取整＋取整後 clamp 於 50×cap（升格 2026-07-22）
 # 每市場各自從 history 確定性重放（history_us／history_tw），冪等可重現。
-# band／grid 以組合 pp 為單位（每腿滿載＝50 pp）。
+# band／grid／clamp 以組合 pp 為單位（每腿滿載＝50 pp；cap1.5 clamp＝75pp）。
 # ---------------------------------------------------------------------------
 def band_exec_replay(history: list, legs: list) -> dict:
     """對每腿的最終權重（組合 pp）重放執行層：executed 初始 0，逐日若
-    |target − executed| ≥ 10pp 則 executed = round(target/5)×5，否則不變。
-    回傳每腿每日 executed、組合合計、事件清單（日期、腿、from→to、原因＝該日
-    閘門翻轉則「閘門翻轉」否則「波動調整」、當日組合執行曝險）與各腿當前值。"""
+    |target − executed| ≥ 20pp 則 executed = min(round(target/10)×10, 50×cap)，否則不變。
+    整數 pp 空間 ≥ 比較（不在 0..1 浮點空間重寫）。回傳每腿每日 executed、組合合計、
+    事件清單（日期、腿、from→to、原因＝該日閘門翻轉則「閘門翻轉」否則「波動調整」、
+    當日組合執行曝險）與各腿當前值。"""
     executed = {t: [] for t in legs}
     combined, events = [], []
     cur = {t: 0.0 for t in legs}
@@ -396,8 +408,8 @@ def band_exec_replay(history: list, legs: list) -> dict:
             tk = r["tickers"][t]
             target = tk["final_pct"]
             gate = bool(tk["gate"])
-            if abs(target - cur[t]) >= 10.0:
-                new = round(target / 5.0) * 5.0
+            if abs(target - cur[t]) >= EXEC_BAND:
+                new = min(round(target / EXEC_GRID) * EXEC_GRID, EXEC_CLAMP)
                 if new != cur[t]:
                     flipped = prev_gate[t] is not None and gate != prev_gate[t]
                     events.append({"date": r["date"], "leg": t,
@@ -417,7 +429,7 @@ def band_exec_replay(history: list, legs: list) -> dict:
 def events_card(mkt: dict, events: list) -> str:
     if not events:
         body = ('<tr><td colspan="5" style="text-align:center;color:var(--muted)">'
-                '近三年窗內無執行層調整事件（皆未跨 10pp 門檻）</td></tr>')
+                '近三年窗內無執行層調整事件（皆未跨 20pp 門檻）</td></tr>')
     else:
         body = ""
         for ev in reversed(events):                 # 倒序（最新在上）
@@ -427,9 +439,9 @@ def events_card(mkt: dict, events: list) -> str:
                      f'<td style="color:{rc}">{ev["reason"]}</td>'
                      f'<td class="num">{ev["combined_exec_pct"]:.0f}%</td></tr>\n')
     return f"""<div class="card">
-<h3>{mkt['short']} 近三年執行層訊號變化事件（10pp 門檻＋5% 取整）</h3>
+<h3>{mkt['short']} 近三年執行層訊號變化事件（A2：20pp 門檻＋10% 取整＋clamp 150%）</h3>
 <p style="font-size:.8rem;color:var(--muted);margin-bottom:.6rem">
-只有當某腿目標與現持差 ≥ 10pp 才調整（取整到 5% 格），故事件遠少於每日微調。倒序全列；「變化」為該腿最終權重（組合 pp，滿載 50%）；原因＝當日閘門翻轉則「閘門翻轉」否則「波動調整」。</p>
+只有當某腿目標與現持差 ≥ 20pp 才調整（取整到 10% 格、再 clamp 於 75%），故事件遠少於每日微調。倒序全列；「變化」為該腿最終權重（組合 pp，滿載 50%）；原因＝當日閘門翻轉則「閘門翻轉」否則「波動調整」。</p>
 <table><thead><tr><th>日期</th><th>腿</th><th>變化</th><th>原因</th><th class="num">當日組合執行曝險</th></tr></thead>
 <tbody>{body}</tbody></table>
 </div>"""
@@ -550,7 +562,7 @@ def backtest_section(mkt: dict) -> str:
     return f"""<div class="card">
 <h3>回測全堆疊 — {mkt['short']}（訊號 → 曝險 → 執行・窗 {L['window'][0]} ～ {L['window'][1]}）{dead}</h3>
 <p style="font-size:.8rem;color:var(--muted);margin-bottom:.7rem">
-主列（藍底）＝<b>cap 1.5 ＋ 執行層（本頁追蹤）</b>；「cap 1.0 ＋ 執行層」＝<b>主系統對帳列</b>（美 0.573／台 1.048，可與 <a href="/long-track-w52-adaptive/">主系統頁</a>對帳）。曝險欄可見 cap 1.5 平均僅 83～85%、非常態滿槓桿。數字轉錄自 results/vol_targeting/w52_adaptive_leverage.json。{'<b>台股數字為 7 bps 均一成本；真實成本版（證交稅）約再降 0.5pp CAGR，見 <a href="/backtest/vol_targeting/tw.html">台股實驗室</a>。</b>' if mkt['key'] == 'tw' else ''}</p>
+主列（藍底）＝<b>cap 1.5 ＋ 執行層 A2（本頁追蹤）</b>；「cap 1.0 ＋ 執行層 A2」＝<b>影子頁對帳列</b>（美 0.566／台 0.992，可與 <a href="/long-track-w52-adaptive/leverage.html">影子對照頁</a>對帳）。末列＝<b>2026-07-22 前舊執行層 10pp/5%</b>，保留供對照（見規則說明的執行層升格註記）。曝險欄可見 cap 1.5 平均僅 83～85%、非常態滿槓桿。數字轉錄自 results/vol_targeting/w52_adaptive_leverage.json。{'<b>台股數字為 7 bps 均一成本；真實成本版（證交稅）約再降 0.5pp CAGR，見 <a href="/backtest/vol_targeting/tw.html">台股實驗室</a>。</b>' if mkt['key'] == 'tw' else ''}</p>
 <table><thead><tr><th>層級</th><th class="num">CAGR</th><th class="num">MDD</th><th class="num">Calmar</th><th class="num">Martin</th><th class="num">平均曝險</th><th class="num">峰值</th><th class="num">年動手</th></tr></thead>
 <tbody>{fs}</tbody></table>
 </div>
@@ -630,7 +642,7 @@ def _market_data(mkt: dict, sigs: dict, history: list, exec_replay: dict) -> dic
         # 燃料表：組合 σ_t/RV 原始比率均值（clip 顯示 2.5）
         "fuel": _col(lambda r: round(min(2.5, 0.5 * (r["tickers"][a].get("raw_ratio", 1.0)
                                                      + r["tickers"][b].get("raw_ratio", 1.0))), 2)),
-        # executed layer (10pp band + 5% round) — deterministic replay
+        # executed layer (A2: 20pp band + 10% round + clamp 50×cap) — deterministic replay
         "cexe": json.dumps(exec_replay["combined"], separators=(",", ":")),
         "aexe": json.dumps(exec_replay["executed"].get(a, []), separators=(",", ":")),
         "bexe": json.dumps(exec_replay["executed"].get(b, []), separators=(",", ":")),
@@ -671,7 +683,7 @@ def _dual_breakdown(legs, finals, exec_finals):
     exe = "＋".join(f"{legs[i]} {ef[i]}%" for i in range(len(legs)))
     html = (f"<b>目標 {td}%</b>＝{tgt}（訊號，每日隨波動微調）／"
             f"<b>現持 {ed}%</b>＝{exe}（執行層；"
-            f"<b>|目標−現持| 未達 10pp 不調，故兩者常有幾 % 差、是設計非錯誤</b>）")
+            f"<b>|目標−現持| 未達 20pp 不調，故兩者常有幾 % 差、是設計非錯誤</b>）")
     return html, td, ed
 
 
@@ -715,7 +727,7 @@ def market_html(mkt: dict, sigs: dict, md: dict) -> str:
 <div class="card">
 <h3>{mkt['short']} 近三年權重時間軸 — 現持（執行層）vs 每日理論目標</h3>
 <p style="font-size:.8rem;color:var(--muted);margin-bottom:.5rem">
-<b style="color:var(--text)">粗階梯線＝現持（執行層）</b>＝10pp 門檻＋5% 取整的實際持股率（跨門檻才動）；<b>細線＝每日理論目標（訊號）</b>（未過門檻不調）。
+<b style="color:var(--text)">粗階梯線＝現持（執行層）</b>＝A2 20pp 門檻＋10% 取整＋clamp 150% 的實際持股率（跨門檻才動）；<b>細線＝每日理論目標（訊號）</b>（未過門檻不調）。
 末端值：{dual}。
 線段<b>實線＝每日實錄</b>、<b>虛線＝規則回放</b>（首次生成往回重算，誠實區隔）。窗 {md['span']}，共 {md['nhist']} 個交易日（回放 {md['n_replay']}／實錄 {md['n_live']}）。</p>
 <div class="chart-wrap"><canvas id="chart-weights-{suf}"></canvas></div>
@@ -742,7 +754,7 @@ def market_html(mkt: dict, sigs: dict, md: dict) -> str:
 <div class="card">
 <h3>{mkt['short']} 回測縮圖 — 自適應中位數 3y（含執行層）vs 50/50 B&amp;H（對數淨值＋回撤）</h3>
 <p style="font-size:.8rem;color:var(--muted);margin-bottom:.6rem">
-回測快照（{mkt['bt_nav']['labels'][0]} → {mkt['bt_nav']['labels'][-1]}）。淨值線＝<b>自適應中位數 3y（含 10pp 門檻＋5% 取整執行層，與追蹤操作同規則）</b>，由 run_band_exec_ablation 月度 NAV 靜態轉錄；B&amp;H 線不變。</p>
+回測快照（{mkt['bt_nav']['labels'][0]} → {mkt['bt_nav']['labels'][-1]}）。淨值線＝<b>自適應中位數 3y（含執行層，與追蹤操作同規則）</b>，由 run_band_exec_ablation 月度 NAV 靜態轉錄；B&amp;H 線不變。</p>
 <div class="grid2">
   <div class="chart-wrap-sm"><canvas id="chart-bt-nav-{suf}"></canvas></div>
   <div class="chart-wrap-sm"><canvas id="chart-bt-dd-{suf}"></canvas></div>
@@ -916,7 +928,7 @@ def generate_html(sigs: dict, changes: list | None, last_change_date: str | None
          '<br><span style="font-size:.78rem;color:var(--muted)">下一個交易日將部位調整至上列目標。</span></div>')
         if changes else
         ('<div style="text-align:center;font-size:.78rem;color:var(--muted);margin:.3rem 0 1rem">'
-         '無可行動變化（四腿閘門未翻轉、且無標的目標與現持差 ≥ 10pp）' +
+         '無可行動變化（四腿閘門未翻轉、且無標的目標與現持差 ≥ 20pp）' +
          (f'（上次變化：{last_change_date}）' if last_change_date else '') + '</div>'))
 
     markets_html = "\n".join(market_html(m, sigs, md_map[m["key"]]) for m in MARKETS)
@@ -1056,8 +1068,13 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 
 <div class="oos-banner">
   <span class="tag-loud">實單主系統・2026-07-18 起・cap 1.5（美+台）・email 提醒可行動變化</span>
-  <div style="font-size:.86rem">本頁是<b>{FREEZE_DATE} 凍結、2026-07-18 起用戶正式採用的實單主系統</b>：<b>W52 單線閘門 × 自適應 σ 波動率目標 cap 1.5 × 10pp＋5% 取整執行層</b>（美台四腿、各市場 50/50 獨立組合，曝險可上到 150%）。真波動率目標＝只在平靜 regime σ_t/RV &gt; 1 時借錢加碼、波動一高自動降回。每交易日台股／美股收盤後更新，<b>可行動變化以 email 提醒</b>（任一腿閘門翻轉，或今日目標與現持執行層差 ≥ 10pp）。cap 1.0（100%）版保留為<a href="/long-track-w52-adaptive/leverage.html">影子對照頁</a>供複審對照。
+  <div style="font-size:.86rem">本頁是<b>{FREEZE_DATE} 凍結、2026-07-18 起用戶正式採用的實單主系統</b>：<b>W52 單線閘門 × 自適應 σ 波動率目標 cap 1.5 × 執行層 A2（20pp 門檻＋10% 取整＋clamp 150%，2026-07-22 升格）</b>（美台四腿、各市場 50/50 獨立組合，曝險可上到 150%）。真波動率目標＝只在平靜 regime σ_t/RV &gt; 1 時借錢加碼、波動一高自動降回。每交易日台股／美股收盤後更新，<b>可行動變化以 email 提醒</b>（任一腿閘門翻轉，或今日目標與現持執行層差 ≥ 20pp）。cap 1.0（100%）版保留為<a href="/long-track-w52-adaptive/leverage.html">影子對照頁</a>供複審對照。
   <br><br><b>誠實紀律（兩點白紙黑字）</b>：<b>①</b> 用戶決策為<b>原「實單前複審關卡」不再作為前置條件</b>，改為<b>上線後回顧點（60 個追蹤交易日，或首次 ≥ 10% 組合回撤事件）</b>——即先上實單、再於回顧點檢驗水下體驗是否符合預期。<b>②</b> <b>美股採 cap 1.5 是「知情決策」</b>：研究顯示<b>美股槓桿的 Calmar 較低（cap 1.5 ＜ cap 1.0）</b>、任何融資利差下都不划算，用戶<b>選擇兩市場一致性與報酬（而非風險調整最優）</b>，明知美股這一腿是為對稱操作付的代價。<b>此外</b>：槓桿放大所有模型誤差、深熊未實測（見 2330 長窗與誠實揭露）、台股須用期貨非融資、實際峰值建議壓 140% 留保證金緩衝。</div>
+</div>
+
+<div class="oos-banner" style="border-color:var(--amber-text);background:var(--amber-bg)">
+  <span class="tag-loud" style="background:var(--amber-text)">2026-07-22 規則切換・執行層升格 A2・請對帳一次實際持倉</span>
+  <div style="font-size:.86rem"><b>執行層今日由 10pp 門檻＋5% 取整，升格為 A2（20pp 門檻＋10% 取整＋取整後 clamp 於 150%）。</b>規則變更後，本頁 <code>band_exec_replay</code> 對全史重放的 executed（現持）序列會改變，<b>今日各腿「現持」可能與你帳戶實際持倉不同</b>。請以本頁<b>今日目標持股率</b>（各腿與組合曝險）<b>對帳一次實際持倉</b>；此後每交易日回歸常規（僅在 |目標−現持|≥20pp 或閘門翻轉時提醒）。<b>採用理由＝調整頻率下降</b>（美股 28.4→12.5 次/年、台股 26.8→12.3 次/年，約 −55%）；相對基準的 Calmar 變化屬<b>單一路徑執行時點雜訊、非績效宣稱</b>，亦不作為未來繼續加寬門檻的依據。研究證據見 <a href="/backtest/vol_targeting/">波動率目標研究頁</a>（執行層變體 A1/A2/B/C/D）。</div>
 </div>
 
 <div class="dual-stat">
@@ -1080,8 +1097,8 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 ⑤ <b>執行</b>：t 收盤訊號、t+1 收盤生效；成本 7 bps／邊。<br>
 ⑥ <b>最終權重</b> = 0.5 × 閘門(0/1) × 套袖權重，每市場兩腿各自計算。<br>
 ⑦ <b>資料揭露</b>：yfinance auto-adjust（還原股價）；0050.TW 2014-01-02 幻影分割壞 bar 由腳本自動修復（回溯縮放，門檻單日 ±40%，台股漲跌停 ±10% 不可能誤觸）；0050 免費歷史約 2009 起。台股 2330 佔 0050 約五成，50/50 組合等效台積電曝險 ≈ 75%，非分散組合。<br>
-⑧ <b>執行層（{FREEZE_DATE} 與規則同日凍結）</b>：|目標 − 現持| ≥ 10pp 才調整，調整取整至 5% 格；<b>回測主數字含此執行層</b>，與追蹤操作同規則（兩市場各自獨立重放）。<br>
-<span style="color:var(--muted);font-size:.78rem">閘門為週頻（僅週五可能翻轉），套袖 RV20／σ_t 為日頻，故本頁每交易日更新（台股收盤後、美股收盤後各一次，date-keyed 冪等）。<b>本頁為實單主系統、發 email 提醒</b>——可行動變化＝任一腿閘門翻轉，或今日目標與現持（執行層 executed）差 ≥ 10pp。cap 1.0（100%）版保留為<a href="/long-track-w52-adaptive/leverage.html">影子對照頁</a>供複審對照。</span>
+⑧ <b>執行層 A2（規則凍結 {FREEZE_DATE}；執行層 {EXEC_UPGRADE_DATE} 升格）</b>：|目標 − 現持| ≥ 20pp 才調整，調整取整至 10% 格、再 clamp 於 50×cap（cap1.5→75pp／組合 150%）；<b>回測主數字含此執行層</b>，與追蹤操作同規則（兩市場各自獨立重放）。舊 10pp/5% 為 2026-07-17～2026-07-22 規則，已降為研究對照。升格理由＝調整頻率下降（見下方變更註記），Calmar 相對變化屬單一路徑執行時點雜訊、非績效宣稱。<br>
+<span style="color:var(--muted);font-size:.78rem">閘門為週頻（僅週五可能翻轉），套袖 RV20／σ_t 為日頻，故本頁每交易日更新（台股收盤後、美股收盤後各一次，date-keyed 冪等）。<b>本頁為實單主系統、發 email 提醒</b>——可行動變化＝任一腿閘門翻轉，或今日目標與現持（執行層 executed）差 ≥ 20pp。cap 1.0（100%）版保留為<a href="/long-track-w52-adaptive/leverage.html">影子對照頁</a>供複審對照。</span>
 </div>
 </div>
 
@@ -1099,7 +1116,7 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 <div class="card" style="border:2px solid var(--amber-border);background:var(--amber-bg)">
 <h3 style="color:var(--amber-text)">誠實揭露（採用前必讀）</h3>
 <div class="rule-list" style="font-size:.82rem">
-① <b>槓桿放大所有模型誤差</b>：W52 樣本內迭代、自適應慢變數、5% 取整路徑成分——全被 ×1.5。<br>
+① <b>槓桿放大所有模型誤差</b>：W52 樣本內迭代、自適應慢變數、10% 取整路徑成分——全被 ×1.5。<br>
 ② <b>深熊退化的直接證據</b>：含 2008 的 2330 長窗裡 W52 × 自適應 Calmar <b>0.433 反而略劣於 score5×自適應 0.441</b>；快閘門對慢熊誘多抵抗較弱，<b>加槓桿只會更痛</b>。<br>
 ③ <b>台股數字含取整路徑成分＋ 2014+ 無崩盤樣本</b>：cap 1.5 Calmar 1.198 不宜當「穩定勝出」；組合層級遇 2008 級深熊的槓桿行為未測試。<br>
 ④ <b>台股須用期貨、峰值壓 140%</b>：融資 6～7% 不可行；但注意——真波動率目標借得少，融資利差不是主殺手（見敏感度表），用期貨的真正理由是保證金／強制平倉機制。<br>
@@ -1171,9 +1188,10 @@ window.addEventListener('hashchange', function(){{
 # change detection
 # ---------------------------------------------------------------------------
 def detect_changes(prev: dict, sigs: dict) -> list:
-    """可行動變化＝任一腿閘門翻轉，或 |今日目標 − 現持（執行層 executed_pct）| ≥ 10pp。
-    改為與現持比（非與前一日目標比），才不會漏掉緩慢累積的漂移；alert 顯示取整後的
-    建議動作（現持 → round(目標/5)×5）。訊息標市場前綴（美股／台股）。"""
+    """可行動變化＝任一腿閘門翻轉，或 |今日目標 − 現持（執行層 executed_pct）| ≥ 20pp
+    （執行層 A2，2026-07-22 升格；門檻同步 10pp→20pp）。改為與現持比（非與前一日目標比），
+    才不會漏掉緩慢累積的漂移；alert 顯示取整後的建議動作（現持 → min(round(目標/10)×10, 50×cap)）。
+    訊息標市場前綴（美股／台股）。"""
     if not prev or "tickers" not in prev:
         return []
     out = []
@@ -1184,9 +1202,9 @@ def detect_changes(prev: dict, sigs: dict) -> list:
         gate_flip = bool(pt.get("gate")) != bool(sigs[t]["gate"])
         target = round(sigs[t]["final"] * 100, 1)
         held = pt.get("executed_pct")
-        drift = held is not None and abs(target - held) >= 10.0
+        drift = held is not None and abs(target - held) >= EXEC_BAND
         if gate_flip or drift:
-            new_exec = round(target / 5.0) * 5.0
+            new_exec = min(round(target / EXEC_GRID) * EXEC_GRID, EXEC_CLAMP)
             parts = []
             if gate_flip:
                 parts.append("閘門 " + ("出場→在場" if sigs[t]["gate"] else "在場→出場"))
@@ -1243,7 +1261,7 @@ def main():
         print(f"{m['short']} exec layer: {len(er['events'])} events, current executed " +
               ", ".join(f"{t} {er['last'][t]:.0f}%" for t in m["legs"]))
 
-    # 實單主系統（2026-07-18 起）：可行動變化以 email 提醒（訊號＝cap 1.5 權重的閘門翻轉或 ≥ 10pp）。
+    # 實單主系統（2026-07-18 起）：可行動變化以 email 提醒（訊號＝cap 1.5 權重的閘門翻轉或 ≥ 20pp）。
     if changes:
         last_change_date = data_date
         last_change_desc = "; ".join(c.replace("<b>", "").replace("</b>", "") for c in changes)
@@ -1280,7 +1298,7 @@ def main():
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "data_date": data_date,
         "ruleset_locked_date": FREEZE_DATE,
-        "mechanism": "W52 gate x adaptive σ_t x cap 1.5 (真波動率目標) x exec layer 10pp+5%round (scale 0~150)",
+        "mechanism": "W52 gate x adaptive σ_t x cap 1.5 (真波動率目標) x exec layer A2 20pp/10%round/clamp150 (scale 0~150; upgraded 2026-07-22)",
         "status": "LIVE main system since 2026-07-18 (cap 1.5, both markets; pre-live review gate demoted to post-live review point: 60 tracking days OR first >=10% drawdown); email on actionable change",
         "leverage": "cap 1.5: w = gate x clip(σ_t/RV20, upper=1.5); financing = cash rate + spread 1.5%/yr; TW must use futures not margin; US cap 1.5 = informed decision (research shows US leverage lower Calmar; user chose consistency over risk-adjusted return)",
         "last_change_date": last_change_date,
