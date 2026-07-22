@@ -490,7 +490,15 @@ def series_alerts(item: dict, spec: dict) -> list[dict]:
     key, label, cat = spec["key"], spec["label"], spec["cat"]
     z, pctile = item.get("z"), item.get("pctile")
 
-    if z is not None and abs(z) >= RULES["z_yellow"]:
+    # 移動型規則（move_z／streak）量的是「這根 bar 相對前一根的變動」。若最新 bar
+    # 落後 as_of（lag_days > 0，常見於亞歐指數在美股收盤時窗尚未落地隔日 bar），那個
+    # 變動是前一交易日的舊聞——把它當今日快照的警報會誤導（2026-07-21 實例：n225
+    # 07-17 的 −4.03% 在 07-20／07-21 連發兩天，實際 07-21 亞股 V 反彈 +3%）。
+    # 故移動型警報只在 lag_days == 0（bar 即當日）時發；水位型（pctile／52 週低）
+    # 量的是現值水位，落後 1 根仍近似當前，維持發報。
+    fresh_bar = (item.get("lag_days") or 0) == 0
+
+    if fresh_bar and z is not None and abs(z) >= RULES["z_yellow"]:
         sev = "red" if abs(z) >= RULES["z_red"] else "yellow"
         period = "單日" if spec["freq"] == "d" else "單期"
         vol = "日波動" if spec["freq"] == "d" else "週波動"
@@ -501,7 +509,7 @@ def series_alerts(item: dict, spec: dict) -> list[dict]:
     if pctile is not None and pa in ("high", "both") and pctile >= RULES["pctile_hi"]:
         out.append({"sev": "yellow", "cat": cat, "key": key, "rule": "pctile",
                     "msg": f"{label} 現值 {item['val_fmt']} 進入一年水位前 "
-                           f"{100 - pctile:.0f}%（分位 {pctile:.0f}）"})
+                           f"{100 - pctile:.1f}%（分位 {pctile:.1f}）"})
     if pctile is not None and pa in ("low", "both") and pctile <= RULES["pctile_lo"]:
         out.append({"sev": "yellow", "cat": cat, "key": key, "rule": "pctile",
                     "msg": f"{label} 現值 {item['val_fmt']} 落到一年水位後 "
@@ -510,7 +518,7 @@ def series_alerts(item: dict, spec: dict) -> list[dict]:
         out.append({"sev": "red", "cat": cat, "key": key, "rule": "lo52",
                     "msg": f"{label} 觸及 52 週新低（{item['val_fmt']}）"})
     st = item.get("streak") or 0
-    if abs(st) >= RULES["streak"] and spec["freq"] == "d":
+    if fresh_bar and abs(st) >= RULES["streak"] and spec["freq"] == "d":
         out.append({"sev": "yellow", "cat": cat, "key": key, "rule": "streak",
                     "msg": f"{label} 連續 {abs(st)} 日{'上漲' if st > 0 else '下跌'}"})
     return out

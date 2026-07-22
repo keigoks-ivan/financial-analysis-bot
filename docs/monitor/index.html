@@ -622,11 +622,16 @@ footer.imq-foot a{color:var(--text-secondary)}
         var rowCls = it.stale ? "stale" : (absZ >= 3 ? "hl-red" : (absZ >= 2 ? "hl-yellow" : ""));
         var tr = el("tr", rowCls);
 
+        var lag = it.lag_days || 0;
         var name = esc(it.label);
-        if (it.stale) name += ' <span class="stale-note">as of ' + it.date + "</span>";
+        // stale（lag > 門檻）已整列淡化；lag 1~門檻 之間的列先前全彩顯示、看起來像今日
+        // 數據（2026-07 亞歐指數在美股收盤時窗慢 1~4 根 bar 的實例）——這裡對 lag≥1
+        // 一律標「as of 日期」並把日變動欄淡化，讓「這格其實是前一交易日」對使用者可見。
+        if (it.stale || lag >= 1) name += ' <span class="stale-note">as of ' + it.date + "</span>";
         tr.appendChild(el("td", "", name));
         tr.appendChild(el("td", "mono", esc(it.val)));
-        tr.appendChild(el("td", "mono " + it.dir, esc(it.chg)));
+        var chgCls = "mono " + it.dir + ((!it.stale && lag >= 1) ? " stale-note" : "");
+        tr.appendChild(el("td", chgCls, esc(it.chg)));
 
         var zCls = absZ >= 3 ? "huge" : (absZ >= 2 ? "big" : "");
         tr.appendChild(el("td", "", it.z === null ? '<span class="z-chip">—</span>'
