@@ -13,8 +13,17 @@ name: Daily Market Monitor
 # US session).  Zero-churn write means a run with no new settled bar (US holiday)
 # produces an empty diff and no commit, so this is idempotent.
 on:
-  # 2026-07-18 已整合進 daily-us-close.yml（時段帶 A），排程停用；保留手動觸發。
-  # 原排程：cron "30 23 * * 1-5"（23:30 UTC Mon-Fri = 台北 07:30 Tue-Sat）
+  # 2026-07-18：當日快照產出（帶 A）已整合進 daily-us-close.yml（21:45 UTC）。
+  # 本檔保留一個獨立班次專職「亞歐指數補跑」——
+  # WHY：Yahoo 對 ^TWII/^N225/^KS11/^HSI/^GDAXI/^STOXX50E 的「已收盤日 bar」要
+  # T+18~28h 才併入歷史，21:45 UTC 的當日快照永遠抓不到當日亞歐 bar（頁面顯示前
+  # 一交易日值、方向可能與真實相反——2026-07-21 亞股 V 反轉日實例）。本班次於次日
+  # 07:00 UTC（＝台北 15:00，安全越過 T+24h 落地窗）重跑 build_monitor：此時
+  # as_of＝min(上一美股收盤日, today_et)＝上一美股收盤日不變，亞歐當日 bar 已落地，
+  # 於是把同一份 as_of 快照的亞歐列補正。zero-churn：無新 bar 則空 diff 不 commit。
+  # 與 daily-us-close（21:45 UTC 出新快照）分工、時段相隔 ~9h 不撞。
+  schedule:
+    - cron: "0 7 * * 2-6"   # Tue-Sat 07:00 UTC = 台北 15:00，補跑前一美股收盤日的亞歐 bar
   workflow_dispatch:
 
 permissions:

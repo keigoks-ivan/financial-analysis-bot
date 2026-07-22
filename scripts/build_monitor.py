@@ -317,6 +317,83 @@ def fetch_yf(tickers: list[str]) -> dict:
     return out
 
 
+# ───────────────────────────────────────────────────────────────────────────
+# 商品期貨換月修正（roll adjustment）
+#
+# yfinance 的 `XX=F` 是「連續前月」序列，換月日會從舊前月合約跳到新前月合約，
+# 造成一根假跳空（2026-07-21 實例：玉米 ZC=F 從 Sep 合約 449.5 跳到 Dec 合約
+# 476.5＝+5.95%，實為換月價差非行情，異常引擎誤發 4.7σ 紅色警報）。顯示的「價位」
+# 是真的（Dec 玉米就是這價），錯的是「日變動」。
+#
+# 辨識法（不需維護逐商品月循環表、純從資料自我校正）：只在最新日變動為異常大
+# （|chg| ≥ ROLL_RET_MIN）時觸發——列舉該根 root 未來 ~9 個月的所有月碼候選具體
+# 合約（不存在的月份 yfinance 自動跳過），批次抓；用「最新收盤最接近連續序列最新
+# 收盤」找出當前活躍合約，取其「自身」日報酬。活躍合約自身報酬 << 連續序列報酬
+# → 判定換月（連續跳空大半是換月價差），用自身報酬覆寫 chg/z；兩者相近 → 真行情，
+# 保留（真 limit-up 不誤殺）。找不到可對應合約且移動達紅色級 → 保守抑制警報並標記。
+# ───────────────────────────────────────────────────────────────────────────
+MONTH_CODES = "FGHJKMNQUVXZ"          # Jan..Dec 期貨月碼
+FUT_SUFFIX = {                         # yf root → 候選交易所後綴（試出哪個有資料）
+    "CL": ["NYM"], "BZ": ["NYM"], "NG": ["NYM"], "PL": ["NYM"], "PA": ["NYM"],
+    "GC": ["CMX"], "SI": ["CMX"], "HG": ["CMX"], "ALI": ["CMX"],
+    "ZC": ["CBT"], "ZW": ["CBT"], "ZS": ["CBT"],
+}
+ROLL_RET_MIN = 3.0        # |日變動%| ≥ 此值才觸發換月檢查（省成本；小移動不可能誤報紅色）
+ROLL_RET_SUPPRESS = 5.0   # 無法確認活躍合約且移動達此級（紅色級）→ 抑制警報
+ROLL_CONFIRM_TOL = 0.005  # 具體合約最新收盤與連續序列最新收盤的相對誤差容忍（0.5%）
+ROLL_FRAC = 0.5           # 活躍合約自身報酬 < 連續報酬 × 此比例 → 判換月
+
+
+def roll_check(yf_symbol: str, cont_last: float, cont_ret_pct: float,
+               as_of_dt) -> tuple | None:
+    """回傳 (kind, real_ret_pct)：kind ∈ {'roll','real','unconfirmed'}；
+    非商品期貨或抓取失敗回 None（caller 不動）。"""
+    import logging
+    import pandas as pd
+    import yfinance as yf
+    root = yf_symbol.split("=")[0]
+    sufs = FUT_SUFFIX.get(root)
+    if not sufs or not cont_last or cont_ret_pct is None:
+        return None
+    cands = []
+    for k in range(0, 9):
+        mm = as_of_dt.month + k
+        yy = as_of_dt.year + (mm - 1) // 12
+        code = MONTH_CODES[(mm - 1) % 12]
+        for suf in sufs:
+            cands.append(f"{root}{code}{yy % 100:02d}.{suf}")
+    lvl = logging.getLogger("yfinance").level
+    logging.getLogger("yfinance").setLevel(logging.CRITICAL)  # 不存在月份的 404 是預期噪音
+    try:
+        df = yf.download(cands, period="8d", interval="1d", auto_adjust=True,
+                         progress=False, threads=True, group_by="column")
+    except Exception as e:
+        warn(f"roll_check {yf_symbol}: 具體合約抓取失敗 {e}")
+        return None
+    finally:
+        logging.getLogger("yfinance").setLevel(lvl)
+    if df is None or len(df) == 0:
+        return None
+    close = df["Close"] if isinstance(df.columns, pd.MultiIndex) else df
+    best, best_diff = None, 9.9
+    for c in close.columns:
+        s = close[c].dropna()
+        if len(s) < 2:
+            continue
+        lc = float(s.iloc[-1])
+        diff = abs(lc - cont_last) / cont_last if cont_last else 9.9
+        if diff < best_diff:
+            best_diff, best = diff, (float(s.iloc[-1]), float(s.iloc[-2]))
+    if best is None or best_diff > ROLL_CONFIRM_TOL:
+        return ("unconfirmed", None)
+    lc, pc = best
+    real = (lc / pc - 1) * 100 if pc else None
+    if real is None:
+        return ("unconfirmed", None)
+    kind = "roll" if abs(real) < abs(cont_ret_pct) * ROLL_FRAC else "real"
+    return (kind, round(real, 2))
+
+
 def fetch_fred(series_id: str) -> list | None:
     """FRED CSV endpoint（免 key），回傳 [(date_iso, val), ...] 或 None。"""
     import requests
@@ -674,6 +751,28 @@ def main() -> int:
                           else "no data from source")
                 gaps.append({"key": key, "label": sp["label"], "reason": reason})
             continue
+
+        # 商品期貨換月修正：連續序列出現異常大日變動時，用活躍具體合約自身報酬辨識
+        # 「換月假跳空」vs「真行情」，換月則覆寫 chg/z（值 last 不動＝真實價位）。
+        st["roll_note"] = None
+        if (sp["cat"] == "commodities" and sp["src"] == "yf"
+                and st["chg"] is not None and abs(st["chg"]) >= ROLL_RET_MIN):
+            res = roll_check(sp["ticker"], st["last"], st["chg"], as_of_dt)
+            if res:
+                kind, real = res
+                if kind == "roll":
+                    new_z = (round(st["z"] * real / st["chg"], 2)
+                             if st["z"] is not None and st["chg"] else None)
+                    info(f"{key}: 換月修正 連續 {st['chg']:+.2f}% → 活躍合約自身 "
+                         f"{real:+.2f}%（z {st['z']}→{new_z}）；抑制假警報")
+                    st["chg"], st["z"], st["streak"] = real, new_z, 0
+                    st["roll_note"] = "換月調整（連續序列跳空為換月價差，已改用活躍合約自身報酬）"
+                elif kind == "unconfirmed" and abs(st["chg"]) >= ROLL_RET_SUPPRESS:
+                    warn(f"{key}: 日變動 {st['chg']:+.2f}% 無法以具體合約確認（疑換月）"
+                         f"——抑制警報")
+                    st["z"] = None
+                    st["roll_note"] = "疑換月未確認，暫抑警報"
+
         st["val_fmt"] = fmt_val(st["last"], sp)
         st["chg_fmt"] = fmt_chg(st["chg"], sp["unit"])
         if st["chg"] is None:
@@ -730,7 +829,7 @@ def main() -> int:
                          "hi52": it["hi52"], "lo52": it["lo52"],
                          "streak": it["streak"], "spark": it["spark"],
                          "date": it["date"], "stale": it["stale"],
-                         "lag_days": it["lag_days"]})
+                         "lag_days": it["lag_days"], "roll_note": it.get("roll_note")})
         categories.append({"key": cat_key, "label": cat_label, "items": rows})
 
     latest = {
