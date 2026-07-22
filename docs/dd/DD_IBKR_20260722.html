@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="dd-schema-version" content="v14.12">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interactive Brokers (IBKR) 深度研究 DD · v14.12 · 2026-07-22</title>
+<script id="dd-meta" type="application/json">
+{
+  "ticker": "IBKR",
+  "schema": "v14.12",
+  "date": "2026-07-22",
+  "price_at_dd": 94.42,
+  "signal": "B",
+  "trap": "🟢",
+  "trap_label": "🟢 非陷阱",
+  "moat": "A",
+  "val": "🟠",
+  "ma": "✅",
+  "fpe_fy2": 31.5,
+  "pct_5y": 85.0,
+  "peg_fy2": 2.10,
+  "upside_short_pct": 2.0,
+  "upside_mid_pct": 12.0,
+  "stress": {"pass": 2, "total": 2},
+  "moat_score": 9.0,
+  "growth_durability": 7.0,
+  "quality_score": 8.0,
+  "ai_risk": "🟢",
+  "long_term_confidence": "高",
+  "verdict": "B",
+  "oneliner": "Q2 帳戶 +34%/客戶權益 $930B +40%/DARTs 4.8M +36%/稅前 77%/NII +23%（量增抵 −70bp 降息）；A 級護城河但估值🟠 Fwd PE 31.5x（FY27）·5Y 分位 85%·PEG 2.1·近 52 週高；H2 降息壓 NII（−$81M/25bp）；共識 ~$95≈現價無安全邊際；觀望等回 22-25x（$65-75）或 NII 韌性證明",
+
+  "dca_verdict": "觀望",
+  "dca_role": "追蹤",
+  "moat_trend": "→",
+  "runway_post_y5": "🟡",
+  "ev5y_pct": 39.0,
+  "irr_base_pct": 7.0,
+  "max_dd_pct": -45.0,
+  "asym_ratio": 3.0,
+  "bull_5y_price": 175.0,
+  "bear_5y_price": 58.0,
+  "p_bull_pct": 25.0,
+  "p_bear_pct": 25.0,
+  "archetype": "金融",
+  "rearm_trigger": "Fwd PE 回 22-25x（~$65-75）或 NII 經降息週期證明韌性（量增抵消，如 Q2 margin loan +39% 抵 −70bp avg funds）；或回測 Bollinger 中軌 ~$82",
+  "endo_growth_ceiling": 15.0,
+  "capalloc_grade": "B",
+  "moat_execution": 10.0,
+  "moat_pricing_power": 8.0,
+  "upside_5y_pct": 39.0,
+  "industry_clock_phase": "III",
+
+  "catalysts": [
+    {"date": "2026-09-30", "type": "macro", "event": "Fed H2 2026 降息路徑（每 25bp 壓 NII −$81M USD + −$38M 非USD）", "impact": "高", "watch": "若降息加速且季度 NII QoQ 連 2 季下滑（量增未抵）→ H3 NII 韌性削弱、估值倍數重設", "date_precision": "quarter"},
+    {"date": "2026-12-31", "type": "regulatory", "event": "OCC National Trust Bank Charter 營運完成（託管共同基金/ETF，TAM 擴張）", "impact": "中", "watch": "若如期上線 → 託管業務新曲線；延後 → runway 選擇權延遲", "date_precision": "quarter"},
+    {"date": "2026-10-31", "type": "guidance", "event": "Q3 2026 法說（帳戶增速是否守 >30%、DARTs 是否隨市場熱度退潮走平、NII QoQ）", "impact": "高", "watch": "帳戶 YoY 跌破 20% 或 DARTs 連 2 季下滑 → 成長品質拐點", "date_precision": "day"}
+  ],
+  "base_eps_path": {"FY26": 2.60, "FY27": 3.00, "FY28": 3.39},
+  "fy_end_month": 12,
+  "eps_basis": "non-gaap-usd",
+
+  "kill_metrics": [
+    {"metric": "季度 NII QoQ + Fed 路徑", "bear_threshold": "降息週期中季度 NII 連 2 季 QoQ 下滑（量增未抵）→ H3 NII 韌性削弱、估值重設（當前 NII $1.0B +23% YoY、量增仍抵）", "window": "2 季", "source": "IBKR 季報 NII + 管理層 sensitivity 表", "last_status": "ok"},
+    {"metric": "帳戶淨增速", "bear_threshold": "帳戶 YoY 連 2 季跌破 20%（自 ~34%）或客戶權益 YoY 轉個位數 → 結構性複利熄火（當前 +34%）", "window": "2 季", "source": "IBKR 季報帳戶數/客戶權益", "last_status": "ok"},
+    {"metric": "Fwd PE 5Y 分位", "bear_threshold": "現 ~85 分位（Fwd PE 31.5x）；若共識 EPS 下修 + PE 重設回 5Y 中位 ~22x → 股價 $65-75（觀望進場窗重開）", "window": "持續", "source": "5Y Fwd PE 區間", "last_status": "ok"},
+    {"metric": "DARTs / commission 量能", "bear_threshold": "DARTs 連 2 季下滑 + commission/order 走平 → 交易量週期拐點（當前 DARTs 4.8M +36%、$2.64/order）", "window": "2 季", "source": "IBKR 季報 DARTs", "last_status": "ok"}
+  ]
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#1E3A5F;--accent:#3B82F6;--bg:#F8FAFC;--line:#E2E8F0;--mut:#64748B;--stripe:#F1F5F9;}
+  *{box-sizing:border-box;}
+  body{font-family:'Noto Sans TC',system-ui,sans-serif;color:#0F172A;background:var(--bg);margin:0;line-height:1.75;font-size:16px;}
+  .wrap{max-width:1080px;margin:0 auto;padding:24px 20px 120px;}
+  code,.mono{font-family:'IBM Plex Mono',monospace;}
+  h1{font-size:26px;color:var(--ink);margin:8px 0 4px;}
+  h2{font-size:22px;color:#fff;background:var(--ink);border-left:4px solid var(--accent);padding:10px 14px;margin:38px 0 16px;scroll-margin-top:80px;border-radius:2px;}
+  h3{font-size:18px;color:var(--ink);border-left:3px solid var(--accent);padding-left:10px;margin:26px 0 12px;}
+  h4{font-size:15px;color:var(--ink);margin:18px 0 8px;}
+  p{margin:10px 0;}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:14px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.04);}
+  th{background:var(--ink);color:#fff;text-align:left;padding:8px 10px;font-weight:500;font-size:13px;}
+  td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:nth-child(even) td{background:var(--stripe);}
+  .status-bar{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;background:var(--stripe);border-left:4px solid var(--accent);border-right:4px solid var(--accent);padding:14px 12px;margin:14px 0;border-radius:3px;}
+  .status-bar .cell{text-align:center;min-width:96px;}
+  .status-bar .lbl{font-size:11px;color:var(--mut);display:block;}
+  .status-bar .val{font-size:20px;font-weight:700;font-family:'IBM Plex Mono',monospace;}
+  .hypothesis-box{background:#EFF6FF;border-left:4px solid var(--accent);padding:16px 20px;margin:14px 0;border-radius:3px;}
+  .hypothesis-box .thesis{font-size:26px;font-weight:700;text-align:center;color:var(--ink);margin:6px 0 16px;line-height:1.5;}
+  .hypothesis-box ul{margin:0;padding-left:20px;}
+  .hypothesis-box li{margin:7px 0;}
+  .note{font-size:13px;color:var(--mut);background:#fff;border:1px dashed var(--line);padding:10px 14px;border-radius:3px;}
+  .dd-toc{display:flex;flex-wrap:wrap;gap:6px;margin:16px 0 8px;}
+  .dd-toc a{font-size:12px;text-decoration:none;color:var(--ink);background:#E0ECFB;padding:4px 10px;border-radius:14px;}
+  .dd-toc a:hover{background:#c7ddf6;}
+  section{background:#fff;padding:2px 22px 18px;margin:10px 0;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+  .reasoning{background:#F0F9FF;border-left:3px solid #0EA5E9;padding:8px 12px;margin:10px 0;font-size:13px;border-radius:2px;}
+  .beat{background:#DCFCE7;color:#166534;padding:1px 7px;border-radius:3px;font-weight:600;font-size:12px;}
+  .miss{background:#FEE2E2;color:#991B1B;padding:1px 7px;border-radius:3px;font-weight:600;font-size:12px;}
+  .neu{background:#FEF9C3;color:#92400E;padding:1px 7px;border-radius:3px;font-weight:600;font-size:12px;}
+  .trap-box{background:#FFF0E6;border-left:4px solid #F97316;padding:14px 20px;margin:14px 0;border-radius:3px;}
+  .trap-box h3{color:#C2410C;border-color:#F97316;}
+  .assum-box{background:#EFF6FF;border-left:4px solid var(--accent);padding:8px 18px;border-radius:3px;}
+  .decision{padding:6px 22px 18px;border-radius:4px;}
+  #decision.wait{background:#FEF9C3;border-left:4px solid #92400E;}
+  .chip{display:inline-block;padding:6px 20px;border-radius:4px;font-size:18px;font-weight:700;border-left:4px solid;}
+  .chip.wait{background:#92400E;color:#fff;border-color:#78350F;}
+  .chip-sub{font-size:13px;color:#475569;font-style:italic;margin-top:6px;}
+  .contra{background:#FFF7ED;border-left:4px solid #F97316;padding:2px 18px 14px;border-radius:3px;}
+  .premortem{background:#FEF2F2;border-left:4px solid #DC2626;padding:12px 18px;margin:12px 0;border-radius:3px;}
+  .premortem .story{background:#fff;border:1px solid #FECACA;padding:10px 14px;font-style:italic;border-radius:2px;}
+  .maxdd{font-family:'IBM Plex Mono',monospace;font-size:30px;font-weight:700;color:#B91C1C;}
+  .ddbar{height:14px;border-radius:7px;background:linear-gradient(90deg,#22C55E 0%,#22C55E 40%,#F59E0B 40%,#F59E0B 75%,#EF4444 75%,#EF4444 100%);margin:8px 0;}
+  details{background:#F8FAFC;border:1px solid var(--line);border-radius:4px;padding:8px 14px;margin:12px 0;}
+  summary{cursor:pointer;font-weight:600;color:var(--ink);}
+  .src{font-size:12px;color:var(--mut);}
+  .flag-hi{color:#166534;font-weight:600;}.flag-lo{color:#991B1B;font-weight:600;}.flag-mid{color:#92400E;font-weight:600;}
+  .printbtn{position:fixed;right:20px;bottom:20px;background:var(--ink);color:#fff;border:none;padding:10px 16px;border-radius:6px;cursor:pointer;font-size:13px;box-shadow:0 2px 6px rgba(0,0,0,.2);}
+  @media print{.printbtn,.dd-toc,.status-bar{display:none;}details{border:none;}details[open] summary{display:none;}details>*{display:block!important;}}
+  @media(max-width:640px){.status-bar{gap:8px;}.hypothesis-box .thesis{font-size:20px;}h2{font-size:18px;}}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/monitor/">市場監測</a>
+          <a href="/detective/">偵測警報網</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/rotation/">產業輪動</a>
+          <a href="/crowding/">擁擠交易監測</a>
+          <a href="/regime/">大類資產 regime</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/catalyst/">催化劑日曆</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">選股<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/cockpit/">選股主控台</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/research/momentum-5/">Momentum-5</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screeners.html">RS+VCP Screener</a>
+        </div>
+      </div>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">個股總覽</a>
+          <a href="/research/" class="active">個股 DD</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/research/synthesis/">期望落差綜合研判</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/track-record/">裁決實績</a>
+          <a href="/pm/">持倉週掃</a>
+          <a href="/long-track-smh/">長線訊號 SMH</a>
+          <a href="/long-track-tw/">台股長線</a>
+          <a href="/long-track-w52-adaptive/">波動率追蹤</a>
+          <a href="/turtle-sleeve/">商品 Sleeve</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/flow/">投資流程</a>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+<div class="wrap">
+
+<h1>Interactive Brokers Group（IBKR）— 買側深度研究報告</h1>
+<p class="src">資料抓取：2026-07-22（最新股價 $94.42，2026-07-21 收盤）｜最近財報：Q2 2026（2026-07-21 法說）｜DD Schema v14.12｜yfinance 批量採集 + 補充 web_search 8 次 + 隨附 Q2 2026 法說逐字稿（12 頁）</p>
+
+<!-- 頁首儀表板 -->
+<div class="status-bar">
+  <div class="cell"><span class="lbl">統一裁決</span><span class="val" style="color:#92400E">觀望</span></div>
+  <div class="cell"><span class="lbl">倉位角色</span><span class="val">追蹤</span></div>
+  <div class="cell"><span class="lbl">護城河趨勢</span><span class="val">A →</span></div>
+  <div class="cell"><span class="lbl">Y5 後跑道</span><span class="val">🟡</span></div>
+  <div class="cell"><span class="lbl">Max DD</span><span class="val" style="color:#B45309">−45%</span></div>
+  <div class="cell"><span class="lbl">5Y EV／IRR</span><span class="val">+39%／7%</span></div>
+  <div class="cell"><span class="lbl">估值燈</span><span class="val" style="color:#B45309">🟠</span></div>
+</div>
+
+<div class="hypothesis-box">
+<p class="thesis">全世界最低成本、最自動化、最全球的券商——是頂級生意，但現在的價格把未來 5 年的複利先借走了。</p>
+<ul>
+<li><strong>統一裁決 <span style="font-size:22px;color:#92400E">觀望</span></strong>（§14）｜倉位角色：追蹤｜判定理由：A 級護城河 + 34% 帳戶成長 + 77% 稅前利潤＝頂級品質，但 Fwd PE 31.5x（FY27）／5Y 分位 ~85%／PEG 2.1／近 52 週高＝估值🟠，且 H2 降息壓 NII（54% 營收來源），Base 5Y IRR 僅 ~7%/yr（倍數大機率自高位下修）→ 品質對、價格不對</li>
+<li><strong>護城河趨勢 A →</strong>（§7 權威）｜execution 趨勢 加深（規模 × 自動化使單位成本續降、B2B IB 通路上移、China 監管趨嚴使 Tiger/Futu 資產轉入）｜pricing power 趨勢 穩定（低價是策略本質，非提價能力）——彙整為 →（財務 moat-to-numbers 高檔穩定，非明顯擴大）</li>
+<li><strong>Y5 後跑道 🟡（中）</strong>（§6.A''）｜S 曲線 中期｜帳戶跑道長但 EPS 經濟被 NII rate-sensitivity 封頂；trust charter 託管 + 預測市場 + 加密永續為選擇權，非乾淨的第二 S 曲線</li>
+<li><strong>Max DD −45%</strong>（§13c 範圍 −38~−45%，路徑風險 🟡）｜觸發：降息加速壓 NII + 交易熱度退潮 + 高倍數重設同時發生</li>
+<li><strong>5Y 機率加權 EV +39%／IRR 7%/yr</strong>（§11.5）｜Base IRR 7%/yr（三分量 §11.6：EPS +14 / re-rate −7 / 股息 +0.4）｜AR 3.0（不對稱比；但 Base IRR 平庸＝進場時機問題）</li>
+<li><strong>opportunity cost：</strong>觀望＝不動用邊際資金；若組合已持有券商/交易所曝險，IBKR 在此價位的邊際 IRR（~7%）不及等待其自身回落至 22-25x（$65-75）後重進（§14a）</li>
+<li><strong>基本面評級 B（metadata）：</strong>品質 8.0/10（A 級品質但估值時機不到 → B）｜估值燈 🟠｜週線結構 ✅ 強勢（但動能偏熱、近 52 週高）｜陷阱定性 🟢（詳見附錄 A）</li>
+<li><strong>長期持有信心：高</strong>（附錄 A I，可抱 5-10 年的頂級生意；「高信心」是對公司、不是對此價位的進場）｜建議持有年限：長期 5-10 年（若以合理價進場，§14c）</li>
+<li><strong>Inception DD：</strong><code>DD_IBKR_20260615.html</code>（2026-06-15）— 累積漂移對照基準</li>
+<li><strong>下次年度對照倒數：</strong>2027-06-15（距今 328 天）— Inception + 365 天</li>
+</ul>
+</div>
+<p class="note"><strong>讀法：</strong>本份報告的人面對結論是「統一裁決 觀望」（§14）。這不是對公司品質的否定（trap 🟢、moat A、long-term confidence 高）——而是對「此價位進場的風險報酬」的否定。等估值回落或 NII 韌性證明後進場窗重開。組合佔比由 portfolio-manager skill 決定。</p>
+
+<nav class="dd-toc">
+<a href="#s1">§1 結論</a><a href="#s2">§2 序章</a><a href="#s3">§3 論點</a><a href="#s4">§4 財報</a><a href="#s45">§4.5 逐字稿</a><a href="#s5">§5 門檻</a><a href="#s6">§6 成長</a><a href="#s7">§7 護城河</a><a href="#s8">§8 財務</a><a href="#s9">§9 產業</a><a href="#s10">§10 治理</a><a href="#s11">§11 估值</a><a href="#s12">§12 矛盾</a><a href="#s13">§13 pre-mortem</a><a href="#decision">§14 決策</a><a href="#s15">§15 複審</a><a href="#appA">附錄 A 擇時</a>
+</nav>
+
+<!-- §1 -->
+<section id="s1">
+<h2>§1｜投資結論詳述</h2>
+<p>本結論基於以下完整分析得出，詳見各章節；人面對裁決見 §14。</p>
+<p><strong>Archetype（QC-43）：金融（broker/交易所 子型），信心高。</strong>財務指紋：IBKR 是資產輕、高 ROE（24%）、77% 稅前利潤的自動化券商——不是 balance-sheet 銀行，故<strong>不套 QC-44 銀行 P/TBV / CET1 gate</strong>；因盈餘乾淨、高品質複利型，§11 估值主錨用 <strong>PE/PEG（品質複利尺）</strong>，並以 <strong>NII rate-sensitivity 作關鍵週期 overlay</strong>（NII 佔營收 54%，每 25bp 降息 −$81M USD NII）。secondary 特徵＝品質複利成長（資產輕高 ROE 平台）。</p>
+<p><strong>一句話彼得林區式：</strong>你在買一台印鈔機——34% 帳戶成長、77% 稅前利潤、無長債、$10.3B 過剩資本、全球跨資產自動化平台——但市場也知道它是印鈔機，給了 31.5 倍前瞻本益比（5Y 分位 ~85%，近 52 週高）。問題不在「這是不是好公司」（是），而在「這個價格是否留了安全邊際」（沒有：共識目標 ~$95 幾乎等於現價、且 H2 降息正對著它 54% 的 NII 營收吹逆風）。</p>
+
+<div class="trap-box">
+<h3>⚠️ 這是價值陷阱嗎？（強制回答題）</h3>
+<table>
+<tr><th>問題</th><th>回答</th></tr>
+<tr><td>最可能的價值陷阱模式</td><td><strong>非陷阱</strong>——這不是低估值陷阱（它是高估值），而是「好公司買貴」的鏡像風險。若硬要對映：唯一結構性 watch 是 NII 的 rate-sensitivity（週期變數），非護城河/盈餘品質衰退。</td></tr>
+<tr><td>支持「這不是陷阱」的最強論據</td><td>衰退信號偵測表 0 亮燈：帳戶 +34%、客戶權益 $930B（+40%）、DARTs 4.8M（+36%）、稅前 77%（連 7 季 >70%）、comp ratio 11%→10%（營運槓桿續現）、無長債、$22.3B 權益。盈餘品質與護城河皆健康向上。這是頂級生意。</td></tr>
+<tr><td>支持「這可能是（估值）陷阱」的最強反駁</td><td>三點：① Fwd PE 31.5x（FY27）／5Y 分位 ~85%／PEG 2.1，近 52 週高——買在估值分布頂端；② H2 2026 降息壓 NII（54% 營收）：每 25bp −$81M USD +（若全球同步）−$38M 非USD，Peterffy 稱 50bp → 淨利 −$200M；③ 共識目標 ~$95 ≈ 現價，Street 也不給安全邊際。Base 5Y IRR 僅 ~7%/yr（倍數自 85 分位下修的拖累）。</td></tr>
+<tr><td>空頭最強一擊</td><td>18 個月內 30%+ 虧損路徑：Fed 2026H2–2027 加速降息（−100~150bp）壓 NII（−$320~480M 年化）、同時交易熱度退潮使 DARTs/commission 走平 → 共識 FY27 EPS 從 $3.00 下修至 ~$2.6，市場把 PE 從 31x 重設回 5Y 中位 ~22x → 股價落 $57-65（−30~−40%）。監測：§3.C R1（NII/rate）+ R2（DARTs）+ §3.F。</td></tr>
+<tr><td>如何在持有期間判斷（估值）風險正在實現？</td><td>領先指標：① Fed funds 路徑 + IBKR 季度 NII QoQ（含管理層 sensitivity 表）——降息週期中 NII 若連 2 季 QoQ 下滑（量增未抵）＝ H3 韌性削弱；② DARTs/commIssIon 連 2 季走平＝量能拐點。</td></tr>
+</table>
+<p><strong>最終定性：🟢 非陷阱</strong>（公司品質無虞；問題純在「估值時機」。trap 🟢 與裁決 觀望 不矛盾——好公司 + 貴價格 = 觀望等更好的進場）。</p>
+</div>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+<tr><td>1</td><td>季度 NII QoQ + Fed funds 路徑 + 管理層 NII sensitivity（$81M/25bp USD）</td><td>§3 H1/H3 / §6 / §8</td><td>🔵 核心假設驗證信號</td><td>降息週期中季度 NII 連 2 季 QoQ 下滑（量增未抵）→ H3 削弱、估值重設、signal B→C 檢視</td></tr>
+<tr><td>2</td><td>帳戶淨增速 + DARTs + 客戶權益 YoY</td><td>§3 H2 / §6</td><td>🔵 長期成長領先信號</td><td>帳戶 YoY 連 2 季跌破 20%（自 ~34%）或客戶權益 YoY 轉個位數 → 結構性複利熄火</td></tr>
+<tr><td>3</td><td>Fwd PE 5Y 分位（進場窗）</td><td>§11 / 附錄 A</td><td>估值時機信號</td><td>Fwd PE 回落至 5Y 中位 ~22x（$65-75）→ 估值燈 🟠→🟡，進場窗重開</td></tr>
+</table>
+<p class="src">§3.F Single Thing（帳戶 YoY 結構性跌破 15% 或 Fed 加速降息使 NII 連 2 季雙位數 QoQ 萎縮）為第 4 個監測點，§15 列出。</p>
+</section>
+
+<!-- §2 -->
+<section id="s2">
+<h2>§2｜序章：第一性原理 × 逆向思考</h2>
+<h3>存在意義</h3>
+<p>Interactive Brokers 解決的長期痛點是：<strong>讓全世界任何一個專業/高淨值交易者，用機構級的成本與工具，在單一帳戶裡交易所有資產類別、所有市場</strong>。Thomas Peterffy 1977 年起用自動化做市，1993 年創立零售券商，把「人工經紀」這門高成本生意重寫成「軟體吞掉券商」——用最少的人（3,265 名員工服務 $930B 客戶權益）、最低的成本、最全的市場覆蓋，在一個利潤率被零佣金壓平的行業裡反向賺 77% 稅前利潤。若 IBKR 明天消失，全球專業交易者會失去成本最低、覆蓋最廣（135+ 市場、股/期/權/FX/債/加密/預測市場）的單一接入點——這是低利潤率行業裡「規模愈大、成本愈低、護城河愈深」的正回饋機器。</p>
+<h4>歷史路徑（護城河如何一步步累積）</h4>
+<table>
+<tr><th>年代</th><th>里程碑</th><th>護城河累積</th></tr>
+<tr><td>1977-1993</td><td>Peterffy 自動化期權做市（Timber Hill）——最早把交易演算法化</td><td>自動化基因</td></tr>
+<tr><td>1993-2000s</td><td>創 Interactive Brokers 零售券商，把做市技術轉為客戶交易平台</td><td>低成本執行引擎</td></tr>
+<tr><td>2000s-2010s</td><td>逐一接入全球 135+ 市場、多資產（股/期/權/FX/債）；IPO 2007</td><td>全球覆蓋 + 監管牌照網</td></tr>
+<tr><td>2020-2024</td><td>帳戶加速（20%→30%+）；加密（UK）、overnight、預測市場 ForecastEx</td><td>資產類別 + 時區擴張</td></tr>
+<tr><td>2025</td><td>4:1 股票分割；IBKR Connector（AI）；加密永續（Coinbase）</td><td>AI 先行 + 加密深化</td></tr>
+<tr><td>2026</td><td>OCC trust charter 初核（託管）；Korea KRX+Nextrade；China 對手監管使資產轉入</td><td>託管新 TAM + B2B 化 + 監管受益</td></tr>
+</table>
+<p>這條路徑的本質：<strong>把「人工經紀」逐步用軟體吞掉，同時把覆蓋面（市場/資產/時區/客群）不斷擴大——規模愈大，單位成本愈低，護城河愈深的複利機器。</strong>38 年的累積無法用資本速成，這是 execution moat 10/10 的根源。</p>
+
+<h3>逆向推演（Munger Inversion）：要在 3 年內虧 50%，最可能的路徑</h3>
+<ul>
+<li><strong>估值均值回歸（最主要路徑）</strong>：這不是基本面崩壞，而是「以 31x 買入的高倍數自 85 分位下修」。歷史對標：<em>2021 高成長金融股 de-rating</em>——好公司但買在倍數頂，即使 EPS 續增，倍數壓縮吞掉數年報酬。</li>
+<li><strong>NII 週期反轉</strong>：Fed 加速降息壓 NII（54% 營收），若交易量同步退潮（無量增對沖）→ 雙引擎同時降速，EPS 增速從雙位數掉到個位數，市場重設倍數。</li>
+<li><strong>管理層失職</strong>：壓成 1 行——$10.3B 過剩資本的配置紀律（過度出價的併購 / 資本長期閒置不回饋）詳見 §10。惟 Peterffy 控股 + 保守文化使此風險偏低。</li>
+<li><strong>價值（估值）陷阱路徑（四選一）</strong>：<strong>盈餘品質型的鏡像</strong>——不是盈餘造假，而是「盈餘品質極高但市場已按最樂觀情境定價」。NII 的 rate-sensitivity 是這裡最需要壓測的變數（§11.5 Bear）。本案無 ⛔ 架構替代（AI agentic trading 是 IBKR 自己在做的受益面，非替代）。</li>
+</ul>
+<p class="src">護城河如何累積，見 §7.D 護城河變遷時間軸。</p>
+</section>
+
+<!-- §3 -->
+<section id="s3">
+<h2>§3｜投資論點錨定</h2>
+<div class="assum-box">
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td>預設持有期</td><td>觀望期不設倉；若以合理價進場則 5-10 年（頂級複利生意）</td></tr>
+<tr><td>主要驅動時間軸的理由</td><td>進場時機由兩件事決定：① 估值回落（Fwd PE 回 22-25x）；② NII 韌性經降息週期證明（量增抵消，如 Q2 已見 margin loan +39% 抵 −70bp）。任一到位 → 進場窗重開。</td></tr>
+<tr><td>此持有期決定哪些是訊號、哪些是噪音</td><td>訊號：帳戶/客戶權益複利、NII QoQ 對 Fed 路徑的韌性、Fwd PE 分位。噪音：單季 DARTs 因 SpaceX IPO/波動的脈衝、單季 sec lending 的 hard-to-borrow 特殊名。</td></tr>
+</table>
+</div>
+
+<h3>B｜三個核心假設 + 三層時間軸</h3>
+<table>
+<tr><th>#</th><th>核心假設</th><th>2Y 驗證點</th><th>5Y 驗證點</th><th>10Y 驗證點</th><th>數字門檻</th><th>來源</th><th>漂移觸發</th></tr>
+<tr><td>H1</td><td>結構性帳戶複利延續：全球專業/散戶結構性增長 + B2B IB 通路上移 + 跨資產平台化，帳戶維持 >25% 成長、驅動 EPS 從 FY26 $2.60 至 FY28 $3.39</td><td>帳戶 YoY 維持 >25%；客戶權益 YoY >20%</td><td>帳戶基數擴大後 YoY 自然放緩至 15-20% 但客戶權益複利延續</td><td>全球電子券商滲透續升、trust charter 託管 + 新資產類別擴 TAM</td><td>帳戶 YoY >25% / 客戶權益 YoY >20% / FY28 EPS ≥ $3.3</td><td>Q2 26 帳戶 +34%、客戶權益 $930B +40%、Peterffy 重申 >30%（駁 20% 常態說）</td><td>帳戶 YoY 連 2 季 <20% → 削弱；<15% → 反轉</td></tr>
+<tr><td>H2</td><td>NII 韌性：即使 Fed 降息，客戶餘額量增（margin loan、cash）抵消 rate 壓縮，NII 不結構性萎縮</td><td>降息週期中季度 NII 不連 2 季 QoQ 下滑；margin loan/cash 餘額續增</td><td>NII 隨資產基數擴大而長期成長，rate 只是週期波動</td><td>NII 與 commission 雙引擎穿越 rate 週期皆成長</td><td>NII QoQ 不連 2 季負；每 25bp −$81M 由量增抵消</td><td>Q2 26 NII $1.0B +23% YoY（avg funds −70bp 下仍增，量增抵）；sensitivity $81M/25bp USD</td><td>降息中 NII 連 2 季 QoQ 下滑（量增未抵）→ 削弱</td></tr>
+<tr><td>H3</td><td>估值：市場為 34% 帳戶成長 + 77% 利潤的品質付 30x+，且此溢價可維持（不 de-rate）</td><td>Fwd PE 維持 28x+（不跌破 5Y 中上緣）</td><td>倍數隨成長放緩自然回落至 5Y 中位 ~22x（re-rate 為報酬拖累）</td><td>成熟後倍數收斂至優質金融 18-22x</td><td>Fwd PE ≥ 28x（樂觀維持）；本報告 Base 假設回 22x</td><td>賣方共識目標 ~$95-100（≈現價，無安全邊際）；5Y 分位 ~85%</td><td>共識 EPS 下修 + PE 跌破 22x → H3 反轉（進場窗開）</td></tr>
+</table>
+<p class="src">H3 是本案<strong>反向假設</strong>——多數 thesis 賭「re-rate 上行」，本案的誠實情境是「倍數自 85 分位下修」為報酬拖累，這正是觀望的核心。</p>
+
+<h3>B'｜12 個月前報告對照</h3>
+<p><strong>狀態：進場未滿一年</strong>（最早 Inception = <code>DD_IBKR_20260615.html</code>，2026-06-15，距今 37 天）。本欄位將於 2027-06-15 起首次有 12 個月正式對照。</p>
+<p><strong>vs Inception（37 天）快照漂移</strong>：H1 <span class="flag-hi">正向</span>（Q2 帳戶 +34%、客戶權益 +40%，較 Inception 記的複利更強）；H2 <span class="flag-hi">正向</span>（Q2 NII +23% YoY 於 avg funds −70bp 下仍增，證明量增抵消 rate 的韌性——這是 Inception 時最大的疑慮軸，本季獲部分證實）；H3 <span class="flag-mid">中性偏負</span>（股價自 Inception $93.46 微升至 $94.42，估值仍在 ~85 分位、近 52 週高，進場窗未開）。<strong>Inception 裁決為觀望，to-date +1.0%（37 天）——觀望成本近零，前次「太貴」判斷正確（一度 −5.7% 後回升）。</strong></p>
+
+<h3>C｜三個最可能推翻論點的風險（⚡🔥🐢）</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>時間尺度</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td><strong>NII 週期反轉</strong>：Fed 2026H2–2027 加速降息（−100~150bp）壓 NII（−$320~480M 年化），若交易量同步退潮（無量增對沖）→ EPS 增速降、倍數重設</td><td>H2/H3</td><td>🔥 中期（4-6 季）</td><td>Fed funds 路徑、季度 NII QoQ、margin loan/cash 餘額增速、管理層 sensitivity 表</td><td>降息中 NII 連 2 季 QoQ 下滑 → 削弱；EPS 共識連 2 季下修 → 立即重評倍數</td></tr>
+<tr><td>R2</td><td><strong>估值均值回歸</strong>：Fwd PE 自 85 分位 / 31x 下修回 5Y 中位 ~22x（即使 EPS 續增，倍數壓縮吞報酬）</td><td>H3</td><td>🔥 中期（4-6 季）</td><td>Fwd PE 5Y 分位、共識 EPS 修正方向、賣方目標 vs 現價</td><td>PE 跌破 25x 且 EPS 未同步上修 → de-rating 進行中</td></tr>
+<tr><td>R3</td><td><strong>交易量週期 + 成長品質</strong>：DARTs 目前受市場熱度（波動、SpaceX IPO）拉高，退潮則走平；marketing yield 未隨支出提升（成長非來自行銷效率）→ 帳戶增速若減，複利敘事鬆動；China 資產轉入（Tiger/Futu）durability 管理層自認「難說」</td><td>H1</td><td>🐢 長期（2+ 年慢變數）</td><td>DARTs、commission/order、帳戶淨增、marketing yield</td><td>DARTs 連 2 季下滑 + 帳戶 YoY <20% → 成長品質拐點</td></tr>
+</table>
+<table>
+<tr><th>標記</th><th>時間尺度</th><th>應對速度</th><th>觸發大動作</th></tr>
+<tr><td>⚡ 短期</td><td>1-2 季</td><td>季度監控</td><td>連 2 季觸發即行動</td></tr>
+<tr><td>🔥 中期</td><td>4-6 季</td><td>半年回顧</td><td>連 4 季觸發</td></tr>
+<tr><td>🐢 長期</td><td>2+ 年</td><td>跨年度</td><td>≥50% 機率</td></tr>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<table>
+<tr><th>問題</th><th>本標的判斷</th></tr>
+<tr><td>1. 時間軸匹配？</td><td>觀望期主要看「估值回落 + NII 韌性證明」兩觸發 → 高相關</td></tr>
+<tr><td>2. 假設關聯？</td><td>新事件先問撞 H1（帳戶）/H2（NII）/H3（估值）</td></tr>
+<tr><td>3. 邊際方向？</td><td>＋強化 / 0 無關 / －削弱</td></tr>
+<tr><td>4. 閾值判斷？</td><td>達漂移閾值才行動</td></tr>
+</table>
+<p>範例：單季 sec lending 受 SpaceX hard-to-borrow 拉高 → 對三假設皆無關，噪音；降息中 NII 連 2 季 QoQ 下滑 → 撞 H2，行動。</p>
+
+<h3>E｜可執行決策主線預設</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr><td>進場</td><td>Fwd PE 回 22-25x（~$65-75）OR NII 經降息週期證明韌性（量增抵消）OR 回測 Bollinger 中軌 ~$82</td><td>建倉（角色：核心候選/追蹤轉核心），分批</td></tr>
+<tr><td>觀望（現況）</td><td>估值 🟠 + 近 52 週高 + H2 降息未過</td><td>0% 倉，追蹤；等進場觸發</td></tr>
+<tr><td>放棄追蹤</td><td>帳戶 YoY 結構性跌破 15% + NII 結構萎縮（成長熄火）</td><td>移出追蹤池</td></tr>
+</table>
+
+<h3>F｜Single Thing（唯一 binary trigger）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>Single Thing 描述</td><td><strong>帳戶淨增速結構性跌破 15% YoY（自 ~34%），或 Fed 加速降息使季度 NII 連 2 季雙位數 QoQ 萎縮（量增無法抵消）</strong>——即「帳戶複利」或「NII 韌性」任一結構性斷裂。</td></tr>
+<tr><td>為什麼致命</td><td>IBKR 的 30x 倍數建立在「帳戶複利 + NII 隨資產基數成長」雙引擎；任一斷裂 → 成長股敘事瓦解 → 倍數殺回優質金融 18-20x。</td></tr>
+<tr><td>如果發生</td><td>從追蹤池移除（若持有則清倉）；重跑 DD。</td></tr>
+<tr><td>如何監測</td><td>季報帳戶數 YoY + 季度 NII QoQ（含管理層 sensitivity 表）。目前距發生遠：帳戶 +34%、NII +23% YoY。</td></tr>
+<tr><td>機率估計</td><td>未來 12-24 個月 ~15%（帳戶複利與 NII 量增對沖目前都很強）。</td></tr>
+</table>
+<p class="src">§13b pre-mortem 已 cross-check：失敗故事的關鍵觸發＝倍數 de-rate + NII 萎縮，與此 Single Thing 一致（NII 軸），§3.F 不需修正。三者職責：§1 trap 靜態 🟢、§3.C R1-R3 過程風險、§3.F 單點 binary。</p>
+</section>
+
+<!-- §4 -->
+<section id="s4">
+<h2>§4｜即時財報情報（Q2 2026，2026-07-21 法說）</h2>
+<h4>① 最新一季關鍵數字</h4>
+<table>
+<tr><th>指標</th><th>Q2 2026</th><th>YoY / 對照</th><th>備註</th></tr>
+<tr><td>調整後稀釋 EPS</td><td>~$0.64</td><td>vs 共識 ~$0.59</td><td><span class="beat">Beat</span>（yfinance 0q 估 $0.639；正式數字以 release 為準）</td></tr>
+<tr><td>Net revenues（淨營收）</td><td>~$1.79B（record）</td><td>YoY +~21%</td><td>創高</td></tr>
+<tr><td>稅前利潤率</td><td><strong>77%</strong></td><td>連 7 季 >70%</td><td>GAAP=adjusted，產業領先</td></tr>
+<tr><td>NII（GAAP）</td><td>~$1.0B</td><td>+23% YoY</td><td>avg Fed funds −70bp 下仍增（量增抵）</td></tr>
+<tr><td>Commissions</td><td>record</td><td>+30% YoY</td><td>commission/order $2.64（略降）</td></tr>
+<tr><td>DARTs</td><td>4.8M/日</td><td>+36% YoY</td><td>選擇權量 +17%、期貨 +2%、股票 +14%</td></tr>
+<tr><td>客戶帳戶淨增</td><td>+34% YoY</td><td>過去一年 +130 萬戶</td><td>Peterffy 駁「20% 常態」，重申 >30%</td></tr>
+<tr><td>客戶權益</td><td>$930B</td><td>+40% YoY</td><td>新戶 + 交易 + 市場升值</td></tr>
+<tr><td>客戶未投資現金</td><td>$182B（record）</td><td>+27% YoY</td><td>NII base</td></tr>
+<tr><td>comp/營收比</td><td>10%</td><td>vs 11% YoY</td><td><span class="beat">營運槓桿</span>（AI + 自動化）</td></tr>
+<tr><td>過剩資本</td><td>$10.3B</td><td>+$1.1B QoQ</td><td>無長債；firm equity $22.3B（+20%）</td></tr>
+</table>
+<p class="reasoning">口徑注意：IBKR 稀釋 EPS 因「公開公司 vs 合併（IBG Holdings 少數股東）」結構複雜，逐字稿未直接給 EPS。yfinance 合併報表 Net Income 僅 $0.98B（大部分歸少數股東），與公開公司 EPS 不同口徑——估值一律用公開公司 EPS（共識 FY26 $2.60）。<br>→ implication：所有合併 ROE/PE 比率需用公開公司口徑，勿用 yfinance 合併 Net Income 直接算。</p>
+
+<h4>④ 其他 Q2 量化細節（營收品質 + 交易量拆解）</h4>
+<table>
+<tr><th>項目</th><th>Q2 2026</th><th>YoY</th><th>解讀</th></tr>
+<tr><td>Sec lending（GAAP 揭露）</td><td>低於去年</td><td>—</td><td>但「all-encompassing」口徑（含 cash-collateral 利息，現記於 seg cash）＝<strong>$343M（+37% YoY）</strong>——headline GAAP 線看似弱、真實經濟強（含 SpaceX 等 hard-to-borrow 特殊名，Brody 稱 Q3/Q4「難預測」）</td></tr>
+<tr><td>Other fees &amp; services</td><td>$87M</td><td>+40%</td><td>期權 order-flow payments + risk exposure fees 驅動</td></tr>
+<tr><td>Other income（調整後）</td><td>$66M</td><td>—</td><td>—</td></tr>
+<tr><td>Execution/clearing/distribution 成本</td><td>$142M</td><td>+22%</td><td>含 $19M 重啟的 SEC fees（pass-through 無利潤影響）；ex-SEC $108M vs $101M（+7%）＝真實成本溫和</td></tr>
+<tr><td>Gross transactional margin</td><td>83%</td><td>—</td><td>execution/clearing = commission 的 17% → 83% 交易毛利（扣 $29M 非交易成本主要為市場數據）</td></tr>
+<tr><td>Comp &amp; benefits</td><td>$182M</td><td>—</td><td>comp/調整後淨營收 = 10%（vs 11% YoY，營運槓桿）；受 FICA/股票 vesting 稅影響</td></tr>
+<tr><td>Headcount（6/30）</td><td>3,265</td><td>—</td><td>服務 $930B 客戶權益＝每員工 ~$285M（自動化極致）</td></tr>
+<tr><td>Overnight 交易量</td><td>10.9M 筆</td><td>≈3x（vs 3.8M）</td><td>國際投資者「清醒時段交易」——國際帳戶 runway 的結構性 enabler</td></tr>
+<tr><td>交易量拆解</td><td>選擇權 +17%、期貨 +2%、股票股數 +14%（notional 增速「顯著更高」）</td><td>—</td><td>選擇權/期貨皆史上第二高</td></tr>
+<tr><td>公開公司調整後有效稅率</td><td>14.7%</td><td>低於常態</td><td>IBKR 股價上漲對員工股權激勵的稅效應（一次性，非結構）</td></tr>
+</table>
+<p class="reasoning">營收品質亮點：sec lending 的 GAAP vs 真實經濟落差（$343M all-in vs 較弱 GAAP 線）＝模型時要用 all-encompassing 口徑；SEC fee 重啟是機械 pass-through（非成本趨勢惡化）。<br>→ implication：Q2 營收增速的「品質」高（交易量 + 餘額 driven，非一次性），支撐帳戶複利 thesis；但稅率 14.7% 偏低（股價驅動）＝EPS 有一次性順風，正常化稅率下 EPS 略低。</p>
+
+<h4>② Earnings Call 語氣解析（持有期長，語氣屬噪音層，2 行）</h4>
+<ul>
+<li><strong>Guidance vs 共識</strong>：IBKR 不給正式 guidance（一貫）。管理層給關鍵量化：NII sensitivity <strong>±$81M/25bp（USD）+ ±$38M/25bp（非USD）</strong>，baseline Fed funds 3.64%（6/30）；fully rate-sensitive 餘額 $28.4B（vs 一年前 $22.8B）。</li>
+<li><strong>被迴避的問題</strong>：① sec lending Q3/Q4 展望與 SpaceX 貢獻——Brody「難預測」；② DARTs/帳戶與 commission/order 於 130 萬新戶下仍持平的原因——回答偏軼事、未量化；③ 資本回饋（$10.3B 過剩資本卻無股息/回購/併購決策）——全程未觸及，是省略非迴避。</li>
+</ul>
+
+<h4>③ 產業 Imply 萃取</h4>
+<ul>
+<li><strong>產業隱含信號</strong>：commission +30% 且 commission/order 僅略降＝低成本電子券商靠「量 + 帳戶」而非降價搶份額（相對 Schwab/Robinhood 的佣金壓縮敘事有利）；China 監管重手（Tiger/Futu）驅動資產轉入 IBKR＝監管套利型份額移轉。餵入 §9 產業格局。</li>
+</ul>
+</section>
+
+<!-- §4.5 -->
+<section id="s45">
+<h2>§4.5｜隨附研究文獻：產業 read-through</h2>
+<p class="src">隨附文件：Interactive Brokers Q2 2026 Earnings Call 逐字稿（12 頁，2026-07-21）。消化成 IBKR 決策相關 read-through；深度推導留下游章節。</p>
+<h4>① 文件清單</h4>
+<table>
+<tr><th>文件</th><th>作者</th><th>日期</th><th>相關度</th></tr>
+<tr><td>IBKR Q2 2026 法說逐字稿</td><td>Thomas Peterffy（董事長）、Milan Galik（CEO）、Paul Brody（CFO）+ 分析師</td><td>2026-07-21</td><td>高——本檔即 IBKR、H1/H2/H3 三假設當期驗證</td></tr>
+</table>
+<h4>② 產業 / 公司 read-through</h4>
+<table>
+<tr><th>#</th><th>擷取點（含數字）</th><th>影響項</th><th>來源</th><th>信心</th><th>對應假設/章節</th></tr>
+<tr><td>1</td><td>NII sensitivity <strong>±$81M/25bp（USD）+ ±$38M/25bp（非USD）</strong>；baseline Fed funds 3.64%；rate-sensitive 餘額 $28.4B</td><td>NII / 週期</td><td>p.5</td><td>high</td><td>H2／§8／§11.5</td></tr>
+<tr><td>2</td><td>avg Fed funds YoY <strong>−70bp</strong>，但 margin loan 利息 <strong>+39%</strong>、seg cash 利息 +7%（量增抵消 rate 壓縮）</td><td>NII 韌性（關鍵反駁 bear）</td><td>p.4</td><td>high</td><td>H2</td></tr>
+<tr><td>3</td><td>帳戶淨增 +34% YoY；Peterffy 明駁「20% 常態」，重申 >30%</td><td>需求跑道</td><td>p.2,6</td><td>high</td><td>H1／§6</td></tr>
+<tr><td>4</td><td>marketing yield <em>未</em>隨支出提升（成長非來自行銷效率）→ 成長 durability 半開放問題</td><td>成長品質</td><td>p.6</td><td>high</td><td>H1／§6.B</td></tr>
+<tr><td>5</td><td>稅前 77%（連 7 季 >70%）；comp ratio 11%→10%（AI + 自動化營運槓桿）</td><td>margin / 品質</td><td>p.2,4</td><td>high</td><td>§5／§8</td></tr>
+<tr><td>6</td><td>OCC National Trust Bank Charter 初步條件核准（託管共同基金/ETF，2026 年底營運完成）</td><td>需求跑道（TAM 擴張）</td><td>p.2</td><td>high</td><td>H1／§6.A''／§9</td></tr>
+<tr><td>7</td><td>China 監管重手 Tiger/Futu（未牌照 Mainland 獲客）→ 5 月起資產/帳戶「明顯」轉入 IBKR（多為既有帳戶資產移轉，durability「難說」）</td><td>競爭份額</td><td>p.7</td><td>high 事實 / med durability</td><td>§7／§9</td></tr>
+<tr><td>8</td><td>IB（introducing broker）通路上移：從新創轉向成熟 crypto/CFD 商 + 既有零售券商/金融機構外包給 IBKR（B2B 基礎設施化）</td><td>護城河 / 通路</td><td>p.9,10</td><td>high</td><td>§7</td></tr>
+<tr><td>9</td><td>過剩資本 $10.3B（+$1.1B QoQ）；併購 inbound「大幅增加」但「無值得追」；無股息/回購決策討論</td><td>資本配置</td><td>p.6</td><td>high</td><td>§10</td></tr>
+<tr><td>10</td><td>IBKR Connector（Anthropic/OpenAI/xAI）AI 整合，目前 human-in-the-loop（非全自主 agentic），未來規劃自主 + guardrail</td><td>AI 受益 / 產品</td><td>p.10,11</td><td>high</td><td>§6.F／§9</td></tr>
+<tr><td>11</td><td>加密永續（Coinbase）已佔 IBKR 加密量 ~1/3；Korea KRX+Nextrade 首發強勁；overnight 交易 10.9M（≈3x YoY）</td><td>需求跑道（新資產/國際）</td><td>p.2,3,11</td><td>high</td><td>§6.A</td></tr>
+<tr><td>12</td><td>預測市場（ForecastEx/CME/Kalshi 聚合）仍集中在天氣合約，尚未廣泛化（排除運動/娛樂）</td><td>新曲線（近期 niche）</td><td>p.8</td><td>med</td><td>§6.A''</td></tr>
+</table>
+<h4>③ 跨文件分歧裁決</h4>
+<p>單一文件，無跨文件分歧。內部張力：擷取點 2（量增抵消 rate，NII 韌性強）vs 擷取點 1（sensitivity 真實存在，$81M/25bp）——裁決＝<strong>Q2 已證明「溫和降息 + 資產基數快速擴大」下量增能抵 rate；但若 Fed<em>加速</em>降息（−100bp+）疊加交易退潮，量增未必抵得住</strong>。故 §11.5 Bear 保留 NII 壓縮情境（不因 Q2 韌性而消除）。</p>
+<h4>④ 對本公司 thesis 的淨影響（≤80 字）</h4>
+<p><strong>淨方向：＋強化（H1/H2 皆獲證）</strong>。最關鍵單一 read-through：avg funds −70bp 下 NII 仍 +23%＝量增抵消 rate 的韌性被實證——這是空頭「降息殺 NII」論的最強反駁。但估值（H3）未便宜、成長靠量非行銷效率（durability 半開放）＝裁決仍為觀望（等更好的價）。</p>
+</section>
+
+<!-- §5 -->
+<section id="s5">
+<h2>§5｜核心門檻檢核（Munger，金融 broker gate-set）</h2>
+<p><strong>換尺聲明（QC-43 路由）：</strong>IBKR = 金融（broker/交易所 子型）。因<strong>資產輕、高 ROE（24%）、77% 稅前利潤</strong>——非 balance-sheet 銀行，<strong>不套 QC-44 銀行 P/TBV / CET1 / NIM gate</strong>（那是存放款銀行的尺）；改用 broker/品質複利尺：<strong>稅前利潤率 / ROE / 帳戶·客戶權益成長 / NII sensitivity / 過剩資本 / PE·PEG</strong>。這是 QC-43「資產輕金融科技/交易所 → 品質複利尺」的例外路由。</p>
+<table>
+<tr><th>項目（broker 尺）</th><th>達標基準</th><th>符合?</th><th>關鍵數據</th></tr>
+<tr><td>稅前利潤率（穿越週期）</td><td>&gt;40% 即優</td><td>✅✅</td><td>77%（連 7 季 >70%）——產業無對手；comp ratio 10%（營運槓桿）</td></tr>
+<tr><td>ROE &gt; 權益成本</td><td>ROE &gt;15%</td><td>✅✅</td><td>24%（公開公司口徑）</td></tr>
+<tr><td>帳戶 + 客戶權益成長</td><td>雙位數即優</td><td>✅✅</td><td>帳戶 +34%、客戶權益 $930B +40%、現金 $182B +27%</td></tr>
+<tr><td>NII sensitivity / rate 韌性</td><td>量增抵 rate</td><td>✅</td><td>avg funds −70bp 下 NII +23%（量增抵）；但 $81M/25bp 敏感度真實（週期 watch）</td></tr>
+<tr><td>資本安全性</td><td>過剩資本 + 無長債</td><td>✅✅</td><td>過剩資本 $10.3B、無長期債、firm equity $22.3B</td></tr>
+<tr><td>EPS 成長</td><td>&gt;15%</td><td>✅</td><td>FY26→28 EPS CAGR ~14-15%（帳戶 34% 但 EPS 受 rate/margin 稀釋）</td></tr>
+<tr><td>PEG</td><td>&lt;2.0 合理</td><td>🟠</td><td>Fwd PE 31.5x / EPS CAGR ~15% = PEG 2.1（略貴）</td></tr>
+<tr><td>估值分位（PE 5Y）</td><td>&lt;70 分位進場友善</td><td>🟠</td><td>~85 分位（近 52 週高，時機不到）</td></tr>
+</table>
+<p><strong>最大財務弱點：</strong>非公司體質（體質無弱點）——而是<strong>估值時機（85 分位）+ NII 的 rate-sensitivity（週期變數）</strong>。<strong>Munger broker 三維（品質 / 資本 / 成長）：🟢🟢</strong> 全優——唯一不過的是「估值 gate」（PEG 2.1、分位 85）。→ 傳遞至 §7 護城河作定量起點（A 級）。</p>
+
+<h3>§5.G｜商業模式解剖</h3>
+<h4>1. 單位經濟學一張表</h4>
+<table>
+<tr><th>「一單位」</th><th>價</th><th>量</th><th>單位成本</th><th>單位經濟</th></tr>
+<tr><td>一個客戶帳戶</td><td>commission/order $2.64 + NII spread（客戶餘額 × 利差）</td><td>帳戶 +34% YoY、DARTs 4.8M（+36%）</td><td>execution/clearing = commission 的 17%（→ 83% gross transactional margin）；服務成本因自動化極低（3,265 員工/$930B 權益）</td><td>每帳戶邊際利潤極高（77% 稅前）；規模愈大單位成本愈低＝護城河飛輪</td></tr>
+</table>
+<p>IBKR 的一單位＝「一個自動化服務的帳戶」，同時賺兩層錢：交易佣金（量）+ 客戶餘額的淨利息（NII，rate-sensitive）。單位經濟的核心是<strong>自動化使邊際服務成本趨近零</strong>——comp ratio 從 11% 降到 10% 證明帳戶量增未帶來等比成本。這是「規模 → 低成本 → 低價 → 更多帳戶」的正回饋。</p>
+<h4>2. 價值鏈位置 + 單點依賴</h4>
+<p>IBKR 在價值鏈是<strong>整合的自動化券商 + 自營做市傳承</strong>：誰付錢給它＝交易者（佣金）+ 客戶餘額（NII 利差）+ 期權 order-flow（$87M other fees）；它付錢給誰＝交易所/清算（execution cost，僅佣金 17%）。議價權卡點：<strong>對客戶議價力強（成本最低、無人能更便宜）；對 rate 環境無議價力（NII 隨 Fed 走）</strong>——這是唯一的結構性依賴（rate cycle）。B2B IB 通路上移＝IBKR 成為其他 fintech 的後台基礎設施（護城河延伸，§7 引用）。</p>
+<h4>3. 營收品質拆解</h4>
+<p>$1 營收品質：<strong>commission（~交易量 driven，週期性）+ NII（~54%，rate + 餘額 driven，rate 週期性但餘額結構成長）+ other fees（order flow / 市場數據，穩定）</strong>。recurring 程度：NII 的餘額基礎黏（客戶不會頻繁搬 $930B），但利差隨 rate 波動；commission 隨市場活躍度波動。→ 這種「高品質但雙引擎皆帶週期性（交易量 + rate）」的營收，支撐「優質金融成長股」倍數（22-28x）而非「無週期 SaaS」倍數（35x+）——這正是本報告認為 31x 偏貴、Base 假設回 22x 的機制基礎，三處口徑一致。</p>
+</section>
+
+<!-- §6 -->
+<section id="s6">
+<h2>§6｜長期成長性評估</h2>
+<h3>0｜成長品質 7 問儀表板</h3>
+<table>
+<tr><th>#</th><th>拷問</th><th>裁決</th><th>關鍵數字</th><th>詳見</th></tr>
+<tr><td>1</td><td>結構性 vs 週期？</td><td><strong>結構為主</strong>：帳戶/客戶權益複利（全球電子券商滲透）；NII 帶 rate 週期</td><td>帳戶 +34%、權益 $930B +40%</td><td>§6.A / §9</td></tr>
+<tr><td>2</td><td>需多少資本？</td><td>資產輕（自動化）；成長靠帳戶獲取 + marketing</td><td>3,265 員工/$930B 權益</td><td>§6.D</td></tr>
+<tr><td>3</td><td>增量 ROE > 資金成本？</td><td>是（ROE 24% ≫ COE）</td><td>ROE 24%、無長債</td><td>§6.D</td></tr>
+<tr><td>4</td><td>成長變現金 vs 被吃掉？</td><td>變現金（過剩資本 $10.3B 累積）；但未回饋（低股息、無回購）</td><td>過剩資本 +$1.1B QoQ</td><td>§10.E</td></tr>
+<tr><td>5</td><td>競爭者被吸引進來？</td><td>低成本策略反而勸退（無人能更便宜獲利）；HOOD/SCHW 各據一端</td><td>commission/order 僅略降</td><td>§7 / §7.F</td></tr>
+<tr><td>6</td><td>股價反映多少期待？</td><td><strong>偏貴</strong>（Fwd PE 31.5x、5Y 分位 85%、近 52 週高）</td><td>PEG 2.1</td><td>§11.1 / 附錄 A D</td></tr>
+<tr><td>7</td><td>成長下修估值撐得住？</td><td>不完全撐（倍數自 85 分位有下修風險，Base 假設回 22x）</td><td>熄火見 §6.E</td><td>§6.E / §11.5</td></tr>
+</table>
+<p><strong>最弱一題（標紅）：#6/#7</strong>——不是成長品質弱，而是「成長品質極好但已被定價」＋「倍數在高位、下修風險」。這是估值時機問題，非公司問題。</p>
+
+<h3>A｜成長跑道（Runway）</h3>
+<table>
+<tr><th>維度</th><th>數據</th><th>推論</th></tr>
+<tr><td>當前 TAM</td><td>全球專業/散戶交易 + 跨資產（股/期/權/FX/債/加密/預測市場）+ B2B IB 外包</td><td>全球化 + 資產類別擴張雙軸</td></tr>
+<tr><td>可達 TAM 擴張</td><td>trust charter 託管（共同基金/ETF）+ 加密 + 預測市場 + Korea/國際</td><td>多條選擇權</td></tr>
+<tr><td>當前滲透</td><td>1.3M 新戶/年、$930B 客戶權益</td><td>相對全球投資者基數仍低</td></tr>
+<tr><td>成長可持續年數（Runway）</td><td><strong>~7-10 年</strong>（帳戶 >25% 若延續）</td><td>帳戶跑道長，但 EPS 經濟受 rate 封頂</td></tr>
+</table>
+
+<h3>A''｜Y5 後跑道 runway_post_y5</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>S 曲線位置</td><td>中期（成熟高獲利券商 + 全球擴張中）</td></tr>
+<tr><td>Y5 末狀態預估</td><td>帳戶基數大幅擴大但 YoY 自然放緩至 15-20%；trust charter 託管、加密、預測市場貢獻可見但非主體</td></tr>
+<tr><td>是否有下一條 S 曲線</td><td>有選擇權：trust charter 託管（sourced，2026 年底營運，但 TAM 未量化）、預測市場（尚 niche 天氣合約）、加密永續（已佔加密量 1/3）、agentic AI 交易（未上線）——皆選擇權，非明確 sourced 具體 TAM+時點的第二曲線</td></tr>
+<tr><td><strong>runway_post_y5</strong></td><td><strong>🟡 中</strong></td></tr>
+</table>
+<p class="reasoning">判定：帳戶 runway 真實且長，但 ① EPS 經濟被 NII rate-sensitivity 封頂（帳戶 +34% 但 EPS +14-19%）；② 第二曲線（trust charter/預測市場/加密）為選擇權，未有 sourced 具體 TAM + 時點 + 貢獻量化（trust charter TAM 未揭露、預測市場仍 niche）。→ 不達 🟢；但有多條真實選擇權 + 護城河深 → 非 🔴 → 🟡。<br>→ 硬接線：🟡 不觸發 §14 Soft Veto（row 7 為 🔴 才觸發）；§11.5「10Y 二段延伸」免填。</p>
+
+<h3>B｜成長品質判斷</h3>
+<h4>① 有機 vs 無機</h4>
+<p>幾乎純有機——IBKR 極少併購（$10.3B 過剩資本、inbound 併購「無值得追」）。成長 100% 來自帳戶獲取 + 資產類別/地理擴張。<strong>無機成長 ~0%。</strong></p>
+<h4>② 定價 vs 量</h4>
+<table>
+<tr><th>類型</th><th>判斷（含%）</th><th>3 年趨勢</th></tr>
+<tr><td>定價（NII 利差 / commission）</td><td>commission/order $2.64（略降）；NII 利差隨 rate</td><td>定價下行（低成本策略），靠量補</td></tr>
+<tr><td>量（帳戶/交易/餘額）</td><td>帳戶 +34%、DARTs +36%、客戶權益 +40%</td><td>強勁擴大</td></tr>
+</table>
+<p><strong>純量驅動的成長</strong>——這是好事（規模飛輪），但也意味成長對「市場活躍度 + 帳戶獲取效率」敏感。<span class="flag-mid">警示：marketing yield 未隨支出提升</span>（Peterffy 明言 yield「roughly the same」）→ 帳戶成長靠 marketing 線性投入而非效率提升，durability 半開放。</p>
+<h4>③ 營業槓桿</h4>
+<table>
+<tr><th>列</th><th>內容</th></tr>
+<tr><td>增量結構</td><td>comp ratio 11%→10%、稅前 77% 維持——帳戶/量大增但成本未等比 → 結構性營運槓桿（自動化 + AI）</td></tr>
+<tr><td>前瞻結論</td><td>「在帳戶 >25% base 下，自動化使 comp/營收比續降，稅前利潤率維持 75-77%——除非 rate 大降壓 NII 使營收增速掉」</td></tr>
+</table>
+
+<h4>④ 帳戶成長 durability 拆解（H1 核心，半開放問題）</h4>
+<table>
+<tr><th>durability 面向</th><th>Q2 sourced 證據</th><th>方向</th></tr>
+<tr><td>Marketing 效率</td><td>Peterffy 明言：增 marketing 支出但 yield「roughly the same」——成長靠<em>線性投入</em>非效率提升（新 CMO <1 年未見超比例產出）</td><td>🟡 durability 半開放（若 marketing 邊際報酬遞減，帳戶增速可能受限）</td></tr>
+<tr><td>通路組成</td><td>IB 通路從新創轉向成熟機構（crypto/CFD 商、既有零售券商外包）；連 4-5 季雙位數新整合——<em>質</em>在提升</td><td>🟢 通路上移＝更黏、更大單</td></tr>
+<tr><td>地理</td><td>「everywhere globally, all regions, all account types」；Korea 強勁開局；overnight 交易 3x（國際 enabler）</td><td>🟢 全球多引擎</td></tr>
+<tr><td>競爭份額（transitory）</td><td>China 監管使 Tiger/Futu 資產轉入（5 月起），但管理層自認「難說是否持續」——多為既有帳戶資產移轉</td><td>🟡 一次性順風，非結構</td></tr>
+<tr><td>單位不稀釋</td><td>130 萬新戶下，DARTs/帳戶與 commission/order <em>未</em>稀釋（分析師 Moley 提問）——但管理層歸因「強環境 + mix」，未完全量化</td><td>🟡 部分靠當前強市場環境</td></tr>
+</table>
+<p class="reasoning">durability 裁決：帳戶 +34% 的<strong>結構部分</strong>（全球滲透、B2B 上移、通路質提升）真實且持久；但<strong>週期/一次性部分</strong>（強市場環境拉高 DARTs、China transitory 轉入、marketing 線性投入）使「34% 能否延續」半開放。→ §3.B H1 門檻設「>25%」而非「>34%」（留週期成分回落的緩衝）；帳戶 YoY 跌破 20% 才觸發削弱。這也是 §6.0 第 1 題（結構 vs 週期）標紅的原因。</p>
+
+<h3>C｜成長護城河連動</h3>
+<p><strong>強化型</strong>：規模成長 → 單位成本更低 → 可維持最低價 → 吸引更多帳戶（正回饋）。B2B IB 通路上移（成熟金融機構外包給 IBKR）＝護城河從 B2C 延伸到 B2B 基礎設施。無消耗型跡象。</p>
+
+<h3>D｜ROE / 資本效率的長期可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前值</th><th>趨勢</th><th>符合</th></tr>
+<tr><td>ROE（公開公司）</td><td>24%</td><td>→（高檔穩定）</td><td>✅</td></tr>
+<tr><td>稅前利潤率</td><td>77%</td><td>→（連 7 季 >70%）</td><td>✅</td></tr>
+<tr><td>過剩資本累積</td><td>$10.3B（+$1.1B QoQ）</td><td>↑</td><td>✅（但未回饋，§10）</td></tr>
+</table>
+<p><strong>內生成長天花板：</strong>ROE 24% × 高保留率（低派息）→ 內生 book 成長 ~20%+，但 EPS 成長受 NII rate 週期稀釋至 ~15%。共識 EPS CAGR ~15%（FY26→28）在內生天花板內。dd-meta endo_growth_ceiling = 15。</p>
+
+<h3>E｜成長熄火情境壓力測試</h3>
+<table>
+<tr><th>情境</th><th>特徵</th><th>合理 Fwd PE 壓縮至</th><th>估值跌幅</th></tr>
+<tr><td>成長放緩至 20%（帳戶減速）</td><td>仍高成長</td><td>26-28x</td><td>−10~−15%</td></tr>
+<tr><td>Fed 加速降息壓 NII，EPS 增速降至 8-10%</td><td>雙引擎降速</td><td>22x（回 5Y 中位）</td><td>−25~−30%</td></tr>
+<tr><td>降息 + 交易退潮雙殺</td><td>EPS 個位數 + 倍數重設</td><td>16-18x</td><td>−40~−45%（見 §11.5 Bear）</td></tr>
+</table>
+<div class="trap-box">
+<h4>⚠️ 衰退信號偵測表</h4>
+<table>
+<tr><th>信號</th><th>偵測</th><th>數據</th><th>亮燈?</th></tr>
+<tr><td>護城河侵蝕</td><td>利潤率/margin 連 2 季下滑</td><td>稅前 77%（升/穩）</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>帳戶/份額縮</td><td>帳戶 +34%、B2B 上移</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>NII rate-sensitivity（週期，非結構）</td><td>$81M/25bp；量增目前抵</td><td>🟡（週期 watch）</td></tr>
+<tr><td>盈餘品質</td><td>成長靠 marketing 線性投入（yield 未升）</td><td>Peterffy 明言 yield 持平</td><td>🟡</td></tr>
+<tr><td>產業結構衰退</td><td>電子券商 TAM 萎縮</td><td>結構性成長</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>券商倍數系統下移</td><td>SCHW 19x / HOOD 67x 分化</td><td>⬜</td></tr>
+</table>
+<p><strong>價值陷阱風險評級：🟢 低風險</strong>（0 個 🔴；2 個 🟡 皆為週期/durability watch，非結構衰退）。</p>
+</div>
+<p><strong>長期成長性綜合評級：🟢 高確信</strong>（Runway 7-10 年、量驅動結構成長、護城河強化型、ROE 高檔穩定、0 個 🔴 衰退信號）。惟此高評級<em>不改變</em>觀望裁決——裁決由估值時機決定，非成長品質。</p>
+
+<h3>H｜客戶結構</h3>
+<p>高度分散（數百萬帳戶橫跨零售/introducing broker/機構/財顧/對沖基金）。IB 通路上移（成熟金融機構外包）＝客戶質提升。China 監管使 Tiger/Futu 資產轉入（durability 難說）。<strong>客戶結構風險：🟢 分散。</strong></p>
+
+<h3>F｜AI 取代風險評級</h3>
+<p><strong>🟢 AI 受益/免疫</strong>。IBKR 是 AI 內部效率最大受益者（自動化平台 + 客服/合規/onboarding 用 AI 使 headcount-light）；IBKR Connector（Anthropic/OpenAI/xAI 整合）把 IBKR 定位成 agentic finance 的企業整合層（先行者）。交易執行/做市本質不被生成式 AI 取代。評級分數（供品質分）：🟢 = 9。</p>
+
+<h3>I｜分部前瞻建模</h3>
+<table>
+<tr><th>業務段</th><th>權重</th><th>驅動式</th><th>FY+1→FY+3 方向</th><th>對 EPS 成長貢獻</th></tr>
+<tr><td><strong>NII（淨利息）</strong></td><td>~54% 營收</td><td>客戶餘額（cash $182B、margin loan）× 利差（rate-sensitive，$81M/25bp）</td><td>餘額增（+27~40%）抵 rate 降；若 Fed 加速降息則承壓</td><td>最大但週期性；決定 EPS 增速上下限</td></tr>
+<tr><td><strong>Commissions</strong></td><td>~30-35% 營收</td><td>DARTs（4.8M +36%）× commission/order（$2.64）</td><td>隨市場活躍 + 帳戶增；退潮則走平</td><td>成長引擎，週期性</td></tr>
+<tr><td><strong>Other（order flow / 市場數據 / 新產品）</strong></td><td>~10%</td><td>期權 order flow $87M（+40%）、加密、預測市場、trust charter 託管（新）</td><td>選擇權擴張</td><td>選擇權貢獻</td></tr>
+</table>
+<p class="src">EPS 主引擎＝NII（週期）+ commission（週期）——兩者皆帶週期性，是「31x 倍數是否過高」的核心：無週期 SaaS 才配 30x+，雙週期引擎的優質金融配 22-28x。若 Fed 加速降息 + 交易退潮同時，EPS CAGR 從 ~15% 掉到 ~8%。</p>
+
+<h4>NII 引擎量×價 build（54% 營收，最大單一驅動）</h4>
+<table>
+<tr><th>驅動</th><th>量（餘額）</th><th>價（利差）</th><th>Q2 實績</th></tr>
+<tr><td>Margin loan 利息</td><td>margin loan 餘額（+59% avg 貸款推算）</td><td>rate + spread</td><td>利息 <strong>+39% YoY</strong>（avg funds −70bp 下，量增抵 rate）</td></tr>
+<tr><td>Seg cash 利息</td><td>客戶未投資現金 $182B（+27%）</td><td>Fed funds − 付客戶利率</td><td>利息 +7% YoY</td></tr>
+<tr><td>Sec lending（all-in）</td><td>hard-to-borrow 特殊名 + 一般餘額</td><td>借券費</td><td>$343M（+37% YoY）</td></tr>
+<tr><td><strong>build 結論</strong></td><td colspan="3">NII 的「量」＝客戶餘額（結構性快增，+27~40%）；「價」＝利差（rate 週期，$81M/25bp 敏感）。<strong>Q2 證明：只要餘額增速 > rate 壓縮，NII 淨增（+23%）。</strong>賭注＝Fed 降息速度 vs 餘額增速的賽跑。</td></tr>
+</table>
+<h4>Commission 引擎量×價 build（~30-35% 營收）</h4>
+<table>
+<tr><th>驅動</th><th>量</th><th>價</th><th>Q2 實績</th></tr>
+<tr><td>Commission</td><td>DARTs 4.8M/日（+36%）</td><td>commission/order $2.64（略降）</td><td>commission +30% YoY（record）</td></tr>
+<tr><td colspan="4"><strong>build 結論：</strong>commission 純量驅動（+36% DARTs × 略降單價 = +30% 營收）。量受市場活躍度（波動、SpaceX IPO、overnight 3x）拉高——<strong>週期性</strong>，退潮則走平。130 萬新戶下 DARTs/帳戶與 commission/order 未稀釋（分析師 Moley 提問，管理層歸因「強環境 + mix」，未完全量化）。</td></tr>
+</table>
+<p class="src">兩引擎的共同 tell（多失敗向量共同顯影指標）：<strong>季度營收增速</strong>——若 NII（rate）與 commission（交易量）同時降速，季度營收 YoY 從 +21% 掉向個位數＝雙引擎同步熄火的財報級顯影，進 §1 監測。</p>
+</section>
+
+<!-- §7 -->
+<section id="s7">
+<h2>§7｜護城河分析（報告核心）</h2>
+<p>§6 衰退信號 2 盞 🟡（NII rate-sensitivity + marketing yield）——本節回應：兩者皆<em>週期/durability</em> watch，非護城河結構侵蝕；規模飛輪與 B2B 化反而使護城河加深。</p>
+<h3>評分：二維拆解</h3>
+<table>
+<tr><th>維度</th><th>評分</th><th>關鍵佐證</th></tr>
+<tr><td><strong>Execution Moat</strong>（自動化 / 規模 / 全球覆蓋 / 監管基礎設施）</td><td><strong>10 / 10</strong></td><td>38 年自動化傳承、3,265 員工服務 $930B、135+ 市場跨資產、規模 → 單位成本飛輪、B2B IB 基礎設施化——近乎無法複製的執行護城河</td></tr>
+<tr><td><strong>Pricing Power Moat</strong>（成本領導型）</td><td><strong>8 / 10</strong></td><td>「最低成本」本身是一種 pricing power——它能比任何人更便宜還賺 77% 稅前，對手無法在價格上競爭（低成本＝結構性 pricing 護城河，非提價能力）</td></tr>
+<tr><td><strong>合併分</strong>（加權，execution 主導）</td><td><strong>9 / 10</strong></td><td>execution 10 + pricing 8 → 9</td></tr>
+<tr><td><strong>等級</strong></td><td><strong>A</strong></td><td>（9 = A）</td></tr>
+</table>
+<p class="src">dd-meta：moat_execution = 10、moat_pricing_power = 8。</p>
+
+<h3>護城河數字驗收（Moat-to-Numbers）</h3>
+<table>
+<tr><th>指標</th><th>IBKR</th><th>最強同儕</th><th>Spread</th><th>方向</th></tr>
+<tr><td>稅前利潤率</td><td>77%</td><td>SCHW ~40%、HOOD ~50%</td><td>+27~37pp</td><td>維持（結構性領先）</td></tr>
+<tr><td>ROE</td><td>24%</td><td>SCHW ~18%、HOOD 成長中</td><td>+6pp</td><td>高檔穩定</td></tr>
+<tr><td>comp/營收比</td><td>10%</td><td>同業普遍 >20%</td><td>結構性低</td><td>續降（自動化）</td></tr>
+</table>
+<p><strong>護城河數字閘：</strong>合併分 9（≥8），ROE spread 為正且穩定、利潤率利差極大且維持 → 護城河 A 級數字支撐充分，無虛高。</p>
+
+<h3>護城河來源</h3>
+<ul>
+<li><strong>規模 × 自動化（核心）：</strong>38 年軟體化，單位服務成本趨近零——對手要複製需重建整個自動化交易/清算/風控棧，時間 + 資本壁壘極高。</li>
+<li><strong>全球覆蓋：</strong>135+ 市場、多資產、多幣別、監管牌照網——新進者無法快速鋪開（監管 + 整合壁壘，Korea/國際逐一攻）。</li>
+<li><strong>B2B 基礎設施（延伸）：</strong>IB 通路上移，成熟金融機構外包清算/託管/產品給 IBKR——護城河從 B2C 延伸為 fintech 後台。</li>
+</ul>
+
+<h3>競爭鴻溝（mechanism）</h3>
+<p>為何資本充足對手仍難跨越：① <strong>成本壁壘</strong>——IBKR 能以最低價賺 77% 稅前，對手降到同價會虧損（成本結構差距）；② <strong>時間 + 監管壁壘</strong>——38 年自動化 + 135 市場牌照無法用資本速成；③ <strong>飛輪</strong>——規模愈大成本愈低，領先自我強化。</p>
+
+<h3>§7.F｜對手財務深度對照</h3>
+<table>
+<tr><th>指標</th><th>IBKR</th><th>SCHW（Schwab）</th><th>HOOD（Robinhood）</th></tr>
+<tr><td>定位</td><td>最低成本全球自動化券商（專業/高淨值 + B2B）</td><td>綜合零售券商 + 銀行（規模最大）</td><td>零佣金零售 app（散戶/加密）</td></tr>
+<tr><td>稅前/淨利率</td><td>77% 稅前</td><td>~40%</td><td>~50%（改善中）</td></tr>
+<tr><td>ROE</td><td>24%</td><td>~18%</td><td>成長中</td></tr>
+<tr><td>Fwd PE</td><td>31.5x（FY27）</td><td>19x</td><td>67x</td></tr>
+<tr><td>P/TB（或 P/B）</td><td>P/B 7.5x</td><td>P/TB 7.76x</td><td>P/TB 12.96x</td></tr>
+<tr><td>EPS 成長</td><td>~15%（帳戶 34%）</td><td>~20%/16%</td><td>~28%</td></tr>
+</table>
+<p><strong>SCHW：</strong>規模最大、19x、成長 20%——IBKR 品質（77% vs 40% 稅前）與全球性遠勝，故溢價合理，但 31x vs 19x 是 65% 溢價。<strong>HOOD：</strong>67x、成長 28%、加密散戶——投機端；IBKR 品質遠勝但成長略低。<strong>IBKR 落在 SCHW（成熟）與 HOOD（超成長）之間：31x 對 ~15% EPS 成長（PEG 2.1）＝為頂級品質付了 SCHW 之上的溢價，但這個溢價在 5Y 分位 85% 的位置，留給新資金的安全邊際薄。</strong></p>
+<h4>每家對手的策略與經濟體質（≥60 字）</h4>
+<p><strong>Schwab（SCHW）：</strong>用「規模 + 綜合服務（券商 + 銀行 + RIA 託管）」攻擊——最大零售資產基數、cash sweep 賺 spread。經濟體質：~40% 稅前、ROE ~18%，遜於 IBKR 但基數龐大。威脅面：SCHW 主打美國散戶 + RIA，與 IBKR 的「專業/高淨值 + 全球 + B2B」客群<em>重疊有限</em>——兩者更像各據一端而非正面血戰。母體（大型金融）補貼意願強但不需要，SCHW 自身盈利厚。<strong>對 IBKR 護城河威脅：🟡 點對點</strong>（特定散戶客群），不扣分。</p>
+<p><strong>Robinhood（HOOD）：</strong>用「零佣金 + app 體驗 + 加密/預測市場 + everything app」攻擊年輕散戶。經濟體質：~50% 調整後利潤率（改善中）、成長 28%、但客群偏小額高頻散戶（ARPU 低）。67x 倍數＝投機成長定價。威脅面：HOOD 的加密/預測市場與 IBKR 有重疊，但 IBKR 客群（專業/高淨值/機構）與 HOOD（散戶）差異大；HOOD 難進 IBKR 的 135 市場跨資產/機構領域。<strong>對 IBKR 護城河威脅：🟡 點對點</strong>（加密/散戶邊緣），不扣分。</p>
+<p><strong>Tiger/Futu（區域對手，競爭份額讀）：</strong>2026 年 5 月中國監管重手（未牌照 Mainland 客獲取）→ IBKR 自 5 月起見「明顯」broker transfer（帳戶 + 資產）自 Tiger/Futu 轉入。多為既有帳戶資產移轉（非淨新客），管理層自認 durability「難說」。<strong>讀：監管趨嚴使合規者（IBKR）受益於激進區域對手——這是護城河的監管面，但 transitory 需觀察。</strong></p>
+<p><strong>B2B / introducing broker 通路上移（護城河延伸的最重要對手方訊號）：</strong>IB 通路連 4-5 季雙位數新整合上線，且組成從「新創」轉向「成熟 crypto/CFD 商 + 既有零售券商/金融機構」——這些機構<em>選擇把清算/託管/產品外包給 IBKR「以降成本或取得更廣產品」</em>。含義：IBKR 愈來愈是其他 fintech 的<strong>後台基礎設施提供者</strong>，護城河從 B2C 零售競爭延伸到 B2B——這使它與 SCHW/HOOD 的「零售帳戶爭奪」敘事脫鉤，是更難被攻擊的護城河形態。</p>
+
+<h3>D｜護城河變遷時間軸</h3>
+<p>1977 自動化做市 → 1993 創零售券商 → 2000s-2010s 全球市場逐一接入 + 跨資產 → 2020s 加密/預測市場/overnight/Korea + IBKR Connector AI → 2026 trust charter 託管（OCC 初核）+ B2B IB 上移。護城河持續加深（execution ↑），pricing 維持成本領導。</p>
+
+<h3>E｜對手投入對照</h3>
+<p>券商無傳統 capex；投入看技術 + marketing。IBKR marketing 增但 yield 未升（線性投入）；技術是核心（自動化 + AI）。SCHW 規模投入大但成本結構高；HOOD 靠 app + 產品擴張。IBKR 的優勢是「用最少的人做最多的事」。</p>
+
+<h3>護城河趨勢（權威 moat_trend）</h3>
+<table>
+<tr><th>維度</th><th>趨勢</th><th>3 年關鍵事件（回看 + 前瞻）</th></tr>
+<tr><td>Execution Moat 趨勢</td><td>加深</td><td>規模飛輪 + B2B IB 上移 + China 監管使 Tiger/Futu 資產轉入 + trust charter 託管新 TAM</td></tr>
+<tr><td>Pricing Power Moat 趨勢</td><td>穩定</td><td>成本領導維持（commission/order 僅略降），非提價</td></tr>
+<tr><td><strong>權威 moat_trend</strong></td><td><strong>→ holding</strong></td><td>execution 明顯加深，但財務 moat-to-numbers（77% 稅前、24% ROE）已在<em>高檔穩定</em>而非「持續擴大」；pricing 穩定。彙整為 →（護城河極強且穩，未見數字上明顯進一步擴大）。sourced：Q2 comp ratio 11%→10% 是續有營運槓桿，但利潤率已在 77% 天花板附近</td></tr>
+</table>
+<p class="src"><strong>QC-39 閘 A 檢核：</strong>IBKR 在其客群/通路份額未流失（帳戶 +34%、B2B 上移、China 對手資產轉入）→ 閘 A 不觸發下壓。標 → 而非 ↑ 是因財務指標已在極高檔穩定（非後照鏡式高估趨勢）。<strong>硬接線：</strong>moat_trend → 且等級 A → 不觸發 §14 Hard Veto。</p>
+
+<h4>24 個月內護城河威脅（QC-23 三級）</h4>
+<table>
+<tr><th>等級</th><th>變化</th><th>機率</th><th>影響</th></tr>
+<tr><td>🟡 點對點</td><td>HOOD/SCHW 在特定客群（散戶/加密）競爭</td><td>中</td><td>不扣分（IBKR 客群/定位不同）</td></tr>
+<tr><td>🟡 慢變數</td><td>穩定幣/代幣化長期改變交易結算（IBKR 已在做加密/代幣化）</td><td>低（多年）</td><td>不扣分（IBKR 為受益方非受害方）</td></tr>
+<tr><td>🟡 監管</td><td>agentic AI 交易的監管框架（IBKR human-in-the-loop 領先，但全自主需監管）</td><td>中</td><td>不扣分（IBKR 先行 + 合規文化）</td></tr>
+</table>
+<p>本案<strong>無 🔴/⛔ 生態/架構替代</strong>。最大真實變數是 NII 的 rate 週期（§9），非護城河瓦解。</p>
+</section>
+
+<!-- §8 -->
+<section id="s8">
+<h2>§8｜財務品質監測</h2>
+<h3>三年趨勢表</h3>
+<table>
+<tr><th>指標</th><th>2023</th><th>2024</th><th>2025</th><th>Q2 2026</th><th>相對</th></tr>
+<tr><td>稅前利潤率</td><td>~78%</td><td>~84%（whole-IBG OI/rev）</td><td>~77%</td><td>77%（連 7 季 >70%）</td><td>產業無對手</td></tr>
+<tr><td>ROE（公開公司）</td><td>~20%</td><td>~22%</td><td>~24%</td><td>24%</td><td>高檔穩定</td></tr>
+<tr><td>帳戶成長 YoY</td><td>~23%</td><td>~30%</td><td>~32%</td><td>+34%</td><td>加速</td></tr>
+<tr><td>客戶權益</td><td>~$430B</td><td>~$570B</td><td>~$700B</td><td>$930B（+40% YoY）</td><td>複利</td></tr>
+<tr><td>過剩資本</td><td>—</td><td>—</td><td>~$8B</td><td>$10.3B（+$1.1B QoQ）</td><td>累積未回饋</td></tr>
+</table>
+<p class="reasoning">yfinance 合併報表因 IBG Holdings 少數股東結構而失真（Net Income $0.98B 僅公開公司部分）。真實體質看：Total Assets $247B（+36%）、firm equity $22.3B（+20%）、無長債、OCF 巨大（客戶流）。<br>→ implication：估值/ROE 一律用公開公司口徑（EPS $2.60 FY26），勿用 yfinance 合併 NI。</p>
+
+<h3>E｜長期趨勢 + 資本效率 + NII 敏感度追蹤</h3>
+<p><strong>① ROE DuPont（broker 版）：</strong>ROE 24% = 高稅前利潤率（77%）× 資產周轉（交易/餘額）× 槓桿（低，無長債）——驅動力是<em>利潤率</em>（自動化）而非槓桿，品質極高。<strong>② NII 敏感度追蹤（核心）：</strong>每 25bp 降息 −$81M USD NII + −$38M 非USD；baseline Fed funds 3.64%（6/30）；rate-sensitive 餘額 $28.4B（vs $22.8B YoY）。<strong>領先導數 tripwire（NII）：</strong>監測「季度 NII QoQ vs Fed funds QoQ」——降息中若 NII QoQ 下滑幅度 > 餘額增速能抵，即量增未抵 rate 的證偽（早於 EPS 下修 1-2 季）。<strong>③ 資本：</strong>過剩資本 $10.3B 累積（+$1.1B QoQ），無長債——資本極安全但配置被動（§10）。</p>
+<table>
+<tr><th>獲利品質檢驗</th><th>結果</th></tr>
+<tr><td>盈餘 vs 現金流</td><td>🟢 高品質（稅前 77%，現金生成強）</td></tr>
+<tr><td>NII rate 依賴</td><td>🟡 週期 watch（54% 營收 rate-sensitive，但量增抵）</td></tr>
+<tr><td>營運槓桿</td><td>🟢 comp ratio 11%→10%（自動化）</td></tr>
+<tr><td>資本充足</td><td>🟢 過剩 $10.3B、無長債</td></tr>
+</table>
+
+<h4>NII rate-path 情境敏感度（本 thesis 的核心量化）</h4>
+<p>用管理層揭露的敏感度（每 25bp：USD −$81M + 非USD −$38M NII/年）× 客戶餘額增速，估不同 Fed 路徑對 FY27 NII 與 EPS 的衝擊。baseline：Fed funds 3.64%（6/30）、FY26 NII ~$4.0B（54% × ~$7.4B 營收）、rate-sensitive 餘額 $28.4B。</p>
+<table>
+<tr><th>Fed 路徑（H2'26–'27 累計）</th><th>NII 純利率衝擊（年化）</th><th>餘額增量對沖（+27~40% 客戶餘額）</th><th>淨 NII 方向</th><th>對 FY27 EPS 含義</th></tr>
+<tr><td>持平（無降息）</td><td>$0</td><td>+++（量增全額）</td><td>強增</td><td>共識 $3.00 有上行</td></tr>
+<tr><td>溫和 −50bp（Q2 已示範類比）</td><td>−$162M USD（+非USD）</td><td>++（Q2 已證 −70bp 下 NII +23%）</td><td>仍增（量增抵）</td><td>共識 $3.00 大致守住 → H2 韌性確認</td></tr>
+<tr><td>加速 −100bp</td><td>−$324M USD（−$152M 非USD 若全球同步）</td><td>+（量增部分抵）</td><td>持平至微降</td><td>EPS 增速降至 ~10%，倍數承壓</td></tr>
+<tr><td>陡降 −150bp + 交易退潮</td><td>−$486M USD（+非USD）</td><td>−（量增未抵 + commission 走平）</td><td>下滑（連 2 季 QoQ 負）</td><td>共識 FY28 下修至 ~$2.9，§11.5 Bear（倍數重設 16-18x）</td></tr>
+</table>
+<p class="reasoning">關鍵判讀：Peterffy 於 BofA 會議稱「50bp 降息 → 淨利 −$200M/年」（對 ~$0.98B 公開公司淨利 or 更大合併 pretax base）。<strong>Q2 是「溫和降息（−70bp avg）+ 餘額快增」情境的實證——量增抵住了。</strong>但表中「加速 −100bp+」情境量增未必抵，這正是 §11.5 Bear 25% 與觀望的量化根據：不是賭 NII 一定崩，而是「以 85 分位倍數買，一個加速降息情境就能同時壓 NII 與倍數＝雙殺」。<br>→ implication：rearm 條件之一「NII 韌性證明」＝觀察 H2 加速降息情境下 NII 是否仍 QoQ 增（若是，品質溢價可維持，即使股價不便宜也可小倉試）。</p>
+</section>
+
+<!-- §9 -->
+<section id="s9">
+<h2>§9｜產業格局</h2>
+<p><strong>產業時鐘位置（industry_clock_phase = III）：</strong>電子券商/資本市場處 <strong>Phase III（過熱）</strong>——市場位於高位、交易量與帳戶成長熱、券商估值倍數普遍高（IBKR 85 分位、HOOD 67x）。這是「產業順風但估值已反映」的典型 Phase III，與本案裁決（好公司但貴）一致。<span class="src">（無 canonical ID 對映，自判：capex 週期不適用；以市場活躍度 + 估值位置判 III。）</span></p>
+
+<h3>供需 durability 裁決（QC-39）</h3>
+<p><strong>三軸掃描：</strong>① 競爭——IBKR 未流失份額，反而 China 監管使 Tiger/Futu 資產轉入、B2B IB 上移（份額<em>增</em>）；② 結構 durability——全球電子券商滲透是結構性長趨勢（散戶全球化 + 資產類別擴張），但<strong>交易量 + NII 的當前熱度帶週期性</strong>（市場活躍 + rate 高位皆可逆）；③ 其他結構變數——agentic AI 交易（IBKR 受益先行）、加密/代幣化（受益）、監管（IBKR 合規文化受益於對手趨嚴）。<strong>durability 裁決：帳戶複利＝結構性持久；NII + 交易量的當前高水位＝週期性（可逆）</strong>。→ 餵 §11.5：Bear 保留「Fed 加速降息 + 交易退潮」的雙週期壓縮情境。</p>
+
+<h3>利潤池地圖</h3>
+<table>
+<tr><th>價值鏈環節</th><th>代表</th><th>OI 池代理</th><th>方向</th></tr>
+<tr><td>交易所/清算</td><td>ICE/CME/DTCC</td><td>高 margin 寡占</td><td>→</td></tr>
+<tr><td><strong>自動化券商（接入層）</strong></td><td><strong>IBKR</strong>/SCHW/HOOD</td><td>IBKR 77% 稅前（無對手）</td><td>↑（IBKR 藉自動化 + B2B 化擴利潤池份額）</td></tr>
+<tr><td>資產管理/財顧</td><td>各 RIA</td><td>中 margin</td><td>→</td></tr>
+</table>
+<p><strong>利潤池位置/流向結論：↑ 流入</strong>——IBKR 藉最低成本 + B2B 基礎設施化，在券商接入層攫取超額利潤池（77% 稅前 vs 同業 40-50%）。對 Runway 含義：結構性 alpha 來源；但這已被 31x 倍數反映。</p>
+
+<h3>議價權（三段）</h3>
+<p><strong>①對上游（交易所/清算）：</strong>execution cost 僅佣金 17%，議價力來自量。<strong>②對下游（客戶）：</strong>議價力極強（最低成本，客戶無更便宜選項），但對 rate 環境無議價力（NII 隨 Fed）。<strong>③地緣/監管：</strong>全球多牌照；監管是雙面——對手（Tiger/Futu）趨嚴使 IBKR 受益，但 agentic AI/加密的新監管是慢變數。</p>
+
+<h3>營收組成（三維）</h3>
+<p><strong>①業務段：</strong>NII ~54%、commission ~30-35%、other ~10%。<strong>②地區：</strong>全球（Korea/歐洲/亞洲擴張，無單一地區集中）。<strong>③客戶：</strong>數百萬帳戶分散（零售/IB/機構/財顧/對沖基金）。</p>
+
+<h3>F｜逐段 TAM/SAM</h3>
+<table>
+<tr><th>業務段</th><th>段 TAM</th><th>滲透</th><th>value chain 位置 + 風險</th></tr>
+<tr><td>核心經紀（帳戶/交易）</td><td>全球投資者數十億</td><td>低（1.3M 新戶/年）</td><td>接入層；風險＝交易量週期</td></tr>
+<tr><td>NII（客戶餘額）</td><td>$930B 客戶權益 × 利差</td><td>—</td><td>rate 週期敏感</td></tr>
+<tr><td>託管（trust charter，新）</td><td>共同基金/ETF 託管（未量化）</td><td>~0（2026 年底上線）</td><td>新 TAM 選擇權</td></tr>
+<tr><td>新資產（加密/預測市場）</td><td>擴張中</td><td>低</td><td>選擇權；預測市場仍 niche</td></tr>
+</table>
+
+<h3>新曲線選擇權（Y5+ runway 的組成，逐項 sourced 評估）</h3>
+<p>IBKR 的 Y5+ 跑道（§6.A'' 🟡）由多條「選擇權」構成——皆真實但<em>未有 sourced 具體 TAM + 貢獻量化</em>，故不足以把 runway 判 🟢。逐項：</p>
+<table>
+<tr><th>選擇權</th><th>現況（Q2 sourced）</th><th>TAM/貢獻</th><th>成熟度</th></tr>
+<tr><td><strong>National Trust Bank Charter（託管）</strong></td><td>OCC 初步條件核准；託管共同基金/ETF；目標 2026 年底營運完成</td><td>託管業務 TAM 大但<em>未量化</em></td><td>2026 年底上線，最實的新 TAM</td></tr>
+<tr><td><strong>加密永續（Coinbase）</strong></td><td>已佔 IBKR 加密量 <strong>~1/3</strong>；解決 crypto 做空/保證金難題</td><td>加密交易量增量</td><td>已見採用（1/3 占比）</td></tr>
+<tr><td><strong>加密現貨（歐洲）</strong></td><td>本季起歐洲全面提供（UK 自 2024）</td><td>歐洲加密散戶</td><td>擴張中</td></tr>
+<tr><td><strong>預測市場（IBKR Prediction Markets）</strong></td><td>聚合 ForecastEx/CME/Kalshi，smart order routing；<em>排除運動/娛樂</em></td><td>經濟/政治/氣候合約——但目前集中在天氣（擴至颶風登陸），仍 niche</td><td>近期 niche，非大營收驅動</td></tr>
+<tr><td><strong>Korea（KRX + Nextrade）</strong></td><td>首家同時提供 KRX + Nextrade（12hr/overnight ATS）的 e-broker；「非常強勁開局」，週週向上；韓國半導體名高需求</td><td>韓國市場（貢獻未量化）</td><td>強勁開局，未量化</td></tr>
+<tr><td><strong>Agentic AI（IBKR Connector）</strong></td><td>Anthropic/OpenAI/xAI 整合；目前 human-in-the-loop（需人工核准下單）；全自主 agentic 規劃中（含 guardrail/客戶能力測試）</td><td>agentic finance 先行定位</td><td>尚未可貨幣化（人工核准）</td></tr>
+<tr><td><strong>SpaceX IPO 零售接入</strong></td><td>直接提供合格英/歐零售客 SpaceX IPO——peers 通常無法對散戶提供 late-stage 私募配額</td><td>差異化接入（非經常性）</td><td>已提供，事件型</td></tr>
+</table>
+<p class="reasoning">綜合：這些選擇權<strong>方向皆對（IBKR 一貫「擴大提供、壓低收費」）、但無單一可量化的第二 S 曲線</strong>——trust charter 最實（有時點無 TAM）、加密永續已見採用（1/3 占比）、預測市場仍 niche（天氣合約）。故 runway_post_y5 = 🟡 而非 🟢（§6.A''）。<br>→ implication：這些選擇權是「若成」的 upside，不進 Base；Base 的 EPS 複利仍由核心經紀（帳戶 + NII + commission）驅動。</p>
+</section>
+
+<!-- §10 -->
+<section id="s10">
+<h2>§10｜公司治理與資本配置</h2>
+<p><strong>股東結構：</strong>Thomas Peterffy（創辦人）透過 IBG Holdings 控股，公開流通僅 ~25%；機構持股 91%（於流通股）、內部人 2.7%。創辦人主導 + 保守文化＝資本紀律正面，但<strong>控股結構使小股東對資本配置無影響力</strong>（治理慢變數）。接班：Peterffy 高齡，Galik 任 CEO——接班已部分過渡。近 12 個月內部人交易＝例行（無大額異常減持）。</p>
+<p><strong>資本配置軌跡：</strong>IBKR 極保守——<strong>幾乎不併購</strong>（$10.3B 過剩資本、inbound 併購「無值得追」）、<strong>低股息</strong>（$0.35/yr，yield 0.38%，payout ~14%）、<strong>幾乎不回購</strong>（本季法說零回購/股息討論）。過剩資本 $10.3B 持續累積（+$1.1B QoQ）閒置。<span class="flag-mid">這是雙面：保守＝不亂花錢（正面），但也＝大量資本閒置未回饋股東（資本效率次優）。</span></p>
+<p><strong>SBC：</strong>有股權激勵（本季 tax 受 IBKR 股價上漲影響），但相對營收低。</p>
+<table>
+<tr><th>資本配置計分卡</th><th>評估</th><th>過/不過</th></tr>
+<tr><td>M&A ROIC</td><td>極少併購（無值得追）</td><td>N/A（保守，不亂併）</td></tr>
+<tr><td>回購/股息紀律</td><td>低股息、無回購——資本閒置 $10.3B</td><td>不過（資本效率次優）</td></tr>
+<tr><td>資本安全</td><td>過剩資本 + 無長債</td><td>過（極安全）</td></tr>
+</table>
+<p><strong>資本配置等級：B</strong>（極保守安全，但 $10.3B 過剩資本閒置未回饋＝資本效率次優）。dd-meta capalloc_grade = B。</p>
+
+<h3>D｜10 年資本配置 track</h3>
+<p>IBKR 10 年主軸＝「有機成長 + 資本累積」，極少併購、低回饋。這對創辦人控股結構是理性的（Peterffy 不需要用回購拉股價），但對外部小股東是「資本效率次優」的長期特徵。ROE 24% 靠營運非槓桿/回購。</p>
+<table>
+<tr><th>資本配置維度</th><th>10 年軌跡</th><th>評價</th></tr>
+<tr><td>M&A</td><td>幾乎零重大併購（$10.3B 過剩資本、inbound「無值得追」）</td><td>保守——避免了併購毀值，但也放棄了無機成長槓桿</td></tr>
+<tr><td>股息</td><td>低且成長慢（$0.35/yr，yield 0.38%，payout ~14%）——2024 曾有提升但基數低</td><td>象徵性，非主要回饋工具</td></tr>
+<tr><td>回購</td><td>幾乎不回購（本季法說零討論）</td><td>控股結構下 Peterffy 無誘因回購拉股價</td></tr>
+<tr><td>過剩資本</td><td>$10.3B 累積且成長（+$1.1B QoQ），無長債</td><td>極安全但閒置——資本效率次優，但危機時是 asymmetric 價值（Peterffy 語）</td></tr>
+<tr><td>再投資</td><td>有機成長（帳戶獲取 + 技術 + 全球擴張 + 新產品）</td><td>ROE 24% ≫ COE，有機再投資報酬高</td></tr>
+</table>
+<p class="src">10 年敘事支撐「保守但安全」的評級：IBKR 從不亂花錢（無減損、無過度出價併購），但也不最大化股東回饋（$10.3B 閒置）。對長期持有者：這是「資產負債表堡壘 + 有機複利」的組合，代價是少了回購/股息的總回報加成。計分卡等級 B（安全過關，回饋不過關）。</p>
+<h3>E｜FCF 去向</h3>
+<p>盈餘主要<strong>累積為過剩資本（$10.3B）</strong>，少量股息，無回購，無併購。<strong>一句結論：</strong>「IBKR 的成長變成累積的過剩資本，而非回饋股東或再投入併購——增量 ROE 24% ≫ COE，但資本閒置使股東總回報少了回購/股息這一塊；這是保守控股結構的理性特徵，非資本錯配，但也不是股東回報最大化。」</p>
+</section>
+
+<!-- §11 -->
+<section id="s11">
+<h2>§11｜估值與報酬（主錨：PE/PEG）</h2>
+<h3>11.1｜歷史估值分位</h3>
+<table>
+<tr><th>指標</th><th>當前</th><th>5Y 低</th><th>5Y 中</th><th>5Y 高</th><th>當前分位</th></tr>
+<tr><td>Forward P/E（FY27）</td><td>31.5x</td><td>~14x</td><td>~22x</td><td>~34x</td><td>~85%</td></tr>
+<tr><td>Forward P/E（FY26）</td><td>36.3x</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>P/B</td><td>7.5x</td><td>~2x</td><td>~5x</td><td>~8x</td><td>~high</td></tr>
+</table>
+<p class="reasoning">分位計算：Fwd PE 31.5x（FY27）在 5Y 區間 14-34x → 分位 (31.5−14)/(34−14) = ~87%。取 ~85（保守）。IBKR 過去數年大幅 re-rate（從 ~15x 到 ~31x），現在近分布頂端 + 近 52 週高。<br>→ implication：估值燈 🟠（偏貴，近過熱邊界）；進場時機不到。</p>
+
+<h3>11.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>解讀</th></tr>
+<tr><td>Forward P/E（FY27）</td><td>31.5x</td><td>—</td></tr>
+<tr><td>EPS CAGR（FY26→FY28）</td><td>~14.2%</td><td>(3.39/2.60)^0.5−1；帳戶 34% 但 EPS 受 rate/margin 稀釋</td></tr>
+<tr><td><strong>PEG</strong></td><td><strong>2.1</strong></td><td>&gt;2 略貴</td></tr>
+</table>
+<p class="reasoning">PEG 2.1 = 31.5 / 15%。若用帳戶成長 34% 當分母 PEG 會 <1，但 EPS 成長才是股東報酬的分母——EPS 成長被 NII rate-sensitivity 稀釋至 ~15%，故 PEG 2.1 是誠實值。→ 估值偏貴，安全邊際薄。</p>
+
+<h3>11.4｜同業估值比較（tier：券商）</h3>
+<p>業務模式 tier：<strong>自動化電子券商</strong>（SCHW 綜合零售券商、HOOD 零佣金散戶 app 為兩端參照）。</p>
+<table>
+<tr><th>公司</th><th>市值</th><th>Fwd PE</th><th>ROE/margin</th><th>EPS 成長</th><th>tier</th></tr>
+<tr><td><strong>IBKR</strong></td><td>$160B（合併）</td><td>31.5x（FY27）</td><td>ROE 24%/稅前 77%</td><td>~15%</td><td>最低成本全球自動化</td></tr>
+<tr><td>SCHW</td><td>大型</td><td>19x</td><td>~40% 稅前</td><td>20%/16%</td><td>綜合零售 + 銀行</td></tr>
+<tr><td>HOOD</td><td>大型</td><td>67x</td><td>~50%</td><td>28%</td><td>零佣金散戶/加密</td></tr>
+</table>
+<p class="reasoning">IBKR 31x vs SCHW 19x = 65% 溢價；vs HOOD 67x 折價。IBKR 品質（77% 稅前、全球）遠勝 SCHW，溢價合理，但 31x 對 15% EPS 成長（PEG 2.1）已充分定價品質。向 SCHW 型優質金融 22x 收斂 → 下行 ~30%；維持 31x 需成長不減 + rate 不壓 NII（兩個都在逆風）。<br>→ implication：H3 re-rate 是<em>下行</em>拖累而非上行動力。<br><strong>分析師目標價：</strong>共識 ~$95-100（WallStreetZen $95.14、S&P $99.99，10-12 位，8 Buy/1 Hold/1 Sell）；現價 $94.42 → 距共識僅 +1~6%。<strong>Street 也不給安全邊際</strong>——共識目標幾乎等於現價，市場已把品質定價到位。</p>
+
+<h4>為何「雙週期引擎的優質金融」該給 22-28x 而非 30x+（估值方法論）</h4>
+<table>
+<tr><th>倍數帶</th><th>什麼生意配得上</th><th>IBKR 是嗎？</th></tr>
+<tr><td>30-40x+</td><td>無週期、可預測、high-recurring（頂級 SaaS、支付網絡 MA/V）——EPS 不隨宏觀波動</td><td>❌ IBKR 的 54% NII 隨 rate 週期、commission 隨交易量週期，非無週期</td></tr>
+<tr><td><strong>22-28x</strong></td><td><strong>高品質但帶週期的成長金融</strong>（頂級券商/交易所，high ROE、結構成長但盈餘有週期波動）</td><td>✅ <strong>這是 IBKR 的合理帶</strong>（77% margin、34% 帳戶＝帶溢價的上緣 28x）</td></tr>
+<tr><td>15-20x</td><td>成熟券商/銀行（SCHW 19x），成長個位數-低雙位數</td><td>IBKR 成長更高，理應在此之上</td></tr>
+</table>
+<p class="reasoning">結論：IBKR 的合理帶是 <strong>22-28x</strong>（優質但雙週期），現價 31.5x 已在此帶<em>上緣之上</em>。這不是說 IBKR 不值 28x（值——它是帶內最高品質），而是說 31x（85 分位）已<em>透支</em>——付這個價，你賭的是「倍數停在 31x 甚至上行」，但雙週期引擎在 Phase III 過熱位置，倍數大機率回帶內（22-28x）。<strong>觀望 = 等它回到自己該有的帶（22-28x, $66-84），而非拒絕它。</strong>→ 這是 §11.6 re-rate 為負貢獻、§14 觀望的方法論根據。</p>
+
+<h3>11.5｜不對稱報酬 Bull/Base/Bear 5Y + 機率 + IRR</h3>
+<table>
+<tr><th>情境</th><th>5Y 絕對</th><th>年化 IRR</th><th>依據</th><th>機率</th></tr>
+<tr><td class="beat">Bull</td><td>+85%（~$175）</td><td>+13%/yr</td><td>帳戶 >30% 延續、NII 韌性、倍數僅溫和降至 ~28x；FY31 EPS ~$6.3 × 28x</td><td>25%</td></tr>
+<tr><td class="neu">Base</td><td>+39%（~$131）</td><td>+7%/yr</td><td>EPS ~14%/yr、倍數自 85 分位回 5Y 中位 22x（re-rate 拖累）；FY31 EPS ~$5.9 × 22x</td><td>50%</td></tr>
+<tr><td class="miss">Bear</td><td>−39%（~$58）</td><td>−9%/yr</td><td>Fed 加速降息壓 NII + 交易退潮，EPS ~8%/yr、倍數重設至 16x</td><td>25%</td></tr>
+<tr><td><strong>機率加權 EV</strong></td><td><strong>+39% 5Y（= ev5y_pct）</strong></td><td><strong>IRR ≈ 7%/yr</strong></td><td>+ 股息 0.4%</td><td>—</td></tr>
+</table>
+<p class="reasoning">Base IRR ~7%/yr <strong>是觀望的核心數字</strong>——即使公司優秀，以 31x（85 分位）買入，倍數回中位的拖累（−7%/yr re-rate）吃掉大半 EPS 複利，Base 報酬平庸（不及大盤 ~10%）。<br><strong>10Y 壓力測試：</strong>10Y 成熟後倍數收斂 18-20x，10Y IRR ~7-8%/yr。</p>
+<p><strong>AR = (0.25×85)/(0.25×39) = 2.18</strong>。取 3.0（含 Bull 上緣）。解讀：AR ~2-3 偏正，但<strong>問題不在不對稱比而在 Base IRR 平庸（7%）</strong>——這是「進場時機」問題（付太高的價），非「標的不好」。</p>
+<p><strong>10Y 二段延伸：</strong>runway_post_y5 = 🟡，免填。</p>
+<table>
+<tr><th>反偏差防線</th><th>本案</th></tr>
+<tr><td>Bear 機率</td><td>25%（rate + 交易雙週期，維持）</td></tr>
+<tr><td>Bull/Bear 散布</td><td>寬（+85% vs −39%）</td></tr>
+<tr><td>Base 機率</td><td>50%（已壓測 de-rate）</td></tr>
+<tr><td>Pattern match</td><td>見 §11.7</td></tr>
+<tr><td>QC-39 durability</td><td>Bear 機率 25% 依據＝searched durability（NII rate 週期 + 交易量週期皆可逆，見 §9）；Q2 已證量增抵溫和降息，但 Bear 保留「加速降息 + 交易退潮」雙殺情境，故不下調</td></tr>
+</table>
+<p class="reasoning"><strong>內生天花板 sanity check：</strong>Base EPS CAGR ~14% vs 內生天花板 ~15% → 在天花板內 ✅（Base 不依賴超越內生的成長）。</p>
+
+<h3>11.6｜IRR 三分量拆解</h3>
+<table>
+<tr><th>情境</th><th>EPS CAGR</th><th>估值 re-rate</th><th>股息+回購</th><th>合計年化</th></tr>
+<tr><td>Bull</td><td>+18%/yr</td><td>−4%/yr</td><td>+0.4%/yr</td><td>+13%/yr</td></tr>
+<tr><td>Base</td><td>+14%/yr</td><td>−7%/yr</td><td>+0.4%/yr</td><td>+7%/yr</td></tr>
+<tr><td>Bear</td><td>+8%/yr</td><td>−17%/yr</td><td>+0%/yr</td><td>−9%/yr</td></tr>
+</table>
+<p class="reasoning"><strong>質感解讀：</strong>「Base 7% IRR 中，14%/yr 來自 EPS 複利，但 −7%/yr 被估值 re-rate（自 85 分位回中位）吃掉，股息+回購僅 0.4%。」<strong>關鍵洞察：所有情境的 re-rate 都是負的</strong>（從 85 分位只能下修或持平，不太可能再上行）——這正是「好公司買在倍數頂」的結構：你賭的是 EPS 複利，但用一個會下修的倍數進場，等於自己給自己設了逆風。這不是「估值依賴型」（不靠 re-rate 上行），而是「估值受害型」（re-rate 是拖累）。→ 等倍數回落再進場，同樣的 EPS 複利就能拿到全額而非被 re-rate 侵蝕。</p>
+
+<h3>11.7｜Pattern match</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>歷史相似個股</td><td><strong>2021 高品質金融/fintech de-rating</strong>（如 2021 高倍數券商/交易所自高位回落）；或 <strong>優質複利股買在倍數頂</strong>的通例</td></tr>
+<tr><td>當時 setup</td><td>公司基本面持續向好，但倍數在歷史高位，隨後數年 EPS 續增卻被 de-rate 抵消，報酬平庸</td></tr>
+<tr><td>最終 5 年實現報酬</td><td>「好公司買在倍數頂」的 5Y IRR 通常 5-8%（EPS 複利被 de-rate 侵蝕）——與本案 Base 7% 相符</td></tr>
+<tr><td>最像/最不像</td><td>最像：頂級品質 + 倍數頂 + 報酬被 re-rate 侵蝕；最不像：IBKR 帳戶複利更持久、資產負債表更強（過剩資本 $10.3B）</td></tr>
+</table>
+<p class="src">Guardrail：本 case 5Y IRR ~5-8% 與 Base 7% 相容——確認觀望（等更好的價，讓 EPS 複利不被 re-rate 吃掉）。</p>
+
+<h4>進場價位地圖（觀望 rearm 的量化錨）</h4>
+<p>用 FY27 EPS $3.00 對映不同 Fwd PE / 5Y 分位 / 對應股價，讓「等便宜」有具體錨（而非模糊「回檔」）：</p>
+<table>
+<tr><th>Fwd PE（FY27）</th><th>5Y 分位</th><th>對應股價</th><th>vs 現價 $94.42</th><th>判讀</th></tr>
+<tr><td>36x</td><td>~95%</td><td>$108</td><td>+14%</td><td>過熱（52 週高上方）</td></tr>
+<tr><td><strong>31.5x（現）</strong></td><td><strong>~85%</strong></td><td><strong>$94</strong></td><td><strong>—</strong></td><td><strong>🟠 偏貴（現況，觀望）</strong></td></tr>
+<tr><td>28x</td><td>~70%</td><td>$84（≈ Bollinger 中軌 $82）</td><td>−11%</td><td>🟡 邊界，可小倉試（若 NII 韌性證明）</td></tr>
+<tr><td>25x</td><td>~55%</td><td>$75</td><td>−21%</td><td>🟢 進場區下緣</td></tr>
+<tr><td>22x</td><td>~40%（5Y 中位）</td><td>$66</td><td>−30%</td><td>🟢 理想進場（EPS 複利不再被 re-rate 侵蝕）</td></tr>
+</table>
+<p class="src">這張表把 §14 rearm「回 22-25x（$65-75）」量化：在 $66-75 進場，Base 5Y IRR 從現價的 ~7% 回升至 ~10-13%（因 re-rate 從 −7%/yr 拖累轉為中性或順風）。回測 Bollinger 中軌 $82（28x）是「NII 韌性已證」時的折衷小倉試點。<strong>這是觀望的建設性版本——不是拒絕好公司，是給好公司標好進場價。</strong></p>
+
+<h3>§11 估值診斷結論</h3>
+<p>11.1 分位（~85%，偏貴）+ 11.2 PEG（2.1，略貴）+ 11.4 同業（vs SCHW 65% 溢價、共識目標 ≈ 現價無安全邊際）→ 綜合估值訊號：<strong>🟠 偏貴</strong>。完整裁決見 §14。</p>
+<p class="src"><strong>多尺矛盾檢查：</strong>Fwd PE（85 分位偏貴）與 PEG（2.1 略貴）與同業（65% 溢價）三尺方向一致（皆偏貴），無方向相反矛盾。<strong>盲點救援：</strong>盲點 1（結構性高成長救援）需 PEG <2.0 且分位 ≤85——本案 PEG 2.1 > 2.0、分位 ~85 邊界 → 不救援，維持 🟠（近 🔴 邊界，但不至過熱 🔴，因成長品質真實）。consensus 落後救援不觸發（共識目標 ≈ 現價，未落後）。</p>
+</section>
+
+<!-- §12 -->
+<section id="s12">
+<h2>§12｜矛盾辨識與強制裁決</h2>
+<div class="contra">
+<h3>1. 共識清單</h3>
+<p>§5 品質 🟢🟢 + §7 護城河 A + §6 成長 🟢 高確信 + §9 利潤池 ↑——「頂級品質 + 結構成長」四者共振，是高信心區（對公司）。<strong>矛盾拓撲判定：集中型</strong>——爭議<strong>集中於單一軸＝估值時機（H3）</strong>。所有矛盾都收斂到「這麼好的公司，31x 該不該買」。</p>
+<h3>2. 矛盾清單</h3>
+<table>
+<tr><th>#</th><th>矛盾點</th><th>章節 A</th><th>章節 B</th><th>性質</th></tr>
+<tr><td>1</td><td>公司品質頂級（moat A、77% 稅前、34% 帳戶）vs 估值偏貴（85 分位、PEG 2.1、共識 ≈ 現價）</td><td>§5/§6/§7 🟢</td><td>§11 🟠</td><td>可調和（好公司 + 貴價格 = 觀望等更好的價）</td></tr>
+<tr><td>2</td><td>NII 韌性已證（Q2 avg funds −70bp 下 +23%）vs NII sensitivity 真實（$81M/25bp，H2 加速降息風險）</td><td>§4.5/§8 韌性</td><td>§3.C R1 風險</td><td>可調和（溫和降息量增抵，加速降息未必抵）</td></tr>
+</table>
+<h3>3. 與上一份報告（2026-06-15）的交叉矛盾</h3>
+<p>無方向性矛盾——本次與前份同為<strong>觀望</strong>，H1/H2 更獲證（Q2 硬數據），H3（估值）仍未便宜。<strong>翻面三元歸因：N/A（未翻面）</strong>。<span class="src">QC-49：未翻面，無需引用觸發器。前次觀望 to-date +1.0%（37 天）——觀望成本近零，判斷正確。</span></p>
+<h3>4. ⚖ 強制裁決</h3>
+<table>
+<tr><th>#</th><th>矛盾</th><th>選哪邊</th><th>依據</th><th>會 settle 的硬數據</th><th>執行路徑（if-then）</th></tr>
+<tr><td>1</td><td>頂級品質 vs 偏貴估值</td><td>選「觀望」（品質不足以在 85 分位付溢價，因 Base IRR 僅 7%）</td><td>Base 5Y IRR 7%（§11.6）＝EPS 複利被 −7%/yr re-rate 吃掉；共識目標 ≈ 現價無安全邊際。品質不是無限付溢價的理由——付出的價格決定報酬</td><td>Fwd PE 5Y 分位；共識 EPS 修正；股價 vs $65-75（22-25x）</td><td>(a) Fwd PE 回 22-25x（$65-75）或回測中軌 $82 → 進場；(b) NII 經加速降息仍韌（量增抵）+ 帳戶 >30% 續 → 即使估值未便宜也可小倉試（品質溢價證明可維持）</td></tr>
+<tr><td>2</td><td>NII 韌性 vs 敏感度</td><td>採信「溫和降息量增抵、加速降息未必抵」</td><td>Q2 是 L1 已實現事實（−70bp 下 NII +23%）；但 −70bp 是溫和，H2 若 −100bp+ 是 L2 前瞻風險——不外推 Q2 韌性到加速情境</td><td>季度 NII QoQ vs Fed 路徑</td><td>(a) 加速降息中 NII 仍 QoQ 增 → H2 確認、進場條件放寬；(b) NII 連 2 季 QoQ 下滑 → Bear 機率上修</td></tr>
+</table>
+<h3>4b. 裁決推理品質三檢</h3>
+<p><strong>① 分母爭議檢查：</strong>§14 觀望的依據是「估值貴」——貴的分母（FY27 EPS $3.00）是否為矛盾爭點？部分是（EPS 受 NII rate 影響，矛盾 #2）——但即使用最樂觀 EPS，31x/85 分位仍貴，故觀望不依賴分母爭議的解決，而依賴「倍數位置 + Base IRR 7%」。<br><strong>② 證據權重：</strong>矛盾 #2 兩側——NII +23%（avg funds −70bp）= <strong>L1 已實現</strong>；H2 加速降息壓 NII = <strong>L2 前瞻</strong>。裁決站 L1（NII 現況韌性採信），但不外推到加速降息情境（保留 Bear）。<br><strong>③ Steelman 義務（觀望方向）：</strong>「現在就<em>買</em>的最強論證」＝(a) IBKR 是 34% 帳戶成長的頂級複利機器，優質複利股「永遠看起來貴」，觀望-on-valuation 是散戶最常錯過偉大公司的方式；(b) Q2 已證 NII 在降息中仍韌（量增抵），bear 的核心擔憂被部分證偽；(c) 前次觀望 to-date +1%，但若這是 10 年複利機器，糾結 $65 vs $94 的進場點是撿了芝麻。<strong>逐點回應：</strong>(a) 成立<em>對長期持有者</em>——故 long_term_confidence 標「高」、本檔進追蹤池而非拒絕；但對<em>新邊際資金</em>，Base IRR 7%（§11.6 re-rate 是負貢獻）意味「現在買 = 用會下修的倍數鎖住報酬」，等回落同樣的 EPS 複利拿全額，錯過成本可控（前次觀望印證：股價 37 天 +1%，未失控上行）；(b) 部分成立故 rearm 加一條「NII 韌性證明」的<em>非價格</em>觸發（不只等便宜，也接受「品質溢價經降息週期證明可維持」）；(c) 若是無週期 SaaS 我同意不糾結進場點，但 IBKR 是<em>雙週期引擎</em>（交易量 + rate），Phase III 過熱位置 + 85 分位倍數下，等一個週期性回檔的期望值 > 追高。→ 裁決＝<strong>觀望，但 rearm 雙軌（估值回落 OR NII 韌性證明）</strong>，非死等便宜。</p>
+</div>
+</section>
+
+<!-- §13 -->
+<section id="s13">
+<h2>§13｜Pre-mortem 與 Max DD</h2>
+<h3>13a. 不確定假設</h3>
+<table>
+<tr><th>#</th><th>不確定假設</th><th>thesis 成立前提</th><th>不成立的後果</th></tr>
+<tr><td>1</td><td>NII 量增能抵 rate 壓縮（即使 Fed 加速降息）</td><td>客戶餘額續快增、Fed 溫和降息</td><td>NII 萎縮、EPS 增速降（樞紐變數，見下）</td></tr>
+<tr><td>2</td><td>31x 倍數可維持（不 de-rate）</td><td>成長不減 + 市場持續給品質溢價</td><td>倍數回中位 22x，即使 EPS 增仍報酬平庸（Base 7%）</td></tr>
+<tr><td>3</td><td>帳戶 >30% 成長 durable（非 marketing 線性投入的幻覺）</td><td>全球滲透續 + marketing 效率不崩</td><td>帳戶減速 → 成長股敘事鬆動</td></tr>
+</table>
+<p class="src"><strong>樞紐變數識別：Fed 降息速度</strong>同時打到 H2（NII 直接）與 H3（成長股倍數對利率敏感）——降息本應利多成長股倍數，但對 IBKR 是「壓 NII（54% 營收）」的矛盾雙面。故 Fed 路徑 + 季度 NII 是監測第一優先。</p>
+<h3>13b. Pre-mortem：失敗故事倒推</h3>
+<div class="premortem">
+<p class="story">「假設 5 年後這個部位虧 40%，最可能的故事是：2026 下半年 Fed 開始一輪比預期陡的降息（−125bp 到 2027），IBKR 的 NII（54% 營收）年化少 $400M+，而這次客戶餘額增速也放緩（前幾年的 34% 帳戶成長被 marketing 效率遞減拖累到 20%），量增第一次沒抵住 rate 壓縮——季度 NII 連 2 季 QoQ 下滑。市場發現「NII 韌性」的假設在<em>加速</em>降息下不成立，同時交易熱度（SpaceX IPO、波動）退潮使 DARTs 走平。共識 FY28 EPS 從 $3.39 下修到 ~$2.9，市場把倍數從 31x（85 分位）重設到 18x（優質金融但成長減速）。EPS 微增但倍數腰斬，股價從 $94 跌到 $56。」</p>
+</div>
+<p class="src">關鍵觸發＝NII 連 2 季 QoQ 萎縮 + 帳戶減速——與 §3.F Single Thing 一致（NII/帳戶軸），§3.F 不需修正。</p>
+<h3>13b'. 「成功但劣化」第二敗局</h3>
+<p>「假設帳戶 thesis 完全兌現（帳戶續 34% 成長），但以<strong>低利率環境</strong>兌現：Fed 把利率降回 ~1-2%，IBKR 帳戶/客戶權益照樣複利，但 NII 利差被壓縮到低利率的薄水平——營收增速從高雙位數掉到中個位數（因 54% 的 NII 引擎失速），市場把它從『成長股』（31x）重估為『低利率環境的成熟券商』（18x）。帳戶成功了，但利率環境把它的<em>盈餘經濟</em>降級，Bull 情境的帳戶數成真、股價卻因倍數與 NII 雙降而不漲。」→ 此敗局已反映進 §11.5 Base 的倍數假設（回 22x，非維持 31x）與 Bear（16x + 低 NII）。</p>
+<h3>13c. 路徑壓力測試（Max DD）</h3>
+<p class="maxdd">−38% ~ −45%</p>
+<div class="ddbar"></div>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>估計 Max DD 範圍</td><td><strong>−38% ~ −45%</strong>（高倍數 + 週期營收，回撤路徑）</td></tr>
+<tr><td>最可能觸發時點</td><td>1-2 年，若 Fed 加速降息 + 交易退潮 + 高倍數重設同時</td></tr>
+<tr><td>觸發後恢復</td><td>若帳戶複利未斷（僅 rate 週期），2-3 年可隨 EPS 復原；若成長減速則倍數永久下移</td></tr>
+<tr><td>路徑風險評級</td><td>🟡 −38~−45%（beta 1.33，需強信念；但非結構崩壞）</td></tr>
+</table>
+<p><strong>校驗：</strong>觀望期無倉位，Max DD 對現狀無影響；此數字用於「若進場」的心理準備——以合理價（22-25x）進場則 Max DD 較淺（倍數安全邊際厚）。<span class="src">dd-meta max_dd_pct = −45（範圍下界）。路徑風險 🟡 + thesis 完整（moat →、runway 🟡、非估值依賴）→ 不因波動砍倉（但本檔現為觀望，不涉持倉）。</span></p>
+</section>
+
+<!-- §14 -->
+<section id="decision" class="decision wait">
+<h2 style="scroll-margin-top:80px">§14｜決策（統一裁決）</h2>
+<p><span class="chip wait">觀望</span></p>
+<p class="chip-sub">追蹤·等 Fwd PE 回 22-25x（$65-75）或 NII 經降息週期證明韌性——頂級公司、偏貴價格、Base IRR 僅 7%，進場時機不到。</p>
+
+<h3>決策矩陣路由</h3>
+<p>archetype 金融（broker，PE/PEG 尺）。<strong>硬否決層：</strong>無——signal B（非 X）；§12 矛盾可調和；moat_trend → 等級 A。<strong>軟否決層：</strong>無——signal B（非 C）；Y5 後跑道 🟡（非 🔴）。<strong>基準路徑：</strong>signal B + 估值 🟠（偏貴）→ <strong>觀望（估值主因）</strong>。週線結構 ✅ 強勢但動能偏熱（26 週 +22%、近 52 週高）——MA ✅ 是「趨勢確認」不改變「估值偏貴 → 觀望」的裁決（估值閘獨立把關）。爆發候選路徑不適用（runway 🟡 非 🟢）。</p>
+
+<h3>§14 裁決品質四問</h3>
+<p><strong>① 相鄰裁決雙向檢核：</strong>為何不是更激進（進場）？——估值 🟠（85 分位、PEG 2.1）、共識目標 ≈ 現價無安全邊際、Base IRR 7%（re-rate 為負貢獻），付這個價鎖不住好報酬。為何不是更保守（迴避）？——<strong>這是公司品質問題嗎？不是</strong>（moat A、trap 🟢、long-term confidence 高）；迴避＝結構性不持有，但 IBKR 是可長抱的頂級生意，只是此價位不進——故「觀望·追蹤」而非「迴避」。<strong>錯過成本檢核（保守側）：</strong>前次觀望 to-date +1%（37 天，未失控上行），且 rearm 含<em>非價格</em>觸發（NII 韌性證明）——不是死等便宜錯過複利，而是「等一個週期回檔或一個品質溢價的證明」。<br><strong>② 問題屬性路由：</strong>本案問題是<strong>價格/時機</strong>（85 分位 + Phase III 過熱 + rate 週期），非結構——故觀望（等時機）非迴避（結構）。<br><strong>③ 唯一約束隔離：</strong>觀望的 binding constraint 是<strong>估值時機（H3，Fwd PE 85 分位 + Base IRR 7%）</strong>，其餘閘（品質 ✅、護城河 A、成長 🟢、NII 韌性 Q2 已證）全部明文通過。rearm ＝該約束的否定：Fwd PE 回 22-25x（$65-75）或 NII 韌性經加速降息證明（使品質溢價可維持）。<br><strong>④ 裁決翻譯層：</strong>對<strong>已持有者</strong>——續抱不加碼（頂級生意可長抱，但此價位不追加；若 §3.F NII/帳戶軸斷裂才考慮減）；對<strong>新邊際資金</strong>——不建倉，進追蹤池，等 rearm 觸發。</p>
+
+<h3>14a. 倉位角色與進場計畫 + opportunity cost</h3>
+<p><strong>執行語（一行）：</strong>0 倉追蹤·rearm=Fwd PE 22-25x（$65-75）或 NII 降息週期韌性證明，或回測中軌 $82。</p>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td><strong>倉位角色（dd-meta dca_role）</strong></td><td><strong>追蹤</strong>（頂級生意，等更好的進場；非核心亦非不持有）</td></tr>
+<tr><td>初始建倉倉位</td><td>0%（觀望）</td></tr>
+<tr><td>目標倉位</td><td>條件成立後由 PM 決定（品質支持核心候選）</td></tr>
+<tr><td>進場觸發</td><td>Fwd PE 回 22-25x（~$65-75）OR NII 經加速降息證明韌性 OR 回測 Bollinger 中軌 ~$82</td></tr>
+<tr><td><strong>opportunity cost</strong></td><td>觀望＝不動用邊際資金。IBKR 此價位邊際 IRR ~7%（Base），不及等其自身回落至 22-25x 後重進（同樣 EPS 複利，倍數不再是逆風 → IRR 回 10-13%）。若組合已持有券商/交易所曝險，加碼 IBKR 於 31x 的邊際報酬低於等待。<span class="src">跨檔以 GRP 三閘（成長 × EPS 上修 × 股價位置）為準——IBKR 股價位置閘（85 分位、近 52 週高）不利，故追蹤不進。</span></td></tr>
+</table>
+<p class="src">本檔為觀望·追蹤，無實際倉位；組合佔比由 portfolio-manager skill 於進場觸發後決定。</p>
+
+<h3>14b. 加碼與減碼條件（追蹤/進場後）</h3>
+<table>
+<tr><th>行動</th><th>觸發條件</th><th>調整至倉位</th></tr>
+<tr><td>進場（追蹤轉建倉）</td><td>Fwd PE 22-25x（$65-75）OR NII 韌性證明 OR 回測中軌 $82</td><td>建核心候選 starter</td></tr>
+<tr><td>加碼</td><td>進場後帳戶 >30% 續 + NII 穿越降息週期仍增</td><td>加至目標</td></tr>
+<tr><td>減碼/放棄追蹤</td><td>§3.F：帳戶 YoY 結構性 <15% OR NII 連 2 季雙位數 QoQ 萎縮（成長熄火）</td><td>移出追蹤池</td></tr>
+</table>
+<p class="src"><strong>賣出分軌：</strong>本檔現為觀望·追蹤（無倉）；若未來進場，dca_role 升核心候選，屆時清倉閘須 thesis 級（帳戶/NII 結構斷裂），估值漲多最多 trim。</p>
+
+<h3>14c. 建議持有年限</h3>
+<table>
+<tr><th>持有年限</th><th>條件</th></tr>
+<tr><td>短期（<2 年）</td><td>N/A（觀望，不設短期）</td></tr>
+<tr><td>中期（2-5 年）</td><td>若以合理價進場 + NII 週期波動</td></tr>
+<tr><td>長期（5-10 年）</td><td>若以合理價進場 + 帳戶複利延續（頂級生意可長抱）</td></tr>
+</table>
+<p><strong>建議持有年限：長期 5-10 年（<em>前提是以合理價進場</em>）</strong>——公司值得長抱（moat A、runway 🟡 偏長、long-term confidence 高），但此價位（31x/85 分位）不是進場點。<strong>EPS 參考：</strong>FY26E $2.60 / FY27E $3.00 / FY28E $3.39（共識，non-GAAP USD）。<strong>現價適合長抱嗎？</strong>——公司適合，價格不適合：$94 對 FY27 31.5x、Base 5Y IRR 7%（re-rate 逆風）；等回 22-25x（$65-75）同樣 EPS 複利可拿 10-13% IRR。</p>
+</section>
+
+<!-- §15 -->
+<section id="s15">
+<h2>§15｜複審觸發與保質期</h2>
+<table>
+<tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>時間/條件</th></tr>
+<tr><td>1</td><td>Q3 2026 法說（帳戶增速守 >30%？DARTs 隨市場熱度？NII QoQ 對 Fed 路徑韌性？）</td><td>財報日期</td><td>~2026-10-31</td></tr>
+<tr><td>2</td><td>Fed H2 2026 降息路徑（每 25bp −$81M USD NII）+ 季度 NII QoQ</td><td>宏觀/產業</td><td>2026H2 持續</td></tr>
+<tr><td>3</td><td>Fwd PE 回 22-25x（$65-75）或回測中軌 $82（進場窗）</td><td>價位觸發</td><td>持續</td></tr>
+<tr><td>4</td><td>§3.F：帳戶 YoY <15% OR NII 連 2 季雙位數 QoQ 萎縮</td><td>Single Thing</td><td>持續監測</td></tr>
+<tr><td>5</td><td>OCC trust charter 營運上線（託管新曲線）</td><td>產業事件</td><td>~2026 年底</td></tr>
+</table>
+<p><strong>保質期：</strong>下一次財報（Q3 2026，~2026-10-31）發布前有效。<br><strong>最可能 upside 因素：</strong>NII 經 H2 降息仍韌（量增抵）+ 帳戶 >30% 續 → 品質溢價證明可維持，觀望轉進場（即使估值未大降）。<br><strong>最可能 downside 因素：</strong>Fed 加速降息壓 NII + 交易退潮 + 高倍數重設 → §11.5 Bear。</p>
+</section>
+
+<!-- 附錄 A -->
+<details id="appA">
+<summary>附錄 A｜擇時（降級，INFORMATIONAL ONLY — 不主導 §14 裁決）</summary>
+<h3>B / H｜基本面評級機制（metadata-only）</h3>
+<p>品質分：底分 = (護城河 §7 = 9 + 成長持久性 §6 = 7) / 2 = 8.0。體質 veto（broker）：利潤率未下滑 ✅、盈餘品質高 ✅、EPS 共識上修 ✅、營收 YoY 正 ✅、資本充足 ✅ → 0 項不過 → 品質分 8.0 → A 級。<strong>final_signal：</strong>quality A + 估值 🟠 + MA ✅ + trap 🟢 → 因估值 🟠（時機不到）落 <strong>B</strong>（品質 A 但估值閘擋，thesis 完整）。輸出 dd-meta signal/verdict = B。</p>
+<h3>D｜估值燈</h3>
+<p>Fwd PE 31.5x（FY27，5Y 分位 ~85%）；PEG 2.1。分位 ~85 → 🟠/🔴 邊界；PEG 2.1 → 🟠。取較嚴 → <strong>🟠 偏貴</strong>（近過熱但成長品質真實，不判 🔴）。盲點 1 救援不適用（PEG >2.0 且分位 ~85）。輸出 dd-meta val = 🟠。</p>
+<h3>F｜週線結構趨勢過濾</h3>
+<p>現價 $94.42；W52 $73.11（斜率 +13.5%）；W104 $58.92（+14.1%）；W250 $36.30（+11.7%）。價 > W52 > W104 > W250 且 W250 斜率 +11.7% > 3 → <strong>✅ 強勢進場</strong>（結構強多頭）。但 26 週 +22%、13 週 +23.4%、近 52 週高（−3.5%）＝<strong>動能偏熱</strong>。BB 上/中/下 102.5/82.2/61.9（現價近上軌）。輸出 dd-meta ma = ✅。<span class="src">MA ✅ 是趨勢確認，但不改變「估值偏貴 → 觀望」——技術面不主導 §14。</span></p>
+<h3>G｜大盤豁免</h3>
+<p>^GSPC 未破 W104 → 大盤正常，×1.0。</p>
+<h3>I｜長期持有信心</h3>
+<p>moat A（9）、moat_trend →、runway_post_y5 🟡、§13 證偽距離遠（§3.F 機率 ~15%）→ 滿足「高」條件 → <strong>高</strong>。輸出 long_term_confidence = 高。<span class="src">「高信心」是對公司可抱 5-10 年，非對此價位進場。</span></p>
+<h3>R:R 三時距（資訊性）</h3>
+<table>
+<tr><th>時距</th><th>計算</th><th>目標價</th><th>upside</th></tr>
+<tr><td>短期（1Y）</td><td>FY26 $2.60 × ~37x（維持高倍數）</td><td>~$96</td><td>+2%</td></tr>
+<tr><td>中期（2Y）</td><td>FY27 $3.00 × ~35x</td><td>~$105</td><td>+12%</td></tr>
+<tr><td>5Y（長期）</td><td>§11.5 Base</td><td>~$131</td><td>+39%</td></tr>
+</table>
+<p class="src"><strong>Bear anchor：</strong>Bear EPS = FY26 $2.60 × 0.9 ≈ $2.34；Bear PE = 18x（成熟券商）；Bear 股價 ≈ $42（現價下行 −55%）。但短中期 Bear 更相關：de-rate 至 22x × $2.6 ≈ $57（−40%）。dd-meta stress = 2/2。upside_short 2%、upside_mid 12%（短中期 upside 薄＝觀望的量化理由）。</p>
+</details>
+
+</div>
+<button class="printbtn" onclick="window.print()">列印為 PDF</button>
+<!-- DD_LIVEBAR -->
+<script src="/assets/dd-livebar.js" defer></script>
+</body>
+</html>
