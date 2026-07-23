@@ -1,11 +1,19 @@
 name: Update Long Track TW 2330/0050 Signal
 
 on:
-  # 2026-07-23 FROZEN: E3 (0050/2330) retired — replaced as the live system by
-  # W52×adaptive vol-target (2026-07-18). Cron REMOVED (no more scheduled updates);
-  # kept as workflow_dispatch only for occasional manual regeneration. Page carries
-  # a frozen banner and links to the tracking hub. Residual email/alert step removed.
-  workflow_dispatch:  # Manual trigger only (frozen system)
+  schedule:
+    # Every Saturday 01:30 UTC = Saturday 09:30 Taiwan time.
+    # Taiwan market closes Fri 13:30 (05:30 UTC); this runs ~28h later so
+    # yfinance .TW end-of-day data is fully settled. E3 signals are weekly
+    # (W40/W52) + monthly (TSMOM month-end), so the Friday close is the only
+    # meaningful update — checking once over the weekend is sufficient.
+    - cron: '30 1 * * 6'
+  workflow_dispatch:  # Manual trigger anytime
+    inputs:
+      test_email:
+        description: 'Send a test email even without signal changes'
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}
@@ -28,6 +36,20 @@ jobs:
       - name: Run long-track TW 2330/0050 update
         run: python scripts/update_long_track_tw.py
 
+      - name: Read change alert
+        id: alert
+        run: |
+          if [ -f lt_tw_alert.txt ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            {
+              echo "body<<ALERT_EOF"
+              cat lt_tw_alert.txt
+              echo "ALERT_EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Commit and push
         run: |
           git config user.email "action@github.com"
@@ -39,7 +61,7 @@ jobs:
               exit 0
             fi
             echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
-            git pull --rebase origin main || { echo "Rebase failed"; exit 1; }
+            git pull --rebase --autostash origin main || { echo "Rebase failed"; exit 1; }
             sleep $((RANDOM % 20 + 5))
           done
           echo "Push failed after 6 attempts"

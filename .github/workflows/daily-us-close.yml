@@ -218,7 +218,11 @@ jobs:
               exit 0
             fi
             echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
-            git pull --rebase origin main || { echo "Rebase failed"; exit 1; }
+            # --autostash：build 步驟會改動 PATHS 白名單以外的檔（未 staged），
+            # 沒有 autostash 時 git pull --rebase 會以 "cannot pull with rebase:
+            # You have unstaged changes" 直接失敗（2026-07-23 事故）。autostash 先
+            # 暫存這些未追蹤變更、rebase 完成後還原，讓已 commit 的白名單工作順利上。
+            git pull --rebase --autostash origin main || { echo "Rebase failed"; exit 1; }
             sleep $((RANDOM % 20 + 5))
           done
           echo "Push failed after 6 attempts"
