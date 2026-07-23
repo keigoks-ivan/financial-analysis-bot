@@ -1,0 +1,106 @@
+name: "Update GLD Gold Sleeve Signal (forward OOS)"
+
+on:
+  schedule:
+    # US close (16:00 ET + buffer). 21:50 UTC — offset from the W52×adaptive main
+    # system (21:35 UTC) to avoid push contention on the shared repo. Single US
+    # leg (GLD); the adaptive vol sleeve updates every trading day, the weekly W52
+    # gate only flips on Fridays. Forward OOS paper tracking — candidate, NOT live.
+    - cron: '50 21 * * 1-5'
+  workflow_dispatch:  # Manual trigger anytime
+    inputs:
+      test_email:
+        description: 'Send a test email even without an actionable change'
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'  # site_nav.py uses 3.12+ f-string syntax
+
+      - name: Install dependencies
+        run: pip install "yfinance>=0.2.40" pandas numpy
+
+      - name: Run GLD gold sleeve update
+        run: python scripts/update_long_track_gld.py
+
+      - name: Read change alert
+        id: alert
+        run: |
+          if [ -f lt_gld_alert.txt ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            {
+              echo "body<<ALERT_EOF"
+              awk 1 lt_gld_alert.txt   # 保證恰好一個尾換行，避免最後一行與 ALERT_EOF 黏連
+              echo "ALERT_EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Fail-safe: probe SMTP secret presence via env (the `secrets` context is
+      # not reliable inside `if:`), then gate the email step on the result so a
+      # missing secret never fails the workflow. MAIL_USERNAME / MAIL_APP_PASSWORD
+      # are already configured (shared with the W52×adaptive main system and 7
+      # other workflows) — no user action needed.
+      - name: Check mail secrets
+        id: mailcfg
+        env:
+          MU: ${{ secrets.MAIL_USERNAME }}
+          MP: ${{ secrets.MAIL_APP_PASSWORD }}
+        run: |
+          if [ -n "$MU" ] && [ -n "$MP" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false (SMTP secrets missing — email skipped)" >&2
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Email actionable change
+        if: (steps.alert.outputs.changed == 'true' || inputs.test_email == true) && steps.mailcfg.outputs.ready == 'true'
+        continue-on-error: true
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_APP_PASSWORD }}
+          subject: "⚡ GLD 金 sleeve（前瞻 OOS 候選・非實單）可行動變化 ${{ steps.alert.outputs.changed == 'true' && '' || '(測試信)' }}"
+          to: keigoks@gmail.com
+          from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
+          body: |
+            ${{ steps.alert.outputs.changed == 'true' && steps.alert.outputs.body || '這是測試信 — email 推播管線正常。目前無可行動變化。' }}
+
+            —
+            InvestMQuest · GLD 金 sleeve · 前瞻 OOS 追蹤（候選、尚非實單）
+            每交易日美股收盤後自動檢查 · 可行動變化＝閘門翻轉或最終權重與現持差 ≥ 20pp
+            退訂：移除 repo secret MAIL_APP_PASSWORD 或編輯 update_long_track_gld.yml
+
+      - name: Commit and push
+        run: |
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
+          git add docs/long-track-gld/index.html docs/long-track-gld/state.json
+          git diff --staged --quiet || git commit -m "Auto update GLD gold sleeve (forward OOS): $(date -u '+%Y-%m-%d')"
+          for i in 1 2 3 4 5 6; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+            git pull --rebase origin main || { echo "Rebase failed"; exit 1; }
+            sleep $((RANDOM % 20 + 5))
+          done
+          echo "Push failed after 6 attempts"
+          exit 1
