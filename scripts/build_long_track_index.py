@@ -2,7 +2,7 @@
 """前瞻追蹤總覽頁 /long-track/ 產生器（fab）。
 
 家族地圖：實單主系統／影子對照／前瞻 OOS 候選／已退役・凍結對照 四分類卡片。
-nav 用 full_nav_block("system","voltrack")（Phase B 才加新 nav key）。靜態內容、
+nav 用 full_nav_block("system","lthub")（追蹤總覽）。靜態內容、
 無資料層；系統狀態變動時更新此檔重跑。中文全形標點。
 
 用法：python3 scripts/build_long_track_index.py
@@ -16,7 +16,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 from site_nav import full_nav_block  # noqa: E402
 
-NAV_BLOCK = full_nav_block("system", "voltrack")
+NAV_BLOCK = full_nav_block("system", "lthub")
 OUT = HERE.parent / "docs" / "long-track" / "index.html"
 
 # 每組＝(分類、色、突出、系統清單)；系統 dict：name／url／one／status／freq／email
@@ -43,11 +43,11 @@ GROUPS = [
     ]),
     ("已退役・凍結對照（被 W52×自適應取代）", "ret", False, [
         {"name": "STX50（SMH/QQQ 美股）", "url": "/long-track-smh/",
-         "one": "2026-07-18 由 W52×自適應接棒、降為凍結對照。",
-         "status": ("凍結對照", "ret"), "freq": "每交易日", "email": "—"},
+         "one": "2026-07-18 由 W52×自適應接棒、2026-07-23 停更（cron 已移除）。",
+         "status": ("已凍結・2026-07-23 停更", "ret"), "freq": "已停更（僅手動）", "email": "—"},
         {"name": "E3（0050/2330 台股）", "url": "/long-track-tw/",
-         "one": "2026-07-18 由 W52×自適應接棒、降為凍結對照。",
-         "status": ("凍結對照", "ret"), "freq": "每交易日", "email": "—"},
+         "one": "2026-07-18 由 W52×自適應接棒、2026-07-23 停更（cron 已移除）。",
+         "status": ("已凍結・2026-07-23 停更", "ret"), "freq": "已停更（僅手動）", "email": "—"},
         {"name": "0050 + 2330 固定 σ（歸檔）", "url": "/long-track-tw-vt/",
          "one": "固定 σ 版波動率目標，vt 家族早期研究線、已歸檔對照。",
          "status": ("凍結對照", "ret"), "freq": "歸檔", "email": "—"},

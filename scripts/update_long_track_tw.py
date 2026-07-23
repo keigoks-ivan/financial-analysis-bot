@@ -42,7 +42,7 @@ from pandas.tseries.offsets import BDay
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from site_nav import full_nav_block  # noqa: E402
 
-NAV_BLOCK = full_nav_block("system", "lttw")
+NAV_BLOCK = full_nav_block("system", "lthub")
 
 OUTPUT = Path(__file__).parent.parent / "docs" / "long-track-tw" / "index.html"
 STATE_JSON = Path(__file__).parent.parent / "docs" / "long-track-tw" / "state.json"
@@ -306,9 +306,10 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 </head>
 <body>
 {NAV_BLOCK}
+<div class="banner" style="border-width:2px;font-weight:600">❄ 已凍結（2026-07-23 停更）· E3 由 W52×自適應波動率接棒為實單主系統（2026-07-18）· 本頁降為凍結對照，不再排程更新 · 見 <a href="/long-track/" style="color:inherit;text-decoration:underline">追蹤總覽</a></div>
 <div class="page-hdr">
   <div class="container">
-    <div class="crumb"><a href="/">首頁</a> / 台股長線訊號 2330/0050</div>
+    <div class="crumb"><a href="/">首頁</a> / <a href="/long-track/">前瞻追蹤</a> / 台股長線訊號 2330/0050（已凍結）</div>
     <h1>台股長線訊號 — 2330/0050(E3)即時狀態</h1>
     <div class="sub">SystemProtocol v7 · 50% 2330 + 50% 0050 · E3 三訊號各 1/3 · Long only</div>
     <div style="margin-top:.6rem;display:flex;gap:.4rem">

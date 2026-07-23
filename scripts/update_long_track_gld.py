@@ -34,7 +34,7 @@ try:
 except ImportError:
     from site_nav_snippet import full_nav_block  # noqa: E402
 
-NAV_BLOCK = full_nav_block("system", "voltrack")
+NAV_BLOCK = full_nav_block("system", "lthub")
 
 _cand = [HERE.parent / "docs", HERE.parents[2] / "docs" if len(HERE.parents) >= 3 else HERE / "docs"]
 DOCS = next((c for c in _cand if c.exists()), _cand[0])

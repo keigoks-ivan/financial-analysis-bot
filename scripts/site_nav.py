@@ -33,6 +33,14 @@ Change log:
         加 pm/ 與 flow/ 映射；pm/index.html 自 SKIP_FILES 移除（改為可注入 nav）。
         v7-backtest/site_nav_snippet.py 同步（build_nav flow_cls＋MENU system pm），
         full_nav_block 輸出對 canonical byte-identical。
+    2026-07-23 Phase B：長線追蹤家族重整。系統群移除 ltsmh／lttw／sleeve 三條目，
+        新增「追蹤總覽」("lthub", /long-track/)（排 voltrack 之後）；voltrack label
+        由「波動率追蹤」改「實單主系統」（url 不變）。PREFIX_ACTIVE：long-track-smh／
+        long-track-tw／turtle-sleeve／long-track-gld／long-track/ 全改 (system, lthub)；
+        w52-adaptive 家族與三個 vt 頁維持 voltrack。★first-match：泛用 long-track/ 排在
+        所有具體 long-track-*/ 之後★。退役 generator（smh/tw/turtle）＋GLD 追蹤頁＋總覽
+        builder 的 full_nav_block 呼叫改 lthub；smh/tw cron 停更、加凍結 banner。
+        v7-backtest/site_nav_snippet.py 同步、byte-identical 驗證。
 """
 
 import re
@@ -126,10 +134,8 @@ MENU = {
     "system": [
         ("tr", "/track-record/", "裁決實績"),
         ("pm", "/pm/", "持倉週掃"),
-        ("ltsmh", "/long-track-smh/", "長線訊號 SMH"),
-        ("lttw", "/long-track-tw/", "台股長線"),
-        ("voltrack", "/long-track-w52-adaptive/", "波動率追蹤"),
-        ("sleeve", "/turtle-sleeve/", "商品 Sleeve"),
+        ("voltrack", "/long-track-w52-adaptive/", "實單主系統"),
+        ("lthub", "/long-track/", "追蹤總覽"),
         ("bt", "/backtest/", "量化回測"),
         ("tools", "/tools/", "期貨部位計算機"),
         ("data", "/data.html", "公開資料"),
@@ -261,15 +267,20 @@ PREFIX_ACTIVE = [
     # 系統群
     ("track-record/", ("system", "tr")),  # 裁決實績（2026-07-11 新增）
     ("pm/", ("system", "pm")),  # 持倉週掃（2026-07-19 復活：position-thesis-monitor 週掃輸出索引）
-    ("long-track-smh/", ("system", "ltsmh")),
-    # 2026-07-17 波動率追蹤家族整併：voltrack 入口 2026-07-17 晚間改指現行主系統
-    # W52 × 自適應波動率（/long-track-w52-adaptive/）；舊三頁歸檔但映射保留供其頁面高亮。
+    # 2026-07-17 voltrack 入口指現行主系統 W52×自適應（label 2026-07-23 改「實單主系統」）；
+    # 三個 vt 家族頁映射保留供其頁面高亮，仍歸 voltrack。
     ("long-track-w52-adaptive/", ("system", "voltrack")),
     ("long-track-qs-vt/", ("system", "voltrack")),
     ("long-track-adaptive-vt/", ("system", "voltrack")),
     ("long-track-tw-vt/", ("system", "voltrack")),
-    ("long-track-tw/", ("system", "lttw")),
-    ("turtle-sleeve/", ("system", "sleeve")),
+    # 2026-07-23 Phase B：退役頁（STX50/E3）與前瞻候選頁（GLD／商品 sleeve）改歸
+    # 「追蹤總覽」(lthub)。★first-match 陷阱★：泛用前綴 long-track/ 必須排在所有具體
+    # long-track-*/ 前綴之後，否則會吃掉 long-track-w52-adaptive/ 等頁的高亮。
+    ("long-track-smh/", ("system", "lthub")),
+    ("long-track-tw/", ("system", "lthub")),
+    ("long-track-gld/", ("system", "lthub")),
+    ("turtle-sleeve/", ("system", "lthub")),
+    ("long-track/", ("system", "lthub")),   # 泛用前綴：排在所有 long-track-*/ 之後
     ("backtest/", ("system", "bt")),
     ("tools/", ("system", "tools")),
     # 2026-07-17 cache/ 獨立條目移除（併入公開資料）；保留前綴映射避免

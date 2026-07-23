@@ -55,7 +55,7 @@ from pandas.tseries.offsets import BDay
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from site_nav import full_nav_block  # noqa: E402
 
-NAV_BLOCK = full_nav_block("system", "sleeve")
+NAV_BLOCK = full_nav_block("system", "lthub")
 
 OUTPUT = Path(__file__).parent.parent / "docs" / "turtle-sleeve" / "index.html"
 STATE_JSON = Path(__file__).parent.parent / "docs" / "turtle-sleeve" / "state.json"

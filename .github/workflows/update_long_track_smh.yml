@@ -1,17 +1,11 @@
 name: Update Long Track SMH/QQQ Signal
 
 on:
-  schedule:
-    # Every Friday 21:30 UTC (US market close 16:00 ET + 1.5h buffer)
-    # = Saturday 05:30 Taiwan time. STX50 signals are weekly (W40/W52/ST) +
-    # monthly (TSMOM month-end), so the Friday close is the only meaningful update.
-    - cron: '54 21 * * 5'
-  workflow_dispatch:  # Manual trigger anytime
-    inputs:
-      test_email:
-        description: 'Send a test email even without signal changes'
-        type: boolean
-        default: false
+  # 2026-07-23 FROZEN: STX50 (SMH/QQQ) retired — replaced as the live system by
+  # W52×adaptive vol-target (2026-07-18). Cron REMOVED (no more scheduled updates);
+  # kept as workflow_dispatch only for occasional manual regeneration. Page carries
+  # a frozen banner and links to the tracking hub. Residual email/alert step removed.
+  workflow_dispatch:  # Manual trigger only (frozen system)
 
 concurrency:
   group: ${{ github.workflow }}
@@ -33,20 +27,6 @@ jobs:
 
       - name: Run long-track SMH/QQQ update
         run: python scripts/update_long_track_smh.py
-
-      - name: Read change alert
-        id: alert
-        run: |
-          if [ -f lt_smh_alert.txt ]; then
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-            {
-              echo "body<<ALERT_EOF"
-              cat lt_smh_alert.txt
-              echo "ALERT_EOF"
-            } >> "$GITHUB_OUTPUT"
-          else
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          fi
 
       - name: Commit and push
         run: |

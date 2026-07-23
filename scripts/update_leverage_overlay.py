@@ -28,7 +28,7 @@ import yfinance as yf
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from site_nav import full_nav_block  # noqa: E402
 
-NAV_BLOCK = full_nav_block("system", "ltsmh")
+NAV_BLOCK = full_nav_block("system", "lthub")
 OUTPUT = Path(__file__).parent.parent / "docs" / "long-track-smh" / "leverage" / "index.html"
 STATE_JSON = Path(__file__).parent.parent / "docs" / "long-track-smh" / "leverage" / "state.json"
 STX_STATE = Path(__file__).parent.parent / "docs" / "long-track-smh" / "state.json"

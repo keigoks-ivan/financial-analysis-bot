@@ -35,7 +35,7 @@ from pandas.tseries.offsets import BDay
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from site_nav import full_nav_block  # noqa: E402
 
-NAV_BLOCK = full_nav_block("system", "ltsmh")
+NAV_BLOCK = full_nav_block("system", "lthub")
 
 OUTPUT = Path(__file__).parent.parent / "docs" / "long-track-smh" / "index.html"
 STATE_JSON = Path(__file__).parent.parent / "docs" / "long-track-smh" / "state.json"
@@ -382,9 +382,10 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 </head>
 <body>
 {NAV_BLOCK}
+<div class="banner" style="border-width:2px;font-weight:600">❄ 已凍結（2026-07-23 停更）· STX50 由 W52×自適應波動率接棒為實單主系統（2026-07-18）· 本頁降為凍結對照，不再排程更新 · 見 <a href="/long-track/" style="color:inherit;text-decoration:underline">追蹤總覽</a></div>
 <div class="page-hdr">
   <div class="container">
-    <div class="crumb"><a href="/">首頁</a> / 美股長線訊號 SMH/QQQ</div>
+    <div class="crumb"><a href="/">首頁</a> / <a href="/long-track/">前瞻追蹤</a> / 美股長線訊號 SMH/QQQ（已凍結）</div>
     <h1>美股長線訊號 — SMH/QQQ(STX50)即時狀態</h1>
     <div class="sub">SystemProtocol v7 · 50% SMH + 50% QQQ · E3 三訊號各 1/3 + ST(10,3) 半倉出場閘門 · Long only</div>
     <div style="margin-top:.6rem;display:flex;gap:.4rem">
