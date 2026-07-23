@@ -3,9 +3,9 @@
 ================================================================================
 2026-07-18 起用戶正式採用的實單主系統（cap 1.5、兩市場皆同）：訊號＝W52 閘門 × 自適應 σ_t
 × 執行層，曝險層 cap 1.5（w = gate × clip(σ_t/RV20, 上限 1.5)，真波動率目標，只在平靜 regime
-σ_t/RV > 1 才借錢加碼、可上到 150%；執行層刻度 0~150）。主／影子於 2026-07-18 對調：本頁（cap 1.5）
-為實單主系統、輸出 index.html＋state.json＋可行動變化 email；cap 1.0（100%）版降為影子對照頁
-（leverage.html，見 update_long_track_w52_adaptive_leverage.py）。用戶決策要點（誠實紀律）：原
+σ_t/RV > 1 才借錢加碼、可上到 150%；執行層刻度 0~150）。本頁（cap 1.5）為實單主系統、輸出
+index.html＋state.json＋可行動變化 email（本頁渲染純 cap 1.5，不再引無槓桿對照）。
+用戶決策要點（誠實紀律）：原
 「實單前複審關卡」改為「上線後回顧點」（60 交易日 OR 首次 ≥10% 回撤）；美股 cap 1.5 為知情決策
 （研究顯示美股槓桿 Calmar 較低，用戶擇兩市場一致性與報酬）。輸出 index.html＋state.json（兩 history
 各 756 回放，_daily_record 每腿記 sigma_t_pct＋raw_ratio＋executed）。
@@ -73,8 +73,8 @@ OUTPUT = DOCS / "long-track-w52-adaptive" / "index.html"
 STATE_JSON = DOCS / "long-track-w52-adaptive" / "state.json"
 ALERT_FILE = DOCS.parent / "lt_w52a_alert.txt"    # 實單主系統：可行動變化 email 提醒
 # 槓桿回測數字由 results/vol_targeting/w52_adaptive_leverage.json 轉錄為下方 LEV 常數
-# （fab 副本無法讀 v7 results，故轉錄；比照主頁 BT_US/BT_TW 慣例）。影子曝險/燃料表
-# 由本頁 history 的 raw_ratio 即時推導（cap1.0=min(1,raw)、cap1.5=min(1.5,raw)），自足可重現。
+# （fab 副本無法讀 v7 results，故轉錄；比照主頁 BT_US/BT_TW 慣例）。曝險/燃料表
+# 由本頁 history 的 raw_ratio 即時推導（cap1.5=min(1.5,raw)），自足可重現。
 
 US_TICKERS = ["QQQ", "SMH"]
 TW_TICKERS = ["0050", "2330"]
@@ -177,8 +177,6 @@ LEV = {
   "us": {
     "window": ['2005-01-03', '2026-07-10'],
     "fullstack": [
-      ('cap 1.0（不加槓桿）', 12.68, -21.3, 0.5948, 1.499, 71.0, 100.0, None),
-      ('cap 1.0＋執行層 A2（＝影子頁對帳）', 12.67, -22.4, 0.5662, 1.438, 71.0, 100.0, 7.2),
       ('靜態 1.5×（無腦放大）', 16.95, -30.8, 0.5497, 1.25, 106.0, 150.0, None),
       ('cap 1.5（真波動率目標·每日）', 14.05, -24.5, 0.5731, 1.369, 85.0, 150.0, None),
       ('cap 1.5＋執行層 A2（本頁追蹤）', 14.10, -23.7, 0.5953, 1.284, 85.0, 150.0, 12.5),
@@ -194,8 +192,6 @@ LEV = {
   "tw": {
     "window": ['2014-01-01', '2026-07-17'],
     "fullstack": [
-      ('cap 1.0（不加槓桿）', 19.49, -19.0, 1.028, 2.422, 73.0, 100.0, None),
-      ('cap 1.0＋執行層 A2（＝影子頁對帳）', 18.98, -19.1, 0.9924, 2.470, 73.0, 100.0, 5.7),
       ('靜態 1.5×（無腦放大）', 28.19, -27.3, 1.0309, 2.292, 110.0, 150.0, None),
       ('cap 1.5（真波動率目標·每日）', 22.17, -19.2, 1.1524, 2.637, 83.0, 150.0, None),
       ('cap 1.5＋執行層 A2（本頁追蹤）', 22.98, -18.9, 1.2173, 2.544, 83.0, 150.0, 12.3),
@@ -569,10 +565,8 @@ def backtest_section(mkt: dict) -> str:
                f'<td class="num">{martin:.2f}</td><td class="num">{avg:.0f}%</td>'
                f'<td class="num">{peak:.0f}%</td><td class="num">{yr}</td></tr>\n')
     # 曝險分布 + 分期
-    d10, d15 = L["dist_cap10"], L["dist_cap15"]
-    dist = (f'<tr class="rowbh"><td>cap 1.0</td><td class="num">{d10["avg"]}%</td><td class="num">{d10["avg3y"]}%</td>'
-            f'<td class="num">{d10["gt100"]}%</td><td class="num">{d10["ge145"]}%</td><td class="num">{d10["peak"]}%</td></tr>'
-            f'<tr class="rowhl"><td>cap 1.5</td><td class="num">{d15["avg"]}%</td><td class="num">{d15["avg3y"]}%</td>'
+    d15 = L["dist_cap15"]
+    dist = (f'<tr class="rowhl"><td>cap 1.5</td><td class="num">{d15["avg"]}%</td><td class="num">{d15["avg3y"]}%</td>'
             f'<td class="num">{d15["gt100"]}%</td><td class="num">{d15["ge145"]}%</td><td class="num">{d15["peak"]}%</td></tr>')
     era_head = "".join(f'<th class="num">{lab}</th>' for lab in L["era_labels"])
     era_cells = "".join(f'<td class="num">{v}%</td>' for v in d15["eras"])
@@ -581,19 +575,16 @@ def backtest_section(mkt: dict) -> str:
              if mkt["key"] == "tw" else
              '<div class="takeaway">cap 1.5 平均曝險僅 85%（不是常態滿槓桿）；GFC 分期只 66%——風暴期靠 σ_t/RV 跌破 1 自動收槓桿。</div>')
     # 融資敏感度
-    c10 = L["cap10_calmar"]
     sens = ""
     for sp, cg, cal in L["sensitivity"]:
         warn = ' style="background:var(--red-bg)"' if sp >= 6 else ""
-        inc = cal - c10
-        icls = "pos" if inc > 1e-9 else ("neg" if inc < -1e-9 else "")
         sens += (f'<tr{warn}><td>{sp:.1f}%{" （台股融資）" if sp>=6 else ""}</td><td class="num">{cg:.2f}%</td>'
-                 f'<td class="num">{cal:.3f}</td><td class="num {icls}">{inc:+.3f}</td></tr>\n')
+                 f'<td class="num">{cal:.3f}</td></tr>\n')
     st = L["stress"]
     return f"""<div class="card">
 <h3>回測全堆疊 — {mkt['short']}（訊號 → 曝險 → 執行・窗 {L['window'][0]} ～ {L['window'][1]}）{dead}</h3>
 <p style="font-size:.8rem;color:var(--muted);margin-bottom:.7rem">
-主列（藍底）＝<b>cap 1.5 ＋ 執行層 A2（本頁追蹤）</b>；「cap 1.0 ＋ 執行層 A2」＝<b>影子頁對帳列</b>（美 0.566／台 0.992，可與 <a href="/long-track-w52-adaptive/leverage.html">影子對照頁</a>對帳）。「cap 1.5＋10pp/5% 執行層」為另一組執行層設定的<b>研究對照列</b>。曝險欄可見 cap 1.5 平均僅 83～85%、非常態滿槓桿。數字轉錄自 results/vol_targeting/w52_adaptive_leverage.json。{'<b>台股數字為 7 bps 均一成本；真實成本版（證交稅）約再降 0.5pp CAGR，見 <a href="/backtest/vol_targeting/tw.html">台股實驗室</a>。</b>' if mkt['key'] == 'tw' else ''}</p>
+主列（藍底）＝<b>cap 1.5 ＋ 執行層 A2（本頁追蹤）</b>；「cap 1.5＋10pp/5% 執行層」為另一組執行層設定的<b>研究對照列</b>。曝險欄可見 cap 1.5 平均僅 83～85%、非常態滿槓桿。數字轉錄自 results/vol_targeting/w52_adaptive_leverage.json。{'<b>台股數字為 7 bps 均一成本；真實成本版（證交稅）約再降 0.5pp CAGR，見 <a href="/backtest/vol_targeting/tw.html">台股實驗室</a>。</b>' if mkt['key'] == 'tw' else ''}</p>
 <table><thead><tr><th>層級</th><th class="num">CAGR</th><th class="num">MDD</th><th class="num">Calmar</th><th class="num">Martin</th><th class="num">平均曝險</th><th class="num">峰值</th><th class="num">年動手</th></tr></thead>
 <tbody>{fs}</tbody></table>
 </div>
@@ -607,17 +598,16 @@ def backtest_section(mkt: dict) -> str:
 </div>
 
 <div class="card">
-<h3>{mkt['short']} 融資利差敏感度（cap 1.5・cap 1.0 Calmar 基準 {c10:.3f}）</h3>
-<table><thead><tr><th>融資利差</th><th class="num">CAGR</th><th class="num">Calmar</th><th class="num">增量 vs cap 1.0</th></tr></thead>
+<h3>{mkt['short']} 融資利差敏感度（cap 1.5）</h3>
+<table><thead><tr><th>融資利差</th><th class="num">CAGR</th><th class="num">Calmar</th></tr></thead>
 <tbody>{sens}</tbody></table>
-<div class="takeaway"><b>誠實更正</b>：原預期「6% 融資 → 增益歸零」<b>不成立</b>——真波動率目標只借一點點（平均曝險 83～85%），6% 利差下台股仍領先 cap 1.0 約 +0.10 Calmar；<b>美股則任何利差都不如 cap 1.0</b>。「必須用期貨」的真正理由是<b>保證金／強制平倉機制與台股散戶實務</b>，不是融資吃掉增益。</div>
+<div class="takeaway"><b>誠實更正</b>：原預期「6% 融資 → 增益歸零」<b>不成立</b>——真波動率目標只借一點點（平均曝險 83～85%），融資利差對 Calmar 的侵蝕有限。<b>美股這一腿槓桿的風險調整報酬本就次優、任何利差下都不佔優</b>。「必須用期貨」的真正理由是<b>保證金／強制平倉機制與台股散戶實務</b>，不是融資吃掉增益。</div>
 </div>
 
 <div class="card">
 <h3>{mkt['short']} 壓力統計（歷史最差）</h3>
 <table><thead><tr><th>設計</th><th class="num">最差單日</th><th class="num">最差 20 日</th></tr></thead>
 <tbody>
-<tr class="rowbh"><td>cap 1.0</td><td class="num">{st['cap10'][0]:.1f}%</td><td class="num">{st['cap10'][1]:.1f}%</td></tr>
 <tr class="rowhl"><td>cap 1.5</td><td class="num">{st['cap15'][0]:.1f}%</td><td class="num">{st['cap15'][1]:.1f}%</td></tr>
 </tbody></table>
 <div style="font-size:.75rem;color:var(--muted);margin-top:.5rem"><b>槓桿算術</b>：150% 滿載時標的單日 −7% ＝ 權益 −10.5%；故實際峰值建議壓 140% 留保證金緩衝。</div>
@@ -693,10 +683,6 @@ def _market_data(mkt: dict, sigs: dict, history: list, exec_replay: dict) -> dic
         "asig": _col(lambda r: r["tickers"][a]["sigma_t_pct"]),
         "bsig": _col(lambda r: r["tickers"][b]["sigma_t_pct"]),
         "src": _col(lambda r: r["source"]),
-        # 影子：cap 1.0 組合曝險（由 raw_ratio 推導，min(1,raw)），與 cap 1.5 對照
-        "cshadow": _col(lambda r: round(sum(
-            (50.0 if r["tickers"][t]["gate"] else 0.0) * min(1.0, r["tickers"][t].get("raw_ratio", 1.0))
-            for t in (a, b)), 1)),
         # 燃料表：組合 σ_t/RV 原始比率均值（clip 顯示 2.5）
         "fuel": _col(lambda r: round(min(2.5, 0.5 * (r["tickers"][a].get("raw_ratio", 1.0)
                                                      + r["tickers"][b].get("raw_ratio", 1.0))), 2)),
@@ -801,7 +787,7 @@ def market_html(mkt: dict, sigs: dict, md: dict) -> str:
 <div class="chart-wrap-sm"><canvas id="chart-rv-{suf}"></canvas></div>
 <h3 style="margin-top:1.1rem">{mkt['short']} 槓桿燃料表 — σ_t/RV 原始比率</h3>
 <p style="font-size:.8rem;color:var(--muted);margin-bottom:.5rem">
-σ_t/RV &gt; <b>1.0</b>（下虛線）＝當下比自身近 3 年平靜、cap 1.5 開始借錢；&gt; <b>1.5</b>（上虛線）＝連 cap 1.5 也滿載 150%。崩盤時比率暴跌到 1 以下、槓桿自動關閉。上方時間軸的<b>藍虛線＝cap 1.0 影子</b>（＝主系統曝險），綠粗階梯＝本頁 cap 1.5 執行，兩者差距就是「借的錢」。</p>
+σ_t/RV &gt; <b>1.0</b>（下虛線）＝當下比自身近 3 年平靜、cap 1.5 開始借錢；&gt; <b>1.5</b>（上虛線）＝連 cap 1.5 也滿載 150%。崩盤時比率暴跌到 1 以下、槓桿自動關閉。上方時間軸的綠粗階梯＝本頁 cap 1.5 執行；比率超過 1.0 的部分就是「借的錢」。</p>
 <div class="chart-wrap-sm"><canvas id="chart-fuel-{suf}"></canvas></div>
 </div>
 
@@ -871,7 +857,6 @@ new Chart(document.getElementById('chart-weights-{suf}'),{{
      borderWidth:2.8,stepped:true,pointRadius:0,pointHoverRadius:3,fill:'origin',segment:{{borderDash:segDash_{suf}}}}},
     {{label:'{legs[0]} 執行',data:{H['aexe']},borderColor:BLUE,borderWidth:1.6,stepped:true,pointRadius:0,pointHoverRadius:3,segment:{{borderDash:segDash_{suf}}}}},
     {{label:'{legs[1]} 執行',data:{H['bexe']},borderColor:AMBER,borderWidth:1.6,stepped:true,pointRadius:0,pointHoverRadius:3,segment:{{borderDash:segDash_{suf}}}}},
-    {{label:'cap 1.0 影子（主系統）',data:{H['cshadow']},borderColor:'#1a56db',borderWidth:1.3,borderDash:[4,3],pointRadius:0,pointHoverRadius:2,tension:0.15}},
     {{label:'100% 分界',data:W_LAB_{suf}.map(function(){{return 100;}}),borderColor:'rgba(120,120,120,0.55)',borderWidth:1,borderDash:[2,3],pointRadius:0}},
     {{label:'合成目標（理論）',data:{H['comb']},borderColor:'rgba(22,163,74,0.35)',borderWidth:1,pointRadius:0,pointHoverRadius:2,tension:0.15}}
   ]}},
@@ -1112,7 +1097,6 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
     <div class="sub">美股 QQQ+SMH ＋ 台股 0050+2330 · 週線 W52 單線閘門 × 自適應 σ 波動率目標 <b>cap 1.5</b>（w = 閘門 × clip(σ_t/RV20, 上限 1.5)）× 執行層 · Long only · <b>2026-07-18 起為實單系統</b>（兩市場皆 cap 1.5）· <span style="opacity:.7">研究代號 變體 C，見 Adaptive_Sigma_Spec</span></div>
     <div style="margin-top:.6rem;display:flex;gap:.4rem;flex-wrap:wrap">
       <a href="/long-track-w52-adaptive/" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border-radius:6px;background:var(--text);color:#fff;text-decoration:none">實單主系統 cap 1.5（本頁）</a>
-      <a href="/long-track-w52-adaptive/leverage.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">cap 1.0 影子對照</a>
       <a href="/backtest/vol_targeting/leverage.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">槓桿研究頁</a>
       <a href="/backtest/vol_targeting/adaptive.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">美股變體實驗室</a>
       <a href="/backtest/vol_targeting/tw.html" style="font-size:.82rem;font-weight:600;padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;color:var(--muted);text-decoration:none">台股變體實驗室</a>
@@ -1128,8 +1112,8 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 
 <div class="oos-banner">
   <span class="tag-loud">實單主系統・2026-07-18 起・cap 1.5（美+台）・email 提醒可行動變化</span>
-  <div style="font-size:.86rem">本頁是<b>{FREEZE_DATE} 凍結、2026-07-18 起用戶正式採用的實單主系統</b>：<b>W52 單線閘門 × 自適應 σ 波動率目標 cap 1.5 × 執行層 A2（20pp 門檻＋10% 取整＋clamp 150%）</b>（美台四腿、各市場 50/50 獨立組合，曝險可上到 150%）。真波動率目標＝只在平靜 regime σ_t/RV &gt; 1 時借錢加碼、波動一高自動降回。每交易日台股／美股收盤後更新，<b>可行動變化以 email 提醒</b>（任一腿閘門翻轉，或今日目標與現持執行層差 ≥ 20pp）。cap 1.0（100%）版保留為<a href="/long-track-w52-adaptive/leverage.html">影子對照頁</a>供複審對照。
-  <br><br><b>誠實紀律（兩點白紙黑字）</b>：<b>①</b> 用戶決策為<b>原「實單前複審關卡」不再作為前置條件</b>，改為<b>上線後回顧點（60 個追蹤交易日，或首次 ≥ 10% 組合回撤事件）</b>——即先上實單、再於回顧點檢驗水下體驗是否符合預期。<b>②</b> <b>美股採 cap 1.5 是「知情決策」</b>：研究顯示<b>美股槓桿的 Calmar 較低（cap 1.5 ＜ cap 1.0）</b>、任何融資利差下都不划算，用戶<b>選擇兩市場一致性與報酬（而非風險調整最優）</b>，明知美股這一腿是為對稱操作付的代價。<b>此外</b>：槓桿放大所有模型誤差、深熊未實測（見 2330 長窗與誠實揭露）、台股須用期貨非融資、實際峰值建議壓 140% 留保證金緩衝。</div>
+  <div style="font-size:.86rem">本頁是<b>{FREEZE_DATE} 凍結、2026-07-18 起用戶正式採用的實單主系統</b>：<b>W52 單線閘門 × 自適應 σ 波動率目標 cap 1.5 × 執行層 A2（20pp 門檻＋10% 取整＋clamp 150%）</b>（美台四腿、各市場 50/50 獨立組合，曝險可上到 150%）。真波動率目標＝只在平靜 regime σ_t/RV &gt; 1 時借錢加碼、波動一高自動降回。每交易日台股／美股收盤後更新，<b>可行動變化以 email 提醒</b>（任一腿閘門翻轉，或今日目標與現持執行層差 ≥ 20pp）。
+  <br><br><b>誠實紀律（兩點白紙黑字）</b>：<b>①</b> 用戶決策為<b>原「實單前複審關卡」不再作為前置條件</b>，改為<b>上線後回顧點（60 個追蹤交易日，或首次 ≥ 10% 組合回撤事件）</b>——即先上實單、再於回顧點檢驗水下體驗是否符合預期。<b>②</b> <b>美股採 cap 1.5 是「知情決策」</b>：研究顯示<b>美股這一腿槓桿的風險調整報酬（Calmar）較不划算</b>、任何融資利差下都不佔優，用戶<b>選擇兩市場一致性與報酬（而非風險調整最優）</b>，明知美股這一腿是為對稱操作付的代價。<b>此外</b>：槓桿放大所有模型誤差、深熊未實測（見 2330 長窗與誠實揭露）、台股須用期貨非融資、實際峰值建議壓 140% 留保證金緩衝。</div>
 </div>
 
 <div class="dual-stat">
@@ -1153,7 +1137,7 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 ⑥ <b>最終權重</b> = 0.5 × 閘門(0/1) × 套袖權重，每市場兩腿各自計算。<br>
 ⑦ <b>資料揭露</b>：yfinance auto-adjust（還原股價）；0050.TW 2014-01-02 幻影分割壞 bar 由腳本自動修復（回溯縮放，門檻單日 ±40%，台股漲跌停 ±10% 不可能誤觸）；0050 免費歷史約 2009 起。台股 2330 佔 0050 約五成，50/50 組合等效台積電曝險 ≈ 75%，非分散組合。<br>
 ⑧ <b>執行層 A2（規則凍結 {FREEZE_DATE}）</b>：|目標 − 現持| ≥ 20pp 才調整，調整取整至 10% 格、再 clamp 於 50×cap（cap1.5→75pp／組合 150%）；<b>回測主數字含此執行層</b>，與追蹤操作同規則（兩市場各自獨立重放）。<br>
-<span style="color:var(--muted);font-size:.78rem">閘門為週頻（僅週五可能翻轉），套袖 RV20／σ_t 為日頻，故本頁每交易日更新（台股收盤後、美股收盤後各一次，date-keyed 冪等）。<b>本頁為實單主系統、發 email 提醒</b>——可行動變化＝任一腿閘門翻轉，或今日目標與現持（執行層 executed）差 ≥ 20pp。cap 1.0（100%）版保留為<a href="/long-track-w52-adaptive/leverage.html">影子對照頁</a>供複審對照。</span>
+<span style="color:var(--muted);font-size:.78rem">閘門為週頻（僅週五可能翻轉），套袖 RV20／σ_t 為日頻，故本頁每交易日更新（台股收盤後、美股收盤後各一次，date-keyed 冪等）。<b>本頁為實單主系統、發 email 提醒</b>——可行動變化＝任一腿閘門翻轉，或今日目標與現持（執行層 executed）差 ≥ 20pp。</span>
 </div>
 </div>
 
@@ -1162,7 +1146,7 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 <summary style="cursor:pointer;font-weight:600;font-size:.9rem">規則沿革（歷次凍結後的變更紀錄）</summary>
 <div class="rule-list" style="font-size:.82rem;margin-top:.75rem">
 • <b>2026-07-17</b>：規則凍結——W52 單線閘門 × 自適應 σ_t（RV20 近三年滾動中位數，756／252）定案，此後不掃參擇優、不改機制形狀、不加濾網。<br>
-• <b>2026-07-18</b>：正式採用 cap 1.5（真波動率目標，w = 閘門 × clip(σ_t/RV, 上限 1.5)）為實單主系統；本頁（cap 1.5）與 cap 1.0 版<b>互換主／影子角色</b>，cap 1.0 版成為<a href="/long-track-w52-adaptive/leverage.html">影子對照頁</a>。<br>
+• <b>2026-07-18</b>：正式採用 cap 1.5（真波動率目標，w = 閘門 × clip(σ_t/RV, 上限 1.5)）為實單主系統。<br>
 • <b>2026-07-22</b>：執行層由 10pp 門檻／5% 取整改為現行 A2（20pp 門檻／10% 取整／取整後 clamp 於 50×cap）。採用理由＝調整頻率下降（美股約 28→13 次／年、台股約 27→12 次／年，約 −55%）；相對基準的 <b>Calmar 變化屬單一路徑執行時點雜訊、非績效宣稱</b>，亦不作為未來繼續加寬門檻的依據。切換當日曾提示以今日目標持股率對帳一次實際持倉（<code>band_exec_replay</code> 對全史重放的現持序列隨規則改變）。<br>
 </div>
 </details>
@@ -1186,7 +1170,7 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 ② <b>深熊退化的直接證據</b>：含 2008 的 2330 長窗裡 W52 × 自適應 Calmar <b>0.433 反而略劣於 score5×自適應 0.441</b>；快閘門對慢熊誘多抵抗較弱，<b>加槓桿只會更痛</b>。<br>
 ③ <b>台股數字含取整路徑成分＋ 2014+ 無崩盤樣本</b>：cap 1.5 Calmar 1.198 不宜當「穩定勝出」；組合層級遇 2008 級深熊的槓桿行為未測試。<br>
 ④ <b>台股須用期貨、峰值壓 140%</b>：融資 6～7% 不可行；但注意——真波動率目標借得少，融資利差不是主殺手（見敏感度表），用期貨的真正理由是保證金／強制平倉機制。<br>
-⑤ <b>美股槓桿不划算（對照組）</b>：任何利差下 cap 1.5 Calmar 都不如 cap 1.0——槓桿的價值只在台股這種低波乾淨多頭樣本，且該樣本無崩盤。
+⑤ <b>美股槓桿不划算</b>：美股這一腿的風險調整報酬（Calmar）在任何融資利差下都次優——槓桿的價值只在台股這種低波乾淨多頭樣本，且該樣本無崩盤。
 </div>
 </div>
 
@@ -1196,7 +1180,7 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 用戶於 2026-07-18 正式將本系統（cap 1.5、兩市場）<b>採為實單主系統，立即切實單</b>。<b>原「實單前複審關卡」不再作為前置條件</b>，改為<b>上線後回顧點</b>——先上線、再於下列時點回顧：<br>
 • 滿 <b>60 個追蹤交易日</b>的實單實錄，回顧實際持股率／事件節奏與回測分布是否一致；<b>或</b><br>
 • 首次經歷 <b>≥ 10% 組合回撤事件</b>，回顧 W52 快閘門 × 自適應套袖 × cap 1.5 在真實下殺中的水下體驗是否符合預期（尤其慢熊誘多情境、槓桿放大痛感）。<br>
-回顧點若發現與預期背離，再按 charter 調整部位或降回 cap 1.0。<b>知情決策已載於頁首兩點</b>：關卡改回顧點、美股 cap 1.5 明知 Calmar 較低仍取一致性。<br>
+回顧點若發現與預期背離，再按 charter 調整部位或降回無槓桿基準。<b>知情決策已載於頁首兩點</b>：關卡改回顧點、美股 cap 1.5 明知 Calmar 較低仍取一致性。<br>
 <span style="color:var(--muted);font-size:.78rem">補充：台股回測數字為 7 bps 均一成本；<b>真實成本版（賣出證交稅 0050 15bps／2330 35bps）約再降 0.5pp CAGR</b>（cap 1.5 -0.52pp），見<a href="/backtest/vol_targeting/tw.html">台股實驗室的真實成本版</a>。</span>
 </div>
 </div>
