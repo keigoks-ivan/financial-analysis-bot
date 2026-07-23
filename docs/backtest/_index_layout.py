@@ -167,6 +167,7 @@ DIRECTORY = {
             ("/backtest/slope_filter_global/", "全球斜率穩健性", None, False),
             ("/backtest/crossasset_defense/", "跨資產防守", None, False),
             ("/backtest/gem/", "SPY/ACWX 雙動能", None, False),
+            ("/backtest/nonequity/", "非股票 sleeve", "研究", False),
         ]),
         ("研究・頻率", [
             ("/backtest/daily_vs_weekly_global/", "日/週·全球", None, False),
@@ -282,7 +283,12 @@ US_RESEARCH = r"""<a class="link-card" href="/backtest/mom_volscaling/" style="b
 </a>"""
 
 # Multi-asset / global research link-cards (verbatim) — moved to 多資產 tab.
-MULTI_RESEARCH = r"""<a class="link-card" href="/backtest/multiasset_trend/" style="border-left:3px solid var(--grey)">
+MULTI_RESEARCH = r"""<a class="link-card" href="/backtest/nonequity/" style="border-left:3px solid #d97706">
+  <span style="font-size:1.3rem">🥇</span>
+  <span><span class="lc-name">非股票 sleeve：商品／美債</span><br><span class="lc-sub">預註冊決策前研究(凍結 2026-07-23、cap 1.0 不上槓桿)· GLD/TLT/IEF/DBC 主列(W52×自適應+A2)四判準全過、與美股系統月相關 &lt;0.3、2022 升息債災主列 MDD −2.8% vs B&amp;H −39.8% · GEM 輪動 MDD −51% 且無 B&amp;H 基準 = 非候選 · DBC 判準4 邊際僅 +0.003(壓線)· 疊加 frictionless 已揭露</span></span>
+  <span class="lc-arrow">→</span>
+</a>
+<a class="link-card" href="/backtest/multiasset_trend/" style="border-left:3px solid var(--grey)">
   <span style="font-size:1.3rem">📈</span>
   <span><span class="lc-name">多資產期貨・趨勢追蹤 · SG Trend Index 複製</span><br><span class="lc-sub">複驗(非發明)· 10 檔期貨/ETF 代理零參數搜索 · 對 SG 官方月報酬相關 0.647、2022 +21.92% ✓,驗收 2/3 過 · CAGR 2.79% 遠不及 SG(第3條深回撤不過 = universe 廣度不足非 bug)· 複製的是風格不是報酬水準；CL=F/SI=F 幻影拼接已審計剔除</span></span>
   <span class="lc-arrow">→</span>
