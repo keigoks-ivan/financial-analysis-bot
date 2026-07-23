@@ -182,7 +182,7 @@ LEV = {
       ('靜態 1.5×（無腦放大）', 16.95, -30.8, 0.5497, 1.25, 106.0, 150.0, None),
       ('cap 1.5（真波動率目標·每日）', 14.05, -24.5, 0.5731, 1.369, 85.0, 150.0, None),
       ('cap 1.5＋執行層 A2（本頁追蹤）', 14.10, -23.7, 0.5953, 1.284, 85.0, 150.0, 12.5),
-      ('cap 1.5＋舊執行層 10pp/5%（2026-07-22 前・對照）', 14.31, -25.3, 0.5666, 1.365, 85.0, 150.0, 28.4),
+      ('cap 1.5＋10pp/5% 執行層（對照）', 14.31, -25.3, 0.5666, 1.365, 85.0, 150.0, 28.4),
     ],
     "era_labels": ['2005-08 GFC', '2009-13 QE', '2014-18 低波', '2019-23 COVID', '2024- AI 牛'],
     "dist_cap10": {"avg": 71, "avg3y": 86, "gt100": 0, "ge145": 0, "peak": 100, "eras": [52, 75, 79, 66, 84]},
@@ -199,7 +199,7 @@ LEV = {
       ('靜態 1.5×（無腦放大）', 28.19, -27.3, 1.0309, 2.292, 110.0, 150.0, None),
       ('cap 1.5（真波動率目標·每日）', 22.17, -19.2, 1.1524, 2.637, 83.0, 150.0, None),
       ('cap 1.5＋執行層 A2（本頁追蹤）', 22.98, -18.9, 1.2173, 2.544, 83.0, 150.0, 12.3),
-      ('cap 1.5＋舊執行層 10pp/5%（2026-07-22 前・對照）', 22.62, -18.9, 1.1984, 2.641, 83.0, 150.0, 26.8),
+      ('cap 1.5＋10pp/5% 執行層（對照）', 22.62, -18.9, 1.1984, 2.641, 83.0, 150.0, 26.8),
     ],
     "era_labels": ['2014-16 陸股貶值/整理', '2017-19 平順多頭', '2020-22 COVID/升息', '2023- AI 台積電牛'],
     "dist_cap10": {"avg": 73, "avg3y": 80, "gt100": 0, "ge145": 0, "peak": 100, "eras": [76, 76, 59, 80]},
@@ -208,6 +208,37 @@ LEV = {
     "cap10_calmar": 1.028,
     "sensitivity": [(0.0, 22.35, 1.162), (1.5, 22.17, 1.152), (3.0, 21.99, 1.143), (6.0, 21.64, 1.125)],
   },
+}
+
+# 逐年回測績效轉錄（results/vol_targeting/w52_adaptive_leverage.json 的 annual_perf；
+# 由 run_w52_adaptive_leverage.build_annual_stack 以日 NAV 年末/年初計算）。
+# 系統＝正式配置 cap 1.5 ＋ 執行層 A2（含融資利差 1.5%/年），與頁面主數字（美 CAGR 14.10
+# ／台 22.98）同一條 NAV；B&H＝該市場兩腿 50/50 買進持有（bh_nav → combine）。
+# 每列＝(年度，系統報酬%，B&H 報酬%，超額 pp，部分年 partial)。美股 2005 完整年
+# （ev=2005-01-03）、末年 2026 為部分年（YTD）；台股 2014 起。CI 不重跑回測、靜態轉錄。
+ANNUAL = {
+  "us": [
+    (2005, -4.0, 7.4, -11.4, False), (2006, -4.8, -0.6, -4.2, False),
+    (2007, 3.5, 7.4, -3.9, False), (2008, -3.3, -43.4, 40.1, False),
+    (2009, 29.5, 57.4, -27.9, False), (2010, 8.8, 18.6, -9.8, False),
+    (2011, -8.8, -1.4, -7.4, False), (2012, 0.1, 13.4, -13.3, False),
+    (2013, 37.0, 35.1, 1.9, False), (2014, 18.2, 24.8, -6.6, False),
+    (2015, -4.7, 4.7, -9.4, False), (2016, 1.2, 20.7, -19.5, False),
+    (2017, 43.0, 35.7, 7.3, False), (2018, 0.9, -4.5, 5.4, False),
+    (2019, 19.0, 51.6, -32.6, False), (2020, 22.2, 52.6, -30.4, False),
+    (2021, 40.7, 35.1, 5.6, False), (2022, -13.8, -32.8, 19.0, False),
+    (2023, 54.1, 64.3, -10.2, False), (2024, 33.2, 32.9, 0.3, False),
+    (2025, 30.5, 34.8, -4.3, False), (2026, 36.1, 42.3, -6.2, True),
+  ],
+  "tw": [
+    (2014, 32.0, 32.4, -0.4, False), (2015, -4.7, -0.6, -4.1, False),
+    (2016, 14.2, 25.8, -11.6, False), (2017, 33.5, 24.4, 9.1, False),
+    (2018, -2.0, -1.4, -0.6, False), (2019, 29.0, 43.6, -14.6, False),
+    (2020, 35.7, 47.3, -11.6, False), (2021, 17.6, 20.2, -2.6, False),
+    (2022, -5.3, -23.2, 17.9, False), (2023, 19.5, 31.4, -11.9, False),
+    (2024, 55.2, 65.9, -10.7, False), (2025, 33.1, 42.0, -8.9, False),
+    (2026, 47.9, 53.3, -5.4, True),
+  ],
 }
 
 
@@ -562,7 +593,7 @@ def backtest_section(mkt: dict) -> str:
     return f"""<div class="card">
 <h3>回測全堆疊 — {mkt['short']}（訊號 → 曝險 → 執行・窗 {L['window'][0]} ～ {L['window'][1]}）{dead}</h3>
 <p style="font-size:.8rem;color:var(--muted);margin-bottom:.7rem">
-主列（藍底）＝<b>cap 1.5 ＋ 執行層 A2（本頁追蹤）</b>；「cap 1.0 ＋ 執行層 A2」＝<b>影子頁對帳列</b>（美 0.566／台 0.992，可與 <a href="/long-track-w52-adaptive/leverage.html">影子對照頁</a>對帳）。末列＝<b>2026-07-22 前舊執行層 10pp/5%</b>，保留供對照（見規則說明的執行層升格註記）。曝險欄可見 cap 1.5 平均僅 83～85%、非常態滿槓桿。數字轉錄自 results/vol_targeting/w52_adaptive_leverage.json。{'<b>台股數字為 7 bps 均一成本；真實成本版（證交稅）約再降 0.5pp CAGR，見 <a href="/backtest/vol_targeting/tw.html">台股實驗室</a>。</b>' if mkt['key'] == 'tw' else ''}</p>
+主列（藍底）＝<b>cap 1.5 ＋ 執行層 A2（本頁追蹤）</b>；「cap 1.0 ＋ 執行層 A2」＝<b>影子頁對帳列</b>（美 0.566／台 0.992，可與 <a href="/long-track-w52-adaptive/leverage.html">影子對照頁</a>對帳）。「cap 1.5＋10pp/5% 執行層」為另一組執行層設定的<b>研究對照列</b>。曝險欄可見 cap 1.5 平均僅 83～85%、非常態滿槓桿。數字轉錄自 results/vol_targeting/w52_adaptive_leverage.json。{'<b>台股數字為 7 bps 均一成本；真實成本版（證交稅）約再降 0.5pp CAGR，見 <a href="/backtest/vol_targeting/tw.html">台股實驗室</a>。</b>' if mkt['key'] == 'tw' else ''}</p>
 <table><thead><tr><th>層級</th><th class="num">CAGR</th><th class="num">MDD</th><th class="num">Calmar</th><th class="num">Martin</th><th class="num">平均曝險</th><th class="num">峰值</th><th class="num">年動手</th></tr></thead>
 <tbody>{fs}</tbody></table>
 </div>
@@ -590,6 +621,33 @@ def backtest_section(mkt: dict) -> str:
 <tr class="rowhl"><td>cap 1.5</td><td class="num">{st['cap15'][0]:.1f}%</td><td class="num">{st['cap15'][1]:.1f}%</td></tr>
 </tbody></table>
 <div style="font-size:.75rem;color:var(--muted);margin-top:.5rem"><b>槓桿算術</b>：150% 滿載時標的單日 −7% ＝ 權益 −10.5%；故實際峰值建議壓 140% 留保證金緩衝。</div>
+</div>"""
+
+
+def annual_perf_section(mkt: dict) -> str:
+    """逐年回測績效表：系統（正式配置 cap 1.5＋執行層 A2，含融資成本）vs 該市場
+    兩腿 50/50 買進持有。欄位＝年度、系統報酬%、B&H 報酬%、超額 pp。負報酬紅、正報酬綠
+    （沿用頁面現有用色慣例）。數字轉錄自 ANNUAL 常數，與頁面主 NAV 同源。"""
+    rows = ANNUAL[mkt["key"]]
+    win = LEV[mkt["key"]]["window"]
+    body = ""
+    for yr, sysr, bhr, exc, partial in rows:
+        yl = (f'{yr} <span style="font-size:.68rem;color:var(--amber-text);font-weight:700">YTD</span>'
+              if partial else str(yr))
+        sc = "var(--green)" if sysr >= 0 else "var(--red)"
+        bc = "var(--green)" if bhr >= 0 else "var(--red)"
+        ec = "var(--green)" if exc >= 0 else "var(--red)"
+        body += (f'<tr><td>{yl}</td>'
+                 f'<td class="num" style="color:{sc}">{fmt_pct(sysr, 1)}</td>'
+                 f'<td class="num" style="color:{bc}">{fmt_pct(bhr, 1)}</td>'
+                 f'<td class="num" style="color:{ec}">{exc:+.1f}</td></tr>\n')
+    return f"""<div class="card">
+<h3>{mkt['short']} 逐年回測績效 — 系統（cap 1.5＋執行層 A2）vs 50/50 買進持有（窗 {win[0]} ～ {win[1]}）</h3>
+<p style="font-size:.8rem;color:var(--muted);margin-bottom:.6rem">
+<b>系統</b>＝正式配置（cap 1.5＋執行層 A2，含融資利差 1.5%/年），與本頁主數字（{mkt['short']} CAGR {'14.10' if mkt['key']=='us' else '22.98'}%／Calmar {'0.5953' if mkt['key']=='us' else '1.2173'}）<b>同一條 NAV</b>；<b>B&amp;H</b>＝該市場兩腿各 50% 買進持有。逐年報酬由<b>日 NAV 年末/年初</b>計算（非月度近似）。超額為系統 − B&amp;H（pp）。</p>
+<table><thead><tr><th>年度</th><th class="num">系統報酬</th><th class="num">B&amp;H 報酬</th><th class="num">超額 (pp)</th></tr></thead>
+<tbody>{body}</tbody></table>
+<div style="font-size:.75rem;color:var(--muted);margin-top:.5rem">回測含執行層與融資利差 1.5%/年、還原股價；<b>部分年以 YTD 標註</b>（美股末年 2026 為部分年；美股 2005 為完整年）。<b>逐年數字為回測、非實盤。</b>趨勢型系統的簽名＝多數年份落後買進持有、在崩盤年（如美股 2008 +40.1pp／2022 +19.0pp、台股 2022 +17.9pp）大幅超額——以參與度換抗跌，非逐年勝出。</div>
 </div>"""
 
 
@@ -764,6 +822,8 @@ def market_html(mkt: dict, sigs: dict, md: dict) -> str:
 {"".join(recent_table(t, sigs[t]) for t in legs)}
 
 {backtest_section(mkt)}
+
+{annual_perf_section(mkt)}
 </div>
 """
 
@@ -1068,13 +1128,8 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 
 <div class="oos-banner">
   <span class="tag-loud">實單主系統・2026-07-18 起・cap 1.5（美+台）・email 提醒可行動變化</span>
-  <div style="font-size:.86rem">本頁是<b>{FREEZE_DATE} 凍結、2026-07-18 起用戶正式採用的實單主系統</b>：<b>W52 單線閘門 × 自適應 σ 波動率目標 cap 1.5 × 執行層 A2（20pp 門檻＋10% 取整＋clamp 150%，2026-07-22 升格）</b>（美台四腿、各市場 50/50 獨立組合，曝險可上到 150%）。真波動率目標＝只在平靜 regime σ_t/RV &gt; 1 時借錢加碼、波動一高自動降回。每交易日台股／美股收盤後更新，<b>可行動變化以 email 提醒</b>（任一腿閘門翻轉，或今日目標與現持執行層差 ≥ 20pp）。cap 1.0（100%）版保留為<a href="/long-track-w52-adaptive/leverage.html">影子對照頁</a>供複審對照。
+  <div style="font-size:.86rem">本頁是<b>{FREEZE_DATE} 凍結、2026-07-18 起用戶正式採用的實單主系統</b>：<b>W52 單線閘門 × 自適應 σ 波動率目標 cap 1.5 × 執行層 A2（20pp 門檻＋10% 取整＋clamp 150%）</b>（美台四腿、各市場 50/50 獨立組合，曝險可上到 150%）。真波動率目標＝只在平靜 regime σ_t/RV &gt; 1 時借錢加碼、波動一高自動降回。每交易日台股／美股收盤後更新，<b>可行動變化以 email 提醒</b>（任一腿閘門翻轉，或今日目標與現持執行層差 ≥ 20pp）。cap 1.0（100%）版保留為<a href="/long-track-w52-adaptive/leverage.html">影子對照頁</a>供複審對照。
   <br><br><b>誠實紀律（兩點白紙黑字）</b>：<b>①</b> 用戶決策為<b>原「實單前複審關卡」不再作為前置條件</b>，改為<b>上線後回顧點（60 個追蹤交易日，或首次 ≥ 10% 組合回撤事件）</b>——即先上實單、再於回顧點檢驗水下體驗是否符合預期。<b>②</b> <b>美股採 cap 1.5 是「知情決策」</b>：研究顯示<b>美股槓桿的 Calmar 較低（cap 1.5 ＜ cap 1.0）</b>、任何融資利差下都不划算，用戶<b>選擇兩市場一致性與報酬（而非風險調整最優）</b>，明知美股這一腿是為對稱操作付的代價。<b>此外</b>：槓桿放大所有模型誤差、深熊未實測（見 2330 長窗與誠實揭露）、台股須用期貨非融資、實際峰值建議壓 140% 留保證金緩衝。</div>
-</div>
-
-<div class="oos-banner" style="border-color:var(--amber-text);background:var(--amber-bg)">
-  <span class="tag-loud" style="background:var(--amber-text)">2026-07-22 規則切換・執行層升格 A2・請對帳一次實際持倉</span>
-  <div style="font-size:.86rem"><b>執行層今日由 10pp 門檻＋5% 取整，升格為 A2（20pp 門檻＋10% 取整＋取整後 clamp 於 150%）。</b>規則變更後，本頁 <code>band_exec_replay</code> 對全史重放的 executed（現持）序列會改變，<b>今日各腿「現持」可能與你帳戶實際持倉不同</b>。請以本頁<b>今日目標持股率</b>（各腿與組合曝險）<b>對帳一次實際持倉</b>；此後每交易日回歸常規（僅在 |目標−現持|≥20pp 或閘門翻轉時提醒）。<b>採用理由＝調整頻率下降</b>（美股 28.4→12.5 次/年、台股 26.8→12.3 次/年，約 −55%）；相對基準的 Calmar 變化屬<b>單一路徑執行時點雜訊、非績效宣稱</b>，亦不作為未來繼續加寬門檻的依據。研究證據見 <a href="/backtest/vol_targeting/">波動率目標研究頁</a>（執行層變體 A1/A2/B/C/D）。</div>
 </div>
 
 <div class="dual-stat">
@@ -1097,9 +1152,20 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 ⑤ <b>執行</b>：t 收盤訊號、t+1 收盤生效；成本 7 bps／邊。<br>
 ⑥ <b>最終權重</b> = 0.5 × 閘門(0/1) × 套袖權重，每市場兩腿各自計算。<br>
 ⑦ <b>資料揭露</b>：yfinance auto-adjust（還原股價）；0050.TW 2014-01-02 幻影分割壞 bar 由腳本自動修復（回溯縮放，門檻單日 ±40%，台股漲跌停 ±10% 不可能誤觸）；0050 免費歷史約 2009 起。台股 2330 佔 0050 約五成，50/50 組合等效台積電曝險 ≈ 75%，非分散組合。<br>
-⑧ <b>執行層 A2（規則凍結 {FREEZE_DATE}；執行層 {EXEC_UPGRADE_DATE} 升格）</b>：|目標 − 現持| ≥ 20pp 才調整，調整取整至 10% 格、再 clamp 於 50×cap（cap1.5→75pp／組合 150%）；<b>回測主數字含此執行層</b>，與追蹤操作同規則（兩市場各自獨立重放）。舊 10pp/5% 為 2026-07-17～2026-07-22 規則，已降為研究對照。升格理由＝調整頻率下降（見下方變更註記），Calmar 相對變化屬單一路徑執行時點雜訊、非績效宣稱。<br>
+⑧ <b>執行層 A2（規則凍結 {FREEZE_DATE}）</b>：|目標 − 現持| ≥ 20pp 才調整，調整取整至 10% 格、再 clamp 於 50×cap（cap1.5→75pp／組合 150%）；<b>回測主數字含此執行層</b>，與追蹤操作同規則（兩市場各自獨立重放）。<br>
 <span style="color:var(--muted);font-size:.78rem">閘門為週頻（僅週五可能翻轉），套袖 RV20／σ_t 為日頻，故本頁每交易日更新（台股收盤後、美股收盤後各一次，date-keyed 冪等）。<b>本頁為實單主系統、發 email 提醒</b>——可行動變化＝任一腿閘門翻轉，或今日目標與現持（執行層 executed）差 ≥ 20pp。cap 1.0（100%）版保留為<a href="/long-track-w52-adaptive/leverage.html">影子對照頁</a>供複審對照。</span>
 </div>
+</div>
+
+<div class="card">
+<details>
+<summary style="cursor:pointer;font-weight:600;font-size:.9rem">規則沿革（歷次凍結後的變更紀錄）</summary>
+<div class="rule-list" style="font-size:.82rem;margin-top:.75rem">
+• <b>2026-07-17</b>：規則凍結——W52 單線閘門 × 自適應 σ_t（RV20 近三年滾動中位數，756／252）定案，此後不掃參擇優、不改機制形狀、不加濾網。<br>
+• <b>2026-07-18</b>：正式採用 cap 1.5（真波動率目標，w = 閘門 × clip(σ_t/RV, 上限 1.5)）為實單主系統；本頁（cap 1.5）與 cap 1.0 版<b>互換主／影子角色</b>，cap 1.0 版成為<a href="/long-track-w52-adaptive/leverage.html">影子對照頁</a>。<br>
+• <b>2026-07-22</b>：執行層由 10pp 門檻／5% 取整改為現行 A2（20pp 門檻／10% 取整／取整後 clamp 於 50×cap）。採用理由＝調整頻率下降（美股約 28→13 次／年、台股約 27→12 次／年，約 −55%）；相對基準的 <b>Calmar 變化屬單一路徑執行時點雜訊、非績效宣稱</b>，亦不作為未來繼續加寬門檻的依據。切換當日曾提示以今日目標持股率對帳一次實際持倉（<code>band_exec_replay</code> 對全史重放的現持序列隨規則改變）。<br>
+</div>
+</details>
 </div>
 
 {appendix_2330_section()}

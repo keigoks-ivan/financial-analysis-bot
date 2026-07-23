@@ -949,7 +949,7 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 
 <div class="oos-banner">
   <span class="tag-loud">cap 1.0（100%）影子對照・無 email・供複審對照</span>
-  <div style="font-size:.86rem"><b>2026-07-18 主從對調</b>：用戶正式將 <b>cap 1.5 版採為實單主系統</b>（<a href="/long-track-w52-adaptive/">主系統頁</a>），本頁（cap 1.0、100%）<b>由原主系統降為影子對照頁</b>，保留供複審對照——<b>訊號完全相同</b>（W52 單線閘門 × 自適應 σ 波動率目標 × 執行層 A2，2026-07-22 起主／影子同步升格為 20pp 門檻＋10% 取整＋clamp），<b>唯一差異是曝險上限收回 1.0（不借錢加碼、封頂 100%；cap1.0 的 clamp 上限＝50pp，本來就不會觸發）</b>。設計取向＝水下體驗優先（門檻式減碼＋跌破 W52 快速出場／收復快速再進場）。<br><br><b>2026-07-22 執行層升格 A2</b>：影子頁與主系統同步，執行層由 10pp 門檻＋5% 取整改為 20pp 門檻＋10% 取整＋取整後 clamp 於 150%（本頁 cap1.0 的 clamp 上限＝50pp，恆不觸發，故主／影子唯一差異仍是 cap）。採用理由＝調整頻率下降（研究證據見 <a href="/backtest/vol_targeting/">波動率目標研究頁</a> 的執行層變體 A1/A2/B/C/D）；相對基準的 Calmar 變化屬單一路徑執行時點雜訊、非績效宣稱。規則切換日的今日「現持」序列因全史重放改變，請對帳一次實際持倉。
+  <div style="font-size:.86rem"><b>影子對照頁</b>：實單主系統為 <b>cap 1.5 版</b>（<a href="/long-track-w52-adaptive/">主系統頁</a>），本頁（cap 1.0、100%）保留供複審對照——<b>訊號完全相同</b>（W52 單線閘門 × 自適應 σ 波動率目標 × 執行層 A2：20pp 門檻＋10% 取整＋clamp），<b>唯一差異是曝險上限收回 1.0（不借錢加碼、封頂 100%；cap1.0 的 clamp 上限＝50pp，本來就不會觸發）</b>。設計取向＝水下體驗優先（門檻式減碼＋跌破 W52 快速出場／收復快速再進場）。主／影子角色與執行層設定的沿革見下方「規則沿革」摺疊區。
   每交易日台股／美股收盤後更新，<b>但本頁無獨立 email</b>——可行動變化通知由<a href="/long-track-w52-adaptive/">實單主系統 cap 1.5</a> 覆蓋。舊追蹤家族（固定 σ／自適應 A）已歸檔凍結，回測證據保留於<a href="/backtest/vol_targeting/adaptive.html">美股</a>／<a href="/backtest/vol_targeting/tw.html">台股</a>變體實驗室。
   <br><br><b>誠實定位（必讀）：本系統是 2026-07-17 樣本內迭代的產物</b>（規則同日凍結）——score5→快閘門 W52 是看了樣本內診斷後的選擇、非先驗；<b>快閘門的慢熊保護較弱</b>（見誠實揭露與 2330 長窗）。本頁 cap 1.0 是主系統 cap 1.5 收回槓桿後的對照基準，方便隔離「槓桿貢獻」與「訊號貢獻」。</div>
 </div>
@@ -974,9 +974,20 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 ⑤ <b>執行</b>：t 收盤訊號、t+1 收盤生效；成本 7 bps／邊。<br>
 ⑥ <b>最終權重</b> = 0.5 × 閘門(0/1) × 套袖權重，每市場兩腿各自計算。<br>
 ⑦ <b>資料揭露</b>：yfinance auto-adjust（還原股價）；0050.TW 2014-01-02 幻影分割壞 bar 由腳本自動修復（回溯縮放，門檻單日 ±40%，台股漲跌停 ±10% 不可能誤觸）；0050 免費歷史約 2009 起。台股 2330 佔 0050 約五成，50/50 組合等效台積電曝險 ≈ 75%，非分散組合。<br>
-⑧ <b>執行層 A2（規則凍結 {FREEZE_DATE}；執行層 {EXEC_UPGRADE_DATE} 升格）</b>：|目標 − 現持| ≥ 20pp 才調整，調整取整至 10% 格、再 clamp 於 50×cap（cap1.0→50pp，恆不觸發）；<b>回測主數字含此執行層</b>，與追蹤操作同規則（兩市場各自獨立重放）。舊 10pp/5% 為 2026-07-17～2026-07-22 規則，已降為研究對照。<br>
+⑧ <b>執行層 A2（規則凍結 {FREEZE_DATE}）</b>：|目標 − 現持| ≥ 20pp 才調整，調整取整至 10% 格、再 clamp 於 50×cap（cap1.0→50pp，恆不觸發）；<b>回測主數字含此執行層</b>，與追蹤操作同規則（兩市場各自獨立重放）。<br>
 <span style="color:var(--muted);font-size:.78rem">閘門為週頻（僅週五可能翻轉），套袖 RV20／σ_t 為日頻（每日可能微調），故本頁每交易日更新（台股收盤後、美股收盤後各一次，date-keyed 冪等）。「可行動變化」＝任一腿閘門翻轉，或今日目標與現持（執行層 executed）差 ≥ 20pp，觸發 email 通知（訊息標市場前綴、顯示取整後的建議動作）。</span>
 </div>
+</div>
+
+<div class="card">
+<details>
+<summary style="cursor:pointer;font-weight:600;font-size:.9rem">規則沿革（歷次凍結後的變更紀錄）</summary>
+<div class="rule-list" style="font-size:.82rem;margin-top:.75rem">
+• <b>2026-07-17</b>：規則凍結——W52 單線閘門 × 自適應 σ_t（RV20 近三年滾動中位數，756／252）定案，此後不掃參擇優、不改機制形狀、不加濾網。<br>
+• <b>2026-07-18</b>：cap 1.5 版採為實單主系統（<a href="/long-track-w52-adaptive/">主系統頁</a>），本頁（cap 1.0、100%）<b>互換主／影子角色</b>成為影子對照頁，無獨立 email。<br>
+• <b>2026-07-22</b>：執行層由 10pp 門檻／5% 取整改為現行 A2（20pp 門檻／10% 取整／取整後 clamp 於 50×cap；本頁 cap 1.0 的 clamp 上限＝50pp，恆不觸發）。採用理由＝調整頻率下降；相對基準的 <b>Calmar 變化屬單一路徑執行時點雜訊、非績效宣稱</b>。切換當日曾提示以今日目標持股率對帳一次實際持倉。<br>
+</div>
+</details>
 </div>
 
 {appendix_2330_section()}
