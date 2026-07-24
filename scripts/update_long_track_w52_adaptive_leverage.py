@@ -34,11 +34,13 @@ CANONICAL COPY：本檔在 v7-backtest（src/vol_target_backtest/）與 financia
 兩市場各自以 band_exec_replay 從 history_us／history_tw 確定性重放，供時間軸粗階梯線、
 事件表、通知與 state 的 executed_pct 用（回測主數字亦含此執行層，見 BT_US／BT_TW 常數）。
 
-圖像化（Chart.js）：兩市場各一個合成曝險量表＋每腿乘法鏈 bar、近三年權重時間軸（粗階梯
-＝執行層持股率＋細線＝每日理論目標）＋ RV20 vs σ_t（σ_t 本頁是動態線，非水平虛線）、
-執行層變化事件表、回測縮圖（對數淨值＋回撤，BT_* 靜態快照＝執行版月度 NAV）。
+圖像化（Chart.js）：兩市場各一個合成曝險量表＋每腿乘法鏈 bar（每腿以自身滿載＝100% 顯示；
+合成曝險量表仍為組合層 0~100%，2026-07-24 由組合 pp/滿載=50% 改顯示基準）、近五年權重時間軸
+（粗階梯＝執行層持股率＋細線＝每日理論目標，2026-07-24 由近三年擴為近五年）＋ 近五年 RV20 vs
+σ_t（σ_t 本頁是動態線，非水平虛線）、最近一年執行層變化事件表（事件表過濾近 365 天，
+2026-07-24 由近三年窗改為最近一年）、回測縮圖（對數淨值＋回撤，BT_* 靜態快照＝執行版月度 NAV）。
 時間軸資料存於 state.json 的 history_us／history_tw 陣列（各自市場交易日曆）：首次生成以
-build_backfill 規則回放近 756 交易日＝約三年（source='replay'），此後 CI 逐日以
+build_backfill 規則回放近 1260 交易日＝約五年（source='replay'），此後 CI 逐日以
 _daily_record 追加當日實錄（source='live'）；merge_history 以日期為 key 冪等，上限
 HISTORY_CAP。回放與實錄在圖上以虛線／實線區隔（誠實紀律，回放不偽裝成實錄）。
 """
@@ -82,8 +84,8 @@ MED_WIN = 756                              # 自適應中位數視窗（3 年）
 MIN_PERIODS = 252                          # 首年 expanding
 FREEZE_DATE = "2026-07-17"
 
-BACKFILL_DAYS = 756                        # 回放窗（近三年交易日）
-HISTORY_CAP = 820                          # state.json history 陣列上限（>756 留實錄餘裕）
+BACKFILL_DAYS = 1260                       # 回放窗（近五年交易日，2026-07-24 由 756/近三年擴充）
+HISTORY_CAP = 1320                         # state.json history 陣列上限（>1260 留實錄餘裕）
 
 # 執行層常數（2026-07-22 由 10pp/5% 升格 A2：門檻 20pp／格 10%／取整後 clamp 於 50×cap）。
 # 本影子頁 cap＝1.0，故 clamp＝50pp（單腿滿載），恆不觸發——主／影子唯一差異仍是 cap。
@@ -374,21 +376,25 @@ def band_exec_replay(history: list, legs: list) -> dict:
 
 
 def events_card(mkt: dict, events: list) -> str:
-    if not events:
+    # 2026-07-24：事件表由近三年窗改為過濾最近一年（365 個日曆天），標題同步；
+    # band_exec_replay 本身仍對全史（現已近五年）重放以確保現持狀態正確，只有本表顯示過濾。
+    cutoff = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
+    recent_events = [e for e in events if e["date"] >= cutoff]
+    if not recent_events:
         body = ('<tr><td colspan="5" style="text-align:center;color:var(--muted)">'
-                '近三年窗內無執行層調整事件（皆未跨 20pp 門檻）</td></tr>')
+                '最近一年窗內無執行層調整事件（皆未跨 20pp 門檻）</td></tr>')
     else:
         body = ""
-        for ev in reversed(events):                 # 倒序（最新在上）
+        for ev in reversed(recent_events):          # 倒序（最新在上）
             rc = "var(--blue-text)" if ev["reason"] == "閘門翻轉" else "var(--amber-text)"
             body += (f'<tr><td>{ev["date"]}</td><td><b>{ev["leg"]}</b></td>'
                      f'<td>{ev["from"]:.0f}% → {ev["to"]:.0f}%</td>'
                      f'<td style="color:{rc}">{ev["reason"]}</td>'
                      f'<td class="num">{ev["combined_exec_pct"]:.0f}%</td></tr>\n')
     return f"""<div class="card">
-<h3>{mkt['short']} 近三年執行層訊號變化事件（A2：20pp 門檻＋10% 取整）</h3>
+<h3>{mkt['short']} 最近一年執行層訊號變化事件（A2：20pp 門檻＋10% 取整）</h3>
 <p style="font-size:.8rem;color:var(--muted);margin-bottom:.6rem">
-只有當某腿目標與現持差 ≥ 20pp 才調整（取整到 10% 格），故事件遠少於每日微調。倒序全列；「變化」為該腿最終權重（組合 pp，滿載 50%）；原因＝當日閘門翻轉則「閘門翻轉」否則「波動調整」。</p>
+只有當某腿目標與現持差 ≥ 20pp 才調整（取整到 10% 格），故事件遠少於每日微調。倒序列出最近 365 天內全部事件；「變化」為該腿最終權重（組合 pp，滿載 50%）；原因＝當日閘門翻轉則「閘門翻轉」否則「波動調整」。</p>
 <table><thead><tr><th>日期</th><th>腿</th><th>變化</th><th>原因</th><th class="num">當日組合執行曝險</th></tr></thead>
 <tbody>{body}</tbody></table>
 </div>"""
@@ -580,17 +586,20 @@ def _market_data(mkt: dict, sigs: dict, history: list, exec_replay: dict) -> dic
     exec_finals = [round(exec_replay["last"].get(t, 0.0), 1) for t in legs]   # 每腿現持（執行層）
     ccol = fill_color(combined / 100)
     slot = {t: WEIGHTS[t] * 100 for t in legs}
-    finals = [round(sigs[t]["final"] * 100, 1) for t in legs]
-    gate_cut = [round(slot[t] if not sigs[t]["gate"] else 0.0, 1) for t in legs]
-    sleeve_cut = [round(slot[t] - finals[i] - gate_cut[i], 1) for i, t in enumerate(legs)]
+    finals = [round(sigs[t]["final"] * 100, 1) for t in legs]        # 組合 pp（滿載 50%；A2 門檻判斷用，不動）
+    # 每腿乘法鏈圖（chart-chain）：2026-07-24 起改為「自身滿載＝100%」基準顯示（純顯示變換，
+    # 不影響上面 finals／組合 pp 判斷）。本頁 cap 1.0，fill_self 上限恆為 100%。
+    fill_self = [round(sigs[t]["fill"] * 100, 1) for t in legs]
+    gate_cut = [round(100.0 if not sigs[t]["gate"] else 0.0, 1) for t in legs]
+    sleeve_cut = [round(max(0.0, 100.0 - fill_self[i] - gate_cut[i]), 1) for i, t in enumerate(legs)]
     n_replay = sum(1 for r in history if r["source"] == "replay")
     n_live = sum(1 for r in history if r["source"] == "live")
     span = (f"{history[0]['date']} → {history[-1]['date']}" if history else "—")
     return {
         "legs": legs, "a": a, "b": b, "combined": combined, "exec_combined": exec_combined,
         "exec_finals": exec_finals, "ccol": ccol,
-        "finals": finals,
-        "C_FINALS": json.dumps(finals, separators=(",", ":")),
+        "finals": finals, "fill_self": fill_self,
+        "C_FINALS": json.dumps(fill_self, separators=(",", ":")),
         "C_SLEEVE": json.dumps(sleeve_cut, separators=(",", ":")),
         "C_GATE": json.dumps(gate_cut, separators=(",", ":")),
         "H": H, "n_replay": n_replay, "n_live": n_live, "span": span,
@@ -648,11 +657,11 @@ def market_html(mkt: dict, sigs: dict, md: dict) -> str:
     <div class="chart-wrap-xs"><canvas id="chart-chain-{suf}"></canvas></div>
   </div>
 </div>
-<div style="font-size:.76rem;color:var(--muted);margin-top:.7rem">每腿 50% 額度＝<b style="color:var(--text)">最終持有</b> ＋ <b style="color:var(--amber-text)">套袖折減</b>（高波減碼）＋ <b>閘門關閉</b>（出場歸零）。{legs[0]} 最終 {finals[0]:.0f}%、{legs[1]} 最終 {finals[1]:.0f}%。</div>
+<div style="font-size:.76rem;color:var(--muted);margin-top:.7rem"><b>每腿以自身滿載＝100% 顯示</b>（本頁 cap 1.0，合成曝險量表仍為組合層 0~100%，不變）＝<b style="color:var(--text)">最終持有</b> ＋ <b style="color:var(--amber-text)">套袖折減</b>（高波減碼）＋ <b>閘門關閉</b>（出場歸零）。{legs[0]} 自身滿載 {md['fill_self'][0]:.0f}%（組合 pp {finals[0]:.0f}%）、{legs[1]} 自身滿載 {md['fill_self'][1]:.0f}%（組合 pp {finals[1]:.0f}%）。</div>
 </div>
 
 <div class="card">
-<h3>{mkt['short']} 近三年權重時間軸 — 現持（執行層）vs 每日理論目標</h3>
+<h3>{mkt['short']} 近五年權重時間軸 — 現持（執行層）vs 每日理論目標</h3>
 <p style="font-size:.8rem;color:var(--muted);margin-bottom:.5rem">
 <b style="color:var(--text)">粗階梯線＝現持（執行層）</b>＝A2 20pp 門檻＋10% 取整的實際持股率（跨門檻才動）；<b>細線＝每日理論目標（訊號）</b>（未過門檻不調）。
 末端值：{dual}。
@@ -664,7 +673,7 @@ def market_html(mkt: dict, sigs: dict, md: dict) -> str:
   <span class="ln-item"><span class="ln-line"></span>每日實錄</span>
   <span class="ln-item"><span class="ln-line ln-dash"></span>規則回放</span>
 </div>
-<h3 style="margin-top:1.1rem">{mkt['short']} 套袖觸發脈絡 — RV20 vs σ_t（動態）</h3>
+<h3 style="margin-top:1.1rem">{mkt['short']} 近五年套袖觸發脈絡 — RV20 vs σ_t（動態）</h3>
 <p style="font-size:.8rem;color:var(--muted);margin-bottom:.5rem">
 本頁 σ_t 是<b>動態線</b>（近 3 年 RV20 滾動中位數），不是固定 σ 版的水平虛線。當 RV20（實線）升破自身 σ_t（虛線）時套袖按比例減碼；RV20 ≤ σ_t 時滿載。regime 抬升時 σ_t 跟著上移，是這頁與固定 σ 版的唯一機制差異。</p>
 <div class="chart-wrap-sm"><canvas id="chart-rv-{suf}"></canvas></div>
@@ -710,7 +719,7 @@ new Chart(document.getElementById('chart-gauge-{suf}'),{{
 
 new Chart(document.getElementById('chart-chain-{suf}'),{{
   type:'bar',
-  data:{{labels:['{legs[0]} 腿（50%）','{legs[1]} 腿（50%）'],datasets:[
+  data:{{labels:['{legs[0]}','{legs[1]}'],datasets:[
     {{label:'最終持有',data:{md['C_FINALS']},backgroundColor:[GREEN,AMBER],borderWidth:0,stack:'s'}},
     {{label:'套袖折減',data:{md['C_SLEEVE']},backgroundColor:'rgba(161,98,7,0.28)',borderWidth:0,stack:'s'}},
     {{label:'閘門關閉',data:{md['C_GATE']},backgroundColor:'rgba(120,120,120,0.22)',borderWidth:0,stack:'s'}}
@@ -718,7 +727,7 @@ new Chart(document.getElementById('chart-chain-{suf}'),{{
   options:{{indexAxis:'y',responsive:true,maintainAspectRatio:false,
     plugins:{{legend:{{display:true,position:'bottom',labels:{{usePointStyle:true,pointStyle:'rect',padding:10,boxWidth:10}}}},
       tooltip:{{callbacks:{{label:function(c){{return c.dataset.label+': '+c.parsed.x.toFixed(1)+'%'}}}}}}}},
-    scales:{{x:{{stacked:true,min:0,max:50,grid:{{color:'rgba(0,0,0,0.06)'}},ticks:{{callback:function(v){{return v+'%'}}}}}},
+    scales:{{x:{{stacked:true,min:0,max:100,grid:{{color:'rgba(0,0,0,0.06)'}},ticks:{{callback:function(v){{return v+'%'}}}}}},
       y:{{stacked:true,grid:{{display:false}}}}}}
   }}
 }});
