@@ -168,6 +168,7 @@ DIRECTORY = {
             ("/backtest/crossasset_defense/", "跨資產防守", None, False),
             ("/backtest/gem/", "SPY/ACWX 雙動能", None, False),
             ("/backtest/nonequity/", "非股票 sleeve", "研究", False),
+            ("/backtest/reits/", "REITs 三地延伸", "研究", False),
         ]),
         ("研究・頻率", [
             ("/backtest/daily_vs_weekly_global/", "日/週·全球", None, False),
@@ -283,7 +284,12 @@ US_RESEARCH = r"""<a class="link-card" href="/backtest/mom_volscaling/" style="b
 </a>"""
 
 # Multi-asset / global research link-cards (verbatim) — moved to 多資產 tab.
-MULTI_RESEARCH = r"""<a class="link-card" href="/backtest/nonequity/" style="border-left:3px solid #d97706">
+MULTI_RESEARCH = r"""<a class="link-card" href="/backtest/reits/" style="border-left:3px solid var(--grey)">
+  <span style="font-size:1.3rem">🏢</span>
+  <span><span class="lc-name">v4 REITs 三地延伸：美 IYR／日 1343.T／星 CLR.SI</span><br><span class="lc-sub">預註冊決策前研究(凍結 2026-07-24、cap 1.0)· 同引擎移植三地房地產信託 = <b>三地皆非候選</b> · IYR 判準3敗(與美股系統月相關 +0.340>0.3、2022升息年飆 +0.763)、Faber 簡單月線 Calmar 0.262 反勝主列 0.113(引擎移植首次不佔優)· 日/星相關夠低卻打不贏實盤系統(判準4)· 星洲樣本短且自身負報酬、結論標初步 · 同框架放行 GLD/擋下 REITs = 預註冊功能 · 匯率未建模</span></span>
+  <span class="lc-arrow">→</span>
+</a>
+<a class="link-card" href="/backtest/nonequity/" style="border-left:3px solid #d97706">
   <span style="font-size:1.3rem">🥇</span>
   <span><span class="lc-name">非股票 sleeve：商品／美債</span><br><span class="lc-sub">預註冊決策前研究(凍結 2026-07-23、cap 1.0 不上槓桿)· GLD/TLT/IEF/DBC 主列(W52×自適應+A2)四判準全過、與美股系統月相關 &lt;0.3、2022 升息債災主列 MDD −2.8% vs B&amp;H −39.8% · GEM 輪動 MDD −51% 且無 B&amp;H 基準 = 非候選 · DBC 判準4 邊際僅 +0.003(壓線)· 疊加 frictionless 已揭露</span></span>
   <span class="lc-arrow">→</span>
