@@ -19,7 +19,7 @@ from _nav_common import make_toggle
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 from site_nav import full_nav_block
 
-NAV_BLOCK = full_nav_block("quant", "bt")
+NAV_BLOCK = full_nav_block("system", "bt")
 OUT = Path(__file__).parent / "tw" / "index.html"
 
 GREEN, RED, GREY = "#16a34a", "#dc2626", "#9ca3af"

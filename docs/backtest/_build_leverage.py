@@ -42,7 +42,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 from site_nav import full_nav_block  # noqa: E402
 
-NAV_BLOCK = full_nav_block("quant", "bt")
+NAV_BLOCK = full_nav_block("system", "bt")
 OUT = Path(__file__).parent / "leverage" / "index.html"
 CURVES = json.loads((OUT.parent / "_curves.json").read_text())  # monthly NAV+DD, pinned from v7 backtest
 

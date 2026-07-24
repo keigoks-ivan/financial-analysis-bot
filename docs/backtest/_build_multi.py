@@ -21,7 +21,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 from site_nav import full_nav_block
 
-NAV_BLOCK = full_nav_block("quant", "bt")
+NAV_BLOCK = full_nav_block("system", "bt")
 OUT = Path(__file__).parent / "multi" / "index.html"
 
 TEAL, GREEN, RED, GREY = "#0f766e", "#16a34a", "#dc2626", "#9ca3af"
