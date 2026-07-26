@@ -107,6 +107,20 @@ Agent({
 
 **git flow**：commit 訊息格式 `Add earnings synthesis: window YYYY-MM-DD → YYYY-MM-DD`，直接 push main。
 
+## Workflow: 個股大方向篩選（stock-screen-v1，接在 DD 之前）
+
+四格 triage（供給／價格／漏水／存續）只回答**「值不值得花時間做完整 DD」**，不回答買不買、不給總分／目標價／評等。與 `stock-analyst` 是**上下游**不是競爭關係，觸發面已切乾淨：
+
+| 用戶說 | 走哪支 |
+|---|---|
+| **裸 ticker**（`NVDA`／`2330`，句中無其他限定詞）、「這檔如何」「值不值得研究」「幫我看一下這家」「先篩一下 X」「X 快篩」「X 大方向」 | `stock-screen-v1` |
+| 「{ticker} DD」「個股分析 {ticker}」「{ticker} 定見」「該不該進場 {ticker}」「買不買 {ticker}」「最終判斷 {ticker}」 | `stock-analyst`（**不經 triage，直接全套**） |
+| 「{ticker} 全套」「ddreport {ticker}」 | `ddreport` |
+
+**短路檢查（screen 開跑前必做）**：`ls docs/dd/DD_{TICKER}_*.html` — 有 90 天內 DD 就**不跑篩選器**，直接報 §14 裁決問要不要重跑；>90 天可跑但**跑完才准讀那份 DD**（防錨定，比照 QC-52）；分岔是訊號不是要對齊的錯誤。screen 判定「值得」時輸出結尾一律問「要跑 `ddreport {ticker}` 嗎」——路由判錯的代價是一行字，不是漏掉一份 DD。
+
+⛔ **本層不是收斂面**：輸出不寫檔、不進 picks／GRP 席位／三軌／dd-screener／cockpit 任何清單，不得被引用為「某檔在篩選器上是 ○」（2026-07-07 拍板不得再蓋新收斂面，本層合規的唯一方式就是不落檔）。判斷類規則（四格判準／✗ 分軌處置／archetype 判定軸／供給格份額次問句／事件驅動前置閘／禁令 1-2／三危險組合）已登記 `knowledge/rule_ledger.md`。**首輪 10 檔已於 2026-07-26 試跑並完成審計**（`notes/site-internal/root/_screen_v1_round1_audit_20260726.md`）：假陰性 2 檔觸發主 kill、archetype 純比率誤分率 40%、ZIM 暴露無事件驅動閘 → 已出 **v1.1** 四項修正。第二輪 2026-10 與裁決校準同步，**須由未接觸 DD 裁決的執行脈絡跑**（首輪防錨定控制破損）。
+
 ## Workflow: 個股深度報告（v13 DD，含決策層）— DCA 已併入
 
 **2026-06-22 起 DCA 已併入 stock-analyst v13。** 個股深度研究與投資決策層整併成**單一報告** `docs/dd/DD_{TICKER}_{YYYYMMDD}.html`：Part I 基本面深度（§1-§11）+ Part II 決策層（§12 矛盾裁決 / §13 pre-mortem+Max DD / §14 統一裁決 / §15 複審），收斂為**一個人面對裁決：進場 / 觀望 / 迴避**。基本面評級 A+/A/B/C/X 降為 metadata（餵 screener），不再是並列 headline。
