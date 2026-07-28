@@ -2,11 +2,13 @@ name: "Update W52 × Adaptive Vol-Target Signal (US+TW)"
 
 on:
   schedule:
-    # Two runs per weekday: TW close (11:30 UTC + buffer) and US close
-    # (16:00 ET + buffer, 21:35 UTC). The adaptive vol-target sleeve reads off
-    # daily realized vol, so it updates every trading day; the weekly W52
-    # long-track gate only flips on Fridays. Forward OOS paper tracking.
-    - cron: '30 11 * * 1-5'
+    # Two runs per weekday: TW close (13:30 Taipei + 90min buffer = 07:00 UTC)
+    # and US close (16:00 ET + buffer, 21:35 UTC). The adaptive vol-target
+    # sleeve reads off daily realized vol, so it updates every trading day;
+    # the weekly W52 long-track gate only flips on Fridays. Forward OOS paper
+    # tracking. (2026-07-28: TW leg moved 11:30→07:00 UTC to shrink the
+    # close-to-run lag from ~6h to 90min; see commit for rationale.)
+    - cron: '0 7 * * 1-5'
     - cron: '35 21 * * 1-5'
   workflow_dispatch:  # Manual trigger anytime
     inputs:
