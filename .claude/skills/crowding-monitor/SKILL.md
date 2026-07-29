@@ -50,7 +50,7 @@ changelog:
 - 對每個**未取得**的官方數值（如 FMS equity allocation z-score、GS crowding index 單一讀數），列入 §9 gaps 誠實清單，**不要硬編**。
 
 ### Step 2 — 組合 recon（供 §7 read-through）
-1. 讀 `docs/picks/candidates.json`（正式榜長熬／爆發席次）＋ stock sleeve handoff（三軌：核心複利／衛星結構／衛星循環）。
+1. 讀 `docs/engine/arena.json`（**甲線權威**：`core_seats`／`sat_seats`／`core_bench`）＋ `docs/picks/candidates.json`（`official_baofa`＝乙線循環）＋ stock sleeve handoff（三軌：核心複利／衛星結構／衛星循環）。**2026-07-29 起 candidates.json 已無 `official_changhao`**（長熬組退役，職能與 GRP 席位重疊）——甲線名字只從 arena.json 取，勿再找長熬榜。
 2. 對每個持倉，用 latest.json 的主題引擎排名，標出**所屬主題（排名／分數／覆蓋）**與**擁擠讀數**（分數＋覆蓋信心的定性合成）。
 3. 對重疊最深的擁擠 cluster 對應 ID，spawn `industry-thesis-critic` 冷讀（見環境常數）。
 

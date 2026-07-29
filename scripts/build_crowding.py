@@ -444,13 +444,24 @@ def load_screener():
 
 
 def load_picks():
+    """本站關注名單 → (official, cand)。
+
+    2026-07-29：長熬組退役（與 GRP 席位職能重疊）後，甲線名單改讀權威來源
+    engine/arena.json 的席位——否則 official 只剩爆發 5 檔，擁擠分析會漏掉整條
+    結構長抱線。picks 側現在只剩爆發（乙線）。
+    """
     pk = load_json(os.path.join(ROOT, "docs", "picks", "candidates.json"), {})
+    ar = load_json(os.path.join(ROOT, "docs", "engine", "arena.json"), {})
     official, cand = set(), set()
-    for k in ("official_changhao", "official_baofa"):
-        official |= {x["ticker"] for x in pk.get(k, [])}
-    for k in ("changhao", "baofa"):
-        cand |= {x["ticker"] for x in pk.get(k, [])}
-    return official, cand
+    # 甲線＝GRP 席位（權威）
+    for k in ("core_seats", "sat_seats"):
+        official |= {x["ticker"] for x in ar.get(k, []) if x.get("ticker")}
+    for k in ("core_bench", "challengers_top"):
+        cand |= {x["ticker"] for x in ar.get(k, []) if x.get("ticker")}
+    # 乙線＝爆發（循環時機線）
+    official |= {x["ticker"] for x in pk.get("official_baofa", [])}
+    cand |= {x["ticker"] for x in pk.get("baofa", [])}
+    return official, cand - official
 
 
 def theme_raws(closes, rev, verd, official, cand, vol_series):

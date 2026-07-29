@@ -1061,10 +1061,8 @@ body{{background:transparent}}</style>
 </div>
 </div>
 
-<footer class="imq-foot">
-  <div>© 2026 InvestMQuest Research</div>
-  <div><a href="/disclosures.html">方法論與揭露</a> · 本站內容僅供研究參考，不構成投資建議</div>
-</footer>
+<!-- 頁尾（© ＋ 揭露）歸主控台外殼所有：本檔是 nav-less iframe 片段，自帶頁尾會在
+     /cockpit/#pipeline 疊出第二份（2026-07-29 移除，與 engine 五片段的既有做法一致）。 -->
 <!-- 主控台 iframe 嵌入：跨頁連結（DD／engine 深頁）在頂層開啟，站內 #錨點留在 iframe 內滾動 -->
 <script>(function(){{function fix(){{var as=document.querySelectorAll('a[href]');for(var i=0;i<as.length;i++){{var a=as[i],h=a.getAttribute('href');if(h&&h.charAt(0)!=='#'&&!a.hasAttribute('target'))a.setAttribute('target','_parent');}}}}if(document.readyState!=='loading')fix();else document.addEventListener('DOMContentLoaded',fix);window.addEventListener('load',fix);[400,1200,2500,5000].forEach(function(t){{setTimeout(fix,t);}});}})();</script>
 </body>

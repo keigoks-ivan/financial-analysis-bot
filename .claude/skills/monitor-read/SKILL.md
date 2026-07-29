@@ -18,7 +18,7 @@ description: 對 /monitor/ 全資產市場監測的機械層跑一次「解讀�
 3. **站內交叉（條件式）**：主題落在有站內研究的領域時，跑 `python knowledge/q.py --theme {關鍵字}` 看成員裁決分布、讀相關 ID 的 id-meta 機器欄（sd_verdict／clock_phase／kill_metrics）；/crowding/ /regime/ 最新一期若在 7 天內可引用其結論（標註出處與日期）。純總經主題（利率／匯率）不強制。**預設不上網**——需要外部事件脈絡（如當日央行決議）時可少量 WebSearch，引用必標來源，查不到就不寫，不猜。
 3b. **組合 read-through（L2，必寫一段）——三來源雙層讀**（2026-07-11 起）：
    - **架構層（慢變）**：`notes/site-internal/root/_handoff_stock_sleeve_pipeline_20260703.md` 三軌架構（核心複利／衛星結構／衛星循環＋各軌上限）——決定「用哪一軌的語言講哪個主題」。
-   - **現況層（日更，必讀 as_of）**：`docs/picks/candidates.json` 的 `official_changhao`／`official_baofa` 兩榜＋`docs/engine/arena.json` 的 `core_seats`／`sat_seats`——當日實際在榜上的名字。主題對名字時以現況層為準（例：APH 若在長熬 official，實質利率主題就點 APH 而非只點架構層成員）。
+   - **現況層（日更，必讀 as_of）**：`docs/engine/arena.json` 的 `core_seats`／`sat_seats`（**甲線結構長抱的權威名單**）＋`docs/picks/candidates.json` 的 `official_baofa`（乙線循環拐點）——當日實際在席／在榜的名字。主題對名字時以現況層為準（例：APH 若在核心席，實質利率主題就點 APH 而非只點架構層成員）。**2026-07-29 起 `official_changhao` 已不存在**（長熬組退役，與 GRP 席位職能重疊）——甲線一律讀 arena.json，讀不到就說讀不到，勿回頭找長熬榜。
    - **一致／分歧是素材**：架構層與現況層對同一名字態度分歧時（資格在但榜上降溫、或榜上亮但架構未收），這本身是描述性資訊，值得一句話點出，不評對錯、不給指令。
    把當日主題對到實際暴露，禁 IRR 排序、禁買賣指令——只說「哪一軌／哪些在榜名字承受哪個主題的壓力或順風」。任一來源讀不到時明說讀不到，不憑記憶編名單。
 3c. **證偽觸發掃描（L3，必跑）**：把當日異常與高低分位極端對照站內已寫下的 kill 條件——(a) ID 的 id-meta `kill_metrics[]`（grep docs/id/ID_*.html 的 id-meta JSON）、(b) 用戶殺手假設 `python knowledge/q.py --falsifiers`、(c) 持倉相關 DD 的監測指標（有直接對應才查）。輸出進 `trigger_scan`：`checked`＝實際對照的條件數，`hits[]`＝被碰到（sev red）或接近閾值（sev yellow）的條目（text 寫明「哪條 kill、閾值多少、現值多少、差多少」）。**零觸發是合法且常見的輸出**——寫 checked 數讓「零」可信，不硬湊 hits。僅做數字可直接對照的條件；質性 kill 條件（如「大客戶轉單」）不在日頻掃描範圍，不假裝掃過。

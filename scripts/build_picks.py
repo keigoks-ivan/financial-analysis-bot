@@ -3,16 +3,28 @@
 """
 build_picks.py — 精選清單「候選區」週更生成器。
 
+定位（2026-07-29 持有人拍板後）：**本檔只產「GRP 席位物理上碰不到的名字」**——
+爆發＝循環拐點型（DD 的 trailing 品質閘結構性不納，GRP 也不給核心席）；十倍＝市值
+$10–200 億（在 GRP 的 $200 億席位門檻**之下**）。與 GRP 席位零重疊是設計，不是巧合。
+
 從站內既有 JSON（純本地聚合，無網路呼叫）產出 docs/picks/candidates.json：
-  - 長熬・品質成長：DD 裁決＝進場 ∩（護城河 S/A 且趨勢非 ↓，或 B 且趨勢 ↑）
   - 爆發・循環上修：cyclical-track 全數合格名單（低熱在前、🔥 沉底標「等回踩」）
-  - 產業趨勢閘（自動）：ID id-meta 主題成員的「上修寬度 × 站上年線寬度」判 對/中性/弱，
+  - 產業趨勢證據（自動）：ID id-meta 主題成員的「上修寬度 × 站上年線寬度」判 對/中性/弱，
     growth_phase=declining 蓋帽至中性；無 ID 覆蓋者以 sector 寬度代判，樣本不足則如實標示。
+    **2026-07-29 起降為證據欄（display-only），不再是任何一組的上榜閘。**
 
 每檔收斂成「四件事」：為什麼上榜／預期倍數與時間／現在能不能買（位置與板機）／什麼情況下架。
 
+長熬・品質成長（已於 2026-07-29 退役，勿重建）：
+  原規則＝DD 進場 ∩ 護城河閘 ∩ 產業趨勢「對」。**退役理由是與 GRP 席位職能重疊**——
+  它是三組裡唯一跟甲線 GRP 搶同一塊地的組（當日實測 5 檔中 3 檔與核心席重複：
+  ASML／NVDA／APH），而甲線的權威答案本來就歸 GRP 席位（陣容）。持有人裁決「不整合、
+  直接拿掉」，理由見對話：把長熬的產業寬度閘搬進 GRP 會誤殺 LLY（寬度 72.2）與
+  TSM（74.6）兩個現任核心席，且該閘鑑別力弱（GRP 過閘 48 檔中 65% 判「對」）、
+  21% 因 ID 未覆蓋而「樣本不足」＝資料缺失被當負面訊號。
+  下游若需甲線名單，一律讀 docs/engine/arena.json 的 core_seats / sat_seats。
+
 正式榜（2026-07-05 治理變更：自動上榜＋持有人 veto）：
-  - 長熬自動上榜：候選 ∩ 產業趨勢＝「對」→ official_changhao[]；中性/弱/樣本不足留候選區。
   - 爆發自動上榜：候選 ∩ 非過熱（🔥）∩ 站上年線（右側價格確認）→ official_baofa[]。
     右側確認取代等 DD 裁決——DD 框架結構性不納拐點循環股（trailing 品質閘必不過）。
   - veto：picks.json 的 veto[] 內 ticker 永不自動上榜（留候選區、標「持有人 veto」）。
@@ -48,8 +60,8 @@ TW8 = timezone(timedelta(hours=8))
 # 每組正式榜席位上限——持有人 2026-07-05 拍板「寧缺勿濫」，額滿者按排序輪替回候選區
 SEAT_CAP = 5
 
-# 長熬席位排序用護城河分數（排序規則 v0 未調參）
-MOAT_PTS = {"S": 3, "A": 2, "B": 1}
+# （原長熬席位排序用的護城河分數 MOAT_PTS 隨長熬組於 2026-07-29 一併移除——
+#   護城河品質排序的職能歸 GRP 的 grp_route（moat S/A → 核心軌）。）
 
 
 def warn(msg):
@@ -322,132 +334,6 @@ def build_trend_resolver(latest, registry):
 
 
 # ---------------------------------------------------------------------------
-# 長熬・品質成長
-# ---------------------------------------------------------------------------
-def build_changhao(latest, trigger_map, grp_set, trend_resolve):
-    """DD 裁決＝進場 ∩（護城河 S/A 且趨勢非 ↓，或 B 且趨勢 ↑）。"""
-    if not isinstance(latest, dict):
-        return []
-    stocks = latest.get("stocks")
-    if not isinstance(stocks, list):
-        warn("latest.json 無 stocks 陣列，長熬組跳過")
-        return []
-
-    out = []
-    for s in stocks:
-        if s.get("dca_verdict") != "進場":
-            continue
-        # P1 防護：機器抽取自 v12 舊 DD 的裁決（dca_verdict_source == overlay_extracted）
-        # 不進「進場」自動候選池——這些是 90 天前舊報告的機器抽取結論（37 檔明列待人工
-        # 複審），當作即時「進場」買入候選上長熬名單並不合理。它們仍完整存在於 latest.json
-        # 與 dd-screener／pipeline 透明檢視，只是不自動晉升為 picks 買入候選。欄位缺失
-        # （舊版 latest.json）→ 視為原生 dd_meta，行為與 overlay 上線前完全一致。
-        if s.get("dca_verdict_source") == "overlay_extracted":
-            continue
-        g, tr = s.get("moat_grade"), s.get("moat_trend")
-        # 護城河閘：S/A 且趨勢非 ↓；或 B 且趨勢 ↑——
-        # 護城河 B 但趨勢向上＝重評來源，等升到 A 市場已給完溢價。
-        if not ((g in ("S", "A") and tr != "↓") or (g == "B" and tr == "↑")):
-            continue
-
-        ticker = s.get("ticker")
-        sector = (s.get("sector") or "").strip()
-        moat_grade = s.get("moat_grade")
-        moat_trend = s.get("moat_trend") or "→"
-        runway = s.get("runway_post_y5")  # 🟢 / 🟡 / 🔴 / None
-        role = s.get("dca_role") or ""
-        ev5y = fnum(s.get("live_ev5y_pct"))
-        if ev5y is None:
-            ev5y = fnum(s.get("ev5y_pct"))
-
-        # --- why (thesis draft) ---
-        sig = s.get("signal") or ""
-        if sector:
-            why = f"{sector}｜護城河 {moat_grade}{moat_trend}、DD 裁決進場"
-        else:
-            why = f"護城河 {moat_grade}{moat_trend} 品質成長，DD 裁決進場"
-        if sig:
-            why += f"（基本面評級 {sig}）"
-
-        # --- expected multiple + horizon ---
-        # 預設 2-3x/5Y；runway 🟢 才標 10x 潛力
-        if runway == "🟢":
-            multiple = "2-3x（5Y 基準）；runway 🟢 → 有熬到 10x 的長坡"
-        else:
-            multiple = "2-3x（5Y 基準）"
-        horizon = "5 年以上，複利熬"
-
-        # --- position (位置 + 板機) ---
-        pos_bits = []
-        ma = s.get("ma") if isinstance(s.get("ma"), dict) else None
-        if ma:
-            above52 = ma.get("above_w52")
-            dist5y = fnum(ma.get("dist_5y_high_daily_pct"))
-            if dist5y is None:
-                dist5y = fnum(ma.get("dist_250w_high_pct"))
-            if above52 is True:
-                pos_bits.append("站上年線")
-            elif above52 is False:
-                pos_bits.append("跌破年線")
-            if dist5y is not None:
-                pos_bits.append(f"距 5Y 高 {dist5y:+.0f}%")
-        trig = trigger_map.get(ticker)
-        if trig:
-            pos_bits.append(trig)
-        position = "；".join(pos_bits) if pos_bits else "—"
-
-        # --- exit draft ---
-        exit_draft = "DD 裁決轉向（觀望/迴避）或護城河趨勢轉 ↓"
-
-        # --- source chips ---
-        chips = ["DD 進場"]
-        if ticker in grp_set:
-            chips.append("GRP")
-        chips.append(f"護城河 {moat_grade}{moat_trend}")
-        if runway:
-            chips.append(f"runway {runway}")
-
-        # --- 產業趨勢（自動判定，取代舊「待人工認定」） ---
-        trend = trend_resolve(ticker, sector)
-
-        out.append({
-            "ticker": ticker,
-            "name": s.get("name") or ticker,
-            "sector": sector,
-            "why": why,
-            "multiple": multiple,
-            "horizon": horizon,
-            "position": position,
-            "exit": exit_draft,
-            "moat_grade": moat_grade,
-            "moat_trend": moat_trend,
-            "runway": runway,
-            "role": role,
-            "ev5y_pct": ev5y,
-            # 行動狀態——年線不是資格閘（資格＝品質×裁決×趨勢），是榜內時點標記
-            "above_w52": ma.get("above_w52") if ma else None,
-            "trend_status": trend["trend_status"],
-            "trend_evidence": trend["trend_evidence"],
-            "id_theme": trend["id_theme"],
-            "trend_breadth_avg": trend.get("trend_breadth_avg", 0.0),
-            "trigger": trig or None,
-            "dd_path": s.get("dd_path"),
-            "sources": chips,
-        })
-
-    # 排序：趨勢「弱」沉底（不硬排除——批准權在人）；其餘 runway 🟢 在前、ev5y 由高到低
-    def sort_key(x):
-        weak = 1 if x.get("trend_status") == "弱" else 0
-        green = 0 if x.get("runway") == "🟢" else 1
-        ev = x.get("ev5y_pct")
-        ev = ev if ev is not None else -999
-        return (weak, green, -ev)
-
-    out.sort(key=sort_key)
-    return out
-
-
-# ---------------------------------------------------------------------------
 # 爆發・循環上修
 # ---------------------------------------------------------------------------
 def build_baofa(cyclical, trigger_map, grp_set, trend_resolve):
@@ -579,9 +465,9 @@ def main():
         warn("GRP 名單無法解析（GRP source chip 將缺席）")
 
     registry = parse_id_themes()
-    trend_resolve, theme_verdicts = build_trend_resolver(latest or {}, registry)
+    # 產業趨勢自 2026-07-29 起只當證據欄（長熬退役後已無 gating consumer；爆發卡片仍顯示）
+    trend_resolve, _theme_verdicts = build_trend_resolver(latest or {}, registry)
 
-    changhao = build_changhao(latest, trigger_map, grp_set, trend_resolve)
     baofa = build_baofa(cyclical, trigger_map, grp_set, trend_resolve)
 
     # ---- 自動上榜（2026-07-05 治理變更）＋ 持有人 veto ----
@@ -599,18 +485,6 @@ def main():
     for x in baofa:
         ma = (stock_idx.get(x["ticker"]) or {}).get("ma")
         x["above_w52"] = ma.get("above_w52") if isinstance(ma, dict) else None
-
-    # 長熬：趨勢「對」→ 自動上榜
-    official_changhao, rest_changhao = [], []
-    for x in changhao:
-        if x["ticker"] in veto:
-            x["not_promoted_reason"] = "持有人 veto"
-            rest_changhao.append(x)
-        elif x["trend_status"] == "對":
-            official_changhao.append(x)
-        else:
-            x["not_promoted_reason"] = f"趨勢{x['trend_status']}"
-            rest_changhao.append(x)
 
     # 爆發：非過熱 ∩ 站上年線 → 自動上榜（右側確認代替 DD 裁決）
     official_baofa, rest_baofa = [], []
@@ -630,31 +504,13 @@ def main():
             x["not_promoted_reason"] = "年線資料缺"
             rest_baofa.append(x)
 
-    changhao, baofa = rest_changhao, rest_baofa
+    baofa = rest_baofa
 
     # ---- 席位上限 SEAT_CAP＝5（持有人 2026-07-05 拍板「寧缺勿濫」，額滿者輪替回候選區） ----
-    # 長熬席位排序（排序規則 v0 未調參）：品質優先——
-    #   護城河分數（S=3／A=2／B=1，趨勢 ↑ 加 0.5）→ 同分以產業趨勢寬度平均
-    #   （(上修寬度＋站上年線寬度)/2，樣本不足＝0）tiebreak → 最後 ticker 字母序（確定性）。
-    def changhao_rank_key(x):
-        pts = MOAT_PTS.get(x.get("moat_grade") or "", 0)
-        if (x.get("moat_trend") or "") == "↑":
-            pts += 0.5
-        return (-pts, -(x.get("trend_breadth_avg") or 0.0), x["ticker"])
-
-    official_changhao.sort(key=changhao_rank_key)
-
     # 爆發席位排序（排序規則 v0 未調參）：沿用 cyclical-track 自身上修複合分
     # （revision_rank_score，eps2y pp＋FY+1 上修% 合成）低熱在前的既有順序——直接取前 5。
 
     # 候選區重排 key（塞回 bumped 名字後維持原本閱讀順序）
-    def changhao_cand_key(x):
-        weak = 1 if x.get("trend_status") == "弱" else 0
-        green = 0 if x.get("runway") == "🟢" else 1
-        ev = x.get("ev5y_pct")
-        ev = ev if ev is not None else -999
-        return (weak, green, -ev)
-
     def baofa_cand_key(x):
         s = x.get("revision_rank_score")
         return (1 if x.get("hot") else 0, -(s if s is not None else -999))
@@ -667,12 +523,7 @@ def main():
         rest.sort(key=resort_key)
         return kept, bumped
 
-    official_changhao, bumped_ch = apply_cap(official_changhao, changhao, changhao_cand_key)
     official_baofa, bumped_bf = apply_cap(official_baofa, baofa, baofa_cand_key)
-
-    # DISPLAY-ONLY 穩定排序：可行動（站上年線）在前——品質排序在各狀態內維持不變、
-    # 席位 ASSIGNMENT 不受影響（apply_cap 已定案）。年線只是榜內時點標記，非資格閘。
-    official_changhao.sort(key=lambda x: 0 if x.get("above_w52") is True else 1)
 
     # as_of：優先取來源的 as_of
     as_of = None
@@ -686,16 +537,21 @@ def main():
     payload = {
         "as_of": as_of,
         "generated_at": datetime.now(TW8).isoformat(),
-        "note": "正式榜與候選均由 build_picks.py 規則自動判定（長熬＝趨勢對；爆發＝循環形狀＋站上年線＋非過熱）；持有人保留 veto（picks.json）。official 與候選互斥。",
+        "note": "正式榜與候選由 build_picks.py 規則自動判定（爆發＝循環形狀＋站上年線＋非過熱）；"
+                "持有人保留 veto（picks.json）。official 與候選互斥。"
+                "長熬組已於 2026-07-29 退役（與 GRP 席位職能重疊）——甲線名單一律讀 engine/arena.json。",
+        "retired_groups": {
+            "changhao": {
+                "retired_on": "2026-07-29",
+                "reason": "與 GRP 席位（engine/arena.json core_seats）職能重疊，甲線權威歸 GRP",
+                "successor": "docs/engine/arena.json → core_seats / sat_seats",
+            }
+        },
         "counts": {
-            "official_changhao": len(official_changhao),
             "official_baofa": len(official_baofa),
-            "changhao": len(changhao),
             "baofa": len(baofa),
         },
-        "official_changhao": official_changhao,
         "official_baofa": official_baofa,
-        "changhao": changhao,
         "baofa": baofa,
     }
 
@@ -705,40 +561,21 @@ def main():
 
     # --- console summary ---
     print(f"[build_picks] wrote {OUT}")
-    print(
-        f"[build_picks] as_of={as_of}  正式榜：長熬={len(official_changhao)} 爆發={len(official_baofa)}"
-        f"  候選：長熬={len(changhao)} 爆發={len(baofa)}"
-    )
-    print(f"[build_picks] 正式榜・長熬（趨勢＝對，品質排序取前 {SEAT_CAP} 席）：")
-    for i, x in enumerate(official_changhao, 1):
-        pts = MOAT_PTS.get(x.get("moat_grade") or "", 0) + (0.5 if x.get("moat_trend") == "↑" else 0)
-        print(f"    #{i} {x['ticker']:<6} 護城河分 {pts:.1f}（{x['moat_grade']}{x['moat_trend']}）・寬度均 {x.get('trend_breadth_avg', 0):.1f}")
-    if bumped_ch:
-        print(f"[build_picks] 長熬席位額滿輪替回候選：{[x['ticker'] for x in bumped_ch]}")
+    print(f"[build_picks] as_of={as_of}  正式榜：爆發={len(official_baofa)}　候選：爆發={len(baofa)}")
     print(f"[build_picks] 正式榜・爆發（非🔥＋站上年線，上修複合分取前 {SEAT_CAP} 席）：")
     for i, x in enumerate(official_baofa, 1):
         print(f"    #{i} {x['ticker']:<8} 上修分 {x.get('revision_rank_score')}")
     if bumped_bf:
         print(f"[build_picks] 爆發席位額滿輪替回候選：{[x['ticker'] for x in bumped_bf]}")
     print("[build_picks] 候選未上榜原因：")
-    for x in changhao:
-        print(f"    長熬 {x['ticker']:<8} {x['not_promoted_reason']}")
     for x in baofa:
         print(f"    爆發 {x['ticker']:<8} {x['not_promoted_reason']}")
-    print("[build_picks] 長熬候選 first 3:")
-    for x in changhao[:3]:
-        print(f"    {x['ticker']:<8} {x['why']}")
-        print(f"             倍數：{x['multiple']}")
-        print(f"             位置：{x['position']}")
     print("[build_picks] 爆發 first 3:")
     for x in baofa[:3]:
         print(f"    {x['ticker']:<8} {x['why']}")
         print(f"             倍數：{x['multiple']}")
         print(f"             位置：{x['position']}")
-    print("[build_picks] 長熬 產業趨勢裁決：")
-    for x in changhao:
-        print(f"    {x['ticker']:<8} [{x['trend_status']}] {x['trend_evidence']}")
-    print("[build_picks] 爆發 產業趨勢裁決：")
+    print("[build_picks] 爆發 產業趨勢證據（display-only，非上榜閘）：")
     for x in baofa:
         print(f"    {x['ticker']:<8} [{x['trend_status']}] {x['trend_evidence']}")
     return 0

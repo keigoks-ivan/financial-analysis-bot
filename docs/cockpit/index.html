@@ -5,14 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>選股主控台 — InvestMQuest Research</title>
-<meta name="description" content="全站選股體系的單一整合入口：總覽（環境×待辦×漏斗×精選×記分板）／精選榜／流程板機／席位排序四分頁。">
+<meta name="description" content="全站選股體系的單一整合入口：總覽（天氣×陣容）／席位排序／流程板機／精選榜四分頁。">
 <link rel="stylesheet" href="/assets/imq-base.css">
 <style>
 :root{
   --bg:var(--paper);--card:var(--card);--accent:#0d2244;--text:var(--ink);--text-sec:var(--body);--muted:var(--muted);
   --border:var(--line);--border-soft:var(--line-soft);
-  /* 2026-07-08 設計系統 v1.1：todo 分類色收斂為單一 accent；green/red/amber 僅保留供資料語意使用 */
-  --green:var(--pos);--green-soft:#eafaef;--red:var(--neg);--amber:var(--warn);--orange:var(--accent);--teal:var(--accent);--purple:var(--accent);
+  /* 2026-07-08 設計系統 v1.1：分類色收斂為單一 accent；green/red/amber 僅保留供資料語意使用 */
+  --green:var(--pos);--red:var(--neg);--amber:var(--warn);--orange:var(--accent);--teal:var(--accent);
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);
@@ -47,17 +47,9 @@ section.block{padding:1.1rem 0}
 .tab-btn:hover{color:var(--text)}
 .tab-btn.active{color:var(--accent);border-bottom-color:var(--gold-deep)}
 .tab-btn .tb-sub{display:block;font-size:.6rem;font-weight:500;color:var(--muted);
-  font-family:'IBM Plex Mono',monospace;letter-spacing:.06em;margin-top:.16rem;text-transform:uppercase}
+  font-family:'IBM Plex Mono',monospace;letter-spacing:.06em;margin-top:.16rem}
 .tab-panel{display:none}
 .tab-panel.active{display:block}
-/* 決策鏈地圖：常駐一行，切分頁時高亮「你在這裡」——四分頁＝一條鏈的四站 */
-.chain-strip{display:flex;align-items:center;gap:.45rem;flex-wrap:wrap;margin:-.9rem 0 1.4rem;
-  font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--muted)}
-.chain-step{padding:.14rem .5rem;border-radius:4px;border:1px solid transparent;white-space:nowrap}
-.chain-step.on{color:var(--gold-deep);border-color:var(--gold);background:var(--card);font-weight:700}
-.chain-arrow{color:var(--border);flex-shrink:0}
-.chain-side{border-left:1px dashed var(--border);border-radius:0;margin-left:.2rem;padding-left:.7rem}
-.chain-side.on{border:1px solid var(--gold);border-radius:4px}
 /* 席位排序第二層 sub-tab bar */
 .subtabbar{display:flex;gap:.2rem;flex-wrap:wrap;margin:.2rem 0 1rem}
 .subtab-btn{appearance:none;background:var(--border-soft);border:1px solid var(--border);
@@ -65,7 +57,7 @@ section.block{padding:1.1rem 0}
   padding:.34rem .8rem;border-radius:6px;letter-spacing:.01em}
 .subtab-btn:hover{color:var(--text);border-color:var(--accent)}
 .subtab-btn.active{color:#fff;background:var(--accent);border-color:var(--accent)}
-/* 查閱區摺疊（低頻說明與深層儀表，預設收合——大道至簡：首屏只留天氣／待辦／正式榜） */
+/* 使用邊界摺疊（低頻說明，預設收合——大道至簡：首屏只留天氣與陣容） */
 .ref-fold{background:var(--card);border:1px solid var(--border);border-radius:var(--r);margin-bottom:.6rem;box-shadow:var(--sh-1)}
 .ref-fold summary{cursor:pointer;padding:.75rem 1.1rem;font-size:.88rem;font-weight:600;color:var(--text-sec);list-style:none;display:flex;align-items:center;gap:.5rem}
 .ref-fold summary::-webkit-details-marker{display:none}
@@ -74,12 +66,14 @@ section.block{padding:1.1rem 0}
 .ref-fold[open] summary{border-bottom:1px solid var(--border-soft)}
 .ref-fold summary small{font-family:'IBM Plex Mono',monospace;font-size:.64rem;font-weight:500;color:var(--muted)}
 .ref-fold .ref-body{padding:.9rem 1.1rem}
+.ref-body p{font-size:.82rem;color:var(--text-sec);line-height:1.7;margin:0 0 .7rem}
+.ref-body p:last-child{margin-bottom:0}
 .embed-frame{width:100%;border:0;display:block;min-height:70vh;background:transparent}
 .embed-note{font-size:.72rem;color:var(--muted);margin:0 0 .5rem;font-family:'IBM Plex Mono',monospace}
 .embed-note a{color:var(--accent)}
 @media(max-width:640px){.tab-btn{padding:.6rem .68rem;font-size:.82rem}.tab-btn .tb-sub{display:none}}
 
-/* ① strip */
+/* ① 天氣 */
 .env-strip{display:flex;flex-wrap:wrap;align-items:stretch;gap:0;overflow:hidden;padding:0}
 .env-cell{padding:.85rem 1.2rem;border-right:1px solid var(--border-soft);flex:1 1 auto;min-width:150px}
 .env-cell:last-child{border-right:0}
@@ -89,22 +83,7 @@ section.block{padding:1.1rem 0}
 .env-links{padding:.85rem 1.2rem;display:flex;flex-direction:column;gap:.25rem;justify-content:center;
   background:var(--border-soft);font-size:.76rem;min-width:120px}
 
-/* ② todo */
-.todo-list{display:flex;flex-direction:column;gap:.6rem}
-.todo{display:flex;gap:.85rem;align-items:flex-start;background:var(--card);border:1px solid var(--border);
-  border-left:3px solid var(--accent);border-radius:var(--r);padding:.85rem 1.1rem}
-.todo-ic{font-size:1.2rem;line-height:1.3;flex-shrink:0}
-.todo-body{flex:1;min-width:0}
-.todo-src{font-family:'IBM Plex Mono',monospace;font-size:.64rem;font-weight:600;letter-spacing:.05em;
-  color:var(--muted);text-transform:uppercase;margin-bottom:.15rem}
-.todo-txt{font-size:.88rem;color:var(--text);line-height:1.55}
-.todo-txt b{font-weight:700}
-.todo-asof{font-family:'IBM Plex Mono',monospace;font-size:.66rem;color:var(--muted);margin-top:.3rem;letter-spacing:.03em}
-.todo-done-btn{appearance:none;background:none;border:1px solid var(--border);border-radius:5px;cursor:pointer;
-  font-family:inherit;font-size:.68rem;color:var(--muted);padding:.2rem .55rem;flex-shrink:0;align-self:center;margin-left:.4rem}
-.todo-done-btn:hover{color:var(--green);border-color:var(--green)}
-.todo-inv{font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--muted);margin-top:.55rem;line-height:1.7}
-/* ③ 陣容單一名單 */
+/* ② 陣容——唯一的一張名單 */
 .roster-table{width:100%;border-collapse:collapse;font-size:.88rem}
 .roster-table th{font-family:'IBM Plex Mono',monospace;font-size:.64rem;font-weight:600;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;text-align:left;padding:.55rem .9rem;border-bottom:1px solid var(--border)}
 .roster-table td{padding:.55rem .9rem;border-bottom:1px solid var(--border-soft)}
@@ -112,53 +91,13 @@ section.block{padding:1.1rem 0}
 .roster-seat{font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--muted);white-space:nowrap}
 .roster-tk{font-weight:700}
 .roster-note{font-size:.74rem;color:var(--muted);margin-top:.55rem;line-height:1.7}
-.todo-link{font-size:.74rem;white-space:nowrap;flex-shrink:0;align-self:center}
-.todo-calm{background:var(--green-soft);border:1px solid var(--border);border-radius:var(--r);
-  padding:1.6rem 1.4rem;text-align:center}
-.todo-calm .big{font-size:1.15rem;font-weight:700;color:var(--green);margin-bottom:.3rem}
-.todo-calm .sm{font-size:.8rem;color:var(--green)}
-
-/* ③ funnel */
-.funnel{display:flex;flex-direction:column;gap:.55rem}
-.flayer{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:.9rem 1.1rem;
-  display:grid;grid-template-columns:minmax(210px,1.15fr) 2fr;gap:.6rem 1.2rem;align-items:center}
-.flayer .fl-l{min-width:0}
-.fl-name{font-size:.96rem;font-weight:700;margin-bottom:.15rem}
-.fl-q{font-size:.74rem;color:var(--muted)}
-.fl-r{display:flex;flex-wrap:wrap;gap:.4rem .55rem;align-items:center}
-.stat{display:inline-flex;flex-direction:column;background:var(--border-soft);border:1px solid var(--border-soft);
-  border-radius:5px;padding:.3rem .6rem;min-width:0}
-.stat .sv{font-size:1.02rem;font-weight:700;line-height:1.1}
-.stat .sl{font-size:.64rem;color:var(--muted);margin-top:.1rem}
-.chip{display:inline-flex;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:.68rem;font-weight:600;background:var(--border-soft);color:var(--accent);
-  border-radius:5px;padding:.2rem .6rem;letter-spacing:.02em}
-.chip:hover{text-decoration:none;box-shadow:var(--sh-1)}
-.dd-mini{display:inline-flex;gap:.45rem;font-size:.72rem;color:var(--text-sec);flex-wrap:wrap}
-.dd-mini b{font-weight:700}
 .v-in{color:var(--green)}.v-watch{color:var(--amber)}.v-avoid{color:var(--red)}
 
-/* ④ scoreboards */
-.sb{display:flex;flex-direction:column;gap:.8rem}
-.sb-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.2rem;box-shadow:var(--sh-1)}
-.sb-top{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;margin-bottom:.55rem}
-.sb-name{font-size:1.02rem;font-weight:700}
-.sb-badge{font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:600;letter-spacing:.05em;
-  padding:.15rem .5rem;border-radius:5px;background:var(--border-soft);color:var(--accent)}
-.sb-note{font-size:.74rem;color:var(--muted)}
-.sb-metrics{display:flex;flex-wrap:wrap;gap:.5rem .7rem;margin:.5rem 0}
-.sb-seatlist{font-size:.8rem;color:var(--text-sec);line-height:1.7}
-.sb-seatlist .tk{display:inline-block;font-weight:600;background:var(--border-soft);border:1px solid var(--border-soft);
-  border-radius:5px;padding:.1rem .5rem;margin:.1rem .2rem .1rem 0}
-
 footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:1.5rem}
-.foot .flow{font-size:.82rem;color:var(--text-sec);line-height:1.8;margin-bottom:.8rem}
-.foot .flow b{color:var(--text)}
 .foot .disc{font-size:.72rem;color:var(--muted);line-height:1.7}
 .imq-foot{margin-top:.8rem;padding-top:.8rem;border-top:1px dashed var(--border);color:var(--muted);font-size:.72rem;line-height:1.8}
 .imq-foot a{color:var(--accent)}
-.upd{font-size:.68rem;color:var(--muted);margin-top:.4rem}
 @media(max-width:720px){
-  .flayer{grid-template-columns:1fr;gap:.5rem}
   .env-cell{border-right:0;border-bottom:1px solid var(--border-soft)}
 }
 </style>
@@ -264,29 +203,20 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
   <div class="hero">
     <div class="eyebrow">Stock-Selection Console · 選股主控台</div>
     <h1>選股主控台</h1>
-    <p class="sub">四個分頁是同一條決策鏈上的四站，不是四套方法——出手三關：<b>DD 裁決＝資格 → 席位＝陣容 → 板機＝時機</b>；榜單是對外櫥窗，不在決策鏈上。</p>
+    <p class="sub">四個分頁是同一條決策鏈上的四站，不是四套方法——出手三關：<b>DD 裁決＝資格 → 席位＝陣容 → 板機＝時機</b>；精選榜收的是席位規格外的名字（循環拐點型與小市值），與陣容零重疊。</p>
   </div>
 
   <!-- 分頁列（順序照決策鏈：今天 → 陣容 → 時機 → 櫥窗） -->
   <div class="tabbar" role="tablist">
-    <button type="button" class="tab-btn" data-tab="overview" role="tab">總覽<span class="tb-sub">今天</span></button>
+    <button type="button" class="tab-btn" data-tab="overview" role="tab">總覽<span class="tb-sub">天氣·陣容</span></button>
     <button type="button" class="tab-btn" data-tab="seats" role="tab">席位排序<span class="tb-sub">該持有誰</span></button>
     <button type="button" class="tab-btn" data-tab="pipeline" role="tab">流程板機<span class="tb-sub">能不能買</span></button>
-    <button type="button" class="tab-btn" data-tab="picks" role="tab">精選榜<span class="tb-sub">對外櫥窗</span></button>
-  </div>
-
-  <!-- 決策鏈地圖：你在哪一站（tab 切換時同步高亮） -->
-  <div class="chain-strip" aria-hidden="true">
-    <span class="chain-step" data-tab="">發現</span><span class="chain-arrow">→</span>
-    <span class="chain-step" data-tab="">資格 · DD 裁決</span><span class="chain-arrow">→</span>
-    <span class="chain-step" data-tab="seats">陣容 · 席位排序</span><span class="chain-arrow">→</span>
-    <span class="chain-step" data-tab="pipeline">時機 · 流程板機</span><span class="chain-arrow">→</span>
-    <span class="chain-step chain-side" data-tab="picks">櫥窗 · 精選榜（不在鏈上）</span>
+    <button type="button" class="tab-btn" data-tab="picks" role="tab">精選榜<span class="tb-sub">席位外獵場</span></button>
   </div>
 
   <!-- ═══ 分頁 1：總覽 ═══ -->
   <div class="tab-panel" id="panel-overview">
-  <!-- ① 環境條（天氣）-->
+  <!-- ① 天氣 -->
   <section class="block">
     <div class="sec-head">
       <span class="sec-num">1</span>
@@ -296,66 +226,23 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     <div id="env-mount"><div class="placeholder">載入中⋯</div></div>
   </section>
 
-  <!-- ② 今日待辦 -->
+  <!-- ② 陣容——唯一的一張名單 -->
   <section class="block">
     <div class="sec-head">
       <span class="sec-num">2</span>
-      <h2 class="sec-title">今日待辦</h2>
-      <span class="sec-desc">板機訊號 · 宣稱到期 · kill 觸發 · 催化劑——只在該裁決的日子出現，處理完可勾除；週檢／月檢項在其週期日才浮上</span>
-    </div>
-    <div id="todo-mount"><div class="placeholder">載入中⋯</div></div>
-  </section>
-
-  <!-- ③ 陣容——唯一的一張名單 -->
-  <section class="block">
-    <div class="sec-head">
-      <span class="sec-num">3</span>
       <h2 class="sec-title">陣容</h2>
       <span class="sec-desc">系統現在的唯一答案——每檔一行讀完整條鏈：席位 · DD 裁決 · 板機狀態（換席裁決見「席位排序」；此為研究層陣容，非帳戶持倉）</span>
     </div>
     <div id="roster-mount"><div class="placeholder">載入中⋯</div></div>
   </section>
 
-  <!-- 查閱區：低頻說明與深層儀表，預設收合 -->
+  <!-- 使用邊界：唯一的說明區，體系全文歸 /flow/ -->
   <section class="block" id="reference">
   <details class="ref-fold" id="taxonomy">
-    <summary>選股體系說明與使用邊界<small>兩條線＋一個板機＋一個對照</small></summary>
+    <summary>名單的使用邊界<small>名單只回答「看誰」</small></summary>
     <div class="ref-body">
-    <p style="font-size:.82rem;color:var(--text-sec);margin:0 0 .7rem;line-height:1.65">全站選股體系收斂成<b>兩條線＋一個板機＋一個對照</b>，呈現在單一主控台、四個分頁同一份底層資料：<b>總覽</b>看天氣、今日待辦與正式榜；<b>精選榜</b>是對外成品名單（甲線成品＝長熬、乙線成品＝爆發、甲線延伸＝十倍）；<b>流程板機</b>是兩線共用的完整漏斗、三軌射擊名單與板機現況；<b>席位排序</b>是甲線排序主幹＝GRP 決策引擎。即時聚合既有系統資料，無獨立資料管線。</p>
-    <p style="font-size:.82rem;color:var(--text-sec);margin:0 0 .9rem;line-height:1.65"><b>各層名單的使用邊界</b>：多層同時亮的名字＝高信心觀察池；各層態度分歧的名字＝研究隊列。「值得投資」的最終判定不歸任何聚合層——一律走 DD §14 裁決 → 決策三錨（產業冷讀 critic × 知識帳本 × 持有人筆記）→ sop-funnel 板機。名單只回答「看誰」，不回答「買不買」與「何時」。</p>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:.7rem">
-      <div style="background:var(--card);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--r);padding:.85rem 1.1rem">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.64rem;font-weight:700;letter-spacing:.08em;color:var(--gold-deep);text-transform:uppercase;margin-bottom:.3rem">方式甲 · 結構長抱線</div>
-        <div style="font-size:.86rem;color:var(--text);line-height:1.6"><b>核心＋衛星結構</b>。排序主幹＝<b>GRP 三閘</b>（見「席位排序」分頁）；EV5y 鏡降為參考子訊號。成品視圖＝<b>長熬榜</b>；小型股延伸＝<b>十倍榜</b>。</div>
-      </div>
-      <div style="background:var(--card);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:var(--r);padding:.85rem 1.1rem">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.64rem;font-weight:700;letter-spacing:.08em;color:var(--amber);text-transform:uppercase;margin-bottom:.3rem">方式乙 · 循環時機線</div>
-        <div style="font-size:.86rem;color:var(--text);line-height:1.6"><b>衛星循環</b>。主幹＝<b>cyclical-track 提名</b>（循環底部 × EPS 上修）；成品視圖＝<b>爆發榜</b>。</div>
-      </div>
-      <div style="background:var(--card);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:var(--r);padding:.85rem 1.1rem">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.64rem;font-weight:700;letter-spacing:.08em;color:var(--green);text-transform:uppercase;margin-bottom:.3rem">共用板機 · sop-funnel</div>
-        <div style="font-size:.86rem;color:var(--text);line-height:1.6"><b>兩線唯一進場訊號</b>（純均線 A1／B／C，T+1 執行）。見「流程板機」分頁。</div>
-      </div>
-      <div style="background:var(--card);border:1px solid var(--border);border-left:3px solid var(--muted);border-radius:var(--r);padding:.85rem 1.1rem">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.64rem;font-weight:700;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;margin-bottom:.3rem">站外對照 · Momentum-5</div>
-        <div style="font-size:.86rem;color:var(--text);line-height:1.6"><b>刻意的站外對照組，非組合方法</b>（S&amp;P500 上修動能，PREREG 凍結至 ~2027-07）。</div>
-      </div>
-    </div>
-    <p style="font-size:.72rem;color:var(--muted);margin-top:.6rem;line-height:1.6">已退役／封存、不再視為選股方式：<b>AR-Live</b>（2026-07-07 退役，僅存參考欄）、<b>alpha-rank</b>（已封存）、5 月世代 4 個 timing screener（bottom-out／breakout／earnings-acceleration／entry-state，職能已由 sop-funnel／循環軌／GRP 上修閘接手）。</p>
-    </div>
-  </details>
-
-  <details class="ref-fold">
-    <summary>漏斗活數字——五層選股體系<small>完整明細見「流程板機」分頁</small></summary>
-    <div class="ref-body">
-    <div id="funnel-mount"><div class="placeholder">載入中⋯</div></div>
-    </div>
-  </details>
-
-  <details class="ref-fold">
-    <summary>組合記分板<small>席位、軌別與表現；GRP 排序全貌見「席位排序」分頁</small></summary>
-    <div class="ref-body">
-    <div id="sb-mount"><div class="placeholder">載入中⋯</div></div>
+    <p><b>多層同時亮的名字＝高信心觀察池；各層態度分歧的名字＝研究隊列。</b>「值得投資」的最終判定不歸任何聚合層——一律走 DD §14 裁決 → 決策三錨（產業冷讀 critic × 知識帳本 × 持有人筆記）→ sop-funnel 板機。名單只回答「看誰」，不回答「買不買」與「何時」。</p>
+    <p>本頁即時聚合既有系統資料，無獨立資料管線。體系全文（兩軌架構、個股軌七步漏斗、節奏表）在 <a href="/flow/">投資流程</a>；權力分工與三條鐵律在「席位排序」分頁。</p>
     </div>
   </details>
   </section>
@@ -363,7 +250,7 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
 
   <!-- ═══ 分頁 2：精選榜 ═══ -->
   <div class="tab-panel" id="panel-picks">
-    <p class="embed-note">對外正式榜（規則自動上榜＋持有人 veto）· 資料來源 candidates.json／tenbagger.json／picks.json · <a href="/picks/">獨立頁</a></p>
+    <p class="embed-note">席位規格外的兩組（爆發＝循環拐點型／十倍＝市值低於席位門檻）· 規則自動上榜＋持有人 veto · 資料來源 candidates.json／tenbagger.json／picks.json · <a href="/picks/">獨立頁</a></p>
     <iframe class="embed-frame" data-src="/picks/_embed.html" title="精選榜" scrolling="no" loading="lazy"></iframe>
   </div>
 
@@ -387,7 +274,6 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
   </div>
 
   <footer class="foot">
-    <p class="flow">漏斗全景（兩線共用）：<b>發現</b>（QGM＋形狀掃描）→ <b>判斷</b>（DD 裁決）→ <b>組合</b>（甲線 GRP 排序主幹＋乙線循環提名）→ <b>板機</b>（sop-funnel 兩線共用）→ <b>監控</b>（風險儀表）；Momentum-5 為站外對照，非組合方法。</p>
     <p class="disc">本頁所有數字皆為既有系統資料的即時聚合，無獨立資料管線，各區塊隨其來源系統的排程自動更新。精選榜／流程板機／席位排序三分頁為既有頁面的同源嵌入，內容與其獨立頁一致。</p>
     <div class="imq-foot">
       <div>© 2026 InvestMQuest Research</div>
@@ -459,9 +345,6 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     document.querySelectorAll('.tab-panel').forEach(function(p){
       p.classList.toggle('active', p.id === 'panel-' + tab);
     });
-    document.querySelectorAll('.chain-step').forEach(function(s){
-      s.classList.toggle('on', s.getAttribute('data-tab') === tab);
-    });
     if(tab === 'seats'){
       activateSub(sub || 'overview');
     } else {
@@ -506,6 +389,10 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
 </script>
 
 <script>
+/* 總覽兩塊：① 天氣（風險儀表＋VIX＋NFCI＋日更監測）② 陣容（席位 × 裁決 × 板機）
+   2026-07-29 大道至簡：今日待辦（真觸發制）依持有人裁決取消——不會用；
+   漏斗活數字／組合記分板／體系說明四卡一併移除，職能分別歸「流程板機」分頁、
+   「席位排序」分頁與 /flow/，本頁不再重述。資料源 15 → 7。*/
 (function(){
   "use strict";
   var $ = function(id){return document.getElementById(id);};
@@ -519,18 +406,10 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     gauge:   '/cache/risk_gauge.json',
     hist:    '/cache/risk_history.json',
     monitor: '/monitor/data/latest.json',
-    mom:     '/research/momentum-5/data.json',
-    momPort: '/research/momentum-5/portfolio.json',
     dd:      '/dd-screener/latest.json',
     sop:     '/dd-screener/sop-funnel/latest.json',
     arena:   '/engine/arena.json',
-    cards:   '/engine/cards.json',
-    cal:     '/catalyst/calendar.json',
-    ed:      '/monitor/data/editorial.json',
-    cyc:     '/dd-screener/cyclical-track.json',
-    picks:   '/picks/candidates.json',
-    tb:      '/picks/tenbagger.json',
-    veto:    '/picks/picks.json'
+    cyc:     '/dd-screener/cyclical-track.json'
   };
   var S = {};
   var pending = Object.keys(sources).map(function(k){
@@ -539,13 +418,10 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
 
   Promise.all(pending).then(function(){
     try{ renderEnv(); }catch(e){ $('env-mount').innerHTML=ph('環境資料暫缺'); }
-    try{ renderTodo(); }catch(e){ $('todo-mount').innerHTML=ph('待辦資料暫缺'); }
-    try{ renderFunnel(); }catch(e){ $('funnel-mount').innerHTML=ph('漏斗資料暫缺'); }
     try{ renderRoster(); }catch(e){ $('roster-mount').innerHTML=ph('陣容資料暫缺'); }
-    try{ renderScoreboard(); }catch(e){ $('sb-mount').innerHTML=ph('記分板資料暫缺'); }
   });
 
-  // ---------- ① 環境條 ----------
+  // ---------- ① 天氣 ----------
   function riskColor(sc){ if(sc>=0.34) return 'var(--green)'; if(sc<=-0.34) return 'var(--red)'; return 'var(--amber)'; }
   function renderEnv(){
     var g = S.gauge, h = S.hist;
@@ -588,165 +464,7 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     $('env-mount').innerHTML = '<div class="card env-strip">'+cells+links+'</div>';
   }
 
-  // ---------- ② 今日待辦（真觸發制 2026-07-11）----------
-  // 原則：只在該裁決的日子出現（日頻真事件天天查；週檢項只在資料剛刷新的窗口浮上；
-  // 月檢項只在月初窗口浮上），處理完可勾除（localStorage，資料換代自動復活）。
-  // 被節奏閘擋下的項目透明列在「庫存」小字——不假裝是今日的事，也不隱瞞它存在。
-  var DONE_KEY = 'cockpit_todo_done_v1';
-  function loadDone(){ try{ return JSON.parse(localStorage.getItem(DONE_KEY)||'{}'); }catch(e){ return {}; } }
-  window._todoDone = function(sig){
-    var d = loadDone(); d[sig] = new Date().toISOString().slice(0,10);
-    try{ localStorage.setItem(DONE_KEY, JSON.stringify(d)); }catch(e){}
-    try{ renderTodo(); }catch(e){}
-  };
-  function daysBetween(isoA, isoB){
-    var a = new Date(isoA+'T00:00:00'), b = new Date(isoB+'T00:00:00');
-    return Math.round((b-a)/86400000);
-  }
-  function renderTodo(){
-    var items = [], inventory = [], done = loadDone();
-    var todayIso = new Date().toISOString().slice(0,10);
-    var arenaAsof = (S.arena && S.arena.run_timestamp) ? String(S.arena.run_timestamp).slice(0,10) : '';
-    var momAsof   = (S.mom && S.mom.as_of) ? String(S.mom.as_of) : '';
-
-    function push(sig, it){ if(!done[sig]){ it.sig = sig; items.push(it); } }
-
-    // A. sop-funnel 板機訊號（日頻真事件）
-    if(S.sop && Array.isArray(S.sop.today_signals) && S.sop.today_signals.length>0){
-      push('sop:'+(S.sop.as_of||todayIso), {cls:'trig', ic:'🎯', src:'sop-funnel · 板機層',
-        txt:'今日 <b>'+S.sop.today_signals.length+'</b> 檔觸發進場板機訊號——待人工確認執行',
-        href:'/dd-screener/sop-funnel.html', label:'看訊號 →',
-        asof: S.sop.as_of ? ('sop as-of '+S.sop.as_of) : ''});
-    }
-
-    // B. 決策卡宣稱到期／破線（日頻檢查，dated）
-    if(S.cards && S.cards.by_ticker && (S.cards.n_due>0 || S.cards.n_breach>0)){
-      var dueList = [];
-      Object.keys(S.cards.by_ticker).forEach(function(t){
-        var c = S.cards.by_ticker[t];
-        if((c.n_due||0)>0 || (c.n_breach||0)>0) dueList.push({t:t, due:c.n_due||0, br:c.n_breach||0, dl:c.next_deadline||''});
-      });
-      dueList.slice(0,4).forEach(function(o){
-        var what = (o.br>0 ? o.br+' 條宣稱破線' : '') + (o.br>0 && o.due>0 ? '、' : '') + (o.due>0 ? o.due+' 條宣稱到期' : '');
-        push('due:'+o.t+':'+o.dl, {cls:'grp', ic:'⏰', src:'決策卡 · 宣稱複審',
-          txt:'<b>'+esc(o.t)+'</b> '+esc(what)+'——進複審隊列，裁決必須回爐',
-          href:'/engine/cards.html', label:'決策卡 →',
-          asof: o.dl ? ('deadline '+o.dl) : ''});
-      });
-    }
-
-    // C. monitor L3 kill 直接觸發（red；解讀須與資料同日才可信）
-    if(S.ed && S.monitor && S.ed.as_of === S.monitor.as_of && S.ed.trigger_scan){
-      (S.ed.trigger_scan.hits||[]).forEach(function(h, i){
-        if(!h || h.sev!=='red') return;
-        push('kill:'+S.ed.as_of+':'+i, {cls:'trig', ic:'⛔', src:'市場監測 · 證偽觸發',
-          txt:'站內 kill 條件被直接觸發——'+esc(String(h.text||'').slice(0,80))+'…',
-          href:'/monitor/', label:'看解讀 →', asof:'monitor as-of '+S.ed.as_of});
-      });
-    }
-
-    // D. 催化劑日曆：今明兩日事件（dated）
-    if(S.cal && Array.isArray(S.cal.events)){
-      S.cal.events.filter(function(ev){
-        if(!ev || !ev.date) return false;
-        var d = daysBetween(todayIso, ev.date);
-        return d>=0 && d<=1;
-      }).slice(0,4).forEach(function(ev){
-        var pos = ev.positioning||{};
-        var tag = pos.holding ? '持倉' : (pos.dca_role||'');
-        push('cat:'+(ev.id||ev.ticker+ev.date), {cls:'mom', ic:'📅', src:'催化劑日曆 · '+(ev.impact?('影響 '+ev.impact):''),
-          txt:'<b>'+esc(ev.ticker)+'</b> '+esc(ev.date.slice(5))+' '+esc(ev.event||'')+(tag?('（'+esc(tag)+'）'):''),
-          href:'/catalyst/', label:'日曆 →', asof:''});
-      });
-    }
-
-    // E. 席位擂台挑戰（週檢項：arena 剛刷新 ≤2 天才浮上，否則入庫存）
-    if(S.arena && Array.isArray(S.arena.duels)){
-      var byChal = {};
-      S.arena.duels.forEach(function(d){
-        if(!d || !d.alert || !d.challenger) return;
-        var ck = d.challenger.ticker;
-        if(!byChal[ck]) byChal[ck] = {chal:d.challenger, seats:[]};
-        if(d.seat && d.seat.ticker) byChal[ck].seats.push(d.seat.ticker);
-      });
-      var chalKeys = Object.keys(byChal);
-      var arenaFresh = arenaAsof && daysBetween(arenaAsof, todayIso) <= 2;
-      if(chalKeys.length){
-        if(arenaFresh){
-          chalKeys.forEach(function(ck){
-            var o = byChal[ck];
-            var routeZh = (o.chal.route==='core')?'核心':(o.chal.route==='satellite')?'衛星':(o.chal.route||'');
-            var scr = (o.chal.grp && o.chal.grp.score!=null)?o.chal.grp.score:o.chal.score;
-            push('duel:'+ck+':'+arenaAsof, {cls:'grp', ic:'⚔️', src:'GRP · 席位擂台 · 週檢',
-              txt:'<b>'+esc(ck)+'</b>（GRP 分 '+fmt(scr,2)+'）挑戰'+routeZh+'軌 <b>'+esc(o.seats.join('／'))+'</b>——需人工裁決是否換席',
-              href:'/engine/arena.html', label:'席位擂台 →', asof:'engine as-of '+arenaAsof});
-          });
-        } else {
-          inventory.push('週檢庫存：'+chalKeys.join('、')+' 擂台挑戰中（engine '+arenaAsof+'，下次週更浮上）');
-        }
-      }
-    }
-
-    // F. Momentum-5 旗標（challenger＝月檢項，月初 1–3 日浮上；review／heat＝資料剛刷新 ≤2 天浮上）
-    if(S.mom && Array.isArray(S.mom.seats)){
-      var benchTop = null;
-      if(S.mom.bench_scores){
-        Object.keys(S.mom.bench_scores).forEach(function(t){
-          var v = S.mom.bench_scores[t];
-          if(benchTop==null || v>benchTop.v) benchTop={t:t,v:v};
-        });
-      }
-      var momFresh = momAsof && daysBetween(momAsof, todayIso) <= 2;
-      var monthlyWindow = (new Date().getDate() <= 3);
-      var flagMeta = {
-        review:      {ic:'🔁', label:'複審（90D 修正轉負）'},
-        review_fresh:{ic:'🔻', label:'複審（30D 新鮮下修）'},
-        challenger:  {ic:'⚔️', label:'挑戰者出現'},
-        heat:        {ic:'🔥', label:'過熱'}
-      };
-      var gatedChal = [];
-      S.mom.seats.forEach(function(s){
-        (s.flags||[]).forEach(function(f){
-          var fm = flagMeta[f]; if(!fm) return;
-          if(f==='challenger'){
-            if(monthlyWindow){
-              var txt = '<b>'+esc(s.ticker)+'</b> 亮 ⚔️ 挑戰者'+(benchTop?('（最強板凳 '+esc(benchTop.t)+' 分 '+fmt(benchTop.v,2)+' vs 現任 '+fmt(s.score,2)+'）'):'')+'——月檢裁決';
-              push('m5c:'+s.ticker+':'+momAsof.slice(0,7), {cls:'mom', ic:'⚔️', src:'Momentum-5 · 月檢',
-                txt:txt, href:'/research/momentum-5/', label:'看組合 →', asof:'M5 as-of '+momAsof});
-            } else { gatedChal.push(s.ticker); }
-          } else if(momFresh){
-            push('m5f:'+s.ticker+':'+f+':'+momAsof, {cls:'mom', ic:fm.ic, src:'Momentum-5 · 旗標',
-              txt:'<b>'+esc(s.ticker)+'</b> 亮 '+fm.ic+' '+esc(fm.label)+'——強制人工重看 thesis',
-              href:'/research/momentum-5/', label:'看組合 →', asof:'M5 as-of '+momAsof});
-          }
-        });
-      });
-      if(gatedChal.length) inventory.push('月檢庫存：M5 挑戰者 '+gatedChal.join('、')+'（下次月初 1–3 日浮上）');
-    }
-
-    var mount = $('todo-mount');
-    var invHtml = inventory.length ? '<div class="todo-inv">'+inventory.map(esc).join('<br>')+'</div>' : '';
-    if(items.length===0){
-      mount.innerHTML =
-        '<div class="todo-calm"><div class="big">✓ 今日無需裁決</div>'+
-        '<div class="sm">板機、宣稱到期、kill 觸發、催化劑今明兩日——全部安靜。</div></div>'+invHtml;
-      return;
-    }
-    var html = '<div class="todo-list">';
-    items.forEach(function(it){
-      html += '<div class="todo '+it.cls+'">'+
-        '<div class="todo-ic">'+it.ic+'</div>'+
-        '<div class="todo-body"><div class="todo-src">'+esc(it.src)+'</div>'+
-        '<div class="todo-txt">'+it.txt+'</div>'+
-        (it.asof ? '<div class="todo-asof">'+esc(it.asof)+'</div>' : '')+'</div>'+
-        '<a class="todo-link" href="'+it.href+'">'+esc(it.label)+'</a>'+
-        '<button type="button" class="todo-done-btn" onclick="_todoDone(\''+esc(it.sig)+'\')" title="標記已處理（資料換代後自動復活）">✓ 已處理</button></div>';
-    });
-    html += '</div>' + invHtml;
-    mount.innerHTML = html;
-  }
-
-  // ---------- ③ 陣容（唯一名單：席位 × 裁決 × 板機，一行一檔讀完整條鏈） ----------
+  // ---------- ② 陣容（唯一名單：席位 × 裁決 × 板機，一行一檔讀完整條鏈） ----------
   // 時機路由（2026-07-11 持有人拍板，登記 knowledge/rule_ledger.md）：
   // 核心席＝sop-funnel 板機；衛星席＝cyclical-track 位置閘（sop 品質閘系統性排除
   // 爆發/循環型，衛星在 sop 裡永遠不亮）。低熱名單外的衛星席誠實標「未覆蓋」不猜。
@@ -800,194 +518,7 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
       (asof?('席位歸屬 engine as-of '+esc(asof)+'（週更）· '):'')+
       '裁決欄＝日更 dd-screener 現值（⚠＝與週更快照分歧，換席待週更）· '+
       '時機路由：核心席＝sop-funnel 板機、衛星席＝cyclical-track 位置閘（2026-07-11 拍板）· '+
-      '對外櫥窗榜（長熬 × 爆發 × 十倍）在「精選榜」分頁，不在決策鏈上</div>';
-  }
-
-  // ---------- 漏斗活數字 ----------
-  function statBox(v,l){return '<span class="stat"><span class="sv num">'+v+'</span><span class="sl">'+esc(l)+'</span></span>';}
-  function chip(href,txt){return '<a class="chip" href="'+href+'">'+esc(txt)+'</a>';}
-  function renderFunnel(){
-    var layers = [];
-
-    // 發現層
-    (function(){
-      var r='';
-      if(S.dd && S.dd.universe_size!=null) r+=statBox(fmt(S.dd.universe_size),'DD Screener universe');
-      if(S.mom && S.mom.coverage) r+=statBox(fmt(S.mom.coverage.eligible)+' / '+fmt(S.mom.coverage.constituents),'Momentum-5 過閘 / S&P500');
-      r+=chip('/qgm/latest.html','QGM 美股')+chip('/qgm-tw/latest.html','QGM 台股')+
-         chip('/screener.html','RS+VCP 美')+chip('/screener-tw.html','RS+VCP 台')+
-         chip('/screener-jp.html','RS+VCP 日')+chip('/screener-my.html','RS+VCP 馬')+
-         chip('#pipeline','形狀掃描');
-      if(!r) r=ph('資料暫缺');
-      layers.push({name:'發現層',q:'宇宙裡誰冒出來了？',r:r});
-    })();
-
-    // 判斷層
-    (function(){
-      var r='';
-      if(S.dd && Array.isArray(S.dd.stocks)){
-        var stocks=S.dd.stocks, nDD=0, vin=0,vwatch=0,vavoid=0;
-        stocks.forEach(function(s){
-          if(s.dd_path) nDD++;
-          if(s.dca_verdict==='進場') vin++;
-          else if(s.dca_verdict==='觀望') vwatch++;
-          else if(s.dca_verdict==='迴避') vavoid++;
-        });
-        r+=statBox(fmt(nDD),'已分析 DD 檔');
-        r+='<span class="stat"><span class="sv"><span class="dd-mini">'+
-           '<b class="v-in">'+vin+'</b> 進場 <b class="v-watch">'+vwatch+'</b> 觀望 <b class="v-avoid">'+vavoid+'</b> 迴避</span></span>'+
-           '<span class="sl">裁決分布（其餘未裁決）</span></span>';
-      }
-      r+=chip('/research/','個股 DD 全表')+chip('/id/tier_matrix.html','Tier Matrix');
-      if(!r) r=ph('資料暫缺');
-      layers.push({name:'判斷層',q:'這家公司值不值得進？',r:r});
-    })();
-
-    // 組合層
-    (function(){
-      var r='';
-      if(S.arena){
-        var nc = (S.arena.core_seats||[]).length, nb=(S.arena.core_bench||[]).length;
-        var ns = (S.arena.sat_seats||[]).length, sv=S.arena.sat_vacant;
-        r+=statBox(nc+' 席'+(nb?' + '+nb+' 板凳':''),'GRP 核心');
-        r+=statBox(ns+' 席'+(sv!=null?'（'+sv+' 從缺）':''),'GRP 衛星');
-      }
-      if(S.cyc && S.cyc.qualified_total!=null){
-        var lowNames=(S.cyc.low_heat||[]).map(function(x){return x.ticker||x;}).slice(0,6);
-        var lowTxt=lowNames.length?('低熱：'+lowNames.join(' ')+(S.cyc.low_heat_count>lowNames.length?'…':'')):'';
-        r+=statBox(fmt(S.cyc.qualified_total),'循環軌合格（'+fmt(S.cyc.low_heat_count)+' 低熱 / '+fmt(S.cyc.hot_count)+' 過熱）'+(lowTxt?' · '+lowTxt:''));
-      }
-      if(S.mom && Array.isArray(S.mom.seats)) r+=statBox(S.mom.seats.length+' 席','Momentum-5');
-      r+=chip('#seats','決策引擎')+chip('#pipeline','三軌 Pipeline')+chip('/research/momentum-5/','Momentum-5');
-      if(!r) r=ph('資料暫缺');
-      layers.push({name:'組合層',q:'錢放哪幾檔？',r:r});
-    })();
-
-    // 板機層
-    (function(){
-      var r='';
-      if(S.sop){
-        var sig=(S.sop.today_signals||[]).length;
-        var standby=(S.sop.standby_a1||[]).length+(S.sop.standby_a2||[]).length+(S.sop.standby_b||[]).length+(S.sop.standby_c||[]).length;
-        var opn=(S.sop.open_trades||[]).length;
-        r+=statBox(fmt(sig),'今日訊號');
-        r+=statBox(fmt(standby),'standby 候選');
-        r+=statBox(fmt(opn),'模擬持倉');
-      }
-      r+=chip('/dd-screener/sop-funnel.html','sop-funnel')+chip('#pipeline','漏斗總覽');
-      if(!r) r=ph('資料暫缺');
-      layers.push({name:'板機層',q:'現在能不能買？',r:r});
-    })();
-
-    // 監控層
-    (function(){
-      var r='';
-      if(S.gauge){
-        var col=riskColor(S.gauge.score);
-        r+='<span class="stat"><span class="sv" style="color:'+col+'">'+esc(S.gauge.label_zh||'')+'</span>'+
-           '<span class="sl">風險儀表 '+fmt(S.gauge.score,3)+'（'+esc(S.gauge.as_of||'')+'）</span></span>';
-      }
-      r+=chip('/markets.html','市場環境')+chip('/#risk-chart','風險圖表');
-      if(!r) r=ph('資料暫缺');
-      layers.push({name:'監控層',q:'環境與持倉健檢？',r:r});
-    })();
-
-    var html='<div class="funnel">';
-    layers.forEach(function(L,i){
-      var indent = (i*10);
-      html+='<div class="flayer" style="margin-left:'+indent+'px;margin-right:'+indent+'px">'+
-        '<div class="fl-l"><div class="fl-name">'+esc(L.name)+'</div><div class="fl-q">'+esc(L.q)+'</div></div>'+
-        '<div class="fl-r">'+L.r+'</div></div>';
-    });
-    html+='</div>';
-    $('funnel-mount').innerHTML=html;
-  }
-
-  // ---------- ④ 精選清單正式榜 ----------
-  function renderPicks(){
-    var mount=$('picks-mount');
-    if(!S.picks && !S.tb){ mount.innerHTML=ph('精選清單資料暫缺'); return; }
-    function tickers(arr){
-      return (arr||[]).map(function(x){
-        var t=(x&&typeof x==='object')?(x.ticker||''):String(x||'');
-        return t?'<span class="tk">'+esc(t)+'</span>':'';
-      }).join('');
-    }
-    function groupCard(name,badge,official,candCount,note){
-      var h='<div class="sb-card"><div class="sb-top">'+
-        '<span class="sb-name">'+esc(name)+'</span>'+
-        '<span class="sb-badge">'+esc(badge)+'</span></div>';
-      h+='<div class="sb-seatlist"><b>正式榜 '+((official||[]).length)+' 檔：</b>'+
-         ((official||[]).length? tickers(official) : '（從缺——席位寧缺勿濫）')+'</div>';
-      if(candCount!=null) h+='<div class="sb-note">候選區 '+candCount+' 檔待升格';
-      else h+='<div class="sb-note">';
-      if(note) h+='　'+esc(note);
-      h+='　<a href="#picks">四件事全文 →</a></div></div>';
-      return h;
-    }
-    var cards=[];
-    if(S.picks){
-      cards.push(groupCard('長熬 · 品質成長','複利 mandate',S.picks.official_changhao,(S.picks.changhao||[]).length,''));
-      cards.push(groupCard('爆發 · 循環上修','循環 mandate',S.picks.official_baofa,(S.picks.baofa||[]).length,''));
-    }
-    if(S.tb){
-      cards.push(groupCard('十倍 · 結構長坡','S&P 400+600 · gate '+esc(S.tb.gate_version||''),S.tb.official,(S.tb.candidates||[]).length,''));
-    }
-    var vetoN=(S.veto&&Array.isArray(S.veto.veto))?S.veto.veto.length:null;
-    var asOf=(S.picks&&S.picks.as_of)||(S.tb&&S.tb.as_of)||'';
-    var foot='<div class="sb-note" style="margin-top:.4rem">as of '+esc(asOf)+'　·　治理＝規則自動上榜＋持有人 veto'+(vetoN!=null?'（現 veto '+vetoN+' 檔）':'')+'　·　上榜 ≠ 板機：進場時點仍看 sop-funnel。</div>';
-    mount.innerHTML='<div class="sb">'+cards.join('')+'</div>'+foot;
-  }
-
-  // ---------- ⑤ 組合記分板 ----------
-  function renderScoreboard(){
-    var cards=[];
-
-    // GRP 主榜 / 三軌
-    (function(){
-      if(!S.arena){ cards.push(ph('GRP 記分板資料暫缺')); return; }
-      var a=S.arena;
-      var seatNames=(a.core_seats||[]).map(function(s){return s.ticker;});
-      var satNames=(a.sat_seats||[]).map(function(s){return s.ticker;});
-      var regime = a.regime? (a.regime.label||'') : '';
-      var h='<div class="sb-card"><div class="sb-top">'+
-        '<span class="sb-name">GRP 主榜 · 三軌組合</span>'+
-        '<span class="sb-badge">個股部 mandate</span>';
-      if(regime) h+='<span class="sb-note">環境判讀：'+esc(regime)+'</span>';
-      h+='</div>';
-      h+='<div class="sb-seatlist"><b>核心 '+(seatNames.length)+' 席：</b>'+
-         (seatNames.length? seatNames.map(function(t){return '<span class="tk">'+esc(t)+'</span>';}).join(''):'（從缺）')+'</div>';
-      h+='<div class="sb-seatlist"><b>衛星 '+(satNames.length)+' 席'+(a.sat_vacant!=null?'（'+a.sat_vacant+' 從缺）':'')+'：</b>'+
-         (satNames.length? satNames.map(function(t){return '<span class="tk">'+esc(t)+'</span>';}).join(''):'（從缺）')+'</div>';
-      h+='<div class="sb-note" style="margin-top:.5rem">GRP 記分維度自 2026-07-04 起累積、歷史裁決不補算，故暫無獨立績效序列；席位為現任裁決快照。'+
-         ' <a href="#seats">席位排序 →</a></div>';
-      h+='</div>';
-      cards.push(h);
-    })();
-
-    // Momentum-5
-    (function(){
-      if(!S.mom || !S.mom.portfolio){ cards.push(ph('Momentum-5 資料暫缺')); return; }
-      var p=S.mom.portfolio;
-      var inc = (S.momPort && S.momPort.inception)? S.momPort.inception : (S.mom.as_of||'');
-      function pn(v){var s=(v>=0?'+':'');return s+fmt(v,2);}
-      function pcol(v){return v>0?'var(--green)':(v<0?'var(--red)':'var(--muted)');}
-      var h='<div class="sb-card"><div class="sb-top">'+
-        '<span class="sb-name">Momentum-5</span>'+
-        '<span class="sb-badge">S&amp;P 500 獨立對照組</span>'+
-        '<span class="sb-note">建倉 '+esc(inc)+' · 資料源在站外（S&amp;P 500 EPS 修正 screen）</span></div>';
-      h+='<div class="sb-metrics">'+
-        '<span class="stat"><span class="sv num" style="color:'+pcol(p.ret_pct)+'">'+pn(p.ret_pct)+'%</span><span class="sl">組合報酬</span></span>'+
-        '<span class="stat"><span class="sv num" style="color:'+pcol(p.spy_ret_pct)+'">'+pn(p.spy_ret_pct)+'%</span><span class="sl">SPY 同期</span></span>'+
-        '<span class="stat"><span class="sv num" style="color:'+pcol(p.alpha_pp)+'">'+pn(p.alpha_pp)+' pp</span><span class="sl">超額 α</span></span>'+
-        '</div>';
-      h+='<div class="sb-note">此為 <b>GRP 邏輯的 S&amp;P 500 獨立對照組（站外資料源）</b>——與 GRP 主榜是主控／對照關係，不是同一組合。建倉未滿一週，績效待累積。'+
-         ' <a href="/research/momentum-5/">看五席 →</a></div>';
-      h+='</div>';
-      cards.push(h);
-    })();
-
-    $('sb-mount').innerHTML='<div class="sb">'+cards.join('')+'</div>';
+      '「精選榜」分頁＝席位規格外的兩個獵場（爆發＝循環拐點型、十倍＝市值低於席位門檻），與本表零重疊是設計</div>';
   }
 })();
 </script>

@@ -296,15 +296,31 @@ def load_revisions():
 
 
 def load_picks():
+    """ticker → 本站身分標籤。
+
+    2026-07-29：長熬組退役（與 GRP 席位職能重疊）後，甲線標籤改讀權威來源
+    engine/arena.json 的席位；picks 側只剩爆發（乙線）。
+    """
     pk = load_json(os.path.join(ROOT, "docs", "picks", "candidates.json"), {})
-    tier_lbl = {"official_changhao": "官方長熬", "official_baofa": "官方爆發",
-                "changhao": "候選長熬", "baofa": "候選爆發"}
+    ar = load_json(os.path.join(ROOT, "docs", "engine", "arena.json"), {})
     pick_map = {}
-    for grp, lbl in tier_lbl.items():
-        for x in pk.get(grp, []):
-            e = pick_map.setdefault(x["ticker"], {"groups": [], "grps": []})
-            e["groups"].append(lbl)
-            e["grps"].append(grp)
+
+    def tag(ticker, lbl, key):
+        if not ticker:
+            return
+        e = pick_map.setdefault(ticker, {"groups": [], "grps": []})
+        e["groups"].append(lbl)
+        e["grps"].append(key)
+
+    # 甲線＝GRP 席位（權威）
+    for key, lbl in (("core_seats", "GRP 核心席"), ("sat_seats", "GRP 衛星席"),
+                     ("core_bench", "GRP 板凳"), ("challengers_top", "GRP 挑戰者")):
+        for x in ar.get(key, []):
+            tag(x.get("ticker"), lbl, key)
+    # 乙線＝爆發（循環時機線）
+    for key, lbl in (("official_baofa", "官方爆發"), ("baofa", "候選爆發")):
+        for x in pk.get(key, []):
+            tag(x.get("ticker"), lbl, key)
     return pick_map
 
 
