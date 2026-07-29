@@ -295,6 +295,13 @@ def load_revisions():
     return rev
 
 
+# 身分標籤（單一定義，渲染層的 ●／○ 判定共用——勿再用「官方」字串前綴判斷）
+PICK_GROUPS_JIA = (("core_seats", "GRP 核心席"), ("sat_seats", "GRP 衛星席"),
+                   ("core_bench", "GRP 板凳"), ("challengers_top", "GRP 挑戰者"))
+PICK_GROUPS_YI = (("official_baofa", "官方爆發"), ("baofa", "候選爆發"))
+SEATED_GROUPS = {"GRP 核心席", "GRP 衛星席", "官方爆發"}   # ●＝在席／在榜
+
+
 def load_picks():
     """ticker → 本站身分標籤。
 
@@ -312,13 +319,10 @@ def load_picks():
         e["groups"].append(lbl)
         e["grps"].append(key)
 
-    # 甲線＝GRP 席位（權威）
-    for key, lbl in (("core_seats", "GRP 核心席"), ("sat_seats", "GRP 衛星席"),
-                     ("core_bench", "GRP 板凳"), ("challengers_top", "GRP 挑戰者")):
+    for key, lbl in PICK_GROUPS_JIA:          # 甲線＝GRP 席位（權威）
         for x in ar.get(key, []):
             tag(x.get("ticker"), lbl, key)
-    # 乙線＝爆發（循環時機線）
-    for key, lbl in (("official_baofa", "官方爆發"), ("baofa", "候選爆發")):
+    for key, lbl in PICK_GROUPS_YI:           # 乙線＝爆發（循環時機線）
         for x in pk.get(key, []):
             tag(x.get("ticker"), lbl, key)
     return pick_map
@@ -486,8 +490,11 @@ def render_dashboard(payload):
         q = t["quadrant"]
         picks = ""
         seen = []
+        # ●＝在席／在榜（GRP 核心・衛星席、官方爆發）；○＝候補（板凳、挑戰者、候選爆發）。
+        # 2026-07-29：長熬退役後甲線標籤改成「GRP …席」，不再以「官方」前綴判定
+        # （舊邏輯 startswith("官方") 會把核心席誤標成 ○）。
         for p in t.get("picks", []):
-            mk = "●" if p["group"].startswith("官方") else "○"
+            mk = "●" if p["group"] in SEATED_GROUPS else "○"
             s = f'{mk}{p["ticker"]}'
             if s not in seen:
                 seen.append(s)
@@ -529,7 +536,7 @@ def render_dashboard(payload):
         f'<div style="font-family:ui-monospace,monospace;font-size:11px;letter-spacing:.14em;'
         f'text-transform:uppercase;color:#5b9bff;margin-bottom:10px">產業輪動 · 自動儀表（RRG 相對 {BENCH}）</div>'
         f'<div style="margin-bottom:8px"><b>象限分布</b>（{payload["counts"]["ranked"]} 主題入圖）：<br>{qrow}</div>'
-        f'<div style="margin:10px 0 6px"><b>相對強度 Top 6</b>（依 RS-Ratio 排序 · ●官方榜 ○候選榜）</div>'
+        f'<div style="margin:10px 0 6px"><b>相對強度 Top 6</b>（依 RS-Ratio 排序 · ●在席／在榜 ○候補）</div>'
         f'<table style="border-collapse:collapse;width:100%;font-size:12.5px">{head}{body}</table>'
         f'<div style="margin-top:12px;font-family:ui-monospace,monospace;font-size:11px;'
         f'color:#6b7484">資料截至 {payload["data_asof_weekly"]}（週線）· '

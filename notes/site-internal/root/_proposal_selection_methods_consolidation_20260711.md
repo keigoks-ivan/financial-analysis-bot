@@ -158,3 +158,17 @@
 | weekly-market-update | ⑥ picks、④ tenbagger、⑦ M5 | picks/tenbagger 貼標；M5 不動 |
 | daily-non-fundamental-refresh | ⑤ sop-funnel、quality-entry、build_dd_screener（含 AR-Live 欄）、entry-state | entry-state step 移除；AR-Live 欄留（已非觸發） |
 | （已拆線） | alpha-rank | 已封存 |
+
+---
+
+## 2026-07-29 追記：⑥ 長熬榜退役（上文「降成品視圖」的後續處置已被取代）
+
+上文 2026-07-11 對 ⑥ 的處置是「**降成品視圖**：長熬＝GRP core 成品榜，貼標即可、`build_picks.py` 規則邏輯不動」。**該處置已於 2026-07-29 升級為完全退役**——貼標沒有解決根本問題：長熬與 GRP 核心席同屬甲線、用不同閘算同一件事，實測 5 檔中 3 檔重複（ASML／NVDA／APH）、4 檔分歧（GOOGL／TXN 在榜不在席且都在板凳；LLY／TSM 在席不在榜）。持有人先問「要把長熬的選股優點和 GRP 整合可以嗎」，看完資料後裁決**「不整合，把長熬拿掉」**。
+
+**為什麼不整合**（資料命中率檢查：GRP 全過 ∩ 市值≥$200 億 ＝ 48 檔）：長熬唯一真互補的軸是產業層同儕寬度（GRP 的 G/R/P 全是單檔訊號，確實沒有橫向維度），但它**當硬閘會誤殺**——鑑別力弱（65%＝31/48 判「對」）、卻會砍掉現任核心席 LLY（寬度 72.2）與 TSM（74.6，「對」要求兩個寬度都 ≥60%，單腳沒過就掉出去）、21% 因 ID 未覆蓋而「樣本不足」＝資料缺失被當負面訊號；且護城河分數排序與 GRP 的 R（上修幅度）排序搶同一個主鍵位置，是衝突非互補。
+
+**Option A 表述更新**：方式甲的「吸收 … 長熬榜（降成品視圖）」→ **長熬榜已刪除，甲線無成品榜，權威判定即 GRP 席位本身**（`docs/engine/arena.json` core_seats／sat_seats）。`/picks/` 頁的新 mandate＝「**席位規格外的兩個獵場**」：爆發（循環拐點型，DD trailing 品質閘結構性不納）＋十倍（市值 $10–200 億，在 GRP 的 $200 億席位門檻之下）——**與席位陣容零重疊是設計**。產業趨勢閘降為 display-only 證據欄（已無 gating consumer）。
+
+**落地範圍**（commit `c03c39e9f` 與後續）：`build_picks.py` 移除長熬全鏈＋`retired_groups` 留痕；`build_crowding.py`／`build_rotation.py` 甲線改讀 arena.json 席位（原本拿長熬當甲線 proxy，放任會靜默漏掉整條結構長抱線）；`build_rotation.py` 另修渲染層 bug——●／○ 原以 `startswith("官方")` 判定，新標籤「GRP 核心席」會被誤標成 ○ 候補，已改用 `SEATED_GROUPS` 集合；`picks/_embed.html` 兩組重新設計；`picks.json` changelog 留痕；`crowding-monitor`／`monitor-read` 兩支 skill 明寫 `official_changhao` 已不存在。
+
+**未接的線留痕**：`build_picks.py` 的 `trend_breadth_avg` 註解寫「席位 tiebreak 用」，但 engine 從未讀它。未來若要整合，正確形態是 **tiebreak 非硬閘**，且須走 CLAUDE.md 判斷類閘程序（回溯考卷／ledger kill condition／PREREG 凍結至校準輪）——現在動就是破 2026-07-04 GRP PREREG。
