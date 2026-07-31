@@ -83,13 +83,14 @@ FAIL=0
 
 # ---- DD/DCA size-budget gate (added files only) ------------------------------
 # Hard floor = anti-偷懶 depth gate (blocks). Upper warn = token-cost budget (warns).
-#   v13/v14 DD (merged decision layer):    110KB hard floor / 150KB upper warn
+#   v13/v14 DD (merged decision layer):    110KB hard floor / 200KB upper warn
 #   legacy v12 DD:                          80KB hard /  90KB soft (unchanged)
 #   legacy DCA (retired, dormant gate):     50KB hard /  55KB soft (unchanged)
 #
-# 2026-07-30 recalibration (QC-38) — owner decision, driver = TOKEN COST, not
-# readability. Target band is now 110-150KB for BOTH modes; the old mode split
-# ("attached-doc mode ~250-400KB") is REMOVED because its causal story was wrong:
+# 2026-07-30/31 recalibration (QC-38) — owner decision, driver = TOKEN COST, not
+# readability. Target band is 150-200KB for BOTH modes (widened 2026-07-31 after
+# three measured reports; see below). The old mode split ("attached-doc mode
+# ~250-400KB") is REMOVED because its causal story was wrong:
 # byte-level autopsy of SBUX 411KB / CMG 403KB / RMS 378KB showed the §4.5
 # transcript read-through is only 3-5% (12-20KB). The bulk was main narrative
 # (58-60% of bytes) plus procedural self-checks (17-19%). Attached docs were
@@ -101,8 +102,11 @@ FAIL=0
 # not deleting filler. Owner also requires DD quality not regress, so the
 # 110KB floor, the five quantitative modules, the seven tables, every critic
 # gate and the sourcing discipline are all UNCHANGED. The primary token lever
-# is the skill's critic excerpt-only rule (~180k tokens per full-file cold read
-# x3 critics -> ~8k via excerpts), which costs zero analysis.
+# is the skill's critic excerpt-only rule: ~180k tokens per full-file cold read
+# x3 critics -> ~66-84k each when the critic still does its own web verification
+# (measured AMZN/PWR/MPWR), i.e. ~63% saved with zero analysis lost. The ~8k
+# figure only holds if a critic reasons over the excerpt WITHOUT searching --
+# do not enforce that; the searching is what produced the real 🔴 findings.
 #
 # Deliberately asymmetric: the LOWER bound blocks, the UPPER bound only warns.
 # A hard upper block fires only after the report is already written, forcing a
@@ -129,13 +133,13 @@ check_report_size() {  # $1=file  $2=hardBytes  $3=warnBytes  $4=label  $5=upper
 }
 if [ -n "$ADDED_DD" ] || [ -n "$ADDED_DCA" ]; then
   echo "→ pre-commit: checking new DD/DCA size budget (added files only)"
-  # DD gate is schema-aware: v13/v14 merged report 110KB floor + 150KB upper warn.
+  # DD gate is schema-aware: v13/v14 merged report 110KB floor + 200KB upper warn.
   # Floor deliberately UNCHANGED at 110KB: owner requires DD quality not regress,
   # so the anti-偷懶 depth floor is not loosened to save tokens. Only the upper
   # budget is new. Primary token lever lives in the skill (critic excerpt-only).
   for f in $ADDED_DD; do
     if grep -qE '"schema"[[:space:]]*:[[:space:]]*"v1[34]' "$f" 2>/dev/null; then
-      check_report_size "$f" 110000 115000 "DD" 150000 || FAIL=1
+      check_report_size "$f" 110000 150000 "DD" 200000 || FAIL=1
     else
       check_report_size "$f" 80000 90000 "DD" || FAIL=1
     fi

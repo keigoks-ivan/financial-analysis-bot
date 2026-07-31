@@ -10,7 +10,7 @@ description: "單一指令跑完整條 DD→sync→commit pipeline。收到一�
 把這條每次都重複的鏈固化成一鍵，並把 size-floor 與 sync 步驟內建，避免漏跑：
 
 ```
-stock-analyst (v14.x DD，含決策層) → update_dd_index.py → size gate (110KB 下界 / 目標 110-150KB) → commit/push
+stock-analyst (v14.x DD，含決策層) → update_dd_index.py → size gate (110KB 下界 / 目標 150-200KB) → commit/push
 ```
 
 **本 skill 不做分析** — 所有研究、決策層、品質規則都在 `stock-analyst`（現 v14.11，版號一號到底）裡。這裡只負責「順序、同步、閘門、提交」。**不再有獨立 DCA 步驟**：單一報告 `docs/dd/DD_*.html` 已內含 Part II 決策層（§12-§15）與統一裁決，不再產 `docs/dca/DCA_*.html`。
@@ -28,7 +28,7 @@ stock-analyst (v14.x DD，含決策層) → update_dd_index.py → size gate (11
 
 5. **同步**：`python scripts/update_dd_index.py`（重生 research 主表 + DD 組合快照 + 自動連鎖 `build_dd_screener.py` rebuild `docs/dd-screener/latest.json` + `build_picks.py` 更新 `docs/picks/candidates.json`；報告由 script 直接讀 dd-meta dca 欄位，「定見」欄連 `/dd/DD_X.html#decision`）。離線 / yfinance 掛掉時加 `--skip-dd-screener`（會 warn 但不 abort）。
 
-6. **Size-budget gate（pre-commit hook 也會擋，但這裡先自驗）**：新報告須 **≥ 110KB（下界未變）且目標落在 110–150KB 帶內**（gate 對 `"schema":"v1[34]` 檔生效；下界擋 commit、上界 150KB 只警告；Part I 基本面 ≥60%）。**未達下界不是去灌水**，而是回去把缺的量化模組補實（五個 v12.6 深度模組 + 四個決策模組的 sourced 數字、非段落注水）。**超過上界不是去刪模組**，而是套三條省法（不印程序性自檢／表只留承重列／同一數字只出現一次）——見 CLAUDE.md「Report 篇幅預算」與 stock-analyst【篇幅預算指令】。真要放行 lean-but-complete 報告才 `--no-verify`。
+6. **Size-budget gate（pre-commit hook 也會擋，但這裡先自驗）**：新報告須 **≥ 110KB（下界未變）且目標落在 150–200KB 帶內**（gate 對 `"schema":"v1[34]` 檔生效；下界擋 commit、上界 150KB 只警告；Part I 基本面 ≥60%）。**未達下界不是去灌水**，而是回去把缺的量化模組補實（五個 v12.6 深度模組 + 四個決策模組的 sourced 數字、非段落注水）。**超過上界不是去刪模組**，而是套三條省法（不印程序性自檢／表只留承重列／同一數字只出現一次）——見 CLAUDE.md「Report 篇幅預算」與 stock-analyst【篇幅預算指令】。真要放行 lean-but-complete 報告才 `--no-verify`。
 
 7. **commit & push**：把 `docs/dd/DD_*`、`docs/research/index.html`、`docs/dd-screener/latest.json`、`docs/picks/candidates.json` **併入同一 commit**（避免任一頁面滯後）。push 前重查 research / screener 沒被並行 session 覆蓋。commit message 沿用既有風格（如 `Add {TICKER} DD (統一裁決 ...); resync research+screener`）。
 
