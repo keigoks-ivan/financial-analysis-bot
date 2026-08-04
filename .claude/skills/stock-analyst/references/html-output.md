@@ -71,7 +71,8 @@ HTML `<head>` 內必須含 `<script id="dd-meta" type="application/json">{...}</
 - 使用 Write 工具輸出至 `docs/dd/`
 - **輸出完成後必須執行以下步驟，不得省略**:
   1. **生成後自驗**:跑 QC-32 自驗腳本 + `python3 scripts/validate_dd_meta.py --report`（確認 v13 五欄 + enum 全綠）;確認 `id="decision"` 錨點存在;確認 dca_verdict 三處（頁首/§14/dd-meta）一致。
-  2. **更新 INDEX.md**:Edit append 一行到 `docs/dd/INDEX.md`，8 欄格式:`| YYYY-MM-DD | TICKER | {同 frontmatter version（現 v14.12）} | {裁決}｜{角色}·{執行語} | 陷阱定性 | 護城河等級/估值燈/MA | DD_TICKER_YYYYMMDD.html | 備註 |`。**第 4 欄 ≤40 字**（v14.12 收斂）:裁決＝進場/觀望/迴避三詞、角色＝核心/衛星/追蹤/不持有四值、執行語＝§14a 首句（starter 比例·rearm/加碼條件）;承繼/翻面歸因/矩陣路徑細節留在報告 §12.3 與備註欄，不進欄 4。基本面評級 A+/A/B/C/X 不放此欄（已在 dd-meta `signal`）。備註限 3 句，每句 30-50 字，`<br>` 分隔（第 1 句 產業位置+品質;第 2 句 估值+護城河趨勢;第 3 句 關鍵判斷/觀察點）。
+  2. **更新 INDEX.md**（**並行模式例外見下方**）:Edit append 一行到 `docs/dd/INDEX.md`，8 欄格式:`| YYYY-MM-DD | TICKER | {同 frontmatter version（現 v14.12）} | {裁決}｜{角色}·{執行語} | 陷阱定性 | 護城河等級/估值燈/MA | DD_TICKER_YYYYMMDD.html | 備註 |`。**第 4 欄 ≤40 字**（v14.12 收斂）:裁決＝進場/觀望/迴避三詞、角色＝核心/衛星/追蹤/不持有四值、執行語＝§14a 首句（starter 比例·rearm/加碼條件）;承繼/翻面歸因/矩陣路徑細節留在報告 §12.3 與備註欄，不進欄 4。基本面評級 A+/A/B/C/X 不放此欄（已在 dd-meta `signal`）。備註限 3 句，每句 30-50 字，`<br>` 分隔（第 1 句 產業位置+品質;第 2 句 估值+護城河趨勢;第 3 句 關鍵判斷/觀察點）。
+  2-bis. **並行 session 例外（token 紀律）**:若編排者明示「不得寫入 INDEX.md／不得碰 catalog 檔」（多個 session 同時 append 會互相覆蓋），則**不 Edit 檔案，改在最終回報中直接輸出那一行 ready-to-paste 的完整 INDEX 行**（同 8 欄格式、同 備註 密度、`$` escape 為 `\$`、`<br>` 分隔、全形標點），由編排者機械貼上。**二選一，不得兩者都不做**——漏登的代價是報告存在於磁碟卻永遠不出現在 research 頁（`update_dd_index.py` 只收 INDEX.md 有列的 DD）。WHY:2026-07-30/31 兩批因禁寫 INDEX.md 而另開 sonnet agent 重讀整份 DD 生 備註，實測 166k／194k tokens（約 85-97k／檔）——writer 手上本來就有全部素材，多輸出一行的邊際成本接近零。
   3. **觸發網站同步**:執行 `python scripts/update_dd_index.py`（同步 research 頁主表 + dd-screener;v14.12 DD 報告由 script 直接讀 dd-meta 決策層欄位，定見欄連 `/dd/DD_X.html#decision`）。失敗則提示用戶手動執行，不得跳過。
   4. **terminal 摘要**（v14.5 格式）:
      ```
