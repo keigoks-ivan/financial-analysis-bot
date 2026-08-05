@@ -199,7 +199,7 @@ def parse_dds():
         if not (tk and date and price):
             excluded.append((base, "missing ticker/date/price_at_dd"))
             continue
-        era = "v13plus" if (sch.startswith("v13") or sch.startswith("v14")) else "v12"
+        era = "v13plus" if sch.startswith(("v13", "v14", "v15")) else "v12"
         if era == "v13plus":
             group = d.get("dca_verdict")  # 進場/觀望/迴避
         else:

@@ -120,7 +120,7 @@ def coverage_map():
 
 
 def dd_path_map():
-    """norm_ticker → latest DD's #decision anchor (v13/v14 決策層 = §14 統一裁決).
+    """norm_ticker → latest DD's #decision anchor (v13+ 決策層統一裁決).
     Lets a ✅有DD shape-hit link straight to its verdict — the radar row and the
     main-table verdict become one click apart（懂它且剛轉強→直接看裁決）."""
     latest: dict = {}  # tk -> (date_str, filename)

@@ -225,9 +225,9 @@ kill metrics 更私人，觸發了卻沒人對帳＝訓練迴路白做。
 掃最新 v14.11+ DD 的 dd-meta `industry_clock_phase`（選填欄；absent 跳過，不報錯）。
 **警示條件**：`industry_clock_phase ∈ {III, IV}` **且**該檔 `dca_verdict == 進場` **且**報告日 > 45 天
 → 列入 triage「產業時鐘已過中場（III/IV）、進場裁決未複審」。
-**不是自動翻裁決**（裁決管轄權在 stock-analyst §14），只是把「時鐘位置與進場裁決錯位、且已陳舊」
+**不是自動翻裁決**（裁決管轄權在 stock-analyst 統一裁決章），只是把「時鐘位置與進場裁決錯位、且已陳舊」
 這件事浮上人工 re-review。產出併入報告新 section「## 產業時鐘 vs 裁決錯位」，以 ticker 為列，
-建議動作欄寫「→ 重跑 stock-analyst 複審 §14 裁決，或 spawn industry-thesis-critic 查時鐘位置」。
+建議動作欄寫「→ 重跑 stock-analyst 複審統一裁決，或 spawn industry-thesis-critic 查時鐘位置」。
 
 ### Check 11: 供應鏈瓶頸破格掃描（2026-07-09 起）
 
@@ -433,7 +433,7 @@ Fleet 鮮度: 掃到 {M} 份 ID，其中 judgment 已 stale（> 60 天）{K} 份
 
 | Ticker | clock_phase | 裁決 | DD age | 建議 |
 |---|---|---|---|---|
-| {ticker} | III/IV | 進場 | N 天 | → 重跑 stock-analyst §14 複審 / spawn industry-thesis-critic |
+| {ticker} | III/IV | 進場 | N 天 | → 重跑 stock-analyst 統一裁決複審 / spawn industry-thesis-critic |
 
 ---
 

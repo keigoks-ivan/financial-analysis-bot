@@ -230,7 +230,7 @@ def render_expiry(events: list) -> str:
 </tbody></table></div>"""
     return f"""<section class="block warn-block">
   <h2 class="block-h"><span class="dot dot-warn"></span>保質期警示 <span class="cnt">{len(exp)} 檔</span></h2>
-  <div class="block-sub">DD §15 保質期在 30 天內屆滿或已過的名字——保質期後 §14 裁決可能失效，需重跑 stock-analyst 複審。</div>
+  <div class="block-sub">DD 複審保質期在 30 天內屆滿或已過的名字——保質期後統一裁決可能失效，需重跑 stock-analyst 複審。</div>
   {body}
 </section>"""
 

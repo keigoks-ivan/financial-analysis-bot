@@ -46,7 +46,7 @@ Agent({
 
 **例外**：用戶明確說「不用跑 critic」/「我自己看就好」可跳過。
 
-**聚合層名單的使用邊界（2026-07-11 持有人拍板）**：站上各聚合層（三軌架構／picks 精選榜／engine GRP 席位／quality-entry 等）對同一名字的態度常不一致，這是職能分工不是 bug。使用鐵律：**多層交集＝高信心觀察池；層間分歧＝研究隊列**（分歧才有邊際資訊——資格在但榜上降溫、或動能亮但架構未收，都是該查原因的訊號，不是矛盾要修）。「值得投資」的最終判定不歸任何聚合層——一律走 DD §14 裁決 → 決策三錨（critic × q.py × usernote）→ sop-funnel 板機。**名單只回答「看誰」，不回答「買不買」與「何時」**；任何 session 不得因交集強就縮短這條裁決鏈，也不得提議再蓋新的收斂面（2026-07-07 拍板）。此為流程紀律非裁決閘，不適用 rule_ledger kill-condition 登記。
+**聚合層名單的使用邊界（2026-07-11 持有人拍板）**：站上各聚合層（三軌架構／picks 精選榜／engine GRP 席位／quality-entry 等）對同一名字的態度常不一致，這是職能分工不是 bug。使用鐵律：**多層交集＝高信心觀察池；層間分歧＝研究隊列**（分歧才有邊際資訊——資格在但榜上降溫、或動能亮但架構未收，都是該查原因的訊號，不是矛盾要修）。「值得投資」的最終判定不歸任何聚合層——一律走 DD 統一裁決（#decision）→ 決策三錨（critic × q.py × usernote）→ sop-funnel 板機。**名單只回答「看誰」，不回答「買不買」與「何時」**；任何 session 不得因交集強就縮短這條裁決鏈，也不得提議再蓋新的收斂面（2026-07-07 拍板）。此為流程紀律非裁決閘，不適用 rule_ledger kill-condition 登記。
 
 ## Site composition：4 repos 共同產生 docs/
 
@@ -117,20 +117,20 @@ Agent({
 | 「{ticker} DD」「個股分析 {ticker}」「{ticker} 定見」「該不該進場 {ticker}」「買不買 {ticker}」「最終判斷 {ticker}」 | `stock-analyst`（**不經 triage，直接全套**） |
 | 「{ticker} 全套」「ddreport {ticker}」 | `ddreport` |
 
-**短路檢查（screen 開跑前必做）**：`ls docs/dd/DD_{TICKER}_*.html` — 有 90 天內 DD 就**不跑篩選器**，直接報 §14 裁決問要不要重跑；>90 天可跑但**跑完才准讀那份 DD**（防錨定，比照 QC-52）；分岔是訊號不是要對齊的錯誤。screen 判定「值得」時輸出結尾一律問「要跑 `ddreport {ticker}` 嗎」——路由判錯的代價是一行字，不是漏掉一份 DD。
+**短路檢查（screen 開跑前必做）**：`ls docs/dd/DD_{TICKER}_*.html` — 有 90 天內 DD 就**不跑篩選器**，直接報統一裁決問要不要重跑；>90 天可跑但**跑完才准讀那份 DD**（防錨定，比照 QC-52）；分岔是訊號不是要對齊的錯誤。screen 判定「值得」時輸出結尾一律問「要跑 `ddreport {ticker}` 嗎」——路由判錯的代價是一行字，不是漏掉一份 DD。
 
 ⛔ **本層不是收斂面**：輸出不寫檔、不進 picks／GRP 席位／三軌／dd-screener／cockpit 任何清單，不得被引用為「某檔在篩選器上是 ○」（2026-07-07 拍板不得再蓋新收斂面，本層合規的唯一方式就是不落檔）。判斷類規則（四格判準／✗ 分軌處置／archetype 判定軸／供給格份額次問句／事件驅動前置閘／禁令 1-2／三危險組合）已登記 `knowledge/rule_ledger.md`。**首輪 10 檔已於 2026-07-26 試跑並完成審計**（`notes/site-internal/root/_screen_v1_round1_audit_20260726.md`）：假陰性 2 檔觸發主 kill、archetype 純比率誤分率 40%、ZIM 暴露無事件驅動閘 → 已出 **v1.1** 四項修正。第二輪 2026-10 與裁決校準同步，**須由未接觸 DD 裁決的執行脈絡跑**（首輪防錨定控制破損）。
 
-## Workflow: 個股深度報告（v13 DD，含決策層）— DCA 已併入
+## Workflow: 個股深度報告（v15 DD，含決策層）— DCA 已併入
 
-**2026-06-22 起 DCA 已併入 stock-analyst v13。** 個股深度研究與投資決策層整併成**單一報告** `docs/dd/DD_{TICKER}_{YYYYMMDD}.html`：Part I 基本面深度（§1-§11）+ Part II 決策層（§12 矛盾裁決 / §13 pre-mortem+Max DD / §14 統一裁決 / §15 複審），收斂為**一個人面對裁決：進場 / 觀望 / 迴避**。基本面評級 A+/A/B/C/X 降為 metadata（餵 screener），不再是並列 headline。
+**2026-06-22 起 DCA 已併入 stock-analyst（現 v15.0，2026-08-05 商業本質優先重排＋75–105KB 帶）。** 個股深度研究與投資決策層整併成**單一報告** `docs/dd/DD_{TICKER}_{YYYYMMDD}.html`：Part I 基本面深度（§1-§10，排序＝結論→論點→產業→商模→護城河〔含 §5.R〕→成長→財務品質→財報→治理→估值）+ Part II 決策層（§11 矛盾裁決 / §12 pre-mortem+Max DD / **§13 統一裁決** / §14 複審），收斂為**一個人面對裁決：進場 / 觀望 / 迴避**。基本面評級 A+/A/B/C/X 降為 metadata（餵 screener），不再是並列 headline。
 
-當用戶說「幫我跑 {ticker} dca」/「{ticker} 定見」/「conviction analysis {ticker}」/「最終判斷 {ticker}」/「該不該進場 {ticker}」/「買不買 {ticker}」/「個股分析 {ticker}」/「{ticker} DD」時，一律自動觸發 `stock-analyst` skill（v13，`.claude/skills/stock-analyst/`）。`deep-conviction-analyst` 已退役為 deprecation stub，dca/定見 觸發語改觸發 stock-analyst。
+當用戶說「幫我跑 {ticker} dca」/「{ticker} 定見」/「conviction analysis {ticker}」/「最終判斷 {ticker}」/「該不該進場 {ticker}」/「買不買 {ticker}」/「個股分析 {ticker}」/「{ticker} DD」時，一律自動觸發 `stock-analyst` skill（v15，`.claude/skills/stock-analyst/`）。`deep-conviction-analyst` 已退役為 deprecation stub，dca/定見 觸發語改觸發 stock-analyst。
 
 **輸出**：
-- HTML：單一 `docs/dd/DD_{TICKER}_{YYYYMMDD}.html`（schema v13.0；§14 帶 `id="decision"` 錨點；**不再產獨立 `docs/dca/DCA_*.html`**）
+- HTML：單一 `docs/dd/DD_{TICKER}_{YYYYMMDD}.html`（schema v15.0；§13 帶 `id="decision"` 錨點；**不再產獨立 `docs/dca/DCA_*.html`**）
 - dd-meta v13：新增決策層欄位 `dca_verdict`/`dca_role`/`moat_trend`（權威）/`runway_post_y5`/`ev5y_pct`（+ 選填 `irr_base_pct`/`max_dd_pct`），下游聚合器直接讀
-- Research 頁同步：跑 `python scripts/update_dd_index.py` 後，「定見」欄連到該 ticker v13 報告的 `/dd/DD_X.html#decision` 錨點
+- Research 頁同步：跑 `python scripts/update_dd_index.py` 後，「定見」欄連到該 ticker 報告的 `/dd/DD_X.html#decision` 錨點
 
 **Legacy**：343 份既有 `docs/dca/DCA_*.html` 凍結保留、仍在站上，下游以 dual-read 支援（v13 dd-meta 優先，讀不到才 fall back legacy DCA）。設計細節見 `docs/_handoff_v13_dd_design_20260621.md`。
 
@@ -234,9 +234,14 @@ DD 報告有雙向 size budget：**下界是深度閘門（擋 commit），上�
 
 | 類型 | hard floor（commit 擋下） | soft warn 下界 | **上界警告** | skill 目標 |
 |---|---|---|---|---|
-| **v13/v14 DD**（`"schema":"v13`／`v14`，兩模式共用一帶） | < 110KB | < 150KB | **> 200KB** | **150–200KB**＋分章節預算（§6 ≤20／§7 ≤18／§11 ≤15／§9 ≤12KB；Part I 基本面 ≥ 60%） |
+| **v15 DD**（`"schema":"v15`，**2026-08-05 起現行**） | < 70KB | < 80KB | **> 115KB** | **75–105KB（~100KB）**＋分章節預算（§5 護城河 ≤15〔含 §5.R 報酬持續期〕／§6 ≤11／§3 ≤8／§10 估值 ≤5KB；估值＋附A 合計 ~7%；決策層 §11–§14 合計 ≤12KB 只渲染結論物；Part I ≥ 60%、§3–§7 商業本質五章是重心） |
+| v13/v14 DD（`"schema":"v13`／`v14`，legacy 帶，不再新增） | < 110KB | < 150KB | > 200KB | 150–200KB（帶語言已證實錨定失效，見下 2026-08-05 段） |
 | legacy v12 DD（`docs/dd/DD_*.html`） | < 80KB | < 90KB | — | ~90–100KB（§5+§8+§9+§10+§11+§12 ≥ 60%） |
 | legacy DCA（`docs/dca/DCA_*.html`，已退役不再新增） | < 50KB | < 55KB | — | — |
+
+**2026-08-05 改制（v15，持有人裁決——現行規則）**：驅動＝「報告長到不想讀」＋token 成本。實測版本演進 legacy median 72KB → v12 95KB → v14.2-14.11 ~116KB → **v14.12 153.5KB（max 509KB）**——「150–200KB＝帶內合格」把帶下緣變成目標；BKNG/ANET（228–229KB）vs SIMO（116KB）同結構對比證明肥的是散文不是模組。v15 五件事：①帶下移 **75–105KB（~100KB）**、hard floor 70KB、含附文獻上界 115KB，「帶內合格」語言廢除；②**章節重排＝商業本質優先**（§1 結論→§2 論點→§3 產業→§4 商模+Munger→§5 護城河→§6 成長→§7 財務品質→§8 財報〔§8.5 read-through〕→§9 治理→§10 估值→§11–§14 決策層；統一裁決在 **§13**、`id="decision"` 錨點與 dd-meta 契約不變，下游 pipeline 已 additive 放寬收 v15）；③估值壓至 ~7%、決策層 ≤12KB 只渲染結論物；④新增 **§5.R 報酬持續期檢核**（ROIC 四象限定位×持續期四檢查點〔需求基礎值/決策層級/價值鏈分配/社會容忍度〕×增量 ROIC×再投資率，判準見 skill `references/roic-durability.md`）；⑤北極星宣言入 skill：找真的值得長期投資的公司——獲利好且品質好、ROIC 好且持續期長、產業與護城河都好，好價格是加分（生意決定買不買、價格決定何時買）。研究深度、五模組七表、critic 關卡全部不變。
+
+以下各段為 v13/v14 帶沿革記載（WHY 保存，數字不再是現行規則）：
 
 **2026-07-30 改制的由來（持有人裁決：驅動因素是 token 成本；同時要求「DD 品質不能下降」）**：舊規格為隨附文獻模式開了 `~250–400KB` 分流帶，但**那條分流的因果歸因是錯的**。對 2026-07-30 三份（SBUX 411KB／CMG 403KB／RMS 378KB）做位元組解剖後發現：§4.5 逐字稿 read-through **只佔 3–5%**（12–20KB），主敘事佔 58–60%（226–236KB）、程序性自檢佔 17–19%（68–75KB）；可見文字佔 72–76%，所以不是模板肥、是內容真有約 10 萬中文字。**附文獻從來不是篇幅膨脹的原因**，2026-07-17 那條「§4.5 撐開篇幅」的歸因被實測推翻，分流帶因此廢除。
 
@@ -244,15 +249,15 @@ DD 報告有雙向 size budget：**下界是深度閘門（擋 commit），上�
 
 **因此第一槓桿不是篇幅，是 critic 讀法（省 token 且零分析損失）**：實測全檔冷讀約 **180k tokens／次**，三個 critic ≈ **540k**——這幾乎就是整份 DD 的實測成本（620–645k tokens／份）。改為只餵相關章節摘錄後，實測每個 critic **66–84k**（AMZN／PWR／MPWR 三份），三個合計約 197k，**省約 63% 而一個字的分析都沒少**。**注意：早期版本寫「約 8k」是錯的**——critic 拿到摘錄後仍會自行跑約 13 次 WebSearch 做查證，8k 只在「純推理不外部查證」時成立；而那些查證正是產出 🔴 發現的原因（PWR 的訴訟與電網政策反彈、MPWR 的 Delta×Infineon 垂直整合威脅），**不得為省 token 取消**。**先做這條，再談篇幅。**
 
-**2026-07-31 校準：總檔案目標無效，改為分章節預算**。新規上線後三份實測——AMZN 197.5KB（+32%）／PWR 180.1KB（+20%）／**MPWR 218.5KB（+46%，且是三者中最單純的公司）**。超帶幅度**與標的複雜度零相關**，推翻了「複雜標的例外」的假設:問題不在標的，在**總量目標本身不可操作**——寫手要寫到第 12 節才知道超支，而那時壓縮重寫已被禁止（且該禁）。三份的具名章節分解高度一致，共同成本中心是 **§6 成長／§7 護城河／§11 估值（＋§9 產業）**，合計佔檔案 37–39%。故:①帶放寬為 **150–200KB**（三份的自陳地板約 165–180KB）;②真正的閘改為**分章節預算**（§6 ≤20／§7 ≤18／§11 ≤15／§9 ≤12KB）;③新增 **§8 邊界即時 byte 檢查**（寫完 §8 實量一次，>110KB 而 §9-§15 未寫就立刻加嚴），因為 MPWR 自陳「三條省法我從 §9 才開始套，寫到 §8 已 130KB」——**省法必須從 §3 就 binding**;④**表格與解釋的取捨方向反轉**:舊指令「表格全留、少解釋」在 §6/§7/§11 是錯的，那三節的產品是推理本身（例:MPWR「Blackwell 失守記在等級不記趨勢」的記帳裁定，壓成「見 §12」會讓 byte 下降但思考消失，而讀者失去的正是決定裁決的那件事）。**七個必交量化表格仍不可退讓，但非必交的補充表優先砍，換取承重判斷的解釋空間。**
+**2026-07-31 校準：總檔案目標無效，改為分章節預算**。新規上線後三份實測——AMZN 197.5KB（+32%）／PWR 180.1KB（+20%）／**MPWR 218.5KB（+46%，且是三者中最單純的公司）**。超帶幅度**與標的複雜度零相關**，推翻了「複雜標的例外」的假設：問題不在標的，在**總量目標本身不可操作**——寫手要寫到第 12 節才知道超支，而那時壓縮重寫已被禁止（且該禁）。三份的具名章節分解高度一致，共同成本中心是 **§6 成長／§7 護城河／§11 估值（＋§9 產業）**，合計佔檔案 37–39%。故：①帶放寬為 **150–200KB**（三份的自陳地板約 165–180KB）;②真正的閘改為**分章節預算**（§6 ≤20／§7 ≤18／§11 ≤15／§9 ≤12KB）;③新增 **§8 邊界即時 byte 檢查**（寫完 §8 實量一次，>110KB 而 §9-§15 未寫就立刻加嚴），因為 MPWR 自陳「三條省法我從 §9 才開始套，寫到 §8 已 130KB」——**省法必須從 §3 就 binding**;④**表格與解釋的取捨方向反轉**:舊指令「表格全留、少解釋」在 §6/§7/§11 是錯的，那三節的產品是推理本身（例：MPWR「Blackwell 失守記在等級不記趨勢」的記帳裁定，壓成「見 §12」會讓 byte 下降但思考消失，而讀者失去的正是決定裁決的那件事）。**七個必交量化表格仍不可退讓，但非必交的補充表優先砍，換取承重判斷的解釋空間。**
 
-**品質不可退讓清單（改制不得觸碰）**：五個量化深度模組（§6.I／§7.F／§8.E／§9.F／§10.D）全部照算照交；七個量化表格照出；所有 critic gate（QC-41／48／50／row 8b）照跑，只改「餵摘錄不餵全檔」；sourcing 密度與 as-of 紀律不變；§4.5 read-through 不砍；hard floor 維持 **110KB**（不因控 token 而鬆深度地板）。**篇幅省的是「寫下來的推導」，不是「做過的研究」與「驗證的關卡」。**
+**品質不可退讓清單（改制不得觸碰）**：五個量化深度模組（分部前瞻／對手 P&L／DuPont＋營運資金／逐段 TAM/SAM／資本配置——v15 編號 §6.I／§5.F／§7.E／§3.F／§9.D）全部照算照交；七個量化表格照出（渲染收斂為承重列）；所有 critic gate（QC-41／48／50／row 8b）照跑，只改「餵摘錄不餵全檔」；sourcing 密度與 as-of 紀律不變；隨附文獻 read-through 不砍；hard floor **70KB**（2026-08-05 隨帶整體下移重議，非放行偷懶）。**篇幅省的是「寫下來的推導」，不是「做過的研究」與「驗證的關卡」。**
 
 **為何上界只警告不硬擋（刻意的不對稱）**：硬上界只會在報告已經寫完之後才觸發，逼出一次壓縮重寫——那等於把同一份報告的 output token 付兩次，與改制目標正好相反。**篇幅控制必須放在寫作指令裡**（見 stock-analyst SKILL.md 的 QC-38、【篇幅預算指令】、【Token 紀律】），gate 只當回饋訊號。
 
-**篇幅省法（依序；明知是「少寫下來」非「沒做」）**：① 程序性自檢（裁決品質四問／§12.4b 三檢／§13a 盲點／門檻檢核表）**照跑但不渲染**，只寫「因此改了什麼」，答案改回報給 orchestrator 以保稽核性；② 深度表只印進入裁決的列，多年時序收斂為關鍵年＋變化率（完整矩陣算過、用過、不渲染）；③ 跨章節引用寫「見 §X.Y」不複述數字與論證。**不准**用刪掉整個量化模組、砍 §4.5 read-through、或降低 sourcing 密度來達標。
+**篇幅省法（依序；明知是「少寫下來」非「沒做」）**：① 程序性自檢（裁決品質四問／推理三檢／pre-mortem 盲點清單／門檻檢核表）**照跑但不渲染**，只寫「因此改了什麼」，答案改回報給 orchestrator 以保稽核性；② 深度表只印進入裁決的列，多年時序收斂為關鍵年＋變化率（完整矩陣算過、用過、不渲染）；③ 跨章節引用寫「見 §X.Y」不複述數字與論證。**不准**用刪掉整個量化模組、砍隨附文獻 read-through、或降低 sourcing 密度來達標。
 
-**只對「新增」檔生效**（`git diff --cached --diff-filter=A`）— 全新報告永遠是新 `*_YYYYMMDD.html`（Add），對 legacy 報告補 metadata 是 Modify，不會被擋。gate 寫在 `scripts/hooks/pre-commit`（v13/v14 對 `"schema":"v1[34]` 檔生效，legacy v12 維持 80KB），真要放行 lean-but-complete 報告用 `git commit --no-verify`。**存量 400KB 級報告不回頭重寫**（重寫本身就是最大的 token 浪費）；新帶只對新報告生效。
+**只對「新增」檔生效**（`git diff --cached --diff-filter=A`）— 全新報告永遠是新 `*_YYYYMMDD.html`（Add），對 legacy 報告補 metadata 是 Modify，不會被擋。gate 寫在 `scripts/hooks/pre-commit`（v15 對 `"schema":"v15` 檔走 70/80/115KB；v13/v14 對 `"schema":"v1[34]` 檔維持 110/150/200KB；legacy v12 維持 80KB），真要放行特殊報告用 `git commit --no-verify`。**存量 400KB 級報告不回頭重寫**（重寫本身就是最大的 token 浪費）；新帶只對新報告生效。
 
 ## 規則治理：判斷類規則的加與刪（2026-07-07 起）
 
@@ -282,4 +287,4 @@ WHY：2026-07 全鏈驗屍證實，五月那批僵化閘（MA Soft Veto / AR≥4
 
 Repo 有 pre-commit hook（`core.hooksPath=scripts/hooks`，已啟用）跑：dd/id-meta validator、cache schema、supply-chain schema、`.nojekyll` guard、supply-chain hub rollup，以及 **DD/DCA size-floor gate（added-only，見上）**。新 clone 啟用方式（`bash scripts/install_hooks.sh`）與 bypass 細節（`--no-verify`）：見 `scripts/README.md`。
 
-標準 ticker pipeline（一句指令跑完，v13）：`stock-analyst`（v13 單一 DD，含決策層 + 統一裁決）→ `python scripts/update_dd_index.py`（同步 research 頁 + screener）→ commit/push。**DCA 已併入 v13，無獨立 DCA 步驟。** 給單一 ticker 時可順帶自動偵測同產業 peer 一起跑（如 KLAC → ASML / LRCX），但**動部位前先按 repo 頂部「Decision-time critic」規則 spawn `industry-thesis-critic`**。`/ddreport` skill（v2.0）把這條鏈固化。
+標準 ticker pipeline（一句指令跑完，v15）：`stock-analyst`（v15 單一 DD，含決策層 + 統一裁決）→ `python scripts/update_dd_index.py`（同步 research 頁 + screener）→ commit/push。**DCA 已併入 v13，無獨立 DCA 步驟。** 給單一 ticker 時可順帶自動偵測同產業 peer 一起跑（如 KLAC → ASML / LRCX），但**動部位前先按 repo 頂部「Decision-time critic」規則 spawn `industry-thesis-critic`**。`/ddreport` skill（v2.0）把這條鏈固化。

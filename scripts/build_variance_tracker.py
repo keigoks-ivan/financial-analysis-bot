@@ -320,13 +320,13 @@ def build(dry_run: bool = False) -> int:
     today = date.today()
 
     metas = [m for _, m in iter_dd_metas(DD_DIR)]
-    v = [m for m in metas if str(m.get("schema", "")).startswith(("v13", "v14"))]
+    v = [m for m in metas if str(m.get("schema", "")).startswith(("v13", "v14", "v15"))]
     # latest_per_ticker 只回 meta；需要 path，故自行對 (path, meta) 去重
     latest_meta = latest_per_ticker(v)
     latest_tickers = {m["ticker"]: m["date"] for m in latest_meta}
     latest_pairs: dict[str, tuple[Path, dict]] = {}
     for path, meta in iter_dd_metas(DD_DIR):
-        if not str(meta.get("schema", "")).startswith(("v13", "v14")):
+        if not str(meta.get("schema", "")).startswith(("v13", "v14", "v15")):
             continue
         t, d = meta.get("ticker"), meta.get("date")
         if t and latest_tickers.get(t) == d:

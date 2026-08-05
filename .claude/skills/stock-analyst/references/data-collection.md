@@ -30,8 +30,8 @@
 | 分析師目標價 consensus | `[ticker] price target analyst consensus` |
 | 5Y 平均 ROIC、毛利率 | `[ticker] ROIC history Macrotrends` |
 | TradingView Beta | `[ticker] beta TradingView`（QC-25 雙源驗證）|
-| **§11.5 IRR 用** | `[ticker] 5-year forward PE band` + `[ticker] EPS consensus FY+3 long-term growth`（IRR re-rate 與 EPS CAGR 基底，同輪搜得） |
-| **QC-39 產業態勢變化（雙向，強制）** | 競爭惡化:`[ticker] market share gaining OR losing 2026` + `[ticker] largest customer second-source OR in-house` + `[competitor] design win at [ticker's customer]` + `[ticker] new entrant 2026`；結構 durability:`[industry] shortage OR oversupply structural OR cyclical 2026 2027` + `[industry] supply discipline new capacity timeline` + `[ticker product] demand durability AI structural`（完整規格見 QC-39） |
+| **§10.5 IRR 用** | `[ticker] 5-year forward PE band` + `[ticker] EPS consensus FY+3 long-term growth`（IRR re-rate 與 EPS CAGR 基底，同輪搜得） |
+| **QC-39 產業態勢變化（雙向，強制）** | 競爭惡化：`[ticker] market share gaining OR losing 2026` + `[ticker] largest customer second-source OR in-house` + `[competitor] design win at [ticker's customer]` + `[ticker] new entrant 2026`；結構 durability:`[industry] shortage OR oversupply structural OR cyclical 2026 2027` + `[industry] supply discipline new capacity timeline` + `[ticker product] demand durability AI structural`（完整規格見 QC-39） |
 
 ### yfinance 批量採集腳本（強制第一步）
 
@@ -60,8 +60,8 @@ print("\n=== Revenue Estimate ===")
 print(t.revenue_estimate)
 
 # 3. 財務三表（多年）— flagship 深度模組所需全欄一次抓齊（robust 逐行，缺行不報錯）
-#    §8.E DuPont/CCC 需:Pretax/Tax(NOPAT)、AR/Inventory/AP(CCC)、Total Assets/Invested Capital(DuPont)
-#    §10.D 資本配置需:D&A、Dividends Paid、Repurchase
+#    §7.E DuPont/CCC 需:Pretax/Tax(NOPAT)、AR/Inventory/AP(CCC)、Total Assets/Invested Capital(DuPont)
+#    §9.D 資本配置需:D&A、Dividends Paid、Repurchase
 def _dump(df, keys, title):
     print(f"\n=== {title} ===")
     if df is None or df.empty:
@@ -112,7 +112,7 @@ print(f"\n=== 大盤 {idx} ===")
 print(f"現價 vs W104: {idx_current:.2f} vs {idx_w104:.2f} | 破線: {idx_current < idx_w104}")
 ```
 
-**執行上述腳本後**，所有 §4、§5、§8、§10、§11、附錄 A 需要的原始數據均已取得。進入各章節撰寫時直接引用，不得針對同一項目再 web_search。
+**執行上述腳本後**，所有 §8、§4、§7、§9、§10、附錄 A 需要的原始數據均已取得。進入各章節撰寫時直接引用，不得針對同一項目再 web_search。
 
 ### 報告頂部必須標註
 

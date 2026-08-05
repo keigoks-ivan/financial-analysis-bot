@@ -125,7 +125,7 @@ def check_dd_meta(path: Path):
 def check_decision_anchor(path: Path, text: str):
     m = DD_VERSION_RE.search(text)
     version = m.group(1) if m else ""
-    if not re.match(r"v1[34]\.", version):
+    if not re.match(r"v1[345]\.", version):
         return []  # only v13/v14 merged reports require the anchor
     if DECISION_ANCHOR_RE.search(text):
         return []

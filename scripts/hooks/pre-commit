@@ -83,9 +83,15 @@ FAIL=0
 
 # ---- DD/DCA size-budget gate (added files only) ------------------------------
 # Hard floor = anti-偷懶 depth gate (blocks). Upper warn = token-cost budget (warns).
+#   v15 DD (2026-08-05 band):               70KB hard floor / 115KB upper warn
 #   v13/v14 DD (merged decision layer):    110KB hard floor / 200KB upper warn
 #   legacy v12 DD:                          80KB hard /  90KB soft (unchanged)
 #   legacy DCA (retired, dormant gate):     50KB hard /  55KB soft (unchanged)
+#
+# v15 note (2026-08-05): the 150-200KB "in-band" language below is v13/v14
+# lineage. It anchored median size from 116KB up to 153KB, so v15 moved the
+# band to 75-105KB (~100KB target) with per-section byte budgets as the
+# primary gate inside the skill. History below kept for the WHY record.
 #
 # 2026-07-30/31 recalibration (QC-38) — owner decision, driver = TOKEN COST, not
 # readability. Target band is 150-200KB for BOTH modes (widened 2026-07-31 after
@@ -127,18 +133,22 @@ check_report_size() {  # $1=file  $2=hardBytes  $3=warnBytes  $4=label  $5=upper
     echo "     (1) run procedural self-checks but stop rendering them,"
     echo "     (2) print only load-bearing table rows (still compute the rest),"
     echo "     (3) cite §X.Y instead of restating numbers across sections."
-    echo "     Do NOT drop a quantitative module, §4.5, or any critic gate."
+    echo "     Do NOT drop a quantitative module, the read-through section, or any critic gate."
   fi
   return 0
 }
 if [ -n "$ADDED_DD" ] || [ -n "$ADDED_DCA" ]; then
   echo "→ pre-commit: checking new DD/DCA size budget (added files only)"
-  # DD gate is schema-aware: v13/v14 merged report 110KB floor + 200KB upper warn.
-  # Floor deliberately UNCHANGED at 110KB: owner requires DD quality not regress,
-  # so the anti-偷懶 depth floor is not loosened to save tokens. Only the upper
-  # budget is new. Primary token lever lives in the skill (critic excerpt-only).
+  # DD gate is schema-aware.
+  # v15 (2026-08-05 owner re-decision): 70KB floor / 80KB warn-low / 115KB warn-high.
+  #   Band moved down deliberately — the old 150-200KB "in-band" language anchored
+  #   median from 116KB up to 153KB. Floor drop is part of the band shift, not a
+  #   laziness pass; per-section budgets in the skill are the primary gate.
+  # v13/v14 legacy band kept at 110/150/200KB; pre-v13 DD at 80/90KB.
   for f in $ADDED_DD; do
-    if grep -qE '"schema"[[:space:]]*:[[:space:]]*"v1[34]' "$f" 2>/dev/null; then
+    if grep -qE '"schema"[[:space:]]*:[[:space:]]*"v15' "$f" 2>/dev/null; then
+      check_report_size "$f" 70000 80000 "DD" 115000 || FAIL=1
+    elif grep -qE '"schema"[[:space:]]*:[[:space:]]*"v1[34]' "$f" 2>/dev/null; then
       check_report_size "$f" 110000 150000 "DD" 200000 || FAIL=1
     else
       check_report_size "$f" 80000 90000 "DD" || FAIL=1

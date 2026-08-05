@@ -320,7 +320,7 @@ def resolve_base_path_ref(ticker: str, earnings_date: str,
     latest_path = None
     latest_meta = None
     for path, meta in iter_dd_metas(DD_DIR):
-        if not str(meta.get("schema", "")).startswith(("v13", "v14")):
+        if not str(meta.get("schema", "")).startswith(("v13", "v14", "v15")):
             continue
         if meta.get("ticker") != ticker:
             continue

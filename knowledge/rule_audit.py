@@ -98,7 +98,7 @@ def _load_dd_corpus():
         except OSError:
             continue
         meta = _dd_meta(text)
-        if not meta or not str(meta.get("schema", "")).startswith(("v13", "v14")):
+        if not meta or not str(meta.get("schema", "")).startswith(("v13", "v14", "v15")):
             continue
         tk, d = meta.get("ticker"), meta.get("date")
         if not (tk and d):

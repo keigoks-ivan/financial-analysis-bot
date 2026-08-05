@@ -260,7 +260,7 @@ def load_dd_universe(
         # 定見 link is the DD's own #decision anchor (no separate /dca/ file).
         # 統一裁決（進場/觀望/迴避）只從 v13/v14 dd-meta 讀 — legacy DCA 檔已
         # 退役（2026-07 起不再作為裁決來源），v12-only ticker 留空待 DD 重跑補上。
-        if str(meta.get("schema", "")).startswith(("v13", "v14")):
+        if str(meta.get("schema", "")).startswith(("v13", "v14", "v15")):
             dca_path, dca_date = f"{dd_path}#decision", dd_date
             dca_verdict = meta.get("dca_verdict")
             dca_role = _norm_dca_role(meta.get("dca_role"))

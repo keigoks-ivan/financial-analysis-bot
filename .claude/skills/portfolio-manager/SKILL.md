@@ -2,33 +2,33 @@
 name: portfolio-manager
 version: v2.0
 released: 2026-07-17
-description: "基金經理人（PM）技能 v2.0：對現有組合做組合層複盤（sizing / 三軌歸位 / trim / 加碼候選 / 現金），direction 權威完全歸 v13/v14 DD §14 統一裁決。組合結構＝三軌（核心 5 複利＋衛星·結構＋衛星·循環），席位排序＝GRP 三閘語言（禁 IRR 排序），賣出走長抱分軌（清倉必須 thesis 級觸發，估值偏高/漲幅本身最多 trim）。消費 position-thesis-monitor 的 MONITOR_*.md triage 為輸入。輸出預設對話內複盤，實際持倉/權重永不寫入任何會 push 的檔（repo 是 PUBLIC，/pm/ 頁面維持封存）。觸發：用戶提供持倉表、要求組合複盤、rebalance、調整配置、現金部位建議、「哪些該賣/該加」。"
+description: "基金經理人（PM）技能 v2.0：對現有組合做組合層複盤（sizing / 三軌歸位 / trim / 加碼候選 / 現金），direction 權威完全歸最新 DD 統一裁決（#decision）。組合結構＝三軌（核心 5 複利＋衛星·結構＋衛星·循環），席位排序＝GRP 三閘語言（禁 IRR 排序），賣出走長抱分軌（清倉必須 thesis 級觸發，估值偏高/漲幅本身最多 trim）。消費 position-thesis-monitor 的 MONITOR_*.md triage 為輸入。輸出預設對話內複盤，實際持倉/權重永不寫入任何會 push 的檔（repo 是 PUBLIC，/pm/ 頁面維持封存）。觸發：用戶提供持倉表、要求組合複盤、rebalance、調整配置、現金部位建議、「哪些該賣/該加」。"
 ---
 
-# 基金經理人（PM）技能 v2.0 — 三軌＋GRP＋DD §14
+# 基金經理人（PM）技能 v2.0 — 三軌＋GRP＋DD 統一裁決
 
 v1.0（2026-04-18）於 2026-07-07 退役（三處根本矛盾：機械超漲止盈 vs 長抱哲學、引用已退役六態機/DCA、core/satellite 二分 vs 三軌）。本 v2.0 按現行系統重寫；v1.0 全文歸檔於 `notes/site-internal/root/_archived_portfolio_manager_v1_SKILL_20260707.md`。`compat/` `policies/` `templates/` 子目錄為 v1.0 遺產，v2.0 不使用（dd-meta 直讀取代 compat 層）。
 
 ## 哲學三原則（v1.0 繼承＋修訂）
 
-1. **分工純粹**：direction（進場/觀望/迴避＋倉位角色）的唯一權威是最新 v13/v14 DD 的 §14 統一裁決。PM 不做單股研究、不 override direction；DD stale 或缺 → 重跑 `stock-analyst`，不是 PM 代判。
-2. **長抱賣出分軌**（v2.0 新憲法，取代 v1.0 機械超漲止盈）：核心/長抱倉的**清倉觸發必須 thesis 級**（falsification breach、ID kill 觸發、§14 裁決翻面、catalyst miss 證偽）。估值偏高、漲幅過大本身**最多 trim 回目標倉，永不單獨清倉**。裁決校準實證：強勢段機械保守的成本 ≈ 3× 其收益（`knowledge/calibration_legacy_dca_20260707.md`）。
+1. **分工純粹**：direction（進場/觀望/迴避＋倉位角色）的唯一權威是最新 DD 的統一裁決（#decision；v13/v14 在 §14、v15 起在 §13）。PM 不做單股研究、不 override direction；DD stale 或缺 → 重跑 `stock-analyst`，不是 PM 代判。
+2. **長抱賣出分軌**（v2.0 新憲法，取代 v1.0 機械超漲止盈）：核心/長抱倉的**清倉觸發必須 thesis 級**（falsification breach、ID kill 觸發、統一裁決翻面、catalyst miss 證偽）。估值偏高、漲幅過大本身**最多 trim 回目標倉，永不單獨清倉**。裁決校準實證：強勢段機械保守的成本 ≈ 3× 其收益（`knowledge/calibration_legacy_dca_20260707.md`）。
 3. **有摩擦的 override**：sizing override 允許且留痕（附 reversal condition）；direction override 禁止。
 
 ## 組合結構權威：三軌（2026-07-03 定案）
 
 | 軌 | 定位 | 檔數/上限 | 進入資格 |
 |---|---|---|---|
-| 核心 | 複利長抱 | ≤5 檔，單檔 ≤10%（個股部淨值） | §14 裁決＝進場＋角色＝核心；GRP 席位 |
-| 衛星·結構 | runway 🟢 數倍股 | 單檔 ≤5% | bull×≥2、runway 🟢；§14 裁決＝進場 |
-| 衛星·循環 | QC-42 循環時機 | 單檔 ≤3% | cyclical-track 提名＋§14 裁決（含附錄 B 循環鏡頭）＋sop-funnel 板機 |
+| 核心 | 複利長抱 | ≤5 檔，單檔 ≤10%（個股部淨值） | 統一裁決＝進場＋角色＝核心；GRP 席位 |
+| 衛星·結構 | runway 🟢 數倍股 | 單檔 ≤5% | bull×≥2、runway 🟢；統一裁決＝進場 |
+| 衛星·循環 | QC-42 循環時機 | 單檔 ≤3% | cyclical-track 提名＋統一裁決（含附錄 B 循環鏡頭）＋sop-funnel 板機 |
 
 一檔一軌。現金＝殘差式，硬性下限 5%、無上限（bottom-up，benchmark 不直接決定現金水位）。個股部整體目標 5–10 檔。
 
 ## 席位與排序語言
 
 - **席位排序一律 GRP 三閘**（`scripts/engine/grp.py`：高成長 × EPS 上修 × 股價位置，按上修幅度排序，寧缺勿濫）。**禁 IRR / EV5y 主排序**（EV5y 只作 tiebreak）。
-- 聚合層名單使用鐵律（2026-07-11 拍板）：**多層交集＝高信心觀察池；層間分歧＝研究隊列**。名單只回答「看誰」，不回答「買不買」與「何時」——買不買走 DD §14 → 決策三錨 → sop-funnel 板機，PM 不縮短這條鏈。
+- 聚合層名單使用鐵律（2026-07-11 拍板）：**多層交集＝高信心觀察池；層間分歧＝研究隊列**。名單只回答「看誰」，不回答「買不買」與「何時」——買不買走 DD 統一裁決 → 決策三錨 → sop-funnel 板機，PM 不縮短這條鏈。
 
 ## 執行管線
 
@@ -38,15 +38,15 @@ v1.0（2026-04-18）於 2026-07-07 退役（三處根本矛盾：機械超漲止
 4. **三軌歸位檢查**：每檔屬哪軌、軌內檔數/單檔上限、一檔一軌；越界 → trim 建議（警示色標示）。
 5. **席位對照**：GRP 席位榜＋`docs/dd-screener/cyclical-track.json` vs 實際持倉——分歧（持有但無席位、有席位但未持有）列入研究隊列，**不自動變成買賣動作**。
 6. **動作分級輸出**（每一條建議必須引用來源）：
-   - **thesis 級處置候選**：monitor red flag 或 §14 翻面 → 建議先 spawn `industry-thesis-critic` ＋ `python knowledge/q.py {T}` ＋ `--note {T}`（決策三錨），錨齊了才談減清。
+   - **thesis 級處置候選**：monitor red flag 或統一裁決翻面 → 建議先 spawn `industry-thesis-critic` ＋ `python knowledge/q.py {T}` ＋ `--note {T}`（決策三錨），錨齊了才談減清。
    - **trim**：超上限/集中度/估值極端 → trim 回目標倉（引長抱分軌，禁清倉語言）。
-   - **加碼/新進候選**：§14 進場＋GRP 席位＋sop-funnel 板機狀態齊 → 列候選與觸發條件；板機未開 → 只列 standby。
+   - **加碼/新進候選**：統一裁決進場＋GRP 席位＋sop-funnel 板機狀態齊 → 列候選與觸發條件；板機未開 → 只列 standby。
    - **維持**：無變化者一行帶過。
 7. **Override 留痕**：L1 sizing / L2 horizon / L3 information（強制標「應重跑 stock-analyst {T}」）皆附 reversal condition；L4 thesis 禁止（唯一出路＝重跑 DD）。
 
 ## PM-QC（v2.0，7 條）
 
-1. **Direction 不可 override**：與 §14 相左的任何買賣意圖 → 重跑 DD，不得繞過。
+1. **Direction 不可 override**：與統一裁決相左的任何買賣意圖 → 重跑 DD，不得繞過。
 2. **長抱賣出分軌強制**：清倉建議必須指名 thesis 級觸發物（哪條 falsifier/kill/翻面）；寫不出來的清倉建議不得輸出。
 3. **禁 IRR 排序**：席位/candidate 排序只用 GRP 語言。
 4. **鮮度分級**：>90 天 DD 的持倉暫停 sizing 裁決、標 must-refresh。
@@ -60,7 +60,7 @@ v1.0（2026-04-18）於 2026-07-07 退役（三處根本矛盾：機械超漲止
 |---|---|---|
 | position-thesis-monitor | 週掃 triage（被動、廣） | PM 的輸入 |
 | industry-thesis-critic | 決策當下深度冷讀（1 ID） | PM 動部位前必 spawn（repo CLAUDE.md 規則） |
-| stock-analyst §14 | 個股 direction 唯一權威 | PM 只引用，不生產 |
+| stock-analyst 統一裁決 | 個股 direction 唯一權威 | PM 只引用，不生產 |
 | sop-funnel | 進場時機板機 | PM 不繞過；板機未開只 standby |
 | GRP | 席位排序 | PM 的排序語言 |
 

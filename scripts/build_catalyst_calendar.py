@@ -121,7 +121,7 @@ def _parse_iso(s: str):
 
 
 def _is_v13_v14(meta: dict) -> bool:
-    return str(meta.get("schema", "")).startswith(("v13", "v14"))
+    return str(meta.get("schema", "")).startswith(("v13", "v14", "v15"))
 
 
 # ── universe ──────────────────────────────────────────────────────────────────
@@ -320,7 +320,7 @@ def build_events(universe, cache, stats, skipped, errors):
                 ticker, exp.isoformat(),
                 "DD 保質期屆滿 — 裁決需複審", "dd_expiry", "中",
                 "s15_static", meta, path,
-                watch="保質期後 §14 裁決可能失效，重跑 stock-analyst 複審。"))
+                watch="保質期後統一裁決可能失效，重跑 stock-analyst 複審。"))
 
         # ── 來源 3：dd-meta catalysts[] ──
         for idx, c in enumerate(meta.get("catalysts") or []):

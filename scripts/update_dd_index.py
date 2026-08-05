@@ -505,7 +505,7 @@ def _v13_dca_overlay() -> dict:
         except OSError:
             continue
         meta = extract_dd_meta_json(text)
-        if not meta or not str(meta.get("schema", "")).startswith(("v13", "v14")):
+        if not meta or not str(meta.get("schema", "")).startswith(("v13", "v14", "v15")):
             continue
         ticker = meta.get("ticker")
         if not ticker:
@@ -1445,7 +1445,7 @@ def _render_verdict_cell(href: str, verdict: str, role: str,
         )
     inner = (
         f'<a href="{href}#decision" target="_blank" rel="noopener" '
-        f'title="投資決策層 §14 統一裁決">'
+        f'title="投資決策層統一裁決（#decision）">'
         f'<span class="dec-badge {css}">{verdict}</span>{role_html}</a>'
         f'{rearm_html}'
     )
@@ -1869,7 +1869,7 @@ def build_row_v12(entry: dict, dca_map: dict | None = None,
     if dca_href:
         dca_cell = (
             f'<td class="num-cell"><a href="{dca_href}" target="_blank" '
-            f'rel="noopener" title="投資決策層（DD §14 統一裁決 / legacy 決策報告）" '
+            f'rel="noopener" title="投資決策層（DD 統一裁決 #decision / legacy 決策報告）" '
             f'style="text-decoration:none">📋</a></td>'
         )
     else:
@@ -2100,7 +2100,7 @@ def collect_v12_entries(force_refresh_eps: bool = False):
 
     entries = []
     for fname, md in index_data.items():
-        if not md["schema"].startswith(("v12", "v13", "v14")):
+        if not md["schema"].startswith(("v12", "v13", "v14", "v15")):
             continue
         path = DD_DIR / fname
         if not path.exists():

@@ -6,7 +6,7 @@
 
 | 對比維度 | v13/v14 DD 抽取自（主要） | legacy 抽取自（舊 DCA / 舊 v12 DD，僅 fallback） |
 |:---|:---|:---|
-| 統一裁決（進場/觀望/迴避）+ 倉位角色 | **§14**（dd-meta `dca_verdict` / `dca_role`） | 舊 DCA §7 裁決 |
+| 統一裁決（進場/觀望/迴避）+ 倉位角色 | **§14；v15 檔在 §13**（dd-meta `dca_verdict` / `dca_role`） | 舊 DCA §7 裁決 |
 | 護城河評分 + 權威趨勢 ↑→↓ | **§7 護城河**（dd-meta `moat` / `moat_trend` / `moat_execution` / `moat_pricing_power`） | 舊 DCA Phase A1 / 舊 v12 §9 |
 | 護城河二維(execution / pricing power) | **§7 二維拆解** | 舊 DCA Phase A1 / 舊 v12 §9 |
 | 威脅三級分類(🟡/🔴/⛔) | **§7 QC-23 威脅分類** | 舊 DCA §6b / 舊 v12 §9 |
