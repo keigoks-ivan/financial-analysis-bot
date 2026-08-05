@@ -36,7 +36,8 @@ date: 2026-07-16
   window.__eps = window.__eps || {};
   const TICK_RE = /^[•\s]*([A-Z0-9]{1,6}(?:\.[A-Z]{1,3})?)$/;
   // header text -> we need Ticker + the three "EPS Norm - Est Avg (FYnE)" columns
-  const heads = [...document.querySelectorAll('.table-styles__table__headerCell___gC361')]
+  // 前綴選擇器：Koyfin 的 CSS module 雜湊尾碼每次改版都會輪換，不要 hardcode 完整 class
+  const heads = [...document.querySelectorAll('[class*="table__headerCell___"]')]
                   .map(h => h.innerText.replace(/\s+/g,' ').trim());
   const idx = {ticker:-1, fy1:-1, fy2:-1, fy3:-1};
   heads.forEach((h,i) => {
@@ -50,8 +51,8 @@ date: 2026-07-16
   window.__epsIdx = idx;
   window.grabEps = function(){
     let n=0;
-    document.querySelectorAll('.table-styles__table__row___K6TSS').forEach(row=>{
-      const cells=[...row.querySelectorAll('.table-styles__table__dataCell___nRZp0')]
+    document.querySelectorAll('[class*="table__row___"]').forEach(row=>{
+      const cells=[...row.querySelectorAll('[class*="table__dataCell___"]')]
                     .map(c=>c.innerText.replace(/\s+/g,' ').trim());
       if (cells.length < heads.length) return;
       const m=(cells[idx.ticker]||'').match(TICK_RE);
@@ -64,12 +65,31 @@ date: 2026-07-16
     });
     return n;
   };
-  window.__epsSC = document.querySelector('.table-styles__table__scrollContainer___WBAWY');
+  window.__epsSC = document.querySelector('[class*="table__scrollContainer___"]');
   return JSON.stringify({heads_found: idx, rows_class_seen: document.querySelectorAll('.table-styles__table__row___K6TSS').length});
 })()
 ```
 
-**Gate**：回傳的 `heads_found` 若有任一 = -1 → 表頭文字對不上（Koyfin 改欄名或欄位被移除），**停下**，回報用戶要人工確認欄位。**類別名（`.table-styles__...___XXXXX` 雜湊尾碼）可能隨 Koyfin 改版變動**——若 `rows_class_seen`=0，先用 `javascript_tool` 印出 scroll 容器內出現頻率最高的 class（≈ ticker 數）重新校準 selector。
+**Gate**：回傳的 `heads_found` 若有任一 = -1 → 表頭文字對不上，**先跑 Step 1.5 的橫向捲動再重試**（EPS 欄未渲染時表頭也讀不到）；橫向到底後仍 -1 才是 Koyfin 改欄名或欄位被移除，**停下**回報用戶。
+
+**CSS class 雜湊會輪換**（2026-07-30 實測：`headerCell___gC361`→`___I7R3q`、`row___K6TSS`→`___RXyc3`、`dataCell___nRZp0`→`___V6mbY`、`scrollContainer___WBAWY`→`___E4YI-`，四個全換）。上面的程式碼已改用 `[class*="table__headerCell___"]` 這類**前綴選擇器**，對尾碼輪換免疫，不需要每次改版回來改 skill。若哪天連 `table__xxx___` 中段也變了（`rows_class_seen`=0），才用 `javascript_tool` 印出 scroll 容器內出現頻率最高的 class（≈ ticker 數）重新校準。
+
+## Step 1.5 — 先把橫向捲到最右（**否則 EPS 三欄根本不存在於 DOM**）
+
+這個表**不只縱向虛擬化，橫向也是**：EPS Norm 三欄位於表格右側，未捲到該位置時整欄不渲染，`heads_found` 會回 -1、`grabEps()` 會回 0。**縱向捲動前必須先做這步**：
+
+```javascript
+(() => {
+  const sc = document.querySelector('[class*="table__scrollContainer___"]');
+  sc.scrollLeft = sc.scrollWidth;                       // 推到最右
+  sc.dispatchEvent(new Event('scroll',{bubbles:true}));  // 必須派發事件才重渲染
+  return JSON.stringify({scrollLeft: sc.scrollLeft, scrollWidth: sc.scrollWidth});
+})()
+```
+
+推到最右後**重跑 Step 1 的注入**（讓 `heads` 在 EPS 欄已渲染的狀態下重新建立索引），確認 `heads_found` 四個值都 ≥ 0 再往下。Step 2 縱向捲動期間**不要動 `scrollLeft`**——一旦回到最左，EPS 欄會再次消失，後續抓到的列會全是空值。
+
+⚠️ Ticker 欄通常是凍結欄（sticky），橫向捲到最右後仍可見，所以 `idx.ticker` 依然有效；若實測發現 ticker 也被捲走，改用「先抓一輪 ticker→列索引對照，再橫捲抓 EPS」兩趟合併。
 
 ## Step 2 — 游標式捲動累積（虛擬列表關鍵）
 
@@ -213,7 +233,8 @@ commit 訊息列出：universe 數、分割調整檔、剔除檔、baseline 日�
 2. **分割 gate 不准想當然**（Step 5）——|FY1|≥35% 或翻號的每一檔都要查 corporate action；乾淨倍率＝分割（保留+調 baseline），塌零/翻負＝壞值（剔除）。
 3. **分割檔要調 baseline**——否則 revision 假下修污染 funnel_rank；改 baseline 需備份 + 用戶授權。
 4. **Excel 一律 USD**——非美股 FX 由 build 換算，不手動轉。
-5. **表頭驅動取欄**（Step 1）——別 hardcode column index；Koyfin 改版時 class 雜湊尾碼也可能變，`rows_class_seen`=0 要重新校準 selector。
+5. **表頭驅動取欄**（Step 1）——別 hardcode column index；class 一律用前綴選擇器（`[class*="table__row___"]`），Koyfin 雜湊尾碼輪換時免疫。
+5b. **橫向先捲到底**（Step 1.5）——表格橫向也虛擬化，EPS 三欄未捲到就不在 DOM；縱向捲動全程不得動 `scrollLeft`。抓到整片空值時第一個要查的就是這條。
 6. **Commit scope tight**——只 add dd-screener bundle，不 add docs/dd/。
 7. **對帳 extra 應為空**——非空代表 universe 或別名沒同步。
 
