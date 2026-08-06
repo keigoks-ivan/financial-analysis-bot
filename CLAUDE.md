@@ -4,14 +4,33 @@
 
 用戶未指定模型時照此表；用戶明講「用 opus / 用 sonnet」時以用戶為準。
 
-| 任務類型 | 預設 spawn 模型 |
+用戶未指定模型時照此表；用戶明講「用 opus / 用 sonnet」時以用戶為準。**鐵律：writer 與 critic 永不同模型**（跨模型冷讀，writer 不得自任 critic）——改任一端時必須同時檢查另一端。
+
+| 任務類型 | 預設模型 |
 |---|---|
-| DD 深度報告批跑（stock-analyst / ddreport）、多檔並行生產批 | opus |
-| 產業 ID / 供應鏈 / macro 新報告寫稿（重研究、判斷密集） | opus |
-| 所有 cold-review critic（industry-thesis-critic、id-review、macro/synthesis 報告 critic） | sonnet（跨模型冷讀，writer 不得自任） |
+| **Orchestrator（主線程大腦）** | **opus**（路由判斷、並行 session git 風險判讀、A/B 與衝突裁定；不因「只是跑 pipeline」降級） |
+| **DD 深度報告 writer（stock-analyst / ddreport）、多檔並行生產批** | **sonnet**（2026-08-06 起試行，見下） |
+| **DD 寫稿後 critic（QC-41 / QC-48 / QC-50 / row 8b）** | **opus**＋強化職責書（見下） |
+| 產業 ID / 供應鏈 / macro 新報告寫稿（重研究、判斷密集） | opus（**維持不動**，DD 的證據不外推到此列） |
+| ID / macro / synthesis 的 cold-review critic（industry-thesis-critic、id-review） | sonnet（該列 writer 仍是 opus，故 critic 維持 sonnet） |
 | 報告可讀性打磨 / 中文改寫潤色（如 macro 打磨） | sonnet |
 | 大型 PDF 平行讀取拆 digest | sonnet |
 | 網站樣板 / 資料同步 / 機械層 script（無判斷） | sonnet |
+
+### DD 層 writer↔critic 對調（2026-08-06 持有人拍板，**試行至 2026-10 校準輪**）
+
+**證據（僅兩點，不得擴大解釋）**：TSM（2026-08-06，84KB）與 PLTR B 版（2026-08-06，93KB）由 sonnet-writer 產出，**裁決方向與 opus 完全一致**（TSM 進場｜核心、PLTR 進場｜衛星），而**篇幅落在 v15 帶內**——同期 opus 四份（PLTR-A 139.9／LLY／BKNG 228.9／KLIC 143.6KB）全數超帶。判斷機器沒失真、篇幅紀律真實，故 writer 改 sonnet。
+
+**但 sonnet-writer 有兩類系統性缺陷，攔截責任全落在 critic**（PLTR A/B 對質實測，紀錄見 `notes/site-internal/dd/_abtest_PLTR_adjudication_20260806.md`）：
+
+1. **整軸覆蓋缺口**——B 版全文對德國／歐盟**零提及**（A 版 18／11 處），連帶 §5.R 社會容忍度誤判 🟢、丟失美政府營收 kill metric、Rule of 40 絆線、德國國防軍決標催化劑，且 NHS break clause 只寫在散文未落 `catalysts[]`（下游 monitor 看不見）。
+2. **量化模組退化**——§5.R 未實算（再投資率寫「估計約 10-15%」無推導，且結果 37% 低於自身共識 CAGR 68.6% ＝ sanity check 失敗卻未處理）；情境樹退化（Bull FY30 EPS 僅比 Base +3.6%，Bull 幾乎全靠終端倍數）；§10.5 IRR 與 §10.6 分解不對帳。
+
+**故 DD critic 的職責書除既有 checklist 外，強制新增兩項**：
+- **(a) 覆蓋面掃描**——逐軸點名「哪一軸整個沒查」（法規／地緣／各主要終端市場／政策），缺軸本身即 🔴，不需先證明結論錯。
+- **(b) 量化模組完整性抽查**——§5.R（增量 ROIC × 再投資率是否真算、內生天花板是否與共識 CAGR 交叉檢查）、情境樹（Bull/Base/Bear 的 EPS 價差是否實質，非只有倍數差）、IRR 內部對帳（§10.5 ↔ §10.6 ↔ 5Y/10Y 年化是否自洽）逐項驗算。
+
+**Kill condition（登記 `knowledge/rule_ledger.md`）**：2026-10 校準輪若出現任一 → 撤回本條、DD writer 復歸 opus：① sonnet-writer 報告的裁決與 opus 重跑出現方向級分歧（進場↔迴避）≥1 例；② critic 未攔下的整軸覆蓋缺口 ≥2 例；③ 量化模組退化在 critic 通過後仍上站 ≥2 例。反向若三項皆零且篇幅持續帶內，則轉常設。
 
 ## Decision-time critic：思考產業 thesis 動部位前必先 spawn
 

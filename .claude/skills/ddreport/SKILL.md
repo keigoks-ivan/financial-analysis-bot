@@ -24,7 +24,7 @@ stock-analyst (v15.x DD，含決策層) → update_dd_index.py → size gate (70
 
 3. **決策意圖 → 先跑 critic**。若用戶語氣是「要不要加倉 / 新進 / 退出某 theme」這種**決策**（不是純研究），先按 repo 頂部「Decision-time critic」規則 spawn `industry-thesis-critic`，再產報告。純資訊查詢不觸發。
 
-4. **跑 DD**：對每個 ticker 觸發 `stock-analyst`（現 v15.0；產出單一 `docs/dd/DD_{TICKER}_{YYYYMMDD}.html`，schema v15.x，含 dd-meta 決策層欄位 dca_verdict/dca_role/moat_trend/runway_post_y5/ev5y_pct + 統一裁決 `id="decision"` 錨點（v15 在 §13））。報告即含 Part II 決策層，**不需再跑獨立 DCA**。
+4. **跑 DD**：對每個 ticker 觸發 `stock-analyst`（**spawn 模型＝`sonnet`**，2026-08-06 起試行至 2026-10 校準；orchestrator 本身維持 opus。DD 寫稿後的 QC-41/48/50 critic 改由 **opus** 執行——writer↔critic 永不同模型。理由與 kill condition 見 repo CLAUDE.md「DD 層 writer↔critic 對調」）（現 v15.0；產出單一 `docs/dd/DD_{TICKER}_{YYYYMMDD}.html`，schema v15.x，含 dd-meta 決策層欄位 dca_verdict/dca_role/moat_trend/runway_post_y5/ev5y_pct + 統一裁決 `id="decision"` 錨點（v15 在 §13））。報告即含 Part II 決策層，**不需再跑獨立 DCA**。
 
 5. **同步**：`python scripts/update_dd_index.py`（重生 research 主表 + DD 組合快照 + 自動連鎖 `build_dd_screener.py` rebuild `docs/dd-screener/latest.json` + `build_picks.py` 更新 `docs/picks/candidates.json`；報告由 script 直接讀 dd-meta dca 欄位，「定見」欄連 `/dd/DD_X.html#decision`）。離線 / yfinance 掛掉時加 `--skip-dd-screener`（會 warn 但不 abort）。
 
