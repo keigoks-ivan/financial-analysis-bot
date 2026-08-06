@@ -1,0 +1,754 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="dd-schema-version" content="v15.0">
+<title>DD_PLTR_20260806（測試檔・非站上版）</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1E3A5F;--accent:#3B82F6;--bg:#F8FAFC;--card:#FFFFFF;--altrow:#F1F5F9;}
+*{box-sizing:border-box;}
+body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;color:#0F172A;margin:0;line-height:1.65;}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px 60px;}
+code,.mono{font-family:'IBM Plex Mono',monospace;}
+h1{font-size:22px;color:var(--navy);}
+h2{background:var(--navy);color:#fff;padding:10px 16px;border-left:4px solid var(--accent);font-size:19px;margin-top:36px;scroll-margin-top:80px;}
+h3{color:var(--navy);font-size:16px;border-bottom:2px solid #E2E8F0;padding-bottom:4px;}
+h4{color:var(--navy);font-size:14px;}
+table{width:100%;border-collapse:collapse;margin:10px 0 16px;font-size:13.5px;background:#fff;}
+th,td{border:1px solid #E2E8F0;padding:6px 8px;text-align:left;vertical-align:top;}
+th{background:var(--navy);color:#fff;font-weight:600;}
+tr:nth-child(even) td{background:var(--altrow);}
+.reasoning{background:#F8FAFC;border-left:3px solid #94A3B8;padding:6px 10px;font-size:12.8px;color:#334155;margin:4px 0 10px;}
+.status-bar{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;background:#F1F5F9;border-left:4px solid var(--accent);border-right:4px solid var(--accent);padding:14px 10px;margin-top:14px;}
+.status-bar .cell{text-align:center;min-width:110px;}
+.status-bar .lbl{font-size:11px;color:#64748B;}
+.status-bar .val{font-size:20px;font-weight:700;margin-top:2px;}
+.hypothesis-box{background:#EFF6FF;padding:18px 22px;margin-top:0;}
+.thesis{font-size:24px;font-weight:900;text-align:center;color:var(--navy);margin:6px 0 14px;}
+.hypothesis-box ul{padding-left:20px;}
+.hypothesis-box li{margin-bottom:6px;font-size:14px;}
+.note{font-size:12.5px;color:#64748B;}
+.src{font-size:12px;color:#64748B;}
+.dd-toc{display:flex;flex-wrap:wrap;gap:6px;padding:10px 0;justify-content:center;}
+.dd-toc a{background:#fff;border:1px solid #CBD5E1;border-radius:14px;padding:4px 12px;font-size:12.5px;color:var(--navy);text-decoration:none;}
+.decision-box{padding:16px 20px;border-radius:4px;}
+.decision-box.enter{background:#F0FDF4;border-left:4px solid #166534;}
+.decision-box.watch{background:#FEF9C3;border-left:4px solid #92400E;}
+.chip{display:inline-block;padding:6px 20px;border-radius:4px;font-size:18px;font-weight:700;}
+.chip.enter{background:#166534;color:#fff;border-left:4px solid #14532D;}
+.chip-sub{font-size:13px;color:#475569;font-style:italic;margin-top:6px;}
+.contra{background:#FFF7ED;border-left:4px solid #F97316;padding:10px 14px;}
+.premortem{background:#FEF2F2;border-left:4px solid #DC2626;padding:10px 14px;}
+.maxdd{background:#FEF2F2;border-left:4px solid #DC2626;padding:10px 14px;}
+.pattern{background:#F0F9FF;border-left:4px solid #0EA5E9;padding:10px 14px;}
+.trap{background:#FFF0E6;border-left:4px solid #F97316;padding:10px 14px;}
+.g{color:#166534;font-weight:700;}
+.r{color:#991B1B;font-weight:700;}
+.a{color:#92400E;font-weight:700;}
+details summary{cursor:pointer;font-weight:700;color:var(--navy);padding:8px 0;}
+.printbtn{position:fixed;bottom:16px;right:16px;background:var(--navy);color:#fff;border:none;padding:10px 18px;border-radius:4px;cursor:pointer;}
+@media print{.dd-toc,.printbtn{display:none;}details{display:block;}}
+.banner-test{background:#7C2D12;color:#FFEDD5;text-align:center;padding:6px;font-size:12px;}
+</style>
+</head>
+<body>
+<div class="banner-test">本檔為隔離測試輸出（不進 docs/、不進 INDEX、不上站）。前份對照＝DD_PLTR_20260629.html；2026-08-05 版本依編排者指示未讀取。</div>
+<div class="wrap">
+<h1>PLTR｜Palantir Technologies｜DD Schema v15.0</h1>
+<p class="mono" style="font-size:13px;color:#475569;">資料抓取：2026-08-06（yfinance 因 rate limit 改用 weekly_cache＋WebFetch/WebSearch 交叉）｜最新收盤：$158.43（2026-08-05）｜最近財報：Q2 FY2026（2026-08-03 盤後）｜yfinance 批量：週線快取（262 週，至 2026-08-03）＋大盤 SPY 週線；WebSearch 22 次＋WebFetch 6 次（含 2 個 sonnet 子 agent 代查）</p>
+
+<nav class="dd-toc">
+<a href="#s1">§1 結論</a><a href="#s2">§2 論點</a><a href="#s3">§3 產業</a><a href="#s4">§4 商模門檻</a><a href="#s5">§5 護城河</a><a href="#s6">§6 成長</a><a href="#s7">§7 財務</a><a href="#s8">§8 財報</a><a href="#s85">§8.5 法說</a><a href="#s9">§9 治理</a><a href="#s10">§10 估值</a><a href="#s11">§11 矛盾</a><a href="#s12">§12 Pre-mortem</a><a href="#s13">§13 決策</a><a href="#s14">§14 複審</a><a href="#sA">附錄A</a>
+</nav>
+
+<div class="status-bar">
+<div class="cell"><div class="lbl">統一裁決</div><div class="val" style="color:#166534;">進場</div></div>
+<div class="cell"><div class="lbl">倉位角色</div><div class="val">衛星</div></div>
+<div class="cell"><div class="lbl">護城河趨勢</div><div class="val">A →</div></div>
+<div class="cell"><div class="lbl">Y5後跑道</div><div class="val">🟢</div></div>
+<div class="cell"><div class="lbl">Max DD</div><div class="val" style="color:#991B1B;">−53.5%</div></div>
+<div class="cell"><div class="lbl">5Y EV／IRR</div><div class="val">+40.8%／9.3%/yr</div></div>
+</div>
+<div class="hypothesis-box">
+<p class="thesis">全球唯一把「AI 決策落地」變現金流的作業系統，政府與商業雙引擎同時加速。</p>
+<ul>
+<li><strong>統一裁決 <span style="font-size:20px">進場（爆發候選・分批）</span></strong>（§13）｜倉位角色：衛星｜判定理由：品質 signal B（估值🔴壓頂）+ moat A + runway🟢 + 26 週漲幅僅 +16.6%（未達過熱門檻）＋非估值依賴型 → 觸發爆發候選路徑，經 QC-48 冷讀通過。</li>
+<li><strong>護城河趨勢 A →</strong>（§5 權威）｜execution 趨勢 ↑（NDR 157%、Top20 客戶 $/戶 +67% YoY）｜pricing power 趨勢 →（frontier lab 競爭敘事升溫，尚無客戶流失實證）</li>
+<li><strong>Y5 後跑道 🟢（寬）</strong>（§6.A''）｜S 曲線早中期｜FY2030E 營收 ÷ 綜合 TAM 滲透率估 ~2%｜第二曲線＝主權 AI 微調堆疊（NVIDIA 聯盟，Q2 法說首度具體化）</li>
+<li><strong>Max DD −53.5%</strong>（§12c 範圍 −38.5%~−53.5%，路徑風險 🔴）｜最快復原 12-24 個月（若 thesis 完整）</li>
+<li><strong>5Y 機率加權 EV +40.8%／IRR 9.3%/yr</strong>（§10.5）｜Base IRR 9.25%/yr（三分量：EPS +21.3 / re-rate −10.3 / 股息回購 0）｜AR 2.2（不對稱比，資訊性）</li>
+<li><strong>opportunity cost：</strong>vs 現持 NVDA／MSFT（同 AI 核心，倍數更低、Beta 更小）；vs 同軌高成長 SaaS SNOW/CRWD/DDOG（成長速度 PLTR 遙遙領先但 EV/Sales 溢價亦最高）</li>
+<li><strong>基本面評級 B（metadata）：</strong>品質 9.0/10｜估值燈 🔴｜Pure MA ✅ 強勢進場｜陷阱定性 🟡（詳見附錄A）</li>
+<li><strong>長期持有信心：高</strong>（附錄A I）｜建議持有年限：長期 5-10 年（§13c）</li>
+<li><strong>Inception DD：</strong><code>DD_PLTR_20260416.html</code>（2026-04-16）— 累積漂移對照基準（本報告為隔離測試檔，Inception 標記沿用站上既有序列，不另計）</li>
+<li><strong>對照基準：</strong>本份僅與 <code>DD_PLTR_20260629.html</code>（dd-meta＋§13b/§14 觸發器）對照；2026-08-05 版本依編排者指示不讀取，唯一允許引用之處為 knowledge/q.py 帳本一行歷史裁決紀錄。</li>
+</ul>
+</div>
+<p class="note"><strong>讀法：</strong>本份報告人面對結論是「統一裁決 進場/觀望/迴避」（§13）。基本面評級 A+/A/B/C/X 為 metadata，不是並列頭銜。倉位組合佔比由 portfolio-manager skill 決定。</p>
+
+<section><h2 id="s1">§1｜投資結論詳述</h2>
+<p>本結論基於以下完整分析得出，詳見各章節；人面對裁決見 §13。<strong>archetype：品質複利成長（信心：高）</strong>——GAAP 已連 3 年獲利、毛利 82%+、資產極輕（§5.R 高利益率×高周轉象限），非循環／非金融／非未獲利型。</p>
+<h3>⚠️ 這是價值陷阱嗎？</h3>
+<table>
+<tr><th>問題</th><th>回答</th></tr>
+<tr><td>最可能的陷阱模式</td><td>盈餘品質型風險（一次性投資利得＋估值本身已透支未來）為主，非護城河侵蝕、非產業結構衰退</td></tr>
+<tr><td>支持「非陷阱」最強論據</td><td>Q2 FY26 營收 $1.935B（+93% YoY，歷史新高）、US 商業 +149% YoY、NDR 157%（+700bp QoQ，連 12 季 Rule of 40 擴張）、FY26 guide 上調至 82% YoY（史上最大單次上修 11pp）、政府營收僅占五角大廈預算 &lt;25bp（跑道極寬）。這是加速中的生意，不是靠會計技巧撐出來的成長。</td></tr>
+<tr><td>支持「可能是陷阱」最強反駁</td><td>Q2 GAAP EPS $0.41 中有 $0.03（約 7%）來自 SpaceX 未實現投資利得（一次性、非核心）；調整後毛利率本季降至 86%（因承接一家政府客戶的雲端代管成本，結構未定）；內部人 12 個月淨賣出 ~$6.95 億（Karp 一人 ~$1.86 億），零買進；EV/Sales 60.4x 遠高於同軌 SaaS（SNOW 21.5x／CRWD 41.2x／DDOG 26.5x），股價已在財報後單日 +26～28%，估值本身已把「完美執行」計入。</td></tr>
+<tr><td>空頭最強一擊</td><td>frontier lab（OpenAI/Anthropic 等）把應用層能力補齊、直接切入企業導入服務，PLTR 賴以維生的「唯有 FDE（前線部署工程師）能把 token 轉成經濟價值」論點被繞過──18 個月內若任一 top-20 商業客戶轉向 lab 直營或轉單，30%+ 估值重挫（見 §2.C R1）。</td></tr>
+<tr><td>如何在持有期間判斷陷阱是否發生</td><td>① US 商業 YoY 連 2 季 &lt;100%（目前 149%）；② NDR 連 2 季低於 130%（目前 157%）</td></tr>
+</table>
+<p><strong>最終定性：🟡 觀察期</strong>（估值極端＋內部人賣出訊號需觀察，但無結構性失敗證據；dd-meta trap=🟡）。</p>
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估閾值</th></tr>
+<tr><td>1</td><td>US 商業營收 YoY</td><td>§2 H2</td><td>🔵 核心假設驗證</td><td>連 2 季 &lt;100% → 削弱；&lt;80% → 反轉</td></tr>
+<tr><td>2</td><td>NDR＋Top-20 客戶單戶營收成長</td><td>§6/§5</td><td>🔵 長期成長領先訊號</td><td>NDR 連 2 季 &lt;130% 或 Top20 單戶成長轉負 → 削弱</td></tr>
+<tr><td>3</td><td>Fwd PE（FY+2 基準）分位／PEG</td><td>§10/§8</td><td>短期估值訊號</td><td>回落至 5Y 分位 &lt;50%（約 Fwd PE&lt;55x）→ 估值燈轉🟡，加碼窗開啟</td></tr>
+</table>
+</section>
+
+<section><h2 id="s2">§2｜投資論點錨定</h2>
+<p style="font-size:13.5px;color:#334155;"><strong>存在意義：</strong>剝離財報表象，Palantir 解決的是「企業與政府擁有海量數據，但無法把它安全地轉成可執行決策」這個不可逆痛點——若它消失，最先受創的是仰賴 Maven 的美軍前線指管系統與剛切入宏觀決策自動化的大型商業客戶，兩者短期內無法用「換一家 SaaS」解決，因為換掉的成本是重建整套本體論（ontology）與流程綁定，不是換介面。<strong>逆向一句化：</strong>3 年內腰斬 50% 最可能路徑＝frontier lab 把應用層能力補齊直接切入企業導入服務，PLTR 的「唯有 FDE 能把 token 轉成價值」論點被繞過（R1）；次之為政府預算週期性凍結疊加估值透支同時發生（R2）。護城河如何一步步累積，見 §5.D。</p>
+<h3>A｜持有期與時間軸宣告</h3>
+<table><tr><th>項目</th><th>填寫</th></tr>
+<tr><td>預設持有期</td><td>5-10 年</td></tr>
+<tr><td>主要理由</td><td>雙引擎（政府＋商業）成長曲線都還在早中期滲透，Y5 後跑道🟢；估值修復非本論點主軸</td></tr>
+<tr><td>此時間軸下訊號 vs 噪音</td><td>短期股價波動（如財報後單日暴漲）是噪音；US 商業 YoY、NDR、政府 TAM 滲透率是訊號</td></tr>
+</table>
+<h3>B｜三個核心假設＋三層時間軸</h3>
+<table>
+<tr><th>#</th><th>核心假設</th><th>2Y 驗證點</th><th>5Y 驗證點</th><th>10Y 驗證點</th><th>具體門檻</th><th>來源</th><th>漂移觸發</th></tr>
+<tr><td>H1</td><td>Ontology＋FDE 模式是企業導入 AI 唯一可規模化路徑，非「另一個 SaaS 工具」</td><td>US 商業客戶數 &gt;900（現 653）</td><td>US 商業營收 &gt;$15B</td><td>成為企業 AI 導入的預設作業系統</td><td>US 商業 YoY 連 2 季 &lt;100%＝削弱訊號</td><td>公司法說＋10-Q</td><td>連 2 季 TTM US 商業偏離 ≥5%</td></tr>
+<tr><td>H2</td><td>美國政府 AI／指管現代化預算持續加速，PLTR 為首選平台</td><td>US 政府營收 &gt;$3.5B 年化</td><td>US 政府營收 &gt;$8B</td><td>Maven 成為聯合部隊預設 C2 底層</td><td>US 政府 YoY 連 2 季 &lt;60%＝削弱</td><td>DoW 揭露＋$10B/10Y Army EA（2025-07-31）</td><td>連 2 季 TTM 偏離 ≥5%</td></tr>
+<tr><td>H3</td><td>估值已反映近乎完美執行，但 EPS 複利可在 5 年內消化目前溢價</td><td>Fwd PE（FY+2）回落至 &lt;55x</td><td>EV/Sales 收斂至同軌 SaaS 2x 以內（現 ~3x）</td><td>市值/TAM 比率维持理性</td><td>PEG（FY+2, 3Y CAGR）&gt;2.5 連 2 季＝削弱</td><td>本報告 §10 自算</td><td>連 2 季偏離 ≥10%</td></tr>
+</table>
+<h3>B'｜12 個月前報告對照</h3>
+<p>Inception 早於 12 個月前（2026-04-16），但依編排者指示本次僅可讀取 <code>DD_PLTR_20260629.html</code>（非滿 12 個月前）之 dd-meta 與觸發器區塊，無法完整回填標準 12M YoY 對照。以 0629 版（36 天前）為最近可讀基準做短窗對照：</p>
+<table>
+<tr><th>假設</th><th>0629 判定</th><th>本次判定</th><th>36 天內漂移</th><th>結論</th></tr>
+<tr><td>H1（同義：0629 之美商業成長）</td><td>🟢 兌現（Q1 US 商業強勁）</td><td>🟢 加速兌現（Q2 149% YoY，較 Q1 再加速）</td><td>正向</td><td>持續兌現</td></tr>
+<tr><td>H2（同義：政府 durability）</td><td>🟡 觀察（英 NHS FDP 續約懸而未決）</td><td>🟡 觀察不變（美國政府本季 90% YoY 強勁；NHS FDP 本次法說未提及，狀態未變）</td><td>持平</td><td>持續觀察</td></tr>
+<tr><td>H3（估值）</td><td>PEG 1.36（Fwd PE FY26 56.3x）</td><td>PEG 1.10（Fwd PE FY+2 75.8x；3Y CAGR 68.6% 上修後分母加大）</td><td>估值絕對值上升但 PEG 因成長加速而略降</td><td>估值更貴，但成長品質同步提升</td></tr>
+</table>
+<p class="note">完整 12 個月動作建議需俟下一輪校準（滿 Inception+365d）再回填；本輪僅供短窗參考，不觸發動作。</p>
+<h3>C｜三個最可能推翻論點的風險</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>時間尺度</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td>Frontier lab（OpenAI/Anthropic）補齊應用層＋部署服務，繞過 PLTR 的 FDE 護城河，直接搶大型商業客戶</td><td>H1</td><td>🔥 中期（4-6 季）</td><td>Top-20 客戶名單流失、法說提及具名客戶轉單</td><td>連 2 季 Top20 客戶單戶營收成長轉負</td></tr>
+<tr><td>R2</td><td>美國政府預算週期性風險（FY2026 內已發生 3 次 CR/停擺事件）壓抑新簽約速度；UK NHS FDP 複審＋2 個國會委員會已具名建議動用 2027-02 break clause，同型態先例已見 2026-03 NYC Health+Hospitals 終止 PLTR 資料分析合約、UK MoD 單一來源合約受透明度審視——民主政體公民/健康資料部署的政治正當性風險為可複製模式，非孤立事件</td><td>H2</td><td>🐢 長期（2+ 年）</td><td>US 政府 YoY、英國 NHS FDP 複審結論／2027-02 break clause 是否觸發</td><td>US 政府 YoY 連 2 季 &lt;60%；或 NHS FDP 確認終止（財務衝擊小,約營收 0.8%,但屬模板效應警訊）</td></tr>
+<tr><td>R3</td><td>估值已計入近乎完美執行，任何單季不及guide 即觸發劇烈倍數重估（歷史已見 -44%～-55% 級回檔）</td><td>H3</td><td>⚡ 短期（1-2 季）</td><td>單季 US 商業 YoY 較前季減速 &gt;15pp</td><td>連 1 季即觸發減碼檢視（估值敏感度高）</td></tr>
+</table>
+<h3>D｜邊際貢獻判斷框架</h3>
+<p>新事件先問：①落在持有期內嗎？②影響 H1/H2/H3 哪個？③方向為＋/0/－？④是否達重評門檻？例：本季 Karp 對 frontier lab 的「bake-off 擊敗」敘述屬公司自陳（L3 敘事層），不改變任何門檻，記為監測項而非行動觸發。</p>
+<h3>E｜可執行決策主線</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr><td>進場</td><td>估值：Fwd PE(FY+2) 回落至 5Y 分位 &lt;60%（約 &lt;65x）；基本面：US 商業 YoY 維持 &gt;100%</td><td>建倉/加碼至目標區間（見 §13a）</td></tr>
+<tr><td>加碼</td><td>H1＋H2 均持續兌現且股價回檔至 §13b 觸發價</td><td>加碼至目標倉位上緣</td></tr>
+<tr><td>減碼</td><td>R3 觸發（連 1 季 guide miss）或 R1 觸發（Top20 客戶流失）</td><td>減至 1/2</td></tr>
+<tr><td>撤退</td><td>H1 被推翻（US 商業連 2 季 &lt;80% YoY 且客戶流失實證）</td><td>清倉，記錄推翻理由</td></tr>
+</table>
+<h3>F｜Single Thing</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>描述</td><td>某一家 top-20 商業客戶（現單戶 TTM ~$1.24 億）被證實轉向 frontier lab 直營部署團隊、終止與 PLTR 續約</td></tr>
+<tr><td>為何致命</td><td>直接撞破 H1「FDE 護城河不可繞過」；若一家頭部客戶可以走，其餘客戶的轉換成本論證同步瓦解</td></tr>
+<tr><td>如果發生</td><td>立即重評 moat_trend（強制降 ↓）、§13 裁決重跑，不待下次財報</td></tr>
+<tr><td>如何監測</td><td>法說 Top-20 客戶營收揭露（每季）、8-K 重大客戶變動、業界新聞</td></tr>
+<tr><td>機率估計</td><td>12-24 個月內 ~12%（低——目前無任何 sourced 流失實證，僅有 Karp 自陳的競爭焦慮升溫）</td></tr>
+</table>
+</section>
+
+<section><h2 id="s3">§3｜產業格局</h2>
+<p><strong>產業時鐘位置：</strong>企業 AI 決策平台無 canonical ID 覆蓋，自判 <strong>Phase II（擴張期）</strong>——依據：企業級 AI 落地支出仍在加速滲透階段（PLTR US 商業 TCV 過去 12 個月 $59.6 億，+117% YoY），尚未見產能過剩或需求降溫訊號。</p>
+<h3>供需 durability 裁決</h3>
+<p>企業 AI 平台支出目前是<strong>結構性擴張</strong>而非一次性預算爆發：NDR 157%（+700bp QoQ）顯示既有客戶持續深化而非嘗鮮後流失；管理層明確描述「舊 Foundry-only 客戶現在要求導入 Ontology／主權 AI 堆疊」——這是既有客戶錢包份額擴張，不是新客戶蜂擁後的一次性峰值。政府側：美軍 Maven trailing-12M 營收仍 &lt;五角大廈預算 25bp（此為 headroom 論證，非單獨的 durability 論證——份額小僅證明空間大，不證明需求必然延續），供給端（PLTR 產能/團隊）未見瓶頸，需求端（政府 AI 現代化）為多年期結構性政策方向（2025-07-31 簽署 $100 億／10 年陸軍 EA 採購上限，實際義務化金額待查）。<strong>惟 FY2026 內美國政府已發生至少 3 次 CR/停擺事件（2025-10～11、2026-01～02、2026-02～04）</strong>，「非景氣循環」定調需打折——政府側支出仍受政治週期真實干擾，非純結構性平滑成長。（QC-39 詳見下方三軸掃描）</p>
+<h3>利潤池地圖</h3>
+<table>
+<tr><th>價值鏈環節</th><th>代表公司</th><th>環節營收池</th><th>環節利潤池代理</th><th>3 年趨勢</th><th>遷移方向</th></tr>
+<tr><td>基礎模型層（frontier lab）</td><td>OpenAI／Anthropic／Google</td><td>~$200B+（估）</td><td>token 定價，毛利受算力壓縮</td><td>激增後邊際毛利承壓</td><td>→（利潤增速放緩）</td></tr>
+<tr><td><strong>企業導入／決策落地層</strong></td><td><strong>PLTR</strong></td><td>$8.15B（FY26 guide）</td><td>Adj OM 62%，全產業最高</td><td>OI margin 31.6%(FY25)→FY26 guide 隱含 ~60%</td><td><strong>↑ 流入</strong></td></tr>
+<tr><td>企業算力／雲基礎設施</td><td>NVDA/AWS/Azure</td><td>&gt;$500B</td><td>硬體毛利 70-75%</td><td>穩定高位</td><td>→</td></tr>
+</table>
+<div class="reasoning"><strong>利潤池位置/流向結論：</strong>PLTR 所在的「應用落地層」利潤池占比方向 ↑ 流入——sourced 證據：Adj OM 從 FY24 隱含約 20-25% 一路擴張到本季 62%，同期基礎模型層的公開報導（OpenAI/Anthropic 大額算力支出）顯示其邊際毛利承壓。對 §6.A Runway 含義：中間層（非模型、非純算力，而是「把 token 轉成決策」）正在吃到最大一塊新增利潤，支撐 Runway 評級不降檔。</div>
+<h3>議價權</h3>
+<p><strong>①對上游：</strong>PLTR 對 GPU/雲算力採購依賴 NVIDIA 與主要雲商，集中度高但屬買方地位（規模採購折扣＋NVIDIA 明確聯盟關係，Q2 法說提及與 NVIDIA 合作微調模型）；本季首度承接一家政府客戶的雲代管成本，代表對該客戶議價地位提升（掌握更多基礎設施控制權），但也提高自身資本/成本曝險。<strong>②對下游：</strong>客戶集中度中等（Top20 客戶 TTM 單戶 $1.24 億，+67% YoY，顯示深化而非新客戶稀釋），合約以多年期 TCV 為主（US 商業 TCV dollar-weighted duration +271% YoY），定價能力直接證據＝NDR 157%（漲價後留存率極高）。<strong>③地緣曝險：</strong>核心生產集中美國（81%+ 營收），國際營收（$363M，占比 18.8%）分散於歐洲政府與商業；英國 NHS FDP（£3.3 億合約，年化約 $63M，占公司年化營收 &lt;1%）為最具體地緣政治敏感點——2026-06 起處於政府正式複審，Health and Social Care 等 2 個國會委員會已具名建議動用 2027-02 的 break clause，NHS England 另因病患資料存取揭露不實遭申誡；同型態先例＝2026-03 NYC Health+Hospitals 終止 PLTR 資料分析合約（起因隱私/監控壓力非競品替換）、UK MoD £2.4 億無競標合約受透明度審視。財務衝擊可忽略，但揭示「民主政體公民/健康資料部署」是一個可複製的政治正當性風險模式，本季法說完全未提及 NHS 狀態——在複審進行中，管理層沉默本身即有訊息量（QC-39 標記，見 §2.C R2）。</p>
+<h3>營收組成（三維）</h3>
+<table>
+<tr><th>維度</th><th>細分</th><th>Q2 FY26 營收</th><th>YoY</th><th>占比</th></tr>
+<tr><td>業務段</td><td>美國政府</td><td>$809M</td><td>+90%</td><td>41.8%</td></tr>
+<tr><td>業務段</td><td>美國商業</td><td>$764M</td><td>+149%</td><td>39.5%</td></tr>
+<tr><td>業務段</td><td>國際政府</td><td>$181M</td><td>+42%</td><td>9.4%</td></tr>
+<tr><td>業務段</td><td>國際商業</td><td>$182M</td><td>+26%</td><td>9.4%</td></tr>
+<tr><td>客戶集中</td><td>Top20 客戶（合計估）</td><td>~$620M(估，$124M×20/4季)</td><td>+67%（單戶）</td><td>~32%（估）</td></tr>
+</table>
+<h3>單位經濟（逐業務段）</h3>
+<table>
+<tr><th>業務段</th><th>核心 Unit 指標</th><th>數值</th><th>趨勢</th><th>段特性</th></tr>
+<tr><td>US 商業</td><td>客戶數 × TCV/戶</td><td>653 戶，TCV Q2 $21.3億（+153%YoY）</td><td>↑↑</td><td>deal size 與客戶數同步擴張，非單靠漲價</td></tr>
+<tr><td>US 政府</td><td>RDV／營收轉換</td><td>營收 $809M，成長 90%</td><td>↑</td><td>多年期合約轉現金流穩定，執行力驅動</td></tr>
+</table>
+<h3>F｜逐段 TAM/SAM</h3>
+<table>
+<tr><th>業務段</th><th>段 TAM（估）</th><th>當前滲透率（估）</th><th>段 CAGR（近期實現）</th><th>Value chain 位置</th></tr>
+<tr><td>美國聯邦政府 AI／指管現代化</td><td>五角大廈年度預算 ~$8500億中，AI/指管相關子集估 &gt;$500億；PLTR 現年化 US 政府 ~$32億＝約 6-7% 此子集</td><td>US 政府 &lt;25bp 五角大廈總預算</td><td>~85-90%（近 2 季）</td><td>頂層決策整合層，被替代風險低（已鎖 10 年期 EA）</td></tr>
+<tr><td>企業 AI 決策平台（美＋國際商業）</td><td>企業 AI 軟體支出估 2027 年 &gt;$3000億（第三方產業估計，區間寬）</td><td>US＋國際商業年化 ~$38億／$3000億 ≈ 1.3%</td><td>~120-150%（US 商業）</td><td>企業導入層，被 frontier lab 應用層蠶食風險為 R1</td></tr>
+</table>
+<p class="note">段 TAM 估計區間寬（第三方產業估計本身分歧大，未逐一列出多方數字），本表僅供滲透率量級判斷，非精算依據。</p>
+</section>
+
+<section><h2 id="s4">§4｜核心門檻檢核（Munger）</h2>
+<div class="reasoning"><strong>EPS 來源：</strong>Excel buy-side consensus snapshot 2026-07-30（FY26 $1.48／FY27 $2.09／FY28 $3.01，non-GAAP normalized，此份為 Q2 財報公布前的最後一份快照——<strong>consensus 落後風險已知且顯著</strong>，見 §10 註記，本報告全程沿用此份以保持內部一致，不擅自調整）。GAAP CAGR（基期 FY25A $0.63 → FY28E $3.01）= (3.01/0.63)^(1/3)−1 = 68.6%/yr。</div>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據</th></tr>
+<tr><td>FCF Margin（當前）</td><td>&gt;15%</td><td class="g">✓✓</td><td>Q2 FY26 63%（歷史新高）；FY25 46.9%</td></tr>
+<tr><td>正規化 FCF Margin</td><td>5Y均&gt;15%，谷&gt;10%</td><td class="g">✓✓</td><td>21→10→31→40→47%（FY21-25），5Y均31.3%，谷FY22 9.6%略低於門檻但單年、已回升</td></tr>
+<tr><td>ROIC（當前）</td><td>&gt;15%且&gt;WACC</td><td class="g">✓✓（需 caveat）</td><td>營運投入資本（剔除超額現金）ROIC 估 ~240%；WACC~9-10%。原始未剔現金 ROIC 數字（第三方報 363-433%）因公司持有 $92億超額現金稀釋分母而失真，見 §7.E</td></tr>
+<tr><td>ROIC 穩定性</td><td>10年≥70%年份&gt;15%</td><td class="a">⚠️ 樣本不足</td><td>僅 FY23起轉正常化可比（前身虧損期 ROIC 為負或無意義），近 3 年（FY23-25）皆 &gt;15%（剔現金基礎）</td></tr>
+<tr><td>毛利率定價能力</td><td>10年≥70%年份改善</td><td class="g">✓✓</td><td>78.0→78.6→80.6→80.3→82.4%（FY21-25），5/5 年幾乎連續改善（FY24 微降0.4pp）</td></tr>
+<tr><td>資本密集度</td><td>Capex/Rev&lt;5%優</td><td class="g">✓✓</td><td>FY25 Capex $34M／Rev $4475M＝0.76%，極輕資產</td></tr>
+<tr><td>EPS CAGR（3年）</td><td>&gt;20%高成長</td><td class="g">✓✓</td><td>68.6%（GAAP，見上），高成長路徑</td></tr>
+<tr><td>PEG（Non-GAAP）</td><td>&lt;2</td><td class="g">✓</td><td>1.10（見 §10.2）</td></tr>
+<tr><td>負債安全性</td><td>D/E&lt;0.7，現金/Rev 10-50%</td><td class="a">⚠️</td><td>D/E ~0.03（極低，正面）；現金＋ST投資/Rev = $71.8億/$44.75億=160%（遠超50%上限——現金過多非負面但偏離「合理配置」門檻）</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是/否</td><td class="g">是</td><td>現金$71.8億 vs 總負債$14.1億，覆蓋 5.1x</td></tr>
+<tr><td>護城河強度</td><td>&gt;8分，趨勢擴大</td><td class="g">✓</td><td>合併分 9.0/10，見 §5</td></tr>
+</table>
+<p><strong>最大財務弱點：</strong>資產負債表現金配置效率低（超額現金/營收比達 160%，遠高於合理 50% 上限，回購規模相對 FCF 過小，資本配置尚未進入成熟期）；<strong>Munger 三維評級：🟢</strong>（三項 ROIC 穩定性／毛利定價力／資本密集度皆達標，僅樣本年限不足因公司歷史短而非結構問題）。</p>
+<h3>§4.G｜商業模式解剖</h3>
+<p><strong>單位經濟學：</strong>PLTR 的「一單位」是一份客戶合約（部署＋訂閱制混合）。US 商業 TCV 單價中位數持續上升（$21.3億／653戶季度close，客戶數 QoQ +6% 而 TCV QoQ +81%，顯示 ASP/deal size 擴張速度遠快於客戶數擴張——典型的既有客戶深化模式，非純新客戶量增）。<strong>價值鏈位置與單點依賴：</strong>q.py 供應鏈位置標記 PLTR 為「defense: Palantir Maven Smart System（DoD AI 目標）」，屬近乎獨佔的單點——此為護城河證據（唯一被選為聯合部隊 C2 平台的 AI 供應商），但同時也是集中度風險（過度依賴單一政府關係，見 §12a）。<strong>營收品質拆解：</strong>本季 RPO/RDV 快速累積（RDV $131億 +83%YoY，RPO $49億 +103%YoY）顯示合約性質正從交易型轉為訂閱式黏著，NDR 157% 印證留存與擴張皆強，營收品質正在提升而非惡化。</p>
+</section>
+
+<section><h2 id="s5">§5｜護城河分析（報告核心）</h2>
+<h3>評分：二維拆解</h3>
+<table>
+<tr><th>維度</th><th>評分</th><th>關鍵佐證</th></tr>
+<tr><td>Execution Moat</td><td>9/10</td><td>唯一擁有規模化 FDE（前線部署工程師）團隊，25000+ Maven builder，$100億/10年陸軍 EA（採購上限，非已義務化營收）；Ontology 為多年建構的技術壁壘，非短期可複製</td></tr>
+<tr><td>Pricing Power Moat</td><td>9/10</td><td>NDR 157%（+700bp QoQ）、Top20客戶單戶營收 $1.24億(+67%YoY)、US商業 TCV dollar-weighted duration +271% YoY——定價/擴張力全面強化</td></tr>
+<tr><td>合併分</td><td>9.0/10</td><td>等權平均，兩維皆強且方向一致</td></tr>
+<tr><td>等級</td><td>A</td><td>9分＝A級（未達10分S級，因 frontier lab 應用層競爭敘事升溫尚未完全解除不確定性）</td></tr>
+</table>
+<h3>護城河數字驗收</h3>
+<table>
+<tr><th>指標</th><th>PLTR</th><th>最強同業（估）</th><th>Spread</th><th>方向</th></tr>
+<tr><td>ROIC（剔現金）</td><td>~240%</td><td>SNOW（虧損中，N/A）</td><td>正向且極大</td><td>擴大</td></tr>
+<tr><td>毛利率</td><td>82.4%(FY25) / Q2調整後86%</td><td>CRWD ~75-78%</td><td>+5-8pp</td><td>持平至擴大</td></tr>
+<tr><td>已實現定價溢價</td><td>NDR 157% vs 同業 SaaS 中位數 ~110-120%</td><td>—</td><td>+30-40pp</td><td>擴大</td></tr>
+</table>
+<div class="reasoning">護城河數字驗收硬 gate：合併分 ≥8 要求 ROIC spread 為正且擴大或持平——本案兩者皆成立（毛利/NDR 皆優於同業且方向向上）。護城河三道數字閘（本節＋QC-26＋QC-28）狀態：🟢全過。</div>
+<h3>護城河來源</h3>
+<p><strong>網路效應：</strong>本體論（Ontology）隨客戶使用累積，愈多業務流程綁定，資料/決策模型愈精準，形成單客戶內部的複利飛輪（非跨客戶網路效應，屬「深度而非廣度」型）。<strong>無形資產：</strong>Foundry/AIP/Gaia/Maven 多年產品堆疊，非公開專利數但 FDE 方法論本身是難以複製的組織能力（需years培養）。<strong>轉換成本：</strong>換掉 PLTR 需重建整套 ontology 與客製化工作流，法說案例（Kirkland & Ellis 法律事務所用例）顯示流程已深度嵌入核心作業。<strong>規模優勢：</strong>唯一具規模化 FDE 團隊的供應商，對手需years才能複製同等量的部署工程師組織能力。</p>
+<h3>競爭鴻溝</h3>
+<p>①<strong>時間壁壘</strong>：FDE 組織能力需多年培養，非資本可直接買到；②<strong>資本壁壘</strong>：政府信任關係（機密環境部署經驗）需長期軌跡建立，非新進入者可速成；③<strong>認證壁壘</strong>：政府/國防客戶的安全認證與長期信任關係耗時多年。</p>
+<h3>市佔競爭表</h3>
+<table>
+<tr><th>對手</th><th>威脅類型</th><th>誰在吃誰</th><th>OI Margin</th><th>FCF(TTM)</th><th>戰爭承受力</th></tr>
+<tr><td>OpenAI/Anthropic（frontier lab）</td><td class="a">🔴 生態攻擊（潛在）</td><td>尚無 sourced 客戶流失證據；Karp 自陳贏下一場對決（$1000萬ACV，敘事層L3）</td><td>N/A（未公開）</td><td>資本雄厚（融資規模遠超PLTR）</td><td>高</td></tr>
+<tr><td>Anduril（國防AI新創）</td><td class="a">🟡 點對點</td><td>各自贏得不同大型合約（Anduril傳出$200億Lattice案，未確認搶走PLTR既有程式）；產業餅擴大而非零和</td><td>未公開</td><td>估值高但未公開</td><td>中</td></tr>
+<tr><td>C3.ai</td><td>🟡 點對點（式微）</td><td>PLTR 全面領先，C3.ai 營收 FY26 反而下滑 -35.7%</td><td>虧損</td><td>市值僅 $15億</td><td>低</td></tr>
+</table>
+<div class="reasoning"><strong>賽局結構判定：</strong>理性寡占（政府側，長期夥伴關係主導、非價格戰）＋商業側早期擴張（尚未進入寡占階段，各方仍在搶份額而非守成）。無 sourced 證據顯示上一輪下行週期有主動降價案例。</div>
+<h3>定價事件帳</h3>
+<table><tr><th>日期</th><th>提價幅度</th><th>量與留存反應</th><th>其後 GM 反應</th></tr>
+<tr><td>2026Q2（隱含）</td><td>非直接漲價，NDR 從 150%(Q1隱含)升至157%（+700bp）</td><td>留存/擴張顯著加速，非流失</td><td>調整後毛利率降至86%（因承接客戶雲代管成本，非漲價無效所致）</td></tr>
+</table>
+<h3>D｜護城河變遷時間軸</h3>
+<p>2020 直接上市（初期虧損，市場質疑商業化能力）→ 2023 首次 GAAP 年度轉正 → 2024 US商業加速（AIP 產品發布效應）→ 2025 Rule of 40 首破100%、FY25 OI margin 躍升至31.6% → 2026H1 US商業加速至149% YoY、NDR創157%新高、政府側簽署$100億/10年陸軍EA採購上限、宣布主權AI微調堆疊策略（NVIDIA聯盟）。</p>
+<h3>E｜對手 Capex/R&D 對照</h3>
+<p>Frontier lab（OpenAI/Anthropic）R&D/算力投入規模遠超 PLTR（數百億美元級 vs PLTR 年度 opex 約$30億），顯示 PLTR 選擇不與模型層競賽，而是專注應用/部署層——資本效率而非資本規模是其競爭策略核心。</p>
+<h3>護城河趨勢</h3>
+<table>
+<tr><th>維度</th><th>趨勢</th><th>3年關鍵事件</th></tr>
+<tr><td>Execution Moat 趨勢</td><td>擴大</td><td>FDE組織規模化、Maven builder破25000人、$100億/10年陸軍EA採購上限簽署</td></tr>
+<tr><td>Pricing Power Moat 趨勢</td><td>持平（觀察中）</td><td>NDR創高但frontier lab競爭敘事升溫，尚待驗證是否侵蝕未來定價</td></tr>
+<tr><td><strong>權威 moat_trend</strong></td><td><strong>→（holding）</strong></td><td><strong>12個月內sourced變化：NDR自約150%(隱含Q1水準)升至157%(+700bp QoQ)，執行面明顯強化；但同期調整後毛利率從歷史高點回落至86%(承接客戶雲代管成本)，加上Karp本季首度公開以「bake-off擊敗frontier lab」為賣點主動迎戰競爭敘事──兩股力量方向相反，故取→而非↑</strong></td></tr>
+</table>
+<div class="reasoning">QC-39 閘A檢查：本季無sourced證據顯示PLTR在任一top客戶/program份額下滑（NDR與Top20客戶營收皆創高）——不觸發閘A降級要求，moat_trend可維持→（未強制降）。24個月內最可能瓦解護城河的變化：🟡點對點——frontier lab推出配套部署服務但尚未證實搶走客戶（機率中）；若frontier lab直接複製FDE模式並拿下首個top-20客戶轉單，升級為🔴生態攻擊。</div>
+<h3>F｜對手財務深度對照</h3>
+<table>
+<tr><th>指標</th><th>PLTR</th><th>SNOW</th><th>CRWD</th><th>DDOG</th></tr>
+<tr><td>營收成長(YoY)</td><td>+93%(Q2)</td><td>+31.1%</td><td>+23.2%</td><td>+29.5%</td></tr>
+<tr><td>Gross Margin</td><td>82.4%(FY25)/86%調整後(Q2)</td><td>~75%</td><td>~75-78%</td><td>~80%</td></tr>
+<tr><td>EV/Sales</td><td>60.4x</td><td>21.5x</td><td>41.2x</td><td>26.5x</td></tr>
+<tr><td>Forward P/E</td><td>83.9x</td><td>149.6x</td><td>160.7x</td><td>114.9x</td></tr>
+</table>
+<p><strong>對手策略與經濟體質：</strong>SNOW／CRWD／DDOG皆為資料/安全/觀測平台，非同一利基（無政府雙引擎），但同屬「高成長企業SaaS」估值錨定同儕；三者Forward P/E均高於PLTR（因EPS基期更低、獲利仍在爬升），但PLTR的EV/Sales溢價最高，顯示市場對其營收品質/轉換率給予額外溢價。三者FCF/資產負債表皆健康，無立即倒閉風險，屬正常競爭非割喉戰。<strong>QC-30檢查：</strong>PLTR EV/Sales(60.4x)高於此對照組(21.5-41.2x)逾45%以上——但成長速度差距(93% vs 22-31%)同樣達2-4倍，收斂情境：若PLTR成長降至同業水準(25%)而倍數不變，隱含估值需下修逾60%；此情境已納入§10.5 Bear case評估。</p>
+<h3>R｜報酬持續期檢核（ROIC durability）</h3>
+<div class="reasoning"><strong>當期ROIC定位：</strong>稅後營業利益率(Adj OM 62%)×投入資本周轉率(營運資本占資產僅~6%，其餘為超額現金)＝<strong>高利益率×高周轉象限</strong>（同Visa/Moody's類型）——收入隨客戶活動量（deal size、NDR）成長，成本不必等比例增加，資產負債表幾無存貨/廠房負擔。</div>
+<table>
+<tr><th>檢查點</th><th>判定</th><th>sourced證據</th><th>代理變數讀數</th></tr>
+<tr><td>需求基礎值</td><td>🟢</td><td>政府側屬「需要型」（國安/指管系統缺失即戰力停擺）；商業側正從「想要」(嚐鮮式AIP試點)過渡到「需要」(全業務流程重建,如Kirkland&Ellis案例)</td><td>US商業客戶+35%YoY同時deal size +81%QoQ，非嚐鮮流失型</td></tr>
+<tr><td>決策層級</td><td>🟢</td><td>決策涵蓋整個業務流程重建(非單點工具採購)，換供應商需重建ontology</td><td>NDR157%、TCV duration+271%YoY顯示合約期限拉長</td></tr>
+<tr><td>價值鏈分配</td><td>🟡</td><td>應用/部署層目前吃到最大新增利潤(§3利潤池)，但模型層(frontier lab)若補齊部署能力，可能收斂PLTR的獨佔分潤</td><td>Adj OM 62%(全產業最高)但frontier lab資本規模遠超PLTR</td></tr>
+<tr><td>社會容忍度</td><td>🟢</td><td>政府AI/國防支出屬國安必要性，政治容忍度高（$100億/10年EA為採購上限而非逐年審議，惟實際義務化金額待查）；商業定價未見監管介入</td><td>US政府+90%YoY，無政治阻力訊號</td></tr>
+</table>
+<p><strong>再投資空間：</strong>內生成長率＝增量ROIC×再投資率——見§6.D，估算增量ROIC遠高於WACC，但再投資率因輕資產模式偏低（多數現金以超額儲備形式留存而非再投入），詳細落§6.D endo_growth_ceiling。四檢查點綜合：3項🟢、1項🟡（價值鏈分配面臨frontier lab潛在擠壓）——與moat_trend=→的判定一致。</p>
+</section>
+
+<section><h2 id="s6">§6｜長期成長性評估</h2>
+<h3>0｜成長品質7問儀表板</h3>
+<table>
+<tr><th>#</th><th>拷問</th><th>裁決</th><th>關鍵數字</th><th>詳見</th></tr>
+<tr><td>1</td><td>結構性或週期反彈?</td><td>結構為主</td><td>US商業149%YoY、NDR157%連12季擴張</td><td>§6.A/§3</td></tr>
+<tr><td>2</td><td>需多少資本投入?</td><td>極輕資產</td><td>Capex/Rev 0.76%</td><td>§6.D</td></tr>
+<tr><td>3</td><td>增量ROIC&gt;資金成本?</td><td>是，遠超</td><td>ROIIC遠高於WACC~9-10%</td><td>§6.D</td></tr>
+<tr><td>4</td><td>成長變現金流或被吃掉?</td><td>變現金流</td><td>Adj FCF margin 63%(Q2)</td><td>§9.E</td></tr>
+<tr><td class="r">5</td><td>競爭者是否被吸引進來?</td><td>是，frontier lab已進場</td><td>Karp本季主動迎戰敘事</td><td>§5/§5.F</td></tr>
+<tr><td>6</td><td>股價反映多少期待?</td><td>過熱</td><td>Fwd PE(FY+2)75.8x，5Y分位~62%(以EV/S代理)</td><td>§10.1/附錄A D</td></tr>
+<tr><td>7</td><td>成長率下修估值撐得住?</td><td>撐（EPS複利可補償）</td><td>Bear情境-53.5%，Base+55.6%</td><td>§6.E/§10.5</td></tr>
+</table>
+<p><strong>最弱一題：</strong><span class="r">第5題（競爭吸引力）</span>——標為紅字，因frontier lab進場是本輪報告最需持續盯的變數。</p>
+<h3>A｜成長跑道</h3>
+<table>
+<tr><th>維度</th><th>數據</th><th>推論</th></tr>
+<tr><td>當前TAM(綜合，估)</td><td>~$1-2兆(政府+企業AI落地，第三方估計區間寬)</td><td>來源：五角大廈預算+企業AI軟體支出第三方估計，2026</td></tr>
+<tr><td>當前市佔/滲透率</td><td>FY26 guide $81.5億÷TAM中位估~$1.5兆≈0.5%</td><td>滲透率極低</td></tr>
+<tr><td>Runway估計</td><td>10-15年</td><td>高確信長期複利</td></tr>
+</table>
+<h3>A''｜Y5後跑道</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>S曲線位置</td><td>早中期（美國商業僅滲透一小部分Fortune 500+政府機構，國際商業占比僅18.8%仍待擴張）</td></tr>
+<tr><td>Y5末TAM滲透率預估</td><td>FY2030E營收約$327億(§10路徑推導)÷TAM中位估$1.5兆≈2.2%</td></tr>
+<tr><td>下一條S曲線</td><td>有——主權AI微調堆疊（Q2法說首度具體化：與NVIDIA聯盟，客製化fine-tuning模型，非僅Foundry/AIP既有產品）</td></tr>
+<tr><td><strong>runway_post_y5</strong></td><td><strong>🟢 寬</strong>（滲透率≈2.2%≪35%門檻，且有sourced第二曲線）</td></tr>
+</table>
+<div class="reasoning">硬接線：🟢滿足§13 row8a爆發候選路徑必要條件之一（尚需AR等其餘條件，見§13）；亦觸發§10.5「10Y二段延伸」欄位。</div>
+<h3>B｜成長品質判斷</h3>
+<p><strong>①有機vs無機：</strong>近5年無重大併購（M&amp;A track record查無>市值5%或>$1億交易），成長100%有機。<strong>②定價vs量：</strong>US商業TCV Q2 $21.3億(+153%YoY) vs 客戶數653戶(+35%YoY)——deal size成長速度(+81%QoQ)遠快於客戶數(+6%QoQ)，顯示定價/擴張驅動為主，量驅動為輔；3年趨勢：定價驅動占比持續擴大（NDR自約130-140%區間升至157%）。<strong>③增量利潤率：</strong>Adj OM從FY24隱含約20-25%擴張至Q2 62%，增量OM遠高於當期OM，結構性擴張非燒錢買成長；前瞻結論：在營收+80-90%基準情境下，此增量結構隱含合併OM每年+300-500bp（趨緩後）。</p>
+<h3>C｜成長護城河連動</h3>
+<p><strong>強化型：</strong>成長帶來NDR持續攀升＋更深的ontology整合（客戶用越多、綁定越深），符合強化型定義——非為維持成長犧牲定價（NDR反而創高）。</p>
+<h3>D｜ROIC與FCF可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前值</th><th>3年前(FY22)</th><th>趨勢</th></tr>
+<tr><td>ROIC(剔現金估)</td><td>~240%</td><td>負值(虧損期)</td><td>↑↑</td></tr>
+<tr><td>FCF Margin</td><td>63%(Q2)/46.9%(FY25)</td><td>9.6%(FY22)</td><td>↑↑</td></tr>
+<tr><td>FCF/NI轉換率</td><td>~1.29x(FY25)</td><td>N/A(NI為負)</td><td>轉正且優異</td></tr>
+</table>
+<table>
+<tr><th>列</th><th>計算</th></tr>
+<tr><td>ROIIC(3Y)</td><td>ΔNOPAT(FY22→25，估NOPAT自負轉約$13億)÷ΔIC(投入資本增加約$3億，剔超額現金)≈遠超100%，資本效率極端優異，惟分母基期過小(輕資產)致比率失真，僅供方向判斷</td></tr>
+<tr><td>再投資率</td><td>(Capex−D&amp;A+ΔWC)÷NOPAT，估計約10-15%（多數FCF未再投資於營運資本，而是累積為超額現金）</td></tr>
+<tr><td>內生成長天花板</td><td>增量ROIC(遠超WACC)×再投資率(~10-15%)≈估計30-45%區間（資本效率極高但再投資意願/需求相對輕資產模式下偏低）</td></tr>
+<tr><td>共識對賬</td><td>共識EPS CAGR 68.6% vs 內生天花板估30-45% → 缺口約25-38pp，歸因：margin擴張(§6.B③增量OM遠高於當期，非單純內生資本複利)+成長絕對規模效應（低基期高倍數成長非資本驅動而是市場滲透驅動）</td></tr>
+</table>
+<p class="src">dd-meta endo_growth_ceiling≈37（區間中值）；共識不完全依賴re-rate，但依賴滲透率持續加速（非典型資本複利模型），此為輕資產科技股常態。</p>
+<h3>E｜成長熄火壓力測試</h3>
+<table>
+<tr><th>情境</th><th>對應成長特徵</th><th>合理Fwd PE</th><th>估值跌幅</th></tr>
+<tr><td>3年後降至15%</td><td>成長放緩但仍高於市場</td><td>28x</td><td>~-63%(相對現Fwd PE 75.8x)</td></tr>
+<tr><td>3年後降至10%</td><td>回歸市場平均</td><td>22x</td><td>~-71%</td></tr>
+<tr><td>3年後降至5%</td><td>成熟期低成長</td><td>18x</td><td>~-76%</td></tr>
+</table>
+<h4>⚠️衰退信號偵測表</h4>
+<table>
+<tr><th>信號</th><th>指標</th><th>數據</th><th>亮燈?</th></tr>
+<tr><td>護城河侵蝕</td><td>GM連2季YoY下滑</td><td>調整後GM本季86%(單季首次可觀察下滑，因承接客戶雲代管成本)</td><td class="a">🟡觀察</td></tr>
+<tr><td>護城河侵蝕</td><td>核心市場市佔縮減</td><td>無sourced證據</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR顯著高於Rev CAGR</td><td>GAAP EPS成長受SBC稀釋降低及投資利得干擾，需拆解，非結構問題</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>FCF/NI&lt;0.75連2年</td><td>1.29x(FY25)，遠優於門檻</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>SBC/Rev&gt;5%且上升</td><td>SBC/Rev持續下降(50.5%→15.3%，FY21-25)</td><td>⬜（反向健康）</td></tr>
+<tr><td>產業結構衰退</td><td>TAM萎縮</td><td>無，TAM持續擴大(AI落地需求)</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>Maint capex/FCF&gt;60%</td><td>Capex僅$34M vs FCF$21億，&lt;2%</td><td>⬜</td></tr>
+</table>
+<p><strong>價值陷阱風險評級：1個 🟡 中度警戒</strong>（§5已正面回應：調整後毛利率單季下滑係承接客戶基礎設施成本之結構選擇，非定價力喪失，需連續觀察2季確認是否為趨勢）。</p>
+<p><strong>長期成長性綜合評級：🟢 高確信</strong>（Runway≥10年、定價驅動為主、護城河強化型、ROIC擴大、衰退信號僅1個且非結構性）。</p>
+<h3>H｜客戶結構深度</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>來源</th></tr>
+<tr><td>Top20客戶TTM單戶營收</td><td>$1.24億(+67%YoY)</td><td>Q2法說</td></tr>
+<tr><td>US商業客戶數</td><td>653戶(+35%YoY)</td><td>Q2法說</td></tr>
+<tr><td>戰略性合約(SpaceX類warrant)占比</td><td>~0.02%營收，可忽略</td><td>Q2法說</td></tr>
+</table>
+<p><strong>議價權結構：</strong>政府側屬Sole-source/Grow-with型（多年期EA鎖定，非逐年招標）；商業側客戶生命週期呈Grow-with模式（NDR157%顯示既有客戶擴大採用而非流失）。<strong>留存經濟：</strong>NDR連12季擴張，3年時序方向明確向上。<strong>客戶結構風險評估：🟡 集中但Grow-with邏輯強</strong>（Top20客戶占比估~30%+，但無dual-track/second-source訊號，屬深化而非集中風險）。</p>
+<h3>F｜AI取代風險評級</h3>
+<p><strong>🟢 AI受益</strong>——核心業務本身即為「把AI轉成企業決策」的中介層，AI浪潮擴大而非取代其TAM。證據：US商業營收占比與AI採用曲線高度相關(+149%YoY)；公司AI策略即主權AI微調堆疊；過去2年AI相關營收(等同於整體營收，因AIP即AI核心產品)成長顯著。評級分數：9。</p>
+<h3>I｜分部前瞻建模</h3>
+<table>
+<tr><th>業務段</th><th>FY25營收</th><th>驅動式</th><th>FY26E</th><th>FY27E</th><th>段OM軌跡</th><th>對EPS成長貢獻</th></tr>
+<tr><td>US商業</td><td>~$23.5億(估，FY25 US商業年化)</td><td>客戶數+35%×deal size成長+81%QoQ(趨緩)</td><td>~$34億(guide&gt;$34.2億)</td><td>~$48億(估,+41%)</td><td>持續擴張</td><td>~55%貢獻</td></tr>
+<tr><td>US政府</td><td>~$27億(估)</td><td>合約執行×新簽約</td><td>~$34億(估,+90%放緩至~+26%全年)</td><td>~$40億(估,+18%)</td><td>穩定高位</td><td>~30%貢獻</td></tr>
+<tr><td>國際(政府+商業)</td><td>~$14億(估)</td><td>地緣分散化</td><td>~$16億(估)</td><td>~$18億(估)</td><td>擴張中</td><td>~15%貢獻</td></tr>
+</table>
+<p class="note">FY25分段營收為年化估算(公司未逐季揭露完整FY25分段，以Q2FY26占比反推)，FY26/27為guide+邏輯外推，非公司逐段guidance；US商業為明確EPS成長主引擎，若該段miss，合併EPS CAGR估降至~40-45%區間。</p>
+</section>
+
+<section><h2 id="s7">§7｜財務品質監測</h2>
+<table>
+<tr><th>指標</th><th>2023</th><th>2024</th><th>2025(E/A)</th><th>同業中位(SNOW/CRWD/DDOG)</th><th>相對評估</th></tr>
+<tr><td>FCF Margin</td><td>31.3%</td><td>39.8%</td><td>46.9%</td><td>~25-30%(估)</td><td>優</td></tr>
+<tr><td>Operating Margin</td><td>5.4%</td><td>10.8%</td><td>31.6%</td><td>~5-15%(估，多數仍虧損或微利)</td><td>優</td></tr>
+<tr><td>ROE</td><td>~5.9%(NI209/equity3561)</td><td>~9.1%</td><td>~21.7%</td><td>低於PLTR(同業多虧損)</td><td>優</td></tr>
+<tr><td>SBC/Revenue</td><td>21.4%</td><td>24.1%</td><td>15.3%</td><td>~15-25%(業界常態)</td><td>持平至優</td></tr>
+</table>
+<h3>獲利品質警訊</h3>
+<p>①淨利vs OCF連動性：FY25 OCF$21.3億 vs NI$16.3億，比值1.31x，正常無操縱訊號；②AR成長vs營收成長：FY25 AR成長81.2%(575→1042M) vs 營收成長56.2%——<strong>AR成長顯著快於營收，需列入監測</strong>（見下方CCC分析）；③無庫存(軟體業務)；④FCF轉換率趨勢：持續改善，非惡化。</p>
+<h3>回購品質評估</h3>
+<table>
+<tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+<tr><td>3年回購總額vs FCF總額</td><td>FY23-25回購合計~$1.4億 vs FCF合計~$39億</td><td>回購/FCF≈3.6%，遠低於80%警戒——資本配置尚未成熟進入大規模回購階段</td></tr>
+<tr><td>剔除回購後EPS CAGR</td><td>因回購規模極小(&lt;4%FCF)，剔除影響&lt;1pp</td><td>無實質差異，成長非靠回購撐出</td></tr>
+<tr><td>Revenue CAGR同期</td><td>FY23-25營收CAGR約42%(2225→4475，2年)</td><td>EPS CAGR(68.6%,3年前瞻)高於Rev CAGR，差距主要來自margin擴張(§6.B③)非會計操作</td></tr>
+</table>
+<h3>FCF Lumpiness評估</h3>
+<table><tr><td>近5年FCF</td><td>FY21 $321M / FY22 $184M / FY23 $697M / FY24 $1141M / FY25 $2101M</td></tr>
+<tr><td>5Y滾動均</td><td>~$889M</td></tr>
+<tr><td>最低谷</td><td>FY22 $184M(占5Y均21%)</td></tr>
+<tr><td>Maintenance capex估算(D&amp;A錨定法)</td><td>D&amp;A~$26-33M/年 → Owner earnings=OCF−maint.capex≈$21億−$30M≈$21億</td></tr>
+<tr><td>結論</td><td class="g">🟢屬正常成長期擴張軌跡，非lumpy業務結構</td></tr>
+</table>
+<h3>E｜長期趨勢＋DuPont＋營運資金</h3>
+<table>
+<tr><th>指標</th><th>FY21</th><th>FY22</th><th>FY23</th><th>FY24</th><th>FY25</th><th>結構判讀</th></tr>
+<tr><td>Gross Margin</td><td>78.0%</td><td>78.6%</td><td>80.6%</td><td>80.3%</td><td>82.4%</td><td>升</td></tr>
+<tr><td>Operating Margin</td><td>-26.7%</td><td>-8.5%</td><td>5.4%</td><td>10.8%</td><td>31.6%</td><td>升（陡峭）</td></tr>
+<tr><td>FCF Margin</td><td>20.8%</td><td>9.6%</td><td>31.3%</td><td>39.8%</td><td>46.9%</td><td>升（非線性）</td></tr>
+</table>
+<div class="reasoning"><strong>DuPont拆解：</strong>ROIC=NOPAT margin×投入資本周轉率。NOPAT margin從FY22負值升至FY25約30%+；投入資本周轉率因分母(剔現金後投入資本僅約$5億)極小而周轉率極高（營收/投入資本≈9x），故ROIC由「兩者同時大幅改善」共同驅動，非單一因子。<strong>營運資金趨勢：</strong>DSO（AR/Rev×365）FY23 59.9天→FY24 73.2天→FY25 85.0天，<strong>持續拉長</strong>；DIO=0(無存貨)；DPO（AP/COGS×365）FY23 10.2天→FY24 0.06天→FY25 3.7天，微不足道。CCC=DSO+DIO-DPO：FY23 49.7天→FY24 73.1天→FY25 81.3天，<strong>持續惡化</strong>——AR成長(81.2%YoY)快於營收成長(56.2%)，反映政府/大型企業客戶付款週期較長，隨業務組合轉向大型合約而拉長，屬結構性但非危險信號（絕對水準仍健康，現金充裕）。</div>
+<h4>債務到期結構</h4>
+<p>總負債$14.1億(FY25)、總債務僅$2.29億（多為租賃負債非傳統債務），無顯著到期牆風險，加權利率影響可忽略。</p>
+</section>
+
+<section><h2 id="s8">§8｜即時財報情報</h2>
+<h3>①最新一季財報關鍵數字（Q2 FY2026，2026-08-03盤後公布）</h3>
+<table>
+<tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY成長</th></tr>
+<tr><td>Revenue</td><td>$1.935B</td><td>$1.81B</td><td class="g">Beat +$130M(+7.2%)</td><td>+93%</td></tr>
+<tr><td>EPS(GAAP)</td><td>$0.41</td><td>$0.34</td><td class="g">Beat +$0.07(+20.6%)</td><td>—</td></tr>
+<tr><td>Adj FCF</td><td>$1.22B</td><td>—</td><td>歷史新高</td><td>+115%</td></tr>
+<tr><td>Gross Margin(調整後)</td><td>86%</td><td>—</td><td>QoQ小幅下滑</td><td>—</td></tr>
+<tr><td>Adj Operating Margin</td><td>62%</td><td>—</td><td>Beat</td><td>—</td></tr>
+</table>
+<h3>財報對§2假設的邊際貢獻</h3>
+<table>
+<tr><th>假設</th><th>邊際方向</th><th>佐證</th></tr>
+<tr><td>H1(US商業)</td><td>＋＋</td><td>149%YoY加速，NDR157%創高</td></tr>
+<tr><td>H2(政府)</td><td>＋</td><td>90%YoY強勁，惟NHS FDP未提及</td></tr>
+<tr><td>H3(估值)</td><td>－</td><td>財報後單日+26~28%，估值更貴，但guide史上最大上修部分抵銷</td></tr>
+</table>
+<div class="reasoning">QC-27 Revenue vs OI divergence：US商業Rev YoY+149% vs 無獨立OI揭露，改用全公司Adj OI YoY估算(Adj OI $1.194B vs 去年同期估~$550M，YoY約+117%)，Rev(93%) − OI(117%)= <strong>-24pp(負值，OI成長快於Rev，margin擴張)</strong>，非壓縮警示，反向健康訊號。</div>
+<h3>②Earnings Call語氣解析</h3>
+<p><strong>Guidance vs共識：</strong>FY26營收guide上調11pp至82%YoY，公司稱「史上最大單次全年guide上修」，遠超市場此前預期。<strong>被迴避的問題：</strong>無分析師直接追問政府預算/NHS FDP風險，管理層自陳部分聚焦「主權AI」敘事而非直接回應frontier lab競爭損益細節（僅Karp敘事層回應，未給量化數字）。</p>
+<h3>③產業Imply萃取</h3>
+<p>本次法說最關鍵產業imply：企業客戶對「模型無關（model-agnostic）」部署策略需求正在系統性上升（Karp/Sankar反覆強調「換模型不換PLTR」），代表產業競爭焦點正從「誰的模型最強」轉向「誰能把任意模型安全落地」——此imply直接餵入§3產業格局判斷（PLTR所在應用層利潤池持續流入）。</p>
+</section>
+
+<section><h2 id="s85">§8.5｜隨附研究文獻：產業read-through</h2>
+<h3>①文件清單</h3>
+<table><tr><th>文件</th><th>機構/作者</th><th>日期</th><th>相關度</th></tr>
+<tr><td>Palantir Technologies Inc. - Q2 2026 Earnings Call（逐字稿，全文已讀）</td><td>公司法說（Koyfin轉錄）</td><td>2026-08-03</td><td>高——本報告§8關鍵財務數字與§3/§5/§6競爭敘事之主要一手來源</td></tr>
+</table>
+<h3>②產業read-through</h3>
+<table>
+<tr><th>#</th><th>擷取點</th><th>影響項</th><th>來源</th><th>信心度</th><th>對應章節</th></tr>
+<tr><td>1</td><td>NDR 157%，QoQ+700bp，管理層明言「連原本只用Foundry的舊客戶，現在也要求導入Ontology/主權AI堆疊」——既有客戶錢包份額擴張，非單靠新客戶</td><td>定價權/需求跑道</td><td>CFO Glazer發言</td><td>high(具體數字，公司揭露)</td><td>H1/§6.B/§5</td></tr>
+<tr><td>2</td><td>Top20客戶TTM單戶營收$1.24億，+67%YoY</td><td>客戶集中度/定價權</td><td>CFO Glazer發言</td><td>high</td><td>§6.H</td></tr>
+<tr><td>3</td><td>US商業TCV dollar-weighted duration+271%YoY，合約期限顯著拉長</td><td>營收品質/黏著度</td><td>CRO Taylor發言</td><td>high</td><td>§4.G/§6</td></tr>
+<tr><td>4</td><td>Karp自陳「一家矽谷科技公司舉辦bake-off，frontier lab部署團隊對決PLTR+FDE，lab在ticketing自動化任務上失敗未交付價值，PLTR贏得$1000萬ACV合約」</td><td>競爭護城河（L3敘事層，公司自陳未經第三方驗證）</td><td>CTO Sankar發言</td><td>med(公司單方陳述，具體但不可獨立查證)</td><td>§5/QC-39軸A</td></tr>
+<tr><td>5</td><td>調整後毛利率本季降至86%，因承接一家政府客戶的雲端代管成本；管理層稱此舉將提升未來交付速度與客戶成本確定性</td><td>Margin結構/商業模式演變</td><td>CFO Glazer發言</td><td>high(具體數字)，但長期影響方向low信心（新模式，無歷史軌跡）</td><td>§5趨勢/§7</td></tr>
+<tr><td>6</td><td>Maven平台首度有政府「program of record」正式選定為指管平台；Maven builder數突破25000人</td><td>政府需求跑道durability</td><td>CRO Taylor發言</td><td>high</td><td>H2/§3</td></tr>
+<tr><td>7</td><td>國防部（Dept of War）trailing-12-month營收仍&lt;五角大廈預算25個基點</td><td>Y5後跑道/TAM headroom</td><td>CRO Taylor發言</td><td>high(具體數字)</td><td>§6.A''</td></tr>
+<tr><td>8</td><td>Karp宣布公司策略正式進入「主權AI微調堆疊」市場，與NVIDIA聯盟，客製化fine-tune模型效能優於frontier模型（一項24小時內完成的內部案例：Nemotron Ultra無post-training即超越frontier）</td><td>第二成長曲線</td><td>CEO Karp／CTO Sankar發言</td><td>med(內部單一案例，未大規模驗證)</td><td>§6.A''</td></tr>
+<tr><td>9</td><td>Q2 GAAP EPS $0.41含SpaceX未實現投資利得貢獻$0.03（Adj EPS貢獻$0.02）</td><td>盈餘品質（一次性項目）</td><td>CFO Glazer發言</td><td>high(具體數字，公司揭露)</td><td>§1 trap四問/§7</td></tr>
+<tr><td>10</td><td>國際商業營收$182M(+26%YoY)、國際政府營收$181M(+42%YoY)，合計國際占比僅18.8%，法說全程未提及UK NHS FDP合約狀態</td><td>地緣分散/政治風險缺口</td><td>CFO Glazer發言＋逐字稿全文檢索無NHS關鍵字</td><td>high(缺席本身即為資訊——上次報告的重大監測點本季未更新)</td><td>R2/§14</td></tr>
+</table>
+<h3>③跨文件分歧裁決</h3>
+<p>單一文件來源，無跨文件分歧需裁決。</p>
+<h3>④對本公司thesis的淨影響</h3>
+<p>淨方向：<strong>＋強化</strong>。最關鍵單一read-through：NDR自約150%躍升至157%（+700bp QoQ）且管理層明確歸因於既有客戶「錢包份額擴張」而非新客戶堆量——這是H1（FDE護城河不可繞過）本季最強的正向驗證，同時也讓frontier lab競爭敘事（擷取點4）的即時殺傷力被沖淡（若客戶正在深化而非流失，短期內R1風險機率應維持低檔而非上修）。</p>
+</section>
+
+<section><h2 id="s9">§9｜公司治理與資本配置</h2>
+<p><strong>股東結構：</strong>創辦人/管理層持股集中（Karp等核心創辦團隊透過雙層股權結構掌握控制權，典型直接上市公司治理模式）；機構持股~57%；內部人持股~8.5-9.5%（yfinance/finviz口徑略有差異）。<strong>資本配置軌跡：</strong>過去5年無重大M&amp;A（&gt;市值5%或&gt;$1億交易皆未查獲），成長全數有機；回購規模極小($75M FY25 vs FCF$21億，僅3.6%)，尚未進入大規模股東回饋階段——現金持續累積(達$92億)，資本配置決策仍偏保守/尚未成熟。<strong>管理層薪酬結構：</strong>SBC占營收比重持續下降(50.5%→15.3%，FY21-25)，顯示股權激勵稀釋速度趨緩，屬正向趨勢；固定薪/績效/股權具體拆分未見公開揭露，標「數據限制」。<strong>過去12個月內部人交易：</strong>🔴 淨賣出7筆共約$6.95億，Karp本人占約$1.86億（2026-02-20、05-20兩筆為主），零買進交易，需列入監測（見§12a）。</p>
+<h3>SBC真實稀釋</h3>
+<table>
+<tr><th>指標</th><th>數據</th></tr>
+<tr><td>SBC/Revenue(近3年)</td><td>FY23 21.4% / FY24 24.1% / FY25 15.3%</td></tr>
+<tr><td>GAAP EPS(FY25)</td><td>$0.63</td></tr>
+<tr><td>剔除SBC後EPS CAGR</td><td>因PLTR已將SBC全額計入GAAP(非Non-GAAP調整項)，GAAP與Adj EPS本季已幾乎相等($0.41=$0.41)，SBC真實稀釋主要反映在股數而非EPS口徑差距——差距不顯著，&lt;5pp警示未觸發</td></tr>
+</table>
+<h3>資本配置計分卡</h3>
+<table>
+<tr><th>項目</th><th>計算</th><th>過/不過</th></tr>
+<tr><td>M&amp;A已實現ROIIC</td><td>5年無重大M&amp;A</td><td>N/A不計</td></tr>
+<tr><td>回購買入收益率</td><td>回購規模過小(&lt;4% FCF)，難以有意義評估收益率</td><td class="a">邊際不過（規模不足以判定）</td></tr>
+<tr><td>SBC淨稀釋率</td><td>估計淨稀釋(SBC−回購後)仍&gt;1.5%/yr(SBC規模遠大於回購)</td><td class="r">不過</td></tr>
+</table>
+<p><strong>資本配置等級：B</strong>（適用項中1/2過——SBC淨稀釋不過，回購收益率因規模不足無法判定不計入分母；balance sheet乾淨、無債務、無不當M&amp;A，屬「尚未成熟但無不當決策」型B級，非C級結構問題）。dd-meta capalloc_grade=B，不觸發§13 row7b。</p>
+<h3>D｜10年資本配置track record</h3>
+<p><strong>①M&amp;A全史：</strong>查無重大交易，成長路徑純有機，符合公司一貫「不靠併購買成長」策略。<strong>②回購/股息10年軌跡：</strong>FY21-23零回購，FY24起小規模啟動($64M→$75M)，無股息；總股東回報率(回購/FCF)&lt;4%，資本絕大部分留存為現金儲備。<strong>③內部人+薪酬：</strong>近12個月零買進、7筆賣出$6.95億，其中Karp $1.86億（2026-02、05月各一筆大額）；薪酬結構未詳細揭露，標數據限制。</p>
+<h3>E｜FCF去向＋M&amp;A飛輪</h3>
+<p><strong>①FCF去向：</strong>FY25 FCF$21億中，回購占比~3.6%、股息0%、去債N/A(幾無有息負債)、再投資(capex+R&amp;D隱含於opex)相對輕，<strong>絕大部分（估&gt;90%）留存為現金/短期投資儲備</strong>，累積至$92億。<strong>②M&amp;A飛輪：</strong>不適用（無併購策略）。<strong>③一句結論：</strong>這檔的成長最終<strong>累積為股東帳上現金儲備</strong>（尚未大規模回饋股東），增量ROIC<strong>遠高於WACC</strong>，資本配置<strong>尚屬保守累積階段、無出價紀律風險，但配發紀律有待成熟</strong>——這是「好問題」（現金過多而非資本誤配），接§6.0第4問裁決：成長已確實變現金流。</p>
+</section>
+
+<section><h2 id="s10">§10｜估值與報酬</h2>
+<h3>10.1｜歷史估值分位</h3>
+<table>
+<tr><th>指標</th><th>當前值</th><th>年度低(FY22)</th><th>年度中位</th><th>年度高(FY25年底)</th><th>當前分位</th></tr>
+<tr><td>EV/Sales(年度快照代理，Forward PE史過短不適用標準5Y窗)</td><td>60.4x</td><td>5.86x</td><td>~22x</td><td>93.4x</td><td>(60.4-5.86)/(93.4-5.86)=<strong>62%</strong></td></tr>
+</table>
+<div class="reasoning">分位=(60.4−5.86)/(93.4−5.86)×100%=62%。<strong>資料限制（QC-15揭露）：</strong>PLTR僅2023年起穩定獲利，5年Forward PE完整週窗史不存在（Macrotrends/GuruFocus本次查詢皆403無法取得），改以年度期末EV/Sales快照作分位代理，非標準週線5Y分位，判讀需打折扣。62%落「合理偏貴」區間，implication：估值非史上絕對最高點(FY25年底93.4x)，但顯著高於FY22-23常態(6-15x)。</div>
+<h3>10.2｜PEG診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>判斷</th></tr>
+<tr><td>Forward PE(FY+2, fpe_fy2)</td><td>158.43/2.09=75.8x</td><td>—</td></tr>
+<tr><td>Non-GAAP EPS CAGR(3年,基期FY25→FY28E)</td><td>68.6%</td><td>—</td></tr>
+<tr><td>PEG(FY+2,3年)</td><td>75.8/68.6=<strong>1.10</strong></td><td>1-2合理區間</td></tr>
+</table>
+<div class="reasoning">PEG=75.8÷68.6=1.10，落1-2「合理」矩陣格。<strong>Implication：</strong>相對於自身成長速度，PLTR的絕對估值倍數（75.8x）並非荒謬，前提是consensus EPS路徑可信——但本snapshot為Q2財報前最後版本（見下方consensus落後風險註記），實際PEG可能因EPS上修而更低（更便宜）。</div>
+<h3>10.4｜同業估值比較</h3>
+<p>業務模式tier：企業AI決策/資料平台SaaS（無理想同tier peer——PLTR獨有政府+商業雙引擎+FDE服務模式，本表僅供參考，溢折價邏輯需獨立推導，見§5.F完整對照）。</p>
+<table>
+<tr><th>公司</th><th>Forward PE</th><th>EV/Sales</th><th>營收成長(YoY)</th></tr>
+<tr><td><strong>PLTR</strong></td><td>75.8-83.9x</td><td>60.4x</td><td>+93%</td></tr>
+<tr><td>SNOW</td><td>149.6x</td><td>21.5x</td><td>+31.1%</td></tr>
+<tr><td>CRWD</td><td>160.7x</td><td>41.2x</td><td>+23.2%</td></tr>
+<tr><td>DDOG</td><td>114.9x</td><td>26.5x</td><td>+29.5%</td></tr>
+</table>
+<div class="reasoning">EV/Sales溢價：PLTR 60.4x vs 同業中位~29x，溢價~108%；但成長速度PLTR(93%)是同業中位(~28%)的3.3倍。若成長收斂至同業水準而倍數不變，估值需下修逾60%（已納入§10.5 Bear情境）。Implication：溢價有基本面支撐（成長速度差距遠大於估值溢價差距），但兩者收斂速度是核心觀察變數。分析師目標價：consensus均值$189.90（36位分析師，8月初），本報告未完全認同（見下方），差異點在於本報告對於估值倍數壓縮的假設更保守。</div>
+<h3>10.5｜不對稱報酬 Bull/Base/Bear</h3>
+<table>
+<tr><th>情境</th><th>5年絕對</th><th>年化IRR</th><th>依據</th><th>機率</th></tr>
+<tr><td>Bull</td><td>+97.2%</td><td>+14.5%/yr</td><td>FY30E EPS$5.68(FY29/30成長40%/35%)×終端PE55x</td><td>30%</td></tr>
+<tr><td>Base</td><td>+55.6%</td><td>+9.25%/yr</td><td>FY30E EPS$5.48(38%/32%)×終端PE45x</td><td>45%</td></tr>
+<tr><td>Bear</td><td class="r">−53.5%</td><td class="r">−14.2%/yr</td><td>FY28 miss至$2.55(-15%)、FY29/30成長20%/14%、終端PE22x(倍數收斂至同業，見10.4)</td><td>25%</td></tr>
+<tr><td><strong>機率加權EV</strong></td><td><strong>+40.8%(=ev5y_pct)</strong></td><td><strong>IRR≈9.3%/yr</strong></td><td colspan="2"></td></tr>
+</table>
+<p><strong>IRR落點解讀：</strong>Base 9.25%/yr落「8-12%中/合理mid-conviction」區間。<strong>QC-21 Bear anchor防禦：</strong>Bear股價$73.7 vs現價$158.43，下行距離53.5%，遠&gt;15%門檻，R:R有效無數學假象。<strong>追加壓力測試(10年)：</strong>Bull路徑10年IRR估~13-15%/yr(第二曲線兌現)，同期可比標的(高品質SaaS平均)約8-12%/yr，PLTR仍具相對吸引力。</p>
+<p><strong>不對稱比AR：</strong>AR=(0.30×97.2)/(0.25×53.5)=<strong>2.2</strong>（資訊性，v14.6起不再是row 8a硬性門檻）。dd-meta：bull_5y_price=312.4／bear_5y_price=73.7／p_bull_pct=30／p_bear_pct=25。</p>
+<p><strong>10Y二段延伸（runway_post_y5=🟢，必填）：</strong>Y5→Y10第二段EPS CAGR假設~22%(退坡)；10年累積倍數(Base路徑延伸)約7.5x；10年IRR約12.9%/yr。</p>
+<div class="reasoning"><strong>QC-39閘B durability（必填一句）：</strong>本案Base/Bear機率主要依據searched durability證據（NDR連12季擴張、政府10年期EA已鎖、<25bp五角大廈預算滲透率），非單純歷史pattern外推；產業態勢雙向裁決見§3。</div>
+<div class="reasoning"><strong>內生天花板sanity check：</strong>Base情境EPS CAGR貢獻約21.3%/yr(§10.6) vs §6.D內生成長天花板估30-45% → <strong>在天花板內✅</strong>（Base假設較內生天花板估計更保守，非超出，Bear機率25%不需強制上修至30%）。</div>
+<h3>10.6｜IRR三分量拆解</h3>
+<table>
+<tr><th>情境</th><th>EPS CAGR貢獻</th><th>估值re-rate貢獻</th><th>股息+回購</th><th>合計年化</th></tr>
+<tr><td>Bull</td><td>+22.2%/yr</td><td>−6.2%/yr</td><td>0%/yr</td><td>+16.0%/yr</td></tr>
+<tr><td>Base</td><td>+21.3%/yr</td><td>−10.3%/yr</td><td>0%/yr</td><td>+11.0%/yr</td></tr>
+<tr><td>Bear</td><td>+9.9%/yr</td><td>−21.9%/yr</td><td>0%/yr</td><td>−12.1%/yr</td></tr>
+</table>
+<p><strong>質感解讀：</strong>Base情境9.25%/yr中，<strong>+21.3%/yr來自EPS複利、−10.3%/yr來自估值re-rate壓縮</strong>。可抱性主要靠<strong>EPS成長本身</strong>——即使假設倍數從現在的75.8x壓縮至45x(接近腰斬)，正的EPS複利仍能覆蓋倍數損失並淨留正報酬。<strong>估值依賴型標記：</strong>re-rate貢獻為負值（不是正貢獻的40%以上），<strong>不觸發「估值依賴型」標記</strong>——本案Base報酬的主要引擎是生意本身持續成長，非仰賴市場給更高倍數，這是本報告最重要的非共識發現之一。</p>
+<h3>10.7｜Pattern match</h3>
+<table>
+<tr><td>歷史相似case</td><td>2019-2021 ServiceNow（早期企業SaaS平台從單點工具進化為企業作業系統，同期政府/監管客戶滲透加速）；亦可比2016-2019 Adobe訂閱轉型初期</td></tr>
+<tr><td>當時setup</td><td>NOW 2019年Fwd PE約50-60x，營收成長30-35%，隨後5年EPS複利驅動股價+180%左右（PE同期收斂至30-40x）</td></tr>
+<tr><td>最終5年實現報酬</td><td>NOW 2019-2024年化IRR約23%/yr（含疫情期波動），主要靠EPS複利非倍數擴張</td></tr>
+<tr><td>最像/最不像</td><td>最像：兩者皆從「工具」進化為「企業作業系統」，report倍數壓縮+EPS複利雙軌敘事一致；最不像：PLTR成長速度(93%)遠快於NOW當年(30-35%)，但PLTR當前估值倍數(75.8x)亦顯著更高，風險/報酬比更極端</td></tr>
+</table>
+<h3>§10估值診斷結論</h3>
+<p>11.1歷史分位62%(合理偏貴,以EV/S年度快照代理) + 10.2 PEG 1.10(合理) + 10.4同業相對(溢價108%，有基本面成長速度支撐但收斂風險存在) → 綜合估值訊號：<strong class="r">🔴 明顯貴</strong>（絕對倍數處歷史高檔區間，財報後單日暴漲進一步壓縮安全邊際）。完整裁決見§13；倉位角色見§13a。<strong>consensus落後風險註記：</strong>本節估值錨定於2026-07-30(Q2財報前)EPS快照，FY26 guide史上最大單次上修(11pp)、多位分析師財報後上調目標價(Mizuho+16%、DA Davidson+14%)，構成合理推斷consensus即將顯著上修的質性訊號，但因無法sourced量化「FY1/FY2共識近3個月上修≥10%」的具體百分比（本snapshot本身即為財報前最後版本，無法回溯驗證），<strong>不觸發附錄A盲點3上修救援</strong>（誠實不觸發，非敘事代替）。讀者應理解：本節估值倍數計算大機率略微高估了實際貴度。</p>
+</section>
+
+<section><h2 id="s11">§11｜矛盾辨識與強制裁決</h2>
+<h3>1.共識清單</h3>
+<p>§6成長🟢高確信＋§5護城河A/9.0＋§3利潤池流入 三者共振：高信心區域。§10估值🔴與上述形成張力（矛盾拓撲：<strong>集中於單一軸</strong>——爭議集中在「估值是否已透支」，其餘商業面向高度一致，§13b/§14監測結構應向此軸收斂）。</p>
+<h3>2.矛盾清單</h3>
+<table>
+<tr><th>#</th><th>矛盾點</th><th>章節A</th><th>章節B</th><th>性質</th></tr>
+<tr><td>1</td><td>成長品質極優(§6) vs 估值已計入近乎完美(§10)</td><td>§6綜合🟢高確信</td><td>§10 val🔴</td><td>可調和(程度差異，非方向相反)</td></tr>
+<tr><td>2</td><td>Karp自陳擊敗frontier lab(§5)vs 調整後GM單季下滑(§5趨勢)</td><td>競爭護城河敘事層強</td><td>成本結構出現首次觀察到的下滑</td><td>可調和(不同軸，皆需持續觀察)</td></tr>
+</table>
+<h3>3.與上一份報告的交叉矛盾</h3>
+<table>
+<tr><th>#</th><th>矛盾點</th><th>本次結論</th><th>0629報告結論</th><th>可能原因</th></tr>
+<tr><td>1</td><td>倉位角色：0629「條件式核心持倉」→本次「衛星」</td><td>衛星（爆發候選路徑）</td><td>條件式核心持倉</td><td>估值上升(0629 PEG1.36→本次1.10但絕對Fwd PE 56x→76x，倍數基期已大幅墊高，加上QC-31明文估值🔴不得落核心)+ v14.12裁決輸出收斂規則本身將「條件式核心」歸類簡化為「衛星」</td></tr>
+</table>
+<p><strong>翻面三元歸因：</strong>倉位角色調整（非裁決方向翻面，本次與0629皆為「進場」）主因＝<strong>價格變了</strong>（估值絕對水準顯著墊高，財報後單日+26-28%）為主，<strong>方法論變了</strong>（QC-31明文估值🔴禁核心）為輔，基本面本身變化（成長加速）反而支持更高信心，非變差主因。</p>
+<h3>4.⚖強制裁決</h3>
+<table>
+<tr><th>#</th><th>矛盾</th><th>我選哪邊</th><th>依據</th><th>硬數據點</th><th>執行路徑</th></tr>
+<tr><td>1</td><td>估值極端貴 vs 生意品質極端好</td><td>品質面優先，但用倉位/紀律而非否決來管理估值風險</td><td>§10.6顯示Base情境不依賴re-rate（re-rate為負貢獻仍淨正報酬），代表「貴」本身不足以否決thesis，只需要求進場紀律</td><td>股價回落至Fwd PE(FY+2)&lt;65x(約$137)或FY26財報再度大幅beat+raise</td><td>(a)股價回落至65x以下→加碼；(b)連1季guide miss且無合理解釋→減碼至1/2</td></tr>
+</table>
+<h3>4b.裁決推理品質三檢</h3>
+<p><strong>分母爭議檢查：</strong>本報告未以「估值便宜」作為進場依據（估值燈為🔴），故本檢查不適用（無效論證風險為零）。<strong>證據權重：</strong>「NDR157%/US商業149%/guide上修」屬L1已實現事實(財報數字)；「Karp自陳擊敗frontier lab」屬L3敘事層——本報告裁決以L1證據為主，L3僅作監測項不作論據支撐moat_trend方向。<strong>Steelman義務（裁決為進場，需寫「現在就賣/不買的最強論證」）：</strong>①EV/Sales 60.4x是任何理性估值框架下都極端昂貴的倍數，即使成長93%也難以完全證成；②財報後單日+26-28%的euphoric repricing歷史上經常部分回吐；③內部人零買進、7筆淨賣出$6.95億是管理層用真金白銀投票的訊號，不容忽視。<strong>回應：</strong>①③已納入row8a的F2式紀律（估值🔴強制分批+specific重進門檻，非全倉一次buy-in）；②本報告Base情境已假設倍數壓縮至45x(接近腰斬)仍維持正報酬，euphoria回吐已部分計入Bear情境(−53.5%)。三者皆已被裁決機制內化為紀律而非被忽視。</p>
+</section>
+
+<section><h2 id="s12">§12｜Pre-mortem與Max DD</h2>
+<h3>13a.不確定假設</h3>
+<table>
+<tr><th>#</th><th>不確定假設</th><th>thesis前提</th><th>不成立後果</th></tr>
+<tr><td>1</td><td>frontier lab不會在12-24個月內複製FDE部署模式</td><td>H1成立</td><td>Top客戶轉單，moat_trend強制降↓</td></tr>
+<tr><td>2</td><td>美國政府AI預算不受選舉週期/CR凍結顯著干擾</td><td>H2成立</td><td>US政府YoY大幅減速，估值同步重估</td></tr>
+<tr><td>3</td><td>consensus EPS路徑（本snapshot已知落後）實際上修幅度足以支撐當前倍數</td><td>H3/§10估值論證</td><td>若上修不如預期，PEG/Fwd PE回到危險區間</td></tr>
+</table>
+<h3>13b.Pre-mortem：失敗故事倒推</h3>
+<div class="premortem">假設5年後這個部位虧50%，最可能發生的故事是：2027年某季，一家PLTR的top-20商業客戶（曾貢獻NDR擴張的核心對象）被證實引入某frontier lab自建的企業部署團隊並終止續約；同期美國政府因預算僵局延遲新簽約，US政府YoY單季驟降至30%以下；市場將PLTR重新分類為「又一個被模型層吃掉的應用層公司」，Fwd PE從75.8x壓縮至25x以下，觸發連鎖停損賣壓，股價跌破$80。</div>
+<h3>13b'.「成功但劣化」第二敗局</h3>
+<p>假設§2核心thesis完全兌現（US商業/政府持續高速成長、TAM滲透率如期擴大），但以<strong>低毛利化</strong>形態兌現——本季調整後毛利率已首度出現下滑（承接客戶雲代管成本），若此模式規模化（PLTR為更多客戶承接基礎設施成本以換取deal），市場可能把估值框架從「純軟體SaaS(75x+)」切換到「系統整合商(20-30x)」，即使營收/客戶數持續達標，5年報酬變成僅+10-20%（倍數框架切換吃掉大部分EPS複利的勝利）。此敗局已反映進§10.5 Bull情境終端倍數未進一步上修（僅55x非更高），作為保守化處理。</p>
+<h3>13c.路徑壓力測試（Max DD）</h3>
+<table>
+<tr><td>估計Max DD範圍</td><td class="r">−38.5%~−53.5%</td></tr>
+<tr><td>最可能觸發時點</td><td>2-3年後，若R1(客戶流失)或R3(guide miss)任一觸發+估值同步重估</td></tr>
+<tr><td>觸發後最快復原</td><td>12-24個月（若thesis完整，EPS複利+倍數企穩）；若H1推翻則不恢復</td></tr>
+<tr><td>路徑風險評級</td><td class="r">🔴 &lt;−50%(多數人會中途出場)</td></tr>
+</table>
+<p><strong>校驗：</strong>若Max DD落在−53.5%，能否撐到復原？條件：①衛星級規模持有(≤portfolio 2-3%)；②不使用槓桿；③§2.F Single Thing(top客戶流失實證)未發生；④分批進場，留子彈於回檔加碼。<strong>倉位處理(F2條件式)：</strong>路徑風險🔴，但thesis完整(moat_trend→非↓、runway_post_y5🟢非🔴、§10.6非估值依賴型)→<strong>不因波動本身砍倉</strong>，改為註記「深回撤心理準備：Max DD −53.5%，僅在能承受此波動下持有」+§13c標「中途出場風險高」。</p>
+<p class="src">dd-meta max_dd_pct=−53.5（範圍下界）；頁首Max DD −53.5%同取下界，三處一致。</p>
+</section>
+
+<section id="decision"><h2 id="s13" style="scroll-margin-top:80px;">§13｜決策（統一裁決唯一居所）</h2>
+<div class="decision-box enter">
+<span class="chip enter">進場</span>
+<p class="chip-sub">進場（爆發候選・分批）：首階小倉(1/3目標)，其餘2/3掛估值回檔或論點增強雙軌觸發；以US商業YoY與客戶流失實證為加減碼軸。</p>
+</div>
+<h3>決策矩陣套用</h3>
+<table>
+<tr><th>優先序</th><th>條件</th><th>本案</th><th>結果</th></tr>
+<tr><td>1 Hard Veto</td><td>signal=X</td><td>signal B</td><td>不觸發</td></tr>
+<tr><td>2 Hard Veto</td><td>thesis不可調和不成立</td><td>矛盾集中單一軸(估值)，可調和</td><td>不觸發</td></tr>
+<tr><td>3 Hard Veto</td><td>moat↓且moat≤B</td><td>moat→/A級</td><td>不觸發</td></tr>
+<tr><td>4 節奏調節</td><td>週線結構❌</td><td>MA✅強勢進場</td><td>不觸發</td></tr>
+<tr><td>5 節奏調節</td><td>動能過熱(4週漂移&gt;10%)</td><td class="a"><strong>是</strong>(4週漂移約+25%，現價貼近布林上軌)</td><td><strong>觸發→強制分批starter</strong></td></tr>
+<tr><td>6 Soft Veto</td><td>signal C</td><td>signal B</td><td>不觸發</td></tr>
+<tr><td>7 Soft Veto</td><td>runway🔴</td><td>runway🟢</td><td>不觸發</td></tr>
+<tr><td>7a Soft Veto</td><td>估值依賴型且無市場錯在哪</td><td>非估值依賴型(re-rate為負,§10.6)</td><td>不觸發</td></tr>
+<tr><td>7b</td><td>capalloc C</td><td>capalloc B</td><td>不觸發</td></tr>
+<tr><td><strong>8a 爆發候選</strong></td><td>signal≥B+runway🟢+26週漲幅&lt;100%+非估值依賴+moat≠↓+val∈{🟠,🔴}</td><td>全過(26週僅+16.6%，遠未達過熱門檻)</td><td><strong>→進場・爆發候選，val🔴故附F2式紀律</strong></td></tr>
+</table>
+<p class="src">無Hard Veto；Row5觸發節奏調節(強制分批)；Row8a全部條件通過→<strong>進場・爆發候選路徑</strong>，val🔴要求F2式紀律：首階倉位減半、明確重進門檻。</p>
+<h4>QC-48冷讀結論（獨立critic，機制見文末gate狀態，過程不渲染）</h4>
+<p>已通過——獨立critic對§10.5 Bull依據(§3.F滲透率算術)、P_bull與§10.7 pattern match歷史IRR相容性(NOW案例23%/yr vs本案Bull14.5%/yr，本案更保守合理)、§6.A'' runway🟢 sourced證據(NVIDIA聯盟主權AI堆疊，法說明確提及)三項逐一驗證，皆成立，爆發候選路徑維持。</p>
+<h3>13a.倉位角色與進場計畫＋opportunity cost</h3>
+<table>
+<tr><th>項目</th><th>具體內容</th></tr>
+<tr><td><strong>組合角色</strong></td><td><strong>衛星持倉</strong>（dd-meta dca_role=衛星）——爆發候選路徑禁核心角色</td></tr>
+<tr><td>目標倉位上限</td><td>2-3%（小輸大贏，倉位本身即風控；val🔴故取區間下緣）</td></tr>
+<tr><td>初始建倉倉位</td><td>1/3目標（首階小倉，動能過熱row5+估值🔴row8a F2雙重要求分批）</td></tr>
+<tr><td>進場價位區間</td><td>現價$158.43可建首階；其餘2/3掛(a)回檔至Fwd PE(FY+2)&lt;65x(約$137)或(b)論點增強觸發(下季US商業YoY維持&gt;130%且NDR維持&gt;150%)雙軌加碼</td></tr>
+<tr><td>持有年限標記</td><td>長期5-10年(§13c)＋F2深回撤心理準備註記(Max DD−53.5%，幾乎必經大幅回撤，thesis完整不因波動砍倉)</td></tr>
+<tr><td><strong>opportunity cost</strong></td><td>邊際資金PLTR vs①加碼已持AI核心(NVDA/MSFT)：後者Beta更低、倍數更合理(NVDA PEG&lt;1、MSFT Fwd PE~30x)，PLTR適合作高Beta衛星級加碼而非取代核心；②vs同軌高成長SaaS(SNOW/CRWD/DDOG)：PLTR成長速度領先2-4倍但EV/Sales溢價亦最高，屬「更高beta、更高成長」互補非替代。<strong>結論：邊際資金放PLTR合理，但須以衛星級倉位(2-3%)控制估值尾部風險，不建議取代任何現有核心席位。</strong></td></tr>
+</table>
+<p class="note">實際組合佔比由portfolio-manager skill決定；此處為決策輸入非組合拍板。</p>
+<h3>13b.加碼與減碼條件</h3>
+<table>
+<tr><th>行動</th><th>觸發條件</th><th>調整至</th></tr>
+<tr><td>加碼</td><td>股價回落至Fwd PE(FY+2)&lt;65x(約$137)</td><td>目標上緣3%</td></tr>
+<tr><td>加碼</td><td>連2季US商業YoY維持&gt;130%且NDR&gt;150%(論點增強，非價格觸發)</td><td>目標上緣3%</td></tr>
+<tr><td>減碼</td><td>連1季guide顯著miss或Top20客戶流失實證</td><td>減至1/2</td></tr>
+<tr><td>清倉</td><td>§2.F Single Thing觸發(top客戶轉向frontier lab實證)</td><td>0%</td></tr>
+</table>
+<p class="src">長抱賣出分軌：衛星角色不受thesis級清倉限制，可用價格/估值觸發trim，但完整清倉仍要求thesis級證據（客戶流失實證），對齊F2對稱條款。</p>
+<h3>13c.建議持有年限</h3>
+<p><strong>建議持有年限：長期5-10年</strong>，原因：runway_post_y5🟢(§6.A'')+利潤池流入(§3)+capalloc B(不觸發中期上限)。<strong>中途出場風險高(Max DD−53.5%🔴)——須以能承受深回撤的衛星級倉位持有。</strong></p>
+<table>
+<tr><th>年份</th><th>EPS估計</th><th>來源</th><th>備注</th></tr>
+<tr><td>FY2026E</td><td>$1.48</td><td>Excel共識2026-07-30(財報前，落後)</td><td>guide隱含實際值可能更高</td></tr>
+<tr><td>FY2027E</td><td>$2.09</td><td>Excel共識</td><td>—</td></tr>
+<tr><td>FY2028E</td><td>$3.01</td><td>Excel共識</td><td>—</td></tr>
+<tr><td>FY2030E(§6邏輯外推)</td><td>~$5.48(Base)</td><td>§6.I/§10路徑</td><td>成長遞減假設</td></tr>
+</table>
+<p><strong>假設長期持有(5-10年)，現在的股價適合嗎？</strong>適合（條件式，分批）。$158.43對應FY+2 Fwd PE 75.8x/PEG 1.10，5Y機率加權EV+40.8%／IRR9.3%。報酬主要來自EPS複利而非倍數擴張(§10.6)，這是本案最重要的支撐論據——即使承受重大倍數壓縮，正向報酬仍可能保住。對能承受−50%級波動的長線資金，分批進場合理；對無法承受深回撤者，等回檔至Fwd PE&lt;65x更佳。</p>
+</section>
+
+<section><h2 id="s14">§14｜複審觸發與保質期</h2>
+<table>
+<tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>時間/條件</th></tr>
+<tr><td>1</td><td>Q3 FY2026財報(US商業YoY、NDR、政府側進度)</td><td>財報日期</td><td>約2026-11月上旬(guide已知：Rev$21.6-21.64億)</td></tr>
+<tr><td>2</td><td>UK NHS FDP合約複審結論／2027-02 break clause是否觸發（本季法說未提及；已有2個國會委員會具名建議動用）</td><td>產業事件</td><td>2026H2複審結論／2027-02為終局觸發點</td></tr>
+<tr><td>3</td><td>股價回落至$137(Fwd PE&lt;65x)加碼窗口，或回升至&gt;$200(接近前高)減碼觀察</td><td>價位觸發</td><td>持續監測</td></tr>
+<tr><td>4</td><td>§2.F：任一top-20商業客戶轉向frontier lab直營、終止續約</td><td>Single Thing</td><td>法說Top客戶揭露/8-K/業界新聞</td></tr>
+</table>
+<p><strong>保質期：2026-11-10（Q3 FY2026財報發布前有效，具體日期待公司公告確認）。</strong>財報後（尤其US商業YoY是否維持&gt;130%、NDR是否維持&gt;150%）須重評。<br><strong>最可能upside：</strong>Q3再度beat+raise，consensus EPS大幅上修，PEG進一步收斂，市場重新確認「非估值依賴型」論證。<br><strong>最可能downside：</strong>frontier lab宣布具體部署服務產品並拿下已知PLTR客戶，或美國政府預算僵局延遲新簽約——雙重打擊將觸發估值與基本面同步重估。</p>
+</section>
+
+<details id="sA">
+<summary>附錄A｜擇時（降級，INFORMATIONAL ONLY — 不主導§13）</summary>
+<h3>基本面評級機制</h3>
+<div class="reasoning">底分=(護城河9.0+成長持久性9.0)/2=9.0。體質veto 5項：①GM近3年未連續下滑&gt;2pp✅（持續改善）②FCF/NI 1.29≥0.7✅③FY+1 EPS共識近90天未下修✅(guide上修11pp，質性訊號一致)④近4季營收YoY未全負✅(全強正)⑤Net Debt/EBITDA≤3✅(淨現金)→0/5不過→品質分=min(9.0+0,10)=<strong>9.0→A級</strong>。</div>
+<table>
+<tr><th>步驟</th><th>條件</th><th>本案</th><th>輸出</th></tr>
+<tr><td>1拒絕檢核</td><td>trap🔴/gate🔴/quality拒絕</td><td>trap🟡、val🔴(gate)、quality 9.0</td><td>不拒絕(quality未拒絕)</td></tr>
+<tr><td>2高強度A+</td><td>quality S/A+gate🟢+MA🟢/✅+trap🟢</td><td>gate(val)🔴，非🟢</td><td>不達A+</td></tr>
+<tr><td>3中高A</td><td>quality S/A+gate🟡+MA✅+trap🟢</td><td>gate🔴非🟡，trap🟡非🟢</td><td>不達A</td></tr>
+<tr><td><strong>QC-31：估值🔴≠C</strong></td><td>quality A級標的估值🔴仍落B（非A、非C）</td><td>quality9.0(A級)+val🔴+無thesis失敗證據</td><td><strong>signal=B</strong></td></tr>
+</table>
+<p class="src">final_signal=B（估值🔴代表現在不該用核心倉位進場，但標的品質本身A級，非thesis失敗，故非C）。dd-meta signal=B/verdict=B。</p>
+<h3>估值燈</h3>
+<div class="reasoning">EV/S年度快照分位62%(§10.1，資料限制下之代理)→落30-70%區間本應🟡，但PEG(FY+2)1.10落1-2「合理」不足以單獨判🔴；取較嚴者需交叉檢查：財報後單日+26-28%euphoric repricing疊加絕對倍數(EV/S60.4x、Fwd PE FY+2 75.8x)顯著高於FY22-23常態且同業溢價108%，本報告判定<strong>估值燈🔴（偏保守，因分位代理指標本身資料受限，寧可從嚴）</strong>。盲點1救援不適用(§6🟢+PEG&lt;2.0但分位62%未達&gt;85%的救援不需要，反是要判斷是否過嚴——選擇維持🔴因倍數絕對值確實處歷史高檔區間)。盲點3救援：consensus落後風險已知但無法sourced量化≥10%上修幅度，誠實不觸發。</div>
+<h3>Pure MA週線狀態機</h3>
+<div class="reasoning">現價$158.43｜W52 $154.98(斜率−1.5%)｜W104 $121.90(斜率+12.4%)｜W250 $59.30(13週斜率+10.2%，因歷史僅262週資料以可得最早250週窗口近似)。判定：價&gt;W52&gt;W104&gt;W250且W250斜率+10.2%&gt;3% → <strong>✅強勢進場</strong>。⚠️註記：現價貼近20週布林上軌($158.43，計算值上軌恰為$158.43)，短期動能明顯過熱(4週漂移+25%)。</div>
+<p class="src">寫入dd-meta ma=✅。</p>
+<h3>Bollinger(2σ,20週)</h3>
+<div class="reasoning">上$158.43／中$135.81／下$113.19。現價貼近上軌上緣→<strong>過熱</strong>，觸發§13 row5節奏調節（強制分批，非否決）。</div>
+<h3>大盤豁免層</h3>
+<div class="reasoning">SPY現價$738.93(2026-07-20週收) vs W104 $628.12→未破線(大盤正常)。係數×1.0，無系統性風險。</div>
+<h3>R:R三時距</h3>
+<table>
+<tr><th>時距</th><th>計算</th><th>目標價</th><th>R:R</th></tr>
+<tr><td>短期(1年)</td><td>FY26E$1.48×合理65x</td><td>$96.2</td><td class="r">−39%(下行，短期估值過熱)</td></tr>
+<tr><td>中期(2年)</td><td>FY27E$2.09×合理60x</td><td>$125.4</td><td class="r">−21%(短中期皆偏貴)</td></tr>
+<tr><td>5Y(長期)</td><td>§6.E Base 5Y EPS$5.48×45x</td><td>$246.6</td><td>+56%</td></tr>
+</table>
+<p class="src"><strong>Bear anchor：</strong>Bear EPS=FY26$1.48×0.9=$1.33；Bear PE=§6.E「降至10%」情境22x；機械Bear股價=$29.3(極端尾部，−82%)。<strong>QC-21：</strong>下行距離極大(&gt;15%)，R:R有效，無數學假象。決策相關bear採§10.5 −53.5%（$73.7）而非機械極端尾部。dd-meta stress=2/2；upside_short=−39%／upside_mid=−21%（短中期R:R為負，反映本報告估值紀律的核心：短期不建議追高，長期論證仍成立）。</p>
+<h3>I｜長期持有信心</h3>
+<div class="reasoning">moat S/A(A,9.0)✅ 且 moat_trend∈{↑,→}(→)✅ 且 runway_post_y5∈{🟢,🟡}(🟢)✅ 且 §12證偽距離遠(§2.F機率估12%，&lt;20%門檻)✅ → 四條件全滿足 → <strong>長期持有信心：高</strong>。寫入dd-meta long_term_confidence=高。</div>
+</details>
+
+<p class="src" style="margin-top:30px;">— 報告結束 —｜本報告為投資研究參考，非投資建議；本檔為隔離測試輸出，未進 docs/、未更新 INDEX、未經 update_dd_index.py 同步。所有數據截至 2026-08-06（yfinance rate-limited，改用本地 weekly_cache + WebFetch/WebSearch 交叉驗證，含 2 個 sonnet 子 agent 代查）。<br>
+<strong>Sources：</strong>本地 data/weekly_cache/PLTR.json（週線262週）＋data/regime_prices.json（SPY大盤）；scripts/get_eps_for_ticker.py Excel consensus snapshot 2026-07-30；stockanalysis.com（財務三表/估值倍數，2026-08-05/06）；finviz.com／marketbeat.com（估值交叉驗證/分析師目標價/內部人交易）；stocktitan.net（Q2 FY26財報稿，2026-08-03）；Palantir Q2 FY2026 Earnings Call逐字稿（Koyfin轉錄，2026-08-03，本體全讀）；knowledge/q.py PLTR帳本（歷次裁決一行歷史紀錄）；docs/dd/DD_PLTR_20260629.html（dd-meta＋§14/§15觸發器區塊，唯一允許讀取之前份報告）。</p>
+
+</div>
+<button class="printbtn" onclick="window.print()">列印為 PDF</button>
+
+<script id="dd-meta" type="application/json">
+{
+  "ticker": "PLTR",
+  "schema": "v15.0",
+  "date": "2026-08-06",
+  "price_at_dd": 158.43,
+  "signal": "B",
+  "trap": "🟡",
+  "trap_label": "🟡 觀察期",
+  "moat": "A",
+  "val": "🔴",
+  "ma": "✅",
+  "fpe_fy2": 75.8,
+  "pct_5y": 62.0,
+  "peg_fy2": 1.10,
+  "upside_short_pct": -39.0,
+  "upside_mid_pct": -21.0,
+  "stress": {"pass": 2, "total": 2},
+  "moat_score": 9.0,
+  "growth_durability": 9.0,
+  "quality_score": 9.0,
+  "ai_risk": "🟢",
+  "long_term_confidence": "高",
+  "verdict": "B",
+  "oneliner": "Q2 FY26 營收+93%YoY創高、US商業+149%、NDR157%(+700bp)創紀錄，guide史上最大單次上修；財報後單日+26-28%致估值極端(EV/S 60x)，護城河A級維持、趨勢→（frontier lab競爭敘事升溫但無客戶流失實證）；裁決進場・爆發候選（衛星、分批、F2紀律），Base IRR不依賴re-rate為核心支撐論據。",
+
+  "dca_verdict": "進場",
+  "dca_role": "衛星",
+  "moat_trend": "→",
+  "runway_post_y5": "🟢",
+  "ev5y_pct": 40.8,
+  "irr_base_pct": 9.25,
+  "max_dd_pct": -53.5,
+  "asym_ratio": 2.2,
+  "bull_5y_price": 312.4,
+  "bear_5y_price": 73.7,
+  "p_bull_pct": 30.0,
+  "p_bear_pct": 25.0,
+  "archetype": "品質複利成長",
+  "rearm_trigger": "股價回落至 Fwd PE(FY+2) < 65x（約 $137）或連 2 季 US 商業 YoY>130%+NDR>150%論點增強觸發",
+
+  "catalysts": [{"date": "2026-11-10", "date_precision": "month", "type": "guidance", "event": "Q3 FY2026 財報（US商業YoY/NDR/政府側進度）", "impact": "高", "watch": "若US商業YoY跌破130%或NDR跌破150% → §10.5情境重評、moat_trend重審"}],
+  "base_eps_path": {"FY2026": 1.48, "FY2027": 2.09, "FY2028": 3.01},
+  "eps_basis": "non-gaap-usd",
+  "fy_end_month": 12,
+  "endo_growth_ceiling": 37,
+  "capalloc_grade": "B",
+  "moat_execution": 9.0,
+  "moat_pricing_power": 9.0,
+  "industry_clock_phase": "II",
+
+  "kill_metrics": [
+    {"metric": "US商業營收YoY", "bear_threshold": "連2季<100%→減碼；<80%→清倉檢視（現149%）", "window": "2季", "last_status": "ok"},
+    {"metric": "NDR", "bear_threshold": "連2季<130%→減碼檢視（現157%）", "window": "2季", "last_status": "ok"},
+    {"metric": "Top-20客戶單戶營收成長", "bear_threshold": "轉負或具名客戶轉向frontier lab實證→§2.F Single Thing觸發，清倉", "window": "", "last_status": "ok"},
+    {"metric": "Fwd PE(FY+2)估值分位", "bear_threshold": "回落至<65x→加碼窗；若guide連1季顯著miss且倍數未壓縮→減碼", "window": "", "last_status": "warning"}
+  ]
+}
+</script>
+</body>
+</html>
