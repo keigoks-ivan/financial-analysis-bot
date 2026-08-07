@@ -292,3 +292,85 @@
 - 附錄 A：「**降級說明（v13、v14.5 更新）**:舊 DD §2 的週線結構趨勢過濾、短期 R:R、估值燈、品質分機制收進此附錄。」
 - 附錄 A I：「**定義（v14.5 補回;隨 v13 改版一度被刪，QC-31 A 級條件與頁首儀表板都引用它卻無計算規則）**」
 - 附錄 A §F 原重複一句「與已退役的 ETF 六態機無承繼關係。」（六態機退役的權威敘述保留在附錄 A 開頭定位段，其餘重複已刪）。
+
+
+---
+
+## v15.1（2026-08-08）文本層重寫（判斷機器零變動）
+
+**WHY**：SKILL.md 227KB 底噪（~69k tokens）是每份 DD cache_read 的最大固定成本；三段接力實測失敗（MELI 108% vs 80% 退場門檻，同日收回）證明真槓桿是底噪本身。**改動**：核心壓至 154KB（−31%，散文壓縮＋事故敘事外移本檔）＋三塊階段性內容逐字移出為條件載入 references（`critic-gates.md` 寫稿後 critic 協議／`decision-layer.md` §11-§13 決策層全文與矩陣／`timing-appendix.md` 附錄 A 擇時）；狀態判定 Python 移 `data-collection.md`。編號系統（QC-1~53、§1-14）與全部門檻、fail 方向、觸發條件凍結未動；dd-meta schema 維持 v15.0（報告輸出契約零變動，skill 版號與 schema 本次刻意不同步）。驗收＝rule_ledger 22/22 逐條對帳＋獨立 opus diff 稽核（3 必修全補）。
+
+### v15.1 收容：自 SKILL.md 移出的個案敘事（QC-21/QC-22 為補個案，規則層 WHY 原已在本檔）
+
+## 1. QC-19｜標的自身重大事件強制搜尋（BSX 教訓）
+
+規則標題所掛的「BSX 教訓」四字為 changelog 未載之唯一線索；SKILL.md 內無更長敘事，僅標題括注。**新檔壓成子句「防漏併購與訴訟」。**
+
+> ### QC-19｜標的自身重大事件強制搜尋（BSX 教訓）
+
+## 2. QC-21｜R:R 數學假象防禦（BSX 教訓）
+
+> 當 Bear 股價 ≈ 現價（差距 < 5%）時，下行距離 → 0 → R:R 分母趨近 0 → R:R 爆到 100x 但無實質意義。**這代表「Bear Case 已被市場完全定價」,安全邊際實際為零。**
+
+（門檻表 >15% / 5-15% / <5% / Bear>現價 與「極端 Bear = Bear PE × 0.8 + Bear EPS × 0.85」已逐字保留於新檔；上引「爆到 100x 但無實質意義／安全邊際實際為零」的解釋敘事被壓成子句「防分母趨零的 R:R 假象」。）
+
+## 3. QC-22｜股價漂移檢查（CRDO 教訓）
+
+> ③ 漂移 > 20%（**CRDO 類三週 +79%**），§1 加註「追高風險極高，建議等待 Pure MA 🟢最佳進場或回測 Bollinger 中軌」。
+
+（「CRDO 類三週 +79%」括注被刪；10%／20% 門檻與三項動作逐字保留。）
+
+## 4. QC-23｜競爭威脅 3 級分類（CRDO/ONTO 教訓）
+
+> 觸發 🔴 或 ⛔ 時，§5 護城河等級相應下調並在 §1 明確標註。**範例：Marvell Golden Cable + AWS 五年協議 = 🔴;Trainium3 PCIe SerDes 改用 Synopsys = ⛔。**
+
+## 5. QC-24｜Intraday 訊號檢查（ONTO 教訓）
+
+> 若任一日觸發，附錄 A 建倉建議標註「近 5 日 intraday 警示」並在 §1 提醒。**範例：ONTO 4/16 intraday $295 vs 收 $266 = 🔴 動能末段訊號。**
+
+## 6. QC-25｜Beta 雙來源驗證（CRDO/ONTO 教訓）
+
+> **範例：CRDO 2.72 vs 3.35（23%）;ONTO 1.47 vs 2.35（60%，雙情境）。**
+
+## 7. QC-26｜Margin 結構性測試（ONTO 教訓）
+
+> **範例：ONTO 49.7% vs Camtek 51.6%（同業擴張），更低階技術 margin 反而更低 = 結構性質變。**
+
+## 8. QC-27｜Revenue vs OI 增長率 Divergence（AMZN 教訓）
+
+> **範例：AMZN Q4 2025 AWS Rev +24% vs OI +17% = 7pp divergence → 嚴重壓縮閾值。**
+
+## 9. QC-28｜絕對成長 vs 相對成長對照（AMZN 教訓）
+
+> **範例：AMZN AWS vs GCP 2025Q4，GCP 絕對新增 $10.0B ≈ AWS $10.3B → AWS 規模優勢在消失。**
+
+## 10. QC-30｜同業溢價收斂壓測（LLY 教訓）
+
+> **範例：LLY Fwd PE 26x vs NVO 11x = 138% 溢價 → 必須測試 NVO 追趕情境。**
+
+## 11. QC-31｜基本面評級定義表 · 核心規則 4 的 PANW 範例
+
+> 4. **附錄 A 的「都不過 → 迴避」是時機語意，不是 signal 對映**:該行描述「現在不進場」的時機，不是 signal grade 指派。**範例：PANW 短期 R:R −0.17、中期 0.23 → 不新進;但 thesis 完整（品質 10、護城河 A、估值🟡）→ signal = B。**
+
+（規則 4 本體逐字保留，僅刪範例。）
+
+## 12. QC-36｜5Y 目標價一致性（2308.TW 教訓）
+
+規則標題括注「（2308.TW 教訓）」為唯一敘事線索，SKILL.md 內無更長段落。
+
+## 13. §6.H 客戶結構深度（3661 Mariana 教訓）
+
+> ### H｜客戶結構深度（**3661 Mariana 教訓**）
+> …**「Mariana 占比超過 50%」**（此字串同時作為 §2.F Single Thing 的示例，該處已於新檔保留為 trigger 寫法示例）
+
+## 14. §10.4 同業估值比較 · Alchip / GUC 教訓
+
+> **禁止**用「同產業但不同業務模式 tier」的高倍數公司當 anchor（**3661 Alchip 教訓：應跟 GUC/Faraday 比，不是 AVGO/MRVL**）。
+
+（禁止條文本體逐字保留；括注教訓被壓成子句「防跨 tier 錨定」。）
+
+---
+
+## 附註：已在 changelog 有記載、故本次直接丟棄不再收錄者
+
+QC-39（AVGO 型過度樂觀 / SNDK 型過嚴的全文敘事）、QC-40（鷹架滲入 HTML 實案）、QC-41（Boris verify-app pattern 由來、PLTR A/B 對質）、QC-43（archetype 誤尺實案）、QC-47、QC-48、QC-49、QC-50、QC-51、QC-52、QC-53、§11.4b（ORCL / SNOW pattern 全文）、§12b'（TSLA robotaxi pattern 全文——新檔保留其 ≤80 字模板與「原型：robotaxi…」一句作判準錨，僅刪長敘事）、§11.3 翻面三元歸因（NU/PLTR/DECK）、§10 多尺矛盾（MU 20260705 原型——新檔保留「原型：MU 20260705」一句，因該句是判準的類別錯誤示範）、§13 四問（DECK/PLTR、SNDK/NKE、SE/ISRG、SNDK/GLW/TT——pattern 名稱作為觸發索引保留於括注）、§11.1 拓撲判定（UBER pattern）、row 4 退出 Soft Veto（SE / NOW）、baseline rows 9/9b/10 MA ❌ 空格（RMS / ROP）、§7 中場邊界（MPWR）、篇幅帶（BKNG/ANET vs SIMO）。

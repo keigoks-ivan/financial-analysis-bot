@@ -234,3 +234,23 @@ spawn 連續失敗 2 次（agent 未回、回傳空、或回傳完全不符格�
 
 ---
 
+
+
+---
+
+## 狀態判定（接續上方批量採集腳本的 closes / w52 / w104 / w250 / slope_pct）
+
+> v15.1（2026-08-08）自 SKILL.md 附錄 A 移入本檔（Python 實作唯一居所）；六態條件表與 W250 斜率定義 ±3%、盲點 2 救援見 `references/timing-appendix.md` §F。
+
+```python
+# 狀態判定（接續批量採集腳本的 closes / w52 / w104 / w250 / slope_pct）
+w52_slope = (w52 / float(np.mean(closes[-65:-13])) - 1) * 100 if len(closes) >= 65 else None
+w104_slope = (w104 / float(np.mean(closes[-117:-13])) - 1) * 100 if len(closes) >= 117 else None
+if w250 is None: state = "樣本不足（< 250 週）"
+elif current < w250 or slope_pct < -3: state = "❌ 系統失效"
+elif current < w104: state = "🟠 暫不進場"
+elif current < w52 and w52_slope > 0 and w104_slope > 0 and slope_pct > 0: state = "🟢 最佳進場"
+elif current > w52 > w104 > w250 and slope_pct > 3: state = "✅ 強勢進場"
+elif current > w52 > w104 > w250 and abs(slope_pct) <= 3: state = "🟡 減半進場"
+else: state = "🟡 觀察池"
+```
