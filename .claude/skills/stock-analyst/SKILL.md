@@ -96,7 +96,6 @@ Part II — 決策層（疊在基本面上，不重搜，合計 ≤12KB——只
 | Part II 動筆前 | 一律 | `references/judgment-playbook.md`（QC-53 情境判斷手冊，掃觸發索引、命中逐條實答） |
 | Write 之前 | 一律 | `references/html-output.md`（頁首模板/CSS/INDEX/同步步驟）＋ `references/dd-meta-schema.md`（QC-32 全文） |
 | 收到既有 DD 的 refresh 請求時 | 最新一份為 v15 檔（`"schema":"v15`）、距今 ≥45 天、屬例行複審（非事件驅動） | `references/delta-refresh.md`（delta 複審協議：資格閘／升級觸發／patch 清單；載入後由該檔接管執行順序） |
-| 全套 DD 開跑前（編排者 spawn 段 A 前）／段 B·段 C 開場 | 走 writer 三段接力（全套 DD 預設；delta 不適用） | `references/writer-stages.md`（三段職責／交接 digest 模板／跨段一致性／崩潰恢復判準） |
 | 修改本 skill 規則時 | — | `references/changelog.md`（制度沿革）＋ `knowledge/rule_ledger.md`（判斷類規則 kill condition 登記簿） |
 
 複利 archetype 的標準流程只需載入 data-collection（步驟 0）、roic-durability（寫 §5 前）與 html-output + dd-meta-schema（Write 前），其餘 reference 全部不進 context。
@@ -664,7 +663,7 @@ QC-1~QC-46 多為**通用成長複利股**累積的 tripwire;當 §0 判為非�
 
 **Refresh 路由（收到既有 DD 的重跑請求時最先判；v15.0，2026-08-07）**：目標 ticker 已有 `docs/dd/DD_{TICKER}_*.html`，且最新一份為 v15 檔（`"schema":"v15`）、距今 ≥45 天、屬**例行複審**（非用戶因具體事件要求重看）→ 走 **delta 複審模式**：必 Read `references/delta-refresh.md`，照其資格閘與流程執行，本節以下的全套執行順序改由該檔接管。以下任一成立 → **不走 delta，照本節全套重跑**：① 最新一份為 legacy v12/v13/v14（順勢升 v15）;② 用戶明示「全套」「重寫」，或因具體事件（財報暴雷／併購／法規裁定／CEO 更迭／guidance 撤回）要求重看;③ 命中 repo CLAUDE.md「升 opus writer 四情境」（多文獻主張漂移／裁決近翻面邊界／特殊 archetype 首建／核心持倉年度大修）;④ 距上次**全套**重寫 > 9 個月，或已連續 delta ≥2 次。**delta 只有「維持」與「升級全套」兩種出口，不得在 delta 內翻面裁決**;delta 中途命中升級觸發時，數字包與對帳結果沿用，全套流程自下方步驟 1.5 接手。
 
-**三段接力路由（v15.0，2026-08-07；純執行層，不動任何判斷條文）**：確定走**全套**（非 delta）時，writer 預設拆成**三段接力**——段 A 研究採集＋§3–§5（含 §5.R）、段 B §6–§10＋附錄、段 C §1·§2＋§11–§14＋dd-meta＋收尾與 critic gate；每段是一隻新 spawn 的 agent（context 從 skill 底噪重啟），交接走「同一份 HTML 檔本體（區段擷取，**嚴禁整檔 Read**）＋ ≤6KB handoff digest」。職責表、digest 模板、跨段一致性條款、崩潰恢復與退場訊號全文見 `references/writer-stages.md`，**spawn 段 A 前與各段開場必讀**。**模型三段一致**：預設道 sonnet；命中 repo CLAUDE.md 升 opus 四情境則三段皆 opus（段間不換模型，防跨模型口徑漂移），critic 端與「writer 與 critic 永不同模型」鐵律不受影響。**delta 複審模式不適用三段切分**（小改切段反而多付兩次底噪），單段跑完。
+**三段接力已收回（2026-08-07，同日上線同日撤）**：writer 一律單段跑完。MELI 首檔實測三段合計 cache_read 為單段基線的 108%，觸發自訂退場訊號③（≥80% 即收回）——切段砍掉的是廉價的早期輪次，每段卻重付一次 skill 底噪地板，算術上不可能省。崩潰復原走一般 resume，不設專屬協議。
 
 
 ### Ticker 正規化
