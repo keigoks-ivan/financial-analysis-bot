@@ -96,6 +96,7 @@ Part II — 決策層（疊在基本面上，不重搜，合計 ≤12KB——只
 | Part II 動筆前 | 一律 | `references/judgment-playbook.md`（QC-53 情境判斷手冊，掃觸發索引、命中逐條實答） |
 | Write 之前 | 一律 | `references/html-output.md`（頁首模板/CSS/INDEX/同步步驟）＋ `references/dd-meta-schema.md`（QC-32 全文） |
 | 收到既有 DD 的 refresh 請求時 | 最新一份為 v15 檔（`"schema":"v15`）、距今 ≥45 天、屬例行複審（非事件驅動） | `references/delta-refresh.md`（delta 複審協議：資格閘／升級觸發／patch 清單；載入後由該檔接管執行順序） |
+| 全套 DD 開跑前（編排者 spawn 段 A 前）／段 B·段 C 開場 | 走 writer 三段接力（全套 DD 預設；delta 不適用） | `references/writer-stages.md`（三段職責／交接 digest 模板／跨段一致性／崩潰恢復判準） |
 | 修改本 skill 規則時 | — | `references/changelog.md`（制度沿革）＋ `knowledge/rule_ledger.md`（判斷類規則 kill condition 登記簿） |
 
 複利 archetype 的標準流程只需載入 data-collection（步驟 0）、roic-durability（寫 §5 前）與 html-output + dd-meta-schema（Write 前），其餘 reference 全部不進 context。
@@ -663,6 +664,9 @@ QC-1~QC-46 多為**通用成長複利股**累積的 tripwire;當 §0 判為非�
 
 **Refresh 路由（收到既有 DD 的重跑請求時最先判；v15.0，2026-08-07）**：目標 ticker 已有 `docs/dd/DD_{TICKER}_*.html`，且最新一份為 v15 檔（`"schema":"v15`）、距今 ≥45 天、屬**例行複審**（非用戶因具體事件要求重看）→ 走 **delta 複審模式**：必 Read `references/delta-refresh.md`，照其資格閘與流程執行，本節以下的全套執行順序改由該檔接管。以下任一成立 → **不走 delta，照本節全套重跑**：① 最新一份為 legacy v12/v13/v14（順勢升 v15）;② 用戶明示「全套」「重寫」，或因具體事件（財報暴雷／併購／法規裁定／CEO 更迭／guidance 撤回）要求重看;③ 命中 repo CLAUDE.md「升 opus writer 四情境」（多文獻主張漂移／裁決近翻面邊界／特殊 archetype 首建／核心持倉年度大修）;④ 距上次**全套**重寫 > 9 個月，或已連續 delta ≥2 次。**delta 只有「維持」與「升級全套」兩種出口，不得在 delta 內翻面裁決**;delta 中途命中升級觸發時，數字包與對帳結果沿用，全套流程自下方步驟 1.5 接手。
 
+**三段接力路由（v15.0，2026-08-07；純執行層，不動任何判斷條文）**：確定走**全套**（非 delta）時，writer 預設拆成**三段接力**——段 A 研究採集＋§3–§5（含 §5.R）、段 B §6–§10＋附錄、段 C §1·§2＋§11–§14＋dd-meta＋收尾與 critic gate；每段是一隻新 spawn 的 agent（context 從 skill 底噪重啟），交接走「同一份 HTML 檔本體（區段擷取，**嚴禁整檔 Read**）＋ ≤6KB handoff digest」。職責表、digest 模板、跨段一致性條款、崩潰恢復與退場訊號全文見 `references/writer-stages.md`，**spawn 段 A 前與各段開場必讀**。**模型三段一致**：預設道 sonnet；命中 repo CLAUDE.md 升 opus 四情境則三段皆 opus（段間不換模型，防跨模型口徑漂移），critic 端與「writer 與 critic 永不同模型」鐵律不受影響。**delta 複審模式不適用三段切分**（小改切段反而多付兩次底噪），單段跑完。
+
+
 ### Ticker 正規化
 
 收到 ticker 後先做正規化：美股 `AVGO`→`AVGO`;台股 `2330.tw`/`2330`→ 檔名用 `2330TW`、yfinance 用 `2330.TW`;港股 `9988.hk`→ 檔名 `9988HK`。檔名格式 `DD_{TICKER}_{YYYYMMDD}.html`。
@@ -670,6 +674,8 @@ QC-1~QC-46 多為**通用成長複利股**累積的 tripwire;當 §0 判為非�
 ### 執行順序
 
 收到 ticker 後，依以下順序執行，不得跳過或壓縮任何步驟：
+
+**所有 spawn 出去的執行型 agent（採集／查證／critic／patch／fix pass）的派工 prompt，一律附帶「機械輪次批次化」三條（定位先於動手／Edit ≥5 處改批次 Write／Bash 驗證併單條）——全文見【Token 紀律】。**
 
 0. **隨附文件前置處理（條件性）**：若用戶在給 ticker 的同時**提供外部文件**（PDF / 研究報告 / 法說逐字稿 / 產業報告等路徑），在跑搜尋之前先把這些文件**消化成「與本公司相關」的產業 read-through**（見【隨附文件處理協議】），其產出寫入報告 §8.5（緊接 §8 最新財報之後）。**只擷取會影響本公司業務前景 / 護城河 / §2 假設的內容**。無隨附文件 → §8.5 整段省略，不留佔位。
 1. **先執行所有搜尋**（見【即時數據協議】）——**第一步 spawn 採集 agent** 取回機械數字包（模板見 `references/data-collection.md`），判斷性搜尋（QC-39／QC-12／Munger／QC-19 深查）本 agent 自行執行；搜尋完成後在心中整理所有數據。**基本面研究只在此做一次**;Part II 決策層引用 Part I 結論，不另起獨立搜尋。
@@ -774,6 +780,13 @@ QC-\d   硬接線   接線：   （必填   必填，餵   寫入 dd-meta   取�
   **界線（違反此線＝品質下降，非省 token）**:可外包的是「**有唯一正確答案、且派工前就能定義清楚**」的查證;**不可外包**的是「**需要先知道自己在找什麼才看得見答案**」的閱讀——隨附逐字稿（§8.5）、前份 DD 的假設與觸發器、ID 的事實區塊，**一律本體自讀，禁止先 digest 再分析**。WHY:本批最高價值的發現全屬後者——AAPL 整場法說「**完全沒提到 Google／Gemini**」（一個不存在，只有帶著 TAC 假設去讀才看得見）、TT「7/29 −4.94% 發生在自家財報**之前**」（需對照時間軸）、MSFT「FY27 營益影響極小為真，因折舊省下被移到營益線之上的租金抵銷」（需追兩項會計變更的交互作用）。摘要器會在分析者知道要找什麼之前就先決定什麼重要，這些一律會被摘掉。且逐字稿全讀僅約 25-35k tokens ≈ 單份總成本 6%——**省 6% 去賭最高價值發現，是壞交易**。
   **不得因省 token 改動 critic 的模型指派**:QC-41/48/50 critic 用 **opus**（writer 為 sonnet 時）是**刻意的跨模型冷讀**（writer 不得自任 critic），是品質設計不是成本設計。**鐵律：writer 與 critic 永不同模型**——若日後 writer 改回 opus，critic 必須同時改回 sonnet。此處採集／查證外包仍用 sonnet（那是證據蒐集不是冷讀，不受此鐵律約束）。
 - **最終回報上限 400 字＋INDEX 行**:編排者（主線程）的 context 是共用資源。最終回報只給：路徑＋KB＋Part I 佔比、§13 裁決與前份對比、3-5 條決策相關變化、未解 critic 項、gate 狀態、INDEX 行。**不要複述報告內容**——報告本身就在磁碟上。
+
+**機械輪次批次化（v15.0，2026-08-07 新增；純執行紀律，不動任何判斷條文）**——機械動作（定位、取段、逐處替換、逐條驗證）本身不產生判斷，但**每一輪都付全額 context 重讀**。實測：一支做 94 次 Edit 的 agent 燒 **27.7M cache_read**（尾段每輪 217k），機械輪次約佔七成；30 次 Edit × 18 萬 context ≈ 540 萬 tokens，改成一次 Write 重寫整檔僅約 4 萬 output token、只花一輪。這是本產線 cache_read 的**第二大成本中心**（僅次於 always-on skill 本體），估省 600-800 萬 tokens／份。三條硬規則：
+
+- **定位先於動手**：動手改檔前，先用**一輪**複合 grep（多 pattern 併一條）把所有目標行號一次取齊；禁止「改一處 → grep 下一處 → 再改一處」交錯進行。
+- **Edit 批次化鐵律**：同一檔案的**機械性修改**（措辭替換、數字更新、格式修正——即不需逐處重新判斷者）**≥5 處時禁止逐個 Edit**；改為一次 Read 相關區段 → 同一則回覆內想清楚全部改點 → **單次 Write 重寫該檔**，或單條 Bash（heredoc ＋ python 腳本）一次完成全部替換。逐個 Edit 只保留給「每一處都需獨立判斷、且改點 < 5 處」。
+- **Bash 驗證批次化**：驗證性查詢（grep 計數、md5、wc、行號定位、多關鍵字掃描）**一律併成單條複合指令**（`a && b && echo --- && c`，或一支 python heredoc 一次印出全部），禁止一條一條打。**驗證輪次 ≤3 輪**。
+- **適用範圍**：DD writer 本體、修補／patch 流程、critic 回饋落地（fix pass），以及**所有 spawn 出去的執行型 agent**——派工 prompt 須附帶本三條。
 
 ---
 
