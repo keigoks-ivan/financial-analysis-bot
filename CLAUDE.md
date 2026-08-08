@@ -7,7 +7,7 @@
 | 任務類型 | 預設模型 |
 |---|---|
 | **Orchestrator（主線程大腦）** | **opus**（路由判斷、並行 session git 風險判讀、A/B 與衝突裁定；不因「只是跑 pipeline」降級） |
-| **DD 深度報告 writer（stock-analyst / ddreport）、多檔並行生產批** | **sonnet**（2026-08-06 起試行，見下） |
+| **DD 深度報告 writer（stock-analyst / ddreport）、多檔並行生產批** | **sonnet**（2026-08-08 起全面採用、無升 opus 例外，見下） |
 | **DD 寫稿後 critic（QC-41 / QC-48 / QC-50 / row 8b）** | **opus**＋強化職責書（見下） |
 | 產業 ID / 供應鏈 / macro 新報告寫稿（重研究、判斷密集） | opus（**維持不動**，DD 的證據不外推到此列） |
 | ID / macro / synthesis 的 cold-review critic（industry-thesis-critic、id-review） | sonnet（該列 writer 仍是 opus，故 critic 維持 sonnet） |
@@ -15,7 +15,7 @@
 | 大型 PDF 平行讀取拆 digest | sonnet |
 | 網站樣板 / 資料同步 / 機械層 script（無判斷） | sonnet |
 
-**DD writer 分層路由（2026-08-06 A/B 定案；上表「見下」所指）**——預設道＝**sonnet writer＋opus critic**（例行 60/90 天 refresh、追蹤池、結構乾淨的複利股、screen 升級首篩檔；實測每檔省 40–45%）。**以下四情境升 opus writer**：①多文獻主張漂移檔（LLY 型，≥2 份逐字稿/賣方報告需跨文件對帳）；②裁決可能翻面檔（前次觀望/迴避近 QC-49/QC-50 邊界）；③首建檔的特殊 archetype（金融／轉機／循環——換尺判斷最重）；④核心持倉年度大修。**實測依據**：2026-08-06 TSM（乾淨檔，sonnet ≈ opus 水準、唯一帶內 84KB）＋PLTR 盲測（爭議檔，已知 8 發現覆蓋 5/8＋1 個 opus 沒有的新發現、決策層 7/8 欄獨立同值；漏的集中在社會容忍度/priced-in 軸）。**退場訊號（可證偽，比照 rule_ledger 精神）**：sonnet 所寫 DD 於 90 天內因「writer 當時應見未見的既有證據」（非新資訊）被翻面 → 該類型立即收回 opus；累積兩例 → 整條預設道收回並檢討。critic=opus 端與「無效輸出必重試」（stock-analyst QC-41/48 條文）為本路由的品質前提，**永不隨成本降級**。
+**DD writer 路由（2026-08-08 持有人拍板：全面 sonnet，取代 2026-08-06 的四情境升 opus 分層）**——**所有 DD 一律 sonnet writer＋opus critic**，不再有升 opus writer 的例外情境。品質前提兩件（永不隨成本降級）：①critic＝opus＋強化職責書（覆蓋面掃描＋量化模組抽查，見下段）；②**機械驗算 gate `scripts/verify_dd_math.py`**（pre-commit 對 v15+ 檔重算 EV/IRR/AR/Max DD 恆等式/情境樹年期/必交模組存在性/版本戳，FAIL 擋 commit，0 token）——2026-08-08 SHOP/ANET 同尺稽核證實兩模型都會犯的純算術錯由 gate 攔，LLM critic 只管判斷與覆蓋。**實測依據**：2026-08-06 TSM（乾淨檔，sonnet ≈ opus 水準、唯一帶內 84KB）＋PLTR 盲測（爭議檔，已知 8 發現覆蓋 5/8＋1 個 opus 沒有的新發現、決策層 7/8 欄獨立同值；漏的集中在社會容忍度/priced-in 軸）。**退場訊號（可證偽，比照 rule_ledger 精神）**：sonnet 所寫 DD 於 90 天內因「writer 當時應見未見的既有證據」（非新資訊）被翻面 → 該類型立即收回 opus；累積兩例 → 整條預設道收回並檢討。critic=opus 端與「無效輸出必重試」（stock-analyst QC-41/48 條文）為本路由的品質前提，**永不隨成本降級**。
 
 ### DD 層 writer↔critic 對調（2026-08-06 持有人拍板，**試行至 2026-10 校準輪**）
 

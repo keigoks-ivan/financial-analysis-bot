@@ -187,6 +187,30 @@ if [ -n "$TARGETS_DD" ]; then
   fi
 fi
 
+# ---- DD math gate (v15+; deliberately staged-only) ---------------------------
+# verify_dd_math.py deterministically recomputes EV5y/IRR/AR/MaxDD identities
+# from dd-meta, checks scenario-tree terminal-year vs declared horizon, v15
+# required-module presence, and version-stamp unity. Added 2026-08-08 after a
+# same-rubric audit showed BOTH opus- and sonnet-written DDs ship arithmetic /
+# year-convention errors that LLM critics repeatedly miss — this class of bug
+# is exactly what a 0-token script catches. Staged-only even when the script
+# itself changes: known historical debt (e.g. SNDK §5.F) is fixed on next touch
+# of each file, not by mass retrofit (token discipline).
+if [ -n "$STAGED_DD" ]; then
+  echo "→ pre-commit: DD math gate (v15+, staged only)"
+  if ! python3 scripts/verify_dd_math.py $STAGED_DD > /tmp/_dd_math.log 2>&1; then
+    echo ""
+    echo "❌ DD math gate FAILED — commit blocked."
+    tail -30 /tmp/_dd_math.log | sed 's/^/   /'
+    echo ""
+    echo "   Deterministic recompute mismatch (scenario tree / meta identities)."
+    echo "   Fix the numbers. Bypass with --no-verify only for a confirmed false"
+    echo "   positive — and then also patch verify_dd_math.py in the same commit."
+    FAIL=1
+  fi
+fi
+# ------------------------------------------------------------------------------
+
 # ID path: validator changed → full sweep; else staged only
 TARGETS_ID=""
 MODE_ID=""

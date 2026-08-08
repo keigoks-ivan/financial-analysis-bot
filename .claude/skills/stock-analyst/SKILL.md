@@ -928,6 +928,7 @@ top 2-3 對手的 Capex 與 R&D 絕對額 + 強度（R&D/Rev），看誰在加�
 ### 11.2｜PEG 診斷
 列：Forward P/E／Non-GAAP EPS CAGR（3 年，§4）／**PEG（Non-GAAP，3 年）：< 1.0 便宜 / 1∼2 合理 / > 2 貴**／PEG（GAAP，3 年，同基準）／5 年 EPS CAGR（含 Runway 遞減，§6.A）／PEG（5 年，Non-GAAP）／3 年 vs 5 年 PEG 差異（差異大 = 近期成長不可持續，需警惕）。
 **解讀（1 段 ≤ 80 字 + QC-33 三段推導）**：PEG 計算 → 矩陣落點 → implication。若 3Y vs 5Y PEG 差距 > 0.5，說明近期成長不可持續，需在 §6.E 反映。
+**分母窗口硬規則（2026-08-08）**：CAGR 基期含一次性效應（EPS 谷底反彈、股權處分利得、稅務一次性）→ 分母**一律前瞻錨定**（FY 當年共識 → FY+3 外推路徑），禁用被污染的 trailing 窗;無論採用哪個窗，計算處必須註明窗口起訖年與選窗理由一句。分子（Fwd PE 的 EPS 年期）與分母（CAGR 起算年）錯開時須明示。
 
 ### 11.4｜同業估值比較（強制「對的 peer group tier」）
 在列同業表之前，必須先判斷標的業務模式 tier：
@@ -950,6 +951,7 @@ top 2-3 對手的 Capex 與 R&D 絕對額 + 強度（R&D/Rev），看誰在加�
 
 四列（Thesis 對 Bull 5 年漲幅／Base／Thesis 錯 Bear 5 年跌幅／**機率加權期望值**）；欄＝5 年絕對%｜年化 IRR｜依據｜機率估計。
 **IRR 公式**：`(1 + 5Y_pct)^(1/5) - 1`。**為何強制年化**：5Y 絕對 % 跨案件不可比;IRR 把時間納入分母，避免遠期報酬被高估。
+**情境樹年期硬規則（2026-08-08，SHOP/ANET 稽核教訓）**：①表頭終端年必須＝§2 宣告的主時距終端年（宣告 FY2031 情境樹就不准表頭寫 FY2030——少算一年成長會系統性壓低 EV 並污染 row 8a 判定），寫表前先對一次;②終端倍數的 EPS 分母年期須與現價倍數口徑同源，或明文揭露不對稱（現價＝FY+1 forward、終端＝終端年當年 EPS 屬保守取捨，必須寫出這句）;③**終端倍數必附 ≥1 個同業現值 comp 對照**（引 11.4 表數字;高於同業最高者須一句具體理由）。寫完本節後**自跑 `python3 scripts/verify_dd_math.py docs/dd/DD_{TICKER}_{DATE}.html`**——機械 gate 會重算 EV/IRR/AR/Max DD 恆等式與年期一致性，FAIL 未清不得進入 §11。
 **IRR 落點解讀**：< 8%/yr 弱（不及大盤平均）／8-12%/yr 中（合理 mid-conviction）／> 12%/yr 強（裁決內部高確信）／> 15%/yr 罕見（檢查機率分配是否過度樂觀）。**IRR 是裁決內部的確信刻度，不作跨檔排序依據**（核心/衛星軌別歸 moat、跨檔排序歸 GRP 三閘〔成長×上修×位置〕，5Y IRR 只是單檔資訊）。
 **追加壓力測試**：thesis 對但時間拉長兩倍（10 年），10Y IRR 是多少？考慮機會成本後的答案？（同期可比標的 IRR ≈ ?）
 **不對稱比 AR（必填一行）**：`AR = (P_bull × |Bull 5Y%|) / (P_bear × |Bear 5Y%|)`，取 1 位小數，寫入 dd-meta 選填欄 `asym_ratio`。**AR Live 掛單**：同時把 Bull/Bear 5Y 目標價與機率寫入 dd-meta 選填四欄 `bull_5y_price`／`bear_5y_price`／`p_bull_pct`／`p_bear_pct`——dd-screener 每日以現價重算 `ar_live`，當 runway 🟢 + moat ≠↓ 的觀望股因回檔使 ar_live ≥ 4 時自動亮進「爆發獵場 watch」（報告內的 AR 是報告日快照，ar_live 是活數字）。解讀：< 2 平庸 / 2-4 偏正 / **≥ 4 顯著不對稱（§13 row 8a 爆發候選門檻）**。**AR 不是放鬆機率防線的理由**——下方反偏差防線（Bear 下限/Base 上限）照舊全部適用。Bear 5Y% ≥ 0（無下行情境）→ AR 標 N/A 並省略 dd-meta 欄（禁止用零下行製造無限大）;Bull 依據必須引用 §3.F 滲透率算術與 §10.7 pattern match IRR，且含關鍵分部的量×價骨架，不接受敘事式 Bull。

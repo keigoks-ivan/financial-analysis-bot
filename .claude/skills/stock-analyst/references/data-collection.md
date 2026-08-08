@@ -125,6 +125,8 @@ print(f"現價 vs W104: {idx_current:.2f} vs {idx_w104:.2f} | 破線: {idx_curre
 5. **TradingView Beta（QC-25 雙源）** — \`{TICKER} beta TradingView\`
 6. **§10.5 IRR 用** — \`{TICKER} 5-year forward PE band\` ＋ \`{TICKER} EPS consensus FY+3 long-term growth\`
 
+**一手數字優先序（2026-08-08，SHOP 稽核教訓）**：損益表關鍵行（營收／營業利益／淨利／EPS）一律以公司 8-K／新聞稿／財報 PDF 為準;yfinance 或聚合站數字與一手衝突時**取一手**，並在使用處註明差異來源。淨利增速與營業利益增速差 >20pp → 必查一次性項目（股權處分利得／稅務／出售資產），拆出本業口徑再進 §7/§8。SBC 與稀釋數字**不准以「yfinance 未回傳」交 N/A**——去 10-K/10-Q 拿。
+
 ## 任務 3：QC-19 重大事件初掃（只列 headline，嚴禁解讀）
 
 \`{TICKER} acquisition OR lawsuit OR investigation OR recall OR guidance cut 2026\`，涵蓋近 12 個月。每則只給「日期｜一句話事實｜來源」。**不要判斷影響大小、不要說「對 thesis 有利／不利」**——那是委派者的工作。
