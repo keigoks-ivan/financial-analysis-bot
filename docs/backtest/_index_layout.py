@@ -1,4 +1,4 @@
-"""LIVE renderer for /backtest/index.html — four-tab categorised directory.
+"""LIVE renderer for /backtest/index.html — five-tab categorised directory.
 
 This is the layout that actually builds the live page: _build_index.py's
 main() calls render() here and writes docs/backtest/index.html.  Data
@@ -25,6 +25,16 @@ pure front-end JS filters over a per-tab directory:
     exactly as the pinned data defines them — GEM stays there only as a
     benchmarked 參照 row/column, its NAV pill lives under 多資產.  完整比較表
     is filtered to US groups (🇹🇼 group belongs to the 台股 tab/page).
+
+2026-08-08 — fifth tab: 🌏 總經
+================================
+Added a fifth tab for cross-country macro research that isn't a tradable
+system (no CAGR/MDD/Sharpe, not ticker-based) and therefore doesn't fit the
+美股/台股/多資產/槓桿疊加 taxonomy.  Moved the four housing_gdp/ entries
+(研究・總經 row) out of the "us" DIRECTORY list into a new DIRECTORY["macro"]
+to preserve the one-entry-one-tab rule.  Its tabpane follows the minimal
+multi/lev pattern (section header + sub-description + %MACRO_DIR%) since it
+has no CTA overview page or link-card research section of its own yet.
 
 No sub-page generator is re-run; only index.html is regenerated.
 Run: python3 _build_index.py   (this module is imported, not run directly)
@@ -108,12 +118,6 @@ DIRECTORY = {
         ("研究・崩盤", [
             ("/backtest/smh_vcrash/", "SMH V崩", None, False),
         ]),
-        ("研究・總經", [
-            ("/backtest/housing_gdp/", "人均 GDP 與房價（42 國因子矩陣）", "研究", False),
-            ("/backtest/housing_gdp/catchup.html", "補漲假說：所得領先、房價落後", "研究", False),
-            ("/backtest/housing_gdp/japan.html", "個案：日本七十年房價史", "研究", False),
-            ("/backtest/housing_gdp/usa.html", "個案：美國崩盤與收復", "研究", False),
-        ]),
         ("前瞻追蹤", [
             ("/long-track-w52-adaptive/", "W52 × 自適應波動率 150%（實單主系統）", "實單", False),
             ("/long-track-qs-vt/", "QQQ+SMH 固定 σ（歸檔）", None, False),
@@ -185,6 +189,15 @@ DIRECTORY = {
         ("系統", [
             ("/backtest/leverage_voltarget/", "期貨槓桿疊加", None, False),
             ("/backtest/vol_targeting/leverage.html", "W52×自適應 150% 槓桿", "研究", False),
+        ]),
+    ],
+    "macro": [
+        ("研究・總經", [
+            ("/backtest/housing_gdp/", "人均 GDP 與房價（42 國因子矩陣）", "研究", False),
+            ("/backtest/housing_gdp/catchup.html", "補漲假說：所得領先、房價落後", "研究", False),
+            ("/backtest/housing_gdp/taiwan.html", "個案：台灣二十五年房價史", "研究", False),
+            ("/backtest/housing_gdp/japan.html", "個案：日本七十年房價史", "研究", False),
+            ("/backtest/housing_gdp/usa.html", "個案：美國崩盤與收復", "研究", False),
         ]),
     ],
 }
@@ -397,6 +410,7 @@ def render():
         "%NAV%": NAV_BLOCK,
         "%US_DIR%": _dir("us"), "%TW_DIR%": _dir("tw"),
         "%MULTI_DIR%": _dir("multi"), "%LEV_DIR%": _dir("lev"),
+        "%MACRO_DIR%": _dir("macro"),
         "%CARD%": card, "%MAIN_ROWS%": main_rows, "%TAIL_ROWS%": tail_rows, "%BH_ROWS%": bh,
         "%US_RESEARCH%": US_RESEARCH, "%MULTI_RESEARCH%": MULTI_RESEARCH,
         "%PERIOD_ROWS%": period,
@@ -501,12 +515,13 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <div class="page-hdr"><div class="container">
   <div class="crumb"><a href="/">首頁</a> / 量化回測</div>
   <h1>量化回測總覽</h1>
-  <div class="sub">20 年全週期(2006~,含 2008/2020/2022 三熊)· 真實 yfinance · 起始 $1M · 依市場/資產類別分四類，點 tab 切換</div>
+  <div class="sub">20 年全週期(2006~,含 2008/2020/2022 三熊)· 真實 yfinance · 起始 $1M · 依市場/資產類別分五類，點 tab 切換</div>
   <div class="tabs">
     <a data-tabkey="us" href="#us" onclick="return showTab('us')">🇺🇸 美股</a>
     <a data-tabkey="tw" href="#tw" onclick="return showTab('tw')">🇹🇼 台股</a>
     <a data-tabkey="multi" href="#multi" onclick="return showTab('multi')">🧩 多資產</a>
     <a data-tabkey="lev" href="#lev" onclick="return showTab('lev')">🔧 槓桿疊加</a>
+    <a data-tabkey="macro" href="#macro" onclick="return showTab('macro')">🌏 總經</a>
   </div>
   <div class="methods">
     <span class="m-lbl">方法論（跨類通用）</span>
@@ -609,6 +624,15 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </div>
 </div>
 
+<!-- ══════════════ 🌏 總經 ══════════════ -->
+<div class="tabpane" data-tab="macro" style="display:none">
+<div class="section">
+<h2 class="section-title">跨國總經研究</h2>
+<div class="section-sub">本類非可交易系統(無 CAGR/MDD/Sharpe)，是跨國總經機制研究。現有研究測試人均 GDP 成長能否解釋 42 國房價，附補漲假說與日本／美國兩個案研究。</div>
+</div>
+%MACRO_DIR%
+</div>
+
 </div>
 <footer><div class="container">&copy; 2026 InvestMQuest Research · 量化回測總覽 · 真實 yfinance · 生成 %NOW%</div></footer>
 
@@ -640,7 +664,7 @@ new Chart(document.getElementById('chart-scatter'),{type:'scatter',
  options:{responsive:true,maintainAspectRatio:false,
   plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.dataset.label+': MDD '+c.parsed.x+'% / CAGR '+c.parsed.y+'%'}}}},
   scales:{x:{title:{display:true,text:'Max Drawdown (%)'},grid:{color:'rgba(0,0,0,.05)'}},y:{title:{display:true,text:'CAGR (%)'},grid:{color:'rgba(0,0,0,.05)'}}}}});
-(function(){var h=(location.hash||'#us').slice(1);if(!/^(us|tw|multi|lev)$/.test(h))h='us';showTab(h);})();
+(function(){var h=(location.hash||'#us').slice(1);if(!/^(us|tw|multi|lev|macro)$/.test(h))h='us';showTab(h);})();
 </script>
 </body></html>
 """
