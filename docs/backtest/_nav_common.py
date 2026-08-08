@@ -152,9 +152,15 @@ RESEARCH_CRASH_LINKS = [
     ("/backtest/tw_crash/", "台股含崩盤驗證", "twcrash", None),
 ]
 
-# 向後相容：舊名保留為四群之串接，供外部引用者使用。
+# 2026-08-08 新增：跨國總經研究（非可交易系統，故另立一群而不塞進既有四群）。
+RESEARCH_MACRO_LINKS = [
+    ("/backtest/housing_gdp/", "人均GDP與房價", "housing_gdp", "研究"),
+]
+
+# 向後相容：舊名保留為五群之串接，供外部引用者使用。
 RESEARCH_LINKS = (RESEARCH_ETF_LINKS + RESEARCH_FREQ_LINKS
-                  + RESEARCH_MA_LINKS + RESEARCH_CRASH_LINKS)
+                  + RESEARCH_MA_LINKS + RESEARCH_CRASH_LINKS
+                  + RESEARCH_MACRO_LINKS)
 
 # One <style> block per page (make_toggle is embedded once). Scoped under
 # .bt-subnav so it can never collide with page CSS.
@@ -227,4 +233,5 @@ def make_toggle(active: str) -> str:
             + _row("研究・頻率", RESEARCH_FREQ_LINKS, active)
             + _row("研究・均線", RESEARCH_MA_LINKS, active)
             + _row("研究・崩盤", RESEARCH_CRASH_LINKS, active)
+            + _row("研究・總經", RESEARCH_MACRO_LINKS, active)
             + '</nav>')

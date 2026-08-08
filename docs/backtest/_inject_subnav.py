@@ -28,7 +28,8 @@ import _nav_common as NC  # noqa: E402
 
 START = '<style id="bt-subnav-style">'
 GROUPS = ["COMPARISON", "INDIVIDUAL", "MULTI", "TAIWAN", "OPTIONS", "INTRADAY",
-          "RESEARCH_ETF", "RESEARCH_FREQ", "RESEARCH_MA", "RESEARCH_CRASH"]
+          "RESEARCH_ETF", "RESEARCH_FREQ", "RESEARCH_MA", "RESEARCH_CRASH",
+          "RESEARCH_MACRO"]
 
 
 def valid_keys() -> set[str]:

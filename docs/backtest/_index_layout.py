@@ -108,6 +108,9 @@ DIRECTORY = {
         ("研究・崩盤", [
             ("/backtest/smh_vcrash/", "SMH V崩", None, False),
         ]),
+        ("研究・總經", [
+            ("/backtest/housing_gdp/", "人均 GDP 與房價（42 國因子矩陣）", "研究", False),
+        ]),
         ("前瞻追蹤", [
             ("/long-track-w52-adaptive/", "W52 × 自適應波動率 150%（實單主系統）", "實單", False),
             ("/long-track-qs-vt/", "QQQ+SMH 固定 σ（歸檔）", None, False),
