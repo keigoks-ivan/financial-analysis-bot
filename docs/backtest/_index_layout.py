@@ -111,6 +111,8 @@ DIRECTORY = {
         ("研究・總經", [
             ("/backtest/housing_gdp/", "人均 GDP 與房價（42 國因子矩陣）", "研究", False),
             ("/backtest/housing_gdp/catchup.html", "補漲假說：所得領先、房價落後", "研究", False),
+            ("/backtest/housing_gdp/japan.html", "個案：日本七十年房價史", "研究", False),
+            ("/backtest/housing_gdp/usa.html", "個案：美國崩盤與收復", "研究", False),
         ]),
         ("前瞻追蹤", [
             ("/long-track-w52-adaptive/", "W52 × 自適應波動率 150%（實單主系統）", "實單", False),
