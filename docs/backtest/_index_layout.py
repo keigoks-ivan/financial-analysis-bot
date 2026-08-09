@@ -198,6 +198,10 @@ DIRECTORY = {
             ("/backtest/housing_gdp/taiwan.html", "個案：台灣二十五年房價史", "研究", False),
             ("/backtest/housing_gdp/japan.html", "個案：日本七十年房價史", "研究", False),
             ("/backtest/housing_gdp/usa.html", "個案：美國崩盤與收復", "研究", False),
+            ("/backtest/housing_gdp/australia.html", "個案：澳洲從未真正崩過", "研究", False),
+            ("/backtest/housing_gdp/malaysia.html", "個案：馬來西亞所得跑贏房價", "研究", False),
+            ("/backtest/housing_gdp/korea.html", "個案：南韓與日本同年見頂", "研究", False),
+            ("/backtest/housing_gdp/uk.html", "個案：英國最深崩盤是通膨", "研究", False),
         ]),
     ],
 }
@@ -628,7 +632,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <div class="tabpane" data-tab="macro" style="display:none">
 <div class="section">
 <h2 class="section-title">跨國總經研究</h2>
-<div class="section-sub">本類非可交易系統(無 CAGR/MDD/Sharpe)，是跨國總經機制研究。現有研究測試人均 GDP 成長能否解釋 42 國房價，附補漲假說與日本／美國兩個案研究。</div>
+<div class="section-sub">本類非可交易系統(無 CAGR/MDD/Sharpe)，是跨國總經機制研究。現有研究測試人均 GDP 成長能否解釋 42 國房價，附補漲假說與七國個案研究（台灣、日本、美國、澳洲、馬來西亞、南韓、英國）。</div>
 </div>
 %MACRO_DIR%
 </div>
