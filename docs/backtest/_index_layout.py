@@ -204,6 +204,7 @@ DIRECTORY = {
             ("/backtest/housing_gdp/uk.html", "個案：英國最深崩盤是通膨", "研究", False),
             ("/backtest/housing_gdp/canada.html", "個案：加拿大從未崩過的市場正在崩", "研究", False),
             ("/backtest/housing_gdp/ireland.html", "個案：愛爾蘭 42 國最深崩盤", "研究", False),
+            ("/backtest/housing_gdp/thailand.html", "個案：泰國失落的十三年", "研究", False),
         ]),
     ],
 }
@@ -634,7 +635,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <div class="tabpane" data-tab="macro" style="display:none">
 <div class="section">
 <h2 class="section-title">跨國總經研究</h2>
-<div class="section-sub">本類非可交易系統(無 CAGR/MDD/Sharpe)，是跨國總經機制研究。現有研究測試人均 GDP 成長能否解釋 42 國房價，附補漲假說與九國個案研究（台灣、日本、美國、澳洲、馬來西亞、南韓、英國、加拿大、愛爾蘭）。</div>
+<div class="section-sub">本類非可交易系統(無 CAGR/MDD/Sharpe)，是跨國總經機制研究。現有研究測試人均 GDP 成長能否解釋 42 國房價，附補漲假說與十國個案研究（台灣、日本、美國、澳洲、馬來西亞、南韓、英國、加拿大、愛爾蘭、泰國）。</div>
 </div>
 %MACRO_DIR%
 </div>
