@@ -205,6 +205,10 @@ DIRECTORY = {
             ("/backtest/housing_gdp/canada.html", "個案：加拿大從未崩過的市場正在崩", "研究", False),
             ("/backtest/housing_gdp/ireland.html", "個案：愛爾蘭 42 國最深崩盤", "研究", False),
             ("/backtest/housing_gdp/thailand.html", "個案：泰國失落的十三年", "研究", False),
+            ("/backtest/housing_gdp/germany.html", "個案：德國沒有泡沫的 25 年凍結", "研究", False),
+            ("/backtest/housing_gdp/spain.html", "個案：西班牙人口驅動的兩次泡沫", "研究", False),
+            ("/backtest/housing_gdp/newzealand.html", "個案：紐西蘭把政策工具全試過一輪", "研究", False),
+            ("/backtest/housing_gdp/hongkong.html", "個案：香港撤辣之後仍在跌", "研究", False),
         ]),
     ],
 }
