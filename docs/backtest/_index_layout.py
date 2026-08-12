@@ -56,6 +56,22 @@ row became an unscannable wall of pills.  Split into four dir-rows:
     enumeration (had gone stale at 10 vs the actual 14) and no longer lists
     country names at all, so it won't go stale again as more are added.
 No sub-page generator is re-run; only index.html is regenerated.
+
+2026-08-12 — sixth tab: 🔍 國家掃描
+====================================
+Added docs/backtest/country_scan/ — a new namespace for single-country
+stock-market "初掃"（first-pass quantitative ROIC screen × qualitative
+export-tech deep-dive research), distinct from housing_gdp/'s cross-country
+housing-price factor-matrix work (macro tab). This is stock-level research
+(individual tickers, ROIC/incremental-ROIC screening, sector deep-dives,
+links to completed DDs) — not a tradable system (no CAGR/MDD/Sharpe) and not
+housing/macro, hence its own tab rather than folding into "macro" or
+"us"/"tw". First entry: country_scan/malaysia.html (127-ticker ROIC screen +
+methodology-trap case studies + 10-name export-tech deep dive + 3 completed
+DD links). DIRECTORY["scan"] follows the macro tab's minimal single-dir-row
+pattern (no CTA/link-card sections yet, since there is only one country
+page so far). One-entry-one-tab rule preserved; tab list order and JS hash
+whitelist regex both extended to include "scan".
 Run: python3 _build_index.py   (this module is imported, not run directly)
 """
 from __future__ import annotations
@@ -222,6 +238,8 @@ DIRECTORY = {
             ("/backtest/housing_gdp/hongkong.html", "香港：撤辣之後仍在跌", "研究", False),
             ("/backtest/housing_gdp/malaysia.html", "馬來西亞：所得跑贏房價", "研究", False),
             ("/backtest/housing_gdp/thailand.html", "泰國：失落的十三年", "研究", False),
+            ("/backtest/housing_gdp/china.html", "中國：官方指數換過口徑，分級城市差很大", "研究", False),
+            ("/backtest/housing_gdp/singapore.html", "新加坡：政府自己蓋，所得贏了房價", "研究", False),
         ]),
         ("個案・英語系", [
             ("/backtest/housing_gdp/usa.html", "美國：崩盤與收復", "研究", False),
@@ -234,6 +252,11 @@ DIRECTORY = {
         ("個案・歐陸", [
             ("/backtest/housing_gdp/germany.html", "德國：沒有泡沫的 25 年凍結", "研究", False),
             ("/backtest/housing_gdp/spain.html", "西班牙：人口驅動的兩次泡沫", "研究", False),
+        ]),
+    ],
+    "scan": [
+        ("市場初掃", [
+            ("/backtest/country_scan/malaysia.html", "馬來西亞：複利機器在哪裡", "研究", False),
         ]),
     ],
 }
@@ -455,7 +478,7 @@ def render():
         "%NAV%": NAV_BLOCK,
         "%US_DIR%": _dir("us"), "%TW_DIR%": _dir("tw"),
         "%MULTI_DIR%": _dir("multi"), "%LEV_DIR%": _dir("lev"),
-        "%MACRO_DIR%": _dir("macro"),
+        "%MACRO_DIR%": _dir("macro"), "%SCAN_DIR%": _dir("scan"),
         "%CARD%": card, "%MAIN_ROWS%": main_rows, "%TAIL_ROWS%": tail_rows, "%BH_ROWS%": bh,
         "%US_RESEARCH%": US_RESEARCH, "%MULTI_RESEARCH%": MULTI_RESEARCH,
         "%PERIOD_ROWS%": period,
@@ -569,6 +592,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
     <a data-tabkey="multi" href="#multi" onclick="return showTab('multi')">🧩 多資產</a>
     <a data-tabkey="lev" href="#lev" onclick="return showTab('lev')">🔧 槓桿疊加</a>
     <a data-tabkey="macro" href="#macro" onclick="return showTab('macro')">🌏 總經</a>
+    <a data-tabkey="scan" href="#scan" onclick="return showTab('scan')">🔍 國家掃描</a>
   </div>
   <div class="methods">
     <span class="m-lbl">方法論（跨類通用）</span>
@@ -680,6 +704,15 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 %MACRO_DIR%
 </div>
 
+<!-- ══════════════ 🔍 國家掃描 ══════════════ -->
+<div class="tabpane" data-tab="scan" style="display:none">
+<div class="section">
+<h2 class="section-title">國家股市初掃</h2>
+<div class="section-sub">對單一國家股市的第一輪系統性掃描：複利機器篩選×出口群深查×估值現況。掃描是研究記錄不是選股名單，個股裁決一律走 DD。</div>
+</div>
+%SCAN_DIR%
+</div>
+
 </div>
 <footer><div class="container">&copy; 2026 InvestMQuest Research · 量化回測總覽 · 真實 yfinance · 生成 %NOW%</div></footer>
 
@@ -711,7 +744,7 @@ new Chart(document.getElementById('chart-scatter'),{type:'scatter',
  options:{responsive:true,maintainAspectRatio:false,
   plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.dataset.label+': MDD '+c.parsed.x+'% / CAGR '+c.parsed.y+'%'}}}},
   scales:{x:{title:{display:true,text:'Max Drawdown (%)'},grid:{color:'rgba(0,0,0,.05)'}},y:{title:{display:true,text:'CAGR (%)'},grid:{color:'rgba(0,0,0,.05)'}}}}});
-(function(){var h=(location.hash||'#us').slice(1);if(!/^(us|tw|multi|lev|macro)$/.test(h))h='us';showTab(h);})();
+(function(){var h=(location.hash||'#us').slice(1);if(!/^(us|tw|multi|lev|macro|scan)$/.test(h))h='us';showTab(h);})();
 </script>
 </body></html>
 """
