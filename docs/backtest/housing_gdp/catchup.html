@@ -161,6 +161,14 @@ tr.hl td{background:#eff6ff}
 .subnav{display:flex;gap:.4rem;margin-top:.8rem;flex-wrap:wrap}
 .subnav a{font-size:.8rem;padding:.3rem .75rem;border-radius:999px;background:#eef1f4;color:#374151}
 .subnav a.on{background:linear-gradient(135deg,#081832,#173564);color:#fff;font-weight:600}
+.tldr{font-size:.78rem;color:var(--muted);margin:.6rem 0 0}
+details.card>summary{cursor:pointer;font-weight:700;font-size:.92rem;line-height:1.6;list-style:revert}
+details.card>summary::marker{color:var(--brand)}
+details.card[open]>summary{margin-bottom:.9rem;padding-bottom:.75rem;border-bottom:1px solid var(--border)}
+details.numdet{margin-top:1.1rem}
+details.numdet>summary{cursor:pointer;font-weight:700;font-size:.9rem;list-style:revert}
+details.numdet>summary::marker{color:var(--brand)}
+details.numdet[open]>summary{margin-bottom:.6rem}
 .lgd{display:flex;gap:.8rem;flex-wrap:wrap;font-size:.78rem;color:var(--muted);margin:.5rem 0 .3rem}
 ul.body{padding-left:1.25rem;line-height:1.95;font-size:.9rem}
 ul.body li{margin-bottom:.3rem}
@@ -204,6 +212,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
          <div class="hs-value">19/30</div></div>
   </div>
 </div>
+<div class="tldr">只想知道結論，上面的摘要就夠了。下面是逐項證據。</div>
 
 <div class="section">
   <div class="section-title">一、這個假說在說什麼</div>
@@ -247,7 +256,8 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <div class="section">
   <div class="section-title">三、為什麼一定要10年：完整的係數網格</div>
   <div class="section-sub">三種訊號窗口 × 三種持有期＝九個獨立迴歸，全部列出。
-    每格含國家＋年份固定效果。正值＝支持假說，負值＝反向（落後者繼續落後）。</div>
+    每格含國家＋年份固定效果（先扣掉這國自己的長期水準、以及當年全球共同的漲跌，
+    只留下真正的組間差異）。正值＝支持假說，負值＝反向（落後者繼續落後）。</div>
   <div class="lgd"><span>藍＝支持假說</span><span>橘＝反向</span><span>粗體＝5% 顯著</span></div>
   <div class="card"><div class="scroll">
   <table><thead><tr><th>訊號窗口</th>
@@ -307,9 +317,14 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
   <p>5年期報酬是逐年重疊計算的。2010 年那一筆涵蓋 2010–2015，2011 年那一筆涵蓋 2011–2016——
   兩者<b>有4年是重複的</b>。這些觀測值不是彼此獨立的，但一般的 t 檢定會把它們當成獨立，
   結果就是樣本看起來比實際多好幾倍，t 值嚴重高估。</p>
-  <p>30年的資料，用5年重疊窗口，<b>真正獨立的樣本大約只有六個</b>。</p>
+  <p>30年的資料，用5年重疊窗口，<b>真正獨立的樣本大約只有六個</b>。
+  修正這個問題最常見的方法叫 <b>Newey-West</b>——不改變估計值本身，
+  只重新計算標準誤，把「重疊樣本其實沒那麼多獨立資訊」這件事考慮進去，t 值因此會縮小。</p>
 
-  <h4>兩種修正方法，答案一致</h4>
+  <details class="numdet">
+  <summary>Newey-West 調整後 t 大幅萎縮，換一個起算年份價差也劇烈擺盪
+    （點開看兩種修正方法的完整敏感度表）</summary>
+  <h4 style="margin-top:0">兩種修正方法，答案一致</h4>
   <table><thead><tr><th>算法</th><th class="num">樣本</th>
     <th class="num">價差 pp／年</th><th class="num">t</th></tr></thead><tbody>
     <tr><td class="lbl">直接算（重疊，會灌水）</td><td class="num">30</td>
@@ -322,6 +337,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
   <p style="margin-top:.8rem">下面五列是「每5年只取一筆」的非重疊算法。
   差別只在<b>從哪一年開始數</b>——結果從 +3.04pp（t=+1.85）
   一路掉到 -0.19pp（t=-0.19）。</p>
+  </details>
   <div class="note"><b>這叫「起點運氣」：</b>同一份資料、同一個規則，只因為從第 1 年還是第 5 年開始數，
     結論就從「不錯」變成「沒有」——<b>樣本量不足以區分「真有效果」與「運氣好」</b>。逐年來看，
     19/30 年價差為正——比擲硬幣好，但沒好到哪裡去；
@@ -357,7 +373,10 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
   <div class="section-sub">過去 10 年實質人均所得成長進入前三分之一
     （門檻 1.75%／年），且房價成長落後所得。
     「會不會兌現」是<b>結構性判讀，不是統計輸出</b>——依據列在第8節。</div>
-  <div class="card"><div class="scroll">
+  <details class="card">
+  <summary>8 個經濟體目前符合門檻，中國與印尼已經落後超過 20 年
+    （點開看完整名單與逐國判讀）</summary>
+  <div class="scroll">
   <table><thead><tr><th>經濟體</th><th class="num">10 年所得<br>%／年</th>
     <th class="num">10 年房價<br>%／年</th><th class="num">每年落後<br>pp</th>
     <th class="num">累計落後</th><th>會不會兌現</th><th>主要原因</th></tr></thead>
@@ -366,7 +385,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
     中國與印尼已經在這個狀態裡20年了——中國 2006–2025 全期是所得 +6.94%／房價 −0.17%，
     落後從未收斂，累計缺口只有愈拉愈大。它們正是讓主頁那張散布圖變平的那幾個點。
     所以「目前符合型態」對它們而言，某種程度只是「一直都是這樣」。</div>
-  </div>
+  </details>
 </div>
 
 <div class="section">
@@ -405,7 +424,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </div>
 
 </div>
-<footer><div class="container">InvestmQuest 研究・產生於 2026-08-12・
+<footer><div class="container">InvestmQuest 研究・產生於 2026-08-13・
   資料：BIS／IMF WEO／World Bank／UN WPP／信義房價指數・
   <a href="/backtest/housing_gdp/">回主頁：因子矩陣</a>・本頁為研究記錄，非投資建議</div></footer>
 </body>
