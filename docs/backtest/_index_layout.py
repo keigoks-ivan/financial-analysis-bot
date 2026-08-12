@@ -256,7 +256,7 @@ DIRECTORY = {
     ],
     "scan": [
         ("市場初掃", [
-            ("/backtest/country_scan/malaysia.html", "馬來西亞：複利機器在哪裡", "研究", False),
+            ("/backtest/country_scan/malaysia.html", "馬來西亞：市場結構與四個投資鏡頭", "研究", False),
         ]),
     ],
 }
