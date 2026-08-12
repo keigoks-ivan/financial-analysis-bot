@@ -36,6 +36,25 @@ to preserve the one-entry-one-tab rule.  Its tabpane follows the minimal
 multi/lev pattern (section header + sub-description + %MACRO_DIR%) since it
 has no CTA overview page or link-card research section of its own yet.
 
+2026-08-12 — macro tab regrouped (14 case pages outgrew one flat row)
+======================================================================
+DIRECTORY["macro"] grew from 4 to 16 pills (2 entry pages + 14 country case
+pages) as housing_gdp/ added countries one at a time; one undifferentiated
+row became an unscannable wall of pills.  Split into four dir-rows:
+  * "研究・主線" — the two entry pages (factor matrix, catch-up hypothesis).
+    These carry the new `emph=True` pill flag (5th tuple element, macro-only
+    — other tabs' 4-tuples are untouched) which renders with the same navy
+    gradient `_pill()`/CSS already uses for the current-page ".on" state, so
+    they visually outrank the 14 case pills without inventing a new color.
+  * "個案・亞洲" (TW/JP/KR/HK/MY/TH), "個案・英語系" (US/CA/UK/IE/AU/NZ,
+    grouped as the Anglophone common-law housing markets — a real cluster in
+    housing-cycle literature, not just alphabetical), "個案・歐陸" (DE/ES).
+  * Each pill text is now "{國名}：{一句辨異描述}" (country name first) so a
+    reader scanning for one country doesn't have to parse a generic "個案："
+    prefix repeated 14 times — the row label already says 個案.
+  * section-sub for the macro pane was rewritten to drop the stale "十國"
+    enumeration (had gone stale at 10 vs the actual 14) and no longer lists
+    country names at all, so it won't go stale again as more are added.
 No sub-page generator is re-run; only index.html is regenerated.
 Run: python3 _build_index.py   (this module is imported, not run directly)
 """
@@ -192,23 +211,29 @@ DIRECTORY = {
         ]),
     ],
     "macro": [
-        ("研究・總經", [
-            ("/backtest/housing_gdp/", "人均 GDP 與房價（42 國因子矩陣）", "研究", False),
-            ("/backtest/housing_gdp/catchup.html", "補漲假說：所得領先、房價落後", "研究", False),
-            ("/backtest/housing_gdp/taiwan.html", "個案：台灣二十五年房價史", "研究", False),
-            ("/backtest/housing_gdp/japan.html", "個案：日本七十年房價史", "研究", False),
-            ("/backtest/housing_gdp/usa.html", "個案：美國崩盤與收復", "研究", False),
-            ("/backtest/housing_gdp/australia.html", "個案：澳洲從未真正崩過", "研究", False),
-            ("/backtest/housing_gdp/malaysia.html", "個案：馬來西亞所得跑贏房價", "研究", False),
-            ("/backtest/housing_gdp/korea.html", "個案：南韓與日本同年見頂", "研究", False),
-            ("/backtest/housing_gdp/uk.html", "個案：英國最深崩盤是通膨", "研究", False),
-            ("/backtest/housing_gdp/canada.html", "個案：加拿大從未崩過的市場正在崩", "研究", False),
-            ("/backtest/housing_gdp/ireland.html", "個案：愛爾蘭 42 國最深崩盤", "研究", False),
-            ("/backtest/housing_gdp/thailand.html", "個案：泰國失落的十三年", "研究", False),
-            ("/backtest/housing_gdp/germany.html", "個案：德國沒有泡沫的 25 年凍結", "研究", False),
-            ("/backtest/housing_gdp/spain.html", "個案：西班牙人口驅動的兩次泡沫", "研究", False),
-            ("/backtest/housing_gdp/newzealand.html", "個案：紐西蘭把政策工具全試過一輪", "研究", False),
-            ("/backtest/housing_gdp/hongkong.html", "個案：香港撤辣之後仍在跌", "研究", False),
+        ("研究・主線", [
+            ("/backtest/housing_gdp/", "人均 GDP 與房價（42 國因子矩陣）", "研究", False, True),
+            ("/backtest/housing_gdp/catchup.html", "補漲假說：所得領先、房價落後", "研究", False, True),
+        ]),
+        ("個案・亞洲", [
+            ("/backtest/housing_gdp/taiwan.html", "台灣：二十五年房價史", "研究", False),
+            ("/backtest/housing_gdp/japan.html", "日本：七十年房價史", "研究", False),
+            ("/backtest/housing_gdp/korea.html", "南韓：與日本同年見頂", "研究", False),
+            ("/backtest/housing_gdp/hongkong.html", "香港：撤辣之後仍在跌", "研究", False),
+            ("/backtest/housing_gdp/malaysia.html", "馬來西亞：所得跑贏房價", "研究", False),
+            ("/backtest/housing_gdp/thailand.html", "泰國：失落的十三年", "研究", False),
+        ]),
+        ("個案・英語系", [
+            ("/backtest/housing_gdp/usa.html", "美國：崩盤與收復", "研究", False),
+            ("/backtest/housing_gdp/canada.html", "加拿大：從未崩過的市場正在崩", "研究", False),
+            ("/backtest/housing_gdp/uk.html", "英國：最深崩盤是通膨", "研究", False),
+            ("/backtest/housing_gdp/ireland.html", "愛爾蘭：42 國最深崩盤", "研究", False),
+            ("/backtest/housing_gdp/australia.html", "澳洲：從未真正崩過", "研究", False),
+            ("/backtest/housing_gdp/newzealand.html", "紐西蘭：政策工具全試過一輪", "研究", False),
+        ]),
+        ("個案・歐陸", [
+            ("/backtest/housing_gdp/germany.html", "德國：沒有泡沫的 25 年凍結", "研究", False),
+            ("/backtest/housing_gdp/spain.html", "西班牙：人口驅動的兩次泡沫", "研究", False),
         ]),
     ],
 }
@@ -226,8 +251,17 @@ def _badge(status):
     return f'<span class="b b-{kind}">{status}</span>'
 
 
-def _pill(url, text, status=None, current=False):
-    cls = ' class="on"' if current else ""
+def _pill(url, text, status=None, current=False, emph=False):
+    # emph: macro-only "entry page" flag (5th tuple element) — reuses the
+    # same navy-gradient look as the current-page ".on" state so the two
+    # housing_gdp/ entry pages visually outrank the 14 country case pills
+    # without introducing a new color. Other tabs' 4-tuples default emph=False.
+    classes = []
+    if current:
+        classes.append("on")
+    if emph:
+        classes.append("entry")
+    cls = f' class="{" ".join(classes)}"' if classes else ""
     return f'<a href="{url}"{cls}>{text}{_badge(status)}</a>'
 
 
@@ -469,11 +503,13 @@ a{color:var(--ink);text-decoration:none}a:hover{text-decoration:underline}
 .dir-pills a{display:inline-flex;align-items:center;gap:.3rem;padding:.28rem .62rem;background:#eef1f4;color:#374151;border-radius:999px;font-size:.76rem;font-weight:500;white-space:nowrap}
 .dir-pills a:hover{background:#e1e6ea;text-decoration:none}
 .dir-pills a.on{background:linear-gradient(135deg,#081832,#173564);color:#fff;font-weight:600}
+.dir-pills a.entry{background:linear-gradient(135deg,#081832,#173564);color:#fff;font-weight:700}
+.dir-pills a.entry:hover{opacity:.92}
 .b{font-size:.6rem;font-weight:700;padding:.03rem .32rem;border-radius:4px;line-height:1.5}
 .b-d{background:rgba(220,38,38,.12);color:#b42318}
 .b-w{background:rgba(180,118,20,.15);color:#986a12}
 .b-t{background:rgba(37,99,235,.14);color:#1d4ed8}
-.dir-pills a.on .b{background:rgba(255,255,255,.22);color:#fff}
+.dir-pills a.on .b,.dir-pills a.entry .b{background:rgba(255,255,255,.22);color:#fff}
 .cta{display:flex;align-items:center;gap:.7rem;background:var(--ink);color:#fff;border-radius:10px;padding:1rem 1.3rem;margin:1.1rem 0;font-weight:700}
 .cta:hover{text-decoration:none;opacity:.94}
 .cta .cta-sub{font-size:.76rem;font-weight:500;color:#cbd5e1;margin-top:.15rem}
@@ -639,7 +675,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <div class="tabpane" data-tab="macro" style="display:none">
 <div class="section">
 <h2 class="section-title">跨國總經研究</h2>
-<div class="section-sub">本類非可交易系統(無 CAGR/MDD/Sharpe)，是跨國總經機制研究。現有研究測試人均 GDP 成長能否解釋 42 國房價，附補漲假說與十國個案研究（台灣、日本、美國、澳洲、馬來西亞、南韓、英國、加拿大、愛爾蘭、泰國）。</div>
+<div class="section-sub">本類非可交易系統（無 CAGR／MDD／Sharpe），是跨國總經機制研究。主線問題：人均所得成長能否解釋房價走勢——因子矩陣做跨國比較、補漲假說檢驗所得與房價的領先落後關係；下方個案頁依地區分組，逐一拆解各國房價史的高點、崩盤與復甦路徑。</div>
 </div>
 %MACRO_DIR%
 </div>
