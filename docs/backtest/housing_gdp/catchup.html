@@ -104,7 +104,7 @@
 :root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;--text:#111827;--muted:#6b7280;--border:#e5e7eb;
       --green:#059669;--red:#dc2626;--amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fde68a;--amber-text:#b45309}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;font-size:15px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;font-size:15px;counter-reset:sec}
 a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
 .container{max-width:1080px;margin:0 auto;padding:0 1.5rem}
 .page-hdr{padding:1.75rem 0 1.25rem;background:linear-gradient(180deg,#f0f4ff 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
@@ -112,15 +112,22 @@ a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
 .page-hdr .sub{color:var(--muted);font-size:.9rem;margin-top:.2rem}
 .crumb{font-size:.82rem;color:var(--muted);margin-bottom:.4rem}.crumb a{color:var(--muted)}
 .section{padding:1.9rem 0 0}
-.section-title{font-size:1.15rem;font-weight:700;margin-bottom:1rem;padding-bottom:.45rem;border-bottom:2px solid var(--brand)}
-.section-sub{font-size:.85rem;color:var(--muted);margin:-.6rem 0 1rem}
+.section-title{counter-increment:sec;display:flex;align-items:center;gap:.5rem;font-size:1.02rem;font-weight:700;
+    color:#3a4353;margin-bottom:.85rem;padding-bottom:.4rem;border-bottom:1px solid var(--border)}
+.section-title::before{content:counter(sec);flex:none;width:1.3em;height:1.3em;border-radius:50%;
+    background:#dde1e8;color:#5b6472;font-size:.66rem;font-weight:700;display:inline-flex;
+    align-items:center;justify-content:center}
+.section-sub{font-size:.85rem;color:var(--muted);margin:-.5rem 0 1rem}
 .card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.1rem 1.25rem;margin-bottom:1rem}
 .card h4{font-size:.95rem;font-weight:700;margin:.9rem 0 .5rem}
 .card h4:first-child{margin-top:0}
 .card p{margin-bottom:.7rem}.card p:last-child{margin-bottom:0}
-.takeaway{font-size:.88rem;margin-top:.9rem;padding:.7rem .95rem;border-radius:6px;background:var(--brand-light);border-left:3px solid var(--brand)}
-.plain{background:#f4f7fd;border:1px solid #d9e3f7;border-left:3px solid var(--brand);border-radius:6px;
-        padding:.8rem 1rem;font-size:.88rem;color:#1f2c44;margin:.9rem 0}
+.takeaway,.plain{font-size:.88rem;margin:.9rem 0;padding:.75rem 1rem;border-radius:6px;background:var(--brand-light);
+    border-left:3px solid var(--brand);color:#1f2c44}
+.takeaway b,.plain b{color:#12213a}
+.takeaway ul,.plain ul,.note ul{margin:.5rem 0 0;padding-left:1.15rem}
+.takeaway li,.plain li,.note li{margin-bottom:.32rem}
+.takeaway li:last-child,.plain li:last-child,.note li:last-child{margin-bottom:0}
 .note{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;padding:.9rem 1.1rem;font-size:.85rem;color:var(--amber-text);margin:1rem 0}
 .calc{background:#fbfbfa;border:1px solid var(--border);border-radius:7px;padding:.85rem 1rem;font-size:.86rem;margin:.85rem 0}
 .calc .row{display:flex;justify-content:space-between;padding:.22rem 0;border-bottom:1px dashed #e8e8e6}
@@ -174,6 +181,15 @@ ul.body{padding-left:1.25rem;line-height:1.95;font-size:.9rem}
 ul.body li{margin-bottom:.3rem}
 footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);text-align:center;padding:1.25rem 0;font-size:.78rem;margin-top:2rem}
 @media(max-width:760px){.hero-stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:430px){
+  .page-hdr h1{font-size:1.32rem}
+  .hero-top{padding:1.1rem 1.2rem}
+  .hero-top h2{font-size:1.12rem}
+  .hero-stats{grid-template-columns:1fr}
+  .hero-stats > div{border-right:none;border-bottom:1px solid var(--border)}
+  .hero-stats > div:last-child{border-bottom:none}
+  .hero-stats .hs-value{font-size:1.2rem}
+}
 </style>
 </head>
 <body>
@@ -215,7 +231,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <div class="tldr">只想知道結論，上面的摘要就夠了。下面是逐項證據。</div>
 
 <div class="section">
-  <div class="section-title">一、這個假說在說什麼</div>
+  <div class="section-title">這個假說在說什麼</div>
   <div class="card">
   <p>想像一個國家，人民的實質所得連續10年每年成長 5%。10年下來，購買力累積成長超過六成。
   按理說，房子是用所得買的，房價應該跟著往上走。但如果同一個10年裡房價幾乎沒動，
@@ -238,7 +254,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </div>
 
 <div class="section">
-  <div class="section-title">二、這跟另一種「找便宜」的算法完全不同</div>
+  <div class="section-title">這跟另一種「找便宜」的算法完全不同</div>
   <div class="card">
   <p>很多人會用另一個方法：看<b>房價所得比的水準</b>是不是低於自己的歷史平均，低就叫便宜。
   這個方法經檢驗<b>沒有效果，而且方向是反的</b>——最便宜的一組，後續3年輸給最貴的一組
@@ -254,7 +270,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </div>
 
 <div class="section">
-  <div class="section-title">三、為什麼一定要10年：完整的係數網格</div>
+  <div class="section-title">為什麼一定要10年：完整的係數網格</div>
   <div class="section-sub">三種訊號窗口 × 三種持有期＝九個獨立迴歸，全部列出。
     每格含國家＋年份固定效果（先扣掉這國自己的長期水準、以及當年全球共同的漲跌，
     只留下真正的組間差異）。正值＝支持假說，負值＝反向（落後者繼續落後）。</div>
@@ -286,7 +302,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </div>
 
 <div class="section">
-  <div class="section-title">四、把假說寫成一個可執行的組合</div>
+  <div class="section-title">把假說寫成一個可執行的組合</div>
   <div class="section-sub">迴歸係數不好體會。改成「如果真的照這個規則選國家，結果會怎樣」。</div>
   <div class="card">
   <p><b>規則：</b>每一年，先挑出過去十年所得成長最快的三分之一國家；
@@ -311,7 +327,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </div>
 
 <div class="section">
-  <div class="section-title">五、統計強度：表面上的 t 值有多少是灌水的</div>
+  <div class="section-title">統計強度：表面上的 t 值有多少是灌水的</div>
   <div class="card">
   <h4>問題出在「重疊」</h4>
   <p>5年期報酬是逐年重疊計算的。2010 年那一筆涵蓋 2010–2015，2011 年那一筆涵蓋 2011–2016——
@@ -346,7 +362,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </div>
 
 <div class="section">
-  <div class="section-title">六、五分位排序檢定</div>
+  <div class="section-title">五分位排序檢定</div>
   <div class="section-sub">另一種檢查：每年把所有國家依落後幅度排序分成五組，看之後真正實現的報酬。
     如果假說成立，「落後最多」那一組應該最高。</div>
   <div class="note"><b>這不是樣本外測試。</b>下面用的是 2000 年以來的全樣本一次排序，
@@ -369,7 +385,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </div>
 
 <div class="section">
-  <div class="section-title">七、目前符合這個型態的經濟體</div>
+  <div class="section-title">目前符合這個型態的經濟體</div>
   <div class="section-sub">過去 10 年實質人均所得成長進入前三分之一
     （門檻 1.75%／年），且房價成長落後所得。
     「會不會兌現」是<b>結構性判讀，不是統計輸出</b>——依據列在第8節。</div>
@@ -389,20 +405,22 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </div>
 
 <div class="section">
-  <div class="section-title">八、逐國結構性判讀</div>
+  <div class="section-title">逐國結構性判讀</div>
   <div class="section-sub">檢查七件事：住宅供給彈性、持有稅與交易稅、外資購買限制、
     總體審慎與信貸政策、人口結構、當前政策方向、房價指數本身的品質。
     每一條都附出處，並列出反面論點。</div>
   <div class="note"><b>南韓與台灣的層級差異：</b>
-    南韓「首爾公寓 2025 年漲 8.71%、19 年最大」為<b>首爾</b>層級數據；本研究用的是全國指數，
-    2025 年名目僅 +0.70%、實質 −1.64%，國家層級尚未出現追趕——判讀維持但依據已限縮。
-    台灣管制期間累計漲幅採信義全國指數：2020→2025 名目 +41.8%、實質 +26.7%。
+    <ul>
+    <li>南韓「首爾公寓 2025 年漲 8.71%、19 年最大」為<b>首爾</b>層級數據；本研究用的是全國指數，
+      2025 年名目僅 +0.70%、實質 −1.64%，國家層級尚未出現追趕——判讀維持但依據已限縮。</li>
+    <li>台灣管制期間累計漲幅採信義全國指數：2020→2025 名目 +41.8%、實質 +26.7%。</li>
+    </ul>
     外部來源與本研究的統計口徑（全國、成屋、Q4、CPI 平減）經常不同。</div>
   <div class="ccard" style="border-left-color:#dc2626"><div class="chd"><span class="cn">中國</span><span class="vb" style="background:#fef2f2;color:#dc2626;border-color:#fecaca">結構性壓抑</span><span class="conf">研究信心：medium</span><span class="conf">累計落後 84%</span></div><p class="chl">中國已用盡需求刺激手段（首付降至15%、房貸利率下限取消）房價仍跌，問題在龐大庫存與人口結構，非可鬆綁的政策壓抑。</p><ul class="facts"><li><b>供給</b>：去化週期達27.4個月（2025年11月），遠高於正常的12～14個月。 <a href="https://www.yicaiglobal.com/news/china-to-focus-on-stabilizing-real-estate-market-by-reducing-housing-inventory-next-year" target="_blank" rel="noopener">出處</a></li><li><b>政策</b>：2024 年 5 月首付降至 15%／25%、房貸利率下限取消，但本研究序列 2025 年仍名目 −5.7%。 <a href="https://www.scmp.com/business/article/3336438/chinas-home-prices-slide-further-november-authorities-vow-stabilise-sector" target="_blank" rel="noopener">出處</a></li><li><b>人口</b>：2025年人口連4年下降（淨減339萬），15～59歲勞動人口自2012年見頂後續萎縮。 <a href="https://asiatimes.com/2026/01/chinas-population-falls-for-fourth-year-amid-economic-woes/" target="_blank" rel="noopener">出處</a></li><li><b>稅制</b>：全國性經常房產稅仍未開徵，僅上海、重慶試點，且已延長至2031年。 <a href="https://fdichina.com/blog/property-tax-china/" target="_blank" rel="noopener">出處</a></li></ul><div class="cp"><b>反面論點：</b>待售面積2026年3月出現52個月來首次年減，城鎮化率僅67.9%仍有上升空間，庫存去化完成後仍可能追上。</div></div><div class="ccard" style="border-left-color:#d97706"><div class="chd"><span class="cn">印尼</span><span class="vb" style="background:#fffbeb;color:#d97706;border-color:#fde68a">資料存疑</span><span class="conf">研究信心：medium</span><span class="conf">累計落後 51%</span></div><p class="chl">官方房價指數僅涵蓋16～18城的建商一手銷售，可能未反映住房缺口最嚴重的次級市場與非正式部門。</p><ul class="facts"><li><b>資料</b>：IHPR指數僅涵蓋約260家建商、16～18城的一手市場，不含二手交易。 <a href="https://www.bi.go.id/en/publikasi/ruang-media/news-release/Pages/sp_2726625.aspx" target="_blank" rel="noopener">出處</a></li><li><b>供給</b>：住房缺口2025年達1,500萬戶，較兩年前的990～1,200萬戶擴大。 <a href="https://www.thejakartapost.com/business/2025/04/23/indonesias-housing-backlog-rises-to-15-million-this-year-deputy-minister.html" target="_blank" rel="noopener">出處</a></li><li><b>信貸</b>：央行LTV維持100%（零頭期款）至2026年底，屬刺激而非壓抑。 <a href="https://www.bi.go.id/en/publikasi/ruang-media/news-release/Pages/sp_2725025.aspx" target="_blank" rel="noopener">出處</a></li><li><b>外資</b>：外國人僅能取得Hak Pakai使用權（無土地所有權），各省另訂購屋價格下限。 <a href="https://balipropertyrules.com/guides/pp-28-2025-foreign-property-bali/" target="_blank" rel="noopener">出處</a></li></ul><div class="cp"><b>反面論點：</b>缺口若集中在建商不願興建的低收入／非正式住房區段，即使指數準確，所得成長也未必能傳導至被追蹤的一手市場，故也可能同時屬結構性壓抑。</div></div><div class="ccard" style="border-left-color:#059669"><div class="chd"><span class="cn">南韓</span><span class="vb" style="background:#ecfdf5;color:#059669;border-color:#a7f3d0">可能兌現</span><span class="conf">研究信心：medium</span><span class="conf">累計落後 23%</span></div><p class="chl">首爾供給持續萎縮、人口續往首都圈集中，追趕跡象已見於首爾（惟全國指數尚未反映）；新一輪打房屬事後反應而非事前阻斷。</p><ul class="facts"><li><b>供給</b>：2026上半年首爾建照、完工量年減26～78%，供給持續緊縮。 <a href="https://en.sedaily.com/finance/2026/07/31/seoul-housing-permits-completions-halved-as-supply-warning" target="_blank" rel="noopener">出處</a></li><li><b>價格</b>：首爾公寓 2025 年漲 8.71%，為 19 年來最大單年漲幅；惟同年全國指數僅 +0.70%（名目）。 <a href="https://www.businesskorea.co.kr/news/articleView.html?idxno=260073" target="_blank" rel="noopener">出處</a></li><li><b>政策</b>：2026年5月起重課多屋族最高82.5%附加稅，首爾全區列入投機管制區。 <a href="https://www.koreaherald.com/article/10734682" target="_blank" rel="noopener">出處</a></li><li><b>人口</b>：首都圈人口占比達50.9%，20～39歲九成淨流入首都圈，即使全國人口停滯。 <a href="https://en.sedaily.com/society/2026/08/03/koreas-capital-region-draws-43-percent-of-population" target="_blank" rel="noopener">出處</a></li></ul><div class="cp"><b>反面論點：</b>追趕跡象集中在首爾，本研究採用的全國指數 2025 年名目僅 +0.70%、實質 −1.64%，國家層級尚未出現追趕；且現政府 14 個月內同時祭出稅制與信貸壓制，力道強於前朝。</div></div><div class="ccard" style="border-left-color:#dc2626"><div class="chd"><span class="cn">馬來西亞</span><span class="vb" style="background:#fef2f2;color:#dc2626;border-color:#fecaca">結構性壓抑</span><span class="conf">研究信心：medium</span><span class="conf">累計落後 13%</span></div><p class="chl">完工待售單位年增31.6%且集中在中價位公寓，正是所得追趕理論上該吸收的區段，供給過剩壓抑價格傳導。</p><ul class="facts"><li><b>供給</b>：完工待售單位2025年年增31.6%，約2.87～3.05萬戶，值170～177億林吉特。 <a href="https://iqiglobal.com/blog/napic-q3-2025/" target="_blank" rel="noopener">出處</a></li><li><b>稅制</b>：產業盈利稅（RPGT）持有3年內處分課稅30%，抑制短期交易。 <a href="https://loanstreet.com.my/learning-centre/rpgt-in-malaysia" target="_blank" rel="noopener">出處</a></li><li><b>外資</b>：外國人購屋門檻吉隆坡100萬林吉特起，高於過剩的中價位區段，隔絕外需。 <a href="https://www.iproperty.com.my/guides/foreigners-buying-property-malaysia-complete-guide-12332" target="_blank" rel="noopener">出處</a></li><li><b>人口</b>：15～64歲勞動人口占比70.4%，人口估2059年才達峰，結構仍屬順風。 <a href="https://www.malaymail.com/amp/news/malaysia/2025/07/11/dosm-sees-malaysia-population-peaking-at-42m-in-2059-chinese-community-shrinking-under-15pc-gender-imbalance-worsening/183589" target="_blank" rel="noopener">出處</a></li></ul><div class="cp"><b>反面論點：</b>過剩集中在柔佛、砂拉越等特定區域與高樓公寓，主要城市優質地段與排屋未過剩，加上2026預算200億林吉特信貸擔保鎖定年輕首購族，區段性追趕仍可能發生。</div></div><div class="ccard" style="border-left-color:#dc2626"><div class="chd"><span class="cn">台灣</span><span class="vb" style="background:#fef2f2;color:#dc2626;border-color:#fecaca">結構性壓抑</span><span class="conf">研究信心：medium</span><span class="conf">累計落後 9%</span></div><p class="chl">央行連7波選擇性信用管制與房地合一稅2.0（短期持有課稅45%）構成主動壓抑，2026年6月總裁仍稱修正「太慢」，管制未大幅鬆綁。</p><ul class="facts"><li><b>信貸</b>：2024年9月第七波信用管制第二戶房貸成數降至50%，2026年3月僅局部鬆綁。 <a href="https://www.money101.com.tw/blog/%E9%99%90%E8%B2%B8%E4%BB%A4%E8%A7%A3%E6%9E%90" target="_blank" rel="noopener">出處</a></li><li><b>稅制</b>：房地合一稅2.0對2年內處分課稅45%，短期轉手比例已從25.5%降至11.4%。 <a href="https://estate.ltn.com.tw/article/28522" target="_blank" rel="noopener">出處</a></li><li><b>效果</b>：新增房貸年減25.5～33.9%，房貸利率升至2.44%，為2009年以來新高。 <a href="https://www.taiwannews.com.tw/news/6260336" target="_blank" rel="noopener">出處</a></li><li><b>官方立場</b>：央行總裁2026年6月稱房價修正「太慢」，房價所得比仍達9.3倍，管制未廣泛解除。 <a href="https://news.cnyes.com/news/id/6505080" target="_blank" rel="noopener">出處</a></li></ul><div class="cp"><b>反面論點：</b>2026 年 3 月部分鬆綁顯示管制是可調節的循環工具而非永久壁壘；且管制期間房價仍持續上漲（信義指數 2020→2025 名目 +41.8%、實質 +26.7%），顯示管制減緩而非阻斷追趕。</div></div><div class="ccard" style="border-left-color:#059669"><div class="chd"><span class="cn">愛爾蘭</span><span class="vb" style="background:#ecfdf5;color:#059669;border-color:#a7f3d0">可能兌現</span><span class="conf">研究信心：medium</span><span class="conf">累計落後 4%</span></div><p class="chl">供給長期短缺（完工量遠低於所需的5.4萬戶）加上外資零限制，顯示落後主因是供給瓶頸而非政策壓抑，缺口理論上隨供給到位而縮小。</p><ul class="facts"><li><b>供給</b>：2025年完工量僅3.63萬戶，遠低於央行估計所需的5.4萬戶。 <a href="https://www.irishtimes.com/business/2026/01/29/irish-home-completions-rose-by-a-fifth-to-36284-units-last-year/" target="_blank" rel="noopener">出處</a></li><li><b>信貸</b>：央行LTI上限（首購4倍、二次購屋3.5倍所得）2022年檢討後僅小幅調整。 <a href="https://www.centralbank.ie/financial-system/financial-stability/macro-prudential-policy/mortgage-measures" target="_blank" rel="noopener">出處</a></li><li><b>外資</b>：愛爾蘭對外國買家無限制，與部分歐盟國家的限購形成對比。 <a href="https://www.irishtimes.com/ireland/housing-planning/2024/04/20/other-eu-countries-have-banned-foreign-property-buyers-to-ease-housing-crises-should-ireland-do-the-same/" target="_blank" rel="noopener">出處</a></li><li><b>資料</b>：CSO房價指數以2016年起完整印花稅交易資料編製，非抽樣，可信度高。 <a href="https://www.cso.ie/en/releasesandpublications/ep/p-rppi/residentialpropertypriceindexdecember2025/keyfindings" target="_blank" rel="noopener">出處</a></li></ul><div class="cp"><b>反面論點：</b>央行4倍所得的房貸上限是刻意設計以防房價脫離所得的長期機制，即使供給補齊，此上限仍可能持續限制房價追上所得的空間。</div></div><div class="ccard" style="border-left-color:#dc2626"><div class="chd"><span class="cn">泰國</span><span class="vb" style="background:#fef2f2;color:#dc2626;border-color:#fecaca">結構性壓抑</span><span class="conf">研究信心：medium</span><span class="conf">累計落後 1%</span></div><p class="chl">曼谷公寓庫存需逾4年去化，加上2024年起進入超高齡社會、勞動人口估2040年前萎縮11%，供需雙重壓力難在5年內反轉。</p><ul class="facts"><li><b>供給</b>：曼谷公寓庫存去化需時約49.5個月，2024年新案6個月內售出率降至32%。 <a href="https://hawook.com/bangkok-condo-oversupply-the-investor-reality-in-2025/" target="_blank" rel="noopener">出處</a></li><li><b>政策</b>：過戶／貸款費0.01%優惠已延長至2027年6月，屬第4輪以上同類刺激。 <a href="https://www.nationthailand.com/business/property/40068066" target="_blank" rel="noopener">出處</a></li><li><b>信貸</b>：央行放寬LTV至100%救市，同時家庭債務占GDP達89%，限制信貸擴張空間。 <a href="https://www.bangkokpost.com/business/general/2984036/bank-of-thailand-eases-mortgage-rules" target="_blank" rel="noopener">出處</a></li><li><b>人口</b>：2024年正式進入超高齡社會（65歲以上占20.69%），勞動人口估2040年前萎縮11%。 <a href="https://www.nationthailand.com/blogs/business/economy/40056069" target="_blank" rel="noopener">出處</a></li></ul><div class="cp"><b>反面論點：</b>2025年曼谷公寓外國買家占比已達26%（未觸49%上限），核心市中心價格仍穩定，加上罕見力度的信貸與費用雙重刺激，僅0.14pp的落後不排除迅速翻正。</div></div>
 </div>
 
 <div class="section">
-  <div class="section-title">九、這一頁能用、不能用的地方</div>
+  <div class="section-title">這一頁能用、不能用的地方</div>
   <div class="card">
   <div class="takeaway" style="margin-top:0"><b>能用的地方：</b>它把主頁「所得解釋不了房價」的結論
     <b>限縮到正確範圍</b>。那個結論對短天期成立，但在10年尺度上，

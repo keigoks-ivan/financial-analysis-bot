@@ -104,7 +104,7 @@
 :root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;--text:#111827;--muted:#6b7280;--border:#e5e7eb;
       --green:#059669;--red:#dc2626;--amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fde68a;--amber-text:#b45309}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text);line-height:1.65;font-size:15px;counter-reset:sec}
 a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
 .container{max-width:1080px;margin:0 auto;padding:0 1.5rem}
 .page-hdr{padding:1.75rem 0 1.25rem;background:linear-gradient(180deg,#f0f4ff 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
@@ -112,15 +112,24 @@ a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
 .page-hdr .sub{color:var(--muted);font-size:.9rem;margin-top:.2rem}
 .crumb{font-size:.82rem;color:var(--muted);margin-bottom:.4rem}.crumb a{color:var(--muted)}
 .section{padding:1.75rem 0 0}
-.section-title{font-size:1.15rem;font-weight:700;margin-bottom:1rem;padding-bottom:.45rem;border-bottom:2px solid var(--brand)}
-.section-sub{font-size:.85rem;color:var(--muted);margin:-.6rem 0 1rem}
+.section-title{counter-increment:sec;display:flex;align-items:center;gap:.5rem;font-size:1.02rem;font-weight:700;
+    color:#3a4353;margin-bottom:.85rem;padding-bottom:.4rem;border-bottom:1px solid var(--border)}
+.section-title::before{content:counter(sec);flex:none;width:1.3em;height:1.3em;border-radius:50%;
+    background:#dde1e8;color:#5b6472;font-size:.66rem;font-weight:700;display:inline-flex;
+    align-items:center;justify-content:center}
+.section-sub{font-size:.85rem;color:var(--muted);margin:-.5rem 0 1rem}
 .card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.1rem 1.25rem;margin-bottom:1rem}
 .card h4{font-size:.95rem;font-weight:700;margin-bottom:.5rem}
 details.card>summary{cursor:pointer;font-weight:700;font-size:.92rem;line-height:1.6;list-style:revert}
 details.card>summary::marker{color:var(--brand)}
 details.card[open]>summary{margin-bottom:.9rem;padding-bottom:.75rem;border-bottom:1px solid var(--border)}
 .tldr{font-size:.78rem;color:var(--muted);margin:-.4rem 0 1rem}
-.takeaway{font-size:.88rem;margin-top:.85rem;padding:.65rem .9rem;border-radius:6px;background:var(--brand-light);border-left:3px solid var(--brand)}
+.takeaway,.plain{font-size:.87rem;margin:.9rem 0;padding:.7rem .95rem;border-radius:6px;background:var(--brand-light);
+    border-left:3px solid var(--brand);color:#1f2c44}
+.takeaway b,.plain b{color:#12213a}
+.takeaway ul,.plain ul,.note ul{margin:.5rem 0 0;padding-left:1.15rem}
+.takeaway li,.plain li,.note li{margin-bottom:.32rem}
+.takeaway li:last-child,.plain li:last-child,.note li:last-child{margin-bottom:0}
 table{width:100%;border-collapse:collapse;font-size:.86rem}
 th,td{text-align:left;padding:.45rem .55rem;border-bottom:1px solid var(--border)}
 th{background:#f9fafb;font-weight:600;font-size:.7rem;text-transform:uppercase;letter-spacing:.02em;color:var(--muted)}
@@ -152,9 +161,6 @@ tr.hl td{background:#eff6ff}
 .cmp-cell.muted .cmp-num{color:var(--muted)}
 .cmp-note{font-size:.78rem;color:var(--muted);margin-top:.35rem;line-height:1.5}
 .note{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;padding:.85rem 1.1rem;font-size:.84rem;color:var(--amber-text);margin:1rem 0}
-.plain{background:#f4f7fd;border:1px solid #d9e3f7;border-left:3px solid var(--brand);border-radius:6px;
-        padding:.7rem .95rem;font-size:.87rem;color:#1f2c44;margin:.9rem 0}
-.plain b{color:#12213a}
 .gloss{display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem}
 .gloss > div{background:var(--card);border:1px solid var(--border);border-radius:7px;padding:.75rem .9rem}
 .gloss .term{font-weight:700;font-size:.9rem;margin-bottom:.25rem}
@@ -215,6 +221,18 @@ table.tf tr.twrow td.lbl{background:var(--amber-bg)}
 .mono{background:#f3f4f6;padding:.05rem .3rem;border-radius:3px;font-size:.85em;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
 footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);text-align:center;padding:1.25rem 0;font-size:.78rem;margin-top:2rem}
 @media(max-width:760px){.hero-stats{grid-template-columns:repeat(2,1fr)}.qa{grid-template-columns:1fr}.scroll-tf{max-height:60vh}.cmp{grid-template-columns:1fr}}
+@media(max-width:430px){
+  .page-hdr h1{font-size:1.32rem}
+  .hero-top{padding:1.1rem 1.2rem}
+  .hero-top h2{font-size:1.12rem}
+  .hero-stats{grid-template-columns:1fr}
+  .hero-stats > div{border-right:none;border-bottom:1px solid var(--border)}
+  .hero-stats > div:last-child{border-bottom:none}
+  .hero-stats .hs-value{font-size:1.25rem}
+  .qa .a{font-size:1rem}
+  .gloss{grid-template-columns:1fr}
+  .chart-wrap{height:320px}
+}
 </style>
 </head>
 <body>
@@ -252,7 +270,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </div>
 
 <div class="section">
-  <div class="section-title">一、同一個問題，換三種問法，答案完全不同</div>
+  <div class="section-title">同一個問題，換三種問法，答案完全不同</div>
   <div class="section-sub">很多關於房價的爭論，其實是這3個問題被混在一起講。</div>
   <div class="qa">
     <div><div class="q">同一個國家，所得成長快的年份，房價也漲得兇嗎？</div>
@@ -270,21 +288,22 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
   </div>
   <div class="tldr">只想知道結論，看到這裡就夠了。下面全部是證據。</div>
 
-  <div class="plain"><b>白話：這三個答案為什麼不衝突？</b><br>
-    （就是開頭那個年齡與身高的關係。）<br><br>
-    所得成長對房價就是這樣：它在<b>時間軸</b>上有效（景氣好的年份房價漲），
-    在<b>國與國的排名</b>上無效（長期漲幅由別的東西決定——這個猜想我們後來真的測了，
-    見<a href="#supply-side">下方「供給端」一節</a>：在城市尺度成立，在國家尺度看不到）。
+  <div class="plain"><b>這三個答案不衝突：所得成長對房價，在時間軸上有效、在國與國排名上無效</b>
+    ——就是開頭那個年齡與身高的關係。長期漲幅由別的東西決定，這個猜想我們後來真的測了
+    （見<a href="#supply-side">下方「供給端」一節</a>：在城市尺度成立，在國家尺度看不到）。
     所以看到「顯著正相關」不等於「可以用它解釋為什麼台灣房價比日本貴」。</div>
 
-  <div class="note"><b>而且，就算同期關係很強，也不能說「所得成長推升房價」。</b>
-    蓋房子本身就是 GDP 的一部分——房市熱絡會直接把 GDP 撐高；反過來，房價漲讓人覺得變有錢，
-    也會回頭刺激消費、推高 GDP。兩件事互為因果，這份資料分不出是誰推誰。
-    這叫做<b>因果無法識別</b>，是同期相關性研究的天生限制，不是這份研究做得不夠細。</div>
+  <div class="note"><b>就算同期關係很強，也不能說「所得成長推升房價」。</b>
+    <ul>
+      <li>蓋房子本身就是 GDP 的一部分——房市熱絡會直接把 GDP 撐高。</li>
+      <li>房價漲讓人覺得變有錢，也會回頭刺激消費、推高 GDP。</li>
+    </ul>
+    兩件事互為因果，這份資料分不出是誰推誰——這叫<b>因果無法識別</b>，
+    是同期相關性研究的天生限制，不是這份研究做得不夠細。</div>
 </div>
 
 <div class="section">
-  <div class="section-title">二、怎麼讀底下的數字</div>
+  <div class="section-title">怎麼讀底下的數字</div>
   <div class="section-sub">下面每張表都會用到這幾個詞彙：</div>
   <div class="gloss">
     <div><div class="term">關聯強度<span>標準化 β</span></div>
@@ -314,7 +333,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </div>
 
 <div class="section">
-  <div class="section-title">三、把國家排開來比：關係是反過來的</div>
+  <div class="section-title">把國家排開來比：關係是反過來的</div>
   <div class="section-sub">每一點是一個國家，橫軸是它長期的所得成長速度，縱軸是房價。
     虛線代表「房價剛好跟上所得」——落在線上方表示房價跑贏所得，下方表示跑輸。</div>
   <div class="card"><div class="chart-wrap"><canvas id="chart-cs"></canvas></div>
@@ -324,13 +343,15 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </div>
 
 <div class="section">
-  <div class="section-title">四、所得成長到底解釋了多少？</div>
+  <div class="section-title">所得成長到底解釋了多少？</div>
   <div class="section-sub">一層一層加東西進模型，看每加一樣能多解釋多少房價變化。
     所有數字用同一個分母算，所以可以直接相減。</div>
-  <div class="plain"><b>白話：</b>把「解釋房價漲跌」想成拼圖。先問「光知道這是哪一國」能拼出多少（
-    3.0%——因為有些國家長期就是漲比較快）；再問「光知道這是哪一年」能拼出多少（
-    13.9%——因為全球景氣會讓大家一起漲一起跌）。最後才問：<b>在這兩件都知道之後，
-    所得成長還能多拼出多少？</b>答案是 14%。</div>
+  <div class="plain"><b>把「解釋房價漲跌」想成拼圖，一塊一塊拼上去：</b>
+    <ul>
+      <li>光知道<b>這是哪一國</b>：拼出 3.0%（有些國家長期就是漲比較快）</li>
+      <li>光知道<b>這是哪一年</b>：拼出 13.9%（全球景氣讓大家一起漲跌）</li>
+      <li>兩者都知道後，<b>所得成長</b>還能多拼出：<b>14%</b></li>
+    </ul></div>
   <div class="card">
   <table><thead><tr><th>模型</th><th class="num">R²</th></tr></thead><tbody>
     <tr><td class="lbl">什麼都沒有（總平均）</td><td class="num">0%</td></tr>
@@ -349,14 +370,16 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </div>
 
 <div class="section">
-  <div class="section-title">五、12 個因子裡，誰最有解釋力？</div>
+  <div class="section-title">12 個因子裡，誰最有解釋力？</div>
   <div class="section-sub">一次只放一個因子下去測，已扣掉國家與年份的共同影響。</div>
-  <div class="plain"><b>白話：</b>最後兩欄把因子分成兩種性格。
-    <b>通膨</b>與<b>家庭信用</b>在扣掉全球共同因素後解釋力掉一半以上，代表它們的作用<b>本來就是全球循環本身</b>
-    （全世界一起降息、一起放貸、一起漲）。<b>所得成長</b>與<b>失業率</b>反而上升，
-    代表它們作用在<b>國與國之間的差異</b>上。<br><br>
-    另外三個「照理說該有用卻沒用」的：都市化率、人口成長、利率變動，解釋力全是 0。
-    都市化不解釋房價，這點跟一般直覺很不一樣。</div>
+  <div class="plain"><b>最後兩欄把 12 個因子分成三種性格：</b>
+    <ul>
+      <li><b>通膨、家庭信用</b>——扣掉全球共同因素後解釋力掉一半以上，代表它們的作用<b>本來就是全球循環本身</b>
+        （全世界一起降息、放貸、漲價）。</li>
+      <li><b>所得成長、失業率</b>——扣掉全球因素後解釋力反而上升，代表它們作用在<b>國與國之間的差異</b>上。</li>
+      <li><b>都市化率、人口成長、利率變動</b>——照理該有用卻沒用，解釋力全是 0。都市化不解釋房價，
+        這點違反直覺。</li>
+    </ul></div>
   <details class="card">
   <summary>所得成長是最強的基本面因子，唯一贏過它的是房價自己的慣性（點開看完整 12 因子比較表）</summary>
   <div class="scroll">
@@ -371,7 +394,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </div>
 
 <div class="section">
-  <div class="section-title">六、所有因子放在一起比，誰還站得住？</div>
+  <div class="section-title">所有因子放在一起比，誰還站得住？</div>
   <div class="section-sub">前面是一個一個分開測，這裡是全部同時放進同一個模型互相競爭。</div>
   <div class="plain"><b>白話：</b>分開測時，每個因子都可能只是在反映別人的影子。
     一起放進去，才知道<b>誰是真的有獨立貢獻</b>。結果所得成長在兩種設定下都還是最大的一個。</div>
@@ -383,7 +406,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </div>
 
 <div class="section">
-  <div class="section-title">七、同樣的因子，換一群國家還成立嗎？</div>
+  <div class="section-title">同樣的因子，換一群國家還成立嗎？</div>
   <div class="section-sub">把 42 個經濟體分成三群，每一群各自重測一次同樣的 12 個因子。</div>
   <div class="plain"><b>白話：</b>這張表在問一件事——已開發國家身上找到的規律，
     在發展中國家身上還成立嗎？答案就在「發展中亞洲」那一欄。</div>
@@ -401,7 +424,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </div>
 
 <div class="section">
-  <div class="section-title">八、42 個國家逐一攤開，看得出什麼規律？</div>
+  <div class="section-title">42 個國家逐一攤開，看得出什麼規律？</div>
   <div class="section-sub">最細的一張：42 個經濟體逐一單獨測。已先扣掉全球共同因素，
     所以可以跟上一節直接對照。房價與 GDP 兩欄是該國樣本期內的實質年化平均（%）。</div>
   <div class="plain"><b>白話：</b>表格可以左右捲動，<b>國名那一欄與最上面的因子名稱會固定不動</b>，
@@ -423,17 +446,19 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
   <div class="takeaway">只有<b>房價慣性</b>與<b>所得成長</b>通過這個檢查——凡是顯著的國家，方向全部一致，
     沒有半個反向。這是所得成長這條關係最強的證據。其餘因子要嘛只在少數國家成立，
     要嘛正負都有，代表背後沒有穩定的跨國機制。</div>
-  <div class="plain"><b>這張表不是海量測試硬篩出來的：</b>上面那張大矩陣一共做了 491 次
-    「一個國家 × 一個因子」的個別檢定，其中 165 次達到 5% 顯著（|t|&gt;1.96）。如果每個因子其實都跟房價無關、
-    純粹碰運氣，5% 顯著水準下大約只會有 25 次「意外達標」——實際數字是隨機情況下預期值的
-    <b>6.6 倍</b>。加上方向幾乎全部一致（房價動能 29/29 正、實質人均 GDP 成長 26/26 正、
-    失業率變動 21/21 負，沒有一個反著來），這兩件事合起來，是這張矩陣不是資料探勘假象、
-    而是真的抓到穩定跨國規律的證據。</div>
+  <div class="plain"><b>這張表不是海量測試硬篩出來的：</b>兩個獨立證據都指向真規律，不是巧合。
+    <ul>
+      <li><b>顯著次數遠超雜訊：</b>上面那張大矩陣一共做了 491 次「一個國家 × 一個因子」的個別檢定，
+        其中 165 次達到 5% 顯著（|t|&gt;1.96）。如果每個因子其實都跟房價無關、純粹碰運氣，
+        5% 顯著水準下大約只會有 25 次「意外達標」——實際數字是預期值的 <b>6.6 倍</b>。</li>
+      <li><b>方向幾乎全部一致：</b>房價動能 29/29 正、實質人均 GDP 成長 26/26 正、
+        失業率變動 21/21 負，沒有一個反著來。</li>
+    </ul></div>
   </div>
 </div>
 
 <div class="section" id="taiwan">
-  <div class="section-title">九、台灣：漲最兇，但跟所得成長無關</div>
+  <div class="section-title">台灣：漲最兇，但跟所得成長無關</div>
   <div class="card">
   <div class="plain" style="margin-top:0"><b>白話：</b>台灣同時是這份研究裡最極端的兩件事——
     房價漲最兇的其中之一，以及<b>房價跟所得成長最沒關係的那一個</b>。這兩件事放在一起才是重點。</div>
@@ -453,7 +478,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </div>
 
 <div class="section" id="supply-side">
-  <div class="section-title">十、供給端：測了，答案是「分母」</div>
+  <div class="section-title">供給端：測了，答案是「分母」</div>
   <div class="section-sub">主頁一開始只能寫成一句免責聲明的猜測，這裡把它變成兩場真正的檢定。</div>
 
   <div class="plain"><b>白話：</b>這份研究最早的版本只用一句話帶過——「跨國排名解釋不了所得成長，
@@ -461,10 +486,10 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
     我們後來真的去測了，分兩層測。</div>
 
   <div class="card"><h4 style="margin-top:0">第一層，跨國：供給端一樣解釋不了</h4>
-  <p>把 42 國蒐齊五種供給端變數——持有稅、建照管制、完工量、供給彈性、外資限制——一組一組拿去對房價，
-    前前後後測了 36 組配對。結果跟所得成長那次一樣：幾乎全是雜訊。唯一一組掛上統計顯著的，
-    方向還是反的（建照成本越高，房價反而漲得越少，跟「管制越嚴、蓋得越少、漲得越兇」的猜想正好相反）。
-    也就是說，供給端不是「還沒測、留待驗證」的一格空白，是「測過了，答案是沒有」的一格空白。</p></div>
+  <p><b>36 組配對，結果跟所得成長那次一樣：幾乎全是雜訊。</b>把 42 國蒐齊五種供給端變數——
+    持有稅、建照管制、完工量、供給彈性、外資限制——一組一組拿去對房價，唯一一組掛上統計顯著的，
+    方向還是反的（建照成本越高，房價反而漲得越少，跟「管制越嚴、蓋得越少、漲得越兇」的猜想正好相反）。</p>
+  <p style="margin-top:.6rem">供給端不是「還沒測、留待驗證」的一格空白，是「測過了，答案是沒有」的一格空白。</p></div>
 
   <div class="card"><h4>第二層，換到美國城市之間：訊號強得不能忽視</h4>
   <p>同一個問題換一個尺度再問一次：不比國家跟國家，比美國 300 多個都會區彼此之間。
@@ -481,17 +506,22 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
   <p>同一個國家、同一段時間，光是「能不能蓋房子」這一件事，
     就把兩座城市的房價命運分到了天差地遠的兩端。</p></div>
 
-  <div class="takeaway"><b>為什麼跨國看不到、換個尺度就看到了？</b>三個原因，都不是各說各話，都算得出數字：
-    (a) 國家平均把城市攪成一團——美國壓成一個數字只有 1.1%／年，但同一批城市裡，
-    漲最快的一群跟漲最慢的一群，一年就差了將近 1.8 個百分點；
-    (b) 42 個國家的樣本太小——就算供給效果真的跟城市尺度一樣大，跨國那套精度普通的供給指標拿去測，
-    能測到的機率也只剩兩到五成，沒比丟銅板好多少；
-    (c) 跨國那把尺本身就粗——它量的其實是「在這國最大城市蓋一座倉庫要花幾天」，不是「這國的人能不能買到房子」。</div>
+  <div class="takeaway"><b>為什麼跨國看不到、換個尺度就看到了？</b>三個原因，都算得出數字：
+    <ul>
+      <li><b>國家平均把城市攪成一團：</b>美國壓成一個數字只有 1.1%／年，但同一批城市裡，
+        漲最快的一群跟漲最慢的一群，一年就差了將近 1.8 個百分點。</li>
+      <li><b>42 個國家的樣本太小：</b>就算供給效果真的跟城市尺度一樣大，跨國那套精度普通的供給指標
+        拿去測，能測到的機率也只剩兩到五成，沒比丟銅板好多少。</li>
+      <li><b>跨國那把尺本身就粗：</b>它量的其實是「在這國最大城市蓋一座倉庫要花幾天」，
+        不是「這國的人能不能買到房子」。</li>
+    </ul></div>
 
-  <div class="plain"><b>正確的理解方式，不是「供給能不能解釋房價」，是「供給決定需求往哪裡宣洩」。</b>
-    需求來的時候，蓋得動房子的城市把它變成新房子（休士頓模式），蓋不動的城市把它變成更高的價格
-    （舊金山模式）。反過來，光是蓋不動、但沒人要來，房價一樣不會漲——美國中西部一堆管制不鬆、
-    但也沒什麼需求的城市就是這樣。所以問「供給能不能解釋房價」，一開始就問錯了問題；
+  <div class="plain"><b>正確的問法不是「供給能不能解釋房價」，是「供給決定需求往哪裡宣洩」：</b>
+    <ul>
+      <li><b>蓋得動的城市</b>（休士頓模式）——需求變成新房子。</li>
+      <li><b>蓋不動的城市</b>（舊金山模式）——需求變成更高的價格。</li>
+    </ul>
+    光是蓋不動、但沒人要來，房價一樣不會漲——美國中西部一堆管制不鬆、但也沒什麼需求的城市就是這樣。
     該問的是：這個城市的需求，最後是被蓋出來的房子吸收掉，還是被推高的價格吸收掉？</div>
 
   <p style="font-size:.92rem">放回台灣的脈絡：判斷台灣房價該看的不是「台灣」這個國家等級的供給指標，
@@ -509,7 +539,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </div>
 
 <div class="section">
-  <div class="section-title">十一、資料來源與限制</div>
+  <div class="section-title">資料來源與限制</div>
 
   <div class="card"><h4 style="margin-top:0">房價／所得比：兩側用同一個物價指數平減</h4><div class="src">
   <p>房價／所得比的兩側都先換算成實質值，且用同一個物價指數<b>CPI</b>平減：房價（hpi_real）
