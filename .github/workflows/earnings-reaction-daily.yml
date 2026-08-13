@@ -1,0 +1,88 @@
+# 美股財報後異常股價反應 → email（純通知層，不 commit 任何檔）
+#
+# 每個美股交易日收盤後、台灣時間早上 07:00（= 23:00 UTC，週一至五 UTC =
+# 台北週二至六早上）跑 scripts/build_earnings_reaction.py：
+#   宇宙 = dd-screener 美股掛牌（含 ADR）；財報反應日 = 剛收盤交易日；
+#   異常 = |漲跌| >= max(5%, 2×60 日日波動)。有異常才寄信，無異常安靜。
+# MAIL_USERNAME / MAIL_APP_PASSWORD 與 update_long_track_w52_adaptive.yml
+# 等 7+ 支 workflow 共用，已設好。
+name: Earnings reaction daily (US)
+
+on:
+  schedule:
+    - cron: '0 23 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      test_email:
+        description: 'Send a test email even without abnormal reactions'
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install "yfinance>=0.2.40" pandas numpy
+
+      - name: Run earnings reaction scan
+        run: python scripts/build_earnings_reaction.py
+
+      - name: Read alert
+        id: alert
+        run: |
+          if [ -f earnings_reaction_alert.txt ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            {
+              echo "body<<ALERT_EOF"
+              awk 1 earnings_reaction_alert.txt
+              echo "ALERT_EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check mail secrets
+        id: mailcfg
+        env:
+          MU: ${{ secrets.MAIL_USERNAME }}
+          MP: ${{ secrets.MAIL_APP_PASSWORD }}
+        run: |
+          if [ -n "$MU" ] && [ -n "$MP" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false (SMTP secrets missing — email skipped)" >&2
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Email abnormal reactions
+        if: (steps.alert.outputs.changed == 'true' || inputs.test_email == true) && steps.mailcfg.outputs.ready == 'true'
+        continue-on-error: true
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_APP_PASSWORD }}
+          subject: "📊 美股財報異常反應 ${{ steps.alert.outputs.changed == 'true' && '' || '(測試信)' }}"
+          to: keigoks@gmail.com
+          from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
+          body: |
+            ${{ steps.alert.outputs.changed == 'true' && steps.alert.outputs.body || '這是測試信 — 財報異常反應 email 管線正常。昨日無異常反應。' }}
+
+            —
+            InvestMQuest · 美股財報後異常反應掃描（dd-screener 美股宇宙含 ADR）
+            每美股交易日台北 07:00 檢查 · 異常＝|漲跌| ≥ max(5%, 2×60 日波動)
+            退訂：停用 earnings-reaction-daily.yml 的 schedule
