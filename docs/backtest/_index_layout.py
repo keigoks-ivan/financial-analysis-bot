@@ -72,6 +72,15 @@ DD links). DIRECTORY["scan"] follows the macro tab's minimal single-dir-row
 pattern (no CTA/link-card sections yet, since there is only one country
 page so far). One-entry-one-tab rule preserved; tab list order and JS hash
 whitelist regex both extended to include "scan".
+2026-08-15 — scan tab: 台灣國家掃描
+====================================
+Added country_scan/taiwan.html (hub + 8 lens sub-pages under
+country_scan/taiwan/: semis / ai-hardware / compounders / hidden-champions /
+domestic / financials / dividends / assets-events; 671-ticker universe,
+TWSE+TPEx mcap ≥ NT$10B). Listed first in the 市場初掃 row (home market on
+top), same minimal single-dir-row pattern; hub links out to its own
+sub-pages so only the hub is registered here.
+
 Run: python3 _build_index.py   (this module is imported, not run directly)
 """
 from __future__ import annotations
@@ -256,6 +265,7 @@ DIRECTORY = {
     ],
     "scan": [
         ("市場初掃", [
+            ("/backtest/country_scan/taiwan.html", "台灣：市場結構與八個投資鏡頭", "研究", False),
             ("/backtest/country_scan/japan.html", "日本：市場結構與七個投資鏡頭", "研究", False),
             ("/backtest/country_scan/malaysia.html", "馬來西亞：市場結構與四個投資鏡頭", "研究", False),
         ]),
