@@ -400,12 +400,14 @@ QC-1~QC-46 多為**通用成長複利股**累積的 tripwire；§0 判為非複�
 **所有 spawn 出去的執行型 agent（採集／查證／critic／patch／fix pass）派工 prompt，一律附帶「機械輪次批次化」三條**（見【Token 紀律】）。
 
 0. **隨附文件前置處理（條件性）**：用戶提供外部文件（PDF／研究報告／逐字稿／產業報告路徑）→ 跑搜尋前先消化成「與本公司相關」的產業 read-through，寫入 §8.5（緊接 §8）。**只擷取會影響本公司業務前景／護城河／§2 假設的內容**。無隨附文件 → §8.5 整段省略，不留佔位。
+   **Koyfin 逐字稿自動帶入**：研究開始前先跑 `python3 ~/scripts/koyfin-downloader/transcripts_for_dd.py {原始 ticker，如 2330.TW}`，取得這輪必讀／可略讀清單。必讀逐字稿本體全讀（不外包、不先 digest，見【Token 紀律】界線段），可略讀依論點相關性自行取捨；讀完併入 §8.5。**一律只讀清單列出的 `.md`，絕不開啟對應 `.pdf`**。資料夾不存在（工具回報找不到並 exit 2）→ 靜默跳過，不中斷分析。
 1. **先執行所有搜尋**（見【即時數據協議】）——**第一步 spawn 採集 agent** 取回機械數字包（模板見 `references/data-collection.md`），判斷性搜尋（QC-39／QC-12／Munger／QC-19 深查）本 agent 自行執行。**基本面研究只在此做一次**;Part II 引用 Part I 結論，不另起搜尋。
 1.5. **Archetype 判定（QC-43）**：資料齊後、進章節前，判定 primary（+ secondary）+ 信心，路由 gate-set（金融 → QC-44／循環 → 投資軌 normalized + 附錄 B 對應子型錶〔商品/capex/需求量〕／EMS·ODM → 第 7 類 ROIC+周轉 gate-set + 需求量循環錶／未獲利 → Rule-of-40／default 品質複利）。§1 開頭/頁首明寫「archetype + 信心 + 換了哪套 gate」。
 1.6. **知識帳本先讀後裁（Part II 動筆前必跑）**：`python knowledge/q.py {TICKER}`（衍生物不存在時自動 rebuild），載入歷次裁決、thesis 演進、已回填 outcome。**硬規則**：前次裁決為觀望/迴避且 to-date 報酬 **> +30%**（`q.py --calibration` 錯過成本警報線）→ 該證據**強制列入 §11.3**，且 §14 複審**不得只以「估值更貴了」維持觀望**——必須明寫「上次觀望/迴避後漲 __%，本次維持/翻面的理由是 ___（正面回應錯過成本，非僅估值變貴）」。
 2. **⛔ 強制靜默（最高優先級）**：收到 ticker 後對話框嚴禁出現任何章節文字、分析段落、表格、bullet、「正在分析…」過渡描述。所有章節（頁首儀表板、§1-§14、附錄 A）直接寫入 HTML。
 3. **草稿 → critic gate → Write**：Part I + Part II 草稿完成後、最終 Write 前，跑 QC-41（強制觸發範圍時）與 QC-48（row 8a 命中時）／row 8b 循環 critic（命中時）／**QC-50 反向 critic（觀望＋錯過成本或上修訊號命中時）**，並執行 **QC-52 Stage 2 DD↔ID 對帳（一律）**，把 🔴/🟡 findings 實際回填修正章節，再 **QC-40 機械 sweep**，最後才呼叫 Write。
 4. 搜尋與 critic gate 完成後唯一允許輸出的文字：「搜尋完成，正在生成 v15.0 DD 報告（含 critic gate）...」，然後直接呼叫 Write（Claude Code 本地環境，不需 present_files）。
+5. Write 成功後，若步驟 0 有跑過 Koyfin 逐字稿工具，補跑 `python3 ~/scripts/koyfin-downloader/transcripts_for_dd.py {原始 ticker} --mark` 記錄已讀，供下次增量判斷。
 
 ### 【隨附文件處理協議】
 **觸發**：用戶請求報告時同時附上外部文件（券商報告／逐字稿／白皮書／新聞 PDF／Excel）。
@@ -414,6 +416,7 @@ QC-1~QC-46 多為**通用成長複利股**累積的 tripwire；§0 判為非複�
 3. **標註**：每個擷取點帶**來源機構 + 日期 + 信心度（high/med/low + 一句依據）**，並指出影響哪一項（需求跑道／定價權／競爭護城河／margin／哪個 §2 假設）。多份文件分歧時並列並裁決。
 4. **接線**：§8.5 是上游素材，必須在下游被實際引用——§2（假設 sourced floor）、§6（成長跑道/分部建模）、§5（護城河/對手對照）、§3（產業格局/利潤池）。§8.5 自身只做「整理 + 標來源 + 指向」。
 **反灌水**：§8.5 是**壓縮成決策相關的 read-through 表 + 分歧裁決**，冗長照搬＝違規。
+Koyfin `.md` 逐字稿（`transcripts_for_dd.py` 帶入者）也是一種隨附文件，引用時標「Koyfin transcript, {日期}」。
 
 ### 搜尋集中原則
 **所有網路搜尋必須在分析開始前一次性完成**：股價/市值/52 週高低點;最新財報關鍵數字、Earnings Call 摘要;EPS 共識（FY+1/+2/+3）;FCF Margin 5 年/ROIC 10 年/毛利率 10 年（Macrotrends）;Forward P/E / EV/EBITDA / P/FCF 當前與 5 年區間;同業估值比較、分析師目標價;**§10.5 IRR 所需的 5Y 末 multiple band 與 consensus EPS（同一輪取得，不在 Part II 重搜）**。搜尋完成後**禁止重新搜尋**;**Part II（§11-§14）一律引用 Part I 已搜得的數字**。有數據缺口則額外補搜後立即進入 HTML 生成。
