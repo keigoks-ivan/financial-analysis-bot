@@ -306,6 +306,25 @@ E3 2330/0050 能到 0.85,<b>領先全來自加入 2330</b>(台積電集中度),�
 <div class="section-sub" style="margin-top:.6rem">今日一致畫面：RICH IV（36.6）下賣方群偏有利、買方避險偏貴 —— 同一個 IV 讀數對不同方向的策略意義相反。</div>
 </div>
 
+<!-- 可轉債 -->
+<div class="section">
+<h2 class="section-title" style="border-bottom-color:#7c3aed">台股可轉債專區</h2>
+<div class="section-sub">CB 現券＋CBAS 機制調查 ＋ 五個獨立回測（折價組合／停止轉換／賣回保底／月營收催化／折價收斂）。
+只有一條可安心小資金實盤，其餘不是機會太稀、就是訊號太弱或規模太小；CBAS 槓桿化以上任何一個都不划算。
+<a href="/backtest/tw_cb/">→ 專區首頁與 30 秒版總結</a></div>
+<div class="card" style="overflow-x:auto">
+<table><thead><tr><th>策略</th><th>本質</th><th>判定</th><th>Headline</th></tr></thead>
+<tbody>
+<tr><td><a href="/backtest/tw_cb/#putfloor" style="font-weight:600">賣回保底攤大餅</a><br><span style="font-size:.72rem;color:var(--muted)">市價&lt;賣回價 · 極分散 · 零周轉</span></td><td>合約保底套利</td><td><span style="background:var(--green-bg);color:var(--green);border:1px solid var(--green-border);padding:.08rem .4rem;border-radius:4px;font-size:.72rem;font-weight:600">GO</span></td><td>201 事件・年化 +6.3%・勝率 95.5%</td></tr>
+<tr><td><a href="/backtest/tw_cb/#discount" style="font-weight:600">折價 CB 組合</a><br><span style="font-size:.72rem;color:var(--muted)">買 &lt;100 元 CB · 2007–2026 全樣本外</span></td><td>面額折價</td><td><span style="background:#fffbeb;color:#d97706;border:1px solid #fde68a;padding:.08rem .4rem;border-radius:4px;font-size:.72rem;font-weight:600">CAUTION</span></td><td>CAGR +3.2%・alpha 顯著但薄（t=3.19）</td></tr>
+<tr><td><a href="/backtest/tw_cb/#revcat" style="font-weight:600">月營收催化×低溢價 CB</a><br><span style="font-size:.72rem;color:var(--muted)">10 日營收公布 → 溢價率排名</span></td><td>基本面催化</td><td><span style="background:#fffbeb;color:#d97706;border:1px solid #fde68a;padding:.08rem .4rem;border-radius:4px;font-size:.72rem;font-weight:600">CAUTION</span></td><td>訊號 vs 對照配對 t=0.96 不顯著</td></tr>
+<tr><td><a href="/backtest/tw_cb/#discconv" style="font-weight:600">折價收斂（股期對沖）</a><br><span style="font-size:.72rem;color:var(--muted)">CB&lt;轉換價值 · 20 日收斂追蹤</span></td><td>轉股套利</td><td><span style="background:#fffbeb;color:#d97706;border:1px solid #fde68a;padding:.08rem .4rem;border-radius:4px;font-size:.72rem;font-weight:600">CAUTION</span></td><td>對沖後 +1.8%/10日（t=6.5）・容量小</td></tr>
+<tr><td><a href="/backtest/tw_cb/#stopconv" style="font-weight:600">停止轉換期收斂</a><br><span style="font-size:.72rem;color:var(--muted)">發行後 3 個月內／到期前 10 日</span></td><td>停轉期錯價</td><td><span style="background:#fef2f2;color:var(--red);border:1px solid #fecaca;padding:.08rem .4rem;border-radius:4px;font-size:.72rem;font-weight:600">AVOID</span></td><td>僅 7 事件、到期窗逆選擇陷阱</td></tr>
+</tbody></table>
+</div>
+<div class="section-sub" style="margin-top:.6rem">對「CBAS 槓桿化」問題的正式回答：報酬最厚的策略年化也只有個位數 %，付了 CBAS 槓桿的利息成本後大機率歸零——不建議疊加。</div>
+</div>
+
 <!-- crash meta -->
 <div class="section">
 <a class="acard-note" style="display:block" href="/backtest/tw_crash/">

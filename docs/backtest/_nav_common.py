@@ -11,6 +11,8 @@ Every backtest page header renders the same groups via make_toggle(active):
     日內交易：    txf_intra | txf_chips | ssf_xsec | txf_basis
     研究筆記：    dvw | dvw_deep | dvw_global | dvw_tw | ma_cross | ma_dev
                   | ma_dynband | ma_squeeze | smh_vcrash
+    研究・總經：  housing_gdp
+    研究・可轉債：tw_cb
 
 Design (2026-07-11 redesign):
   * Colour discipline — every pill is neutral (grey fill, dark-grey text); the
@@ -157,6 +159,13 @@ RESEARCH_MACRO_LINKS = [
     ("/backtest/housing_gdp/", "人均GDP與房價", "housing_gdp", "研究"),
 ]
 
+# 2026-08-15 新增：台股可轉債（CB）研究專區——五個獨立回測（折價組合/停止轉換/
+# 賣回保底/月營收催化/折價收斂）彙整頁，自成一群（同 OPTIONS_LINKS 的做法），
+# 不塞進 TAIWAN_LINKS（那是可交易的波段系統排名）或既有研究四群（主題不合）。
+TW_CB_LINKS = [
+    ("/backtest/tw_cb/", "台股可轉債專區", "tw_cb", "研究"),
+]
+
 # 向後相容：舊名保留為五群之串接，供外部引用者使用。
 RESEARCH_LINKS = (RESEARCH_ETF_LINKS + RESEARCH_FREQ_LINKS
                   + RESEARCH_MA_LINKS + RESEARCH_CRASH_LINKS
@@ -234,4 +243,5 @@ def make_toggle(active: str) -> str:
             + _row("研究・均線", RESEARCH_MA_LINKS, active)
             + _row("研究・崩盤", RESEARCH_CRASH_LINKS, active)
             + _row("研究・總經", RESEARCH_MACRO_LINKS, active)
+            + _row("研究・可轉債", TW_CB_LINKS, active)
             + '</nav>')
