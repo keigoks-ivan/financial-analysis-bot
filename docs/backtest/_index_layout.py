@@ -80,6 +80,14 @@ domestic / financials / dividends / assets-events; 671-ticker universe,
 TWSE+TPEx mcap ≥ NT$10B). Listed first in the 市場初掃 row (home market on
 top), same minimal single-dir-row pattern; hub links out to its own
 sub-pages so only the hub is registered here.
+2026-08-15 — scan tab: 美國國家掃描
+====================================
+Added country_scan/us.html (hub + 9 lens sub-pages under country_scan/us/:
+platforms / semis / software / compounders / healthcare / financials /
+consumer / energy-industrials / hidden-champions; 1,590-ticker universe,
+S&P 1500 + mcap ≥ US$10B supplement, foreign ADR excluded). Listed above
+Taiwan (largest market on top); hub links out to its own sub-pages so only
+the hub is registered here.
 
 Run: python3 _build_index.py   (this module is imported, not run directly)
 """
@@ -265,6 +273,7 @@ DIRECTORY = {
     ],
     "scan": [
         ("市場初掃", [
+            ("/backtest/country_scan/us.html", "美國：市場結構與九個投資鏡頭", "研究", False),
             ("/backtest/country_scan/taiwan.html", "台灣：市場結構與八個投資鏡頭", "研究", False),
             ("/backtest/country_scan/japan.html", "日本：市場結構與七個投資鏡頭", "研究", False),
             ("/backtest/country_scan/malaysia.html", "馬來西亞：市場結構與四個投資鏡頭", "研究", False),
