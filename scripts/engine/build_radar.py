@@ -214,7 +214,7 @@ def render_grp_board(payload: dict) -> str:
 <h3>GRP 主榜 <span class="cnt">{len(board)} 檔全過三閘（顯示 top 30，按上修幅度）</span></h3>
 <div class="shape-desc"><b>持有人選股準則（2026-07-04 拍板）：高成長 × EPS 上修 × 位置適合＋市值 ≥ $200 億</b>——
 G＝FY+1 隱含 EPS 成長 ≥15% ｜ R＝FY+1 EPS 30 天修正 &gt;0（下修否決）｜ P＝站上 40 週線＋位置標籤
-｜市值門檻管主榜與席位資格（本輪另有 {payload.get('grp_subfloor_n', 0)} 檔過三閘但未達市值，留在形狀欄）。
+｜市值門檻管主榜與席位資格（本期另有 {payload.get('grp_subfloor_n', 0)} 檔過三閘但未達市值，留在形狀欄）。
 排序＝上修幅度。這是研究優先序，進場仍走 DD 裁決＋板機。</div>
 <table><thead><tr><th class="left">Ticker</th><th class="left">產業</th><th>層</th>
 <th>G 成長</th><th>R 30d修正</th><th class="left">P 位置</th><th>12M</th><th>軌別</th><th>DD池</th></tr></thead>

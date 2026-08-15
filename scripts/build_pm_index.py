@@ -155,7 +155,7 @@ def build() -> str:
     reports = sorted(PM.glob("MONITOR_*.md"), reverse=True)
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
     if not reports:
-        body_report = '<div class="report"><p>目前無週掃報告。position-thesis-monitor 產出後會列於此。</p></div>'
+        body_report = '<div class="report"><p>目前無週掃報告，產出後會列於此。</p></div>'
         hist = ""
         latest_date = "—"
     else:
@@ -176,7 +176,7 @@ def build() -> str:
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>持倉週掃｜InvestMQuest Research</title>
-<meta name="description" content="position-thesis-monitor 每週掃全持倉與近期研究 DD 的否證指標、催化劑時程、thesis 老化與產業 ID kill 門檻——手動/cron 觸發的分流報告索引。">
+<meta name="description" content="每週掃全持倉與近期研究 DD 的否證指標、催化劑時程、thesis 老化與產業 ID kill 門檻——手動/cron 觸發的分流報告索引。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
@@ -188,7 +188,7 @@ def build() -> str:
   <div class="container">
     <div class="crumb"><a href="/">首頁</a> / <a href="/track-record/">系統</a> / 持倉週掃</div>
     <h1>持倉週掃</h1>
-    <div class="sub">position-thesis-monitor 週掃輸出：逐一檢查每個持倉與近期研究 DD 的否證指標、催化劑時程、DD／ID 老化，並獨立掃每張產業 ID 的 kill 門檻，標出「沉默衰退」（催化劑錯過、指標破線、thesis 過半衰期、ID kill 門檻跨越）供人工重審。<b>手動 / cron 觸發，非即時。</b></div>
+    <div class="sub">本報告逐一檢查每個持倉與近期研究 DD 的否證指標、催化劑時程、DD／ID 老化，並獨立掃每張產業 ID 的 kill 門檻，標出「沉默衰退」（催化劑錯過、指標破線、thesis 過半衰期、ID kill 門檻跨越）供人工重審。<b>手動 / cron 觸發，非即時。</b></div>
     <div class="badge">最新報告：{latest_date}　·　頁面更新 {now}</div>
   </div>
 </div>
@@ -197,7 +197,7 @@ def build() -> str:
 {body_report}
 </div>
 <footer>
-  &copy; {datetime.now().year} InvestMQuest Research · 持倉週掃（position-thesis-monitor）· 本頁為研究監控輸出，不構成投資建議
+  &copy; {datetime.now().year} InvestMQuest Research · 持倉週掃 · 本頁為研究監控輸出，不構成投資建議
 </footer>
 </body>
 </html>
