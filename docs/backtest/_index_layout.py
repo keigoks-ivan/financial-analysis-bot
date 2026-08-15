@@ -213,6 +213,9 @@ DIRECTORY = {
             ("/backtest/tw_vcrash/", "台股 V崩防禦", None, False),
             ("/backtest/tw_crash/", "台股含崩盤驗證", None, False),
         ]),
+        ("研究・可轉債", [
+            ("/backtest/tw_cb/", "台股可轉債專區", "專區", False),
+        ]),
         ("前瞻追蹤", [
             ("/long-track-w52-adaptive/", "W52 × 自適應波動率 150%（實單主系統）", "實單", False),
             ("/long-track-tw-vt/", "0050+2330 固定 σ（歸檔）", None, False),
