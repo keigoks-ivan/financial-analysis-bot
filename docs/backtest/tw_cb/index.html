@@ -51,6 +51,22 @@ tbody tr:hover td{background:#f3f4f6}
 .warn-loud{background:var(--red-bg);border:2px solid var(--red-border);border-radius:8px;
       padding:1rem 1.2rem;font-size:.88rem;color:var(--red-text);margin:1rem 0}
 .warn-loud strong{color:var(--red)}
+.eli5{background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px;
+      padding:.85rem 1.1rem;font-size:.88rem;color:#4c1d95;margin:.9rem 0}
+.eli5 .eli5-tag{display:inline-block;font-size:.68rem;font-weight:700;letter-spacing:.05em;
+      color:#7c3aed;background:#ede9fe;padding:.15rem .55rem;border-radius:99px;margin-bottom:.45rem}
+.eli5 p{margin:0;line-height:1.75}
+details.dense{margin:.6rem 0}
+details.dense > summary{cursor:pointer;font-size:.82rem;font-weight:600;color:var(--brand);
+      padding:.4rem 0;list-style:none}
+details.dense > summary::-webkit-details-marker{display:none}
+details.dense > summary::before{content:"▸ ";font-size:.75rem}
+details.dense[open] > summary::before{content:"▾ "}
+.hbar-row{display:flex;align-items:center;gap:.6rem;font-size:.82rem;margin-bottom:.4rem}
+.hbar-label{width:7.5rem;color:var(--muted);flex-shrink:0}
+.hbar-track{background:#eef2ff;border-radius:4px;overflow:hidden;height:14px;flex:1}
+.hbar-fill{background:var(--brand);height:100%}
+.hbar-n{width:2.6rem;text-align:right;font-weight:600;font-variant-numeric:tabular-nums;flex-shrink:0}
 footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
        text-align:center;padding:1.25rem 0;font-size:.78rem;margin-top:2rem}
 @media(max-width:768px){
@@ -182,6 +198,34 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
   </div>
 </div>
 
+<!-- ===== 先講人話 ===== -->
+<div class="section">
+<h2 class="section-title">先講人話：這頁在講什麼</h2>
+<div class="card">
+<p style="font-size:.92rem;color:#111827;margin-bottom:.9rem"><strong>什麼是可轉債（CB）？</strong>
+把它想成「借錢給公司、拿到一張借據」——公司跟你借錢，約定到期還本金加利息。特別的地方是這張借據附一張
+「兌換券」：如果公司股票漲多了，你可以拿借據去換成股票，賺股票上漲的錢；股票不漲，你就當一般借據，
+到期要求公司把錢還你。</p>
+<p style="font-size:.92rem;color:#111827;margin-bottom:.9rem"><strong>什麼是「賣回」？</strong>
+借據上常會寫「在某一天，你有權要求公司提早照約定的價格把錢還你」——這叫賣回權，是公司給的保底承諾
+（前提是公司沒違約）。本頁排名第一的策略「賣回保底攤大餅」做的事情就是：專挑「現在市場上買這張借據的
+價錢，比合約保底價還便宜」的可轉債，買進去、等到約定日期要求公司還錢，賺中間的價差。</p>
+<p style="font-size:.92rem;color:#111827;margin-bottom:.9rem"><strong>什麼是「折價」？</strong>
+市場上有人急著賣、或這張借據交易量太小沒什麼人注意，導致成交價低於它「照合約條款算出來」該值的錢，
+這個落差就是折價，也是本頁好幾個策略想賺的錢。</p>
+<p style="font-size:.92rem;color:#111827;margin-bottom:0"><strong>CBAS 是什麼？</strong>
+把借據裡「兌換券」的部分單獨拆出來賣給你——你不用出全額本金借錢給公司，只花一小筆「權利金」買這張
+兌換券，等於用小錢賭這家公司股票會漲。代價是這筆權利金已經先付了一年的利息，如果股票不漲、到期沒行使，
+這筆錢就整筆歸零——本質是槓桿選擇權，賭輸了本金全損。</p>
+</div>
+<div class="eli5" style="background:#eff6ff;border-color:#bfdbfe;color:#1e3a8a">
+<span class="eli5-tag" style="background:#dbeafe;color:#1d4ed8">本頁三句話結論</span>
+<p>① 五條研究線裡，只有「賣回保底攤大餅」真的可以放心拿小資金去實盤操作。
+② 其他四條方向大致是對的，但賺得薄、需要人工盯盤、或訊號本身站不住腳。
+③ 不管挑哪一條，拿去疊 CBAS 槓桿都不划算——賺的錢薄到付不起槓桿的利息成本。</p>
+</div>
+</div>
+
 <!-- ===== SUMMARY TABLE ===== -->
 <div class="section">
 <h2 class="section-title">30 秒版總結</h2>
@@ -223,6 +267,9 @@ bid-ask spread 統計均無公開存檔——這是回測 CBAS 本身（而非�
 月頻續抱以最近成交價認定，下市券以最後成交價認損（無存活者偏差）。把楊朝成等（2006）1990–2004、528 檔的錨點
 延伸到 2007–2026 全樣本外——這段完全沒被原論文看過。</div>
 
+<div class="eli5"><span class="eli5-tag">白話版</span><p>這個策略在做什麼：可轉債價格常常會跌到低於「面額 100 元」，這裡專挑那些便宜貨買進、放著不動。結果一句話：長期下來比大盤多賺一點點（統計上算顯著），但賺得比 20 年前的老研究少很多。為什麼：便宜的可轉債現在比較沒那麼容易被漏看了（市場比以前有效率），能撿到的殘值自然變薄。</p></div>
+
+<details class="dense"><summary>看細節數字：六種配置完整比較表</summary>
 <div class="card" style="overflow-x:auto">
 <table>
 <thead><tr><th>配置</th><th>CAGR</th><th>MDD</th><th>Sharpe</th><th>Calmar</th><th>月勝率</th>
@@ -236,6 +283,7 @@ bid-ask spread 統計均無公開存檔——這是回測 CBAS 本身（而非�
 </tbody>
 </table>
 </div>
+</details>
 
 <div class="card">
 <p><strong>楊朝成等（2006）錨點對照</strong>（非直接可比——樣本期、制度、資料源皆不同）：
@@ -266,6 +314,8 @@ P1（月頻）周轉率高（162%/年）、Sharpe 反而更差，
 <div class="section-sub">規則：台灣 CB 發行後前 3 個月與到期前 10 日依規定停止轉換，套利者無法「買 CB→轉股→賣股」收斂折價；
 理論上恢復轉換日起折價應收斂。世代 cohort 674 檔試算，訊號窗
 2015-04 ~ 2020-08。</div>
+
+<div class="eli5"><span class="eli5-tag">白話版</span><p>這個策略在做什麼：可轉債剛發行的頭 3 個月、或快到期前 10 天，法規規定不能轉換成股票，這裡想賭「一旦恢復可以轉換，之前累積的折價就會補漲收斂」。結果一句話：機會太少了——20 多年裡篩出來的真事件只有 7 個，不足以撐成一個可以年年操作的策略，判定 NO-GO。為什麼：越接近到期日還在打折的可轉債，通常是市場已經在擔心公司還不出錢，便宜不是撿到寶，是市場在提醒你風險。</p></div>
 
 <div class="warn-loud">
 <strong>方法論教訓（本策略是抓出這個 bug 的地方）：</strong>前一版用 yobond 快照自報的「CB 理論價」欄位當轉換價值，
@@ -308,6 +358,8 @@ S2 到期日優先用最近賣回日估計，退回用最後出現日近似；�
 事件實際涵蓋 2015-03-12 ~ 2022-09-18。
 與折價 CB 組合（P2_lt100）的差異：保底錨從「面額 100」換成「真實賣回價」（常 &gt;100）。</div>
 
+<div class="eli5"><span class="eli5-tag">白話版</span><p>這個策略在做什麼：專挑「現在買它的價錢，比公司白紙黑字承諾的保底價還便宜」的可轉債，買了就不動，一路抱到約定的那天，要求公司照保底價把錢還你——有點像撿到一張「面額比買價貴」的商品券，拿去兌現就是穩賺價差。結果一句話：201 次這樣操作，192 次賺錢，平均一筆賺回本金約 9%。為什麼：賣回權是合約白紙黑字的保底承諾，只要公司不違約，中間的價差幾乎穩拿；會輸的幾乎都輸在極少數公司真的還不出錢（違約），不是判斷方向錯了。</p></div>
+
 <div class="hero-stats" style="margin:1rem 0">
 <div><div class="hs-label">事件數</div><div class="hs-value">201</div></div>
 <div><div class="hs-label">勝率</div><div class="hs-value" style="color:var(--green)">95.5%</div></div>
@@ -317,6 +369,7 @@ S2 到期日優先用最近賣回日估計，退回用最後出現日近似；�
 
 <div class="warn-loud">
 <strong>MDD -23.9% 是尾端假象，不是策略風險的真實寫照：</strong>報告口徑的 MDD -23.95% 是尾端假象：訊號窗 2019-07 斷檔後，組合在 2022 年只剩三圓二一檔、單檔權重逼近 100%，那一檔的浮盈從 121 回吐到 104 才造成這段深回撤；分散期正常年份（平均同時持有 44 檔）各年最深回撤都 ≤6%。
+下面「同時持有檔數時間軸」用逐月數字直接證實這一段。
 </div>
 
 <div class="card">
@@ -326,6 +379,7 @@ P2_lt100（面額 100 錨）年化只有約 +2.9%，
 低於賣回保底攤大餅（含現金拖累）的 +6.3%——合約錨（賣回價）勝面額錨。</p>
 </div>
 
+<details class="dense"><summary>看細節數字：YTP 四分位診斷、緩衝敏感度</summary>
 <div class="card" style="overflow-x:auto">
 <h3 style="font-size:.95rem;margin-bottom:.5rem">YTP 四分位診斷（只診斷不篩選——回答「便宜得多的是不是違約撿屍」）</h3>
 <table>
@@ -350,6 +404,243 @@ P2_lt100（面額 100 錨）年化只有約 +2.9%，
 </tbody>
 </table>
 </div>
+</details>
+
+<div class="card" style="overflow-x:auto">
+<h3 style="font-size:.95rem;margin-bottom:.3rem">逐年拆解</h3>
+<p style="font-size:.84rem;color:var(--muted);margin-bottom:.7rem">這張表在回答：這個策略的品質在不同年份進場有沒有差、以及每一年實際「入袋」了多少已實現損益（因為持有天數中位數超過一年半，進場年份跟出場年份常常對不上）。</p>
+<p style="font-size:.82rem;font-weight:600;margin-bottom:.3rem">按進場年份（事件品質）</p>
+<table>
+<thead><tr><th>進場年</th><th>事件數</th><th>勝率</th><th>平均淨報酬</th><th>平均持有天數</th></tr></thead>
+<tbody><tr><td>2015</td><td>115</td><td>97.4%</td><td>+8.3%</td><td>588 天</td></tr>
+<tr><td>2016</td><td>22</td><td>90.9%</td><td>+2.5%</td><td>503 天</td></tr>
+<tr><td>2017</td><td>17</td><td>88.2%</td><td>+8.4%</td><td>663 天</td></tr>
+<tr><td>2018</td><td>40</td><td>95.0%</td><td>+13.0%</td><td>706 天</td></tr>
+<tr><td>2019</td><td>7</td><td>100.0%</td><td>+30.0%</td><td>598 天</td></tr>
+</tbody>
+</table>
+<p style="font-size:.82rem;font-weight:600;margin:.9rem 0 .3rem">按出場年份（已實現損益，落袋為安的年份）</p>
+<table>
+<thead><tr><th>出場年</th><th>出場數</th><th>平均已實現淨報酬</th></tr></thead>
+<tbody><tr><td>2015</td><td>14</td><td>-4.1%</td></tr>
+<tr><td>2016</td><td>42</td><td>+4.6%</td></tr>
+<tr><td>2017</td><td>59</td><td>+8.1%</td></tr>
+<tr><td>2018</td><td>28</td><td>+11.6%</td></tr>
+<tr><td>2019</td><td>18</td><td>+6.2%</td></tr>
+<tr><td>2020</td><td>20</td><td>+13.3%</td></tr>
+<tr><td>2021</td><td>18</td><td>+30.1%</td></tr>
+<tr><td>2022</td><td>2</td><td>+6.7%</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="card">
+<h3 style="font-size:.95rem;margin-bottom:.3rem">單筆報酬分布</h3>
+<p style="font-size:.84rem;color:var(--muted);margin-bottom:.7rem">這張圖在回答：平均 +9.33% 是被少數大贏家拉高的假象，還是大多數事件都溫和小賺？</p>
+<div class="hbar-row"><div class="hbar-label">&lt;-20%</div><div class="hbar-track"><div class="hbar-fill" style="width:2.4%"></div></div><div class="hbar-n">3</div></div>
+<div class="hbar-row"><div class="hbar-label">-20%~-10%</div><div class="hbar-track"><div class="hbar-fill" style="width:0.0%"></div></div><div class="hbar-n">0</div></div>
+<div class="hbar-row"><div class="hbar-label">-10%~0%</div><div class="hbar-track"><div class="hbar-fill" style="width:4.7%"></div></div><div class="hbar-n">6</div></div>
+<div class="hbar-row"><div class="hbar-label">0%~5%</div><div class="hbar-track"><div class="hbar-fill" style="width:100.0%"></div></div><div class="hbar-n">127</div></div>
+<div class="hbar-row"><div class="hbar-label">5%~10%</div><div class="hbar-track"><div class="hbar-fill" style="width:21.3%"></div></div><div class="hbar-n">27</div></div>
+<div class="hbar-row"><div class="hbar-label">10%~20%</div><div class="hbar-track"><div class="hbar-fill" style="width:10.2%"></div></div><div class="hbar-n">13</div></div>
+<div class="hbar-row"><div class="hbar-label">20%~40%</div><div class="hbar-track"><div class="hbar-fill" style="width:8.7%"></div></div><div class="hbar-n">11</div></div>
+<div class="hbar-row"><div class="hbar-label">&gt;40%</div><div class="hbar-track"><div class="hbar-fill" style="width:11.0%"></div></div><div class="hbar-n">14</div></div>
+
+<p style="font-size:.84rem;color:var(--muted);margin-top:.6rem">中位數單筆淨報酬只有 +2.09%（見上方報告數字），比平均值 +9.33% 低很多——
+分布右偏，少數幾筆大贏家（例如提前下市但市價遠高於賣回價的美律一 +69%、大毅一 +55%）把平均值拉高，
+但主體事件仍集中在 0~10% 這個溫和獲利區間。</p>
+</div>
+
+<div class="card">
+<h3 style="font-size:.95rem;margin-bottom:.3rem">持有天數分布</h3>
+<p style="font-size:.84rem;color:var(--muted);margin-bottom:.7rem">這張表在回答：錢一次要被綁多久，資金週轉快不快？</p>
+<div class="hero-stats" style="grid-template-columns:repeat(5,1fr)">
+<div><div class="hs-label">最短</div><div class="hs-value" style="font-size:1.05rem">0 天</div></div>
+<div><div class="hs-label">P25</div><div class="hs-value" style="font-size:1.05rem">359 天</div></div>
+<div><div class="hs-label">中位數</div><div class="hs-value" style="font-size:1.05rem">614 天</div></div>
+<div><div class="hs-label">P75</div><div class="hs-value" style="font-size:1.05rem">827 天</div></div>
+<div><div class="hs-label">最長</div><div class="hs-value" style="font-size:1.05rem">1788 天</div></div>
+</div>
+<p style="font-size:.84rem;color:#374151;margin-top:.7rem">中位數約 1.7 年、P75 約 2.3 年——
+這不是快進快出的策略，資金一次卡住通常一到兩年，資金週轉很慢，這也是為什麼組合報酬要看「含現金拖累」口徑
+（沒滿倉的閒置資金也要算進年化報酬）。</p>
+</div>
+
+<div class="card" style="overflow-x:auto">
+<h3 style="font-size:.95rem;margin-bottom:.3rem">輸的那幾筆全列（9 筆）</h3>
+<p style="font-size:.84rem;color:var(--muted);margin-bottom:.7rem">這張表在回答：萬一輸了，是輸在哪裡——是判斷方向錯了，還是資料/流動性的問題？</p>
+<table>
+<thead><tr><th>代號</th><th>名稱</th><th>進場日</th><th>進場價</th><th>賣回價</th><th>賣回日</th>
+<th>出場日</th><th>出場價</th><th>出場方式</th><th>淨報酬</th><th>為什麼輸</th></tr></thead>
+<tbody><tr><td>47031</td><td>揚華一</td><td>2015-05-06</td><td>99.65</td><td>102.01</td><td>2017-04-27</td><td>2015-08-18</td><td>21.75</td><td>delisted</td><td>-78.2%</td><td style='color:var(--muted)'>疑似違約下市（出場時最後成交價 &lt;70 元）</td></tr>
+<tr><td>67021</td><td>興航一</td><td>2015-05-20</td><td>98.60</td><td>100.00</td><td>2017-10-09</td><td>2017-01-24</td><td>36.85</td><td>delisted</td><td>-62.7%</td><td style='color:var(--muted)'>疑似違約下市（出場時最後成交價 &lt;70 元）</td></tr>
+<tr><td>36626</td><td>樂陞六</td><td>2016-09-09</td><td>99.95</td><td>103.02</td><td>2018-03-02</td><td>2016-10-21</td><td>78.25</td><td>delisted</td><td>-21.9%</td><td style='color:var(--muted)'>提前下市，但非疑似違約——資料上看不出下市原因（可能提前贖回／合併下櫃等，欄位無法區分）</td></tr>
+<tr><td>26412</td><td>正德二</td><td>2017-06-06</td><td>103.00</td><td>104.57</td><td>2018-01-09</td><td>2017-11-15</td><td>100.10</td><td>delisted</td><td>-3.0%</td><td style='color:var(--muted)'>提前下市，但非疑似違約——資料上看不出下市原因（可能提前贖回／合併下櫃等，欄位無法區分）</td></tr>
+<tr><td>35912</td><td>艾笛二</td><td>2015-12-25</td><td>101.50</td><td>103.80</td><td>2016-11-15</td><td>2016-01-27</td><td>100.00</td><td>delisted</td><td>-1.7%</td><td style='color:var(--muted)'>提前下市，但非疑似違約——資料上看不出下市原因（可能提前贖回／合併下櫃等，欄位無法區分）</td></tr>
+<tr><td>16261</td><td>艾美特一KY</td><td>2016-10-03</td><td>100.70</td><td>103.80</td><td>2017-08-15</td><td>2016-12-05</td><td>99.80</td><td>delisted</td><td>-1.1%</td><td style='color:var(--muted)'>提前下市，但非疑似違約——資料上看不出下市原因（可能提前贖回／合併下櫃等，欄位無法區分）</td></tr>
+<tr><td>36911</td><td>碩禾一</td><td>2017-10-30</td><td>100.50</td><td>105.10</td><td>2019-07-25</td><td>2017-12-19</td><td>100.05</td><td>delisted</td><td>-0.6%</td><td style='color:var(--muted)'>提前下市，但非疑似違約——資料上看不出下市原因（可能提前贖回／合併下櫃等，欄位無法區分）</td></tr>
+<tr><td>14322</td><td>大魯閣二</td><td>2018-03-05</td><td>101.00</td><td>106.14</td><td>2019-02-13</td><td>2018-03-30</td><td>101.00</td><td>delisted</td><td>-0.2%</td><td style='color:var(--muted)'>提前下市，但非疑似違約——資料上看不出下市原因（可能提前贖回／合併下櫃等，欄位無法區分）</td></tr>
+<tr><td>52551</td><td>美桀一</td><td>2018-10-30</td><td>100.15</td><td>101.51</td><td>2020-03-02</td><td>2018-10-30</td><td>100.15</td><td>delisted</td><td>-0.2%</td><td style='color:var(--muted)'>提前下市，但非疑似違約——資料上看不出下市原因（可能提前贖回／合併下櫃等，欄位無法區分）</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="card" style="overflow-x:auto">
+<h3 style="font-size:.95rem;margin-bottom:.3rem">買價折扣深度 vs 結果</h3>
+<p style="font-size:.84rem;color:var(--muted);margin-bottom:.7rem">這張表在回答：買得越便宜（折得越深）是不是賺得越多，還是深折反而是「快違約才便宜」的危險訊號？（與上面 YTP 四分位是不同角度——YTP 併入了剩餘天數，這裡只看純價格折扣。）</p>
+<table>
+<thead><tr><th>折扣深度（進場價/賣回價-1）</th><th>n</th><th>勝率</th><th>平均淨報酬</th></tr></thead>
+<tbody><tr><td>&lt;-10%（深折）</td><td>3</td><td>100.0%</td><td>+19.7%</td></tr>
+<tr><td>-10%~-5%</td><td>22</td><td>100.0%</td><td>+15.1%</td></tr>
+<tr><td>-5%~-1%（含）</td><td>176</td><td>94.9%</td><td>+8.4%</td></tr>
+</tbody>
+</table>
+<p style="font-size:.84rem;color:var(--muted);margin-top:.5rem">跟 YTP 四分位的結論一致：折得越深沒有出現報酬變差或違約集中的跡象，
+本回測 2 筆疑似違約案例的折扣深度都不在最深那一層。</p>
+</div>
+
+<details class="dense"><summary>看細節數字：同時持有檔數時間軸（逐月）</summary>
+<div class="card">
+<h3 style="font-size:.95rem;margin-bottom:.3rem">同時持有檔數時間軸</h3>
+<p style="font-size:.84rem;color:var(--muted);margin-bottom:.7rem">這張圖在回答：MDD -23.95% 那段期間，組合其實只剩幾檔在撐？
+峰值 102 檔出現在 2016-01；訊號窗在 2019-07 斷檔後（紅色段）沒有新事件補進來，
+既有部位陸續到期出場，檔數一路歸零到 2022-09 的 0 檔——
+這就是尾端「單檔權重逼近 100%」的來源。</p>
+<div style="max-height:340px;overflow-y:auto;padding-right:.4rem">
+<div class="hbar-row"><div class="hbar-label">2015-03</div><div class="hbar-track"><div class="hbar-fill" style="width:28.4%;"></div></div><div class="hbar-n">29</div></div>
+<div class="hbar-row"><div class="hbar-label">2015-04</div><div class="hbar-track"><div class="hbar-fill" style="width:36.3%;"></div></div><div class="hbar-n">37</div></div>
+<div class="hbar-row"><div class="hbar-label">2015-05</div><div class="hbar-track"><div class="hbar-fill" style="width:43.1%;"></div></div><div class="hbar-n">44</div></div>
+<div class="hbar-row"><div class="hbar-label">2015-06</div><div class="hbar-track"><div class="hbar-fill" style="width:54.9%;"></div></div><div class="hbar-n">56</div></div>
+<div class="hbar-row"><div class="hbar-label">2015-07</div><div class="hbar-track"><div class="hbar-fill" style="width:69.6%;"></div></div><div class="hbar-n">71</div></div>
+<div class="hbar-row"><div class="hbar-label">2015-08</div><div class="hbar-track"><div class="hbar-fill" style="width:88.2%;"></div></div><div class="hbar-n">90</div></div>
+<div class="hbar-row"><div class="hbar-label">2015-09</div><div class="hbar-track"><div class="hbar-fill" style="width:90.2%;"></div></div><div class="hbar-n">92</div></div>
+<div class="hbar-row"><div class="hbar-label">2015-10</div><div class="hbar-track"><div class="hbar-fill" style="width:88.2%;"></div></div><div class="hbar-n">90</div></div>
+<div class="hbar-row"><div class="hbar-label">2015-11</div><div class="hbar-track"><div class="hbar-fill" style="width:92.2%;"></div></div><div class="hbar-n">94</div></div>
+<div class="hbar-row"><div class="hbar-label">2015-12</div><div class="hbar-track"><div class="hbar-fill" style="width:99.0%;"></div></div><div class="hbar-n">101</div></div>
+<div class="hbar-row"><div class="hbar-label">2016-01</div><div class="hbar-track"><div class="hbar-fill" style="width:100.0%;"></div></div><div class="hbar-n">102</div></div>
+<div class="hbar-row"><div class="hbar-label">2016-02</div><div class="hbar-track"><div class="hbar-fill" style="width:97.1%;"></div></div><div class="hbar-n">99</div></div>
+<div class="hbar-row"><div class="hbar-label">2016-03</div><div class="hbar-track"><div class="hbar-fill" style="width:95.1%;"></div></div><div class="hbar-n">97</div></div>
+<div class="hbar-row"><div class="hbar-label">2016-04</div><div class="hbar-track"><div class="hbar-fill" style="width:95.1%;"></div></div><div class="hbar-n">97</div></div>
+<div class="hbar-row"><div class="hbar-label">2016-05</div><div class="hbar-track"><div class="hbar-fill" style="width:93.1%;"></div></div><div class="hbar-n">95</div></div>
+<div class="hbar-row"><div class="hbar-label">2016-06</div><div class="hbar-track"><div class="hbar-fill" style="width:88.2%;"></div></div><div class="hbar-n">90</div></div>
+<div class="hbar-row"><div class="hbar-label">2016-07</div><div class="hbar-track"><div class="hbar-fill" style="width:89.2%;"></div></div><div class="hbar-n">91</div></div>
+<div class="hbar-row"><div class="hbar-label">2016-08</div><div class="hbar-track"><div class="hbar-fill" style="width:87.3%;"></div></div><div class="hbar-n">89</div></div>
+<div class="hbar-row"><div class="hbar-label">2016-09</div><div class="hbar-track"><div class="hbar-fill" style="width:90.2%;"></div></div><div class="hbar-n">92</div></div>
+<div class="hbar-row"><div class="hbar-label">2016-10</div><div class="hbar-track"><div class="hbar-fill" style="width:88.2%;"></div></div><div class="hbar-n">90</div></div>
+<div class="hbar-row"><div class="hbar-label">2016-11</div><div class="hbar-track"><div class="hbar-fill" style="width:84.3%;"></div></div><div class="hbar-n">86</div></div>
+<div class="hbar-row"><div class="hbar-label">2016-12</div><div class="hbar-track"><div class="hbar-fill" style="width:79.4%;"></div></div><div class="hbar-n">81</div></div>
+<div class="hbar-row"><div class="hbar-label">2017-01</div><div class="hbar-track"><div class="hbar-fill" style="width:73.5%;"></div></div><div class="hbar-n">75</div></div>
+<div class="hbar-row"><div class="hbar-label">2017-02</div><div class="hbar-track"><div class="hbar-fill" style="width:71.6%;"></div></div><div class="hbar-n">73</div></div>
+<div class="hbar-row"><div class="hbar-label">2017-03</div><div class="hbar-track"><div class="hbar-fill" style="width:68.6%;"></div></div><div class="hbar-n">70</div></div>
+<div class="hbar-row"><div class="hbar-label">2017-04</div><div class="hbar-track"><div class="hbar-fill" style="width:66.7%;"></div></div><div class="hbar-n">68</div></div>
+<div class="hbar-row"><div class="hbar-label">2017-05</div><div class="hbar-track"><div class="hbar-fill" style="width:62.7%;"></div></div><div class="hbar-n">64</div></div>
+<div class="hbar-row"><div class="hbar-label">2017-06</div><div class="hbar-track"><div class="hbar-fill" style="width:60.8%;"></div></div><div class="hbar-n">62</div></div>
+<div class="hbar-row"><div class="hbar-label">2017-07</div><div class="hbar-track"><div class="hbar-fill" style="width:57.8%;"></div></div><div class="hbar-n">59</div></div>
+<div class="hbar-row"><div class="hbar-label">2017-08</div><div class="hbar-track"><div class="hbar-fill" style="width:52.0%;"></div></div><div class="hbar-n">53</div></div>
+<div class="hbar-row"><div class="hbar-label">2017-09</div><div class="hbar-track"><div class="hbar-fill" style="width:47.1%;"></div></div><div class="hbar-n">48</div></div>
+<div class="hbar-row"><div class="hbar-label">2017-10</div><div class="hbar-track"><div class="hbar-fill" style="width:43.1%;"></div></div><div class="hbar-n">44</div></div>
+<div class="hbar-row"><div class="hbar-label">2017-11</div><div class="hbar-track"><div class="hbar-fill" style="width:38.2%;"></div></div><div class="hbar-n">39</div></div>
+<div class="hbar-row"><div class="hbar-label">2017-12</div><div class="hbar-track"><div class="hbar-fill" style="width:38.2%;"></div></div><div class="hbar-n">39</div></div>
+<div class="hbar-row"><div class="hbar-label">2018-01</div><div class="hbar-track"><div class="hbar-fill" style="width:37.3%;"></div></div><div class="hbar-n">38</div></div>
+<div class="hbar-row"><div class="hbar-label">2018-02</div><div class="hbar-track"><div class="hbar-fill" style="width:33.3%;"></div></div><div class="hbar-n">34</div></div>
+<div class="hbar-row"><div class="hbar-label">2018-03</div><div class="hbar-track"><div class="hbar-fill" style="width:30.4%;"></div></div><div class="hbar-n">31</div></div>
+<div class="hbar-row"><div class="hbar-label">2018-04</div><div class="hbar-track"><div class="hbar-fill" style="width:31.4%;"></div></div><div class="hbar-n">32</div></div>
+<div class="hbar-row"><div class="hbar-label">2018-05</div><div class="hbar-track"><div class="hbar-fill" style="width:31.4%;"></div></div><div class="hbar-n">32</div></div>
+<div class="hbar-row"><div class="hbar-label">2018-06</div><div class="hbar-track"><div class="hbar-fill" style="width:32.4%;"></div></div><div class="hbar-n">33</div></div>
+<div class="hbar-row"><div class="hbar-label">2018-07</div><div class="hbar-track"><div class="hbar-fill" style="width:29.4%;"></div></div><div class="hbar-n">30</div></div>
+<div class="hbar-row"><div class="hbar-label">2018-08</div><div class="hbar-track"><div class="hbar-fill" style="width:31.4%;"></div></div><div class="hbar-n">32</div></div>
+<div class="hbar-row"><div class="hbar-label">2018-09</div><div class="hbar-track"><div class="hbar-fill" style="width:33.3%;"></div></div><div class="hbar-n">34</div></div>
+<div class="hbar-row"><div class="hbar-label">2018-10</div><div class="hbar-track"><div class="hbar-fill" style="width:44.1%;"></div></div><div class="hbar-n">45</div></div>
+<div class="hbar-row"><div class="hbar-label">2018-11</div><div class="hbar-track"><div class="hbar-fill" style="width:49.0%;"></div></div><div class="hbar-n">50</div></div>
+<div class="hbar-row"><div class="hbar-label">2018-12</div><div class="hbar-track"><div class="hbar-fill" style="width:50.0%;"></div></div><div class="hbar-n">51</div></div>
+<div class="hbar-row"><div class="hbar-label">2019-01</div><div class="hbar-track"><div class="hbar-fill" style="width:51.0%;"></div></div><div class="hbar-n">52</div></div>
+<div class="hbar-row"><div class="hbar-label">2019-02</div><div class="hbar-track"><div class="hbar-fill" style="width:51.0%;"></div></div><div class="hbar-n">52</div></div>
+<div class="hbar-row"><div class="hbar-label">2019-03</div><div class="hbar-track"><div class="hbar-fill" style="width:53.9%;"></div></div><div class="hbar-n">55</div></div>
+<div class="hbar-row"><div class="hbar-label">2019-04</div><div class="hbar-track"><div class="hbar-fill" style="width:53.9%;"></div></div><div class="hbar-n">55</div></div>
+<div class="hbar-row"><div class="hbar-label">2019-05</div><div class="hbar-track"><div class="hbar-fill" style="width:52.0%;"></div></div><div class="hbar-n">53</div></div>
+<div class="hbar-row"><div class="hbar-label">2019-06</div><div class="hbar-track"><div class="hbar-fill" style="width:49.0%;"></div></div><div class="hbar-n">50</div></div>
+<div class="hbar-row"><div class="hbar-label">2019-07</div><div class="hbar-track"><div class="hbar-fill" style="width:48.0%;"></div></div><div class="hbar-n">49</div></div>
+<div class="hbar-row"><div class="hbar-label">2019-08</div><div class="hbar-track"><div class="hbar-fill" style="width:46.1%;"></div></div><div class="hbar-n">47</div></div>
+<div class="hbar-row"><div class="hbar-label">2019-09</div><div class="hbar-track"><div class="hbar-fill" style="width:44.1%;"></div></div><div class="hbar-n">45</div></div>
+<div class="hbar-row"><div class="hbar-label">2019-10</div><div class="hbar-track"><div class="hbar-fill" style="width:42.2%;"></div></div><div class="hbar-n">43</div></div>
+<div class="hbar-row"><div class="hbar-label">2019-11</div><div class="hbar-track"><div class="hbar-fill" style="width:40.2%;"></div></div><div class="hbar-n">41</div></div>
+<div class="hbar-row"><div class="hbar-label">2019-12</div><div class="hbar-track"><div class="hbar-fill" style="width:39.2%;"></div></div><div class="hbar-n">40</div></div>
+<div class="hbar-row"><div class="hbar-label">2020-01</div><div class="hbar-track"><div class="hbar-fill" style="width:39.2%;"></div></div><div class="hbar-n">40</div></div>
+<div class="hbar-row"><div class="hbar-label">2020-02</div><div class="hbar-track"><div class="hbar-fill" style="width:39.2%;"></div></div><div class="hbar-n">40</div></div>
+<div class="hbar-row"><div class="hbar-label">2020-03</div><div class="hbar-track"><div class="hbar-fill" style="width:37.3%;"></div></div><div class="hbar-n">38</div></div>
+<div class="hbar-row"><div class="hbar-label">2020-04</div><div class="hbar-track"><div class="hbar-fill" style="width:37.3%;"></div></div><div class="hbar-n">38</div></div>
+<div class="hbar-row"><div class="hbar-label">2020-05</div><div class="hbar-track"><div class="hbar-fill" style="width:34.3%;"></div></div><div class="hbar-n">35</div></div>
+<div class="hbar-row"><div class="hbar-label">2020-06</div><div class="hbar-track"><div class="hbar-fill" style="width:29.4%;"></div></div><div class="hbar-n">30</div></div>
+<div class="hbar-row"><div class="hbar-label">2020-07</div><div class="hbar-track"><div class="hbar-fill" style="width:29.4%;"></div></div><div class="hbar-n">30</div></div>
+<div class="hbar-row"><div class="hbar-label">2020-08</div><div class="hbar-track"><div class="hbar-fill" style="width:27.5%;"></div></div><div class="hbar-n">28</div></div>
+<div class="hbar-row"><div class="hbar-label">2020-09</div><div class="hbar-track"><div class="hbar-fill" style="width:25.5%;"></div></div><div class="hbar-n">26</div></div>
+<div class="hbar-row"><div class="hbar-label">2020-10</div><div class="hbar-track"><div class="hbar-fill" style="width:22.5%;"></div></div><div class="hbar-n">23</div></div>
+<div class="hbar-row"><div class="hbar-label">2020-11</div><div class="hbar-track"><div class="hbar-fill" style="width:20.6%;"></div></div><div class="hbar-n">21</div></div>
+<div class="hbar-row"><div class="hbar-label">2020-12</div><div class="hbar-track"><div class="hbar-fill" style="width:19.6%;"></div></div><div class="hbar-n">20</div></div>
+<div class="hbar-row"><div class="hbar-label">2021-01</div><div class="hbar-track"><div class="hbar-fill" style="width:17.6%;"></div></div><div class="hbar-n">18</div></div>
+<div class="hbar-row"><div class="hbar-label">2021-02</div><div class="hbar-track"><div class="hbar-fill" style="width:13.7%;"></div></div><div class="hbar-n">14</div></div>
+<div class="hbar-row"><div class="hbar-label">2021-03</div><div class="hbar-track"><div class="hbar-fill" style="width:11.8%;"></div></div><div class="hbar-n">12</div></div>
+<div class="hbar-row"><div class="hbar-label">2021-04</div><div class="hbar-track"><div class="hbar-fill" style="width:10.8%;"></div></div><div class="hbar-n">11</div></div>
+<div class="hbar-row"><div class="hbar-label">2021-05</div><div class="hbar-track"><div class="hbar-fill" style="width:10.8%;"></div></div><div class="hbar-n">11</div></div>
+<div class="hbar-row"><div class="hbar-label">2021-06</div><div class="hbar-track"><div class="hbar-fill" style="width:9.8%;background:var(--red)"></div></div><div class="hbar-n">10</div></div>
+<div class="hbar-row"><div class="hbar-label">2021-07</div><div class="hbar-track"><div class="hbar-fill" style="width:7.8%;background:var(--red)"></div></div><div class="hbar-n">8</div></div>
+<div class="hbar-row"><div class="hbar-label">2021-08</div><div class="hbar-track"><div class="hbar-fill" style="width:5.9%;background:var(--red)"></div></div><div class="hbar-n">6</div></div>
+<div class="hbar-row"><div class="hbar-label">2021-09</div><div class="hbar-track"><div class="hbar-fill" style="width:3.9%;background:var(--red)"></div></div><div class="hbar-n">4</div></div>
+<div class="hbar-row"><div class="hbar-label">2021-10</div><div class="hbar-track"><div class="hbar-fill" style="width:2.9%;background:var(--red)"></div></div><div class="hbar-n">3</div></div>
+<div class="hbar-row"><div class="hbar-label">2021-11</div><div class="hbar-track"><div class="hbar-fill" style="width:2.9%;background:var(--red)"></div></div><div class="hbar-n">3</div></div>
+<div class="hbar-row"><div class="hbar-label">2021-12</div><div class="hbar-track"><div class="hbar-fill" style="width:2.0%;background:var(--red)"></div></div><div class="hbar-n">2</div></div>
+<div class="hbar-row"><div class="hbar-label">2022-01</div><div class="hbar-track"><div class="hbar-fill" style="width:2.0%;background:var(--red)"></div></div><div class="hbar-n">2</div></div>
+<div class="hbar-row"><div class="hbar-label">2022-02</div><div class="hbar-track"><div class="hbar-fill" style="width:2.0%;background:var(--red)"></div></div><div class="hbar-n">2</div></div>
+<div class="hbar-row"><div class="hbar-label">2022-03</div><div class="hbar-track"><div class="hbar-fill" style="width:1.0%;background:var(--red)"></div></div><div class="hbar-n">1</div></div>
+<div class="hbar-row"><div class="hbar-label">2022-04</div><div class="hbar-track"><div class="hbar-fill" style="width:1.0%;background:var(--red)"></div></div><div class="hbar-n">1</div></div>
+<div class="hbar-row"><div class="hbar-label">2022-05</div><div class="hbar-track"><div class="hbar-fill" style="width:1.0%;background:var(--red)"></div></div><div class="hbar-n">1</div></div>
+<div class="hbar-row"><div class="hbar-label">2022-06</div><div class="hbar-track"><div class="hbar-fill" style="width:1.0%;background:var(--red)"></div></div><div class="hbar-n">1</div></div>
+<div class="hbar-row"><div class="hbar-label">2022-07</div><div class="hbar-track"><div class="hbar-fill" style="width:1.0%;background:var(--red)"></div></div><div class="hbar-n">1</div></div>
+<div class="hbar-row"><div class="hbar-label">2022-08</div><div class="hbar-track"><div class="hbar-fill" style="width:1.0%;background:var(--red)"></div></div><div class="hbar-n">1</div></div>
+<div class="hbar-row"><div class="hbar-label">2022-09</div><div class="hbar-track"><div class="hbar-fill" style="width:0.0%;background:var(--red)"></div></div><div class="hbar-n">0</div></div>
+
+</div>
+</div>
+</details>
+
+<div class="card">
+<h3 style="font-size:.95rem;margin-bottom:.3rem">「如果你有 30／100／300 萬」試算</h3>
+<p style="font-size:.84rem;color:var(--muted);margin-bottom:.7rem">這張表在回答：小資金真的做得動這個策略嗎，還是理論上勝率 95.5%、實際上買不到量？</p>
+
+<p style="font-size:.84rem;color:var(--muted);margin-bottom:.6rem">方法：對每一筆事件，用進場日當天該券實際成交金額 × 10%
+（與上方「容量診斷」同一把尺）當作單日可買進上限；全部 201 筆事件的上限中位數 NT$137,760、
+P25（較保守）NT$30,150。「足額買比例」＝若照歷史平均同時持倉
+44 檔等權下單，這筆資金的單檔部位大小在多少比例的事件裡不會超過當日 10% 成交量上限；
+「約可攤幾檔」＝這筆資金 ÷ 上限中位數／P25，抓個量級。</p>
+<table>
+<thead><tr><th>資金</th><th>等權單檔部位</th><th>足額買比例</th><th>約可攤幾檔（量級）</th></tr></thead>
+<tbody><tr><td>NT$300,000</td><td>NT$6,742（÷44 檔等權）</td><td>201/201（100.0%）</td><td>約 2.2 檔（中位容量）／10.0 檔（保守 P25 容量）</td></tr>
+<tr><td>NT$1,000,000</td><td>NT$22,473（÷44 檔等權）</td><td>158/201（78.6%）</td><td>約 7.3 檔（中位容量）／33.2 檔（保守 P25 容量）</td></tr>
+<tr><td>NT$3,000,000</td><td>NT$67,418（÷44 檔等權）</td><td>126/201（62.7%）</td><td>約 21.8 檔（中位容量）／99.5 檔（保守 P25 容量）</td></tr>
+</tbody>
+</table>
+
+</div>
+
+<div class="card">
+<h3 style="font-size:.95rem;margin-bottom:.5rem">實盤操作步驟（checklist）</h3>
+<p style="font-size:.84rem;color:var(--muted);margin-bottom:.7rem">這份清單在回答：如果真的想照做，具體要怎麼找券、怎麼下單、怎麼出場。細節以各券公開說明書為準，本清單不是法律或投資建議。</p>
+<ol style="padding-left:1.2rem;font-size:.88rem;color:#374151;line-height:1.9">
+<li><strong>找候選：</strong>每日至櫃買中心（TPEx）下載可轉債買賣斷交易行情表（RSta0113），或看公開資訊觀測站／各券商 CB 報價頁面找目前掛牌、有成交的可轉債現價；賣回價與賣回日要查該券的公開說明書或發行公告（次級市場報價系統通常不會直接列出賣回條款，需自行對照）。</li>
+<li><strong>進場條件：</strong>市價 &lt; 賣回價 × 0.99（本回測用的 1% 緩衝），且賣回日距今至少 30 天以上（太近的賣回日代表條款快照可能已過期或流動性視窗太短）。</li>
+<li><strong>持有：</strong>買了就不動，不加碼、不停損、不因股價波動調整——賺的是合約保底的價差，不是股票的方向。</li>
+<li><strong>出場（二選一，看哪個對你有利）：</strong>賣回日當天市價若高於賣回價，直接在市場上賣出；否則行使賣回權——<strong>賣回必須在合約規定的申請期間內向承辦券商提出申請，逾期視同放棄權利</strong>，實際申請窗口、應備文件、扣款流程以各券公開說明書及承辦券商規定為準。</li>
+<li><strong>五個坑：</strong>
+  <ul style="padding-left:1.1rem;margin-top:.4rem;line-height:1.8">
+    <li>停牌——台灣可轉債常在賣回日／到期日前數日到數週停止交易，屆時看不到即時報價不代表沒有保底價值，但也代表你在那段時間無法用市價賣出。</li>
+    <li>疑似違約——出場價 &lt;70 元的案例代表公司可能已經還不出錢，賣回權形同一張兌現不了的承諾；分散是唯一防禦，任何單一券的判斷都可能是錯的。</li>
+    <li>賣回價可能因條款重設而變——部分券的轉換價／賣回價會因減資、除權息或其他條款事件被重新設定，下單前務必核對最新公開說明書，不要只信舊的快照數字。</li>
+    <li>資料窗限制——本回測條款資料只到 2019-07，2015～2019 又是台股相對多頭的時期，不能保證同樣的勝率在空頭市場也成立。</li>
+    <li>容量小——見上方試算，多數個別事件的可買金額被當日成交量限制在幾十萬到一百多萬元，資金越大越難維持等權分散。</li>
+  </ul>
+</li>
+</ol>
+</div>
 
 <div class="note"><strong>限制：</strong>出場價來源分布——152
 筆事件是賣回日當天無成交、改用最近一次真實成交價出場（中位陳舊 8 天，
@@ -368,6 +659,9 @@ P2_lt100（面額 100 錨）年化只有約 +2.9%，
 形成窗 2015-04-13 ~ 2019-07-11，
 52 個形成日。</div>
 
+<div class="eli5"><span class="eli5-tag">白話版</span><p>這個策略在做什麼：每個月 10 日公司公布上個月營收後，在「低溢價、價格不算貴」的可轉債裡，挑「營收成長最快」的那 1/3 買進。結果一句話：有沒有看營收去挑，結果差不多（統計上不顯著）——但「低溢價、價格不貴，不管營收、全部都買」這個篩選規則本身，意外地是張好牌。為什麼：營收訊號比較像是幫你避開「最爛的那 1/3」，不是幫你挑出「真正最強的那 1/3」——避開地雷跟挑到冠軍，是兩件不同的事。</p></div>
+
+<details class="dense"><summary>看細節數字：六種配置完整比較表</summary>
 <div class="card" style="overflow-x:auto">
 <table>
 <thead><tr><th>配置</th><th>CAGR</th><th>MDD</th><th>Sharpe</th><th>Calmar</th><th>年化周轉率</th><th>alpha(年化)</th><th>beta(t)</th></tr></thead>
@@ -393,12 +687,14 @@ P2_lt100（面額 100 錨）年化只有約 +2.9%，
 月頻版「後1/3 最差」的排序在這個變體不成立；3 月疊代對照組數字異常低，屬變體實作雜訊，引用時以月頻版為準，
 但這也代表「負向剔除」的解讀只在月頻版成立、穩健性有限。</p>
 </div>
+</details>
 
 <div class="warn-loud">
 <strong>Review 補算（2026-08-15）——原始 report.md 的獨立迴歸沒有回答「訊號組真的贏對照組嗎」，
 須看兩組的配對差：</strong>前 1/3 vs 對照組（配對 t 檢定）差 +2.2pp、t=0.96、勝月 51.9%、逐年衰減 → 不顯著。前 1/3 vs 後 1/3 差 +10.1pp、t=2.76 顯著 → 營收訊號其實是「負向剔除」（避開營收最爛的那 1/3），不是「正向精選」（挑不出比母體平均更好的標的）。　逐年衰減：2015 年訊號組領先對照組 +8.1pp，到 2019 年已反轉為 -3.6pp。
 </div>
 
+<details class="dense"><summary>看細節數字：逐年報酬（月頻變體）</summary>
 <div class="card" style="overflow-x:auto">
 <h3 style="font-size:.95rem;margin-bottom:.5rem">逐年報酬（月頻變體）</h3>
 <table>
@@ -411,6 +707,7 @@ P2_lt100（面額 100 錨）年化只有約 +2.9%，
 </tbody>
 </table>
 </div>
+</details>
 
 <div class="card">
 <p><strong>意外的發現在對照組本身：</strong>「低溢價率（&lt;20%）＋CB 價&lt;130，不看營收，全買」這個母體規則，
@@ -432,8 +729,11 @@ CAGR +7.3%、Sharpe 1.23、alpha 年化 +6.8%
 Phase A（無對沖）驗證錯價是真的、會收斂；先導檢查已知機會稀薄（52 個月度抽樣日僅 32 筆、集中深度價內券）。
 資料窗 2015-03 ~ 2019-08。</div>
 
+<div class="eli5"><span class="eli5-tag">白話版</span><p>這個策略在做什麼：可轉債的市價如果比「立刻換成股票能拿到的價值」還低，理論上這個落差應該會被補回來（收斂），這裡驗證這件事在台股是不是真的成立。結果一句話：錯價確實是真的、確實會收斂，但把股票本身漲跌的影響拿掉之後，剩下的純套利報酬其實很薄，而且機會集中在冷門小股票，很難買到量。為什麼：這是市場沒空注意的角落，角落雖然存在，但小到裝不下多少錢，只適合自己手動操作。</p></div>
+
 <div class="card" style="overflow-x:auto">
 <h3 style="font-size:.95rem;margin-bottom:.5rem">收斂測量（核心科學問題）</h3>
+<p style="font-size:.84rem;color:var(--muted);margin-bottom:.6rem">這張表在回答：買進去之後，折價真的會慢慢消失嗎？</p>
 <table>
 <thead><tr><th>交易日後</th><th>有效觀測數</th><th>涵蓋率</th><th>平均折價率</th><th>中位數折價率</th><th>仍≥1%比率</th></tr></thead>
 <tbody><tr><td>t+1</td><td>477</td><td>99.8%</td><td>+3.8%</td><td>+3.0%</td><td>76.1%</td></tr>
@@ -455,6 +755,7 @@ Phase A（無對沖）驗證錯價是真的、會收斂；先導檢查已知機�
 
 <div class="card" style="overflow-x:auto">
 <h3 style="font-size:.95rem;margin-bottom:.5rem">對沖後報酬按折價深度分層（review 補算，n=292 嚴格版）</h3>
+<p style="font-size:.84rem;color:var(--muted);margin-bottom:.6rem">這張表在回答：折得越深，扣掉股票方向暴險之後，是不是真的賺比較多？</p>
 <table>
 <thead><tr><th>折價分層</th><th>n</th><th>平均對沖後報酬</th><th>勝率</th></tr></thead>
 <tbody><tr><td>[3%, 5%)</td><td>217</td><td>+1.3%</td><td>—</td></tr>
@@ -490,6 +791,7 @@ Phase A（無對沖）驗證錯價是真的、會收斂；先導檢查已知機�
 
 <div class="section">
 <h2 class="section-title">方法論教訓（三條，全站共用）</h2>
+<div class="eli5"><span class="eli5-tag">白話版</span><p>這三條是做這幾個回測時真的踩到的坑，寫下來提醒自己以後不要再犯：（1）資料裡混進「已經過期的股價」會做出假訊號；（2）把好幾筆各自只分到部分資金的回測結果直接加總，會虛報成好幾倍的資金報酬；（3）股票在快到期或快被要求還錢時常常會暫停交易，「當天沒有成交價」不代表「沒有市價」，直接拿合約保底價取代會做出假崩盤。</p></div>
 <div class="warn-loud">
 <strong>①內嵌股價的快照欄位不能當事件日訊號：</strong>yobond「CB 理論價」欄位內嵌的是快照當時的股價，
 月頻快照常常已過期一個月——停止轉換回測曾因此把 14 個訊號裡的 13 個判成假訊號。任何「合約條款＋內嵌市價」
@@ -513,6 +815,7 @@ Phase A（無對沖）驗證錯價是真的、會收斂；先導檢查已知機�
 
 <div class="section">
 <h2 class="section-title">總排名與對「CBAS 操作策略」問題的正式回答</h2>
+<div class="eli5"><span class="eli5-tag">白話版</span><p>把五條研究線攤開來比：「賣回保底攤大餅」是唯一一個小資金可以直接照做的；其他四條要嘛賺得太薄、要嘛需要人盯盤才做得到、要嘛統計上站不住腳。如果你在想拿這些策略去買 CBAS（等於借錢加碼賭）划不划算——答案是不划算，這些策略賺的錢薄到付不起借錢的利息成本。</p></div>
 <div class="card">
 <ol style="padding-left:1.3rem;font-size:.92rem;line-height:2;color:#111827">
 <li><strong>賣回保底攤大餅</strong>（最佳，可小資金實盤）——合約錨、零周轉、壓力測試後仍穩健。</li>
@@ -567,14 +870,15 @@ TCRI 資訊仍未知。</li>
 
 <div class="section">
 <h2 class="section-title">詞彙表</h2>
-<div class="card"><table><tbody><tr><td style='font-weight:600;white-space:nowrap'>CB（可轉換公司債）</td><td>公司發行的債券，附帶「可依約定轉換價換成該公司股票」的權利。</td></tr>
-<tr><td style='font-weight:600;white-space:nowrap'>CBAS</td><td>券商把 CB 拆成債券端（ASW）與選擇權端（ASO）分售，ASO 是以該 CB 為標的、履約價約 100 元的美式買權，槓桿工具。</td></tr>
-<tr><td style='font-weight:600;white-space:nowrap'>轉換價值 CV</td><td>CV = 100 ÷ 轉換價 × 母股收盤價——這張 CB 若立刻轉股可拿到的股票市值。</td></tr>
-<tr><td style='font-weight:600;white-space:nowrap'>溢價率／折價率</td><td>CB 市價相對轉換價值的偏離——市價 &gt;CV 是溢價（股性強），&lt;CV 是折價（可能存在轉股套利空間）。</td></tr>
-<tr><td style='font-weight:600;white-space:nowrap'>賣回權（put）</td><td>持有人有權在約定的賣回日以賣回價（常 &gt;100 元）要求發行人買回，是合約保底的來源。</td></tr>
-<tr><td style='font-weight:600;white-space:nowrap'>停止轉換期</td><td>發行後前 3 個月與到期前 10 日依規定不可轉股，套利機制在此期間失效。</td></tr>
-<tr><td style='font-weight:600;white-space:nowrap'>YTP（Yield to Put）</td><td>以進場價買入、持有到賣回日行使賣回權的年化報酬率——把賣回權當固定收益資產估值的指標。</td></tr>
-<tr><td style='font-weight:600;white-space:nowrap'>疑似違約</td><td>CB 提前下市且最後成交價 &lt;70 元，基礎版資料無法區分到期償還/轉換/違約，僅供人工覆核。</td></tr>
+<div class="section-sub">每條先講白話，再附原本的技術定義。</div>
+<div class="card"><table><tbody><tr><td style='font-weight:600;white-space:nowrap'>CB（可轉換公司債）</td><td>跟公司借錢的借據，附一張「可以換成股票」的兌換券——股票漲就換股票賺價差，不漲就當借據領回本金。<br><span style='color:var(--muted);font-size:.82rem'>公司發行的債券，附帶「可依約定轉換價換成該公司股票」的權利。</span></td></tr>
+<tr><td style='font-weight:600;white-space:nowrap'>CBAS</td><td>把借據上「換股票」的那張兌換券單獨拆出來賣你——用一小筆錢賭股票會漲，是槓桿工具，賭輸權利金就歸零。<br><span style='color:var(--muted);font-size:.82rem'>券商把 CB 拆成債券端（ASW）與選擇權端（ASO）分售，ASO 是以該 CB 為標的、履約價約 100 元的美式買權，槓桿工具。</span></td></tr>
+<tr><td style='font-weight:600;white-space:nowrap'>轉換價值 CV</td><td>這張借據如果現在立刻拿去換股票，換到的股票值多少錢。<br><span style='color:var(--muted);font-size:.82rem'>CV = 100 ÷ 轉換價 × 母股收盤價——這張 CB 若立刻轉股可拿到的股票市值。</span></td></tr>
+<tr><td style='font-weight:600;white-space:nowrap'>溢價率／折價率</td><td>市場上買這張借據的價錢，比「換成股票的價值」貴還是便宜——便宜（折價）代表可能存在賺價差的機會。<br><span style='color:var(--muted);font-size:.82rem'>CB 市價相對轉換價值的偏離——市價 &gt;CV 是溢價（股性強），&lt;CV 是折價（可能存在轉股套利空間）。</span></td></tr>
+<tr><td style='font-weight:600;white-space:nowrap'>賣回權（put）</td><td>借據上寫的「某一天你有權要求公司照約定的價格把錢還你」——這是公司給的保底承諾。<br><span style='color:var(--muted);font-size:.82rem'>持有人有權在約定的賣回日以賣回價（常 &gt;100 元）要求發行人買回，是合約保底的來源。</span></td></tr>
+<tr><td style='font-weight:600;white-space:nowrap'>停止轉換期</td><td>剛發行的頭幾個月、快到期的最後幾天，規定不能把借據換成股票的空窗期。<br><span style='color:var(--muted);font-size:.82rem'>發行後前 3 個月與到期前 10 日依規定不可轉股，套利機制在此期間失效。</span></td></tr>
+<tr><td style='font-weight:600;white-space:nowrap'>YTP（Yield to Put）</td><td>如果一路抱到約定的賣回日、行使賣回權，換算下來一年大概賺多少利息，把它當成一張固定收益的存款單來估值。<br><span style='color:var(--muted);font-size:.82rem'>以進場價買入、持有到賣回日行使賣回權的年化報酬率——把賣回權當固定收益資產估值的指標。</span></td></tr>
+<tr><td style='font-weight:600;white-space:nowrap'>疑似違約</td><td>公司可能真的還不出錢了——這張借據提前被下市、最後成交價已經跌到面額不到七成。<br><span style='color:var(--muted);font-size:.82rem'>CB 提前下市且最後成交價 &lt;70 元，基礎版資料無法區分到期償還/轉換/違約，僅供人工覆核。</span></td></tr>
 </tbody></table></div>
 </div>
 
