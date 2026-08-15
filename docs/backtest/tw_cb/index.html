@@ -318,10 +318,11 @@ P1（月頻）周轉率高（162%/年）、Sharpe 反而更差，
 <div class="eli5"><span class="eli5-tag">白話版</span><p>這個策略在做什麼：可轉債剛發行的頭 3 個月、或快到期前一小段時間（依各券條款），規定不能轉換成股票，這裡想賭「一旦恢復可以轉換，之前累積的折價就會補漲收斂」。結果一句話：機會太少了——有條款資料的 5 年多（2015～2020）裡篩出來的真事件只有 7 個，不足以撐成一個可以年年操作的策略，判定 NO-GO。為什麼：越接近到期日還在打折的可轉債，通常是市場已經在擔心公司還不出錢，便宜不是撿到寶，是市場在提醒你風險。</p></div>
 
 <div class="warn-loud">
-<strong>方法論教訓（本策略是抓出這個 bug 的地方）：</strong>前一版用 yobond 快照自報的「CB 理論價」欄位當轉換價值，
-14 個 S1 訊號裡有 13 個是假的——快照月頻、常常已過期一個月，「折價」其實是股價在快照後下跌造成的幻影。
-改用交易所官方 API 抓事件日當天真實母股收盤價重算後，S1 只剩 5 個真事件，另有 1 筆（288602 兆豐金E2）
-疑似為海外可交換公司債（EB，標的未必是發行人自己股票），已標記但未剔除。
+<strong>資料處理注意事項：條款快照裡的「理論價」欄位不能直接當轉換價值用。</strong>yobond 快照自報的「CB 理論價」
+欄位內嵌的是快照當時的股價，快照為月頻、常已過期一個月，若直接採用，「折價」其實常是股價在快照後下跌造成的
+幻影——停止轉換期回測中，14 個 S1 訊號有 13 個因此被判為假訊號。本研究改用交易所官方 API 抓事件日當天真實
+母股收盤價重算，S1 因此只剩 5 個真事件；另有 1 筆（288602 兆豐金E2）疑似為海外可交換公司債（EB，標的未必
+是發行人自己股票），已標記但未剔除。
 </div>
 
 <div class="card" style="overflow-x:auto">
@@ -408,7 +409,7 @@ P2_lt100（面額 100 錨）年化只有約 +2.9%，
 
 <div class="card" style="overflow-x:auto">
 <h3 style="font-size:.95rem;margin-bottom:.3rem">逐年拆解</h3>
-<p style="font-size:.84rem;color:var(--muted);margin-bottom:.7rem">這張表在回答：這個策略的品質在不同年份進場有沒有差、以及每一年實際「入袋」了多少已實現損益（因為持有天數中位數超過一年半，進場年份跟出場年份常常對不上）。</p>
+<p style="font-size:.84rem;color:var(--muted);margin-bottom:.7rem">不同年份進場的事件品質有沒有差？每一年實際「入袋」了多少已實現損益？（持有天數中位數超過一年半，進場年份跟出場年份常常對不上，因此分兩個角度呈現。）</p>
 <p style="font-size:.82rem;font-weight:600;margin-bottom:.3rem">按進場年份（事件品質）</p>
 <table>
 <thead><tr><th>進場年</th><th>事件數</th><th>勝率</th><th>平均淨報酬</th><th>平均持有天數</th></tr></thead>
@@ -436,7 +437,7 @@ P2_lt100（面額 100 錨）年化只有約 +2.9%，
 
 <div class="card">
 <h3 style="font-size:.95rem;margin-bottom:.3rem">單筆報酬分布</h3>
-<p style="font-size:.84rem;color:var(--muted);margin-bottom:.7rem">這張圖在回答：平均 +9.33% 是被少數大贏家拉高的假象，還是大多數事件都溫和小賺？</p>
+<p style="font-size:.84rem;color:var(--muted);margin-bottom:.7rem">平均 +9.33% 是被少數大贏家拉高的假象，還是大多數事件都溫和小賺？</p>
 <div class="hbar-row"><div class="hbar-label">&lt;-20%</div><div class="hbar-track"><div class="hbar-fill" style="width:2.4%"></div></div><div class="hbar-n">3</div></div>
 <div class="hbar-row"><div class="hbar-label">-20%~-10%</div><div class="hbar-track"><div class="hbar-fill" style="width:0.0%"></div></div><div class="hbar-n">0</div></div>
 <div class="hbar-row"><div class="hbar-label">-10%~0%</div><div class="hbar-track"><div class="hbar-fill" style="width:4.7%"></div></div><div class="hbar-n">6</div></div>
@@ -453,7 +454,7 @@ P2_lt100（面額 100 錨）年化只有約 +2.9%，
 
 <div class="card">
 <h3 style="font-size:.95rem;margin-bottom:.3rem">持有天數分布</h3>
-<p style="font-size:.84rem;color:var(--muted);margin-bottom:.7rem">這張表在回答：錢一次要被綁多久，資金週轉快不快？</p>
+<p style="font-size:.84rem;color:var(--muted);margin-bottom:.7rem">錢一次要被綁多久，資金週轉快不快？</p>
 <div class="hero-stats" style="grid-template-columns:repeat(5,1fr)">
 <div><div class="hs-label">最短</div><div class="hs-value" style="font-size:1.05rem">0 天</div></div>
 <div><div class="hs-label">P25</div><div class="hs-value" style="font-size:1.05rem">359 天</div></div>
@@ -468,7 +469,7 @@ P2_lt100（面額 100 錨）年化只有約 +2.9%，
 
 <div class="card" style="overflow-x:auto">
 <h3 style="font-size:.95rem;margin-bottom:.3rem">輸的那幾筆全列（9 筆）</h3>
-<p style="font-size:.84rem;color:var(--muted);margin-bottom:.7rem">這張表在回答：萬一輸了，是輸在哪裡——是判斷方向錯了，還是資料/流動性的問題？</p>
+<p style="font-size:.84rem;color:var(--muted);margin-bottom:.7rem">萬一輸了，是輸在哪裡——是判斷方向錯了，還是資料/流動性的問題？</p>
 <table>
 <thead><tr><th>代號</th><th>名稱</th><th>進場日</th><th>進場價</th><th>賣回價</th><th>賣回日</th>
 <th>出場日</th><th>出場價</th><th>出場方式</th><th>淨報酬</th><th>為什麼輸</th></tr></thead>
@@ -487,7 +488,7 @@ P2_lt100（面額 100 錨）年化只有約 +2.9%，
 
 <div class="card" style="overflow-x:auto">
 <h3 style="font-size:.95rem;margin-bottom:.3rem">買價折扣深度 vs 結果</h3>
-<p style="font-size:.84rem;color:var(--muted);margin-bottom:.7rem">這張表在回答：買得越便宜（折得越深）是不是賺得越多，還是深折反而是「快違約才便宜」的危險訊號？（與上面 YTP 四分位是不同角度——YTP 併入了剩餘天數，這裡只看純價格折扣。）</p>
+<p style="font-size:.84rem;color:var(--muted);margin-bottom:.7rem">買得越便宜（折得越深）是不是賺得越多，還是深折反而是「快違約才便宜」的危險訊號？（與上面 YTP 四分位是不同角度——YTP 併入了剩餘天數，這裡只看純價格折扣。）</p>
 <table>
 <thead><tr><th>折扣深度（進場價/賣回價-1）</th><th>n</th><th>勝率</th><th>平均淨報酬</th></tr></thead>
 <tbody><tr><td>&lt;-10%（深折）</td><td>3</td><td>100.0%</td><td>+19.7%</td></tr>
@@ -502,7 +503,7 @@ P2_lt100（面額 100 錨）年化只有約 +2.9%，
 <details class="dense"><summary>看細節數字：同時持有檔數時間軸（逐月）</summary>
 <div class="card">
 <h3 style="font-size:.95rem;margin-bottom:.3rem">同時持有檔數時間軸</h3>
-<p style="font-size:.84rem;color:var(--muted);margin-bottom:.7rem">這張圖在回答：MDD -23.95% 那段期間，組合其實只剩幾檔在撐？
+<p style="font-size:.84rem;color:var(--muted);margin-bottom:.7rem">MDD -23.95% 那段期間，組合其實只剩幾檔在撐？
 峰值 102 檔出現在 2016-01；訊號窗在 2019-07 斷檔後（紅色段）沒有新事件補進來，
 既有部位陸續到期出場，檔數一路歸零到 2022-09 的 0 檔——
 這就是尾端「單檔權重逼近 100%」的來源。</p>
@@ -605,7 +606,7 @@ P2_lt100（面額 100 錨）年化只有約 +2.9%，
 
 <div class="card">
 <h3 style="font-size:.95rem;margin-bottom:.3rem">「如果你有 30／100／300 萬」試算</h3>
-<p style="font-size:.84rem;color:var(--muted);margin-bottom:.7rem">這張表在回答：小資金真的做得動這個策略嗎，還是理論上勝率 95.5%、實際上買不到量？</p>
+<p style="font-size:.84rem;color:var(--muted);margin-bottom:.7rem">小資金真的做得動這個策略嗎，還是理論上勝率 95.5%、實際上買不到量？</p>
 
 <p style="font-size:.84rem;color:var(--muted);margin-bottom:.6rem">先講最小單位：可轉債一次最少買 1 張（面額 NT$10 萬，市價約＝報價 × 1,000 元；
 本回測 201 筆進場價換算，一張中位數約 NT$98,900）。所以「資金 ÷ 一張的價錢」就是你最多能攤幾檔——
@@ -627,7 +628,7 @@ P2_lt100（面額 100 錨）年化只有約 +2.9%，
 
 <div class="card">
 <h3 style="font-size:.95rem;margin-bottom:.5rem">實盤操作步驟（checklist）</h3>
-<p style="font-size:.84rem;color:var(--muted);margin-bottom:.7rem">這份清單在回答：如果真的想照做，具體要怎麼找券、怎麼下單、怎麼出場。細節以各券公開說明書為準，本清單不是法律或投資建議。</p>
+<p style="font-size:.84rem;color:var(--muted);margin-bottom:.7rem">如果真的想照做，具體要怎麼找券、怎麼下單、怎麼出場？細節以各券公開說明書為準，以下不構成法律或投資建議。</p>
 <ol style="padding-left:1.2rem;font-size:.88rem;color:#374151;line-height:1.9">
 <li><strong>找候選：</strong>每日至櫃買中心（TPEx）下載可轉債買賣斷交易行情表（RSta0113），或看公開資訊觀測站／各券商 CB 報價頁面找目前掛牌、有成交的可轉債現價；賣回價與賣回日要查該券的公開說明書或發行公告（次級市場報價系統通常不會直接列出賣回條款，需自行對照）。</li>
 <li><strong>進場條件：</strong>市價 &lt; 賣回價 × 0.99（本回測用的 1% 緩衝），且賣回日距今至少 30 天以上（太近的賣回日代表條款快照可能已過期或流動性視窗太短）。</li>
@@ -693,8 +694,8 @@ P2_lt100（面額 100 錨）年化只有約 +2.9%，
 </details>
 
 <div class="warn-loud">
-<strong>Review 補算（2026-08-15）——原始 report.md 的獨立迴歸沒有回答「訊號組真的贏對照組嗎」，
-須看兩組的配對差：</strong>前 1/3 vs 對照組（配對 t 檢定）差 +2.2pp、t=0.96、勝月 51.9%、逐年衰減 → 不顯著。前 1/3 vs 後 1/3 差 +10.1pp、t=2.76 顯著 → 營收訊號其實是「負向剔除」（避開營收最爛的那 1/3），不是「正向精選」（挑不出比母體平均更好的標的）。　逐年衰減：2015 年訊號組領先對照組 +8.1pp，到 2019 年已反轉為 -3.6pp。
+<strong>補充分析——單獨看訊號組與對照組各自的迴歸結果，沒有回答「訊號組真的贏對照組嗎」，
+必須直接看兩組的配對差：</strong>前 1/3 vs 對照組（配對 t 檢定）差 +2.2pp、t=0.96、勝月 51.9%、逐年衰減 → 不顯著。前 1/3 vs 後 1/3 差 +10.1pp、t=2.76 顯著 → 營收訊號其實是「負向剔除」（避開營收最爛的那 1/3），不是「正向精選」（挑不出比母體平均更好的標的）。　逐年衰減：2015 年訊號組領先對照組 +8.1pp，到 2019 年已反轉為 -3.6pp。
 </div>
 
 <details class="dense"><summary>看細節數字：逐年報酬（月頻變體）</summary>
@@ -736,7 +737,7 @@ Phase A（無對沖）驗證錯價是真的、會收斂；先導檢查已知機�
 
 <div class="card" style="overflow-x:auto">
 <h3 style="font-size:.95rem;margin-bottom:.5rem">收斂測量（核心科學問題）</h3>
-<p style="font-size:.84rem;color:var(--muted);margin-bottom:.6rem">這張表在回答：買進去之後，折價真的會慢慢消失嗎？</p>
+<p style="font-size:.84rem;color:var(--muted);margin-bottom:.6rem">買進去之後，折價真的會慢慢消失嗎？</p>
 <table>
 <thead><tr><th>交易日後</th><th>有效觀測數</th><th>涵蓋率</th><th>平均折價率</th><th>中位數折價率</th><th>仍≥1%比率</th></tr></thead>
 <tbody><tr><td>t+1</td><td>477</td><td>99.8%</td><td>+3.8%</td><td>+3.0%</td><td>76.1%</td></tr>
@@ -752,13 +753,13 @@ Phase A（無對沖）驗證錯價是真的、會收斂；先導檢查已知機�
 </div>
 
 <div class="warn-loud">
-<strong>但「無對沖持有 10 日」的原始報酬是灌水的——Review 補算把母股方向暴險拆掉之後，優勢仍在但薄很多：</strong>
+<strong>但「無對沖持有 10 日」的原始報酬是灌水的——把母股方向暴險拆掉之後，優勢仍在但薄很多：</strong>
 折價收斂一半靠股票自己跌下來——已收斂事件中，母股 10 日平均下跌 -1.4%，「買 CB 持有 10 日不對沖」的原始 Phase A 報酬（+18.95% 年化；但逐筆勝率只有 47.9%、MDD -43.7%）其實是折價收斂報酬與母股方向暴險混在一起、未拆解的數字，不能當成套利報酬看，等同賭母股方向。把母股方向剔除後（CB 報酬 - 母股報酬）：用 forward-fill 價格版本算出 +4.2%/10 日，但那是灌水的——嚴格只用真實成交價版本（n=292）算出 +1.8%/10 日（中位數 +1.3%）、勝率 68.5%、t=6.5；扣掉 0.6% 全部交易成本後 +1.2%、勝率 60%，優勢仍在但薄。
 </div>
 
 <div class="card" style="overflow-x:auto">
-<h3 style="font-size:.95rem;margin-bottom:.5rem">對沖後報酬按折價深度分層（review 補算，n=292 嚴格版）</h3>
-<p style="font-size:.84rem;color:var(--muted);margin-bottom:.6rem">這張表在回答：折得越深，扣掉股票方向暴險之後，是不是真的賺比較多？</p>
+<h3 style="font-size:.95rem;margin-bottom:.5rem">對沖後報酬按折價深度分層（n=292 嚴格版）</h3>
+<p style="font-size:.84rem;color:var(--muted);margin-bottom:.6rem">折得越深，扣掉股票方向暴險之後，是不是真的賺比較多？</p>
 <table>
 <thead><tr><th>折價分層</th><th>n</th><th>平均對沖後報酬</th><th>勝率</th></tr></thead>
 <tbody><tr><td>[3%, 5%)</td><td>217</td><td>+1.3%</td><td>—</td></tr>
@@ -777,7 +778,7 @@ Phase A（無對沖）驗證錯價是真的、會收斂；先導檢查已知機�
 <p><strong>新資料陷阱（conv_price 因賣回重設上調）：</strong>本回測用到的訊號事件中，
 11/478（+2.3%）用到的條款快照，其「下一筆快照」
 轉換價出現「上調」而非規格假設的只會下修（規格假設對到期贖回型下修有效，對賣回權重設條款無效——
-另據 report.md 記載，在整體 582 檔 5 碼 CB 條款時間序列的口徑下，有 30 檔／5.2% 出現此類上調，中位數升幅 34%）。
+在整體 582 檔 5 碼 CB 條款時間序列的口徑下，有 30 檔／5.2% 出現此類上調，中位數升幅 34%）。
 若訊號日剛好落在重設後、快照還沒更新的空窗期，會把「沒有真的折價」誤判成折價。
 剔除這批標記事件後的穩健性對照：事件數 467
 （原始 478）、20 日收斂率
@@ -786,32 +787,32 @@ Phase A（無對沖）驗證錯價是真的、會收斂；先導檢查已知機�
 </div>
 
 <div class="note"><strong>限制：</strong>6 碼交換債已一律排除（標的非母股，已知假訊號源）；Phase B（股期實際對沖）
-本身未實作，此處的「對沖後報酬」是 review 用真實股價回推的近似拆解，非逐日 mark 兩腿部位的完整實作；
+本身未實作，此處的「對沖後報酬」是用真實股價回推的近似拆解，非逐日 mark 兩腿部位的完整實作；
 容量診斷顯示 370/407 筆事件的等分資本名目部位超過當日成交金額 10%。
 </div>
 </div>
 
 
 <div class="section">
-<h2 class="section-title">方法論教訓（三條，全站共用）</h2>
-<div class="eli5"><span class="eli5-tag">白話版</span><p>這三條是做這幾個回測時真的踩到的坑，寫下來提醒自己以後不要再犯：（1）資料裡混進「已經過期的股價」會做出假訊號；（2）把好幾筆各自只分到部分資金的回測結果直接加總，會虛報成好幾倍的資金報酬；（3）股票在快到期或快被要求還錢時常常會暫停交易，「當天沒有成交價」不代表「沒有市價」，直接拿合約保底價取代會做出假崩盤。</p></div>
+<h2 class="section-title">資料處理注意事項——做台股 CB 回測時最容易出錯的三個地方</h2>
+<div class="eli5"><span class="eli5-tag">白話版</span><p>這三件事是做台股可轉債回測時最容易踩到的坑，讀者若要自己動手做類似分析，可以直接參考：（1）資料裡混進「已經過期的股價」會做出假訊號；（2）把好幾筆各自只分到部分資金的回測結果直接加總，會虛報成好幾倍的資金報酬；（3）股票在快到期或快被要求還錢時常常會暫停交易，「當天沒有成交價」不代表「沒有市價」，直接拿合約保底價取代會做出假崩盤。</p></div>
 <div class="warn-loud">
 <strong>①內嵌股價的快照欄位不能當事件日訊號：</strong>yobond「CB 理論價」欄位內嵌的是快照當時的股價，
-月頻快照常常已過期一個月——停止轉換回測曾因此把 14 個訊號裡的 13 個判成假訊號。任何「合約條款＋內嵌市價」
-混在一起的欄位，必須拆開來源，市價一律用官方 API 抓事件日當天真實值，條款可以 asof 過期使用（過期方向保守）。
+月頻快照常常已過期一個月——停止轉換期回測中，14 個訊號有 13 個因此被判為假訊號。任何「合約條款＋內嵌市價」
+混在一起的欄位，都必須拆開來源：市價一律用官方 API 抓事件日當天真實值，條款可以 asof 過期使用（過期方向保守）。
 </div>
 <div class="warn-loud">
 <strong>②多 tranche 權益合併，pre-launch 期須填閒置資金：</strong>月營收 3 個月疊代變體三個 tranche
 各自只分到總資金 1/3、同時並存、互不重疊，逐日加總即代表全部資金——這與「兩個各自滿額的獨立回測不可直接相加」
-（本站 Rule 1）不是同一情境，須先判斷資金是否重複計算再決定合併方式。
+的常見資料陷阱不是同一情境，須先判斷資金是否重複計算，再決定合併方式。
 </div>
 <div class="warn-loud">
-<strong>③台股 CB 賣回／到期前常停牌，「當日市價」須用停牌前最後成交價：</strong>賣回保底攤大餅初版要求賣回日
-「當天」剛好有成交才採用市價，實測後發現台股 CB 常在賣回/到期日前數日到數週停牌（例：24391 美律一
-2018-01-17~01-29 停牌，賣回日恰好落在停牌窗內，停牌前最後成交價 167 遠高於賣回價 100.5），嚴格要求「當天成交」
-會把「停牌前市價明明遠高於賣回價」的事件錯判成「無市價可比、只能拿賣回價」，逐日 MTM 路徑上產生假崩盤
-（初版組合年化曾算出 -38%、MDD -97.6%，與逐筆勝率 95.5%完全矛盾——這個矛盾本身就是抓到 bug 的信號）。
-修正後一律用「停牌前最近一次真實成交價」，並記錄陳舊天數供讀者自行打折扣。
+<strong>③台股 CB 賣回／到期前常停牌，「當日市價」須用停牌前最後成交價：</strong>台股 CB 常在賣回／到期日前
+數日到數週停牌（例：24391 美律一 2018-01-17~01-29 停牌，賣回日恰好落在停牌窗內，停牌前最後成交價 167 元
+遠高於賣回價 100.5 元）。若嚴格要求賣回日「當天」剛好有成交才採用市價，會把「停牌前市價明明遠高於賣回價」
+的事件誤判為「無市價可比、只能拿賣回價出場」，逐日 MTM 路徑上因此產生假崩盤——這種算法會把組合年化算成
+-38%、MDD -97.6%，與逐筆勝率 95.5% 明顯矛盾，可見問題出在資料處理方式，不是策略本身。因此本研究一律採用
+「停牌前最近一次真實成交價」出場，並記錄陳舊天數供讀者自行打折扣。
 </div>
 </div>
 
@@ -858,14 +859,14 @@ alpha 顯著（t=3.79）且 beta 低。</li>
 
 
 <div class="section">
-<h2 class="section-title">未做項目（卡在付費資料）</h2>
+<h2 class="section-title">後續研究方向（受限於付費資料）</h2>
 <div class="card">
 <ul style="padding-left:1.2rem;font-size:.9rem;color:#374151;line-height:1.9">
-<li><strong>新發行競拍／蜜月期首日漲幅</strong>——台灣首日漲幅無公開統計，需自建歷次競拍結果資料庫。</li>
+<li><strong>新發行競拍／蜜月期首日漲幅</strong>——台灣首日漲幅無公開統計，若要驗證需自建歷次競拍結果資料庫。</li>
 <li><strong>大股東 CBAS 跟單訊號</strong>——分點買超→過轉換價→融券暴增→券償大增的訊號鏈，公開資料（融券/券償）可回測，
-但完整驗證需要交叉比對分點進出，工程量大，本輪未展開。</li>
-<li><strong>TCRI 信評變動事件</strong>——待驗證假說，卡在 TEJ 付費歷史序列；CB 次級市場（散戶＋CBAS 券商）是否消化
-TCRI 資訊仍未知。</li>
+但完整驗證需要交叉比對分點進出，工程量較大，留待後續研究展開。</li>
+<li><strong>TCRI 信評變動事件</strong>——待驗證假說，需要 TEJ 付費歷史序列；CB 次級市場（散戶＋CBAS 券商）是否消化
+TCRI 資訊仍是未知數。</li>
 </ul>
 </div>
 </div>
