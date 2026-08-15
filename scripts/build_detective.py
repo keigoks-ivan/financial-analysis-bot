@@ -19,7 +19,7 @@ scripts/detective_state.py 純函數庫）。
   7. variance   — 財測落差紅旗（drift < −15%，白旗＝幣別待確認永不出訊號）
                   逐 ticker 黃；同週新增紅旗 ≥3 檔加一條 fleet 級紅
   8. kill       — ID／macro kill_metrics 機械對帳（kill_watch.json，Phase 6）：
-                  breached 條目→紅（附「建議 spawn industry-thesis-critic 複審」），
+                  breached 條目→紅（附「建議以產業論點冷讀複審」），
                   near 不出訊號（只留頁面對帳表）；缺檔／stale→誠實標示不炸
   9. sector     — 產業結構分歧（回答「今天是誰在跌」）：單一產業 ETF 當日 z 極端
                   而大盤持平的單日分歧（下跌／對稱向上）、同日多產業分歧叢集（≥2 黃／
@@ -542,7 +542,7 @@ def variance_signals(var, snap):
 def kill_signals(kw):
     """kill_watch.json 的 breached 條目 → 紅燈，鍵 kill:{doc_stem}:{idx}；
     near／green／unknown／stale_needs_reparse 皆不出訊號（只留頁面對帳表）。
-    fact 附固定流程語式「建議 spawn industry-thesis-critic 複審該 thesis」——這是
+    fact 附固定流程語式「建議以產業論點冷讀複審該 thesis」——這是
     流程動作、非買賣指令，維持描述器紀律。缺檔（kw 空）→ 回空、源 stale 由 staleness 標。"""
     if not kw:
         return []
@@ -566,7 +566,7 @@ def kill_signals(kw):
             thr += f" {unit}"
         cur_s = _fmt(cur) if isinstance(cur, (int, float)) else str(cur)
         fact = (f"{theme}｜{metric} 已越線：現值 {cur_s} vs 閾值 {thr}（源 {stem}）。"
-                f"建議 spawn industry-thesis-critic 複審該 thesis")
+                f"建議以產業論點冷讀複審該 thesis")
         mag = 3.0
         if isinstance(cur, (int, float)) and isinstance(val, (int, float)) and val != 0:
             mag = min(abs(cur - val) / abs(val) * 10.0, 5.0)
