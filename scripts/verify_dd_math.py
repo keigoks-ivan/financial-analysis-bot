@@ -100,7 +100,13 @@ def check_file(path):
                 fails.append(f"Max DD 恆等式違反：|{mdd}| < |Bear 終點 {bear_ret:.1f}|"
                              f"——路徑最大回撤不可能小於任一情境終點跌幅")
     else:
-        warns.append("dd-meta 情境欄位不全，A 組重算跳過")
+        # 2026-08-08 TSM 同尺稽核：缺欄位靜默跳過會讓整組 A 驗算失效卻報 pass
+        # ——v15+ 檔六個情境輸入欄一律必填，缺欄即 FAIL（fix-on-touch：只擋新增/被改的檔）
+        missing = [k for k, v in (("price_at_dd", price), ("bull_5y_price", bull_p),
+                                  ("bear_5y_price", bear_p), ("p_bull_pct", p_bull),
+                                  ("p_bear_pct", p_bear), ("upside_5y_pct", base_ret))
+                   if v is None]
+        fails.append(f"dd-meta 情境欄位缺失（A 組 0 項可驗）：{', '.join(missing)}")
 
     # ---- B. 情境樹年期 ----
     declared = set(re.findall(rf"FY(20\d\d){SP}情境樹", html))

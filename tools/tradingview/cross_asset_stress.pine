@@ -1,0 +1,169 @@
+//@version=6
+// =============================================================================
+// 跨資產壓力分數（Cross-Asset Stress Score）— /monitor/ 同配方 TradingView 版
+// -----------------------------------------------------------------------------
+// 對齊 research.investmquest.com/monitor/ 的 scripts/build_monitor_score.py
+// （設計凍結）：21 條跨資產 series → 每條＝該日水位在滾動 756 交易日（3 年）窗
+// 的百分位，定向成「高＝壓力」（rising＝stress → 百分位；falling＝stress →
+// 100 − 百分位）→ 五個等權桶（vol 波動／credit 信用／liq 流動性／app 風險胃納
+// ／rates 利率）→ 桶內等權、桶間等權合成 0–100。
+// 可得性誠實：桶要 >=2 成員才出分（rates >=1）；合成要 >=3 桶才出分。
+// 另附「風險偏好內部線」（站上稱市場內部；5 條風險偏好 ratio——半導體/高beta/
+// 循環消費/成長/小型股，高＝這些族群領跌＝內部 risk-off；長窗 3 年＋短窗 63 日）
+// ——與站上相同，絕不進合成分數，僅疊圖比較。
+//
+// 定位＝環境描述器，非擇時訊號：衡量當下跨資產壓力在歷史中的分位位置，
+// 不構成進出場指令（同站上聲明）。
+//
+// 用法：套在【日線】圖（任何 symbol 皆可，建議 SPX；所有資料自行 request）。
+//
+// 與站上數字的誠實差異：
+//   1. 起算點：本版每條 series 需滿 756 根日 bar 才貢獻（站上 252 筆即起算），
+//      故各桶亮起時間比站上晚，早期分數可能缺值。
+//   2. 資料源：TV（CBOE/FRED/連續期貨）vs 站上 yfinance/FRED CSV，小差幅。
+//   3. ICE OAS 三條在 TV 反而有全史（站上被 FRED 免費端限縮約 3 年），credit
+//      桶組成時點與站上不同。
+//   4. 百分位含/不含當日的邊際定義差 <1 分。
+//   合計：曲線形狀與波段應與站上高度一致，單日數字可能差 1~3 分。
+//   正式讀數以站上每日收盤後為準。
+// =============================================================================
+
+indicator("跨資產壓力分數（環境描述器）", shorttitle="跨資產壓力", overlay=false, precision=1)
+
+grpS = "設定"
+winL   = input.int(756, "長窗（交易日）", minval=100, group=grpS, tooltip="站上凍結值 756＝3 年滾動百分位窗。")
+winS   = input.int(63,  "內部短窗（交易日）", minval=20, group=grpS, tooltip="站上凍結值 63＝約一季。")
+showIL = input.bool(true, "顯示風險偏好（3 年）", group=grpS, tooltip="五條風險偏好 ratio：半導體/大型科技（SOX/NDX）、高beta/低波（SPHB/SPLV）、循環/防禦消費（XLY/XLP）、成長/價值（VUG/VTV）、小型/大型（IWM/SPY）。高＝這些族群在領跌＝內部 risk-off。不進合成分數。")
+showIS = input.bool(false, "顯示風險偏好（3 月）", group=grpS, tooltip="同五條 ratio，百分位窗縮成 63 日，反映數週齡的新鮮輪動。")
+showTbl= input.bool(true, "顯示桶分解面板", group=grpS)
+
+notDaily = not timeframe.isdaily
+var label warnLbl = na
+if notDaily and barstate.islast
+    label.delete(warnLbl)
+    warnLbl := label.new(bar_index, 50, "本指標須套在日線圖", color=color.new(color.red, 15), textcolor=color.white, style=label.style_label_center, size=size.large)
+
+// ---- 資料（每呼叫＝1 個 request.security，共 24，上限 40 內）-----------------
+req(sym) => request.security(sym, "D", close, gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off)
+
+// vol 桶
+vVix  = req("CBOE:VIX")
+vVvix = req("CBOE:VVIX")
+vSkew = req("CBOE:SKEW")
+vMove = req("TVC:MOVE")
+vVts  = req("CBOE:VIX9D/CBOE:VIX")
+// credit 桶
+cHy   = req("FRED:BAMLH0A0HYM2")
+cIg   = req("FRED:BAMLC0A0CM")
+cCcc  = req("FRED:BAMLH0A3HYC")
+cHl   = req("AMEX:HYG/AMEX:LQD")
+cBaa  = req("FRED:BAA10Y")
+// liq 桶
+lNfci = req("FRED:NFCI")
+lStl  = req("FRED:STLFSI4")
+lSofr = req("FRED:SOFR-FRED:IORB")
+// app 風險胃納桶（全部 falling＝壓力）
+aXly  = req("AMEX:XLY/AMEX:XLP")
+aHbLv = req("AMEX:SPHB/AMEX:SPLV")
+aDjt  = req("DJ:DJT/DJ:DJI")
+aKre  = req("AMEX:KRE/AMEX:XLF")
+aItb  = req("AMEX:ITB/AMEX:SPY")
+aCuAu = req("COMEX:HG1!/COMEX:GC1!")
+// rates 桶
+rReal = req("FRED:DFII10")
+rTp   = req("FRED:THREEFYTP10")
+// 市場內部（sphb_splv／xly_xlp 重用上方，僅 3 條新腳）
+iSox  = req("NASDAQ:SOX/NASDAQ:NDX")
+iVug  = req("AMEX:VUG/AMEX:VTV")
+iIwm  = req("AMEX:IWM/AMEX:SPY")
+
+// ---- 分數：756 日滾動百分位，定向「高＝壓力」---------------------------------
+scU(v) => p = ta.percentrank(v, winL), na(v) ? na : p            // rising = stress
+scD(v) => p = ta.percentrank(v, winL), na(v) ? na : 100.0 - p    // falling = stress
+scDs(v) => p = ta.percentrank(v, winS), na(v) ? na : 100.0 - p   // 短窗 falling
+
+sVix  = scU(vVix)
+sVvix = scU(vVvix)
+sSkew = scU(vSkew)
+sMove = scU(vMove)
+sVts  = scU(vVts)
+sHy   = scU(cHy)
+sIg   = scU(cIg)
+sCcc  = scU(cCcc)
+sHl   = scD(cHl)
+sBaa  = scU(cBaa)
+sNfci = scU(lNfci)
+sStl  = scU(lStl)
+sSofr = scU(lSofr)
+sXly  = scD(aXly)
+sHbLv = scD(aHbLv)
+sDjt  = scD(aDjt)
+sKre  = scD(aKre)
+sItb  = scD(aItb)
+sCuAu = scD(aCuAu)
+sReal = scU(rReal)
+sTp   = scU(rTp)
+
+// ---- 桶合成（桶內等權；vol/credit/liq/app 要 >=2 成員、rates >=1）-------------
+NAF = float(na)
+agg(float a, float b, float c, float d, float e, float f, int minN) =>
+    n = (na(a)?0:1)+(na(b)?0:1)+(na(c)?0:1)+(na(d)?0:1)+(na(e)?0:1)+(na(f)?0:1)
+    s = nz(a)+nz(b)+nz(c)+nz(d)+nz(e)+nz(f)
+    n >= minN ? s / n : na
+
+bVol    = agg(sVix, sVvix, sSkew, sMove, sVts, NAF, 2)
+bCredit = agg(sHy, sIg, sCcc, sHl, sBaa, NAF, 2)
+bLiq    = agg(sNfci, sStl, sSofr, NAF, NAF, NAF, 2)
+bApp    = agg(sXly, sHbLv, sDjt, sKre, sItb, sCuAu, 2)
+bRates  = agg(sReal, sTp, NAF, NAF, NAF, NAF, 1)
+
+// ---- 合成分數（桶間等權；>=3 桶才出分）---------------------------------------
+score = agg(bVol, bCredit, bLiq, bApp, bRates, NAF, 3)
+
+// ---- 市場內部（長窗 756／短窗 63；>=3/5 成員；不進合成分數）-------------------
+intL = agg(scD(iSox), scD(aHbLv), scD(aXly), scD(iVug), scD(iIwm), NAF, 3)
+intS = agg(scDs(iSox), scDs(aHbLv), scDs(aXly), scDs(iVug), scDs(iIwm), NAF, 3)
+
+// ---- 波段（同站上：calm<20 normal<40 warming<60 tense<80 extreme）-------------
+bandTxt = na(score) ? "資料不足" : score < 20 ? "平靜" : score < 40 ? "正常" : score < 60 ? "升溫" : score < 80 ? "緊繃" : "極端"
+bandCol = na(score) ? color.gray : score < 20 ? #16a34a : score < 40 ? color.new(chart.fg_color, 30) : score < 60 ? #d97706 : score < 80 ? #ea580c : #dc2626
+
+// ---- 繪圖 --------------------------------------------------------------------
+// 配色（validate_palette.js 過檢，light/dark 皆 PASS）：
+//   分數＝主題前景色（唯一深色主角）；3 年＝琥珀 #d97706；3 月＝青 #0891b2。
+//   波段語意交給底色帶：0-20 綠（平靜）／60-80 琥珀（緊繃）／80-100 紅（極端）。
+h0   = hline(0,   "0",   color=color.new(color.gray, 100))
+h20  = hline(20,  "20",  color=color.new(color.gray, 80), linestyle=hline.style_dotted)
+h40  = hline(40,  "40",  color=color.new(color.gray, 70), linestyle=hline.style_dotted)
+h60  = hline(60,  "60",  color=color.new(color.gray, 70), linestyle=hline.style_dotted)
+h80  = hline(80,  "80",  color=color.new(color.gray, 80), linestyle=hline.style_dotted)
+h100 = hline(100, "100", color=color.new(color.gray, 100))
+fill(h80, h100, color=color.new(#dc2626, 92), title="極端帶")
+fill(h60, h80,  color=color.new(#d97706, 94), title="緊繃帶")
+fill(h0,  h20,  color=color.new(#16a34a, 94), title="平靜帶")
+
+plot(notDaily ? na : (showIS ? intS : na), "風險偏好（3 月）", color=color.new(#0891b2, 35), linewidth=1)
+plot(notDaily ? na : (showIL ? intL : na), "風險偏好（3 年）", color=color.new(#d97706, 15), linewidth=1)
+plot(notDaily ? na : score, "跨資產壓力分數", color=chart.fg_color, linewidth=2)
+
+// ---- 面板：桶分解 ------------------------------------------------------------
+var table tbl = table.new(position.top_right, 2, 9, border_width=1)
+fnum(v) => na(v) ? "—" : str.tostring(v, "#.#")
+trow(i, k, v, col) =>
+    table.cell(tbl, 0, i, k, text_size=size.small, text_halign=text.align_left, text_color=color.gray, bgcolor=color.new(color.black, 88))
+    table.cell(tbl, 1, i, v, text_size=size.small, text_halign=text.align_right, text_color=col, bgcolor=color.new(color.black, 88))
+
+if showTbl and barstate.islast and not notDaily
+    trow(0, "壓力分數", fnum(score) + "（" + bandTxt + "）", bandCol)
+    trow(1, "波動桶", fnum(bVol), color.silver)
+    trow(2, "信用桶", fnum(bCredit), color.silver)
+    trow(3, "流動性桶", fnum(bLiq), color.silver)
+    trow(4, "風險胃納桶", fnum(bApp), color.silver)
+    trow(5, "利率桶", fnum(bRates), color.silver)
+    trow(6, "風險偏好 3 年", fnum(intL), #d97706)
+    trow(7, "風險偏好 3 月", fnum(intS), #0891b2)
+    trow(8, "描述器非擇時", "分數＝歷史分位", color.gray)
+
+// ---- 提醒：波段升級 ----------------------------------------------------------
+bandUp = not na(score) and not na(score[1]) and (score >= 60 and score[1] < 60 or score >= 80 and score[1] < 80)
+alertcondition(bandUp, "壓力波段升級", "跨資產壓力分數進入緊繃/極端波段")

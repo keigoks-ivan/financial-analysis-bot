@@ -3112,11 +3112,13 @@ def main():
             )
 
     # Event-driven triggers for the consumer layer (2026-07-11)：ticker hub（/t/）、
-    # 搜尋索引＋首頁最新發布 strip、RSS、DD 現值條注入（冪等）、裁決實績記分板。
+    # 搜尋索引＋首頁最新發布 strip、RSS、DD 現值條注入（冪等）、裁決實績記分板、
+    # kill_registry 常駐同步（2026-08-08，additive merge dd-meta kill_metrics[]，
+    # 讓週日 kill-watch-weekly.yml 看得到新 DD 的證偽門檻）。
     # 皆為本地檔案聚合（track-record 會對缺覆蓋 ticker 補抓自己的價格快取——非致命）。
     for _consumer in ("inject_dd_livebar.py", "build_ticker_hubs.py",
                       "build_search_index.py", "build_rss.py",
-                      "build_track_record.py"):
+                      "build_track_record.py", "sync_kill_registry.py"):
         _cs = Path(__file__).resolve().parent / _consumer
         if not _cs.exists():
             continue

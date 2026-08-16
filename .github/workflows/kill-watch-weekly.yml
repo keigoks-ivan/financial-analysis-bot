@@ -8,6 +8,11 @@ name: Weekly Kill-Metrics Watch
 # 下游：build_detective.py 第 8 源讀 breached → 紅燈訊號（附「建議 spawn
 # industry-thesis-critic 複審」）；near 只留頁面對帳表。
 #
+# 2026-08-08 加一步 scripts/sync_kill_registry.py（跑在 build_kill_watch 之前）：
+# additive merge 掃全部 docs/dd/DD_*.html 的 dd-meta kill_metrics[] 進 registry，
+# 讓「stock-analyst 產新 DD／update_dd_index.py 這條同步鏈沒被觸發」時 cron 仍能
+# 自癒補上新觸發器。純本地檔案掃描零網路，失敗不擋 build_kill_watch。
+#
 # 排程：週日 13:00 UTC（在 crossasset-weekly 12:00 之後）。build_kill_watch 是
 # zero-churn 寫入——資料沒動就空 diff、不 commit，重複觸發冪等。
 on:
@@ -38,12 +43,15 @@ jobs:
       - name: Install dependencies
         run: pip install --quiet requests
 
+      - name: Sync kill registry from DD kill_metrics
+        run: python scripts/sync_kill_registry.py || echo "sync_kill_registry failed — continuing with existing registry"
+
       - name: Build kill-metrics watch
         run: python scripts/build_kill_watch.py
 
       - name: Commit and push if changed
         run: |
-          if git status --porcelain docs/detective/data/kill_watch.json | grep -q .; then
+          if git status --porcelain docs/detective/data/kill_watch.json docs/detective/data/kill_registry.json | grep -q .; then
             echo "Changes detected"
           else
             echo "No changes to commit"
@@ -51,7 +59,7 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/detective/data/kill_watch.json
+          git add docs/detective/data/kill_watch.json docs/detective/data/kill_registry.json
           DATE=$(date -u +"%Y-%m-%d")
           git commit -m "kill-watch: weekly kill-metrics reconciliation ${DATE}"
           for i in 1 2 3 4 5 6; do

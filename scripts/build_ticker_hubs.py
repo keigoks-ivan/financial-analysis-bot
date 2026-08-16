@@ -26,6 +26,7 @@ import re
 import shutil
 import sys
 from collections import defaultdict
+from datetime import date as _date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -108,6 +109,17 @@ ul.items li:last-child{border-bottom:0}
 .it-sub{color:var(--sec);font-size:12.5px}
 .tag{font-family:var(--imq-font-mono);font-size:10.5px;padding:.12rem .45rem;border-radius:4px;background:var(--paper);border:1px solid var(--line);color:var(--sec);white-space:nowrap}
 .foot-note{margin-top:44px;padding-top:16px;border-top:1px solid var(--line);font-size:11.5px;color:var(--muted)}
+/* checkpoint panel */
+section.blk.ckpt .ckpt-note{font-family:var(--imq-font-mono);font-size:11px;color:var(--muted);margin-bottom:14px}
+.ckpt-sub{margin-top:16px}
+.ckpt-sub:first-of-type{margin-top:0}
+.ckpt-sub h3{font-family:var(--imq-font-mono);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--sec);margin-bottom:6px}
+.ckpt-sub ul.items li{align-items:flex-start}
+ul.items li.past{opacity:.5}
+.rearm-line{font-size:13px;color:var(--ink);padding:6px 4px}
+.tag.st-ok{background:rgba(15,110,86,.08);border-color:rgba(15,110,86,.30);color:var(--imq-green)}
+.tag.st-warning{background:rgba(180,83,9,.08);border-color:rgba(180,83,9,.30);color:var(--imq-amber)}
+.tag.st-triggered{background:rgba(192,57,43,.08);border-color:rgba(192,57,43,.32);color:var(--imq-rose)}
 /* directory */
 .dir-stats{display:flex;flex-wrap:wrap;gap:14px;margin:18px 0 22px}
 .stat{border:1px solid var(--line);border-radius:var(--r);background:var(--card);padding:12px 18px;min-width:120px}
@@ -125,6 +137,8 @@ a.tcard .rc{font-family:var(--imq-font-mono);font-size:10.5px;color:var(--muted)
 @media(max-width:600px){.wrap{padding:28px 16px 48px}h1.tk{font-size:27px}}"""
 
 VERDICT_CLASS = {"進場": "v-in", "迴避": "v-out", "觀望": "v-hold"}
+STATUS_CLASS = {"ok": "st-ok", "warning": "st-warning", "triggered": "st-triggered"}
+STATUS_LABEL = {"ok": "正常", "warning": "警示", "triggered": "已觸發", "unknown": "未知"}
 
 
 def esc(s) -> str:
@@ -382,6 +396,78 @@ def render_snapshot(stock, as_of):
     return f'<div class="snap">{inner}</div>\n{asof}'
 
 
+def render_checkpoint_panel(meta):
+    """檢核點面板 — kill_metrics[] / catalysts[] / rearm_trigger 三選填欄的唯讀呈現。
+
+    任一子節缺資料就整節省略；三者全缺回傳空字串（不 render 整塊，多數 legacy
+    ticker 沒有這三欄）。"""
+    if not meta:
+        return ""
+    kill_metrics = meta.get("kill_metrics") or []
+    catalysts = meta.get("catalysts") or []
+    rearm = (meta.get("rearm_trigger") or "").strip()
+    if not (kill_metrics or catalysts or rearm):
+        return ""
+
+    subs = []
+
+    if kill_metrics:
+        lis = []
+        for km in kill_metrics:
+            metric = esc(km.get("metric") or "—")
+            thresh = esc(km.get("bear_threshold") or "—")
+            window = km.get("window") or ""
+            status = km.get("last_status") or ""
+            tags = []
+            if window:
+                tags.append(f'<span class="tag">{esc(window)}</span>')
+            if status:
+                scls = STATUS_CLASS.get(status, "")
+                cls_attr = f"tag {scls}" if scls else "tag"
+                slabel = STATUS_LABEL.get(status, status)
+                tags.append(f'<span class="{cls_attr}">{esc(slabel)}</span>')
+            lis.append(
+                f'<li><span class="it-main">{metric}'
+                f'<span class="it-sub"> · {thresh}</span></span>{"".join(tags)}</li>'
+            )
+        subs.append(
+            '<div class="ckpt-sub"><h3>證偽觸發器</h3>'
+            f'<ul class="items">{"".join(lis)}</ul></div>'
+        )
+
+    if catalysts:
+        today = _date.today().isoformat()
+        lis = []
+        rows = sorted(catalysts, key=lambda c: c.get("date") or "")
+        for c in rows:
+            cdate = c.get("date") or ""
+            event = esc(c.get("event") or "—")
+            impact = c.get("impact") or ""
+            itag = f'<span class="tag">{esc(impact)}</span>' if impact else ""
+            past = " past" if cdate and cdate < today else ""
+            lis.append(
+                f'<li class="dt-row{past}"><span class="dt">{esc(cdate)}</span>'
+                f'<span class="it-main">{event}</span>{itag}</li>'
+            )
+        subs.append(
+            '<div class="ckpt-sub"><h3>催化劑</h3>'
+            f'<ul class="items">{"".join(lis)}</ul></div>'
+        )
+
+    if rearm:
+        subs.append(
+            '<div class="ckpt-sub"><h3>再武裝條件</h3>'
+            f'<p class="rearm-line">{esc(normalize_punct(rearm))}</p></div>'
+        )
+
+    note = ('<div class="ckpt-note">來源＝最新 DD 決策層；'
+            '週更機械比對見 <a href="/detective/">/detective/</a>。</div>')
+    return (
+        '<section class="blk ckpt"><h2>檢核點</h2>'
+        f'{note}{"".join(subs)}</section>'
+    )
+
+
 _CJK_HALF_PUNCT = re.compile(r'([一-鿿])([,:;!?.])')
 _PUNCT_MAP = {",": "，", ":": "：", ";": "；", "!": "！", "?": "？", ".": "。"}
 
@@ -411,6 +497,8 @@ def render_ticker_page(ticker, dd_rows, cur, ids, sc, comps, syns, stock, as_of)
         vr.append(verdict_chip(cur["verdict"], cur["era"]))
         vr.append(f'<span class="chip muted">裁決日期 {esc(cur["date"])}</span>')
     parts.append(f'<div class="verdict-row">{"".join(vr)}</div>')
+    if cur and cur["meta"]:
+        parts.append(render_checkpoint_panel(cur["meta"]))
     parts.append(render_snapshot(stock, as_of))
 
     def section(title, count, body):

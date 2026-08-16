@@ -131,6 +131,10 @@ print(f"現價 vs W104: {idx_current:.2f} vs {idx_w104:.2f} | 破線: {idx_curre
 
 \`{TICKER} acquisition OR lawsuit OR investigation OR recall OR guidance cut 2026\`，涵蓋近 12 個月。每則只給「日期｜一句話事實｜來源」。**不要判斷影響大小、不要說「對 thesis 有利／不利」**——那是委派者的工作。
 
+## 任務 4：kill_watch 現況（2026-08-08 接線）
+
+若 \`docs/detective/data/kill_watch.json\` 存在，grep 本 ticker 的條目（含 \`last_status\`／是否越線）附進資料包；讓「前次觸發器哪條已發火」是機器比對事實，供 QC-49／§14 引用，不靠 writer 翻舊檔散文。查無條目照實回報「查無」，不要用散文回填。
+
 ## 回傳格式（Markdown；逐節照填；總量 ≤6KB）
 
 ### 0. 頂部標註
