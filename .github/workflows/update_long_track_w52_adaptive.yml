@@ -45,6 +45,14 @@ jobs:
         # own — notifications are covered by the cap 1.5 main system (alert file below).
         run: python scripts/update_long_track_w52_adaptive_leverage.py
 
+      - name: Run TW B-ii downside-semivariance shadow tracking page
+        # 2026-08-17: read-only TW-only shadow page (docs/long-track-w52-adaptive/tw-semivol.html).
+        # Signal is identical to the cap 1.5 LIVE main system except the TW leg's vol-target
+        # sleeve denominator (B-ii downside semivariance instead of RV20); NOT adopted as a
+        # live rule (pre-registered criteria not fully met — see Adaptive_Sigma_Spec.md
+        # 2026-08-17 decision record). Same two-cron schedule; NO email of its own.
+        run: python scripts/update_long_track_w52_adaptive_tw_semivol.py
+
       - name: Read change alert
         id: alert
         run: |
@@ -102,7 +110,7 @@ jobs:
         run: |
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
-          git add docs/long-track-w52-adaptive/index.html docs/long-track-w52-adaptive/state.json docs/long-track-w52-adaptive/leverage.html docs/long-track-w52-adaptive/leverage_state.json
+          git add docs/long-track-w52-adaptive/index.html docs/long-track-w52-adaptive/state.json docs/long-track-w52-adaptive/leverage.html docs/long-track-w52-adaptive/leverage_state.json docs/long-track-w52-adaptive/tw-semivol.html docs/long-track-w52-adaptive/tw_semivol_state.json
           git diff --staged --quiet || git commit -m "Auto update W52 × adaptive vol-target (US+TW): $(date -u '+%Y-%m-%d')"
           for i in 1 2 3 4 5 6; do
             if git push; then
