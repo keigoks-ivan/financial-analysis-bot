@@ -114,6 +114,7 @@ MENU = {
         ("syn", "/research/synthesis/", "期望落差綜合研判"),
     ],
     "market": [
+        ("brief", "/briefing/", "每日簡報"),  # 2026-08-17 日報恢復（週一至週六 06:15），重新掛回頁首
         ("mon", "/monitor/", "市場監測"),
         ("det", "/detective/", "偵測警報網"),
         ("radar", "/rotation/radar.html", "資產輪動雷達"),
@@ -263,7 +264,7 @@ PREFIX_ACTIVE = [
     ("regime/", ("market", "regime")),
     ("macro/", ("market", "macro")),  # 總經深度報告（2026-07-09），nav 已掛項目
     ("weekly/", ("market", "week")),
-    ("briefing/", ("market", None)),  # 已暫停，nav 無項目，僅群高亮
+    ("briefing/", ("market", "brief")),  # 2026-08-17 恢復更新，nav 項目已掛回
     # 系統群
     ("track-record/", ("system", "tr")),  # 裁決實績（2026-07-11 新增）
     ("pm/", ("system", "pm")),  # 持倉週掃（2026-07-19 復活：position-thesis-monitor 週掃輸出索引）
