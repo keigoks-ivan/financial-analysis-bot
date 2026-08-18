@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>02 · The Language of Numbers｜數字的語言 | 股票分析完整框架 | InvestMQuest</title>
+<meta name="description" content="How to read the three financial statements, calculate ROIC and incremental ROIC, and spot the numbers that get dressed up. 教你讀懂三張報表、算出 ROIC 與增量 ROIC，並看穿最容易被動手腳的幾個數字。">
+<meta name="color-scheme" content="light">
+<link rel="stylesheet" href="/learn/learn.css">
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/monitor/">市場監測</a>
+          <a href="/detective/">偵測警報網</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/rotation/">產業輪動</a>
+          <a href="/crowding/">擁擠交易監測</a>
+          <a href="/regime/">大類資產 regime</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/catalyst/">催化劑日曆</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">選股<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/cockpit/">選股主控台</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/research/momentum-5/">Momentum-5</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screeners.html">RS+VCP Screener</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">個股總覽</a>
+          <a href="/research/">個股 DD</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/research/synthesis/">期望落差綜合研判</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/track-record/">裁決實績</a>
+          <a href="/pm/">持倉週掃</a>
+          <a href="/long-track-w52-adaptive/">實單主系統</a>
+          <a href="/long-track/">追蹤總覽</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/flow/">投資流程</a>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<nav class="course-nav">
+  <div class="course-nav-inner">
+    <div class="course-nav-brand">
+      <a href="/">&larr; <span class="lang-en">Research Home</span><span class="lang-zh" style="display:none">研究站首頁</span></a>
+      <span class="course-nav-sep">/</span>
+      <a href="/learn/index.html" class="course-nav-home"><span class="lang-en">Course Home</span><span class="lang-zh" style="display:none">課程首頁</span></a>
+      <span class="course-nav-sep">/</span>
+      <a href="/learn/review.html"><span class="lang-en">Review Deck</span><span class="lang-zh" style="display:none">複習牌組</span></a>
+    </div>
+    <div class="course-nav-pager">
+      <a href="01-framework.html">&larr; <span class="lang-en">Prev</span><span class="lang-zh" style="display:none">上一課</span></a>
+      <a href="03-demand.html"><span class="lang-en">Next</span><span class="lang-zh" style="display:none">下一課</span> &rarr;</a>
+    </div>
+    <div class="course-nav-lang">
+      <button class="lang-btn" data-lang="zh" onclick="setLang('zh')">中文</button>
+      <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+</nav>
+
+<div class="lc-wrap">
+
+  <header class="module-header">
+    <span class="module-eyebrow lang-en">MODULE 02 · Start Here</span>
+    <span class="module-eyebrow lang-zh" style="display:none">第 02 課・起點</span>
+    <h1 class="lang-en">The Language of Numbers</h1>
+    <h1 class="lang-zh" style="display:none">數字的語言</h1>
+    <div class="fw-ribbon"><span class="fw-ribbon-label"><span class="lang-en">Where you are in the framework</span><span class="lang-zh" style="display:none">你在框架的哪一層</span></span><span class="fw-ribbon-step active"><span class="lang-en">Start Here</span><span class="lang-zh" style="display:none">起點</span></span><span class="fw-ribbon-step"><span class="lang-en">Where Returns Come From</span><span class="lang-zh" style="display:none">報酬從哪裡來</span></span><span class="fw-ribbon-step"><span class="lang-en">What a Good Business Looks Like</span><span class="lang-zh" style="display:none">好生意長什麼樣</span></span><span class="fw-ribbon-step"><span class="lang-en">How the Market Prices It</span><span class="lang-zh" style="display:none">市場怎麼定價</span></span><span class="fw-ribbon-step"><span class="lang-en">How to Judge</span><span class="lang-zh" style="display:none">怎麼下判斷</span></span><span class="fw-ribbon-step"><span class="lang-en">From One Stock to a Portfolio</span><span class="lang-zh" style="display:none">從一檔股票到一個組合</span></span><span class="fw-ribbon-step"><span class="lang-en">Close</span><span class="lang-zh" style="display:none">收尾</span></span><span class="fw-ribbon-q"><span class="lang-en">What is the framework, and what language does it speak?</span><span class="lang-zh" style="display:none">這套框架是什麼？它用什麼語言說話？</span></span></div>
+  </header>
+
+  <!-- BODY:START -->
+  <div class="module-goals">
+    <div class="module-goals-title"><span class="lang-en">What You&#39;ll Learn</span><span class="lang-zh" style="display:none">這一課學什麼</span></div>
+    <ul>
+      <li><span class="lang-en">Trace a single sale through the income statement, balance sheet, and cash flow statement, explain why the three do not always move together, and measure the gap as a cash conversion cycle.</span><span class="lang-zh" style="display:none">追蹤一筆銷售如何流過損益表、資產負債表、現金流量表，解釋為什麼三張表有時候不會同步變動，並用現金轉換循環把這個落差量出來。</span></li>
+      <li><span class="lang-en">Tell gross profit, operating profit, net income, and free cash flow apart, and name one common way each of them gets dressed up.</span><span class="lang-zh" style="display:none">分辨毛利、營業利益、淨利、自由現金流的差別，並各自說出一種常見的美化手法。</span></li>
+      <li><span class="lang-en">Calculate ROIC as after-tax operating margin times invested capital turnover, and calculate incremental ROIC from two years of data.</span><span class="lang-zh" style="display:none">用稅後營業利益率乘以投入資本周轉率算出 ROIC，並用兩年資料算出增量 ROIC。</span></li>
+      <li><span class="lang-en">Spot the gap between per-share growth and total earnings growth, and explain how buybacks can create one without the other.</span><span class="lang-zh" style="display:none">看出每股數字成長和總額成長之間的落差，並解釋回購如何只製造前者。</span></li>
+      <li><span class="lang-en">Recognize when a stock price series needs adjusting for splits and dividends before any return can be trusted, and estimate a rough number instead of a false-precision one.</span><span class="lang-zh" style="display:none">判斷股價序列什麼時候需要還原分割與配息才能信任報酬率，並用「大概」的量級估算取代假精確的數字。</span></li>
+    </ul>
+  </div>
+
+  <section>
+    <h2 class="lang-en">A Company That Almost Never Missed</h2>
+    <h2 class="lang-zh" style="display:none">一家幾乎從來不會「錯過」的公司</h2>
+    <p class="lang-en">For a long stretch through the 1990s and into the early 2000s, General Electric reported quarterly earnings per share that matched or beat Wall Street&#39;s estimate almost every single time — often by exactly one cent. GE at that point spanned jet engines, medical imaging, television broadcasting, industrial equipment, and a large finance arm. Those businesses do not move in lockstep: engine orders, ad revenue, and loan losses do not all land on the same schedule quarter after quarter. A company that large hitting the same target that consistently, for that long, is not a coincidence you would expect from the underlying operations alone.</p>
+    <p class="lang-zh" style="display:none">1990 年代到 2000 年代初，奇異公司（GE）連續多年，幾乎每一季公布的每股盈餘都精準命中或些微超過華爾街的預估值——而且經常剛好高出一美分。當時的 GE 橫跨飛機引擎、醫療影像、電視媒體、工業設備，還有一個規模龐大的金融子公司。這些事業的節奏完全不同步：引擎訂單、廣告營收、放款壞帳不會剛好每季都用同樣的幅度移動。一家這麼龐大、業務這麼分散的公司，連續多年都精準命中同一個目標，這不太可能只是業務本身自然對齊的結果。</p>
+    <p class="lang-en">This is a teaching case about how numbers get reported, not a verdict on GE as a business today. The mechanism worth learning from it: a large finance subsidiary carries reserves — money set aside for expected future losses — and management has real discretion over how much to set aside in any given quarter. Release a little more reserve than the loan book actually needs, and net income goes up this quarter with no change to the underlying business. Set aside a little more than needed, and you have a cushion to release later, in a quarter that needs help. None of this shows up as an obvious lie on the income statement. It shows up, if at all, as a mismatch between how smooth the reported profit line looks and how much the cash the business actually generates bounces around underneath it. That mismatch is exactly what this lesson teaches you to go looking for.</p>
+    <p class="lang-zh" style="display:none">這是一個關於數字如何被呈現的教學案例，不是對 GE 這家公司現在的評價。值得學的機制是：一家大型金融子公司會提列準備金——為了未來可能發生的壞帳先預留一筆錢——而經營層對每一季要提列多少，其實有相當大的裁量空間。如果某一季實際需要的準備金比提列的少，多提列的部分被釋放回來，淨利當季就會上升，但底層業務其實什麼都沒變。反過來，某一季多提列一點，就等於先存了一筆緩衝，留到之後需要「撐一下」的季度再釋放出來。這整個過程不會在損益表上留下明顯的「說謊」痕跡。如果真的留下痕跡，通常是「帳面利潤看起來異常平滑」與「底層現金流量實際上起伏不小」之間的落差。這個落差，正是這一課要教你去找的東西。</p>
+    <p class="lang-en">The story has a documented ending. In August 2009 the US Securities and Exchange Commission charged GE with accounting violations covering 2002 and 2003 — including changes to how commercial paper hedges and locomotive sales were accounted for — and GE paid a $50 million penalty to settle without admitting or denying the findings. The penalty is small relative to a company that size; the useful part is the confirmation that a very long run of quarters landing exactly on target is a pattern worth a second look, and that the second look is available to anyone reading the filings, years before a regulator gets there.</p>
+    <p class="lang-zh" style="display:none">這個故事有一個留下紀錄的結局。2009 年 8 月，美國證券交易委員會（SEC）就 2002 與 2003 年度的會計處理對 GE 提出指控，內容包括商業本票避險與火車頭銷售的認列方式變更；GE 支付 5,000 萬美元罰款達成和解，並未承認或否認相關指控。以那種規模的公司來說，這筆罰款其實不大；真正有用的部分是它印證了一件事：一長串季度全部剛好命中目標，是值得回頭多看一眼的型態，而且這一眼任何讀財報的人都看得到，比監理機關動手早了好幾年。</p>
+    <div class="takeaway">
+      <div class="takeaway-title"><span class="lang-en">Takeaway</span><span class="lang-zh" style="display:none">收斂</span></div>
+      <p class="lang-en">One number on one statement is an opinion shaped by real choices. Reading the three statements together, and reading cash against profit, is how you find out how much of that opinion is backed by something real.</p>
+      <p class="lang-zh" style="display:none">單一報表上的單一數字，是一連串真實選擇形塑出來的意見。把三張表放在一起讀，把現金拿來對照利潤，才能看出這個意見有多少是真的有東西撐著。</p>
+    </div>
+  </section>
+
+  <div class="predict-block" data-predict-id="02-language-of-numbers-p1" data-predict='{"q":{"en":"A company&#39;s total net income this year is exactly flat versus last year. Over the same twelve months it bought back and retired 15% of its shares. Its reported EPS will grow by:","zh":"一家公司今年的總淨利跟去年完全持平。同樣這十二個月裡，它買回並註銷了 15% 的股份。它公布的 EPS 會成長多少？"},"opts":[{"en":"0% — nothing inside the business improved","zh":"0%——公司內部什麼都沒變好"},{"en":"About 15%","zh":"約 15%"},{"en":"About 18%","zh":"約 18%"},{"en":"It depends on what price the buyback was done at","zh":"要看回購是在什麼價位執行的"}],"reveal":{"en":"About 18% — and the arithmetic is the whole point. EPS is profit divided by shares. If the share count falls to 85% of what it was, EPS gets divided by 0.85, which is the same as multiplying it by 1 ÷ 0.85 = 1.176. Most people answer 15%, mirroring the buyback percentage back, because a 15% cut in the denominator intuitively feels like a 15% change in the result; it is not, and the gap widens fast as buybacks get larger. The fourth option is a good instinct about value but the wrong answer to this question: the buyback price determines whether shareholders got richer, while the EPS arithmetic happens regardless of price. And note what an 18% EPS gain is fully compatible with here — a business that produced not one extra dollar of profit or cash all year.","zh":"約 18%——而這個算術本身就是重點。EPS ＝ 利潤 ÷ 股數。如果股數降到原來的 85%，EPS 就是被 0.85 除，等同於乘上 1 ÷ 0.85 ＝ 1.176。多數人會回答 15%，把回購比例原樣搬過來，因為分母少 15%，直覺上就像結果變動 15%；但它不是，而且回購比例越大，這個落差擴大得越快。第四個選項在「價值」這件事上直覺是對的，但它不是這一題的答案：回購價位決定的是股東有沒有真的變有錢，而 EPS 的算術不管價位如何都會照樣發生。另外請注意這個 18% 的 EPS 成長，跟一件事完全相容——這家公司整年沒有多賺一塊錢利潤、也沒有多產生一塊錢現金。"}}'></div>
+
+  <section>
+    <h2 class="lang-en">One Sale, Three Statements</h2>
+    <h2 class="lang-zh" style="display:none">一筆銷售，流過三張表</h2>
+    <p class="lang-en">The mechanism to internalize first: a company&#39;s three financial statements are not three separate report cards. They are three different camera angles on the same set of events, and a single sale moves through all three at once, usually at different speeds.</p>
+    <p class="lang-zh" style="display:none">要先內化的機制是：一家公司的三張財務報表不是三張各自獨立的成績單。它們是同一組事件的三個不同攝影機角度，一筆銷售會同時流過這三張表，只是速度通常不一樣。</p>
+    <p class="lang-en">Say a manufacturer ships $1,000 of equipment to a customer on 60-day payment terms. On the <span class="key-term" tabindex="0">income statement<span class="key-term-tip">The statement that records revenue when it is earned and costs when they are incurred, regardless of when cash actually changes hands — this is called accrual accounting.</span></span>, $1,000 of revenue is recognized immediately, along with the cost of the goods sold — say $600 — leaving $400 of gross profit. On the balance sheet, that $1,000 does not show up as cash; it shows up as accounts receivable, an asset representing money the company is owed but has not collected. At the same time, the $600 of inventory that walked out the door disappears from the inventory line. On the cash flow statement, nothing has happened yet — no cash moved. Sixty days later, when the customer pays, the receivable turns into cash: the balance sheet shifts $1,000 from receivables to cash, and the cash flow statement finally records that $1,000 as cash collected from operations.</p>
+    <p class="lang-zh" style="display:none">假設一家製造商出貨 1,000 美元的設備給客戶，付款條件是 60 天後付款。在<span class="key-term" tabindex="0">損益表<span class="key-term-tip">依「應計基礎」記錄的報表：收入在賺得的那一刻就認列，成本在發生的那一刻就認列，不管現金什麼時候真的進出。</span></span>上，1,000 美元的營收立刻被認列，連同銷貨成本（假設 600 美元）一起，留下 400 美元的毛利。在資產負債表上，這 1,000 美元不會變成現金，而是變成應收帳款——一項代表「公司該收但還沒收到」的資產；同時，離開倉庫的那 600 美元存貨，從存貨科目裡消失。在現金流量表上，此刻什麼都還沒發生——沒有任何現金移動。60 天後，客戶付款了，應收帳款才轉成現金：資產負債表上把 1,000 美元從應收帳款搬到現金，現金流量表這時候才終於把這 1,000 美元記成「營業活動收到的現金」。</p>
+    <p class="lang-en">This is why the same $1,000 sale can make a company look profitable on the income statement quarter after quarter while its cash keeps draining — if receivables keep growing faster than they get collected, or if the timing gap between shipping and collecting keeps stretching out. It is also why a company can report a net loss on the income statement (because of a large non-cash charge, more on that below) while its cash balance actually grows. Neither situation is automatically bad or good; the point is that no single statement tells you the whole story on its own, and the gap between them is itself information.</p>
+    <p class="lang-zh" style="display:none">這就是為什麼同一筆 1,000 美元的銷售，可以讓公司在損益表上連續好幾季看起來很賺錢，現金卻不斷流失——如果應收帳款成長的速度一直快過收現的速度，或者出貨到收現之間的時間差一直在拉長。這也是為什麼一家公司可以在損益表上出現淨損（因為某項大額的非現金費用，下面會再談），現金餘額卻反而在成長。這兩種情況都不代表自動是壞事或好事，重點是：沒有任何一張報表能單獨講完整個故事，而三張表之間的落差本身就是資訊。</p>
+    <p class="lang-en">How to see it from public filings: look for the reconciliation at the top of the cash flow statement, which starts from net income and adds back non-cash items, then adjusts for the change in each working-capital line — receivables, inventory, payables. A company where "increase in accounts receivable" is a large and growing subtraction, quarter after quarter, faster than revenue itself is growing, is a company whose reported profit is running ahead of its collected cash. That single line is one of the highest-signal, most underused numbers on the entire filing.</p>
+    <p class="lang-zh" style="display:none">如何從公開財報看出來：找現金流量表最上方那段「調節」——從淨利出發，加回非現金項目，再逐項調整營運資金科目（應收帳款、存貨、應付帳款）的變動。如果「應收帳款增加」這一行是一個很大、而且逐季擴大的扣減項，成長速度比營收本身還快，代表這家公司帳面上認列的利潤，跑得比實際收到的現金還快。這一行單獨看，是整份財報裡訊號密度最高、卻最少被讀者留意的數字之一。</p>
+  </section>
+
+  <section>
+    <h2 class="lang-en">Working Capital: Who Is Financing Whom</h2>
+    <h2 class="lang-zh" style="display:none">營運資金：誰在幫誰墊錢</h2>
+    <p class="lang-en">The gap between shipping and collecting has a name and a size, and both are measurable from any annual report. <span class="key-term" tabindex="0">Working capital<span class="key-term-tip">The cash tied up in the operating cycle: inventory plus receivables, less payables. Growing it consumes cash; shrinking it releases cash.</span></span> is the cash trapped in the operating cycle — inventory sitting in a warehouse and invoices customers have not paid yet — offset by the invoices the company itself has not paid yet. Three numbers describe it: days of inventory (inventory &divide; cost of goods sold &times; 365), days sales outstanding (receivables &divide; revenue &times; 365), and days payable outstanding (payables &divide; cost of goods sold &times; 365). Add the first two, subtract the third, and you get the <span class="key-term" tabindex="0">cash conversion cycle<span class="key-term-tip">Days of inventory plus days sales outstanding minus days payable outstanding — how many days of cash the business must fund between paying suppliers and getting paid by customers.</span></span>: the number of days the business must fund out of its own pocket between paying its suppliers and being paid by its customers.</p>
+    <p class="lang-zh" style="display:none">出貨到收現之間的那段落差，有名字，也有大小，而且從任何一份年報裡都量得出來。<span class="key-term" tabindex="0">營運資金<span class="key-term-tip">卡在營運循環裡的現金：存貨加應收帳款，扣掉應付帳款。它變大會吃掉現金，變小會釋放現金。</span></span>就是卡在營運循環裡的現金——躺在倉庫裡的存貨、客戶還沒付的帳單——再扣掉公司自己還沒付出去的帳單。描述它的有三個數字：存貨天數（存貨 ÷ 銷貨成本 × 365）、應收帳款天數（應收帳款 ÷ 營收 × 365）、應付帳款天數（應付帳款 ÷ 銷貨成本 × 365）。前兩者相加、減掉第三個，就得到<span class="key-term" tabindex="0">現金轉換循環<span class="key-term-tip">存貨天數加應收帳款天數減應付帳款天數——公司從付錢給供應商、到向客戶收到錢之間，必須自己掏腰包墊多少天。</span></span>：這門生意從付錢給供應商，到客戶付錢給它，中間必須自己墊多少天的現金。</p>
+    <p class="lang-en">The number can go negative, and when it does the economics change completely. Dell in the late 1990s built each computer only after the customer ordered and paid, and paid its component suppliers on ordinary terms afterwards — a cash conversion cycle of roughly negative thirty days. A business like that gets handed cash before it spends any, which means growth funds itself: every additional dollar of sales arrives as cash up front instead of demanding more inventory and receivables be financed first. Costco and Amazon&#39;s retail operation run on the same principle from the other end — they turn inventory fast enough that the goods are sold and paid for before the supplier invoice comes due, so the supplier is effectively financing the shelves.</p>
+    <p class="lang-zh" style="display:none">這個數字可以是負的，而一旦變成負的，整門生意的經濟結構就完全不同了。1990 年代後期的戴爾（Dell），是客戶先下單、先付錢，才開始組裝那台電腦，之後才依一般帳期付錢給零組件供應商——現金轉換循環大約是負三十天。這樣的生意是先拿到錢、才開始花錢，等於成長會自己養活自己：每多做一塊錢生意，錢是先進來的，而不是要求你先去墊存貨與應收帳款。好市多（Costco）與亞馬遜的零售業務，則是從另一端做到同一件事——存貨周轉得夠快，貨賣掉、錢收進來的時候，供應商的帳款還沒到期，等於是供應商在幫它墊貨架上的商品。</p>
+    <p class="lang-en">The reverse is the quiet killer of growing companies. A business with a positive cycle of ninety days must fund three months of operations for every dollar of sales it adds, so growing revenue 40% in a year means finding 40% more of that funding, from cash flow or from a lender. Plenty of profitable companies have run out of money while growing quickly for exactly this reason: profit and cash were never the same thing, and the growth itself was the drain. This is why invested capital, defined in the next section, subtracts payables — a company that gets its suppliers to carry the inventory needs less of its own capital to run the identical business.</p>
+    <p class="lang-zh" style="display:none">反過來的情況，是成長型公司安靜的殺手。一門現金轉換循環是正九十天的生意，每多做一塊錢營收，就得先墊三個月的營運資金；營收一年成長 40%，就代表要多找 40% 的資金來墊，不是從現金流出，就是從銀行借。歷史上有大量「有獲利卻把錢用光」的公司，原因就是這個：利潤跟現金從來不是同一件事，而成長本身就是那個抽水機。這也是為什麼下一節定義投入資本時要扣掉應付帳款——一家能讓供應商幫忙扛存貨的公司，經營一模一樣的生意，需要的自有資本就是比較少。</p>
+    <p class="lang-en">The false signal to watch for: a cash conversion cycle that improves purely because days payable stretched out. Paying suppliers in 90 days instead of 45 releases a real slug of cash, once — and then the benefit stops, because the cycle only shortens again if you stretch further. It also transfers strain onto suppliers, who eventually reprice or demand deposits. The opposite false signal is a company whose days sales outstanding jumps 15 or 20 days in a single year while revenue growth stays flat: that usually means either the customer base got weaker or product was pushed into the channel near quarter-end to make a number, and revenue booked that way tends to come back as returns or as a soft following quarter. Read all three components separately, never just the headline cycle.</p>
+    <p class="lang-zh" style="display:none">要留意的假訊號是：現金轉換循環的改善，純粹來自應付帳款天數被拉長。把付款從 45 天拖到 90 天，確實會釋放出一筆實實在在的現金，但只有一次——之後好處就停了，因為循環要再縮短，就得再拖更久。它同時把壓力轉嫁給供應商，供應商最後會用漲價或要求預付款來反應。相反方向的假訊號是：某一年應收帳款天數突然跳增 15 到 20 天，營收成長率卻沒什麼變化——這通常代表客戶體質變差，或是季底把貨硬塞進通路來湊數字，而這樣認列的營收，往往會以退貨、或下一季特別疲弱的形式回頭找你。三個組成要分開讀，永遠不要只看那個合計出來的循環天數。</p>
+    <div class="takeaway">
+      <div class="takeaway-title"><span class="lang-en">Takeaway</span><span class="lang-zh" style="display:none">收斂</span></div>
+      <p class="lang-en">Working capital tells you who is financing the business: a negative cycle means customers and suppliers fund your growth, a long positive one means you fund theirs — and the second kind of company needs cash fastest exactly when it is doing best.</p>
+      <p class="lang-zh" style="display:none">營運資金告訴你這門生意是誰在出錢：循環為負，代表客戶與供應商在幫你的成長墊資；循環是很長的正數，代表你在幫他們墊——而後面這種公司，恰好在生意最好的時候最缺現金。</p>
+    </div>
+  </section>
+
+  <details class="think-first">
+    <summary><span class="lang-en">Think first: why does fast growth make a profitable company run out of cash?</span><span class="lang-zh" style="display:none">先想一下：為什麼快速成長會讓一家有獲利的公司把錢用光？</span></summary>
+    <div class="tf-body">
+      <p class="lang-en">Profit is recognized when a sale is made; cash arrives when the customer pays, and it leaves earlier than that to buy the inventory that made the sale possible. Every incremental dollar of revenue therefore demands an upfront investment in inventory and receivables that is only recovered months later. If the business is growing 40% a year, that investment grows 40% a year too, and it compounds ahead of the collections that fund it. Profit margin does not save you here — a 10% net margin on a sale that ties up 25% of its value in working capital for three months is still cash-negative while growth is accelerating. This is why the cash flow statement, not the income statement, is where a growth story either survives or gets exposed, and why the two levers that fix it are slowing growth or shortening the cycle, not raising prices.</p>
+      <p class="lang-zh" style="display:none">利潤是在銷售成立的那一刻認列的；現金卻是在客戶付款時才進來，而且為了促成這筆銷售所買的存貨，錢比那更早就出去了。因此每多做一塊錢營收，都要求你先投入一筆綁在存貨與應收帳款上的資金，幾個月後才收得回來。如果生意一年成長 40%，這筆投入也會一年成長 40%，而且它累積的速度跑在用來支應它的收現之前。這時候利潤率救不了你——一筆淨利率 10% 的生意，如果有 25% 的金額被綁在營運資金裡三個月，在成長加速的期間，現金依然是淨流出。這就是為什麼一個成長故事是活下來還是被拆穿，看的是現金流量表而不是損益表；也是為什麼真正能解決問題的兩個槓桿是「放慢成長」或「縮短循環」，而不是漲價。</p>
+    </div>
+  </details>
+
+  <section>
+    <h2 class="lang-en">Four Kinds of Profit, Four Ways to Dress Them Up</h2>
+    <h2 class="lang-zh" style="display:none">四種利潤，四種美化的方式</h2>
+    <p class="lang-en">A single income statement produces at least four different profit numbers, and they answer different questions. Gross profit (revenue minus cost of goods sold) tells you how much pricing power and production efficiency the core product has. Operating profit — often called EBIT, earnings before interest and tax — subtracts the cost of running the business around that product: sales, marketing, R&amp;D, administration. Net income subtracts interest, tax, and anything unusual that happened that year. Free cash flow is not on the income statement at all; it is cash generated by operations minus the capital spending needed to keep generating it.</p>
+    <p class="lang-zh" style="display:none">同一張損益表至少會生出四種不同的利潤數字，各自回答不同的問題。毛利（營收減銷貨成本）告訴你核心產品有多少定價能力與生產效率。營業利益（常被稱為 EBIT，稅前息前利益）在毛利之上，再扣掉圍繞這個產品運作整間公司的成本：業務、行銷、研發、行政。淨利再扣掉利息、稅，還有當年度發生的各種一次性項目。自由現金流則完全不在損益表上；它是「營業活動產生的現金」減去「維持這個現金產生能力所需要的資本支出」。</p>
+    <p class="lang-en">Each one gets massaged differently. Gross margin can be flattered by reclassifying costs that arguably belong in cost of goods sold into operating expense instead — the gross margin line looks better, but the business has not actually gotten more efficient at making the product. Operating profit and net income are the two most exposed to one-time items: a gain from selling a building, a tax settlement, a restructuring credit — all can be tucked into a normal-looking line to make a soft quarter look fine. Net income specifically is the target of &#8220;adjusted&#8221; or &#8220;non-GAAP&#8221; presentations that add back stock-based compensation, amortization of acquired intangibles, and restructuring charges, on the argument that these are not real costs of running the business. Some of that argument is reasonable; some of it is a way to report a number well above what GAAP actually requires.</p>
+    <p class="lang-zh" style="display:none">每一種利潤被動手腳的方式都不一樣。毛利率可以靠把原本該算進銷貨成本的費用，重新分類成營業費用來美化——毛利率這一行看起來變好了，但公司做這個產品其實並沒有變得更有效率。營業利益與淨利是最容易被一次性項目影響的兩個層次：出售一棟大樓的利得、一筆稅務和解、一筆重組費用的迴轉，都可以塞進看起來正常的科目裡，讓一個表現平庸的季度看起來還過得去。淨利尤其是「調整後」或「非公認會計原則（non-GAAP）」呈現方式最愛動手的地方——把股份基礎薪酬、併購產生的無形資產攤銷、重組費用通通加回去，理由是這些不算「經營本業的真實成本」。這個說法有部分合理，但也有一部分，只是一種把數字報得比公認會計準則實際要求還要高的手法。</p>
+    <p class="lang-en">Free cash flow is harder to dress up in the same way because it is built from cash, not accounting choices — but it has its own blind spot: it can look artificially strong or weak purely from timing. A company that slows down capital spending for one year, or stretches out payments to suppliers, or draws down inventory it built up the year before, will show a free cash flow spike that has nothing to do with the underlying business getting better. This is exactly why the earlier example about General Electric matters: smoothing shows up as an income statement that looks calmer than the cash underneath it, and the fix is always the same — check whether the calm profit line is confirmed by the messier cash line, not whether the profit line looks nice on its own.</p>
+    <p class="lang-zh" style="display:none">自由現金流比較難用同樣的方式美化，因為它是從現金堆出來的，不是從會計選擇堆出來的——但它也有自己的盲點：純粹因為時間點的關係，可以看起來異常強或異常弱。一家公司如果某一年刻意放慢資本支出、拖延付款給供應商，或者把前一年囤積的存貨消化掉，都會讓自由現金流出現一次性的暴衝，跟底層業務有沒有變好完全無關。這正是前面 GE 案例重要的原因：帳面平滑，會表現成損益表看起來比底下的現金還要冷靜，而檢查的方法永遠一樣——去看這條看起來很平穩的利潤線，有沒有被那條比較顛簸的現金線印證，而不是只看利潤線本身漂不漂亮。</p>
+    <div class="table-scroll">
+      <table class="lc-table">
+        <thead>
+          <tr>
+            <th><span class="lang-en">Measure</span><span class="lang-zh" style="display:none">指標</span></th>
+            <th><span class="lang-en">Question it actually answers</span><span class="lang-zh" style="display:none">它真正回答的問題</span></th>
+            <th><span class="lang-en">Most common way it gets dressed up</span><span class="lang-zh" style="display:none">最常見的美化手法</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="lang-en">Gross profit</span><span class="lang-zh" style="display:none">毛利</span></td>
+            <td><span class="lang-en">Does the product itself command a price above what it costs to make?</span><span class="lang-zh" style="display:none">這個產品本身，賣價撐不撐得起它的製造成本？</span></td>
+            <td><span class="lang-en">Moving borderline production costs down into operating expense</span><span class="lang-zh" style="display:none">把界線模糊的製造相關成本，往下挪到營業費用</span></td>
+          </tr>
+          <tr>
+            <td><span class="lang-en">Operating profit (EBIT)</span><span class="lang-zh" style="display:none">營業利益（EBIT）</span></td>
+            <td><span class="lang-en">Does the whole operation, not just the product, make money?</span><span class="lang-zh" style="display:none">扣掉整間公司的運作成本之後，本業還賺不賺錢？</span></td>
+            <td><span class="lang-en">One-time gains and restructuring credits tucked into ordinary lines</span><span class="lang-zh" style="display:none">把一次性利得、重組費用迴轉，塞進看起來正常的科目</span></td>
+          </tr>
+          <tr>
+            <td><span class="lang-en">Net income</span><span class="lang-zh" style="display:none">淨利</span></td>
+            <td><span class="lang-en">What is left for shareholders after lenders and the tax authority?</span><span class="lang-zh" style="display:none">付完債權人與稅之後，還剩多少是股東的？</span></td>
+            <td><span class="lang-en">&#8220;Adjusted&#8221; presentations that add back SBC and acquired-intangible amortization</span><span class="lang-zh" style="display:none">「調整後」呈現法，把股份薪酬、併購無形資產攤銷加回去</span></td>
+          </tr>
+          <tr>
+            <td><span class="lang-en">Free cash flow</span><span class="lang-zh" style="display:none">自由現金流</span></td>
+            <td><span class="lang-en">How much cash is genuinely available after keeping the business running?</span><span class="lang-zh" style="display:none">維持生意運轉之後，真正可以自由支配的現金有多少？</span></td>
+            <td><span class="lang-en">Timing: deferring capex a year, stretching payables, drawing down inventory</span><span class="lang-zh" style="display:none">時間點：延後一年資本支出、拉長付款、消化庫存</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="lang-en">Read the table as a sequence rather than a menu. Each row subtracts something the row above ignored, so a company can look excellent at one level and unremarkable two rows down — a software business with 80% gross margin and negative free cash flow is not a contradiction, it is a description of where its money goes. The useful habit is to name, out loud, which of these four numbers a headline is quoting before reacting to it.</p>
+    <p class="lang-zh" style="display:none">這張表要當成一個順序讀，不是一份選單。每一列都扣掉了上一列忽略的東西，所以一家公司可以在某一層看起來很出色，往下兩層卻普通得很——一家毛利率 80%、自由現金流卻是負的軟體公司並不矛盾，那只是在描述它的錢花到哪裡去了。真正有用的習慣是：在對任何頭條數字做出反應之前，先把它引用的是這四個數字裡的哪一個，明確講出來。</p>
+    <h3 class="lang-en">The Divergence Test: When Growth and Profit Stop Agreeing</h3>
+    <h3 class="lang-zh" style="display:none">背離測試：成長與利潤不再同步的訊號</h3>
+    <p class="lang-en">One fast way to screen for margin trouble without building a full model: compare revenue growth year over year with operating profit growth year over year. If revenue grew 15% and operating profit grew only 5%, the gap — 10 percentage points — says costs are eating into the business faster than sales are expanding it. As a rough guide: a gap under 0% (operating profit growing faster than revenue) usually signals margin expansion; 0&#8211;3 points is a normal amount of noise; above 3 points is worth a closer look; above roughly 7 points is a real margin compression warning that deserves an explanation before you accept any story about "temporary" cost pressure.</p>
+    <p class="lang-zh" style="display:none">要在不用建完整模型的情況下快速篩出利潤率警訊，有一個很快的方法：拿營收年增率跟營業利益年增率相比。如果營收成長 15%，營業利益只成長 5%，這個 10 個百分點的落差，說明成本吃掉獲利的速度快過營收擴張的速度。粗略的參考值：落差小於 0（營業利益成長比營收還快）通常代表營業利益率正在擴張；0 到 3 個百分點屬於正常雜訊範圍；超過 3 個百分點值得多看一眼；超過大約 7 個百分點，就是真正的營業利益率壓縮警訊，任何「這只是暫時性成本壓力」的說法，都要先拿出解釋才能接受。</p>
+    <p class="lang-en">Where this breaks down: a company deliberately investing ahead of revenue — building out a new factory, hiring a sales team before the pipeline matures — will show the same divergence pattern for reasons that have nothing to do with losing pricing power. The number does not tell you which story is true; it tells you where to look. Read it alongside the gross margin line specifically: if gross margin is holding steady while operating margin falls, the pressure is coming from spending decisions, which can be a choice; if gross margin itself is falling, the pressure is coming from the product or from competition, which is harder to walk back.</p>
+    <p class="lang-zh" style="display:none">這個方法失效的地方：一家刻意超前營收投資的公司——蓋新廠、業務團隊先養起來再等業績兌現——也會出現同樣的背離型態，但原因跟失去定價權完全無關。這個數字不會告訴你哪個故事才是真的；它只會告訴你該往哪裡看。要搭配毛利率一起讀：如果毛利率守住、營益率卻在下滑，壓力來自支出決策，這是一種選擇，可以收回來；如果連毛利率本身都在下滑，壓力來自產品或競爭本身，通常比較難逆轉。</p>
+    <div class="pitfall">
+      <div class="pitfall-icon">&#9888;</div>
+      <div class="pitfall-body">
+        <p class="lang-en"><strong>Pitfall: treating EBITDA as cash.</strong> EBITDA (earnings before interest, tax, depreciation, and amortization) is an approximation of operating profit before non-cash accounting charges — it is not a cash flow measure at all. It ignores the capital spending needed to actually keep the equipment running and ignores the cash tied up or released by changes in working capital. A business with high EBITDA and heavy, unavoidable capital spending — an airline, a telecom network operator, a chip fabricator — can have thin or negative free cash flow even while EBITDA looks robust.</p>
+        <p class="lang-zh" style="display:none"><strong>陷阱：把 EBITDA 當成現金。</strong>EBITDA（稅前息前折舊攤銷前利益）只是「扣掉非現金會計費用之前的營業利益」的近似值，它根本不是一個現金流量指標。它完全沒有考慮維持設備運轉所需要的資本支出，也沒有考慮營運資金變化占用或釋放的現金。一家 EBITDA 很高、但資本支出又重又躲不掉的公司——航空公司、電信網路營運商、晶圓代工廠——可以在 EBITDA 看起來很健壯的同時，自由現金流卻很薄甚至是負的。</p>
+      </div>
+    </div>
+    <div class="pitfall">
+      <div class="pitfall-icon">&#9888;</div>
+      <div class="pitfall-body">
+        <p class="lang-en"><strong>Pitfall: forgetting stock-based compensation.</strong> Many companies add stock-based compensation (SBC) back to arrive at &#8220;adjusted&#8221; earnings, on the logic that it is a non-cash expense. It is non-cash, but it is not free — it dilutes existing shareholders by issuing new shares, which is a real economic cost that simply shows up as a slowly rising share count instead of a cash outflow. A company whose adjusted earnings look healthy but whose SBC runs at 8&#8211;10% of revenue or more is quietly transferring value from existing owners to employees every year, whether or not that shows up in net income.</p>
+        <p class="lang-zh" style="display:none"><strong>陷阱：忘了股份基礎薪酬（SBC）。</strong>許多公司把股份基礎薪酬加回去算「調整後」盈餘，理由是它不是現金費用。它確實不是現金，但它不是免費的——它靠發行新股稀釋既有股東，這是一項真實的經濟成本，只是不會以現金流出的形式出現，而是以股數緩慢上升的形式出現。一家調整後盈餘看起來很健康、但 SBC 占營收 8% 到 10% 以上的公司，其實每年都在悄悄把價值從既有股東手上，轉移給員工，不管淨利表上有沒有反映出來。</p>
+      </div>
+    </div>
+  </section>
+
+  <details class="think-first">
+    <summary><span class="lang-en">Think first: why can net income grow while free cash flow falls?</span><span class="lang-zh" style="display:none">先想一下：為什麼淨利可以成長，自由現金流卻反而下滑？</span></summary>
+    <div class="tf-body">
+      <p class="lang-en">A growing company needs more working capital to support that growth — more inventory to stock, more receivables outstanding as sales volume rises — and often needs more capital spending to add capacity ahead of the revenue actually landing. Both of those are uses of cash that sit below net income on the cash flow statement. If net income grows 15% but capital spending grows 40% and receivables grow with it, free cash flow can fall even as the income statement looks better every quarter. This is not automatically a red flag — it can be exactly what a business investing in a real growth opportunity looks like. The question worth asking next is whether the incremental capital being spent is earning a high return, which is the subject of the next section.</p>
+      <p class="lang-zh" style="display:none">一家成長中的公司，要支撐這個成長需要更多營運資金——存貨要囤更多，隨銷量上升應收帳款餘額也跟著變大——通常還需要更多資本支出，先把產能建起來等營收落地。這兩者在現金流量表上都排在淨利之後、都是現金的用途。如果淨利成長 15%，但資本支出成長 40%、應收帳款也跟著長大，自由現金流可以一路下滑，即使損益表每一季看起來都在變好。這不自動是紅燈——它也可能正是一家公司投資在一個真實成長機會裡該有的樣子。接下來值得問的問題，是這筆新增資本能不能賺到高報酬，這正是下一節要談的。</p>
+    </div>
+  </details>
+
+  <section>
+    <h2 class="lang-en">ROIC: What a Dollar of Capital Earns</h2>
+    <h2 class="lang-zh" style="display:none">ROIC：一塊錢資本能賺多少</h2>
+    <p class="lang-en">Every business needs capital tied up to operate — factories, inventory, money owed by customers. <span class="key-term" tabindex="0">Return on invested capital (ROIC)<span class="key-term-tip">After-tax operating profit divided by invested capital — how much profit the business generates per dollar tied up in it, before financing decisions.</span></span> asks the single most important question this whole framework depends on: how much profit does the business generate per dollar tied up in it? Get the answer high and durable, and the business is worth compounding money into. Get it low, or worse, below the cost of that capital, and every dollar of growth is quietly destroying value even while revenue and even net income keep climbing.</p>
+    <p class="lang-zh" style="display:none">每一門生意都需要綁住一些資本才能運轉——廠房、存貨、客戶還沒付的錢。<span class="key-term" tabindex="0">投入資本報酬率（ROIC）<span class="key-term-tip">稅後營業利益除以投入資本——公司每綁住一塊錢資本，能創造出多少利潤，還沒算進融資結構的影響。</span></span>問的是這整套框架最核心的問題：這門生意每綁住一塊錢，能創造出多少利潤？答案又高又持久，這門生意就值得把錢一直投進去複利。答案很低，甚至低於資金成本，那即使營收、甚至淨利都在往上走，每一塊錢的成長其實都在悄悄摧毀價值。</p>
+    <p class="lang-en"><span class="key-term" tabindex="0">Invested capital<span class="key-term-tip">Everything tied up to generate operating profit: net property, plant &amp; equipment, plus inventory, plus receivables, plus other operating assets, minus non-interest-bearing operating liabilities such as accounts payable.</span></span> is defined as: net property, plant &amp; equipment, plus inventory, plus receivables, plus other operating assets, minus non-interest-bearing operating liabilities (mainly accounts payable and accrued expenses — money the company owes but is not paying interest on). That last subtraction matters: a company that gets its suppliers to finance its inventory — pay them 60 days after selling the goods those suppliers shipped — needs less of its own capital to run the same size business, and that shows up directly as a lower invested capital base and a higher ROIC, with nothing else changing.</p>
+    <p class="lang-zh" style="display:none"><span class="key-term" tabindex="0">投入資本<span class="key-term-tip">為了創造營業利益而綁住的所有資源：淨廠房設備，加上存貨，加上應收帳款，加上其他營運資產，扣掉不計息的營運負債，主要是應付帳款與應計費用——公司欠著但不用付利息的錢。</span></span>的定義是：淨廠房設備，加上存貨，加上應收帳款，加上其他營運資產，扣掉不計息的營運負債（主要是應付帳款與應計費用——公司欠著、但不用付利息的錢）。最後這個扣減項很重要：一家能讓供應商幫忙墊資的公司——先把貨賣掉，60 天後才付供應商錢——經營同樣規模的生意需要的自有資本就更少，這會直接反映成更低的投入資本、更高的 ROIC，其他什麼都沒變。</p>
+    <p class="lang-en">The formula worth memorizing splits ROIC into two levers: <span class="we-formula">ROIC = after-tax operating margin &times; invested capital turnover</span>. After-tax operating margin (NOPAT &divide; revenue) captures pricing power and cost discipline. Invested capital turnover (revenue &divide; invested capital) captures how much revenue the business squeezes out of each dollar tied up. A software company can post a modest 25% margin but turn its tiny invested capital base over five or six times a year, landing on a high ROIC through turnover. An airline can post a decent-looking margin in a good year but turn its enormous fleet of capital over barely once, landing on a ROIC that struggles to clear its cost of capital even in the good years. Same formula, completely different route to the same number — which is exactly why looking at margin alone, without turnover, misses half the picture.</p>
+    <p class="lang-zh" style="display:none">值得記下來的公式，把 ROIC 拆成兩個槓桿：<span class="we-formula">ROIC ＝ 稅後營業利益率 × 投入資本周轉率</span>。稅後營業利益率（稅後營業利益 ÷ 營收）反映的是定價能力與成本紀律。投入資本周轉率（營收 ÷ 投入資本）反映的是公司從每一塊錢綁住的資本裡，能榨出多少營收。一家軟體公司可能只有 25% 左右的利益率，但一年把很小的投入資本基礎周轉五、六次，靠周轉率把 ROIC 拉高。一家航空公司在景氣好的年份，利益率看起來還可以，但龐大的機隊資本一年周轉不到一次，即使在景氣好的年份，ROIC 也很難清楚打敗資金成本。同一個公式，走完全不同的路徑到同一個數字——這正是為什麼只看利益率、不看周轉率，會漏看一半的畫面。</p>
+    <p class="lang-en">Where this tool does not apply cleanly: for banks, insurers, and other financial companies, "invested capital" and "revenue" as defined here do not mean the same thing they mean for an industrial or software business — a bank&#39;s core input is deposits and its core output is a spread, not a factory turning materials into product. Running this exact formula on a bank produces numbers that look meaningless or absurd. Financial companies need their own version built around return on tangible equity instead, which is a topic for a later lesson on matching the right yardstick to the right business.</p>
+    <p class="lang-zh" style="display:none">這個工具不適用的地方：對銀行、保險公司等金融股來說，這裡定義的「投入資本」與「營收」，跟一般工業或軟體公司的意義並不一樣——銀行的核心投入是存款，核心產出是利差，不是一間把原料變成產品的工廠。把這個公式原封不動套在銀行上，算出來的數字會顯得沒有意義甚至荒謬。金融股需要用自己的一套版本，圍繞在有形股東權益報酬率上，這是後面一課討論「用對的尺量對的生意」時會再細談的主題。</p>
+    <h3 class="lang-en">Incremental ROIC: The Number That Actually Predicts Growth</h3>
+    <h3 class="lang-zh" style="display:none">增量 ROIC：真正能預測成長的數字</h3>
+    <p class="lang-en">Average ROIC tells you how the whole existing capital base is doing. It does not tell you what happens to the next dollar the company reinvests, and the next dollar is what growth is made of. <span class="key-term" tabindex="0">Incremental ROIC<span class="key-term-tip">The change in after-tax operating profit divided by the change in invested capital between two periods — the return on the newest capital added, not the historical average.</span></span> is calculated from the change between two periods: the increase in after-tax operating profit divided by the increase in invested capital. A company can have an average ROIC that looks merely fine while its incremental ROIC is excellent — meaning the newest investments are earning far more than the base did, and the average is simply being dragged down by older, lower-return assets still on the books. Multiply incremental ROIC by the reinvestment rate and you get a rough ceiling on how fast the business can grow itself without needing outside financing — the exact mechanic a later lesson on growth durability builds on directly.</p>
+    <p class="lang-zh" style="display:none">平均 ROIC 告訴你整個既有資本基礎的表現如何。它不會告訴你公司再投入的下一塊錢會發生什麼事，而成長正是由這些「下一塊錢」堆出來的。<span class="key-term" tabindex="0">增量 ROIC<span class="key-term-tip">兩個期間之間，稅後營業利益的變動除以投入資本的變動——衡量的是最新增加的那筆資本的報酬率，不是歷史平均。</span></span>是用兩期之間的變動算出來的：稅後營業利益的增加額，除以投入資本的增加額。一家公司的平均 ROIC 可能看起來只是普通，但增量 ROIC 卻很出色——代表最新投入的資本賺到的報酬，遠比舊有資本基礎好，平均值只是被帳上還留著的舊資產、低報酬拖累而已。把增量 ROIC 乘上再投資率，就能粗略估出這門生意不靠外部融資、單靠自己造血能長多快——這正是後面討論成長持續期那一課會直接沿用的機制。</p>
+  </section>
+
+  <div class="worked-example">
+    <div class="worked-example-title"><span class="lang-en">Worked Example: Reading Two Years of Statements</span><span class="lang-zh" style="display:none">逐步範例：讀兩年的報表</span></div>
+    <p class="lang-en">The company below, Atlas Components, is an illustrative teaching case, not a real listed company — the numbers are built to be internally consistent and realistic in scale, not sourced from any actual filing.</p>
+    <p class="lang-zh" style="display:none">下方的「亞特拉斯零組件」是虛構的教學案例公司，不是真實上市公司——數字是為了內部邏輯自洽、量級貼近現實而設計的，不是取自任何真實財報。</p>
+    <ol class="worked-example-steps">
+      <li class="worked-example-step"><span class="we-step-num">1</span><div class="we-step-body">
+        <p class="lang-en">Year 1: revenue $500M, operating income (EBIT) $80M &rarr; operating margin 16%. Apply a 25% tax rate: NOPAT = $80M &times; 0.75 = <span class="we-formula">$60M</span>.</p>
+        <p class="lang-zh" style="display:none">第一年：營收 5 億美元，營業利益（EBIT）8,000 萬美元 &rarr; 營業利益率 16%。套用 25% 稅率：稅後營業利益（NOPAT）= 8,000 萬 × 0.75 ＝ <span class="we-formula">6,000 萬美元</span>。</p>
+      </div></li>
+      <li class="worked-example-step"><span class="we-step-num">2</span><div class="we-step-body">
+        <p class="lang-en">Year 1 invested capital: net PP&amp;E $250M + inventory $70M + receivables $60M + other operating assets $20M &minus; non-interest-bearing operating liabilities $80M = <span class="we-formula">$320M</span>.</p>
+        <p class="lang-zh" style="display:none">第一年投入資本：淨廠房設備 2.5 億 + 存貨 0.7 億 + 應收帳款 0.6 億 + 其他營運資產 0.2 億 &minus; 不計息營運負債 0.8 億 ＝ <span class="we-formula">3.2 億美元</span>。</p>
+      </div></li>
+      <li class="worked-example-step"><span class="we-step-num">3</span><div class="we-step-body">
+        <p class="lang-en">Year 1 ROIC = $60M &divide; $320M = <span class="we-formula">18.75%</span>. Check via the decomposition: margin 12% ($60M NOPAT &divide; $500M revenue) &times; turnover 1.5625&times; ($500M &divide; $320M) = 18.75% — matches.</p>
+        <p class="lang-zh" style="display:none">第一年 ROIC ＝ 6,000 萬 ÷ 3.2 億 ＝ <span class="we-formula">18.75%</span>。用分解式驗算：利益率 12%（6,000 萬 NOPAT ÷ 5 億營收）× 周轉率 1.5625 倍（5 億 ÷ 3.2 億）＝ 18.75%——吻合。</p>
+      </div></li>
+      <li class="worked-example-step"><span class="we-step-num">4</span><div class="we-step-body">
+        <p class="lang-en">Year 2: revenue $560M, EBIT $90M (16.07% margin — essentially flat vs. Year 1). NOPAT = $90M &times; 0.75 = $67.5M. Invested capital: net PP&amp;E $266M + inventory $78M + receivables $68M + other $22M &minus; liabilities $85M = <span class="we-formula">$349M</span>.</p>
+        <p class="lang-zh" style="display:none">第二年：營收 5.6 億，EBIT 9,000 萬（利益率 16.07%——跟第一年幾乎持平）。NOPAT ＝ 9,000 萬 × 0.75 ＝ 6,750 萬。投入資本：淨廠房設備 2.66 億 + 存貨 0.78 億 + 應收帳款 0.68 億 + 其他 0.22 億 &minus; 負債 0.85 億 ＝ <span class="we-formula">3.49 億美元</span>。</p>
+      </div></li>
+      <li class="worked-example-step"><span class="we-step-num">5</span><div class="we-step-body">
+        <p class="lang-en">Year 2 ROIC = $67.5M &divide; $349M = <span class="we-formula">19.34%</span> — up slightly from 18.75%. On its own, this says "steady, maybe slightly improving capital efficiency." Nothing alarming, nothing exciting.</p>
+        <p class="lang-zh" style="display:none">第二年 ROIC ＝ 6,750 萬 ÷ 3.49 億 ＝ <span class="we-formula">19.34%</span>——比 18.75% 略升。單看這個數字，只能說「穩定，資本效率或許略有改善」，沒什麼特別，也沒什麼好擔心。</p>
+      </div></li>
+      <li class="worked-example-step"><span class="we-step-num">6</span><div class="we-step-body">
+        <p class="lang-en">Incremental ROIC = &Delta;NOPAT &divide; &Delta;invested capital = ($67.5M &minus; $60M) &divide; ($349M &minus; $320M) = $7.5M &divide; $29M = <span class="we-formula">25.9%</span>. This is meaningfully higher than either year&#39;s average ROIC — the newest capital Atlas put to work is earning noticeably better returns than its existing base, which the average-ROIC numbers alone completely hid.</p>
+        <p class="lang-zh" style="display:none">增量 ROIC ＝ ΔNOPAT ÷ Δ投入資本 ＝（6,750 萬 &minus; 6,000 萬）÷（3.49 億 &minus; 3.2 億）＝ 750 萬 ÷ 2,900 萬 ＝ <span class="we-formula">25.9%</span>。這個數字明顯高於任一年的平均 ROIC——亞特拉斯最新投入的資本，賺到的報酬明顯優於既有資本基礎，而這件事光看平均 ROIC 完全看不出來。</p>
+      </div></li>
+      <li class="worked-example-step"><span class="we-step-num">7</span><div class="we-step-body">
+        <p class="lang-en">Now free cash flow. Year 1: net income $55M, D&amp;A $30M, capex $40M, working capital increase $10M &rarr; CFO = $55M + $30M &minus; $10M = $75M; FCF = $75M &minus; $40M = $35M; FCF &divide; NI = 35/55 = <span class="we-formula">0.64</span>. Year 2: net income $63M, D&amp;A $34M, capex $50M. The working capital increase is not a number you have to be handed — it is already sitting in Step 4: inventory +$8M, receivables +$8M, other operating assets +$2M, less operating liabilities +$5M = <span class="we-formula">+$13M</span> of cash absorbed. So CFO = $63M + $34M &minus; $13M = $84M; FCF = $84M &minus; $50M = $34M; FCF &divide; NI = 34/63 = <span class="we-formula">0.54</span>. (Cross-check the other half of invested capital the same way: capex $50M minus D&amp;A $34M = $16M, exactly the rise in net PP&amp;E from $250M to $266M. When those two ties hold, the statements are talking to each other properly.)</p>
+        <p class="lang-zh" style="display:none">接著算自由現金流。第一年：淨利 5,500 萬，折舊攤銷 3,000 萬，資本支出 4,000 萬，營運資金增加 1,000 萬 &rarr; CFO ＝ 5,500 萬 + 3,000 萬 &minus; 1,000 萬 ＝ 7,500 萬；FCF ＝ 7,500 萬 &minus; 4,000 萬 ＝ 3,500 萬；FCF ÷ NI ＝ 35/55 ＝ <span class="we-formula">0.64</span>。第二年：淨利 6,300 萬，折舊攤銷 3,400 萬，資本支出 5,000 萬。營運資金的增加不必別人告訴你——它已經藏在第 4 步裡：存貨 +800 萬、應收帳款 +800 萬、其他營運資產 +200 萬，扣掉營運負債 +500 萬，合計吸收現金 <span class="we-formula">1,300 萬</span>。所以 CFO ＝ 6,300 萬 + 3,400 萬 &minus; 1,300 萬 ＝ 8,400 萬；FCF ＝ 8,400 萬 &minus; 5,000 萬 ＝ 3,400 萬；FCF ÷ NI ＝ 34/63 ＝ <span class="we-formula">0.54</span>。（投入資本的另一半也可以同樣對帳：資本支出 5,000 萬減折舊攤銷 3,400 萬 ＝ 1,600 萬，正好等於淨廠房設備從 2.5 億增加到 2.66 億的金額。這兩條線都對得起來，代表三張表確實在互相說話。）</p>
+      </div></li>
+      <li class="worked-example-step"><span class="we-step-num">8</span><div class="we-step-body">
+        <p class="lang-en">Put it together and the naive reading and the correct reading diverge sharply. Naive reading: "FCF conversion fell from 0.64 to 0.54 — cash quality is deteriorating, be cautious." Correct reading: ROIC held steady to slightly up, capex stepped up to fund growth, and the capital funding that growth is earning an incremental return of roughly 26% — well above the company&#39;s existing base rate. The falling FCF/NI ratio here is not a warning sign; it is the visible cost of a business investing in unusually productive growth. The two readings would lead to opposite decisions, and only the incremental ROIC calculation tells you which one is right.</p>
+        <p class="lang-zh" style="display:none">把這些數字放在一起，直覺的讀法跟正確的讀法會分岔得很開。直覺讀法：「FCF 轉換率從 0.64 掉到 0.54——現金品質在惡化，要小心。」正確讀法：ROIC 持平略升，資本支出加碼是為了資助成長，而支撐這個成長的資本，賺到的增量報酬大約是 26%——明顯高於公司既有的基礎報酬率。這裡下滑的 FCF/NI 比率不是警訊；它是一門生意投資在異常高產出成長機會上，看得見的代價。這兩種讀法會導向完全相反的決定，只有算出增量 ROIC，才知道哪一種是對的。</p>
+      </div></li>
+      <li class="worked-example-step"><span class="we-step-num">9</span><div class="we-step-body">
+        <p class="lang-en">The boundary on that conclusion: incremental ROIC computed from two years is a noisy estimate, because a single year&#39;s capital spend often has not started earning yet. Atlas&#39;s $29M of new capital may be a factory that only produces for a full year from Year 3 onward — in which case the true incremental return is higher than 26%, and this calculation understates it. Run the same calculation on a company whose capex is lumpy — a chip fabricator, a shipping line — over a two-year window and it can come out negative for reasons that say nothing about the quality of the investment. The fix is to compute it over a rolling three-to-five-year window, and to treat any single-pair number as a question, not an answer.</p>
+        <p class="lang-zh" style="display:none">這個結論的邊界：用兩年資料算出來的增量 ROIC 是一個雜訊很大的估計值，因為當年投下去的資本，往往還沒開始產出。亞特拉斯新增的 2,900 萬資本，可能是一座要到第三年才全年滿載的新廠——若真是如此，真實的增量報酬率比 26% 更高，這個算法反而低估了。同樣的算法套在資本支出很塊狀的公司上——晶圓廠、航運公司——用兩年窗口算，甚至可能算出負值，而這跟那筆投資的品質完全無關。解法是改用三到五年的滾動窗口去算，並且把任何「單一組兩年」算出來的數字當成一個問題，不是一個答案。</p>
+      </div></li>
+    </ol>
+  </div>
+
+  <div class="takeaway">
+    <div class="takeaway-title"><span class="lang-en">Takeaway</span><span class="lang-zh" style="display:none">收斂</span></div>
+    <p class="lang-en">A high, durable ROIC is evidence of a good business — it is not, by itself, evidence of a good stock. Whether the price already pays for that quality is a separate question this lesson deliberately leaves open; it belongs to the valuation lessons much later in this framework.</p>
+    <p class="lang-zh" style="display:none">又高又持久的 ROIC 是好生意的證據——它本身並不是好股票的證據。價格有沒有已經把這份品質算進去，是另一個問題，這一課刻意先留著不答；它屬於這套框架後面估值那幾課的範圍。</p>
+  </div>
+
+  <section>
+    <h2 class="lang-en">Per Share Is Not the Same as In Total</h2>
+    <h2 class="lang-zh" style="display:none">每股數字，不等於總額</h2>
+    <p class="lang-en">Every number this lesson has covered so far — revenue, NOPAT, net income, free cash flow — is a total-company figure. The number printed in headlines, EPS, is that total divided by the share count. That denominator is not fixed. A company can grow EPS in exactly three ways: grow total profit, shrink the share count, or some mix of both — and only the first one requires the underlying business to actually get better.</p>
+    <p class="lang-zh" style="display:none">這一課到目前為止談的每一個數字——營收、NOPAT、淨利、自由現金流——都是公司整體的數字。財經頭條印出來的那個數字，EPS（每股盈餘），是把這個總額除以股數。這個分母不是固定的。一家公司要讓 EPS 成長，其實只有三條路：讓總利潤成長、讓股數變少、或者兩者混合——而只有第一條路，真的需要底層生意變好。</p>
+    <p class="lang-en"><span class="key-term" tabindex="0">Buybacks<span class="key-term-tip">A company using its cash to repurchase and retire its own shares — this reduces the share count, which mechanically raises EPS even if total profit does not grow at all.</span></span> reduce the share count directly. If a company earns a flat $500M in net income for two straight years but retires 15% of its shares along the way, EPS still rises by roughly 18% — a number that would look, on any headline scan, exactly like real earnings growth. This is not automatically deceptive: buying back stock at a price below what the business is actually worth is a genuinely good use of capital, and it is the mechanism that made per-share value compound for long-term holders of several well-known industrial and consumer companies over decades. It becomes a problem specifically when buybacks are used to paper over a stalled business, funded with debt, executed at prices well above intrinsic value, or timed to offset dilution from heavy stock-based compensation issued to employees rather than to actually shrink the float.</p>
+    <p class="lang-zh" style="display:none"><span class="key-term" tabindex="0">回購<span class="key-term-tip">公司用現金買回並註銷自己的股票——這會讓股數變少，即使總利潤完全沒有成長，EPS 也會因此機械式地上升。</span></span>直接讓股數變少。如果一家公司連續兩年淨利都持平在 5 億美元，但過程中買回並註銷了 15% 的股份，EPS 依然會上升大約 18%——任何一個掃頭條的人看到這個數字，都會以為這是真實的獲利成長。這不一定是騙人的：用低於企業真實價值的價格買回股票，是一種真正對股東有利的資本運用方式，也正是好幾家知名工業與消費品公司，讓長期股東的每股價值持續複利成長好幾十年的機制之一。它變成問題，具體是當回購被拿來掩蓋一門停滯的生意、靠舉債支撐、在遠高於內在價值的價格執行，或者只是拿來抵銷發給員工的大量股份薪酬造成的稀釋，而不是真的讓在外流通股數縮小的時候。</p>
+    <p class="lang-en">How to see it from public filings: compare EPS growth to total net income growth over the same period, and separately track the diluted weighted-average share count over three to five years. If EPS is consistently outrunning net income growth by several points a year, and the share count is falling steadily, the gap is buybacks, not operations — which is not a verdict, just a signal to go check what price those buybacks were executed at and whether debt funded them.</p>
+    <p class="lang-zh" style="display:none">如何從公開財報看出來：把同一段期間的 EPS 成長率跟總淨利成長率放在一起比，並另外追蹤三到五年的稀釋加權平均股數。如果 EPS 每年持續跑贏淨利成長好幾個百分點，同時股數穩定下滑，這個落差來自回購，不是來自本業——這不是一個定論，只是一個訊號，提醒你去查那些回購是在什麼價位執行的、有沒有靠舉債撐著。</p>
+  </section>
+
+  <details class="think-first">
+    <summary><span class="lang-en">Think first: why can &#8220;EPS growth of 15%&#8221; fail to make the company more valuable?</span><span class="lang-zh" style="display:none">先想一下：為什麼「EPS 成長 15%」不能保證公司變得更值錢？</span></summary>
+    <div class="tf-body">
+      <p class="lang-en">Company value is set by the total cash the business can generate for all its owners over time, discounted back to today — it does not care how many slices that total gets cut into. If EPS rises purely because the share count shrank while total profit and total cash generation stayed flat, the size of the pie has not changed; only the number of slices has. The per-share number the market watches went up, but nothing happened that a rational buyer of the entire company, rather than one share of it, would pay more for. Value only genuinely increases when the total pie itself grows, or when shares are retired at a price meaningfully below what the whole pie is worth — which shifts a larger share of the same-size pie to the remaining owners.</p>
+      <p class="lang-zh" style="display:none">公司的價值是由這門生意未來能為所有股東創造的總現金，折現到今天所決定的——它不在乎這塊總額被切成幾片。如果 EPS 上升純粹是因為股數變少，而總利潤與總現金創造能力完全沒變，那塊餅的大小其實沒有改變，只是切法變了。市場盯著的每股數字上升了，但一個理性買下整間公司（而不是一股）的買家，並沒有任何理由願意多付錢。價值真正增加，只有在整塊餅本身變大的時候，或者股份是在明顯低於整塊餅真實價值的價格買回並註銷的時候——後者是把同樣大小的餅，讓更少的剩餘股東去分。</p>
+    </div>
+  </details>
+
+  <div class="fill-blank">
+    <div class="fill-blank-title"><span class="lang-en">Now You: A Different Company, Same Two Formulas</span><span class="lang-zh" style="display:none">換你算：另一家公司，同樣兩個公式</span></div>
+    <p class="lang-en">A company reports operating income (EBIT) of $48M on revenue of $300M, taxed at 25%. Its invested capital is: net PP&amp;E $150M + inventory $40M + receivables $35M + other operating assets $10M &minus; non-interest-bearing operating liabilities $45M. Separately, net income is $30M, D&amp;A is $18M, capex is $22M, and working capital increased by $5M.</p>
+    <p class="lang-zh" style="display:none">一家公司營收 3 億美元，營業利益（EBIT）4,800 萬美元，稅率 25%。投入資本為：淨廠房設備 1.5 億 + 存貨 0.4 億 + 應收帳款 0.35 億 + 其他營運資產 0.1 億 &minus; 不計息營運負債 0.45 億。另外，淨利為 3,000 萬，折舊攤銷 1,800 萬，資本支出 2,200 萬，營運資金增加 500 萬。</p>
+    <ol>
+      <li><span class="lang-en">ROIC (NOPAT &divide; invested capital) = <input class="fb-input" data-answer="18.9" data-tol="0.5" placeholder="?"> %</span><span class="lang-zh" style="display:none">ROIC（NOPAT ÷ 投入資本）＝ <input class="fb-input" data-answer="18.9" data-tol="0.5" placeholder="?"> %</span></li>
+      <li><span class="lang-en">Free cash flow (NI + D&amp;A &minus; &Delta;WC &minus; capex) = $<input class="fb-input" data-answer="21" data-tol="1" placeholder="?">M</span><span class="lang-zh" style="display:none">自由現金流（NI + 折舊攤銷 &minus; 營運資金增加 &minus; 資本支出）＝ $<input class="fb-input" data-answer="21" data-tol="1" placeholder="?"> 百萬</span></li>
+      <li><span class="lang-en">FCF &divide; net income = <input class="fb-input" data-answer="70" data-tol="3" placeholder="?"> %</span><span class="lang-zh" style="display:none">FCF ÷ 淨利 ＝ <input class="fb-input" data-answer="70" data-tol="3" placeholder="?"> %</span></li>
+    </ol>
+    <button type="button" class="fb-check"><span class="lang-en">Check</span><span class="lang-zh" style="display:none">對答案</span></button>
+    <div class="fb-result"></div>
+  </div>
+
+  <div class="war-story">
+    <div class="war-story-head"><span class="war-story-icon">&#128220;</span><span class="war-story-intro"><span class="lang-en">War Story</span><span class="lang-zh" style="display:none">戰爭故事</span></span></div>
+    <div class="war-story-body">
+      <p class="lang-en">In August 2015, Valeant Pharmaceuticals — a pharmaceutical roll-up that grew mainly by acquiring other drugmakers and raising prices on their existing drugs — traded near $262 a share, one of the largest holdings in several well-known hedge funds. Valeant reported strong growth in "cash EPS," a company-defined adjusted measure that stripped out amortization of the intangible assets created by all those acquisitions, restructuring charges, and other items. Under that measure, the growth story looked intact. Under plain GAAP net income, and especially under free cash flow relative to the mountain of debt used to fund the acquisitions, the picture was far less comfortable — heavy debt service, price increases that drew regulatory and political scrutiny, and specialty pharmacy relationships that later drew fraud allegations. By March 2016 the stock was near $30, roughly 85% below its peak; in 2017 it traded under $10, more than 95% down; the company was renamed Bausch Health in 2018. The GAAP-versus-adjusted gap had been visible in the filings the entire time; the adjusted number was simply the one most investors were reading. The diagnostic available to any reader before the collapse was not insider knowledge — it was the size and the direction of travel of the gap between what the company called earnings and what GAAP called earnings, checked against the cash actually available to service the debt.</p>
+      <p class="lang-zh" style="display:none">2015 年 8 月，Valeant 製藥公司——一家主要靠併購其他藥廠、然後對既有藥品大幅漲價來成長的藥業集團——股價一度接近每股 262 美元，是好幾檔知名避險基金的重倉持股。Valeant 當時公布的是強勁成長的「現金 EPS」，一種公司自訂的調整後指標，把那一連串併購產生的無形資產攤銷、重組費用等項目全部剔除。用這個指標看，成長故事完好無缺。但用一般公認會計原則下的淨利，特別是拿自由現金流去對照支撐這些併購的龐大債務，畫面就沒那麼好看了——沉重的還債壓力、引來監管與政治關注的大幅漲價策略，以及後來被指控涉及詐欺的特約藥局合作關係。到 2016 年 3 月，股價已經跌到 30 美元附近，距高點約 −85%；2017 年一度跌破 10 美元，累計跌幅超過 95%；公司於 2018 年更名為 Bausch Health。GAAP 與調整後數字之間的落差，其實一直都攤在公開財報裡；只是多數投資人當時讀的，是那個調整後的數字。在崩盤之前，任何一個讀者手上就有的診斷工具並不是什麼內線消息——就是「公司自己說的盈餘」與「公認會計原則說的盈餘」之間那個落差有多大、往哪個方向走，再拿它去對照真正能拿來還債的現金。</p>
+    </div>
+  </div>
+
+  <div class="war-story">
+    <div class="war-story-head"><span class="war-story-icon">&#128220;</span><span class="war-story-intro"><span class="lang-en">War Story</span><span class="lang-zh" style="display:none">戰爭故事</span></span></div>
+    <div class="war-story-body">
+      <p class="lang-en">Run the same reading in the opposite direction and it can lead to a mistake of the opposite kind. MongoDB, the database software company, went public in late 2017 with roughly $155M of annual revenue and grew it to roughly $1.7B about six years later — a little over ten times. Across that entire stretch it never reported a positive GAAP annual profit: net losses ran on the order of one to three hundred million dollars a year, driven substantially by stock-based compensation that has run at roughly a quarter to a third of revenue. Trailing P/E was therefore undefined, and any screen sorting on EPS saw a company that "does not make money."</p>
+      <p class="lang-zh" style="display:none">把同一套讀法反過來用，也可能導向另一種相反方向的錯誤。資料庫軟體公司 MongoDB 在 2017 年底上市時，年營收約 1.55 億美元，約六年後成長到約 17 億美元，成長超過十倍。但這整段期間，它的 GAAP 年度損益從來沒有轉正過：淨損大約落在每年一到三億美元的量級，主要來自占營收約四分之一到三分之一的股份薪酬。因此它的過去 12 個月本益比根本無法計算，任何用 EPS 排序的篩選器看到的，都是一家「不賺錢的公司」。</p>
+      <p class="lang-en">Read the cash side and a different company appears. Operating cash flow crossed into positive territory, free cash flow followed, and by around fiscal 2024 free cash flow was running in the low hundreds of millions on revenue growing near 30% — putting the rough software health check sometimes called the "Rule of 40" (revenue growth rate plus free cash flow margin) in the high thirties to low forties, in the same years GAAP EPS was negative. A checklist built purely around positive EPS throws this company out for exactly the wrong reason: it is not that the losses are fake, it is that the largest single line creating them is not a cash cost in the year it is booked.</p>
+      <p class="lang-zh" style="display:none">改讀現金端，看到的是另一家公司。營業活動現金流先轉正，自由現金流跟著轉正；到 2024 會計年度前後，自由現金流已經來到數億美元的低段，而營收還在接近 30% 的速度成長——把軟體業常用的粗略健康檢查「40 法則」（營收成長率加上自由現金流利潤率）算出來，大約落在三十幾到四十出頭，而這幾年的 GAAP 每股盈餘依然是負的。一份只用「EPS 是否為正」當條件的檢查表，會因為完全錯誤的理由把這家公司刷掉：問題不在於虧損是假的，而在於製造這些虧損的最大單一項目，在認列的當年並不是現金支出。</p>
+      <p class="lang-en">The honest counterweight matters just as much, and it is the reason this case is not simply "cash good, GAAP bad." Stock-based compensation is not a cash cost, but it is a real one: over roughly the same period the diluted share count went from around 50 million at the IPO to somewhere in the seventy-millions, close to 50% dilution of the existing owners. That cost never appears in the free cash flow line either. So the correct reading of a company like this is neither "EPS is negative, avoid" nor "FCF is positive, fine" — it is that growth and cash generation are real and the price of both is being paid in shares, which is a number you have to go count yourself. This is a teaching illustration of the pattern, not a current view on the stock; the specific figures move every quarter and would need re-checking against the latest filing before they mean anything for a decision today.</p>
+      <p class="lang-zh" style="display:none">誠實的另一面同樣重要，這也是為什麼這個案例不能簡化成「現金好、GAAP 壞」。股份薪酬不是現金成本，但它是真實的成本：大約同一段期間，稀釋後股數從上市時的約 5,000 萬股，增加到 7,000 萬股出頭，等於既有股東被稀釋了接近五成。這筆代價同樣不會出現在自由現金流那一行。所以對這種公司，正確的讀法既不是「EPS 是負的，避開」，也不是「FCF 是正的，沒問題」——而是：成長與現金創造都是真的，而兩者的代價是用股份支付的，這個數字必須你自己去數。這是一段用來說明型態的教學案例，不是對這檔股票現在的看法；實際數字每一季都在變動，要用在今天的決定之前，必須重新對照最新財報。</p>
+    </div>
+  </div>
+
+  <section>
+    <h2 class="lang-en">Adjusted Prices, and Thinking in Magnitudes</h2>
+    <h2 class="lang-zh" style="display:none">還原股價，以及用量級思考</h2>
+    <p class="lang-en">One more number-reading habit belongs in this lesson because it quietly breaks more return calculations than almost anything else: whether the stock price series you are using has been adjusted for splits and dividends. On August 31, 2020, Apple executed a 4-for-1 stock split — a shareholder who owned one $500 share the day before owned four $125 shares the day after, with the total value unchanged. A raw, unadjusted price chart that does not account for that event shows the price falling roughly 75% overnight, which is nonsense; nothing about the business or the shareholder&#39;s wealth changed. A <span class="key-term" tabindex="0">total-return or split-and-dividend-adjusted price series<span class="key-term-tip">A price history recalculated so that stock splits and dividend payments do not create artificial jumps — the only kind of price series long-run return calculations should be built on.</span></span> rescales the entire history before the split so the series stays continuous, and does the same for large special dividends. Any return calculated off an unadjusted series that spans a split date will be wrong, sometimes by a factor of several times, and the error is not random — it is a systematic distortion tied to the exact date of the corporate action.</p>
+    <p class="lang-zh" style="display:none">這一課還要放進另一個讀數字的能力，因為它安靜地毀掉的報酬率計算，可能比其他任何一件事都多：你用的股價序列，有沒有還原分割與配息。2020 年 8 月 31 日，蘋果執行了 1 股分割為 4 股；一位分割前一天持有一股 500 美元股票的股東，分割後一天持有四股各 125 美元的股票，總價值完全沒變。一張沒有處理這個事件的原始未調整股價圖，會顯示股價一夜之間跌了大約 75%，這完全沒有意義；公司的生意本身、股東的財富，什麼都沒變。<span class="key-term" tabindex="0">還原股價（total-return / 拆股與配息調整後的股價序列）<span class="key-term-tip">重新計算過的股價歷史，讓股票分割與配息不會製造出人為的跳空——長期報酬率的計算只應該建立在這種序列上。</span></span>會把分割之前的整段歷史重新按比例縮放，讓序列維持連續，對大額特別股息也做同樣處理。任何一個橫跨分割日期、用未還原序列算出來的報酬率都是錯的，有時候錯到差好幾倍，而且這個誤差不是隨機的——它是綁定在那個公司行動確切日期上的系統性扭曲。</p>
+    <p class="lang-en">The last habit worth building here is thinking in magnitudes rather than false precision — sometimes called a Fermi estimate, after the physicist known for quickly estimating quantities from first principles. Financial numbers invite a false sense of exactness because they come printed to the cent, but a number derived from several uncertain inputs is only as reliable as its shakiest input. If a retailer discloses total revenue and store count but not per-store sales, dividing one by the other gives a rough per-store figure — and if that figure comes out at, say, $200M per store when comparable retailers in the same category run closer to $20M per store, the honest conclusion is not "this store must be extraordinary." It is "one of my assumptions is off by roughly a factor of ten, most likely the store count, and I need to find out which one before I trust anything downstream of it." Getting comfortable saying "roughly $30&#8211;35M" instead of a fabricated "$31.4M" is not sloppiness — it is honesty about how much the underlying data actually supports.</p>
+    <p class="lang-zh" style="display:none">這裡值得養成的最後一個習慣，是用量級思考取代假精確——有時候被稱為費米估算，得名自那位擅長從第一原理快速估出量級的物理學家。財務數字很容易給人一種假的精確感，因為它們印出來都精確到小數點，但一個由好幾個不確定輸入推導出來的數字，可靠度只跟其中最不可靠的那個輸入一樣差。如果一家零售商只揭露總營收與門市數，沒有揭露單店營收，把兩者相除可以得到一個粗略的單店數字——如果算出來是每店 2 億美元，而同類別可比零售商大約是每店 2,000 萬美元，誠實的結論不是「這家店一定特別強」，而是「我某個假設大概錯了十倍左右，最可能是門市數這一項，在信任任何後續推導之前，得先找出是哪裡錯了」。習慣說「大概 3,000 萬到 3,500 萬美元」，而不是硬湊一個「3,140 萬美元」出來，不是偷懶，而是誠實面對底層資料實際能撐起多少精確度。</p>
+  </section>
+
+  <div class="calc-card" id="roic-calc">
+    <div class="calc-card-title"><span class="lang-en">Calculator: ROIC Decomposition</span><span class="lang-zh" style="display:none">試算器：ROIC 分解</span></div>
+    <div class="calc-row">
+      <div class="calc-row-head">
+        <span class="calc-row-label"><span class="lang-en">After-tax operating margin</span><span class="lang-zh" style="display:none">稅後營業利益率</span></span>
+        <span class="calc-row-echo"><span data-echo="margin-input">12</span>%</span>
+      </div>
+      <input type="range" id="margin-input" name="margin" min="1" max="35" step="0.5" value="12">
+    </div>
+    <div class="calc-row">
+      <div class="calc-row-head">
+        <span class="calc-row-label"><span class="lang-en">Invested capital turnover</span><span class="lang-zh" style="display:none">投入資本周轉率</span></span>
+        <span class="calc-row-echo"><span data-echo="turnover-input">1.56</span>&times;</span>
+      </div>
+      <input type="range" id="turnover-input" name="turnover" min="0.2" max="4" step="0.02" value="1.56">
+    </div>
+    <div class="calc-outputs">
+      <div class="calc-output">
+        <span class="calc-output-label"><span class="lang-en">ROIC</span><span class="lang-zh" style="display:none">ROIC</span></span>
+        <span class="calc-output-value" data-out="roic">18.7%</span>
+      </div>
+    </div>
+    <p class="calc-hint lang-en">Drag turnover down toward 0.3&times; while holding margin near 12% — this is roughly what a heavy-asset business (an airline, a chip fab) looks like: ROIC stays weak even with a perfectly respectable margin, because turnover is the binding constraint. Then push turnover up past 3&times; while holding margin at just 3&ndash;5% — this is a low-margin, high-turnover retailer or distributor: ROIC can still clear a healthy double digit even though the margin line alone looks unimpressive. The lesson is that margin alone, or turnover alone, tells you almost nothing about capital efficiency; ROIC needs both.</p>
+    <p class="calc-hint lang-zh" style="display:none">把周轉率拉到接近 0.3 倍，同時把利益率維持在 12% 附近——這大致是重資產生意（航空公司、晶圓代工廠）的樣子：即使利益率相當體面，ROIC 依然很弱，因為卡住的是周轉率。接著把周轉率拉到 3 倍以上，同時把利益率維持在只有 3% 到 5%——這是低利益率、高周轉率的零售商或經銷商：即使利益率這條線本身看起來平淡無奇，ROIC 依然能撐出健康的兩位數。這裡的教訓是：單看利益率、或單看周轉率，幾乎看不出資本效率好不好，ROIC 兩者都要。</p>
+  </div>
+
+  <div class="calc-card" id="fcf-calc">
+    <div class="calc-card-title"><span class="lang-en">Calculator: Free Cash Flow and Conversion</span><span class="lang-zh" style="display:none">試算器：自由現金流與轉換率</span></div>
+    <div class="calc-row">
+      <div class="calc-row-head">
+        <span class="calc-row-label"><span class="lang-en">Net income ($M)</span><span class="lang-zh" style="display:none">淨利（百萬美元）</span></span>
+        <span class="calc-row-echo">$<span data-echo="ni-input">55</span>M</span>
+      </div>
+      <input type="range" id="ni-input" name="ni" min="0" max="200" step="1" value="55">
+    </div>
+    <div class="calc-row">
+      <div class="calc-row-head">
+        <span class="calc-row-label"><span class="lang-en">Depreciation &amp; amortization ($M)</span><span class="lang-zh" style="display:none">折舊攤銷（百萬美元）</span></span>
+        <span class="calc-row-echo">$<span data-echo="da-input">30</span>M</span>
+      </div>
+      <input type="range" id="da-input" name="da" min="0" max="100" step="1" value="30">
+    </div>
+    <div class="calc-row">
+      <div class="calc-row-head">
+        <span class="calc-row-label"><span class="lang-en">Capital expenditure ($M)</span><span class="lang-zh" style="display:none">資本支出（百萬美元）</span></span>
+        <span class="calc-row-echo">$<span data-echo="capex-input">40</span>M</span>
+      </div>
+      <input type="range" id="capex-input" name="capex" min="0" max="150" step="1" value="40">
+    </div>
+    <div class="calc-row">
+      <div class="calc-row-head">
+        <span class="calc-row-label"><span class="lang-en">Working capital change ($M, + = cash used)</span><span class="lang-zh" style="display:none">營運資金變動（百萬美元，正值＝用掉現金）</span></span>
+        <span class="calc-row-echo">$<span data-echo="dwc-input">10</span>M</span>
+      </div>
+      <input type="range" id="dwc-input" name="dwc" min="-30" max="60" step="1" value="10">
+    </div>
+    <div class="calc-outputs">
+      <div class="calc-output">
+        <span class="calc-output-label"><span class="lang-en">Free cash flow</span><span class="lang-zh" style="display:none">自由現金流</span></span>
+        <span class="calc-output-value" data-out="fcf">$35M</span>
+      </div>
+      <div class="calc-output">
+        <span class="calc-output-label"><span class="lang-en">FCF &divide; net income</span><span class="lang-zh" style="display:none">FCF ÷ 淨利</span></span>
+        <span class="calc-output-value" data-out="ratio">64%</span>
+      </div>
+    </div>
+    <p class="calc-hint lang-en">The default values are Atlas Components&#39; Year 1. Push capex up while leaving net income unchanged and watch the ratio fall — that is Year 2. Then drag working capital change into negative territory: cash released rather than absorbed, which is what a company draining down inventory looks like, and note how quickly it flatters the ratio without anything improving in the business. Finally drag net income to zero: the ratio reads "n/a" rather than exploding, because a ratio with a zero denominator has no meaning and should be shown as missing, not as a number. Any real screen built on FCF-to-net-income needs the same guard, which is precisely why loss-making companies get mechanically mis-sorted by screens that skip it.</p>
+    <p class="calc-hint lang-zh" style="display:none">預設值就是亞特拉斯零組件的第一年。把資本支出拉高、淨利不動，看著比率往下掉——那是第二年。接著把營運資金變動拉到負值：代表現金被釋放而不是被占用，這是一家公司在消化存貨時的樣子，注意它能多快美化這個比率，而生意本身其實什麼都沒變好。最後把淨利拉到零：比率會顯示「n/a」而不是爆出一個數字，因為分母為零的比率本來就沒有意義，應該呈現為「沒有」而不是某個數值。任何真的拿 FCF ÷ 淨利做篩選的系統都需要同一層防呆——這正是為什麼略過這件事的篩選器，會機械式地把虧損公司排到錯誤的位置。</p>
+  </div>
+
+  <div class="pitfall">
+    <div class="pitfall-icon">&#9888;</div>
+    <div class="pitfall-body">
+      <p class="lang-en"><strong>Pitfall: computing a multi-year return off an unadjusted price series.</strong> If the stock underwent a split or a large special dividend anywhere inside the window you are measuring and you did not adjust for it, the number you get back is not approximately wrong — it can be wrong by a factor of two, four, or more, in whichever direction the corporate action distorts the series. Always confirm the data source labels its prices as split-and-dividend-adjusted before trusting any return calculated across more than a single quarter.</p>
+      <p class="lang-zh" style="display:none"><strong>陷阱：用未還原的股價序列算多年期報酬率。</strong>如果你測量的區間裡，股票曾經分割過或發過大額特別股息，而你沒有還原，算出來的數字不是「大概錯了一點」，而是可能整整錯了兩倍、四倍甚至更多，方向取決於那次公司行動怎麼扭曲了序列。在信任任何跨越超過一季的報酬率計算之前，先確認資料來源有沒有標明股價已經還原分割與配息。</p>
+    </div>
+  </div>
+
+  <ul class="checklist">
+    <li class="checklist-item"><input type="checkbox" id="cl1"><label for="cl1"><span class="lang-en">Compare net income growth to FCF growth over at least two consecutive years; if they diverge, check days sales outstanding and days of inventory before accepting any explanation.</span><span class="lang-zh" style="display:none">比對至少連續兩年的淨利成長與 FCF 成長；兩者背離時，先查應收帳款天數與存貨天數，再決定要不要接受任何解釋。</span></label></li>
+    <li class="checklist-item"><input type="checkbox" id="cl2"><label for="cl2"><span class="lang-en">Decompose ROIC into after-tax operating margin &times; invested capital turnover, and track both across at least two years.</span><span class="lang-zh" style="display:none">把 ROIC 拆成稅後營業利益率 × 投入資本周轉率，兩者都追蹤至少兩年的趨勢。</span></label></li>
+    <li class="checklist-item"><input type="checkbox" id="cl3"><label for="cl3"><span class="lang-en">Calculate incremental ROIC, not just the historical average — it is the number that actually predicts what growth is worth.</span><span class="lang-zh" style="display:none">算增量 ROIC，不要只看歷史平均——它才是真正能預測成長值不值錢的數字。</span></label></li>
+    <li class="checklist-item"><input type="checkbox" id="cl4"><label for="cl4"><span class="lang-en">Check how large stock-based compensation is as a share of revenue, and whether it is being added back into an "adjusted" earnings number.</span><span class="lang-zh" style="display:none">查股份基礎薪酬占營收的比重，以及它有沒有被加回「調整後」盈餘裡。</span></label></li>
+    <li class="checklist-item"><input type="checkbox" id="cl5"><label for="cl5"><span class="lang-en">Compare EPS growth to total net income growth to isolate how much of the headline number is coming from a shrinking share count.</span><span class="lang-zh" style="display:none">比較 EPS 成長率跟總淨利成長率，抓出頭條數字裡有多少來自股數縮小。</span></label></li>
+    <li class="checklist-item"><input type="checkbox" id="cl6"><label for="cl6"><span class="lang-en">Compute revenue growth minus operating income growth; treat anything above roughly 7 points as a margin-compression flag worth an explanation.</span><span class="lang-zh" style="display:none">算營收成長率減營業利益成長率；超過大約 7 個百分點就當成營業利益率壓縮警訊，要求一個解釋。</span></label></li>
+    <li class="checklist-item"><input type="checkbox" id="cl7"><label for="cl7"><span class="lang-en">Confirm any long-run stock return is calculated off a split-and-dividend-adjusted price series before trusting it.</span><span class="lang-zh" style="display:none">在信任任何長期股價報酬率之前，確認它是用還原分割與配息後的股價序列算出來的。</span></label></li>
+    <li class="checklist-item"><input type="checkbox" id="cl8"><label for="cl8"><span class="lang-en">When an input is uncertain, state the answer as a rounded range instead of a false-precision figure, and note which assumption it hinges on.</span><span class="lang-zh" style="display:none">當某個輸入不確定時，用四捨五入的區間表達答案，而不是硬湊一個假精確的數字，並註明它靠哪個假設撐著。</span></label></li>
+  </ul>
+
+  <section>
+    <h2 class="lang-en">How This Connects</h2>
+    <h2 class="lang-zh" style="display:none">這一課接到哪裡</h2>
+    <p class="lang-en">The first lesson in this framework (<a href="01-framework.html">01 &middot; The Framework: Five Questions</a>) laid out the five questions a full analysis needs to answer, and argued that valuation belongs last. This lesson is the toolkit that makes every one of the other four questions answerable with numbers instead of impressions: reading whether a moat shows up in the figures (<a href="10-moat-numbers.html">10 &middot; Does the Moat Show Up in the Numbers</a>) runs on the same ROIC decomposition built here; judging how long high returns can last (<a href="11-roic-durability.html">11 &middot; ROIC Durability</a>) runs on the same incremental-ROIC calculation; separating real growth from bought growth (<a href="13-growth-quality.html">13 &middot; Growth Quality</a>) and spotting earnings that are not backed by cash (<a href="14-earnings-quality.html">14 &middot; Earnings Quality</a>) both start from the profit-versus-cash gap this lesson traced; and even the final valuation step (<a href="20-valuation.html">20 &middot; Valuation</a>) depends on knowing which profit number is real before any of it gets discounted. The point about financial companies needing a different yardstick is picked up in full later (<a href="16-archetypes.html">16 &middot; Archetypes</a>). None of that works without first getting comfortable with what a total-versus-per-share number is actually measuring, and with sizing an unfamiliar figure in rough magnitudes rather than false precision.</p>
+    <p class="lang-zh" style="display:none">這套框架的第一課（<a href="01-framework.html">01・框架總覽：五個問題</a>）列出了一份完整分析需要回答的五個問題，並主張估值要放在最後一步。這一課，是讓另外四個問題能用數字、而不是印象去回答的工具箱：判斷護城河有沒有反映在數字上（<a href="10-moat-numbers.html">10・護城河在數字上看得到嗎</a>），用的是這裡建立的同一套 ROIC 分解；判斷高報酬能維持多久（<a href="11-roic-durability.html">11・ROIC 的持續期</a>），用的是這裡的同一套增量 ROIC 算法；分辨真成長與買來的成長（<a href="13-growth-quality.html">13・成長的品質</a>）、以及抓出沒有現金撐著的盈餘（<a href="14-earnings-quality.html">14・盈餘品質</a>），起點都是這一課追過的那個「利潤與現金的落差」；就連最後的估值步驟（<a href="20-valuation.html">20・估值</a>），也要先確定哪個利潤數字才是真的，才能拿去折現。至於金融股必須換一把尺量這件事，後面會完整處理（<a href="16-archetypes.html">16・原型</a>）。這一切的前提，是先習慣總額與每股數字究竟在量什麼，並且習慣用大概的量級去估一個陌生數字，而不是硬湊出假精確。</p>
+    <p class="lang-en">The next lesson stays at the level of a whole industry rather than a single company&#39;s statements, and asks a different but related question: what is actually pulling demand, and how big is the runway. The same discipline learned here — trust a number only as far as the assumption underneath it, and prefer a defensible "roughly" over a fabricated decimal — is exactly what keeps that next step honest.</p>
+    <p class="lang-zh" style="display:none">下一課把視角拉高到整個產業層級，而不是單一公司的報表，問的是一個不同但相關的問題：需求究竟被什麼拉動、跑道有多長。這一課學到的紀律——一個數字只能信任到它底層假設能撐住的程度，寧可用一個站得住腳的「大概」，也不要硬湊一個小數點——正是讓下一步不失真的關鍵。</p>
+  </section>
+
+  <div class="quiz-block" data-quiz-id="02-language-of-numbers-q1" data-quiz='[
+    {"q":{"en":"A company&#39;s gross margin holds steady, but its operating margin falls year over year. What is the most likely explanation?","zh":"一家公司毛利率維持穩定，但營業利益率逐年下滑。最可能的原因是？"},
+     "opts":[{"en":"SG&amp;A or R&amp;D spending grew faster than revenue","zh":"SG&amp;A 或研發費用的成長速度快過營收"},{"en":"Inventory increased","zh":"存貨增加了"},{"en":"The stock price fell","zh":"股價下跌"},{"en":"Cash on the balance sheet increased","zh":"資產負債表上的現金增加了"}],
+     "a":0,
+     "exp":{"en":"Stable gross margin means cost of goods sold stayed proportional to revenue. A falling operating margin below that means the layer of costs below gross profit &mdash; sales, marketing, R&amp;D, admin &mdash; is growing faster than revenue, which is a spending-decision story, not a pricing-power story.","zh":"毛利率穩定，代表銷貨成本占營收的比例沒有變。毛利之下的營業利益率卻在下滑，代表毛利之後那一層費用——業務、行銷、研發、行政——成長速度快過營收，這是支出決策的故事，不是定價能力的故事。"}},
+    {"q":{"en":"A company&#39;s NOPAT was $40M on $250M of invested capital in Year 1, and $46M on $270M of invested capital in Year 2. What is incremental ROIC?","zh":"一家公司第一年 NOPAT 為 4,000 萬美元、投入資本 2.5 億美元；第二年 NOPAT 為 4,600 萬美元、投入資本 2.7 億美元。增量 ROIC 最接近多少？"},
+     "opts":[{"en":"About 17%","zh":"約 17%"},{"en":"About 16%","zh":"約 16%"},{"en":"About 30%","zh":"約 30%"},{"en":"About 6%","zh":"約 6%"}],
+     "a":2,
+     "exp":{"en":"Incremental ROIC = &Delta;NOPAT &divide; &Delta;invested capital = ($46M &minus; $40M) &divide; ($270M &minus; $250M) = $6M &divide; $20M = 30%. Both 16% and 17% are the average ROIC of Year 1 and Year 2 respectively &mdash; useful, but not the number that tells you how good the newest capital is.","zh":"增量 ROIC ＝ ΔNOPAT ÷ Δ投入資本 ＝（4,600 萬 &minus; 4,000 萬）÷（2.7 億 &minus; 2.5 億）＝ 600 萬 ÷ 2,000 萬 ＝ 30%。16% 與 17% 分別是第一年、第二年的平均 ROIC——有用，但不是告訴你最新資本有多好的那個數字。"}},
+    {"q":{"en":"FCF &divide; net income fell from 0.9 to 0.55 at the same time capital expenditure rose sharply and incremental ROIC rose from 12% to 22%. What does this most likely indicate?","zh":"FCF ÷ 淨利從 0.9 降到 0.55，同時資本支出大幅上升、增量 ROIC 從 12% 升到 22%。這最可能代表什麼？"},
+     "opts":[{"en":"Earnings quality is deteriorating and the stock should be avoided","zh":"獲利品質正在惡化，應該避開"},{"en":"This may be productive, expansionary spending &mdash; a falling ratio is not automatically bad when the incremental return is high","zh":"這可能是高產出的擴張性支出——增量報酬夠高時，比率下滑不必然是壞事"},{"en":"The company is almost certainly manipulating its accounts","zh":"公司幾乎一定在做假帳"},{"en":"Falling cash means bankruptcy risk is rising sharply","zh":"現金下滑代表破產風險大幅升高"}],
+     "a":1,
+     "exp":{"en":"This is exactly the Atlas Components pattern from the worked example: a rising incremental ROIC well above the base rate means the capital funding that lower ratio is earning strong returns, which is the visible cost of investing in growth, not a quality warning by itself.","zh":"這正是逐步範例裡亞特拉斯零組件的型態：增量 ROIC 明顯高於基礎報酬率，代表撐起這個較低比率的資本，正賺到很好的報酬，這是投資成長看得見的代價，本身不是品質警訊。"}},
+    {"q":{"en":"Two companies have identical revenue, identical operating profit, and identical net PP&amp;E, inventory and receivables. The only difference: Company A pays its suppliers in 30 days, Company B in 90 days. Which has the higher ROIC?","zh":"兩家公司的營收、營業利益、淨廠房設備、存貨、應收帳款全部一模一樣。唯一的差別是：A 公司 30 天付款給供應商，B 公司 90 天。哪一家的 ROIC 比較高？"},
+     "opts":[{"en":"Company A &mdash; paying suppliers faster shows financial discipline","zh":"A 公司——付款快代表財務紀律好"},{"en":"Company B &mdash; larger payables reduce invested capital, so the same profit sits on a smaller base","zh":"B 公司——應付帳款較大會縮小投入資本，同樣的利潤落在較小的基數上"},{"en":"Identical &mdash; payment terms do not touch the income statement, so ROIC cannot differ","zh":"完全一樣——付款條件不影響損益表，所以 ROIC 不可能有差"},{"en":"Company A &mdash; because B is effectively borrowing, which raises its cost of capital","zh":"A 公司——因為 B 等於在借錢，資金成本會比較高"}],
+     "a":1,
+     "exp":{"en":"Invested capital is net PP&amp;E plus inventory plus receivables plus other operating assets, MINUS non-interest-bearing operating liabilities &mdash; payables included. B&#39;s suppliers are financing 90 days of its operating cycle interest-free, so B runs the identical business on less of its own capital and posts a higher ROIC. The third option is the common trap: ROIC has a balance-sheet denominator, so a change that never touches the income statement can still move it. The fourth confuses trade credit with borrowing &mdash; payables carry no interest, which is exactly why they are subtracted.","zh":"投入資本＝淨廠房設備＋存貨＋應收帳款＋其他營運資產，「減去」不計息營運負債，應付帳款就在其中。B 公司的供應商等於無息幫它墊了 90 天的營運循環，所以 B 用比較少的自有資本經營一模一樣的生意，ROIC 因此較高。第三個選項是最常見的陷阱：ROIC 的分母在資產負債表上，所以一個完全不碰損益表的改變，照樣會讓它移動。第四個選項把商業信用當成借款——應付帳款不用付利息，這正是它要被扣掉的原因。"}},
+    {"q":{"en":"A company&#39;s EPS grew 15% while total net income grew only 5%. What is the most likely explanation?","zh":"一家公司 EPS 成長 15%，但總淨利只成長 5%。最可能的解釋是？"},
+     "opts":[{"en":"The tax rate fell","zh":"稅率下降"},{"en":"A large buyback reduced the share count","zh":"大量回購減少了股數"},{"en":"A favorable currency move","zh":"匯率帶來利多"},{"en":"Gross margin improved","zh":"毛利率提升"}],
+     "a":1,
+     "exp":{"en":"A lower tax rate or better gross margin would raise total net income and EPS by roughly the same percentage if the share count did not change &mdash; neither explains a gap between the two growth rates on its own. Only a shrinking denominator, the share count, can make EPS outrun total profit growth.","zh":"如果股數沒變，稅率下降或毛利率提升會讓總淨利與 EPS 用差不多的百分比一起成長——這兩者本身都不能解釋兩個成長率之間的落差。只有分母（股數）縮小，才能讓 EPS 跑贏總利潤的成長。"}},
+    {"q":{"en":"What is the biggest problem with treating EBITDA as if it were cash flow?","zh":"把 EBITDA 當成現金流量看待，最大的問題是什麼？"},
+     "opts":[{"en":"It ignores capital expenditure and working-capital changes, so it can be mistaken for cash when it is not","zh":"它沒有考慮資本支出與營運資金變化，可能被誤當成現金，但它不是"},{"en":"It ignores revenue growth","zh":"它沒有考慮營收成長"},{"en":"It is always deliberately manipulated by the company","zh":"它一定是被公司刻意操縱過的"},{"en":"It is a pre-tax measure, so it is too conservative","zh":"它是稅前指標，所以太保守"}],
+     "a":0,
+     "exp":{"en":"A capital-heavy business can show robust EBITDA while free cash flow is thin or negative once the capital spending needed to keep the equipment running is subtracted &mdash; EBITDA simply never subtracts it.","zh":"一門重資產生意可以在 EBITDA 看起來很健壯的同時，一旦扣掉維持設備運轉所需要的資本支出，自由現金流卻很薄甚至是負的——因為 EBITDA 本來就從來沒有扣掉這一項。"}},
+    {"q":{"en":"A company&#39;s ROIC jumps to 30% this quarter, and you decide to buy immediately on that number alone. Which principle from the first lesson does this skip?","zh":"一家公司這一季 ROIC 大幅跳升到 30%，你只憑這個數字就立刻決定買進。這個做法跳過了第一課的哪一個原則？"},
+     "opts":[{"en":"Whether the industry lets anyone earn a return at all, and whether the price already reflects this news","zh":"產業究竟讓不讓人賺錢，以及價格是不是已經反映了這個消息"},{"en":"ROIC does not matter and can be ignored","zh":"ROIC 不重要，可以不用管"},{"en":"You should check the P/E ratio before looking at ROIC at all","zh":"應該先看本益比，再看 ROIC"},{"en":"The financial statements are almost certainly fabricated","zh":"財報數字幾乎一定是造假的"}],
+     "a":0,
+     "exp":{"en":"The first lesson&#39;s five questions put the industry backdrop and what the price already assumes ahead of any single-quarter number. A great ROIC print, on its own, answers only one of five questions &mdash; it says nothing about whether that quality is already fully priced in.","zh":"第一課的五個問題，把產業背景與價格已經假設了什麼，排在任何單一季度的數字之前。一個亮眼的 ROIC 數字，本身只回答了五個問題裡的一個——它完全沒有回答這份品質有沒有已經被完全反映在價格裡。"},"from":"01"},
+    {"q":{"en":"According to the first lesson, what separates a good business from a good stock?","zh":"依照第一課的說法，好生意跟好股票的差別在哪裡？"},
+     "opts":[{"en":"A good stock always has a wider moat than a good business","zh":"好股票的護城河一定比好生意更寬"},{"en":"Judging the quality of the business and judging whether the current price already reflects that quality are two separate questions","zh":"判斷生意的品質，跟判斷現在的價格有沒有已經反映這份品質，是兩個分開的問題"},{"en":"A good stock always has a higher EPS","zh":"好股票的 EPS 一定比較高"},{"en":"There is no difference &mdash; they are the same thing","zh":"兩者沒有差別，是同一件事"}],
+     "a":1,
+     "exp":{"en":"This lesson&#39;s numbers &mdash; ROIC, incremental ROIC, FCF quality &mdash; can only ever answer the business-quality question. Whether that quality is already paid for by the price is answered much later in this framework, deliberately.","zh":"這一課的數字——ROIC、增量 ROIC、FCF 品質——永遠只能回答生意品質這個問題。這份品質有沒有已經被價格買走，是這套框架後面才刻意回答的問題。"},"from":"01"},
+    {"q":{"en":"A stock underwent a large stock split at some point in its history. If you calculate a long-run return using an unadjusted price series that spans that split date, what is most likely to happen?","zh":"一檔股票曾經在歷史上執行過大比例分割。如果用一段橫跨分割日期、未還原的股價序列去算長期報酬率，最可能發生什麼？"},
+     "opts":[{"en":"The return will be badly miscalculated, because the price drop caused by the split looks like a real loss in the raw series","zh":"報酬率會被嚴重算錯，因為分割造成的股價下降，在原始序列裡看起來像真實的損失"},{"en":"There will be no effect at all","zh":"完全不會有任何影響"},{"en":"There will be only a tiny, ignorable error","zh":"只會有極小、可以忽略的誤差"},{"en":"Using an adjusted price series would actually be more likely to introduce errors","zh":"用還原後的股價序列反而更容易出錯"}],
+     "a":0,
+     "exp":{"en":"A split changes the price per share without changing anything about the underlying business or the holder&#39;s wealth. An unadjusted series treats that price drop as if it were a real decline, which can distort a calculated return by a factor of several times depending on the split ratio.","zh":"分割改變的是每股價格，跟底層生意、股東的財富完全無關。未還原的序列會把這次價格下降當成真實的下跌，依分割比例的不同，算出來的報酬率可能整整扭曲好幾倍。"}},
+    {"q":{"en":"A company has grown net income more than 10% for two straight years, but the gap between its &#8220;adjusted&#8221; earnings and GAAP net income keeps widening, mostly from adding back stock-based compensation. What should you check first?","zh":"一家公司連續兩年淨利成長都超過 10%，但「調整後」盈餘與 GAAP 淨利之間的落差逐年擴大，主要來自加回股份薪酬。你應該先檢查什麼？"},
+     "opts":[{"en":"The trend in FCF &divide; net income, and stock-based compensation as a share of revenue","zh":"FCF ÷ 淨利的趨勢，以及股份薪酬占營收比重的趨勢"},{"en":"Just the P/E ratio","zh":"直接看本益比高不高"},{"en":"The stock&#39;s recent chart pattern","zh":"股價最近的技術線型"},{"en":"Nothing &mdash; stock-based compensation does not touch cash, so it does not matter","zh":"不用管，股份薪酬不影響現金，所以不重要"}],
+     "a":0,
+     "exp":{"en":"A widening gap driven by SBC add-backs is precisely the pattern this lesson flags: SBC is non-cash but dilutive, so the FCF-to-net-income trend and the SBC-to-revenue ratio are the two numbers that tell you how much real economic cost is being waved away by the adjusted figure.","zh":"由 SBC 加回撐大的落差，正是這一課要示範抓的型態：SBC 不是現金，但會稀釋股東，所以 FCF 對淨利的趨勢，加上 SBC 占營收的比重，這兩個數字才能告訴你「調整後」數字揮手帶過了多少真實的經濟成本。"}}
+  ]'></div>
+
+  <p class="lang-en">Numbers only tell you how a business performed once you know how to read them &mdash; they say nothing yet about what pulls the industry it operates in forward or backward. That is where the next lesson starts: the demand engine underneath every revenue line.</p>
+  <p class="lang-zh" style="display:none">數字只有在你懂得怎麼讀的時候，才會告訴你一門生意表現如何——它們還完全沒有回答，這門生意所在的產業，究竟被什麼拉動、又被什麼拖累。這正是下一課要開始的地方：藏在每一行營收數字底下的需求引擎。</p>
+  <!-- BODY:END -->
+
+  <div class="lc-pager">
+    <a href="01-framework.html"><span class="lc-pager-dir lang-en">Previous</span><span class="lc-pager-dir lang-zh" style="display:none">上一課</span><div class="lc-pager-label lang-en">01 · The Framework: Five Questions</div><div class="lc-pager-label lang-zh" style="display:none">01・框架總覽：五個問題</div></a>
+    <a href="03-demand.html" class="lc-pager-next"><span class="lc-pager-dir lang-en">Next</span><span class="lc-pager-dir lang-zh" style="display:none">下一課</span><div class="lc-pager-label lang-en">03 · Demand: Who Buys, Why, and for How Long</div><div class="lc-pager-label lang-zh" style="display:none">03・需求：誰買、為什麼買、還能買多久</div></a>
+  </div>
+
+  <footer class="lc-footer">
+    <a href="/learn/index.html"><span class="lang-en">&larr; Course Home</span><span class="lang-zh" style="display:none">&larr; 課程首頁</span></a>
+    <span class="lc-footer-note">INVESTMQUEST &middot; LEARN &middot; MODULE 02</span>
+  </footer>
+
+</div>
+
+<script src="/learn/learn.js"></script>
+<!-- SCRIPT:START -->
+<script>
+initCalc('roic-calc', function(v){
+  var margin = (v.margin || 0) / 100;
+  var turnover = v.turnover || 0;
+  var roic = margin * turnover * 100;
+  return {
+    roic: roic.toFixed(1) + '%'
+  };
+});
+
+initCalc('fcf-calc', function(v){
+  var ni = v.ni || 0;
+  var da = v.da || 0;
+  var capex = v.capex || 0;
+  var dwc = v.dwc || 0;
+  var cfo = ni + da - dwc;
+  var fcf = cfo - capex;
+  return {
+    fcf: (fcf < 0 ? '-$' + Math.abs(fcf).toFixed(0) : '$' + fcf.toFixed(0)) + 'M',
+    ratio: ni > 0 ? ((fcf / ni) * 100).toFixed(0) + '%' : 'n/a'
+  };
+});
+</script>
+<!-- SCRIPT:END -->
+</body>
+</html>

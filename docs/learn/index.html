@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>股票分析完整框架｜The Complete Stock Analysis Framework | InvestMQuest</title>
+<meta name="description" content="A 29-module course on how to analyse a stock from first principles: where industry returns come from, what a good business looks like, how the market prices it, how to judge, and how one stock becomes a portfolio. 股票分析完整框架課程：29 課，從產業供需、商業本質與護城河、市場定價與反身性、判斷紀律，到資產配置與回測誠實。">
+<meta name="color-scheme" content="light">
+<link rel="stylesheet" href="/learn/learn.css">
+<style>
+.lc-hero{background:linear-gradient(135deg,#0f1e33 0%,#1e3a5f 55%,#0f2a45 100%);padding:52px 0 44px;color:#fff}
+.lc-hero-inner{max-width:880px;margin:0 auto;padding:0 20px}
+.lc-hero-eyebrow{font-size:11px;letter-spacing:.16em;color:#93c5fd;font-weight:700;text-transform:uppercase;margin-bottom:12px}
+.lc-hero h1{color:#fff;font-size:32px;letter-spacing:-.01em;margin-bottom:14px}
+.lc-hero-sub{font-size:14.5px;color:#c3d5ea;max-width:660px;line-height:1.7}
+.lc-hero-cta{margin-top:22px;display:flex;gap:10px;flex-wrap:wrap}
+.lc-hero-cta a{display:inline-block;padding:9px 18px;border-radius:6px;font-size:13.5px;font-weight:600;text-decoration:none}
+.lc-hero-cta .primary{background:#fff;color:#0f1e33}
+.lc-hero-cta .secondary{border:1px solid #93c5fd;color:#dbeafe}
+.lc-intro{padding:34px 0 8px}
+.lc-intro p{font-size:15px;color:var(--lc-text);line-height:1.8;margin-bottom:16px}
+.how-title{font-size:11px;letter-spacing:.14em;font-weight:700;color:var(--lc-accent);text-transform:uppercase;margin:38px 0 14px}
+.how-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:10px}
+.how-card{background:#fff;border:1px solid var(--lc-border);border-radius:var(--lc-radius);padding:14px 16px}
+.how-card-name{font-size:12.5px;font-weight:700;color:var(--lc-navy-deep);margin-bottom:6px}
+.how-card p{font-size:12.5px;color:var(--lc-text-muted);line-height:1.6;margin:0}
+.map-title{font-size:11px;letter-spacing:.14em;font-weight:700;color:var(--lc-accent);text-transform:uppercase;margin:40px 0 14px}
+.northstar{background:#fffbea;border:1px solid #f0d98a;border-radius:var(--lc-radius);padding:16px 18px;margin:26px 0 8px;font-size:14.5px;line-height:1.7}
+.northstar b{color:var(--lc-navy-deep)}
+@media(max-width:720px){.lc-hero{padding:34px 0}.lc-hero h1{font-size:24px}}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/monitor/">市場監測</a>
+          <a href="/detective/">偵測警報網</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/rotation/">產業輪動</a>
+          <a href="/crowding/">擁擠交易監測</a>
+          <a href="/regime/">大類資產 regime</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/catalyst/">催化劑日曆</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">選股<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/cockpit/">選股主控台</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/research/momentum-5/">Momentum-5</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screeners.html">RS+VCP Screener</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">個股總覽</a>
+          <a href="/research/">個股 DD</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/research/synthesis/">期望落差綜合研判</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/track-record/">裁決實績</a>
+          <a href="/pm/">持倉週掃</a>
+          <a href="/long-track-w52-adaptive/">實單主系統</a>
+          <a href="/long-track/">追蹤總覽</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/flow/">投資流程</a>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<nav class="course-nav">
+  <div class="course-nav-inner">
+    <div class="course-nav-brand">
+      <a href="/">&larr; <span class="lang-en">Research Home</span><span class="lang-zh" style="display:none">研究站首頁</span></a>
+      <span class="course-nav-sep">/</span>
+      <a href="/learn/index.html" class="course-nav-home"><span class="lang-en">Course Home</span><span class="lang-zh" style="display:none">課程首頁</span></a>
+      <span class="course-nav-sep">/</span>
+      <a href="/learn/review.html"><span class="lang-en">Review Deck</span><span class="lang-zh" style="display:none">複習牌組</span></a>
+    </div>
+    <div class="course-nav-pager"></div>
+    <div class="course-nav-lang">
+      <button class="lang-btn" data-lang="zh" onclick="setLang('zh')">中文</button>
+      <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+</nav>
+
+<section class="lc-hero">
+  <div class="lc-hero-inner">
+    <div class="lc-hero-eyebrow"><span class="lang-en">29 Modules · 5 Parts · One Framework</span><span class="lang-zh" style="display:none">29 課・5 部・一套框架</span></div>
+    <h1 class="lang-en">The Complete Stock Analysis Framework</h1>
+    <h1 class="lang-zh" style="display:none">股票分析完整框架</h1>
+    <p class="lc-hero-sub lang-en">A stock is a claim on a business, inside an industry, priced by a crowd. This course teaches you to read all three layers in order — supply and demand, business quality and moat, market expectations — and then to judge, act, and size the position with rules you can defend.</p>
+    <p class="lc-hero-sub lang-zh" style="display:none">一張股票，是一家公司的一部分；公司活在一個產業裡；價格由一群人共同決定。這門課教你依序讀懂這三層——供給與需求、商業本質與護城河、市場期望——然後學會下判斷、決定行動、把部位放進一個有規則可守的組合。</p>
+    <div class="lc-hero-cta">
+      <a class="primary" href="01-framework.html"><span class="lang-en">Start with Module 01 &rarr;</span><span class="lang-zh" style="display:none">從第 01 課開始 &rarr;</span></a>
+      <a class="secondary" href="review.html"><span class="lang-en">Review Deck</span><span class="lang-zh" style="display:none">複習牌組</span></a>
+    </div>
+  </div>
+</section>
+
+<div class="lc-wrap lc-intro">
+  <p class="lang-en">Most stock-analysis teaching starts with valuation — P/E, DCF, multiples — as if the hard part were arithmetic. It is not. By the time you are dividing price by earnings, three bigger questions have already been silently answered for you: whether the industry lets anyone earn good returns, whether this company earns more than its cost of capital and can keep doing so, and what the crowd has already assumed. Get any of those wrong and the arithmetic only makes the mistake more precise.</p>
+  <p class="lang-zh" style="display:none">多數的股票分析教學從估值開始——本益比、現金流折現、各種倍數——好像難的部分是算術。其實不是。當你在把股價除以獲利的時候，有三個更大的問題已經悄悄被替你回答了：這個產業讓不讓人賺到好報酬、這家公司賺得比資金成本多嗎而且能不能一直這樣、還有市場已經假設了什麼。任何一題答錯，算術只是把錯誤算得更精確而已。</p>
+
+  <p class="lang-en">This course runs in the order the questions actually matter. Part I asks where returns come from at the industry level — demand engines, supply discipline, the capital cycle, substitution. Part II asks what a good business looks like — business model, moat sources and moat evidence, how long high returns can last, growth and earnings quality, management. Part III asks how the market prices it — what a price implies, how price feeds back into the business, and how valuation fits at the end rather than the beginning. Part IV is about judgment itself: weighing evidence, writing a falsifiable thesis, inverting, deciding to act, wait or avoid, and building a process that survives your own biases. Part V takes one stock to a portfolio — sizing, structure, trend and volatility rules, and how to test rules honestly.</p>
+  <p class="lang-zh" style="display:none">這門課照問題真正重要的順序走。第一部問報酬從哪裡來——產業層級的需求引擎、供給紀律、資本週期、替代威脅。第二部問好生意長什麼樣——商業模式、護城河的來源與證據、高報酬能維持多久、成長與獲利的品質、經營層。第三部問市場怎麼定價——價格已經假設了什麼、價格怎麼反過來影響生意、以及為什麼估值放在最後而不是最前面。第四部講判斷本身：怎麼秤證據、怎麼寫一個能被證偽的論點、反過來想、決定進場／等待／迴避，並建立一套能抵抗自己偏誤的流程。第五部從一檔股票走到一個組合——部位大小、結構、趨勢與波動率規則，以及怎麼誠實地測試規則。</p>
+
+  <div class="northstar">
+    <span class="lang-en"><b>The one sentence to keep:</b> the business decides <em>whether</em> to buy; the price decides <em>when</em>. Everything in the 29 modules hangs off that sentence.</span>
+    <span class="lang-zh" style="display:none"><b>要記住的一句話：</b>生意決定買不買，價格決定何時買。29 課的所有內容都掛在這句話上。</span>
+  </div>
+
+  <div class="how-title"><span class="lang-en">How This Course Teaches</span><span class="lang-zh" style="display:none">本課程的教學方法</span></div>
+  <div class="how-grid">
+    <div class="how-card">
+      <div class="how-card-name"><span class="lang-en">Concrete before abstract</span><span class="lang-zh" style="display:none">具體先於抽象</span></div>
+      <p class="lang-en">Every module opens with one real company or one real number, then names the concept it illustrates.</p>
+      <p class="lang-zh" style="display:none">每一課都先從一家真實公司或一個真實數字開始，再說出它示範的是哪個概念。</p>
+    </div>
+    <div class="how-card">
+      <div class="how-card-name"><span class="lang-en">Predict, then reveal</span><span class="lang-zh" style="display:none">先預測，再揭曉</span></div>
+      <p class="lang-en">Before a key answer is shown you commit to a guess. Being wrong first is what makes the right answer stick.</p>
+      <p class="lang-zh" style="display:none">關鍵答案揭曉前，你先押一個猜測。先錯一次，正確答案才會真的留下來。</p>
+    </div>
+    <div class="how-card">
+      <div class="how-card-name"><span class="lang-en">Worked, then faded examples</span><span class="lang-zh" style="display:none">先看完整範例，再自己補空</span></div>
+      <p class="lang-en">Calculations shown fully step by step, then repeated with a blank for you to fill.</p>
+      <p class="lang-zh" style="display:none">計算過程先完整逐步呈現，接著再來一次，這次留一格給你自己填。</p>
+    </div>
+    <div class="how-card">
+      <div class="how-card-name"><span class="lang-en">Retrieval and spacing</span><span class="lang-zh" style="display:none">主動回想與間隔複習</span></div>
+      <p class="lang-en">Every module ends with a quiz; later modules re-ask earlier questions; the review deck brings back what you missed.</p>
+      <p class="lang-zh" style="display:none">每一課結尾都有測驗；後面的課會回頭問前面的題；複習牌組把你答錯的再帶回來。</p>
+    </div>
+    <div class="how-card">
+      <div class="how-card-name"><span class="lang-en">Self-explanation</span><span class="lang-zh" style="display:none">自我解釋</span></div>
+      <p class="lang-en">"Think first" boxes ask you to say why before you read why. Explaining beats re-reading.</p>
+      <p class="lang-zh" style="display:none">「先想一下」框請你在讀到答案前先說出理由。自己解釋一遍比重讀有效。</p>
+    </div>
+    <div class="how-card">
+      <div class="how-card-name"><span class="lang-en">War stories</span><span class="lang-zh" style="display:none">實戰案例</span></div>
+      <p class="lang-en">Named cases where the framework was followed or ignored — and what it cost. Lessons paid for by someone else.</p>
+      <p class="lang-zh" style="display:none">有名有姓的案例：框架被遵守或被忽略時，各自付出了什麼代價。別人付過學費的教訓。</p>
+    </div>
+  </div>
+
+  <div class="map-title"><span class="lang-en">The Framework at a Glance</span><span class="lang-zh" style="display:none">框架一覽</span></div>
+  <div class="fw-map">
+    <div class="fw-layer">
+      <div class="fw-layer-name"><small><span class="lang-en">Part I</span><span class="lang-zh" style="display:none">第一部</span></small><span class="lang-en">Where Returns Come From</span><span class="lang-zh" style="display:none">報酬從哪裡來</span></div>
+      <div class="fw-layer-q"><span class="lang-en">Does the industry let anyone earn good returns — and for how long? Demand engines, supply discipline, the profit pool, the capital cycle, substitution.</span><span class="lang-zh" style="display:none">這個產業讓不讓人賺到好報酬？能賺多久？需求引擎、供給紀律、利潤池、資本週期、替代威脅。</span><span class="fw-mods">03 – 07</span></div>
+    </div>
+    <div class="fw-layer">
+      <div class="fw-layer-name"><small><span class="lang-en">Part II</span><span class="lang-zh" style="display:none">第二部</span></small><span class="lang-en">What a Good Business Looks Like</span><span class="lang-zh" style="display:none">好生意長什麼樣</span></div>
+      <div class="fw-layer-q"><span class="lang-en">Does this company earn more than its cost of capital, and can it keep doing so? Business model, moat sources and evidence, return durability, growth and earnings quality, management.</span><span class="lang-zh" style="display:none">這家公司賺得比資金成本多嗎？能一直這樣嗎？商業模式、護城河來源與證據、報酬持續期、成長與獲利品質、經營層。</span><span class="fw-mods">08 – 17</span></div>
+    </div>
+    <div class="fw-layer">
+      <div class="fw-layer-name"><small><span class="lang-en">Part III</span><span class="lang-zh" style="display:none">第三部</span></small><span class="lang-en">How the Market Prices It</span><span class="lang-zh" style="display:none">市場怎麼定價</span></div>
+      <div class="fw-layer-q"><span class="lang-en">What does today's price already assume — and how does price feed back into the business? Expectations, reflexivity, valuation last.</span><span class="lang-zh" style="display:none">今天的價格已經假設了什麼？價格又怎麼反過來影響生意？期望、反身性、估值放最後。</span><span class="fw-mods">18 – 20</span></div>
+    </div>
+    <div class="fw-layer">
+      <div class="fw-layer-name"><small><span class="lang-en">Part IV</span><span class="lang-zh" style="display:none">第四部</span></small><span class="lang-en">How to Judge</span><span class="lang-zh" style="display:none">怎麼下判斷</span></div>
+      <div class="fw-layer-q"><span class="lang-en">How do you weigh evidence, build a falsifiable view, invert, decide to act / wait / avoid, and protect the process from yourself?</span><span class="lang-zh" style="display:none">怎麼秤證據、怎麼建立能被證偽的看法、反過來想、決定進場／等待／迴避、怎麼防自己壞了流程？</span><span class="fw-mods">21 – 25</span></div>
+    </div>
+    <div class="fw-layer">
+      <div class="fw-layer-name"><small><span class="lang-en">Part V</span><span class="lang-zh" style="display:none">第五部</span></small><span class="lang-en">From One Stock to a Portfolio</span><span class="lang-zh" style="display:none">從一檔股票到一個組合</span></div>
+      <div class="fw-layer-q"><span class="lang-en">How much of it, next to what else, under which rules? Structure, trend and volatility rules, and how to test rules honestly.</span><span class="lang-zh" style="display:none">買多少？和什麼放在一起？用什麼規則管？組合結構、趨勢與波動率規則、怎麼誠實地測試規則。</span><span class="fw-mods">26 – 28</span></div>
+    </div>
+  </div>
+
+  <div class="map-title"><span class="lang-en">Course Map</span><span class="lang-zh" style="display:none">課程地圖</span></div>
+  <p class="lang-en">Modules build on each other — go in order the first time. Each is 20–35 minutes. Your progress is saved in this browser; the review deck draws on every quiz you have taken.</p>
+  <p class="lang-zh" style="display:none">課程彼此堆疊——第一次請照順序走。每課約 20–35 分鐘。進度存在這個瀏覽器裡；複習牌組會從你做過的每一份測驗抽題。</p>
+  <!-- MAP:START -->
+  <div class="map-part"><span class="lang-en">Start Here</span><span class="lang-zh" style="display:none">起點</span></div>
+  <div class="course-map">
+    <a class="module-card" href="01-framework.html">
+      <span class="module-card-num">01</span>
+      <div class="module-card-title"><span class="lang-en">The Framework: Five Questions</span><span class="lang-zh" style="display:none">框架總覽：五個問題</span></div>
+      <div class="module-card-meta"><span class="module-card-time lang-en">~20 min</span><span class="module-card-time lang-zh" style="display:none">約 20 分鐘</span></div>
+    </a>
+    <a class="module-card" href="02-language-of-numbers.html">
+      <span class="module-card-num">02</span>
+      <div class="module-card-title"><span class="lang-en">The Language of Numbers</span><span class="lang-zh" style="display:none">數字的語言</span></div>
+      <div class="module-card-meta"><span class="module-card-time lang-en">~30 min</span><span class="module-card-time lang-zh" style="display:none">約 30 分鐘</span></div>
+    </a>
+  </div>
+  <div class="map-part"><span class="lang-en">Part I · Where Returns Come From</span><span class="lang-zh" style="display:none">第一部・報酬從哪裡來</span></div>
+  <div class="course-map">
+    <a class="module-card" href="03-demand.html">
+      <span class="module-card-num">03</span>
+      <div class="module-card-title"><span class="lang-en">Demand: Who Buys, Why, and for How Long</span><span class="lang-zh" style="display:none">需求：誰買、為什麼買、還能買多久</span></div>
+      <div class="module-card-meta"><span class="module-card-time lang-en">~25 min</span><span class="module-card-time lang-zh" style="display:none">約 25 分鐘</span></div>
+    </a>
+    <a class="module-card" href="04-supply.html">
+      <span class="module-card-num">04</span>
+      <div class="module-card-title"><span class="lang-en">Supply: Who Sells, at What Cost, How Fast</span><span class="lang-zh" style="display:none">供給：誰賣、成本多少、多快能擴產</span></div>
+      <div class="module-card-meta"><span class="module-card-time lang-en">~25 min</span><span class="module-card-time lang-zh" style="display:none">約 25 分鐘</span></div>
+    </a>
+    <a class="module-card" href="05-profit-pool.html">
+      <span class="module-card-num">05</span>
+      <div class="module-card-title"><span class="lang-en">The Profit Pool: Where the Money Ends Up</span><span class="lang-zh" style="display:none">利潤池：整條鏈的錢流到誰口袋</span></div>
+      <div class="module-card-meta"><span class="module-card-time lang-en">~25 min</span><span class="module-card-time lang-zh" style="display:none">約 25 分鐘</span></div>
+    </a>
+    <a class="module-card" href="06-capital-cycle.html">
+      <span class="module-card-num">06</span>
+      <div class="module-card-title"><span class="lang-en">The Capital Cycle and the Industry Clock</span><span class="lang-zh" style="display:none">資本週期與產業時鐘</span></div>
+      <div class="module-card-meta"><span class="module-card-time lang-en">~30 min</span><span class="module-card-time lang-zh" style="display:none">約 30 分鐘</span></div>
+    </a>
+    <a class="module-card" href="07-substitution.html">
+      <span class="module-card-num">07</span>
+      <div class="module-card-title"><span class="lang-en">Substitution and Threats from Outside the Circle</span><span class="lang-zh" style="display:none">替代與圈外威脅</span></div>
+      <div class="module-card-meta"><span class="module-card-time lang-en">~25 min</span><span class="module-card-time lang-zh" style="display:none">約 25 分鐘</span></div>
+    </a>
+  </div>
+  <div class="map-part"><span class="lang-en">Part II · What a Good Business Looks Like</span><span class="lang-zh" style="display:none">第二部・好生意長什麼樣</span></div>
+  <div class="course-map">
+    <a class="module-card" href="08-business-model.html">
+      <span class="module-card-num">08</span>
+      <div class="module-card-title"><span class="lang-en">Business Model Anatomy</span><span class="lang-zh" style="display:none">商業模式解剖</span></div>
+      <div class="module-card-meta"><span class="module-card-time lang-en">~25 min</span><span class="module-card-time lang-zh" style="display:none">約 25 分鐘</span></div>
+    </a>
+    <a class="module-card" href="09-moat-sources.html">
+      <span class="module-card-num">09</span>
+      <div class="module-card-title"><span class="lang-en">The Five Sources of a Moat</span><span class="lang-zh" style="display:none">護城河的五個來源</span></div>
+      <div class="module-card-meta"><span class="module-card-time lang-en">~30 min</span><span class="module-card-time lang-zh" style="display:none">約 30 分鐘</span></div>
+    </a>
+    <a class="module-card" href="10-moat-numbers.html">
+      <span class="module-card-num">10</span>
+      <div class="module-card-title"><span class="lang-en">A Moat Must Show Up in the Numbers</span><span class="lang-zh" style="display:none">護城河要對得上數字</span></div>
+      <div class="module-card-meta"><span class="module-card-time lang-en">~25 min</span><span class="module-card-time lang-zh" style="display:none">約 25 分鐘</span></div>
+    </a>
+    <a class="module-card" href="11-roic-durability.html">
+      <span class="module-card-num">11</span>
+      <div class="module-card-title"><span class="lang-en">ROIC and How Long It Lasts</span><span class="lang-zh" style="display:none">ROIC 與持續期</span></div>
+      <div class="module-card-meta"><span class="module-card-time lang-en">~30 min</span><span class="module-card-time lang-zh" style="display:none">約 30 分鐘</span></div>
+    </a>
+    <a class="module-card" href="12-moat-trend.html">
+      <span class="module-card-num">12</span>
+      <div class="module-card-title"><span class="lang-en">Is the Moat Widening or Narrowing?</span><span class="lang-zh" style="display:none">護城河在變寬還是變窄</span></div>
+      <div class="module-card-meta"><span class="module-card-time lang-en">~25 min</span><span class="module-card-time lang-zh" style="display:none">約 25 分鐘</span></div>
+    </a>
+    <a class="module-card" href="13-growth-quality.html">
+      <span class="module-card-num">13</span>
+      <div class="module-card-title"><span class="lang-en">The Quality of Growth</span><span class="lang-zh" style="display:none">成長的品質</span></div>
+      <div class="module-card-meta"><span class="module-card-time lang-en">~25 min</span><span class="module-card-time lang-zh" style="display:none">約 25 分鐘</span></div>
+    </a>
+    <a class="module-card" href="14-earnings-quality.html">
+      <span class="module-card-num">14</span>
+      <div class="module-card-title"><span class="lang-en">Earnings Quality and Survivability</span><span class="lang-zh" style="display:none">財務品質與存續力</span></div>
+      <div class="module-card-meta"><span class="module-card-time lang-en">~30 min</span><span class="module-card-time lang-zh" style="display:none">約 30 分鐘</span></div>
+    </a>
+    <a class="module-card" href="15-management-capital.html">
+      <span class="module-card-num">15</span>
+      <div class="module-card-title"><span class="lang-en">Management and Capital Allocation</span><span class="lang-zh" style="display:none">經營者與資本配置</span></div>
+      <div class="module-card-meta"><span class="module-card-time lang-en">~25 min</span><span class="module-card-time lang-zh" style="display:none">約 25 分鐘</span></div>
+    </a>
+    <a class="module-card" href="16-archetypes.html">
+      <span class="module-card-num">16</span>
+      <div class="module-card-title"><span class="lang-en">Different Businesses, Different Rulers</span><span class="lang-zh" style="display:none">不同生意用不同的尺</span></div>
+      <div class="module-card-meta"><span class="module-card-time lang-en">~25 min</span><span class="module-card-time lang-zh" style="display:none">約 25 分鐘</span></div>
+    </a>
+    <a class="module-card" href="17-cyclicals.html">
+      <span class="module-card-num">17</span>
+      <div class="module-card-title"><span class="lang-en">Cyclical Businesses</span><span class="lang-zh" style="display:none">循環型生意</span></div>
+      <div class="module-card-meta"><span class="module-card-time lang-en">~30 min</span><span class="module-card-time lang-zh" style="display:none">約 30 分鐘</span></div>
+    </a>
+  </div>
+  <div class="map-part"><span class="lang-en">Part III · How the Market Prices It</span><span class="lang-zh" style="display:none">第三部・市場怎麼定價</span></div>
+  <div class="course-map">
+    <a class="module-card" href="18-price-expectations.html">
+      <span class="module-card-num">18</span>
+      <div class="module-card-title"><span class="lang-en">How Prices Move: Earnings, Multiples, Expectations</span><span class="lang-zh" style="display:none">股價怎麼動：盈餘、倍數、預期</span></div>
+      <div class="module-card-meta"><span class="module-card-time lang-en">~30 min</span><span class="module-card-time lang-zh" style="display:none">約 30 分鐘</span></div>
+    </a>
+    <a class="module-card" href="19-reflexivity.html">
+      <span class="module-card-num">19</span>
+      <div class="module-card-title"><span class="lang-en">When the Market Shapes the Company</span><span class="lang-zh" style="display:none">市場反過來影響公司</span></div>
+      <div class="module-card-meta"><span class="module-card-time lang-en">~25 min</span><span class="module-card-time lang-zh" style="display:none">約 25 分鐘</span></div>
+    </a>
+    <a class="module-card" href="20-valuation.html">
+      <span class="module-card-num">20</span>
+      <div class="module-card-title"><span class="lang-en">Valuation: A Small Weight, but Get It Right</span><span class="lang-zh" style="display:none">估值：比重小，但要算對</span></div>
+      <div class="module-card-meta"><span class="module-card-time lang-en">~30 min</span><span class="module-card-time lang-zh" style="display:none">約 30 分鐘</span></div>
+    </a>
+  </div>
+  <div class="map-part"><span class="lang-en">Part IV · How to Judge</span><span class="lang-zh" style="display:none">第四部・怎麼下判斷</span></div>
+  <div class="course-map">
+    <a class="module-card" href="21-evidence.html">
+      <span class="module-card-num">21</span>
+      <div class="module-card-title"><span class="lang-en">Weighing Evidence</span><span class="lang-zh" style="display:none">證據怎麼秤</span></div>
+      <div class="module-card-meta"><span class="module-card-time lang-en">~25 min</span><span class="module-card-time lang-zh" style="display:none">約 25 分鐘</span></div>
+    </a>
+    <a class="module-card" href="22-thesis.html">
+      <span class="module-card-num">22</span>
+      <div class="module-card-title"><span class="lang-en">From Analysis to a Thesis</span><span class="lang-zh" style="display:none">從分析到論點</span></div>
+      <div class="module-card-meta"><span class="module-card-time lang-en">~25 min</span><span class="module-card-time lang-zh" style="display:none">約 25 分鐘</span></div>
+    </a>
+    <a class="module-card" href="23-inversion.html">
+      <span class="module-card-num">23</span>
+      <div class="module-card-title"><span class="lang-en">Invert: How Would This Fail?</span><span class="lang-zh" style="display:none">反過來想：這會怎麼失敗？</span></div>
+      <div class="module-card-meta"><span class="module-card-time lang-en">~25 min</span><span class="module-card-time lang-zh" style="display:none">約 25 分鐘</span></div>
+    </a>
+    <a class="module-card" href="24-act-wait-avoid.html">
+      <span class="module-card-num">24</span>
+      <div class="module-card-title"><span class="lang-en">Act, Wait, or Avoid</span><span class="lang-zh" style="display:none">進場、觀望、迴避</span></div>
+      <div class="module-card-meta"><span class="module-card-time lang-en">~25 min</span><span class="module-card-time lang-zh" style="display:none">約 25 分鐘</span></div>
+    </a>
+    <a class="module-card" href="25-biases-process.html">
+      <span class="module-card-num">25</span>
+      <div class="module-card-title"><span class="lang-en">Your Biases and Your Process</span><span class="lang-zh" style="display:none">你的偏誤與你的流程</span></div>
+      <div class="module-card-meta"><span class="module-card-time lang-en">~25 min</span><span class="module-card-time lang-zh" style="display:none">約 25 分鐘</span></div>
+    </a>
+  </div>
+  <div class="map-part"><span class="lang-en">Part V · From One Stock to a Portfolio</span><span class="lang-zh" style="display:none">第五部・從一檔股票到一個組合</span></div>
+  <div class="course-map">
+    <a class="module-card" href="26-portfolio-structure.html">
+      <span class="module-card-num">26</span>
+      <div class="module-card-title"><span class="lang-en">Portfolio Structure</span><span class="lang-zh" style="display:none">組合結構</span></div>
+      <div class="module-card-meta"><span class="module-card-time lang-en">~25 min</span><span class="module-card-time lang-zh" style="display:none">約 25 分鐘</span></div>
+    </a>
+    <a class="module-card" href="27-trend-vol.html">
+      <span class="module-card-num">27</span>
+      <div class="module-card-title"><span class="lang-en">Trend Gate × Volatility Target</span><span class="lang-zh" style="display:none">趨勢閘門 × 波動率目標</span></div>
+      <div class="module-card-meta"><span class="module-card-time lang-en">~30 min</span><span class="module-card-time lang-zh" style="display:none">約 30 分鐘</span></div>
+    </a>
+    <a class="module-card" href="28-backtest-honesty.html">
+      <span class="module-card-num">28</span>
+      <div class="module-card-title"><span class="lang-en">Backtest Honesty and the Risk Budget</span><span class="lang-zh" style="display:none">回測的誠實與風險預算</span></div>
+      <div class="module-card-meta"><span class="module-card-time lang-en">~30 min</span><span class="module-card-time lang-zh" style="display:none">約 30 分鐘</span></div>
+    </a>
+  </div>
+  <div class="map-part"><span class="lang-en">Close</span><span class="lang-zh" style="display:none">收尾</span></div>
+  <div class="course-map">
+    <a class="module-card" href="29-framework-checklist.html">
+      <span class="module-card-num">29</span>
+      <div class="module-card-title"><span class="lang-en">The Framework on One Page</span><span class="lang-zh" style="display:none">框架總表與自檢清單</span></div>
+      <div class="module-card-meta"><span class="module-card-time lang-en">~15 min</span><span class="module-card-time lang-zh" style="display:none">約 15 分鐘</span></div>
+    </a>
+  </div>
+  <!-- MAP:END -->
+</div>
+
+<footer class="lc-wrap lc-footer">
+  <a href="/"><span class="lang-en">&larr; Back to the research site</span><span class="lang-zh" style="display:none">&larr; 回研究站</span></a>
+  <span class="lc-footer-note">INVESTMQUEST &middot; LEARN</span>
+</footer>
+
+<script src="/learn/learn.js"></script>
+</body>
+</html>
