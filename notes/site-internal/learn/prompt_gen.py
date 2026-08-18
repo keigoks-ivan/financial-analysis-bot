@@ -7,6 +7,7 @@ READ={
  'market':'I `id_skill_distillation.md` 的「## 3. Priced-in」「## 5」「## 8」；D `dd_skill_distillation.md` 的「## 3」（priced-in／IRR／Max DD／矛盾裁決）「## 5」「## 6」',
  'judgment':'D `dd_skill_distillation.md` 的「## 3」「## 4」（只讀規則精神，不得出現代碼）「## 5」；I `id_skill_distillation.md` 的「## 4. Risk & Falsification」「## 5. Judgment Playbook」「## 7」',
  'portfolio':'A `alloc_backtest_distillation.md` 全文',
+ 'cases':'WRITER_SPEC.md 的 §9 案例課格式（硬規則）＋ 簡報指定的站內數字來源檔（只查數字，grep 即可）＋ WebSearch 公開一手資料（年報／法說／財經媒體；每個數字都要查證）',
  'close':'BRIEFS.md 全部 29 段（你要收斂全部課程），以及 `docs/learn/*.html` 每一課的 `.module-goals` 區塊（用 grep 擷取即可，不必整頁讀）',
 }
 def prompt(num):

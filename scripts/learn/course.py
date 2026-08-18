@@ -282,7 +282,7 @@ REQUIRED = [
     ("module-goals", 1), ("war-story", 1), ("worked-example", 1), ("predict-block", 1),
     ("think-first", 2), ("pitfall", 1), ("checklist", 1), ("quiz-block", 1),
 ]
-SIZE_MIN, SIZE_MAX = 60_000, 170_000
+SIZE_MIN, SIZE_MAX = 60_000, 190_000
 
 
 def strip_site_nav(text):

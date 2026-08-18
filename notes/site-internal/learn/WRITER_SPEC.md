@@ -74,9 +74,9 @@
 
 ## 4. 允許使用的連結（只准用這張表；其他一律不准）
 
-`index.html`　`review.html`　與以下 29 個檔名（相對路徑，例如 `href="06-capital-cycle.html"`）：
+`index.html`　`review.html`　與以下 36 個檔名（相對路徑，例如 `href="06-capital-cycle.html"`）：
 
-01-framework.html · 02-language-of-numbers.html · 03-demand.html · 04-supply.html · 05-profit-pool.html · 06-capital-cycle.html · 07-substitution.html · 08-business-model.html · 09-moat-sources.html · 10-moat-numbers.html · 11-roic-durability.html · 12-moat-trend.html · 13-growth-quality.html · 14-earnings-quality.html · 15-management-capital.html · 16-archetypes.html · 17-cyclicals.html · 18-price-expectations.html · 19-reflexivity.html · 20-valuation.html · 21-evidence.html · 22-thesis.html · 23-inversion.html · 24-act-wait-avoid.html · 25-biases-process.html · 26-portfolio-structure.html · 27-trend-vol.html · 28-backtest-honesty.html · 29-framework-checklist.html
+01-framework.html · 02-language-of-numbers.html · 03-demand.html · 04-supply.html · 05-profit-pool.html · 06-capital-cycle.html · 07-substitution.html · 08-business-model.html · 09-moat-sources.html · 10-moat-numbers.html · 11-roic-durability.html · 12-moat-trend.html · 13-growth-quality.html · 14-earnings-quality.html · 15-management-capital.html · 16-archetypes.html · 17-cyclicals.html · 18-price-expectations.html · 19-reflexivity.html · 20-valuation.html · 21-evidence.html · 22-thesis.html · 23-inversion.html · 24-act-wait-avoid.html · 25-biases-process.html · 26-portfolio-structure.html · 27-asset-allocation.html · 28-backtest-honesty.html · 29-framework-checklist.html · 30-case-tsmc.html · 31-case-micron.html · 32-case-jpmorgan.html · 33-case-uber.html · 34-case-ge.html · 35-case-nextera.html · 36-case-honhai.html
 
 ## 5. 交稿前自檢
 
@@ -93,3 +93,34 @@
 3. 組裝：`python3 scripts/learn/course.py inject NN notes/site-internal/learn/drafts/NN-slug-body.html [--script notes/site-internal/learn/drafts/NN-slug-script.js] --desc "One English sentence. 一句中文說明。"`
 4. 驗收：`python3 scripts/learn/course.py qc docs/learn/NN-slug.html`。有錯就改 drafts 檔、重跑 inject、再 qc。**直到 0 errors**。
 5. 最後回報：檔案大小、quiz 題數、試算器有無、你認為最弱的一段是哪裡（一句話）。
+
+---
+
+## §9 案例課格式（第六部・案例實戰，第 30–36 課；2026-08-18 新增）
+
+案例課的目的：**把整套框架用在一家真實公司上，凍結在某個時點，只用當時查得到的資訊走一遍，讓讀者先下判斷，再揭曉後來發生什麼。** 這是「時光機」型練習——實證上最有效的學習方式（worked example → 讀者自己預測 → 揭曉 → 事後檢討）。
+
+### 9.1 結構（照這個順序；每節英中並列）
+1. **開場：凍結日的世界**（~1 節）——寫清楚「現在是 YYYY 年 M 月」，當時股價、市值、市場在怕什麼／在期待什麼、剛發生的事件。**全文在揭曉之前，只能用凍結日之前公開可得的資訊**；不得偷渡事後才知道的事（審稿人會逐段抓「事後之明」）。
+2. **第一部練習：產業（報酬從哪裡來）**——需求引擎、供給紀律、資本週期位置、替代威脅；引用第 03–07 課的工具，每個工具用一句話提醒讀者它是什麼（連結該課）。
+3. **第二部練習：生意（好生意長什麼樣）**——商業模式、護城河來源與證據、ROIC 與持續期、成長與獲利品質、經營層與資本配置（第 08–15 課）。
+4. **第三部練習：市場（價格假設了什麼）**——原型歸類（第 16 課）、循環位置（第 17 課，若適用）、價格內含的預期（第 18 課）、反身性（第 19 課，若適用）、估值只在最後（第 20 課）。
+5. **第四部練習：判斷**——證據分級、寫一個可證偽的論點與殺手假設、反過來想、進場／等待／迴避的裁決與觸發條件（第 21–24 課）。**這裡放 `.predict-block`：請讀者在揭曉前寫下自己的裁決與理由。**
+6. **第五部練習：部位**——如果進場，放在組合的什麼角色、多大、什麼情況下賣（第 26 課）；如果不進場，寫下什麼會讓你改變主意。
+7. **揭曉：後來發生了什麼**——用真實數字（股價、EPS、事件）講之後 2–5 年；`details.think-first` 先收起來，讀者按了才看。
+8. **事後檢討**——哪些判斷對、哪些錯、**錯的是「當時就該看到的」還是「當時不可能知道的」**（第 25 課的分類）；如果讀者當時裁決是「迴避」而股價後來大漲，也要講清楚「迴避不一定錯」（結果 ≠ 過程）。
+9. **這個原型教我們的三件事**（`.takeaway` ×1 ＋ 三條 checklist）。
+10. **接回框架**——連到這個案例用到的每一課（用允許的檔名）。
+11. **quiz 8–10 題**：至少 5 題是「換一個相似情境你會怎麼判斷」的遷移題；`from` 兩題交錯複習照簡報。
+
+### 9.2 硬規則
+- **真實公司、真實日期、真實數字**；每個數字寫「約」＋期間＋出處類型（年報／法說／新聞／資料商）。站內 `docs/dd/`、`docs/id/` 檔案**可以拿來查數字**（grep），但**不得引用其中的裁決、評級、口吻或任何內部欄位名**；課文是獨立寫成的教學案例，不是站內報告的摘要。用到的關鍵數字若站內檔案與 WebSearch 不一致，以公開一手來源為準。
+- **凍結紀律**：揭曉之前的每一段都要能通過「凍結日當天的人寫得出來嗎？」這個測試。
+- **不做投資建議**：揭曉之後不寫「所以現在該買／該賣」；只寫框架怎麼用、判斷怎麼被驗證或推翻。
+- **中文淺白**：短句、一句一個意思、先結論後理由、專有名詞立刻白話；像跟一個聰明但沒學過財務的朋友講。英文同等品質。
+- 全形標點、去個人化、引號鐵律、排版鐵律照 §1–§8。
+- 篇幅目標 100–140KB；至少 1 個試算器或 1 個 fill-blank（例如：用凍結日的數字算隱含成長率或反推 P/E）。
+
+> 2026-08-18 補充（讀者要求，適用所有課）：**舉例以美股（美國上市公司）為主；台股例子只用台積電**。案例課的主角公司照簡報，但課內其他配角例子同樣以美股為主。
+
+**⛔ 鐵律：禁止執行任何會改變工作區或索引的 git 指令（checkout／restore／stash／reset／clean／add／commit／pull）。這個 repo 同時有多個 agent 在改不同檔案，`git checkout --` 會把別人的成果整批洗掉（2026-08-18 已發生一次）。只准 `git status`／`git diff`／`git log` 這類唯讀指令。QC 失敗只能改自己的檔案來修。**

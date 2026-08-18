@@ -5,7 +5,7 @@
 ## 讀什麼
 1. `notes/site-internal/learn/WRITER_SPEC.md`（規格）＋ `BRIEFS.md` 的該課段（這一課本來該涵蓋什麼）。
 2. 該課頁面 `docs/learn/NN-slug.html`。**只改 `<!-- BODY:START -->…<!-- BODY:END -->` 與 `<!-- SCRIPT:START -->…<!-- SCRIPT:END -->` 之間，以及 meta description**；其他一律不動。
-3. 需要時對照素材（`dd_skill_distillation.md`／`id_skill_distillation.md`／`alloc_backtest_distillation.md`）驗證數字與案例。
+3. 需要時對照素材（`dd_skill_distillation.md`／`id_skill_distillation.md`／`alloc_backtest_distillation.md`；第 27 課用 `asset_alloc_evidence.md`）驗證數字與案例。
 
 ## 審什麼（逐條，缺就修）
 A. **正確性**（最高優先）：財務概念、公式、案例年份與量級、quiz 正確答案索引 `a`、exp 的推理、試算器算式與極端值（除以零／NaN）。錯的直接改。不確定的數字改成「約」＋量級或刪掉。
@@ -26,3 +26,5 @@ H. **大小**：60–170KB 內；若 <80KB 通常是深度不足，補；若 >15
 - 發現的問題（按嚴重度：正確性 > 覆蓋 > 深度 > 教學設計 > 語言），每條一行「問題→怎麼改了」。
 - 沒改但值得注意的（若有）。
 - 最後一行：`QC: 0 errors, <size>KB, quiz <n>`。
+
+**⛔ 鐵律：禁止執行任何會改變工作區或索引的 git 指令（checkout／restore／stash／reset／clean／add／commit／pull）。這個 repo 同時有多個 agent 在改不同檔案，`git checkout --` 會把別人的成果整批洗掉（2026-08-18 已發生一次）。只准 `git status`／`git diff`／`git log` 這類唯讀指令。QC 失敗只能改自己的檔案來修。**
