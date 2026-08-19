@@ -24,6 +24,15 @@ name: Intel 2.0 Daily Chain
 # （`date -u +%u` == 7），平日鏈只跑 monitor → detective → intel → render。
 on:
   workflow_dispatch:
+    inputs:
+      force_weekly:
+        description: "強制跑週日段（crossasset／catalyst／kill-watch），測試用"
+        type: boolean
+        default: false
+      skip_intel:
+        description: "跳過 intel 抓取＋LLM（省 token；只重繪頁面），測試用"
+        type: boolean
+        default: false
   schedule:
     - cron: "30 22 * * 0-4"
 
@@ -60,7 +69,7 @@ jobs:
       - name: Compute dates and weekly-gate
         run: |
           echo "DATE=$(TZ=Asia/Taipei date +%Y-%m-%d)" >> "$GITHUB_ENV"
-          if [ "$(date -u +%u)" = "7" ]; then
+          if [ "$(date -u +%u)" = "7" ] || [ "${{ inputs.force_weekly }}" = "true" ]; then
             echo "IS_SUNDAY=true" >> "$GITHUB_ENV"
           else
             echo "IS_SUNDAY=false" >> "$GITHUB_ENV"
@@ -185,6 +194,7 @@ jobs:
       #    threads/deepread via run_daily.py --skip-fetch）
       # ---------------------------------------------------------------
       - name: "④ Intel — fetch sources"
+        if: ${{ inputs.skip_intel != true }}
         id: intel_fetch
         continue-on-error: true
         timeout-minutes: 10
@@ -201,6 +211,7 @@ jobs:
           exit 0
 
       - name: "④ Intel — install Claude Code CLI"
+        if: ${{ inputs.skip_intel != true }}
         continue-on-error: true
         timeout-minutes: 5
         run: |
@@ -210,6 +221,7 @@ jobs:
           echo "::endgroup::"
 
       - name: "④ Intel — classify + summarize + threads + deepread + write daily JSON"
+        if: ${{ inputs.skip_intel != true }}
         id: intel_run
         continue-on-error: true
         timeout-minutes: 25
