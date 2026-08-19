@@ -1,0 +1,337 @@
+name: Intel 2.0 Daily Chain
+
+# 情報監視器 2.0 Phase A（notes/site-internal/intel/DESIGN.md「2026-08-20 2.0
+# Phase A」段）：把原本六支各自獨立的 cron workflow（monitor-daily /
+# detective-daily / crossasset-weekly / weekly-catalyst-chain /
+# kill-watch-weekly / intel-daily）串成單一線性鏈，最後統一跑
+# scripts/intel/render.py 產出 /intel/ 的 8 個分頁（今日／變化／儀表／週更／
+# 行事曆／故事線／封存／狀態）。
+#
+# 六支原檔**全部保留不動**，本檔是新增的平行鏈——原檔仍各自照舊排程跑，
+# 作為 rollback 路徑；本鏈失敗不影響原檔，原檔失敗也不影響本鏈（各自獨立
+# commit）。
+#
+# 排程：cron "30 22 * * 0-4" = UTC 週日～週四 22:30 = 台北時間週一～週五
+# 06:30（TPE = UTC+8）。
+#
+# 每個 pipeline 段落都 continue-on-error: true，段落內部用 `set +e` 手動控管
+# exit code（不讓單一段落中途失敗就跳過同段其餘指令），並把
+# name|outcome|seconds 寫進 /tmp/chain_status.txt，供 render.py 之前的
+# 「Write chain status json」步驟彙整成 docs/intel/data/chain_status.json
+# （render.py 的狀態頁若讀到這個檔案，會逐步顯示 ✅/❌；讀不到就照舊跳過）。
+#
+# 每週資料（crowding／rotation／regime／catalyst／kill-watch）只在週日跑
+# （`date -u +%u` == 7），平日鏈只跑 monitor → detective → intel → render。
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 22 * * 0-4"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: intel-2-daily
+  cancel-in-progress: false
+
+jobs:
+  intel-2-chain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      # 六支來源 workflow 各自 pip install 的聯集（逐字照抄，不臆測版本）：
+      #   monitor-daily:    yfinance>=0.2.40 pandas requests openpyxl
+      #   detective-daily:  （無額外安裝）
+      #   crossasset-weekly: yfinance>=0.2.40 pandas requests
+      #   weekly-catalyst-chain: yfinance>=0.2.40 requests
+      #   kill-watch-weekly: requests
+      #   intel-daily:      feedparser pyyaml requests beautifulsoup4 yfinance
+      - name: Install dependencies (union of all chained workflows)
+        run: pip install "yfinance>=0.2.40" pandas requests openpyxl feedparser pyyaml beautifulsoup4
+
+      - name: Compute dates and weekly-gate
+        run: |
+          echo "DATE=$(TZ=Asia/Taipei date +%Y-%m-%d)" >> "$GITHUB_ENV"
+          if [ "$(date -u +%u)" = "7" ]; then
+            echo "IS_SUNDAY=true" >> "$GITHUB_ENV"
+          else
+            echo "IS_SUNDAY=false" >> "$GITHUB_ENV"
+          fi
+          rm -f /tmp/chain_status.txt
+          touch /tmp/chain_status.txt
+
+      # ---------------------------------------------------------------
+      # ① monitor（同 monitor-daily.yml）
+      # ---------------------------------------------------------------
+      - name: "① Monitor — market data + stress score + internals + home pulse"
+        id: monitor
+        continue-on-error: true
+        timeout-minutes: 15
+        run: |
+          echo "::group::monitor"
+          set +e
+          T0=$(date +%s)
+          python scripts/build_monitor.py
+          rc=$?
+          python scripts/build_monitor_score.py || echo "::warning::stress score build failed; monitor data unaffected"
+          python scripts/build_monitor_internals.py || echo "::warning::internals build failed; monitor core unaffected"
+          python scripts/build_home_pulse.py || echo "::warning::home pulse build failed; monitor core unaffected"
+          T1=$(date +%s)
+          if [ $rc -eq 0 ]; then outcome=success; else outcome=failure; echo "::warning::monitor failed, keeping yesterday's files"; fi
+          echo "monitor|$outcome|$((T1-T0))" >> /tmp/chain_status.txt
+          echo "::endgroup::"
+          exit $rc
+
+      # ---------------------------------------------------------------
+      # ② detective（同 detective-daily.yml 的機械層部分；email 通知仍留在
+      #    detective-daily.yml 自己的排程跑，本鏈不重複寄信）
+      # ---------------------------------------------------------------
+      - name: "② Detective — alert network + PM flags"
+        id: detective
+        continue-on-error: true
+        timeout-minutes: 10
+        run: |
+          echo "::group::detective"
+          set +e
+          T0=$(date +%s)
+          python scripts/build_detective.py
+          rc=$?
+          python scripts/build_pm_flags.py || echo "::warning::PM flags build failed; detective core unaffected"
+          T1=$(date +%s)
+          if [ $rc -eq 0 ]; then outcome=success; else outcome=failure; echo "::warning::detective failed, keeping yesterday's files"; fi
+          echo "detective|$outcome|$((T1-T0))" >> /tmp/chain_status.txt
+          echo "::endgroup::"
+          exit $rc
+
+      # ---------------------------------------------------------------
+      # ③ 週日限定：crossasset（crowding/rotation/regime）＋ catalyst ＋
+      #    kill-watch（同 crossasset-weekly.yml / weekly-catalyst-chain.yml /
+      #    kill-watch-weekly.yml）
+      # ---------------------------------------------------------------
+      - name: "③ Cross-asset weekly (Sun only) — crowding + rotation + regime"
+        id: crossasset
+        if: env.IS_SUNDAY == 'true'
+        continue-on-error: true
+        timeout-minutes: 15
+        run: |
+          echo "::group::crossasset"
+          set +e
+          T0=$(date +%s)
+          ok=0; fail=0
+          for s in build_crowding build_rotation build_regime; do
+            python scripts/$s.py
+            if [ $? -ne 0 ]; then
+              echo "::warning::scripts/$s.py failed — continuing"
+              fail=$((fail+1))
+            else
+              ok=$((ok+1))
+            fi
+          done
+          T1=$(date +%s)
+          if [ $ok -gt 0 ]; then outcome=success; else outcome=failure; echo "::warning::crossasset failed, keeping yesterday's files"; fi
+          echo "crossasset|$outcome|$((T1-T0))" >> /tmp/chain_status.txt
+          echo "::endgroup::"
+          [ $ok -gt 0 ] && exit 0 || exit 1
+
+      - name: "③ Catalyst calendar weekly (Sun only)"
+        id: catalyst
+        if: env.IS_SUNDAY == 'true'
+        continue-on-error: true
+        timeout-minutes: 15
+        run: |
+          echo "::group::catalyst"
+          set +e
+          T0=$(date +%s)
+          python scripts/build_catalyst_calendar.py
+          rc=$?
+          if [ $rc -eq 0 ]; then
+            python3 scripts/build_variance_tracker.py || echo "::warning::variance tracker build failed; catalyst calendar unaffected"
+            python scripts/build_catalyst_page.py || { echo "::warning::catalyst page render failed"; rc=1; }
+          fi
+          T1=$(date +%s)
+          if [ $rc -eq 0 ]; then outcome=success; else outcome=failure; echo "::warning::catalyst failed, keeping yesterday's files"; fi
+          echo "catalyst|$outcome|$((T1-T0))" >> /tmp/chain_status.txt
+          echo "::endgroup::"
+          exit $rc
+
+      - name: "③ Kill-watch weekly (Sun only)"
+        id: killwatch
+        if: env.IS_SUNDAY == 'true'
+        continue-on-error: true
+        timeout-minutes: 10
+        run: |
+          echo "::group::killwatch"
+          set +e
+          T0=$(date +%s)
+          python scripts/sync_kill_registry.py || echo "sync_kill_registry failed — continuing with existing registry"
+          python scripts/build_kill_watch.py
+          rc=$?
+          T1=$(date +%s)
+          if [ $rc -eq 0 ]; then outcome=success; else outcome=failure; echo "::warning::killwatch failed, keeping yesterday's files"; fi
+          echo "killwatch|$outcome|$((T1-T0))" >> /tmp/chain_status.txt
+          echo "::endgroup::"
+          exit $rc
+
+      # ---------------------------------------------------------------
+      # ④ intel pipeline（同 intel-daily.yml：fetch → classify/summarize/
+      #    threads/deepread via run_daily.py --skip-fetch）
+      # ---------------------------------------------------------------
+      - name: "④ Intel — fetch sources"
+        id: intel_fetch
+        continue-on-error: true
+        timeout-minutes: 10
+        run: |
+          echo "::group::intel_fetch"
+          set +e
+          T0=$(date +%s)
+          python3 scripts/intel/fetch.py --date "$DATE"
+          rc=$?
+          T1=$(date +%s)
+          if [ $rc -ne 0 ]; then echo "::warning::fetch.py reported degraded source health (see log); continuing with whatever pending JSON was written"; fi
+          echo "intel_fetch|$([ $rc -eq 0 ] && echo success || echo warning)|$((T1-T0))" >> /tmp/chain_status.txt
+          echo "::endgroup::"
+          exit 0
+
+      - name: "④ Intel — install Claude Code CLI"
+        continue-on-error: true
+        timeout-minutes: 5
+        run: |
+          echo "::group::intel_cli_install"
+          npm install -g @anthropic-ai/claude-code
+          claude --version
+          echo "::endgroup::"
+
+      - name: "④ Intel — classify + summarize + threads + deepread + write daily JSON"
+        id: intel_run
+        continue-on-error: true
+        timeout-minutes: 25
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          echo "::group::intel_run"
+          unset ANTHROPIC_API_KEY
+          unset ANTHROPIC_AUTH_TOKEN
+          unset ANTHROPIC_BASE_URL
+          set +e
+          T0=$(date +%s)
+          python3 scripts/intel/run_daily.py --date "$DATE" --skip-fetch
+          rc=$?
+          T1=$(date +%s)
+          if [ $rc -eq 0 ]; then outcome=success; else outcome=failure; echo "::warning::intel_run failed, keeping yesterday's files"; fi
+          echo "intel_run|$outcome|$((T1-T0))" >> /tmp/chain_status.txt
+          echo "::endgroup::"
+          exit $rc
+
+      # ---------------------------------------------------------------
+      # 寫 chain_status.json（render.py 之前，讓 status.html 可顯示每步結果）
+      # ---------------------------------------------------------------
+      - name: Write chain status json
+        if: always()
+        run: |
+          echo "::group::chain_status"
+          mkdir -p docs/intel/data
+          python3 - "$DATE" <<'PYEOF'
+          import json
+          import sys
+          date = sys.argv[1]
+          steps = []
+          try:
+              with open("/tmp/chain_status.txt", encoding="utf-8") as f:
+                  for line in f:
+                      line = line.strip()
+                      if not line:
+                          continue
+                      parts = line.split("|")
+                      if len(parts) != 3:
+                          continue
+                      name, outcome, seconds = parts
+                      try:
+                          seconds = int(seconds)
+                      except ValueError:
+                          seconds = None
+                      steps.append({"name": name, "outcome": outcome, "seconds": seconds})
+          except FileNotFoundError:
+              pass
+          payload = {"date": date, "steps": steps}
+          with open("docs/intel/data/chain_status.json", "w", encoding="utf-8") as f:
+              json.dump(payload, f, ensure_ascii=False, indent=2)
+              f.write("\n")
+          print(json.dumps(payload, ensure_ascii=False, indent=2))
+          PYEOF
+          echo "::endgroup::"
+
+      # ---------------------------------------------------------------
+      # ⑤ render.py 永遠跑（即使前面所有段落都失敗，仍用既有 JSON 重繪頁面）
+      # ---------------------------------------------------------------
+      - name: "⑤ Render /intel/ pages"
+        id: render
+        if: always()
+        timeout-minutes: 10
+        run: |
+          echo "::group::render"
+          python3 scripts/intel/render.py --date "$DATE"
+          echo "::endgroup::"
+
+      # ---------------------------------------------------------------
+      # ⑥ 單一 commit：各來源 workflow 原本會 add 的路徑聯集 + docs/intel/
+      # ---------------------------------------------------------------
+      - name: Commit and push if changed
+        if: always()
+        run: |
+          PATHS=""
+          for p in \
+            docs/monitor/data/latest.json \
+            docs/monitor/data/alerts.json \
+            docs/monitor/data/score_history.json \
+            docs/monitor/data/internals.json \
+            docs/monitor/data/internals_history.json \
+            docs/monitor/data/internals_alerts.json \
+            docs/home/pulse.json \
+            docs/detective/data/latest.json \
+            docs/detective/data/state.json \
+            docs/detective/data/alert_history.json \
+            docs/pm/flags.json \
+            data/cot_history.json \
+            data/crowding_volume.json \
+            data/rotation_bench.json \
+            data/regime_prices.json \
+            docs/crowding/data/latest.json \
+            docs/crowding/index.html \
+            docs/rotation/data/latest.json \
+            docs/rotation/index.html \
+            docs/regime/data/latest.json \
+            docs/regime/index.html \
+            docs/catalyst \
+            docs/detective/data/kill_watch.json \
+            docs/detective/data/kill_registry.json \
+            docs/intel; do
+            [ -e "$p" ] && PATHS="$PATHS $p"
+          done
+          if git status --porcelain $PATHS | grep -q .; then
+            echo "Changes detected"
+          else
+            echo "No changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add $PATHS
+          git commit -m "intel-2: daily chain ${DATE}"
+          for i in 1 2 3 4 5 6; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+            git pull --rebase --autostash origin main || { echo "Rebase failed"; exit 1; }
+            sleep $((RANDOM % 20 + 5))
+          done
+          echo "Push failed after 6 attempts"
+          exit 1

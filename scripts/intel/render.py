@@ -61,6 +61,20 @@ DOCS_INTEL = ROOT / "docs" / "intel"
 DATA_DIR = DOCS_INTEL / "data"
 PENDING_DIR = DOCS_INTEL / "pending"
 HEALTH_FILE = DATA_DIR / "sources_health.json"
+THREADS_FILE = DATA_DIR / "threads.json"
+
+# 2.0 Phase A：跨站台唯讀資料源（各自獨立 fail-safe，缺檔/缺欄位一律回 DASH，
+# 不讓任一來源拖垮整頁）。見 notes/site-internal/intel/DESIGN.md 2026-08-20 節。
+DOCS = ROOT / "docs"
+MONITOR_SCORE_FILE = DOCS / "monitor" / "data" / "score_history.json"
+DETECTIVE_LATEST_FILE = DOCS / "detective" / "data" / "latest.json"
+DETECTIVE_STATE_FILE = DOCS / "detective" / "data" / "state.json"
+KILL_WATCH_FILE = DOCS / "detective" / "data" / "kill_watch.json"
+REGIME_LATEST_FILE = DOCS / "regime" / "data" / "latest.json"
+MACRO_CLOCK_FILE = DOCS / "macro" / "data" / "clock.json"
+RISK_GAUGE_FILE = DOCS / "cache" / "risk_gauge.json"
+ROTATION_RADAR_FILE = DOCS / "rotation" / "data" / "radar.json"
+CATALYST_CALENDAR_FILE = DOCS / "catalyst" / "calendar.json"
 
 TAIPEI_OFFSET = timedelta(hours=8)
 STALE_HOURS = 30
@@ -111,6 +125,15 @@ def load_json(path: Path):
     import json
     with path.open("r", encoding="utf-8") as f:
         return json.load(f)
+
+
+def load_json_safe(path: Path):
+    """load_json 的 fail-safe 版本：任何例外（缺檔／壞 JSON／權限）一律回 None，
+    呼叫端用 `or {}` 接手，不得讓任一跨站台資料源拖垮整頁渲染。"""
+    try:
+        return load_json(path)
+    except Exception:
+        return None
 
 
 def load_sources_yml():
@@ -962,6 +985,18 @@ HEAT_SORT_RANK = {"up": 0, "flat": 1, "down": 2}
 THREAD_OPEN_TOP_N = 3  # 升溫的前 N 條預設展開
 
 
+def _thread_sort_key(t: dict):
+    """排序＝升溫→持平→降溫，同組內依今日新增數 desc、再依天數 desc。抽成
+    module-level 函式讓 index 頁「前 5 條預覽」與 render_threads() 本身共用同一
+    順序定義，不會兩處各自維護一份排序邏輯而漂移。"""
+    heat = t.get("heat") if t.get("heat") in HEAT_ARROW else "flat"
+    return (
+        HEAT_SORT_RANK.get(heat, 1),
+        -(t.get("today_count") or 0),
+        -(t.get("day_n") or 0),
+    )
+
+
 def _thread_source_short(url: str) -> str:
     """從最新標題的 URL 取網域當來源短名（thread.latest[] 只有 url/title/date，
     沒有 source_name/source_short 欄位，故從連結本身推短名，非資料造假）。"""
@@ -975,24 +1010,20 @@ def _thread_source_short(url: str) -> str:
     return host[:16]
 
 
-def render_threads(threads: list) -> str:
+def render_threads(threads: list, detail_limit: int | None = 3) -> str:
     """進行中的故事線：一行一條清單（`<details>`/`<summary>`，無 JS）——
-    熱度 pill／主題／第 N 天／今日 +n／14 天 sparkline／最新一則標題（單行截斷）
-    的緊湊列；點列展開最新 2–3 則（連原文／來源短名／日期）。排序＝升溫→持平→
-    降溫，同組內依今日新增數 desc、再依天數 desc；升溫前 3 條預設展開。空陣列
-    由呼叫端負責整段（含 h2）省略。"""
+    熱度 pill／主題／第 N 天／今日 +n／（有 total_count 時）共 T 張／14 天
+    sparkline／最新一則標題（單行截斷）的緊湊列；點列展開最新則（連原文／
+    來源短名／日期）。排序＝升溫→持平→降溫，同組內依今日新增數 desc、再依
+    天數 desc；升溫前 3 條預設展開。空陣列由呼叫端負責整段（含 h2）省略。
+
+    detail_limit：展開內容顯示的則數上限；index 頁前 5 條預覽維持 3 則
+    （保持頁面不加長），threads.html 完整清單傳 None 顯示全部
+    card_ids_latest（規格：「expanded shows all card_ids_latest」）。"""
     if not threads:
         return ""
 
-    def _sort_key(t: dict):
-        heat = t.get("heat") if t.get("heat") in HEAT_ARROW else "flat"
-        return (
-            HEAT_SORT_RANK.get(heat, 1),
-            -(t.get("today_count") or 0),
-            -(t.get("day_n") or 0),
-        )
-
-    ordered = sorted(threads, key=_sort_key)
+    ordered = sorted(threads, key=_thread_sort_key)
     up_total = sum(1 for t in ordered if (t.get("heat") or "flat") == "up")
     open_budget = min(THREAD_OPEN_TOP_N, up_total)
 
@@ -1015,6 +1046,12 @@ def render_threads(threads: list) -> str:
         if is_open:
             opened += 1
 
+        total_count = t.get("total_count")
+        total_cell = (
+            f'<span class="tht">共 {esc(fmt_num(int(total_count)))} 張</span>'
+            if isinstance(total_count, (int, float)) else ""
+        )
+
         # 收合行的「最新一則標題」欄
         if latest:
             top = latest[0]
@@ -1031,9 +1068,10 @@ def render_threads(threads: list) -> str:
         else:
             latest_cell = f'<span class="mut">{DASH}</span>'
 
-        # 展開內容：最新 2–3 則（連原文／來源短名／日期）
+        # 展開內容：最新則（連原文／來源短名／日期）——detail_limit=None 顯示全部
         detail_items = []
-        for e in latest[:3]:
+        detail_source = latest if detail_limit is None else latest[:detail_limit]
+        for e in detail_source:
             eu = e.get("url") or ""
             et = esc((e.get("title") or "")[:160])
             if not et:
@@ -1058,6 +1096,7 @@ def render_threads(threads: list) -> str:
             f'<span class="tt">{title_zh}</span>'
             f'<span class="thd">第 {esc(fmt_num(day_n))} 天</span>'
             f'<span class="thn">今日 +{esc(fmt_num(today_n))}</span>'
+            f'{total_cell}'
             f'<span class="thsp">{spark}</span>'
             f'<span class="thlast">{latest_cell}</span>'
             f'<span class="chev"></span>'
@@ -1066,6 +1105,59 @@ def render_threads(threads: list) -> str:
             f"</details>"
         )
     return '<div class="threads">' + "\n".join(rows_html) + "</div>"
+
+
+def compute_full_threads(date_str: str) -> list:
+    """故事線分頁（threads.html）用：讀 threads.json 全部條目（不受單日 JSON 挑選
+    名額限制），依規格公式機械算出 today_count／prev／heat／day_n／total／
+    sparkline，補齊 render_threads() 需要的欄位。任何單一條目算壞不擋其餘條目。"""
+    data = load_json_safe(THREADS_FILE) or {}
+    threads = data.get("threads") or []
+    try:
+        td = datetime.strptime(date_str, "%Y-%m-%d").date()
+    except ValueError:
+        td = None
+
+    out = []
+    for t in threads:
+        try:
+            dc = t.get("daily_counts") or {}
+            today_count = dc.get(date_str, 0) or 0
+            prior_days = sorted(d for d in dc if d < date_str)
+            prev = dc.get(prior_days[-1], 0) if prior_days else 0
+            last_seen = t.get("last_seen") or ""
+            if last_seen and last_seen < date_str:
+                heat = "down"
+            elif today_count > prev:
+                heat = "up"
+            elif today_count < prev:
+                heat = "down"
+            else:
+                heat = "flat"
+            total = sum(v for v in dc.values() if isinstance(v, (int, float)))
+            day_n = 1
+            first_seen = t.get("first_seen")
+            if td and first_seen:
+                try:
+                    fd = datetime.strptime(first_seen, "%Y-%m-%d").date()
+                    day_n = max((td - fd).days + 1, 1)
+                except ValueError:
+                    day_n = 1
+            sparkline = []
+            if td:
+                for i in range(13, -1, -1):
+                    ds = (td - timedelta(days=i)).isoformat()
+                    sparkline.append(dc.get(ds, 0) or 0)
+            tt = dict(t)
+            tt.update(
+                today_count=today_count, heat=heat, day_n=day_n,
+                total_count=total, latest=t.get("card_ids_latest") or [],
+                sparkline=sparkline,
+            )
+            out.append(tt)
+        except Exception:
+            continue
+    return out
 
 
 # ------------------------------------------------------------- aside boxes
@@ -1252,12 +1344,348 @@ def _mast_chips(payload: dict, cards: list, archive_link: bool) -> str:
     return '<div class="chips">' + "".join(chips) + "</div>"
 
 
+# ------------------------------------------------------------- 2.0 分頁殼
+
+TABS = [
+    ("index.html", "今日", None),
+    ("change.html", "變化", "change_n"),
+    ("gauges.html", "儀表", None),
+    ("weekly.html", "週更", None),
+    ("calendar.html", "行事曆", "cal_n"),
+    ("threads.html", "故事線", None),
+    ("archive.html", "封存", None),
+    ("status.html", "狀態", None),
+]
+
+
+def render_tabstrip(active: str, badges: dict = None) -> str:
+    badges = badges or {}
+    items = []
+    for href, label, badge_key in TABS:
+        cls = "tab on" if href == active else "tab"
+        n = badges.get(badge_key) if badge_key else None
+        n_html = f'<span class="n">{esc(fmt_num(n))}</span>' if n not in (None, "") else ""
+        items.append(f'<a class="{cls}" href="/intel/{href}">{esc(label)}{n_html}</a>')
+    return '<nav class="tabstrip" aria-label="情報監視器分頁">' + "".join(items) + "</nav>"
+
+
+def compute_tab_badges(date_str: str, calendar: list, det: dict) -> dict:
+    """分頁小數字：變化＝訊號數、行事曆＝未來 14 天事件數（intel calendar ∪
+    catalyst events）。任何一步失敗都回 None（render_tabstrip 略過不顯示）。"""
+    badges = {}
+    try:
+        badges["change_n"] = len((det or {}).get("signals") or [])
+    except Exception:
+        badges["change_n"] = None
+    try:
+        base_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+        days = {(base_date + timedelta(days=i)).isoformat() for i in range(14)}
+        cat = load_json_safe(CATALYST_CALENDAR_FILE) or {}
+        n = sum(1 for e in (calendar or []) if e.get("date") in days)
+        n += sum(1 for e in (cat.get("events") or []) if e.get("date") in days)
+        badges["cal_n"] = n
+    except Exception:
+        badges["cal_n"] = None
+    return badges
+
+
+def _util_chips() -> str:
+    return (
+        '<div class="chips"><a class="chip" href="/intel/">回今日</a>'
+        '<a class="chip" href="/intel/archive.html">歷史</a>'
+        '<a class="chip" href="/intel/status.html">狀態</a></div>'
+    )
+
+
+# --------------------------------------------------------- 1 現況（狀態列）
+
+def _band_zh_for_score(score, bands) -> str:
+    try:
+        s = float(score)
+    except (TypeError, ValueError):
+        return ""
+    bz = {"calm": "平靜", "normal": "正常", "warming": "升溫", "tense": "緊張", "extreme": "極端"}
+    for k, rng in (bands or {}).items():
+        try:
+            a, b = rng
+            if a <= s < b:
+                return bz.get(k, k)
+        except (TypeError, ValueError):
+            continue
+    return ""
+
+
+def load_status_snapshot() -> dict:
+    """「現況」六格的原始數字：讀 6 個跨站台 JSON，各自獨立 fail-safe。
+    `_detective` 鍵把完整 detective payload 一併帶出，供「變化」預覽段複用，
+    避免同一份 JSON 讀兩次。"""
+    out = {}
+
+    sh = load_json_safe(MONITOR_SCORE_FILE) or {}
+    series = sh.get("series") or []
+    last = series[-1] if series else {}
+    score = last.get("s")
+    out["stress_score"] = fmt_num(score) or DASH
+    out["stress_band"] = _band_zh_for_score(score, sh.get("bands"))
+    out["stress_int"] = fmt_num(last.get("int_s"))
+    out["stress_date"] = last.get("d") or ""
+
+    det = load_json_safe(DETECTIVE_LATEST_FILE) or {}
+    al = det.get("alert_level") or {}
+    counts = det.get("counts") or {}
+    out["alert_score"] = fmt_num(al.get("score")) or DASH
+    out["alert_band"] = al.get("band_label") or ""
+    out["alert_red"] = counts.get("red")
+    out["alert_yellow"] = counts.get("yellow")
+    out["alert_escalated"] = counts.get("escalated")
+    out["_detective"] = det
+
+    reg = load_json_safe(REGIME_LATEST_FILE) or {}
+    out["regime_label"] = (reg.get("composite") or {}).get("label_zh") or DASH
+
+    clock = load_json_safe(MACRO_CLOCK_FILE) or {}
+    out["clock_quadrant"] = clock.get("quadrant") or DASH
+
+    rg = load_json_safe(RISK_GAUGE_FILE) or {}
+    try:
+        rg_label = rg.get("label_zh")
+        rg_score = rg.get("score")
+        out["risk_gauge"] = (
+            f"{rg_label} {float(rg_score):.2f}" if (rg_label and rg_score is not None) else DASH
+        )
+    except (TypeError, ValueError):
+        out["risk_gauge"] = DASH
+
+    radar = load_json_safe(ROTATION_RADAR_FILE) or {}
+    ca = next(
+        (u for u in (radar.get("universes") or []) if u.get("key") == "cross_asset"), None
+    )
+    scored = []
+    for m in (ca or {}).get("members") or []:
+        exc = ((m.get("frames") or {}).get("120") or {}).get("exc")
+        if exc is None:
+            continue
+        try:
+            scored.append((m.get("label") or "", float(exc)))
+        except (TypeError, ValueError):
+            continue
+    scored.sort(key=lambda x: -x[1])
+    out["radar_top3"] = "／".join(
+        f"{lbl} {'+' if v >= 0 else ''}{fmt_num(v)}" for lbl, v in scored[:3]
+    ) or DASH
+
+    kw = load_json_safe(KILL_WATCH_FILE) or {}
+    out["kill_near"] = len(kw.get("near") or [])
+    out["kill_breached"] = len(kw.get("breached") or [])
+    out["_kill_watch"] = kw
+
+    return out
+
+
+def render_status_strip(snap: dict) -> str:
+    stress_sub = " · ".join(x for x in (
+        snap.get("stress_band") or "",
+        (f"內部 {snap['stress_int']}" if snap.get("stress_int") not in (None, "") else ""),
+        snap.get("stress_date") or "",
+    ) if x) or DASH
+
+    alert_bits = []
+    if snap.get("alert_band"):
+        alert_bits.append(snap["alert_band"])
+    if snap.get("alert_red") is not None:
+        alert_bits.append(f"{snap['alert_red']} 紅 {snap.get('alert_yellow') or 0} 黃")
+    if snap.get("alert_escalated") is not None:
+        alert_bits.append(f"升級 {snap['alert_escalated']}")
+    alert_sub = " · ".join(alert_bits) or DASH
+
+    tiles = [
+        '<div class="ss-tile"><div class="ss-lab">跨資產壓力（monitor）</div>'
+        f'<div class="ss-val">{esc(snap.get("stress_score") or DASH)}</div>'
+        f'<div class="ss-sub">{esc(stress_sub)}</div>'
+        '<a class="ss-link" href="/intel/gauges.html">儀表 →</a></div>',
+
+        '<div class="ss-tile"><div class="ss-lab">警戒度（detective）</div>'
+        f'<div class="ss-val">{esc(snap.get("alert_score") or DASH)}</div>'
+        f'<div class="ss-sub">{esc(alert_sub)}</div>'
+        '<a class="ss-link" href="/intel/change.html">變化 →</a></div>',
+
+        '<div class="ss-tile"><div class="ss-lab">Regime（週更）</div>'
+        f'<div class="ss-val ss-val-s">{esc(snap.get("regime_label") or DASH)}</div>'
+        '<a class="ss-link" href="/intel/weekly.html">週更 →</a></div>',
+
+        '<div class="ss-tile"><div class="ss-lab">宏觀時鐘 · 風險偏好</div>'
+        f'<div class="ss-val ss-val-s">{esc(snap.get("clock_quadrant") or DASH)}</div>'
+        f'<div class="ss-sub">{esc(snap.get("risk_gauge") or DASH)}</div>'
+        '<div class="ss-note">市場風險儀表保留在首頁</div></div>',
+
+        '<div class="ss-tile"><div class="ss-lab">輪動雷達 cross-asset 120d</div>'
+        f'<div class="ss-val ss-val-s">領先：{esc(snap.get("radar_top3") or DASH)}</div>'
+        '<a class="ss-link" href="/rotation/radar.html#cross_asset/120" '
+        'target="_blank" rel="noopener nofollow">開雷達 ↗</a></div>',
+
+        '<div class="ss-tile"><div class="ss-lab">證偽表（kill watch）</div>'
+        f'<div class="ss-val">{esc(fmt_num(snap.get("kill_near")) or "0")}</div>'
+        f'<div class="ss-sub">接近 · {esc(fmt_num(snap.get("kill_breached")) or "0")} 突破</div>'
+        '<a class="ss-link" href="/intel/change.html">對帳表 →</a></div>',
+    ]
+    return '<div class="ss-strip">' + "".join(tiles) + "</div>"
+
+
+# --------------------------------------------------------- 2 變化（訊號表）
+
+_SIG_STATE_LABEL = {
+    "new": "新", "active": "活躍", "escalated": "升級",
+    "cooling": "冷卻", "resolved": "解除", "cleared": "解除",
+}
+_SIG_SEV_LABEL = {"red": "紅", "yellow": "黃"}
+SIGNAL_HEAD = (
+    "<thead><tr><th>等級</th><th>訊號</th><th>來源層</th>"
+    "<th>首見</th><th>持續</th><th>狀態</th></tr></thead>"
+)
+
+
+def _signal_sort_rank(sig: dict) -> float:
+    sev = (sig.get("sev") or "").lower()
+    state = (sig.get("state") or "").lower()
+    r = 0.0 if sev == "red" else 1.0
+    r += 0.0 if state in ("escalated", "new") else 0.5
+    r += 1.0 if state == "cooling" else 0.0
+    return r
+
+
+def sorted_signals(signals: list) -> list:
+    """紅在前、新/升級在前、冷卻最後，同層再依 days_active 降冪。"""
+    return sorted(signals, key=lambda s: (_signal_sort_rank(s), -(s.get("days_active") or 0)))
+
+
+def _signal_row(sig: dict) -> str:
+    sev = (sig.get("sev") or "").lower()
+    sev_cls = "pill sred" if sev == "red" else "pill samber" if sev == "yellow" else "pill"
+    sev_label = _SIG_SEV_LABEL.get(sev, sev or DASH)
+    state = (sig.get("state") or "").lower()
+    state_label = _SIG_STATE_LABEL.get(state, state or DASH)
+    label = esc(sig.get("label") or "")
+    fact = esc(sig.get("fact") or sig.get("context") or "")
+    fact_html = f' <span class="mut">· {fact}</span>' if fact else ""
+    src = esc(sig.get("source") or "") or DASH
+    first_seen = (sig.get("first_seen") or "")[5:] or DASH
+    days = sig.get("days_active")
+    days_s = f"{days} 天" if days is not None else DASH
+    return (
+        "<tr>"
+        f'<td><span class="{sev_cls}">{esc(sev_label)}</span></td>'
+        f"<td>{label}{fact_html}</td>"
+        f'<td class="mono">{src}</td>'
+        f'<td class="mono">{esc(first_seen)}</td>'
+        f'<td class="mono">{esc(days_s)}</td>'
+        f'<td><span class="pill">{esc(state_label)}</span></td>'
+        "</tr>"
+    )
+
+
+def render_signal_table(signals: list) -> str:
+    if not signals:
+        return '<div class="empty">目前無訊號資料。</div>'
+    rows = "".join(_signal_row(s) for s in signals)
+    return f'<div class="twrap"><table class="t sigtbl">{SIGNAL_HEAD}<tbody>{rows}</tbody></table></div>'
+
+
+def render_change_preview(det: dict, transitions_today: int) -> str:
+    signals = det.get("signals") or []
+    ordered = sorted_signals(signals)
+    non_cooling = [s for s in ordered if (s.get("state") or "").lower() != "cooling"]
+    top8 = non_cooling[:8]
+    rest_n = max(len(ordered) - len(top8), 0)
+    parts = [render_signal_table(top8)]
+    if signals:
+        parts.append(
+            f'<p class="note">…其餘 {rest_n} 條（含冷卻中）收在「變化」分頁。'
+            f"今日狀態轉移：{transitions_today} 筆。"
+            ' <a href="/intel/change.html">看全部 →</a></p>'
+        )
+    return "".join(parts)
+
+
+def _pct(v) -> str:
+    try:
+        return f"{float(v) * 100:.0f}%"
+    except (TypeError, ValueError):
+        return DASH
+
+
+_KILL_STATUS_LABEL = {"near": "接近", "breached": "突破"}
+
+
+def render_kill_table(kw: dict) -> str:
+    items_by_id = {i.get("id"): i for i in (kw.get("items") or []) if i.get("id")}
+    rows = []
+    for status, ids in (("breached", kw.get("breached") or []), ("near", kw.get("near") or [])):
+        for iid in ids:
+            it = items_by_id.get(iid)
+            if not it:
+                continue
+            doc = it.get("doc") or ""
+            doc_href = "/" + doc[len("docs/"):] if doc.startswith("docs/") else doc
+            link_html = (
+                f'<a href="{esc(doc_href)}" rel="noopener nofollow">報告 ↗</a>' if doc_href else DASH
+            )
+            value = it.get("value")
+            unit = it.get("unit") or ""
+            threshold_s = (
+                f'{esc(fmt_num(value))} <span class="mut">{esc(unit)}</span>'
+                if value not in (None, "") else DASH
+            )
+            rows.append(
+                "<tr>"
+                f'<td><span class="pill {esc(status)}">{_KILL_STATUS_LABEL.get(status, status)}</span></td>'
+                f'<td>{esc(it.get("theme") or "")}</td>'
+                f'<td>{esc(it.get("metric_text") or "")}</td>'
+                f'<td class="num">{esc(fmt_num(it.get("current"))) or DASH}</td>'
+                f'<td class="num">{threshold_s}</td>'
+                f"<td>{link_html}</td>"
+                "</tr>"
+            )
+    if not rows:
+        return '<div class="empty">目前無接近或突破的證偽指標。</div>'
+    head = (
+        "<thead><tr><th>狀態</th><th>主題</th><th>指標</th>"
+        "<th>現值</th><th>門檻</th><th>報告</th></tr></thead>"
+    )
+    return f'<div class="twrap"><table class="t killtbl">{head}<tbody>{"".join(rows)}</tbody></table></div>'
+
+
+def render_composite_table(composites: list) -> str:
+    if not composites:
+        return '<div class="empty">今日無複合規則資料。</div>'
+    rows = []
+    for c in composites:
+        narrative = (c.get("narrative") or "")[:60]
+        fired = c.get("fired")
+        fired_html = '<span class="pill sred">觸發</span>' if fired else '<span class="pill">未觸發</span>'
+        rows.append(
+            "<tr>"
+            f'<td class="mono">{esc(c.get("id") or "")}</td>'
+            f'<td>{esc(c.get("name") or "")} <span class="mut">· {esc(narrative)}'
+            f'{"…" if narrative else ""}</span></td>'
+            f'<td class="num">{esc(fmt_num(c.get("met_count")))}/{esc(fmt_num(c.get("min_true")))}</td>'
+            f'<td class="num">{esc(_pct(c.get("proximity")))}</td>'
+            f"<td>{fired_html}</td>"
+            "</tr>"
+        )
+    head = (
+        "<thead><tr><th>規則</th><th>名稱</th><th>成員達標</th>"
+        "<th>接近度</th><th>狀態</th></tr></thead>"
+    )
+    return f'<div class="twrap"><table class="t compositetbl">{head}<tbody>{"".join(rows)}</tbody></table></div>'
+
+
 def h2(zh: str, en: str, count=None) -> str:
     cnt = f'<span class="cnt">{count}</span>' if count is not None else ""
     return f'<h2>{esc(zh)}<span class="en">{esc(en)}</span>{cnt}</h2>'
 
 
-def build_day_body(date_str: str, payload: dict, mode_note: str, is_archive: bool) -> str:
+def build_day_body(date_str: str, payload: dict, mode_note: str, is_archive: bool,
+                    badges: dict = None) -> str:
     gauges = payload.get("gauges") or []
     flags = payload.get("flags") or []
     brief_zh = payload.get("brief_zh") or []
@@ -1302,9 +1730,22 @@ def build_day_body(date_str: str, payload: dict, mode_note: str, is_archive: boo
     )
     p.append(_mast_chips(payload, cards, is_archive))
     p.append("</div>")
+    p.append(render_tabstrip("archive.html" if is_archive else "index.html", badges))
 
     if mode_note:
         p.append(mode_note)
+
+    # 1／2. 現況＋變化（只在「今日」頁顯示；封存頁是歷史快照，不該疊上「現在」的
+    # 即時跨站台數字，避免誤讀成那一天的現況）。
+    if not is_archive:
+        snap = load_status_snapshot()
+        p.append(h2("現況", "Status"))
+        p.append(render_status_strip(snap))
+        det = snap.get("_detective") or {}
+        state = load_json_safe(DETECTIVE_STATE_FILE) or {}
+        transitions_n = len(state.get("transitions_today") or [])
+        p.append(h2("變化", "Change"))
+        p.append(render_change_preview(det, transitions_n))
 
     # 2. 儀表列
     p.append(h2("儀表列", "Gauges", len(gauges) or None))
@@ -1314,10 +1755,17 @@ def build_day_body(date_str: str, payload: dict, mode_note: str, is_archive: boo
     p.append(h2("轉折警示", "Alerts", len(flags) or None))
     p.append(render_flags(flags))
 
-    # 3.5 進行中的故事線（空陣列整段省略，含標題）
+    # 3.5 進行中的故事線（空陣列整段省略，含標題）——2026-08-20：頁面不加長，
+    # 只留前 5 條一行式＋「看全部故事線 →」連 threads.html（完整清單）。
     if threads:
         p.append(h2("進行中的故事線", "Threads", len(threads)))
-        p.append(render_threads(threads))
+        top5 = sorted(threads, key=_thread_sort_key)[:5]
+        p.append(render_threads(top5))
+        if len(threads) > 5:
+            p.append(
+                f'<p class="note"><a href="/intel/threads.html">'
+                f"看全部故事線 →（共 {len(threads)} 條）</a></p>"
+            )
 
     # 4. 市場早報（雙欄）
     p.append('<section class="only-brief">')
@@ -1372,6 +1820,179 @@ def build_day_body(date_str: str, payload: dict, mode_note: str, is_archive: boo
     p.append("</div>")  # .wrap
     p.append(FOOT)
     p.append(TOGGLE_SCRIPT)
+    return "\n".join(p)
+
+
+# ---------------------------------------------------------- 2.0 其餘分頁
+
+def build_change_body(date_str: str, det: dict, state: dict, kw: dict, badges: dict) -> str:
+    al = det.get("alert_level") or {}
+    drivers = al.get("drivers") or []
+    drv_text = "　".join(
+        f"{esc(d.get('label') or '')} +{esc(fmt_num(d.get('points')))}" for d in drivers
+    ) or DASH
+
+    p = ['<div class="wrap">']
+    p.append(
+        '<div class="mast"><div class="ttl"><h1>變化</h1>'
+        f'<div class="date">{esc(date_str)}　今日訊號、生命週期、證偽對帳、複合規則</div></div>'
+        + _util_chips() + "</div>"
+    )
+    p.append(render_tabstrip("change.html", badges))
+
+    p.append(h2("警戒度", "Alert level"))
+    p.append(
+        '<p class="note" style="font-size:13.5px;color:var(--ink2);max-width:none">'
+        f'警戒度 <b style="color:var(--ink);font-size:15px">{esc(fmt_num(al.get("score")) or DASH)}</b>'
+        f'（{esc(al.get("band_label") or DASH)}）'
+        f"　計分來源：{drv_text}</p>"
+    )
+
+    signals = sorted_signals(det.get("signals") or [])
+    p.append(h2("全部訊號", "Signals", len(signals) or None))
+    p.append(render_signal_table(signals))
+
+    p.append(h2("證偽對帳表", "Kill watch"))
+    p.append(render_kill_table(kw))
+
+    p.append(h2("複合規則靶盤", "Composites"))
+    p.append(render_composite_table(det.get("composites") or []))
+
+    p.append("</div>")
+    p.append(FOOT)
+    return "\n".join(p)
+
+
+def build_gauges_body(badges: dict) -> str:
+    p = ['<div class="wrap">']
+    p.append(
+        '<div class="mast"><div class="ttl"><h1>儀表</h1>'
+        '<div class="date">機械層 96 條序列，來自 /monitor/</div></div>'
+        + _util_chips() + "</div>"
+    )
+    p.append(render_tabstrip("gauges.html", badges))
+    p.append('<iframe class="fullframe" src="/monitor/" title="市場監測" loading="lazy"></iframe>')
+    p.append("</div>")
+    p.append(FOOT)
+    return "\n".join(p)
+
+
+_WEEKLY_SUBTABS = [
+    ("crowding", "擁擠交易", "/crowding/"),
+    ("regime", "Regime", "/regime/"),
+    ("rotation", "產業輪動", "/rotation/"),
+    ("radar", "資產輪動雷達 ↗", "/rotation/radar.html#cross_asset/120"),
+]
+
+WEEKLY_SUBTAB_SCRIPT = (
+    "<script>(function(){"
+    "var btns=document.querySelectorAll('.subtabs button');"
+    "var panes=document.querySelectorAll('.subpane');"
+    "btns.forEach(function(b){b.addEventListener('click',function(){"
+    "btns.forEach(function(x){x.setAttribute('aria-pressed',String(x===b))});"
+    "panes.forEach(function(p){p.style.display="
+    "(p.getAttribute('data-pane')===b.getAttribute('data-set'))?'':'none'});"
+    "})});"
+    "})();</script>"
+)
+
+
+def build_weekly_body(badges: dict) -> str:
+    p = ['<div class="wrap">']
+    p.append(
+        '<div class="mast"><div class="ttl"><h1>週更</h1>'
+        '<div class="date">擁擠交易／Regime／產業輪動／資產輪動雷達</div></div>'
+        + _util_chips() + "</div>"
+    )
+    p.append(render_tabstrip("weekly.html", badges))
+    sub_btns = []
+    for i, (key, label, _url) in enumerate(_WEEKLY_SUBTABS):
+        pressed = "true" if i == 0 else "false"
+        sub_btns.append(
+            f'<button type="button" data-set="{esc(key)}" aria-pressed="{pressed}">{esc(label)}</button>'
+        )
+    p.append('<div class="subtabs" role="group" aria-label="週更子分頁">' + "".join(sub_btns) + "</div>")
+    for i, (key, label, url) in enumerate(_WEEKLY_SUBTABS):
+        style = "" if i == 0 else ' style="display:none"'
+        p.append(
+            f'<div class="subpane" data-pane="{esc(key)}"{style}>'
+            f'<iframe class="fullframe" src="{esc(url)}" loading="lazy" title="{esc(label)}"></iframe></div>'
+        )
+    p.append("</div>")
+    p.append(FOOT)
+    p.append(WEEKLY_SUBTAB_SCRIPT)
+    return "\n".join(p)
+
+
+def build_calendar_body(date_str: str, calendar: list, badges: dict) -> str:
+    try:
+        base_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+    except ValueError:
+        base_date = datetime.now(timezone.utc).date()
+    cat = load_json_safe(CATALYST_CALENDAR_FILE) or {}
+    cat_events = cat.get("events") or []
+
+    by_date: dict = {}
+    for e in calendar or []:
+        d = e.get("date")
+        if d:
+            by_date.setdefault(d, []).append(("intel", e))
+    for e in cat_events:
+        d = e.get("date")
+        if d:
+            by_date.setdefault(d, []).append(("catalyst", e))
+
+    days = [base_date + timedelta(days=i) for i in range(14)]
+    cells = []
+    for d in days:
+        ds = d.isoformat()
+        items = by_date.get(ds) or []
+        label = f"{d.month:02d}/{d.day:02d}（{weekday_zh(d)}）"
+        rows = []
+        for kind, e in items[:6]:
+            if kind == "intel":
+                impact = (e.get("impact") or "").lower()
+                hi = bool(e.get("hi")) or impact == "high"
+                t = (e.get("time") or "").strip()
+                txt = (e.get("text") or "").strip()
+                line = (esc(t) + " " + esc(txt)).strip()
+            else:
+                hi = (e.get("impact") or "") in ("高", "high", "High")
+                line = f'{esc(e.get("ticker") or "")}：{esc(e.get("event") or "")}'
+            cls = " hi" if hi else ""
+            rows.append(f'<div class="cd{cls}">{line}</div>')
+        more = len(items) - 6
+        if more > 0:
+            rows.append(f'<div class="cd more">+{more}</div>')
+        cells.append(
+            f'<div class="cal14-cell"><div class="cal14-d">{esc(label)}</div>{"".join(rows)}</div>'
+        )
+
+    p = ['<div class="wrap">']
+    p.append(
+        '<div class="mast"><div class="ttl"><h1>行事曆</h1>'
+        '<div class="date">接下來 14 天　intel 日曆（總經／ForexFactory／財報）＋ catalyst 催化劑</div></div>'
+        + _util_chips() + "</div>"
+    )
+    p.append(render_tabstrip("calendar.html", badges))
+    p.append(f'<div class="cal14">{"".join(cells)}</div>')
+    p.append("</div>")
+    p.append(FOOT)
+    return "\n".join(p)
+
+
+def build_threads_body(date_str: str, badges: dict) -> str:
+    threads = compute_full_threads(date_str)
+    p = ['<div class="wrap">']
+    p.append(
+        '<div class="mast"><div class="ttl"><h1>故事線</h1>'
+        f'<div class="date">進行中的故事線，共 {len(threads)} 條</div></div>'
+        + _util_chips() + "</div>"
+    )
+    p.append(render_tabstrip("threads.html", badges))
+    p.append(render_threads(threads, detail_limit=None) if threads else '<div class="empty">目前無進行中的故事線。</div>')
+    p.append("</div>")
+    p.append(FOOT)
     return "\n".join(p)
 
 
@@ -1455,7 +2076,7 @@ def resolve_day_payload(date_str: str, sources_meta: dict, data_path: Path = Non
 DATE_HTML_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})\.html$")
 
 
-def render_archive(current_date: str, out_dir: Path) -> str:
+def render_archive(current_date: str, out_dir: Path, badges: dict = None) -> str:
     dates = set()
     for p in out_dir.glob("*.html"):
         m = DATE_HTML_RE.match(p.name)
@@ -1476,6 +2097,7 @@ def render_archive(current_date: str, out_dir: Path) -> str:
         '<div class="date">依日期排列</div></div>'
         '<div class="chips"><a class="chip" href="/intel/">回今日</a>'
         '<a class="chip" href="/intel/status.html">狀態</a></div></div>',
+        render_tabstrip("archive.html", badges),
         f'<ul class="arclist">{"".join(items)}</ul>' if items else '<div class="empty">尚無封存頁面。</div>',
         "</div>",
         FOOT,
@@ -1485,7 +2107,7 @@ def render_archive(current_date: str, out_dir: Path) -> str:
 
 # ------------------------------------------------------------------- status
 
-def render_status_page(date_str: str, payload: dict, sources_meta: dict) -> str:
+def render_status_page(date_str: str, payload: dict, sources_meta: dict, badges: dict = None) -> str:
     status = payload.get("status") or {}
     generated_at = payload.get("generated_at")
     health = {"sources": []}
@@ -1550,6 +2172,8 @@ def render_status_page(date_str: str, payload: dict, sources_meta: dict) -> str:
         f'<div class="date">{esc(date_str)} · 來源健康與每日用量</div></div>'
         '<div class="chips"><a class="chip" href="/intel/">回今日</a>'
         '<a class="chip" href="/intel/archive.html">歷史</a></div></div>',
+        render_tabstrip("status.html", badges),
+        render_chain_status(),
         h2("當日摘要", "Summary"),
         f'<div class="stat-cards">{stat_html}</div>',
         h2("來源健康", "Sources"),
@@ -1558,6 +2182,34 @@ def render_status_page(date_str: str, payload: dict, sources_meta: dict) -> str:
         FOOT,
     ]
     return "\n".join(body)
+
+
+CHAIN_STATUS_FILE = DATA_DIR / "chain_status.json"
+_CHAIN_ICON = {"success": "✅", "failure": "❌", "cancelled": "◻︎", "skipped": "◻︎"}
+
+
+def render_chain_status() -> str:
+    """一條鏈 workflow（.github/workflows/intel-2-daily.yml）寫的
+    docs/intel/data/chain_status.json 讀得到才顯示；讀不到（舊 workflow 尚未產生
+    這份檔，或本機測試 render 時本來就沒有）整段省略，不視為錯誤。"""
+    data = load_json_safe(CHAIN_STATUS_FILE)
+    if not data or not data.get("steps"):
+        return ""
+    rows = []
+    for s in data["steps"]:
+        outcome = (s.get("outcome") or "").lower()
+        icon = _CHAIN_ICON.get(outcome, "◻︎")
+        secs = s.get("seconds")
+        secs_s = f"{secs}s" if secs is not None else DASH
+        rows.append(
+            f'<div class="c"><div class="k">{esc(s.get("name") or "")}</div>'
+            f'<div class="v">{icon} <span class="mut" style="font-size:11px">{esc(secs_s)}</span></div></div>'
+        )
+    return (
+        h2("一條鏈狀態", "Chain")
+        + f'<p class="note">{esc(data.get("date") or "")}</p>'
+        + f'<div class="stat-cards">{"".join(rows)}</div>'
+    )
 
 
 # ------------------------------------------------------------------- inject
@@ -1602,8 +2254,11 @@ def main():
     sources_meta = load_sources_yml()
 
     payload, banner, stale = resolve_day_payload(date_str, sources_meta, data_path)
+    calendar = payload.get("calendar") or []
+    det_for_badges = load_json_safe(DETECTIVE_LATEST_FILE) or {}
+    badges = compute_tab_badges(date_str, calendar, det_for_badges)
 
-    index_body = build_day_body(date_str, payload, banner, is_archive=False)
+    index_body = build_day_body(date_str, payload, banner, is_archive=False, badges=badges)
     index_html = (
         head(
             "全球金融市場監視器 — InvestMQuest Research",
@@ -1617,7 +2272,7 @@ def main():
     index_path = out_dir / "index.html"
     index_path.write_text(index_html, encoding="utf-8")
 
-    day_body = build_day_body(date_str, payload, banner, is_archive=True)
+    day_body = build_day_body(date_str, payload, banner, is_archive=True, badges=badges)
     day_html = (
         head(
             f"{date_str} — 全球金融市場監視器封存 — InvestMQuest Research",
@@ -1634,7 +2289,7 @@ def main():
     archive_html = (
         head("監視器封存 — InvestMQuest Research", "全球金融市場監視器歷史日期列表。", indexable=False)
         + "\n<body>\n"
-        + render_archive(date_str, out_dir)
+        + render_archive(date_str, out_dir, badges)
         + "\n</body>\n</html>\n"
     )
     archive_path = out_dir / "archive.html"
@@ -1643,16 +2298,74 @@ def main():
     status_html = (
         head("監視器狀態 — InvestMQuest Research", "全球金融市場監視器來源健康與每日用量。", indexable=False)
         + "\n<body>\n"
-        + render_status_page(date_str, payload, sources_meta)
+        + render_status_page(date_str, payload, sources_meta, badges)
         + "\n</body>\n</html>\n"
     )
     status_path = out_dir / "status.html"
     status_path.write_text(status_html, encoding="utf-8")
 
-    if out_dir == DOCS_INTEL:
-        inject_nav([index_path, day_path, archive_path, status_path])
+    # 2.0 Phase A 新增分頁：變化／儀表／週更／行事曆／故事線。各自獨立讀取跨站台
+    # JSON（fail-safe），不依賴今日 intel pipeline 是否跑成功。
+    kw_for_change = load_json_safe(KILL_WATCH_FILE) or {}
+    state_for_change = load_json_safe(DETECTIVE_STATE_FILE) or {}
+    change_html = (
+        head("變化 — 全球金融市場監視器 — InvestMQuest Research",
+             "今日訊號、生命週期、證偽對帳、複合規則靶盤。", indexable=False)
+        + "\n<body>\n"
+        + build_change_body(date_str, det_for_badges, state_for_change, kw_for_change, badges)
+        + "\n</body>\n</html>\n"
+    )
+    change_path = out_dir / "change.html"
+    change_path.write_text(change_html, encoding="utf-8")
 
-    for p in (index_path, day_path, archive_path, status_path):
+    gauges_html = (
+        head("儀表 — 全球金融市場監視器 — InvestMQuest Research",
+             "機械層 96 條序列，來自 /monitor/。", indexable=False)
+        + "\n<body>\n"
+        + build_gauges_body(badges)
+        + "\n</body>\n</html>\n"
+    )
+    gauges_path = out_dir / "gauges.html"
+    gauges_path.write_text(gauges_html, encoding="utf-8")
+
+    weekly_html = (
+        head("週更 — 全球金融市場監視器 — InvestMQuest Research",
+             "擁擠交易／Regime／產業輪動／資產輪動雷達。", indexable=False)
+        + "\n<body>\n"
+        + build_weekly_body(badges)
+        + "\n</body>\n</html>\n"
+    )
+    weekly_path = out_dir / "weekly.html"
+    weekly_path.write_text(weekly_html, encoding="utf-8")
+
+    calendar_html = (
+        head("行事曆 — 全球金融市場監視器 — InvestMQuest Research",
+             "接下來 14 天：intel 日曆＋ catalyst 催化劑。", indexable=False)
+        + "\n<body>\n"
+        + build_calendar_body(date_str, calendar, badges)
+        + "\n</body>\n</html>\n"
+    )
+    calendar_path = out_dir / "calendar.html"
+    calendar_path.write_text(calendar_html, encoding="utf-8")
+
+    threads_html = (
+        head("故事線 — 全球金融市場監視器 — InvestMQuest Research",
+             "進行中的故事線，逐條展開近期所有卡片。", indexable=False)
+        + "\n<body>\n"
+        + build_threads_body(date_str, badges)
+        + "\n</body>\n</html>\n"
+    )
+    threads_path = out_dir / "threads.html"
+    threads_path.write_text(threads_html, encoding="utf-8")
+
+    all_paths = [
+        index_path, day_path, archive_path, status_path,
+        change_path, gauges_path, weekly_path, calendar_path, threads_path,
+    ]
+    if out_dir == DOCS_INTEL:
+        inject_nav(all_paths)
+
+    for p in all_paths:
         print(f"wrote {p}")
 
 

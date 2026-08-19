@@ -229,3 +229,43 @@
 **規則（`is_rumor` 權威判定收斂在 `classify.py::apply_llm_result`）**：`source_rumor`（來源層 `rumor:true`）∪ `source_tier ∈ {T3,T4}` ∪ haiku 自己判斷的 `is_rumor` ——三路 OR，任一為真即傳聞卡。傳聞卡不佔一般 `STAGE2_LIMIT=70` 名額，改走獨立的 `RUMOR_STAGE2_CAP=10`（`select_rumor_stage2`，依 importance desc／新到舊排序）；超過 10 則的傳聞卡仍標 `is_rumor:true` 但維持 title-only（`summarized:false`），不進 sonnet。下游四處明確過濾 `is_rumor`：`summarize.py::build_digest`（market_cards_input）、`summarize.py::build_flag_candidates`（防禦層）、`deepread.py::select_candidates`、`threads.py::assign_mechanical` 與 `merge_daily`。render.py 呈現規則見 Task B 段落（同日「其他標題」改版）。
 
 **退出條件**：一週後檢視每個來源的實際命中率（有沒有產出真的有用的傳聞卡、有沒有被交叉印證到後續變成正式新聞）；產出掛零或雜訊過高（例：Reddit 迷因股熱議跟市場層完全無關）的來源直接 `enabled:false` 並記錄原因，不強行保留湊來源數。
+
+### 2026-08-20 2.0 Phase A：分頁殼＋機械層彙整
+
+在原本單頁（今日 brief）之上加一層「情報監視器 2.0」外殼：全站零 LLM、零前端 fetch、純 Python server-side 渲染，把 `/intel/` 自己的日報資料與站上其他四個機械層（`/monitor/`／`/detective/`／`/regime/`／`/rotation/`／`/crowding/`／`/catalyst/`）的既有 JSON 彙整成一個可以「先看總覽再挑要不要深看」的入口，而不是每個分頁各自去每個子站找。
+
+**分頁結構（`render_tabstrip()`，每頁頁首同一條）**：
+
+| Tab | 檔案 | 內容 | 小紅字徽章 |
+|---|---|---|---|
+| 今日 | `index.html` | 現況六格＋變化預覽（top 8）＋原有早報（故事線縮為前 5 條） | — |
+| 變化 | `change.html` | 警戒度一行摘要＋完整訊號表＋證偽對帳表＋複合規則靶盤 | 訊號總數 |
+| 儀表 | `gauges.html` | 全高 `<iframe src="/monitor/">` | — |
+| 週更 | `weekly.html` | 子分頁按鈕切換 iframe：擁擠交易／Regime／產業輪動／資產輪動雷達（新分頁） | — |
+| 行事曆 | `calendar.html` | 未來 14 天 7×2 格：intel 日曆＋ catalyst 事件 | 未來 14 天事件數 |
+| 故事線 | `threads.html` | 完整故事線清單（`threads.json` 全量重算，非單日 payload 的挑選子集） | — |
+| 封存 | `archive.html` | 既有封存列表（加分頁列） | — |
+| 狀態 | `status.html` | 既有健康檢查（加分頁列＋新「一條鏈狀態」區塊） | — |
+
+**現況六格資料來源**（`load_status_snapshot()`，每格獨立 `load_json_safe()`，任一來源缺檔/壞檔只讓該格顯示 `—`，不擋其他格或整頁）：
+
+| 格 | 讀 | 連結 |
+|---|---|---|
+| 跨資產壓力 | `docs/monitor/data/score_history.json`（最新分數＋帶）＋`internals.json`（內部分數） | → 儀表 |
+| 警戒度 | `docs/detective/data/latest.json`（score/band）＋`state.json`（紅/黃計數、今日升級數） | → 變化 |
+| Regime | `docs/regime/data/latest.json`（label_zh） | → 週更 |
+| 宏觀時鐘＋風險偏好 | `docs/macro/data/clock.json`＋`docs/cache/risk_gauge.json` | 無連結（市場風險儀表仍留首頁原位） |
+| 輪動雷達 cross-asset 120d | `docs/rotation/data/radar.json`（top 3） | → `/rotation/radar.html#cross_asset/120`（新分頁開） |
+| 證偽表 | `docs/detective/data/kill_watch.json`（near/breached 計數） | → 變化 |
+
+**變化頁**：訊號排序＝紅先於黃、新/升級先於冷卻、同組依 `days_active` desc（`sorted_signals()`，公式移植自互動雛型的 `r(a)-r(b)||(b.days_active-a.days_active)`）；證偽對帳表把 `docs/` 開頭的報告連結改寫成站內絕對路徑 `/`；複合規則靶盤顯示 `met_count/min_true` 與 proximity%。
+
+**故事線頁 vs 首頁預覽**：兩者共用 `render_threads()`，差別在 `detail_limit` 參數——首頁前 5 條預覽維持展開上限 3 則（頁面不加長）；`threads.html` 傳 `detail_limit=None` 顯示 `card_ids_latest` 全部則數，並多顯示「共 T 張」（`compute_full_threads()` 從 `threads.json` 全量重算 `today_count/prev/heat/day_n/total_count/sparkline`，不受單日 payload 的 12 條篩選上限）。
+
+**一條鏈 workflow（`.github/workflows/intel-2-daily.yml`，新增檔，六支原檔不動）**：`workflow_dispatch` ＋ `schedule: "30 22 * * 0-4"`（UTC 週日～週四 22:30 ＝ 台北週一～週五 06:30）。單一 job、90 分鐘總 timeout，把 monitor-daily／detective-daily／crossasset-weekly／weekly-catalyst-chain／kill-watch-weekly／intel-daily 六支的建置指令（逐字照抄）串成一條鏈：① monitor → ② detective → ③ 只在週日跑（`date -u +%u == 7`）：crowding/rotation/regime＋catalyst＋kill-watch → ④ intel（fetch → Claude Code CLI → run_daily.py --skip-fetch，`CLAUDE_CODE_OAUTH_TOKEN` 走 secrets，明確 `unset ANTHROPIC_API_KEY` 三件）→ ⑤ `render.py`（`if: always()`，即使前面全失敗仍用既有 JSON 重繪頁面）→ ⑥ 單一 commit（各段路徑聯集 + `docs/intel/`，訊息 `intel-2: daily chain YYYY-MM-DD`，push 重試 6 次 rebase 迴圈同既有六支）。每段 `continue-on-error: true`＋自己的 timeout（10–15 分鐘）；render 之前一步把每段 `name|outcome|seconds` 寫成 `docs/intel/data/chain_status.json`，供狀態頁「一條鏈狀態」區塊顯示 ✅/❌（`render_chain_status()`，讀不到檔案就整段省略、不視為錯誤）。**原六支 workflow 全部保留原排程，作為 rollback 路徑**；本鏈與原六支互不影響、各自獨立 commit。
+
+**尚未做（Phase B／C，留給後續）**：
+- Phase B：週更／行事曆頁目前用 iframe 嵌 `/monitor/`、`/crowding/`、`/regime/`、`/rotation/`——尚未做成原生渲染（同站樣式、免跳頁載入）；早報「機械層判讀」（把六格數字收斂成 2-3 句連貫敘事，非純數字牆）尚未做。
+- Phase C：站上主 nav 尚未收斂進 `/intel/` 分頁殼（`scripts/site_nav.py` 仍是舊版連結）；`docs/home/pulse.json` 首頁尚未改讀新的「現況」彙整層，兩邊資料重疊但各自獨立計算。
+
+**驗證方式**：`python3 scripts/intel/render.py --date YYYY-MM-DD`（純渲染，不跑 fetch/classify/summarize）＋ `python3 scripts/qc.py`＋`python3 -m http.server --directory docs` 手動 curl 8 個分頁確認 200＋分頁列存在。

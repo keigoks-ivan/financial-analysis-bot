@@ -135,7 +135,7 @@ tr.confirmed .bar i{background:var(--red)}
 .hpill.up{border-color:#EFD0C9;background:var(--red-bg);color:var(--red)}
 .hpill.down{border-color:#CCE3D6;background:var(--grn-bg);color:var(--grn)}
 .thr .tt{min-width:0;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.thr .thd,.thr .thn{font-size:11px;color:var(--mut);font-variant-numeric:tabular-nums;white-space:nowrap}
+.thr .thd,.thr .thn,.thr .tht{font-size:11px;color:var(--mut);font-variant-numeric:tabular-nums;white-space:nowrap}
 .thr .thsp{line-height:0}
 .thr .thsp .spark rect{fill:var(--acc);opacity:.7}
 .thr .thlast{min-width:0;font-size:11.5px;color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -332,6 +332,72 @@ footer.imq-foot .sep{color:var(--line)}
 @media(prefers-reduced-motion:reduce){.chev{transition:none}}
 @media print{.seg,.chev{display:none}body{background:#fff}}
 
+/* ============================================================ 2.0 分頁殼 */
+/* 2026-08-20 Phase A：頁首分頁列（今日／變化／儀表／週更／行事曆／故事線／
+   封存／狀態）＋「現況」六格＋「變化」預覽表＋週更子分頁＋ 14 天行事曆格。
+   沿用既有 token（--sur/--line/--ink/--mut/--acc/--red/--amb/--grn），
+   不引入新色板。 */
+.tabstrip{display:flex;gap:2px;overflow-x:auto;margin:0 0 16px;padding-bottom:1px;
+  border-bottom:1px solid var(--line)}
+.tabstrip .tab{flex:none;display:inline-flex;align-items:center;gap:6px;
+  padding:8px 13px;font-size:12.5px;font-weight:600;color:var(--mut);
+  text-decoration:none;border-bottom:2px solid transparent;white-space:nowrap}
+.tabstrip .tab:hover{color:var(--ink2)}
+.tabstrip .tab.on{color:var(--ink);border-bottom-color:var(--acc)}
+.tabstrip .tab .n{font-size:10.5px;font-weight:600;color:var(--mut);
+  background:var(--sur2);border:1px solid var(--line);border-radius:999px;
+  padding:0 6px;font-variant-numeric:tabular-nums}
+.tabstrip .tab.on .n{color:var(--acc);border-color:var(--acc-soft);background:var(--acc-soft)}
+
+/* 現況（六格） */
+.ss-strip{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin:2px 0 0}
+.ss-tile{background:var(--sur);border:1px solid var(--line);border-radius:var(--r);
+  padding:9px 11px;display:flex;flex-direction:column;gap:3px;min-height:78px}
+.ss-lab{font-size:10.5px;color:var(--mut);font-weight:600;letter-spacing:.02em}
+.ss-val{font-size:19px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums;line-height:1.2}
+.ss-val-s{font-size:14px;font-weight:600;line-height:1.35;overflow-wrap:break-word}
+.ss-sub{font-size:11px;color:var(--mut)}
+.ss-note{font-size:10.5px;color:var(--mut);margin-top:auto}
+.ss-link{margin-top:auto;font-size:11px;color:var(--acc);text-decoration:none;align-self:flex-start}
+.ss-link:hover{text-decoration:underline}
+
+/* 變化：訊號等級 pill（紅／黃通用色，跟 .pill.confirmed/.near 分開一套語意） */
+.pill.sred{border-color:#EFD0C9;background:var(--red-bg);color:var(--red)}
+.pill.samber{border-color:#EADFB4;background:var(--amb-bg);color:var(--amb)}
+.pill.breached{border-color:#EFD0C9;background:var(--red-bg);color:var(--red)}
+.pill.near{border-color:#EADFB4;background:var(--amb-bg);color:var(--amb)}
+table.sigtbl{min-width:760px}
+table.killtbl{min-width:680px}
+table.compositetbl{min-width:680px}
+
+/* 儀表／週更：全高 iframe（撐滿 viewport 減頁首） */
+iframe.fullframe{width:100%;height:calc(100vh - 190px);min-height:520px;border:1px solid var(--line);
+  border-radius:var(--r);background:var(--sur);display:block}
+
+/* 週更子分頁按鈕 */
+.subtabs{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 10px}
+.subtabs button{border:1px solid var(--line);background:var(--sur);color:var(--mut);
+  border-radius:999px;padding:5px 13px;font:inherit;font-size:12.5px;cursor:pointer}
+.subtabs button[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.subtabs button:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+
+/* 行事曆：14 天 7×2 格 */
+.cal14{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}
+.cal14-cell{background:var(--sur);border:1px solid var(--line);border-radius:var(--r);
+  padding:7px 9px;min-height:100px;font-size:11.5px;line-height:1.5}
+.cal14-d{font-size:10.5px;color:var(--mut);font-weight:600;margin-bottom:3px;
+  font-variant-numeric:tabular-nums}
+.cal14-cell .cd{color:var(--ink2);overflow-wrap:anywhere;padding:1px 0}
+.cal14-cell .cd.hi{color:var(--ink);font-weight:600}
+.cal14-cell .cd.more{color:var(--mut)}
+
+@media(max-width:640px){
+  .tabstrip{margin-bottom:12px}
+  .ss-strip{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .cal14{grid-template-columns:repeat(2,minmax(0,1fr))}
+  iframe.fullframe{height:calc(100vh - 230px)}
+}
+
 </style>
 </head>
 <body>
@@ -434,6 +500,7 @@ footer.imq-foot .sep{color:var(--line)}
 <script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
 <div class="wrap">
 <div class="mast"><div class="ttl"><h1>監視器封存</h1><div class="date">依日期排列</div></div><div class="chips"><a class="chip" href="/intel/">回今日</a><a class="chip" href="/intel/status.html">狀態</a></div></div>
+<nav class="tabstrip" aria-label="情報監視器分頁"><a class="tab" href="/intel/index.html">今日</a><a class="tab" href="/intel/change.html">變化<span class="n">54</span></a><a class="tab" href="/intel/gauges.html">儀表</a><a class="tab" href="/intel/weekly.html">週更</a><a class="tab" href="/intel/calendar.html">行事曆<span class="n">43</span></a><a class="tab" href="/intel/threads.html">故事線</a><a class="tab on" href="/intel/archive.html">封存</a><a class="tab" href="/intel/status.html">狀態</a></nav>
 <ul class="arclist"><li><a href="/intel/2026-08-19.html">2026-08-19（三）</a></li></ul>
 </div>
 <footer class="imq-foot"><div class="in"><div>本頁為機械聚合＋LLM 摘要：固定來源清單每日抓取 → 規則過濾 → 分類與中文摘要 →靜態渲染；儀表與轉折警示取自站內既有監測管線，卡片內容為第三方來源之摘要，正確性以原文為準。</div><div><a href="/monitor/">市場監測</a> <span class="sep">·</span> <a href="/detective/">主題偵測</a> <span class="sep">·</span> <a href="/crowding/">擁擠交易</a> <span class="sep">·</span> <a href="/intel/archive.html">歷史</a> <span class="sep">·</span> <a href="/intel/status.html">狀態</a> <span class="sep">·</span> <a href="/disclosures.html">方法論與揭露</a></div><div>聲明：本頁為市場狀態的描述器，只陳述觀察到的數字與新聞，不做買賣建議、不預測價格。© 2026 InvestMQuest Research</div></div></footer>

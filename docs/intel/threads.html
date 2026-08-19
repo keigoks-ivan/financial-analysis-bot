@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>故事線 — 全球金融市場監視器 — InvestMQuest Research</title>
+<meta name="description" content="進行中的故事線，逐條展開近期所有卡片。">
+<meta property="og:title" content="故事線 — 全球金融市場監視器 — InvestMQuest Research">
+<meta property="og:site_name" content="InvestMQuest Research">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* intel.css — /intel/ 全球金融市場監視器（版型 A：儀表列＋早報＋密集列表）
+   光亮主題單一版本（站台其餘頁面同為淺色）。所有數字用 tabular-nums，
+   除 .mono 資料行外不使用等寬字。頁內不使用 position:sticky／z-index，
+   由 site_nav.py 注入的 .imq-nav-root 獨占 sticky 層。 */
+:root{
+  color-scheme:light;
+  --bg:#F5F6F4; --sur:#FFFFFF; --sur2:#F0F2EE; --sur3:#E7EAE4;
+  --line:#DEE1DB; --line2:#EBEDE8;
+  --ink:#151A21; --ink2:#39414D; --mut:#6A737F;
+  --acc:#8A5A2B; --acc-soft:#F3E9DD;
+  --red:#B93A29; --amb:#A67908; --grn:#2C7F53; --cool:#2E6DA4;
+  --red-bg:#FBEAE6; --amb-bg:#FAF2DA; --grn-bg:#E6F3EC; --cool-bg:#E9F0F8;
+  --r:7px;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:84px;-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,-apple-system,sans-serif;
+  font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;
+  font-variant-numeric:tabular-nums;
+}
+a{color:var(--acc)}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,"Noto Sans TC",monospace;font-size:11.5px;color:var(--mut);font-variant-numeric:tabular-nums}
+.wrap{max-width:1120px;margin:0 auto;padding:18px 20px 56px;display:flex;flex-direction:column;gap:0}
+.nowrap{white-space:nowrap}
+
+/* ------------------------------------------------------------- masthead */
+.mast{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px 18px;padding-bottom:12px;border-bottom:2px solid var(--ink);margin-bottom:14px}
+.mast .ttl{display:flex;flex-direction:column;gap:2px;margin-right:auto}
+.mast h1{margin:0;font-size:19px;font-weight:700;letter-spacing:.02em}
+.mast .date{color:var(--mut);font-size:12.5px}
+.mast .date b{color:var(--ink2);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;line-height:1.5;padding:2px 8px;border:1px solid var(--line);border-radius:999px;background:var(--sur);color:var(--mut);white-space:nowrap}
+.chip b{color:var(--ink2);font-weight:600}
+.chip.ok{border-color:#CCE3D6;background:var(--grn-bg);color:var(--grn)}
+.chip.warn{border-color:#EADFB4;background:var(--amb-bg);color:var(--amb)}
+.chip.bad{border-color:#EFD0C9;background:var(--red-bg);color:var(--red)}
+a.chip{text-decoration:none}
+a.chip:hover{border-color:var(--acc);color:var(--acc)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--sur)}
+.seg button{border:0;background:transparent;color:var(--mut);padding:5px 11px;font:inherit;font-size:12px;cursor:pointer;white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.seg button:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+
+/* -------------------------------------------------------------- headings */
+h2{font-size:13.5px;font-weight:700;color:var(--ink);margin:26px 0 9px;display:flex;align-items:center;gap:10px;letter-spacing:.02em}
+h2 .en{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);font-weight:600}
+h2 .cnt{font-size:11px;color:var(--mut);font-weight:500}
+h2::after{content:"";flex:1;height:1px;background:var(--line)}
+h3{font-size:12.5px;font-weight:700;margin:0 0 7px;color:var(--ink2)}
+.note{margin:10px 0 0;color:var(--mut);font-size:12px;max-width:68ch}
+.note a{color:var(--acc)}
+
+/* ---------------------------------------------------------------- gauges */
+/* 2026-08-20：鎖死 7＋6 兩排（持有人回饋「每天固定排列」）——13 個固定維度＋
+   1 個補位 blank 格＝14 格，桌機固定 7 欄不換行；寬度不夠時整條橫向捲動，
+   不讓格位隨螢幕寬度重排。手機（≤640px）另外改 4 欄，見下方 mobile 區塊。 */
+.gauges{display:grid;grid-template-columns:repeat(7,minmax(118px,1fr));gap:7px;margin:2px 0 0;overflow-x:auto;padding-bottom:2px}
+.g{position:relative;background:var(--sur);border:1px solid var(--line);border-left:3px solid var(--grn);border-radius:var(--r);padding:7px 10px 8px;display:flex;flex-direction:column;gap:2px;min-height:76px;min-width:118px}
+.g.warn{border-left-color:var(--amb)} .g.crit{border-left-color:var(--red)}
+.g.blank{border-style:dashed;border-left-style:dashed;border-left-color:var(--line);align-items:center;justify-content:center;background:transparent}
+.g.blank .bd{margin:auto;font-size:16px;color:var(--line)}
+.g .lab{display:flex;align-items:center;gap:5px;font-size:10.5px;letter-spacing:.09em;color:var(--mut);font-weight:600;text-transform:uppercase;overflow-wrap:break-word}
+.g .dot{width:6px;height:6px;border-radius:50%;background:var(--grn);flex:none}
+.g.warn .dot{background:var(--amb)} .g.crit .dot{background:var(--red)}
+.g .val{font-size:19px;font-weight:600;letter-spacing:-.01em;line-height:1.25;color:var(--ink);white-space:normal;overflow:hidden;overflow-wrap:break-word;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical}
+.g .val.long{font-size:12.5px;font-weight:500;line-height:1.45;white-space:normal;color:var(--ink2);display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.g .sub{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;font-size:11.5px;color:var(--mut);margin-top:auto;min-width:0}
+.g .m{font-weight:600;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.g .sub.long{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.g .chg{font-variant-numeric:tabular-nums;white-space:nowrap}
+.g .chg.up{color:var(--red)} .g .chg.dn{color:var(--grn)}
+.pct{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;padding:0 5px;border-radius:999px;border:1px solid var(--line);background:var(--sur2);color:var(--mut);white-space:nowrap}
+.pct.hot{border-color:#EFD0C9;background:var(--red-bg);color:var(--red)}
+.pct.cold{border-color:#CFDFEF;background:var(--cool-bg);color:var(--cool)}
+
+/* ----------------------------------------------------------------- table */
+.twrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--sur)}
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+table.t th,table.t td{padding:7px 10px;text-align:left;border-top:1px solid var(--line2);vertical-align:middle}
+table.t thead th{background:var(--sur2);border-top:0;color:var(--mut);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;white-space:nowrap}
+table.t tbody tr:first-child td{border-top:1px solid var(--line)}
+table.t td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+table.t td.thm{color:var(--ink2)}
+table.t td.span{color:var(--ink2)}
+table.t td a{color:var(--acc);text-decoration:none;white-space:nowrap}
+table.t td a:hover{text-decoration:underline}
+table.flags{min-width:720px}
+table.flags.plain{min-width:0}
+table.flags td.lv{width:1%;white-space:nowrap}
+.pill{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.03em;padding:1px 7px;border-radius:999px;border:1px solid var(--line);background:var(--sur2);color:var(--mut);white-space:nowrap}
+.pill.confirmed{border-color:#EFD0C9;background:var(--red-bg);color:var(--red)}
+.pill.near{border-color:#EADFB4;background:var(--amb-bg);color:var(--amb)}
+.pill.thesis{border-color:#CFDFEF;background:var(--cool-bg);color:var(--cool)}
+.dist{display:flex;align-items:center;gap:6px;min-width:92px}
+.bar{flex:1;height:5px;border-radius:3px;background:var(--sur3);overflow:hidden;min-width:44px}
+.bar i{display:block;height:100%;background:var(--amb);border-radius:3px}
+tr.confirmed .bar i{background:var(--red)}
+.dist .dv{font-size:11.5px;color:var(--mut);font-variant-numeric:tabular-nums;white-space:nowrap}
+.empty{color:var(--mut);font-size:12.5px;padding:12px 12px;background:var(--sur);border:1px solid var(--line);border-radius:var(--r)}
+
+/* --------------------------------------------------------- 進行中的故事線 */
+/* 2026-08-20 改版（持有人回饋「12 張一樣大的卡要一張張讀」）：一行一條清單，
+   `<details>`/`<summary>` 實作、無 JS，比照 `.list .r` 的密集列語言。 */
+.threads{border:1px solid var(--line);border-radius:var(--r);background:var(--sur);overflow:hidden}
+.thr{border-top:1px solid var(--line2);scroll-margin-top:84px}
+.thr:first-child{border-top:0}
+.thr>summary{
+  cursor:pointer;list-style:none;
+  display:grid;grid-template-columns:66px minmax(0,1fr) 50px 58px 88px minmax(0,1.3fr) 14px;
+  gap:0 10px;align-items:center;padding:8px 11px;font-size:12.5px;
+}
+.thr>summary::-webkit-details-marker{display:none}
+.thr>summary:hover{background:var(--sur2)}
+.thr>summary:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+.thr[open]>summary{background:var(--sur2)}
+.thr[open]>summary .chev{transform:rotate(90deg)}
+.hpill{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:999px;border:1px solid var(--line);background:var(--sur2);color:var(--mut);white-space:nowrap;justify-self:start}
+.hpill.up{border-color:#EFD0C9;background:var(--red-bg);color:var(--red)}
+.hpill.down{border-color:#CCE3D6;background:var(--grn-bg);color:var(--grn)}
+.thr .tt{min-width:0;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.thr .thd,.thr .thn,.thr .tht{font-size:11px;color:var(--mut);font-variant-numeric:tabular-nums;white-space:nowrap}
+.thr .thsp{line-height:0}
+.thr .thsp .spark rect{fill:var(--acc);opacity:.7}
+.thr .thlast{min-width:0;font-size:11.5px;color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.thr .thlast a{color:var(--ink2);text-decoration:none}
+.thr .thlast a:hover{color:var(--acc)}
+.thr-body{padding:2px 12px 12px calc(66px + 10px);background:var(--sur2);border-top:1px dashed var(--line)}
+.th-l{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;max-width:82ch}
+.th-l li{font-size:12.5px;line-height:1.6;color:var(--ink2);border-top:1px solid var(--line2);padding-top:6px}
+.th-l li:first-child{border-top:0;padding-top:0}
+.th-l a{color:var(--ink2);text-decoration:none;font-weight:500}
+.th-l a:hover{color:var(--acc)}
+.th-meta{display:block;font-size:11px;color:var(--mut);margin-top:2px}
+.th-empty{color:var(--mut);font-size:12px;padding:2px 0}
+
+/* ------------------------------------------------------------- brief 段 */
+.sheet{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;align-items:start}
+@media(min-width:960px){.sheet{grid-template-columns:minmax(0,1fr) 320px;gap:26px}}
+.brief{max-width:68ch;display:flex;flex-direction:column;gap:11px}
+.brief p{margin:0;font-size:14.5px;line-height:1.85;color:var(--ink2);overflow-wrap:anywhere}
+.brief p.lead{font-size:15.5px;line-height:1.8;color:var(--ink)}
+.brief b{font-weight:700;color:var(--ink)}
+.brief b.lead-chip{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.04em;color:var(--acc);background:var(--acc-soft);border-radius:4px;padding:1px 7px;margin-right:7px;vertical-align:1px}
+.brief .n{font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink)}
+.brief .src{color:var(--mut);font-size:.78em}
+.brief a{font-size:.72em;padding:0 .45em;border:1px solid var(--line);border-radius:999px;text-decoration:none;color:var(--mut);vertical-align:baseline;white-space:nowrap;line-height:1.7;background:var(--sur);margin:0 .1em}
+.brief a:hover{border-color:var(--acc);color:var(--acc)}
+aside.side{display:flex;flex-direction:column;gap:16px;min-width:0}
+.box{background:var(--sur);border:1px solid var(--line);border-radius:var(--r);padding:11px 12px}
+.box h3{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.box h3 span{font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+/* 今日焦點 */
+.focus{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.focus li{display:grid;grid-template-columns:9px minmax(0,1fr);gap:8px;align-items:start;padding:7px 0;border-top:1px solid var(--line2)}
+.focus li:first-child{border-top:0;padding-top:2px}
+.focus .imp{width:7px;height:7px;border-radius:50%;background:var(--line);margin-top:6px}
+.focus .tx{min-width:0}
+.focus .tx a,.focus .tx span.h{display:block;color:var(--ink);text-decoration:none;font-size:12.5px;line-height:1.5;overflow-wrap:anywhere}
+.focus .tx a:hover{color:var(--acc)}
+.focus .mt{font-size:11px;color:var(--mut);margin-top:2px;display:flex;gap:6px;flex-wrap:wrap}
+/* 日曆 */
+.cal{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.cal li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 9px;padding:6px 0;border-top:1px solid var(--line2)}
+.cal li:first-child{border-top:0;padding-top:2px}
+.cal .d{font-size:11px;color:var(--mut);font-variant-numeric:tabular-nums;white-space:nowrap;padding-top:1px}
+.cal .ev{min-width:0;font-size:12.5px;line-height:1.5;color:var(--ink2);overflow-wrap:anywhere}
+.cal .ev.hi{color:var(--ink);font-weight:600}
+.cal .mt{font-size:11px;color:var(--mut);display:flex;flex-wrap:wrap;gap:6px;margin-top:1px}
+.idot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--line);vertical-align:1px;margin-right:4px}
+.idot.high{background:var(--red)} .idot.medium{background:var(--amb)} .idot.low{background:var(--line)}
+.none{color:var(--mut);font-size:12px;padding:2px 0}
+/* 迷你狀態 */
+.mini{display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:var(--mut)}
+.mini div{display:flex;justify-content:space-between;gap:10px}
+.mini b{font-weight:600;color:var(--ink2);font-variant-numeric:tabular-nums}
+
+/* ------------------------------------------------------------ 密集列表 */
+.list{border:1px solid var(--line);border-radius:var(--r);background:var(--sur);overflow:hidden}
+.list+.list{margin-top:10px}
+.rowgrid,.list .r>summary,.list .plain{
+  display:grid;grid-template-columns:3.2em 10px minmax(0,1fr) auto auto;
+  gap:0 10px;align-items:baseline;padding:7px 11px;
+}
+.list .head{color:var(--mut);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;background:var(--sur2);border-bottom:1px solid var(--line);font-weight:600;align-items:center;padding-top:5px;padding-bottom:5px}
+.list .grp{display:flex;align-items:center;gap:8px;background:var(--sur2);border-top:1px solid var(--line);padding:5px 11px;font-size:11.5px;font-weight:700;color:var(--ink2);letter-spacing:.02em}
+.list .grp .c{font-weight:500;color:var(--mut);font-size:11px}
+.list .grp::after{content:"";flex:1;height:1px;background:var(--line)}
+.list .r,.list .plain{border-top:1px solid var(--line2)}
+.list .head+.r,.list .head+.plain,.list .grp+.r,.list .grp+.plain,.list .head+.grp{border-top:0}
+.list .r>summary{cursor:pointer;list-style:none;font-size:13px}
+.list .r>summary::-webkit-details-marker{display:none}
+.list .r>summary:hover{background:var(--sur2)}
+.list .r>summary:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+.list .t{font-size:11.5px;color:var(--mut);font-variant-numeric:tabular-nums;white-space:nowrap}
+.list .imp{width:8px;height:8px;border-radius:50%;background:var(--line);align-self:center;justify-self:center}
+.imp.i3{background:var(--red)} .imp.i2{background:var(--amb)} .imp.i1{background:var(--line)}
+.list .ti{min-width:0;overflow-wrap:anywhere;color:var(--ink);line-height:1.5}
+.list .src{font-size:11.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:9em;justify-self:end}
+.list .end{display:flex;align-items:center;gap:6px;white-space:nowrap;justify-self:end}
+.tier{font-size:10px;font-weight:600;letter-spacing:.04em;color:var(--mut);border:1px solid var(--line);border-radius:4px;padding:0 4px;background:var(--sur2)}
+.tier.t1{color:var(--grn);border-color:#CCE3D6;background:var(--grn-bg)}
+.tier.t3,.tier.t4{color:var(--amb);border-color:#EADFB4;background:var(--amb-bg)}
+.chev{width:12px;height:12px;flex:none;color:var(--mut);transition:transform .15s ease}
+.chev::before{content:"›";display:block;font-size:14px;line-height:12px;text-align:center}
+.list .r[open]>summary .chev{transform:rotate(90deg)}
+.list .r[open]>summary{background:var(--sur2)}
+.list .body{padding:2px 12px 12px calc(3.2em + 20px);display:flex;flex-direction:column;gap:6px;background:var(--sur2);border-top:1px dashed var(--line);font-size:12.5px;line-height:1.7;color:var(--ink2)}
+.list .body>*{max-width:82ch}
+.list .body .why{color:var(--ink2)}
+.list .body .why b{color:var(--ink);font-weight:700}
+.list .body .meta{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:11.5px;color:var(--mut);align-items:center}
+.list .body a{color:var(--acc)}
+.tag{display:inline-block;font-size:10.5px;padding:0 6px;border-radius:4px;background:var(--sur3);color:var(--mut);margin-left:6px;vertical-align:1px;white-space:nowrap}
+.tag.p{background:var(--acc-soft);color:var(--acc)}
+.tag.r{background:var(--red-bg);color:var(--red)}
+.tag.th{background:var(--cool-bg);color:var(--cool);text-decoration:none;cursor:pointer}
+.tag.th:hover{background:var(--cool);color:#fff}
+.list .empty{border:0;border-radius:0;background:transparent}
+
+/* ------------------------------------------------------- 深讀（card body） */
+.deep{background:var(--sur);border:1px solid var(--line);border-radius:var(--r);padding:8px 10px;display:flex;flex-direction:column;gap:6px;max-width:82ch}
+.deep-h{font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--ink2);display:flex;align-items:center;gap:8px}
+.conf{font-size:10px;font-weight:600;padding:0 6px;border-radius:999px;border:1px solid var(--line);background:var(--sur2);color:var(--mut)}
+.conf.high{border-color:#CCE3D6;background:var(--grn-bg);color:var(--grn)}
+.conf.med{border-color:#EADFB4;background:var(--amb-bg);color:var(--amb)}
+.conf.low{border-color:var(--line);background:var(--sur2);color:var(--mut)}
+table.deep-nums{width:100%;border-collapse:collapse;font-size:12px}
+table.deep-nums td{padding:3px 8px 3px 0;border-top:1px solid var(--line2);vertical-align:baseline;color:var(--ink2)}
+table.deep-nums tr:first-child td{border-top:0}
+table.deep-nums td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink);white-space:nowrap}
+.deep-take,.deep-watch{font-size:12.5px;line-height:1.7;color:var(--ink2)}
+.deep-take b,.deep-watch b{color:var(--ink);font-weight:700}
+.deep-ent{display:flex;flex-wrap:wrap;gap:5px}
+.chip2{display:inline-block;font-size:10.5px;padding:1px 7px;border-radius:999px;background:var(--sur2);border:1px solid var(--line);color:var(--mut)}
+
+/* 其他標題（未摘要）兩欄 */
+.tlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0 18px;border:1px solid var(--line);border-radius:var(--r);background:var(--sur);padding:4px 12px}
+.tlist .ti2{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:7px 0;border-top:1px solid var(--line2);align-items:baseline}
+.tlist .ti2 .h{min-width:0;font-size:12.5px;line-height:1.5;color:var(--ink);overflow-wrap:anywhere}
+.tlist .ti2 a{color:var(--ink);text-decoration:none}
+.tlist .ti2 a:hover{color:var(--acc)}
+.tlist .ti2 .m{font-size:11px;color:var(--mut);white-space:nowrap}
+.tlist .ti2 .s{grid-column:1;font-size:11px;color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* 「其他標題」改版（Task B，2026-08-20）：一行一則，時間｜類別 chip｜標題｜來源｜tier */
+.tlist2{border:1px solid var(--line);border-radius:var(--r);background:var(--sur);overflow:hidden}
+.tlist2 .ti3{display:grid;grid-template-columns:3.2em auto minmax(0,1fr) auto auto;gap:0 10px;align-items:baseline;padding:6px 11px;border-top:1px solid var(--line2)}
+.tlist2 .ti3:first-child{border-top:0}
+.tlist2 .ti3 .m{font-size:11px;color:var(--mut);white-space:nowrap;font-variant-numeric:tabular-nums}
+.tlist2 .ti3 .cchip{font-size:10px;color:var(--mut);background:var(--sur2);border-radius:4px;padding:0 5px;white-space:nowrap;align-self:center}
+.tlist2 .ti3 .h{min-width:0;font-size:12.5px;line-height:1.5;color:var(--ink);overflow-wrap:anywhere}
+.tlist2 .ti3 .h a{color:var(--ink);text-decoration:none}
+.tlist2 .ti3 .h a:hover{color:var(--acc)}
+.tlist2 .ti3 .s{font-size:11px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:9em}
+.dupn{color:var(--mut);font-weight:400;font-size:11px}
+
+/* 收合區（「其餘 N 則」／各類別子區）——同 .list .r 的 chevron 語言 */
+details.tmore,details.tcat{border:1px solid var(--line);border-radius:var(--r);background:var(--sur)}
+details.tmore{margin-top:8px}
+details.tmore>summary,details.tcat>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;padding:8px 12px;font-size:12.5px;font-weight:600;color:var(--ink2)}
+details.tmore>summary::-webkit-details-marker,details.tcat>summary::-webkit-details-marker{display:none}
+details.tmore>summary:hover,details.tcat>summary:hover{background:var(--sur2)}
+details.tmore>summary::after,details.tcat>summary::after{content:"›";margin-left:auto;color:var(--mut);transition:transform .15s ease}
+details.tmore[open]>summary::after,details.tcat[open]>summary::after{transform:rotate(90deg)}
+details.tcat{margin:8px 10px}
+details.tcat>summary .c{font-weight:500;color:var(--mut);font-size:11px}
+details.tmore>.tlist2,details.tmore>.tlist{margin:0 10px 10px}
+
+/* ---------------------------------------------------------------- 其他 */
+.banner{background:var(--amb-bg);border:1px solid #EADFB4;border-left:3px solid var(--amb);color:var(--ink2);padding:9px 12px;border-radius:var(--r);margin:0 0 14px;font-size:12.5px;max-width:78ch}
+.banner.stale{background:var(--red-bg);border-color:#EFD0C9;border-left-color:var(--red)}
+.banner b{color:var(--ink);font-weight:700}
+body[data-mode="list"] .only-brief{display:none}
+body[data-mode="brief"] .only-list{display:none}
+/* status 頁 */
+table.stbl{min-width:680px}
+table.stbl td.ok{color:var(--grn);font-weight:600}
+table.stbl td.fail{color:var(--red);font-weight:600}
+table.stbl td.err{white-space:normal;color:var(--mut);max-width:340px}
+.stat-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin:2px 0 6px}
+.stat-cards .c{background:var(--sur);border:1px solid var(--line);border-radius:var(--r);padding:9px 11px}
+.stat-cards .c .k{color:var(--mut);font-size:11px;margin-bottom:3px}
+.stat-cards .c .v{font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.arclist{list-style:none;padding:0;margin:0;max-width:44ch;border:1px solid var(--line);border-radius:var(--r);background:var(--sur)}
+.arclist li{padding:8px 12px;border-top:1px solid var(--line2)}
+.arclist li:first-child{border-top:0}
+.arclist a{color:var(--ink);text-decoration:none;font-weight:500}
+.arclist a:hover{color:var(--acc)}
+.back{color:var(--acc);text-decoration:none;font-size:12.5px}
+.back:hover{text-decoration:underline}
+footer.imq-foot{margin-top:34px;padding:16px 20px 22px;border-top:1px solid var(--line);font-size:11.5px;color:var(--mut);line-height:1.8}
+footer.imq-foot .in{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:4px}
+footer.imq-foot a{color:var(--acc)}
+footer.imq-foot .sep{color:var(--line)}
+
+/* --------------------------------------------------------------- mobile */
+@media(max-width:640px){
+  .wrap{padding:14px 13px 46px}
+  .gauges{grid-template-columns:repeat(4,minmax(0,1fr));overflow-x:visible}
+  .g{min-width:0}
+  .g .val{font-size:17px}
+  .rowgrid,.list .r>summary,.list .plain{grid-template-columns:3.2em 10px minmax(0,1fr) auto;gap:0 8px;padding:8px 10px}
+  .list .src{display:none}
+  .list .head span.hsrc{display:none}
+  .list .body{padding-left:12px}
+  .tlist{grid-template-columns:minmax(0,1fr)}
+  .tlist2 .ti3{grid-template-columns:3.2em minmax(0,1fr) auto}
+  .tlist2 .ti3 .cchip,.tlist2 .ti3 .s{display:none}
+  .brief p{font-size:14px}
+  /* 進行中的故事線：手機隱藏 sparkline 與最新標題欄，保留 pill／主題／天數／+n */
+  .thr>summary{grid-template-columns:58px minmax(0,1fr) 44px 52px 14px}
+  .thr .thsp,.thr .thlast{display:none}
+  .thr-body{padding-left:12px}
+}
+@media(prefers-reduced-motion:reduce){.chev{transition:none}}
+@media print{.seg,.chev{display:none}body{background:#fff}}
+
+/* ============================================================ 2.0 分頁殼 */
+/* 2026-08-20 Phase A：頁首分頁列（今日／變化／儀表／週更／行事曆／故事線／
+   封存／狀態）＋「現況」六格＋「變化」預覽表＋週更子分頁＋ 14 天行事曆格。
+   沿用既有 token（--sur/--line/--ink/--mut/--acc/--red/--amb/--grn），
+   不引入新色板。 */
+.tabstrip{display:flex;gap:2px;overflow-x:auto;margin:0 0 16px;padding-bottom:1px;
+  border-bottom:1px solid var(--line)}
+.tabstrip .tab{flex:none;display:inline-flex;align-items:center;gap:6px;
+  padding:8px 13px;font-size:12.5px;font-weight:600;color:var(--mut);
+  text-decoration:none;border-bottom:2px solid transparent;white-space:nowrap}
+.tabstrip .tab:hover{color:var(--ink2)}
+.tabstrip .tab.on{color:var(--ink);border-bottom-color:var(--acc)}
+.tabstrip .tab .n{font-size:10.5px;font-weight:600;color:var(--mut);
+  background:var(--sur2);border:1px solid var(--line);border-radius:999px;
+  padding:0 6px;font-variant-numeric:tabular-nums}
+.tabstrip .tab.on .n{color:var(--acc);border-color:var(--acc-soft);background:var(--acc-soft)}
+
+/* 現況（六格） */
+.ss-strip{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin:2px 0 0}
+.ss-tile{background:var(--sur);border:1px solid var(--line);border-radius:var(--r);
+  padding:9px 11px;display:flex;flex-direction:column;gap:3px;min-height:78px}
+.ss-lab{font-size:10.5px;color:var(--mut);font-weight:600;letter-spacing:.02em}
+.ss-val{font-size:19px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums;line-height:1.2}
+.ss-val-s{font-size:14px;font-weight:600;line-height:1.35;overflow-wrap:break-word}
+.ss-sub{font-size:11px;color:var(--mut)}
+.ss-note{font-size:10.5px;color:var(--mut);margin-top:auto}
+.ss-link{margin-top:auto;font-size:11px;color:var(--acc);text-decoration:none;align-self:flex-start}
+.ss-link:hover{text-decoration:underline}
+
+/* 變化：訊號等級 pill（紅／黃通用色，跟 .pill.confirmed/.near 分開一套語意） */
+.pill.sred{border-color:#EFD0C9;background:var(--red-bg);color:var(--red)}
+.pill.samber{border-color:#EADFB4;background:var(--amb-bg);color:var(--amb)}
+.pill.breached{border-color:#EFD0C9;background:var(--red-bg);color:var(--red)}
+.pill.near{border-color:#EADFB4;background:var(--amb-bg);color:var(--amb)}
+table.sigtbl{min-width:760px}
+table.killtbl{min-width:680px}
+table.compositetbl{min-width:680px}
+
+/* 儀表／週更：全高 iframe（撐滿 viewport 減頁首） */
+iframe.fullframe{width:100%;height:calc(100vh - 190px);min-height:520px;border:1px solid var(--line);
+  border-radius:var(--r);background:var(--sur);display:block}
+
+/* 週更子分頁按鈕 */
+.subtabs{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 10px}
+.subtabs button{border:1px solid var(--line);background:var(--sur);color:var(--mut);
+  border-radius:999px;padding:5px 13px;font:inherit;font-size:12.5px;cursor:pointer}
+.subtabs button[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.subtabs button:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+
+/* 行事曆：14 天 7×2 格 */
+.cal14{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}
+.cal14-cell{background:var(--sur);border:1px solid var(--line);border-radius:var(--r);
+  padding:7px 9px;min-height:100px;font-size:11.5px;line-height:1.5}
+.cal14-d{font-size:10.5px;color:var(--mut);font-weight:600;margin-bottom:3px;
+  font-variant-numeric:tabular-nums}
+.cal14-cell .cd{color:var(--ink2);overflow-wrap:anywhere;padding:1px 0}
+.cal14-cell .cd.hi{color:var(--ink);font-weight:600}
+.cal14-cell .cd.more{color:var(--mut)}
+
+@media(max-width:640px){
+  .tabstrip{margin-bottom:12px}
+  .ss-strip{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .cal14{grid-template-columns:repeat(2,minmax(0,1fr))}
+  iframe.fullframe{height:calc(100vh - 230px)}
+}
+
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/monitor/">市場監測</a>
+          <a href="/intel/" class="active">情報監視器</a>
+          <a href="/detective/">偵測警報網</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/rotation/">產業輪動</a>
+          <a href="/crowding/">擁擠交易監測</a>
+          <a href="/regime/">大類資產 regime</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/catalyst/">催化劑日曆</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">選股<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/cockpit/">選股主控台</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/research/momentum-5/">Momentum-5</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screeners.html">RS+VCP Screener</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">個股總覽</a>
+          <a href="/research/">個股 DD</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/research/synthesis/">期望落差綜合研判</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/track-record/">裁決實績</a>
+          <a href="/pm/">持倉週掃</a>
+          <a href="/long-track-w52-adaptive/">實單主系統</a>
+          <a href="/long-track/">追蹤總覽</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/flow/">投資流程</a>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+<div class="wrap">
+<div class="mast"><div class="ttl"><h1>故事線</h1><div class="date">進行中的故事線，共 24 條</div></div><div class="chips"><a class="chip" href="/intel/">回今日</a><a class="chip" href="/intel/archive.html">歷史</a><a class="chip" href="/intel/status.html">狀態</a></div></div>
+<nav class="tabstrip" aria-label="情報監視器分頁"><a class="tab" href="/intel/index.html">今日</a><a class="tab" href="/intel/change.html">變化<span class="n">54</span></a><a class="tab" href="/intel/gauges.html">儀表</a><a class="tab" href="/intel/weekly.html">週更</a><a class="tab" href="/intel/calendar.html">行事曆<span class="n">43</span></a><a class="tab on" href="/intel/threads.html">故事線</a><a class="tab" href="/intel/archive.html">封存</a><a class="tab" href="/intel/status.html">狀態</a></nav>
+<div class="threads"><details class="thr" id="thread-th_55681dda58" open><summary><span class="hpill up" title="升溫">▲ 升溫</span><span class="tt">美債長天期殖利率飆升</span><span class="thd">第 1 天</span><span class="thn">今日 +8</span><span class="tht">共 8 張</span><span class="thsp"><svg class="spark" viewBox="0 0 80 18" width="80" height="18" preserveAspectRatio="none" role="img" aria-label="近 14 天卡片數"><rect x="0" y="16" width="4.71429" height="2" rx="1"></rect><rect x="6" y="16" width="4.71429" height="2" rx="1"></rect><rect x="11" y="16" width="4.71429" height="2" rx="1"></rect><rect x="17" y="16" width="4.71429" height="2" rx="1"></rect><rect x="23" y="16" width="4.71429" height="2" rx="1"></rect><rect x="29" y="16" width="4.71429" height="2" rx="1"></rect><rect x="34" y="16" width="4.71429" height="2" rx="1"></rect><rect x="40" y="16" width="4.71429" height="2" rx="1"></rect><rect x="46" y="16" width="4.71429" height="2" rx="1"></rect><rect x="51" y="16" width="4.71429" height="2" rx="1"></rect><rect x="57" y="16" width="4.71429" height="2" rx="1"></rect><rect x="63" y="16" width="4.71429" height="2" rx="1"></rect><rect x="69" y="16" width="4.71429" height="2" rx="1"></rect><rect x="74" y="1" width="4.71429" height="17" rx="1"></rect></svg></span><span class="thlast"><a href="https://news.cnyes.com/news/id/6581561" rel="noopener nofollow">〈美股早盤〉美財政部擴大長債回購！主要指數開高 美債殖利率回落</a></span><span class="chev"></span></summary><div class="thr-body"><ul class="th-l"><li><a href="https://news.cnyes.com/news/id/6581561" rel="noopener nofollow">〈美股早盤〉美財政部擴大長債回購！主要指數開高 美債殖利率回落</a><span class="th-meta">news.cnyes.com · 08-19</span></li><li><a href="https://www.cnbc.com/2026/08/18/30-year-treasury-yield-three-things-that-could-drive-it-even-higher.html" rel="noopener nofollow">The 30-year Treasury yield just hit a 19-year high. Three things could drive it even higher</a><span class="th-meta">cnbc.com · 08-19</span></li><li><a href="https://www.cnbc.com/2026/08/18/bond-market-treasury-yields-warsh-main-street.html" rel="noopener nofollow">Analysis: Bond market pressure is squeezing Main Street as Wall Street waits on Warsh</a><span class="th-meta">cnbc.com · 08-19</span></li><li><a href="https://www.wsj.com/finance/investing/bonds-are-getting-hammered-and-wall-street-says-the-rout-wont-end-anytime-soon-895e0ad8?mod=rss_markets_main" rel="noopener nofollow">Bonds Are Getting Hammered, and Wall Street Says the Rout Won’t End Anytime Soon</a><span class="th-meta">wsj.com · 08-19</span></li><li><a href="https://economictimes.indiatimes.com/markets/us-stocks/wall-street-guide/why-rising-treasury-yields-are-becoming-a-growing-risk-for-the-us-economy/articleshow/133344713.cms" rel="noopener nofollow">Why rising Treasury yields are becoming a growing risk for the US economy</a><span class="th-meta">economictimes.in · 08-19</span></li></ul></div></details>
+<details class="thr" id="thread-th_b006898e28" open><summary><span class="hpill up" title="升溫">▲ 升溫</span><span class="tt">公債殖利率多年高點賣壓</span><span class="thd">第 1 天</span><span class="thn">今日 +6</span><span class="tht">共 6 張</span><span class="thsp"><svg class="spark" viewBox="0 0 80 18" width="80" height="18" preserveAspectRatio="none" role="img" aria-label="近 14 天卡片數"><rect x="0" y="16" width="4.71429" height="2" rx="1"></rect><rect x="6" y="16" width="4.71429" height="2" rx="1"></rect><rect x="11" y="16" width="4.71429" height="2" rx="1"></rect><rect x="17" y="16" width="4.71429" height="2" rx="1"></rect><rect x="23" y="16" width="4.71429" height="2" rx="1"></rect><rect x="29" y="16" width="4.71429" height="2" rx="1"></rect><rect x="34" y="16" width="4.71429" height="2" rx="1"></rect><rect x="40" y="16" width="4.71429" height="2" rx="1"></rect><rect x="46" y="16" width="4.71429" height="2" rx="1"></rect><rect x="51" y="16" width="4.71429" height="2" rx="1"></rect><rect x="57" y="16" width="4.71429" height="2" rx="1"></rect><rect x="63" y="16" width="4.71429" height="2" rx="1"></rect><rect x="69" y="16" width="4.71429" height="2" rx="1"></rect><rect x="74" y="1" width="4.71429" height="17" rx="1"></rect></svg></span><span class="thlast"><a href="https://www.yna.co.kr/view/AKR20260819145551008" rel="noopener nofollow">&#x27;너무 올랐나&#x27; 국고채 금리 일제히 하락…3년물 연 3.798%(종합)</a></span><span class="chev"></span></summary><div class="thr-body"><ul class="th-l"><li><a href="https://www.yna.co.kr/view/AKR20260819145551008" rel="noopener nofollow">&#x27;너무 올랐나&#x27; 국고채 금리 일제히 하락…3년물 연 3.798%(종합)</a><span class="th-meta">yna.co.kr · 08-19</span></li><li><a href="https://www.wsj.com/livecoverage/stock-market-today-dow-sp-500-nasdaq-08-19-2026?mod=rss_markets_main" rel="noopener nofollow">Stock Market Today: Bond Yields Dive After Treasury Steps Up Buybacks</a><span class="th-meta">wsj.com · 08-19</span></li><li><a href="https://news.google.com/rss/articles/CBMikAFBVV95cUxOS3pqSU0xNlBxTzEzTmJqWl9YSnpVaUtnUmRHUzFyZTdsbWw0aVMwT1dfRkhQZjd5c3BnRmdiQWliYWxDbERsY2xpLXlsZW13N0x2LXRrNUYzaHJ3N3loR0FhTXhEeUp4WHk1S2toeVh5aW1xdDdmZ05PWFdwYXVmOEF2SlB2X0J6Y3JqaDVFc1jSAZYBQVVfeXFMTzBXRjRROG0wcS1uOTZCUXBHVVFna2VNSXdLcEE5MGpSUXpwUXk1TUVjTmJncThKY1RMOFpkNXZycW9HWnRIRjY3bkdzOUQ5SjFPc1doWThpU2lrY0NyTWtibWFzQ1p2dFJ4TjFBZlBqYWY1aTZRTWEyNnFBaktnclNvYXhNMmZlSFZYbllqclBWRnJMRkhR?oc=5" rel="noopener nofollow">Yields pull back from multi-year highs after Treasury Department says it will double government debt repurchase size</a><span class="th-meta">news.google.com · 08-19</span></li><li><a href="https://economictimes.indiatimes.com/markets/us-stocks/news/global-market-eurozone-bond-rout-loses-steam-but-rising-oil-prices-keep-investors-wary/articleshow/133344103.cms" rel="noopener nofollow">Global Market: Eurozone bond rout loses steam, but rising oil prices keep investors wary</a><span class="th-meta">economictimes.in · 08-19</span></li><li><a href="https://www.wsj.com/world/why-wall-street-thinks-the-brutal-bond-rout-is-just-getting-started-c84e9131?mod=rss_markets_main" rel="noopener nofollow">Why Wall Street Thinks the Brutal Bond Rout Is Just Getting Started</a><span class="th-meta">wsj.com · 08-19</span></li></ul></div></details>
+<details class="thr" id="thread-th_2007374432" open><summary><span class="hpill up" title="升溫">▲ 升溫</span><span class="tt">英國通膨升溫壓力</span><span class="thd">第 1 天</span><span class="thn">今日 +5</span><span class="tht">共 5 張</span><span class="thsp"><svg class="spark" viewBox="0 0 80 18" width="80" height="18" preserveAspectRatio="none" role="img" aria-label="近 14 天卡片數"><rect x="0" y="16" width="4.71429" height="2" rx="1"></rect><rect x="6" y="16" width="4.71429" height="2" rx="1"></rect><rect x="11" y="16" width="4.71429" height="2" rx="1"></rect><rect x="17" y="16" width="4.71429" height="2" rx="1"></rect><rect x="23" y="16" width="4.71429" height="2" rx="1"></rect><rect x="29" y="16" width="4.71429" height="2" rx="1"></rect><rect x="34" y="16" width="4.71429" height="2" rx="1"></rect><rect x="40" y="16" width="4.71429" height="2" rx="1"></rect><rect x="46" y="16" width="4.71429" height="2" rx="1"></rect><rect x="51" y="16" width="4.71429" height="2" rx="1"></rect><rect x="57" y="16" width="4.71429" height="2" rx="1"></rect><rect x="63" y="16" width="4.71429" height="2" rx="1"></rect><rect x="69" y="16" width="4.71429" height="2" rx="1"></rect><rect x="74" y="1" width="4.71429" height="17" rx="1"></rect></svg></span><span class="thlast"><a href="https://www.theguardian.com/business/2026/aug/19/uk-inflation-rise-iran-war-energy-consumer-prices-index-interest-rates" rel="noopener nofollow">UK inflation rises to 2.9% as Iran war drives up energy bills</a></span><span class="chev"></span></summary><div class="thr-body"><ul class="th-l"><li><a href="https://www.theguardian.com/business/2026/aug/19/uk-inflation-rise-iran-war-energy-consumer-prices-index-interest-rates" rel="noopener nofollow">UK inflation rises to 2.9% as Iran war drives up energy bills</a><span class="th-meta">theguardian.com · 08-19</span></li><li><a href="https://www.wsj.com/economy/global/u-k-inflation-picked-up-in-july-15b2b0be?mod=rss_socialeconomyfeed" rel="noopener nofollow">U.K. Inflation Surges as Iran War Threatens Further Price Pressures</a><span class="th-meta">wsj.com · 08-19</span></li><li><a href="https://www.ft.com/content/5a606279-3473-4c5b-a16e-ad9db6debafb?syn-25a6b1a6=1" rel="noopener nofollow">UK inflation accelerates to 2.9% in July amid Middle East energy shock</a><span class="th-meta">ft.com · 08-19</span></li><li><a href="https://economictimes.indiatimes.com/markets/us-stocks/news/global-market-european-shares-flat-as-middle-east-risks-weigh-fed-minutes-in-focus/articleshow/133344247.cms" rel="noopener nofollow">Global Market: European shares flat as Middle East risks weigh; Fed Minutes in focus</a><span class="th-meta">economictimes.in · 08-19</span></li><li><a href="https://www.theguardian.com/business/2026/aug/19/rising-inflation-underlines-scale-of-andy-burnham-cost-of-living-challenge" rel="noopener nofollow">Rising inflation underlines scale of Andy Burnham’s cost of living challenge</a><span class="th-meta">theguardian.com · 08-19</span></li></ul></div></details>
+<details class="thr" id="thread-th_b95340e804"><summary><span class="hpill up" title="升溫">▲ 升溫</span><span class="tt">人形機器人上市熱潮</span><span class="thd">第 1 天</span><span class="thn">今日 +4</span><span class="tht">共 4 張</span><span class="thsp"><svg class="spark" viewBox="0 0 80 18" width="80" height="18" preserveAspectRatio="none" role="img" aria-label="近 14 天卡片數"><rect x="0" y="16" width="4.71429" height="2" rx="1"></rect><rect x="6" y="16" width="4.71429" height="2" rx="1"></rect><rect x="11" y="16" width="4.71429" height="2" rx="1"></rect><rect x="17" y="16" width="4.71429" height="2" rx="1"></rect><rect x="23" y="16" width="4.71429" height="2" rx="1"></rect><rect x="29" y="16" width="4.71429" height="2" rx="1"></rect><rect x="34" y="16" width="4.71429" height="2" rx="1"></rect><rect x="40" y="16" width="4.71429" height="2" rx="1"></rect><rect x="46" y="16" width="4.71429" height="2" rx="1"></rect><rect x="51" y="16" width="4.71429" height="2" rx="1"></rect><rect x="57" y="16" width="4.71429" height="2" rx="1"></rect><rect x="63" y="16" width="4.71429" height="2" rx="1"></rect><rect x="69" y="16" width="4.71429" height="2" rx="1"></rect><rect x="74" y="1" width="4.71429" height="17" rx="1"></rect></svg></span><span class="thlast"><a href="https://www.ft.com/content/14cd8246-7fb1-4f8f-81b4-8de11ced79e5?syn-25a6b1a6=1" rel="noopener nofollow">Chinese humanoid robot maker surges 600% in trading debut</a></span><span class="chev"></span></summary><div class="thr-body"><ul class="th-l"><li><a href="https://www.ft.com/content/14cd8246-7fb1-4f8f-81b4-8de11ced79e5?syn-25a6b1a6=1" rel="noopener nofollow">Chinese humanoid robot maker surges 600% in trading debut</a><span class="th-meta">ft.com · 08-19</span></li><li><a href="https://www.wsj.com/tech/chinas-unitree-soars-in-debut-as-investors-bet-big-on-robotics-d2d73c08?mod=rss_worldnews" rel="noopener nofollow">Chinese Humanoid Robot Leader Soars in Market Debut Despite U.S. Ban</a><span class="th-meta">wsj.com · 08-19</span></li><li><a href="https://money.udn.com/money/story/5612/9701874" rel="noopener nofollow">和椿秀多型態機器人無人工廠 鎖定人形機器人應用</a><span class="th-meta">money.udn.com · 08-19</span></li><li><a href="https://money.udn.com/money/story/5612/9701877" rel="noopener nofollow">崇越攻機器人商機 攜手日本SCIVAX 聚焦視覺觸覺新科技</a><span class="th-meta">money.udn.com · 08-19</span></li><li><a href="https://www.cnbc.com/2026/08/19/china-backflipping-robot-maker-unitree-jumps-shanghai-ipo.html" rel="noopener nofollow">China’s backflipping robot maker Unitree pops 542% in Shanghai debut</a><span class="th-meta">cnbc.com · 08-19</span></li></ul></div></details>
+<details class="thr" id="thread-th_8da85cf860"><summary><span class="hpill up" title="升溫">▲ 升溫</span><span class="tt">輝達晶片出口管制漏洞</span><span class="thd">第 1 天</span><span class="thn">今日 +3</span><span class="tht">共 3 張</span><span class="thsp"><svg class="spark" viewBox="0 0 80 18" width="80" height="18" preserveAspectRatio="none" role="img" aria-label="近 14 天卡片數"><rect x="0" y="16" width="4.71429" height="2" rx="1"></rect><rect x="6" y="16" width="4.71429" height="2" rx="1"></rect><rect x="11" y="16" width="4.71429" height="2" rx="1"></rect><rect x="17" y="16" width="4.71429" height="2" rx="1"></rect><rect x="23" y="16" width="4.71429" height="2" rx="1"></rect><rect x="29" y="16" width="4.71429" height="2" rx="1"></rect><rect x="34" y="16" width="4.71429" height="2" rx="1"></rect><rect x="40" y="16" width="4.71429" height="2" rx="1"></rect><rect x="46" y="16" width="4.71429" height="2" rx="1"></rect><rect x="51" y="16" width="4.71429" height="2" rx="1"></rect><rect x="57" y="16" width="4.71429" height="2" rx="1"></rect><rect x="63" y="16" width="4.71429" height="2" rx="1"></rect><rect x="69" y="16" width="4.71429" height="2" rx="1"></rect><rect x="74" y="1" width="4.71429" height="17" rx="1"></rect></svg></span><span class="thlast"><a href="https://www.cnbc.com/2026/08/18/nvidias-ai-moat-is-shifting-from-chips-to-capital.html" rel="noopener nofollow">Nvidia&#x27;s AI moat is shifting from chips to capital</a></span><span class="chev"></span></summary><div class="thr-body"><ul class="th-l"><li><a href="https://www.cnbc.com/2026/08/18/nvidias-ai-moat-is-shifting-from-chips-to-capital.html" rel="noopener nofollow">Nvidia&#x27;s AI moat is shifting from chips to capital</a><span class="th-meta">cnbc.com · 08-19</span></li><li><a href="https://news.google.com/rss/articles/CBMipAFBVV95cUxNSldvS2hSWHF6b1ktYmhDblJhODNWUHFveDVKV2VqaUk2c3JKQjMwYm0yYmhCOXJ2eURuV0JldTYwTWFiU2ZuSWFpNVFmTkV6ZGljemlYWnBaWDVMelVrZnFma3FhcmpEdE5xRVp0Nkh3OHBzaTVVbE9PMWt4VjF3REQwakhvMGdiX0FuVXhzYWFKaU92eW92VnVMT2V1dlcxZ1JtaA?oc=5" rel="noopener nofollow">Nvidia Tries to Spur the AI Boom Into the Future</a><span class="th-meta">news.google.com · 08-19</span></li><li><a href="https://www.cnbc.com/2026/08/19/china-ai-nvidia-chips-us-export-controls.html" rel="noopener nofollow">The U.S. banned Nvidia&#x27;s best chips from going to China. Now it&#x27;s trying to close a crucial loophole</a><span class="th-meta">cnbc.com · 08-19</span></li><li><a href="https://news.google.com/rss/articles/CBMinwFBVV95cUxPb0VOQm9kVnMtUWdwakFBUWNBU25nU3Z1ZzJfcjE0c1FIRndqRXJiV3VKNGV1S1VhTzc2aGdfaXBmZENTR00wdmlWa1RLR2hmNVlQTW5vMmtLa1JSSU5wMzE4SEk3ei1JX2FFN0k3eFFRNzRJX1RXQ2NsMC04TU9RTDVvd3Y5NE1vTE8yWlI2ODZHMkpQQXJvLXBGWDFyUjQ?oc=5" rel="noopener nofollow">Going Into Earnings, Is Nvidia Stock a Buy, a Sell, or Fairly Valued?</a><span class="th-meta">news.google.com · 08-19</span></li></ul></div></details>
+<details class="thr" id="thread-th_aaf36070c6"><summary><span class="hpill up" title="升溫">▲ 升溫</span><span class="tt">日本財政疑慮衝擊日圓日債日股</span><span class="thd">第 1 天</span><span class="thn">今日 +3</span><span class="tht">共 3 張</span><span class="thsp"><svg class="spark" viewBox="0 0 80 18" width="80" height="18" preserveAspectRatio="none" role="img" aria-label="近 14 天卡片數"><rect x="0" y="16" width="4.71429" height="2" rx="1"></rect><rect x="6" y="16" width="4.71429" height="2" rx="1"></rect><rect x="11" y="16" width="4.71429" height="2" rx="1"></rect><rect x="17" y="16" width="4.71429" height="2" rx="1"></rect><rect x="23" y="16" width="4.71429" height="2" rx="1"></rect><rect x="29" y="16" width="4.71429" height="2" rx="1"></rect><rect x="34" y="16" width="4.71429" height="2" rx="1"></rect><rect x="40" y="16" width="4.71429" height="2" rx="1"></rect><rect x="46" y="16" width="4.71429" height="2" rx="1"></rect><rect x="51" y="16" width="4.71429" height="2" rx="1"></rect><rect x="57" y="16" width="4.71429" height="2" rx="1"></rect><rect x="63" y="16" width="4.71429" height="2" rx="1"></rect><rect x="69" y="16" width="4.71429" height="2" rx="1"></rect><rect x="74" y="1" width="4.71429" height="17" rx="1"></rect></svg></span><span class="thlast"><a href="https://www.japantimes.co.jp/business/2026/08/19/markets/yen-bonds-nikkei/" rel="noopener nofollow">Japan’s bad market week continues, with the yen, bonds and stocks struggling</a></span><span class="chev"></span></summary><div class="thr-body"><ul class="th-l"><li><a href="https://www.japantimes.co.jp/business/2026/08/19/markets/yen-bonds-nikkei/" rel="noopener nofollow">Japan’s bad market week continues, with the yen, bonds and stocks struggling</a><span class="th-meta">japantimes.co.jp · 08-19</span></li><li><a href="https://news.cnyes.com/news/id/6581633" rel="noopener nofollow">日本債市快撐不住了？10年期殖利率逼近3%警戒線</a><span class="th-meta">news.cnyes.com · 08-19</span></li><li><a href="https://www.scmp.com/economy/global-economy/article/3364596/why-historic-us-japan-intervention-has-failed-lift-pressure-yen?utm_source=rss_feed" rel="noopener nofollow">Why the historic US-Japan intervention has failed to lift pressure on the yen</a><span class="th-meta">scmp.com · 08-19</span></li><li><a href="https://www.japantimes.co.jp/business/2026/08/19/companies/mizuho-markets-boj-rate-hikes/" rel="noopener nofollow">Mizuho markets head expects BOJ to raise rates soon, more often</a><span class="th-meta">japantimes.co.jp · 08-19</span></li><li><a href="https://news.google.com/rss/articles/CBMiswFBVV95cUxOMWdZeVVubTV4bWgzbGN2T2cxX0lFMHVaRkJyd0ctcW9JLWIyVjBGV0tqNHdRUEwzYUhLR0VtTml4bzE3WENQY2tBcTgzVzJaR2NmTmZSQVlmdkgtZ2M2bUtrYzBxSmJNeHFsSWNWdWJ2VkFJYXgzOXd6d0k3OWl6amNZMjNWSjh0YTRURmpQN1RVSXJ6RXV3RDJON0xRaWFIRGZpNWxLN0pzUlBvLU45ZnNXOA?oc=5" rel="noopener nofollow">Japanese Stocks Slide as Bond Market Anxiety Hits AI Sentiment</a><span class="th-meta">news.google.com · 08-19</span></li></ul></div></details>
+<details class="thr" id="thread-th_53b5098971"><summary><span class="hpill up" title="升溫">▲ 升溫</span><span class="tt">中國 AI 影片生成技術崛起</span><span class="thd">第 1 天</span><span class="thn">今日 +3</span><span class="tht">共 3 張</span><span class="thsp"><svg class="spark" viewBox="0 0 80 18" width="80" height="18" preserveAspectRatio="none" role="img" aria-label="近 14 天卡片數"><rect x="0" y="16" width="4.71429" height="2" rx="1"></rect><rect x="6" y="16" width="4.71429" height="2" rx="1"></rect><rect x="11" y="16" width="4.71429" height="2" rx="1"></rect><rect x="17" y="16" width="4.71429" height="2" rx="1"></rect><rect x="23" y="16" width="4.71429" height="2" rx="1"></rect><rect x="29" y="16" width="4.71429" height="2" rx="1"></rect><rect x="34" y="16" width="4.71429" height="2" rx="1"></rect><rect x="40" y="16" width="4.71429" height="2" rx="1"></rect><rect x="46" y="16" width="4.71429" height="2" rx="1"></rect><rect x="51" y="16" width="4.71429" height="2" rx="1"></rect><rect x="57" y="16" width="4.71429" height="2" rx="1"></rect><rect x="63" y="16" width="4.71429" height="2" rx="1"></rect><rect x="69" y="16" width="4.71429" height="2" rx="1"></rect><rect x="74" y="1" width="4.71429" height="17" rx="1"></rect></svg></span><span class="thlast"><a href="https://news.cnyes.com/news/id/6581171" rel="noopener nofollow">AI代理改寫模型定價！為何DeepSeek API大漲、OpenAI反降80%？</a></span><span class="chev"></span></summary><div class="thr-body"><ul class="th-l"><li><a href="https://news.cnyes.com/news/id/6581171" rel="noopener nofollow">AI代理改寫模型定價！為何DeepSeek API大漲、OpenAI反降80%？</a><span class="th-meta">news.cnyes.com · 08-19</span></li><li><a href="https://news.cnyes.com/news/id/6581655" rel="noopener nofollow">Alphabet發行澳元債券 20年期殖利率略低於7% 創公司紀錄</a><span class="th-meta">news.cnyes.com · 08-19</span></li><li><a href="https://www.japantimes.co.jp/commentary/2026/08/19/world/chinese-ai-video-dominates/" rel="noopener nofollow">Chinese AI video is coming for more than Hollywood</a><span class="th-meta">japantimes.co.jp · 08-19</span></li></ul></div></details>
+<details class="thr" id="thread-th_48661a0745"><summary><span class="hpill up" title="升溫">▲ 升溫</span><span class="tt">AI 舉債與財政擴張債務風險</span><span class="thd">第 1 天</span><span class="thn">今日 +3</span><span class="tht">共 3 張</span><span class="thsp"><svg class="spark" viewBox="0 0 80 18" width="80" height="18" preserveAspectRatio="none" role="img" aria-label="近 14 天卡片數"><rect x="0" y="16" width="4.71429" height="2" rx="1"></rect><rect x="6" y="16" width="4.71429" height="2" rx="1"></rect><rect x="11" y="16" width="4.71429" height="2" rx="1"></rect><rect x="17" y="16" width="4.71429" height="2" rx="1"></rect><rect x="23" y="16" width="4.71429" height="2" rx="1"></rect><rect x="29" y="16" width="4.71429" height="2" rx="1"></rect><rect x="34" y="16" width="4.71429" height="2" rx="1"></rect><rect x="40" y="16" width="4.71429" height="2" rx="1"></rect><rect x="46" y="16" width="4.71429" height="2" rx="1"></rect><rect x="51" y="16" width="4.71429" height="2" rx="1"></rect><rect x="57" y="16" width="4.71429" height="2" rx="1"></rect><rect x="63" y="16" width="4.71429" height="2" rx="1"></rect><rect x="69" y="16" width="4.71429" height="2" rx="1"></rect><rect x="74" y="1" width="4.71429" height="17" rx="1"></rect></svg></span><span class="thlast"><a href="https://news.cnyes.com/news/id/6581417" rel="noopener nofollow">因殖利率飆升與AI估值疑慮 亞洲科技與晶片股周三全面重挫</a></span><span class="chev"></span></summary><div class="thr-body"><ul class="th-l"><li><a href="https://news.cnyes.com/news/id/6581417" rel="noopener nofollow">因殖利率飆升與AI估值疑慮 亞洲科技與晶片股周三全面重挫</a><span class="th-meta">news.cnyes.com · 08-19</span></li><li><a href="https://news.google.com/rss/articles/CBMiyAFBVV95cUxNbFJiWmkycHowZHRNLVdqTnVNOUhHbVlZbFVXODhXcDFZX0ZrNWxuR3hqRkhiMWRZWEhaSWJwQnRjTk5FVXEzRXowRGhFU1BqR2wtbHFjaHg1dFQ5UWFZbGo0bm02WjZBMVdlVEJ3RFpRa1FRNXZoYTJTMVViajBsNXViNXQ2bkJyU2gyN0kxQjdmNllaUnMwRElJNnd4cU1VT24tdTRfVU5RcFpLTmN3UktJRzRYZ21uNUpfemRKc3I0UFcxZDd4cg?oc=5" rel="noopener nofollow">Don&#x27;t blame US bond market indigestion on AI debt binge</a><span class="th-meta">news.google.com · 08-19</span></li><li><a href="https://news.cnyes.com/news/id/6581432" rel="noopener nofollow">AI融資與財政擴張交織成「債務風暴」 高盛：聯準會恐因此被迫升息</a><span class="th-meta">news.cnyes.com · 08-19</span></li><li><a href="https://news.google.com/rss/articles/CBMiT0FVX3lxTE1UcEpidFBhRUhtVnpvUWI0OWZubWpVRnhRQktWemVEQ2RVWWY3NGI3T3RqcTFzUDB1a3pBQW1IQlFzY1ZLTDZscHRrNjdJcHc?oc=5" rel="noopener nofollow">AI融資與財政擴張交織成「債務風暴」 高盛：聯準會恐因此被迫升息</a><span class="th-meta">news.google.com · 08-19</span></li></ul></div></details>
+<details class="thr" id="thread-th_8851202583"><summary><span class="hpill up" title="升溫">▲ 升溫</span><span class="tt">私募信貸壓力蔓延</span><span class="thd">第 1 天</span><span class="thn">今日 +2</span><span class="tht">共 2 張</span><span class="thsp"><svg class="spark" viewBox="0 0 80 18" width="80" height="18" preserveAspectRatio="none" role="img" aria-label="近 14 天卡片數"><rect x="0" y="16" width="4.71429" height="2" rx="1"></rect><rect x="6" y="16" width="4.71429" height="2" rx="1"></rect><rect x="11" y="16" width="4.71429" height="2" rx="1"></rect><rect x="17" y="16" width="4.71429" height="2" rx="1"></rect><rect x="23" y="16" width="4.71429" height="2" rx="1"></rect><rect x="29" y="16" width="4.71429" height="2" rx="1"></rect><rect x="34" y="16" width="4.71429" height="2" rx="1"></rect><rect x="40" y="16" width="4.71429" height="2" rx="1"></rect><rect x="46" y="16" width="4.71429" height="2" rx="1"></rect><rect x="51" y="16" width="4.71429" height="2" rx="1"></rect><rect x="57" y="16" width="4.71429" height="2" rx="1"></rect><rect x="63" y="16" width="4.71429" height="2" rx="1"></rect><rect x="69" y="16" width="4.71429" height="2" rx="1"></rect><rect x="74" y="1" width="4.71429" height="17" rx="1"></rect></svg></span><span class="thlast"><a href="https://news.google.com/rss/articles/CBMitAFBVV95cUxPdTRXdVh6UmJ1d2VNeTVzUTZvR3gyak9FeUlDSlFSR243LUxJUHgtZ2NCV3c1Y29SU1NrWlIyeHplQVFiSHZiYTFXYVlzRjBHd2cxdS14TmNBTXdCSzNPT0JZUzk2eWlMZWVKY0ZucEtiQi01T2pqTGdhRTZUVUttLXNYQVJXcHU0VklVZjlGQV85Si1SYm9LcFR2OTNTM09jNWpVY1FWc3J2enFtTnBBMlI3aTE?oc=5" rel="noopener nofollow">Anthropic-Tied Data Center Inks $1.3 Billion Private Credit Loan</a></span><span class="chev"></span></summary><div class="thr-body"><ul class="th-l"><li><a href="https://news.google.com/rss/articles/CBMitAFBVV95cUxPdTRXdVh6UmJ1d2VNeTVzUTZvR3gyak9FeUlDSlFSR243LUxJUHgtZ2NCV3c1Y29SU1NrWlIyeHplQVFiSHZiYTFXYVlzRjBHd2cxdS14TmNBTXdCSzNPT0JZUzk2eWlMZWVKY0ZucEtiQi01T2pqTGdhRTZUVUttLXNYQVJXcHU0VklVZjlGQV85Si1SYm9LcFR2OTNTM09jNWpVY1FWc3J2enFtTnBBMlI3aTE?oc=5" rel="noopener nofollow">Anthropic-Tied Data Center Inks $1.3 Billion Private Credit Loan</a><span class="th-meta">news.google.com · 08-19</span></li><li><a href="https://www.ft.com/content/ade8f80e-a5aa-4696-a6ca-40865c77229f?syn-25a6b1a6=1" rel="noopener nofollow">Private credit’s mounting strains</a><span class="th-meta">ft.com · 08-19</span></li></ul></div></details>
+<details class="thr" id="thread-th_117b52bca9"><summary><span class="hpill up" title="升溫">▲ 升溫</span><span class="tt">阿聯伊朗緊張升級</span><span class="thd">第 1 天</span><span class="thn">今日 +2</span><span class="tht">共 2 張</span><span class="thsp"><svg class="spark" viewBox="0 0 80 18" width="80" height="18" preserveAspectRatio="none" role="img" aria-label="近 14 天卡片數"><rect x="0" y="16" width="4.71429" height="2" rx="1"></rect><rect x="6" y="16" width="4.71429" height="2" rx="1"></rect><rect x="11" y="16" width="4.71429" height="2" rx="1"></rect><rect x="17" y="16" width="4.71429" height="2" rx="1"></rect><rect x="23" y="16" width="4.71429" height="2" rx="1"></rect><rect x="29" y="16" width="4.71429" height="2" rx="1"></rect><rect x="34" y="16" width="4.71429" height="2" rx="1"></rect><rect x="40" y="16" width="4.71429" height="2" rx="1"></rect><rect x="46" y="16" width="4.71429" height="2" rx="1"></rect><rect x="51" y="16" width="4.71429" height="2" rx="1"></rect><rect x="57" y="16" width="4.71429" height="2" rx="1"></rect><rect x="63" y="16" width="4.71429" height="2" rx="1"></rect><rect x="69" y="16" width="4.71429" height="2" rx="1"></rect><rect x="74" y="1" width="4.71429" height="17" rx="1"></rect></svg></span><span class="thlast"><a href="https://news.google.com/rss/articles/CBMiygFBVV95cUxNdzR1UDJHQ1pYM2Y2dzJ4Wmo3d3VCNFBEbDZQamtaSm5wdF9uWUdwRzdNa0ZtTFdzaUppUkdtelNyaDV0ZnU4aWY1aUlBLWhNdzN2VmhvZzJNdk8zM3gwSXZvc0p6Zld0UHhRQ0RjY2NTekZOekZnMEhwWlo1OXc2Mk1KZ0ZkZHF4WFR5NVRMejB2eDQxdXJJR0VocU5QVmRHbHFTZXlJNWRfdE43Sko3cXlYalB2VmFWSFczb044NlZEU21vOTNHOHpB?oc=5" rel="noopener nofollow">UAE&#x27;s financial embargo on Iran after missile threat puts rivalry back in spotlight</a></span><span class="chev"></span></summary><div class="thr-body"><ul class="th-l"><li><a href="https://news.google.com/rss/articles/CBMiygFBVV95cUxNdzR1UDJHQ1pYM2Y2dzJ4Wmo3d3VCNFBEbDZQamtaSm5wdF9uWUdwRzdNa0ZtTFdzaUppUkdtelNyaDV0ZnU4aWY1aUlBLWhNdzN2VmhvZzJNdk8zM3gwSXZvc0p6Zld0UHhRQ0RjY2NTekZOekZnMEhwWlo1OXc2Mk1KZ0ZkZHF4WFR5NVRMejB2eDQxdXJJR0VocU5QVmRHbHFTZXlJNWRfdE43Sko3cXlYalB2VmFWSFczb044NlZEU21vOTNHOHpB?oc=5" rel="noopener nofollow">UAE&#x27;s financial embargo on Iran after missile threat puts rivalry back in spotlight</a><span class="th-meta">news.google.com · 08-19</span></li><li><a href="https://www.cnbc.com/2026/08/19/us-iran-war-trump-hormuz.html" rel="noopener nofollow">UAE severs trade with Iran after reported missile strike</a><span class="th-meta">cnbc.com · 08-19</span></li><li><a href="https://news.google.com/rss/articles/CBMibkFVX3lxTE4xWXltSkJ1VVdJSDBqRktHbUd0bjg0cG5KcjhudGFwaUFCLUk2cUxndEpIalBiUndYRzM2azBKU1Q3VUdwTjZhNjM3SHVCS0Y1Ym9qSy1rSzlMUDMxb0lSLUxfekhvdHdPVlUtdnln0gFzQVVfeXFMTklBNnA3QkJxbGljbGpEei1oYnVWeWJ2Z1hjRjNaY0M0ZGlMR0xHa3ZlUEJrcEhBWG5qWHZ2Tk5KMWJPMkpQZFl1U0R2cnI1TngyQWVrY1NadEx6YUR3dTUxdGEtY2V3S3REdDA5bHNzRHZOVQ?oc=5" rel="noopener nofollow">Iran reportedly weighs attacks on U.S. targets in Europe as UAE severs trade with Tehran</a><span class="th-meta">news.google.com · 08-19</span></li><li><a href="https://news.cnyes.com/news/id/6581564" rel="noopener nofollow">伊朗闖大禍？阿聯一口氣切斷所有貿易與金融往來</a><span class="th-meta">news.cnyes.com · 08-19</span></li><li><a href="https://oilprice.com/Latest-Energy-News/World-News/Strait-of-Hormuz-Shipping-Slows-After-Vessel-Attack.html" rel="noopener nofollow">Strait of Hormuz Shipping Slows After Vessel Attack</a><span class="th-meta">oilprice.com · 08-19</span></li></ul></div></details>
+<details class="thr" id="thread-th_9c3fa05ded"><summary><span class="hpill up" title="升溫">▲ 升溫</span><span class="tt">SK海力士股價重挫與買回</span><span class="thd">第 1 天</span><span class="thn">今日 +2</span><span class="tht">共 2 張</span><span class="thsp"><svg class="spark" viewBox="0 0 80 18" width="80" height="18" preserveAspectRatio="none" role="img" aria-label="近 14 天卡片數"><rect x="0" y="16" width="4.71429" height="2" rx="1"></rect><rect x="6" y="16" width="4.71429" height="2" rx="1"></rect><rect x="11" y="16" width="4.71429" height="2" rx="1"></rect><rect x="17" y="16" width="4.71429" height="2" rx="1"></rect><rect x="23" y="16" width="4.71429" height="2" rx="1"></rect><rect x="29" y="16" width="4.71429" height="2" rx="1"></rect><rect x="34" y="16" width="4.71429" height="2" rx="1"></rect><rect x="40" y="16" width="4.71429" height="2" rx="1"></rect><rect x="46" y="16" width="4.71429" height="2" rx="1"></rect><rect x="51" y="16" width="4.71429" height="2" rx="1"></rect><rect x="57" y="16" width="4.71429" height="2" rx="1"></rect><rect x="63" y="16" width="4.71429" height="2" rx="1"></rect><rect x="69" y="16" width="4.71429" height="2" rx="1"></rect><rect x="74" y="1" width="4.71429" height="17" rx="1"></rect></svg></span><span class="thlast"><a href="https://www.wsj.com/business/sk-hynix-plans-more-than-28-billion-share-buyback-641a2e06?mod=rss_markets_main" rel="noopener nofollow">SK Hynix Plans More Than $28 Billion Share Buyback</a></span><span class="chev"></span></summary><div class="thr-body"><ul class="th-l"><li><a href="https://www.wsj.com/business/sk-hynix-plans-more-than-28-billion-share-buyback-641a2e06?mod=rss_markets_main" rel="noopener nofollow">SK Hynix Plans More Than $28 Billion Share Buyback</a><span class="th-meta">wsj.com · 08-19</span></li><li><a href="https://economictimes.indiatimes.com/markets/us-stocks/wall-street-guide/south-koreas-sk-hynix-announces-buyback-after-stock-crashes-50-in-two-months-wipes-off-massive-retail-wealth/articleshow/133344672.cms" rel="noopener nofollow">South Korea’s SK Hynix announces buyback after stock crashes 50% in two months, wipes off massive retail wealth</a><span class="th-meta">economictimes.in · 08-19</span></li><li><a href="https://www.yna.co.kr/view/AKR20260819145500008" rel="noopener nofollow">국고채 금리 일제히 하락…3년물 연 3.798%</a><span class="th-meta">yna.co.kr · 08-19</span></li><li><a href="https://www.yna.co.kr/view/AKR20260819145551008" rel="noopener nofollow">&#x27;너무 올랐나&#x27; 국고채 금리 일제히 하락…3년물 연 3.798%(종합)</a><span class="th-meta">yna.co.kr · 08-19</span></li><li><a href="https://www.yna.co.kr/view/AKR20260819128451530" rel="noopener nofollow">정은경 &quot;국민연금 리밸런싱 유예, 시장 변동성 때문&quot;(종합)</a><span class="th-meta">yna.co.kr · 08-19</span></li></ul></div></details>
+<details class="thr" id="thread-th_2f51867c65"><summary><span class="hpill up" title="升溫">▲ 升溫</span><span class="tt">Moderna 黑色素瘤疫苗進展</span><span class="thd">第 1 天</span><span class="thn">今日 +2</span><span class="tht">共 2 張</span><span class="thsp"><svg class="spark" viewBox="0 0 80 18" width="80" height="18" preserveAspectRatio="none" role="img" aria-label="近 14 天卡片數"><rect x="0" y="16" width="4.71429" height="2" rx="1"></rect><rect x="6" y="16" width="4.71429" height="2" rx="1"></rect><rect x="11" y="16" width="4.71429" height="2" rx="1"></rect><rect x="17" y="16" width="4.71429" height="2" rx="1"></rect><rect x="23" y="16" width="4.71429" height="2" rx="1"></rect><rect x="29" y="16" width="4.71429" height="2" rx="1"></rect><rect x="34" y="16" width="4.71429" height="2" rx="1"></rect><rect x="40" y="16" width="4.71429" height="2" rx="1"></rect><rect x="46" y="16" width="4.71429" height="2" rx="1"></rect><rect x="51" y="16" width="4.71429" height="2" rx="1"></rect><rect x="57" y="16" width="4.71429" height="2" rx="1"></rect><rect x="63" y="16" width="4.71429" height="2" rx="1"></rect><rect x="69" y="16" width="4.71429" height="2" rx="1"></rect><rect x="74" y="1" width="4.71429" height="17" rx="1"></rect></svg></span><span class="thlast"><a href="https://www.ft.com/content/a98a77e2-5156-4189-b971-974a7e60130f?syn-25a6b1a6=1" rel="noopener nofollow">Moderna shares soar 90% on melanoma vaccine trial success</a></span><span class="chev"></span></summary><div class="thr-body"><ul class="th-l"><li><a href="https://www.ft.com/content/a98a77e2-5156-4189-b971-974a7e60130f?syn-25a6b1a6=1" rel="noopener nofollow">Moderna shares soar 90% on melanoma vaccine trial success</a><span class="th-meta">ft.com · 08-19</span></li><li><a href="https://www.cnbc.com/2026/08/19/moderna-merck-cancer-vaccine-shows-initial-late-stage-melanoma-data.html" rel="noopener nofollow">Moderna, Merck cancer vaccine shows promise in late-stage trial; Moderna stock soars 90%</a><span class="th-meta">cnbc.com · 08-19</span></li></ul></div></details>
+<details class="thr" id="thread-th_d84ff7ad9d"><summary><span class="hpill up" title="升溫">▲ 升溫</span><span class="tt">美加關稅談判進展</span><span class="thd">第 1 天</span><span class="thn">今日 +1</span><span class="tht">共 1 張</span><span class="thsp"><svg class="spark" viewBox="0 0 80 18" width="80" height="18" preserveAspectRatio="none" role="img" aria-label="近 14 天卡片數"><rect x="0" y="16" width="4.71429" height="2" rx="1"></rect><rect x="6" y="16" width="4.71429" height="2" rx="1"></rect><rect x="11" y="16" width="4.71429" height="2" rx="1"></rect><rect x="17" y="16" width="4.71429" height="2" rx="1"></rect><rect x="23" y="16" width="4.71429" height="2" rx="1"></rect><rect x="29" y="16" width="4.71429" height="2" rx="1"></rect><rect x="34" y="16" width="4.71429" height="2" rx="1"></rect><rect x="40" y="16" width="4.71429" height="2" rx="1"></rect><rect x="46" y="16" width="4.71429" height="2" rx="1"></rect><rect x="51" y="16" width="4.71429" height="2" rx="1"></rect><rect x="57" y="16" width="4.71429" height="2" rx="1"></rect><rect x="63" y="16" width="4.71429" height="2" rx="1"></rect><rect x="69" y="16" width="4.71429" height="2" rx="1"></rect><rect x="74" y="1" width="4.71429" height="17" rx="1"></rect></svg></span><span class="thlast"><a href="https://www.wsj.com/economy/trade/trump-pauses-50-tariff-on-some-canadian-products-2b3fd404?mod=rss_worldnews" rel="noopener nofollow">Trump Pauses 50% Tariff on Some Canadian Products</a></span><span class="chev"></span></summary><div class="thr-body"><ul class="th-l"><li><a href="https://www.wsj.com/economy/trade/trump-pauses-50-tariff-on-some-canadian-products-2b3fd404?mod=rss_worldnews" rel="noopener nofollow">Trump Pauses 50% Tariff on Some Canadian Products</a><span class="th-meta">wsj.com · 08-19</span></li><li><a href="https://www.ft.com/content/8a256a34-5e8d-459a-80a3-78ba6aa121af?syn-25a6b1a6=1" rel="noopener nofollow">Trump says deal reached with Canada and pauses tariffs</a><span class="th-meta">ft.com · 08-19</span></li><li><a href="https://www.cnbc.com/2026/08/18/trump-carney-canada-tariffs-dealine-talks.html" rel="noopener nofollow">Trump pauses 50% scheduled tariffs on Canada for three days, announces &#x27;deal&#x27; with Ottawa</a><span class="th-meta">cnbc.com · 08-19</span></li><li><a href="https://www.wsj.com/economy/trade/trump-pauses-50-tariff-on-some-canadian-products-2b3fd404?mod=rss_socialeconomyfeed" rel="noopener nofollow">President Trump said he would pause a 50% tariff on certain goods from Canada for three days while the two countries seek to finalize an agreement</a><span class="th-meta">wsj.com · 08-19</span></li></ul></div></details>
+<details class="thr" id="thread-th_17253271a8"><summary><span class="hpill up" title="升溫">▲ 升溫</span><span class="tt">亞洲基金經理人 AI 避險轉向</span><span class="thd">第 1 天</span><span class="thn">今日 +1</span><span class="tht">共 1 張</span><span class="thsp"><svg class="spark" viewBox="0 0 80 18" width="80" height="18" preserveAspectRatio="none" role="img" aria-label="近 14 天卡片數"><rect x="0" y="16" width="4.71429" height="2" rx="1"></rect><rect x="6" y="16" width="4.71429" height="2" rx="1"></rect><rect x="11" y="16" width="4.71429" height="2" rx="1"></rect><rect x="17" y="16" width="4.71429" height="2" rx="1"></rect><rect x="23" y="16" width="4.71429" height="2" rx="1"></rect><rect x="29" y="16" width="4.71429" height="2" rx="1"></rect><rect x="34" y="16" width="4.71429" height="2" rx="1"></rect><rect x="40" y="16" width="4.71429" height="2" rx="1"></rect><rect x="46" y="16" width="4.71429" height="2" rx="1"></rect><rect x="51" y="16" width="4.71429" height="2" rx="1"></rect><rect x="57" y="16" width="4.71429" height="2" rx="1"></rect><rect x="63" y="16" width="4.71429" height="2" rx="1"></rect><rect x="69" y="16" width="4.71429" height="2" rx="1"></rect><rect x="74" y="1" width="4.71429" height="17" rx="1"></rect></svg></span><span class="thlast"><a href="https://economictimes.indiatimes.com/markets/stocks/news/tech-holds-the-crown-but-defensive-positioning-grows-bofa-securities-asia-fm-survey/articleshow/133347742.cms" rel="noopener nofollow">Tech holds the crown, but defensive positioning grows: BofA survey</a></span><span class="chev"></span></summary><div class="thr-body"><ul class="th-l"><li><a href="https://economictimes.indiatimes.com/markets/stocks/news/tech-holds-the-crown-but-defensive-positioning-grows-bofa-securities-asia-fm-survey/articleshow/133347742.cms" rel="noopener nofollow">Tech holds the crown, but defensive positioning grows: BofA survey</a><span class="th-meta">economictimes.in · 08-19</span></li><li><a href="https://finance.yahoo.com/markets/stocks/articles/multi-growth-runway-fuels-visa-114955075.html" rel="noopener nofollow">Multi Year Growth Runway Fuels Visa’s (V) Bullish Case</a><span class="th-meta">finance.yahoo.co · 08-19</span></li></ul></div></details>
+<details class="thr" id="thread-th_6477e55c25"><summary><span class="hpill up" title="升溫">▲ 升溫</span><span class="tt">創意大規模籌資與擴產動向</span><span class="thd">第 1 天</span><span class="thn">今日 +1</span><span class="tht">共 1 張</span><span class="thsp"><svg class="spark" viewBox="0 0 80 18" width="80" height="18" preserveAspectRatio="none" role="img" aria-label="近 14 天卡片數"><rect x="0" y="16" width="4.71429" height="2" rx="1"></rect><rect x="6" y="16" width="4.71429" height="2" rx="1"></rect><rect x="11" y="16" width="4.71429" height="2" rx="1"></rect><rect x="17" y="16" width="4.71429" height="2" rx="1"></rect><rect x="23" y="16" width="4.71429" height="2" rx="1"></rect><rect x="29" y="16" width="4.71429" height="2" rx="1"></rect><rect x="34" y="16" width="4.71429" height="2" rx="1"></rect><rect x="40" y="16" width="4.71429" height="2" rx="1"></rect><rect x="46" y="16" width="4.71429" height="2" rx="1"></rect><rect x="51" y="16" width="4.71429" height="2" rx="1"></rect><rect x="57" y="16" width="4.71429" height="2" rx="1"></rect><rect x="63" y="16" width="4.71429" height="2" rx="1"></rect><rect x="69" y="16" width="4.71429" height="2" rx="1"></rect><rect x="74" y="1" width="4.71429" height="17" rx="1"></rect></svg></span><span class="thlast"><a href="https://news.cnyes.com/news/id/6581745" rel="noopener nofollow">創意通過兩項議案 擬大規模籌資655億元</a></span><span class="chev"></span></summary><div class="thr-body"><ul class="th-l"><li><a href="https://news.cnyes.com/news/id/6581745" rel="noopener nofollow">創意通過兩項議案 擬大規模籌資655億元</a><span class="th-meta">news.cnyes.com · 08-19</span></li></ul></div></details>
+<details class="thr" id="thread-th_b4cc996335"><summary><span class="hpill up" title="升溫">▲ 升溫</span><span class="tt">南海軍事化建設進展</span><span class="thd">第 1 天</span><span class="thn">今日 +1</span><span class="tht">共 1 張</span><span class="thsp"><svg class="spark" viewBox="0 0 80 18" width="80" height="18" preserveAspectRatio="none" role="img" aria-label="近 14 天卡片數"><rect x="0" y="16" width="4.71429" height="2" rx="1"></rect><rect x="6" y="16" width="4.71429" height="2" rx="1"></rect><rect x="11" y="16" width="4.71429" height="2" rx="1"></rect><rect x="17" y="16" width="4.71429" height="2" rx="1"></rect><rect x="23" y="16" width="4.71429" height="2" rx="1"></rect><rect x="29" y="16" width="4.71429" height="2" rx="1"></rect><rect x="34" y="16" width="4.71429" height="2" rx="1"></rect><rect x="40" y="16" width="4.71429" height="2" rx="1"></rect><rect x="46" y="16" width="4.71429" height="2" rx="1"></rect><rect x="51" y="16" width="4.71429" height="2" rx="1"></rect><rect x="57" y="16" width="4.71429" height="2" rx="1"></rect><rect x="63" y="16" width="4.71429" height="2" rx="1"></rect><rect x="69" y="16" width="4.71429" height="2" rx="1"></rect><rect x="74" y="1" width="4.71429" height="17" rx="1"></rect></svg></span><span class="thlast"><a href="https://www.japantimes.co.jp/news/2026/08/19/asia-pacific/politics/china-reef-work/" rel="noopener nofollow">China finishes first phase of construction at South China Sea reef, images show</a></span><span class="chev"></span></summary><div class="thr-body"><ul class="th-l"><li><a href="https://www.japantimes.co.jp/news/2026/08/19/asia-pacific/politics/china-reef-work/" rel="noopener nofollow">China finishes first phase of construction at South China Sea reef, images show</a><span class="th-meta">japantimes.co.jp · 08-19</span></li><li><a href="https://www.wsj.com/economy/global/u-k-inflation-picked-up-in-july-15b2b0be?mod=rss_socialeconomyfeed" rel="noopener nofollow">U.K. Inflation Surges as Iran War Threatens Further Price Pressures</a><span class="th-meta">wsj.com · 08-19</span></li></ul></div></details>
+<details class="thr" id="thread-th_02ad7a4a9c"><summary><span class="hpill up" title="升溫">▲ 升溫</span><span class="tt">伊朗與美國地緣衝突升級</span><span class="thd">第 1 天</span><span class="thn">今日 +1</span><span class="tht">共 1 張</span><span class="thsp"><svg class="spark" viewBox="0 0 80 18" width="80" height="18" preserveAspectRatio="none" role="img" aria-label="近 14 天卡片數"><rect x="0" y="16" width="4.71429" height="2" rx="1"></rect><rect x="6" y="16" width="4.71429" height="2" rx="1"></rect><rect x="11" y="16" width="4.71429" height="2" rx="1"></rect><rect x="17" y="16" width="4.71429" height="2" rx="1"></rect><rect x="23" y="16" width="4.71429" height="2" rx="1"></rect><rect x="29" y="16" width="4.71429" height="2" rx="1"></rect><rect x="34" y="16" width="4.71429" height="2" rx="1"></rect><rect x="40" y="16" width="4.71429" height="2" rx="1"></rect><rect x="46" y="16" width="4.71429" height="2" rx="1"></rect><rect x="51" y="16" width="4.71429" height="2" rx="1"></rect><rect x="57" y="16" width="4.71429" height="2" rx="1"></rect><rect x="63" y="16" width="4.71429" height="2" rx="1"></rect><rect x="69" y="16" width="4.71429" height="2" rx="1"></rect><rect x="74" y="1" width="4.71429" height="17" rx="1"></rect></svg></span><span class="thlast"><a href="https://www.ft.com/content/b2d9e5a2-22ce-4267-98b0-62ab78906509?syn-25a6b1a6=1" rel="noopener nofollow">FirstFT: Iran weighs Europe strikes if US restarts war</a></span><span class="chev"></span></summary><div class="thr-body"><ul class="th-l"><li><a href="https://www.ft.com/content/b2d9e5a2-22ce-4267-98b0-62ab78906509?syn-25a6b1a6=1" rel="noopener nofollow">FirstFT: Iran weighs Europe strikes if US restarts war</a><span class="th-meta">ft.com · 08-19</span></li><li><a href="https://www.theguardian.com/business/2026/aug/18/governments-borrowing-costs-us-iran-bond-yields-trump" rel="noopener nofollow">Governments’ borrowing costs hit further multi-decade highs as US-Iran peace hopes fade</a><span class="th-meta">theguardian.com · 08-19</span></li><li><a href="https://news.google.com/rss/articles/CBMibkFVX3lxTE4xWXltSkJ1VVdJSDBqRktHbUd0bjg0cG5KcjhudGFwaUFCLUk2cUxndEpIalBiUndYRzM2azBKU1Q3VUdwTjZhNjM3SHVCS0Y1Ym9qSy1rSzlMUDMxb0lSLUxfekhvdHdPVlUtdnln0gFzQVVfeXFMTklBNnA3QkJxbGljbGpEei1oYnVWeWJ2Z1hjRjNaY0M0ZGlMR0xHa3ZlUEJrcEhBWG5qWHZ2Tk5KMWJPMkpQZFl1U0R2cnI1TngyQWVrY1NadEx6YUR3dTUxdGEtY2V3S3REdDA5bHNzRHZOVQ?oc=5" rel="noopener nofollow">Iran reportedly weighs attacks on U.S. targets in Europe as UAE severs trade with Tehran</a><span class="th-meta">news.google.com · 08-19</span></li></ul></div></details>
+<details class="thr" id="thread-th_3286d7f091"><summary><span class="hpill up" title="升溫">▲ 升溫</span><span class="tt">AI 對就業市場的衝擊</span><span class="thd">第 1 天</span><span class="thn">今日 +1</span><span class="tht">共 1 張</span><span class="thsp"><svg class="spark" viewBox="0 0 80 18" width="80" height="18" preserveAspectRatio="none" role="img" aria-label="近 14 天卡片數"><rect x="0" y="16" width="4.71429" height="2" rx="1"></rect><rect x="6" y="16" width="4.71429" height="2" rx="1"></rect><rect x="11" y="16" width="4.71429" height="2" rx="1"></rect><rect x="17" y="16" width="4.71429" height="2" rx="1"></rect><rect x="23" y="16" width="4.71429" height="2" rx="1"></rect><rect x="29" y="16" width="4.71429" height="2" rx="1"></rect><rect x="34" y="16" width="4.71429" height="2" rx="1"></rect><rect x="40" y="16" width="4.71429" height="2" rx="1"></rect><rect x="46" y="16" width="4.71429" height="2" rx="1"></rect><rect x="51" y="16" width="4.71429" height="2" rx="1"></rect><rect x="57" y="16" width="4.71429" height="2" rx="1"></rect><rect x="63" y="16" width="4.71429" height="2" rx="1"></rect><rect x="69" y="16" width="4.71429" height="2" rx="1"></rect><rect x="74" y="1" width="4.71429" height="17" rx="1"></rect></svg></span><span class="thlast"><a href="https://www.cnbc.com/2026/08/19/goldman-ai-impact-employment-jobs.html" rel="noopener nofollow">Goldman studied where AI is squeezing labor markets. Here&#x27;s what it found</a></span><span class="chev"></span></summary><div class="thr-body"><ul class="th-l"><li><a href="https://www.cnbc.com/2026/08/19/goldman-ai-impact-employment-jobs.html" rel="noopener nofollow">Goldman studied where AI is squeezing labor markets. Here&#x27;s what it found</a><span class="th-meta">cnbc.com · 08-19</span></li><li><a href="https://finance.yahoo.com/markets/stocks/articles/stable-growth-trajectory-positions-mastercard-114803769.html" rel="noopener nofollow">Stable Growth Trajectory Positions Mastercard (MA) for Strong Returns</a><span class="th-meta">finance.yahoo.co · 08-19</span></li></ul></div></details>
+<details class="thr" id="thread-th_0bfc4397c0"><summary><span class="hpill up" title="升溫">▲ 升溫</span><span class="tt">民用電池廠轉向國防訂單</span><span class="thd">第 1 天</span><span class="thn">今日 +1</span><span class="tht">共 1 張</span><span class="thsp"><svg class="spark" viewBox="0 0 80 18" width="80" height="18" preserveAspectRatio="none" role="img" aria-label="近 14 天卡片數"><rect x="0" y="16" width="4.71429" height="2" rx="1"></rect><rect x="6" y="16" width="4.71429" height="2" rx="1"></rect><rect x="11" y="16" width="4.71429" height="2" rx="1"></rect><rect x="17" y="16" width="4.71429" height="2" rx="1"></rect><rect x="23" y="16" width="4.71429" height="2" rx="1"></rect><rect x="29" y="16" width="4.71429" height="2" rx="1"></rect><rect x="34" y="16" width="4.71429" height="2" rx="1"></rect><rect x="40" y="16" width="4.71429" height="2" rx="1"></rect><rect x="46" y="16" width="4.71429" height="2" rx="1"></rect><rect x="51" y="16" width="4.71429" height="2" rx="1"></rect><rect x="57" y="16" width="4.71429" height="2" rx="1"></rect><rect x="63" y="16" width="4.71429" height="2" rx="1"></rect><rect x="69" y="16" width="4.71429" height="2" rx="1"></rect><rect x="74" y="1" width="4.71429" height="17" rx="1"></rect></svg></span><span class="thlast"><a href="https://www.japantimes.co.jp/business/2026/08/19/tech/lg-energy-batteries-us-drones/" rel="noopener nofollow">LG Energy may supply batteries for U.S. drones in pivot to defense</a></span><span class="chev"></span></summary><div class="thr-body"><ul class="th-l"><li><a href="https://www.japantimes.co.jp/business/2026/08/19/tech/lg-energy-batteries-us-drones/" rel="noopener nofollow">LG Energy may supply batteries for U.S. drones in pivot to defense</a><span class="th-meta">japantimes.co.jp · 08-19</span></li></ul></div></details>
+<details class="thr" id="thread-th_077d7c2d53"><summary><span class="hpill up" title="升溫">▲ 升溫</span><span class="tt">三星晶圓代工漲價搶單</span><span class="thd">第 1 天</span><span class="thn">今日 +1</span><span class="tht">共 1 張</span><span class="thsp"><svg class="spark" viewBox="0 0 80 18" width="80" height="18" preserveAspectRatio="none" role="img" aria-label="近 14 天卡片數"><rect x="0" y="16" width="4.71429" height="2" rx="1"></rect><rect x="6" y="16" width="4.71429" height="2" rx="1"></rect><rect x="11" y="16" width="4.71429" height="2" rx="1"></rect><rect x="17" y="16" width="4.71429" height="2" rx="1"></rect><rect x="23" y="16" width="4.71429" height="2" rx="1"></rect><rect x="29" y="16" width="4.71429" height="2" rx="1"></rect><rect x="34" y="16" width="4.71429" height="2" rx="1"></rect><rect x="40" y="16" width="4.71429" height="2" rx="1"></rect><rect x="46" y="16" width="4.71429" height="2" rx="1"></rect><rect x="51" y="16" width="4.71429" height="2" rx="1"></rect><rect x="57" y="16" width="4.71429" height="2" rx="1"></rect><rect x="63" y="16" width="4.71429" height="2" rx="1"></rect><rect x="69" y="16" width="4.71429" height="2" rx="1"></rect><rect x="74" y="1" width="4.71429" height="17" rx="1"></rect></svg></span><span class="thlast"><a href="https://news.cnyes.com/news/id/6581562" rel="noopener nofollow">台積電先進產能被搶光！三星晶圓代工趁勢漲價15%</a></span><span class="chev"></span></summary><div class="thr-body"><ul class="th-l"><li><a href="https://news.cnyes.com/news/id/6581562" rel="noopener nofollow">台積電先進產能被搶光！三星晶圓代工趁勢漲價15%</a><span class="th-meta">news.cnyes.com · 08-19</span></li><li><a href="https://news.google.com/rss/articles/CBMiT0FVX3lxTE81ckdDWmJULXI4S0hsbzliT1gtUVNpalZGazZ6WnpuWHJXSnlvQXFfV2JIWk9LWTFiZTZjdFVUM1FkcnlqcXVWYUQwSF9jdmM?oc=5" rel="noopener nofollow">台積電先進產能被搶光！三星晶圓代工趁勢漲價15%</a><span class="th-meta">news.google.com · 08-19</span></li></ul></div></details>
+<details class="thr" id="thread-th_8fc8064ff4"><summary><span class="hpill up" title="升溫">▲ 升溫</span><span class="tt">歐洲防務支出推升公債殖利率</span><span class="thd">第 1 天</span><span class="thn">今日 +1</span><span class="tht">共 1 張</span><span class="thsp"><svg class="spark" viewBox="0 0 80 18" width="80" height="18" preserveAspectRatio="none" role="img" aria-label="近 14 天卡片數"><rect x="0" y="16" width="4.71429" height="2" rx="1"></rect><rect x="6" y="16" width="4.71429" height="2" rx="1"></rect><rect x="11" y="16" width="4.71429" height="2" rx="1"></rect><rect x="17" y="16" width="4.71429" height="2" rx="1"></rect><rect x="23" y="16" width="4.71429" height="2" rx="1"></rect><rect x="29" y="16" width="4.71429" height="2" rx="1"></rect><rect x="34" y="16" width="4.71429" height="2" rx="1"></rect><rect x="40" y="16" width="4.71429" height="2" rx="1"></rect><rect x="46" y="16" width="4.71429" height="2" rx="1"></rect><rect x="51" y="16" width="4.71429" height="2" rx="1"></rect><rect x="57" y="16" width="4.71429" height="2" rx="1"></rect><rect x="63" y="16" width="4.71429" height="2" rx="1"></rect><rect x="69" y="16" width="4.71429" height="2" rx="1"></rect><rect x="74" y="1" width="4.71429" height="17" rx="1"></rect></svg></span><span class="thlast"><a href="https://economictimes.indiatimes.com/markets/bonds/german-finance-ministry-links-high-borrowing-costs-to-security-overhaul/articleshow/133348455.cms" rel="noopener nofollow">German finance ministry links high borrowing costs to security overhaul</a></span><span class="chev"></span></summary><div class="thr-body"><ul class="th-l"><li><a href="https://economictimes.indiatimes.com/markets/bonds/german-finance-ministry-links-high-borrowing-costs-to-security-overhaul/articleshow/133348455.cms" rel="noopener nofollow">German finance ministry links high borrowing costs to security overhaul</a><span class="th-meta">economictimes.in · 08-19</span></li></ul></div></details>
+<details class="thr" id="thread-th_3ec24018b0"><summary><span class="hpill up" title="升溫">▲ 升溫</span><span class="tt">台韓 AI 供應鏈合作轉向</span><span class="thd">第 1 天</span><span class="thn">今日 +1</span><span class="tht">共 1 張</span><span class="thsp"><svg class="spark" viewBox="0 0 80 18" width="80" height="18" preserveAspectRatio="none" role="img" aria-label="近 14 天卡片數"><rect x="0" y="16" width="4.71429" height="2" rx="1"></rect><rect x="6" y="16" width="4.71429" height="2" rx="1"></rect><rect x="11" y="16" width="4.71429" height="2" rx="1"></rect><rect x="17" y="16" width="4.71429" height="2" rx="1"></rect><rect x="23" y="16" width="4.71429" height="2" rx="1"></rect><rect x="29" y="16" width="4.71429" height="2" rx="1"></rect><rect x="34" y="16" width="4.71429" height="2" rx="1"></rect><rect x="40" y="16" width="4.71429" height="2" rx="1"></rect><rect x="46" y="16" width="4.71429" height="2" rx="1"></rect><rect x="51" y="16" width="4.71429" height="2" rx="1"></rect><rect x="57" y="16" width="4.71429" height="2" rx="1"></rect><rect x="63" y="16" width="4.71429" height="2" rx="1"></rect><rect x="69" y="16" width="4.71429" height="2" rx="1"></rect><rect x="74" y="1" width="4.71429" height="17" rx="1"></rect></svg></span><span class="thlast"><a href="https://news.cnyes.com/news/id/6581693" rel="noopener nofollow">〈台北國際自動化展〉和椿：人形機器人是下波成長動能 布局實體AI台灣尚缺電池製造能力</a></span><span class="chev"></span></summary><div class="thr-body"><ul class="th-l"><li><a href="https://news.cnyes.com/news/id/6581693" rel="noopener nofollow">〈台北國際自動化展〉和椿：人形機器人是下波成長動能 布局實體AI台灣尚缺電池製造能力</a><span class="th-meta">news.cnyes.com · 08-19</span></li><li><a href="https://money.udn.com/money/story/5612/9701863" rel="noopener nofollow">對手變夥伴 CNN：AI使台灣成為韓國「通美廊道」</a><span class="th-meta">money.udn.com · 08-19</span></li></ul></div></details>
+<details class="thr" id="thread-th_cf7daa8351"><summary><span class="hpill up" title="升溫">▲ 升溫</span><span class="tt">韓元升值走勢</span><span class="thd">第 1 天</span><span class="thn">今日 +1</span><span class="tht">共 1 張</span><span class="thsp"><svg class="spark" viewBox="0 0 80 18" width="80" height="18" preserveAspectRatio="none" role="img" aria-label="近 14 天卡片數"><rect x="0" y="16" width="4.71429" height="2" rx="1"></rect><rect x="6" y="16" width="4.71429" height="2" rx="1"></rect><rect x="11" y="16" width="4.71429" height="2" rx="1"></rect><rect x="17" y="16" width="4.71429" height="2" rx="1"></rect><rect x="23" y="16" width="4.71429" height="2" rx="1"></rect><rect x="29" y="16" width="4.71429" height="2" rx="1"></rect><rect x="34" y="16" width="4.71429" height="2" rx="1"></rect><rect x="40" y="16" width="4.71429" height="2" rx="1"></rect><rect x="46" y="16" width="4.71429" height="2" rx="1"></rect><rect x="51" y="16" width="4.71429" height="2" rx="1"></rect><rect x="57" y="16" width="4.71429" height="2" rx="1"></rect><rect x="63" y="16" width="4.71429" height="2" rx="1"></rect><rect x="69" y="16" width="4.71429" height="2" rx="1"></rect><rect x="74" y="1" width="4.71429" height="17" rx="1"></rect></svg></span><span class="thlast"><a href="https://www.yna.co.kr/view/AKR20260819152800011" rel="noopener nofollow">[연합뉴스 이 시각 헤드라인] - 18:00</a></span><span class="chev"></span></summary><div class="thr-body"><ul class="th-l"><li><a href="https://www.yna.co.kr/view/AKR20260819152800011" rel="noopener nofollow">[연합뉴스 이 시각 헤드라인] - 18:00</a><span class="th-meta">yna.co.kr · 08-19</span></li><li><a href="https://www.yna.co.kr/view/AKR20260819088552002" rel="noopener nofollow">원/달러 환율 1,300원대로…11개월 만에 최저(종합2보)</a><span class="th-meta">yna.co.kr · 08-19</span></li></ul></div></details>
+<details class="thr" id="thread-th_3a4cf7a38a"><summary><span class="hpill up" title="升溫">▲ 升溫</span><span class="tt">國民年金再平衡爭議</span><span class="thd">第 1 天</span><span class="thn">今日 +1</span><span class="tht">共 1 張</span><span class="thsp"><svg class="spark" viewBox="0 0 80 18" width="80" height="18" preserveAspectRatio="none" role="img" aria-label="近 14 天卡片數"><rect x="0" y="16" width="4.71429" height="2" rx="1"></rect><rect x="6" y="16" width="4.71429" height="2" rx="1"></rect><rect x="11" y="16" width="4.71429" height="2" rx="1"></rect><rect x="17" y="16" width="4.71429" height="2" rx="1"></rect><rect x="23" y="16" width="4.71429" height="2" rx="1"></rect><rect x="29" y="16" width="4.71429" height="2" rx="1"></rect><rect x="34" y="16" width="4.71429" height="2" rx="1"></rect><rect x="40" y="16" width="4.71429" height="2" rx="1"></rect><rect x="46" y="16" width="4.71429" height="2" rx="1"></rect><rect x="51" y="16" width="4.71429" height="2" rx="1"></rect><rect x="57" y="16" width="4.71429" height="2" rx="1"></rect><rect x="63" y="16" width="4.71429" height="2" rx="1"></rect><rect x="69" y="16" width="4.71429" height="2" rx="1"></rect><rect x="74" y="1" width="4.71429" height="17" rx="1"></rect></svg></span><span class="thlast"><a href="https://www.yna.co.kr/view/AKR20260819128451530" rel="noopener nofollow">정은경 &quot;국민연금 리밸런싱 유예, 시장 변동성 때문&quot;(종합)</a></span><span class="chev"></span></summary><div class="thr-body"><ul class="th-l"><li><a href="https://www.yna.co.kr/view/AKR20260819128451530" rel="noopener nofollow">정은경 &quot;국민연금 리밸런싱 유예, 시장 변동성 때문&quot;(종합)</a><span class="th-meta">yna.co.kr · 08-19</span></li></ul></div></details></div>
+</div>
+<footer class="imq-foot"><div class="in"><div>本頁為機械聚合＋LLM 摘要：固定來源清單每日抓取 → 規則過濾 → 分類與中文摘要 →靜態渲染；儀表與轉折警示取自站內既有監測管線，卡片內容為第三方來源之摘要，正確性以原文為準。</div><div><a href="/monitor/">市場監測</a> <span class="sep">·</span> <a href="/detective/">主題偵測</a> <span class="sep">·</span> <a href="/crowding/">擁擠交易</a> <span class="sep">·</span> <a href="/intel/archive.html">歷史</a> <span class="sep">·</span> <a href="/intel/status.html">狀態</a> <span class="sep">·</span> <a href="/disclosures.html">方法論與揭露</a></div><div>聲明：本頁為市場狀態的描述器，只陳述觀察到的數字與新聞，不做買賣建議、不預測價格。© 2026 InvestMQuest Research</div></div></footer>
+</body>
+</html>
