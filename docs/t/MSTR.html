@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>MSTR 個股研究總覽 — InvestMQuest Research</title>
+  <meta name="description" content="MSTR 在 InvestMQuest 站內的全部研究聚合：個股 DD、所屬產業 ID、供應鏈位置、對比與期望落差綜合研判。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/imq-base.css">
+  <style>
+:root {
+  --imq-bg:           var(--paper);
+  --imq-bg-soft:      var(--paper);
+  --imq-card:         var(--card);
+  --imq-border:       var(--line);
+  --imq-border-soft:  var(--line-soft);
+  --imq-text:         var(--ink);
+  --imq-text-sec:     var(--sec);
+  --imq-text-muted:   var(--muted);
+  --imq-accent:       var(--accent);
+  --imq-accent-hover: var(--accent-ink);
+  --imq-indigo-deep:  #534AB7;
+  --imq-green:        #0F6E56;
+  --imq-brand:        #1a56db;
+  --imq-amber:        #B45309;
+  --imq-rose:         #C0392B;
+  --imq-shadow-sm:    var(--sh-1);
+  --imq-shadow-md:    var(--sh-2);
+  --imq-shadow-lg:    var(--sh-2);
+  --imq-r-sm:   var(--r);
+  --imq-r-md:   var(--r);
+  --imq-r-lg:   var(--r);
+  --imq-r-xl:   var(--r);
+  --imq-r-2xl:  var(--r);
+  --imq-r-pill: 999px;
+  --imq-font-sans: var(--sans);
+  --imq-font-mono: var(--mono);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--imq-font-sans);background:var(--paper);color:var(--body);line-height:1.7;font-size:14px;min-height:100vh;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none;transition:color .15s}
+a:hover{color:var(--accent-ink)}
+.serif{font-family:'Noto Serif TC',Georgia,'Times New Roman',serif}
+.mono{font-family:var(--imq-font-mono)}
+.wrap{max-width:960px;margin:0 auto;padding:40px 28px 64px}
+.overline{font-family:var(--imq-font-mono);font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-deep);margin-bottom:12px}
+h1.tk{font-family:'Noto Serif TC',Georgia,serif;font-weight:700;letter-spacing:-.01em;color:var(--ink);font-size:34px;line-height:1.15;margin-bottom:8px}
+.oneliner{color:var(--sec);font-size:14px;line-height:1.7;margin:10px 0 18px;max-width:760px}
+.verdict-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:20px}
+.chip{display:inline-flex;align-items:center;gap:.35em;font-size:12px;font-weight:600;padding:.3rem .7rem;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);white-space:nowrap}
+.chip.v-in{background:rgba(15,110,86,.10);border-color:rgba(15,110,86,.35);color:var(--imq-green)}
+.chip.v-out{background:rgba(192,57,43,.08);border-color:rgba(192,57,43,.32);color:var(--imq-rose)}
+.chip.v-hold{background:rgba(180,83,9,.08);border-color:rgba(180,83,9,.30);color:var(--imq-amber)}
+.chip.muted{color:var(--muted)}
+.snap{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--line);border-radius:var(--r);background:var(--card);overflow:hidden;margin-bottom:8px}
+.snap .cell{flex:1 1 auto;min-width:96px;padding:10px 14px;border-right:1px solid var(--line-soft)}
+.snap .cell:last-child{border-right:0}
+.snap .lbl{font-family:var(--imq-font-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.snap .val{font-size:14px;font-weight:600;color:var(--ink)}
+.asof{font-size:11px;color:var(--muted);margin-bottom:30px}
+section.blk{margin-top:30px}
+section.blk > h2{font-family:'Noto Serif TC',Georgia,serif;font-size:18px;font-weight:700;color:var(--ink);border-bottom:2px solid var(--line);padding-bottom:7px;margin-bottom:4px}
+section.blk > .cnt{font-family:var(--imq-font-mono);font-size:11px;color:var(--muted);margin-bottom:12px}
+ul.items{list-style:none;display:flex;flex-direction:column;gap:2px}
+ul.items li{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;padding:8px 4px;border-bottom:1px solid var(--line-soft)}
+ul.items li:last-child{border-bottom:0}
+.dt{font-family:var(--imq-font-mono);font-size:12px;color:var(--sec);flex-shrink:0;min-width:82px}
+.it-main{flex:1 1 260px}
+.it-main a{font-weight:600}
+.it-sub{color:var(--sec);font-size:12.5px}
+.tag{font-family:var(--imq-font-mono);font-size:10.5px;padding:.12rem .45rem;border-radius:4px;background:var(--paper);border:1px solid var(--line);color:var(--sec);white-space:nowrap}
+.foot-note{margin-top:44px;padding-top:16px;border-top:1px solid var(--line);font-size:11.5px;color:var(--muted)}
+/* checkpoint panel */
+section.blk.ckpt .ckpt-note{font-family:var(--imq-font-mono);font-size:11px;color:var(--muted);margin-bottom:14px}
+.ckpt-sub{margin-top:16px}
+.ckpt-sub:first-of-type{margin-top:0}
+.ckpt-sub h3{font-family:var(--imq-font-mono);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--sec);margin-bottom:6px}
+.ckpt-sub ul.items li{align-items:flex-start}
+ul.items li.past{opacity:.5}
+.rearm-line{font-size:13px;color:var(--ink);padding:6px 4px}
+.tag.st-ok{background:rgba(15,110,86,.08);border-color:rgba(15,110,86,.30);color:var(--imq-green)}
+.tag.st-warning{background:rgba(180,83,9,.08);border-color:rgba(180,83,9,.30);color:var(--imq-amber)}
+.tag.st-triggered{background:rgba(192,57,43,.08);border-color:rgba(192,57,43,.32);color:var(--imq-rose)}
+/* directory */
+.dir-stats{display:flex;flex-wrap:wrap;gap:14px;margin:18px 0 22px}
+.stat{border:1px solid var(--line);border-radius:var(--r);background:var(--card);padding:12px 18px;min-width:120px}
+.stat .n{font-family:'Noto Serif TC',Georgia,serif;font-size:26px;font-weight:700;color:var(--ink);line-height:1}
+.stat .k{font-family:var(--imq-font-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:5px}
+#flt{width:100%;max-width:360px;padding:10px 14px;font-size:14px;font-family:var(--imq-font-sans);border:1px solid var(--line);border-radius:var(--r);background:var(--card);color:var(--ink);margin-bottom:18px}
+#flt:focus{outline:none;border-color:var(--accent)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:10px}
+a.tcard{display:flex;flex-direction:column;gap:6px;border:1px solid var(--line);border-radius:var(--r);background:var(--card);padding:12px 14px;transition:border-color .15s,box-shadow .15s}
+a.tcard:hover{border-color:var(--accent);box-shadow:var(--sh-1)}
+a.tcard .tk{font-family:var(--imq-font-mono);font-size:15px;font-weight:700;color:var(--ink);letter-spacing:.01em}
+a.tcard .meta{display:flex;align-items:center;justify-content:space-between;gap:8px}
+a.tcard .rc{font-family:var(--imq-font-mono);font-size:10.5px;color:var(--muted)}
+.nores{color:var(--muted);font-size:13px;padding:20px 4px;display:none}
+@media(max-width:600px){.wrap{padding:28px 16px 48px}h1.tk{font-size:27px}}
+  </style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/monitor/">市場監測</a>
+          <a href="/intel/">情報監視器</a>
+          <a href="/detective/">偵測警報網</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/rotation/">產業輪動</a>
+          <a href="/crowding/">擁擠交易監測</a>
+          <a href="/regime/">大類資產 regime</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/catalyst/">催化劑日曆</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">選股<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/cockpit/">選股主控台</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/research/momentum-5/">Momentum-5</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screeners.html">RS+VCP Screener</a>
+        </div>
+      </div>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/" class="active">個股總覽</a>
+          <a href="/research/">個股 DD</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/research/synthesis/">期望落差綜合研判</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/track-record/">裁決實績</a>
+          <a href="/pm/">持倉週掃</a>
+          <a href="/long-track-w52-adaptive/">實單主系統</a>
+          <a href="/long-track/">追蹤總覽</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/flow/">投資流程</a>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<main class="wrap">
+<div class="overline">Ticker Hub · 個股研究總覽</div>
+<h1 class="tk mono">MSTR</h1>
+<p class="oneliner">BTC 840,447枚／均價$75,578（無抵押）；企業價值mNAV約1.07x（非折價，含$223.6億請求權後溢價）；複利尺度5Y期望年化MSTR≈0%對BTC 7.3%；股利固定義務覆蓋率僅1.1%；2028 put wall$67.1億、S&amp;P給&#x27;B-&#x27;評等、MSCI 10/16指數重分類決議。迴避、不持有。</p>
+<div class="verdict-row"><span class="chip v-out">裁決｜迴避</span><span class="chip muted">裁決日期 2026-08-19</span></div>
+<section class="blk ckpt"><h2>檢核點</h2><div class="ckpt-note">來源＝最新 DD 決策層；週更機械比對見 <a href="/detective/">/detective/</a>。</div><div class="ckpt-sub"><h3>證偽觸發器</h3><ul class="items"><li><span class="it-main">企業價值mNAV（市值+負債+特別股清算優先權-現金，÷BTC市值）<span class="it-sub"> · 連續8週&lt;0.95x→計入全部請求權後仍折價，資本結構壓力確認惡化；連續8週≥1.15x→估值溢價擴大、增值引擎重啟訊號</span></span><span class="tag">持續</span><span class="tag st-warning">警示</span></li><li><span class="it-main">BTC/股（fully diluted）季度變化<span class="it-sub"> · 連2季QoQ下滑→稀釋速度超過BTC增速，增值引擎確認反轉</span></span><span class="tag">2季</span><span class="tag st-warning">警示</span></li><li><span class="it-main">季度BTC出售量（枚）<span class="it-sub"> · 單季售幣&gt;3,000枚，或連續兩季售幣皆用於支應股利（而非偶發一次性）→售幣已從備援機制轉為常態依賴</span></span><span class="tag">季度</span><span class="tag st-warning">警示</span></li><li><span class="it-main">特別股股利遞延/違約<span class="it-sub"> · STRF／STRC／STRE／STRK任一累積股利實際遞延未付→信用市場對整體資本結構重新定價</span></span><span class="tag">持續</span><span class="tag st-ok">正常</span></li><li><span class="it-main">MSCI非營運公司指數重分類決議<span class="it-sub"> · 2026-10-16確認排除MSTR或設定過渡淘汰期→估計最高$88億被動資金流出風險兌現</span></span><span class="tag">至2026-11 rebalance</span><span class="tag st-warning">警示</span></li><li><span class="it-main">2028 put wall再融資結果<span class="it-sub"> · $67.1億到期須用現金/新增稀釋型ATM償還之比例&gt;60%（非以新債或延展置換）→稀釋速度加劇</span></span><span class="tag">至2028-09</span><span class="tag st-ok">正常</span></li></ul></div><div class="ckpt-sub"><h3>催化劑</h3><ul class="items"><li class="dt-row"><span class="dt">2026-08-31</span><span class="it-main">STRC股利率半月審查（15日/月底，2026-06-30起由月度改半月度）＋USD Reserve餘額揭露</span><span class="tag">中</span></li><li class="dt-row"><span class="dt">2026-10-16</span><span class="it-main">MSCI「非營運公司」指數分類諮詢結果公布（2026-08開啟、09-30截止），最快2026-11 rebalance生效</span><span class="tag">高</span></li><li class="dt-row"><span class="dt">2026-11-上旬</span><span class="it-main">Q3 2026財報＋股東信（BTC Yield/Gain季度更新）</span><span class="tag">高</span></li><li class="dt-row"><span class="dt">2026-Q4</span><span class="it-main">權益mNAV能否重返0.9x以上（史高3.4x，2026-06-27跌破1.0x後持續&lt;1.0x）</span><span class="tag">高</span></li><li class="dt-row"><span class="dt">2027-09-15</span><span class="it-main">2028 Convertible Notes（$10.1億）持有人put option首個生效日，開啟2028 put wall序幕</span><span class="tag">高</span></li></ul></div><div class="ckpt-sub"><h3>再武裝條件</h3><p class="rearm-line">權益mNAV連續8週≥1.15x 且 BTC/股連2季QoQ回正 且 2028 put wall（$67.1億六檔轉債本金，2027-09至2028-06陸續到期）完成再融資且淨稀釋&lt;15% 且 MSCI未將MSTR排除出現有指數 → 由迴避重審至觀望</p></div></section>
+<div class="snap"><div class="cell"><div class="lbl">訊號</div><div class="val">X</div></div><div class="cell"><div class="lbl">估值</div><div class="val">🟠</div></div><div class="cell"><div class="lbl">護城河</div><div class="val">C</div></div><div class="cell"><div class="lbl">FY+2 fPE</div><div class="val">-1</div></div><div class="cell"><div class="lbl">5Y PE 分位</div><div class="val">50%</div></div><div class="cell"><div class="lbl">PEG</div><div class="val">2.85</div></div><div class="cell"><div class="lbl">中期 upside</div><div class="val">10.0%</div></div></div>
+<div class="asof">Screener 快照 as-of 2026-08-20（估值欄隨週更管線刷新）。</div>
+<section class="blk"><h2>個股研究</h2><div class="cnt">1 筆</div><ul class="items"><li><span class="dt">2026-08-19</span><span class="it-main"><a href="/dd/DD_MSTR_20260819.html">DD 報告</a> <span class="it-sub">裁決</span></span><span class="tag">迴避</span></li></ul></section>
+<div class="foot-note">頁面由站內研究自動聚合，裁決以個別報告為準。</div>
+</main>
+<footer class="imq-foot">
+  <div>&copy; 2026 InvestMQuest Research</div>
+  <div><a href="/disclosures.html">方法論與揭露</a> · 本站內容僅供研究參考，不構成投資建議</div>
+</footer>
+</body>
+</html>
