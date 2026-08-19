@@ -93,6 +93,7 @@
       "category": "company | industry | market | macro | geo",
       "tags": {"tickers": ["NVDA","2330.TW"], "themes": ["ai-datacenter"]},
       "importance": 3,
+      "source_tier": "T2",
       "summary_zh": "一句話。",
       "why_zh": "為什麼跟投資有關（1–2 句，不重複摘要）。"
     }
@@ -122,6 +123,25 @@
 **地緣政治**
 - Reuters World、AP Top News、CFR、國防部即時軍事動態、陸委會新聞稿
 - 只留命中 `taiwan-geo` 或提到 251 檔任一的
+
+## 5b. 小道消息（持有人 2026-08-19 確認要收）
+
+**收，但分等級、標清楚、追蹤命中率。** 卡片 schema 加 `source_tier`：
+
+| tier | 定義 | 例 |
+|---|---|---|
+| T1 官方 | 公司自述、監管申報 | SEC 8-K、MOPS、法說會逐字稿 |
+| T2 主流媒體 | 有編輯把關 | Reuters、Bloomberg、工商時報 |
+| T3 專業圈 | 具名、有可查紀錄的分析師／產業媒體 | 郭明錤、SemiAnalysis、DigiTimes 供應鏈消息 |
+| T4 小道 | 匿名、論壇、社群 | PTT Stock 板、Reddit、X 爆料帳號 |
+
+規則：
+1. T3／T4 卡掛「傳聞」badge，頁面上與事實分區。
+2. **單靠 T4 不得 importance=3**；需 T3 以上或 ≥2 個獨立來源才可升。
+3. 傳聞每日上限 20 條。
+4. **命中率追蹤**：`docs/intel/data/rumors.jsonl` 存每則傳聞（來源帳號／板、日期、主張）；每週 opus 回顧比對是否被 T1／T2 證實 → 維護 `rumor_sources.json` 的 hit-rate，預過濾權重據此自動調整。這是這條線最有價值的產出。
+5. 抓取可行性：PTT／Reddit／Substack 可機械抓；X 官方 API 付費、免費管道不穩，Phase 1 跳過，之後以「持有人手動貼連結進 inbox」補。
+6. **不抓** Telegram／LINE／付費群組；**只收公開傳聞，不收任何內線資訊**。
 
 ## 6. 頁面（Phase 1 只做前兩個）
 
