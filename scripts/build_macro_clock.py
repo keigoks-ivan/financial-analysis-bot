@@ -25,6 +25,7 @@ import io
 import json
 import math
 import sys
+import time
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
@@ -47,8 +48,20 @@ QUAD_ASSET = {"復甦": "股票", "過熱": "商品", "滯脹": "現金", "再�
 
 
 def fred(sid: str) -> pd.Series:
+    # 2026-08-19：GH runner 連 FRED 常 read timeout（07-10 起每週皆失敗、clock 卡在 2026-06）
+    # → timeout 30→90 秒＋重試 3 次（指數退避）。本機 30 秒即過，問題在 runner 出口網路。
     req = urllib.request.Request(FRED.format(sid=sid), headers=UA)
-    raw = urllib.request.urlopen(req, timeout=30).read().decode("utf-8")
+    last_err = None
+    for attempt in range(3):
+        try:
+            raw = urllib.request.urlopen(req, timeout=90).read().decode("utf-8")
+            break
+        except Exception as e:  # noqa: BLE001
+            last_err = e
+            print(f"  fred {sid}: 第 {attempt + 1} 次失敗（{e}）", file=sys.stderr)
+            time.sleep(5 * (attempt + 1))
+    else:
+        raise RuntimeError(f"fred {sid} 重試 3 次仍失敗：{last_err}")
     df = pd.read_csv(io.StringIO(raw))
     df.columns = ["date", "v"]
     df["date"] = pd.to_datetime(df["date"])
