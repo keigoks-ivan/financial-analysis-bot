@@ -165,6 +165,8 @@ def fetch_article(url: str) -> tuple[str, str]:
     """Returns (text, status) — status ∈ {"ok","paywall","fail"}。<600 字視為
     大概率遇到付費牆／同意頁（DESIGN 原文用詞），不是抓取失敗。"""
     if requests is None or BeautifulSoup is None:
+        print("[intel/deepread] missing dependency: requests/beautifulsoup4 — all deep reads skipped",
+              file=sys.stderr)
         return "", "fail"
     try:
         resp = requests.get(
