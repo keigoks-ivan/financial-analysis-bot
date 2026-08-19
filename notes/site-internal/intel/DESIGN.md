@@ -43,6 +43,20 @@
 
 **額度估算（月租）**：haiku 200 條 × ~120 tok ≈ 2.4 萬／天；sonnet 60 條 × ~230 tok ≈ 1.4 萬／天；opus 每週一次 ~5 萬。**一個月合計 ~150 萬 token，其中 opus 只佔 ~20 萬**。對 Max 方案是零頭。
 
+## 2b. 資料正確性（持有人 2026-08-19：來源都要略微確認正確性）
+
+「略微」＝機械層與模型各做一點便宜的檢查，不做重度事實查核。五道：
+
+| # | 檢查 | 誰做 | 成本 |
+|---|---|---|---|
+| 1 | **來源白名單＋健康檢查**：只抓 `sources.yml` 列出的來源；每次抓記錄「抓得到／格式對／最近 7 天有更新」，連續 3 天異常自動停用並在頁面標「來源 X 停用」 | Python | 0 |
+| 2 | **連結活著**：卡片 URL 做 HEAD 檢查，404／跳轉到首頁的丟掉 | Python | 0 |
+| 3 | **交叉印證**：同一件事（標題相似度＋同 ticker＋同日）幾個**獨立**來源在講，記 `corroboration` 數；🔴 需 `corroboration≥2` 或 T1 來源 | Python | 0 |
+| 4 | **不加數字、不誇大**：sonnet 摘要**只准用 snippet 裡出現的數字與主張**，沒有的寫「原文未給數字」；haiku 判「標題與內文是否一致」，不一致標 `headline_mismatch` 並降一級 | haiku／sonnet | 已含在日常額度 |
+| 5 | **週抽查**：opus 週回顧時隨機抽 10 張 🔴 卡，WebFetch 原文對照摘要有沒有扭曲；每來源錯誤率寫進 `sources.yml`，錯誤率高的降權或移除 | opus | 每週一次，小 |
+
+卡片 schema 加：`corroboration`（int）、`checks`（`{"link_ok":true,"headline_ok":true}`）。頁面上 `corroboration≥2` 顯示「✓ 多方來源」。
+
 ## 3. 資料流（每天）
 
 ```
@@ -70,10 +84,11 @@
            git commit --only docs/intel/ → push（用 worktree 隔離，避免踩並行 session）
 ```
 
-**排程跑在哪（Phase 1 第 0 步要驗）**：
-- 預設：**本機 launchd** 跑 `claude -p`（確定走月租）。Mac 要醒著；用 `pmset repeat wakeorpoweron MTWRFSU 06:25:00` 叫醒。
-- 備選：GitHub Actions 用 `claude setup-token` 產的長效 token（**先查目前條款是否允許 CI 用月租 token**，允許才用；優點是不靠 Mac）。
-- 兩者的 prompt／腳本完全相同，只差觸發點。
+**排程跑在哪（2026-08-19 持有人拍板：不掛 Mac，全部掛雲端）**：
+- AI 步驟用 **claude.ai Routine**（雲端排程的 Claude Code session，走月租額度）。持有人帳號已有在跑的 routine（`position-thesis-monitor-weekly`，sonnet，checkout 本 repo → 產出 → push），照同一模式建 `intel-daily`（haiku＋sonnet 兩段可在同一 routine 內用不同 model 的 subagent，或拆兩個 routine）與 `intel-weekly-review`（opus）。
+- **雲端 routine 環境對外網路受限**（既有 routine prompt 已載明 yfinance 抓不到）。所以**抓取一律留在 GitHub Actions**（免費、網路完整），routine 只讀 repo 裡已 commit 的 `pending/YYYY-MM-DD.json`，不自己上網抓。
+- 順序：GHA 06:00 抓＋commit → routine 06:30 checkout（已含 pending）→ 分類摘要 → render.py → commit＋push。
+- 不用本機 launchd、不用 `claude setup-token`。
 
 ## 4. 卡片 schema（`docs/intel/data/YYYY-MM-DD.json`）
 
@@ -94,6 +109,8 @@
       "tags": {"tickers": ["NVDA","2330.TW"], "themes": ["ai-datacenter"]},
       "importance": 3,
       "source_tier": "T2",
+      "corroboration": 2,
+      "checks": {"link_ok": true, "headline_ok": true},
       "summary_zh": "一句話。",
       "why_zh": "為什麼跟投資有關（1–2 句，不重複摘要）。"
     }
