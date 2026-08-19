@@ -68,13 +68,18 @@ h3{font-size:12.5px;font-weight:700;margin:0 0 7px;color:var(--ink2)}
 .note a{color:var(--acc)}
 
 /* ---------------------------------------------------------------- gauges */
-.gauges{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:7px;margin:2px 0 0}
-.g{position:relative;background:var(--sur);border:1px solid var(--line);border-left:3px solid var(--grn);border-radius:var(--r);padding:7px 10px 8px;display:flex;flex-direction:column;gap:2px;min-height:76px}
+/* 2026-08-20：鎖死 7＋6 兩排（持有人回饋「每天固定排列」）——13 個固定維度＋
+   1 個補位 blank 格＝14 格，桌機固定 7 欄不換行；寬度不夠時整條橫向捲動，
+   不讓格位隨螢幕寬度重排。手機（≤640px）另外改 4 欄，見下方 mobile 區塊。 */
+.gauges{display:grid;grid-template-columns:repeat(7,minmax(118px,1fr));gap:7px;margin:2px 0 0;overflow-x:auto;padding-bottom:2px}
+.g{position:relative;background:var(--sur);border:1px solid var(--line);border-left:3px solid var(--grn);border-radius:var(--r);padding:7px 10px 8px;display:flex;flex-direction:column;gap:2px;min-height:76px;min-width:118px}
 .g.warn{border-left-color:var(--amb)} .g.crit{border-left-color:var(--red)}
-.g .lab{display:flex;align-items:center;gap:5px;font-size:10.5px;letter-spacing:.09em;color:var(--mut);font-weight:600;text-transform:uppercase}
+.g.blank{border-style:dashed;border-left-style:dashed;border-left-color:var(--line);align-items:center;justify-content:center;background:transparent}
+.g.blank .bd{margin:auto;font-size:16px;color:var(--line)}
+.g .lab{display:flex;align-items:center;gap:5px;font-size:10.5px;letter-spacing:.09em;color:var(--mut);font-weight:600;text-transform:uppercase;overflow-wrap:break-word}
 .g .dot{width:6px;height:6px;border-radius:50%;background:var(--grn);flex:none}
 .g.warn .dot{background:var(--amb)} .g.crit .dot{background:var(--red)}
-.g .val{font-size:20px;font-weight:600;letter-spacing:-.01em;line-height:1.25;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.g .val{font-size:19px;font-weight:600;letter-spacing:-.01em;line-height:1.25;color:var(--ink);white-space:normal;overflow:hidden;overflow-wrap:break-word;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical}
 .g .val.long{font-size:12.5px;font-weight:500;line-height:1.45;white-space:normal;color:var(--ink2);display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .g .sub{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;font-size:11.5px;color:var(--mut);margin-top:auto;min-width:0}
 .g .m{font-weight:600;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
@@ -111,21 +116,39 @@ tr.confirmed .bar i{background:var(--red)}
 .empty{color:var(--mut);font-size:12.5px;padding:12px 12px;background:var(--sur);border:1px solid var(--line);border-radius:var(--r)}
 
 /* --------------------------------------------------------- 進行中的故事線 */
-.threads{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin:2px 0 0}
-.thc{background:var(--sur);border:1px solid var(--line);border-radius:var(--r);padding:9px 11px;display:flex;flex-direction:column;gap:5px;scroll-margin-top:84px}
-.thc-h{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.thc-h .tt{font-size:12.5px;font-weight:700;color:var(--ink);line-height:1.4;overflow-wrap:anywhere}
-.hheat{font-size:11px;font-weight:700;flex:none}
-.hheat.up{color:var(--red)} .hheat.down{color:var(--grn)} .hheat.flat{color:var(--mut)}
-.thc-m{display:flex;gap:10px;font-size:11px;color:var(--mut);font-variant-numeric:tabular-nums}
-.thc-spark{line-height:0}
-.thc-spark .spark rect{fill:var(--acc);opacity:.7}
-.thc-l{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:3px}
-.thc-l li{font-size:11.5px;line-height:1.5;border-top:1px solid var(--line2);padding-top:4px}
-.thc-l li:first-child{border-top:0;padding-top:0}
-.thc-l a,.thc-l li{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.thc-l a{color:var(--ink2);text-decoration:none}
-.thc-l a:hover{color:var(--acc)}
+/* 2026-08-20 改版（持有人回饋「12 張一樣大的卡要一張張讀」）：一行一條清單，
+   `<details>`/`<summary>` 實作、無 JS，比照 `.list .r` 的密集列語言。 */
+.threads{border:1px solid var(--line);border-radius:var(--r);background:var(--sur);overflow:hidden}
+.thr{border-top:1px solid var(--line2);scroll-margin-top:84px}
+.thr:first-child{border-top:0}
+.thr>summary{
+  cursor:pointer;list-style:none;
+  display:grid;grid-template-columns:66px minmax(0,1fr) 50px 58px 88px minmax(0,1.3fr) 14px;
+  gap:0 10px;align-items:center;padding:8px 11px;font-size:12.5px;
+}
+.thr>summary::-webkit-details-marker{display:none}
+.thr>summary:hover{background:var(--sur2)}
+.thr>summary:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+.thr[open]>summary{background:var(--sur2)}
+.thr[open]>summary .chev{transform:rotate(90deg)}
+.hpill{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:999px;border:1px solid var(--line);background:var(--sur2);color:var(--mut);white-space:nowrap;justify-self:start}
+.hpill.up{border-color:#EFD0C9;background:var(--red-bg);color:var(--red)}
+.hpill.down{border-color:#CCE3D6;background:var(--grn-bg);color:var(--grn)}
+.thr .tt{min-width:0;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.thr .thd,.thr .thn{font-size:11px;color:var(--mut);font-variant-numeric:tabular-nums;white-space:nowrap}
+.thr .thsp{line-height:0}
+.thr .thsp .spark rect{fill:var(--acc);opacity:.7}
+.thr .thlast{min-width:0;font-size:11.5px;color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.thr .thlast a{color:var(--ink2);text-decoration:none}
+.thr .thlast a:hover{color:var(--acc)}
+.thr-body{padding:2px 12px 12px calc(66px + 10px);background:var(--sur2);border-top:1px dashed var(--line)}
+.th-l{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;max-width:82ch}
+.th-l li{font-size:12.5px;line-height:1.6;color:var(--ink2);border-top:1px solid var(--line2);padding-top:6px}
+.th-l li:first-child{border-top:0;padding-top:0}
+.th-l a{color:var(--ink2);text-decoration:none;font-weight:500}
+.th-l a:hover{color:var(--acc)}
+.th-meta{display:block;font-size:11px;color:var(--mut);margin-top:2px}
+.th-empty{color:var(--mut);font-size:12px;padding:2px 0}
 
 /* ------------------------------------------------------------- brief 段 */
 .sheet{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;align-items:start}
@@ -290,7 +313,8 @@ footer.imq-foot .sep{color:var(--line)}
 /* --------------------------------------------------------------- mobile */
 @media(max-width:640px){
   .wrap{padding:14px 13px 46px}
-  .gauges{grid-template-columns:repeat(auto-fill,minmax(132px,1fr))}
+  .gauges{grid-template-columns:repeat(4,minmax(0,1fr));overflow-x:visible}
+  .g{min-width:0}
   .g .val{font-size:17px}
   .rowgrid,.list .r>summary,.list .plain{grid-template-columns:3.2em 10px minmax(0,1fr) auto;gap:0 8px;padding:8px 10px}
   .list .src{display:none}
@@ -300,6 +324,10 @@ footer.imq-foot .sep{color:var(--line)}
   .tlist2 .ti3{grid-template-columns:3.2em minmax(0,1fr) auto}
   .tlist2 .ti3 .cchip,.tlist2 .ti3 .s{display:none}
   .brief p{font-size:14px}
+  /* 進行中的故事線：手機隱藏 sparkline 與最新標題欄，保留 pill／主題／天數／+n */
+  .thr>summary{grid-template-columns:58px minmax(0,1fr) 44px 52px 14px}
+  .thr .thsp,.thr .thlast{display:none}
+  .thr-body{padding-left:12px}
 }
 @media(prefers-reduced-motion:reduce){.chev{transition:none}}
 @media print{.seg,.chev{display:none}body{background:#fff}}

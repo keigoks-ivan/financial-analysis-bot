@@ -49,6 +49,7 @@ import sys
 from datetime import datetime, timedelta, timezone
 from html.parser import HTMLParser
 from pathlib import Path
+from urllib.parse import urlparse
 
 import yaml
 
@@ -350,6 +351,14 @@ def render_gauges(gauges: list) -> str:
             f'<div class="lab"><span class="dot"></span>{label}</div>'
             f"{val_html}{sub_html}</div>"
         )
+    # 2026-08-20：儀表列鎖死 7＋6 兩排（持有人回饋「每天固定排列」）——13 個固定
+    # 維度依序排完後，補齊到 7 的倍數（目前恆為 1 格），讓桌機永遠是兩排整齊的
+    # 7／6+1，格位不隨螢幕寬度或缺資料重排。缺資料的維度本身已由 build_gauges()
+    # 的 emit() 用「無新增訊號」佔位輸出，不會整格消失；這裡補的是「湊滿整排」
+    # 的視覺留白格，不是資料缺格。
+    pad = (-len(tiles)) % 7
+    for _ in range(pad):
+        tiles.append('<div class="g blank" aria-hidden="true"><span class="bd">—</span></div>')
     return '<div class="gauges" aria-label="市場儀表">\n' + "\n".join(tiles) + "\n</div>"
 
 
@@ -949,13 +958,47 @@ def _sparkline_svg(values: list, width: int = 100, height: int = 22) -> str:
     )
 
 
+HEAT_SORT_RANK = {"up": 0, "flat": 1, "down": 2}
+THREAD_OPEN_TOP_N = 3  # 升溫的前 N 條預設展開
+
+
+def _thread_source_short(url: str) -> str:
+    """從最新標題的 URL 取網域當來源短名（thread.latest[] 只有 url/title/date，
+    沒有 source_name/source_short 欄位，故從連結本身推短名，非資料造假）。"""
+    if not url:
+        return ""
+    try:
+        host = (urlparse(url).netloc or "").lower()
+    except ValueError:
+        return ""
+    host = re.sub(r"^www\.", "", host)
+    return host[:16]
+
+
 def render_threads(threads: list) -> str:
-    """進行中的故事線：緊湊網格卡，每張＝標題／第 N 天／今日 +n／熱度箭頭／
-    14 天 sparkline／2–3 則最新標題連結。空陣列由呼叫端負責整段（含 h2）省略。"""
+    """進行中的故事線：一行一條清單（`<details>`/`<summary>`，無 JS）——
+    熱度 pill／主題／第 N 天／今日 +n／14 天 sparkline／最新一則標題（單行截斷）
+    的緊湊列；點列展開最新 2–3 則（連原文／來源短名／日期）。排序＝升溫→持平→
+    降溫，同組內依今日新增數 desc、再依天數 desc；升溫前 3 條預設展開。空陣列
+    由呼叫端負責整段（含 h2）省略。"""
     if not threads:
         return ""
-    cards_html = []
-    for t in threads:
+
+    def _sort_key(t: dict):
+        heat = t.get("heat") if t.get("heat") in HEAT_ARROW else "flat"
+        return (
+            HEAT_SORT_RANK.get(heat, 1),
+            -(t.get("today_count") or 0),
+            -(t.get("day_n") or 0),
+        )
+
+    ordered = sorted(threads, key=_sort_key)
+    up_total = sum(1 for t in ordered if (t.get("heat") or "flat") == "up")
+    open_budget = min(THREAD_OPEN_TOP_N, up_total)
+
+    rows_html = []
+    opened = 0
+    for t in ordered:
         tid = t.get("id") or ""
         title_zh = esc(t.get("title_zh") or "")
         day_n = t.get("day_n") or 1
@@ -964,27 +1007,65 @@ def render_threads(threads: list) -> str:
         if heat not in HEAT_ARROW:
             heat = "flat"
         arrow = HEAT_ARROW[heat]
-        spark = _sparkline_svg(t.get("sparkline") or [])
+        heat_zh = HEAT_LABEL_ZH.get(heat, "")
+        spark = _sparkline_svg(t.get("sparkline") or [], width=80, height=18)
         latest = t.get("latest") or []
-        link_items = []
+
+        is_open = heat == "up" and opened < open_budget
+        if is_open:
+            opened += 1
+
+        # 收合行的「最新一則標題」欄
+        if latest:
+            top = latest[0]
+            top_title = esc((top.get("title") or "")[:120])
+            top_url = top.get("url") or ""
+            if top_title and top_url and _safe_href(top_url):
+                latest_cell = f'<a href="{esc(top_url)}" rel="noopener nofollow">{top_title}</a>'
+            elif top_title:
+                latest_cell = f"<span>{top_title}</span>"
+            else:
+                latest_cell = f'<span class="mut">{DASH}</span>'
+        elif heat == "down" and today_n == 0:
+            latest_cell = '<span class="mut">今日無新卡</span>'
+        else:
+            latest_cell = f'<span class="mut">{DASH}</span>'
+
+        # 展開內容：最新 2–3 則（連原文／來源短名／日期）
+        detail_items = []
         for e in latest[:3]:
             eu = e.get("url") or ""
-            et = (e.get("title") or "")[:120]
+            et = esc((e.get("title") or "")[:160])
+            if not et:
+                continue
+            src = esc(_thread_source_short(eu))
+            when = (e.get("date") or "")[5:]  # MM-DD
+            meta_bits = [b for b in (src, when) if b]
+            meta_html = f'<span class="th-meta">{" · ".join(meta_bits)}</span>' if meta_bits else ""
             if eu and _safe_href(eu):
-                link_items.append(f'<li><a href="{esc(eu)}" rel="noopener nofollow">{esc(et)}</a></li>')
-            elif et:
-                link_items.append(f"<li>{esc(et)}</li>")
-        links_html = f'<ul class="thc-l">{"".join(link_items)}</ul>' if link_items else ""
-        cards_html.append(
-            f'<div class="thc" id="thread-{esc(tid)}">'
-            f'<div class="thc-h"><span class="tt">{title_zh}</span>'
-            f'<span class="hheat {esc(heat)}" title="{esc(HEAT_LABEL_ZH.get(heat, ""))}">{arrow}</span></div>'
-            f'<div class="thc-m"><span>第 {esc(fmt_num(day_n))} 天</span>'
-            f'<span>今日 +{esc(fmt_num(today_n))}</span></div>'
-            f'<div class="thc-spark">{spark}</div>'
-            f"{links_html}</div>"
+                detail_items.append(f'<li><a href="{esc(eu)}" rel="noopener nofollow">{et}</a>{meta_html}</li>')
+            else:
+                detail_items.append(f"<li>{et}{meta_html}</li>")
+        detail_html = (
+            f'<ul class="th-l">{"".join(detail_items)}</ul>' if detail_items
+            else '<div class="th-empty">今日無新卡</div>'
         )
-    return '<div class="threads">' + "\n".join(cards_html) + "</div>"
+
+        rows_html.append(
+            f'<details class="thr" id="thread-{esc(tid)}"{" open" if is_open else ""}>'
+            f"<summary>"
+            f'<span class="hpill {esc(heat)}" title="{esc(heat_zh)}">{arrow} {esc(heat_zh)}</span>'
+            f'<span class="tt">{title_zh}</span>'
+            f'<span class="thd">第 {esc(fmt_num(day_n))} 天</span>'
+            f'<span class="thn">今日 +{esc(fmt_num(today_n))}</span>'
+            f'<span class="thsp">{spark}</span>'
+            f'<span class="thlast">{latest_cell}</span>'
+            f'<span class="chev"></span>'
+            f"</summary>"
+            f'<div class="thr-body">{detail_html}</div>'
+            f"</details>"
+        )
+    return '<div class="threads">' + "\n".join(rows_html) + "</div>"
 
 
 # ------------------------------------------------------------- aside boxes
