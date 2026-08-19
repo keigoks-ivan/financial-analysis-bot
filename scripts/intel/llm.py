@@ -36,7 +36,13 @@ RETRY_SLEEP_SEC = 15
 # 空虛") traced partly to the old caps throttling a much bigger source list
 # down to too few cards; still a hard ceiling, §6 rule 3 「寧可漏不爆額度」
 # unchanged.
-DAILY_CARD_CAPS = {"haiku": 320, "sonnet": 70}
+# "deepread" (2026-08-19 深讀功能新增) is a *separate* ledger bucket from
+# "sonnet" even though it dials the same `--model sonnet` CLI flag — it's
+# accounted via run_claude(..., ledger_key="deepread") so the ≤12
+# articles/day deep-read budget can't crowd out (or be crowded out by) the
+# classify/summarize/digest sonnet budget. Unit = articles processed
+# (deepread.py BATCH_SIZE=4 × up to 3 batches).
+DAILY_CARD_CAPS = {"haiku": 440, "sonnet": 70, "deepread": 12}
 
 # Claude Code CLI picks ANTHROPIC_API_KEY over the OAuth token when both are
 # present, billing the API instead of the Max/Pro subscription. Strip these
@@ -103,7 +109,12 @@ class Ledger:
         self.calls[model] = self.calls.get(model, 0) + 1
 
     def tokens_summary(self) -> dict:
-        return {m: self.tokens_in.get(m, 0) + self.tokens_out.get(m, 0) for m in ("haiku", "sonnet")}
+        # Dynamic key union (not a fixed ("haiku","sonnet") tuple) so a new
+        # ledger bucket like "deepread" (2026-08-19, separate from "sonnet"
+        # despite sharing the CLI --model flag) shows up in status.tokens
+        # once it's actually used.
+        keys = set(self.tokens_in) | set(self.tokens_out)
+        return {m: self.tokens_in.get(m, 0) + self.tokens_out.get(m, 0) for m in sorted(keys)}
 
     def to_status_dict(self) -> dict:
         return {
@@ -123,6 +134,7 @@ def run_claude(
     ledger: "Ledger | None" = None,
     card_count: int = 0,
     timeout: int = CLI_TIMEOUT,
+    ledger_key: "str | None" = None,
 ):
     """Call Claude Code CLI headless once (with retries). Returns (parsed, usage).
 
@@ -131,11 +143,18 @@ def run_claude(
     isn't available, or it failed after MAX_ATTEMPTS retries — callers must
     handle None gracefully (skip that batch, keep going; DESIGN.md §6 rule 3:
     寧可漏不爆額度).
+
+    `ledger_key` (2026-08-19 新增): the Ledger accounting bucket, if it should
+    differ from `model` (the CLI `--model` flag). Used by deepread.py so its
+    ≤12 articles/day budget is tracked separately from the sonnet
+    classify/summarize/digest budget even though both dial `--model sonnet`.
+    Defaults to `model` when omitted (all pre-existing callers unaffected).
     """
-    if ledger is not None and not ledger.room(model, card_count):
-        ledger.capped[model] = True
-        print(f"[intel/llm] {label}: daily cap reached for {model}, skipping "
-              f"({card_count} cards would exceed {DAILY_CARD_CAPS.get(model)})",
+    key = ledger_key or model
+    if ledger is not None and not ledger.room(key, card_count):
+        ledger.capped[key] = True
+        print(f"[intel/llm] {label}: daily cap reached for {key}, skipping "
+              f"({card_count} cards would exceed {DAILY_CARD_CAPS.get(key)})",
               file=sys.stderr)
         return None, {"capped": True}
 
@@ -198,7 +217,7 @@ def run_claude(
                 last_err = f"non-JSON reply (head: {last_bad_head!r}): {e.msg}"
                 raise RuntimeError(last_err)
             if ledger is not None:
-                ledger.record(model, card_count, usage_summary)
+                ledger.record(key, card_count, usage_summary)
             print(f"[intel/llm] {label}: ok, tokens in={in_tok} out={out_tok}", file=sys.stderr)
             return parsed, usage_summary
         except subprocess.TimeoutExpired:
@@ -210,5 +229,5 @@ def run_claude(
             time.sleep(RETRY_SLEEP_SEC)
 
     if ledger is not None:
-        ledger.failures.append({"label": label, "model": model, "error": last_err})
+        ledger.failures.append({"label": label, "model": key, "error": last_err})
     return None, {"error": last_err}

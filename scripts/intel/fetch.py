@@ -28,12 +28,15 @@ import statistics
 import sys
 import time
 import unicodedata
+from urllib.parse import urljoin
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import feedparser
 import requests
 import yaml
+
+import sec_filings  # 2026-08-19 新增：kind=="sec_8k" dispatch，見該檔 docstring
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 INTEL_DIR = ROOT / "scripts" / "intel"
@@ -48,7 +51,7 @@ TIMEOUT = 10
 LINK_CHECK_TIMEOUT = 5
 LINK_CHECK_TOP_N = 60
 FRESHNESS_HOURS = 36
-MAX_KEPT = 350
+MAX_KEPT = 420
 DEDUP_JACCARD = 0.85
 # 2026-08-19：來源擴充後同一事件常同時被直接來源與 Google News 聚合命中；
 # 這條較寬鬆的門檻只負責「跨來源」合併（見 dedup_cards 第二段），避免同日
@@ -96,6 +99,19 @@ POLYMARKET_KEYWORDS = [
     "default", "tariff", "war", "invade", "invasion", "ceasefire",
     "election", "impeach", "sanction",
 ]
+
+# 2026-08-19 新增：Kalshi（第二家預測市場，補 polymarket）。跟 polymarket 不同，
+# Kalshi 的 /markets?limit=100&status=open 泛用清單本身以運動合約為主（實測：
+# 100 筆裡關鍵字比對只會誤中球員姓名子字串，例如 "Federico" 含 "fed"），所以不
+# 走「抓一批→關鍵字篩」，改成「先指定經濟類 series_ticker→逐一查」，見
+# fetch_kalshi_source()。四個 series 對應 DESIGN.md §3「地緣／央行」要的
+# Fed／衰退／關稅機率：
+#   KXFED         下次會議後 Fed funds 利率（多檔 strike，取離 0.5 最近的一檔代表）
+#   KXFEDDECISION 下次會議升/降息機率
+#   KXRECSSNBER   NBER 認定的衰退機率
+#   KXEFFTARIFF   美國有效關稅稅率（季度）
+KALSHI_SERIES = ["KXFED", "KXFEDDECISION", "KXRECSSNBER", "KXEFFTARIFF"]
+KALSHI_MAX_CARDS = 8
 
 
 # ── 小工具 ───────────────────────────────────────────────────────────────
@@ -177,14 +193,17 @@ class Health:
         )
 
 
-def http_get(url: str, retries: int = 1, timeout: int = TIMEOUT):
-    """GET with a single retry. Returns (ok, status, latency_ms, text_or_none, error_or_none)."""
+def http_get(url: str, retries: int = 1, timeout: int = TIMEOUT, ua: str = UA):
+    """GET with a single retry. Returns (ok, status, latency_ms, text_or_none, error_or_none).
+    `ua` 預設用全站 UA；2026-08-19 加這個參數是因為 mining.com 的 WAF 專門擋
+    UA 字串裡含 "Bot"（同一端點用瀏覽器風格 UA 測試回 200），見
+    fetch_rss_source 的 source.get("ua") 覆寫。"""
     last_err = None
     for attempt in range(retries + 1):
         t0 = time.time()
         try:
             resp = requests.get(
-                url, headers={"User-Agent": UA, "Accept": "*/*"}, timeout=timeout
+                url, headers={"User-Agent": ua, "Accept": "*/*"}, timeout=timeout
             )
             latency_ms = int((time.time() - t0) * 1000)
             if resp.status_code >= 400:
@@ -205,7 +224,7 @@ def http_get(url: str, retries: int = 1, timeout: int = TIMEOUT):
 # ── RSS 來源 ─────────────────────────────────────────────────────────────
 def fetch_rss_source(source: dict, health: Health) -> list[dict]:
     sid = source["id"]
-    ok, status, latency_ms, text, err = http_get(source["url"])
+    ok, status, latency_ms, text, err = http_get(source["url"], ua=source.get("ua", UA))
     if not ok:
         health.record(sid, False, status, latency_ms, 0, err)
         return []
@@ -215,6 +234,9 @@ def fetch_rss_source(source: dict, health: Health) -> list[dict]:
     for e in entries:
         title = strip_html(e.get("title", ""), limit=200)
         link = e.get("link", "") or ""
+        if link and not link.startswith("http"):
+            # 2026-08-19：BOK／RBI 這類 feed 給相對路徑，補成絕對網址（否則 QC 當站內死連結）
+            link = urljoin(source["url"], link)
         if not title or not link:
             continue
         summary = strip_html(
@@ -574,6 +596,103 @@ def fetch_polymarket_source(source: dict, health: Health, state: dict) -> list[d
     return cards
 
 
+# ── Kalshi（第二家預測市場；kind: kalshi）───────────────────────────────
+def fetch_kalshi_source(source: dict, health: Health, state: dict) -> list[dict]:
+    """建模同 fetch_polymarket_source：state-based 1 日機率變化卡、同一個
+    change_1d 門檻（0.10）。跟 polymarket 的差異只在「怎麼選市場」——見
+    KALSHI_SERIES 常數上方的註解：Kalshi 的泛用 /markets 清單以運動合約為主，
+    關鍵字比對會誤中球員姓名子字串，所以改成逐一查經濟類 series_ticker，
+    每個 event_ticker 只取機率最接近 0.5（資訊量最大）的一檔代表，避免同一
+    事件的多檔 strike（"above 5%"/"above 6%"/...）洗版。"""
+    sid = source["id"]
+    base_url = source["url"]
+    all_markets = []
+    ok_any = False
+    last_status = None
+    last_latency = None
+    last_err = None
+    for series in KALSHI_SERIES:
+        sep = "&" if "?" in base_url else "?"
+        url = f"{base_url}{sep}series_ticker={series}&status=open&limit=100"
+        ok, status, latency_ms, text, err = http_get(url)
+        last_status, last_latency, last_err = status, latency_ms, err
+        if not ok:
+            continue
+        ok_any = True
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError:
+            continue
+        all_markets.extend(data.get("markets") or [])
+
+    if not ok_any:
+        health.record(sid, False, last_status, last_latency, 0, last_err)
+        return []
+    health.record(sid, True, last_status, last_latency, len(all_markets))
+
+    # 同一 event_ticker 只留機率最接近 0.5 的一檔（多 strike 事件的代表檔）。
+    best_by_event: dict[str, dict] = {}
+    for m in all_markets:
+        # 已在查詢字串加 status=open，這裡不再重複判斷 m["status"]（Kalshi 用
+        # "active" 標示可交易中，不是 "open"——踩過一次這個假設錯誤）。
+        try:
+            prob = float(m.get("last_price_dollars") or "nan")
+        except (TypeError, ValueError):
+            continue
+        if prob != prob:  # NaN
+            continue
+        ev = m.get("event_ticker") or m.get("ticker")
+        if not ev:
+            continue
+        dist = abs(prob - 0.5)
+        prev = best_by_event.get(ev)
+        if prev is None or dist < prev["_dist"]:
+            m2 = dict(m)
+            m2["_prob"] = prob
+            m2["_dist"] = dist
+            best_by_event[ev] = m2
+
+    prev_probs = state.get("kalshi_probs", {})
+    new_probs = {}
+    cards = []
+    # 依「離 0.5 最近」排序，資訊量最大的先進（跟 cap 一起決定誰被丟）。
+    for ev, m in sorted(best_by_event.items(), key=lambda kv: kv[1]["_dist"]):
+        ticker = m.get("ticker") or ev
+        prob = round(m["_prob"], 4)
+        new_probs[ticker] = prob
+        change_1d = round(prob - prev_probs[ticker], 4) if ticker in prev_probs else None
+        title = strip_html(m.get("title", ""), limit=200)
+        sub = strip_html(m.get("yes_sub_title", "") or m.get("no_sub_title", ""), limit=200)
+        cards.append(
+            {
+                "kind": "event",
+                "level": "market",
+                "category": source["category"],
+                "source_tier": source["tier"],
+                "source_id": sid,
+                "title": title or ev,
+                "url": f"https://kalshi.com/markets/{(m.get('event_ticker') or ev).split('-')[0].lower()}",
+                "published_at": None,
+                "lang": "en",
+                "summary_raw": sub,
+                "data": {
+                    "series": ticker,
+                    "value": prob,
+                    "change_1d": change_1d,
+                    "threshold": 0.10,
+                },
+            }
+        )
+        if len(cards) >= KALSHI_MAX_CARDS:
+            break
+    # 未進卡的市場機率仍寫回 state，下次才有基準算 change_1d。
+    for ev, m in best_by_event.items():
+        t = m.get("ticker") or ev
+        new_probs.setdefault(t, round(m["_prob"], 4))
+    state["kalshi_probs"] = new_probs
+    return cards
+
+
 # ── generic JSON 來源（Phase 1 僅健康檢查，不產卡；見 sources.yml note）──
 def fetch_json_healthcheck_source(source: dict, health: Health) -> list[dict]:
     sid = source["id"]
@@ -927,6 +1046,10 @@ def freshness_filter(cards: list[dict], now: datetime) -> tuple[list[dict], int]
         if c.get("kind") == "data":
             kept.append(c)
             continue
+        # 2026-08-19：低頻官方來源（EIA 週報、RBI）可在 sources.yml 設 max_age_hours
+        # 放寬新鮮度窗；沒設就用全域 36h。
+        src_hours = c.get("_max_age_hours")
+        cutoff = now - timedelta(hours=src_hours if src_hours else FRESHNESS_HOURS)
         pub = c.get("published_at")
         if not pub:
             kept.append(c)  # 沒有時間戳的保留，交給人工／後續 stage 判斷
@@ -1000,12 +1123,24 @@ def priority_key(c: dict):
     )
 
 
+SOURCE_FLOOR = 3  # 2026-08-19：每個來源至少保 3 則（最新優先），T3 才不會被 T1/T2 大量擠光
+
+
 def cap_and_sort(cards: list[dict]) -> tuple[list[dict], int]:
     cards.sort(key=priority_key)
     if len(cards) <= MAX_KEPT:
         return cards, 0
-    dropped = len(cards) - MAX_KEPT
-    return cards[:MAX_KEPT], dropped
+    floor_ids, per_src = set(), {}
+    for c in cards:  # 已依 tier/新舊排序，每來源取前 SOURCE_FLOOR 則
+        sid = c.get("source_id", "")
+        if per_src.get(sid, 0) < SOURCE_FLOOR:
+            per_src[sid] = per_src.get(sid, 0) + 1
+            floor_ids.add(c.get("id"))
+    floor = [c for c in cards if c.get("id") in floor_ids]
+    rest = [c for c in cards if c.get("id") not in floor_ids]
+    kept = (floor + rest)[:MAX_KEPT]
+    kept.sort(key=priority_key)
+    return kept, len(cards) - len(kept)
 
 
 # ── 連結存活檢查 ─────────────────────────────────────────────────────────
@@ -1047,6 +1182,14 @@ def load_sources() -> list[dict]:
 
 
 def dispatch_source(source: dict, health: Health, state: dict) -> list[dict]:
+    cards = _dispatch_source(source, health, state)
+    if source.get("max_age_hours"):
+        for c in cards:
+            c["_max_age_hours"] = float(source["max_age_hours"])
+    return cards
+
+
+def _dispatch_source(source: dict, health: Health, state: dict) -> list[dict]:
     kind = source["kind"]
     if kind == "rss":
         return fetch_rss_source(source, health)
@@ -1060,8 +1203,18 @@ def dispatch_source(source: dict, health: Health, state: dict) -> list[dict]:
         return fetch_json_healthcheck_source(source, health)
     if kind == "html":
         return fetch_html_source(source, health)
+    if kind == "sec_8k":
+        return sec_filings.fetch_sec_8k_source(source, health)
+    if kind == "kalshi":
+        return fetch_kalshi_source(source, health, state)
     # kind == "ff_calendar" 不回傳卡片，main() 另外用 fetch_ff_calendar() 呼叫。
     return []
+
+
+def _strip_private(pending):
+    for c in (pending.get("cards") or []) if isinstance(pending, dict) else []:
+        c.pop("_max_age_hours", None)
+    return pending
 
 
 def main():
@@ -1182,7 +1335,7 @@ def main():
         health_out_path.parent.mkdir(parents=True, exist_ok=True)
         calendar_out_path.parent.mkdir(parents=True, exist_ok=True)
         pending_out_path.write_text(
-            json.dumps(pending, ensure_ascii=False, indent=2, sort_keys=False) + "\n",
+            json.dumps(_strip_private(pending), ensure_ascii=False, indent=2, sort_keys=False) + "\n",
             encoding="utf-8",
         )
         health_out_path.write_text(

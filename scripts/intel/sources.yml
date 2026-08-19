@@ -7,7 +7,10 @@
 #   short       ≤8 字顯示短名（中文可）——brief_zh 的 <a> 連結文字、finalize_card 的
 #                 source_short 用這個；缺這欄位 fall back 到 name 前 8 字。
 #   url         抓取端點（RSS/JSON/CSV/XML）；FRED 用 fredgraph.csv 端點
-#   kind        rss | gnews | ff_calendar | json | csv | html | onsite
+#   ua          （選）覆寫抓取用 User-Agent，只有 kind: rss 支援（見 fetch.py
+#                 fetch_rss_source／http_get）；缺省用全站 UA。2026-08-19 新增，
+#                 起因 mining.com 的 WAF 專擋 UA 字串含 "Bot"。
+#   kind        rss | gnews | ff_calendar | json | csv | html | onsite | sec_8k | kalshi
 #                 rss         -> feedparser 解析
 #                 gnews       -> Google News RSS 聚合搜尋（feedparser 解析，逐則取
 #                                 <source> 標籤當發布方，tier 依 GNEWS_MAJOR_PUBLISHERS
@@ -20,15 +23,22 @@
 #                 csv         -> FRED fredgraph 專用，fetch.py 特判處理
 #                 html        -> 純健康檢查用（無結構化解析）
 #                 onsite      -> 保留給站內 docs/*/data/*.json，Phase 1 未使用（那些路徑寫死在 fetch.py，不走本檔）
+#                 sec_8k      -> SEC EDGAR getcurrent atom feed，交給 scripts/intel/sec_filings.py
+#                                 解析＋比對站內 ticker universe（kind="data" 卡，零 LLM，見該檔 docstring）
+#                                 2026-08-19 新增
+#                 kalshi      -> Kalshi Trade API v2，見 fetch.py fetch_kalshi_source（狀態式機率變化卡，
+#                                 建模同 polymarket_markets）2026-08-19 新增
 #   tier        T1 官方/一手（央行／財政部／統計局／FRED／SEC／TWSE） · T2 主流媒體 · T3 具名專業圈 · T4 匿名/聚合
 #                 （gnews 來源的 tier 為預設值，實際 tier 逐則依發布方覆寫）
-#   category    rates|credit|liquidity|fx|commodities|vol|breadth|positioning|econ|cb|geo|regime|asia|crypto
+#   category    rates|credit|liquidity|fx|commodities|vol|breadth|positioning|econ|cb|geo|regime|asia|crypto|filing
 #                 （對應 DESIGN.md §3 十三維度 key；industry 層關鍵字如 semis/ai/ev 由
-#                 haiku 分類階段賦予，不在此檔；on-site 數字卡的維度寫死在 fetch.py）
+#                 haiku 分類階段賦予，不在此檔；on-site 數字卡的維度寫死在 fetch.py；
+#                 `filing`＝2026-08-19 新增，SEC 8-K 專用，不進 13 維度儀表列，只在個股層顯示）
 #   level       market（Phase 1 只做市場層；gnews semis/台積電條目在 haiku 分類時可能被
-#                 判為 industry，這裡的 level 只是抓取階段的預設值）
+#                 判為 industry，這裡的 level 只是抓取階段的預設值；sec_8k 固定 level=company）
 #   lang        en | zh | ja
 #   max_items   單次抓取上限（RSS/JSON 通用；FRED/單一數值來源設 1）
+#   max_age_hours（選）該來源的新鮮度窗，覆寫全域 36h；低頻官方來源（EIA 週報、RBI）設 240
 #   enabled     true/false；false 一律附 note 說明原因
 #   note        （選）健康檢查失敗原因，或人工核校備註
 #
@@ -814,3 +824,373 @@
   lang: en
   max_items: 200
   enabled: true
+
+# ── 2026-08-19 晚間擴充二：加寬（更多一手來源／更多維度）──────────────────
+# 全部於 2026-08-19 用真實 HTTP fetch（12s timeout, UA="Mozilla/5.0 (compatible;
+# intel-fetch/1.0)"；SEC 端點依規定改用含聯絡方式的 UA，見 sec_filings.py）核實。
+
+# -- 亞洲央行 --------------------------------------------------------------
+- id: bok_press
+  name: Bank of Korea — 英文新聞稿 RSS
+  short: "BOK"
+  url: "https://www.bok.or.kr/eng/bbs/E0000634/news.rss"
+  kind: rss
+  tier: T1
+  category: cb
+  level: market
+  lang: en
+  max_items: 30
+  enabled: true
+
+- id: rbi_press
+  max_age_hours: 240
+  name: Reserve Bank of India — 新聞稿 RSS
+  short: "RBI"
+  url: "https://www.rbi.org.in/pressreleases_rss.xml"
+  kind: rss
+  tier: T1
+  category: cb
+  level: market
+  lang: en
+  max_items: 30
+  enabled: true
+
+- id: mof_japan_eng
+  name: Japan Ministry of Finance — 英文版
+  short: "日本財務省"
+  url: "https://www.mof.go.jp/english/index.htm"
+  kind: html
+  tier: T1
+  category: cb
+  level: market
+  lang: en
+  max_items: 1
+  enabled: false
+  note: "2026-08-19 fetch: 首頁 200 但整站找不到可機器讀的 RSS/feed（/rss/english.xml 404，頁面原始碼無 rss/atom link tag，日文版亦同）；暫停用。"
+
+- id: hkma_press
+  name: Hong Kong Monetary Authority — 新聞稿
+  short: "HKMA"
+  url: "https://www.hkma.gov.hk/eng/news-and-media/press-releases/"
+  kind: html
+  tier: T1
+  category: asia
+  level: market
+  lang: en
+  max_items: 1
+  enabled: false
+  note: "2026-08-19 fetch: 頁面 200 但為 JS 動態渲染列表，靜態 HTML 無事件內容；已試 /eng/rss/press-releases.xml、/eng/rss.xml 皆 404，站上無可發現的 RSS/Atom feed，暫停用。"
+
+- id: mas_press
+  name: Monetary Authority of Singapore — 新聞
+  short: "MAS"
+  url: "https://www.mas.gov.sg/news"
+  kind: html
+  tier: T1
+  category: asia
+  level: market
+  lang: en
+  max_items: 1
+  enabled: false
+  note: "2026-08-19 fetch: 頁面 200 但為 JS 動態渲染列表；已試 /rss/mas-publications、/rss/news 皆 404，站上無可發現的 RSS/Atom feed，暫停用。"
+
+- id: cbc_tw
+  name: 中央銀行（台灣）— 新聞稿
+  short: "央行"
+  url: "https://www.cbc.gov.tw/tw/lp-45-1.rss"
+  kind: rss
+  tier: T1
+  category: cb
+  level: market
+  lang: zh
+  max_items: 30
+  enabled: false
+  note: "2026-08-19 fetch: Python requests 預設 SSL 驗證失敗——SSLCertVerificationError 'Missing Subject Key Identifier'，為台灣政府 GRCA 憑證鏈的已知系統性問題（非本地網路問題，GitHub Actions 標準 CA bundle 預期同樣失敗，不同於 polymarket 的本地 DNS 封鎖）；忽略憑證驗證重測後該路徑實為 302 轉址到 /tw/mp-1.html（一般網頁非 RSS），確認站上此路徑本來就無 RSS 內容。同一憑證鏈問題也擋下 dgbas.gov.tw（主計總處）與 mof.gov.tw（財政部）兩個候選，均未另建條目，暫停用待之後找到繞過憑證問題且合規的做法。"
+
+# -- 亞洲媒體 ---------------------------------------------------------------
+- id: scmp_economy
+  name: South China Morning Post — Global Economy RSS
+  short: "SCMP"
+  url: "https://www.scmp.com/rss/12/feed"
+  kind: rss
+  tier: T2
+  category: asia
+  level: market
+  lang: en
+  max_items: 30
+  enabled: true
+
+- id: caixin_global
+  name: Caixin Global — RSS
+  short: "Caixin"
+  url: "https://www.caixinglobal.com/rss/"
+  kind: rss
+  tier: T2
+  category: asia
+  level: market
+  lang: en
+  max_items: 30
+  enabled: false
+  note: "2026-08-19 fetch: 403（換過兩種 UA 仍被擋，疑似 Cloudflare 反爬），暫停用。"
+
+- id: economic_times_markets
+  name: Economic Times — Markets RSS
+  short: "ET"
+  url: "https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms"
+  kind: rss
+  tier: T2
+  category: asia
+  level: market
+  lang: en
+  max_items: 30
+  enabled: true
+
+- id: japan_times_feed
+  name: The Japan Times — 全站 RSS
+  short: "JapanTimes"
+  url: "https://www.japantimes.co.jp/feed/"
+  kind: rss
+  tier: T2
+  category: asia
+  level: market
+  lang: en
+  max_items: 20
+  enabled: true
+  note: "業別子 feed（/news/business/feed/、/category/business/feed/）皆 403，改用全站 feed（含 BUSINESS／JAPAN／ASIA PACIFIC 等分類，entry.tags 可辨識分類）。"
+
+- id: yonhap_economy
+  name: 聯合新聞（韓聯社）— 經濟版 RSS
+  short: "聯合社"
+  url: "https://www.yna.co.kr/rss/economy.xml"
+  kind: rss
+  tier: T2
+  category: asia
+  level: market
+  lang: ko
+  max_items: 30
+  enabled: true
+  note: "英文版 en.yna.co.kr/RSS/economy.xml 404；改用韓文版經濟分類 feed（120 則／次，含日期），標題為韓文，classify 階段 haiku 可處理非中英文標題。"
+
+- id: udn_money
+  name: 經濟日報（money.udn.com）— 要聞 RSS
+  short: "經濟日報"
+  url: "https://money.udn.com/rssfeed/news/1001/5591?ch=money"
+  kind: rss
+  tier: T2
+  category: asia
+  level: market
+  lang: zh
+  max_items: 20
+  enabled: true
+
+# -- 商品／能源 --------------------------------------------------------------
+- id: eia_todayinenergy
+  max_age_hours: 240
+  name: US EIA — Today in Energy RSS
+  short: "EIA"
+  url: "https://www.eia.gov/rss/todayinenergy.xml"
+  kind: rss
+  tier: T1
+  category: commodities
+  level: market
+  lang: en
+  max_items: 20
+  enabled: true
+
+- id: eia_press
+  max_age_hours: 240
+  name: US EIA — 新聞稿 RSS
+  short: "EIA"
+  url: "https://www.eia.gov/rss/press_rss.xml"
+  kind: rss
+  tier: T1
+  category: commodities
+  level: market
+  lang: en
+  max_items: 10
+  enabled: true
+  note: "This Week in Petroleum 專屬 feed（/rss/twip.xml、/petroleum/weekly/rss.xml）皆 404，改收 EIA 新聞稿 feed（涵蓋範圍更廣，含 TWIP 重點發布）。"
+
+- id: oilprice_main
+  name: OilPrice.com — 主要新聞 RSS
+  short: "OilPrice"
+  url: "https://oilprice.com/rss/main"
+  kind: rss
+  tier: T3
+  category: commodities
+  level: market
+  lang: en
+  max_items: 15
+  enabled: true
+
+- id: mining_com
+  name: Mining.com — RSS
+  short: "Mining.com"
+  url: "https://www.mining.com/feed/"
+  kind: rss
+  tier: T3
+  category: commodities
+  level: market
+  lang: en
+  max_items: 20
+  enabled: true
+  ua: "Mozilla/5.0 (compatible; intel-fetch/1.0)"
+  note: "2026-08-19 fetch: 全站共用 UA（含 'IntelBot' 字樣）被 WAF 擋 403，換成不含 'Bot' 字樣的瀏覽器風格 UA 回 200；fetch.py fetch_rss_source 支援 sources.yml 逐來源 `ua:` 覆寫（見 http_get ua 參數）。"
+
+- id: kitco_news
+  name: Kitco News — RSS
+  short: "Kitco"
+  url: "https://www.kitco.com/news"
+  kind: html
+  tier: T3
+  category: commodities
+  level: market
+  lang: en
+  max_items: 1
+  enabled: false
+  note: "2026-08-19 fetch: 頁面 200 但無可發現 RSS/Atom feed（/rss/、/rss/KitcoNews.xml、/rss/gold.xml 皆 404 或轉址回一般網頁），暫停用。"
+
+- id: gnews_us_bakerhughes
+  name: "Google News — Baker Hughes 鑽井數（英文，週度）"
+  short: "GNews"
+  url: "https://news.google.com/rss/search?q=%22Baker%20Hughes%22%20%22rig%20count%22+when:7d&hl=en-US&gl=US&ceid=US:en"
+  kind: gnews
+  tier: T3
+  category: commodities
+  level: market
+  lang: en
+  max_items: 10
+  enabled: true
+  note: "Baker Hughes 官網無鑽井數 RSS/API，改用 Google News 聚合查詢；鑽井數週度發布（多為週五），窗口拉到 7 天涵蓋整週，重複由 fetch.py 既有去重處理。"
+
+# -- 歐洲／全球官方（皆已 2026-08-19 實測失敗，含替代路徑）──────────────────
+- id: bundesbank_press
+  name: Deutsche Bundesbank — 新聞稿 RSS
+  short: "Bundesbank"
+  url: "https://www.bundesbank.de/service/rss/en/633286/feed.rss"
+  kind: rss
+  tier: T1
+  category: cb
+  level: market
+  lang: en
+  max_items: 30
+  enabled: false
+  note: "2026-08-19 fetch: 404。替代路徑 /en/service/rss、/resource/blob/604814/rss.xml 皆 404，暫停用。"
+
+- id: eurostat_news
+  name: Eurostat — 新聞 RSS
+  short: "Eurostat"
+  url: "https://ec.europa.eu/eurostat/en/web/main/rss"
+  kind: rss
+  tier: T1
+  category: econ
+  level: market
+  lang: en
+  max_items: 30
+  enabled: false
+  note: "2026-08-19 fetch: 404。替代路徑 /eurostat/web/main/news/rss-feed 亦 404，暫停用。"
+
+- id: imf_news
+  name: IMF — News RSS
+  short: "IMF"
+  url: "https://www.imf.org/en/News/rss?language=eng"
+  kind: rss
+  tier: T1
+  category: cb
+  level: market
+  lang: en
+  max_items: 30
+  enabled: false
+  note: "2026-08-19 fetch: 403（換 UA 仍被擋）。替代路徑 /en/Blogs/rss 同樣 403，暫停用。"
+
+- id: oecd_newsroom
+  name: OECD — Newsroom RSS
+  short: "OECD"
+  url: "https://www.oecd.org/newsroom/rss.xml"
+  kind: rss
+  tier: T1
+  category: econ
+  level: market
+  lang: en
+  max_items: 30
+  enabled: false
+  note: "2026-08-19 fetch: 403（換 UA 仍被擋），暫停用。"
+
+- id: worldbank_news
+  name: World Bank — News RSS
+  short: "WorldBank"
+  url: "https://www.worldbank.org/en/news/all.rss"
+  kind: rss
+  tier: T1
+  category: econ
+  level: market
+  lang: en
+  max_items: 30
+  enabled: false
+  note: "2026-08-19 fetch: 404。替代路徑 /en/rss 亦 404，暫停用。"
+
+# -- 預測市場（第二家，Fed／經濟／關稅專用，補 polymarket）────────────────
+- id: kalshi_markets
+  name: Kalshi — 經濟／Fed／衰退／關稅市場（Trade API v2，公開端點）
+  short: "Kalshi"
+  url: "https://api.elections.kalshi.com/trade-api/v2/markets"
+  kind: kalshi
+  tier: T2
+  category: geo
+  level: market
+  lang: en
+  max_items: 10
+  enabled: true
+  note: "2026-08-19 fetch: /markets?limit=100&status=open 本身可通（200），但預設清單以運動類合約為主（網球/棒球對戰等），關鍵字比對 title 會誤中球員姓名子字串（例：'Federico' 含 'fed'）。改用 Kalshi /series?category=Economics 查到的具體 series_ticker（KXFED＝下次會議後 Fed funds 利率、KXFEDDECISION＝升降息機率、KXRECSSNBER＝NBER 衰退、KXEFFTARIFF＝有效關稅稅率）逐一以 series_ticker= 查詢，同一 event_ticker 下只取機率最接近 0.5（最有資訊量）的一檔，見 fetch.py fetch_kalshi_source；state-based 1 日機率變化與 polymarket 相同門檻（0.10）。"
+
+# -- SEC EDGAR 8-K（個股層，T1，機械式，見 sec_filings.py）────────────────
+- id: sec_edgar_8k
+  name: SEC EDGAR — 8-K 即時申報（getcurrent）
+  short: "SEC 8-K"
+  url: "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=8-K&output=atom"
+  kind: sec_8k
+  tier: T1
+  category: filing
+  level: company
+  lang: en
+  max_items: 20
+  enabled: true
+  note: "2026-08-19 fetch: 200，Atom feed 回傳近期全市場最新 40~100 筆 8-K/8-K-A（含 CIK、Item 清單），非僅本站追蹤標的；fetch.py 端用 SEC company_tickers.json 建 ticker→CIK 對照，只保留 CIK 落在 docs/dd/ dd-meta ∪ docs/id/*.html id-meta related_tickers 聯集的申報，見 sec_filings.py。SEC 要求 UA 含聯絡方式，此來源專用 UA='IntelBot/1.0 (research.investmquest.com; keigoks@gmail.com)'，與其餘來源共用的 UA 不同。"
+
+# -- T3 具名分析師（待持有人指定名單，先佔位不啟用）────────────────────────
+# - id: analyst_placeholder_1
+#   name: （待指定）具名分析師 Substack 1
+#   short: "T3分析師"
+#   url: "https://<name>.substack.com/feed"
+#   kind: rss
+#   tier: T3
+#   category: regime
+#   level: market
+#   lang: en
+#   max_items: 10
+#   enabled: false
+#   note: "待持有人指定名單"
+# - id: analyst_placeholder_2
+#   name: （待指定）具名分析師 Substack 2
+#   short: "T3分析師"
+#   url: "https://<name>.substack.com/feed"
+#   kind: rss
+#   tier: T3
+#   category: regime
+#   level: market
+#   lang: en
+#   max_items: 10
+#   enabled: false
+#   note: "待持有人指定名單"
+# - id: analyst_placeholder_3
+#   name: （待指定）具名分析師 Substack 3
+#   short: "T3分析師"
+#   url: "https://<name>.substack.com/feed"
+#   kind: rss
+#   tier: T3
+#   category: regime
+#   level: market
+#   lang: en
+#   max_items: 10
+#   enabled: false
+#   note: "待持有人指定名單"

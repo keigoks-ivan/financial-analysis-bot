@@ -1,7 +1,16 @@
 #!/usr/bin/env python3
 """scripts/intel/run_daily.py — Phase 1 orchestrator: fetch (optional) →
-classify (haiku) → summarize (sonnet) → write docs/intel/data/{date}.json →
+classify (haiku) → summarize (sonnet, incl. story-thread assignment) →
+threads.merge_daily (thread counts/heat/cooling) → deepread (sonnet, ≤12
+articles) → digest (sonnet brief_zh) → write docs/intel/data/{date}.json →
 render (if scripts/intel/render.py exists yet).
+
+2026-08-19「加料」：新增 deepread.py（重要卡讀全文）與 threads.py（故事串連），
+見 notes/site-internal/intel/DESIGN.md 2026-08-19 晚間段落。兩者都掛在
+llm_available 分支裡——`--no-llm` 路徑（見下）完全不跑，deep read 需要 sonnet，
+threads 的機械路徑理論上零 LLM 也能跑，但因為 `--no-llm` 路徑本來就不呼叫
+classify/summarize（只處理 kind=="data" 卡），沒有 news 卡可供指派，故一併
+跳過，只讀現有 threads 狀態供 status 頁參考。
 
 對應 notes/site-internal/intel/DESIGN.md §10（每天怎麼跑）。這支是 GHA
 `.github/workflows/intel-daily.yml` 唯一直接呼叫的入口。
@@ -36,6 +45,7 @@ from common import (
     now_utc,
     pending_path,
 )
+from deepread import run_deepread
 from llm import Ledger
 from summarize import (
     build_calendar,
@@ -48,6 +58,7 @@ from summarize import (
     summarize_data_card,
 )
 from classify import classify_data_card
+import threads as threads_mod
 
 INTEL_DIR = ROOT / "scripts" / "intel"
 NEXT_RUN_LABEL = "06:00 TPE"
@@ -92,6 +103,9 @@ def build_output(date: str, pending: dict, llm_available: bool) -> dict:
     # 央行卡片時要退而求其次找日曆裡最近的 FOMC 條目。
     calendar = build_calendar(date)
 
+    threads_output: list = []
+    deep_log: dict = {}
+
     if not llm_available:
         print("[intel/run_daily] CLAUDE_CODE_OAUTH_TOKEN not set — LLM steps skipped, "
               "data-only mode.", file=sys.stderr)
@@ -106,11 +120,17 @@ def build_output(date: str, pending: dict, llm_available: bool) -> dict:
         classified_count = len(data_cards)
         summarized_count = len(data_cards)
         llm_tag = "unavailable"
+        threads_state = threads_mod.load_state()  # --no-llm 路徑不寫回，只讀現況給 status 頁看
     else:
         result = classify(pending, ledger)
         selected = result["selected"]
         selected_ids = {c["id"] for c in selected}
-        summarized = summarize_cards(selected, ledger)
+
+        # 故事串連（threads.py）：sonnet 摘要那通呼叫順便帶「目前活躍故事線」
+        # 清單給模型判斷歸屬（零額外呼叫）；title-only 卡片用機械路徑比對。
+        threads_state = threads_mod.load_state()
+        active_threads = threads_mod.active_thread_list(threads_state)
+        summarized = summarize_cards(selected, ledger, active_threads=active_threads)
         # 2026-08-19：relevant 但沒擠進 stage 2（sonnet 每日額度／per-source cap）
         # 的卡片不再整批消失——走 passthrough_card()（title-only，
         # summarized:false），一樣進最終輸出。「回應內容有點空虛」的另一半
@@ -119,7 +139,18 @@ def build_output(date: str, pending: dict, llm_available: bool) -> dict:
             passthrough_card(c) for c in result["all"]
             if c.get("relevant") and c["id"] not in selected_ids
         ]
-        finalized = [finalize_card(c, name_map, short_map) for c in summarized["cards"] + passthrough]
+        raw_cards = summarized["cards"] + passthrough
+        threads_mod.assign_mechanical(passthrough, threads_state)
+        threads_output = threads_mod.merge_daily(date, raw_cards, threads_state)
+        threads_mod.save_state(threads_state)
+
+        finalized = [finalize_card(c, name_map, short_map) for c in raw_cards]
+
+        # 重要卡讀全文（deepread.py）：在 finalize 之後、digest 之前跑，這樣
+        # digest 的早報寫手能用上 card["deep"]["takeaway_zh"]（見
+        # summarize.build_digest 的 deep_takeaway 欄位）。
+        deep_log = run_deepread(finalized, ledger)
+
         digest = build_digest(result["all"], finalized, ledger, name_map, short_map)
         gauges = build_gauges(result["all"], calendar)
         flags = build_flags(result["all"])
@@ -127,6 +158,12 @@ def build_output(date: str, pending: dict, llm_available: bool) -> dict:
         classified_count = sum(1 for c in result["all"] if c.get("relevant"))
         summarized_count = summarized["log"]["summarized"]
         llm_tag = "ok"
+
+    deep_counts = {"ok": 0, "paywall": 0, "fail": 0, "skipped": 0}
+    for c in finalized:
+        ds = c.get("deep_status")
+        if ds in deep_counts:
+            deep_counts[ds] += 1
 
     status = {
         "sources_ok": meta.get("sources_ok", 0),
@@ -137,6 +174,9 @@ def build_output(date: str, pending: dict, llm_available: bool) -> dict:
         "summarized": summarized_count,
         "tokens": ledger.tokens_summary(),
         "next_run": NEXT_RUN_LABEL,
+        "deep_read": deep_counts,
+        "threads_active": len(threads_output),
+        "threads_total": len(threads_state.get("threads", [])),
     }
     status.update({"cards_used": ledger.cards_used, "capped": ledger.capped})
 
@@ -149,6 +189,7 @@ def build_output(date: str, pending: dict, llm_available: bool) -> dict:
         "brief_zh": brief_zh,
         "flags": flags,
         "cards": finalized,
+        "threads": threads_output,
         "calendar": calendar,
         "status": status,
     }
@@ -213,10 +254,12 @@ def main():
         f"[intel/run_daily] date={date} llm={output['llm']} "
         f"sources_ok={s['sources_ok']}/{s['sources_ok'] + s['sources_fail']} "
         f"fetched={s['fetched']} kept={s['kept']} classified={s['classified']} "
-        f"summarized={s['summarized']} tokens(haiku)={s['tokens']['haiku']} "
-        f"tokens(sonnet)={s['tokens']['sonnet']} cards={len(output['cards'])} "
+        f"summarized={s['summarized']} tokens(haiku)={s['tokens'].get('haiku', 0)} "
+        f"tokens(sonnet)={s['tokens'].get('sonnet', 0)} "
+        f"tokens(deepread)={s['tokens'].get('deepread', 0)} cards={len(output['cards'])} "
         f"gauges={len(output['gauges'])} flags={len(output['flags'])} "
-        f"calendar={len(output['calendar'])}"
+        f"calendar={len(output['calendar'])} "
+        f"deep_read={s.get('deep_read')} threads_active={s.get('threads_active')}"
     )
     return 0
 

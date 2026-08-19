@@ -497,7 +497,8 @@ def tier_badge(card) -> str:
     return f'<span class="{cls}">{esc(tier)}</span>'
 
 
-def card_tags_html(card) -> str:
+def card_tags_html(card, thread_map=None) -> str:
+    thread_map = thread_map or {}
     tags = card.get("tags") or {}
     out = []
     propagated = tags.get("propagated_to") or []
@@ -508,6 +509,11 @@ def card_tags_html(card) -> str:
         out.append(f'<span class="tag p">{esc(" · ".join(tickers[:3]))}</span>')
     if is_rumor(card):
         out.append('<span class="tag r">傳聞</span>')
+    tid = card.get("thread_id")
+    if tid:
+        title_zh = thread_map.get(tid)
+        if title_zh:
+            out.append(f'<a class="tag th" href="#thread-{esc(tid)}">🧵 {esc(title_zh)}</a>')
     return "".join(out)
 
 
@@ -545,7 +551,54 @@ def _card_title(card) -> str:
     return esc(t)
 
 
-def render_row(card, sources_meta=None) -> str:
+_CONF_LABEL_ZH = {"high": "高信心", "med": "中信心", "low": "低信心"}
+
+
+def render_deep_block(deep: dict) -> str:
+    """「深讀」block：數字小表格＋要點＋接下來看什麼＋實體 chips＋信心度。
+    deep_status != "ok"（沒有 deep dict）的卡片一律不呼叫本函式，什麼都不畫。"""
+    if not isinstance(deep, dict):
+        return ""
+    numbers = deep.get("numbers") or []
+    entities = deep.get("entities") or {}
+    takeaway = esc(deep.get("takeaway_zh") or "")
+    watch = esc(deep.get("watch_zh") or "")
+    confidence = (deep.get("confidence") or "").lower()
+    conf_label = _CONF_LABEL_ZH.get(confidence, "")
+
+    parts = ['<div class="deep">']
+    head = '<div class="deep-h">深讀'
+    if conf_label:
+        head += f'<span class="conf {esc(confidence)}">{esc(conf_label)}</span>'
+    head += "</div>"
+    parts.append(head)
+
+    if numbers:
+        rows = []
+        for n in numbers[:6]:
+            what = esc(n.get("what") or "")
+            value = esc(n.get("value") or "")
+            period = n.get("period") or ""
+            period_html = f' <span class="mut">{esc(period)}</span>' if period else ""
+            rows.append(f"<tr><td>{what}</td><td class=\"num\">{value}{period_html}</td></tr>")
+        parts.append(f'<table class="deep-nums"><tbody>{"".join(rows)}</tbody></table>')
+    if takeaway:
+        parts.append(f'<div class="deep-take"><b>要點：</b>{takeaway}</div>')
+    if watch:
+        parts.append(f'<div class="deep-watch"><b>接下來看：</b>{watch}</div>')
+
+    chips = []
+    for key in ("tickers", "themes", "countries"):
+        for v in (entities.get(key) or [])[:6]:
+            chips.append(f'<span class="chip2">{esc(v)}</span>')
+    if chips:
+        parts.append('<div class="deep-ent">' + "".join(chips) + "</div>")
+
+    parts.append("</div>")
+    return "".join(parts)
+
+
+def render_row(card, thread_map=None) -> str:
     """一列 = <details>；<summary> 本身是整條 grid（時間｜重要度｜標題｜來源｜tier+chevron）。
     未摘要（summarized == False）的卡片改用純 <div>，不掛 chevron。"""
     t = fmt_hm(card_time(card))
@@ -573,7 +626,7 @@ def render_row(card, sources_meta=None) -> str:
             + f'<span class="end">{tier}</span></div>'
         )
 
-    tags_html = card_tags_html(card)
+    tags_html = card_tags_html(card, thread_map)
     why = esc(card.get("why_zh") or "")
     summary_zh = esc(card.get("summary_zh") or "")
     full_title = esc(card.get("title") or "")
@@ -588,6 +641,8 @@ def render_row(card, sources_meta=None) -> str:
     data_html = render_data_line(card.get("data"))
     if data_html:
         body_bits.append(data_html)
+    if card.get("deep") and card.get("deep_status") == "ok":
+        body_bits.append(render_deep_block(card["deep"]))
 
     meta_bits = []
     src_full = esc(card.get("source_name") or card.get("source") or "")
@@ -628,7 +683,7 @@ def group_header(label: str, n: int) -> str:
     return f'<div class="grp">{esc(label)}<span class="c">{n}</span></div>'
 
 
-def render_grouped_list(cards: list, order: list, empty_text: str) -> str:
+def render_grouped_list(cards: list, order: list, empty_text: str, thread_map=None) -> str:
     """依 category 分組（order 先、其餘依卡片數排序），空組略過。"""
     if not cards:
         return f'<div class="list">{LIST_HEAD}<div class="empty">{esc(empty_text)}</div></div>'
@@ -641,14 +696,14 @@ def render_grouped_list(cards: list, order: list, empty_text: str) -> str:
     for cat in seq:
         items = sorted(by_cat[cat], key=card_sort_key)
         parts.append(group_header(cat_label(cat), len(items)))
-        parts.extend(render_row(c) for c in items)
+        parts.extend(render_row(c, thread_map) for c in items)
     return '<div class="list">' + "\n".join(parts) + "</div>"
 
 
-def render_flat_list(cards: list, empty_text: str) -> str:
+def render_flat_list(cards: list, empty_text: str, thread_map=None) -> str:
     if not cards:
         return f'<div class="list">{LIST_HEAD}<div class="empty">{esc(empty_text)}</div></div>'
-    rows = "\n".join(render_row(c) for c in sorted(cards, key=card_sort_key))
+    rows = "\n".join(render_row(c, thread_map) for c in sorted(cards, key=card_sort_key))
     return f'<div class="list">{LIST_HEAD}\n{rows}\n</div>'
 
 
@@ -675,7 +730,7 @@ def render_title_list(cards: list) -> str:
     return '<div class="tlist">' + "\n".join(items) + "</div>"
 
 
-def render_dense_feed(cards: list) -> str:
+def render_dense_feed(cards: list, thread_map=None) -> str:
     """版型 B：全部卡片一行一則，依層級分組。"""
     by_level = {}
     for c in cards:
@@ -690,10 +745,75 @@ def render_dense_feed(cards: list) -> str:
             continue
         any_rows = True
         parts.append(group_header(LEVEL_LABEL_ZH.get(lv, lv), len(items)))
-        parts.extend(render_row(c) for c in sorted(items, key=card_sort_key))
+        parts.extend(render_row(c, thread_map) for c in sorted(items, key=card_sort_key))
     if not any_rows:
         parts.append('<div class="empty">今日尚無卡片。</div>')
     return '<div class="list">' + "\n".join(parts) + "</div>"
+
+
+# ------------------------------------------------------------------ threads
+
+HEAT_ARROW = {"up": "▲", "down": "▼", "flat": "→"}
+HEAT_LABEL_ZH = {"up": "升溫", "down": "降溫", "flat": "持平"}
+
+
+def _sparkline_svg(values: list, width: int = 100, height: int = 22) -> str:
+    """14 天迷你長條圖，inline SVG（無外部資源，符合站台自我約束）。"""
+    if not values:
+        return ""
+    n = len(values)
+    maxv = max(values) or 1
+    bw = width / n
+    bars = []
+    for i, v in enumerate(values):
+        h = 2 if v <= 0 else max(2, round((v / maxv) * (height - 3)) + 2)
+        x = round(i * bw)
+        w = max(1.0, bw - 1)
+        y = height - h
+        bars.append(f'<rect x="{x:g}" y="{y:g}" width="{w:g}" height="{h:g}" rx="1"></rect>')
+    return (
+        f'<svg class="spark" viewBox="0 0 {width} {height}" width="{width}" height="{height}" '
+        f'preserveAspectRatio="none" role="img" aria-label="近 14 天卡片數">'
+        + "".join(bars) + "</svg>"
+    )
+
+
+def render_threads(threads: list) -> str:
+    """進行中的故事線：緊湊網格卡，每張＝標題／第 N 天／今日 +n／熱度箭頭／
+    14 天 sparkline／2–3 則最新標題連結。空陣列由呼叫端負責整段（含 h2）省略。"""
+    if not threads:
+        return ""
+    cards_html = []
+    for t in threads:
+        tid = t.get("id") or ""
+        title_zh = esc(t.get("title_zh") or "")
+        day_n = t.get("day_n") or 1
+        today_n = t.get("today_count") or 0
+        heat = t.get("heat") or "flat"
+        if heat not in HEAT_ARROW:
+            heat = "flat"
+        arrow = HEAT_ARROW[heat]
+        spark = _sparkline_svg(t.get("sparkline") or [])
+        latest = t.get("latest") or []
+        link_items = []
+        for e in latest[:3]:
+            eu = e.get("url") or ""
+            et = (e.get("title") or "")[:120]
+            if eu and _safe_href(eu):
+                link_items.append(f'<li><a href="{esc(eu)}" rel="noopener nofollow">{esc(et)}</a></li>')
+            elif et:
+                link_items.append(f"<li>{esc(et)}</li>")
+        links_html = f'<ul class="thc-l">{"".join(link_items)}</ul>' if link_items else ""
+        cards_html.append(
+            f'<div class="thc" id="thread-{esc(tid)}">'
+            f'<div class="thc-h"><span class="tt">{title_zh}</span>'
+            f'<span class="hheat {esc(heat)}" title="{esc(HEAT_LABEL_ZH.get(heat, ""))}">{arrow}</span></div>'
+            f'<div class="thc-m"><span>第 {esc(fmt_num(day_n))} 天</span>'
+            f'<span>今日 +{esc(fmt_num(today_n))}</span></div>'
+            f'<div class="thc-spark">{spark}</div>'
+            f"{links_html}</div>"
+        )
+    return '<div class="threads">' + "\n".join(cards_html) + "</div>"
 
 
 # ------------------------------------------------------------- aside boxes
@@ -894,6 +1014,9 @@ def build_day_body(date_str: str, payload: dict, mode_note: str, is_archive: boo
     status = payload.get("status") or {}
     generated_at = payload.get("generated_at")
 
+    threads = payload.get("threads") or []
+    thread_map = {t.get("id"): t.get("title_zh") for t in threads if t.get("id")}
+
     title_only = [c for c in cards if is_title_only(c)]
     main = [c for c in cards if not is_title_only(c)]
     rumor_cards = [c for c in main if is_rumor(c)]
@@ -936,6 +1059,11 @@ def build_day_body(date_str: str, payload: dict, mode_note: str, is_archive: boo
     p.append(h2("轉折警示", "Alerts", len(flags) or None))
     p.append(render_flags(flags))
 
+    # 3.5 進行中的故事線（空陣列整段省略，含標題）
+    if threads:
+        p.append(h2("進行中的故事線", "Threads", len(threads)))
+        p.append(render_threads(threads))
+
     # 4. 市場早報（雙欄）
     p.append('<section class="only-brief">')
     p.append(h2("市場早報", "Brief"))
@@ -950,13 +1078,13 @@ def build_day_body(date_str: str, payload: dict, mode_note: str, is_archive: boo
 
     # 5. 卡片列表
     p.append(h2("市場層", "Market", len(market_cards)))
-    p.append(render_grouped_list(market_cards, GAUGE_ORDER, "今日無市場層卡片。"))
+    p.append(render_grouped_list(market_cards, GAUGE_ORDER, "今日無市場層卡片。", thread_map))
 
     p.append(h2("產業層", "Industry", len(industry_cards)))
-    p.append(render_grouped_list(industry_cards, [], "今日無產業層卡片。"))
+    p.append(render_grouped_list(industry_cards, [], "今日無產業層卡片。", thread_map))
 
     p.append(h2("個股層", "Company", len(company_cards)))
-    p.append(render_grouped_list(company_cards, [], "今日無個股層卡片。"))
+    p.append(render_grouped_list(company_cards, [], "今日無個股層卡片。", thread_map))
 
     if title_only:
         p.append(h2("其他標題", "Headlines", len(title_only)))
@@ -966,13 +1094,13 @@ def build_day_body(date_str: str, payload: dict, mode_note: str, is_archive: boo
     if rumor_cards:
         p.append(h2("傳聞", "Rumor", len(rumor_cards)))
         p.append('<p class="note">只收公開傳聞（T3／T4 來源），不做查證、不代表事實，僅供交叉比對。</p>')
-        p.append(render_flat_list(rumor_cards, "今日無 T3／T4 傳聞卡片。"))
+        p.append(render_flat_list(rumor_cards, "今日無 T3／T4 傳聞卡片。", thread_map))
     p.append("</section>")
 
     # 版型 B：純列表
     p.append('<section class="only-list">')
     p.append(h2("全部卡片", "Feed", len(cards)))
-    p.append(render_dense_feed(cards))
+    p.append(render_dense_feed(cards, thread_map))
     p.append("</section>")
 
     p.append("</div>")  # .wrap
@@ -1128,6 +1256,11 @@ def render_status_page(date_str: str, payload: dict, sources_meta: dict) -> str:
     )
 
     tokens = status.get("tokens") or {}
+    deep_read = status.get("deep_read") or {}
+    deep_s = (
+        " · ".join(f"{esc(k)} {v}" for k, v in deep_read.items() if v)
+        if any(deep_read.values()) else DASH
+    )
     cards = [
         ("健康檢查時間（台北）", esc(fmt_full(health.get("generated_at")))),
         ("今日產出時間（台北）", esc(fmt_full(generated_at))),
@@ -1135,6 +1268,9 @@ def render_status_page(date_str: str, payload: dict, sources_meta: dict) -> str:
         ("抓到 → 保留", f"{status.get('fetched', DASH)} → {status.get('kept', DASH)}"),
         ("分類 → 摘要", f"{status.get('classified', DASH)} → {status.get('summarized', DASH)}"),
         ("今日 token", " · ".join(f"{esc(k)} {v:,}" for k, v in tokens.items()) or DASH),
+        ("深讀（重要卡讀全文）", deep_s),
+        ("故事線（進行中／總計）",
+         f"{status.get('threads_active', DASH)} ／ {status.get('threads_total', DASH)}"),
         ("下次排程", esc(status.get("next_run") or DASH)),
     ]
     stat_html = "".join(

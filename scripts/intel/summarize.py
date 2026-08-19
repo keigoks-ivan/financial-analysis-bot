@@ -164,8 +164,15 @@ def _batch_input(cards: list[dict]) -> list[dict]:
     return out
 
 
-def summarize_batch(cards: list[dict], ledger: Ledger, batch_no: str):
-    payload = json.dumps(_batch_input(cards), ensure_ascii=False)
+def summarize_batch(cards: list[dict], ledger: Ledger, batch_no: str, active_threads: list | None = None):
+    """2026-08-19 起 payload 是一個物件（不再是裸陣列）：`cards` 照舊，外加
+    `active_threads`（threads.py::active_thread_list() 產出的緊湊清單，
+    ≤40 條 {id,title_zh,keywords}）——讓模型能在同一通呼叫裡順便判斷每張卡
+    該歸進哪條故事線（threads.py 的「sonnet 路徑」，零額外呼叫）。"""
+    payload = json.dumps(
+        {"cards": _batch_input(cards), "active_threads": active_threads or []},
+        ensure_ascii=False,
+    )
     parsed, usage = run_claude(
         system=_summarize_system_prompt(),
         user=payload,
@@ -198,6 +205,31 @@ def _strip_meta_disclaimers(text: str) -> str:
     return cleaned or text  # 全砍光就保留原文，不要留空字串
 
 
+def _apply_thread_proposal(card: dict, result: dict | None) -> None:
+    """2026-08-19 新增：從 sonnet 摘要結果裡取出 `thread` 欄位，存成
+    `card["_thread_proposal"]`（threads.py::merge_daily() 消化用，最終輸出
+    schema 不會出現這個內部欄位——finalize_card 不複製它）。"""
+    thread = (result or {}).get("thread")
+    if not isinstance(thread, dict):
+        card["_thread_proposal"] = None
+        return
+    match = thread.get("match")
+    card["_thread_proposal"] = {
+        "match": match.strip() if isinstance(match, str) and match.strip() else None,
+        "new_title_zh": _plain_thread_text(thread.get("new_title_zh"), 18),
+        "keywords": [
+            _plain_thread_text(k, 24) for k in (thread.get("keywords") or [])[:10]
+            if _plain_thread_text(k, 24)
+        ][:10],
+    }
+
+
+def _plain_thread_text(s, limit: int) -> str:
+    if not isinstance(s, str):
+        return ""
+    return re.sub(r"<[^>]+>", "", s).strip()[:limit]
+
+
 def apply_summary_result(card: dict, result: dict | None) -> dict:
     if not result:
         card["summary_zh"] = (card.get("title", "") or "")[:90]
@@ -206,6 +238,7 @@ def apply_summary_result(card: dict, result: dict | None) -> dict:
         card["forecast"] = None
         card["summarized"] = True
         card["_summarize_source"] = "fallback_no_llm"
+        card["_thread_proposal"] = None
         return card
     card["summary_zh"] = _strip_meta_disclaimers((result.get("summary_zh") or card.get("title", ""))[:90])
     card["why_zh"] = _strip_meta_disclaimers((result.get("why_zh") or "")[:45])
@@ -214,20 +247,25 @@ def apply_summary_result(card: dict, result: dict | None) -> dict:
     card["forecast"] = forecast if isinstance(forecast, dict) and forecast.get("claim") else None
     card["summarized"] = True
     card["_summarize_source"] = "sonnet"
+    _apply_thread_proposal(card, result)
     return card
 
 
-def summarize_cards(selected: list[dict], ledger: Ledger, batch_size: int = BATCH_SIZE) -> dict:
+def summarize_cards(
+    selected: list[dict], ledger: Ledger, batch_size: int = BATCH_SIZE,
+    active_threads: list | None = None,
+) -> dict:
     data_cards = [c for c in selected if c.get("kind") == "data"]
     other_cards = [c for c in selected if c.get("kind") != "data"]
 
     for c in data_cards:
         summarize_data_card(c)
+        c["_thread_proposal"] = None  # 數字卡不參與故事線指派
 
     llm_calls, llm_failures = 0, 0
     for i in range(0, len(other_cards), batch_size):
         batch = other_cards[i : i + batch_size]
-        by_id, usage = summarize_batch(batch, ledger, batch_no=f"{i // batch_size + 1}")
+        by_id, usage = summarize_batch(batch, ledger, batch_no=f"{i // batch_size + 1}", active_threads=active_threads)
         if not by_id and usage.get("capped"):
             for c in batch:
                 apply_summary_result(c, None)
@@ -284,6 +322,8 @@ def finalize_card(card: dict, name_map: dict, short_map: dict | None = None) -> 
         out["is_rumor"] = True
     if card.get("data") is not None:
         out["data"] = card["data"]
+    if card.get("thread_id"):
+        out["thread_id"] = card["thread_id"]
     return out
 
 
@@ -658,17 +698,23 @@ def build_digest(all_classified_cards: list[dict], finalized_market_cards: list[
     monitor_snapshot = build_monitor_snapshot()
     short_map = short_map or {}
 
-    market_cards_input = [
-        {
+    market_cards_input = []
+    for c in finalized_market_cards:
+        if c.get("level") != "market":
+            continue
+        item = {
             "id": c["id"], "title": c["title"], "summary_zh": c.get("summary_zh", ""),
             "why_zh": c.get("why_zh", ""), "importance": c.get("importance", 2),
             "category": c.get("category"), "url": c.get("url"),
             "source_name": c.get("source_name"),
             "source_short": c.get("source_short") or source_short_for(c, short_map, name_map),
         }
-        for c in finalized_market_cards
-        if c.get("level") == "market"
-    ]
+        # 2026-08-19 深讀新增：卡片若有 deepread.py 產出的 deep.takeaway_zh，
+        # 附進去讓早報寫手能用更深一層的事實（不是必用，卡片沒有就沒有這欄）。
+        deep = c.get("deep")
+        if isinstance(deep, dict) and deep.get("takeaway_zh"):
+            item["deep_takeaway"] = deep["takeaway_zh"]
+        market_cards_input.append(item)
     payload = json.dumps(
         {"monitor_snapshot": monitor_snapshot, "market_cards": market_cards_input},
         ensure_ascii=False,
@@ -724,6 +770,20 @@ def build_calendar(date: str, days_ahead: int = 7) -> list:
     # 2026-08-19 新增：ForexFactory 經濟日曆（fetch.py::fetch_ff_calendar 產出，
     # 已轉換為台北時間、只保留 High/Medium 影響力）——與站內既有 macro/catalyst
     # 日曆合併，用 (date, text) 去重（同一事件兩邊都有時保留先加入的那筆）。
+    # 2026-08-19 新增：DD 宇宙＋大型股的財報日（calendar_ext.earnings_events，yfinance
+    # 快取 3 天），格式與 ff_calendar 相同，一樣走下面的 (date, text) 去重。
+    try:
+        from calendar_ext import earnings_events
+        for e in earnings_events(date, days_ahead):
+            try:
+                ed = datetime.strptime(e.get("date", ""), "%Y-%m-%d").date()
+            except ValueError:
+                continue
+            if d0 <= ed <= d1:
+                out.append(e)
+    except Exception as exc:  # noqa: BLE001 — 財報日曆失敗不得擋日報
+        print(f"[intel/summarize] earnings_events failed: {exc}", file=sys.stderr)
+
     ff = load_json(FF_CALENDAR)
     if ff:
         for e in ff.get("events", []):

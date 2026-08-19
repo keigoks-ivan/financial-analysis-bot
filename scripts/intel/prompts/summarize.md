@@ -7,8 +7,16 @@
 
 ## 任務
 
-輸入是一批已通過相關性篩選的卡片（id／title／summary／source／category／level／tickers／
-themes／tier／corroboration），逐張輸出：
+輸入是一個 JSON 物件 `{"cards":[...], "active_threads":[...]}`：
+
+- `cards`：一批已通過相關性篩選的卡片（id／title／summary／source／category／level／
+  tickers／themes／tier／corroboration）。
+- `active_threads`：目前站上「進行中的故事線」緊湊清單（≤40 條，每條
+  `{"id":"…","title_zh":"…","keywords":["…"]}`）——這是跨天累積的故事線索引，供你判斷
+  今天這張卡是不是某條故事線的新進展，或是一個全新的故事。`active_threads` 可能是空陣列
+  （代表目前沒有任何進行中的故事線，或系統剛啟用）。
+
+對 `cards` 裡的每一張卡逐張輸出：
 
 - `summary_zh`：**40–90 字**，只寫這則內容陳述的事實，**只能使用來源文字（title/summary）裡
   真的出現的數字**；來源沒給數字就直接平鋪敘述那件事本身（定性描述），**絕對不要寫「原文未給
@@ -21,12 +29,28 @@ themes／tier／corroboration），逐張輸出：
   ——不確定的話就給 2**，下游 Python 仍會再做一次強制檢查。
 - `forecast`（可省略，只有來源文字本身就做出「有明確日期的斷言」才填）：
   `{"claim":"…","by_when":"YYYY-MM-DD 或概略敘述","who":"…"}`；沒有就整個欄位省略或給 `null`。
+- `thread`（故事串連，2026-08-19 新增）：判斷這張卡屬於哪條「進行中的故事線」——
+  `{"match":"<active_threads 裡的既有 id，或 null>","new_title_zh":"…","keywords":["…"]}`：
+  - 先看這張卡的內容是不是 `active_threads` 裡某條故事線的延續／新進展（同一件事、同一個
+    正在演變的情況——不是同一產業或同一大主題就算，要是「同一條敘事線」，例：「Fed 官員
+    對 9 月降息的口風」「某公司併購案的進度」）。是的話 `match` 填那條的 `id`，其餘兩欄留空
+    （`new_title_zh:""`、`keywords:[]`）。
+  - 不是既有故事線的延續、但這則內容本身有機會發展成一條值得追蹤的故事線（不是單次孤立
+    事件，例：單純一次財報數字通常不是故事線，但「某公司財報後的訴訟／監管調查延燒」可能
+    是），才提議新建：`match:null`，`new_title_zh`＝**≤18 字**精簡故事線標題（不是這則新聞的
+    標題，是能涵蓋未來幾天後續發展的敘事名稱，例：「Fed 9 月降息預期」「台積電 A16 背面供電
+    進度」），`keywords`＝**5–10 個**中英文皆可的關鍵字（含相關 ticker／機構／關鍵詞，用於
+    之後比對是否為同一故事線的後續）。
+  - 大部分卡片（單次、不會有後續追蹤價值的新聞）**兩者都不是**——這種情況 `match:null` 且
+    `new_title_zh:""`（空字串，不是隨便湊一個標題），代表「這則不歸入任何故事線」，不要為了
+    湊數勉強配對或硬造故事線。**寧可不建，不要建錯**——故事線一旦建立會持續佔用版面。
 
 ## 輸出格式（唯一規則：只輸出 JSON 陣列，不得有其他文字）
 
 ```json
 [
-  {"id":"<card id>","summary_zh":"…","why_zh":"…","importance":2,"forecast":null}
+  {"id":"<card id>","summary_zh":"…","why_zh":"…","importance":2,"forecast":null,
+   "thread":{"match":null,"new_title_zh":"","keywords":[]}}
 ]
 ```
 

@@ -207,3 +207,11 @@
 - **加料**：`sources.yml` 35→63 來源：CNBC（world/economy/markets）、Dow Jones 公開 RSS（Markets/World/Economy）、FT（markets/world）、Economist、NYT Economy、Guardian Economics、Yahoo Finance、MarketWatch、14 條 Google News 主題查詢（`kind: gnews`，以 `<source>` 發布方為 source_name；主流媒體升 T2，其餘 T3）、ForexFactory 週曆（`kind: ff_calendar`，faireconomy 鏡像，ET→台北、High/Medium 進 7 日日曆）。`MAX_KEPT` 200→350、haiku 上限 320 卡、sonnet 70 卡＋每來源 ≤6；未進 sonnet 的相關卡以 `summarized:false` 出現在「其他標題」。`--no-llm` 旗標可零 token 測試整條管線。
 - **實測 2026-08-19**：fetched 747 → kept 334 → 291 張卡（76 張 sonnet 摘要＋215 張 title-only）；token ≈ haiku 118k＋sonnet 164k（digest 輸入約 81k，下一步可瘦身：只餵 importance≥2 的市場卡）。
 - 待辦：digest 輸入瘦身；主題名（ChinaEconomy 等）中文化；儀表「亞洲」用的是站內 TWSE 卡（T+1 落後）。
+
+### 2026-08-19 深夜：更廣＋更深（持有人問「有辦法再廣再深嗎」→ 拍板先廣後深、交 sonnet 執行）
+
+- **更廣**（`sources.yml` 63→69 活來源；新 kind `sec_8k`／`kalshi`）：BOK、RBI（無逐則日期）、SCMP、Economic Times、Japan Times、Yonhap（韓文）、經濟日報 RSS、EIA（Today in Energy／新聞稿，`max_age_hours: 240` 放寬新鮮度）、OilPrice、Mining.com（需 `ua:` 覆寫）、Baker Hughes gnews、SEC EDGAR 8-K（只留站內 DD／ID 宇宙的公司，`sec_filings.py`）、Kalshi 公開 API（機率變動卡，同 Polymarket 規則）、財報日（`calendar_ext.earnings_events`：DD 宇宙＋大型股，yfinance 快取 3 天）。失敗來源（MoF 日本／HKMA／MAS／台灣央行／財新／Kitco／Bundesbank／Eurostat／IMF／OECD／世銀）以 `enabled:false`＋真實錯誤留檔；Fed 行事曆頁面為 JS 渲染，跳過。T3 Substack 名單留白待持有人指定。
+- **cap 調整**：`MAX_KEPT` 350→420、haiku 上限 440 卡、`cap_and_sort` 每來源至少保 3 則（`SOURCE_FLOOR`）避免 T3 被 T1/T2 大量擠光；`max_age_hours` 逐來源覆寫 36h 新鮮度窗。
+- **更深**：①`deepread.py` 每天挑 ≤12 張（重要度 3 優先、跳過付費牆網域）抓原文、機械抽主文（`<article>` 或最密 `<p>` 群，<600 字視為 paywall）、sonnet 每 4 篇一呼叫抽「數字（必須逐字出現在原文）／實體／一句事實 takeaway／接下來看什麼」，掛在卡片 `deep`；②`threads.py` 故事串連：summarize 批次同時回傳 `thread`（對既有 thread 或新開），title-only 卡用關鍵字機械配對；狀態在 `docs/intel/data/threads.json`（30 天計數、heat up/flat/down、5 天零命中冷卻、14 天移除、上限 60）；頁面新增「進行中的故事線」區（第 N 天、今日 +n、14 天迷你長條、最新標題）與卡片展開的「深讀」區塊。
+- 實測首跑：deepread 12 候選 → 11 篇成功抽文（cnyes 為 JS 渲染常抽不到）、sonnet 約 4.5 萬 token；threads 首日 23 條。
+- 待辦：cnyes 原文改走其 API；T3 名單；Fed 行事曆；多日後檢視 thread 品質（是否過度開新線）。
