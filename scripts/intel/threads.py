@@ -179,8 +179,8 @@ def assign_mechanical(cards: list[dict], state: dict) -> None:
         for t in active
     ]
     for c in cards:
-        if c.get("thread_id") or c.get("kind") == "data":
-            continue
+        if c.get("thread_id") or c.get("kind") == "data" or c.get("is_rumor"):
+            continue  # 2026-08-20 傳聞層試行：傳聞卡不得進故事串連
         tags = c.get("tags") or {}
         card_kw = {
             str(v).strip().lower()
@@ -218,8 +218,8 @@ def merge_daily(date: str, cards: list[dict], state: dict) -> list[dict]:
     # 1) sonnet 路徑：先處理有 match 既有 thread 的
     new_candidates = []
     for c in cards:
-        if c.get("kind") == "data" or c.get("thread_id"):
-            continue
+        if c.get("kind") == "data" or c.get("thread_id") or c.get("is_rumor"):
+            continue  # 2026-08-20 傳聞層試行：傳聞卡不得進故事串連
         prop = c.get("_thread_proposal")
         if not prop:
             continue

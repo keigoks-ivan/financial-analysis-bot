@@ -42,7 +42,7 @@ RETRY_SLEEP_SEC = 15
 # articles/day deep-read budget can't crowd out (or be crowded out by) the
 # classify/summarize/digest sonnet budget. Unit = articles processed
 # (deepread.py BATCH_SIZE=4 × up to 3 batches).
-DAILY_CARD_CAPS = {"haiku": 440, "sonnet": 70, "deepread": 12}
+DAILY_CARD_CAPS = {"haiku": 440, "sonnet": 80, "deepread": 12}  # sonnet 80＝主線 70＋傳聞 10（2026-08-20）
 
 # Claude Code CLI picks ANTHROPIC_API_KEY over the OAuth token when both are
 # present, billing the API instead of the Max/Pro subscription. Strip these

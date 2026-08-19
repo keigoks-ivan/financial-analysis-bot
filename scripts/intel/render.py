@@ -730,6 +730,177 @@ def render_title_list(cards: list) -> str:
     return '<div class="tlist">' + "\n".join(items) + "</div>"
 
 
+# ---------------------------------------------- 「其他標題」改版（Task B，2026-08-20）
+# 持有人原話：「其他標題 277 這個那麼多其實等於沒有 因為不會看」。改法：同題去重
+# （title token Jaccard ≥0.6）→ 只在上方列「值得一瞥」的重要度前 30 則（單一類別
+# ≤5 則避免洗版）→ 其餘依類別收合在 <details> 裡，不再是一段看不完的兩欄清單。
+
+_TITLE_ONLY_TIER_RANK = {"T1": 0, "T2": 1, "T3": 2, "T4": 3}
+_CJK_CHAR_RE = re.compile(r"[一-鿿]")
+_CHUNK_RE = re.compile(r"[一-鿿]+|[^一-鿿]+")
+_ASCII_WORD_RE = re.compile(r"[a-z0-9]+")
+_DEDUP_JACCARD_THRESHOLD = 0.6
+_TITLE_ONLY_VISIBLE_LIMIT = 30
+_TITLE_ONLY_PER_CAT_CAP = 5
+_RUMOR_TITLE_ONLY_SHOW_LIMIT = 20
+
+
+def _title_only_text(card) -> str:
+    """同 `_card_title` 的文字來源（summary_zh 優先、data 卡去前綴），但不 escape
+    ——同題去重比對用原文 token，escape 與否不影響比對結果，直接用原文較省事。"""
+    t = card.get("summary_zh") or card.get("title") or ""
+    if card.get("kind") == "data":
+        t = _KEY_PREFIX_RE.sub("", _TITLE_PREFIX_RE.sub("", t))
+    return t
+
+
+def _title_ngram_tokens(title: str) -> set:
+    """同題判斷用的 token 集合：中文連續字用 2-gram（bigram），英文/數字用小寫
+    整詞。跟 fetch.py 既有（較鬆、只比對同日窗內）的去重邏輯是兩套獨立實作，
+    互不共用——這裡要的是「同一則新聞被多來源轉載」的精準判斷，不是粗篩。"""
+    t = (title or "").strip()
+    tokens: set = set()
+    for chunk in _CHUNK_RE.findall(t):
+        if not chunk or not chunk.strip():
+            continue
+        if _CJK_CHAR_RE.match(chunk[0]):
+            n = len(chunk)
+            if n < 2:
+                tokens.add(chunk)
+            else:
+                tokens.update(chunk[i:i + 2] for i in range(n - 1))
+        else:
+            tokens.update(_ASCII_WORD_RE.findall(chunk.lower()))
+    return tokens
+
+
+def _title_jaccard(a: set, b: set) -> float:
+    if not a or not b:
+        return 0.0
+    inter = len(a & b)
+    if not inter:
+        return 0.0
+    union = len(a) + len(b) - inter
+    return inter / union if union else 0.0
+
+
+def dedup_title_only(cards: list) -> list:
+    """同題去重（title token Jaccard ≥0.6 視為同一則），回傳 `[(代表卡, 同題數)]`。
+    代表卡＝該群裡 tier 最高（T1 最佳）、同 tier 取最新的一則；同題數＝群內其餘
+    則數（渲染時掛「＋n 同題」灰字後綴）。O(n²) 比對，「其他標題」單日量級（幾百
+    則）可接受，不需要更複雜的索引結構。"""
+    n = len(cards)
+    if n == 0:
+        return []
+    tokens = [_title_ngram_tokens(_title_only_text(c)) for c in cards]
+
+    def priority(i):
+        return (_TITLE_ONLY_TIER_RANK.get(cards[i].get("source_tier"), 9), -sort_epoch(cards[i]))
+
+    order = sorted(range(n), key=priority)
+    assigned = [False] * n
+    out = []
+    for i in order:
+        if assigned[i]:
+            continue
+        cluster = [i]
+        assigned[i] = True
+        for j in order:
+            if assigned[j]:
+                continue
+            if _title_jaccard(tokens[i], tokens[j]) >= _DEDUP_JACCARD_THRESHOLD:
+                cluster.append(j)
+                assigned[j] = True
+        rep_idx = min(cluster, key=priority)
+        out.append((cards[rep_idx], len(cluster) - 1))
+    return out
+
+
+def _select_visible_title_only(deduped: list) -> tuple:
+    """依 importance desc → tier T1>T2>T3>T4 desc → 新到舊排序，取前
+    `_TITLE_ONLY_VISIBLE_LIMIT` 則，同一類別最多 `_TITLE_ONLY_PER_CAT_CAP` 則
+    （避免單一類別洗版）。回傳 (visible, rest)，兩者皆為 `(卡, 同題數)` list。"""
+    def key(pair):
+        c, _dup = pair
+        imp = int(c.get("importance") or 1)
+        tier_rank = _TITLE_ONLY_TIER_RANK.get(c.get("source_tier"), 9)
+        return (-imp, tier_rank, -sort_epoch(c))
+
+    ordered = sorted(deduped, key=key)
+    visible, rest = [], []
+    cat_count: dict = {}
+    for pair in ordered:
+        c, _dup = pair
+        cat = c.get("category") or "other"
+        if len(visible) < _TITLE_ONLY_VISIBLE_LIMIT and cat_count.get(cat, 0) < _TITLE_ONLY_PER_CAT_CAP:
+            visible.append(pair)
+            cat_count[cat] = cat_count.get(cat, 0) + 1
+        else:
+            rest.append(pair)
+    return visible, rest
+
+
+def _render_title_only_row(card, dup_count: int = 0) -> str:
+    """一行一則：時間｜類別 chip｜標題（連結）｜來源短名｜tier。"""
+    t = fmt_hm(card_time(card))
+    title = _card_title(card)
+    url = card.get("url") or ""
+    h = (
+        f'<a href="{esc(url)}" rel="noopener nofollow">{title}</a>'
+        if url and _safe_href(url) else title
+    )
+    if dup_count > 0:
+        h += f' <span class="dupn">＋{dup_count} 同題</span>'
+    src = esc(source_short(card))
+    tier = tier_badge(card)
+    cat = card.get("category")
+    cat_chip = f'<span class="cchip">{esc(cat_label(cat))}</span>' if cat else '<span class="cchip"></span>'
+    return (
+        '<div class="ti3">'
+        f'<span class="m">{esc(t)}</span>'
+        f'{cat_chip}'
+        f'<span class="h">{h}</span>'
+        f'<span class="s">{src}</span>'
+        f'<span class="tr">{tier}</span>'
+        "</div>"
+    )
+
+
+def render_title_only_section(cards: list) -> tuple:
+    """「其他標題」整段（去重＋top 30＋依類別收合）。回傳 (html, visible_n, raw_total)。"""
+    raw_total = len(cards)
+    if raw_total == 0:
+        return "", 0, 0
+    deduped = dedup_title_only(cards)
+    visible, rest = _select_visible_title_only(deduped)
+    visible_n = len(visible)
+
+    parts = ['<div class="tlist2">']
+    parts.extend(_render_title_only_row(c, dup) for c, dup in visible)
+    parts.append("</div>")
+
+    if rest:
+        rest_raw_n = raw_total - visible_n  # 含被摺進代表卡裡的同題則數
+        by_cat: dict = {}
+        for pair in rest:
+            cat = pair[0].get("category") or "other"
+            by_cat.setdefault(cat, []).append(pair)
+        cat_order = sorted(by_cat.keys(), key=lambda k: -len(by_cat[k]))
+        parts.append(f'<details class="tmore"><summary>其餘 {rest_raw_n} 則（依類別收合）</summary>')
+        for cat in cat_order:
+            items = sorted(by_cat[cat], key=lambda pair: card_sort_key(pair[0]))
+            parts.append(
+                f'<details class="tcat"><summary>{esc(cat_label(cat))}'
+                f'<span class="c">{len(items)}</span></summary>'
+                '<div class="tlist2">'
+                + "".join(_render_title_only_row(c, dup) for c, dup in items)
+                + "</div></details>"
+            )
+        parts.append("</details>")
+
+    return "".join(parts), visible_n, raw_total
+
+
 def render_dense_feed(cards: list, thread_map=None) -> str:
     """版型 B：全部卡片一行一則，依層級分組。"""
     by_level = {}
@@ -1024,6 +1195,9 @@ def build_day_body(date_str: str, payload: dict, mode_note: str, is_archive: boo
     market_cards = [c for c in solid if (c.get("level") or "market") == "market"]
     industry_cards = [c for c in solid if c.get("level") == "industry"]
     company_cards = [c for c in solid if c.get("level") == "company"]
+    # Task B（2026-08-20）：未摘要傳聞卡不進「其他標題」，改摺進傳聞區底部。
+    title_only_rumor = [c for c in title_only if is_rumor(c)]
+    title_only_other = [c for c in title_only if not is_rumor(c)]
 
     base_date = datetime.strptime(date_str, "%Y-%m-%d").date()
     wd = weekday_zh(base_date)
@@ -1086,15 +1260,26 @@ def build_day_body(date_str: str, payload: dict, mode_note: str, is_archive: boo
     p.append(h2("個股層", "Company", len(company_cards)))
     p.append(render_grouped_list(company_cards, [], "今日無個股層卡片。", thread_map))
 
-    if title_only:
-        p.append(h2("其他標題", "Headlines", len(title_only)))
-        p.append('<p class="note">以下為通過過濾但未進入摘要額度的標題，僅列原標題與來源。</p>')
-        p.append(render_title_list(title_only))
+    if title_only_other:
+        section_html, visible_n, raw_n = render_title_only_section(title_only_other)
+        p.append(h2("其他標題", "Headlines", f"{visible_n}／{raw_n}"))
+        p.append(
+            '<p class="note">haiku 篩過但沒進摘要名額的標題；'
+            "上面是重要度最高的 30 則，其餘依類別收合。</p>"
+        )
+        p.append(section_html)
 
-    if rumor_cards:
+    if rumor_cards or title_only_rumor:
         p.append(h2("傳聞", "Rumor", len(rumor_cards)))
         p.append('<p class="note">只收公開傳聞（T3／T4 來源），不做查證、不代表事實，僅供交叉比對。</p>')
         p.append(render_flat_list(rumor_cards, "今日無 T3／T4 傳聞卡片。", thread_map))
+        if title_only_rumor:
+            shown = sorted(title_only_rumor, key=card_sort_key)[:_RUMOR_TITLE_ONLY_SHOW_LIMIT]
+            p.append(
+                f'<details class="tmore"><summary>其餘傳聞標題 {len(title_only_rumor)} 則</summary>'
+                + render_title_list(shown)
+                + "</details>"
+            )
     p.append("</section>")
 
     # 版型 B：純列表

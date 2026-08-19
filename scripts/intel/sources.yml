@@ -10,7 +10,13 @@
 #   ua          （選）覆寫抓取用 User-Agent，只有 kind: rss 支援（見 fetch.py
 #                 fetch_rss_source／http_get）；缺省用全站 UA。2026-08-19 新增，
 #                 起因 mining.com 的 WAF 專擋 UA 字串含 "Bot"。
-#   kind        rss | gnews | ff_calendar | json | csv | html | onsite | sec_8k | kalshi
+#   rumor       （選，2026-08-20 新增）true＝傳聞層來源（T3/T4 小道消息試行）。
+#                 fetch.py::dispatch_source 會替該來源每張卡加 source_rumor:true；
+#                 classify.py 把這類卡與 tier T3/T4、haiku 判定 is_rumor 的卡統一收斂為
+#                 is_rumor:true，獨立佔用 RUMOR_STAGE2_CAP=10 名額（不吃一般 STAGE2_LIMIT=70），
+#                 且 summarize/threads/deepread 全部過濾掉 is_rumor 卡，不進日報／串連／深讀。
+#                 詳見 DESIGN.md「2026-08-20 傳聞層試行（一週）」。
+#   kind        rss | gnews | ff_calendar | json | csv | html | onsite | sec_8k | kalshi | ptt
 #                 rss         -> feedparser 解析
 #                 gnews       -> Google News RSS 聚合搜尋（feedparser 解析，逐則取
 #                                 <source> 標籤當發布方，tier 依 GNEWS_MAJOR_PUBLISHERS
@@ -28,6 +34,8 @@
 #                                 2026-08-19 新增
 #                 kalshi      -> Kalshi Trade API v2，見 fetch.py fetch_kalshi_source（狀態式機率變化卡，
 #                                 建模同 polymarket_markets）2026-08-19 新增
+#                 ptt         -> PTT Stock 板首頁 HTML 解析（div.r-ent，只收推文「爆」或 ≥30 的文章，
+#                                 見 fetch.py fetch_ptt_source）2026-08-20 新增，傳聞層試行專用
 #   tier        T1 官方/一手（央行／財政部／統計局／FRED／SEC／TWSE） · T2 主流媒體 · T3 具名專業圈 · T4 匿名/聚合
 #                 （gnews 來源的 tier 為預設值，實際 tier 逐則依發布方覆寫）
 #   category    rates|credit|liquidity|fx|commodities|vol|breadth|positioning|econ|cb|geo|regime|asia|crypto|filing
@@ -1157,40 +1165,183 @@
   enabled: true
   note: "2026-08-19 fetch: 200，Atom feed 回傳近期全市場最新 40~100 筆 8-K/8-K-A（含 CIK、Item 清單），非僅本站追蹤標的；fetch.py 端用 SEC company_tickers.json 建 ticker→CIK 對照，只保留 CIK 落在 docs/dd/ dd-meta ∪ docs/id/*.html id-meta related_tickers 聯集的申報，見 sec_filings.py。SEC 要求 UA 含聯絡方式，此來源專用 UA='IntelBot/1.0 (research.investmquest.com; keigoks@gmail.com)'，與其餘來源共用的 UA 不同。"
 
-# -- T3 具名分析師（待持有人指定名單，先佔位不啟用）────────────────────────
-# - id: analyst_placeholder_1
-#   name: （待指定）具名分析師 Substack 1
-#   short: "T3分析師"
-#   url: "https://<name>.substack.com/feed"
-#   kind: rss
-#   tier: T3
-#   category: regime
-#   level: market
-#   lang: en
-#   max_items: 10
-#   enabled: false
-#   note: "待持有人指定名單"
-# - id: analyst_placeholder_2
-#   name: （待指定）具名分析師 Substack 2
-#   short: "T3分析師"
-#   url: "https://<name>.substack.com/feed"
-#   kind: rss
-#   tier: T3
-#   category: regime
-#   level: market
-#   lang: en
-#   max_items: 10
-#   enabled: false
-#   note: "待持有人指定名單"
-# - id: analyst_placeholder_3
-#   name: （待指定）具名分析師 Substack 3
-#   short: "T3分析師"
-#   url: "https://<name>.substack.com/feed"
-#   kind: rss
-#   tier: T3
-#   category: regime
-#   level: market
-#   lang: en
-#   max_items: 10
-#   enabled: false
-#   note: "待持有人指定名單"
+# -- 傳聞層試行（一週，2026-08-20 啟用，見 DESIGN.md「2026-08-20 傳聞層試行」）──
+# 全部 rumor: true。T3＝具名個人 Substack（有署名、有分析脈絡，仍是個人觀點非機構
+# 查證）；T4＝匿名／聚合／社群熱議（Reddit／ZeroHedge／PTT）。每個來源皆於
+# 2026-08-19 用真實 HTTP fetch 核實；enabled:false 的附實測失敗原因。
+
+# ---- T3 具名 Substack 作者 ----
+- id: semianalysis
+  name: SemiAnalysis（Dylan Patel）
+  short: "SemiAnalysis"
+  url: "https://www.semianalysis.com/feed"
+  kind: rss
+  tier: T3
+  category: regime
+  level: market
+  lang: en
+  max_items: 5
+  rumor: true
+  enabled: true
+  note: "2026-08-19 fetch: 200（301 -> semianalysis.com/feed/，requests 預設跟隨轉址）。半導體供應鏈具名深度分析，常有未經廠商證實的產能/良率/客戶傳聞。"
+- id: fabricated_knowledge
+  name: Fabricated Knowledge（Doug O'Laughlin）
+  short: "FabKnowledge"
+  url: "https://www.fabricatedknowledge.com/feed"
+  kind: rss
+  tier: T3
+  category: regime
+  level: market
+  lang: en
+  max_items: 5
+  rumor: true
+  enabled: true
+  note: "2026-08-19 fetch: 200。半導體/科技股具名分析，含產業內部消息與供應鏈耳語。"
+- id: apricitas_economics
+  name: Apricitas Economics（Joseph Politano）
+  short: "Apricitas"
+  url: "https://www.apricitas.io/feed"
+  kind: rss
+  tier: T3
+  category: econ
+  level: market
+  lang: en
+  max_items: 5
+  rumor: true
+  enabled: true
+  note: "2026-08-19 fetch: 200。總經數據具名解讀，非官方一手但常搶先一般媒體。"
+- id: noahpinion
+  name: Noahpinion（Noah Smith）
+  short: "Noahpinion"
+  url: "https://www.noahpinion.blog/feed"
+  kind: rss
+  tier: T3
+  category: regime
+  level: market
+  lang: en
+  max_items: 5
+  rumor: true
+  enabled: true
+  note: "2026-08-19 fetch: 200。總經/政策具名評論。"
+- id: kyla_scanlon
+  name: Kyla Scanlon
+  short: "KylaScanlon"
+  url: "https://kyla.substack.com/feed"
+  kind: rss
+  tier: T3
+  category: regime
+  level: market
+  lang: en
+  max_items: 5
+  rumor: true
+  enabled: true
+  note: "2026-08-19 fetch: 200。總經敘事/散戶情緒具名評論。"
+- id: the_transcript
+  name: The Transcript
+  short: "TheTranscript"
+  url: "https://thetranscript.substack.com/feed"
+  kind: rss
+  tier: T3
+  category: regime
+  level: market
+  lang: en
+  max_items: 5
+  rumor: true
+  enabled: true
+  note: "2026-08-19 fetch: 200。法說會逐字稿重點摘錄，具名編輯整理。"
+- id: citrini_research
+  name: Citrini Research
+  short: "Citrini"
+  url: "https://citriniresearch.substack.com/feed"
+  kind: rss
+  tier: T3
+  category: regime
+  level: market
+  lang: en
+  max_items: 5
+  rumor: true
+  enabled: false
+  note: "2026-08-19 fetch: 404，Substack 回應「This publication is flagged as Potential Violation of Substack's content guidelines」，換瀏覽器 UA 仍同樣結果，非暫時性錯誤。"
+- id: doomberg
+  name: Doomberg
+  short: "Doomberg"
+  url: "https://newsletter.doomberg.com/feed"
+  kind: rss
+  tier: T3
+  category: commodities
+  level: market
+  lang: en
+  max_items: 5
+  rumor: true
+  enabled: true
+  note: "2026-08-19 fetch: 站方原網域 www.doomberg.com/feed 用 IntelBot UA 回 403，換瀏覽器 UA 回 301 轉址到 newsletter.doomberg.com（首頁非 feed）；改直接指向 https://newsletter.doomberg.com/feed 實測 200，故 url 已改用此正確端點（非原始指定的 www.doomberg.com/feed）。能源/大宗商品具名分析。"
+
+# ---- T4 匿名／聚合／社群 ----
+- id: reddit_wallstreetbets
+  name: Reddit — r/wallstreetbets（熱門）
+  short: "r/WSB"
+  url: "https://www.reddit.com/r/wallstreetbets/hot/.rss"
+  ua: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+  kind: rss
+  tier: T4
+  category: positioning
+  level: market
+  lang: en
+  max_items: 6
+  rumor: true
+  enabled: true
+  note: "2026-08-19 fetch: 200，須用瀏覽器風格 UA（IntelBot UA 或無 UA 常被 Reddit 擋）。散戶熱議/迷因股情緒，噪音極高。"
+- id: reddit_stocks
+  name: Reddit — r/stocks（熱門）
+  short: "r/stocks"
+  url: "https://www.reddit.com/r/stocks/hot/.rss"
+  ua: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+  kind: rss
+  tier: T4
+  category: positioning
+  level: market
+  lang: en
+  max_items: 5
+  rumor: true
+  enabled: true
+  note: "2026-08-19 fetch: 200，同 wallstreetbets 需瀏覽器 UA。"
+- id: reddit_investing
+  name: Reddit — r/investing（熱門）
+  short: "r/investing"
+  url: "https://www.reddit.com/r/investing/hot/.rss"
+  ua: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+  kind: rss
+  tier: T4
+  category: positioning
+  level: market
+  lang: en
+  max_items: 5
+  rumor: true
+  enabled: true
+  note: "2026-08-19 fetch: 第一次 429（rate limit），重試後 200；瀏覽器 UA 下屬間歇性限流，仍設 enabled:true，交給 fetch.py 既有重試機制。"
+- id: zerohedge
+  name: ZeroHedge
+  short: "ZeroHedge"
+  url: "https://feeds.feedburner.com/zerohedge/feed"
+  kind: rss
+  tier: T4
+  category: regime
+  level: market
+  lang: en
+  max_items: 6
+  rumor: true
+  enabled: true
+  note: "2026-08-19 fetch: 200。匿名編輯部、常帶未查證/聳動標題，僅供交叉比對。"
+- id: ptt_stock
+  name: PTT Stock 板（熱門推文）
+  short: "PTT Stock"
+  url: "https://www.ptt.cc/bbs/Stock/index.html"
+  kind: ptt
+  tier: T4
+  category: regime
+  level: market
+  lang: zh
+  max_items: 6
+  rumor: true
+  enabled: true
+  note: "2026-08-19 fetch: 200（cookie over18=1）。抓最新 2 頁，只收推文數「爆」或 ≥30 的文章；PTT 索引頁無逐篇時間戳，published_at 固定 null（見 fetch.py fetch_ptt_source docstring）。"

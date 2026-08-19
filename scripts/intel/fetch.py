@@ -193,17 +193,19 @@ class Health:
         )
 
 
-def http_get(url: str, retries: int = 1, timeout: int = TIMEOUT, ua: str = UA):
+def http_get(url: str, retries: int = 1, timeout: int = TIMEOUT, ua: str = UA, cookies: dict | None = None):
     """GET with a single retry. Returns (ok, status, latency_ms, text_or_none, error_or_none).
     `ua` 預設用全站 UA；2026-08-19 加這個參數是因為 mining.com 的 WAF 專門擋
     UA 字串裡含 "Bot"（同一端點用瀏覽器風格 UA 測試回 200），見
-    fetch_rss_source 的 source.get("ua") 覆寫。"""
+    fetch_rss_source 的 source.get("ua") 覆寫。`cookies`（2026-08-20 新增）：
+    PTT 分齡確認用（`over18=1`），見 fetch_ptt_source。"""
     last_err = None
     for attempt in range(retries + 1):
         t0 = time.time()
         try:
             resp = requests.get(
-                url, headers={"User-Agent": ua, "Accept": "*/*"}, timeout=timeout
+                url, headers={"User-Agent": ua, "Accept": "*/*"}, timeout=timeout,
+                cookies=cookies,
             )
             latency_ms = int((time.time() - t0) * 1000)
             if resp.status_code >= 400:
@@ -690,6 +692,111 @@ def fetch_kalshi_source(source: dict, health: Health, state: dict) -> list[dict]
         t = m.get("ticker") or ev
         new_probs.setdefault(t, round(m["_prob"], 4))
     state["kalshi_probs"] = new_probs
+    return cards
+
+
+# ── PTT Stock 板（小道消息／傳聞層，kind: ptt，2026-08-20 新增）───────────
+try:
+    from bs4 import BeautifulSoup as _BS4
+except ImportError:  # pragma: no cover — beautifulsoup4 已是站內既有依賴（yfinance 帶入）
+    _BS4 = None
+
+PTT_MIN_PUSH = 30  # 只收推文「爆」或 ≥30 篇（DESIGN 2026-08-20 傳聞層試行規則）
+PTT_CATEGORY_RE = re.compile(r"^\s*\[([^\]]{1,10})\]\s*")
+
+
+def fetch_ptt_source(source: dict, health: Health) -> list[dict]:
+    """PTT Stock 板：抓最新 2 頁（index.html ＋「‹ 上頁」連結），只收推文數
+    「爆」或 ≥30 的文章；標題去掉 [分類] 前綴（保留進 tags.themes）；連結組
+    https://www.ptt.cc + href；PTT 版面沒有逐篇時間戳，published_at 一律
+    None（呼叫端統一補 fetched_at，first_seen_filter 會用「第一次看到」判新舊）。
+    需要 cookie over18=1（分齡確認）；沒裝 beautifulsoup4 就整條跳過。"""
+    sid = source["id"]
+    if _BS4 is None:
+        health.record(sid, False, None, None, 0, "beautifulsoup4 not installed")
+        return []
+    base_url = source["url"]
+    ua = source.get("ua", UA)
+    cookies = {"over18": "1"}
+
+    ok, status, latency_ms, text, err = http_get(base_url, ua=ua, cookies=cookies)
+    if not ok:
+        health.record(sid, False, status, latency_ms, 0, err)
+        return []
+    total_latency = latency_ms
+    texts = [text]
+    try:
+        soup0 = _BS4(text, "lxml")
+        prev_href = None
+        for a in soup0.select(".action-bar a.btn.wide"):
+            if a.get_text(strip=True) == "‹ 上頁" and a.get("href"):
+                prev_href = a["href"]
+                break
+        if prev_href:
+            prev_url = urljoin(base_url, prev_href)
+            ok2, status2, latency2, text2, err2 = http_get(prev_url, ua=ua, cookies=cookies)
+            if ok2:
+                texts.append(text2)
+                total_latency = (total_latency or 0) + (latency2 or 0)
+    except Exception:  # noqa: BLE001 — 拿不到第二頁不影響第一頁的結果
+        pass
+
+    scored: list[tuple[bool, int, dict]] = []
+    for page_text in texts:
+        try:
+            soup = _BS4(page_text, "lxml")
+        except Exception:  # noqa: BLE001
+            continue
+        for ent in soup.select("div.r-ent"):
+            title_a = ent.select_one("div.title a")
+            if not title_a:
+                continue  # 已刪除文章（標題欄無 <a>）
+            href = title_a.get("href") or ""
+            if not href:
+                continue
+            raw_title = strip_html(title_a.get_text(strip=True), limit=200)
+            nrec = ent.select_one("div.nrec")
+            push_text = (nrec.get_text(strip=True) if nrec else "").strip()
+            is_bao = push_text == "爆"
+            try:
+                push_n = int(push_text)
+            except ValueError:
+                push_n = None
+            if not (is_bao or (push_n is not None and push_n >= PTT_MIN_PUSH)):
+                continue
+            m = PTT_CATEGORY_RE.match(raw_title)
+            cat_tag = m.group(1) if m else None
+            title = raw_title[m.end():].strip() if m else raw_title
+            link = urljoin(base_url, href)
+            card = {
+                "kind": "news",
+                "level": source.get("level", "market"),
+                "category": source["category"],
+                "source_tier": source["tier"],
+                "source_id": sid,
+                "title": title or raw_title,
+                "url": link,
+                "published_at": None,  # PTT index 頁無逐篇時間戳（見上方 docstring）
+                "lang": source.get("lang", "zh"),
+                "summary_raw": (f"推文數 {push_text}" + (f"；分類 {cat_tag}" if cat_tag else "")),
+                "tags": {"tickers": [], "themes": [cat_tag] if cat_tag else []},
+            }
+            rank_push = 999 if is_bao else (push_n or 0)
+            scored.append((is_bao, rank_push, card))
+
+    # 同一篇文章可能同時出現在「最新頁」與「上頁」（換頁時邊界重疊）——用連結去重。
+    seen_urls: set = set()
+    deduped: list[tuple[bool, int, dict]] = []
+    for is_bao, rank, card in scored:
+        if card["url"] in seen_urls:
+            continue
+        seen_urls.add(card["url"])
+        deduped.append((is_bao, rank, card))
+
+    deduped.sort(key=lambda x: (0 if x[0] else 1, -x[1]))
+    max_items = source.get("max_items", 6)
+    cards = [c for _, _, c in deduped[:max_items]]
+    health.record(sid, True, status, total_latency, len(cards))
     return cards
 
 
@@ -1186,6 +1293,11 @@ def dispatch_source(source: dict, health: Health, state: dict) -> list[dict]:
     if source.get("max_age_hours"):
         for c in cards:
             c["_max_age_hours"] = float(source["max_age_hours"])
+    if source.get("rumor"):
+        # 2026-08-20 傳聞層試行：非底線欄位，_strip_private 不會剝掉，會隨卡片
+        # 一路傳到 classify/summarize/render，供各層過濾傳聞卡不進主摘要。
+        for c in cards:
+            c["source_rumor"] = True
     return cards
 
 
@@ -1207,6 +1319,8 @@ def _dispatch_source(source: dict, health: Health, state: dict) -> list[dict]:
         return sec_filings.fetch_sec_8k_source(source, health)
     if kind == "kalshi":
         return fetch_kalshi_source(source, health, state)
+    if kind == "ptt":
+        return fetch_ptt_source(source, health)
     # kind == "ff_calendar" 不回傳卡片，main() 另外用 fetch_ff_calendar() 呼叫。
     return []
 

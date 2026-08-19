@@ -106,6 +106,8 @@ def select_candidates(cards: list[dict], limit: int = MAX_CANDIDATES) -> list[di
     for c in cards:
         if c.get("kind") == "data":
             continue
+        if c.get("is_rumor"):  # 2026-08-20 傳聞層試行：傳聞卡不得進深讀
+            continue
         if not c.get("summarized"):
             continue
         if int(c.get("importance") or 0) < 2:

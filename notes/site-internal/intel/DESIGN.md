@@ -215,3 +215,17 @@
 - **更深**：①`deepread.py` 每天挑 ≤12 張（重要度 3 優先、跳過付費牆網域）抓原文、機械抽主文（`<article>` 或最密 `<p>` 群，<600 字視為 paywall）、sonnet 每 4 篇一呼叫抽「數字（必須逐字出現在原文）／實體／一句事實 takeaway／接下來看什麼」，掛在卡片 `deep`；②`threads.py` 故事串連：summarize 批次同時回傳 `thread`（對既有 thread 或新開），title-only 卡用關鍵字機械配對；狀態在 `docs/intel/data/threads.json`（30 天計數、heat up/flat/down、5 天零命中冷卻、14 天移除、上限 60）；頁面新增「進行中的故事線」區（第 N 天、今日 +n、14 天迷你長條、最新標題）與卡片展開的「深讀」區塊。
 - 實測首跑：deepread 12 候選 → 11 篇成功抽文（cnyes 為 JS 渲染常抽不到）、sonnet 約 4.5 萬 token；threads 首日 23 條。
 - 待辦：cnyes 原文改走其 API；T3 名單；Fed 行事曆；多日後檢視 thread 品質（是否過度開新線）。
+
+### 2026-08-20 傳聞層試行（一週）
+
+持有人拍板：接「真的小道消息」來源（Reddit／ZeroHedge／具名 Substack／PTT），**先試一週再決定去留**。核心紀律：傳聞卡永遠不得混進日報 brief_zh、深讀候選、故事線串連、或轉折警示候選——這一層存在的意義只是「讓交叉比對的原始素材更廣」，不是升級成主敘事的一部分。
+
+**來源清單（`sources.yml`，全部 `rumor: true`）**：
+- T3 具名 Substack（8 個，`short`：SemiAnalysis／FabKnowledge／Apricitas／Noahpinion／KylaScanlon／TheTranscript／Citrini／Doomberg）——Citrini 因 Substack 端回 404「Potential Violation of guidelines」設 `enabled:false`；Doomberg 原始網址只 301 轉首頁非 feed，改用實測可行的 `newsletter.doomberg.com/feed`。
+- T4 匿名／聚合／社群（5 個）——Reddit r/wallstreetbets、r/stocks、r/investing（`.rss`，需瀏覽器風格 `ua:` 覆寫，Reddit 對預設/機器人 UA 常擋）、ZeroHedge（feedburner）、PTT Stock 板（新 `kind: ptt`，見下）。
+
+**PTT（新 `kind: ptt`，`fetch.py::fetch_ptt_source`）**：抓 `bbs/Stock/index.html`＋其「‹ 上頁」連結（最新 2 頁），cookie `over18=1` 過分齡；只收推文數「爆」或 ≥30 的文章（`PTT_MIN_PUSH=30`）；標題開頭 `[分類]` 前綴剝離進 `tags.themes`，不留在 title；連結＝`https://www.ptt.cc` + href；PTT 索引頁沒有逐篇時間戳，`published_at` 固定 `null`（下游用「第一次看到」判新舊，不當成發布時間）；兩頁邊界重疊的文章用 URL 去重；沒裝 `beautifulsoup4` 或抓取失敗一律回空 list＋記 health，不讓整條 pipeline 掛掉。
+
+**規則（`is_rumor` 權威判定收斂在 `classify.py::apply_llm_result`）**：`source_rumor`（來源層 `rumor:true`）∪ `source_tier ∈ {T3,T4}` ∪ haiku 自己判斷的 `is_rumor` ——三路 OR，任一為真即傳聞卡。傳聞卡不佔一般 `STAGE2_LIMIT=70` 名額，改走獨立的 `RUMOR_STAGE2_CAP=10`（`select_rumor_stage2`，依 importance desc／新到舊排序）；超過 10 則的傳聞卡仍標 `is_rumor:true` 但維持 title-only（`summarized:false`），不進 sonnet。下游四處明確過濾 `is_rumor`：`summarize.py::build_digest`（market_cards_input）、`summarize.py::build_flag_candidates`（防禦層）、`deepread.py::select_candidates`、`threads.py::assign_mechanical` 與 `merge_daily`。render.py 呈現規則見 Task B 段落（同日「其他標題」改版）。
+
+**退出條件**：一週後檢視每個來源的實際命中率（有沒有產出真的有用的傳聞卡、有沒有被交叉印證到後續變成正式新聞）；產出掛零或雜訊過高（例：Reddit 迷因股熱議跟市場層完全無關）的來源直接 `enabled:false` 並記錄原因，不強行保留湊來源數。

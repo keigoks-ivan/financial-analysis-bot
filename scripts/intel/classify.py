@@ -42,6 +42,8 @@ from llm import Ledger, run_claude
 BATCH_SIZE = 40
 STAGE2_LIMIT = 70
 PER_SOURCE_STAGE2_CAP = 6  # 2026-08-19：單一來源最多 6 條進 sonnet，防一個 feed 洗版
+RUMOR_STAGE2_CAP = 10  # 2026-08-20 傳聞層試行：傳聞卡獨立小額度，不吃一般 STAGE2_LIMIT
+RUMOR_SOURCE_RESERVE = 6  # 10 席中保留給 source_rumor（真小道）的席次
 SUMMARY_TRUNCATE = 300  # DESIGN §6 rule 2: LLM 只看 ≤300 字 snippet
 
 CLASSIFY_SYSTEM = None  # lazy-loaded via read_prompt("classify.md")
@@ -144,6 +146,17 @@ def apply_llm_result(card: dict, result: dict | None) -> dict:
             card["importance_guess"] = 2
         card["_classify_source"] = "haiku"
 
+    # 2026-08-20 傳聞層試行：is_rumor 的權威判定收斂在這裡，三路 OR——
+    # ①來源本身在 sources.yml 標 rumor:true（fetch.py 已寫 source_rumor）、
+    # ②來源 tier 為 T3/T4、③haiku 自己判斷 is_rumor。任一為真即傳聞卡，
+    # 之後 select_stage2 / select_rumor_stage2 的分流、以及 summarize.py／
+    # threads.py／deepread.py 的過濾都讀這個統一後的值，不再各自重算。
+    card["is_rumor"] = bool(
+        card.get("source_rumor")
+        or card.get("source_tier") in ("T3", "T4")
+        or card.get("is_rumor")
+    )
+
     # Python post-rules (deterministic, DESIGN §6/§7 — not the model's call).
     if card.get("source_tier") == "T4":
         card["importance_guess"] = min(card.get("importance_guess", 2), 2)
@@ -201,6 +214,26 @@ def select_stage2(
     return kept, dropped
 
 
+def select_rumor_stage2(cards: list[dict], limit: int = RUMOR_STAGE2_CAP) -> tuple[list[dict], int]:
+    """傳聞卡（is_rumor=true）的獨立小額度選拔，2026-08-20 傳聞層試行。排序＝
+    importance_guess desc，同分新到舊（recency desc）；不套 select_stage2 的
+    per-source cap——傳聞來源本來就少（≤6 個 source 共 13 個），額度本身只有
+    10，沒有單一 feed 洗版的風險。超額的卡片維持 is_rumor=true 但不進 selected，
+    render.py 會把它們放進「其餘傳聞標題」收合區（title-only，不摘要）。"""
+    relevant = [c for c in cards if c.get("relevant")]
+    relevant.sort(key=lambda c: _recency_key(c), reverse=True)
+    relevant.sort(key=lambda c: -c.get("importance_guess", 1))
+    # 真小道來源（sources.yml rumor:true → source_rumor）優先保留 RUMOR_SOURCE_RESERVE
+    # 個名額；否則 Yahoo／MarketWatch 這類 T3 聚合站會把 Reddit／PTT／Substack 全擠掉
+    # （2026-08-19 實測 10 席只剩 1 席給真小道）。剩餘名額再由全體依 importance 填。
+    reserve = [c for c in relevant if c.get("source_rumor")][:RUMOR_SOURCE_RESERVE]
+    reserved_ids = {id(c) for c in reserve}
+    rest = [c for c in relevant if id(c) not in reserved_ids]
+    kept = (reserve + rest)[:limit]
+    dropped = len(relevant) - len(kept)
+    return kept, dropped
+
+
 def classify(pending: dict, ledger: Ledger, batch_size: int = BATCH_SIZE,
              stage2_limit: int = STAGE2_LIMIT, only_kinds: set | None = None) -> dict:
     cards = pending.get("cards", [])
@@ -243,14 +276,23 @@ def classify(pending: dict, ledger: Ledger, batch_size: int = BATCH_SIZE,
     # selected；STAGE2_LIMIT／per-source cap 只套用在真的要花 sonnet token 的
     # other_cards 上。
     relevant_data = [c for c in data_cards if c.get("relevant")]
-    selected_other, dropped_over_cap = select_stage2(other_cards, stage2_limit)
-    selected = relevant_data + selected_other
+    # 2026-08-20 傳聞層試行：is_rumor 卡片不吃一般 STAGE2_LIMIT 額度，獨立走
+    # RUMOR_STAGE2_CAP=10 的小額度選拔（select_rumor_stage2），避免它們（或反
+    # 過來，一般卡片）互相排擠彼此的 sonnet 名額。
+    rumor_other = [c for c in other_cards if c.get("is_rumor")]
+    nonrumor_other = [c for c in other_cards if not c.get("is_rumor")]
+    selected_other, dropped_over_cap = select_stage2(nonrumor_other, stage2_limit)
+    selected_rumor, dropped_rumor_over_cap = select_rumor_stage2(rumor_other)
+    selected = relevant_data + selected_other + selected_rumor
 
     drop_log = {
         "total_classified": len(all_classified),
         "not_relevant": not_relevant_count,
         "selected_for_stage2": len(selected),
         "dropped_over_stage2_cap": dropped_over_cap,
+        "rumor_cards_total": len(rumor_other),
+        "rumor_selected_for_stage2": len(selected_rumor),
+        "dropped_rumor_over_cap": dropped_rumor_over_cap,
         "llm_batches_ok": llm_calls,
         "llm_batches_failed": llm_failures,
         "data_cards_zero_llm": len(data_cards),

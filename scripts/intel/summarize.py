@@ -320,6 +320,8 @@ def finalize_card(card: dict, name_map: dict, short_map: dict | None = None) -> 
         out["forecast"] = card["forecast"]
     if card.get("is_rumor"):
         out["is_rumor"] = True
+    if card.get("source_rumor"):
+        out["source_rumor"] = True  # 真小道來源（Reddit／PTT／Substack…），render 用來區分 T3 聚合站
     if card.get("data") is not None:
         out["data"] = card["data"]
     if card.get("thread_id"):
@@ -543,6 +545,8 @@ def build_flag_candidates(all_classified_cards: list[dict]) -> list[dict]:
     for c in all_classified_cards:
         if c.get("kind") != "data":
             continue
+        if c.get("is_rumor"):  # 2026-08-20 防禦層：data 卡本來就不會是傳聞，但保留這道閘
+            continue
         title = c.get("title", "")
         data = c.get("data") or {}
         theme = data.get("theme") or re.sub(r"^\[[^\]]+\]\s*", "", title)
@@ -701,6 +705,8 @@ def build_digest(all_classified_cards: list[dict], finalized_market_cards: list[
     market_cards_input = []
     for c in finalized_market_cards:
         if c.get("level") != "market":
+            continue
+        if c.get("is_rumor"):  # 2026-08-20 傳聞層試行：傳聞卡不得進日報 brief_zh
             continue
         item = {
             "id": c["id"], "title": c["title"], "summary_zh": c.get("summary_zh", ""),
