@@ -121,6 +121,8 @@
 
 ## 10. 每天怎麼跑（全部雲端）
 
+**2026-08-19 執行環境改判（重要）**：claude.ai Routine **推不上 GitHub**——`position-thesis-monitor-weekly` 2026-08-17 run（`cse_01LyuL3K9TntxwzqMaKv8ewc`）實測 `git push` 403、測試分支 403、`mcp__github__push_files` 403（Resource not accessible by integration），與 2026-07-15 home-pulse spec 記載的 #58141 同一問題、至今未修。故 **LLM 步驟改在 GitHub Actions 內用 Claude Code CLI 跑**（`claude -p --model …`，認證用 `CLAUDE_CODE_OAUTH_TOKEN`＝`claude setup-token` 產生的長效 token，**走月租額度、不用 API key**；Pro/Max 官方支援）。GHA 有完整網路＋contents:write，抓／算／寫／推同一條 workflow 完成；模型搭配用 `--model` 分步（haiku 分類 → sonnet 摘要；週日 opus）。Routine 只保留為備援觸發器，不再承擔寫入。下圖的「Routine」段落一律讀成「同一 GHA workflow 的第二個 job」。**前置一次性動作（持有人）**：本機執行 `claude setup-token` → 把 token 存為 repo secret `CLAUDE_CODE_OAUTH_TOKEN`。
+
 ```
 06:00 TPE  GitHub Actions  intel-fetch.yml（免費、網路完整）
            scripts/intel/fetch.py
