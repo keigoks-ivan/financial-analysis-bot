@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="index,follow">
+<title>全球情報監視器 — InvestMQuest Research</title>
+<meta name="description" content="全球金融市場情報監視器：儀表列、市場早報、產業／個股卡片、傳聞與接下來 7 天日曆，機械聚合＋LLM 摘要每日更新。">
+<meta property="og:title" content="全球情報監視器 — InvestMQuest Research">
+<meta property="og:site_name" content="InvestMQuest Research">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F3F4F2; --sur:#FFFFFF; --sur2:#EAECE8; --line:#D9DCD6; --ink:#16191F; --mut:#66707E; --acc:#8A5A2B; --acc-soft:#F1E6DA;
+  --red:#C8412E; --amb:#B8820F; --grn:#2F8F5B; --red-bg:#FBE9E5; --amb-bg:#FBF1D9; --grn-bg:#E3F3EA;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0F1216; --sur:#161A20; --sur2:#1D222A; --line:#2A303A; --ink:#E6E8EB; --mut:#8B93A0; --acc:#D9A066; --acc-soft:#2A2118;
+  --red:#E0604F; --amb:#E0AA3C; --grn:#4FB07E; --red-bg:#2A1714; --amb-bg:#2A2212; --grn-bg:#132519;
+}}
+:root[data-theme="dark"]{
+  --bg:#0F1216; --sur:#161A20; --sur2:#1D222A; --line:#2A303A; --ink:#E6E8EB; --mut:#8B93A0; --acc:#D9A066; --acc-soft:#2A2118;
+  --red:#E0604F; --amb:#E0AA3C; --grn:#4FB07E; --red-bg:#2A1714; --amb-bg:#2A2212; --grn-bg:#132519;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans","Noto Sans TC",system-ui,-apple-system,"PingFang TC",sans-serif;font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.mono{font-family:"IBM Plex Mono","Noto Sans TC",ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
+.wrap{max-width:1080px;margin:0 auto;padding:20px 20px 60px}
+/* top */
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.top h1{margin:0;font-size:18px;font-weight:600;letter-spacing:.01em}
+.top h1 small{color:var(--mut);font-weight:400;margin-left:10px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--sur)}
+.seg button{border:0;background:transparent;color:var(--mut);padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.seg button:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+.note{margin:12px 0 0;color:var(--mut);font-size:12.5px}
+/* gauges */
+.gauges{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:18px 0 6px}
+.g{background:var(--sur);border:1px solid var(--line);border-radius:6px;padding:8px 10px;display:grid;grid-template-columns:auto 1fr;column-gap:8px;row-gap:2px;align-items:center}
+.g .dot{width:9px;height:9px;border-radius:50%;background:var(--grn)}
+.g.warn .dot{background:var(--amb)} .g.crit .dot{background:var(--red)}
+.g .name{font-weight:600;font-size:12.5px}
+.g .d{grid-column:2;color:var(--mut);font-size:12px;line-height:1.35}
+.g .v{grid-column:2;font-size:12px}
+.g.crit .v{color:var(--red)} .g.warn .v{color:var(--amb)}
+/* sections */
+h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin:26px 0 10px;font-weight:600;display:flex;align-items:center;gap:10px}
+h2::after{content:"";flex:1;height:1px;background:var(--line)}
+h2 .zh{letter-spacing:.02em;text-transform:none;font-size:13px;color:var(--ink)}
+/* prose */
+.brief{max-width:68ch}
+.brief p{margin:0 0 12px;font-size:15px;line-height:1.75}
+.brief b{font-weight:600}
+.brief .n{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;font-size:14px}
+.brief .src{color:var(--mut);font-size:12px;margin-left:4px}
+.flag{border-left:3px solid var(--amb);background:var(--amb-bg);padding:10px 12px;border-radius:0 6px 6px 0;margin:6px 0 0;max-width:68ch}
+.flag.hard{border-color:var(--red);background:var(--red-bg)}
+.flag .k{font-weight:600;font-size:12.5px;margin-right:6px}
+/* dense list */
+.list{border:1px solid var(--line);border-radius:6px;background:var(--sur);overflow:hidden}
+.row{display:grid;grid-template-columns:44px 12px 76px 92px 1fr auto;gap:0 10px;align-items:center;padding:7px 10px;border-top:1px solid var(--line);font-size:13.5px}
+.row:first-child{border-top:0}
+.row.head{color:var(--mut);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;background:var(--sur2)}
+.row .t{color:var(--mut);font-size:12px}
+.row .imp{width:9px;height:9px;border-radius:50%;background:var(--line);justify-self:center}
+.imp.i3{background:var(--red)} .imp.i2{background:var(--amb)} .imp.i1{background:var(--line)}
+.row .cat{font-size:11.5px;color:var(--acc);font-weight:600;letter-spacing:.02em}
+.row .src{font-size:12px;color:var(--mut);white-space:nowrap}
+.row .src em{font-style:normal;color:var(--acc)}
+.row .hd{min-width:0}
+.row .hd summary{cursor:pointer;list-style:none;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.row .hd summary::-webkit-details-marker{display:none}
+.row .hd summary::before{content:"\203a";color:var(--mut);display:inline-block;transition:transform .15s}
+.row .hd details[open] summary::before{transform:rotate(90deg)}
+.row .hd .body{padding:8px 0 4px 16px;color:var(--mut);font-size:13px;line-height:1.6;max-width:70ch}
+.row .hd .body b{color:var(--ink);font-weight:600}
+.row .hd .body a{color:var(--acc)}
+.row .empty{color:var(--mut);font-size:13px;padding:14px 10px;grid-column:1/-1}
+.tag{display:inline-block;font-size:11px;padding:1px 6px;border-radius:4px;background:var(--sur2);color:var(--mut);margin-left:6px;vertical-align:1px}
+.tag.r{background:var(--red-bg);color:var(--red)}.tag.p{background:var(--acc-soft);color:var(--acc)}
+.row .lvl{font-size:11px;color:var(--mut);justify-self:end}
+.row.grp{grid-template-columns:1fr;background:var(--sur2);color:var(--mut);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;padding:5px 10px}
+/* calendar */
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal .d{background:var(--sur);border:1px solid var(--line);border-radius:6px;padding:8px;min-height:74px;font-size:12px}
+.cal .d .w{color:var(--mut);font-size:11px;margin-bottom:4px}
+.cal .d .e{margin:2px 0}
+.cal .d .e.hi{font-weight:600;color:var(--acc)}
+.status{display:flex;flex-wrap:wrap;gap:8px 22px;color:var(--mut);font-size:12px;margin-top:8px}
+/* modes */
+body[data-mode="list"] .only-brief{display:none}
+body[data-mode="brief"] .only-list{display:none}
+/* banners */
+.banner{background:var(--amb-bg);border:1px solid var(--amb);color:var(--ink);padding:10px 14px;border-radius:6px;margin:14px 0;font-size:13px;max-width:68ch}
+.banner.stale{background:var(--red-bg);border-color:var(--red)}
+.banner b{font-weight:600}
+/* status table */
+.twrap{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--sur)}
+table.stbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:640px}
+table.stbl th,table.stbl td{padding:6px 10px;border-top:1px solid var(--line);text-align:left;white-space:nowrap}
+table.stbl thead th{background:var(--sur2);color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.05em;border-top:0}
+table.stbl tbody tr:first-child td{border-top:1px solid var(--line)}
+table.stbl td.ok{color:var(--grn);font-weight:600}
+table.stbl td.fail{color:var(--red);font-weight:600}
+table.stbl td.err{white-space:normal;color:var(--mut);max-width:360px;overflow:hidden;text-overflow:ellipsis}
+.stat-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:10px 0 20px}
+.stat-cards .c{background:var(--sur);border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+.stat-cards .c .k{color:var(--mut);font-size:11.5px;margin-bottom:3px}
+.stat-cards .c .v{font-size:16px;font-weight:600}
+/* archive list */
+.arclist{list-style:none;padding:0;margin:0;max-width:40ch}
+.arclist li{padding:7px 0;border-top:1px solid var(--line)}
+.arclist li:first-child{border-top:0}
+.arclist a{color:var(--ink);text-decoration:none;font-weight:500}
+.arclist a:hover{color:var(--acc)}
+/* footer */
+footer.imq-foot{margin-top:32px;padding:18px 20px;border-top:1px solid var(--line);text-align:center;font-size:12px;color:var(--mut)}
+footer.imq-foot a{color:var(--acc)}
+.back{display:inline-block;margin:14px 0 0;font-size:12.5px;color:var(--acc);text-decoration:none}
+.back:hover{text-decoration:underline}
+@media (max-width:720px){
+  .row{grid-template-columns:12px 1fr;gap:4px 8px}
+  .row .t,.row .cat,.row .src,.row .lvl,.row.head{display:none}
+  .cal{grid-template-columns:repeat(2,1fr)}
+}
+@media (prefers-reduced-motion: reduce){ .row .hd summary::before{transition:none} }
+
+</style>
+</head>
+<body data-mode="brief">
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/monitor/">市場監測</a>
+          <a href="/intel/" class="active">情報監視器</a>
+          <a href="/detective/">偵測警報網</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/rotation/">產業輪動</a>
+          <a href="/crowding/">擁擠交易監測</a>
+          <a href="/regime/">大類資產 regime</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/catalyst/">催化劑日曆</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">選股<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/cockpit/">選股主控台</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/research/momentum-5/">Momentum-5</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screeners.html">RS+VCP Screener</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">個股總覽</a>
+          <a href="/research/">個股 DD</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/research/synthesis/">期望落差綜合研判</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/track-record/">裁決實績</a>
+          <a href="/pm/">持倉週掃</a>
+          <a href="/long-track-w52-adaptive/">實單主系統</a>
+          <a href="/long-track/">追蹤總覽</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/flow/">投資流程</a>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+<div class="wrap">
+<div class="top">
+<h1>Intel 監視器<small>2026-08-19 · 16:16 更新</small></h1>
+<div class="seg" role="group" aria-label="版型"><button type="button" data-set="brief" aria-pressed="true">A · 早報＋列表</button><button type="button" data-set="list" aria-pressed="false">B · 純列表</button></div></div>
+<div class="gauges" aria-label="市場儀表">
+<div class="g crit"><span class="dot"></span><span class="name">利率</span><span class="v mono">美 10Y 公債殖利率現值 4.72%，分位 99.6</span><span class="d">美 10Y 單日 ▲ 4bps、30Y ▲ 6bps，30Y</span></div>
+<div class="g warn"><span class="dot"></span><span class="name">信用</span><span class="v mono">HYG/LQD 信用比分位 99.6，HYG 高收益分位 97.6</span><span class="d">HYG ▼ 0.10%、BKLN 槓桿貸款 ▼ 0.19%，</span></div>
+<div class="g crit"><span class="dot"></span><span class="name">流動性</span><span class="v mono">TGA 財政部帳戶現值 963950，進入一年水位前 5%（分位 99.2） F</span><span class="d">TGA 單日 ▲ 57B、Fed 資產負債表分位達 100.</span></div>
+<div class="g warn"><span class="dot"></span><span class="name">匯率</span><span class="v mono">USD/TWD 連續 6 日下跌；韓元升破 1,400 關卡、一度</span><span class="d">USD/TWD 分位 78.6；市場關注美日聯手干預匯市、瑞</span></div>
+<div class="g warn"><span class="dot"></span><span class="name">商品</span><span class="v mono">銅分位 92.5，黃豆連續 5 日上漲</span><span class="d">銅 ▼ 1.84%、白銀 ▼ 3.30%、鉑金 ▼ 3.09</span></div>
+<div class="g warn"><span class="dot"></span><span class="name">波動與壓力</span><span class="v mono">VIX9D 單日 ▲ 20.53%，分位 68.7；VIX 分位 24.2</span><span class="d">VIX ▲ 4.28%、MOVE 債市波動 ▲ 3.99%，</span></div>
+<div class="g crit"><span class="dot"></span><span class="name">股市內部</span><span class="v mono">S&amp;P 500 分位 96.0、XLE 能源與 XLV 醫療分位皆達 100.0</span><span class="d">費城半導體 ▼ 4.98%，MTUM 動能單日跌幅 ▼ 3.</span></div>
+<div class="g warn"><span class="dot"></span><span class="name">部位與情緒</span><span class="v mono">Copper 部位 5 年分位 97.7（net long）、WTI Crude</span><span class="d">最擁擠主題換人為 HBM Supercycle</span></div>
+<div class="g"><span class="dot"></span><span class="name">經濟數據</span><span class="v mono">歐洲 18 國中 14 國儲蓄率高於疫前，家庭儲蓄占可支配收入逾 14%，較疫前</span><span class="d">變化不大</span></div>
+<div class="g"><span class="dot"></span><span class="name">央行與財政政策</span><span class="v mono">歐洲央行總裁拉加德於世界經濟論壇全球經濟展望座談就歐洲經濟發表評論 Europe</span><span class="d">變化不大</span></div>
+<div class="g"><span class="dot"></span><span class="name">地緣</span><span class="v mono">美國貿易代表署稱美方貿易政策提升薪資、促進製造業回流</span><span class="d">日本因美國期中選舉臨近，預期面臨川普在國防支出與日圓匯率方面</span></div>
+<div class="g crit"><span class="dot"></span><span class="name">跨市場 regime</span><span class="v mono">跨市場 regime 顯示晚週期再通脹、美元見頂回落</span><span class="d">美國將標售 160 億美元 20 年期公債，市場預估得標殖利</span></div>
+<div class="g crit"><span class="dot"></span><span class="name">亞洲</span><span class="v mono">台股今日跌破十日線與季線，收 44,719.35 點、跌 589.33 點；三大</span><span class="d">日經 225 終場大跌逾 2100 點，南韓 KOSPI 盤</span></div>
+</div>
+<section class="only-brief">
+<h2>Alerts <span class="zh">轉折提醒</span></h2>
+<div class="flag"><span class="k">⚠ 接近中</span>kill-watch 顯示 USFiscalDeficit 主題下 ACM 10Y term premium 已月度持續突破，現值 0.8681 接近閾值 1.0，狀態為接近中。 <a href="/detective/" rel="noopener nofollow">詳情</a></div>
+<div class="flag"><span class="k">⚠ 接近中</span>kill-watch 顯示 USEconomy 主題下 10Y breakeven 通膨預期現值 2.25，接近閾值 2.6，狀態為接近中。 <a href="/detective/" rel="noopener nofollow">詳情</a></div>
+<div class="flag hard"><span class="k">🔴 已確認</span>跨市場 regime 已確認轉為晚週期再通脹、美元見頂回落。 <a href="/regime/" rel="noopener nofollow">詳情</a></div>
+<div class="flag"><span class="k">⚠ 接近中</span>kill-watch 顯示 USFiscalDeficit 主題下 10Y/30Y 殖利率現值 5.22，接近閾值 5.5，狀態為接近中。 <a href="/detective/" rel="noopener nofollow">詳情</a></div>
+<div class="flag"><span class="k">⚠ 接近中</span>kill-watch 顯示 GlobalLiquidity 主題下 DXY／美元 COT 現值 99.60，接近閾值 102.0，狀態為接近中。 <a href="/detective/" rel="noopener nofollow">詳情</a></div>
+<div class="flag"><span class="k">⚠ 接近中</span>kill-watch 顯示 ChinaEconomy 主題下 USD/CNY 與外儲現值 6.7372，接近閾值 7.2，狀態為接近中。 <a href="/detective/" rel="noopener nofollow">詳情</a></div>
+<div class="flag"><span class="k">⚠ 接近中</span>kill-watch 顯示 USEconomy 主題下核心 PCE 年增現值 3.2865，接近閾值 3.5，狀態為接近中。 <a href="/detective/" rel="noopener nofollow">詳情</a></div>
+<div class="flag"><span class="k">⚠ 接近中</span>kill-watch 顯示 DollarCycle 主題下 DXY 技術位置＋COT 現值 99.60，接近閾值 102.0，狀態為接近中。 <a href="/detective/" rel="noopener nofollow">詳情</a></div>
+<h2>Market <span class="zh">市場早報</span></h2>
+<div class="brief">
+<p>利率面持續偏緊：美 10Y 公債殖利率現值 <span class="n">4.72%</span>，進入一年水位前 5%、分位達 <span class="n">99.6</span> <a href="https://fred.stlouisfed.org/series/DGS10" rel="noopener nofollow">FRED DGS10</a>，10Y TIPS 實質利率同步升至 <span class="n">2.44%</span>、分位 <span class="n">99.6</span> <a href="https://fred.stlouisfed.org/series/DFII10" rel="noopener nofollow">FRED DFII10</a>。日本公債殖利率也因高市（Takaichi）預算疑慮及市場對美方立場的擔憂而走高 <a href="https://asia.nikkei.com/business/markets/bonds/japan-bond-yields-spike-on-takaichi-budget-fears-worries-over-us-view" rel="noopener nofollow">Nikkei Asia</a>，美國即將標售 <span class="n">160</span> 億美元 20 年期公債，市場預估得標殖利率恐逼近 <span class="n">5.27%</span>，若成真將是 2020 年重啟發行以來新高 <a href="https://news.cnyes.com/news/id/6581323" rel="noopener nofollow">鉅亨網</a>。</p>
+<p>流動性方面，財政部一般帳戶（TGA）現值 <span class="n">963950</span>，進入一年水位前 5%、分位 <span class="n">99.2</span> <a href="https://fred.stlouisfed.org/series/WTREGEN" rel="noopener nofollow">FRED WTREGEN</a>，隔夜逆回購（RRP）則現值 <span class="n">0.155</span>，進入一年水位後 5%、分位僅 <span class="n">3.5</span> <a href="https://fred.stlouisfed.org/series/RRPONTSYD" rel="noopener nofollow">FRED RRPONTS</a>。</p>
+<p>股市內部訊號明顯轉弱：SPHB/SPLV 高低波比單日跌幅 <span class="n">▼ 3.75%</span>，為一年日波動的 <span class="n">2.09</span> 倍標準差 <a href="/monitor/" rel="noopener nofollow">站內市場監測</a>，MTUM 動能單日跌幅 <span class="n">▼ 3.19%</span>，為一年日波動的 <span class="n">2.04</span> 倍標準差 <a href="/monitor/" rel="noopener nofollow">站內市場監測</a>；XLE 能源則連續 <span class="n">7</span> 日上漲 <a href="/monitor/" rel="noopener nofollow">站內市場監測</a>。部位面上，Copper 部位五年分位達 <span class="n">97.7</span>（net long），WTI Crude 部位五年分位僅 <span class="n">7.7</span>（net long），EUR 部位五年分位 <span class="n">8.5</span>（net short），三者均進入極端區間 <a href="/crowding/" rel="noopener nofollow">站內擁擠交易監測</a>。</p>
+<p>亞股今日普遍重挫：台股跌破十日線與季線，收 <span class="n">44,719.35</span> 點、跌 <span class="n">589.33</span> 點，三大法人賣超 <span class="n">708.48</span> 億元、外資賣超 <span class="n">416.39</span> 億元 <a href="https://news.cnyes.com/news/id/6581428" rel="noopener nofollow">鉅亨網</a>；日經 225 終場大跌逾 <span class="n">2100</span> 點，南韓 KOSPI 盤中一度暴跌近 <span class="n">7%</span> 並觸發 SIDECAR 機制，半導體與記憶體股成重災區 <a href="https://news.cnyes.com/news/id/6581429" rel="noopener nofollow">鉅亨網</a>；陸股深證成指盤中下跌 <span class="n">639.83</span> 點至 <span class="n">13982.6688</span> 點，跌幅 <span class="n">4.38%</span> <a href="https://news.cnyes.com/news/id/6581376" rel="noopener nofollow">鉅亨網</a>。</p>
+<p>匯市方面，USD/TWD 連續 <span class="n">6</span> 日下跌 <a href="/monitor/" rel="noopener nofollow">站內市場監測</a>，韓元兌美元則升破 <span class="n">1400</span> 心理關口，一度觸及 <span class="n">1398.80</span> 至 <span class="n">1399.0</span>，為十個月來首見 <a href="https://news.cnyes.com/news/id/6581406" rel="noopener nofollow">鉅亨網</a>；市場並關注美日聯手干預匯市提振日元，瑞郎則崛起成為利差交易新融資貨幣 <a href="https://news.cnyes.com/news/id/6581402" rel="noopener nofollow">鉅亨網</a>。</p>
+<p>跨市場 regime 顯示晚週期再通脹、美元見頂回落 <a href="/regime/" rel="noopener nofollow">站內跨市場 regime</a>，輪動雷達領先象限轉為 G <a href="/rotation/radar.html" rel="noopener nofollow">站內輪動雷達</a>；最擁擠主題換人為 HBM Supercycle <a href="/crowding/" rel="noopener nofollow">站內擁擠交易監測</a>。</p>
+<p>經濟數據面，報導指歐洲 18 國中有 <span class="n">14</span> 國儲蓄率高於疫前，家庭儲蓄占可支配收入逾 <span class="n">14%</span>，較疫前五年均值高近 <span class="n">2</span> 個百分點，而美國儲蓄率已跌破疫前水準，反映大西洋兩岸消費動能分歧 <a href="https://news.cnyes.com/news/id/6581419" rel="noopener nofollow">鉅亨網</a>。</p>
+</div>
+<h2>Industry <span class="zh">產業</span></h2>
+<div class="list"><div class="row head"><span>時間</span><span></span><span>類別</span><span>來源</span><span>標題</span><span></span></div>
+<div class="row"><span class="t mono">14:30</span><span class="imp i2"></span><span class="cat">ai</span><span class="src">T2 · 鉅亨網 — 頭條 RSS（台股／匯市／總經）</span><div class="hd"><details><summary>WSJ 報導 OpenAI Q2營收67億美元、季增18%，營運虧損擴大至123億美元；Anthropic 同期營收115億美元、季增逾140%，首次單季營收超</summary><div class="body"><b>為什麼重要：</b>牽動 AI 龍頭估值敘事與相關投資人對兩公司前景判斷 <a href="https://news.cnyes.com/news/id/6581375" rel="noopener nofollow">鉅亨網 — 頭條 RSS（台股／匯市／總經）</a></div></details></div><span class="lvl">ai</span></div>
+<div class="row"><span class="t mono">14:29</span><span class="imp i2"></span><span class="cat">semis</span><span class="src">T2 · 鉅亨網 — 頭條 RSS（台股／匯市／總經）</span><div class="hd"><details><summary>金融時報報導中國放行小批量輝達H200晶片，字節跳動、騰訊各獲1萬顆。</summary><div class="body"><b>為什麼重要：</b>牽動輝達對中出口政策動向與中國AI業者晶片供應 <a href="https://news.cnyes.com/news/id/6581403" rel="noopener nofollow">鉅亨網 — 頭條 RSS（台股／匯市／總經）</a></div></details></div><span class="lvl">ai</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">semis</span><span class="src">T2 · Nikkei Asia — RSS</span><div class="hd"><details><summary>日本晶片新創瞄準 AI 熱潮，產業焦點轉向材料領域，原文未給數字。</summary><div class="body"><b>為什麼重要：</b>牽動半導體材料供應鏈與 AI 相關產業投資主題。 <a href="https://asia.nikkei.com/editor-s-picks/interview/japan-chip-startup-targets-ai-boom-as-industry-focus-turns-to-materials" rel="noopener nofollow">Nikkei Asia — RSS</a></div></details></div><span class="lvl">semis</span></div>
+<div class="row"><span class="t mono">15:20</span><span class="imp i1"></span><span class="cat">semis</span><span class="src">T2 · 鉅亨網 — 頭條 RSS（台股／匯市／總經）</span><div class="hd"><details><summary>日本花王在半導體封裝基板精密清洗劑市占約60%，前段製程特定NAND化學品市占第一，客戶含台積電、三星、鎧俠。</summary><div class="body"><b>為什麼重要：</b>牽動半導體化學材料供應鏈與相關供應商評價 <a href="https://news.cnyes.com/news/id/6581416" rel="noopener nofollow">鉅亨網 — 頭條 RSS（台股／匯市／總經）</a></div></details></div><span class="lvl">semis</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i1"></span><span class="cat">renewable-energy</span><span class="src">T2 · Nikkei Asia — RSS</span><div class="hd"><details><summary>伊朗戰爭引發的能源危機帶動菲律賓太陽能產業成長熱潮，原文未給數字。</summary><div class="body"><b>為什麼重要：</b>反映地緣能源危機外溢至東南亞再生能源投資與供應鏈需求。 <a href="https://asia.nikkei.com/business/energy/iran-war-energy-crisis-sparks-philippine-solar-boom" rel="noopener nofollow">Nikkei Asia — RSS</a></div></details></div><span class="lvl">renewable-energy</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i1"></span><span class="cat">ev</span><span class="src">T2 · Nikkei Asia — RSS</span><div class="hd"><details><summary>寮國加速轉向電動車，動能來自水力發電，原文未給數字。</summary><div class="body"><b>為什麼重要：</b>涉及東南亞電動車與再生能源需求主題，牽動相關供應鏈。 <a href="https://asia.nikkei.com/business/automobiles/electric-vehicles/laos-accelerates-shift-to-evs-fueled-by-hydropower" rel="noopener nofollow">Nikkei Asia — RSS</a></div></details></div><span class="lvl">ev</span></div>
+</div>
+<h2>Company <span class="zh">個股</span></h2>
+<div class="list"><div class="row head"><span>時間</span><span></span><span>類別</span><span>來源</span><span>標題</span><span></span></div>
+<div class="row"><span class="t mono">15:20</span><span class="imp i2"></span><span class="cat">semis</span><span class="src">T2 · 鉅亨網 — 頭條 RSS（台股／匯市／總經）</span><div class="hd"><details><summary>台積電A16導入SPR背面供電架構，速度提升8%至10%、功耗降15%至20%，估第4季量產。</summary><div class="body"><b>為什麼重要：</b>牽動台積電先進製程競爭力與2330股價評價 <a href="https://news.cnyes.com/news/id/6581372" rel="noopener nofollow">鉅亨網 — 頭條 RSS（台股／匯市／總經）</a></div></details></div><span class="lvl">2330</span></div>
+<div class="row"><span class="t mono">13:13</span><span class="imp i2"></span><span class="cat">robotics</span><span class="src">T2 · 鉅亨網 — 頭條 RSS（台股／匯市／總經）</span><div class="hd"><details><summary>上銀表示訂單能見度看到明年第一季，看好下半年，全年營收估雙位數成長。</summary><div class="body"><b>為什麼重要：</b>牽動上銀（2049）營收展望與機器人自動化供應鏈評價 <a href="https://news.cnyes.com/news/id/6581328" rel="noopener nofollow">鉅亨網 — 頭條 RSS（台股／匯市／總經）</a></div></details></div><span class="lvl">2049</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">semis</span><span class="src">T2 · Nikkei Asia — RSS</span><div class="hd"><details><summary>小米因記憶體晶片短缺與需求疲弱，獲利下滑 43%。</summary><div class="body"><b>為什麼重要：</b>反映記憶體晶片供應緊張對終端手機品牌獲利的衝擊，牽動半導體供應鏈。 <a href="https://asia.nikkei.com/business/technology/smartphone-king-xiaomi-s-profits-drop-43-on-memory-crunch-weak-demand" rel="noopener nofollow">Nikkei Asia — RSS</a></div></details></div><span class="lvl">semis</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">ai</span><span class="src">T2 · Nikkei Asia — RSS</span><div class="hd"><details><summary>阿里巴巴與字節跳動縮減遊戲與零售業務投資，轉而加碼投資 AI，原文未給數字。</summary><div class="body"><b>為什麼重要：</b>反映中國科技巨頭資本配置轉向 AI，牽動 AI 主題與相關業務估值。 <a href="https://asia.nikkei.com/business/technology/artificial-intelligence/alibaba-bytedance-trim-gaming-and-retail-to-invest-in-ai" rel="noopener nofollow">Nikkei Asia — RSS</a></div></details></div><span class="lvl">ai</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">credit</span><span class="src">T2 · Nikkei Asia — RSS</span><div class="hd"><details><summary>軟銀計畫發行 63 億美元零售債券，為日本企業史上最大規模。</summary><div class="body"><b>為什麼重要：</b>反映軟銀融資需求與規模，牽動日本信用債市場供給與投資人資金配置。 <a href="https://asia.nikkei.com/business/softbank/softbank-plans-6.3bn-retail-bond-issue-largest-by-japanese-company" rel="noopener nofollow">Nikkei Asia — RSS</a></div></details></div><span class="lvl">company</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">battery</span><span class="src">T2 · Nikkei Asia — RSS</span><div class="hd"><details><summary>LG 新能源在美國啟用電池生產基地，供應 Toyota 與 Tesla，原文未給數字。</summary><div class="body"><b>為什麼重要：</b>牽動電動車電池供應鏈布局，涉及 Toyota、Tesla 供應關係與美國在地化生產。 <a href="https://asia.nikkei.com/business/technology/lg-energy-solution-opens-us-battery-hub-serving-toyota-and-tesla" rel="noopener nofollow">Nikkei Asia — RSS</a></div></details></div><span class="lvl">ev</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">ai</span><span class="src">T2 · Nikkei Asia — RSS</span><div class="hd"><details><summary>人形機器人廠宇樹科技股價於上海掛牌首日大漲，原文未給數字。</summary><div class="body"><b>為什麼重要：</b>牽動機器人與 AI 硬體主題投資情緒 <a href="https://asia.nikkei.com/business/markets/ipo/unitree-shares-soar-in-humanoid-maker-s-landmark-shanghai-ipo" rel="noopener nofollow">Nikkei Asia — RSS</a></div></details></div><span class="lvl">ai</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i1"></span><span class="cat">logistics</span><span class="src">T2 · Nikkei Asia — RSS</span><div class="hd"><details><summary>三菱倉庫將在美國興建 2 座物流配送中心，投資額 40 亿日圆。</summary><div class="body"><b>為什麼重要：</b>反映日商加碼美國物流布局，牽動供應鏈與跨太平洋貿易主題。 <a href="https://asia.nikkei.com/business/markets/property/mitsubishi-logistics-to-build-2-distribution-centers-in-us-for-40m" rel="noopener nofollow">Nikkei Asia — RSS</a></div></details></div><span class="lvl">logistics</span></div>
+</div>
+<h2>Rumor <span class="zh">傳聞</span></h2>
+<div class="list"><div class="row head"><span>時間</span><span></span><span>類別</span><span>來源</span><span>標題</span><span></span></div><div class="row empty">今日無 T3／T4 傳聞卡片。</div></div>
+</section>
+<section class="only-list">
+<h2>Feed <span class="zh">全部一行一則，依層級分組</span></h2>
+<div class="list"><div class="row head"><span>時間</span><span></span><span>類別</span><span>來源</span><span>標題</span><span></span></div>
+<div class="row grp">Market · 市場</div>
+<div class="row"><span class="t mono">15:38</span><span class="imp i2"></span><span class="cat">fx</span><span class="src">T2 · 鉅亨網 — 頭條 RSS（台股／匯市／總經）</span><div class="hd"><details><summary>韓元兌美元周三突破 1,400 心理關口，一度觸及 1,398.80 至 1,399.0，為十個月來首見。</summary><div class="body"><b>為什麼重要：</b>牽動韓元資產、出口股與半導體供應鏈匯兌敞口 <a href="https://news.cnyes.com/news/id/6581406" rel="noopener nofollow">鉅亨網 — 頭條 RSS（台股／匯市／總經）</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">15:30</span><span class="imp i2"></span><span class="cat">econ</span><span class="src">T2 · 鉅亨網 — 頭條 RSS（台股／匯市／總經）</span><div class="hd"><details><summary>報導指歐洲18國中14國儲蓄率高於疫前，家庭儲蓄占可支配收入逾14%，較疫前五年均值高近2個百分點；美國儲蓄率已跌破疫前水準。</summary><div class="body"><b>為什麼重要：</b>牽動歐美消費動能分歧，影響零售與消費類股展望 <a href="https://news.cnyes.com/news/id/6581419" rel="noopener nofollow">鉅亨網 — 頭條 RSS（台股／匯市／總經）</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">15:17</span><span class="imp i2"></span><span class="cat">regime</span><span class="src">T2 · 鉅亨網 — 頭條 RSS（台股／匯市／總經）</span><div class="hd"><details><summary>油價與全球債息同步走高，日經 225 終場大跌逾 2100 點，南韓 KOSPI 盤中一度暴跌近 7% 並觸發 SIDECAR 機制，半導體、記憶體股重挫。</summary><div class="body"><b>為什麼重要：</b>波及半導體供應鏈與亞股風險情緒，牽動全球風險資產聯動。 <a href="https://news.cnyes.com/news/id/6581429" rel="noopener nofollow">鉅亨網 — 頭條 RSS（台股／匯市／總經）</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">15:10</span><span class="imp i2"></span><span class="cat">cb</span><span class="src">T1 · European Central Bank — 新聞稿</span><div class="hd"><details><summary>歐洲央行總裁拉加德在世界經濟論壇全球經濟展望座談中就歐洲經濟發表評論，原文未給數字。</summary><div class="body"><b>為什麼重要：</b>央行官員談話可能透露歐元區政策立場與經濟展望方向。 <a href="https://www.ecb.europa.eu//press/key/date/2026/html/ecb.sp260819~98ddf24b7b.en.html" rel="noopener nofollow">European Central Bank — 新聞稿</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">15:03</span><span class="imp i2"></span><span class="cat">asia</span><span class="src">T2 · 鉅亨網 — 頭條 RSS（台股／匯市／總經）</span><div class="hd"><details><summary>台股今日跌破十日線與季線，收44,719.35點、跌589.33點；三大法人賣超708.48億元，外資賣超416.39億元。</summary><div class="body"><b>為什麼重要：</b>牽動台股短期籌碼動能與大盤技術面判斷 <a href="https://news.cnyes.com/news/id/6581428" rel="noopener nofollow">鉅亨網 — 頭條 RSS（台股／匯市／總經）</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">15:00</span><span class="imp i2"></span><span class="cat">fx</span><span class="src">T2 · 鉅亨網 — 頭條 RSS（台股／匯市／總經）</span><div class="hd"><details><summary>報導指美日聯手干預匯市提振日元，瑞郎崛起成為利差交易新融資貨幣，原文未給數字。</summary><div class="body"><b>為什麼重要：</b>牽動全球利差交易資金流向與日元、瑞郎相關部位 <a href="https://news.cnyes.com/news/id/6581402" rel="noopener nofollow">鉅亨網 — 頭條 RSS（台股／匯市／總經）</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">13:40</span><span class="imp i2"></span><span class="cat">rates</span><span class="src">T2 · 鉅亨網 — 頭條 RSS（台股／匯市／總經）</span><div class="hd"><details><summary>美國將標售 160 億美元 20 年期公債，市場預估得標殖利率恐逼近 5.27%，若成真為 2020 年重啟發行以來新高；當日韓股跌近 6%、日經跌逾 3%。</summary><div class="body"><b>為什麼重要：</b>長債標售結果牽動美股、亞太股市與房貸利率，反映全球長債拋售壓力。 <a href="https://news.cnyes.com/news/id/6581323" rel="noopener nofollow">鉅亨網 — 頭條 RSS（台股／匯市／總經）</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">13:26</span><span class="imp i2"></span><span class="cat">asia</span><span class="src">T2 · 鉅亨網 — 頭條 RSS（台股／匯市／總經）</span><div class="hd"><details><summary>深證成指盤中下跌639.83點至13,982.6688點，跌幅4.38%，工業母機、減速器概念表現疲軟。</summary><div class="body"><b>為什麼重要：</b>反映陸股風險偏好下滑，牽動相關產業類股情緒 <a href="https://news.cnyes.com/news/id/6581376" rel="noopener nofollow">鉅亨網 — 頭條 RSS（台股／匯市／總經）</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">positioning</span><span class="src">數據 · 站內擁擠交易監測</span><div class="hd"><details><summary>最擁擠主題換人：HBM Supercycle</summary><div class="body"><span class="mono">現值 HBM Supercycle</span> <a href="/crowding/" rel="noopener nofollow">站內擁擠交易監測</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">regime</span><span class="src">數據 · 站內輪動雷達</span><div class="hd"><details><summary>輪動雷達領先象限轉為 G</summary><div class="body"><span class="mono">現值 G</span> <a href="/rotation/radar.html" rel="noopener nofollow">站內輪動雷達</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">liquidity</span><span class="src">數據 · FRED RRPONTSYD — Fed 隔夜逆回購（RRP）</span><div class="hd"><details><summary>FRED RRPONTSYD — Fed 隔夜逆回購（RRP）：現值 0.155 進入一年水位後 5%（分位 3.5）</summary><div class="body"><span class="mono">現值 0.155 · 分位 3.5 · 門檻 34.5787 · 20 日變化 -0.12 · 截至 2026-08-18</span> <a href="https://fred.stlouisfed.org/series/RRPONTSYD" rel="noopener nofollow">FRED RRPONTSYD — Fed 隔夜逆回購（RRP）</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">positioning</span><span class="src">數據 · 站內擁擠交易監測</span><div class="hd"><details><summary>EUR (Euro FX) 部位進入極端（5y 分位 8.5，net short）</summary><div class="body"><span class="mono">現值 8.5 · 分位 8.5 · 門檻 10</span> <a href="/crowding/" rel="noopener nofollow">站內擁擠交易監測</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">regime</span><span class="src">數據 · 站內 kill-watch</span><div class="hd"><details><summary>kill metric 接近閾值：USFiscalDeficit — ACM 10Y term premium 月度持續</summary><div class="body"><span class="mono">現值 0.8681 · 門檻 1 · 狀態 near · <a href="/macro/MACRO_USFiscalDeficit_20260708.html">相關報告</a></span> <a href="/detective/" rel="noopener nofollow">站內 kill-watch</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">regime</span><span class="src">數據 · 站內 kill-watch</span><div class="hd"><details><summary>kill metric 接近閾值：USEconomy — 10Y breakeven 通膨預期</summary><div class="body"><span class="mono">現值 2.25 · 門檻 2.6 · 狀態 near · <a href="/macro/MACRO_USEconomy_20260708.html">相關報告</a></span> <a href="/detective/" rel="noopener nofollow">站內 kill-watch</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">regime</span><span class="src">數據 · 站內跨市場 regime</span><div class="hd"><details><summary>跨市場 regime：晚週期再通脹 · 美元見頂回落</summary><div class="body"><span class="mono">現值 0.63</span> <a href="/regime/" rel="noopener nofollow">站內跨市場 regime</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">commodities</span><span class="src">數據 · 站內市場監測</span><div class="hd"><details><summary>soybean：黃豆 連續 5 日上漲</summary><div class="body"><span class="mono">截至 2026-08-18 · 規則 streak · 等級 yellow</span> <a href="/monitor/" rel="noopener nofollow">站內市場監測</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">regime</span><span class="src">數據 · 站內 kill-watch</span><div class="hd"><details><summary>kill metric 接近閾值：USFiscalDeficit — 10Y/30Y 殖利率</summary><div class="body"><span class="mono">現值 5.22 · 門檻 5.5 · 狀態 near · <a href="/macro/MACRO_USFiscalDeficit_20260708.html">相關報告</a></span> <a href="/detective/" rel="noopener nofollow">站內 kill-watch</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">regime</span><span class="src">數據 · 站內 kill-watch</span><div class="hd"><details><summary>kill metric 接近閾值：GlobalLiquidity — DXY／美元 COT</summary><div class="body"><span class="mono">現值 99.604 · 門檻 102 · 狀態 near · <a href="/macro/MACRO_GlobalLiquidity_20260708.html">相關報告</a></span> <a href="/detective/" rel="noopener nofollow">站內 kill-watch</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">regime</span><span class="src">數據 · 站內 kill-watch</span><div class="hd"><details><summary>kill metric 接近閾值：ChinaEconomy — USD/CNY 與外儲</summary><div class="body"><span class="mono">現值 6.7372 · 門檻 7.2 · 狀態 near · <a href="/macro/MACRO_ChinaEconomy_20260709.html">相關報告</a></span> <a href="/detective/" rel="noopener nofollow">站內 kill-watch</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">positioning</span><span class="src">數據 · 站內擁擠交易監測</span><div class="hd"><details><summary>Copper 部位進入極端（5y 分位 97.7，net long）</summary><div class="body"><span class="mono">現值 97.7 · 分位 97.7 · 門檻 90</span> <a href="/crowding/" rel="noopener nofollow">站內擁擠交易監測</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">breadth</span><span class="src">數據 · 站內市場監測</span><div class="hd"><details><summary>sphb_splv：SPHB/SPLV 高低波比 單日跌幅 ▼ 3.75%，為一年日波動的 2.09 倍標準差</summary><div class="body"><span class="mono">截至 2026-08-18 · 規則 move_z · 等級 yellow</span> <a href="/monitor/" rel="noopener nofollow">站內市場監測</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">breadth</span><span class="src">數據 · 站內市場監測</span><div class="hd"><details><summary>xle：XLE 能源 連續 7 日上漲</summary><div class="body"><span class="mono">截至 2026-08-18 · 規則 streak · 等級 yellow</span> <a href="/monitor/" rel="noopener nofollow">站內市場監測</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">regime</span><span class="src">數據 · 站內 kill-watch</span><div class="hd"><details><summary>kill metric 接近閾值：USEconomy — 核心 PCE 年增</summary><div class="body"><span class="mono">現值 3.2865 · 門檻 3.5 · 狀態 near · <a href="/macro/MACRO_USEconomy_20260708.html">相關報告</a></span> <a href="/detective/" rel="noopener nofollow">站內 kill-watch</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">breadth</span><span class="src">數據 · 站內市場監測</span><div class="hd"><details><summary>mtum：MTUM 動能 單日跌幅 ▼ 3.19%，為一年日波動的 2.04 倍標準差</summary><div class="body"><span class="mono">截至 2026-08-18 · 規則 move_z · 等級 yellow</span> <a href="/monitor/" rel="noopener nofollow">站內市場監測</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">rates</span><span class="src">數據 · 站內市場監測</span><div class="hd"><details><summary>real10y：10Y TIPS 實質利率 現值 2.44% 進入一年水位前 0.4%（分位 99.6）</summary><div class="body"><span class="mono">截至 2026-08-18 · 規則 pctile · 等級 yellow</span> <a href="/monitor/" rel="noopener nofollow">站內市場監測</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">regime</span><span class="src">數據 · 站內 kill-watch</span><div class="hd"><details><summary>kill metric 接近閾值：DollarCycle — DXY 技術位置＋COT</summary><div class="body"><span class="mono">現值 99.604 · 門檻 102 · 狀態 near · <a href="/macro/MACRO_DollarCycle_20260710.html">相關報告</a></span> <a href="/detective/" rel="noopener nofollow">站內 kill-watch</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">rates</span><span class="src">數據 · FRED DGS10 — 美國 10Y 公債殖利率</span><div class="hd"><details><summary>FRED DGS10 — 美國 10Y 公債殖利率：現值 4.72 進入一年水位前 5%（分位 99.6）</summary><div class="body"><span class="mono">現值 4.72 · 分位 99.6 · 門檻 0.2815 · 20 日變化 0.12 · 截至 2026-08-17</span> <a href="https://fred.stlouisfed.org/series/DGS10" rel="noopener nofollow">FRED DGS10 — 美國 10Y 公債殖利率</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">liquidity</span><span class="src">數據 · FRED WTREGEN — 財政部一般帳戶（TGA）</span><div class="hd"><details><summary>FRED WTREGEN — 財政部一般帳戶（TGA）：現值 963950 進入一年水位前 5%（分位 99.2）</summary><div class="body"><span class="mono">現值 963950 · 分位 99.2 · 門檻 568877 · 20 日變化 89873 · 截至 2026-08-12</span> <a href="https://fred.stlouisfed.org/series/WTREGEN" rel="noopener nofollow">FRED WTREGEN — 財政部一般帳戶（TGA）</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">rates</span><span class="src">數據 · FRED DFII10 — 10Y TIPS 實質利率</span><div class="hd"><details><summary>FRED DFII10 — 10Y TIPS 實質利率：現值 2.44 進入一年水位前 5%（分位 99.6）</summary><div class="body"><span class="mono">現值 2.44 · 分位 99.6 · 門檻 0.2456 · 20 日變化 0.09 · 截至 2026-08-17</span> <a href="https://fred.stlouisfed.org/series/DFII10" rel="noopener nofollow">FRED DFII10 — 10Y TIPS 實質利率</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">fx</span><span class="src">數據 · 站內市場監測</span><div class="hd"><details><summary>usdtwd：USD/TWD 連續 6 日下跌</summary><div class="body"><span class="mono">截至 2026-08-18 · 規則 streak · 等級 yellow</span> <a href="/monitor/" rel="noopener nofollow">站內市場監測</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">positioning</span><span class="src">數據 · 站內擁擠交易監測</span><div class="hd"><details><summary>WTI Crude 部位進入極端（5y 分位 7.7，net long）</summary><div class="body"><span class="mono">現值 7.7 · 分位 7.7 · 門檻 10</span> <a href="/crowding/" rel="noopener nofollow">站內擁擠交易監測</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">rates</span><span class="src">T2 · Nikkei Asia — RSS</span><div class="hd"><details><summary>日本公債殖利率因高市（Takaichi）預算疑慮及市場對美方立場的擔憂而走高，原文未給數字。</summary><div class="body"><b>為什麼重要：</b>日本財政與利率走勢牽動日圓、日債部位與跨市場資金成本。 <a href="https://asia.nikkei.com/business/markets/bonds/japan-bond-yields-spike-on-takaichi-budget-fears-worries-over-us-view" rel="noopener nofollow">Nikkei Asia — RSS</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">econ</span><span class="src">T2 · Nikkei Asia — RSS</span><div class="hd"><details><summary>日本中產階級儘管多年調薪，實質消費力仍下降，原文未給數字。</summary><div class="body"><b>為什麼重要：</b>反映日本內需消費疲弱，牽動日本消費相關企業與通膨政策判斷。 <a href="https://asia.nikkei.com/economy/japan-middle-class-loses-spending-power-despite-years-of-pay-raises" rel="noopener nofollow">Nikkei Asia — RSS</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">credit</span><span class="src">T2 · Nikkei Asia — RSS</span><div class="hd"><details><summary>日本保險公司積極爭取外國投資人，以取代傳統的交叉持股結構，原文未給數字。</summary><div class="body"><b>為什麼重要：</b>牽動日股公司治理改革與交叉持股解編對股票供給的影響。 <a href="https://asia.nikkei.com/business/insurance/japanese-insurers-court-foreign-investors-to-replace-cross-shareholdings" rel="noopener nofollow">Nikkei Asia — RSS</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">geo</span><span class="src">T2 · Nikkei Asia — RSS</span><div class="hd"><details><summary>日本因美國期中選舉臨近，預期將面臨川普在國防支出與日圓匯率方面的要求，原文未給數字。</summary><div class="body"><b>為什麼重要：</b>牽動美日貿易與匯率談判，可能影響日圓走勢與日本財政負擔。 <a href="https://asia.nikkei.com/politics/international-relations/japan-braces-for-trump-demands-on-defense-yen-ahead-of-us-midterms" rel="noopener nofollow">Nikkei Asia — RSS</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">rates</span><span class="src">T2 · Nikkei Asia — RSS</span><div class="hd"><details><summary>高市（Takaichi）2027 年對日本央行（BOJ）人事任命，將影響未來升息步調，原文未給數字。</summary><div class="body"><b>為什麼重要：</b>央行人事牽動日本升息路徑預期，影響日圓與日債市場定價。 <a href="https://asia.nikkei.com/economy/bank-of-japan/takaichi-s-boj-appointments-in-2027-loom-over-pace-of-rate-hikes" rel="noopener nofollow">Nikkei Asia — RSS</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">asia</span><span class="src">T2 · Nikkei Asia — RSS</span><div class="hd"><details><summary>港交所受 IPO 與交易熱潮帶動，上半年獲利創紀錄，原文未給數字。</summary><div class="body"><b>為什麼重要：</b>顯示港股資本市場活動升溫，牽動港交所股價與亞股情緒 <a href="https://asia.nikkei.com/business/companies/hong-kong-bourse-posts-record-first-half-earnings-on-ipo-trading-boom" rel="noopener nofollow">Nikkei Asia — RSS</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">geo</span><span class="src">T2 · Nikkei Asia — RSS</span><div class="hd"><details><summary>澳洲駐日大使提議建立印太網絡以制衡中國，原文未給數字。</summary><div class="body"><b>為什麼重要：</b>牽動印太地緣政治格局，影響區域供應鏈與安全風險評估。 <a href="https://asia.nikkei.com/editor-s-picks/interview/australian-ambassador-to-japan-floats-indo-pacific-network-to-counter-china" rel="noopener nofollow">Nikkei Asia — RSS</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">credit</span><span class="src">T2 · Nikkei Asia — RSS</span><div class="hd"><details><summary>新加坡擴大精英簽證計畫，吸引頂尖基金經理人，原文未給數字。</summary><div class="body"><b>為什麼重要：</b>牽動全球資產管理人才與資金流向新加坡的競爭格局。 <a href="https://asia.nikkei.com/spotlight/work/singapore-expands-elite-visa-program-to-lure-top-fund-managers" rel="noopener nofollow">Nikkei Asia — RSS</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">geo</span><span class="src">T2 · Nikkei Asia — RSS</span><div class="hd"><details><summary>中國在 Meta 洽購 AI 新創 Manus 後收緊邊境管制，原文未給數字。</summary><div class="body"><b>為什麼重要：</b>牽動中美 AI 併購與人才／技術流動的地緣政治風險。 <a href="https://asia.nikkei.com/politics/international-relations/china-tightens-border-crossings-after-meta-s-play-for-ai-startup-manus" rel="noopener nofollow">Nikkei Asia — RSS</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">econ</span><span class="src">T2 · Nikkei Asia — RSS</span><div class="hd"><details><summary>印度企業獲利增速創 3 年新高，儘管有戰爭衝擊，原文未給具體數字。</summary><div class="body"><b>為什麼重要：</b>反映印度企業獲利韌性，牽動印度股市與新興市場配置判斷。 <a href="https://asia.nikkei.com/business/companies/indian-firms-profit-growth-hits-3-year-high-despite-war-shock" rel="noopener nofollow">Nikkei Asia — RSS</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">23:02</span><span class="imp i1"></span><span class="cat">geo</span><span class="src">T1 · USTR — 新聞稿（關稅／貿易）</span><div class="hd"><details><summary>美國貿易代表署發布文章，稱美方貿易政策在愛荷華州提升薪資、促進製造業回流，原文未給數字。</summary><div class="body"><b>為什麼重要：</b>反映美國貿易政策方向，可能影響製造業回流與相關產業供應鏈布局。 <a href="https://ustr.gov/about/policy-offices/press-office/press-releases/2026/august/road-iowa-america-first-trade-raising-wages-reshoring-jobs-and-restoring-americas-global" rel="noopener nofollow">USTR — 新聞稿（關稅／貿易）</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i1"></span><span class="cat">commodities</span><span class="src">T2 · Nikkei Asia — RSS</span><div class="hd"><details><summary>日本稻米供過於求，價格暴跌 40%，已低於生產成本。</summary><div class="body"><b>為什麼重要：</b>反映日本農產品價格與生產者收益壓力，可能牽動通膨與農業政策。 <a href="https://asia.nikkei.com/business/agriculture/japan-rice-glut-sends-prices-tumbling-40-below-production-cost" rel="noopener nofollow">Nikkei Asia — RSS</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i1"></span><span class="cat">geo</span><span class="src">T2 · Nikkei Asia — RSS</span><div class="hd"><details><summary>南韓在川普介入後縮短美韓聯合軍演，原文未給具體天數。</summary><div class="body"><b>為什麼重要：</b>地緣局勢牽動東北亞風險溢價與美韓資產情緒 <a href="https://asia.nikkei.com/politics/defense/south-korea-cuts-short-joint-military-exercises-after-trump-intervention2" rel="noopener nofollow">Nikkei Asia — RSS</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i1"></span><span class="cat">regime</span><span class="src">T2 · Nikkei Asia — RSS</span><div class="hd"><details><summary>東京辦公室空置率為 1.5%，為全球主要城市中最低。</summary><div class="body"><b>為什麼重要：</b>反映日本商辦市場緊俏，牽動不動產與 REITs 評價 <a href="https://asia.nikkei.com/business/markets/property/tokyo-office-vacancy-rate-at-1.5-lowest-among-big-global-cities" rel="noopener nofollow">Nikkei Asia — RSS</a></div></details></div><span class="lvl">market</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i1"></span><span class="cat">geo</span><span class="src">T2 · Nikkei Asia — RSS</span><div class="hd"><details><summary>報導探討開放權重 AI 模型成為美中科技競爭新戰場，原文未給數字。</summary><div class="body"><b>為什麼重要：</b>牽動 AI 地緣政治與相關科技股評價敘事 <a href="https://asia.nikkei.com/business/technology/tech-asia/why-open-weight-ai-is-the-new-frontier-in-the-us-china-tech-race" rel="noopener nofollow">Nikkei Asia — RSS</a></div></details></div><span class="lvl">market</span></div>
+<div class="row grp">Industry · 產業</div>
+<div class="row"><span class="t mono">14:30</span><span class="imp i2"></span><span class="cat">ai</span><span class="src">T2 · 鉅亨網 — 頭條 RSS（台股／匯市／總經）</span><div class="hd"><details><summary>WSJ 報導 OpenAI Q2營收67億美元、季增18%，營運虧損擴大至123億美元；Anthropic 同期營收115億美元、季增逾140%，首次單季營收超</summary><div class="body"><b>為什麼重要：</b>牽動 AI 龍頭估值敘事與相關投資人對兩公司前景判斷 <a href="https://news.cnyes.com/news/id/6581375" rel="noopener nofollow">鉅亨網 — 頭條 RSS（台股／匯市／總經）</a></div></details></div><span class="lvl">industry</span></div>
+<div class="row"><span class="t mono">14:29</span><span class="imp i2"></span><span class="cat">semis</span><span class="src">T2 · 鉅亨網 — 頭條 RSS（台股／匯市／總經）</span><div class="hd"><details><summary>金融時報報導中國放行小批量輝達H200晶片，字節跳動、騰訊各獲1萬顆。</summary><div class="body"><b>為什麼重要：</b>牽動輝達對中出口政策動向與中國AI業者晶片供應 <a href="https://news.cnyes.com/news/id/6581403" rel="noopener nofollow">鉅亨網 — 頭條 RSS（台股／匯市／總經）</a></div></details></div><span class="lvl">industry</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">semis</span><span class="src">T2 · Nikkei Asia — RSS</span><div class="hd"><details><summary>日本晶片新創瞄準 AI 熱潮，產業焦點轉向材料領域，原文未給數字。</summary><div class="body"><b>為什麼重要：</b>牽動半導體材料供應鏈與 AI 相關產業投資主題。 <a href="https://asia.nikkei.com/editor-s-picks/interview/japan-chip-startup-targets-ai-boom-as-industry-focus-turns-to-materials" rel="noopener nofollow">Nikkei Asia — RSS</a></div></details></div><span class="lvl">industry</span></div>
+<div class="row"><span class="t mono">15:20</span><span class="imp i1"></span><span class="cat">semis</span><span class="src">T2 · 鉅亨網 — 頭條 RSS（台股／匯市／總經）</span><div class="hd"><details><summary>日本花王在半導體封裝基板精密清洗劑市占約60%，前段製程特定NAND化學品市占第一，客戶含台積電、三星、鎧俠。</summary><div class="body"><b>為什麼重要：</b>牽動半導體化學材料供應鏈與相關供應商評價 <a href="https://news.cnyes.com/news/id/6581416" rel="noopener nofollow">鉅亨網 — 頭條 RSS（台股／匯市／總經）</a></div></details></div><span class="lvl">industry</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i1"></span><span class="cat">renewable-energy</span><span class="src">T2 · Nikkei Asia — RSS</span><div class="hd"><details><summary>伊朗戰爭引發的能源危機帶動菲律賓太陽能產業成長熱潮，原文未給數字。</summary><div class="body"><b>為什麼重要：</b>反映地緣能源危機外溢至東南亞再生能源投資與供應鏈需求。 <a href="https://asia.nikkei.com/business/energy/iran-war-energy-crisis-sparks-philippine-solar-boom" rel="noopener nofollow">Nikkei Asia — RSS</a></div></details></div><span class="lvl">industry</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i1"></span><span class="cat">ev</span><span class="src">T2 · Nikkei Asia — RSS</span><div class="hd"><details><summary>寮國加速轉向電動車，動能來自水力發電，原文未給數字。</summary><div class="body"><b>為什麼重要：</b>涉及東南亞電動車與再生能源需求主題，牽動相關供應鏈。 <a href="https://asia.nikkei.com/business/automobiles/electric-vehicles/laos-accelerates-shift-to-evs-fueled-by-hydropower" rel="noopener nofollow">Nikkei Asia — RSS</a></div></details></div><span class="lvl">industry</span></div>
+<div class="row grp">Company · 個股</div>
+<div class="row"><span class="t mono">15:20</span><span class="imp i2"></span><span class="cat">semis</span><span class="src">T2 · 鉅亨網 — 頭條 RSS（台股／匯市／總經）</span><div class="hd"><details><summary>台積電A16導入SPR背面供電架構，速度提升8%至10%、功耗降15%至20%，估第4季量產。</summary><div class="body"><b>為什麼重要：</b>牽動台積電先進製程競爭力與2330股價評價 <a href="https://news.cnyes.com/news/id/6581372" rel="noopener nofollow">鉅亨網 — 頭條 RSS（台股／匯市／總經）</a></div></details></div><span class="lvl">company</span></div>
+<div class="row"><span class="t mono">13:13</span><span class="imp i2"></span><span class="cat">robotics</span><span class="src">T2 · 鉅亨網 — 頭條 RSS（台股／匯市／總經）</span><div class="hd"><details><summary>上銀表示訂單能見度看到明年第一季，看好下半年，全年營收估雙位數成長。</summary><div class="body"><b>為什麼重要：</b>牽動上銀（2049）營收展望與機器人自動化供應鏈評價 <a href="https://news.cnyes.com/news/id/6581328" rel="noopener nofollow">鉅亨網 — 頭條 RSS（台股／匯市／總經）</a></div></details></div><span class="lvl">company</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">semis</span><span class="src">T2 · Nikkei Asia — RSS</span><div class="hd"><details><summary>小米因記憶體晶片短缺與需求疲弱，獲利下滑 43%。</summary><div class="body"><b>為什麼重要：</b>反映記憶體晶片供應緊張對終端手機品牌獲利的衝擊，牽動半導體供應鏈。 <a href="https://asia.nikkei.com/business/technology/smartphone-king-xiaomi-s-profits-drop-43-on-memory-crunch-weak-demand" rel="noopener nofollow">Nikkei Asia — RSS</a></div></details></div><span class="lvl">company</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">ai</span><span class="src">T2 · Nikkei Asia — RSS</span><div class="hd"><details><summary>阿里巴巴與字節跳動縮減遊戲與零售業務投資，轉而加碼投資 AI，原文未給數字。</summary><div class="body"><b>為什麼重要：</b>反映中國科技巨頭資本配置轉向 AI，牽動 AI 主題與相關業務估值。 <a href="https://asia.nikkei.com/business/technology/artificial-intelligence/alibaba-bytedance-trim-gaming-and-retail-to-invest-in-ai" rel="noopener nofollow">Nikkei Asia — RSS</a></div></details></div><span class="lvl">company</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">credit</span><span class="src">T2 · Nikkei Asia — RSS</span><div class="hd"><details><summary>軟銀計畫發行 63 億美元零售債券，為日本企業史上最大規模。</summary><div class="body"><b>為什麼重要：</b>反映軟銀融資需求與規模，牽動日本信用債市場供給與投資人資金配置。 <a href="https://asia.nikkei.com/business/softbank/softbank-plans-6.3bn-retail-bond-issue-largest-by-japanese-company" rel="noopener nofollow">Nikkei Asia — RSS</a></div></details></div><span class="lvl">company</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">battery</span><span class="src">T2 · Nikkei Asia — RSS</span><div class="hd"><details><summary>LG 新能源在美國啟用電池生產基地，供應 Toyota 與 Tesla，原文未給數字。</summary><div class="body"><b>為什麼重要：</b>牽動電動車電池供應鏈布局，涉及 Toyota、Tesla 供應關係與美國在地化生產。 <a href="https://asia.nikkei.com/business/technology/lg-energy-solution-opens-us-battery-hub-serving-toyota-and-tesla" rel="noopener nofollow">Nikkei Asia — RSS</a></div></details></div><span class="lvl">company</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i2"></span><span class="cat">ai</span><span class="src">T2 · Nikkei Asia — RSS</span><div class="hd"><details><summary>人形機器人廠宇樹科技股價於上海掛牌首日大漲，原文未給數字。</summary><div class="body"><b>為什麼重要：</b>牽動機器人與 AI 硬體主題投資情緒 <a href="https://asia.nikkei.com/business/markets/ipo/unitree-shares-soar-in-humanoid-maker-s-landmark-shanghai-ipo" rel="noopener nofollow">Nikkei Asia — RSS</a></div></details></div><span class="lvl">company</span></div>
+<div class="row"><span class="t mono">--:--</span><span class="imp i1"></span><span class="cat">logistics</span><span class="src">T2 · Nikkei Asia — RSS</span><div class="hd"><details><summary>三菱倉庫將在美國興建 2 座物流配送中心，投資額 40 亿日圆。</summary><div class="body"><b>為什麼重要：</b>反映日商加碼美國物流布局，牽動供應鏈與跨太平洋貿易主題。 <a href="https://asia.nikkei.com/business/markets/property/mitsubishi-logistics-to-build-2-distribution-centers-in-us-for-40m" rel="noopener nofollow">Nikkei Asia — RSS</a></div></details></div><span class="lvl">company</span></div></div>
+</section>
+<h2>Next 7 days <span class="zh">接下來 7 天</span></h2>
+<div class="cal">
+<div class="d"><div class="w">四 08-20</div><div class="e">—</div></div>
+<div class="d"><div class="w">五 08-21</div><div class="e">—</div></div>
+<div class="d"><div class="w">六 08-22</div><div class="e">—</div></div>
+<div class="d"><div class="w">日 08-23</div><div class="e">—</div></div>
+<div class="d"><div class="w">一 08-24</div><div class="e">—</div></div>
+<div class="d"><div class="w">二 08-25</div><div class="e">—</div></div>
+<div class="d"><div class="w">三 08-26</div><div class="e hi">核心 PCE 物價指數（7 月）</div><div class="e hi">NVDA 下一次財報（yfinance 預估）</div><div class="e hi">SNOW 下一次財報（yfinance 預估）</div></div>
+</div>
+<h2>Status <span class="zh">狀態</span></h2>
+<div class="status mono"><span>來源 26／27 正常</span><span>抓到 299 · 留 95 · 分類 60 · 摘要 60</span><span>今日 token ≈ 102,421（haiku 29,293 · sonnet 73,128）</span><span>下次：06:00 TPE</span></div>
+<p class="note">完整來源健康表見 <a href="/intel/status.html">/intel/status.html</a>。</p>
+</div>
+<footer class="imq-foot"><div>© 2026 InvestMQuest Research</div><div><a href="/disclosures.html">方法論與揭露</a> · 本頁為機械聚合＋LLM 摘要，卡片內容為第三方來源之摘要，正確性以原文為準，不構成投資建議</div></footer>
+<script>(function(){var b=document.body,btns=document.querySelectorAll('.seg button');btns.forEach(function(x){x.addEventListener('click',function(){b.setAttribute('data-mode',x.getAttribute('data-set'));btns.forEach(function(y){y.setAttribute('aria-pressed',String(y===x))});})});})();</script>
+</body>
+</html>

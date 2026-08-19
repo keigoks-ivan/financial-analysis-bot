@@ -1,0 +1,95 @@
+name: Intel Daily (market monitor)
+
+# Phase 1（市場層）情報監視器 /intel/ 的每日 pipeline。對應
+# notes/site-internal/intel/DESIGN.md §10（2026-08-19 改判：LLM 步驟改在
+# GitHub Actions 內用 Claude Code CLI 跑，claude.ai Routine 推不上 GitHub）。
+#
+# 一條 workflow 內做完：抓取（零 LLM）→ haiku 分類 → sonnet 摘要／早報／儀表
+# → 寫 docs/intel/data/{date}.json → render（若 scripts/intel/render.py 已
+# 存在）→ commit/push docs/intel/。cron 06:00 TPE 週一到週五（UTC 22:00
+# 週日到週四，因 TPE = UTC+8）。
+on:
+  schedule:
+    - cron: "0 22 * * 0-4"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: intel-daily
+  cancel-in-progress: false
+
+jobs:
+  intel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: pip install feedparser pyyaml requests
+
+      - name: Compute today's date (TPE)
+        run: echo "DATE=$(TZ=Asia/Taipei date +%Y-%m-%d)" >> "$GITHUB_ENV"
+
+      # 零 LLM：抓取／正規化／去重／新鮮度／關鍵字預過濾／連結存活檢查，寫
+      # docs/intel/pending/{date}.json ＋ sources_health.json ＋ state.json。
+      # >50% 來源失敗時 fetch.py 回傳非 0（GHA 可見），但 pending JSON 仍會
+      # 寫出——不擋後續步驟，讓當日頁面至少有站內數字卡可用。
+      - name: Fetch & normalize sources
+        run: |
+          python3 scripts/intel/fetch.py --date "$DATE" \
+            || echo "::warning::fetch.py reported degraded source health (see log); continuing with whatever pending JSON was written"
+
+      # 裝不起來就讓後面的 LLM 步驟自然降級（run_daily.py 的 fallback 會把當天
+      # 產出縮成 data-only），不擋 pipeline——比照 morning-briefing 的
+      # continue-on-error 慣例。
+      - name: Install Claude Code CLI
+        continue-on-error: true
+        run: |
+          npm install -g @anthropic-ai/claude-code
+          claude --version
+
+      # haiku 分類 → sonnet 摘要／早報／儀表 → 寫 docs/intel/data/{date}.json
+      # → render.py（若已存在）。CLAUDE_CODE_OAUTH_TOKEN 走 Max/Pro 訂閱月租，
+      # 絕不能同時帶 ANTHROPIC_API_KEY（否則 CLI 會改用 API key 計費到
+      # Console）——scripts/intel/llm.py 的子行程 env 已經會把它拿掉，這裡
+      # unset 是雙保險。
+      - name: Classify + summarize + write daily JSON
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          unset ANTHROPIC_API_KEY
+          unset ANTHROPIC_AUTH_TOKEN
+          unset ANTHROPIC_BASE_URL
+          python3 scripts/intel/run_daily.py --date "$DATE" --skip-fetch
+
+      - name: Commit and push if changed
+        run: |
+          if git status --porcelain docs/intel | grep -q .; then
+            echo "Changes detected"
+          else
+            echo "No changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/intel
+          git commit -m "intel: daily ${DATE}"
+          for i in 1 2 3 4 5 6; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+            git pull --rebase --autostash origin main || { echo "Rebase failed"; exit 1; }
+            sleep $((RANDOM % 20 + 5))
+          done
+          echo "Push failed after 6 attempts"
+          exit 1

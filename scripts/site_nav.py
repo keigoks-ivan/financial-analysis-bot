@@ -116,6 +116,7 @@ MENU = {
     "market": [
         ("brief", "/briefing/", "每日簡報"),  # 2026-08-17 日報恢復（週一至週六 06:15），重新掛回頁首
         ("mon", "/monitor/", "市場監測"),
+        ("intel", "/intel/", "情報監視器"),  # 2026-08-19 新增：全球金融市場情報監視器 Phase 1（市場層）
         ("det", "/detective/", "偵測警報網"),
         ("radar", "/rotation/radar.html", "資產輪動雷達"),
         ("rot", "/rotation/", "產業輪動"),
@@ -253,6 +254,7 @@ PREFIX_ACTIVE = [
     ("earnings/", ("market", "earn")),
     ("catalyst/", ("market", "cat")),
     ("monitor/", ("market", "mon")),  # 全資產市場監測（2026-07-10）
+    ("intel/", ("market", "intel")),  # 情報監視器 Phase 1（2026-08-19 新增）
     ("detective/", ("market", "det")),  # 市場偵測器 v2 警報網（2026-07-16；noindex 保留）
     ("markets.html", ("market", "markets")),
     ("sectors.html", ("market", "sectors")),

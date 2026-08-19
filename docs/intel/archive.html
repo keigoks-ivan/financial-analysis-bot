@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Intel 封存 — InvestMQuest Research</title>
+<meta name="description" content="情報監視器歷史日期列表。">
+<meta property="og:title" content="Intel 封存 — InvestMQuest Research">
+<meta property="og:site_name" content="InvestMQuest Research">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F3F4F2; --sur:#FFFFFF; --sur2:#EAECE8; --line:#D9DCD6; --ink:#16191F; --mut:#66707E; --acc:#8A5A2B; --acc-soft:#F1E6DA;
+  --red:#C8412E; --amb:#B8820F; --grn:#2F8F5B; --red-bg:#FBE9E5; --amb-bg:#FBF1D9; --grn-bg:#E3F3EA;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0F1216; --sur:#161A20; --sur2:#1D222A; --line:#2A303A; --ink:#E6E8EB; --mut:#8B93A0; --acc:#D9A066; --acc-soft:#2A2118;
+  --red:#E0604F; --amb:#E0AA3C; --grn:#4FB07E; --red-bg:#2A1714; --amb-bg:#2A2212; --grn-bg:#132519;
+}}
+:root[data-theme="dark"]{
+  --bg:#0F1216; --sur:#161A20; --sur2:#1D222A; --line:#2A303A; --ink:#E6E8EB; --mut:#8B93A0; --acc:#D9A066; --acc-soft:#2A2118;
+  --red:#E0604F; --amb:#E0AA3C; --grn:#4FB07E; --red-bg:#2A1714; --amb-bg:#2A2212; --grn-bg:#132519;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans","Noto Sans TC",system-ui,-apple-system,"PingFang TC",sans-serif;font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.mono{font-family:"IBM Plex Mono","Noto Sans TC",ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
+.wrap{max-width:1080px;margin:0 auto;padding:20px 20px 60px}
+/* top */
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.top h1{margin:0;font-size:18px;font-weight:600;letter-spacing:.01em}
+.top h1 small{color:var(--mut);font-weight:400;margin-left:10px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--sur)}
+.seg button{border:0;background:transparent;color:var(--mut);padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.seg button:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+.note{margin:12px 0 0;color:var(--mut);font-size:12.5px}
+/* gauges */
+.gauges{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:18px 0 6px}
+.g{background:var(--sur);border:1px solid var(--line);border-radius:6px;padding:8px 10px;display:grid;grid-template-columns:auto 1fr;column-gap:8px;row-gap:2px;align-items:center}
+.g .dot{width:9px;height:9px;border-radius:50%;background:var(--grn)}
+.g.warn .dot{background:var(--amb)} .g.crit .dot{background:var(--red)}
+.g .name{font-weight:600;font-size:12.5px}
+.g .d{grid-column:2;color:var(--mut);font-size:12px;line-height:1.35}
+.g .v{grid-column:2;font-size:12px}
+.g.crit .v{color:var(--red)} .g.warn .v{color:var(--amb)}
+/* sections */
+h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin:26px 0 10px;font-weight:600;display:flex;align-items:center;gap:10px}
+h2::after{content:"";flex:1;height:1px;background:var(--line)}
+h2 .zh{letter-spacing:.02em;text-transform:none;font-size:13px;color:var(--ink)}
+/* prose */
+.brief{max-width:68ch}
+.brief p{margin:0 0 12px;font-size:15px;line-height:1.75}
+.brief b{font-weight:600}
+.brief .n{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;font-size:14px}
+.brief .src{color:var(--mut);font-size:12px;margin-left:4px}
+.flag{border-left:3px solid var(--amb);background:var(--amb-bg);padding:10px 12px;border-radius:0 6px 6px 0;margin:6px 0 0;max-width:68ch}
+.flag.hard{border-color:var(--red);background:var(--red-bg)}
+.flag .k{font-weight:600;font-size:12.5px;margin-right:6px}
+/* dense list */
+.list{border:1px solid var(--line);border-radius:6px;background:var(--sur);overflow:hidden}
+.row{display:grid;grid-template-columns:44px 12px 76px 92px 1fr auto;gap:0 10px;align-items:center;padding:7px 10px;border-top:1px solid var(--line);font-size:13.5px}
+.row:first-child{border-top:0}
+.row.head{color:var(--mut);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;background:var(--sur2)}
+.row .t{color:var(--mut);font-size:12px}
+.row .imp{width:9px;height:9px;border-radius:50%;background:var(--line);justify-self:center}
+.imp.i3{background:var(--red)} .imp.i2{background:var(--amb)} .imp.i1{background:var(--line)}
+.row .cat{font-size:11.5px;color:var(--acc);font-weight:600;letter-spacing:.02em}
+.row .src{font-size:12px;color:var(--mut);white-space:nowrap}
+.row .src em{font-style:normal;color:var(--acc)}
+.row .hd{min-width:0}
+.row .hd summary{cursor:pointer;list-style:none;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.row .hd summary::-webkit-details-marker{display:none}
+.row .hd summary::before{content:"\203a";color:var(--mut);display:inline-block;transition:transform .15s}
+.row .hd details[open] summary::before{transform:rotate(90deg)}
+.row .hd .body{padding:8px 0 4px 16px;color:var(--mut);font-size:13px;line-height:1.6;max-width:70ch}
+.row .hd .body b{color:var(--ink);font-weight:600}
+.row .hd .body a{color:var(--acc)}
+.row .empty{color:var(--mut);font-size:13px;padding:14px 10px;grid-column:1/-1}
+.tag{display:inline-block;font-size:11px;padding:1px 6px;border-radius:4px;background:var(--sur2);color:var(--mut);margin-left:6px;vertical-align:1px}
+.tag.r{background:var(--red-bg);color:var(--red)}.tag.p{background:var(--acc-soft);color:var(--acc)}
+.row .lvl{font-size:11px;color:var(--mut);justify-self:end}
+.row.grp{grid-template-columns:1fr;background:var(--sur2);color:var(--mut);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;padding:5px 10px}
+/* calendar */
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal .d{background:var(--sur);border:1px solid var(--line);border-radius:6px;padding:8px;min-height:74px;font-size:12px}
+.cal .d .w{color:var(--mut);font-size:11px;margin-bottom:4px}
+.cal .d .e{margin:2px 0}
+.cal .d .e.hi{font-weight:600;color:var(--acc)}
+.status{display:flex;flex-wrap:wrap;gap:8px 22px;color:var(--mut);font-size:12px;margin-top:8px}
+/* modes */
+body[data-mode="list"] .only-brief{display:none}
+body[data-mode="brief"] .only-list{display:none}
+/* banners */
+.banner{background:var(--amb-bg);border:1px solid var(--amb);color:var(--ink);padding:10px 14px;border-radius:6px;margin:14px 0;font-size:13px;max-width:68ch}
+.banner.stale{background:var(--red-bg);border-color:var(--red)}
+.banner b{font-weight:600}
+/* status table */
+.twrap{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--sur)}
+table.stbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:640px}
+table.stbl th,table.stbl td{padding:6px 10px;border-top:1px solid var(--line);text-align:left;white-space:nowrap}
+table.stbl thead th{background:var(--sur2);color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.05em;border-top:0}
+table.stbl tbody tr:first-child td{border-top:1px solid var(--line)}
+table.stbl td.ok{color:var(--grn);font-weight:600}
+table.stbl td.fail{color:var(--red);font-weight:600}
+table.stbl td.err{white-space:normal;color:var(--mut);max-width:360px;overflow:hidden;text-overflow:ellipsis}
+.stat-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:10px 0 20px}
+.stat-cards .c{background:var(--sur);border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+.stat-cards .c .k{color:var(--mut);font-size:11.5px;margin-bottom:3px}
+.stat-cards .c .v{font-size:16px;font-weight:600}
+/* archive list */
+.arclist{list-style:none;padding:0;margin:0;max-width:40ch}
+.arclist li{padding:7px 0;border-top:1px solid var(--line)}
+.arclist li:first-child{border-top:0}
+.arclist a{color:var(--ink);text-decoration:none;font-weight:500}
+.arclist a:hover{color:var(--acc)}
+/* footer */
+footer.imq-foot{margin-top:32px;padding:18px 20px;border-top:1px solid var(--line);text-align:center;font-size:12px;color:var(--mut)}
+footer.imq-foot a{color:var(--acc)}
+.back{display:inline-block;margin:14px 0 0;font-size:12.5px;color:var(--acc);text-decoration:none}
+.back:hover{text-decoration:underline}
+@media (max-width:720px){
+  .row{grid-template-columns:12px 1fr;gap:4px 8px}
+  .row .t,.row .cat,.row .src,.row .lvl,.row.head{display:none}
+  .cal{grid-template-columns:repeat(2,1fr)}
+}
+@media (prefers-reduced-motion: reduce){ .row .hd summary::before{transition:none} }
+
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/monitor/">市場監測</a>
+          <a href="/intel/" class="active">情報監視器</a>
+          <a href="/detective/">偵測警報網</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/rotation/">產業輪動</a>
+          <a href="/crowding/">擁擠交易監測</a>
+          <a href="/regime/">大類資產 regime</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/catalyst/">催化劑日曆</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">選股<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/cockpit/">選股主控台</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/research/momentum-5/">Momentum-5</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screeners.html">RS+VCP Screener</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">個股總覽</a>
+          <a href="/research/">個股 DD</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+          <a href="/supply-chain/">供應鏈地圖</a>
+          <a href="/comparisons/">多股對比</a>
+          <a href="/research/synthesis/">期望落差綜合研判</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/track-record/">裁決實績</a>
+          <a href="/pm/">持倉週掃</a>
+          <a href="/long-track-w52-adaptive/">實單主系統</a>
+          <a href="/long-track/">追蹤總覽</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/flow/">投資流程</a>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+<div class="wrap">
+<div class="top"><h1>Intel 封存<small>依日期排列</small></h1></div>
+<p class="note"><a class="back" href="/intel/">回今日</a></p>
+<ul class="arclist"><li><a href="/intel/2026-08-19.html">2026-08-19（三）</a></li></ul>
+</div>
+<footer class="imq-foot"><div>© 2026 InvestMQuest Research</div><div><a href="/disclosures.html">方法論與揭露</a> · 本頁為機械聚合＋LLM 摘要，卡片內容為第三方來源之摘要，正確性以原文為準，不構成投資建議</div></footer>
+</body>
+</html>
