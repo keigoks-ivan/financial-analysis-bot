@@ -44,6 +44,14 @@ _ONSITE_NAMES = {
     "onsite_detective": "站內 kill-watch",
 }
 
+_ONSITE_SHORTS = {
+    "onsite_monitor": "站內監測",
+    "onsite_regime": "站內regime",
+    "onsite_rotation": "站內輪動",
+    "onsite_crowding": "站內擁擠",
+    "onsite_detective": "站內偵探",
+}
+
 
 def now_utc() -> datetime:
     return datetime.now(timezone.utc)
@@ -78,7 +86,26 @@ def load_source_name_map() -> dict:
     return names
 
 
+def load_source_short_map() -> dict:
+    """source_id -> ≤8 字短名（用於 brief_zh 的 <a> 連結文字／finalize_card 的
+    source_short），來源 sources.yml 的 `short:` 欄位 ＋ onsite 特判。缺
+    `short:` 的來源 fall back 到 name 前 8 字（source_name_for/source_short_for
+    再兜底一次），不因漏填整條 pipeline 掛掉。"""
+    shorts = dict(_ONSITE_SHORTS)
+    try:
+        with open(SOURCES_YML, "r", encoding="utf-8") as f:
+            sources = yaml.safe_load(f) or []
+        for s in sources:
+            if s.get("id") and s.get("short"):
+                shorts[s["id"]] = s["short"]
+    except (OSError, yaml.YAMLError):
+        pass
+    return shorts
+
+
 def source_name_for(card: dict, name_map: dict) -> str:
+    if card.get("source_name_override"):
+        return card["source_name_override"]
     sid = card.get("source_id", "")
     if sid in name_map:
         return name_map[sid]
@@ -86,6 +113,18 @@ def source_name_for(card: dict, name_map: dict) -> str:
         series = (card.get("data") or {}).get("series", sid.replace("fred_", "").upper())
         return f"FRED {series}"
     return card.get("source_id") or "未知來源"
+
+
+def source_short_for(card: dict, short_map: dict, name_map: dict | None = None) -> str:
+    """≤8 字短名。gnews 卡片逐則帶 `source_short_override`（發布方名稱依卡片
+    而異，不能用 source_id 查表）；其餘來源查 sources.yml `short:`，缺表就用
+    全名/來源名前 8 字兜底。"""
+    if card.get("source_short_override"):
+        return card["source_short_override"][:14]
+    sid = card.get("source_id", "")
+    if sid in short_map:
+        return short_map[sid][:14]
+    return source_name_for(card, name_map or {})[:10] or (card.get("source_id") or "")[:10]
 
 
 def pending_path(date: str) -> Path:

@@ -197,3 +197,13 @@
 ## 15. 刻意不做
 
 不抓全文、不盤中即時、opus 不做日常分類、不做向量搜尋、不做站上對話式查詢（改離線 CLI `scripts/intel/q.py --ticker NVDA --since 30d`）、不買付費資料（期權流、空單、另類數據）——這些等 Phase 4 後再評估。
+
+### 2026-08-19 晚間：版面重做＋加料（持有人看過首版後的回饋）
+
+持有人回饋：「很多都有錯誤、Alerts 要更易讀、市場早報不美觀、產業／個股字會連在一起、整個 layout 重新設計、內容有點空虛」。同日處理：
+
+- **版面**（`render.py`＋`templates/intel.css` 全重寫）：儀表列改為「一個數字＋序列名＋漲跌＋分位 pill」的小格（不再是句子）；轉折警示改成表格（等級／主題／指標／現值／門檻／距離進度條／報告連結）；早報改為左主文（段首維度 chip、數字 tabular-nums、來源改小膠囊標籤）＋右側欄（今日焦點／接下來 7 天／資料狀態）；密集列改 `3.2em|10px|minmax(0,1fr)|auto|auto` grid，來源只顯示短名（`source_short`）、時間缺值顯示「—」、chevron 固定在最後一格不換行；新增「其他標題」三欄 title-only 區。
+- **儀表與警示改為零 LLM**：13 格儀表直接由 `docs/monitor/data/latest.json` 算（`build_gauges`）；警示每天讀 `docs/detective/data/kill_watch.json` 的 near∪breached 現況（`_kill_watch_flags`，不是只在新進榜時才出現）＋卡片裡的 regime 變化。sonnet digest 現在只寫 `brief_zh`。
+- **加料**：`sources.yml` 35→63 來源：CNBC（world/economy/markets）、Dow Jones 公開 RSS（Markets/World/Economy）、FT（markets/world）、Economist、NYT Economy、Guardian Economics、Yahoo Finance、MarketWatch、14 條 Google News 主題查詢（`kind: gnews`，以 `<source>` 發布方為 source_name；主流媒體升 T2，其餘 T3）、ForexFactory 週曆（`kind: ff_calendar`，faireconomy 鏡像，ET→台北、High/Medium 進 7 日日曆）。`MAX_KEPT` 200→350、haiku 上限 320 卡、sonnet 70 卡＋每來源 ≤6；未進 sonnet 的相關卡以 `summarized:false` 出現在「其他標題」。`--no-llm` 旗標可零 token 測試整條管線。
+- **實測 2026-08-19**：fetched 747 → kept 334 → 291 張卡（76 張 sonnet 摘要＋215 張 title-only）；token ≈ haiku 118k＋sonnet 164k（digest 輸入約 81k，下一步可瘦身：只餵 importance≥2 的市場卡）。
+- 待辦：digest 輸入瘦身；主題名（ChinaEconomy 等）中文化；儀表「亞洲」用的是站內 TWSE 卡（T+1 落後）。

@@ -4,129 +4,244 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Intel 狀態 — InvestMQuest Research</title>
-<meta name="description" content="情報監視器來源健康與每日用量。">
-<meta property="og:title" content="Intel 狀態 — InvestMQuest Research">
+<title>監視器狀態 — InvestMQuest Research</title>
+<meta name="description" content="全球金融市場監視器來源健康與每日用量。">
+<meta property="og:title" content="監視器狀態 — InvestMQuest Research">
 <meta property="og:site_name" content="InvestMQuest Research">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+/* intel.css — /intel/ 全球金融市場監視器（版型 A：儀表列＋早報＋密集列表）
+   光亮主題單一版本（站台其餘頁面同為淺色）。所有數字用 tabular-nums，
+   除 .mono 資料行外不使用等寬字。頁內不使用 position:sticky／z-index，
+   由 site_nav.py 注入的 .imq-nav-root 獨占 sticky 層。 */
 :root{
-  --bg:#F3F4F2; --sur:#FFFFFF; --sur2:#EAECE8; --line:#D9DCD6; --ink:#16191F; --mut:#66707E; --acc:#8A5A2B; --acc-soft:#F1E6DA;
-  --red:#C8412E; --amb:#B8820F; --grn:#2F8F5B; --red-bg:#FBE9E5; --amb-bg:#FBF1D9; --grn-bg:#E3F3EA;
-}
-@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
-  --bg:#0F1216; --sur:#161A20; --sur2:#1D222A; --line:#2A303A; --ink:#E6E8EB; --mut:#8B93A0; --acc:#D9A066; --acc-soft:#2A2118;
-  --red:#E0604F; --amb:#E0AA3C; --grn:#4FB07E; --red-bg:#2A1714; --amb-bg:#2A2212; --grn-bg:#132519;
-}}
-:root[data-theme="dark"]{
-  --bg:#0F1216; --sur:#161A20; --sur2:#1D222A; --line:#2A303A; --ink:#E6E8EB; --mut:#8B93A0; --acc:#D9A066; --acc-soft:#2A2118;
-  --red:#E0604F; --amb:#E0AA3C; --grn:#4FB07E; --red-bg:#2A1714; --amb-bg:#2A2212; --grn-bg:#132519;
+  color-scheme:light;
+  --bg:#F5F6F4; --sur:#FFFFFF; --sur2:#F0F2EE; --sur3:#E7EAE4;
+  --line:#DEE1DB; --line2:#EBEDE8;
+  --ink:#151A21; --ink2:#39414D; --mut:#6A737F;
+  --acc:#8A5A2B; --acc-soft:#F3E9DD;
+  --red:#B93A29; --amb:#A67908; --grn:#2C7F53; --cool:#2E6DA4;
+  --red-bg:#FBEAE6; --amb-bg:#FAF2DA; --grn-bg:#E6F3EC; --cool-bg:#E9F0F8;
+  --r:7px;
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans","Noto Sans TC",system-ui,-apple-system,"PingFang TC",sans-serif;font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
-.mono{font-family:"IBM Plex Mono","Noto Sans TC",ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
-.wrap{max-width:1080px;margin:0 auto;padding:20px 20px 60px}
-/* top */
-.top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid var(--line)}
-.top h1{margin:0;font-size:18px;font-weight:600;letter-spacing:.01em}
-.top h1 small{color:var(--mut);font-weight:400;margin-left:10px}
+html{scroll-padding-top:84px;-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,-apple-system,sans-serif;
+  font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;
+  font-variant-numeric:tabular-nums;
+}
+a{color:var(--acc)}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,"Noto Sans TC",monospace;font-size:11.5px;color:var(--mut);font-variant-numeric:tabular-nums}
+.wrap{max-width:1120px;margin:0 auto;padding:18px 20px 56px;display:flex;flex-direction:column;gap:0}
+.nowrap{white-space:nowrap}
+
+/* ------------------------------------------------------------- masthead */
+.mast{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px 18px;padding-bottom:12px;border-bottom:2px solid var(--ink);margin-bottom:14px}
+.mast .ttl{display:flex;flex-direction:column;gap:2px;margin-right:auto}
+.mast h1{margin:0;font-size:19px;font-weight:700;letter-spacing:.02em}
+.mast .date{color:var(--mut);font-size:12.5px}
+.mast .date b{color:var(--ink2);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;line-height:1.5;padding:2px 8px;border:1px solid var(--line);border-radius:999px;background:var(--sur);color:var(--mut);white-space:nowrap}
+.chip b{color:var(--ink2);font-weight:600}
+.chip.ok{border-color:#CCE3D6;background:var(--grn-bg);color:var(--grn)}
+.chip.warn{border-color:#EADFB4;background:var(--amb-bg);color:var(--amb)}
+.chip.bad{border-color:#EFD0C9;background:var(--red-bg);color:var(--red)}
+a.chip{text-decoration:none}
+a.chip:hover{border-color:var(--acc);color:var(--acc)}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--sur)}
-.seg button{border:0;background:transparent;color:var(--mut);padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
-.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.seg button{border:0;background:transparent;color:var(--mut);padding:5px 11px;font:inherit;font-size:12px;cursor:pointer;white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
 .seg button:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
-.note{margin:12px 0 0;color:var(--mut);font-size:12.5px}
-/* gauges */
-.gauges{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:18px 0 6px}
-.g{background:var(--sur);border:1px solid var(--line);border-radius:6px;padding:8px 10px;display:grid;grid-template-columns:auto 1fr;column-gap:8px;row-gap:2px;align-items:center}
-.g .dot{width:9px;height:9px;border-radius:50%;background:var(--grn)}
-.g.warn .dot{background:var(--amb)} .g.crit .dot{background:var(--red)}
-.g .name{font-weight:600;font-size:12.5px}
-.g .d{grid-column:2;color:var(--mut);font-size:12px;line-height:1.35}
-.g .v{grid-column:2;font-size:12px}
-.g.crit .v{color:var(--red)} .g.warn .v{color:var(--amb)}
-/* sections */
-h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin:26px 0 10px;font-weight:600;display:flex;align-items:center;gap:10px}
+
+/* -------------------------------------------------------------- headings */
+h2{font-size:13.5px;font-weight:700;color:var(--ink);margin:26px 0 9px;display:flex;align-items:center;gap:10px;letter-spacing:.02em}
+h2 .en{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);font-weight:600}
+h2 .cnt{font-size:11px;color:var(--mut);font-weight:500}
 h2::after{content:"";flex:1;height:1px;background:var(--line)}
-h2 .zh{letter-spacing:.02em;text-transform:none;font-size:13px;color:var(--ink)}
-/* prose */
-.brief{max-width:68ch}
-.brief p{margin:0 0 12px;font-size:15px;line-height:1.75}
-.brief b{font-weight:600}
-.brief .n{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;font-size:14px}
-.brief .src{color:var(--mut);font-size:12px;margin-left:4px}
-.flag{border-left:3px solid var(--amb);background:var(--amb-bg);padding:10px 12px;border-radius:0 6px 6px 0;margin:6px 0 0;max-width:68ch}
-.flag.hard{border-color:var(--red);background:var(--red-bg)}
-.flag .k{font-weight:600;font-size:12.5px;margin-right:6px}
-/* dense list */
-.list{border:1px solid var(--line);border-radius:6px;background:var(--sur);overflow:hidden}
-.row{display:grid;grid-template-columns:44px 12px 76px 92px 1fr auto;gap:0 10px;align-items:center;padding:7px 10px;border-top:1px solid var(--line);font-size:13.5px}
-.row:first-child{border-top:0}
-.row.head{color:var(--mut);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;background:var(--sur2)}
-.row .t{color:var(--mut);font-size:12px}
-.row .imp{width:9px;height:9px;border-radius:50%;background:var(--line);justify-self:center}
+h3{font-size:12.5px;font-weight:700;margin:0 0 7px;color:var(--ink2)}
+.note{margin:10px 0 0;color:var(--mut);font-size:12px;max-width:68ch}
+.note a{color:var(--acc)}
+
+/* ---------------------------------------------------------------- gauges */
+.gauges{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:7px;margin:2px 0 0}
+.g{position:relative;background:var(--sur);border:1px solid var(--line);border-left:3px solid var(--grn);border-radius:var(--r);padding:7px 10px 8px;display:flex;flex-direction:column;gap:2px;min-height:76px}
+.g.warn{border-left-color:var(--amb)} .g.crit{border-left-color:var(--red)}
+.g .lab{display:flex;align-items:center;gap:5px;font-size:10.5px;letter-spacing:.09em;color:var(--mut);font-weight:600;text-transform:uppercase}
+.g .dot{width:6px;height:6px;border-radius:50%;background:var(--grn);flex:none}
+.g.warn .dot{background:var(--amb)} .g.crit .dot{background:var(--red)}
+.g .val{font-size:20px;font-weight:600;letter-spacing:-.01em;line-height:1.25;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.g .val.long{font-size:12.5px;font-weight:500;line-height:1.45;white-space:normal;color:var(--ink2);display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.g .sub{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;font-size:11.5px;color:var(--mut);margin-top:auto;min-width:0}
+.g .m{font-weight:600;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.g .sub.long{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.g .chg{font-variant-numeric:tabular-nums;white-space:nowrap}
+.g .chg.up{color:var(--red)} .g .chg.dn{color:var(--grn)}
+.pct{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;padding:0 5px;border-radius:999px;border:1px solid var(--line);background:var(--sur2);color:var(--mut);white-space:nowrap}
+.pct.hot{border-color:#EFD0C9;background:var(--red-bg);color:var(--red)}
+.pct.cold{border-color:#CFDFEF;background:var(--cool-bg);color:var(--cool)}
+
+/* ----------------------------------------------------------------- table */
+.twrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--sur)}
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+table.t th,table.t td{padding:7px 10px;text-align:left;border-top:1px solid var(--line2);vertical-align:middle}
+table.t thead th{background:var(--sur2);border-top:0;color:var(--mut);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;white-space:nowrap}
+table.t tbody tr:first-child td{border-top:1px solid var(--line)}
+table.t td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+table.t td.thm{color:var(--ink2)}
+table.t td.span{color:var(--ink2)}
+table.t td a{color:var(--acc);text-decoration:none;white-space:nowrap}
+table.t td a:hover{text-decoration:underline}
+table.flags{min-width:720px}
+table.flags.plain{min-width:0}
+table.flags td.lv{width:1%;white-space:nowrap}
+.pill{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.03em;padding:1px 7px;border-radius:999px;border:1px solid var(--line);background:var(--sur2);color:var(--mut);white-space:nowrap}
+.pill.confirmed{border-color:#EFD0C9;background:var(--red-bg);color:var(--red)}
+.pill.near{border-color:#EADFB4;background:var(--amb-bg);color:var(--amb)}
+.pill.thesis{border-color:#CFDFEF;background:var(--cool-bg);color:var(--cool)}
+.dist{display:flex;align-items:center;gap:6px;min-width:92px}
+.bar{flex:1;height:5px;border-radius:3px;background:var(--sur3);overflow:hidden;min-width:44px}
+.bar i{display:block;height:100%;background:var(--amb);border-radius:3px}
+tr.confirmed .bar i{background:var(--red)}
+.dist .dv{font-size:11.5px;color:var(--mut);font-variant-numeric:tabular-nums;white-space:nowrap}
+.empty{color:var(--mut);font-size:12.5px;padding:12px 12px;background:var(--sur);border:1px solid var(--line);border-radius:var(--r)}
+
+/* ------------------------------------------------------------- brief 段 */
+.sheet{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;align-items:start}
+@media(min-width:960px){.sheet{grid-template-columns:minmax(0,1fr) 320px;gap:26px}}
+.brief{max-width:68ch;display:flex;flex-direction:column;gap:11px}
+.brief p{margin:0;font-size:14.5px;line-height:1.85;color:var(--ink2);overflow-wrap:anywhere}
+.brief p.lead{font-size:15.5px;line-height:1.8;color:var(--ink)}
+.brief b{font-weight:700;color:var(--ink)}
+.brief b.lead-chip{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.04em;color:var(--acc);background:var(--acc-soft);border-radius:4px;padding:1px 7px;margin-right:7px;vertical-align:1px}
+.brief .n{font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink)}
+.brief .src{color:var(--mut);font-size:.78em}
+.brief a{font-size:.72em;padding:0 .45em;border:1px solid var(--line);border-radius:999px;text-decoration:none;color:var(--mut);vertical-align:baseline;white-space:nowrap;line-height:1.7;background:var(--sur);margin:0 .1em}
+.brief a:hover{border-color:var(--acc);color:var(--acc)}
+aside.side{display:flex;flex-direction:column;gap:16px;min-width:0}
+.box{background:var(--sur);border:1px solid var(--line);border-radius:var(--r);padding:11px 12px}
+.box h3{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.box h3 span{font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+/* 今日焦點 */
+.focus{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.focus li{display:grid;grid-template-columns:9px minmax(0,1fr);gap:8px;align-items:start;padding:7px 0;border-top:1px solid var(--line2)}
+.focus li:first-child{border-top:0;padding-top:2px}
+.focus .imp{width:7px;height:7px;border-radius:50%;background:var(--line);margin-top:6px}
+.focus .tx{min-width:0}
+.focus .tx a,.focus .tx span.h{display:block;color:var(--ink);text-decoration:none;font-size:12.5px;line-height:1.5;overflow-wrap:anywhere}
+.focus .tx a:hover{color:var(--acc)}
+.focus .mt{font-size:11px;color:var(--mut);margin-top:2px;display:flex;gap:6px;flex-wrap:wrap}
+/* 日曆 */
+.cal{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.cal li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 9px;padding:6px 0;border-top:1px solid var(--line2)}
+.cal li:first-child{border-top:0;padding-top:2px}
+.cal .d{font-size:11px;color:var(--mut);font-variant-numeric:tabular-nums;white-space:nowrap;padding-top:1px}
+.cal .ev{min-width:0;font-size:12.5px;line-height:1.5;color:var(--ink2);overflow-wrap:anywhere}
+.cal .ev.hi{color:var(--ink);font-weight:600}
+.cal .mt{font-size:11px;color:var(--mut);display:flex;flex-wrap:wrap;gap:6px;margin-top:1px}
+.idot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--line);vertical-align:1px;margin-right:4px}
+.idot.high{background:var(--red)} .idot.medium{background:var(--amb)} .idot.low{background:var(--line)}
+.none{color:var(--mut);font-size:12px;padding:2px 0}
+/* 迷你狀態 */
+.mini{display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:var(--mut)}
+.mini div{display:flex;justify-content:space-between;gap:10px}
+.mini b{font-weight:600;color:var(--ink2);font-variant-numeric:tabular-nums}
+
+/* ------------------------------------------------------------ 密集列表 */
+.list{border:1px solid var(--line);border-radius:var(--r);background:var(--sur);overflow:hidden}
+.list+.list{margin-top:10px}
+.rowgrid,.list .r>summary,.list .plain{
+  display:grid;grid-template-columns:3.2em 10px minmax(0,1fr) auto auto;
+  gap:0 10px;align-items:baseline;padding:7px 11px;
+}
+.list .head{color:var(--mut);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;background:var(--sur2);border-bottom:1px solid var(--line);font-weight:600;align-items:center;padding-top:5px;padding-bottom:5px}
+.list .grp{display:flex;align-items:center;gap:8px;background:var(--sur2);border-top:1px solid var(--line);padding:5px 11px;font-size:11.5px;font-weight:700;color:var(--ink2);letter-spacing:.02em}
+.list .grp .c{font-weight:500;color:var(--mut);font-size:11px}
+.list .grp::after{content:"";flex:1;height:1px;background:var(--line)}
+.list .r,.list .plain{border-top:1px solid var(--line2)}
+.list .head+.r,.list .head+.plain,.list .grp+.r,.list .grp+.plain,.list .head+.grp{border-top:0}
+.list .r>summary{cursor:pointer;list-style:none;font-size:13px}
+.list .r>summary::-webkit-details-marker{display:none}
+.list .r>summary:hover{background:var(--sur2)}
+.list .r>summary:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+.list .t{font-size:11.5px;color:var(--mut);font-variant-numeric:tabular-nums;white-space:nowrap}
+.list .imp{width:8px;height:8px;border-radius:50%;background:var(--line);align-self:center;justify-self:center}
 .imp.i3{background:var(--red)} .imp.i2{background:var(--amb)} .imp.i1{background:var(--line)}
-.row .cat{font-size:11.5px;color:var(--acc);font-weight:600;letter-spacing:.02em}
-.row .src{font-size:12px;color:var(--mut);white-space:nowrap}
-.row .src em{font-style:normal;color:var(--acc)}
-.row .hd{min-width:0}
-.row .hd summary{cursor:pointer;list-style:none;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
-.row .hd summary::-webkit-details-marker{display:none}
-.row .hd summary::before{content:"\203a";color:var(--mut);display:inline-block;transition:transform .15s}
-.row .hd details[open] summary::before{transform:rotate(90deg)}
-.row .hd .body{padding:8px 0 4px 16px;color:var(--mut);font-size:13px;line-height:1.6;max-width:70ch}
-.row .hd .body b{color:var(--ink);font-weight:600}
-.row .hd .body a{color:var(--acc)}
-.row .empty{color:var(--mut);font-size:13px;padding:14px 10px;grid-column:1/-1}
-.tag{display:inline-block;font-size:11px;padding:1px 6px;border-radius:4px;background:var(--sur2);color:var(--mut);margin-left:6px;vertical-align:1px}
-.tag.r{background:var(--red-bg);color:var(--red)}.tag.p{background:var(--acc-soft);color:var(--acc)}
-.row .lvl{font-size:11px;color:var(--mut);justify-self:end}
-.row.grp{grid-template-columns:1fr;background:var(--sur2);color:var(--mut);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;padding:5px 10px}
-/* calendar */
-.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
-.cal .d{background:var(--sur);border:1px solid var(--line);border-radius:6px;padding:8px;min-height:74px;font-size:12px}
-.cal .d .w{color:var(--mut);font-size:11px;margin-bottom:4px}
-.cal .d .e{margin:2px 0}
-.cal .d .e.hi{font-weight:600;color:var(--acc)}
-.status{display:flex;flex-wrap:wrap;gap:8px 22px;color:var(--mut);font-size:12px;margin-top:8px}
-/* modes */
+.list .ti{min-width:0;overflow-wrap:anywhere;color:var(--ink);line-height:1.5}
+.list .src{font-size:11.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:9em;justify-self:end}
+.list .end{display:flex;align-items:center;gap:6px;white-space:nowrap;justify-self:end}
+.tier{font-size:10px;font-weight:600;letter-spacing:.04em;color:var(--mut);border:1px solid var(--line);border-radius:4px;padding:0 4px;background:var(--sur2)}
+.tier.t1{color:var(--grn);border-color:#CCE3D6;background:var(--grn-bg)}
+.tier.t3,.tier.t4{color:var(--amb);border-color:#EADFB4;background:var(--amb-bg)}
+.chev{width:12px;height:12px;flex:none;color:var(--mut);transition:transform .15s ease}
+.chev::before{content:"›";display:block;font-size:14px;line-height:12px;text-align:center}
+.list .r[open]>summary .chev{transform:rotate(90deg)}
+.list .r[open]>summary{background:var(--sur2)}
+.list .body{padding:2px 12px 12px calc(3.2em + 20px);display:flex;flex-direction:column;gap:6px;background:var(--sur2);border-top:1px dashed var(--line);font-size:12.5px;line-height:1.7;color:var(--ink2)}
+.list .body>*{max-width:82ch}
+.list .body .why{color:var(--ink2)}
+.list .body .why b{color:var(--ink);font-weight:700}
+.list .body .meta{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:11.5px;color:var(--mut);align-items:center}
+.list .body a{color:var(--acc)}
+.tag{display:inline-block;font-size:10.5px;padding:0 6px;border-radius:4px;background:var(--sur3);color:var(--mut);margin-left:6px;vertical-align:1px;white-space:nowrap}
+.tag.p{background:var(--acc-soft);color:var(--acc)}
+.tag.r{background:var(--red-bg);color:var(--red)}
+.list .empty{border:0;border-radius:0;background:transparent}
+
+/* 其他標題（未摘要）兩欄 */
+.tlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0 18px;border:1px solid var(--line);border-radius:var(--r);background:var(--sur);padding:4px 12px}
+.tlist .ti2{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:7px 0;border-top:1px solid var(--line2);align-items:baseline}
+.tlist .ti2 .h{min-width:0;font-size:12.5px;line-height:1.5;color:var(--ink);overflow-wrap:anywhere}
+.tlist .ti2 a{color:var(--ink);text-decoration:none}
+.tlist .ti2 a:hover{color:var(--acc)}
+.tlist .ti2 .m{font-size:11px;color:var(--mut);white-space:nowrap}
+.tlist .ti2 .s{grid-column:1;font-size:11px;color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ---------------------------------------------------------------- 其他 */
+.banner{background:var(--amb-bg);border:1px solid #EADFB4;border-left:3px solid var(--amb);color:var(--ink2);padding:9px 12px;border-radius:var(--r);margin:0 0 14px;font-size:12.5px;max-width:78ch}
+.banner.stale{background:var(--red-bg);border-color:#EFD0C9;border-left-color:var(--red)}
+.banner b{color:var(--ink);font-weight:700}
 body[data-mode="list"] .only-brief{display:none}
 body[data-mode="brief"] .only-list{display:none}
-/* banners */
-.banner{background:var(--amb-bg);border:1px solid var(--amb);color:var(--ink);padding:10px 14px;border-radius:6px;margin:14px 0;font-size:13px;max-width:68ch}
-.banner.stale{background:var(--red-bg);border-color:var(--red)}
-.banner b{font-weight:600}
-/* status table */
-.twrap{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--sur)}
-table.stbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:640px}
-table.stbl th,table.stbl td{padding:6px 10px;border-top:1px solid var(--line);text-align:left;white-space:nowrap}
-table.stbl thead th{background:var(--sur2);color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.05em;border-top:0}
-table.stbl tbody tr:first-child td{border-top:1px solid var(--line)}
+/* status 頁 */
+table.stbl{min-width:680px}
 table.stbl td.ok{color:var(--grn);font-weight:600}
 table.stbl td.fail{color:var(--red);font-weight:600}
-table.stbl td.err{white-space:normal;color:var(--mut);max-width:360px;overflow:hidden;text-overflow:ellipsis}
-.stat-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:10px 0 20px}
-.stat-cards .c{background:var(--sur);border:1px solid var(--line);border-radius:6px;padding:10px 12px}
-.stat-cards .c .k{color:var(--mut);font-size:11.5px;margin-bottom:3px}
-.stat-cards .c .v{font-size:16px;font-weight:600}
-/* archive list */
-.arclist{list-style:none;padding:0;margin:0;max-width:40ch}
-.arclist li{padding:7px 0;border-top:1px solid var(--line)}
+table.stbl td.err{white-space:normal;color:var(--mut);max-width:340px}
+.stat-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin:2px 0 6px}
+.stat-cards .c{background:var(--sur);border:1px solid var(--line);border-radius:var(--r);padding:9px 11px}
+.stat-cards .c .k{color:var(--mut);font-size:11px;margin-bottom:3px}
+.stat-cards .c .v{font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.arclist{list-style:none;padding:0;margin:0;max-width:44ch;border:1px solid var(--line);border-radius:var(--r);background:var(--sur)}
+.arclist li{padding:8px 12px;border-top:1px solid var(--line2)}
 .arclist li:first-child{border-top:0}
 .arclist a{color:var(--ink);text-decoration:none;font-weight:500}
 .arclist a:hover{color:var(--acc)}
-/* footer */
-footer.imq-foot{margin-top:32px;padding:18px 20px;border-top:1px solid var(--line);text-align:center;font-size:12px;color:var(--mut)}
-footer.imq-foot a{color:var(--acc)}
-.back{display:inline-block;margin:14px 0 0;font-size:12.5px;color:var(--acc);text-decoration:none}
+.back{color:var(--acc);text-decoration:none;font-size:12.5px}
 .back:hover{text-decoration:underline}
-@media (max-width:720px){
-  .row{grid-template-columns:12px 1fr;gap:4px 8px}
-  .row .t,.row .cat,.row .src,.row .lvl,.row.head{display:none}
-  .cal{grid-template-columns:repeat(2,1fr)}
+footer.imq-foot{margin-top:34px;padding:16px 20px 22px;border-top:1px solid var(--line);font-size:11.5px;color:var(--mut);line-height:1.8}
+footer.imq-foot .in{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:4px}
+footer.imq-foot a{color:var(--acc)}
+footer.imq-foot .sep{color:var(--line)}
+
+/* --------------------------------------------------------------- mobile */
+@media(max-width:640px){
+  .wrap{padding:14px 13px 46px}
+  .gauges{grid-template-columns:repeat(auto-fill,minmax(132px,1fr))}
+  .g .val{font-size:17px}
+  .rowgrid,.list .r>summary,.list .plain{grid-template-columns:3.2em 10px minmax(0,1fr) auto;gap:0 8px;padding:8px 10px}
+  .list .src{display:none}
+  .list .head span.hsrc{display:none}
+  .list .body{padding-left:12px}
+  .tlist{grid-template-columns:minmax(0,1fr)}
+  .brief p{font-size:14px}
 }
-@media (prefers-reduced-motion: reduce){ .row .hd summary::before{transition:none} }
+@media(prefers-reduced-motion:reduce){.chev{transition:none}}
+@media print{.seg,.chev{display:none}body{background:#fff}}
 
 </style>
 </head>
@@ -229,12 +344,12 @@ footer.imq-foot a{color:var(--acc)}
 </header>
 <script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
 <div class="wrap">
-<div class="top"><h1>Intel 狀態<small>來源健康 · 每日用量</small></h1></div>
-<p class="note"><a class="back" href="/intel/">回今日</a> · <a class="back" href="/intel/archive.html">封存</a></p>
-<div class="stat-cards"><div class="c"><div class="k">健康檢查時間（台北）</div><div class="v mono">2026-08-19 15:53</div></div><div class="c"><div class="k">今日產出時間（台北）</div><div class="v mono">2026-08-19 16:16</div></div><div class="c"><div class="k">來源正常／失敗</div><div class="v mono">26 ／ 1</div></div><div class="c"><div class="k">抓到 → 保留</div><div class="v mono">299 → 95</div></div><div class="c"><div class="k">分類 → 摘要</div><div class="v mono">60 → 60</div></div><div class="c"><div class="k">今日 token</div><div class="v mono">haiku 29,293 · sonnet 73,128</div></div><div class="c"><div class="k">下次排程</div><div class="v mono">06:00 TPE</div></div></div>
-<h2>Sources <span class="zh">來源健康</span></h2>
-<div class="twrap"><table class="stbl"><thead><tr><th>source_id</th><th>名稱</th><th>tier</th><th>狀態</th><th>延遲</th><th>抓到筆數</th><th>錯誤</th></tr></thead><tbody><tr><td>fed_press_all</td><td>Federal Reserve — 全部新聞稿</td><td>T1</td><td class="ok">OK</td><td>346 ms</td><td>20</td><td class="err"></td></tr><tr><td>fed_press_monetary</td><td>Federal Reserve — 貨幣政策新聞稿</td><td>T1</td><td class="ok">OK</td><td>318 ms</td><td>15</td><td class="err"></td></tr><tr><td>fed_speeches</td><td>Federal Reserve — 官員演講（Fedspeak）</td><td>T1</td><td class="ok">OK</td><td>365 ms</td><td>15</td><td class="err"></td></tr><tr><td>ecb_press</td><td>European Central Bank — 新聞稿</td><td>T1</td><td class="ok">OK</td><td>1351 ms</td><td>15</td><td class="err"></td></tr><tr><td>boj_press</td><td>Bank of Japan — What&#x27;s New（英文版）</td><td>T1</td><td class="ok">OK</td><td>117 ms</td><td>30</td><td class="err"></td></tr><tr><td>boe_press</td><td>Bank of England — News</td><td>T1</td><td class="ok">OK</td><td>370 ms</td><td>30</td><td class="err"></td></tr><tr><td>bea_rss</td><td>US Bureau of Economic Analysis — 新聞稿 RSS</td><td>T1</td><td class="ok">OK</td><td>12267 ms</td><td>30</td><td class="err"></td></tr><tr><td>bls_empsit</td><td>US BLS — Employment Situation（非農）</td><td>T1</td><td class="ok">OK</td><td>60 ms</td><td>10</td><td class="err"></td></tr><tr><td>bls_cpi</td><td>US BLS — Consumer Price Index（CPI）</td><td>T1</td><td class="ok">OK</td><td>50 ms</td><td>10</td><td class="err"></td></tr><tr><td>federal_register_fed</td><td>Federal Register — Federal Reserve System 文件</td><td>T1</td><td class="ok">OK</td><td>643 ms</td><td>21</td><td class="err"></td></tr><tr><td>ustr_press</td><td>USTR — 新聞稿（關稅／貿易）</td><td>T1</td><td class="ok">OK</td><td>514 ms</td><td>10</td><td class="err"></td></tr><tr><td>polymarket_markets</td><td>Polymarket — Gamma API（公開市場清單）</td><td>T2</td><td class="fail">FAIL</td><td>138 ms</td><td>0</td><td class="err">HTTPSConnectionPool(host=&#x27;gamma-api.polymarket.com&#x27;, port=443): Max retries exceeded with url: /markets?limit=50&amp;active=true&amp;closed=false (C…</td></tr><tr><td>twse_market_index</td><td>台灣證交所 — 大盤統計資訊（JSON）</td><td>T1</td><td class="ok">OK</td><td>70 ms</td><td>4</td><td class="err"></td></tr><tr><td>nikkei_asia</td><td>Nikkei Asia — RSS</td><td>T2</td><td class="ok">OK</td><td>242 ms</td><td>30</td><td class="err"></td></tr><tr><td>cnyes_headline</td><td>鉅亨網 — 頭條 RSS（台股／匯市／總經）</td><td>T2</td><td class="ok">OK</td><td>314 ms</td><td>40</td><td class="err"></td></tr><tr><td>coingecko_btc</td><td>CoinGecko — BTC/USD 現貨價</td><td>T2</td><td class="ok">OK</td><td>310 ms</td><td>1</td><td class="err"></td></tr><tr><td>defillama_stablecoins</td><td>DefiLlama — 穩定幣總流通量</td><td>T2</td><td class="ok">OK</td><td>3690 ms</td><td>3186</td><td class="err"></td></tr><tr><td>fred_real10y</td><td>FRED DFII10 — 10Y TIPS 實質利率</td><td>T1</td><td class="ok">OK</td><td>256 ms</td><td>1</td><td class="err"></td></tr><tr><td>fred_dgs2</td><td>FRED DGS2 — 美國 2Y 公債殖利率</td><td>T1</td><td class="ok">OK</td><td>242 ms</td><td>1</td><td class="err"></td></tr><tr><td>fred_dgs10</td><td>FRED DGS10 — 美國 10Y 公債殖利率</td><td>T1</td><td class="ok">OK</td><td>234 ms</td><td>1</td><td class="err"></td></tr><tr><td>fred_hy_oas</td><td>FRED BAMLH0A0HYM2 — ICE BofA HY OAS</td><td>T1</td><td class="ok">OK</td><td>56 ms</td><td>1</td><td class="err"></td></tr><tr><td>fred_dxy</td><td>FRED DTWEXBGS — 美元廣義貿易加權指數</td><td>T1</td><td class="ok">OK</td><td>70 ms</td><td>1</td><td class="err"></td></tr><tr><td>fred_vix</td><td>FRED VIXCLS — CBOE VIX</td><td>T1</td><td class="ok">OK</td><td>76 ms</td><td>1</td><td class="err"></td></tr><tr><td>fred_t10y2y</td><td>FRED T10Y2Y — 10Y-2Y 利差</td><td>T1</td><td class="ok">OK</td><td>2526 ms</td><td>1</td><td class="err"></td></tr><tr><td>fred_walcl</td><td>FRED WALCL — Fed 總資產負債表</td><td>T1</td><td class="ok">OK</td><td>63 ms</td><td>1</td><td class="err"></td></tr><tr><td>fred_rrp</td><td>FRED RRPONTSYD — Fed 隔夜逆回購（RRP）</td><td>T1</td><td class="ok">OK</td><td>72 ms</td><td>1</td><td class="err"></td></tr><tr><td>fred_tga</td><td>FRED WTREGEN — 財政部一般帳戶（TGA）</td><td>T1</td><td class="ok">OK</td><td>54 ms</td><td>1</td><td class="err"></td></tr></tbody></table></div>
+<div class="mast"><div class="ttl"><h1>監視器狀態</h1><div class="date">2026-08-19 · 來源健康與每日用量</div></div><div class="chips"><a class="chip" href="/intel/">回今日</a><a class="chip" href="/intel/archive.html">歷史</a></div></div>
+<h2>當日摘要<span class="en">Summary</span></h2>
+<div class="stat-cards"><div class="c"><div class="k">健康檢查時間（台北）</div><div class="v">2026-08-19 17:07</div></div><div class="c"><div class="k">今日產出時間（台北）</div><div class="v">2026-08-19 17:15</div></div><div class="c"><div class="k">來源正常／失敗</div><div class="v">54 ／ 1</div></div><div class="c"><div class="k">抓到 → 保留</div><div class="v">747 → 334</div></div><div class="c"><div class="k">分類 → 摘要</div><div class="v">291 → 76</div></div><div class="c"><div class="k">今日 token</div><div class="v">haiku 117,768 · sonnet 164,347</div></div><div class="c"><div class="k">下次排程</div><div class="v">06:00 TPE</div></div></div>
+<h2>來源健康<span class="en">Sources</span></h2>
+<div class="twrap"><table class="t stbl"><thead><tr><th>source_id</th><th>名稱</th><th>tier</th><th>狀態</th><th>延遲</th><th>抓到筆數</th><th>錯誤</th></tr></thead><tbody><tr><td>fed_press_all</td><td>Federal Reserve — 全部新聞稿</td><td>T1</td><td class="ok">OK</td><td class="num">326 ms</td><td class="num">20</td><td class="err"></td></tr><tr><td>fed_press_monetary</td><td>Federal Reserve — 貨幣政策新聞稿</td><td>T1</td><td class="ok">OK</td><td class="num">297 ms</td><td class="num">15</td><td class="err"></td></tr><tr><td>fed_speeches</td><td>Federal Reserve — 官員演講（Fedspeak）</td><td>T1</td><td class="ok">OK</td><td class="num">262 ms</td><td class="num">15</td><td class="err"></td></tr><tr><td>ecb_press</td><td>European Central Bank — 新聞稿</td><td>T1</td><td class="ok">OK</td><td class="num">1238 ms</td><td class="num">15</td><td class="err"></td></tr><tr><td>boj_press</td><td>Bank of Japan — What&#x27;s New（英文版）</td><td>T1</td><td class="ok">OK</td><td class="num">185 ms</td><td class="num">30</td><td class="err"></td></tr><tr><td>boe_press</td><td>Bank of England — News</td><td>T1</td><td class="ok">OK</td><td class="num">377 ms</td><td class="num">30</td><td class="err"></td></tr><tr><td>bea_rss</td><td>US Bureau of Economic Analysis — 新聞稿 RSS</td><td>T1</td><td class="ok">OK</td><td class="num">21253 ms</td><td class="num">30</td><td class="err"></td></tr><tr><td>bls_empsit</td><td>US BLS — Employment Situation（非農）</td><td>T1</td><td class="ok">OK</td><td class="num">685 ms</td><td class="num">10</td><td class="err"></td></tr><tr><td>bls_cpi</td><td>US BLS — Consumer Price Index（CPI）</td><td>T1</td><td class="ok">OK</td><td class="num">199 ms</td><td class="num">10</td><td class="err"></td></tr><tr><td>federal_register_fed</td><td>Federal Register — Federal Reserve System 文件</td><td>T1</td><td class="ok">OK</td><td class="num">588 ms</td><td class="num">21</td><td class="err"></td></tr><tr><td>ustr_press</td><td>USTR — 新聞稿（關稅／貿易）</td><td>T1</td><td class="ok">OK</td><td class="num">516 ms</td><td class="num">10</td><td class="err"></td></tr><tr><td>polymarket_markets</td><td>Polymarket — Gamma API（公開市場清單）</td><td>T2</td><td class="fail">FAIL</td><td class="num">112 ms</td><td class="num">0</td><td class="err">HTTPSConnectionPool(host=&#x27;gamma-api.polymarket.com&#x27;, port=443): Max retries exceeded with url: /markets?limit=50&amp;active=true&amp;closed=false (C…</td></tr><tr><td>twse_market_index</td><td>台灣證交所 — 大盤統計資訊（JSON）</td><td>T1</td><td class="ok">OK</td><td class="num">135 ms</td><td class="num">4</td><td class="err"></td></tr><tr><td>nikkei_asia</td><td>Nikkei Asia — RSS</td><td>T2</td><td class="ok">OK</td><td class="num">340 ms</td><td class="num">30</td><td class="err"></td></tr><tr><td>cnyes_headline</td><td>鉅亨網 — 頭條 RSS（台股／匯市／總經）</td><td>T2</td><td class="ok">OK</td><td class="num">716 ms</td><td class="num">40</td><td class="err"></td></tr><tr><td>coingecko_btc</td><td>CoinGecko — BTC/USD 現貨價</td><td>T2</td><td class="ok">OK</td><td class="num">651 ms</td><td class="num">1</td><td class="err"></td></tr><tr><td>defillama_stablecoins</td><td>DefiLlama — 穩定幣總流通量</td><td>T2</td><td class="ok">OK</td><td class="num">1830 ms</td><td class="num">3186</td><td class="err"></td></tr><tr><td>fred_real10y</td><td>FRED DFII10 — 10Y TIPS 實質利率</td><td>T1</td><td class="ok">OK</td><td class="num">337 ms</td><td class="num">1</td><td class="err"></td></tr><tr><td>fred_dgs2</td><td>FRED DGS2 — 美國 2Y 公債殖利率</td><td>T1</td><td class="ok">OK</td><td class="num">210 ms</td><td class="num">1</td><td class="err"></td></tr><tr><td>fred_dgs10</td><td>FRED DGS10 — 美國 10Y 公債殖利率</td><td>T1</td><td class="ok">OK</td><td class="num">210 ms</td><td class="num">1</td><td class="err"></td></tr><tr><td>fred_hy_oas</td><td>FRED BAMLH0A0HYM2 — ICE BofA HY OAS</td><td>T1</td><td class="ok">OK</td><td class="num">204 ms</td><td class="num">1</td><td class="err"></td></tr><tr><td>fred_dxy</td><td>FRED DTWEXBGS — 美元廣義貿易加權指數</td><td>T1</td><td class="ok">OK</td><td class="num">225 ms</td><td class="num">1</td><td class="err"></td></tr><tr><td>fred_vix</td><td>FRED VIXCLS — CBOE VIX</td><td>T1</td><td class="ok">OK</td><td class="num">215 ms</td><td class="num">1</td><td class="err"></td></tr><tr><td>fred_t10y2y</td><td>FRED T10Y2Y — 10Y-2Y 利差</td><td>T1</td><td class="ok">OK</td><td class="num">212 ms</td><td class="num">1</td><td class="err"></td></tr><tr><td>fred_walcl</td><td>FRED WALCL — Fed 總資產負債表</td><td>T1</td><td class="ok">OK</td><td class="num">204 ms</td><td class="num">1</td><td class="err"></td></tr><tr><td>fred_rrp</td><td>FRED RRPONTSYD — Fed 隔夜逆回購（RRP）</td><td>T1</td><td class="ok">OK</td><td class="num">209 ms</td><td class="num">1</td><td class="err"></td></tr><tr><td>fred_tga</td><td>FRED WTREGEN — 財政部一般帳戶（TGA）</td><td>T1</td><td class="ok">OK</td><td class="num">193 ms</td><td class="num">1</td><td class="err"></td></tr><tr><td>cnbc_world</td><td>CNBC — World News</td><td>T2</td><td class="ok">OK</td><td class="num">343 ms</td><td class="num">30</td><td class="err"></td></tr><tr><td>cnbc_economy</td><td>CNBC — Economy</td><td>T2</td><td class="ok">OK</td><td class="num">251 ms</td><td class="num">30</td><td class="err"></td></tr><tr><td>cnbc_markets</td><td>CNBC — Markets</td><td>T2</td><td class="ok">OK</td><td class="num">358 ms</td><td class="num">30</td><td class="err"></td></tr><tr><td>dowjones_markets</td><td>Dow Jones — RSSMarketsMain（公開 RSS）</td><td>T2</td><td class="ok">OK</td><td class="num">449 ms</td><td class="num">30</td><td class="err"></td></tr><tr><td>dowjones_world</td><td>Dow Jones — RSSWorldNews（公開 RSS）</td><td>T2</td><td class="ok">OK</td><td class="num">453 ms</td><td class="num">30</td><td class="err"></td></tr><tr><td>dowjones_econ</td><td>Dow Jones — socialeconomyfeed（公開 RSS）</td><td>T2</td><td class="ok">OK</td><td class="num">444 ms</td><td class="num">30</td><td class="err"></td></tr><tr><td>ft_markets</td><td>Financial Times — Markets</td><td>T2</td><td class="ok">OK</td><td class="num">512 ms</td><td class="num">25</td><td class="err"></td></tr><tr><td>ft_world</td><td>Financial Times — World</td><td>T2</td><td class="ok">OK</td><td class="num">505 ms</td><td class="num">25</td><td class="err"></td></tr><tr><td>economist_finance</td><td>The Economist — Finance and Economics</td><td>T2</td><td class="ok">OK</td><td class="num">61 ms</td><td class="num">15</td><td class="err"></td></tr><tr><td>nyt_economy</td><td>New York Times — Economy</td><td>T2</td><td class="ok">OK</td><td class="num">368 ms</td><td class="num">20</td><td class="err"></td></tr><tr><td>guardian_economics</td><td>The Guardian — Economics</td><td>T2</td><td class="ok">OK</td><td class="num">327 ms</td><td class="num">20</td><td class="err"></td></tr><tr><td>yahoo_finance</td><td>Yahoo Finance — News</td><td>T3</td><td class="ok">OK</td><td class="num">1181 ms</td><td class="num">30</td><td class="err"></td></tr><tr><td>marketwatch_top</td><td>MarketWatch — Top Stories</td><td>T3</td><td class="ok">OK</td><td class="num">1091 ms</td><td class="num">10</td><td class="err"></td></tr><tr><td>gnews_us_fed</td><td>Google News — &quot;Federal Reserve&quot;（英文）</td><td>T3</td><td class="ok">OK</td><td class="num">657 ms</td><td class="num">10</td><td class="err"></td></tr><tr><td>gnews_us_tariff</td><td>Google News — 關稅／貿易戰（英文）</td><td>T3</td><td class="ok">OK</td><td class="num">791 ms</td><td class="num">10</td><td class="err"></td></tr><tr><td>gnews_us_opec</td><td>Google News — OPEC／原油（英文）</td><td>T3</td><td class="ok">OK</td><td class="num">703 ms</td><td class="num">10</td><td class="err"></td></tr><tr><td>gnews_us_yields</td><td>Google News — 公債殖利率／債市（英文）</td><td>T3</td><td class="ok">OK</td><td class="num">666 ms</td><td class="num">10</td><td class="err"></td></tr><tr><td>gnews_us_china</td><td>Google News — 中國經濟／PBOC（英文）</td><td>T3</td><td class="ok">OK</td><td class="num">369 ms</td><td class="num">10</td><td class="err"></td></tr><tr><td>gnews_us_mideast</td><td>Google News — 伊朗／中東局勢（英文）</td><td>T3</td><td class="ok">OK</td><td class="num">856 ms</td><td class="num">10</td><td class="err"></td></tr><tr><td>gnews_us_aichips</td><td>Google News — Nvidia／AI 晶片／TSMC（英文）</td><td>T3</td><td class="ok">OK</td><td class="num">737 ms</td><td class="num">10</td><td class="err"></td></tr><tr><td>gnews_us_creditspread</td><td>Google News — 私募信用／信用利差（英文）</td><td>T3</td><td class="ok">OK</td><td class="num">631 ms</td><td class="num">10</td><td class="err"></td></tr><tr><td>gnews_us_stockmkt</td><td>Google News — 股市賣壓／反彈（英文）</td><td>T3</td><td class="ok">OK</td><td class="num">704 ms</td><td class="num">10</td><td class="err"></td></tr><tr><td>gnews_tw_taistock</td><td>Google News — 台股（中文）</td><td>T3</td><td class="ok">OK</td><td class="num">704 ms</td><td class="num">10</td><td class="err"></td></tr><tr><td>gnews_tw_tsmc</td><td>Google News — 台積電（中文）</td><td>T3</td><td class="ok">OK</td><td class="num">789 ms</td><td class="num">10</td><td class="err"></td></tr><tr><td>gnews_tw_fed</td><td>Google News — 聯準會（中文）</td><td>T3</td><td class="ok">OK</td><td class="num">584 ms</td><td class="num">10</td><td class="err"></td></tr><tr><td>gnews_tw_usstock</td><td>Google News — 美股（中文）</td><td>T3</td><td class="ok">OK</td><td class="num">499 ms</td><td class="num">10</td><td class="err"></td></tr><tr><td>gnews_tw_cbtwd</td><td>Google News — 央行／新台幣（中文）</td><td>T3</td><td class="ok">OK</td><td class="num">793 ms</td><td class="num">10</td><td class="err"></td></tr><tr><td>ff_calendar</td><td>ForexFactory — 本週經濟日曆</td><td>T2</td><td class="ok">OK</td><td class="num">83 ms</td><td class="num">23</td><td class="err"></td></tr></tbody></table></div>
 </div>
-<footer class="imq-foot"><div>© 2026 InvestMQuest Research</div><div><a href="/disclosures.html">方法論與揭露</a> · 本頁為機械聚合＋LLM 摘要，卡片內容為第三方來源之摘要，正確性以原文為準，不構成投資建議</div></footer>
+<footer class="imq-foot"><div class="in"><div>本頁為機械聚合＋LLM 摘要：固定來源清單每日抓取 → 規則過濾 → 分類與中文摘要 →靜態渲染；儀表與轉折警示取自站內既有監測管線，卡片內容為第三方來源之摘要，正確性以原文為準。</div><div><a href="/monitor/">市場監測</a> <span class="sep">·</span> <a href="/detective/">主題偵測</a> <span class="sep">·</span> <a href="/crowding/">擁擠交易</a> <span class="sep">·</span> <a href="/intel/archive.html">歷史</a> <span class="sep">·</span> <a href="/intel/status.html">狀態</a> <span class="sep">·</span> <a href="/disclosures.html">方法論與揭露</a></div><div>聲明：本頁為市場狀態的描述器，只陳述觀察到的數字與新聞，不做買賣建議、不預測價格。© 2026 InvestMQuest Research</div></div></footer>
 </body>
 </html>

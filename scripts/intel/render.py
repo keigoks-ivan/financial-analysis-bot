@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""scripts/intel/render.py — Phase 1 static renderer for /intel/.
+"""scripts/intel/render.py — 靜態渲染器 for /intel/（版型 A）。
 
 對應 notes/site-internal/intel/DESIGN.md §11（卡片 schema）／§12（頁面，版型決議
 A，2026-08-19）／§14（防護）。本檔零判斷、零 LLM：讀 `docs/intel/data/{date}.json`
@@ -7,8 +7,18 @@ A，2026-08-19）／§14（防護）。本檔零判斷、零 LLM：讀 `docs/int
 `docs/intel/pending/{date}.json`（只有原始抓取，尚未分類摘要）並在頁面上標示
 banner，讓頁面永遠不 404、不悄悄失真。
 
+版面（2026-08-19 重製）：
+    1. masthead        標題＋日期＋更新時間＋狀態 chips＋歷史／狀態連結
+    2. 儀表列          13 格：label／大數字 value／metric·chg·分位 pill，左側狀態色條
+    3. 轉折警示        表格：等級 pill｜主題｜指標｜現值｜門檻｜距離｜來源
+    4. 市場早報        雙欄：早報段落 ＋ aside（今日焦點／7 日日曆／資料狀態）
+    5. 市場／產業／個股 密集列表，依類別分組；其他標題（未摘要）；傳聞（T3/T4）
+    6. footer          方法說明＋站內連結＋聲明
+
 CLI:
     python3 scripts/intel/render.py --date 2026-08-19
+    python3 scripts/intel/render.py --date 2026-08-19 --data <json> --out <dir>
+        （--data／--out 為測試用：直接指定輸入 JSON 與輸出目錄，不動 docs/。）
 
 輸出：
     docs/intel/index.html          今日（= --date 那天）
@@ -23,9 +33,12 @@ CLI:
       並照樣跳脫），達成「來源文字是資料不是指令」（DESIGN §14）。
     - 站外連結一律加 rel="noopener nofollow"。
 
+相容性：所有新欄位（gauges.metric/pctile/chg、flags 的結構化欄位、calendar 的
+time/impact/country/forecast/previous、cards 的 summarized/source_short）皆為
+選填；缺席時退回舊行為，不得因此壞版或出現半截句子。
+
 決定性：輸出不嵌入渲染當下的 wall-clock 時間戳（唯一用到「現在」的地方是
-status.html 頁尾「stale 警告」的判斷本身，這是刻意的活判斷，不是渲染噪音——
-同一份輸入在 30 小時視窗內重跑會得到 byte-identical 輸出）。
+stale 警告的判斷本身，這是刻意的活判斷，不是渲染噪音）。
 """
 from __future__ import annotations
 
@@ -50,6 +63,7 @@ HEALTH_FILE = DATA_DIR / "sources_health.json"
 
 TAIPEI_OFFSET = timedelta(hours=8)
 STALE_HOURS = 30
+DASH = "—"
 
 WEEKDAY_ZH = ["一", "二", "三", "四", "五", "六", "日"]
 
@@ -63,9 +77,31 @@ GAUGE_LABEL_ZH = {
     "positioning": "部位", "econ": "經濟數據", "cb": "央行財政",
     "geo": "地緣", "regime": "regime", "asia": "亞洲",
 }
+# 產業／個股層才會出現的類別（市場層 13 類沿用 GAUGE_LABEL_ZH）。
+INDUSTRY_LABEL_ZH = {
+    "semis": "半導體", "ai": "AI", "ev": "電動車", "battery": "電池",
+    "robotics": "機器人", "logistics": "物流", "renewable-energy": "再生能源",
+    "automation": "自動化", "software": "軟體", "cloud": "雲端",
+    "biotech": "生技", "healthcare": "醫療", "defense": "國防",
+    "materials": "材料", "chemical": "化學材料", "energy": "能源",
+    "consumer": "消費", "retail": "零售", "financials": "金融",
+    "industrials": "工業", "telecom": "電信", "property": "房地產",
+    "crypto": "加密資產", "autos": "汽車", "aerospace": "航太",
+    "shipping": "航運", "tourism": "觀光", "process-node": "先進製程",
+    "gpu": "GPU", "llm": "大型語言模型", "other": "其他",
+}
+
+
+def cat_label(cat: str) -> str:
+    cat = cat or ""
+    return GAUGE_LABEL_ZH.get(cat) or INDUSTRY_LABEL_ZH.get(cat) or cat or "其他"
+
 
 LEVEL_ORDER = ["market", "industry", "company"]
 LEVEL_LABEL_ZH = {"market": "市場", "industry": "產業", "company": "個股"}
+
+FLAG_ORDER = {"confirmed": 0, "near": 1, "thesis": 2}
+FLAG_LABEL = {"confirmed": "已確認", "near": "接近中", "thesis": "論點"}
 
 
 # ------------------------------------------------------------------ json io
@@ -207,10 +243,11 @@ def to_taipei(dt: datetime) -> datetime:
     return dt + TAIPEI_OFFSET
 
 
-def fmt_hm(iso_s) -> str:
+def fmt_hm(iso_s, dash: str = DASH) -> str:
+    """台北時間 HH:MM；無時間戳一律回 dash（不再輸出 "--:--"）。"""
     dt = parse_iso(iso_s)
     if dt is None:
-        return "--:--"
+        return dash
     tp = to_taipei(dt)
     return f"{tp.hour:02d}:{tp.minute:02d}"
 
@@ -218,93 +255,246 @@ def fmt_hm(iso_s) -> str:
 def fmt_full(iso_s) -> str:
     dt = parse_iso(iso_s)
     if dt is None:
-        return "—"
+        return DASH
     tp = to_taipei(dt)
     return f"{tp.year:04d}-{tp.month:02d}-{tp.day:02d} {tp.hour:02d}:{tp.minute:02d}"
 
 
-def weekday_zh(d: "datetime.date") -> str:
+def weekday_zh(d) -> str:
     return WEEKDAY_ZH[d.weekday()]
 
 
+def card_time(card) -> str:
+    return card.get("published") or card.get("published_at") or card.get("fetched_at")
+
+
 def sort_epoch(card) -> float:
-    dt = parse_iso(card.get("published") or card.get("published_at") or card.get("fetched_at"))
+    dt = parse_iso(card_time(card))
     return dt.timestamp() if dt else 0.0
+
+
+def card_sort_key(card):
+    return (-int(card.get("importance") or 1), -int(card.get("corroboration") or 1),
+            -sort_epoch(card))
+
+
+def fmt_num(v) -> str:
+    if v is None or v == "":
+        return ""
+    if isinstance(v, bool):
+        return str(v)
+    if isinstance(v, float):
+        return f"{v:g}"
+    return str(v)
 
 
 # ------------------------------------------------------------------ gauges
 
+def _pct_pill(pctile) -> str:
+    if pctile is None or pctile == "":
+        return ""
+    try:
+        p = float(pctile)
+    except (TypeError, ValueError):
+        return ""
+    cls = "pct hot" if p >= 90 else "pct cold" if p <= 10 else "pct"
+    return f'<span class="{cls}" title="一年分位">分位 {esc(f"{p:g}")}</span>'
+
+
+def _chg_span(chg) -> str:
+    chg = (chg or "").strip()
+    if not chg:
+        return ""
+    cls = "chg up" if chg.startswith("▲") else "chg dn" if chg.startswith("▼") else "chg"
+    return f'<span class="{cls}">{esc(chg)}</span>'
+
+
 def render_gauges(gauges: list) -> str:
     if not gauges:
-        return '<div class="gauges"><div class="row empty">今日儀表資料尚未產出。</div></div>'
-    rows = []
+        return '<div class="empty">今日儀表資料尚未產出。</div>'
+    tiles = []
     for g in gauges:
         status = (g.get("status") or "green").lower()
-        cls = "crit" if status == "red" else "warn" if status == "yellow" else ""
-        cls_attr = f"g {cls}" if cls else "g"
-        label = esc(g.get("label") or g.get("category") or "")
-        value = esc(g.get("value") or "")
-        delta = esc(g.get("delta") or "")
-        rows.append(
-            f'<div class="{cls_attr}"><span class="dot"></span>'
-            f'<span class="name">{label}</span>'
-            f'<span class="v mono">{value}</span>'
-            f'<span class="d">{delta}</span></div>'
+        cls = "g crit" if status == "red" else "g warn" if status == "yellow" else "g"
+        label = esc(g.get("label") or cat_label(g.get("category")))
+        value = (g.get("value") or "").strip()
+        metric = (g.get("metric") or "").strip()
+        delta = (g.get("delta") or "").strip()
+        pct = _pct_pill(g.get("pctile"))
+        chg = _chg_span(g.get("chg"))
+
+        if metric:
+            # 新格式：value 是短數字、metric 是 ≤10 字序列名。
+            val_html = f'<div class="val" title="{esc(value)}">{esc(value) or DASH}</div>'
+            sub_bits = [f'<span class="m" title="{esc(metric)}">{esc(metric)}</span>']
+            if chg:
+                sub_bits.append(chg)
+            if pct:
+                sub_bits.append(pct)
+            sub_html = f'<div class="sub">{"".join(sub_bits)}</div>'
+        else:
+            # 舊格式：value／delta 可能是整句 — 夾住行數，永不出現半截字。
+            val_html = f'<div class="val long" title="{esc(value)}">{esc(value) or DASH}</div>'
+            sub_bits = []
+            if delta:
+                sub_bits.append(f'<span class="m" title="{esc(delta)}">{esc(delta)}</span>')
+            if chg:
+                sub_bits.append(chg)
+            if pct:
+                sub_bits.append(pct)
+            sub_html = (
+                f'<div class="sub long">{"".join(sub_bits)}</div>' if sub_bits else ""
+            )
+        tiles.append(
+            f'<div class="{cls}">'
+            f'<div class="lab"><span class="dot"></span>{label}</div>'
+            f"{val_html}{sub_html}</div>"
         )
-    return '<div class="gauges" aria-label="市場儀表">\n' + "\n".join(rows) + "\n</div>"
+    return '<div class="gauges" aria-label="市場儀表">\n' + "\n".join(tiles) + "\n</div>"
 
 
 # ------------------------------------------------------------------- flags
 
-FLAG_LABEL = {"near": "⚠ 接近中", "confirmed": "🔴 已確認", "thesis": "🔴 論點連結"}
+def _flag_link(fl) -> str:
+    link = fl.get("link") or ""
+    if not (link and _safe_href(link)):
+        return f'<span class="mut">{DASH}</span>'
+    text = "報告 ↗" if link.startswith("/macro/") or link.startswith("/id/") else "詳情 ↗"
+    return f'<a href="{esc(link)}" rel="noopener nofollow">{esc(text)}</a>'
+
+
+def _dist_cell(fl) -> str:
+    d = fl.get("distance_pct")
+    if (fl.get("level") or "").lower() == "confirmed" and d in (None, ""):
+        return '<div class="dist"><div class="bar"><i style="width:100%"></i></div>' \
+               '<span class="dv">已觸發</span></div>'
+    try:
+        v = float(d)
+    except (TypeError, ValueError):
+        return f'<span class="dv">{DASH}</span>'
+    prox = 100.0 - abs(v)
+    prox = 0.0 if prox < 0 else 100.0 if prox > 100 else prox
+    return (
+        f'<div class="dist"><div class="bar" role="img" aria-label="距離門檻 {esc(f"{v:g}")}%">'
+        f'<i style="width:{prox:.0f}%"></i></div>'
+        f'<span class="dv">{esc(f"{abs(v):g}")}%</span></div>'
+    )
+
+
+FLAG_HEAD = (
+    "<thead><tr><th>等級</th><th>主題</th><th>指標</th><th>現值</th>"
+    "<th>門檻</th><th>距離</th><th>來源</th></tr></thead>"
+)
+FLAG_HEAD_PLAIN = "<thead><tr><th>等級</th><th>內容</th><th>來源</th></tr></thead>"
+
+
+def _flag_structured(fl) -> bool:
+    return bool(
+        (fl.get("metric") or "").strip()
+        or (fl.get("theme") or "").strip()
+        or fmt_num(fl.get("value"))
+        or fmt_num(fl.get("threshold"))
+    )
 
 
 def render_flags(flags: list) -> str:
     if not flags:
-        return ""
-    out = []
-    for fl in flags:
+        return '<div class="empty">今日無轉折警示。</div>'
+    ordered = sorted(
+        flags, key=lambda f: FLAG_ORDER.get((f.get("level") or "near").lower(), 3)
+    )
+    any_structured = any(_flag_structured(f) for f in ordered)
+    rows = []
+    for fl in ordered:
         level = (fl.get("level") or "near").lower()
-        hard = " hard" if level in ("confirmed", "thesis") else ""
-        label = FLAG_LABEL.get(level, "⚠ 接近中")
-        text = esc(fl.get("text_zh") or "")
-        link = fl.get("link") or ""
-        body = f'<span class="k">{esc(label)}</span>{text}'
-        if link and _safe_href(link):
-            body += f' <a href="{esc(link)}" rel="noopener nofollow">詳情</a>'
-        out.append(f'<div class="flag{hard}">{body}</div>')
-    return "\n".join(out)
+        if level not in FLAG_LABEL:
+            level = "near"
+        pill = f'<span class="pill {level}">{FLAG_LABEL[level]}</span>'
+        metric = (fl.get("metric") or "").strip()
+        value = fmt_num(fl.get("value"))
+        threshold = fmt_num(fl.get("threshold"))
+        theme = (fl.get("theme") or "").strip()
+        if _flag_structured(fl):
+            rows.append(
+                f'<tr class="{level}"><td class="lv">{pill}</td>'
+                f'<td class="thm">{esc(theme) or DASH}</td>'
+                f"<td>{esc(metric) or DASH}</td>"
+                f'<td class="num">{esc(value) or DASH}</td>'
+                f'<td class="num">{esc(threshold) or DASH}</td>'
+                f"<td>{_dist_cell(fl)}</td>"
+                f"<td>{_flag_link(fl)}</td></tr>"
+            )
+        else:
+            text = esc(fl.get("text_zh") or "")
+            span = 5 if any_structured else 1
+            rows.append(
+                f'<tr class="{level}"><td class="lv">{pill}</td>'
+                f'<td class="span" colspan="{span}">{text}</td>'
+                f"<td>{_flag_link(fl)}</td></tr>"
+            )
+    cls = "t flags" if any_structured else "t flags plain"
+    return (
+        f'<div class="twrap"><table class="{cls}">'
+        + (FLAG_HEAD if any_structured else FLAG_HEAD_PLAIN)
+        + "<tbody>"
+        + "".join(rows)
+        + "</tbody></table></div>"
+    )
 
 
 # -------------------------------------------------------------------- brief
 
+_LEAD_B_RE = re.compile(r"^\s*<b>(.{1,14}?)</b>")
+
+
 def render_brief(brief_zh: list) -> str:
     if not brief_zh:
-        return '<p class="note">今日市場早報尚未產出。</p>'
-    paras = [f"<p>{sanitize_brief(p)}</p>" for p in brief_zh]
+        return '<div class="empty">今日市場早報尚未產出。</div>'
+    paras = []
+    for i, raw in enumerate(brief_zh):
+        body = sanitize_brief(raw)
+        body = _LEAD_B_RE.sub(lambda m: f'<b class="lead-chip">{m.group(1)}</b>', body, count=1)
+        cls = ' class="lead"' if i == 0 else ""
+        paras.append(f"<p{cls}>{body}</p>")
     return '<div class="brief">\n' + "\n".join(paras) + "\n</div>"
 
 
-# --------------------------------------------------------------- card rows
+# --------------------------------------------------------------- card bits
 
 def is_rumor(card) -> bool:
-    return card.get("kind") == "rumor" or card.get("source_tier") in ("T3", "T4")
+    return bool(
+        card.get("is_rumor")
+        or card.get("kind") == "rumor"
+        or card.get("source_tier") in ("T3", "T4")
+    )
 
 
-def card_source_label(card, sources_meta) -> str:
-    tier = card.get("source_tier") or ""
-    name = card.get("source_name") or card.get("source") or ""
+def is_title_only(card) -> bool:
+    return card.get("summarized") is False
+
+
+def source_short(card) -> str:
+    """≤10 字的來源短名：優先用 source_short，否則從 source_name 砍掉破折號／
+    括號後的補述。長度由 CSS 省略號負責，這裡只做語意裁切。"""
+    s = (card.get("source_short") or "").strip()
+    if s:
+        return s
+    name = (card.get("source_name") or card.get("source") or "").strip()
     if not name:
-        meta = sources_meta.get(card.get("source_id") or "")
-        name = meta["name"] if meta else (card.get("source_id") or "")
-    corrob = card.get("corroboration") or 1
-    if card.get("kind") == "data":
-        return f"數據 · {esc(name)}"
-    if is_rumor(card):
-        return f"{esc(tier)} · 傳聞"
-    if corrob and corrob >= 2:
-        return f"{esc(tier)} · {corrob} 源"
-    return f"{esc(tier)} · {esc(name)}" if name else esc(tier)
+        return ""
+    for sep in (" — ", " – ", " - ", "—", "（", "(", "｜", "|", "："):
+        if sep in name:
+            name = name.split(sep, 1)[0].strip()
+            break
+    return name.strip(" ·")
+
+
+def tier_badge(card) -> str:
+    tier = (card.get("source_tier") or "").strip()
+    if not tier:
+        return ""
+    cls = "tier " + tier.lower()
+    return f'<span class="{cls}">{esc(tier)}</span>'
 
 
 def card_tags_html(card) -> str:
@@ -314,26 +504,17 @@ def card_tags_html(card) -> str:
     tickers = tags.get("tickers") or []
     if propagated:
         out.append(f'<span class="tag p">→ {esc(" · ".join(propagated))}</span>')
-    elif tickers and card.get("level") != "company":
-        out.append(f'<span class="tag p">→ {esc(" · ".join(tickers))}</span>')
+    elif tickers:
+        out.append(f'<span class="tag p">{esc(" · ".join(tickers[:3]))}</span>')
     if is_rumor(card):
         out.append('<span class="tag r">傳聞</span>')
     return "".join(out)
 
 
-def card_lvl_label(card) -> str:
-    tags = card.get("tags") or {}
-    tickers = tags.get("tickers") or []
-    themes = tags.get("themes") or []
-    if tickers:
-        return " · ".join(tickers[:3])
-    if themes:
-        return themes[0]
-    return card.get("level") or ""
-
-
-_DATA_KEYS = (("value", "現值"), ("pctile", "分位"), ("threshold", "門檻"), ("change_20d", "20 日變化"),
-              ("prev", "前值"), ("status", "狀態"), ("as_of", "截至"), ("rule", "規則"), ("severity", "等級"))
+_DATA_KEYS = (("value", "現值"), ("pctile", "分位"), ("threshold", "門檻"),
+              ("change_20d", "20 日變化"), ("prev", "前值"), ("status", "狀態"),
+              ("as_of", "截至"), ("rule", "規則"), ("severity", "等級"),
+              ("series", "序列"))
 
 
 def render_data_line(data) -> str:
@@ -345,137 +526,282 @@ def render_data_line(data) -> str:
         v = data.get(key)
         if v is None or v == "":
             continue
-        if isinstance(v, float):
-            v = f"{v:g}"
-        parts.append(f"{label} {esc(str(v))}")
+        parts.append(f"{label} {esc(fmt_num(v))}")
     if data.get("doc"):
         parts.append(f'<a href="/{esc(str(data["doc"]).replace("docs/", "", 1))}">相關報告</a>')
-    return (" <span class=\"mono\">" + " · ".join(parts) + "</span>") if parts else ""
+    return ('<div class="mono">' + " · ".join(parts) + "</div>") if parts else ""
 
 
-def render_row(card, sources_meta, lvl_text=None) -> str:
-    t = fmt_hm(card.get("published") or card.get("published_at") or card.get("fetched_at"))
+_TITLE_PREFIX_RE = re.compile(r"^\s*\[[^\]]{1,20}\]\s*")
+
+
+_KEY_PREFIX_RE = re.compile(r"^[a-z0-9_]{2,24}：")
+
+
+def _card_title(card) -> str:
+    t = card.get("summary_zh") or card.get("title") or ""
+    if card.get("kind") == "data":
+        t = _KEY_PREFIX_RE.sub("", _TITLE_PREFIX_RE.sub("", t))
+    return esc(t)
+
+
+def render_row(card, sources_meta=None) -> str:
+    """一列 = <details>；<summary> 本身是整條 grid（時間｜重要度｜標題｜來源｜tier+chevron）。
+    未摘要（summarized == False）的卡片改用純 <div>，不掛 chevron。"""
+    t = fmt_hm(card_time(card))
     imp = int(card.get("importance") or 1)
     imp = 1 if imp < 1 else 3 if imp > 3 else imp
-    cat = esc(card.get("category") or "")
-    src = card_source_label(card, sources_meta)
-    title = esc(card.get("summary_zh") or card.get("title") or "")
-    why = esc(card.get("why_zh") or "")
+    title = _card_title(card)
+    src = esc(source_short(card))
+    tier = tier_badge(card)
     url = card.get("url") or ""
-    src_name = esc(card.get("source_name") or card.get("source") or "")
-    tags_html = card_tags_html(card)
-    lvl = esc(lvl_text if lvl_text is not None else card_lvl_label(card))
-    link_html = (
-        f' <a href="{esc(url)}" rel="noopener nofollow">{src_name or "來源"}</a>'
-        if url and _safe_href(url) else ""
+    safe_url = url if (url and _safe_href(url)) else ""
+
+    head_cells = (
+        f'<span class="t">{esc(t)}</span>'
+        f'<span class="imp i{imp}" aria-hidden="true"></span>'
     )
-    data_html = render_data_line(card.get("data"))
+
+    if is_title_only(card):
+        ttl = (
+            f'<span class="ti"><a href="{esc(safe_url)}" rel="noopener nofollow">{title}</a></span>'
+            if safe_url else f'<span class="ti">{title}</span>'
+        )
+        return (
+            '<div class="plain">' + head_cells + ttl
+            + f'<span class="src" title="{esc(card.get("source_name") or "")}">{src}</span>'
+            + f'<span class="end">{tier}</span></div>'
+        )
+
+    tags_html = card_tags_html(card)
+    why = esc(card.get("why_zh") or "")
+    summary_zh = esc(card.get("summary_zh") or "")
+    full_title = esc(card.get("title") or "")
+
+    body_bits = []
+    if summary_zh and summary_zh != title:
+        body_bits.append(f"<div>{summary_zh}</div>")
+    elif full_title and _TITLE_PREFIX_RE.sub("", full_title).strip() != title:
+        body_bits.append(f'<div class="why"><b>原標題：</b>{full_title}</div>')
     if why:
-        why_html = f"<b>為什麼重要：</b>{why}{data_html}{link_html}"
-    else:
-        why_html = (data_html + link_html).strip()
+        body_bits.append(f'<div class="why"><b>為什麼重要：</b>{why}</div>')
+    data_html = render_data_line(card.get("data"))
+    if data_html:
+        body_bits.append(data_html)
+
+    meta_bits = []
+    src_full = esc(card.get("source_name") or card.get("source") or "")
+    if src_full:
+        meta_bits.append(f"來源 {src_full}")
+    corrob = card.get("corroboration")
+    if corrob and int(corrob) >= 2:
+        meta_bits.append(f"{int(corrob)} 源交叉")
+    cat = card.get("category")
+    if cat:
+        meta_bits.append(esc(cat_label(cat)))
+    if safe_url:
+        meta_bits.append(f'<a href="{esc(safe_url)}" rel="noopener nofollow">原文 ↗</a>')
+    if meta_bits:
+        body_bits.append('<div class="meta">' + "".join(
+            f"<span>{b}</span>" for b in meta_bits) + "</div>")
+    if not body_bits:
+        body_bits.append('<div class="meta"><span>本卡無補充內容。</span></div>')
+
     return (
-        '<div class="row">'
-        f'<span class="t mono">{t}</span>'
-        f'<span class="imp i{imp}"></span>'
-        f'<span class="cat">{cat}</span>'
-        f'<span class="src">{src}</span>'
-        f'<div class="hd"><details><summary>{title}{tags_html}</summary>'
-        f'<div class="body">{why_html}</div></details></div>'
-        f'<span class="lvl">{lvl}</span>'
-        "</div>"
+        '<details class="r"><summary>'
+        + head_cells
+        + f'<span class="ti">{title}{tags_html}</span>'
+        + f'<span class="src" title="{src_full}">{src}</span>'
+        + f'<span class="end">{tier}<span class="chev" aria-hidden="true"></span></span>'
+        + "</summary>"
+        + '<div class="body">' + "".join(body_bits) + "</div></details>"
     )
 
 
 LIST_HEAD = (
-    '<div class="row head"><span>時間</span><span></span><span>類別</span>'
-    "<span>來源</span><span>標題</span><span></span></div>"
+    '<div class="head rowgrid"><span>時間</span><span></span><span>標題</span>'
+    '<span class="hsrc">來源</span><span>來源層級</span></div>'
 )
 
 
-def render_card_list(cards: list, sources_meta, empty_text: str) -> str:
+def group_header(label: str, n: int) -> str:
+    return f'<div class="grp">{esc(label)}<span class="c">{n}</span></div>'
+
+
+def render_grouped_list(cards: list, order: list, empty_text: str) -> str:
+    """依 category 分組（order 先、其餘依卡片數排序），空組略過。"""
     if not cards:
-        return f'<div class="list">{LIST_HEAD}<div class="row empty">{esc(empty_text)}</div></div>'
-    ordered = sorted(cards, key=lambda c: (-int(c.get("importance") or 1), -sort_epoch(c)))
-    rows = "\n".join(render_row(c, sources_meta) for c in ordered)
+        return f'<div class="list">{LIST_HEAD}<div class="empty">{esc(empty_text)}</div></div>'
+    by_cat = {}
+    for c in cards:
+        by_cat.setdefault(c.get("category") or "other", []).append(c)
+    seq = [c for c in order if c in by_cat]
+    seq += sorted((c for c in by_cat if c not in seq), key=lambda k: -len(by_cat[k]))
+    parts = [LIST_HEAD]
+    for cat in seq:
+        items = sorted(by_cat[cat], key=card_sort_key)
+        parts.append(group_header(cat_label(cat), len(items)))
+        parts.extend(render_row(c) for c in items)
+    return '<div class="list">' + "\n".join(parts) + "</div>"
+
+
+def render_flat_list(cards: list, empty_text: str) -> str:
+    if not cards:
+        return f'<div class="list">{LIST_HEAD}<div class="empty">{esc(empty_text)}</div></div>'
+    rows = "\n".join(render_row(c) for c in sorted(cards, key=card_sort_key))
     return f'<div class="list">{LIST_HEAD}\n{rows}\n</div>'
 
 
-def render_dense_feed(cards: list, sources_meta) -> str:
-    by_level = {lv: [] for lv in LEVEL_ORDER}
+def render_title_list(cards: list) -> str:
+    """未摘要卡片：兩欄標題清單（標題 + 來源 + 時間）。"""
+    if not cards:
+        return ""
+    items = []
+    for c in sorted(cards, key=card_sort_key):
+        title = _card_title(c)
+        url = c.get("url") or ""
+        h = (
+            f'<a href="{esc(url)}" rel="noopener nofollow">{title}</a>'
+            if url and _safe_href(url) else title
+        )
+        src = esc(source_short(c))
+        items.append(
+            '<div class="ti2">'
+            f'<span class="h">{h}</span>'
+            f'<span class="m">{esc(fmt_hm(card_time(c)))}</span>'
+            f'<span class="s">{src}</span>'
+            "</div>"
+        )
+    return '<div class="tlist">' + "\n".join(items) + "</div>"
+
+
+def render_dense_feed(cards: list) -> str:
+    """版型 B：全部卡片一行一則，依層級分組。"""
+    by_level = {}
     for c in cards:
         by_level.setdefault(c.get("level") or "market", []).append(c)
     parts = [LIST_HEAD]
     any_rows = False
-    for lv in LEVEL_ORDER + [k for k in by_level if k not in LEVEL_ORDER]:
+    seq = [lv for lv in LEVEL_ORDER if lv in by_level]
+    seq += [lv for lv in by_level if lv not in LEVEL_ORDER]
+    for lv in seq:
         items = by_level.get(lv) or []
         if not items:
             continue
         any_rows = True
-        ordered = sorted(items, key=lambda c: (-int(c.get("importance") or 1), -sort_epoch(c)))
-        parts.append(f'<div class="row grp">{esc(lv.capitalize())} · {esc(LEVEL_LABEL_ZH.get(lv, lv))}</div>')
-        parts.extend(render_row(c, sources_meta, lvl_text=lv) for c in ordered)
+        parts.append(group_header(LEVEL_LABEL_ZH.get(lv, lv), len(items)))
+        parts.extend(render_row(c) for c in sorted(items, key=card_sort_key))
     if not any_rows:
-        parts.append('<div class="row empty">今日尚無卡片。</div>')
+        parts.append('<div class="empty">今日尚無卡片。</div>')
     return '<div class="list">' + "\n".join(parts) + "</div>"
 
 
-# ----------------------------------------------------------------- calendar
+# ------------------------------------------------------------- aside boxes
+
+def render_focus(cards: list, n: int = 5) -> str:
+    pool = [c for c in cards if not is_rumor(c) and not is_title_only(c)]
+    top = sorted(pool, key=card_sort_key)[:n]
+    if not top:
+        return '<div class="box"><h3>今日焦點<span>Focus</span></h3>' \
+               '<div class="cal"><div class="none">今日尚無卡片。</div></div></div>'
+    items = []
+    for c in top:
+        imp = int(c.get("importance") or 1)
+        imp = 1 if imp < 1 else 3 if imp > 3 else imp
+        title = _card_title(c)
+        url = c.get("url") or ""
+        h = (
+            f'<a href="{esc(url)}" rel="noopener nofollow">{title}</a>'
+            if url and _safe_href(url) else f'<span class="h">{title}</span>'
+        )
+        mt = [esc(cat_label(c.get("category")))]
+        s = source_short(c)
+        if s:
+            mt.append(esc(s))
+        t = fmt_hm(card_time(c))
+        if t != DASH:
+            mt.append(esc(t))
+        items.append(
+            f'<li><span class="imp i{imp}" aria-hidden="true"></span>'
+            f'<span class="tx">{h}<span class="mt">'
+            + "".join(f"<span>{m}</span>" for m in mt)
+            + "</span></span></li>"
+        )
+    return (
+        '<div class="box"><h3>今日焦點<span>Focus</span></h3>'
+        '<ul class="focus">' + "\n".join(items) + "</ul></div>"
+    )
+
 
 def render_calendar(calendar: list, base_date) -> str:
-    """7 upcoming days, starting tomorrow (base_date+1 .. base_date+7) — "今天"
-    itself is already covered by the market brief / gauges above."""
+    """接下來 7 天（base_date+1 .. base_date+7）；今天本身已被早報／儀表覆蓋。"""
     by_date = {}
     for e in calendar or []:
         by_date.setdefault(e.get("date"), []).append(e)
-    days = []
+    items = []
     for i in range(1, 8):
         d = base_date + timedelta(days=i)
         ds = d.isoformat()
-        label = f"{weekday_zh(d)} {d.month:02d}-{d.day:02d}"
         events = by_date.get(ds) or []
-        if events:
-            ev_html = "".join(
-                f'<div class="e{" hi" if e.get("hi") else ""}">{esc(e.get("text") or "")}</div>'
-                for e in events
+        if not events:
+            continue
+        label = f"{d.month:02d}/{d.day:02d}（{weekday_zh(d)}）"
+        for e in events:
+            impact = (e.get("impact") or "").lower()
+            dot_cls = f"idot {impact}" if impact in ("high", "medium", "low") else "idot"
+            hi = " hi" if e.get("hi") or impact == "high" else ""
+            mt = []
+            if e.get("time"):
+                mt.append(esc(e["time"]))
+            if e.get("country"):
+                mt.append(esc(e["country"]))
+            if e.get("forecast") not in (None, ""):
+                mt.append("預估 " + esc(fmt_num(e["forecast"])))
+            if e.get("previous") not in (None, ""):
+                mt.append("前值 " + esc(fmt_num(e["previous"])))
+            mt_html = (
+                '<span class="mt">' + "".join(f"<span>{m}</span>" for m in mt) + "</span>"
+            ) if mt else ""
+            items.append(
+                f'<li><span class="d">{esc(label)}</span>'
+                f'<span class="ev{hi}"><span class="{dot_cls}" aria-hidden="true"></span>'
+                f'{esc(e.get("text") or "")}{mt_html}</span></li>'
             )
-        else:
-            ev_html = '<div class="e">—</div>'
-        days.append(f'<div class="d"><div class="w">{esc(label)}</div>{ev_html}</div>')
-    return '<div class="cal">\n' + "\n".join(days) + "\n</div>"
+    more = ""
+    if len(items) > 12:
+        more = f'<div class="mut" style="font-size:12px;margin-top:6px">…另有 {len(items) - 12} 項（見完整 JSON）</div>'
+        items = items[:12]
+    inner = (
+        '<ul class="cal">' + "\n".join(items) + "</ul>" + more
+        if items else '<div class="none">接下來 7 天無排定事件。</div>'
+    )
+    return '<div class="box"><h3>接下來 7 天<span>Calendar</span></h3>' + inner + "</div>"
 
 
-# ------------------------------------------------------------------- status
-
-def render_status_line(status: dict) -> str:
+def render_mini_status(status: dict, cards_n: int) -> str:
     if not status:
-        return ""
-    sources_ok = status.get("sources_ok")
-    sources_fail = status.get("sources_fail")
-    fetched = status.get("fetched")
-    kept = status.get("kept")
-    classified = status.get("classified")
-    summarized = status.get("summarized")
-    tokens = status.get("tokens") or {}
-    next_run = status.get("next_run")
-    parts = []
-    if sources_ok is not None:
-        total = (sources_ok or 0) + (sources_fail or 0)
-        parts.append(f"來源 {sources_ok}／{total} 正常")
-    if fetched is not None:
-        parts.append(
-            f"抓到 {fetched} · 留 {kept if kept is not None else '—'} · "
-            f"分類 {classified if classified is not None else '—'} · "
-            f"摘要 {summarized if summarized is not None else '—'}"
-        )
-    if tokens:
-        tok_str = " · ".join(f"{esc(k)} {v:,}" for k, v in tokens.items())
+        rows = [("卡片", str(cards_n))]
+    else:
+        ok, fail = status.get("sources_ok"), status.get("sources_fail")
+        tokens = status.get("tokens") or {}
         total_tok = sum(v for v in tokens.values() if isinstance(v, (int, float)))
-        parts.append(f"今日 token ≈ {total_tok:,}（{tok_str}）")
-    if next_run:
-        parts.append(f"下次：{esc(next_run)}")
-    spans = "".join(f"<span>{p}</span>" for p in parts)
-    return f'<div class="status mono">{spans}</div>'
+        rows = []
+        if ok is not None:
+            rows.append(("來源正常", f"{ok}／{(ok or 0) + (fail or 0)}"))
+        if status.get("fetched") is not None:
+            rows.append(("抓取 → 保留", f"{status.get('fetched')} → {status.get('kept', DASH)}"))
+        rows.append(("卡片", str(cards_n)))
+        if total_tok:
+            rows.append(("今日 token", f"{int(total_tok):,}"))
+        if status.get("next_run"):
+            rows.append(("下次排程", str(status["next_run"])))
+    body = "".join(f"<div><span>{esc(k)}</span><b>{esc(v)}</b></div>" for k, v in rows)
+    return (
+        '<div class="box"><h3>資料狀態<span>Status</span></h3>'
+        f'<div class="mini">{body}</div>'
+        '<div class="mini" style="margin-top:6px">'
+        '<a class="back" href="/intel/status.html">完整來源健康表 →</a></div></div>'
+    )
 
 
 # ---------------------------------------------------------------- page shell
@@ -495,7 +821,7 @@ def head(title: str, description: str, indexable: bool) -> str:
 <meta property="og:site_name" content="InvestMQuest Research">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 {css}
 </style>
@@ -503,12 +829,19 @@ def head(title: str, description: str, indexable: bool) -> str:
 
 
 FOOT = (
-    '<footer class="imq-foot">'
-    "<div>© 2026 InvestMQuest Research</div>"
-    '<div><a href="/disclosures.html">方法論與揭露</a> · '
-    "本頁為機械聚合＋LLM 摘要，卡片內容為第三方來源之摘要，正確性以原文為準，"
-    "不構成投資建議</div>"
-    "</footer>"
+    '<footer class="imq-foot"><div class="in">'
+    "<div>本頁為機械聚合＋LLM 摘要：固定來源清單每日抓取 → 規則過濾 → 分類與中文摘要 →"
+    "靜態渲染；儀表與轉折警示取自站內既有監測管線，卡片內容為第三方來源之摘要，"
+    "正確性以原文為準。</div>"
+    '<div><a href="/monitor/">市場監測</a> <span class="sep">·</span> '
+    '<a href="/detective/">主題偵測</a> <span class="sep">·</span> '
+    '<a href="/crowding/">擁擠交易</a> <span class="sep">·</span> '
+    '<a href="/intel/archive.html">歷史</a> <span class="sep">·</span> '
+    '<a href="/intel/status.html">狀態</a> <span class="sep">·</span> '
+    '<a href="/disclosures.html">方法論與揭露</a></div>'
+    "<div>聲明：本頁為市場狀態的描述器，只陳述觀察到的數字與新聞，"
+    "不做買賣建議、不預測價格。© 2026 InvestMQuest Research</div>"
+    "</div></footer>"
 )
 
 TOGGLE_SCRIPT = (
@@ -527,82 +860,132 @@ def banner_html(text: str, stale: bool = False) -> str:
     return f'<div class="{cls}">{text}</div>'
 
 
-def build_day_body(date_str: str, payload: dict, mode_note: str, archive_link: str) -> str:
+def _mast_chips(payload: dict, cards: list, archive_link: bool) -> str:
+    status = payload.get("status") or {}
+    chips = []
+    llm = (payload.get("llm") or "").strip()
+    if llm:
+        cls = "chip ok" if llm.lower() in ("ok", "正常") else "chip warn"
+        chips.append(f'<span class="{cls}">LLM <b>{esc(llm)}</b></span>')
+    ok, fail = status.get("sources_ok"), status.get("sources_fail")
+    if ok is not None:
+        total = (ok or 0) + (fail or 0)
+        cls = "chip ok" if not fail else "chip warn"
+        chips.append(f'<span class="{cls}">來源 <b>{ok}／{total}</b></span>')
+    chips.append(f'<span class="chip">卡片 <b>{len(cards)}</b></span>')
+    if archive_link:
+        chips.append('<a class="chip" href="/intel/">回今日</a>')
+    chips.append('<a class="chip" href="/intel/archive.html">歷史</a>')
+    chips.append('<a class="chip" href="/intel/status.html">狀態</a>')
+    return '<div class="chips">' + "".join(chips) + "</div>"
+
+
+def h2(zh: str, en: str, count=None) -> str:
+    cnt = f'<span class="cnt">{count}</span>' if count is not None else ""
+    return f'<h2>{esc(zh)}<span class="en">{esc(en)}</span>{cnt}</h2>'
+
+
+def build_day_body(date_str: str, payload: dict, mode_note: str, is_archive: bool) -> str:
     gauges = payload.get("gauges") or []
     flags = payload.get("flags") or []
     brief_zh = payload.get("brief_zh") or []
     cards = payload.get("cards") or []
     calendar = payload.get("calendar") or []
     status = payload.get("status") or {}
-    sources_meta = payload.get("_sources_meta") or {}
     generated_at = payload.get("generated_at")
 
-    industry_cards = [c for c in cards if c.get("level") == "industry" and not is_rumor(c)]
-    company_cards = [c for c in cards if c.get("level") == "company" and not is_rumor(c)]
-    rumor_cards = [c for c in cards if is_rumor(c)]
+    title_only = [c for c in cards if is_title_only(c)]
+    main = [c for c in cards if not is_title_only(c)]
+    rumor_cards = [c for c in main if is_rumor(c)]
+    solid = [c for c in main if not is_rumor(c)]
+    market_cards = [c for c in solid if (c.get("level") or "market") == "market"]
+    industry_cards = [c for c in solid if c.get("level") == "industry"]
+    company_cards = [c for c in solid if c.get("level") == "company"]
 
     base_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+    wd = weekday_zh(base_date)
+    when = fmt_hm(generated_at)
 
-    parts = []
-    parts.append('<div class="wrap">')
-    parts.append('<div class="top">')
-    when = fmt_hm(generated_at) if generated_at else "--:--"
-    parts.append(f'<h1>Intel 監視器<small>{esc(date_str)} · {esc(when)} 更新</small></h1>')
-    parts.append(
+    p = []
+    p.append('<div class="wrap">')
+
+    # 1. masthead
+    p.append('<div class="mast">')
+    p.append(
+        '<div class="ttl"><h1>全球金融市場監視器</h1>'
+        f'<div class="date">{esc(date_str)}（{wd}）'
+        f'　·　更新 <b>{esc(when)}</b> 台北時間</div></div>'
+    )
+    p.append(
         '<div class="seg" role="group" aria-label="版型">'
-        '<button type="button" data-set="brief" aria-pressed="true">A · 早報＋列表</button>'
+        '<button type="button" data-set="brief" aria-pressed="true">A · 早報</button>'
         '<button type="button" data-set="list" aria-pressed="false">B · 純列表</button>'
-        "</div></div>"
+        "</div>"
     )
+    p.append(_mast_chips(payload, cards, is_archive))
+    p.append("</div>")
+
     if mode_note:
-        parts.append(mode_note)
-    if archive_link:
-        parts.append(archive_link)
+        p.append(mode_note)
 
-    parts.append(render_gauges(gauges))
+    # 2. 儀表列
+    p.append(h2("儀表列", "Gauges", len(gauges) or None))
+    p.append(render_gauges(gauges))
 
-    parts.append('<section class="only-brief">')
-    flags_html = render_flags(flags)
-    if flags_html:
-        parts.append('<h2>Alerts <span class="zh">轉折提醒</span></h2>')
-        parts.append(flags_html)
-    parts.append('<h2>Market <span class="zh">市場早報</span></h2>')
-    parts.append(render_brief(brief_zh))
-    parts.append('<h2>Industry <span class="zh">產業</span></h2>')
-    parts.append(render_card_list(industry_cards, sources_meta, "Phase 1 僅涵蓋市場層，產業層尚未上線。"))
-    parts.append('<h2>Company <span class="zh">個股</span></h2>')
-    parts.append(render_card_list(company_cards, sources_meta, "Phase 1 僅涵蓋市場層，個股層尚未上線。"))
-    parts.append('<h2>Rumor <span class="zh">傳聞</span></h2>')
-    parts.append(render_card_list(rumor_cards, sources_meta, "今日無 T3／T4 傳聞卡片。"))
-    parts.append("</section>")
+    # 3. 轉折警示
+    p.append(h2("轉折警示", "Alerts", len(flags) or None))
+    p.append(render_flags(flags))
 
-    parts.append('<section class="only-list">')
-    parts.append('<h2>Feed <span class="zh">全部一行一則，依層級分組</span></h2>')
-    parts.append(render_dense_feed(cards, sources_meta))
-    parts.append("</section>")
+    # 4. 市場早報（雙欄）
+    p.append('<section class="only-brief">')
+    p.append(h2("市場早報", "Brief"))
+    p.append('<div class="sheet"><div class="main">')
+    p.append(render_brief(brief_zh))
+    p.append("</div>")
+    p.append('<aside class="side">')
+    p.append(render_focus(main))
+    p.append(render_calendar(calendar, base_date))
+    p.append(render_mini_status(status, len(cards)))
+    p.append("</aside></div>")
 
-    parts.append('<h2>Next 7 days <span class="zh">接下來 7 天</span></h2>')
-    parts.append(render_calendar(calendar, base_date))
+    # 5. 卡片列表
+    p.append(h2("市場層", "Market", len(market_cards)))
+    p.append(render_grouped_list(market_cards, GAUGE_ORDER, "今日無市場層卡片。"))
 
-    parts.append('<h2>Status <span class="zh">狀態</span></h2>')
-    status_html = render_status_line(status)
-    parts.append(status_html or '<p class="note">今日狀態資料尚未產出。</p>')
-    parts.append(
-        '<p class="note">完整來源健康表見 '
-        '<a href="/intel/status.html">/intel/status.html</a>。</p>'
-    )
+    p.append(h2("產業層", "Industry", len(industry_cards)))
+    p.append(render_grouped_list(industry_cards, [], "今日無產業層卡片。"))
 
-    parts.append("</div>")  # .wrap
-    parts.append(FOOT)
-    parts.append(TOGGLE_SCRIPT)
-    return "\n".join(parts)
+    p.append(h2("個股層", "Company", len(company_cards)))
+    p.append(render_grouped_list(company_cards, [], "今日無個股層卡片。"))
+
+    if title_only:
+        p.append(h2("其他標題", "Headlines", len(title_only)))
+        p.append('<p class="note">以下為通過過濾但未進入摘要額度的標題，僅列原標題與來源。</p>')
+        p.append(render_title_list(title_only))
+
+    if rumor_cards:
+        p.append(h2("傳聞", "Rumor", len(rumor_cards)))
+        p.append('<p class="note">只收公開傳聞（T3／T4 來源），不做查證、不代表事實，僅供交叉比對。</p>')
+        p.append(render_flat_list(rumor_cards, "今日無 T3／T4 傳聞卡片。"))
+    p.append("</section>")
+
+    # 版型 B：純列表
+    p.append('<section class="only-list">')
+    p.append(h2("全部卡片", "Feed", len(cards)))
+    p.append(render_dense_feed(cards))
+    p.append("</section>")
+
+    p.append("</div>")  # .wrap
+    p.append(FOOT)
+    p.append(TOGGLE_SCRIPT)
+    return "\n".join(p)
 
 
 # ------------------------------------------------------------- data loading
 
-def resolve_day_payload(date_str: str, sources_meta: dict):
+def resolve_day_payload(date_str: str, sources_meta: dict, data_path: Path = None):
     """Return (payload, banner_html, is_stale). payload always has all keys."""
-    real_path = DATA_DIR / f"{date_str}.json"
+    real_path = data_path if data_path is not None else (DATA_DIR / f"{date_str}.json")
     pending_path = PENDING_DIR / f"{date_str}.json"
 
     if real_path.exists():
@@ -678,9 +1061,9 @@ def resolve_day_payload(date_str: str, sources_meta: dict):
 DATE_HTML_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})\.html$")
 
 
-def render_archive(current_date: str) -> str:
+def render_archive(current_date: str, out_dir: Path) -> str:
     dates = set()
-    for p in DOCS_INTEL.glob("*.html"):
+    for p in out_dir.glob("*.html"):
         m = DATE_HTML_RE.match(p.name)
         if m:
             dates.add(m.group(1))
@@ -695,9 +1078,11 @@ def render_archive(current_date: str) -> str:
         items.append(f'<li><a href="/intel/{esc(d)}.html">{esc(d)}（{wd}）</a></li>')
     body = [
         '<div class="wrap">',
-        '<div class="top"><h1>Intel 封存<small>依日期排列</small></h1></div>',
-        '<p class="note"><a class="back" href="/intel/">回今日</a></p>',
-        f'<ul class="arclist">{"".join(items)}</ul>' if items else '<p class="note">尚無封存頁面。</p>',
+        '<div class="mast"><div class="ttl"><h1>監視器封存</h1>'
+        '<div class="date">依日期排列</div></div>'
+        '<div class="chips"><a class="chip" href="/intel/">回今日</a>'
+        '<a class="chip" href="/intel/status.html">狀態</a></div></div>',
+        f'<ul class="arclist">{"".join(items)}</ul>' if items else '<div class="empty">尚無封存頁面。</div>',
         "</div>",
         FOOT,
     ]
@@ -721,20 +1106,20 @@ def render_status_page(date_str: str, payload: dict, sources_meta: dict) -> str:
         ok = bool(s.get("ok"))
         ok_html = '<td class="ok">OK</td>' if ok else '<td class="fail">FAIL</td>'
         latency = s.get("latency_ms")
-        latency_s = f"{latency} ms" if latency is not None else "—"
+        latency_s = f"{latency} ms" if latency is not None else DASH
         item_count = s.get("item_count")
-        item_s = item_count if item_count is not None else "—"
+        item_s = item_count if item_count is not None else DASH
         err = s.get("error") or ""
         err_s = (err[:140] + "…") if len(err) > 140 else err
         rows.append(
             "<tr>"
             f"<td>{esc(sid)}</td><td>{esc(name)}</td><td>{esc(tier)}</td>"
-            f"{ok_html}<td>{esc(latency_s)}</td><td>{esc(item_s)}</td>"
+            f'{ok_html}<td class="num">{esc(latency_s)}</td><td class="num">{esc(item_s)}</td>'
             f'<td class="err">{esc(err_s)}</td>'
             "</tr>"
         )
     table = (
-        '<div class="twrap"><table class="stbl"><thead><tr>'
+        '<div class="twrap"><table class="t stbl"><thead><tr>'
         "<th>source_id</th><th>名稱</th><th>tier</th><th>狀態</th>"
         "<th>延遲</th><th>抓到筆數</th><th>錯誤</th>"
         "</tr></thead><tbody>"
@@ -746,24 +1131,26 @@ def render_status_page(date_str: str, payload: dict, sources_meta: dict) -> str:
     cards = [
         ("健康檢查時間（台北）", esc(fmt_full(health.get("generated_at")))),
         ("今日產出時間（台北）", esc(fmt_full(generated_at))),
-        ("來源正常／失敗", f"{status.get('sources_ok', '—')} ／ {status.get('sources_fail', '—')}"),
-        ("抓到 → 保留", f"{status.get('fetched', '—')} → {status.get('kept', '—')}"),
-        ("分類 → 摘要", f"{status.get('classified', '—')} → {status.get('summarized', '—')}"),
-        ("今日 token", " · ".join(f"{k} {v:,}" for k, v in tokens.items()) or "—"),
-        ("下次排程", esc(status.get("next_run") or "—")),
+        ("來源正常／失敗", f"{status.get('sources_ok', DASH)} ／ {status.get('sources_fail', DASH)}"),
+        ("抓到 → 保留", f"{status.get('fetched', DASH)} → {status.get('kept', DASH)}"),
+        ("分類 → 摘要", f"{status.get('classified', DASH)} → {status.get('summarized', DASH)}"),
+        ("今日 token", " · ".join(f"{esc(k)} {v:,}" for k, v in tokens.items()) or DASH),
+        ("下次排程", esc(status.get("next_run") or DASH)),
     ]
     stat_html = "".join(
-        f'<div class="c"><div class="k">{k}</div><div class="v mono">{v}</div></div>'
+        f'<div class="c"><div class="k">{k}</div><div class="v">{v}</div></div>'
         for k, v in cards
     )
 
     body = [
         '<div class="wrap">',
-        '<div class="top"><h1>Intel 狀態<small>來源健康 · 每日用量</small></h1></div>',
-        f'<p class="note"><a class="back" href="/intel/">回今日</a> · '
-        f'<a class="back" href="/intel/archive.html">封存</a></p>',
+        '<div class="mast"><div class="ttl"><h1>監視器狀態</h1>'
+        f'<div class="date">{esc(date_str)} · 來源健康與每日用量</div></div>'
+        '<div class="chips"><a class="chip" href="/intel/">回今日</a>'
+        '<a class="chip" href="/intel/archive.html">歷史</a></div></div>',
+        h2("當日摘要", "Summary"),
         f'<div class="stat-cards">{stat_html}</div>',
-        "<h2>Sources <span class=\"zh\">來源健康</span></h2>",
+        h2("來源健康", "Sources"),
         table,
         "</div>",
         FOOT,
@@ -795,6 +1182,10 @@ def inject_nav(paths):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--date", required=True, help="YYYY-MM-DD")
+    ap.add_argument("--data", default=None,
+                    help="（測試用）直接指定輸入 JSON，略過 docs/intel/data/ 解析")
+    ap.add_argument("--out", default=None,
+                    help="（測試用）輸出目錄，預設 docs/intel/；非預設時不注入站台 nav")
     args = ap.parse_args()
     date_str = args.date
     try:
@@ -803,64 +1194,64 @@ def main():
         print(f"invalid --date: {date_str}", file=sys.stderr)
         sys.exit(1)
 
-    DOCS_INTEL.mkdir(parents=True, exist_ok=True)
+    out_dir = Path(args.out).resolve() if args.out else DOCS_INTEL
+    data_path = Path(args.data).resolve() if args.data else None
+    out_dir.mkdir(parents=True, exist_ok=True)
     sources_meta = load_sources_yml()
 
-    payload, banner, stale = resolve_day_payload(date_str, sources_meta)
+    payload, banner, stale = resolve_day_payload(date_str, sources_meta, data_path)
 
-    index_body = build_day_body(date_str, payload, banner, "")
+    index_body = build_day_body(date_str, payload, banner, is_archive=False)
     index_html = (
         head(
-            "全球情報監視器 — InvestMQuest Research",
-            "全球金融市場情報監視器：儀表列、市場早報、產業／個股卡片、傳聞與接下來 7 天日曆，機械聚合＋LLM 摘要每日更新。",
+            "全球金融市場監視器 — InvestMQuest Research",
+            "全球金融市場監視器：儀表列、轉折警示、市場早報、市場／產業／個股卡片與接下來 7 天日曆，機械聚合＋LLM 摘要每日更新。",
             indexable=True,
         )
         + "\n<body data-mode=\"brief\">\n"
         + index_body
         + "\n</body>\n</html>\n"
     )
-    index_path = DOCS_INTEL / "index.html"
+    index_path = out_dir / "index.html"
     index_path.write_text(index_html, encoding="utf-8")
 
-    archive_link = f'<p class="note"><a class="back" href="/intel/">回今日</a> · <a class="back" href="/intel/archive.html">封存</a></p>'
-    day_body = build_day_body(date_str, payload, banner, archive_link)
+    day_body = build_day_body(date_str, payload, banner, is_archive=True)
     day_html = (
         head(
-            f"{date_str} — Intel 監視器封存 — InvestMQuest Research",
-            f"{date_str} 全球情報監視器封存頁。",
+            f"{date_str} — 全球金融市場監視器封存 — InvestMQuest Research",
+            f"{date_str} 全球金融市場監視器封存頁。",
             indexable=False,
         )
         + "\n<body data-mode=\"brief\">\n"
         + day_body
         + "\n</body>\n</html>\n"
     )
-    day_path = DOCS_INTEL / f"{date_str}.html"
+    day_path = out_dir / f"{date_str}.html"
     day_path.write_text(day_html, encoding="utf-8")
 
     archive_html = (
-        head("Intel 封存 — InvestMQuest Research", "情報監視器歷史日期列表。", indexable=False)
+        head("監視器封存 — InvestMQuest Research", "全球金融市場監視器歷史日期列表。", indexable=False)
         + "\n<body>\n"
-        + render_archive(date_str)
+        + render_archive(date_str, out_dir)
         + "\n</body>\n</html>\n"
     )
-    archive_path = DOCS_INTEL / "archive.html"
+    archive_path = out_dir / "archive.html"
     archive_path.write_text(archive_html, encoding="utf-8")
 
     status_html = (
-        head("Intel 狀態 — InvestMQuest Research", "情報監視器來源健康與每日用量。", indexable=False)
+        head("監視器狀態 — InvestMQuest Research", "全球金融市場監視器來源健康與每日用量。", indexable=False)
         + "\n<body>\n"
         + render_status_page(date_str, payload, sources_meta)
         + "\n</body>\n</html>\n"
     )
-    status_path = DOCS_INTEL / "status.html"
+    status_path = out_dir / "status.html"
     status_path.write_text(status_html, encoding="utf-8")
 
-    inject_nav([index_path, day_path, archive_path, status_path])
+    if out_dir == DOCS_INTEL:
+        inject_nav([index_path, day_path, archive_path, status_path])
 
-    print(f"wrote {index_path}")
-    print(f"wrote {day_path}")
-    print(f"wrote {archive_path}")
-    print(f"wrote {status_path}")
+    for p in (index_path, day_path, archive_path, status_path):
+        print(f"wrote {p}")
 
 
 if __name__ == "__main__":

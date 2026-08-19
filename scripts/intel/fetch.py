@@ -48,8 +48,21 @@ TIMEOUT = 10
 LINK_CHECK_TIMEOUT = 5
 LINK_CHECK_TOP_N = 60
 FRESHNESS_HOURS = 36
-MAX_KEPT = 200
+MAX_KEPT = 350
 DEDUP_JACCARD = 0.85
+# 2026-08-19：來源擴充後同一事件常同時被直接來源與 Google News 聚合命中；
+# 這條較寬鬆的門檻只負責「跨來源」合併（見 dedup_cards 第二段），避免同日
+# 同事件在頁面上重複出現、卻仍保留 corroboration 計數。
+DEDUP_JACCARD_CROSS = 0.6
+
+# Google News RSS 聚合搜尋（kind: gnews）：逐則卡片依 <source> 標籤覆寫
+# source_name/source_short/source_tier，這份清單只決定「覆寫成 T2 還是 T3」
+# ——不在清單內一律 T3（聚合層預設，即使查到具名發布方）。比對前先轉小寫。
+GNEWS_MAJOR_PUBLISHERS = [
+    "reuters", "bloomberg", "cnbc", "wsj", "wall street journal",
+    "financial times", "ft.com", "associated press", "ap news",
+    "nikkei", "經濟日報", "工商時報", "鉅亨網", "中央社",
+]
 
 TIER_RANK = {"T1": 0, "T2": 1, "T3": 2, "T4": 3}
 
@@ -224,6 +237,190 @@ def fetch_rss_source(source: dict, health: Health) -> list[dict]:
         )
     health.record(sid, True, status, latency_ms, len(cards))
     return cards
+
+
+# ── Google News 主題聚合（kind: gnews）──────────────────────────────────
+def _gnews_tier_for(publisher: str, default_tier: str) -> str:
+    p = (publisher or "").lower()
+    if any(m in p for m in GNEWS_MAJOR_PUBLISHERS):
+        return "T2"
+    return default_tier if default_tier in ("T2", "T3") else "T3"
+
+
+def _gnews_short(publisher: str) -> str:
+    """≤8 字短名：具名主流媒體用慣用縮寫，其餘直接截斷（CJK 也算一個字元）。"""
+    p = (publisher or "").strip()
+    lower = p.lower()
+    known = {
+        "reuters": "Reuters", "bloomberg": "Bloomberg", "cnbc": "CNBC",
+        "wsj": "WSJ", "wall street journal": "WSJ",
+        "financial times": "FT", "ft.com": "FT",
+        "associated press": "AP", "ap news": "AP",
+        "nikkei": "Nikkei", "經濟日報": "經濟日報", "工商時報": "工商時報",
+        "鉅亨網": "鉅亨網", "cnyes": "鉅亨網", "中央社": "中央社",
+        "investor's business daily": "IBD", "marketwatch": "MktWatch",
+        "barron": "Barron's", "udn": "UDN", "ltn": "自由財經", "ctee": "工商時報",
+        "economist": "Economist", "guardian": "Guardian", "yahoo": "Yahoo",
+        "new york times": "NYT", "washington post": "WaPo",
+    }
+    for k, v in known.items():
+        if k in lower:
+            return v
+    return _smart_short(p) if p else "GNews"
+
+
+def _smart_short(name: str, limit: int = 14) -> str:
+    """短名不硬切字：CJK 直接取前 8 字；拉丁文先去 The/網域尾巴，超長就切到
+    最後一個完整的字（例 "The Mighty Ducks Times" → "Mighty Ducks"）。"""
+    n = (name or "").strip()
+    if re.search(r"[\u4e00-\u9fff]", n):
+        return n[:8]
+    n = re.sub(r"^(the|www\.)\s*", "", n, flags=re.I)
+    n = re.sub(r"\.(com|net|org|tw|cn|jp|hk|co\.uk)(\.[a-z]{2})?$", "", n, flags=re.I)
+    if len(n) <= limit:
+        return n
+    words, out = n.split(), ""
+    for w in words:
+        if len(out) + len(w) + (1 if out else 0) > limit:
+            break
+        out = f"{out} {w}".strip()
+    return out or n[:limit]
+
+
+def fetch_gnews_source(source: dict, health: Health) -> list[dict]:
+    """Google News RSS 聚合搜尋：每則的真正發布方來自 <source> 標籤
+    （feedparser 解析為 entry.source.title），標題會被 Google News 加上
+    「 - 發布方」尾巴，這裡剝掉。tier/source_name/source_short 逐則覆寫，
+    sources.yml 上的 tier/short 只是找不到 <source> 時的保守預設值。"""
+    sid = source["id"]
+    ok, status, latency_ms, text, err = http_get(source["url"])
+    if not ok:
+        health.record(sid, False, status, latency_ms, 0, err)
+        return []
+    parsed = feedparser.parse(text)
+    entries = parsed.entries[: source.get("max_items", 10)]
+    cards = []
+    for e in entries:
+        raw_title = strip_html(e.get("title", ""), limit=260)
+        link = e.get("link", "") or ""
+        if not raw_title or not link:
+            continue
+        src_obj = e.get("source")
+        publisher = ""
+        if isinstance(src_obj, dict):
+            publisher = (src_obj.get("title") or "").strip()
+        if not publisher:
+            # fallback：標題本身就是「標題 - 發布方」格式
+            m = re.search(r"\s-\s([^-]+)$", raw_title)
+            if m:
+                publisher = m.group(1).strip()
+        # 去掉標題尾巴的 " - 發布方"
+        title = raw_title
+        if publisher and title.endswith(publisher):
+            title = title[: -len(publisher)].rstrip()
+            if title.endswith("-"):
+                title = title[:-1].rstrip()
+        summary = strip_html(e.get("summary", "") or e.get("description", ""), limit=400)
+        pub = parse_dt(e.get("published_parsed")) or parse_dt(e.get("updated_parsed"))
+        tier = _gnews_tier_for(publisher, source["tier"])
+        cards.append(
+            {
+                "kind": "news",
+                "level": source.get("level", "market"),
+                "category": source["category"],
+                "source_tier": tier,
+                "source_id": sid,
+                "source_name_override": publisher or source["name"],
+                "source_short_override": _gnews_short(publisher) if publisher else None,
+                "title": title or raw_title,
+                "url": link,
+                "published_at": iso(pub) if pub else None,
+                "lang": source.get("lang", "en"),
+                "summary_raw": summary,
+            }
+        )
+    health.record(sid, True, status, latency_ms, len(cards))
+    return cards
+
+
+# ── ForexFactory 經濟日曆（kind: ff_calendar，不產卡）───────────────────
+import xml.etree.ElementTree as ET
+from zoneinfo import ZoneInfo
+
+_ET_ZONE = ZoneInfo("America/New_York")
+_TPE_ZONE = ZoneInfo("Asia/Taipei")
+FF_CALENDAR_FILE = None  # set lazily from DATA_DIR in main() / module import
+
+
+def et_time_to_taipei(date_str: str, time_str: str) -> tuple[str | None, str | None]:
+    """ForexFactory 給的日期/時間是美東（ET，DST-aware）；轉台北（UTC+8，無 DST）。
+    回傳 (YYYY-MM-DD, HH:MM)；解析失敗（例如 "All Day"/"Tentative"）回傳
+    (None, None) —— 呼叫端保留原始欄位、只是不做時區換算。"""
+    time_str = (time_str or "").strip()
+    date_str = (date_str or "").strip()
+    if not time_str or not date_str:
+        return None, None
+    try:
+        dt_naive = datetime.strptime(f"{date_str} {time_str}", "%m-%d-%Y %I:%M%p")
+    except ValueError:
+        return None, None
+    dt_et = dt_naive.replace(tzinfo=_ET_ZONE)
+    dt_tpe = dt_et.astimezone(_TPE_ZONE)
+    return dt_tpe.strftime("%Y-%m-%d"), dt_tpe.strftime("%H:%M")
+
+
+def fetch_ff_calendar(source: dict, health: Health) -> list[dict]:
+    """回傳 CALENDAR 條目（不是卡片，不進 fetched_cards/pending.json）：
+    {date, time, country, text, hi, impact, forecast, previous, source, url}。
+    只保留 impact in (High, Medium) —— DESIGN 要求的「未來 7 天」窗口留給
+    summarize.py build_calendar 在渲染當下再過濾（本檔只負責忠實轉換這週的
+    ForexFactory 排程）。單一來源失敗非致命：回傳 []，呼叫端不寫檔即可。"""
+    sid = source["id"]
+    ok, status, latency_ms, text, err = http_get(source["url"])
+    if not ok:
+        health.record(sid, False, status, latency_ms, 0, err)
+        return []
+    try:
+        root = ET.fromstring(text)
+    except ET.ParseError as e:
+        health.record(sid, False, status, latency_ms, 0, f"bad xml: {e}")
+        return []
+
+    out = []
+    for ev in root.findall("event"):
+        impact = (ev.findtext("impact") or "").strip()
+        if impact not in ("High", "Medium"):
+            continue
+        title = (ev.findtext("title") or "").strip()
+        country = (ev.findtext("country") or "").strip()
+        date_raw = (ev.findtext("date") or "").strip()
+        time_raw = (ev.findtext("time") or "").strip()
+        if not title or not date_raw:
+            continue
+        date_tpe, time_tpe = et_time_to_taipei(date_raw, time_raw)
+        if not date_tpe:
+            # 轉換失敗（All Day/Tentative 等）：退回用原始 ET 日期，不換算時間。
+            try:
+                date_tpe = datetime.strptime(date_raw, "%m-%d-%Y").strftime("%Y-%m-%d")
+            except ValueError:
+                continue
+            time_tpe = None
+        out.append(
+            {
+                "date": date_tpe,
+                "time": time_tpe,
+                "country": country,
+                "text": f"{country} {title}".strip(),
+                "hi": impact == "High",
+                "impact": "high" if impact == "High" else "medium",
+                "forecast": (ev.findtext("forecast") or "").strip() or None,
+                "previous": (ev.findtext("previous") or "").strip() or None,
+                "source": "ForexFactory",
+                "url": (ev.findtext("url") or "").strip() or None,
+            }
+        )
+    health.record(sid, True, status, latency_ms, len(out))
+    return out
 
 
 # ── FRED CSV（kind: csv）─────────────────────────────────────────────────
@@ -599,6 +796,8 @@ def build_onsite_cards(state: dict) -> tuple[list[dict], dict]:
                     "op": it.get("op"),
                     "status": it.get("status"),
                     "doc": it.get("doc"),
+                    "theme": it.get("theme", item_id),
+                    "metric_text": it.get("metric_text", ""),
                 },
             }
 
@@ -668,7 +867,55 @@ def dedup_cards(cards: list[dict]) -> list[dict]:
 
     for c in merged:
         c.pop("_tokens", None)
-    return merged
+
+    # 第二段（2026-08-19 新增）：跨來源較寬鬆合併（jaccard >= DEDUP_JACCARD_CROSS，
+    # 同日），只在其中一則來自 Google News 聚合（source_id 前綴 gnews_）時觸發
+    # ——目的是讓 Google News 命中的同一則報導併入已存在的直接來源卡（記
+    # corroboration+1），不因措辭不同而在頁面上重複出現；不對兩則「都不是
+    # gnews」的卡片套用這條寬鬆門檻，避免不同事件因用詞相近被誤併。
+    news2 = [c for c in merged if c.get("kind") == "news"]
+    rest2 = [c for c in merged if c.get("kind") != "news"]
+    for c in news2:
+        c["_tokens2"] = norm_title_tokens(c.get("title", ""))
+
+    used2 = [False] * len(news2)
+    final_news: list[dict] = []
+    for i, c in enumerate(news2):
+        if used2[i]:
+            continue
+        group = [i]
+        for j in range(i + 1, len(news2)):
+            if used2[j]:
+                continue
+            other = news2[j]
+            if c.get("source_id") == other.get("source_id"):
+                continue
+            is_gnews_pair = (c.get("source_id") or "").startswith("gnews_") or (
+                other.get("source_id") or ""
+            ).startswith("gnews_")
+            if not is_gnews_pair:
+                continue
+            if c.get("published_at") and other.get("published_at"):
+                if c["published_at"][:10] != other["published_at"][:10]:
+                    continue
+            if jaccard(c["_tokens2"], other["_tokens2"]) >= DEDUP_JACCARD_CROSS:
+                group.append(j)
+        for j in group:
+            used2[j] = True
+        if len(group) == 1:
+            final_news.append(c)
+            continue
+        candidates = [news2[j] for j in group]
+        candidates.sort(key=lambda x: TIER_RANK.get(x["source_tier"], 9))
+        primary = candidates[0]
+        source_ids = {x.get("source_id") for x in candidates}
+        primary["corroboration"] = max(primary.get("corroboration", 1), len(source_ids))
+        final_news.append(primary)
+
+    for c in final_news:
+        c.pop("_tokens2", None)
+
+    return rest2 + final_news
 
 
 # ── 新鮮度 ───────────────────────────────────────────────────────────────
@@ -803,6 +1050,8 @@ def dispatch_source(source: dict, health: Health, state: dict) -> list[dict]:
     kind = source["kind"]
     if kind == "rss":
         return fetch_rss_source(source, health)
+    if kind == "gnews":
+        return fetch_gnews_source(source, health)
     if kind == "csv":
         return fetch_fred_source(source, health, state)
     if kind == "json":
@@ -811,6 +1060,7 @@ def dispatch_source(source: dict, health: Health, state: dict) -> list[dict]:
         return fetch_json_healthcheck_source(source, health)
     if kind == "html":
         return fetch_html_source(source, health)
+    # kind == "ff_calendar" 不回傳卡片，main() 另外用 fetch_ff_calendar() 呼叫。
     return []
 
 
@@ -819,14 +1069,26 @@ def main():
     ap.add_argument("--date", required=True, help="YYYY-MM-DD")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--only", default=None, help="只跑單一 source id（或 'onsite'）")
+    ap.add_argument("--out", default=None,
+                     help="覆寫 pending JSON 輸出路徑（測試用，預設 docs/intel/pending/{date}.json）")
+    ap.add_argument("--health-out", default=None,
+                     help="覆寫 sources_health.json 輸出路徑（測試用，預設 docs/intel/data/sources_health.json）")
+    ap.add_argument("--calendar-out", default=None,
+                     help="覆寫 ff_calendar.json 輸出路徑（測試用，預設 docs/intel/data/ff_calendar.json）")
+    ap.add_argument("--state-file", default=None,
+                     help="覆寫 state.json 讀寫路徑（測試用，預設 docs/intel/data/state.json，"
+                          "避免測試跑污染正式 first-seen/FRED band/polymarket 狀態）")
     args = ap.parse_args()
+
+    state_file = Path(args.state_file) if args.state_file else STATE_FILE
 
     now = now_utc()
     sources = load_sources()
     health = Health()
-    state = _load_json(STATE_FILE) or {}
+    state = _load_json(state_file) or {}
 
     fetched_cards: list[dict] = []
+    calendar_entries: list[dict] = []
     attempted = 0
     for source in sources:
         if not source.get("enabled", False):
@@ -835,6 +1097,9 @@ def main():
             continue
         attempted += 1
         try:
+            if source["kind"] == "ff_calendar":
+                calendar_entries.extend(fetch_ff_calendar(source, health))
+                continue
             fetched_cards.extend(dispatch_source(source, health, state))
         except Exception as e:  # noqa: BLE001 — 單一來源壞掉不能拖垮整批
             health.record(source["id"], False, None, None, 0, f"unhandled: {e}")
@@ -902,18 +1167,35 @@ def main():
         "sources": health.records,
     }
 
+    calendar_out = {
+        "schema": "intel-ff-calendar-v1",
+        "date": args.date,
+        "generated_at": iso(now),
+        "events": calendar_entries,
+    }
+
     if not args.dry_run:
-        pending_path = PENDING_DIR / f"{args.date}.json"
-        pending_path.write_text(
+        pending_out_path = Path(args.out) if args.out else (PENDING_DIR / f"{args.date}.json")
+        health_out_path = Path(args.health_out) if args.health_out else HEALTH_FILE
+        calendar_out_path = Path(args.calendar_out) if args.calendar_out else (DATA_DIR / "ff_calendar.json")
+        pending_out_path.parent.mkdir(parents=True, exist_ok=True)
+        health_out_path.parent.mkdir(parents=True, exist_ok=True)
+        calendar_out_path.parent.mkdir(parents=True, exist_ok=True)
+        pending_out_path.write_text(
             json.dumps(pending, ensure_ascii=False, indent=2, sort_keys=False) + "\n",
             encoding="utf-8",
         )
-        HEALTH_FILE.write_text(
+        health_out_path.write_text(
             json.dumps(health_out, ensure_ascii=False, indent=2, sort_keys=False) + "\n",
             encoding="utf-8",
         )
+        calendar_out_path.write_text(
+            json.dumps(calendar_out, ensure_ascii=False, indent=2, sort_keys=False) + "\n",
+            encoding="utf-8",
+        )
         state.update(onsite_updates)  # polymarket_probs 已由 fetch_polymarket_source 直接寫回 state dict
-        STATE_FILE.write_text(
+        state_file.parent.mkdir(parents=True, exist_ok=True)
+        state_file.write_text(
             json.dumps(state, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
             encoding="utf-8",
         )
@@ -921,6 +1203,7 @@ def main():
     print(
         f"[intel/fetch] date={args.date} attempted_sources={attempted} "
         f"ok={ok_sources} fail={fail_sources} fetched={total_fetched} kept={len(kept)} "
+        f"calendar_entries={len(calendar_entries)} "
         f"dropped(dup={dup_dropped},stale={stale_dropped},seen={unseen_dropped},deny={deny_dropped},cap={cap_dropped})"
     )
 

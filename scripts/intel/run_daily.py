@@ -32,6 +32,7 @@ from common import (
     iso,
     load_json,
     load_source_name_map,
+    load_source_short_map,
     now_utc,
     pending_path,
 )
@@ -39,11 +40,10 @@ from llm import Ledger
 from summarize import (
     build_calendar,
     build_digest,
-    build_flag_candidates,
-    build_monitor_snapshot,
-    fallback_flags,
-    fallback_gauges,
+    build_flags,
+    build_gauges,
     finalize_card,
+    passthrough_card,
     summarize_cards,
     summarize_data_card,
 )
@@ -86,6 +86,11 @@ def build_output(date: str, pending: dict, llm_available: bool) -> dict:
     all_cards = pending.get("cards", [])
     ledger = Ledger()
     name_map = load_source_name_map()
+    short_map = load_source_short_map()
+
+    # calendar 純 Python、跟 LLM 開關無關，先算好——gauges 的 cb 欄在沒有今日
+    # 央行卡片時要退而求其次找日曆裡最近的 FOMC 條目。
+    calendar = build_calendar(date)
 
     if not llm_available:
         print("[intel/run_daily] CLAUDE_CODE_OAUTH_TOKEN not set — LLM steps skipped, "
@@ -94,27 +99,34 @@ def build_output(date: str, pending: dict, llm_available: bool) -> dict:
         for c in data_cards:
             classify_data_card(c)
             summarize_data_card(c)
-        finalized = [finalize_card(c, name_map) for c in data_cards]
-        flag_candidates = build_flag_candidates(data_cards)
-        digest = {
-            "gauges": fallback_gauges(),
-            "brief_zh": [],
-            "flags": fallback_flags(flag_candidates),
-        }
+        finalized = [finalize_card(c, name_map, short_map) for c in data_cards]
+        gauges = build_gauges(data_cards, calendar)
+        flags = build_flags(data_cards)
+        brief_zh = []
         classified_count = len(data_cards)
         summarized_count = len(data_cards)
         llm_tag = "unavailable"
     else:
         result = classify(pending, ledger)
         selected = result["selected"]
+        selected_ids = {c["id"] for c in selected}
         summarized = summarize_cards(selected, ledger)
-        finalized = [finalize_card(c, name_map) for c in summarized["cards"]]
-        digest = build_digest(result["all"], finalized, ledger, name_map)
-        classified_count = len(selected)
+        # 2026-08-19：relevant 但沒擠進 stage 2（sonnet 每日額度／per-source cap）
+        # 的卡片不再整批消失——走 passthrough_card()（title-only，
+        # summarized:false），一樣進最終輸出。「回應內容有點空虛」的另一半
+        # 成因就是這裡：舊版只有進了 sonnet 的卡才會出現在頁面上。
+        passthrough = [
+            passthrough_card(c) for c in result["all"]
+            if c.get("relevant") and c["id"] not in selected_ids
+        ]
+        finalized = [finalize_card(c, name_map, short_map) for c in summarized["cards"] + passthrough]
+        digest = build_digest(result["all"], finalized, ledger, name_map, short_map)
+        gauges = build_gauges(result["all"], calendar)
+        flags = build_flags(result["all"])
+        brief_zh = digest["brief_zh"]
+        classified_count = sum(1 for c in result["all"] if c.get("relevant"))
         summarized_count = summarized["log"]["summarized"]
         llm_tag = "ok"
-
-    calendar = build_calendar(date)
 
     status = {
         "sources_ok": meta.get("sources_ok", 0),
@@ -133,9 +145,9 @@ def build_output(date: str, pending: dict, llm_available: bool) -> dict:
         "date": date,
         "generated_at": iso(now_utc()),
         "llm": llm_tag,
-        "gauges": digest["gauges"],
-        "brief_zh": digest["brief_zh"],
-        "flags": digest["flags"],
+        "gauges": gauges,
+        "brief_zh": brief_zh,
+        "flags": flags,
         "cards": finalized,
         "calendar": calendar,
         "status": status,
@@ -147,6 +159,12 @@ def main():
     ap.add_argument("--date", default=None, help="YYYY-MM-DD, default = today TPE")
     ap.add_argument("--skip-fetch", action="store_true")
     ap.add_argument("--out", default=None, help="override output path (default docs/intel/data/{date}.json)")
+    ap.add_argument(
+        "--no-llm", action="store_true",
+        help="force data-only mode (fetch + deterministic gauges/flags/calendar, "
+             "llm:\"unavailable\") even if CLAUDE_CODE_OAUTH_TOKEN is set — for "
+             "testing the pipeline without spending sonnet/haiku tokens.",
+    )
     args = ap.parse_args()
 
     date = args.date or _today_tpe()
@@ -163,7 +181,7 @@ def main():
               "and could not produce one — cannot build daily JSON.", file=sys.stderr)
         return 1
 
-    llm_available = _llm_available()
+    llm_available = False if args.no_llm else _llm_available()
     try:
         output = build_output(date, pending, llm_available)
     except Exception as e:  # noqa: BLE001 — even a hard crash in classify/summarize

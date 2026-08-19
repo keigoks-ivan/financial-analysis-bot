@@ -40,7 +40,8 @@ from common import (
 from llm import Ledger, run_claude
 
 BATCH_SIZE = 40
-STAGE2_LIMIT = 60
+STAGE2_LIMIT = 70
+PER_SOURCE_STAGE2_CAP = 6  # 2026-08-19：單一來源最多 6 條進 sonnet，防一個 feed 洗版
 SUMMARY_TRUNCATE = 300  # DESIGN §6 rule 2: LLM 只看 ≤300 字 snippet
 
 CLASSIFY_SYSTEM = None  # lazy-loaded via read_prompt("classify.md")
@@ -156,17 +157,46 @@ def _recency_key(card: dict) -> str:
     return card.get("published_at") or card.get("fetched_at") or ""
 
 
-def select_stage2(cards: list[dict], limit: int = STAGE2_LIMIT) -> tuple[list[dict], int]:
-    """(importance_guess desc, tier asc, corroboration desc, recency desc).
-    Python sort is stable, so applying keys from least- to most-significant
-    in separate passes gives the same result as one composite tuple, without
-    fighting over ascending-vs-descending direction in a single key."""
+def select_stage2(
+    cards: list[dict], limit: int = STAGE2_LIMIT, per_source_cap: int = PER_SOURCE_STAGE2_CAP
+) -> tuple[list[dict], int]:
+    """(importance_guess desc, tier asc, corroboration desc, recency desc),
+    with a per-source_id cap so one prolific feed can't crowd out the rest of
+    the day's stage-2 budget (2026-08-19, alongside the sources.yml expansion
+    — a single RSS/gnews feed having a big day used to fill the whole ≤60
+    slate). Python sort is stable, so applying keys from least- to
+    most-significant in separate passes gives the same result as one
+    composite tuple, without fighting over ascending-vs-descending direction
+    in a single key."""
     relevant = [c for c in cards if c.get("relevant")]
     relevant.sort(key=lambda c: _recency_key(c), reverse=True)          # 4th: recency desc
     relevant.sort(key=lambda c: -c.get("corroboration", 1))             # 3rd: corroboration desc
     relevant.sort(key=lambda c: TIER_RANK.get(c.get("source_tier"), 9))  # 2nd: tier asc
     relevant.sort(key=lambda c: -c.get("importance_guess", 1))          # 1st: importance desc
-    kept = relevant[:limit]
+
+    kept: list[dict] = []
+    overflow: list[dict] = []  # cards that lost out only to the per-source cap
+    per_source_count: dict = {}
+    for c in relevant:
+        if len(kept) >= limit:
+            break
+        sid = c.get("source_id", "")
+        if per_source_count.get(sid, 0) >= per_source_cap:
+            overflow.append(c)
+            continue
+        per_source_count[sid] = per_source_count.get(sid, 0) + 1
+        kept.append(c)
+
+    # Second pass: if the per-source cap left room under `limit` (i.e. fewer
+    # than `limit` cards qualified once every source is capped), backfill
+    # from the overflow queue in the same priority order rather than leaving
+    # the stage-2 batch under-filled.
+    if len(kept) < limit and overflow:
+        for c in overflow:
+            if len(kept) >= limit:
+                break
+            kept.append(c)
+
     dropped = len(relevant) - len(kept)
     return kept, dropped
 
@@ -205,7 +235,16 @@ def classify(pending: dict, ledger: Ledger, batch_size: int = BATCH_SIZE,
     relevant_count = sum(1 for c in all_classified if c.get("relevant"))
     not_relevant_count = len(all_classified) - relevant_count
 
-    selected, dropped_over_cap = select_stage2(all_classified, stage2_limit)
+    # kind=="data" 卡片走 summarize_data_card()，全程零 LLM（DESIGN §6）——把它們
+    # 塞進跟 news/event 卡共用的 STAGE2_LIMIT／per-source cap 沒有意義（那個
+    # 預算存在的唯一理由是限制 sonnet 花費），反而會讓零成本的數字卡被高
+    # importance 的新聞擠掉、退化成 passthrough（2026-08-19 實測：23 張站內
+    # 數字卡裡有 15 張被擠出 stage2）。所有 relevant 的數字卡一律直接進
+    # selected；STAGE2_LIMIT／per-source cap 只套用在真的要花 sonnet token 的
+    # other_cards 上。
+    relevant_data = [c for c in data_cards if c.get("relevant")]
+    selected_other, dropped_over_cap = select_stage2(other_cards, stage2_limit)
+    selected = relevant_data + selected_other
 
     drop_log = {
         "total_classified": len(all_classified),

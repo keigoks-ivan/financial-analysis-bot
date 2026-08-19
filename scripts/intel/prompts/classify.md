@@ -10,8 +10,14 @@
   央行與財政政策／地緣／跨市場 regime／亞洲）｜`"industry"`（特定產業／主題，如半導體、AI
   資料中心、電力）｜`"company"`（單一上市公司事件）。
 - `category`：market 層用下列 13 個 key 之一：
-  `rates credit liquidity fx commodities vol breadth positioning econ cb geo regime asia`；
-  industry/company 層用最貼切的主題關鍵字（英文小寫，例如 `semis`、`ai-datacenter`）。
+  `rates credit liquidity fx commodities vol breadth positioning econ cb geo regime asia`
+  （另有選用維度 `crypto`，只給明確與加密貨幣相關的卡片用）；
+  industry/company 層優先從下列既有關鍵字挑最貼切的一個（英文小寫、有橫線用連字號）：
+  `semis ai ev battery robotics logistics renewable-energy automation software cloud
+  biotech healthcare defense materials chemical energy consumer retail financials
+  industrials telecom property`；若都不貼切，才自創一個同風格的新關鍵字（英文小寫、
+  盡量單字或用連字號連接，不要用底線或空格）——**優先沿用既有清單**，保持下游分類穩定，
+  不要為同一個主題（例如「半導體」）在不同天造出不同拼法的 key。
   若給了 `category_hint`，優先沿用，除非明顯不合。
 - `tickers`：文中明確提到的美股／台股 ticker 陣列（找不到就 `[]`，不要用猜的）。
 - `themes`：貼切的產業/主題關鍵字陣列（找不到就 `[]`）。

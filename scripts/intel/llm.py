@@ -30,9 +30,13 @@ MAX_ATTEMPTS = 3
 RETRY_SLEEP_SEC = 15
 
 # DESIGN.md §6 model table hard caps, in CARDS/day (the design's own unit —
-# "haiku ≤200 cards/day classify, sonnet ≤60/day summarize" — not a token
-# budget; token counts are recorded for reporting only, see Ledger below).
-DAILY_CARD_CAPS = {"haiku": 200, "sonnet": 60}
+# not a token budget; token counts are recorded for reporting only, see
+# Ledger below). Raised 2026-08-19 alongside the source-list expansion
+# (haiku 200->320, sonnet 60->70) — content thinness feedback ("內容有點
+# 空虛") traced partly to the old caps throttling a much bigger source list
+# down to too few cards; still a hard ceiling, §6 rule 3 「寧可漏不爆額度」
+# unchanged.
+DAILY_CARD_CAPS = {"haiku": 320, "sonnet": 70}
 
 # Claude Code CLI picks ANTHROPIC_API_KEY over the OAuth token when both are
 # present, billing the API instead of the Max/Pro subscription. Strip these

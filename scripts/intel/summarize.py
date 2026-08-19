@@ -6,18 +6,25 @@
 五道，尤其規則 3：🔴 需 corroboration≥2 或 T1）／§8（T4 單獨不得 🔴）／
 §11（卡片 schema）。
 
-三件事：
-1. `summarize_cards()` —— 對 stage 1 選出的 ≤60 張卡逐張補
+五件事：
+1. `summarize_cards()` —— 對 stage 1 選出的 ≤70 張卡逐張補
    summary_zh/why_zh/importance/forecast。kind=="data" 的卡片沿用 §6「已結構化，
    零 LLM」原則，直接用 title 生成摘要，不進 sonnet。importance==3 的卡片，
    Python 強制檢查 corroboration>=2 或 source_tier=="T1"，不合格降到 2
-   （不管 LLM 說了什麼——這條不是模型的判斷）。
-2. `build_digest()` —— 一次 sonnet 呼叫，輸出 gauges（13 維度儀表）／
-   brief_zh（5–8 段早報）／flags（轉折提醒，候選由 Python 先算好，LLM 只負責
-   把候選寫成中文句子，不得新增）。brief_zh 寫完在 Python 端跑一次 allow-list
-   sanitize（只准 <a>/<b>/<span class="n">）。
-3. `build_calendar()` —— 純 Python，讀 docs/monitor/data/macro_calendar.json
-   ＋ docs/catalyst/calendar.json 未來 7 天的事件，不經 LLM。
+   （不管 LLM 說了什麼——這條不是模型的判斷）。未進 stage 2 的卡片改走
+   `passthrough_card()`（title-only，summarized=false），仍然出現在最終輸出，
+   不再整批消失（2026-08-19 起，回應「內容有點空虛」的持有人回饋）。
+2. `build_gauges()` —— 13 維度儀表，**純 Python 決定性**（2026-08-19 起完全
+   脫離 LLM）：直接讀 docs/monitor/data/latest.json 等站內機械層資料算出
+   value/status/delta，不再讓 sonnet 複述數字。
+3. `build_flags()` / `build_flag_candidates()` —— 轉折提醒，**純 Python 決定性**
+   （2026-08-19 起完全脫離 LLM）：value/threshold/distance_pct/text_zh 全部
+   在 Python 端算好、寫成中文句子。
+4. `build_digest()` —— 一次 sonnet 呼叫，現在只剩 brief_zh（5–8 段早報）。
+   寫完在 Python 端跑一次 allow-list sanitize（只准 <a>/<b>/<span class="n">）。
+5. `build_calendar()` —— 純 Python，讀 docs/monitor/data/macro_calendar.json
+   ＋ docs/catalyst/calendar.json ＋ docs/intel/data/ff_calendar.json（新增，
+   ForexFactory 經濟日曆）未來 7 天的事件，不經 LLM。
 """
 from __future__ import annotations
 
@@ -34,9 +41,11 @@ from common import (
     iso,
     load_json,
     load_source_name_map,
+    load_source_short_map,
     now_utc,
     read_prompt,
     source_name_for,
+    source_short_for,
 )
 from llm import Ledger, run_claude
 
@@ -46,8 +55,12 @@ BRIEF_SYSTEM = None
 
 MONITOR_LATEST = ROOT / "docs" / "monitor" / "data" / "latest.json"
 REGIME_LATEST = ROOT / "docs" / "regime" / "data" / "latest.json"
+ROTATION_RADAR = ROOT / "docs" / "rotation" / "data" / "radar.json"
+CROWDING_LATEST = ROOT / "docs" / "crowding" / "data" / "latest.json"
+DETECTIVE_KILL_WATCH = ROOT / "docs" / "detective" / "data" / "kill_watch.json"
 MACRO_CALENDAR = ROOT / "docs" / "monitor" / "data" / "macro_calendar.json"
 CATALYST_CALENDAR = ROOT / "docs" / "catalyst" / "calendar.json"
+FF_CALENDAR = ROOT / "docs" / "intel" / "data" / "ff_calendar.json"
 
 # monitor/latest.json `categories[].key` -> intel §3 dimension key (same
 # mapping fetch.py uses for on-site alert cards, kept in sync manually).
@@ -105,7 +118,29 @@ def summarize_data_card(card: dict) -> dict:
     card["why_zh"] = why_zh
     card["importance"] = _enforce_importance_rules(card, card.get("importance_guess", 2))
     card["forecast"] = None
+    card["summarized"] = True
     card["_summarize_source"] = "deterministic"
+    return card
+
+
+def passthrough_card(card: dict) -> dict:
+    """DESIGN §6/§2 2026-08-19 擴充：relevant 但沒被選進 stage 2（sonnet 每日
+    上限／per-source cap 排擠掉）的卡片，仍要出現在輸出 JSON——只是 title-only、
+    不占 sonnet 額度。`summarized:false` 讓前端可以淡化呈現，而不是整條資訊
+    消失（這正是持有人回饋「內容有點空虛」的另一半成因：舊版把沒進 stage 2
+    的卡直接丟棄，不只是分類篩掉的內容看不見）。"""
+    title = card.get("title", "") or ""
+    if card.get("kind") == "data":
+        # 數字卡即使沒擠進 stage 2 也是零成本——沿用 summarize_data_card() 的
+        # 標題清理規則（去掉 "[monitor]" 這類來源前綴），觀感與有進 sonnet 的
+        # 數字卡一致，讀者看不出差別。
+        title = re.sub(r"^\[[^\]]+\]\s*", "", title)
+    card["summary_zh"] = title[:80]
+    card["why_zh"] = ""
+    card["importance"] = min(card.get("importance_guess", 2), 2)
+    card["forecast"] = None
+    card["summarized"] = False
+    card["_summarize_source"] = "passthrough_not_selected"
     return card
 
 
@@ -145,19 +180,39 @@ def summarize_batch(cards: list[dict], ledger: Ledger, batch_no: str):
     return by_id, usage
 
 
+# 常見的 LLM 自我提醒句——「來源沒給數字」本身就是有用資訊一次就好，寫成
+# 句子結尾的免責宣告是噪音（持有人回饋：摘要「結尾都是原文未給數字」）。
+# 2026-08-19：summarize.md 已改規則禁止這類句子，這裡再加一道 Python 防線
+# （防 LLM 仍偶爾漏規則），把常見變體整句砍掉。
+_META_DISCLAIMER_RE = re.compile(
+    r"[，,、]?\s*(原文|文中|報導)?(未|沒有?)(給出?|提供|說明)(具體)?數字[。.]?"
+    r"|[，,、]?\s*原文未(具體)?說明[。.]?"
+)
+
+
+def _strip_meta_disclaimers(text: str) -> str:
+    if not text:
+        return text
+    cleaned = _META_DISCLAIMER_RE.sub("", text).strip()
+    cleaned = cleaned.strip("，,。.、 ")
+    return cleaned or text  # 全砍光就保留原文，不要留空字串
+
+
 def apply_summary_result(card: dict, result: dict | None) -> dict:
     if not result:
-        card["summary_zh"] = (card.get("title", "") or "")[:60]
+        card["summary_zh"] = (card.get("title", "") or "")[:90]
         card["why_zh"] = "摘要生成失敗，見原始標題。"
         card["importance"] = _enforce_importance_rules(card, min(card.get("importance_guess", 2), 2))
         card["forecast"] = None
+        card["summarized"] = True
         card["_summarize_source"] = "fallback_no_llm"
         return card
-    card["summary_zh"] = (result.get("summary_zh") or card.get("title", ""))[:80]
-    card["why_zh"] = (result.get("why_zh") or "")[:60]
+    card["summary_zh"] = _strip_meta_disclaimers((result.get("summary_zh") or card.get("title", ""))[:90])
+    card["why_zh"] = _strip_meta_disclaimers((result.get("why_zh") or "")[:45])
     card["importance"] = _enforce_importance_rules(card, result.get("importance", 2))
     forecast = result.get("forecast")
     card["forecast"] = forecast if isinstance(forecast, dict) and forecast.get("claim") else None
+    card["summarized"] = True
     card["_summarize_source"] = "sonnet"
     return card
 
@@ -196,7 +251,8 @@ def summarize_cards(selected: list[dict], ledger: Ledger, batch_size: int = BATC
 
 
 # ── finalize card schema (Output contract card object) ─────────────────────
-def finalize_card(card: dict, name_map: dict) -> dict:
+def finalize_card(card: dict, name_map: dict, short_map: dict | None = None) -> dict:
+    short_map = short_map or {}
     out = {
         "id": card.get("id"),
         "kind": card.get("kind"),
@@ -204,6 +260,7 @@ def finalize_card(card: dict, name_map: dict) -> dict:
         "category": card.get("category"),
         "title": card.get("title"),
         "source_name": source_name_for(card, name_map),
+        "source_short": source_short_for(card, short_map, name_map),
         "source_tier": card.get("source_tier"),
         "url": card.get("url"),
         "published_at": card.get("published_at"),
@@ -219,6 +276,7 @@ def finalize_card(card: dict, name_map: dict) -> dict:
         },
         "summary_zh": card.get("summary_zh", ""),
         "why_zh": card.get("why_zh", ""),
+        "summarized": bool(card.get("summarized", True)),
     }
     if card.get("forecast"):
         out["forecast"] = card["forecast"]
@@ -252,30 +310,286 @@ def build_monitor_snapshot() -> dict:
     return snapshot
 
 
+def _num(x):
+    """轉數字失敗回 None（不拋例外）——distance_pct 只在兩邊都是數字時才算。"""
+    if isinstance(x, (int, float)):
+        return float(x)
+    if isinstance(x, str):
+        try:
+            return float(re.sub(r"[^\d.\-]", "", x))
+        except ValueError:
+            return None
+    return None
+
+
+FG_RATING_ZH = {
+    "extreme fear": "極度恐懼", "fear": "恐懼", "neutral": "中性",
+    "greed": "貪婪", "extreme greed": "極度貪婪",
+}
+
+
+def _monitor_item(monitor: dict | None, cat_key: str, item_key: str) -> dict | None:
+    if not monitor:
+        return None
+    for cb in monitor.get("categories", []):
+        if cb.get("key") == cat_key:
+            for it in cb.get("items", []):
+                if it.get("key") == item_key:
+                    return it
+    return None
+
+
+def build_gauges(all_classified_cards: list[dict], calendar: list[dict] | None = None) -> list:
+    """13 維度儀表，2026-08-19 起完全 Python 決定性（不再送 sonnet）——持有人
+    回饋「儀表/警示是看不懂的 LLM 散文」，數字本來就在 docs/monitor/data/
+    latest.json 裡算好了，LLM 只是在複述並偶爾複述錯。缺 monitor 檔或缺特定
+    序列時逐格 fall back 到「無新增訊號」，不捏造。"""
+    monitor = load_json(MONITOR_LATEST)
+    calendar = calendar or []
+
+    by_cat: dict = {}
+    for c in all_classified_cards:
+        if not c.get("relevant", True):
+            continue
+        by_cat.setdefault(c.get("category"), []).append(c)
+
+    def has_red_kill(cat: str) -> bool:
+        for c in by_cat.get(cat, []):
+            if c.get("kind") != "data":
+                continue
+            data = c.get("data") or {}
+            if data.get("severity") == "red" or "已突破" in (c.get("title") or ""):
+                return True
+        return False
+
+    def status_for(cat: str, pctile) -> str:
+        if (pctile is not None and (pctile >= 97 or pctile <= 3)) or has_red_kill(cat):
+            return "red"
+        if (pctile is not None and (pctile >= 90 or pctile <= 10)) or by_cat.get(cat):
+            return "yellow"
+        return "green"
+
+    gauges = []
+
+    def emit(cat: str, metric: str, value, pctile=None, chg=None):
+        status = status_for(cat, pctile)
+        parts = []
+        if pctile is not None:
+            parts.append(f"分位 {pctile:g}")
+        if chg:
+            parts.append(str(chg))
+        delta = " · ".join(parts)[:18] if parts else "變化不大"
+        gauges.append({
+            "category": cat, "label": CATEGORY_LABELS_ZH[cat], "status": status,
+            "value": _plain(value, 10) or "無新增訊號", "metric": metric[:10],
+            "pctile": pctile, "chg": chg or None, "delta": delta,
+        })
+
+    # rates — 10Y 公債殖利率
+    it = _monitor_item(monitor, "rates", "dgs10")
+    emit("rates", "10Y", it.get("val") if it else None, it.get("pctile") if it else None, it.get("chg") if it else None)
+
+    # credit — HY OAS 優先（信用利差比 ETF 價格更直接），缺就退 HYG
+    it = _monitor_item(monitor, "credit", "hy_oas") or _monitor_item(monitor, "credit", "hyg")
+    metric = "HY OAS" if (it and it.get("key") == "hy_oas") else "HYG"
+    emit("credit", metric, it.get("val") if it else None, it.get("pctile") if it else None, it.get("chg") if it else None)
+
+    # liquidity — 銀行準備金比 RRP 更能反映流動性水位，缺就退 RRP
+    it = _monitor_item(monitor, "liquidity", "reserves") or _monitor_item(monitor, "liquidity", "rrp")
+    metric = "準備金" if (it and it.get("key") == "reserves") else "RRP"
+    emit("liquidity", metric, it.get("val") if it else None, it.get("pctile") if it else None, it.get("chg") if it else None)
+
+    # fx — DXY 美元指數
+    it = _monitor_item(monitor, "fx", "dxy")
+    emit("fx", "DXY", it.get("val") if it else None, it.get("pctile") if it else None, it.get("chg") if it else None)
+
+    # commodities — WTI 原油
+    it = _monitor_item(monitor, "commodities", "wti")
+    emit("commodities", "WTI", it.get("val") if it else None, it.get("pctile") if it else None, it.get("chg") if it else None)
+
+    # vol — VIX
+    it = _monitor_item(monitor, "vol", "vix")
+    emit("vol", "VIX", it.get("val") if it else None, it.get("pctile") if it else None, it.get("chg") if it else None)
+
+    # breadth — S&P 500（整數＋千分位，而非帶小數的 val 字串）
+    it = _monitor_item(monitor, "indices", "sp500")
+    sp_value = None
+    if it and it.get("spark"):
+        try:
+            sp_value = f"{round(it['spark'][-1]):,}"
+        except (TypeError, ValueError, IndexError):
+            sp_value = it.get("val")
+    emit("breadth", "S&P500", sp_value, it.get("pctile") if it else None, it.get("chg") if it else None)
+
+    # positioning — CNN Fear & Greed，缺就退擁擠監測龍頭主題
+    fg = (monitor or {}).get("fear_greed")
+    if fg and fg.get("score") is not None:
+        rating_zh = FG_RATING_ZH.get((fg.get("rating") or "").lower(), fg.get("rating", ""))
+        diff = None
+        if fg.get("prev") is not None:
+            diff = fg["score"] - fg["prev"]
+        chg = None
+        if diff is not None and diff != 0:
+            chg = f"{'▲' if diff > 0 else '▼'} {abs(diff)}"
+        pctile = None  # F&G 本身就是 0-100 分位性質的分數，不重複套 monitor pctile 規則
+        status = "red" if fg["score"] >= 90 or fg["score"] <= 10 else (
+            "yellow" if fg["score"] >= 75 or fg["score"] <= 25 else "green")
+        gauges.append({
+            "category": "positioning", "label": CATEGORY_LABELS_ZH["positioning"], "status": status,
+            "value": f"{fg['score']} {rating_zh}"[:10], "metric": "F&G",
+            "pctile": None, "chg": chg, "delta": (chg or "變化不大"),
+        })
+    else:
+        crowding = load_json(CROWDING_LATEST)
+        themes = (crowding or {}).get("themes", [])
+        top = themes[0]["name"] if themes else None
+        emit("positioning", "擁擠主題", top)
+
+    # econ — 今日最高重要度的經濟數據卡（data 優先，其次 news），缺就無新增
+    econ_cards = by_cat.get("econ", [])
+    econ_data = [c for c in econ_cards if c.get("kind") == "data"]
+    pick = None
+    if econ_data:
+        pick = max(econ_data, key=lambda c: c.get("importance_guess", c.get("importance", 1)))
+    elif econ_cards:
+        pick = max(econ_cards, key=lambda c: c.get("importance_guess", c.get("importance", 1)))
+    econ_n = len(econ_cards)
+    econ_value = f"{econ_n} 則" if econ_n else None
+    if pick and pick.get("kind") == "data" and (pick.get("data") or {}).get("value") is not None:
+        econ_value = str((pick.get("data") or {}).get("value"))[:10]
+    emit("econ", "經濟數據", econ_value)
+
+    # cb — 今日央行相關卡數；沒有就找日曆裡最近的 FOMC 條目
+    cb_n = len(by_cat.get("cb", []))
+    if cb_n:
+        emit("cb", "央行訊息", f"{cb_n} 則")
+    else:
+        fomc = next((e for e in sorted(calendar, key=lambda e: e.get("date", ""))
+                     if "FOMC" in (e.get("text") or "")), None)
+        emit("cb", "央行訊息", f"{fomc['date'][5:]} FOMC" if fomc else None)
+
+    # geo — 今日地緣相關卡數
+    geo_n = len(by_cat.get("geo", []))
+    emit("geo", "地緣事件", f"{geo_n} 則" if geo_n else None)
+
+    # regime — 站內跨市場 regime 判讀（label_zh 第一段），缺就退 sp500 60 日分位
+    regime = load_json(REGIME_LATEST)
+    label_zh = ((regime or {}).get("composite") or {}).get("label_zh")
+    if label_zh:
+        first_seg = re.split(r"\s*[·,，]\s*", label_zh)[0].strip()
+        emit("regime", "regime", first_seg)
+    else:
+        sp_it = _monitor_item(monitor, "indices", "sp500")
+        p60 = sp_it.get("p60") if sp_it else None
+        emit("regime", "60日分位", f"p60={p60:g}" if isinstance(p60, (int, float)) else None)
+
+    # asia — 台股（monitor twii），缺就退 Nikkei，再缺退 USD/TWD
+    it = (_monitor_item(monitor, "indices", "twii")
+          or _monitor_item(monitor, "indices", "n225")
+          or _monitor_item(monitor, "fx", "usdtwd"))
+    metric = {"twii": "台股", "n225": "Nikkei", "usdtwd": "USD/TWD"}.get(it.get("key") if it else None, "亞洲")
+    emit("asia", metric, it.get("val") if it else None, it.get("pctile") if it else None, it.get("chg") if it else None)
+
+    # 依 CATEGORY_ORDER 排序輸出（emit() 呼叫順序其實已經照序，這裡再保險一次）。
+    by_cat_out = {g["category"]: g for g in gauges}
+    return [by_cat_out[c] for c in CATEGORY_ORDER if c in by_cat_out]
+
+
 def build_flag_candidates(all_classified_cards: list[dict]) -> list[dict]:
-    """Deterministic candidates (Python, not the LLM) — the sonnet digest call
-    only phrases these into Chinese sentences, it cannot add its own."""
+    """2026-08-19 擴充（DESIGN §3 flags 結構化）：Deterministic candidates，
+    連 `text_zh` 都在 Python 端組好——flags 已完全脫離 LLM digest 呼叫，這裡
+    產出的就是最終的 flags 物件（不再有下游 LLM 改寫這一步）。"""
     candidates = []
     for c in all_classified_cards:
         if c.get("kind") != "data":
             continue
         title = c.get("title", "")
+        data = c.get("data") or {}
+        theme = data.get("theme") or re.sub(r"^\[[^\]]+\]\s*", "", title)
+        value = data.get("value") if data.get("value") is not None else data.get("current")
+        threshold = data.get("threshold")
+        value_n, threshold_n = _num(value), _num(threshold)
+        distance_pct = None
+        if value_n is not None and threshold_n is not None and threshold_n != 0:
+            distance_pct = round(abs(value_n - threshold_n) / abs(threshold_n) * 100, 1)
+        metric = data.get("metric_text") or data.get("series") or ""
+
         if "kill-watch" in title and "接近閾值" in title:
-            candidates.append({
-                "level": "near", "theme": title, "metric": (c.get("data") or {}),
-                "status": "near", "link": c.get("url", "/detective/"),
-            })
+            level, status, link = "near", "near", c.get("url", "/detective/")
         elif "kill-watch" in title and "已突破" in title:
-            candidates.append({
-                "level": "confirmed", "theme": title, "metric": (c.get("data") or {}),
-                "status": "breached", "link": c.get("url", "/detective/"),
-            })
+            level, status, link = "confirmed", "breached", c.get("url", "/detective/")
         elif title.startswith("[regime]"):
-            candidates.append({
-                "level": "confirmed", "theme": title, "metric": (c.get("data") or {}),
-                "status": "regime_change", "link": c.get("url", "/regime/"),
-            })
+            level, status, link = "confirmed", "regime_change", c.get("url", "/regime/")
+        else:
+            continue
+
+        if value is not None and threshold is not None:
+            text_zh = f"{theme}：{metric} 現值 {value}，門檻 {threshold}"[:60] if metric else \
+                f"{theme}：現值 {value}，門檻 {threshold}"[:60]
+        else:
+            status_zh = {"near": "接近閾值", "breached": "已突破", "regime_change": "regime 標籤變化"}.get(status, "")
+            text_zh = f"{theme}（{status_zh}）"[:60]
+
+        candidates.append({
+            "level": level, "theme": theme, "metric": metric, "value": value,
+            "threshold": threshold, "status": status, "distance_pct": distance_pct,
+            "link": link, "text_zh": text_zh,
+        })
     return candidates
+
+
+KILL_WATCH_PATH = ROOT / "docs" / "detective" / "data" / "kill_watch.json"
+
+
+def _kill_watch_flags() -> list[dict]:
+    """每天都讀 kill_watch.json 的「現況」（near ∪ breached 全列），不像卡片只在
+    新進榜時發——警示表要的是今天的完整狀態，不是變化日誌。零 LLM。"""
+    kw = load_json(KILL_WATCH_PATH) or {}
+    items = {it.get("id"): it for it in kw.get("items", []) if isinstance(it, dict)}
+    out = []
+    for status, level in (("breached", "confirmed"), ("near", "near")):
+        for item_id in kw.get(status, []) or []:
+            it = items.get(item_id)
+            if not it:
+                continue
+            value, threshold = it.get("current"), it.get("value")
+            if isinstance(value, float):
+                value = round(value, 4 if abs(value) < 1 else 2)
+            value_n, threshold_n = _num(value), _num(threshold)
+            distance_pct = None
+            if value_n is not None and threshold_n is not None and threshold_n != 0:
+                distance_pct = round(abs(value_n - threshold_n) / abs(threshold_n) * 100, 1)
+            doc = it.get("doc") or ""
+            link = "/" + doc[len("docs/"):] if doc.startswith("docs/") else "/detective/"
+            theme = it.get("theme") or item_id
+            metric = it.get("metric_text") or ""
+            unit = it.get("unit") or ""
+            if value is not None and threshold is not None:
+                text_zh = f"{theme}：{metric} 現值 {value}，門檻 {it.get('op') or ''}{threshold} {unit}".strip()[:60]
+            else:
+                text_zh = f"{theme}：{metric}（{'已突破' if status == 'breached' else '接近閾值'}）"[:60]
+            out.append({
+                "level": level, "theme": theme, "metric": metric, "value": value,
+                "threshold": threshold, "status": status, "distance_pct": distance_pct,
+                "link": link, "text_zh": text_zh, "as_of": it.get("value_as_of"),
+            })
+    return out
+
+
+def build_flags(all_classified_cards: list[dict]) -> list[dict]:
+    """flags 全程零 LLM（2026-08-19 起）：kill-watch 現況（每日全列）＋ 卡片裡的
+    regime 變化候選；以 (theme, metric) 去重，confirmed 排前。"""
+    flags = _kill_watch_flags()
+    seen = {(f["theme"], f["metric"]) for f in flags}
+    for cand in build_flag_candidates(all_classified_cards):
+        key = (cand.get("theme"), cand.get("metric"))
+        if key in seen:
+            continue
+        seen.add(key)
+        flags.append(cand)
+    order = {"confirmed": 0, "near": 1, "thesis": 2}
+    flags.sort(key=lambda f: (order.get(f.get("level"), 3), f.get("theme") or ""))
+    return flags
 
 
 def sanitize_brief_html(fragments: list) -> list:
@@ -322,31 +636,6 @@ def _short_anchor_text(m: "re.Match") -> str:
 _ANCHOR_RE = re.compile(r"(<a\s+href=\"[^\"]+\">)(.*?)</a>", re.S)
 
 
-def _canonicalize_gauges(parsed_gauges) -> list:
-    """Rebuild the 13-gauge array from CATEGORY_ORDER/CATEGORY_LABELS_ZH
-    (the canonical source of truth) instead of trusting the LLM's `category`/
-    `label` fields verbatim — only `status`/`value`/`delta` come from the
-    model; this guarantees exact order, exact count, and exact Chinese labels
-    every day regardless of small LLM formatting drift (e.g. a dropped space
-    in a label)."""
-    by_cat = {}
-    if isinstance(parsed_gauges, list):
-        for g in parsed_gauges:
-            if isinstance(g, dict) and g.get("category") in CATEGORY_LABELS_ZH:
-                by_cat[g["category"]] = g
-    out = []
-    for cat in CATEGORY_ORDER:
-        g = by_cat.get(cat, {})
-        out.append({
-            "category": cat,
-            "label": CATEGORY_LABELS_ZH[cat],
-            "status": g.get("status") if g.get("status") in ("green", "yellow", "red") else "green",
-            "value": _plain(g.get("value"), 40) or "今日無新增訊號",
-            "delta": _plain(g.get("delta"), 30) or "變化不大",
-        })
-    return out
-
-
 def fallback_flags(candidates: list[dict]) -> list:
     out = []
     for cand in candidates:
@@ -361,9 +650,13 @@ def fallback_flags(candidates: list[dict]) -> list:
 
 
 def build_digest(all_classified_cards: list[dict], finalized_market_cards: list[dict],
-                  ledger: Ledger, name_map: dict) -> dict:
+                  ledger: Ledger, name_map: dict, short_map: dict | None = None) -> dict:
+    """2026-08-19 起 gauges／flags 已全數移出這通 LLM 呼叫（見 build_gauges／
+    build_flags，純 Python 決定性）——這裡現在只剩 brief_zh 一件事：把今天
+    最重要的卡片收斂成 5-8 段導讀文字。持有人回饋「儀表/警示是看不懂的 LLM
+    散文」，數字本來就該由機械層算好，LLM 只負責寫散文本身。"""
     monitor_snapshot = build_monitor_snapshot()
-    flag_candidates = build_flag_candidates(all_classified_cards)
+    short_map = short_map or {}
 
     market_cards_input = [
         {
@@ -371,13 +664,13 @@ def build_digest(all_classified_cards: list[dict], finalized_market_cards: list[
             "why_zh": c.get("why_zh", ""), "importance": c.get("importance", 2),
             "category": c.get("category"), "url": c.get("url"),
             "source_name": c.get("source_name"),
+            "source_short": c.get("source_short") or source_short_for(c, short_map, name_map),
         }
         for c in finalized_market_cards
         if c.get("level") == "market"
     ]
     payload = json.dumps(
-        {"monitor_snapshot": monitor_snapshot, "market_cards": market_cards_input,
-         "flag_candidates": flag_candidates},
+        {"monitor_snapshot": monitor_snapshot, "market_cards": market_cards_input},
         ensure_ascii=False,
     )
     # This single call is charged against the sonnet ledger like any other
@@ -386,25 +679,14 @@ def build_digest(all_classified_cards: list[dict], finalized_market_cards: list[
         system=_brief_system_prompt(),
         user=payload,
         model="sonnet",
-        label="digest (gauges+brief+flags)",
+        label="digest (brief_zh)",
         ledger=ledger,
         card_count=0,  # digest doesn't consume per-card budget, only tokens
     )
     if not parsed or not isinstance(parsed, dict):
-        return {
-            "gauges": fallback_gauges(),
-            "brief_zh": [],
-            "flags": fallback_flags(flag_candidates),
-        }
-    gauges = _canonicalize_gauges(parsed.get("gauges"))
+        return {"brief_zh": []}
     brief_zh = sanitize_brief_html(parsed.get("brief_zh") or [])
-    flags = parsed.get("flags")
-    if not isinstance(flags, list):
-        flags = fallback_flags(flag_candidates)
-    else:
-        # LLM must not invent flags beyond the candidates we gave it.
-        flags = flags[: len(flag_candidates)] if flag_candidates else []
-    return {"gauges": gauges, "brief_zh": brief_zh, "flags": flags}
+    return {"brief_zh": brief_zh}
 
 
 # ── calendar (pure Python, no LLM) ──────────────────────────────────────────
@@ -439,9 +721,28 @@ def build_calendar(date: str, days_ahead: int = 7) -> list:
                     "hi": e.get("impact") == "高",
                 })
 
+    # 2026-08-19 新增：ForexFactory 經濟日曆（fetch.py::fetch_ff_calendar 產出，
+    # 已轉換為台北時間、只保留 High/Medium 影響力）——與站內既有 macro/catalyst
+    # 日曆合併，用 (date, text) 去重（同一事件兩邊都有時保留先加入的那筆）。
+    ff = load_json(FF_CALENDAR)
+    if ff:
+        for e in ff.get("events", []):
+            try:
+                ed = datetime.strptime(e.get("date", ""), "%Y-%m-%d").date()
+            except ValueError:
+                continue
+            if d0 <= ed <= d1:
+                out.append({
+                    "date": e["date"], "text": e.get("text", ""), "hi": bool(e.get("hi")),
+                    "time": e.get("time"), "country": e.get("country"),
+                    "impact": e.get("impact"), "forecast": e.get("forecast"),
+                    "previous": e.get("previous"), "source": e.get("source", "ForexFactory"),
+                    "url": e.get("url"),
+                })
+
     seen = set()
     deduped = []
-    for e in sorted(out, key=lambda x: (x["date"], not x["hi"])):
+    for e in sorted(out, key=lambda x: (x["date"], x.get("time") or "99:99", not x["hi"])):
         key = (e["date"], e["text"])
         if key in seen:
             continue
