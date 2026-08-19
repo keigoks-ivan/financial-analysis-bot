@@ -1,0 +1,426 @@
+# scripts/intel/sources.yml
+# Phase 1（市場層）情報來源清單。對應 notes/site-internal/intel/DESIGN.md §3/§7/§8。
+#
+# 欄位：
+#   id          唯一代碼，snake_case
+#   name        人類可讀名稱
+#   url         抓取端點（RSS/JSON/CSV）；FRED 用 fredgraph.csv 端點
+#   kind        rss | json | csv | html | onsite
+#                 rss   -> feedparser 解析
+#                 json  -> requests.get().json()（Phase 1 僅做健康檢查，不產卡；見 fetch.py 註解）
+#                 csv   -> FRED fredgraph 專用，fetch.py 特判處理
+#                 html  -> 純健康檢查用（無結構化解析）
+#                 onsite -> 保留給站內 docs/*/data/*.json，Phase 1 未使用（那些路徑寫死在 fetch.py，不走本檔）
+#   tier        T1 官方/一手（央行／財政部／統計局／FRED／SEC／TWSE） · T2 主流媒體 · T3 具名專業圈 · T4 匿名/聚合
+#   category    rates|credit|liquidity|fx|commodities|vol|breadth|positioning|econ|cb|geo|regime|asia|crypto
+#                 （對應 DESIGN.md §3 十三維度 key；on-site 數字卡的維度寫死在 fetch.py，不在此檔）
+#   level       market（Phase 1 只做市場層）
+#   lang        en | zh | ja
+#   max_items   單次抓取上限（RSS/JSON 通用；FRED/單一數值來源設 1）
+#   enabled     true/false；false 一律附 note 說明原因
+#   note        （選）健康檢查失敗原因，或人工核校備註
+#
+# 全部 URL 已於 2026-08-19 用真實 HTTP fetch（10s timeout, UA=IntelBot/1.0）核實一次；
+# 結果見同日 sources_health.json。停用來源的 note 是當次失敗的實際錯誤，非猜測。
+
+# ── 央行（cb）──────────────────────────────────────────────────────────────
+- id: fed_press_all
+  name: Federal Reserve — 全部新聞稿
+  url: https://www.federalreserve.gov/feeds/press_all.xml
+  kind: rss
+  tier: T1
+  category: cb
+  level: market
+  lang: en
+  max_items: 30
+  enabled: true
+
+- id: fed_press_monetary
+  name: Federal Reserve — 貨幣政策新聞稿
+  url: https://www.federalreserve.gov/feeds/press_monetary.xml
+  kind: rss
+  tier: T1
+  category: cb
+  level: market
+  lang: en
+  max_items: 30
+  enabled: true
+
+- id: fed_speeches
+  name: Federal Reserve — 官員演講（Fedspeak）
+  url: https://www.federalreserve.gov/feeds/speeches.xml
+  kind: rss
+  tier: T1
+  category: cb
+  level: market
+  lang: en
+  max_items: 30
+  enabled: true
+
+- id: ecb_press
+  name: European Central Bank — 新聞稿
+  url: https://www.ecb.europa.eu/rss/press.html
+  kind: rss
+  tier: T1
+  category: cb
+  level: market
+  lang: en
+  max_items: 30
+  enabled: true
+
+- id: boj_press
+  name: Bank of Japan — What's New（英文版）
+  url: https://www.boj.or.jp/en/rss/whatsnew.xml
+  kind: rss
+  tier: T1
+  category: cb
+  level: market
+  lang: en
+  max_items: 30
+  enabled: true
+
+- id: boe_press
+  name: Bank of England — News
+  url: https://www.bankofengland.co.uk/rss/news
+  kind: rss
+  tier: T1
+  category: cb
+  level: market
+  lang: en
+  max_items: 30
+  enabled: true
+
+- id: pboc_news
+  name: 中國人民銀行 — 政策動態
+  url: http://www.pbc.gov.cn/rss/pbc_rss.xml
+  kind: rss
+  tier: T1
+  category: cb
+  level: market
+  lang: zh
+  max_items: 30
+  enabled: false
+  note: "2026-08-19 fetch: 404 Not Found（該路徑已不存在）。備援路徑 /goutongjiaoliu/.../index.html 為純 HTML（200）無 RSS/JSON 結構，PBOC 官網目前找不到機器可讀 feed，暫停用。"
+
+# ── 財政／統計（cb / econ）───────────────────────────────────────────────
+- id: ustreas_press
+  name: US Treasury — 新聞稿
+  url: https://home.treasury.gov/rss/press-releases.xml
+  kind: rss
+  tier: T1
+  category: cb
+  level: market
+  lang: en
+  max_items: 30
+  enabled: false
+  note: "2026-08-19 fetch: 404。已試 /index.php/rss/press.xml（403 Access Denied）、/rss/press-release.xml（404）、/feed（404），home.treasury.gov 目前無可用 RSS，暫停用。"
+
+- id: bea_rss
+  name: US Bureau of Economic Analysis — 新聞稿 RSS
+  url: https://apps.bea.gov/rss/rss.xml
+  kind: rss
+  tier: T1
+  category: econ
+  level: market
+  lang: en
+  max_items: 30
+  enabled: true
+
+- id: bls_empsit
+  name: US BLS — Employment Situation（非農）
+  url: https://www.bls.gov/feed/empsit.rss
+  kind: rss
+  tier: T1
+  category: econ
+  level: market
+  lang: en
+  max_items: 10
+  enabled: true
+
+- id: bls_cpi
+  name: US BLS — Consumer Price Index（CPI）
+  url: https://www.bls.gov/feed/cpi.rss
+  kind: rss
+  tier: T1
+  category: econ
+  level: market
+  lang: en
+  max_items: 10
+  enabled: true
+
+- id: econ_calendar
+  name: 美國經濟數據日曆（BLS／BEA／Census 排程）
+  url: https://www.bls.gov/schedule/news_release/2026_sched.htm
+  kind: html
+  tier: T1
+  category: econ
+  level: market
+  lang: en
+  max_items: 30
+  enabled: false
+  note: "找不到免金鑰、機器可讀（RSS/JSON）的經濟日曆來源；BLS/BEA/Census 排程頁只有 HTML 表格，FRED release-dates API 需要 API key（違反本專案不用金鑰原則）。標記停用，待日後評估輕量 HTML 解析或改用需金鑰來源。"
+
+# ── 政策／地緣（cb / geo）────────────────────────────────────────────────
+- id: federal_register_fed
+  name: Federal Register — Federal Reserve System 文件
+  url: "https://www.federalregister.gov/api/v1/documents.rss?conditions%5Bagencies%5D%5B%5D=federal-reserve-system"
+  kind: rss
+  tier: T1
+  category: cb
+  level: market
+  lang: en
+  max_items: 30
+  enabled: true
+
+- id: ustr_press
+  name: USTR — 新聞稿（關稅／貿易）
+  url: https://ustr.gov/rss.xml
+  kind: rss
+  tier: T1
+  category: cb
+  level: market
+  lang: en
+  max_items: 30
+  enabled: true
+
+- id: bis_press
+  name: Bank for International Settlements — 新聞稿
+  url: https://www.bis.org/doclist/press_arch.rss
+  kind: rss
+  tier: T1
+  category: cb
+  level: market
+  lang: en
+  max_items: 30
+  enabled: false
+  note: "2026-08-19 fetch: 404。已試 /doclist/press_arch.rss、/doclist/all_pr.rss、/rss/home.rss 皆 404，/press/pressrels.htm 回 200 但是 HTML 列表非 RSS。BIS 官網目前找不到機器可讀 feed，暫停用。"
+
+- id: reuters_world
+  name: Reuters — World News（best-topics RSS）
+  url: "https://www.reutersagency.com/feed/?best-topics=top-news&post_type=best"
+  kind: rss
+  tier: T2
+  category: geo
+  level: market
+  lang: en
+  max_items: 30
+  enabled: false
+  note: "2026-08-19 fetch: 跟隨重導向後 404（跳到 reutersagency.com 首頁，非 feed）。Reuters 公開 RSS 已於數年前停止維護，暫停用。"
+
+- id: reuters_business
+  name: Reuters — Business & Finance（best-topics RSS）
+  url: "https://www.reutersagency.com/feed/?best-topics=business-finance&post_type=best"
+  kind: rss
+  tier: T2
+  category: econ
+  level: market
+  lang: en
+  max_items: 30
+  enabled: false
+  note: "2026-08-19 fetch: 跟隨重導向後 404（跳到 reutersagency.com 首頁，非 feed）。同 reuters_world，暫停用。"
+
+- id: ap_top_news
+  name: AP — Top News
+  url: "https://apnews.com/hub/ap-top-news?output=rss"
+  kind: rss
+  tier: T2
+  category: geo
+  level: market
+  lang: en
+  max_items: 30
+  enabled: false
+  note: "2026-08-19 fetch: 200 但跟隨重導向落在 apnews.com 首頁（text/html），?output=rss 參數已失效，非 RSS 內容。AP 公開 RSS 已停止提供，暫停用。"
+
+# ── 預測市場／地緣機率（geo）─────────────────────────────────────────────
+- id: polymarket_markets
+  name: Polymarket — Gamma API（公開市場清單）
+  url: "https://gamma-api.polymarket.com/markets?limit=50&active=true&closed=false"
+  kind: json
+  tier: T2
+  category: geo
+  level: market
+  lang: en
+  max_items: 50
+  enabled: true
+  note: "2026-08-19 直接 curl 從本機網路 DNS 解析被台灣法院命令封鎖名單攔截（域名層級封鎖頁，與內容無關，疑為博弈類網域被境內 ISP 攔截）；改用公開 DNS（8.8.8.8）解析真實 IP 後直接 fetch，回傳 200＋正常 JSON，端點本身正常。GitHub Actions（美國機房）不受此本地封鎖影響，預期正常。fetch.py 對此來源的失敗會誠實記錄在 sources_health.json，不做 DNS 繞過的 hack。"
+
+# ── 亞洲（asia）───────────────────────────────────────────────────────────
+- id: twse_market_index
+  name: 台灣證交所 — 大盤統計資訊（JSON）
+  url: "https://www.twse.com.tw/rwd/zh/afterTrading/MI_INDEX?response=json"
+  kind: json
+  tier: T1
+  category: asia
+  level: market
+  lang: zh
+  max_items: 5
+  enabled: true
+  note: "Phase 1 僅做健康檢查與抓取存在性確認，不從此結構化 JSON 產生新聞卡（該端點是表格式大盤統計，非標題式內容）；卡片化留待 Phase 2。"
+
+- id: nikkei_asia
+  name: Nikkei Asia — RSS
+  url: https://asia.nikkei.com/rss/feed/nar
+  kind: rss
+  tier: T2
+  category: asia
+  level: market
+  lang: en
+  max_items: 30
+  enabled: true
+
+- id: cnyes_headline
+  name: 鉅亨網 — 頭條 RSS（台股／匯市／總經）
+  url: "https://news.cnyes.com/rss/v1/news/category/headline"
+  kind: rss
+  tier: T2
+  category: asia
+  level: market
+  lang: zh
+  max_items: 40
+  enabled: true
+
+- id: ctee_commercial_times
+  name: 工商時報（ctee.com.tw）— RSS
+  url: https://ctee.com.tw/feed
+  kind: rss
+  tier: T2
+  category: asia
+  level: market
+  lang: zh
+  max_items: 30
+  enabled: false
+  note: "2026-08-19 fetch: 403（Cloudflare WAF 連線錯誤頁，含 /feed 與 /feeds/posts/default?alt=rss 兩種路徑皆被擋）。暫停用，待改用具白名單的抓取方式或改走其他鏡像。"
+
+# ── 加密（crypto，選用維度）─────────────────────────────────────────────
+- id: coingecko_btc
+  name: CoinGecko — BTC/USD 現貨價
+  url: "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"
+  kind: json
+  tier: T2
+  category: crypto
+  level: market
+  lang: en
+  max_items: 1
+  enabled: true
+
+- id: defillama_stablecoins
+  name: DefiLlama — 穩定幣總流通量
+  url: "https://stablecoins.llama.fi/stablecoincharts/all"
+  kind: json
+  tier: T2
+  category: crypto
+  level: market
+  lang: en
+  max_items: 1
+  enabled: true
+
+# ── FRED（rates / credit / liquidity / fx / vol）── kind: csv，fetch.py 特判 ──
+- id: fred_real10y
+  name: "FRED DFII10 — 10Y TIPS 實質利率"
+  url: "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DFII10"
+  kind: csv
+  tier: T1
+  category: rates
+  level: market
+  lang: en
+  max_items: 1
+  enabled: true
+
+- id: fred_dgs2
+  name: "FRED DGS2 — 美國 2Y 公債殖利率"
+  url: "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS2"
+  kind: csv
+  tier: T1
+  category: rates
+  level: market
+  lang: en
+  max_items: 1
+  enabled: true
+
+- id: fred_dgs10
+  name: "FRED DGS10 — 美國 10Y 公債殖利率"
+  url: "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10"
+  kind: csv
+  tier: T1
+  category: rates
+  level: market
+  lang: en
+  max_items: 1
+  enabled: true
+
+- id: fred_hy_oas
+  name: "FRED BAMLH0A0HYM2 — ICE BofA HY OAS"
+  url: "https://fred.stlouisfed.org/graph/fredgraph.csv?id=BAMLH0A0HYM2"
+  kind: csv
+  tier: T1
+  category: credit
+  level: market
+  lang: en
+  max_items: 1
+  enabled: true
+
+- id: fred_dxy
+  name: "FRED DTWEXBGS — 美元廣義貿易加權指數"
+  url: "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DTWEXBGS"
+  kind: csv
+  tier: T1
+  category: fx
+  level: market
+  lang: en
+  max_items: 1
+  enabled: true
+
+- id: fred_vix
+  name: "FRED VIXCLS — CBOE VIX"
+  url: "https://fred.stlouisfed.org/graph/fredgraph.csv?id=VIXCLS"
+  kind: csv
+  tier: T1
+  category: vol
+  level: market
+  lang: en
+  max_items: 1
+  enabled: true
+
+- id: fred_t10y2y
+  name: "FRED T10Y2Y — 10Y-2Y 利差"
+  url: "https://fred.stlouisfed.org/graph/fredgraph.csv?id=T10Y2Y"
+  kind: csv
+  tier: T1
+  category: rates
+  level: market
+  lang: en
+  max_items: 1
+  enabled: true
+
+- id: fred_walcl
+  name: "FRED WALCL — Fed 總資產負債表"
+  url: "https://fred.stlouisfed.org/graph/fredgraph.csv?id=WALCL"
+  kind: csv
+  tier: T1
+  category: liquidity
+  level: market
+  lang: en
+  max_items: 1
+  enabled: true
+
+- id: fred_rrp
+  name: "FRED RRPONTSYD — Fed 隔夜逆回購（RRP）"
+  url: "https://fred.stlouisfed.org/graph/fredgraph.csv?id=RRPONTSYD"
+  kind: csv
+  tier: T1
+  category: liquidity
+  level: market
+  lang: en
+  max_items: 1
+  enabled: true
+
+- id: fred_tga
+  name: "FRED WTREGEN — 財政部一般帳戶（TGA）"
+  url: "https://fred.stlouisfed.org/graph/fredgraph.csv?id=WTREGEN"
+  kind: csv
+  tier: T1
+  category: liquidity
+  level: market
+  lang: en
+  max_items: 1
+  enabled: true
