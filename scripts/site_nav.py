@@ -48,6 +48,17 @@ Change log:
         其餘是 intel「完整互動頁」外連目的地）。雷達依持有人 2026-08-19 決定獨立
         保留。PREFIX_ACTIVE 六個舊前綴改 ("market", None)（群高亮、無選單項）。
         外部 repo snippet 同步待各 repo 自己的 commit（見 site-composition.md）。
+    2026-08-20 選股入口整頓第二批：選股群收斂＋市場偵探回掛系統群。(1) 選股 ▾
+        下拉移除 DD Screener／QGM 美股／QGM 台股／RS+VCP Screener／Momentum-5
+        五條目——五者已收進 /cockpit/ 總覽分頁新增的「想法四路（發現層）」純
+        連結區塊，不再需要獨立佔頂層下拉席位。移除後 MENU["pick"] 只剩「選股
+        主控台」單一目的地，故整組下拉改頂層直連 <a href="/cockpit/">選股</a>
+        （比照其他頂層項 2-4 字慣例，捨長版「選股主控台」）；PREFIX_ACTIVE 的
+        pick 群映射不變，僅 build_nav() 渲染路徑改為 flat link。(2) 市場偵探
+        （/detective/）於 8/20 Phase C 收斂時被移出市場群選單，但 how-to.html
+        仍把它列為每日晨檢第一步的四磚之一——現改掛回系統群（"det" 排首位，
+        緊接裁決實績／持倉週掃兩個既有監控類條目之前），PREFIX_ACTIVE 的
+        detective/ 映射由 ("market", None) 改 ("system", "det")。
 """
 
 import re
@@ -102,14 +113,13 @@ MENU = {
     # 精選榜／流程板機／席位排序（＋原駕駛艙總覽）四頁已收斂進單一 /cockpit/ 四分頁，
     # 故下拉移除 picks／pipe／eng 三個舊條目，只留單一「選股主控台」入口。
     # 舊 URL 皆為活 redirect stub，外部書籤與外部 3 repo 舊 nav 仍可用。
-    # 非四頁條目（DD Screener 主表／Momentum-5／QGM／RS+VCP）保留不動。
+    # 2026-08-20 選股入口整頓第二批：DD Screener／Momentum-5／QGM 美股／QGM 台股／
+    # RS+VCP Screener 五條目移除——已收進 /cockpit/ 總覽分頁「想法四路（發現層）」
+    # 純連結區塊，發現層職能不需要重複佔頂層下拉席位。移除後本組只剩「選股主控台」
+    # 一項，build_nav() 因此不再對 "pick" 呼叫 dd()，改渲染成頂層直連連結；
+    # 各頁 PREFIX_ACTIVE 仍映射 ("pick", ...) 供群高亮沿用，不受影響。
     "pick": [
         ("cockpit", "/cockpit/", "選股主控台"),
-        ("dds", "/dd-screener/", "DD Screener"),
-        ("mom5", "/research/momentum-5/", "Momentum-5"),
-        ("qus", "/qgm/", "QGM 美股"),
-        ("qtw", "/qgm-tw/", "QGM 台股"),
-        ("scr", "/screeners.html", "RS+VCP Screener"),
     ],
     "research": [
         ("thub", "/t/", "個股總覽"),
@@ -143,6 +153,10 @@ MENU = {
     # 收斂為單一「波動率追蹤家族」入口（五頁 pill 已互連，一個入口即達全家族）；
     # 獨立 cache 條目移除，Data Cache 併入公開資料（PREFIX_ACTIVE 見下方判斷）。
     "system": [
+        # 2026-08-20 加回：市場偵探於 8/20 Phase C 收斂時被移出市場群選單，但
+        # how-to.html 仍把它列為每日晨檢第一步的四磚之一，故掛回系統群、排在
+        # 裁決實績／持倉週掃兩個既有監控類條目之前。
+        ("det", "/detective/", "市場偵探"),
         ("tr", "/track-record/", "裁決實績"),
         ("pm", "/pm/", "持倉週掃"),
         ("voltrack", "/long-track-w52-adaptive/", "實單主系統"),
@@ -170,6 +184,8 @@ def build_nav(group=None, item=None):
         )
 
     home_cls = ' class="active"' if group == "home" else ""
+    # 2026-08-20 選股群收斂至單一目的地（/cockpit/）後改頂層直連，不再走 dd()。
+    pick_cls = ' class="active"' if group == "pick" else ""
     mm_cls = ' class="active"' if group == "mm" else ""
     flow_cls = ' class="active"' if group == "flow" else ""
     howto_cls = ' class="active"' if group == "howto" else ""
@@ -180,7 +196,7 @@ def build_nav(group=None, item=None):
     <nav class="imq-menu">
       <a href="/"{home_cls}>首頁</a>
 {dd("market")}
-{dd("pick")}
+      <a href="/cockpit/"{pick_cls}>選股</a>
 {dd("research")}
       <a href="/mental-models/"{mm_cls}>心智模型</a>
 {dd("system")}
@@ -266,7 +282,6 @@ PREFIX_ACTIVE = [
     ("catalyst/", ("market", None)),
     ("monitor/", ("market", None)),  # 全資產市場監測（2026-07-10；Phase C 併入 intel 儀表分頁）
     ("intel/", ("market", "intel")),  # 情報監視器 Phase 1（2026-08-19 新增）
-    ("detective/", ("market", None)),  # 市場偵測器 v2 警報網（2026-07-16；Phase C 併入 intel 變化分頁）
     ("markets.html", ("market", "markets")),
     ("sectors.html", ("market", "sectors")),
     ("crowding/", ("market", None)),
@@ -279,6 +294,7 @@ PREFIX_ACTIVE = [
     ("weekly/", ("market", "week")),
     ("briefing/", ("market", "brief")),  # 2026-08-17 恢復更新，nav 項目已掛回
     # 系統群
+    ("detective/", ("system", "det")),  # 市場偵探（2026-07-16 新增；2026-08-20 自市場群改掛系統群）
     ("track-record/", ("system", "tr")),  # 裁決實績（2026-07-11 新增）
     ("pm/", ("system", "pm")),  # 持倉週掃（2026-07-19 復活：position-thesis-monitor 週掃輸出索引）
     # 2026-07-17 voltrack 入口指現行主系統 W52×自適應（label 2026-07-23 改「實單主系統」）；
