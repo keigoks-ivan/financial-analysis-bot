@@ -112,11 +112,17 @@ def run_screen():
             if len(c) < 260:
                 continue
             ma200 = c.rolling(200).mean().iloc[-1]
+            # up-day ratio, trailing 126 trading days — feeds shadow line Q
+            # (path-quality / "frog in the pan" smoothness proxy). Not part of
+            # the frozen composite/veto logic; purely a raw-dump passthrough.
+            up_diffs = c.diff().dropna().tail(126)
+            pct_up_126 = float((up_diffs > 0).sum() / len(up_diffs)) if len(up_diffs) else None
             rows[t] = dict(
                 price=float(c.iloc[-1]),
                 above200=bool(c.iloc[-1] > ma200),
                 mom6=float(c.iloc[-1] / c.iloc[-127] - 1),
                 ret12=float(c.iloc[-1] / c.iloc[-253] - 1),
+                pct_up_126=pct_up_126,
             )
         except Exception:
             pass
@@ -157,6 +163,47 @@ def run_screen():
                 rows[t].update(d)
                 got += 1
     print(f"eps_trend coverage: {got}")
+
+    # ── earnings surprise (threaded per-ticker, 8 workers) ──
+    # Feeds shadow line P (PEAD / financial-report-surprise line). Raw-dump
+    # passthrough ONLY — does not touch the frozen composite/veto logic above.
+    def surprise_info(t):
+        try:
+            eh = yf.Ticker(t).earnings_history
+            if eh is None or eh.empty:
+                return t, None
+            eh = eh[eh['epsActual'].notna()]
+            if eh.empty:
+                return t, None
+            idx = eh.index[-1]
+            row = eh.iloc[-1]
+            sp = row.get('surprisePercent')
+            if sp is None or pd.isna(sp):
+                return t, None
+            date_iso = pd.Timestamp(idx).date().isoformat()
+            # yfinance's earnings_history.surprisePercent is a FRACTION
+            # (e.g. 0.0452 == +4.52%); scale to percent-point units to match
+            # this script's other percent fields (rev_fy1/rev_fy2/growth).
+            # Note: the 'quarter' index is the fiscal-period END date, not the
+            # actual report/announcement date (which yfinance keeps only in
+            # the separate get_earnings_dates() call) — it typically lags the
+            # real report date by ~3-6 weeks, so using it as the "report
+            # date" for freshness gating is slightly conservative (marks
+            # things stale a bit sooner than the true announcement date
+            # would), not lenient.
+            return t, dict(surprise_pct=float(sp) * 100.0, surprise_date=date_iso)
+        except Exception:
+            return t, None
+
+    surprise_got = 0
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        futs = [ex.submit(surprise_info, t) for t in rows]
+        for f in as_completed(futs):
+            t, d = f.result()
+            if d:
+                rows[t].update(d)
+                surprise_got += 1
+    print(f"surprise coverage: {surprise_got}")
 
     # ── composite (frozen 0.5/0.3/0.2, winsorized z) ──
     df = pd.DataFrame(rows).T
@@ -327,11 +374,19 @@ def build():
     # ── raw factor dump for the shadow-track experiment (build_momentum5_shadow.py) ──
     # Full univ (post-dropna, pre-veto) so the shadow script can recompute its own
     # composite variants; does NOT feed the frozen composite/veto logic above.
+    # 2026-08-20: added pct_up_126 (feeds shadow line Q) and surprise_pct/
+    # surprise_date (feeds shadow line P) — both raw-dump passthrough only.
     def gv(t, col):
         v = univ.at[t, col] if col in univ.columns else None
         if v is None or pd.isna(v):
             return None
         return float(v)
+
+    def gv_str(t, col):
+        if col not in univ.columns:
+            return None
+        v = univ.at[t, col]
+        return None if v is None or pd.isna(v) else str(v)
 
     raw_universe = []
     for t in univ.index:
@@ -346,11 +401,16 @@ def build():
             'rev30_fy1': gv(t, 'rev30_fy1'),
             'rev30_fy2': gv(t, 'rev30_fy2'),
             'growth': gv(t, 'growth'),
+            'pct_up_126': gv(t, 'pct_up_126'),
+            'surprise_pct': gv(t, 'surprise_pct'),
+            'surprise_date': gv_str(t, 'surprise_date'),
         })
+    surprise_coverage = sum(1 for r in raw_universe if r['surprise_pct'] is not None)
     raw_payload = {
         'as_of': as_of,
         'spy_close': round(spy_close, 2),
         'spy6': float(spy6),  # SPY's own 6M return — needed to rebuild relmom6 = mom6 - spy6
+        'surprise_coverage': surprise_coverage,
         'universe': raw_universe,
     }
 
@@ -386,7 +446,8 @@ def main():
     RAW_FACTORS_JSON.write_text(json.dumps(raw_payload, ensure_ascii=False, indent=1) + '\n',
                                 encoding='utf-8')
     print(f"  ✓ wrote {RAW_FACTORS_JSON.relative_to(ROOT)} "
-          f"({len(raw_payload['universe'])} tickers)")
+          f"({len(raw_payload['universe'])} tickers, "
+          f"surprise_coverage={raw_payload['surprise_coverage']})")
 
 
 if __name__ == '__main__':

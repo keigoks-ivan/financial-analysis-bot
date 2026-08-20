@@ -268,22 +268,23 @@ table.data tr.is-seat:hover td{background:#efe9da}
   <div class="wrap">
     <div class="sec-hdr">
       <span class="sec-eyebrow">Shadow Track · PREREG 2026-08-20</span>
-      <span class="sec-title">影子對照實驗（PREREG 2026-08-20）——九十天 vs 三十天修正窗</span>
-      <span class="sec-desc">機械式雙線比較，2026-11-22 起首次週更後人工評審</span>
+      <span class="sec-title">影子對照實驗（PREREG 2026-08-20）——四線機械對照：C／F／P／Q</span>
+      <span class="sec-desc">四條純機械線同跑同一份原始資料，2026-11-22 起首次週更後人工評審</span>
     </div>
     <div class="xcard" id="shadow-prereg" style="margin-bottom:.9rem">
       <div class="loading">規格載入中…</div>
     </div>
+    <div class="xcard" id="shadow-multitest" style="margin-bottom:.9rem;border-color:var(--warn,#c8873b)"></div>
     <div class="cards" id="shadow-lines" style="margin-bottom:.9rem">
-      <div class="loading">兩線持倉載入中…</div>
+      <div class="loading">四線持倉載入中…</div>
     </div>
     <div class="tbl-wrap" style="margin-bottom:.7rem">
       <table class="data" id="shadow-nav-tbl">
         <thead>
-          <tr><th style="text-align:left">日期</th><th>Line C NAV（90D）</th><th>Line F NAV（30D）</th><th>SPY NAV</th></tr>
+          <tr><th style="text-align:left">日期</th><th>Line C NAV（90D）</th><th>Line F NAV（30D）</th><th>Line P NAV（財報驚喜）</th><th>Line Q NAV（路徑品質）</th><th>SPY NAV</th></tr>
         </thead>
         <tbody id="shadow-nav-body">
-          <tr><td colspan="4" class="loading">NAV 序列載入中…</td></tr>
+          <tr><td colspan="6" class="loading">NAV 序列載入中…</td></tr>
         </tbody>
       </table>
     </div>
@@ -501,14 +502,21 @@ table.data tr.is-seat:hover td{background:#efe9da}
 
   // ── shadow track（PREREG 影子對照實驗）──
   var LINE_META = {
-    C: {label: 'Line C · 控制線（90 天修正窗）', tag: 'C'},
-    F: {label: 'Line F · 新鮮線（30 天修正窗）', tag: 'F'}
+    C: {label: 'Line C · 控制線（90 天修正窗）', tag: 'C',
+        blurb: '控制組：現行凍結公式原樣，EPS 修正動能取 90 天窗，機械式選出綜合分數前 5 名。'},
+    F: {label: 'Line F · 新鮮線（30 天修正窗）', tag: 'F',
+        blurb: '測試「修正越新鮮越好」：唯一改動是把修正因子從 90 天窗換成 30 天窗，其餘公式不變，看即時修正是否比累積修正更有效。'},
+    P: {label: 'Line P · 財報驚喜線（PEAD）', tag: 'P',
+        blurb: '測試「財報實際數字」是否比「分析師修正」更有效：把修正因子換成最近一次財報的實際 vs 預估落差（財報後動能效應），且要求該筆財報在 120 天內才算數，逾期直接排除、不是記 0。'},
+    Q: {label: 'Line Q · 路徑品質線', tag: 'Q',
+        blurb: '測試「漲勢平滑度」能否篩掉噴出型假動能：公式與否決跟控制線完全一樣，先取控制線前 20 名候選，再挑近 126 個交易日上漲天數佔比最高的 5 檔，用穩定爬升取代單純分數排序。'}
   };
 
   function showShadowError(){
     var pr = $('shadow-prereg'); if(pr) pr.innerHTML = '<div class="errbox">影子對照實驗資料載入失敗，稍後再試。</div>';
+    var mt = $('shadow-multitest'); if(mt) mt.innerHTML = '';
     var lines = $('shadow-lines'); if(lines) lines.innerHTML = '';
-    var tb = $('shadow-nav-body'); if(tb) tb.innerHTML = '<tr><td colspan="4" class="errbox" style="border:none">資料載入失敗。</td></tr>';
+    var tb = $('shadow-nav-body'); if(tb) tb.innerHTML = '<tr><td colspan="6" class="errbox" style="border:none">資料載入失敗。</td></tr>';
     var dc = $('shadow-disclosure'); if(dc) dc.textContent = '';
   }
 
@@ -520,10 +528,14 @@ table.data tr.is-seat:hover td{background:#efe9da}
     if(pr){
       var rules = pre.portfolio_rules || {};
       var review = pre.review || {};
+      var dp = pre.design_p || {}, dq = pre.design_q || {};
       pr.innerHTML =
         '<h4>'+esc(pre.title||'影子對照實驗')+'</h4>'+
         '<p>'+esc(pre.objective||'')+'</p>'+
         '<p style="margin-top:.5rem">'+esc(pre.design||'')+'</p>'+
+        (dp.design ? '<p style="margin-top:.5rem"><span class="k">'+esc(dp.title||'Line P')+'：</span>'+esc(dp.design||'')+
+          '　'+esc(dp.surprise_definition||'')+'　'+esc(dp.freshness_gate||'')+'　'+esc(dp.data_gate||'')+'</p>' : '') +
+        (dq.design ? '<p style="margin-top:.5rem"><span class="k">'+esc(dq.title||'Line Q')+'：</span>'+esc(dq.design||'')+'</p>' : '') +
         '<ul style="margin-top:.6rem">'+
           '<li><span class="k">組合規則：</span>'+esc(rules.weighting||'')+'　·　成立 '+esc(rules.inception||'')+
             '　·　'+esc(rules.rebalance||'')+'　·　'+esc(rules.nav_update||'')+'　·　'+
@@ -532,14 +544,23 @@ table.data tr.is-seat:hover td{background:#efe9da}
             (review.metrics||[]).map(esc).join('、')+'。'+esc(review.outcome_rule||'')+'</li>'+
         '</ul>';
     }
+    var mt = $('shadow-multitest');
+    if(mt){
+      if(pre.multiple_testing){
+        mt.innerHTML = '<strong>多重檢定誠實提醒：</strong>'+esc(pre.multiple_testing);
+      } else {
+        mt.innerHTML = '';
+      }
+    }
     var dc = $('shadow-disclosure');
     if(dc) dc.textContent = esc(pre.disclosure||'');
 
     var linesWrap = $('shadow-lines');
     if(linesWrap){
       linesWrap.innerHTML = '';
-      ['C','F'].forEach(function(key){
-        var line = (sd.lines||{})[key] || {};
+      ['C','F','P','Q'].forEach(function(key){
+        var line = (sd.lines||{})[key];
+        if(!line) return;  // line not yet present in this shadow.json snapshot
         var meta = LINE_META[key];
         var holdings = line.holdings || [];
         var card = document.createElement('div');
@@ -548,6 +569,7 @@ table.data tr.is-seat:hover td{background:#efe9da}
           sd.nav_series[sd.nav_series.length-1]['nav_'+key] : null;
         card.innerHTML =
           '<h4>'+esc(meta.label)+'　<span class="mono" style="font-size:.8rem;color:var(--muted)">NAV '+fmtNav(navLatest)+'</span></h4>'+
+          '<p class="foot-note" style="margin:.15rem 0 .6rem">'+esc(meta.blurb||'')+'</p>'+
           '<ul>' +
           holdings.map(function(h){
             return '<li><span class="k">'+esc(h.ticker)+'</span>　進場 '+
@@ -563,13 +585,15 @@ table.data tr.is-seat:hover td{background:#efe9da}
     if(tb){
       tb.innerHTML = '';
       var rows = sd.nav_series || [];
-      if(!rows.length){ tb.innerHTML = '<tr><td colspan="4" class="loading">尚無 NAV 紀錄</td></tr>'; }
+      if(!rows.length){ tb.innerHTML = '<tr><td colspan="6" class="loading">尚無 NAV 紀錄</td></tr>'; }
       rows.slice().reverse().forEach(function(r){
         var tr = document.createElement('tr');
         tr.innerHTML =
           '<td style="text-align:left">'+esc(r.date)+'</td>'+
           '<td>'+fmtNav(r.nav_C)+'</td>'+
           '<td>'+fmtNav(r.nav_F)+'</td>'+
+          '<td>'+fmtNav(r.nav_P)+'</td>'+
+          '<td>'+fmtNav(r.nav_Q)+'</td>'+
           '<td>'+fmtNav(r.nav_spy)+'</td>';
         tb.appendChild(tr);
       });
