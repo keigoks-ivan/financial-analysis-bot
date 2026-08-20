@@ -59,6 +59,21 @@ Change log:
         仍把它列為每日晨檢第一步的四磚之一——現改掛回系統群（"det" 排首位，
         緊接裁決實績／持倉週掃兩個既有監控類條目之前），PREFIX_ACTIVE 的
         detective/ 映射由 ("market", None) 改 ("system", "det")。
+    2026-08-20 研究區整併第二階段（nav 瘦身，見 notes/site-internal/root/
+        _consolidation_research_20260820.md §7）：研究 ▾ 下拉從 7 項收斂為
+        3 項——「個股研究」(thub, /t/)／「產業研究」(id, /id/)／「Tier
+        Matrix」(tier, /id/tier_matrix.html)；維持下拉形態，不降頂層直連
+        （與同日選股群單一目的地改直連不同——研究群仍有 3 個真實目的地）。
+        移除的 4 個舊條目（個股 DD／多股對比／期望落差綜合研判／供應鏈地圖）
+        第一階段已收進 /t/ 或 /id/ 分頁，其實體頁面（stub／獨立頁／deep
+        report）PREFIX_ACTIVE 映射同步改點到吸收方的 item，不再指向已消失
+        的選單鍵：docs/research/（stub）、docs/dd/（個別 DD 報告）、
+        docs/dca/、docs/report/、docs/comparisons/（stub＋MS_*.html 報告）、
+        docs/research/synthesis/（stub＋{TICKER}_{date}.html 報告）一律改
+        ("research","thub")（個股研究是這些「個股研究地圖三種切法」的收斂
+        點）；docs/supply-chain/（獨立完整頁＋子地圖）改 ("research","id")
+        （供應鏈地圖是 /id/ 的一個分頁，屬產業研究鏡頭）。效果：這些頁面
+        瀏覽時「研究」下拉的對應項與群同時高亮，不再退化成純群高亮。
 """
 
 import re
@@ -121,14 +136,14 @@ MENU = {
     "pick": [
         ("cockpit", "/cockpit/", "選股主控台"),
     ],
+    # 2026-08-20 nav 瘦身第二階段（研究區整併第一階段的後續，見
+    # notes/site-internal/root/_consolidation_research_20260820.md §7）：
+    # 個股 DD／供應鏈地圖／多股對比／期望落差綜合研判四條目已在第一階段收進
+    # /t/ 或 /id/ 分頁，故選單只留三個真實頂層目的地；下拉形態不變。
     "research": [
-        ("thub", "/t/", "個股總覽"),
-        ("dd", "/research/", "個股 DD"),
-        ("id", "/id/", "產業深度 ID"),
+        ("thub", "/t/", "個股研究"),
+        ("id", "/id/", "產業研究"),
         ("tier", "/id/tier_matrix.html", "Tier Matrix"),
-        ("sc", "/supply-chain/", "供應鏈地圖"),
-        ("cmp", "/comparisons/", "多股對比"),
-        ("syn", "/research/synthesis/", "期望落差綜合研判"),
     ],
     # 2026-08-20 intel 2.0 Phase C：市場群 13→7 收斂——monitor／detective／crowding／
     # regime／rotation（產業輪動）／catalyst 六個監看入口整併進情報監視器分頁殼
@@ -264,17 +279,22 @@ PREFIX_ACTIVE = [
     ("screener-jp.html", ("pick", "scr")),
     ("screener-my.html", ("pick", "scr")),
     # 研究群
-    ("t/", ("research", "thub")),  # 個股總覽（2026-07-11 新增）
-    ("research/synthesis/", ("research", "syn")),
-    ("research/", ("research", "dd")),
-    ("dd/", ("research", "dd")),
-    ("dca/", ("research", "dd")),
-    ("report/", ("research", "dd")),
+    # 2026-08-20 nav 瘦身第二階段：下拉只剩 thub/id/tier 三項，故舊 dd/cmp/syn/sc
+    # 四個 item 鍵已從 MENU["research"] 移除。以下映射改點到吸收方的 item——
+    # 個股 DD／多股對比／期望落差三頁是「個股研究地圖的三種切法」，改指
+    # "thub"；供應鏈地圖是 /id/ 的一個分頁，改指 "id"。效果＝這些頁面瀏覽時
+    # 對應下拉項與群一起高亮，不退化成純群高亮。
+    ("t/", ("research", "thub")),  # 個股研究（2026-07-11 新增；2026-08-20 改名）
+    ("research/synthesis/", ("research", "thub")),
+    ("research/", ("research", "thub")),
+    ("dd/", ("research", "thub")),
+    ("dca/", ("research", "thub")),
+    ("report/", ("research", "thub")),
     ("id/tier_matrix.html", ("research", "tier")),
     ("id/", ("research", "id")),
     ("ds/", ("research", "id")),
-    ("comparisons/", ("research", "cmp")),
-    ("supply-chain/", ("research", "sc")),
+    ("comparisons/", ("research", "thub")),
+    ("supply-chain/", ("research", "id")),
     # 市場群
     ("earnings/", ("market", "earn")),
     # 2026-08-20 Phase C：六個舊監看入口自選單移除後，其頁面映射改

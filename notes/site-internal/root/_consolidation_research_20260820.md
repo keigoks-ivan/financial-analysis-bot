@@ -1,6 +1,6 @@
 # 研究區整併：7 頁 → 2 console（2026-08-20）
 
-狀態：**已執行（第一階段）**。任務裁決「把導覽列『研究』群的 7 頁收斂成兩個主控台」，本輪只建主控台＋轉址，**未改 `scripts/site_nav.py` 的 MENU／nav 結構**（nav 標籤瘦身留第二階段，見§7）。
+狀態：**第一、二階段皆已執行**。任務裁決「把導覽列『研究』群的 7 頁收斂成兩個主控台」，第一階段建主控台＋轉址（本輪未改 `scripts/site_nav.py` 的 MENU／nav 結構）；第二階段（2026-08-20 同日）執行 nav 標籤瘦身，`scripts/site_nav.py` 的 MENU["research"] 由 7 項收斂為 3 項，並同步至外部三 repo 的 nav literal copy。詳見§7。
 前身：`_consolidation_stock_console_20260710.md`（選股主控台 4→1 的同一手法，本次沿用其 iframe＋nav-less 片段＋redirect stub 三件套）。
 
 ---
@@ -75,13 +75,15 @@
 
 ## 6. nav 與站內引用
 
-- **nav：零改動**（本輪不動 `scripts/site_nav.py` 的 MENU/nav 結構，僅擴充 `SKIP_FILES`）。研究下拉維持列 個股總覽／個股 DD／產業深度 ID／Tier Matrix／供應鏈地圖／多股對比／期望落差綜合研判 七項；後四者（個股 DD／多股對比／期望落差綜合研判／供應鏈地圖仍為獨立頁不受影響）點擊 → 舊 URL → redirect → 對應主控台分頁（供應鏈地圖除外，維持獨立到達）。
-- **`site_nav.py` SKIP_FILES**：新增 7 檔——3 個 redirect stub（`research/index.html`、`comparisons/index.html`、`research/synthesis/index.html`）＋ 4 個 nav-less iframe 片段（`research/_body.html`、`comparisons/_body.html`、`research/synthesis/_body.html`、`supply-chain/_body.html`）。`docs/t/index.html`、`docs/id/index.html` 本身**未列入 SKIP_FILES**，維持正常 nav 注入（與 `/cockpit/` 先例一致）。
+- **nav（第一階段）**：零改動（第一階段不動 `scripts/site_nav.py` 的 MENU/nav 結構，僅擴充 `SKIP_FILES`）。
+- **nav（第二階段，2026-08-20 同日執行，見§7.1）**：`MENU["research"]` 由 7 項收斂為 3 項——「個股研究」(`thub`, `/t/`)／「產業研究」(`id`, `/id/`)／「Tier Matrix」(`tier`, `/id/tier_matrix.html`)，維持下拉形態不降頂層直連。`PREFIX_ACTIVE` 同步調整：移除選單的 4 個舊 item（`dd`/`sc`/`cmp`/`syn`）不再對應下拉條目，其實體頁面映射改點到吸收方——`docs/dd/`／`docs/dca/`／`docs/report/`／`docs/research/`（含 stub）／`docs/comparisons/`（含 stub）／`docs/research/synthesis/`（含 stub）改指 `("research","thub")`；`docs/supply-chain/`（獨立頁＋子地圖）改指 `("research","id")`。效果：這些頁面瀏覽時「研究」下拉的對應項與群同時高亮（不只群高亮）。全站 `python3 scripts/site_nav.py` re-inject 兩次驗證冪等（第一次 1701 updated，第二次 0 updated／1701 unchanged）；stub／nav-less 片段（`SKIP_FILES` 內）確認未被灌入 nav。
+- **`site_nav.py` SKIP_FILES**（第一階段）：新增 7 檔——3 個 redirect stub（`research/index.html`、`comparisons/index.html`、`research/synthesis/index.html`）＋ 4 個 nav-less iframe 片段（`research/_body.html`、`comparisons/_body.html`、`research/synthesis/_body.html`、`supply-chain/_body.html`）。`docs/t/index.html`、`docs/id/index.html` 本身**未列入 SKIP_FILES**，維持正常 nav 注入（與 `/cockpit/` 先例一致）。第二階段未再變更 `SKIP_FILES`。
+- **外部三 repo 同步（第二階段）**：`v7-backtest`（`site_nav_snippet.py`，commit `ee7d07b`）、`morning-briefing`（`briefing/site_nav_snippet.py`，commit `4abb44b`）、`minervini-quality-backtest`（`live/site_nav_block.py`，commit `2eb6c70`）三份 nav literal 的研究下拉皆已同步改為 3 項。**發現**：v7-backtest 的 `pick` 群（選股）尚未同步 2026-08-20 稍早的選股主控台單一入口收斂（仍列 6 項含已退役的 DD Screener/QGM/Momentum-5/RS+VCP Screener），已於該 repo commit 的 docstring change log 中註記為既有落後、非本次改動範圍；`market` 群已由另一並行 session 同日同步 intel 2.0 Phase C，cherry-pick 時與本次 research 群變更在 docstring 區段自動合併衝突，已手動解決（MENU dict 本身無衝突，僅 changelog 文字衝突）。
 - `docs/id/tier_matrix.html` 的「三頁分工」段落原文把 `/picks/` 描述成獨立頁——但該 URL 已於 2026-07-10 選股主控台整併中改為轉址 stub → `/cockpit/#picks`。本輪同步修正為「選股主控台 · 精選榜」，並把「先在本頁定位…再去 picks 看它今天能不能 act」改成「…再去精選榜看」。
 - `docs/id/index.html` 兩處硬編「Tier Matrix v2.1」版本號字樣改為「Tier Matrix」（不再帶版號），避免每次 Tier Matrix 改版都要回頭改這裡的文案；同段落新增一條文字連結指向本頁「供應鏈地圖」分頁（`#supplychain`）。
 
-## 7. 需人工確認（第二階段，本輪僅記載不執行）
+## 7. 第二階段執行記錄（2026-08-20 同日）
 
-1. **nav 標籤瘦身**：研究下拉目前仍列 7 項（個股總覽／個股 DD／產業深度 ID／Tier Matrix／供應鏈地圖／多股對比／期望落差綜合研判）。第二階段可考慮收斂為 3 項——**個股研究 `/t/`**／**產業研究 `/id/`**／**Tier Matrix**（`/id/tier_matrix.html` 因高頻獨立引用維持單獨入口；`/supply-chain/` 是否也保留獨立入口待定，因其 44 張子地圖需要直接連結，但主入口本身已可從 `/id/` 分頁到達）。需改 `scripts/site_nav.py` 的 `MENU`／`full_nav_block()` 全站 re-inject，範圍較大，建議待本輪確認無回歸後單獨一輪執行。
+1. **nav 標籤瘦身 — 已執行**。研究下拉由 7 項（個股總覽／個股 DD／產業深度 ID／Tier Matrix／供應鏈地圖／多股對比／期望落差綜合研判）收斂為 3 項——**個股研究 `/t/`**／**產業研究 `/id/`**／**Tier Matrix**（`/id/tier_matrix.html` 因高頻獨立引用維持單獨入口；`/supply-chain/` 未獲獨立下拉項，因其主入口已可從 `/id/` 分頁到達，44 張子地圖仍可直接連結，只是不再佔頂層下拉席位）。`scripts/site_nav.py` 的 `MENU["research"]`／`PREFIX_ACTIVE`（見§6）已改，全站 `python3 scripts/site_nav.py` re-inject 完成並驗證冪等。主 repo commit：`__MAIN_REPO_COMMIT_HASH__`。外部三 repo nav literal 同步 commit：v7-backtest `ee7d07b`、morning-briefing `4abb44b`、minervini-quality-backtest `2eb6c70`（皆已 push）。另有 9 個檔案（5 份 `docs/dd/` DD 報告＋`docs/long-track-w52-adaptive/` 3 個 HTML＋3 個 state JSON）因另一 session 正在編輯中而排除於本次 commit：HTML 部分 nav 已個別復原（套用 nav 瘦身前的 site_nav.py 版本重新產生完整 nav block，同時把它們一併補齊到與全站其他頁一致的最新市場／選股群，只有研究群刻意維持瘦身前的 7 項），內容編輯完全未動；JSON 3 檔從未被 nav 注入器碰過，原樣不動。
 2. **`/id/` 待研究 backlog 分頁的 JS 動態搬運**是否要改為 build-time 靜態生成（例如由一支新 builder 在每次跑 `refresh_id_staleness.py` 時順便重繪 backlog 靜態片段）——目前 client-side 即時讀取已能保證零漂移，暫無明顯必要性，但若日後分類數量成長導致載入延遲明顯，可重新評估。
 3. **`docs/comparisons/index.html`／`docs/research/synthesis/index.html` 過去無 producer builder**（純 skill-append 手工維護）——`_body.html` 化之後仍是同樣的手工維護模式，只是換了檔名；若未來要幫這兩頁做自動化 index 重建（例如掃描目錄自動產生 listing），屬另一輪任務，本次不做。
