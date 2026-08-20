@@ -20,8 +20,12 @@
 3. `build_flags()` / `build_flag_candidates()` —— 轉折提醒，**純 Python 決定性**
    （2026-08-19 起完全脫離 LLM）：value/threshold/distance_pct/text_zh 全部
    在 Python 端算好、寫成中文句子。
-4. `build_digest()` —— 一次 sonnet 呼叫，現在只剩 brief_zh（5–8 段早報）。
-   寫完在 Python 端跑一次 allow-list sanitize（只准 <a>/<b>/<span class="n">）。
+4. `build_digest()` —— 一次 sonnet 呼叫，brief_zh（5–8 段早報）＋選填
+   site_read_zh（Phase B，2026-08-20：`build_site_snapshot()` 把站內機械層
+   〔monitor 壓力／detective 警戒度／kill watch／regime〕濃縮成 ≤600 字純文字
+   餵進 prompt，只有素材存在時才要求這欄，讓 LLM 把外部新聞跟站內機械層訊號
+   對起來寫成一段「站內監測判讀」）。寫完在 Python 端跑一次 allow-list
+   sanitize（只准 <a>/<b>/<span class="n">），brief_zh／site_read_zh 都過這關。
 5. `build_calendar()` —— 純 Python，讀 docs/monitor/data/macro_calendar.json
    ＋ docs/catalyst/calendar.json ＋ docs/intel/data/ff_calendar.json（新增，
    ForexFactory 經濟日曆）未來 7 天的事件，不經 LLM。
@@ -61,6 +65,9 @@ DETECTIVE_KILL_WATCH = ROOT / "docs" / "detective" / "data" / "kill_watch.json"
 MACRO_CALENDAR = ROOT / "docs" / "monitor" / "data" / "macro_calendar.json"
 CATALYST_CALENDAR = ROOT / "docs" / "catalyst" / "calendar.json"
 FF_CALENDAR = ROOT / "docs" / "intel" / "data" / "ff_calendar.json"
+# Phase B（2026-08-20）：site_snapshot 額外讀的兩份站內機械層資料。
+MONITOR_SCORE_HISTORY = ROOT / "docs" / "monitor" / "data" / "score_history.json"
+DETECTIVE_LATEST = ROOT / "docs" / "detective" / "data" / "latest.json"
 
 # monitor/latest.json `categories[].key` -> intel §3 dimension key (same
 # mapping fetch.py uses for on-site alert cards, kept in sync manually).
@@ -693,6 +700,82 @@ def fallback_flags(candidates: list[dict]) -> list:
     return out
 
 
+_SITE_SNAPSHOT_BAND_ZH = {
+    "calm": "平靜", "normal": "正常", "warming": "升溫", "tense": "緊張", "extreme": "極端",
+}
+SITE_SNAPSHOT_MAX_CHARS = 600
+
+
+def _site_snapshot_band(score, bands) -> str:
+    try:
+        s = float(score)
+    except (TypeError, ValueError):
+        return ""
+    for k, rng in (bands or {}).items():
+        try:
+            a, b = rng
+            if a <= s < b:
+                return _SITE_SNAPSHOT_BAND_ZH.get(k, k)
+        except (TypeError, ValueError):
+            continue
+    return ""
+
+
+def build_site_snapshot() -> str | None:
+    """B2（2026-08-20）：把站內機械層（monitor 壓力分數／detective 警戒度＋
+    紅黃數＋今日新增/升級訊號／kill watch 接近/突破數／regime 標籤）濃縮成
+    ≤600 字純文字，餵進 brief.md 的 digest 呼叫，讓 sonnet 寫「站內監測判讀」
+    （site_read_zh）。每個來源獨立 fail-safe——單一來源缺檔/壞檔就跳過那一句
+    （不是整塊放棄），全部來源都缺才回 None（呼叫端據此完全省略這欄，
+    render.py 向後相容）。刻意只給濃縮數字，不把整包 signals/cards 塞進來
+    （token 紀律：這欄本身要 ≤600 字元，不是給模型自己再篩選的原始資料）。"""
+    bits: list[str] = []
+
+    sh = load_json(MONITOR_SCORE_HISTORY)
+    if sh:
+        series = sh.get("series") or []
+        last = series[-1] if series else {}
+        score = last.get("s")
+        if score is not None:
+            band = _site_snapshot_band(score, sh.get("bands"))
+            bits.append(f"monitor 壓力分數 {score:g}" + (f"（{band}）" if band else ""))
+
+    det = load_json(DETECTIVE_LATEST)
+    if det:
+        al = det.get("alert_level") or {}
+        counts = det.get("counts") or {}
+        if al.get("score") is not None:
+            bits.append(
+                f"detective 警戒度 {al.get('score')}（{al.get('band_label') or ''}）"
+                f"，{counts.get('red', 0)} 紅 {counts.get('yellow', 0)} 黃"
+            )
+        signals = det.get("signals") or []
+        hot = [s for s in signals if (s.get("state") or "").lower() in ("new", "escalated")]
+        hot.sort(key=lambda s: (
+            0 if (s.get("sev") or "").lower() == "red" else 1,
+            -(s.get("score") or 0),
+        ))
+        labels = [s.get("label") for s in hot[:5] if s.get("label")]
+        if labels:
+            bits.append("今日新增/升級：" + "、".join(labels))
+
+    kw = load_json(DETECTIVE_KILL_WATCH)
+    if kw is not None:
+        near_n = len(kw.get("near") or [])
+        breached_n = len(kw.get("breached") or [])
+        bits.append(f"kill watch {near_n} 接近 {breached_n} 突破")
+
+    reg = load_json(REGIME_LATEST)
+    if reg:
+        label = ((reg.get("composite") or {}) or {}).get("label_zh")
+        if label:
+            bits.append(f"regime：{label}")
+
+    if not bits:
+        return None
+    return "；".join(bits)[:SITE_SNAPSHOT_MAX_CHARS]
+
+
 def build_digest(all_classified_cards: list[dict], finalized_market_cards: list[dict],
                   ledger: Ledger, name_map: dict, short_map: dict | None = None) -> dict:
     """2026-08-19 起 gauges／flags 已全數移出這通 LLM 呼叫（見 build_gauges／
@@ -700,6 +783,7 @@ def build_digest(all_classified_cards: list[dict], finalized_market_cards: list[
     最重要的卡片收斂成 5-8 段導讀文字。持有人回饋「儀表/警示是看不懂的 LLM
     散文」，數字本來就該由機械層算好，LLM 只負責寫散文本身。"""
     monitor_snapshot = build_monitor_snapshot()
+    site_snapshot = build_site_snapshot()
     short_map = short_map or {}
 
     market_cards_input = []
@@ -721,10 +805,13 @@ def build_digest(all_classified_cards: list[dict], finalized_market_cards: list[
         if isinstance(deep, dict) and deep.get("takeaway_zh"):
             item["deep_takeaway"] = deep["takeaway_zh"]
         market_cards_input.append(item)
-    payload = json.dumps(
-        {"monitor_snapshot": monitor_snapshot, "market_cards": market_cards_input},
-        ensure_ascii=False,
-    )
+    payload_dict = {"monitor_snapshot": monitor_snapshot, "market_cards": market_cards_input}
+    if site_snapshot:
+        # B2（2026-08-20）：只有真的組出 site_snapshot 時才把這欄放進 payload——
+        # brief.md 的指示是「site_snapshot 存在才要求 site_read_zh」，讓沒有
+        # 這塊素材的舊行為（純早報）完全不受影響。
+        payload_dict["site_snapshot"] = site_snapshot
+    payload = json.dumps(payload_dict, ensure_ascii=False)
     # This single call is charged against the sonnet ledger like any other
     # sonnet batch; count it as covering the market-card set it summarizes.
     parsed, usage = run_claude(
@@ -738,7 +825,14 @@ def build_digest(all_classified_cards: list[dict], finalized_market_cards: list[
     if not parsed or not isinstance(parsed, dict):
         return {"brief_zh": []}
     brief_zh = sanitize_brief_html(parsed.get("brief_zh") or [])
-    return {"brief_zh": brief_zh}
+    result = {"brief_zh": brief_zh}
+    if site_snapshot:
+        site_read_raw = parsed.get("site_read_zh")
+        if isinstance(site_read_raw, str) and site_read_raw.strip():
+            cleaned = sanitize_brief_html([site_read_raw])
+            if cleaned:
+                result["site_read_zh"] = cleaned[0]
+    return result
 
 
 # ── calendar (pure Python, no LLM) ──────────────────────────────────────────

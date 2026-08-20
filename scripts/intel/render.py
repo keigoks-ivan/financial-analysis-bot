@@ -75,6 +75,9 @@ MACRO_CLOCK_FILE = DOCS / "macro" / "data" / "clock.json"
 RISK_GAUGE_FILE = DOCS / "cache" / "risk_gauge.json"
 ROTATION_RADAR_FILE = DOCS / "rotation" / "data" / "radar.json"
 CATALYST_CALENDAR_FILE = DOCS / "catalyst" / "calendar.json"
+# Phase B（2026-08-20）：週更頁原生渲染直接讀的另外兩份週更資料源。
+CROWDING_LATEST_FILE = DOCS / "crowding" / "data" / "latest.json"
+ROTATION_LATEST_FILE = DOCS / "rotation" / "data" / "latest.json"
 
 TAIPEI_OFFSET = timedelta(hours=8)
 STALE_HOURS = 30
@@ -489,6 +492,26 @@ def render_brief(brief_zh: list) -> str:
         cls = ' class="lead"' if i == 0 else ""
         paras.append(f"<p{cls}>{body}</p>")
     return '<div class="brief">\n' + "\n".join(paras) + "\n</div>"
+
+
+def render_site_read(site_read_zh) -> str:
+    """B2（2026-08-20）：早報之後的「站內監測判讀」——digest 頂層選填欄位
+    `site_read_zh`（只有 summarize.py 有 site_snapshot 素材時才會出現）。缺欄位
+    /空字串一律回空字串，build_day_body 完全不渲染這段（向後相容舊 JSON）。
+    跟 brief_zh 一樣是 LLM 產出，render 端仍跑一次 allow-list sanitize 當第二道防線。"""
+    if not isinstance(site_read_zh, str) or not site_read_zh.strip():
+        return ""
+    body = sanitize_brief(site_read_zh)
+    if not body.strip():
+        return ""
+    return (
+        '<div class="box" style="margin-top:10px">'
+        '<h3>站內監測判讀'
+        '<span><a href="/intel/change.html" style="color:inherit;text-decoration:none">'
+        "機械層數字→ 變化分頁</a></span></h3>"
+        f'<p style="margin:8px 0 0;font-size:13px;line-height:1.7">{body}</p>'
+        "</div>"
+    )
 
 
 # --------------------------------------------------------------- card bits
@@ -1772,6 +1795,7 @@ def build_day_body(date_str: str, payload: dict, mode_note: str, is_archive: boo
     p.append(h2("市場早報", "Brief"))
     p.append('<div class="sheet"><div class="main">')
     p.append(render_brief(brief_zh))
+    p.append(render_site_read(payload.get("site_read_zh")))
     p.append("</div>")
     p.append('<aside class="side">')
     p.append(render_focus(main))
@@ -1877,50 +1901,225 @@ def build_gauges_body(badges: dict) -> str:
     return "\n".join(p)
 
 
-_WEEKLY_SUBTABS = [
-    ("crowding", "擁擠交易", "/crowding/"),
-    ("regime", "Regime", "/regime/"),
-    ("rotation", "產業輪動", "/rotation/"),
-    ("radar", "資產輪動雷達 ↗", "/rotation/radar.html#cross_asset/120"),
-]
+# ---------------------------------------------- 週更原生渲染（Phase B，2026-08-20）
+# 舊版三個 iframe 嵌 /crowding/ /regime/ /rotation/ 全部拆掉，改成 Python 端直接
+# 讀三份週更 JSON 渲染真數字（沿用既有 intel.css：.box/.twrap table.t/.stat-cards/
+# .note），底部留一排連到完整互動頁的小連結。任一來源缺檔/壞檔只讓該區塊顯示
+# 「尚無資料」，不擋其他兩塊或整頁（同站台一貫的 fail-safe 慣例）。
 
-WEEKLY_SUBTAB_SCRIPT = (
-    "<script>(function(){"
-    "var btns=document.querySelectorAll('.subtabs button');"
-    "var panes=document.querySelectorAll('.subpane');"
-    "btns.forEach(function(b){b.addEventListener('click',function(){"
-    "btns.forEach(function(x){x.setAttribute('aria-pressed',String(x===b))});"
-    "panes.forEach(function(p){p.style.display="
-    "(p.getAttribute('data-pane')===b.getAttribute('data-set'))?'':'none'});"
-    "})});"
-    "})();</script>"
-)
+_STALE_DAYS = 10
+
+
+def _as_of_date(s) -> "datetime.date | None":
+    if not s:
+        return None
+    try:
+        return datetime.strptime(str(s)[:10], "%Y-%m-%d").date()
+    except ValueError:
+        return None
+
+
+def _stale_note(as_of) -> str:
+    """as_of 超過 _STALE_DAYS 天時回「（資料 N 天前）」，否則空字串。"""
+    d = _as_of_date(as_of)
+    if d is None:
+        return ""
+    days = (datetime.now(timezone.utc).date() - d).days
+    return f"（資料 {days} 天前）" if days > _STALE_DAYS else ""
+
+
+def _weekly_section_head(zh: str, en: str, as_of) -> str:
+    stale = _stale_note(as_of)
+    as_of_s = esc(as_of) if as_of else DASH
+    stale_html = f" <span>{esc(stale)}</span>" if stale else ""
+    return h2(zh, en) + f'<p class="note">as_of {as_of_s}{stale_html}</p>'
+
+
+def render_weekly_crowding() -> str:
+    d = load_json_safe(CROWDING_LATEST_FILE) or {}
+    if not d:
+        return (
+            _weekly_section_head("擁擠交易", "Crowding", None)
+            + '<div class="empty">今日尚無資料，見 <a href="/crowding/">/crowding/</a>。</div>'
+        )
+    as_of = d.get("cot_as_of") or (d.get("generated_at") or "")[:10]
+    parts = [_weekly_section_head("擁擠交易", "Crowding", as_of)]
+
+    themes = [t for t in (d.get("themes") or []) if t.get("rank") is not None]
+    themes = sorted(themes, key=lambda t: t["rank"])[:10]
+    if themes:
+        rows = "".join(
+            "<tr>"
+            f'<td>{esc(t.get("name")) or DASH}</td>'
+            f'<td class="num">{esc(fmt_num(t.get("score"))) or DASH}</td>'
+            f'<td class="num">{esc(fmt_num(t.get("rank"))) or DASH}</td>'
+            "</tr>"
+            for t in themes
+        )
+        parts.append(
+            '<div class="twrap"><table class="t"><thead><tr>'
+            "<th>主題</th><th>擁擠分數</th><th>排名</th>"
+            "</tr></thead><tbody>" + rows + "</tbody></table></div>"
+        )
+    else:
+        parts.append('<div class="empty">今日無主題擁擠資料。</div>')
+
+    def _cot_extreme_key(c):
+        try:
+            return -abs(float(c.get("pctile_5y")) - 50.0)
+        except (TypeError, ValueError):
+            return 0.0
+
+    cot_top = sorted(
+        (c for c in (d.get("cot") or []) if c.get("pctile_5y") is not None),
+        key=_cot_extreme_key,
+    )[:8]
+    if cot_top:
+        rows = "".join(
+            "<tr>"
+            f'<td>{esc(c.get("market")) or DASH}</td>'
+            f'<td>{esc(c.get("direction")) or DASH}</td>'
+            f'<td class="num">{esc(fmt_num(c.get("pctile_5y"))) or DASH}</td>'
+            "</tr>"
+            for c in cot_top
+        )
+        parts.append(
+            '<div class="twrap" style="margin-top:8px"><table class="t"><thead><tr>'
+            "<th>市場</th><th>方向</th><th>5 年分位</th>"
+            "</tr></thead><tbody>" + rows + "</tbody></table></div>"
+        )
+    else:
+        parts.append('<div class="empty">今日無 COT 極端值資料。</div>')
+
+    parts.append(
+        '<p class="note">來源：/crowding/ 每週日更新 · '
+        '<a href="/crowding/">完整互動頁 →</a></p>'
+    )
+    return "".join(parts)
+
+
+def render_weekly_regime() -> str:
+    d = load_json_safe(REGIME_LATEST_FILE) or {}
+    if not d:
+        return (
+            _weekly_section_head("Regime", "Regime", None)
+            + '<div class="empty">今日尚無資料，見 <a href="/regime/">/regime/</a>。</div>'
+        )
+    meta = d.get("meta") or {}
+    as_of = meta.get("publish_date") or (d.get("generated_at") or "")[:10]
+    parts = [_weekly_section_head("Regime", "Regime", as_of)]
+
+    comp = d.get("composite") or {}
+    label_zh = comp.get("label_zh") or DASH
+    label_en = comp.get("label_en") or ""
+    parts.append(
+        '<div style="margin:2px 0 10px">'
+        f'<div style="font-size:19px;font-weight:700;color:var(--ink)">{esc(label_zh)}</div>'
+        + (f'<div class="note" style="margin-top:2px">{esc(label_en)}</div>' if label_en else "")
+        + "</div>"
+    )
+
+    axes = d.get("axes") or []
+    if axes:
+        rows = "".join(
+            "<tr>"
+            f'<td>{esc(a.get("name")) or DASH}</td>'
+            f'<td>{esc((a.get("reading") or "")[:90]) or DASH}</td>'
+            f'<td><span class="pill">{esc(a.get("pill")) or DASH}</span></td>'
+            "</tr>"
+            for a in axes
+        )
+        parts.append(
+            '<div class="twrap"><table class="t"><thead><tr>'
+            "<th>維度</th><th>現值</th><th>訊號</th>"
+            "</tr></thead><tbody>" + rows + "</tbody></table></div>"
+        )
+    else:
+        parts.append('<div class="empty">今日無維度資料。</div>')
+
+    parts.append('<p class="note"><a href="/regime/">完整互動頁 →</a></p>')
+    return "".join(parts)
+
+
+def render_weekly_rotation() -> str:
+    d = load_json_safe(ROTATION_LATEST_FILE) or {}
+    if not d:
+        return (
+            _weekly_section_head("產業輪動", "Rotation", None)
+            + '<div class="empty">今日尚無資料，見 <a href="/rotation/">/rotation/</a>。</div>'
+        )
+    as_of = d.get("as_of") or (d.get("generated_at") or "")[:10]
+    parts = [_weekly_section_head("產業輪動", "Rotation", as_of)]
+
+    qc = d.get("quadrant_counts") or {}
+    quad_labels = [("leading", "領先"), ("improving", "轉強"), ("weakening", "轉弱"), ("lagging", "落後")]
+    quad_html = "".join(
+        f'<div class="c"><div class="k">{esc(lab)}</div>'
+        f'<div class="v">{esc(fmt_num(qc.get(key))) or "0"}</div></div>'
+        for key, lab in quad_labels
+    )
+    parts.append(f'<div class="stat-cards">{quad_html}</div>')
+
+    themes = d.get("themes") or []
+
+    def _theme_table(items) -> str:
+        if not items:
+            return '<div class="empty">無資料。</div>'
+        rows = "".join(
+            "<tr>"
+            f'<td>{esc(t.get("theme")) or DASH}</td>'
+            f'<td class="num">{esc(fmt_num(t.get("rs_ratio"))) or DASH}</td>'
+            f'<td class="num">{esc(fmt_num(t.get("rs_mom"))) or DASH}</td>'
+            "</tr>"
+            for t in items
+        )
+        return (
+            '<div class="twrap"><table class="t"><thead><tr>'
+            "<th>主題</th><th>RS-Ratio</th><th>RS-Mom</th>"
+            "</tr></thead><tbody>" + rows + "</tbody></table></div>"
+        )
+
+    leading = sorted(
+        (t for t in themes if t.get("quadrant") == "leading" and t.get("rs_ratio") is not None),
+        key=lambda t: -t["rs_ratio"],
+    )[:5]
+    lagging = sorted(
+        (t for t in themes if t.get("quadrant") == "lagging" and t.get("rs_ratio") is not None),
+        key=lambda t: t["rs_ratio"],
+    )[:5]
+
+    parts.append('<div style="font-weight:600;font-size:12.5px;margin:10px 0 4px;color:var(--ink2)">領先前 5</div>')
+    parts.append(_theme_table(leading))
+    parts.append('<div style="font-weight:600;font-size:12.5px;margin:10px 0 4px;color:var(--ink2)">落後前 5</div>')
+    parts.append(_theme_table(lagging))
+
+    parts.append(
+        '<p class="note"><a href="/rotation/">完整互動頁 →</a> · '
+        '<a href="/rotation/radar.html">輪動雷達 →</a></p>'
+    )
+    return "".join(parts)
 
 
 def build_weekly_body(badges: dict) -> str:
     p = ['<div class="wrap">']
     p.append(
         '<div class="mast"><div class="ttl"><h1>週更</h1>'
-        '<div class="date">擁擠交易／Regime／產業輪動／資產輪動雷達</div></div>'
+        '<div class="date">擁擠交易／Regime／產業輪動（原生渲染，週日更新）</div></div>'
         + _util_chips() + "</div>"
     )
     p.append(render_tabstrip("weekly.html", badges))
-    sub_btns = []
-    for i, (key, label, _url) in enumerate(_WEEKLY_SUBTABS):
-        pressed = "true" if i == 0 else "false"
-        sub_btns.append(
-            f'<button type="button" data-set="{esc(key)}" aria-pressed="{pressed}">{esc(label)}</button>'
-        )
-    p.append('<div class="subtabs" role="group" aria-label="週更子分頁">' + "".join(sub_btns) + "</div>")
-    for i, (key, label, url) in enumerate(_WEEKLY_SUBTABS):
-        style = "" if i == 0 else ' style="display:none"'
-        p.append(
-            f'<div class="subpane" data-pane="{esc(key)}"{style}>'
-            f'<iframe class="fullframe" src="{esc(url)}" loading="lazy" title="{esc(label)}"></iframe></div>'
-        )
+    p.append(render_weekly_crowding())
+    p.append(render_weekly_regime())
+    p.append(render_weekly_rotation())
+    p.append(
+        '<p class="note" style="margin-top:16px">完整互動頁：'
+        '<a href="/crowding/">/crowding/</a> · '
+        '<a href="/regime/">/regime/</a> · '
+        '<a href="/rotation/">/rotation/</a> · '
+        '<a href="/rotation/radar.html">/rotation/radar.html</a></p>'
+    )
     p.append("</div>")
     p.append(FOOT)
-    p.append(WEEKLY_SUBTAB_SCRIPT)
     return "\n".join(p)
 
 
@@ -2186,6 +2385,26 @@ def render_status_page(date_str: str, payload: dict, sources_meta: dict, badges:
 
 CHAIN_STATUS_FILE = DATA_DIR / "chain_status.json"
 _CHAIN_ICON = {"success": "✅", "failure": "❌", "cancelled": "◻︎", "skipped": "◻︎"}
+# Phase B（2026-08-20）：每節後面的人話說明——名字對照
+# .github/workflows/intel-2-daily.yml 寫進 /tmp/chain_status.txt 的固定七個
+# step name（monitor/detective/crossasset/catalyst/killwatch/intel_fetch/
+# intel_run），未知 name 就不加說明（不擋渲染）。
+_CHAIN_STEP_DESC = {
+    "monitor": "跨資產壓力儀表",
+    "detective": "訊號網",
+    "crossasset": "週更三頁（擁擠交易／Regime／產業輪動）",
+    "catalyst": "催化劑行事曆",
+    "killwatch": "證偽表",
+    "intel_fetch": "新聞抓取",
+    "intel_run": "AI 摘要",
+}
+
+
+def _chain_all_success(data: dict) -> bool:
+    steps = data.get("steps") or []
+    if not steps:
+        return False
+    return all((s.get("outcome") or "").lower() == "success" for s in steps)
 
 
 def render_chain_status() -> str:
@@ -2197,18 +2416,32 @@ def render_chain_status() -> str:
         return ""
     rows = []
     for s in data["steps"]:
+        name = s.get("name") or ""
         outcome = (s.get("outcome") or "").lower()
         icon = _CHAIN_ICON.get(outcome, "◻︎")
         secs = s.get("seconds")
         secs_s = f"{secs}s" if secs is not None else DASH
+        desc = _CHAIN_STEP_DESC.get(name, "")
+        label = f"{name}　{desc}" if desc else name
         rows.append(
-            f'<div class="c"><div class="k">{esc(s.get("name") or "")}</div>'
-            f'<div class="v">{icon} <span class="mut" style="font-size:11px">{esc(secs_s)}</span></div></div>'
+            f'<div class="c"><div class="k">{esc(label)}</div>'
+            f'<div class="v">{icon} <span class="note" style="margin:0;font-size:11px">{esc(secs_s)}</span></div></div>'
+        )
+    # 一行總結：本頁只保留當日 chain_status.json（每次覆蓋、不留歷史），故只能
+    # 判斷「今天這條鏈是否整條成功」，不能回溯更早的成功日期——誠實標示這個
+    # 侷限，而不是編造一個查不到來源的日期。
+    if _chain_all_success(data):
+        summary = f"上次完整成功：{esc(data.get('date') or DASH)}"
+    else:
+        summary = (
+            "上次完整成功：非今日（本頁僅追蹤當日鏈路狀態，"
+            "更早的成功記錄請查 GitHub Actions run history）"
         )
     return (
         h2("一條鏈狀態", "Chain")
         + f'<p class="note">{esc(data.get("date") or "")}</p>'
         + f'<div class="stat-cards">{"".join(rows)}</div>'
+        + f'<p class="note">{summary}</p>'
     )
 
 

@@ -269,3 +269,64 @@
 - Phase C：站上主 nav 尚未收斂進 `/intel/` 分頁殼（`scripts/site_nav.py` 仍是舊版連結）；`docs/home/pulse.json` 首頁尚未改讀新的「現況」彙整層，兩邊資料重疊但各自獨立計算。
 
 **驗證方式**：`python3 scripts/intel/render.py --date YYYY-MM-DD`（純渲染，不跑 fetch/classify/summarize）＋ `python3 scripts/qc.py`＋`python3 -m http.server --directory docs` 手動 curl 8 個分頁確認 200＋分頁列存在。
+
+### 2026-08-20 2.0 Phase B：週更原生渲染＋早報站內判讀＋狀態頁人話說明
+
+**B1（週更頁改原生渲染）**：`weekly.html` 拿掉三個 iframe（`/crowding/`／`/regime/`／`/rotation/`），改
+`render.py` 新增 `render_weekly_crowding()`／`render_weekly_regime()`／`render_weekly_rotation()` 三個
+函式，各自 `load_json_safe()` 讀對應 `docs/{crowding,regime,rotation}/data/latest.json`（新增
+`CROWDING_LATEST_FILE`／`ROTATION_LATEST_FILE` 路徑常數，`REGIME_LATEST_FILE` 沿用既有），沿用
+`intel.css` 既有樣式（`.box`／`table.t`＋`.twrap`／`.stat-cards`／`.note`，未新增任何 CSS 規則）：
+- **擁擠交易**：`cot_as_of` 當 as_of；`themes[]` 依 `rank` 取前 10（主題／分數／排名，latest.json 目前
+  沒有排名變化欄位，暫不渲染該欄）；`cot[]` 依 `|pctile_5y-50|` 取最極端前 8（市場／方向／5 年分位）。
+- **Regime**：`composite.label_zh`（大字）＋`label_en`（副標）；`axes[]` 逐列渲染（名稱／`reading`
+  截 90 字當「現值」／`pill` 當「訊號」）。
+- **產業輪動**：`quadrant_counts` 四象限計數卡；`themes[]` 用既有 `quadrant`／`rs_ratio` 欄位直接排出
+  領先前 5（`quadrant=="leading"` 依 `rs_ratio` 降冪）與落後前 5（`quadrant=="lagging"` 依 `rs_ratio`
+  升冪）——latest.json 本身已有排名資料可用，不需要 fallback 到 `radar.json`。
+- **staleness**：每區塊 `_stale_note(as_of)` 共用一條規則——as_of 超過 10 天在標題旁補灰字
+  「（資料 N 天前）」（用當下 wall-clock 判斷，屬 render.py 既有「唯一活判斷」慣例，非破壞決定性）。
+- 底部保留一排連結「完整互動頁：/crowding/ · /regime/ · /rotation/ · /rotation/radar.html」。
+- 清掉的死碼：舊版 `_WEEKLY_SUBTABS`／`WEEKLY_SUBTAB_SCRIPT`（子分頁按鈕切 iframe 的機制）整段移除，
+  三塊內容改為同頁縱向堆疊，不再需要 JS 切換。
+
+**B2（早報「站內監測判讀」）**：`summarize.py` 新增 `build_site_snapshot()`——濃縮 monitor 壓力分數
+（`docs/monitor/data/score_history.json` 最新一筆 `s`＋帶）、detective 警戒度與紅黃數（`docs/detective/
+data/latest.json` 的 `alert_level`／`counts`）、今日新增/升級訊號 label 前 5 條（`signals[]` 篩
+`state in (new, escalated)`，紅優先、分數降冪）、kill watch 接近/突破數（`docs/detective/data/
+kill_watch.json` 的 `near`/`breached` 長度）、regime `composite.label_zh`，串成一段 `；` 分隔純文字並
+硬截斷 `SITE_SNAPSHOT_MAX_CHARS = 600` 字元。**組裝規則**：五個來源各自獨立 `load_json()`（本來就
+fail-safe，缺檔/壞檔回 `None`）——單一來源缺失只跳過那一句，不放棄整塊；五個來源全缺才回 `None`。
+`build_digest()` 只有 `build_site_snapshot()` 回傳非 `None` 時，才把 `site_snapshot` 塞進送給 sonnet
+的 payload，並在 `brief.md`（新增一段「站內監測判讀」規則＋輸出格式分兩種）裡告知模型：只有這欄存在
+才需要多輸出 `site_read_zh`（2–4 句，把外部新聞跟站內機械層現況對起來講；同 brief_zh 的描述器紀律，
+禁擇時結論、禁買賣指令；只能用 `site_snapshot`／`market_cards` 裡真實出現的內容，不得外推）。模型
+回傳的 `site_read_zh` 一樣過 `sanitize_brief_html()`（沿用既有 allow-list：`<a>`/`<b>`/`<span
+class="n">`）才寫進 `build_digest()` 回傳物件。`run_daily.py` 把 `digest.get("site_read_zh")` 併入
+`output["site_read_zh"]`（`--no-llm`／LLM 不可用路徑固定 `None`）。**向後相容**：`render.py` 新增
+`render_site_read()`，`isinstance(...,str)` 且非空字串才渲染（並再跑一次 `sanitize_brief()` 當第二道
+防線，跟 `render_brief()` 同一套雙重清洗慣例）；欄位不存在／為 `None`／空字串時完全不輸出「站內監測
+判讀」標題與內容，舊格式 JSON（無此欄位）渲染結果與改動前逐位元組相同。渲染位置＝早報 `.main` 欄、
+`render_brief(brief_zh)` 之後、`</div>` 關閉 `.main` 之前；標題旁小字「機械層數字→ 變化分頁」連
+`/intel/change.html`。**token 紀律**：`site_snapshot` 是五句濃縮數字硬截 600 字元，不塞整包
+`signals[]`／`cards[]`——LLM 拿到的是機械層已經算好的結論句，不是待篩選的原始資料。
+
+**B3（狀態頁人話說明）**：`render_chain_status()` 新增 `_CHAIN_STEP_DESC` 對照表（`monitor`＝跨資產
+壓力儀表／`detective`＝訊號網／`crossasset`＝週更三頁／`catalyst`＝催化劑行事曆／`killwatch`＝證偽表
+／`intel_fetch`＝新聞抓取／`intel_run`＝新聞抓取與 AI 摘要），照 `.github/workflows/intel-2-daily.yml`
+寫進 `chain_status.json` 的固定七個 step name 對應（名字對不上的 step 只顯示原名，不擋渲染）。每張卡
+的 `.k` 從純 step name 改成「name　說明」。新增一行總結：`_chain_all_success()` 檢查當日七步是否全部
+`outcome=="success"`，是則顯示「上次完整成功：{當日日期}」；否則顯示「上次完整成功：非今日（本頁僅
+追蹤當日鏈路狀態，更早的成功記錄請查 GitHub Actions run history）」——**誠實侷限**：`chain_status.json`
+每次執行覆蓋、不留歷史，render.py 只能回答「今天這條鏈是否整條成功」，不能回溯更早的成功日期，故不
+編造查不到來源的日期。
+
+**離線驗證（不呼叫 LLM）**：把當日 `docs/intel/data/{date}.json` 複製到 `/tmp`，手動加一個含 `<b>`／
+`<span class="n">`／`<a href>`／`<script>`（驗證過濾）的假 `site_read_zh` 字串，`python3 scripts/intel/
+render.py --date {date} --data /tmp/fake.json --out /tmp/intel_test_out` 渲染到隔離輸出目錄（`--data`／
+`--out` 本來就是 render.py 內建的測試旗標，見檔頭 CLI 說明），確認「站內監測判讀」區塊出現、`<script>`
+被過濾成純文字、`<a>` 補上 `rel="noopener nofollow"`，再刪除 `/tmp` 底下的測試檔——全程不動 `docs/` 裡
+的真檔、不呼叫真的 LLM。
+
+**Phase C 待辦不變**：站上主 nav 尚未收斂進 `/intel/` 分頁殼；`docs/home/pulse.json` 首頁尚未改讀新的
+「現況」彙整層。
