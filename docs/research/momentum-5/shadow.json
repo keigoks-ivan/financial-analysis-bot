@@ -1,5 +1,5 @@
 {
- "schema": "momentum5-shadow-v2",
+ "schema": "momentum5-shadow-v3",
  "prereg": {
   "title": "影子對照實驗：財報後新鮮上修優先（30 天修正窗）vs 現行 90 天窗",
   "frozen_date": "2026-08-20",
@@ -39,7 +39,21 @@
    "design": "composite 與否決跟 line C 完全一樣；多一道二次篩選——先取 line C composite 前 20 名，再按近 126 個交易日上漲天數佔比（up-day ratio，平滑度代理）由高到低取前 5 檔；同分以 ticker 字母序決勝。",
    "sanity": "line Q 的 20 檔候選池須與 line C 當週的 20 檔候選池集合完全一致；建置腳本內建此檢查，不一致時報錯且不寫入 shadow.json。"
   },
-  "multiple_testing": "三條實驗線並跑，隨機矇對機率上升；『勝出』門檻＝同時勝過 line C 與 SPY 且最大回撤不更差；升級正式規則仍須人工月度複審拍板。敗者記錄結案，不回頭調參。"
+  "design_r": {
+   "title": "Line R（殘差動能線，2026-08-20 新增）",
+   "objective": "檢定「扣除大盤後的動能殘差」是否比「原始相對動能（relmom6）」更能篩掉純粹跟隨大盤漲跌的假動能。",
+   "design": "與 line C 同公式，唯一改動：composite 中 0.3 權重的動能項由 z(relmom6) 換成 z(resmom)；否決三項完全不變（200DMA／rev_avg 90d≤0／12M>+250%），composite 的 rev 項仍是 z(rev_avg 90d)。",
+   "resmom_definition": "resmom 取個股近 252 個交易日的日報酬，對 SPY 同期日報酬做含截距 OLS 回歸，得逐日殘差；訊號＝殘差在 [t−252, t−21] 窗（跳過最近 21 個交易日的殘差，避開短期反轉）的總和 ÷ 同窗殘差標準差（樣本標準差，ddof=1）。資料不足 252+21（273）個交易日的共同交易日者記 null（該股排除出 line R universe）。",
+   "disclosure": "誠實標注：本線只對市場（SPY）做殘差化，並非完整 Fama-French 三因子版本（未扣除規模、價值等其他風格因子的共同動能）。"
+  },
+  "design_h": {
+   "title": "Line H（52 週高點線，2026-08-20 新增）",
+   "objective": "檢定「貼近 52 週高點」這個動能代理是否優於相對動能（relmom6），並觀察是否會選出過度集中、齊漲齊跌的名單。",
+   "design": "與 line C 同公式，唯一改動：composite 中 0.3 權重的動能項由 z(relmom6) 換成 z(px_over_52wh)；否決三項完全不變，composite 的 rev 項仍是 z(rev_avg 90d)。",
+   "px_over_52wh_definition": "px_over_52wh ＝ 最新收盤 ÷ 近 252 個交易日最高收盤（比值越接近 1 代表越貼近 52 週高點）。",
+   "disclosure": "52 週高點接近度只佔 composite 30% 權重，其餘 70%（0.5 的 90 天 EPS 上修＋0.2 的 FY1→FY2 前瞻成長）負責在『大家都貼近前高』時拉開差距——不是整條線只看誰離高點最近，這是對『會不會很多股票一起入選、選出來的 5 檔高度重疊』這個疑慮的直接回應。"
+  },
+  "multiple_testing": "五條實驗線（F／P／Q／R／H）並跑，隨機矇對機率上升；『勝出』門檻＝同時勝過 line C 與 SPY 且最大回撤不更差；升級正式規則仍須人工月度複審拍板。敗者記錄結案，不回頭調參、不加回（防參數擇優滑坡）。"
  },
  "as_of": "2026-08-20",
  "inception_date": "2026-08-20",
@@ -209,6 +223,88 @@
      "weight_pct": 20.0
     }
    ]
+  },
+  "R": {
+   "nav_base": 100.0,
+   "nav": 100.0,
+   "holdings": [
+    {
+     "ticker": "FLEX",
+     "entry_date": "2026-08-20",
+     "entry_price": 112.58,
+     "score": 3.01,
+     "weight_pct": 20.0
+    },
+    {
+     "ticker": "DELL",
+     "entry_date": "2026-08-20",
+     "entry_price": 441.47,
+     "score": 2.32,
+     "weight_pct": 20.0
+    },
+    {
+     "ticker": "HPE",
+     "entry_date": "2026-08-20",
+     "entry_price": 53.6,
+     "score": 2.26,
+     "weight_pct": 20.0
+    },
+    {
+     "ticker": "SMCI",
+     "entry_date": "2026-08-20",
+     "entry_price": 37.44,
+     "score": 1.99,
+     "weight_pct": 20.0
+    },
+    {
+     "ticker": "CNC",
+     "entry_date": "2026-08-20",
+     "entry_price": 64.83,
+     "score": 1.8,
+     "weight_pct": 20.0
+    }
+   ]
+  },
+  "H": {
+   "nav_base": 100.0,
+   "nav": 100.0,
+   "holdings": [
+    {
+     "ticker": "HPE",
+     "entry_date": "2026-08-20",
+     "entry_price": 53.6,
+     "score": 2.33,
+     "weight_pct": 20.0
+    },
+    {
+     "ticker": "FLEX",
+     "entry_date": "2026-08-20",
+     "entry_price": 112.58,
+     "score": 2.21,
+     "weight_pct": 20.0
+    },
+    {
+     "ticker": "DELL",
+     "entry_date": "2026-08-20",
+     "entry_price": 441.47,
+     "score": 2.2,
+     "weight_pct": 20.0
+    },
+    {
+     "ticker": "PSX",
+     "entry_date": "2026-08-20",
+     "entry_price": 246.55,
+     "score": 2.19,
+     "weight_pct": 20.0
+    },
+    {
+     "ticker": "MPC",
+     "entry_date": "2026-08-20",
+     "entry_price": 366.35,
+     "score": 2.03,
+     "weight_pct": 20.0
+    }
+   ]
   }
  },
  "nav_series": [
@@ -219,7 +315,9 @@
    "nav_spy": 100.0,
    "spy_close": 769.06,
    "nav_P": 100.0,
-   "nav_Q": 100.0
+   "nav_Q": 100.0,
+   "nav_R": 100.0,
+   "nav_H": 100.0
   }
  ],
  "rebalance_history": [
@@ -274,6 +372,32 @@
     "FTNT"
    ],
    "turnover_pct": null
+  },
+  {
+   "date": "2026-08-20",
+   "event": "inception",
+   "line": "R",
+   "holdings": [
+    "FLEX",
+    "DELL",
+    "HPE",
+    "SMCI",
+    "CNC"
+   ],
+   "turnover_pct": null
+  },
+  {
+   "date": "2026-08-20",
+   "event": "inception",
+   "line": "H",
+   "holdings": [
+    "HPE",
+    "FLEX",
+    "DELL",
+    "PSX",
+    "MPC"
+   ],
+   "turnover_pct": null
   }
  ],
  "changelog": [
@@ -284,6 +408,10 @@
   {
    "date": "2026-08-20",
    "event": "新增 line P、Q inception（財報驚喜、路徑品質），同日補建於既有 line C／F 序列。"
+  },
+  {
+   "date": "2026-08-20",
+   "event": "新增 line R、H inception（殘差動能、52 週高點），同日補建於既有 line C／F 序列。"
   }
  ],
  "data_gaps": []

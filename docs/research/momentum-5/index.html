@@ -268,23 +268,23 @@ table.data tr.is-seat:hover td{background:#efe9da}
   <div class="wrap">
     <div class="sec-hdr">
       <span class="sec-eyebrow">Shadow Track · PREREG 2026-08-20</span>
-      <span class="sec-title">影子對照實驗（PREREG 2026-08-20）——四線機械對照：C／F／P／Q</span>
-      <span class="sec-desc">四條純機械線同跑同一份原始資料，2026-11-22 起首次週更後人工評審</span>
+      <span class="sec-title">影子對照實驗（PREREG 2026-08-20）——六線機械對照：C／F／P／Q／R／H</span>
+      <span class="sec-desc">六條純機械線同跑同一份原始資料，2026-11-22 起首次週更後人工評審</span>
     </div>
     <div class="xcard" id="shadow-prereg" style="margin-bottom:.9rem">
       <div class="loading">規格載入中…</div>
     </div>
     <div class="xcard" id="shadow-multitest" style="margin-bottom:.9rem;border-color:var(--warn,#c8873b)"></div>
     <div class="cards" id="shadow-lines" style="margin-bottom:.9rem">
-      <div class="loading">四線持倉載入中…</div>
+      <div class="loading">六線持倉載入中…</div>
     </div>
     <div class="tbl-wrap" style="margin-bottom:.7rem">
       <table class="data" id="shadow-nav-tbl">
         <thead>
-          <tr><th style="text-align:left">日期</th><th>Line C NAV（90D）</th><th>Line F NAV（30D）</th><th>Line P NAV（財報驚喜）</th><th>Line Q NAV（路徑品質）</th><th>SPY NAV</th></tr>
+          <tr><th style="text-align:left">日期</th><th>Line C NAV（90D）</th><th>Line F NAV（30D）</th><th>Line P NAV（財報驚喜）</th><th>Line Q NAV（路徑品質）</th><th>Line R NAV（殘差動能）</th><th>Line H NAV（52 週高點）</th><th>SPY NAV</th></tr>
         </thead>
         <tbody id="shadow-nav-body">
-          <tr><td colspan="6" class="loading">NAV 序列載入中…</td></tr>
+          <tr><td colspan="8" class="loading">NAV 序列載入中…</td></tr>
         </tbody>
       </table>
     </div>
@@ -509,14 +509,18 @@ table.data tr.is-seat:hover td{background:#efe9da}
     P: {label: 'Line P · 財報驚喜線（PEAD）', tag: 'P',
         blurb: '測試「財報實際數字」是否比「分析師修正」更有效：把修正因子換成最近一次財報的實際 vs 預估落差（財報後動能效應），且要求該筆財報在 120 天內才算數，逾期直接排除、不是記 0。'},
     Q: {label: 'Line Q · 路徑品質線', tag: 'Q',
-        blurb: '測試「漲勢平滑度」能否篩掉噴出型假動能：公式與否決跟控制線完全一樣，先取控制線前 20 名候選，再挑近 126 個交易日上漲天數佔比最高的 5 檔，用穩定爬升取代單純分數排序。'}
+        blurb: '測試「漲勢平滑度」能否篩掉噴出型假動能：公式與否決跟控制線完全一樣，先取控制線前 20 名候選，再挑近 126 個交易日上漲天數佔比最高的 5 檔，用穩定爬升取代單純分數排序。'},
+    R: {label: 'Line R · 殘差動能線', tag: 'R',
+        blurb: '測試「扣掉大盤漲跌的動能」是否比原始相對動能更純：唯一改動是把動能項換成 resmom——個股報酬先對 SPY 做迴歸，取跳過最近 21 天短期反轉區的殘差總和 ÷ 殘差標準差，其餘公式與否決完全不變。誠實標注：只對市場（SPY）做殘差化，不是完整三因子版本。'},
+    H: {label: 'Line H · 52 週高點線', tag: 'H',
+        blurb: '測試「貼近 52 週高點」能否當動能代理：唯一改動是把動能項換成「最新收盤 ÷ 近 252 個交易日最高收盤」，其餘公式與否決完全不變。52 週高點只佔 30% 權重，其餘 70%（90 天上修＋前瞻成長）負責在大家都貼前高時拉開差距，不會因為齊漲齊跌就整組選出高度重疊的名單。'}
   };
 
   function showShadowError(){
     var pr = $('shadow-prereg'); if(pr) pr.innerHTML = '<div class="errbox">影子對照實驗資料載入失敗，稍後再試。</div>';
     var mt = $('shadow-multitest'); if(mt) mt.innerHTML = '';
     var lines = $('shadow-lines'); if(lines) lines.innerHTML = '';
-    var tb = $('shadow-nav-body'); if(tb) tb.innerHTML = '<tr><td colspan="6" class="errbox" style="border:none">資料載入失敗。</td></tr>';
+    var tb = $('shadow-nav-body'); if(tb) tb.innerHTML = '<tr><td colspan="8" class="errbox" style="border:none">資料載入失敗。</td></tr>';
     var dc = $('shadow-disclosure'); if(dc) dc.textContent = '';
   }
 
@@ -529,6 +533,7 @@ table.data tr.is-seat:hover td{background:#efe9da}
       var rules = pre.portfolio_rules || {};
       var review = pre.review || {};
       var dp = pre.design_p || {}, dq = pre.design_q || {};
+      var dr = pre.design_r || {}, dh = pre.design_h || {};
       pr.innerHTML =
         '<h4>'+esc(pre.title||'影子對照實驗')+'</h4>'+
         '<p>'+esc(pre.objective||'')+'</p>'+
@@ -536,6 +541,10 @@ table.data tr.is-seat:hover td{background:#efe9da}
         (dp.design ? '<p style="margin-top:.5rem"><span class="k">'+esc(dp.title||'Line P')+'：</span>'+esc(dp.design||'')+
           '　'+esc(dp.surprise_definition||'')+'　'+esc(dp.freshness_gate||'')+'　'+esc(dp.data_gate||'')+'</p>' : '') +
         (dq.design ? '<p style="margin-top:.5rem"><span class="k">'+esc(dq.title||'Line Q')+'：</span>'+esc(dq.design||'')+'</p>' : '') +
+        (dr.design ? '<p style="margin-top:.5rem"><span class="k">'+esc(dr.title||'Line R')+'：</span>'+esc(dr.design||'')+
+          '　'+esc(dr.resmom_definition||'')+'　'+esc(dr.disclosure||'')+'</p>' : '') +
+        (dh.design ? '<p style="margin-top:.5rem"><span class="k">'+esc(dh.title||'Line H')+'：</span>'+esc(dh.design||'')+
+          '　'+esc(dh.px_over_52wh_definition||'')+'　'+esc(dh.disclosure||'')+'</p>' : '') +
         '<ul style="margin-top:.6rem">'+
           '<li><span class="k">組合規則：</span>'+esc(rules.weighting||'')+'　·　成立 '+esc(rules.inception||'')+
             '　·　'+esc(rules.rebalance||'')+'　·　'+esc(rules.nav_update||'')+'　·　'+
@@ -558,7 +567,7 @@ table.data tr.is-seat:hover td{background:#efe9da}
     var linesWrap = $('shadow-lines');
     if(linesWrap){
       linesWrap.innerHTML = '';
-      ['C','F','P','Q'].forEach(function(key){
+      ['C','F','P','Q','R','H'].forEach(function(key){
         var line = (sd.lines||{})[key];
         if(!line) return;  // line not yet present in this shadow.json snapshot
         var meta = LINE_META[key];
@@ -585,7 +594,7 @@ table.data tr.is-seat:hover td{background:#efe9da}
     if(tb){
       tb.innerHTML = '';
       var rows = sd.nav_series || [];
-      if(!rows.length){ tb.innerHTML = '<tr><td colspan="6" class="loading">尚無 NAV 紀錄</td></tr>'; }
+      if(!rows.length){ tb.innerHTML = '<tr><td colspan="8" class="loading">尚無 NAV 紀錄</td></tr>'; }
       rows.slice().reverse().forEach(function(r){
         var tr = document.createElement('tr');
         tr.innerHTML =
@@ -594,6 +603,8 @@ table.data tr.is-seat:hover td{background:#efe9da}
           '<td>'+fmtNav(r.nav_F)+'</td>'+
           '<td>'+fmtNav(r.nav_P)+'</td>'+
           '<td>'+fmtNav(r.nav_Q)+'</td>'+
+          '<td>'+fmtNav(r.nav_R)+'</td>'+
+          '<td>'+fmtNav(r.nav_H)+'</td>'+
           '<td>'+fmtNav(r.nav_spy)+'</td>';
         tb.appendChild(tr);
       });

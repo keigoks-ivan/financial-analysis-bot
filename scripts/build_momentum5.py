@@ -79,6 +79,13 @@ REVIEW_REV30 = -2.0                    # seat rev30_avg <= -2 (fresh downgrade) 
 HEAT_RET12 = 2.5                       # seat 12M return > +250% -> flag
 MIN_EPS_COVERAGE = 300                 # fail-safe floor
 
+# 2026-08-20: raw-dump-only constants feeding shadow lines R (residual momentum)
+# and H (52-week high) — NOT part of the frozen composite/veto logic above.
+RESMOM_REG_WINDOW = 252                # line R: OLS regression window (trading days)
+RESMOM_SKIP_DAYS = 21                  # line R: skip most-recent N days from sum/std (short-term reversal)
+RESMOM_MIN_OBS = RESMOM_REG_WINDOW + RESMOM_SKIP_DAYS  # 273 — data-sufficiency gate, else null
+PX_52WH_WINDOW = 252                   # line H: 52-week-high lookback window (trading days)
+
 
 def run_screen():
     """Run the frozen S&P 500 12M-upside screen.
@@ -104,6 +111,8 @@ def run_screen():
     spy = px['SPY']['Close'].dropna()
     spy_close = float(spy.iloc[-1])
     spy6 = spy.iloc[-1] / spy.iloc[-127] - 1
+    # SPY daily returns — feeds shadow line R's market-residual OLS (below).
+    spy_ret = spy.pct_change().dropna()
 
     rows = {}
     for t in tickers:
@@ -117,12 +126,43 @@ def run_screen():
             # the frozen composite/veto logic; purely a raw-dump passthrough.
             up_diffs = c.diff().dropna().tail(126)
             pct_up_126 = float((up_diffs > 0).sum() / len(up_diffs)) if len(up_diffs) else None
+
+            # px_over_52wh — feeds shadow line H (52-week-high line). Raw-dump
+            # passthrough only; not part of the frozen composite/veto logic.
+            px_over_52wh = (float(c.iloc[-1] / c.tail(PX_52WH_WINDOW).max())
+                            if len(c) >= PX_52WH_WINDOW else None)
+
+            # resmom — feeds shadow line R (residual-momentum line). Raw-dump
+            # passthrough only; not part of the frozen composite/veto logic.
+            # Definition (PREREG'd 2026-08-20): OLS-regress the ticker's daily
+            # return on SPY's same-day daily return (with intercept) over the
+            # trailing RESMOM_REG_WINDOW (252) trading days on the common
+            # date index; take the resulting daily residuals; skip the most
+            # recent RESMOM_SKIP_DAYS (21) of them (short-term-reversal
+            # avoidance); signal = sum(remaining residuals) / std(remaining
+            # residuals, ddof=1). Requires >= RESMOM_MIN_OBS (273) common
+            # trading days of ticker+SPY returns, else null (excluded).
+            t_ret = c.pct_change().dropna()
+            common = pd.concat({'r': t_ret, 's': spy_ret}, axis=1, join='inner').dropna()
+            if len(common) >= RESMOM_MIN_OBS:
+                win = common.tail(RESMOM_REG_WINDOW)
+                X = np.column_stack([np.ones(len(win)), win['s'].to_numpy()])
+                beta, *_ = np.linalg.lstsq(X, win['r'].to_numpy(), rcond=None)
+                resid = win['r'].to_numpy() - X @ beta
+                sig_resid = resid[:-RESMOM_SKIP_DAYS]  # drop most-recent 21
+                sig_std = float(np.std(sig_resid, ddof=1)) if len(sig_resid) > 1 else 0.0
+                resmom = float(np.sum(sig_resid) / sig_std) if sig_std > 0 else None
+            else:
+                resmom = None
+
             rows[t] = dict(
                 price=float(c.iloc[-1]),
                 above200=bool(c.iloc[-1] > ma200),
                 mom6=float(c.iloc[-1] / c.iloc[-127] - 1),
                 ret12=float(c.iloc[-1] / c.iloc[-253] - 1),
                 pct_up_126=pct_up_126,
+                resmom=resmom,
+                px_over_52wh=px_over_52wh,
             )
         except Exception:
             pass
@@ -374,8 +414,9 @@ def build():
     # ── raw factor dump for the shadow-track experiment (build_momentum5_shadow.py) ──
     # Full univ (post-dropna, pre-veto) so the shadow script can recompute its own
     # composite variants; does NOT feed the frozen composite/veto logic above.
-    # 2026-08-20: added pct_up_126 (feeds shadow line Q) and surprise_pct/
-    # surprise_date (feeds shadow line P) — both raw-dump passthrough only.
+    # 2026-08-20: added pct_up_126 (feeds shadow line Q), surprise_pct/
+    # surprise_date (feeds shadow line P), and resmom/px_over_52wh (feed
+    # shadow lines R and H respectively) — all raw-dump passthrough only.
     def gv(t, col):
         v = univ.at[t, col] if col in univ.columns else None
         if v is None or pd.isna(v):
@@ -404,13 +445,19 @@ def build():
             'pct_up_126': gv(t, 'pct_up_126'),
             'surprise_pct': gv(t, 'surprise_pct'),
             'surprise_date': gv_str(t, 'surprise_date'),
+            'resmom': gv(t, 'resmom'),
+            'px_over_52wh': gv(t, 'px_over_52wh'),
         })
     surprise_coverage = sum(1 for r in raw_universe if r['surprise_pct'] is not None)
+    resmom_coverage = sum(1 for r in raw_universe if r['resmom'] is not None)
+    px52wh_coverage = sum(1 for r in raw_universe if r['px_over_52wh'] is not None)
     raw_payload = {
         'as_of': as_of,
         'spy_close': round(spy_close, 2),
         'spy6': float(spy6),  # SPY's own 6M return — needed to rebuild relmom6 = mom6 - spy6
         'surprise_coverage': surprise_coverage,
+        'resmom_coverage': resmom_coverage,
+        'px52wh_coverage': px52wh_coverage,
         'universe': raw_universe,
     }
 
@@ -447,7 +494,9 @@ def main():
                                 encoding='utf-8')
     print(f"  ✓ wrote {RAW_FACTORS_JSON.relative_to(ROOT)} "
           f"({len(raw_payload['universe'])} tickers, "
-          f"surprise_coverage={raw_payload['surprise_coverage']})")
+          f"surprise_coverage={raw_payload['surprise_coverage']}, "
+          f"resmom_coverage={raw_payload['resmom_coverage']}, "
+          f"px52wh_coverage={raw_payload['px52wh_coverage']})")
 
 
 if __name__ == '__main__':

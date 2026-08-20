@@ -1,7 +1,7 @@
 """
-Momentum-5 SHADOW TRACK builder — four mechanical variants of the frozen
-composite, run as a paper A/B/C/D alongside the human-curated Momentum-5
-portfolio.
+Momentum-5 SHADOW TRACK builder — six mechanical variants of the frozen
+composite (control + five experimental), run as a paper track alongside the
+human-curated Momentum-5 portfolio.
 
 WHAT THIS IS
 ------------
@@ -31,15 +31,29 @@ and runs FOUR purely mechanical top-5 lines on the SAME data:
                      by composite score, then re-rank by smoothness (up-day
                      ratio over the trailing 126 trading days, pct_up_126,
                      descending) and take the top 5. Ties broken by ticker.
+  line R (resid)   : 2026-08-20 addition. ONLY the momentum factor (the 0.3
+                     weight) is replaced: z(relmom6) -> z(resmom), where
+                     resmom is a market-residual momentum signal (ticker
+                     daily returns OLS-regressed on SPY daily returns over a
+                     trailing 252-day window, skip-most-recent-21-days sum of
+                     residuals / std of residuals — see build_momentum5.py
+                     for the exact definition). All three vetoes (200DMA,
+                     rev_avg<=0 on the 90-day window, 12M>+250%) and the
+                     rev_avg composite term are byte-identical to line C.
+  line H (52wk-hi) : 2026-08-20 addition. ONLY the momentum factor is
+                     replaced: z(relmom6) -> z(px_over_52wh) = latest close /
+                     trailing-252-day highest close. All three vetoes and the
+                     rev_avg composite term are byte-identical to line C.
 
-Purpose: test three single-variable deviations from the frozen 90-day-window
-composite — revision freshness (F), earnings-surprise substitution (P), and
-path-quality re-ranking (Q) — against the control line and SPY, in a clean,
-deterministic, cost-free, equal-weight, monthly-rebalance paper track. Full
-spec lives in the "prereg" block of shadow.json (verbatim, do not edit
-outside of the 2026-11-22 review point below).
+Purpose: test five single-variable deviations from the frozen 90-day-window
+composite — revision freshness (F), earnings-surprise substitution (P),
+path-quality re-ranking (Q), market-residual momentum (R), and 52-week-high
+proximity (H) — against the control line and SPY, in a clean, deterministic,
+cost-free, equal-weight, monthly-rebalance paper track. Full spec lives in
+the "prereg" block of shadow.json (verbatim, do not edit outside of the
+2026-11-22 review point below).
 
-MULTIPLE-TESTING HONESTY (PREREG'd 2026-08-20, do not relax): running three
+MULTIPLE-TESTING HONESTY (PREREG'd 2026-08-20, do not relax): running five
 experimental lines at once raises the odds that one wins by chance alone.
 "Winning" requires beating BOTH line C AND SPY, with max drawdown no worse.
 Promoting any line to a real rule still requires a human monthly-review
@@ -51,10 +65,11 @@ Review point: 2026-11-22 (first successful weekly update on/after this date)
 
 MECHANICS
 ---------
-- Universe & vetoes: identical structure to build_momentum5.py for C/F/Q;
+- Universe & vetoes: identical structure to build_momentum5.py for C/F/Q/R/H;
   line P swaps the revision term/veto for a freshness-gated earnings
   surprise term (see above).
-- Equal weight, 5 seats each line, inception 2026-08-20.
+- Equal weight, 5 seats each line, inception 2026-08-20 (lines C/F, then P/Q
+  same-day-backfilled, then R/H same-day-backfilled again).
 - Rebalance: mechanical, on the first successful weekly update day of each
   calendar month (whole-month buy & hold otherwise). Line P skips a
   scheduled rebalance if the surprise data gate trips (see above).
@@ -165,9 +180,46 @@ PREREG = {
             "建置腳本內建此檢查，不一致時報錯且不寫入 shadow.json。"
         ),
     },
+    # 2026-08-20 再擴充：加開 line R（殘差動能）與 line H（52 週高點）兩條實驗線，
+    # 與既有 line C／F／P／Q 並跑於同一份 shadow.json（五條實驗線＋一條控制線）。
+    "design_r": {
+        "title": "Line R（殘差動能線，2026-08-20 新增）",
+        "objective": "檢定「扣除大盤後的動能殘差」是否比「原始相對動能（relmom6）」更能篩掉純粹跟隨大盤漲跌的假動能。",
+        "design": (
+            "與 line C 同公式，唯一改動：composite 中 0.3 權重的動能項由 z(relmom6) "
+            "換成 z(resmom)；否決三項完全不變（200DMA／rev_avg 90d≤0／12M>+250%），"
+            "composite 的 rev 項仍是 z(rev_avg 90d)。"
+        ),
+        "resmom_definition": (
+            "resmom 取個股近 252 個交易日的日報酬，對 SPY 同期日報酬做含截距 OLS 回歸，"
+            "得逐日殘差；訊號＝殘差在 [t−252, t−21] 窗（跳過最近 21 個交易日的殘差，"
+            "避開短期反轉）的總和 ÷ 同窗殘差標準差（樣本標準差，ddof=1）。"
+            "資料不足 252+21（273）個交易日的共同交易日者記 null（該股排除出 line R universe）。"
+        ),
+        "disclosure": (
+            "誠實標注：本線只對市場（SPY）做殘差化，並非完整 Fama-French 三因子版本"
+            "（未扣除規模、價值等其他風格因子的共同動能）。"
+        ),
+    },
+    "design_h": {
+        "title": "Line H（52 週高點線，2026-08-20 新增）",
+        "objective": "檢定「貼近 52 週高點」這個動能代理是否優於相對動能（relmom6），並觀察是否會選出過度集中、齊漲齊跌的名單。",
+        "design": (
+            "與 line C 同公式，唯一改動：composite 中 0.3 權重的動能項由 z(relmom6) "
+            "換成 z(px_over_52wh)；否決三項完全不變，composite 的 rev 項仍是 z(rev_avg 90d)。"
+        ),
+        "px_over_52wh_definition": "px_over_52wh ＝ 最新收盤 ÷ 近 252 個交易日最高收盤（比值越接近 1 代表越貼近 52 週高點）。",
+        "disclosure": (
+            "52 週高點接近度只佔 composite 30% 權重，其餘 70%（0.5 的 90 天 EPS 上修＋"
+            "0.2 的 FY1→FY2 前瞻成長）負責在『大家都貼近前高』時拉開差距——"
+            "不是整條線只看誰離高點最近，這是對『會不會很多股票一起入選、選出來的 5 檔高度重疊』"
+            "這個疑慮的直接回應。"
+        ),
+    },
     "multiple_testing": (
-        "三條實驗線並跑，隨機矇對機率上升；『勝出』門檻＝同時勝過 line C 與 SPY 且最大回撤不更差；"
-        "升級正式規則仍須人工月度複審拍板。敗者記錄結案，不回頭調參。"
+        "五條實驗線（F／P／Q／R／H）並跑，隨機矇對機率上升；"
+        "『勝出』門檻＝同時勝過 line C 與 SPY 且最大回撤不更差；"
+        "升級正式規則仍須人工月度複審拍板。敗者記錄結案，不回頭調參、不加回（防參數擇優滑坡）。"
     ),
 }
 
@@ -266,6 +318,52 @@ def build_line_q(df, elig_c_ref):
     return elig_q, pool_ref
 
 
+def build_line_r(df):
+    """Line R: composite momentum term swapped from z(relmom6) to z(resmom)
+    (market-residual momentum, see build_momentum5.py for the definition).
+    Everything else — the rev_avg composite term and all three vetoes
+    (incl. the 90d-window rev_avg<=0 veto) — is byte-identical to line C."""
+    d = df.copy()
+    d['rev_avg'] = d[['rev_fy1', 'rev_fy2']].astype(float).mean(axis=1, skipna=True)
+
+    univ = d.dropna(subset=['rev_avg', 'growth', 'resmom']).copy()
+    univ['score'] = (W_REV * z(univ['rev_avg'])
+                      + W_MOM * z(univ['resmom'])
+                      + W_GROWTH * z(univ['growth']))
+    univ['eligible'] = (univ['above200'].astype(bool)
+                         & (univ['rev_avg'] > 0)
+                         & (univ['ret12'] < VETO_RET12))
+
+    elig = univ[univ['eligible']].copy()
+    elig['_tkr_sort'] = elig.index
+    elig = elig.sort_values(['score', '_tkr_sort'], ascending=[False, True])
+    elig = elig.drop(columns=['_tkr_sort'])
+    return univ, elig
+
+
+def build_line_h(df):
+    """Line H: composite momentum term swapped from z(relmom6) to
+    z(px_over_52wh) (latest close / trailing-252d highest close). Everything
+    else — the rev_avg composite term and all three vetoes — is
+    byte-identical to line C."""
+    d = df.copy()
+    d['rev_avg'] = d[['rev_fy1', 'rev_fy2']].astype(float).mean(axis=1, skipna=True)
+
+    univ = d.dropna(subset=['rev_avg', 'growth', 'px_over_52wh']).copy()
+    univ['score'] = (W_REV * z(univ['rev_avg'])
+                      + W_MOM * z(univ['px_over_52wh'])
+                      + W_GROWTH * z(univ['growth']))
+    univ['eligible'] = (univ['above200'].astype(bool)
+                         & (univ['rev_avg'] > 0)
+                         & (univ['ret12'] < VETO_RET12))
+
+    elig = univ[univ['eligible']].copy()
+    elig['_tkr_sort'] = elig.index
+    elig = elig.sort_values(['score', '_tkr_sort'], ascending=[False, True])
+    elig = elig.drop(columns=['_tkr_sort'])
+    return univ, elig
+
+
 def sanity_check_line_c(univ_c):
     """Line C's score, recomputed from raw_factors.json's full universe, must
     match data.json's top20 scores within SANITY_TOL. Returns (ok, detail)."""
@@ -352,6 +450,8 @@ def main():
     univ_f, elig_f = build_line(df, '30')
     univ_p, elig_p, coverage_p = build_line_p(df, as_of)
     elig_q, q_pool = build_line_q(df, elig_c)  # raises RuntimeError (abort, write nothing) on pool mismatch
+    univ_r, elig_r = build_line_r(df)
+    univ_h, elig_h = build_line_h(df)
 
     ok, detail = sanity_check_line_c(univ_c)
     if not ok:
@@ -360,12 +460,16 @@ def main():
     print(f"  ✓ sanity check line C OK: {detail}")
     print(f"  ✓ sanity check line Q pool OK: matches line C top{Q_POOL_SIZE} ({len(q_pool)} tickers)")
     print(f"  · line P surprise coverage (fresh <= {SURPRISE_FRESH_DAYS}d): {coverage_p}")
+    print(f"  · line R resmom eligible universe: {len(univ_r)} scored, {len(elig_r)} eligible")
+    print(f"  · line H px_over_52wh eligible universe: {len(univ_h)} scored, {len(elig_h)} eligible")
 
     if len(elig_c) < Q_POOL_SIZE:
         print(f"  ✗ line C eligible pool ({len(elig_c)}) < {Q_POOL_SIZE} — cannot build line Q base — aborting")
         sys.exit(1)
-    if len(elig_c) < N_SEATS or len(elig_f) < N_SEATS or len(elig_q) < N_SEATS:
-        print(f"  ✗ not enough eligible names (C={len(elig_c)}, F={len(elig_f)}, Q={len(elig_q)}) — aborting")
+    if (len(elig_c) < N_SEATS or len(elig_f) < N_SEATS or len(elig_q) < N_SEATS
+            or len(elig_r) < N_SEATS or len(elig_h) < N_SEATS):
+        print(f"  ✗ not enough eligible names (C={len(elig_c)}, F={len(elig_f)}, Q={len(elig_q)}, "
+              f"R={len(elig_r)}, H={len(elig_h)}) — aborting")
         sys.exit(1)
 
     p_gate_ok = coverage_p >= SURPRISE_MIN_COVERAGE and len(elig_p) >= N_SEATS
@@ -388,9 +492,11 @@ def main():
             'F': make_holdings(elig_f, df, as_of),
             'P': make_holdings(elig_p, df, as_of),
             'Q': make_holdings(elig_q, df, as_of),
+            'R': make_holdings(elig_r, df, as_of),
+            'H': make_holdings(elig_h, df, as_of),
         }
         state = {
-            'schema': 'momentum5-shadow-v2',
+            'schema': 'momentum5-shadow-v3',
             'prereg': PREREG,
             'as_of': as_of,
             'inception_date': as_of,
@@ -399,6 +505,7 @@ def main():
             'lines': {k: {'nav_base': 100.0, 'nav': 100.0, 'holdings': h} for k, h in holdings.items()},
             'nav_series': [{
                 'date': as_of, 'nav_C': 100.0, 'nav_F': 100.0, 'nav_P': 100.0, 'nav_Q': 100.0,
+                'nav_R': 100.0, 'nav_H': 100.0,
                 'nav_spy': 100.0, 'spy_close': spy_close,
             }],
             'rebalance_history': [
@@ -407,12 +514,13 @@ def main():
                 for k, hs in holdings.items()
             ],
             'changelog': [
-                {'date': as_of, 'event': '影子對照實驗 PREREG 凍結，四線 inception'
-                                          '（90d／30d 修正窗／PEAD 財報驚喜／路徑品質）。'},
+                {'date': as_of, 'event': '影子對照實驗 PREREG 凍結，六線 inception'
+                                          '（90d 控制／30d 修正窗／PEAD 財報驚喜／路徑品質／'
+                                          '殘差動能／52 週高點）。'},
             ],
             'data_gaps': [],
         }
-        for k in ('C', 'F', 'P', 'Q'):
+        for k in ('C', 'F', 'P', 'Q', 'R', 'H'):
             print(f"    line {k}: {[h['ticker'] for h in holdings[k]]}")
     else:
         # ── one-time backfill of any line missing from an already-existing
@@ -442,10 +550,29 @@ def main():
             })
             added.append('Q')
             print(f"    line Q (backfilled): {[h['ticker'] for h in holdings_q]}")
+        if 'R' not in state['lines']:
+            holdings_r = make_holdings(elig_r, df, as_of)
+            state['lines']['R'] = {'nav_base': 100.0, 'nav': 100.0, 'holdings': holdings_r}
+            state['rebalance_history'].append({
+                'date': as_of, 'event': 'inception', 'line': 'R',
+                'holdings': [h['ticker'] for h in holdings_r], 'turnover_pct': None,
+            })
+            added.append('R')
+            print(f"    line R (backfilled): {[h['ticker'] for h in holdings_r]}")
+        if 'H' not in state['lines']:
+            holdings_h = make_holdings(elig_h, df, as_of)
+            state['lines']['H'] = {'nav_base': 100.0, 'nav': 100.0, 'holdings': holdings_h}
+            state['rebalance_history'].append({
+                'date': as_of, 'event': 'inception', 'line': 'H',
+                'holdings': [h['ticker'] for h in holdings_h], 'turnover_pct': None,
+            })
+            added.append('H')
+            print(f"    line H (backfilled): {[h['ticker'] for h in holdings_h]}")
         if added:
             state['prereg'] = PREREG
-            state['schema'] = 'momentum5-shadow-v2'
-            added_zh = '、'.join('財報驚喜' if x == 'P' else '路徑品質' for x in added)
+            state['schema'] = 'momentum5-shadow-v3'
+            added_zh_map = {'P': '財報驚喜', 'Q': '路徑品質', 'R': '殘差動能', 'H': '52 週高點'}
+            added_zh = '、'.join(added_zh_map[x] for x in added)
             state['changelog'].append({
                 'date': as_of,
                 'event': f"新增 line {'、'.join(added)} inception（{added_zh}），同日補建於既有 line C／F 序列。",
@@ -463,6 +590,10 @@ def main():
                     row['nav_P'] = 100.0
                 if 'Q' in added:
                     row['nav_Q'] = 100.0
+                if 'R' in added:
+                    row['nav_R'] = 100.0
+                if 'H' in added:
+                    row['nav_H'] = 100.0
             SHADOW_JSON.write_text(json.dumps(state, ensure_ascii=False, indent=1) + '\n',
                                     encoding='utf-8')
             if added:
@@ -474,7 +605,7 @@ def main():
         # ── WEEKLY UPDATE (and possibly monthly rebalance) ──
         is_new_month = month_of(as_of) != state.get('last_rebalance_month')
 
-        for line_key, elig in (('C', elig_c), ('F', elig_f), ('Q', elig_q)):
+        for line_key, elig in (('C', elig_c), ('F', elig_f), ('Q', elig_q), ('R', elig_r), ('H', elig_h)):
             line = state['lines'][line_key]
             if is_new_month:
                 # mark-to-market the OUTGOING holdings first, then rebalance
@@ -538,7 +669,9 @@ def main():
                 'date': as_of,
                 'event': f"月度機械換倉：line C -> {[h['ticker'] for h in state['lines']['C']['holdings']]}, "
                          f"line F -> {[h['ticker'] for h in state['lines']['F']['holdings']]}, "
-                         f"line Q -> {[h['ticker'] for h in state['lines']['Q']['holdings']]}" + p_note,
+                         f"line Q -> {[h['ticker'] for h in state['lines']['Q']['holdings']]}, "
+                         f"line R -> {[h['ticker'] for h in state['lines']['R']['holdings']]}, "
+                         f"line H -> {[h['ticker'] for h in state['lines']['H']['holdings']]}" + p_note,
             })
 
         nav_spy = round(100.0 * spy_close / state['spy_close_inception'], 2)
@@ -549,11 +682,14 @@ def main():
             'nav_F': round(state['lines']['F']['nav'], 2),
             'nav_P': round(state['lines']['P']['nav'], 2),
             'nav_Q': round(state['lines']['Q']['nav'], 2),
+            'nav_R': round(state['lines']['R']['nav'], 2),
+            'nav_H': round(state['lines']['H']['nav'], 2),
             'nav_spy': nav_spy,
             'spy_close': spy_close,
         })
         print(f"    nav_C={state['lines']['C']['nav']:.2f}  nav_F={state['lines']['F']['nav']:.2f}  "
               f"nav_P={state['lines']['P']['nav']:.2f}  nav_Q={state['lines']['Q']['nav']:.2f}  "
+              f"nav_R={state['lines']['R']['nav']:.2f}  nav_H={state['lines']['H']['nav']:.2f}  "
               f"nav_spy={nav_spy:.2f}")
 
     SHADOW_JSON.write_text(json.dumps(state, ensure_ascii=False, indent=1) + '\n',
