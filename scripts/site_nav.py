@@ -41,6 +41,13 @@ Change log:
         所有具體 long-track-*/ 之後★。退役 generator（smh/tw/turtle）＋GLD 追蹤頁＋總覽
         builder 的 full_nav_block 呼叫改 lthub；smh/tw cron 停更、加凍結 banner。
         v7-backtest/site_nav_snippet.py 同步、byte-identical 驗證。
+    2026-08-20 intel 2.0 Phase C：市場群 13→7 收斂。移除 mon／det／rot／crowd／
+        regime／cat 六條目（整併進 /intel/ 分頁殼：儀表＝monitor iframe、變化＝
+        detective、週更＝crowding＋regime＋rotation、行事曆＝catalyst）；intel 升
+        市場群首位。原頁全保留可直達、刻意不轉址（monitor 被 gauges.html iframe，
+        其餘是 intel「完整互動頁」外連目的地）。雷達依持有人 2026-08-19 決定獨立
+        保留。PREFIX_ACTIVE 六個舊前綴改 ("market", None)（群高亮、無選單項）。
+        外部 repo snippet 同步待各 repo 自己的 commit（見 site-composition.md）。
 """
 
 import re
@@ -113,18 +120,20 @@ MENU = {
         ("cmp", "/comparisons/", "多股對比"),
         ("syn", "/research/synthesis/", "期望落差綜合研判"),
     ],
+    # 2026-08-20 intel 2.0 Phase C：市場群 13→7 收斂——monitor／detective／crowding／
+    # regime／rotation（產業輪動）／catalyst 六個監看入口整併進情報監視器分頁殼
+    # （儀表＝monitor iframe、變化＝detective、週更＝crowding＋regime＋rotation、
+    # 行事曆＝catalyst）。原頁全數保留可直達、刻意「不轉址」：/monitor/ 被
+    # /intel/gauges.html iframe，其餘是 intel 各分頁「完整互動頁」連結的目的地
+    # （內容比 intel 分頁更全）。資產輪動雷達依持有人 2026-08-19 決定獨立保留。
+    # PREFIX_ACTIVE 的六個舊前綴映射改 ("market", None)：頁面仍歸市場群高亮，
+    # 但不再對應任何選單項目。
     "market": [
+        ("intel", "/intel/", "情報監視器"),  # 2026-08-19 新增；2026-08-20 Phase C 升為市場群首位
         ("brief", "/briefing/", "每日簡報"),  # 2026-08-17 日報恢復（週一至週六 06:15），重新掛回頁首
-        ("mon", "/monitor/", "市場監測"),
-        ("intel", "/intel/", "情報監視器"),  # 2026-08-19 新增：全球金融市場情報監視器 Phase 1（市場層）
-        ("det", "/detective/", "偵測警報網"),
         ("radar", "/rotation/radar.html", "資產輪動雷達"),
-        ("rot", "/rotation/", "產業輪動"),
-        ("crowd", "/crowding/", "擁擠交易監測"),
-        ("regime", "/regime/", "大類資產 regime"),
         ("macro", "/macro/", "總經深度報告"),
         ("earn", "/earnings/", "財報分析"),
-        ("cat", "/catalyst/", "催化劑日曆"),
         ("markets", "/markets.html", "Markets"),
         ("sectors", "/sectors.html", "Sectors"),
         # 2026-07-11 週報已停更，自頁首移除（/weekly/ 頁面保留可直達；
@@ -252,18 +261,20 @@ PREFIX_ACTIVE = [
     ("supply-chain/", ("research", "sc")),
     # 市場群
     ("earnings/", ("market", "earn")),
-    ("catalyst/", ("market", "cat")),
-    ("monitor/", ("market", "mon")),  # 全資產市場監測（2026-07-10）
+    # 2026-08-20 Phase C：六個舊監看入口自選單移除後，其頁面映射改
+    # ("market", None)——仍歸市場群高亮，但不再有對應選單項目。
+    ("catalyst/", ("market", None)),
+    ("monitor/", ("market", None)),  # 全資產市場監測（2026-07-10；Phase C 併入 intel 儀表分頁）
     ("intel/", ("market", "intel")),  # 情報監視器 Phase 1（2026-08-19 新增）
-    ("detective/", ("market", "det")),  # 市場偵測器 v2 警報網（2026-07-16；noindex 保留）
+    ("detective/", ("market", None)),  # 市場偵測器 v2 警報網（2026-07-16；Phase C 併入 intel 變化分頁）
     ("markets.html", ("market", "markets")),
     ("sectors.html", ("market", "sectors")),
-    ("crowding/", ("market", "crowd")),
+    ("crowding/", ("market", None)),
     # rotation/radar.html 是「資產輪動雷達」獨立項目；須排在 rotation/ 之前，
-    # 否則會被 rotation/ 前綴吃掉。index.html 與 ROTATION_*.html 仍歸「產業輪動」。
+    # 否則會被 rotation/ 前綴吃掉。index.html 與 ROTATION_*.html 歸市場群（無選單項）。
     ("rotation/radar.html", ("market", "radar")),  # 資產輪動雷達（2026-07-11 新增）
-    ("rotation/", ("market", "rot")),
-    ("regime/", ("market", "regime")),
+    ("rotation/", ("market", None)),
+    ("regime/", ("market", None)),
     ("macro/", ("market", "macro")),  # 總經深度報告（2026-07-09），nav 已掛項目
     ("weekly/", ("market", "week")),
     ("briefing/", ("market", "brief")),  # 2026-08-17 恢復更新，nav 項目已掛回

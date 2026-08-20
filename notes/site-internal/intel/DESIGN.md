@@ -330,3 +330,43 @@ render.py --date {date} --data /tmp/fake.json --out /tmp/intel_test_out` 渲染�
 
 **Phase C 待辦不變**：站上主 nav 尚未收斂進 `/intel/` 分頁殼；`docs/home/pulse.json` 首頁尚未改讀新的
 「現況」彙整層。
+
+### 2026-08-20 2.0 Phase C：nav 收斂＋首頁「市場現況」改讀現況彙整層
+
+**C1（現況彙整層落地）**：`render.py` 新增 `STATUS_SNAPSHOT_FILE`（`docs/intel/data/
+status_snapshot.json`）與 `write_status_snapshot()`——把 `load_status_snapshot()` 的結果
+序列化（`_` 開頭私有鍵不落地；`schema=intel-status-snapshot-v1`；zero-churn 寫入；刻意
+不含 generated_at，新鮮度由 stress_date／alert_date 等來源日期表達）。為此
+`load_status_snapshot()` 增補原始欄位：`stress_band_key`／`alert_band_key`／`alert_date`／
+`risk_gauge_label`／`risk_gauge_score`／`risk_gauge_date`（新增 `_band_key_for_score()`，
+`_band_zh_for_score()` 改為其 zh 包裝，行為不變）。寫入時機兩處：①render.py main()
+（僅正式輸出 docs/intel/ 時，--out 測試模式不寫）；②`build_home_pulse.py` 新增
+`refresh_intel_status_snapshot()`（延遲 import render，失敗不擋 pulse）——因該腳本掛在
+monitor-daily／daily-us-close／rotation-radar-daily 下午刷新鏈上，首頁四磚能跟著午後
+資料更新，不必等隔天 06:30。計算只有一份（render.load_status_snapshot），兩個寫入點
+共用。
+
+**C2（首頁「市場現況」四磚改讀快照）**：`docs/index.html` 磚 2/3/4 的現值／色帶／資料日
+改為快照優先（fetch `/intel/data/status_snapshot.json`）、快照缺檔/缺欄退回原本各來源
+JSON 自算（fallback 保留原邏輯全文）；delta 與 sparkline 仍讀各歷史檔（快照只有最新值）。
+磚 3 連結 `/detective/` → `/intel/change.html`（來源標籤改「情報監視器 · 變化」）、磚 4
+`/monitor/` → `/intel/gauges.html`（「情報監視器 · 儀表」）；磚 1（實單執行層）與磚 2
+錨點（#risk-chart，市場風險儀表留首頁）不動。自動更新檢查清單新增「情報監視器 · 現況
+快照」一列（ts/cmp＝stress_date）。
+
+**C3（nav 收斂 13→7）**：`site_nav.py` 市場群移除 mon／det／rot／crowd／regime／cat
+六條目（儀表＝monitor iframe、變化＝detective、週更＝crowding＋regime＋rotation、
+行事曆＝catalyst），intel 升市場群首位；PREFIX_ACTIVE 六個舊前綴改 `("market", None)`
+（頁面仍歸市場群高亮、無選單項）。全站 sweep 已跑（~1700 檔）。
+
+**「舊頁轉址」判定＝不轉址（記載否決理由，防後續 session 重提）**：①`/monitor/` 被
+`/intel/gauges.html` iframe，轉址會讓 iframe 內容變成套娃；②`/crowding/`／`/regime/`／
+`/rotation/` 是 intel 週更分頁「完整互動頁」外連的目的地，且各自 builder 每週重寫
+index.html，轉址殼會被蓋掉；③`/detective/` 內容比 intel 變化分頁更全（市場全景磚牆
+近百條指標），且 intel 自己連到它（render.py「主題偵測」連結）；④`/catalyst/` 同理
+（intel 行事曆僅 14 天）＋builder 重寫。六頁全數保留可直達，僅自主 nav 移除。
+
+**外部 repo snippet 未同步（待辦）**：v7-backtest／morning-briefing／
+minervini-quality-backtest 內嵌的 nav 副本仍是 13 項舊市場群；qgm／qgm-tw／briefing／
+weekly／backtest 五個 EXTERNAL_TREES 目錄的頁面在各 repo 同步前顯示舊 nav。改外部
+repo 依 CLAUDE.md 須先與持有人確認，故留待辦。

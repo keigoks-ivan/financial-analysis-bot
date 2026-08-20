@@ -268,5 +268,24 @@ def main():
           f"monitor={pulse['monitor_as_of']} radar={pulse['radar_as_of']}")
 
 
+def refresh_intel_status_snapshot():
+    """intel 2.0 Phase C（2026-08-20）：「現況」彙整層的計算只有一份——
+    scripts/intel/render.py 的 load_status_snapshot()。本腳本掛在
+    monitor-daily／daily-us-close／rotation-radar-daily 等下午刷新鏈上，
+    順手重寫 docs/intel/data/status_snapshot.json，讓首頁「市場現況」四磚
+    跟著盤中/午後資料更新，而不是等到隔天 06:30 的 intel 鏈。失敗不擋 pulse。"""
+    import sys
+
+    sys.path.insert(0, os.path.join(ROOT, "scripts", "intel"))
+    import render as intel_render  # noqa: PLC0415 — 延遲載入，避免平時揹整包 render
+
+    intel_render.write_status_snapshot(intel_render.load_status_snapshot())
+    print("intel-status-snapshot: refreshed")
+
+
 if __name__ == "__main__":
     main()
+    try:
+        refresh_intel_status_snapshot()
+    except Exception as exc:  # noqa: BLE001 — 快照失敗不擋 home-pulse 主輸出
+        print(f"intel-status-snapshot: skipped ({exc})")

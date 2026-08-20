@@ -78,6 +78,9 @@ CATALYST_CALENDAR_FILE = DOCS / "catalyst" / "calendar.json"
 # Phase B（2026-08-20）：週更頁原生渲染直接讀的另外兩份週更資料源。
 CROWDING_LATEST_FILE = DOCS / "crowding" / "data" / "latest.json"
 ROTATION_LATEST_FILE = DOCS / "rotation" / "data" / "latest.json"
+# Phase C（2026-08-20）：「現況」彙整層的落地檔——首頁「市場現況」磚 2/3/4 的
+# 現值／色帶唯一事實源（docs/index.html 讀本檔；歷史走勢仍讀各歷史 JSON）。
+STATUS_SNAPSHOT_FILE = DATA_DIR / "status_snapshot.json"
 
 TAIPEI_OFFSET = timedelta(hours=8)
 STALE_HOURS = 30
@@ -1422,20 +1425,27 @@ def _util_chips() -> str:
 
 # --------------------------------------------------------- 1 現況（狀態列）
 
-def _band_zh_for_score(score, bands) -> str:
+def _band_key_for_score(score, bands) -> str:
+    """Phase C：回傳帶位的原始 key（calm/normal/…），首頁四磚靠它對色票；
+    無法判定回空字串。"""
     try:
         s = float(score)
     except (TypeError, ValueError):
         return ""
-    bz = {"calm": "平靜", "normal": "正常", "warming": "升溫", "tense": "緊張", "extreme": "極端"}
     for k, rng in (bands or {}).items():
         try:
             a, b = rng
             if a <= s < b:
-                return bz.get(k, k)
+                return k
         except (TypeError, ValueError):
             continue
     return ""
+
+
+def _band_zh_for_score(score, bands) -> str:
+    bz = {"calm": "平靜", "normal": "正常", "warming": "升溫", "tense": "緊張", "extreme": "極端"}
+    k = _band_key_for_score(score, bands)
+    return bz.get(k, k)
 
 
 def load_status_snapshot() -> dict:
@@ -1450,6 +1460,7 @@ def load_status_snapshot() -> dict:
     score = last.get("s")
     out["stress_score"] = fmt_num(score) or DASH
     out["stress_band"] = _band_zh_for_score(score, sh.get("bands"))
+    out["stress_band_key"] = _band_key_for_score(score, sh.get("bands"))
     out["stress_int"] = fmt_num(last.get("int_s"))
     out["stress_date"] = last.get("d") or ""
 
@@ -1458,6 +1469,8 @@ def load_status_snapshot() -> dict:
     counts = det.get("counts") or {}
     out["alert_score"] = fmt_num(al.get("score")) or DASH
     out["alert_band"] = al.get("band_label") or ""
+    out["alert_band_key"] = al.get("band") or ""
+    out["alert_date"] = al.get("as_of") or ""
     out["alert_red"] = counts.get("red")
     out["alert_yellow"] = counts.get("yellow")
     out["alert_escalated"] = counts.get("escalated")
@@ -1478,6 +1491,16 @@ def load_status_snapshot() -> dict:
         )
     except (TypeError, ValueError):
         out["risk_gauge"] = DASH
+    # Phase C：另存原始欄位（label／score／date 分離），首頁磚 2 直接用，
+    # 不必回頭解析上面的組合字串。
+    out["risk_gauge_label"] = rg.get("label_zh") or ""
+    try:
+        out["risk_gauge_score"] = (
+            round(float(rg.get("score")), 4) if rg.get("score") is not None else None
+        )
+    except (TypeError, ValueError):
+        out["risk_gauge_score"] = None
+    out["risk_gauge_date"] = rg.get("as_of") or ""
 
     radar = load_json_safe(ROTATION_RADAR_FILE) or {}
     ca = next(
@@ -1503,6 +1526,28 @@ def load_status_snapshot() -> dict:
     out["_kill_watch"] = kw
 
     return out
+
+
+def write_status_snapshot(snap: dict) -> None:
+    """Phase C（2026-08-20）：把「現況」彙整層序列化成 status_snapshot.json，
+    供首頁「市場現況」磚 2/3/4 讀取現值／色帶（單一計算來源，取代首頁自行
+    重算同一批跨站台 JSON）。`_` 開頭私有鍵（完整 detective／kill watch
+    payload）不落地。zero-churn：內容不變不重寫（build_home_pulse.py 同慣例）；
+    刻意不含 generated_at，新鮮度由 stress_date／alert_date 等來源日期表達。
+    除 render.py 每日鏈外，scripts/build_home_pulse.py 也會呼叫本函式，
+    讓 monitor-daily／daily-us-close 等下午刷新鏈同步更新快照。"""
+    import json
+
+    pub = {k: v for k, v in snap.items() if not k.startswith("_")}
+    pub["schema"] = "intel-status-snapshot-v1"
+    content = json.dumps(pub, ensure_ascii=False, sort_keys=True, indent=1) + "\n"
+    try:
+        if STATUS_SNAPSHOT_FILE.read_text(encoding="utf-8") == content:
+            return
+    except OSError:
+        pass
+    STATUS_SNAPSHOT_FILE.parent.mkdir(parents=True, exist_ok=True)
+    STATUS_SNAPSHOT_FILE.write_text(content, encoding="utf-8")
 
 
 def render_status_strip(snap: dict) -> str:
@@ -2485,6 +2530,14 @@ def main():
     data_path = Path(args.data).resolve() if args.data else None
     out_dir.mkdir(parents=True, exist_ok=True)
     sources_meta = load_sources_yml()
+
+    # Phase C：只在正式輸出（docs/intel/）時落地現況快照；--out 測試模式不動 docs/。
+    # 快照失敗不擋頁面渲染。
+    if out_dir == DOCS_INTEL:
+        try:
+            write_status_snapshot(load_status_snapshot())
+        except Exception as exc:  # noqa: BLE001
+            print(f"status_snapshot: skipped ({exc})", file=sys.stderr)
 
     payload, banner, stale = resolve_day_payload(date_str, sources_meta, data_path)
     calendar = payload.get("calendar") or []
