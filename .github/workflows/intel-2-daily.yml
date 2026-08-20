@@ -243,6 +243,34 @@ jobs:
           exit $rc
 
       # ---------------------------------------------------------------
+      # ④b 產業主題週摘要（Phase 2 Task D，週日限定）：掛在既有週報分支日
+      #    （IS_SUNDAY，UTC 週日收工 = 台北時間週一 06:30），不另挑日子。
+      #    單一 sonnet 呼叫，寫 docs/intel/data/theme_weekly.json，供
+      #    render.py「產業」分頁每個主題列渲染一段週更綜述。
+      # ---------------------------------------------------------------
+      - name: "④b Intel — theme weekly synthesis (Sun only)"
+        if: env.IS_SUNDAY == 'true' && inputs.skip_intel != true
+        id: theme_weekly
+        continue-on-error: true
+        timeout-minutes: 10
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          echo "::group::theme_weekly"
+          unset ANTHROPIC_API_KEY
+          unset ANTHROPIC_AUTH_TOKEN
+          unset ANTHROPIC_BASE_URL
+          set +e
+          T0=$(date +%s)
+          python3 scripts/intel/theme_weekly.py --date "$DATE"
+          rc=$?
+          T1=$(date +%s)
+          if [ $rc -eq 0 ]; then outcome=success; else outcome=failure; echo "::warning::theme_weekly failed, keeping last week's theme_weekly.json"; fi
+          echo "theme_weekly|$outcome|$((T1-T0))" >> /tmp/chain_status.txt
+          echo "::endgroup::"
+          exit $rc
+
+      # ---------------------------------------------------------------
       # 寫 chain_status.json（render.py 之前，讓 status.html 可顯示每步結果）
       # ---------------------------------------------------------------
       - name: Write chain status json

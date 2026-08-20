@@ -28,13 +28,28 @@
   T3/T4 且內容屬單方說法。
 - `importance_guess`（1-3 整數）：3＝可能改變某主題／市場 regime 的判斷；2＝值得記進脈絡；
   1＝背景雜訊。**只憑你能從 title/summary 看出的事實密度判斷，不要臆測後續發展。**
+- `theme`：從下列固定主題 key 挑最貼切的一個，完全不貼切就填 `null`（不要自創新 key，
+  這份清單是站內產業／主題頁對齊用的固定 slug）：
+  `ai-datacenter`（AI 資料中心）／`semis-equipment`（半導體設備）／
+  `advanced-packaging`（先進封裝）／`memory`（記憶體）／
+  `foundry-leading-edge`（晶圓代工與先進製程）／`power-energy`（電力與能源）／
+  `defense`（國防軍工）／`robotics-automation`（機器人與自動化）／
+  `robotaxi-autonomous`（自駕與機器人計程車）／`quantum-computing`（量子運算）／
+  `copper-materials`（銅與原物料）／`crypto-stablecoin`（加密資產與穩定幣）／
+  `biotech-pharma`（生技製藥）／`taiwan-geo`（台灣科技與地緣）／
+  `china-economy`（中國經濟）／`usd-dollar-cycle`（美元與利率週期）／
+  `us-fiscal-deficit`（美國財政赤字）／`global-liquidity`（全球流動性）／
+  `us-economy`（美國總體經濟）。market 層卡片（rates/credit/…13 維度）通常
+  `theme` 應為 `null`，除非內容明確落在上述某個主題（例如一則利率新聞剛好是
+  在談美元週期，可以標 `usd-dollar-cycle`）。
 
 ## 輸出格式（唯一規則：只輸出 JSON 陣列，不得有其他文字）
 
 ```json
 [
   {"id":"<card id>","relevant":true,"level":"market","category":"rates",
-   "tickers":[],"themes":[],"headline_ok":true,"is_rumor":false,"importance_guess":2}
+   "tickers":[],"themes":[],"headline_ok":true,"is_rumor":false,"importance_guess":2,
+   "theme":null}
 ]
 ```
 

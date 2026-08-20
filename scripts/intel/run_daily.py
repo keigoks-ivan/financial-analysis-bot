@@ -114,7 +114,7 @@ def build_output(date: str, pending: dict, llm_available: bool) -> dict:
             classify_data_card(c)
             summarize_data_card(c)
         finalized = [finalize_card(c, name_map, short_map) for c in data_cards]
-        gauges = build_gauges(data_cards, calendar)
+        gauges = build_gauges(data_cards, calendar, threads=None, date=date)
         flags = build_flags(data_cards)
         brief_zh = []
         site_read_zh = None
@@ -153,7 +153,7 @@ def build_output(date: str, pending: dict, llm_available: bool) -> dict:
         deep_log = run_deepread(finalized, ledger)
 
         digest = build_digest(result["all"], finalized, ledger, name_map, short_map)
-        gauges = build_gauges(result["all"], calendar)
+        gauges = build_gauges(result["all"], calendar, threads=threads_output, date=date)
         flags = build_flags(result["all"])
         brief_zh = digest["brief_zh"]
         site_read_zh = digest.get("site_read_zh")

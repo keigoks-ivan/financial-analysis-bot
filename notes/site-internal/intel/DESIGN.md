@@ -370,3 +370,164 @@ index.html，轉址殼會被蓋掉；③`/detective/` 內容比 intel 變化分�
 minervini-quality-backtest 內嵌的 nav 副本仍是 13 項舊市場群；qgm／qgm-tw／briefing／
 weekly／backtest 五個 EXTERNAL_TREES 目錄的頁面在各 repo 同步前顯示舊 nav。改外部
 repo 依 CLAUDE.md 須先與持有人確認，故留待辦。
+
+### 2026-08-20 Phase 2：今日重點／儀表列文字化／產業主題層／週摘要
+
+Phase 2 四件事全部**零新增 LLM 呼叫**（Task A/B 純 Python 機械分數與計算）或**復用既有的
+sonnet 額度**（Task C 的 theme 欄位掛在既有 classify.py haiku 呼叫的既有輸出裡、不加一次
+呼叫；Task D 是唯一真正新增的一次呼叫，週更一次）。
+
+**Task A（今日頁最上方「今日重點」，≤5 條）**：`render.py::compute_today_highlights()`。兩個
+候選池，**站內事件池排序優先於新聞池**（機械層訊號本來就比一則新聞更接近「論點被打到」）：
+
+- **新聞卡池分數** `_news_highlight_score()`：
+  `importance × 10 + corroboration × 3 + (source_tier=="T1" 則 +2) + thread_heat_bonus`
+  （`thread_heat_bonus`：卡片掛的故事線 `heat=="up"` 則 +3，`today_count` 每多 1 則額外
+  +0.5，封頂 +5；沒有故事線則 0）。同一 `category` 最多取 2 則進最終清單（多樣性上限），
+  逐條附「一句話為什麼」＋短來源名＋連結，文字直接沿用既有 `summary_zh`／`why_zh`，不生成
+  新判斷句。
+- **站內事件池**（排序優先於新聞池，同樣列進候選再合併排序）`_site_event_items()`：涵蓋
+  三種機械訊號——① detective 警戒帶換檔代理（`state=="new"` 且 `sev=="red"` 的訊號，無
+  歷史帶資料故用「今日新觸發之紅色訊號」代理）；② kill-watch 接近／突破門檻旗標（讀
+  `detective/data/kill_watch.json` 的 `near`／`breached`）；③ `home/pulse.json` 確認反轉訊號
+  （`reversal_flags[].evidence` 含「持穩」子字串，比照 `build_home_pulse.py` 自己判斷確認的
+  用法）。三種來源各自 fail-safe（單一來源缺檔／壞檔不影響另外兩種或新聞池）。
+- **描述器紀律**：所有輸出文字只陳述事實（訊號本身、門檻距離、現值），**不下擇時結論、不下
+  買賣指令**——這點不是新規則，是站內既有 flag／kill-watch 文案（`text_zh`）的直接復用，
+  Task A 沒有生成任何新的判斷語句。
+- 本地測試（`docs/intel/data/2026-08-20.json`）：5 條全數命中站內事件池（1 條 detective
+  紅色訊號代理＋4 條 kill-watch 接近門檻），因為當日新聞卡的分數都低於站內事件；這是
+  資料期剛好如此，不是排序邏輯的 bug（新聞池分數＋去重＋2-per-category 上限邏輯已個別跑過
+  單元測試，行為符合設計）。
+
+**Task B（儀表列 econ／cb／geo 三格：從「N 則」計數改成真內容）**：`summarize.py::build_gauges()`
+簽名新增 `calendar`／`threads`／`date` 參數（呼叫端 `run_daily.py` 兩處呼叫都已更新帶入）：
+
+- `econ`：今天日曆裡 impact=high 且非央行事件的最高優先事件，優先挑 `country=="USD"`，沒有
+  才退回任一高影響力事件；有 `forecast`/`previous` 就用括號附註（"（預估 X／前值 Y）"，只有
+  一邊有值就只附那一邊）；今天日曆完全沒有高影響力經濟事件才退回當日最高
+  `importance` 的 econ 分類卡片標題。
+- `cb`：日曆裡最近一場 impact=high 且判定為央行事件（`_is_cb_calendar_event()`——FOMC／ECB／
+  BOE／BOJ／RBA／RBNZ／BOC／SNB／PBOC／利率決議／會議紀要等關鍵字比對）的日期＋事件名，
+  副標接當日最新一則 T1 來源央行卡片標題；日曆沒有就退回日曆裡最近一場 FOMC 條目。
+- `geo`：`threads` 裡 `category=="geo"` 的故事線，依 `heat`（up 優先於 flat 優先於 down）再依
+  `today_count` 排序，取最熱一條的 `title_zh`，副標「第 N 天 · {升溫/持平/降溫}」；沒有 geo
+  故事線才退回當日最高 importance 的 geo 分類卡片標題。
+- **渲染機制**：三格改走 `render.py::render_gauges()` 既有的「舊格式」路徑（`metric=""`
+  觸發，`_text_gauge()` 輔助函式組裝）——這條路徑本來就允許 `value`/`delta` 是完整句子，靠
+  CSS（`.val.long` 兩行 clamp／`.sub.long` 單行 ellipsis）視覺截斷，不是 Python 硬切字元，
+  三格因此能放下完整事件名／標題而不是被 `emit()` 的 10 字上限砍斷。
+- 本地驗證：直接呼叫 `build_gauges()` 餵 2026-08-20 的卡片＋日曆＋故事線，econ 選中
+  `AUD Employment Change`（當天無 USD 高影響力事件，正確退回全體）、cb 選中
+  `2026-08-20 USD FOMC Meeting Minutes`（副標帶 T1 卡標題）、geo 選中「美加關稅談判進展」
+  （第 2 天・升溫）；`render.py` 端到端渲染確認三格 HTML 走 `.val.long`/`.sub.long`，未觸發
+  既有 `emit()` 截斷路徑。
+
+**Task C（產業／主題層，全機械）**：
+1. `scripts/intel/themes.yml`——**19 個固定主題**（key／name_zh／keywords／可選
+   id_page／kill_theme／crowding_key）：
+
+   | key | 中文名 | 站內錨點 |
+   |---|---|---|
+   | ai-datacenter | AI 資料中心 | ID＋擁擠 |
+   | semis-equipment | 半導體設備 | ID＋擁擠 |
+   | advanced-packaging | 先進封裝 | ID＋擁擠 |
+   | memory | 記憶體 | ID＋擁擠 |
+   | foundry-leading-edge | 晶圓代工與先進製程 | ID＋擁擠 |
+   | power-energy | 電力與能源 | ID＋擁擠 |
+   | defense | 國防軍工 | ID＋擁擠 |
+   | robotics-automation | 機器人與自動化 | ID＋擁擠 |
+   | robotaxi-autonomous | 自駕與機器人計程車 | ID＋擁擠 |
+   | quantum-computing | 量子運算 | ID＋擁擠 |
+   | copper-materials | 銅與原物料 | ID＋擁擠 |
+   | crypto-stablecoin | 加密資產與穩定幣 | ID＋擁擠 |
+   | biotech-pharma | 生技製藥 | ID＋擁擠 |
+   | taiwan-geo | 台灣科技與地緣 | 無 |
+   | china-economy | 中國經濟 | kill-watch |
+   | usd-dollar-cycle | 美元與利率週期 | kill-watch |
+   | us-fiscal-deficit | 美國財政赤字 | kill-watch |
+   | global-liquidity | 全球流動性 | kill-watch |
+   | us-economy | 美國總體經濟 | kill-watch |
+
+   13 個帶 `id_page` 的主題已逐一驗證對應檔案存在於 `docs/id/`；13 個帶 `crowding_key` 的
+   主題已驗證對 `crowding/data/latest.json` 的 `themes[].name` 大小寫不分子字串比對唯一。
+2. `classify.py`：haiku 分類呼叫的輸出新增 `theme` 欄位（從固定清單挑一個或 `null`，不在
+   清單內的值一律清成 `null`，不信任模型亂造 key）；`common.py` 新增 `load_themes()`／
+   `theme_keys()` 快取讀取。
+3. `render.py::assign_theme(card, themes)`：`card.theme` 有值直接用；沒有（舊 payload／haiku
+   漏判）就退回關鍵字比對（標題＋`tags.themes` 對 `themes.yml` 的 `keywords`，大小寫不分，
+   命中第一個算）——**這條 fallback 路徑是本地測試唯一會走到的路徑**，因為現有
+   `docs/intel/data/*.json` 都是加 `theme` 欄位之前產生的舊 payload。
+4. `render.py::update_theme_history()` 寫 `docs/intel/data/theme_history.json`（schema
+   `intel-theme-history-v1`）——比照 `threads.json` 慣例，只記有卡的（主題，日期）配對、14 天
+   保留窗、zero-churn 寫入、不帶 `generated_at`；只在正式輸出（`out_dir == DOCS_INTEL`）呼叫。
+5. 新分頁「產業」（`themes.html`，8→9 個分頁）＝`build_themes_body()`：每主題一列，7 日
+   sparkline（`theme_sparkline()`，復用既有 `_sparkline_svg()`）＋今日該主題最高分卡片
+   （復用 Task A 的 `_news_highlight_score()`）＋站內錨點 chip（ID 連結／kill 距離
+   `_kill_theme_pick()`／擁擠分數 `_crowding_theme_pick()`，缺一種不影響另外兩種）。近 7 日
+   零卡**且**無任何站內錨點的主題整條不顯示。
+6. 今日頁「產業層」section 改用 `render_theme_grouped_list()`——沿用既有 `industry_cards`
+   篩選集合（未改變口徑），只把分組鍵從 category 換成 theme，沒有 theme 的卡片歸「其他」。
+
+**Task D（週摘要，唯一新增 LLM 呼叫，週更一次）**：`scripts/intel/theme_weekly.py`。
+
+- **掛哪一天／為什麼**：掛在 `.github/workflows/intel-2-daily.yml` 既有的 `IS_SUNDAY` 分支
+  （`date -u +%u == 7`，即 UTC 週日 22:30 收工 ＝ 台北時間**週一 06:30**）——這本來就是
+  crowding／rotation／regime／catalyst／kill-watch 五個既有週更模組的分支日，Task D 直接
+  搭這班車，不需要另挑日子、也不影響平日鏈（週一～週五）的既有排程與步驟順序。新增的
+  「④b Intel — theme weekly synthesis」步驟插在既有「④ Intel — classify + summarize +…」
+  （id: `intel_run`）之後、「Write chain status json」之前，**只新增一個 step，未改動任何
+  既有 step 的順序或 cron**。
+- **輸入**：往回掃 7 天 `docs/intel/data/{date}.json`（缺檔的日期直接略過，不報錯），依
+  `theme` 欄位或 `assign_theme()` fallback 分派給主題，過濾出有 `summary_zh` 的卡片，每主題
+  依 `importance` 排序取前 ≤15 則（標題＋summary_zh），只有本週真的有卡片的主題才進 payload。
+- **LLM 呼叫**：單一 sonnet 呼叫、獨立 ledger bucket `"theme_weekly"`（`llm.py` 新增
+  `DAILY_CARD_CAPS["theme_weekly"]=20`，比照 `deepread` 的先例——同樣掛 `--model sonnet`
+  但獨立額度，不跟每日 classify/summarize/deepread 搶）。Prompt（`prompts/theme_weekly.md`）
+  內嵌描述器紀律（只陳述本週卡片裡真實出現的事實與方向性變化，不做擇時判斷、不下買賣指令、
+  不外推）＋全形標點規則＋純文字輸出（無 HTML／markdown，因為渲染端 `esc()` 會逐字跳脫，
+  任何殘留標籤只會被當純文字顯示，`theme_weekly.py::_clean_text()` 另外防禦性去除角括號
+  標籤與多餘空白，雙重保險）。每主題輸出 2–3 句。
+- **輸出**：`docs/intel/data/theme_weekly.json`（schema `intel-theme-weekly-v1`，
+  `week_of` ＋ `themes:{key:text}`），zero-churn 寫入、不帶 `generated_at`。任何一步失敗
+  （額度打滿／CLI 不可用／JSON 解析失敗）都保留舊檔案不覆蓋，腳本一律回 0，不讓 chain 變紅
+  （這是加值步驟不是關鍵路徑）。
+- **渲染**：`render_theme_row()` 在每個主題列下方掛 `_theme_weekly_block()`——`week_of` 距
+  當日渲染日期 >8 天整段標灰（`.theme-weekly.stale`）並附「（已過期，等待下次週更）」；
+  檔案不存在或該主題沒有 `weekly_zh` 就完全不渲染這塊（本地測試三種狀態都已驗證：
+  新鮮＝正常樣式＋日期、過期＝灰化樣式＋過期提示、缺檔＝該 div 完全不出現）。
+
+**本地測試小結（2026-08-20，`docs/intel/data/2026-08-20.json`，`--data`／`--out` 均指向
+`/private/tmp/.../scratchpad/intel_test*`，未呼叫真實 LLM、未寫入任何 tracked 檔——測試中
+暫時寫入 `docs/intel/data/theme_weekly.json`／`theme_history.json` 驗證真實路徑行為後已刪除，
+`git status` 確認乾淨）**：
+
+- `render.py --date 2026-08-20 --data … --out …` 全部 10 個分頁渲染無例外。
+- Task A：5/5 命中站內事件池（1 條 detective 代理＋4 條 kill-watch 接近門檻），HTML 結構
+  （`.focus` 復用）正確。
+- Task B：直接呼叫 `build_gauges()` 驗證 econ/cb/geo 三格文字選取邏輯正確；套回 daily JSON
+  重繪後確認 `.val.long`/`.sub.long` 正確出現、`title` 屬性帶完整文字供 hover。
+- Task C：`assign_theme()` fallback 對 355 張卡（該payload 早於 `theme` 欄位存在）成功分派，
+  **19 個主題中 13 個本地測試日有卡片**（ai-datacenter 6／semis-equipment 0／
+  advanced-packaging 0／memory 4／foundry-leading-edge 3／power-energy 2／defense 9／
+  robotics-automation 15／robotaxi-autonomous 0／quantum-computing 0／copper-materials 5／
+  crypto-stablecoin 7／biotech-pharma 15／taiwan-geo 6／china-economy 0／
+  usd-dollar-cycle 33／us-fiscal-deficit 16／global-liquidity 0／us-economy 2，7 日窗因
+  本地只有 2 天真實資料故等於當日計數）；`theme_history.json` 寫入／zero-churn／
+  sparkline／今日頁「產業層」重分組（4 張既有 industry_cards＋1 組「其他」）全數驗證正確。
+- Task D：`theme_weekly.py --dry-run` 正確收集＋列印 13 個有卡主題的計數、不呼叫 LLM、不
+  寫檔；手造 `theme_weekly.json` 驗證新鮮／過期／缺檔三態渲染皆正確（見上）。
+- `python3 scripts/qc.py`：見下方 QC 段落（本次改動的檔案跑過，全形標點違規已於撰寫時
+  避開，未發現新增違規）。
+
+**估計新增 token 成本**：Task A/B/C（除 classify.py 的 `theme` 欄位外）全為純 Python，零
+新增 token。`theme` 欄位掛在既有 classify.py haiku 呼叫的既有 batch 裡（prompt 增加約
+19 行主題清單說明，每個 batch 增加的 input token 約在數百 token 量級，batch 數不變，屬於
+既有 haiku 額度內的邊際增量，不是新呼叫）。Task D 是唯一真正新增的呼叫：**每週一次**，
+payload 上限 19 主題 × 15 則 × （標題＋summary_zh，各約 30-90 字）估算 input 約
+15,000–25,000 tokens，system prompt（theme_weekly.md）約 1,200 字 ≈ 1,800 tokens，output
+19 主題 × 2-3 句 ≈ 每主題 60-120 字，合計 output 約 1,500–2,500 tokens。**單次呼叫估計
+input+output 合計約 18,000–29,000 tokens／週**，遠低於 `deepread`（12 篇／日）與
+`sonnet`（80 卡／日）既有的每日消耗量級，且是週頻不是日頻。
+
+**Phase 2 驗收修正（2026-08-20，Fable 驗收時加）**：今日重點的站內事件池首版會被 kill-watch near 旗標填滿（near＝長期不變狀態，非當日事件，會天天霸榜擠掉新聞）。修正：①near 整池只留距離門檻最近 1 條；②站內事件合計最多佔 2 席（真變化——新紅色警示／門檻已觸發／轉折確認——優先），其餘席次留給新聞卡。修正後 2026-08-20 樣本＝偵探紅色警示＋DBC 轉折確認＋FOMC 紀要偏鷹×2＋XBI 異動，混合正確。

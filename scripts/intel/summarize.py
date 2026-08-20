@@ -333,6 +333,8 @@ def finalize_card(card: dict, name_map: dict, short_map: dict | None = None) -> 
         out["data"] = card["data"]
     if card.get("thread_id"):
         out["thread_id"] = card["thread_id"]
+    if card.get("theme"):  # Phase 2（2026-08-20）：haiku 分類階段挑的固定主題 key
+        out["theme"] = card["theme"]
     return out
 
 
@@ -388,13 +390,55 @@ def _monitor_item(monitor: dict | None, cat_key: str, item_key: str) -> dict | N
     return None
 
 
-def build_gauges(all_classified_cards: list[dict], calendar: list[dict] | None = None) -> list:
+# Phase 2 Task B（2026-08-20）：ForexFactory 日曆事件文字裡用來判斷「這是央行
+# 事件」的關鍵字（機械字串比對，不經 LLM）。涵蓋常見主要央行決策/紀要/記者會
+# 命名慣例；寧可漏（退回舊 fallback）不可誤把非央行事件標成央行事件，故只收
+# 這批高信心字樣。
+CB_EVENT_KEYWORDS = (
+    "fomc", "federal reserve", "fed rate", "fed interest rate",
+    "ecb", "boe", "boj", "rba", "rbnz", "boc rate", "snb", "pboc",
+    "rate decision", "interest rate decision", "monetary policy statement",
+    "monetary policy report", "meeting minutes", "cash rate",
+)
+
+
+def _is_cb_calendar_event(text: str) -> bool:
+    t = (text or "").lower()
+    return any(k in t for k in CB_EVENT_KEYWORDS)
+
+
+HEAT_RANK_ZH = {"up": "升溫", "flat": "持平", "down": "降溫"}
+
+
+def _text_gauge(status_for_fn, cat: str, value, delta: str = "", pctile=None, chg=None) -> dict:
+    """Task B（2026-08-20）：econ/cb/geo 三格改顯示「內容」而非「則數」——
+    bypass emit()（它會把 value 硬砍到 10 字，不夠放事件名／故事線標題），
+    改直接組 dict，metric 留空讓 render_gauges() 走『舊格式』（value/delta
+    可放整句，CSS `.val.long` 2 行截斷、`.sub.long` 單行省略號，不會撐版）。"""
+    status = status_for_fn(cat, pctile)
+    return {
+        "category": cat, "label": CATEGORY_LABELS_ZH[cat], "status": status,
+        "value": _plain(value, 80) or "無新增訊號", "metric": "",
+        "pctile": pctile, "chg": chg or None, "delta": _plain(delta, 60),
+    }
+
+
+def build_gauges(all_classified_cards: list[dict], calendar: list[dict] | None = None,
+                  threads: list[dict] | None = None, date: str | None = None) -> list:
     """13 維度儀表，2026-08-19 起完全 Python 決定性（不再送 sonnet）——持有人
     回饋「儀表/警示是看不懂的 LLM 散文」，數字本來就在 docs/monitor/data/
     latest.json 裡算好了，LLM 只是在複述並偶爾複述錯。缺 monitor 檔或缺特定
-    序列時逐格 fall back 到「無新增訊號」，不捏造。"""
+    序列時逐格 fall back 到「無新增訊號」，不捏造。
+
+    Phase 2 Task B（2026-08-20，持有人回饋「經濟數據 19 則／央行 14 則／
+    地緣 38 則」這種純計數對讀者無意義）：econ/cb/geo 三格改顯示內容——
+    econ＝今天最重要一場高影響力經濟數據（優先 USD）；cb＝下一場高影響力
+    央行事件＋最新一條 T1 央行卡標題；geo＝最熱地緣故事線＋今日最高分地緣卡
+    fallback。新增 `threads`／`date` 選填參數，兩者缺席時三格照樣 fail-safe
+    退回舊的則數計數（呼叫端若未升級也不會壞）。"""
     monitor = load_json(MONITOR_LATEST)
     calendar = calendar or []
+    threads = threads or []
 
     by_cat: dict = {}
     for c in all_classified_cards:
@@ -494,32 +538,66 @@ def build_gauges(all_classified_cards: list[dict], calendar: list[dict] | None =
         top = themes[0]["name"] if themes else None
         emit("positioning", "擁擠主題", top)
 
-    # econ — 今日最高重要度的經濟數據卡（data 優先，其次 news），缺就無新增
+    # econ — 今天行事曆裡最重要一場高影響力經濟數據（優先 USD，非央行事件），
+    # 有 forecast/previous 就帶上；沒有高影響力事件就退回今日最高分經濟卡標題。
     econ_cards = by_cat.get("econ", [])
-    econ_data = [c for c in econ_cards if c.get("kind") == "data"]
-    pick = None
-    if econ_data:
-        pick = max(econ_data, key=lambda c: c.get("importance_guess", c.get("importance", 1)))
-    elif econ_cards:
-        pick = max(econ_cards, key=lambda c: c.get("importance_guess", c.get("importance", 1)))
-    econ_n = len(econ_cards)
-    econ_value = f"{econ_n} 則" if econ_n else None
-    if pick and pick.get("kind") == "data" and (pick.get("data") or {}).get("value") is not None:
-        econ_value = str((pick.get("data") or {}).get("value"))[:10]
-    emit("econ", "經濟數據", econ_value)
+    today_events = [e for e in calendar if not date or e.get("date") == date]
+    econ_events = [
+        e for e in today_events
+        if (e.get("impact") == "high" or e.get("hi")) and not _is_cb_calendar_event(e.get("text"))
+    ]
+    usd_econ = [e for e in econ_events if (e.get("country") or "").upper() == "USD"]
+    econ_pick = (usd_econ or econ_events)
+    econ_pick = econ_pick[0] if econ_pick else None
+    if econ_pick:
+        text = (econ_pick.get("text") or "").strip()
+        fc, pv = econ_pick.get("forecast"), econ_pick.get("previous")
+        if fc and pv:
+            text += f"（預估 {fc}／前值 {pv}）"
+        elif fc:
+            text += f"（預估 {fc}）"
+        elif pv:
+            text += f"（前值 {pv}）"
+        gauges.append(_text_gauge(status_for, "econ", text))
+    else:
+        pick = max(econ_cards, key=lambda c: c.get("importance_guess", c.get("importance", 1))) if econ_cards else None
+        gauges.append(_text_gauge(status_for, "econ", pick.get("title") if pick else None))
 
-    # cb — 今日央行相關卡數；沒有就找日曆裡最近的 FOMC 條目
-    cb_n = len(by_cat.get("cb", []))
-    if cb_n:
-        emit("cb", "央行訊息", f"{cb_n} 則")
+    # cb — 下一場高影響力央行事件（今天或未來，依日期排序取第一筆）＋日期；
+    # 副行放最新一條 T1 央行卡標題；都沒有才退回舊的「最近 FOMC 字樣」fallback。
+    cb_cards_all = by_cat.get("cb", [])
+    t1_cb = [c for c in cb_cards_all if c.get("source_tier") == "T1"]
+    cb_sub = ""
+    if t1_cb:
+        latest_cb = max(t1_cb, key=lambda c: c.get("published_at") or c.get("fetched_at") or "")
+        cb_sub = latest_cb.get("title") or ""
+    cb_events = sorted(
+        (e for e in calendar if (e.get("impact") == "high" or e.get("hi")) and _is_cb_calendar_event(e.get("text"))),
+        key=lambda e: (e.get("date") or "", e.get("time") or ""),
+    )
+    cb_pick = cb_events[0] if cb_events else None
+    if cb_pick:
+        cb_value = f"{cb_pick.get('date', '')} {(cb_pick.get('text') or '').strip()}".strip()
+        gauges.append(_text_gauge(status_for, "cb", cb_value, delta=cb_sub))
     else:
         fomc = next((e for e in sorted(calendar, key=lambda e: e.get("date", ""))
                      if "FOMC" in (e.get("text") or "")), None)
-        emit("cb", "央行訊息", f"{fomc['date'][5:]} FOMC" if fomc else None)
+        cb_value = f"{fomc['date'][5:]} FOMC" if fomc else None
+        gauges.append(_text_gauge(status_for, "cb", cb_value, delta=cb_sub))
 
-    # geo — 今日地緣相關卡數
-    geo_n = len(by_cat.get("geo", []))
-    emit("geo", "地緣事件", f"{geo_n} 則" if geo_n else None)
+    # geo — 最熱地緣故事線 title_zh／heat／day_n；沒有故事線就退回今日最高分
+    # 地緣卡標題。
+    geo_threads = [t for t in threads if (t.get("category") or "") == "geo"]
+    heat_rank = {"up": 0, "flat": 1, "down": 2}
+    geo_threads.sort(key=lambda t: (heat_rank.get(t.get("heat"), 1), -(t.get("today_count") or 0)))
+    if geo_threads:
+        top = geo_threads[0]
+        geo_delta = f"第 {top.get('day_n') or 1} 天 · {HEAT_RANK_ZH.get(top.get('heat'), '')}".strip(" ·")
+        gauges.append(_text_gauge(status_for, "geo", top.get("title_zh"), delta=geo_delta))
+    else:
+        geo_cards_ = by_cat.get("geo", [])
+        pick = max(geo_cards_, key=lambda c: c.get("importance_guess", c.get("importance", 1))) if geo_cards_ else None
+        gauges.append(_text_gauge(status_for, "geo", pick.get("title") if pick else None))
 
     # regime — 站內跨市場 regime 判讀（label_zh 第一段），缺就退 sp500 60 日分位
     regime = load_json(REGIME_LATEST)

@@ -36,6 +36,7 @@ from common import (
     now_utc,
     pending_path,
     read_prompt,
+    theme_keys,
 )
 from llm import Ledger, run_claude
 
@@ -47,6 +48,7 @@ RUMOR_SOURCE_RESERVE = 6  # 10 席中保留給 source_rumor（真小道）的席
 SUMMARY_TRUNCATE = 300  # DESIGN §6 rule 2: LLM 只看 ≤300 字 snippet
 
 CLASSIFY_SYSTEM = None  # lazy-loaded via read_prompt("classify.md")
+_THEME_KEYS = set(theme_keys())  # Phase 2: themes.yml 固定主題 key 集合（module import 時算一次）
 
 
 def _classify_system_prompt() -> str:
@@ -77,6 +79,7 @@ def classify_data_card(card: dict) -> dict:
     card["checks"] = dict(card.get("checks") or {})
     card["checks"]["headline_mismatch"] = False
     card["_classify_source"] = "deterministic"
+    card.setdefault("theme", None)  # kind=="data" 卡片零 LLM，不判 theme（render.py 關鍵字 fallback 仍可比對 title/tags）
     return card
 
 
@@ -129,6 +132,7 @@ def apply_llm_result(card: dict, result: dict | None) -> dict:
         card["headline_ok"] = True
         card["is_rumor"] = card.get("source_tier") in ("T3", "T4")
         card["importance_guess"] = 1
+        card["theme"] = None
         card["_classify_source"] = "fallback_no_llm"
     else:
         card["relevant"] = bool(result.get("relevant", False))
@@ -144,6 +148,12 @@ def apply_llm_result(card: dict, result: dict | None) -> dict:
             card["importance_guess"] = int(result.get("importance_guess", 2))
         except (TypeError, ValueError):
             card["importance_guess"] = 2
+        # Phase 2（2026-08-20）：haiku 挑的固定主題 key，Python 端驗證存在於
+        # themes.yml 才收——模型偶爾會抄錯字或自創新 key，寧可存 None 讓
+        # render.py 的關鍵字 fallback 接手，也不讓一個野生 key 混進
+        # theme_history.json／「產業」分頁分組。
+        theme = result.get("theme")
+        card["theme"] = theme if theme in _THEME_KEYS else None
         card["_classify_source"] = "haiku"
 
     # 2026-08-20 傳聞層試行：is_rumor 的權威判定收斂在這裡，三路 OR——

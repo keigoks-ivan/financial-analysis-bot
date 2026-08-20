@@ -81,6 +81,13 @@ ROTATION_LATEST_FILE = DOCS / "rotation" / "data" / "latest.json"
 # Phase C（2026-08-20）：「現況」彙整層的落地檔——首頁「市場現況」磚 2/3/4 的
 # 現值／色帶唯一事實源（docs/index.html 讀本檔；歷史走勢仍讀各歷史 JSON）。
 STATUS_SNAPSHOT_FILE = DATA_DIR / "status_snapshot.json"
+# Phase 2（2026-08-20）：產業／主題層新增的三個唯讀來源＋一個寫入落地檔。
+THEMES_YML = INTEL_SCRIPTS_DIR / "themes.yml"
+HOME_PULSE_FILE = DOCS / "home" / "pulse.json"
+THEME_HISTORY_FILE = DATA_DIR / "theme_history.json"
+THEME_WEEKLY_FILE = DATA_DIR / "theme_weekly.json"
+THEME_HISTORY_RETENTION_DAYS = 14
+THEME_WEEKLY_STALE_DAYS = 8
 
 TAIPEI_OFFSET = timedelta(hours=8)
 STALE_HOURS = 30
@@ -159,6 +166,42 @@ def load_sources_yml():
                 "category": e.get("category", ""),
             }
     return out
+
+
+def load_themes_yml() -> list:
+    """Phase 2（2026-08-20）：scripts/intel/themes.yml 的固定主題清單（見該檔
+    頭註解的欄位定義）。render.py 自成一體不 import common.py（render.py 是
+    純渲染器，故意不依賴 pipeline 端模組），故這裡另外自帶一份等價的 fail-safe
+    loader，與 common.load_themes() 各自獨立但讀同一份 YAML。"""
+    if not THEMES_YML.exists():
+        return []
+    try:
+        data = yaml.safe_load(THEMES_YML.read_text(encoding="utf-8")) or []
+    except Exception:
+        return []
+    return [t for t in data if isinstance(t, dict) and t.get("key")]
+
+
+def _theme_by_key() -> dict:
+    return {t["key"]: t for t in load_themes_yml()}
+
+
+def assign_theme(card: dict, themes: list) -> str | None:
+    """card.theme 有填（haiku 分類階段挑的）就直接用；沒有（舊 payload／haiku
+    漏判）就退回關鍵字 fallback——比對 card 標題＋tags.themes（大小寫不分）
+    是否含有該主題 keywords 任一字串，第一個命中的主題勝出（themes.yml 的
+    順序即優先序）。找不到就回 None（歸「其他」）。"""
+    theme = card.get("theme")
+    if theme:
+        return theme
+    hay = (card.get("title") or "").lower()
+    tags_themes = " ".join((card.get("tags") or {}).get("themes") or []).lower()
+    hay = f"{hay} {tags_themes}"
+    for t in themes:
+        for kw in t.get("keywords") or []:
+            if kw and kw.lower() in hay:
+                return t["key"]
+    return None
 
 
 # --------------------------------------------------------------- html utils
@@ -758,6 +801,31 @@ def render_grouped_list(cards: list, order: list, empty_text: str, thread_map=No
     return '<div class="list">' + "\n".join(parts) + "</div>"
 
 
+def render_theme_grouped_list(cards: list, themes: list, empty_text: str, thread_map=None) -> str:
+    """Task C5（2026-08-20）：今日頁「產業層」改按主題分組（取代原本的 category
+    分組）——骨架完全比照 render_grouped_list，分組鍵改用 assign_theme()（haiku
+    的 card.theme 優先，缺欄位退關鍵字 fallback，見上方定義）。無主題的卡片歸
+    「其他」，且「其他」固定排最後一組（不管張數，避免雜項因為量大反而排到主題
+    前面，喧賓奪主）。"""
+    if not cards:
+        return f'<div class="list">{LIST_HEAD}<div class="empty">{esc(empty_text)}</div></div>'
+    theme_label = {t["key"]: t.get("name_zh") or t["key"] for t in themes}
+    by_theme: dict = {}
+    for c in cards:
+        key = assign_theme(c, themes) or "other"
+        by_theme.setdefault(key, []).append(c)
+    seq = sorted((k for k in by_theme if k != "other"), key=lambda k: -len(by_theme[k]))
+    if "other" in by_theme:
+        seq.append("other")
+    parts = [LIST_HEAD]
+    for key in seq:
+        items = sorted(by_theme[key], key=card_sort_key)
+        label = theme_label.get(key, "其他")
+        parts.append(group_header(label, len(items)))
+        parts.extend(render_row(c, thread_map) for c in items)
+    return '<div class="list">' + "\n".join(parts) + "</div>"
+
+
 def render_flat_list(cards: list, empty_text: str, thread_map=None) -> str:
     if not cards:
         return f'<div class="list">{LIST_HEAD}<div class="empty">{esc(empty_text)}</div></div>'
@@ -1186,6 +1254,180 @@ def compute_full_threads(date_str: str) -> list:
     return out
 
 
+# ------------------------------------------------------- 今日重點（Task A）
+
+def _thread_heat_bonus(card: dict, threads_by_id: dict, threads: list) -> int:
+    """打分公式第四項：所屬故事線熱度加分。優先用 card.thread_id 直接查
+    （threads_output 裡有的卡片本來就已被指派 thread_id）；沒有 thread_id
+    的卡片退回關鍵字比對（標題是否含有某條故事線的任一 keyword）。up=+5／
+    flat=+2／down or 無匹配=0——升溫故事線的卡片更值得放進今日重點。"""
+    tid = card.get("thread_id")
+    heat = None
+    if tid and tid in threads_by_id:
+        heat = threads_by_id[tid].get("heat")
+    else:
+        title_l = (card.get("title") or "").lower()
+        for t in threads:
+            for kw in t.get("keywords") or []:
+                if kw and kw.lower() in title_l:
+                    heat = t.get("heat")
+                    break
+            if heat:
+                break
+    return {"up": 5, "flat": 2}.get(heat, 0)
+
+
+def _news_highlight_score(card: dict, threads_by_id: dict, threads: list) -> float:
+    """今日重點新聞卡池打分公式（Task A，DESIGN.md Phase 2 節記載）：
+    importance×10 ＋ corroboration×3 ＋（T1 來源 +2）＋ 故事線熱度加分。"""
+    score = int(card.get("importance") or 1) * 10
+    score += int(card.get("corroboration") or 1) * 3
+    if card.get("source_tier") == "T1":
+        score += 2
+    score += _thread_heat_bonus(card, threads_by_id, threads)
+    return score
+
+
+def _site_event_items(payload: dict) -> list:
+    """站內事件池（排在新聞前面）：detective 新觸發紅色警示（band 換檔的機械
+    代理——detective 本身不存 band 逐日歷史，state=="new" 且 sev=="red" 的
+    訊號是最貼近「今天新出現的警示」的既有訊號）、kill 指標 breached／near
+    （沿用 payload.flags，不重寫文字）、home/pulse.json 轉折確認（evidence
+    含「持穩」字樣＝confirmed，此判定字串沿用 scripts/build_home_pulse.py
+    內部既有用法，不是本次新發明的判斷邏輯）。任一來源缺檔／壞檔各自
+    fail-safe 跳過，不影響其他兩種。"""
+    items = []
+
+    det = load_json_safe(DETECTIVE_LATEST_FILE) or {}
+    for s in (det.get("signals") or []):
+        if s.get("state") == "new" and s.get("sev") == "red":
+            label = (s.get("label") or "").strip()
+            fact = (s.get("fact") or "").strip()
+            summary = f"{label}：{fact}" if label and fact else (fact or label)
+            if not summary:
+                continue
+            items.append({
+                "summary": summary,
+                "why": "今日新觸發之紅色警示訊號（機械監測分類，非擇時判斷）。",
+                "source": "站內偵探",
+                "url": "/detective/",
+            })
+
+    near_pool = []
+    for fl in (payload.get("flags") or []):
+        level = (fl.get("level") or "").lower()
+        if level not in ("confirmed", "near"):
+            continue
+        text_zh = (fl.get("text_zh") or "").strip()
+        if not text_zh:
+            continue
+        item = {
+            "summary": text_zh,
+            "why": "已觸發設定門檻。" if level == "confirmed" else "接近設定門檻，尚未觸發。",
+            "source": "站內 kill-watch",
+            "url": fl.get("link") or "/detective/",
+        }
+        if level == "confirmed":
+            items.append(item)
+        else:
+            # near＝長期不變的狀態，非今日事件——整池只留距離門檻最近的 1 條，
+            # 避免同一批 near 旗標天天霸佔「今日重點」擠掉新聞（2026-08-20 驗收修正）。
+            near_pool.append((fl.get("distance_pct") if isinstance(fl.get("distance_pct"), (int, float)) else 999.0, item))
+
+    pulse = load_json_safe(HOME_PULSE_FILE) or {}
+    for rf in (pulse.get("reversal_flags") or []):
+        evidence = (rf.get("evidence") or "").strip()
+        if "持穩" not in evidence:
+            continue
+        axis = (rf.get("axis") or "").strip()
+        frm, to = rf.get("from"), rf.get("to")
+        summary = f"{axis}：{frm} → {to}" if axis and frm and to else (evidence or axis)
+        if not summary:
+            continue
+        items.append({
+            "summary": summary,
+            "why": evidence or "轉折訊號已連續確認。",
+            "source": "站內轉折雷達",
+            "url": "/",
+        })
+
+    if near_pool:
+        near_pool.sort(key=lambda t: t[0])
+        items.append(near_pool[0][1])
+
+    return items
+
+
+def compute_today_highlights(payload: dict, n: int = 5) -> list:
+    """Task A（2026-08-20）：今日重點，純機械打分，零新增 LLM 呼叫。回傳
+    ≤n 條 {summary, why, source, url} dict——站內事件池優先（detective 新警示／
+    kill 指標／轉折確認），剩餘名額由新聞卡池依打分公式（見
+    `_news_highlight_score`）填滿，同 category 最多 2 條保多樣性。整段包在
+    try/except：任何一步壞掉都回 []，呼叫端據此完全省略這個區塊，不擋頁面。"""
+    try:
+        # 站內事件最多佔 2 席（真變化優先），其餘留給新聞卡——
+        # 否則 kill-watch near 這類長期狀態會天天填滿五條（2026-08-20 驗收修正）。
+        site_items = _site_event_items(payload)[:min(2, n)]
+        remaining = max(n - len(site_items), 0)
+        news_items = []
+        if remaining:
+            threads = payload.get("threads") or []
+            threads_by_id = {t.get("id"): t for t in threads if t.get("id")}
+            cards = payload.get("cards") or []
+            pool = [
+                c for c in cards
+                if not is_rumor(c) and not is_title_only(c) and (c.get("summary_zh") or "").strip()
+            ]
+            scored = sorted(pool, key=lambda c: -_news_highlight_score(c, threads_by_id, threads))
+            per_cat: dict = {}
+            for c in scored:
+                if len(news_items) >= remaining:
+                    break
+                cat = c.get("category") or ""
+                if per_cat.get(cat, 0) >= 2:
+                    continue
+                per_cat[cat] = per_cat.get(cat, 0) + 1
+                news_items.append({
+                    "summary": c.get("summary_zh") or _card_title(c),
+                    "why": c.get("why_zh") or "",
+                    "source": source_short(c),
+                    "url": c.get("url") or "",
+                })
+        return (site_items + news_items)[:n]
+    except Exception:
+        return []
+
+
+def render_highlights(items: list) -> str:
+    """今日重點清單——沿用 `.focus`（render_focus 同一套 CSS，見
+    templates/intel.css `.focus`），每條：summary（連結）＋ why（一句）＋
+    來源短名。描述器紀律：summary/why 全部沿用既有欄位文字，這裡不生成任何
+    新的判斷句。"""
+    if not items:
+        return ""
+    lis = []
+    for it in items:
+        summary = esc(it.get("summary") or "")
+        if not summary:
+            continue
+        why = esc(it.get("why") or "")
+        src = esc(it.get("source") or "")
+        url = it.get("url") or ""
+        head_html = (
+            f'<a href="{esc(url)}" rel="noopener nofollow">{summary}</a>'
+            if url and _safe_href(url) else f'<span class="h">{summary}</span>'
+        )
+        mt_bits = [m for m in (why, src) if m]
+        mt_html = "".join(f"<span>{m}</span>" for m in mt_bits)
+        lis.append(
+            f'<li><span class="imp i2" aria-hidden="true"></span>'
+            f'<span class="tx">{head_html}<span class="mt">{mt_html}</span></span></li>'
+        )
+    if not lis:
+        return ""
+    return '<ul class="focus">' + "\n".join(lis) + "</ul>"
+
+
 # ------------------------------------------------------------- aside boxes
 
 def render_focus(cards: list, n: int = 5) -> str:
@@ -1377,6 +1619,7 @@ TABS = [
     ("change.html", "變化", "change_n"),
     ("gauges.html", "儀表", None),
     ("weekly.html", "週更", None),
+    ("themes.html", "產業", "theme_n"),
     ("calendar.html", "行事曆", "cal_n"),
     ("threads.html", "故事線", None),
     ("archive.html", "封存", None),
@@ -1806,6 +2049,11 @@ def build_day_body(date_str: str, payload: dict, mode_note: str, is_archive: boo
     # 1／2. 現況＋變化（只在「今日」頁顯示；封存頁是歷史快照，不該疊上「現在」的
     # 即時跨站台數字，避免誤讀成那一天的現況）。
     if not is_archive:
+        highlights = compute_today_highlights(payload)
+        if highlights:
+            p.append(h2("今日重點", "Highlights", len(highlights)))
+            p.append(render_highlights(highlights))
+
         snap = load_status_snapshot()
         p.append(h2("現況", "Status"))
         p.append(render_status_strip(snap))
@@ -1853,7 +2101,7 @@ def build_day_body(date_str: str, payload: dict, mode_note: str, is_archive: boo
     p.append(render_grouped_list(market_cards, GAUGE_ORDER, "今日無市場層卡片。", thread_map))
 
     p.append(h2("產業層", "Industry", len(industry_cards)))
-    p.append(render_grouped_list(industry_cards, [], "今日無產業層卡片。", thread_map))
+    p.append(render_theme_grouped_list(industry_cards, load_themes_yml(), "今日無產業層卡片。", thread_map))
 
     p.append(h2("個股層", "Company", len(company_cards)))
     p.append(render_grouped_list(company_cards, [], "今日無個股層卡片。", thread_map))
@@ -2225,6 +2473,287 @@ def build_calendar_body(date_str: str, calendar: list, badges: dict) -> str:
     return "\n".join(p)
 
 
+# --------------------------------------------------------- 產業（Task C3/C4）
+
+def load_theme_history() -> dict:
+    return load_json_safe(THEME_HISTORY_FILE) or {"schema": "intel-theme-history-v1", "themes": []}
+
+
+def update_theme_history(date_str: str, cards: list, themes: list) -> None:
+    """Task C3（2026-08-20）：每主題每日卡數 state，比照 threads.json 慣例（見
+    threads.py 設計樣板）——只記有卡的（主題, 日期）配對（沒卡的日期不寫 0，
+    跟 threads.json 的 daily_counts 慣例一致，讀取端用 `.get(date, 0)` 補
+    空缺），14 天保留窗，超窗的日期整批砍掉；一個主題砍到 daily_counts 變空
+    就整條移除，state 檔不會無限成長。zero-churn：序列化內容不變就不重寫，
+    不寫 generated_at（比照 write_status_snapshot()）。只在正式輸出（out_dir
+    == DOCS_INTEL）呼叫；任何一步失敗都吞掉，不擋頁面渲染——這是狀態累積檔，
+    不是當日渲染的必要輸入。"""
+    import json
+
+    counts: dict = {}
+    for c in cards:
+        key = assign_theme(c, themes)
+        if key:
+            counts[key] = counts.get(key, 0) + 1
+
+    state = load_theme_history()
+    by_key = {t.get("key"): dict(t) for t in (state.get("themes") or []) if t.get("key")}
+
+    try:
+        base = datetime.strptime(date_str, "%Y-%m-%d").date()
+        cutoff = (base - timedelta(days=THEME_HISTORY_RETENTION_DAYS - 1)).isoformat()
+    except ValueError:
+        cutoff = None
+
+    for key, cnt in counts.items():
+        entry = by_key.setdefault(key, {"key": key, "daily_counts": {}})
+        dc = dict(entry.get("daily_counts") or {})
+        dc[date_str] = cnt
+        entry["daily_counts"] = dc
+
+    out_themes = []
+    for key in sorted(by_key):
+        entry = by_key[key]
+        dc = entry.get("daily_counts") or {}
+        if cutoff:
+            dc = {d: v for d, v in dc.items() if d >= cutoff}
+        if not dc:
+            continue
+        out_themes.append({"key": key, "daily_counts": dc})
+
+    content = json.dumps(
+        {"schema": "intel-theme-history-v1", "themes": out_themes},
+        ensure_ascii=False, sort_keys=True, indent=1,
+    ) + "\n"
+    try:
+        if THEME_HISTORY_FILE.read_text(encoding="utf-8") == content:
+            return
+    except OSError:
+        pass
+    try:
+        THEME_HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
+        THEME_HISTORY_FILE.write_text(content, encoding="utf-8")
+    except OSError as exc:
+        print(f"[render.py] theme_history write skipped ({exc})", file=sys.stderr)
+
+
+def theme_sparkline(date_str: str, key: str, days: int = 7) -> list:
+    state = load_theme_history()
+    by_key = {t.get("key"): t for t in (state.get("themes") or [])}
+    dc = (by_key.get(key) or {}).get("daily_counts") or {}
+    try:
+        td = datetime.strptime(date_str, "%Y-%m-%d").date()
+    except ValueError:
+        return [0] * days
+    out = []
+    for i in range(days - 1, -1, -1):
+        ds = (td - timedelta(days=i)).isoformat()
+        out.append(dc.get(ds, 0) or 0)
+    return out
+
+
+def _f(x):
+    try:
+        return float(x)
+    except (TypeError, ValueError):
+        return None
+
+
+KILL_STATUS_ZH = {"breached": "已突破", "near": "接近門檻", "green": "正常"}
+
+
+def _kill_theme_pick(kill_theme: str, kw_items: list) -> dict | None:
+    """C4 產業分頁站內錨點之一：從 kill_watch items 挑同一 macro theme 裡最
+    值得關注的一筆——breached 優先於 near 優先於 green，同組內取現值離門檻
+    最近（distance 最小）的那筆。找不到回 None（頁面該格整段省略，不是空
+    佔位）。"""
+    cand = [it for it in kill_items_for(kill_theme, kw_items)]
+    if not cand:
+        return None
+    status_rank = {"breached": 0, "near": 1, "green": 2}
+
+    def _dist(it):
+        v, t = _f(it.get("current")), _f(it.get("value"))
+        if v is None or t is None or t == 0:
+            return 999.0
+        return abs(v - t) / abs(t) * 100.0
+
+    cand.sort(key=lambda it: (status_rank.get(it.get("status"), 3), _dist(it)))
+    return cand[0]
+
+
+def kill_items_for(kill_theme: str, kw_items: list) -> list:
+    return [it for it in kw_items if it.get("theme") == kill_theme]
+
+
+def _crowding_theme_pick(crowding_key: str, crowding_themes: list) -> dict | None:
+    ck = crowding_key.lower()
+    for ct in crowding_themes:
+        if ck in (ct.get("name") or "").lower():
+            return ct
+    return None
+
+
+def compute_theme_rows(date_str: str, payload: dict) -> list:
+    """Task C4：組出「產業」分頁每一列需要的資料——name_zh／7 日 sparkline／
+    今日最重要 1 條（沿用 Task A 的打分法）／站內錨點（ID 連結／kill 距離／
+    擁擠分數，各自缺就省略）／週更綜述（Task D，缺檔不渲染）。近 7 日零卡且
+    無任何站內錨的主題整條不回傳（規格：「近 7 日零卡且無站內錨的主題不
+    顯示」）。任一跨站台來源壞掉都各自 fail-safe，不影響其他主題或其他錨點
+    種類。"""
+    themes = load_themes_yml()
+    cards = payload.get("cards") or []
+    kw = load_json_safe(KILL_WATCH_FILE) or {}
+    kw_items = kw.get("items") or []
+    crowding = load_json_safe(CROWDING_LATEST_FILE) or {}
+    crowding_themes = crowding.get("themes") or []
+    weekly = load_json_safe(THEME_WEEKLY_FILE) or {}
+    weekly_themes = weekly.get("themes") if isinstance(weekly.get("themes"), dict) else {}
+    weekly_week_of = weekly.get("week_of")
+
+    threads = payload.get("threads") or []
+    threads_by_id = {t.get("id"): t for t in threads if t.get("id")}
+    pool = [
+        c for c in cards
+        if not is_rumor(c) and not is_title_only(c) and (c.get("summary_zh") or "").strip()
+    ]
+    top_by_theme: dict = {}
+    for c in pool:
+        key = assign_theme(c, themes)
+        if not key:
+            continue
+        score = _news_highlight_score(c, threads_by_id, threads)
+        cur = top_by_theme.get(key)
+        if cur is None or score > cur[0]:
+            top_by_theme[key] = (score, c)
+
+    rows = []
+    for t in themes:
+        key = t["key"]
+        try:
+            spark = theme_sparkline(date_str, key, days=7)
+        except Exception:
+            spark = [0] * 7
+        total7 = sum(spark)
+        top_card = (top_by_theme.get(key) or (None, None))[1]
+
+        id_page = t.get("id_page")
+        id_link = f"/id/{id_page}" if id_page else None
+
+        kill_item = None
+        if t.get("kill_theme"):
+            try:
+                kill_item = _kill_theme_pick(t["kill_theme"], kw_items)
+            except Exception:
+                kill_item = None
+
+        crowding_item = None
+        if t.get("crowding_key"):
+            try:
+                crowding_item = _crowding_theme_pick(t["crowding_key"], crowding_themes)
+            except Exception:
+                crowding_item = None
+
+        if total7 == 0 and not (id_link or kill_item or crowding_item):
+            continue
+
+        rows.append({
+            "key": key, "name_zh": t.get("name_zh") or key,
+            "sparkline": spark, "total7": total7, "top_card": top_card,
+            "id_link": id_link, "kill_item": kill_item, "crowding_item": crowding_item,
+            "weekly_zh": (weekly_themes or {}).get(key), "weekly_week_of": weekly_week_of,
+        })
+
+    rows.sort(key=lambda r: -r["total7"])
+    return rows
+
+
+def _theme_weekly_block(weekly_zh: str | None, week_of: str | None, date_str: str) -> str:
+    """Task D 渲染：週更綜述掛在每主題列下方，>8 天視為過期整段標灰（缺檔
+    不渲染、不報錯——呼叫端只在 weekly_zh 有值時才呼叫本函式）。"""
+    if not weekly_zh or not weekly_zh.strip():
+        return ""
+    stale = False
+    if week_of:
+        try:
+            wd = datetime.strptime(week_of, "%Y-%m-%d").date()
+            td = datetime.strptime(date_str, "%Y-%m-%d").date()
+            stale = (td - wd).days > THEME_WEEKLY_STALE_DAYS
+        except ValueError:
+            pass
+    cls = "theme-weekly stale" if stale else "theme-weekly"
+    stale_note = "（已過期，等待下次週更）" if stale else ""
+    as_of = esc(week_of or "")
+    return (
+        f'<div class="{cls}">{esc(weekly_zh)}'
+        f'<div class="tw-meta">週更綜述 · {as_of}{esc(stale_note)}</div></div>'
+    )
+
+
+def render_theme_row(row: dict, date_str: str) -> str:
+    spark = _sparkline_svg(row.get("sparkline") or [], width=90, height=20)
+    top_card = row.get("top_card")
+    if top_card:
+        title = _card_title(top_card)
+        url = top_card.get("url") or ""
+        top_html = (
+            f'<a href="{esc(url)}" rel="noopener nofollow">{title}</a>'
+            if url and _safe_href(url) else f'<span>{title}</span>'
+        )
+    else:
+        top_html = f'<span class="mut">{DASH}</span>'
+
+    anchors = []
+    if row.get("id_link"):
+        anchors.append(f'<a class="chip" href="{esc(row["id_link"])}">產業報告 ↗</a>')
+    ki = row.get("kill_item")
+    if ki:
+        status_zh = KILL_STATUS_ZH.get(ki.get("status"), ki.get("status") or "")
+        metric = esc((ki.get("metric_text") or "")[:24])
+        doc = ki.get("doc") or ""
+        href = "/" + doc.split("docs/", 1)[-1] if doc else "/detective/"
+        anchors.append(
+            f'<a class="chip" href="{esc(href)}">kill：{metric}｜{esc(status_zh)} ↗</a>'
+        )
+    ci = row.get("crowding_item")
+    if ci and ci.get("score") is not None:
+        anchors.append(
+            f'<a class="chip" href="/crowding/">擁擠分數 {esc(fmt_num(ci.get("score")))}'
+            f'（第 {esc(fmt_num(ci.get("rank")))} 名）↗</a>'
+        )
+    anchors_html = f'<div class="theme-anchors">{"".join(anchors)}</div>' if anchors else ""
+
+    weekly_html = _theme_weekly_block(row.get("weekly_zh"), row.get("weekly_week_of"), date_str)
+
+    return (
+        '<div class="theme-row">'
+        f'<div class="theme-top"><span class="tt">{esc(row["name_zh"])}</span>'
+        f'<span class="thsp">{spark}</span>'
+        f'<span class="tht">近 7 日 {row.get("total7", 0)} 張</span></div>'
+        f'<div class="theme-card">{top_html}</div>'
+        f'{anchors_html}{weekly_html}'
+        '</div>'
+    )
+
+
+def build_themes_body(date_str: str, payload: dict, badges: dict) -> str:
+    rows = compute_theme_rows(date_str, payload)
+    p = ['<div class="wrap">']
+    p.append(
+        '<div class="mast"><div class="ttl"><h1>產業</h1>'
+        f'<div class="date">依主題分組的產業層卡片，共 {len(rows)} 個主題有資料或站內錨點</div></div>'
+        + _util_chips() + "</div>"
+    )
+    p.append(render_tabstrip("themes.html", badges))
+    if not rows:
+        p.append('<div class="empty">近 7 日尚無任何主題卡片或站內錨點資料。</div>')
+    else:
+        p.append('<div class="theme-list">' + "\n".join(render_theme_row(r, date_str) for r in rows) + "</div>")
+    p.append("</div>")
+    p.append(FOOT)
+    return "\n".join(p)
+
+
 def build_threads_body(date_str: str, badges: dict) -> str:
     threads = compute_full_threads(date_str)
     p = ['<div class="wrap">']
@@ -2544,6 +3073,21 @@ def main():
     det_for_badges = load_json_safe(DETECTIVE_LATEST_FILE) or {}
     badges = compute_tab_badges(date_str, calendar, det_for_badges)
 
+    # Task C3（2026-08-20）：每主題每日卡數 state——只在正式輸出時累積歷史，
+    # --out 測試模式不動 docs/。失敗不擋渲染。
+    if out_dir == DOCS_INTEL:
+        try:
+            update_theme_history(date_str, payload.get("cards") or [], load_themes_yml())
+        except Exception as exc:  # noqa: BLE001
+            print(f"theme_history: skipped ({exc})", file=sys.stderr)
+
+    try:
+        theme_rows = compute_theme_rows(date_str, payload)
+        badges["theme_n"] = len(theme_rows)
+    except Exception as exc:  # noqa: BLE001
+        print(f"theme rows: skipped ({exc})", file=sys.stderr)
+        badges["theme_n"] = None
+
     index_body = build_day_body(date_str, payload, banner, is_archive=False, badges=badges)
     index_html = (
         head(
@@ -2634,6 +3178,17 @@ def main():
     calendar_path = out_dir / "calendar.html"
     calendar_path.write_text(calendar_html, encoding="utf-8")
 
+    themes_html = (
+        head("產業 — 全球金融市場監視器 — InvestMQuest Research",
+             "依主題分組的產業層卡片：熱度趨勢、今日焦點、ID／kill-watch／擁擠交易站內錨點。",
+             indexable=False)
+        + "\n<body>\n"
+        + build_themes_body(date_str, payload, badges)
+        + "\n</body>\n</html>\n"
+    )
+    themes_path = out_dir / "themes.html"
+    themes_path.write_text(themes_html, encoding="utf-8")
+
     threads_html = (
         head("故事線 — 全球金融市場監視器 — InvestMQuest Research",
              "進行中的故事線，逐條展開近期所有卡片。", indexable=False)
@@ -2646,7 +3201,7 @@ def main():
 
     all_paths = [
         index_path, day_path, archive_path, status_path,
-        change_path, gauges_path, weekly_path, calendar_path, threads_path,
+        change_path, gauges_path, weekly_path, themes_path, calendar_path, threads_path,
     ]
     if out_dir == DOCS_INTEL:
         inject_nav(all_paths)

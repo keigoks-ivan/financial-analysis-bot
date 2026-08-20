@@ -15,6 +15,7 @@ import yaml
 ROOT = Path(__file__).resolve().parent.parent.parent
 INTEL_DIR = ROOT / "scripts" / "intel"
 SOURCES_YML = INTEL_DIR / "sources.yml"
+THEMES_YML = INTEL_DIR / "themes.yml"  # Phase 2（2026-08-20）：固定主題註冊表
 DATA_DIR = ROOT / "docs" / "intel" / "data"
 PENDING_DIR = ROOT / "docs" / "intel" / "pending"
 PROMPTS_DIR = INTEL_DIR / "prompts"
@@ -137,3 +138,27 @@ def daily_output_path(date: str) -> Path:
 
 def read_prompt(name: str) -> str:
     return (PROMPTS_DIR / name).read_text(encoding="utf-8")
+
+
+_THEMES_CACHE: list | None = None
+
+
+def load_themes() -> list:
+    """Phase 2（2026-08-20）：讀 scripts/intel/themes.yml 的固定主題清單
+    （見該檔案頭註解）。fail-safe——缺檔／壞 YAML 回 []，呼叫端（classify.py
+    的 prompt 組裝、theme_weekly.py 的每主題掃描）都要能接受空清單而不掛掉。
+    Process 內快取一次（themes.yml 在同一次執行中不會變動）。"""
+    global _THEMES_CACHE
+    if _THEMES_CACHE is not None:
+        return _THEMES_CACHE
+    try:
+        with open(THEMES_YML, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f) or []
+        _THEMES_CACHE = [t for t in data if isinstance(t, dict) and t.get("key")]
+    except (OSError, yaml.YAMLError):
+        _THEMES_CACHE = []
+    return _THEMES_CACHE
+
+
+def theme_keys() -> list:
+    return [t["key"] for t in load_themes()]

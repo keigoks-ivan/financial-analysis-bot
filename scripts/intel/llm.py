@@ -42,7 +42,10 @@ RETRY_SLEEP_SEC = 15
 # articles/day deep-read budget can't crowd out (or be crowded out by) the
 # classify/summarize/digest sonnet budget. Unit = articles processed
 # (deepread.py BATCH_SIZE=4 × up to 3 batches).
-DAILY_CARD_CAPS = {"haiku": 440, "sonnet": 80, "deepread": 12}  # sonnet 80＝主線 70＋傳聞 10（2026-08-20）
+DAILY_CARD_CAPS = {"haiku": 440, "sonnet": 80, "deepread": 12, "theme_weekly": 20}  # sonnet 80＝主線 70＋傳聞 10（2026-08-20）
+# "theme_weekly"（Phase 2 Task D，2026-08-20 新增）：週一次的產業主題週摘要，
+# 同樣掛 --model sonnet 但走獨立 ledger bucket（比照 deepread 的先例），
+# card_count 用「本週有卡片的主題數」計，上限 20 已覆蓋 themes.yml 現有 19 個主題。
 
 # Claude Code CLI picks ANTHROPIC_API_KEY over the OAuth token when both are
 # present, billing the API instead of the Max/Pro subscription. Strip these
