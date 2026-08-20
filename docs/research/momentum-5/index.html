@@ -264,6 +264,33 @@ table.data tr.is-seat:hover td{background:#efe9da}
   </div>
 </section>
 
+<section class="blk" id="sec-shadow" style="background:var(--paper)">
+  <div class="wrap">
+    <div class="sec-hdr">
+      <span class="sec-eyebrow">Shadow Track · PREREG 2026-08-20</span>
+      <span class="sec-title">影子對照實驗（PREREG 2026-08-20）——九十天 vs 三十天修正窗</span>
+      <span class="sec-desc">機械式雙線比較，2026-11-22 起首次週更後人工評審</span>
+    </div>
+    <div class="xcard" id="shadow-prereg" style="margin-bottom:.9rem">
+      <div class="loading">規格載入中…</div>
+    </div>
+    <div class="cards" id="shadow-lines" style="margin-bottom:.9rem">
+      <div class="loading">兩線持倉載入中…</div>
+    </div>
+    <div class="tbl-wrap" style="margin-bottom:.7rem">
+      <table class="data" id="shadow-nav-tbl">
+        <thead>
+          <tr><th style="text-align:left">日期</th><th>Line C NAV（90D）</th><th>Line F NAV（30D）</th><th>SPY NAV</th></tr>
+        </thead>
+        <tbody id="shadow-nav-body">
+          <tr><td colspan="4" class="loading">NAV 序列載入中…</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="foot-note" id="shadow-disclosure"></p>
+  </div>
+</section>
+
 <section class="blk" id="sec-logic">
   <div class="wrap">
     <div class="sec-hdr">
@@ -375,6 +402,10 @@ table.data tr.is-seat:hover td{background:#efe9da}
     render(pf, d);
   }).catch(function(){ showError(); });
 
+  // shadow track fetched independently — its failure must not break the main page
+  fetch('./shadow.json',{cache:'no-store'}).then(function(r){ if(!r.ok) throw 0; return r.json(); })
+    .then(renderShadow).catch(showShadowError);
+
   function render(pf, d){
     // ── hero meta ──
     $('m-asof').textContent = d.as_of || '—';
@@ -466,6 +497,83 @@ table.data tr.is-seat:hover td{background:#efe9da}
   function metric(lbl, val, cls){
     return '<div class="metric"><span class="lbl">'+esc(lbl)+'</span>'+
            '<span class="val '+(cls||'')+'">'+val+'</span></div>';
+  }
+
+  // ── shadow track（PREREG 影子對照實驗）──
+  var LINE_META = {
+    C: {label: 'Line C · 控制線（90 天修正窗）', tag: 'C'},
+    F: {label: 'Line F · 新鮮線（30 天修正窗）', tag: 'F'}
+  };
+
+  function showShadowError(){
+    var pr = $('shadow-prereg'); if(pr) pr.innerHTML = '<div class="errbox">影子對照實驗資料載入失敗，稍後再試。</div>';
+    var lines = $('shadow-lines'); if(lines) lines.innerHTML = '';
+    var tb = $('shadow-nav-body'); if(tb) tb.innerHTML = '<tr><td colspan="4" class="errbox" style="border:none">資料載入失敗。</td></tr>';
+    var dc = $('shadow-disclosure'); if(dc) dc.textContent = '';
+  }
+
+  function fmtNav(v){ return (v===null||v===undefined) ? '—' : Number(v).toFixed(2); }
+
+  function renderShadow(sd){
+    var pre = sd.prereg || {};
+    var pr = $('shadow-prereg');
+    if(pr){
+      var rules = pre.portfolio_rules || {};
+      var review = pre.review || {};
+      pr.innerHTML =
+        '<h4>'+esc(pre.title||'影子對照實驗')+'</h4>'+
+        '<p>'+esc(pre.objective||'')+'</p>'+
+        '<p style="margin-top:.5rem">'+esc(pre.design||'')+'</p>'+
+        '<ul style="margin-top:.6rem">'+
+          '<li><span class="k">組合規則：</span>'+esc(rules.weighting||'')+'　·　成立 '+esc(rules.inception||'')+
+            '　·　'+esc(rules.rebalance||'')+'　·　'+esc(rules.nav_update||'')+'　·　'+
+            esc(rules.transaction_cost||'')+'　·　'+esc(rules.tie_break||'')+'　·　'+esc(rules.exclusion||'')+'</li>'+
+          '<li><span class="k">評審點：</span>'+esc(review.trigger||'')+'——指標：'+
+            (review.metrics||[]).map(esc).join('、')+'。'+esc(review.outcome_rule||'')+'</li>'+
+        '</ul>';
+    }
+    var dc = $('shadow-disclosure');
+    if(dc) dc.textContent = esc(pre.disclosure||'');
+
+    var linesWrap = $('shadow-lines');
+    if(linesWrap){
+      linesWrap.innerHTML = '';
+      ['C','F'].forEach(function(key){
+        var line = (sd.lines||{})[key] || {};
+        var meta = LINE_META[key];
+        var holdings = line.holdings || [];
+        var card = document.createElement('div');
+        card.className = 'xcard';
+        var navLatest = (sd.nav_series && sd.nav_series.length) ?
+          sd.nav_series[sd.nav_series.length-1]['nav_'+key] : null;
+        card.innerHTML =
+          '<h4>'+esc(meta.label)+'　<span class="mono" style="font-size:.8rem;color:var(--muted)">NAV '+fmtNav(navLatest)+'</span></h4>'+
+          '<ul>' +
+          holdings.map(function(h){
+            return '<li><span class="k">'+esc(h.ticker)+'</span>　進場 '+
+              (h.entry_price!=null?h.entry_price.toFixed(2):'—')+'（'+esc(h.entry_date||'')+'）　score '+
+              (h.score!=null?h.score.toFixed(2):'—')+'　等權 '+(h.weight_pct!=null?h.weight_pct.toFixed(0):'20')+'%</li>';
+          }).join('') +
+          '</ul>';
+        linesWrap.appendChild(card);
+      });
+    }
+
+    var tb = $('shadow-nav-body');
+    if(tb){
+      tb.innerHTML = '';
+      var rows = sd.nav_series || [];
+      if(!rows.length){ tb.innerHTML = '<tr><td colspan="4" class="loading">尚無 NAV 紀錄</td></tr>'; }
+      rows.slice().reverse().forEach(function(r){
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td style="text-align:left">'+esc(r.date)+'</td>'+
+          '<td>'+fmtNav(r.nav_C)+'</td>'+
+          '<td>'+fmtNav(r.nav_F)+'</td>'+
+          '<td>'+fmtNav(r.nav_spy)+'</td>';
+        tb.appendChild(tr);
+      });
+    }
   }
 })();
 </script>

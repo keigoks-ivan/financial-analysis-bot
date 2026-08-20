@@ -68,9 +68,18 @@ echo "running build_momentum5.py..."
 "$PY" scripts/build_momentum5.py
 
 if git status --porcelain "$DATA_JSON" | grep -q .; then
-  echo "data.json changed — committing"
+  echo "data.json changed — running shadow track (build_momentum5_shadow.py)..."
+  RAW_FACTORS_JSON="docs/research/momentum-5/raw_factors.json"
+  SHADOW_JSON="docs/research/momentum-5/shadow.json"
+  if ! "$PY" scripts/build_momentum5_shadow.py; then
+    echo "WARNING: build_momentum5_shadow.py failed — committing data.json without shadow update"
+  fi
+
+  echo "committing"
   TODAY=$(date '+%Y-%m-%d')
   git add "$DATA_JSON"
+  [ -f "$RAW_FACTORS_JSON" ] && git add "$RAW_FACTORS_JSON"
+  [ -f "$SHADOW_JSON" ] && git add "$SHADOW_JSON"
   git commit -m "data: momentum-5 weekly update ${TODAY}（本地跑點）"
 
   PUSHED=0

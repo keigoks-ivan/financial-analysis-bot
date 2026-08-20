@@ -60,6 +60,7 @@ import requests
 ROOT = Path(__file__).resolve().parent.parent
 PORTFOLIO_JSON = ROOT / 'docs' / 'research' / 'momentum-5' / 'portfolio.json'
 DATA_JSON = ROOT / 'docs' / 'research' / 'momentum-5' / 'data.json'
+RAW_FACTORS_JSON = ROOT / 'docs' / 'research' / 'momentum-5' / 'raw_factors.json'
 
 WIKI_URL = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
 BROWSER_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)'
@@ -322,20 +323,53 @@ def build():
         'bench_scores': bench_scores,
         'coverage': coverage,
     }
-    return payload
+
+    # ── raw factor dump for the shadow-track experiment (build_momentum5_shadow.py) ──
+    # Full univ (post-dropna, pre-veto) so the shadow script can recompute its own
+    # composite variants; does NOT feed the frozen composite/veto logic above.
+    def gv(t, col):
+        v = univ.at[t, col] if col in univ.columns else None
+        if v is None or pd.isna(v):
+            return None
+        return float(v)
+
+    raw_universe = []
+    for t in univ.index:
+        raw_universe.append({
+            'ticker': t,
+            'price': gv(t, 'price'),
+            'above200': bool(univ.at[t, 'above200']) if pd.notna(univ.at[t, 'above200']) else None,
+            'mom6': gv(t, 'mom6'),
+            'ret12': gv(t, 'ret12'),
+            'rev_fy1': gv(t, 'rev_fy1'),
+            'rev_fy2': gv(t, 'rev_fy2'),
+            'rev30_fy1': gv(t, 'rev30_fy1'),
+            'rev30_fy2': gv(t, 'rev30_fy2'),
+            'growth': gv(t, 'growth'),
+        })
+    raw_payload = {
+        'as_of': as_of,
+        'spy_close': round(spy_close, 2),
+        'spy6': float(spy6),  # SPY's own 6M return — needed to rebuild relmom6 = mom6 - spy6
+        'universe': raw_universe,
+    }
+
+    return payload, raw_payload
 
 
 def main():
     try:
-        payload = build()
+        result = build()
     except Exception as e:
         # any screen/scrape failure -> keep last good data.json
         print(f"  ✗ screen failed ({type(e).__name__}: {e}) — data.json left unchanged")
         sys.exit(0)
 
-    if payload is None:
+    if result is None:
         # coverage fail-safe already logged
         sys.exit(0)
+
+    payload, raw_payload = result
 
     DATA_JSON.write_text(json.dumps(payload, ensure_ascii=False, indent=1) + '\n',
                          encoding='utf-8')
@@ -348,6 +382,11 @@ def main():
         print(f"      {s['ticker']:<5} close={s['close']}  ret={s['ret_since_entry_pct']}%  "
               f"revFY1={s['rev_fy1']}  revFY2={s['rev_fy2']}  score={s['score']}  "
               f"rank={s['rank']}{flags}")
+
+    RAW_FACTORS_JSON.write_text(json.dumps(raw_payload, ensure_ascii=False, indent=1) + '\n',
+                                encoding='utf-8')
+    print(f"  ✓ wrote {RAW_FACTORS_JSON.relative_to(ROOT)} "
+          f"({len(raw_payload['universe'])} tickers)")
 
 
 if __name__ == '__main__':
