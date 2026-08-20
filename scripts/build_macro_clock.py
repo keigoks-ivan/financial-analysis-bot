@@ -104,8 +104,19 @@ def build_axes() -> tuple[pd.DataFrame, dict]:
     latest_detail = {k: round(float(z6(t[k]).iloc[-1] * sgn), 2)
                      for k, sgn in [*GROWTH.items(), *INFLATION.items()]
                      if len(z6(t[k]).dropna())}
+    # 水位現值（給 index 頁換位觸發「現值」自動填充；非針位輸入，純顯示）
+    levels = {
+        "payems_m_change_k": round(float(pay.iloc[-1])),
+        "payems_3m_avg_k": round(float(pay.rolling(3).mean().iloc[-1])),
+        "unrate_pct": round(float(t["UNRATE"].iloc[-1]), 1),
+        "core_pce_yoy_pct": round(float(t["PCEPILFE"].dropna().iloc[-1]), 2),
+        "cpi_yoy_pct": round(float(t["CPIAUCSL"].dropna().iloc[-1]), 2),
+        "asof": {k: f"{raw[k].index[-1]:%Y-%m}"
+                 for k in ("PAYEMS", "UNRATE", "PCEPILFE", "CPIAUCSL")},
+    }
     return axes, {"series_z6_latest": latest_detail,
-                  "series_asof": {k: f"{v.index[-1]:%Y-%m}" for k, v in raw.items()}}
+                  "series_asof": {k: f"{v.index[-1]:%Y-%m}" for k, v in raw.items()},
+                  "levels": levels}
 
 
 def asset_returns() -> pd.DataFrame:
