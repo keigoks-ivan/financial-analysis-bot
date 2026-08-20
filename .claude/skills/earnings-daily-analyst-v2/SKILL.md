@@ -189,7 +189,7 @@ web_fetch: {找到的 URL}
 sb=p = sort by market cap（最大排最前面）
 頁面會列出當天所有 reporting companies，包含 ticker、company name、EPS estimate、revenue estimate、growth rate
 
-⚠️ Earnings Whispers 的 d= 參數是相對 offset（d=1=本週一、d=2=本週二...），不是絕對日期。所以必須先 web_search 找到正確的 URL，不要自己猜 d 值。
+⚠️ Earnings Whispers 的 d= 參數是相對 offset（d=1=本週一、d=2=本週二â¦â¦），不是絕對日期。所以必須先 web_search 找到正確的 URL，不要自己猜 d 值。
 Step 2：如果 Earnings Whispers 失敗，用 fallback
 web_search: "earnings reports {DATE} major companies"
 web_search: "earnings calendar {DATE} S&P 500"
@@ -457,8 +457,8 @@ Phase 3：靜默生成 HTML
 對話框唯一允許的輸出：
 
 「Phase 1: 掃描 {DATE} earnings...找到 N 家 $50B+ 公司」
-「Phase 2: 搜尋 N 家公司數據中...」
-「搜尋完成，正在生成 HTML 報告...」
+「Phase 2: 搜尋 N 家公司數據中â¦â¦」
+「搜尋完成，正在生成 HTML 報告â¦â¦」
 Present file link + 簡短摘要（3-5 行核心發現）
 
 ⛔ 強制靜默輸出規則（最高優先級）
@@ -466,12 +466,12 @@ Present file link + 簡短摘要（3-5 行核心發現）
 
 任何 §1-§5 的分析文字
 任何數據表格
-任何「正在分析...」的過渡描述
+任何「正在分析â¦â¦」的過渡描述
 
 唯一正確流程：
 
 執行所有 web_search / web_fetch
-輸出一行：「搜尋完成，正在生成 HTML 報告...」
+輸出一行：「搜尋完成，正在生成 HTML 報告â¦â¦」
 立即 create_file 生成完整 HTML
 present_files 提供下載
 簡短摘要（核心發現 3-5 行 + 部署指令）
@@ -522,7 +522,7 @@ Earnings Call 段落空洞
 §1 各公司財報重點（每家公司一個 company-card）
 每家公司必須包含：
 (a) 數據表
-指標實際預期YoY / 備註Non-GAAP EPS$X$Y+Z% · BEAT/MISS營收$XB$YB+Z% · BEAT/MISS關鍵 segment...—...全年指引......RAISE/MAINTAIN/LOWER
+指標實際預期YoY / 備註Non-GAAP EPS$X$Y+Z% · BEAT/MISS營收$XB$YB+Z% · BEAT/MISS關鍵 segment...—...全年指引â¦â¦...RAISE/MAINTAIN/LOWER
 必須標注：
 
 EPS 和 Revenue 的 beat/miss 幅度（$和%）
@@ -873,7 +873,7 @@ html<span class="tag beat">BEAT</span>      <!-- green bg -->
 Contradiction Block HTML
 html<div class="contradiction">
   <h4>矛盾 N：簡短標題</h4>
-  <p>具體數字對比和邏輯問題陳述...</p>
+  <p>具體數字對比和邏輯問題陳述â¦â¦</p>
   <p class="implication">→ <strong>Implication：</strong>...</p>
 </div>
 Winners/Losers HTML（v2.4 簡化格式 — 一行一家，禁用多行段落）
@@ -901,7 +901,7 @@ html<h3>贏家</h3>
 ⛔ 三欄式表格為 v2.4 起的唯一合規格式。舊版把整段分析塞進「原因」欄的寫法禁用。
 Summary List HTML
 html<ul class="summary-list">
-  <li><strong>1. 標題。</strong>具體分析，包含公司名、實際股價%、和具體數字...</li>
+  <li><strong>1. 標題。</strong>具體分析，包含公司名、實際股價%、和具體數字â¦â¦</li>
 </ul>
 Footer（必須包含）
 html<div class="disclaimer">
