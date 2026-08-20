@@ -200,7 +200,7 @@ table.data tr.is-seat:hover td{background:#efe9da}
   <div class="wrap">
     <span class="eyebrow">研究提名組合 · 非投資建議</span>
     <h1>Momentum-5 · <span class="accent">S&amp;P 500</span> 十二個月上修動能組合</h1>
-    <p class="sub">一個五席的研究提名組合，用意在於觀察「EPS 修正動能＋人工催化劑判斷」在十二個月尺度上能不能持續跑贏大盤。<b>手動觸發更新，非定期自動更新；資料截至下方「資料更新」時間戳（頁面載入時動態顯示）</b>，換席則為人工裁決——程式只計算指標、亮出旗標，永遠不會自動換人。本頁為研究流程展示，不構成任何投資建議。</p>
+    <p class="sub">一個五席的研究提名組合，用意在於觀察「EPS 修正動能＋人工催化劑判斷」在十二個月尺度上能不能持續跑贏大盤。<b>每週六自動更新（本地排程跑點，遇休眠或離線會於下次開機自動補跑）</b>，資料截至下方「資料更新」時間戳（頁面載入時動態顯示），換席則為人工裁決——程式只計算指標、亮出旗標，永遠不會自動換人。本頁為研究流程展示，不構成任何投資建議。</p>
     <div class="meta" id="hero-meta">
       <span class="chip">資料更新：<b id="m-asof">—</b></span>
       <span class="chip">組合成立：<b id="m-inception">—</b></span>
@@ -322,7 +322,7 @@ table.data tr.is-seat:hover td{background:#efe9da}
       <ul>
         <li><b>成分股：</b>S&amp;P 500 成分名單取自 Wikipedia（以瀏覽器 User-Agent 抓取），每週重抓，隨指數調整同步。</li>
         <li><b>價格與估值：</b>yfinance 提供的還原日線收盤價，計算 200 日均線、六個月與十二個月報酬；分析師預估趨勢（eps_trend）提供 FY1／FY2 共識的 <b>90 天修正快照</b>——修正幅度請當方向訊號，勿當精確值。</li>
-        <li><b>更新節奏：</b>排程設計為每週六 08:00（台北時間）與 <a href="/markets.html">Markets</a> 市場頁同一 workflow 重跑，但實際觸發頻率非固定——<b>目前為手動觸發更新</b>，資料截至上方「資料更新」時間戳（頁面載入時動態讀取 <span class="mono">data.json</span> 的 <span class="mono">as_of</span> 欄位）。</li>
+        <li><b>更新節奏：</b>由本機 launchd 排程每日檢查、於每週六觸發重跑（原 GitHub Actions workflow 自 2026 年 8 月起因 Yahoo 封鎖機房 IP 導致 eps_trend 覆蓋率歸零而停用此資料源，改為本地跑點）；若當週六 Mac 休眠或離線，排程會在下次開機時偵測資料已過期（≥ 8 天）並自動補跑，不需人工觸發。資料截至上方「資料更新」時間戳（頁面載入時動態讀取 <span class="mono">data.json</span> 的 <span class="mono">as_of</span> 欄位）。</li>
         <li><b>Fail-safe：</b>當 eps_trend 覆蓋率不足（&lt; 300 檔）或 Screen 執行失敗時，程式會直接跳過、<b>不覆寫既有 data.json</b>，本頁因此保留上一份良好資料，而不是渲染出破碎或空白的一週。</li>
         <li><b>換席治理：</b>五席與板凳名單存於 <span class="mono">portfolio.json</span>，為人工維護的唯一真實來源；週更程式只計算指標、亮出旗標，<b>永遠不會自動換人</b>。</li>
       </ul>
