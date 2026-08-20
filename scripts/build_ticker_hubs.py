@@ -576,15 +576,13 @@ def render_ticker_page(ticker, dd_rows, cur, ids, sc, comps, syns, stock, as_of)
     return "\n".join(parts) + "\n"
 
 
-def render_index(universe_sorted, dd_by_ticker, cur_by_ticker, cov_counts):
+def render_overview_body(universe_sorted, dd_by_ticker, cur_by_ticker):
+    """總覽分頁本體（filterable ticker grid）— 2026-08-20 起做為 /t/ 主控台
+    Tab 1（總覽）內嵌內容；獨立、不含 page_head/FOOTER，方便被 console 殼包住。"""
     total_reports = sum(len(dd_by_ticker[t]) for t in universe_sorted)
     n_verdict = sum(1 for t in universe_sorted
                     if cur_by_ticker.get(t) and cur_by_ticker[t]["era"] == "裁決")
-    head = page_head(
-        "個股總覽 · Ticker Hub — InvestMQuest Research",
-        "按 ticker 聚合 InvestMQuest 站內全部研究（個股 DD／產業 ID／供應鏈／對比／期望落差綜合）的目錄索引。",
-    )
-    parts = [head, '<main class="wrap">']
+    parts = []
     parts.append('<div class="overline">Ticker Hub · 個股總覽</div>')
     parts.append('<h1 class="tk serif">個股總覽</h1>')
     parts.append('<p class="oneliner">專業投資人以 ticker 為單位思考，但本站以報告類型分區。'
@@ -617,8 +615,6 @@ def render_index(universe_sorted, dd_by_ticker, cur_by_ticker, cov_counts):
     parts.append(f'<div class="grid" id="grid">{"".join(cards)}</div>')
     parts.append('<div class="nores" id="nores">無符合的 ticker。</div>')
     parts.append(f'<div class="foot-note">{FOOTNOTE}</div>')
-    parts.append('</main>')
-    parts.append(FOOTER)
     parts.append("""<script>
 (function(){
   var flt=document.getElementById('flt'),grid=document.getElementById('grid'),nores=document.getElementById('nores');
@@ -634,6 +630,131 @@ def render_index(universe_sorted, dd_by_ticker, cur_by_ticker, cov_counts):
   });
 })();
 </script>""")
+    return "\n".join(parts)
+
+
+CONSOLE_CSS = """
+/* ── 個股研究主控台 tabbar（2026-08-20，比照 /cockpit/ 殼）───────────────── */
+.console-tabbar{display:flex;gap:.25rem;flex-wrap:wrap;border-bottom:1px solid var(--line);margin:.2rem 0 1.3rem;position:sticky;top:0;background:var(--paper);z-index:5}
+.console-tab-btn{appearance:none;background:none;border:0;font-family:inherit;cursor:pointer;
+  font-size:.94rem;font-weight:600;color:var(--sec);padding:.7rem 1.05rem;
+  border-bottom:2px solid transparent;margin-bottom:-1px;letter-spacing:.01em}
+.console-tab-btn:hover{color:var(--ink)}
+.console-tab-btn.active{color:var(--accent);border-bottom-color:var(--gold-deep,var(--accent))}
+.console-tab-panel{display:none}
+.console-tab-panel.active{display:block}
+.console-embed-frame{width:100%;border:0;display:block;min-height:70vh;background:transparent}
+.console-embed-note{font-size:.72rem;color:var(--muted);margin:0 0 .6rem;font-family:var(--mono)}
+.console-embed-note a{color:var(--accent)}
+@media(max-width:640px){.console-tab-btn{padding:.55rem .65rem;font-size:.82rem}}
+"""
+
+CONSOLE_JS = """
+<script>
+(function(){
+  "use strict";
+  var TABS = ['overview','dd','compare','synthesis'];
+  var FRAME_ID = {dd:'dd-frame', compare:'compare-frame', synthesis:'synthesis-frame'};
+
+  function sizeFrame(fr){
+    try{
+      var d = fr.contentDocument || fr.contentWindow.document;
+      if(!d) return;
+      var h = Math.max(d.documentElement ? d.documentElement.scrollHeight : 0,
+                       d.body ? d.body.scrollHeight : 0);
+      if(h > 0) fr.style.height = (h + 24) + 'px';
+    }catch(e){}
+  }
+  function wireSize(fr){
+    fr.addEventListener('load', function(){
+      sizeFrame(fr);
+      var n = 0, iv = setInterval(function(){ sizeFrame(fr); if(++n > 16) clearInterval(iv); }, 400);
+    });
+  }
+  var frames = {};
+  Object.keys(FRAME_ID).forEach(function(k){
+    var fr = document.getElementById(FRAME_ID[k]);
+    if(fr){ frames[k] = fr; wireSize(fr); }
+  });
+
+  function ensureLoaded(k){
+    var fr = frames[k];
+    if(!fr) return;
+    var src = fr.getAttribute('data-src');
+    if(fr._loadedSrc === src){ sizeFrame(fr); return; }
+    fr._loadedSrc = src;
+    fr.src = src;
+  }
+
+  function activate(tab){
+    if(TABS.indexOf(tab) < 0) tab = 'overview';
+    document.querySelectorAll('.console-tab-btn').forEach(function(b){
+      b.classList.toggle('active', b.getAttribute('data-ctab') === tab);
+    });
+    document.querySelectorAll('.console-tab-panel').forEach(function(p){
+      p.classList.toggle('active', p.id === 'panel-' + tab);
+    });
+    if(frames[tab]) ensureLoaded(tab);
+  }
+
+  document.querySelectorAll('.console-tab-btn').forEach(function(b){
+    b.addEventListener('click', function(){
+      var t = b.getAttribute('data-ctab');
+      if(('#' + t) !== location.hash){ location.hash = t; }
+      else { activate(t); }
+    });
+  });
+  window.addEventListener('hashchange', function(){
+    activate((location.hash || '#overview').replace('#',''));
+  });
+
+  var initial = (location.hash || '#overview').replace('#','');
+  activate(initial);
+})();
+</script>
+"""
+
+
+def render_index(universe_sorted, dd_by_ticker, cur_by_ticker, cov_counts):
+    """個股研究主控台（/t/index.html）— 4 分頁：總覽（inline）／DD 清單／多股對比／
+    期望落差（三者皆 iframe 嵌入對應 _body.html 分頁片段）。2026-08-20 研究區整併第一階段。"""
+    head = page_head(
+        "個股研究主控台 — InvestMQuest Research",
+        "按 ticker 聚合 InvestMQuest 站內全部個股研究：總覽／DD 清單／多股對比／期望落差綜合研判，四分頁單一入口。",
+    )
+    overview_body = render_overview_body(universe_sorted, dd_by_ticker, cur_by_ticker)
+
+    parts = [head]
+    parts.append(f'<style>{CONSOLE_CSS}</style>')
+    parts.append('<main class="wrap">')
+    parts.append("""<div class="console-tabbar" role="tablist">
+  <button type="button" class="console-tab-btn" data-ctab="overview" role="tab">總覽</button>
+  <button type="button" class="console-tab-btn" data-ctab="dd" role="tab">DD 清單</button>
+  <button type="button" class="console-tab-btn" data-ctab="compare" role="tab">多股對比</button>
+  <button type="button" class="console-tab-btn" data-ctab="synthesis" role="tab">期望落差</button>
+</div>""")
+    parts.append(f'<div class="console-tab-panel" id="panel-overview">{overview_body}</div>')
+    parts.append(
+        '<div class="console-tab-panel" id="panel-dd">'
+        '<p class="console-embed-note">全站 DD 報告表格（訊號／護城河／估值篩選）· <a href="/research/">獨立頁</a></p>'
+        '<iframe class="console-embed-frame" id="dd-frame" data-src="/research/_body.html" '
+        'title="DD 清單" scrolling="no" loading="lazy"></iframe></div>'
+    )
+    parts.append(
+        '<div class="console-tab-panel" id="panel-compare">'
+        '<p class="console-embed-note">2-5 檔個股四層時間框架橫向對比 · <a href="/comparisons/">獨立頁</a></p>'
+        '<iframe class="console-embed-frame" id="compare-frame" data-src="/comparisons/_body.html" '
+        'title="多股對比" scrolling="no" loading="lazy"></iframe></div>'
+    )
+    parts.append(
+        '<div class="console-tab-panel" id="panel-synthesis">'
+        '<p class="console-embed-note">趨勢定位 × 期望落差綜合研判 · <a href="/research/synthesis/">獨立頁</a></p>'
+        '<iframe class="console-embed-frame" id="synthesis-frame" data-src="/research/synthesis/_body.html" '
+        'title="期望落差" scrolling="no" loading="lazy"></iframe></div>'
+    )
+    parts.append('</main>')
+    parts.append(FOOTER)
+    parts.append(CONSOLE_JS)
     parts.append('</body>\n</html>')
     return "\n".join(parts) + "\n"
 

@@ -109,7 +109,7 @@ ls ${DCA_DIR}/DCA_${TICKER}_*${FILE_EXT} 2>/dev/null | sort -r | head -1
 
 **第六步之後、第七步之前:跑「寫稿後 self-review gate」(v1.7,見專章)— gate 全過才准動 index.html**
 
-**第七步:在 `docs/comparisons/index.html` 的 `<ul class="reports">` 區塊**最上方** insert 一個 `<li>` 卡片**(若 listing 上仍掛著 empty-state 提示,一併移除)
+**第七步：在 `docs/comparisons/_body.html` 的 `<ul class="reports">` 區塊**最上方** insert 一個 `<li>` 卡片**（若 listing 上仍掛著 empty-state 提示，一併移除）（2026-08-20 起 `docs/comparisons/index.html` 已改為轉址 stub → `/t/#compare`，`個股研究主控台 · 多股對比` 分頁直接 iframe 嵌入 `_body.html`，卡片一律 append 這個檔，不再動 index.html）
 
 範本:
 ```html
@@ -131,7 +131,7 @@ ls ${DCA_DIR}/DCA_${TICKER}_*${FILE_EXT} 2>/dev/null | sort -r | head -1
 
 ```bash
 cd /Users/ivanchang/financial-analysis-bot
-git add docs/comparisons/MS_<...>.html docs/comparisons/index.html
+git add docs/comparisons/MS_<...>.html docs/comparisons/_body.html
 git commit -m "comparisons: <tickers> (<YYYY-MM-DD>)"
 git push
 ```
@@ -316,7 +316,7 @@ v1.8 起所有檔預設都是 v13/v14 DD（IRR composition / Pattern Match / Max
 
 ## 【寫稿後 self-review gate】(v1.7 新增 — 強制,過 gate 才能寫 index.html)
 
-HTML 寫完後、更新 `docs/comparisons/index.html` 之前,執行以下檢查。任一項 fail → 先修正 HTML 再過 gate,**不准帶傷上 listing**:
+HTML 寫完後、更新 `docs/comparisons/_body.html` 之前，執行以下檢查。任一項 fail → 先修正 HTML 再過 gate，**不准帶傷上 listing**:
 
 **數字回查(抽查制)**:
 1. 隨機抽 ≥6 個關鍵數字(每檔至少 1 個;優先抽 EPS CAGR、IRR、市占 %、ROIC),回開 source 報告(或 latest.json / webfill 來源)逐一核對 — 數字、單位、FY 區間都要對得上
@@ -446,7 +446,7 @@ skill 行為:
 
 ### Listing 同步
 
-每次產出後,**必須** insert 一個 `<li>` 卡片到 `docs/comparisons/index.html` 的 `<ul class="reports">` 最上方(見第七步)。listing 頁是手動 / skill-appended 維護,沒有 build script。
+每次產出後，**必須** insert 一個 `<li>` 卡片到 `docs/comparisons/_body.html` 的 `<ul class="reports">` 最上方（見第七步）。listing 頁是手動 / skill-appended 維護，沒有 build script。
 
 ### Nav
 

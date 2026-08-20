@@ -275,6 +275,24 @@ h1{font-family:var(--serif);color:var(--ink);font-size:1.7rem;font-weight:700;le
 @media(max-width:480px){
   .cat-summary-grid{grid-template-columns:1fr}
 }
+
+/* ── 產業研究主控台 tabbar（2026-08-20，比照 /cockpit/ /t/ 殼）───────────── */
+.console-tabbar{display:flex;gap:.25rem;flex-wrap:wrap;border-bottom:1px solid var(--border,var(--line));margin:.2rem 0 1.3rem;position:sticky;top:0;background:var(--paper);z-index:5}
+.console-tab-btn{appearance:none;background:none;border:0;font-family:inherit;cursor:pointer;
+  font-size:.94rem;font-weight:600;color:var(--sec);padding:.7rem 1.05rem;
+  border-bottom:2px solid transparent;margin-bottom:-1px;letter-spacing:.01em}
+.console-tab-btn:hover{color:var(--ink)}
+.console-tab-btn.active{color:var(--accent);border-bottom-color:var(--gold-deep,var(--accent))}
+.console-tab-panel{display:none}
+.console-tab-panel.active{display:block}
+.console-embed-frame{width:100%;border:0;display:block;min-height:70vh;background:transparent}
+.console-embed-note{font-size:.72rem;color:var(--muted);margin:0 0 .6rem;font-family:var(--mono,monospace)}
+.console-embed-note a{color:var(--accent)}
+@media(max-width:640px){.console-tab-btn{padding:.55rem .65rem;font-size:.82rem}}
+/* 待研究 backlog 分頁（由 JS 從隱藏 injection-zone 即時搬入，單一資料源） */
+.backlog-cat{margin:0 0 1.6rem}
+.backlog-cat h3{font-size:1rem;font-weight:700;color:var(--ink);border-bottom:1px solid var(--line);padding-bottom:.4rem;margin:0 0 .7rem}
+.backlog-empty{color:var(--muted);font-size:.85rem;padding:1rem 0}
 </style>
 </head>
 <body>
@@ -360,8 +378,14 @@ h1{font-family:var(--serif);color:var(--ink);font-size:1.7rem;font-weight:700;le
   </div>
 </header>
 <script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
-
-
+<div class="wrap-tabbar" style="max-width:1160px;margin:0 auto;padding:0 20px">
+<div class="console-tabbar" role="tablist">
+  <button type="button" class="console-tab-btn" data-ctab="reports" role="tab">ID 報告</button>
+  <button type="button" class="console-tab-btn" data-ctab="supplychain" role="tab">供應鏈地圖</button>
+  <button type="button" class="console-tab-btn" data-ctab="backlog" role="tab">待研究 backlog</button>
+</div>
+</div>
+<div class="console-tab-panel" id="panel-reports">
 <div class="container">
   <div class="crumb"><a href="/">首頁</a> &rsaquo; <a href="/research/">研究</a> &rsaquo; 產業深度</div>
 
@@ -389,12 +413,12 @@ h1{font-family:var(--serif);color:var(--ink);font-size:1.7rem;font-weight:700;le
 
   <div class="tier-passthrough"><div style="background:#eafaef;border-left:3px solid var(--pos);border-radius:var(--r);padding:14px 18px;margin:14px 0;color:var(--pos);font-size:13px;line-height:1.7">
   <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">
-    <strong>Tier Matrix 健康度：✅ v2.1 剛更新</strong>
+    <strong>Tier Matrix 健康度：✅ 剛更新</strong>
     <span style="font-size:11px;color:var(--pos)">最新 2026-05-04 · 59 檔 · 今天</span>
   </div>
   <div><strong>✅ 已收錄 59 檔</strong>（跨 30+ 份產業 ID）：v2.1 補進 10 檔（2308.TW / LLY / 8035.T / 6857.T / 2454.TW / 3037.TW / 6501.T / PLTR / EXPE / SNDK）；9 檔 §0.7 資料刷新（NVDA / AVGO / GOOGL / VRT / ETN / NET / AMD / MU / PANW）</div>
   <div><strong>🆕 128 檔在 ID 中出現但未列入 Matrix</strong>（多數為 HK / TW 單一 ID 曝險，PM 引用對應 ID 評估即可）</div>
-  <div style="margin-top:8px;font-size:12px"><a href="/id/tier_matrix.html" style="color:var(--accent);font-weight:600">→ 查看 Tier Matrix v2.1</a></div>
+  <div style="margin-top:8px;font-size:12px"><a href="/id/tier_matrix.html" style="color:var(--accent);font-weight:600">→ 查看 Tier Matrix</a> · <a href="#supplychain" style="color:var(--accent);font-weight:600" data-tab-link="supplychain">→ 供應鏈地圖分頁</a></div>
 </div></div>
 
   <div class="toolbar">
@@ -3220,6 +3244,25 @@ Sub-groups (controlled vocabulary, see /docs/id/taxonomy.md):
   </div>
 </div>
 
+
+</div>
+<!-- /panel-reports -->
+
+<div class="console-tab-panel" id="panel-supplychain">
+  <div class="wrap-tabbar" style="max-width:1160px;margin:0 auto;padding:0 20px">
+    <p class="console-embed-note">44 個供應鏈互動地圖主題（8 大功能模組 × 5 大終端市場）· 客戶獨家/關鍵單點識別 · <a href="/supply-chain/">獨立頁</a></p>
+    <iframe class="console-embed-frame" id="supplychain-frame" data-src="/supply-chain/_body.html" title="供應鏈地圖" scrolling="no" loading="lazy"></iframe>
+  </div>
+</div>
+<!-- /panel-supplychain -->
+
+<div class="console-tab-panel" id="panel-backlog">
+  <div class="wrap-tabbar" style="max-width:1160px;margin:0 auto;padding:0 20px">
+    <p class="console-embed-note">各分類「建議補建」清單——由本頁 ID 報告分頁的資料源即時搬入（單一資料源，新增 ID 時自動同步）。🟡 為子題級補強候選，✅ 已建者附連結。</p>
+    <div id="backlog-mount"><div class="backlog-empty">載入中…</div></div>
+  </div>
+</div>
+<!-- /panel-backlog -->
 <footer class="imq-foot">
   <div>&copy; 2026 InvestMQuest Research</div>
   <div><a href="/disclosures.html">方法論與揭露</a> · 本站內容僅供研究參考，不構成投資建議</div>
@@ -3310,6 +3353,100 @@ document.querySelectorAll('a[href*="/id/ID_"]').forEach(function(a){
   a.target = '_blank';
   a.rel = 'noopener';
 });
+</script>
+
+
+<script>
+/* ── 產業研究主控台：分頁控制 + 供應鏈 iframe 延遲載入 + 待研究 backlog 即時搬運 ── */
+(function(){
+  "use strict";
+  var TABS = ['reports','supplychain','backlog'];
+
+  function sizeFrame(fr){
+    try{
+      var d = fr.contentDocument || fr.contentWindow.document;
+      if(!d) return;
+      var h = Math.max(d.documentElement ? d.documentElement.scrollHeight : 0,
+                       d.body ? d.body.scrollHeight : 0);
+      if(h > 0) fr.style.height = (h + 24) + 'px';
+    }catch(e){}
+  }
+  function wireSize(fr){
+    fr.addEventListener('load', function(){
+      sizeFrame(fr);
+      var n = 0, iv = setInterval(function(){ sizeFrame(fr); if(++n > 16) clearInterval(iv); }, 400);
+    });
+  }
+  var scFrame = document.getElementById('supplychain-frame');
+  if(scFrame) wireSize(scFrame);
+
+  function ensureLoaded(fr){
+    if(!fr) return;
+    var src = fr.getAttribute('data-src');
+    if(fr._loadedSrc === src){ sizeFrame(fr); return; }
+    fr._loadedSrc = src;
+    fr.src = src;
+  }
+
+  function activate(tab){
+    if(TABS.indexOf(tab) < 0) tab = 'reports';
+    document.querySelectorAll('.console-tab-btn').forEach(function(b){
+      b.classList.toggle('active', b.getAttribute('data-ctab') === tab);
+    });
+    document.querySelectorAll('.console-tab-panel').forEach(function(p){
+      p.classList.toggle('active', p.id === 'panel-' + tab);
+    });
+    if(tab === 'supplychain') ensureLoaded(scFrame);
+    if(tab === 'backlog') buildBacklog();
+  }
+
+  document.querySelectorAll('.console-tab-btn').forEach(function(b){
+    b.addEventListener('click', function(){
+      var t = b.getAttribute('data-ctab');
+      if(('#' + t) !== location.hash){ location.hash = t; }
+      else { activate(t); }
+    });
+  });
+  document.querySelectorAll('a[data-tab-link]').forEach(function(a){
+    a.addEventListener('click', function(e){
+      e.preventDefault();
+      var t = a.getAttribute('data-tab-link');
+      if(('#' + t) !== location.hash){ location.hash = t; } else { activate(t); }
+    });
+  });
+  window.addEventListener('hashchange', function(){
+    activate((location.hash || '#reports').slice(1));
+  });
+
+  // 待研究 backlog：從隱藏的 industry-analyst-injection-zone（單一資料源）搬入
+  // 每個 .category 的 <details class="suggest"> 區塊，避免內容重複維護。
+  var backlogBuilt = false;
+  function buildBacklog(){
+    if(backlogBuilt) return;
+    var mount = document.getElementById('backlog-mount');
+    var zone = document.getElementById('industry-analyst-injection-zone');
+    if(!mount || !zone){ if(mount) mount.innerHTML = '<div class="backlog-empty">資料源缺失。</div>'; return; }
+    var cats = zone.querySelectorAll(':scope > .category');
+    var html = '';
+    cats.forEach(function(cat){
+      var h2 = cat.querySelector('.cat-head h2');
+      var details = cat.querySelector('details.suggest');
+      if(!details) return;
+      var slug = cat.getAttribute('data-cat') || '';
+      var name = h2 ? h2.textContent : slug;
+      var clone = details.cloneNode(true);
+      clone.open = true;
+      html += '<div class="backlog-cat"><h3>' + name +
+        (slug ? ' <a href="/id/cat-' + slug + '.html" style="font-size:.7rem;font-weight:500;color:var(--muted)">（查看該分類 →）</a>' : '') +
+        '</h3>' + clone.innerHTML.replace('建議補建', '待研究子題') + '</div>';
+    });
+    mount.innerHTML = html || '<div class="backlog-empty">目前無待研究子題資料。</div>';
+    backlogBuilt = true;
+  }
+
+  var initial = (location.hash || '#reports').slice(1);
+  activate(initial);
+})();
 </script>
 
 </body>

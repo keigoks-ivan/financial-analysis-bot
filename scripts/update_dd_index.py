@@ -24,7 +24,8 @@ from pathlib import Path
 DOCS = Path(__file__).parent.parent / "docs"
 DD_DIR = DOCS / "dd"
 DCA_DIR = DOCS / "dca"
-INDEX_HTML = DOCS / "research" / "index.html"
+INDEX_HTML = DOCS / "research" / "_body.html"  # 2026-08-20 研究區整併：/research/index.html 已改為轉址 stub -> /t/#dd，
+# 實際 DD 表格內容改寫入這個 nav-less 分頁片段（由 /t/ 主控台 iframe 嵌入）。
 INDEX_MD = DD_DIR / "INDEX.md"
 PRICE_CACHE = DOCS / "research" / "price_cache.json"
 EPS_CAGR_CACHE = DOCS / "research" / ".eps_cagr_cache.json"

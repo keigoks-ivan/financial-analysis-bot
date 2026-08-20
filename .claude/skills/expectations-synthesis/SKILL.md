@@ -28,7 +28,7 @@ description: "收到一個 ticker（可附一個券商報告資料夾）後，�
 - 輸出：`docs/research/synthesis/{TICKER}_{YYYYMMDD}.html`（對應 `https://research.investmquest.com/research/synthesis/`）
 - 模板：`.claude/skills/expectations-synthesis/template.html`（CSS/nav/13 章節 scaffold；填 `{{TOKEN}}` 與 `<!-- FILL -->`）
 - 券商資料夾慣例：`/Users/ivanchang/Library/CloudStorage/GoogleDrive-keigoks@gmail.com/我的雲端硬碟/007美股/{TICKER}/`（PDF 放這）
-- 索引維護：研究首頁 `docs/research/index.html` hero 卡片 ＋（≥3 份時）`docs/research/synthesis/index.html` 列表頁
+- 索引維護：`docs/research/synthesis/_body.html` 列表頁（2026-08-20 起 `docs/research/synthesis/index.html` 已改為轉址 stub → `/t/#synthesis`，`個股研究主控台 · 期望落差` 分頁直接 iframe 嵌入 `_body.html`；卡片 append 目標請改打這個檔）
 - 預設**停下複審**：寫完、驗證通過後，**不自動 commit**；把本地路徑給用戶看，待用戶說 push 才走 commit flow
 
 ---

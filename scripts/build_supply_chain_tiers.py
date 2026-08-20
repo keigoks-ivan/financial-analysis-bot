@@ -37,6 +37,9 @@ ROOT = Path(__file__).resolve().parent.parent
 SC = ROOT / "docs" / "supply-chain"
 DATA = SC / "data"
 INDEX = SC / "index.html"
+BODY = SC / "_body.html"  # 2026-08-20 研究區整併：/id/ 主控台「供應鏈地圖」分頁 iframe 嵌入這個
+# nav-less 片段；INDEX 本身仍是獨立完整頁（42 張子地圖需維持直接可達），兩檔的
+# TIERS_AUTO 區塊必須同步，故此腳本收工前對兩個檔案都做同一次 marker 替換。
 
 FLAG = {
     "TW": "🇹🇼", "US": "🇺🇸", "JP": "🇯🇵", "KR": "🇰🇷", "CN": "🇨🇳", "NL": "🇳🇱",
@@ -481,6 +484,18 @@ def main() -> int:
     INDEX.write_text(new, encoding="utf-8")
     print(f"injected scarcity ranking: 🔴 {len(T0)} / 🟠 {len(T1)} / 🟣 {len(T2)} / "
           f"⚪ {len(OVER)} into {INDEX.relative_to(ROOT)}")
+
+    # 2026-08-20：同步 _body.html（/id/ 主控台 iframe 片段），與 INDEX 共用同一份
+    # TIERS_AUTO 區塊，避免兩檔漂移。BODY 不存在時（尚未建立過片段）略過，交由
+    # 一次性的手動建置腳本先產生骨架。
+    if BODY.exists():
+        btxt = BODY.read_text(encoding="utf-8")
+        if pat.search(btxt):
+            bnew = pat.sub(lambda m: f"{m.group(1)}\n{block}\n{m.group(2)}", btxt)
+            BODY.write_text(bnew, encoding="utf-8")
+            print(f"synced scarcity ranking into {BODY.relative_to(ROOT)}")
+        else:
+            print(f"WARN: TIERS_AUTO markers not found in {BODY.relative_to(ROOT)}; skipped sync")
     return 0
 
 

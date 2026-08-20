@@ -30,7 +30,7 @@ stock-analyst (v15.x DD，含決策層) → update_dd_index.py → size gate (70
 
 6. **Size-budget gate（pre-commit hook 也會擋，但這裡先自驗）**：新報告須 **≥ 70KB 且目標落在 75–105KB 帶內（含 §8.5 附文獻 ≤115KB）**（gate 對 `"schema":"v15` 檔生效；下界擋 commit、上界只警告；Part I 基本面 ≥60%、估值＋附A ~7%）。**未達下界不是去灌水**，而是回去把缺的量化模組補實（五個 v12.6 深度模組 + 四個決策模組的 sourced 數字、非段落注水）。**超過上界不是去刪模組**，而是套三條省法（不印程序性自檢／表只留承重列／同一數字只出現一次）——見 CLAUDE.md「Report 篇幅預算」與 stock-analyst【篇幅預算指令】。真要放行 lean-but-complete 報告才 `--no-verify`。
 
-7. **commit & push**：把 `docs/dd/DD_*`、`docs/research/index.html`、`docs/dd-screener/latest.json`、`docs/picks/candidates.json` **併入同一 commit**（避免任一頁面滯後）。push 前重查 research / screener 沒被並行 session 覆蓋。commit message 沿用既有風格（如 `Add {TICKER} DD (統一裁決 ...); resync research+screener`）。
+7. **commit & push**：把 `docs/dd/DD_*`、`docs/research/_body.html`（2026-08-20 起 `/research/index.html` 已改為轉址 stub → `/t/#dd`，實際 DD 表格內容在 `_body.html`）、`docs/dd-screener/latest.json`、`docs/picks/candidates.json` **併入同一 commit**（避免任一頁面滯後）。push 前重查 research / screener 沒被並行 session 覆蓋。commit message 沿用既有風格（如 `Add {TICKER} DD (統一裁決 ...); resync research+screener`）。
 
 ## 邊界
 

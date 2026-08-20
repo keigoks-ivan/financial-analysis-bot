@@ -358,6 +358,16 @@ SKIP_FILES = {
     "engine/_arena_body.html",                  # iframe 片段（擂台子分頁·M5 對照組 PREREG 凍結）
     "engine/_cards_body.html",                  # iframe 片段（決策卡子分頁）
     "engine/_scoreboard_body.html",             # iframe 片段（記分板子分頁）
+    # 2026-08-20 研究區整併第一階段：/研究/ 群 7 頁收斂成 /t/ + /id/ 兩個主控台。
+    # 3 個 redirect stub 與 4 個 nav-less iframe 片段一律不注入站 nav（原因同上）。
+    "research/index.html",                      # redirect stub -> /t/#dd
+    "comparisons/index.html",                   # redirect stub -> /t/#compare
+    "research/synthesis/index.html",            # redirect stub -> /t/#synthesis
+    "research/_body.html",                      # iframe 片段（/t/ DD 清單分頁）
+    "comparisons/_body.html",                   # iframe 片段（/t/ 多股對比分頁）
+    "research/synthesis/_body.html",            # iframe 片段（/t/ 期望落差分頁）
+    "supply-chain/_body.html",                  # iframe 片段（/id/ 供應鏈地圖分頁；
+                                                 # supply-chain/index.html 本身維持獨立完整頁，不進此清單）
 }
 
 
