@@ -4,10 +4,12 @@
 2026-07-18 起用戶正式採用的實單主系統（cap 1.5、兩市場皆同）：訊號＝W52 閘門 × 自適應 σ_t
 × 執行層，曝險層 cap 1.5（w = gate × clip(σ_t/RV20, 上限 1.5)，真波動率目標，只在平靜 regime
 σ_t/RV > 1 才借錢加碼、可上到 150%；執行層刻度 0~150）。本頁（cap 1.5）為實單主系統、輸出
-index.html＋state.json＋可行動變化 email（本頁渲染純 cap 1.5，不再引無槓桿對照）。
+_body.html（nav-less iframe 片段，2026-08-23 系統主控台整併起；獨立 URL /long-track-w52-adaptive/
+已改為 redirect stub → /long-track/#live，見 docs/long-track/）＋state.json＋可行動變化 email
+（本頁渲染純 cap 1.5，不再引無槓桿對照）。
 用戶決策要點（誠實紀律）：原
 「實單前複審關卡」改為「上線後回顧點」（60 交易日 OR 首次 ≥10% 回撤）；美股 cap 1.5 為知情決策
-（研究顯示美股槓桿 Calmar 較低，用戶擇兩市場一致性與報酬）。輸出 index.html＋state.json（兩 history
+（研究顯示美股槓桿 Calmar 較低，用戶擇兩市場一致性與報酬）。輸出 _body.html＋state.json（兩 history
 各 1260 回放＝近五年，2026-07-24 由 756/近三年擴充，_daily_record 每腿記 sigma_t_pct＋raw_ratio＋executed）。
 槓桿回測數字由 results/vol_targeting/w52_adaptive_leverage.json 轉錄為 LEV 常數（fab 副本無法讀
 v7 results，比照主頁 BT_US/BT_TW 慣例）；曝險/燃料表由 history raw_ratio 即時推導，自足可重現。
@@ -63,16 +65,21 @@ HERE = Path(__file__).resolve().parent
 for _p in (HERE, HERE.parents[2] if len(HERE.parents) >= 3 else HERE):
     sys.path.insert(0, str(_p))
 try:                                       # fab: scripts/site_nav.py
-    from site_nav import full_nav_block
+    from site_nav import full_nav_block  # noqa: F401 (kept for API parity; unused below)
 except ImportError:                        # v7-backtest: repo-root snippet
-    from site_nav_snippet import full_nav_block  # noqa: E402
+    from site_nav_snippet import full_nav_block  # noqa: E402,F401
 
-NAV_BLOCK = full_nav_block("system", "voltrack")
+# 2026-08-23 系統主控台整併：本頁改產 nav-less iframe 片段（被 /long-track/#live 嵌入），
+# index.html 改為 redirect stub（見 docs/long-track-w52-adaptive/index.html，
+# 由本次整併一次性寫入、此後不再由本 script 覆寫）。NAV_BLOCK 故意留空——片段內含
+# 站 nav 會在 iframe 內冒出整條選單。leverage.html／tw-semivol.html 走各自獨立
+# script（各自 NAV_BLOCK 不受影響），維持原樣標準頁。
+NAV_BLOCK = ""
 
 # ---- output dir: <repo_root>/docs/long-track-adaptive-vt/ ------------------
 _cand = [HERE.parent / "docs", HERE.parents[2] / "docs" if len(HERE.parents) >= 3 else HERE / "docs"]
 DOCS = next((c for c in _cand if c.exists()), _cand[0])
-OUTPUT = DOCS / "long-track-w52-adaptive" / "index.html"
+OUTPUT = DOCS / "long-track-w52-adaptive" / "_body.html"
 STATE_JSON = DOCS / "long-track-w52-adaptive" / "state.json"
 ALERT_FILE = DOCS.parent / "lt_w52a_alert.txt"    # 實單主系統：可行動變化 email 提醒
 # 槓桿回測數字由 results/vol_targeting/w52_adaptive_leverage.json 轉錄為下方 LEV 常數

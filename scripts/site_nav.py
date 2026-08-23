@@ -388,6 +388,16 @@ SKIP_FILES = {
     "research/synthesis/_body.html",            # iframe 片段（/t/ 期望落差分頁）
     "supply-chain/_body.html",                  # iframe 片段（/id/ 供應鏈地圖分頁；
                                                  # supply-chain/index.html 本身維持獨立完整頁，不進此清單）
+    # 2026-08-23 系統群整併第一批：/long-track/ 升級四分頁主控台，
+    # 3 個舊獨立 URL 改 redirect stub、3 個 builder 改產 nav-less iframe 片段。
+    # long-track-w52-adaptive/leverage.html／tw-semivol.html 不在此批範圍內，
+    # 仍維持獨立完整頁、照常注入站 nav。
+    "long-track-w52-adaptive/index.html",        # redirect stub -> /long-track/#live
+    "long-track-w52-adaptive/_body.html",        # iframe 片段（實單主系統分頁）
+    "pm/index.html",                             # redirect stub -> /long-track/#positions
+    "pm/_body.html",                             # iframe 片段（持倉週掃分頁）
+    "track-record/index.html",                   # redirect stub -> /long-track/#record
+    "track-record/_body.html",                   # iframe 片段（裁決實績分頁）
 }
 
 

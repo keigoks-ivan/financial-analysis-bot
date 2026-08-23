@@ -8,7 +8,14 @@ Parses every docs/dd/DD_*.html dd-meta block, computes forward returns
 against weekly adjusted closes, benchmarks US-listed names against SPY
 (absolute-only for non-US, disclosed), aggregates by verdict group × window
 with era separation (v13+ dca_verdict vs legacy v12 signal grade), and renders
-a self-contained docs/track-record/index.html + zero-churn data/latest.json.
+a self-contained docs/track-record/_body.html + zero-churn data/latest.json.
+
+2026-08-23 系統主控台整併：輸出改為 nav-less iframe 片段 docs/track-record/_body.html
+（被 /long-track/#record 嵌入）；獨立 URL /track-record/ 改為 redirect stub
+（docs/track-record/index.html，一次性寫入，此後不由本 script 覆寫）。extract_canonical()
+仍抓 fonts_tokens／footer（片段保留頁面字體與頁尾），但 nav_style／nav_header／nav_script
+三段不再組進輸出（iframe 片段不掛站 nav，避免內嵌選單）。_body.html 與 index.html 皆已
+加入 scripts/site_nav.py 的 SKIP_FILES。
 
 描述器紀律：retrospective description only, no forward-looking claims.
 Read-only w.r.t. data/weekly_cache. Owns data/track_record_prices.json cache.
@@ -30,7 +37,7 @@ WEEKLY_CACHE = os.path.join(ROOT, "data", "weekly_cache")
 ROTATION_BENCH = os.path.join(ROOT, "data", "rotation_bench.json")
 OWN_CACHE = os.path.join(ROOT, "data", "track_record_prices.json")
 OUT_JSON = os.path.join(ROOT, "docs", "track-record", "data", "latest.json")
-OUT_HTML = os.path.join(ROOT, "docs", "track-record", "index.html")
+OUT_HTML = os.path.join(ROOT, "docs", "track-record", "_body.html")
 CANONICAL = os.path.join(ROOT, "docs", "mental-models", "index.html")
 
 WINDOWS = [("d30", 30), ("d90", 90), ("d180", 180)]
@@ -544,7 +551,9 @@ def render_cohort(cohort_tbl):
 
 
 def render_html(payload, tables, extr, cohort_tbl, latest_tbl):
-    fonts_tokens, nav_style, nav_header, nav_script, footer = extract_canonical()
+    fonts_tokens, _nav_style, _nav_header, _nav_script, footer = extract_canonical()
+    # nav_style/nav_header/nav_script intentionally unused: this output is now a
+    # nav-less iframe fragment (see 2026-08-23 module docstring note above).
     meta = payload["meta"]
     as_of = meta["data_as_of"]
 
@@ -568,11 +577,8 @@ def render_html(payload, tables, extr, cohort_tbl, latest_tbl):
   {fonts_tokens}
 {PAGE_CSS}
   </style>
-{nav_style}
 </head>
 <body>
-{nav_header}
-{nav_script}
 
 <section class="tr-hero">
   <div class="tr-overline">TRACK RECORD · 回顧性裁決實績</div>

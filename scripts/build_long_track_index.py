@@ -1,9 +1,23 @@
 #!/usr/bin/env python3
-"""前瞻追蹤總覽頁 /long-track/ 產生器（fab）。
+"""系統主控台 /long-track/ 產生器（fab）— 2026-08-23 系統群整併。
 
-家族地圖：實單主系統／影子對照／前瞻 OOS 候選／已退役・凍結對照 四分類卡片。
-nav 用 full_nav_block("system","lthub")（追蹤總覽）。靜態內容、
-無資料層；系統狀態變動時更新此檔重跑。中文全形標點。
+四分頁單一入口：
+  #overview  總覽      — 家族地圖（實單主系統／影子對照／前瞻 OOS 候選／已退役凍結對照），inline
+  #live      實單主系統 — iframe 嵌入 /long-track-w52-adaptive/_body.html
+  #positions 持倉週掃   — iframe 嵌入 /pm/_body.html
+  #record    裁決實績   — iframe 嵌入 /track-record/_body.html
+
+舊 3 個獨立 URL（/long-track-w52-adaptive/、/pm/、/track-record/）已改為
+meta-refresh redirect stub，指回對應分頁錨點；三個來源頁的 builder
+（update_long_track_w52_adaptive.py／build_pm_index.py／build_track_record.py）
+改產 nav-less _body.html 片段。stub／片段皆已加入 scripts/site_nav.py 的
+SKIP_FILES。/long-track-w52-adaptive/leverage.html 與 tw-semivol.html 維持
+獨立完整頁，不在此整併範圍內。
+
+nav 用 full_nav_block("system","lthub")（追蹤總覽，MENU 條目本身未改動——
+nav 瘦身留待下一批）。設計沿用本頁既有 token 體系（--brand:#1a56db 等），
+未套用 /assets/imq-base.css 的 --line/--paper/--accent 等 token（本頁未載入
+該檔），tabbar 樣式改用本頁既有配色以避免未定義變數。
 
 用法：python3 scripts/build_long_track_index.py
 """
@@ -104,10 +118,90 @@ a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
 .sys-meta b{color:#374151;font-weight:600}
 .arr{margin-left:auto;color:var(--brand);font-weight:700}
 footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);text-align:center;padding:1.2rem 0;font-size:.78rem;margin-top:2rem}
+
+/* ── 系統主控台 tabbar（2026-08-23，比照 /cockpit/ 與 /t/ 殼；沿用本頁既有 token）── */
+.console-tabbar{display:flex;gap:.25rem;flex-wrap:wrap;border-bottom:1px solid var(--border);margin:.2rem 0 1.3rem;position:sticky;top:0;background:var(--bg);z-index:5}
+.console-tab-btn{appearance:none;background:none;border:0;font-family:inherit;cursor:pointer;
+  font-size:.94rem;font-weight:600;color:var(--muted);padding:.7rem 1.05rem;
+  border-bottom:2px solid transparent;margin-bottom:-1px;letter-spacing:.01em}
+.console-tab-btn:hover{color:var(--text)}
+.console-tab-btn.active{color:var(--brand);border-bottom-color:var(--brand)}
+.console-tab-panel{display:none}
+.console-tab-panel.active{display:block}
+.console-embed-frame{width:100%;border:0;display:block;min-height:70vh;background:transparent}
+.console-embed-note{font-size:.72rem;color:var(--muted);margin:.9rem 0 .6rem;font-family:ui-monospace,Menlo,monospace}
+.console-embed-note a{color:var(--brand)}
+@media(max-width:640px){.console-tab-btn{padding:.55rem .65rem;font-size:.82rem}}
+"""
+
+CONSOLE_JS = """
+<script>
+(function(){
+  "use strict";
+  var TABS = ['overview','live','positions','record'];
+  var FRAME_ID = {live:'live-frame', positions:'positions-frame', record:'record-frame'};
+
+  function sizeFrame(fr){
+    try{
+      var d = fr.contentDocument || fr.contentWindow.document;
+      if(!d) return;
+      var h = Math.max(d.documentElement ? d.documentElement.scrollHeight : 0,
+                       d.body ? d.body.scrollHeight : 0);
+      if(h > 0) fr.style.height = (h + 24) + 'px';
+    }catch(e){}
+  }
+  function wireSize(fr){
+    fr.addEventListener('load', function(){
+      sizeFrame(fr);
+      var n = 0, iv = setInterval(function(){ sizeFrame(fr); if(++n > 16) clearInterval(iv); }, 400);
+    });
+  }
+  var frames = {};
+  Object.keys(FRAME_ID).forEach(function(k){
+    var fr = document.getElementById(FRAME_ID[k]);
+    if(fr){ frames[k] = fr; wireSize(fr); }
+  });
+
+  function ensureLoaded(k){
+    var fr = frames[k];
+    if(!fr) return;
+    var src = fr.getAttribute('data-src');
+    if(fr._loadedSrc === src){ sizeFrame(fr); return; }
+    fr._loadedSrc = src;
+    fr.src = src;
+  }
+
+  function activate(tab){
+    if(TABS.indexOf(tab) < 0) tab = 'overview';
+    document.querySelectorAll('.console-tab-btn').forEach(function(b){
+      b.classList.toggle('active', b.getAttribute('data-ctab') === tab);
+    });
+    document.querySelectorAll('.console-tab-panel').forEach(function(p){
+      p.classList.toggle('active', p.id === 'panel-' + tab);
+    });
+    if(frames[tab]) ensureLoaded(tab);
+  }
+
+  document.querySelectorAll('.console-tab-btn').forEach(function(b){
+    b.addEventListener('click', function(){
+      var t = b.getAttribute('data-ctab');
+      if(('#' + t) !== location.hash){ location.hash = t; }
+      else { activate(t); }
+    });
+  });
+  window.addEventListener('hashchange', function(){
+    activate((location.hash || '#overview').replace('#',''));
+  });
+
+  var initial = (location.hash || '#overview').replace('#','');
+  activate(initial);
+})();
+</script>
 """
 
 
-def render() -> str:
+def render_overview_body() -> str:
+    """總覽分頁本體（家族地圖）— 獨立於 page chrome，供 console 殼內嵌 Tab 1。"""
     groups_html = ""
     for title, cls, prominent, systems in GROUPS:
         rows = ""
@@ -121,27 +215,53 @@ def render() -> str:
                 f'<div class="sys-meta"><span>更新頻率：<b>{s["freq"]}</b></span>'
                 f'<span>Email 通知：<b>{s["email"]}</b></span></div></a>')
         groups_html += f'<div class="grp {cls}"><div class="grp-h">{title}</div>{rows}</div>\n'
+    return (
+        f'<div class="plain-box"><span class="pb-tag">💬 白話</span><span class="pb-body">{PLAIN}</span></div>'
+        f'{groups_html}'
+    )
 
+
+def render() -> str:
+    overview_body = render_overview_body()
     return f"""<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
 <meta name="robots" content="noindex,nofollow">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>前瞻追蹤總覽 | InvestMQuest Research</title>
+<title>系統主控台 | InvestMQuest Research</title>
 <style>{CSS}</style>
 </head>
 <body>
 {NAV_BLOCK}
 <div class="page-hdr"><div class="container">
-  <div class="crumb"><a href="/">首頁</a> / 前瞻追蹤</div>
-  <h1>前瞻追蹤總覽</h1>
-  <div class="sub">實單主系統 · 影子對照 · 前瞻 OOS 候選 · 已退役凍結對照 — 一頁看清整個追蹤家族的定位與現況。</div>
+  <div class="crumb"><a href="/">首頁</a> / 系統主控台</div>
+  <h1>系統主控台</h1>
+  <div class="sub">總覽 · 實單主系統 · 持倉週掃 · 裁決實績 — 四分頁單一入口，一頁看清整個追蹤家族的定位、現況與紀律紀錄。</div>
 </div></div>
 <div class="container">
-<div class="plain-box"><span class="pb-tag">💬 白話</span><span class="pb-body">{PLAIN}</span></div>
-{groups_html}</div>
-<footer><div class="container">&copy; 2026 InvestMQuest Research · 前瞻追蹤總覽 · 僅供研究參考</div></footer>
+<div class="console-tabbar" role="tablist">
+  <button type="button" class="console-tab-btn" data-ctab="overview" role="tab">總覽</button>
+  <button type="button" class="console-tab-btn" data-ctab="live" role="tab">實單主系統</button>
+  <button type="button" class="console-tab-btn" data-ctab="positions" role="tab">持倉週掃</button>
+  <button type="button" class="console-tab-btn" data-ctab="record" role="tab">裁決實績</button>
+</div>
+<div class="console-tab-panel" id="panel-overview">{overview_body}</div>
+<div class="console-tab-panel" id="panel-live">
+  <p class="console-embed-note">W52 × 自適應波動率 cap 1.5（美＋台）· 2026-07-18 起實單主系統 · <a href="/long-track-w52-adaptive/">獨立頁</a></p>
+  <iframe class="console-embed-frame" id="live-frame" data-src="/long-track-w52-adaptive/_body.html" title="實單主系統" scrolling="no" loading="lazy"></iframe>
+</div>
+<div class="console-tab-panel" id="panel-positions">
+  <p class="console-embed-note">逐一檢查每個持倉與近期研究 DD 的否證指標、催化劑時程、thesis 老化 · <a href="/pm/">獨立頁</a></p>
+  <iframe class="console-embed-frame" id="positions-frame" data-src="/pm/_body.html" title="持倉週掃" scrolling="no" loading="lazy"></iframe>
+</div>
+<div class="console-tab-panel" id="panel-record">
+  <p class="console-embed-note">本站個股 DD 裁決的回顧性前瞻報酬統計，描述器語言、非績效宣傳 · <a href="/track-record/">獨立頁</a></p>
+  <iframe class="console-embed-frame" id="record-frame" data-src="/track-record/_body.html" title="裁決實績" scrolling="no" loading="lazy"></iframe>
+</div>
+</div>
+<footer><div class="container">&copy; 2026 InvestMQuest Research · 系統主控台 · 僅供研究參考</div></footer>
+{CONSOLE_JS}
 </body>
 </html>"""
 

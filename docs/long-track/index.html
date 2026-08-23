@@ -4,7 +4,7 @@
 <meta name="robots" content="noindex,nofollow">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>前瞻追蹤總覽 | InvestMQuest Research</title>
+<title>系統主控台 | InvestMQuest Research</title>
 <style>
 :root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;--text:#111827;--muted:#6b7280;--border:#e5e7eb;
       --green:#059669;--green-bg:#ecfdf5;--green-border:#a7f3d0;--green-text:#065f46;
@@ -41,6 +41,20 @@ a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
 .sys-meta b{color:#374151;font-weight:600}
 .arr{margin-left:auto;color:var(--brand);font-weight:700}
 footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);text-align:center;padding:1.2rem 0;font-size:.78rem;margin-top:2rem}
+
+/* ── 系統主控台 tabbar（2026-08-23，比照 /cockpit/ 與 /t/ 殼；沿用本頁既有 token）── */
+.console-tabbar{display:flex;gap:.25rem;flex-wrap:wrap;border-bottom:1px solid var(--border);margin:.2rem 0 1.3rem;position:sticky;top:0;background:var(--bg);z-index:5}
+.console-tab-btn{appearance:none;background:none;border:0;font-family:inherit;cursor:pointer;
+  font-size:.94rem;font-weight:600;color:var(--muted);padding:.7rem 1.05rem;
+  border-bottom:2px solid transparent;margin-bottom:-1px;letter-spacing:.01em}
+.console-tab-btn:hover{color:var(--text)}
+.console-tab-btn.active{color:var(--brand);border-bottom-color:var(--brand)}
+.console-tab-panel{display:none}
+.console-tab-panel.active{display:block}
+.console-embed-frame{width:100%;border:0;display:block;min-height:70vh;background:transparent}
+.console-embed-note{font-size:.72rem;color:var(--muted);margin:.9rem 0 .6rem;font-family:ui-monospace,Menlo,monospace}
+.console-embed-note a{color:var(--brand)}
+@media(max-width:640px){.console-tab-btn{padding:.55rem .65rem;font-size:.82rem}}
 </style>
 </head>
 <body>
@@ -123,17 +137,99 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </header>
 <script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
 <div class="page-hdr"><div class="container">
-  <div class="crumb"><a href="/">首頁</a> / 前瞻追蹤</div>
-  <h1>前瞻追蹤總覽</h1>
-  <div class="sub">實單主系統 · 影子對照 · 前瞻 OOS 候選 · 已退役凍結對照 — 一頁看清整個追蹤家族的定位與現況。</div>
+  <div class="crumb"><a href="/">首頁</a> / 系統主控台</div>
+  <h1>系統主控台</h1>
+  <div class="sub">總覽 · 實單主系統 · 持倉週掃 · 裁決實績 — 四分頁單一入口，一頁看清整個追蹤家族的定位、現況與紀律紀錄。</div>
 </div></div>
 <div class="container">
-<div class="plain-box"><span class="pb-tag">💬 白話</span><span class="pb-body">這個家族的沿革（白話）：早期實單主線用「六狀態機」與「STX50／E3」兩套引擎；<b>2026-07-18 起改由「W52 週線閘門 × 自適應波動率 × cap 1.5 ＋ A2 執行層」接棒為實單主系統</b>（美台兩市場各 70% 指數部），舊引擎降為凍結對照。GLD 金 sleeve 與商品 sleeve 是決策前研究通過後的<b>前瞻候選</b>——還在紙上測、尚未進實單。</span></div>
-<div class="grp live"><div class="grp-h">實單主系統</div><a class="sys" href="/long-track-w52-adaptive/"><div class="sys-top"><span class="sys-name">W52 × 自適應波動率 cap 1.5（美 + 台）</span><span class="pill live">實單</span><span class="arr">→</span></div><div class="sys-one">兩市場各 70% 指數部＝W52 週線閘門 × 自適應波動率 × cap 1.5 ＋ A2 執行層。<b>2026-07-18 起接棒為實單主系統</b>。</div><div class="sys-meta"><span>更新頻率：<b>每交易日 × 2（台／美收盤後）</b></span><span>Email 通知：<b>✅ 有</b></span></div></a></div>
+<div class="console-tabbar" role="tablist">
+  <button type="button" class="console-tab-btn" data-ctab="overview" role="tab">總覽</button>
+  <button type="button" class="console-tab-btn" data-ctab="live" role="tab">實單主系統</button>
+  <button type="button" class="console-tab-btn" data-ctab="positions" role="tab">持倉週掃</button>
+  <button type="button" class="console-tab-btn" data-ctab="record" role="tab">裁決實績</button>
+</div>
+<div class="console-tab-panel" id="panel-overview"><div class="plain-box"><span class="pb-tag">💬 白話</span><span class="pb-body">這個家族的沿革（白話）：早期實單主線用「六狀態機」與「STX50／E3」兩套引擎；<b>2026-07-18 起改由「W52 週線閘門 × 自適應波動率 × cap 1.5 ＋ A2 執行層」接棒為實單主系統</b>（美台兩市場各 70% 指數部），舊引擎降為凍結對照。GLD 金 sleeve 與商品 sleeve 是決策前研究通過後的<b>前瞻候選</b>——還在紙上測、尚未進實單。</span></div><div class="grp live"><div class="grp-h">實單主系統</div><a class="sys" href="/long-track-w52-adaptive/"><div class="sys-top"><span class="sys-name">W52 × 自適應波動率 cap 1.5（美 + 台）</span><span class="pill live">實單</span><span class="arr">→</span></div><div class="sys-one">兩市場各 70% 指數部＝W52 週線閘門 × 自適應波動率 × cap 1.5 ＋ A2 執行層。<b>2026-07-18 起接棒為實單主系統</b>。</div><div class="sys-meta"><span>更新頻率：<b>每交易日 × 2（台／美收盤後）</b></span><span>Email 通知：<b>✅ 有</b></span></div></a></div>
 <div class="grp shadow"><div class="grp-h">影子對照（同引擎、不上槓桿）</div><a class="sys" href="/long-track-w52-adaptive/leverage.html"><div class="sys-top"><span class="sys-name">W52 × 自適應波動率 cap 1.0 影子</span><span class="pill shadow">影子對照</span><span class="arr">→</span></div><div class="sys-one">同引擎的 cap 1.0（不上槓桿）影子線，供槓桿 vs 不槓桿對照。</div><div class="sys-meta"><span>更新頻率：<b>每交易日 × 2</b></span><span>Email 通知：<b>❌（併入主系統通知）</b></span></div></a></div>
 <div class="grp cand"><div class="grp-h">前瞻 OOS 候選（決策前研究通過、尚非實單）</div><a class="sys" href="/long-track-gld/"><div class="sys-top"><span class="sys-name">🥇 GLD 金 sleeve</span><span class="pill cand">前瞻 OOS・候選</span><span class="arr">→</span></div><div class="sys-one">非股票 sleeve 決策前研究通過後的前瞻紙上追蹤（單腿 GLD、cap 1.0、W52×自適應＋A2）。長樣本 1976-2026 含 20 年熊市壓力測試通過。<b>尚非實單</b>。</div><div class="sys-meta"><span>更新頻率：<b>每交易日（美股收盤後）</b></span><span>Email 通知：<b>✅（可行動變化）</b></span></div></a><a class="sys" href="/turtle-sleeve/"><div class="sys-top"><span class="sys-name">🐢 商品 Sleeve（80/20 組合）</span><span class="pill cand">前瞻 OOS・候選</span><span class="arr">→</span></div><div class="sys-one">GLD/USO→期貨 商品 sleeve 疊上 STX50 的 80/20 組合曝險，OOS 並行追蹤。</div><div class="sys-meta"><span>更新頻率：<b>每交易日</b></span><span>Email 通知：<b>—</b></span></div></a></div>
 <div class="grp ret"><div class="grp-h">已退役・凍結對照（被 W52×自適應取代）</div><a class="sys" href="/long-track-smh/"><div class="sys-top"><span class="sys-name">STX50（SMH/QQQ 美股）</span><span class="pill ret">已凍結・2026-07-23 停更</span><span class="arr">→</span></div><div class="sys-one">2026-07-18 由 W52×自適應接棒、2026-07-23 停更（cron 已移除）。</div><div class="sys-meta"><span>更新頻率：<b>已停更（僅手動）</b></span><span>Email 通知：<b>—</b></span></div></a><a class="sys" href="/long-track-tw/"><div class="sys-top"><span class="sys-name">E3（0050/2330 台股）</span><span class="pill ret">已凍結・2026-07-23 停更</span><span class="arr">→</span></div><div class="sys-one">2026-07-18 由 W52×自適應接棒、2026-07-23 停更（cron 已移除）。</div><div class="sys-meta"><span>更新頻率：<b>已停更（僅手動）</b></span><span>Email 通知：<b>—</b></span></div></a><a class="sys" href="/long-track-tw-vt/"><div class="sys-top"><span class="sys-name">0050 + 2330 固定 σ（歸檔）</span><span class="pill ret">凍結對照</span><span class="arr">→</span></div><div class="sys-one">固定 σ 版波動率目標，vt 家族早期研究線、已歸檔對照。</div><div class="sys-meta"><span>更新頻率：<b>歸檔</b></span><span>Email 通知：<b>—</b></span></div></a><a class="sys" href="/long-track-adaptive-vt/"><div class="sys-top"><span class="sys-name">自適應美台總覽（歸檔）</span><span class="pill ret">凍結對照</span><span class="arr">→</span></div><div class="sys-one">自適應 σ 美台總覽，vt 家族研究線、已歸檔對照。</div><div class="sys-meta"><span>更新頻率：<b>歸檔</b></span><span>Email 通知：<b>—</b></span></div></a><a class="sys" href="/long-track-qs-vt/"><div class="sys-top"><span class="sys-name">QQQ + SMH 長軌 × 套袖（歸檔）</span><span class="pill ret">凍結對照</span><span class="arr">→</span></div><div class="sys-one">週線長軌閘門 × 波動率套袖組合，vt 家族研究線、已歸檔對照。</div><div class="sys-meta"><span>更新頻率：<b>歸檔</b></span><span>Email 通知：<b>—</b></span></div></a><a class="sys" href="/backtest/six_state/status/"><div class="sys-top"><span class="sys-name">六狀態機（SMH/QQQ）</span><span class="pill ret">凍結對照</span><span class="arr">→</span></div><div class="sys-one">早期六態機引擎，已退役、僅手動；被 W52×自適應取代。</div><div class="sys-meta"><span>更新頻率：<b>手動</b></span><span>Email 通知：<b>—</b></span></div></a></div>
 </div>
-<footer><div class="container">&copy; 2026 InvestMQuest Research · 前瞻追蹤總覽 · 僅供研究參考</div></footer>
+<div class="console-tab-panel" id="panel-live">
+  <p class="console-embed-note">W52 × 自適應波動率 cap 1.5（美＋台）· 2026-07-18 起實單主系統 · <a href="/long-track-w52-adaptive/">獨立頁</a></p>
+  <iframe class="console-embed-frame" id="live-frame" data-src="/long-track-w52-adaptive/_body.html" title="實單主系統" scrolling="no" loading="lazy"></iframe>
+</div>
+<div class="console-tab-panel" id="panel-positions">
+  <p class="console-embed-note">逐一檢查每個持倉與近期研究 DD 的否證指標、催化劑時程、thesis 老化 · <a href="/pm/">獨立頁</a></p>
+  <iframe class="console-embed-frame" id="positions-frame" data-src="/pm/_body.html" title="持倉週掃" scrolling="no" loading="lazy"></iframe>
+</div>
+<div class="console-tab-panel" id="panel-record">
+  <p class="console-embed-note">本站個股 DD 裁決的回顧性前瞻報酬統計，描述器語言、非績效宣傳 · <a href="/track-record/">獨立頁</a></p>
+  <iframe class="console-embed-frame" id="record-frame" data-src="/track-record/_body.html" title="裁決實績" scrolling="no" loading="lazy"></iframe>
+</div>
+</div>
+<footer><div class="container">&copy; 2026 InvestMQuest Research · 系統主控台 · 僅供研究參考</div></footer>
+
+<script>
+(function(){
+  "use strict";
+  var TABS = ['overview','live','positions','record'];
+  var FRAME_ID = {live:'live-frame', positions:'positions-frame', record:'record-frame'};
+
+  function sizeFrame(fr){
+    try{
+      var d = fr.contentDocument || fr.contentWindow.document;
+      if(!d) return;
+      var h = Math.max(d.documentElement ? d.documentElement.scrollHeight : 0,
+                       d.body ? d.body.scrollHeight : 0);
+      if(h > 0) fr.style.height = (h + 24) + 'px';
+    }catch(e){}
+  }
+  function wireSize(fr){
+    fr.addEventListener('load', function(){
+      sizeFrame(fr);
+      var n = 0, iv = setInterval(function(){ sizeFrame(fr); if(++n > 16) clearInterval(iv); }, 400);
+    });
+  }
+  var frames = {};
+  Object.keys(FRAME_ID).forEach(function(k){
+    var fr = document.getElementById(FRAME_ID[k]);
+    if(fr){ frames[k] = fr; wireSize(fr); }
+  });
+
+  function ensureLoaded(k){
+    var fr = frames[k];
+    if(!fr) return;
+    var src = fr.getAttribute('data-src');
+    if(fr._loadedSrc === src){ sizeFrame(fr); return; }
+    fr._loadedSrc = src;
+    fr.src = src;
+  }
+
+  function activate(tab){
+    if(TABS.indexOf(tab) < 0) tab = 'overview';
+    document.querySelectorAll('.console-tab-btn').forEach(function(b){
+      b.classList.toggle('active', b.getAttribute('data-ctab') === tab);
+    });
+    document.querySelectorAll('.console-tab-panel').forEach(function(p){
+      p.classList.toggle('active', p.id === 'panel-' + tab);
+    });
+    if(frames[tab]) ensureLoaded(tab);
+  }
+
+  document.querySelectorAll('.console-tab-btn').forEach(function(b){
+    b.addEventListener('click', function(){
+      var t = b.getAttribute('data-ctab');
+      if(('#' + t) !== location.hash){ location.hash = t; }
+      else { activate(t); }
+    });
+  });
+  window.addEventListener('hashchange', function(){
+    activate((location.hash || '#overview').replace('#',''));
+  });
+
+  var initial = (location.hash || '#overview').replace('#','');
+  activate(initial);
+})();
+</script>
+
 </body>
 </html>

@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
-"""Build docs/pm/index.html — the 持倉週掃 (position-thesis-monitor) report index.
+"""Build docs/pm/_body.html — the 持倉週掃 (position-thesis-monitor) report index.
 
 Scans docs/pm/MONITOR_YYYYMMDD.md (weekly triage reports produced by the
 position-thesis-monitor agent, manually / cron triggered), renders the newest
 one to HTML with a lightweight line-based markdown converter, and lists the
-full history. The page carries a <body> so scripts/site_nav.py injects the
-canonical site nav after it (pm/ is mapped to ('system','pm') in PREFIX_ACTIVE;
-pm/index.html was removed from SKIP_FILES on 2026-07-19).
+full history.
+
+2026-08-23 系統主控台整併：輸出改為 nav-less iframe 片段 docs/pm/_body.html
+（被 /long-track/#positions 嵌入）；獨立 URL /pm/ 改為 redirect stub
+（docs/pm/index.html，一次性寫入，此後不由本 script 覆寫）。_body.html 與
+index.html 皆已加入 scripts/site_nav.py 的 SKIP_FILES（片段不掛站 nav，避免
+iframe 內冒出整條選單；stub 保持極簡）。頁面本身不含任何 client-side JSON
+fetch（flags.json／holdings.json 只在 MONITOR_*.md 內文被文字提及，非 JS 讀取），
+故嵌入 iframe 對資料路徑無影響。
 
 Idempotent. Re-run whenever a new MONITOR_*.md lands:
     python3 scripts/build_pm_index.py
@@ -19,7 +25,7 @@ from datetime import datetime
 from pathlib import Path
 
 PM = Path(__file__).resolve().parent.parent / "docs" / "pm"
-OUT = PM / "index.html"
+OUT = PM / "_body.html"
 
 
 def _fmt_date(stem: str) -> str:
