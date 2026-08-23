@@ -11,8 +11,10 @@ name: Intel 2.0 Daily Chain
 # 作為 rollback 路徑；本鏈失敗不影響原檔，原檔失敗也不影響本鏈（各自獨立
 # commit）。
 #
-# 排程：cron "30 22 * * 0-4" = UTC 週日～週四 22:30 = 台北時間週一～週五
-# 06:30（TPE = UTC+8）。
+# 排程：cron "30 22 * * 0-5" = UTC 週日～週五 22:30 = 台北時間週一～週六
+# 06:30（TPE = UTC+8）。週六（UTC 週五）這輪是 2026-08-23 新增：處理美股
+# 週五收盤資料，讓首頁檢查清單週末不再顯示「落後一日」；週日段判斷用
+# `date -u +%u` == 7，週六輪不會誤觸每週段。
 #
 # 每個 pipeline 段落都 continue-on-error: true，段落內部用 `set +e` 手動控管
 # exit code（不讓單一段落中途失敗就跳過同段其餘指令），並把
@@ -34,7 +36,7 @@ on:
         type: boolean
         default: false
   schedule:
-    - cron: "30 22 * * 0-4"
+    - cron: "30 22 * * 0-5"
 
 permissions:
   contents: write
