@@ -74,6 +74,19 @@ Change log:
         點）；docs/supply-chain/（獨立完整頁＋子地圖）改 ("research","id")
         （供應鏈地圖是 /id/ 的一個分頁，屬產業研究鏡頭）。效果：這些頁面
         瀏覽時「研究」下拉的對應項與群同時高亮，不再退化成純群高亮。
+    2026-08-23 系統群 nav 瘦身（見 notes/site-internal/root/
+        _consolidation_system_20260823.md）：MENU["system"] 8→4 項，只留
+        「系統主控台」(lthub, /long-track/，label 由「追蹤總覽」改名)／
+        「量化回測」(bt)／「期貨部位計算機」(tools)／「公開資料」(data)；
+        市場偵探(det)／裁決實績(tr)／持倉週掃(pm)／實單主系統(voltrack) 四個
+        item 鍵移除。PREFIX_ACTIVE：track-record/、pm/、long-track-w52-adaptive/
+        與三個 vt 家族頁改掛 ("system","lthub")；detective/ 不進市場群選單
+        （維持不轉址直達頁），改掛 ("market","intel")——比照 crowding/regime/
+        rotation 的「同源完整互動頁」判定。順手清掉 2026-08-20 選股群收斂時
+        遺留的 dangling PREFIX_ACTIVE 鍵：("pick","dds")／mom5／qus／qtw／scr
+        五個已消失的下拉項鍵，統一改 ("pick", None)（群高亮、無選單項，
+        與同批市場群六條目的處理方式一致）。build_nav() 不變——系統群仍是 4
+        項，維持下拉形態，不觸發選股群式的單項 flat-link 特例。
 """
 
 import re
@@ -164,18 +177,14 @@ MENU = {
         # 2026-07-11 週報已停更，自頁首移除（/weekly/ 頁面保留可直達；
         # PREFIX_ACTIVE 的 weekly/ 映射保留，使其頁面仍歸市場群 active）
     ],
-    # 2026-07-17 系統群整併（11→8）：ltqsvt/lttwvt/ltadvt 三條波動率追蹤條
-    # 收斂為單一「波動率追蹤家族」入口（五頁 pill 已互連，一個入口即達全家族）；
-    # 獨立 cache 條目移除，Data Cache 併入公開資料（PREFIX_ACTIVE 見下方判斷）。
+    # 2026-08-23 系統群瘦身（8→4，見 notes/site-internal/root/
+    # _consolidation_system_20260823.md）：市場偵探／裁決實績／持倉週掃／實單
+    # 主系統四條目移除——四者皆為「監控/裁決」類分頁，語意上收斂進 /long-track/
+    # 總覽（該頁已是四分頁系統主控台，見 2026-08-20 Phase 1）。lthub 項標籤由
+    # 「追蹤總覽」改「系統主控台」（URL 不變，仍 /long-track/）；市場偵探不落回
+    # 市場群選單（維持不轉址、直達頁），改由 PREFIX_ACTIVE 群層映射處理。
     "system": [
-        # 2026-08-20 加回：市場偵探於 8/20 Phase C 收斂時被移出市場群選單，但
-        # how-to.html 仍把它列為每日晨檢第一步的四磚之一，故掛回系統群、排在
-        # 裁決實績／持倉週掃兩個既有監控類條目之前。
-        ("det", "/detective/", "市場偵探"),
-        ("tr", "/track-record/", "裁決實績"),
-        ("pm", "/pm/", "持倉週掃"),
-        ("voltrack", "/long-track-w52-adaptive/", "實單主系統"),
-        ("lthub", "/long-track/", "追蹤總覽"),
+        ("lthub", "/long-track/", "系統主控台"),
         ("bt", "/backtest/", "量化回測"),
         ("tools", "/tools/", "期貨部位計算機"),
         ("data", "/data.html", "公開資料"),
@@ -268,16 +277,21 @@ PREFIX_ACTIVE = [
     # 不會被注入 nav）；保留前綴僅為「選股群高亮」的語意錨，不再對應下拉條目（item=None）。
     ("picks/", ("pick", None)),
     ("dd-screener/pipeline.html", ("pick", None)),
-    ("dd-screener/", ("pick", "dds")),
+    # 2026-08-23 清 dangling keys：dds/mom5/qus/qtw/scr 五個 item 鍵已於
+    # 2026-08-20 選股群收斂（8 項→單一 cockpit）時從 MENU["pick"] 移除，
+    # 但 PREFIX_ACTIVE 當時漏改，殘留指向不存在的下拉項（active_for() 永遠
+    # 比對不到，等同無聲退化成無高亮）。統一改 ("pick", None)：頁面仍歸
+    # 選股群高亮，不再假裝有對應下拉項。
+    ("dd-screener/", ("pick", None)),
     ("engine/", ("pick", None)),
-    ("research/momentum-5/", ("pick", "mom5")),
-    ("qgm/", ("pick", "qus")),
-    ("qgm-tw/", ("pick", "qtw")),
-    ("screeners.html", ("pick", "scr")),
-    ("screener.html", ("pick", "scr")),
-    ("screener-tw.html", ("pick", "scr")),
-    ("screener-jp.html", ("pick", "scr")),
-    ("screener-my.html", ("pick", "scr")),
+    ("research/momentum-5/", ("pick", None)),
+    ("qgm/", ("pick", None)),
+    ("qgm-tw/", ("pick", None)),
+    ("screeners.html", ("pick", None)),
+    ("screener.html", ("pick", None)),
+    ("screener-tw.html", ("pick", None)),
+    ("screener-jp.html", ("pick", None)),
+    ("screener-my.html", ("pick", None)),
     # 研究群
     # 2026-08-20 nav 瘦身第二階段：下拉只剩 thub/id/tier 三項，故舊 dd/cmp/syn/sc
     # 四個 item 鍵已從 MENU["research"] 移除。以下映射改點到吸收方的 item——
@@ -313,16 +327,19 @@ PREFIX_ACTIVE = [
     ("macro/", ("market", "macro")),  # 總經深度報告（2026-07-09），nav 已掛項目
     ("weekly/", ("market", "week")),
     ("briefing/", ("market", "brief")),  # 2026-08-17 恢復更新，nav 項目已掛回
-    # 系統群
-    ("detective/", ("system", "det")),  # 市場偵探（2026-07-16 新增；2026-08-20 自市場群改掛系統群）
-    ("track-record/", ("system", "tr")),  # 裁決實績（2026-07-11 新增）
-    ("pm/", ("system", "pm")),  # 持倉週掃（2026-07-19 復活：position-thesis-monitor 週掃輸出索引）
-    # 2026-07-17 voltrack 入口指現行主系統 W52×自適應（label 2026-07-23 改「實單主系統」）；
-    # 三個 vt 家族頁映射保留供其頁面高亮，仍歸 voltrack。
-    ("long-track-w52-adaptive/", ("system", "voltrack")),
-    ("long-track-qs-vt/", ("system", "voltrack")),
-    ("long-track-adaptive-vt/", ("system", "voltrack")),
-    ("long-track-tw-vt/", ("system", "voltrack")),
+    # 市場偵探：2026-08-23 系統群瘦身時移出系統群——它是 /intel/ 變化分頁的
+    # 同源完整互動頁，比照 crowding/regime/rotation 的不轉址判定，改掛市場群
+    # intel 項；頁面本身不轉址，維持獨立可直達。
+    ("detective/", ("market", "intel")),  # 市場偵探（2026-07-16 新增；2026-08-20 曾掛系統群；2026-08-23 改掛市場群 intel）
+    # 系統群（2026-08-23 瘦身：det/tr/pm/voltrack 四個 item 鍵自 MENU["system"]
+    # 移除，收斂進「系統主控台」單一入口，故以下前綴一律改掛 lthub）
+    ("track-record/", ("system", "lthub")),  # 裁決實績（2026-07-11 新增；2026-08-23 併入系統主控台）
+    ("pm/", ("system", "lthub")),  # 持倉週掃（2026-07-19 復活；2026-08-23 併入系統主控台）
+    # 2026-08-23 voltrack 項移除，實單主系統與三個 vt 家族頁改掛 lthub。
+    ("long-track-w52-adaptive/", ("system", "lthub")),
+    ("long-track-qs-vt/", ("system", "lthub")),
+    ("long-track-adaptive-vt/", ("system", "lthub")),
+    ("long-track-tw-vt/", ("system", "lthub")),
     # 2026-07-23 Phase B：退役頁（STX50/E3）與前瞻候選頁（GLD／商品 sleeve）改歸
     # 「追蹤總覽」(lthub)。★first-match 陷阱★：泛用前綴 long-track/ 必須排在所有具體
     # long-track-*/ 前綴之後，否則會吃掉 long-track-w52-adaptive/ 等頁的高亮。

@@ -61,7 +61,7 @@ try:                                       # fab: scripts/site_nav.py
 except ImportError:                        # v7-backtest: repo-root snippet
     from site_nav_snippet import full_nav_block  # noqa: E402
 
-NAV_BLOCK = full_nav_block("system", "voltrack")
+NAV_BLOCK = full_nav_block("system", "lthub")  # 2026-08-23 系統群瘦身：voltrack 項移除，併入系統主控台
 
 # ---- output dir: <repo_root>/docs/long-track-adaptive-vt/ ------------------
 _cand = [HERE.parent / "docs", HERE.parents[2] / "docs" if len(HERE.parents) >= 3 else HERE / "docs"]

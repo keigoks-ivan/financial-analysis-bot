@@ -95,9 +95,59 @@ Phase 0 commit：`aa8b41d8f`（本地）→ worktree cherry-pick 後最終 SHA `
 
 ---
 
-## 附：留待下一批的項目（本批明確排除）
+## 附：留待下一批的項目（本批明確排除，Phase 2 執行時已完成 1／2，見下）
 
-1. **nav 標籤瘦身**：`MENU["system"]` 由現行 8 項（`det`／`tr`／`pm`／`voltrack`／`lthub`／`bt`／`tools`／`data`）收斂為 4 項（主控台／量化回測／期貨計算機／公開資料），`tr`／`pm`／`voltrack` 三項摺入 `lthub`（改標「主控台」）。
-2. **市場偵探移群**：`det`（市場偵探）目前掛在 `system` 群第一項，移至 `market` 群屬於另一批任務，本批完全未觸碰。
-3. **`how-to.html` 改寫**：涉及站內導覽說明文字更新，需同步反映 `/long-track/` 四分頁化與（未來）nav 瘦身後的群組結構，待 nav 瘦身批次一併處理避免文案二次改動。
-4. **三個外部 repo 的 nav 同步 commit push**：見 Phase 0.4，需人工確認後才能 push，是本批遺留的待辦而非「下一批任務」，優先權更高。
+1. ~~**nav 標籤瘦身**：`MENU["system"]` 由現行 8 項...收斂為 4 項~~ → 已於 Phase 2 完成，見 §7。
+2. ~~**市場偵探移群**：`det`（市場偵探）...移至 `market` 群~~ → 已於 Phase 2 完成，見 §7。
+3. **`how-to.html` 改寫**：涉及站內導覽說明文字更新，需同步反映 `/long-track/` 四分頁化與 nav 瘦身後的群組結構——**Phase 2 仍不動 how-to.html**，是下一批（最後一批）任務。
+4. ~~**三個外部 repo 的 nav 同步 commit push**~~ → 已於 Phase 2 執行，見 §7（原 Phase 0.4 遺留的 3 個本地 commit 因與 Phase 2 的 `system` 群改動疊加，改為一次性重新同步後 push，而非分兩輪推）。
+
+---
+
+## Phase 2：系統群 nav 瘦身（2026-08-23，緊接 Phase 0/1 之後執行）
+
+### 7.1 範圍
+
+`scripts/site_nav.py`：
+
+- `MENU["system"]` 8 項→4 項：`det`／`tr`／`pm`／`voltrack` 四個 item 鍵移除；倖存的 `lthub` 項標籤由「追蹤總覽」改「系統主控台」（URL 不變，`/long-track/`）；`bt`／`tools`／`data` 三項不變。**不新增 `det` 回市場群選單**（維持不轉址、直達頁的判定，比照 crowding/regime/rotation）。
+- `PREFIX_ACTIVE` 改點：
+  - `track-record/`、`pm/`、`long-track-w52-adaptive/`、`long-track-qs-vt/`、`long-track-adaptive-vt/`、`long-track-tw-vt/` 六條前綴統一改掛 `("system", "lthub")`（原本分別掛 `tr`／`pm`／`voltrack`）。
+  - `detective/` 改掛 `("market", "intel")`（原 `("system","det")`）——選擇 intel 而非純群層高亮（`("market", None)`），理由：`/detective/` 是 `/intel/` 「變化」分頁的同源完整互動頁，與 crowding/regime/rotation 三頁「歸市場群某具體 item」的判定一致，不是泛用市場頁。
+  - 清 dangling keys：`("pick","dds")`／`mom5`／`qus`／`qtw`／`scr` 五個 2026-08-20 選股群收斂時已從 `MENU["pick"]` 移除、但 `PREFIX_ACTIVE` 漏改的殘留 item 鍵，統一改 `("pick", None)`（`dd-screener/`、`engine/`、`research/momentum-5/`、`qgm/`、`qgm-tw/`、`screeners.html`、`screener.html`、`screener-tw.html`、`screener-jp.html`、`screener-my.html` 十條前綴）。
+- 內部 generator 同步：7 支 `scripts/update_long_track_*_vt*.py`（`adaptive_vt`／`qs_vt_adaptive`／`qs_vt`／`w52_adaptive_leverage`／`w52_adaptive_tw_semivol`／`tw_vt`／`tw_vt_adaptive`）原本硬編 `full_nav_block("system", "voltrack")`，`voltrack` 鍵移除後若不改會靜默退化成「群高亮但無 item 高亮」（與 dangling keys 同一類問題），已同步改 `full_nav_block("system", "lthub")`。經盤點確認 `/detective/`／`/pm/`／`/track-record/` 三頁的 builder（`build_detective.py`／`build_pm_flags.py`／`build_track_record.py` 等）皆不自行呼叫 `full_nav_block`，nav 完全依賴 `site_nav.py` 全站掃描 + `PREFIX_ACTIVE`，故上述 `PREFIX_ACTIVE` 改點已自動覆蓋，無需額外改 builder。
+- `build_nav()` 本身**不變**——`system` 群瘦身後仍是 4 項，維持下拉形態，不觸發選股群式的單項 flat-link 特例（那個特例只在群縮到剛好 1 項時才轉換）。
+- 檔頭 change log 補記 2026-08-23 條目。
+
+### 7.2 全站 re-inject 驗證（idempotency）
+
+`python3 scripts/site_nav.py`：
+- 第一次：`updated 1701 / skip 30 / skip-external 570 / no-body 8`
+- 第二次：`unchanged 1701 / skip 30 / skip-external 570 / no-body 8`（冪等確認；`no-body` 8 筆與本批無關——皆為既有 HTML 結構缺失的 DD 報告，非本批引入，且與下方「6 個 DD-gate 髒檔」中的 5 筆不完全重疊）。
+
+1701 全數變動：因為 `MENU["system"]` 內容變動會反映在**每一頁**渲染出的完整 nav header（下拉選單內容），不限於系統群自身頁面，與 Phase 1 全站 1701 頁基準一致。
+
+外部五樹（`backtest`／`qgm`／`qgm-tw`／`briefing`／`weekly`）沿用 Phase 0.2 的 throwaway sweep script 邏輯（不套用 `EXTERNAL_TREES` 早退）同步跑過，結果與 canonical `docs/` 一致（byte-identical 抽查）。
+
+### 7.3 已知不動的 6 個 DD-gate 髒檔
+
+工作區中以下 6 個檔案在本批之前即為髒檔（DD math pre-commit gate 因內容問題擋下、與本次 nav 改動無關），本批全程不碰、不納入 commit：
+
+```
+docs/dd/DD_UBER_20260808.html
+docs/dd/DD_TSM_20260806.html
+docs/dd/DD_SNDK_20260806.html
+docs/dd/DD_LLY_20260806.html
+docs/dd/DD_KLIC_20260806.html
+docs/earnings/synthesis_2026-08-20.html
+```
+
+判定依據：這 6 檔的 `git diff --stat` 變動行數（33／33／33／33／33／14）明顯高於同批其餘 nav-only 頁面的基準值（6 行）——多出的行數是先前既有、與本批無關的內容差異，本批的 nav re-inject 疊加在其上但未刻意處理。commit 時用 `--only` 明列檔案，天然排除這 6 個。
+
+### 7.4 三個外部 repo 的 commit / push
+
+延續 Phase 0.4 的治理備註：v7-backtest（`4b7d302`）／morning-briefing（`7db8c9a`）／minervini-quality-backtest（`907a08e`）三個本地 commit 因與本階段 `system` 群改動有邏輯疊加（尤其 v7-backtest 的 `MENU["system"]` 字面副本），改為**先完成本 canonical repo 的 Phase 2 改動，再一次性重新同步三個外部 repo 到最終狀態後 push**，而非分兩輪各推一次（原字面任務指令是「先 push 待推 commit、再做瘦身」兩步驟，此處為主動排序調整，屬本批第二個需回報的自主判斷——見主報告）。三個 repo 最終 commit hash 與 push 結果見主報告。
+
+### 7.5 Commit
+
+Phase 2 commit：見主報告（獨立於 Phase 0／Phase 1 commit，`--only` 明列 `scripts/site_nav.py`＋7 支 `update_long_track_*_vt*.py`＋1701 個 nav-only 頁面＋本設計文件，明確排除上方 6 個 DD-gate 髒檔）。
