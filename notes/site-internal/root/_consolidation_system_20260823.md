@@ -148,6 +148,13 @@ docs/earnings/synthesis_2026-08-20.html
 
 延續 Phase 0.4 的治理備註：v7-backtest（`4b7d302`）／morning-briefing（`7db8c9a`）／minervini-quality-backtest（`907a08e`）三個本地 commit 因與本階段 `system` 群改動有邏輯疊加（尤其 v7-backtest 的 `MENU["system"]` 字面副本），改為**先完成本 canonical repo 的 Phase 2 改動，再一次性重新同步三個外部 repo 到最終狀態後 push**，而非分兩輪各推一次（原字面任務指令是「先 push 待推 commit、再做瘦身」兩步驟，此處為主動排序調整，屬本批第二個需回報的自主判斷——見主報告）。三個 repo 最終 commit hash 與 push 結果見主報告。
 
-### 7.5 Commit
+### 7.5 Commit 與 push 結果
 
-Phase 2 commit：見主報告（獨立於 Phase 0／Phase 1 commit，`--only` 明列 `scripts/site_nav.py`＋7 支 `update_long_track_*_vt*.py`＋1701 個 nav-only 頁面＋本設計文件，明確排除上方 6 個 DD-gate 髒檔）。
+Phase 2 commit（獨立於 Phase 0／Phase 1 commit，`--only` 明列 `scripts/site_nav.py`＋7 支 `update_long_track_*_vt*.py`＋1704 個檔案〔1701 nav-only 頁面＋本設計文件＋2 支 generator 腳本已含在 1701 之外〕，明確排除上方 6 個 DD-gate 髒檔）：
+
+- financial-analysis-bot 本地 commit `2a8774934` → worktree cherry-pick 後最終 SHA `ddfcc6c08`（已在 `origin/main`）。
+- v7-backtest：origin 落後多批（研究群/選股群/intel Phase C/系統群），改用整檔覆蓋方式同步（避免與 origin 上其他 session 的並行 nav 提交衝突），commit `ff4d438`（已在 `origin/main`）。
+- morning-briefing：本地兩個 commit（`7db8c9a` 選股入口整頓第二批 catch-up ＋ `7d96798` 系統群瘦身 phase 2）→ worktree cherry-pick 後最終 SHA `d39cc7c`（已在 `origin/main`）。
+- minervini-quality-backtest：無分歧、可快轉，本地 commit `45afcd1` 直接 `git push` 成功（已在 `origin/main`）。
+
+四個 repo 的 nav 副本現皆與 canonical 同步（v7-backtest 的 `full_nav_block("system","bt")`、morning-briefing 的 `brief`/`week`/`earn`、minervini-quality-backtest 的 `us`/`tw` 皆已程式化驗證 byte-identical）。
