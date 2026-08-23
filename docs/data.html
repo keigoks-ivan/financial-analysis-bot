@@ -157,14 +157,21 @@ table.dt-schema td.ty{font-family:var(--mono);font-size:11px;color:var(--gold-de
     <a href="#crowding">crowding</a>
     <a href="#picks">picks</a>
     <a href="#monitor">monitor</a>
+    <a href="#score-history">monitor/score-history</a>
     <a href="#regime">regime</a>
+    <a href="#detective">detective</a>
+    <a href="#intel-status">intel/status</a>
+    <a href="#track-record">track-record</a>
+    <a href="#pm-flags">pm/flags</a>
+    <a href="#pm-holdings">pm/holdings</a>
+    <a href="#long-track-state">long-track/state</a>
     <a href="#search">search-index</a>
   </div>
 
   <!-- ══ DD SCREENER ══ -->
   <section class="dt-ep" id="dd-screener">
     <div class="dt-ep-head"><h2>DD 選股宇宙</h2><span class="dt-path">/dd-screener/latest.json</span></div>
-    <p class="dt-purpose">全站個股 DD 宇宙的機器可讀快照——約 240 檔已寫過 DD 報告的個股，帶基本面訊號（FCF／ROIC／EPS 成長／PEG／負債）、護城河評分、統一裁決（dca_verdict）、五年情境價與 EPS 估計。是 <code>/dd-screener/</code>、<code>/cockpit/</code>、<code>/research/</code> 三頁的共同資料源。</p>
+    <p class="dt-purpose">全站個股 DD 宇宙的機器可讀快照——約 240 檔已寫過 DD 報告的個股，帶基本面訊號（FCF／ROIC／EPS 成長／PEG／負債）、護城河評分、統一裁決（dca_verdict）、五年情境價與 EPS 估計。是 <code>/dd-screener/</code>、<code>/cockpit/</code>、<code>/t/</code> 三頁的共同資料源。</p>
     <div class="dt-facts">
       <div class="dt-fact"><span class="k">更新頻率</span><span class="v">每日（Tue–Sat 09:00 台北）· workflow <code>daily-non-fundamental-refresh</code> 跑 <code>build_dd_screener.py</code>；每份新 DD 發布時亦即時重建</span></div>
       <div class="dt-fact"><span class="k">as_of 語意</span><span class="v"><code>as_of</code> = 快照交易日；<code>eps_estimates_source.snapshot_date</code> = EPS 估計 Excel 快照日</span></div>
@@ -336,7 +343,40 @@ table.dt-schema td.ty{font-family:var(--mono);font-size:11px;color:var(--gold-de
         <tr><td class="f">gaps</td><td class="ty">array</td><td>未取得資料點</td></tr>
       </tbody>
     </table></div>
-    <p class="dt-note"><b>穩定性</b>：schema 版本化為 <code>monitor-v1</code>；類別新增為 additive。另有 <code>/monitor/data/alerts.json</code> 留痕與 <code>editorial.json</code>（人工解讀層）。</p>
+    <p class="dt-note"><b>穩定性</b>：schema 版本化為 <code>monitor-v1</code>；類別新增為 additive。另有 <code>/monitor/data/alerts.json</code> 留痕與 <code>editorial.json</code>（人工解讀層），跨資產壓力分數長歷史序列見下方 <a href="#score-history">score_history</a>。</p>
+  </section>
+
+  <!-- ══ MONITOR SCORE HISTORY ══ -->
+  <section class="dt-ep" id="score-history">
+    <div class="dt-ep-head"><h2>跨資產壓力分數・長歷史</h2><span class="dt-path">/monitor/data/score_history.json</span></div>
+    <p class="dt-purpose">跨資產壓力分數自 1994 年起的完整逐日序列（約 7,900 個交易日），含五段區間（calm／normal／warming／tense／extreme）定義、bucket 拆解（vol／credit／liq／app／rates）與市場內部廣度（internals）。是站內壓力分數唯一的歷史回溯來源，也是 <code>/monitor/</code> headline 與 <code>/intel/</code> 對帳表「跨資產壓力分數」欄位的機械層依據。</p>
+    <div class="dt-facts">
+      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">每日（Tue–Sat 07:00 UTC＝台北 15:00）· workflow <code>monitor-daily</code> 跑 <code>build_monitor_score.py</code>；<code>intel-2-daily</code> 鏈亦於每日晨跑重算一次</span></div>
+      <div class="dt-fact"><span class="k">as_of 語意</span><span class="v"><code>as_of</code> = 最新交易日；<code>series[]</code> 逐日 additive 累積，早期年份因序列覆蓋不足 <code>cov</code>（涵蓋率）偏低屬預期</span></div>
+    </div>
+    <div class="dt-tablewrap"><table class="dt-schema">
+      <thead><tr><th>欄位</th><th>型別</th><th>意義</th></tr></thead>
+      <tbody>
+        <tr><td class="f">schema</td><td class="ty">string</td><td>"monitor-score-v1"</td></tr>
+        <tr><td class="f">as_of / generated_at</td><td class="ty">string</td><td>最新交易日／產生時戳</td></tr>
+        <tr><td class="f">method</td><td class="ty">object</td><td>計算方法：bucket_rule／buckets／window_td／orientation／min_obs／excluded_note／ice_oas_note／internals</td></tr>
+        <tr><td class="f">bands</td><td class="ty">object</td><td>五段區間定義：calm[0,20]／normal[20,40]／warming[40,60]／tense[60,80]／extreme[80,100]</td></tr>
+        <tr><td class="f">series</td><td class="ty">array</td><td>逐日資料點（見下）</td></tr>
+        <tr><td class="f">internals_latest</td><td class="ty">object</td><td>最新一日市場內部廣度：as_of／score／score_short／members／members_short</td></tr>
+      </tbody>
+    </table></div>
+    <div class="dt-tablewrap"><table class="dt-schema">
+      <thead><tr><th>series[] 欄位</th><th>型別</th><th>意義</th></tr></thead>
+      <tbody>
+        <tr><td class="f">d</td><td class="ty">string</td><td>日期 YYYY-MM-DD</td></tr>
+        <tr><td class="f">s</td><td class="ty">number</td><td>當日綜合壓力分數（0–100）</td></tr>
+        <tr><td class="f">b</td><td class="ty">object</td><td>五個 bucket 各自分數：vol／credit／liq／app／rates（缺資料為 null）</td></tr>
+        <tr><td class="f">int / int_s</td><td class="ty">number</td><td>當日市場內部廣度讀數／短窗版本（早期歷史多為 null）</td></tr>
+        <tr><td class="f">cov</td><td class="ty">number</td><td>當日納入計算的序列涵蓋率（0–1）</td></tr>
+        <tr><td class="f">spx</td><td class="ty">number</td><td>當日 SPX 收盤參照值</td></tr>
+      </tbody>
+    </table></div>
+    <p class="dt-note"><b>穩定性</b>：<code>bands</code> 門檻定義穩定，變更會列於本頁；<code>series</code> 只增不改（逐日 append）。</p>
   </section>
 
   <!-- ══ REGIME ══ -->
@@ -359,6 +399,147 @@ table.dt-schema td.ty{font-family:var(--mono);font-size:11px;color:var(--gold-de
       </tbody>
     </table></div>
     <p class="dt-note"><b>穩定性</b>：<code>pos_0to1</code> 為質化加權讀數，非回測指數；軸集合穩定。</p>
+  </section>
+
+  <!-- ══ DETECTIVE ══ -->
+  <section class="dt-ep" id="detective">
+    <div class="dt-ep-head"><h2>偵測警報網</h2><span class="dt-path">/detective/data/latest.json</span></div>
+    <p class="dt-purpose">全站偵測層機械層完整快照——當前約 76 條偵測訊號的狀態機（active／cooling／escalated／new）、複合規則（composites）、綜合警戒度 <code>alert_level</code> 與逐項 driver 拆解。是 <code>/detective/</code> 頁面、<code>/intel/change.html</code> 對帳表與 <code>pm/flags.json</code> 的共同上游。</p>
+    <div class="dt-facts">
+      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">每日（intel-2-daily 鏈 06:30 台北主跑）＋ workflow <code>detective-daily</code> 平日備援／週六週報班次跑 <code>build_detective.py</code></span></div>
+      <div class="dt-fact"><span class="k">as_of 語意</span><span class="v"><code>alert_level.as_of</code> = 綜合警戒度判定基準日；<code>crowding_as_of</code>／<code>kill_as_of</code>／<code>monitor_as_of</code>／<code>regime_as_of</code>／<code>radar_as_of</code>／<code>variance_as_of</code> 分別標注各上游子系統各自時效（可能不同日）</span></div>
+    </div>
+    <div class="dt-tablewrap"><table class="dt-schema">
+      <thead><tr><th>欄位</th><th>型別</th><th>意義</th></tr></thead>
+      <tbody>
+        <tr><td class="f">schema</td><td class="ty">string</td><td>"detective-v2"</td></tr>
+        <tr><td class="f">alert_level</td><td class="ty">object</td><td>綜合警戒度：as_of／band／band_label／score／drivers[]（label+points 拆解分數怎麼來）</td></tr>
+        <tr><td class="f">counts</td><td class="ty">object</td><td>訊號計數：active／cooling／escalated／new／red／yellow／total</td></tr>
+        <tr><td class="f">composites</td><td class="ty">array</td><td>跨訊號複合規則（多條件同時成立才觸發）</td></tr>
+        <tr><td class="f">signals</td><td class="ty">array</td><td>逐條訊號（見下）</td></tr>
+        <tr><td class="f">sources / sources_stale</td><td class="ty">object/array</td><td>上游子系統時效表、過期上游清單</td></tr>
+      </tbody>
+    </table></div>
+    <div class="dt-tablewrap"><table class="dt-schema">
+      <thead><tr><th>signals[] 欄位</th><th>型別</th><th>意義</th></tr></thead>
+      <tbody>
+        <tr><td class="f">key / label / fact</td><td class="ty">string</td><td>唯一鍵、顯示名稱、當前事實敘述</td></tr>
+        <tr><td class="f">cat / dim / source</td><td class="ty">string</td><td>分類、維度、來源子系統</td></tr>
+        <tr><td class="f">sev / state</td><td class="ty">string</td><td>嚴重度（yellow／red）、狀態機狀態（active／cooling／escalated／new）</td></tr>
+        <tr><td class="f">score</td><td class="ty">number</td><td>該訊號對綜合分數的貢獻</td></tr>
+        <tr><td class="f">first_seen / last_seen / days_active</td><td class="ty">string/int</td><td>首見日、最近一次仍成立的日期、連續存在天數</td></tr>
+        <tr><td class="f">escalations / context / composite_members / muted_until</td><td class="ty">array/string</td><td>升級歷史、補充脈絡、複合規則成員、靜音至（若有）</td></tr>
+      </tbody>
+    </table></div>
+    <p class="dt-note"><b>穩定性</b>：<code>signals[]</code> 是跨日追蹤的狀態機，不是每日全量重算的快照——同一 <code>key</code> 的 <code>state</code> 會隨天數演變；<code>sev</code> 分級 red 高於 yellow。</p>
+  </section>
+
+  <!-- ══ INTEL STATUS SNAPSHOT ══ -->
+  <section class="dt-ep" id="intel-status">
+    <div class="dt-ep-head"><h2>情報監視器・現況彙整</h2><span class="dt-path">/intel/data/status_snapshot.json</span></div>
+    <p class="dt-purpose">把 <code>/intel/</code> 儀表、變化、產業時鐘、kill-watch 等分頁各自的頭條數字序列化成單一輕量檔，供跨頁（含首頁市場現況四磚）直接引用而不必各自重算。是站內「威脅指針」「跨資產壓力分數」「市場風險儀表」三個描述器現值的單一真相來源。</p>
+    <div class="dt-facts">
+      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">每日（週一至週五台北 06:30，對應資料日週日至週四）· workflow <code>intel-2-daily</code> 跑 <code>scripts/intel/render.py</code></span></div>
+      <div class="dt-fact"><span class="k">as_of 語意</span><span class="v">無單一全域 <code>as_of</code>——<code>alert_date</code>／<code>stress_date</code>／<code>risk_gauge_date</code> 分帶各自資料日</span></div>
+    </div>
+    <div class="dt-tablewrap"><table class="dt-schema">
+      <thead><tr><th>欄位</th><th>型別</th><th>意義</th></tr></thead>
+      <tbody>
+        <tr><td class="f">schema</td><td class="ty">string</td><td>"intel-status-snapshot-v1"</td></tr>
+        <tr><td class="f">alert_band / alert_band_key / alert_date / alert_score / alert_red / alert_yellow / alert_escalated</td><td class="ty">string/int</td><td>威脅指針：分級、分級鍵、資料日、分數、紅／黃燈計數、升級數</td></tr>
+        <tr><td class="f">stress_band / stress_band_key / stress_date / stress_score / stress_int</td><td class="ty">string/number</td><td>跨資產壓力分數：分級、分級鍵、資料日、分數、市場內部廣度讀數</td></tr>
+        <tr><td class="f">risk_gauge_label / risk_gauge_score / risk_gauge_date</td><td class="ty">string/number</td><td>市場風險儀表：分級標籤、分數、資料日</td></tr>
+        <tr><td class="f">clock_quadrant</td><td class="ty">string</td><td>產業時鐘目前象限</td></tr>
+        <tr><td class="f">regime_label</td><td class="ty">string</td><td>大類資產 regime 當期敘述</td></tr>
+        <tr><td class="f">kill_breached / kill_near</td><td class="ty">int</td><td>kill-watch 已觸發／接近閾值的指標數</td></tr>
+        <tr><td class="f">radar_top3</td><td class="ty">string</td><td>輪動雷達前三名文字摘要</td></tr>
+      </tbody>
+    </table></div>
+    <p class="dt-note"><b>穩定性</b>：零改動寫入（zero-churn）——內容不變不重寫。是首頁四磚與 /intel/ 各分頁頭條數字的單一真相來源，不建議繞過此檔各自重算。</p>
+  </section>
+
+  <!-- ══ TRACK RECORD ══ -->
+  <section class="dt-ep" id="track-record">
+    <div class="dt-ep-head"><h2>裁決實績</h2><span class="dt-path">/track-record/data/latest.json</span></div>
+    <p class="dt-purpose">裁決實績的回顧性統計資料層——依 DD schema 版本（v1.2 / v1.3+）分表的分季 cohort 統計（30／90／180 日與迄今報酬中位數、對 SPY 勝率、正報酬占比）、極值案例與排除樣本留痕。驅動 <a href="/long-track/#record">系統主控台・裁決實績</a>分頁。</p>
+    <div class="dt-facts">
+      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">事件驅動——每份 DD 發布經 <code>update_dd_index.py</code> 連鎖 <code>build_track_record.py</code> 即時重建；週日 <code>kill-watch-weekly</code>／<code>weekly-fundamental-refresh</code> 亦會觸發</span></div>
+      <div class="dt-fact"><span class="k">as_of 語意</span><span class="v"><code>meta.data_as_of</code> = 還原股價資料截止日；<code>meta.built_at</code> = 產生時戳</span></div>
+    </div>
+    <div class="dt-tablewrap"><table class="dt-schema">
+      <thead><tr><th>欄位</th><th>型別</th><th>意義</th></tr></thead>
+      <tbody>
+        <tr><td class="f">meta</td><td class="ty">object</td><td>built_at／data_as_of／spy_as_of／n_tickers／n_reports_total／n_observations／n_price_covered／n_price_uncovered／n_excluded_nometa／n_split_rebased／n_with_meta／windows_days／note</td></tr>
+        <tr><td class="f">tables</td><td class="ty">object</td><td>依 DD schema 版本分表：v12／v13plus</td></tr>
+        <tr><td class="f">cohorts</td><td class="ty">array</td><td>分季統計：quarter／n／d30／d90／d180／todate，各含 median／p25／p75／pct_beat_spy／pct_positive／n／n_bench</td></tr>
+        <tr><td class="f">extremes</td><td class="ty">object</td><td>報酬極值案例（最佳／最差）</td></tr>
+        <tr><td class="f">excluded_examples / uncovered_price</td><td class="ty">array</td><td>排除樣本留痕、缺價格覆蓋的 ticker</td></tr>
+      </tbody>
+    </table></div>
+    <p class="dt-note"><b>穩定性</b>：回顧性描述統計，非可外推期望值——樣本仍在成長中（2026-03 起）；還原股價週線，非美股僅計絕對報酬。</p>
+  </section>
+
+  <!-- ══ PM FLAGS ══ -->
+  <section class="dt-ep" id="pm-flags">
+    <div class="dt-ep-head"><h2>持倉監控旗標</h2><span class="dt-path">/pm/flags.json</span></div>
+    <p class="dt-purpose">持倉自動監控的旗標流——掃描全部持倉（指數部＋個股部），把偵測警報網訊號、kill-watch 門檻、輪動象限翻轉比對到持有 ticker，標出值得人工複審的項目。驅動 <a href="/long-track/#positions">系統主控台・持倉週掃</a>分頁。</p>
+    <div class="dt-facts">
+      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">每日（intel-2-daily 鏈 06:30 台北主跑）＋ workflow <code>detective-daily</code> 平日備援跑 <code>build_pm_flags.py</code></span></div>
+      <div class="dt-fact"><span class="k">as_of 語意</span><span class="v"><code>as_of</code> = 本檔產生日；<code>detective_as_of</code>／<code>kill_watch_as_of</code>／<code>holdings_as_of</code> 分別標注三個上游各自時效（可能不同日）</span></div>
+    </div>
+    <div class="dt-tablewrap"><table class="dt-schema">
+      <thead><tr><th>欄位</th><th>型別</th><th>意義</th></tr></thead>
+      <tbody>
+        <tr><td class="f">schema_version / generated_at / as_of</td><td class="ty">string</td><td>schema 版本、產生時戳、本檔產生日</td></tr>
+        <tr><td class="f">detective_as_of / kill_watch_as_of / holdings_as_of</td><td class="ty">string</td><td>三個上游資料源各自時效</td></tr>
+        <tr><td class="f">summary</td><td class="ty">object</td><td>holdings_scanned／active／cleared 計數</td></tr>
+        <tr><td class="f">flags</td><td class="ty">array</td><td>逐條旗標：ticker／sleeve／source／key／label／fact／sev／cat／first_seen／last_seen／status</td></tr>
+      </tbody>
+    </table></div>
+    <p class="dt-note"><b>穩定性</b>：<code>sev</code> 分 yellow／red；<code>status</code> 分 active／cleared——旗標解除不會被刪除，只轉 cleared 留痕。</p>
+  </section>
+
+  <!-- ══ PM HOLDINGS ══ -->
+  <section class="dt-ep" id="pm-holdings">
+    <div class="dt-ep-head"><h2>實單持倉組合</h2><span class="dt-path">/pm/holdings.json</span></div>
+    <p class="dt-purpose">實單持倉組合的機器可讀快照——指數部（W52 自適應引擎當前曝險與各成分）＋個股部席位擂台在席者與候選挑戰者。驅動 <a href="/long-track/#positions">系統主控台・持倉週掃</a>與 <a href="/cockpit/#seats">選股駕駛艙・席位排序</a>兩頁。</p>
+    <div class="dt-facts">
+      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">每週（Sun 20:00 UTC＝台北週一 04:00）· workflow <code>weekly-engine</code> 跑 <code>build_holdings.py</code></span></div>
+      <div class="dt-fact"><span class="k">as_of 語意</span><span class="v"><code>index_sleeve.as_of</code>／<code>stock_sleeve.as_of</code> 分別標注兩個 sleeve 各自結算日</span></div>
+    </div>
+    <div class="dt-tablewrap"><table class="dt-schema">
+      <thead><tr><th>欄位</th><th>型別</th><th>意義</th></tr></thead>
+      <tbody>
+        <tr><td class="f">schema_version / generated_at / as_of / source / note</td><td class="ty">string</td><td>schema 版本、產生時戳、本檔基準日、來源標記、組合構成說明</td></tr>
+        <tr><td class="f">index_sleeve</td><td class="ty">object</td><td>as_of／mechanism／status／combined_exposure_us_pct／combined_exposure_tw_pct／components[]（ticker/market/gate/executed_pct/final_weight_pct/sleeve_weight/levered）</td></tr>
+        <tr><td class="f">stock_sleeve</td><td class="ty">object</td><td>as_of／regime／core_slots／sat_slots／sat_vacant／core_seats／sat_seats／core_bench</td></tr>
+        <tr><td class="f">challengers</td><td class="ty">array</td><td>候選挑戰者：ticker／route／role／score／shape／dca_verdict／dd_path／dd_date／funnel_rank／beats_seats</td></tr>
+      </tbody>
+    </table></div>
+    <p class="dt-note"><b>穩定性</b>：換席永遠人工拍板——本檔是系統建議排序，不是自動執行紀錄。</p>
+  </section>
+
+  <!-- ══ LONG-TRACK W52-ADAPTIVE STATE ══ -->
+  <section class="dt-ep" id="long-track-state">
+    <div class="dt-ep-head"><h2>W52 自適應引擎狀態（主系統／槓桿／台股半年化波動）</h2><span class="dt-path">/long-track-w52-adaptive/{state,leverage_state,tw_semivol_state}.json</span></div>
+    <p class="dt-purpose">W52 × 自適應波動率 cap 1.5 引擎三個變體的完整機制與歷史：<code>state.json</code>＝主系統（美 QQQ/SMH、台 0050/2330，cap 1.5 實單）、<code>leverage_state.json</code>＝槓桿版研究對照、<code>tw_semivol_state.json</code>＝台股半年化波動變體（非實單訊號）。驅動 <a href="/long-track/#live">系統主控台・實單主系統</a>分頁與各自獨立頁。</p>
+    <div class="dt-facts">
+      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">每個交易日兩班（美股收盤後 07:00 UTC＝台北 15:00；台股收盤後 21:35 UTC＝台北隔日 05:35）· workflow <code>update_long_track_w52_adaptive</code> 依序跑三支 <code>update_long_track_w52_adaptive*.py</code></span></div>
+      <div class="dt-fact"><span class="k">as_of 語意</span><span class="v"><code>data_date</code> = 權重計算基準的週線資料日；<code>generated_at</code> = 產生時戳；<code>ruleset_locked_date</code> = 規則凍結日</span></div>
+    </div>
+    <div class="dt-tablewrap"><table class="dt-schema">
+      <thead><tr><th>欄位</th><th>型別</th><th>意義</th></tr></thead>
+      <tbody>
+        <tr><td class="f">mechanism</td><td class="ty">string</td><td>文字描述門檻與 cap（W52 閘門 × 自適應 σ_t × cap 1.5 × 執行層 A2）</td></tr>
+        <tr><td class="f">status</td><td class="ty">string</td><td>LIVE（主系統）／研究對照（槓桿版、tw-semivol）+ 生效日與復審條件</td></tr>
+        <tr><td class="f">leverage</td><td class="ty">string</td><td>僅主系統另有：槓桿段融資假設與市場差異（台股須用期貨）</td></tr>
+        <tr><td class="f">last_change_date / last_change_desc</td><td class="ty">string</td><td>最近一次曝險變動日期與說明（無變動為 null）</td></tr>
+        <tr><td class="f">weights / combined_exposure_us_pct / combined_exposure_tw_pct</td><td class="ty">object/number</td><td>各成分權重、美／台合併曝險百分比</td></tr>
+        <tr><td class="f">tickers</td><td class="ty">object</td><td>逐檔：market／gate／sigma_base_pct／sigma_t_pct／rv20_pct／raw_ratio／levered／sleeve_weight／final_weight_pct／executed_pct／wk_date／wk_close／w52／w104／w250／s104_pos／s250_pos</td></tr>
+        <tr><td class="f">history_us / history_tw</td><td class="ty">array</td><td>逐週歷史：date／source／tickers／combined_pct（tw-only 變體無 history_us）</td></tr>
+      </tbody>
+    </table></div>
+    <p class="dt-note"><b>穩定性</b>：<code>tw_semivol_state.json</code> 另帶 <code>not_a_live_signal</code> 旗標，明確標注非實單訊號僅供研究追蹤；三檔 schema 一致，欄位子集依變體差異。</p>
   </section>
 
   <!-- ══ SEARCH INDEX ══ -->

@@ -158,3 +158,54 @@ Phase 2 commit（獨立於 Phase 0／Phase 1 commit，`--only` 明列 `scripts/s
 - minervini-quality-backtest：無分歧、可快轉，本地 commit `45afcd1` 直接 `git push` 成功（已在 `origin/main`）。
 
 四個 repo 的 nav 副本現皆與 canonical 同步（v7-backtest 的 `full_nav_block("system","bt")`、morning-briefing 的 `brief`/`week`/`earn`、minervini-quality-backtest 的 `us`/`tw` 皆已程式化驗證 byte-identical）。
+
+---
+
+## Phase 3（最後一批）：`how-to.html` 整篇重寫 + `data.html` 補端點（2026-08-23）
+
+**本批完結整個系統區＋指南改版系列。** Phase 0/1/2 處理了 nav 結構與系統主控台落地，本批把站內兩份「說明文件」——使用指南與公開資料端點文件——追上前三個 Phase 的落地結果，是這個系列設計文件的最後一條記錄。
+
+### 8.1 觸發原因
+
+`docs/how-to.html` 的內容早於 Phase 0-2：晨檢段落還在教 `/monitor/`／`/detective/`（未提 `/intel/`），決策鏈段落連到已變成 redirect stub 的 `/research/`／`/pm/`／`/track-record/`，速查表沿用舊四分組（市場層／選股與個股層／行為與實績層／工具與資料層），與 nav 實際的四分組（市場／選股／研究／系統）不同構；`.snapshot` 範例區塊硬編 2026-07-17／18 的截圖數字，每次改版就過期一次。`docs/data.html` 只文件化 8 組端點，停在 intel 世代之前——`/intel/`、`/detective/`、`/monitor/` 長歷史序列、`/pm/`、`/long-track-w52-adaptive/` 家族六個實際存在的端點完全沒有 schema 文件。
+
+### 8.2 `how-to.html` 改動範圍
+
+六段骨架（晨檢／週日定位／一筆真決策完整鏈／平時自動化／站的邊界／速查表）**維持不變**，只換每段的落地動線：
+
+- **§1 晨檢**：首頁四磚點進去的細節頁從 `/monitor/`＋`/detective/` 改為 `/intel/gauges.html`（儀表）＋`/intel/change.html`（變化）；`/detective/` 降級為「從 /intel/change.html 點進去看」的一句話帶過。移除硬編 2026-07-17／18／2025-11-24 三個快照範例的具體數字，改寫成「威脅指針 vs 壓力分數同向／分歧怎麼判斷」的不綁日期教學框架（`.snapshot` 視覺區塊保留，內容改為方法論而非數字）。
+- **§3 決策鏈**：`/flow/` 七步敘事結構原樣保留，連結逐一更新——③深度研究改連 `/t/`（個股研究總覽頁，一頁收斂 DD＋所屬 ID＋供應鏈＋對比）與 `/id/`；④裁決三錨、⑦出場歸帳的帳本連結改 `/long-track/#record`；⑥自動監控的持倉週掃連結改 `/long-track/#positions`。
+- **§4 自動化**：`/cockpit/` 補上四分頁名稱（總覽・天氣陣容／席位排序／流程板機／精選榜），`/data.html` 範例端點加入 `intel/data/status_snapshot.json`。
+- **§5 邊界**：帳本連結同步改 `/long-track/#record`。
+- **速查表**：整表重建為五組——市場（11 列，含新增 `/intel/`、`/briefing/`）／選股（3 列：`/cockpit/`／`/dd-screener/`／`/picks/`）／研究（4 列：`/t/`／`/id/`／Tier Matrix／`/supply-chain/`）／系統（4 列：`/long-track/`／`/backtest/`／`/tools/`／`/data.html`）／頂層獨立頁（3 列：`/mental-models/`／`/flow/`／`/search.html`）——與 nav 四分組同構。欄位從三欄（頁面／用途／使用頻率）擴為四欄（入口／用途／更新頻率／使用時機）；主控台類入口在「入口」欄直接列分頁 hash 直達連結（如 `/cockpit/#seats`、`/t/#dd`、`/long-track/#live`）。`/learn/`（36 課分析框架課程）不在 nav 內、不進速查表，改在 hero lede 補一句話保留可發現性，避免速查表跟 nav 分組脫鉤又要為它開特例。
+
+改寫前後行數：299 → 302 行（六段骨架份量持平，未灌水）。
+
+### 8.3 `data.html` 新增端點
+
+先逐一 `ls`／`python3 -c "json.load"` 驗證檔案存在與 schema 結構，確認 9 個候選路徑全部存在後才動筆（無一為假設）：
+
+| 端點 | 路徑 | 來源 workflow |
+|---|---|---|
+| 跨資產壓力分數・長歷史 | `/monitor/data/score_history.json` | `monitor-daily` 跑 `build_monitor_score.py`（另於 `intel-2-daily` 鏈重算） |
+| 偵測警報網 | `/detective/data/latest.json` | `intel-2-daily` 主跑 ＋ `detective-daily` 備援跑 `build_detective.py` |
+| 情報監視器・現況彙整 | `/intel/data/status_snapshot.json` | `intel-2-daily` 跑 `scripts/intel/render.py` |
+| 裁決實績 | `/track-record/data/latest.json` | 事件驅動，`update_dd_index.py` 連鎖 `build_track_record.py` |
+| 持倉監控旗標 | `/pm/flags.json` | `intel-2-daily` 主跑 ＋ `detective-daily` 備援跑 `build_pm_flags.py` |
+| 實單持倉組合 | `/pm/holdings.json` | `weekly-engine` 跑 `build_holdings.py` |
+| W52 自適應引擎狀態（主系統／槓桿／台股半年化波動三檔） | `/long-track-w52-adaptive/{state,leverage_state,tw_semivol_state}.json` | `update_long_track_w52_adaptive` 依序跑三支 `.py` |
+
+既有 8 組端點順手校正兩處過期敘述：DD Screener 段落「共同資料源」把已變 redirect stub 的 `/research/` 改為 `/t/`；monitor 段落補一句指向新增的 score_history 小節。TOC 從 8 個錨點擴為 15 個。改動後 394 → 575 行（純新增 6 個端點區塊，無刪減）。
+
+### 8.4 驗證
+
+- 自寫 `check_links.py`（掃 `how-to.html` 全部站內 `href` 對 `docs/` 檔案系統，轉址 stub 視為通過）：60 個唯一 href，51 內部＋3 外部（跳過）＋6 純錨點（跳過），**0 個失敗**；同法掃 `data.html`：45 個唯一 href，**0 個失敗**。
+- `python3 scripts/site_nav.py`：`unchanged 1701`（無 `updated`）——確認本批兩檔案的 nav header 在 Phase 2 已是最終狀態，本批只動 body 內容，未觸發任何 nav 重寫。
+- `python3 scripts/qc.py docs/how-to.html docs/data.html`：**0 errors, 0 warnings**。
+- `git status`：僅 `docs/how-to.html`／`docs/data.html` 變動；既有 6 個 DD-gate 髒檔（`DD_UBER_20260808`／`DD_TSM_20260806`／`DD_SNDK_20260806`／`DD_LLY_20260806`／`DD_KLIC_20260806`／`earnings/synthesis_2026-08-20`）延續 Phase 2 判定，全程未觸碰。
+
+### 8.5 Commit 與 push 結果
+
+本批不涉外部 repo（`how-to.html`／`data.html` 為 canonical-only 頁，三個外部 repo 皆無同名檔案）。commit hash 與 push 結果見主報告。
+
+**至此，整個系統區＋指南改版系列（Phase 0 外部樹欠帳 → Phase 1 系統主控台 → Phase 2 nav 瘦身 → Phase 3 指南與資料文件）全部完結，本設計文件不再新增條目。**
