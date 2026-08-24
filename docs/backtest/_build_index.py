@@ -76,26 +76,30 @@ RET = {
     "spy":   [13.84, 5.33, -36.24, 22.65, 13.14, 0.85, 14.17, 29.00, 14.56, 1.29, 13.59, 20.78, -5.25, 31.09, 17.24, 30.51, -18.65, 26.71, 25.59, 18.01, 8.87],
 }
 
+# 2026-08-24 視覺改版：inline style 的背景/文字/邊框色換成全站奶油紙×深海軍藍×金 token
+# （/assets/imq-base.css，由 _index_layout.py 的 <link> 引入），文字/標籤一字不動。四檔語意色：
+# 實單=金／採用·候補=綠／實驗·研究=藍(--accent)／否決·歸檔=紅；DOM 的「支配候選/無效交換」屬
+# L2 判定的警示級距（非採用狀態），改用 --warn（與 --gold 系近但語意分開，見 imq-base.css）。
 TAG = {
-    "atk":  '<span class="tag" style="background:#dcfce7;color:#166534;border:1px solid #86efac">進攻</span>',
+    "atk":  '<span class="tag" style="background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)">進攻</span>',
     "def":  '<span class="tag tag-best">防守</span>',
-    "live": '<span class="tag" style="background:#fffbeb;color:#92400e;border:1px solid #fde68a">實盤 ⚠</span>',
-    "exp":  '<span class="tag" style="background:#fffbeb;color:#92400e;border:1px solid #fde68a">🔬 實驗·未採用</span>',
-    "adopt": '<span class="tag" style="background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0">✓ 採用 · OOS</span>',
-    "live_now": '<span class="tag" style="background:#475569;color:#fff;border:1px solid #475569">舊實倉 · 對照</span>',
-    "adopt_wait": '<span class="tag" style="background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0">✓ 採用 · 待上實倉</span>',
+    "live": '<span class="tag" style="background:var(--gold-bg);color:var(--gold-deep);border:1px solid var(--gold-border)">實盤 ⚠</span>',
+    "exp":  '<span class="tag" style="background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent-border)">🔬 實驗·未採用</span>',
+    "adopt": '<span class="tag" style="background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)">✓ 採用 · OOS</span>',
+    "live_now": '<span class="tag" style="background:var(--grey);color:#fff;border:1px solid var(--grey)">舊實倉 · 對照</span>',
+    "adopt_wait": '<span class="tag" style="background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)">✓ 採用 · 待上實倉</span>',
     "fail": '<span class="tag tag-fail">失敗</span>',
-    "ma":   '<span class="tag" style="background:#f0fdfa;color:#115e59;border:1px solid #99f6e4">多資產</span>',
+    "ma":   '<span class="tag" style="background:var(--neutral-bg);color:var(--text);border:1px solid var(--border)">多資產</span>',
     "bh":   '<span class="tag tag-bh">基準</span>',
 }
 
 # L2 dominance verdicts vs each system's natural benchmark (source: /backtest/criteria/)
 DOM = {
-    "domc":      '<span class="tag" style="background:#fffbeb;color:#92400e;border:1px solid #fde68a">支配候選 ⚠</span>',
+    "domc":      '<span class="tag" style="background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-border)">支配候選 ⚠</span>',
     "neardom":   '<span class="tag tag-best">近支配</span>',
-    "trade":     '<span class="tag" style="background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe">有效交換</span>',
+    "trade":     '<span class="tag" style="background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent-border)">有效交換</span>',
     "mixed":     '<span class="tag tag-bh">混合</span>',
-    "weak":      '<span class="tag" style="background:#fff7ed;color:#9a3412;border:1px solid #fed7aa">無效交換</span>',
+    "weak":      '<span class="tag" style="background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-border)">無效交換</span>',
     "dominated": '<span class="tag tag-fail">被支配</span>',
     "na":        "—",
 }
@@ -123,7 +127,7 @@ GROUPS = [
         ("SPY/ACWX/AGG 雙動能月切換", "/backtest/gem/",
          "SPY/ACWX/AGG 月度切換 · 2026-07 發表後 OOS：發表後(2014~2026)CAGR／Sharpe／Calmar 三維全輸買進持有，全樣本風險調整優勢整包來自 2008 單一事件；絕對動能閘門 6／6 假訊號、拖累 4.5pp／年 · headline 為全樣本(月底基準，見星號)",
          "+8.63%", "-21.54%", "0.68", "0.40", "mixed", "$5.42M*",
-         '<span class="tag" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db">發表後 OOS 未存活</span>'),
+         '<span class="tag" style="background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)">發表後 OOS 未存活</span>'),
     ]),
     ("L1 不合格但角色可用(部位大小解，不豁免門檻)", [
         ("QQQ＋SMH 六狀態機・三態無 Grid", "/backtest/six_state/",
@@ -140,11 +144,11 @@ GROUPS = [
         ("0050 四系統總覽・台股 vs 美股差異", "/backtest/tw_0050_compare/",
          "四系統風險調整排名 + matched-window 檢驗：把美股關進同 2010+ 窗口，連 QQQ B&H 也反贏趨勢 → 「B&H 難敗」主因是樣本無崩盤，非台股特性",
          "—", "—", "—", "—", "na", "—",
-         '<span class="tag" style="background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe">總覽/分析</span>'),
+         '<span class="tag" style="background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent-border)">總覽/分析</span>'),
         ("台股含崩盤樣本 · 趨勢 vs B&H（^TWII/EWT/2330）", "/backtest/tw_crash/",
          "把 2000(−66%)＋2008(−58%)放進樣本，5 系統零調參(OOS):趨勢把 MDD −60〜66% 砍到 −28〜44%、Calmar 全勝 B&H → 證實「B&H 難敗」是 2009+ 無崩盤的樣本假象；為風險調整(尾部)支配，非 CAGR 支配",
          "—", "—", "—", "—", "na", "—",
-         '<span class="tag" style="background:#fef2f2;color:#991b1b;border:1px solid #fecaca">🔬 結論驗證</span>'),
+         '<span class="tag" style="background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent-border)">🔬 結論驗證</span>'),
         ("0050 週線長軌趨勢（移植）", "/backtest/tw_0050_lt/",
          "週線 W52/104/250 score-5 · long only · 0050 上最強趨勢變體：Sharpe 1.10/Calmar 0.68 全面勝 B&H 風險調整(只讓出 CAGR);"
          "贏 STX50/六狀態/雙軌 · 有 W250 暖身偏誤 · CAGR 為 NT$",
@@ -269,8 +273,8 @@ def sys_row(name, url, sub, cagr, mdd, sharpe, calmar, dom_key, final, tag) -> s
 
 
 def group_header(title: str) -> str:
-    return ('<tr><td colspan="8" style="background:#f0f4ff;font-size:.75rem;font-weight:600;'
-            f'color:#1e40af;text-transform:uppercase;letter-spacing:.04em">{title}</td></tr>')
+    return ('<tr><td colspan="8" style="background:var(--accent-bg);font-size:.75rem;font-weight:600;'
+            'color:var(--accent);text-transform:uppercase;letter-spacing:.04em">' + title + '</td></tr>')
 
 
 # =========================================================================

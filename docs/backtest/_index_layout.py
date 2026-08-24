@@ -106,17 +106,20 @@ from site_nav import full_nav_block
 NAV_BLOCK = full_nav_block("system", "bt")
 OUT = Path(__file__).parent / "index.html"
 
-GREEN, RED, GREY = "#16a34a", "#dc2626", "#9ca3af"
+# 2026-08-24 視覺改版：換成全站奶油紙×深海軍藍×金 design token（/assets/imq-base.css）。
+# 四檔語意色與全站一致：實單=金(GOLD) / 採用·候補=綠(GREEN=--pos) / 實驗·研究=藍(BLUE=--accent)
+# / 否決·歸檔=紅(RED=--neg) / 基準=灰(GREY=--sec)。取代原本 --16a34a/--dc2626/--9ca3af 孤立色。
+GREEN, RED, GREY = "#15803d", "#b91c1c", "#6b7a92"
+BLUE, GOLD = "#0d2244", "#8f6d2c"
 
-# the single live card
-# 現役卡片必須掛「當下的實單主系統」。2026-07-18 起美台皆為 W52×自適應 cap 1.5;
-# 前代的 STX50（美）與 E3（台）同日降為對照線,不再佔用現役卡位。
+# 現役卡片改為「引導卡」（2026-08-24）：不再貼會過期的績效快照與執行層參數（曾寫「10pp 門檻＋
+# 5% 取整」，已被 2026-07-22 升格的 20pp/10% 取整＋clamp 150% 取代而變成錯誤陳述）。單一事實
+# 來源改為系統主控台 /long-track/#live，本頁只給一句定位＋連結，不再重複任何會漂移的數字。
 LIVE_CARD = {
-    "name": "QQQ/SMH · W52 × 自適應波動率 cap 1.5", "tag": "實單主系統",
-    "sub": "50/50 QQQ/SMH · 週線 W52 單線閘門 × 自適應 σ 目標 × 曝險上限 150% · "
-           "執行層 10pp 門檻＋5% 取整（2026-07-18 起;前代 STX50 已降為對照）",
-    "cagr": "+14.31%", "mdd": "-25.3%", "sharpe": "1.36", "calmar": "0.567",
-    "url": "/long-track-w52-adaptive/",
+    "tag": "實單主系統",
+    "name": "QQQ/SMH · W52 × 自適應波動率 cap 1.5",
+    "sub": "實單即時淨值、曝險與執行層參數以系統主控台為準——本頁只做研究排名與分類目錄，不重貼會過期的快照數字。",
+    "url": "/long-track/#live",
 }
 
 # ── per-tab directory ────────────────────────────────────────────────────
@@ -300,14 +303,16 @@ DIRECTORY = {
 
 
 def _badge(status):
+    # 四檔語意色（2026-08-24 統一）：否決/失敗/負貢獻/未過 → 紅；實單 → 金；
+    # 其餘（研究/專區/模擬中/觀察/追蹤中/即將，皆屬「實驗·研究」廣義）→ 藍。
     if not status:
         return ""
-    if status in ("否決", "失敗", "負貢獻"):
+    if status in ("否決", "失敗", "負貢獻", "未過"):
         kind = "d"
-    elif status in ("追蹤中", "即將"):
-        kind = "t"
+    elif status == "實單":
+        kind = "g"
     else:
-        kind = "w"
+        kind = "b"
     return f'<span class="b b-{kind}">{status}</span>'
 
 
@@ -325,20 +330,31 @@ def _pill(url, text, status=None, current=False, emph=False):
     return f'<a href="{url}"{cls}>{text}{_badge(status)}</a>'
 
 
-def _dir(tab):
+def _dir(tab, collapsed=True):
+    # collapsed=True（2026-08-24 規格點 4）：目錄整段包進 <details> 移到 tab 最底部，
+    # 一顆連結都不掉，只改容器與位置。macro/scan 兩個「只有連結清單」的 tab（規格點 6）
+    # 例外維持 collapsed=False——那坨 pill 目錄本身就是整個 tab 的內容，收合等於清空頁面。
     rows = ""
     for label, items in DIRECTORY[tab]:
         pills = "".join(_pill(*p) for p in items)
         rows += (f'<div class="dir-row"><div class="dir-lbl">{label}</div>'
                  f'<div class="dir-pills">{pills}</div></div>')
-    return f'<div class="dir">{rows}</div>'
+    dir_html = f'<div class="dir">{rows}</div>'
+    if not collapsed:
+        return dir_html
+    return (f'<details class="dir-details"><summary>本分類全部頁面索引</summary>'
+            f'<div class="d-body">{dir_html}</div></details>')
 
 
 def lane(title):
-    if "採用" in title:
-        return GREEN
+    # 檢查順序刻意：「否決」「實驗」先於「採用」判定，因為「🔬 實驗(未採用)」字面含
+    # 「採用」子字串（未採用）——若採用判定先跑會誤判成綠色（舊版曾有此 bug，2026-08-24 修正）。
     if "否決" in title:
         return RED
+    if "實驗" in title:
+        return BLUE
+    if "候補" in title or "採用" in title:
+        return GREEN
     return GREY
 
 
@@ -355,7 +371,7 @@ def slim_row(name, url, sub, cagr, mdd, sharpe, calmar, dom_key, final, tag, lc)
 
 
 def section_header(title, lc):
-    return (f'<tr><td colspan="6" style="background:#f8fafc;border-left:3px solid {lc};'
+    return (f'<tr><td colspan="6" style="background:var(--neutral-bg);border-left:3px solid {lc};'
             f'font-size:.74rem;font-weight:700;color:#475569;text-transform:uppercase;'
             f'letter-spacing:.04em">{title}</td></tr>')
 
@@ -446,13 +462,7 @@ def render():
   <div class="ac-tag">{c['tag']}</div>
   <div class="ac-name">{c['name']}</div>
   <div class="ac-sub">{c['sub']}</div>
-  <div class="ac-metrics">
-    <div><span>CAGR</span><b style="color:var(--green)">{c['cagr']}</b></div>
-    <div><span>MDD</span><b>{c['mdd']}</b></div>
-    <div><span>Sharpe</span><b>{c['sharpe']}</b></div>
-    <div><span>Calmar</span><b>{c['calmar']}</b></div>
-  </div>
-  <a class="ac-link" href="{c['url']}">詳細頁 →</a>
+  <a class="ac-link" href="{c['url']}">前往系統主控台 →</a>
 </div>
 <div class="acard-note">
   <div class="acn-title">其餘已採用 / 候補(未上實倉)</div>
@@ -475,7 +485,7 @@ def render():
         else:
             main_rows += hdr + body
     bh = "".join(
-        f'<tr style="background:#fafbfc;border-left:3px solid {GREY}"><td>{n}</td><td>{c}</td>'
+        f'<tr style="background:var(--neutral-bg);border-left:3px solid {GREY}"><td>{n}</td><td>{c}</td>'
         f'<td style="color:var(--muted)">{m}</td><td>{cl}</td><td>—</td><td>{idx.TAG["bh"]}</td></tr>'
         for n, c, m, s, cl in idx.BH_ROWS)
 
@@ -490,7 +500,7 @@ def render():
             continue
         full_rows += idx.group_header(title) + "".join(idx.sys_row(*r) for r in items)
     full_rows += idx.group_header("基準(Buy &amp; Hold)") + "".join(
-        f'<tr style="background:#fafbfc"><td>{n}</td><td>{c}</td><td style="color:var(--muted)">{m}</td>'
+        f'<tr style="background:var(--neutral-bg)"><td>{n}</td><td>{c}</td><td style="color:var(--muted)">{m}</td>'
         f'<td>{s}</td><td>{cl}</td><td>—</td><td>—</td><td>{idx.TAG["bh"]}</td></tr>'
         for n, c, m, s, cl in idx.BH_ROWS)
 
@@ -504,18 +514,43 @@ def render():
         if "進攻" in label or "集成" in label:
             return GREEN
         if "B&H" in label:
-            return "#94a3b8"
+            return "#9aa7b8"
         if "雙軌" in label or "做空" in label or "回歸" in label:
             return RED
-        return "#64748b"
+        return GREY
     scatter = [dict(label=l, x=x, y=y, color=scat_color(l)) for l, x, y, _c in idx.SCATTER]
+
+    # 狀態總覽（2026-08-24 新增，規格點 2）：頁首 tabs 下方的第一屏。四個數字由現頁內容
+    # 一次性數過寫死（不建資料鏈）——合格候補=GROUPS「✓採用」+「合格候補」兩組共 6 個系統；
+    # 實驗·研究=全頁 DIRECTORY pill 中標「研究/專區/模擬中/觀察/追蹤中/即將」的不重複頁面共
+    # 54 個（跨六個 tab 的 DIRECTORY 統計，不含未標狀態的一般連結）；否決·歸檔=標「否決/失敗/
+    # 負貢獻/未過」或連結文字含「（歸檔）」的不重複頁面共 15 個。統計方法見
+    # notes/site-internal/root/_redesign_backtest_index_20260824.md。
+    status_overview = """<div class="stat-row">
+  <a class="stat-card stat-live" href="/long-track/#live">
+    <div class="stat-n">1</div><div class="stat-k">實單</div>
+    <div class="stat-d">套 · 系統主控台 →</div>
+  </a>
+  <div class="stat-card stat-cand">
+    <div class="stat-n">6</div><div class="stat-k">合格候補</div>
+    <div class="stat-d">通過 L1 門檻，未上實倉</div>
+  </div>
+  <div class="stat-card stat-exp">
+    <div class="stat-n">54</div><div class="stat-k">實驗・研究</div>
+    <div class="stat-d">探索性頁面，非實倉候選</div>
+  </div>
+  <div class="stat-card stat-rej">
+    <div class="stat-n">15</div><div class="stat-k">否決・歸檔</div>
+    <div class="stat-d">已否決或降級為對照</div>
+  </div>
+</div>"""
 
     html = TEMPLATE
     for k, v in {
-        "%NAV%": NAV_BLOCK,
+        "%NAV%": NAV_BLOCK, "%STATUS_OVERVIEW%": status_overview,
         "%US_DIR%": _dir("us"), "%TW_DIR%": _dir("tw"),
         "%MULTI_DIR%": _dir("multi"), "%LEV_DIR%": _dir("lev"),
-        "%MACRO_DIR%": _dir("macro"), "%SCAN_DIR%": _dir("scan"),
+        "%MACRO_DIR%": _dir("macro", collapsed=False), "%SCAN_DIR%": _dir("scan", collapsed=False),
         "%CARD%": card, "%MAIN_ROWS%": main_rows, "%TAIL_ROWS%": tail_rows, "%BH_ROWS%": bh,
         "%US_RESEARCH%": US_RESEARCH, "%MULTI_RESEARCH%": MULTI_RESEARCH,
         "%PERIOD_ROWS%": period,
@@ -534,24 +569,53 @@ TEMPLATE = r"""<!DOCTYPE html>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>量化回測總覽 | InvestMQuest Research</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="/assets/imq-base.css">
 <style>
-:root{--ink:#1f2937;--text:#374151;--muted:#6b7280;--border:#e5e7eb;--bg:#f7f8fa;--card:#fff;
-      --green:#16a34a;--green-bg:#f0fdf4;--green-border:#bbf7d0;--red:#dc2626;--grey:#9ca3af}
+/* 2026-08-24 視覺改版：全站奶油紙×深海軍藍×金 design token（/assets/imq-base.css）取代原本
+   灰白 generic 配色（--bg:#f7f8fa + 孤立 --green/--red）。以下 :root 只「別名」imq-base 既有
+   token（--ink/--body/--sec/--paper/--line/--accent/--gold*/--pos/--neg/--warn），不重定義其值；
+   保留 --red/--green/--muted/--bg/--border/--text 等舊名是因為 _build_index.py（GROUPS 資料層，
+   不在本次改版範圍）的 Python 內嵌 inline style 仍寫死 var(--red)/var(--green)/var(--muted)，
+   別名讓那些既有 inline style 不必逐一修改就能自動吃到新色，數字/文字內容全部不動。四檔語意色：
+   實單=金(--gold*) / 採用·候補=綠(--pos 別名 --green) / 實驗·研究=藍(--accent) /
+   否決·歸檔=紅(--neg 別名 --red) / 基準=灰(--sec 別名 --grey)。 */
+:root{
+  --text:var(--body); --muted:var(--sec); --border:var(--line); --bg:var(--paper);
+  --green:var(--pos); --green-bg:#eafaef; --green-border:#bfe0c8;
+  --red:var(--neg); --red-bg:#fbeceb; --red-border:#f1c9c6;
+  --grey:var(--sec);
+  --accent-bg:#eef1f6; --accent-border:#ccd3de;
+  --gold-border:#e8d6a8;
+  --warn-bg:#fbf3df; --warn-border:#e8d6a8;
+  --neutral-bg:var(--line-soft);
+}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;font-size:15px}
+body{font-family:var(--sans),-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;font-size:15px}
 a{color:var(--ink);text-decoration:none}a:hover{text-decoration:underline}
 .container{max-width:1080px;margin:0 auto;padding:0 1.5rem}
-.page-hdr{padding:1.5rem 0 1rem;background:#fff;border-bottom:1px solid var(--border)}
-.page-hdr h1{font-size:1.45rem;font-weight:800;letter-spacing:-.03em;color:var(--ink)}
+.page-hdr{padding:1.5rem 0 1rem;background:var(--card);border-bottom:1px solid var(--border)}
+.page-hdr h1{font-family:var(--serif);font-size:1.6rem;font-weight:700;letter-spacing:-.01em;color:var(--ink)}
 .page-hdr .sub{color:var(--muted);font-size:.85rem;margin-top:.15rem}
 .crumb{font-size:.8rem;color:var(--muted);margin-bottom:.35rem}.crumb a{color:var(--muted)}
 .tabs{display:flex;gap:.4rem;margin-top:.9rem;flex-wrap:wrap}
-.tabs a{font-size:.86rem;font-weight:600;padding:.4rem .9rem;border:1px solid var(--border);border-radius:7px;color:var(--muted);background:#fff;cursor:pointer}
+.tabs a{font-size:.86rem;font-weight:600;padding:.4rem .9rem;border:1px solid var(--border);border-radius:7px;color:var(--muted);background:var(--card);cursor:pointer}
 .tabs a:hover{text-decoration:none;border-color:var(--ink)}
-.tabs a.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.tabs a.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 .methods{display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;margin-top:.6rem;font-size:.8rem}
 .methods .m-lbl{font-size:.66rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
-.methods a{padding:.2rem .6rem;background:#eef2ff;border:1px solid #c7d2fe;border-radius:999px;color:#3730a3;font-weight:600}
+.methods a{padding:.2rem .6rem;background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:999px;color:var(--accent);font-weight:600}
+/* 狀態總覽（規格點 2）——tabs 下方第一屏，四張狀態卡，跨 tab 常駐 */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;margin-top:1rem}
+.stat-card{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--grey);border-radius:10px;padding:.75rem .9rem;color:inherit}
+.stat-card .stat-n{font-family:var(--mono);font-size:1.5rem;font-weight:700;color:var(--ink);line-height:1.1}
+.stat-card .stat-k{font-size:.78rem;font-weight:700;color:var(--ink);margin-top:.2rem}
+.stat-card .stat-d{font-size:.7rem;color:var(--muted);margin-top:.15rem}
+.stat-live{border-left-color:var(--gold-deep)}
+.stat-live .stat-n,.stat-live .stat-d{color:var(--gold-deep)}
+.stat-live:hover{border-color:var(--gold-deep);text-decoration:none;box-shadow:var(--sh-1)}
+.stat-cand{border-left-color:var(--green)}
+.stat-exp{border-left-color:var(--accent)}
+.stat-rej{border-left-color:var(--red)}
 .section{padding:1.5rem 0 0}
 .section-title{font-size:1.05rem;font-weight:700;color:var(--ink);margin-bottom:.85rem;padding-bottom:.4rem;border-bottom:1px solid var(--border)}
 .section-sub{font-size:.82rem;color:var(--muted);margin:-.45rem 0 .9rem}
@@ -560,30 +624,30 @@ a{color:var(--ink);text-decoration:none}a:hover{text-decoration:underline}
 .dir-row:first-child{border-top:0}
 .dir-lbl{flex:0 0 5em;font-size:.64rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;padding-top:.4rem}
 .dir-pills{display:flex;flex-wrap:wrap;gap:.32rem;min-width:0}
-.dir-pills a{display:inline-flex;align-items:center;gap:.3rem;padding:.28rem .62rem;background:#eef1f4;color:#374151;border-radius:999px;font-size:.76rem;font-weight:500;white-space:nowrap}
-.dir-pills a:hover{background:#e1e6ea;text-decoration:none}
-.dir-pills a.on{background:linear-gradient(135deg,#081832,#173564);color:#fff;font-weight:600}
-.dir-pills a.entry{background:linear-gradient(135deg,#081832,#173564);color:#fff;font-weight:700}
+.dir-pills a{display:inline-flex;align-items:center;gap:.3rem;padding:.28rem .62rem;background:var(--neutral-bg);color:var(--text);border-radius:999px;font-size:.76rem;font-weight:500;white-space:nowrap}
+.dir-pills a:hover{background:var(--line);text-decoration:none}
+.dir-pills a.on{background:linear-gradient(135deg,var(--accent-ink),var(--accent));color:#fff;font-weight:600}
+.dir-pills a.entry{background:linear-gradient(135deg,var(--accent-ink),var(--accent));color:#fff;font-weight:700}
 .dir-pills a.entry:hover{opacity:.92}
 .b{font-size:.6rem;font-weight:700;padding:.03rem .32rem;border-radius:4px;line-height:1.5}
-.b-d{background:rgba(220,38,38,.12);color:#b42318}
-.b-w{background:rgba(180,118,20,.15);color:#986a12}
-.b-t{background:rgba(37,99,235,.14);color:#1d4ed8}
+.b-d{background:var(--red-bg);color:var(--red)}
+.b-b{background:var(--accent-bg);color:var(--accent)}
+.b-g{background:var(--gold-bg);color:var(--gold-deep)}
 .dir-pills a.on .b,.dir-pills a.entry .b{background:rgba(255,255,255,.22);color:#fff}
-.cta{display:flex;align-items:center;gap:.7rem;background:var(--ink);color:#fff;border-radius:10px;padding:1rem 1.3rem;margin:1.1rem 0;font-weight:700}
+/* 目錄收合（規格點 4）——每個 tab 的 .dir 移到最底部後包一層 details */
+.dir-details{margin:1.1rem 0}
+.dir-details .dir{margin:.75rem 0 0}
+.cta{display:flex;align-items:center;gap:.7rem;background:var(--accent);color:#fff;border-radius:10px;padding:1rem 1.3rem;margin:1.1rem 0;font-weight:700}
 .cta:hover{text-decoration:none;opacity:.94}
 .cta .cta-sub{font-size:.76rem;font-weight:500;color:#cbd5e1;margin-top:.15rem}
 .cta .arr{margin-left:auto;font-size:1.1rem}
 .live-wrap{display:grid;grid-template-columns:1.3fr 1fr;gap:1rem;margin-top:1rem}
-.acard{background:var(--card);border:1px solid var(--green);border-radius:12px;padding:1.2rem 1.3rem;box-shadow:0 0 0 1px var(--green) inset}
-.ac-tag{display:inline-block;font-size:.72rem;font-weight:700;padding:.2rem .6rem;border-radius:99px;margin-bottom:.5rem;background:var(--green);color:#fff}
-.ac-name{font-size:1.3rem;font-weight:800;letter-spacing:-.02em;color:var(--ink)}
-.ac-sub{font-size:.8rem;color:var(--muted);margin:.25rem 0 .9rem}
-.ac-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;margin-bottom:.8rem}
-.ac-metrics > div{text-align:center;background:#fafbfc;border:1px solid var(--border);border-radius:8px;padding:.5rem .3rem}
-.ac-metrics span{display:block;font-size:.64rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
-.ac-metrics b{font-size:1.05rem;font-weight:800;color:var(--ink)}
-.ac-link{font-size:.82rem;font-weight:600;color:var(--green)}
+/* 引導卡（規格點 3）——實單卡不再貼會過期的數字快照，只給定位＋連結 */
+.acard{background:var(--card);border:1px solid var(--gold);border-radius:12px;padding:1.2rem 1.3rem;box-shadow:0 0 0 1px var(--gold) inset;display:flex;flex-direction:column}
+.ac-tag{display:inline-block;font-size:.72rem;font-weight:700;padding:.2rem .6rem;border-radius:99px;margin-bottom:.5rem;background:var(--gold-deep);color:#fff;align-self:flex-start}
+.ac-name{font-family:var(--serif);font-size:1.25rem;font-weight:700;letter-spacing:-.01em;color:var(--ink)}
+.ac-sub{font-size:.84rem;color:var(--sec);margin:.4rem 0 1rem;line-height:1.7}
+.ac-link{font-size:.86rem;font-weight:700;color:var(--gold-deep);margin-top:auto}
 .acard-note{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1.3rem}
 .acn-title{font-size:.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.6rem}
 .acard-note ul{list-style:none;font-size:.84rem;line-height:1.9}
@@ -592,13 +656,13 @@ a{color:var(--ink);text-decoration:none}a:hover{text-decoration:underline}
 .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:.5rem;margin-bottom:1rem;overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:.86rem}
 th,td{text-align:left;padding:.55rem .7rem;border-bottom:1px solid var(--border)}
-th{background:#fafbfc;font-weight:600;font-size:.74rem;text-transform:uppercase;letter-spacing:.03em;color:var(--muted)}
+th{background:var(--neutral-bg);font-weight:600;font-size:.74rem;text-transform:uppercase;letter-spacing:.03em;color:var(--muted)}
 td{font-variant-numeric:tabular-nums}
-tbody tr:hover td{background:#f6f8fb}
-.tag{display:inline-block;padding:.13rem .5rem;border-radius:4px;font-size:.7rem;font-weight:600;white-space:nowrap;background:#f3f4f6;color:#475569;border:1px solid var(--border)}
-.tag-best{background:var(--green-bg);color:#166534;border:1px solid var(--green-border)}
-.tag-fail{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
-.tag-bh{background:#f3f4f6;color:#6b7280;border:1px solid var(--border)}
+tbody tr:hover td{background:#fbf8f1}
+.tag{display:inline-block;padding:.13rem .5rem;border-radius:4px;font-size:.7rem;font-weight:600;white-space:nowrap;background:var(--neutral-bg);color:var(--text);border:1px solid var(--border)}
+.tag-best{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.tag-fail{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+.tag-bh{background:var(--neutral-bg);color:var(--muted);border:1px solid var(--border)}
 .link-card{display:flex;align-items:center;gap:.75rem;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem 1.2rem;margin-bottom:1rem;color:var(--ink)}
 .link-card:hover{border-color:var(--ink);text-decoration:none}
 .link-card .lc-name{font-weight:700;font-size:1rem}.link-card .lc-sub{font-size:.78rem;color:var(--muted)}.link-card .lc-arrow{margin-left:auto;color:var(--ink);font-weight:700}
@@ -612,9 +676,10 @@ details summary{padding:.85rem 1.2rem;font-weight:600;font-size:.9rem;cursor:poi
 details summary::before{content:'▸';color:var(--grey);transition:transform .15s}
 details[open] summary::before{transform:rotate(90deg)}
 details .d-body{padding:0 1.2rem 1.2rem;overflow-x:auto}
-footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);text-align:center;padding:1.2rem 0;font-size:.78rem;margin-top:2rem}
+footer{background:var(--card);border-top:1px solid var(--border);color:var(--muted);text-align:center;padding:1.2rem 0;font-size:.78rem;margin-top:2rem}
 @media(max-width:820px){.live-wrap{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}table{font-size:.76rem}th,td{padding:.4rem .45rem}
-.dir-row{flex-direction:column;gap:.3rem}.dir-lbl{flex-basis:auto;padding-top:0}}
+.dir-row{flex-direction:column;gap:.3rem}.dir-lbl{flex-basis:auto;padding-top:0}
+.stat-row{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
@@ -637,14 +702,13 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
     <a href="/backtest/glossary/">術語對照表</a>
     <a href="/backtest/free_lunch/">分散與免費午餐</a>
   </div>
+  %STATUS_OVERVIEW%
 </div></div>
 
 <div class="container">
 
 <!-- ══════════════ 🇺🇸 美股 ══════════════ -->
 <div class="tabpane" data-tab="us">
-%US_DIR%
-
 <div class="section">
 <h2 class="section-title">現役系統</h2>
 <div class="section-sub">實單攻擊位 2026-07-18 起改為 <a href="/long-track-w52-adaptive/">W52 × 自適應波動率 150%</a>；本表 STX50／E3 為其前身（舊實倉・對照）。其餘採用 / 候補列在右側，未上實倉。</div>
@@ -689,6 +753,11 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <details><summary>逐年報酬表(2006–2026)</summary><div class="d-body">
 <table><thead><tr><th>Year</th>%YEARLY_HEAD%</tr></thead><tbody>%YEARLY_ROWS%</tbody></table></div></details>
 </div>
+
+<div class="section">
+<h2 class="section-title">頁面索引</h2>
+%US_DIR%
+</div>
 </div>
 
 <!-- ══════════════ 🇹🇼 台股 ══════════════ -->
@@ -698,9 +767,13 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
   <span>台股總覽<div class="cta-sub">0050+2330 W52×自適應波動率(實單)· 前代 E3 對照 · 0050 四系統 · 含崩盤驗證 · 完整比較表與圖表</div></span>
   <span class="arr">→</span>
 </a>
-%TW_DIR%
 <div class="section">
 <div class="section-sub">2330/0050 E3 為<b>舊實倉</b>台股攻擊位(NT$，自 2010，不與美股同尺；實單已改用 W52 × 自適應波動率 150%)。波段 / 選擇權 / 日內三線各自獨立追蹤；完整數字見上方「台股總覽」。</div>
+</div>
+
+<div class="section">
+<h2 class="section-title">頁面索引</h2>
+%TW_DIR%
 </div>
 </div>
 
@@ -711,11 +784,15 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
   <span>多資產總覽<div class="cta-sub">唐奇安 / Clenow / SG Trend / 跨資產防守 · 資產池不同，僅供組合互補參照</div></span>
   <span class="arr">→</span>
 </a>
-%MULTI_DIR%
 <div class="section">
 <h2 class="section-title">研究筆記</h2>
 <div class="section-sub">跨資產 / 全球市場的機制與穩健性研究 — 組合層互補缺口與弱基準假象的反例庫。</div>
 %MULTI_RESEARCH%
+</div>
+
+<div class="section">
+<h2 class="section-title">頁面索引</h2>
+%MULTI_DIR%
 </div>
 </div>
 
@@ -726,9 +803,13 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
   <span>槓桿疊加總覽<div class="cta-sub">在現役趨勢引擎上疊加期貨槓桿 / 波動目標 · 換軸互補研究(未採用)</div></span>
   <span class="arr">→</span>
 </a>
-%LEV_DIR%
 <div class="section">
 <div class="section-sub">槓桿疊加皆為研究線(非實盤)：擇時家族全否決，換軸 +ZN+GC 的 E3 閘門 overlay 三窗全勝但仍待 L4 決策。完整數字見上方「槓桿疊加總覽」。</div>
+</div>
+
+<div class="section">
+<h2 class="section-title">頁面索引</h2>
+%LEV_DIR%
 </div>
 </div>
 
@@ -768,19 +849,19 @@ function toNAV(r){var n=[],v=1;for(var i=0;i<r.length;i++){if(r[i]===null){n.pus
 Chart.defaults.font.family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif";Chart.defaults.font.size=11;
 new Chart(document.getElementById('chart-nav'),{type:'line',
  data:{labels:YEARS.map(String),datasets:[
-  {label:'SMH/QQQ STX50(舊實倉)',data:toNAV(RET.smh),borderColor:'#16a34a',borderWidth:2.4,pointRadius:0,tension:.1},
-  {label:'QQQ B&H',data:toNAV(RET.qqq),borderColor:'#94a3b8',borderWidth:1.3,borderDash:[5,3],pointRadius:0,tension:.1},
-  {label:'SPY B&H',data:toNAV(RET.spy),borderColor:'#cbd5e1',borderWidth:1.3,borderDash:[5,3],pointRadius:0,tension:.1}
+  {label:'SMH/QQQ STX50(舊實倉)',data:toNAV(RET.smh),borderColor:'#15803d',borderWidth:2.4,pointRadius:0,tension:.1},
+  {label:'QQQ B&H',data:toNAV(RET.qqq),borderColor:'#9aa7b8',borderWidth:1.3,borderDash:[5,3],pointRadius:0,tension:.1},
+  {label:'SPY B&H',data:toNAV(RET.spy),borderColor:'#c9bfa0',borderWidth:1.3,borderDash:[5,3],pointRadius:0,tension:.1}
  ]},
  options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
   plugins:{legend:{position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'line',padding:10,font:{size:10}}},
    tooltip:{callbacks:{label:function(c){return c.parsed.y===null?null:c.dataset.label+': $'+c.parsed.y.toFixed(2)+'M'}}}},
-  scales:{x:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:10}}},y:{type:'logarithmic',grid:{color:'rgba(0,0,0,.06)'},ticks:{callback:function(v){return '$'+v+'M'},font:{size:10}}}}}});
+  scales:{x:{grid:{color:'rgba(12,21,33,.06)'},ticks:{font:{size:10}}},y:{type:'logarithmic',grid:{color:'rgba(12,21,33,.08)'},ticks:{callback:function(v){return '$'+v+'M'},font:{size:10}}}}}});
 new Chart(document.getElementById('chart-scatter'),{type:'scatter',
  data:{datasets:SCATTER.map(function(p){return {label:p.label,data:[{x:p.x,y:p.y}],backgroundColor:p.color,pointRadius:6,pointHoverRadius:8}})},
  options:{responsive:true,maintainAspectRatio:false,
   plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.dataset.label+': MDD '+c.parsed.x+'% / CAGR '+c.parsed.y+'%'}}}},
-  scales:{x:{title:{display:true,text:'Max Drawdown (%)'},grid:{color:'rgba(0,0,0,.05)'}},y:{title:{display:true,text:'CAGR (%)'},grid:{color:'rgba(0,0,0,.05)'}}}}});
+  scales:{x:{title:{display:true,text:'Max Drawdown (%)'},grid:{color:'rgba(12,21,33,.07)'}},y:{title:{display:true,text:'CAGR (%)'},grid:{color:'rgba(12,21,33,.07)'}}}}});
 (function(){var h=(location.hash||'#us').slice(1);if(!/^(us|tw|multi|lev|macro|scan)$/.test(h))h='us';showTab(h);})();
 </script>
 </body></html>
