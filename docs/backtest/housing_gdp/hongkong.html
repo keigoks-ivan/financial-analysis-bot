@@ -209,6 +209,11 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
   <div class="section-title">47 年的實質房價</div>
   <div class="section-sub">BIS Selected Residential Property Prices，實質（CPI 平減），各年 Q4。這是本研究資料庫裡香港可得的完整歷史。</div>
   <div class="card"><div class="chart-wrap"><canvas id="chart-long"></canvas></div></div>
+  <div class="card">
+    <h4>逐年對照：房價 YoY vs 人均 GDP YoY</h4>
+    <p class="section-sub" style="margin:0 0 .8rem">回答的是：景氣好的那一年，房價是否也漲得多——對應下方因子表的同期相關。</p>
+    <div class="chart-wrap"><canvas id="chart-yoy"></canvas></div>
+  </div>
   <div class="card"><div class="scroll">
   <table><thead><tr><th>分期</th><th class="num">期間</th><th class="num">實質年化</th>
     <th class="num">累計</th><th>說明</th></tr></thead><tbody><tr><td class="lbl">中英談判前的高峰</td><td class="num sub">1979→1981</td><td class="num strong">+6.23%</td><td class="num">+13%</td><td class="why">地產狂潮與土地飆漲，1980–81 年見高</td></tr><tr><td class="lbl">前途問題衝擊</td><td class="num sub">1981→1984</td><td class="num strong">-18.23%</td><td class="num">-45%</td><td class="why">信心危機與利率飆升，3年實質腰斬</td></tr><tr><td class="lbl">聯合聲明後的13年大多頭</td><td class="num sub">1984→1997</td><td class="num strong">+10.45%</td><td class="num">+264%</td><td class="why">聯繫匯率下的低實質利率，實質漲逾兩倍</td></tr><tr><td class="lbl">回歸後的崩盤</td><td class="num sub">1997→2003</td><td class="num strong">-12.17%</td><td class="num">-54%</td><td class="why">亞洲金融風暴、八萬五政策與 SARS，6年實質重挫</td></tr><tr><td class="lbl">自由行與零利率後的復甦</td><td class="num sub">2003→2011</td><td class="num strong">+11.15%</td><td class="num">+133%</td><td class="why">CEPA 與北水南下，疊加美國零利率輸入</td></tr><tr><td class="lbl">辣招年代的續漲</td><td class="num sub">2011→2021</td><td class="num strong">+5.38%</td><td class="num">+69%</td><td class="why">SSD／BSD／DSD 全套加辣，房價仍創歷史新高</td></tr><tr><td class="lbl">撤辣仍跌的回檔</td><td class="num sub">2021→2025</td><td class="num strong">-8.41%</td><td class="num">-30%</td><td class="why">高息、人口外流與 2024 年全面撤辣後續跌</td></tr></tbody></table></div>
@@ -313,13 +318,15 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </div>
 
 </div>
-<footer><div class="container">InvestmQuest 研究・產生於 2026-08-18・
+<footer><div class="container">InvestmQuest 研究・產生於 2026-08-27・
   資料：BIS／IMF WEO／World Bank・
   <a href="/backtest/housing_gdp/">回主頁：因子矩陣</a>・本頁為研究記錄，非投資建議</div></footer>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script>
 const SERIES = {"1979": 46.7, "1980": 56.1, "1981": 52.7, "1982": 38.9, "1983": 30.5, "1984": 28.8, "1985": 33.5, "1986": 36.1, "1987": 40.6, "1988": 48.4, "1989": 51.5, "1990": 52.9, "1991": 74.3, "1992": 79.4, "1993": 83.4, "1994": 88.7, "1995": 74.0, "1996": 87.3, "1997": 104.9, "1998": 65.0, "1999": 64.5, "2000": 58.4, "2001": 52.4, "2002": 47.6, "2003": 48.2, "2004": 62.1, "2005": 66.2, "2006": 67.1, "2007": 78.7, "2008": 73.4, "2009": 88.9, "2010": 105.7, "2011": 112.2, "2012": 134.0, "2013": 139.5, "2014": 148.6, "2015": 155.5, "2016": 160.2, "2017": 179.2, "2018": 184.9, "2019": 185.5, "2020": 186.4, "2021": 189.4, "2022": 160.8, "2023": 145.4, "2024": 131.7, "2025": 133.3};
+const GDP_INDEX = {"1981": 52.7, "1982": 53.5, "1983": 55.7, "1984": 60.4, "1985": 60.0, "1986": 65.9, "1987": 74.1, "1988": 79.6, "1989": 80.6, "1990": 83.3, "1991": 87.1, "1992": 91.4, "1993": 95.2, "1994": 99.0, "1995": 98.9, "1996": 100.0, "1997": 104.3, "1998": 97.2, "1999": 98.8, "2000": 105.2, "2001": 105.5, "2002": 107.4, "2003": 110.1, "2004": 119.1, "2005": 127.2, "2006": 134.8, "2007": 142.8, "2008": 145.3, "2009": 141.0, "2010": 149.4, "2011": 155.3, "2012": 156.6, "2013": 160.5, "2014": 164.1, "2015": 166.7, "2016": 168.8, "2017": 174.3, "2018": 177.5, "2019": 173.7, "2020": 164.4, "2021": 175.7, "2022": 167.6, "2023": 171.7, "2024": 176.8, "2025": 182.8};
+const GDP_YOY = {"1981": 6.67, "1982": 1.33, "1983": 4.22, "1984": 8.36, "1985": -0.56, "1986": 9.78, "1987": 12.41, "1988": 7.41, "1989": 1.32, "1990": 3.35, "1991": 4.55, "1992": 4.88, "1993": 4.25, "1994": 3.9, "1995": -0.07, "1996": 1.12, "1997": 4.29, "1998": -6.84, "1999": 1.65, "2000": 6.51, "2001": 0.33, "2002": 1.76, "2003": 2.52, "2004": 8.16, "2005": 6.77, "2006": 5.98, "2007": 5.98, "2008": 1.72, "2009": -2.95, "2010": 5.95, "2011": 3.95, "2012": 0.83, "2013": 2.53, "2014": 2.2, "2015": 1.6, "2016": 1.26, "2017": 3.28, "2018": 1.8, "2019": -2.13, "2020": -5.32, "2021": 6.86, "2022": -4.61, "2023": 2.45, "2024": 2.97, "2025": 3.36};
 const PEERS = {"香港": {"2001": 100.0, "2002": 90.9, "2003": 92.0, "2004": 118.5, "2005": 126.5, "2006": 128.2, "2007": 150.4, "2008": 140.2, "2009": 169.8, "2010": 201.8, "2011": 214.2, "2012": 256.0, "2013": 266.4, "2014": 283.8, "2015": 297.1, "2016": 306.0, "2017": 342.3, "2018": 353.2, "2019": 354.3, "2020": 356.0, "2021": 361.7, "2022": 307.0, "2023": 277.7, "2024": 251.6, "2025": 254.5}, "台灣": {"2001": 100.0, "2002": 103.0, "2003": 110.6, "2004": 123.7, "2005": 131.0, "2006": 145.0, "2007": 145.6, "2008": 142.9, "2009": 168.4, "2010": 192.8, "2011": 207.5, "2012": 224.0, "2013": 257.0, "2014": 260.9, "2015": 250.0, "2016": 242.7, "2017": 244.0, "2018": 248.8, "2019": 253.8, "2020": 270.3, "2021": 302.0, "2022": 316.5, "2023": 332.8, "2024": 360.0, "2025": 342.5}, "南韓": {"2001": 100.0, "2002": 113.3, "2003": 116.6, "2004": 110.2, "2005": 111.3, "2006": 119.1, "2007": 121.2, "2008": 120.6, "2009": 118.5, "2010": 116.7, "2011": 120.2, "2012": 118.5, "2013": 117.4, "2014": 118.7, "2015": 122.7, "2016": 122.7, "2017": 122.5, "2018": 124.2, "2019": 123.9, "2020": 132.2, "2021": 147.8, "2022": 140.3, "2023": 128.1, "2024": 125.9, "2025": 123.8}, "新加坡": {"2001": 100.0, "2002": 98.1, "2003": 95.4, "2004": 94.7, "2005": 97.3, "2006": 106.6, "2007": 134.1, "2008": 120.8, "2009": 123.8, "2010": 140.0, "2011": 140.5, "2012": 138.9, "2013": 137.6, "2014": 132.1, "2015": 128.2, "2016": 124.2, "2017": 125.0, "2018": 134.1, "2019": 136.8, "2020": 140.0, "2021": 149.3, "2022": 152.1, "2023": 156.2, "2024": 160.0, "2025": 163.4}, "日本": {"2001": 100.0, "2002": 94.9, "2003": 89.1, "2004": 83.5, "2005": 80.6, "2006": 78.6, "2007": 77.7, "2008": 74.9, "2009": 74.3, "2010": 76.0, "2011": 75.5, "2012": 75.3, "2013": 76.3, "2014": 74.9, "2015": 76.1, "2016": 77.8, "2017": 78.8, "2018": 80.1, "2019": 80.4, "2020": 82.5, "2021": 87.6, "2022": 90.7, "2023": 90.0, "2024": 89.8, "2025": 91.9}};
 const COL = {"日本": "#dc2626", "美國": "#2a78d6", "台灣": "#eb6834", "南韓": "#1baf7a", "德國": "#7c3aed", "英國": "#d97706", "加拿大": "#0891b2", "澳洲": "#0f766e", "馬來西亞": "#be185d", "紐西蘭": "#9333ea", "泰國": "#ca8a04", "新加坡": "#0284c7", "愛爾蘭": "#15803d", "西班牙": "#b91c1c", "荷蘭": "#ea580c", "印尼": "#7c2d12", "義大利": "#c026d3", "丹麥": "#dc2670", "土耳其": "#b91c8c", "希臘": "#1e40af", "巴西": "#059669", "奧地利": "#65a30d", "挪威": "#0369a1", "波蘭": "#be123c", "葡萄牙": "#166534", "南非": "#b45309"};
 const ME = "香港";
@@ -329,12 +336,44 @@ new Chart(document.getElementById('chart-long'), {
   data:{labels:yrs, datasets:[{
     label:'實質房價指數（2010=100）', data:yrs.map(y=>SERIES[y]),
     borderColor:COL[ME]||'#2a78d6', backgroundColor:'rgba(42,120,214,.08)',
-    borderWidth:2, pointRadius:0, pointHoverRadius:5, fill:true, tension:.15 }]},
+    borderWidth:2, pointRadius:0, pointHoverRadius:5, fill:true, tension:.15
+  },{
+    label:'實質人均 GDP（同起點）', data:yrs.map(y=>GDP_INDEX[y]??null),
+    borderColor:'#9aa2ad', borderWidth:2, borderDash:[5,4], pointRadius:0,
+    pointHoverRadius:4, fill:false, spanGaps:true, tension:.15
+  }]},
   options:{responsive:true,maintainAspectRatio:false,
     scales:{x:{grid:{display:false},ticks:{maxTicksLimit:14}},
              y:{grid:{color:'#eceef1'},title:{display:true,text:'實質指數（2010=100）'}}},
-    plugins:{legend:{display:false},
-      tooltip:{callbacks:{label:c=>`${c.label} 年：${c.parsed.y}`}}}}
+    plugins:{legend:{display:true,position:'top',labels:{usePointStyle:true,boxWidth:8}},
+      tooltip:{callbacks:{
+        title:c=>`${c[0].label} 年`,
+        label:c=>`${c.dataset.label}：${c.parsed.y!=null?c.parsed.y.toFixed(1):'—'}`}}}}
+});
+new Chart(document.getElementById('chart-yoy'), {
+  type:'bar',
+  data:{labels:yrs, datasets:[{
+    type:'bar',
+    label:'實質房價 YoY', order:2,
+    data:yrs.map((y,i)=>i>0 && SERIES[yrs[i-1]]!=null && SERIES[y]!=null
+      ? (SERIES[y]/SERIES[yrs[i-1]]-1)*100 : null),
+    backgroundColor:(COL[ME]||'#2a78d6')+'99', borderWidth:0
+  },{
+    type:'line',
+    label:'實質人均 GDP YoY', order:1,
+    data:yrs.map(y=>GDP_YOY[y]??null),
+    borderColor:'#4b5563', borderWidth:2, pointRadius:0, pointHoverRadius:4,
+    spanGaps:true, tension:.15, fill:false
+  }]},
+  options:{responsive:true,maintainAspectRatio:false,
+    scales:{x:{grid:{display:false},ticks:{maxTicksLimit:14}},
+             y:{grid:{color:ctx=>ctx.tick.value===0?'#9ca3af':'#eceef1',
+                       lineWidth:ctx=>ctx.tick.value===0?1.4:1},
+                title:{display:true,text:'YoY %'}}},
+    plugins:{legend:{display:true,position:'top',labels:{usePointStyle:true,boxWidth:8}},
+      tooltip:{callbacks:{
+        title:c=>`${c[0].label} 年`,
+        label:c=>`${c.dataset.label}：${c.parsed.y!=null?c.parsed.y.toFixed(1)+'%':'—'}`}}}}
 });
 const XC = null;
 if (XC) {

@@ -209,6 +209,11 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
   <div class="section-title">16 年的實質房價</div>
   <div class="section-sub">BIS Selected Residential Property Prices，實質（CPI 平減），各年 Q4。這是本研究資料庫裡波蘭可得的完整歷史。</div>
   <div class="card"><div class="chart-wrap"><canvas id="chart-long"></canvas></div></div>
+  <div class="card">
+    <h4>逐年對照：房價 YoY vs 人均 GDP YoY</h4>
+    <p class="section-sub" style="margin:0 0 .8rem">回答的是：景氣好的那一年，房價是否也漲得多——對應下方因子表的同期相關。</p>
+    <div class="chart-wrap"><canvas id="chart-yoy"></canvas></div>
+  </div>
   <div class="card"><div class="scroll">
   <table><thead><tr><th>分期</th><th class="num">期間</th><th class="num">實質年化</th>
     <th class="num">累計</th><th>說明</th></tr></thead><tbody><tr><td class="lbl">後金融海嘯修正：供給過剩疊上房貸信用緊縮</td><td class="num sub">2010→2013</td><td class="num strong">-5.35%</td><td class="num">-15%</td><td class="why">2008年金融海嘯後餘波未平，疊上KNF（波蘭金融監理委員會）2010年建議T、2011年建議S修正案收緊房貸信用標準（外幣房貸月付／所得比上限42%），實質房價3年累計腰斬式修正</td></tr><tr><td class="lbl">歐盟趨同期：8年穩健多頭</td><td class="num sub">2013→2021</td><td class="num strong">+3.93%</td><td class="num">+36%</td><td class="why">後危機信用緊縮消化完畢，波蘭經濟持續追趕歐盟平均所得水準，實質房價8年穩健上漲，2021年見頂</td></tr><tr><td class="lbl">升息循環與俄烏戰爭衝擊：單年回檔</td><td class="num sub">2021→2022</td><td class="num strong">-6.88%</td><td class="num">-7%</td><td class="why">NBP（波蘭央行）2021年10月啟動升息循環，疊上2022年2月俄羅斯入侵烏克蘭的邊境經濟體衝擊，實質房價單年回檔近7%</td></tr><tr><td class="lbl">Bezpieczny Kredyt 2%補貼房貸與NBP降息：3年反彈</td><td class="num sub">2022→2025</td><td class="num strong">+4.49%</td><td class="num">+14%</td><td class="why">2023年7月上路的Bezpieczny Kredyt 2%補貼房貸（10年期利差補貼，有效利率降至2%）疊上NBP同年9月啟動降息，實質房價3年反彈逾一成</td></tr></tbody></table></div>
@@ -303,13 +308,15 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </div>
 
 </div>
-<footer><div class="container">InvestmQuest 研究・產生於 2026-08-18・
+<footer><div class="container">InvestmQuest 研究・產生於 2026-08-27・
   資料：BIS／IMF WEO／World Bank・
   <a href="/backtest/housing_gdp/">回主頁：因子矩陣</a>・本頁為研究記錄，非投資建議</div></footer>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script>
 const SERIES = {"2010": 99.3, "2011": 94.2, "2012": 87.4, "2013": 84.2, "2014": 85.9, "2015": 87.4, "2016": 90.7, "2017": 92.1, "2018": 97.6, "2019": 104.1, "2020": 110.4, "2021": 114.6, "2022": 106.7, "2023": 113.7, "2024": 119.6, "2025": 121.8};
+const GDP_INDEX = {"2010": 99.3, "2011": 104.5, "2012": 106.0, "2013": 106.8, "2014": 111.1, "2015": 116.0, "2016": 119.6, "2017": 125.8, "2018": 133.6, "2019": 139.7, "2020": 137.0, "2021": 150.0, "2022": 158.7, "2023": 159.6, "2024": 165.0, "2025": 171.5};
+const GDP_YOY = {"2010": 3.51, "2011": 5.19, "2012": 1.5, "2013": 0.7, "2014": 4.02, "2015": 4.43, "2016": 3.11, "2017": 5.18, "2018": 6.19, "2019": 4.61, "2020": -1.96, "2021": 9.45, "2022": 5.82, "2023": 0.57, "2024": 3.37, "2025": 3.95};
 const PEERS = {"土耳其": {"2010": 100.0, "2011": 99.9, "2012": 104.0, "2013": 108.7, "2014": 113.4, "2015": 121.3, "2016": 125.9, "2017": 123.0, "2018": 107.4, "2019": 105.0, "2020": 121.4, "2021": 144.0, "2022": 219.5, "2023": 252.7, "2024": 221.5, "2025": 219.8}, "印尼": {"2010": 100.0, "2011": 100.9, "2012": 103.7, "2013": 107.1, "2014": 106.9, "2015": 106.7, "2016": 105.7, "2017": 105.7, "2018": 105.2, "2019": 103.5, "2020": 103.1, "2021": 102.5, "2022": 99.0, "2023": 98.0, "2024": 97.8, "2025": 95.9}, "德國": {"2010": 100.0, "2011": 99.9, "2012": 101.2, "2013": 102.2, "2014": 105.2, "2015": 110.8, "2016": 119.0, "2017": 124.6, "2018": 129.8, "2019": 136.6, "2020": 148.7, "2021": 160.0, "2022": 143.7, "2023": 128.2, "2024": 127.6, "2025": 128.1}, "愛爾蘭": {"2010": 100.0, "2011": 78.3, "2012": 73.7, "2013": 77.6, "2014": 92.9, "2015": 99.4, "2016": 107.9, "2017": 120.0, "2018": 127.8, "2019": 127.5, "2020": 129.9, "2021": 140.5, "2022": 140.2, "2023": 138.4, "2024": 149.8, "2025": 155.7}, "美國": {"2010": 100.0, "2011": 95.9, "2012": 101.6, "2013": 110.3, "2014": 114.2, "2015": 119.9, "2016": 124.1, "2017": 128.9, "2018": 132.0, "2019": 135.1, "2020": 146.2, "2021": 160.2, "2022": 159.8, "2023": 163.2, "2024": 164.4, "2025": 161.6}};
 const COL = {"日本": "#dc2626", "美國": "#2a78d6", "台灣": "#eb6834", "南韓": "#1baf7a", "德國": "#7c3aed", "英國": "#d97706", "加拿大": "#0891b2", "澳洲": "#0f766e", "馬來西亞": "#be185d", "紐西蘭": "#9333ea", "泰國": "#ca8a04", "新加坡": "#0284c7", "愛爾蘭": "#15803d", "西班牙": "#b91c1c", "荷蘭": "#ea580c", "印尼": "#7c2d12", "義大利": "#c026d3", "丹麥": "#dc2670", "土耳其": "#b91c8c", "希臘": "#1e40af", "巴西": "#059669", "奧地利": "#65a30d", "挪威": "#0369a1", "波蘭": "#be123c", "葡萄牙": "#166534", "南非": "#b45309"};
 const ME = "波蘭";
@@ -319,12 +326,44 @@ new Chart(document.getElementById('chart-long'), {
   data:{labels:yrs, datasets:[{
     label:'實質房價指數（2010=100）', data:yrs.map(y=>SERIES[y]),
     borderColor:COL[ME]||'#2a78d6', backgroundColor:'rgba(42,120,214,.08)',
-    borderWidth:2, pointRadius:0, pointHoverRadius:5, fill:true, tension:.15 }]},
+    borderWidth:2, pointRadius:0, pointHoverRadius:5, fill:true, tension:.15
+  },{
+    label:'實質人均 GDP（同起點）', data:yrs.map(y=>GDP_INDEX[y]??null),
+    borderColor:'#9aa2ad', borderWidth:2, borderDash:[5,4], pointRadius:0,
+    pointHoverRadius:4, fill:false, spanGaps:true, tension:.15
+  }]},
   options:{responsive:true,maintainAspectRatio:false,
     scales:{x:{grid:{display:false},ticks:{maxTicksLimit:14}},
              y:{grid:{color:'#eceef1'},title:{display:true,text:'實質指數（2010=100）'}}},
-    plugins:{legend:{display:false},
-      tooltip:{callbacks:{label:c=>`${c.label} 年：${c.parsed.y}`}}}}
+    plugins:{legend:{display:true,position:'top',labels:{usePointStyle:true,boxWidth:8}},
+      tooltip:{callbacks:{
+        title:c=>`${c[0].label} 年`,
+        label:c=>`${c.dataset.label}：${c.parsed.y!=null?c.parsed.y.toFixed(1):'—'}`}}}}
+});
+new Chart(document.getElementById('chart-yoy'), {
+  type:'bar',
+  data:{labels:yrs, datasets:[{
+    type:'bar',
+    label:'實質房價 YoY', order:2,
+    data:yrs.map((y,i)=>i>0 && SERIES[yrs[i-1]]!=null && SERIES[y]!=null
+      ? (SERIES[y]/SERIES[yrs[i-1]]-1)*100 : null),
+    backgroundColor:(COL[ME]||'#2a78d6')+'99', borderWidth:0
+  },{
+    type:'line',
+    label:'實質人均 GDP YoY', order:1,
+    data:yrs.map(y=>GDP_YOY[y]??null),
+    borderColor:'#4b5563', borderWidth:2, pointRadius:0, pointHoverRadius:4,
+    spanGaps:true, tension:.15, fill:false
+  }]},
+  options:{responsive:true,maintainAspectRatio:false,
+    scales:{x:{grid:{display:false},ticks:{maxTicksLimit:14}},
+             y:{grid:{color:ctx=>ctx.tick.value===0?'#9ca3af':'#eceef1',
+                       lineWidth:ctx=>ctx.tick.value===0?1.4:1},
+                title:{display:true,text:'YoY %'}}},
+    plugins:{legend:{display:true,position:'top',labels:{usePointStyle:true,boxWidth:8}},
+      tooltip:{callbacks:{
+        title:c=>`${c[0].label} 年`,
+        label:c=>`${c.dataset.label}：${c.parsed.y!=null?c.parsed.y.toFixed(1)+'%':'—'}`}}}}
 });
 const XC = null;
 if (XC) {

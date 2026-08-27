@@ -209,6 +209,11 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
   <div class="section-title">29 年的實質房價</div>
   <div class="section-sub">BIS Selected Residential Property Prices，實質（CPI 平減），各年 Q4。這是本研究資料庫裡希臘可得的完整歷史。</div>
   <div class="card"><div class="chart-wrap"><canvas id="chart-long"></canvas></div></div>
+  <div class="card">
+    <h4>逐年對照：房價 YoY vs 人均 GDP YoY</h4>
+    <p class="section-sub" style="margin:0 0 .8rem">回答的是：景氣好的那一年，房價是否也漲得多——對應下方因子表的同期相關。</p>
+    <div class="chart-wrap"><canvas id="chart-yoy"></canvas></div>
+  </div>
   <div class="card"><div class="scroll">
   <table><thead><tr><th>分期</th><th class="num">期間</th><th class="num">實質年化</th>
     <th class="num">累計</th><th>說明</th></tr></thead><tbody><tr><td class="lbl">入歐前奏</td><td class="num sub">1997→2001</td><td class="num strong">+8.03%</td><td class="num">+36%</td><td class="why">德拉克馬盯住歐元與利率收斂，實質房價穩步上行</td></tr><tr><td class="lbl">入歐後信用擴張與雅典奧運</td><td class="num sub">2001→2006</td><td class="num strong">+5.63%</td><td class="num">+31%</td><td class="why">2001年加入歐元區、2004年雅典奧運基建潮，實質房價漲至歷史高點</td></tr><tr><td class="lbl">海嘯前奏的溫和回落</td><td class="num sub">2006→2009</td><td class="num strong">-3.11%</td><td class="num">-9%</td><td class="why">全球金融海嘯衝擊前，漲勢先行降溫</td></tr><tr><td class="lbl">主權債務危機與三次紓困</td><td class="num sub">2009→2017</td><td class="num strong">-6.62%</td><td class="num">-42%</td><td class="why">2010、2012、2015年三度紓困，撙節與2015年資本管制，實質房價連跌8年、腰斬有餘</td></tr><tr><td class="lbl">紓困結束後的復甦</td><td class="num sub">2017→2025</td><td class="num strong">+5.63%</td><td class="num">+55%</td><td class="why">2018年紓困計畫結束，改革政府與外資買盤（含黃金簽證）推動連年回升，惟疫情期一度暫緩</td></tr></tbody></table></div>
@@ -313,13 +318,15 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </div>
 
 </div>
-<footer><div class="container">InvestmQuest 研究・產生於 2026-08-18・
+<footer><div class="container">InvestmQuest 研究・產生於 2026-08-27・
   資料：BIS／IMF WEO／World Bank・
   <a href="/backtest/housing_gdp/">回主頁：因子矩陣</a>・本頁為研究記錄，非投資建議</div></footer>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script>
 const SERIES = {"1997": 66.3, "1998": 71.4, "1999": 75.8, "2000": 81.5, "2001": 90.3, "2002": 98.2, "2003": 98.3, "2004": 98.9, "2005": 107.9, "2006": 118.7, "2007": 117.3, "2008": 114.7, "2009": 108.0, "2010": 95.6, "2011": 86.8, "2012": 74.9, "2013": 69.2, "2014": 66.6, "2015": 63.6, "2016": 63.2, "2017": 62.4, "2018": 63.7, "2019": 68.4, "2020": 72.0, "2021": 75.9, "2022": 80.1, "2023": 87.2, "2024": 91.4, "2025": 96.7};
+const GDP_INDEX = {"1997": 66.3, "1998": 68.1, "1999": 69.6, "2000": 72.3, "2001": 75.2, "2002": 78.4, "2003": 82.7, "2004": 87.0, "2005": 87.8, "2006": 93.1, "2007": 96.1, "2008": 96.0, "2009": 91.8, "2010": 86.4, "2011": 77.8, "2012": 71.6, "2013": 70.5, "2014": 71.5, "2015": 71.8, "2016": 72.3, "2017": 73.5, "2018": 75.2, "2019": 77.1, "2020": 70.0, "2021": 76.4, "2022": 82.3, "2023": 84.4, "2024": 86.5, "2025": 88.3};
+const GDP_YOY = {"1997": 3.2, "1998": 2.78, "1999": 2.17, "2000": 3.83, "2001": 4.12, "2002": 4.2, "2003": 5.53, "2004": 5.17, "2005": 0.92, "2006": 6.06, "2007": 3.21, "2008": -0.13, "2009": -4.39, "2010": -5.9, "2011": -9.93, "2012": -7.99, "2013": -1.57, "2014": 1.51, "2015": 0.43, "2016": 0.69, "2017": 1.65, "2018": 2.36, "2019": 2.45, "2020": -9.15, "2021": 9.11, "2022": 7.69, "2023": 2.57, "2024": 2.47, "2025": 2.14};
 const PEERS = {"希臘": {"1997": 100.0, "1998": 107.7, "1999": 114.4, "2000": 123.0, "2001": 136.2, "2002": 148.2, "2003": 148.3, "2004": 149.2, "2005": 162.8, "2006": 179.1, "2007": 177.0, "2008": 173.0, "2009": 162.9, "2010": 144.2, "2011": 131.0, "2012": 113.0, "2013": 104.4, "2014": 100.4, "2015": 95.9, "2016": 95.3, "2017": 94.1, "2018": 96.1, "2019": 103.2, "2020": 108.7, "2021": 114.5, "2022": 120.8, "2023": 131.5, "2024": 137.9, "2025": 145.9}, "義大利": {"1997": 100.0, "1998": 98.2, "1999": 97.7, "2000": 99.8, "2001": 104.7, "2002": 112.1, "2003": 116.1, "2004": 122.3, "2005": 127.8, "2006": 132.6, "2007": 135.3, "2008": 132.3, "2009": 131.1, "2010": 129.3, "2011": 125.7, "2012": 116.6, "2013": 109.1, "2014": 103.8, "2015": 101.5, "2016": 101.6, "2017": 99.4, "2018": 97.5, "2019": 97.4, "2020": 99.2, "2021": 99.6, "2022": 91.5, "2023": 92.2, "2024": 95.2, "2025": 97.9}, "西班牙": {"1997": 100.0, "1998": 105.2, "1999": 112.2, "2000": 116.2, "2001": 125.7, "2002": 141.8, "2003": 163.7, "2004": 185.5, "2005": 201.9, "2006": 219.5, "2007": 223.2, "2008": 206.4, "2009": 197.1, "2010": 189.5, "2011": 160.9, "2012": 136.2, "2013": 127.5, "2014": 130.4, "2015": 136.4, "2016": 141.0, "2017": 149.0, "2018": 156.3, "2019": 161.3, "2020": 165.2, "2021": 166.0, "2022": 164.2, "2023": 165.9, "2024": 180.4, "2025": 197.7}, "愛爾蘭": {"1997": 100.0, "1998": 118.7, "1999": 135.1, "2000": 144.3, "2001": 139.5, "2002": 152.0, "2003": 169.4, "2004": 183.6, "2005": 197.7, "2006": 217.1, "2007": 210.1, "2008": 180.1, "2009": 154.9, "2010": 132.9, "2011": 104.0, "2012": 98.0, "2013": 103.2, "2014": 123.4, "2015": 132.1, "2016": 143.4, "2017": 159.5, "2018": 169.9, "2019": 169.5, "2020": 172.6, "2021": 186.7, "2022": 186.3, "2023": 183.9, "2024": 199.0, "2025": 206.9}, "葡萄牙": {"1997": 100.0, "1998": 101.8, "1999": 109.0, "2000": 114.0, "2001": 112.4, "2002": 108.3, "2003": 107.2, "2004": 105.2, "2005": 106.2, "2006": 104.5, "2007": 100.9, "2008": 91.7, "2009": 94.5, "2010": 91.5, "2011": 81.5, "2012": 76.7, "2013": 77.2, "2014": 79.0, "2015": 82.5, "2016": 88.1, "2017": 95.9, "2018": 103.9, "2019": 114.4, "2020": 123.7, "2021": 134.9, "2022": 136.7, "2023": 144.9, "2024": 157.6, "2025": 183.2}};
 const COL = {"日本": "#dc2626", "美國": "#2a78d6", "台灣": "#eb6834", "南韓": "#1baf7a", "德國": "#7c3aed", "英國": "#d97706", "加拿大": "#0891b2", "澳洲": "#0f766e", "馬來西亞": "#be185d", "紐西蘭": "#9333ea", "泰國": "#ca8a04", "新加坡": "#0284c7", "愛爾蘭": "#15803d", "西班牙": "#b91c1c", "荷蘭": "#ea580c", "印尼": "#7c2d12", "義大利": "#c026d3", "丹麥": "#dc2670", "土耳其": "#b91c8c", "希臘": "#1e40af", "巴西": "#059669", "奧地利": "#65a30d", "挪威": "#0369a1", "波蘭": "#be123c", "葡萄牙": "#166534", "南非": "#b45309"};
 const ME = "希臘";
@@ -329,12 +336,44 @@ new Chart(document.getElementById('chart-long'), {
   data:{labels:yrs, datasets:[{
     label:'實質房價指數（2010=100）', data:yrs.map(y=>SERIES[y]),
     borderColor:COL[ME]||'#2a78d6', backgroundColor:'rgba(42,120,214,.08)',
-    borderWidth:2, pointRadius:0, pointHoverRadius:5, fill:true, tension:.15 }]},
+    borderWidth:2, pointRadius:0, pointHoverRadius:5, fill:true, tension:.15
+  },{
+    label:'實質人均 GDP（同起點）', data:yrs.map(y=>GDP_INDEX[y]??null),
+    borderColor:'#9aa2ad', borderWidth:2, borderDash:[5,4], pointRadius:0,
+    pointHoverRadius:4, fill:false, spanGaps:true, tension:.15
+  }]},
   options:{responsive:true,maintainAspectRatio:false,
     scales:{x:{grid:{display:false},ticks:{maxTicksLimit:14}},
              y:{grid:{color:'#eceef1'},title:{display:true,text:'實質指數（2010=100）'}}},
-    plugins:{legend:{display:false},
-      tooltip:{callbacks:{label:c=>`${c.label} 年：${c.parsed.y}`}}}}
+    plugins:{legend:{display:true,position:'top',labels:{usePointStyle:true,boxWidth:8}},
+      tooltip:{callbacks:{
+        title:c=>`${c[0].label} 年`,
+        label:c=>`${c.dataset.label}：${c.parsed.y!=null?c.parsed.y.toFixed(1):'—'}`}}}}
+});
+new Chart(document.getElementById('chart-yoy'), {
+  type:'bar',
+  data:{labels:yrs, datasets:[{
+    type:'bar',
+    label:'實質房價 YoY', order:2,
+    data:yrs.map((y,i)=>i>0 && SERIES[yrs[i-1]]!=null && SERIES[y]!=null
+      ? (SERIES[y]/SERIES[yrs[i-1]]-1)*100 : null),
+    backgroundColor:(COL[ME]||'#2a78d6')+'99', borderWidth:0
+  },{
+    type:'line',
+    label:'實質人均 GDP YoY', order:1,
+    data:yrs.map(y=>GDP_YOY[y]??null),
+    borderColor:'#4b5563', borderWidth:2, pointRadius:0, pointHoverRadius:4,
+    spanGaps:true, tension:.15, fill:false
+  }]},
+  options:{responsive:true,maintainAspectRatio:false,
+    scales:{x:{grid:{display:false},ticks:{maxTicksLimit:14}},
+             y:{grid:{color:ctx=>ctx.tick.value===0?'#9ca3af':'#eceef1',
+                       lineWidth:ctx=>ctx.tick.value===0?1.4:1},
+                title:{display:true,text:'YoY %'}}},
+    plugins:{legend:{display:true,position:'top',labels:{usePointStyle:true,boxWidth:8}},
+      tooltip:{callbacks:{
+        title:c=>`${c[0].label} 年`,
+        label:c=>`${c.dataset.label}：${c.parsed.y!=null?c.parsed.y.toFixed(1)+'%':'—'}`}}}}
 });
 const XC = null;
 if (XC) {

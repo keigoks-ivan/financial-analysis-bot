@@ -209,6 +209,11 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
   <div class="section-title">51 年的實質房價</div>
   <div class="section-sub">BIS Selected Residential Property Prices，實質（CPI 平減），各年 Q4。這是本研究資料庫裡南韓可得的完整歷史。</div>
   <div class="card"><div class="chart-wrap"><canvas id="chart-long"></canvas></div></div>
+  <div class="card">
+    <h4>逐年對照：房價 YoY vs 人均 GDP YoY</h4>
+    <p class="section-sub" style="margin:0 0 .8rem">回答的是：景氣好的那一年，房價是否也漲得多——對應下方因子表的同期相關。</p>
+    <div class="chart-wrap"><canvas id="chart-yoy"></canvas></div>
+  </div>
   <div class="card"><div class="scroll">
   <table><thead><tr><th>分期</th><th class="num">期間</th><th class="num">實質年化</th>
     <th class="num">累計</th><th>說明</th></tr></thead><tbody><tr><td class="lbl">高成長與都市化</td><td class="num sub">1975→1986</td><td class="num strong">+4.96%</td><td class="num">+70%</td><td class="why">重化工業化與首都圈人口集中，實質房價穩步上行</td></tr><tr><td class="lbl">三低好景與泡沫</td><td class="num sub">1986→1990</td><td class="num strong">+6.37%</td><td class="num">+28%</td><td class="why">低油價、低利率、低韓元帶來的資產狂潮，4年見頂</td></tr><tr><td class="lbl">二百萬戶建設後的補跌</td><td class="num sub">1990→1995</td><td class="num strong">-7.16%</td><td class="num">-31%</td><td class="why">盧泰愚二百萬戶住宅計畫供給湧現，房價連年實質下跌</td></tr><tr><td class="lbl">亞洲金融風暴</td><td class="num sub">1995→1998</td><td class="num strong">-8.18%</td><td class="num">-23%</td><td class="why">IMF 紓困與企業倒閉潮，實質房價再探底</td></tr><tr><td class="lbl">復甦與江南泡沫</td><td class="num sub">1998→2008</td><td class="num strong">+2.47%</td><td class="num">+28%</td><td class="why">低利率與首都圈領漲，政府連續推出打房措施</td></tr><tr><td class="lbl">海嘯後長期盤整</td><td class="num sub">2008→2013</td><td class="num strong">-0.54%</td><td class="num">-3%</td><td class="why">首都圈回檔，「傳貰價格漲、買賣價格不漲」的背離期</td></tr><tr><td class="lbl">低利率與傳貰槓桿大漲</td><td class="num sub">2013→2021</td><td class="num strong">+2.92%</td><td class="num">+26%</td><td class="why">超低利率與傳貰押金槓桿，首爾領漲至歷史次高</td></tr><tr><td class="lbl">去槓桿與連4年下跌</td><td class="num sub">2021→2025</td><td class="num strong">-4.32%</td><td class="num">-16%</td><td class="why">家庭負債占 GDP 見頂後回落，DSR 監理上路</td></tr></tbody></table></div>
@@ -313,13 +318,15 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </div>
 
 </div>
-<footer><div class="container">InvestmQuest 研究・產生於 2026-08-18・
+<footer><div class="container">InvestmQuest 研究・產生於 2026-08-27・
   資料：BIS／IMF WEO／World Bank・
   <a href="/backtest/housing_gdp/">回主頁：因子矩陣</a>・本頁為研究記錄，非投資建議</div></footer>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script>
 const SERIES = {"1975": 69.3, "1976": 76.6, "1977": 98.8, "1978": 118.1, "1979": 108.0, "1980": 93.6, "1981": 85.4, "1982": 89.4, "1983": 102.9, "1984": 111.3, "1985": 115.3, "1986": 118.0, "1987": 118.8, "1988": 126.6, "1989": 136.2, "1990": 151.1, "1991": 140.8, "1992": 126.3, "1993": 115.8, "1994": 109.1, "1995": 104.2, "1996": 100.6, "1997": 98.1, "1998": 80.7, "1999": 82.7, "2000": 81.2, "2001": 85.4, "2002": 96.7, "2003": 99.6, "2004": 94.1, "2005": 95.0, "2006": 101.6, "2007": 103.5, "2008": 103.0, "2009": 101.2, "2010": 99.7, "2011": 102.6, "2012": 101.2, "2013": 100.2, "2014": 101.3, "2015": 104.7, "2016": 104.8, "2017": 104.6, "2018": 106.0, "2019": 105.8, "2020": 112.8, "2021": 126.1, "2022": 119.8, "2023": 109.3, "2024": 107.5, "2025": 105.7};
+const GDP_INDEX = {"1981": 85.4, "1982": 91.3, "1983": 102.1, "1984": 111.5, "1985": 119.1, "1986": 131.5, "1987": 147.0, "1988": 163.2, "1989": 173.2, "1990": 188.7, "1991": 207.2, "1992": 218.2, "1993": 231.1, "1994": 250.3, "1995": 271.8, "1996": 290.8, "1997": 306.2, "1998": 289.1, "1999": 320.4, "2000": 346.9, "2001": 360.4, "2002": 386.0, "2003": 395.9, "2004": 414.8, "2005": 432.1, "2006": 452.2, "2007": 476.0, "2008": 486.6, "2009": 488.0, "2010": 519.6, "2011": 534.6, "2012": 545.1, "2013": 560.6, "2014": 574.9, "2015": 588.5, "2016": 604.9, "2017": 623.7, "2018": 640.9, "2019": 653.3, "2020": 647.9, "2021": 678.5, "2022": 698.2, "2023": 708.8, "2024": 722.4, "2025": 730.6};
+const GDP_YOY = {"1981": 5.74, "1982": 6.84, "1983": 11.84, "1984": 9.24, "1985": 6.84, "1986": 10.4, "1987": 11.79, "1988": 11.01, "1989": 6.14, "1990": 8.92, "1991": 9.81, "1992": 5.3, "1993": 5.92, "1994": 8.3, "1995": 8.6, "1996": 6.98, "1997": 5.31, "1998": -5.58, "1999": 10.81, "2000": 8.29, "2001": 3.9, "2002": 7.08, "2003": 2.57, "2004": 4.78, "2005": 4.18, "2006": 4.65, "2007": 5.27, "2008": 2.22, "2009": 0.28, "2010": 6.47, "2011": 2.9, "2012": 1.96, "2013": 2.83, "2014": 2.55, "2015": 2.36, "2016": 2.79, "2017": 3.11, "2018": 2.75, "2019": 1.94, "2020": -0.84, "2021": 4.73, "2022": 2.89, "2023": 1.52, "2024": 1.93, "2025": 1.13};
 const PEERS = {"南韓": {"2001": 100.0, "2002": 113.3, "2003": 116.6, "2004": 110.2, "2005": 111.3, "2006": 119.1, "2007": 121.2, "2008": 120.6, "2009": 118.5, "2010": 116.7, "2011": 120.2, "2012": 118.5, "2013": 117.4, "2014": 118.7, "2015": 122.7, "2016": 122.7, "2017": 122.5, "2018": 124.2, "2019": 123.9, "2020": 132.2, "2021": 147.8, "2022": 140.3, "2023": 128.1, "2024": 125.9, "2025": 123.8}, "台灣": {"2001": 100.0, "2002": 103.0, "2003": 110.6, "2004": 123.7, "2005": 131.0, "2006": 145.0, "2007": 145.6, "2008": 142.9, "2009": 168.4, "2010": 192.8, "2011": 207.5, "2012": 224.0, "2013": 257.0, "2014": 260.9, "2015": 250.0, "2016": 242.7, "2017": 244.0, "2018": 248.8, "2019": 253.8, "2020": 270.3, "2021": 302.0, "2022": 316.5, "2023": 332.8, "2024": 360.0, "2025": 342.5}, "日本": {"2001": 100.0, "2002": 94.9, "2003": 89.1, "2004": 83.5, "2005": 80.6, "2006": 78.6, "2007": 77.7, "2008": 74.9, "2009": 74.3, "2010": 76.0, "2011": 75.5, "2012": 75.3, "2013": 76.3, "2014": 74.9, "2015": 76.1, "2016": 77.8, "2017": 78.8, "2018": 80.1, "2019": 80.4, "2020": 82.5, "2021": 87.6, "2022": 90.7, "2023": 90.0, "2024": 89.8, "2025": 91.9}, "香港": {"2001": 100.0, "2002": 90.9, "2003": 92.0, "2004": 118.5, "2005": 126.5, "2006": 128.2, "2007": 150.4, "2008": 140.2, "2009": 169.8, "2010": 201.8, "2011": 214.2, "2012": 256.0, "2013": 266.4, "2014": 283.8, "2015": 297.1, "2016": 306.0, "2017": 342.3, "2018": 353.2, "2019": 354.3, "2020": 356.0, "2021": 361.7, "2022": 307.0, "2023": 277.7, "2024": 251.6, "2025": 254.5}, "新加坡": {"2001": 100.0, "2002": 98.1, "2003": 95.4, "2004": 94.7, "2005": 97.3, "2006": 106.6, "2007": 134.1, "2008": 120.8, "2009": 123.8, "2010": 140.0, "2011": 140.5, "2012": 138.9, "2013": 137.6, "2014": 132.1, "2015": 128.2, "2016": 124.2, "2017": 125.0, "2018": 134.1, "2019": 136.8, "2020": 140.0, "2021": 149.3, "2022": 152.1, "2023": 156.2, "2024": 160.0, "2025": 163.4}};
 const COL = {"日本": "#dc2626", "美國": "#2a78d6", "台灣": "#eb6834", "南韓": "#1baf7a", "德國": "#7c3aed", "英國": "#d97706", "加拿大": "#0891b2", "澳洲": "#0f766e", "馬來西亞": "#be185d", "紐西蘭": "#9333ea", "泰國": "#ca8a04", "新加坡": "#0284c7", "愛爾蘭": "#15803d", "西班牙": "#b91c1c", "荷蘭": "#ea580c", "印尼": "#7c2d12", "義大利": "#c026d3", "丹麥": "#dc2670", "土耳其": "#b91c8c", "希臘": "#1e40af", "巴西": "#059669", "奧地利": "#65a30d", "挪威": "#0369a1", "波蘭": "#be123c", "葡萄牙": "#166534", "南非": "#b45309"};
 const ME = "南韓";
@@ -329,12 +336,44 @@ new Chart(document.getElementById('chart-long'), {
   data:{labels:yrs, datasets:[{
     label:'實質房價指數（2010=100）', data:yrs.map(y=>SERIES[y]),
     borderColor:COL[ME]||'#2a78d6', backgroundColor:'rgba(42,120,214,.08)',
-    borderWidth:2, pointRadius:0, pointHoverRadius:5, fill:true, tension:.15 }]},
+    borderWidth:2, pointRadius:0, pointHoverRadius:5, fill:true, tension:.15
+  },{
+    label:'實質人均 GDP（同起點）', data:yrs.map(y=>GDP_INDEX[y]??null),
+    borderColor:'#9aa2ad', borderWidth:2, borderDash:[5,4], pointRadius:0,
+    pointHoverRadius:4, fill:false, spanGaps:true, tension:.15
+  }]},
   options:{responsive:true,maintainAspectRatio:false,
     scales:{x:{grid:{display:false},ticks:{maxTicksLimit:14}},
              y:{grid:{color:'#eceef1'},title:{display:true,text:'實質指數（2010=100）'}}},
-    plugins:{legend:{display:false},
-      tooltip:{callbacks:{label:c=>`${c.label} 年：${c.parsed.y}`}}}}
+    plugins:{legend:{display:true,position:'top',labels:{usePointStyle:true,boxWidth:8}},
+      tooltip:{callbacks:{
+        title:c=>`${c[0].label} 年`,
+        label:c=>`${c.dataset.label}：${c.parsed.y!=null?c.parsed.y.toFixed(1):'—'}`}}}}
+});
+new Chart(document.getElementById('chart-yoy'), {
+  type:'bar',
+  data:{labels:yrs, datasets:[{
+    type:'bar',
+    label:'實質房價 YoY', order:2,
+    data:yrs.map((y,i)=>i>0 && SERIES[yrs[i-1]]!=null && SERIES[y]!=null
+      ? (SERIES[y]/SERIES[yrs[i-1]]-1)*100 : null),
+    backgroundColor:(COL[ME]||'#2a78d6')+'99', borderWidth:0
+  },{
+    type:'line',
+    label:'實質人均 GDP YoY', order:1,
+    data:yrs.map(y=>GDP_YOY[y]??null),
+    borderColor:'#4b5563', borderWidth:2, pointRadius:0, pointHoverRadius:4,
+    spanGaps:true, tension:.15, fill:false
+  }]},
+  options:{responsive:true,maintainAspectRatio:false,
+    scales:{x:{grid:{display:false},ticks:{maxTicksLimit:14}},
+             y:{grid:{color:ctx=>ctx.tick.value===0?'#9ca3af':'#eceef1',
+                       lineWidth:ctx=>ctx.tick.value===0?1.4:1},
+                title:{display:true,text:'YoY %'}}},
+    plugins:{legend:{display:true,position:'top',labels:{usePointStyle:true,boxWidth:8}},
+      tooltip:{callbacks:{
+        title:c=>`${c[0].label} 年`,
+        label:c=>`${c.dataset.label}：${c.parsed.y!=null?c.parsed.y.toFixed(1)+'%':'—'}`}}}}
 });
 const XC = null;
 if (XC) {

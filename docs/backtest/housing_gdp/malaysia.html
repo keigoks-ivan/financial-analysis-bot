@@ -209,6 +209,11 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
   <div class="section-title">38 年的實質房價</div>
   <div class="section-sub">BIS Selected Residential Property Prices，實質（CPI 平減），各年 Q4。這是本研究資料庫裡馬來西亞可得的完整歷史。</div>
   <div class="card"><div class="chart-wrap"><canvas id="chart-long"></canvas></div></div>
+  <div class="card">
+    <h4>逐年對照：房價 YoY vs 人均 GDP YoY</h4>
+    <p class="section-sub" style="margin:0 0 .8rem">回答的是：景氣好的那一年，房價是否也漲得多——對應下方因子表的同期相關。</p>
+    <div class="chart-wrap"><canvas id="chart-yoy"></canvas></div>
+  </div>
   <div class="card"><div class="scroll">
   <table><thead><tr><th>分期</th><th class="num">期間</th><th class="num">實質年化</th>
     <th class="num">累計</th><th>說明</th></tr></thead><tbody><tr><td class="lbl">風暴前榮景</td><td class="num sub">1988→1997</td><td class="num strong">+5.45%</td><td class="num">+61%</td><td class="why">高成長年代，實質房價穩步上行</td></tr><tr><td class="lbl">亞洲金融風暴</td><td class="num sub">1997→1999</td><td class="num strong">-6.28%</td><td class="num">-12%</td><td class="why">資本管制、令吉釘住美元，房價實質重挫</td></tr><tr><td class="lbl">長期整理</td><td class="num sub">1999→2009</td><td class="num strong">+1.16%</td><td class="num">+12%</td><td class="why">供給過剩消化期，實質房價幾乎不動</td></tr><tr><td class="lbl">寬鬆與投機潮</td><td class="num sub">2009→2014</td><td class="num strong">+7.62%</td><td class="num">+44%</td><td class="why">低利率與建商包息方案（DIBS），5年實質大漲</td></tr><tr><td class="lbl">打房與供給過剩</td><td class="num sub">2014→2019</td><td class="num strong">+2.89%</td><td class="num">+15%</td><td class="why">DIBS 禁止、印花稅與貸款成數收緊，量價同步降溫</td></tr><tr><td class="lbl">疫後停滯</td><td class="num sub">2019→2025</td><td class="num strong">+1.22%</td><td class="num">+8%</td><td class="why">滯銷餘屋高檔、家庭負債占 GDP 高位，實質房價原地踏步</td></tr></tbody></table></div>
@@ -313,13 +318,15 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </div>
 
 </div>
-<footer><div class="container">InvestmQuest 研究・產生於 2026-08-18・
+<footer><div class="container">InvestmQuest 研究・產生於 2026-08-27・
   資料：BIS／IMF WEO／World Bank・
   <a href="/backtest/housing_gdp/">回主頁：因子矩陣</a>・本頁為研究記錄，非投資建議</div></footer>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script>
 const SERIES = {"1988": 61.0, "1989": 60.5, "1990": 65.3, "1991": 76.7, "1992": 79.9, "1993": 80.7, "1994": 87.5, "1995": 99.5, "1996": 105.7, "1997": 98.3, "1998": 86.1, "1999": 86.3, "2000": 88.8, "2001": 88.4, "2002": 91.1, "2003": 93.3, "2004": 93.6, "2005": 93.0, "2006": 94.5, "2007": 95.1, "2008": 92.0, "2009": 96.8, "2010": 102.4, "2011": 110.4, "2012": 124.5, "2013": 132.3, "2014": 139.8, "2015": 145.1, "2016": 152.7, "2017": 156.5, "2018": 160.0, "2019": 161.2, "2020": 165.7, "2021": 163.7, "2022": 163.6, "2023": 167.3, "2024": 171.6, "2025": 173.4};
+const GDP_INDEX = {"1988": 61.0, "1989": 64.9, "1990": 67.8, "1991": 73.2, "1992": 77.5, "1993": 82.9, "1994": 88.1, "1995": 94.2, "1996": 100.9, "1997": 105.6, "1998": 95.3, "1999": 98.6, "2000": 104.5, "2001": 102.3, "2002": 105.2, "2003": 108.7, "2004": 113.4, "2005": 116.5, "2006": 121.4, "2007": 127.8, "2008": 131.5, "2009": 127.3, "2010": 134.4, "2011": 139.2, "2012": 144.7, "2013": 147.9, "2014": 154.3, "2015": 159.5, "2016": 164.2, "2017": 171.6, "2018": 177.8, "2019": 184.9, "2020": 175.1, "2021": 180.2, "2022": 195.9, "2023": 200.3, "2024": 208.0, "2025": 216.3};
+const GDP_YOY = {"1988": 7.24, "1989": 6.52, "1990": 4.47, "1991": 7.85, "1992": 5.92, "1993": 6.91, "1994": 6.27, "1995": 6.93, "1996": 7.2, "1997": 4.61, "1998": -9.74, "1999": 3.43, "2000": 5.99, "2001": -2.12, "2002": 2.83, "2003": 3.32, "2004": 4.39, "2005": 2.73, "2006": 4.2, "2007": 5.25, "2008": 2.9, "2009": -3.19, "2010": 5.59, "2011": 3.59, "2012": 3.9, "2013": 2.26, "2014": 4.29, "2015": 3.39, "2016": 2.92, "2017": 4.51, "2018": 3.64, "2019": 3.95, "2020": -5.28, "2021": 2.89, "2022": 8.75, "2023": 2.23, "2024": 3.84, "2025": 3.98};
 const PEERS = {"馬來西亞": {"1998": 100.0, "1999": 100.3, "2000": 103.2, "2001": 102.8, "2002": 105.8, "2003": 108.4, "2004": 108.8, "2005": 108.1, "2006": 109.8, "2007": 110.5, "2008": 106.9, "2009": 112.5, "2010": 119.0, "2011": 128.3, "2012": 144.7, "2013": 153.7, "2014": 162.4, "2015": 168.6, "2016": 177.4, "2017": 181.9, "2018": 185.9, "2019": 187.3, "2020": 192.5, "2021": 190.2, "2022": 190.1, "2023": 194.3, "2024": 199.4, "2025": 201.5}, "泰國": {"1998": 100.0, "1999": 92.2, "2000": 93.6, "2001": 91.6, "2002": 90.8, "2003": 94.2, "2004": 96.4, "2005": 97.6, "2006": 96.8, "2007": 95.4, "2008": 96.3, "2009": 96.9, "2010": 95.8, "2011": 95.7, "2012": 97.3, "2013": 103.7, "2014": 113.0, "2015": 120.7, "2016": 124.1, "2017": 128.9, "2018": 130.9, "2019": 133.1, "2020": 135.1, "2021": 135.9, "2022": 133.9, "2023": 138.0, "2024": 140.2, "2025": 141.8}, "新加坡": {"1998": 100.0, "1999": 133.4, "2000": 129.5, "2001": 114.6, "2002": 112.4, "2003": 109.3, "2004": 108.5, "2005": 111.5, "2006": 122.1, "2007": 153.6, "2008": 138.5, "2009": 141.9, "2010": 160.5, "2011": 161.0, "2012": 159.1, "2013": 157.7, "2014": 151.4, "2015": 146.9, "2016": 142.3, "2017": 143.2, "2018": 153.7, "2019": 156.8, "2020": 160.4, "2021": 171.1, "2022": 174.2, "2023": 179.0, "2024": 183.4, "2025": 187.3}, "南韓": {"1998": 100.0, "1999": 102.5, "2000": 100.6, "2001": 105.8, "2002": 119.8, "2003": 123.4, "2004": 116.6, "2005": 117.7, "2006": 126.0, "2007": 128.3, "2008": 127.6, "2009": 125.4, "2010": 123.5, "2011": 127.1, "2012": 125.4, "2013": 124.2, "2014": 125.5, "2015": 129.8, "2016": 129.8, "2017": 129.6, "2018": 131.4, "2019": 131.1, "2020": 139.8, "2021": 156.3, "2022": 148.4, "2023": 135.5, "2024": 133.2, "2025": 131.0}, "日本": {"1998": 100.0, "1999": 97.5, "2000": 94.4, "2001": 90.8, "2002": 86.1, "2003": 80.8, "2004": 75.8, "2005": 73.1, "2006": 71.3, "2007": 70.5, "2008": 68.0, "2009": 67.4, "2010": 68.9, "2011": 68.5, "2012": 68.3, "2013": 69.3, "2014": 67.9, "2015": 69.1, "2016": 70.6, "2017": 71.5, "2018": 72.7, "2019": 73.0, "2020": 74.8, "2021": 79.5, "2022": 82.4, "2023": 81.6, "2024": 81.5, "2025": 83.4}};
 const COL = {"日本": "#dc2626", "美國": "#2a78d6", "台灣": "#eb6834", "南韓": "#1baf7a", "德國": "#7c3aed", "英國": "#d97706", "加拿大": "#0891b2", "澳洲": "#0f766e", "馬來西亞": "#be185d", "紐西蘭": "#9333ea", "泰國": "#ca8a04", "新加坡": "#0284c7", "愛爾蘭": "#15803d", "西班牙": "#b91c1c", "荷蘭": "#ea580c", "印尼": "#7c2d12", "義大利": "#c026d3", "丹麥": "#dc2670", "土耳其": "#b91c8c", "希臘": "#1e40af", "巴西": "#059669", "奧地利": "#65a30d", "挪威": "#0369a1", "波蘭": "#be123c", "葡萄牙": "#166534", "南非": "#b45309"};
 const ME = "馬來西亞";
@@ -329,12 +336,44 @@ new Chart(document.getElementById('chart-long'), {
   data:{labels:yrs, datasets:[{
     label:'實質房價指數（2010=100）', data:yrs.map(y=>SERIES[y]),
     borderColor:COL[ME]||'#2a78d6', backgroundColor:'rgba(42,120,214,.08)',
-    borderWidth:2, pointRadius:0, pointHoverRadius:5, fill:true, tension:.15 }]},
+    borderWidth:2, pointRadius:0, pointHoverRadius:5, fill:true, tension:.15
+  },{
+    label:'實質人均 GDP（同起點）', data:yrs.map(y=>GDP_INDEX[y]??null),
+    borderColor:'#9aa2ad', borderWidth:2, borderDash:[5,4], pointRadius:0,
+    pointHoverRadius:4, fill:false, spanGaps:true, tension:.15
+  }]},
   options:{responsive:true,maintainAspectRatio:false,
     scales:{x:{grid:{display:false},ticks:{maxTicksLimit:14}},
              y:{grid:{color:'#eceef1'},title:{display:true,text:'實質指數（2010=100）'}}},
-    plugins:{legend:{display:false},
-      tooltip:{callbacks:{label:c=>`${c.label} 年：${c.parsed.y}`}}}}
+    plugins:{legend:{display:true,position:'top',labels:{usePointStyle:true,boxWidth:8}},
+      tooltip:{callbacks:{
+        title:c=>`${c[0].label} 年`,
+        label:c=>`${c.dataset.label}：${c.parsed.y!=null?c.parsed.y.toFixed(1):'—'}`}}}}
+});
+new Chart(document.getElementById('chart-yoy'), {
+  type:'bar',
+  data:{labels:yrs, datasets:[{
+    type:'bar',
+    label:'實質房價 YoY', order:2,
+    data:yrs.map((y,i)=>i>0 && SERIES[yrs[i-1]]!=null && SERIES[y]!=null
+      ? (SERIES[y]/SERIES[yrs[i-1]]-1)*100 : null),
+    backgroundColor:(COL[ME]||'#2a78d6')+'99', borderWidth:0
+  },{
+    type:'line',
+    label:'實質人均 GDP YoY', order:1,
+    data:yrs.map(y=>GDP_YOY[y]??null),
+    borderColor:'#4b5563', borderWidth:2, pointRadius:0, pointHoverRadius:4,
+    spanGaps:true, tension:.15, fill:false
+  }]},
+  options:{responsive:true,maintainAspectRatio:false,
+    scales:{x:{grid:{display:false},ticks:{maxTicksLimit:14}},
+             y:{grid:{color:ctx=>ctx.tick.value===0?'#9ca3af':'#eceef1',
+                       lineWidth:ctx=>ctx.tick.value===0?1.4:1},
+                title:{display:true,text:'YoY %'}}},
+    plugins:{legend:{display:true,position:'top',labels:{usePointStyle:true,boxWidth:8}},
+      tooltip:{callbacks:{
+        title:c=>`${c[0].label} 年`,
+        label:c=>`${c.dataset.label}：${c.parsed.y!=null?c.parsed.y.toFixed(1)+'%':'—'}`}}}}
 });
 const XC = null;
 if (XC) {
