@@ -97,7 +97,7 @@ DOMINANCE = [
      "規則不可移植：QQQ 套用失敗、SMH 輸 Faber(見系統頁擴展節)"),
     ("LT SMH/QQQ STX50", "/backtest/long_track_smh/", "SMH/QQQ 50/50 B&H",
      (13.84, -21.87, 0.90, 0.63), (18.09, -56.93, 0.79, 0.32), "trade",
-     "★ 本版觸發案例 — 完整判讀見上方範例"),
+     "★ 對照範例 — 完整判讀見上方範例"),
     ("Ensemble E3", "/backtest/long_track_ensemble/", "SPY/QQQ 50/50 B&H",
      (11.36, -21.15, 0.87, 0.54), (13.52, -53.66, 0.73, 0.25), "trade",
      "讓 2pp 報酬換 Calmar 2.2 倍 — 站內風險效率最佳的核心交換"),
