@@ -253,6 +253,7 @@ DIRECTORY = {
         ("研究・主線", [
             ("/backtest/housing_gdp/", "人均 GDP 與房價（42 國因子矩陣）", "研究", False, True),
             ("/backtest/housing_gdp/catchup.html", "補漲假說：所得領先、房價落後", "研究", False, True),
+            ("/backtest/housing_gdp/gdp_band.html", "GDP 帶假說：3,000→10,000 美元最快？", "研究", False, True),
         ]),
         ("個案・亞洲", [
             ("/backtest/housing_gdp/taiwan.html", "台灣：二十五年房價史", "研究", False),
