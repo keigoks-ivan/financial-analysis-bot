@@ -5,6 +5,33 @@ description: "分析美股指定日期的財報和 earnings call，自動產出 
 
 美股每日財報深度分析 Skill v2.2
 
+v2.7 變更（2026-08-28）— 版式改外資券商研究報告風（持有人回饋：更明顯易懂）：
+
+① 每張 company-card 新增「速覽列（stat-strip）」— 券商 note 的標準化數據列
+卡片標頭下方固定一排四格晶片，順序永遠是 EPS → 營收 → 指引 → 股價，
+讀者眼睛掃同一個位置就能比較所有公司：
+`<div class="stat-strip">` 內放四個 `<span class="stat-chip {good|bad|mid|na}">`，
+每格 `<span class="k">{標籤}</span>{值}`。值要極短（BEAT +3.7%／RAISE／收 -1.39%）。
+顏色：good＝綠（beat/raise）、bad＝紅（miss/lower/股價跌）、mid＝黃（inline/maintain）、
+na＝灰（未取得二源確認時寫「未確認」）。
+股價晶片取代原 meta-right 的 stock-move（避免同一數字寫兩處，v2.6 精簡紀律）；
+meta-right 只留市值＋盤前/盤後＋季度，詳細價格與時間標注仍在 Stock Reaction 段。
+
+② 每張 company-card 新增「重點（bottom-line）」— 券商 note 的 Bottom line 一句話
+stat-strip 之後、數據表之前，一句話講清楚「這份財報最後為什麼漲/跌、關鍵變數是哪個」：
+`<div class="bottom-line"><strong>重點</strong>{一句話，≤60 中文字}</div>`。
+這是結論不是摘要——必須點名單一關鍵變數（例：「毛利率財測季減 90bp 蓋過 Google $120B 協議」），
+禁止「表現亮眼」「值得關注」這類無資訊量句。與 lede 條目可同方向但不得逐字重複。
+
+③ 「關鍵細節」bullet 改粗體導語式（券商 note 的 bold lead-in）
+每條開頭 2-6 字粗體主題詞＋全形冒號：`<li><strong>毛利率：</strong>…</li>`。
+讀者先掃粗體詞決定要不要讀整條。主題詞須是名詞（毛利率／Google 協議／資本回饋），
+不是評語（亮點／警訊）。其他段落（Call 重點／Stock Reaction／分析師觀點）本已有
+固定導語結構，不變。
+
+④ 新增 CSS（完整樣式表章節已同步）：.stat-strip / .stat-chip(.good/.bad/.mid/.na)
+/ .stat-chip .k / .bottom-line。範例見 earnings_2026-08-27.html（v2.7 首個套用版）。
+
 v2.6 變更（2026-08-28）— 兩項精簡修正（持有人回饋：內容更精簡、資訊量不下降）：
 
 ① report-lede（核心發現）改條列式
@@ -865,12 +892,22 @@ html<div class="container"> <!-- max-width: 880px -->
   </header>
   <div class="toc">...</div>
 </div>
-Company Card HTML（v2.2 強化：新增分析師觀點段落）
+Company Card HTML（v2.7 券商版：速覽列＋重點一句話；v2.2 分析師觀點段落）
 html<div class="company-card">
   <div class="company-header">
     <span class="ticker">{TICKER} · {Company Name}</span>
-    <span class="meta-right">${MktCap} · 盤前/盤後 · <span class="stock-move up/down">+X.XX% 收 $YYY.YY（{日期}）</span></span>
+    <span class="meta-right">${MktCap} · 盤前/盤後（{日期} {季度}）</span>
   </div>
+  <div class="stat-strip">
+    <span class="stat-chip good"><span class="k">EPS</span>BEAT +3.7%</span>
+    <span class="stat-chip good"><span class="k">營收</span>BEAT +2.0%</span>
+    <span class="stat-chip mid"><span class="k">指引</span>MAINTAIN</span>
+    <span class="stat-chip bad"><span class="k">股價</span>收 -1.39%</span>
+  </div>
+  <!-- stat-strip 規則（v2.7）：四格固定順序 EPS→營收→指引→股價，不增減；
+       值極短；未取得二源確認時該格用 class="na" 寫「未確認」；
+       股價詳細價格＋時間標注留在 Stock Reaction 段，不塞進晶片 -->
+  <div class="bottom-line"><strong>重點</strong>{一句話 ≤60 字：為什麼漲/跌，點名單一關鍵變數}</div>
   <table>
     <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
     <tbody>
@@ -879,7 +916,7 @@ html<div class="company-card">
     </tbody>
   </table>
   <h4>關鍵細節</h4>
-  <ul><li>...</li></ul>
+  <ul><li><strong>{2-6 字名詞主題詞}：</strong>...</li></ul> <!-- v2.7 粗體導語式，每條都要 -->
   <h4>Earnings Call 重點</h4>
   <ul>
     <li>CEO {姓名}：「{transcript 實際引述}」</li>
@@ -964,6 +1001,16 @@ TOC: .toc, .toc-title (IBM Plex Mono, uppercase)
 Sections: h2 (border-bottom), h3, h4 (uppercase, muted)
 Tables: full table styling with hover, th uppercase, td border-bottom
 Company Card: .company-card (border, radius, padding 24px 28px), .company-header (flex, border-bottom), .ticker (IBM Plex Mono 20px bold)
+v2.7 券商版新增（必含）：
+.stat-strip{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 0;}
+.stat-chip{font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:500;padding:4px 10px;border-radius:4px;background:var(--surface-2);border:1px solid var(--border);white-space:nowrap;}
+.stat-chip .k{font-size:9.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--text-dim);margin-right:6px;}
+.stat-chip.good{background:var(--green-bg);color:var(--green);border-color:transparent;}
+.stat-chip.bad{background:var(--red-bg);color:var(--red);border-color:transparent;}
+.stat-chip.mid{background:var(--amber-bg);color:var(--amber);border-color:transparent;}
+.stat-chip.na{color:var(--text-muted);}
+.bottom-line{border-left:3px solid var(--border-strong);background:var(--surface-2);padding:10px 14px;margin:12px 0 4px;font-size:14.5px;border-radius:0 var(--radius) var(--radius) 0;}
+.bottom-line strong{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:var(--text-muted);margin-right:8px;}
 Tags: .tag.beat/.miss/.inline/.raise/.maintain/.lower
 Stock move: .stock-move.up/.down
 Winners/Losers: .winner-row td:first-child (border-left green), .loser-row td:first-child (border-left red)
@@ -1102,6 +1149,9 @@ v2.3 強化版檢查清單：
  report-lede 是 4-6 條條列式（lede-list）？每條一行一重點、≤2 個數字錨、含公司名+股價%、細節用（§N）指路？沒有多家公司塞同一長句？（v2.6 強制）
  中文字後全是全形標點（，。：；）？沒有「字,」「點:」這類半形殘留？（v2.6 強制）
  §5 第一塊與 lede 沒有重複條目？§5 每條都是 cross-company 推論？（v2.6 強制）
+ 每張 company-card 都有 stat-strip（四格固定順序 EPS→營收→指引→股價）＋ bottom-line 一句話？未確認的格用 na？（v2.7 強制）
+ bottom-line 有點名單一關鍵變數、≤60 字、無「表現亮眼」類空話？股價數字沒有同時出現在 meta-right 與晶片兩處？（v2.7 強制）
+ 關鍵細節每條 bullet 都是粗體名詞導語開頭（<strong>主題詞：</strong>）？（v2.7 強制）
  Navigation / breadcrumb / disclaimer / footer 都完整？
  所有 CSS classes 都正確？Tag colors 對應 beat/miss/raise/lower？
  Mobile responsive 有 @media 720px？
