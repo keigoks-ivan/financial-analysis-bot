@@ -266,6 +266,7 @@ DIRECTORY = {
             ("/backtest/housing_gdp/china.html", "中國：官方指數換過口徑，分級城市差很大", "研究", False),
             ("/backtest/housing_gdp/singapore.html", "新加坡：政府自己蓋，所得贏了房價", "研究", False),
             ("/backtest/housing_gdp/indonesia.html", "印尼：22 年跌勢未收復", "研究", False),
+            ("/backtest/housing_gdp/india.html", "印度：跨過 3,000 美元門檻，房價卻沒漲", "研究", False),
         ]),
         ("個案・英語系", [
             ("/backtest/housing_gdp/usa.html", "美國：崩盤與收復", "研究", False),
@@ -286,11 +287,17 @@ DIRECTORY = {
             ("/backtest/housing_gdp/norway.html", "挪威：石油而非人口外移", "研究", False),
             ("/backtest/housing_gdp/austria.html", "奧地利：實質利率係數 37 國最正", "研究", False),
             ("/backtest/housing_gdp/poland.html", "波蘭：負實質利率卻刻意降息", "研究", False),
+            ("/backtest/housing_gdp/france.html", "法國：所得解釋不了房價的異數", "研究", False),
+            ("/backtest/housing_gdp/switzerland.html", "瑞士：升息循環中紋風不動的房價", "研究", False),
+            ("/backtest/housing_gdp/sweden.html", "瑞典：銀行危機與負債爭議兩張臉", "研究", False),
+            ("/backtest/housing_gdp/czechia.html", "捷克：看不見的修正，不磁吸資金的首都", "研究", False),
         ]),
         ("個案・其他新興市場", [
             ("/backtest/housing_gdp/turkey.html", "土耳其：通膨 80% 仍降息", "研究", False),
             ("/backtest/housing_gdp/brazil.html", "巴西：同期相關拉滿，長期方向消失", "研究", False),
             ("/backtest/housing_gdp/southafrica.html", "南非：被遺忘的 1983 年崩盤", "研究", False),
+            ("/backtest/housing_gdp/israel.html", "以色列：房市抗議運動打輸的那一場", "研究", False),
+            ("/backtest/housing_gdp/mexico.html", "墨西哥：升息打不下去的 20 年", "研究", False),
         ]),
     ],
     "scan": [
