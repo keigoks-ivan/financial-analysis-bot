@@ -32,6 +32,21 @@ stat-strip 之後、數據表之前，一句話講清楚「這份財報最後為
 ④ 新增 CSS（完整樣式表章節已同步）：.stat-strip / .stat-chip(.good/.bad/.mid/.na)
 / .stat-chip .k / .bottom-line。範例見 earnings_2026-08-27.html（v2.7 首個套用版）。
 
+⑤ §2 六要素改結構化列表（持有人回饋：§2 全擠在同一段）
+每個子產業段禁止再用單一 <p> 把六要素串成一大段。固定格式：
+<h3>{子產業標題}</h3>
+<ul class="trend-list">
+  <li><span class="tl">趨勢</span>{內容}</li>
+  <li><span class="tl">細節</span>{內容}</li>
+  <li><span class="tl">跨日比較</span>{內容}</li>
+  <li><span class="tl">上下游</span>{內容}</li>
+  <li><span class="tl">可證偽</span>{內容}</li>
+  <li class="impl"><span class="tl">Implication</span>{內容}</li>
+</ul>
+標籤固定六個、順序固定、標籤後不加冒號（晶片本身就是分隔）。
+非共識觀察（.noncon）同樣拆為兩條：<span class="tl">觀察</span>＋<span class="tl">可證偽</span>。
+CSS（完整樣式表章節已同步）：.trend-list / .tl / .trend-list li.impl .tl。
+
 v2.6 變更（2026-08-28）— 兩項精簡修正（持有人回饋：內容更精簡、資訊量不下降）：
 
 ① report-lede（核心發現）改條列式
@@ -660,7 +675,8 @@ Stock reaction 段落必須包含：
 - Supply chain 分層（design → manufacturing → power → cooling → networking → construction）
 ⚠️ 當同一天的公司橫跨產業鏈上下游時，thematic／supply chain 分組通常比 GICS 更有洞察力。
 
-每個子產業必須產出以下六個要素（v2.4 從四個增加）：
+每個子產業必須產出以下六個要素（v2.4 從四個增加）。
+⛔ v2.7 版式：六要素一律用 `<ul class="trend-list">` 一行一要素＋標籤晶片呈現（格式見 v2.7 變更 ⑤），禁止塞進單一 <p> 長段：
 
 1. 趨勢 — 1-2 句總結，必須是可證偽的陳述，不是「表現分化」這種廢話
 2. 細節 — 同產業公司的數據對照，每家至少一個具體數字；有 2 家以上時做直接對比
@@ -1011,6 +1027,10 @@ v2.7 券商版新增（必含）：
 .stat-chip.na{color:var(--text-muted);}
 .bottom-line{border-left:3px solid var(--border-strong);background:var(--surface-2);padding:10px 14px;margin:12px 0 4px;font-size:14.5px;border-radius:0 var(--radius) var(--radius) 0;}
 .bottom-line strong{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:var(--text-muted);margin-right:8px;}
+.trend-list{list-style:none;padding:0;margin:0 0 28px;}
+.trend-list li{margin:9px 0;}
+.tl{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:1px 7px;margin-right:8px;white-space:nowrap;vertical-align:1px;}
+.trend-list li.impl .tl{color:var(--accent);border-color:var(--accent);background:transparent;}
 Tags: .tag.beat/.miss/.inline/.raise/.maintain/.lower
 Stock move: .stock-move.up/.down
 Winners/Losers: .winner-row td:first-child (border-left green), .loser-row td:first-child (border-left red)
@@ -1152,6 +1172,7 @@ v2.3 強化版檢查清單：
  每張 company-card 都有 stat-strip（四格固定順序 EPS→營收→指引→股價）＋ bottom-line 一句話？未確認的格用 na？（v2.7 強制）
  bottom-line 有點名單一關鍵變數、≤60 字、無「表現亮眼」類空話？股價數字沒有同時出現在 meta-right 與晶片兩處？（v2.7 強制）
  關鍵細節每條 bullet 都是粗體名詞導語開頭（<strong>主題詞：</strong>）？（v2.7 強制）
+ §2 每個子產業段都是 trend-list 一行一要素＋標籤晶片？沒有任何子產業用單一 <p> 塞六要素？noncon 也拆為 觀察／可證偽 兩條？（v2.7 強制）
  Navigation / breadcrumb / disclaimer / footer 都完整？
  所有 CSS classes 都正確？Tag colors 對應 beat/miss/raise/lower？
  Mobile responsive 有 @media 720px？
