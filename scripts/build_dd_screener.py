@@ -1339,13 +1339,13 @@ def _compute_live_eps_cagr(entry: dict, live_fy_result: dict) -> dict:
             "eps2y_live_method": "xlsx_forward",
         }
 
-    if eps_1y is not None and year_ago is not None and year_ago > 0:
+    if eps_1y is not None and year_ago is not None and year_ago > 0 and eps_1y > 0:
         cagr = ((eps_1y / year_ago) ** 0.5 - 1) * 100
         return {
             "eps2y_live": round(cagr, 2),
             "eps2y_live_method": "yearago",
         }
-    if eps_1y is not None and trailing is not None and trailing > 0:
+    if eps_1y is not None and trailing is not None and trailing > 0 and eps_1y > 0:
         cagr = ((eps_1y / trailing) ** 0.5 - 1) * 100
         return {
             "eps2y_live": round(cagr, 2),
