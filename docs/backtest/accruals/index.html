@@ -157,8 +157,13 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
   <div class="hero-top">
     <span class="verdict-tag">頭條判斷</span>
     <h2>應計異象活著，OOS 比 train 更強——但效應集中在低應計極端組，禁不起壓力測試</h2>
-    <p>全樣本（2009–2026）Q5－Q1 年化 +6.2%，t=2.24——顯著，方向與 Sloan (1996) 一致。
-    拆開來看，train（t=0.67）不顯著，OOS（t=2.69）顯著且幅度是 train 的五倍多（+11.5%）——
+    <p>全樣本（2009–2026）Q5－Q1（把股票依應計高低分五組，最高分那組的報酬減最低分那組，看這個訊號能不能選出贏家）
+    年化（annualized，把長短不一的持有期都換算成「一年賺多少」的統一比較基準）價差 +6.2%，
+    t 值（這個差距是真訊號還是運氣的評分，粗略說絕對值要大於 2 才算數）=2.24——顯著（statistically significant，
+    統計上比運氣造成的機率更低，不等於「效果很大」），方向與 Sloan (1996) 一致。
+    拆開來看，train（訓練期——用來設計、校準訊號的那段歷史資料）期（t=0.67）不顯著，
+    OOS（out-of-sample，樣本外——訓練期完全沒看過的資料，拿來做真實測試，比訓練期的結果更可信）期（t=2.69）
+    顯著且幅度是 train 的五倍多（+11.5%）——
     這在本系列（PEAD 已衰退）裡是少見的存活案例。但誠實看：Q1–Q4 四組幾乎打平，只有 Q5 單獨跳高；
     OOS 的顯著性主要由兩段合計僅 5 次重排的年代撐起。隔年獲利追蹤顯示，機制更像「低應計是引擎」，
     不是 Sloan 原始故事裡「高應計是地雷、隔年獲利崩潰」。</p>
@@ -175,8 +180,11 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 <div class="section">
 <h2 class="section-title">一、這是什麼——訊號與交易規則</h2>
 <div class="takeaway"><b>應計項目＝（淨利－營運現金流）÷平均總資產（Sloan 1996 現金流量表法），只用 10-K 年度值、
-申報日對齊。</b>每年 6 月 30 日重排（給足 12 月年報＋非曆年制公司的申報時滯），用「當時已申報」的最新年度應計值
-分五組，等權，持有一年。Q5（低應計，現金含量高）多／Q1（高應計）空。成本 14bps 年度換手（成本不敏感）。</p>
+申報日對齊（point-in-time，用「當時真的能看到的資料」回測，不是事後才知道的最終數字，避免用未來才有的資訊回測出假訊號）。</b>
+每年 6 月 30 日重排（給足 12 月年報＋非曆年制公司的申報時滯），用「當時已申報」的最新年度應計值
+分五組（五分位，quintile——把樣本由小排到大切成五等份，每份各佔 20%），等權（equal-weight，投資組合裡每檔股票分配一樣多的資金，
+不按市值大小加權），持有一年。Q5（低應計，現金含量高）多／Q1（高應計）空。
+成本 14bps（basis point，基點，1bp＝0.01%，交易成本常用這個單位）年度換手（成本不敏感）。</p>
 </div>
 <p style="font-size:.9rem;color:#374151;margin:.9rem 0">
 資料層沿用美股漲跌歸因頁同一套底層：S&amp;P500＋Nasdaq-100 池子（835 檔，2009–2026），另擴充 EDGAR 解析器讀取
@@ -196,7 +204,8 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 <div class="scroll"><table><thead><tr><th>期間</th><th class="num">Q1（高應計）</th><th class="num">Q2</th><th class="num">Q3</th><th class="num">Q4</th><th class="num">Q5（低應計）</th><th class="num">Q5−Q1（淨，t 值）</th><th class="num">重排次數</th></tr></thead><tbody><tr><td class="lbl">Train 2009–2018</td><td class="num">16.3%</td><td class="num">14.8%</td><td class="num">15.8%</td><td class="num">17.4%</td><td class="num">18.3%</td><td class="num" style="">+2.1%<br><span style="font-size:.72rem;color:var(--muted)">t=0.67</span></td><td class="num">9</td></tr><tr><td class="lbl">OOS 2019–2026</td><td class="num">13.4%</td><td class="num">11.8%</td><td class="num">12.0%</td><td class="num">11.8%</td><td class="num">24.4%</td><td class="num" style="color:var(--red);font-weight:700">+11.5%<br><span style="font-size:.72rem;color:var(--muted)">t=2.69</span></td><td class="num">7</td></tr><tr><td class="lbl">Full 2009–2026</td><td class="num">15.0%</td><td class="num">13.5%</td><td class="num">14.1%</td><td class="num">14.9%</td><td class="num">20.9%</td><td class="num" style="color:var(--red);font-weight:700">+6.2%<br><span style="font-size:.72rem;color:var(--muted)">t=2.24</span></td><td class="num">16</td></tr></tbody></table></div>
 
 <p style="font-size:.87rem;color:#374151;margin:1rem 0">
-非單調，且效應集中在單一極端組：全期 Q1–Q4 四組落在 13.5%–15.0% 窄幅區間，只有 Q5 跳到
+非單調（monotonicity 不成立——分組報酬沒有照順序一路升高或降低；好訊號理論上該是單調的，中間亂跳代表雜訊多），
+且效應集中在單一極端組：全期 Q1–Q4 四組落在 13.5%–15.0% 窄幅區間，只有 Q5 跳到
 20.9%。OOS 更明顯——Q1–Q4 全部落在 11.8%–13.4%，Q5 一枝獨秀到
 24.4%。可執行報酬幾乎全部來自「找出現金含量最高的那一小撮公司」，
 不是橫跨五組的連續風險溢酬。
@@ -284,7 +293,8 @@ OOS 期更清楚：Q1 年化 13.4%，已經是四個「非極端」分組裡最�
 
 <div class="section">
 <h2 class="section-title">六、與既有因子的重疊檢查（防「同一訊號換皮」——低波動/BAB 那次的教訓）</h2>
-<div class="takeaway"><b>應計與 E/P 中度相關（Spearman 均值 0.30），
+<div class="takeaway"><b>應計與 E/P 中度相關（Spearman 相關——用排名而非數值本身算出來的相關係數，−1 到 +1，
+越接近 0 代表兩個排序越沒關係；均值 0.30），
 與 EPS 年增率幾乎不相關（0.11）——不是同一訊號換皮，但也不是完全獨立。</b></div>
 <p style="font-size:.9rem;color:#374151;margin:.9rem 0">
 低應計公司往往同時也是估值較貴的公司（現金流健康、成長中的公司市場願意給更高本益比），相關度不到「同一訊號」的門檻
@@ -336,7 +346,7 @@ NFLX 是「高應計≠地雷」最有力的反例。</b></div>
 <div class="section">
 <h2 class="section-title">八、方法論限制（誠實揭露）</h2>
 <div class="takeaway"><b>七個限制，第三條（OOS 集中在小樣本年代）最重要——直接動搖「應計異象活著」這個頭條的穩健性。</b></div>
-<div class="card"><ul style="padding-left:1.2rem;font-size:.87rem;line-height:1.85;color:#374151"><li><b>NDX100 生存者偏差，方向利多。</b>　只用現在的 100 檔清單往回套用（Wikipedia 已無歷史成分表），會讓表現偏樂觀——沿用既有揭露。</li><li><b>年度重排的小樣本年代。</b>　2009–2012（n=3）、2022（n=1）兩段重排次數過少，t 值不可靠或無法計算，不應過度解讀。</li><li><b>OOS 顯著性集中在兩段小樣本年代。</b>　2020–2021（n=2）與 2023–2026（n=3）合計僅 5 次重排卻撐起 OOS 大半的正報酬，禁不起拿掉重算的壓力測試——見第四節。</li><li><b>CFO 後備欄位使用率偏高。</b>　286/612 檔（約 47%）用到 `ContinuingOperations` 後備定義，可能與主欄位定義有些微不一致（是否含已終止業務的現金流），已全數記錄但未逐檔人工核對。</li><li><b>總資產期初值後備。</b>　603/9999 筆年度觀測（約 6%）找不到期初 instant 觀測值退回只用期末值，會讓這些觀測的應計分母系統性偏小（分子不變、分母變小會放大應計絕對值），已記錄但未排除。</li><li><b>均值受極端值影響。</b>　第五節隔年淨利成長率均值（尤其 Q5 的 +177.7%）明顯被少數爆發性反彈個案拉高，本頁同時提供中位數作為更穩健的參考。</li><li><b>非單調且效應集中。</b>　Q5−Q1 價差幾乎全部由 Q5 這一個極端分組貢獻，Q1–Q4 四組本身區分度很低——不是教科書等級的五組單調梯度。</li></ul></div>
+<div class="card"><ul style="padding-left:1.2rem;font-size:.87rem;line-height:1.85;color:#374151"><li><b>NDX100 生存者偏差（survivorship bias，回測只用「現在還活著、還在指數內」的樣本，篩掉當年表現差、後來下市的公司，會讓結果看起來比真實情況樂觀），方向利多。</b>　只用現在的 100 檔清單往回套用（Wikipedia 已無歷史成分表），會讓表現偏樂觀——沿用既有揭露。</li><li><b>年度重排的小樣本年代。</b>　2009–2012（n=3）、2022（n=1）兩段重排次數過少，t 值不可靠或無法計算，不應過度解讀。</li><li><b>OOS 顯著性集中在兩段小樣本年代。</b>　2020–2021（n=2）與 2023–2026（n=3）合計僅 5 次重排卻撐起 OOS 大半的正報酬，禁不起拿掉重算的壓力測試——見第四節。</li><li><b>CFO 後備欄位使用率偏高。</b>　286/612 檔（約 47%）用到 `ContinuingOperations` 後備定義，可能與主欄位定義有些微不一致（是否含已終止業務的現金流），已全數記錄但未逐檔人工核對。</li><li><b>總資產期初值後備。</b>　603/9999 筆年度觀測（約 6%）找不到期初 instant 觀測值退回只用期末值，會讓這些觀測的應計分母系統性偏小（分子不變、分母變小會放大應計絕對值），已記錄但未排除。</li><li><b>均值受極端值影響。</b>　第五節隔年淨利成長率均值（尤其 Q5 的 +177.7%）明顯被少數爆發性反彈個案拉高，本頁同時提供中位數作為更穩健的參考。</li><li><b>非單調且效應集中。</b>　Q5−Q1 價差幾乎全部由 Q5 這一個極端分組貢獻，Q1–Q4 四組本身區分度很低——不是教科書等級的五組單調梯度。</li></ul></div>
 </div>
 
 

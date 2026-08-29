@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>美股財報驚喜後漂移 | InvestMQuest Research</title>
-<meta name="description" content="用 SEC EDGAR 逐季財報 + 835 檔美股 17 年資料驗 PEAD（盈餘公告後漂移）異象生死：全樣本勉強顯著，train/OOS 各自不顯著，事件研究 CAR 呈現教科書形狀，但空頭腿在這個多頭池子裡沒肉。">
+<meta name="description" content="用 SEC EDGAR 逐季財報 + 835 檔美股 17 年資料驗 PEAD（盈餘公告後漂移）異象生死：全樣本邊緣未達顯著，train/OOS 各自不顯著，事件研究 CAR 呈現教科書形狀，但空頭腿在這個多頭池子裡沒肉。">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
@@ -156,17 +156,19 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 <div class="hero">
   <div class="hero-top">
     <span class="verdict-tag">頭條判斷</span>
-    <h2>PEAD 沒死透，但很虛弱——全樣本勉強顯著，拆開來看撐不住</h2>
-    <p>全樣本（2009–2026）Q5－Q1 年化 +3.4%，t=2.08——勉強站上顯著門檻。但拆開 train（t=1.63）
-    和 OOS（t=1.32）各自都不顯著，這不是能安心上實盤的訊號。事件研究線最乾淨：Q5 在申報後 60 個交易日
-    累積超額報酬 +0.66%，教科書等級的漂移形狀。但空頭腿在這個 17 年幾乎單邊多頭的池子裡沒肉——
+    <h2>PEAD 沒死透，但很虛弱——全樣本連勉強顯著都夠不到，拆開來看更站不住</h2>
+    <p>全樣本（2009–2026）Q5－Q1（最高分那組的報酬減最低分那組的報酬）年化（annualized，換算成一年的報酬）+3.0%，
+    t=1.82（t 值——這個報酬差距是真訊號還是運氣的評分，粗略說絕對值要大於 2 才算數）——連 95% 信心水準（t=1.96）都夠不到（2026-08-29
+    分割調整定錨日修正後由 t=2.08 下修，見方法論限制第七條）。拆開 train（訓練期，用來設計、校準訊號的那段歷史資料，t=1.32）
+    和 OOS（out-of-sample，樣本外，訓練期完全沒看過的資料，拿來做真實測試，t=1.25）各自都不顯著（不像巧合的機率不夠低），這不是能安心上實盤的訊號。事件研究線最乾淨：Q5 在申報後 60 個交易日
+    累積超額報酬（CAR，扣掉同期大盤表現後，這組股票額外多賺了多少） +0.62%，教科書等級的漂移形狀。但空頭腿在這個 17 年幾乎單邊多頭的池子裡沒肉——
     Q1（最差驚喜）絕對報酬仍是正的，放空要先扛住整體逆風。</p>
   </div>
   <div class="hero-stats">
-    <div><div class="hs-label">全期 Q5−Q1（淨）</div><div class="hs-value">+3.4%</div></div>
-    <div><div class="hs-label">全期 t 值</div><div class="hs-value">2.08</div></div>
-    <div><div class="hs-label">Train t 值</div><div class="hs-value">1.63</div></div>
-    <div><div class="hs-label">OOS t 值</div><div class="hs-value">1.32</div></div>
+    <div><div class="hs-label">全期 Q5−Q1（淨）</div><div class="hs-value">+3.0%</div></div>
+    <div><div class="hs-label">全期 t 值</div><div class="hs-value">1.82</div></div>
+    <div><div class="hs-label">Train t 值</div><div class="hs-value">1.32</div></div>
+    <div><div class="hs-label">OOS t 值</div><div class="hs-value">1.25</div></div>
   </div>
 </div>
 
@@ -174,9 +176,9 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 <div class="section">
 <h2 class="section-title">一、這是什麼——訊號與交易規則</h2>
 <div class="takeaway"><b>驚喜定義用季節隨機漫步 SUE：這一季 EPS 減去去年同季 EPS，除以過去 8 個季差的標準差。</b>
-不用分析師預估——沒有免費、逐日更新的 point-in-time 分析師共識可用，不硬湊。財報公布次一交易日進場，
-持有 60 個交易日或撞到下一次申報提前結束；每季末把「過去 90 天內有申報事件」的股票按 SUE 分五組，
-等權，Q5 多／Q1 空。成本 14bps 單邊來回，每筆事件扣一次。</div>
+不用分析師預估——沒有免費、逐日更新的 point-in-time（用「當時真的看得到」的資料回測，不是事後才知道的數字，避免用未來資訊回測出假訊號）分析師共識可用，不硬湊。財報公布次一交易日進場，
+持有 60 個交易日或撞到下一次申報提前結束；每季末把「過去 90 天內有申報事件」的股票按 SUE 分五組（五分位／quintile，把樣本由小排到大切成五等份，每份各佔 20%），
+等權（equal-weight，每檔股票分配一樣多的資金，不按市值加權），Q5 多／Q1 空。成本 14bps（basis point，基點，1bp＝0.01%）單邊來回，每筆事件扣一次。</div>
 <p style="font-size:.9rem;color:#374151;margin:.9rem 0">
 資料層沿用美股漲跌歸因頁同一套底層：S&amp;P500＋Nasdaq-100 池子（835 檔，2009–2026），SEC EDGAR 逐季財報
 point-in-time 對齊、分割修正後的 EPS。事前假設誠實列出：文獻普遍認為 PEAD 在大型股已大幅衰退，
@@ -187,15 +189,15 @@ point-in-time 對齊、分割修正後的 EPS。事前假設誠實列出：文�
 
 <div class="section">
 <h2 class="section-title">二、Q1–Q5 年化與 Q5−Q1（train／OOS／全期）</h2>
-<div class="takeaway"><b>全樣本勉強顯著（t=2.08），但拆開 train（t=1.63）
-和 OOS（t=1.32）各自都不顯著——全樣本擠出來的顯著性，個別分段都撐不住。</b>
-扣成本前後幾乎沒差（gross +3.4% vs net +3.4%），
+<div class="takeaway"><b>全樣本（t=1.82）、train（t=1.32）、
+OOS（t=1.25）三段都夠不到 95% 顯著門檻——2026-08-29 分割定錨修正後，全樣本也從勉強顯著轉為不顯著。</b>
+扣成本前後幾乎沒差（gross +3.1% vs net +3.0%），
 不是策略便宜，是訊號本身太弱，14bps 這種二階效應顯不出來。</div>
 
-<div class="scroll"><table><thead><tr><th>期間</th><th class="num">Q1</th><th class="num">Q2</th><th class="num">Q3</th><th class="num">Q4</th><th class="num">Q5</th><th class="num">Q5−Q1（淨，t 值）</th><th class="num">換手季數</th></tr></thead><tbody><tr><td class="lbl">Train 2009–2018</td><td class="num">10.7%</td><td class="num">11.5%</td><td class="num">11.5%</td><td class="num">13.6%</td><td class="num">14.7%</td><td class="num" style="">+3.6%<br><span style="font-size:.72rem;color:var(--muted)">t=1.63</span></td><td class="num">29</td></tr><tr><td class="lbl">OOS 2019–2026</td><td class="num">12.9%</td><td class="num">14.2%</td><td class="num">11.6%</td><td class="num">14.7%</td><td class="num">17.0%</td><td class="num" style="">+3.3%<br><span style="font-size:.72rem;color:var(--muted)">t=1.32</span></td><td class="num">30</td></tr><tr><td class="lbl">Full 2009–2026</td><td class="num">11.8%</td><td class="num">12.9%</td><td class="num">11.6%</td><td class="num">14.1%</td><td class="num">15.9%</td><td class="num" style="color:var(--red);font-weight:700">+3.4%<br><span style="font-size:.72rem;color:var(--muted)">t=2.08</span></td><td class="num">59</td></tr></tbody></table></div>
+<div class="scroll"><table><thead><tr><th>期間</th><th class="num">Q1</th><th class="num">Q2</th><th class="num">Q3</th><th class="num">Q4</th><th class="num">Q5</th><th class="num">Q5−Q1（淨，t 值）</th><th class="num">換手季數</th></tr></thead><tbody><tr><td class="lbl">Train 2009–2018</td><td class="num">11.0%</td><td class="num">11.2%</td><td class="num">12.1%</td><td class="num">13.5%</td><td class="num">14.3%</td><td class="num" style="">+2.9%<br><span style="font-size:.72rem;color:var(--muted)">t=1.32</span></td><td class="num">29</td></tr><tr><td class="lbl">OOS 2019–2026</td><td class="num">13.0%</td><td class="num">14.6%</td><td class="num">11.6%</td><td class="num">14.4%</td><td class="num">16.9%</td><td class="num" style="">+3.2%<br><span style="font-size:.72rem;color:var(--muted)">t=1.25</span></td><td class="num">30</td></tr><tr><td class="lbl">Full 2009–2026</td><td class="num">12.0%</td><td class="num">12.9%</td><td class="num">11.8%</td><td class="num">14.0%</td><td class="num">15.6%</td><td class="num" style="">+3.0%<br><span style="font-size:.72rem;color:var(--muted)">t=1.82</span></td><td class="num">59</td></tr></tbody></table></div>
 
 <p style="font-size:.87rem;color:#374151;margin:1rem 0">
-非單調的位置固定：三段裡 Q3 都比 Q2 差——中間分組是雜訊而不是平滑遞增的獲利驚喜梯度，教科書 PEAD 理論上該是單調的。
+非單調（monotonic，分組報酬有沒有照順序一路升高；好訊號理論上該是單調的，中間亂跳代表雜訊多）的位置固定：三段裡 Q3 都比 Q2 差——中間分組是雜訊而不是平滑遞增的獲利驚喜梯度。
 這是「訊號弱」的另一個獨立證據。
 </p>
 
@@ -208,13 +210,13 @@ point-in-time 對齊、分割修正後的 EPS。事前假設誠實列出：文�
 
 <div class="section">
 <h2 class="section-title">三、事件研究：事件時間累積超額報酬（相對池子等權）</h2>
-<div class="takeaway"><b>Q5 隨時間單調擴大且 t 值持續上升（+5日 +0.14% → +60日
-+0.66%，t 從 2.58 升到 3.69）——
+<div class="takeaway"><b>Q5 隨時間單調擴大且 t 值持續上升（+5日 +0.13% → +60日
++0.62%，t 從 2.45 升到 3.44）——
 教科書等級的漂移形狀，是全篇最乾淨的證據。</b>
-Q1 方向對稱但幅度只有 Q5 的六成左右（+60日 -0.40%）——
+Q1 方向對稱但幅度只有 Q5 的六成左右（+60日 -0.35%）——
 好消息漂移得比壞消息更持久。</div>
 
-<div class="scroll"><table><thead><tr><th>分組</th><th class="num">+5 日 CAR</th><th class="num">+20 日 CAR</th><th class="num">+60 日 CAR</th><th class="num">事件數</th></tr></thead><tbody><tr><td class="lbl">Q5（財報大驚喜）</td><td class="num" style="color:var(--red);font-weight:700">+0.14%<br><span style="font-size:.7rem;color:var(--muted)">t=2.58</span></td><td class="num" style="color:var(--red);font-weight:700">+0.34%<br><span style="font-size:.7rem;color:var(--muted)">t=3.35</span></td><td class="num" style="color:var(--red);font-weight:700">+0.66%<br><span style="font-size:.7rem;color:var(--muted)">t=3.69</span></td><td class="num">5015</td></tr><tr><td class="lbl">Q1（財報大失望）</td><td class="num" style="">-0.11%<br><span style="font-size:.7rem;color:var(--muted)">t=-1.72</span></td><td class="num" style="">-0.18%<br><span style="font-size:.7rem;color:var(--muted)">t=-1.48</span></td><td class="num" style="color:var(--red);font-weight:700">-0.40%<br><span style="font-size:.7rem;color:var(--muted)">t=-2.01</span></td><td class="num">5028</td></tr></tbody></table></div>
+<div class="scroll"><table><thead><tr><th>分組</th><th class="num">+5 日 CAR</th><th class="num">+20 日 CAR</th><th class="num">+60 日 CAR</th><th class="num">事件數</th></tr></thead><tbody><tr><td class="lbl">Q5（財報大驚喜）</td><td class="num" style="color:var(--red);font-weight:700">+0.13%<br><span style="font-size:.7rem;color:var(--muted)">t=2.45</span></td><td class="num" style="color:var(--red);font-weight:700">+0.33%<br><span style="font-size:.7rem;color:var(--muted)">t=3.26</span></td><td class="num" style="color:var(--red);font-weight:700">+0.62%<br><span style="font-size:.7rem;color:var(--muted)">t=3.44</span></td><td class="num">5016</td></tr><tr><td class="lbl">Q1（財報大失望）</td><td class="num" style="">-0.10%<br><span style="font-size:.7rem;color:var(--muted)">t=-1.71</span></td><td class="num" style="">-0.20%<br><span style="font-size:.7rem;color:var(--muted)">t=-1.63</span></td><td class="num" style="">-0.35%<br><span style="font-size:.7rem;color:var(--muted)">t=-1.77</span></td><td class="num">5028</td></tr></tbody></table></div>
 
 <p style="font-size:.87rem;color:#374151;margin:1rem 0">
 做法：取被季度組合標記進 Q5／Q1 的事件（各約 5,000 筆），用事件進場日到 +5／+20／+60 個交易日的股票對數報酬，
@@ -231,18 +233,18 @@ Q1 方向對稱但幅度只有 Q5 的六成左右（+60日 -0.40%）——
 
 <div class="section">
 <h2 class="section-title">四、多空兩腿分開看——空頭腿沒肉</h2>
-<div class="warn-loud"><strong>空頭腿（Q1）的絕對年化報酬是 11.8%，不是負的。</strong>
+<div class="warn-loud"><strong>空頭腿（Q1）的絕對年化報酬是 12.0%，不是負的。</strong>
 這個池子（S&amp;P500＋NDX100）2009–2026 幾乎是單邊多頭市場，「SUE 最差」的股票平均仍然每年漲近
 12%——放空它，先天要扛住這個逆風，賺的錢完全來自「Q5 又更會漲」的相對優勢，
 不是空頭腿本身有正報酬。</strong></div>
 
 <p style="font-size:.9rem;color:#374151;margin:.9rem 0">
-多頭腿（Q5）年化 15.9%，相對池子平均（Q3 約 11.6%）貢獻約
-+4.3% 超額，撐起本策略幾乎全部的可執行報酬。
+多頭腿（Q5）年化 15.6%，相對池子平均（Q3 約 11.8%）貢獻約
++3.8% 超額，撐起本策略幾乎全部的可執行報酬。
 這印證 return_driver 頁面先前的發現：獲利最差的股票在財報日當場被市場修正掉，賣壓提前反映，之後續跌力道有限。
 </p>
 
-<div class="note"><b>實務含意：如果只做多 Q5（不做空 Q1），年化 15.9% 裡已經包含本策略幾乎全部的可執行報酬；
+<div class="note"><b>實務含意：如果只做多 Q5（不做空 Q1），年化 15.6% 裡已經包含本策略幾乎全部的可執行報酬；
 空腿的價值主要是降低與大盤的相關性，不是額外報酬來源。</b>
 任何要真正執行空頭腿的人，還要先解決融券成本與借券可得性這個本測未涵蓋的變數——把 Q1 絕對報酬看成正的，
 就知道這個成本會直接吃掉本來就微薄的相對優勢。</div>
@@ -251,11 +253,12 @@ Q1 方向對稱但幅度只有 Q5 的六成左右（+60日 -0.40%）——
 
 <div class="section">
 <h2 class="section-title">五、年代切片（沿用美股漲跌歸因頁五段分期）</h2>
-<div class="takeaway"><b>五段裡只有 2023–2026 AI 年代單獨顯著（t=3.01），
-其餘四段 |t| 都在 1.6 以下，2020–2021 COVID 泡沫甚至翻負（-4.8%）。</b>
-全樣本 t=2.08 的顯著性幾乎全部來自最近這一段——把最近三年半拿掉重算，全樣本大概率掉到不顯著。</div>
+<div class="takeaway"><b>五段裡只有 2023–2026 AI 年代單獨顯著（t=2.85），
+其餘四段 |t| 都在 1.6 以下，2020–2021 COVID 泡沫甚至翻負（-5.3%）。</b>
+全樣本 t=1.82 本已夠不到顯著門檻，其中仍有一大部分是最近這一段撐出來的——
+把最近三年半拿掉重算，全樣本會更弱。</div>
 
-<div class="scroll"><table><thead><tr><th>指標</th><th class="num">09–12 QE復甦</th><th class="num">13–19 低利成長</th><th class="num">20–21 COVID泡沫</th><th class="num">2022 升息熊</th><th class="num">23–26 AI</th></tr></thead><tbody><tr><td class="lbl">Q5−Q1（淨，年化）</td><td class="num" style="">+7.2%<br><span style="font-size:.7rem;color:var(--muted)">t=0.81（n=5）</span></td><td class="num" style="">+2.8%<br><span style="font-size:.7rem;color:var(--muted)">t=1.52（n=28）</span></td><td class="num" style="">-4.8%<br><span style="font-size:.7rem;color:var(--muted)">t=-0.77（n=8）</span></td><td class="num" style="">+2.0%<br><span style="font-size:.7rem;color:var(--muted)">t=0.30（n=4）</span></td><td class="num" style="color:var(--red);font-weight:700">+8.9%<br><span style="font-size:.7rem;color:var(--muted)">t=3.01（n=14）</span></td></tr></tbody></table></div>
+<div class="scroll"><table><thead><tr><th>指標</th><th class="num">09–12 QE復甦</th><th class="num">13–19 低利成長</th><th class="num">20–21 COVID泡沫</th><th class="num">2022 升息熊</th><th class="num">23–26 AI</th></tr></thead><tbody><tr><td class="lbl">Q5−Q1（淨，年化）</td><td class="num" style="">+7.0%<br><span style="font-size:.7rem;color:var(--muted)">t=0.81（n=5）</span></td><td class="num" style="">+2.1%<br><span style="font-size:.7rem;color:var(--muted)">t=1.12（n=28）</span></td><td class="num" style="">-5.3%<br><span style="font-size:.7rem;color:var(--muted)">t=-0.85（n=8）</span></td><td class="num" style="">+2.6%<br><span style="font-size:.7rem;color:var(--muted)">t=0.43（n=4）</span></td><td class="num" style="color:var(--red);font-weight:700">+8.7%<br><span style="font-size:.7rem;color:var(--muted)">t=2.85（n=14）</span></td></tr></tbody></table></div>
 
 <p style="font-size:.87rem;color:#374151;margin:1rem 0">
 這不是「PEAD 又活過來了」的訊號，比較可能是 AI 主題年代少數幾檔權值股（輝達系供應鏈）財報驚喜後續漲的個案，
@@ -348,8 +351,8 @@ PEAD 理論上的對手方是誰？傳統解釋（Bernard &amp; Thomas 1989）�
 
 <div class="section">
 <h2 class="section-title">八、方法論限制（誠實揭露）</h2>
-<div class="takeaway"><b>六個限制，第一、第四條偏多／方向明確；其餘偏精確度，不影響頭條判斷的方向。</b></div>
-<div class="card"><ul style="padding-left:1.2rem;font-size:.87rem;line-height:1.85;color:#374151"><li><b>NDX100 生存者偏差，方向利多。</b>　只用現在的 100 檔清單往回套用（Wikipedia 已無歷史成分表），會讓表現偏樂觀——沿用美股漲跌歸因頁的既有揭露。</li><li><b>SUE 分母退化，個別事件會出現數千甚至百萬倍的極端值。</b>　獲利極度穩定的公司，過去 8 季差的標準差可能趨近零，導致 SUE 數值失真。分組用分位數排序（qcut）而非數值本身，對 Q1–Q5 歸類影響有限；個股案例揀選時已排除這類極端值。</li><li><b>年代切片小樣本警告。</b>　2009–2012（n=5）、2022（n=4）兩段季度數過少，t 值不可靠，不應過度解讀。</li><li><b>空頭腿絕對報酬是正的，不是策略缺陷。</b>　這個池子幾乎全程多頭，Q1（最差 SUE）年化仍有正報酬——誠實描述「相對優勢」和「絕對做空報酬」是兩回事，任何要真正執行空頭腿的人都要先解決融券成本與借券可得性，本測未涵蓋。</li><li><b>事件窗口偶爾與總經事件重疊。</b>　60 個交易日的持有期偶爾會完整覆蓋一次總體衝擊（COVID、油價崩盤），個股案例三已具體點出這個混淆來源，年代切片的 2020–2021 段翻負也與此有關。</li><li><b>不用分析師預估。</b>　SUE 只用季節隨機遊走定義（SUE uses seasonal random walk only (EPS_q - EPS_q-4)/sigma_8q; no analyst consensus (no free point-in-time source).），這會系統性低估「市場預期」與「實際公佈值」之間真正的差距——本測結果應理解為「相對於一個天真基準的驚喜」，不是「相對於真實市場預期的驚喜」。</li></ul></div>
+<div class="takeaway"><b>七個限制，第一、第四、第七條偏多／方向明確；其餘偏精確度，不影響頭條判斷的方向。</b></div>
+<div class="card"><ul style="padding-left:1.2rem;font-size:.87rem;line-height:1.85;color:#374151"><li><b>NDX100 生存者偏差，方向利多。</b>　生存者偏差（survivorship bias，回測只用「現在還活著、還在清單內」的樣本，篩掉當年表現差、後來被剔除的公司，會讓結果看起來比真實情況樂觀）：只用現在的 100 檔清單往回套用（Wikipedia 已無歷史成分表），會讓表現偏樂觀——沿用美股漲跌歸因頁的既有揭露。</li><li><b>SUE 分母退化，個別事件會出現數千甚至百萬倍的極端值。</b>　獲利極度穩定的公司，過去 8 季差的標準差可能趨近零，導致 SUE 數值失真。分組用分位數排序（qcut）而非數值本身，對 Q1–Q5 歸類影響有限；個股案例揀選時已排除這類極端值。</li><li><b>年代切片小樣本警告。</b>　2009–2012（n=5）、2022（n=4）兩段季度數過少，t 值不可靠，不應過度解讀。</li><li><b>空頭腿絕對報酬是正的，不是策略缺陷。</b>　這個池子幾乎全程多頭，Q1（最差 SUE）年化仍有正報酬——誠實描述「相對優勢」和「絕對做空報酬」是兩回事，任何要真正執行空頭腿的人都要先解決融券成本與借券可得性，本測未涵蓋。</li><li><b>事件窗口偶爾與總經事件重疊。</b>　60 個交易日的持有期偶爾會完整覆蓋一次總體衝擊（COVID、油價崩盤），個股案例三已具體點出這個混淆來源，年代切片的 2020–2021 段翻負也與此有關。</li><li><b>不用分析師預估。</b>　SUE 只用季節隨機遊走定義（SUE uses seasonal random walk only (EPS_q - EPS_q-4)/sigma_8q; no analyst consensus (no free point-in-time source).），這會系統性低估「市場預期」與「實際公佈值」之間真正的差距——本測結果應理解為「相對於一個天真基準的驚喜」，不是「相對於真實市場預期的驚喜」。</li><li><b>2026-08-29 更正：分割調整定錨日修正，頭條數字已下修。</b>　EPS 分割調整原本以財報期別結束日（period_end）判斷「這之後有沒有分割」，但 ASC 260 規定申報日若晚於分割生效日，申報數字本身已用分割後股數重編——用期別結束日會對這類申報重複修正一次。改用申報日（filed）定錨後，全池 39,339 筆股季重算，107 筆（0.27%）EPS 差異 &gt;1%（WMT／GOOG／GOOGL／MA／NFLX／BKNG 等真實分割案例）。修正後 Q5−Q1（淨）：train 期 3.58%／t=1.63 → 2.94%／t=1.32；OOS 期 3.31%／t=1.32 → 3.16%／t=1.25；全期 3.44%／t=2.08 → 3.05%／t=1.82——方向不變（仍是正 spread），但全期從原本勉強站上 95% 顯著門檻（t&gt;1.96）變成跌破門檻；本頁數字已用修正版重新計算。</li></ul></div>
 </div>
 
 
@@ -375,7 +378,7 @@ PEAD 理論上的對手方是誰？傳統解釋（Bernard &amp; Thomas 1989）�
 <script>
 new Chart(document.getElementById('chart-a'), {
   type: 'bar',
-  data: { labels: ["Train", "OOS", "全期"], datasets: [{label: 'Q1', data: [10.7, 12.9, 11.8], backgroundColor: '#93c5fd'}, {label: 'Q2', data: [11.5, 14.2, 12.9], backgroundColor: '#60a5fa'}, {label: 'Q3', data: [11.5, 11.6, 11.6], backgroundColor: '#3b82f6'}, {label: 'Q4', data: [13.6, 14.7, 14.1], backgroundColor: '#2563eb'}, {label: 'Q5', data: [14.7, 17.0, 15.9], backgroundColor: '#1a56db'}] },
+  data: { labels: ["Train", "OOS", "全期"], datasets: [{label: 'Q1', data: [11.0, 13.0, 12.0], backgroundColor: '#93c5fd'}, {label: 'Q2', data: [11.2, 14.6, 12.9], backgroundColor: '#60a5fa'}, {label: 'Q3', data: [12.1, 11.6, 11.8], backgroundColor: '#3b82f6'}, {label: 'Q4', data: [13.5, 14.4, 14.0], backgroundColor: '#2563eb'}, {label: 'Q5', data: [14.3, 16.9, 15.6], backgroundColor: '#1a56db'}] },
   options: {
     responsive: true, maintainAspectRatio: false,
     scales: { y: { title: {display:true, text:'年化報酬 (%)'} } },
@@ -389,8 +392,8 @@ new Chart(document.getElementById('chart-b'), {
   data: {
     labels: ["+5日", "+20日", "+60日"],
     datasets: [
-      {label: 'Q5（財報大驚喜）', data: [0.139, 0.338, 0.662], borderColor: '#1a56db', backgroundColor: '#1a56db', tension: .25},
-      {label: 'Q1（財報大失望）', data: [-0.106, -0.181, -0.402], borderColor: '#dc2626', backgroundColor: '#dc2626', tension: .25}
+      {label: 'Q5（財報大驚喜）', data: [0.131, 0.33, 0.618], borderColor: '#1a56db', backgroundColor: '#1a56db', tension: .25},
+      {label: 'Q1（財報大失望）', data: [-0.104, -0.196, -0.35], borderColor: '#dc2626', backgroundColor: '#dc2626', tension: .25}
     ]
   },
   options: {
@@ -405,7 +408,7 @@ new Chart(document.getElementById('chart-c'), {
   type: 'bar',
   data: {
     labels: ["09–12 QE", "13–19 低利", "20–21 COVID", "2022 升息", "23–26 AI"],
-    datasets: [{label: 'Q5−Q1 年化價差（淨）', data: [7.2, 2.8, -4.8, 2.0, 8.9], backgroundColor: '#1a56db'}]
+    datasets: [{label: 'Q5−Q1 年化價差（淨）', data: [7.0, 2.1, -5.3, 2.6, 8.7], backgroundColor: '#1a56db'}]
   },
   options: {
     responsive: true, maintainAspectRatio: false,
