@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>美股獲利能力因子（GP/A＋營業利益率） | InvestMQuest Research</title>
+<meta name="description" content="用 SEC EDGAR 年度財報 + 835 檔美股 17 年資料驗 Novy-Marx (2013) GP/A 獲利能力因子與營業利益率變體：兩訊號在此樣本皆未跑出溢價，方向甚至相反，最不賺錢一組報酬領先；機制節並陳品質溢價與風險補償兩說，個股案例與資料覆蓋率限制皆誠實揭露。">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+:root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
+      --text:#111827;--muted:#6b7280;--border:#e5e7eb;
+      --green:#059669;--green-bg:#ecfdf5;--green-border:#a7f3d0;--green-text:#065f46;
+      --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;--red-text:#991b1b;
+      --amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fde68a;--amber-text:#92400e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans TC',sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1080px;margin:0 auto;padding:0 1.5rem}
+.page-hdr{padding:1.75rem 0 1.25rem;background:linear-gradient(180deg,#eff6ff 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
+.page-hdr h1{font-size:1.6rem;font-weight:700;letter-spacing:-.03em}
+.page-hdr .sub{color:var(--muted);font-size:.9rem;margin-top:.2rem}
+.crumb{font-size:.82rem;color:var(--muted);margin-bottom:.4rem}
+.crumb a{color:var(--muted)}
+.section{padding:1.75rem 0 0}
+.section-title{font-size:1.1rem;font-weight:700;margin-bottom:1rem;
+               padding-bottom:.45rem;border-bottom:2px solid var(--brand)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.1rem 1.25rem;margin-bottom:1rem}
+table{width:100%;border-collapse:collapse;font-size:.85rem;background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+th,td{text-align:left;padding:.55rem .65rem;border-bottom:1px solid var(--border)}
+th{background:#f9fafb;font-weight:600;font-size:.72rem;text-transform:uppercase;
+   letter-spacing:.03em;color:var(--muted)}
+td{font-variant-numeric:tabular-nums;vertical-align:top}
+td.num,th.num{text-align:right}
+td.lbl{white-space:nowrap;font-weight:500}
+tbody tr:last-child td{border-bottom:0}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.hero{margin:1.25rem 0;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--card)}
+.hero-top{background:linear-gradient(135deg,#eff6ff 0%,#f5f8ff 100%);padding:1.4rem 1.6rem;border-bottom:1px solid var(--border)}
+.hero-top .verdict-tag{display:inline-block;background:#1a56db;color:#fff;font-size:.74rem;font-weight:700;
+                       letter-spacing:.05em;padding:.25rem .7rem;border-radius:99px;margin-bottom:.5rem}
+.hero-top h2{font-size:1.3rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.35rem}
+.hero-top p{font-size:.92rem;color:#374151;max-width:62rem}
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card)}
+.hero-stats > div{padding:1rem 1.2rem;text-align:center;border-right:1px solid var(--border)}
+.hero-stats > div:last-child{border-right:none}
+.hero-stats .hs-label{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.hero-stats .hs-value{font-size:1.4rem;font-weight:800;letter-spacing:-.02em}
+.takeaway{font-size:.87rem;margin:.9rem 0;padding:.7rem .95rem;border-radius:6px;background:var(--brand-light);
+    border-left:3px solid var(--brand);color:#1f2c44}
+.takeaway b{color:#12213a}
+.note{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;
+      padding:.85rem 1.1rem;font-size:.84rem;color:var(--amber-text);margin:1rem 0}
+.warn-loud{background:var(--red-bg);border:2px solid var(--red-border);border-radius:8px;
+      padding:1rem 1.2rem;font-size:.9rem;color:var(--red-text);margin:1rem 0}
+.warn-loud strong{color:var(--red)}
+.cmp{display:grid;gap:1rem;margin:.9rem 0}
+.chart-wrap{position:relative}
+footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
+       text-align:center;padding:1.25rem 0;font-size:.78rem;margin-top:2rem}
+@media(max-width:768px){
+  .hero-stats{grid-template-columns:repeat(2,1fr)}
+  .cmp{grid-template-columns:1fr !important}
+  table{font-size:.76rem}th,td{padding:.4rem .45rem}
+}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <a href="/cockpit/">選股</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">個股研究</a>
+          <a href="/id/">產業研究</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/" class="active">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/flow/">投資流程</a>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="page-hdr">
+  <div class="container">
+    <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / 美股獲利能力因子（GP/A＋營業利益率）</div>
+    <h1>美股獲利能力因子（GP/A＋營業利益率）</h1>
+    <div class="sub">S&amp;P500 + Nasdaq-100 點時財報全樣本（835 檔，2009–2026）・GP/A 與營業利益率雙訊號五分位 ＋ 多空拆解 ＋ 年代切片 ＋ 持續性研究 ＋ 個股案例</div>
+    <style id="bt-subnav-style">.bt-subnav{margin-top:.75rem;border:1px solid var(--border,#e5e7eb);border-radius:8px;overflow:hidden;font-size:.78rem;line-height:1.3}.bt-subnav-row{display:flex;align-items:flex-start;gap:.55rem;padding:.32rem .55rem;border-top:1px solid var(--border,#e5e7eb)}.bt-subnav-row:first-child{border-top:0}.bt-subnav-lbl{flex:0 0 5.4em;font-size:.64rem;font-weight:700;color:var(--muted,#6b7280);text-transform:uppercase;letter-spacing:.04em;padding-top:.34rem}.bt-subnav-pills{display:flex;flex-wrap:wrap;gap:.3rem;min-width:0}.bt-subnav-pills a{display:inline-flex;align-items:center;gap:.28rem;padding:.26rem .6rem;background:#eef1f4;color:#374151;border-radius:999px;text-decoration:none;font-weight:500;white-space:nowrap;transition:background .12s}.bt-subnav-pills a:hover{background:#e1e6ea}.bt-subnav-pills a.bt-dead{color:#7a828d;background:#f2f3f5}.bt-subnav-pills a.bt-on{background:linear-gradient(135deg,#081832,#173564);color:#fff;font-weight:600}.bt-subnav-pills a.bt-on:hover{background:linear-gradient(135deg,#081832,#173564)}.bt-tag{font-size:.6rem;font-weight:600;padding:.02rem .3rem;border-radius:4px;line-height:1.4}.bt-tag-dead{background:rgba(220,38,38,.12);color:#b42318}.bt-tag-watch{background:rgba(180,118,20,.15);color:#986a12}.bt-on .bt-tag-dead{background:rgba(255,255,255,.22);color:#fff}.bt-on .bt-tag-watch{background:rgba(255,255,255,.22);color:#fff}@media(max-width:640px){.bt-subnav-row{flex-direction:column;gap:.28rem;padding:.4rem .55rem}.bt-subnav-lbl{flex-basis:auto;padding-top:0}}</style><nav class="bt-subnav" aria-label="回測子導航"><div class="bt-subnav-row"><div class="bt-subnav-lbl">對比總覽</div><div class="bt-subnav-pills"><a href="/backtest/">20 年</a><a href="/backtest/10y/">10 年</a><a href="/backtest/criteria/">評估標準</a><a href="/backtest/tw/">台股總覽</a><a href="/backtest/multi/">多資產總覽</a><a href="/backtest/leverage/">槓桿疊加總覽</a><a href="/backtest/ma_sensitivity/">MA 敏感度</a><a href="/backtest/free_lunch/">分散與免費午餐</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">個別系統</div><div class="bt-subnav-pills"><a href="/backtest/long_track/">SPY/QQQ 長軌</a><a href="/backtest/long_track_qqq/">QQQ 長軌純攻</a><a href="/backtest/long_track_ensemble/">SPY/QQQ 集成</a><a href="/backtest/long_track_smh/">SMH/QQQ 進攻</a><a href="/backtest/six_state/">QQQ＋SMH 六狀態</a><a href="/backtest/six_state_v1r1/">QQQ 六狀態實盤</a><a href="/backtest/gem/">SPY/ACWX 雙動能</a><a href="/backtest/slope_filter/">SPY/AGG 斜率</a><a href="/backtest/rsi2_mr/">SPY/QQQ 均值回歸</a><a href="/backtest/supertrend/">週線 Supertrend</a><a href="/backtest/minervini/">Minervini RS+VCP</a><a href="/backtest/mom_volscaling/">動能·波動縮放</a><a href="/backtest/dual_track_study/">雙軌分散研究</a><a href="/backtest/leverage_voltarget/">期貨槓桿疊加</a><a href="/backtest/vol_targeting/">波動目標倉位<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/dual_track/" class="bt-dead">SPY/QQQ 雙軌多空<span class="bt-tag bt-tag-dead">否決</span></a><a href="/backtest/exit_switch/" class="bt-dead">出場法切換<span class="bt-tag bt-tag-dead">否決</span></a><a href="/backtest/short_system/" class="bt-dead">指數做空<span class="bt-tag bt-tag-dead">失敗</span></a><a href="/backtest/cndr/" class="bt-dead">Iron Condor<span class="bt-tag bt-tag-dead">失敗</span></a><a href="/backtest/covered_call/" class="bt-dead">Covered Call<span class="bt-tag bt-tag-dead">負貢獻</span></a><a href="/backtest/put_timing/" class="bt-dead">SPY/QQQ 買 put 避險<span class="bt-tag bt-tag-dead">負貢獻</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">多資產</div><div class="bt-subnav-pills"><a href="/backtest/turtle/">唐奇安突破</a><a href="/backtest/clenow/">跨資產趨勢</a><a href="/backtest/multiasset_trend/">SG Trend 複製</a><a href="/backtest/turtle_adopt/">組合採用 Sleeve</a><a href="/backtest/slope_filter_global/">全球斜率穩健性</a><a href="/backtest/crossasset_defense/">跨資產防守</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">台股波段</div><div class="bt-subnav-pills"><a href="/backtest/tw_0050_compare/">0050 總覽·台美差異</a><a href="/backtest/tw_0050/">0050 進攻趨勢（移植）</a><a href="/backtest/tw_0050_lt/">0050 長軌趨勢</a><a href="/backtest/long_track_tw/">2330/0050 E3 長軌</a><a href="/backtest/tw_0050_six/">0050 六狀態機</a><a href="/backtest/tw_0050_dual/" class="bt-dead">0050 雙軌多空<span class="bt-tag bt-tag-dead">否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">台股選擇權</div><div class="bt-subnav-pills"><a href="/backtest/tw_options/">台股選擇權專區<span class="bt-tag bt-tag-watch">專區</span></a><a href="/backtest/txo_vol_seller/">台指選擇權賣方<span class="bt-tag bt-tag-watch">模擬中</span></a><a href="/backtest/txo_put_seller/">台指賣方下檔<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_iron_condor/">台指雙賣<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_covered_call_0050/">台指 Covered Call<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_tail_hedge/">台指尾端避險<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">日內交易</div><div class="bt-subnav-pills"><a href="/backtest/txf_intraday/">台指當沖<span class="bt-tag bt-tag-watch">未過</span></a><a href="/backtest/txf_chips/">籌碼偏向<span class="bt-tag bt-tag-watch">觀察</span></a><a href="/backtest/ssf_xsec/">個股期橫斷面<span class="bt-tag bt-tag-watch">未過</span></a><a href="/backtest/txf_basis/" class="bt-dead">基差偏向<span class="bt-tag bt-tag-dead">否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・主動式ETF</div><div class="bt-subnav-pills"><a href="/backtest/active_etf/">主動式ETF總結<span class="bt-tag bt-tag-watch">專區</span></a><a href="/backtest/tw_active_etf/">台股主動式ETF<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/us_active_etf/">美股主動式ETF<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/tw_mutual_fund/">台股共同基金<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・頻率</div><div class="bt-subnav-pills"><a href="/backtest/daily_vs_weekly/">日/週線</a><a href="/backtest/daily_vs_weekly_deep/">日/週·深掘</a><a href="/backtest/daily_vs_weekly_global/">日/週·全球</a><a href="/backtest/daily_vs_weekly_tw/">日/週·台股</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・均線</div><div class="bt-subnav-pills"><a href="/backtest/ma_cross/">MA 交叉</a><a href="/backtest/ma_deviation/">MA 乖離</a><a href="/backtest/ma_dynband/">MA 動態帶</a><a href="/backtest/ma_squeeze/">MA 擠壓</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・崩盤</div><div class="bt-subnav-pills"><a href="/backtest/smh_vcrash/">SMH V崩</a><a href="/backtest/tw_vcrash/">台股 V崩防禦</a><a href="/backtest/tw_crash/">台股含崩盤驗證</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・總經</div><div class="bt-subnav-pills"><a href="/backtest/housing_gdp/">人均GDP與房價<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・可轉債</div><div class="bt-subnav-pills"><a href="/backtest/tw_cb/">台股可轉債專區<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・因子</div><div class="bt-subnav-pills"><a href="/backtest/return_driver/">美股漲跌歸因：獲利與估值<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/pead/">美股財報驚喜後漂移<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/accruals/">美股獲利品質（應計項目）<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/share_issuance/">美股股數增減（發行與回購）<span class="bt-tag bt-tag-watch">研究</span></a></div></div></nav>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ===== HERO ===== -->
+<div class="hero">
+  <div class="hero-top">
+    <span class="verdict-tag">頭條判斷</span>
+    <h2>兩訊號都沒有跑出獲利能力溢價——方向甚至相反，最不賺錢一組報酬領先</h2>
+    <p>全樣本（2009–2026）GP/A（gross profitability，毛利÷總資產，Novy-Marx 2013，headline）
+    Q5－Q1（把股票依獲利能力高低分五組，最高分那組的報酬減最低分那組，看這個訊號能不能選出贏家）
+    年化（annualized，把長短不一的持有期都換算成「一年賺多少」的統一比較基準）價差 -3.8%，
+    t 值（這個差距是真訊號還是運氣的評分，粗略說絕對值要大於 2 才算數）=-0.71——不顯著（statistically significant，
+    統計上比運氣造成的機率更低；本測未達門檻），營業利益率（用戶指定變體）Q5－Q1 -9.7%
+    （t=-1.87）方向相同。拆開來看，train（訓練期——用來設計、校準訊號的那段歷史資料）期
+    （t=0.25）打平，OOS（out-of-sample，樣本外——訓練期完全沒看過的資料，拿來做真實測試，
+    比訓練期的結果更可信）期（t=-1.07）更負（-10.4%）——不是「發表後衰退」，
+    是從頭到尾都沒有跑出正確方向。持續性研究顯示獲利能力本身高度穩定，但市場沒有因此付溢價；
+    個股案例顯示 2023–2026 AI 年代的方向錯誤主要由記憶體／半導體庫存循環股谷底反彈主導，
+    比較像「風險補償」不是「品質被低估」。</p>
+  </div>
+  <div class="hero-stats">
+    <div><div class="hs-label">GP/A 全期 Q5−Q1（淨）</div><div class="hs-value">-3.8%</div></div>
+    <div><div class="hs-label">GP/A 全期 t 值</div><div class="hs-value">-0.71</div></div>
+    <div><div class="hs-label">GP/A OOS t 值</div><div class="hs-value">-1.07</div></div>
+    <div><div class="hs-label">營業利益率全期 Q5−Q1</div><div class="hs-value">-9.7%</div></div>
+  </div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">一、這是什麼——兩個訊號與交易規則</h2>
+<div class="takeaway"><b>GP/A（gross profitability，毛利÷總資產，Novy-Marx 2013，headline）＝毛利÷總資產（同一財年期末值，
+不取期初期末平均——水準比率，非流量對流量比率）；營業利益率（用戶指定變體）＝營業利益÷營收，同一財年。
+只用 10-K 年度值、申報日對齊（point-in-time，用「當時真的能看到的資料」回測，不是事後才知道的最終數字，避免用未來才有的資訊回測出假訊號）。</b>
+每年 6 月 30 日重排，用「當時已申報」的最新年度值分五組（quintile，五分位——把樣本由小排到大切成五等份，每份各佔 20%），
+等權（equal-weight，投資組合裡每檔股票分配一樣多的資金，不按市值大小加權），持有一年。Q5（獲利能力最高）多／Q1（最低）空。
+成本 14bps（basis point，基點，1bp＝0.01%，交易成本常用這個單位）年度換手（成本不敏感）。</p>
+</div>
+<p style="font-size:.9rem;color:#374151;margin:.9rem 0">
+資料層沿用美股漲跌歸因頁同一套底層：S&amp;P500＋Nasdaq-100 池子（835 檔，2009–2026），另建自有模組解析
+年度毛利／營收／銷貨成本／營業利益／總資產（duration 與 instant 兩類 XBRL 事實）。事前假設誠實列出：
+GP/A 是 Novy-Marx (2013) 發表後存活紀錄最好的因子之一；營業利益率是用戶指定變體，事前並列登記，不是跑完挑好看的。
+</p>
+<p style="font-size:.9rem;color:#374151;margin:.9rem 0">
+557 檔有可解析年度資料（835 檔池子、615 檔有可用價格）。
+毛利欄位：4177／8408 筆（50%）
+直取 XBRL <code>GrossProfit</code>；1855 筆（22%）
+用「營收－銷貨成本」算出；3249 筆（39%）
+兩者皆缺（金融、保險、REITs 這類本來就沒有「毛利」概念的產業）。
+</p>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">二、Q1–Q5 年化與 Q5−Q1（train／OOS／全期，兩訊號並列）</h2>
+<div class="takeaway"><b>兩訊號結論一致，都是負的：GP/A 全期 Q5−Q1（把股票依獲利能力高低分五組，最高分那組的報酬減最低分那組，
+看這個訊號能不能選出贏家）年化（annualized，把長短不一的持有期都換算成「一年賺多少」的統一比較基準）
+-3.8%（t=-0.71），
+營業利益率 -9.7%（t=-1.87）——
+沒有一個期間顯著為正，train 最好的結果也只是打平（GP/A t=0.25）。</b></div>
+
+<h3 style="font-size:.95rem;margin:1rem 0 .5rem">GP/A（headline）</h3>
+<div class="scroll"><table><thead><tr><th>期間</th><th class="num">Q1（最低）</th><th class="num">Q2</th><th class="num">Q3</th><th class="num">Q4</th><th class="num">Q5（最高）</th><th class="num">Q5−Q1（淨，t 值——這個差距是真訊號還是運氣的評分，粗略說絕對值要大於 2 才算數）</th><th class="num">重排次數</th></tr></thead><tbody><tr><td class="lbl">Train 2009–2018</td><td class="num">14.6%</td><td class="num">19.2%</td><td class="num">18.0%</td><td class="num">21.2%</td><td class="num">16.7%</td><td class="num" style="">+1.4%<br><span style="font-size:.72rem;color:var(--muted)">t=0.25</span></td><td class="num">9</td></tr><tr><td class="lbl">OOS 2019–2026</td><td class="num">20.0%</td><td class="num">15.3%</td><td class="num">12.7%</td><td class="num">19.8%</td><td class="num">10.8%</td><td class="num" style="">-10.4%<br><span style="font-size:.72rem;color:var(--muted)">t=-1.07</span></td><td class="num">7</td></tr><tr><td class="lbl">Full 2009–2026</td><td class="num">16.9%</td><td class="num">17.5%</td><td class="num">15.7%</td><td class="num">20.6%</td><td class="num">14.1%</td><td class="num" style="">-3.8%<br><span style="font-size:.72rem;color:var(--muted)">t=-0.71</span></td><td class="num">16</td></tr></tbody></table></div>
+
+<h3 style="font-size:.95rem;margin:1.3rem 0 .5rem">營業利益率（用戶變體）</h3>
+<div class="scroll"><table><thead><tr><th>期間</th><th class="num">Q1（最低）</th><th class="num">Q2</th><th class="num">Q3</th><th class="num">Q4</th><th class="num">Q5（最高）</th><th class="num">Q5−Q1（淨，t 值——這個差距是真訊號還是運氣的評分，粗略說絕對值要大於 2 才算數）</th><th class="num">重排次數</th></tr></thead><tbody><tr><td class="lbl">Train 2009–2018</td><td class="num">21.1%</td><td class="num">17.5%</td><td class="num">16.0%</td><td class="num">16.4%</td><td class="num">17.7%</td><td class="num" style="">-4.2%<br><span style="font-size:.72rem;color:var(--muted)">t=-1.10</span></td><td class="num">9</td></tr><tr><td class="lbl">OOS 2019–2026</td><td class="num">26.1%</td><td class="num">11.9%</td><td class="num">8.2%</td><td class="num">14.6%</td><td class="num">12.6%</td><td class="num" style="">-16.8%<br><span style="font-size:.72rem;color:var(--muted)">t=-1.58</span></td><td class="num">7</td></tr><tr><td class="lbl">Full 2009–2026</td><td class="num">23.3%</td><td class="num">15.0%</td><td class="num">12.5%</td><td class="num">15.6%</td><td class="num">15.4%</td><td class="num" style="">-9.7%<br><span style="font-size:.72rem;color:var(--muted)">t=-1.87</span></td><td class="num">16</td></tr></tbody></table></div>
+
+<p style="font-size:.87rem;color:#374151;margin:1rem 0">
+非單調（monotonicity 不成立——分組報酬沒有照順序一路升高或降低；好訊號理論上該是單調的，中間亂跳代表雜訊多）：
+GP/A 全期五組年化為 16.9%／17.5%／
+15.7%／20.6%／
+14.1%——Q5（最高獲利能力）反而是五組裡最低。
+營業利益率更誇張：Q1（最低）23.3%，比其餘四組（12.5%–15.6%）高出一大截。
+</p>
+
+<div id="chart-a-wrap" class="chart-wrap" style="height:320px;margin-top:1.1rem">
+<canvas id="chart-a"></canvas>
+</div>
+<p style="font-size:.78rem;color:var(--muted);margin-top:.4rem">圖：GP/A 與營業利益率 Q1–Q5 年化報酬（淨），三個期間並排。</p>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">三、多空兩腿分開看——空腿（最不賺錢）意外領先</h2>
+<div class="warn-loud"><strong>規格事前預期「肉在多頭腿（高獲利能力）」，本測結果相反：GP/A 空頭腿（Q1）年化
+16.9%，僅次於 Q4；營業利益率空頭腿（Q1）年化 23.3%，
+比第二名高出超過 8pp，是五組裡最突出的一組。多頭腿（Q5）沒有輸給大盤，但也沒有跑出超額報酬——
+GP/A 14.1%、營業利益率 15.4%，都落在五組報酬的中段。</strong></div>
+
+<p style="font-size:.9rem;color:#374151;margin:.9rem 0">
+個股層面拆解（見第九節）顯示 Q1 的領先很大程度是少數幾檔景氣循環股在谷底反彈貢獻的——
+2023–2026 AI 年代 Q1 組報酬被記憶體／半導體庫存循環股（MU、WDC 等）的爆發性反彈拉高，
+這些公司在形成日當下獲利能力墊底（甚至虧損），是典型「風險補償」而非「品質被低估」的樣態。
+</p>
+
+<div class="note"><b>實務含意：這段期間、這個池子，「只做多高獲利能力」沒有跑出超額報酬，
+「放空低獲利能力」反而是虧錢的一邊。</b>兩個訊號都沒有找到規格預期的那種「肉」。</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">四、年代切片——最近的 AI 年代方向錯得最凶</h2>
+<div class="takeaway"><b>五段裡只有 2013–2019（低利率成長期，訓練期主體）GP/A 方向勉強正確
+（+3.4%，仍不顯著）。其餘四段全部是負的，
+2023–2026 AI 年代最負：GP/A -24.6%、
+營業利益率 -28.8%。</b></div>
+
+<div class="scroll"><table><thead><tr><th>訊號</th><th class="num">09–12 QE復甦</th><th class="num">13–19 低利成長</th><th class="num">20–21 COVID泡沫</th><th class="num">2022 升息熊</th><th class="num">23–26 AI</th></tr></thead><tbody><tr><td class="lbl">GP/A Q5−Q1（淨）</td><td class="num" style="">-1.4%<br><span style="font-size:.7rem;color:var(--muted)">t=-0.12（n=3）</span></td><td class="num" style="">+3.4%<br><span style="font-size:.7rem;color:var(--muted)">t=0.58（n=7）</span></td><td class="num" style="">-3.1%<br><span style="font-size:.7rem;color:var(--muted)">t=-1.02（n=2）</span></td><td class="num">—<br><span style="font-size:.7rem;color:var(--muted)">n 不足</span></td><td class="num" style="">-24.6%<br><span style="font-size:.7rem;color:var(--muted)">t=-1.13（n=3）</span></td></tr><tr><td class="lbl">營業利益率 Q5−Q1（淨）</td><td class="num" style="">-6.8%<br><span style="font-size:.7rem;color:var(--muted)">t=-0.66（n=3）</span></td><td class="num" style="">-2.1%<br><span style="font-size:.7rem;color:var(--muted)">t=-0.69（n=7）</span></td><td class="num" style="">-14.1%<br><span style="font-size:.7rem;color:var(--muted)">t=-0.77（n=2）</span></td><td class="num">—<br><span style="font-size:.7rem;color:var(--muted)">n 不足</span></td><td class="num" style="">-28.8%<br><span style="font-size:.7rem;color:var(--muted)">t=-1.26（n=3）</span></td></tr></tbody></table></div>
+
+<p style="font-size:.87rem;color:#374151;margin:1rem 0">
+這與「近期科技巨頭獲利能力屢創新高、市場應該更看重獲利品質」的直覺相反。個股案例（第九節）顯示
+2023–2026 這段的方向錯誤主要由記憶體／半導體庫存循環股的谷底反彈主導——這些股票在形成日當下獲利能力墊底，
+卻是接下來一年報酬最誇張的股票。2009–2012 與 2022 兩段小樣本 n 太小，不宜過度解讀方向。
+</p>
+
+<div id="chart-c-wrap" class="chart-wrap" style="height:300px;margin-top:1.1rem">
+<canvas id="chart-c"></canvas>
+</div>
+<p style="font-size:.78rem;color:var(--muted);margin-top:.4rem">圖：GP/A 與營業利益率 Q5−Q1 年化價差，五個年代並排對照。</p>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">五、機制：獲利能力為何在這裡沒有溢價？兩種解釋並陳</h2>
+
+<p style="font-size:.9rem;color:#374151;margin:.9rem 0">
+<b>解釋一（Novy-Marx 2013 原始敘事，品質溢價）</b>：高毛利率／高營業利益率公司有定價權與規模優勢，
+市場長期低估這種「品質」，因此存在溢價。<b>解釋二（風險補償／景氣循環反轉敘事）</b>：獲利能力低點往往對應景氣循環谷底，
+谷底之後的反彈本身就是對「承擔循環風險」的補償，不是市場錯誤定價——半導體、記憶體這類資本密集產業，
+獲利能力在庫存循環谷底最難看，正是這個時間點買進、撐過谷底，才能吃到循環反轉的爆發性報酬。
+</p>
+
+<div class="takeaway"><b>持續性研究（獲利能力本身是否是穩定的公司特質）支持「品質溢價」敘事的必要條件成立，
+但市場沒有因此付溢價：GP/A 隔年 Spearman 相關（rank correlation，用排名而非數值本身算出來的相關係數，
+−1 到 +1，越接近 1 代表排名越穩定不變）ρ=0.932（5,268 個公司年觀測），
+營業利益率 ρ=0.835（6,802 個觀測）——公司今年賺錢，
+明年極大機率還是賺錢，是穩定特質不是雜訊。</b></div>
+
+<p style="font-size:.9rem;color:#374151;margin:.9rem 0">
+兩個關鍵事實比較支持解釋二：第一，Q1 的領先在 2023–2026 AI 年代最誇張（第四節），
+這段期間由記憶體／半導體庫存循環股的谷底反彈主導——這些公司不是「被低估的爛公司」，
+是「正在經歷史詩級景氣循環反轉的資本密集產業」（見第九節 MU 案例）。第二，如果市場真的系統性低估「持續獲利」這個品質訊號，
+應該會反映成正的溢價，但本測沒有觀察到；反而是「暫時性谷底、注定反彈」的低獲利能力公司吃走了報酬。
+兩種解釋都不是全有全無：本測不能排除「這個大型股池子＋這段特定期間剛好是獲利能力因子失靈的樣本」，
+但現有證據的權重比較支持「本測期間的訊號，抓到的是循環谷底風險補償，不是品質溢價」。
+</p>
+
+<div id="chart-d-wrap" class="chart-wrap" style="height:300px;margin-top:1.1rem">
+<canvas id="chart-d"></canvas>
+</div>
+<p style="font-size:.78rem;color:var(--muted);margin-top:.4rem">圖：Q5−Q1 多空價差淨值曲線（1.0 起始，扣成本），兩訊號都在近年下滑。</p>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">六、與既有因子的重疊檢查（防「同一訊號換皮」，含兩訊號互相比較）</h2>
+<div class="takeaway"><b>GP/A 與營業利益率相關僅 0.15，遠低於「同訊號換皮」門檻
+（一般認為 &gt;0.8）——兩者是獨立訊號。與其他既有因子相關也都很低（絕對值最高的是 GP/A vs 淨發行率的
+-0.22）。</b></div>
+
+<div class="scroll"><table><thead><tr><th>對照</th><th class="num">Spearman 相關均值</th><th class="num">重排次數</th></tr></thead><tbody>
+<tr><td class="lbl">GP/A vs 營業利益率</td><td class="num">0.15</td><td class="num">16</td></tr>
+<tr><td class="lbl">GP/A vs E/P</td><td class="num">-0.01</td><td class="num">16</td></tr>
+<tr><td class="lbl">GP/A vs EPS 年增率</td><td class="num">0.08</td><td class="num">15</td></tr>
+<tr><td class="lbl">GP/A vs 應計</td><td class="num">-0.13</td><td class="num">16</td></tr>
+<tr><td class="lbl">GP/A vs 淨發行率</td><td class="num">-0.22</td><td class="num">16</td></tr>
+<tr><td class="lbl">營業利益率 vs E/P</td><td class="num">0.13</td><td class="num">16</td></tr>
+<tr><td class="lbl">營業利益率 vs EPS 年增率</td><td class="num">0.11</td><td class="num">15</td></tr>
+<tr><td class="lbl">營業利益率 vs 應計</td><td class="num">0.11</td><td class="num">16</td></tr>
+<tr><td class="lbl">營業利益率 vs 淨發行率</td><td class="num">-0.00</td><td class="num">16</td></tr>
+</tbody></table></div>
+
+<p style="font-size:.87rem;color:#374151;margin:1rem 0">
+排除「這其實是 E/P 或應計換個名字」的疑慮，但反過來也說明：本測的負向結果不能歸咎於「訊號其實是別的東西在作怪」，
+問題確實出在獲利能力本身這段期間、這個池子裡沒有溢價。
+</p>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">七、個股案例</h2>
+<div class="takeaway"><b>兩張卡對應第五節的兩種解釋：MU 是「風險補償」的戲劇性範例，EL 是「品質沒有提供估值保護」的反例。</b></div>
+
+<div class="cmp" style="grid-template-columns:repeat(2,1fr)">
+
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.5rem">
+    <div style="font-weight:800;font-size:1.05rem">MU <span style="font-weight:400;font-size:.8rem;color:var(--muted)">美光科技・谷底最不賺錢，隔年報酬最誇張</span></div>
+    <div style="font-size:.78rem;color:var(--muted)">GP/A=8.1%</div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr;gap:.5rem;text-align:center;margin:.7rem 0">
+    <div><div style="font-size:.68rem;color:var(--muted)">持有一年淨報酬</div>
+    <div style="font-weight:800;font-size:1.3rem;color:var(--brand)">+838.8%</div></div>
+  </div>
+  <div style="font-size:.85rem;color:#1f2c44">2025-06-30 重排納入 Q1（GP/A 與營業利益率雙雙墊底），對應 FY2024：毛利率僅 8.1%、營業利益率僅 5.2%，資產規模高達 694.16 億美元——典型「資本密集、獲利能力被壓到谷底」的記憶體庫存循環低點樣態。持有一年淨報酬 +838.8%（股價從 2025-06-30 的 123.25 美元漲到 2026-06-30 的 1,154.29 美元），由 AI 資料中心對 HBM／DRAM 高頻寬記憶體需求的供給緊缺行情推動。這是本測「低獲利能力＝循環谷底風險訊號、不是品質差訊號」最戲劇性的樣本，同期 WDC、LITE、INTC 等同樣墊底於 Q1 的半導體股也都出現數倍反彈。</div>
+</div>
+
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.5rem">
+    <div style="font-weight:800;font-size:1.05rem">EL <span style="font-weight:400;font-size:.8rem;color:var(--muted)">雅詩蘭黛・高獲利能力多年，但近三次重排連續下跌</span></div>
+    <div style="font-size:.78rem;color:var(--muted)">GP/A=50%–120%（多年）</div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr;gap:.5rem;text-align:center;margin:.7rem 0">
+    <div><div style="font-size:.68rem;color:var(--muted)">近四次持有淨報酬</div>
+    <div style="font-weight:800;font-size:1.3rem;color:var(--brand)">−19.3%／−22.0%／−45.3%／−21.6%</div></div>
+  </div>
+  <div style="font-size:.85rem;color:#991b1b">EL 從 2012-06-30 到 2025-06-30 幾乎每次重排都落在 GP/A 的 Q5，毛利率長年維持 50%–120%，是本測樣本裡「持續高獲利能力」最乾淨的案例之一。但 2021-06-30 之後營業利益率明顯下滑，對應的持有期報酬轉為連續四次負值：−19.3%、−22.0%、−45.3%、−21.6%，直到 2025-06-30 才幾乎打平（−0.8%）。中國消費放緩＋高端美妝庫存去化是市場公認的背景。這是「高獲利能力沒有提供估值保護」的清楚反例——即便毛利結構常年健康，一旦成長動能被市場重新定價，高獲利能力本身並不能阻止股價連續四年下修。</div>
+</div>
+
+</div>
+
+<div class="note"><b>補充揭露（資料品質案例，非個股表現案例）：REGN（再生元）從未在 XBRL 申報 <code>GrossProfit</code> 或任何
+COGS 相關科目（生技製藥業常見），GP/A 只能靠「營收－成本」推算，而 REGN 僅在 FY2018／FY2019 兩個財年有可算的營運成本科目可用。</b>
+結果是 REGN 2021-06-30 至 2025-06-30 連續五次重排，GP/A 數值凍結在同一個 2019 財年的舊值（0.5039）——
+申報日對齊本身沒有邏輯錯誤，是這家公司之後就再也沒有新的可用資料可以更新。詳見第八節第 3 點的規模量化。</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">八、方法論限制（誠實揭露）</h2>
+<div class="takeaway"><b>七個限制，第三條（凍結毛利率）最值得留意——它是本次驗證新發現的資料覆蓋率問題，
+很可能是頭條數字偏負的部分成因。</b></div>
+<div class="card"><ul style="padding-left:1.2rem;font-size:.87rem;line-height:1.85;color:#374151"><li><b>NDX100 生存者偏差（survivorship bias，回測只用「現在還活著、還在指數內」的樣本，篩掉當年表現差、後來下市的公司，會讓結果看起來比真實情況樂觀），方向利多。</b>　只用現在的 100 檔清單往回套用，會讓表現偏樂觀——沿用既有揭露。</li><li><b>GP/A 對特定產業覆蓋率結構性偏低。</b>　3249／8408 筆年度觀測（39%）完全無法計算毛利（金融、保險、REITs 這類本來就沒有「毛利」概念的產業，以及部分生技／服務業從未拆分揭露 COGS）——不是資料抓取失敗，是這些產業的財報結構本來就不支援 GP/A。</li><li><b>「凍結毛利率」現象規模量化（本測最重要的新發現）。</b>　13%（51／393 檔曾入選 GP/A 組合的股票）出現連續 3 次以上重排毛利率數值完全不變，最極端的 VMRK 連凍 14 次、TROW 13 次、EXPD／TMUS／WDAY 各 12 次——這些公司偶然在早期某一年有可算的毛利／COGS 資料，之後就再也沒有新資料可用，只能沿用數年前的舊快照參與分組。這會系統性稀釋 GP/A 分組的即時性與正確性，很可能是頭條 Q5−Q1 偏負／非單調的部分成因，但無法從本測資料精確拆解出貢獻多少 pp——誠實列為未解的保留。</li><li><b>ASC 606 過渡期資料延遲（已修正並驗證）。</b>　2018 年前後收入認列準則改版造成 XBRL 概念改標籤，初版邏輯人為製造約 2 年資料延遲，尤其集中在 2017／2018 兩次重排（受影響比例一度衝到 46–66%）。已改為跨概念取全域最早申報日，修正後延遲比例回到 14.3%／16.1%，與前後年份背景趨勢一致，尖峰消失。同一 bug 模式在 <code>return_driver_backtest</code>／<code>accruals_backtest</code>／<code>share_issuance_backtest</code>裡原樣未修（本任務明確禁止修改這些檔案），理論上可能有相同機制的延遲，留待日後另案覆核。</li><li><b>小樣本年代。</b>　2009–2012（n=3）、2022（n=1）兩段重排次數過少，t 值不可靠或無法計算，不應過度解讀。</li><li><b>非單調。</b>　兩訊號的五組報酬都看不出隨獲利能力遞增的清楚梯度，Q1（最不賺錢）反而經常領先，跟文獻預期方向相反。</li><li><b>兩訊號皆為事前登記的並列驗證。</b>　規格明訂「headline 給 GP/A，營業利益率不論好壞照實並列」——本測兩者結論一致（都是負／打平），未出現需要「分歧時明說該挑哪個」的情況，但依規格仍完整並列兩組數字，不做取捨。</li></ul></div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">延伸閱讀</h2>
+<div class="card" style="font-size:.87rem;line-height:1.9">
+<a href="/backtest/return_driver/">美股漲跌歸因：獲利與估值</a> —— 同一套資料層的起點研究：長期報酬靠獲利、短期靠估值。<br>
+<a href="/backtest/accruals/">美股獲利品質（應計項目）</a> —— 同系列因子研究：應計異象活著且 OOS 更強，與本頁「獲利能力沒有溢價」形成對照。
+</div>
+</div>
+
+
+</div>
+
+<footer>
+  <div class="container">
+    &copy; 2026 InvestMQuest Research &middot; 美股獲利能力因子（研究頁，非可交易策略）&middot;
+    規格 docs/Profitability_Backtest_Spec.md・頁面生成 2026-08-29 &middot; 僅供研究參考
+  </div>
+</footer>
+
+<script>
+new Chart(document.getElementById('chart-a'), {
+  type: 'bar',
+  data: { labels: ["Train", "OOS", "全期"], datasets: [{label: 'GP/A Q1', data: [14.6, 20.0, 16.9], backgroundColor: '#93c5fd'}, {label: 'GP/A Q2', data: [19.2, 15.3, 17.5], backgroundColor: '#60a5fa'}, {label: 'GP/A Q3', data: [18.0, 12.7, 15.7], backgroundColor: '#3b82f6'}, {label: 'GP/A Q4', data: [21.2, 19.8, 20.6], backgroundColor: '#2563eb'}, {label: 'GP/A Q5', data: [16.7, 10.8, 14.1], backgroundColor: '#1a56db'}] },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: { y: { title: {display:true, text:'年化報酬 (%)'} } },
+    plugins: { legend: { position: 'top' } }
+  }
+});
+</script>
+<script>
+new Chart(document.getElementById('chart-c'), {
+  type: 'bar',
+  data: {
+    labels: ["09–12 QE", "13–19 低利", "20–21 COVID", "2022 升息", "23–26 AI"],
+    datasets: [
+      {label: 'GP/A Q5−Q1 年化（淨）', data: [-1.4, 3.4, -3.1, null, -24.6], backgroundColor: '#1a56db'},
+      {label: '營業利益率 Q5−Q1 年化（淨）', data: [-6.8, -2.1, -14.1, null, -28.8], backgroundColor: '#d97706'}
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: { y: { title: {display:true, text:'Q5−Q1 年化價差 (%)'} } },
+    plugins: { legend: { position: 'top' } }
+  }
+});
+</script>
+<script>
+new Chart(document.getElementById('chart-d'), {
+  type: 'line',
+  data: {
+    labels: ["2010-06-30", "2011-06-30", "2012-06-30", "2013-06-30", "2014-06-30", "2015-06-30", "2016-06-30", "2017-06-30", "2018-06-30", "2019-06-30", "2020-06-30", "2021-06-30", "2022-06-30", "2023-06-30", "2024-06-30", "2025-06-30"],
+    datasets: [
+      {label: 'GP/A 多空淨值（1.0 起始）', data: [1.043, 1.207, 0.914, 0.748, 0.91, 0.919, 0.781, 0.912, 1.011, 1.076, 1.076, 1.009, 1.013, 1.059, 0.942, 0.309], borderColor: '#1a56db', backgroundColor: 'transparent', tension: .15},
+      {label: '營業利益率 多空淨值（1.0 起始）', data: [0.99, 1.064, 0.778, 0.691, 0.665, 0.706, 0.649, 0.588, 0.642, 0.657, 0.443, 0.462, 0.436, 0.449, 0.377, 0.101], borderColor: '#d97706', backgroundColor: 'transparent', tension: .15}
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: { y: { title: {display:true, text:'多空淨值（1.0 起始）'} } },
+    plugins: { legend: { position: 'top' } }
+  }
+});
+</script>
+</body>
+</html>
