@@ -13,6 +13,7 @@ Every backtest page header renders the same groups via make_toggle(active):
                   | ma_dynband | ma_squeeze | smh_vcrash
     研究・總經：  housing_gdp
     研究・可轉債：tw_cb
+    研究・因子：  return_driver
 
 Design (2026-07-11 redesign):
   * Colour discipline — every pill is neutral (grey fill, dark-grey text); the
@@ -166,6 +167,13 @@ TW_CB_LINKS = [
     ("/backtest/tw_cb/", "台股可轉債專區", "tw_cb", "研究"),
 ]
 
+# 2026-08-29 新增：美股「獲利 vs 估值」報酬歸因研究（事後分解 + 事前預測五分位 +
+# 先知測試三段），非可交易系統，也不是台股/選擇權主題，自成一群（同 TW_CB_LINKS
+# 的做法）。
+RESEARCH_FACTOR_LINKS = [
+    ("/backtest/return_driver/", "美股漲跌歸因：獲利與估值", "return_driver", "研究"),
+]
+
 # 向後相容：舊名保留為五群之串接，供外部引用者使用。
 RESEARCH_LINKS = (RESEARCH_ETF_LINKS + RESEARCH_FREQ_LINKS
                   + RESEARCH_MA_LINKS + RESEARCH_CRASH_LINKS
@@ -244,4 +252,5 @@ def make_toggle(active: str) -> str:
             + _row("研究・崩盤", RESEARCH_CRASH_LINKS, active)
             + _row("研究・總經", RESEARCH_MACRO_LINKS, active)
             + _row("研究・可轉債", TW_CB_LINKS, active)
+            + _row("研究・因子", RESEARCH_FACTOR_LINKS, active)
             + '</nav>')
