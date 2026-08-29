@@ -38,6 +38,7 @@ When a system page changes, update below and re-run:
     python3 _build_index.py
 """
 from __future__ import annotations
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -677,15 +678,58 @@ new Chart(document.getElementById('chart-scatter'),{
 """
 
 
+# 2026-08-29 全展開分類總表重構——完整性守門：走訪 docs/backtest/*/index.html 的所有一層
+# 目錄，比對是否出現在 _index_layout.SECTIONS 的某個 pill url 裡。漏掛就印 WARNING；白名單
+# 是「有自己 overview／入口性質、本來就不是分類清單裡一顆 pill」的頁面，每項附一行理由。
+_COMPLETENESS_EXCLUDE = {
+    "tw": "台股波段 section 的 CTA 入口頁（/backtest/tw/ 總覽），不是清單裡的一顆 pill",
+    "multi": "多資產·經典複製 section 的 CTA 入口頁（/backtest/multi/ 總覽），同上",
+    "leverage": "槓桿疊加 section 的 CTA 入口頁（/backtest/leverage/ 總覽），同上",
+    "criteria": "跨分類方法論頁（評估標準），走頁首「方法論」工具列，不進分類清單",
+    "glossary": "跨分類方法論頁（術語對照表），走頁首「方法論」工具列，不進分類清單",
+}
+
+
+def _completeness_check():
+    from _index_layout import SECTIONS  # late import (avoids cycle)
+
+    base = Path(__file__).parent
+    linked_dirs = set()
+    for sec in SECTIONS:
+        for _label, items in sec["rows"]:
+            for item in items:
+                m = re.match(r"^/backtest/([^/]+)/", item[0])
+                if m:
+                    linked_dirs.add(m.group(1))
+
+    missing = []
+    for p in sorted(base.iterdir()):
+        if not p.is_dir() or p.name.startswith("__") or not (p / "index.html").exists():
+            continue
+        if p.name in _COMPLETENESS_EXCLUDE or p.name in linked_dirs:
+            continue
+        missing.append(p.name)
+
+    if missing:
+        for d in missing:
+            print(f"WARNING: /backtest/{d}/ has index.html but is not linked from any "
+                  f"SECTIONS directory row and is not in _COMPLETENESS_EXCLUDE")
+    else:
+        print("Completeness check: 0 WARNING — every docs/backtest/*/index.html directory "
+              "is either classified in SECTIONS or explicitly whitelisted.")
+    return missing
+
+
 def main():
-    # /backtest/ now renders with the redesigned dashboard layout (US-only,
-    # muted palette).  Data (GROUPS/RET/...) still lives here and is consumed
-    # by the layout module + _build_10y/_build_tw.  The legacy render()/TEMPLATE
-    # above are kept only as importable data helpers (group_header/sys_row/etc.).
+    # /backtest/ now renders with the redesigned full-expand directory layout.
+    # Data (GROUPS/RET/...) still lives here and is consumed by the layout
+    # module + _build_10y/_build_tw.  The legacy render()/TEMPLATE above are
+    # kept only as importable data helpers (group_header/sys_row/etc.).
     from _index_layout import render as render_layout  # late import (avoids cycle)
     html = render_layout()
     OUT.write_text(html, encoding="utf-8")
     print(f"Written {OUT} ({len(html):,} bytes)")
+    _completeness_check()
 
 
 if __name__ == "__main__":

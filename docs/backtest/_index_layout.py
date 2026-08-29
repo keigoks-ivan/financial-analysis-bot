@@ -1,114 +1,67 @@
-"""LIVE renderer for /backtest/index.html — five-tab categorised directory.
+"""LIVE renderer for /backtest/index.html — full-expand classification directory.
 
 This is the layout that actually builds the live page: _build_index.py's
 main() calls render() here and writes docs/backtest/index.html.  Data
 (GROUPS/RET/SCATTER/BH_ROWS/PERIOD_CAGR...) still lives in _build_index.py;
 its legacy render()/TEMPLATE are DEAD code kept only as data helpers.
 
-2026-07-17 redesign — four-tab true filtering
-=============================================
-Owner feedback: the four top tabs (美股/台股/多資產/槓桿疊加) used to be plain
-page-links while the shared make_toggle pill bar dumped ALL seven groups
-(多資產/台股波段/台股選擇權/日內…) onto every page — so the 美股 page showed
-台股/多資產/日內 rows.  Now the index is a single page whose four tabs are
-pure front-end JS filters over a per-tab directory:
+2026-08-29 — 全展開分類總表重構（取代 2026-07-17～2026-08-24 的六 tab 設計）
+================================================================================
+Owner feedback（逐字）:「首頁的設計不好啊 分類的不完全 重新設計整個」「要非常清楚現在有哪些
+以及裡面有哪些回測 都要分類好」「要一目了然那種」。
 
-  * Every navigable entry (pill / link) lives in EXACTLY ONE tab.  The only
-    cross-tab links are the always-visible 方法論 utilities (評估標準/術語表)
-    and /long-track-adaptive-vt/ (自適應美台總覽 — legitimately US+TW).
-  * Tabs switch client-side (showTab); the standalone /backtest/{tw,multi,
-    leverage}/ overview pages still exist and are reached via each tab's CTA.
-  * Classification (2026-07): GEM(SPY/ACWX 雙動能) → 多資產 (global-rotation
-    nature); 全球/18-市場 日週研究(dvw_global/dvw_deep) → 多資產; SG Trend /
-    全球斜率 → 多資產; all TXO + 台指日內 → 台股.  The US-overview comparison
-    ANALYTICS (波段 ranking, 完整比較表, scatter, 逐年/分期 CAGR) are left
-    exactly as the pinned data defines them — GEM stays there only as a
-    benchmarked 參照 row/column, its NAV pill lives under 多資產.  完整比較表
-    is filtered to US groups (🇹🇼 group belongs to the 台股 tab/page).
+問題診斷：舊版六個 tab＋<details> 收合把內容藏起來，落地只看得到一個 tab（預設 us）；且分類
+清單本身漏頁——DIRECTORY["us"]「研究・因子」漏了 profitability／asset_growth／index_inclusion／
+insider 四頁（_nav_common.RESEARCH_FACTOR_LINKS 早已補齊 8 頁，但這裡沒同步）；「研究・主動式
+ETF」同時掛在 us 與 tw 兩個 tab（active_etf 專區頁重複出現）。
 
-2026-08-08 — fifth tab: 🌏 總經
-================================
-Added a fifth tab for cross-country macro research that isn't a tradable
-system (no CAGR/MDD/Sharpe, not ticker-based) and therefore doesn't fit the
-美股/台股/多資產/槓桿疊加 taxonomy.  Moved the four housing_gdp/ entries
-(研究・總經 row) out of the "us" DIRECTORY list into a new DIRECTORY["macro"]
-to preserve the one-entry-one-tab rule.  Its tabpane follows the minimal
-multi/lev pattern (section header + sub-description + %MACRO_DIR%) since it
-has no CTA overview page or link-card research section of its own yet.
+新設計：拿掉 JS tab 過濾與所有分類清單的 <details> 收合，改成單頁全展開——十三個分類 section
+由上到下依序排列，捲動就能看到全部。結構：
 
-2026-08-12 — macro tab regrouped (14 case pages outgrew one flat row)
-======================================================================
-DIRECTORY["macro"] grew from 4 to 16 pills (2 entry pages + 14 country case
-pages) as housing_gdp/ added countries one at a time; one undifferentiated
-row became an unscannable wall of pills.  Split into four dir-rows:
-  * "研究・主線" — the two entry pages (factor matrix, catch-up hypothesis).
-    These carry the new `emph=True` pill flag (5th tuple element, macro-only
-    — other tabs' 4-tuples are untouched) which renders with the same navy
-    gradient `_pill()`/CSS already uses for the current-page ".on" state, so
-    they visually outrank the 14 case pills without inventing a new color.
-  * "個案・亞洲" (TW/JP/KR/HK/MY/TH), "個案・英語系" (US/CA/UK/IE/AU/NZ,
-    grouped as the Anglophone common-law housing markets — a real cluster in
-    housing-cycle literature, not just alphabetical), "個案・歐陸" (DE/ES).
-  * Each pill text is now "{國名}：{一句辨異描述}" (country name first) so a
-    reader scanning for one country doesn't have to parse a generic "個案："
-    prefix repeated 14 times — the row label already says 個案.
-  * section-sub for the macro pane was rewritten to drop the stale "十國"
-    enumeration (had gone stale at 10 vs the actual 14) and no longer lists
-    country names at all, so it won't go stale again as more are added.
-No sub-page generator is re-run; only index.html is regenerated.
+  1. 頁首（h1 + 方法論工具列）
+  2. 狀態總覽（4 張 stat 卡；研究／否決兩個數字改成從 SECTIONS 資料程式即時統計 _count_status()，
+     不再寫死；實單 1／合格候補 6 維持寫死＋註解，因為那是人工判定，不是可從 pill 狀態字串推導
+     的東西）
+  3. 實單主系統卡＋合格候補小卡（%CARD%，內容不動）
+  4. 錨點快跳列（13 個分類的 pill，純 <a href="#id">，無 JS 過濾；舊 hash #us/#tw/#multi/#lev/
+     #macro/#scan 用一小段 JS 映射到新 section id，讓外部深連結不斷）
+  5. 分類總表主體——兩區、十三個 section，全展開，見 SECTIONS 定義
+  6. 數據對比區（原本塞在 us tab 尾端的排名表／完整比較表／scatter／逐年/分期 CAGR／
+     US_RESEARCH／MULTI_RESEARCH link-card，內容與數字一個不動，搬到目錄之後）
 
-2026-08-12 — sixth tab: 🔍 國家掃描
-====================================
-Added docs/backtest/country_scan/ — a new namespace for single-country
-stock-market "初掃"（first-pass quantitative ROIC screen × qualitative
-export-tech deep-dive research), distinct from housing_gdp/'s cross-country
-housing-price factor-matrix work (macro tab). This is stock-level research
-(individual tickers, ROIC/incremental-ROIC screening, sector deep-dives,
-links to completed DDs) — not a tradable system (no CAGR/MDD/Sharpe) and not
-housing/macro, hence its own tab rather than folding into "macro" or
-"us"/"tw". First entry: country_scan/malaysia.html (127-ticker ROIC screen +
-methodology-trap case studies + 10-name export-tech deep dive + 3 completed
-DD links). DIRECTORY["scan"] follows the macro tab's minimal single-dir-row
-pattern (no CTA/link-card sections yet, since there is only one country
-page so far). One-entry-one-tab rule preserved; tab list order and JS hash
-whitelist regex both extended to include "scan".
-2026-08-15 — scan tab: 台灣國家掃描
-====================================
-Added country_scan/taiwan.html (hub + 8 lens sub-pages under
-country_scan/taiwan/: semis / ai-hardware / compounders / hidden-champions /
-domestic / financials / dividends / assets-events; 671-ticker universe,
-TWSE+TPEx mcap ≥ NT$10B). Listed first in the 市場初掃 row (home market on
-top), same minimal single-dir-row pattern; hub links out to its own
-sub-pages so only the hub is registered here.
-2026-08-15 — scan tab: 美國國家掃描
-====================================
-Added country_scan/us.html (hub + 9 lens sub-pages under country_scan/us/:
-platforms / semis / software / compounders / healthcare / financials /
-consumer / energy-industrials / hidden-champions; 1,590-ticker universe,
-S&P 1500 + mcap ≥ US$10B supplement, foreign ADR excluded). Listed above
-Taiwan (largest market on top); hub links out to its own sub-pages so only
-the hub is registered here.
+分類修正（對照舊六 tab → 新十三 section）：
+  * 個股因子（美股）section 直接從 _nav_common.RESEARCH_FACTOR_LINKS 取全部 8 頁（不再手抄
+    4 頁的舊清單）——這是漏頁修復的關鍵。
+  * 主動式ETF與基金 section 直接從 _nav_common.RESEARCH_ETF_LINKS 取（active_etf 專區 +
+    us_active_etf + tw_active_etf + tw_mutual_fund，共 4 頁），全站只在這裡掛一次；US/TW
+    波段 section 不再各自重複列一次。
+  * 頻率／均線／崩盤防禦三個研究主題原本分散在 us/tw/multi 三個 tab 各登一次，現併入「方法研究」
+    一個 section 的三個子列（直接取 _nav_common 對應的 RESEARCH_FREQ/MA/CRASH_LINKS），避免
+    同一頁在多分類重複出現。
+  * 台股選擇權／台股日內 section 直接取 _nav_common.OPTIONS_LINKS / INTRADAY_LINKS。
+  * 美股波段系統／台股波段／多資產·經典複製／槓桿疊加／總經／國家掃描 沿用舊 DIRECTORY 手抄清單
+    （_nav_common 對應清單頁數對不上，例如 MULTI_LINKS 6 頁 vs 這裡系統 9 頁含 gem/nonequity/
+    reits），逐字保留。
+  * 前瞻追蹤（美/台各 4 條）刻意在美股波段系統與台股波段兩個 section 都各自出現一次——同一顆
+    實單系統本來就橫跨美台兩市場，這不是需要去重的重複，_count_status() 用 URL 做 set 去重，
+    不會把它算成兩個不同頁面。
 
-2026-08-29 — 美股「獲利 vs 估值」報酬歸因研究新增
-====================================================
-Added docs/backtest/return_driver/ — S&P500+NDX100 point-in-time SEC EDGAR
-panel, 事後變異數分解（問題 A）+ 事前五分位選股（問題 B）+ 先知測試診斷三段。
-Stock-level cross-sectional research, not a tradable system, not TW/options —
-new "研究・因子" DIRECTORY["us"] group (same pattern as "研究・可轉債" under
-"tw"). _nav_common.py 新增 RESEARCH_FACTOR_LINKS 與「研究・因子」pill 列；
-_inject_subnav.py 的 GROUPS 加入 RESEARCH_FACTOR（同批順手補上 2026-08-15
-漏加的 TW_CB）。其餘頁面以 _inject_subnav.py 外科式同步 pill bar。
+完整性守門：_build_index.py main() 新增 _completeness_check()，走訪 docs/backtest/*/index.html
+的所有一層目錄，比對是否出現在 SECTIONS 的某個 url 裡；白名單（tw/multi/leverage/criteria/
+glossary，逐項附一行理由）之外沒掛到就印 WARNING。
 
 Run: python3 _build_index.py   (this module is imported, not run directly)
 """
 from __future__ import annotations
 import json
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 import _build_index as idx
+import _nav_common as navc
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 from site_nav import full_nav_block
@@ -132,236 +85,245 @@ LIVE_CARD = {
     "url": "/long-track/#live",
 }
 
-# 2026-08-29 首頁改造：落地第一屏加「全區總覽」卡片列（規格點見用戶原話：
-# 「量化回測的首頁我不要美股，是要整個量化回測真的首頁」）。改前：page-hdr 之後直接進
-# %US_DIR% 等 tabpane，預設 tab='us'，等於落地第一眼就是美股波段表——其餘五個 tab 要點
-# 過去才看得到。改後：page-hdr 與 tabpane 之間插入六張總覽卡（跨 tab，與目前選到哪個
-# tab 無關，恆在），每張卡＝一個群組的頁數(從 DIRECTORY 精確算,非手打)＋一句既有結論
-# (逐字或近逐字取自本檔案同一 tab 的 cta-sub/section-sub,不新造宣稱)＋入口(點卡片=
-# 呼叫既有 showTab() 切 tab,不新開路由)。default tab 仍是 'us'(風險最小,不動既有深連
-# 結行為),但這張總覽卡格才是使用者落地看到的第一件事。
-GROUP_CARDS = [
-    dict(emoji="🇺🇸", tab="us", name="美股系統",
-         note="現役 W52×自適應波動率 150%（原 STX50/E3 降為對照）；6 個系統通過風險調整排名門檻，列為已採用／候補。"),
-    dict(emoji="🇹🇼", tab="tw", name="台股",
-         note="0050+2330 W52×自適應波動率（實單）·前代 E3 對照·0050 四系統·含崩盤驗證。"),
-    dict(emoji="🧩", tab="multi", name="多資產·經典複製",
-         note="唐奇安／Clenow／SG Trend／跨資產防守·資產池不同，僅供組合互補參照。"),
-    dict(emoji="🔧", tab="lev", name="槓桿疊加",
-         note="在現役趨勢引擎上疊加期貨槓桿／波動目標·換軸互補研究（未採用）。"),
-    dict(emoji="🌏", tab="macro", name="研究·總經",
-         note="跨國總經研究：人均所得成長能否解釋房價走勢——主線因子矩陣＋各國個案史。"),
-    dict(emoji="🔍", tab="scan", name="國家掃描",
-         note="對單一國家股市的第一輪系統性掃描：複利機器篩選×出口群深查×估值現況。"),
+
+def _conv(links):
+    """把 _nav_common 的 (url,label,key,status) 4-tuple 轉成本頁 pill 用的
+    (url,text,status,current) 4-tuple，讀而不改 _nav_common.py。"""
+    return [(u, lb, st, False) for (u, lb, _k, st) in links]
+
+
+# ── 十三個分類 section（由上到下即為落地全展開順序）──────────────────────────
+# region: "sys"=第一區「系統・可交易」／"research"=第二區「研究・非交易」
+# cta: 可選 (url, label, sub) —— 該分類自己的總覽/專區入口頁（既有 .cta 版型，逐字沿用）
+# rows: [ (row_label, [ (url, text, status_or_None, is_current[, emph]), ... ] ), ... ]
+SECTIONS = [
+    # ═══════════════ 第一區：系統・可交易 ═══════════════
+    dict(id="us-swing", region="sys", emoji="🇺🇸", name="美股波段系統",
+         sub="現役 W52×自適應波動率 150%（原 STX50/E3 降為對照）；其餘依風險調整排名分為"
+             "採用／候補／實驗／否決，完整比較表與圖表見下方「數據對比」。",
+         cta=None,
+         rows=[
+            ("總覽・工具", [
+                ("/backtest/", "20 年總覽", None, True),
+                ("/backtest/10y/", "10 年對比", None, False),
+                ("/backtest/ma_sensitivity/", "MA 敏感度", None, False),
+                ("/backtest/free_lunch/", "分散與免費午餐", None, False),
+            ]),
+            ("個別系統", [
+                ("/backtest/long_track_smh/", "SMH/QQQ 進攻", None, False),
+                ("/backtest/long_track_ensemble/", "SPY/QQQ 集成", None, False),
+                ("/backtest/slope_filter/", "SPY/AGG 斜率", None, False),
+                ("/backtest/long_track/", "SPY/QQQ 長軌", None, False),
+                ("/backtest/long_track_qqq/", "QQQ 長軌純攻", None, False),
+                ("/backtest/six_state/", "QQQ＋SMH 六狀態", None, False),
+                ("/backtest/six_state_v1r1/", "QQQ 六狀態實盤", None, False),
+                ("/backtest/supertrend/", "週線 Supertrend", None, False),
+                ("/backtest/minervini/", "Minervini RS+VCP", None, False),
+                ("/backtest/mom_volscaling/", "動能·波動縮放", None, False),
+                ("/backtest/dual_track_study/", "雙軌分散研究", None, False),
+                ("/backtest/vol_targeting/", "波動目標倉位", "研究", False),
+                ("/backtest/vol_targeting/adaptive.html", "波動率變體實驗室", "研究", False),
+                ("/backtest/rsi2_mr/", "SPY/QQQ 均值回歸", None, False),
+                ("/backtest/dual_track/", "SPY/QQQ 雙軌多空", "否決", False),
+                ("/backtest/exit_switch/", "出場法切換", "否決", False),
+                ("/backtest/short_system/", "指數做空", "失敗", False),
+            ]),
+            ("前瞻追蹤", [
+                ("/long-track-w52-adaptive/", "W52 × 自適應波動率 150%（實單主系統）", "實單", False),
+                ("/long-track-qs-vt/", "QQQ+SMH 固定 σ（歸檔）", None, False),
+                ("/long-track-qs-vt/adaptive.html", "QQQ+SMH 自適應（歸檔）", None, False),
+                ("/long-track-adaptive-vt/", "自適應美台總覽（歸檔）", None, False),
+            ]),
+         ]),
+    dict(id="us-options", region="sys", emoji="🇺🇸", name="美股選擇權",
+         sub="Iron Condor／Covered Call／買 put 避險三個選擇權研究，結果全部失敗或負貢獻。",
+         cta=None,
+         rows=[
+            ("選擇權研究", [
+                ("/backtest/cndr/", "Iron Condor", "失敗", False),
+                ("/backtest/covered_call/", "Covered Call", "負貢獻", False),
+                ("/backtest/put_timing/", "SPY/QQQ 買 put 避險", "負貢獻", False),
+            ]),
+         ]),
+    dict(id="tw-swing", region="sys", emoji="🇹🇼", name="台股波段",
+         sub="0050+2330 現役 W52×自適應波動率（實單）；前代 E3 對照；0050 四系統含崩盤驗證。",
+         cta=("/backtest/tw/", "台股總覽",
+              "0050+2330 W52×自適應波動率(實單)· 前代 E3 對照 · 0050 四系統 · 含崩盤驗證 · 完整比較表與圖表"),
+         rows=[
+            ("波段", [
+                ("/backtest/tw_0050_compare/", "0050 總覽·台美差異", None, False),
+                ("/backtest/tw_0050/", "0050 進攻趨勢", None, False),
+                ("/backtest/tw_0050_lt/", "0050 長軌趨勢", None, False),
+                ("/backtest/long_track_tw/", "2330/0050 E3 長軌", None, False),
+                ("/backtest/vol_targeting/tw.html", "0050+2330 波動率變體", "研究", False),
+                ("/backtest/tw_0050_six/", "0050 六狀態機", None, False),
+                ("/backtest/tw_0050_dual/", "0050 雙軌多空", "否決", False),
+            ]),
+            ("前瞻追蹤", [
+                ("/long-track-w52-adaptive/", "W52 × 自適應波動率 150%（實單主系統）", "實單", False),
+                ("/long-track-tw-vt/", "0050+2330 固定 σ（歸檔）", None, False),
+                ("/long-track-tw-vt/adaptive.html", "0050+2330 自適應（歸檔）", None, False),
+                ("/long-track-adaptive-vt/", "自適應美台總覽（歸檔）", None, False),
+            ]),
+         ]),
+    dict(id="tw-options", region="sys", emoji="🇹🇼", name="台股選擇權",
+         sub="台指選擇權賣方／雙賣／避險策略群，共用 TAIEX/TWVIX/TXO 資料層與 Black-76 引擎。",
+         cta=None,
+         rows=[("選擇權", _conv(navc.OPTIONS_LINKS))]),
+    dict(id="tw-intraday", region="sys", emoji="🇹🇼", name="台股日內",
+         sub="台指期與個股期日內訊號普查，四條線目前皆未通過門檻或已否決。",
+         cta=None,
+         rows=[("日內", _conv(navc.INTRADAY_LINKS))]),
+    dict(id="multi-classic", region="sys", emoji="🧩", name="多資產·經典複製",
+         sub="唐奇安突破／Clenow／SG Trend／跨資產防守等經典系統複製，資產池與現役系統不同，"
+             "僅供組合互補參照。",
+         cta=("/backtest/multi/", "多資產總覽",
+              "唐奇安 / Clenow / SG Trend / 跨資產防守 · 資產池不同，僅供組合互補參照"),
+         rows=[
+            ("系統", [
+                ("/backtest/turtle/", "唐奇安突破", None, False),
+                ("/backtest/clenow/", "跨資產趨勢", None, False),
+                ("/backtest/multiasset_trend/", "SG Trend 複製", None, False),
+                ("/backtest/turtle_adopt/", "組合採用 Sleeve", None, False),
+                ("/backtest/slope_filter_global/", "全球斜率穩健性", None, False),
+                ("/backtest/crossasset_defense/", "跨資產防守", None, False),
+                ("/backtest/gem/", "SPY/ACWX 雙動能", None, False),
+                ("/backtest/nonequity/", "非股票 sleeve", "研究", False),
+                ("/backtest/reits/", "REITs 三地延伸", "研究", False),
+            ]),
+         ]),
+    dict(id="leverage", region="sys", emoji="🔧", name="槓桿疊加",
+         sub="在現役趨勢引擎上疊加期貨槓桿／波動目標，屬換軸互補研究，尚未採用。",
+         cta=("/backtest/leverage/", "槓桿疊加總覽",
+              "在現役趨勢引擎上疊加期貨槓桿 / 波動目標 · 換軸互補研究(未採用)"),
+         rows=[
+            ("系統", [
+                ("/backtest/leverage_voltarget/", "期貨槓桿疊加", None, False),
+                ("/backtest/vol_targeting/leverage.html", "W52×自適應 150% 槓桿", "研究", False),
+            ]),
+         ]),
+    # ═══════════════ 第二區：研究・非交易 ═══════════════
+    dict(id="factor", region="research", emoji="🧬", name="個股因子（美股）",
+         sub="S&P500+NDX100 point-in-time SEC EDGAR 個股層級因子研究——獲利能力／資產成長／"
+             "指數納入／內部人買賣等八個題目，皆非可交易系統。",
+         cta=None,
+         rows=[("研究", _conv(navc.RESEARCH_FACTOR_LINKS))]),
+    dict(id="active-fund", region="research", emoji="📊", name="主動式ETF與基金",
+         sub="台美主動式 ETF 與共同基金能否創造 alpha 的因子分析總結。",
+         cta=None,
+         rows=[("研究", _conv(navc.RESEARCH_ETF_LINKS))]),
+    dict(id="tw-cb", region="research", emoji="💵", name="台股可轉債",
+         sub="台股可轉債折價／賣回保底／收斂等策略研究專區。",
+         cta=None,
+         rows=[("研究", _conv(navc.TW_CB_LINKS))]),
+    dict(id="method", region="research", emoji="📐", name="方法研究",
+         sub="日/週頻率、均線進場方法、V 崩防禦等跨系統機制研究——答的是「這個機制有沒有 edge」，"
+             "不是「這個系統能不能上實單」。",
+         cta=None,
+         rows=[
+            ("頻率", _conv(navc.RESEARCH_FREQ_LINKS)),
+            ("均線", _conv(navc.RESEARCH_MA_LINKS)),
+            ("崩盤防禦", _conv(navc.RESEARCH_CRASH_LINKS)),
+         ]),
+    dict(id="macro", region="research", emoji="🌏", name="總經・房價×GDP",
+         sub="本類非可交易系統（無 CAGR／MDD／Sharpe），是跨國總經機制研究。主線問題：人均所得"
+             "成長能否解釋房價走勢——因子矩陣做跨國比較、補漲假說檢驗所得與房價的領先落後關係；"
+             "下方個案頁依地區分組，逐一拆解各國房價史的高點、崩盤與復甦路徑。",
+         cta=None,
+         rows=[
+            ("研究・主線", [
+                ("/backtest/housing_gdp/", "人均 GDP 與房價（42 國因子矩陣）", "研究", False, True),
+                ("/backtest/housing_gdp/catchup.html", "補漲假說：所得領先、房價落後", "研究", False, True),
+                ("/backtest/housing_gdp/city_catchup.html", "補漲假說：換成城市層級，訊號還在嗎？", "研究", False, True),
+                ("/backtest/housing_gdp/gdp_band.html", "GDP 帶假說：3,000→10,000 美元最快？", "研究", False, True),
+            ]),
+            ("個案・亞洲", [
+                ("/backtest/housing_gdp/taiwan.html", "台灣：二十五年房價史", "研究", False),
+                ("/backtest/housing_gdp/japan.html", "日本：七十年房價史", "研究", False),
+                ("/backtest/housing_gdp/korea.html", "南韓：與日本同年見頂", "研究", False),
+                ("/backtest/housing_gdp/hongkong.html", "香港：撤辣之後仍在跌", "研究", False),
+                ("/backtest/housing_gdp/malaysia.html", "馬來西亞：所得跑贏房價", "研究", False),
+                ("/backtest/housing_gdp/thailand.html", "泰國：失落的十三年", "研究", False),
+                ("/backtest/housing_gdp/china.html", "中國：官方指數換過口徑，分級城市差很大", "研究", False),
+                ("/backtest/housing_gdp/singapore.html", "新加坡：政府自己蓋，所得贏了房價", "研究", False),
+                ("/backtest/housing_gdp/indonesia.html", "印尼：22 年跌勢未收復", "研究", False),
+                ("/backtest/housing_gdp/india.html", "印度：跨過 3,000 美元門檻，房價卻沒漲", "研究", False),
+            ]),
+            ("個案・英語系", [
+                ("/backtest/housing_gdp/usa.html", "美國：崩盤與收復", "研究", False),
+                ("/backtest/housing_gdp/canada.html", "加拿大：從未崩過的市場正在崩", "研究", False),
+                ("/backtest/housing_gdp/uk.html", "英國：最深崩盤是通膨", "研究", False),
+                ("/backtest/housing_gdp/ireland.html", "愛爾蘭：42 國最深崩盤", "研究", False),
+                ("/backtest/housing_gdp/australia.html", "澳洲：從未真正崩過", "研究", False),
+                ("/backtest/housing_gdp/newzealand.html", "紐西蘭：政策工具全試過一輪", "研究", False),
+            ]),
+            ("個案・歐陸", [
+                ("/backtest/housing_gdp/germany.html", "德國：沒有泡沫的 25 年凍結", "研究", False),
+                ("/backtest/housing_gdp/spain.html", "西班牙：人口驅動的兩次泡沫", "研究", False),
+                ("/backtest/housing_gdp/greece.html", "希臘：失落的十年，19 年未收復", "研究", False),
+                ("/backtest/housing_gdp/italy.html", "義大利：18 年未收復 2007 高點", "研究", False),
+                ("/backtest/housing_gdp/portugal.html", "葡萄牙：谷底比紓困期早 4 年", "研究", False),
+                ("/backtest/housing_gdp/netherlands.html", "荷蘭：供給彈性倒數第 2", "研究", False),
+                ("/backtest/housing_gdp/denmark.html", "丹麥：房貸債券吸收利率衝擊", "研究", False),
+                ("/backtest/housing_gdp/norway.html", "挪威：石油而非人口外移", "研究", False),
+                ("/backtest/housing_gdp/austria.html", "奧地利：實質利率係數 37 國最正", "研究", False),
+                ("/backtest/housing_gdp/poland.html", "波蘭：負實質利率卻刻意降息", "研究", False),
+                ("/backtest/housing_gdp/france.html", "法國：所得解釋不了房價的異數", "研究", False),
+                ("/backtest/housing_gdp/switzerland.html", "瑞士：升息循環中紋風不動的房價", "研究", False),
+                ("/backtest/housing_gdp/sweden.html", "瑞典：銀行危機與負債爭議兩張臉", "研究", False),
+                ("/backtest/housing_gdp/czechia.html", "捷克：看不見的修正，不磁吸資金的首都", "研究", False),
+            ]),
+            ("個案・其他新興市場", [
+                ("/backtest/housing_gdp/turkey.html", "土耳其：通膨 80% 仍降息", "研究", False),
+                ("/backtest/housing_gdp/brazil.html", "巴西：同期相關拉滿，長期方向消失", "研究", False),
+                ("/backtest/housing_gdp/southafrica.html", "南非：被遺忘的 1983 年崩盤", "研究", False),
+                ("/backtest/housing_gdp/israel.html", "以色列：房市抗議運動打輸的那一場", "研究", False),
+                ("/backtest/housing_gdp/mexico.html", "墨西哥：升息打不下去的 20 年", "研究", False),
+            ]),
+         ]),
+    dict(id="scan", region="research", emoji="🔍", name="國家掃描",
+         sub="對單一國家股市的第一輪系統性掃描：複利機器篩選×出口群深查×估值現況。掃描是研究記錄"
+             "不是選股名單，個股裁決一律走 DD。",
+         cta=None,
+         rows=[
+            ("市場初掃", [
+                ("/backtest/country_scan/us.html", "美國：市場結構與九個投資鏡頭", "研究", False),
+                ("/backtest/country_scan/taiwan.html", "台灣：市場結構與八個投資鏡頭", "研究", False),
+                ("/backtest/country_scan/japan.html", "日本：市場結構與七個投資鏡頭", "研究", False),
+                ("/backtest/country_scan/malaysia.html", "馬來西亞：市場結構與四個投資鏡頭", "研究", False),
+            ]),
+         ]),
 ]
 
+REGION_TITLE = {"sys": "系統・可交易", "research": "研究・非交易"}
 
-def group_overview():
-    cards = ""
-    for g in GROUP_CARDS:
-        n = sum(len(items) for _label, items in DIRECTORY[g["tab"]])
-        cards += (
-            f'<a class="gcard" href="#{g["tab"]}" onclick="return showTab(\'{g["tab"]}\')">'
-            f'<div class="gc-top"><span class="gc-emoji">{g["emoji"]}</span>'
-            f'<span class="gc-name">{g["name"]}</span><span class="gc-n">{n} 頁</span></div>'
-            f'<div class="gc-note">{g["note"]}</div></a>'
-        )
-    return f'<div class="group-grid">{cards}</div>'
-
-
-# ── per-tab directory ────────────────────────────────────────────────────
-# tab -> [ (row_label, [ (url, text, status_or_None, is_current), ... ]) ]
-# status ∈ 否決/失敗/負貢獻 (red) · 未過/觀察/研究/模擬中/專區 (amber) · 追蹤中/即將 (blue)
-DIRECTORY = {
-    "us": [
-        ("總覽・工具", [
-            ("/backtest/", "20 年總覽", None, True),
-            ("/backtest/10y/", "10 年對比", None, False),
-            ("/backtest/ma_sensitivity/", "MA 敏感度", None, False),
-            ("/backtest/free_lunch/", "分散與免費午餐", None, False),
-        ]),
-        ("個別系統", [
-            ("/backtest/long_track_smh/", "SMH/QQQ 進攻", None, False),
-            ("/backtest/long_track_ensemble/", "SPY/QQQ 集成", None, False),
-            ("/backtest/slope_filter/", "SPY/AGG 斜率", None, False),
-            ("/backtest/long_track/", "SPY/QQQ 長軌", None, False),
-            ("/backtest/long_track_qqq/", "QQQ 長軌純攻", None, False),
-            ("/backtest/six_state/", "QQQ＋SMH 六狀態", None, False),
-            ("/backtest/six_state_v1r1/", "QQQ 六狀態實盤", None, False),
-            ("/backtest/supertrend/", "週線 Supertrend", None, False),
-            ("/backtest/minervini/", "Minervini RS+VCP", None, False),
-            ("/backtest/mom_volscaling/", "動能·波動縮放", None, False),
-            ("/backtest/dual_track_study/", "雙軌分散研究", None, False),
-            ("/backtest/vol_targeting/", "波動目標倉位", "研究", False),
-            ("/backtest/vol_targeting/adaptive.html", "波動率變體實驗室", "研究", False),
-            ("/backtest/rsi2_mr/", "SPY/QQQ 均值回歸", None, False),
-            ("/backtest/dual_track/", "SPY/QQQ 雙軌多空", "否決", False),
-            ("/backtest/exit_switch/", "出場法切換", "否決", False),
-            ("/backtest/short_system/", "指數做空", "失敗", False),
-        ]),
-        ("選擇權研究", [
-            ("/backtest/cndr/", "Iron Condor", "失敗", False),
-            ("/backtest/covered_call/", "Covered Call", "負貢獻", False),
-            ("/backtest/put_timing/", "SPY/QQQ 買 put 避險", "負貢獻", False),
-        ]),
-        ("研究・主動式ETF", [
-            ("/backtest/active_etf/", "主動式 ETF 研究總結（台美）", "專區", False),
-            ("/backtest/us_active_etf/", "美股主動式 ETF 因子分析", "研究", False),
-        ]),
-        ("研究・頻率", [
-            ("/backtest/daily_vs_weekly/", "日/週線", None, False),
-        ]),
-        ("研究・均線", [
-            ("/backtest/ma_cross/", "MA 交叉", None, False),
-            ("/backtest/ma_deviation/", "MA 乖離", None, False),
-            ("/backtest/ma_dynband/", "MA 動態帶", None, False),
-            ("/backtest/ma_squeeze/", "MA 擠壓", None, False),
-        ]),
-        ("研究・崩盤", [
-            ("/backtest/smh_vcrash/", "SMH V崩", None, False),
-        ]),
-        ("研究・因子", [
-            ("/backtest/return_driver/", "美股漲跌歸因：獲利與估值", "研究", False),
-            ("/backtest/pead/", "美股財報驚喜後漂移", "研究", False),
-            ("/backtest/accruals/", "美股獲利品質（應計項目）", "研究", False),
-            ("/backtest/share_issuance/", "美股股數增減（發行與回購）", "研究", False),
-        ]),
-        ("前瞻追蹤", [
-            ("/long-track-w52-adaptive/", "W52 × 自適應波動率 150%（實單主系統）", "實單", False),
-            ("/long-track-qs-vt/", "QQQ+SMH 固定 σ（歸檔）", None, False),
-            ("/long-track-qs-vt/adaptive.html", "QQQ+SMH 自適應（歸檔）", None, False),
-            ("/long-track-adaptive-vt/", "自適應美台總覽（歸檔）", None, False),
-        ]),
-    ],
-    "tw": [
-        ("波段", [
-            ("/backtest/tw_0050_compare/", "0050 總覽·台美差異", None, False),
-            ("/backtest/tw_0050/", "0050 進攻趨勢", None, False),
-            ("/backtest/tw_0050_lt/", "0050 長軌趨勢", None, False),
-            ("/backtest/long_track_tw/", "2330/0050 E3 長軌", None, False),
-            ("/backtest/vol_targeting/tw.html", "0050+2330 波動率變體", "研究", False),
-            ("/backtest/tw_0050_six/", "0050 六狀態機", None, False),
-            ("/backtest/tw_0050_dual/", "0050 雙軌多空", "否決", False),
-        ]),
-        ("選擇權", [
-            ("/backtest/tw_options/", "台股選擇權專區", "專區", False),
-            ("/backtest/txo_vol_seller/", "台指選擇權賣方", "模擬中", False),
-            ("/backtest/txo_put_seller/", "台指賣方下檔", "研究", False),
-            ("/backtest/txo_iron_condor/", "台指雙賣", "研究", False),
-            ("/backtest/txo_covered_call_0050/", "台指 Covered Call", "研究", False),
-            ("/backtest/txo_tail_hedge/", "台指尾端避險", "研究", False),
-        ]),
-        ("日內交易", [
-            ("/backtest/txf_intraday/", "台指當沖", "未過", False),
-            ("/backtest/txf_chips/", "籌碼偏向", "觀察", False),
-            ("/backtest/ssf_xsec/", "個股期橫斷面", "未過", False),
-            ("/backtest/txf_basis/", "基差偏向", "否決", False),
-        ]),
-        ("研究・主動式ETF", [
-            ("/backtest/active_etf/", "主動式 ETF 研究總結（台美）", "專區", False),
-            ("/backtest/tw_active_etf/", "台股主動式 ETF 因子分析", "研究", False),
-            ("/backtest/tw_mutual_fund/", "台股共同基金有沒有 alpha", "研究", False),
-        ]),
-        ("研究・頻率", [
-            ("/backtest/daily_vs_weekly_tw/", "日/週·台股", None, False),
-        ]),
-        ("研究・崩盤", [
-            ("/backtest/tw_vcrash/", "台股 V崩防禦", None, False),
-            ("/backtest/tw_crash/", "台股含崩盤驗證", None, False),
-        ]),
-        ("研究・可轉債", [
-            ("/backtest/tw_cb/", "台股可轉債專區", "專區", False),
-        ]),
-        ("前瞻追蹤", [
-            ("/long-track-w52-adaptive/", "W52 × 自適應波動率 150%（實單主系統）", "實單", False),
-            ("/long-track-tw-vt/", "0050+2330 固定 σ（歸檔）", None, False),
-            ("/long-track-tw-vt/adaptive.html", "0050+2330 自適應（歸檔）", None, False),
-            ("/long-track-adaptive-vt/", "自適應美台總覽（歸檔）", None, False),
-        ]),
-    ],
-    "multi": [
-        ("系統", [
-            ("/backtest/turtle/", "唐奇安突破", None, False),
-            ("/backtest/clenow/", "跨資產趨勢", None, False),
-            ("/backtest/multiasset_trend/", "SG Trend 複製", None, False),
-            ("/backtest/turtle_adopt/", "組合採用 Sleeve", None, False),
-            ("/backtest/slope_filter_global/", "全球斜率穩健性", None, False),
-            ("/backtest/crossasset_defense/", "跨資產防守", None, False),
-            ("/backtest/gem/", "SPY/ACWX 雙動能", None, False),
-            ("/backtest/nonequity/", "非股票 sleeve", "研究", False),
-            ("/backtest/reits/", "REITs 三地延伸", "研究", False),
-        ]),
-        ("研究・頻率", [
-            ("/backtest/daily_vs_weekly_global/", "日/週·全球", None, False),
-            ("/backtest/daily_vs_weekly_deep/", "日/週·深掘（18 市場）", None, False),
-        ]),
-    ],
-    "lev": [
-        ("系統", [
-            ("/backtest/leverage_voltarget/", "期貨槓桿疊加", None, False),
-            ("/backtest/vol_targeting/leverage.html", "W52×自適應 150% 槓桿", "研究", False),
-        ]),
-    ],
-    "macro": [
-        ("研究・主線", [
-            ("/backtest/housing_gdp/", "人均 GDP 與房價（42 國因子矩陣）", "研究", False, True),
-            ("/backtest/housing_gdp/catchup.html", "補漲假說：所得領先、房價落後", "研究", False, True),
-            ("/backtest/housing_gdp/city_catchup.html", "補漲假說：換成城市層級，訊號還在嗎？", "研究", False, True),
-            ("/backtest/housing_gdp/gdp_band.html", "GDP 帶假說：3,000→10,000 美元最快？", "研究", False, True),
-        ]),
-        ("個案・亞洲", [
-            ("/backtest/housing_gdp/taiwan.html", "台灣：二十五年房價史", "研究", False),
-            ("/backtest/housing_gdp/japan.html", "日本：七十年房價史", "研究", False),
-            ("/backtest/housing_gdp/korea.html", "南韓：與日本同年見頂", "研究", False),
-            ("/backtest/housing_gdp/hongkong.html", "香港：撤辣之後仍在跌", "研究", False),
-            ("/backtest/housing_gdp/malaysia.html", "馬來西亞：所得跑贏房價", "研究", False),
-            ("/backtest/housing_gdp/thailand.html", "泰國：失落的十三年", "研究", False),
-            ("/backtest/housing_gdp/china.html", "中國：官方指數換過口徑，分級城市差很大", "研究", False),
-            ("/backtest/housing_gdp/singapore.html", "新加坡：政府自己蓋，所得贏了房價", "研究", False),
-            ("/backtest/housing_gdp/indonesia.html", "印尼：22 年跌勢未收復", "研究", False),
-            ("/backtest/housing_gdp/india.html", "印度：跨過 3,000 美元門檻，房價卻沒漲", "研究", False),
-        ]),
-        ("個案・英語系", [
-            ("/backtest/housing_gdp/usa.html", "美國：崩盤與收復", "研究", False),
-            ("/backtest/housing_gdp/canada.html", "加拿大：從未崩過的市場正在崩", "研究", False),
-            ("/backtest/housing_gdp/uk.html", "英國：最深崩盤是通膨", "研究", False),
-            ("/backtest/housing_gdp/ireland.html", "愛爾蘭：42 國最深崩盤", "研究", False),
-            ("/backtest/housing_gdp/australia.html", "澳洲：從未真正崩過", "研究", False),
-            ("/backtest/housing_gdp/newzealand.html", "紐西蘭：政策工具全試過一輪", "研究", False),
-        ]),
-        ("個案・歐陸", [
-            ("/backtest/housing_gdp/germany.html", "德國：沒有泡沫的 25 年凍結", "研究", False),
-            ("/backtest/housing_gdp/spain.html", "西班牙：人口驅動的兩次泡沫", "研究", False),
-            ("/backtest/housing_gdp/greece.html", "希臘：失落的十年，19 年未收復", "研究", False),
-            ("/backtest/housing_gdp/italy.html", "義大利：18 年未收復 2007 高點", "研究", False),
-            ("/backtest/housing_gdp/portugal.html", "葡萄牙：谷底比紓困期早 4 年", "研究", False),
-            ("/backtest/housing_gdp/netherlands.html", "荷蘭：供給彈性倒數第 2", "研究", False),
-            ("/backtest/housing_gdp/denmark.html", "丹麥：房貸債券吸收利率衝擊", "研究", False),
-            ("/backtest/housing_gdp/norway.html", "挪威：石油而非人口外移", "研究", False),
-            ("/backtest/housing_gdp/austria.html", "奧地利：實質利率係數 37 國最正", "研究", False),
-            ("/backtest/housing_gdp/poland.html", "波蘭：負實質利率卻刻意降息", "研究", False),
-            ("/backtest/housing_gdp/france.html", "法國：所得解釋不了房價的異數", "研究", False),
-            ("/backtest/housing_gdp/switzerland.html", "瑞士：升息循環中紋風不動的房價", "研究", False),
-            ("/backtest/housing_gdp/sweden.html", "瑞典：銀行危機與負債爭議兩張臉", "研究", False),
-            ("/backtest/housing_gdp/czechia.html", "捷克：看不見的修正，不磁吸資金的首都", "研究", False),
-        ]),
-        ("個案・其他新興市場", [
-            ("/backtest/housing_gdp/turkey.html", "土耳其：通膨 80% 仍降息", "研究", False),
-            ("/backtest/housing_gdp/brazil.html", "巴西：同期相關拉滿，長期方向消失", "研究", False),
-            ("/backtest/housing_gdp/southafrica.html", "南非：被遺忘的 1983 年崩盤", "研究", False),
-            ("/backtest/housing_gdp/israel.html", "以色列：房市抗議運動打輸的那一場", "研究", False),
-            ("/backtest/housing_gdp/mexico.html", "墨西哥：升息打不下去的 20 年", "研究", False),
-        ]),
-    ],
-    "scan": [
-        ("市場初掃", [
-            ("/backtest/country_scan/us.html", "美國：市場結構與九個投資鏡頭", "研究", False),
-            ("/backtest/country_scan/taiwan.html", "台灣：市場結構與八個投資鏡頭", "研究", False),
-            ("/backtest/country_scan/japan.html", "日本：市場結構與七個投資鏡頭", "研究", False),
-            ("/backtest/country_scan/malaysia.html", "馬來西亞：市場結構與四個投資鏡頭", "研究", False),
-        ]),
-    ],
+# 舊六 tab hash → 新 section id（讓外部深連結不斷；section id 本身就是錨點，JS 只是保險）
+LEGACY_HASH = {
+    "us": "us-swing", "tw": "tw-swing", "multi": "multi-classic",
+    "lev": "leverage", "macro": "macro", "scan": "scan",
 }
+
+
+def _section_count(sec) -> int:
+    return sum(len(items) for _label, items in sec["rows"])
+
+
+def _count_status():
+    """研究／否決兩個總覽數字：從 SECTIONS 即時統計不重複頁面（用 URL 當 key 去重——
+    前瞻追蹤同一顆實單系統會同時出現在美股波段系統與台股波段兩個 section，不應重複計數）。
+    否決·歸檔 = 狀態∈{否決,失敗,負貢獻,未過} 或連結文字含「（歸檔）」；
+    實驗·研究 = 其餘任何非空狀態（研究/專區/模擬中/觀察/追蹤中/即將），但排除「實單」本身。"""
+    exp_urls, rej_urls = set(), set()
+    for sec in SECTIONS:
+        for _label, items in sec["rows"]:
+            for item in items:
+                url, text, status = item[0], item[1], item[2]
+                archived = "（歸檔）" in text
+                if (status in ("否決", "失敗", "負貢獻", "未過")) or archived:
+                    rej_urls.add(url)
+                elif status and status != "實單":
+                    exp_urls.add(url)
+    return len(exp_urls), len(rej_urls)
 
 
 def _badge(status):
@@ -382,7 +344,7 @@ def _pill(url, text, status=None, current=False, emph=False):
     # emph: macro-only "entry page" flag (5th tuple element) — reuses the
     # same navy-gradient look as the current-page ".on" state so the two
     # housing_gdp/ entry pages visually outrank the 14 country case pills
-    # without introducing a new color. Other tabs' 4-tuples default emph=False.
+    # without introducing a new color. Other sections' 4-tuples default emph=False.
     classes = []
     if current:
         classes.append("on")
@@ -392,22 +354,50 @@ def _pill(url, text, status=None, current=False, emph=False):
     return f'<a href="{url}"{cls}>{text}{_badge(status)}</a>'
 
 
-def _dir(tab, collapsed=True):
-    # collapsed=True（2026-08-24 規格點 4）：目錄整段包進 <details> 移到 tab 最底部，
-    # 一顆連結都不掉，只改容器與位置。macro/scan 兩個「只有連結清單」的 tab（規格點 6）
-    # 例外維持 collapsed=False——那坨 pill 目錄本身就是整個 tab 的內容，收合等於清空頁面。
-    rows = ""
-    for label, items in DIRECTORY[tab]:
+def _dir_rows_html(rows):
+    body = ""
+    for label, items in rows:
         pills = "".join(_pill(*p) for p in items)
-        rows += (f'<div class="dir-row"><div class="dir-lbl">{label}</div>'
+        body += (f'<div class="dir-row"><div class="dir-lbl">{label}</div>'
                  f'<div class="dir-pills">{pills}</div></div>')
-    dir_html = f'<div class="dir">{rows}</div>'
-    if not collapsed:
-        return dir_html
-    return (f'<details class="dir-details"><summary>本分類全部頁面索引</summary>'
-            f'<div class="d-body">{dir_html}</div></details>')
+    return f'<div class="dir">{body}</div>'
 
 
+def render_section(sec) -> str:
+    n = _section_count(sec)
+    cta_html = ""
+    if sec["cta"]:
+        url, label, sub = sec["cta"]
+        cta_html = (f'<a class="cta" href="{url}"><span style="font-size:1.3rem">{sec["emoji"]}</span>'
+                    f'<span>{label}<div class="cta-sub">{sub}</div></span><span class="arr">→</span></a>')
+    return (f'<div class="section" id="{sec["id"]}">'
+            f'<h2 class="section-title">{sec["emoji"]} {sec["name"]}<span class="sec-n">{n} 頁</span></h2>'
+            f'<div class="section-sub">{sec["sub"]}</div>'
+            f'{cta_html}{_dir_rows_html(sec["rows"])}</div>')
+
+
+def anchor_jump() -> str:
+    groups = {"sys": "", "research": ""}
+    for sec in SECTIONS:
+        n = _section_count(sec)
+        groups[sec["region"]] += f'<a href="#{sec["id"]}">{sec["emoji"]} {sec["name"]}<span class="aj-n">{n}</span></a>'
+    return (f'<div class="anchor-jump">'
+            f'<div class="aj-group"><span class="aj-lbl">系統・可交易</span>{groups["sys"]}</div>'
+            f'<div class="aj-group"><span class="aj-lbl">研究・非交易</span>{groups["research"]}</div>'
+            f'</div>')
+
+
+def sections_html() -> str:
+    out, last_region = "", None
+    for sec in SECTIONS:
+        if sec["region"] != last_region:
+            out += f'<h2 class="region-title">{REGION_TITLE[sec["region"]]}</h2>'
+            last_region = sec["region"]
+        out += render_section(sec)
+    return out
+
+
+# ── per-tab directory (legacy tab lookup kept for lane()/is_position() below) ──
 def lane(title):
     # 檢查順序刻意：「否決」「實驗」先於「採用」判定，因為「🔬 實驗(未採用)」字面含
     # 「採用」子字串（未採用）——若採用判定先跑會誤判成綠色（舊版曾有此 bug，2026-08-24 修正）。
@@ -438,7 +428,7 @@ def section_header(title, lc):
             f'letter-spacing:.04em">{title}</td></tr>')
 
 
-# US research link-cards (verbatim) — only US-scoped notes belong to 美股 tab.
+# US research link-cards (verbatim) — only US-scoped notes belong to 美股 data section.
 US_RESEARCH = r"""<a class="link-card" href="/backtest/mom_volscaling/" style="border-left:3px solid var(--grey)">
   <span style="font-size:1.3rem">🌀</span>
   <span><span class="lc-name">美股動能・波動率縮放 · Barroso & Santa-Clara (2015) 複驗</span><br><span class="lc-sub">複驗 · WML 動能用已實現波動事前削平崩盤 · 真 OOS 2014-2026 Sharpe 0.26→0.52、MDD −77.6%→−27.2%,bootstrap 95% CI [+0.04,+0.45] 不含 0(顯著)· 只答機制存活性、不答可交易性(無成本)· 2020-03 反彈期削獲利是雙面刃</span></span>
@@ -485,7 +475,7 @@ US_RESEARCH = r"""<a class="link-card" href="/backtest/mom_volscaling/" style="b
   <span class="lc-arrow">→</span>
 </a>"""
 
-# Multi-asset / global research link-cards (verbatim) — moved to 多資產 tab.
+# Multi-asset / global research link-cards (verbatim) — 數據對比（多資產）小節用。
 MULTI_RESEARCH = r"""<a class="link-card" href="/backtest/reits/" style="border-left:3px solid var(--grey)">
   <span style="font-size:1.3rem">🏢</span>
   <span><span class="lc-name">v4 REITs 三地延伸：美 IYR／日 1343.T／星 CLR.SI</span><br><span class="lc-sub">預註冊決策前研究(凍結 2026-07-24、cap 1.0)· 同引擎移植三地房地產信託 = <b>三地皆非候選</b> · IYR 判準3敗(與美股系統月相關 +0.340>0.3、2022升息年飆 +0.763)、Faber 簡單月線 Calmar 0.262 反勝主列 0.113(引擎移植首次不佔優)· 日/星相關夠低卻打不贏實盤系統(判準4)· 星洲樣本短且自身負報酬、結論標初步 · 同框架放行 GLD/擋下 REITs = 預註冊功能 · 匯率未建模</span></span>
@@ -555,7 +545,7 @@ def render():
         f'<tr><td style="font-weight:600">{name}</td><td>{a}</td><td>{b}</td><td>{c}</td><td>{d}</td></tr>'
         for name, _color, a, b, c, d in idx.PERIOD_CAGR)
 
-    # 完整比較表 — US groups only (🇹🇼 group has its own 台股 tab/page)
+    # 完整比較表 — US groups only (🇹🇼 group has its own 台股波段 section)
     full_rows = ""
     for title, items in idx.GROUPS:
         if not is_position(title):
@@ -582,13 +572,11 @@ def render():
         return GREY
     scatter = [dict(label=l, x=x, y=y, color=scat_color(l)) for l, x, y, _c in idx.SCATTER]
 
-    # 狀態總覽（2026-08-24 新增，規格點 2）：頁首 tabs 下方的第一屏。四個數字由現頁內容
-    # 一次性數過寫死（不建資料鏈）——合格候補=GROUPS「✓採用」+「合格候補」兩組共 6 個系統；
-    # 實驗·研究=全頁 DIRECTORY pill 中標「研究/專區/模擬中/觀察/追蹤中/即將」的不重複頁面共
-    # 54 個（跨六個 tab 的 DIRECTORY 統計，不含未標狀態的一般連結）；否決·歸檔=標「否決/失敗/
-    # 負貢獻/未過」或連結文字含「（歸檔）」的不重複頁面共 15 個。統計方法見
-    # notes/site-internal/root/_redesign_backtest_index_20260824.md。
-    status_overview = """<div class="stat-row">
+    # 狀態總覽（2026-08-29 改版）：研究／否決兩數字改為即時統計（見 _count_status），
+    # 實單=1／合格候補=6 維持人工判定寫死——合格候補＝GROUPS「✓ 採用」+「合格候補」兩組
+    # 共 6 個系統，屬人工分類判斷，不是能從 pill 狀態字串機械推導的東西。
+    exp_n, rej_n = _count_status()
+    status_overview = f"""<div class="stat-row">
   <a class="stat-card stat-live" href="/long-track/#live">
     <div class="stat-n">1</div><div class="stat-k">實單</div>
     <div class="stat-d">套 · 系統主控台 →</div>
@@ -598,27 +586,26 @@ def render():
     <div class="stat-d">通過 L1 門檻，未上實倉</div>
   </div>
   <div class="stat-card stat-exp">
-    <div class="stat-n">54</div><div class="stat-k">實驗・研究</div>
+    <div class="stat-n">{exp_n}</div><div class="stat-k">實驗・研究</div>
     <div class="stat-d">探索性頁面，非實倉候選</div>
   </div>
   <div class="stat-card stat-rej">
-    <div class="stat-n">15</div><div class="stat-k">否決・歸檔</div>
+    <div class="stat-n">{rej_n}</div><div class="stat-k">否決・歸檔</div>
     <div class="stat-d">已否決或降級為對照</div>
   </div>
 </div>"""
 
     html = TEMPLATE
     for k, v in {
-        "%NAV%": NAV_BLOCK, "%STATUS_OVERVIEW%": status_overview, "%GROUP_OVERVIEW%": group_overview(),
-        "%US_DIR%": _dir("us"), "%TW_DIR%": _dir("tw"),
-        "%MULTI_DIR%": _dir("multi"), "%LEV_DIR%": _dir("lev"),
-        "%MACRO_DIR%": _dir("macro", collapsed=False), "%SCAN_DIR%": _dir("scan", collapsed=False),
+        "%NAV%": NAV_BLOCK, "%STATUS_OVERVIEW%": status_overview,
+        "%ANCHOR_JUMP%": anchor_jump(), "%SECTIONS%": sections_html(),
         "%CARD%": card, "%MAIN_ROWS%": main_rows, "%TAIL_ROWS%": tail_rows, "%BH_ROWS%": bh,
         "%US_RESEARCH%": US_RESEARCH, "%MULTI_RESEARCH%": MULTI_RESEARCH,
         "%PERIOD_ROWS%": period,
         "%FULL_ROWS%": full_rows, "%YEARLY_HEAD%": yhead, "%YEARLY_ROWS%": yrows,
         "%JS_RET%": json.dumps(idx.RET), "%JS_SCATTER%": json.dumps(scatter),
-        "%JS_YEARS%": json.dumps(idx.YEARS), "%NOW%": datetime.now().strftime("%Y-%m-%d"),
+        "%JS_YEARS%": json.dumps(idx.YEARS), "%JS_LEGACY_HASH%": json.dumps(LEGACY_HASH),
+        "%NOW%": datetime.now().strftime("%Y-%m-%d"),
     }.items():
         html = html.replace(k, v)
     return html
@@ -659,24 +646,10 @@ a{color:var(--ink);text-decoration:none}a:hover{text-decoration:underline}
 .page-hdr h1{font-family:var(--serif);font-size:1.6rem;font-weight:700;letter-spacing:-.01em;color:var(--ink)}
 .page-hdr .sub{color:var(--muted);font-size:.85rem;margin-top:.15rem}
 .crumb{font-size:.8rem;color:var(--muted);margin-bottom:.35rem}.crumb a{color:var(--muted)}
-/* 全區總覽卡（2026-08-29 首頁改造）——落地第一屏，六類群組卡，跟目前選到哪個 tab 無關 */
-.group-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin-top:1rem}
-.gcard{display:block;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:.8rem .95rem;color:inherit}
-.gcard:hover{border-color:var(--ink);text-decoration:none;box-shadow:var(--sh-1)}
-.gc-top{display:flex;align-items:center;gap:.4rem}
-.gc-emoji{font-size:1.1rem}
-.gc-name{font-weight:700;font-size:.9rem;color:var(--ink)}
-.gc-n{margin-left:auto;font-size:.7rem;font-weight:600;color:var(--muted);white-space:nowrap}
-.gc-note{font-size:.76rem;color:var(--muted);margin-top:.35rem;line-height:1.5}
-@media(max-width:820px){.group-grid{grid-template-columns:1fr}}
-.tabs{display:flex;gap:.4rem;margin-top:.9rem;flex-wrap:wrap}
-.tabs a{font-size:.86rem;font-weight:600;padding:.4rem .9rem;border:1px solid var(--border);border-radius:7px;color:var(--muted);background:var(--card);cursor:pointer}
-.tabs a:hover{text-decoration:none;border-color:var(--ink)}
-.tabs a.on{background:var(--accent);color:#fff;border-color:var(--accent)}
-.methods{display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;margin-top:.6rem;font-size:.8rem}
+.methods{display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;margin-top:.9rem;font-size:.8rem}
 .methods .m-lbl{font-size:.66rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
 .methods a{padding:.2rem .6rem;background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:999px;color:var(--accent);font-weight:600}
-/* 狀態總覽（規格點 2）——tabs 下方第一屏，四張狀態卡，跨 tab 常駐 */
+/* 狀態總覽——頁首下方第一屏，四張狀態卡 */
 .stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;margin-top:1rem}
 .stat-card{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--grey);border-radius:10px;padding:.75rem .9rem;color:inherit}
 .stat-card .stat-n{font-family:var(--mono);font-size:1.5rem;font-weight:700;color:var(--ink);line-height:1.1}
@@ -688,8 +661,18 @@ a{color:var(--ink);text-decoration:none}a:hover{text-decoration:underline}
 .stat-cand{border-left-color:var(--green)}
 .stat-exp{border-left-color:var(--accent)}
 .stat-rej{border-left-color:var(--red)}
+/* 錨點快跳列（2026-08-29）——13 個分類 pill，純 anchor，無 JS 過濾 */
+.anchor-jump{margin-top:1rem;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:.7rem .8rem}
+.aj-group{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem}
+.aj-group+.aj-group{margin-top:.5rem}
+.aj-lbl{flex:0 0 auto;font-size:.66rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin-right:.3rem}
+.anchor-jump a{display:inline-flex;align-items:center;gap:.28rem;padding:.28rem .62rem;background:var(--neutral-bg);color:var(--text);border-radius:999px;font-size:.76rem;font-weight:600;white-space:nowrap}
+.anchor-jump a:hover{background:var(--line);text-decoration:none}
+.aj-n{font-size:.68rem;font-weight:700;color:var(--muted)}
+.region-title{font-family:var(--serif);font-size:1.3rem;font-weight:700;color:var(--ink);margin:2rem 0 .3rem;padding-top:1.3rem;border-top:2px solid var(--ink)}
 .section{padding:1.5rem 0 0}
-.section-title{font-size:1.05rem;font-weight:700;color:var(--ink);margin-bottom:.85rem;padding-bottom:.4rem;border-bottom:1px solid var(--border)}
+.section-title{font-size:1.05rem;font-weight:700;color:var(--ink);margin-bottom:.85rem;padding-bottom:.4rem;border-bottom:1px solid var(--border);display:flex;align-items:baseline;gap:.5rem}
+.sec-n{font-size:.72rem;font-weight:600;color:var(--muted)}
 .section-sub{font-size:.82rem;color:var(--muted);margin:-.45rem 0 .9rem}
 .dir{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin:1.1rem 0}
 .dir-row{display:flex;align-items:flex-start;gap:.55rem;padding:.34rem .6rem;border-top:1px solid var(--border)}
@@ -706,15 +689,12 @@ a{color:var(--ink);text-decoration:none}a:hover{text-decoration:underline}
 .b-b{background:var(--accent-bg);color:var(--accent)}
 .b-g{background:var(--gold-bg);color:var(--gold-deep)}
 .dir-pills a.on .b,.dir-pills a.entry .b{background:rgba(255,255,255,.22);color:#fff}
-/* 目錄收合（規格點 4）——每個 tab 的 .dir 移到最底部後包一層 details */
-.dir-details{margin:1.1rem 0}
-.dir-details .dir{margin:.75rem 0 0}
 .cta{display:flex;align-items:center;gap:.7rem;background:var(--accent);color:#fff;border-radius:10px;padding:1rem 1.3rem;margin:1.1rem 0;font-weight:700}
 .cta:hover{text-decoration:none;opacity:.94}
 .cta .cta-sub{font-size:.76rem;font-weight:500;color:#cbd5e1;margin-top:.15rem}
 .cta .arr{margin-left:auto;font-size:1.1rem}
 .live-wrap{display:grid;grid-template-columns:1.3fr 1fr;gap:1rem;margin-top:1rem}
-/* 引導卡（規格點 3）——實單卡不再貼會過期的數字快照，只給定位＋連結 */
+/* 引導卡——實單卡不再貼會過期的數字快照，只給定位＋連結 */
 .acard{background:var(--card);border:1px solid var(--gold);border-radius:12px;padding:1.2rem 1.3rem;box-shadow:0 0 0 1px var(--gold) inset;display:flex;flex-direction:column}
 .ac-tag{display:inline-block;font-size:.72rem;font-weight:700;padding:.2rem .6rem;border-radius:99px;margin-bottom:.5rem;background:var(--gold-deep);color:#fff;align-self:flex-start}
 .ac-name{font-family:var(--serif);font-size:1.25rem;font-weight:700;letter-spacing:-.01em;color:var(--ink)}
@@ -759,15 +739,7 @@ footer{background:var(--card);border-top:1px solid var(--border);color:var(--mut
 <div class="page-hdr"><div class="container">
   <div class="crumb"><a href="/">首頁</a> / 量化回測</div>
   <h1>量化回測總覽</h1>
-  %GROUP_OVERVIEW%
-  <div class="tabs">
-    <a data-tabkey="us" href="#us" onclick="return showTab('us')">🇺🇸 美股</a>
-    <a data-tabkey="tw" href="#tw" onclick="return showTab('tw')">🇹🇼 台股</a>
-    <a data-tabkey="multi" href="#multi" onclick="return showTab('multi')">🧩 多資產</a>
-    <a data-tabkey="lev" href="#lev" onclick="return showTab('lev')">🔧 槓桿疊加</a>
-    <a data-tabkey="macro" href="#macro" onclick="return showTab('macro')">🌏 總經</a>
-    <a data-tabkey="scan" href="#scan" onclick="return showTab('scan')">🔍 國家掃描</a>
-  </div>
+  <div class="sub">全展開分類總表——十三個分類、全部回測頁面，捲動即可看完，不需要點 tab。</div>
   <div class="methods">
     <span class="m-lbl">方法論（跨類通用）</span>
     <a href="/backtest/criteria/">評估標準</a>
@@ -779,17 +751,18 @@ footer{background:var(--card);border-top:1px solid var(--border);color:var(--mut
 
 <div class="container">
 
-<!-- ══════════════ 🇺🇸 美股 ══════════════ -->
-<div class="tabpane" data-tab="us">
-<div class="section">
-<h2 class="section-title">現役系統</h2>
-<div class="section-sub">實單攻擊位 2026-07-18 起改為 <a href="/long-track-w52-adaptive/">W52 × 自適應波動率 150%</a>；本表 STX50／E3 為其前身（舊實倉・對照）。其餘採用 / 候補列在右側，未上實倉。</div>
 <div class="live-wrap">%CARD%</div>
-</div>
+
+%ANCHOR_JUMP%
+
+%SECTIONS%
+
+<!-- ══════════════ 數據對比 ══════════════ -->
+<h2 class="region-title">數據對比</h2>
 
 <div class="section">
-<h2 class="section-title">波段系統 · 風險調整排名</h2>
-<div class="section-sub">左色帶：<span style="color:var(--green)">綠=採用</span> · 灰=候補/角色可用 · <span style="color:var(--red)">紅=否決</span>。支配性 = 對自然基準的 <a href="/backtest/criteria/">L2 判定</a>。實驗/否決收在下方。<br>(雙動能 GEM 的導覽已歸「多資產」tab；此表仍保留其為對美股 B&amp;H 的參照列。)</div>
+<h2 class="section-title">數據對比（美股波段）</h2>
+<div class="section-sub">左色帶：<span style="color:var(--green)">綠=採用</span> · 灰=候補/角色可用 · <span style="color:var(--red)">紅=否決</span>。支配性 = 對自然基準的 <a href="/backtest/criteria/">L2 判定</a>。實驗/否決收在下方。<br>(雙動能 GEM 的分類已歸「多資產·經典複製」；此表仍保留其為對美股 B&amp;H 的參照列。)</div>
 <div class="card">
 <table><thead><tr><th>系統</th><th>CAGR</th><th>MDD</th><th>Calmar</th><th>支配性</th><th>狀態</th></tr></thead>
 <tbody>%MAIN_ROWS%%BH_ROWS%</tbody></table>
@@ -800,8 +773,8 @@ footer{background:var(--card);border-top:1px solid var(--border);color:var(--mut
 </div>
 
 <div class="section">
-<h2 class="section-title">研究筆記</h2>
-<div class="section-sub">探索性研究頁(分散結構 / 反例 / 文獻複驗),非實倉候選，刻意不列入上方比較表。跨資產 / 全球市場的研究已歸「多資產」tab。</div>
+<h2 class="section-title">研究筆記（美股波段）</h2>
+<div class="section-sub">探索性研究頁(分散結構 / 反例 / 文獻複驗),非實倉候選，刻意不列入上方比較表。跨資產 / 全球市場的研究見下方「數據對比（多資產）」。</div>
 %US_RESEARCH%
 </div>
 
@@ -827,96 +800,16 @@ footer{background:var(--card);border-top:1px solid var(--border);color:var(--mut
 </div>
 
 <div class="section">
-<h2 class="section-title">頁面索引</h2>
-%US_DIR%
-</div>
-</div>
-
-<!-- ══════════════ 🇹🇼 台股 ══════════════ -->
-<div class="tabpane" data-tab="tw" style="display:none">
-<a class="cta" href="/backtest/tw/">
-  <span style="font-size:1.3rem">🇹🇼</span>
-  <span>台股總覽<div class="cta-sub">0050+2330 W52×自適應波動率(實單)· 前代 E3 對照 · 0050 四系統 · 含崩盤驗證 · 完整比較表與圖表</div></span>
-  <span class="arr">→</span>
-</a>
-<div class="section">
-<div class="section-sub">2330/0050 E3 為<b>舊實倉</b>台股攻擊位(NT$，自 2010，不與美股同尺；實單已改用 W52 × 自適應波動率 150%)。波段 / 選擇權 / 日內三線各自獨立追蹤；完整數字見上方「台股總覽」。</div>
-</div>
-
-<div class="section">
-<h2 class="section-title">頁面索引</h2>
-%TW_DIR%
-</div>
-</div>
-
-<!-- ══════════════ 🧩 多資產 ══════════════ -->
-<div class="tabpane" data-tab="multi" style="display:none">
-<a class="cta" href="/backtest/multi/">
-  <span style="font-size:1.3rem">🧩</span>
-  <span>多資產總覽<div class="cta-sub">唐奇安 / Clenow / SG Trend / 跨資產防守 · 資產池不同，僅供組合互補參照</div></span>
-  <span class="arr">→</span>
-</a>
-<div class="section">
-<h2 class="section-title">研究筆記</h2>
-<div class="section-sub">跨資產 / 全球市場的機制與穩健性研究 — 組合層互補缺口與弱基準假象的反例庫。</div>
+<h2 class="section-title">數據對比（多資產）</h2>
+<div class="section-sub">跨資產 / 全球市場的機制與穩健性研究 — 組合層互補缺口與弱基準假象的反例庫。資產池不同，僅供組合互補參照，不與上表直接比較。</div>
 %MULTI_RESEARCH%
-</div>
-
-<div class="section">
-<h2 class="section-title">頁面索引</h2>
-%MULTI_DIR%
-</div>
-</div>
-
-<!-- ══════════════ 🔧 槓桿疊加 ══════════════ -->
-<div class="tabpane" data-tab="lev" style="display:none">
-<a class="cta" href="/backtest/leverage/">
-  <span style="font-size:1.3rem">🔧</span>
-  <span>槓桿疊加總覽<div class="cta-sub">在現役趨勢引擎上疊加期貨槓桿 / 波動目標 · 換軸互補研究(未採用)</div></span>
-  <span class="arr">→</span>
-</a>
-<div class="section">
-<div class="section-sub">槓桿疊加皆為研究線(非實盤)：擇時家族全否決，換軸 +ZN+GC 的 E3 閘門 overlay 三窗全勝但仍待 L4 決策。完整數字見上方「槓桿疊加總覽」。</div>
-</div>
-
-<div class="section">
-<h2 class="section-title">頁面索引</h2>
-%LEV_DIR%
-</div>
-</div>
-
-<!-- ══════════════ 🌏 總經 ══════════════ -->
-<div class="tabpane" data-tab="macro" style="display:none">
-<div class="section">
-<h2 class="section-title">跨國總經研究</h2>
-<div class="section-sub">本類非可交易系統（無 CAGR／MDD／Sharpe），是跨國總經機制研究。主線問題：人均所得成長能否解釋房價走勢——因子矩陣做跨國比較、補漲假說檢驗所得與房價的領先落後關係；下方個案頁依地區分組，逐一拆解各國房價史的高點、崩盤與復甦路徑。</div>
-</div>
-%MACRO_DIR%
-</div>
-
-<!-- ══════════════ 🔍 國家掃描 ══════════════ -->
-<div class="tabpane" data-tab="scan" style="display:none">
-<div class="section">
-<h2 class="section-title">國家股市初掃</h2>
-<div class="section-sub">對單一國家股市的第一輪系統性掃描：複利機器篩選×出口群深查×估值現況。掃描是研究記錄不是選股名單，個股裁決一律走 DD。</div>
-</div>
-%SCAN_DIR%
 </div>
 
 </div>
 <footer><div class="container">&copy; 2026 InvestMQuest Research · 量化回測總覽 · 真實 yfinance · 生成 %NOW%</div></footer>
 
 <script>
-var YEARS=%JS_YEARS%,RET=%JS_RET%,SCATTER=%JS_SCATTER%;
-function showTab(t){
-  var panes=document.querySelectorAll('.tabpane');
-  for(var i=0;i<panes.length;i++){panes[i].style.display=(panes[i].getAttribute('data-tab')===t)?'':'none';}
-  var tabs=document.querySelectorAll('.tabs a');
-  for(var j=0;j<tabs.length;j++){tabs[j].classList.toggle('on',tabs[j].getAttribute('data-tabkey')===t);}
-  if(window.history&&history.replaceState)history.replaceState(null,'','#'+t);
-  if(t==='us')window.dispatchEvent(new Event('resize'));
-  return false;
-}
+var YEARS=%JS_YEARS%,RET=%JS_RET%,SCATTER=%JS_SCATTER%,LEGACY_HASH=%JS_LEGACY_HASH%;
 function toNAV(r){var n=[],v=1;for(var i=0;i<r.length;i++){if(r[i]===null){n.push(null);continue}v*=1+r[i]/100;n.push(v)}return n}
 Chart.defaults.font.family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif";Chart.defaults.font.size=11;
 new Chart(document.getElementById('chart-nav'),{type:'line',
@@ -934,7 +827,19 @@ new Chart(document.getElementById('chart-scatter'),{type:'scatter',
  options:{responsive:true,maintainAspectRatio:false,
   plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.dataset.label+': MDD '+c.parsed.x+'% / CAGR '+c.parsed.y+'%'}}}},
   scales:{x:{title:{display:true,text:'Max Drawdown (%)'},grid:{color:'rgba(12,21,33,.07)'}},y:{title:{display:true,text:'CAGR (%)'},grid:{color:'rgba(12,21,33,.07)'}}}}});
-(function(){var h=(location.hash||'#us').slice(1);if(!/^(us|tw|multi|lev|macro|scan)$/.test(h))h='us';showTab(h);})();
+(function(){
+  // 舊六 tab hash(#us/#tw/#multi/#lev/#macro/#scan) 相容：映射到新 section id 並捲動過去。
+  // 新 13 個 section 的 id 本身就是合法錨點，就算 JS 失敗，瀏覽器原生 #id 跳轉一樣能到位。
+  function jump(){
+    var h=(location.hash||'').slice(1);
+    if(!h)return;
+    var target=LEGACY_HASH[h]||h;
+    var el=document.getElementById(target);
+    if(el)el.scrollIntoView({block:'start'});
+  }
+  window.addEventListener('load',jump);
+  window.addEventListener('hashchange',jump);
+})();
 </script>
 </body></html>
 """
