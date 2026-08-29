@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>美股漲跌歸因：獲利與估值 | InvestMQuest Research</title>
+<meta name="description" content="用 SEC EDGAR 逐季財報 + 835 檔美股 17 年資料拆解報酬：長期報酬靠獲利、短期靠估值；但用過去獲利成長事前選股不管用，先知測試證明不是獲利沒用，是猜不到。">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+:root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
+      --text:#111827;--muted:#6b7280;--border:#e5e7eb;
+      --green:#059669;--green-bg:#ecfdf5;--green-border:#a7f3d0;--green-text:#065f46;
+      --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;--red-text:#991b1b;
+      --amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fde68a;--amber-text:#92400e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans TC',sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1080px;margin:0 auto;padding:0 1.5rem}
+.page-hdr{padding:1.75rem 0 1.25rem;background:linear-gradient(180deg,#eff6ff 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
+.page-hdr h1{font-size:1.6rem;font-weight:700;letter-spacing:-.03em}
+.page-hdr .sub{color:var(--muted);font-size:.9rem;margin-top:.2rem}
+.crumb{font-size:.82rem;color:var(--muted);margin-bottom:.4rem}
+.crumb a{color:var(--muted)}
+.section{padding:1.75rem 0 0}
+.section-title{font-size:1.1rem;font-weight:700;margin-bottom:1rem;
+               padding-bottom:.45rem;border-bottom:2px solid var(--brand)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.1rem 1.25rem;margin-bottom:1rem}
+table{width:100%;border-collapse:collapse;font-size:.85rem;background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+th,td{text-align:left;padding:.55rem .65rem;border-bottom:1px solid var(--border)}
+th{background:#f9fafb;font-weight:600;font-size:.72rem;text-transform:uppercase;
+   letter-spacing:.03em;color:var(--muted)}
+td{font-variant-numeric:tabular-nums;vertical-align:top}
+td.num,th.num{text-align:right}
+td.lbl{white-space:nowrap;font-weight:500}
+tbody tr:last-child td{border-bottom:0}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.hero{margin:1.25rem 0;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--card)}
+.hero-top{background:linear-gradient(135deg,#eff6ff 0%,#f5f8ff 100%);padding:1.4rem 1.6rem;border-bottom:1px solid var(--border)}
+.hero-top .verdict-tag{display:inline-block;background:#1a56db;color:#fff;font-size:.74rem;font-weight:700;
+                       letter-spacing:.05em;padding:.25rem .7rem;border-radius:99px;margin-bottom:.5rem}
+.hero-top h2{font-size:1.3rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.35rem}
+.hero-top p{font-size:.92rem;color:#374151;max-width:62rem}
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card)}
+.hero-stats > div{padding:1rem 1.2rem;text-align:center;border-right:1px solid var(--border)}
+.hero-stats > div:last-child{border-right:none}
+.hero-stats .hs-label{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.hero-stats .hs-value{font-size:1.4rem;font-weight:800;letter-spacing:-.02em}
+.takeaway{font-size:.87rem;margin:.9rem 0;padding:.7rem .95rem;border-radius:6px;background:var(--brand-light);
+    border-left:3px solid var(--brand);color:#1f2c44}
+.takeaway b{color:#12213a}
+.note{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;
+      padding:.85rem 1.1rem;font-size:.84rem;color:var(--amber-text);margin:1rem 0}
+.warn-loud{background:var(--red-bg);border:2px solid var(--red-border);border-radius:8px;
+      padding:1rem 1.2rem;font-size:.9rem;color:var(--red-text);margin:1rem 0}
+.warn-loud strong{color:var(--red)}
+.cmp{display:grid;gap:1rem;margin:.9rem 0}
+.chart-wrap{position:relative}
+footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
+       text-align:center;padding:1.25rem 0;font-size:.78rem;margin-top:2rem}
+@media(max-width:768px){
+  .hero-stats{grid-template-columns:repeat(2,1fr)}
+  .cmp{grid-template-columns:1fr !important}
+  table{font-size:.76rem}th,td{padding:.4rem .45rem}
+}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <a href="/cockpit/">選股</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">個股研究</a>
+          <a href="/id/">產業研究</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/" class="active">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/flow/">投資流程</a>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="page-hdr">
+  <div class="container">
+    <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / 美股漲跌歸因</div>
+    <h1>美股漲跌歸因：獲利與估值</h1>
+    <div class="sub">S&amp;P500 + Nasdaq-100 點時財報全樣本（835 檔，2009–2026）・事後分解 ＋ 事前選股 ＋ 先知測試三段檢定</div>
+    <style id="bt-subnav-style">.bt-subnav{margin-top:.75rem;border:1px solid var(--border,#e5e7eb);border-radius:8px;overflow:hidden;font-size:.78rem;line-height:1.3}.bt-subnav-row{display:flex;align-items:flex-start;gap:.55rem;padding:.32rem .55rem;border-top:1px solid var(--border,#e5e7eb)}.bt-subnav-row:first-child{border-top:0}.bt-subnav-lbl{flex:0 0 5.4em;font-size:.64rem;font-weight:700;color:var(--muted,#6b7280);text-transform:uppercase;letter-spacing:.04em;padding-top:.34rem}.bt-subnav-pills{display:flex;flex-wrap:wrap;gap:.3rem;min-width:0}.bt-subnav-pills a{display:inline-flex;align-items:center;gap:.28rem;padding:.26rem .6rem;background:#eef1f4;color:#374151;border-radius:999px;text-decoration:none;font-weight:500;white-space:nowrap;transition:background .12s}.bt-subnav-pills a:hover{background:#e1e6ea}.bt-subnav-pills a.bt-dead{color:#7a828d;background:#f2f3f5}.bt-subnav-pills a.bt-on{background:linear-gradient(135deg,#081832,#173564);color:#fff;font-weight:600}.bt-subnav-pills a.bt-on:hover{background:linear-gradient(135deg,#081832,#173564)}.bt-tag{font-size:.6rem;font-weight:600;padding:.02rem .3rem;border-radius:4px;line-height:1.4}.bt-tag-dead{background:rgba(220,38,38,.12);color:#b42318}.bt-tag-watch{background:rgba(180,118,20,.15);color:#986a12}.bt-on .bt-tag-dead{background:rgba(255,255,255,.22);color:#fff}.bt-on .bt-tag-watch{background:rgba(255,255,255,.22);color:#fff}@media(max-width:640px){.bt-subnav-row{flex-direction:column;gap:.28rem;padding:.4rem .55rem}.bt-subnav-lbl{flex-basis:auto;padding-top:0}}</style><nav class="bt-subnav" aria-label="回測子導航"><div class="bt-subnav-row"><div class="bt-subnav-lbl">對比總覽</div><div class="bt-subnav-pills"><a href="/backtest/">20 年</a><a href="/backtest/10y/">10 年</a><a href="/backtest/criteria/">評估標準</a><a href="/backtest/tw/">台股總覽</a><a href="/backtest/multi/">多資產總覽</a><a href="/backtest/leverage/">槓桿疊加總覽</a><a href="/backtest/ma_sensitivity/">MA 敏感度</a><a href="/backtest/free_lunch/">分散與免費午餐</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">個別系統</div><div class="bt-subnav-pills"><a href="/backtest/long_track/">SPY/QQQ 長軌</a><a href="/backtest/long_track_qqq/">QQQ 長軌純攻</a><a href="/backtest/long_track_ensemble/">SPY/QQQ 集成</a><a href="/backtest/long_track_smh/">SMH/QQQ 進攻</a><a href="/backtest/six_state/">QQQ＋SMH 六狀態</a><a href="/backtest/six_state_v1r1/">QQQ 六狀態實盤</a><a href="/backtest/gem/">SPY/ACWX 雙動能</a><a href="/backtest/slope_filter/">SPY/AGG 斜率</a><a href="/backtest/rsi2_mr/">SPY/QQQ 均值回歸</a><a href="/backtest/supertrend/">週線 Supertrend</a><a href="/backtest/minervini/">Minervini RS+VCP</a><a href="/backtest/mom_volscaling/">動能·波動縮放</a><a href="/backtest/dual_track_study/">雙軌分散研究</a><a href="/backtest/leverage_voltarget/">期貨槓桿疊加</a><a href="/backtest/vol_targeting/">波動目標倉位<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/dual_track/" class="bt-dead">SPY/QQQ 雙軌多空<span class="bt-tag bt-tag-dead">否決</span></a><a href="/backtest/exit_switch/" class="bt-dead">出場法切換<span class="bt-tag bt-tag-dead">否決</span></a><a href="/backtest/short_system/" class="bt-dead">指數做空<span class="bt-tag bt-tag-dead">失敗</span></a><a href="/backtest/cndr/" class="bt-dead">Iron Condor<span class="bt-tag bt-tag-dead">失敗</span></a><a href="/backtest/covered_call/" class="bt-dead">Covered Call<span class="bt-tag bt-tag-dead">負貢獻</span></a><a href="/backtest/put_timing/" class="bt-dead">SPY/QQQ 買 put 避險<span class="bt-tag bt-tag-dead">負貢獻</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">多資產</div><div class="bt-subnav-pills"><a href="/backtest/turtle/">唐奇安突破</a><a href="/backtest/clenow/">跨資產趨勢</a><a href="/backtest/multiasset_trend/">SG Trend 複製</a><a href="/backtest/turtle_adopt/">組合採用 Sleeve</a><a href="/backtest/slope_filter_global/">全球斜率穩健性</a><a href="/backtest/crossasset_defense/">跨資產防守</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">台股波段</div><div class="bt-subnav-pills"><a href="/backtest/tw_0050_compare/">0050 總覽·台美差異</a><a href="/backtest/tw_0050/">0050 進攻趨勢（移植）</a><a href="/backtest/tw_0050_lt/">0050 長軌趨勢</a><a href="/backtest/long_track_tw/">2330/0050 E3 長軌</a><a href="/backtest/tw_0050_six/">0050 六狀態機</a><a href="/backtest/tw_0050_dual/" class="bt-dead">0050 雙軌多空<span class="bt-tag bt-tag-dead">否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">台股選擇權</div><div class="bt-subnav-pills"><a href="/backtest/tw_options/">台股選擇權專區<span class="bt-tag bt-tag-watch">專區</span></a><a href="/backtest/txo_vol_seller/">台指選擇權賣方<span class="bt-tag bt-tag-watch">模擬中</span></a><a href="/backtest/txo_put_seller/">台指賣方下檔<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_iron_condor/">台指雙賣<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_covered_call_0050/">台指 Covered Call<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_tail_hedge/">台指尾端避險<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">日內交易</div><div class="bt-subnav-pills"><a href="/backtest/txf_intraday/">台指當沖<span class="bt-tag bt-tag-watch">未過</span></a><a href="/backtest/txf_chips/">籌碼偏向<span class="bt-tag bt-tag-watch">觀察</span></a><a href="/backtest/ssf_xsec/">個股期橫斷面<span class="bt-tag bt-tag-watch">未過</span></a><a href="/backtest/txf_basis/" class="bt-dead">基差偏向<span class="bt-tag bt-tag-dead">否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・主動式ETF</div><div class="bt-subnav-pills"><a href="/backtest/active_etf/">主動式ETF總結<span class="bt-tag bt-tag-watch">專區</span></a><a href="/backtest/tw_active_etf/">台股主動式ETF<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/us_active_etf/">美股主動式ETF<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/tw_mutual_fund/">台股共同基金<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・頻率</div><div class="bt-subnav-pills"><a href="/backtest/daily_vs_weekly/">日/週線</a><a href="/backtest/daily_vs_weekly_deep/">日/週·深掘</a><a href="/backtest/daily_vs_weekly_global/">日/週·全球</a><a href="/backtest/daily_vs_weekly_tw/">日/週·台股</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・均線</div><div class="bt-subnav-pills"><a href="/backtest/ma_cross/">MA 交叉</a><a href="/backtest/ma_deviation/">MA 乖離</a><a href="/backtest/ma_dynband/">MA 動態帶</a><a href="/backtest/ma_squeeze/">MA 擠壓</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・崩盤</div><div class="bt-subnav-pills"><a href="/backtest/smh_vcrash/">SMH V崩</a><a href="/backtest/tw_vcrash/">台股 V崩防禦</a><a href="/backtest/tw_crash/">台股含崩盤驗證</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・總經</div><div class="bt-subnav-pills"><a href="/backtest/housing_gdp/">人均GDP與房價<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・可轉債</div><div class="bt-subnav-pills"><a href="/backtest/tw_cb/">台股可轉債專區<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・因子</div><div class="bt-subnav-pills"><a href="/backtest/return_driver/" class="bt-on">美股漲跌歸因：獲利與估值<span class="bt-tag bt-tag-watch">研究</span></a></div></div></nav>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ===== HERO ===== -->
+<div class="hero">
+  <div class="hero-top">
+    <span class="verdict-tag">頭條判斷</span>
+    <h2>長期漲跌靠獲利，一年內靠估值情緒；但用過去獲利成長事前選股不管用</h2>
+    <p>持有 5 年以上，獲利成長解釋了 67.1% 的報酬變異；持有 1 年，估值變化解釋了 70.4%。
+    但把這個順序反過來、拿「過去」的獲利成長去「預測」下一季報酬，train 和 OOS 全部測不出來
+    （EPS 成長因子 t=-0.18）。先知測試把「猜不到」和「沒有用」分開驗證：偷看未來 4 季真實成長排序，
+    t 值直接翻到 9.56——獲利真的驅動報酬，只是公開的歷史財報猜不到未來成長。</p>
+  </div>
+  <div class="hero-stats">
+    <div><div class="hs-label">5 年期獲利貢獻</div><div class="hs-value">67.1%</div></div>
+    <div><div class="hs-label">1 年期估值貢獻</div><div class="hs-value">70.4%</div></div>
+    <div><div class="hs-label">EPS 選股因子 t 值</div><div class="hs-value">-0.18</div></div>
+    <div><div class="hs-label">先知版 t 值（作弊上限）</div><div class="hs-value">9.56</div></div>
+  </div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">一、回頭看，獲利真的解釋了長期報酬</h2>
+<div class="takeaway"><b>持有 1 年，七成報酬是估值情緒在動；持有 5 年以上，六到九成報酬是獲利在動。</b>
+這是同一批股票、同一套算法，只把「起點到終點」的持有期拉長，答案就整個翻過來——不是猜的，是一個代數恆等式
+（報酬 ＝ 獲利成長 ＋ 估值倍數變化 ＋ 股息，三項恰好加總回總報酬，每一筆都算過，殘差在浮點誤差等級）。</div>
+
+<p style="font-size:.9rem;color:#374151;margin:.9rem 0">
+做法：每季末抓一批股票（S&amp;P500＋Nasdaq-100 過去 17 年的池子，835 檔），往前看 1／3／5 年和「全期」的總報酬，
+拆成三塊——公司賺更多錢帶來的漲幅（獲利貢獻）、市場願意付更高倍數帶來的漲幅（估值貢獻）、股息。
+三塊變異數對總報酬變異數的佔比加總「恰好」等於 100.00%，這件事本身不是統計結果，是算式必然。
+</p>
+
+<h3 style="font-size:.95rem;margin:1.1rem 0 .5rem">Train（2009–2018）</h3>
+<table><thead><tr><th>持有期</th><th class="num">獲利貢獻</th><th class="num">估值貢獻</th><th class="num">股息貢獻</th><th class="num">樣本數</th></tr></thead><tbody><tr><td class="lbl">持有 1 年</td><td class="num strong">30.8%</td><td class="num">69.7%</td><td class="num">-0.5%</td><td class="num"><span style="color:var(--muted)"> n=13337</span></td></tr><tr><td class="lbl">持有 3 年</td><td class="num strong">70.3%</td><td class="num">32.5%</td><td class="num">-2.7%</td><td class="num"><span style="color:var(--muted)"> n=12732</span></td></tr><tr><td class="lbl">持有 5 年</td><td class="num strong">71.6%</td><td class="num">31.8%</td><td class="num">-3.5%</td><td class="num"><span style="color:var(--muted)"> n=12482</span></td></tr><tr><td class="lbl">全期（一次到底）</td><td class="num strong">88.5%</td><td class="num">15.5%</td><td class="num">-4.0%</td><td class="num"><span style="color:var(--muted)"> n=389</span></td></tr></tbody></table>
+
+<h3 style="font-size:.95rem;margin:1.3rem 0 .5rem">OOS（2019–2026）</h3>
+<table><thead><tr><th>持有期</th><th class="num">獲利貢獻</th><th class="num">估值貢獻</th><th class="num">股息貢獻</th><th class="num">樣本數</th></tr></thead><tbody><tr><td class="lbl">持有 1 年</td><td class="num strong">29.9%</td><td class="num">70.7%</td><td class="num">-0.6%</td><td class="num"><span style="color:var(--muted)"> n=11596</span></td></tr><tr><td class="lbl">持有 3 年</td><td class="num strong">56.8%</td><td class="num">44.3%</td><td class="num">-1.1%</td><td class="num"><span style="color:var(--muted)"> n=7749</span></td></tr><tr><td class="lbl">持有 5 年</td><td class="num strong">57.9%</td><td class="num">43.3%</td><td class="num">-1.2%</td><td class="num"><span style="color:var(--muted)"> n=4144</span></td></tr><tr><td class="lbl">全期（一次到底）</td><td class="num strong">163.5%</td><td class="num">-65.7%</td><td class="num">2.2%</td><td class="num"><span style="color:#b91c1c;font-weight:700"> n=24（樣本太小，見下方警告）</span></td></tr></tbody></table>
+
+<div class="note"><b>OOS「全期」桶只有 24 筆觀察（獲利貢獻算出 163.5%、
+估值貢獻 -65.7%）——這不是真訊號，是小樣本雜訊。</b>
+「全期」要求同一檔股票從 2019 年附近的某一季一路抱到 2026 年還在池子裡，OOS 視窗本來就短，湊得出這種全期配對的
+股票只剩 24 檔，任何一檔波動大的個股都能把整批的變異數佔比拖到 100% 以外（獲利貢獻 163.5%、估值貢獻 −65.7%，
+兩個數字本身就是異常值的訊號）。判讀時只看 1／3／5 年三欄，全期欄位僅供參考，不當結論用。</div>
+
+<div id="chart-a-wrap" class="chart-wrap" style="height:320px;margin-top:1.1rem">
+<canvas id="chart-a"></canvas>
+</div>
+<p style="font-size:.78rem;color:var(--muted);margin-top:.4rem">圖：全樣本（train+OOS 合併）獲利貢獻 vs 估值貢獻，隨持有期拉長的變化。</p>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">二、用「過去」的獲利成長，事前選得出贏家嗎</h2>
+<div class="takeaway"><b>選不出來。EPS 成長因子的 Q5−Q1 價差在 train、OOS、全期全部不顯著（|t| 最大 0.48）。</b>
+四個因子——EPS 成長、營收成長、12-1 月動能、E/P——每季末排名分五組，等權持有一季，train/OOS/全期分開驗，
+沒有一個因子在三段測試裡同時顯著又同方向。</div>
+
+<h3 style="font-size:.95rem;margin:1.1rem 0 .5rem">Train（2009–2018）</h3>
+<div class="scroll"><table><thead><tr><th>因子</th><th class="num">Q1</th><th class="num">Q2</th><th class="num">Q3</th><th class="num">Q4</th><th class="num">Q5</th><th class="num">Q5−Q1（t 值）</th><th>單調性</th><th class="num">換手季數</th></tr></thead><tbody><tr><td class="lbl">EPS YoY 成長</td><td class="num">14.6%</td><td class="num">14.4%</td><td class="num">13.4%</td><td class="num">11.8%</td><td class="num">11.3%</td><td class="num" style="">-2.7%<br><span style="font-size:.72rem;color:var(--muted)">t=-1.11</span></td><td>遞減（反著單調）</td><td class="num">31</td></tr><tr><td class="lbl">營收 YoY 成長</td><td class="num">15.5%</td><td class="num">16.6%</td><td class="num">12.2%</td><td class="num">12.9%</td><td class="num">11.5%</td><td class="num" style="">-3.4%<br><span style="font-size:.72rem;color:var(--muted)">t=-1.13</span></td><td>非單調</td><td class="num">30</td></tr><tr><td class="lbl">12-1 月動能</td><td class="num">23.4%</td><td class="num">21.7%</td><td class="num">18.9%</td><td class="num">16.9%</td><td class="num">17.0%</td><td class="num" style="">-7.2%<br><span style="font-size:.72rem;color:var(--muted)">t=-1.14</span></td><td>非單調</td><td class="num">40</td></tr><tr><td class="lbl">E/P（獲利殖利率）</td><td class="num">19.6%</td><td class="num">15.3%</td><td class="num">15.7%</td><td class="num">16.4%</td><td class="num">14.5%</td><td class="num" style="">-4.5%<br><span style="font-size:.72rem;color:var(--muted)">t=-1.54</span></td><td>非單調</td><td class="num">35</td></tr></tbody></table></div>
+<h3 style="font-size:.95rem;margin:1.3rem 0 .5rem">OOS（2019–2026）</h3>
+<div class="scroll"><table><thead><tr><th>因子</th><th class="num">Q1</th><th class="num">Q2</th><th class="num">Q3</th><th class="num">Q4</th><th class="num">Q5</th><th class="num">Q5−Q1（t 值）</th><th>單調性</th><th class="num">換手季數</th></tr></thead><tbody><tr><td class="lbl">EPS YoY 成長</td><td class="num">16.3%</td><td class="num">12.7%</td><td class="num">10.5%</td><td class="num">10.2%</td><td class="num">19.0%</td><td class="num" style="">+2.0%<br><span style="font-size:.72rem;color:var(--muted)">t=0.48</span></td><td>非單調</td><td class="num">29</td></tr><tr><td class="lbl">營收 YoY 成長</td><td class="num">14.4%</td><td class="num">13.2%</td><td class="num">11.0%</td><td class="num">10.3%</td><td class="num">18.9%</td><td class="num" style="">+4.2%<br><span style="font-size:.72rem;color:var(--muted)">t=0.80</span></td><td>非單調</td><td class="num">29</td></tr><tr><td class="lbl">12-1 月動能</td><td class="num">11.6%</td><td class="num">13.6%</td><td class="num">11.9%</td><td class="num">11.5%</td><td class="num">19.7%</td><td class="num" style="">+6.3%<br><span style="font-size:.72rem;color:var(--muted)">t=0.84</span></td><td>非單調</td><td class="num">29</td></tr><tr><td class="lbl">E/P（獲利殖利率）</td><td class="num">18.9%</td><td class="num">12.6%</td><td class="num">12.5%</td><td class="num">13.6%</td><td class="num">10.6%</td><td class="num" style="">-6.9%<br><span style="font-size:.72rem;color:var(--muted)">t=-1.51</span></td><td>非單調</td><td class="num">29</td></tr></tbody></table></div>
+<h3 style="font-size:.95rem;margin:1.3rem 0 .5rem">全期（2009–2026）</h3>
+<div class="scroll"><table><thead><tr><th>因子</th><th class="num">Q1</th><th class="num">Q2</th><th class="num">Q3</th><th class="num">Q4</th><th class="num">Q5</th><th class="num">Q5−Q1（t 值）</th><th>單調性</th><th class="num">換手季數</th></tr></thead><tbody><tr><td class="lbl">EPS YoY 成長</td><td class="num">15.4%</td><td class="num">13.6%</td><td class="num">12.0%</td><td class="num">11.0%</td><td class="num">15.0%</td><td class="num" style="">-0.4%<br><span style="font-size:.72rem;color:var(--muted)">t=-0.18</span></td><td>非單調</td><td class="num">60</td></tr><tr><td class="lbl">營收 YoY 成長</td><td class="num">15.0%</td><td class="num">14.9%</td><td class="num">11.6%</td><td class="num">11.6%</td><td class="num">15.1%</td><td class="num" style="">+0.3%<br><span style="font-size:.72rem;color:var(--muted)">t=0.10</span></td><td>非單調</td><td class="num">59</td></tr><tr><td class="lbl">12-1 月動能</td><td class="num">18.3%</td><td class="num">18.2%</td><td class="num">15.9%</td><td class="num">14.6%</td><td class="num">18.1%</td><td class="num" style="">-1.7%<br><span style="font-size:.72rem;color:var(--muted)">t=-0.34</span></td><td>非單調</td><td class="num">69</td></tr><tr><td class="lbl">E/P（獲利殖利率）</td><td class="num">19.3%</td><td class="num">14.1%</td><td class="num">14.2%</td><td class="num">15.1%</td><td class="num">12.8%</td><td class="num" style="font-weight:700;color:var(--red)">-5.6%<br><span style="font-size:.72rem;color:var(--muted)">t=-2.15</span></td><td>非單調</td><td class="num">64</td></tr></tbody></table></div>
+
+<p style="font-size:.87rem;color:#374151;margin:1rem 0">
+營收成長因子的結果形狀跟 EPS 成長幾乎一樣，不是巧合是印證——兩者互相的 Spearman 相關只有 0.1～0.2，
+代表這是兩個獨立因子各自都測不出東西，不是同一訊號重複算了兩次。
+</p>
+
+<div class="note"><b>唯一勉強顯著的是 E/P 因子在全期呈現負價差：-5.6%，
+t=-2.15</b>——高獲利殖利率（便宜股）跑輸低獲利殖利率（貴股），方向跟傳統價值因子相反。
+這對應的是後金融海嘯到現在這段大型成長股主導的市場（尤其科技巨頭 17 年估值持續擴張）：不是「基本面沒用」，
+是「用靜態獲利殖利率當篩選器，這段特定的市場史反而選錯邊」——換一段成長股領先地位反轉的窗口，這個符號不保證延續。</div>
+
+<div id="chart-b-wrap" class="chart-wrap" style="height:340px;margin-top:1.1rem">
+<canvas id="chart-b"></canvas>
+</div>
+<p style="font-size:.78rem;color:var(--muted);margin-top:.4rem">圖：四因子 Q5−Q1 年化價差，三個期間並排。柱子越高代表「用這個因子選股」的多空優勢越大——這裡幾乎全部貼著零軸。</p>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">三、如果你能預知獲利呢——先知測試（作弊上限，不可交易）</h2>
+<div class="warn-loud"><strong>下面這組數字用了排名當下還沒公開的未來財報，任何真實策略都不可能拿到這個資訊優勢。
+它不是策略，是一把量尺，只用來回答一個問題：「選不出贏家」是因為獲利沒用，還是因為未來猜不到。</strong></div>
+
+<p style="font-size:.9rem;color:#374151;margin:.9rem 0">
+做法：把第二節的 EPS／營收成長因子，換成「這檔股票接下來 4 季實際會申報的成長」——排名當下用未來已發生、
+已申報的真實數字，不是預測值。同樣五分位、等權、持一季，train/OOS/全期分列。
+</p>
+
+<div class="cmp" style="grid-template-columns:1fr 1fr">
+<div><table><thead><tr><th>EPS因子</th><th class="num">真實版（用過去猜未來）</th><th class="num">先知版（偷看未來，作弊）</th></tr></thead><tbody><tr><td class="lbl">Train</td><td class="num">-2.7%<br><span style="font-size:.72rem;color:var(--muted)">t=-1.11</span></td><td class="num" style="font-weight:700;color:#b45309">+16.5%<br><span style="font-size:.72rem;color:var(--muted)">t=7.75</span></td></tr><tr><td class="lbl">OOS</td><td class="num">+2.0%<br><span style="font-size:.72rem;color:var(--muted)">t=0.48</span></td><td class="num" style="font-weight:700;color:#b45309">+31.0%<br><span style="font-size:.72rem;color:var(--muted)">t=7.12</span></td></tr><tr><td class="lbl">全期</td><td class="num">-0.4%<br><span style="font-size:.72rem;color:var(--muted)">t=-0.18</span></td><td class="num" style="font-weight:700;color:#b45309">+22.9%<br><span style="font-size:.72rem;color:var(--muted)">t=9.56</span></td></tr></tbody></table></div>
+<div><table><thead><tr><th>營收因子</th><th class="num">真實版（用過去猜未來）</th><th class="num">先知版（偷看未來，作弊）</th></tr></thead><tbody><tr><td class="lbl">Train</td><td class="num">-3.4%<br><span style="font-size:.72rem;color:var(--muted)">t=-1.13</span></td><td class="num" style="font-weight:700;color:#b45309">+15.5%<br><span style="font-size:.72rem;color:var(--muted)">t=5.21</span></td></tr><tr><td class="lbl">OOS</td><td class="num">+4.2%<br><span style="font-size:.72rem;color:var(--muted)">t=0.80</span></td><td class="num" style="font-weight:700;color:#b45309">+28.6%<br><span style="font-size:.72rem;color:var(--muted)">t=4.16</span></td></tr><tr><td class="lbl">全期</td><td class="num">+0.3%<br><span style="font-size:.72rem;color:var(--muted)">t=0.10</span></td><td class="num" style="font-weight:700;color:#b45309">+21.4%<br><span style="font-size:.72rem;color:var(--muted)">t=6.02</span></td></tr></tbody></table></div>
+</div>
+
+<div class="takeaway"><b>先知版全部由「不顯著」翻成 t 值 4～10 的強烈正單調——EPS 先知版全期 Q5−Q1 達
++22.9%（t=9.56）。</b>
+真實版跟先知版差的不是訊號強度，是「過去成長」跟「未來成長」根本測不出關聯——市場早就把等到公開的獲利成長
+定價完畢，等你看得到這份財報，能靠它賺的錢已經賺完了。這證明獲利成長真的驅動報酬（呼應第一節），
+只是猜不到，不是沒有用。</div>
+
+<div id="chart-c-wrap" class="chart-wrap" style="height:320px;margin-top:1.1rem">
+<canvas id="chart-c"></canvas>
+</div>
+<p style="font-size:.78rem;color:var(--muted);margin-top:.4rem">圖：EPS／營收成長因子，真實版與先知版的 Q5−Q1 年化價差對照，三期間並排。</p>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">四、方法論限制（誠實揭露）</h2>
+<div class="takeaway"><b>七個限制，前兩個偏多、方向明確；其餘偏精確度，不影響頭條判斷的方向。</b></div>
+<div class="card"><ul style="padding-left:1.2rem;font-size:.87rem;line-height:1.85;color:#374151"><li><b>存活偏差有兩個獨立來源，方向都偏向用戶假設。</b>　Nasdaq-100 只能用現行成分股名單（Wikipedia 已無歷史成分表）；SEC EDGAR 的 CIK 對照表也只認現存掛牌公司——兩者都篩掉了後來下市、被併購的舊成分股，方向一致偏袒「留下來的都是贏家」。全池 835 檔裡有 195 檔（23.4%）因此無法解析。問題 B 測不出顯著性，是在這個偏多方向的樣本裡都測不出來，解讀上要更保守，不是更寬鬆。</li><li><b>問題 A 的滾動窗格互相重疊，不是獨立樣本。</b>　1 年／3 年／5 年分解用每季末起點滾動，同一檔股票相鄰窗格高度重疊，n 看起來上萬筆但實際自由度遠小於此。這不影響分解出的「佔比」本身——那是代數恆等式，不是統計估計——但不要把 n 直接當成獨立觀察數看待。</li><li><b>財報 Q4 沒有直接申報值，用全年減前三季反推。</b>　營收可加總，反推精確；EPS 嚴格說不可加總（因股數會變動），反推是近似值。反推失敗的年度直接捨棄，不硬湊。</li><li><b>EPS 非正時改用「股價 ÷ 營收總額」當估值代理，不是真正的 P/S。</b>　這個比值沒有除以股數，不能拿來跟別家公司比水準高低，只能看同一檔股票自己時間序列的變化率——數學上恆等式仍然成立，只是這個「估值貢獻」分量的可比性打了折扣。</li><li><b>股票分割的 EPS 已修正，但增資稀釋、庫藏股沒有額外處理。</b>　SEC XBRL 的 EPS 是用申報當時的股數算的，遇到後來的股票分割不會回頭改，而 yfinance 的股價一律用現在的股數還原——不修正會把每次分割都算成一次假的獲利崩跌。已修正這一項；增資稀釋、庫藏股註銷這些通常已經內含在公司申報的加權平均股數裡，不需要再處理。</li><li><b>四個因子彼此不是同一訊號的變形。</b>　交叉 Spearman 相關全部 |ρ|<0.2，代表 Q5−Q1 都測不出東西不是因為四個因子互相抵銷同一件事，是各自獨立地測不出東西。</li><li><b>train/OOS 切分點凍結在看到 OOS 結果之前，沒有回頭調整。</b>　沒有因為 OOS 不如預期而回頭改切分點、分位數目或因子定義——這是規格要求（不調參數），也是先知測試能拿來對照的前提：先知版的訊號強度不是調出來的，是同一套凍結流程換一個輸入跑出來的。</li></ul></div>
+</div>
+
+
+</div>
+
+<footer>
+  <div class="container">
+    &copy; 2026 InvestMQuest Research &middot; 美股漲跌歸因：獲利與估值（研究頁，非可交易策略）&middot;
+    規格 docs/Return_Driver_Attribution_Spec.md・頁面生成 2026-08-29 &middot; 僅供研究參考
+  </div>
+</footer>
+
+<script>
+new Chart(document.getElementById('chart-a'), {
+  type: 'bar',
+  data: {
+    labels: ["1 年", "3 年", "5 年", "全期"],
+    datasets: [
+      {label: '獲利貢獻', data: [30.1, 63.0, 67.1, 86.6], backgroundColor: '#1a56db', stack: 's'},
+      {label: '估值貢獻', data: [70.4, 38.9, 35.7, 15.0], backgroundColor: '#93c5fd', stack: 's'}
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: { x: { stacked: true }, y: { stacked: true, title: {display:true, text:'變異數分解佔比 (%)'} } },
+    plugins: { legend: { position: 'top' } }
+  }
+});
+</script>
+<script>
+new Chart(document.getElementById('chart-b'), {
+  type: 'bar',
+  data: { labels: ["Train", "OOS", "全期"], datasets: [{label: 'EPS 成長', data: [-2.7, 2.0, -0.4], backgroundColor: '#1a56db'}, {label: '營收成長', data: [-3.4, 4.2, 0.3], backgroundColor: '#059669'}, {label: '12-1 月動能', data: [-7.2, 6.3, -1.7], backgroundColor: '#d97706'}, {label: 'E/P', data: [-4.5, -6.9, -5.6], backgroundColor: '#dc2626'}] },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: { y: { title: {display:true, text:'Q5−Q1 年化價差 (%)'} } },
+    plugins: { legend: { position: 'top' } }
+  }
+});
+</script>
+<script>
+new Chart(document.getElementById('chart-c'), {
+  type: 'bar',
+  data: { labels: ["Train", "OOS", "全期"], datasets: [{label: 'EPS 真實版', data: [-2.7, 2.0, -0.4], backgroundColor: '#93c5fd'}, {label: 'EPS 先知版（作弊）', data: [16.5, 31.0, 22.9], backgroundColor: '#1a56db'}, {label: '營收真實版', data: [-3.4, 4.2, 0.3], backgroundColor: '#a7f3d0'}, {label: '營收先知版（作弊）', data: [15.5, 28.6, 21.4], backgroundColor: '#059669'}] },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: { y: { title: {display:true, text:'Q5−Q1 年化價差 (%)'} } },
+    plugins: { legend: { position: 'top' } }
+  }
+});
+</script>
+</body>
+</html>

@@ -29,7 +29,10 @@ import _nav_common as NC  # noqa: E402
 START = '<style id="bt-subnav-style">'
 GROUPS = ["COMPARISON", "INDIVIDUAL", "MULTI", "TAIWAN", "OPTIONS", "INTRADAY",
           "RESEARCH_ETF", "RESEARCH_FREQ", "RESEARCH_MA", "RESEARCH_CRASH",
-          "RESEARCH_MACRO"]
+          "RESEARCH_MACRO", "TW_CB", "RESEARCH_FACTOR"]
+# 2026-08-29 補：TW_CB 補進來——2026-08-15 新增 TW_CB_LINKS 時漏了同步加進這份
+# GROUPS 清單，導致 tw_cb/ 頁自己的 active key 一直無法被 valid_keys()/url_to_key()
+# 解析（--check 會報「無法反解 active key」）。同批順手補上新加的 RESEARCH_FACTOR。
 
 
 def valid_keys() -> set[str]:

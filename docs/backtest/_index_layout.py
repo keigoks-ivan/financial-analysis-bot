@@ -89,6 +89,16 @@ S&P 1500 + mcap ≥ US$10B supplement, foreign ADR excluded). Listed above
 Taiwan (largest market on top); hub links out to its own sub-pages so only
 the hub is registered here.
 
+2026-08-29 — 美股「獲利 vs 估值」報酬歸因研究新增
+====================================================
+Added docs/backtest/return_driver/ — S&P500+NDX100 point-in-time SEC EDGAR
+panel, 事後變異數分解（問題 A）+ 事前五分位選股（問題 B）+ 先知測試診斷三段。
+Stock-level cross-sectional research, not a tradable system, not TW/options —
+new "研究・因子" DIRECTORY["us"] group (same pattern as "研究・可轉債" under
+"tw"). _nav_common.py 新增 RESEARCH_FACTOR_LINKS 與「研究・因子」pill 列；
+_inject_subnav.py 的 GROUPS 加入 RESEARCH_FACTOR（同批順手補上 2026-08-15
+漏加的 TW_CB）。其餘頁面以 _inject_subnav.py 外科式同步 pill bar。
+
 Run: python3 _build_index.py   (this module is imported, not run directly)
 """
 from __future__ import annotations
@@ -172,6 +182,9 @@ DIRECTORY = {
         ]),
         ("研究・崩盤", [
             ("/backtest/smh_vcrash/", "SMH V崩", None, False),
+        ]),
+        ("研究・因子", [
+            ("/backtest/return_driver/", "美股漲跌歸因：獲利與估值", "研究", False),
         ]),
         ("前瞻追蹤", [
             ("/long-track-w52-adaptive/", "W52 × 自適應波動率 150%（實單主系統）", "實單", False),
