@@ -132,6 +132,43 @@ LIVE_CARD = {
     "url": "/long-track/#live",
 }
 
+# 2026-08-29 首頁改造：落地第一屏加「全區總覽」卡片列（規格點見用戶原話：
+# 「量化回測的首頁我不要美股，是要整個量化回測真的首頁」）。改前：page-hdr 之後直接進
+# %US_DIR% 等 tabpane，預設 tab='us'，等於落地第一眼就是美股波段表——其餘五個 tab 要點
+# 過去才看得到。改後：page-hdr 與 tabpane 之間插入六張總覽卡（跨 tab，與目前選到哪個
+# tab 無關，恆在），每張卡＝一個群組的頁數(從 DIRECTORY 精確算,非手打)＋一句既有結論
+# (逐字或近逐字取自本檔案同一 tab 的 cta-sub/section-sub,不新造宣稱)＋入口(點卡片=
+# 呼叫既有 showTab() 切 tab,不新開路由)。default tab 仍是 'us'(風險最小,不動既有深連
+# 結行為),但這張總覽卡格才是使用者落地看到的第一件事。
+GROUP_CARDS = [
+    dict(emoji="🇺🇸", tab="us", name="美股系統",
+         note="現役 W52×自適應波動率 150%（原 STX50/E3 降為對照）；6 個系統通過風險調整排名門檻，列為已採用／候補。"),
+    dict(emoji="🇹🇼", tab="tw", name="台股",
+         note="0050+2330 W52×自適應波動率（實單）·前代 E3 對照·0050 四系統·含崩盤驗證。"),
+    dict(emoji="🧩", tab="multi", name="多資產·經典複製",
+         note="唐奇安／Clenow／SG Trend／跨資產防守·資產池不同，僅供組合互補參照。"),
+    dict(emoji="🔧", tab="lev", name="槓桿疊加",
+         note="在現役趨勢引擎上疊加期貨槓桿／波動目標·換軸互補研究（未採用）。"),
+    dict(emoji="🌏", tab="macro", name="研究·總經",
+         note="跨國總經研究：人均所得成長能否解釋房價走勢——主線因子矩陣＋各國個案史。"),
+    dict(emoji="🔍", tab="scan", name="國家掃描",
+         note="對單一國家股市的第一輪系統性掃描：複利機器篩選×出口群深查×估值現況。"),
+]
+
+
+def group_overview():
+    cards = ""
+    for g in GROUP_CARDS:
+        n = sum(len(items) for _label, items in DIRECTORY[g["tab"]])
+        cards += (
+            f'<a class="gcard" href="#{g["tab"]}" onclick="return showTab(\'{g["tab"]}\')">'
+            f'<div class="gc-top"><span class="gc-emoji">{g["emoji"]}</span>'
+            f'<span class="gc-name">{g["name"]}</span><span class="gc-n">{n} 頁</span></div>'
+            f'<div class="gc-note">{g["note"]}</div></a>'
+        )
+    return f'<div class="group-grid">{cards}</div>'
+
+
 # ── per-tab directory ────────────────────────────────────────────────────
 # tab -> [ (row_label, [ (url, text, status_or_None, is_current), ... ]) ]
 # status ∈ 否決/失敗/負貢獻 (red) · 未過/觀察/研究/模擬中/專區 (amber) · 追蹤中/即將 (blue)
@@ -572,7 +609,7 @@ def render():
 
     html = TEMPLATE
     for k, v in {
-        "%NAV%": NAV_BLOCK, "%STATUS_OVERVIEW%": status_overview,
+        "%NAV%": NAV_BLOCK, "%STATUS_OVERVIEW%": status_overview, "%GROUP_OVERVIEW%": group_overview(),
         "%US_DIR%": _dir("us"), "%TW_DIR%": _dir("tw"),
         "%MULTI_DIR%": _dir("multi"), "%LEV_DIR%": _dir("lev"),
         "%MACRO_DIR%": _dir("macro", collapsed=False), "%SCAN_DIR%": _dir("scan", collapsed=False),
@@ -622,6 +659,16 @@ a{color:var(--ink);text-decoration:none}a:hover{text-decoration:underline}
 .page-hdr h1{font-family:var(--serif);font-size:1.6rem;font-weight:700;letter-spacing:-.01em;color:var(--ink)}
 .page-hdr .sub{color:var(--muted);font-size:.85rem;margin-top:.15rem}
 .crumb{font-size:.8rem;color:var(--muted);margin-bottom:.35rem}.crumb a{color:var(--muted)}
+/* 全區總覽卡（2026-08-29 首頁改造）——落地第一屏，六類群組卡，跟目前選到哪個 tab 無關 */
+.group-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin-top:1rem}
+.gcard{display:block;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:.8rem .95rem;color:inherit}
+.gcard:hover{border-color:var(--ink);text-decoration:none;box-shadow:var(--sh-1)}
+.gc-top{display:flex;align-items:center;gap:.4rem}
+.gc-emoji{font-size:1.1rem}
+.gc-name{font-weight:700;font-size:.9rem;color:var(--ink)}
+.gc-n{margin-left:auto;font-size:.7rem;font-weight:600;color:var(--muted);white-space:nowrap}
+.gc-note{font-size:.76rem;color:var(--muted);margin-top:.35rem;line-height:1.5}
+@media(max-width:820px){.group-grid{grid-template-columns:1fr}}
 .tabs{display:flex;gap:.4rem;margin-top:.9rem;flex-wrap:wrap}
 .tabs a{font-size:.86rem;font-weight:600;padding:.4rem .9rem;border:1px solid var(--border);border-radius:7px;color:var(--muted);background:var(--card);cursor:pointer}
 .tabs a:hover{text-decoration:none;border-color:var(--ink)}
@@ -712,7 +759,8 @@ footer{background:var(--card);border-top:1px solid var(--border);color:var(--mut
 <div class="page-hdr"><div class="container">
   <div class="crumb"><a href="/">首頁</a> / 量化回測</div>
   <h1>量化回測總覽</h1>
-  <div class="sub">20 年全週期(2006~,含 2008/2020/2022 三熊)· 真實 yfinance · 起始 $1M · 依市場/資產類別分五類，點 tab 切換</div>
+  <div class="sub">20 年全週期(2006~,含 2008/2020/2022 三熊)· 真實 yfinance · 起始 $1M · 依市場/資產類別分六類，點卡片或 tab 切換</div>
+  %GROUP_OVERVIEW%
   <div class="tabs">
     <a data-tabkey="us" href="#us" onclick="return showTab('us')">🇺🇸 美股</a>
     <a data-tabkey="tw" href="#tw" onclick="return showTab('tw')">🇹🇼 台股</a>
