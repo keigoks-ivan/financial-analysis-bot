@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>內部人買賣（Form 4）叢集買進 | InvestMQuest Research</title>
+<meta name="description" content="用 SEC 官方 Insider Transactions Data Sets 逐季彙整包，驗證「叢集買進」（同一檔股票短時間內 2 位以上內部人各自淨買進）能不能選出贏家：train/OOS/全期超額報酬、高管 vs 董事分拆、年代切片、事件時間 CAR、覆蓋度誠實揭露。">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+:root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
+      --text:#111827;--muted:#6b7280;--border:#e5e7eb;
+      --green:#059669;--green-bg:#ecfdf5;--green-border:#a7f3d0;--green-text:#065f46;
+      --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;--red-text:#991b1b;
+      --amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fde68a;--amber-text:#92400e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans TC',sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1080px;margin:0 auto;padding:0 1.5rem}
+.page-hdr{padding:1.75rem 0 1.25rem;background:linear-gradient(180deg,#eff6ff 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
+.page-hdr h1{font-size:1.6rem;font-weight:700;letter-spacing:-.03em}
+.page-hdr .sub{color:var(--muted);font-size:.9rem;margin-top:.2rem}
+.crumb{font-size:.82rem;color:var(--muted);margin-bottom:.4rem}
+.crumb a{color:var(--muted)}
+.section{padding:1.75rem 0 0}
+.section-title{font-size:1.1rem;font-weight:700;margin-bottom:1rem;
+               padding-bottom:.45rem;border-bottom:2px solid var(--brand)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.1rem 1.25rem;margin-bottom:1rem}
+table{width:100%;border-collapse:collapse;font-size:.85rem;background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+th,td{text-align:left;padding:.55rem .65rem;border-bottom:1px solid var(--border)}
+th{background:#f9fafb;font-weight:600;font-size:.72rem;text-transform:uppercase;
+   letter-spacing:.03em;color:var(--muted)}
+td{font-variant-numeric:tabular-nums;vertical-align:top}
+td.num,th.num{text-align:right}
+td.lbl{white-space:nowrap;font-weight:500}
+tbody tr:last-child td{border-bottom:0}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.hero{margin:1.25rem 0;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--card)}
+.hero-top{background:linear-gradient(135deg,#eff6ff 0%,#f5f8ff 100%);padding:1.4rem 1.6rem;border-bottom:1px solid var(--border)}
+.hero-top .verdict-tag{display:inline-block;background:#1a56db;color:#fff;font-size:.74rem;font-weight:700;
+                       letter-spacing:.05em;padding:.25rem .7rem;border-radius:99px;margin-bottom:.5rem}
+.hero-top h2{font-size:1.3rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.35rem}
+.hero-top p{font-size:.92rem;color:#374151;max-width:62rem}
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card)}
+.hero-stats > div{padding:1rem 1.2rem;text-align:center;border-right:1px solid var(--border)}
+.hero-stats > div:last-child{border-right:none}
+.hero-stats .hs-label{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.hero-stats .hs-value{font-size:1.4rem;font-weight:800;letter-spacing:-.02em}
+.takeaway{font-size:.87rem;margin:.9rem 0;padding:.7rem .95rem;border-radius:6px;background:var(--brand-light);
+    border-left:3px solid var(--brand);color:#1f2c44}
+.takeaway b{color:#12213a}
+.note{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;
+      padding:.85rem 1.1rem;font-size:.84rem;color:var(--amber-text);margin:1rem 0}
+.warn-loud{background:var(--red-bg);border:2px solid var(--red-border);border-radius:8px;
+      padding:1rem 1.2rem;font-size:.9rem;color:var(--red-text);margin:1rem 0}
+.warn-loud strong{color:var(--red)}
+.cmp{display:grid;gap:1rem;margin:.9rem 0}
+.chart-wrap{position:relative}
+footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
+       text-align:center;padding:1.25rem 0;font-size:.78rem;margin-top:2rem}
+@media(max-width:768px){
+  .hero-stats{grid-template-columns:repeat(2,1fr)}
+  .cmp{grid-template-columns:1fr !important}
+  table{font-size:.76rem}th,td{padding:.4rem .45rem}
+}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <a href="/cockpit/">選股</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">個股研究</a>
+          <a href="/id/">產業研究</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/" class="active">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/flow/">投資流程</a>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="page-hdr">
+  <div class="container">
+    <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / 內部人買賣叢集買進</div>
+    <h1>內部人買賣（Form 4）叢集買進</h1>
+    <div class="sub">SEC 官方 Insider Transactions Data Sets・835 檔池子（640 檔可解析 CIK）・2009–2026</div>
+    <style id="bt-subnav-style">.bt-subnav{margin-top:.75rem;border:1px solid var(--border,#e5e7eb);border-radius:8px;overflow:hidden;font-size:.78rem;line-height:1.3}.bt-subnav-row{display:flex;align-items:flex-start;gap:.55rem;padding:.32rem .55rem;border-top:1px solid var(--border,#e5e7eb)}.bt-subnav-row:first-child{border-top:0}.bt-subnav-lbl{flex:0 0 5.4em;font-size:.64rem;font-weight:700;color:var(--muted,#6b7280);text-transform:uppercase;letter-spacing:.04em;padding-top:.34rem}.bt-subnav-pills{display:flex;flex-wrap:wrap;gap:.3rem;min-width:0}.bt-subnav-pills a{display:inline-flex;align-items:center;gap:.28rem;padding:.26rem .6rem;background:#eef1f4;color:#374151;border-radius:999px;text-decoration:none;font-weight:500;white-space:nowrap;transition:background .12s}.bt-subnav-pills a:hover{background:#e1e6ea}.bt-subnav-pills a.bt-dead{color:#7a828d;background:#f2f3f5}.bt-subnav-pills a.bt-on{background:linear-gradient(135deg,#081832,#173564);color:#fff;font-weight:600}.bt-subnav-pills a.bt-on:hover{background:linear-gradient(135deg,#081832,#173564)}.bt-tag{font-size:.6rem;font-weight:600;padding:.02rem .3rem;border-radius:4px;line-height:1.4}.bt-tag-dead{background:rgba(220,38,38,.12);color:#b42318}.bt-tag-watch{background:rgba(180,118,20,.15);color:#986a12}.bt-on .bt-tag-dead{background:rgba(255,255,255,.22);color:#fff}.bt-on .bt-tag-watch{background:rgba(255,255,255,.22);color:#fff}@media(max-width:640px){.bt-subnav-row{flex-direction:column;gap:.28rem;padding:.4rem .55rem}.bt-subnav-lbl{flex-basis:auto;padding-top:0}}</style><nav class="bt-subnav" aria-label="回測子導航"><div class="bt-subnav-row"><div class="bt-subnav-lbl">對比總覽</div><div class="bt-subnav-pills"><a href="/backtest/">20 年</a><a href="/backtest/10y/">10 年</a><a href="/backtest/criteria/">評估標準</a><a href="/backtest/tw/">台股總覽</a><a href="/backtest/multi/">多資產總覽</a><a href="/backtest/leverage/">槓桿疊加總覽</a><a href="/backtest/ma_sensitivity/">MA 敏感度</a><a href="/backtest/free_lunch/">分散與免費午餐</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">個別系統</div><div class="bt-subnav-pills"><a href="/backtest/long_track/">SPY/QQQ 長軌</a><a href="/backtest/long_track_qqq/">QQQ 長軌純攻</a><a href="/backtest/long_track_ensemble/">SPY/QQQ 集成</a><a href="/backtest/long_track_smh/">SMH/QQQ 進攻</a><a href="/backtest/six_state/">QQQ＋SMH 六狀態</a><a href="/backtest/six_state_v1r1/">QQQ 六狀態實盤</a><a href="/backtest/gem/">SPY/ACWX 雙動能</a><a href="/backtest/slope_filter/">SPY/AGG 斜率</a><a href="/backtest/rsi2_mr/">SPY/QQQ 均值回歸</a><a href="/backtest/supertrend/">週線 Supertrend</a><a href="/backtest/minervini/">Minervini RS+VCP</a><a href="/backtest/mom_volscaling/">動能·波動縮放</a><a href="/backtest/dual_track_study/">雙軌分散研究</a><a href="/backtest/leverage_voltarget/">期貨槓桿疊加</a><a href="/backtest/vol_targeting/">波動目標倉位<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/dual_track/" class="bt-dead">SPY/QQQ 雙軌多空<span class="bt-tag bt-tag-dead">否決</span></a><a href="/backtest/exit_switch/" class="bt-dead">出場法切換<span class="bt-tag bt-tag-dead">否決</span></a><a href="/backtest/short_system/" class="bt-dead">指數做空<span class="bt-tag bt-tag-dead">失敗</span></a><a href="/backtest/cndr/" class="bt-dead">Iron Condor<span class="bt-tag bt-tag-dead">失敗</span></a><a href="/backtest/covered_call/" class="bt-dead">Covered Call<span class="bt-tag bt-tag-dead">負貢獻</span></a><a href="/backtest/put_timing/" class="bt-dead">SPY/QQQ 買 put 避險<span class="bt-tag bt-tag-dead">負貢獻</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">多資產</div><div class="bt-subnav-pills"><a href="/backtest/turtle/">唐奇安突破</a><a href="/backtest/clenow/">跨資產趨勢</a><a href="/backtest/multiasset_trend/">SG Trend 複製</a><a href="/backtest/turtle_adopt/">組合採用 Sleeve</a><a href="/backtest/slope_filter_global/">全球斜率穩健性</a><a href="/backtest/crossasset_defense/">跨資產防守</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">台股波段</div><div class="bt-subnav-pills"><a href="/backtest/tw_0050_compare/">0050 總覽·台美差異</a><a href="/backtest/tw_0050/">0050 進攻趨勢（移植）</a><a href="/backtest/tw_0050_lt/">0050 長軌趨勢</a><a href="/backtest/long_track_tw/">2330/0050 E3 長軌</a><a href="/backtest/tw_0050_six/">0050 六狀態機</a><a href="/backtest/tw_0050_dual/" class="bt-dead">0050 雙軌多空<span class="bt-tag bt-tag-dead">否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">台股選擇權</div><div class="bt-subnav-pills"><a href="/backtest/tw_options/">台股選擇權專區<span class="bt-tag bt-tag-watch">專區</span></a><a href="/backtest/txo_vol_seller/">台指選擇權賣方<span class="bt-tag bt-tag-watch">模擬中</span></a><a href="/backtest/txo_put_seller/">台指賣方下檔<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_iron_condor/">台指雙賣<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_covered_call_0050/">台指 Covered Call<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_tail_hedge/">台指尾端避險<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">日內交易</div><div class="bt-subnav-pills"><a href="/backtest/txf_intraday/">台指當沖<span class="bt-tag bt-tag-watch">未過</span></a><a href="/backtest/txf_chips/">籌碼偏向<span class="bt-tag bt-tag-watch">觀察</span></a><a href="/backtest/ssf_xsec/">個股期橫斷面<span class="bt-tag bt-tag-watch">未過</span></a><a href="/backtest/txf_basis/" class="bt-dead">基差偏向<span class="bt-tag bt-tag-dead">否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・主動式ETF</div><div class="bt-subnav-pills"><a href="/backtest/active_etf/">主動式ETF總結<span class="bt-tag bt-tag-watch">專區</span></a><a href="/backtest/tw_active_etf/">台股主動式ETF<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/us_active_etf/">美股主動式ETF<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/tw_mutual_fund/">台股共同基金<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・頻率</div><div class="bt-subnav-pills"><a href="/backtest/daily_vs_weekly/">日/週線</a><a href="/backtest/daily_vs_weekly_deep/">日/週·深掘</a><a href="/backtest/daily_vs_weekly_global/">日/週·全球</a><a href="/backtest/daily_vs_weekly_tw/">日/週·台股</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・均線</div><div class="bt-subnav-pills"><a href="/backtest/ma_cross/">MA 交叉</a><a href="/backtest/ma_deviation/">MA 乖離</a><a href="/backtest/ma_dynband/">MA 動態帶</a><a href="/backtest/ma_squeeze/">MA 擠壓</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・崩盤</div><div class="bt-subnav-pills"><a href="/backtest/smh_vcrash/">SMH V崩</a><a href="/backtest/tw_vcrash/">台股 V崩防禦</a><a href="/backtest/tw_crash/">台股含崩盤驗證</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・總經</div><div class="bt-subnav-pills"><a href="/backtest/housing_gdp/">人均GDP與房價<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・可轉債</div><div class="bt-subnav-pills"><a href="/backtest/tw_cb/">台股可轉債專區<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・因子</div><div class="bt-subnav-pills"><a href="/backtest/return_driver/">美股漲跌歸因：獲利與估值<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/pead/">美股財報驚喜後漂移<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/accruals/">美股獲利品質（應計項目）<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/share_issuance/">美股股數增減（發行與回購）<span class="bt-tag bt-tag-watch">研究</span></a></div></div></nav>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ===== HERO ===== -->
+<div class="hero">
+  <div class="hero-top">
+    <span class="verdict-tag">測不出穩定超額報酬</span>
+    <h2>叢集買進組合全期超額 +1.1%，t=0.72，train t=1.57／OOS t=-0.66——沒有一段站得住腳的顯著性。</h2>
+  </div>
+  <div class="hero-stats">
+    <div><div class="hs-label">全期年化超額</div><div class="hs-value">+1.1%</div></div>
+    <div><div class="hs-label">全期 t 值</div><div class="hs-value">t=0.72</div></div>
+    <div><div class="hs-label">每季平均觸發檔數</div><div class="hs-value">17.9</div></div>
+    <div><div class="hs-label">資料來源</div><div class="hs-value" style="font-size:.85rem">SEC 官方彙整包</div></div>
+  </div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">一、為什麼看內部人買賣——機制與事前假設</h2>
+<div class="takeaway"><b>內部人賣股理由一堆（換屋、繳稅、分散風險），買股理由通常只有一個：覺得公司被低估。</b>
+這是這個策略的全部邏輯基礎——賣出訊號很吵，買進訊號比較乾淨。</div>
+
+<p style="font-size:.9rem;color:#374151;margin:.9rem 0">
+公司高階主管與董事，比外部投資人更早看到訂單、成本、客戶流失這些還沒寫進財報的訊號——這是內部人交易研究的核心假設
+（資訊不對稱）。美國證券法要求他們在公開市場買賣自家股票後 2 個工作日內申報 <b>Form 4</b>，申報後任何人都看得到，
+但「看得到」不代表「有用」——賣出可能只是要繳稅、買房子、分散風險，理由太多，訊號被稀釋；買進通常只有一種解釋：
+自掏腰包，覺得便宜。文獻上「叢集買進」（<b>同一檔股票、短時間內有兩位以上不同的內部人各自淨買進，不是一個人單獨的
+動作</b>）訊號被認為又更乾淨一層——一個人可能看走眼，兩個人同時看走眼機率低一些。
+</p>
+
+<div class="note"><b>本頁只做多頭一邊。</b>賣出端只登記描述統計、不建空頭策略——這是事前寫進規格的決定，
+不是算出來不好看才回頭改規則。</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">二、主策略——叢集買進組合 vs 池子等權</h2>
+<div class="takeaway"><b>叢集買進組合全期超額 +1.1%，t=0.72，train t=1.57／OOS t=-0.66——沒有一段站得住腳的顯著性。</b></div>
+
+<p style="font-size:.9rem;color:#374151;margin:.9rem 0">
+做法：每季末，把過去 90 天內至少 2 位不同內部人（依 Form 4 <b>申報日</b>——不是交易日，
+這是法定 2 個工作日內必須申報的日期，用申報日才是真正 <b>point-in-time</b>［用「當時真的看得到」的資料判斷，
+不能偷用未來才公布的數字］）淨買進的股票，等權組成多頭組合，持有 6 個月（<b>train/OOS</b>——先在一段歷史上
+定規則、再拿完全沒看過的另一段歷史驗證，避免「找到剛好在這段歷史上有效的規則」這種假訊號——切分點與
+return_driver 等系列頁一致：2009–2018 為 train，2019–2026 為 OOS，凍結後沒有回頭調整）。
+基準是同一批池子（835 檔的 640 檔可解析 CIK子集）<b>等權</b>（每檔分配一樣的資金，不管公司大小）持有。
+下面所有報酬都以<b>年化</b>（把不同長短的期間報酬換算成「一年相當於多少」，才能跨不同長度的區間比較）表示。
+<b>t 值</b>（衡量「這個超額報酬是真的還是運氣」的統計量）|t|≥1.96 才算 <b>顯著</b>（數字大到不太可能只是運氣）。
+本頁所有報酬都<b>未扣除交易成本</b>——若按本站其他系統慣例的單邊 5bp 手續費＋2bp 滑價（來回合計 <b>14 bps</b>，
+1 bp＝0.01 個百分點）估算，每次季度再平衡的雙邊換手都會侵蝕報酬，覆蓋度越低換手越集中在少數個股，成本影響也越不能忽略。
+</p>
+
+<div class="scroll"><table><thead><tr><th>期間</th><th class="num">組合年化</th><th class="num">池子等權年化</th><th class="num">年化超額</th><th class="num">t 值</th><th class="num">換手季數</th></tr></thead><tbody><tr><td class="lbl">Train（2009–2018）</td><td class="num">+21.2%</td><td class="num">+17.8%</td><td class="num strong">+3.1%</td><td class="num"><span style="color:var(--muted)">t=1.57</span></td><td class="num">39</td></tr><tr><td class="lbl">OOS（2019–2026）</td><td class="num">+10.7%</td><td class="num">+13.1%</td><td class="num strong">-1.6%</td><td class="num"><span style="color:var(--muted)">t=-0.66</span></td><td class="num">28</td></tr><tr><td class="lbl">全期（2009–2026）</td><td class="num">+16.7%</td><td class="num">+15.8%</td><td class="num strong">+1.1%</td><td class="num"><span style="color:var(--muted)">t=0.72</span></td><td class="num">67</td></tr></tbody></table></div>
+
+<div id="chart-port-wrap" class="chart-wrap" style="height:300px;margin-top:1.1rem">
+<canvas id="chart-port"></canvas>
+</div>
+<p style="font-size:.78rem;color:var(--muted);margin-top:.4rem">圖：叢集買進組合 vs 池子等權，train/OOS/全期年化報酬對照。</p>
+
+<div class="note"><b>覆蓋度：每季平均 17.9 檔觸發叢集買進
+（中位數 16 檔，範圍 0–55 檔，
+1/70 個季度掛零）。</b>
+足夠支撐統計檢定，但仍是小眾訊號——池子裡多數股票任一季都測不到叢集買進，不是廣泛適用的日常訊號。
+</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">三、高管 vs 董事——誰的買進訊號比較準</h2>
+<div class="takeaway"><b>高管與董事兩組都測不出顯著超額——拆分後樣本更薄，統計力進一步下降。</b></div>
+
+<p style="font-size:.9rem;color:#374151;margin:.9rem 0">
+把叢集買進的「至少 2 位淨買進內部人」拆成兩個互斥子集：全部（或多數）是公司高管（CEO/CFO 等實際經營者）的組合，
+與全部（或多數）是董事（董事會成員，不兼任高管）的組合，各自跑一次同樣的組合 vs 池子等權流程。拆分後樣本更薄，
+解讀時要打更多折扣。
+</p>
+
+<div class="cmp" style="grid-template-columns:1fr 1fr">
+<div><h3 style="font-size:.95rem;margin:0 0 .5rem">高管叢集買進（每季平均 6.0 檔）</h3><table><thead><tr><th>期間</th><th class="num">年化超額</th><th class="num">t 值</th></tr></thead><tbody><tr><td class="lbl">Train</td><td class="num">+1.9%</td><td class="num"><span style="color:var(--muted)">t=0.50</span></td></tr><tr><td class="lbl">OOS</td><td class="num">-4.8%</td><td class="num"><span style="color:var(--muted)">t=-1.19</span></td></tr><tr><td class="lbl">全期</td><td class="num">-0.9%</td><td class="num"><span style="color:var(--muted)">t=-0.32</span></td></tr></tbody></table></div>
+<div><h3 style="font-size:.95rem;margin:0 0 .5rem">董事叢集買進（每季平均 10.4 檔）</h3><table><thead><tr><th>期間</th><th class="num">年化超額</th><th class="num">t 值</th></tr></thead><tbody><tr><td class="lbl">Train</td><td class="num">+3.1%</td><td class="num"><span style="color:var(--muted)">t=1.45</span></td></tr><tr><td class="lbl">OOS</td><td class="num">-2.3%</td><td class="num"><span style="color:var(--muted)">t=-0.67</span></td></tr><tr><td class="lbl">全期</td><td class="num">+0.8%</td><td class="num"><span style="color:var(--muted)">t=0.42</span></td></tr></tbody></table></div>
+</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">四、年代切片——訊號是通則還是特定時期的巧合</h2>
+<div class="takeaway"><b>五個年代切片全部測不出顯著超額——沒有哪一段總經環境特別偏袒這個訊號。</b></div>
+<div class="scroll"><table><thead><tr><th>叢集買進組合</th><th class="num">09–12 QE復甦</th><th class="num">13–19 低利成長</th><th class="num">20–21 COVID泡沫</th><th class="num">2022 升息熊</th><th class="num">23–26 AI</th></tr></thead><tbody><tr><td class="lbl">年化超額</td><td class="num">+3.7%<br><span style="color:var(--muted)">t=1.10</span></td><td class="num">+2.2%<br><span style="color:var(--muted)">t=0.96</span></td><td class="num">+4.4%<br><span style="color:var(--muted)">t=1.44</span></td><td class="num">-2.1%<br><span style="color:var(--muted)">t=-0.89</span></td><td class="num">-5.5%<br><span style="color:var(--muted)">t=-1.17</span></td></tr></tbody></table></div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">五、輔線——淨買賣金額 ÷ 市值五分位</h2>
+<div class="takeaway"><b>Q5（淨買進金額佔市值比例最高）年化 14.1%，
+Q1（比例最低，通常是淨賣出）年化 18.5%，Q5−Q1 價差 <span style="color:var(--muted)">t=-1.87</span>。</b>
+零交易股票（同季完全沒有內部人買賣申報，110 檔/季）全期年化 17.7%，作為對照組。</div>
+
+<p style="font-size:.9rem;color:#374151;margin:.9rem 0">
+只有「這一季有內部人買賣申報」的股票才進五分位排名（沒有交易的股票另列一組，不強塞進 Q1）——
+分母是股數（來自 SEC 申報的 dei:EntityCommonStockSharesOutstanding，逐檔逐時點對齊）乘以股價的市值估計值。
+這是規格要求「並列登記」的輔助觀察，不是本頁的主結論。
+</p>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">六、事件時間 CAR——訊號日之後到底有沒有持續多賺</h2>
+<div class="takeaway"><b>訊號後確實持續累積超額報酬（+120 交易日 CAR +2.0%，t=2.98）。</b></div>
+
+<p style="font-size:.9rem;color:#374151;margin:.9rem 0">
+<b>CAR</b>（事件時間累積超額報酬，Cumulative Abnormal Return）：從叢集買進的觸發日（第 2 位內部人淨買進申報生效那天）
+開始算，每個交易日「這檔股票報酬減掉池子平均報酬」逐日累加，看訊號後 20／60／120 個交易日，累積下來到底比大盤
+多賺還是少賺。
+</p>
+
+<div class="scroll"><table><thead><tr><th>事件後窗口</th><th class="num">平均 CAR</th><th class="num">t 值</th><th class="num">事件數</th></tr></thead><tbody><tr><td class="lbl">+20 交易日</td><td class="num">+0.7%</td><td class="num"><span style="color:var(--red);font-weight:700">t=2.73</span></td><td class="num">1250</td></tr><tr><td class="lbl">+60 交易日</td><td class="num">+1.9%</td><td class="num"><span style="color:var(--red);font-weight:700">t=4.22</span></td><td class="num">1249</td></tr><tr><td class="lbl">+120 交易日</td><td class="num">+2.0%</td><td class="num"><span style="color:var(--red);font-weight:700">t=2.98</span></td><td class="num">1244</td></tr></tbody></table></div>
+
+<div class="note"><b>這裡有個看似矛盾、其實不矛盾的落差：個股-事件層次的 CAR 顯著，但第二節的組合年化超額（t=0.72）測不出來。</b>
+不是算錯，是兩種檢定的「power」差很多——CAR 用 1250 個觸發事件當樣本；組合報酬只有 67 個季度樣本，
+還因為 6 個月重疊持有互相高度相關，有效樣本數更少。樣本數差了快 20 倍，組合層級的統計把握度本來就低很多。
+另外組合是每季等權同時持有所有觸發股票、持有滿 6 個月，會把個別事件的短期爆發稀釋進一整批部位裡——
+<b>個股訊號是真的，但目前這種「每季等權建組合」的包裝方式沒把訊號的優勢完整轉換成可交易的組合報酬。</b></div>
+
+</div>
+
+
+<div class="section">
+<h2 class="section-title">七、個股案例——一次抄底成功，一次內部人也看走眼</h2>
+<div class="takeaway"><b>兩張卡都是真實觸發事件，不是精選的勝率——由全樣本裡 180 天後報酬最高／最低的觸發事件各挑一筆。</b></div>
+
+<div class="cmp" style="grid-template-columns:1fr 1fr">
+
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.5rem">
+    <div style="font-weight:800;font-size:1.05rem">GNW</div>
+    <div style="font-size:.78rem;color:var(--muted)">觸發日 2009-02-24</div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem;text-align:center;margin:.7rem 0">
+    <div><div style="font-size:.68rem;color:var(--muted)">觸發日股價</div><div style="font-weight:700;font-size:1.1rem">$1.51</div></div>
+    <div><div style="font-size:.68rem;color:var(--muted)">180 天後報酬</div><div style="font-weight:800;font-size:1.1rem;color:var(--brand)">+458.9%</div></div>
+  </div>
+  <div style="font-size:.85rem;color:#1f2c44">GNW 觸發叢集買進當下股價 $1.51，180 天後報酬 +458.9%——教科書式的內部人抄底：股價低點附近，至少兩位內部人自掏腰包買進，之後確實反彈。</div>
+</div>
+
+
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.5rem">
+    <div style="font-weight:800;font-size:1.05rem">EP</div>
+    <div style="font-size:.78rem;color:var(--muted)">觸發日 2010-07-09</div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem;text-align:center;margin:.7rem 0">
+    <div><div style="font-size:.68rem;color:var(--muted)">觸發日股價</div><div style="font-weight:700;font-size:1.1rem">$8.64</div></div>
+    <div><div style="font-size:.68rem;color:var(--muted)">180 天後報酬</div><div style="font-weight:800;font-size:1.1rem;color:var(--brand)">-83.3%</div></div>
+  </div>
+  <div style="font-size:.85rem;color:#991b1b">EP 同樣觸發叢集買進，180 天後報酬 -83.3%——內部人也會看走眼：買進當下覺得便宜，之後股價繼續探底，資訊優勢不代表判斷一定對。</div>
+</div>
+
+</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">八、方法論限制（誠實揭露）</h2>
+<div class="card"><ul style="padding-left:1.2rem;font-size:.87rem;line-height:1.85;color:#374151"><li><b>池子沿用 return_driver 的存活偏差，方向偏多。</b>　835 檔池子（S&amp;P500 點時重建 + Nasdaq-100 現行成分股）只有 640 檔解析得到 SEC CIK，195 檔（23.4%）因下市/併購/代碼變更等原因解析不到——篩掉的都是後來消失的公司，方向一致偏向倖存者。</li><li><b>市值分母只涵蓋有 EDGAR 股數揭露的股票，輔線五分位不是全池子排名。</b>　市值 = 逐時點股數（dei:EntityCommonStockSharesOutstanding）× 股價，缺股數資料的股票被排除在五分位之外，不是給預設值硬湊。</li><li><b>CAR 的市場基準是簡化的等權平均，不是逐季正確的池子成分。</b>　事件研究的「大盤」用全部 640 檔可解析 CIK 股票的等權日報酬近似，沒有逐季調整成分股名單——這是標準事件研究的簡化，不影響「訊號後有沒有持續超額」這個問題的方向，但不是嚴格的可交易基準。</li><li><b>Form 4 申報日雖是法定 2 個工作日內，仍可能有申報延遲的極端值。</b>　SEC 對申報延遲有罰則，但歷史上不是每一筆都準時；本頁一律以申報日（不是交易日）當訊號可見日，這是保守方向（比用交易日更晚才「看得到」），不會製造未來看得到的偏誤。</li><li><b>官方彙整包只到最近一個完整季度，運行當下的最新一季可能不完整。</b>　SEC 每季發佈彙整包有落後，本頁不外推缺失的季度。</li></ul></div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">延伸閱讀</h2>
+<div class="card" style="font-size:.87rem;line-height:1.9">
+<a href="/backtest/return_driver/">美股漲跌歸因：獲利與估值</a> —— 同一批 835 檔池子的姊妹研究：長期報酬靠獲利成長，
+事前選股卻選不出來；本頁換一種「內部人自己怎麼判斷」的角度，看能不能繞過這個限制。
+</div>
+</div>
+
+
+</div>
+
+<footer>
+  <div class="container">
+    &copy; 2026 InvestMQuest Research &middot; 內部人買賣（Form 4）叢集買進（研究頁，非可交易策略）&middot;
+    規格 docs/Insider_Trading_Backtest_Spec.md・頁面生成 2026-08-29 &middot; 僅供研究參考
+  </div>
+</footer>
+
+<script>
+new Chart(document.getElementById('chart-port'), {
+  type: 'bar',
+  data: {
+    labels: ["Train", "OOS", "全期"],
+    datasets: [
+      {label: '叢集買進組合', data: [21.2, 10.7, 16.7], backgroundColor: '#1a56db'},
+      {label: '池子等權基準', data: [17.8, 13.1, 15.8], backgroundColor: '#93c5fd'}
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: { y: { title: {display:true, text:'年化報酬 (%)'} } },
+    plugins: { legend: { position: 'top' } }
+  }
+});
+</script>
+</body>
+</html>
