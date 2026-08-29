@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>美股資產成長異象 | InvestMQuest Research</title>
+<meta name="description" content="用 SEC EDGAR 年度財報 + 835 檔美股 17 年資料驗資產成長異象（Cooper, Gulen & Schill 2008）生死：全樣本 Q5−Q1 幾乎掛零且方向在不同年代反覆翻轉，資金來源拆解與隔年獲利追蹤都找不到乾淨的過度投資機制，個股案例顯示同樣是資產暴增，負債堆出來的（MSTR）與股權撐起來的（META）命運天差地遠。">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+:root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
+      --text:#111827;--muted:#6b7280;--border:#e5e7eb;
+      --green:#059669;--green-bg:#ecfdf5;--green-border:#a7f3d0;--green-text:#065f46;
+      --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;--red-text:#991b1b;
+      --amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fde68a;--amber-text:#92400e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans TC',sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1080px;margin:0 auto;padding:0 1.5rem}
+.page-hdr{padding:1.75rem 0 1.25rem;background:linear-gradient(180deg,#eff6ff 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
+.page-hdr h1{font-size:1.6rem;font-weight:700;letter-spacing:-.03em}
+.page-hdr .sub{color:var(--muted);font-size:.9rem;margin-top:.2rem}
+.crumb{font-size:.82rem;color:var(--muted);margin-bottom:.4rem}
+.crumb a{color:var(--muted)}
+.section{padding:1.75rem 0 0}
+.section-title{font-size:1.1rem;font-weight:700;margin-bottom:1rem;
+               padding-bottom:.45rem;border-bottom:2px solid var(--brand)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.1rem 1.25rem;margin-bottom:1rem}
+table{width:100%;border-collapse:collapse;font-size:.85rem;background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+th,td{text-align:left;padding:.55rem .65rem;border-bottom:1px solid var(--border)}
+th{background:#f9fafb;font-weight:600;font-size:.72rem;text-transform:uppercase;
+   letter-spacing:.03em;color:var(--muted)}
+td{font-variant-numeric:tabular-nums;vertical-align:top}
+td.num,th.num{text-align:right}
+td.lbl{white-space:nowrap;font-weight:500}
+tbody tr:last-child td{border-bottom:0}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.hero{margin:1.25rem 0;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--card)}
+.hero-top{background:linear-gradient(135deg,#eff6ff 0%,#f5f8ff 100%);padding:1.4rem 1.6rem;border-bottom:1px solid var(--border)}
+.hero-top .verdict-tag{display:inline-block;background:#1a56db;color:#fff;font-size:.74rem;font-weight:700;
+                       letter-spacing:.05em;padding:.25rem .7rem;border-radius:99px;margin-bottom:.5rem}
+.hero-top h2{font-size:1.3rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.35rem}
+.hero-top p{font-size:.92rem;color:#374151;max-width:62rem}
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card)}
+.hero-stats > div{padding:1rem 1.2rem;text-align:center;border-right:1px solid var(--border)}
+.hero-stats > div:last-child{border-right:none}
+.hero-stats .hs-label{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.hero-stats .hs-value{font-size:1.4rem;font-weight:800;letter-spacing:-.02em}
+.takeaway{font-size:.87rem;margin:.9rem 0;padding:.7rem .95rem;border-radius:6px;background:var(--brand-light);
+    border-left:3px solid var(--brand);color:#1f2c44}
+.takeaway b{color:#12213a}
+.note{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;
+      padding:.85rem 1.1rem;font-size:.84rem;color:var(--amber-text);margin:1rem 0}
+.warn-loud{background:var(--red-bg);border:2px solid var(--red-border);border-radius:8px;
+      padding:1rem 1.2rem;font-size:.9rem;color:var(--red-text);margin:1rem 0}
+.warn-loud strong{color:var(--red)}
+.cmp{display:grid;gap:1rem;margin:.9rem 0}
+.chart-wrap{position:relative}
+footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
+       text-align:center;padding:1.25rem 0;font-size:.78rem;margin-top:2rem}
+@media(max-width:768px){
+  .hero-stats{grid-template-columns:repeat(2,1fr)}
+  .cmp{grid-template-columns:1fr !important}
+  table{font-size:.76rem}th,td{padding:.4rem .45rem}
+}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <a href="/cockpit/">選股</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">個股研究</a>
+          <a href="/id/">產業研究</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/" class="active">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/flow/">投資流程</a>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="page-hdr">
+  <div class="container">
+    <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / 美股資產成長異象</div>
+    <h1>美股資產成長異象</h1>
+    <div class="sub">S&amp;P500 + Nasdaq-100 點時財報全樣本（835 檔，2009–2026）・資產成長五分位（Cooper, Gulen & Schill 2008）＋ 年代切片 ＋ 資金來源拆解 ＋ 隔年獲利追蹤 ＋ 個股案例</div>
+    <style id="bt-subnav-style">.bt-subnav{margin-top:.75rem;border:1px solid var(--border,#e5e7eb);border-radius:8px;overflow:hidden;font-size:.78rem;line-height:1.3}.bt-subnav-row{display:flex;align-items:flex-start;gap:.55rem;padding:.32rem .55rem;border-top:1px solid var(--border,#e5e7eb)}.bt-subnav-row:first-child{border-top:0}.bt-subnav-lbl{flex:0 0 5.4em;font-size:.64rem;font-weight:700;color:var(--muted,#6b7280);text-transform:uppercase;letter-spacing:.04em;padding-top:.34rem}.bt-subnav-pills{display:flex;flex-wrap:wrap;gap:.3rem;min-width:0}.bt-subnav-pills a{display:inline-flex;align-items:center;gap:.28rem;padding:.26rem .6rem;background:#eef1f4;color:#374151;border-radius:999px;text-decoration:none;font-weight:500;white-space:nowrap;transition:background .12s}.bt-subnav-pills a:hover{background:#e1e6ea}.bt-subnav-pills a.bt-dead{color:#7a828d;background:#f2f3f5}.bt-subnav-pills a.bt-on{background:linear-gradient(135deg,#081832,#173564);color:#fff;font-weight:600}.bt-subnav-pills a.bt-on:hover{background:linear-gradient(135deg,#081832,#173564)}.bt-tag{font-size:.6rem;font-weight:600;padding:.02rem .3rem;border-radius:4px;line-height:1.4}.bt-tag-dead{background:rgba(220,38,38,.12);color:#b42318}.bt-tag-watch{background:rgba(180,118,20,.15);color:#986a12}.bt-on .bt-tag-dead{background:rgba(255,255,255,.22);color:#fff}.bt-on .bt-tag-watch{background:rgba(255,255,255,.22);color:#fff}@media(max-width:640px){.bt-subnav-row{flex-direction:column;gap:.28rem;padding:.4rem .55rem}.bt-subnav-lbl{flex-basis:auto;padding-top:0}}</style><nav class="bt-subnav" aria-label="回測子導航"><div class="bt-subnav-row"><div class="bt-subnav-lbl">對比總覽</div><div class="bt-subnav-pills"><a href="/backtest/">20 年</a><a href="/backtest/10y/">10 年</a><a href="/backtest/criteria/">評估標準</a><a href="/backtest/tw/">台股總覽</a><a href="/backtest/multi/">多資產總覽</a><a href="/backtest/leverage/">槓桿疊加總覽</a><a href="/backtest/ma_sensitivity/">MA 敏感度</a><a href="/backtest/free_lunch/">分散與免費午餐</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">個別系統</div><div class="bt-subnav-pills"><a href="/backtest/long_track/">SPY/QQQ 長軌</a><a href="/backtest/long_track_qqq/">QQQ 長軌純攻</a><a href="/backtest/long_track_ensemble/">SPY/QQQ 集成</a><a href="/backtest/long_track_smh/">SMH/QQQ 進攻</a><a href="/backtest/six_state/">QQQ＋SMH 六狀態</a><a href="/backtest/six_state_v1r1/">QQQ 六狀態實盤</a><a href="/backtest/gem/">SPY/ACWX 雙動能</a><a href="/backtest/slope_filter/">SPY/AGG 斜率</a><a href="/backtest/rsi2_mr/">SPY/QQQ 均值回歸</a><a href="/backtest/supertrend/">週線 Supertrend</a><a href="/backtest/minervini/">Minervini RS+VCP</a><a href="/backtest/mom_volscaling/">動能·波動縮放</a><a href="/backtest/dual_track_study/">雙軌分散研究</a><a href="/backtest/leverage_voltarget/">期貨槓桿疊加</a><a href="/backtest/vol_targeting/">波動目標倉位<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/dual_track/" class="bt-dead">SPY/QQQ 雙軌多空<span class="bt-tag bt-tag-dead">否決</span></a><a href="/backtest/exit_switch/" class="bt-dead">出場法切換<span class="bt-tag bt-tag-dead">否決</span></a><a href="/backtest/short_system/" class="bt-dead">指數做空<span class="bt-tag bt-tag-dead">失敗</span></a><a href="/backtest/cndr/" class="bt-dead">Iron Condor<span class="bt-tag bt-tag-dead">失敗</span></a><a href="/backtest/covered_call/" class="bt-dead">Covered Call<span class="bt-tag bt-tag-dead">負貢獻</span></a><a href="/backtest/put_timing/" class="bt-dead">SPY/QQQ 買 put 避險<span class="bt-tag bt-tag-dead">負貢獻</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">多資產</div><div class="bt-subnav-pills"><a href="/backtest/turtle/">唐奇安突破</a><a href="/backtest/clenow/">跨資產趨勢</a><a href="/backtest/multiasset_trend/">SG Trend 複製</a><a href="/backtest/turtle_adopt/">組合採用 Sleeve</a><a href="/backtest/slope_filter_global/">全球斜率穩健性</a><a href="/backtest/crossasset_defense/">跨資產防守</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">台股波段</div><div class="bt-subnav-pills"><a href="/backtest/tw_0050_compare/">0050 總覽·台美差異</a><a href="/backtest/tw_0050/">0050 進攻趨勢（移植）</a><a href="/backtest/tw_0050_lt/">0050 長軌趨勢</a><a href="/backtest/long_track_tw/">2330/0050 E3 長軌</a><a href="/backtest/tw_0050_six/">0050 六狀態機</a><a href="/backtest/tw_0050_dual/" class="bt-dead">0050 雙軌多空<span class="bt-tag bt-tag-dead">否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">台股選擇權</div><div class="bt-subnav-pills"><a href="/backtest/tw_options/">台股選擇權專區<span class="bt-tag bt-tag-watch">專區</span></a><a href="/backtest/txo_vol_seller/">台指選擇權賣方<span class="bt-tag bt-tag-watch">模擬中</span></a><a href="/backtest/txo_put_seller/">台指賣方下檔<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_iron_condor/">台指雙賣<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_covered_call_0050/">台指 Covered Call<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_tail_hedge/">台指尾端避險<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">日內交易</div><div class="bt-subnav-pills"><a href="/backtest/txf_intraday/">台指當沖<span class="bt-tag bt-tag-watch">未過</span></a><a href="/backtest/txf_chips/">籌碼偏向<span class="bt-tag bt-tag-watch">觀察</span></a><a href="/backtest/ssf_xsec/">個股期橫斷面<span class="bt-tag bt-tag-watch">未過</span></a><a href="/backtest/txf_basis/" class="bt-dead">基差偏向<span class="bt-tag bt-tag-dead">否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・主動式ETF</div><div class="bt-subnav-pills"><a href="/backtest/active_etf/">主動式ETF總結<span class="bt-tag bt-tag-watch">專區</span></a><a href="/backtest/tw_active_etf/">台股主動式ETF<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/us_active_etf/">美股主動式ETF<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/tw_mutual_fund/">台股共同基金<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・頻率</div><div class="bt-subnav-pills"><a href="/backtest/daily_vs_weekly/">日/週線</a><a href="/backtest/daily_vs_weekly_deep/">日/週·深掘</a><a href="/backtest/daily_vs_weekly_global/">日/週·全球</a><a href="/backtest/daily_vs_weekly_tw/">日/週·台股</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・均線</div><div class="bt-subnav-pills"><a href="/backtest/ma_cross/">MA 交叉</a><a href="/backtest/ma_deviation/">MA 乖離</a><a href="/backtest/ma_dynband/">MA 動態帶</a><a href="/backtest/ma_squeeze/">MA 擠壓</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・崩盤</div><div class="bt-subnav-pills"><a href="/backtest/smh_vcrash/">SMH V崩</a><a href="/backtest/tw_vcrash/">台股 V崩防禦</a><a href="/backtest/tw_crash/">台股含崩盤驗證</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・總經</div><div class="bt-subnav-pills"><a href="/backtest/housing_gdp/">人均GDP與房價<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・可轉債</div><div class="bt-subnav-pills"><a href="/backtest/tw_cb/">台股可轉債專區<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・因子</div><div class="bt-subnav-pills"><a href="/backtest/return_driver/">美股漲跌歸因：獲利與估值<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/pead/">美股財報驚喜後漂移<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/accruals/">美股獲利品質（應計項目）<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/share_issuance/">美股股數增減（發行與回購）<span class="bt-tag bt-tag-watch">研究</span></a></div></div></nav>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ===== HERO ===== -->
+<div class="hero">
+  <div class="hero-top">
+    <span class="verdict-tag">頭條判斷</span>
+    <h2>資產成長異象死了——不只是不顯著，方向本身在不同年代反覆翻轉</h2>
+    <p>全樣本（2009–2026）Q5－Q1（資產成長最慢多、最快空）年化僅 +0.2%，t=0.08——遠稱不上顯著。
+    拆開看：train（2009–2018）t=-1.13（-3.0%），OOS（2019–2026）t=0.92（+4.3%）——
+    看似「訊號很弱」，但年代切片顯示真相更糟：2013–2019 這段樣本量最大的年代裡，價差顯著為負，
+    高成長股票顯著贏過低成長股票，跟文獻預期方向相反。資金來源拆解與隔年獲利追蹤都找不到乾淨的
+    「過度投資」機制——資產成長最快的公司隔年獲利照樣強勁。個股案例（MSTR vs META）顯示，同樣是資產暴增，
+    負債堆出來的與股權撐起來的，命運可以天差地遠——但這是個案分野，不是這個池子的系統性規律。</p>
+  </div>
+  <div class="hero-stats">
+    <div><div class="hs-label">全期 Q5−Q1（淨）</div><div class="hs-value">+0.2%</div></div>
+    <div><div class="hs-label">全期 t 值</div><div class="hs-value">0.08</div></div>
+    <div><div class="hs-label">Train t 值</div><div class="hs-value">-1.13</div></div>
+    <div><div class="hs-label">OOS t 值</div><div class="hs-value">0.92</div></div>
+  </div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">一、這是什麼——訊號與交易規則</h2>
+<div class="takeaway"><b>資產成長率＝總資產年增率（10-K 年度值，申報日對齊，只用「當時已公開」的數字，不偷看未來——這叫
+point-in-time）。</b>每年 6 月 30 日重排，用最新已申報的年度成長率分五分位（五組，equal-weight 等權即每檔權重相同），
+Q5（成長最慢）多、Q1（成長最快）空，持有一年。成本 14bps（0.14%，買賣各一次的來回摩擦成本）年度換手。</p>
+</div>
+
+<p style="font-size:.9rem;color:#374151;margin:.9rem 0">
+事前假設（Cooper, Gulen &amp; Schill 2008）：總資產膨脹快的公司之後跑輸，機制解讀是「過度投資／併購溢價」——
+花大錢買資產、買公司的管理層，通常不是把股東的錢花在刀口上。發表已久（近 20 年），本測驗它在 2009 年後
+S&amp;P500＋Nasdaq-100（835 檔池子，NDX100 端只用現在的成分股清單，對「成長股本身就是贏家」這個假設方向利多——
+即存活偏差，落敗或下市的公司不會出現在清單裡）大型股池子的生死。
+</p>
+
+<div class="note"><b>資料地雷（winsorize 的具體案例）：</b>原始成長率分布裡有一檔（FTI，2017 年財報年度）算出
++381,425 倍——資產從 7.4 萬美元暴衝到 282.6 億美元。查證：這不是輸入錯誤，是 TechnipFMC 合併重組的殼公司效應——
+2017 年 1 月併購生效前，這個 CIK 底下掛的是合併殼公司的「合併前」極小規模帳目，隔年才變成合併後的實體公司規模。
+這種「財報期間橫跨併購」的斷點正是規格點名要防的「併購巨獸」。原始樣本均值因此被單一離群值污染到
++4544%（明顯離譜）；1%／99% 分位 winsorize 後（削平到
+-29.0%／+169.0% 之間，共削平 188 筆／
+9333 筆觀測），均值回到 +10.5%——正常量級。中位數本來就不受離群值影響
+（+5.1%，winsorize 前後完全相同）。</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">二、Q1–Q5 年化與 Q5−Q1（train／OOS／全期）</h2>
+<div class="warn-loud"><strong>全樣本幾乎掛零：Q5−Q1（低成長多、高成長空的價差）年化僅
++0.2%，t=0.08——
+遠低於「顯著」的門檻（t 值，判斷價差是不是巧合的統計量，一般以絕對值≥1.96 當顯著門檻；train＝樣本前段、
+用來設計策略；OOS＝out-of-sample 樣本外段、用來驗證策略沒有過度擬合訓練期）。</strong>
+Train（2009–2018）t=-1.13，價差是-3.0%——
+方向是反的（高成長組反而贏）；OOS（2019–2026）t=0.92，
+方向對了（+4.3%）但一樣不顯著。</div>
+
+<div class="scroll"><table><thead><tr><th>期間</th><th class="num">Q1（成長最快）</th><th class="num">Q2</th><th class="num">Q3</th><th class="num">Q4</th><th class="num">Q5（成長最慢）</th><th class="num">Q5−Q1（淨，t 值）</th><th class="num">重排次數</th></tr></thead><tbody><tr><td class="lbl">Train 2009–2018</td><td class="num">18.7%</td><td class="num">15.9%</td><td class="num">16.3%</td><td class="num">15.8%</td><td class="num">15.7%</td><td class="num" style="">-3.0%<br><span style="font-size:.72rem;color:var(--muted)">t=-1.13</span></td><td class="num">9</td></tr><tr><td class="lbl">OOS 2019–2026</td><td class="num">13.7%</td><td class="num">14.4%</td><td class="num">14.1%</td><td class="num">13.4%</td><td class="num">17.6%</td><td class="num" style="">+4.3%<br><span style="font-size:.72rem;color:var(--muted)">t=0.92</span></td><td class="num">7</td></tr><tr><td class="lbl">Full 2009–2026</td><td class="num">16.5%</td><td class="num">15.2%</td><td class="num">15.3%</td><td class="num">14.8%</td><td class="num">16.5%</td><td class="num" style="">+0.2%<br><span style="font-size:.72rem;color:var(--muted)">t=0.08</span></td><td class="num">16</td></tr></tbody></table></div>
+
+<p style="font-size:.87rem;color:#374151;margin:1rem 0">
+五組年化報酬全部擠在同一個窄幅區間（全期 14.9%–16.7%），沒有五分位（把股票依訊號值由高到低分成五組，每組
+約占母體五分之一）該有的單調性（monotonicity，指五組報酬應該隨訊號值依序遞增或遞減；本測結果標記為
+「non-monotonic 非單調」）——資產成長率對這個池子的股票報酬，幾乎沒有任何排序能力。
+</p>
+
+<div id="chart-a-wrap" class="chart-wrap" style="height:320px;margin-top:1.1rem">
+<canvas id="chart-a"></canvas>
+</div>
+<p style="font-size:.78rem;color:var(--muted);margin-top:.4rem">圖：Q1–Q5 年化報酬（淨），三個期間並排。</p>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">三、年代切片——不只是不顯著，方向本身就不穩定</h2>
+<div class="takeaway"><b>2013–2019（n=7 次重排，樣本量最大的一段）價差顯著為負
+（-6.9%，t=-2.16）——高成長股票顯著贏過低成長股票，
+方向剛好與 Cooper et al. (2008) 的預期相反。</b>2020–2021（n=2，
++14.7%，t=14.21）方向翻正且數字很大，
+但只有兩次重排，樣本小到不能拿 t 值當真。2022 只有 1 次重排無法算 t 值。
+</div>
+
+<div class="scroll"><table><thead><tr><th>指標</th><th class="num">09–12 QE復甦</th><th class="num">13–19 低利成長</th><th class="num">20–21 COVID泡沫</th><th class="num">2022 升息熊</th><th class="num">23–26 AI</th></tr></thead><tbody><tr><td class="lbl">Q5−Q1（淨，年化）</td><td class="num" style="">+1.3%<br><span style="font-size:.7rem;color:var(--muted)">t=0.28（n=3）（n 太小，t 值僅供參考）</span></td><td class="num" style="color:var(--red);font-weight:700">-6.9%<br><span style="font-size:.7rem;color:var(--muted)">t=-2.16（n=7）</span></td><td class="num" style="">+14.7%<br><span style="font-size:.7rem;color:var(--muted)">t=14.21（n=2）（n 太小，t 值僅供參考）</span></td><td class="num">—<br><span style="font-size:.7rem;color:var(--muted)">n 不足</span></td><td class="num" style="">+7.2%<br><span style="font-size:.7rem;color:var(--muted)">t=1.35（n=3）（n 太小，t 值僅供參考）</span></td></tr></tbody></table></div>
+
+<p style="font-size:.87rem;color:#374151;margin:1rem 0">
+把五段年代疊起來看：全樣本那個接近零的 Q5−Q1（第二節）不是「訊號普遍微弱」，而是「顯著為負的一大段
+（2013–2019）跟方向翻正的一小段（2020–2021）互相抵銷」出來的假平靜。這比單純的「不顯著」更說明問題——
+連方向本身都不穩定，代表這不是一個可以長期依賴的排序訊號。
+</p>
+
+<div id="chart-c-wrap" class="chart-wrap" style="height:300px;margin-top:1.1rem">
+<canvas id="chart-c"></canvas>
+</div>
+<p style="font-size:.78rem;color:var(--muted);margin-top:.4rem">圖：Q5−Q1 年化價差，五個年代並排對照。</p>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">四、機制：過度投資，還是成長期正常擴張？兩種解釋並陳</h2>
+
+<p style="font-size:.9rem;color:#374151;margin:.9rem 0">
+<b>解釋一（Cooper et al. 2008 原始敘事，過度投資／併購溢價）</b>：資產膨脹快的公司，管理層把股東的錢花在報酬率
+不高的併購與擴產上，市場一開始被「公司變大了」的表象迷惑，之後隨獲利品質浮現而修正，資產成長快的公司隔年獲利
+應該相對疲弱、股價應該跑輸。<b>解釋二（成長期正常擴張）</b>：一家真正處於高速成長期的公司，資產本來就會先於
+獲利成長（先擴產、先囤貨、先蓋廠房，營收與獲利隨後才跟上），資產成長快本身不是問題，是健康擴張的先行指標。
+</p>
+
+<div class="takeaway"><b>本測證據兩種解釋都不完全支持：隔年自身淨利成長率（同一家公司隔年跟自己比）
+呈 U 型，不是遞減——Q1（成長最快）中位數+11.5%（t=2.48顯著），
+跟 Q5（成長最慢）的+11.4%（t=2.80顯著）相近，
+反而是中間三組（Q2–Q4）獲利成長動能最弱。</b>Cooper 原始故事預期 Q1 隔年獲利應該垮，本測沒看到——
+資產成長最快的公司隔年獲利照樣成長，不支持「過度投資」的簡單版本。</div>
+
+<div class="scroll"><table><thead><tr><th>分組</th><th class="num">隔年淨利成長均值</th><th class="num">隔年淨利成長中位數</th><th class="num">樣本數</th><th class="num">t 值（vs 0）</th></tr></thead><tbody><tr><td class="lbl">Q1（成長最快）</td><td class="num">+66.6%</td><td class="num" style="color:var(--red);font-weight:700">+11.5%</td><td class="num">1,185</td><td class="num" style="color:var(--red);font-weight:700">2.48</td></tr><tr><td class="lbl">Q2</td><td class="num">+28.2%</td><td class="num" style="color:var(--red);font-weight:700">+8.7%</td><td class="num">1,150</td><td class="num" style="color:var(--red);font-weight:700">3.61</td></tr><tr><td class="lbl">Q3</td><td class="num">+35.9%</td><td class="num" style="color:var(--red);font-weight:700">+6.3%</td><td class="num">1,148</td><td class="num" style="color:var(--red);font-weight:700">2.77</td></tr><tr><td class="lbl">Q4</td><td class="num">+63.4%</td><td class="num" style="">+5.8%</td><td class="num">1,144</td><td class="num" style="">1.20</td></tr><tr><td class="lbl">Q5（成長最慢）</td><td class="num">+130.5%</td><td class="num" style="color:var(--red);font-weight:700">+11.4%</td><td class="num">1,174</td><td class="num" style="color:var(--red);font-weight:700">2.80</td></tr></tbody></table></div>
+
+<div id="chart-d-wrap" class="chart-wrap" style="height:300px;margin-top:1.1rem">
+<canvas id="chart-d"></canvas>
+</div>
+<p style="font-size:.78rem;color:var(--muted);margin-top:.4rem">圖：隔年自身淨利成長率中位數，五組並排——U 型，不是遞減。</p>
+
+<p style="font-size:.87rem;color:#374151;margin:1rem 0">
+資金來源拆解（能拆多少拆多少：資產負債表恆等式 Δ資產＝Δ負債＋Δ股東權益，殘差是少數股權／匯兌調整等會計雜項）
+顯示：五組的融資結構其實差不多——不管成長快慢，多數公司約六到七成靠負債擴張、三成多靠股權，Q1 到 Q5 只有
+溫和遞增（負債佔比中位數從 58.4% 爬到
+69.7%）。<b>沒有「快速擴張的公司特別愛借錢」這種乾淨的訊號</b>——
+過度投資的案例（見第六節 MSTR）是個案，不是這個池子的系統性特徵。（提醒：Q3–Q5 的比例分母 Δ資產偶爾很小，
+少數觀測的比例會爆到誇張數字，均值因此不可靠，本頁一律只看中位數，並揭露離群值筆數。）
+</p>
+
+<div class="scroll"><table><thead><tr><th>分組</th><th class="num">負債融資佔比（中位數）</th><th class="num">股權融資佔比（中位數）</th><th class="num">樣本數</th><th class="num">離群值（|比例|&gt;3）</th></tr></thead><tbody><tr><td class="lbl">Q1（成長最快）</td><td class="num">58.4%</td><td class="num">36.0%</td><td class="num">989</td><td class="num">1</td></tr><tr><td class="lbl">Q2</td><td class="num">62.0%</td><td class="num">34.3%</td><td class="num">856</td><td class="num">7</td></tr><tr><td class="lbl">Q3</td><td class="num">65.9%</td><td class="num">32.5%</td><td class="num">843</td><td class="num">28</td></tr><tr><td class="lbl">Q4</td><td class="num">70.5%</td><td class="num">37.7%</td><td class="num">878</td><td class="num">229</td></tr><tr><td class="lbl">Q5（成長最慢）</td><td class="num">69.7%</td><td class="num">32.9%</td><td class="num">921</td><td class="num">69</td></tr></tbody></table></div>
+
+<p style="font-size:.87rem;color:#374151;margin:1rem 0">
+另一個切角——自有現金覆蓋率（op_cashflow, 營運現金流 ÷ Δ資產，衡量公司自己賺的現金能覆蓋多少比例的資產增幅）：
+Q1（成長最快）中位數僅 0.48（覆蓋不到一半，剩下要靠外部融資），Q2 中位數
+1.14（現金流就夠付，甚至有餘裕）。這條線索方向對了——成長越快，越依賴外部資金——
+但沒有轉化成隔年獲利的差異（上表已看到 Q1 隔年獲利照樣強）。Q4／Q5 這個比例的分母（Δ資產）常常很小甚至為負，
+比例本身數學上不穩定，本頁不把它們納入這條敘事（樣本裡逾半數觀測被判定為離群值，見
+<a href="#note-cashcov">方法論限制</a>）。
+</p>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">五、與表親因子的相關檢查（防「同一訊號換皮」——低波動/BAB 那次的教訓）</h2>
+<div class="takeaway"><b>與應計、淨發行的 Spearman 相關（等級相關係數，衡量兩個排序有多接近，不受極端值影響）
+都遠低於「同一訊號」的門檻（一般 |ρ|&gt;0.5）——資產成長不是應計或淨發行換個名字重新賣一次。</b></div>
+
+<table><thead><tr><th>對照因子</th><th class="num">Spearman 相關均值（逐次重排平均）</th><th class="num">重排次數</th></tr></thead>
+<tbody>
+<tr><td class="lbl">資產成長 vs 應計項目</td><td class="num">-0.005</td><td class="num">16</td></tr>
+<tr><td class="lbl">資產成長 vs 淨發行率</td><td class="num">0.235</td><td class="num">16</td></tr>
+<tr><td class="lbl">資產成長 vs E/P（獲利殖利率）</td><td class="num">-0.050</td><td class="num">16</td></tr>
+<tr><td class="lbl">資產成長 vs EPS 年增率</td><td class="num">0.073</td><td class="num">15</td></tr>
+</tbody></table>
+
+<p style="font-size:.87rem;color:#374151;margin:1rem 0">
+與應計項目幾乎零相關（-0.005）——直覺上「發股籌資會推高資產、也常帶動應計」
+的擔心（規格點名的檢查項）在這個池子沒有出現：資產膨脹快的公司，不必然是應計也高的公司。與淨發行率相關度
+0.235，方向合理（發股籌資確實會推高總資產），但強度只到「中低度相關」，
+沒有到「同一訊號」的地步——用股權籌資把資產做大的公司，只是資產成長快的其中一種樣態，不是全部。
+覆蓋率：應計 CSV 匹配 6,373／6,738
+（94.6%），淨發行 CSV 匹配
+6,353／6,738
+（94.3%）——兩個表親系統本身也要求同時有可用的財報資料，
+不是每一筆資產成長觀測都找得到對應值。
+</p>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">六、個股案例——同樣是「資產成長最快」，命運可以天差地遠</h2>
+<div class="takeaway"><b>兩張卡剛好對應第四節的兩種解釋：MSTR 是負債堆出來的資產成長，隔年量價雙殺；
+META 是股權撐起的健康擴張，隔年繼續大漲。</b>兩檔都在同一組（Q1，資產成長最快），
+差別在資金來源——這正是第四節「資金來源拆解」想抓、但在群組平均層次抓不乾淨的個案分野。</div>
+
+<div class="cmp" style="grid-template-columns:repeat(2,1fr)">
+
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.5rem">
+    <div style="font-weight:800;font-size:1.05rem">MSTR <span style="font-weight:400;font-size:.8rem;color:var(--muted)">MicroStrategy・債務堆出來的資產，被市場打回原形</span></div>
+    <div style="font-size:.78rem;color:var(--muted)">資產成長=+59.9%・91.9% 負債融資</div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem;text-align:center;margin:.7rem 0">
+    <div><div style="font-size:.68rem;color:var(--muted)">持有一年淨報酬</div>
+    <div style="font-weight:800;font-size:1.3rem;color:var(--brand)">−75.3%</div></div>
+    <div><div style="font-size:.68rem;color:var(--muted)">隔年自身淨利成長</div>
+    <div style="font-weight:800;font-size:1.3rem;color:var(--brand)">虧損擴大至71倍</div></div>
+  </div>
+  <div style="font-size:.85rem;color:#991b1b">2021-06-30 重排納入 Q1（申報對應 FY2020）：一年內總資產暴增近六成，九成以上靠發行可轉換公司債支應——那年下半年公司開始把資產負債表押注在比特幣上，債務堆出來的資產成長，不是靠賺錢賺出來的。持有一年股價跌 75.3%，隔年（FY2020→FY2021）淨利從虧損 750 萬美元擴大為虧損 5.35 億美元——換算成比例是 −7,017%，但分母（前一年淨利）本來就趨近於零，比例本身容易失真到誇張量級，這裡只引用「虧損擴大約 71 倍」這個方向與量級，不當成精確的成長率讀。量價雙殺，是本測裡最乾淨地吻合 Cooper 原始「過度投資／槓桿式賭注」故事的案例。</div>
+</div>
+
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.5rem">
+    <div style="font-weight:800;font-size:1.05rem">META <span style="font-weight:400;font-size:.8rem;color:var(--muted)">Facebook・IPO 現金與收購撐大資產，是健康擴張</span></div>
+    <div style="font-size:.78rem;color:var(--muted)">資產成長=+138.6%・78.2% 股權融資</div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem;text-align:center;margin:.7rem 0">
+    <div><div style="font-size:.68rem;color:var(--muted)">持有一年淨報酬</div>
+    <div style="font-weight:800;font-size:1.3rem;color:var(--brand)">+171.2%</div></div>
+    <div><div style="font-size:.68rem;color:var(--muted)">隔年自身淨利成長</div>
+    <div style="font-weight:800;font-size:1.3rem;color:var(--brand)">跳增至28倍</div></div>
+  </div>
+  <div style="font-size:.85rem;color:#1f2c44">2013-06-30 重排納入 Q1（申報對應 FY2012）：那一年資產成長 138.6%，主因是 2012 年 5 月 IPO 帶入的鉅額現金與新股權資本，加上收購 Instagram——近八成靠新發行股權支應，幾乎不靠借錢。持有一年股價漲 171.2%，隔年淨利從 5,300 萬美元跳增到 15 億美元（約 28 倍）——2012 年 IPO 當年的鉅額股票薪酬費用把當年獲利壓得極低，基期偏低會放大隔年成長倍數，這裡同樣不把倍數本身當精確讀數，只看方向：市場沒有被「資產翻倍」嚇跑。反而是本測「資產成長快≠過度投資」最有力的反例：同樣是 Q1，同樣是資產暴增，股權撐起的擴張跟債務堆出來的擴張，後續命運天差地遠。</div>
+</div>
+
+</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">七、方法論限制（誠實揭露）</h2>
+<div class="takeaway"><b>七個限制，第二條（方向不穩定）最重要——直接說明「資產成長異象死了」這個頭條判斷不是「訊號太弱」，
+而是「訊號在不同年代根本沒有固定方向」。</b></div>
+<div class="card"><ul style="padding-left:1.2rem;font-size:.87rem;line-height:1.85;color:#374151"><li><b>NDX100 生存者偏差，方向利多。</b>　只用現在的 100 檔清單往回套用（Wikipedia 已無歷史成分表），今天還在清單上的都是「活下來的贏家」，會讓表現偏樂觀——沿用既有揭露。</li><li><b>方向本身不穩定，比不顯著更嚴重。</b>　第三節：2013–2019（樣本量最大的一段）顯著為負，方向與文獻預期相反；全樣本的接近零，是兩段方向相反的年代互相抵銷的結果，不是訊號普遍微弱。</li><li><b>資金來源拆解的比例在低成長組不穩定。</b>　debt_share／equity_share 的分母是 Δ資產，Q3–Q5 有不少觀測 Δ資產很小甚至為負，比例會被放大到失真——本頁一律以中位數為準，並揭露離群值（|比例|&gt;3）筆數，第四節表格已標示。</li><li><b>自有現金覆蓋率同樣分母不穩，且比例本身就會誇張到失真（第六節 MSTR／META 的隔年獲利倍數就是同一種現象）。</b>　<span id="note-cashcov">Q4 有 53.5%（677／1,265 筆）、Q5 有 17.4%（224／1,285 筆）觀測被判定為離群值（|比例|&gt;5），本頁只用中位數對照 Q1／Q2，沒有把 Q4／Q5 的覆蓋率數字當作可信結論。</span></li><li><b>資金來源與獲利機制檢查依賴表親系統的資料覆蓋率。</b>　應計 CSV 匹配率 94.6%，隔年淨利追蹤同樣借用應計系統算好的 ni_yoy_fwd 欄位，覆蓋率86.1%——不是每一筆資產成長觀測都找得到對應的淨利／現金流資料，非隨機缺漏的可能性未逐檔排查。</li><li><b>winsorize 邊界本身是武斷選擇。</b>　1%／99% 分位削平到 -29.0%／+169.0%，是產業慣例但仍是人為選擇；換一個百分位數門檻，極端組的排序可能有微幅變動（qcut 排序基本不受影響，但敘述統計如均值、資金來源比例會變）。</li><li><b>非單調且方向不穩，不是教科書等級的五組單調梯度。</b>　第二節五組報酬全部擠在窄幅區間，資產成長率對這個池子幾乎沒有排序能力。</li></ul></div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">延伸閱讀</h2>
+<div class="card" style="font-size:.87rem;line-height:1.9">
+<a href="/backtest/return_driver/">美股漲跌歸因：獲利與估值</a> —— 同一套資料層的起點研究：長期報酬靠獲利、短期靠估值。<br>
+<a href="/backtest/share_issuance/">美股股數增減（發行與回購）</a> —— 同系列因子研究：淨發行率與資產成長的相關性見本頁第五節。<br>
+<a href="/backtest/accruals/">美股獲利品質（應計項目）</a> —— 同系列因子研究：本頁隔年獲利追蹤（第四節）借用了這個系統已算好的欄位；應計異象是本系列少見活著的案例，資產成長不是。
+</div>
+</div>
+
+
+</div>
+
+<footer>
+  <div class="container">
+    &copy; 2026 InvestMQuest Research &middot; 美股資產成長異象（研究頁，非可交易策略）&middot;
+    規格 docs/Asset_Growth_Backtest_Spec.md・頁面生成 2026-08-29 &middot; 僅供研究參考
+  </div>
+</footer>
+
+<script>
+new Chart(document.getElementById('chart-a'), {
+  type: 'bar',
+  data: { labels: ["Train", "OOS", "全期"], datasets: [{label: 'Q1', data: [18.7, 13.7, 16.5], backgroundColor: '#93c5fd'}, {label: 'Q2', data: [15.9, 14.4, 15.2], backgroundColor: '#60a5fa'}, {label: 'Q3', data: [16.3, 14.1, 15.3], backgroundColor: '#3b82f6'}, {label: 'Q4', data: [15.8, 13.4, 14.8], backgroundColor: '#2563eb'}, {label: 'Q5', data: [15.7, 17.6, 16.5], backgroundColor: '#1a56db'}] },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: { y: { title: {display:true, text:'年化報酬 (%)'} } },
+    plugins: { legend: { position: 'top' } }
+  }
+});
+</script>
+<script>
+new Chart(document.getElementById('chart-c'), {
+  type: 'bar',
+  data: {
+    labels: ["09–12 QE", "13–19 低利", "20–21 COVID", "2022 升息", "23–26 AI"],
+    datasets: [{label: 'Q5−Q1 年化價差（淨）', data: [1.3, -6.9, 14.7, null, 7.2], backgroundColor: '#1a56db'}]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: { y: { title: {display:true, text:'Q5−Q1 年化價差 (%)'} } },
+    plugins: { legend: { position: 'top' } }
+  }
+});
+</script>
+<script>
+new Chart(document.getElementById('chart-d'), {
+  type: 'bar',
+  data: {
+    labels: ["Q1（成長最快）", "Q2", "Q3", "Q4", "Q5（成長最慢）"],
+    datasets: [{label: '隔年自身淨利成長率中位數', data: [11.5, 8.7, 6.3, 5.8, 11.4], backgroundColor: '#059669'}]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: { y: { title: {display:true, text:'隔年淨利成長率中位數 (%)'} } },
+    plugins: { legend: { position: 'top' } }
+  }
+});
+</script>
+</body>
+</html>
