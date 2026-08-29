@@ -185,6 +185,9 @@ DIRECTORY = {
         ]),
         ("研究・因子", [
             ("/backtest/return_driver/", "美股漲跌歸因：獲利與估值", "研究", False),
+            ("/backtest/pead/", "美股財報驚喜後漂移", "研究", False),
+            ("/backtest/accruals/", "美股獲利品質（應計項目）", "研究", False),
+            ("/backtest/share_issuance/", "美股股數增減（發行與回購）", "研究", False),
         ]),
         ("前瞻追蹤", [
             ("/long-track-w52-adaptive/", "W52 × 自適應波動率 150%（實單主系統）", "實單", False),

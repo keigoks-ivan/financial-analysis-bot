@@ -13,7 +13,7 @@ Every backtest page header renders the same groups via make_toggle(active):
                   | ma_dynband | ma_squeeze | smh_vcrash
     研究・總經：  housing_gdp
     研究・可轉債：tw_cb
-    研究・因子：  return_driver
+    研究・因子：  return_driver | pead | accruals | share_issuance
 
 Design (2026-07-11 redesign):
   * Colour discipline — every pill is neutral (grey fill, dark-grey text); the
@@ -172,6 +172,9 @@ TW_CB_LINKS = [
 # 的做法）。
 RESEARCH_FACTOR_LINKS = [
     ("/backtest/return_driver/", "美股漲跌歸因：獲利與估值", "return_driver", "研究"),
+    ("/backtest/pead/", "美股財報驚喜後漂移", "pead", "研究"),
+    ("/backtest/accruals/", "美股獲利品質（應計項目）", "accruals", "研究"),
+    ("/backtest/share_issuance/", "美股股數增減（發行與回購）", "share_issuance", "研究"),
 ]
 
 # 向後相容：舊名保留為五群之串接，供外部引用者使用。
