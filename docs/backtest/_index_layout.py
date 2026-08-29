@@ -759,7 +759,6 @@ footer{background:var(--card);border-top:1px solid var(--border);color:var(--mut
 <div class="page-hdr"><div class="container">
   <div class="crumb"><a href="/">首頁</a> / 量化回測</div>
   <h1>量化回測總覽</h1>
-  <div class="sub">20 年全週期(2006~,含 2008/2020/2022 三熊)· 真實 yfinance · 起始 $1M · 依市場/資產類別分六類，點卡片或 tab 切換</div>
   %GROUP_OVERVIEW%
   <div class="tabs">
     <a data-tabkey="us" href="#us" onclick="return showTab('us')">🇺🇸 美股</a>
