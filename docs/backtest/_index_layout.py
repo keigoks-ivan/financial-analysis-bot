@@ -64,6 +64,29 @@ GROUPS/RET/BH_ROWS/PERIOD_CAGR/YEARLY_COLS/SCATTER/group_header/sys_row/yearly_c
 _build_10y.py／_build_tw.py／_build_leverage.py／_build_multi.py 等子頁 builder 引用，只是
 首頁不再消費。
 
+2026-08-31 — 首頁改多欄卡片牆（masonry card wall）
+================================================================================
+Owner 從四份 mockup（variant_a/b/c/d）中拍板 A：多欄卡片牆。SECTIONS 資料常數一筆不動，只改
+render 邏輯：
+
+  * 十三個分類 section 從整行式 .section/.dir 改成緊湊 .card，桌機 3 欄 CSS columns masonry
+    （.masonry{column-count:3}）、平板 2 欄、手機 1 欄，卡片 break-inside:avoid 避免跨欄斷裂；
+    兩大區標題（系統・可交易／研究・非交易）維持 masonry 區塊前的 region-title。
+  * section sub（分類說明文字）不再渲染——資料留在 SECTIONS，render_section() 不輸出
+    section-sub div 了。
+  * 錨點快跳列整段拿掉（anchor_jump() 函式與 %ANCHOR_JUMP% placeholder 一併移除）——頁面縮
+    到卡片牆後已冗餘；但每個 section 的 id 仍原樣留在對應 .card 上，頁尾 LEGACY_HASH（舊六
+    tab hash → 新 section id）的 scrollIntoView script 不動，外部深連結（如 #us-swing／#us）
+    仍能捲到正確卡片。
+  * 有 CTA 專區入口的三個分類（tw-swing／multi-classic／leverage）原本佔滿版寬的 .cta banner
+    改為卡片頂部一顆 .card-cta pill（「{label} →」），入口不丟但不再佔整條卡片高度。
+  * _dir_rows_html() 更名 _card_body_html()，輸出從 .dir/.dir-row/.dir-lbl/.dir-pills 改成
+    .grp/.grp-lbl/.pills（沿用 mockup 命名並重寫對應 CSS）；卡內仍依 dir-lbl 子群分組（如總經
+    卡的 主線/亞洲/英語系/歐陸/新興 照舊），pill 樣式改緊湊版，狀態 badge（.b/.b-d/.b-b/.b-g）
+    色語意不變。舊 .section/.section-title/.sec-n/.section-sub/.dir*/.cta*/.anchor-jump CSS，
+    以及早已死碼的 .card{overflow-x:auto}（本檔內 0 處引用的表格卡殘留）一併移除，避免跟新
+    .card 選擇器衝突。
+
 Run: python3 _build_index.py   (this module is imported, not run directly)
 """
 from __future__ import annotations
@@ -361,46 +384,39 @@ def _pill(url, text, status=None, current=False, emph=False):
     return f'<a href="{url}"{cls}>{text}{_badge(status)}</a>'
 
 
-def _dir_rows_html(rows):
+def _card_body_html(rows):
     body = ""
     for label, items in rows:
         pills = "".join(_pill(*p) for p in items)
-        body += (f'<div class="dir-row"><div class="dir-lbl">{label}</div>'
-                 f'<div class="dir-pills">{pills}</div></div>')
-    return f'<div class="dir">{body}</div>'
+        body += (f'<div class="grp"><div class="grp-lbl">{label}</div>'
+                 f'<div class="pills">{pills}</div></div>')
+    return body
 
 
 def render_section(sec) -> str:
+    """Render one分類 as a compact masonry card. sec['sub'] (section 副標) is
+    intentionally not emitted here (2026-08-31) — the data stays in SECTIONS,
+    the card wall just doesn't render it."""
     n = _section_count(sec)
     cta_html = ""
     if sec["cta"]:
-        url, label, sub = sec["cta"]
-        cta_html = (f'<a class="cta" href="{url}"><span style="font-size:1.3rem">{sec["emoji"]}</span>'
-                    f'<span>{label}<div class="cta-sub">{sub}</div></span><span class="arr">→</span></a>')
-    return (f'<div class="section" id="{sec["id"]}">'
-            f'<h2 class="section-title">{sec["emoji"]} {sec["name"]}<span class="sec-n">{n} 頁</span></h2>'
-            f'<div class="section-sub">{sec["sub"]}</div>'
-            f'{cta_html}{_dir_rows_html(sec["rows"])}</div>')
-
-
-def anchor_jump() -> str:
-    groups = {"sys": "", "research": ""}
-    for sec in SECTIONS:
-        n = _section_count(sec)
-        groups[sec["region"]] += f'<a href="#{sec["id"]}">{sec["emoji"]} {sec["name"]}<span class="aj-n">{n}</span></a>'
-    return (f'<div class="anchor-jump">'
-            f'<div class="aj-group"><span class="aj-lbl">系統・可交易</span>{groups["sys"]}</div>'
-            f'<div class="aj-group"><span class="aj-lbl">研究・非交易</span>{groups["research"]}</div>'
-            f'</div>')
+        url, label, _sub = sec["cta"]
+        cta_html = f'<a class="card-cta" href="{url}">{label} →</a>'
+    return (f'<div class="card" id="{sec["id"]}">'
+            f'<h3>{sec["emoji"]} {sec["name"]}<span class="n">{n} 頁</span></h3>'
+            f'{cta_html}{_card_body_html(sec["rows"])}</div>')
 
 
 def sections_html() -> str:
     out, last_region = "", None
     for sec in SECTIONS:
         if sec["region"] != last_region:
-            out += f'<h2 class="region-title">{REGION_TITLE[sec["region"]]}</h2>'
+            if last_region is not None:
+                out += "</div>"
+            out += f'<h2 class="region-title">{REGION_TITLE[sec["region"]]}</h2><div class="masonry">'
             last_region = sec["region"]
         out += render_section(sec)
+    out += "</div>"
     return out
 
 
@@ -446,7 +462,7 @@ def render():
     html = TEMPLATE
     for k, v in {
         "%NAV%": NAV_BLOCK, "%STATUS_OVERVIEW%": status_overview,
-        "%ANCHOR_JUMP%": anchor_jump(), "%SECTIONS%": sections_html(),
+        "%SECTIONS%": sections_html(),
         "%CARD%": card,
         "%JS_LEGACY_HASH%": json.dumps(LEGACY_HASH),
         "%NOW%": datetime.now().strftime("%Y-%m-%d"),
@@ -504,38 +520,30 @@ a{color:var(--ink);text-decoration:none}a:hover{text-decoration:underline}
 .stat-cand{border-left-color:var(--green)}
 .stat-exp{border-left-color:var(--accent)}
 .stat-rej{border-left-color:var(--red)}
-/* 錨點快跳列（2026-08-29）——13 個分類 pill，純 anchor，無 JS 過濾 */
-.anchor-jump{margin-top:1rem;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:.7rem .8rem}
-.aj-group{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem}
-.aj-group+.aj-group{margin-top:.5rem}
-.aj-lbl{flex:0 0 auto;font-size:.66rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin-right:.3rem}
-.anchor-jump a{display:inline-flex;align-items:center;gap:.28rem;padding:.28rem .62rem;background:var(--neutral-bg);color:var(--text);border-radius:999px;font-size:.76rem;font-weight:600;white-space:nowrap}
-.anchor-jump a:hover{background:var(--line);text-decoration:none}
-.aj-n{font-size:.68rem;font-weight:700;color:var(--muted)}
 .region-title{font-family:var(--serif);font-size:1.3rem;font-weight:700;color:var(--ink);margin:2rem 0 .3rem;padding-top:1.3rem;border-top:2px solid var(--ink)}
-.section{padding:1.5rem 0 0}
-.section-title{font-size:1.05rem;font-weight:700;color:var(--ink);margin-bottom:.85rem;padding-bottom:.4rem;border-bottom:1px solid var(--border);display:flex;align-items:baseline;gap:.5rem}
-.sec-n{font-size:.72rem;font-weight:600;color:var(--muted)}
-.section-sub{font-size:.82rem;color:var(--muted);margin:-.45rem 0 .9rem}
-.dir{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin:1.1rem 0}
-.dir-row{display:flex;align-items:flex-start;gap:.55rem;padding:.34rem .6rem;border-top:1px solid var(--border)}
-.dir-row:first-child{border-top:0}
-.dir-lbl{flex:0 0 5em;font-size:.64rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;padding-top:.4rem}
-.dir-pills{display:flex;flex-wrap:wrap;gap:.32rem;min-width:0}
-.dir-pills a{display:inline-flex;align-items:center;gap:.3rem;padding:.28rem .62rem;background:var(--neutral-bg);color:var(--text);border-radius:999px;font-size:.76rem;font-weight:500;white-space:nowrap}
-.dir-pills a:hover{background:var(--line);text-decoration:none}
-.dir-pills a.on{background:linear-gradient(135deg,var(--accent-ink),var(--accent));color:#fff;font-weight:600}
-.dir-pills a.entry{background:linear-gradient(135deg,var(--accent-ink),var(--accent));color:#fff;font-weight:700}
-.dir-pills a.entry:hover{opacity:.92}
+/* 多欄卡片牆（2026-08-31）——CSS columns masonry：桌機 3 欄／平板 2 欄／手機 1 欄 */
+.masonry{column-count:3;column-gap:1rem}
+@media(max-width:1100px){.masonry{column-count:2}}
+@media(max-width:680px){.masonry{column-count:1}}
+.card{break-inside:avoid;background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:var(--sh-1);padding:.9rem 1rem;margin:0 0 1rem}
+.card h3{font-size:.94rem;font-weight:700;color:var(--ink);display:flex;align-items:baseline;gap:.4rem;padding-bottom:.45rem;border-bottom:1px solid var(--border);margin-bottom:.55rem}
+.card h3 .n{margin-left:auto;font-size:.66rem;font-weight:600;color:var(--muted);font-family:var(--mono)}
+.card-cta{display:flex;align-items:center;justify-content:center;gap:.3rem;background:linear-gradient(135deg,var(--accent-ink),var(--accent));color:#fff;border-radius:999px;padding:.4rem .8rem;margin-bottom:.6rem;font-size:.76rem;font-weight:700}
+.card-cta:hover{opacity:.92;text-decoration:none}
+.grp{margin-bottom:.5rem}
+.grp:last-child{margin-bottom:0}
+.grp-lbl{font-size:.6rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.28rem}
+.pills{display:flex;flex-wrap:wrap;gap:.26rem}
+.pills a{display:inline-flex;align-items:center;gap:.24rem;padding:.18rem .48rem;background:var(--neutral-bg);color:var(--text);border-radius:999px;font-size:.68rem;font-weight:500;white-space:nowrap;line-height:1.4}
+.pills a:hover{background:var(--line);text-decoration:none}
+.pills a.on{background:linear-gradient(135deg,var(--accent-ink),var(--accent));color:#fff;font-weight:600}
+.pills a.entry{background:linear-gradient(135deg,var(--accent-ink),var(--accent));color:#fff;font-weight:700}
+.pills a.entry:hover{opacity:.92}
 .b{font-size:.6rem;font-weight:700;padding:.03rem .32rem;border-radius:4px;line-height:1.5}
 .b-d{background:var(--red-bg);color:var(--red)}
 .b-b{background:var(--accent-bg);color:var(--accent)}
 .b-g{background:var(--gold-bg);color:var(--gold-deep)}
-.dir-pills a.on .b,.dir-pills a.entry .b{background:rgba(255,255,255,.22);color:#fff}
-.cta{display:flex;align-items:center;gap:.7rem;background:var(--accent);color:#fff;border-radius:10px;padding:1rem 1.3rem;margin:1.1rem 0;font-weight:700}
-.cta:hover{text-decoration:none;opacity:.94}
-.cta .cta-sub{font-size:.76rem;font-weight:500;color:#cbd5e1;margin-top:.15rem}
-.cta .arr{margin-left:auto;font-size:1.1rem}
+.pills a.on .b,.pills a.entry .b{background:rgba(255,255,255,.22);color:#fff}
 .live-wrap{display:grid;grid-template-columns:1.3fr 1fr;gap:1rem;margin-top:1rem}
 /* 引導卡——實單卡不再貼會過期的數字快照，只給定位＋連結 */
 .acard{background:var(--card);border:1px solid var(--gold);border-radius:12px;padding:1.2rem 1.3rem;box-shadow:0 0 0 1px var(--gold) inset;display:flex;flex-direction:column}
@@ -548,7 +556,6 @@ a{color:var(--ink);text-decoration:none}a:hover{text-decoration:underline}
 .acard-note ul{list-style:none;font-size:.84rem;line-height:1.9}
 .acard-note li{padding-left:.9rem;position:relative}
 .acard-note li::before{content:'·';position:absolute;left:0;color:var(--grey);font-weight:700}
-.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:.5rem;margin-bottom:1rem;overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:.86rem}
 th,td{text-align:left;padding:.55rem .7rem;border-bottom:1px solid var(--border)}
 th{background:var(--neutral-bg);font-weight:600;font-size:.74rem;text-transform:uppercase;letter-spacing:.03em;color:var(--muted)}
@@ -573,7 +580,6 @@ details[open] summary::before{transform:rotate(90deg)}
 details .d-body{padding:0 1.2rem 1.2rem;overflow-x:auto}
 footer{background:var(--card);border-top:1px solid var(--border);color:var(--muted);text-align:center;padding:1.2rem 0;font-size:.78rem;margin-top:2rem}
 @media(max-width:820px){.live-wrap{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}table{font-size:.76rem}th,td{padding:.4rem .45rem}
-.dir-row{flex-direction:column;gap:.3rem}.dir-lbl{flex-basis:auto;padding-top:0}
 .stat-row{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
@@ -595,8 +601,6 @@ footer{background:var(--card);border-top:1px solid var(--border);color:var(--mut
 <div class="container">
 
 <div class="live-wrap">%CARD%</div>
-
-%ANCHOR_JUMP%
 
 %SECTIONS%
 
