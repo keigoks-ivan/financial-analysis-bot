@@ -374,3 +374,12 @@
 ## 附註：已在 changelog 有記載、故本次直接丟棄不再收錄者
 
 QC-39（AVGO 型過度樂觀 / SNDK 型過嚴的全文敘事）、QC-40（鷹架滲入 HTML 實案）、QC-41（Boris verify-app pattern 由來、PLTR A/B 對質）、QC-43（archetype 誤尺實案）、QC-47、QC-48、QC-49、QC-50、QC-51、QC-52、QC-53、§11.4b（ORCL / SNOW pattern 全文）、§12b'（TSLA robotaxi pattern 全文——新檔保留其 ≤80 字模板與「原型：robotaxi…」一句作判準錨，僅刪長敘事）、§11.3 翻面三元歸因（NU/PLTR/DECK）、§10 多尺矛盾（MU 20260705 原型——新檔保留「原型：MU 20260705」一句，因該句是判準的類別錯誤示範）、§13 四問（DECK/PLTR、SNDK/NKE、SE/ISRG、SNDK/GLW/TT——pattern 名稱作為觸發索引保留於括注）、§11.1 拓撲判定（UBER pattern）、row 4 退出 Soft Veto（SE / NOW）、baseline rows 9/9b/10 MA ❌ 空格（RMS / ROP）、§7 中場邊界（MPWR）、篇幅帶（BKNG/ANET vs SIMO）。
+
+---
+
+## 2026-09-01 — QC-54 白話呈現規則新增（呈現層，源頭改 = option a）
+
+- **持有人拍板**：2026-08-31 批次（NVDA/MRVL/CRWD/CRM/VIK/ADI）4/4 首輪 QC-40 合規 0/4——§13 開場直接渲染決策矩陣機器語言（「Row 1-3 Hard Veto…皆未命中」），承重結論僅靠燈號/emoji 承載，讀起來像內部稽核文件非讀者面對的研究報告。持有人裁決＝**option (a) 源頭改**（否決另做一層白話包裝／summary layer），比照 industry-analyst v2.0→v3.0 前例（sell-side 呈現、敘事前置、附錄證據折疊、廢 dual-output）。
+- **三件套**：① SKILL.md 新增 **QC-54｜白話呈現（深入淺出・賣方風）**，緊接 QC-40 之後——§1/§13 開場強制白話敘事、決策矩陣逐 row 檢核表與 Hard/Soft Veto 逐項列舉移入 `<details>`/附錄、燈號/emoji 不得單獨承載承重結論；② `references/critic-gates.md` QC-41 六軸 critic checklist 新增 **⑦ QC-54 白話呈現核**（SKILL.md 對應處同步「六軸」→「七軸」），違反一項 🟡、§13 開場全無白話敘事 ＝ 🔴；③ 範本句品質標竿——「用未確認風險的價格買進仍是為未解問題付價」（DD_VIK_20260831 §13）。
+- **無版本 bump**：本次為純呈現層規則，裁決矩陣、fail-safe 方向、dd-meta schema（維持 `v15.0`）與 `id="decision"` 錨點契約一字未動，下游 pipeline 零影響——比照 QC-38（2026-07-17）等格式類規則的治理歸類，**不需登記 rule_ledger kill condition**。
+- **證據**：2026-08-31 批次 4 份首輪鷹架洩漏；CRM §13 正文渲染整張 row 檢核表；兩位 critic 對「row 8」是否違規的執法標準不一致（同一份報告一位判過、一位判不過）。
