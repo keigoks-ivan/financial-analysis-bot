@@ -87,6 +87,15 @@ render 邏輯：
     以及早已死碼的 .card{overflow-x:auto}（本檔內 0 處引用的表格卡殘留）一併移除，避免跟新
     .card 選擇器衝突。
 
+2026-08-31 — pill 樣式一致化
+================================================================================
+Owner 看了卡片牆截圖後指示「都要用成一致的」：台股波段／多資產·經典複製／槓桿疊加三張卡的
+`.card-cta` 全寬深藍按鈕，與 us-swing 卡「20 年總覽」的 `.on` 深色填滿樣式，跟其他 pill 視覺
+不同級。改法：三個 hub 連結在 render_section() 動態併入該卡第一個子群的 pills（帶「專區」小標
+沿用既有 badge 體系，SECTIONS 資料不動——cta 併入純屬 render 層邏輯）；`.on` 拉平成一般 pill 底
+色＋細邊框＋粗體辨識，不再是深色填滿按鈕。清掉死碼 `.card-cta`/`.card-cta:hover` CSS 與
+render_section() 內的 cta_html 分支。
+
 Run: python3 _build_index.py   (this module is imported, not run directly)
 """
 from __future__ import annotations
@@ -396,15 +405,21 @@ def _card_body_html(rows):
 def render_section(sec) -> str:
     """Render one分類 as a compact masonry card. sec['sub'] (section 副標) is
     intentionally not emitted here (2026-08-31) — the data stays in SECTIONS,
-    the card wall just doesn't render it."""
+    the card wall just doesn't render it.
+
+    sec['cta'] (hub 專區入口，2026-08-31 起不再是全寬 .card-cta 按鈕) is spliced
+    into the first row group as an ordinary leading pill tagged with a "專區"
+    status badge — SECTIONS itself is not mutated, this is render-layer only."""
     n = _section_count(sec)
-    cta_html = ""
+    rows = sec["rows"]
     if sec["cta"]:
         url, label, _sub = sec["cta"]
-        cta_html = f'<a class="card-cta" href="{url}">{label} →</a>'
+        hub_pill = (url, label, "專區", False)
+        first_label, first_items = rows[0]
+        rows = [(first_label, (hub_pill,) + tuple(first_items))] + list(rows[1:])
     return (f'<div class="card" id="{sec["id"]}">'
             f'<h3>{sec["emoji"]} {sec["name"]}<span class="n">{n} 頁</span></h3>'
-            f'{cta_html}{_card_body_html(sec["rows"])}</div>')
+            f'{_card_body_html(rows)}</div>')
 
 
 def sections_html() -> str:
@@ -528,22 +543,20 @@ a{color:var(--ink);text-decoration:none}a:hover{text-decoration:underline}
 .card{break-inside:avoid;background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:var(--sh-1);padding:.9rem 1rem;margin:0 0 1rem}
 .card h3{font-size:.94rem;font-weight:700;color:var(--ink);display:flex;align-items:baseline;gap:.4rem;padding-bottom:.45rem;border-bottom:1px solid var(--border);margin-bottom:.55rem}
 .card h3 .n{margin-left:auto;font-size:.66rem;font-weight:600;color:var(--muted);font-family:var(--mono)}
-.card-cta{display:flex;align-items:center;justify-content:center;gap:.3rem;background:linear-gradient(135deg,var(--accent-ink),var(--accent));color:#fff;border-radius:999px;padding:.4rem .8rem;margin-bottom:.6rem;font-size:.76rem;font-weight:700}
-.card-cta:hover{opacity:.92;text-decoration:none}
 .grp{margin-bottom:.5rem}
 .grp:last-child{margin-bottom:0}
 .grp-lbl{font-size:.6rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.28rem}
 .pills{display:flex;flex-wrap:wrap;gap:.26rem}
 .pills a{display:inline-flex;align-items:center;gap:.24rem;padding:.18rem .48rem;background:var(--neutral-bg);color:var(--text);border-radius:999px;font-size:.68rem;font-weight:500;white-space:nowrap;line-height:1.4}
 .pills a:hover{background:var(--line);text-decoration:none}
-.pills a.on{background:linear-gradient(135deg,var(--accent-ink),var(--accent));color:#fff;font-weight:600}
+.pills a.on{background:var(--neutral-bg);color:var(--text);font-weight:700;border:1px solid var(--accent)}
 .pills a.entry{background:linear-gradient(135deg,var(--accent-ink),var(--accent));color:#fff;font-weight:700}
 .pills a.entry:hover{opacity:.92}
 .b{font-size:.6rem;font-weight:700;padding:.03rem .32rem;border-radius:4px;line-height:1.5}
 .b-d{background:var(--red-bg);color:var(--red)}
 .b-b{background:var(--accent-bg);color:var(--accent)}
 .b-g{background:var(--gold-bg);color:var(--gold-deep)}
-.pills a.on .b,.pills a.entry .b{background:rgba(255,255,255,.22);color:#fff}
+.pills a.entry .b{background:rgba(255,255,255,.22);color:#fff}
 .live-wrap{display:grid;grid-template-columns:1.3fr 1fr;gap:1rem;margin-top:1rem}
 /* 引導卡——實單卡不再貼會過期的數字快照，只給定位＋連結 */
 .acard{background:var(--card);border:1px solid var(--gold);border-radius:12px;padding:1.2rem 1.3rem;box-shadow:0 0 0 1px var(--gold) inset;display:flex;flex-direction:column}
