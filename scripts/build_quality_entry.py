@@ -766,7 +766,7 @@ body{{font-family:var(--sans);background:var(--paper);color:var(--body);line-hei
       <li>MA snapshot 為 yfinance 週線（每次 build 重抓）；timing 欄位來自 docs/screener/latest.json 每日 cron + yfinance fallback</li>
     </ul>
     <h4>機器可讀</h4>
-    <p>JSON sidecar: <a href="/dd-screener/quality-entry.json"><code>/dd-screener/quality-entry.json</code></a> · 每日快照: <code>/dd-screener/quality-entry-snapshots/YYYY-MM-DD.json</code>（schema v{SCHEMA_VERSION}）</p>
+    <p>JSON sidecar: <a href="/dd-screener/quality-entry.json"><code>/dd-screener/quality-entry.json</code></a> · 每日快照：<code>/dd-screener/quality-entry-snapshots/YYYY-MM-DD.json</code>（schema v{SCHEMA_VERSION}）</p>
   </div>
 
 </div>
