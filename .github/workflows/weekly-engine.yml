@@ -100,6 +100,38 @@ jobs:
           echo "::error::All 7 engine builders failed — nothing was rebuilt; failing the run."
           exit 1
 
+      # 席位擂台週報 email：此時 HEAD 仍是上週版本（尚未 commit），
+      # scripts/engine/build_weekly_mail.py 用 `git show HEAD:docs/engine/arena.json`
+      # 取上週陣容，跟 working tree 的本週 arena.json 對比，組出前後週對照 + 換席原因 HTML。
+      # 讀主旨檔進 $GITHUB_OUTPUT 的作法比照 daily-us-close.yml 的 turtle-sleeve alert 讀檔模式。
+      - name: Weekly seat-arena mail (build)
+        id: weekly_mail
+        continue-on-error: true
+        run: |
+          python scripts/engine/build_weekly_mail.py
+          if [ -f engine_weekly_mail_subject.txt ]; then
+            {
+              echo "subject<<MAIL_SUBJECT_EOF"
+              cat engine_weekly_mail_subject.txt
+              echo "MAIL_SUBJECT_EOF"
+            } >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Weekly seat-arena mail (send)
+        if: steps.weekly_mail.outcome == 'success'
+        continue-on-error: true
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_APP_PASSWORD }}
+          subject: ${{ steps.weekly_mail.outputs.subject }}
+          to: keigoks@gmail.com
+          from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
+          html_body: file://engine_weekly_mail.html
+
       - name: Commit and push if changed
         run: |
           git config user.name "github-actions[bot]"
