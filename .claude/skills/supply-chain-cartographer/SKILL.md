@@ -254,6 +254,7 @@ single: "近獨佔 · <主張> （信心度 high · 多源證實）"
 | **G8: TW 中文源** | 至少 30% 的 sources URL 是 .tw / 中文媒體域名 | 確保 TW 視角不缺 |
 | **G9: 本機 render** | headless screenshot 看得到 nodes + edges + drawer | 視覺確認 |
 | **G10: Live URL** | deploy 後 curl 200 | post-push 必驗 |
+| **G11: 白話呈現**（2026-09-01） | 顯示文字（`subtitle`／`analysis`／`single`／`note` 等）遵守 `notes/site-internal/root/_plainlang_styleguide.md`（『二補、實作定案』節優先）——白話為主術語為輔；新造術語先查表，表上沒有的照鐵律③查證後定白話名並回寫 | 人工檢視 |
 
 ## stingtao 殘留 patterns（必砍）
 

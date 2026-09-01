@@ -1201,5 +1201,6 @@ v2.3 強化版檢查清單：
  Navigation / breadcrumb / disclaimer / footer 都完整？
  所有 CSS classes 都正確？Tag colors 對應 beat/miss/raise/lower？
  Mobile responsive 有 @media 720px？
+ 白話呈現條款（2026-09-01 持有人拍板，全站適用）：所有輸出給讀者的顯示文字遵守 `notes/site-internal/root/_plainlang_styleguide.md`（『二補、實作定案』節優先）——①白話為主、術語為輔（對照表已定白話主名的詞一律用白話主名，原代號降小字或首現括號）；②新造術語前先查表，表上沒有的要先照鐵律③讀機制查證、定白話名並回寫對照表；③解釋深入淺出：每個承重判斷用讀者能懂的話講一遍，不堆行話？
 
 任一項目未通過 → 回到 Phase 2 補搜，不可勉強生成。

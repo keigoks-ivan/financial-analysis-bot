@@ -188,3 +188,4 @@ git push origin main
 3. **Excel 一律假設 USD**：Koyfin export 規範如此（即使 reporting currency 不同，Koyfin 會 USD-translate）。FX pipeline 對 .TW/.T/.HK/.KS 從 yfinance back-compute local currency display；ADRs（如 LVMH→MC、AENA、BESI、RMS）留 USD（ADR 投資人本身就交易 USD）。
 4. **Spot-check 不能跳**：§Step 6 是唯一能抓出 Excel column 順序變 / Koyfin export 規範變 / FX pipeline 套錯的 gate。任何 ✗ 不要 commit。
 5. **Commit scope tight**：只 add §Step 8 列的 dd-screener bundle。**不要 add docs/dd/** 或 **docs/dca/** 新檔（那些是別 session 的成果，commit 規範另有流程）。
+6. **白話呈現條款（2026-09-01 持有人拍板，全站適用，極簡版）**：本 skill 為機械層資料管線，產出中若出現顯示 label（如 variant 頁欄位名），遵守 `notes/site-internal/root/_plainlang_styleguide.md` 對照表白話主名。

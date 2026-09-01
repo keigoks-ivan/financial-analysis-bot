@@ -747,6 +747,7 @@ industry-analyst skill 在 publish 前必須跑 critic gate（Step 8.7，介於 
 5. **commit 訊息要結構化**：列大錯/cosmetic 分類 + portfolio implication
 6. **失敗不靜默**：validator fail / critic 找不到章節 / user skip 全部 → 都明確告訴 user
 7. **Banner 累積上限**：≥5 patch 標記、>2000 字、或 id_version ≥v1.5 → 進 consolidation flow（Step 0 → C1-C6），不再疊新 patch；此規則不可繞過
+8. **白話呈現條款（2026-09-01 持有人拍板，全站適用）**：patch 進正文的顯示文字遵守 `notes/site-internal/root/_plainlang_styleguide.md`（『二補、實作定案』節優先）——①白話為主、術語為輔（對照表已定白話主名的詞一律用白話主名，原代號降小字或首現括號）；②新造術語前先查表，表上沒有的要先照鐵律③讀機制查證、定白話名並回寫對照表；③解釋深入淺出：每個承重判斷用讀者能懂的話講一遍，不堆行話。
 
 ---
 

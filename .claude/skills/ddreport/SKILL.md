@@ -37,3 +37,4 @@ stock-analyst (v15.x DD，含決策層) → update_dd_index.py → size gate (70
 - 只要單檔報告（不 commit）→ 直接走 `stock-analyst`；多檔橫向對比 → 走 `multi-stock-comparator-v1`。本 skill 專門用於「同一 ticker 走完整 DD 報告 + 同步 + 提交」。
 - **DCA 已退役**（併入單一 DD）；`deep-conviction-analyst` 是 deprecation stub，dca/定見 觸發語改觸發 `stock-analyst`。
 - 不新增任何 validator / build script；step 5 的 `update_dd_index.py` 與 pre-commit hook 已涵蓋所有 plumbing。
+- **白話呈現條款（2026-09-01 持有人拍板，全站適用，極簡版）**：本 skill 是 thin orchestrator，不自產報告文案——讀者可見文字的白話呈現責任在 `stock-analyst`（QC-54）；本 skill 產出中若出現顯示 label（如 commit 訊息、terminal 摘要），遵守 `notes/site-internal/root/_plainlang_styleguide.md` 對照表白話主名。

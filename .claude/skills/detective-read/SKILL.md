@@ -64,3 +64,4 @@ description: 對「市場偵測器 v2」（/detective/）的機械層狀態機�
 - **kill 覆蓋誠實**：`kill_watch.json` 不存在時明說「尚未建置」，不假裝掃過；存在時 `breached` 條目必須連回對應 ID／thesis 語境才算處理完。
 - 中文全形標點；機構研究語調；無鷹架語言（「本次新增」「補上」）。
 - 解讀不留歷史檔（單一 `editorial.json` 覆寫）——歷史判讀留痕靠 git history；異常留痕歸機械層 `state.json`。
+- **白話呈現條款（2026-09-01 持有人拍板，全站適用）**：`editorial.json` 寫入頁面的 `headline`／`themes`／`watch` 等顯示文字遵守 `notes/site-internal/root/_plainlang_styleguide.md`（『二補、實作定案』節優先）——①白話為主、術語為輔（對照表已定白話主名的詞一律用白話主名，原代號降小字或首現括號）；②新造術語前先查表，表上沒有的要先照鐵律③讀機制查證、定白話名並回寫對照表；③解釋深入淺出：每個承重判讀用讀者能懂的話講一遍，不堆行話。

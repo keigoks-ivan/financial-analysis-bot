@@ -97,6 +97,10 @@ Live: https://research.investmquest.com/earnings/
 - **Duplicate date in folder but index already has it** — not missing; no action.
 - **Pre-existing untracked `docs/id/ID_*.html`** — never stage these; use `git add docs/earnings/` (directory-scoped) so unrelated untracked files are not pulled in.
 
+## 白話呈現條款（2026-09-01 持有人拍板，全站適用，極簡版）
+
+產出的 index 卡片顯示 label（takeaway／日期／weekday 等）若出現術語，遵守 `notes/site-internal/root/_plainlang_styleguide.md` 對照表白話主名。
+
 ## What NOT to do
 
 - Do not re-style the HTML, change CSS, or touch files outside `docs/earnings/`.

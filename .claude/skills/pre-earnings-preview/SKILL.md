@@ -179,6 +179,7 @@ python3 scripts/snapshot_consensus.py {TICKER}
 8. **noindex**：報告 `<meta name="robots" content="noindex">`（內部研究）。
 9. **一頁式 ~15–25KB**：這是賽前 setup 便條、不是第二份 DD——競爭/估值深度住 DD，本頁只連出不複製。
 10. **git 衛生**：`git add` 只加三檔、不 `-A`；commit 前 `git status` 看 `??`；push 前 `git pull --rebase`。
+11. **白話呈現條款（2026-09-01 持有人拍板，全站適用）**：所有輸出給讀者的顯示文字遵守 `notes/site-internal/root/_plainlang_styleguide.md`（『二補、實作定案』節優先）——①白話為主、術語為輔（對照表已定白話主名的詞一律用白話主名，原代號降小字或首現括號）；②新造術語前先查表，表上沒有的要先照鐵律③讀機制查證、定白話名並回寫對照表；③解釋深入淺出：每個承重判斷用讀者能懂的話講一遍，不堆行話。
 
 ---
 

@@ -237,6 +237,7 @@ commit 訊息列出：universe 數、分割調整檔、剔除檔、baseline 日�
 5b. **橫向先捲到底**（Step 1.5）——表格橫向也虛擬化，EPS 三欄未捲到就不在 DOM；縱向捲動全程不得動 `scrollLeft`。抓到整片空值時第一個要查的就是這條。
 6. **Commit scope tight**——只 add dd-screener bundle，不 add docs/dd/。
 7. **對帳 extra 應為空**——非空代表 universe 或別名沒同步。
+8. **白話呈現條款（2026-09-01 持有人拍板，全站適用，極簡版）**：本 skill 為機械層資料管線，產出中若出現顯示 label（如 variant 頁欄位名），遵守 `notes/site-internal/root/_plainlang_styleguide.md` 對照表白話主名。
 
 ## 與 refresh-eps-screener 的差異速查
 

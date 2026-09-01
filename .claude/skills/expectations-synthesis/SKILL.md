@@ -196,6 +196,10 @@ description: "收到一個 ticker（可附一個券商報告資料夾）後，�
 18. **寫稿後報告級 critic**（Step 6.5）：獨立 sonnet 紅隊本篇自身（不看寫作過程），major 發現必修稿或 §8 明文回應。與寫稿前 industry-thesis-critic 是兩件事。
 19. **校準帳本 append**（Step 7.5）：發布凍結判讀進 `knowledge/synthesis_ledger.json`，季度回填 outcome；連兩輪 direction 命中率 < 50% 的維度要檢討推理協議。
 
+**白話呈現條款（2026-09-01 持有人拍板，全站適用）**：
+
+20. 所有輸出給讀者的顯示文字遵守 `notes/site-internal/root/_plainlang_styleguide.md`（『二補、實作定案』節優先）——①白話為主、術語為輔（對照表已定白話主名的詞一律用白話主名，原代號降小字或首現括號）；②新造術語前先查表，表上沒有的要先照鐵律③讀機制查證、定白話名並回寫對照表；③解釋深入淺出：每個承重判斷用讀者能懂的話講一遍，不堆行話。
+
 ---
 
 ## 反模式（別做）
