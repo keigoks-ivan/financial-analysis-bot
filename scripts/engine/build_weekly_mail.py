@@ -38,7 +38,7 @@ OUT_HTML = ROOT / "engine_weekly_mail.html"
 OUT_SUBJECT = ROOT / "engine_weekly_mail_subject.txt"
 
 TRACK_LABEL = {"core": "核心", "sat": "衛星"}
-P_LABEL_TXT = {"breakout": "突破帶", "pullback": "回踩中", "in_trend": "趨勢帶內"}
+P_LABEL_TXT = {"breakout": "突破帶", "pullback": "回踩到位", "in_trend": "趨勢帶內"}
 
 
 # ── 資料載入 ────────────────────────────────────────────────────────────
@@ -70,13 +70,15 @@ def load_prev_arena() -> dict | None:
 def humanize_why(raw: str | None) -> str:
     if not raw:
         return "機械層未留下具體原因"
+    if raw.startswith("市值資料缺漏"):
+        return raw
     if raw.startswith("市值"):
         return f"市值不足（{raw}）"
-    if raw.startswith("R 否決") or raw.startswith("R 保守否決"):
+    if raw.startswith("上修閘否決") or raw.startswith("上修閘保守否決"):
         return raw
-    if raw.startswith("R fail"):
+    if raw.startswith("上修閘未過"):
         return f"EPS 預估上修未達標（{raw}）"
-    if raw.startswith("G fail"):
+    if raw.startswith("成長閘未過"):
         return f"成長動能未達標（{raw}）"
     return raw
 

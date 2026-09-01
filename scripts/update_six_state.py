@@ -440,6 +440,7 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
     <div class="crumb"><a href="/backtest/">回測</a> / <a href="/backtest/six_state/">六狀態機</a> / 即時狀態</div>
     <h1>六狀態機 — 即時狀態</h1>
     <div class="sub">指數部六狀態機 v1.0r1 &middot; 純 ETF 配置（QQQ + IB01）&middot; QQQ 週線</div>
+    <div class="sub">這是大盤曝險燈號，依 QQQ 週線切換 S0–S5 六種配置狀態，與個股訊號無關（個股訊號另見選股漏斗的「態①-⑤」系統）。</div>
   </div>
 </div>
 <div class="container">

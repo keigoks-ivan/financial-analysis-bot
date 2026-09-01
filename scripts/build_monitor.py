@@ -80,7 +80,7 @@ CATEGORIES = [
     ("alerts", "今日異常"),          # 虛擬分類，前端用
     ("indices", "全球指數"),
     ("sectors", "美股產業"),
-    ("factors", "因子與風險胃納"),
+    ("factors", "因子與風險偏好"),
     ("rates", "利率／通膨／期限溢價"),
     ("vol", "波動與情緒"),
     ("credit", "信用"),
@@ -128,7 +128,7 @@ for sym, zh in [("XLK", "科技"), ("XLF", "金融"), ("XLE", "能源"), ("XLV",
 # 冷門但關鍵組：道氏運輸背離／區域銀行金絲雀／早週期營建／高 beta 胃納）
 _d("mtum", "MTUM 動能", "factors", "yf", "MTUM", prefix="$")
 _d("fngs", "FNGS 大型科技", "factors", "yf", "FNGS", prefix="$")
-_d("arkk", "ARKK 投機胃納", "factors", "yf", "ARKK", prefix="$")
+_d("arkk", "ARKK 投機偏好", "factors", "yf", "ARKK", prefix="$")
 _d("rsp_spy", "RSP/SPY 等權比", "factors", "ratio", ("rsp_raw", "spy_raw"), dp=4)
 _d("iwm_spy", "IWM/SPY 小型股比", "factors", "ratio", ("iwm_raw", "spy_raw"), dp=4)
 _d("vtv_vug", "VTV/VUG 價值成長比", "factors", "ratio", ("vtv_raw", "vug_raw"), dp=4)
@@ -139,7 +139,7 @@ _d("kre_xlf", "KRE/XLF 區域銀行比", "factors", "ratio", ("kre_raw", "xlf"),
    pct_alert="low")
 _d("itb_spy", "ITB/SPY 住宅營建比", "factors", "ratio", ("itb_raw", "spy_raw"), dp=4,
    pct_alert="low")
-_d("xly_xlp", "XLY/XLP 消費風險胃納", "factors", "ratio", ("xly", "xlp"), dp=4,
+_d("xly_xlp", "XLY/XLP 消費風險偏好", "factors", "ratio", ("xly", "xlp"), dp=4,
    pct_alert="low")
 _d("sphb_splv", "SPHB/SPLV 高低波比", "factors", "ratio", ("sphb_raw", "splv_raw"),
    dp=4, pct_alert="low")
@@ -585,15 +585,15 @@ def series_alerts(item: dict, spec: dict) -> list[dict]:
     pa = spec["pct_alert"]
     if pctile is not None and pa in ("high", "both") and pctile >= RULES["pctile_hi"]:
         out.append({"sev": "yellow", "cat": cat, "key": key, "rule": "pctile",
-                    "msg": f"{label} 現值 {item['val_fmt']} 進入一年水位前 "
+                    "msg": f"{label} 現值 {item['val_fmt']} 進入一年歷史高位前 "
                            f"{100 - pctile:.1f}%（分位 {pctile:.1f}）"})
     if pctile is not None and pa in ("low", "both") and pctile <= RULES["pctile_lo"]:
         out.append({"sev": "yellow", "cat": cat, "key": key, "rule": "pctile",
-                    "msg": f"{label} 現值 {item['val_fmt']} 落到一年水位後 "
+                    "msg": f"{label} 現值 {item['val_fmt']} 落到一年歷史低位後 "
                            f"{pctile:.0f}%（低分位警示）"})
     if spec["lo52_alert"] and item.get("lo52"):
         out.append({"sev": "red", "cat": cat, "key": key, "rule": "lo52",
-                    "msg": f"{label} 觸及 52 週新低（{item['val_fmt']}）"})
+                    "msg": f"{label} 觸及一年新低（{item['val_fmt']}）"})
     st = item.get("streak") or 0
     if fresh_bar and abs(st) >= RULES["streak"] and spec["freq"] == "d":
         out.append({"sev": "yellow", "cat": cat, "key": key, "rule": "streak",
@@ -631,7 +631,7 @@ def structural_alerts(items: dict, fear_greed: dict | None) -> tuple[list[dict],
             newly = prev_ratio is not None and prev_ratio <= 1.0
             alerts.append({"sev": "red" if newly else "yellow", "cat": "vol",
                            "key": "vix_ts", "rule": "vix_inversion",
-                           "msg": f"VIX 期限結構倒掛{'（今日新轉倒掛）' if newly else '中'}："
+                           "msg": f"VIX 短天期比長天期貴{'（今日新轉倒掛）' if newly else '中'}："
                                   f"VIX9D/VIX = {ts['last']:.3f} > 1"})
 
     # 3) 股漲信用背離：S&P 500 上漲但 HYG/LQD 大幅走弱
@@ -639,7 +639,7 @@ def structural_alerts(items: dict, fear_greed: dict | None) -> tuple[list[dict],
     if (spx and hl and spx.get("chg") is not None and hl.get("z") is not None
             and spx["chg"] > 0 and hl["z"] <= RULES["div_credit_z"]):
         alerts.append({"sev": "yellow", "cat": "credit", "key": "hyg_lqd", "rule": "divergence",
-                       "msg": f"股漲信用背離：S&P 500 {spx['chg_fmt']} 上漲，"
+                       "msg": f"股市漲但信用市場不買單：S&P 500 {spx['chg_fmt']} 上漲，"
                               f"但 HYG/LQD 信用比 z = {hl['z']:.1f} 大幅走弱"})
 
     # 4) Fear & Greed 極端

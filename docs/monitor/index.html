@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>市場監測 — InvestMQuest Research</title>
-  <meta name="description" content="全資產市場監測 — 全球指數／美股產業／因子與風險胃納／利率通膨／波動情緒／信用／外匯／商品／資金管路近 100 條 series 日更明細，附統計異常偵測（z-score 閘／水位分位閘／結構事件）與近 60 天異常留痕。描述器非擇時訊號。">
+  <meta name="description" content="全資產市場監測 — 全球指數／美股產業／因子與風險偏好／利率通膨／波動情緒／信用／外匯／商品／資金管路近 100 條 series 日更明細，附統計異常偵測（z-score 閘／歷史高低位閘／結構事件）與近 60 天異常留痕。描述器非擇時訊號。">
   <meta property="og:title" content="市場監測 — InvestMQuest Research">
   <meta property="og:site_name" content="InvestMQuest Research">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -285,7 +285,7 @@ footer.imq-foot a{color:var(--text-secondary)}
   <div class="hero">
     <div class="overline">Market Monitor · Describer</div>
     <h1>市場監測</h1>
-    <p>本頁提供全球指數、美股產業、因子與風險胃納、利率／通膨／期限溢價、波動情緒、信用（含 CCC 金絲雀）、外匯、商品與資金管路（SOFR−IORB、Fed 資產負債表、STLFSI）近 100 條 series 的日更明細，並以統計規則（變動 z-score、一年水位分位、結構事件）標出異常；資料來源 Yahoo Finance／FRED／CNN；每日美股收盤後更新。本頁為描述器（describer），衡量「今天什麼東西落在統計異常區」，非擇時訊號、不構成買賣指令。</p>
+    <p>本頁提供全球指數、美股產業、因子與風險偏好、利率／通膨／期限溢價、波動情緒、信用（含 CCC 金絲雀）、外匯、商品與資金管路（SOFR−IORB、Fed 資產負債表、STLFSI）近 100 條 series 的日更明細，並以統計規則（變動 z-score、一年歷史高低位、結構事件）標出異常；資料來源 Yahoo Finance／FRED／CNN；每日美股收盤後更新。本頁為描述器（describer），衡量「今天什麼東西落在統計異常區」，非擇時訊號、不構成買賣指令。</p>
     <div class="asof" id="asof">載入中…</div>
   </div>
 
@@ -364,17 +364,17 @@ footer.imq-foot a{color:var(--text-secondary)}
 
   <section class="method">
     <h2>方法論<span class="en">Methodology</span></h2>
-    <p>所有異常皆為統計描述，規則與閾值如下；閾值寫死在 <span class="mono">scripts/build_monitor.py</span>，改動需過 commit。z-score 以該 series 過去一年的變動分布為基準（日頻 252 筆、週頻 52 筆）；水位分位為現值在一年區間內的百分位。週頻 series（NFCI、TGA、銀行準備金、STLFSI、Fed 資產負債表、初領失業金）不參與連漲跌規則。</p>
+    <p>所有異常皆為統計描述，規則與閾值如下；閾值寫死在 <span class="mono">scripts/build_monitor.py</span>，改動需過 commit。z-score 以該 series 過去一年的變動分布為基準（日頻 252 筆、週頻 52 筆）；歷史高低位為現值在一年區間內的百分位。週頻 series（NFCI、TGA、銀行準備金、STLFSI、Fed 資產負債表、初領失業金）不參與連漲跌規則。</p>
     <div class="tbl-wrap"><table>
       <tr><th>規則</th><th>條件</th><th>級別</th></tr>
       <tr><td>單日變動 z-score</td><td>|z| ≥ 2 ／ |z| ≥ 3</td><td>黃 ／ 紅</td></tr>
-      <tr><td>高水位分位（壓力型 series：VIX 家族、MOVE、SKEW、HY／IG／CCC OAS、NFCI、STLFSI、SOFR−IORB、實質利率、期限溢價、金銀比、初領失業金；通膨預期雙向）</td><td>一年分位 ≥ 98</td><td>黃</td></tr>
-      <tr><td>低水位（HYG/LQD 信用比；風險胃納比：道氏運輸、區域銀行、住宅營建、XLY/XLP、SPHB/SPLV；通膨預期雙向）</td><td>一年分位 ≤ 2</td><td>黃</td></tr>
-      <tr><td>52 週新低（主要股指）</td><td>收盤觸及 252 日最低</td><td>紅</td></tr>
+      <tr><td>歷史高位（壓力型 series：VIX 家族、MOVE、SKEW、HY／IG／CCC OAS、NFCI、STLFSI、SOFR−IORB、實質利率、期限溢價、金銀比、初領失業金；通膨預期雙向）</td><td>一年分位 ≥ 98</td><td>黃</td></tr>
+      <tr><td>歷史低位（HYG/LQD 信用比；風險偏好比：道氏運輸、區域銀行、住宅營建、XLY/XLP、SPHB/SPLV；通膨預期雙向）</td><td>一年分位 ≤ 2</td><td>黃</td></tr>
+      <tr><td>一年新低（主要股指）</td><td>收盤觸及 252 日最低</td><td>紅</td></tr>
       <tr><td>連漲跌</td><td>同方向連續 ≥ 5 日</td><td>黃</td></tr>
       <tr><td>殖利率曲線翻轉</td><td>10Y−2Y 利差正負號單日翻轉</td><td>紅</td></tr>
-      <tr><td>VIX 期限結構倒掛</td><td>VIX9D／VIX &gt; 1（新轉倒掛＝紅，持續中＝黃）</td><td>紅／黃</td></tr>
-      <tr><td>股漲信用背離</td><td>S&amp;P 500 上漲且 HYG/LQD 日變動 z ≤ −2</td><td>黃</td></tr>
+      <tr><td>VIX 短天期比長天期貴</td><td>VIX9D／VIX &gt; 1（新轉倒掛＝紅，持續中＝黃）</td><td>紅／黃</td></tr>
+      <tr><td>股市漲但信用市場不買單</td><td>S&amp;P 500 上漲且 HYG/LQD 日變動 z ≤ −2</td><td>黃</td></tr>
       <tr><td>Fear &amp; Greed 極端</td><td>≤ 10（極端恐懼）或 ≥ 90（極端貪婪）</td><td>黃</td></tr>
     </table></div>
     <p style="margin-top:.6rem">利率曲線與信用 OAS 走 FRED 日更（落後一個交易日屬預期）；流動性四項（RRP／TGA／銀行準備金／NFCI）沿用本站早報時期的方向慣例合成單一評估。資料缺口誠實列出，不以舊值填充；落後超過時效門檻的 series 標灰、不參與異常判定。</p>
@@ -691,7 +691,7 @@ footer.imq-foot a{color:var(--text-secondary)}
 
   // ── 跨資產壓力分數（獨立 fetch；資料缺失或格式不符則整段隱藏，不影響其餘頁面）──
   var BAND_LABELS = { calm: "平靜", normal: "常態", warming: "升溫", tense: "緊張", extreme: "極端" };
-  var BUCKET_LABELS = { vol: "波動", credit: "信用", liq: "流動性", app: "風險胃納", rates: "利率" };
+  var BUCKET_LABELS = { vol: "波動", credit: "信用", liq: "流動性", app: "風險偏好", rates: "利率" };
   var BUCKET_ORDER = ["vol", "credit", "liq", "app", "rates"];
   var MEMBER_LABELS = {
     move: "MOVE（公債波動）", skew: "SKEW（尾端偏態）", vix: "VIX", vix_ts: "VIX 期限結構", vvix: "VVIX",

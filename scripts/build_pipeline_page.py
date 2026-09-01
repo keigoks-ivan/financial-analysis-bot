@@ -67,6 +67,9 @@ CORE_CAP_PCT = 10.0              # 核心單檔上限（個股部淨值）
 SATELLITE_CAP_PCT = 5.0          # 衛星單檔上限
 CORE_SLOTS = 5                   # 核心席位硬上限（章程 core ≤5）；超出落板凳
 
+# 白話工程：sop-funnel 態①-⑤ 顯示層白話對照（純顯示，資料層字串不動；對照 sop_funnel/engine.py）
+STATE_PLAIN = {"①": "健康多頭", "②": "偏熱", "③": "過熱", "④": "回檔", "⑤": "出場等回歸"}
+
 # ── 觀望複審隊列（裁決保鮮迴路，2026-07-04）──────────────────────────────────
 # 門檻全部沿用既有拍板值，不引入新調參：miss＝結算警報線（knowledge/ --calibration 同口徑）、
 # EPS 上修＝循環軌資格口徑（handoff Task 2）。命中＝裁決回爐複審，不是買進訊號。
@@ -290,7 +293,7 @@ def render_universe(latest: dict, pre_id: Optional[dict], momentum_blind: list) 
     mom_blind = len(momentum_blind)
     return f"""<section class="block">
   <h2 class="block-h"><span class="step">1</span> 宇宙 · 待研究隊列</h2>
-  <div class="block-sub">DD 宇宙規模與兩條「還沒被研究的候選」入口——形狀掃描的覆蓋盲區（六燈全滅＝零方法覆蓋），與下方回看鏡的動能盲區（高報酬卻無／舊 DD）。</div>
+  <div class="block-sub">DD 宇宙規模與兩條「還沒被研究的候選」入口——形狀掃描命中但完全沒人研究過的盲區（不在任何產業報告、也還沒做 DD），與下方回看鏡的動能盲區（高報酬卻無／舊 DD）。</div>
   <div class="stat-row">
     <div class="stat"><strong>{universe}</strong>DD 宇宙（latest.json）</div>
     <div class="stat"><strong>{shape_blind}</strong>形狀掃描盲區</div>
@@ -311,7 +314,7 @@ def render_gate(gated: list) -> str:
   <h2 class="block-h"><span class="step">2</span> 資格閘 · 通過 {len(gated)} 檔</h2>
   <div class="block-sub">
     自算口徑（<b>不依賴 pass_count</b>）：<code>fail_criteria −{{de}} 為空</code> 且 <code>moat_grade∈{{S,A,B}}</code> 且 <code>moat_trend≠↓</code>。
-    D/E 為 advisory——<code>&gt;{DE_WARN_THRESHOLD}</code> 標 ⚠ 但<b>不計分、不擋</b>（持有人 2026-06-11 拍板的五條件無 D/E；本頁已把 de 退出閘）。
+    D/E 為 advisory——<code>&gt;{DE_WARN_THRESHOLD}</code> 標 ⚠ 但<b>不計分、不擋</b>（持有人 2026-06-11 拍板的五項資格門檻無 D/E；本頁已把 de 退出閘）。
     本閘通過 {len(gated)} 檔，其中 <b>{de_warn_n}</b> 檔帶 D/E ⚠。
   </div>
   <div class="gate-grid">{tags}</div>
@@ -570,18 +573,19 @@ def render_trigger(sop: Optional[dict], veto_by_reason: dict,
         for x in lst:
             t = escape(x.get("ticker", "?"))
             st = x.get("sim", {}).get("current_state") if isinstance(x.get("sim"), dict) else None
-            parts.append(f"{t}<span class='st'>{escape(st or x.get('entry_type',''))}</span>")
+            label = STATE_PLAIN.get(st, st) if st else x.get('entry_type', '')
+            parts.append(f"{t}<span class='st'>{escape(label)}</span>")
         return "、".join(parts) or "—"
 
     return f"""<section class="block">
   <h2 class="block-h"><span class="step">4</span> 板機現況 <span class="asof">sop-funnel as of {as_of}</span></h2>
-  <div class="block-sub">SOP 漏斗 T+1 執行層的當日燈號。態②過熱否決＝反動能硬閘擋下的訊號累計（ledger append-only 統計）。</div>
+  <div class="block-sub">SOP 漏斗 T+1 執行層的當日燈號。偏熱（態2）否決＝反動能硬閘擋下的訊號累計（ledger append-only 統計）。</div>
   <div class="stat-row">
     <div class="stat"><strong>{len(today)}</strong>今日訊號</div>
     <div class="stat"><strong>{len(opens)}</strong>持倉中 open</div>
     <div class="stat"><strong>{len(a1)}/{len(a2)}/{len(b)}/{len(c)}</strong>待命 A1/A2/B/C</div>
     <div class="stat"><strong>{len(base)}</strong>築底中</div>
-    <div class="stat warn"><strong>{veto2}</strong>態②過熱否決（累計）</div>
+    <div class="stat warn"><strong>{veto2}</strong>偏熱（態2）否決（累計）</div>
   </div>
   <div class="trigger-detail">
     <div><span class="lbl">持倉中</span>{_open_names(opens)}</div>
@@ -726,7 +730,7 @@ def render_leaderboard(univ: list, artifacts: list, n_total: int) -> str:
 
 def render_howto() -> str:
     rules = [
-        ("這頁只排序，不下單", "潛力分決定「先研究／先考慮誰」，<b>不是買進訊號</b>。要買，等 sop-funnel 板機亮燈：A1 起漲／B 回踩／<b>C 冷卻完成</b>（態②過熱否決後，完成週收盤跌回 +2σ 帶內且守住 52 週線 — 2026-07-04 起，過熱不再是終局）。"),
+        ("這頁只排序，不下單", "潛力分決定「先研究／先考慮誰」，<b>不是買進訊號</b>。要買，等 sop-funnel 板機亮燈：A1 起漲／B 回踩／<b>C 冷卻完成</b>（偏熱〔態2〕否決後，完成週收盤跌回 +2σ 帶內且守住 52 週線 — 2026-07-04 起，過熱不再是終局）。"),
         ("裁決是唯一權威", "能不能進候選，看 DD 統一裁決＝<b>進場／觀望／迴避</b>。沒裁決（待補 DD）＝還沒資格，不是可買。"),
         ("席位鎖死：核心 5 ＋ 衛星 5", "核心軌固定 5 席（角色優先），衛星／循環另計。滿了要進，得<b>打贏現有最弱的</b>才換，不加席位。"),
         ("三軌各有任務，別混", "核心＝耐久複利（上限 10%）；衛星結構＝runway🟢 數倍股（5%）；衛星循環＝底部×上修（3%，先等回踩）。"),

@@ -39,7 +39,7 @@ def main() -> int:
         ec = e.get("earnings_check") or {}
         if ec.get("days_to_earnings") is not None:
             lines.append(f"   距下次財報 {ec['days_to_earnings']} 天"
-                         f"{'' if ec.get('ok', True) else ' ⚠ 財報窗口內'}")
+                         f"{'' if ec.get('ok', True) else ' ⚠ 財報前觀察期內'}")
         lines.append("")
     if vetoed:
         lines.append(f"(另有 {len(vetoed)} 個訊號被 veto,詳見頁面)")

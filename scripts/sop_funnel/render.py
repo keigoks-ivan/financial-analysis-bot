@@ -61,14 +61,56 @@ def _dd_link(ev) -> str:
 
 
 _ST_COLOR = {"1": "#059669", "2": "#ca8a04", "3": "#ea580c", "4": "#b45309", "5": "#dc2626"}
+# 白話工程（見 notes/site-internal/root/_plainlang_styleguide.md §2.2）：態①-⑤ 顯示層
+# 一律換白話主名，圈碼/阿拉伯碼降小字備查；含義對照 engine.py state1()/simulate_trade()。
+_STATE_PLAIN = {"1": "健康多頭", "2": "偏熱", "3": "過熱", "4": "回檔", "5": "出場等回歸"}
 
 
 def _state_badge(st) -> str:
     d = _CIRCLED.get(st, st)
     if d in _ST_COLOR:
         return (f'<span style="font-weight:800;font-size:13px;color:{_ST_COLOR[d]}">'
-                f'態{d}</span>')
+                f'{_STATE_PLAIN.get(d, d)}</span>'
+                f'<span style="font-size:9.5px;color:var(--muted);margin-left:4px">（態{d}）</span>')
     return _e(st)
+
+
+_LEG_REASON_PLAIN = {  # engine.py legs[].reason / pending_action 的白話對照（純顯示層，資料值不動）
+    "態③減1/3": "過熱減碼",
+    "態④減碼": "回檔減碼",
+    "態④回補": "回檔回補",
+    "態⑤全出": "出場等回歸（全出）",
+    "態⑤": "出場等回歸",
+}
+
+
+def _leg_reason_label(raw) -> str:
+    """腿動作原因（態③減1/3 等）→ 白話主名＋原代號小字，回傳已跳脫 HTML 片段。"""
+    if not raw:
+        return "—"
+    plain = _LEG_REASON_PLAIN.get(raw)
+    if plain is None:
+        return _e(raw)
+    return (f'{_e(plain)}<span style="color:var(--muted);font-size:9.5px">'
+            f'（{_e(raw)}）</span>')
+
+
+_VETO_LABELS = {  # 否決/週線態勢原因的白話對照（對照 engine.py state1()/_veto_stack）
+    "態②過熱": "偏熱",
+}
+
+
+def _veto_label(raw) -> str:
+    """否決/週線態勢原因 → 白話主名（＋原代號小字，若有對照），回傳已跳脫 HTML 片段。"""
+    if raw in _VETO_LABELS:
+        plain = _VETO_LABELS[raw]
+        return (f'{_e(plain)}<span style="color:var(--muted);font-size:9.5px">'
+                f'（{_e(raw)}）</span>')
+    if raw.startswith("五條件fail:"):
+        return _e("五項資格門檻未過：" + raw[len("五條件fail:"):])
+    if raw == "五條件缺資料":
+        return _e("五項資格門檻缺資料")
+    return _e(raw)
 
 
 def _signal_rows(evs) -> str:
@@ -93,9 +135,9 @@ def _signal_rows(evs) -> str:
 def _warn_tags(e) -> str:
     tags = []
     if e.get("moat_review_due"):
-        tags.append('<span class="warn-tag">護城河待複檢</span>')
+        tags.append('<span class="warn-tag">護城河評級待更新</span>')
     if e.get("earnings_check") == "silent":
-        tags.append('<span class="warn-tag">財報窗內</span>')
+        tags.append('<span class="warn-tag">財報前觀察期內</span>')
     if e.get("earnings_check") == "unverified":
         tags.append('<span class="warn-tag">財報日未驗</span>')
     return "".join(tags) or "—"
@@ -108,9 +150,10 @@ def _veto_rows(evs) -> str:
         f'<tr><td class="left">{_e(e["ticker"])}</td>'
         f'<td><span class="tag tag-{e["entry_type"].lower()}">{e["entry_type"]}</span></td>'
         f'<td>{e["signal_close"]:,.1f}</td>'
-        f'<td class="left veto">{_e("；".join(e["vetoes"]))}</td></tr>'
+        f'<td class="left veto">{"；".join(_veto_label(v) for v in e["vetoes"])}</td></tr>'
         for e in evs)
-    return (f'<details class="veto-box"><summary>今日否決 {len(evs)} 筆（創新高/站回但被五問擋下）</summary>'
+    return (f'<details class="veto-box"><summary>今日否決 {len(evs)} 筆'
+            f'（創新高/站回，但被資格門檻或態勢守則擋下）</summary>'
             f'<table><thead><tr><th class="left">ticker</th><th>型態</th><th>訊號價</th>'
             f'<th class="left">否決原因</th></tr></thead><tbody>{rows}</tbody></table></details>')
 
@@ -136,8 +179,8 @@ def _veto_distribution_block(vd) -> str:
         f'<details class="vd-box" open><summary>否決原因分布 — 帳本累計 {vd["total"]} 筆'
         f'（近 {vd["recent_window_days"]} 日 {vd["recent_total"]} 筆）</summary>'
         f'<div class="vd-wrap">{bars}</div>'
-        f'<div class="vd-note">否決＝五條件已過、技術型態觸發，但進場當下被態勢守則擋下。'
-        f'態2過熱＝價格離均線過遠，不追高、等回踩；價≤52週線／排列不正＝尚未進入健康多頭。</div>'
+        f'<div class="vd-note">否決＝五項資格門檻已過、技術型態觸發，但進場當下被態勢守則擋下。'
+        f'偏熱（態2）＝價格離均線過遠，不追高、等回踩；價≤52週線／排列不正＝尚未進入健康多頭（態1）。</div>'
         f'</details>')
 
 
@@ -209,7 +252,7 @@ def _performance_block(p) -> str:
         f'<div class="section"><div class="card">'
         f'<h2>6/1 起策略淨值 vs SPY（起始資金 {cap_m}）</h2>'
         f'<div class="desc">起始 {cap_m} 個股部，照 SOP 全交易設定（T+1 進場 · 部位 = min(10%, 1.5%÷停損) · '
-        f'態③減1/3 · 態④減碼+回補 · 態⑤全出）逐日 mark-to-market；未投入現金照 IBKR 閒置資金利率 '
+        f'過熱（態3）減1/3 · 回檔（態4）減碼+回補 · 出場等回歸（態5）全出）逐日 mark-to-market；未投入現金照 IBKR 閒置資金利率 '
         f'{p.get("cash_apr_pct", 0):.2f}% p.a.（{_e(rate_src)}，自動跟基準）計息（USD、&gt;$10k、Actual/360）。'
         f'基準 SPY 同起始資金、{_e(p["start"])} 為基期。日序列由 sim legs 重建，與 §3/§4 一致。</div>'
         f'<div class="pf-legend"><span class="pf-lg-nav">策略 NAV</span>'
@@ -236,14 +279,14 @@ def _open_rows(evs) -> str:
     out = []
     for e in sorted(evs, key=lambda x: x["entry_date"], reverse=True):
         s = e["sim"]
-        legs = "；".join(f'{l["reason"]}@{l["price"]:,.0f}' for l in s["legs"]) or "—"
+        legs = "；".join(f'{_leg_reason_label(l["reason"])}@{l["price"]:,.0f}' for l in s["legs"]) or "—"
         flo = (s["last_price"] / s["entry_close"] - 1) * 100 if s.get("last_price") else None
         out.append(
             f'<tr><td class="left"><strong>{_e(e["ticker"])}</strong></td>'
             f'<td><span class="tag tag-{e["entry_type"].lower()}">{e["entry_type"]}</span></td>'
             f'<td>{_e(e["entry_date"])}</td><td>{s["entry_close"]:,.1f}</td>'
             f'<td>{_state_badge(s["current_state"])}'
-            + (f'<span class="pending-tag">{_e(s["pending_action"])}·明日收盤執行</span>'
+            + (f'<span class="pending-tag">{_leg_reason_label(s["pending_action"])}·明日收盤執行</span>'
                if s.get("pending_action") else '')
             + f'</td><td>{s["current_fraction"] * 100:.0f}%</td>'
             f'<td class="{_cls(flo)}">{_pct(flo)}</td>'
@@ -262,7 +305,7 @@ def _closed_rows(evs) -> str:
             f'<tr><td class="left"><strong>{_e(e["ticker"])}</strong></td>'
             f'<td><span class="tag tag-{e["entry_type"].lower()}">{e["entry_type"]}</span></td>'
             f'<td>{_e(e["entry_date"])}</td><td>{_e(s["exit_date"])}</td>'
-            f'<td>{_e(s["exit_reason"])}</td>'
+            f'<td>{_leg_reason_label(s["exit_reason"])}</td>'
             f'<td class="{_cls(s["ret_pct"])}">{_pct(s["ret_pct"])}</td>'
             f'<td>{_e(s["r_multiple"])}</td>'
             f'<td class="{_cls(s.get("alpha_pct"))}">{_pct(s.get("alpha_pct"))}</td>'
@@ -323,7 +366,7 @@ def _backtest_block(bt) -> str:
                     f'<tbody>{tr}</tbody></table>')
     return (f'<p class="bt-meta">窗口 {_e(bt.get("window_start"))} → {_e(bt.get("window_end"))} · '
             f'universe {bt.get("n_tickers")} 檔 · ⚠ 質量閘門凍結今日值（survivorship 偏誤，僅供參考）</p>'
-            f'<table><thead><tr><th class="left">態④變體</th><th>trades</th><th>勝率</th>'
+            f'<table><thead><tr><th class="left">回檔處置版本（態4）</th><th>trades</th><th>勝率</th>'
             f'<th>中位報酬</th><th>平均報酬</th><th>α vs SPY</th><th>平均R</th><th>中位持有</th>'
             f'</tr></thead><tbody>{"".join(rows)}</tbody></table>{per_type}')
 
@@ -340,11 +383,14 @@ def _population_block(pop, excluded) -> str:
         return '<div class="empty">母體為空</div>'
     rows = []
     for r in pop:
-        st = "態① ✓" if r["state1"] else "✗" + "、".join(r["state1_fails"])
+        if r["state1"]:
+            st = ('健康多頭<span style="color:var(--muted);font-size:9.5px">（態1）</span> ✓')
+        else:
+            st = "✗" + "、".join(_veto_label(x) for x in r["state1_fails"])
         st_cls = "pos" if r["state1"] else ""
         rows.append(
             f'<tr><td class="left"><strong>{_e(r["ticker"])}</strong> {_e(r.get("name") or "")}'
-            + ('<span class="warn-tag">待複檢</span>' if r.get("moat_review_due") else '')
+            + ('<span class="warn-tag">評級待更新</span>' if r.get("moat_review_due") else '')
             + f'</td>'
             f'<td>{_grade_badge(r["moat_grade"], r["moat_trend"])} <span style="color:var(--muted)">{_e(r["moat_score"])}</span></td>'
             f'<td>{_e(r.get("signal"))}</td>'
@@ -353,15 +399,15 @@ def _population_block(pop, excluded) -> str:
             f'<td>{_e(round(r["fcf"], 1)) if r.get("fcf") is not None else "—"}</td>'
             f'<td>{_e(round(r["peg"], 2)) if r.get("peg") is not None else "—"}</td>'
             f'<td>{_pct(r["dist_ath_pct"])}</td>'
-            f'<td class="left {st_cls}" style="font-size:10.5px">{_e(st)}</td>'
+            f'<td class="left {st_cls}" style="font-size:10.5px">{st}</td>'
             f'<td>{_dd_link(r)}</td></tr>')
     recon = ""
     if excluded:
         items = "、".join(
             f'{_e(e["ticker"])}（{_grade_badge(e["moat_grade"], e["moat_trend"])}'
             f'，{_e("、".join(e["moat_cut"]))}）' for e in excluded)
-        recon = (f'<div class="exceeded">四質量條件通過、被護城河 gate 擋下 {len(excluded)} 檔'
-                 f'（{len(pop)}＋{len(excluded)} = 四條件母體）：{items}</div>')
+        recon = (f'<div class="exceeded">四項財務門檻通過、被護城河 gate 擋下 {len(excluded)} 檔'
+                 f'（{len(pop)}＋{len(excluded)} = 四項財務門檻母體）：{items}</div>')
     return (f'<table><thead><tr><th class="left">ticker</th><th>護城河</th><th>訊號</th>'
             f'<th>CAGR</th><th>ROIC</th><th>FCFm</th><th>PEG</th><th>距ATH</th>'
             f'<th class="left">週線態勢</th><th>報告</th></tr></thead>'
@@ -516,12 +562,12 @@ footer{{text-align:center;font-size:10.5px;color:var(--muted);padding:24px}}
 
 <div class="hero"><div class="hero-inner">
 <div class="hero-h1">Pure MA SOP 漏斗 — 起漲點雷達 × 自動記分板</div>
-<div class="hero-sub">個股部 Pure MA SOP v2.1 機器版（總守則 v2.0）。五條件閘門（FY1→FY3 CAGR&gt;15 · ROIC&gt;15 · FCFm&gt;10 · PEG&lt;2 · 護城河≥B 且趨勢非↓）→ 態①健康多頭 → <strong>A1 起漲型</strong>（突破站立 ≥26 週的 ATH）/ <strong>B 第二班車</strong>（A1 後 26 週內首次回踩站回 60MA）。所有動作 T+1 收盤執行；進場後五狀態機自動模擬、出場自動記分。</div>
+<div class="hero-sub">個股部 Pure MA SOP v2.1 機器版（總守則 v2.0）。五項資格門檻（FY1→FY3 CAGR&gt;15 · ROIC&gt;15 · FCFm&gt;10 · PEG&lt;2 · 護城河≥B 且趨勢非↓）→ 健康多頭（態1）→ <strong>A1 起漲型</strong>（突破站立 ≥26 週的 ATH）/ <strong>B 第二班車</strong>（A1 後 26 週內首次回踩站回 60MA）。所有動作 T+1 收盤執行；進場後五狀態機自動模擬、出場自動記分。</div>
 <div class="hero-stats">
 <div class="hero-stat"><strong>{d["as_of"]}</strong>as of</div>
 <div class="hero-stat"><strong>{d["universe_total"]}</strong>universe</div>
-<div class="hero-stat"><strong>{d["quality_pass"]}</strong>五條件過閘</div>
-<div class="hero-stat"><strong>{d["state1_count"]}</strong>態①健康多頭</div>
+<div class="hero-stat"><strong>{d["quality_pass"]}</strong>五項資格門檻過閘</div>
+<div class="hero-stat"><strong>{d["state1_count"]}</strong>健康多頭（態1）</div>
 <div class="hero-stat"><strong>{len(d["open_trades"])}</strong>模擬持倉</div>
 <div class="hero-stat"><strong>{len(d["closed_trades"])}</strong>已平倉</div>
 {'<div class="hero-stat"><strong>⚠</strong>SPY 基準滯後</div>' if d.get("spy_benchmark_stale") else ''}
@@ -539,7 +585,7 @@ footer{{text-align:center;font-size:10.5px;color:var(--muted);padding:24px}}
 
 <div class="section"><div class="card">
 <h2>§2 待命區</h2>
-<div class="desc">未扣板機的候選。A1 起漲待命 = 距 ATH ≤5% 且基期 ≥26 週；B 武裝 = A1 錨後 26 週內回踩中；C 冷卻武裝 = 純態②否決後等「完成週收盤跌回 +2σ 帶內且守住 52週線」（2026-07-04 gate change，PREREG 觀察期）；築基中 = 距 ATH 5–25% 且 ATH 已站 ≥20 週（下一批 A1 孵化池）。</div>
+<div class="desc">未扣板機的候選。A1 起漲待命 = 距 ATH ≤5% 且基期 ≥26 週；B 武裝 = A1 錨後 26 週內回踩中；C 冷卻武裝 = 純偏熱（態2）否決後等「完成週收盤跌回 +2σ 帶內且守住 52週線」（2026-07-04 gate change，PREREG 觀察期）；築基中 = 距 ATH 5–25% 且 ATH 已站 ≥20 週（下一批 A1 孵化池）。</div>
 <div class="grid3">
 <div><h3>A1 起漲待命（{len(d["standby_a1"])}）</h3>{_standby_table(d["standby_a1"], a1_cols, "無起漲待命標的 — 等下一個長基期突破")}</div>
 <div><h3>B 武裝中（{len([r for r in d["standby_b"] if not r["exceeded"]])}）</h3>{b_html}</div>
@@ -551,7 +597,7 @@ footer{{text-align:center;font-size:10.5px;color:var(--muted);padding:24px}}
 
 <div class="section"><div class="card">
 <h2>§3 模擬持倉</h2>
-<div class="desc">帳本中 open 的訊號，每日按五狀態機演進（態③觸3σ減1/3 · 態④破60MA×0.97/連3日減至核心50%+站回回補 · 態⑤週收盤破52週線全出）。</div>
+<div class="desc">帳本中 open 的訊號，每日按五狀態機演進（過熱〔態3〕觸3σ減1/3 · 回檔〔態4〕破60MA×0.97/連3日減至核心50%+站回回補 · 出場等回歸〔態5〕週收盤破52週線全出）。</div>
 <table><thead><tr><th class="left">ticker</th><th>型態</th><th>進場日</th><th>進場價</th><th>目前態</th><th>部位</th><th>浮動報酬</th><th>α</th><th class="left">出場腿</th></tr></thead>
 <tbody>{_open_rows(d["open_trades"])}</tbody></table>
 </div></div>
@@ -566,27 +612,24 @@ footer{{text-align:center;font-size:10.5px;color:var(--muted);padding:24px}}
 <h4>已平倉明細</h4>
 <table><thead><tr><th class="left">ticker</th><th>型態</th><th>進場</th><th>出場</th><th>原因</th><th>報酬</th><th>R</th><th>α vs SPY</th><th>持有</th></tr></thead>
 <tbody>{_closed_rows(d["closed_trades"])}</tbody></table>
-<h4>5 年歷史回測參考（含態④減碼幅度 A/B，供 2026-09 季檢）　·　<a href="/dd-screener/sop-funnel-backtest.html">完整 2022 回測：斷路器死鎖發現 + NAV 曲線 + 規則實驗室 →</a></h4>
+<h4>5 年歷史回測參考（含回檔〔態4〕減碼幅度 A/B，供 2026-09 季檢）　·　<a href="/dd-screener/sop-funnel-backtest.html">完整 2022 回測：斷路器死鎖發現 + NAV 曲線 + 規則實驗室 →</a></h4>
 {_backtest_block(d.get("backtest"))}
 </div></div>
 
 <div class="section"><div class="card">
 <h2>§5 規則對照與 Caveats</h2>
-<div class="sop-table">
-<strong>S-4 五問機器化程度</strong>：Q1 五條件 ✓自動（四質量 + 護城河≥B 非↓，dd-screener 資料庫）· Q2 進場型態 ✓自動（A1/A2/B）· Q3 態①健康多頭 ✓自動（凍結週線）· Q4 部位公式 ✓建議值 · Q5 財報靜默期＋斷路器＋總曝險 ✗<strong>人工自查</strong>
-</div>
-<div class="caveat" style="margin-top:12px">
+<div class="caveat">
 <strong>v1 已知簡化（誠實清單）</strong>
 <ul>
-<li>財報靜默期：<strong>2026-06-11 用戶裁決拿掉禁令</strong>（2022 回測：被擋 14 筆放行後全獲利，惟證據含凍結名單偏誤）。forward 訊號改為「標記不擋」——財報窗內進場標 ⚠ 供季檢以無偏數據複查。S-7 gap 破線當日態⑤未模擬</li>
-<li>態⑤ 執行 = 週收盤確認後的次一交易日<strong>收盤</strong>（資料層只有日收盤、無開盤價）— 真實操作建議週一開盤即出，模擬與實盤在生死線上差約一個交易日</li>
+<li>財報前觀察期：<strong>2026-06-11 用戶裁決拿掉禁令</strong>（2022 回測：被擋 14 筆放行後全獲利，惟證據含凍結名單偏誤）。forward 訊號改為「標記不擋」——財報前觀察期內進場標 ⚠ 供季檢以無偏數據複查。S-7 gap 破線當日出場等回歸（態5）未模擬</li>
+<li>出場等回歸（態5）執行 = 週收盤確認後的次一交易日<strong>收盤</strong>（資料層只有日收盤、無開盤價）— 真實操作建議週一開盤即出，模擬與實盤在生死線上差約一個交易日</li>
 <li>組合層規則（斷路器 10%、總曝險 100%、單檔 10% 互斥）未模擬 — 本頁為單筆訊號追蹤，非 NAV 回測</li>
-<li>態①金字塔加碼未模擬 — 每 ticker 同時最多一筆 trade</li>
+<li>健康多頭（態1）金字塔加碼未模擬 — 每 ticker 同時最多一筆 trade</li>
 <li>價格為含息調整（auto_adjust，與全站一致）— TW 高息股的 ATH/52週線訊號可能比看盤圖表早觸發 ~1-2%/年</li>
 <li>B 型「限突破後首次回測」實作為「每 A1 錨最多一次站回」；錨齡上限 26 週</li>
-<li>回填段（{_e(d["params"].get("base_age_min_weeks"))}週基期規則上線前的歷史事件）五條件用當前值評估</li>
-<li>報酬分母 = 累計投入資金（含態④回補）；R = 報酬 ÷ 進場時停損距離</li>
-<li>護城河評級來自 DD 報告（人工輸入會過期）：dd 評級逾 {_e(183)} 天未更新 → 訊號照發但標「護城河待複檢」</li>
+<li>回填段（{_e(d["params"].get("base_age_min_weeks"))}週基期規則上線前的歷史事件）五項資格門檻用當前值評估</li>
+<li>報酬分母 = 累計投入資金（含回檔〔態4〕回補）；R = 報酬 ÷ 進場時停損距離</li>
+<li>護城河評級來自 DD 報告（人工輸入會過期）：dd 評級逾 {_e(183)} 天未更新 → 訊號照發但標「護城河評級待更新」</li>
 </ul>
 </div>
 <div class="sop-table" style="margin-top:12px">
@@ -595,8 +638,8 @@ footer{{text-align:center;font-size:10.5px;color:var(--muted);padding:24px}}
 </div></div>
 
 <div class="section"><div class="card">
-<h2>§6 漏斗母體 — 五條件全過清單（{len(d["population"])} 檔）</h2>
-<div class="desc">這是任何時點的「射程內」標的：四質量條件（CAGR&gt;15 · ROIC&gt;15 · FCFm&gt;10 · PEG&lt;2）＋護城河（≥B 且趨勢非↓）全過。技術面（態①/起漲板機）只決定「何時」對這份名單動手，不影響入列。按護城河等級排序。</div>
+<h2>§6 合格候選池 — 五項資格門檻全過清單（{len(d["population"])} 檔）</h2>
+<div class="desc">這是任何時點的「待機名單」：四項財務門檻（CAGR&gt;15 · ROIC&gt;15 · FCFm&gt;10 · PEG&lt;2）＋護城河（≥B 且趨勢非↓）全過。技術面（健康多頭〔態1〕/起漲板機）只決定「何時」對這份名單動手，不影響入列。按護城河等級排序。</div>
 {_population_block(d["population"], d.get("moat_excluded", []))}
 </div></div>
 

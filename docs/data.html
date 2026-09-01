@@ -270,7 +270,7 @@ table.dt-schema td.ty{font-family:var(--mono);font-size:11px;color:var(--gold-de
   <!-- ══ CROWDING ══ -->
   <section class="dt-ep" id="crowding">
     <div class="dt-ep-head"><h2>擁擠交易監測</h2><span class="dt-path">/crowding/data/latest.json</span></div>
-    <p class="dt-purpose">三層代理三角測量的資料層：15 個期貨市場的 COT 部位極端、15 檔跨資產 ETF 的動能／偏離、64 個主題的四維擁擠分數。<b>描述器非擇時</b>——衡量部位集中與下方緩衝，不預測轉折時點。</p>
+    <p class="dt-purpose">三層交叉驗證（COT 部位／ETF 動能／主題擁擠分數，互相對照）的資料層：15 個期貨市場的 COT（CFTC 大戶持倉報告）部位極端、15 檔跨資產 ETF 的動能／偏離、64 個主題的五維擁擠分數（漲多了嗎／齊漲齊跌程度／分析師在追嗎／成交量異常度／站內看多程度）。<b>描述器非擇時</b>——衡量部位集中與下方緩衝，不預測轉折時點。</p>
     <div class="dt-facts">
       <div class="dt-fact"><span class="k">更新頻率</span><span class="v">每週（週日 12:00 UTC）· workflow <code>crossasset-weekly</code> 跑 <code>build_crowding.py</code></span></div>
       <div class="dt-fact"><span class="k">as_of 語意</span><span class="v"><code>cot_as_of</code> = CFTC COT 報告日（常滯後數日）；<code>generated_at</code> = 產生時戳；ETF 時效見 <code>meta</code></span></div>
@@ -281,7 +281,7 @@ table.dt-schema td.ty{font-family:var(--mono);font-size:11px;color:var(--gold-de
         <tr><td class="f">cot_as_of</td><td class="ty">string</td><td>COT 報告 as-of 日</td></tr>
         <tr><td class="f">cot</td><td class="ty">array</td><td>15 市場：market／net_pct_oi／pctile_3y／pctile_5y／delta_4w／delta_13w／direction／extreme</td></tr>
         <tr><td class="f">etf</td><td class="ty">array</td><td>15 檔：ticker／label／ret_12m／momentum_pctile／deviation_pctile／volume_z</td></tr>
-        <tr><td class="f">themes</td><td class="ty">array</td><td>64 主題：name／rank／score／score_4dim／dims／members_covered／members_total／low_coverage</td></tr>
+        <tr><td class="f">themes</td><td class="ty">array</td><td>64 主題：name／rank／score（五維綜合分）／score_4dim（舊版四維診斷用，已非主分數）／dims（各維度分數拆解）／members_covered／members_total／low_coverage</td></tr>
         <tr><td class="f">gaps</td><td class="ty">array</td><td>未取得或低信心的資料點（誠實列出，不捏造）</td></tr>
         <tr><td class="f">meta</td><td class="ty">object</td><td>各層時效與方法註記</td></tr>
       </tbody>
@@ -292,7 +292,7 @@ table.dt-schema td.ty{font-family:var(--mono);font-size:11px;color:var(--gold-de
   <!-- ══ PICKS ══ -->
   <section class="dt-ep" id="picks">
     <div class="dt-ep-head"><h2>精選清單（候選 + 正式榜）</h2><span class="dt-path">/picks/candidates.json</span></div>
-    <p class="dt-purpose">由 <code>build_picks.py</code> 規則自動判定的爆發軌清單（循環形狀＋站上年線＋非過熱）。含正式榜（official）與候選，兩者互斥；持有人保留 veto。<b>本檔只收 GRP 席位規格外的名字</b>——甲線結構長抱名單見 <code>/engine/arena.json</code>（長熬組已於 2026-07-29 退役，職能與 GRP 席位重疊）。</p>
+    <p class="dt-purpose">由 <code>build_picks.py</code> 規則自動判定的爆發軌清單（循環形狀＋站上年線＋非過熱）。含正式榜（official）與候選，兩者互斥；持有人保留 veto。<b>本檔只收三閘評分（GRP）席位規格外的名字</b>——三閘評分結構線（甲線）長抱名單見 <code>/engine/arena.json</code>（長熬組已於 2026-07-29 退役，職能與三閘評分席位重疊）。</p>
     <div class="dt-facts">
       <div class="dt-fact"><span class="k">更新頻率</span><span class="v">事件驅動——每份 DD 發布／同步時經 <code>update_dd_index.py</code> 連鎖 <code>build_picks.py</code>；每日 <code>daily-non-fundamental-refresh</code> 亦刷新</span></div>
       <div class="dt-fact"><span class="k">as_of 語意</span><span class="v"><code>as_of</code> = 判定基準交易日；<code>generated_at</code> = 產生時戳</span></div>
@@ -502,7 +502,7 @@ table.dt-schema td.ty{font-family:var(--mono);font-size:11px;color:var(--gold-de
   <!-- ══ PM HOLDINGS ══ -->
   <section class="dt-ep" id="pm-holdings">
     <div class="dt-ep-head"><h2>實單持倉組合</h2><span class="dt-path">/pm/holdings.json</span></div>
-    <p class="dt-purpose">實單持倉組合的機器可讀快照——指數部（W52 自適應引擎當前曝險與各成分）＋個股部席位擂台在席者與候選挑戰者。驅動 <a href="/long-track/#positions">系統主控台・持倉週掃</a>與 <a href="/cockpit/#seats">選股駕駛艙・席位排序</a>兩頁。</p>
+    <p class="dt-purpose">實單持倉組合的機器可讀快照——指數部（W52 自適應引擎當前曝險與各成分）＋個股部席位擂台在席者與候選挑戰者。驅動 <a href="/long-track/#positions">系統主控台・持倉週掃</a>與 <a href="/cockpit/#seats">選股主控台・席位排序</a>兩頁。</p>
     <div class="dt-facts">
       <div class="dt-fact"><span class="k">更新頻率</span><span class="v">每週（Sun 20:00 UTC＝台北週一 04:00）· workflow <code>weekly-engine</code> 跑 <code>build_holdings.py</code></span></div>
       <div class="dt-fact"><span class="k">as_of 語意</span><span class="v"><code>index_sleeve.as_of</code>／<code>stock_sleeve.as_of</code> 分別標注兩個 sleeve 各自結算日</span></div>

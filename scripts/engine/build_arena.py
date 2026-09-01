@@ -100,7 +100,7 @@ def cross_check_r(r: dict, yf_rev) -> dict:
         r["grp"] = g = dict(g)
         g["veto"] = True
         g["pass"] = False
-        g["why"] = [f"R 保守否決：yfinance 30d 重下修 {yf_rev:+.1f}%（Koyfin 正向不足以豁免）"] \
+        g["why"] = [f"上修閘保守否決：yfinance 30 天預估重下修 {yf_rev:+.1f}%（Koyfin 正向不足以豁免）"] \
                    + list(g["why"])
     return r
 
@@ -170,7 +170,7 @@ def load_light_rows(stocks_map: dict) -> list[dict]:
                    "r_strength": rev or 0.0, "p_label": p_label,
                    "dist_hi": b.get("dist_ath"), "price": b.get("price"),
                    "score": round((rev or 0) + (g or 0) / 100.0, 3),
-                   "why": [] if ok else ["雷達 GRP 資料不足或未過（隨主榜週更再驗）"]}
+                   "why": [] if ok else ["雷達三閘資料不足或未過（隨主榜週更再驗）"]}
         rows.append({"ticker": t, "verdict": c.get("verdict"),
                      "role": c.get("role") or "衛星持倉",
                      "route": "satellite", "route_why": "快審卡（衛星限定）",
@@ -216,8 +216,8 @@ def main() -> int:
         if not ok:
             r["grp"] = dict(r["grp"])
             r["grp"]["pass"] = False
-            r["grp"]["why"] = (["市值未知（資格 fail-closed）"] if ok is None
-                               else [f"市值 {r['mktcap']/1e9:.0f}B < 門檻 {MKTCAP_MIN/1e9:.0f}B"]) \
+            r["grp"]["why"] = (["市值資料缺漏，資格從嚴不予通過"] if ok is None
+                               else [f"市值 {r['mktcap']/1e9:.0f}B 低於門檻 {MKTCAP_MIN/1e9:.0f}B"]) \
                               + list(r["grp"]["why"])
         return r
     entered = [apply_cap(r) for r in entered]
@@ -355,31 +355,31 @@ def main() -> int:
             rhs = '<span class="muted">同形狀無挑戰者</span>'
         else:
             link = f'<a href="{escape(c["dd_path"])}#decision">{escape(c["ticker"])}</a>' if c.get("dd_path") else escape(c["ticker"])
-            rhs = (f'{link}（{c["verdict"]}，R 分 {c["score"]:.1f}）')
+            rhs = (f'{link}（{c["verdict"]}，上修排序分 {c["score"]:.1f}）')
         flag = '<span class="tag tag-dn">⚔ 警報</span>' if d["alert"] else '<span class="tag tag-up">守住</span>'
-        return (f'<tr><td class="left"><strong>{escape(s["ticker"])}</strong>（R 分 {s["score"]:.1f}）</td>'
+        return (f'<tr><td class="left"><strong>{escape(s["ticker"])}</strong>（上修排序分 {s["score"]:.1f}）</td>'
                 f'<td class="left">{SHAPE_LABELS.get(s["shape"], s["shape"])}</td>'
                 f'<td class="left">{rhs}</td><td>{flag}</td></tr>')
 
     head = ('<table><thead><tr><th class="left">席位</th><th class="left">形狀</th>'
-            '<th class="left">R 上修</th><th>G 成長</th><th class="left">P 位置</th>'
+            '<th class="left">上修閘</th><th>成長閘</th><th class="left">位置閘</th>'
             '<th class="left">護城河</th><th class="left">決策卡</th></tr></thead><tbody>')
     core_tbl = head + "".join(seat_tr(r, i) for i, r in enumerate(core_seats, 1)) + "</tbody></table>"
     for i in range(CORE_SLOTS - len(core_seats)):
         core_tbl = core_tbl.replace("</tbody>", (
             f'<tr><td class="left">{len(core_seats)+i+1}. <span class="muted">（空缺）</span></td>'
-            f'<td class="left muted" colspan="6">進場核心票中無 GRP 全過者遞補 — 寧缺勿濫</td></tr></tbody>'), 1)
+            f'<td class="left muted" colspan="6">進場核心票中無三閘全過者遞補 — 寧缺勿濫</td></tr></tbody>'), 1)
     sat_body = "".join(seat_tr(r, i) for i, r in enumerate(sat_seats, 1))
     for i in range(payload["sat_vacant"]):
         sat_body += (f'<tr><td class="left">{len(sat_seats)+i+1}. <span class="muted">（空缺）</span></td>'
-                     f'<td class="left muted" colspan="6">等衛星候選同時拿到進場裁決＋GRP 全過</td></tr>')
+                     f'<td class="left muted" colspan="6">等衛星候選同時拿到進場裁決＋三閘全過</td></tr>')
     sat_tbl = head + sat_body + "</tbody></table>"
 
     def bench_line(rows):
         parts = []
         for r in rows[:10]:
             g = r["grp"]
-            tag = "" if g["pass"] else f'（{("；".join(g["why"][:1])) or "GRP 未過"}）'
+            tag = "" if g["pass"] else f'（{("；".join(g["why"][:1])) or "三閘未過"}）'
             parts.append(f'{r["ticker"]}{tag}')
         return escape("、".join(parts) or "—")
     duel_tbl = ('<table><thead><tr><th class="left">席位（分數）</th><th class="left">形狀</th>'
@@ -391,16 +391,16 @@ def main() -> int:
                  if payload["max_sector_share_pct"] > 50 else "")
 
     body = f"""<div class="hero">
-<h1>席位擂台 · L3 組合層</h1>
+<h1>席位擂台 · 組合層</h1>
 <div class="hero-sub">組合才是產品：核心 {CORE_SLOTS} 席＋衛星 {SAT_SLOTS} 席，每席對決「同形狀最強挑戰者」。
 ⚔ 警報＝挑戰者分數超過席位 → 進<b>每月擂台的人工複審清單</b>。引擎不自動換席——換人是人的裁決。
-席位資格（GRP v1，2026-07-04 持有人拍板）＝DD 裁決進場 ∩ <b>三閘全過</b>：
-<b>G 高成長</b>（FY1→FY3 EPS CAGR ≥15%）× <b>R 上修</b>（FY+1 月修 &gt;0 或 2Y &gt;0pp；下修 ≤-2% 否決）×
-<b>P 位置適合</b>（站上 52 週線且未過熱）。排序＝R 上修幅度——<b>不再依賴 5Y EV/IRR</b>。
-<b>軌別路由</b>：核心＝護城河 S/A 非↓（複利耐久）；衛星＝其餘 GRP 全過者（moat B／循環爆發型）。
+席位資格（三閘評分 GRP v1，2026-07-04 持有人拍板）＝DD 裁決進場 ∩ <b>三閘全過</b>：
+<b>成長閘</b>（FY1→FY3 EPS CAGR ≥15%）× <b>上修閘</b>（FY+1 月修 &gt;0 或 2Y &gt;0pp；下修 ≤-2% 否決）×
+<b>位置閘</b>（站上 52 週線且未過熱）。排序＝上修幅度——<b>不再依賴 5Y EV/IRR</b>。
+<b>軌別路由</b>：核心＝護城河 S/A 非↓（複利耐久）；衛星＝其餘三閘全過者（moat B／循環爆發型）。
 <b>市值門檻 ≥ ${MKTCAP_MIN/1e9:.0f}B</b>（持有人 2026-07-04 拍板：席位與主榜資格層；雷達發現層照掃全宇宙）。
 <b>兩級資格</b>：核心席必須完整 v14 DD；衛星席另接受 🪶 快審卡（週期位置＋陷阱＋護城河快評）。
-DD 角色與機械軌別衝突標 ⚠ 供人裁。GRP 未過的進場票落板凳、寧缺勿濫。</div>
+DD 角色與機械軌別衝突標 ⚠ 供人裁。三閘未過的進場票落板凳、寧缺勿濫。</div>
 <div class="asof">資料源 dd-screener latest.json ｜ 席位口徑與 Pipeline 頁一致 ｜ 週更</div>
 </div>
 <div class="stat-row">
@@ -417,7 +417,7 @@ DD 角色與機械軌別衝突標 ⚠ 供人裁。GRP 未過的進場票落板�
 <div class="block"><h2>衛星席位（{len(sat_seats)}/{SAT_SLOTS}）</h2>{sat_tbl}</div>
 <div class="block"><h2>擂台對戰表</h2>
 <div class="block-sub">軌別配對：核心席 vs 核心向挑戰者、衛星席 vs 衛星向挑戰者（moat 耐久性同級才有資格互換；
-挑戰者資格＝裁決 ∈ {{進場, 觀望}} ∩ GRP 全過）。觀望挑戰者勝出＝先觸發它的複審，不是直接換。</div>
+挑戰者資格＝裁決 ∈ {{進場、觀望}} ∩ 三閘全過）。觀望挑戰者勝出＝先觸發它的複審，不是直接換。</div>
 {duel_tbl}</div>
 <div class="block"><h2>席位變動帳本</h2>
 <div class="block-sub">append-only——席位組成變動才記一筆；有帳本，換席決策才能被結算（誰換對了、誰換錯了，91 天後對答案）。</div>
@@ -425,7 +425,7 @@ DD 角色與機械軌別衝突標 ⚠ 供人裁。GRP 未過的進場票落板�
 <div class="block"><h2>席位產業分布</h2><div class="block-sub">{conc_html}</div>{conc_warn}</div>
 <div class="note">核心板凳（進場但未坐席）：{bench_line(core_bench)}。
 衛星板凳：{bench_line(sat_bench)}。
-挑戰者池 top（GRP 全過）：{escape('、'.join(r['ticker'] for r in payload['challengers_top'][:10]) or '—')}。</div>"""
+挑戰者池 top（三閘全過）：{escape('、'.join(r['ticker'] for r in payload['challengers_top'][:10]) or '—')}。</div>"""
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     ARENA_JSON.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")

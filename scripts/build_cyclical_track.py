@@ -267,6 +267,19 @@ def _fail_tags(fc: list) -> str:
     return " ".join(f'<span class="ftag">{k}</span>' for k in fc) or "—"
 
 
+# 護城河評等白話對照（字母代碼降小字，主名用等第詞）— 對應 moat_grade / moat_trend。
+MOAT_GRADE_WORD = {"S": "頂級", "A": "優良", "B": "中等", "C": "薄弱", "X": "無"}
+MOAT_TREND_WORD = {"↑": "轉強", "→": "持平", "↓": "轉弱"}
+
+
+def _moat_cell(mg: Optional[str], mt: Optional[str]) -> str:
+    if not mg:
+        return "—"
+    word = MOAT_GRADE_WORD.get(mg, mg)
+    grade_html = f'{word}<sup style="font-size:8px;opacity:.6">{mg}</sup>'
+    return f"{grade_html} {mt or ''}"
+
+
 def _row_html(row: dict) -> str:
     ret = row.get("ret_12m_pct")
     ret_str = f"{'+' if (ret or 0) >= 0 else ''}{ret:.0f}%" if ret is not None else "—"
@@ -280,7 +293,7 @@ def _row_html(row: dict) -> str:
   <td>{_fmt_signed(row.get('eps_fy_next_revision_pct'))}</td>
   <td>{_fmt_signed(row.get('eps_fy_curr_revision_pct'))}</td>
   <td class="{ret_cls}">{ret_str}</td>
-  <td class="meta-cell">{row.get('moat_grade') or '—'} {row.get('moat_trend') or ''} · {_fail_tags(row.get('fail_criteria'))}</td>
+  <td class="meta-cell">{_moat_cell(row.get('moat_grade'), row.get('moat_trend'))} · {_fail_tags(row.get('fail_criteria'))}</td>
   <td>{_verdict_badge(row.get('dca_verdict'))}</td>
 </tr>"""
 
@@ -293,13 +306,13 @@ def _section_table(rows: list[dict], empty_msg: str) -> str:
 <thead>
 <tr>
   <th class="left">Ticker</th>
-  <th>排序分</th>
-  <th>2Y修正pp</th>
-  <th>FY+1修正%</th>
-  <th>FY0修正%</th>
+  <th>上修排序分</th>
+  <th>2年修正幅度<br><span style="font-size:8.5px;opacity:.65">(pp)</span></th>
+  <th>明年修正幅度<br><span style="font-size:8.5px;opacity:.65">(%)</span></th>
+  <th>今年修正幅度<br><span style="font-size:8.5px;opacity:.65">(%)</span></th>
   <th>12M報酬</th>
   <th class="left">護城河 · 未過項</th>
-  <th>站上裁決</th>
+  <th>DD 裁決</th>
 </tr>
 </thead>
 <tbody>
@@ -409,8 +422,8 @@ body{{font-family:var(--sans);background:var(--paper);color:var(--body);line-hei
     <div class="hero-h1">衛星·循環軌 — 循環底部 × 上修動能</div>
     <div class="hero-sub">
       個股部第三軌（衛星·循環）的<b>研究提名層</b>。鎖定「trailing 財務難看（FCF／ROIC 未過＝循環底部）
-      <b>但分析師正在上修</b>」的標的——這是 QC-42 診斷的 mandate gap（SNDK／MU 型循環贏家全滅於品質閘）的
-      代理捕手。輸出<b>不是進場清單</b>，是交給個股 DD（QC-42 循環鏡頭附錄 B）與板機接手的候選池。
+      <b>但分析師正在上修</b>」的標的——補上「循環贏家型（如 SNDK／MU）全數卡在品質閘」這個篩選死角的
+      代理捕手。輸出<b>不是進場清單</b>，是交給個股 DD（循環鏡頭附錄 B）與板機接手的候選池。
     </div>
     <div class="hero-stats">
       <div class="hero-stat"><strong>{run_ts_display}</strong>最後更新（台北）</div>
@@ -429,7 +442,7 @@ body{{font-family:var(--sans);background:var(--paper);color:var(--body);line-hei
     <strong>⚠ 研究提名清單，不是進場清單</strong>
     本軌只回答「該研究誰」。每檔要真正進場，仍須同時通過：
     <ul>
-      <li>(a) v14 個股 DD 統一裁決＝<b>進場</b>（含 QC-42 循環鏡頭附錄 B 的反動能硬閘）；</li>
+      <li>(a) v14 個股 DD 統一裁決＝<b>進場</b>（含循環鏡頭附錄 B 的反動能硬閘）；</li>
       <li>(b) sop-funnel 板機亮燈（T+1 執行）。</li>
     </ul>
     單檔上限 <b>{SINGLE_NAME_CAP_PCT:.0f}%</b>（個股部淨值，衛星倉位）。🔥 標記者為 12M 報酬 &gt; +250%，
@@ -437,7 +450,7 @@ body{{font-family:var(--sans);background:var(--paper);color:var(--body);line-hei
   </div>
 
   <div class="formula-panel">
-    <h3>資格規則（QC-42 代理版 v0，門檻為持有人拍板）</h3>
+    <h3>資格規則（代理版 v0，門檻為持有人拍板）</h3>
     <div class="formula-row">
       <b>1 循環特徵</b>：<code>fail_criteria ∩ {{fcf, roic}} ≠ ∅</code>（trailing 財務難看＝循環底部）
     </div>
@@ -477,7 +490,7 @@ body{{font-family:var(--sans);background:var(--paper);color:var(--body);line-hei
       <li>12M 報酬：<code>data/weekly_cache/{{TICKER}}.json</code> 週線 <code>close[-1]/close[-53]−1</code>（bars 不足即不計熱度）</li>
     </ul>
     <h4>下游</h4>
-    <p>候選 → <code>stock-analyst</code> v14 DD（QC-42 循環鏡頭附錄 B）→ sop-funnel 板機 → 個股部衛星倉位（單檔 ≤ {SINGLE_NAME_CAP_PCT:.0f}%）。</p>
+    <p>候選 → <code>stock-analyst</code> v14 DD（循環鏡頭附錄 B）→ sop-funnel 板機 → 個股部衛星倉位（單檔 ≤ {SINGLE_NAME_CAP_PCT:.0f}%）。</p>
     <h4>機器可讀</h4>
     <p>JSON sidecar: <a href="/dd-screener/cyclical-track.json"><code>/dd-screener/cyclical-track.json</code></a> · 每週快照：<code>/dd-screener/cyclical-track-snapshots/YYYY-MM-DD.json</code>（schema v{SCHEMA_VERSION}）</p>
   </div>

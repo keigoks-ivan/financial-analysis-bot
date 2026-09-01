@@ -42,13 +42,13 @@ def main() -> int:
     cap_b = f"{MKTCAP_MIN / 1e9:.0f}"
 
     funnel = f"""① 發現    雷達每週掃 S&P 500＋NDX＋中型股（{scored_n} 檔可算）
-             GRP 三閘：G 成長 ≥15% × R 上修 >0（下修否決）× P 站上 52 週線未過熱
+             三閘評分：成長閘 ≥15% × 上修閘 >0（下修否決）× 位置閘站上 52 週線未過熱
              ＋ 市值 ≥ ${cap_b} 億美元 ×10 → 主榜（現 {board_n} 檔，按上修幅度排）
 
 ② 資格    兩級審查（研究深度 ∝ 倉位）
              核心席 → 完整 v14 DD（裁決：進場／觀望／迴避）
              衛星席 → 快審卡即可（週期位置判定＋陷阱檢查＋護城河快評）
-             ⚠ 這層專擋 GRP 看不見的：週期頂點假象、會計假成長、基期效應
+             ⚠ 這層專擋三閘評分看不見的：週期頂點假象、會計假成長、基期效應
 
 ③ 分軌    護城河定軌別
              S/A 級（複利耐久）→ 核心席，{core_slots} 席 × 上限 10%
@@ -66,7 +66,7 @@ def main() -> int:
 <h1>決策引擎</h1>
 <div class="hero-sub" style="font-size:15px"><b>一句話：全市場掃「高成長 × EPS 上修 × 位置適合」→ 審查擋陷阱 →
 護城河分軌 → 席位化組合 → 每個判斷自動對答案。</b></div>
-<div class="asof">研究層頁面，不含實際持倉 ｜ 週更 ｜ 分工：本引擎＝<b>方式甲（結構長抱線）的排序主幹</b>——GRP 三閘排序與席位（機器擂台）；流程與板機見 <a href="/dd-screener/pipeline.html">Pipeline</a>，對外成品榜見 <a href="/picks/">精選清單</a> ｜ 已結算 {sb.get('n_settled', '—')} 筆歷史裁決</div>
+<div class="asof">研究層頁面，不含實際持倉 ｜ 週更 ｜ 分工：本引擎＝<b>方式甲（結構長抱線）的排序主幹</b>——三閘評分（GRP）排序與席位（機器擂台）；流程與板機見 <a href="/dd-screener/pipeline.html">Pipeline</a>，對外成品榜見 <a href="/picks/">精選清單</a> ｜ 已結算 {sb.get('n_settled', '—')} 筆歷史裁決</div>
 </div>
 
 <div class="block">
@@ -79,7 +79,7 @@ def main() -> int:
 <table>
 <thead><tr><th class="left">問題</th><th class="left">權威</th><th class="left">在哪看</th></tr></thead>
 <tbody>
-<tr><td class="left">先看誰</td><td class="left">GRP 主榜（市場活數據，週更）</td><td class="left"><a href="/engine/radar.html">雷達</a></td></tr>
+<tr><td class="left">先看誰</td><td class="left">三閘主榜（市場活數據，週更）</td><td class="left"><a href="/engine/radar.html">雷達</a></td></tr>
 <tr><td class="left">能不能買</td><td class="left">DD 裁決／快審卡（懂生意的否決權）</td><td class="left"><a href="/engine/cards.html">決策卡</a></td></tr>
 <tr><td class="left">核心還是衛星</td><td class="left">護城河評級（S/A＝核心、其餘＝衛星）</td><td class="left"><a href="/engine/arena.html">擂台</a></td></tr>
 <tr><td class="left">何時買</td><td class="left">板機（A1/B/C）＋ regime 撥盤</td><td class="left"><a href="/dd-screener/sop-funnel.html">SOP Funnel</a>・<a href="/engine/arena.html">擂台</a></td></tr>
@@ -106,7 +106,7 @@ def main() -> int:
 <thead><tr><th class="left">驅動力</th><th class="left">頻率</th><th class="left">影響</th></tr></thead>
 <tbody>
 <tr><td class="left"><b>月度 EPS 修正刷新</b></td><td class="left">每月（Koyfin snapshot）＋每週（yfinance，雷達候選）</td>
-<td class="left">最大——席位排序按 R 上修幅度，每次刷新全體重排；勉強過閘的（R 貼近 0）一個小下修就下席。
+<td class="left">最大——席位排序按上修幅度，每次刷新全體重排；勉強過閘的（上修幅度貼近 0）一個小下修就下席。
 <b>兩源主源規則</b>：DD 池認 Koyfin、池外認 yfinance，計分不混用；但重下修 ≤-2% 的否決<b>任一源觸發即生效</b>
 （源吵架時聽壞消息），方向相反標 ⚠ 源分歧供人工判讀</td></tr>
 <tr><td class="left"><b>財報季條件翻正</b></td><td class="left">季度</td>
@@ -126,7 +126,7 @@ def main() -> int:
 <h2>三條鐵律</h2>
 <div class="block-sub" style="font-size:13.5px;line-height:2">
 1. <b>看得見 ≠ 能買</b>——雷達只給研究順序，資格永遠要過審查。<br>
-2. <b>上修最猛處常是最危險處</b>——所以 GRP 之上必有週期位置判定（MU 檢查）。<br>
+2. <b>上修最猛處常是最危險處</b>——所以三閘評分之上必有週期位置判定（MU 檢查）。<br>
 3. <b>每個判斷都會被結算</b>——觀望的錯過和進場的套牢同權重記帳；數據改規則，不是感覺改規則。
 </div>
 </div>
@@ -137,7 +137,7 @@ def main() -> int:
 <div class="layer"><div class="lno">L0</div><h3>全市場雷達</h3>
 <p>結構訊號批量 → 候選逐檔 EPS 修正確認。</p>
 <a href="/engine/radar.html">→ 雷達</a></div>
-<div class="layer"><div class="lno">L1</div><h3>GRP 準則＋軌別路由</h3>
+<div class="layer"><div class="lno">L1</div><h3>三閘準則＋軌別路由</h3>
 <p>三閘＝選股準則；moat 分軌。四形狀（突破／循環轉折／動能／主題下沉）降為發現鏡頭。</p></div>
 <div class="layer"><div class="lno">L2</div><h3>決策卡</h3>
 <p>一席一卡：GRP 守門自動結算＋DD 深層宣稱帶期限。</p>
@@ -150,10 +150,10 @@ def main() -> int:
 <a href="/engine/scoreboard.html">→ 記分板</a></div>
 </div>
 <div class="note" style="margin-top:12px">
-<b>紀律</b>：GRP 三閘與市值門檻（2026-07-04 持有人拍板）PREREG 鎖定，季檢憑記分板數據才可調；
+<b>紀律</b>：三閘評分與市值門檻（2026-07-04 持有人拍板）PREREG 鎖定，季檢憑記分板數據才可調；
 記分板 append-only、gate 變更畫分段線、歷史不重算；樣本未熟（n&lt;20 或齡&lt;91 天）標「觀察期」不給結論。
 <b>與 <a href="/dd-screener/pipeline.html">dd-screener Pipeline</a> 的關係</b>：同屬<b>方式甲（結構長抱線）</b>，
-不是兩套並存的競爭排序——Pipeline 核心軌<b>已對齊 GRP 排序主幹</b>（EV5y×確定性降為參考子訊號，2026-07-04 mandate）。
+不是兩套並存的競爭排序——Pipeline 核心軌<b>已對齊三閘評分排序主幹</b>（EV5y×確定性降為參考子訊號，2026-07-04 mandate）。
 本區＝甲線排序主幹的機器擂台視圖，Pipeline＝同一條甲線的流程與板機視圖，兩者互指不重複。
 </div>
 </div>
@@ -163,8 +163,8 @@ def main() -> int:
 <table>
 <thead><tr><th class="left">Phase</th><th class="left">內容</th><th class="left">狀態</th></tr></thead>
 <tbody>
-<tr><td class="left">1-2</td><td class="left">雷達＋GRP 主榜＋擂台＋決策卡＋記分板＋快審層＋市值門檻＋系統測試（32 斷言）</td><td class="left">✅ 2026-07-04 上線</td></tr>
-<tr><td class="left">3</td><td class="left">形狀檢查表與 GRP 閾值首次季度校準（記分板滿 91 天後）</td><td class="left">2026-10—</td></tr>
+<tr><td class="left">1-2</td><td class="left">雷達＋三閘主榜＋擂台＋決策卡＋記分板＋快審層＋市值門檻＋系統測試（32 斷言）</td><td class="left">✅ 2026-07-04 上線</td></tr>
+<tr><td class="left">3</td><td class="left">形狀檢查表與三閘評分閾值首次季度校準（記分板滿 91 天後）</td><td class="left">2026-10—</td></tr>
 </tbody></table>
 </div>"""
     # 2026-07-10 選股主控台整併：engine 總覽改輸出 nav-less 片段，供 /cockpit/#seats
@@ -172,7 +172,7 @@ def main() -> int:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     (OUT_DIR / "_index_body.html").write_text(
         page_embed_shell("決策引擎 · 席位排序", body,
-                         "選股邏輯一頁版：GRP 三閘 × 兩級審查 × 護城河分軌 × 席位擂台 × 自動結算"),
+                         "選股邏輯一頁版：三閘評分 × 兩級審查 × 護城河分軌 × 席位擂台 × 自動結算"),
         encoding="utf-8")
     print("engine/_index_body.html written (nav-less 片段，供主控台席位排序分頁)")
     return 0

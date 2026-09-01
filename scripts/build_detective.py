@@ -172,8 +172,8 @@ ALERT_DRIVER_LABELS = {
     "composite_red":    lambda n: f"{n} 項複合規則觸發（紅）",
     "composite_yellow": lambda n: f"{n} 項複合規則觸發（黃）",
     "composite_near":   lambda n: f"{n} 項複合規則距觸發差 1 個成員",
-    "kill_breached":    lambda n: f"{n} 條 kill 指標越線",
-    "kill_near":        lambda n: f"{n} 條 kill 指標接近閾值",
+    "kill_breached":    lambda n: f"{n} 條否證指標越線",
+    "kill_near":        lambda n: f"{n} 條否證指標接近閾值",
     "escalated":        lambda n: f"{n} 條訊號今日升級",
     "sustained":        lambda n: f"{n} 條紅燈持續 ≥{ALERT_SUSTAINED_DAYS} 日",
 }
@@ -571,7 +571,7 @@ def kill_signals(kw):
         if isinstance(cur, (int, float)) and isinstance(val, (int, float)) and val != 0:
             mag = min(abs(cur - val) / abs(val) * 10.0, 5.0)
         out.append(_sig(
-            f"kill:{stem}:{idx}", "kill", "kill_metric", f"{theme} kill 指標",
+            f"kill:{stem}:{idx}", "kill", "kill_metric", f"{theme} 否證指標",
             fact, "red", mag, f"kill_watch {kw_asof}｜{doc}"))
     return out
 

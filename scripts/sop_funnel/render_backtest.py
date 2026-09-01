@@ -157,7 +157,7 @@ def main() -> int:
         if t.get("earnings_check") == "silent":
             trade_rows += (f'<tr class="muted-row"><td class="left">{_e(t["ticker"])}</td>'
                            f'<td>{_e(t["type"])}</td><td>{_e(t["signal_date"])}</td>'
-                           f'<td colspan="6" class="left">財報窗內 — 原版被擋，現行配置放行（見發現②）</td></tr>')
+                           f'<td colspan="6" class="left">財報前觀察期內 — 原版被擋，現行配置放行（見發現②）</td></tr>')
             continue
         nb_tag = f'<span class="warn-tag">{_e(t.get("nav_blocked"))}</span>' if t.get("nav_blocked") else ""
         trade_rows += (f'<tr><td class="left"><strong>{_e(t["ticker"])}</strong>{nb_tag}</td>'
@@ -226,14 +226,14 @@ footer{{text-align:center;font-size:10.5px;color:var(--muted);padding:24px}}
 
 <div class="hero"><div class="hero-inner">
 <div class="hero-h1">SOP 漏斗 2022 回測 — 技術執行層 × 規則實驗室</div>
-<div class="hero-sub">窗口 {d["window_start"]} → {d["window_end"]} · {d["price_basis"]} · 母體 = <strong>凍結 2026-06-11 的 {d["n_gated"]} 檔五條件過閘名單</strong>。本頁是規則對照實驗，不是選股能力證明。<strong>2026-06-11 裁決：拿掉斷路器、財報靜默期改「標記不擋」</strong>——現行配置（綠線）= 無斷路器 × 財報窗放行；裁決依據與其證據等級見 §1。</div>
+<div class="hero-sub">窗口 {d["window_start"]} → {d["window_end"]} · {d["price_basis"]} · 母體 = <strong>凍結 2026-06-11 的 {d["n_gated"]} 檔五項資格門檻過閘名單</strong>。本頁是規則對照實驗，不是選股能力證明。<strong>2026-06-11 裁決：拿掉斷路器、財報前觀察期改「標記不擋」</strong>——現行配置（綠線）= 無斷路器 × 財報窗放行；裁決依據與其證據等級見 §1。</div>
 </div></div>
 
 <div class="section">
 <div class="honesty">
 <strong>⚠ 誠實邊界 — 先讀這個再看數字</strong>
-五條件閘門用的是<u>今天</u>的分析師預估與護城河評級（歷史版本不存在），universe 是<u>今天</u>策展的 DD 名單——2022 年的漏斗會選出不一樣的股票。因此：<u>所有絕對報酬數字（CAGR、終值、α）一律視為灰色參考</u>，它們繼承了「拿今天的贏家回去考古」的樂觀偏誤。
-<div class="ok-list">站得住的結論（同名單內部對照，偏誤兩邊抵銷）：① 斷路器死鎖 ② 靜默期影響 ③ 態④ A/B ④ 型態行為 ⑤ 閘門對照（殘留偏誤較大）。選股能力的無偏證據 = <a href="/dd-screener/sop-funnel.html">主頁 forward 帳本</a>。Phase 2（point-in-time 代理閘門）另議。</div>
+五項資格門檻用的是<u>今天</u>的分析師預估與護城河評級（歷史版本不存在），universe 是<u>今天</u>策展的 DD 名單——2022 年的漏斗會選出不一樣的股票。因此：<u>所有絕對報酬數字（CAGR、終值、α）一律視為灰色參考</u>，它們繼承了「拿今天的贏家回去考古」的樂觀偏誤。
+<div class="ok-list">站得住的結論（同名單內部對照，偏誤兩邊抵銷）：① 斷路器死鎖 ② 財報前觀察期影響 ③ 回檔（態4）A/B ④ 型態行為 ⑤ 閘門對照（殘留偏誤較大）。選股能力的無偏證據 = <a href="/dd-screener/sop-funnel.html">主頁 forward 帳本</a>。Phase 2（point-in-time 代理閘門）另議。</div>
 </div>
 </div>
 
@@ -245,15 +245,15 @@ footer{{text-align:center;font-size:10.5px;color:var(--muted);padding:24px}}
 <p>2024-07 曝險 ~83% 遇急跌，NAV -10.1% 觸發斷路器（{t2["breaker_episodes"][0]["trigger"] if t2["breaker_episodes"] else "—"}）→ 五狀態機把部位停損至滿手現金 → NAV 凍在回撤區<strong>永遠回不到 -5% 解除線</strong> → 後續 {t2["blocked_entries"]} 筆進場被擋到期末。解除條件假設「部位反彈收復回撤」，但觸發時部位已被砍光——條文與狀態機交互產生死鎖。<strong>裁決：拿掉斷路器</strong>。代價是失去帳戶層保險絲（whipsaw 市況的連續停損無人喊停），列入季檢覆議。</p>
 </div>
 <div class="finding">
-<h3>發現② 財報靜默期 — 擋下 {g["n_silent_blocked"]}/{g["n_signals"]} 筆（{silent_pct}%）<span class="decided">已裁決 2026-06-11：標記不擋</span></h3>
+<h3>發現② 財報前觀察期 — 擋下 {g["n_silent_blocked"]}/{g["n_signals"]} 筆（{silent_pct}%）<span class="decided">已裁決 2026-06-11：標記不擋</span></h3>
 <div class="nums">有禁令：α {_pct(g["mean_alpha_pct"])} · R {g["mean_r"]} · NAV(無斷路器) {nb["final_nav"]:.0f}　vs　拿掉禁令：α {_pct(gns["mean_alpha_pct"])} · R {gns["mean_r"]} · NAV {ns["final_nav"]:.0f}</div>
-<p>被擋 14 筆中實際成交的 {len(d.get("silent_counterfactual", []))} 筆放行後<strong>全數獲利</strong>（下表）。⚠ 但此證據含重度 survivorship 偏誤：凍結名單 = 今日贏家，其歷史財報多為利多，「衝著財報買」在贏家名單上只剩好的一面；且 FIX 一筆 +186% 扛走大半差距。<strong>裁決：forward 系統改「標記不擋」</strong>——財報窗內進場照進、標 ⚠，累積無偏數據供季檢複驗是否恢復禁令。</p>
+<p>被擋 14 筆中實際成交的 {len(d.get("silent_counterfactual", []))} 筆放行後<strong>全數獲利</strong>（下表）。⚠ 但此證據含重度 survivorship 偏誤：凍結名單 = 今日贏家，其歷史財報多為利多，「衝著財報買」在贏家名單上只剩好的一面；且 FIX 一筆 +186% 扛走大半差距。<strong>裁決：forward 系統改「標記不擋」</strong>——財報前觀察期內進場照進、標 ⚠，累積無偏數據供季檢複驗是否恢復禁令。</p>
 <table><thead><tr><th class="left">ticker</th><th>訊號日</th><th>放行後報酬</th><th>下場</th></tr></thead><tbody>{cf_rows}</tbody></table>
 </div>
 <div class="finding">
-<h3>發現③ 態④減碼幅度 A/B — 階梯小勝，不構成改規則的強證據</h3>
+<h3>發現③ 回檔（態4）減碼幅度 A/B — 階梯小勝，不構成改規則的強證據</h3>
 <div class="nums">charter 一次 50%：α {_pct(g["mean_alpha_pct"])} · R {g["mean_r"]}　vs　階梯 25%+25%：α {_pct(st["mean_alpha_pct"])} · R {st["mean_r"]}</div>
-<p>與態④ trim-variants 舊研究（流程指標）合併讀，維持現行規則，供 2026-09 季檢。</p>
+<p>與回檔（態4）trim-variants 舊研究（流程指標）合併讀，維持現行規則，供 2026-09 季檢。</p>
 </div>
 <div class="finding">
 <h3>發現④ 型態行為 — A1 起漲樣本極稀但彈道不同</h3>
@@ -286,7 +286,7 @@ footer{{text-align:center;font-size:10.5px;color:var(--muted);padding:24px}}
 </div></div>
 
 <div class="section"><div class="card">
-<h2>§3 年度拆分（gated · charter 態④ · 含靜默期禁令版本）</h2>
+<h2>§3 年度拆分（gated · charter 回檔〔態4〕· 含財報前觀察期禁令版本）</h2>
 <div class="desc">2022 全熊市：進場稀少且全敗但被停損框住 — 防禦行為符合設計；訊號集中在 2023 復甦與 2025。</div>
 <table><thead><tr><th class="left">年</th><th>進場</th><th>財報窗</th><th>勝率</th><th>中位報酬</th><th>平均報酬</th></tr></thead>
 <tbody>{yearly_rows}</tbody></table>
@@ -297,8 +297,8 @@ footer{{text-align:center;font-size:10.5px;color:var(--muted);padding:24px}}
 <table><thead><tr><th class="left">組</th><th>訊號</th><th>進場</th><th>財報窗</th><th>勝率</th><th>中位報酬</th><th>平均報酬</th><th>α vs SPY</th><th>平均R</th><th>中位持有</th></tr></thead>
 <tbody>
 {stat_row(f'現行配置：過閘 {d["n_gated"]} 檔 · 財報窗放行', gns)}
-{stat_row(f'原版：過閘 {d["n_gated"]} 檔 · 靜默期禁令', g)}
-{stat_row('態④階梯變體（A/B）', st, muted=True)}
+{stat_row(f'原版：過閘 {d["n_gated"]} 檔 · 財報前觀察期禁令', g)}
+{stat_row('回檔（態4）階梯變體（A/B）', st, muted=True)}
 {stat_row(f'226 檔純價格（無閘門）', ug_s, muted=True)}
 </tbody></table>
 </div></div>
@@ -314,7 +314,7 @@ footer{{text-align:center;font-size:10.5px;color:var(--muted);padding:24px}}
 <div class="caveat"><ul>{caveat_lis}
 <li>全動作 T+1 收盤執行；週線指標用已完成週凍結值（無部分週 look-ahead）</li>
 <li>NAV 模擬：現金不計息、零交易成本；回補腿受現金約束、賣腿永遠執行</li>
-<li>2026-06-11 裁決記錄：拿掉斷路器（死鎖發現）、靜默期改標記不擋（含偏證據，forward 標記複驗）— 兩項皆列季檢覆議</li>
+<li>2026-06-11 裁決記錄：拿掉斷路器（死鎖發現）、財報前觀察期改標記不擋（含偏證據，forward 標記複驗）— 兩項皆列季檢覆議</li>
 <li>Phase 2（point-in-time 代理閘門：trailing 指標 + 季度資格窗 + 財報滯後）需 Koyfin 歷史財報匯出，另議</li>
 </ul></div>
 </div></div>

@@ -1012,11 +1012,11 @@ def series_alerts_v2(item: dict, spec: dict) -> list[dict]:
     pa = spec["pct_alert"]
     if pctile is not None and pa in ("high", "both") and pctile >= RULES_V2["pctile_hi"]:
         out.append({"sev": "yellow", "cat": cat, "key": key, "rule": "pctile",
-                    "msg": f"{label} 現值 {item['val_fmt']} 進入一年水位前 "
+                    "msg": f"{label} 現值 {item['val_fmt']} 進入一年歷史高位前 "
                            f"{100 - pctile:.0f}%（分位 {pctile:.0f}）"})
     if pctile is not None and pa in ("low", "both") and pctile <= RULES_V2["pctile_lo"]:
         out.append({"sev": "yellow", "cat": cat, "key": key, "rule": "pctile",
-                    "msg": f"{label} 現值 {item['val_fmt']} 落到一年水位後 "
+                    "msg": f"{label} 現值 {item['val_fmt']} 落到一年歷史低位後 "
                            f"{pctile:.0f}%（低分位警示）"})
     st = item.get("streak") or 0
     if abs(st) >= RULES_V2["streak"] and spec["freq"] == "d":
@@ -1084,7 +1084,7 @@ def structural_alerts_v2(items: dict, history: dict) -> list[dict]:
             and eq["pctile"] <= RULES_V2["eqw_pctile_lo"]):
         alerts.append({"sev": "yellow", "cat": "breadth", "key": "qqew_qqq",
                        "rule": "eqw_div",
-                       "msg": f"QQEW/QQQ 等權比 {eq['val_fmt']} 落到一年水位後 "
+                       "msg": f"QQEW/QQQ 等權比 {eq['val_fmt']} 落到一年歷史低位後 "
                               f"{eq['pctile']:.0f}%，等權腳明顯落後市值權"})
 
     # vol_term_3m：VIX/VIX3M > 1.0 倒掛——新翻轉紅、持續黃
@@ -1096,7 +1096,7 @@ def structural_alerts_v2(items: dict, history: dict) -> list[dict]:
         newly = prev_ratio is not None and prev_ratio <= RULES_V2["vol_term_ratio"]
         alerts.append({"sev": "red" if newly else "yellow", "cat": "options_vol",
                        "key": "vix_vix3m", "rule": "vol_term_3m",
-                       "msg": f"VIX 三個月期限結構倒掛{'（今日新轉倒掛）' if newly else '中'}："
+                       "msg": f"VIX 短天期比長天期（3 個月）貴{'（今日新轉倒掛）' if newly else '中'}："
                               f"VIX/VIX3M = {vt['last']:.3f} > 1"})
 
     # zero_dte_stress：極端短波動水位＋SPX 選擇權量異常同日出現
@@ -1125,12 +1125,12 @@ def structural_alerts_v2(items: dict, history: dict) -> list[dict]:
         if pe["pctile"] >= RULES_V2["pc_eq_hi"]:
             alerts.append({"sev": "yellow", "cat": "options_vol", "key": "pc_equity",
                            "rule": "pc_extreme",
-                           "msg": f"個股 Put/Call 比 {pe['val_fmt']} 進入一年水位前 "
+                           "msg": f"個股 Put/Call 比 {pe['val_fmt']} 進入一年歷史高位前 "
                                   f"{100 - pe['pctile']:.0f}%（避險需求偏高側極端）"})
         elif pe["pctile"] <= RULES_V2["pc_eq_lo"]:
             alerts.append({"sev": "yellow", "cat": "options_vol", "key": "pc_equity",
                            "rule": "pc_extreme",
-                           "msg": f"個股 Put/Call 比 {pe['val_fmt']} 落到一年水位後 "
+                           "msg": f"個股 Put/Call 比 {pe['val_fmt']} 落到一年歷史低位後 "
                                   f"{pe['pctile']:.0f}%（call 偏好側極端）"})
 
     # sv_extreme：全市場空單量比水位極端
@@ -1139,12 +1139,12 @@ def structural_alerts_v2(items: dict, history: dict) -> list[dict]:
         if svr["pctile"] >= RULES_V2["sv_hi"]:
             alerts.append({"sev": "yellow", "cat": "positioning",
                            "key": "short_vol_ratio", "rule": "sv_extreme",
-                           "msg": f"全市場空單量比 {svr['val_fmt']} 進入一年水位前 "
+                           "msg": f"全市場空單量比 {svr['val_fmt']} 進入一年歷史高位前 "
                                   f"{100 - svr['pctile']:.0f}%"})
         elif svr["pctile"] <= RULES_V2["sv_lo"]:
             alerts.append({"sev": "yellow", "cat": "positioning",
                            "key": "short_vol_ratio", "rule": "sv_extreme",
-                           "msg": f"全市場空單量比 {svr['val_fmt']} 落到一年水位後 "
+                           "msg": f"全市場空單量比 {svr['val_fmt']} 落到一年歷史低位後 "
                                   f"{svr['pctile']:.0f}%"})
 
     # naaim_extreme：極端曝險水位（分位或絕對值）
@@ -1157,7 +1157,7 @@ def structural_alerts_v2(items: dict, history: dict) -> list[dict]:
             hit = f"現值 {na['last']:.1f} 低於 10（平均曝險接近空手）"
         elif (na.get("pctile") is not None
               and na["pctile"] >= RULES_V2["naaim_pctile"]):
-            hit = f"現值 {na['last']:.1f} 進入一年水位前 {100 - na['pctile']:.0f}%"
+            hit = f"現值 {na['last']:.1f} 進入一年歷史高位前 {100 - na['pctile']:.0f}%"
         if hit:
             alerts.append({"sev": "yellow", "cat": "positioning", "key": "naaim",
                            "rule": "naaim_extreme",

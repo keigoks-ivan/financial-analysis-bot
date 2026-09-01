@@ -403,7 +403,7 @@ def build_baofa(cyclical, trigger_map, grp_set, trend_resolve):
         if verdict:
             chips.append(f"DD {verdict}")
         if ticker in grp_set:
-            chips.append("GRP")
+            chips.append("三閘評分")
 
         # --- 產業趨勢（同一套證據對循環拐點同樣有用） ---
         trend = trend_resolve(ticker, rec.get("sector") or "")
@@ -539,11 +539,11 @@ def main():
         "generated_at": datetime.now(TW8).isoformat(),
         "note": "正式榜與候選由 build_picks.py 規則自動判定（爆發＝循環形狀＋站上年線＋非過熱）；"
                 "持有人保留 veto（picks.json）。official 與候選互斥。"
-                "長熬組已於 2026-07-29 退役（與 GRP 席位職能重疊）——甲線名單一律讀 engine/arena.json。",
+                "長熬組已於 2026-07-29 退役（與三閘評分席位職能重疊）——三閘評分結構線名單一律讀 engine/arena.json。",
         "retired_groups": {
             "changhao": {
                 "retired_on": "2026-07-29",
-                "reason": "與 GRP 席位（engine/arena.json core_seats）職能重疊，甲線權威歸 GRP",
+                "reason": "與三閘評分席位（engine/arena.json core_seats）職能重疊，三閘評分結構線權威歸三閘評分",
                 "successor": "docs/engine/arena.json → core_seats / sat_seats",
             }
         },

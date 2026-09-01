@@ -226,12 +226,12 @@ def render_card(c: dict, *, open_default: bool) -> str:
         dist = f'（距高 {g["dist_hi"]:+.0f}%）' if g["dist_hi"] is not None else ""
         guard_html = f"""<table style="margin-bottom:8px"><thead><tr>
 <th class="left">GRP 守門（席位存在理由 · 週更自動）</th><th>現值</th><th>門檻</th><th>狀態</th><th class="left">破閘動作</th></tr></thead><tbody>
-<tr><td class="left">G 高成長（FY1→FY3 CAGR）</td><td>{pct(g["g"], 1, False) if g["g"] is not None else "—"}</td>
+<tr><td class="left">成長閘 G（FY1→FY3 CAGR）</td><td>{pct(g["g"], 1, False) if g["g"] is not None else "—"}</td>
 <td>≥{G_MIN_CAGR:.0f}%</td><td>{cell(g_ok)}</td><td class="left">跌破 → 複審</td></tr>
-<tr><td class="left">R 上修（FY+1 月修／2Y pp）</td>
+<tr><td class="left">上修閘 R（FY+1 月修／2Y pp）</td>
 <td>{pct(g["r_fy1"]) if g["r_fy1"] is not None else "—"}／{f'{g["r_2y"]:+.1f}pp' if g["r_2y"] is not None else "—"}</td>
 <td>&gt;0（≤{R_VETO_FY1:.0f}% 否決）</td><td>{cell(r_ok, g["veto"])}</td><td class="left">下修 → 減碼複審</td></tr>
-<tr><td class="left">P 位置（52 週線＋位置帶）</td>
+<tr><td class="left">位置閘 P（52 週線＋位置帶）</td>
 <td class="left">{P_LABEL_HTML.get(g["p_label"])}{dist}</td>
 <td>站上 52 週線</td><td>{cell(p_ok)}</td><td class="left">破線 → 複審</td></tr>
 </tbody></table>"""
@@ -239,7 +239,7 @@ def render_card(c: dict, *, open_default: bool) -> str:
 
     alert = ""
     if grp_fail:
-        alert = '<span class="tag tag-dn">⛔ GRP 落席</span>'
+        alert = '<span class="tag tag-dn">⛔ 三閘落席</span>'
     elif n_breach:
         alert = f'<span class="tag tag-dn">❌ {n_breach} 條觸發</span>'
     elif n_due:
@@ -333,8 +333,8 @@ def main() -> int:
                       f'{bench_inner}</details>')
 
     body = f"""<div class="hero">
-<h1>決策卡 · L2 判斷層</h1>
-<div class="hero-sub">一席一卡，兩層守門：上層 GRP（G 高成長／R 上修／P 位置，週更自動結算，
+<h1>決策卡 · 判斷層</h1>
+<div class="hero-sub">一席一卡，兩層守門：上層三閘評分（GRP，成長閘／上修閘／位置閘，週更自動結算，
 破閘自動亮 ⛔）＋下層深層證偽（基本面宣稱，財報期人工結算）。卡片分兩級：完整 DD 抽取卡
 （核心席）vs 🪶 快審卡（衛星席限定，5% 倉）。下表 30 秒掃全局，點 ticker 或卡片展開細節。</div>
 <div class="asof">{len(cards)} 張卡 ｜ {n_claims} 條宣稱（❌ 觸發 {n_breach} · ⏰ 到期 {n_due}）｜ 週更結算</div>

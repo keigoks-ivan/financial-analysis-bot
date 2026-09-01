@@ -86,10 +86,10 @@ def grp_score(s: dict) -> dict:
     if g is None:
         g = _f(s.get("eps2y_live")) or _f(s.get("eps2y"))
         if g is not None:
-            why.append("G 用 eps2y fallback（無 FY3 預估）")
+            why.append("成長閘用 2 年成長率代替（缺 FY3 預估）")
     g_pass = g is not None and g >= G_MIN_CAGR
     if not g_pass:
-        why.append(f"G fail（CAGR {g if g is not None else '缺'}）")
+        why.append(f"成長閘未過（CAGR {g if g is not None else '缺'}）")
 
     # R
     r_fy1 = _f(s.get("eps_fy_next_revision_pct"))
@@ -98,9 +98,9 @@ def grp_score(s: dict) -> dict:
     r_pass = (not veto) and ((r_fy1 is not None and r_fy1 > R_MIN_FY1)
                              or (r_2y is not None and r_2y > R_MIN_2Y_PP))
     if veto:
-        why.append(f"R 否決（FY+1 下修 {r_fy1:+.1f}%）")
+        why.append(f"上修閘否決（FY+1 下修 {r_fy1:+.1f}%）")
     elif not r_pass:
-        why.append(f"R fail（FY+1 {r_fy1 if r_fy1 is not None else '缺'}％／2Y {r_2y if r_2y is not None else '缺'}pp）")
+        why.append(f"上修閘未過（FY+1 {r_fy1 if r_fy1 is not None else '缺'}％／2Y {r_2y if r_2y is not None else '缺'}pp）")
     r_strength = max(r_fy1 or 0.0, (r_2y or 0.0) * 2.0)   # pp 換算近似倍率，僅排序用
 
     # P
@@ -120,7 +120,7 @@ def grp_score(s: dict) -> dict:
             p_label = "in_trend"
     p_pass = p_label in ("breakout", "pullback", "in_trend")
     if not p_pass:
-        why.append("P fail（52 週線下或無資料）")
+        why.append("位置閘未過（站在 52 週線下或資料缺）")
 
     all_pass = g_pass and r_pass and p_pass
     return {"pass": all_pass, "veto": veto,
@@ -134,7 +134,7 @@ def grp_score(s: dict) -> dict:
 
 P_LABEL_HTML = {"breakout": '<span class="tag tag-up">🟢 突破帶</span>',
                 "pullback": '<span class="tag tag-up">🟢 回踩到位</span>',
-                "in_trend": '<span class="tag tag-pool">🟡 趨勢內</span>',
+                "in_trend": '<span class="tag tag-pool">🟡 趨勢帶內</span>',
                 None: '<span class="tag tag-dn">🔴 不適合</span>'}
 
 
