@@ -86,3 +86,8 @@
 | flowmap CTA 觸發位模組（3 窗動能反解翻轉價位；窗長／AUM 錨 PREREG 凍結；設計稿 `notes/site-internal/root/_flowmap_forecast_ledger_design_20260901.md` §A） | 2026-09-01 | 連兩季（26 週）frozen_forecast 與 CFTC COT 週度部位變化方向對帳，命中率與擲硬幣無統計差異 → 模組降級為 gaps 或刪除 | — |
 | flowmap vol-control 曝險模組（target_vol=10%／cap=100%／AUM 錨 $250bn PREREG 凍結） | 2026-09-01 | 階梯表預測的流量方向連兩季與 SPX 已實現波動—報酬互動不符 → 模組降級為 gaps 或刪除（buyback 日曆為純日曆無判斷，不掛 kill） | — |
 | forecast ledger 判讀對帳簿本體（tool-level；`knowledge/forecasts.jsonl`＋`settle_forecasts.py`＋`q.py --forecasts`；resolver 必須機械可判） | 2026-09-01 | 180 天內 resolved < 20 筆，或校準結果從未被任何決策討論／校準輪實際引用 → 儀式化認定，降級或砍（automatable ≠ valuable，同 macro-analyst tool-level 條款精神）。正面義務：本簿是 rule_ledger「macro stance 與後續 6M 方向無相關→降級」條款的機械執行路徑 | — |
+| flowmap 月末再平衡模組（SPY−AGG 月內分岔→月末機械流量；桶與窗口 PREREG 凍結，設計稿 §E2） | 2026-09-02 | 連八次月末（含季末）方向對帳命中與擲硬幣無統計差異（scorecard α=0.10 精確二項檢定）→ 模組降級為 gaps 或刪除。月頻樣本慢約需 2 年足量，檢查點放校準輪 | — |
+| rv-model producer（SPY RV21 五分位轉移表機械賦 p，月度兩筆；設計稿 §E3） | 2026-09-02 | resolved ≥20 筆後 BSS < 0（輸給 per-source climatology）→ producer 砍。本件同時是 forecast ledger 的試金石 | — |
+| vix-model producer（VIX 期限結構倒掛 onset 事件觸發，兩命題；base rate 32 事件：21d 回正 96.9%／63d SPY 更高 71.9%；設計稿 §G5） | 2026-09-02 | resolved ≥20 筆後 BSS < 0 → 砍。已知約束：^VIX3M 上游 feed 缺口使即時 onset 偵測可能滯後（誠實 stale 警告，非 bug） | — |
+| cot-model producer（權益三指數 COT 極端事件觸發「4 週反向」；p＝pooled 誠實頻率 0.25；設計稿 §G5） | 2026-09-02 | resolved ≥20 筆後 BSS < 0 → 砍。**登記時已知**：2021–2026 樣本反轉率僅 25–28%（延續為主），前提存疑係持有人知情後拍板留場（2026-09-02），正因如此本件是最該被淘汰賽檢驗的一個 | — |
+| trend-track paper track（TSMOM 9 檔 12-1 月換倉；prereg 逐字入 track.json；設計稿 §G6） | 2026-09-02 | 24 個月後 Sharpe 與 Max DD 皆未優於 9 檔等權 buy-and-hold → 收線；期間不調參、永不連實倉 | — |

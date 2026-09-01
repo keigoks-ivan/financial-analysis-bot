@@ -141,3 +141,101 @@ Phase 1 flowmap 獨立產出，不改 detective。Phase 2 若對帳成立，才�
 
 - 趨勢追蹤 paper track（第三案，另出 PREREG 設計）；nowcast 層（第四案）；regime playbook（組合層，涉 pm 語言另議）。
 - 不動既有 skill 檔、不動 nav、不動 crowding／detective／monitor 任何現行管線。
+
+---
+
+## E. Phase 1.5 增補（2026-09-01 持有人核准；成品供取捨複審，逐模組可獨立拆除）
+
+同一合格判準（機制／可凍結對帳／breadth），三個新件。**實作要求：模組函式獨立、latest.json 各占獨立 key、任一模組拆除不影響其他**——持有人看完成品才決定留哪些。
+
+### E1. flowmap 模組 4：槓桿 ETF 每日再平衡（機制最硬，純算術）
+
+- **公式**：尾盤再平衡名目 =（L²−L）× AUM × 當日標的報酬。L 含正負：±2x →係數 2／6，±3x →係數 6／12（−2x＝6、−3x＝12）。
+- **Universe（CONFIG 硬表，PREREG 凍結）**：SPX 複合體 SSO(+2)/UPRO(+3)/SPXL(+3)/SDS(−2)/SPXU(−3)/SPXS(−3)；NDX 複合體 QLD(+2)/TQQQ(+3)/QID(−2)/SQQQ(−3)；半導體 SOXL(+3)/SOXS(−3)。
+- **AUM**：yfinance totalAssets，快取 `data/flowmap_etf_aum_cache.json`（7 天內不重抓；單檔失敗用上次快取值＋標 stale；全部抓不到→模組 null 進 gaps）。
+- **輸出**：per 複合體（SPX/NDX/SOX）——今日已實現再平衡流量＋條件表「若明日 ±1／±2／±3% → 尾盤同方向機械流量 $X bn」。confidence: med（公式為 prospectus 規則、AUM 為實值；內部淨額與滑價未知）。
+- **Kill**：本模組為規則算術（同 buyback 日曆待遇），不掛行為 kill；只掛資料層 kill——AUM 源連續 4 週全抓不到 → 模組進 gaps。
+
+### E2. flowmap 模組 5：月末／季末再平衡壓力
+
+- **機制**：平衡型基金月末回歸目標權重；月內股債報酬分岔越大，月末反向機械流量越大。
+- **估計式（PREREG 凍結）**：分岔 = SPY 月至今報酬 − AGG 月至今報酬（**價格快取加抓 AGG**）。方向：分岔 > 0 → 月末賣股買債（反之買股）。量級桶：|分岔| <2pp → 小 [0,10]；2–5pp → 中 [10,30]；>5pp → 大 [30,60] bn USD（外部研究粗錨，lo 信心）。生效窗口＝當月最後 3 個交易日；非窗口期照樣顯示讀數但標「未進生效窗」。季末（3/6/9/12 月）加註「疊加季度再平衡，量級傾向桶內偏上緣」。
+- **凍結對帳**：frozen_forecast 加月末件——生效窗首日凍結方向，事後以「生效窗 3 日 SPY−AGG 相對報酬方向」對帳。
+- **Kill（登 rule_ledger）**：連八次月末（含季末）方向對帳命中與擲硬幣無統計差異 → 模組降級為 gaps 或刪除（月頻樣本慢，檢查點放校準輪，~2 年才足量——此限制誠實寫進頁面方法論折疊）。
+
+### E3. RV 預測 producer（forecast ledger 的機械餵料——「原始數據裡真正可預測的量是波動率」的落地）
+
+- **Base rate 表**：`scripts/build_rv_base_rates.py` 抓 SPY 日線 ~10 年（yfinance→stooq），算 RV21（年化，日對數報酬 std×√252），建經驗轉移表：當前 RV21 五分位 →（a）21 個交易日後 RV21 高於今日的頻率（b）未來 21 個交易日內 RV21 觸及「今日值 +5 vol 點」以上的頻率。輸出 `data/rv_base_rates.json`（含樣本數；季度手動重建）。五分位×21d×+5pt 全部 PREREG 凍結。
+- **Producer**：`scripts/generate_rv_forecasts.py`——每月首個交易日手動跑（不掛 cron，先養習慣），從轉移表取 p，append 兩筆進 `knowledge/forecasts.jsonl`（source: `rv-model`）：①「30 曆日後 SPY RV21 高於今日 X%」（window: at_expiry）②「30 曆日內 SPY RV21 觸及 X+5% 以上」（window: any_close）。dry-run 預設、`--write` 落帳（比照 harvest；但 p 由轉移表機械給出，不需人工賦值——這正是要測的：**最可預測的量能不能給出校準的 p**）。
+- **Resolver 新域**：`settle_forecasts.py` 加 `rv:<TICKER>` 域——結算時從 `data/flowmap_prices.json` 日線算 RV21；支援 at_expiry 與 any_close。flowmap 價格快取 500 根日線足夠回看。
+- **Kill（登 rule_ledger）**：rv-model source resolved ≥20 筆後 BSS < 0（輸給 climatology）→ producer 砍。此件同時是 forecast ledger 本體的試金石。
+
+### E4. 治理
+
+- E2／E3 兩條 kill 於 commit 時登 rule_ledger 並再履行加一提刪一（E1 為純算術不登）。
+- 指數再構成（Russell/S&P 納入剔除）**本輪不蓋**：需要事件公告資料非純原始價格，違反「只看原始數據」前提，列 Phase 2 候選。
+
+---
+
+## F. 自動對帳與進化迴路（2026-09-01 持有人指示：「要自己對答案自己進化」）
+
+**進化的合法形式＝淘汰與重估，不是自動調參**：結構與門檻 PREREG 凍結不變；機率參數按 schedule 用新數據重估；輸的模組由已登記 kill 條款處決。機器對答案與舉旗，處決仍歸人（與 detective kill_watch 同哲學）。日常運轉零 LLM。
+
+### F1. 結算自動化
+新 workflow `forecast-settle-weekly.yml`（每週一次）：跑 `knowledge/settle_forecasts.py`，把 forecasts.jsonl 的 status/outcome/brier 回寫並 commit（forecast_settlement.json 維持 gitignore 本地衍生物）。解除「至少每 30 天手動跑」的人肉依賴。
+
+### F2. flowmap 成績單（模組自己的答案卷，公開渲染）
+新 `scripts/score_flowmap.py`（掛週更）：對帳 `forecast_history.jsonl` 凍結預測 vs 實際——
+- CTA 件（操作化定義，PREREG 凍結）：**樣本＝實際發生翻轉的週**——某 COT 報告週內，價格穿越了前一日凍結的任一 flip level（以 flowmap 價格快取判定）才成一筆樣本；預測方向＝被穿越窗的翻轉方向（多窗同週穿越取淨向）；對帳對象＝該市場對應 COT 類別淨部位的週變化方向（優先 leveraged funds，快取無此類別則用 non-commercial，實際採用類別寫進 scorecard meta）。命中＝同號。rolling 26 週命中率＝kill 條款同源指標。另計自我一致性（穿越後 composite 是否如凍結預測翻轉）作 sanity 欄。
+- 月末件：vs 生效窗 3 日 SPY−AGG 相對報酬方向（rolling 8 次）。
+- 輸出 `docs/flowmap/data/scorecard.json`：per-module 命中率＋樣本數＋kill 條款現值＋狀態燈（🟢 健康／🟡 樣本不足不評分／🔴 kill 門檻觸發＝舉旗待校準輪處決）。
+- flowmap 頁面加「成績單」section：白話渲染，模型錯了讀者看得到——這是描述器的誠實條款，也是與黑箱訊號商的根本差異。
+
+### F3. RV producer 全自動
+- `generate_rv_forecasts.py --write` 上 cron（每月首個交易日；p 為轉移表機械輸出、無人工判斷成分，符合自動落帳；同月查重防重複）。
+- `build_rv_base_rates.py` 季度自動重建（機率參數隨新數據重估＝合法進化；重建歷史保留 built_at 供追溯）。
+- 兩者可併入 F1 的 workflow 或獨立小 workflow，實作擇一（傾向併入，少一個 cron 面）。
+
+### F4. 界線
+- scorecard 🔴 只舉旗**不自動刪模組**、不自動改任何 CONFIG——處決與調整一律走校準輪＋rule_ledger。
+- 人工判讀類 forecast（detective/monitor editorial、macro）**不自動落帳**——機率賦值是人的判斷，自動化的只有結算與記分。
+
+---
+
+## G. 統計性質層（statlab）＋COT 重設計＋趨勢 paper track（2026-09-01 持有人拍板「都做」；融資餘額／申贖流明示不做）
+
+### G0. 定位
+- 新描述器頁 `docs/statlab/`（統計性質面板；noindex、不掛 nav、非收斂面）：相關性／VIX 期限結構／COT 極端統計三件。回答「什麼統計性質現在處於什麼狀態」，禁方向結論。
+- **crowding 現行管線與頁面唯讀不動**（cot_history.json 只消費）；crowding 頁本身要不要改版＝另案待持有人另拍。
+- producers（G5）比照 rv-model 進 forecast ledger，接線進 F1 週更 workflow（F 包落地後）。
+
+### G1. statlab 資料層
+`data/statlab_prices.json`——結構與 `data/flowmap_prices.json` 完全同構（meta＋series 日線 close，incremental，yfinance→stooq）。symbols：SPY、TLT、11 檔 SPDR sector（XLK XLF XLE XLV XLI XLY XLP XLU XLB XLRE XLC）、^VIX、^VIX3M；rolling 約 3 年。新 workflow `statlab-daily.yml`（cron 慣例照 flowmap-daily，零 LLM、zero-churn）。
+
+### G2. 相關性面板（PREREG 凍結）
+①股債相關＝SPY vs TLT 日報酬 63d 滾動相關；②sector 平均兩兩相關＝11 檔 sector ETF 63d 兩兩相關的等權平均；各附近 3 年分位。用途＝組合層風險描述（相關性升＝分散失效），頁面禁任何方向句。
+
+### G3. VIX 期限結構（PREREG 凍結）
+slope＝^VIX3M − ^VIX（收盤差）；狀態 contango（>0）／inverted（<0）；3 年分位；倒掛事件表（onset 定義＝連續 ≥5 日 slope>0 後首個 <0）。
+
+### G4. COT 極端統計（重設計；消費 cot_history.json 唯讀）
+- 實作前**必讀 build_crowding.py 確認 series 值語義**（淨部位口徑），不得望文生義。
+- 每市場滾動 3 年分位；極端定義＝分位 ≥95 或 ≤5（PREREG 凍結）。
+- 極端事件表＋base rate：**只對權益三指數**（S&P/NDX/RTY e-mini，價格代理 SPY/QQQ/IWM 走 flowmap 日線快取）計算「極端後 4 週價格反向」頻率（分市場＋pooled，樣本數必列；資料自 2021 起僅 ~5 年，樣本薄誠實標 lo）。**其餘 12 市場只渲染極端狀態不算 base rate**——無日線價格代理不硬算。
+- statlab 渲染：15 市場極端狀態燈＋權益三指數 base rate 表＋現況。
+
+### G5. producers：vix-model／cot-model（F 包落地後接線 F1 workflow）
+- 新 resolver 域（settle_forecasts.py）：`pxd:<TICKER>`＝data/flowmap_prices.json 日線收盤；`vixts:SLOPE`＝statlab_prices.json 算 ^VIX3M−^VIX。
+- **vix-model**（事件觸發）：倒掛 onset 時兩筆——①「21 交易日內 slope 回正」（vixts:SLOPE >0，any_close）②「63 交易日後 SPY 高於 onset 日收盤」（pxd:SPY，at_expiry；直接方向命題，誠實測試 crisis-rebound base rate）。p 自 `data/vixts_base_rates.json`（^VIX/^VIX3M ~10 年自建快取，builder 比照 build_rv_base_rates）。
+- **cot-model**（事件觸發）：權益三指數極端觸發時一筆「4 週後價格反向」（pxd: at_expiry），p 自 G4 base rate 表。
+- 共同：無事件不落帳；dry-run 預設、--write 查重（同市場同事件週拒重複）；p 機械給出。
+- **Kill（登 rule_ledger）**：vix-model／cot-model 各自 resolved ≥20 筆後 BSS<0 → 砍（同 rv-model 條款）。
+
+### G6. 趨勢追蹤 paper track（TSMOM；與 P10 刻意雙軌）
+- **家族區分**：P10＝橫斷面個股動能（股票彼此比）；本線＝時間序列多資產趨勢（每資產與自己的過去比）。比照 QGM×RS 雙鏡頭慣例，不合併。
+- **PREREG 凍結**：universe＝SPY QQQ IWM EFA EEM TLT IEF GLD DBC 共 9 檔；訊號＝12-1 動能（12 個月前至 1 個月前總報酬）>0 → 持有，否則該 slot 記現金（0% 報酬）；等權 1/9；月度首交易日換倉；inception 2026-09-01、NAV=100；對照組＝同 9 檔等權 buy-and-hold 與 SPY。prereg 逐字入 track.json（照 P10 慣例）。
+- 位置與形態照 P10：`docs/research/trend-track/`（index.html＋track.json）＋`scripts/build_trend_track.py`＋自建價格快取 `data/trend_track_prices.json`（同構，9 檔，~400 交易日）；NAV 週更掛 `weekly-market-update.yml`（surgical 加一步）。本輪**不掛 nav 不上首頁**（取捨後再議）。
+- **Kill（登 rule_ledger）**：24 個月後 Sharpe 與 Max DD 皆未優於 9 檔等權 buy-and-hold → 收線；期間不調參。paper only 永不連實倉。
+
+### G7. 治理
+G5 兩條＋G6 一條 kill 於 commit 時登 rule_ledger 並履行加一提刪一。發包模型照 §C4（sonnet 實作、orchestrator 驗收）。
