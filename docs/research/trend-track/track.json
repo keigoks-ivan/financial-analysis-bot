@@ -1,0 +1,325 @@
+{
+ "schema": "trend-track-v1",
+ "prereg": {
+  "title": "趨勢追蹤 paper track（TSMOM）— v0（PREREG，2026-09-01 凍結）",
+  "frozen_date": "2026-09-01",
+  "family_distinction": "與 P10（純價格動能 paper track，docs/research/price-momentum/）刻意雙軌，比照站內 QGM×RS+VCP screener 雙鏡頭慣例，不合併：P10 是橫斷面動能——S&P 500∪NQ100_EXTRAS 一個大池子的股票彼此比誰更強；本線是時間序列動能（TSMOM）——固定 9 檔資產，每一檔只跟自己的過去比，趨勢向上就持有、向下就退到現金，這是有百年跨資產證據的規則家族（Moskowitz/Ooi/Pedersen 2012《Time Series Momentum》一類文獻）。",
+  "positioning": "本線是零基本面成分、全機械、自帶 NAV 的跨資產時間序列動能 paper track。它不是收斂面：不回饋 DD 裁決鏈、不進 picks/GRP/三軌/cockpit 任何清單，不得被其他 session 引用為「某資產在趨勢追蹤上」的選股或擇時依據。資產層零人為干預；唯一人類接觸點是本 prereg 的正式評審點與 kill condition。",
+  "universe_and_data": {
+   "universe": "SPY、QQQ、IWM、EFA、EEM、TLT、IEF、GLD、DBC 共 9 檔固定資產類別代理（美股大盤／美股科技／美股小型股／成熟市場〔歐澳遠東〕／新興市場／長天期美債／中天期美債／黃金／大宗商品）。DBC 若當期資料不可得（<253 筆收盤），改試 PDBC，並在 track.json 的 commodity_symbol_used 欄位註記當期實際採用的代理；若兩者皆不可得，該 slot 以現金記帳（0% 報酬）並記入 data_gaps，不捏造數字。",
+   "prices": "yfinance 日線收盤（auto_adjust=True），yfinance 失敗 fallback stooq；自建快取 data/trend_track_prices.json，incremental 增量合併、rolling ~400 個交易日（signal 只需 253 筆，多留緩衝供週度增量與 12-1 視窗滑動）。",
+   "sufficiency_floor": "個股（資產）資料充足門檻：dropna 後 close 序列長度 ≥253，否則該資產本期排除、記入 data_gaps，該 slot 以現金記帳。"
+  },
+  "signal": {
+   "definition": "12-1 動能：t−252 至 t−21 交易日總報酬（12 個月前至 1 個月前，跳過最近 1 個月），與 P10 L12 慢線同一套標準定義、同一套 index 慣例（c.iloc[-22] / c.iloc[-253] − 1，-253 約 12 個月前、-22 約 1 個月前，跳過最近 21 個交易日）。",
+   "ret_12_1": "ret_12_1 = c.iloc[-22] / c.iloc[-253] − 1。",
+   "rule": ">0 → 該資產本期持有；否則該 slot 記現金（0% 報酬）。無其他否決條件。"
+  },
+  "weighting_and_rebalance": {
+   "equal_weight": "等權 1/9——無論本期幾檔在趨勢中，未持有的 slot 就是現金，其權重不會被轉移給其他持有中的資產（不是「在趨勢的資產瓜分全部曝險」，是「固定 9 席，每席各自決定持有或現金」）。",
+   "monthly_rebalance": "月度首交易日換倉（判定＝當月第一個有價格的交易日，操作上＝本次執行的日曆月份 ≠ 上次 rebalance 月份，與 P10/shadow 的 last_rebalance_month 慣例一致）：重新計算 9 檔各自訊號，整組重置等權——當日 mark-to-market NAV／9 換算每個持有 slot 的 units，現金 slot 對應比例留現金。",
+   "idempotency": "同日重跑冪等：nav_series 與 rebalance_history 同日期覆蓋，不重複 append。"
+  },
+  "nav_accounting": {
+   "inception": "Inception：2026-09-01，趨勢線 NAV=100.0；9 檔等權 buy-and-hold 對照組同日 NAV=100.0；nav_spy 同日以 SPY 收盤 normalize 至 100。",
+   "mark_to_market": "每次執行（週更）mark to market：NAV = 現金 + Σ units × 該資產最新收盤。"
+  },
+  "benchmarks": {
+   "buy_and_hold": "9 檔等權 buy-and-hold：inception 當日等權買入（每檔 NAV/9），此後永不再平衡，權重隨相對表現自然漂移——與趨勢線的「每月機械換倉、訊號決定持有或現金」對照，回答「機械擇時是否比單純持有更好」。",
+   "spy": "SPY 單一標的，同日 inception=100，作為傳統大盤基準對照。"
+  },
+  "kill_conditions": {
+   "evaluation_point": "正式評估點 2028-09-01（24 個月）；期中讀數可看、不具裁決力。",
+   "kill_1": "24 個月後 Sharpe 與 Max DD 皆未優於 9 檔等權 buy-and-hold → 收線；期間不調參、不重調、不復活。",
+   "paper_only": "Paper only，永不連實倉。"
+  },
+  "disclosure": "誠實標注：paper track、無交易成本、無滑價、機械式、非投資建議。不是收斂面，不進任何裁決鏈（picks/GRP/三軌/cockpit）。資產層零人為干預；唯一人類接觸點是本 prereg 的正式評審點與 kill condition。"
+ },
+ "as_of": "2026-09-01",
+ "inception_date": "2026-09-01",
+ "spy_close_inception": 767.05,
+ "last_rebalance_month": "2026-09",
+ "commodity_symbol_used": "DBC",
+ "nav_series": [
+  {
+   "date": "2026-09-01",
+   "nav_trend": 100.0,
+   "nav_bh": 100.0,
+   "nav_spy": 100.0,
+   "spy_close": 767.05
+  }
+ ],
+ "trend": {
+  "cash": 11.11111111111111,
+  "holdings": {
+   "SPY": {
+    "ticker": "SPY",
+    "entry_date": "2026-09-01",
+    "entry_price": 767.05,
+    "units": 0.01448551086775453,
+    "last_price": 767.05
+   },
+   "QQQ": {
+    "ticker": "QQQ",
+    "entry_date": "2026-09-01",
+    "entry_price": 716.76,
+    "units": 0.015501857122483273,
+    "last_price": 716.76
+   },
+   "IWM": {
+    "ticker": "IWM",
+    "entry_date": "2026-09-01",
+    "entry_price": 293.93,
+    "units": 0.037801895387034705,
+    "last_price": 293.93
+   },
+   "EFA": {
+    "ticker": "EFA",
+    "entry_date": "2026-09-01",
+    "entry_price": 107.45,
+    "units": 0.10340726953104802,
+    "last_price": 107.45
+   },
+   "EEM": {
+    "ticker": "EEM",
+    "entry_date": "2026-09-01",
+    "entry_price": 67.02,
+    "units": 0.16578799031798136,
+    "last_price": 67.02
+   },
+   "IEF": {
+    "ticker": "IEF",
+    "entry_date": "2026-09-01",
+    "entry_price": 92.74,
+    "units": 0.1198092636522656,
+    "last_price": 92.74
+   },
+   "GLD": {
+    "ticker": "GLD",
+    "entry_date": "2026-09-01",
+    "entry_price": 408.42,
+    "units": 0.02720511020790145,
+    "last_price": 408.42
+   },
+   "DBC": {
+    "ticker": "DBC",
+    "entry_date": "2026-09-01",
+    "entry_price": 31.3,
+    "units": 0.35498757543485976,
+    "last_price": 31.3
+   }
+  },
+  "rebalance_history": [
+   {
+    "date": "2026-09-01",
+    "event": "inception",
+    "entered": [
+     "DBC",
+     "EEM",
+     "EFA",
+     "GLD",
+     "IEF",
+     "IWM",
+     "QQQ",
+     "SPY"
+    ],
+    "exited": [],
+    "cash_slots": 1,
+    "holdings": [
+     {
+      "ticker": "DBC",
+      "units": 0.354988,
+      "entry_price": 31.3
+     },
+     {
+      "ticker": "EEM",
+      "units": 0.165788,
+      "entry_price": 67.02
+     },
+     {
+      "ticker": "EFA",
+      "units": 0.103407,
+      "entry_price": 107.45
+     },
+     {
+      "ticker": "GLD",
+      "units": 0.027205,
+      "entry_price": 408.42
+     },
+     {
+      "ticker": "IEF",
+      "units": 0.119809,
+      "entry_price": 92.74
+     },
+     {
+      "ticker": "IWM",
+      "units": 0.037802,
+      "entry_price": 293.93
+     },
+     {
+      "ticker": "QQQ",
+      "units": 0.015502,
+      "entry_price": 716.76
+     },
+     {
+      "ticker": "SPY",
+      "units": 0.014486,
+      "entry_price": 767.05
+     }
+    ]
+   }
+  ]
+ },
+ "benchmark_bh": {
+  "units": {
+   "SPY": 0.01448551086775453,
+   "QQQ": 0.015501857122483273,
+   "IWM": 0.037801895387034705,
+   "EFA": 0.10340726953104802,
+   "EEM": 0.16578799031798136,
+   "TLT": 0.13464749286368288,
+   "IEF": 0.1198092636522656,
+   "GLD": 0.02720511020790145,
+   "DBC": 0.35498757543485976
+  },
+  "cash": 0.0,
+  "last_price": {
+   "SPY": 767.05,
+   "QQQ": 716.76,
+   "IWM": 293.93,
+   "EFA": 107.45,
+   "EEM": 67.02,
+   "TLT": 82.52,
+   "IEF": 92.74,
+   "GLD": 408.42,
+   "DBC": 31.3
+  },
+  "missing_at_inception": []
+ },
+ "data_gaps": [],
+ "changelog": [
+  {
+   "date": "2026-09-01",
+   "event": "趨勢追蹤 paper track（TSMOM）PREREG 凍結（2026-09-01），inception。當期持有：['DBC', 'EEM', 'EFA', 'GLD', 'IEF', 'IWM', 'QQQ', 'SPY']。"
+  }
+ ],
+ "assets": [
+  {
+   "ticker": "SPY",
+   "role": "美股大盤（S&P 500）",
+   "price": 767.05,
+   "ret_12_1_pct": 16.39,
+   "signal_in_trend": true,
+   "data_sufficient": true,
+   "held": true,
+   "entry_date": "2026-09-01",
+   "entry_price": 767.05,
+   "last_price": 767.05,
+   "units": 0.014486
+  },
+  {
+   "ticker": "QQQ",
+   "role": "美股科技（Nasdaq 100）",
+   "price": 716.76,
+   "ret_12_1_pct": 19.79,
+   "signal_in_trend": true,
+   "data_sufficient": true,
+   "held": true,
+   "entry_date": "2026-09-01",
+   "entry_price": 716.76,
+   "last_price": 716.76,
+   "units": 0.015502
+  },
+  {
+   "ticker": "IWM",
+   "role": "美股小型股（Russell 2000）",
+   "price": 293.93,
+   "ret_12_1_pct": 25.3,
+   "signal_in_trend": true,
+   "data_sufficient": true,
+   "held": true,
+   "entry_date": "2026-09-01",
+   "entry_price": 293.93,
+   "last_price": 293.93,
+   "units": 0.037802
+  },
+  {
+   "ticker": "EFA",
+   "role": "成熟市場（歐澳遠東）",
+   "price": 107.45,
+   "ret_12_1_pct": 19.85,
+   "signal_in_trend": true,
+   "data_sufficient": true,
+   "held": true,
+   "entry_date": "2026-09-01",
+   "entry_price": 107.45,
+   "last_price": 107.45,
+   "units": 0.103407
+  },
+  {
+   "ticker": "EEM",
+   "role": "新興市場",
+   "price": 67.02,
+   "ret_12_1_pct": 29.9,
+   "signal_in_trend": true,
+   "data_sufficient": true,
+   "held": true,
+   "entry_date": "2026-09-01",
+   "entry_price": 67.02,
+   "last_price": 67.02,
+   "units": 0.165788
+  },
+  {
+   "ticker": "TLT",
+   "role": "長天期美債（20 年以上）",
+   "price": 82.52,
+   "ret_12_1_pct": -0.47,
+   "signal_in_trend": false,
+   "data_sufficient": true,
+   "held": false,
+   "entry_date": null,
+   "entry_price": null,
+   "last_price": null,
+   "units": null
+  },
+  {
+   "ticker": "IEF",
+   "role": "中天期美債（7–10 年）",
+   "price": 92.74,
+   "ret_12_1_pct": 0.55,
+   "signal_in_trend": true,
+   "data_sufficient": true,
+   "held": true,
+   "entry_date": "2026-09-01",
+   "entry_price": 92.74,
+   "last_price": 92.74,
+   "units": 0.119809
+  },
+  {
+   "ticker": "GLD",
+   "role": "黃金",
+   "price": 408.42,
+   "ret_12_1_pct": 17.94,
+   "signal_in_trend": true,
+   "data_sufficient": true,
+   "held": true,
+   "entry_date": "2026-09-01",
+   "entry_price": 408.42,
+   "last_price": 408.42,
+   "units": 0.027205
+  },
+  {
+   "ticker": "DBC",
+   "role": "大宗商品",
+   "price": 31.3,
+   "ret_12_1_pct": 37.51,
+   "signal_in_trend": true,
+   "data_sufficient": true,
+   "held": true,
+   "entry_date": "2026-09-01",
+   "entry_price": 31.3,
+   "last_price": 31.3,
+   "units": 0.354988
+  }
+ ]
+}
