@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta name="robots" content="noindex,nofollow">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>統計性質面板 — InvestMQuest Research</title>
+  <meta name="description" content="統計性質面板 — 股債相關性、VIX 期限結構、CFTC 大戶持倉極端統計三個獨立描述器，回答「什麼統計性質現在處於什麼狀態」。不預測方向，不給買賣建議。">
+  <meta property="og:title" content="統計性質面板 — InvestMQuest Research">
+  <meta property="og:site_name" content="InvestMQuest Research">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Playfair+Display:wght@600;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/imq-base.css">
+  <style>
+:root{
+  --bg:#f7f3ea;--bg-card:#ffffff;--bg-card-hover:#fbf8f1;
+  --border:#e5dfd0;--border-light:#efe9da;
+  --text:#0c1521;--text-secondary:#2a3a52;--text-muted:#9aa7b8;
+  --accent:#0d2244;--accent-hover:#081832;
+  --gold:#b8924a;--gold-deep:#8f6d2c;
+  --pos:#15803d;--neg:#b91c1c;--warn:#a16207;
+  --pos-bg:#eafaef;--neg-bg:#fbeceb;--warn-bg:#fbf3df;
+  --shadow-sm:0 1px 2px rgba(13,34,68,.05);
+  --shadow-md:0 6px 18px rgba(13,34,68,.07);
+  --radius:10px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#0b0d11;--bg-card:#14181f;--bg-card-hover:#1a1f28;
+    --border:#28303c;--border-light:#222834;
+    --text:#edeff3;--text-secondary:#a6aebc;--text-muted:#717a8a;
+    --accent:#5b9bff;--accent-hover:#7db0ff;
+    --gold:#c9a55e;--gold-deep:#b8924a;
+    --pos:#34d399;--neg:#f87171;--warn:#fbbf24;
+    --pos-bg:rgba(52,211,153,.12);--neg-bg:rgba(248,113,113,.12);--warn-bg:rgba(251,191,36,.12);
+    --shadow-sm:0 1px 2px rgba(0,0,0,.3);
+    --shadow-md:0 4px 14px rgba(0,0,0,.4);
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:15px;
+     -webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+a:hover{color:var(--accent-hover)}
+.wrap{max-width:1140px;margin:0 auto;padding:0 20px}
+.mono{font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums}
+
+.hero{padding:2.6rem 0 1.6rem}
+.overline{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;
+          text-transform:uppercase;color:var(--gold-deep);font-weight:600}
+h1{font-family:'Playfair Display','Noto Serif TC',Georgia,serif;font-size:1.9rem;
+   font-weight:700;letter-spacing:-.01em;color:var(--text);margin:.4rem 0 .6rem}
+.hero .lede{color:var(--text-secondary);max-width:760px;font-size:.95rem;line-height:1.75}
+.hero .lede strong{color:var(--text)}
+.mandate{margin-top:1.1rem;max-width:820px;border-left:3px solid var(--accent);
+         background:var(--bg-card);border-radius:0 var(--radius) var(--radius) 0;
+         padding:.9rem 1.15rem;font-size:.85rem;color:var(--text-secondary);line-height:1.75}
+.mandate strong{color:var(--text)}
+.asof{margin-top:.9rem;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--text-muted)}
+
+section{margin:2.2rem 0}
+h2{font-family:'Playfair Display','Noto Serif TC',Georgia,serif;font-size:1.25rem;
+   font-weight:700;margin-bottom:.4rem;color:var(--text)}
+h2 .en{font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--text-muted);
+       font-weight:400;letter-spacing:.08em;margin-left:.55rem;text-transform:uppercase}
+.section-sub{font-size:.84rem;color:var(--text-muted);margin-bottom:1rem;max-width:800px;line-height:1.75}
+.section-sub strong{color:var(--text-secondary)}
+
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
+      box-shadow:var(--shadow-sm);padding:1.1rem 1.3rem}
+
+/* 統計卡（相關性） */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1rem}
+.stat-card .stat-head{font-size:.86rem;font-weight:700;color:var(--text);margin-bottom:.15rem}
+.stat-card .stat-explain{font-size:.8rem;color:var(--text-muted);line-height:1.7;margin-bottom:.7rem}
+.stat-card .stat-row{display:flex;align-items:baseline;gap:.9rem;flex-wrap:wrap;margin-bottom:.5rem}
+.stat-card .stat-num{font-family:'IBM Plex Mono',monospace;font-size:1.7rem;font-weight:700;color:var(--text)}
+.stat-card .stat-pctile{font-size:.78rem;color:var(--text-secondary)}
+.stat-card .stat-pctile b{color:var(--text)}
+.spark-wrap{margin-top:.5rem;color:var(--accent);opacity:.85}
+.spark-wrap .spark-label{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--text-muted);
+                          text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem}
+.na-card{color:var(--text-muted);font-size:.85rem}
+
+/* VIX 期限結構 */
+.vix-row{display:flex;flex-wrap:wrap;gap:1.7rem;align-items:baseline;margin-bottom:.9rem}
+.vix-row .vbox .vlabel{font-size:11px;color:var(--text-muted)}
+.vix-row .vbox .vval{font-family:'IBM Plex Mono',monospace;font-size:1.2rem;font-weight:700;
+                      color:var(--text);margin-top:.15rem}
+.state-chip{display:inline-block;font-size:11.5px;font-weight:700;padding:.2rem .6rem;border-radius:20px}
+.state-contango{background:var(--pos-bg);color:var(--pos)}
+.state-inverted{background:var(--neg-bg);color:var(--neg)}
+.state-flat{background:var(--border-light);color:var(--text-muted)}
+.stale-note{font-size:.76rem;color:var(--warn);margin-top:.5rem}
+
+table.data-table{width:100%;border-collapse:collapse}
+table.data-table th{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;
+               letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);
+               text-align:left;padding:.5rem .6rem;border-bottom:1px solid var(--border)}
+table.data-table td{padding:.6rem .6rem;border-bottom:1px solid var(--border-light);
+               vertical-align:top;font-size:.83rem}
+table.data-table tr:last-child td{border-bottom:none}
+table.data-table td.num{font-family:'IBM Plex Mono',monospace;text-align:right;white-space:nowrap}
+.status-resolved{color:var(--text-secondary)}
+.status-ongoing{color:var(--warn);font-weight:600}
+
+/* COT 15 市場燈號 */
+.mkt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:.6rem;margin-bottom:1.2rem}
+.mkt-cell{border:1px solid var(--border);border-radius:8px;padding:.7rem .8rem;background:var(--bg-card)}
+.mkt-cell.eq3{border-color:var(--gold)}
+.mkt-cell .ml{font-size:.78rem;color:var(--text-secondary);font-weight:600;margin-bottom:.3rem}
+.mkt-cell .mv{font-family:'IBM Plex Mono',monospace;font-size:.98rem;font-weight:700;color:var(--text)}
+.mkt-cell .mp{font-size:.72rem;color:var(--text-muted);margin-top:.15rem}
+.mkt-cell.extreme-long{background:var(--pos-bg)}
+.mkt-cell.extreme-short{background:var(--neg-bg)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:.3rem;vertical-align:middle}
+.dot-long{background:var(--pos)}
+.dot-short{background:var(--neg)}
+
+/* details / gaps / disclaimer */
+details{margin-top:.8rem}
+details summary{cursor:pointer;font-size:.82rem;font-weight:600;color:var(--accent);list-style:revert}
+details .body{margin-top:.6rem;font-size:.82rem;color:var(--text-secondary);line-height:1.8}
+.gaps{font-size:.83rem;color:var(--text-secondary);background:var(--bg-card);border:1px solid var(--border);
+      border-radius:var(--radius);padding:.9rem 1.1rem}
+.gaps ul{margin:.3rem 0 0 1.1rem}
+.disclaimer{margin:1.6rem 0;padding:1.1rem 1.3rem;background:var(--bg-card);border:1px solid var(--border);
+            border-radius:var(--radius);font-size:.78rem;color:var(--text-muted);line-height:1.75}
+.disclaimer strong{color:var(--text-secondary)}
+.loading{color:var(--text-muted);font-size:.85rem;padding:1.2rem 0}
+.conf-chip{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:9.5px;
+           font-weight:700;padding:.12rem .45rem;border-radius:20px;margin-left:.4rem;vertical-align:middle}
+.conf-hi{background:var(--pos-bg);color:var(--pos)}
+.conf-med{background:rgba(13,34,68,.08);color:var(--accent)}
+.conf-lo{background:var(--warn-bg);color:var(--warn)}
+
+footer.imq-foot{margin-top:2.6rem;padding:1.4rem 20px;border-top:1px solid var(--border);
+                 text-align:center;font-size:12.5px;color:var(--text-muted)}
+footer.imq-foot a{color:var(--text-secondary)}
+
+@media(max-width:768px){
+  h1{font-size:1.5rem}
+  table.data-table{display:block;overflow-x:auto}
+  .vix-row{gap:1rem}
+}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <span class="overline">Statistical Properties Panel</span>
+    <h1>統計性質面板</h1>
+    <p class="lede">
+      這頁不猜漲跌，只回答「市場現在的統計性質長什麼樣子」——三件事各自獨立：
+      <strong>股票和債券最近漲跌是不是同一個方向</strong>（相關性）、
+      <strong>市場對「近期」和「未來三個月」的恐慌程度誰比較貴</strong>（VIX 期限結構）、
+      <strong>期貨市場裡的投機部位有沒有擠到歷史邊緣</strong>（CFTC 大戶持倉極端統計）。
+      三個統計量都是純數學計算，門檻與窗長已在設計階段凍結，不隨個案調整。
+    </p>
+    <div class="mandate">
+      <strong>定位：</strong>本頁是<strong>描述器（describer），不是進出場訊號</strong>。
+      它衡量統計性質現在處於什麼狀態，<strong>不預測接下來會不會、或往哪個方向變化</strong>。
+      個股與組合的進出，依各公司深度報告（DD）寫定的證偽條件決定，不由本頁驅動。
+      本頁的結論也不會流入站上任何選股名單。
+    </div>
+    <div class="asof" id="asof">載入中…</div>
+  </div>
+
+  <section id="sec-corr">
+    <h2>相關性<span class="en">Correlation</span></h2>
+    <p class="section-sub">
+      分散配置的前提是「手上的資產不會一起漲一起跌」。這裡看兩件事：
+      <strong>股票和公債最近 63 個交易日是不是同向</strong>——相關性一旦轉正走高，代表股跌時債券不一定幫得上忙，
+      傳統的股債分散效果正在打折；<strong>11 檔類股彼此漲跌是不是同步</strong>——數字越高，代表市場在用同一套邏輯
+      定價所有產業，分散持有不同類股的效果變小。分位是把「今天的數字」放進近 3 年的歷史分布裡看落在哪裡。
+    </p>
+    <div class="stat-grid" id="corr-grid">
+      <div class="card na-card loading">載入中…</div>
+    </div>
+  </section>
+
+  <section id="sec-vix">
+    <h2>VIX 期限結構<span class="en">VIX Term Structure</span></h2>
+    <p class="section-sub">
+      VIX 是「近期」的波動溢價，VIX3M 是「未來三個月」的波動溢價。正常時近期比較便宜（contango，市場對眼前比較放心）；
+      一旦倒掛（inverted，slope = VIX3M − VIX 轉負），代表市場現在對「這幾天」的恐慌程度比對「未來三個月」還高——
+      這通常在市場緊張、消息面急轉直下時出現。<strong>倒掛本身是市場情緒的溫度計，不是「接下來會跌」的預測</strong>，
+      這裡只記錄它發生過幾次、每次燒了多久才回正。
+    </p>
+    <div class="card" id="vix-card"><div class="loading">載入中…</div></div>
+    <details id="vix-events-detail">
+      <summary>近 3 年倒掛事件表</summary>
+      <div class="body">
+        onset（倒掛起點）＝連續 ≥5 個交易日 slope 站在正值之後，首次翻負的那一天；回正天數＝從 onset 到 slope
+        重新翻正之間經過的交易日數。「進行中」代表截至最新資料日尚未回正。
+        <div style="overflow-x:auto;margin-top:.6rem">
+          <table class="data-table" id="vix-events-table">
+            <thead><tr><th>倒掛起點</th><th>當日 slope</th><th>回正日</th><th>回正天數</th><th>狀態</th></tr></thead>
+            <tbody id="vix-events-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <section id="sec-cot">
+    <h2>CFTC 大戶持倉極端統計<span class="en">COT Positioning Extremes</span></h2>
+    <p class="section-sub">
+      CFTC 每週公布期貨市場「非商業」（一般理解為投機／資產管理資金）的淨部位——正值代表這群人整體淨做多，
+      負值代表淨做空。<strong>當淨部位擠進近 3 年最極端的 5% 區間（不管多空），代表這群交易者的部位已經到了
+      歷史邊緣</strong>：金字塔尖端的部位一旦要平倉，容易引發連鎖的同向交易。這不是「價格馬上要反轉」的預測，
+      只是部位擁擠度到了統計上的極端值——燈亮不代表方向，只代表擠。
+    </p>
+    <div class="mkt-grid" id="cot-grid"><div class="loading">載入中…</div></div>
+    <p class="section-sub">
+      <strong>只有股市三大指數（S&amp;P 500／那斯達克 100／羅素 2000 期貨）另外算了一件事</strong>：過去每一次淨部位
+      擠進極端區間之後，4 週後價格有沒有真的「反向」（極端偏多後續跌、極端偏空後續漲）。這是唯一有現成日線價格可以
+      拿來對帳的三個市場，其餘 12 個市場只呈現目前狀態，不算這個統計。
+    </p>
+    <div class="card" style="overflow-x:auto">
+      <table class="data-table" id="baserate-table">
+        <thead><tr><th>市場</th><th>事件數</th><th>命中數</th><th>命中率</th><th>信心</th></tr></thead>
+        <tbody id="baserate-tbody"><tr><td colspan="5" class="loading">載入中…</td></tr></tbody>
+      </table>
+    </div>
+    <details id="cot-detail">
+      <summary>COT 模組方法論與 base rate 定義</summary>
+      <div class="body" id="cot-detail-body"></div>
+    </details>
+  </section>
+
+  <section id="sec-gaps" style="display:none">
+    <h2>資料缺口<span class="en">Gaps</span></h2>
+    <div class="gaps" id="gaps"></div>
+  </section>
+
+  <div class="disclaimer">
+    <strong>免責與定位：</strong>
+    本頁為 InvestMQuest Research 內部研究文件，<strong>描述器非擇時訊號、非投資建議</strong>。
+    相關性與 VIX 期限結構皆為機械計算（可重算、可回測），COT 淨部位分位與極端後 4 週價格對帳同為機械計算，
+    但 CFTC 資料自 2021 年起僅約 5 年，可用事件樣本天生偏少，一律標記低信心，樣本數已逐項列出供自行判斷。
+    過往統計關係不保證未來重演，本頁任何數字皆不構成買賣建議。
+  </div>
+</div>
+
+<footer class="imq-foot">
+  <div class="wrap">
+    <div>© 2026 InvestMQuest Research</div>
+    <div><a href="/disclosures.html">方法論與揭露</a> · 本站內容僅供研究參考，不構成投資建議</div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  function el(tag, cls, html) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (html !== undefined) e.innerHTML = html;
+    return e;
+  }
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+  function fmtSigned(v, d) {
+    if (v === null || v === undefined) return "—";
+    var n = Number(v);
+    var s = n.toFixed(d === undefined ? 1 : d);
+    return (n > 0 ? "+" : "") + s;
+  }
+  function fmtNum(v, d) {
+    if (v === null || v === undefined) return "—";
+    return Number(v).toFixed(d === undefined ? 1 : d);
+  }
+  function confChip(c) {
+    if (c === "hi") return '<span class="conf-chip conf-hi">高</span>';
+    if (c === "med") return '<span class="conf-chip conf-med">中</span>';
+    if (c === "lo") return '<span class="conf-chip conf-lo">低</span>';
+    return "";
+  }
+
+  function twStamp(iso) {
+    if (!iso) return "";
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return String(iso);
+    var p = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Taipei", year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", hourCycle: "h23"
+    }).formatToParts(d).reduce(function (o, x) { o[x.type] = x.value; return o; }, {});
+    return p.year + "-" + p.month + "-" + p.day + " " + p.hour + ":" + p.minute + " 台北時間";
+  }
+
+  function sparklineSvg(pairs, w, h) {
+    if (!pairs || pairs.length < 2) return "";
+    var vals = pairs.map(function (p) { return p[1]; });
+    var min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+    var range = (max - min) || 1;
+    var n = vals.length;
+    var pts = vals.map(function (v, i) {
+      var x = (i / (n - 1)) * w;
+      var y = h - ((v - min) / range) * (h - 4) - 2;
+      return x.toFixed(1) + "," + y.toFixed(1);
+    }).join(" ");
+    var lastVal = vals[n - 1];
+    var lastY = h - ((lastVal - min) / range) * (h - 4) - 2;
+    return '<svg viewBox="0 0 ' + w + ' ' + h + '" width="100%" height="' + h +
+      '" preserveAspectRatio="none"><polyline points="' + pts +
+      '" fill="none" stroke="currentColor" stroke-width="1.6"/>' +
+      '<circle cx="' + w + '" cy="' + lastY.toFixed(1) + '" r="2.4" fill="currentColor"/></svg>';
+  }
+
+  // ── 相關性 ──────────────────────────────────────────────────────────────
+  function corrStatCard(title, explain, stat) {
+    var card = el("div", "card stat-card");
+    card.appendChild(el("div", "stat-head", esc(title)));
+    card.appendChild(el("div", "stat-explain", explain));
+    if (!stat) {
+      card.appendChild(el("div", "na-card", "今日無可用資料，見下方資料缺口。"));
+      return card;
+    }
+    var row = el("div", "stat-row");
+    row.appendChild(el("div", "stat-num mono", fmtSigned(stat.current, 2)));
+    var p = el("div", "stat-pctile",
+      "近 3 年分位 <b>" + fmtNum(stat.pctile_3y, 0) + "%</b>" + confChip(stat.confidence));
+    row.appendChild(p);
+    card.appendChild(row);
+    var sw = el("div", "spark-wrap");
+    sw.appendChild(el("div", "spark-label", "近 90 日走勢"));
+    sw.innerHTML += sparklineSvg(stat.spark_90d, 280, 34);
+    card.appendChild(sw);
+    var meta = el("div", "", "資料日 " + esc(stat.as_of) +
+      (stat.n_pairs ? "・" + stat.n_pairs + " 組配對" : "") +
+      "・" + stat.window_days + " 交易日滾動窗");
+    meta.style.cssText = "font-size:.72rem;color:var(--text-muted);margin-top:.5rem";
+    card.appendChild(meta);
+    return card;
+  }
+
+  function renderCorrelation(corr) {
+    var host = document.getElementById("corr-grid");
+    host.innerHTML = "";
+    if (!corr) {
+      host.appendChild(el("div", "card na-card", "相關性模組今日無可用資料，見下方資料缺口。"));
+      return;
+    }
+    host.appendChild(corrStatCard(
+      "SPY–TLT 股債相關（63 日滾動）",
+      "相關性升高＝股票和公債最近同向漲跌，股跌買債避險的分散效果變弱；相關性走低或翻負＝股債仍能互相對沖。",
+      corr.spy_tlt));
+    host.appendChild(corrStatCard(
+      "11 檔類股兩兩相關平均（63 日滾動）",
+      "數字越高，代表十一個類股漲跌越同步，分散持有不同類股的效果越小；數字越低，代表產業之間仍各自表現。",
+      corr.sector_avg_pairwise));
+  }
+
+  // ── VIX 期限結構 ────────────────────────────────────────────────────────
+  var STATE_LABEL = { contango: "正常（近期較便宜）", inverted: "倒掛（近期較貴）", flat: "持平" };
+  var STATE_CLASS = { contango: "state-contango", inverted: "state-inverted", flat: "state-flat" };
+
+  function renderVix(vt) {
+    var host = document.getElementById("vix-card");
+    host.innerHTML = "";
+    if (!vt) {
+      host.appendChild(el("div", "loading", "VIX 期限結構模組今日無可用資料，見下方資料缺口。"));
+      document.getElementById("vix-events-detail").style.display = "none";
+      return;
+    }
+    var row = el("div", "vix-row");
+    [["VIX（近期）", fmtNum(vt.vix, 2)], ["VIX3M（未來 3 個月）", fmtNum(vt.vix3m, 2)],
+     ["Slope（VIX3M−VIX）", fmtSigned(vt.slope, 2)]].forEach(function (s) {
+      var box = el("div", "vbox");
+      box.appendChild(el("div", "vlabel", s[0]));
+      box.appendChild(el("div", "vval mono", s[1]));
+      row.appendChild(box);
+    });
+    var stateBox = el("div", "vbox");
+    stateBox.appendChild(el("div", "vlabel", "狀態"));
+    var chip = el("div", "state-chip " + (STATE_CLASS[vt.state] || ""),
+      esc(STATE_LABEL[vt.state] || vt.state));
+    chip.style.marginTop = ".2rem";
+    stateBox.appendChild(chip);
+    row.appendChild(stateBox);
+    var pctBox = el("div", "vbox");
+    pctBox.appendChild(el("div", "vlabel", "近 3 年分位"));
+    pctBox.appendChild(el("div", "vval mono", fmtNum(vt.pctile_3y, 0) + "%" + confChip(vt.confidence)));
+    row.appendChild(pctBox);
+    host.appendChild(row);
+    host.appendChild(el("div", "", "資料日 " + esc(vt.as_of) + "・近 3 年共 " + vt.n_events_3y + " 次倒掛事件"));
+    host.lastChild.style.cssText = "font-size:.78rem;color:var(--text-muted)";
+    if (vt.stale) {
+      host.appendChild(el("div", "stale-note",
+        "⚠ 上游資料來源有延遲，本頁現值以兩個序列的共同交易日為準，可能落後最新盤面，見下方資料缺口。"));
+    }
+
+    var tbody = document.getElementById("vix-events-tbody");
+    tbody.innerHTML = "";
+    var events = (vt.events_3y || []).slice().reverse();
+    if (!events.length) {
+      tbody.appendChild(el("tr", "", '<td colspan="5" class="loading">近 3 年無倒掛事件。</td>'));
+    } else {
+      events.forEach(function (e) {
+        var tr = el("tr");
+        tr.appendChild(el("td", "", esc(e.onset_date)));
+        tr.appendChild(el("td", "num mono", fmtSigned(e.onset_slope, 2)));
+        tr.appendChild(el("td", "", esc(e.recovery_date || "—")));
+        tr.appendChild(el("td", "num mono", e.recovery_trading_days === null ? "—" : e.recovery_trading_days + " 日"));
+        tr.appendChild(el("td", "status-" + e.status, e.status === "resolved" ? "已回正" : "進行中"));
+        tbody.appendChild(tr);
+      });
+    }
+  }
+
+  // ── COT ─────────────────────────────────────────────────────────────────
+  function renderCotGrid(cot) {
+    var host = document.getElementById("cot-grid");
+    host.innerHTML = "";
+    if (!cot || !cot.markets || !cot.markets.length) {
+      host.appendChild(el("div", "loading", "COT 模組今日無可用資料，見下方資料缺口。"));
+      return;
+    }
+    cot.markets.forEach(function (m) {
+      var cls = "mkt-cell" + (m.is_equity_three ? " eq3" : "") +
+        (m.extreme === "stretched_long" ? " extreme-long" : m.extreme === "stretched_short" ? " extreme-short" : "");
+      var cell = el("div", cls);
+      var dotHtml = m.extreme === "stretched_long" ? '<span class="dot dot-long"></span>' :
+        m.extreme === "stretched_short" ? '<span class="dot dot-short"></span>' : "";
+      cell.appendChild(el("div", "ml", dotHtml + esc(m.label)));
+      cell.appendChild(el("div", "mv mono", fmtSigned(m.net_pct_oi, 2) + "%"));
+      var pctText = "分位 " + fmtNum(m.pctile_3y, 0) + "%" +
+        (m.extreme === "stretched_long" ? "・極端偏多" : m.extreme === "stretched_short" ? "・極端偏空" : "");
+      cell.appendChild(el("div", "mp", pctText));
+      host.appendChild(cell);
+    });
+  }
+
+  function renderBaseRate(cot) {
+    var tbody = document.getElementById("baserate-tbody");
+    tbody.innerHTML = "";
+    var br = cot && cot.base_rate;
+    if (!br) {
+      tbody.appendChild(el("tr", "", '<td colspan="5" class="loading">權益三指數 base rate 今日無可用資料，見下方資料缺口。</td>'));
+      return;
+    }
+    (br.by_market || []).forEach(function (m) {
+      var tr = el("tr");
+      tr.appendChild(el("td", "", esc(m.market) + '<br><small style="color:var(--text-muted)">代理：' + esc(m.proxy) + "</small>"));
+      tr.appendChild(el("td", "num mono", m.n_events));
+      tr.appendChild(el("td", "num mono", m.n_hit));
+      tr.appendChild(el("td", "num mono", m.hit_rate_pct === null ? "—" : fmtNum(m.hit_rate_pct, 1) + "%"));
+      tr.appendChild(el("td", "", confChip(br.confidence)));
+      tbody.appendChild(tr);
+    });
+    var pooled = br.pooled || {};
+    var tr = el("tr");
+    tr.style.fontWeight = "700";
+    tr.appendChild(el("td", "", "三指數合併（pooled）"));
+    tr.appendChild(el("td", "num mono", pooled.n_events || 0));
+    tr.appendChild(el("td", "num mono", pooled.n_hit || 0));
+    tr.appendChild(el("td", "num mono", pooled.hit_rate_pct === null || pooled.hit_rate_pct === undefined ? "—" : fmtNum(pooled.hit_rate_pct, 1) + "%"));
+    tr.appendChild(el("td", "", confChip(br.confidence)));
+    tbody.appendChild(tr);
+
+    var detailBody = document.getElementById("cot-detail-body");
+    detailBody.innerHTML = "";
+    detailBody.appendChild(el("p", "", esc(cot.methodology || "")));
+    var p2 = el("p", "", esc(br.definition || ""));
+    p2.style.marginTop = ".5rem";
+    detailBody.appendChild(p2);
+    var p3 = el("p", "", esc(br.caveat || ""));
+    p3.style.cssText = "margin-top:.5rem;color:var(--warn)";
+    detailBody.appendChild(p3);
+    detailBody.appendChild(el("p", "", "極端門檻：近 3 年（156 週）滾動分位 ≥" + cot.extreme_thresholds.hi +
+      " 或 ≤" + cot.extreme_thresholds.lo + "；淨部位口徑：非商業（noncommercial／投機資金）淨部位 ÷ 總未平倉量。"))
+      .style.cssText = "margin-top:.5rem";
+  }
+
+  function renderGaps(data) {
+    var gaps = data.gaps || [];
+    if (!gaps.length) return;
+    document.getElementById("sec-gaps").style.display = "";
+    var box = document.getElementById("gaps");
+    box.innerHTML = "本次更新缺口：";
+    var ul = el("ul");
+    gaps.forEach(function (g) { ul.appendChild(el("li", "", esc(g))); });
+    box.appendChild(ul);
+  }
+
+  fetch("data/latest.json").then(function (r) { return r.json(); }).then(function (data) {
+    document.getElementById("asof").textContent =
+      "資料日 " + data.as_of + " · 產出 " + twStamp(data.generated_at) + " · 每日美股收盤後更新";
+    renderCorrelation(data.correlation);
+    renderVix(data.vix_term);
+    renderCotGrid(data.cot);
+    renderBaseRate(data.cot);
+    renderGaps(data);
+  }).catch(function (e) {
+    document.getElementById("corr-grid").innerHTML =
+      '<div class="card na-card">資料載入失敗：' + esc(e.message) + "</div>";
+  });
+})();
+</script>
+</body>
+</html>
