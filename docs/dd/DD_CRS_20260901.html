@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v15.0">
+<title>CRS｜Carpenter Technology｜深度研究 DD｜2026-09-01</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1E3A5F;--accent:#3B82F6;--bg:#F8FAFC;--card:#FFFFFF;--altrow:#F1F5F9;}
+*{box-sizing:border-box;}
+body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:#0F172A;margin:0;padding:0;line-height:1.65;}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px 60px;}
+h1,h2,h3,h4{font-family:'Noto Sans TC',sans-serif;color:var(--navy);}
+h2{background:#EFF6FF;border-left:4px solid var(--accent);padding:10px 14px;margin-top:44px;scroll-margin-top:80px;font-size:20px;}
+h3{border-left:3px solid #93C5FD;padding-left:10px;margin-top:26px;font-size:16px;}
+h4{font-size:14px;color:#334155;}
+table{border-collapse:collapse;width:100%;margin:12px 0;font-size:13.5px;}
+th,td{border:1px solid #E2E8F0;padding:6px 9px;text-align:left;vertical-align:top;}
+th{background:var(--navy);color:#fff;font-weight:600;}
+tr:nth-child(even){background:var(--altrow);}
+code{font-family:'IBM Plex Mono',monospace;background:#F1F5F9;padding:1px 5px;border-radius:3px;font-size:12.5px;}
+.reasoning{background:#F8FAFC;border-left:3px solid #94A3B8;padding:8px 12px;margin:8px 0;font-size:13px;color:#334155;}
+.status-bar{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;background:#F1F5F9;border-top:4px solid var(--accent);border-bottom:4px solid var(--accent);padding:14px 10px;margin-top:0;}
+.status-bar .cell{text-align:center;min-width:110px;}
+.status-bar .lbl{font-size:11px;color:#64748B;display:block;}
+.status-bar .val{font-size:20px;font-weight:700;display:block;}
+.hypothesis-box{background:#EFF6FF;border-left:4px solid var(--accent);padding:18px 22px;margin:14px 0;}
+.hypothesis-box .thesis{font-size:24px;font-weight:700;text-align:center;color:var(--navy);margin:4px 0 14px;}
+.hypothesis-box ul{padding-left:20px;}
+.hypothesis-box li{margin:6px 0;}
+.decision-box{padding:20px 24px;margin:18px 0;border-radius:4px;}
+.decision-box.enter{background:#F0FDF4;border-left:4px solid #166534;}
+.verdict-chip{display:inline-block;padding:6px 20px;border-radius:4px;font-size:18px;font-weight:700;background:#166534;color:#fff;border-left:4px solid #14532D;margin-bottom:8px;}
+.verdict-sub{font-size:13px;color:#475569;font-style:italic;display:block;margin-bottom:16px;}
+.conflict-box{background:#FFF7ED;border-left:4px solid #F97316;padding:16px 20px;margin:18px 0;}
+.verdict-table{background:#FED7AA;}
+.premortem-box{background:#FEF2F2;border-left:4px solid #DC2626;padding:16px 20px;margin:18px 0;}
+.pattern-box{background:#F0F9FF;border-left:4px solid #0EA5E9;padding:14px 18px;margin:14px 0;}
+.trap-box{background:#FFF0E6;border-left:4px solid #F97316;padding:14px 18px;margin:14px 0;}
+.trap-box h4{color:#C2410C;}
+.pass{color:#166534;font-weight:600;}
+.fail{color:#991B1B;font-weight:600;}
+.neutral{color:#92400E;font-weight:600;}
+.green{color:#166534;font-weight:600;}
+.red{color:#991B1B;font-weight:600;}
+.amber{color:#92400E;font-weight:600;}
+.dd-toc{display:flex;flex-wrap:wrap;gap:6px;padding:12px 0;justify-content:center;background:#fff;position:sticky;top:0;z-index:10;border-bottom:1px solid #E2E8F0;}
+.dd-toc a{font-size:12px;padding:4px 10px;border-radius:14px;background:#EFF6FF;color:var(--navy);text-decoration:none;border:1px solid #BFDBFE;}
+.dd-toc a:hover{background:var(--accent);color:#fff;}
+.note{font-size:12.5px;color:#64748B;}
+.small{font-size:12px;color:#64748B;}
+.printbtn{position:fixed;right:18px;bottom:18px;background:var(--navy);color:#fff;border:none;padding:10px 16px;border-radius:24px;cursor:pointer;font-size:13px;z-index:20;}
+details{margin:10px 0;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:4px;padding:8px 14px;}
+summary{cursor:pointer;font-weight:600;color:var(--navy);}
+@media print{.dd-toc,.printbtn{display:none;}details{display:block;}}
+</style>
+</head>
+<body>
+<nav class="dd-toc">
+<a href="#s1">§1 結論</a><a href="#s2">§2 論點</a><a href="#s3">§3 產業</a><a href="#s4">§4 商模門檻</a>
+<a href="#s5">§5 護城河</a><a href="#s6">§6 成長</a><a href="#s7">§7 財務</a><a href="#s8">§8 財報</a>
+<a href="#s9">§9 治理</a><a href="#s10">§10 估值</a><a href="#s11">§11 矛盾</a><a href="#s12">§12 pre-mortem</a>
+<a href="#decision">§13 決策</a><a href="#s14">§14 複審</a><a href="#appA">附錄A 擇時</a>
+</nav>
+<div class="wrap">
+<div style="text-align:center;padding:18px 0 6px;">
+<h1 style="margin:0;">CRS｜Carpenter Technology Corporation</h1>
+<p class="small">資料抓取 2026-09-01（美股）｜最新股價 $476.42（2026-08-31 收盤）｜DD Schema v15.0｜持倉複審（原 Inception DD 2026-05-18）</p>
+</div>
+
+<div class="status-bar">
+<div class="cell"><span class="lbl">統一裁決</span><span class="val" style="color:#166534;">進場</span></div>
+<div class="cell"><span class="lbl">倉位角色</span><span class="val">核心</span></div>
+<div class="cell"><span class="lbl">護城河趨勢</span><span class="val green">A ↑</span></div>
+<div class="cell"><span class="lbl">Y5 後跑道</span><span class="val">🟢 寬</span></div>
+<div class="cell"><span class="lbl">Max DD</span><span class="val amber">−55~−68%</span></div>
+<div class="cell"><span class="lbl">5Y機率加權EV／IRR</span><span class="val">+34.7%／8.4%/yr</span></div>
+</div>
+
+<div class="hypothesis-box">
+<p class="thesis">美國本土具備航太引擎級鎳基超合金 primary melt 資格的 open-market 供應商僅 CRS 與 ATI 兩家，靠認證門檻與長約定價把稀缺賣成護城河</p>
+<ul>
+<li><strong>統一裁決 <span style="font-size:22px;color:#166534;">進場</span></strong>（§13）｜倉位角色：核心｜判定理由：moat A 且趨勢 ↑、估值燈 🟡 合理、週線 ✅ 強勢，無 Hard/Soft Veto</li>
+<li><strong>護城河趨勢 A ↑</strong>（§5 權威）｜execution 趨勢 ↑（SAO 調整後營益率連 18 季擴張至 37.8% 歷史新高）｜pricing power 趨勢 ↑（60-65% 航太營收走多年期 LTA，FY26 完成 8 筆長約皆為「顯著」提價）</li>
+<li><strong>Y5 後跑道 🟢 寬</strong>（§6.A''）｜S 曲線：中期（航太 supercycle 尚未見頂）｜Y5 末滲透率估 <35%｜第二曲線：IGT／資料中心電力需求驅動的能源分部（Q4 FY26 YoY +19%）為獨立於航太外的第二成長引擎</li>
+<li><strong>Max DD −55%~−68%</strong>（§12c 範圍，路徑風險 🔴）｜最快復原：視下一輪航太訂單週期回升速度，歷史前例（FY22-23 谷底）約 2-3 年</li>
+<li><strong>5Y 機率加權 EV +34.7%／IRR 8.4%/yr</strong>（§10.5，Bear機率因內生天花板sanity check觸發已由25%上修至30%）｜Base IRR 8.4%/yr（三分量 §10.6：EPS 成長主導＋9.9%/yr、估值收斂僅小幅負貢獻−1.4%/yr、買回/股息已內含於EPS成長）｜AR 1.7（不對稱比，資訊性，隨Bear機率上修同步下修）</li>
+<li><strong>opportunity cost：</strong>組合內 HWM（同 ID 主題，觀望）與 ATI（108 天前 DD，觀望）皆為同賽道 peer；CRS 是三者中唯一分部利潤率創歷史新高且裁決落地進場者，GRP 三閘（成長×EPS 上修×估值位置）優於兩者，邊際資金續留 CRS 優先於加碼 HWM/ATI</li>
+<li><strong>基本面評級 A（metadata）：</strong>品質 8.6/10｜估值燈 🟡｜Pure MA ✅｜陷阱定性 🟢（詳見附錄 A）</li>
+<li><strong>長期持有信心：高</strong>（附錄 A I）｜建議持有年限：中長期 3-7 年（§13c）</li>
+<li><strong>Inception DD：</strong><code>DD_CRS_20260518.html</code>（2026-05-18）— 累積漂移對照基準</li>
+<li><strong>下次年度對照倒數：</strong>2027-05-18（距今 259 天）— Inception + 365 天</li>
+</ul>
+</div>
+<p class="note"><strong>讀法：</strong>本份報告的人面對結論是「統一裁決 進場」（§13）。基本面評級 A 為 metadata（餵 screener），不是並列頭銜。倉位組合佔比由 portfolio-manager skill 依組合狀態決定。</p>
+
+<section id="s1">
+<h2>§1 投資結論詳述</h2>
+<p>本結論基於以下完整分析得出，詳見各章節；人面對裁決見 §13。</p>
+<p>這是一門認證門檻極高的生意：航太引擎用的鎳基超合金，美國本土能以open-market身分供應引擎級primary melt的廠商只有Carpenter Technology與ATI兩家；全球再加上主要自用的Precision Castparts、被Airbus+Safran全資持有的Aubert &amp; Duval（供歐系引擎），以及現由Acerinox、Aperam兩家歐系金屬集團持有的Haynes、Universal Stainless——合計是一個4-6家、資本背景更多元的較寬鬆寡占，而不是先前認知的「僅3家」。認證一款合金上引擎仍要5-10年，但過去約24個月出現的新路徑是：資本更雄厚的一方改用「併購」直接取得既有合格產能，繞過從零開始認證的門檻。這個結構讓CRS在FY26把SAO分部調整後營益率推到連續18季擴張、Q4創新高37.8%，靠的是長約提價而非原物料順風。這次複審把四件事講清楚：CEO猝逝後的接班安排、明顯上修的FY27財測、ATI在四月宣布的規模相近新產能，以及本次查證才發現的更完整競爭與客戶垂直整合地圖。四件事加總後論點沒有變壞：治理已由熟悉的人接手，財測本身是最強的正面訊號，CRS自身0起客戶流失、8/8筆LTA續約提價的實測證據未被任何新訊號推翻——但競爭與客戶地圖確實更擁擠，除了ATI新產能能否維持提價步調，還須觀察引擎/機身OEM是否複製「買下供應商」這條路徑到美系供應鏈。</p>
+
+<h3>⚠️ 這是價值陷阱嗎？（強制回答題）</h3>
+<div class="trap-box">
+<h4>五問</h4>
+<p><strong>最可能的陷阱模式：</strong>非陷阱——但若真要挑最接近的模式，是「隱性資本密集型」的變體：Athens AL 擴產若不能如期在 FY2028 初商轉，過去三年被視為「結構性」的營益率擴張會被追問是不是靠延後維護資本支出撐出來的。</p>
+<p><strong>支持「這不是陷阱」的最強論據：</strong>FY26 調整後 FCF $362.3M（轉換率遠高於獲利品質警訊門檻），資本支出 $242.7M 中大部分是有明確 ROIC（管理層估 &gt;20%）的成長型投資（Athens），非維護性支出膨脹；SAO 營益率擴張連續 18 季、幅度平緩漸進（32.0%→37.8%，非單季跳升），與定價事件帳（8 筆長約皆提價）直接對應，不是會計操作。</p>
+<p><strong>支持「這可能是陷阱」的最強反駁：</strong>當前Fwd PE（FY28基礎）30.0x、PEG 1.36，已price in相當一段時間的高成長；若ATI、Acerinox、Aperam的新增產能（見§3／§5）比預期更快壓縮議價空間，市場可能發現「稀缺」比想像中更快被填補。<strong>真實存在的市場空方論述（非假想情境）：</strong>股價自52週低點$228.88至52週高點$625.94累計+173%、YTD+70.9%；Seeking Alpha於78%漲幅後發表「From Strong Buy To Sell」，Simply Wall St稱股價「Looks Rich」（GF Value $207.37 vs 當時$537.57）；核心論點是「60%+營收集中循環性航太國防，起始估值已充分，小幅失望會被放大」；KeyBanc/DB/Susquehanna三家在財報beat＋guidance上修後仍以「估值」為由下修目標價（$644→$608、$722→$689、$680→$600），僅BTIG逆勢上調。<strong>不接受此論述改變裁決的理由：</strong>估值已在§10用PEG/同業折價正面處理（🟡公允非便宜），CRS相對ATI/HWM折價29-41%而margin品質更優；「起始估值全滿、小幅失望被放大」的路徑風險已定量吸收進§12c Max DD（−55%~−68%）與§10.5終端倍數收斂（30.0x→28x），非被忽視。</p>
+<p><strong>空頭最強一擊：</strong>18 個月內若 Boeing 因新一輪 FAA 介入使 737 MAX 月產重新跌破 30 架並維持 2 季以上，供應鏈去化庫存、CRS A&amp;D 訂單動能反轉，疊加 Thene 若無法完整履行「不設定過渡任期」的承諾（治理真空重演），兩者疊加可造成 30%+ 虧損（對應 §2.C R1、R4）；與上述真實市場空方論述（估值已充分反映樂觀情境）疊加時，殺傷力更大。</p>
+<p><strong>持有期間如何判斷陷阱是否正在發生：</strong>①SAO 調整後營益率 TTM 連 2 季跌破 33%；②A&amp;D 訂單金額連 2 季 QoQ 轉負且非國防預算程序性因素造成。</p>
+</div>
+<p><strong>最終定性：</strong><span class="green">🟢 非陷阱</span></p>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+<tr><td>1</td><td><strong>SAO 分部調整後營益率（季度，TTM 化）</strong></td><td>§5 H1／§10</td><td>🔵 核心假設驗證信號</td><td>連 2 季 TTM 從 37.8% 跌破 33%（削弱）；連 4 季 &lt;30%（反轉，減倉）</td></tr>
+<tr><td>2</td><td><strong>A&amp;D 訂單動能 + ATI Bakers South 投產後的 CRS LTA 續約提價幅度</strong></td><td>§5 H2／§3</td><td>🔵 長期成長領先信號</td><td>A&amp;D 訂單連 2 季轉負，或 2027H2 起續約 LTA 提價幅度降至個位數（削弱議價權）</td></tr>
+<tr><td>3</td><td><strong>治理連續性：Thene 任期穩定性 + Athens AL commissioning 進度</strong></td><td>§9／§5 H3</td><td>中期執行信號</td><td>Thene 12 個月內二度離任且 60 天內無可信繼任人；或 Athens 商轉延後 &gt;6 個月</td></tr>
+</table>
+</section>
+
+<section id="s2">
+<h2>§2 投資論點錨定</h2>
+<p style="font-size:13.5px;"><strong>存在意義：</strong>航太引擎（渦輪盤、渦輪葉片、軸類鍛件）與國防平台需要在極端溫度與應力下不失效的金屬——這不是「效率提升」，是飛機引擎能不能安全運轉的物理極限問題。若 CRS 明天消失，美國本土 open-market 只剩 ATI 一家能立即承接引擎級 primary melt 需求（PCC 主要自用、Aubert &amp; Duval 為歐系客戶全資持有、Haynes／Universal Stainless 傳統上非同級直接替代），Boeing／Airbus／GE／Pratt &amp; Whitney 的引擎產能會立即被原料瓶頸卡住。<strong>逆向一句化：</strong>這筆投資 3 年虧 50% 最可能的路徑——技術替代機率低（陶瓷基複材短期無法取代高溫合金的關鍵部位）；最可信的是「產業週期反轉」：航太建造率不如預期，疊加 ATI 新產能上線後價格紀律鬆動，SAO 營益率從高檔快速回落，市場同時把倍數打回歷史低檔。護城河如何累積而成，見 §5.D。</p>
+
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td><strong>預設持有期</strong></td><td>3-7 年（中長期），對應航太 supercycle 從中段建造率爬升到 Athens 擴產全面貢獻的窗口</td></tr>
+<tr><td><strong>主要驅動理由</strong></td><td>Boeing/Airbus 合計約 16,000 架商用機積壓訂單提供多年能見度；FY29 營益目標 $1.2-1.3B 為公開路徑；Athens 商轉落在 FY2028，完整貢獻要到 FY2030</td></tr>
+<tr><td><strong>訊號 vs 噪音</strong></td><td>訊號：SAO 調整後營益率 TTM、A&amp;D 訂單動能、Athens 進度、治理穩定性；噪音：單季附加費（surcharge）波動、PEP 分部季度雜訊、單日股價反應</td></tr>
+</table>
+
+<h3>B｜三個核心假設 + 三層時間軸</h3>
+<div class="hypothesis-box">
+<table>
+<tr><th>#</th><th>核心假設</th><th>2Y 驗證點</th><th>5Y 驗證點</th><th>10Y 驗證點</th><th>數字門檻</th><th>來源</th><th>漂移觸發</th></tr>
+<tr><td><strong>H1</strong></td><td>SAO 調整後營益率維持 ≥33% 為結構性新常態（非景氣頂峰）</td><td>FY27-28 TTM 維持 34-38%</td><td>FY31 Athens 全貢獻後仍 ≥32%</td><td>FY35 跨週期均值 ≥26%</td><td>連 2 季 TTM &lt;33%＝削弱；連 4 季 &lt;30%＝反轉</td><td>Q4 FY26 法說（2026-07-30）；連 18 季擴張紀錄</td><td>連 2 季 TTM &lt;33%</td></tr>
+<tr><td><strong>H2</strong></td><td>航太 A&amp;D 需求動能持續至少到 FY28-29（16,000 架積壓訂單支撐）</td><td>Boeing 737 MAX 達 47/月並邁向 52/月；Airbus A320neo 邁向 70-75/月</td><td>FY31 A&amp;D 占營收仍 ≥65%，訂單金額維持正成長</td><td>2035 前窄體機積壓不低於 8,000 架</td><td>連 2 季訂單轉負＝削弱；連 3 季負成長＝反轉</td><td>Q4 FY26 法說；Boeing/Airbus 公開產能指引</td><td>連 2 季訂單轉負</td></tr>
+<tr><td><strong>H3</strong></td><td>Athens AL 擴產（$400M，+9,000噸／+7%）如期於 FY2028 初商轉，且 2030 貢獻增量營益 $150M+</td><td>FY27 法說持續確認 on schedule/on budget</td><td>FY30 增量營益達成或超過 $150M 目標</td><td>2030+ 新產能在下一輪週期谷底仍守 ≥60% 稼動率</td><td>延後 &gt;6 個月＝削弱；成本超支 &gt;20%＝削弱</td><td>Q4 FY26 法說：「12 個月後上線」，capex $242.7M FY26 已投入</td><td>延後 &gt;6 個月</td></tr>
+</table>
+</div>
+
+<h3>B'｜12 個月前報告對照</h3>
+<div class="hypothesis-box">
+<p><strong>狀態：進場未滿一年（Inception = 2026-05-18，距今 105 天）。</strong>本欄位將於 2027-05-18 起首次有資料對照。在此之前，僅以本節戰術假設視角追蹤。Inception baseline：股價 $414.94／Fwd PE 32.6x／PEG 1.36／SAO Q3 FY26 調整後 OM 35.6%／FY26 OI guidance $700-705M；本次（105 天後）：股價 $476.42（+14.8%）／SAO Q4 FY26 已達 37.8%／FY26 實際 OI $702.0M（落在 guidance 內偏高）／FY27 guidance $850-880M（新發布，+21-25% YoY）。</p>
+</div>
+
+<h3>C｜三個最可能推翻論點的風險</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>時間尺度</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td>Boeing 新一輪品質/FAA 介入事件，737 MAX 月產無法邁向 47→52 目標</td><td>H2</td><td>⚡ 短期</td><td>Boeing 月度交付數據＋FAA 公告</td><td>連 2 季月產 &lt;38 架削弱；連 3 季 &lt;35 架或再遭限產反轉</td></tr>
+<tr><td>R2</td><td>ATI Bakers South VIM（2027H2 投產，9,000 噸、80% 已鎖 LTA）上線後產業提價紀律鬆動，CRS 續約 LTA 提價幅度縮小</td><td>H1</td><td>🔥 中期</td><td>CRS 逐年 LTA 續約提價幅度、SAO 定價事件帳</td><td>續約提價降至個位數且連 2 次＝削弱；出現折價續約＝反轉</td></tr>
+<tr><td>R3</td><td>下一輪航太週期反轉（歷史前例 FY22-23，GAAP 曾轉虧），疊加 Athens 產能適逢景氣谷底上線稀釋利潤率</td><td>H1+H2</td><td>🐢 長期</td><td>全球商用機積壓訂單總量、Boeing/Airbus 訂單淨額</td><td>積壓訂單/交付比從 ~10 年降至 &lt;6 年開始減倉；&lt;4 年大幅減倉</td></tr>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<p style="font-size:13px;">新事件出現時依序自問：①時間軸匹配（3-7 年持有期內）？②影響 H1/H2/H3 哪一個？③邊際方向（＋/0/－）？④是否達 C 表警戒閾值？不影響任何假設、不改變估值分位者視為噪音。</p>
+
+<h3>E｜可執行決策主線預設</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>行動</th></tr>
+<tr><td>進場</td><td>本次評估已滿足：Q4 FY26 法說確認 SAO≥33%＋FY27 guidance 上修（§13b 已發火觸發器）</td><td>建倉至目標倉位（核心角色區間，PM 拍板）</td></tr>
+<tr><td>加碼</td><td>H1+H2 同時再確認（連 2 季 TTM≥35%＋A&amp;D 訂單維持正成長）且無 R2 削弱訊號</td><td>加碼至目標倉位上限</td></tr>
+<tr><td>減碼</td><td>R1 或 R2 觸發削弱</td><td>減至區間下緣，重新評估</td></tr>
+<tr><td>撤退</td><td>H1 反轉（連 4 季&lt;30%）且 H2 反轉（連 3 季訂單負成長）同時發生，或 §2.F Single Thing 觸發</td><td>清倉，記錄推翻理由</td></tr>
+</table>
+
+<h3>F｜Single Thing</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td><strong>描述</strong></td><td>「Tony Thene 在未來 12 個月內二度離開 CEO 職位（無論原因），且董事會 60 天內未任命一位具備至少 5 年 C-suite 經驗的可信繼任者」——具體、單點、可驗證的治理真空事件</td></tr>
+<tr><td><strong>為什麼致命</strong></td><td>CRS 過去 13 個月已發生兩次 CEO 交接（2025-08 Thene 兼任 Chairman、2026-07 Malloy 猝逝＋Thene 回任），若第三次交接失序，會直接打擊「管理層是否值得信任把 $1B 回購與 Athens 擴產交出去」的資本配置信心（§9），並可能延遲 Athens commissioning 決策節奏（H3）</td></tr>
+<tr><td><strong>如果發生</strong></td><td>立即降倉至衛星角色觀察，暫停加碼，重新評估治理風險溢價</td></tr>
+<tr><td><strong>如何監測</strong></td><td>8-K 高管異動公告（即時）、法說會管理層陣容（每季）</td></tr>
+<tr><td><strong>機率估計</strong></td><td>未來 12-24 個月 ~5-8%（Thene 為資深、長期在任的營運者，且董事會已明確排除「過渡性」定位，但兩次意外交接的近因使尾部風險不可完全忽視）</td></tr>
+</table>
+<p class="small">§1 trap 定性＝靜態裁決；R1-R3＝過程性風險；§2.F＝單一具體觸發事件，三者不重疊。</p>
+</section>
+
+<section id="s3">
+<h2>§3 產業格局</h2>
+<p><strong>產業時鐘位置：</strong>Phase II 擴張期——航太商用機建造率仍在爬升段（Boeing 47→52/月在途、Airbus 目標 70-75/月但因 Pratt &amp; Whitney GTF 交付延遲下修至 2027 年底），尚未進入產能過剩或訂單見頂的過熱期。無 canonical ID 直接覆蓋本狹義子產業（鎳基超合金），依站內「Aerospace Specialty Metals」主題（供需：shortage／時鐘：Phase II／conviction：mid）交叉：<strong>產業物理供需＝shortage（ID:Aerospace Specialty Metals，as-of 2026-04-27）</strong>，與本 DD 判斷方向一致，作為事實錨（非方向論據）。</p>
+
+<h3>供需 durability 裁決（雙向）</h3>
+<p>①<strong>結構性證據：</strong>美國本土 open-market 具引擎級 primary melt 資格者僅 CRS／ATI 兩家（PCC 主要自用）、認證週期 5-10 年、Boeing/Airbus 積壓訂單約 16,000 架（Q4 FY26 法說）、國防 FY27 預算請求總額約 $1.45T（CSIS，較 FY26 大幅上修）、資料中心用電需求帶動 IGT 分部獨立成長（Q4 FY26 YoY+19%）——四個互相獨立的需求來源疊加，不是單一航太循環。②<strong>週期性反證：</strong>Airbus 已將 A320neo 邁向 rate-75 的時間表因 GTF 引擎延誤下修至 2027 年底才達成（非「順風無阻」）；CRS FY22 確曾出現 GAAP 淨損（-$49.1M），證明這門生意並非對景氣免疫。③<strong>近 24 個月供給側移動清單（本次複審主動查證，非僅 ATI 一條）：</strong></p>
+<table>
+<tr><th>移動</th><th>時點</th><th>是否具備美系引擎盤件認證資格</th><th>對 24 個月內威脅的定性</th></tr>
+<tr><td>ATI Monroe, NC 新增第 5 座 VIM 熔煉爐，9,000 噸（約當 ATI 自身鎳合金產能 +8-10%）</td><td>2026-04 公告，2027H2 投產，80% 已鎖 LTA</td><td>是（既有合格供應商擴產）</td><td>構成 24 個月內真實威脅，見 §5 賽局判定</td></tr>
+<tr><td>Airbus＋Safran 買斷 Tikehau 持股，全資取得 Aubert &amp; Duval（法國，營收約 €960M，鎳基超合金/鈦合金/特殊鋼）</td><td>2026-06-25 完成（三方持股結構自 2023-04 即存在，本次僅買斷少數股東）</td><td>是，但主要供歐系引擎（Safran/CFM、Rolls-Royce），非 CRS 60-65% LTA 綁定的美系客戶群</td><td>不構成 24 個月內對 CRS 美系業務的直接威脅，但是 OEM 垂直整合意圖的明確先例（見 §6.H／§12a）</td></tr>
+<tr><td>Acerinox 完成收購 Haynes International（US$798M，透過美國子公司 North American Stainless）</td><td>2026 年完成；NAS 肯塔基廠另擴產（+308,000 短噸/年，以不鏽鋼為主，2026 年初動工）</td><td>Haynes 本身既有部分鎳/鈷合金航太資格，但傳統上非 CRS 高階 primary melt 直接對手</td><td>資本背景轉強（歐系不鏽鋼集團補血），24 個月內尚未見到對 CRS LTA 定價的直接侵蝕，列入觀察</td></tr>
+<tr><td>Aperam 完成收購 Universal Stainless &amp; Alloy Products（North Jackson 廠具 VAR/ESR 重熔線）</td><td>2025-01-23 完成</td><td>VAR/ESR 重熔與 CRS primary melt 業務相鄰，但尚無 sourced 證據顯示已取得同級引擎盤件認證</td><td>資本背景轉強，24 個月內尚未構成直接威脅，列入觀察</td></tr>
+<tr><td>Safran 自建鍛造產能：Gennevilliers 廠 €150M 擴產；管理層公開表態「垂直整合已從競爭優勢升級為戰略必需」</td><td>2026-06 公告</td><td>非 primary melt（鍛造下游），但明確表態要縮減對「一小群專業供應商」的依賴</td><td>非直接產能威脅，但是需求端客戶意圖轉變的訊號，見 §6.H</td></tr>
+</table>
+<p><strong>裁決：結構性持久為主，但供給側移動比先前認知更寬——除ATI對稱擴產外，另有Acerinox/Aperam用併購取得美國航太合金產能、Airbus/Safran用併購取得既有合格供應商全資。5-10年認證週期仍是真實防線（五條移動沒有一條可明天取得GE/Pratt &amp; Whitney新認證），非永久性稀缺的方向不變，但證據基礎更薄，需更高頻率複審。</strong>此裁決餵入§6.E normalized假設與§10.5 bear機率。</p>
+
+<h3>貿易政策與原料供應鏈</h3>
+<p><strong>232金屬衍生品重構（正面為主）：</strong>2026-04-02總統公告將鋼/鋁/銅衍生品232條款從按金屬含量課稅改為按成品全額關稅價值課稅（外國含量&gt;15%者全額課25%），2026-06-01再修訂，2026-06-08生效至2027-12-31——對美國本土熔煉的CRS屬進口替代保護，方向正面。<strong>232加工關鍵礦物（中性偏觀察）：</strong>2026-01-14公告目前不直接課稅，指示180天內（2026-07-13）提交談判報告，並明列後續行動風險標的含「specialty alloys and chemical inputs incorporating critical minerals」——CRS在潛在標的範圍內，2026-07-13後續結果未查得，列入§14。<strong>原料地緣：</strong>CRS以surcharge機制轉嫁鎳/鈷價格波動，本報告未查得具體來源國佔比與制裁曝險明細（數據限制）；若232後續行動落地為關稅或最低進口價，改變的是surcharge基準與時滯，非CRS的轉嫁能力本身。</p>
+
+<h3>三軸裁決</h3>
+<p><strong>結構性轉好中（B 軸）+ 其他結構變動中（C 軸：ATI 對稱擴產、國防預算供給側、232 貿易政策、OEM 併購式垂直整合）+ 靜態（A 軸：CRS 未在任何客戶/program 流失份額，上述供給側移動皆為同業/客戶對稱回應而非直接搶單）</strong>——三軸不同向，取最關鍵者：B 軸（結構性持久但非永續稀缺）主導 moat_trend 與估值判斷，C 軸的新增發現（OEM 併購式垂直整合、232 關鍵礦物後續行動）已落 kill_metrics 與 §14 追蹤。</p>
+
+<h3>利潤池位置/流向</h3>
+<p>價值鏈：上游原料（鎳/鈷礦，CRS 用 surcharge 機制轉嫁）→ <strong>CRS/ATI/PCC（本標的所在，鎳基超合金熔煉與鍛造）</strong> → 引擎 OEM（GE/Pratt &amp; Whitney/Rolls-Royce）→ 機身 OEM（Boeing/Airbus）。CRS 所在環節 5 年前 OI margin（代理：SAO 分部）約 12-15%，當前 37.8%，<strong>利潤池位置/流向：↑ 流入</strong>——證據：LTA 續約提價（8 筆，FY26）+ 議價權集中在極少數合格供應商（認證週期 5-10 年構成的真實壁壘）。對 §6.A Runway 含義：正面，支撐利潤率延續性判斷。</p>
+
+<h3>議價權（三段）</h3>
+<p><strong>對上游：</strong>鎳/鈷供應商集中度中等，CRS 以 surcharge 機制直接轉嫁原料價格波動，不承擔庫存週期風險，議價地位中性偏強（成本轉嫁能力本身即是一種議價權）。<strong>對下游：</strong>60-65% 航太營收走多年期 LTA（Tony Thene，2026-04-29 法說），FY26 完成 8 筆長約全數為「顯著」提價，客戶（引擎 OEM）優先考量供應確定性而非價格，議價權明顯站在 CRS 一方；管理層明確拒絕「現貨定價」商業模式（"we do not entertain spot pricing"），強化長約鎖定關係。<strong>地緣曝險：</strong>生產基地集中美國本土（Reading, PA／Athens, AL 等），國防/太空業務受惠美國本土供應鏈政策傾向；貿易政策與原料地緣曝險見上方「貿易政策與原料供應鏈」獨立段落，非僅廠址問題。<strong>能源成本：</strong>VIM/VAR 真空熔煉為高耗電製程，本報告用資料中心用電需求驅動 IGT 分部視為需求利多（§3 營收組成），對稱地，工業電價走勢也是 CRS 自身的成本曝險項，本次未查得賓州/阿拉巴馬州工業電價具體走勢，列數據限制。<strong>勞工：</strong>主力廠區（Reading, PA）屬工會密集製造業，本次未查得近期勞資合約到期或罷工風險的具體揭露，標「未發現異常揭露」。<strong>環保/排放：</strong>金屬熔煉業空污與廢棄物法遵為常態成本項，本次未查得CRS特有的環保裁罰或重大法遵爭議，標「未發現異常揭露」。</p>
+
+<h3>營收組成（三維）</h3>
+<p><strong>業務段：</strong>SAO（特殊合金）約占分部營益 95%+ 為主要成長引擎；PEP（含 Dynamet 鈦合金、積層製造、經銷）約 5%，Q4 FY26 淨銷售（不含附加費）$98.2M。<strong>終端市場（成長率標記）：</strong>航太國防 Q4 FY26 YoY+17%（分項：引擎 +30%、緊固件 +12%、結構/經銷 +8%，國防 QoQ -10% 屬程序性季節波動）；能源（IGT，資料中心驅動）Q4 YoY-12%（單季波動，全年趨勢向上，Q3 曾 YoY+44%）；醫療 Q4 YoY-30%（低基期回升中，Q4 首度轉季增）；工業消費 Q4 YoY+22%（半導體設備需求驅動）。<strong>客戶集中度：</strong>未單獨揭露 top 1/5 客戶占比，但 60-65% 航太營收綁定 LTA 為結構性集中（見 §6.H）。</p>
+
+<h3>F｜逐段 TAM/SAM</h3>
+<table>
+<tr><th>終端市場</th><th>驅動</th><th>CRS 定位</th><th>成長天花板路徑</th></tr>
+<tr><td>航太商用（引擎+結構+緊固件）</td><td>Boeing/Airbus 積壓 ~16,000 架，建造率爬升至 FY2028+</td><td>SAO 主力，60-65% LTA 鎖定</td><td>受限於 Boeing/Airbus 交付爬升速度；GTF 延誤是唯一可見的節奏風險</td></tr>
+<tr><td>國防</td><td>FY27 DOD 預算請求 ~$1.45T（CSIS，大幅上修）</td><td>SAO 內成長最快子市場之一</td><td>program-specific，易 lumpy，但預算趨勢明確向上</td></tr>
+<tr><td>能源（IGT／資料中心）</td><td>AI 資料中心用電需求驅動渦輪機建造</td><td>與航太共用產能，非獨立產線</td><td>與航太爭產能時段，量能上限受制於 SAO 總產能（Athens 擴產部分紓解）</td></tr>
+<tr><td>醫療（Dynamet）</td><td>骨科/牙科/心臟——去化庫存後回溫</td><td>PEP 分部，占比小</td><td>低個位數占比，非成長引擎</td></tr>
+</table>
+<p class="small">此段的成長天花板不是「客戶要不要買」，是「CRS/ATI 產能能不能跟上」——這正是護城河（§5）與利潤池流向的來源。</p>
+</section>
+
+<section id="s4">
+<h2>§4 商業模式解剖＋核心門檻檢核（Munger）</h2>
+
+<h3>門檻檢核表</h3>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合?</th><th>數據</th></tr>
+<tr><td>FCF Margin（當前）</td><td>&gt;15%</td><td class="neutral">部分符合</td><td>FY26 調整後 FCF $362.3M ÷ 淨銷售 $3,124.2M ≈ 11.6%（低於門檻，但受 Athens 成長型 capex 壓低——剔除 Athens 資本支出後 FCF margin 估算 &gt;17%）</td></tr>
+<tr><td>正規化 FCF Margin</td><td>5年均值&gt;15%；谷底&gt;10%</td><td class="fail">未達</td><td>FY22 -4.6%／FY23 -2.7%／FY24 6.5%／FY25 9.9%／FY26 11.6%；5年均值約4.1%，谷底為負——但此期間橫跨 FY22-23 循環谷底＋Athens 擴產期，非穩態讀數，見下方 reasoning</td></tr>
+<tr><td>ROIC（當前）</td><td>&gt;15%，高於 WACC</td><td class="pass">符合</td><td>FY26 估算 ROIC ≈20.0%（NOPAT ~$540.5M÷投入資本估~$2,698M），WACC 估算 ~9.5%，超額 ~10.5pp</td></tr>
+<tr><td>ROIC 穩定性</td><td>10年中≥70%年份&gt;15%</td><td class="neutral">部分符合</td><td>FY22-23 循環谷底 ROIC 為負／低個位數，FY24 起連 3 年重回並擴大至 &gt;15%，趨勢明確向上但未滿 10 年穩定紀錄</td></tr>
+<tr><td>毛利率定價能力</td><td>10年≥70%年份持續改善</td><td class="pass">符合（近5年）</td><td>毛利率 FY22 8.2%→FY26 約30.6%（web sourced，Macrotrends），連續 4 年改善</td></tr>
+<tr><td>資本密集度</td><td>Capex/Rev&lt;5%優／&lt;10%尚可</td><td class="pass">尚可（含成長資本）</td><td>FY26<strong>實際</strong>資本支出 $242.7M÷淨銷售(含附加費) $3,124.2M ≈<strong>7.77%</strong>（本次修正：原版本誤用FY27 guidance $300-315M/總CapEx計算FY26比率，兩者年度口徑不一致，已改用FY26實際數字），其中$175-185M為Athens成長型投資（非維護性）；FY27 guidance總CapEx $300-315M（含Athens尾款）對應FY27比率待FY27營收實際數字才可計算，此處不預先套用</td></tr>
+<tr><td>EPS CAGR（3年）</td><td>&gt;20%或12-20%+長runway</td><td class="pass">符合（高成長路徑）</td><td>基期 FY26 調整後 EPS $10.76→FY27E $13.38→FY29E $19.60（推導），3年 CAGR ≈22.1%</td></tr>
+<tr><td>PEG</td><td>&lt;2</td><td class="pass">符合</td><td>30.0（Fwd PE FY28基礎）÷22.1%＝1.36，見 §10.2</td></tr>
+<tr><td>負債安全性</td><td>D/E&lt;0.7；現金/Rev 10-50%</td><td class="pass">符合</td><td>淨負債/EBITDA 遠低於 1x（管理層多次法說重申），流動性 $892.4M（FY26末）</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是/否</td><td class="pass">是（接近）</td><td>總負債長年穩定 ~$703M，FY26流動性 $892.4M（含 $393.3M現金）已可覆蓋大部分</td></tr>
+<tr><td>護城河強度</td><td>&gt;8分，趨勢擴大</td><td class="pass">符合</td><td>合併分 8.6（§5），趨勢 ↑</td></tr>
+</table>
+<div class="reasoning">FCF margin 5 年均值未達標的原因是：分母窗口橫跨 FY22-23 景氣谷底（GAAP 虧損期）與當前的 Athens 成長型資本支出高峰，兩端都會壓低比率，中段（FY24-26）已連續改善且趨勢明確 → implication：不將此項單獨視為品質瑕疵，改以 ROIC 與毛利率兩項 Munger 維度作交叉驗證，兩者皆過關，故整體 Munger 三維評級仍為 🟡（1項 FCF margin 偏弱，其餘兩維達標，需 §5 說明哪維偏弱——已在本表列出）。</div>
+<p><strong>Munger 三維護城河快速評級：🟡</strong>（ROIC 穩定性、毛利率定價能力達標；FCF margin 受循環谷底+成長資本雙重壓低偏弱）最大財務弱點：FCF margin 尚未在扣除成長型資本支出後於穩態下驗證。</p>
+
+<h3>§4.G 商業模式解剖</h3>
+<table>
+<tr><th>面向</th><th>內容</th></tr>
+<tr><td>單位經濟學</td><td>「一磅出貨的鎳基超合金」：ASP/磅近年因產品組合含較多低單價材質而下滑，但「每磅營益」（EBIT/pound）持續上升（Q1 FY26 法說：SAO EBIT/pound YoY +42%）——量價脫鉤，管理層明確強調「單價下滑≠定價轉弱」，是組合轉移，非折價</td></tr>
+<tr><td>價值鏈位置＋單點依賴</td><td>CRS 站在「引擎 OEM 供應鏈最窄的瓶頸」：認證週期 5-10 年構成鎖喉點，⚑ 客戶獨家型依賴（60-65% 航太營收綁 LTA）——一體兩面：既是護城河證據（§5 引用），也是集中度風險（§12a 列入：若單一大客戶 in-house 化或轉單，衝擊集中）</td></tr>
+<tr><td>營收品質拆解</td><td>60-65% 航太營收為多年期 LTA（recurring、合約 2-5 年，長於歷史 pre-COVID 常態的短約），非一次性；量價驅動中，FY26 SAO 銷售成長主由量（+22-23% shipment volume）與組合帶動，非純漲價——營收品質偏高，支撐 §10 給予中高倍數的正當性</td></tr>
+</table>
+</section>
+
+<section id="s5">
+<h2>§5 護城河分析（報告核心）</h2>
+<p>本次複審在補完競爭地圖（見 §3「近 24 個月供給側移動清單」）後，對 Pricing Power Moat 與合併分重新裁決一次，非沿用舊分數。合併分 8.2 之必要條件（ROIC spread 為正且擴大／持平）已滿足：見下方 Moat-to-Numbers。若 §6 衰退信號有亮燈，本節已在對應段正面回應（見 §6 衰退信號表，本案 0 個亮燈）。</p>
+
+<h3>評分：二維拆解</h3>
+<table>
+<tr><th>維度</th><th>分數</th><th>關鍵佐證</th></tr>
+<tr><td>Execution Moat</td><td>9/10（不變）</td><td>VIM/VAR 熔煉工藝＋認證資格構成的製造能力；美國本土 open-market 具引擎級 primary melt 資格者僅 CRS／ATI 兩家；SAO 調整後營益率連 18 季擴張至 37.8% 為直接數字驗收。競爭地圖補完後（見 §3）未發現任何一條 sourced 證據衝擊 CRS 自身的製造執行力，此維度分數不變</td></tr>
+<tr><td>Pricing Power Moat</td><td><strong>7/10（下修，原8/10）</strong></td><td>60-65%航太營收綁LTA，8筆長約皆「顯著」提價、0客戶流失，L1實測未被推翻，故不砍到6以下。下修1分理由擴大為三項：①ATI對稱擴產；②競爭地圖比「僅3家」認知更擁擠——Acerinox/Haynes、Aperam/Universal兩組歐系資本已入場；③客戶併購繞過認證週期的先例（Airbus+Safran全資A&amp;D，見§6.H）</td></tr>
+<tr><td>合併分</td><td><strong>8.2</strong>（9×0.6+7×0.4；原8.6）</td><td>等級：<strong>A（邊界判斷，非無條件）</strong>——8.2落在9（A單點）與7-8（B帶）之間，取捨依據：執行力乾淨守住9分、CRS當期定價行為（0客戶流失、8/8LTA提價）未被推翻，故仍歸A級；已如實揭露下修幅度（8.6→8.2）供覆審，若下輪查得任一新玩家侵蝕CRS客群定價，須降為B級</td></tr>
+</table>
+<p class="small">dd-meta：moat_execution=9／moat_pricing_power=7（原 8，本次複審下修）</p>
+
+<h3>護城河數字驗收（Moat-to-Numbers）</h3>
+<table>
+<tr><th>指標</th><th>CRS</th><th>ATI（最強直接同業）</th><th>Spread</th><th>5年前 Spread</th><th>方向</th></tr>
+<tr><td>ROIC（估算）</td><td>~20.0%（FY26）</td><td>~12%（FY26估）</td><td>+8.0pp</td><td>+4-5pp（FY22-23期間，兩者皆低迷）</td><td><strong>擴大</strong></td></tr>
+<tr><td>可比分部營益/EBITDA margin</td><td>SAO 調整後 EBIT margin 37.8%（Q4 FY26）</td><td>AA&amp;S 分部 EBITDA margin 23.7%（Q2 2026，+930bp YoY）</td><td>正向（EBIT vs EBITDA 口徑不同，CRS 若換算EBITDA margin會更高）</td><td>擴大中</td><td><strong>擴大</strong></td></tr>
+</table>
+<div class="reasoning">護城河合併分 ≥8 的硬 gate 要求 ROIC spread 為正且擴大/持平 → 本案 spread 由 FY22-23 的 +4-5pp 擴大至當前約 +8pp，滿足 gate，合併分 8.2（下修後）仍站得住，不需進一步扣分。</div>
+
+<h3>護城河來源</h3>
+<p><strong>轉換成本：</strong>換掉 CRS 供應商需重跑引擎合金認證，實務上 5-10 年週期＋大量工程驗證成本，構成幾近不可逾越的轉換障礙。<strong>規模優勢：</strong>VIM/VAR 熔煉設備＋數十年累積的冶金製程知識（1,000+ 種合金配方管理能力）為新進者難以在短期複製的資本＋know-how 雙重壁壘。<strong>無形資產：</strong>合金配方與製程 know-how 未大量申請專利（避免公開配方），改以商業機密＋長期客戶關係維護，這也是為何過去 CRS 對 ATI 提起過專利訴訟（顯示對智財邊界的積極維護）。</p>
+
+<h3>競爭鴻溝</h3>
+<p>①<strong>時間壁壘：</strong>新合金上引擎需 5-10 年認證，這條防線本次補完競爭地圖後仍然成立——五條新查得的供給側移動沒有一條可在明天就取得 GE／Pratt &amp; Whitney 引擎盤件的新認證。②<strong>資本壁壘：</strong>ATI 這次擴產規模僅 9,000 噸／80% 已被長約鎖定就代表一筆重大資本決策，顯示即使是現有合格供應商要擴產都需要客戶預先承諾分攤風險。③<strong>認證壁壘：</strong>航太/國防客戶的供應商稽核與品質認證流程本身即是壁壘，不接受未經完整驗證的產能。<strong>④併購繞道（本次新增，原版本漏判）：</strong>上述①-③三道壁壘描述的都是「從零開始建立產能並取得認證」的路徑，但實際觀察到的是資本更雄厚的一方（Acerinox、Aperam 兩家歐系金屬集團；Airbus+Safran 兩家客戶自身）改用「併購既有合格產能」直接繞過認證週期——沒有人「獨立跨過」門檻，而是用資本買下已跨過門檻的公司。這條路徑短期內對 CRS 主力的美系引擎客群衝擊有限（見 §6.H），但長期而言是新進資本繞開①-③三道壁壘的可行途徑，不應假設「新進者更難獨立跨過此門檻」就等於「新進者進不來」。</p>
+
+<h3>市佔競爭表</h3>
+<table>
+<tr><th>對手</th><th>目前定位</th><th>3年回看+前瞻2-3年趨勢</th><th>核心威脅</th><th>OI/EBITDA margin</th><th>FCF</th><th>戰爭承受力</th></tr>
+<tr><td>ATI</td><td>次強直接同業，AA&amp;S分部</td><td>回看：份額持平；前瞻：新增9,000噸產能2027H2上線，80%已鎖LTA——對稱擴產而非搶單</td><td>🟡 點對點（產能對稱擴張，非生態級攻擊）</td><td>AA&amp;S EBITDA margin 23.7%（Q2 2026，落後CRS）</td><td>公司整體EBITDA $284M（Q2 2026）</td><td>中（資產負債表健康但規模小於HWM）</td></tr>
+<tr><td>HWM（Howmet，鄰接同業）</td><td>~50%業務重疊（結構件/鍛件為主，非CRS核心的primary melt）</td><td>Engine Products分部EBITDA margin 37.7%（Q2 2026，+470bp YoY）——與CRS SAO調整後EBIT margin 37.8%相近但口徑不同（EBITDA vs EBIT，CRS實質margin品質更高）</td><td>🟡 相鄰市場，非直接primary melt競爭</td><td>公司整體adj EBITDA margin 32.1%</td><td>公司整體revenue $2.55B/季，遠大於CRS</td><td>高（規模最大，現金流最強）</td></tr>
+<tr><td>PCC（Precision Castparts，Berkshire）</td><td>主要垂直整合自用（GE/RR鍛件），開放市場銷售有限</td><td>不直接搶CRS第三方客戶，但其captive產能規模抑制了CRS/ATI可爭取的open-market份額上限</td><td>🟡 結構性天花板，非主動攻擊</td><td>未揭露（Berkshire子公司不單獨列報）</td><td>Berkshire母體資本雄厚</td><td>高（母體補貼意願強但目前無積極擴張市場份額動作）</td></tr>
+<tr><td>Aubert &amp; Duval（法國，2026-06由Airbus+Safran全資）</td><td>營收約€960M，主供歐系引擎（Safran/CFM、RR）</td><td>三方持股自2023-04存在，2026-06僅買斷少數股東；客群與CRS美系LTA不重疊</td><td>🟡 客戶自有化先例（非直接搶CRS美系客戶，是垂直整合訊號，見§6.H）</td><td>未查得</td><td>Airbus+Safran母體支撐</td><td>中高（僅服務歐系需求）</td></tr>
+<tr><td>Haynes（現由Acerinox經NAS持有）</td><td>美國既有鎳/鈷合金航太生產者，傳統非CRS高階primary melt對手</td><td>2026年Acerinox以US$798M完成收購；NAS另擴產不鏽鋼+308,000短噸/年</td><td>🟡 資本轉強，24個月內未見對CRS LTA的直接侵蝕</td><td>未查得</td><td>Acerinox母體支撐</td><td>中（尚無積極搶單動作）</td></tr>
+<tr><td>Universal Stainless（現由Aperam持有）</td><td>美國特殊鋼廠，VAR/ESR重熔線與CRS primary melt相鄰</td><td>2025-01-23由Aperam完成收購；無sourced證據顯示已取得同級認證</td><td>🟡 資本轉強，24個月內未見直接威脅</td><td>未查得</td><td>Aperam母體支撐</td><td>中（尚無積極搶單動作）</td></tr>
+</table>
+<p><strong>賽局結構判定（重新論證）：</strong>理性寡占，信心層級由「高」下修為「中高」——原判定唯一依據是ATI新產能80%已鎖LTA，補完競爭地圖後看到的是4-6家、資本背景更多元的結構。維持理性寡占而非破壞性競爭：①CRS自身0客戶流失、8/8筆LTA提價的實測證據未被推翻；②ATI/Acerinox/Aperam新增產能皆屬「先鎖客戶再整合」紀律型路徑，無現貨降價搶單證據；③認證週期仍是真防線，Acerinox/Aperam尚無sourced證據顯示已投入取得CRS核心客群新認證。玩家數與資本背景比先前複雜，複審頻率應提高（見§14）。</p>
+
+<h3>定價事件帳</h3>
+<table>
+<tr><th>期間</th><th>事件</th><th>量與留存反應</th><th>其後 GM 反應</th></tr>
+<tr><td>Q1 FY26</td><td>完成 5 筆航太 LTA，合約期 2-5 年，「顯著」提價</td><td>客戶主動要求鎖定供應（非被迫接受），無留存流失</td><td>SAO 調整後 OM 32.0%（同期）</td></tr>
+<tr><td>Q2 FY26</td><td>再完成 3 筆航太 LTA，「顯著」提價</td><td>需求持續強，Tony Thene 明確表態「30% 提價都不算多」</td><td>SAO 調整後 OM 33.1%</td></tr>
+<tr><td>近3年趨勢</td><td>共8+筆長約續簽全數提價，無一折價續約案例</td><td>0 起客戶流失或轉單案例</td><td>OM 從 26-28% 區間穩定擴張至 37.8%</td></tr>
+</table>
+
+<h3>D｜護城河變遷時間軸</h3>
+<p>FY22-23（景氣谷底，GAAP轉虧）→FY24起訂單回溫、LTA陸續到期重議價→FY25 record獲利→FY26連續4季創營益紀錄、SAO OM連18季擴張、8筆LTA全數提價→2026-02宣布CEO接班計畫（Thene→Malloy）並行推進Athens擴產→2026-07治理插曲（Malloy猝逝、Thene回任）未影響營運節奏，FY27 guidance如期於Q4法說發布並大幅上修。</p>
+
+<h3>護城河趨勢（權威）</h3>
+<p>Execution Moat 趨勢：<strong>↑ 擴大</strong>（SAO調整後營益率連18季擴張，Athens擴產鞏固長期產能領先）。Pricing Power Moat 趨勢：<strong>↑ 擴大但速度可能放緩</strong>（LTA提價持續，但ATI對稱擴產是24個月內需觀察的潛在收斂訊號）。<strong>權威 moat_trend：↑</strong>（12個月內sourced變化：SAO調整後營益率從Q1 FY26的32.0%擴張至Q4 FY26的37.8%，+580bp；同期ATI AA&amp;S分部EBITDA margin雖也擴張930bp但絕對水準仍顯著落後CRS）。</p>
+<p><strong>份額檢查：</strong>CRS 未在任何主要客戶/program 流失份額（sourced：無 second-source 或轉單證據），故 moat_trend 維持 ↑ 成立。</p>
+
+<h3>24 個月內最可能瓦解護城河的變化</h3>
+<table>
+<tr><th>等級</th><th>事件</th><th>機率</th></tr>
+<tr><td>🟡 點對點</td><td>ATI Bakers South VIM（2027H2投產）稀釋CRS/ATI雙寡頭議價空間，續約提價幅度收斂</td><td>中（~30-35%，已部分被80%長約鎖定緩解）</td></tr>
+<tr><td>🟡 點對點</td><td>Airbus因GTF延誤持續下修A320neo爬升節奏，拖慢CRS結構件子市場訂單回補</td><td>中（~25%，已在發生中但幅度可控）</td></tr>
+<tr><td>🟡 點對點（本次新增）</td><td>客戶（引擎／機身OEM）以併購取得既有合格產能，繞過5-10年認證週期——Airbus+Safran 2026-06全資買斷Aubert &amp; Duval為明確先例，若GE或Pratt &amp; Whitney在美系供應鏈複製此路徑（如收購Haynes/Universal相關資產或另起併購），CRS議價權基礎將被實質侵蝕</td><td>低-中（~15-20%於24個月內；A&amp;D案例本身主供歐系引擎、非CRS美系客群，直接複製到CRS客群尚無sourced跡象，但Safran「垂直整合為戰略必需」的公開表態使此路徑機率不可忽略）</td></tr>
+<tr><td>⛔ 架構替代</td><td>陶瓷基複材/新一代合金技術繞過鎳基超合金關鍵應用；積層製造（AM）降低buy-to-fly ratio、減少每架引擎的合金採購量</td><td>低（&lt;10%，5-10年認證週期本身即是CRS的防線；AM對buy-to-fly的影響本次僅初步提問未深查，暫判低風險，列入下一輪複審）</td></tr>
+</table>
+<p class="small">無 🔴/⛔ 實質觸發，護城河等級與趨勢本次不需下調至C級以下，但新增的「OEM併購式垂直整合」一項已落 kill_metrics（見 dd-meta）供下游持續監測。</p>
+
+<h3>§5.F｜對手 P&amp;L 深度對照</h3>
+<p><strong>ATI</strong>（策略：紀律型對稱擴產，非低價搶單）：Q2 2026 AA&amp;S 分部營收 $624.0M（YoY+17%），分部EBITDA $147.6M/23.7%margin（+930bp YoY），公司整體revenue $1.3B/季、adj EBITDA $284M。經濟體質健康但規模與margin均落後CRS SAO，其擴產80%已鎖定LTA顯示其自身也依賴長約可見度，不具備發動價格戰的財務動機。<strong>HWM</strong>（策略：規模與多元化，Engine Products為最相關分部）：Q2 2026 revenue $2.55B（YoY+24%），Engine Products分部revenue $1.37B（YoY+32%）、分部EBITDA margin 37.7%（+470bp YoY）。規模遠大於CRS，FCF與資產負債表最強，但其業務組合以結構件/鍛件為主，與CRS的primary melt業務重疊約僅50%，非直接正面搶單對手。</p>
+<p><strong>對合併分/moat_trend的含義：</strong>兩大同業財務體質皆健康、皆在擴產或成長，顯示整個產業處於「大家都在漲」的結構性順風期，尚未進入零和搶單階段——這支撐CRS moat_trend維持↑，但也提醒2027-2028年新產能陸續上線後（CRS Athens + ATI Bakers South）需要重新檢視是否轉為零和。</p>
+
+<h3>R｜報酬持續期檢核（ROIC durability）</h3>
+<p><strong>當期ROIC定位：</strong>稅後營業利益率（FY26估~17.3%＝NOPAT $540.5M÷淨銷售$3,124M）×投入資本周轉率（估~1.16x）→<strong>高利益率×中周轉</strong>象限，介於「機場/先進製程」（高利益率低周轉）與「Moody's/Visa」（高利益率高周轉）之間，資產有一定重量（熔煉爐/鍛造設備）但周轉正在隨產能利用率提升而改善。</p>
+<table>
+<tr><th>檢查點</th><th>判定</th><th>sourced證據</th></tr>
+<tr><td>需求基礎值</td><td>🟢</td><td>「需要型」需求——引擎安全關鍵材料，延後採購的代價是生產線停擺，非「想要型」的可延後性消費</td></tr>
+<tr><td>決策層級</td><td>🟡（原🟢，本次下修）</td><td>決策最小單位是整條認證合格的供應商關係，換供應商=重跑5-10年認證，代理變數：0起客戶流失、8筆長約全數續簽——但這條防線只封住「客戶自己換供應商」的路徑，未封住「客戶把供應商買下來」的路徑（Airbus+Safran 2026-06全資取得Aubert &amp; Duval即為此路徑的sourced先例，見§6.H）。CRS美系客群目前未見同類動作，故不判🔴，但由🟢降為🟡反映這條繞道路徑真實存在</td></tr>
+<tr><td>價值鏈分配</td><td>🟡</td><td>經濟利益集中在CRS/ATI/PCC這個瓶頸環節（利潤池↑流入），但下游引擎OEM（GE/PW/RR）本身也是寡占，長期分配仍取決於雙邊談判力，非CRS單方面決定</td></tr>
+<tr><td>社會容忍度</td><td>🟢</td><td>航太引擎材料不涉及消費者敏感定價（B2B、非終端消費品），無政治/監管定價天花板疑慮；國防採購甚至傾向支持本土供應商漲價以確保供應安全</td></tr>
+</table>
+<p><strong>再投資空間：</strong>內生成長率＝增量ROIC×再投資率（見§6.D詳算，本節僅一句：增量ROIC顯著高於WACC，Athens擴產屬於「還能以相近或更高報酬再投入」的正向案例，非既有現金流耗盡型）。</p>
+</section>
+
+<section id="s6">
+<h2>§6 長期成長性評估</h2>
+
+<h3>0｜成長品質7問儀表板</h3>
+<table>
+<tr><th>#</th><th>拷問</th><th>裁決</th><th>關鍵數字</th><th>詳見</th></tr>
+<tr><td>1</td><td>結構性或週期反彈？</td><td>結構為主，但保有真實週期尾巴</td><td>16,000架積壓訂單；FY22曾GAAP轉虧</td><td>§6.A/§3</td></tr>
+<tr><td>2</td><td>需多少資本投入？</td><td>中資產（Athens期間偏重）</td><td>Capex/Rev~10%（含成長資本）</td><td>§6.D</td></tr>
+<tr><td>3</td><td>增量ROIC&gt;資金成本？</td><td>是</td><td>Athens估ROIC&gt;20% vs WACC~9.5%</td><td>§6.D</td></tr>
+<tr><td>4</td><td>成長變現金流或被吃掉？</td><td>變現金流為主</td><td>FY26調整後FCF$362.3M，回購$179.1M</td><td>§9.E</td></tr>
+<tr><td>5</td><td>競爭者被吸引進來？</td><td>已進（對稱擴產）</td><td>ATI 9,000噸新產能2027H2</td><td>§5/§5.F</td></tr>
+<tr><td>6</td><td>股價反映多少期待？</td><td>合理偏中性</td><td>Fwd PE 30.0x、PEG 1.36</td><td>§10.1/附錄A</td></tr>
+<tr><td>7</td><td>成長率下修估值撐得住？</td><td>撐（有多元需求支撐），但倍數會收斂</td><td>熄火情境見下方E</td><td>§6.E/§10.5</td></tr>
+</table>
+<p class="small">最弱一題：#5（競爭者已進場，24個月內需持續觀察是否稀釋利潤率）。</p>
+
+<h3>A｜成長跑道</h3>
+<p>當前TAM（鎳基超合金航太+國防+能源+醫療應用，估~$10-15B全球，多方報告估2033年達~$17B，8%CAGR）；CRS當前滲透率（open-market供應商中，扣除PCC captive部分）估中高個位數市占；<strong>成長可持續年數估計（Runway）：8-10年</strong>（受限於認證合格供應商增加速度極慢，但也受限於航太建造率終將見頂）。</p>
+
+<h3>A''｜Y5後跑道 runway_post_y5</h3>
+<p>S曲線位置：<strong>中期</strong>（航太supercycle爬升段，Boeing/Airbus尚未達目標建造率）。Y5末（FY2031）TAM滲透率估仍&lt;35%（供給端受合格供應商稀少限制，需求端仍在爬升）。第二曲線：<strong>有，且已有sourced證據</strong>——IGT/資料中心電力需求驅動的能源分部（獨立於航太週期，Q4 FY26 YoY+19%，Q3 FY26曾YoY+44%），與國防預算supercycle（FY27 DOD請求$1.45T，較FY26大幅上修）構成兩條獨立於航太commercial cycle的需求曲線。</p>
+<p><strong>runway_post_y5 = 🟢 寬</strong>（Y5末滲透率&lt;35% 且有sourced第二曲線：能源/資料中心+國防）。🟢的判定也是本報告「10Y二段延伸」（見§10.5）必須填寫的前提之一；本案因估值燈落🟡而非🟠/🔴，走一般進場路徑而非需要估值折價的加碼路徑。</p>
+
+<h3>B｜成長品質判斷</h3>
+<p><strong>①有機vs無機：</strong>近5年無重大M&amp;A（&gt;市值5%或&gt;$100M），成長100%有機。<strong>②定價vs量：</strong>FY26 SAO銷售成長主要由量驅動（shipment volume YoY+22-23%，Q4 FY26），疊加組合優化與提價，量價協同而非單靠漲價；ASP/磅實際下滑反映組合轉移（非折價，見§4.G）。<strong>③增量利潤率：</strong>SAO調整後營益率從FY26 Q1的32.0%攜升至Q4的37.8%，增量margin遠高於存量水準（結構性擴張，非燒錢買成長）。前瞻結論：在維持當前建造率爬升下，合併OM每年可望再擴張200-400bp（隨規模化與Athens投產遞減）。</p>
+
+<h3>C｜成長護城河連動評估</h3>
+<p><strong>強化型</strong>——成長（量增+組合優化）直接帶動更高的定價議價力與規模效率，未見犧牲定價換量、也未見大幅增加SBC稀釋股東（見§9 SBC分析）。</p>
+
+<h3>D｜ROIC與FCF長期可維持性 + ROIIC</h3>
+<table>
+<tr><th>指標</th><th>當前值</th><th>3年前</th><th>趨勢</th><th>門檻</th><th>符合?</th></tr>
+<tr><td>ROIC</td><td>~20.0%（FY26估）</td><td>~8-10%（FY23）</td><td>↑</td><td>&gt;15%且&gt;WACC</td><td class="pass">是</td></tr>
+<tr><td>ROIC-WACC超額</td><td>~10.5pp</td><td>接近0或負</td><td>↑擴大</td><td>持續正值且擴大</td><td class="pass">是</td></tr>
+<tr><td>FCF Margin</td><td>11.6%</td><td>-2.7%（FY23）</td><td>↑</td><td>&gt;15%</td><td class="fail">未達（受成長資本壓低，見§4）</td></tr>
+<tr><td>FCF/NI轉換率</td><td>估~95%+（FY26調整後FCF$362.3M）</td><td>N/A（FY23虧損）</td><td>↑</td><td>&gt;85%</td><td class="pass">是</td></tr>
+<tr><td>Reinvestment Rate</td><td>偏高（成長期，Athens投入中）</td><td>低（谷底期縮減資本支出）</td><td>↑</td><td>成長期合理偏高</td><td class="pass">是</td></tr>
+</table>
+<table>
+<tr><th>ROIIC計算</th><th>數值</th><th>備註</th></tr>
+<tr><td>ROIIC（3Y，FY23→FY26）</td><td>≈(NOPAT_26$540.5M−NOPAT_23約$56M)÷(IC_26估$2,698M−IC_23$2,089M)≈79.5%</td><td>此期間橫跨景氣谷底到高峰，數字偏高不具穩態代表性，僅供方向參考</td></tr>
+<tr><td>再投資率（本次修正：真算而非估區間）</td><td>FY26 Capex $242.7M ÷ NOPAT $540.5M ＝ <strong>44.9%</strong>（gross proxy）</td><td>本報告未取得公開揭露的ΔWC與D&amp;A逐年明細，無法完整套用(Capex−D&amp;A+ΔWC)÷NOPAT公式；改用gross Capex/NOPAT作為上界代理指標，明確標示為代理值而非淨再投資率（會高估，因未扣除D&amp;A所代表的維護性資本部分）</td></tr>
+<tr><td>穩態增量ROIC（本次修正：改用sourced數字，非憑空斷言）</td><td><strong>20%</strong>（管理層對Athens擴產專案guided ROIC「&gt;20%」，取下限20%作保守穩態代理，非任意假設的22%）</td><td>來源：Athens擴產專案公開guidance（$400M投資、2030年增量營益$150M+目標，隱含ROIC&gt;20%）</td></tr>
+<tr><td>內生成長天花板（重算）</td><td>20%（穩態增量ROIC）× 44.9%（再投資率proxy）＝ <strong>8.98%≈9.0%</strong></td><td>dd-meta endo_growth_ceiling=9.0（原14.0為未附推導的斷言，本次已修正並使算式與機器欄完全對齊）</td></tr>
+<tr><td>共識對賬（重算，缺口擴大）</td><td>共識3年EPS CAGR 22.1% − 內生天花板9.0% ＝ <strong>缺口13.1pp</strong>（原估8.1pp基於未推導的天花板，本次上修）</td><td>缺口歸因（定量）：①回購對EPS槓桿約0.8-1.4pp/yr（FY26回購$179.1M÷市值$23.6B≈0.76%；$1B新授權3年內用完約1.2-1.4%/yr）；②SAO margin擴張（37.8%→39-41%，3年+120-320bp）年化約1-2.6pp；<strong>兩項合計僅約2-4pp，剩餘約9-11pp未能定量歸因</strong></td></tr>
+</table>
+<div class="reasoning"><strong>誠實處理未歸因缺口：</strong>約9-11pp無法用回購與margin擴張完整解釋，可能來源：①FY27 guided總CapEx（$300-315M）已高於FY26實際（$242.7M），再投資率本身正在爬升，FY26單年snapshot可能低估真實強度；②建造率爬升期的產能利用率槓桿，部分可能屬一次性（達目標建造率後邊際效益遞減）。若屬實，這部分成長不進入長期複利軌跡，是§12b「成功但劣化」敗局論述的量化佐證——已反映在§10.5 Base案終端倍數僅28x（非維持30x+）、10Y二段延伸CAGR降至10%。長期持有信心不因此下修（moat/趨勢/runway三項客觀條件仍支撐「高」），但這是「進場｜核心」信心區間中最脆弱的一塊拼圖，已誠實揭露供覆審。</div>
+
+<h3>E｜成長熄火情境壓力測試</h3>
+<p>三情境（3年後成長率降至15%/10%/5%）×Fwd PE壓縮至28x/22x/16x×潛在估值跌幅約-6%/-27%/-51%（相對當前Fwd PE 30.0x基準）。此組數字用於§1下行風險與§10.5 Bear情境交叉參考。</p>
+
+<h3>⚠️ 衰退信號偵測表</h3>
+<table>
+<tr><th>信號</th><th>指標</th><th>亮燈?</th></tr>
+<tr><td>護城河侵蝕</td><td>毛利率連2季YoY下滑</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>核心市場市佔率縮減</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>提價後銷量下滑</td><td>⬜（8筆LTA全數提價且0客戶流失）</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR顯著高於Revenue CAGR</td><td>⬜（EPS成長主要由OI margin擴張+量增驅動，非會計操作）</td></tr>
+<tr><td>盈餘品質</td><td>FCF/NI轉換率&lt;0.75連2年</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>SBC/Revenue&gt;5%且逐年上升</td><td>⬜（未查得異常揭露）</td></tr>
+<tr><td>產業結構衰退</td><td>TAM萎縮或被替代技術壓縮</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>產業估值倍數系統性下移</td><td>⬜（同業ATI/HWM倍數同步走高）</td></tr>
+<tr><td>隱性資本密集</td><td>Maintenance Capex占FCF&gt;60%</td><td>⬜（多數capex為Athens成長型）</td></tr>
+<tr><td>隱性資本密集</td><td>停止投資新產能收入3年內下滑?</td><td>⬜</td></tr>
+</table>
+<p><strong>價值陷阱風險評級：衰退信號偵測表10項0個亮燈 → 🟢低風險。長期成長性綜合評級：🟡中等可見度</strong>（Runway 8-10年、1個弱項為FCF margin未達穩態驗證，其餘皆強）。</p>
+
+<h3>H｜客戶結構深度</h3>
+<p><strong>①客戶集中度：</strong>未單獨揭露top1/5客戶占比，但60-65%航太營收綁LTA構成結構性集中。<strong>②議價權結構：</strong>引擎OEM（GE/Pratt&amp;Whitney/RR）多為Sole-source或Dual-track但CRS產品差異化程度高，實務上難以short-term second-source。<strong>③客戶生命週期（本次修正）：</strong>Grow with客戶為主（LTA續約擴大而非萎縮）——但「未見in-house化跡象」的舊版判斷已被sourced事實推翻：<strong>Airbus與Safran於2026-06-25完成買斷Tikehau Capital持股，取得Aubert &amp; Duval（法國鎳基超合金/鈦合金廠，營收約€960M）的完整全資所有權</strong>（三方持股結構自2023-04即存在，本次為買斷少數股東，非全新事件）；Safran高層並公開表態垂直整合已從競爭優勢升級為戰略必需，目標是縮減對「一小群專業供應商」的依賴，並以€150M擴充Gennevilliers鍛造產能落實——Safran是CFM（LEAP引擎，737 MAX/A320neo用）50%股東，正是本報告H2需求假設的載體之一。這代表in-house化確實在發生，只是走「買下供應商」而非「自建產線」的路徑，舊版只設想了後者。<strong>平衡說明：</strong>A&amp;D主要服務歐系引擎與法國國防，CRS的60-65% LTA綁定美系引擎鏈，此事件對CRS美系客戶敞口的直接衝擊有限，正確定性是「本報告的競爭與客戶地圖從一開始就不完整」而非「情勢剛惡化」；但這是美系OEM未來是否複製同一路徑的明確先例，已列入§5「24個月」表與§12a盲點表追蹤。<strong>④留存經濟：</strong>0起客戶流失/轉單案例，LTA續約率100%（8/8筆全數提價）。<strong>客戶結構風險評估：🟡集中但Grow-with邏輯強，惟OEM併購式垂直整合先例已列入監測</strong>。</p>
+
+<h3>F｜AI取代風險評級</h3>
+<p><strong>🟢 AI受益或免疫</strong>——核心業務（航太合金製造）與AI無直接替代關係；反而因AI資料中心用電需求推升IGT渦輪機建造，成為額外需求來源（獨立於航太週期的第二曲線之一，見§6.A''）。</p>
+
+<h3>I｜分部前瞻建模</h3>
+<table>
+<tr><th>業務段</th><th>FY0(FY26)營收</th><th>驅動式</th><th>FY27E</th><th>FY28E</th><th>FY29E</th><th>段OM軌跡</th><th>對合併EPS成長貢獻</th></tr>
+<tr><td>SAO（>95%分部OI）</td><td>營益$674.9M估（$702.0M總OI扣PEP/corp）</td><td>量+15-20%（建造率爬升）×價+3-6%（LTA續約）×組合優化</td><td>OI guidance中段$865M總OI對應SAO約$850M</td><td>估SAO OI ~$990M（延續類似成長率）</td><td>對應總OI目標中段$1.25B，SAO約$1.22B</td><td>37.8%→估39-41%（規模化+Athens早期貢獻）</td><td>SAO為唯一主引擎，貢獻約95%+的EPS成長</td></tr>
+<tr><td>PEP（Dynamet+積層+經銷）</td><td>估~$28M全年OI</td><td>醫療回溫+航太/國防積層需求</td><td>Q1 FY27 guidance$6-7M/季</td><td>估溫和成長</td><td>估溫和成長</td><td>低個位數OM，波動大</td><td>&lt;5%，非主引擎</td></tr>
+</table>
+<p class="small">若SAO miss，合併EPS CAGR將大幅低於基準（SAO是唯一主引擎，貢獻約95%+）——此為單引擎集中度風險，已列入§12a盲點。</p>
+</section>
+
+<section id="s7">
+<h2>§7 財務品質監測</h2>
+<h3>三年趨勢表</h3>
+<table>
+<tr><th>指標</th><th>FY24</th><th>FY25</th><th>FY26(E/實際混合)</th><th>ATI（同業中位）</th><th>相對評估</th></tr>
+<tr><td>FCF Margin</td><td>6.5%</td><td>9.9%</td><td>11.6%</td><td>估中個位數</td><td>優</td></tr>
+<tr><td>調整後EBIT/EBITDA Margin(SAO/可比)</td><td>~29%(估)</td><td>~33%(估)</td><td>37.8%</td><td>ATI AA&amp;S 23.7%(EBITDA口徑)</td><td>優</td></tr>
+<tr><td>ROIC−WACC</td><td>估+3-5pp</td><td>估+7pp</td><td>估+10.5pp</td><td>估+2-3pp</td><td>優</td></tr>
+<tr><td>ROE</td><td>~11.4%(186.5/1629)</td><td>~19.9%(376/1887)</td><td>估~25%+</td><td>估中個位數-低雙位數</td><td>優</td></tr>
+</table>
+
+<h3>獲利品質警訊</h3>
+<p>淨利與OCF連動性：FY25 OCF $440M vs 淨利$376M，比率1.17（健康，非靠應計項目撐盈餘）。AR成長vs營收成長：FY22-25 AR自$382M增至$576M（+51%）vs營收+57%，比例相當，無異常膨脹。存貨成長vs營收成長：存貨自$496M增至$794M（+60%）略高於營收成長，反映建造率爬升期的策略性備料，非滯銷積壓（訂單能見度佐證）。FCF轉換率趨勢：持續改善（見上表），資本密集度變化主要來自Athens成長型投資，非維護資本膨脹。</p>
+
+<h3>回購品質評估</h3>
+<table>
+<tr><th>指標</th><th>判斷</th></tr>
+<tr><td>過去3年回購/FCF</td><td>回購($102M+$179.1M FY25-26)相對FCF($286M+$362.3M)≈43%，未過80%警示線</td></tr>
+<tr><td>剔除回購EPS CAGR</td><td>原CAGR22.1%（FY26-29估）；因股數減少幅度尚小（FY26僅回購約0.9%股數），剔除回購後估CAGR仍達~20-21%，差距&lt;2pp，未達5pp警示</td></tr>
+<tr><td>回購均價vs當前股價</td><td>FY26回購均價估~$400（低於現價$476.42），資本配置紀律尚可，惟隨$1B新授權於高位加碼執行需持續觀察</td></tr>
+<tr><td>Revenue CAGR（同期）</td><td>估FY26-29 Revenue CAGR~10-12%，遠低於EPS CAGR 22.1%，差距主要來自OI margin結構性擴張（非回購撐出），已於§6.B③說明</td></tr>
+</table>
+
+<h3>FCF Lumpiness評估</h3>
+<p>過去5年FCF：FY22 -$85M／FY23 -$68M／FY24 $178M／FY25 $286M／FY26調整後$362.3M。5年滾動均約$135M（受早年谷底拖累），最低谷FY23佔5Y均的-50%（負值）。Maintenance capex估算（D&amp;A錨定法）：以FY26 D&amp;A估~$145-150M作maintenance capex代理，Owner earnings=OCF($605M估)-maint. capex(~$148M)≈$457M，顯著高於報告FCF（因扣除Athens成長型資本）。Lumpiness性質：業務天然受景氣循環影響（一次性資本支出週期性明顯），非結構性惡化。<strong>結論：🟡需關注低谷頻率</strong>（FY22-23確曾轉負，需持續監測下一輪週期反轉時的FCF韌性）。</p>
+
+<h3>E｜長期趨勢+DuPont+營運資金</h3>
+<table>
+<tr><th>年度</th><th>Gross Margin</th><th>Operating Margin</th><th>ROIC(估)</th><th>FCF Margin</th><th>結構判讀</th></tr>
+<tr><td>FY22</td><td>8.2%</td><td>-1.4%</td><td>負值</td><td>-4.6%</td><td>景氣谷底</td></tr>
+<tr><td>FY23</td><td>13.2%</td><td>5.2%</td><td>~3-4%</td><td>-2.7%</td><td>初步回升</td></tr>
+<tr><td>FY24</td><td>21.2%</td><td>12.8%</td><td>~8-9%</td><td>6.5%</td><td>結構性改善開始</td></tr>
+<tr><td>FY25</td><td>26.7%</td><td>18.3%</td><td>~14-15%</td><td>9.9%</td><td>加速擴張</td></tr>
+<tr><td>FY26</td><td>~30.6%(估)</td><td>22.5%</td><td>~20.0%(估)</td><td>11.6%</td><td>歷史新高，結構性確立</td></tr>
+</table>
+<p><strong>DuPont拆解（FY25→FY26估）：</strong>ROIC=NOPAT margin×投入資本周轉率。FY25：NOPAT margin~13.1%（$376M稅後估÷$2,877M營收，簡化）×周轉率~1.11x（$2,877M÷IC$2,582M均）≈14.5%（與上表估算相近）。FY26：NOPAT margin估~17.3%×周轉率估~1.16x≈20.0%——<strong>margin擴張是ROIC提升的主要驅動</strong>（DuPont判讀：獲利力驅動為主，資本效率為輔助貢獻）。</p>
+<p><strong>營運資金趨勢（CCC）：</strong>DSO估(AR/日均營收)：FY25 $576M/($2,877M/365)≈73天；DIO估(存貨/日均COGS)：FY25 $794M/(($2,877M×0.733)/365)≈148天（毛利率26.7%推算COGS）；DPO估(AP/日均COGS)：$267M/(2,109M/365)≈46天；CCC≈73+148-46=175天，較FY22（估更高，谷底期存貨滯留更久）已改善但仍偏長，反映特殊合金生產週期本質較長（非盈餘品質警訊，屬產業特性）。</p>
+<p><strong>債務到期結構：</strong>管理層FY26法說重申淨負債/EBITDA遠低於1x，未揭露具體到期牆細節，暫標「數據限制」。</p>
+</section>
+
+<section id="s8">
+<h2>§8 即時財報情報</h2>
+<h3>①最新一季財報關鍵數字（Q4 FY26，季結2026-06-30）</h3>
+<table>
+<tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY</th></tr>
+<tr><td>淨銷售（含附加費）</td><td>$851.0M</td><td>~$863M(估)</td><td class="fail">Miss ~-1.3%</td><td>+13%</td></tr>
+<tr><td>調整後EPS</td><td>$3.23</td><td>$3.07-3.09</td><td class="pass">Beat +5.2%</td><td>+32.9%</td></tr>
+<tr><td>調整後營益</td><td>$206.9M</td><td>N/A</td><td>—</td><td>+37%</td></tr>
+<tr><td>SAO調整後OM</td><td>37.8%</td><td>—</td><td>連18季擴張新高</td><td>+730bp(vs30.5%)</td></tr>
+</table>
+<p><strong>財報對§2假設的邊際貢獻：</strong>H1（＋強化，OM創新高遠超33%門檻）｜H2（＋強化，A&amp;D +17%YoY且16,000架積壓訂單）｜H3（0不變，Athens持續on schedule，「12個月後上線」）。</p>
+<p class="small">營收（含附加費）小幅miss主因附加費本身為原料成本轉嫁的被動性項目、非需求指標；扣除附加費的淨銷售YoY+9%與22%出貨量成長方向一致，本項miss不改變基本面判斷。</p>
+
+<h3>②Earnings Call語氣解析</h3>
+<p><strong>Guidance vs共識：</strong>FY27營益guidance $850-880M（+21-25%）大幅高於FY26 record，且管理層公開表態「若你想把這個guidance當floor，我不會反對」——語氣顯著樂觀，暗示上修空間。<strong>被迴避的問題：</strong>分析師追問FY27成長為何「moderate」而非「accelerate」，管理層以「guidance哲學一致性」帶過，未正面量化解釋deceleration幅度是否已保守。</p>
+<h3>③產業Imply萃取</h3>
+<p>本次call對產業供需最關鍵的imply是：結構性客戶仍在「該下單而未下單」（管理層明確表態部分結構件客戶承認訂單量低於應有水準），意味即使當前訂單已創高，真實需求缺口尚未完全反映在訂單簿——供給緊張程度可能被低估，餵入§3利潤池判定。</p>
+</section>
+
+<section id="s9">
+<h2>§9 治理與資本配置</h2>
+<p><strong>股東結構：</strong>Insider持股2.40%，機構持股95.51%（yfinance），無dual-class投票權結構。<strong>治理連續性（本次複審重點）：</strong>2026-02董事會宣布接班計畫，Brian Malloy（時任President&amp;COO）於2026-07-01接任President&amp;CEO，Tony Thene（自2015年起任CEO，2025-08起兼任Chairman）轉任Executive Chairman；2026-07-24 Malloy猝逝（享年59歲，公司未公開死因，距接任僅3週）；2026-07-27董事會宣布Thene立即回任CEO並繼續兼任Chairman，管理層在2026-07-30法說會上明確表態「這不是過渡性安排，也不會對外尋找新CEO人選，計畫由我無限期擔任CEO」。<strong>治理評級判斷：</strong>由一位長期在任（2015年起）、市場熟悉且過去8年多次帶領公司穿越景氣循環的資深營運者回鍋掌舵，屬於「用最熟悉的人穩住陣腳」的穩健安排，非治理真空；但短短13個月內連兩次CEO職位變動，客觀上構成一次性但真實的關鍵人物風險，已於§2.F列為Single Thing、§12a列為盲點。</p>
+<p><strong>資本配置軌跡：</strong>近5年無重大M&amp;A（&gt;市值5%或&gt;$100M），成長全數有機（Athens擴產為主）。2024年7月啟動$400M回購授權，2026年8月用罄（累計FY25-26回購約$281M＋FY24啟動當年約$119M存量，合計$400M用罄；FY24當年回購金額本報告未單獨查證，僅以總額反推），2026-08-12董事會另行授權<strong>額外$1.0B</strong>回購計畫（非取代舊額度，因舊額度已耗盡），CEO Thene公開表態此為「對長期價值創造信心」的展現。<strong>管理層薪酬結構：</strong>CEO層級基本薪$1.0M、目標現金獎金125%（Malloy方案，Thene回任後條款未見更新揭露）、年度股權獎勵$4.5M；Executive Chairman層級基本薪$1.0M、目標獎金100%、股權獎勵$2.0M——總目標薪酬中約80%以上為變動薪酬（獎金+股權），與ROIC/TSR掛鉤程度屬產業常見的高績效連動結構。<strong>過去12個月內部人交易：</strong>2026-08-25 Tony Thene出售109,283股（約$52.9M，均價$484.24），公開聲明理由為地產規劃／稅務規劃／財務多元化，出售後仍為公司前20大股東；未查得CFO Tim Lain或其他高管於近期有出售紀錄。</p>
+<div class="reasoning">內部人賣出三步判讀：①機制歸因——聲明理由為稅務/地產規劃而非對公司前景的判斷，且時點緊接在正面Q4法說與新回購授權之後（若真對前景悲觀，通常不會在利多消息後才賣）；②留存規模——賣出後仍為前20大股東，非清倉式離場；③升級觸發設計——若Tim Lain或其他高管在更低價位（如低於$400）跟進出售，才需重新評估conviction；目前僅Thene一人出售且理由可信，不觸發降級。</div>
+
+<h3>資本配置計分卡</h3>
+<table>
+<tr><th>項目</th><th>計算</th><th>過/不過</th></tr>
+<tr><td>M&amp;A已實現ROIIC</td><td>近5年無重大M&amp;A</td><td>N/A不計</td></tr>
+<tr><td>回購買入收益率</td><td>Earnings yield≈1/PE(30.0x)≈3.3%，vs(10Y殖利率~4.2%+2%)=6.2%門檻</td><td class="fail">不過（買回估值不便宜，屬「相信長期價值」型回購而非價值型）</td></tr>
+<tr><td>SBC淨稀釋率</td><td>股數呈淨減少趨勢（回購步調超過SBC發行），估&lt;1.5%/yr</td><td class="pass">過</td></tr>
+</table>
+<p><strong>資本配置等級：適用項1/2過 = B</strong>（非C級，不觸發持有年限上限）。</p>
+
+<h3>D｜10年資本配置track record</h3>
+<p>①M&amp;A全史：近5-10年無重大併購，成長路徑以有機投資（Athens擴產為代表）為主，無整合失敗或減損紀錄。②回購/股息10年軌跡：股息長年穩定約$39-40M/年（低股利率~0.17%，非股東回報主力）；回購自2024年7月$400M授權啟動後轉趨積極（FY25 $102M→FY26 $179.1M，加速中），總股東回報率（回購+股息）/FCF約53%（FY26）。③內部人+薪酬：見上方獨立段落。<strong>本模組結論：</strong>10年敘事顯示管理層資本配置紀律穩健（無失敗併購紀錄拖累），近2年轉趨積極回購支撐計分卡B級評等。</p>
+
+<h3>E｜FCF去向+M&amp;A飛輪</h3>
+<p>①FCF去向拆解（FY26）：回購$179.1M（占FCF~49%）／股息~$40M（占~11%）／再投資（Athens capex $175-185M，占營收角度另計，非由FCF直接支應而是與capex guidance並列）／無去債需求（負債結構穩定）。②本案非連續併購型公司，M&amp;A飛輪判定N/A。③一句結論：這檔的成長最終<strong>變股東現金與再投資並重</strong>，增量ROIC<strong>顯著&gt;WACC</strong>，資本配置<strong>健康複利中，惟需持續觀察高位回購的買入紀律</strong>。</p>
+</section>
+
+<section id="s10">
+<h2>§10 估值與報酬</h2>
+<h3>11.1｜歷史估值分位</h3>
+<p>5年trailing PE因FY22 GAAP虧損與FY23急速復甦（單年高點134.2x）嚴重失真，改採平滑後Forward PE區間：5Y低點~20x／高點~45x／現值（FY28基礎）30.0x → <strong>分位≈40%</strong>＝(30.0-20)/(45-20)。矩陣落點合理偏便宜，與PEG方向一致，互相驗證（trailing PE分位因循環失真不可靠，本案以PEG為權威尺）。</p>
+
+<h3>11.2｜PEG診斷</h3>
+<table>
+<tr><th>項目</th><th>值</th></tr>
+<tr><td>Forward PE（FY28基礎）</td><td>30.0x</td></tr>
+<tr><td>3年EPS CAGR（Non-GAAP，FY26→FY29）</td><td>22.1%</td></tr>
+<tr><td><strong>PEG（3年）</strong></td><td><strong>1.36（合理）</strong></td></tr>
+</table>
+<div class="reasoning">PEG計算：30.0÷22.1=1.36 → 矩陣落點：1.0-2.0合理區間 → implication：估值燈🟡，非過熱亦非便宜，支撐一般進場路徑成立（非爆發候選路徑，因估值未落🟠/🔴）。</div>
+
+<h3>11.4｜同業估值比較</h3>
+<p>本標的業務模式tier：<strong>Specialty Alloy Producer（primary melt為主的premium航太合金供應商）</strong>——與純鍛件/結構件（HWM，~50%重疊）或多角化特殊金屬（ATI）有差異，理想peer為ATI（最直接可比）。</p>
+<table>
+<tr><th>公司</th><th>市值</th><th>Fwd PE</th><th>EV/EBITDA</th><th>分部margin(可比)</th></tr>
+<tr><td><strong>CRS</strong></td><td><strong>$23.6B</strong></td><td><strong>30.0x</strong></td><td><strong>29.0x</strong></td><td><strong>SAO 37.8%(EBIT)</strong></td></tr>
+<tr><td>ATI</td><td>估~$20B+</td><td>42.0x</td><td>30.5-33.1x</td><td>AA&amp;S 23.7%(EBITDA)</td></tr>
+<tr><td>HWM</td><td>估~$85B+</td><td>50.9-53.6x</td><td>34.7x</td><td>Engine Products 37.7%(EBITDA)</td></tr>
+<tr><td>MTRN</td><td>較小</td><td>34.6x</td><td>26.6x</td><td>—</td></tr>
+</table>
+<div class="reasoning">CRS Fwd PE 30.0x相對ATI(42.0x)/HWM(50.9x)折價29-41%，而CRS分部margin品質（EBIT口徑37.8%）不遜於甚至優於兩者→折價缺乏基本面支撐，反而是相對低估訊號，若向peer中位（~40x）收斂隱含約+33%空間，為§10.5 Bull情境部分佐證。</div>
+<p class="small"><strong>分析師目標價（本次修正歸因）：</strong>跨來源分歧大（$466-$700，中位約$556-$608，n=9-14），JPMorgan 2026-07由$470上修至$705。分歧點真實理由並非市場對ATI擴產的分歧（原版本無source推測，已刪除），而是<strong>財報beat＋guidance上修後，KeyBanc/DB/Susquehanna三家仍下修目標價</strong>——KeyBanc明確以「on valuation」自$644下修至$608（維持Overweight）、DB自$722→$689（Buy）、Susquehanna自$680→$600（Positive）；僅BTIG逆勢自$450上調至$620（Buy）。三家在基本面轉強後仍因估值下修，是priced-in軸最直接的sourced證據，已在§1 trap box正面對質。</p>
+
+<h3>11.5｜不對稱報酬 Bull/Base/Bear 5Y</h3>
+<p>本情境樹以 <strong>FY2031 情境樹</strong>（報告日2026-09-01起算5年）為終端年，EPS建模延續§6.I分部前瞻：</p>
+<table>
+<tr><th>情境</th><th>FY2031 EPS</th><th>終端PE</th><th>終端股價</th><th>5Y絕對%</th><th>年化IRR</th><th>機率</th></tr>
+<tr><td>Bull</td><td>$33.00（FY26基期$10.76起算25.1%/yr CAGR，Boeing/Airbus高端建造率提前達成+Athens超額貢獻+ATI/Acerinox/Aperam新產能被完全消化不損定價）</td><td>32x（維持接近當前倍數）</td><td>$1,056.00</td><td>+121.7%</td><td>+17.3%/yr</td><td>25%</td></tr>
+<tr><td><strong>Base</strong></td><td><strong>$25.50</strong>（FY27E$13.38→FY28E$15.88(+18.7%)→FY29E$19.60(+23.4%，Athens早期貢獻與量能爬升加速)→FY30E$22.54(+15.0%)→FY31E$25.50(+13.1%)，非單純逐年遞減而是先加速後趨緩，整體反映建造率爬升+競爭產能擴大部分抵銷提價空間）</td><td>28x（自現值30.0x溫和收斂，反映oligopoly持續但競爭地圖更擁擠、非永久稀缺）</td><td>$714.00</td><td>+49.9%</td><td>+8.4%/yr</td><td><strong>45%</strong>（本次由50%下修，見下方內生天花板sanity check）</td></tr>
+<tr><td>Bear</td><td>$12.50（FY29-30起航太週期反轉，defense/build rate令期，ATI新產能上線後定價紀律鬆動，SAO OM回落至~28-30%）</td><td>15x（谷底型倍數壓縮）</td><td>$187.50</td><td>-60.6%</td><td>—</td><td><strong>30%</strong>（本次由25%上修，見下方內生天花板sanity check）</td></tr>
+</table>
+<p class="small">終端倍數同業comp對照：Base 28x仍高於一般工業股（~18-20x）但低於ATI現值42x/HWM現值51x，反映CRS長期倍數收斂但保有oligopoly溢價的取捨——已明列理由。現價口徑（FY28 forward 30.0x）與終端口徑（FY2031當年EPS）不對稱，屬保守取捨，已如實揭露。</p>
+<p><strong>不對稱比 AR = 1.7</strong>（(25×121.7)/(30×60.6)，本次隨Bear機率上修由2.0重算為1.7）——偏正但非顯著不對稱（&lt;4），未達爆發候選門檻，與估值燈🟡（非🟠/🔴）一致不觸發該路徑。</p>
+<p><strong>供需durability依據一句（本次已補完供給側證據基礎）：</strong>本案bear機率30%（本次上修）主要依據為<strong>混合</strong>（searched結構性durability證據支撐base case不採信純歷史谷底外推，ATI對稱擴產、Acerinox/Aperam併購入場、Airbus GTF延誤等完整sourced脆弱性證據——而非僅ATI與GTF兩條——支撐bear機率不下修至歷史低點15-20%；上修至30%的直接原因不是供需durability證據轉弱，而是下方內生天花板sanity check的機械規則觸發），產業態勢雙向裁決見§3。</p>
+<p><strong>內生天花板sanity check（重算，結論反轉）：</strong>Base情境EPS CAGR貢獻（FY26→FY31年化約18.9%）vs §6.D內生成長天花板<strong>9.0%</strong>（原14.0為未附推導的斷言，已重算見§6.D）→<strong>超出⚠，缺口比原判斷更大（13.1pp，原估8.1pp）</strong>。原版本以「Athens新增段」援引例外把bear維持25%，但Athens資本支出已是§6.D再投資率分子的一部分，不能重複拿來當獨立解釋；量化可歸因部分（回購0.8-1.4pp+margin擴張1-2.6pp）僅2-4pp，不足以滿足例外條款的sourced新segment標準。<strong>故不再援引例外，改依基本規則：Bear機率上修至30%</strong>（Base下修至45%），已反映於上表——誠實承認共識EPS CAGR有相當比例目前無法用增量ROIC×再投資率engine完整解釋，此不確定性已透過提高bear機率反映進裁決。</p>
+
+<h3>10Y二段延伸（runway_post_y5=🟢，必填）</h3>
+<p>Y5→Y10第二段EPS CAGR假設<strong>10%</strong>（依據：§6.A''第二曲線——能源/資料中心+國防supercycle在Athens全面貢獻後轉為溫和複利期，退坡假設低於第一段18.9%）。10Y累積倍數（Base路徑延伸）：25.50×(1.10)^5÷10.76≈<strong>3.8x</strong>（第10年估算每股盈餘~$41 ÷ FY26基期$10.76）。10Y IRR：以10年終端股價估~$41×24x（進一步溫和收斂）=$984，(984/476.42)^(1/10)-1≈<strong>7.5%/yr</strong>。</p>
+
+<h3>11.6｜IRR三分量拆解</h3>
+<p class="small">本表口徑與§10.5一致：現價用FY28 forward EPS（$15.88），終端用FY31當年EPS，故EPS成長分量以FY28→FY31（4年跨度、年化以5為指數）計算，不與§10.5自陳的FY26→FY31全期18.9%口徑混用；股息與淨買回已內含於diluted EPS成長本身（buyback減少股數即反映在每股盈餘），不得在EPS分量之外另計，故獨立分量欄為0，僅在文字說明買回對EPS成長的貢獻幅度。</p>
+<table>
+<tr><th>情境</th><th>EPS成長貢獻（FY28→FY31,年化）</th><th>估值re-rate貢獻</th><th>股息+淨買回（獨立分量）</th><th>合計年化</th></tr>
+<tr><td>Bull</td><td>+15.75%/yr（$15.88→$33.00）</td><td>+1.30%/yr（30.0x→32x）</td><td>0（已內含於EPS成長）</td><td>1.1575×1.0130＝<strong>+17.3%/yr</strong>（與§10.5一致）</td></tr>
+<tr><td><strong>Base</strong></td><td><strong>+9.93%/yr</strong>（$15.88→$25.50）</td><td>-1.37%/yr（30.0x→28x）</td><td>0（已內含於EPS成長；買回貢獻估~1-1.5pp/yr、股息~0.2pp/yr，皆已算進上述diluted EPS成長數字，不重複相加）</td><td>1.0993×0.9863＝<strong>+8.4%/yr</strong>（與§10.5一致）</td></tr>
+<tr><td>Bear</td><td>-4.68%/yr（$15.88→$12.50）</td><td>-12.94%/yr（30.0x→15x）</td><td>0（已內含於EPS成長）</td><td>0.9532×0.8706＝<strong>-17.0%/yr</strong>（對應§10.5累積-60.6%的年化口徑）</td></tr>
+</table>
+<p><strong>質感解讀（修正版）：</strong>Base情境8.4%年化IRR中，真實構成是EPS成長貢獻+9.9%/yr、估值正常化拖累僅-1.4%/yr——<strong>估值收斂並未「吃掉大半」，這句舊敘述在正確數字下不成立，真實情況是報酬絕大部分來自EPS複利本身，倍數收斂只是小幅拖累。</strong>可抱性主要靠EPS複利——自然複利、公司自己長出來，非估值依賴型（本案終端倍數28x本身就低於現值30.0x，是收斂不是依賴上修，不觸發估值依賴型標記）。<strong>倍數敏感度（Base EPS固定$25.50，供讀者看見裁決對終端倍數這一個變數的曝險）：</strong>終端PE 28x／24x／22x／20x → 終端價$714／$612／$561／$510 → 年化IRR <strong>8.4%／5.1%／3.3%／1.4%</strong>；即使終端倍數降至§6.E「成長降至10%」情境用的22x，年化仍為正值，裁決方向不變，但長期複利路徑的吸引力明顯減弱，這是「進場｜核心」對單一估值假設曝險的誠實揭露。</p>
+
+<h3>11.7｜Pattern Match</h3>
+<p><strong>歷史相似case：</strong>2016-2019 ATI從商品化不銹鋼轉型至航太合金專精化的重估歷程（P/E ~15x→~30x，隨後2020疫情倒退），5年報酬（含COVID回撤）年化約8-12%，與本案Base 8.4%量級相近。最像：同屬specialty alloy結構性重估；最不像：CRS當前16,000架積壓訂單能見度遠優於2016年，下檔保護更厚。</p>
+
+<h3>§10估值診斷結論</h3>
+<p>11.1歷史分位（受trailing PE失真，改用平滑Fwd PE分位~40%→合理偏便宜）+11.2 PEG（1.36→合理）+11.4同業相對（折價29-41%，有基本面支撐——CRS分部margin品質不輸甚至優於同業）→綜合估值訊號：<strong>🟡公允</strong>。完整裁決見§13；倉位角色見§13a。</p>
+<p><strong>多尺矛盾說明：</strong>trailing PE百分位法（因FY22-23循環扭曲）與PEG法方向基本一致（皆落合理區間），未見顯著矛盾，故不需額外archetype優先尺裁決——本案採PEG為主要判準。</p>
+</section>
+
+<section id="s11">
+<h2>§11 矛盾辨識與強制裁決</h2>
+<p><strong>共識清單：</strong>§6🟡中等可見度+§5↑A級+§3利潤池↑流入+§10🟡公允，四者方向一致——高信心區。<strong>矛盾拓撲判定：</strong>爭議<strong>集中單一軸，但軸的定義本次擴大</strong>——原判定為「ATI對稱擴產是否會稀釋CRS定價權」單點，經完整競爭地圖查證後擴大為「CRS/ATI雙寡頭認知 vs 4-6家更擁擠競爭地圖（含Acerinox/Aperam併購入場與Airbus+Safran客戶垂直整合先例）是否足以動搖moat=A與理性寡占判定」這個更完整的軸，其餘章節無實質分歧。</p>
+
+<h3>矛盾清單</h3>
+<table class="verdict-table">
+<tr><th>#</th><th>矛盾點</th><th>章節A結論</th><th>章節B結論</th><th>性質</th></tr>
+<tr><td>1</td><td>管理層「唯一在擴產」敘事 vs 本次查證發現ATI對稱擴產</td><td>§3管理層口徑（2026-01發言，當時屬實）</td><td>§3本DD sourced更新（2026-04 ATI公告）</td><td>可調和（時序更新，非管理層說謊，僅資訊過時）</td></tr>
+<tr><td>2</td><td>前次DD（2026-05-18）裁決「觀望」（IRR門檻法） vs 本次「進場」</td><td>前次：機率加權IRR 6.95%/yr&lt;8%門檻，強制觀望</td><td>本次：v15矩陣以signal/val/MA/moat_trend為裁決依據，IRR降為資訊性參考</td><td>可調和（方法論升版，非基本面矛盾——見下方§11.3）</td></tr>
+<tr><td>3</td><td>市場慣用的「全球僅3家合格供應商」寡占敘事 vs 實際查得的4-6家更擁擠競爭地圖（Aubert &amp; Duval/Haynes-Acerinox/Universal-Aperam）</td><td>寡占敘事：moat_pricing_power=8，理性寡占信心「高」</td><td>完整競爭地圖：moat_pricing_power=7，moat_score 8.2，理性寡占信心「中高」</td><td>可調和（採完整競爭地圖口徑重新論證，moat級別維持A但為邊界判斷——見§5明列derivation）</td></tr>
+</table>
+
+<h3>⚖ 強制裁決</h3>
+<p>矛盾#1選邊：<strong>採信本次sourced更新（ATI已擴產）</strong>，依據：一手新聞稿+法說會transcript（2026-04），非推測。會settle此矛盾的硬數據點：2027H2 ATI Bakers South投產後6個月內CRS LTA續約提價幅度是否降至個位數（來源：法說會定價事件帳，頻率：每季）。執行路徑：①若CRS續約提價維持雙位數→強化moat_trend，可加碼；②若降至個位數或出現折價續約→moat_trend重評為→，§13重新裁決。</p>
+<p>矛盾#3選邊：<strong>採信覆核後的競爭地圖更新（4-6家而非3家），moat_pricing_power下修至7、moat_score降至8.2，但letter grade維持A</strong>——依據：執行力子維度（9分）未被任何新證據挑戰，且CRS自身當期定價行為（0客戶流失、8/8LTA提價）為L1實測證據，未被推翻；letter grade維持A是本報告在8.2這個介於B帶（7-8）與A單點（9）之間的邊界分數上做出的明確選擇，非迴避。會settle此矛盾的硬數據點：下一輪LTA續約（預估2027年內陸續到期）的提價幅度是否仍維持雙位數。執行路徑：①若下一輪續約提價維持雙位數且0客戶流失→moat級別與信心layer維持；②若出現個位數提價或首次客戶流失→moat_pricing_power降至6以下，letter grade重評為B，dca_role須重新評估是否降為衛星。</p>
+
+<h3>裁決推理品質三檢</h3>
+<p><strong>分母爭議檢查：</strong>估值判斷分母為FY28共識EPS，非本案矛盾爭點，「便宜」論證有效。<strong>證據權重：</strong>L1（Q4 FY26財報8-K、8筆LTA提價紀錄、ATI 8-K/法說會）> L2（分析師目標價共識，跨源分歧大，權重降低）> L3（無顯著L3敘事依賴）——裁決站在L1側。<strong>Steelman義務（用市場上真實空方論述，非假想情境；全文見§1 trap box）：</strong>最強反面論證——YTD+70.9%、三家券商財報beat後仍因估值下修目標價、競爭地圖比先前擁擠，「此時買入等於在oligopoly紅利見頂＋估值已滿的最後階段追高」。回應：CRS折價於ATI/HWM且margin品質更優，下檔保護較同業厚；新增競爭者無一具備24個月內侵蝕CRS美系客群定價權的sourced證據；估值疑慮已定量吸收進§10.5終端倍數收斂與§12c Max DD。反駁基於本報告自身數字，故裁決維持進場，但§13a執行語標示「續抱不加碼」而非「立即加碼」，反映部分讓步。</p>
+
+<h3>與上一份報告的交叉矛盾（翻面三元歸因）</h3>
+<p>方向：觀望→進場，翻面。歸因排序：①<strong>基本面變了（主因）</strong>——Q4 FY26 SAO OM創37.8%新高、FY27 guidance大幅上修至$850-880M、backlog自12,000+架擴大至16,000架、新增$1B回購授權、國防預算FY27請求大幅上修，皆為2026-05-18後的新增正面事實；②<strong>方法論變了（次因，誠實標註）</strong>——v15決策矩陣以signal/val/MA/moat_trend機械裁決，取代前次舊制「IRR&lt;8%強制觀望」的硬性覆寫規則（該規則已於方法論升版時移除，IRR現為裁決內部確信刻度，不作為裁決是否成立的硬性門檻）；③價格變了（次要）——股價+14.8%但幅度不足以單獨解釋翻面。<strong>已發火觸發器引用：</strong>前次報告「首批進場」觸發條件(b)「Q4 FY26法說確認SAO Op Margin持守33%+且上修FY27 guidance」已於2026-07-30明確發火（SAO OM 37.8%遠超33%門檻，FY27 guidance較FY26 record成長21-25%），本次翻面有sourced觸發器支撐，非無據翻面。</p>
+</section>
+
+<section id="s12">
+<h2>§12 Pre-mortem 與 Max DD</h2>
+<div class="premortem-box">
+<h4>盲點（不確定假設）</h4>
+<table>
+<tr><th>不確定假設</th><th>Thesis仍成立的前提</th><th>假設不成立的後果</th></tr>
+<tr><td>SAO是唯一主引擎（貢獻95%+分部OI），單一業務段集中度高</td><td>SAO持續執行力不失手</td><td>SAO任何季度性miss會直接、放大地衝擊合併EPS，PEP無法緩衝</td></tr>
+<tr><td>治理連續性（Thene無限期任期承諾）能兌現</td><td>Thene健康且無意外，董事會接班梯隊已強化</td><td>第三次交接若失序，資本配置決策（$1B回購／Athens後續投資）節奏可能被打斷</td></tr>
+<tr><td>ATI對稱擴產維持「紀律型」而非轉向搶單</td><td>雙寡頭理性定價持續</td><td>若ATI在2027H2投產後為快速回收資本而降價搶單，CRS pricing power moat直接受挫</td></tr>
+<tr><td>假設：引擎／機身OEM不會複製Airbus+Safran買下Aubert &amp; Duval的路徑，取得美系primary melt既有合格產能</td><td>GE、Pratt &amp; Whitney等美系OEM維持現行「向CRS/ATI採購」模式，不轉向併購自有化</td><td>若不成立，LTA續約提價空間將結構性收斂，CRS pricing power moat的核心假設（客戶別無選擇只能接受漲價）被弱化</td></tr>
+</table>
+<h4>失敗故事倒推</h4>
+<p>「假設5年後這個部位虧50%，最可能發生的故事是：2028年Airbus因GTF供應鏈問題進一步下修A320neo建造目標，同期ATI Bakers South投產後為攤提新產能成本而在續約時讓利，CRS 2029年LTA續約提價幅度首次降至個位數，SAO調整後營益率從37.8%的高點回落至30%以下，市場同時把Fwd PE從30x壓縮至18x，疊加治理若在此期間再生波折，股價從高點回落逾55%。」</p>
+<h4>成功但劣化的第二敗局</h4>
+<p>「假設§2核心thesis完全兌現（Athens如期商轉、A&amp;D需求持續強），但以<strong>商品化</strong>形態兌現——ATI與CRS新產能同時到位後，產業從『稀缺定價』轉為『產能充裕但需求仍成長』的正常工業品狀態，市場把估值框架從『稀缺oligopoly溢價』切換到『一般特殊材料工業股』（15-20x），5年報酬變成僅個位數，遠低於本案Base情境+49.9%假設。」此敗局機率不可忽略，已反映進§10.5 Base案終端PE僅28x（非維持當前30x以上），而非假設兌現＝維持現框架。</p>
+<h4>路徑壓力測試（Max DD）</h4>
+<p><strong>估計Max DD範圍 −55% ~ −68%</strong>。最可能觸發時點：FY2029-2030（下一輪航太訂單消化期疊加ATI新產能全面上線）。觸發後最快復原：參考FY22-23前例，約2-3年（伴隨下一輪訂單週期回升）。<strong>路徑風險評級：🔴 &lt;−50%</strong>。校驗：若Max DD落在此範圍，能否撐到復原？條件：部位不超過核心倉位上限、不使用槓桿、§2.F Single Thing未發生、SAO OM未連4季跌破30%。</p>
+</div>
+<p class="small">🔴且thesis完整（moat_trend↑、runway_post_y5🟢、非估值依賴型皆成立）→ 不因波動本身砍倉，§13a改採「深回撤心理準備」註記，倉位上限交PM決定。</p>
+</section>
+
+<section id="decision">
+<h2>§13 決策</h2>
+<div class="decision-box enter">
+<div class="verdict-chip">進場</div>
+<span class="verdict-sub">核心角色；治理插曲已平穩落地、財測明顯上修、估值合理，唯一需要盯緊的新變數是 ATI 對稱擴產能否維持產業定價紀律</span>
+
+<p>白話：這是一門有 16,000 架飛機積壓訂單撐腰、全球只有兩家半公司能做的生意，這一季財報和財測都比預期更好，CEO 職位的插曲已經由最熟悉這家公司的人接手且講明不是過渡安排，唯一讓人不能閉著眼睛抱到底的新訊號，是對手也開始蓋一樣規模的新產能——這不會馬上改變裁決，但值得放進監測清單首位。</p>
+
+<details>
+<summary>決策矩陣逐row檢核（點開看完整表）</summary>
+<table>
+<tr><th>優先序</th><th>條件</th><th>本案結果</th></tr>
+<tr><td>1 Hard Veto</td><td>signal=X?</td><td class="pass">否（signal=A）</td></tr>
+<tr><td>2 Hard Veto</td><td>§11強制裁決thesis不可調和不成立?</td><td class="pass">否（矛盾皆可調和）</td></tr>
+<tr><td>3 Hard Veto</td><td>moat_trend↓且moat≤B?</td><td class="pass">否（moat=A，趨勢↑）</td></tr>
+<tr><td>4 節奏調節</td><td>週線❌?</td><td class="pass">否（MA=✅強勢）</td></tr>
+<tr><td>5 節奏調節</td><td>動能過熱?</td><td class="pass">否（現價$476.42距52週高點$625.94（2026-08-13）達−23.9%，非貼近歷史高點的過熱位置；2026-08 區間實際為$476-538，非窄幅盤整，但方向遠離高點，未觸發過熱判定）</td></tr>
+<tr><td>6 Soft Veto</td><td>signal=C?</td><td class="pass">否</td></tr>
+<tr><td>7 Soft Veto</td><td>runway_post_y5=🔴?</td><td class="pass">否（🟢寬）</td></tr>
+<tr><td>7a Soft Veto</td><td>估值依賴型且無反駁?</td><td class="pass">否（本案為估值收斂拖累，非依賴re-rate上修）</td></tr>
+<tr><td>7b</td><td>capalloc_grade=C?</td><td class="pass">否（B級）</td></tr>
+<tr><td>8a 爆發候選</td><td>val∈{🟠,🔴}?</td><td class="neutral">不符（val=🟡），不落此路徑</td></tr>
+<tr><td>9/10 Baseline</td><td>無Veto+signal≥B+估值≤🟡+MA✅</td><td class="pass"><strong>符合→進場</strong></td></tr>
+</table>
+<p class="small">§13裁決品質四問：①相鄰檢核——為何不是更激進的row8a？因val=🟡未達🟠/🔴資格門檻，不勉強升級；為何不是更保守的觀望？因無Hard/Soft Veto觸發，過度保守會忽視Q4財測已明確上修的錯過成本。②問題屬性：本案是「價格/時機合理」而非「結構性問題」，故指向進場非迴避。③binding constraint：本案無任何約束封鎖進場，故無需rearm_trigger。④翻譯層：已持有者（本檔為現有核心5席持倉之一）→續抱不加碼至下次法說（Q1 FY27，約2026-10）確認H1/H2假設未削弱；新邊際資金→可依PM組合紀律建倉至核心區間。</p>
+</details>
+
+<h3>13a 倉位角色與進場計畫 + opportunity cost</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td><strong>在投資組合中的角色</strong></td><td>核心</td></tr>
+<tr><td>初始/現有建倉倉位</td><td>已持有（現核心5席之一），本次複審為維持/續抱判斷</td></tr>
+<tr><td>目標倉位</td><td>核心區間（PM拍板組合佔比）</td></tr>
+<tr><td>進場價位區間</td><td>現價$476.42附近皆可建倉/續抱；深回撤（見§12c）時為加碼機會而非減倉理由</td></tr>
+<tr><td>進場節奏</td><td>續抱不加碼，待Q1 FY27法說（約2026-10）確認H1/H2未削弱後再考慮加碼</td></tr>
+<tr><td><strong>vs現有組合同類曝險（opportunity cost）</strong></td><td>組合內同ID主題（Aerospace Specialty Metals）另有HWM（2026-07-10 DD，觀望）與ATI（2026-05-18 DD，觀望）；三者GRP三閘比較——CRS本次成長動能最強（SAO OM連18季擴張創新高）、EPS上修證據最直接（FY27guidance大幅上修）、估值位置相對同業折價29-41%且無基本面缺陷支撐折價，三閘皆優於HWM/ATI現有裁決，邊際資金應優先續留/加碼CRS而非轉向HWM/ATI（後兩者尚待各自複審驗證是否有相同程度的上修證據）。</td></tr>
+</table>
+<p class="note">實際組合佔比由 portfolio-manager skill 依組合配置紀律決定；此處的倉位角色與區間為決策輸入，非組合拍板。</p>
+
+<h3>13b 加碼與減碼條件</h3>
+<table>
+<tr><th>行動</th><th>觸發條件</th><th>調整</th></tr>
+<tr><td>加碼</td><td>連2季TTM SAO OM≥35%且A&amp;D訂單維持正成長，且ATI投產後CRS續約提價未見收斂</td><td>加至區間上緣（PM拍板）</td></tr>
+<tr><td>加碼</td><td>Athens AL如期於FY2028初商轉且Q1-Q2 FY28法說確認ramp進度符合guided rate</td><td>加至區間上緣（PM拍板）</td></tr>
+<tr><td>減碼</td><td>SAO調整後OM連2季TTM跌破33%，或ATI投產後CRS續約提價降至個位數/出現折價</td><td>減至區間下緣</td></tr>
+<tr><td>清倉</td><td>SAO OM連4季TTM&lt;30%（H1反轉）且A&amp;D訂單連3季負成長（H2反轉）同時發生，或§2.F Single Thing觸發</td><td>清倉，記錄推翻理由</td></tr>
+</table>
+<p class="small">長抱賣出分軌（核心角色）：減碼/清倉觸發皆為thesis級（上表），估值偏高或漲幅本身不單獨觸發清倉，最多觸發trim回目標倉位。</p>
+
+<h3>13c 建議持有年限</h3>
+<p>短期（&lt;2年）：若純做週期波段，2027-2028 Athens商轉前為觀察窗，非本案建議路徑。中期（2-5年）：若聚焦Athens全面貢獻兌現（FY2030）與supercycle中段，符合本案主軸。長期（5-10年）：若能承受下一輪航太週期反轉（歷史前例FY22-23）並在Max DD期間不恐慌砍倉，長期持有仍具吸引力（runway_post_y5=🟢支撐）。<strong>建議持有年限：中長期3-7年</strong>，原因：runway_post_y5🟢（能源/國防第二曲線佐證）、利潤池↑流入、capalloc_grade=B（非C，不觸發年限上限）。</p>
+<p><strong>EPS預測參考表：</strong>FY27E $13.38｜FY28E $15.88｜FY29E $19.60（推導）｜FY31E（Base）$25.50。<strong>長期持有適合性：</strong>以當前價位換取的是一門結構性oligopoly、但保有真實週期尾巴的生意；5-10年持有需要能扛過至少一次類似FY22-23的循環回撤，若能做到，Base情境的+8.4%/yr年化報酬（且主要由EPS複利驅動而非估值依賴）是合理但非驚豔的長期複利路徑。</p>
+</div>
+</section>
+
+<section id="s14">
+<h2>§14 複審觸發與保質期</h2>
+<table>
+<tr><th>觸發點</th><th>類型</th><th>條件</th></tr>
+<tr><td>Q1 FY27法說</td><td>財報日期</td><td>約2026年10月下旬（估計，依歷史Q1法說cadence）</td></tr>
+<tr><td>ATI Bakers South VIM投產</td><td>產業事件</td><td>2027年下半年，投產後6個月內觀察CRS續約提價幅度</td></tr>
+<tr><td>Athens AL commissioning</td><td>價位/里程碑觸發</td><td>目標FY2028初，延後&gt;6個月即觸發H3削弱</td></tr>
+<tr><td>§2.F Single Thing</td><td>治理事件</td><td>Thene 12個月內二度離任且60天內無可信繼任者</td></tr>
+<tr><td>歐系／併購系產能取得美系引擎認證首例（本次新增）</td><td>競爭事件</td><td>Acerinox/Haynes或Aperam/Universal Stainless任一取得GE或Pratt &amp; Whitney引擎盤件primary melt新認證，或美系OEM複製Airbus+Safran買下A&amp;D的路徑收購CRS/ATI以外的合格產能——任一發生即觸發moat_pricing_power重評</td></tr>
+<tr><td>Section 232加工關鍵礦物後續行動</td><td>貿易政策</td><td>2026-07-13報告後續（本次未查得公開結果）——若後續行動落地為鎳/鈷關稅或最低進口價機制，需重評surcharge基準與時滯對SAO margin的影響</td></tr>
+</table>
+<p><strong>這份報告的保質期：2026-10-31</strong>（Q1 FY27法說後2週內須重新評估）。<strong>最可能發生的upside因素：</strong>Q1 FY27財測再度上修、ATI/Acerinox/Aperam新產能被完全消化未損定價、defense訂單因FY27預算大幅上修而加速。<strong>最可能發生的downside因素：</strong>ATI投產後CRS續約提價收斂、Airbus GTF延誤擴大、治理再生變數、美系OEM複製客戶垂直整合先例。</p>
+</section>
+
+<section id="appA">
+<h2>附錄A｜擇時（降級，INFORMATIONAL ONLY）</h2>
+<details open>
+<summary>週線結構、R:R、估值燈（點開／列印時展開）</summary>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>現價／W52／W104／W250</td><td>$476.42／$400.90／$302.18／$158.47</td></tr>
+<tr><td>52週高／52週低（as of 2026-08-13）／距高點</td><td>$625.94／$228.88／<strong>−23.9%</strong>（本次複審補入，原版本缺此欄）</td></tr>
+<tr><td>YTD漲幅（as of 2026-08-11）</td><td><strong>+70.9%</strong>（本次複審補入；累計自52週低點+108.2%）</td></tr>
+<tr><td>W250斜率(13w)</td><td>+20.60%</td></tr>
+<tr><td>Pure MA狀態</td><td><strong>✅ 強勢進場</strong>（價&gt;W52&gt;W104&gt;W250，斜率&gt;3%）</td></tr>
+<tr><td>大盤豁免</td><td>正常（^GSPC現價7686.14 &gt; W104 6494.95，未破線，係數×1.0）</td></tr>
+<tr><td>Bollinger（20週）上/中/下</td><td>$641.66／$512.38／$383.10（現價位於中軌下方，非過熱）</td></tr>
+<tr><td>短期R:R（1年，FY28E$15.88×30x）</td><td>目標$476.4，upside≈0.0%（⚠️數學假象——短期已充分price-in，不作為進場時機依據，長期框架才是本裁決基礎）</td></tr>
+<tr><td>中期R:R（2年，FY29E$19.60×28x）</td><td>目標$548.8，upside≈+15.2%</td></tr>
+<tr><td>Bear anchor</td><td>Bear股價$187.50（現價下行-60.6%，見§10.5）</td></tr>
+<tr><td>品質分</td><td>底分(moat8.2+成長持久性8.5)/2=8.35；體質veto 0項不過→不降級；quality_score≈8.4 → <strong>A級</strong>（≥7.5；moat分本次由8.6下修至8.2，見§5）</td></tr>
+<tr><td>估值燈</td><td>🟡合理（PEG1.36為主判準；trailing PE分位法因循環失真改採平滑Fwd PE分位≈40%，方向一致；52週高點−23.9%、YTD+70.9%已知漲幅不改變🟡判定，但確認現價非「盤整未過熱」的低關注區）</td></tr>
+<tr><td>基本面評級（final_signal）</td><td><strong>A</strong>（quality A級+估值🟡gate+MA✅+trap🟢，中高強度路徑）</td></tr>
+<tr><td>長期持有信心（I）</td><td><strong>高</strong>（moat A級且moat_trend∈{↑,→}、runway_post_y5∈{🟢,🟡}、§12證偽距離遠——§2.F機率僅5-8%；moat分下修至8.2為邊界判斷，見§5明列derivation）</td></tr>
+</table>
+</details>
+</section>
+
+<p class="small" style="text-align:center;margin-top:40px;">DD Schema v15.0｜資料來源：Carpenter Technology 8-K/法說會逐字稿（Q1-Q4 FY26）、yfinance、公開新聞稿（GlobeNewswire/SEC/StreetInsider/TradingView等）｜本報告僅供內部研究，noindex</p>
+
+<div class="hypothesis-box" style="background:#F0F9FF;margin-top:30px;">
+<h4>版本修訂紀錄</h4>
+<ul>
+<li><strong>2026-09-01（v15.0）— 全套重寫複審</strong>：升級自legacy v12.3（Inception 2026-05-18）。三重未反映事件（CEO猝逝與Thene回任、Q4 FY26財報與FY27 guidance、8/12新增$1B回購授權）已完整處理；主動查證發現ATI於2026-04宣布規模相近的鎳基超合金新產能，推翻管理層「唯一在擴產」舊敘事，已納入§3/§5競爭動態判斷。裁決由前次（觀望，舊制IRR&lt;8%強制覆寫）翻面為進場｜核心，觸發器見§11.3三元歸因。</li>
+<li><strong>2026-09-01（同日修正版）</strong>：修正初版競爭地圖不完整（漏Aubert &amp; Duval/Haynes-Acerinox/Universal-Aperam三組玩家）、priced-in軸事實選擇性（漏52週高低點/YTD+70.9%/分析師估值下修的真實理由）、§6.H客戶垂直整合宣稱被Airbus+Safran 2026-06全資取得A&amp;D的sourced事實推翻、§10.6三分量拆解與§10.5情境樹不對帳（Bull/Base/Bear三處數字錯誤+回購雙重計算）、§3貿易政策整軸未查（232金屬衍生品/加工關鍵礦物）。已全數修正：moat_pricing_power 8→7、moat_score 8.6→8.2（letter grade維持A，已明列邊界判斷理由）；§6.D再投資率與內生天花板改用sourced輸入重算（endo_growth_ceiling 14.0→9.0），觸發內生天花板sanity check機械規則，Bear機率25%→30%（Base 50%→45%），ev5y_pct 40.2→34.7、asym_ratio 2.0→1.7；§10.6三分量整表換為與§10.5自洽的分解；dd-meta kill_metrics新增OEM垂直整合追蹤項。統一裁決「進場｜核心」與moat_trend「↑」維持不變（重評確認此二者未被任何新證據推翻）。</li>
+</ul>
+</div>
+
+<div class="hypothesis-box" style="background:#FFF7ED;">
+<h4>假設驗證對照（vs 2026-05-18 Inception）</h4>
+<table>
+<tr><th>假設</th><th>2026-05-18判定</th><th>2026-09-01本次</th><th>邊際變化</th></tr>
+<tr><td>H1（SAO OM≥32%結構性新常態）</td><td>Q3 FY26 35.6%，剛確立</td><td>Q4 FY26 37.8%，連18季擴張，門檻上修至≥33%</td><td>＋強化，已連2季確認</td></tr>
+<tr><td>H2（A&amp;D訂單動能至FY27-28）</td><td>backlog $1.3B，bookings+23%QoQ</td><td>積壓訂單擴大至~16,000架，A&amp;D銷售+17%YoY</td><td>＋強化</td></tr>
+<tr><td>H3（Athens FY28初商轉）</td><td>on schedule/on budget（Q2 FY26口徑）</td><td>「12個月後上線」（Q4 FY26口徑），未見延誤跡象</td><td>0不變（持續確認中）</td></tr>
+<tr><td>R1（Boeing FAA事件）</td><td>機率15-20%</td><td>未觸發；Boeing反而邁向47/月</td><td>風險降低</td></tr>
+<tr><td>裁決</td><td>觀望</td><td>進場｜核心</td><td>翻面（見§11.3三元歸因）</td></tr>
+</table>
+</div>
+
+</div>
+<button class="printbtn" onclick="window.print()">列印為 PDF</button>
+<script id="dd-meta" type="application/json">
+{
+  "ticker": "CRS",
+  "schema": "v15.0",
+  "date": "2026-09-01",
+  "price_at_dd": 476.42,
+  "signal": "A",
+  "trap": "🟢",
+  "trap_label": "🟢 非陷阱",
+  "moat": "A",
+  "val": "🟡",
+  "ma": "✅",
+  "fpe_fy2": 30.0,
+  "pct_5y": 40,
+  "peg_fy2": 1.36,
+  "upside_short_pct": 0.0,
+  "upside_mid_pct": 15.2,
+  "stress": {"pass": 2, "total": 2},
+  "moat_score": 8.2,
+  "growth_durability": 8.5,
+  "quality_score": 8.4,
+  "ai_risk": "🟢",
+  "long_term_confidence": "高",
+  "verdict": "A",
+  "oneliner": "美國本土open-market具引擎級primary melt資格者僅CRS/ATI兩家；SAO調整後營益率連18季擴張至37.8%歷史新高；FY27 guidance上修21-25%；治理插曲已由資深回任CEO穩住；競爭地圖比先前認知更擁擠（ATI對稱擴產+Acerinox/Aperam併購入場+客戶垂直整合先例）為24個月內主要觀察變數。",
+
+  "dca_verdict": "進場",
+  "dca_role": "核心",
+  "moat_trend": "↑",
+  "runway_post_y5": "🟢",
+  "ev5y_pct": 34.7,
+  "irr_base_pct": 8.4,
+  "max_dd_pct": -68.0,
+  "asym_ratio": 1.7,
+  "bull_5y_price": 1056.0,
+  "bear_5y_price": 187.5,
+  "p_bull_pct": 25,
+  "p_bear_pct": 30,
+  "archetype": "品質複利成長",
+  "rearm_trigger": "已進場核心角色，無rearm觸發；加碼觸發見§13b",
+
+  "catalysts": [
+    {"date": "2026-10-22", "date_precision": "month", "type": "guidance", "event": "Q1 FY27法說（估計）", "impact": "高", "watch": "若SAO調整後OM低於37%或FY27 guidance未重申→H1假設減弱"},
+    {"date": "2027-07-01", "date_precision": "quarter", "type": "capacity", "event": "Athens AL擴產目標商轉時點（FY2028初）", "impact": "高", "watch": "若延後>6個月→H3假設直接減弱"},
+    {"date": "2027-07-01", "date_precision": "quarter", "type": "capacity", "event": "ATI Bakers South VIM熔煉爐目標投產（2027下半年）", "impact": "中", "watch": "投產後CRS續約LTA若出現讓步→moat_trend重評"}
+  ],
+  "base_eps_path": {"FY27": 13.38, "FY28": 15.88, "FY29": 19.60, "FY30": 22.54, "FY31": 25.50},
+  "fy_end_month": 6,
+  "eps_basis": "non-gaap-usd",
+  "endo_growth_ceiling": 9.0,
+  "capalloc_grade": "B",
+  "moat_execution": 9,
+  "moat_pricing_power": 7,
+  "upside_5y_pct": 49.9,
+  "industry_clock_phase": "II",
+
+  "kill_metrics": [
+    {"metric": "SAO分部調整後營益率(TTM)", "bear_threshold": "連2季TTM跌破33%（當前37.8%）→減碼；連4季<30%→清倉", "window": "2季", "source": "Q4 FY26法說", "last_status": "ok"},
+    {"metric": "A&D訂單/積壓訂單動能", "bear_threshold": "訂單連2季QoQ轉負，或Boeing月產連2季<38架→減碼", "window": "2季", "source": "Q4 FY26法說+Boeing公開產能指引", "last_status": "ok"},
+    {"metric": "治理連續性(Thene任期)", "bear_threshold": "Thene 12個月內二度離任且60天內無可信繼任者→降倉至衛星並暫停加碼", "window": "12個月", "source": "2026-07-30法說8-K", "last_status": "ok"},
+    {"metric": "ATI競爭產能對CRS定價權的影響", "bear_threshold": "2027H2 ATI Bakers South投產後6個月內CRS LTA續約提價幅度降至個位數或出現折價→moat_trend重評", "window": "投產後2季", "source": "本DD §3/§5 sourced查證(2026-04 ATI公告)", "last_status": "ok"},
+    {"metric": "OEM垂直整合/自有合格產能取得美系引擎盤件資格", "bear_threshold": "GE、Pratt & Whitney或Safran任一宣布收購或取得美國本土鎳基超合金primary melt合格產能→moat_pricing_power重評", "window": "12個月", "source": "Airbus+Safran 2026-06全資取得Aubert & Duval先例，本DD §5/§6.H sourced查證", "last_status": "ok"}
+  ]
+}
+</script>
+<!-- DD_LIVEBAR -->
+<script src="/assets/dd-livebar.js" defer></script>
+</body>
+</html>
