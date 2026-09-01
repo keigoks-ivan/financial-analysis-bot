@@ -1,0 +1,471 @@
+{
+ "schema": "price-momentum-v2",
+ "prereg": {
+  "title": "P10 純價格動能 paper track — v0（雙線 L12/L6，PREREG，2026-09-01 凍結）",
+  "frozen_date": "2026-09-01",
+  "positioning": "P10 是零基本面成分、全機械、自帶 NAV 的純價格動能 paper track——與 RS+VCP screener（發現雷達）、QGM（品質閘門後動能）、Momentum-5/shadow（EPS 修正動能）刻意分離的第四條線。它不是收斂面：不回饋 DD 裁決鏈、不進 picks/GRP/三軌/cockpit 任何清單，不得被其他 session 引用為「某檔在 P10 上」的選股依據。個股層零人為干預；唯一人類接觸點是 prereg 的 review points 與 kill conditions。",
+  "universe_and_data": {
+   "universe": "S&P 500 成分（Wikipedia scrape，瀏覽器 UA，完全照抄 build_momentum5.py 做法，`.`→`-`），加上 NQ100_EXTRAS（copy scripts/screener.py 的 NQ100_EXTRAS dict，24 檔，ticker→sector），與 S&P 名單 union 去重（若某 extra 已入 S&P 以 S&P 的 sector 為準）。",
+   "prices": "yf.download(tickers + ['SPY'], period='2y', interval='1d', auto_adjust=True, group_by='ticker', threads=True)，同 build_momentum5 模式。",
+   "sufficiency_floor": "個股資料充足門檻：dropna 後 close series 長度 ≥ 253，否則排除（記入 coverage 統計）。"
+  },
+  "signal": {
+   "definition": "c＝該 ticker dropna 後的 adjusted close series，最後一筆為 t。",
+   "ret_12_1": "ret_12_1 = c.iloc[-22] / c.iloc[-253] - 1（12-1 動能：跳過最近 21 個交易日的 11 個月報酬，這是文獻標準定義）。",
+   "vol": "win = c.iloc[-253:-21]；vol = win.pct_change().dropna().std() * sqrt(252)（與報酬同窗的年化波動）。",
+   "score": "score = ret_12_1 / vol。vol 為 0 或 NaN → 排除。"
+  },
+  "eligibility": {
+   "gate_1": "ret_12_1 > 0（絕對動能——內建熊市閥）。",
+   "gate_2": "c.iloc[-1] > 200DMA（最近 200 筆 close 的簡單平均；不足 200 筆 → 排除）。",
+   "no_extra_vetoes": "沒有 +250% 過熱否決、沒有任何 revision/獲利/估值條件——這是刻意的，prereg 已明文。",
+   "heat_flag": "Heat flag（純資訊、非否決）：plain 12M 報酬 c.iloc[-1]/c.iloc[-253] - 1 > 2.5 → 該持股掛 heat flag。"
+  },
+  "selection_buffer_weight": {
+   "ranking": "對 eligible 名單按 score 降冪排名；score 同分以 ticker 字母序 tie-break（穩定排序疊在字母序 universe 上），排名完全確定性。",
+   "zones": "買進區 = top 10；持有區 = top 40（eligible 排名；跌出 top 40 或變不合格 → 賣）。",
+   "monthly_rebalance": "每月 rebalance：先賣出「不在 eligible top 40 內」的持股（變不合格者自然不在名單內，同一條規則覆蓋）；空出的席位由排名最高的未持有 eligible 名字依序補入，補到 10 席或名單耗盡；補不滿的席位留現金（報酬 0），不硬湊。",
+   "weight_reset": "Rebalance 時全組合重置等權：每檔持股權重 = NAV/10 ÷ 該日收盤價 → 換算成 units 記帳；現金 = NAV × (10 − 持股數)/10。"
+  },
+  "nav_accounting": {
+   "inception": "Inception：首次執行日 = 首次 rebalance，NAV = 100.0；nav_spy 同日以 SPY 收盤 normalize 至 100。",
+   "mark_to_market": "每次執行（週更）mark to market：NAV = cash + Σ units × 該檔最新收盤；SPY 同步。",
+   "rebalance_trigger": "Rebalance 觸發：本次執行的日曆月份 ≠ last_rebalance_month → 先 mark to market，再以當日收盤執行 rebalance（與 shadow 的 last_rebalance_month 慣例一致）。",
+   "idempotency": "同日重跑冪等：nav_series 同日期覆蓋不重複 append；同日重跑 rebalance 則以確定性結果覆蓋當日那筆 rebalance_history。",
+   "rebalance_history_fields": "rebalance_history 每筆記：date、sells、buys、期末 holdings（ticker/rank/score/units）、eligible 數、現金席位數。"
+  },
+  "turnover": {
+   "definition": "每次 rebalance 記 n_sells。turnover_12m_annualized = 近 12 次 rebalance 的 Σ n_sells / 10（不足 12 次先照實際次數年化，標註 partial: true）。"
+  },
+  "fail_safe": "以下任一 → print warning、exit 0、完全不動 track.json：Wikipedia scrape 失敗或成分 < 400；價格資料充足（≥253 closes）的 ticker 數 < 400；任何未捕捉例外（top-level try/except 包 main）。",
+  "kill_conditions": {
+   "evaluation_point": "正式評估點 2028-09-01（24 個月）；期中讀數（如 2027-09-01）可看、不具裁決力。No re-tuning、no re-adding、closed stays closed。",
+   "kill_1": "24 個月 NAV 落後 SPY 且 Max DD 比 SPY 深 → 關閉。",
+   "kill_2": "與 shadow line C 在重疊窗口對帳，12M 與 24M 檢查點皆落後 → 記錄「本宇宙中獲利修正動能 > 價格動能」結論後關閉。",
+   "kill_3": "turnover_12m_annualized > 300%（即 12 個月 Σ n_sells > 30）→ 緩衝帶設計失敗，回爐（此條可提前觸發）。"
+  },
+  "disclosure": "誠實標注：paper track、無交易成本、機械式、非投資建議。不是收斂面，不進任何裁決鏈（picks/GRP/三軌/cockpit）。個股層零人為干預；唯一人類接觸點是本 prereg 的 review points 與 kill conditions。",
+  "two_line_expansion": {
+   "title": "雙線擴建（2026-09-01 持有人拍板，commit 前納入 v0 凍結範圍）",
+   "objective": "P10 track 擴為兩條線並跑，回答「慢動能 vs 快動能誰對」。",
+   "l12": "L12（慢線）：即上述 §2–§8（signal/eligibility/selection_buffer_weight/nav_accounting/turnover/fail_safe/kill_conditions）全部規格，原樣不動。",
+   "l6": "L6（快線）：與 L12 的唯一變數是 lookback，其餘 byte-identical：ret_6_1 = c.iloc[-22] / c.iloc[-127] - 1（6-1 動能：跳過最近 21 個交易日的 5 個月報酬；127 與 build_momentum5.py 的 spy6 慣例一致）；win = c.iloc[-127:-21]；vol = win.pct_change().dropna().std() * sqrt(252)；score = ret_6_1 / vol。資格：ret_6_1 > 0 + 同一條 200DMA 閘。資料充足門檻維持 ≥253（刻意：兩線 universe 必須完全相同，否則 lookback 不是唯一變數）。Heat flag 定義不變（plain 12M > +250%，是名字的屬性非訊號的屬性，兩線共用）。top10/top40 緩衝、月度換倉、等權重置、現金席位、換手統計：全部與 L12 同一套規則、同一套程式路徑。",
+   "inception": "兩線同日 inception、各自 NAV=100、各自持股/現金/換手記帳，完全獨立。",
+   "tie_break": "排序 tie-break：score 同分以 ticker 字母序（穩定排序）——兩線同規則。",
+   "turnover_kill_watch_note": "turnover kill watch：僅在滿 12 次 rebalance 窗口觸發——兩線同規則。",
+   "multiple_testing_honesty": "多重檢定誠實（比照 shadow.json）：兩條線並跑提高其中一條靠運氣贏的機率。「贏」的定義＝同時打敗 SPY 與另一條線，且 Max DD 不更差。輸的線記錄結論後關閉，不重調、不復活。",
+   "per_line_kill_conditions": "Kill conditions 逐線獨立適用：kill ①（vs SPY）與 kill ③（換手 >300%）每條線各自評；kill ③ 門檻兩線同為 300%——這是成本可行性判準不是公平性判準，若 6-1 天生活不過 300% 換手，那本身就是結論（快動能在此席位數/緩衝帶下不可投資）。kill ②（vs shadow line C）亦逐線對帳。",
+   "blend_clause": "50/50 混合 NAV 是事後衍生物：隨時可從兩條 nav_series 直接計算，不另立第三條線、不是收斂面；prereg 明文禁止未來 session 以「混合表現好」為由把混合升格為正式線（那是新規格，須重走 prereg）。"
+  }
+ },
+ "as_of": "2026-09-01",
+ "inception_date": "2026-09-01",
+ "spy_close_inception": 767.05,
+ "last_rebalance_month": "2026-09",
+ "nav_series": [
+  {
+   "date": "2026-09-01",
+   "nav_L12": 100.0,
+   "nav_L6": 100.0,
+   "nav_spy": 100.0,
+   "spy_close": 767.05
+  }
+ ],
+ "lines": {
+  "L12": {
+   "cash": 0.0,
+   "holdings": [
+    {
+     "ticker": "SNDK",
+     "entry_date": "2026-09-01",
+     "entry_price": 1566.7,
+     "rank": 1,
+     "score": 19.2,
+     "heat": true,
+     "units": 0.006382843117164908,
+     "last_price": 1566.699951171875
+    },
+    {
+     "ticker": "WDC",
+     "entry_date": "2026-09-01",
+     "entry_price": 450.55,
+     "rank": 2,
+     "score": 7.05,
+     "heat": true,
+     "units": 0.02219509548537615,
+     "last_price": 450.54998779296875
+    },
+    {
+     "ticker": "MU",
+     "entry_date": "2026-09-01",
+     "entry_price": 958.73,
+     "rank": 3,
+     "score": 6.89,
+     "heat": true,
+     "units": 0.01043046551554664,
+     "last_price": 958.72998046875
+    },
+    {
+     "ticker": "STX",
+     "entry_date": "2026-09-01",
+     "entry_price": 828.38,
+     "rank": 4,
+     "score": 5.52,
+     "heat": true,
+     "units": 0.012071754437644423,
+     "last_price": 828.3800048828125
+    },
+    {
+     "ticker": "LITE",
+     "entry_date": "2026-09-01",
+     "entry_price": 914.76,
+     "rank": 5,
+     "score": 4.67,
+     "heat": true,
+     "units": 0.010931828996943305,
+     "last_price": 914.760009765625
+    },
+    {
+     "ticker": "CIEN",
+     "entry_date": "2026-09-01",
+     "entry_price": 382.8,
+     "rank": 6,
+     "score": 4.05,
+     "heat": true,
+     "units": 0.026123302818411635,
+     "last_price": 382.79998779296875
+    },
+    {
+     "ticker": "AMAT",
+     "entry_date": "2026-09-01",
+     "entry_price": 458.39,
+     "rank": 7,
+     "score": 3.44,
+     "heat": false,
+     "units": 0.021815483933849446,
+     "last_price": 458.3900146484375
+    },
+    {
+     "ticker": "INTC",
+     "entry_date": "2026-09-01",
+     "entry_price": 89.51,
+     "rank": 8,
+     "score": 3.26,
+     "heat": true,
+     "units": 0.11171935829898004,
+     "last_price": 89.51000213623047
+    },
+    {
+     "ticker": "VLO",
+     "entry_date": "2026-09-01",
+     "entry_price": 358.92,
+     "rank": 9,
+     "score": 3.02,
+     "heat": false,
+     "units": 0.027861360821032674,
+     "last_price": 358.9200134277344
+    },
+    {
+     "ticker": "LRCX",
+     "entry_date": "2026-09-01",
+     "entry_price": 301.49,
+     "rank": 10,
+     "score": 2.91,
+     "heat": false,
+     "units": 0.03316859704770334,
+     "last_price": 301.489990234375
+    }
+   ],
+   "rebalance_history": [
+    {
+     "date": "2026-09-01",
+     "event": "inception",
+     "sells": [],
+     "buys": [
+      "SNDK",
+      "WDC",
+      "MU",
+      "STX",
+      "LITE",
+      "CIEN",
+      "AMAT",
+      "INTC",
+      "VLO",
+      "LRCX"
+     ],
+     "holdings": [
+      {
+       "ticker": "SNDK",
+       "rank": 1,
+       "score": 19.2,
+       "units": 0.006383
+      },
+      {
+       "ticker": "WDC",
+       "rank": 2,
+       "score": 7.05,
+       "units": 0.022195
+      },
+      {
+       "ticker": "MU",
+       "rank": 3,
+       "score": 6.89,
+       "units": 0.01043
+      },
+      {
+       "ticker": "STX",
+       "rank": 4,
+       "score": 5.52,
+       "units": 0.012072
+      },
+      {
+       "ticker": "LITE",
+       "rank": 5,
+       "score": 4.67,
+       "units": 0.010932
+      },
+      {
+       "ticker": "CIEN",
+       "rank": 6,
+       "score": 4.05,
+       "units": 0.026123
+      },
+      {
+       "ticker": "AMAT",
+       "rank": 7,
+       "score": 3.44,
+       "units": 0.021815
+      },
+      {
+       "ticker": "INTC",
+       "rank": 8,
+       "score": 3.26,
+       "units": 0.111719
+      },
+      {
+       "ticker": "VLO",
+       "rank": 9,
+       "score": 3.02,
+       "units": 0.027861
+      },
+      {
+       "ticker": "LRCX",
+       "rank": 10,
+       "score": 2.91,
+       "units": 0.033169
+      }
+     ],
+     "eligible_count": 261,
+     "cash_seats": 0,
+     "n_sells": 0
+    }
+   ],
+   "flags": {
+    "turnover_12m_annualized_pct": 0.0,
+    "turnover_partial": true,
+    "turnover_kill_watch": false
+   }
+  },
+  "L6": {
+   "cash": 0.0,
+   "holdings": [
+    {
+     "ticker": "PANW",
+     "entry_date": "2026-09-01",
+     "entry_price": 382.13,
+     "rank": 1,
+     "score": 2.36,
+     "heat": false,
+     "units": 0.026169104420540573,
+     "last_price": 382.1300048828125
+    },
+    {
+     "ticker": "HUM",
+     "entry_date": "2026-09-01",
+     "entry_price": 383.23,
+     "rank": 2,
+     "score": 2.19,
+     "heat": false,
+     "units": 0.026093989805920377,
+     "last_price": 383.2300109863281
+    },
+    {
+     "ticker": "DDOG",
+     "entry_date": "2026-09-01",
+     "entry_price": 237.04,
+     "rank": 3,
+     "score": 1.98,
+     "heat": false,
+     "units": 0.04218697385773599,
+     "last_price": 237.0399932861328
+    },
+    {
+     "ticker": "FTNT",
+     "entry_date": "2026-09-01",
+     "entry_price": 170.93,
+     "rank": 4,
+     "score": 1.97,
+     "heat": false,
+     "units": 0.05850348346394612,
+     "last_price": 170.92999267578125
+    },
+    {
+     "ticker": "DELL",
+     "entry_date": "2026-09-01",
+     "entry_price": 456.01,
+     "rank": 5,
+     "score": 1.89,
+     "heat": false,
+     "units": 0.021929343185119313,
+     "last_price": 456.010009765625
+    },
+    {
+     "ticker": "CRWD",
+     "entry_date": "2026-09-01",
+     "entry_price": 231.0,
+     "rank": 6,
+     "score": 1.86,
+     "heat": false,
+     "units": 0.04329004329004329,
+     "last_price": 231.0
+    },
+    {
+     "ticker": "HPE",
+     "entry_date": "2026-09-01",
+     "entry_price": 52.24,
+     "rank": 7,
+     "score": 1.8,
+     "heat": false,
+     "units": 0.19142418986793364,
+     "last_price": 52.2400016784668
+    },
+    {
+     "ticker": "AMD",
+     "entry_date": "2026-09-01",
+     "entry_price": 470.72,
+     "rank": 8,
+     "score": 1.78,
+     "heat": false,
+     "units": 0.02124405161044213,
+     "last_price": 470.7200012207031
+    },
+    {
+     "ticker": "STT",
+     "entry_date": "2026-09-01",
+     "entry_price": 191.38,
+     "rank": 9,
+     "score": 1.73,
+     "heat": false,
+     "units": 0.052252062623382674,
+     "last_price": 191.3800048828125
+    },
+    {
+     "ticker": "MPC",
+     "entry_date": "2026-09-01",
+     "entry_price": 373.32,
+     "rank": 10,
+     "score": 1.61,
+     "heat": false,
+     "units": 0.02678667042700248,
+     "last_price": 373.32000732421875
+    }
+   ],
+   "rebalance_history": [
+    {
+     "date": "2026-09-01",
+     "event": "inception",
+     "sells": [],
+     "buys": [
+      "PANW",
+      "HUM",
+      "DDOG",
+      "FTNT",
+      "DELL",
+      "CRWD",
+      "HPE",
+      "AMD",
+      "STT",
+      "MPC"
+     ],
+     "holdings": [
+      {
+       "ticker": "PANW",
+       "rank": 1,
+       "score": 2.36,
+       "units": 0.026169
+      },
+      {
+       "ticker": "HUM",
+       "rank": 2,
+       "score": 2.19,
+       "units": 0.026094
+      },
+      {
+       "ticker": "DDOG",
+       "rank": 3,
+       "score": 1.98,
+       "units": 0.042187
+      },
+      {
+       "ticker": "FTNT",
+       "rank": 4,
+       "score": 1.97,
+       "units": 0.058503
+      },
+      {
+       "ticker": "DELL",
+       "rank": 5,
+       "score": 1.89,
+       "units": 0.021929
+      },
+      {
+       "ticker": "CRWD",
+       "rank": 6,
+       "score": 1.86,
+       "units": 0.04329
+      },
+      {
+       "ticker": "HPE",
+       "rank": 7,
+       "score": 1.8,
+       "units": 0.191424
+      },
+      {
+       "ticker": "AMD",
+       "rank": 8,
+       "score": 1.78,
+       "units": 0.021244
+      },
+      {
+       "ticker": "STT",
+       "rank": 9,
+       "score": 1.73,
+       "units": 0.052252
+      },
+      {
+       "ticker": "MPC",
+       "rank": 10,
+       "score": 1.61,
+       "units": 0.026787
+      }
+     ],
+     "eligible_count": 258,
+     "cash_seats": 0,
+     "n_sells": 0
+    }
+   ],
+   "flags": {
+    "turnover_12m_annualized_pct": 0.0,
+    "turnover_partial": true,
+    "turnover_kill_watch": false
+   }
+  }
+ },
+ "data_gaps": [],
+ "changelog": [
+  {
+   "date": "2026-09-01",
+   "event": "P10 雙線（L12/L6）PREREG 凍結（2026-09-01），兩線同日 inception。"
+  }
+ ]
+}
