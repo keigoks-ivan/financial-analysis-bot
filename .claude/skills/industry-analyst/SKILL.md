@@ -949,7 +949,8 @@ id-meta = 下游（stock-analyst / earnings-synthesis / position-thesis-monitor 
 5. **跑分類頁**：`python3 scripts/build_id_category_pages.py`（整塊複製 index.html category block，badge 自動帶過去，不需改 script）。
 6. **重生 DD↔ID 對應 / banner**（若腳本存在）：`python3 scripts/id_dd_mapping.py`、`python3 scripts/retrofit_dd_id_banner.py`。
 7. **Tier Matrix 健康度**：`python3 scripts/check_tier_matrix.py --inject-html` — 掃新 ticker（≥2 份 ID signal）、注入健康度 banner。若返回「🆕 N 檔新 ticker」必須在回 user 訊息中提示是否評估加入 Tier Matrix。
-8. `git add + commit + push`（同 commit 涵蓋 ID 新增 + alert 更新）。
+8. commit 前跑 `python3 scripts/inject_report_primer.py --family id`，讓新報告帶上白話導讀塊（冪等，可重複跑）。
+9. `git add + commit + push`（同 commit 涵蓋 ID 新增 + alert 更新）。
 
 ### INDEX.md 欄位（沿用 ID v1.13）
 

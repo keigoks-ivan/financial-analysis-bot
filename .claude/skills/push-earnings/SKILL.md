@@ -70,6 +70,8 @@ If `<div class="empty-state">尚未發布分析報告…</div>` is still present
 
 ## Step 8 — Commit and push
 
+commit 前跑 `python3 scripts/inject_report_primer.py --family earnings`，讓新報告帶上白話導讀塊（冪等，可重複跑）。
+
 ```bash
 git add docs/earnings/
 git commit -m "Add earnings analysis: YYYY-MM-DD[, YYYY-MM-DD ...]"

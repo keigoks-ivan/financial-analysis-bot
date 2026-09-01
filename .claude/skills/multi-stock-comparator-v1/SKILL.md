@@ -129,6 +129,8 @@ ls ${DCA_DIR}/DCA_${TICKER}_*${FILE_EXT} 2>/dev/null | sort -r | head -1
 
 **第八步:輸出 git 流程提示**
 
+commit 前跑 `python3 scripts/inject_report_primer.py --family comparisons`，讓新報告帶上白話導讀塊（冪等，可重複跑）。
+
 ```bash
 cd /Users/ivanchang/financial-analysis-bot
 git add docs/comparisons/MS_<...>.html docs/comparisons/_body.html

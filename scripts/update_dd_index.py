@@ -3014,11 +3014,34 @@ def main():
     else:
         print("\nFailed to update index.html")
 
+    if args.dry_run:
+        return
+
+    # Auto-trigger 白話導讀塊注入（scripts/inject_report_primer.py，7 家族全量冪等掃描）。
+    # 放在 --skip-dd-screener 早退之前——純本地機械操作、無 yfinance/網路依賴，離線模式
+    # 也該跑。fail-soft：injector 出錯只 warn，不擋 research sync（比照本檔既有
+    # yfinance 失敗 warn 不 abort 的慣例）。全量掃描實測 <1s（1252 檔），不拆 --family。
+    primer_script = Path(__file__).resolve().parent / "inject_report_primer.py"
+    if primer_script.exists():
+        import subprocess  # local import — only used in this terminal hook
+        print(f"\n→ Auto-trigger: {primer_script.name} (白話導讀塊冪等掃描，全家族)")
+        try:
+            subprocess.run([sys.executable, str(primer_script)], check=True)
+        except subprocess.CalledProcessError as e:
+            print(
+                f"\n⚠ inject_report_primer 失敗 (exit {e.returncode})。"
+                f"research sync 照常完成；請手動跑 `python3 {primer_script}` 補注入。",
+                file=sys.stderr,
+            )
+        except Exception as e:
+            print(f"\n⚠ inject_report_primer 錯誤：{e}。research sync 照常完成。",
+                  file=sys.stderr)
+
     # Auto-trigger DD Screener rebuild so /research/ and /dd-screener/ stay in
     # lockstep. New DD/DCA additions are picked up via the stateless glob in
     # build_dd_screener.py. Failure here (e.g. yfinance network blip) must NOT
     # abort the research-sync caller — it's a separate, supplementary page.
-    if args.dry_run or args.skip_dd_screener:
+    if args.skip_dd_screener:
         return
     import subprocess  # local import — only used in this terminal hook
     screener_script = Path(__file__).resolve().parent / "build_dd_screener.py"
