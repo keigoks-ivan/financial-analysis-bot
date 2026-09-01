@@ -1,0 +1,66 @@
+name: Daily Conditional Flow Map
+
+# 每日刷新條件流量地圖（docs/flowmap/data/latest.json）— 純機械、零 LLM。
+# scripts/build_flowmap.py 算三個 Phase 1 模組：CTA 趨勢觸發位（SPY/QQQ/IWM
+# 20/60/120 交易日動能）、vol-control 隱含曝險（SPY 21d/63d 已實現波動）、
+# 庫藏股靜默期日曆（S&P 市值前 100 檔次次財報日）。設計依據：
+# notes/site-internal/root/_flowmap_forecast_ledger_design_20260901.md §A。
+#
+# cron 時段與 commit 慣例照抄 monitor-daily.yml：yfinance 日線 bar 於美股收盤
+# 後（~20:00-21:00 UTC）才落地，07:00 UTC（台北 15:00）已安全越過落地窗。
+# zero-churn 寫入：資料沒動就空 diff、不 commit，重複觸發是冪等的。
+on:
+  schedule:
+    - cron: "0 7 * * 2-6"   # Tue-Sat 07:00 UTC = 台北 15:00，美股收盤後安全窗
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: flowmap-daily
+  cancel-in-progress: false
+
+jobs:
+  flowmap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install "yfinance>=0.2.40" pandas requests
+
+      - name: Build conditional flow map data
+        run: python scripts/build_flowmap.py
+
+      - name: Commit and push if changed
+        run: |
+          PATHS="data/flowmap_prices.json data/flowmap_earnings_cache.json docs/flowmap/data"
+          if git status --porcelain $PATHS | grep -q .; then
+            echo "Changes detected"
+          else
+            echo "No changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add $PATHS
+          DATE=$(date -u +"%Y-%m-%d")
+          git commit -m "flowmap: daily data refresh ${DATE}"
+          for i in 1 2 3 4 5 6; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+            git pull --rebase --autostash origin main || { echo "Rebase failed"; exit 1; }
+            sleep $((RANDOM % 20 + 5))
+          done
+          echo "Push failed after 6 attempts"
+          exit 1

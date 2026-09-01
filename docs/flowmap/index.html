@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta name="robots" content="noindex,nofollow">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>條件流量地圖 — InvestMQuest Research</title>
+  <meta name="description" content="條件流量地圖 — 算的是機械型資金（CTA 趨勢跟隨、目標波動控制基金、企業庫藏股買盤）在什麼價格與波動條件下會被迫買或賣、量級多大。描述器非擇時訊號，不預測方向，不給買賣建議。">
+  <meta property="og:title" content="條件流量地圖 — InvestMQuest Research">
+  <meta property="og:site_name" content="InvestMQuest Research">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Playfair+Display:wght@600;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/imq-base.css">
+  <style>
+:root{
+  --bg:#f7f3ea;--bg-card:#ffffff;--bg-card-hover:#fbf8f1;
+  --border:#e5dfd0;--border-light:#efe9da;
+  --text:#0c1521;--text-secondary:#2a3a52;--text-muted:#9aa7b8;
+  --accent:#0d2244;--accent-hover:#081832;
+  --gold:#b8924a;--gold-deep:#8f6d2c;
+  --pos:#15803d;--neg:#b91c1c;--warn:#a16207;
+  --pos-bg:#eafaef;--neg-bg:#fbeceb;--warn-bg:#fbf3df;
+  --shadow-sm:0 1px 2px rgba(13,34,68,.05);
+  --shadow-md:0 6px 18px rgba(13,34,68,.07);
+  --radius:10px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#0b0d11;--bg-card:#14181f;--bg-card-hover:#1a1f28;
+    --border:#28303c;--border-light:#222834;
+    --text:#edeff3;--text-secondary:#a6aebc;--text-muted:#717a8a;
+    --accent:#5b9bff;--accent-hover:#7db0ff;
+    --gold:#c9a55e;--gold-deep:#b8924a;
+    --pos:#34d399;--neg:#f87171;--warn:#fbbf24;
+    --pos-bg:rgba(52,211,153,.12);--neg-bg:rgba(248,113,113,.12);--warn-bg:rgba(251,191,36,.12);
+    --shadow-sm:0 1px 2px rgba(0,0,0,.3);
+    --shadow-md:0 4px 14px rgba(0,0,0,.4);
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:15px;
+     -webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+a:hover{color:var(--accent-hover)}
+.wrap{max-width:1140px;margin:0 auto;padding:0 20px}
+.mono{font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums}
+
+.hero{padding:2.6rem 0 1.6rem}
+.overline{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;
+          text-transform:uppercase;color:var(--gold-deep);font-weight:600}
+h1{font-family:'Playfair Display','Noto Serif TC',Georgia,serif;font-size:1.9rem;
+   font-weight:700;letter-spacing:-.01em;color:var(--text);margin:.4rem 0 .6rem}
+.hero .lede{color:var(--text-secondary);max-width:760px;font-size:.95rem;line-height:1.75}
+.hero .lede strong{color:var(--text)}
+.mandate{margin-top:1.1rem;max-width:820px;border-left:3px solid var(--accent);
+         background:var(--bg-card);border-radius:0 var(--radius) var(--radius) 0;
+         padding:.9rem 1.15rem;font-size:.85rem;color:var(--text-secondary);line-height:1.75}
+.mandate strong{color:var(--text)}
+.asof{margin-top:.9rem;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--text-muted)}
+
+section{margin:2.2rem 0}
+h2{font-family:'Playfair Display','Noto Serif TC',Georgia,serif;font-size:1.25rem;
+   font-weight:700;margin-bottom:.4rem;color:var(--text)}
+h2 .en{font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--text-muted);
+       font-weight:400;letter-spacing:.08em;margin-left:.55rem;text-transform:uppercase}
+.section-sub{font-size:.84rem;color:var(--text-muted);margin-bottom:1rem;max-width:760px;line-height:1.7}
+
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
+      box-shadow:var(--shadow-sm);padding:1.1rem 1.3rem}
+
+/* 條件流量表 */
+.flow-table{width:100%;border-collapse:collapse}
+.flow-table th{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;
+               letter-spacing:.07em;text-transform:uppercase;color:var(--text-muted);
+               text-align:left;padding:.5rem .6rem;border-bottom:1px solid var(--border)}
+.flow-table td{padding:.85rem .6rem;border-bottom:1px solid var(--border-light);
+               vertical-align:top;font-size:.87rem}
+.flow-table tr:last-child td{border-bottom:none}
+.flow-cond b{color:var(--text);font-weight:700}
+.flow-cond small{display:block;color:var(--text-muted);margin-top:.25rem;font-size:.78rem;line-height:1.6}
+.flow-actor{color:var(--text-secondary);white-space:nowrap}
+.flow-mag{font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--text);white-space:nowrap}
+.flow-mag .dir{font-size:.72rem;color:var(--text-muted);display:block;font-family:'Inter','Noto Sans TC',sans-serif;font-weight:400;margin-top:.15rem}
+.conf-chip{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;
+           font-weight:700;padding:.15rem .5rem;border-radius:20px}
+.conf-lo{background:var(--warn-bg);color:var(--warn)}
+.conf-med{background:rgba(13,34,68,.08);color:var(--accent)}
+.conf-na{background:var(--border-light);color:var(--text-muted)}
+.flow-src{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-muted);white-space:nowrap}
+
+/* 觸發位距離條圖 */
+.bar-row{display:grid;grid-template-columns:150px 1fr 90px;gap:.7rem;align-items:center;
+         padding:.45rem 0;border-bottom:1px dashed var(--border-light)}
+.bar-row:last-child{border-bottom:none}
+.bar-label{font-size:.8rem;color:var(--text-secondary)}
+.bar-label b{color:var(--text);font-weight:700}
+.bar-track{position:relative;height:20px;background:var(--border-light);border-radius:4px;overflow:hidden}
+.bar-mid{position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--text-muted);opacity:.5}
+.bar-fill{position:absolute;top:2px;bottom:2px;border-radius:3px}
+.bar-fill.up{background:var(--pos)}
+.bar-fill.down{background:var(--neg)}
+.bar-val{font-family:'IBM Plex Mono',monospace;font-size:.78rem;text-align:right;color:var(--text-secondary)}
+
+/* blackout 時間線 */
+.week-strip{display:flex;gap:6px;flex-wrap:wrap}
+.week-cell{flex:1 1 100px;min-width:100px;border-radius:8px;padding:.6rem .7rem;
+           border:1px solid var(--border);background:var(--bg-card)}
+.week-cell .wd{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--text-muted)}
+.week-cell .wp{font-family:'IBM Plex Mono',monospace;font-size:1.05rem;font-weight:700;margin-top:.2rem}
+.week-cell.peak{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
+
+/* details / gaps / disclaimer */
+details{margin-top:.8rem}
+details summary{cursor:pointer;font-size:.82rem;font-weight:600;color:var(--accent);list-style:revert}
+details .body{margin-top:.6rem;font-size:.82rem;color:var(--text-secondary);line-height:1.8}
+details table{width:100%;border-collapse:collapse;margin-top:.4rem;font-size:.78rem}
+details th,details td{text-align:left;padding:.35rem .5rem;border-bottom:1px solid var(--border-light)}
+.gaps{font-size:.83rem;color:var(--text-secondary);background:var(--bg-card);border:1px solid var(--border);
+      border-radius:var(--radius);padding:.9rem 1.1rem}
+.gaps ul{margin:.3rem 0 0 1.1rem}
+.disclaimer{margin:1.6rem 0;padding:1.1rem 1.3rem;background:var(--bg-card);border:1px solid var(--border);
+            border-radius:var(--radius);font-size:.78rem;color:var(--text-muted);line-height:1.75}
+.disclaimer strong{color:var(--text-secondary)}
+.loading{color:var(--text-muted);font-size:.85rem;padding:1.2rem 0}
+
+footer.imq-foot{margin-top:2.6rem;padding:1.4rem 20px;border-top:1px solid var(--border);
+                 text-align:center;font-size:12.5px;color:var(--text-muted)}
+footer.imq-foot a{color:var(--text-secondary)}
+
+@media(max-width:768px){
+  h1{font-size:1.5rem}
+  .flow-table{display:block;overflow-x:auto}
+  .bar-row{grid-template-columns:110px 1fr 70px}
+}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <span class="overline">Conditional Flow Map · Phase 1</span>
+    <h1>條件流量地圖</h1>
+    <p class="lede">
+      市場上有一群<strong>按公式行動</strong>的資金——不是誰看好看壞，是價格或波動一旦碰到某個數字，
+      程式就會照規則買或賣。CTA 趨勢跟隨基金看價格站上或跌破某條均線／區間；
+      目標波動控制基金看已實現波動變大變小，機械調整曝險；企業庫藏股買盤則在財報前有法規靜默期，
+      整批消失又整批回來。<strong>本頁算的是「如果價格到哪裡、誰會被迫做什麼、量多大」，不是預測漲跌。</strong>
+      三個模組的門檻與資金錨已於設計階段凍結，不隨個案調整；每天的結論也會原樣存檔，方便之後回頭核對機械模型是否真的準。
+    </p>
+    <div class="mandate">
+      <strong>定位：</strong>本頁是<strong>描述器（describer），不是進出場訊號</strong>。
+      它衡量「若某個價格或波動條件被觸及，機械型資金會被迫做多少」，
+      <strong>不預測會不會觸及、也不預測方向</strong>。個股與組合的進出，依各公司深度報告（DD）寫定的證偽條件決定，不由本頁驅動。
+      本頁的結論也不會流入站上任何選股名單——只回答「條件」，不回答「買不買」。
+    </div>
+    <div class="asof" id="asof">載入中…</div>
+  </div>
+
+  <section id="sec-table">
+    <h2>條件流量表<span class="en">Conditional Flow</span></h2>
+    <p class="section-sub">
+      每一列是一個「若……則……」的條件句：條件被觸及時，是誰、在什麼量級上被迫交易。
+      公式與門檻降為表格下方折疊區，不擋閱讀。
+    </p>
+    <div class="card" style="overflow-x:auto">
+      <table class="flow-table" id="flow-table">
+        <thead><tr><th>條件</th><th>行為者</th><th>量級</th><th>信心</th><th>資料日</th></tr></thead>
+        <tbody id="flow-tbody"><tr><td colspan="5" class="loading">載入中…</td></tr></tbody>
+      </table>
+    </div>
+    <details id="cta-detail">
+      <summary>CTA 模組方法論與今日三窗明細</summary>
+      <div class="body">
+        對 SPX／NDX／RTY（以 SPY／QQQ／IWM 為代理）各算 20／60／120 交易日動能：現價高於 N 日前收盤 → 訊號 +1（多頭部位）；
+        低於則 −1（空頭部位）。三窗訊號加總成 composite（如「+2/3」＝三窗中兩窗偏多）。
+        「全翻轉時預估流量」是外部研究對 CTA 資金規模的粗略錨定（非本頁機械算出），標記低信心，且已於設計階段凍結不隨個案調整。
+        <div id="cta-windows-detail"></div>
+      </div>
+    </details>
+    <details id="vol-detail">
+      <summary>Vol-control 模組方法論</summary>
+      <div class="body">
+        以 SPY 日報酬算 21 個交易日（約 1 個月）與 63 個交易日（約 3 個月）年化已實現波動，
+        取兩者較大值代入「目標波動模型」：曝險 = min(100%，10% ÷ 已實現波動)。
+        已實現波動每再升 2 個百分點，曝險就對應降一階，隱含賣壓 = 曝險變化 × 2,500 億美元 AUM 錨（外部研究值，低信心）。
+        「假想明日 ±2% 一天」是把該日報酬放進最近 21 日窗、剔除最舊一天重算，觀察曝險變化的方向。
+        <div id="vol-ladder-detail"></div>
+      </div>
+    </details>
+  </section>
+
+  <section id="sec-bars">
+    <h2>CTA 觸發位 vs 現價距離<span class="en">Trigger Distance</span></h2>
+    <p class="section-sub">
+      每一條是一個時間窗（20／60／120 交易日）的翻轉價位。條越短代表現價離「訊號翻轉」越近；
+      綠色＝目前站在多頭那一側，紅色＝站在空頭那一側。
+    </p>
+    <div class="card" id="bars-host"><div class="loading">載入中…</div></div>
+  </section>
+
+  <section id="sec-buyback">
+    <h2>庫藏股靜默期覆蓋率<span class="en">Buyback Blackout</span></h2>
+    <p class="section-sub">
+      財報前 35 個曆日到財報後 1 個曆日，公司依法規慣例不能進場買回自家股票。
+      下表是未來 8 週、S&amp;P 市值前 100 檔中「當週落在靜默期」的等權占比——覆蓋率越高，代表越多公司的買盤同時缺席。
+      <strong>等權非市值加權</strong>，純日曆機制、不含任何方向判斷。
+    </p>
+    <div class="card">
+      <div class="week-strip" id="week-strip"><div class="loading">載入中…</div></div>
+      <div id="buyback-note" style="margin-top:.8rem;font-size:.78rem;color:var(--text-muted)"></div>
+    </div>
+  </section>
+
+  <section id="sec-frozen">
+    <h2>今日凍結預測<span class="en">Frozen Forecast</span></h2>
+    <p class="section-sub">
+      每天把「若明日觸及某個條件，模型結論會怎麼變」原樣存檔（<span class="mono">forecast_history.jsonl</span>），
+      不可回改。這是讓機械模型可以被秋後算帳的機制，不是即時判斷。
+    </p>
+    <div class="card" id="frozen-host"><div class="loading">載入中…</div></div>
+  </section>
+
+  <section id="sec-gaps" style="display:none">
+    <h2>資料缺口<span class="en">Gaps</span></h2>
+    <div class="gaps" id="gaps"></div>
+  </section>
+
+  <div class="disclaimer">
+    <strong>免責與定位：</strong>
+    本頁為 InvestMQuest Research 內部研究文件，<strong>描述器非擇時訊號、非投資建議</strong>。
+    CTA／vol-control 兩模組的翻轉價位與已實現波動皆為機械計算（可重算、可回測）；
+    「全翻轉流量」與「AUM 錨」為外部研究粗略估計，非本站機械算出，信心度已逐項標註。
+    庫藏股靜默期覆蓋率為等權純日曆機制，不含市值加權亦不含任何方向判斷。
+    Dealer gamma（選擇權未平倉部位驅動的做市商避險流量）因缺乏可得的 OI 級資料，本階段暫不產出，見上方資料缺口。
+    過往統計關係不保證未來重演。
+  </div>
+</div>
+
+<footer class="imq-foot">
+  <div class="wrap">
+    <div>© 2026 InvestMQuest Research</div>
+    <div><a href="/disclosures.html">方法論與揭露</a> · 本站內容僅供研究參考，不構成投資建議</div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  function el(tag, cls, html) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (html !== undefined) e.innerHTML = html;
+    return e;
+  }
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+  function fmtSigned(v, d) {
+    if (v === null || v === undefined) return "—";
+    var n = Number(v);
+    var s = n.toFixed(d === undefined ? 1 : d);
+    return (n > 0 ? "+" : "") + s;
+  }
+  function fmtNum(v, d) {
+    if (v === null || v === undefined) return "—";
+    return Number(v).toFixed(d === undefined ? 1 : d);
+  }
+  // 資料層單位為十億美元（usd_bn）；站內慣例以「億美元」呈現（1 十億 = 10 億），故顯示前一律換算。
+  function bnToYi(v) {
+    if (v === null || v === undefined) return null;
+    return Number(v) * 10;
+  }
+
+  var MARKET_LABEL = {
+    SPX: "SPX（標普 500，以 SPY 代理）",
+    NDX: "NDX（那斯達克 100，以 QQQ 代理）",
+    RTY: "RTY（羅素 2000，以 IWM 代理）"
+  };
+  var MARKET_SHORT = { SPX: "SPX", NDX: "NDX", RTY: "RTY" };
+
+  function twStamp(iso) {
+    if (!iso) return "";
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return String(iso);
+    var p = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Taipei", year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", hourCycle: "h23"
+    }).formatToParts(d).reduce(function (o, x) { o[x.type] = x.value; return o; }, {});
+    return p.year + "-" + p.month + "-" + p.day + " " + p.hour + ":" + p.minute + " 台北時間";
+  }
+
+  // ── 條件流量表 ──────────────────────────────────────────────────────────
+  function renderFlowTable(data) {
+    var tbody = document.getElementById("flow-tbody");
+    tbody.innerHTML = "";
+    var rows = [];
+
+    (data.cta || []).forEach(function (m) {
+      var nearest = null;
+      (m.windows || []).forEach(function (w) {
+        if (w.dist_pct === null) return;
+        if (nearest === null || Math.abs(w.dist_pct) < Math.abs(nearest.dist_pct)) nearest = w;
+      });
+      if (!nearest) return;
+      var dir = nearest.signal > 0 ? "跌破" : "站上";
+      var flipTo = nearest.signal > 0 ? "轉空" : "轉多";
+      rows.push({
+        cond: "<b>" + esc(MARKET_SHORT[m.market] || m.market) + " " + (nearest.signal > 0 ? "跌破" : "站上") +
+              " <span class=\"mono\">" + fmtNum(nearest.flip_level, 2) + "</span></b>" +
+              "<small>" + nearest.len + " 日動能窗（現距 " + fmtSigned(nearest.dist_pct, 2) + "%）" + dir + "後" + flipTo +
+              "，三窗合計訊號由 " + esc(m.composite_signal) + " 變動</small>",
+        actor: "CTA 趨勢跟隨基金",
+        mag: fmtNum(bnToYi(m.est_flow_on_full_flip_usd_bn[0]), 0) + "–" + fmtNum(bnToYi(m.est_flow_on_full_flip_usd_bn[1]), 0) + " 億美元",
+        magDir: "全翻轉時預估名目流量",
+        conf: m.confidence,
+        src: m.as_of
+      });
+    });
+
+    if (data.vol_control) {
+      var vc = data.vol_control;
+      var rung = (vc.ladder || [])[0];
+      if (rung) {
+        rows.push({
+          cond: "<b>SPY 已實現波動再升 2 個百分點（來到約 <span class=\"mono\">" + fmtNum(rung.rv, 1) + "%</span>）</b>" +
+                "<small>目前 21 日 " + fmtNum(vc.rv_1m, 1) + "% ／ 63 日 " + fmtNum(vc.rv_3m, 1) +
+                "%，隱含曝險現為 " + fmtNum(vc.implied_exposure_pct, 1) + "%</small>",
+          actor: "目標波動控制基金（vol-control）",
+          mag: fmtSigned(bnToYi(rung.flow_usd_bn), 0) + " 億美元",
+          magDir: "曝險降至 " + fmtNum(rung.exposure_pct, 1) + "%",
+          conf: vc.confidence,
+          src: vc.as_of
+        });
+      }
+    }
+
+    if (data.buyback) {
+      var bb = data.buyback;
+      var peak = (bb.blackout_cov_pct_by_week || []).filter(function (w) { return w.week_start === bb.peak_week; })[0];
+      rows.push({
+        cond: "<b>未來 8 週，S&amp;P 市值前 100 檔的靜默期覆蓋率高峰落在 " + esc(bb.peak_week) + " 當週</b>" +
+              "<small>" + esc(bb.blackout_window_note) + "；樣本 " + bb.universe_n + "/" + bb.universe_total + " 檔（等權，非市值加權）</small>",
+        actor: "企業庫藏股買盤（缺席）",
+        mag: (peak ? fmtNum(peak.coverage_pct, 1) : "—") + "%",
+        magDir: "當週覆蓋率",
+        conf: null,
+        src: bb.as_of
+      });
+    }
+
+    if (!rows.length) {
+      tbody.appendChild(el("tr", "", '<td colspan="5" class="loading">今日三個模組皆無可用資料，見下方資料缺口。</td>'));
+      return;
+    }
+
+    rows.forEach(function (r) {
+      var tr = el("tr");
+      tr.appendChild(el("td", "flow-cond", r.cond));
+      tr.appendChild(el("td", "flow-actor", esc(r.actor)));
+      tr.appendChild(el("td", "flow-mag", esc(r.mag) + '<span class="dir">' + esc(r.magDir) + "</span>"));
+      var confHtml = r.conf === "lo" ? '<span class="conf-chip conf-lo">低</span>'
+        : r.conf === "med" ? '<span class="conf-chip conf-med">中</span>'
+        : '<span class="conf-chip conf-na">純日曆</span>';
+      tr.appendChild(el("td", "", confHtml));
+      tr.appendChild(el("td", "flow-src", esc(r.src || "—")));
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderCtaDetail(data) {
+    var host = document.getElementById("cta-windows-detail");
+    if (!host) return;
+    var t = el("table");
+    t.appendChild(el("tr", "", "<th>市場</th><th>窗</th><th>訊號</th><th>翻轉價位</th><th>距現價</th>"));
+    (data.cta || []).forEach(function (m) {
+      (m.windows || []).forEach(function (w) {
+        var sig = w.signal > 0 ? "多（+1）" : (w.signal < 0 ? "空（−1）" : "中性（0）");
+        t.appendChild(el("tr", "", "<td>" + esc(MARKET_SHORT[m.market] || m.market) + "</td><td>" + w.len +
+          " 日</td><td>" + sig + "</td><td class=\"mono\">" + fmtNum(w.flip_level, 2) + "</td><td class=\"mono\">" +
+          fmtSigned(w.dist_pct, 2) + "%</td>"));
+      });
+    });
+    host.innerHTML = "";
+    host.appendChild(t);
+  }
+
+  function renderVolDetail(data) {
+    var host = document.getElementById("vol-ladder-detail");
+    if (!host || !data.vol_control) return;
+    var t = el("table");
+    t.appendChild(el("tr", "", "<th>已實現波動</th><th>隱含曝險</th><th>相對現況流量</th>"));
+    (data.vol_control.ladder || []).forEach(function (r) {
+      t.appendChild(el("tr", "", "<td class=\"mono\">" + fmtNum(r.rv, 1) + "%</td><td class=\"mono\">" +
+        fmtNum(r.exposure_pct, 1) + "%</td><td class=\"mono\">" + fmtSigned(bnToYi(r.flow_usd_bn), 0) + " 億美元</td>"));
+    });
+    host.innerHTML = "";
+    host.appendChild(t);
+    var nd = data.vol_control.next_day_scenario;
+    if (nd) {
+      var dirLabel = { up: "曝險上升", down: "曝險下降", flat: "曝險持平" };
+      var p = el("p", "", "假想「明日 +2%」：21 日波動變動為 " + fmtNum(nd.plus_2pct.rv21_new_pct, 2) +
+        "%，" + (dirLabel[nd.plus_2pct.exposure_change_dir] || "—") +
+        "。假想「明日 −2%」：21 日波動變動為 " + fmtNum(nd.minus_2pct.rv21_new_pct, 2) +
+        "%，" + (dirLabel[nd.minus_2pct.exposure_change_dir] || "—") + "。");
+      p.style.marginTop = ".5rem";
+      host.appendChild(p);
+    }
+  }
+
+  // ── CTA 觸發位距離條圖 ──────────────────────────────────────────────────
+  function renderBars(data) {
+    var host = document.getElementById("bars-host");
+    host.innerHTML = "";
+    var cta = data.cta || [];
+    if (!cta.length) {
+      host.appendChild(el("div", "loading", "CTA 模組今日無可用資料。"));
+      return;
+    }
+    var SCALE = 15; // ±15% 距離填滿整條軌道寬度
+    cta.forEach(function (m) {
+      (m.windows || []).forEach(function (w) {
+        var row = el("div", "bar-row");
+        row.appendChild(el("div", "bar-label",
+          "<b>" + esc(MARKET_SHORT[m.market] || m.market) + "</b>·" + w.len + " 日"));
+        var track = el("div", "bar-track");
+        track.appendChild(el("div", "bar-mid"));
+        if (w.dist_pct !== null) {
+          var pct = Math.max(-100, Math.min(100, (w.dist_pct / SCALE) * 100));
+          var fill = el("div", "bar-fill " + (w.signal > 0 ? "up" : "down"));
+          var widthPct = Math.min(50, Math.abs(pct) / 2);
+          fill.style.width = widthPct + "%";
+          if (pct >= 0) { fill.style.left = "50%"; } else { fill.style.right = "50%"; }
+          track.appendChild(fill);
+        }
+        row.appendChild(track);
+        row.appendChild(el("div", "bar-val mono", fmtSigned(w.dist_pct, 2) + "%"));
+        host.appendChild(row);
+      });
+    });
+  }
+
+  // ── blackout 週度覆蓋率 ────────────────────────────────────────────────
+  function renderBuyback(data) {
+    var host = document.getElementById("week-strip");
+    var note = document.getElementById("buyback-note");
+    host.innerHTML = "";
+    if (!data.buyback) {
+      host.appendChild(el("div", "loading", "本模組今日無可用資料（樣本覆蓋率不足），見下方資料缺口。"));
+      note.textContent = "";
+      return;
+    }
+    var bb = data.buyback;
+    var maxPct = Math.max.apply(null, bb.blackout_cov_pct_by_week.map(function (w) { return w.coverage_pct; }));
+    bb.blackout_cov_pct_by_week.forEach(function (w) {
+      var cell = el("div", "week-cell" + (w.week_start === bb.peak_week ? " peak" : ""));
+      var intensity = maxPct > 0 ? w.coverage_pct / maxPct : 0;
+      cell.style.background = "color-mix(in srgb, var(--warn-bg) " + Math.round(20 + intensity * 80) + "%, var(--bg-card))";
+      cell.appendChild(el("div", "wd", w.week_start.slice(5)));
+      cell.appendChild(el("div", "wp mono", fmtNum(w.coverage_pct, 0) + "%"));
+      host.appendChild(cell);
+    });
+    note.textContent = "樣本 " + bb.universe_n + "/" + bb.universe_total + " 檔取得次次財報日；峰值週 " + bb.peak_week + "。";
+  }
+
+  // ── 今日凍結預測 ───────────────────────────────────────────────────────
+  function renderFrozen(data) {
+    var host = document.getElementById("frozen-host");
+    host.innerHTML = "";
+    var fc = data.frozen_forecast;
+    if (!fc) {
+      host.appendChild(el("div", "loading", "今日無凍結預測。"));
+      return;
+    }
+    var ul = el("ul");
+    ul.style.cssText = "margin-left:1.1rem;font-size:.85rem;color:var(--text-secondary);line-height:1.9";
+    (fc.cta || []).forEach(function (c) {
+      var dir = c.dist_pct !== null && c.dist_pct > 0 ? "跌破" : "站上";
+      ul.appendChild(el("li", "", "若 " + esc(MARKET_SHORT[c.market] || c.market) + " 收盤" + dir +
+        " <span class=\"mono\">" + fmtNum(c.nearest_flip_level, 2) + "</span>（" + c.nearest_flip_window +
+        " 日窗，現距 " + fmtSigned(c.dist_pct, 2) + "%），三窗合計訊號將由 " + esc(c.current_composite) +
+        " 變為 " + esc(c.if_breached_composite) + "。"));
+    });
+    if (fc.vol_control) {
+      var dirLabel = { up: "曝險會上升", down: "曝險會下降", flat: "曝險大致不變" };
+      ul.appendChild(el("li", "", "若明日 SPY 收 +2%，" +
+        (dirLabel[fc.vol_control.plus_2pct_exposure_change_dir] || "方向未知") +
+        "；若收 −2%，" + (dirLabel[fc.vol_control.minus_2pct_exposure_change_dir] || "方向未知") + "。"));
+    }
+    if (!ul.children.length) {
+      host.appendChild(el("div", "loading", "今日無凍結預測。"));
+      return;
+    }
+    host.appendChild(ul);
+  }
+
+  function renderGaps(data) {
+    var gaps = data.gaps || [];
+    if (!gaps.length) return;
+    document.getElementById("sec-gaps").style.display = "";
+    var box = document.getElementById("gaps");
+    box.innerHTML = "本次更新缺口：";
+    var ul = el("ul");
+    gaps.forEach(function (g) { ul.appendChild(el("li", "", esc(g))); });
+    box.appendChild(ul);
+  }
+
+  fetch("data/latest.json").then(function (r) { return r.json(); }).then(function (data) {
+    document.getElementById("asof").textContent =
+      "資料日 " + data.as_of + " · 產出 " + twStamp(data.generated_at) + " · 每日美股收盤後更新";
+    renderFlowTable(data);
+    renderCtaDetail(data);
+    renderVolDetail(data);
+    renderBars(data);
+    renderBuyback(data);
+    renderFrozen(data);
+    renderGaps(data);
+  }).catch(function (e) {
+    document.getElementById("flow-tbody").innerHTML =
+      '<tr><td colspan="5" class="loading">資料載入失敗：' + esc(e.message) + "</td></tr>";
+  });
+})();
+</script>
+</body>
+</html>
