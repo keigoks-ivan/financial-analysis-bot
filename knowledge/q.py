@@ -7,6 +7,8 @@ q.py — 知識層查詢介面（Phase 1，服務 a：自我導航）。
   python knowledge/q.py --theme CoWoS # 含關鍵字的產業節點 + 成員 ticker 現裁決
   python knowledge/q.py --verdicts    # 全公司「最新裁決」分布
   python knowledge/q.py --calibration # 命中率 / 校準（需 outcome）；無 outcome 則給覆蓋報告
+  python knowledge/q.py --forecasts [source]  # 機率化判讀對帳簿：open 清單 + 校準（forecasts.jsonl）
+  python knowledge/q.py --forecast-add        # 互動式落帳精靈（resolver 需機械可解析，見 README）
   python knowledge/q.py --rebuild     # 重建 decisions.jsonl + graph.json
 
 第二大腦（全文層，brain_build.py 衍生）：
@@ -30,6 +32,7 @@ from pathlib import Path
 from collections import Counter, defaultdict
 
 KDIR = Path(__file__).resolve().parent
+ROOT = KDIR.parent
 DECISIONS = KDIR / "decisions.jsonl"
 GRAPH = KDIR / "graph.json"
 BUILD = KDIR / "build_knowledge.py"
@@ -38,6 +41,13 @@ SETTLE_BUILD = KDIR / "settle_outcomes.py"
 BRAIN_BUILD = KDIR / "brain_build.py"
 BRAIN_DB = KDIR / "brain.db"
 VAULT = KDIR / "vault"
+
+# 機率化判讀對帳簿（2026-09-01 起，設計見
+# notes/site-internal/root/_flowmap_forecast_ledger_design_20260901.md §B）
+FORECASTS = KDIR / "forecasts.jsonl"
+FORECAST_SETTLE = KDIR / "forecast_settlement.json"
+SETTLE_FORECASTS = KDIR / "settle_forecasts.py"
+MONITOR_LATEST = ROOT / "docs" / "monitor" / "data" / "latest.json"
 
 
 def _rebuild():
@@ -329,6 +339,242 @@ def cmd_calibration():
         print(f"  {k:8s} {ok}/{tot} = {ok/tot*100:.0f}%")
 
 
+# ─────────────────────────── 機率化判讀對帳簿（forecasts.jsonl）───────────────────────────
+
+# source → id 縮寫（fc_YYYYMMDD_<縮寫>_NN）。未知 source 退回英數前 4 碼。
+FORECAST_SOURCE_ABBR = {
+    "detective-read": "det",
+    "monitor-read": "mon",
+    "macro-falsifier": "macro",
+    "crowding-monitor": "crowd",
+    "manual": "man",
+}
+
+
+def _forecast_abbr(source):
+    if source in FORECAST_SOURCE_ABBR:
+        return FORECAST_SOURCE_ABBR[source]
+    a = "".join(ch for ch in source.lower() if ch.isalnum())[:4]
+    return a or "src"
+
+
+def _next_forecast_id(ts, source):
+    abbr = _forecast_abbr(source)
+    prefix = f"fc_{ts.replace('-', '')}_{abbr}_"
+    n = 0
+    if FORECASTS.exists():
+        for line in FORECASTS.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            try:
+                rid = json.loads(line).get("id", "")
+            except json.JSONDecodeError:
+                continue
+            if rid.startswith(prefix):
+                n += 1
+    return f"{prefix}{n + 1:02d}"
+
+
+def _check_resolver(series):
+    """驗證 resolver.series 可機械解析——委派 settle_forecasts.py（避免在此重複一份 ALIAS／
+    monitor 讀法）。回傳 (ok, message)。"""
+    r = subprocess.run([sys.executable, str(SETTLE_FORECASTS), "--check-resolver", series],
+                       capture_output=True, text=True)
+    return r.returncode == 0, r.stdout.strip()
+
+
+def _days_between_ymd(a, b):
+    from datetime import date as _date
+    ya, ma, da = map(int, a.split("-"))
+    yb, mb, db = map(int, b.split("-"))
+    return (_date(yb, mb, db) - _date(ya, ma, da)).days
+
+
+def _load_forecast_settlement():
+    """forecast_settlement.json（settle_forecasts.py 產出）。無檔、或比 forecasts.jsonl／
+    monitor latest.json／任一週線 cache 舊 → 自動重跑（同 _load_settlement 的 staleness 慣例）。"""
+    try:
+        stale = not FORECAST_SETTLE.exists()
+        if not stale:
+            t = FORECAST_SETTLE.stat().st_mtime
+            if FORECASTS.exists() and t < FORECASTS.stat().st_mtime:
+                stale = True
+            elif MONITOR_LATEST.exists() and t < MONITOR_LATEST.stat().st_mtime:
+                stale = True
+            else:
+                import os
+                cache_dir = ROOT / "data" / "weekly_cache"
+                if cache_dir.is_dir():
+                    with os.scandir(cache_dir) as it:
+                        stale = any(e.stat().st_mtime > t for e in it if e.name.endswith(".json"))
+        if stale:
+            subprocess.run([sys.executable, str(SETTLE_FORECASTS)], check=True)
+        if not FORECAST_SETTLE.exists():
+            return None
+        return json.loads(FORECAST_SETTLE.read_text(encoding="utf-8"))
+    except Exception as e:
+        print(f"（forecast 結算不可用：{e}）")
+        return None
+
+
+def cmd_forecasts(source=None):
+    data = _load_forecast_settlement()
+    if not data:
+        print("尚無 forecasts.jsonl 或結算失敗。用 --forecast-add 落第一筆。")
+        return
+    today = data.get("last_run") or ""
+    rows = data.get("rows", [])
+    if source:
+        rows = [r for r in rows if r.get("source") == source]
+        if not rows:
+            print(f"source={source} 沒有任何筆數。")
+            return
+
+    print(f"forecast ledger — 結算 as_of {today}" + (f"（source={source}）" if source else "") + "\n")
+    if data.get("coverage_warning"):
+        print(f"⚠ {data['coverage_warning']}\n")
+
+    opens = sorted([r for r in rows if r.get("status") == "open"], key=lambda r: r.get("resolve_by") or "")
+    print(f"未結算（open）：{len(opens)} 筆")
+    for r in opens:
+        rb = r.get("resolve_by") or ""
+        overdue = bool(rb) and today and rb < today
+        mark = "⚠ 逾期未結算  " if overdue else "  "
+        dleft = ""
+        if rb and today and not overdue:
+            dleft = f"（剩 {_days_between_ymd(today, rb)}d）"
+        print(f"{mark}{r.get('id', ''):24s} p={r.get('p')}  →{rb}{dleft}  {(r.get('claim') or '')[:60]}")
+    if not opens:
+        print("  （無）")
+    print()
+
+    resolved = [r for r in rows if r.get("status") in ("resolved_yes", "resolved_no")]
+    voided = [r for r in rows if r.get("status") == "void"]
+    n_yes = sum(1 for r in resolved if r["status"] == "resolved_yes")
+    n_no = len(resolved) - n_yes
+    print(f"已結算：{len(resolved)} 筆（yes {n_yes} / no {n_no}）；void：{len(voided)} 筆"
+          + (f"；detective 域待實作 {data.get('n_detective_pending')} 筆" if data.get("n_detective_pending") else ""))
+    print()
+
+    by_src = defaultdict(list)
+    for r in resolved:
+        if r.get("p") is not None and r.get("outcome") is not None:
+            by_src[r.get("source") or "—"].append(r)
+
+    sources = [source] if source else sorted(by_src)
+    for src in sources:
+        rs = by_src.get(src, [])
+        if not rs:
+            continue
+        n = len(rs)
+        mean_brier = sum(r["brier"] for r in rs) / n
+        print(f"── {src}（resolved {n} 筆）── raw Brier 均值 {mean_brier:.4f}")
+        if n < 20:
+            print("   樣本不足（<20 筆），不出 BSS／校準曲線（見 README 樣本誠實條款）。\n")
+            continue
+        base_rate = sum(r["outcome"] for r in rs) / n
+        brier_clim = base_rate * (1 - base_rate)
+        if brier_clim > 0:
+            bss = 1 - mean_brier / brier_clim
+            print(f"   climatology（該 source resolved 集合的 in-sample outcome 頻率）= {base_rate:.3f}；"
+                  f"Brier skill score = 1 − Brier/Brier_clim = {bss:.3f}")
+        else:
+            print(f"   climatology = {base_rate:.3f}（0 或 1，分母為 0，無法算 BSS）")
+        print("   校準曲線（10 桶：預測機率 vs 實際頻率）：")
+        buckets = [[] for _ in range(10)]
+        for r in rs:
+            buckets[min(int(r["p"] * 10), 9)].append(r)
+        for i, b in enumerate(buckets):
+            if not b:
+                continue
+            avg_p = sum(r["p"] for r in b) / len(b)
+            freq = sum(r["outcome"] for r in b) / len(b)
+            print(f"     [{i * 10:>3}-{(i + 1) * 10:>3}%]  n={len(b):<3}  預測均值={avg_p:.2f}  實際頻率={freq:.2f}")
+        print()
+
+
+def cmd_forecast_add():
+    from datetime import date as _date, timedelta as _td
+    print("落帳精靈 — 機率化判讀對帳簿（knowledge/forecasts.jsonl）")
+    print("核心裁定：resolver 必須機械可判，寫不出可解析的 resolver 就不准落帳")
+    print("（見 notes/site-internal/root/_flowmap_forecast_ledger_design_20260901.md §B2）。\n")
+
+    claim = input("命題（claim，具體到可判真偽的一句話）：").strip()
+    if not claim:
+        print("命題不可空白，中止。")
+        return
+    try:
+        p = float(input("機率 p（0-1，如 0.25）：").strip())
+    except ValueError:
+        print("p 必須是數字，中止。")
+        return
+    if not (0 <= p <= 1):
+        print("p 必須介於 0 與 1 之間，中止。")
+        return
+    try:
+        horizon_days = int(input("horizon_days（幾天內判真偽，如 90）：").strip())
+    except ValueError:
+        print("horizon_days 必須是整數，中止。")
+        return
+    if horizon_days <= 0:
+        print("horizon_days 必須 > 0，中止。")
+        return
+
+    today = _date.today()
+    ts = today.isoformat()
+    resolve_by = (today + _td(days=horizon_days)).isoformat()
+
+    print("\nresolver 域（domain）：")
+    print("  1) price   — data/weekly_cache/<TICKER>.json 週線收盤")
+    print("  2) monitor — docs/monitor/data/latest.json 的 series key")
+    print("  （detective 域結算未實作，本精靈暫不接受此域落帳）")
+    dom = input("選 1 或 2：").strip()
+    dom_map = {"1": "price", "2": "monitor"}
+    if dom not in dom_map:
+        print("非 1/2，中止。")
+        return
+    key_prompt = "TICKER（如 NVDA）：" if dom == "1" else "monitor series key（如 hy_oas）："
+    key = input(key_prompt).strip()
+    key = key.upper() if dom == "1" else key
+    series = f"{dom_map[dom]}:{key}"
+    ok, msg = _check_resolver(series)
+    if not ok:
+        print(f"resolver 不可解析：{msg}。無法落帳，中止。")
+        return
+    print(f"  目前值：{msg}")
+
+    op = input("比較運算子 op（> / < / >= / <=）：").strip()
+    if op not in (">", "<", ">=", "<="):
+        print("op 必須是 > < >= <= 其中之一，中止。")
+        return
+    try:
+        value = float(input("門檻 value（數字，尺度需與上面目前值一致）：").strip())
+    except ValueError:
+        print("value 必須是數字，中止。")
+        return
+    window = input("window（any_close=區間內任一收盤觸及即 yes／at_expiry=只看到期時值）[any_close]：").strip() or "any_close"
+    if window not in ("any_close", "at_expiry"):
+        print("window 必須是 any_close 或 at_expiry，中止。")
+        return
+
+    source = input("source（如 detective-read / monitor-read / manual）[manual]：").strip() or "manual"
+    source_ref = input("source_ref（出處，如報告路徑或 as_of，可留白）：").strip() or None
+
+    row = {
+        "id": _next_forecast_id(ts, source), "ts": ts, "source": source, "source_ref": source_ref,
+        "claim": claim, "p": p, "horizon_days": horizon_days, "resolve_by": resolve_by,
+        "resolver": {"series": series, "op": op, "value": value, "window": window},
+        "status": "open", "resolved_ts": None, "outcome": None, "brier": None,
+    }
+    print("\n" + json.dumps(row, ensure_ascii=False, indent=1))
+    if input("\n確認落帳？(y/N)：").strip().lower() != "y":
+        print("已取消，未寫入。")
+        return
+    with FORECASTS.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(row, ensure_ascii=False) + "\n")
+    print(f"✅ 已落帳 {row['id']} → knowledge/forecasts.jsonl")
+
+
 # ─────────────────────────── 第二大腦（全文層）───────────────────────────
 
 def _ensure_brain():
@@ -545,6 +791,11 @@ def main():
         cmd_verdicts()
     elif a0 == "--calibration":
         cmd_calibration()
+    elif a0 == "--forecasts":
+        src = args[1] if len(args) > 1 and not args[1].startswith("--") else None
+        cmd_forecasts(src)
+    elif a0 == "--forecast-add":
+        cmd_forecast_add()
     elif a0.startswith("--"):
         print(__doc__)
     else:

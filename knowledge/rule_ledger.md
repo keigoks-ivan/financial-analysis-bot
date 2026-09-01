@@ -83,3 +83,6 @@
 | wiki/gym.html 異常狩獵（用戶票選） | 2026-07-08 | 認領數 < 5 或對帳判定數 = 0（只認領不對帳＝評論家模式）→ 降級回靜態榜 | — |
 | q.py --inbox / --falsifiers 回寫迴路 | 2026-07-08 | falsifiers.json 30 天後仍 0 條 → 回寫迴路失敗，重新設計而非硬推 | — |
 | munger-mind 蒙格腦（定位＝掛蒙格清單的紅隊，非蒙格複製；語料薄／二手卡／出處洗白三風險已知） | 2026-07-08 | 30 天內對質報告無任何一條進入實際決策參考 → 降級為純語料檢索、撤第三隻錨席位。正面樣本 ×2：META（治理假說重安放進 pre-mortem）、NVDA（歷史倍數錨失效＋四傾向共振警報，用戶認可） | — |
+| flowmap CTA 觸發位模組（3 窗動能反解翻轉價位；窗長／AUM 錨 PREREG 凍結；設計稿 `notes/site-internal/root/_flowmap_forecast_ledger_design_20260901.md` §A） | 2026-09-01 | 連兩季（26 週）frozen_forecast 與 CFTC COT 週度部位變化方向對帳，命中率與擲硬幣無統計差異 → 模組降級為 gaps 或刪除 | — |
+| flowmap vol-control 曝險模組（target_vol=10%／cap=100%／AUM 錨 $250bn PREREG 凍結） | 2026-09-01 | 階梯表預測的流量方向連兩季與 SPX 已實現波動—報酬互動不符 → 模組降級為 gaps 或刪除（buyback 日曆為純日曆無判斷，不掛 kill） | — |
+| forecast ledger 判讀對帳簿本體（tool-level；`knowledge/forecasts.jsonl`＋`settle_forecasts.py`＋`q.py --forecasts`；resolver 必須機械可判） | 2026-09-01 | 180 天內 resolved < 20 筆，或校準結果從未被任何決策討論／校準輪實際引用 → 儀式化認定，降級或砍（automatable ≠ valuable，同 macro-analyst tool-level 條款精神）。正面義務：本簿是 rule_ledger「macro stance 與後續 6M 方向無相關→降級」條款的機械執行路徑 | — |

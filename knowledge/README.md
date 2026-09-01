@@ -75,6 +75,21 @@ python knowledge/rule_audit.py --report   # 印 markdown 審計預覽表（貼�
 **讀數紀律**：v13/v14 決策層 2026-06-22 才起跑，成熟樣本（結算齡 ≥28 天）現多為 0，
 mean to_date 取全部已結算命中、方向可讀量級慎讀。
 
+## 機率化判讀對帳簿（forecasts.jsonl，2026-09-01 起）
+
+把站內判讀（detective-read／monitor-read／macro 證偽表等）升級成可記分的機率預測：落款凍結
+→機械結算→Brier／校準曲線。設計見 `notes/site-internal/root/_flowmap_forecast_ledger_design_20260901.md` §B。
+
+- `forecasts.jsonl`（append-only，真相，commit）：每筆 `{claim, p, resolve_by, resolver, status, outcome, brier}`；
+  **resolver 必須機械可判**（`price:<TICKER>`／`monitor:<key>` 兩域可結算，`detective:*` 本期未實作）。
+- `settle_forecasts.py`：機械結算（open → resolved_yes/resolved_no/void），回寫 forecasts.jsonl 的
+  status/resolved_ts/outcome/brier 四欄，彙總輸出 `forecast_settlement.json`（衍生物，gitignore）。
+- `python knowledge/q.py --forecasts [source]`：open 清單（含逾期未結算標記）＋依 source 的校準統計
+  （resolved ≥20 筆才出 Brier skill score／10 桶校準曲線，<20 筆只印 raw Brier）；會自動先跑結算。
+- `python knowledge/q.py --forecast-add`：互動式落帳精靈，落帳前驗證 resolver 可解析，寫不出來就拒絕。
+- `scripts/harvest_macro_falsifiers.py`：把 `docs/macro/MACRO_*.html` 證偽表擬成落帳草案（dry-run 印
+  stdout，`--write` 才 append；p 值需人工賦值，草案預設 null 不會被寫入）。
+
 ## 回填 outcome（人工複盤，機械結算不取代）
 
 在 `ledger.manual.jsonl` 加一行（`decision_id` = `q.py` 顯示的 `ticker-YYYYMMDD`）：
