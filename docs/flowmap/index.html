@@ -111,6 +111,23 @@ h2 .en{font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--text-mut
 .week-cell .wp{font-family:'IBM Plex Mono',monospace;font-size:1.05rem;font-weight:700;margin-top:.2rem}
 .week-cell.peak{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
 
+/* 成績單 */
+.scorecard-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1rem}
+.score-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
+            padding:1.1rem 1.3rem;box-shadow:var(--shadow-sm)}
+.score-card h3{font-family:'Playfair Display','Noto Serif TC',Georgia,serif;font-size:1.02rem;
+               font-weight:700;margin-bottom:.55rem;color:var(--text)}
+.score-status{display:flex;align-items:baseline;gap:.5rem;margin-bottom:.7rem}
+.score-status .dot{font-size:1.05rem}
+.score-status .label{font-size:.85rem;color:var(--text-secondary);font-weight:600}
+.score-stats{display:flex;gap:1.5rem;margin-bottom:.7rem;flex-wrap:wrap}
+.score-stats .stat-label{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em}
+.score-stats .stat-val{font-family:'IBM Plex Mono',monospace;font-size:1.15rem;font-weight:700;
+                       color:var(--text);margin-top:.15rem}
+.score-note{font-size:.8rem;color:var(--text-secondary);line-height:1.7}
+.score-kill{margin-top:.6rem;font-size:.76rem;color:var(--neg);line-height:1.7;
+            background:var(--neg-bg);border-radius:6px;padding:.5rem .6rem}
+
 /* details / gaps / disclaimer */
 details{margin-top:.8rem}
 details summary{cursor:pointer;font-size:.82rem;font-weight:600;color:var(--accent);list-style:revert}
@@ -139,14 +156,16 @@ footer.imq-foot a{color:var(--text-secondary)}
 <body>
 <div class="wrap">
   <div class="hero">
-    <span class="overline">Conditional Flow Map · Phase 1</span>
+    <span class="overline">Conditional Flow Map · Phase 1 + 1.5</span>
     <h1>條件流量地圖</h1>
     <p class="lede">
       市場上有一群<strong>按公式行動</strong>的資金——不是誰看好看壞，是價格或波動一旦碰到某個數字，
       程式就會照規則買或賣。CTA 趨勢跟隨基金看價格站上或跌破某條均線／區間；
       目標波動控制基金看已實現波動變大變小，機械調整曝險；企業庫藏股買盤則在財報前有法規靜默期，
-      整批消失又整批回來。<strong>本頁算的是「如果價格到哪裡、誰會被迫做什麼、量多大」，不是預測漲跌。</strong>
-      三個模組的門檻與資金錨已於設計階段凍結，不隨個案調整；每天的結論也會原樣存檔，方便之後回頭核對機械模型是否真的準。
+      整批消失又整批回來；槓桿／反向ETF每天收盤前都要把部位調回目標倍數，不需要價格觸及特定水位；
+      平衡型基金則在每月底把偏離的股債比例調回原本設定。
+      <strong>本頁算的是「如果價格到哪裡、誰會被迫做什麼、量多大」，不是預測漲跌。</strong>
+      五個模組的門檻與資金錨已於設計階段凍結，不隨個案調整；每天的結論也會原樣存檔，方便之後回頭核對機械模型是否真的準。
     </p>
     <div class="mandate">
       <strong>定位：</strong>本頁是<strong>描述器（describer），不是進出場訊號</strong>。
@@ -212,6 +231,56 @@ footer.imq-foot a{color:var(--text-secondary)}
     </div>
   </section>
 
+  <section id="sec-levetf">
+    <h2>槓桿／反向ETF尾盤再平衡<span class="en">Leveraged ETF Rebalance</span></h2>
+    <p class="section-sub">
+      SSO／UPRO／SPXL 這類槓桿ETF、SDS／SPXU／SPXS 這類反向ETF，每天收盤前都要把部位調回目標倍數——
+      不需要價格觸及特定水位，只要當天指數有漲跌，尾盤就有一筆機械交易。
+      <strong>漲時做多基金要加碼、做空基金要回補（回補也是買進）；跌時方向剛好相反</strong>，
+      兩邊力量在同一天疊加成同方向的流量，這正是「槓桿ETF放大收盤走勢」這個說法的算術來源。
+    </p>
+    <div class="card" style="overflow-x:auto">
+      <table class="flow-table" id="levetf-table">
+        <thead><tr><th>複合體</th><th>今日已實現流量</th><th>若明日 +1%</th><th>若明日 −1%</th><th>信心</th></tr></thead>
+        <tbody id="levetf-tbody"><tr><td colspan="5" class="loading">載入中…</td></tr></tbody>
+      </table>
+    </div>
+    <details id="levetf-detail">
+      <summary>槓桿ETF模組方法論與複合體明細</summary>
+      <div class="body">
+        公式：尾盤再平衡名目 =（槓桿倍數² − 槓桿倍數）× 基金規模（AUM）× 當日標的報酬。
+        槓桿倍數含正負：+2x 係數 2、−2x 係數 6、+3x 係數 6、−3x 係數 12——反向基金的係數天生比同倍數的做多基金大，
+        這也是為什麼放大效應在下跌時特別明顯的原因。
+        SPX／NDX 複合體的標的報酬直接讀 SPY／QQQ 當日報酬；SOX（半導體）複合體目前沒有現成的非槓桿指數代理可用，
+        改用 SOXL（失敗則 SOXS）自身當日報酬除以槓桿倍數換算回推，精確度略低於前兩個複合體，屬本頁的實作選擇。
+        AUM 來自 yfinance 揭露的基金總資產，7 天更新一次；單一基金若當天抓不到，沿用上次數字並標記「資料可能過期」。
+        <div id="levetf-complex-detail"></div>
+      </div>
+    </details>
+  </section>
+
+  <section id="sec-monthend">
+    <h2>月末／季末再平衡壓力<span class="en">Month-End Rebalance</span></h2>
+    <p class="section-sub">
+      很多平衡型基金（例如常見的股六債四）按月把配置調回目標比例。
+      <strong>股票和債券當月報酬差距越大，月底要調的量就越大</strong>——股票漲比債券多，月底就要賣股票買債券；反之則反過來。
+      這股力道集中在<strong>每月最後 3 個交易日</strong>；季底（3／6／9／12 月）還會疊加季度再平衡，量通常偏量級區間上緣。
+    </p>
+    <div class="card" id="monthend-host"><div class="loading">載入中…</div></div>
+    <details id="monthend-detail">
+      <summary>月末模組方法論與誠實限制</summary>
+      <div class="body">
+        分岔 = 本月至今 SPY 報酬 − 本月至今 AGG 報酬（AGG 代理美國核心債券）。
+        分岔為正（股票跑贏）→ 月底賣股買債；分岔為負（債券跑贏）→ 買股賣債。
+        <strong>量級桶為外部研究粗略估計，不是本頁精算數字</strong>：分岔 &lt;2 個百分點對應約 0–100 億美元、
+        2–5 個百分點對應約 100–300 億美元、超過 5 個百分點對應約 300–600 億美元，信心度標為低。
+        生效窗第一天會把當時的方向原樣存檔，供之後對照生效窗 3 日的實際 SPY−AGG 相對報酬方向。
+        <strong>這個模組月頻更新——一年約 12 次讀數，要累積到能判斷「準不準」大約需要 2 年，
+        現階段請把它當作方向性的提示，不是精算結論。</strong>
+      </div>
+    </details>
+  </section>
+
   <section id="sec-frozen">
     <h2>今日凍結預測<span class="en">Frozen Forecast</span></h2>
     <p class="section-sub">
@@ -219,6 +288,20 @@ footer.imq-foot a{color:var(--text-secondary)}
       不可回改。這是讓機械模型可以被秋後算帳的機制，不是即時判斷。
     </p>
     <div class="card" id="frozen-host"><div class="loading">載入中…</div></div>
+  </section>
+
+  <section id="sec-scorecard" style="display:none">
+    <h2>成績單<span class="en">Scorecard</span></h2>
+    <p class="section-sub">
+      本頁的模型每天把預測凍結存檔，這裡是它們的答案卷——錯了你看得到。
+      每個模組獨立對帳、獨立記分；<strong>紅燈只代表「已達淘汰門檻，等持有人在校準輪決定要不要收掉」，
+      本頁不會自動關閉或修改任何模組</strong>。
+    </p>
+    <div class="scorecard-grid" id="scorecard-grid"></div>
+    <details id="scorecard-detail">
+      <summary>對帳方法論與誠實限制</summary>
+      <div class="body" id="scorecard-method"></div>
+    </details>
   </section>
 
   <section id="sec-gaps" style="display:none">
@@ -232,6 +315,9 @@ footer.imq-foot a{color:var(--text-secondary)}
     CTA／vol-control 兩模組的翻轉價位與已實現波動皆為機械計算（可重算、可回測）；
     「全翻轉流量」與「AUM 錨」為外部研究粗略估計，非本站機械算出，信心度已逐項標註。
     庫藏股靜默期覆蓋率為等權純日曆機制，不含市值加權亦不含任何方向判斷。
+    槓桿／反向ETF模組的公式與AUM皆為實值機械計算（中信心；內部淨額與滑價未知）；
+    月末再平衡模組的分岔為機械計算，但量級桶為外部研究粗略估計（低信心），且月頻更新樣本累積慢，
+    需時約 2 年才足量校準，現階段僅供方向性參考。
     Dealer gamma（選擇權未平倉部位驅動的做市商避險流量）因缺乏可得的 OI 級資料，本階段暫不產出，見上方資料缺口。
     過往統計關係不保證未來重演。
   </div>
@@ -278,9 +364,15 @@ footer.imq-foot a{color:var(--text-secondary)}
   var MARKET_LABEL = {
     SPX: "SPX（標普 500，以 SPY 代理）",
     NDX: "NDX（那斯達克 100，以 QQQ 代理）",
-    RTY: "RTY（羅素 2000，以 IWM 代理）"
+    RTY: "RTY（羅素 2000，以 IWM 代理）",
+    SOX: "SOX（費城半導體，以 SOXL/SOXS 自身報酬反推）"
   };
-  var MARKET_SHORT = { SPX: "SPX", NDX: "NDX", RTY: "RTY" };
+  var MARKET_SHORT = { SPX: "SPX", NDX: "NDX", RTY: "RTY", SOX: "SOX" };
+  var DIR_LABEL_MONTHEND = {
+    sell_equity_buy_bond: "股票跑贏，月底傾向賣股買債",
+    buy_equity_sell_bond: "債券跑贏，月底傾向買股賣債",
+    flat: "股債報酬大致持平，方向不明顯"
+  };
 
   function twStamp(iso) {
     if (!iso) return "";
@@ -352,8 +444,41 @@ footer.imq-foot a{color:var(--text-secondary)}
       });
     }
 
+    (data.lev_etf ? data.lev_etf.complexes : []).forEach(function (c) {
+      var shockUp = (c.shock_table || []).filter(function (s) { return s.shock_pct === 1; })[0];
+      rows.push({
+        cond: "<b>" + esc(MARKET_SHORT[c.complex] || c.complex) + " 複合體今日已實現機械流量 " +
+              fmtSigned(bnToYi(c.today_realized_flow_usd_bn), 1) + " 億美元</b>" +
+              "<small>標的今日報酬 " + fmtSigned(c.underlying_return_pct, 2) + "%；若明日再 +1%，尾盤同方向機械流量約 " +
+              (shockUp ? fmtNum(bnToYi(shockUp.flow_usd_bn), 1) : "—") + " 億美元</small>",
+        actor: "槓桿／反向ETF（尾盤再平衡）",
+        mag: fmtSigned(bnToYi(c.today_realized_flow_usd_bn), 1) + " 億美元",
+        magDir: "今日已實現流量",
+        conf: c.confidence,
+        src: c.as_of || (data.lev_etf && data.lev_etf.as_of)
+      });
+    });
+
+    if (data.month_end) {
+      var me = data.month_end;
+      var bkt = me.magnitude_bucket || {};
+      rows.push({
+        cond: "<b>本月 SPY−AGG 報酬分岔 " + fmtSigned(me.divergence_pct, 2) + " 個百分點</b>" +
+              "<small>" + (DIR_LABEL_MONTHEND[me.direction] || "—") + "；生效窗 " +
+              (me.effective_window ? me.effective_window.start + " 至 " + me.effective_window.end : "—") +
+              (me.in_window ? "（今日在窗內）" : "（今日未進窗，僅供讀數參考）") +
+              (me.quarter_end_note ? "；" + esc(me.quarter_end_note) : "") + "</small>",
+        actor: "平衡型基金（月末回歸目標權重）",
+        mag: fmtNum(bnToYi(bkt.range_usd_bn ? bkt.range_usd_bn[0] : null), 0) + "–" +
+             fmtNum(bnToYi(bkt.range_usd_bn ? bkt.range_usd_bn[1] : null), 0) + " 億美元",
+        magDir: "量級桶（" + (bkt.label || "—") + "，外部研究粗錨）",
+        conf: me.confidence,
+        src: me.as_of
+      });
+    }
+
     if (!rows.length) {
-      tbody.appendChild(el("tr", "", '<td colspan="5" class="loading">今日三個模組皆無可用資料，見下方資料缺口。</td>'));
+      tbody.appendChild(el("tr", "", '<td colspan="5" class="loading">今日五個模組皆無可用資料，見下方資料缺口。</td>'));
       return;
     }
 
@@ -466,6 +591,93 @@ footer.imq-foot a{color:var(--text-secondary)}
     note.textContent = "樣本 " + bb.universe_n + "/" + bb.universe_total + " 檔取得次次財報日；峰值週 " + bb.peak_week + "。";
   }
 
+  // ── 槓桿／反向ETF尾盤再平衡 ────────────────────────────────────────────
+  function renderLevEtf(data) {
+    var tbody = document.getElementById("levetf-tbody");
+    var detailHost = document.getElementById("levetf-complex-detail");
+    tbody.innerHTML = "";
+    var complexes = data.lev_etf ? data.lev_etf.complexes : [];
+    if (!complexes || !complexes.length) {
+      tbody.appendChild(el("tr", "", '<td colspan="5" class="loading">本模組今日無可用資料，見下方資料缺口。</td>'));
+      if (detailHost) detailHost.innerHTML = "";
+      return;
+    }
+    complexes.forEach(function (c) {
+      var shockUp1 = (c.shock_table || []).filter(function (s) { return s.shock_pct === 1; })[0];
+      var shockDn1 = (c.shock_table || []).filter(function (s) { return s.shock_pct === -1; })[0];
+      var tr = el("tr");
+      tr.appendChild(el("td", "flow-cond",
+        "<b>" + esc(MARKET_SHORT[c.complex] || c.complex) + "</b><small>標的：" +
+        esc(c.underlying_proxy) + "，今日報酬 " + fmtSigned(c.underlying_return_pct, 2) + "%</small>"));
+      tr.appendChild(el("td", "flow-mag mono", fmtSigned(bnToYi(c.today_realized_flow_usd_bn), 1) + " 億美元"));
+      tr.appendChild(el("td", "flow-mag mono", shockUp1 ? fmtSigned(bnToYi(shockUp1.flow_usd_bn), 1) + " 億美元" : "—"));
+      tr.appendChild(el("td", "flow-mag mono", shockDn1 ? fmtSigned(bnToYi(shockDn1.flow_usd_bn), 1) + " 億美元" : "—"));
+      var confHtml = c.confidence === "med" ? '<span class="conf-chip conf-med">中</span>'
+        : '<span class="conf-chip conf-lo">低</span>';
+      tr.appendChild(el("td", "", confHtml));
+      tbody.appendChild(tr);
+    });
+
+    if (detailHost) {
+      detailHost.innerHTML = "";
+      var t = el("table");
+      t.appendChild(el("tr", "", "<th>複合體</th><th>ETF</th><th>槓桿</th><th>係數</th><th>AUM（億美元）</th><th>今日流量（億美元）</th>"));
+      complexes.forEach(function (c) {
+        (c.legs || []).forEach(function (leg) {
+          var staleTag = leg.aum_stale ? "（資料可能過期）" : "";
+          t.appendChild(el("tr", "",
+            "<td>" + esc(MARKET_SHORT[c.complex] || c.complex) + "</td><td>" + esc(leg.ticker) + "</td><td class=\"mono\">" +
+            (leg.leverage > 0 ? "+" : "") + leg.leverage + "x</td><td class=\"mono\">" + leg.coef +
+            "</td><td class=\"mono\">" + fmtNum(bnToYi(leg.aum_usd_bn), 1) + staleTag + "</td><td class=\"mono\">" +
+            fmtSigned(bnToYi(leg.today_flow_usd_bn), 2) + "</td>"));
+        });
+      });
+      detailHost.appendChild(t);
+    }
+  }
+
+  // ── 月末／季末再平衡壓力 ──────────────────────────────────────────────
+  function renderMonthEnd(data) {
+    var host = document.getElementById("monthend-host");
+    host.innerHTML = "";
+    var me = data.month_end;
+    if (!me) {
+      host.appendChild(el("div", "loading", "本模組今日無可用資料，見下方資料缺口。"));
+      return;
+    }
+    var wrap = el("div");
+    wrap.style.cssText = "display:flex;flex-wrap:wrap;gap:1.6rem;align-items:baseline;margin-bottom:.9rem";
+    var stats = [
+      ["SPY 本月至今", fmtSigned(me.spy_mtd_return_pct, 2) + "%"],
+      ["AGG 本月至今", fmtSigned(me.agg_mtd_return_pct, 2) + "%"],
+      ["分岔（SPY−AGG）", fmtSigned(me.divergence_pct, 2) + " pp"]
+    ];
+    stats.forEach(function (s) {
+      var box = el("div");
+      box.appendChild(el("div", "", s[0]));
+      box.firstChild && (box.firstChild.style.cssText = "font-size:11px;color:var(--text-muted)");
+      var v = el("div", "mono", esc(s[1]));
+      v.style.cssText = "font-size:1.15rem;font-weight:700;color:var(--text);margin-top:.15rem";
+      box.appendChild(v);
+      wrap.appendChild(box);
+    });
+    host.appendChild(wrap);
+
+    var bkt = me.magnitude_bucket || {};
+    var p1 = el("p", "", (DIR_LABEL_MONTHEND[me.direction] || "—") + "——量級桶：<b>" + esc(bkt.label || "—") +
+      "</b>（約 " + fmtNum(bnToYi(bkt.range_usd_bn ? bkt.range_usd_bn[0] : null), 0) + "–" +
+      fmtNum(bnToYi(bkt.range_usd_bn ? bkt.range_usd_bn[1] : null), 0) + " 億美元，外部研究粗錨，低信心）。");
+    p1.style.cssText = "font-size:.85rem;color:var(--text-secondary);line-height:1.8";
+    host.appendChild(p1);
+
+    var windowTxt = me.effective_window ? me.effective_window.start + " 至 " + me.effective_window.end : "—";
+    var p2 = el("p", "", "生效窗（本月最後 3 個交易日）：" + esc(windowTxt) +
+      (me.in_window ? "——<b>今日在生效窗內</b>" : "——今日尚未進生效窗，讀數僅供參考") +
+      (me.quarter_end_note ? "。" + esc(me.quarter_end_note) : "") + "。");
+    p2.style.cssText = "font-size:.82rem;color:var(--text-muted);margin-top:.4rem";
+    host.appendChild(p2);
+  }
+
   // ── 今日凍結預測 ───────────────────────────────────────────────────────
   function renderFrozen(data) {
     var host = document.getElementById("frozen-host");
@@ -490,12 +702,108 @@ footer.imq-foot a{color:var(--text-secondary)}
         (dirLabel[fc.vol_control.plus_2pct_exposure_change_dir] || "方向未知") +
         "；若收 −2%，" + (dirLabel[fc.vol_control.minus_2pct_exposure_change_dir] || "方向未知") + "。"));
     }
+    (fc.lev_etf || []).forEach(function (c) {
+      var s1 = (c.shock_table || []).filter(function (s) { return s.shock_pct === 1; })[0];
+      ul.appendChild(el("li", "", esc(MARKET_SHORT[c.complex] || c.complex) +
+        " 複合體今日已實現流量 " + fmtSigned(bnToYi(c.today_realized_flow_usd_bn), 1) +
+        " 億美元；若明日 +1%，尾盤同方向流量約 " + (s1 ? fmtNum(bnToYi(s1.flow_usd_bn), 1) : "—") + " 億美元。"));
+    });
+    if (fc.month_end) {
+      ul.appendChild(el("li", "", "本月生效窗首日（" + esc(fc.month_end.window_start) +
+        "）凍結方向：" + (DIR_LABEL_MONTHEND[fc.month_end.direction] || "—") +
+        "（分岔 " + fmtSigned(fc.month_end.divergence_pct, 2) +
+        " pp），將以生效窗 3 日（至 " + esc(fc.month_end.window_end) + "）的 SPY−AGG 相對報酬方向對帳。"));
+    }
     if (!ul.children.length) {
       host.appendChild(el("div", "loading", "今日無凍結預測。"));
       return;
     }
     host.appendChild(ul);
   }
+
+  // ── 成績單（scorecard.json，獨立 fetch，失敗整段隱藏）───────────────────
+  var SCORE_MODULE_LABEL = {
+    cta: "CTA 趨勢跟隨",
+    month_end: "月末／季末再平衡",
+    rv_model: "波動率預測（rv-model）"
+  };
+  var SCORE_DOT = { green: "🟢", yellow: "🟡", red: "🔴" };
+  var SCORE_STATUS_TEXT = {
+    green: "健康：統計上顯著優於擲硬幣",
+    yellow: "樣本累積中，尚不評分",
+    red: "已觸發淘汰門檻"
+  };
+
+  function scoreStat(label, val) {
+    var box = el("div");
+    box.appendChild(el("div", "stat-label", esc(label)));
+    box.appendChild(el("div", "stat-val mono", esc(String(val))));
+    return box;
+  }
+
+  function renderScorecard(sc) {
+    if (!sc || !sc.modules) throw new Error("scorecard.json 格式不完整");
+    var grid = document.getElementById("scorecard-grid");
+    grid.innerHTML = "";
+
+    ["cta", "month_end", "rv_model"].forEach(function (key) {
+      var m = sc.modules[key];
+      if (!m) return;
+      var card = el("div", "score-card");
+      card.appendChild(el("h3", "", esc(SCORE_MODULE_LABEL[key] || key)));
+
+      var statusRow = el("div", "score-status");
+      statusRow.appendChild(el("span", "dot", SCORE_DOT[m.status] || "⚪"));
+      statusRow.appendChild(el("span", "label", esc(SCORE_STATUS_TEXT[m.status] || m.status || "—")));
+      card.appendChild(statusRow);
+
+      var isRv = key === "rv_model";
+      var nNow = isRv ? m.n_resolved : m.n_samples;
+      var nReq = m.n_required;
+      var stats = el("div", "score-stats");
+      stats.appendChild(scoreStat("樣本數", (nNow === undefined || nNow === null ? "—" : nNow) + "／需 " + nReq));
+      if (m.status === "yellow") {
+        stats.appendChild(scoreStat("狀態", "樣本累積中（" + nNow + "／" + nReq + "）"));
+      } else if (isRv) {
+        stats.appendChild(scoreStat("raw Brier", fmtNum(m.raw_brier_mean, 4)));
+        stats.appendChild(scoreStat("BSS（vs climatology）", (m.bss === null || m.bss === undefined) ? "—" : fmtSigned(m.bss, 3)));
+      } else {
+        stats.appendChild(scoreStat("命中率", (m.hit_rate === null || m.hit_rate === undefined) ? "—" : fmtNum(m.hit_rate * 100, 1) + "%"));
+        stats.appendChild(scoreStat("命中／樣本", m.hits + "／" + nNow));
+      }
+      card.appendChild(stats);
+
+      card.appendChild(el("div", "score-note", esc(m.status_label || "")));
+
+      if (m.status === "red") {
+        card.appendChild(el("div", "score-kill", "淘汰門檻：" + esc(m.kill_condition || "") +
+          "——本頁只舉旗，不會自動關閉或修改此模組。"));
+      }
+
+      grid.appendChild(card);
+    });
+
+    var method = document.getElementById("scorecard-method");
+    var meta = sc.meta || {};
+    method.innerHTML =
+      "<p>資料日 " + esc(sc.as_of || "—") + "。" + esc(meta.method_note || "") + "</p>" +
+      "<p style=\"margin-top:.6rem\">CTA 對帳採用的 COT 部位類別：<b>" + esc(meta.cot_category_used || "—") +
+      "</b>——" + esc(meta.cot_category_reason || "") + "</p>" +
+      "<p style=\"margin-top:.6rem\">顯著性判定：" + esc(meta.significance_test || "") + "</p>" +
+      "<p style=\"margin-top:.6rem\"><strong>月末模組月頻更新——一年約 12 次讀數，" +
+      "累積到能判斷「準不準」約需 2 年；目前只有極少量歷史，全部模組顯示樣本累積中屬正常狀態，不是系統故障。</strong></p>";
+
+    document.getElementById("sec-scorecard").style.display = "";
+  }
+
+  fetch("data/scorecard.json").then(function (r) {
+    if (!r.ok) throw new Error("scorecard.json HTTP " + r.status);
+    return r.json();
+  }).then(function (sc) {
+    renderScorecard(sc);
+  }).catch(function () {
+    document.getElementById("sec-scorecard").style.display = "none";
+  });
 
   function renderGaps(data) {
     var gaps = data.gaps || [];
@@ -516,6 +824,8 @@ footer.imq-foot a{color:var(--text-secondary)}
     renderVolDetail(data);
     renderBars(data);
     renderBuyback(data);
+    renderLevEtf(data);
+    renderMonthEnd(data);
     renderFrozen(data);
     renderGaps(data);
   }).catch(function (e) {

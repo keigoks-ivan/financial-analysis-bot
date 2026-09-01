@@ -1,0 +1,111 @@
+name: Weekly Forecast Ledger Settle + Flowmap Scorecard
+
+# 自動對帳與進化迴路（設計稿 §F：notes/site-internal/root/
+# _flowmap_forecast_ledger_design_20260901.md）。零 LLM、純機械，每週跑一次：
+#
+#   1. knowledge/settle_forecasts.py            — 結算 forecasts.jsonl 的 open
+#      筆（price:/monitor:/rv:/pxd:/vixts: 五域，detective: 未實作），回寫
+#      status/outcome/brier。
+#   2. scripts/generate_rv_forecasts.py --write  — RV 預測 producer（每月首個
+#      交易日才真的落帳，同月同 source 查重內建；週跑月落帳，其餘週次會被
+#      拒絕，拒絕不是失敗，見下方 step 的 `|| echo` 容錯）。
+#   3. scripts/build_rv_base_rates.py --if-due   — 季度自動重建轉移表
+#      （built_at 距今 <85 天則自己跳過，not due 不是失敗）。
+#   4. scripts/generate_vix_forecasts.py --write — vix-model 事件觸發 producer
+#      （VIX 期限結構倒掛 onset；無事件時 exit 0 不落帳，不是失敗，見設計稿
+#      §G5）。
+#   5. scripts/generate_cot_forecasts.py --write — cot-model 事件觸發 producer
+#      （權益三指數 COT net_pct_oi 極端分位；無事件時 exit 0 不落帳，同上）。
+#   6. scripts/build_vixts_base_rates.py --if-due — 季度自動重建 VIX 倒掛
+#      base rate（同 rv 的 --if-due 慣例）。
+#   7. scripts/build_cot_base_rates.py --if-due   — 季度自動重建 COT 極端部位
+#      base rate（同上）。
+#   8. scripts/score_flowmap.py                  — flowmap 成績單：對帳
+#      forecast_history.jsonl 凍結預測 vs 實際，輸出
+#      docs/flowmap/data/scorecard.json（只舉旗，不改動任何模組或 CONFIG）。
+#
+# 排程：週一 02:00 UTC——晚於 intel-2-daily.yml 的週日 22:30 UTC 週段（含
+# crowding COT 週更、timeout 90 分鐘），留出緩衝讓 data/cot_history.json 在本
+# 工作流跑之前已刷新，CTA 模組對帳才吃得到當週資料。
+on:
+  schedule:
+    - cron: "0 2 * * 1"   # 週一 02:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: forecast-settle-weekly
+  cancel-in-progress: false
+
+jobs:
+  forecast-settle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install --quiet "yfinance>=0.2.40" pandas requests
+
+      - name: Settle forecast ledger (forecasts.jsonl)
+        run: python knowledge/settle_forecasts.py
+
+      - name: Generate monthly RV forecasts (dedupe-safe)
+        run: python scripts/generate_rv_forecasts.py --write || echo "generate_rv_forecasts no-op this week (monthly dedupe rejected or no data) — continuing"
+
+      - name: Rebuild RV base rates if due (quarterly)
+        run: python scripts/build_rv_base_rates.py --if-due || echo "build_rv_base_rates --if-due not due or fetch failed — continuing with existing table"
+
+      - name: Generate vix-model forecasts (event-triggered, dedupe-safe)
+        run: python scripts/generate_vix_forecasts.py --write || echo "generate_vix_forecasts no-op this week (no onset event or dedupe rejected) — continuing"
+
+      - name: Generate cot-model forecasts (event-triggered, dedupe-safe)
+        run: python scripts/generate_cot_forecasts.py --write || echo "generate_cot_forecasts no-op this week (no extreme event or dedupe rejected) — continuing"
+
+      - name: Rebuild vixts base rates if due (quarterly)
+        run: python scripts/build_vixts_base_rates.py --if-due || echo "build_vixts_base_rates --if-due not due or fetch failed — continuing with existing table"
+
+      - name: Rebuild COT base rates if due (quarterly)
+        run: python scripts/build_cot_base_rates.py --if-due || echo "build_cot_base_rates --if-due not due or fetch failed — continuing with existing table"
+
+      - name: Score flowmap (frozen forecasts vs actuals)
+        run: python scripts/score_flowmap.py
+
+      - name: Commit and push if changed
+        run: |
+          PATHS=""
+          for p in knowledge/forecasts.jsonl data/rv_base_rates.json \
+                   data/rv_base_rates_raw_cache.json docs/flowmap/data/scorecard.json \
+                   data/vixts_base_rates.json data/vixts_base_rates_raw_cache.json \
+                   data/cot_base_rates.json data/cot_base_rates_raw_cache.json; do
+            [ -e "$p" ] && PATHS="$PATHS $p"
+          done
+          if git status --porcelain $PATHS | grep -q .; then
+            echo "Changes detected"
+          else
+            echo "No changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add $PATHS
+          DATE=$(date -u +"%Y-%m-%d")
+          git commit -m "forecast-ledger: weekly settle + flowmap scorecard ${DATE}"
+          for i in 1 2 3 4 5 6; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+            git pull --rebase --autostash origin main || { echo "Rebase failed"; exit 1; }
+            sleep $((RANDOM % 20 + 5))
+          done
+          echo "Push failed after 6 attempts"
+          exit 1

@@ -19,12 +19,23 @@
 
 Phase 2（dealer gamma）本檔不做——資料源不足，一律進 gaps 不捏造。
 
+Phase 1.5（2026-09-01 持有人核准增補，設計依據同檔 §E1／§E2）
+-----------------------------------------------------------
+  槓桿ETF每日再平衡（模組 4）：SPX／NDX／SOX 三複合體 CONFIG 硬表，尾盤再平衡
+                     名目 =（L²−L）× AUM × 當日標的報酬；AUM 走 yfinance
+                     totalAssets（獨立快取，7 天內不重抓）。confidence: med。
+  月末／季末再平衡壓力（模組 5）：分岔 = SPY MTD 報酬 − AGG MTD 報酬，量級桶為
+                     外部研究粗錨，confidence: lo。生效窗＝當月最後 3 個交易日。
+  兩模組函式獨立、latest.json 各占獨立 key（lev_etf／month_end），拆除互不影響。
+
 輸出
 ----
-  data/flowmap_prices.json          — SPY/QQQ/IWM 日線 close，rolling ~500 個交易日
-                                       （yfinance -> stooq fallback，incremental）。
+  data/flowmap_prices.json          — SPY/QQQ/IWM/AGG 日線 close，rolling ~500 個
+                                       交易日（yfinance -> stooq fallback，incremental）。
   data/flowmap_earnings_cache.json  — 100 檔次次財報日快取（7 天內不重抓）。
-  docs/flowmap/data/latest.json     — 契約 JSON（schema="flowmap-v1"）。
+  data/flowmap_etf_aum_cache.json   — 槓桿／反向 ETF 複合體 AUM 快取（7 天內不重抓；
+                                       單檔失敗沿用上次快取值並標 stale）。
+  docs/flowmap/data/latest.json     — 契約 JSON（schema="flowmap-v1.1"）。
   docs/flowmap/data/forecast_history.jsonl
                                      — 每日凍結預測逐行 append（同日重跑覆蓋當日
                                        那行，不重複 append）。
@@ -56,11 +67,12 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, "data")
 PRICE_CACHE = os.path.join(DATA, "flowmap_prices.json")
 EARNINGS_CACHE = os.path.join(DATA, "flowmap_earnings_cache.json")
+LEV_ETF_AUM_CACHE = os.path.join(DATA, "flowmap_etf_aum_cache.json")
 OUT_DIR = os.path.join(ROOT, "docs", "flowmap", "data")
 OUT_JSON = os.path.join(OUT_DIR, "latest.json")
 FORECAST_HISTORY = os.path.join(OUT_DIR, "forecast_history.jsonl")
 
-SCHEMA = "flowmap-v1"
+SCHEMA = "flowmap-v1.1"
 
 
 def warn(msg: str) -> None:
@@ -76,7 +88,7 @@ def info(msg: str) -> None:
 # ═══════════════════════════════════════════════════════════════════════════
 
 # ── 價格快取 ──
-FLOWMAP_SYMBOLS = ["SPY", "QQQ", "IWM"]
+FLOWMAP_SYMBOLS = ["SPY", "QQQ", "IWM", "AGG"]  # AGG：模組 5 月末再平衡需股債分岔
 ROLLING_TRADING_DAYS = 520  # ~500 個交易日 + 緩衝
 
 # ── 模組 1：CTA 趨勢觸發位 ──
@@ -118,6 +130,55 @@ SP100_TICKERS = [
     "MU", "GILD", "BX", "ADP", "LRCX", "PANW", "REGN", "SCHW", "MMC", "KLAC",
     "CB", "PGR", "SO", "ZTS", "CI", "BSX", "FI", "MO", "DUK", "CME",
 ]
+
+# ── 模組 4：槓桿 ETF 每日再平衡（設計稿 §E1，PREREG 凍結，逐字照抄不得調整）──
+# 係數 = L² − L（L 含正負）：+2x→2／−2x→6／+3x→6／−3x→12。
+LEV_ETF_AUM_MAX_AGE_DAYS = 7
+LEV_ETF_SHOCK_PCTS = [-3, -2, -1, 1, 2, 3]
+LEV_ETF_CONFIDENCE = "med"
+LEV_ETF_COMPLEXES = [
+    {
+        "complex": "SPX",
+        # SPX 複合體標的報酬直接讀既有價格快取的 SPY（非槓桿代理）。
+        "underlying_proxy": "SPY",
+        "legs": [
+            ("SSO", 2), ("UPRO", 3), ("SPXL", 3),
+            ("SDS", -2), ("SPXU", -3), ("SPXS", -3),
+        ],
+    },
+    {
+        "complex": "NDX",
+        "underlying_proxy": "QQQ",
+        "legs": [("QLD", 2), ("TQQQ", 3), ("QID", -2), ("SQQQ", -3)],
+    },
+    {
+        "complex": "SOX",
+        # 半導體複合體在既有價格快取（SPY/QQQ/IWM/AGG）中無現成非槓桿代理；
+        # 設計稿未另外指定新增指數代理，改用 SOXL（失敗則 SOXS）自身當日報酬
+        # ÷ 槓桿反推標的報酬——屬本檔的實作選擇，非設計稿逐字條文，供持有人複審。
+        "underlying_proxy": None,
+        "legs": [("SOXL", 3), ("SOXS", -3)],
+    },
+]
+
+
+def _lev_coef(lev: int) -> int:
+    return lev * lev - lev
+
+
+def _all_lev_etf_tickers():
+    out = []
+    for cx in LEV_ETF_COMPLEXES:
+        for t, _ in cx["legs"]:
+            out.append(t)
+    return out
+
+
+# ── 模組 5：月末／季末再平衡壓力（設計稿 §E2，PREREG 凍結）──
+MONTH_END_WINDOW_DAYS = 3
+MONTH_END_CONFIDENCE = "lo"
+QUARTER_END_MONTHS = {3, 6, 9, 12}
+QUARTER_END_NOTE = "本月為季末月，疊加季度再平衡，量級傾向桶內偏上緣"
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -194,10 +255,12 @@ def _yf_daily(tickers, period="2y"):
         return out
     df = yf.download(tickers, period=period, interval="1d", auto_adjust=True,
                      group_by="ticker", threads=True, progress=False)
-    single = len(tickers) == 1
+    # yfinance 回傳 MultiIndex 欄位（Ticker, Price）不論單檔或多檔（實測 1.2.0），
+    # 用欄位層數判斷而非 ticker 數，修正單檔 bootstrap（如新增 AGG）誤判為扁平欄位。
+    is_multi = hasattr(df.columns, "nlevels") and df.columns.nlevels > 1
     for tk in tickers:
         try:
-            sub = df if single else df[tk]
+            sub = df[tk] if is_multi else df
             close = sub["Close"]
             rows = []
             for idx, val in close.items():
@@ -571,10 +634,314 @@ def buyback_module(known_dates, as_of_date, gaps):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# 模組 4：槓桿 ETF 每日再平衡（設計稿 §E1）
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _age_days(fetched_at, now):
+    if not fetched_at:
+        return None
+    try:
+        dt = datetime.strptime(fetched_at, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+        return (now - dt).total_seconds() / 86400.0
+    except Exception:
+        return None
+
+
+def refresh_etf_aum_cache(skip_fetch):
+    """槓桿／反向 ETF 複合體 AUM 快取（yfinance totalAssets），7 天內不重抓。
+
+    回傳 {ticker: {"aum_usd_bn": float, "stale": bool}}——單檔失敗沿用上次快取值
+    並標 stale=True；從未成功抓過的 ticker 不出現在回傳值中（呼叫端須跳過）。
+    """
+    cache = load_json(LEV_ETF_AUM_CACHE, {"meta": {}, "tickers": {}})
+    entries = cache.setdefault("tickers", {})
+    now = datetime.now(timezone.utc)
+    tickers = _all_lev_etf_tickers()
+    fetched_n = 0
+    failed_n = 0
+    skipped_n = 0
+    failed_this_run = set()
+
+    if not skip_fetch:
+        try:
+            import yfinance as yf  # noqa: F401
+        except ImportError:
+            import subprocess
+            subprocess.call([sys.executable, "-m", "pip", "install", "-q",
+                             "yfinance>=0.2.40", "pandas"])
+            import yfinance as yf
+        for t in tickers:
+            e = entries.get(t)
+            age = _age_days(e.get("fetched_at") if e else None, now)
+            fresh = (e is not None and e.get("aum_usd_bn") is not None
+                    and age is not None and age < LEV_ETF_AUM_MAX_AGE_DAYS)
+            if fresh:
+                skipped_n += 1
+                continue
+            try:
+                etf_info = yf.Ticker(t).info or {}
+                ta = etf_info.get("totalAssets")
+                if not ta:
+                    raise ValueError("totalAssets missing/zero in yfinance .info")
+                entries[t] = {
+                    "aum_usd_bn": round(float(ta) / 1e9, 4),
+                    "fetched_at": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                }
+                fetched_n += 1
+            except Exception as exc:
+                failed_n += 1
+                failed_this_run.add(t)
+                warn(f"lev-etf AUM fetch failed for {t}: {str(exc)[:80]}")
+                # 保留舊快取值（若有）當 fallback，不覆寫成 null
+            time.sleep(0.15)
+
+    cache["meta"] = {
+        "built_at": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "universe_n": len(tickers),
+        "cache_max_age_days": LEV_ETF_AUM_MAX_AGE_DAYS,
+        "note": "槓桿／反向 ETF 複合體 AUM 快取（yfinance .info totalAssets），"
+                "7 天內不重抓；單檔失敗沿用上次快取值並標 stale，不覆寫成 null。",
+    }
+    write_json_if_changed(LEV_ETF_AUM_CACHE, cache)
+    info(f"lev-etf AUM cache: fetched={fetched_n} skipped_fresh={skipped_n} failed={failed_n}")
+
+    out = {}
+    for t in tickers:
+        e = entries.get(t)
+        if not e or e.get("aum_usd_bn") is None:
+            continue
+        age = _age_days(e.get("fetched_at"), now)
+        stale = (t in failed_this_run) or (age is None) or (age >= LEV_ETF_AUM_MAX_AGE_DAYS)
+        out[t] = {"aum_usd_bn": e["aum_usd_bn"], "stale": bool(stale)}
+    return out
+
+
+def _daily_return_from_series(pts):
+    """pts: [(date, close), ...] 升冪排序。回傳最新一筆對前一筆的報酬（小數），
+    資料不足回傳 None。"""
+    if not pts or len(pts) < 2:
+        return None
+    prev = pts[-2][1]
+    cur = pts[-1][1]
+    if not prev:
+        return None
+    return cur / prev - 1.0
+
+
+def _sox_underlying_return(skip_fetch, gaps):
+    """SOX 複合體標的報酬：既有價格快取無非槓桿半導體代理，改用 SOXL（失敗則
+    SOXS）自身當日報酬 ÷ 槓桿反推。--skip-fetch 模式不重抓（該資料不落盤快取），
+    直接跳過並記錄 gap。"""
+    if skip_fetch:
+        gaps.append("SOX 複合體標的報酬：--skip-fetch 模式不重抓 SOXL／SOXS，本次跳過")
+        return None
+    for ticker, lev in (("SOXL", 3), ("SOXS", -3)):
+        try:
+            rows = _yf_daily([ticker], period="5d").get(ticker)
+            if rows and len(rows) >= 2:
+                c_prev, c_cur = rows[-2][1], rows[-1][1]
+                if c_prev:
+                    return (c_cur / c_prev - 1.0) / lev
+        except Exception as e:
+            warn(f"SOX underlying return via {ticker} failed: {e}")
+    gaps.append("SOX 複合體標的報酬：SOXL／SOXS 皆抓取失敗，SOX 複合體本次跳過")
+    return None
+
+
+def lev_etf_module(price_series, aum_map, skip_fetch, gaps):
+    spy_pts = price_series.get("SPY") or []
+    as_of = spy_pts[-1][0] if spy_pts else None
+
+    complexes_out = []
+    for cx in LEV_ETF_COMPLEXES:
+        label = cx["complex"]
+        proxy = cx.get("underlying_proxy")
+        if proxy:
+            r = _daily_return_from_series(price_series.get(proxy) or [])
+            if r is None:
+                gaps.append(f"槓桿ETF {label} 複合體：{proxy} 報酬資料不足，複合體跳過")
+                continue
+            proxy_label = proxy
+        else:
+            r = _sox_underlying_return(skip_fetch, gaps)
+            if r is None:
+                continue  # gap 已在 _sox_underlying_return 內記錄
+            proxy_label = "SOXL/SOXS（自身報酬÷槓桿反推，無現成非槓桿代理）"
+
+        legs_out = []
+        k_complex = 0.0
+        for ticker, lev in cx["legs"]:
+            a = aum_map.get(ticker)
+            if not a:
+                gaps.append(f"槓桿ETF {label}／{ticker}：AUM 無可用資料（含快取），該檔跳過")
+                continue
+            coef = _lev_coef(lev)
+            aum_bn = a["aum_usd_bn"]
+            flow_bn = coef * aum_bn * r
+            legs_out.append({
+                "ticker": ticker,
+                "leverage": lev,
+                "coef": coef,
+                "aum_usd_bn": rnd(aum_bn, 3),
+                "aum_stale": bool(a["stale"]),
+                "today_flow_usd_bn": rnd(flow_bn, 3),
+            })
+            k_complex += coef * aum_bn
+
+        if not legs_out:
+            gaps.append(f"槓桿ETF {label} 複合體：所有成分 AUM 皆無可用資料，複合體跳過")
+            continue
+
+        shock_table = [
+            {"shock_pct": s, "flow_usd_bn": rnd(k_complex * (s / 100.0), 3)}
+            for s in LEV_ETF_SHOCK_PCTS
+        ]
+        complexes_out.append({
+            "complex": label,
+            "underlying_proxy": proxy_label,
+            "underlying_return_pct": rnd(r * 100, 3),
+            "legs": legs_out,
+            "today_realized_flow_usd_bn": rnd(k_complex * r, 3),
+            "shock_table": shock_table,
+            "confidence": LEV_ETF_CONFIDENCE,
+        })
+
+    if not complexes_out:
+        gaps.append("槓桿ETF再平衡：三個複合體皆無可用資料，模組輸出 null")
+        return None
+
+    return {"as_of": as_of, "complexes": complexes_out}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 模組 5：月末／季末再平衡壓力（設計稿 §E2）
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _weekdays_of_month(year, month):
+    import calendar as _cal
+    days_in_month = _cal.monthrange(year, month)[1]
+    return [date(year, month, d) for d in range(1, days_in_month + 1)
+            if date(year, month, d).weekday() < 5]
+
+
+def _mtd_return_pct(pts, as_of_date):
+    """pts: [(date_str, close), ...] 升冪排序。MTD% = 今日收盤 / 上月底收盤 − 1。
+    資料不足（無上月底收盤或無今日收盤）回傳 None。"""
+    if not pts:
+        return None
+    month_start_str = as_of_date.replace(day=1).isoformat()
+    as_of_str = as_of_date.isoformat()
+    prior_close = None
+    asof_close = None
+    for d, c in pts:
+        if d < month_start_str:
+            prior_close = c
+        if d == as_of_str:
+            asof_close = c
+    if prior_close is None or asof_close is None or not prior_close:
+        return None
+    return (asof_close / prior_close - 1.0) * 100.0
+
+
+def _magnitude_bucket(abs_div_pp):
+    """量級桶（設計稿 §E2，外部研究粗錨，lo 信心）：
+    <2pp→小[0,10]；2–5pp→中[10,30]；>5pp→大[30,60]（單位：億美元 usd_bn）。"""
+    if abs_div_pp < 2.0:
+        return "小", [0, 10]
+    if abs_div_pp <= 5.0:
+        return "中", [10, 30]
+    return "大", [30, 60]
+
+
+def month_end_module(price_series, gaps):
+    spy_pts = price_series.get("SPY") or []
+    agg_pts = price_series.get("AGG") or []
+    if not spy_pts:
+        gaps.append("月末再平衡：SPY 價格快取為空，模組跳過")
+        return None
+    if not agg_pts:
+        gaps.append("月末再平衡：AGG 價格快取為空，模組跳過")
+        return None
+
+    as_of_str = spy_pts[-1][0]
+    as_of_date = date.fromisoformat(as_of_str)
+
+    spy_mtd = _mtd_return_pct(spy_pts, as_of_date)
+    agg_mtd = _mtd_return_pct(agg_pts, as_of_date)
+    if spy_mtd is None or agg_mtd is None:
+        gaps.append("月末再平衡：本月或上月底收盤資料不足，無法算 MTD 報酬，模組跳過")
+        return None
+
+    divergence = spy_mtd - agg_mtd
+    if divergence > 1e-9:
+        direction = "sell_equity_buy_bond"
+    elif divergence < -1e-9:
+        direction = "buy_equity_sell_bond"
+    else:
+        direction = "flat"
+
+    bucket_label, bucket_range = _magnitude_bucket(abs(divergence))
+
+    wds = _weekdays_of_month(as_of_date.year, as_of_date.month)
+    last3 = wds[-MONTH_END_WINDOW_DAYS:] if len(wds) >= MONTH_END_WINDOW_DAYS else wds
+    in_window = as_of_date in last3
+    is_qtr = as_of_date.month in QUARTER_END_MONTHS
+
+    return {
+        "as_of": as_of_str,
+        "month": as_of_date.strftime("%Y-%m"),
+        "spy_mtd_return_pct": rnd(spy_mtd, 3),
+        "agg_mtd_return_pct": rnd(agg_mtd, 3),
+        "divergence_pct": rnd(divergence, 3),
+        "direction": direction,
+        "magnitude_bucket": {"label": bucket_label, "range_usd_bn": bucket_range},
+        "effective_window": {
+            "start": last3[0].isoformat() if last3 else None,
+            "end": last3[-1].isoformat() if last3 else None,
+        },
+        "in_window": in_window,
+        "is_quarter_end_month": is_qtr,
+        "quarter_end_note": QUARTER_END_NOTE if is_qtr else None,
+        "confidence": MONTH_END_CONFIDENCE,
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # 每日凍結預測（設計稿 §A6 自我證偽機制）
 # ═══════════════════════════════════════════════════════════════════════════
 
-def build_frozen_forecast(cta_out, vol_control_out, as_of):
+def build_lev_etf_frozen(lev_etf_out):
+    """槓桿ETF條件表快照——本模組無行為級 kill（純算術），凍結純為稽核留痕。"""
+    if not lev_etf_out:
+        return None
+    out = []
+    for c in lev_etf_out.get("complexes", []):
+        out.append({
+            "complex": c["complex"],
+            "today_realized_flow_usd_bn": c["today_realized_flow_usd_bn"],
+            "shock_table": c["shock_table"],
+        })
+    return out or None
+
+
+def build_month_end_frozen(month_end_out):
+    """月末生效窗首日凍結方向件（設計稿 §E2）：只在生效窗第一個交易日落帳，
+    對帳定義＝生效窗 3 日 SPY−AGG 相對報酬方向（非本檔職責，留給後續結算腳本）。"""
+    if not month_end_out or not month_end_out.get("in_window"):
+        return None
+    win = month_end_out.get("effective_window") or {}
+    if month_end_out.get("as_of") != win.get("start"):
+        return None
+    return {
+        "as_of": month_end_out["as_of"],
+        "direction": month_end_out["direction"],
+        "divergence_pct": month_end_out["divergence_pct"],
+        "window_start": win.get("start"),
+        "window_end": win.get("end"),
+    }
+
+
+def build_frozen_forecast(cta_out, vol_control_out, lev_etf_out, month_end_out, as_of):
     cta_fc = []
     for m in cta_out:
         windows = m["windows"]
@@ -600,7 +967,11 @@ def build_frozen_forecast(cta_out, vol_control_out, as_of):
             "minus_2pct_exposure_change_dir": (nd.get("minus_2pct") or {}).get("exposure_change_dir"),
         }
 
-    return {"as_of": as_of, "cta": cta_fc, "vol_control": vc_fc}
+    lev_etf_fc = build_lev_etf_frozen(lev_etf_out)
+    month_end_fc = build_month_end_frozen(month_end_out)
+
+    return {"as_of": as_of, "cta": cta_fc, "vol_control": vc_fc,
+            "lev_etf": lev_etf_fc, "month_end": month_end_fc}
 
 
 def append_forecast_history(as_of, frozen_forecast):
@@ -661,7 +1032,25 @@ def main():
         gaps.append(f"庫藏股靜默期：模組執行失敗（{str(e)[:120]}），輸出 null")
         buyback_out = None
 
-    frozen_forecast = build_frozen_forecast(cta_out, vol_control_out, as_of)
+    # ── 模組 4：槓桿 ETF 每日再平衡（Phase 1.5，§E1）──
+    try:
+        aum_map = refresh_etf_aum_cache(args.skip_fetch)
+        lev_etf_out = lev_etf_module(price_series, aum_map, args.skip_fetch, gaps)
+    except Exception as e:
+        warn(f"lev-etf module failed: {e}")
+        gaps.append(f"槓桿ETF再平衡：模組執行失敗（{str(e)[:120]}），輸出 null")
+        lev_etf_out = None
+
+    # ── 模組 5：月末／季末再平衡壓力（Phase 1.5，§E2）──
+    try:
+        month_end_out = month_end_module(price_series, gaps)
+    except Exception as e:
+        warn(f"month-end module failed: {e}")
+        gaps.append(f"月末再平衡：模組執行失敗（{str(e)[:120]}），輸出 null")
+        month_end_out = None
+
+    frozen_forecast = build_frozen_forecast(cta_out, vol_control_out, lev_etf_out,
+                                            month_end_out, as_of)
 
     payload = {
         "schema": SCHEMA,
@@ -671,6 +1060,8 @@ def main():
         "vol_control": vol_control_out,
         "buyback": buyback_out,
         "gamma": None,
+        "lev_etf": lev_etf_out,
+        "month_end": month_end_out,
         "gaps": gaps,
         "frozen_forecast": frozen_forecast,
     }
@@ -678,7 +1069,9 @@ def main():
     wrote = write_json_if_changed(OUT_JSON, payload)
     info(f"latest.json: {'written' if wrote else 'no change'} (as_of={as_of}, "
          f"cta_markets={len(cta_out)}, vol_control={'ok' if vol_control_out else 'null'}, "
-         f"buyback={'ok' if buyback_out else 'null'})")
+         f"buyback={'ok' if buyback_out else 'null'}, "
+         f"lev_etf_complexes={len(lev_etf_out['complexes']) if lev_etf_out else 0}, "
+         f"month_end={'ok' if month_end_out else 'null'})")
 
     append_forecast_history(as_of, frozen_forecast)
     info(f"forecast_history.jsonl: appended/overwritten row for {as_of}")
