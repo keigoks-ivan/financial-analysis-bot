@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>美股財報統整 2026-08-02 → 2026-09-01 · investMQuest</title>
+<meta name="description" content="30 天財報統整：AI capex×backlog 定價機制延續、48 小時內 beat 容忍度斷崖式收緊、零售關稅退款扭曲 EPS、中國消費互聯網模式三度驗證、GAAP/Adjusted 口徑分歧成獨立定價變數。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ffffff; --bg-subtle:#fafaf9; --surface:#ffffff; --surface-2:#f7f7f5;
+  --border:#e5e5e2; --border-strong:#1a1a1a;
+  --text:#1a1a1a; --text-muted:#666; --text-dim:#999;
+  --accent:#2563eb; --green:#15803d; --green-bg:#f0fdf4;
+  --red:#b91c1c; --red-bg:#fef2f2; --amber:#b45309; --amber-bg:#fffbeb;
+  --orange:#c2410c; --orange-bg:#fff7ed; --radius:8px;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,sans-serif;
+  font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased;}
+
+.imq-nav{display:flex;align-items:center;gap:22px;flex-wrap:wrap;
+  padding:12px 28px;border-bottom:1px solid var(--border);background:var(--bg-subtle);
+  font-size:13px;position:sticky;top:0;z-index:50;}
+.imq-nav a{color:var(--text-muted);text-decoration:none;}
+.imq-nav a:hover{color:var(--accent);}
+
+.container{max-width:880px;margin:0 auto;padding:32px 24px 80px;}
+.breadcrumb{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);
+  text-transform:uppercase;letter-spacing:.6px;margin-bottom:24px;}
+.breadcrumb a{color:var(--text-dim);text-decoration:none;}
+.breadcrumb a:hover{color:var(--accent);}
+
+.report-header{border-bottom:2px solid var(--border-strong);padding-bottom:24px;margin-bottom:32px;}
+.report-header h1{font-size:30px;line-height:1.25;margin:0 0 10px;letter-spacing:-.6px;}
+.report-meta{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-muted);
+  text-transform:uppercase;letter-spacing:.5px;margin-bottom:20px;}
+.report-lede{border-left:3px solid var(--accent);padding:14px 18px;background:var(--surface-2);
+  border-radius:0 var(--radius) var(--radius) 0;font-size:15px;}
+
+.toc{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);
+  padding:18px 22px;margin-bottom:40px;}
+.toc-title{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;
+  letter-spacing:.8px;color:var(--text-dim);margin-bottom:10px;}
+.toc ol{margin:0;padding-left:20px;font-size:14px;}
+.toc li{margin:4px 0;}
+.toc a{color:var(--text);text-decoration:none;}
+.toc a:hover{color:var(--accent);}
+
+h2{font-size:23px;margin:52px 0 18px;padding-bottom:9px;border-bottom:1px solid var(--border-strong);
+  letter-spacing:-.3px;}
+h3{font-size:17px;margin:32px 0 10px;}
+h4{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;
+  letter-spacing:.8px;color:var(--text-muted);margin:20px 0 8px;}
+p{margin:0 0 14px;}
+ul{margin:0 0 14px;padding-left:20px;}
+li{margin:5px 0;}
+
+table{width:100%;border-collapse:collapse;margin:14px 0 20px;font-size:13.5px;}
+th{text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;
+  letter-spacing:.6px;color:var(--text-muted);padding:8px 10px;border-bottom:1px solid var(--border-strong);
+  font-weight:500;}
+td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:top;}
+tbody tr:hover{background:var(--surface-2);}
+
+.tag{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:500;
+  padding:2px 7px;border-radius:4px;letter-spacing:.4px;white-space:nowrap;}
+.tag.beat{background:var(--green-bg);color:var(--green);}
+.tag.miss{background:var(--red-bg);color:var(--red);}
+.tag.mixed{background:var(--amber-bg);color:var(--amber);}
+.tag-add{background:var(--green-bg);color:var(--green);}
+.tag-cut{background:var(--red-bg);color:var(--red);}
+.tag-hold{background:var(--amber-bg);color:var(--amber);}
+
+.stock-move{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500;
+  padding:2px 7px;border-radius:4px;}
+.stock-move.up{background:var(--green-bg);color:var(--green);}
+.stock-move.down{background:var(--red-bg);color:var(--red);}
+
+.contradiction{background:var(--orange-bg);border-left:3px solid var(--orange);
+  border-radius:0 var(--radius) var(--radius) 0;padding:16px 20px;margin:18px 0;}
+.contradiction h4{color:var(--orange);font-size:12px;margin:0 0 8px;}
+.contradiction p{margin:0 0 10px;font-size:14.5px;}
+.implication{margin-bottom:0!important;color:var(--text);}
+
+.summary-list{list-style:none;padding:0;}
+.summary-list li{border-left:3px solid var(--accent);background:var(--surface-2);
+  padding:12px 16px;margin:10px 0;border-radius:0 var(--radius) var(--radius) 0;font-size:14.5px;}
+
+.disclaimer{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px 20px;margin-top:48px;font-size:12.5px;color:var(--text-muted);line-height:1.65;}
+footer{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);
+  margin-top:28px;padding-top:20px;border-top:1px solid var(--border);}
+footer a{color:var(--text-dim);text-decoration:none;}
+
+/* synthesis-specific */
+.synthesis-tag{background:#ea580c;color:#fff;padding:.18rem .55rem;border-radius:4px;font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.source-local{color:#0369a1;font-size:.7rem;border:1px solid #bae6fd;padding:1px 6px;border-radius:3px;margin-left:4px}
+.source-webfill{color:#9a3412;font-size:.7rem;border:1px solid #fed7aa;padding:1px 6px;border-radius:3px;margin-left:4px}
+.trend-block{border-left:3px solid var(--accent);padding:14px 18px;background:var(--surface-2);border-radius:0 var(--radius) var(--radius) 0;margin-bottom:24px}
+.trend-block h3{margin-top:0;font-size:1.05rem}
+.imply-list{padding-left:0;list-style:none}
+.imply-list li{padding:8px 0;border-bottom:1px solid var(--border)}
+.imply-list li:last-child{border-bottom:none}
+.confidence-note{font-size:.78rem;color:var(--text-muted);background:#fef3c7;border-left:3px solid #f59e0b;padding:10px 14px;border-radius:0 6px 6px 0;margin:18px 0}
+.signal-row{font-weight:600;background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 12px;margin-bottom:10px}
+.lead-row{font-weight:600;background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 12px;margin:14px 0}
+.caveat{font-size:.82rem;color:var(--amber);background:var(--amber-bg);border-radius:6px;padding:8px 12px;margin-top:10px}
+.pm-action{font-size:.85rem;font-weight:600;background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 12px;margin-top:8px}
+.bullets{padding-left:18px}
+.bullets li{margin:4px 0}
+
+@media (max-width:720px){
+  .container{padding:22px 16px 60px;}
+  .report-header h1{font-size:22px;}
+  table{font-size:12.5px;}
+  th,td{padding:7px 6px;}
+  .imq-nav{gap:14px;padding:10px 14px;}
+}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/earnings/" class="active">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <a href="/cockpit/">選股</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">個股研究</a>
+          <a href="/id/">產業研究</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/flow/">投資流程</a>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="container">
+  <div class="breadcrumb">
+    <a href="/">首頁</a> › <a href="/earnings/">財報分析</a> › 30 天統整 2026-09-01
+  </div>
+
+  <header class="report-header">
+    <h1>美股財報統整：2026-08-02 → 2026-09-01</h1>
+    <div class="report-meta">本地深度日報 9 份 · 缺失交易日 13 個（web 補 4 家 top-cap 公司）· 91 unique tickers · 生成於 2026-09-01</div>
+    <div class="report-lede">
+      <strong>本期重點：</strong>
+      這是 2026 Q2 財報季的收尾窗口——AI 供應鏈財報從「全鏈一致上漲」滑向「內部估值分化」，而市場對 beat 的容忍度在最後兩週出現斷崖式收緊。五條主線：
+      ① <strong>AI capex×backlog 定價機制延續且天花板再上移</strong>——NVDA 8/26 揭露超大規模業者 2026 年 capex 逾 $800B、2027 年上看 $1.3 兆，自身作為「收錢方」股價不跌反漲（次日收盤擴大至 +8.7%），但同日 SNPS 因核心 EDA 有機成長僅約 8% 而逆勢下跌，AI 供應鏈本季首度出現內部方向分歧；
+      ② <strong>Beat 容忍度在 48 小時內斷崖式收緊</strong>——8/26 四家 AI 供應鏈公司 3 漲 1 跌，不到 48 小時後的 8/27，六家全數 beat 卻無一家明確收漲，MRVL 揭露 Google 規模達 $1,200 億的客製晶片協議都擋不住毛利率財測季減 90bp 的重挫；
+      ③ <strong>零售關稅退款系統性扭曲本季 EPS 可比性</strong>——TGT／TJX／LOW／WMT／ROST 五家零售巨頭同季合計認列逾 $45 億一次性 IEEPA 關稅退款，外部查證顯示全市場公開揭露總額已達 $18.7 億美元的多倍規模，退款金額或揭露透明度皆非股價決定因素，剔除退款後的本業成長才是；
+      ④ <strong>中國消費互聯網「核心優於預期、獲利端系統性失守」模式三度驗證</strong>——BABA（8/20）→NTES（8/20）→PDD（8/24）橫跨一週，三種不同成因（主動 AI 投資、被動投資虧損、主動治理再投資）卻收斂到同一種股價反應；
+      ⑤ <strong>GAAP／Adjusted 口徑分歧成為獨立於 beat/miss 標籤之外的定價變數</strong>——BMO 商譽減損蓋過 adjusted beat、INTU 因 SBC 口徑變更放大 headline miss 假象、CRM 的 Anthropic 投資利得經查證未污染 non-GAAP，本季至此已累積至少 4 個此類案例。
+    </div>
+  </header>
+
+  <div class="toc">
+    <div class="toc-title">目錄</div>
+    <ol>
+      <li><a href="#sec0">§0 TL;DR</a></li>
+      <li><a href="#sec1">§1 Window 範圍與素材</a></li>
+      <li><a href="#sec2">§2 行業地圖</a></li>
+      <li><a href="#sec3">§3 跨產業大趨勢</a></li>
+      <li><a href="#sec4">§4 各產業詳論</a></li>
+      <li><a href="#sec5">§5 矛盾與弱訊號</a></li>
+      <li><a href="#sec6">§6 PM Implications</a></li>
+      <li><a href="#sec7">§7 下 30 天 Watchlist</a></li>
+    </ol>
+  </div>
+
+  <h2 id="sec0">§0 TL;DR</h2>
+  <ol class="imply-list">
+    <li><strong>1. AI capex×backlog 機制延續，但供應鏈內部首度分裂</strong> — NVDA 揭露 hyperscaler 2027 年 capex 上看 $1.3 兆仍收漲（收錢方邏輯延續第 5 例），但同日 SNPS 因核心 EDA 有機成長僅 8% 逆勢下跌 -4%，「同屬 AI 供應鏈」不再保證一致定價。→ 詳見 §3-1</li>
+    <li><strong>2. Beat 容忍度 48 小時斷崖式收緊</strong> — 8/26「3 漲 1 跌」到 8/27「6 家全數未確認收漲」，MRVL 揭露 Google $1,200 億協議仍因毛利率季減 90bp 重挫 -7.62%，局部瑕疵的定價權重已凌駕頭條規模。→ 詳見 §3-2</li>
+    <li><strong>3. 零售關稅退款系統性扭曲 EPS 可比性</strong> — TGT/TJX/LOW/WMT/ROST 五家合計逾 $45 億一次性認列，外部查證全市場揭露已達 $18.7 億美元級規模；退款大小不決定股價，剔除退款後本業成長才是。→ 詳見 §3-3</li>
+    <li><strong>4. 中國消費互聯網模式三度驗證</strong> — BABA／NTES／PDD 核心業務優於預期、獲利端指標全數同步失守，三種成因不同卻收斂到同一種市場定價反應。→ 詳見 §3-4</li>
+    <li><strong>5. GAAP/Adjusted 口徑分歧成獨立定價變數</strong> — BMO（商譽減損）、INTU（SBC 口徑變更）、CRM（Anthropic 利得查證乾淨）三案例方向互異，提醒任何 beat/miss 判定都須先核實比較基礎。→ 詳見 §3-5</li>
+  </ol>
+
+  <h2 id="sec1">§1 Window 範圍與素材</h2>
+  <p>Window：<strong>2026-08-02 → 2026-09-01</strong>（22 個交易日）。本地深度日報覆蓋 9 個交易日（08-04、08-06、08-11、08-19、08-20、08-24、08-25、08-26、08-27），涵蓋 87 檔 unique ticker。缺失交易日 13 個，其中 2 個交易日經 web 補回合計 <strong>4 檔 top-cap 公司</strong>（含 top-20 mkt cap 中的 LLY、HD 兩檔，另補 BRK.B、DIS 兩檔大型權值股）；其餘 11 個缺失日經查證屬低活躍日、或其唯一重要公司已由相鄰本地日報的次日收盤覆核（Phase R）納入。合計本期 unique ticker 約 91 檔。</p>
+
+  <h4>缺失日 Fill-Gap 表（web 補回，≥$50B 市值優先，含 day-內盲點）</h4>
+  <table>
+    <thead><tr><th>日期</th><th>Ticker</th><th>公司</th><th>結果</th><th>關鍵數字</th><th>股價反應</th><th>Source</th></tr></thead>
+    <tbody>
+      <tr><td>08-05</td><td>LLY <span class="source-webfill">web-filled</span></td><td>Eli Lilly（top-20 mkt cap，day-內盲點）</td><td><span class="tag beat">BEAT</span></td><td>非 GAAP EPS $8.38（+27.3% 超共識）、營收 $22.97B（+47.7% YoY）、Mounjaro+Zepbound 合計 $14.9B；FY26 指引上修至營收 $85-87B</td><td>+5%（8/5 收盤）</td><td>investor.lilly.com；cnbc.com/2026/08/05</td></tr>
+      <tr><td>08-05</td><td>DIS <span class="source-webfill">web-filled</span></td><td>Walt Disney（day-內盲點，8/6 本地日報未涵蓋）</td><td><span class="tag mixed">MIXED</span></td><td>調整後 EPS $2.06 超共識 $1.88；營收 $25.25B 未達共識 $25.66B；主題樂園創紀錄季度、Disney+ SVOD 營益率 13%</td><td>—（未取得二源確認收盤 %）</td><td>cnbc.com/2026/08/05；qz.com（Disney earnings beat parks streaming）</td></tr>
+      <tr><td>08-10</td><td>BRK.B <span class="source-webfill">web-filled</span></td><td>Berkshire Hathaway（8/8 週六發布，8/10 首個交易反應日）</td><td><span class="tag beat">BEAT</span></td><td>營運獲利 $12.98B（+16% YoY），能源／鐵路／製造抵銷保險疲弱</td><td>—（未達二源確認）</td><td>cnbc.com/2026/08/08</td></tr>
+      <tr><td>08-18</td><td>HD <span class="source-webfill">web-filled</span></td><td>Home Depot（top-20 mkt cap，day-內盲點，08-19 本地日報未涵蓋）</td><td><span class="tag beat">BEAT</span></td><td>調整後 EPS $4.92 vs 共識 $4.73；淨銷售 $47.86B（+5.7%）；可比銷售 +1.7%；重申 FY26 指引（未上修）</td><td>約 +1%（beat 但指引未上修，反應溫和）</td><td>ir.homedepot.com；cnbc.com/2026/08/18</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:13px;color:var(--text-muted)">其餘 9 個缺失交易日經 WebSearch 交叉查證處置如下：08-03、08-07、08-13、08-14、08-17 查無 ≥$50B 市值級公司單獨成篇之必要（財報季中段相對空窗，或重疊公司已由相鄰本地日報覆蓋）；08-12（CRWV／SMCI／LITE 最終判決收盤與 NBIS 財報）已完整併入 08-11 本地日報的 Phase R 覆核；08-21（ROST 最終判決 +5.52~5.79%）已併入 08-20 本地日報；08-28（WDAY／MRVL／ADSK 次日最終判決）已併入 08-27 本地日報的 Phase R 段落；08-31 依既有 season-state 紀錄確認為「0 家」空窗日；09-01（本報告生成當日）市場尚在交易中，無法完整覆核，不強行填入。百度（BIDU，8/18，市值約 $35-37B）與雅詩蘭黛（EL，8/19，市值約 $30-35B）因未達 $50B+ 門檻且非用戶指定，依規則排除於完整分析之外，僅作為 §3/§4 背景色彩簡要提及。<strong>Top-20 mkt cap 覆蓋掃描</strong>：NVDA／MSFT／AMZN／GOOGL／LLY／WMT／HD／ORCL 皆已於本期覆蓋（本地或 web-filled）；AAPL／META／TSLA／JPM／V／MA／UNH／XOM／JNJ／PG／BAC 十一檔本期未報告財報（皆已於 window 開始前的 7 月中下旬或更早報告，或如 XOM 於 7/31 早於 window 起點 8/2 一天，屬時序上合理排除），非漏抓。</p>
+
+  <h4>Sector 分布（本地 + web 補回合計）</h4>
+  <table>
+    <thead><tr><th>Sector</th><th>公司數（約）</th><th>reaction tilt</th></tr></thead>
+    <tbody>
+      <tr><td>科技 / AI 基建 / SaaS</td><td>~20</td><td>分化——backlog／有機成長品質決定漲跌，「同屬 AI 鏈」不再保證一致方向</td></tr>
+      <tr><td>半導體 / 客製晶片</td><td>~4</td><td>偏跌——毛利率／有機成長細節蓋過頭條規模</td></tr>
+      <tr><td>消費 / 零售</td><td>~11</td><td>分裂——指引方向決定漲跌，退款金額與透明度皆非解釋變數</td></tr>
+      <tr><td>中國消費互聯網</td><td>3</td><td>偏跌——核心業務優於預期但獲利端系統性失守</td></tr>
+      <tr><td>金融 / 銀行 / 另類資產</td><td>~10</td><td>分裂——GAAP/adjusted 口徑乾淨度與財報前估值消化程度決定方向</td></tr>
+      <tr><td>工業 / 航太 / 運輸</td><td>~14</td><td>偏漲——產能瓶頸型超級週期支撐 beat-and-raise</td></tr>
+      <tr><td>能源 / 公用事業</td><td>~13</td><td>偏漲——中東衝突溢價貫穿上下游</td></tr>
+      <tr><td>醫療保健 / 製藥</td><td>~6</td><td>中性偏強——但一次性項目（IPR&amp;D／訴訟準備金）持續扭曲 headline EPS</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="sec2">§2 行業地圖</h2>
+  <p>下表把本期 91 檔 ticker 按 sector × 子產業分組。與前期（截至 8/20）相比，本期最大的結構性變化是 AI 供應鏈子產業內部首度出現方向分歧——EDA 設計工具（SNPS）與客製晶片（MRVL）在同一週內雙雙因「細節瑕疵」逆勢下跌，而 GPU／雲端安全／企業軟體（NVDA/CRWD/CRM）仍維持強勢，顯示「AI 供應鏈」作為單一同質交易主題的有效性正在快速遞減。</p>
+  <table>
+    <thead><tr><th>Sector</th><th>子產業</th><th>代表 ticker</th><th>本期傾向</th></tr></thead>
+    <tbody>
+      <tr><td rowspan="4">科技/AI基建</td><td>GPU / AI 運算</td><td>NVDA <span class="source-local">local</span></td><td>強——backlog 破 $2 兆，capex 循環未見頂</td></tr>
+      <tr><td>Neocloud / AI 雲端出貨</td><td>CRWV <span class="source-local">local</span>、SMCI <span class="source-local">local</span>、LITE <span class="source-local">local</span>、SE <span class="source-local">local</span></td><td>強——8/11 backlog 揭露機制延續</td></tr>
+      <tr><td>網路安全/企業SaaS</td><td>CRWD <span class="source-local">local</span>、CRM <span class="source-local">local</span>、NET <span class="source-local">local</span>、DDOG <span class="source-local">local</span>、WDAY <span class="source-local">local</span>、ADSK <span class="source-local">local</span>、INTU <span class="source-local">local</span></td><td>分裂——單季指引局部瑕疵蓋過全年 raise</td></tr>
+      <tr><td>EDA/客製晶片</td><td>SNPS <span class="source-local">local</span>、MRVL <span class="source-local">local</span></td><td>偏跌——有機成長與毛利率細節決定股價</td></tr>
+      <tr><td rowspan="1">半導體</td><td>類比/測試設備</td><td>ADI <span class="source-local">local</span>、KEYS <span class="source-local">local</span></td><td>分裂——乾淨 beat 反遭 sell the news</td></tr>
+      <tr><td rowspan="3">消費/零售</td><td>折扣/連鎖零售</td><td>TGT <span class="source-local">local</span>、WMT <span class="source-local">local</span>、ROST <span class="source-local">local</span>、TJX <span class="source-local">local</span></td><td>分裂：指引方向決定，關稅退款扭曲可比性</td></tr>
+      <tr><td>家居改善</td><td>LOW <span class="source-local">local</span>、HD <span class="source-webfill">webfill</span></td><td>偏弱——房市凍結、DIY 疲軟</td></tr>
+      <tr><td>休閒/旅遊/媒體</td><td>BKNG <span class="source-local">local</span>、ABNB <span class="source-local">local</span>、DIS <span class="source-webfill">webfill</span>、WBD <span class="source-local">local</span>、ROKU <span class="source-local">local</span></td><td>中性偏強——剩餘上檔主導反應方向</td></tr>
+      <tr><td>中國消費互聯網</td><td>—</td><td>BABA <span class="source-local">local</span>、NTES <span class="source-local">local</span>、PDD <span class="source-local">local</span></td><td>偏跌——核心強、獲利端弱的一致模式</td></tr>
+      <tr><td rowspan="2">金融</td><td>加拿大六大銀行</td><td>BMO <span class="source-local">local</span>、BNS <span class="source-local">local</span>、RY <span class="source-local">local</span>、TD <span class="source-local">local</span>、CM <span class="source-local">local</span></td><td>分裂——GAAP/adjusted 乾淨度＋估值消化程度</td></tr>
+      <tr><td>另類資產/保險</td><td>APO <span class="source-local">local</span>、AIG <span class="source-local">local</span>、AFL <span class="source-local">local</span>、BRK.B <span class="source-webfill">webfill</span></td><td>中性偏強</td></tr>
+      <tr><td rowspan="2">工業/航太</td><td>航太系統/防務</td><td>PH <span class="source-local">local</span>、HWM <span class="source-local">local</span>、TDG <span class="source-local">local</span>、ATI <span class="source-local">local</span>、ESLT <span class="source-local">local</span></td><td>強——多年產業級 backlog</td></tr>
+      <tr><td>工程機械/農機/運輸</td><td>CAT <span class="source-local">local</span>、DE <span class="source-local">local</span>、GWW <span class="source-local">local</span>、RSG <span class="source-local">local</span>、ET <span class="source-local">local</span>、MPLX <span class="source-local">local</span></td><td>強——AI 資本支出鏈延伸至實體工程機械</td></tr>
+      <tr><td rowspan="2">能源</td><td>上游油氣</td><td>COP <span class="source-local">local</span>、PBR <span class="source-local">local</span>、EOG <span class="source-local">local</span>、DVN <span class="source-local">local</span>、BP <span class="source-local">local</span></td><td>強——中東衝突溢價</td></tr>
+      <tr><td>中下游/公用</td><td>LNG <span class="source-local">local</span>、MPC <span class="source-local">local</span>、TRGP <span class="source-local">local</span>、SRE <span class="source-local">local</span>、CEG <span class="source-local">local</span>、DUK <span class="source-local">local</span>、NRG <span class="source-local">local</span></td><td>分裂——EBITDA beat／revenue miss 組合常見</td></tr>
+      <tr><td rowspan="2">醫療保健</td><td>大型製藥</td><td>LLY <span class="source-webfill">webfill</span>、MRK <span class="source-local">local</span>、PFE <span class="source-local">local</span>、GILD <span class="source-local">local</span></td><td>強（LLY）／中性（會計雜訊掩蓋核心業務）</td></tr>
+      <tr><td>醫療服務/藥廠通路</td><td>CAH <span class="source-local">local</span>、AMGN <span class="source-local">local</span></td><td>偏強</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="sec3">§3 跨產業大趨勢</h2>
+
+  <div class="trend-block">
+    <h3>3-1. AI capex×backlog 定價機制延續，但供應鏈內部首度出現方向分歧</h3>
+    <p class="signal-row">NVDA 把 hyperscaler capex 天花板進一步推高至 2027 年 $1.3 兆，自身股價不跌反漲；但同日 SNPS 因核心業務有機成長品質不足而逆勢下跌，顯示「AI 供應鏈」不再是可以整體交易的單一主題。</p>
+    <h4>關鍵 data points</h4>
+    <ul class="bullets">
+      <li>8/26：NVDA Q3 財測 $108B 遠超共識 $104.2B，backlog 突破 $2 兆；管理層首度揭露超大規模業者 2026 年 capex 逾 $800B、2027 年上看 $1.3 兆；同日 AWS 宣布採購 200 萬顆 GPU。盤後 +4%，次日（8/27）最終判決擴大至約 +8.7%。</li>
+      <li>8/26：SNPS 全面 beat 且上修全年財測，但盤後下跌 -4%——核心矛盾在於營收年增 42.3% 中相當比例來自一年前 Ansys 併購貢獻，剔除後核心 EDA 業務有機成長僅約 8% YoY，低於市場隱性期待。</li>
+      <li>8/26：CRWD 淨新增 ARR 創紀錄 $332.8M（+51% YoY）、全年財測雙上修，盤後 +11~12.6%；CRM non-GAAP EPS 超共識 80.4%，盤後 +14%（經查證 $26 億 Anthropic 投資利得未污染 non-GAAP，見 §3-5）。</li>
+      <li>8/27：MRVL 揭露與 Google 潛在規模達 $1,200 億（6.5 年）的客製晶片協議——本財報季迄今揭露最大單一商業合約金額，但因 Q3 毛利率財測季減 90bp，次日最終判決收 -7~8%。</li>
+    </ul>
+    <h4>Confirm 名單（本地）</h4>
+    <ul><li>08-04／08-11：SPCX、AMD、CRWV、SMCI、LITE <span class="source-local">local</span>（8/11 機制轉折起點，已於前期報告確立）</li><li>08-26：NVDA、CRWD、CRM <span class="source-local">local</span>（backlog／ARR／查證乾淨的 beat 均獲正向定價）</li></ul>
+    <h4>Refute 名單（本地）</h4>
+    <ul><li>08-26：SNPS <span class="source-local">local</span>——同屬「AI 供應鏈」且 beat+raise，卻因有機成長品質不足逆勢下跌，是本季第一個「AI 鏈內部方向分歧」樣本。</li><li>08-27：MRVL <span class="source-local">local</span>——capex 接收方理應複製 NVDA 正向反應模式，卻因毛利率細節被蓋過，顯示「capex 接收方受益」的 meta-pattern 開始被個股特有因素推翻。</li></ul>
+    <h4>跨產業 read-through</h4>
+    <ul class="bullets">
+      <li>測試設備／類比半導體（ADI、KEYS）延續前期「乾淨 beat 仍遭 sell the news」模式，顯示 AI 供應鏈上游對細節的挑剔程度持續蔓延。</li>
+      <li>實體工程機械（CAT、DE）在 8/4、8/20 兩個不同交易日都獲得管理層對「資料中心與基建需求」的正面歸因，是 AI capex 溢出至非科技產業最乾淨的驗證。</li>
+    </ul>
+    <h4>外部 corroboration</h4>
+    <ul class="bullets">
+      <li>Goldman Sachs 預期超大規模業者 2027 年資本支出將達 $1.2 兆，與 NVDA CFO 揭露的 $1.3 兆數字量級一致，兩份獨立來源互相印證（<a href="https://www.goldmansachs.com/insights/articles/tracking-trillions-the-assumptions-shaping-scale-of-the-ai-build-out" target="_blank" rel="noopener">Goldman Sachs Insights</a>）。</li>
+      <li>JPMorgan 與 Goldman Sachs 已公開將 2027 年 AI capex 預測上修至 $1 兆以上，分析師「持續低估 Big Tech AI 支出」的軌跡本身也是本輪週期尚未見頂的間接證據（<a href="https://beth-kindig.medium.com/ai-capex-to-hit-1-trillion-estimates-are-still-too-low-7b6cf73060fa" target="_blank" rel="noopener">Beth Kindig, AI Capex Estimates</a>）。</li>
+    </ul>
+    <p class="caveat">Caveat：SNPS／MRVL 的「內部分歧」樣本數僅 2 個，且集中在同一週；下一輪驗證點是 10-11 月的 MSFT/AMZN/GOOGL/META capex 指引與其他 EDA/半導體設備公司財報，能否複製同一種「細節決定方向」的分裂模式仍待觀察。</p>
+  </div>
+
+  <div class="trend-block">
+    <h3>3-2. Beat 容忍度 48 小時斷崖式收緊：從「3 漲 1 跌」到「6 家全數未確認收漲」</h3>
+    <p class="signal-row">8/26 與 8/27 兩個相鄰交易日的樣本組成雖不同（AI 供應鏈 vs 銀行+企業軟體），但市場對「beat」的容忍度在極短時間內出現劇烈切換。</p>
+    <h4>關鍵 data points</h4>
+    <ul class="bullets">
+      <li>8/26：NVDA／CRWD／CRM／SNPS 四家 beat+raise，3 家立即大漲（+4%~+14%）、1 家（SNPS）下跌 -4%。</li>
+      <li>8/27：RY／TD／CM／MRVL／ADSK／WDAY 六家清一色 beat，卻無一家明確收漲——4 家確認下跌（MRVL -7~8%、ADSK -3.67%、RY -1.39%、CM -3.4~3.6%）、2 家（TD）多輪覆核仍無法二源確認方向。</li>
+      <li>WDAY 同步上調全年訂閱營收與利益率財測，卻因 Q3 單季訂閱營收指引 $2.52B 不如預期，盤後重挫 -7.02%（次日反轉收 +5.8~6.7%，是本季第二大方向反轉紀錄）。</li>
+      <li>ADSK 因自由現金流財測中點小幅下修（-$25M），次日收 -3.67%。</li>
+    </ul>
+    <h4>Confirm 名單（本地）</h4>
+    <ul><li>08-27：RY、CM、MRVL、ADSK <span class="source-local">local</span>（全數 beat 仍收跌或未確認）</li><li>08-25：INTU <span class="source-local">local</span>（本季第 4 次驗證「指引方向 > beat 幅度」，前三例為 8/19 TGT/TJX/LOW、8/20 WMT/ROST/DE、8/24 PDD）</li></ul>
+    <h4>Refute 名單（本地）</h4>
+    <ul><li>08-27：WDAY <span class="source-local">local</span>——次日最終判決由盤後 -7.02% 反轉至 +5.8~6.7%，顯示局部瑕疵的定價效力有時只是短期雜訊，非所有「beat 仍跌」案例都會延續。</li></ul>
+    <h4>跨產業 read-through</h4>
+    <ul class="bullets">
+      <li>此模式已從純軟體板塊（8/25 INTU）蔓延至銀行（8/27 RY/CM）與客製晶片（MRVL），顯示這不是單一產業的估值消化問題，而是財報季尾聲全市場風險偏好收緊的訊號。</li>
+      <li>與 8/19-20 零售業「指引方向決定股價」模式（§3-3）性質相同但強度更極端——本次是「全數 beat 仍全數未漲」，容忍度门槛比零售業當時更高。</li>
+    </ul>
+    <h4>外部 corroboration</h4>
+    <ul class="bullets">
+      <li>CNBC 8 月下旬多篇「Stock market news」實時報導記錄了同期 Fabrinet（財報全面超預期仍重挫逾 9%）與 National Vision（beat 但全年指引未達預期，重挫 6%）等多起「beat 但股價重挫」案例，與本站記錄的 8/26-27 樣本方向一致（<a href="https://www.cnbc.com/2026/08/24/stock-market-today-live-updates.html" target="_blank" rel="noopener">CNBC Stock Market News, 2026-08-25</a>）。</li>
+      <li>同期 Qualcomm 財報 beat 但因前瞻指引不如預期而遭股價下跌，是本站已記錄模式之外的又一獨立樣本，顯示「指引 > beat」已是跨產業現象而非零售/AI 供應鏈特有（<a href="https://www.cnbc.com/2026/08/19/stock-market-today-live-updates.html" target="_blank" rel="noopener">CNBC Stock Market News, 2026-08-20</a>）。</li>
+    </ul>
+    <p class="caveat">Caveat：容忍度收緊是否為財報季尾聲的暫時性現象（流動性降低、對沖需求上升），還是估值週期性轉折的早期訊號，需觀察 9 月 ORCL（9/14）與 AVGO（財季末將近，預期 9 月初）財報是否延續同一種「零容忍」定價。</p>
+  </div>
+
+  <div class="trend-block">
+    <h3>3-3. 零售關稅退款系統性扭曲本季 EPS 可比性：五家巨頭合計逾 $45 億</h3>
+    <p class="signal-row">TGT/TJX/LOW/WMT/ROST 同季認列逾 $45 億一次性 IEEPA 關稅退款，退款金額與揭露透明度都不是股價的解釋變數，剔除退款後的本業成長才是。</p>
+    <h4>關鍵 data points</h4>
+    <ul class="bullets">
+      <li>8/19：TGT 認列 $9.94 億（貢獻 EPS $1.65，占本季 EPS 約 40%）、TJX 認列 $3.31 億（已排除於 adjusted guidance 外）、LOW 認列 $0.11／股（占 $4.40 EPS 約 2.5%，剔除後實為 miss）。</li>
+      <li>8/20：WMT 認列約 $29 億（推升營業利益率 28.8pp，管理層明言再投資而非留存）、ROST 認列約 $2.53 億（貢獻 EPS 約 22.6%）。</li>
+      <li>股價方向與退款規模無關：WMT 退款金額最大（$29 億）卻收本日最深跌幅（-9~10%，可比銷售 +2.6% 創疫後新低）；ROST 退款佔 EPS 比例更高（22.6%）卻因剔除退款後本業仍強（可比銷售 +10% 全由客流量驅動）而大漲逾 5~7%。</li>
+      <li>HD <span class="source-webfill">webfill</span>（8/18）未見額外一次性關稅退款干擾，beat 但因指引未上修（僅重申 FY26 guidance）而反應溫和（約 +1%），為本組退款干擾 vs 乾淨 beat 的對照組。</li>
+    </ul>
+    <h4>Confirm 名單（本地）</h4>
+    <ul><li>08-19：TGT、TJX、LOW <span class="source-local">local</span></li><li>08-20：WMT、ROST <span class="source-local">local</span></li></ul>
+    <h4>Confirm 名單（web-fill）</h4>
+    <ul><li>08-18：HD <span class="source-webfill">webfill</span>（對照組，未見同等規模退款干擾）</li></ul>
+    <h4>跨產業 read-through</h4>
+    <ul class="bullets">
+      <li>與 §3-5 的 GAAP/Adjusted 口徑分歧屬於同一類「headline 數字需拆解才可比」問題，但關稅退款屬於全產業系統性事件而非個股特有會計選擇。</li>
+      <li>Q3 財報季（11 月）是關鍵驗證點——若退款持續出現，代表分批發放而非一次性出清；若完全消失，Q3 起零售 EPS 年增率比較基期需扣除本次干擾。</li>
+    </ul>
+    <h4>外部 corroboration</h4>
+    <ul class="bullets">
+      <li>Coresight Research 專題報告確認退款規模與各公司會計處理方式差異：Walmart 收到「絕大部分」共 $29 億退款並投入價格與客戶體驗；Target 收到「顯著多數」近 $10 億退款、計入 cost of sales 減項；Home Depot 收到 $7.3 億退款中大部分計入 COGS 減項，其餘 $4,500 萬將於年內逐步認列（<a href="https://coresight.com/research/tariff-refunds-in-2q26-billions-booked-by-retailers-and-brands-guidance-split/" target="_blank" rel="noopener">Coresight Research, Tariff Refunds in 2Q26</a>）。</li>
+      <li>Calcbench 統計顯示美股上市公司合計已揭露 $18.7 億美元的關稅退款，證實這是跨產業、跨公司的系統性會計事件而非零售業獨有現象（<a href="https://www.calcbench.com/blog/post/blogger4826384462710933242/Public-Companies-Have-Disclosed-18.7-Billion-in-Tariff-Refunds" target="_blank" rel="noopener">Calcbench, Public Companies Tariff Refunds</a>）。</li>
+    </ul>
+    <p class="caveat">Caveat：Calcbench 的 $18.7 億為全市場（含非零售業）累計揭露金額，與本站聚焦零售五巨頭的 $45 億爬梳口徑不同（零售五巨頭金額更集中但非全市場總量），引用時不可直接相加比較。</p>
+  </div>
+
+  <div class="trend-block">
+    <h3>3-4. 中國消費互聯網「核心優於預期、獲利端系統性失守」模式三度驗證</h3>
+    <p class="signal-row">BABA→NTES→PDD 橫跨一週，三家公司核心業務指標均優於預期或加速成長，但獲利端指標全數同步失守，且成因彼此不同。</p>
+    <h4>關鍵 data points</h4>
+    <ul class="bullets">
+      <li>8/20：BABA 雲端外部營收 +45%（22 季新高），但 AI 資本支出暴增 75%、淨利年減 75%，股價收跌約 -3.6%。</li>
+      <li>8/20：NTES 核心遊戲及加值服務淨營收 YoY +9.7%（優於整體共識），但因非經營性投資虧損 $4.35 億拖累，non-GAAP EPS 較共識低約 22.6%，股價收跌約 -4.65%。</li>
+      <li>8/24：PDD 交易服務營收 +13%（加速），但 non-GAAP 淨利年減 13%、營業利益率 27%→26%，non-GAAP EPS 雖 beat 共識但較去年同期年減 12.4%，股價收 -1.48%。</li>
+      <li>三者獲利承壓來源本質各異——PDD 是主動研發／平台治理再投資（R&amp;D +40%）；BABA 是主動 AI 資本支出加碼；NTES 是被動非核心投資虧損——但市場對三者的頭條反應高度同質化。</li>
+    </ul>
+    <h4>Confirm 名單（本地）</h4>
+    <ul><li>08-20：BABA、NTES <span class="source-local">local</span></li><li>08-24：PDD <span class="source-local">local</span></li></ul>
+    <h4>跨產業 read-through</h4>
+    <ul class="bullets">
+      <li>PDD 財報後三家券商（Morgan Stanley／BofA／Citi）齊上調目標價，卻無法阻止當日收跌，顯示賣方中期樂觀評估與市場短期定價存在明顯時間軸分歧，是本季少見的「分析師目標價與即時股價方向相反」案例。</li>
+      <li>此模式若在下一波財報（京東、美團、騰訊，多數落在 11 月前後）延續，代表這是中國消費互聯網板塊性特徵而非本季巧合疊加。</li>
+    </ul>
+    <h4>外部 corroboration</h4>
+    <ul class="bullets">
+      <li>Investing.com 對三家中國科技巨頭 Q2 2026 財報的橫向比較報導確認同一模式的第四個樣本——Baidu（未達本站 $50B+ 門檻，未入正式分析）Q2 non-GAAP 淨利年減 46.3%、廣告營收持續萎縮，同樣受「AI 資本支出激增＋核心業務承壓」雙重壓力（<a href="https://www.investing.com/news/stock-market-news/tencent-alibaba-and-baidu-how-chinas-tech-giants-diverged-in-q2-2026-93CH-4870649" target="_blank" rel="noopener">Investing.com, Tencent Alibaba Baidu Q2 2026 Divergence</a>）。</li>
+      <li>同篇報導同時指出 Tencent 呈現相反軌跡——三年間毛利率由 48.1% 擴張至 56.7%、淨利率維持近 30%，是「越擴大規模越賺錢」的對照組，證明本趨勢並非中國科技股全面現象，而是特定押注 AI 資本支出強度的子集（<a href="https://www.techbuzz.ai/articles/alibaba-profit-plunges-75-as-ai-spending-spree-hits-bottom-line" target="_blank" rel="noopener">TechBuzz, Alibaba Profit Plunges 75%</a>）。</li>
+    </ul>
+    <p class="caveat">Caveat：三個主要樣本集中於同一週（8/20-8/24），且中國互聯網板塊本身受地緣政治／監管政策波動影響大，本模式的可持續性需待 11 月京東/美團/騰訊財報季驗證，目前判斷屬中等信心度；Tencent 的反例（見外部 corroboration）提醒本趨勢不可線性外推至整個板塊。</p>
+  </div>
+
+  <div class="trend-block">
+    <h3>3-5. GAAP/Adjusted 口徑分歧成為獨立於 beat/miss 標籤之外的定價變數</h3>
+    <p class="signal-row">本季至少 4 個案例顯示，headline 數字與可比基礎（GAAP vs adjusted、新舊會計口徑）之間的落差，本身就是一個獨立於「beat 或 miss」標籤之外的股價解釋變數。</p>
+    <h4>關鍵 data points</h4>
+    <ul class="bullets">
+      <li>8/25：BMO adjusted EPS C$3.96 beat 共識 C$3.74（+5.9%），但因一次性商譽減損拖累 GAAP EPS 年減 24%，股價收跌 -1.39%；同日 BNS 的 GAAP／adjusted EPS 落差僅 0.4%（乾淨 beat），股價收漲 +4.5~5%。</li>
+      <li>8/25：INTU FY27 non-GAAP EPS 財測 $22.68-23.12 較共識 $27.30 低約 16-17%，觸發盤後 -7.3~-8.7%；但公司同時揭露 FY27 起 SBC 首度計入 non-GAAP 指標（全年衝擊 $5.81/股），剔除口徑變更後可比基礎的實際落差僅約 -2.5%。</li>
+      <li>8/26：CRM 股價 +14% 部分被媒體歸因於「AI growth and Anthropic investment gain」，但經查證 Salesforce non-GAAP 定義結構性排除策略性投資公允價值損益，驅動 EPS 超共識 80.4% 的核心動能與該筆 $26 億利得無關——本案例是「敘事誤導但底層數字乾淨」，方向與 BMO／INTU（底層數字確實受口徑影響）相反。</li>
+    </ul>
+    <h4>Confirm 名單（本地）</h4>
+    <ul><li>08-25：BMO、BNS、INTU <span class="source-local">local</span></li><li>08-26：CRM <span class="source-local">local</span></li></ul>
+    <h4>跨產業 read-through</h4>
+    <ul class="bullets">
+      <li>此類案例橫跨銀行（BMO）、企業軟體（INTU、CRM）兩個互不相關產業，顯示這是財報季普遍存在的「敘事與結構脫鉤」現象，而非單一產業會計慣例問題。</li>
+      <li>與 §3-3 零售關稅退款屬於同一大類「headline 數字需拆解才可比」問題，共同提醒任何跨公司 beat rate 統計若不逐家核實比較基礎，會系統性誤判獲利品質方向。</li>
+    </ul>
+    <h4>外部 corroboration</h4>
+    <ul class="bullets">
+      <li>Motley Fool 與 The Street 對 INTU、CRM 財報電話會議逐字稿的公開轉錄確認了管理層對 SBC 口徑變更與 Anthropic 投資性質的原話陳述，與本站查證方向一致（<a href="https://www.fool.com/earnings/call-transcripts/2026/08/26/estee-lauder-el-q4-2026-earnings-call-transcript/" target="_blank" rel="noopener">The Motley Fool Earnings Call Transcripts, 2026-08</a>）。</li>
+      <li>Investing.com 對 Estée Lauder（同期案例，非本站主要覆蓋對象）Q4 財報電話會議記錄同樣顯示「beat 幅度取決於比較基礎」的模式在消費品產業亦成立，作為本趨勢的側面佐證（<a href="https://www.investing.com/news/transcripts/earnings-call-transcript-estee-lauder-beats-q4-2026-estimates-shares-jump-16-93CH-4867678" target="_blank" rel="noopener">Investing.com, Estée Lauder Q4 2026 Transcript</a>）。</li>
+    </ul>
+    <p class="caveat">Caveat：INTU 的「剔除口徑後落差僅 -2.5%」為本站基於揭露的 SBC 衝擊金額反推計算，非公司官方直接提供的可比 EPS 數字，屬合理推估而非精確引用。</p>
+  </div>
+
+  <div class="trend-block">
+    <h3>3-6. 消費分裂延伸：Pro／數位／off-price 通路持續強，DIY／傳統實體／客單價疲弱</h3>
+    <p class="signal-row">零售 K 型分裂在本期進一步深化，資金遷移方向從「必需可自由裁量支出通路」轉向「價值型通路」。</p>
+    <h4>關鍵 data points</h4>
+    <ul class="bullets">
+      <li>LOW Pro／線上／居家服務三通路連續第五季正成長，DIY 端持續承壓，CEO 稱「自金融危機後最困難的房市」。</li>
+      <li>WMT 美國可比銷售 +2.6%（遠低於共識 3.5~3.8%，客單價僅 +1.1%），為疫情以來最慢增速；ROST 可比銷售 +10%，全數由客流量驅動。</li>
+      <li>TJX 是三大零售商中唯一沒有關稅退款干擾的乾淨 beat（EPS +2.5%），但因 Q3／FY EPS 指引低於共識，股價跌幅（-3~4.7%）反而是三者中最深。</li>
+      <li>DE（8/20）建營/林業機械營收 +18%，管理層明確歸因資料中心與基建需求——是 AI capex 鏈條溢出至實體工程機械的又一驗證樣本，首度喊底部並帶動財報後股價逆勢大漲近 8%。</li>
+    </ul>
+    <h4>Confirm 名單（本地）</h4>
+    <ul><li>08-19：LOW、TJX <span class="source-local">local</span></li><li>08-20：WMT、ROST、DE <span class="source-local">local</span></li></ul>
+    <h4>跨產業 read-through</h4>
+    <ul class="bullets">
+      <li>off-price／折扣通路（ROST、TJX 的 HomeGoods +7%）整體展現韌性，與傳統百貨/量販的疲弱形成清楚對比，資金正從「必需可自由裁量支出」流向「價值型」通路。</li>
+      <li>房市利率敏感度（LOW DIY 疲軟）與消費力總體疲弱（WMT 客單價放緩）是兩個不同機制，須分開追蹤驗證。</li>
+    </ul>
+    <h4>外部 corroboration</h4>
+    <ul class="bullets">
+      <li>eMarketer 產業報告確認 off-price／折扣通路本年度持續擴張展店計畫（TJX 全年新開 146 家門市、Burlington 與 Ross 各計畫新增約 110 家），佐證本站觀察到的「off-price 通路展現韌性」並非單季財報巧合，而是產業結構性趨勢（<a href="https://www.emarketer.com/content/off-price-retailers-go-full-steam-ahead-2026" target="_blank" rel="noopener">eMarketer, Off-Price Retailers Go Full Steam Ahead 2026</a>）。</li>
+      <li>WWD／Sourcing Journal 的「K 型經濟」專題報導指出價值型連鎖與 off-price 通路同步搶占市佔，正在擠壓缺乏差異化定位的中價位零售商，與本站 TJX（乾淨 beat 仍最深跌）樣本共同指向「中間市場承壓」的更大主題（<a href="https://wwd.com/sourcing-journal/industry-news/inflation-continues-k-shaped-economy-remains-mid-tier-retail-1239004302/" target="_blank" rel="noopener">WWD, K-Shaped Economy Reshapes Retail</a>）。</li>
+    </ul>
+    <p class="caveat">Caveat：DIY 疲軟是否為利率驅動的暫時現象、還是消費結構性降級，需 Q3（11 月）房貸利率走勢與 LOW 可比銷售同步驗證，本站已在前期報告標記此驗證點，本期尚無新進展。</p>
+  </div>
+
+  <h2 id="sec4">§4 各產業詳論</h2>
+
+  <h3>4-1. AI 基礎設施與雲端</h3>
+  <p class="lead-row">Backlog×capex 定價機制本季持續有效，但供應鏈內部評價已不再同質，市場開始細顆粒度區分「有機成長品質」與「估值消化程度」。</p>
+  <h4>Winners</h4>
+  <ul class="bullets">
+    <li>NVDA <span class="source-local">local</span> — Q3 財測 $108B 遠超共識，backlog 破 $2 兆，capex 天花板揭露至 2027 年 $1.3 兆，次日最終判決擴大至約 +8.7%。</li>
+    <li>CRWD <span class="source-local">local</span> — 淨新增 ARR 創紀錄 $332.8M（+51% YoY），Falcon Flex 帳號已佔前十大成交案全部，盤後 +11~12.6%。</li>
+    <li>CRM <span class="source-local">local</span> — non-GAAP EPS 超共識 80.4%，Agentforce ARR 三位數增速，盤後 +14%（查證乾淨，見 §3-5）。</li>
+  </ul>
+  <h4>Losers</h4>
+  <ul class="bullets">
+    <li>SNPS <span class="source-local">local</span> — 核心 EDA 有機成長僅約 8%（併購貢獻蓋過頭條 42.3% 增速），盤後 -4%。</li>
+    <li>MRVL <span class="source-local">local</span> — Q3 毛利率財測季減 90bp 蓋過 Google $1,200 億協議揭露，次日最終判決 -7~8%。</li>
+    <li>ADSK、WDAY <span class="source-local">local</span> — 局部財測瑕疵（FCF 中點下修／單季訂閱指引不如預期）盤後重挫；WDAY 次日反轉，ADSK 未反轉。</li>
+  </ul>
+  <p class="lead-row">Implication：「AI 供應鏈」不應再被當作單一同質主題交易，未來 30 天觀察重點是 9 月 ORCL（9/14）與 AVGO 財報能否複製「backlog×有機成長雙達標才被賞」的更嚴格標準。</p>
+
+  <h3>4-2. 半導體 / 客製晶片</h3>
+  <p class="lead-row">本期樣本較前期收斂（ALAB、SNDK、WDC 等前期主角不在本 window 財報週期內），但既有的「乾淨 beat 仍遭 sell the news」模式延續。</p>
+  <h4>Winners</h4>
+  <ul class="bullets">
+    <li>ADI <span class="source-local">local</span> — 雙 beat＋FQ4 上調，但漲幅（+0.37%）幾乎全數回吐。</li>
+  </ul>
+  <h4>Losers</h4>
+  <ul class="bullets">
+    <li>KEYS <span class="source-local">local</span> — 訂單 +56% 創紀錄、財報本季最乾淨，仍收跌約 -6~-6.6%。</li>
+    <li>MRVL <span class="source-local">local</span> — 見 §4-1，資料中心營收占比已達 79%（YoY +46%），對 AI 資料中心終端市場依賴度持續加深，Google 認股權證隱含最高約 7% 潛在稀釋。</li>
+  </ul>
+  <p class="lead-row">Implication：測試設備／類比半導體對「乾淨度」的定價已趨近零容忍，本產業本期無新增結構性利多或利空，維持前期「觀望」基調。</p>
+
+  <h3>4-3. 消費與零售</h3>
+  <p class="lead-row">關稅退款一次性效應是本期最大扭曲變數，K 型分裂持續深化——見 §3-3、§3-6 詳細數據。</p>
+  <h4>Winners</h4>
+  <ul class="bullets">
+    <li>TGT <span class="source-local">local</span> — 剔除退款後可比銷售仍 +3.8%（超共識 +2.4%），數位 +8.7%、當日配送 +25%。</li>
+    <li>ROST <span class="source-local">local</span> — 可比銷售 +10% 全由客流量驅動，剔除退款仍強，最終判決 +5.52~5.79%。</li>
+    <li>DE <span class="source-local">local</span> — 雙位數 beat＋首度喊底部，財報前遭兩家券商下修目標價，財報後仍大漲近 8%。</li>
+    <li>HD <span class="source-webfill">webfill</span> — beat 但指引未上修（僅重申），作為「乾淨無退款干擾」對照組，反應溫和。</li>
+  </ul>
+  <h4>Losers</h4>
+  <ul class="bullets">
+    <li>WMT <span class="source-local">local</span> — 雙 beat＋上調全年指引，仍因可比銷售增速創疫後新低而收最深跌幅（-9~10%）。</li>
+    <li>LOW <span class="source-local">local</span> — 全年三項指引全砍至區間下緣，剔除退款後實為 miss。</li>
+    <li>TJX <span class="source-local">local</span> — 本季唯一乾淨 beat 的零售商，卻因前瞻指引低於共識收跌幅最深（-3~4.7%）。</li>
+  </ul>
+  <p class="lead-row">Implication：Q3 財報季零售 EPS 將面臨關稅退款高基期效應，真實可比銷售趨勢屆時才會顯性化；本期新增證據（TJX 乾淨 beat 仍最深跌）進一步強化「指引方向 > beat 品質」的統一定價法則。</p>
+
+  <h3>4-4. 中國消費互聯網</h3>
+  <p class="lead-row">三度驗證的「核心強、獲利弱」模式是本期最乾淨的板塊性訊號——詳見 §3-4。</p>
+  <h4>核心優於預期</h4>
+  <ul class="bullets">
+    <li>BABA <span class="source-local">local</span> — 雲端外部營收 +45%（22 季新高），AI 相關產品營收連 12 季三位數成長。</li>
+    <li>PDD <span class="source-local">local</span> — 交易服務營收 +13%（加速），但廣告貨幣化僅 +3.4%，同一份補貼計畫對兩大營收來源效果相反。</li>
+  </ul>
+  <h4>獲利端系統性失守</h4>
+  <ul class="bullets">
+    <li>BABA、NTES、PDD <span class="source-local">local</span> — 淨利分別年減 75%／因非核心投資虧損拖累 EPS miss 22.6%／年減 13%，三者股價同週或當日收跌。</li>
+  </ul>
+  <p class="lead-row">Implication：京東／美團／騰訊 11 月財報是否延續此模式，將決定這是板塊性特徵還是本季巧合疊加；三家券商財報後齊上調 PDD 目標價卻未能扭轉當日跌勢，提示短期股價與中期基本面判斷的時間軸分歧值得持續追蹤。</p>
+
+  <h3>4-5. 金融、銀行與另類資產</h3>
+  <p class="lead-row">加拿大六大銀行本期全數交卷，Capital Markets 業務同步爆發是本期最一致的產業性順風，但股價反應因 GAAP/adjusted 口徑乾淨度與財報前估值消化程度而分裂。</p>
+  <h4>Winners</h4>
+  <ul class="bullets">
+    <li>BNS <span class="source-local">local</span> — ROE 首度達標 14%，GAAP/adjusted 口徑落差僅 0.4%，收漲 +4.5~5%。</li>
+    <li>TD <span class="source-local">local</span> — Capital Markets 稱「record」，惟股價數據歷經三輪 Phase R 覆核仍無法二源確認方向。</li>
+  </ul>
+  <h4>Losers</h4>
+  <ul class="bullets">
+    <li>BMO <span class="source-local">local</span> — Capital Markets 部門獲利 +45~46%，但商譽減損拖累 GAAP EPS 年減 24%，收跌 -1.39%。</li>
+    <li>RY <span class="source-local">local</span> — 創紀錄獲利（$6.02B，+11%），premarket 一度上漲後翻黑收跌 -1.39%，反映財報前已消化的高估值而非基本面疑慮。</li>
+    <li>CM <span class="source-local">local</span> — 9/1 Phase R 二輪覆核確認收跌 -3.4~3.6%，GAAP 因 Caribbean 出售減損項目 miss，adjusted 則 beat。</li>
+  </ul>
+  <p class="lead-row">Implication：加拿大銀行 Capital Markets 業務高成長是否可持續，取決於北美 IB/交易市場的產業性回溫是否延續至 11 月 Q4 FY26 財報；本期新增證據顯示財報前估值消化程度（RY 年內漲幅）已是與 GAAP 口徑乾淨度同等重要的獨立定價變數。</p>
+
+  <h3>4-6. 工業、航太與能源</h3>
+  <p class="lead-row">產能瓶頸型超級週期（航太）與中東衝突溢價（能源）兩條主線本期延續，且工程機械（CAT、DE）進一步驗證 AI capex 溢出至實體經濟。</p>
+  <h4>Winners</h4>
+  <ul class="bullets">
+    <li>CAT <span class="source-local">local</span> — 單季首破 $200 億營收（+24%），adj. EPS $8.17 對共識 $6.20 為近五年最大 beat，在手訂單 +92%。</li>
+    <li>ANET <span class="source-local">local</span> — 首個 $30 億季（+37.7%），營業利益率擴至 49.9%，盤後 +9.2% 創歷史新高。</li>
+    <li>COP、PBR <span class="source-local">local</span> — 已實現油價與 EBITDA 皆超共識，Bloomberg 直接歸因於美伊衝突推升油氣價格。</li>
+    <li>DE <span class="source-local">local</span> — 見 §4-3，AI capex 溢出至實體工程機械最乾淨樣本。</li>
+  </ul>
+  <h4>Losers</h4>
+  <ul class="bullets">
+    <li>NRG <span class="source-local">local</span> — adj. EPS miss 12%，指引落中點以下，電力題材本期只認已簽約 GW，宣告量未能轉化為市場獎勵，收 -12.4%。</li>
+    <li>TRGP <span class="source-local">local</span> — 調整後 EBITDA 創紀錄（+38% YoY）但營收未達共識，中游商品定價轉嫁口徑造成 headline 誤導。</li>
+  </ul>
+  <p class="lead-row">Implication：若 Iran-Oman 談判達成協議、霍爾木茲海峽通行恢復，油價與能源股獲利可能快速回吐，本產業強勢不宜線性外推至 Q3/Q4；航太系統的多年產業級 backlog 風險特徵與能源的地緣政治外生溢價本質不同，具備更長能見度。</p>
+
+  <h3>4-7. 醫療保健</h3>
+  <p class="lead-row">LLY（web-filled）延續前期 GLP-1 敘事強勢，本產業其餘公司則延續「一次性項目掩蓋核心業務」的既有模式。</p>
+  <h4>Winners</h4>
+  <ul class="bullets">
+    <li>LLY <span class="source-webfill">webfill</span> — 營收 $22.97B（+47.7%），Mounjaro/Zepbound 合計 $14.9B，FY26 指引上修至 $85-87B，收 +5%。</li>
+    <li>AMGN <span class="source-local">local</span> — 雙 beat，全年營收與 EPS 齊上調。</li>
+    <li>CAH <span class="source-local">local</span> — 五分部全雙位數成長，加碼 $50 億股票回購。</li>
+  </ul>
+  <h4>Losers / 雜訊</h4>
+  <ul class="bullets">
+    <li>MRK <span class="source-local">local</span> — 全年 EPS 指引砍 47%（Terns 併購 IPR&amp;D 費用），但同時上調營收指引，單看 EPS 會嚴重誤判基本面方向。</li>
+    <li>GILD <span class="source-local">local</span> — 帳面虧損 $6.75／股（IPR&amp;D $112 億），基礎業務實際 +10%。</li>
+  </ul>
+  <p class="lead-row">Implication：本產業本期教訓與 §3-5 GAAP/Adjusted 分歧、§3-3 零售關稅退款屬同一類「headline 數字需拆解才可比」規則的延伸案例，任何跨公司比較都必須先確認一次性項目的性質與規模。</p>
+
+  <h3>4-8. 旅遊、媒體與消費品</h3>
+  <p class="lead-row">本產業本期最大的共同特徵是「剩餘上檔（財報前估值起點）主導股價方向」——同樣的 beat/miss 幅度，因財報前累積漲跌幅不同而得到截然相反的市場反應；併購題材（Paramount/WBD、Fox/ROKU）則持續為部分個股的股價設下隱含天花板。</p>
+  <h4>Winners</h4>
+  <ul class="bullets">
+    <li>BKNG <span class="source-local">local</span> — Q3 營收指引 $93.7-95.5 億低於共識 3.5%，但因財報前過去 52 週 -20.1%（估值起點低），三大指標全面打敗自家指引，盤後仍 +5.7~6.3%。</li>
+    <li>ABNB <span class="source-local">local</span> — 結束連 3 季 miss，EBITDA margin 目標上修，盤後 +9~11%。</li>
+    <li>DIS <span class="source-webfill">webfill</span> — 主題樂園創紀錄季度（Experiences 營收 +10%）、Disney+ SVOD 營益率 13%，調整後 EPS 超共識 $0.18，股票回購目標由 $8 億上修至至少 $9 億。</li>
+  </ul>
+  <h4>Losers / 特殊情況</h4>
+  <ul class="bullets">
+    <li>MCD <span class="source-local">local</span> — 美國同店銷售疲弱，本地日報標記為「執行問題而非需求問題」的待驗證假設，需觀察新任美國總裁上任後 Q3 同店是否回到 +2% 以上。</li>
+    <li>SPOT <span class="source-local">local</span> — EPS miss，AI 支出引發成長疑慮，盤前 -2~-6%。</li>
+    <li>WBD <span class="source-local">local</span> — EPS 對比共識大幅翻正（-$0.10→+$0.06），但實為對已大幅下修共識的低基期翻正（股東淨利仍年減逾 90%），受同日 Paramount 併購核准消息干擾，股價幾近持平。</li>
+    <li>ROKU <span class="source-local">local</span> — 淨利暴增 1,464%、EPS 遠超共識，股價卻僅 +0.16%——Fox Corp 的 $22B 收購案已為股價設定隱含天花板，基本面敏感度大幅降低。</li>
+  </ul>
+  <p class="lead-row">Implication：本產業的定價邏輯本期進一步驗證了「剩餘上檔（估值起點）主導股價方向」這條跨產業統一法則（見前期報告 §3-4 與本期 §3-2 的延伸）；併購標的（WBD、ROKU）的財報分析框架須與一般公司分開處理，股價對基本面訊息的敏感度已被交易價格隱含天花板系統性壓低。</p>
+
+  <h2 id="sec5">§5 矛盾與弱訊號</h2>
+
+  <div class="contradiction">
+    <h4>矛盾 1：AMD 盤後先漲 7%、兩小時後翻跌 8.6%——同一份財報、同一批數字，兩個相反判決</h4>
+    <p>TheFly 於財報公布後 16:19 ET 發稿標題為「AMD rises 7% after Q2 earnings, Q3 revenue guidance beat consensus」；到 18:13 ET，quote page 已顯示 -8.64%。期間沒有新的數字發布，基本面完全沒變（營收 $115.36 億、adj. EPS $1.66、Data Center +107%、Q3 指引中點 $130 億高於共識 $125.1 億），唯一的變數是財報電話會議與時間本身。同日 BKNG 把 Q3 指引砍到共識以下 3.5% 卻大漲，AMD 把指引拉到共識以上約 4% 卻大跌——兩者方向完全顛倒，唯一能解釋的變數是估值起點：BKNG 財報前過去 52 週 -20.1%，AMD 財報前 YTD +121%。</p>
+    <p class="implication">→ PM Action：盤後第一個小時的價格對高估值 AI 標的幾乎沒有資訊量，「最終判決」必須以次一交易日收盤為準；本季「指引 vs 共識」的絕對差距完全不能預測股價方向，剩餘上檔（估值起點）才是主導變數——這條規則本期在 §3-2（MRVL/ADSK/WDAY）與 §4-8（BKNG/DIS）持續驗證。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 2：ROKU 淨利暴增 1,464%、EPS 遠超共識，股價僅 +0.16%——併購溢價鎖死股價對基本面的敏感度</h4>
+    <p>Roku 本季淨利 $1.642 億（去年同期僅 $1,050 萬），EPS $1.08 遠超共識 $0.59-0.61，各項指標近乎全面超預期；然而盤後股價僅上漲 0.16%，幾乎無感。Fox Corp 的 $22B 收購案已為 Roku 股價設定隱含天花板。</p>
+    <p class="implication">→ PM Action：併購標的公司的財報分析框架需與一般公司分開處理——評估此類個股應優先追蹤交易完成機率與隱含價值價差，而非單季財報基本面細節。</p>
+  </div>
+
+
+
+  <div class="contradiction">
+    <h4>矛盾 3：MRVL 揭露本財報季最大單一商業協議金額，股價卻重挫超過 7%</h4>
+    <p>MRVL 本季不僅 EPS/營收 beat、FY27/FY28 展望雙上修，還首度完整揭露與 Google 潛在規模達 $1,200 億（6.5 年）的客製晶片協議細節——這是本財報季迄今揭露的最大單一商業合約金額；但股價當晚即重挫 -7.62%，市值蒸發約 $161 億。市場已在 8/19-21 的 Google 認股權證新聞週期中消化過這筆協議的稀釋含義，本次財報只是提供更多細節，真正的增量資訊是毛利率財測季減 90bp。</p>
+    <p class="implication">→ PM Action：「協議規模」這個變數的邊際定價力道正在快速遞減，評估客製晶片類公司時應優先追蹤毛利率軌跡而非合約金額頭條。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 4：本日 6 家公司財報全數 beat，卻無一家明確收漲——48 小時內市場容忍度斷崖式收緊</h4>
+    <p>8/26 報告記錄的 4 家公司中 3 家 beat+raise 後股價立即大漲；不到 48 小時後的 8/27，同樣清一色 beat 的 6 家公司（RY/TD/CM/MRVL/ADSK/WDAY）卻沒有一家明確收漲，4 家確認下跌、2 家無法確認方向。財測中任何局部瑕疵（毛利率、FCF 中點、單季指引）此刻都比「整體是否 beat」更能決定股價方向。</p>
+    <p class="implication">→ PM Action：財報季尾聲的估值容忍度可能在相鄰交易日之間劇烈切換，任何依賴「beat 即應正向反應」的簡單交易邏輯本期已被證明高風險，須逐項檢視財測細節而非僅看 headline beat/miss。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 5：WMT 退款金額遠大於 ROST，股價卻是本日跌幅最深而非受益最大</h4>
+    <p>WMT 認列約 $29 億 IEEPA 關稅退款（遠大於 ROST 的 $2.53 億），且同步上調全年指引，股價卻收本日最深跌幅（-9~10%）；ROST 退款金額雖小，但佔 EPS 比例更高（22.6%），因剔除退款後本業（可比銷售 +10%，全由客流量驅動）依然真實強勁而大漲逾 5~7%。兩者都上調了全年財測，但市場給出截然不同的評價。</p>
+    <p class="implication">→ PM Action：退款金額或佔比本身不是股價的解釋變數，真正的分水嶺在於「剔除退款後，本業成長是否依然真實可信」——這與 §3-3 的核心結論完全一致，須逐家拆解退款貢獻才能判斷真實獲利品質。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 6：BABA 雲端與 AI 產品營收創多季新高，淨利卻重摔 75%——是否為同一個故事的兩面</h4>
+    <p>Alibaba Cloud 外部營收 +45%（22 季新高）、AI 相關產品營收連 12 季三位數成長，理論上是公司近年來最強的成長驗證；但同一季淨利年減 75%，資本支出暴增 75%，自由現金流轉為深度負值。財報同時包含「AI 貨幣化加速」與「AI 投資吃光獲利」兩個看似矛盾的敘事。</p>
+    <p class="implication">→ PM Action：這兩者並非真正矛盾，而是同一個「投資階段」故事的兩面——市場短期股價反應更聚焦獲利端的立即衝擊，而非長期 AI 貨幣化曲線的斜率；CEO 公開承諾「三年打平」提供了明確、可證偽的中期檢驗點。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 7：INTU FY27 財測「headline 大幅 miss」，但一大部分來自非經營性的會計口徑變更</h4>
+    <p>INTU FY27 non-GAAP EPS 財測較共識低約 16-17%，市場以此為由盤後急殺 -7.3~-8.7%；但公司同時揭露 FY27 起 SBC 首度計入 non-GAAP 指標，全年衝擊達 $5.81/股。若以可比基礎（剔除口徑變更）計算，實際落差僅約 -2.5%，與市場定價所隱含的嚴重程度存在巨大落差。這是本季繼 GOOGL（口徑放大 beat 表象）之後第二個「headline 數字與可比基礎脫鉤」案例，但方向相反。</p>
+    <p class="implication">→ PM Action：任何 beat/miss 判定都必須先確認分子（實際數字）與分母（共識）的比較基礎是否一致，否則會系統性誤判獲利品質的真實變化方向；INTU 本次下跌是否過度，需待 Q1 FY27 法說會揭露新舊口徑對照後才能驗證。</p>
+  </div>
+
+  <h2 id="sec6">§6 PM Implications</h2>
+
+  <h3>Sector Tilt（未來 30-90 天）</h3>
+  <ul class="bullets">
+    <li><strong>超配</strong>：AI 供應鏈中同時具備 backlog 揭露＋有機成長品質雙達標的名字（NVDA／CRWD／CRM 型態，而非泛稱「AI 供應鏈」整體）；航太系統與工程機械（多年產業級 backlog，能見度最佳，且已驗證 AI capex 溢出效應）；能源上游（中東溢價驅動，宜隨地緣局勢動態調整曝險）。</li>
+    <li><strong>標配</strong>：零售龍頭中指引方向明確上修且退款透明拆解者（TGT 型態）；乾淨 GAAP/adjusted 口徑的金融股（BNS 型態）。</li>
+    <li><strong>低配 / 觀察</strong>：AI 供應鏈中僅有頭條規模但缺乏有機成長或毛利率佐證的名字（SNPS／MRVL 型態）；財報前已消化高估值的名字（RY 型態，即使基本面無虞仍可能因估值消化而承壓）；中國消費互聯網（核心強、獲利弱模式尚待 11 月驗證，波動風險偏高）。</li>
+  </ul>
+
+  <h3>Add / Cut / Hold 名單（僅用本地深度日報 conviction signal）</h3>
+  <ul class="imply-list">
+    <li><span class="tag tag-add">ADD</span> <strong>NVDA</strong> <span class="source-local">local</span> — Q3 財測 $108B 遠超共識、backlog 破 $2 兆，capex 天花板進一步上移至 2027 年 $1.3 兆，「收錢方」邏輯本季第 5 例驗證。confidence：High</li>
+    <li><span class="tag tag-add">ADD</span> <strong>CRWD</strong> <span class="source-local">local</span> — 淨新增 ARR 增速（+51%）遠超總 ARR 增速（+25%），Falcon Flex 平台化銷售模式加速，全年財測雙上修。confidence：High</li>
+    <li><span class="tag tag-add">ADD</span> <strong>CRM</strong> <span class="source-local">local</span> — non-GAAP EPS 超共識 80.4% 經查證屬核心業務真實成長（非 Anthropic 利得），Agentforce ARR 三位數增速。confidence：Medium-High</li>
+    <li><span class="tag tag-add">ADD</span> <strong>ROST</strong> <span class="source-local">local</span> — 可比銷售 +10% 全由客流量驅動，剔除關稅退款仍強，off-price 通路 K 型分裂中的明確受益者。confidence：Medium-High</li>
+    <li><span class="tag tag-add">ADD</span> <strong>DE</strong> <span class="source-local">local</span> — 雙位數 beat＋首度喊底部，AI capex 溢出至實體工程機械最乾淨樣本，財報後逆勢大漲近 8%。confidence：Medium</li>
+    <li><span class="tag tag-add">ADD</span> <strong>BNS</strong> <span class="source-local">local</span> — GAAP/adjusted 口徑落差僅 0.4%，ROE 首度達標 14%，加拿大銀行中獲利品質最乾淨。confidence：Medium</li>
+    <li><span class="tag tag-hold">HOLD／WATCH</span> <strong>SNPS</strong> <span class="source-local">local</span> — 核心 EDA 有機成長僅約 8%，需觀察 FY26 Q4 財報能否回升至雙位數，暫不列入 add。confidence：Medium</li>
+    <li><span class="tag tag-hold">HOLD／WATCH</span> <strong>MRVL</strong> <span class="source-local">local</span> — Google $1,200 億協議規模大但毛利率財測轉弱蓋過利多，需 Q3 FY27 財報驗證毛利率是否止穩。confidence：Medium</li>
+    <li><span class="tag tag-hold">HOLD／WATCH</span> <strong>WMT</strong> <span class="source-local">local</span> — 可比銷售增速創疫後新低，雖上調全年指引，本業成長訊號本期轉弱，需觀察 Q3 客單價是否回升。confidence：Medium</li>
+    <li><span class="tag tag-hold">HOLD／WATCH</span> <strong>RY</strong> <span class="source-local">local</span> — 創紀錄獲利但財報前已消化高估值，premarket 由漲轉跌，需觀察未來 1-2 週股價相對同業表現以判斷是否僅為單日獲利了結。confidence：Medium</li>
+    <li><span class="tag tag-hold">HOLD／WATCH</span> <strong>BABA／NTES／PDD</strong> <span class="source-local">local</span> — 中國消費互聯網「核心強、獲利弱」模式三度驗證，惟三家獲利承壓成因不同、板塊波動風險偏高，建議觀察 11 月京東/美團/騰訊財報是否延續同一模式後再決定加碼。confidence：Low-Medium</li>
+    <li><span class="tag tag-cut">CUT／降低曝險</span> <strong>LOW</strong> <span class="source-local">local</span> — 全年三項指引全砍至區間下緣，剔除關稅退款後本季實為 miss，DIY 端疲弱未見改善訊號。confidence：Medium</li>
+    <li><span class="tag tag-cut">CUT／降低曝險</span> <strong>TJX</strong> <span class="source-local">local</span> — 本季唯一乾淨 beat 的零售商卻收跌幅最深，前瞻指引低於共識，需觀察 Q3 FQ3（11 月）能否驗證是保守給指引或真實動能放緩。confidence：Medium</li>
+    <li><span class="tag tag-cut">CUT／降低曝險</span> <strong>NRG</strong> <span class="source-local">local</span> — EPS miss 12%、指引落中點以下，電力題材本季只認已簽約 GW，本站現裁決本身已是「觀望」，本期無改善訊號。confidence：Medium</li>
+    <li><span class="tag tag-cut">CUT／降低曝險</span> <strong>ADSK</strong> <span class="source-local">local</span> — FCF 財測中點下修，未如 WDAY 於次日反轉，需觀察下季實際 FCF 數字對比本次下修後財測。confidence：Low-Medium</li>
+  </ul>
+
+  <div class="confidence-note">
+    <strong>Web 補料公司 confirm-only 名單</strong>（不單獨進入主 ADD/CUT 判斷，僅作趨勢輔證）：<br>
+    <strong>LLY</strong> <span class="source-webfill">webfill</span> — 本站既有裁決已為「進場」（基本面 A+，2026-08-06），本次財報（GLP-1 營收 +47.7%、guidance 上修）為既有裁決的正向確認，非新增判斷。<br>
+    <strong>DIS／BRK.B／HD</strong> <span class="source-webfill">webfill</span> — 皆為缺失日補回的 top-cap 公司，數字未經本站深度日報二次交叉確認，僅用於 §3/§4 產業敘事佐證。HD 需注意：本次財報 beat 但指引未上修，若後續本站對 HD 進行完整 DD，應同時檢視此次「重申而非上修」guidance 是否代表管理層對房市展望轉趨保守。
+  </div>
+
+  <div class="confidence-note">
+    <strong>知識帳本／ID 機器欄交叉檢查提醒</strong>：本期 ADD 名單中的 NVDA／CRWD／CRM 皆屬熱門 AI 主題，依 QC-52 熱產業時鐘紀律，若對應 ID 機器欄顯示 clock_phase=II（Phase II 熱產業），建議在實際動部位前先跑 <code>python knowledge/q.py --theme AI基建</code> 與 <code>--theme 網路安全</code> 交叉檢查 priced_in 欄位——本報告未執行此步驟（屬 stock-analyst／multi-stock-comparator 決策層工作範圍，非 earnings-synthesis skill 職責），僅在此提醒後續動部位前的必要程序。中國消費互聯網（BABA/NTES/PDD）若涉及實際加碼決策，依 repo 頂部「Decision-time critic」規則，應先 spawn industry-thesis-critic 對相關產業 ID 跑冷讀。
+  </div>
+
+  <h2 id="sec7">§7 下 30 天 Watchlist</h2>
+  <p>以下 catalyst 日期皆經 WebSearch 查證來源，無法精確查證者以含糊表述呈現，不自由生成日期。</p>
+  <table>
+    <thead><tr><th>日期</th><th>Catalyst</th><th>與本期 trend 的關聯</th><th>Source</th></tr></thead>
+    <tbody>
+      <tr><td>2026-09-03</td><td>LULU 公布 Q2 FY2026 財報</td><td>消費 K 型分裂延伸驗證點——管理層已預告營收/EPS 雙位數下滑，可與 §3-6 DIY／傳統實體疲弱主題對照</td><td>corporate.lululemon.com；scanx.trade</td></tr>
+      <tr><td>~2026 年 9 月中旬（來源分歧：9/9 或 9/14，需以公司正式公告為準）</td><td>ORCL 公布 FQ1 FY2027 財報</td><td>雲端 backlog／RPO 揭露的重要驗證點，測試 §3-1「backlog×有機成長雙達標」新標準是否延續至企業軟體巨頭</td><td>tipranks.com（9/14）；financecalendar.com（9/9，未經公司正式確認）</td></tr>
+      <tr><td>2026-09 初（精確日期待查證）</td><td>AVGO 公布 FQ3 財報</td><td>另一個 AI 客製晶片／網通龍頭，可與 MRVL（§3-1/§4-1 毛利率蓋過協議規模）直接對照</td><td>需下一輪報告以 WebSearch「AVGO next earnings date」確認精確日期後再引用</td></tr>
+      <tr><td>2026-Q3 財報季（11 月）</td><td>京東／美團／騰訊財報</td><td>§3-4 中國消費互聯網「核心強、獲利弱」模式是否延伸至下一波財報的關鍵驗證點</td><td>本地日報 08-24 已標記此驗證點</td></tr>
+      <tr><td>2026-Q3 財報季（11 月）</td><td>TGT/LOW/TJX/WMT/ROST 零售五巨頭財報</td><td>§3-3 關稅退款是否為一次性而非分批發放的核心驗證點，直接影響 Q3 EPS 年增率比較基期</td><td>本地日報 08-19/08-20 已標記此驗證點</td></tr>
+      <tr><td>持續追蹤</td><td>Iran-Oman 談判、霍爾木茲海峽通行狀況</td><td>直接決定 §4-6 能源上下游強勢是否為結構性或短期地緣溢價</td><td>前期報告（截至 08-20）已建立驗證框架</td></tr>
+      <tr><td>持續追蹤</td><td>MSFT/AMZN/GOOGL/META 10 月底-11 月初財報 capex 指引</td><td>§3-1 AI capex 天花板（2027 年 $1.3 兆）是否兌現於下一輪 hyperscaler 財報的核心驗證點</td><td>本地日報 08-26 已標記此驗證點</td></tr>
+    </tbody>
+  </table>
+
+  <div class="disclaimer">
+    本報告為 30 天財報統整，彙整本站既有深度日報（本地）與缺失交易日的 web 補充資料所得的跨產業趨勢判讀，不構成個股投資建議。所有數字均標註來源（本地 <span class="source-local">local</span> / web 補料 <span class="source-webfill">webfill</span>），web 補料公司未經本站深度分析流程二次交叉確認，僅供產業敘事佐證。ADD/CUT/HOLD 名單為本期財報數據的戰術性讀，與本站既有個股 DD／DCA 裁決可能存在差異，使用者應以最新完整 DD 報告為個股決策的最終依據；涉及實際加碼／減碼決策前，應依 repo 治理規則先跑決策時 critic 與知識帳本交叉查詢。
+  </div>
+
+  <footer>
+    investMQuest Research · 財報統整 v1.3 · 生成於 2026-09-01<br>
+    <a href="/earnings/">返回財報分析首頁</a>
+  </footer>
+</div>
+</body>
+</html>
