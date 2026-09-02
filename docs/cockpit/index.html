@@ -450,10 +450,11 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
   var pending = Object.keys(sources).map(function(k){
     return getJSON(sources[k]).then(function(d){S[k]=d;}).catch(function(){S[k]=null;});
   });
-  // board.txt 是純文字看板（非 JSON），fetch 失敗時整塊靜默隱藏，其餘陣容照常渲染
-  pending.push(fetch('/engine/board.txt',{cache:'no-store'}).then(function(r){
+  // 選股看板（HTML TABLE 版，取代舊 <pre> 等寬看板：對齊靠瀏覽器排版、燈號用顏色不用代碼）
+  // 是裸片段（非 JSON），fetch 失敗時整塊靜默隱藏、13 欄明細表改預設展開，其餘陣容照常渲染
+  pending.push(fetch('/engine/_board_body.html',{cache:'no-store'}).then(function(r){
     if(!r.ok) throw new Error(r.status); return r.text();
-  }).then(function(t){S.boardTxt=t;}).catch(function(){S.boardTxt=null;}));
+  }).then(function(t){S.boardHtml=t;}).catch(function(){S.boardHtml=null;}));
 
   Promise.all(pending).then(function(){
     try{ renderEnv(); }catch(e){ $('env-mount').innerHTML=ph('環境資料暫缺'); }
@@ -644,17 +645,20 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
       '<th title="'+esc('FY+1 單月 EPS 修正——是燈號不是排序鍵；≤−10% 仍是資格否決線，veto 後不會出現在席位表')+'">上修燈</th>'+
       '<th title="'+esc('位置燈只標示不排序，定義見 scripts/engine/grp.py')+'">時機燈</th>'+
       '<th>DD</th><th>遲滯</th><th>板機</th></tr>';
-    var boardHtml = S.boardTxt
-      ? ('<div class="card" style="margin-bottom:.8rem"><div class="card-title">選股看板（等寬版・週更）</div><pre class="board">'+esc(S.boardTxt)+'</pre></div>')
-      : '';
-    mount.innerHTML = boardHtml +
+    // 選股看板（HTML TABLE 版）已含席位＋燈號＋DD/護城河，是陣容區首個元素；
+    // 舊 13 欄明細表收進 <details>（板機欄是它獨有的資訊，故保留，預設收合——
+    // 看板 fetch 失敗時無看板卡，明細表改預設展開，陣容不至於整塊開天窗）
+    var boardCard = S.boardHtml || '';
+    mount.innerHTML = boardCard +
+      '<details class="ref-fold"'+(boardCard?'':' open')+'><summary>席位明細（含板機）<small>13 欄完整表</small></summary>'+
+      '<div class="ref-body">'+
       '<div class="card" style="overflow-x:auto"><table class="roster-table">'+thead+rows+'</table></div>'+
       '<div class="roster-note">'+
       (bench.length?('板凳前排：'+esc(bench.join('、'))+' · '):'')+
       (asof?('席位歸屬 as-of '+esc(asof)+'（擁有層引擎週更）· '):'')+
       (ledgerNote?(ledgerNote+' · '):'')+
       'DD 只做 veto／角色標籤，不參與排序；上修為燈號；等寬版看 <a href="/engine/board.txt">/engine/board.txt</a>'+
-      '</div>';
+      '</div></div></details>';
   }
 })();
 </script>

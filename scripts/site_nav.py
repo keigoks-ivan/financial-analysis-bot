@@ -401,6 +401,7 @@ SKIP_FILES = {
     "engine/scoreboard.html",                   # redirect stub -> /cockpit/#seats-scoreboard
     "engine/_radar_body.html",                  # iframe 片段（雷達子分頁）
     "engine/_arena_body.html",                  # iframe 片段（擂台子分頁·M5 對照組 PREREG 凍結）
+    "engine/_board_body.html",                  # 純片段（選股看板 v2，嵌 cockpit 陣容區與擂台頁；無 html/head/body）
     "engine/_cards_body.html",                  # iframe 片段（決策卡子分頁）
     "engine/_scoreboard_body.html",             # iframe 片段（記分板子分頁）
     # 2026-08-20 研究區整併第一階段：/研究/ 群 7 頁收斂成 /t/ + /id/ 兩個主控台。

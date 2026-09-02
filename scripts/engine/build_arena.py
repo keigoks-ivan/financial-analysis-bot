@@ -20,6 +20,7 @@ Usage: python3 scripts/engine/build_arena.py
 from __future__ import annotations
 
 import json
+import re
 import sys
 import unicodedata
 from datetime import datetime, timezone
@@ -38,6 +39,7 @@ WEEKLY_CACHE_UNIVERSE = ROOT / "data" / "weekly_cache_universe"   # 非 DD 池�
 QGM_US = ROOT / "docs" / "qgm" / "latest.json"
 QGM_TW = ROOT / "docs" / "qgm-tw" / "latest.json"
 BOARD_TXT = OUT_DIR / "board.txt"
+BOARD_HTML = OUT_DIR / "_board_body.html"   # 2026-09-02：HTML 版看板（表格＋燈號），raw fragment 供 cockpit innerHTML 與 _arena_body.html 內嵌共用
 TWD_PER_USD = 32.0          # QGM-TW 市值（新台幣十億）換算門檻用，近似值
 OVERHEAT_R26_PCT = 80.0     # 時機燈：26 週漲幅 >+80% ＝ 過熱（不進席位，只列擁有層）
 LISTING_ALIAS = {"2330.TW": "TSM"}   # 本地掛牌 → ADR（同公司只留一席）
@@ -517,6 +519,347 @@ def render_board_text(as_of, rows, core_seats, sat_seats, prev_snap, entered) ->
     return "\n".join(L) + "\n"
 
 
+# ── HTML 版看板（2026-09-02，持有人否決 ASCII <pre>：燈號不見、欄位對不齊）─────────────
+# board.txt（render_board_text，above）保留給終端機／郵件；瀏覽器一律走這裡的 HTML TABLE
+# ——對齊交給瀏覽器排版引擎，欄位不再需要手動補白，顏色燈號也能回來。輸出是「裸片段」
+# （單一 <div class="board-wrap">…</div>，樣式自帶 scoped <style>），不含 html/head/body，
+# 可直接：① innerHTML 塞進 cockpit #roster-mount；② 原樣接進 page_embed_shell() 產的
+# _arena_body.html body（後者另有 common.py PAGE_CSS，兩邊 class 名不衝突，token 共用
+# /assets/imq-base.css，故顏色與字體在兩處視覺一致）。
+
+_TIMING_HTML = {   # p_label -> (dot, 中文, 色系)；色系對應 bw-pill-{cls}
+    "breakout": ("🟢", "突破帶", "up"),
+    "pullback": ("🟢", "回踩", "up"),
+    "in_trend": ("🟡", "趨勢內", "neu"),
+    "overheated": ("🟠", "過熱", "warn"),
+}
+
+# note 欄 chip 化：why[] 裡固定句型 -> (短 chip 文字, 原句當 title)。順序即比對順序，
+# 不影響輸出順序（輸出仍照 why[] 原順序，此表只負責「認出這句要不要變 chip」）。
+_CHIP_PATTERNS = [
+    (re.compile(r"^市值資料缺漏"), lambda w, m: "市值待補"),
+    (re.compile(r"^市值 (\d+)B 低於門檻 (\d+)B"), lambda w, m: f"市值 <{m.group(2)}B"),
+    (re.compile(r"^位置閘：過熱（26 週 ([+-]?\d+)%）"), lambda w, m: f"過熱 {m.group(1)}%"),
+    (re.compile(r"^位置閘未過"), lambda w, m: "線下"),
+    (re.compile(r"^品質閘 ROIC (\S+)"), lambda w, m: f"品質閘 ROIC {m.group(1)}"),
+    (re.compile(r"^品質閘 FCF (\S+)"), lambda w, m: f"品質閘 FCF {m.group(1)}"),
+    (re.compile(r"^成長閘用 2 年成長率代替"), lambda w, m: "2Y 代替"),
+    (re.compile(r"^成長閘未過"), lambda w, m: "成長閘"),
+    (re.compile(r"^上修閘保守否決"), lambda w, m: "上修否決"),
+    (re.compile(r"^上修閘否決"), lambda w, m: "上修否決"),
+    (re.compile(r"^DD 迴避"), lambda w, m: "DD 迴避"),
+    (re.compile(r"^硬 veto 下席"), lambda w, m: "硬 veto"),
+]
+
+
+def _match_chip(w: str):
+    for pat, fn in _CHIP_PATTERNS:
+        m = pat.match(w)
+        if m:
+            return fn(w, m), w
+    return None
+
+
+def _chip_html(short: str, title: str) -> str:
+    return f'<span class="bw-chip" title="{escape(title)}">{escape(short)}</span>'
+
+
+def _chips_html(chips: list, cap: int = 3) -> str:
+    if not chips:
+        return '<span class="bw-muted">—</span>'
+    vis, extra = chips[:cap], chips[cap:]
+    out = "".join(_chip_html(s, t) for s, t in vis)
+    if extra:
+        more_title = "；".join(f"{s}：{t}" for s, t in extra)
+        out += _chip_html(f"+{len(extra)}", more_title)
+    return out
+
+
+def _note_chips(r: dict) -> list:
+    """單列的完整 chip 清單（未截斷）：why[] 逐句比對 ＋ g_method（QGM 單年代替）
+    ＋ hyst（候補／觀察中）。輸出順序＝why 原順序（否決/市值/過熱等最先），其後補兩類狀態 chip。"""
+    chips, seen = [], set()
+    def add(short, title):
+        if short in seen:
+            return
+        seen.add(short); chips.append((short, title))
+    for w in ((r.get("grp") or {}).get("why") or []):
+        c = _match_chip(w)
+        if c:
+            add(*c)
+    if r.get("g_method") == "FY1→FY2 單年":
+        add("成長=單年", "QGM 品質池：以 FY1→FY2 單年成長率代替 FY1→FY3 CAGR（缺 FY3 預估）")
+    hy = r.get("hyst") or ""
+    if "候補" in hy:
+        m = re.search(r"(\d+)/(\d+)", hy)
+        add(f"候補 {m.group(1)}/{m.group(2)}" if m else "候補", hy)
+    elif "觀察中" in hy:
+        add("觀察中", hy)
+    return chips
+
+
+def _chips_from_why(why_list, limit: int = 3) -> list:
+    """通用版（不含 g_method／hyst）：給 DD-vs-機械資格、下席原因等只有 why[] 可用的表格。"""
+    out = []
+    for w in (why_list or [])[:limit]:
+        c = _match_chip(w)
+        out.append(c if c else (w[:14] + ("…" if len(w) > 14 else ""), w))
+    return out
+
+
+def _num(v, d: int = 1) -> str:
+    if v is None:
+        return '<span class="bw-muted">—</span>'
+    try:
+        return f"{float(v):.{d}f}"
+    except (TypeError, ValueError):
+        return '<span class="bw-muted">—</span>'
+
+
+def _timing_pill(p_label, r26, dist_hi) -> str:
+    dot, label, cls = _TIMING_HTML.get(p_label, ("🔴", "線下", "dn"))
+    bits = []
+    if r26 is not None:
+        bits.append(f"26 週漲幅 {r26:+.1f}%")
+    if dist_hi is not None:
+        bits.append(f"距 52 週高 {dist_hi:+.1f}%")
+    title = "；".join(bits) or "時機資料缺"
+    return f'<span class="bw-pill bw-pill-{cls}" title="{escape(title)}">{dot} {escape(label)}</span>'
+
+
+def _rev_pill(r_fy1) -> str:
+    if r_fy1 is None:
+        return '<span class="bw-pill bw-pill-mut">—</span>'
+    if r_fy1 >= 5:
+        return f'<span class="bw-pill bw-pill-up">🟢 {r_fy1:+.1f}%</span>'
+    if r_fy1 <= -10:
+        return f'<span class="bw-pill bw-pill-dn">🔴 否決 {r_fy1:+.1f}%</span>'
+    return f'<span class="bw-pill bw-pill-neu">⚪ {r_fy1:+.1f}%</span>'
+
+
+def _dd_pill(tag) -> str:
+    if not tag:
+        return '<span class="bw-pill bw-pill-mut">—</span>'
+    if "進場" in tag:
+        cls = "up"
+    elif "觀望" in tag:
+        cls = "neu"
+    elif "迴避" in tag:
+        cls = "dn"
+    else:
+        cls = "mut"
+    return f'<span class="bw-pill bw-pill-{cls}">{escape(tag)}</span>'
+
+
+def _tk_link(r: dict) -> str:
+    tk = escape(r["ticker"])
+    return f'<a href="{escape(r["dd_path"])}#decision">{tk}</a>' if r.get("dd_path") else tk
+
+
+_BOARD_CSS = """<style>
+.board-wrap{font-family:var(--sans,-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif);
+  color:var(--ink,var(--text,#1a1a1a));font-size:13px;line-height:1.55}
+.board-wrap .bw-head{font-size:14.5px;font-weight:700;color:var(--ink,var(--text,#1a1a1a))}
+.board-wrap .bw-rule{font-size:11.5px;color:var(--sec,var(--text-sec,#666));margin:2px 0 10px}
+.board-wrap h3.bw-sec{font-family:var(--serif,'Playfair Display','Noto Serif TC',Georgia,serif);
+  font-size:15px;font-weight:700;color:var(--ink,var(--text,#1a1a1a));margin:20px 0 3px}
+.board-wrap .bw-sub{font-size:11.5px;color:var(--sec,var(--text-sec,#666));margin:0 0 8px}
+.board-wrap .bw-scroll{overflow-x:auto;border:1px solid var(--line,var(--border,#ddd));
+  border-radius:var(--r,8px);background:var(--card,#fff)}
+.board-wrap table{width:100%;border-collapse:collapse;font-size:12.5px}
+.board-wrap th{font-family:var(--mono,'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace);
+  font-size:10.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;
+  color:var(--sec,var(--text-sec,#666));text-align:right;padding:6px 8px;
+  border-bottom:1px solid var(--line,var(--border,#ddd));white-space:nowrap;cursor:help}
+.board-wrap th.bw-l,.board-wrap td.bw-l{text-align:left}
+.board-wrap td{padding:5px 8px;text-align:right;border-bottom:1px solid var(--line-soft,var(--border,#eee));
+  white-space:nowrap;font-family:var(--mono,'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace);
+  font-variant-numeric:tabular-nums}
+.board-wrap td.bw-note{white-space:normal;text-align:left;font-family:var(--sans,inherit);min-width:160px}
+.board-wrap tr.bw-seated td{background:var(--paper,rgba(0,0,0,.025))}
+.board-wrap tbody tr:hover td{background:var(--line-soft,rgba(0,0,0,.03))}
+.board-wrap .bw-muted{color:var(--muted,#999)}
+.board-wrap a{color:var(--accent,#0d2244);font-weight:650;text-decoration:none}
+.board-wrap a:hover{text-decoration:underline}
+.board-wrap .bw-pill{display:inline-block;font-family:var(--mono,'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace);
+  font-size:10.5px;font-weight:600;border-radius:5px;padding:1px 6px;white-space:nowrap}
+.board-wrap .bw-pill-up{background:#eafaef;color:var(--pos,#15803d)}
+.board-wrap .bw-pill-dn{background:#fbeceb;color:var(--neg,#b91c1c)}
+.board-wrap .bw-pill-neu{background:#fbf3df;color:var(--warn,#a16207)}
+.board-wrap .bw-pill-warn{background:#fdeedb;color:#c2610a}
+.board-wrap .bw-pill-mut{background:var(--line-soft,#eee);color:var(--muted,#999)}
+.board-wrap .bw-chip{display:inline-block;font-size:10.5px;font-family:var(--sans,inherit);
+  color:var(--sec,var(--text-sec,#666));background:var(--line-soft,rgba(0,0,0,.045));
+  border-radius:4px;padding:1px 6px;margin:0 3px 3px 0;cursor:help}
+.board-wrap .bw-chip-more{color:var(--muted,#999)}
+.board-wrap .bw-note-line{font-size:12px;color:var(--sec,var(--text-sec,#666));margin-top:8px;line-height:1.75}
+.board-wrap .bw-note-line b{color:var(--ink,var(--text,#1a1a1a))}
+@media(max-width:760px){.board-wrap table{font-size:11.5px}.board-wrap th,.board-wrap td{padding:4px 6px}}
+</style>"""
+
+
+def render_board_html(as_of, rows, core_seats, sat_seats, prev_snap, entered) -> str:
+    """HTML TABLE 版看板（2026-09-02，取代 <pre> ASCII——持有人否決理由：對齊靠瀏覽器排版
+    引擎解決，燈號用顏色不用代碼）。回傳裸片段（無 html/head/body），可直接 innerHTML 或
+    接進另一頁 <body>。內容與 render_board_text 同源同排序，只是呈現層換成表格＋燈號＋chip。"""
+    seat_label = {}
+    for i, r in enumerate(core_seats, 1):
+        seat_label[r["ticker"]] = f"核心 {i}"
+    for i, r in enumerate(sat_seats, 1):
+        seat_label[r["ticker"]] = f"衛星 {i}"
+
+    own = [r for r in rows if (r["grp"].get("quality") or {}).get("pass") and (r["score"] or 0) > 0][:40]
+
+    thead = ("<tr>"
+             '<th title="排序名次">#</th>'
+             '<th class="bw-l" title="點擊連到該股 DD #decision 錨點（若有 v13+ DD）">Ticker</th>'
+             '<th title="擁有層分＝min(成長,30)＋FY1 盈餘殖利率（ROIC≥30 持續期 +2；PEG>2 罰 −5）——排序鍵">擁有層分</th>'
+             '<th title="FY1→FY3 EPS CAGR（缺 FY3 用 2 年成長率代替）">成長%</th>'
+             '<th title="FY1 盈餘殖利率＝100 ÷ FY1 P/E">EY%</th>'
+             '<th title="投入資本回報率 ROIC">ROIC%</th>'
+             '<th title="自由現金流利潤率">FCF%</th>'
+             '<th title="PEG＝FY1 P/E ÷ 成長%">PEG</th>'
+             '<th title="FY+1 單月 EPS 修正——燈號不參與排序；≤−10% 為資格否決線">上修燈</th>'
+             '<th title="52 週位置與熱度燈號——不參與排序，見各燈 title">時機燈</th>'
+             '<th class="bw-l" title="目前坐核心／衛星席次；空白＝未坐席">席</th>'
+             '<th class="bw-l" title="DD 裁決標籤——只做 veto（迴避）與角色標籤，不參與排序；⚠過期＝逾 180 天">DD</th>'
+             '<th class="bw-l" title="護城河評級與趨勢：字母＝評級，↑升 →平 ↓降">護城河</th>'
+             '<th class="bw-l" title="資格閘未過／狀態摘要，完整原因見各 chip title">註記</th>'
+             "</tr>")
+
+    body_rows = []
+    for i, r in enumerate(own, 1):
+        g = r["grp"]; o = g.get("own") or {}
+        tk = r["ticker"]
+        seated = tk in seat_label
+        seat_cell = escape(seat_label[tk]) if seated else '<span class="bw-muted">—</span>'
+        moat = r.get("moat") or "—"
+        moat_cell = escape(moat) if moat != "—" else '<span class="bw-muted">—</span>'
+        body_rows.append(
+            f'<tr{" class=\"bw-seated\"" if seated else ""}>'
+            f"<td>{i}</td>"
+            f'<td class="bw-l"><strong>{_tk_link(r)}</strong></td>'
+            f"<td>{_num(r.get('score'), 1)}</td>"
+            f"<td>{_num(g.get('g'), 1)}</td>"
+            f"<td>{_num(o.get('ey'), 1)}</td>"
+            f"<td>{_num(r.get('roic'), 1)}</td>"
+            f"<td>{_num(r.get('fcf'), 1)}</td>"
+            f"<td>{_num(r.get('peg'), 2)}</td>"
+            f"<td>{_rev_pill(g.get('r_fy1'))}</td>"
+            f"<td>{_timing_pill(g.get('p_label'), r.get('r26'), g.get('dist_hi'))}</td>"
+            f'<td class="bw-l">{seat_cell}</td>'
+            f'<td class="bw-l">{_dd_pill(r.get("dd_tag"))}</td>'
+            f'<td class="bw-l">{moat_cell}</td>'
+            f'<td class="bw-note">{_chips_html(_note_chips(r))}</td>'
+            "</tr>")
+
+    main_tbl = ('<div class="bw-scroll"><table><thead>' + thead + "</thead><tbody>"
+                + "".join(body_rows) + "</tbody></table></div>")
+
+    # ── 席位對照 ──
+    prev_seats = {t: "核心席" for t in prev_snap.get("core", [])}
+    prev_seats.update({t: "衛星席" for t in prev_snap.get("sat", [])})
+    track_code = {"核心席": "C", "衛星席": "S"}
+    seat_thead = ("<tr><th class=\"bw-l\">席</th><th class=\"bw-l\">Ticker</th>"
+                  "<th>擁有層分</th><th class=\"bw-l\">時機燈</th>"
+                  "<th class=\"bw-l\">DD</th><th class=\"bw-l\">遲滯</th></tr>")
+    seat_rows = []
+    for track_label, seats, code_letter in (("核心席", core_seats, "C"), ("衛星席", sat_seats, "S")):
+        for j, r in enumerate(seats, 1):
+            g = r["grp"]
+            if prev_seats.get(r["ticker"]) == track_label:
+                chg = ""
+            elif r["ticker"] not in prev_seats:
+                chg = "NEW"
+            else:
+                chg = f'FROM:{track_code.get(prev_seats[r["ticker"]], "?")}'
+            hyst_txt = (f'<span class="bw-chip" title="本期新換入或跨軌轉入">{escape(chg)}</span> ' if chg else "") \
+                       + escape(r.get("hyst") or "—")
+            seat_rows.append(
+                f'<tr><td class="bw-l">{code_letter}{j}</td>'
+                f'<td class="bw-l"><strong>{_tk_link(r)}</strong></td>'
+                f"<td>{_num(r.get('score'), 1)}</td>"
+                f'<td class="bw-l">{_timing_pill(g.get("p_label"), r.get("r26"), g.get("dist_hi"))}</td>'
+                f'<td class="bw-l">{_dd_pill(r.get("dd_tag"))}</td>'
+                f'<td class="bw-l">{hyst_txt}</td></tr>')
+    seat_tbl = ('<div class="bw-scroll"><table><thead>' + seat_thead + "</thead><tbody>"
+                + "".join(seat_rows) + "</tbody></table></div>")
+
+    gone = [t for t in prev_seats if t not in seat_label]
+    if gone:
+        why_map = {r["ticker"]: r for r in rows}
+        lines = []
+        for t in gone:
+            r = why_map.get(t)
+            why = (((r or {}).get("grp") or {}).get("why") or [])
+            chips = _chips_from_why(why, limit=2) if why else []
+            reason = _chips_html(chips) if chips else '<span class="bw-muted">擁有層分數被擠下／不在母體</span>'
+            lines.append(f'<div class="bw-note-line">🔻 DOWN <b>{escape(t)}</b>'
+                         f'（{escape((r or {}).get("hyst") or "—")}）：{reason}</div>')
+        changes_html = "".join(lines)
+    else:
+        changes_html = '<div class="bw-note-line">本期無下席變動。</div>'
+
+    # ── DD 進場 vs 機械資格 ──
+    ok_n = sum(1 for r in entered if r["grp"]["pass"])
+    ng = [r for r in entered if not r["grp"]["pass"]]
+    dd_gate_sub = f"進場 {len(entered)}：過閘 {ok_n}／未過 {len(ng)}"
+    if ng:
+        ng_thead = '<tr><th class="bw-l">Ticker</th><th class="bw-l">時機燈</th><th class="bw-l">原因</th></tr>'
+        ng_rows = []
+        for r in ng:
+            g = r["grp"]
+            ng_rows.append(
+                f'<tr><td class="bw-l"><strong>{_tk_link(r)}</strong></td>'
+                f'<td class="bw-l">{_timing_pill(g.get("p_label"), r.get("r26"), g.get("dist_hi"))}</td>'
+                f'<td class="bw-note">{_chips_html(_chips_from_why(g.get("why")))}</td></tr>')
+        ng_tbl = ('<div class="bw-scroll"><table><thead>' + ng_thead + "</thead><tbody>"
+                  + "".join(ng_rows) + "</tbody></table></div>")
+    else:
+        ng_tbl = '<div class="bw-note-line">進場票全數過機械三閘，無需人工複審。</div>'
+
+    # ── 無 DD 而機械過閘（DD 選配層候選） ──
+    qgm_cands = [r for r in own if r.get("src") == "qgm" and r["grp"]["pass"]]
+    if qgm_cands:
+        q_thead = ('<tr><th class="bw-l">Ticker</th><th>分</th><th>成長%</th><th>ROIC%</th>'
+                   '<th>PEG</th><th class="bw-l">時機燈</th><th class="bw-l">遲滯</th></tr>')
+        q_rows = []
+        for r in qgm_cands:
+            g = r["grp"]
+            q_rows.append(
+                f'<tr><td class="bw-l"><strong>{_tk_link(r)}</strong></td>'
+                f"<td>{_num(r.get('score'), 1)}</td><td>{_num(g.get('g'), 1)}</td>"
+                f"<td>{_num(r.get('roic'), 1)}</td><td>{_num(r.get('peg'), 2)}</td>"
+                f'<td class="bw-l">{_timing_pill(g.get("p_label"), r.get("r26"), g.get("dist_hi"))}</td>'
+                f'<td class="bw-l">{escape(r.get("hyst") or "—")}</td></tr>')
+        qgm_tbl = ('<div class="bw-scroll"><table><thead>' + q_thead + "</thead><tbody>"
+                   + "".join(q_rows) + "</tbody></table></div>")
+    else:
+        qgm_tbl = '<div class="bw-note-line">目前無候選（QGM 品質池名字皆已有 DD 或未過機械三閘）。</div>'
+
+    head_line = f"選股看板 v2 · as_of {as_of} · 母體 {len(rows)}（美股含 ADR；台股另建）"
+    rule_line = ("排序＝擁有層分（min(成長，30)＋FY1 盈餘殖利率；ROIC≥30 +2；PEG>2 −5）"
+                 "· 資格＝品質閘×成長閘×市值 · 時機燈不進排序 · DD 只 veto／角色")
+
+    return (
+        '<div class="board-wrap">' + _BOARD_CSS
+        + f'<div class="bw-head">{escape(head_line)}</div>'
+        + f'<div class="bw-rule">{escape(rule_line)}</div>'
+        + main_tbl
+        + '<h3 class="bw-sec">席位對照</h3>'
+        + '<div class="bw-sub">C1–C5＝核心席次、S1–S5＝衛星席次；NEW＝本期新換入、FROM:X＝跨軌轉入。</div>'
+        + seat_tbl + changes_html
+        + '<h3 class="bw-sec">DD 進場 vs 機械資格</h3>'
+        + f'<div class="bw-sub">{escape(dd_gate_sub)}——過閘者已在席位或候補中，這裡只列未過者供人工複審。</div>'
+        + ng_tbl
+        + '<h3 class="bw-sec">無 DD 而機械過閘（DD 選配層候選）</h3>'
+        + '<div class="bw-sub">QGM 品質池名字，機械三閘全過但尚無 DD 裁決——有興趣才跑 DD。</div>'
+        + qgm_tbl
+        + '<div class="bw-note-line">同內容另存純文字版 <a href="/engine/board.txt">board.txt</a>（終端機／郵件用）。</div>'
+        + "</div>"
+    )
+
+
 def main() -> int:
     stocks = json.loads(DD_LATEST.read_text(encoding="utf-8"))["stocks"]
     # latest.json 若以 --include-non-dd 產出，無 DD 列（dd_status="none"）改由 load_qgm_rows 供給
@@ -688,6 +1031,8 @@ def main() -> int:
                  if (r["grp"].get("quality") or {}).get("pass") and (r["score"] or 0) > 0][:60]
     board_text = render_board_text(as_of, universe_rows, core_seats, sat_seats, prev, entered)
     BOARD_TXT.write_text(board_text, encoding="utf-8")
+    board_html = render_board_html(as_of, universe_rows, core_seats, sat_seats, prev, entered)
+    BOARD_HTML.write_text(board_html, encoding="utf-8")
     payload = {
         "schema_version": "2.0",
         "method": "v2 擁有層×時機層分離（2026-09-02）：排序＝own_score；R 為燈號；DD 只 veto／角色；遲滯 2/4",
@@ -804,9 +1149,9 @@ def main() -> int:
 DD 角色與機械軌別衝突標 ⚠ 供人裁。三閘未過的進場票落板凳、寧缺勿濫。</div>
 <div class="asof">資料源 dd-screener latest.json ＋ QGM 品質池（US／TW）＋週線 cache ｜ v2 擁有層×時機層 ｜ 週更</div>
 </div>
-<div class="block"><h2>選股看板 v2（等寬版）</h2>
-<div class="block-sub">擁有層排序（值不值得擁有）與時機燈（現在能不能動）分開讀；DD 只做 veto 與角色標籤。同內容另存 <a href="/engine/board.txt">board.txt</a>。</div>
-<pre class="board" style="font-family:var(--mono);font-size:11.5px;line-height:1.45;overflow-x:auto;white-space:pre;background:var(--paper);border:1px solid var(--line);padding:12px">{escape(board_text)}</pre></div>
+<div class="block"><h2>選股看板 v2</h2>
+<div class="block-sub">擁有層排序（值不值得擁有）與時機燈（現在能不能動）分開讀；DD 只做 veto 與角色標籤。</div>
+{board_html}</div>
 <div class="stat-row">
 <div class="stat"><strong>{dial['label'] if dial['level'] else '—'}</strong><span>Regime 撥盤（{dial['level'] if dial['level'] else '—'}×）</span></div>
 <div class="stat"><strong>{sum(1 for d in duels if d['alert'])}</strong><span>⚔ 擂台警報</span></div>
