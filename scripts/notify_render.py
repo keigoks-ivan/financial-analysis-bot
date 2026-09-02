@@ -32,6 +32,7 @@ state["keys"][key]["notify"]["last_immediate"]，不動 keys 其他任何欄位�
 sort_keys=True）以避免假 diff。
 """
 import argparse
+import html as html_lib
 import json
 import os
 import re
@@ -129,6 +130,168 @@ def _footer(has_active_red):
     if has_active_red:
         lines.append(FOOTER_DEEP_READ)
     return lines
+
+
+# ── HTML email 版型（設計稿 §5.7：notes/site-internal/root/
+# _market_read_design_20260903.md）──────────────────────────────────────
+# 600px 單欄置中白卡、系統字型、全部 inline style，不依賴 <style>／外部資源。
+# 這裡只組版面；每個 render_*_html 都是既有 render_* 的姊妹函式，共用同一份
+# 前置計算（見 _immediate_rows / _digest_compute / _weekly_compute），確保
+# 數字與純文字版本恆一致，不會另外重算分岔。
+
+_FONT = '-apple-system, "PingFang TC", "Noto Sans TC", "Segoe UI", sans-serif'
+_C_BG = "#f6f5f2"
+_C_BORDER = "#e6e2d8"
+_C_TEXT = "#1c1c1c"
+_C_MUTED = "#6b6b6b"
+_C_NAVY = "#0f1f3d"
+_C_RED_BAR = "#b3261e"
+_C_GOLD = "#8a6d1f"
+_C_ZEBRA = "#faf9f6"
+_C_HEAD_BG = "#efece4"
+_PILL = {
+    "green": ("#e8f3ea", "#1f6b3a"),
+    "red": ("#fbe9e7", "#b3261e"),
+    "grey": ("#f0eee9", "#5a5a5a"),
+}
+DETECTIVE_URL = "https://research.investmquest.com/detective/"
+
+
+def _h(v):
+    """HTML-escape a data value（非標記）給 inline 內容使用。"""
+    if v is None:
+        return ""
+    return html_lib.escape(str(v), quote=True)
+
+
+def _pill(label, kind="grey"):
+    bg, fg = _PILL.get(kind, _PILL["grey"])
+    return (
+        f'<span style="display:inline-block;padding:2px 10px;border-radius:999px;'
+        f'font-size:12px;line-height:1.6;background-color:{bg};color:{fg};'
+        f'white-space:nowrap;">{_h(label)}</span>'
+    )
+
+
+def _section_title(en, zh):
+    return (
+        f'<div style="margin:22px 0 8px 0;">'
+        f'<div style="font-size:11px;letter-spacing:0.08em;color:{_C_GOLD};'
+        f'text-transform:uppercase;font-weight:700;">{_h(en)}</div>'
+        f'<div style="font-size:15px;font-weight:700;color:{_C_TEXT};margin-top:2px;">{_h(zh)}</div>'
+        f'</div>'
+    )
+
+
+def _minute_version(bullets):
+    if not bullets:
+        return ""
+    lis = "".join(f'<li style="margin:0 0 6px 0;">{b}</li>' for b in bullets)
+    return (
+        f'<div style="font-size:11px;letter-spacing:0.08em;color:{_C_GOLD};'
+        f'text-transform:uppercase;font-weight:700;">ONE-MINUTE VERSION</div>'
+        f'<div style="font-size:14px;font-weight:700;color:{_C_TEXT};margin:2px 0 8px 0;">一分鐘版</div>'
+        f'<ul style="margin:0 0 4px 0;padding-left:18px;font-size:14px;line-height:1.65;color:{_C_TEXT};">{lis}</ul>'
+    )
+
+
+def _tile(number, label, sub=None):
+    sub_html = (
+        f'<div style="font-size:11px;color:{_C_MUTED};margin-top:4px;">{_h(sub)}</div>'
+        if sub else ""
+    )
+    return (
+        f'<div style="display:inline-block;vertical-align:top;width:160px;'
+        f'box-sizing:border-box;margin:4px 8px 4px 0;padding:14px 12px;'
+        f'background-color:{_C_ZEBRA};border:1px solid {_C_BORDER};border-radius:6px;'
+        f'text-align:center;">'
+        f'<div style="font-size:26px;font-weight:700;color:{_C_NAVY};line-height:1.1;">{_h(number)}</div>'
+        f'<div style="font-size:12px;color:{_C_MUTED};margin-top:4px;">{_h(label)}</div>'
+        f'{sub_html}</div>'
+    )
+
+
+def _tiles_row(tiles_html):
+    return '<div style="margin:6px 0 4px 0;">' + "".join(tiles_html) + "</div>"
+
+
+def _table(headers, rows, aligns=None):
+    """headers/cells 皆已假設呼叫端做好 escape（純文字用 _h，pill/span 直接傳
+    html）。aligns 預設全 left，可個別指定 right 讓數字靠右。"""
+    aligns = aligns or ["left"] * len(headers)
+    thead = "".join(
+        f'<th style="text-align:{a};padding:8px 10px;background-color:{_C_HEAD_BG};'
+        f'font-size:12px;color:{_C_MUTED};font-weight:700;">{h}</th>'
+        for h, a in zip(headers, aligns)
+    )
+    body = []
+    for i, row in enumerate(rows):
+        bg = _C_ZEBRA if i % 2 == 1 else "#ffffff"
+        cells = "".join(
+            f'<td style="text-align:{a};padding:8px 10px;font-size:13px;color:{_C_TEXT};'
+            f'border-top:1px solid {_C_BORDER};">{cell}</td>'
+            for cell, a in zip(row, aligns)
+        )
+        body.append(f'<tr style="background-color:{bg};">{cells}</tr>')
+    return (
+        f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
+        f'style="width:100%;border-collapse:collapse;margin:4px 0 4px 0;">'
+        f'<thead><tr>{thead}</tr></thead><tbody>{"".join(body)}</tbody></table>'
+    )
+
+
+def _bullet_list(items):
+    if not items:
+        return f'<div style="font-size:13px;color:{_C_MUTED};">（無）</div>'
+    lis = "".join(f'<li style="margin:0 0 4px 0;">{i}</li>' for i in items)
+    return f'<ul style="margin:0 0 4px 0;padding-left:18px;font-size:13px;line-height:1.6;color:{_C_TEXT};">{lis}</ul>'
+
+
+def _button(url, label="查看完整版面"):
+    return (
+        f'<div style="text-align:center;margin:6px 0 4px 0;">'
+        f'<a href="{_h(url)}" style="display:inline-block;background-color:{_C_NAVY};'
+        f'color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;'
+        f'padding:12px 28px;border-radius:6px;">{_h(label)}</a></div>'
+    )
+
+
+def _html_doc(mail_title, bar_title, bar_date, body_html, has_active_red, accent=None):
+    accent = accent or _C_NAVY
+    deep_read = (
+        f'<div style="margin-top:4px;">{_h(FOOTER_DEEP_READ)}</div>' if has_active_red else ""
+    )
+    return f"""<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{_h(mail_title)}</title>
+</head>
+<body style="margin:0;padding:0;background-color:{_C_BG};">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:{_C_BG};">
+<tr><td align="center" style="padding:24px 12px;">
+<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background-color:#ffffff;border:1px solid {_C_BORDER};border-radius:8px;overflow:hidden;font-family:{_FONT};">
+<tr><td style="background-color:{accent};color:#ffffff;padding:18px 24px;">
+<div style="font-size:16px;font-weight:700;">{_h(bar_title)}</div>
+<div style="font-size:12px;opacity:.85;margin-top:2px;">{_h(bar_date)}</div>
+</td></tr>
+<tr><td style="padding:18px 24px 6px 24px;font-size:15px;line-height:1.65;color:{_C_TEXT};">
+{body_html}
+</td></tr>
+<tr><td style="padding:8px 24px 24px 24px;">
+{_button(DETECTIVE_URL)}
+<div style="margin-top:14px;font-size:12px;color:{_C_MUTED};line-height:1.6;text-align:center;">
+{_h(FOOTER_FIXED)}
+{deep_read}
+</div>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>
+"""
 
 
 # ── immediate ────────────────────────────────────────────────────────────
@@ -293,9 +456,12 @@ def _immediate_candidates(latest, state):
     return out
 
 
-def render_immediate(latest, state, force=False):
-    """回傳 (body_text_or_None, eligible_keys[])。呼叫端只在 eligible_keys
-    非空且非 force 時才寫回 state.json。"""
+def _immediate_rows(latest, state):
+    """共用前置計算：回傳 (rows, eligible_keys)。rows 為排序後的
+    (score, key, reasons, fact, context, label, no_label, days) tuple 清單。
+    text（render_immediate）與 HTML（render_immediate_html）共用同一份計算，
+    避免兩邊分岔算出不同數字。不含 force 分支——force 只影響呼叫端「沒有
+    eligible 事件時要不要仍產出樣本檔」，與這裡的計算內容無關。"""
     as_of = latest.get("as_of") or state.get("as_of")
     keys_state = state.get("keys", {})
     sig_by_key = {s["key"]: s for s in latest.get("signals", [])}
@@ -319,22 +485,30 @@ def render_immediate(latest, state, force=False):
             continue
         eligible.setdefault(key, {"reasons": set()})["reasons"].add(reason)
 
-    if not eligible and not force:
-        return None, []
-
     rows = []
     for key, e in eligible.items():
         fact, context, label, score, no_label = _display_for(key, keys_state, sig_by_key, composite_by_key)
-        rows.append((score, key, e["reasons"], fact, context, label, no_label))
+        days = (keys_state.get(key) or {}).get("days_active", 1)
+        rows.append((score, key, e["reasons"], fact, context, label, no_label, days))
     rows.sort(key=lambda r: -r[0])
+    return rows, sorted(eligible.keys())
+
+
+def render_immediate(latest, state, force=False):
+    """回傳 (body_text_or_None, eligible_keys[])。呼叫端只在 eligible_keys
+    非空且非 force 時才寫回 state.json。"""
+    as_of = latest.get("as_of") or state.get("as_of")
+    rows, eligible_keys = _immediate_rows(latest, state)
+
+    if not rows and not force:
+        return None, []
 
     lines = [f"市場偵探 — 即時警報 {as_of or ''}", ""]
     if rows:
-        for score, key, reasons, fact, context, label, no_label in rows:
+        for score, key, reasons, fact, context, label, no_label, days in rows:
             reasons = sorted(reasons)
             tag = TAG.get(reasons[0], "🔴")
             why = "、".join(REASON_LABEL.get(r, r) for r in reasons)
-            days = (keys_state.get(key) or {}).get("days_active", 1)
             line = f"{tag} {fact or label}"
             if context:
                 line += f"（{context}）"
@@ -345,12 +519,57 @@ def render_immediate(latest, state, force=False):
     else:
         lines.append("（測試信：目前無資格事件，這是即時警報管線的測試樣本。）")
     lines += _footer(has_active_red=True)  # immediate 層恆為紅燈事件
-    return "\n".join(lines), sorted(eligible.keys())
+    return "\n".join(lines), eligible_keys
+
+
+def render_immediate_html(latest, state, force=False):
+    """回傳 HTML 字串或 None（無資格且非 force）。設計稿 §5.7：red-accent
+    top bar＋每則觸發訊號一張卡，卡上標明觸發原因（新紅／升級／複合規則）。"""
+    as_of = latest.get("as_of") or state.get("as_of")
+    rows, _ = _immediate_rows(latest, state)
+    if not rows and not force:
+        return None
+
+    cards = []
+    if rows:
+        for score, key, reasons, fact, context, label, no_label, days in rows:
+            reasons = sorted(reasons)
+            why = "、".join(REASON_LABEL.get(r, r) for r in reasons)
+            headline = _h(fact or label) + ("（無標籤）" if no_label else "")
+            context_html = (
+                f'<div style="font-size:13px;color:{_C_MUTED};margin-top:3px;">{_h(context)}</div>'
+                if context else ""
+            )
+            cards.append(
+                f'<div style="border-left:4px solid {_C_RED_BAR};background-color:{_C_ZEBRA};'
+                f'border-radius:4px;padding:12px 14px;margin:0 0 10px 0;">'
+                f'<div style="font-size:14px;font-weight:700;color:{_C_TEXT};">{headline}</div>'
+                f'{context_html}'
+                f'<div style="margin-top:8px;">{_pill(why, "red")}'
+                f'<span style="font-size:12px;color:{_C_MUTED};margin-left:8px;">第 {days} 天</span></div>'
+                f'</div>'
+            )
+        body = "".join(cards)
+    else:
+        body = f'<div style="font-size:13px;color:{_C_MUTED};">（測試信：目前無資格事件，這是即時警報管線的測試樣本。）</div>'
+
+    section = _section_title("TRIGGERED SIGNALS", "觸發的紅燈訊號") + body
+    return _html_doc(
+        mail_title=f"市場偵探 · 即時警報 {as_of or ''}",
+        bar_title="市場偵探 · 即時警報",
+        bar_date=as_of or "",
+        body_html=section,
+        has_active_red=True,
+        accent=_C_RED_BAR,
+    )
 
 
 # ── digest ───────────────────────────────────────────────────────────────
 
-def render_digest(latest, state, force=False):
+def _digest_compute(latest, state):
+    """共用前置計算：text（render_digest）與 HTML（render_digest_html）都從
+    這份 dict 取數字，避免兩邊分岔。邏輯逐行照搬自原 render_digest（見
+    2026-09 前版本），純粹抽出、未改變任何計算方式。"""
     as_of = latest.get("as_of")
     signals = latest.get("signals", [])
     transitions = state.get("transitions_today", [])
@@ -360,8 +579,6 @@ def render_digest(latest, state, force=False):
     fired_red_composites = [c for c in (latest.get("composites") or [])
                             if isinstance(c, dict) and c.get("fired") and c.get("sev") == "red"]
     eligible = bool(transitions) or bool(active_red) or bool(fired_red_composites)
-    if not eligible and not force:
-        return None
 
     keys_state = state.get("keys", {})
     history_by_key = {h.get("key"): h for h in state.get("history", []) if h.get("key")}
@@ -390,25 +607,62 @@ def render_digest(latest, state, force=False):
                          and (history_by_key.get(t["key"]) or {}).get("peak_sev") == "red"]
     counted = set(new_red_keys) | set(esc_red_keys) | set(resolved_red_keys)
     n_esc_confirm = len([t for t in trans_today if t.get("to") == "escalated" and t["key"] not in counted])
-    n_cooling = len([t for t in trans_today if t.get("to") == "cooling"])
+    cooling_keys = [t["key"] for t in trans_today if t.get("to") == "cooling"]
+    n_cooling = len(cooling_keys)
     n_closed = len([t for t in trans_today if t.get("to") == "resolved" and t["key"] not in counted])
     n_other = len([t for t in trans_today
                   if t.get("to") not in ("new", "escalated", "cooling", "resolved")])
     n_esc_total = len(esc_red_keys) + n_esc_confirm
     n_closed_total = len(resolved_red_keys) + n_closed
 
+    new_keys_today = sorted({t["key"] for t in transitions
+                             if t.get("date") == as_of and t.get("to") == "new"})
+
+    stale = latest.get("sources_stale") or []
+    trivial = (n_red == 0 and n_comp_fired == 0 and new_count == 0)
+    closest_composite = (
+        max(composites_all, key=lambda c: c.get("proximity", 0)) if composites_all else None
+    )
+
+    return dict(
+        as_of=as_of, eligible=eligible, trivial=trivial, transitions=transitions,
+        active_red=active_red, fired_red_composites=fired_red_composites,
+        keys_state=keys_state, history_by_key=history_by_key, sig_by_key=sig_by_key,
+        composite_by_key=composite_by_key, new_count=new_count, n_red=n_red,
+        n_yellow=n_yellow, n_total=n_total, composites_all=composites_all,
+        fired_composites=fired_composites, n_comp_fired=n_comp_fired,
+        trans_today=trans_today, new_red_keys=new_red_keys, esc_red_keys=esc_red_keys,
+        composite_fire_today=composite_fire_today, resolved_red_keys=resolved_red_keys,
+        n_esc_confirm=n_esc_confirm, cooling_keys=cooling_keys, n_cooling=n_cooling,
+        n_closed=n_closed, n_other=n_other, n_esc_total=n_esc_total,
+        n_closed_total=n_closed_total, new_keys_today=new_keys_today, stale=stale,
+        closest_composite=closest_composite,
+    )
+
+
+def render_digest(latest, state, force=False):
+    d = _digest_compute(latest, state)
+    if not d["eligible"] and not force:
+        return None
+
+    as_of = d["as_of"]
+    keys_state, sig_by_key, composite_by_key, history_by_key = (
+        d["keys_state"], d["sig_by_key"], d["composite_by_key"], d["history_by_key"]
+    )
+    active_red = d["active_red"]
+
     lines = [f"市場偵探 — 每日摘要 {as_of or ''}", ""]
 
     # 例外報告的核心收斂：紅／composite fired／新增皆為 0 時，一行帶過並收工，
     # 不逼讀者掃過一整份狀態機 dump 才確認「今天沒事」。
-    if n_red == 0 and n_comp_fired == 0 and new_count == 0:
-        lines.append(f"今日無紅級事件與新訊號，黃燈變動 ±{len(transitions)}（詳頁面）")
+    if d["trivial"]:
+        lines.append(f"今日無紅級事件與新訊號，黃燈變動 ±{len(d['transitions'])}（詳頁面）")
         lines += _footer(has_active_red=False)
         return "\n".join(lines)
 
     lines.append(
-        f"總覽：{n_total} 訊號｜紅 {n_red}｜黃 {n_yellow}｜"
-        f"今日新增 {new_count}、升級 {n_esc_total}、結案 {n_closed_total}"
+        f"總覽：{d['n_total']} 訊號｜紅 {d['n_red']}｜黃 {d['n_yellow']}｜"
+        f"今日新增 {d['new_count']}、升級 {d['n_esc_total']}、結案 {d['n_closed_total']}"
     )
     lines.append("")
 
@@ -422,8 +676,7 @@ def render_digest(latest, state, force=False):
             lines.append(line)
         lines.append("")
 
-    new_keys_today = sorted({t["key"] for t in transitions
-                             if t.get("date") == as_of and t.get("to") == "new"})
+    new_keys_today = d["new_keys_today"]
     if new_keys_today:
         lines.append(f"新增訊號（{len(new_keys_today)} 筆）：")
         for k in new_keys_today:
@@ -431,33 +684,35 @@ def render_digest(latest, state, force=False):
             lines.append(f"・{fact or label}")
         lines.append("")
 
-    if trans_today:
+    if d["trans_today"]:
         lines.append("當日轉變：")
-        for k in new_red_keys:
+        for k in d["new_red_keys"]:
             _, _, label, _, _ = _display_for(k, keys_state, sig_by_key, composite_by_key)
             lines.append(f"・新紅：{label}")
-        for k in esc_red_keys:
+        for k in d["esc_red_keys"]:
             _, _, label, _, _ = _display_for(k, keys_state, sig_by_key, composite_by_key)
             lines.append(f"・升級至紅：{label}")
-        for c in composite_fire_today:
+        for c in d["composite_fire_today"]:
             lines.append(f"・composite fire：{c.get('name', c.get('id', ''))}")
-        for k in resolved_red_keys:
+        for k in d["resolved_red_keys"]:
             _, _, label, _, _ = _display_for(k, keys_state, sig_by_key, composite_by_key, history_by_key)
             lines.append(f"・紅燈 resolved：{label}")
         tail_bits = []
-        if n_esc_confirm:
-            tail_bits.append(f"升級確認 {n_esc_confirm}")
-        if n_cooling:
-            tail_bits.append(f"轉冷卻 {n_cooling}")
-        if n_closed:
-            tail_bits.append(f"結案 {n_closed}")
-        if n_other:
-            tail_bits.append(f"其他 {n_other}")
+        if d["n_esc_confirm"]:
+            tail_bits.append(f"升級確認 {d['n_esc_confirm']}")
+        if d["n_cooling"]:
+            tail_bits.append(f"轉冷卻 {d['n_cooling']}")
+        if d["n_closed"]:
+            tail_bits.append(f"結案 {d['n_closed']}")
+        if d["n_other"]:
+            tail_bits.append(f"其他 {d['n_other']}")
         if tail_bits:
             lines.append(f"黃燈變動：{'、'.join(tail_bits)}（詳頁面）")
         lines.append("")
 
+    composites_all = d["composites_all"]
     if composites_all:
+        fired_composites = d["fired_composites"]
         if fired_composites:
             lines.append("Composites（fired）：")
             for c in fired_composites:
@@ -467,29 +722,209 @@ def render_digest(latest, state, force=False):
                     f"成員 {c.get('met_count', 0)}/{c.get('min_true', 0)}"
                 )
         else:
-            closest = max(composites_all, key=lambda c: c.get("proximity", 0))
+            closest = d["closest_composite"]
             lines.append(
                 f"Composite 0/{len(composites_all)} fired（最接近觸發："
                 f"{closest.get('name', closest.get('id', ''))} "
                 f"{closest.get('met_count', 0)}/{closest.get('min_true', 0)}）"
             )
 
-    stale = latest.get("sources_stale") or []
+    stale = d["stale"]
     if stale:
         lines.append(f"Sources stale（{len(stale)} 筆）：{'、'.join(stale)}")
 
-    lines += _footer(has_active_red=bool(active_red) or bool(fired_red_composites))
+    lines += _footer(has_active_red=bool(active_red) or bool(d["fired_red_composites"]))
     return "\n".join(lines)
+
+
+def _magnitude_from_fact(fact, label):
+    """從 fact 句拆出「幅度」子句（fact＝label＋空白＋幅度描述的既有慣例，
+    見 build_detective.py 產出格式）；查無 label 前綴就整句照印，不臆測。"""
+    fact = fact or ""
+    if label and fact.startswith(label):
+        rest = fact[len(label):].lstrip()
+        if rest:
+            return rest
+    return fact
+
+
+def render_digest_html(latest, state, force=False):
+    d = _digest_compute(latest, state)
+    if not d["eligible"] and not force:
+        return None
+
+    as_of = d["as_of"]
+    keys_state, sig_by_key, composite_by_key, history_by_key = (
+        d["keys_state"], d["sig_by_key"], d["composite_by_key"], d["history_by_key"]
+    )
+    active_red = d["active_red"]
+
+    if d["trivial"]:
+        body = (
+            f'<div style="font-size:14px;color:{_C_TEXT};">'
+            f'今日無紅級事件與新訊號，黃燈變動 ±{len(d["transitions"])} 筆（詳見網站）。</div>'
+        )
+        return _html_doc(
+            mail_title=f"市場偵探 · 每日摘要 {as_of or ''}",
+            bar_title="市場偵探 · 每日摘要",
+            bar_date=as_of or "",
+            body_html=body,
+            has_active_red=False,
+        )
+
+    # ── 一分鐘版：紅燈數與最重要一條／今日新增數與最顯眼一條／複合規則最接近觸發的一組
+    bullets = []
+    if active_red:
+        top_red = sorted(active_red, key=lambda s: -s.get("score", 0))[0]
+        bullets.append(
+            f"紅燈訊號 <b>{d['n_red']}</b> 檔，最重要一條：{_h(top_red.get('fact') or top_red.get('label', ''))}"
+        )
+    else:
+        bullets.append(f"紅燈訊號 <b>{d['n_red']}</b> 檔")
+    new_keys_today = d["new_keys_today"]
+    if new_keys_today:
+        new_disp = [_display_for(k, keys_state, sig_by_key, composite_by_key) for k in new_keys_today]
+        top_new = sorted(new_disp, key=lambda t: -(t[3] or 0))[0]
+        bullets.append(
+            f"今日新增 <b>{d['new_count']}</b> 筆，最顯眼一條：{_h(top_new[0] or top_new[2])}"
+        )
+    else:
+        bullets.append(f"今日新增 <b>{d['new_count']}</b> 筆")
+    closest = d["closest_composite"]
+    if closest is not None:
+        fired = bool(closest.get("fired"))
+        bullets.append(
+            ("複合規則已觸發：" if fired else "複合規則最接近觸發：") +
+            f"{_h(closest.get('name', closest.get('id', '')))}"
+            f"（逼近觸發程度 {closest.get('met_count', 0)}/{closest.get('min_true', 0)}）"
+        )
+
+    parts = [_minute_version(bullets)]
+
+    # ── 三顆大數字磚
+    sub = f"新增 {d['new_count']}・升級 {d['n_esc_total']}・結案 {d['n_closed_total']}"
+    parts.append(_tiles_row([
+        _tile(d["n_total"], "訊號總數", sub),
+        _tile(d["n_red"], "紅燈訊號"),
+        _tile(d["n_yellow"], "黃燈訊號"),
+    ]))
+
+    # ── 紅級訊號
+    if active_red:
+        parts.append(_section_title("RED-LEVEL SIGNALS", "紅級訊號"))
+        parts.append(
+            f'<div style="font-size:12px;color:{_C_MUTED};margin:0 0 6px 0;">'
+            f'幅度中的「標準差」＝一年日波動的倍數；「分位路徑」＝一年歷史相對位置。</div>'
+        )
+        rows = []
+        for s in sorted(active_red, key=lambda s: -s.get("score", 0)):
+            fact = s.get("fact") or ""
+            label = s.get("label") or s.get("key", "")
+            rows.append([
+                _h(label),
+                _h(_magnitude_from_fact(fact, label)),
+                _h(s.get("context") or ""),
+                _h(s.get("days_active", 1)),
+                _pill("紅", "red"),
+            ])
+        parts.append(_table(
+            ["訊號", "幅度", "分位路徑", "天數", "狀態"],
+            rows,
+        ))
+
+    # ── 新增訊號
+    if new_keys_today:
+        parts.append(_section_title(f"NEW SIGNALS ({len(new_keys_today)})", f"新增訊號（{len(new_keys_today)} 筆）"))
+        items = []
+        for k in new_keys_today:
+            fact, _, label, _, _ = _display_for(k, keys_state, sig_by_key, composite_by_key)
+            items.append(_h(fact or label))
+        parts.append(_bullet_list(items))
+
+    # ── 當日轉變
+    if d["trans_today"]:
+        parts.append(_section_title("TODAY'S CHANGES", "當日轉變"))
+        change_items = []
+        for k in d["new_red_keys"]:
+            _, _, label, _, _ = _display_for(k, keys_state, sig_by_key, composite_by_key)
+            change_items.append(f'{_pill("新紅", "red")} <span style="margin-left:6px;">{_h(label)}</span>')
+        for k in d["esc_red_keys"]:
+            _, _, label, _, _ = _display_for(k, keys_state, sig_by_key, composite_by_key)
+            change_items.append(f'{_pill("升級", "red")} <span style="margin-left:6px;">{_h(label)}</span>')
+        for c in d["composite_fire_today"]:
+            change_items.append(
+                f'{_pill("複合規則新觸發", "red")} '
+                f'<span style="margin-left:6px;">{_h(c.get("name", c.get("id", "")))}</span>'
+            )
+        for k in d["cooling_keys"]:
+            _, _, label, _, _ = _display_for(k, keys_state, sig_by_key, composite_by_key)
+            change_items.append(f'{_pill("轉冷卻", "grey")} <span style="margin-left:6px;">{_h(label)}</span>')
+        for k in d["resolved_red_keys"]:
+            _, _, label, _, _ = _display_for(k, keys_state, sig_by_key, composite_by_key, history_by_key)
+            change_items.append(f'{_pill("結案", "green")} <span style="margin-left:6px;">{_h(label)}</span>')
+        parts.append(_bullet_list(change_items))
+        tail_bits = []
+        if d["n_esc_confirm"]:
+            tail_bits.append(f"升級確認 {d['n_esc_confirm']}")
+        if d["n_closed"]:
+            tail_bits.append(f"結案 {d['n_closed']}")
+        if d["n_other"]:
+            tail_bits.append(f"其他 {d['n_other']}")
+        if tail_bits:
+            parts.append(
+                f'<div style="font-size:12px;color:{_C_MUTED};margin-top:2px;">'
+                f'其餘：{_h("、".join(tail_bits))}（詳頁面）</div>'
+            )
+
+    # ── 複合規則
+    composites_all = d["composites_all"]
+    if composites_all:
+        parts.append(_section_title("COMPOSITE RULES", "複合規則"))
+        fired_composites = d["fired_composites"]
+        if fired_composites:
+            rows = [
+                [
+                    _h(c.get("name", c.get("id", ""))),
+                    _pill(SEV_ZH.get(c.get("sev"), c.get("sev") or ""), "red"),
+                    _h(f"{c.get('met_count', 0)}/{c.get('min_true', 0)}"),
+                ]
+                for c in fired_composites
+            ]
+            parts.append(_table(["規則", "嚴重度", "逼近觸發程度"], rows, aligns=["left", "left", "right"]))
+        else:
+            closest = d["closest_composite"]
+            parts.append(
+                f'<div style="font-size:13px;color:{_C_TEXT};">'
+                f'複合規則 0/{len(composites_all)} 觸發，最接近觸發：'
+                f'{_h(closest.get("name", closest.get("id", "")))}　'
+                f'逼近觸發程度 {closest.get("met_count", 0)}/{closest.get("min_true", 0)}</div>'
+            )
+
+    # ── 資料新鮮度
+    stale = d["stale"]
+    if stale:
+        parts.append(_section_title("SOURCE FRESHNESS", "資料新鮮度"))
+        parts.append(
+            f'<div style="font-size:13px;color:{_C_TEXT};">過期來源（{len(stale)} 筆）：{_h("、".join(stale))}</div>'
+        )
+
+    return _html_doc(
+        mail_title=f"市場偵探 · 每日摘要 {as_of or ''}",
+        bar_title="市場偵探 · 每日摘要",
+        bar_date=as_of or "",
+        body_html="".join(parts),
+        has_active_red=bool(active_red) or bool(d["fired_red_composites"]),
+    )
 
 
 # ── weekly ───────────────────────────────────────────────────────────────
 
-def render_weekly(latest, state):
+def _weekly_compute(latest, state):
+    """共用前置計算（text／HTML 週報共用，數字不分岔）。回傳 None 代表無
+    as_of 可回顧（測試樣本情境）。"""
     as_of = latest.get("as_of") or state.get("as_of")
     if not as_of:
-        lines = ["市場偵探 — 週報", "", "（測試信：目前無 as_of 可回顧，這是週報管線的測試樣本。）"]
-        lines += _footer(has_active_red=False)
-        return "\n".join(lines)
+        return None
 
     ref = date.fromisoformat(as_of)
     window_start = (ref - timedelta(days=6)).isoformat()
@@ -518,8 +953,8 @@ def render_weekly(latest, state):
     sustained_count = 0
     for k, e in keys_state.items():
         for esc in (e.get("escalations") or []):
-            d = esc.get("date")
-            if not (d and window_start <= d <= as_of):
+            esc_date = esc.get("date")
+            if not (esc_date and window_start <= esc_date <= as_of):
                 continue
             if esc.get("from") != esc.get("to"):
                 escalated_events.append((k, esc))
@@ -538,9 +973,45 @@ def render_weekly(latest, state):
     new_red_this_week |= {k for k, esc in escalated_events if esc.get("to") == "red"}
     kill_breached = (kill_watch or {}).get("breached") or []
 
+    sources = latest.get("sources", {})
+    stale = latest.get("sources_stale") or []
+
+    active_red = any(s.get("sev") == "red" for s in latest.get("signals", [])) or any(
+        isinstance(c, dict) and c.get("fired") and c.get("sev") == "red"
+        for c in (latest.get("composites") or [])
+    )
+
+    return dict(
+        as_of=as_of, window_start=window_start, keys_state=keys_state,
+        history_by_key=history_by_key, sig_by_key=sig_by_key,
+        composite_by_key=composite_by_key, kill_watch=kill_watch,
+        new_this_week=new_this_week, resolved_this_week=resolved_this_week,
+        escalated_events=escalated_events, sustained_count=sustained_count,
+        new_fires_this_week=new_fires_this_week, new_red_this_week=new_red_this_week,
+        kill_breached=kill_breached, sources=sources, stale=stale,
+        active_red=active_red,
+    )
+
+
+def render_weekly(latest, state):
+    d = _weekly_compute(latest, state)
+    if d is None:
+        lines = ["市場偵探 — 週報", "", "（測試信：目前無 as_of 可回顧，這是週報管線的測試樣本。）"]
+        lines += _footer(has_active_red=False)
+        return "\n".join(lines)
+
+    as_of, window_start = d["as_of"], d["window_start"]
+    keys_state, sig_by_key, composite_by_key, history_by_key = (
+        d["keys_state"], d["sig_by_key"], d["composite_by_key"], d["history_by_key"]
+    )
+    new_this_week, resolved_this_week = d["new_this_week"], d["resolved_this_week"]
+    escalated_events = d["escalated_events"]
+    new_fires_this_week = d["new_fires_this_week"]
+    kill_watch, kill_breached = d["kill_watch"], d["kill_breached"]
+
     lines = [f"市場偵探 — 週報 {window_start} ~ {as_of}", ""]
     lines.append(
-        f"【本週要點】新紅 {len(new_red_this_week)}｜composite fire {len(new_fires_this_week)}｜"
+        f"【本週要點】新紅 {len(d['new_red_this_week'])}｜composite fire {len(new_fires_this_week)}｜"
         f"kill breached {len(kill_breached)}｜"
         f"訊號淨變化（新增 {len(new_this_week)}／解除 {len(resolved_this_week)}）"
     )
@@ -564,7 +1035,7 @@ def render_weekly(latest, state):
             lines.append(f"・{label}：{from_zh}→{to_zh}（{esc.get('date')}）")
     else:
         lines.append("（無）")
-    lines.append(f"黃燈持續確認 {sustained_count} 筆")
+    lines.append(f"黃燈持續確認 {d['sustained_count']} 筆")
     lines.append("")
 
     lines.append(
@@ -579,8 +1050,7 @@ def render_weekly(latest, state):
         lines.append("（無）")
     lines.append("")
 
-    sources = latest.get("sources", {})
-    stale = latest.get("sources_stale") or []
+    sources, stale = d["sources"], d["stale"]
     lines.append("各源 as-of：")
     for name, sd in sorted(sources.items()):
         flag = "（過期）" if name in stale else ""
@@ -607,12 +1077,147 @@ def render_weekly(latest, state):
     else:
         lines.append("Kill watch：（kill_watch.json 尚未建置，略過）")
 
-    active_red = any(s.get("sev") == "red" for s in latest.get("signals", [])) or any(
-        isinstance(c, dict) and c.get("fired") and c.get("sev") == "red"
-        for c in (latest.get("composites") or [])
-    )
-    lines += _footer(has_active_red=active_red)
+    lines += _footer(has_active_red=d["active_red"])
     return "\n".join(lines)
+
+
+def render_weekly_html(latest, state):
+    d = _weekly_compute(latest, state)
+    if d is None:
+        body = (
+            f'<div style="font-size:13px;color:{_C_MUTED};">'
+            f'（測試信：目前無 as_of 可回顧，這是週報管線的測試樣本。）</div>'
+        )
+        return _html_doc(
+            mail_title="市場偵探 · 週報",
+            bar_title="市場偵探 · 週報",
+            bar_date="",
+            body_html=body,
+            has_active_red=False,
+        )
+
+    as_of, window_start = d["as_of"], d["window_start"]
+    keys_state, sig_by_key, composite_by_key, history_by_key = (
+        d["keys_state"], d["sig_by_key"], d["composite_by_key"], d["history_by_key"]
+    )
+    new_this_week, resolved_this_week = d["new_this_week"], d["resolved_this_week"]
+    escalated_events = d["escalated_events"]
+    new_fires_this_week = d["new_fires_this_week"]
+    kill_watch, kill_breached = d["kill_watch"], d["kill_breached"]
+
+    # ── 一分鐘版：本週要點三件事（新紅＋淨變化／composite fire／kill breached）
+    bullets = [
+        f"本週新紅 <b>{len(d['new_red_this_week'])}</b> 檔；訊號淨變化："
+        f"新增 <b>{len(new_this_week)}</b>、解除 <b>{len(resolved_this_week)}</b>",
+        f"複合規則本週新觸發 <b>{len(new_fires_this_week)}</b> 條",
+        f"否證指標對帳表：breached <b>{len(kill_breached)}</b> 筆",
+    ]
+    parts = [_minute_version(bullets)]
+
+    # ── 三顆大數字磚：本週新增／解除／升級
+    parts.append(_tiles_row([
+        _tile(len(new_this_week), "本週新增"),
+        _tile(len(resolved_this_week), "本週解除"),
+        _tile(len(escalated_events), "本週升級"),
+    ]))
+
+    # ── 本週新增／解除（家族聚合，同 _render_family_lines 邏輯）
+    parts.append(_section_title(f"NEW THIS WEEK ({len(new_this_week)})", f"本週新增（{len(new_this_week)} 筆）"))
+    parts.append(_bullet_list([
+        _h(line.lstrip("・")) for line in
+        _render_family_lines(new_this_week, keys_state, sig_by_key, composite_by_key, history_by_key)
+    ]))
+    parts.append(_section_title(f"RESOLVED THIS WEEK ({len(resolved_this_week)})", f"本週解除（{len(resolved_this_week)} 筆）"))
+    parts.append(_bullet_list([
+        _h(line.lstrip("・")) for line in
+        _render_family_lines(resolved_this_week, keys_state, sig_by_key, composite_by_key, history_by_key)
+    ]))
+
+    # ── 本週升級
+    parts.append(_section_title(f"ESCALATED THIS WEEK ({len(escalated_events)})", f"本週升級（sev 真升級）{len(escalated_events)} 筆"))
+    if escalated_events:
+        rows = []
+        for k, esc in sorted(escalated_events, key=lambda x: x[0]):
+            _, _, label, _, _ = _display_for(k, keys_state, sig_by_key, composite_by_key, history_by_key)
+            from_zh = SEV_ZH.get(esc.get("from"), esc.get("from") or "")
+            to_zh = SEV_ZH.get(esc.get("to"), esc.get("to") or "")
+            pill_kind = "red" if to_zh == "紅" else "grey"
+            rows.append([_h(label), f"{_h(from_zh)}→{_pill(to_zh, pill_kind)}", _h(esc.get("date"))])
+        parts.append(_table(["訊號白話", "嚴重度變化", "日期"], rows))
+    else:
+        parts.append(_bullet_list([]))
+    parts.append(
+        f'<div style="font-size:12px;color:{_C_MUTED};margin-top:2px;">'
+        f'黃燈持續確認 {d["sustained_count"]} 筆</div>'
+    )
+
+    # ── 複合規則新觸發
+    parts.append(_section_title(
+        f"COMPOSITE FIRES ({len(new_fires_this_week)})",
+        f"本週複合規則新觸發 {len(new_fires_this_week)} 條"
+    ))
+    if new_fires_this_week:
+        rows = [
+            [
+                _h(c.get("name", c.get("id", ""))),
+                _pill(SEV_ZH.get(c.get("sev"), c.get("sev") or ""), "red"),
+                _h(c.get("fired_since")),
+            ]
+            for c in new_fires_this_week
+        ]
+        parts.append(_table(["規則", "嚴重度", "觸發日"], rows))
+    else:
+        parts.append(_bullet_list([]))
+    parts.append(
+        f'<div style="font-size:12px;color:{_C_MUTED};margin-top:2px;">'
+        f'僅計本次快照仍在觸發狀態者，已提早停止的規則不計入。</div>'
+    )
+
+    # ── 各源 as-of（資料新鮮度）
+    sources, stale = d["sources"], d["stale"]
+    parts.append(_section_title("SOURCE FRESHNESS", "各源資料新鮮度"))
+    rows = []
+    for name, sd in sorted(sources.items()):
+        stale_flag = name in stale
+        rows.append([
+            _h(name),
+            _h(sd or "（缺）"),
+            _pill("過期", "red") if stale_flag else _pill("正常", "green"),
+        ])
+    parts.append(_table(["來源", "as-of", "狀態"], rows, aligns=["left", "left", "right"]))
+
+    # ── 否證指標對帳表
+    parts.append(_section_title("KILL WATCH COVERAGE", "否證指標對帳表"))
+    if kill_watch:
+        coverage = kill_watch.get("coverage") or {}
+        mechanical = coverage.get("mechanical", 0)
+        total = coverage.get("total", 0)
+        llm_only = coverage.get("llm_only", 0)
+        items_by_id = {it.get("id"): it for it in (kill_watch.get("items") or [])
+                      if isinstance(it, dict)}
+        breached_labels = [
+            (items_by_id.get(b) or {}).get("metric_text", b) for b in kill_breached
+        ]
+        parts.append(
+            f'<div style="font-size:13px;color:{_C_TEXT};">'
+            f'機械監控覆蓋 {mechanical}/{total}，'
+            f'{_pill(f"breached {len(kill_breached)} 筆", "red" if kill_breached else "green")}'
+            f'（另 {llm_only} 條屬 LLM 語意判定、不在機械比對內）</div>'
+        )
+        if breached_labels:
+            parts.append(_bullet_list([_h(b) for b in breached_labels]))
+    else:
+        parts.append(
+            f'<div style="font-size:13px;color:{_C_MUTED};">（kill_watch.json 尚未建置，略過）</div>'
+        )
+
+    return _html_doc(
+        mail_title=f"市場偵探 · 週報 {window_start} ~ {as_of}",
+        bar_title="市場偵探 · 週報",
+        bar_date=f"{window_start} ~ {as_of}",
+        body_html="".join(parts),
+        has_active_red=d["active_red"],
+    )
 
 
 # ── main ─────────────────────────────────────────────────────────────────
@@ -621,16 +1226,29 @@ def _default_out(tier):
     return os.path.join(ROOT, f"detective_mail_{tier}.txt")
 
 
+def _default_html_out(tier):
+    return os.path.join(ROOT, f"detective_mail_{tier}.html")
+
+
+def _write_html(html_path, html_str):
+    os.makedirs(os.path.dirname(os.path.abspath(html_path)) or ".", exist_ok=True)
+    with open(html_path, "w", encoding="utf-8") as fh:
+        fh.write(html_str)
+    return html_str
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--tier", required=True, choices=["immediate", "digest", "weekly"])
     ap.add_argument("--force", action="store_true", help="無資格也產最小樣本檔（test_email 用）；不寫回 state.json")
-    ap.add_argument("--out", default=None, help="輸出 body 檔路徑（預設 repo 根 detective_mail_{tier}.txt，已 gitignore）")
+    ap.add_argument("--out", default=None, help="輸出純文字 body 檔路徑（預設 repo 根 detective_mail_{tier}.txt，已 gitignore）")
+    ap.add_argument("--html-out", default=None, help="輸出 HTML body 檔路徑（預設 repo 根 detective_mail_{tier}.html，已 gitignore）")
     ap.add_argument("--latest", default=DEFAULT_LATEST)
     ap.add_argument("--state", default=DEFAULT_STATE)
     args = ap.parse_args()
 
     out_path = args.out or _default_out(args.tier)
+    html_path = args.html_out or _default_html_out(args.tier)
     latest = load_json(args.latest, {})
     state = load_json(args.state, {})
 
@@ -640,6 +1258,9 @@ def main():
             print("notify_render[immediate]: no eligible event, no file written")
             return
         _write_body(out_path, [body])
+        html_body = render_immediate_html(latest, state, force=args.force)
+        if html_body is not None:
+            _write_html(html_path, html_body)
         if eligible_keys and not args.force:
             as_of = latest.get("as_of")
             for k in eligible_keys:
@@ -652,6 +1273,8 @@ def main():
             print(f"notify_render[immediate]: body written (force={args.force}, "
                   f"{len(eligible_keys)} eligible key(s)), state.json 未動")
         print(f"body → {out_path}")
+        if html_body is not None:
+            print(f"html → {html_path}")
 
     elif args.tier == "digest":
         body = render_digest(latest, state, force=args.force)
@@ -659,12 +1282,20 @@ def main():
             print("notify_render[digest]: no eligible day, no file written")
             return
         _write_body(out_path, [body])
+        html_body = render_digest_html(latest, state, force=args.force)
+        if html_body is not None:
+            _write_html(html_path, html_body)
         print(f"notify_render[digest]: body → {out_path}")
+        if html_body is not None:
+            print(f"html → {html_path}")
 
     else:  # weekly
         body = render_weekly(latest, state)
         _write_body(out_path, [body])
+        html_body = render_weekly_html(latest, state)
+        _write_html(html_path, html_body)
         print(f"notify_render[weekly]: body → {out_path}")
+        print(f"html → {html_path}")
 
 
 if __name__ == "__main__":

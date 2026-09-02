@@ -32,12 +32,17 @@ from pathlib import Path
 
 from zoneinfo import ZoneInfo
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from mail_html import esc, frame, note, one_minute, pill, section, table, tiles  # noqa: E402
+
 EASTERN = ZoneInfo("America/New_York")
 TAIPEI = ZoneInfo("Asia/Taipei")
 
 ROOT = Path(__file__).resolve().parent.parent
 SCREENER_JSON = ROOT / "docs" / "dd-screener" / "latest.json"
 ALERT_FILE = ROOT / "earnings_reaction_alert.txt"
+ALERT_HTML = ROOT / "earnings_reaction_mail.html"
+EARNINGS_PAGE_URL = "https://research.investmquest.com/earnings/"
 
 # screener 宇宙裡用歐洲主掛牌裸代碼的檔 → Yahoo 查不到，改用美股 OTC ADR 代碼
 # 抓價與財報日（信中仍顯示原代碼）
@@ -87,6 +92,87 @@ def classify(ts, session_date, prior_session_date):
             return None           # 昨天盤前發布 → 昨天已反應、昨天已寄過
         return "reacted"          # AMC / 時間不明
     return None
+
+
+def _fmt_pct_html(x) -> str:
+    return "—" if x is None else f"{x:+.1%}"
+
+
+def build_mail_html(session_date, tw_now: str, ab_r: list, normal: list,
+                    ab_t: list, failed: int, attempted: int) -> str:
+    """組 earnings_reaction_mail.html（§5.7 版型）。三個清單皆空時仍要產出
+    一份「無異常／測試信」版本，讓 workflow 的 test_email 分支永遠有檔可用。
+    """
+    has_event = bool(ab_r or ab_t)
+    bullets = []
+    for r in ab_r[:3]:
+        tag = "" if r["known_time"] else "（發布時間不明）"
+        bullets.append(f"<strong>{esc(r['ticker'])}</strong> {_fmt_pct_html(r.get('ret'))}"
+                       f"（門檻 ±{r['threshold']:.0%}）｜{esc(r['when'])}{tag}")
+    for r in ab_t[:2]:
+        bullets.append(f"<strong>{esc(r['ticker'])}</strong> 盤後 "
+                       f"{_fmt_pct_html(r.get('postmarket_ret'))}（今晚剛發布，明早看完整反應）")
+
+    tile_items = [
+        ("異常反應", str(len(ab_r)), "|漲跌| ≥ max(5%,2σ)"),
+        ("其他已反應", str(len(normal)), "未達門檻"),
+        ("今晚盤後異常", str(len(ab_t)), "明早見完整反應"),
+    ]
+
+    body = one_minute(bullets)
+    body += tiles(tile_items)
+
+    # 375px 手機寬度實測：欄名縮短（EPS surprise→EPS、發布時間→時間，並把
+    # 「MM-DD HH:MM ET」的 " ET" 尾綴拿掉——美股語境下多餘）換取不折成三行。
+    def _short_when(w: str) -> str:
+        return w[:-3] if w.endswith(" ET") else w
+
+    if ab_r:
+        headers = ["Ticker", "漲跌", "門檻", "EPS", "時間"]
+        rows = []
+        for r in ab_r:
+            tone = "green" if (r.get("ret") or 0) >= 0 else "red"
+            sur = "—" if r["surprise_pct"] is None else f"{r['surprise_pct']:+.1f}%"
+            tag = "" if r["known_time"] else "（時間不明）"
+            rows.append([f"<strong>{esc(r['ticker'])}</strong>",
+                        pill(_fmt_pct_html(r.get("ret")), tone),
+                        f"±{r['threshold']:.0%}", sur, esc(_short_when(r["when"])) + tag])
+        body += section("ABNORMAL REACTIONS", "異常反應", table(headers, rows, numeric_cols={2, 3}))
+
+    if ab_t:
+        headers_t = ["Ticker", "盤後漲跌", "EPS"]
+        rows_t = []
+        for r in ab_t:
+            tone = "green" if (r.get("postmarket_ret") or 0) >= 0 else "red"
+            sur = "—" if r["surprise_pct"] is None else f"{r['surprise_pct']:+.1f}%"
+            rows_t.append([f"<strong>{esc(r['ticker'])}</strong>",
+                          pill(_fmt_pct_html(r.get("postmarket_ret")), tone), sur])
+        body += section("TONIGHT AMC", "今晚盤後剛發布", table(headers_t, rows_t, numeric_cols={2}))
+
+    if normal:
+        shown = sorted(normal, key=lambda r: -abs(r["ret"]))[:8]
+        headers_n = ["Ticker", "漲跌"]
+        rows_n = [[f"<strong>{esc(r['ticker'])}</strong>", _fmt_pct_html(r["ret"])] for r in shown]
+        inner = table(headers_n, rows_n, numeric_cols={1})
+        if len(normal) > len(shown):
+            inner += note(f"其餘 {len(normal) - len(shown)} 檔見網站。")
+        body += section("OTHER REPORTERS", "其他已反應（未達異常門檻）", inner)
+
+    if failed:
+        body += note(f"（{failed}/{attempted} 檔財報日查詢失敗，該部分未覆蓋）")
+    if not has_event:
+        body += note(f"美股 {esc(session_date)} 交易日無異常反應 — 這是測試信，確認 email 管線正常。")
+
+    accent = "red" if any((r.get("ret") or 0) < 0 for r in ab_r) else "navy"
+    return frame(
+        title="美股財報異常反應",
+        date=f"{session_date}（產於台北 {tw_now}）",
+        body_html=body,
+        button_label="前往財報專區 →",
+        button_url=EARNINGS_PAGE_URL,
+        accent=accent,
+        disclaimer="美股財報後異常反應機械掃描（描述器），非投資建議；異常＝|漲跌| ≥ max(5%, 2×60 日波動)。",
+    )
 
 
 def main() -> int:
@@ -189,18 +275,22 @@ def main() -> int:
         sur = "" if r["surprise_pct"] is None else f"｜EPS surprise {r['surprise_pct']:+.1f}%"
         return f"  {r['ticker']:<6} {fmt_pct(r.get('ret'))}（門檻 ±{r['threshold']:.0%}）{sur}｜{r['when']}{tag}"
 
+    normal = [r for r in reacted if not r["abnormal"]]
+    tw_now = datetime.now(TAIPEI).strftime("%Y-%m-%d %H:%M")
+
     if not ab_r and not ab_t:
         print("無異常 → 不寄信")
         ALERT_FILE.unlink(missing_ok=True)
+        ALERT_HTML.write_text(
+            build_mail_html(session_date, tw_now, [], normal, [], failed, attempted),
+            encoding="utf-8")
         return 0
 
-    tw_now = datetime.now(TAIPEI).strftime("%Y-%m-%d %H:%M")
     body = [f"美股 {session_date} 交易日 · 財報後異常股價反應（產於台北 {tw_now}）", ""]
     if ab_r:
         body.append(f"■ 異常反應（{len(ab_r)} 檔，|漲跌| ≥ max(5%, 2σ)）：")
         body += [line(r) for r in sorted(ab_r, key=lambda r: -abs(r["ret"]))]
         body.append("")
-    normal = [r for r in reacted if not r["abnormal"]]
     if normal:
         body.append(f"■ 其他已反應的財報檔（{len(normal)} 檔，未達門檻）：")
         body += [f"  {r['ticker']:<6} {fmt_pct(r['ret'])}" for r in
@@ -216,6 +306,12 @@ def main() -> int:
         body.append(f"（{failed}/{attempted} 檔財報日查詢失敗，該部分未覆蓋）")
     ALERT_FILE.write_text("\n".join(body) + "\n")
     print(f"alert written → {ALERT_FILE.name}")
+
+    ALERT_HTML.write_text(
+        build_mail_html(session_date, tw_now, sorted(ab_r, key=lambda r: -abs(r["ret"])),
+                        normal, ab_t, failed, attempted),
+        encoding="utf-8")
+    print(f"mail html written → {ALERT_HTML.name}")
     return 0
 
 

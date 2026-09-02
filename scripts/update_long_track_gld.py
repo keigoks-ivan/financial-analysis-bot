@@ -34,6 +34,7 @@ try:
     from site_nav import full_nav_block
 except ImportError:
     from site_nav_snippet import full_nav_block  # noqa: E402
+from mail_html import esc, frame, note, one_minute, pill, section, table, tiles  # noqa: E402
 
 NAV_BLOCK = full_nav_block("system", "lthub")
 
@@ -42,6 +43,8 @@ DOCS = next((c for c in _cand if c.exists()), _cand[0])
 OUTPUT = DOCS / "long-track-gld" / "index.html"
 STATE_JSON = DOCS / "long-track-gld" / "state.json"
 ALERT_FILE = DOCS.parent / "lt_gld_alert.txt"    # gate 翻轉或 |target−executed| ≥ 20pp 才寫
+ALERT_HTML = DOCS.parent / "long_track_gld_mail.html"  # 同一事件的美觀 HTML 版（§5.7）
+LT_GLD_PAGE_URL = "https://research.investmquest.com/long-track-gld/"
 
 # ---- config (凍結，§11) ----------------------------------------------------
 TICKER = "GLD"
@@ -230,6 +233,45 @@ def detect_changes(prev: dict, sig: dict) -> str | None:
     arrow = (f"最終權重 {held:.0f}% → {new_exec:.0f}%" if held is not None
              else f"最終權重 → {new_exec:.0f}%")
     return f"{('、'.join(parts) + ' → ') if parts else ''}{arrow}"
+
+
+def build_mail_html(change: str | None, sig: dict, executed: float, data_date) -> str:
+    """組 long_track_gld_mail.html（§5.7 版型）。無可行動變化時仍要產出一份
+    「無變化／測試信」版本，讓 workflow 的 test_email 分支永遠有檔可用。
+    """
+    has_event = bool(change)
+    bullets = [change] if change else []  # 單一事件：一分鐘版只在 >1 條時才渲染（見 mail_html.one_minute）
+
+    tile_items = [
+        ("今日目標權重", f"{sig['final']*100:.0f}%", "cap 1.0"),
+        ("A2 執行後現持", f"{executed:.0f}%", None),
+        ("套袖 sleeve", f"{sig['sleeve']:.2f}", "clip 1.0"),
+    ]
+
+    headers = ["閘門", "RV20（年化）", "σ_t（3年中位）", "raw＝σ_t/RV20"]
+    rows = [[
+        pill("在場", "green") if sig["gate"] else pill("出場", "gray"),
+        f"{sig['rv20']*100:.1f}%", f"{sig['sigma_t']*100:.1f}%",
+        f"{sig['raw_ratio']:.3f}",
+    ]]
+
+    body = one_minute(bullets)
+    body += tiles(tile_items)
+    body += section("SIGNAL STATE", "訊號狀態", table(headers, rows, numeric_cols={1, 2, 3}))
+    if change:
+        body += note(f"可行動變化：{esc(change)}")
+    if not has_event:
+        body += note("目前無可行動變化 — 這是測試信，確認 email 管線正常。")
+
+    return frame(
+        title="GLD 金 Sleeve（前瞻 OOS・非實單）",
+        date=str(data_date),
+        body_html=body,
+        button_label="前往 GLD Sleeve 頁 →",
+        button_url=LT_GLD_PAGE_URL,
+        accent="navy",
+        disclaimer="前瞻 OOS 追蹤（候選、尚非實單），機械訊號通知（描述器），非投資建議。",
+    )
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -724,6 +766,9 @@ def main():
         if ALERT_FILE.exists():
             ALERT_FILE.unlink()
         print("No actionable change vs last run.")
+
+    ALERT_HTML.write_text(build_mail_html(change, sig, executed, data_date), encoding="utf-8")
+    print(f"Mail HTML written: {ALERT_HTML}")
 
     html = generate_html(sig, change, last_change_date, history, exec_replay)
     _check_inline_js(html)                         # 生成即驗證：inline JS 語法必須過 node --check

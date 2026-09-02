@@ -4,7 +4,10 @@ description: >
   產出；不存在＝該層今天不寄）。存在才呼叫 dawidd6/action-send-mail@v3 寄出。
   Composite action 不能直接讀 secrets，SMTP 帳密由呼叫端 workflow 以
   mail_username / mail_password input 傳入（值來自呼叫端的 MAIL_USERNAME /
-  MAIL_APP_PASSWORD secret，由呼叫端解析後轉交）。
+  MAIL_APP_PASSWORD secret，由呼叫端解析後轉交）。html_file 為選填：若存在
+  （notify_render.py 同時產出的 HTML 版型，設計稿 §5.7）則以
+  html_body: file://… 傳給 mail action 當 HTML 內文，body_file 的純文字版本
+  仍照舊傳入當純文字備援（多數郵件用戶端會優先渲染 HTML 版）。
 
 inputs:
   subject:
@@ -13,6 +16,10 @@ inputs:
   body_file:
     description: "郵件內文檔路徑（notify_render.py 產出；含固定 footer）"
     required: true
+  html_file:
+    description: "選填：HTML 內文檔路徑（notify_render.py --html-out 產出）。不存在或空檔時退回純文字，不影響寄送。"
+    required: false
+    default: ""
   tier:
     description: "通知層級：immediate | digest | weekly（僅供 log 標記，不影響邏輯）"
     required: true
@@ -37,9 +44,30 @@ runs:
           echo "send=false" >> "$GITHUB_OUTPUT"
           echo "send-notify[${{ inputs.tier }}]: no body file (${{ inputs.body_file }}) — skip, no-op"
         fi
+        if [ -n "${{ inputs.html_file }}" ] && [ -s "${{ inputs.html_file }}" ]; then
+          echo "send_html=true" >> "$GITHUB_OUTPUT"
+          echo "send-notify[${{ inputs.tier }}]: html file found (${{ inputs.html_file }}) — will attach as html_body"
+        else
+          echo "send_html=false" >> "$GITHUB_OUTPUT"
+        fi
 
-    - name: Send mail
-      if: steps.check.outputs.send == 'true'
+    - name: Send mail (text + html)
+      if: steps.check.outputs.send == 'true' && steps.check.outputs.send_html == 'true'
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 465
+        secure: true
+        username: ${{ inputs.mail_username }}
+        password: ${{ inputs.mail_password }}
+        subject: ${{ inputs.subject }}
+        to: keigoks@gmail.com
+        from: InvestMQuest Detective <${{ inputs.mail_username }}>
+        body: file://${{ inputs.body_file }}
+        html_body: file://${{ inputs.html_file }}
+
+    - name: Send mail (text only)
+      if: steps.check.outputs.send == 'true' && steps.check.outputs.send_html != 'true'
       uses: dawidd6/action-send-mail@v3
       with:
         server_address: smtp.gmail.com

@@ -54,6 +54,7 @@ from pandas.tseries.offsets import BDay
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from site_nav import full_nav_block  # noqa: E402
+from mail_html import esc, frame, note, one_minute, pill, section, table, tiles  # noqa: E402
 
 NAV_BLOCK = full_nav_block("system", "lthub")
 
@@ -61,6 +62,8 @@ OUTPUT = Path(__file__).parent.parent / "docs" / "turtle-sleeve" / "index.html"
 STATE_JSON = Path(__file__).parent.parent / "docs" / "turtle-sleeve" / "state.json"
 STX50_STATE = Path(__file__).parent.parent / "docs" / "long-track-smh" / "state.json"
 ALERT_FILE = Path(__file__).parent.parent / "turtle_sleeve_alert.txt"
+ALERT_HTML = Path(__file__).parent.parent / "commodity_sleeve_mail.html"
+SLEEVE_PAGE_URL = "https://research.investmquest.com/turtle-sleeve/"
 
 # --- adopted combined-system parameters ---
 SIGNAL_TICKERS = ["USO", "GLD"]                 # CMDTY2 sleeve signal legs
@@ -845,6 +848,57 @@ def detect_changes(legs: list) -> list[str]:
     return out
 
 
+EVENT_KIND_LABEL = {"entry": "進場", "exit": "出場", "add": "加碼"}
+EVENT_KIND_TONE = {"entry": "green", "exit": "red", "add": "green"}
+
+
+def build_mail_html(legs: list, changes: list[str], rebal_due: bool,
+                    stx_exp: float, asof_str: str) -> str:
+    """組 commodity_sleeve_mail.html（§5.7 版型，見 scripts/mail_html.py）。
+
+    changes 非空／rebal_due 皆是真事件；兩者皆無時仍要產出一份「無事件／測試信」
+    版本，讓 workflow 的 test_email 分支永遠有檔可用。
+    """
+    has_event = bool(changes)
+    bullets = [c.replace("<b>", "<strong>").replace("</b>", "</strong>") for c in changes]
+
+    tile_items = [(f"{l['ticker']} 部位", l["pos"],
+                   f"{l['n_contracts']} 口" if l["n_contracts"] else None) for l in legs]
+    tile_items.append(("STX50 曝險", f"{stx_exp:.0f}%", "組合 80% 權重"))
+
+    # 5 欄（非 6 欄）：375px 手機寬度實測「期貨」全名（如「MCL 微型油 (100bbl)」）
+    # 撐開儲存格逼其餘欄擠壓折行——併入 Ticker 儲存格當小字副標。
+    headers = ["Ticker", "方向", "口數", "停損", "事件"]
+    rows = []
+    for l in legs:
+        tone = EVENT_KIND_TONE.get(l["event_kind"], "gray")
+        event_pill = pill(EVENT_KIND_LABEL.get(l["event_kind"], "無變化"), tone)
+        stop_txt = f"{l['stop']:.2f}" if l.get("stop") is not None else "—"
+        ticker_cell = (f"<strong>{esc(l['ticker'])}</strong>"
+                      f'<br><span style="color:#6b6b6b;font-size:11px;">{esc(l["fut"])}</span>')
+        rows.append([ticker_cell, esc(l["pos"]), str(l["n_contracts"]), stop_txt, event_pill])
+
+    body = one_minute(bullets)
+    body += tiles(tile_items)
+    body += section("SLEEVE POSITIONS", "商品 Sleeve 持倉與事件",
+                    table(headers, rows, numeric_cols={2, 3}))
+    if rebal_due:
+        body += note("🔁 月底再平衡提醒：sleeve 與股票核心再平衡回 20/80。")
+    if not has_event and not rebal_due:
+        body += note("今日無 sleeve 事件 — 這是測試信，確認 email 管線正常。")
+
+    accent = "red" if any(l["event_kind"] == "exit" for l in legs) else "navy"
+    return frame(
+        title="商品 Sleeve 訊號",
+        date=asof_str,
+        body_html=body,
+        button_label="前往商品 Sleeve 頁 →",
+        button_url=SLEEVE_PAGE_URL,
+        accent=accent,
+        disclaimer="商品 Sleeve（OOS 並行追蹤，非實單）。本信為系統訊號通知，非投資建議。",
+    )
+
+
 def main():
     prev_state = {}
     if STATE_JSON.exists():
@@ -956,6 +1010,10 @@ def main():
         elif ALERT_FILE.exists():
             ALERT_FILE.unlink()
         print("No sleeve events.")
+
+    ALERT_HTML.write_text(build_mail_html(legs, changes, rebal_due, stx_exp, asof_str),
+                          encoding="utf-8")
+    print(f"Mail HTML written: {ALERT_HTML}")
 
     html = generate_html(legs, stx, combined, asof_str, changes, last_change_date,
                          rebal_due, year_events, nav_labels, comb_vals, stx_vals, slv_vals, yr_ret,

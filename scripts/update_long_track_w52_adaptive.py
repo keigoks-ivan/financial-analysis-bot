@@ -68,6 +68,10 @@ try:                                       # fab: scripts/site_nav.py
     from site_nav import full_nav_block  # noqa: F401 (kept for API parity; unused below)
 except ImportError:                        # v7-backtest: repo-root snippet
     from site_nav_snippet import full_nav_block  # noqa: E402,F401
+try:                                       # fab: scripts/mail_html.py（v7-backtest 無此檔時
+    from mail_html import esc, frame, note, one_minute, pill, section, table, tiles  # noqa: E402
+except ImportError:                        # 副本降級：無 HTML mail 產出，僅純文字 alert 不受影響
+    esc = frame = note = one_minute = pill = section = table = tiles = None
 
 # 2026-08-23 系統主控台整併：本頁改產 nav-less iframe 片段（被 /long-track/#live 嵌入），
 # index.html 改為 redirect stub（見 docs/long-track-w52-adaptive/index.html，
@@ -82,6 +86,8 @@ DOCS = next((c for c in _cand if c.exists()), _cand[0])
 OUTPUT = DOCS / "long-track-w52-adaptive" / "_body.html"
 STATE_JSON = DOCS / "long-track-w52-adaptive" / "state.json"
 ALERT_FILE = DOCS.parent / "lt_w52a_alert.txt"    # 實單主系統：可行動變化 email 提醒
+ALERT_HTML = DOCS.parent / "long_track_w52_mail.html"  # 同一事件的美觀 HTML 版（§5.7）
+LT_W52_PAGE_URL = "https://research.investmquest.com/long-track-w52-adaptive/"
 # 槓桿回測數字由 results/vol_targeting/w52_adaptive_leverage.json 轉錄為下方 LEV 常數
 # （fab 副本無法讀 v7 results，故轉錄；比照主頁 BT_US/BT_TW 慣例）。曝險/燃料表
 # 由本頁 history 的 raw_ratio 即時推導（cap1.5=min(1.5,raw)），自足可重現。
@@ -1282,6 +1288,48 @@ def detect_changes(prev: dict, sigs: dict) -> list:
     return out
 
 
+def build_mail_html(changes: list, sigs: dict, exp: dict, data_date) -> str:
+    """組 long_track_w52_mail.html（§5.7 版型）。無可行動變化時仍要產出一份
+    「無變化／測試信」版本，讓 workflow 的 test_email 分支永遠有檔可用。
+    v7-backtest 副本若缺 mail_html.py（見上方 import 降級），本函式不會被呼叫。
+    """
+    has_event = bool(changes)
+    bullets = [c.replace("<b>", "<strong>").replace("</b>", "</strong>") for c in changes]
+
+    tile_items = [
+        ("美股組合曝險", f"{exp['us']:.0f}%", None),
+        ("台股組合曝險", f"{exp['tw']:.0f}%", None),
+        ("可行動變化", str(len(changes)), None),
+    ]
+
+    # 375px 手機寬度實測：「σt（自適應）」「最終權重」欄名過長會折成兩行擠壓
+    # 「市場」欄——縮短欄名（自適應波動率一詞已在信末免責/本頁常態解釋）。
+    headers = ["Ticker", "市場", "閘門", "RV20", "σt", "權重"]
+    rows = []
+    for t in ALL_TICKERS:
+        d = sigs[t]
+        gate_pill = pill("在場", "green") if d["gate"] else pill("出場", "gray")
+        rows.append([f"<strong>{esc(t)}</strong>", esc(TICKER_MARKET[t]), gate_pill,
+                    f"{d['rv20']*100:.1f}%", f"{d['sigma_t']*100:.1f}%",
+                    f"{d['final']*100:.0f}%"])
+
+    body = one_minute(bullets)
+    body += tiles(tile_items)
+    body += section("TARGET WEIGHTS", "各腿目標權重", table(headers, rows, numeric_cols={3, 4, 5}))
+    if not has_event:
+        body += note("目前無可行動變化 — 這是測試信，確認 email 管線正常。")
+
+    return frame(
+        title="W52 × 自適應波動率 150%（美＋台・實單）",
+        date=str(data_date),
+        body_html=body,
+        button_label="前往 W52 實單主系統頁 →",
+        button_url=LT_W52_PAGE_URL,
+        accent="navy",
+        disclaimer="實單主系統機械訊號通知（描述器）。可行動變化＝任一腿閘門翻轉或最終權重與現持差 ≥ 10pp。",
+    )
+
+
 def main():
     prev_state = {}
     if STATE_JSON.exists():
@@ -1356,6 +1404,10 @@ def main():
         if ALERT_FILE.exists():
             ALERT_FILE.unlink()
         print("No actionable change vs last run.")
+
+    if frame is not None:
+        ALERT_HTML.write_text(build_mail_html(changes, sigs, exp, data_date), encoding="utf-8")
+        print(f"Mail HTML written: {ALERT_HTML}")
 
     html = generate_html(sigs, changes, last_change_date, hist_map, exec_map)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
