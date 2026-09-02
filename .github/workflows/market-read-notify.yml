@@ -6,9 +6,10 @@ name: Market Read Notify
 # 零 LLM：判讀本身由雲端 routine market-read-auto（或 orchestrator 手動跑
 # market-read skill）產生並 push 到 main；本工作流只在 read.json 或
 # read_status.json 變動時被 push 事件觸發，跑 scripts/market_read_summary.py
-# 產生純文字主旨與信文，寄一封摘要 email 給持有人。判讀成功寄摘要；
-# read_status.json.status=failed 時寄失敗信（含原因）——分支邏輯全部收在
-# market_read_summary.py 內，本工作流只是把腳本輸出轉寄出去。
+# 產生美化版 HTML 信＋純文字備援＋主旨，寄一封摘要 email 給持有人（版型標準：
+# _market_read_design_20260903.md §5.7）。判讀成功寄摘要；read_status.json.
+# status=failed 時寄失敗信（含原因）——分支邏輯全部收在 market_read_summary.py
+# 內，本工作流只是把腳本輸出（HTML／純文字檔＋主旨）轉寄出去。
 
 on:
   push:
@@ -37,17 +38,15 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Build market-read summary (subject + body)
+      - name: Build market-read summary (HTML + text + subject)
         id: summary
         run: |
-          OUTPUT="$(python3 scripts/market_read_summary.py)"
+          OUTPUT="$(python3 scripts/market_read_summary.py --html market_read_mail.html --text market_read_mail.txt)"
           SUBJECT="$(printf '%s\n' "$OUTPUT" | sed -n '1p')"
-          BODY="$(printf '%s\n' "$OUTPUT" | tail -n +3)"
-          echo "subject=$SUBJECT" >> "$GITHUB_OUTPUT"
           DELIM="EOF_$(date +%s%N)_${RANDOM}"
           {
-            echo "body<<$DELIM"
-            printf '%s\n' "$BODY"
+            echo "subject<<$DELIM"
+            printf '%s\n' "$SUBJECT"
             echo "$DELIM"
           } >> "$GITHUB_OUTPUT"
 
@@ -63,8 +62,5 @@ jobs:
           subject: ${{ steps.summary.outputs.subject }}
           to: keigoks@gmail.com
           from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
-          body: |
-            ${{ steps.summary.outputs.body }}
-
-            —
-            InvestMQuest · 市況主控台判讀層自動通知
+          html_body: file://market_read_mail.html
+          body: file://market_read_mail.txt
