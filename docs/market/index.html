@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>市況主控台 — InvestMQuest Research</title>
+  <meta name="description" content="把站上十一條市況管線的今日狀態，收成一頁可讀、可記分、能接到決策的市場現況。每個數字帶來源日期；判讀句只講機率與條件，不下買賣指令。">
+  <meta property="og:title" content="市況主控台 — InvestMQuest Research">
+  <meta property="og:site_name" content="InvestMQuest Research">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Playfair+Display:wght@600;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/imq-base.css">
+  <style>
+:root{
+  --bg:#f7f3ea;--bg-card:#ffffff;--bg-card2:#fbf8f1;--bg-card-hover:#fbf8f1;
+  --border:#e5dfd0;--border-light:#efe9da;
+  --text:#0c1521;--text-secondary:#2a3a52;--text-muted:#9aa7b8;
+  --accent:#0d2244;--accent-hover:#081832;
+  --gold:#b8924a;--gold-deep:#8f6d2c;
+  --pos:#15803d;--neg:#b91c1c;--warn:#a16207;--crit:#b91c1c;--stale:#8a8f7e;
+  --pos-bg:#eafaef;--neg-bg:#fbeceb;--warn-bg:#fbf3df;--crit-bg:#fbeceb;--stale-bg:rgba(138,143,126,.14);
+  --s1:#2a6fd6;--s1-bg:rgba(42,111,214,.10);--s2:#c2603a;--s2-bg:rgba(194,96,58,.12);
+  --shadow-sm:0 1px 2px rgba(13,34,68,.05);--shadow-md:0 6px 18px rgba(13,34,68,.07);
+  --radius:10px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#0b0d11;--bg-card:#14181f;--bg-card2:#1a1f28;--bg-card-hover:#1a1f28;
+    --border:#28303c;--border-light:#222834;
+    --text:#edeff3;--text-secondary:#a6aebc;--text-muted:#717a8a;
+    --accent:#5b9bff;--accent-hover:#7db0ff;
+    --gold:#c9a55e;--gold-deep:#b8924a;
+    --pos:#34d399;--neg:#f87171;--warn:#fbbf24;--crit:#f87171;--stale:#7d8390;
+    --pos-bg:rgba(52,211,153,.12);--neg-bg:rgba(248,113,113,.12);--warn-bg:rgba(251,191,36,.12);--crit-bg:rgba(248,113,113,.12);--stale-bg:rgba(125,131,144,.16);
+    --s1:#5b9bff;--s1-bg:rgba(91,155,255,.16);--s2:#e08a5e;--s2-bg:rgba(224,138,94,.16);
+    --shadow-sm:0 1px 2px rgba(0,0,0,.3);--shadow-md:0 4px 14px rgba(0,0,0,.4);
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:15px;
+     -webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+a:hover{color:var(--accent-hover)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+.mono{font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums}
+
+.hero{padding:2.6rem 0 1.6rem}
+.overline{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;
+          text-transform:uppercase;color:var(--gold-deep);font-weight:600}
+h1{font-family:'Playfair Display','Noto Serif TC',Georgia,serif;font-size:1.95rem;
+   font-weight:700;letter-spacing:-.01em;color:var(--text);margin:.4rem 0 .6rem;text-wrap:balance}
+.hero .lede{color:var(--text-secondary);max-width:780px;font-size:.95rem;line-height:1.8}
+.hero .lede strong{color:var(--text)}
+.mandate{margin-top:1.1rem;max-width:820px;border-left:3px solid var(--accent);
+         background:var(--bg-card);border-radius:0 var(--radius) var(--radius) 0;
+         padding:.9rem 1.15rem;font-size:.85rem;color:var(--text-secondary);line-height:1.75}
+.mandate strong{color:var(--text)}
+.asof{margin-top:.9rem;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--text-muted)}
+.load-fail{margin-top:1.4rem;padding:.9rem 1.1rem;background:var(--crit-bg);color:var(--crit);
+           border-radius:var(--radius);font-size:.85rem}
+
+section{margin:2.2rem 0}
+h2{font-family:'Playfair Display','Noto Serif TC',Georgia,serif;font-size:1.22rem;
+   font-weight:700;margin-bottom:.3rem;color:var(--text)}
+h2 .en{font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--text-muted);
+       font-weight:400;letter-spacing:.06em;margin-left:.55rem;text-transform:uppercase}
+.section-sub{font-size:.84rem;color:var(--text-muted);margin-bottom:.6rem;max-width:780px;line-height:1.7}
+.srclinks{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.9rem}
+.srclinks a{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--text-muted);
+            background:var(--bg-card2);border:1px solid var(--border-light);border-radius:999px;
+            padding:.16rem .6rem;white-space:nowrap}
+.srclinks a:hover{color:var(--accent);border-color:var(--accent)}
+
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
+      padding:1.05rem 1.2rem;box-shadow:var(--shadow-sm)}
+.card.stale{opacity:.72;border-style:dashed}
+a.card{display:block;color:inherit;text-decoration:none}
+a.card:hover{border-color:var(--accent)}
+
+.grid{display:grid;gap:14px}
+.g5{grid-template-columns:repeat(5,1fr)}.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:2fr 1fr}
+@media(max-width:900px){.g5{grid-template-columns:repeat(2,1fr)}.g2,.g3{grid-template-columns:1fr}}
+
+.tile .lab{font-size:12.5px;color:var(--text-muted)}
+.tile .val{font-family:'Playfair Display','Noto Serif TC',Georgia,serif;font-size:1.32rem;margin:.18rem 0 .12rem;line-height:1.2}
+.tile .val.mono{font-family:'IBM Plex Mono',monospace;font-size:1.5rem;font-weight:600}
+.tile .sub{font-size:.8rem;color:var(--text-secondary);margin:0}
+.tile .meta{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--text-muted);
+            margin-top:.45rem;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+
+.chip{display:inline-flex;align-items:center;gap:4px;font-family:'IBM Plex Mono',monospace;
+      font-size:10.5px;padding:1.5px 7px;border-radius:999px;border:1px solid transparent;white-space:nowrap}
+.chip.good{background:var(--pos-bg);color:var(--pos)}
+.chip.warn{background:var(--warn-bg);color:var(--warn)}
+.chip.crit{background:var(--crit-bg);color:var(--crit)}
+.chip.stale{background:var(--stale-bg);color:var(--stale)}
+.chip.p{background:var(--s1-bg);color:var(--s1)}
+.chip.neutral{background:var(--border-light);color:var(--text-muted)}
+
+.note{font-size:12.5px;color:var(--text-muted);margin:.5rem 0 0;max-width:74ch;line-height:1.7}
+svg text{font-family:'IBM Plex Mono',monospace;font-size:11px;fill:var(--text-muted)}
+svg .lab{fill:var(--text);font-family:'Inter','Noto Sans TC',sans-serif;font-size:12.5px}
+svg .gridline{stroke:var(--border-light);stroke-width:1}
+svg .axis{stroke:var(--border);stroke-width:1}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text-muted);margin:.2rem 0 .7rem}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.legend i.hollow{background:transparent;border:2px solid var(--text-muted);width:8px;height:8px}
+
+table.mt{border-collapse:collapse;width:100%;font-size:13px}
+table.mt th{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.09em;
+            text-transform:uppercase;color:var(--text-muted);text-align:left;padding:6px 8px;
+            border-bottom:1px solid var(--border)}
+table.mt td{padding:7px 8px;border-bottom:1px solid var(--border-light);vertical-align:top}
+table.mt td.num{font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tw{overflow-x:auto}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13px}
+.kv b{font-family:'IBM Plex Mono',monospace;font-weight:600;white-space:nowrap;color:var(--text)}
+.kv span{color:var(--text-secondary)}
+
+.trig{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:900px){.trig{grid-template-columns:1fr}}
+.trig .card{background:var(--bg-card2)}
+.trig .n{font-family:'IBM Plex Mono',monospace;font-size:1.4rem;font-weight:600;color:var(--accent)}
+
+.bar{fill:var(--s2)}.dot{fill:var(--s1)}.dotb{fill:var(--bg-card);stroke:var(--text-muted);stroke-width:2}
+.link-line{stroke:var(--s1);stroke-width:2;opacity:.5}
+
+/* 記分板卡片（沿用 /flowmap/ 既有樣式，schema 相同） */
+.scorecard-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem}
+.score-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
+            padding:1rem 1.15rem;box-shadow:var(--shadow-sm)}
+.score-card h3{font-family:'Playfair Display','Noto Serif TC',Georgia,serif;font-size:.98rem;
+               font-weight:700;margin-bottom:.5rem;color:var(--text)}
+.score-status{display:flex;align-items:baseline;gap:.5rem;margin-bottom:.6rem}
+.score-status .dot{font-size:1rem}
+.score-status .label{font-size:.8rem;color:var(--text-secondary);font-weight:600}
+.score-stats{display:flex;gap:1.2rem;margin-bottom:.6rem;flex-wrap:wrap}
+.score-stats .stat-label{font-size:9.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em}
+.score-stats .stat-val{font-family:'IBM Plex Mono',monospace;font-size:1.05rem;font-weight:700;
+                       color:var(--text);margin-top:.12rem}
+.score-note{font-size:.76rem;color:var(--text-secondary);line-height:1.65}
+.score-kill{margin-top:.55rem;font-size:.72rem;color:var(--crit);line-height:1.65;
+            background:var(--crit-bg);border-radius:6px;padding:.45rem .55rem}
+.score-card .src-id{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--text-muted);
+                    font-weight:400;margin-left:.35rem}
+.score-card.is-sentinel{border-style:dashed;border-color:var(--text-muted);margin-top:.3rem}
+.sentinel-note{margin-top:.55rem;font-size:.76rem;color:var(--text-secondary);line-height:1.65;
+               background:var(--warn-bg);border-radius:6px;padding:.45rem .55rem}
+.scorecard-subhead{font-family:'Playfair Display','Noto Serif TC',Georgia,serif;font-size:.98rem;
+                   font-weight:700;margin:1.5rem 0 .4rem;color:var(--text)}
+
+/* 曝險規則區 */
+.exp-top{display:flex;gap:1.6rem;flex-wrap:wrap;align-items:flex-start;margin-bottom:.8rem}
+.exp-target .n{font-family:'IBM Plex Mono',monospace;font-size:2.4rem;font-weight:700;color:var(--accent);line-height:1}
+.exp-target .lab{font-size:12px;color:var(--text-muted);margin-top:.2rem}
+.exp-factors,.exp-gates{display:flex;flex-direction:column;gap:.4rem}
+.exp-factors .row,.exp-gates .row{display:flex;align-items:baseline;gap:.5rem;font-size:.82rem}
+.exp-factors .row b,.exp-gates .row b{width:112px;color:var(--text-secondary);font-weight:600}
+.proto-badge{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;
+             letter-spacing:.07em;border:1px dashed var(--warn);color:var(--warn);
+             padding:2px 8px;border-radius:999px;margin-left:.6rem;vertical-align:middle}
+
+footer.imq-foot{margin-top:2.8rem;padding:1.4rem 20px;border-top:1px solid var(--border);
+                 text-align:center;font-size:12.5px;color:var(--text-muted)}
+footer.imq-foot a{color:var(--text-secondary)}
+
+.disclaimer{margin:1.8rem 0;padding:1.1rem 1.3rem;background:var(--bg-card);border:1px solid var(--border);
+            border-radius:var(--radius);font-size:.78rem;color:var(--text-muted);line-height:1.8}
+.disclaimer strong{color:var(--text-secondary)}
+.loading{color:var(--text-muted);font-size:.85rem;padding:1rem 0}
+
+@media(max-width:768px){
+  h1{font-size:1.5rem}
+  .exp-top{flex-direction:column}
+}
+  </style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/market/" class="active">市況主控台</a>
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <a href="/cockpit/">選股</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">個股研究</a>
+          <a href="/id/">產業研究</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/flow/">投資流程</a>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+<div class="wrap">
+  <div class="hero">
+    <span class="overline">InvestMQuest Research · 市場</span>
+    <h1>市況主控台</h1>
+    <p class="lede">
+      站上有十一條各自獨立運作的市況管線——機械層異常掃描、警報網、條件流量、統計性質、
+      預測帳簿、大類資產 regime、總經時鐘、擁擠交易、成績單、曝險規則、系統主控台（實單執行層）。
+      平常要看懂「現在市況」得逐一開十一個頁面。<strong>這頁把它們的今日狀態收成一頁：
+      每個數字都帶來源日期，判讀句只講機率與條件，不下買賣指令。</strong>
+    </p>
+    <div class="mandate">
+      <strong>定位：</strong>本頁是<strong>合成層（describer of describers），不是新的判斷模型</strong>。
+      所有數字原樣讀自既有管線的最新輸出，不重算、不加權合成一個總分；「市況曝險規則（paper）」
+      區塊上線後以 paper 帳戶記分，在淘汰賽中證明前<strong>只顯示不執行</strong>，不連任何實倉。
+      個股與組合的進出，依各公司深度報告（DD）寫定的證偽條件決定，不由本頁驅動。
+    </div>
+    <div class="asof" id="asof">資料載入中…</div>
+    <div class="load-fail" id="loadFail" hidden>資料載入失敗。</div>
+  </div>
+
+  <div id="page-body" hidden>
+
+  <section id="sec-thesis">
+    <div class="card" style="border-left:3px solid var(--accent);border-radius:0 var(--radius) var(--radius) 0">
+      <div class="overline" style="margin-bottom:.4rem">今日讀法（機械生成，議會機率＋流量位置）</div>
+      <p id="thesisHeadline" style="font-size:1.02rem;color:var(--text)"></p>
+      <ul id="thesisBullets" style="margin:.7rem 0 0 1.1rem;padding:0;font-size:.86rem;color:var(--text-secondary);line-height:1.85"></ul>
+    </div>
+  </section>
+
+  <section id="sec-env">
+    <h2>現在是什麼環境<span class="en">Environment</span></h2>
+    <p class="section-sub">五套讀法各自獨立，不合成一個分數；第五磚是實單執行層的目標曝險，來自系統主控台。</p>
+    <div class="srclinks">
+      <a href="/regime/">來源 → 大類資產 regime</a>
+      <a href="/macro/">來源 → 總經時鐘</a>
+      <a href="/detective/">來源 → 市場偵探</a>
+      <a href="/monitor/">來源 → 市場監測</a>
+      <a href="/long-track/">來源 → 系統主控台</a>
+    </div>
+    <div class="grid g5" id="env"></div>
+  </section>
+
+  <section class="grid g2">
+    <div class="card">
+      <h2>預測議會<span class="en">Forecast Council</span></h2>
+      <div class="srclinks"><a href="/flowmap/#sec-scorecard">來源 → 成績單（flowmap）</a></div>
+      <div class="legend"><span><i style="background:var(--s1)"></i>系統機率</span><span><i class="hollow"></i>空手猜（歷史無條件頻率）</span></div>
+      <div id="council"></div>
+      <p class="note" id="councilNote"></p>
+      <div id="nowcastBlock" style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--border)" hidden>
+        <div class="overline" style="font-size:10px">今日狀態讀數（即時，非落帳）</div>
+        <p class="note" style="margin-top:.35rem">這一段是「今天各模型讀到什麼狀態」的快照，不是帳上等待結算的預測——議會（上方）才是真正落帳計分的命題，這裡只回答「現在」，不承諾「未來會怎樣」。</p>
+        <div class="tw"><table class="mt" id="nowcastTable"></table></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>機械賣家在哪裡<span class="en">Conditional Flow</span></h2>
+      <div class="srclinks"><a href="/flowmap/">來源 → 條件流量地圖</a></div>
+      <div id="ladder"></div>
+      <div class="kv" style="margin-top:10px" id="flowKv"></div>
+    </div>
+  </section>
+
+  <section class="grid g3">
+    <div class="card">
+      <h2>引信距離<span class="en">Falsifier Distance</span></h2>
+      <div class="srclinks"><a href="/intel/">來源 → 情報監視器（轉折雷達）</a><a href="/macro/">來源 → 總經深度報告</a></div>
+      <div class="legend"><span><i style="background:var(--s2)"></i>距門檻還差多少（%）</span><span class="chip p">p</span><span style="margin-left:-8px">＝系統認為區間內觸及的機率（帳上有單的才有）</span></div>
+      <div id="fuses"></div>
+      <p class="note">期限溢價系列為 FRED Kim–Wright 口徑，非 NY Fed ACM。</p>
+    </div>
+    <div class="card">
+      <h2>今日異常<span class="en">Anomalies</span></h2>
+      <div class="srclinks"><a href="/monitor/">來源 → 市場監測</a></div>
+      <div id="anom" style="display:flex;flex-direction:column;gap:8px;margin-top:6px"></div>
+      <h2 style="margin-top:18px">個股層脈搏<span class="en">Stock Pulse</span></h2>
+      <div class="srclinks"><a href="/research/">來源 → 個股研究</a></div>
+      <div id="pulse"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>會改變今天讀法的三個數字<span class="en">Watch Triggers</span></h2>
+    <p class="section-sub">機械觸發點，不是預測。</p>
+    <div class="trig" id="triggers"></div>
+  </section>
+
+  <section class="grid g2">
+    <div class="card">
+      <h2>記分板<span class="en">Scoreboard</span></h2>
+      <div class="srclinks"><a href="/flowmap/#sec-scorecard">來源 → 成績單（flowmap）</a></div>
+      <div class="scorecard-grid" id="scoreGrid"></div>
+      <h3 class="scorecard-subhead">預測對帳簿<span class="en">Ledger Sources</span></h3>
+      <div class="scorecard-grid" id="ledgerGrid"></div>
+      <div id="sentinelHost"></div>
+      <p class="note">判定方式是序貫檢定（SPRT）；紅燈只代表已達淘汰門檻，等持有人在校準輪決定要不要收掉，本頁不會自動關閉或修改任何模組。</p>
+    </div>
+    <div class="card">
+      <h2>資料新鮮度<span class="en">Freshness</span></h2>
+      <div class="tw"><table class="mt" id="fresh"></table></div>
+    </div>
+  </section>
+
+  <section id="sec-exposure">
+    <h2>市況曝險規則<span class="en">Exposure Rule</span><span class="proto-badge">paper · 未證明前只顯示不執行</span></h2>
+    <p class="section-sub">週頻規則：vol×trend×credit 三因子決定目標曝險，三軌各自的新倉閘只是輸入之一，不是指令。SPRT 判紅即撤，期間不調參。</p>
+    <div class="card">
+      <div class="exp-top">
+        <div class="exp-target">
+          <div class="n mono" id="expTarget">—</div>
+          <div class="lab">目標曝險</div>
+        </div>
+        <div class="exp-factors" id="expFactors"></div>
+        <div class="exp-gates" id="expGates"></div>
+      </div>
+      <div id="navChartHost"></div>
+      <p class="note" id="expSprtNote"></p>
+      <p class="note" id="expGapNote" hidden>曝險追蹤檔（exposure_track.json）尚未取得，NAV 對比走勢暫不顯示。</p>
+    </div>
+  </section>
+
+  <div class="disclaimer">
+    <strong>免責與定位：</strong>本頁為 InvestMQuest Research 內部研究文件，<strong>合成層描述器，非投資建議</strong>。
+    所有區塊的判定機制、信心度與資料延遲，皆已在各自來源頁標註；本頁不重算、不加權合成單一總分。
+    「市況曝險規則」為 paper 帳戶記分，在序貫檢定證明優於基準前不連任何實倉；判紅即撤，期間不因單一案例調參。
+    過往統計關係不保證未來重演。
+  </div>
+
+  </div>
+</div>
+
+<footer class="imq-foot">
+  <div class="wrap">
+    <div>© 2026 InvestMQuest Research</div>
+    <div><a href="/disclosures.html">方法論與揭露</a> · 本站內容僅供研究參考，不構成投資建議</div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  function $(sel) { return document.querySelector(sel); }
+  function el(tag, cls, html) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (html !== undefined) e.innerHTML = html;
+    return e;
+  }
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+  function fmtSigned(v, d) {
+    if (v === null || v === undefined) return "—";
+    var n = Number(v);
+    var s = n.toFixed(d === undefined ? 1 : d);
+    return (n > 0 ? "+" : "") + s;
+  }
+  function fmtNum(v, d) {
+    if (v === null || v === undefined) return "—";
+    return Number(v).toFixed(d === undefined ? 1 : d);
+  }
+  function fmtPct(v, d) {
+    if (v === null || v === undefined) return "—";
+    return Math.round(Number(v) * (d ? Math.pow(10, d) : 100)) / (d ? Math.pow(10, d) : 1) + "%";
+  }
+  function pct0(v) {
+    if (v === null || v === undefined) return "—";
+    return Math.round(Number(v) * 100) + "%";
+  }
+  function twStamp(iso) {
+    if (!iso) return "";
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return String(iso);
+    var p = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Taipei", year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", hourCycle: "h23"
+    }).formatToParts(d).reduce(function (o, x) { o[x.type] = x.value; return o; }, {});
+    return p.year + "-" + p.month + "-" + p.day + " " + p.hour + ":" + p.minute + " 台北時間";
+  }
+
+  // ── SPRT（同 /flowmap/ 參數：p0=0.5／p1=0.65／α=0.05／β=0.10，n_eff≥20 才判定）──
+  var SPRT_FLOOR = 20;
+  var SPRT_LLR_HIT = 0.26236;
+  var SPRT_LLR_MISS = 0.35667;
+  var SPRT_B_CONST = -2.2513;
+
+  var SCORE_MODULE_LABEL = { cta: "CTA 趨勢跟隨", month_end: "月末／季末再平衡", exposure_rule: "市況曝險規則（paper）" };
+  var SOURCE_LABEL = {
+    "rv-model": "波動率模型", "vix-model": "VIX 期限結構模型", "cot-model": "COT 極端部位模型",
+    "tsmom": "趨勢方向模型", "vrp": "波動風險溢酬模型", "dd-verdict": "個股裁決",
+    "macro-falsifier": "總經證偽表",
+    "sop-funnel": "板機訊號模型", "grp-seat": "GRP 席位", "picks-baofa": "精選爆發榜",
+    "tenbagger": "十倍股候選", "risk-gauge": "風險偏好模型", "rrg-sector": "類股輪動模型",
+    "intel-llm": "新聞閱讀模型", "monitor-read": "市場監測判讀", "detective-read": "警報網判讀",
+    "crowding-monitor": "擁擠交易判讀",
+    "sentinel-noise": "哨兵（無技巧對照組）"
+  };
+  var SCORE_DOT = { green: "🟢", yellow: "🟡", red: "🔴", descriptor: "⚪" };
+  var SCORE_STATUS_TEXT = {
+    green: "已證實優於基準", yellow: "證據累積中（有效樣本 n／決策需累積 LLR）",
+    red: "已證實不優於基準，等校準輪處決", descriptor: "描述器，不評分"
+  };
+
+  function scoreStat(label, val) {
+    var box = el("div");
+    box.appendChild(el("div", "stat-label", esc(label)));
+    box.appendChild(el("div", "stat-val mono", esc(String(val))));
+    return box;
+  }
+
+  function sprtStateText(sprt, nEff, floor) {
+    floor = floor || SPRT_FLOOR;
+    if (!sprt) return "證據累積中：帳上尚未累積可結算樣本。";
+    if (sprt.state === "accept_h1") {
+      return "已證實優於基準（SPRT 判定 accept_h1，判定於 " + esc(sprt.decided_at || "—") +
+        "，n=" + esc(sprt.decided_n) + "）。";
+    }
+    if (sprt.state === "accept_h0") {
+      return "已證實不優於基準（SPRT 判定 accept_h0），等校準輪處決（判定於 " +
+        esc(sprt.decided_at || "—") + "，n=" + esc(sprt.decided_n) + "）。";
+    }
+    if (sprt.A == null || sprt.B == null || sprt.llr == null) {
+      return "證據累積中：有效樣本 " + nEff + "，未滿 " + floor + " 筆前不判定。";
+    }
+    var toGreen = Math.max(0, Math.ceil((sprt.A - sprt.llr) / SPRT_LLR_HIT));
+    var toRed = Math.max(0, Math.ceil((sprt.llr - sprt.B) / SPRT_LLR_MISS));
+    var txt = "證據累積中：有效樣本 " + nEff + "，離判綠還差約再 " + toGreen +
+      " 次命中（或離判紅還差約再 " + toRed + " 次未命中，皆假設此後同向不中斷，只是距離換算非機率預測）。";
+    if (nEff < floor) txt += "未滿 " + floor + " 筆前不判定，即使累積 LLR 已達門檻。";
+    return txt;
+  }
+
+  function renderSprtCard(key, m) {
+    var card = el("div", "score-card");
+    card.appendChild(el("h3", "", esc(SCORE_MODULE_LABEL[key] || key)));
+    var statusRow = el("div", "score-status");
+    statusRow.appendChild(el("span", "dot", SCORE_DOT[m.status] || "⚪"));
+    statusRow.appendChild(el("span", "label", esc(SCORE_STATUS_TEXT[m.status] || m.status || "—")));
+    card.appendChild(statusRow);
+    var stats = el("div", "score-stats");
+    stats.appendChild(scoreStat("有效樣本 n_eff", (m.n_eff == null ? "—" : m.n_eff) + "／需 " + (m.n_required == null ? "—" : m.n_required)));
+    stats.appendChild(scoreStat("命中／樣本", (m.hits == null ? "—" : m.hits) + "／" + (m.n_eff == null ? "—" : m.n_eff)));
+    stats.appendChild(scoreStat("累積 LLR", m.sprt ? fmtSigned(m.sprt.llr, 3) : "—"));
+    card.appendChild(stats);
+    card.appendChild(el("div", "score-note", esc(sprtStateText(m.sprt, m.n_eff, m.n_required))));
+    if (m.status === "red") {
+      card.appendChild(el("div", "score-kill", "淘汰門檻：" + esc(m.kill_condition || "SPRT accept_h0") +
+        "——本頁只舉旗，不會自動關閉或修改此模組。"));
+    }
+    return card;
+  }
+
+  function renderSourceCard(key, s) {
+    var card = el("div", "score-card");
+    var h3 = el("h3", "", esc(SOURCE_LABEL[key] || key));
+    h3.appendChild(el("span", "src-id", "(" + esc(key) + ")"));
+    card.appendChild(h3);
+    var statusRow = el("div", "score-status");
+    statusRow.appendChild(el("span", "dot", SCORE_DOT[s.status] || "⚪"));
+    statusRow.appendChild(el("span", "label", esc(SCORE_STATUS_TEXT[s.status] || s.status || "—")));
+    card.appendChild(statusRow);
+    var stats = el("div", "score-stats");
+    stats.appendChild(scoreStat("有效樣本 n_eff", (s.n_eff == null ? "—" : s.n_eff) + "／已結算 " + (s.n_resolved == null ? "—" : s.n_resolved)));
+    var bssTxt = (s.bss === null || s.bss === undefined) ? "—" : fmtSigned(s.bss, 3);
+    if (s.bss_ci90 && s.bss_ci90[0] != null && s.bss_ci90[1] != null) {
+      bssTxt += "［" + fmtSigned(s.bss_ci90[0], 3) + "，" + fmtSigned(s.bss_ci90[1], 3) + "］";
+    }
+    stats.appendChild(scoreStat("BSS（vs 逐筆基準機率）", bssTxt));
+    stats.appendChild(scoreStat("累積 LLR", s.sprt ? fmtSigned(s.sprt.llr, 3) : "—"));
+    card.appendChild(stats);
+    var noteTxt = s.sprt ? sprtStateText(s.sprt, s.n_eff, SPRT_FLOOR) : (s.status_label || "證據累積中。");
+    card.appendChild(el("div", "score-note", esc(noteTxt)));
+    if (s.status === "red") {
+      card.appendChild(el("div", "score-kill", "淘汰門檻：SPRT accept_h0（n_eff≥20 起累積 LLR ≤ " +
+        esc(fmtSigned(s.sprt ? s.sprt.B : SPRT_B_CONST, 4)) + "）——本頁只舉旗，不會自動關閉或修改此來源。"));
+    }
+    return card;
+  }
+
+  function renderSentinelCard(s) {
+    var card = el("div", "score-card is-sentinel");
+    var h3 = el("h3", "", esc(SOURCE_LABEL["sentinel-noise"]));
+    h3.appendChild(el("span", "src-id", "(sentinel-noise)"));
+    card.appendChild(h3);
+    var statusRow = el("div", "score-status");
+    statusRow.appendChild(el("span", "dot", SCORE_DOT[s.status] || "⚪"));
+    statusRow.appendChild(el("span", "label", esc(SCORE_STATUS_TEXT[s.status] || s.status || "—")));
+    card.appendChild(statusRow);
+    var stats = el("div", "score-stats");
+    stats.appendChild(scoreStat("有效樣本 n_eff", (s.n_eff == null ? "—" : s.n_eff)));
+    stats.appendChild(scoreStat("BSS", (s.bss === null || s.bss === undefined) ? "—" : fmtSigned(s.bss, 3)));
+    card.appendChild(stats);
+    card.appendChild(el("div", "sentinel-note",
+      "哨兵是每個預測來源的無技巧對照組（機率＝基準機率加隨機雜訊），不是真預測。" +
+      "哨兵判綠＝記分機制本身壞掉；哨兵遲遲不判紅＝淘汰機制形同虛設——兩個方向都要看。"));
+    return card;
+  }
+
+  function renderScoreboard(sc) {
+    sc = sc || {};
+    var grid = $("#scoreGrid");
+    grid.innerHTML = "";
+    var modules = sc.modules || {};
+    ["cta", "month_end"].forEach(function (key) {
+      var m = modules[key];
+      if (m) grid.appendChild(renderSprtCard(key, m));
+    });
+    if (!Object.keys(modules).length) {
+      grid.appendChild(el("div", "loading", "尚無模組可對帳（帳簿尚未升級，或尚未累積出可結算的筆數）。"));
+    }
+
+    var lsGrid = $("#ledgerGrid");
+    var sentinelHost = $("#sentinelHost");
+    lsGrid.innerHTML = "";
+    sentinelHost.innerHTML = "";
+    var sources = sc.ledger_sources || {};
+    var keys = Object.keys(sources).filter(function (k) { return k !== "sentinel-noise"; }).sort();
+    if (!keys.length) {
+      lsGrid.appendChild(el("div", "loading", "尚無可對帳的預測來源，見下方資料缺口。"));
+    } else {
+      keys.forEach(function (key) { lsGrid.appendChild(renderSourceCard(key, sources[key])); });
+    }
+    if (sources["sentinel-noise"]) sentinelHost.appendChild(renderSentinelCard(sources["sentinel-noise"]));
+
+    if (sc.exposure_rule) {
+      var expCard = renderSprtCard("exposure_rule", sc.exposure_rule);
+      grid.appendChild(expCard);
+    }
+  }
+
+  // ── 環境五磚 ──
+  function renderEnv(list) {
+    $("#env").innerHTML = (list || []).map(function (e) {
+      var tag = e.link ? "a" : "div";
+      var hrefAttr = e.link ? ' href="' + esc(e.link) + '"' : "";
+      return '<' + tag + ' class="card tile' + (e.stale ? ' stale' : '') + '"' + hrefAttr + '>' +
+        '<div class="lab">' + esc(e.label) + '</div>' +
+        '<div class="val">' + esc(e.value) + '</div>' +
+        '<p class="sub">' + esc(e.sub || "") + '</p>' +
+        '<div class="meta"><span>as-of ' + esc(e.as_of || "—") + '</span>' +
+        '<span class="chip ' + esc(e.tone || "neutral") + '">' + esc(e.stale ? "過期" : (e.cadence || "")) + '</span></div>' +
+        '</' + tag + '>';
+    }).join("");
+  }
+
+  // ── 預測議會 dumbbell ──
+  function renderCouncil(rows) {
+    rows = rows || [];
+    if (!rows.length) { $("#council").innerHTML = '<div class="loading">帳上目前沒有待結算命題。</div>'; return; }
+    var W = 560, L = 260, R = W - 24, rh = 26, H = rows.length * rh + 34;
+    var x = function (v) { return L + (R - L) * v; };
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="max-width:' + W + 'px;display:block">';
+    [0, .25, .5, .75, 1].forEach(function (v) {
+      s += '<line class="gridline" x1="' + x(v) + '" y1="8" x2="' + x(v) + '" y2="' + (H - 24) + '"/>' +
+        '<text x="' + x(v) + '" y="' + (H - 8) + '" text-anchor="middle">' + Math.round(v * 100) + '%</text>';
+    });
+    rows.forEach(function (r, i) {
+      var y = 18 + i * rh;
+      var p = r.p == null ? 0 : r.p, b = r.p_clim == null ? p : r.p_clim;
+      s += '<text class="lab" x="' + (L - 10) + '" y="' + (y + 4) + '" text-anchor="end">' + esc(r.label || r.claim) + '</text>';
+      s += '<line class="link-line" x1="' + x(b) + '" y1="' + y + '" x2="' + x(p) + '" y2="' + y + '"/>';
+      s += '<circle class="dotb" cx="' + x(b) + '" cy="' + y + '" r="5"><title>空手猜 ' + Math.round(b * 100) + '%</title></circle>';
+      s += '<circle class="dot" cx="' + x(p) + '" cy="' + y + '" r="5.5"><title>系統 ' + Math.round(p * 100) + '%</title></circle>';
+      var dx = p >= b ? 10 : -10;
+      s += '<text x="' + (x(p) + dx) + '" y="' + (y + 4) + '" text-anchor="' + (dx > 0 ? "start" : "end") +
+        '" style="fill:var(--text);font-weight:600">' + Math.round(p * 100) + '%</text>';
+    });
+    s += '</svg>';
+    $("#council").innerHTML = s;
+
+    var maxDiv = null;
+    rows.forEach(function (r) {
+      if (r.p == null || r.p_clim == null) return;
+      var d = Math.abs(r.p - r.p_clim);
+      if (!maxDiv || d > maxDiv.d) maxDiv = { d: d, r: r };
+    });
+    $("#councilNote").textContent = maxDiv
+      ? ("藍點離空心圈越遠，代表系統越敢跟歷史唱反調。今天分歧最大的一筆是「" + (maxDiv.r.label || maxDiv.r.claim) + "」，系統 " +
+        Math.round(maxDiv.r.p * 100) + "% 對歷史基準 " + Math.round(maxDiv.r.p_clim * 100) + "%，相差 " +
+        Math.round(maxDiv.d * 100) + " 個百分點。")
+      : "帳上命題與歷史基準暫無可比對的分歧資料。";
+  }
+
+  // ── 今日狀態讀數（nowcast，即時非落帳）──
+  var TSMOM_HORIZON_LABEL = "1 個月後上漲";
+  function renderNowcast(nc) {
+    if (!nc) { $("#nowcastBlock").hidden = true; return; }
+    $("#nowcastBlock").hidden = false;
+    var rows = [];
+    (nc.tsmom || []).forEach(function (t) {
+      rows.push([
+        esc(t.ticker || "—"),
+        t.in_trend ? "在趨勢內" : "不在趨勢內",
+        pct0(t.p_hist), pct0(t.p_clim)
+      ]);
+    });
+    if (nc.vrp) {
+      rows.push(["SPY（VRP 分位 " + esc(nc.vrp.tercile != null ? nc.vrp.tercile : "—") + "）",
+        "1 個月後 SPY 上漲", pct0(nc.vrp.p_up_21d), pct0(nc.vrp.p_clim_21d)]);
+      rows.push(["SPY（VRP 分位 " + esc(nc.vrp.tercile != null ? nc.vrp.tercile : "—") + "）",
+        "3 個月後 SPY 上漲", pct0(nc.vrp.p_up_63d), pct0(nc.vrp.p_clim_63d)]);
+    }
+    if (nc.rv) {
+      rows.push(["SPY（波動分位 " + esc(nc.rv.quintile != null ? nc.rv.quintile : "—") + "）",
+        "波動一個月後再升高", pct0(nc.rv.p_higher_21d), pct0(nc.rv.p_clim_higher)]);
+      rows.push(["SPY（波動分位 " + esc(nc.rv.quintile != null ? nc.rv.quintile : "—") + "）",
+        "波動一個月內暴增 5 點", pct0(nc.rv.p_touch_plus5), pct0(nc.rv.p_clim_touch)]);
+    }
+    var html = "<tr><th>資產／讀數</th><th>目前狀態</th><th>歷史頻率</th><th>基準頻率</th></tr>";
+    rows.forEach(function (r) {
+      html += "<tr><td>" + r[0] + "</td><td>" + r[1] + "</td><td class=\"num\">" + r[2] + "</td><td class=\"num\">" + r[3] + "</td></tr>";
+    });
+    $("#nowcastTable").innerHTML = html;
+  }
+
+  // ── CTA 價格梯 ──
+  function renderLadder(cta) {
+    cta = cta || [];
+    if (!cta.length) { $("#ladder").innerHTML = '<div class="loading">尚無 CTA 資料。</div>'; return; }
+    var W = 520, rowH = 66, H = cta.length * rowH + 18, L = 150, R = W - 16;
+    var lo = -4, hi = 4;
+    var x = function (pct) { return L + (R - L) * ((pct - lo) / (hi - lo)); };
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="max-width:' + W + 'px;display:block">';
+    cta.forEach(function (m, i) {
+      var y = 22 + i * rowH;
+      var flow = (m.full_flip_flow_bn && m.full_flip_flow_bn.length === 2)
+        ? (Math.round(m.full_flip_flow_bn[0] * 10) + "–" + Math.round(m.full_flip_flow_bn[1] * 10) + " 億美元")
+        : "—";
+      s += '<text class="lab" x="0" y="' + (y + 18) + '">' + esc(m.market || "") + '（' + esc(m.proxy || "") +
+        ' ' + fmtNum(m.px, 2) + '）</text>' +
+        '<text x="0" y="' + (y + 34) + '">全翻轉約 ' + flow + '</text>';
+      s += '<line class="axis" x1="' + x(lo) + '" y1="' + (y + 22) + '" x2="' + x(hi) + '" y2="' + (y + 22) + '"/>';
+      [-4, -2, 0, 2, 4].forEach(function (t) {
+        s += '<line class="gridline" x1="' + x(t) + '" y1="' + (y + 16) + '" x2="' + x(t) + '" y2="' + (y + 28) + '"/>';
+        if (i === cta.length - 1) s += '<text x="' + x(t) + '" y="' + (y + 46) + '" text-anchor="middle">' + (t > 0 ? "+" : "") + t + '%</text>';
+      });
+      s += '<rect x="' + (x(0) - 1.5) + '" y="' + (y + 10) + '" width="3" height="24" rx="1.5" fill="var(--text)"><title>現價</title></rect>';
+      (m.levels || []).forEach(function (l, j) {
+        var pct = l.dist_pct != null ? l.dist_pct : ((l.level / m.px - 1) * 100);
+        var cx = x(Math.max(lo, Math.min(hi, pct)));
+        s += '<circle cx="' + cx + '" cy="' + (y + 22) + '" r="6" fill="var(--s2)"><title>' + l.w + ' 日窗翻轉位 ' +
+          fmtNum(l.level, 2) + '（' + fmtSigned(pct, 2) + '%）</title></circle>';
+        s += '<text x="' + cx + '" y="' + (j === 0 ? y + 8 : y - 6) + '" text-anchor="middle">' + l.w + '日 ' + fmtSigned(pct, 1) + '%</text>';
+      });
+    });
+    s += '</svg><div class="legend" style="margin-top:6px"><span><i style="background:var(--text)"></i>現價</span>' +
+      '<span><i style="background:var(--s2)"></i>CTA 翻轉價位（距現價 %）</span></div>';
+    $("#ladder").innerHTML = s;
+  }
+
+  var MONTHEND_DIR_LABEL = {
+    sell_equity_buy_bond: "生效窗內，方向賣股買債",
+    buy_equity_sell_bond: "生效窗內，方向買股賣股",
+    flat: "生效窗內，股債報酬大致持平"
+  };
+  var MONTHEND_BUCKET_LABEL = { low: "小桶（0–100 億）", mid: "中桶（100–300 億）", high: "大桶（300–600 億）" };
+
+  function renderFlowKv(flows) {
+    flows = flows || {};
+    var rows = [];
+    if (flows.vol_control) {
+      var vc = flows.vol_control;
+      var ladderTxt = (vc.ladder || []).map(function (r) {
+        return "波動到 " + fmtNum(r.rv, 1) + " 賣約 " + fmtNum(Math.abs(r.flow_usd_bn) * 10, 0) + " 億美元";
+      }).join("，");
+      rows.push(["波動控制基金", "曝險 " + fmtNum(vc.exposure_pct, 0) + "%（已實現波動 1 月 " + fmtNum(vc.rv_1m, 1) +
+        "、3 月 " + fmtNum(vc.rv_3m, 1) + "）。" + (ladderTxt ? ladderTxt + "。" : "")]);
+    }
+    if (flows.lev_etf && flows.lev_etf.shock_minus2_bn) {
+      var sh = flows.lev_etf.shock_minus2_bn;
+      var parts = Object.keys(sh).map(function (k) { return k + " " + fmtSigned(sh[k] * 10, 0) + " 億"; });
+      rows.push(["槓桿 ETF", "若明日跌 2%：" + parts.join("、") + "美元（純算術）。"]);
+    }
+    if (flows.month_end) {
+      var me = flows.month_end;
+      rows.push(["月末再平衡", (me.in_window ? (MONTHEND_DIR_LABEL[me.direction] || "生效窗內") : "不在生效窗內") +
+        "，" + (MONTHEND_BUCKET_LABEL[me.bucket] || "量級未知") + "。"]);
+    }
+    if (flows.buyback && flows.buyback.peak_week) {
+      rows.push(["庫藏股靜默", "覆蓋率往上走，高峰 " + esc(flows.buyback.peak_week) + " 那週，企業買盤逐週變薄。"]);
+    }
+    $("#flowKv").innerHTML = rows.map(function (r) {
+      return "<b>" + esc(r[0]) + "</b><span>" + r[1] + "</span>";
+    }).join("");
+  }
+
+  // ── 引信距離 ──
+  function renderFuses(list) {
+    list = list || [];
+    if (!list.length) { $("#fuses").innerHTML = '<div class="loading">尚無引信資料。</div>'; return; }
+    var rows = list.slice().sort(function (a, b) { return a.dist_pct - b.dist_pct; });
+    var W = 660, L = 190, R = W - 70, rh = 26, H = rows.length * rh + 30;
+    var max = Math.max(45, Math.ceil(Math.max.apply(null, rows.map(function (r) { return r.dist_pct; })) / 10) * 10);
+    var x = function (v) { return L + (R - L) * (v / max); };
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="max-width:' + W + 'px;display:block">';
+    var step = max / 4;
+    for (var v = 0; v <= max + .01; v += step) {
+      s += '<line class="gridline" x1="' + x(v) + '" y1="6" x2="' + x(v) + '" y2="' + (H - 22) + '"/>' +
+        '<text x="' + x(v) + '" y="' + (H - 6) + '" text-anchor="middle">' + Math.round(v) + '%</text>';
+    }
+    rows.forEach(function (r, i) {
+      var y = 12 + i * rh;
+      var label = r.metric || r.theme || "";
+      s += '<text class="lab" x="' + (L - 10) + '" y="' + (y + 5) + '" text-anchor="end">' + esc(label) + '</text>';
+      s += '<rect class="bar" x="' + x(0) + '" y="' + (y - 6) + '" width="' + (x(r.dist_pct) - x(0)) +
+        '" height="12" rx="4"><title>' + esc(label) + '：現值 ' + esc(r.now) + '，門檻 ' + esc(r.threshold) +
+        '，距門檻 ' + r.dist_pct + '%</title></rect>';
+      s += '<text x="' + (x(r.dist_pct) + 6) + '" y="' + (y + 4) + '">' + r.dist_pct + '%</text>';
+      if (r.p != null) s += '<text x="' + (R + 12) + '" y="' + (y + 4) + '" style="fill:var(--s1);font-weight:600">p ' + Math.round(r.p * 100) + '%</text>';
+    });
+    s += '</svg>';
+    $("#fuses").innerHTML = s;
+  }
+
+  var ANOM_SEV_CLASS = { crit: "crit", warn: "warn" };
+  function renderAnom(list) {
+    list = list || [];
+    $("#anom").innerHTML = list.length ? list.map(function (a) {
+      return '<div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;border-bottom:1px solid var(--border-light);padding-bottom:6px">' +
+        '<span>' + esc(a.msg) + '</span><span class="chip ' + (ANOM_SEV_CLASS[a.sev] || "neutral") + '">' + esc(a.sev || "") + '</span></div>';
+    }).join("") : '<div class="loading">今日無兩個標準差以上異常。</div>';
+  }
+
+  function renderPulse(p) {
+    p = p || {};
+    var d30 = p.by_verdict_30d || {};
+    var total = (d30["進場"] || 0) + (d30["觀望"] || 0) + (d30["迴避"] || 0);
+    if (!p.fresh || !total) {
+      $("#pulse").innerHTML = '<p class="note">個股層無新資料，本期不判讀（近 ' + (p.n_60d != null ? "60" : "30") +
+        ' 天裁決數低於門檻 ' + (p.threshold != null ? p.threshold : 10) + '）。</p>';
+      return;
+    }
+    var W = 360, H = 60, L = 0, R = W, x0 = L;
+    var seg = function (n, c, lab, xx, w) {
+      return '<rect x="' + xx + '" y="14" width="' + Math.max(0, w - 2) + '" height="18" rx="3" fill="' + c + '"><title>' + lab + ' ' + n + '</title></rect>';
+    };
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="max-width:' + W + 'px;display:block">';
+    [[d30["進場"] || 0, "var(--s1)", "進場"], [d30["觀望"] || 0, "var(--stale)", "觀望"], [d30["迴避"] || 0, "var(--s2)", "迴避"]].forEach(function (r) {
+      var n = r[0], c = r[1], l = r[2];
+      var w = (R - L) * n / total;
+      s += seg(n, c, l, x0, w);
+      s += '<text x="' + (x0 + 4) + '" y="46">' + l + ' ' + n + '</text>';
+      x0 += w;
+    });
+    s += '</svg>';
+    var sv = p.since_v13 || {};
+    $("#pulse").innerHTML = '<div class="kv" style="margin:6px 0 8px"><b>近 30 天</b><span>' + p.n_30d +
+      ' 個裁決 <span class="chip good">新鮮度通過</span></span><b>v13 以來</b><span>' + (sv.n || "—") +
+      ' 個裁決：進場 ' + (sv["進場"] || 0) + '／觀望 ' + (sv["觀望"] || 0) + '／迴避 ' + (sv["迴避"] || 0) + '</span></div>' +
+      s + renderListsLine(p.lists) + '<p class="note">DD 鏈在挑名字，不是在躲市場。近 60 天裁決數低於門檻時本區改顯示「不判讀」。</p>';
+  }
+
+  var LIST_LABEL = {"sop-funnel": "板機訊號", "grp-seat": "GRP 席位", "picks-baofa": "精選爆發榜", "tenbagger": "十倍股候選"};
+  function renderListsLine(lists) {
+    if (!lists) return '';
+    var parts = Object.keys(lists).map(function (k) { return (LIST_LABEL[k] || k) + ' ' + lists[k]; });
+    if (!parts.length) return '';
+    return '<div class="kv" style="margin:8px 0 4px"><b>名單層開放命題</b><span>' + esc(parts.join('／')) +
+      '（各名單每檔一張「跑贏 SPY」單，記分在下方記分板）</span></div>';
+  }
+
+  function renderTriggers(list) {
+    $("#triggers").innerHTML = (list || []).map(function (t) {
+      return '<div class="card"><div class="overline">' + esc(t.label) + '</div><div class="n">' + esc(t.level) +
+        '</div><div class="note" style="margin-top:4px">' + esc(t.why) + '</div></div>';
+    }).join("");
+  }
+
+  var FRESH_LINK = {
+    "monitor 跨資產監測": "/monitor/", "detective 警報網": "/detective/", "flowmap 條件流量": "/flowmap/",
+    "statlab 統計面板": "/statlab/", "intel 情報監視器": "/intel/", "regime 大類資產環境": "/regime/",
+    "crowding COT 部位": "/crowding/", "總經時鐘": "/macro/", "系統主控台（實單主系統）": "/long-track/"
+  };
+  var FRESH_STATUS = { ok: ["good", "新鮮"], warn: ["warn", "偏舊"], stale: ["stale", "停更"] };
+  function renderFresh(list) {
+    var html = "<tr><th>管線</th><th>as-of</th><th>節奏</th><th>狀態</th></tr>";
+    (list || []).forEach(function (r) {
+      var st = FRESH_STATUS[r.status] || ["neutral", r.status || "—"];
+      var link = FRESH_LINK[r.pipeline];
+      var name = link ? '<a href="' + link + '">' + esc(r.pipeline) + '</a>' : esc(r.pipeline);
+      html += "<tr><td>" + name + "</td><td class=\"num\">" + esc(r.as_of || "—") + "</td><td>" + esc(r.cadence || "—") +
+        "</td><td><span class=\"chip " + st[0] + "\">" + st[1] + "</span></td></tr>";
+    });
+    $("#fresh").innerHTML = html;
+  }
+
+  var GATE_LABEL = {
+    open: ["good", "🟢 開"], caution: ["warn", "🟡 謹慎"], closed: ["crit", "🔴 關"]
+  };
+  var GATE_NAME = { core: "核心軌", satellite_structural: "衛星·結構", satellite_cyclical: "衛星·循環" };
+  function renderExposure(er, sprtModule) {
+    er = er || {};
+    $("#expTarget").textContent = er.target != null ? Math.round(er.target * 100) + "%" : "—";
+    var factors = er.factors || {};
+    $("#expFactors").innerHTML = ["vol", "trend", "credit"].map(function (k) {
+      var v = factors[k];
+      var tone = v == null ? "neutral" : (v >= 1 ? "good" : "warn");
+      return '<div class="row"><b>' + k + '</b><span class="chip ' + tone + '">' + (v == null ? "—" : fmtNum(v, 2)) + '</span></div>';
+    }).join("");
+    var gates = er.gates || {};
+    $("#expGates").innerHTML = Object.keys(GATE_NAME).map(function (k) {
+      var g = GATE_LABEL[gates[k]] || ["neutral", "—"];
+      return '<div class="row"><b>' + GATE_NAME[k] + '</b><span class="chip ' + g[0] + '">' + g[1] + '</span></div>';
+    }).join("");
+    $("#expSprtNote").textContent = sprtStateText(sprtModule ? sprtModule.sprt : (er.sprt || null),
+      sprtModule ? sprtModule.n_eff : 0, sprtModule ? sprtModule.n_required : SPRT_FLOOR);
+  }
+
+  function renderNavChart(track, fetched) {
+    var host = $("#navChartHost");
+    if (!track || !track.nav_series || !track.nav_series.length) {
+      var gap = $("#expGapNote");
+      gap.hidden = false;
+      gap.textContent = fetched
+        ? "曝險追蹤檔已取得，但尚無 NAV 對比走勢——inception 前或尚未開始記錄，屬正常狀態。"
+        : "曝險追蹤檔（exposure_track.json）尚未取得，NAV 對比走勢暫不顯示。";
+      host.innerHTML = "";
+      return;
+    }
+    $("#expGapNote").hidden = true;
+    var pts = track.nav_series;
+    var W = 640, H = 160, L = 46, R = W - 16, T = 12, B = 28;
+    var allVals = [];
+    pts.forEach(function (p) {
+      ["nav", "nav_spy", "nav_b6040"].forEach(function (k) { if (p[k] != null) allVals.push(p[k]); });
+    });
+    var lo = Math.min.apply(null, allVals), hi = Math.max.apply(null, allVals);
+    if (lo === hi) { lo -= 1; hi += 1; }
+    var pad = (hi - lo) * 0.08;
+    lo -= pad; hi += pad;
+    var x = function (i) { return L + (R - L) * (pts.length === 1 ? 0 : i / (pts.length - 1)); };
+    var y = function (v) { return T + (H - T - B) * (1 - (v - lo) / (hi - lo)); };
+    function line(key, color) {
+      var d = "";
+      pts.forEach(function (p, i) {
+        if (p[key] == null) return;
+        d += (d ? "L" : "M") + x(i).toFixed(1) + "," + y(p[key]).toFixed(1);
+      });
+      return '<path d="' + d + '" fill="none" stroke="' + color + '" stroke-width="2"/>';
+    }
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="max-width:' + W + 'px;display:block;margin-top:.6rem">';
+    [lo, (lo + hi) / 2, hi].forEach(function (v) {
+      s += '<line class="gridline" x1="' + L + '" y1="' + y(v) + '" x2="' + R + '" y2="' + y(v) + '"/>' +
+        '<text x="' + (L - 6) + '" y="' + (y(v) + 3) + '" text-anchor="end">' + v.toFixed(1) + '</text>';
+    });
+    s += line("nav_b6040", "var(--text-muted)");
+    s += line("nav_spy", "var(--s2)");
+    s += line("nav", "var(--s1)");
+    s += '<text x="' + L + '" y="' + (H - 6) + '">' + esc(pts[0].date) + '</text>';
+    s += '<text x="' + R + '" y="' + (H - 6) + '" text-anchor="end">' + esc(pts[pts.length - 1].date) + '</text>';
+    s += '</svg><div class="legend"><span><i style="background:var(--s1)"></i>paper 曝險規則 NAV</span>' +
+      '<span><i style="background:var(--s2)"></i>SPY buy-and-hold</span>' +
+      '<span><i style="background:var(--text-muted)"></i>60/40（SPY／AGG）</span></div>';
+    host.innerHTML = s;
+  }
+
+  // ── 主流程 ──
+  fetch("data/state.json").then(function (r) {
+    if (!r.ok) throw new Error("state.json HTTP " + r.status);
+    return r.json();
+  }).then(function (data) {
+    $("#asof").textContent = "資料 as-of：" + esc(data.as_of || "—") +
+      (data.generated_at ? "　·　產生於 " + twStamp(data.generated_at) : "");
+    $("#page-body").hidden = false;
+
+    var rz = data.read_zh || {};
+    $("#thesisHeadline").textContent = rz.headline || "今日無合成判讀。";
+    $("#thesisBullets").innerHTML = (rz.bullets || []).map(function (b) { return "<li>" + esc(b) + "</li>"; }).join("");
+
+    renderEnv(data.environment);
+    renderCouncil(data.council);
+    renderNowcast(data.nowcast);
+    renderLadder((data.flows || {}).cta);
+    renderFlowKv(data.flows);
+    renderFuses(data.fuses);
+    renderAnom(data.anomalies);
+    renderPulse(data.stock_pulse);
+    renderTriggers(data.triggers);
+    renderFresh(data.freshness);
+    renderScoreboard(data.scoreboard);
+    renderExposure(data.exposure_rule, (data.scoreboard || {}).exposure_rule);
+
+    // 曝險追蹤檔（NAV 對比走勢）獨立 fetch，fail-safe
+    fetch("data/exposure_track.json").then(function (r) {
+      if (!r.ok) throw new Error("exposure_track.json HTTP " + r.status);
+      return r.json();
+    }).then(function (track) {
+      renderNavChart(track, true);
+    }).catch(function () {
+      renderNavChart(null, false);
+    });
+  }).catch(function (err) {
+    $("#asof").hidden = true;
+    $("#loadFail").hidden = false;
+    $("#page-body").hidden = true;
+  });
+})();
+</script>
+</body>
+</html>

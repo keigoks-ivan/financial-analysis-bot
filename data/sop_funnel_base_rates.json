@@ -1,0 +1,39 @@
+{
+  "schema": "sop-funnel-base-rates-v1",
+  "built_at": "2026-09-02T03:37:30Z",
+  "source_backtest": "docs/dd-screener/sop-funnel/backtest.json",
+  "source_backtest_run_timestamp": "2026-06-11T02:26:35Z",
+  "horizon_days": 91,
+  "n_trades": 53,
+  "n_valid": 47,
+  "n_hit": 31,
+  "freq_beat_91d": 0.6596,
+  "by_type": {
+    "A2": {
+      "n": 34,
+      "hit": 25,
+      "freq": 0.7353
+    },
+    "B": {
+      "n": 8,
+      "hit": 3,
+      "freq": 0.375
+    },
+    "A1": {
+      "n": 5,
+      "hit": 3,
+      "freq": 0.6
+    }
+  },
+  "n_valid_min": 30,
+  "prereg_fallback_p": 0.58,
+  "use_table": true,
+  "p_clim_ref": "data/dd_verdict_base_rates.json p_clim.dd_beat_spy_91d=0.5271（built_at=2026-09-01T23:50:24Z）—— 宇宙相對 SPY 無條件基準，供對照本表的sop-funnel 板機訊號 pooled 勝率是否有邊際訊號，不用於本表自身計算",
+  "skip_counts": {
+    "missing_close": 6
+  },
+  "spy_data_start": "2016-09-02",
+  "spy_data_end": "2026-09-01",
+  "n_spy_daily_bars": 2512,
+  "methodology_note": "對 docs/dd-screener/sop-funnel/backtest.json 的 trades_charter[]（態①-⑤ SOP 規則的歷史質量閘門回測，2021–2026），每筆 trade 取 ticker 在 entry_date 當日或之前的最近週線收盤（data/weekly_cache/）與 entry_date+91 曆日當日或之前的最近週線收盤，同兩個日期查 SPY（data/dd_verdict_base_rates_raw_cache.json，唯讀）收盤；hit = ticker 報酬 > SPY 同窗報酬；freq_beat_91d = pooled hit 頻率（跨全部有效 trade，不分 type）。ticker／SPY 兩端皆採「目標日或之前最近收盤」，任一端缺資料或視窗尚未到期（最後一根資料日 < 目標日）即整筆跳過，不補值、不外推。by_type 僅供觀察列出，producer（scripts/generate_sop_funnel_forecasts.py）只讀 pooled freq_beat_91d，n_valid < 30 時退回 PREREG 0.58（設計稿 §9 F1，PREREG 凍結）。"
+}

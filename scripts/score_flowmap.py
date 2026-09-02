@@ -80,6 +80,7 @@ FORECAST_HISTORY = FLOWMAP_DATA_DIR / "forecast_history.jsonl"
 FLOWMAP_PRICES = DATA / "flowmap_prices.json"
 COT_HISTORY = DATA / "cot_history.json"
 FORECAST_SETTLEMENT = ROOT / "knowledge" / "forecast_settlement.json"
+EXPOSURE_TRACK = ROOT / "docs" / "market" / "data" / "exposure_track.json"
 OUT_JSON = FLOWMAP_DATA_DIR / "scorecard.json"
 
 SCHEMA = "flowmap-scorecard-v2"
@@ -130,6 +131,13 @@ VOL_CONTROL_BLOCK = {
     "status": "descriptor",
     "status_label": "描述器，不評分（無可對帳的公開流量資料）",
 }
+
+EXPOSURE_RULE_KILL_TEXT = (
+    "SPRT（p0=0.5／p1=0.65／α=0.05／β=0.10，n_eff≥20，樣本＝逐月「當月 paper 報酬 − "
+    "SPY B&H 報酬 > 0」命中序列）累積 LLR ≤ B(-2.2513) → accept_h0 → 規則撤下、三軌"
+    "新倉閘回「僅顯示無規則」；期間不調參；paper only 永不連實倉（設計稿 "
+    "notes/site-internal/root/_market_cockpit_design_20260902.md §4）。"
+)
 
 # 白話名（首現括號原名，設計稿 §6）——供 HTML／其他消費者共用同一份對照表。
 SOURCE_LABEL = {
@@ -602,6 +610,47 @@ def load_ledger_sources(gaps):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# exposure_rule（市況曝險規則 v0 paper track——逐字讀
+# docs/market/data/exposure_track.json 的 sprt 子物件，本檔不重算，SPRT／latch
+# 由 scripts/build_exposure_track.py 依 sprt_with_latch 已算好；設計稿
+# notes/site-internal/root/_market_cockpit_design_20260902.md §4）
+# ═══════════════════════════════════════════════════════════════════════════
+
+def load_exposure_rule(gaps):
+    if not EXPOSURE_TRACK.exists():
+        gaps.append("exposure_rule：docs/market/data/exposure_track.json 不存在（尚未跑過 "
+                    "scripts/build_exposure_track.py），本次以「尚未起跑」計")
+        return {
+            "status": "yellow",
+            "status_label": "尚未起跑",
+            "n_eff": 0,
+            "n_required": SPRT_N_EFF_FLOOR,
+            "kill_condition": EXPOSURE_RULE_KILL_TEXT,
+        }
+
+    data = load_json(EXPOSURE_TRACK, {}) or {}
+    sprt = data.get("sprt") or {}
+    n_eff = sprt.get("n_used", 0)
+    status = sprt.get("status") or SPRT_STATE_TO_STATUS.get(sprt.get("state"), "yellow")
+    status_label = sprt.get("status_label") or "尚未起跑"
+    factors_history = data.get("factors_history") or []
+    latest_factors = factors_history[-1] if factors_history else None
+
+    return {
+        "status": status,
+        "status_label": status_label,
+        "n_eff": n_eff,
+        "n_required": sprt.get("n_required", SPRT_N_EFF_FLOOR),
+        "sprt": sprt,
+        "as_of": data.get("as_of"),
+        "inception_date": data.get("inception_date"),
+        "target": latest_factors.get("target") if latest_factors else None,
+        "gates": latest_factors.get("gates") if latest_factors else None,
+        "kill_condition": EXPOSURE_RULE_KILL_TEXT,
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # Orchestration
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -624,8 +673,9 @@ def main():
     cta_report = build_cta_report(fh_rows, price_series, gaps, prior_cta_sprt)
     month_end_report = build_month_end_report(fh_rows, price_series, gaps, prior_month_end_sprt)
     ledger_sources = load_ledger_sources(gaps)
+    exposure_rule = load_exposure_rule(gaps)
 
-    n_sprt_modules = 2  # cta, month_end
+    n_sprt_modules = 3  # cta, month_end, exposure_rule
     n_tested = n_sprt_modules + len([k for k in ledger_sources if k != SENTINEL_KEY])
     multiplicity = {
         "n_tested": n_tested,
@@ -669,6 +719,7 @@ def main():
         },
         "vol_control": VOL_CONTROL_BLOCK,
         "ledger_sources": ledger_sources,
+        "exposure_rule": exposure_rule,
         "gaps": gaps,
     }
 
@@ -676,7 +727,8 @@ def main():
     info(f"scorecard.json: {'written' if wrote else 'no change'} (as_of={as_of}, "
          f"cta={cta_report['status']}/{cta_report['n_eff']}, "
          f"month_end={month_end_report['status']}/{month_end_report['n_eff']}, "
-         f"ledger_sources={len(ledger_sources)})")
+         f"ledger_sources={len(ledger_sources)}, "
+         f"exposure_rule={exposure_rule['status']}/{exposure_rule['n_eff']})")
 
 
 if __name__ == "__main__":

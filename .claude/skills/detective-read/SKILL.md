@@ -1,4 +1,6 @@
 ---
+
+**2026-09-02 增補（持有人拍板「判讀必留命題」）**：每次判讀至少 1 條、至多 3 條帶 resolver＋p 的命題進預測帳簿，由本 skill 自行給 p、跑 `scripts/ledger_from_editorial.py` 落帳；沒有命題＝判讀未完成。詳見硬規則末條與 schema 的 `forecasts[]`。設計稿：`notes/site-internal/root/_market_cockpit_design_20260902.md` §3。
 name: detective-read
 description: 對「市場偵測器 v2」（/detective/）的機械層狀態機跑一次「解讀」（editorial read）——讀 docs/detective/data/latest.json（signals[] 狀態機視圖＋composites[] 規則引擎）與 state.json（90 天生命週期史／transitions_today），交叉 docs/monitor/data/latest.json＋internals.json 找底層數字錨、docs/detective/data/kill_watch.json（若存在）找 breached／near，及站內研究資產（knowledge/q.py --theme／ID kill_metrics／crowding／regime 若新鮮），把當日警報網狀態收斂成 headline＋3-5 段主題判讀＋watch list，寫入 docs/detective/data/editorial.json 由頁面渲染。判斷層與機械層嚴格分離：描述器紀律（環境判讀與情境準備，禁擇時結論、禁買賣指令），每個判讀句必須錨定機械層具體數字／分位／z／狀態機轉移。觸發：用戶說「detective read」「解讀偵探」「偵探解讀」「解讀警報網」「detective 解讀」「跑 detective read」。
 ---
@@ -49,7 +51,12 @@ description: 對「市場偵測器 v2」（/detective/）的機械層狀態機�
   "watch": [
     {"item": "未來幾天盯的具體數字或複合規則", "why": "為什麼值得看／差多少就會怎樣"}
   ],
-  "stance_note": "描述器聲明一句——環境判讀與情境準備，非擇時訊號，不構成買賣指令"
+  "stance_note": "描述器聲明一句——環境判讀與情境準備，非擇時訊號，不構成買賣指令",
+  "forecasts": [                     // 必留命題（1–3 條；2026-09-02 起必填）
+    {"claim": "一句可判真偽的話（含門檻與到期日）", "p": 0.30, "horizon_days": 30,
+     "resolver": {"series": "monitor:hy_oas", "op": ">", "value": 3.0, "window": "any_close"},
+     "why": "一句白話理由（錨定今日數字）"}
+  ]
 }
 ```
 
@@ -64,4 +71,5 @@ description: 對「市場偵測器 v2」（/detective/）的機械層狀態機�
 - **kill 覆蓋誠實**：`kill_watch.json` 不存在時明說「尚未建置」，不假裝掃過；存在時 `breached` 條目必須連回對應 ID／thesis 語境才算處理完。
 - 中文全形標點；機構研究語調；無鷹架語言（「本次新增」「補上」）。
 - 解讀不留歷史檔（單一 `editorial.json` 覆寫）——歷史判讀留痕靠 git history；異常留痕歸機械層 `state.json`。
+- **判讀必留命題（2026-09-02 持有人拍板）**：每次判讀寫 1–3 條 `forecasts[]`（claim／p／horizon_days／resolver／why），**p 由本 skill 自己給**（持有人授權不再人工確認），resolver 域限 `monitor:<key>`／`pxd:SPY|QQQ|IWM`／`vixts:SLOPE`／`price:<TICKER>`，window 為 `any_close` 或 `at_expiry`；寫完必跑 `python scripts/ledger_from_editorial.py --source detective-read --file docs/detective/data/editorial.json --write`（機械驗 resolver、查重、append＋哨兵 twin，resolver 寫不出的命題不准落帳）。沒有命題＝判讀未完成。記分＝SPRT（同帳簿 v2 條款），kill 登 `knowledge/rule_ledger.md`。
 - **白話呈現條款（2026-09-01 持有人拍板，全站適用）**：`editorial.json` 寫入頁面的 `headline`／`themes`／`watch` 等顯示文字遵守 `notes/site-internal/root/_plainlang_styleguide.md`（『二補、實作定案』節優先）——①白話為主、術語為輔（對照表已定白話主名的詞一律用白話主名，原代號降小字或首現括號）；②新造術語前先查表，表上沒有的要先照鐵律③讀機制查證、定白話名並回寫對照表；③解釋深入淺出：每個承重判讀用讀者能懂的話講一遍，不堆行話。

@@ -117,6 +117,7 @@ def build_output(date: str, pending: dict, llm_available: bool) -> dict:
         gauges = build_gauges(data_cards, calendar, threads=None, date=date)
         flags = build_flags(data_cards)
         brief_zh = []
+        claims = []
         site_read_zh = None
         classified_count = len(data_cards)
         summarized_count = len(data_cards)
@@ -156,6 +157,7 @@ def build_output(date: str, pending: dict, llm_available: bool) -> dict:
         gauges = build_gauges(result["all"], calendar, threads=threads_output, date=date)
         flags = build_flags(result["all"])
         brief_zh = digest["brief_zh"]
+        claims = digest.get("claims") or []
         site_read_zh = digest.get("site_read_zh")
         classified_count = sum(1 for c in result["all"] if c.get("relevant"))
         summarized_count = summarized["log"]["summarized"]
@@ -189,6 +191,7 @@ def build_output(date: str, pending: dict, llm_available: bool) -> dict:
         "llm": llm_tag,
         "gauges": gauges,
         "brief_zh": brief_zh,
+        "claims": claims,
         "site_read_zh": site_read_zh,
         "flags": flags,
         "cards": finalized,

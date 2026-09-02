@@ -31,6 +31,36 @@ Python 直接讀站內機械層資料算出（持有人回饋：LLM 複述數字
 數字，就直接平鋪敘述那件事本身（定性描述），不要在句子裡評論「來源有沒有給數字」這件事。
 這種話對讀者毫無資訊量，是純噪音。
 
+## 可判命題（`claims`，選填，0–2 條，寫不出乾淨 resolver 就不要提）
+
+除了 `brief_zh`（和選填的 `site_read_zh`），你可以再輸出至多 2 條「有意義且可機械驗證」的
+方向性判斷，供站內帳簿追蹤日後對不對——這是誠實檢驗「每天讀新聞對預測有沒有增量」的一部分，
+**不是任務的必答項**，沒有把握就整個省略這欄或給空陣列。
+
+`claims`（陣列，0–2 條，每條格式）：
+```json
+{"claim":"2026-10-15 前：10 年期公債殖利率週線收盤站上 5.0%","p":0.28,"horizon_days":30,
+ "resolver":{"series":"monitor:dgs10","op":">","value":5.0,"window":"any_close"}}
+```
+
+- `claim`：一句可查核的純文字中文陳述，含明確門檻與到期日／時間範圍，不含任何 HTML 標籤。
+- `p`：你對這句話成立機率的誠實估計（0–1 之間的小數），是你自己的判斷，不是站內既有數字。
+- `horizon_days`：整數，介於 7 到 90 之間。
+- `resolver.series` **只能**是下列白名單之一，**寫不出對應 series 就這條整個不要提，不得
+  硬猜、不得發明新 series**：
+  `monitor:dgs10`（10 年期公債殖利率）、`monitor:dgs30`（30 年期公債殖利率）、
+  `monitor:hy_oas`（高收益利差）、`monitor:tp10y`（10 年期期限溢價）、
+  `monitor:sofr_iorb`（SOFR−IORB 資金利差）、`pxd:SPY`／`pxd:QQQ`／`pxd:IWM`
+  （對應指數 ETF 收盤價方向）、`vixts:SLOPE`（VIX 期限結構斜率）。
+- `resolver.op` 只能是 `>`／`<`／`>=`／`<=`。
+- `resolver.value` 為門檻數字，與該 series 的站內顯示單位一致（`monitor:dgs10`／`dgs30`／
+  `hy_oas`／`tp10y` 用百分比，例如 5.0 代表 5.0%；`monitor:sofr_iorb` 用基點，例如 5 代表
+  5bp；`pxd:*` 用該 ETF 的收盤價格數字；`vixts:SLOPE` 用波動點數）。
+- `resolver.window` 只能是 `any_close`（到期日之前任一收盤觸及即算成立）或 `at_expiry`
+  （只看到期當日的值）。
+- 沒有素材支撐、或想不出乾淨 resolver 的日子，`claims` 就是空陣列 `[]`（或整欄省略），
+  不得為了湊數硬寫、不得只給沒有 resolver 的定性判斷。
+
 ## 任務：輸出一個 JSON 物件，只有一個欄位 `brief_zh`
 
 `brief_zh`（陣列，**5–8 段**中文字串，每段是一個 HTML fragment）：
@@ -53,7 +83,7 @@ Python 直接讀站內機械層資料算出（持有人回饋：LLM 複述數字
 
 ## 輸出格式（唯一規則：只輸出一個 JSON 物件，不得有其他文字）
 
-`site_snapshot` 不存在時，只輸出 `brief_zh`：
+`site_snapshot` 不存在時，只輸出 `brief_zh`（`claims` 選填，見上節，沒有把握就省略）：
 
 ```json
 {"brief_zh":["<b>利率｜</b>…","<b>央行｜</b>…"]}
@@ -63,6 +93,15 @@ Python 直接讀站內機械層資料算出（持有人回饋：LLM 複述數字
 
 ```json
 {"brief_zh":["<b>利率｜</b>…","<b>央行｜</b>…"],"site_read_zh":"…"}
+```
+
+有把握的 `claims` 疊加範例（`site_snapshot` 存在與否皆可搭配 `claims`）：
+
+```json
+{"brief_zh":["<b>利率｜</b>…","<b>央行｜</b>…"],
+ "claims":[{"claim":"2026-10-15 前：10 年期公債殖利率週線收盤站上 5.0%","p":0.28,
+            "horizon_days":30,
+            "resolver":{"series":"monitor:dgs10","op":">","value":5.0,"window":"any_close"}}]}
 ```
 
 ## 紀律

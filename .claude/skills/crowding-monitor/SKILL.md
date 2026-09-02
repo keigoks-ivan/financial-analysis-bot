@@ -1,4 +1,6 @@
 ---
+
+**2026-09-02 增補（持有人拍板「判讀必留命題」）**：每次判讀至少 1 條、至多 3 條帶 resolver＋p 的命題進預測帳簿，由本 skill 自行給 p、跑 `scripts/ledger_from_editorial.py` 落帳（命題檔放 `knowledge/editorial_drafts/`）；沒有命題＝判讀未完成。詳見硬規則末條與 schema 的 `forecasts[]`。設計稿：`notes/site-internal/root/_market_cockpit_design_20260902.md` §3。
 name: crowding-monitor
 description: 產出新一期「跨資產擁擠交易監測」HTML（docs/crowding/CROWDING_YYYYMMDD.html）並在期刊列表插卡。消費端 skill——假設 docs/crowding/data/latest.json 由週更 pipeline（build_crowding.py）維護（COT 15 市場＋64+ 主題擁擠分數＋15 檔跨資產 ETF＋gaps）。skill 職責＝把最新資料層＋情緒/資金流 web 掃描（BofA FMS／Flow Show／GS Prime positioning／AAII／VIX-SKEW，每主題 3-5 輪 WebSearch，每個數字帶來源日期與信心）收斂成三層代理三角測量：Exhibit 編號制的 named trades（含 unwind 觸發器與狀態）、COT positioning 儀表、主題擁擠熱力圖、機構 vs 散戶分岔、對本站組合的 read-through（GRP／三軌語言，禁 IRR 排序、禁買賣指令）、反向掃描、方法論血統與 gaps 誠實列出。定位＝描述器非擇時訊號，與首頁風險儀表同家族。觸發：用戶說「跑擁擠交易監測」「crowding monitor」「擁擠交易月報」「新一期 crowding」「positioning monitor」。
 version: v1.0
@@ -97,4 +99,5 @@ changelog:
 - **覆蓋率誠實**：主題引擎覆蓋薄者標 ⚠「僅方向性」；區分「相對排名」與「絕對水位」（45 分不代表市場不擁擠，只代表比此宇宙的 AI cluster 不擠）。
 - **無鷹架語言**：不出現「本版補齊／先前漏掉／更新／changelog」等 stingtao 殘留；報告是獨立成期的一份判讀。
 - **不動 pipeline 疆界**：唯讀 latest.json；不改 build_crowding.py、data/、`docs/crowding/data/`、workflow，也不改 index.html 的 AUTO_DASH 標記間內容。
+- **判讀必留命題（2026-09-02 持有人拍板）**：每期報告另存 `knowledge/editorial_drafts/crowding_{YYYYMMDD}.json`（schema 同 monitor-read 的 `forecasts[]`：claim／p／horizon_days／resolver／why，1–3 條，把 named trades 的 unwind 觸發器數值化成可判命題；**p 由本 skill 自己給**），跑 `python scripts/ledger_from_editorial.py --source crowding-monitor --file knowledge/editorial_drafts/crowding_{YYYYMMDD}.json --write`。此檔不在 `docs/crowding/data/`，故不違反「不動 pipeline 疆界」。沒有命題＝該期未完成。kill 登 rule_ledger（SPRT）。
 - **白話呈現條款（2026-09-01 持有人拍板，全站適用）**：所有輸出給讀者的顯示文字遵守 `notes/site-internal/root/_plainlang_styleguide.md`（『二補、實作定案』節優先）——①白話為主、術語為輔（對照表已定白話主名的詞一律用白話主名，原代號降小字或首現括號）；②新造術語前先查表，表上沒有的要先照鐵律③讀機制查證、定白話名並回寫對照表；③解釋深入淺出：每個承重判斷用讀者能懂的話講一遍，不堆行話。

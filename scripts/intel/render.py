@@ -2031,7 +2031,8 @@ def build_day_body(date_str: str, payload: dict, mode_note: str, is_archive: boo
     p.append(
         '<div class="ttl"><h1>全球金融市場監視器</h1>'
         f'<div class="date">{esc(date_str)}（{wd}）'
-        f'　·　更新 <b>{esc(when)}</b> 台北時間</div></div>'
+        f'　·　更新 <b>{esc(when)}</b> 台北時間'
+        '　·　<a href="/market/">市況主控台 →</a></div></div>'
     )
     p.append(
         '<div class="seg" role="group" aria-label="版型">'
@@ -2184,7 +2185,8 @@ def build_gauges_body(badges: dict) -> str:
     p = ['<div class="wrap">']
     p.append(
         '<div class="mast"><div class="ttl"><h1>儀表</h1>'
-        '<div class="date">機械層 96 條序列，來自 /monitor/</div></div>'
+        '<div class="date">機械層 96 條序列，來自 /monitor/'
+        '　·　<a href="/market/">市況主控台 →</a></div></div>'
         + _util_chips() + "</div>"
     )
     p.append(render_tabstrip("gauges.html", badges))

@@ -18,25 +18,54 @@ build_macro_base_rates.py 檔頭），回填 p_clim／p_clim_ref／n。climatolo
 scripts.build_macro_base_rates（同套件、非 A1 的 knowledge/forecast_lib.py，dry-run 可安全
 import）；若 raw cache 缺失，climatology() 自身會回傳 p=None／n=0，不會拋例外。
 
-p 值規則不變：kill_metrics／climatology 本身都沒有「這格該賦多少機率」的答案，p_clim 只是
-無條件參照頻率，不是要下注的 p——草案 p 預設仍留 null（note 標「need_human_p」）。p 由
+p 值規則（v2 基準）：kill_metrics／climatology 本身都沒有「這格該賦多少機率」的答案，p_clim
+只是無條件參照頻率，不是要下注的 p——草案 p 預設仍留 null（note 標「need_human_p」）。p 由
 orchestrator 依 p_clim＋報告 stance 提案、持有人確認後，透過 `--p-file` 指定 {source_ref: p}
 JSON 賦值，再用 `--write` 落帳；--write 只落有 p 的草案，p 仍為 null 的一律跳過（印
 need_human_p 如常，供之後另一輪 --p-file 或人工流程補值）。
 
+`--p-mode conditional`（forecast v2 設計稿 §9／2026-09-02 六筆 macro 草案 p 的原始賦值程序，
+本旗標把該手算程序機械化，PREREG 凍結、不得改動門檻常數）：不再留 p=null 等人工，改由
+「條件式歷史頻率法」直接算出 p，寫回 note 取代 need_human_p 段：
+  1. narrow 桶 = 一年滾動分位（252 交易日窗）進入極端桶（dgs10/dgs30/tp10y ≥90 分位；hy_oas
+     ≤10 分位；sofr_iorb ≥70 分位）× 21 交易日動能符號與「今日」動能符號相同（今日動能為 0
+     則不設動能濾網）；sofr_iorb 額外要求：未來 H_td 交易日視窗須含一個季末（3/6/9/12 月最後
+     交易日，用序列本身資料判定，非精確人為假日曆）。
+  2. broader 桶（先驗）＝narrow 桶少一層條件：dgs10/dgs30/hy_oas/tp10y 直接用該筆已算好的
+     p_clim（climatology() 的無條件頻率，同 delta／horizon，天生同窗同取樣點）；sofr_iorb 因
+     多一層季末條件，broader＝去掉季末層的「一年分位×動能」桶（非直接跳到無條件）。
+  3. 收縮：p = (n_narrow·f_narrow + 60·f_broader) / (n_narrow + 60)，60 為先驗樣本數；下限
+     0.01；四捨五入 2 位小數。
+  以上常數（252／21／90／10／70／60／0.01）PREREG 凍結，任何人不得依單一案例調整；門檻異動須
+  走校準輪並登記 knowledge/rule_ledger.md。此模式下 `--write` 會直接落帳（drafts 拿到非 null
+  p，符合既有「只落 p 非 null」規則），不需要 `--p-file`；`--p-file` 仍可疊加，若同一
+  source_ref 兩者都給，`--p-file` 的值優先（保留人工覆寫空間）。
+
 resolve_by／horizon_days：用該份報告 macro-meta 的 refresh_due 當到期日（報告自己約定的下次
 複審時點，非本腳本另訂）；refresh_due 已過期（早於今天）的報告整份跳過。
 
+`--ledger PATH`：覆寫查重／落帳目標（預設 knowledge/forecasts.jsonl）。用於離線測試（scratch
+ledger，不得觸碰真檔）或繞過「今天六筆草案已在真帳簿」造成的 dry-run 查重跳過——指向一個不存在
+或空白的檔案即可讓 dry-run 印出完整草案供核對，不影響真帳簿。
+
 用法：
   python scripts/harvest_macro_falsifiers.py                     # dry-run，草案印到 stdout（純 JSONL）
+  python scripts/harvest_macro_falsifiers.py --p-mode conditional
+                                                                   # dry-run，p 由條件式歷史頻率法算出
+  python scripts/harvest_macro_falsifiers.py --p-mode conditional --ledger /tmp/scratch.jsonl
+                                                                   # dry-run，繞過真帳簿查重看完整六筆
   python scripts/harvest_macro_falsifiers.py --p-file p.json     # dry-run，額外依 {source_ref:p} 填 p
                                                                    #（仍不落帳，只是預覽落帳後長相）
+  python scripts/harvest_macro_falsifiers.py --p-mode conditional --write
+                                                                   # 落帳：p 由條件式歷史頻率法算出後
+                                                                   # 直接 append（含哨兵 twin）
   python scripts/harvest_macro_falsifiers.py --p-file p.json --write
                                                                    # 落帳：只 append p 非 null 的草案
                                                                    #（含哨兵 twin，經 forecast_lib.append）
 跳過原因、每筆 p_clim 診斷（現值／門檻／delta／p_clim／n）與統計印到 stderr，不混進 stdout 的 JSONL。
 """
 import argparse
+import bisect
 import json
 import re
 import sys
@@ -69,6 +98,138 @@ SERIES_MAP = [
 # 字串）。climatology() 的衍生 sofr_iorb 序列本身就是 bp 尺度，故此處與 monitor 現值、threshold
 # 抽出的 value 三方天生同尺度，delta 直接相減即可，不需要另外的換算係數。
 RESOLVER_UNIT = {"dgs10": "%", "dgs30": "%", "hy_oas": "%", "tp10y": "%", "sofr_iorb": "bp"}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# --p-mode conditional：條件式歷史頻率法（v2 設計稿 §9，PREREG 凍結常數，見檔頭 docstring）
+# ═══════════════════════════════════════════════════════════════════════════
+
+LVL_BUCKET = {
+    "dgs10": (">=", 90), "dgs30": (">=", 90), "tp10y": (">=", 90),
+    "hy_oas": ("<=", 10), "sofr_iorb": (">=", 70),
+}
+LVL_WINDOW_TD = 252    # 一年分位桶滾動視窗（交易日）
+MOM_WINDOW_TD = 21     # 21 日動能
+SHRINK_PRIOR_N = 60    # 向較寬桶收縮的先驗樣本數
+P_FLOOR = 0.01
+
+
+def _pct_rank(window_vals, x):
+    """x 在 window_vals（含 x 本身）中的百分位排名：≤x 的比例 ×100。"""
+    n = len(window_vals)
+    return 100.0 * sum(1 for v in window_vals if v <= x) / n
+
+
+def _quarter_end_in_window(dates, t, h_td):
+    """window=dates[t+1..t+h_td] 是否含一個季末（3/6/9/12 月最後交易日）。用「下一筆資料的月份
+    不同（或本身是序列最後一筆）」判定該筆是否為當月最後交易日——data-driven proxy，非精確
+    US federal holiday 日曆，但與實際交易資料一致。"""
+    end = min(t + h_td, len(dates) - 1)
+    for i in range(t + 1, end + 1):
+        m = int(dates[i][5:7])
+        if m not in (3, 6, 9, 12):
+            continue
+        if i + 1 >= len(dates) or int(dates[i + 1][5:7]) != m:
+            return True
+    return False
+
+
+def conditional_p(key, op, delta, horizon_days, p_clim, cache_path=None):
+    """§9 條件式歷史頻率法。p_clim＝該筆已由 bmr.climatology() 算出的無條件頻率（同 delta／
+    horizon／op，天生同窗同取樣點）——dgs10/dgs30/hy_oas/tp10y 直接拿它當 broader 桶（少一層
+    條件＝lvl+mom 少了 mom＝無條件，正是 p_clim 的定義）；sofr_iorb 因多一層季末條件，broader
+    改自算「lvl+mom（去季末層）」，不能借用 p_clim（那是連 lvl／mom 都不設限的無條件頻率，跳了
+    兩層）。
+
+    回傳 dict：p（float|None）、n_narrow、f_narrow、f_broader、broader_desc、mom_today_sign、
+    method（白話方法摘要，供寫入 note 取代 need_human_p 段）。cache_path 預設 bmr.RAW_CACHE；
+    測試可傳自訂路徑（不影響正式 raw cache）。"""
+    cache_path = cache_path or bmr.RAW_CACHE
+    mapped = bmr.MONITOR_KEY_SERIES.get(key)
+    if mapped is None or key not in LVL_BUCKET:
+        return {"p": None, "n_narrow": 0, "f_narrow": None, "f_broader": None,
+                "broader_desc": None, "mom_today_sign": None,
+                "method": f"conditional_p: key={key!r} 不在支援清單（{sorted(LVL_BUCKET)}）"}
+
+    series_name, _unit = mapped
+    all_series = bmr._load_raw_series(cache_path)
+    rows = all_series.get(series_name)
+    if not rows or len(rows) < LVL_WINDOW_TD + MOM_WINDOW_TD + 2:
+        return {"p": None, "n_narrow": 0, "f_narrow": None, "f_broader": None,
+                "broader_desc": None, "mom_today_sign": None,
+                "method": f"conditional_p: {series_name} raw cache 資料不足，無法算一年分位桶"}
+
+    dates = [r[0] for r in rows]
+    vals = [r[1] for r in rows]
+    n_total = len(vals)
+    cutoff = bmr._shift_years(dates[-1], -bmr.LOOKBACK_YEARS)
+    start_i = max(bisect.bisect_left(dates, cutoff), LVL_WINDOW_TD)
+    op_eff = ">" if op in (">", ">=") else "<"
+    H_td = max(1, round(horizon_days * 252 / 365))
+
+    lvl_op, lvl_thresh = LVL_BUCKET[key]
+    mom_today = vals[-1] - vals[-1 - MOM_WINDOW_TD]
+    mom_today_sign = 1 if mom_today > 0 else (-1 if mom_today < 0 else 0)
+    is_qtr = (key == "sofr_iorb")
+
+    narrow_hits = narrow_n = 0
+    broader_hits = broader_n = 0  # 只有 is_qtr 用得到（lvl+mom，去掉季末層）
+
+    for t in range(start_i, n_total):
+        end = t + H_td
+        if end >= n_total:
+            break
+        window_vals = vals[t + 1:t + H_td + 1]
+        if len(window_vals) != H_td:
+            continue
+        hit = (max(window_vals) - vals[t]) >= delta if op_eff == ">" else (min(window_vals) - vals[t]) <= delta
+
+        win = vals[t - LVL_WINDOW_TD + 1:t + 1]
+        pr = _pct_rank(win, vals[t])
+        lvl_ok = (pr >= lvl_thresh) if lvl_op == ">=" else (pr <= lvl_thresh)
+
+        mom_ok = True
+        if mom_today_sign != 0 and t - MOM_WINDOW_TD >= 0:
+            mom = vals[t] - vals[t - MOM_WINDOW_TD]
+            mom_sign = 1 if mom > 0 else (-1 if mom < 0 else 0)
+            mom_ok = (mom_sign == mom_today_sign)
+
+        lvlmom_ok = lvl_ok and mom_ok
+        if is_qtr:
+            if lvlmom_ok:
+                broader_n += 1
+                broader_hits += hit
+                if _quarter_end_in_window(dates, t, H_td):
+                    narrow_n += 1
+                    narrow_hits += hit
+        else:
+            if lvlmom_ok:
+                narrow_n += 1
+                narrow_hits += hit
+
+    if is_qtr:
+        f_broader = (broader_hits / broader_n) if broader_n else None
+        broader_desc = f"lvl{lvl_op}{lvl_thresh}×mom（去季末層）f={f_broader} n={broader_n}"
+    else:
+        f_broader = p_clim
+        broader_desc = f"p_clim（無條件，同 delta／horizon）={p_clim}"
+
+    p_raw = None
+    if f_broader is not None:
+        p_raw = (narrow_hits + SHRINK_PRIOR_N * f_broader) / (narrow_n + SHRINK_PRIOR_N)
+    p = max(P_FLOOR, round(p_raw, 2)) if p_raw is not None else None
+
+    f_narrow = (narrow_hits / narrow_n) if narrow_n else None
+    mom_word = {1: "mom↑", -1: "mom↓", 0: "mom無濾網（今日動能=0）"}[mom_today_sign]
+    narrow_desc = f"lvl{lvl_op}{lvl_thresh}×{mom_word}" + ("×窗含季末" if is_qtr else "")
+    method = (f"p 由 --p-mode conditional 條件式歷史頻率法算出（v2 設計稿 §9 凍結，"
+              f"knowledge/forecasts.jsonl schema=fc-v2）：narrow=[{narrow_desc}] "
+              f"f={f_narrow} n={narrow_n}，向 broader=[{broader_desc}] 以 {SHRINK_PRIOR_N} 樣本"
+              f"先驗收縮｜p=(n·f+{SHRINK_PRIOR_N}·f_broader)/(n+{SHRINK_PRIOR_N})，下限 {P_FLOOR}"
+              f"｜結果 p={p}")
+    return {"p": p, "n_narrow": narrow_n, "f_narrow": f_narrow, "f_broader": f_broader,
+            "broader_desc": broader_desc, "mom_today_sign": mom_today_sign, "method": method}
+
 
 UP_KEYWORDS = ["走闊", "升破", "站上", "突破", "上破", "超過", "收上", "轉正站上", "跳升"]
 DOWN_KEYWORDS = ["收斂", "跌破", "降至", "低於", "回落至", "跌落", "低破"]
@@ -140,10 +301,11 @@ def _load_macro_meta(fp):
         return None
 
 
-def _existing_forecasts():
-    if not FORECASTS.exists():
+def _existing_forecasts(path=None):
+    path = Path(path) if path else FORECASTS
+    if not path.exists():
         return []
-    return [json.loads(l) for l in FORECASTS.read_text(encoding="utf-8").splitlines() if l.strip()]
+    return [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines() if l.strip()]
 
 
 def _next_id(today_str, seq_state):
@@ -152,11 +314,22 @@ def _next_id(today_str, seq_state):
     return f"fc_{today_str.replace('-', '')}_macro_{n:02d}"
 
 
-def harvest():
+def _raw_cache_built_at(cache_path=None):
+    cache_path = Path(cache_path) if cache_path else bmr.RAW_CACHE
+    try:
+        return json.loads(cache_path.read_text(encoding="utf-8")).get("meta", {}).get("built_at")
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
+def harvest(p_mode=None, ledger_path=None):
     """回傳 (drafts, skipped, diagnostics)。diagnostics：每筆落地草案的 p_clim 診斷 dict 列表，
-    供 main() 印 stderr（現值／門檻／delta／p_clim／n）。"""
+    供 main() 印 stderr（現值／門檻／delta／p_clim／n）。p_mode="conditional" 時額外用 §9
+    條件式歷史頻率法（見 conditional_p()）直接賦 p，取代 need_human_p。ledger_path 覆寫查重
+    來源（預設 FORECASTS；測試／繞過真帳簿已有六筆的查重跳過用 --ledger 指向 scratch 檔）。"""
+    ledger_path = Path(ledger_path) if ledger_path else FORECASTS
     monitor_keys = _load_monitor_keys()
-    existing = _existing_forecasts()
+    existing = _existing_forecasts(ledger_path)
     existing_pairs = {(r.get("source_ref"), r.get("claim")) for r in existing}
 
     # 若同一天已有其他來源（含之前跑過的 harvest）用掉 macro 序號，掃現有 id 補起點，避免撞號
@@ -232,9 +405,23 @@ def harvest():
                     f"{clim.get('window')} | n={clim.get('n')}"
                 ) if cur is not None else "monitor 現值缺失，無法算 p_clim"
 
-                note_parts = [
-                    "need_human_p（p_clim 已由 climatology 算出，p 仍待 orchestrator 依 p_clim＋報告 "
-                    "stance 提案、持有人確認後用 --p-file 落帳）",
+                p_value = None
+                p_table_built_at = None
+                cond = None
+                if p_mode == "conditional" and cur is not None:
+                    cond = conditional_p(key, op, delta, horizon_days, p_clim)
+                    p_value = cond.get("p")
+                    if p_value is not None:
+                        p_table_built_at = _raw_cache_built_at()
+
+                if p_value is not None:
+                    note_parts = [cond["method"]]
+                else:
+                    note_parts = [
+                        "need_human_p（p_clim 已由 climatology 算出，p 仍待 orchestrator 依 p_clim＋報告 "
+                        "stance 提案、持有人確認後用 --p-file 落帳）",
+                    ]
+                note_parts += [
                     f"harvest 來源門檻原文：『{threshold}』",
                     f"monitor {key} 目前值＝{item.get('date')} {item.get('val')}"
                     f"（delta={delta}{series_unit} vs threshold={value}{unit or series_unit}）",
@@ -248,7 +435,7 @@ def harvest():
                     "source": "macro-falsifier",
                     "source_ref": source_ref,
                     "claim": claim,
-                    "p": None,
+                    "p": p_value,
                     "horizon_days": horizon_days,
                     "resolve_by": refresh_due,
                     "resolver": {"series": f"monitor:{key}", "op": op, "value": value,
@@ -259,7 +446,7 @@ def harvest():
                     "claim_template": "macro_threshold",
                     "p_clim": (round(p_clim, 4) if isinstance(p_clim, float) else p_clim),
                     "p_clim_ref": p_clim_ref,
-                    "p_table_built_at": None,
+                    "p_table_built_at": p_table_built_at,
                     "episode_id": f"macro:{slug}:{_collapse_ws(metric)}",
                     "block_key": block_key,
                     "twin_of": None,
@@ -268,6 +455,7 @@ def harvest():
                     "source_ref": source_ref, "key": key, "current": cur,
                     "threshold": value, "unit": series_unit, "delta": delta,
                     "p_clim": p_clim, "n": clim.get("n"),
+                    "p_conditional": (cond.get("p") if cond else None),
                 })
     return drafts, skipped, diagnostics
 
@@ -277,9 +465,16 @@ def main():
     ap.add_argument("--write", action="store_true", help="落帳：只 append p 非 null 的草案（含哨兵 twin）")
     ap.add_argument("--p-file", default=None,
                      help="{source_ref: p} JSON 檔——依 source_ref 對草案賦 p（不落帳；配合 --write 才落帳）")
+    ap.add_argument("--p-mode", choices=["conditional"], default=None,
+                     help="conditional：p 由 §9 條件式歷史頻率法直接算出（見 conditional_p()），"
+                          "取代 need_human_p；--p-file 若同時指定同一 source_ref 仍優先覆寫")
+    ap.add_argument("--ledger", default=None,
+                     help="覆寫查重／落帳目標路徑（預設 knowledge/forecasts.jsonl）；測試或繞過"
+                          "「今天六筆已在真帳簿」造成的 dry-run 查重跳過時指向 scratch 檔")
     args = ap.parse_args()
 
-    drafts, skipped, diagnostics = harvest()
+    ledger_path = Path(args.ledger) if args.ledger else FORECASTS
+    drafts, skipped, diagnostics = harvest(p_mode=args.p_mode, ledger_path=ledger_path)
 
     p_map = {}
     if args.p_file:
@@ -290,19 +485,24 @@ def main():
             sys.exit(2)
         for d in drafts:
             if d["source_ref"] in p_map:
+                overridden_note = (f"p 由 --p-file 指定（{Path(args.p_file).name}；orchestrator 依 "
+                                    f"p_clim＋報告 stance 提案，待持有人確認）")
+                old_note = d.get("note") or ""
+                if old_note.startswith("need_human_p"):
+                    d["note"] = re.sub(r"^need_human_p（[^）]*）", overridden_note, old_note)
+                else:
+                    # p_mode=conditional 已算出 method note，--p-file 仍優先覆寫 p，但保留原計算供參考
+                    d["note"] = f"{overridden_note}｜（--p-mode conditional 原計算保留參考）{old_note}"
                 d["p"] = p_map[d["source_ref"]]
-                # 留下 p 的來歷：不是機械賦值，是人／orchestrator 依 p_clim＋報告 stance 給的
-                d["note"] = re.sub(r"^need_human_p（[^）]*）",
-                                   f"p 由 --p-file 指定（{Path(args.p_file).name}；orchestrator 依 p_clim＋報告 stance 提案，待持有人確認）",
-                                   d.get("note") or "")
 
     for d in drafts:
         print(json.dumps(d, ensure_ascii=False))
 
     for diag in diagnostics:
+        cond_part = f" p_conditional={diag['p_conditional']}" if diag.get("p_conditional") is not None else ""
         print(f"[harvest-macro] {diag['source_ref']}: current={diag['current']}{diag['unit']} "
               f"threshold={diag['threshold']}{diag['unit']} delta={diag['delta']}{diag['unit']} "
-              f"p_clim={diag['p_clim']} n={diag['n']}", file=sys.stderr)
+              f"p_clim={diag['p_clim']} n={diag['n']}{cond_part}", file=sys.stderr)
 
     if skipped:
         print(f"\n# 跳過 {len(skipped)} 筆（非機械可判或條件不符，需要的話用 q.py --forecast-add 手動落帳）：",
@@ -312,15 +512,15 @@ def main():
 
     if not args.write:
         n_p = sum(1 for d in drafts if d.get("p") is not None)
-        print(f"\n# dry-run：共 {len(drafts)} 筆草案，{n_p} 筆已由 --p-file 賦 p（其餘 need_human_p）。"
-              f"--write 才會落帳，且只落 p 非 null 的草案。",
+        print(f"\n# dry-run：共 {len(drafts)} 筆草案，{n_p} 筆已賦 p（--p-mode conditional／--p-file，"
+              f"其餘 need_human_p）。--write 才會落帳，且只落 p 非 null 的草案。ledger={ledger_path}",
               file=sys.stderr)
         return
 
     to_write = [d for d in drafts if d.get("p") is not None]
     if not to_write:
         print(f"\n# --write：{len(drafts)} 筆草案 p 皆為 null（need_human_p），依規則全數不寫入。"
-              f"需先用 --p-file 賦 p。",
+              f"需先用 --p-mode conditional 或 --p-file 賦 p。",
               file=sys.stderr)
         return
 
@@ -334,9 +534,9 @@ def main():
               "A1 套件交付前無法 --write。", file=sys.stderr)
         sys.exit(2)
 
-    n_written, n_twins = fl.append(to_write, path=FORECASTS, write=True)
+    n_written, n_twins = fl.append(to_write, path=ledger_path, write=True)
     print(f"\n# --write：寫入 {n_written} 本尊 + {n_twins} 哨兵"
-          f"（{len(drafts) - len(to_write)} 筆 p=null 被跳過，need_human_p）。",
+          f"（{len(drafts) - len(to_write)} 筆 p=null 被跳過，need_human_p）。ledger={ledger_path}",
           file=sys.stderr)
 
 

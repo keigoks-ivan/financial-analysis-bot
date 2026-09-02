@@ -37,10 +37,38 @@ name: Weekly Forecast Ledger Settle + Flowmap Scorecard
 #  14. scripts/build_macro_base_rates.py --if-due — 季度自動重建 macro
 #      climatology 快取（僅 base rate，harvest_macro_falsifiers.py 的 p 需
 #      持有人人工賦值，不上 cron，§5.5）。
-#  15. scripts/score_flowmap.py                  — flowmap 成績單：CTA／月末
+#  15. scripts/generate_sop_funnel_forecasts.py --write — sop-funnel producer
+#      （板機訊號 91 曆日跑贏 SPY；事件觸發，同 ticker×signal_date 查重內建，
+#      見市況主控台設計稿 §9 F1）。
+#  16. scripts/generate_list_forecasts.py --list all --write — grp-seat／
+#      picks-baofa／tenbagger producer（GRP 席位／精選爆發榜／十倍股候選
+#      跑贏 SPY；週跑月落帳查重，§9 F2）。
+#  17. scripts/harvest_kill_watch.py --p-mode conditional --write —
+#      kill_watch 引信 producer（同 macro-falsifier source；monitor 型門檻
+#      機率化，§9 F3）。
+#  18. scripts/generate_risk_gauge_forecasts.py --write — risk-gauge producer
+#      （風險偏好分數五分位條件 SPY 13 週後更高；每月首週落帳，§9 F4）。
+#  19. scripts/generate_rrg_forecasts.py --write — rrg-sector producer
+#      （11 檔 SPDR 象限條件跑贏 SPY 63 交易日；每月首週落帳，§9 F5）。
+#  20. scripts/build_sop_funnel_base_rates.py --if-due — 自建 sop-funnel
+#      board rate 表（charter 回測 53 筆，季度重建，§9 F1）。
+#  21. scripts/build_risk_gauge_base_rates.py --if-due — 自建 risk-gauge
+#      條件轉移表（1,345 週序列，季度重建，§9 F4）。
+#  22. scripts/build_rrg_base_rates.py --if-due — 自建 RRG 象限條件表
+#      （3 年 11 檔取樣，季度重建，§9 F5）。
+#  23. scripts/harvest_intel_claims.py --write    — intel-llm 新聞閱讀命題
+#      producer（市況主控台設計稿 §5：讀近 7 份 /intel/ 每日摘要的
+#      claims[]，白名單＋resolver 驗證通過即落帳；0 條合格 claims 時
+#      exit 0 不落帳，不是失敗）。
+#  24. scripts/score_flowmap.py                  — flowmap 成績單：CTA／月末
 #      模組對帳 forecast_history.jsonl 凍結預測 vs 實際（SPRT 序貫檢定），
 #      並逐字讀入 knowledge/forecast_settlement.json 的 sources 摘要，輸出
 #      docs/flowmap/data/scorecard.json（只舉旗，不改動任何模組或 CONFIG）。
+#  25. scripts/build_market_state.py              — 市況主控台合成層（市況
+#      主控台設計稿 §1）：只讀不算，彙整既有 latest.json／帳簿／scorecard
+#      為 docs/market/data/state.json；缺檔不 crash（gaps 記錄）。E1 套件
+#      交付，本檔（E5）僅代為掛上這個 workflow step。F6 套件（2026-09-02）
+#      在 15–22 加掛 §9 五個 producer＋三個自建 base-rate builder。
 #
 # 排程：週一 02:00 UTC——晚於 intel-2-daily.yml 的週日 22:30 UTC 週段（含
 # crowding COT 週更、timeout 90 分鐘），留出緩衝讓 data/cot_history.json 在本
@@ -115,8 +143,38 @@ jobs:
       - name: Rebuild macro base rates if due (quarterly)
         run: python scripts/build_macro_base_rates.py --if-due || echo "build_macro_base_rates --if-due not due or fetch failed — continuing with existing table"
 
+      - name: Generate sop-funnel forecasts (event-triggered, dedupe-safe)
+        run: python scripts/generate_sop_funnel_forecasts.py --write || echo "generate_sop_funnel_forecasts no-op this week (no eligible signal or dedupe rejected) — continuing"
+
+      - name: Generate list forecasts (grp-seat / picks-baofa / tenbagger, dedupe-safe)
+        run: python scripts/generate_list_forecasts.py --list all --write || echo "generate_list_forecasts no-op this week (no eligible entrants or dedupe rejected) — continuing"
+
+      - name: Harvest kill_watch forecasts (conditional p, dedupe-safe)
+        run: python scripts/harvest_kill_watch.py --p-mode conditional --write || echo "harvest_kill_watch no-op this week (no eligible monitor items or dedupe rejected) — continuing"
+
+      - name: Generate risk-gauge forecasts (monthly, dedupe-safe)
+        run: python scripts/generate_risk_gauge_forecasts.py --write || echo "generate_risk_gauge_forecasts no-op this week (monthly dedupe rejected or no data) — continuing"
+
+      - name: Generate rrg-sector forecasts (monthly, dedupe-safe)
+        run: python scripts/generate_rrg_forecasts.py --write || echo "generate_rrg_forecasts no-op this week (monthly dedupe rejected or no data) — continuing"
+
+      - name: Rebuild sop-funnel base rates if due (quarterly)
+        run: python scripts/build_sop_funnel_base_rates.py --if-due || echo "build_sop_funnel_base_rates --if-due not due or fetch failed — continuing with existing table"
+
+      - name: Rebuild risk-gauge base rates if due (quarterly)
+        run: python scripts/build_risk_gauge_base_rates.py --if-due || echo "build_risk_gauge_base_rates --if-due not due or fetch failed — continuing with existing table"
+
+      - name: Rebuild rrg base rates if due (quarterly)
+        run: python scripts/build_rrg_base_rates.py --if-due || echo "build_rrg_base_rates --if-due not due or fetch failed — continuing with existing table"
+
+      - name: Harvest intel LLM claims
+        run: python scripts/harvest_intel_claims.py --write || echo "harvest_intel_claims no-op this week (no eligible claims or dedupe rejected) — continuing"
+
       - name: Score flowmap (frozen forecasts vs actuals)
         run: python scripts/score_flowmap.py
+
+      - name: Build market state
+        run: python scripts/build_market_state.py || echo "build_market_state failed — continuing"
 
       - name: Commit and push if changed
         run: |
@@ -128,7 +186,10 @@ jobs:
                    data/tsmom_base_rates.json data/tsmom_base_rates_raw_cache.json \
                    data/vrp_base_rates.json data/vrp_base_rates_raw_cache.json \
                    data/dd_verdict_base_rates.json data/dd_verdict_base_rates_raw_cache.json \
-                   data/macro_base_rates.json data/macro_base_rates_raw_cache.json; do
+                   data/macro_base_rates.json data/macro_base_rates_raw_cache.json \
+                   data/sop_funnel_base_rates.json data/risk_gauge_base_rates.json \
+                   data/rrg_base_rates.json \
+                   docs/market/data/state.json; do
             [ -e "$p" ] && PATHS="$PATHS $p"
           done
           if git status --porcelain $PATHS | grep -q .; then
