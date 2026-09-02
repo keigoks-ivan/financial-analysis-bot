@@ -1,0 +1,93 @@
+{
+ "schema": "kelly-track-v1",
+ "prereg": {
+  "title": "G5 Kelly 傾斜 paper 組合（PREREG 凍結至判決或 24 個月）",
+  "source_doc": "notes/site-internal/root/_forecast_p2_design_20260902.md §4",
+  "frozen_date": "2026-09-02",
+  "positioning": "回答『議會的 p 有沒有錢的價值』，與市況曝險規則（描述環境的三因子）並列、不合併。paper only，永不連實倉；不是收斂面，不產名單、不進 picks/GRP/三軌/cockpit 任何清單，不得被引用為個股或資產配置依據。",
+  "cadence": "掛 weekly-market-update.yml，於 build_exposure_track.py 之後執行；週六班車以週五收盤算、週一生效；inception＝首次執行的效力週一，NAV=100。",
+  "inputs": {
+   "council": "docs/market/data/state.json council_summary.spy_up_21d（p／p_clim／n_sources）。",
+   "rv_blend": "docs/market/data/exposure_track.json factors_history[-1].rv_blend；缺→自算，公式逐字同 scripts/build_exposure_track.py（0.5×RV21＋0.5×RV63）。",
+   "financing_rate": "docs/monitor/data/latest.json rates 類別 dgs3mo 項目 val（如 3.91%）。",
+   "prices": "SPY 日線＝data/flowmap_prices.json（唯讀，本檔不寫入）。"
+  },
+  "rule": {
+   "edge": "edge＝p − p_clim。",
+   "gate": "若 |edge| < 0.05（5 個百分點）、或 n_sources < 2、或任一輸入缺 → E＝1.0（reason：no_edge／thin_council／missing_input）。",
+   "tilt": "否則 z＝Φ⁻¹(p) − Φ⁻¹(p_clim)（statistics.NormalDist().inv_cdf），σ21＝(rv_blend／100) × √(21／252)，E＝clip(1 ＋ 0.25 × z ／ σ21, 0.5, 1.5)（四分之一 Kelly，相對 100% 基準的傾斜）。5pp 門檻與 read_zh 的『無邊際』同一把尺。"
+  },
+  "book": {
+   "nav": "日 NAV_t＝NAV_{t−1} × (1 ＋ E × r_SPY,t − fin_t)，fin_t＝max(E − 1, 0) × (dgs3mo ＋ 1.5)／100／252（槓桿部分付 3 個月國庫券＋1.5% 年息，同long-track 慣例）。",
+   "cash_policy": "E < 1 的現金不計息（同曝險規則慣例，對本規則偏保守，PREREG 明列）。",
+   "benchmark": "SPY buy-and-hold（inception 當日買入，永不再平衡）。"
+  },
+  "scoring": {
+   "monthly_sample": "月樣本＝當月 paper 報酬 − SPY B&H 報酬 > 0 為命中。",
+   "sprt": "SPRT 同 forecast ledger v2 §3.3 參數：p0=0.5／p1=0.65／α=0.05／β=0.10，上界 A=ln(18)=2.8904，下界 B=ln(0.1/0.95)=−2.2513，n_eff<20 一律continue，決策一旦落定即鎖存（decided_at／decided_n），只有校準輪可重設。實作照抄 scripts/build_exposure_track.py 的 sprt_with_latch，不得另開一份可能漂移的複製邏輯。",
+   "info_only": "另列 Sharpe／MaxDD 對 SPY B&H（資訊欄，≥3 個月才計算，不做決策）。"
+  },
+  "kill_conditions": {
+   "kill_1": "SPRT（p0=0.5／p1=0.65／α=0.05／β=0.10，n_eff≥20，樣本＝逐月「當月 paper 報酬 − SPY B&H 報酬 > 0」命中序列）累積 LLR ≤ B(-2.2513) → accept_h0 → 規則撤下；期間不調參；paper only 永不連實倉（設計稿 notes/site-internal/root/_forecast_p2_design_20260902.md §4）。",
+   "data_layer_note": "連續 8 週因 missing_input E＝1.0 → gaps 標紅（非 kill）。"
+  },
+  "disclosure": "誠實標注：paper track、無交易成本、無滑價、機械式、非投資建議；不是收斂面，不產名單、不進 picks/GRP/三軌/cockpit 任何清單。"
+ },
+ "as_of": "2026-08-31",
+ "inception_date": "2026-09-07",
+ "exposure_history": [
+  {
+   "date": "2026-09-07",
+   "as_of": "2026-08-31",
+   "state_as_of": "2026-09-02",
+   "p": 0.6651,
+   "p_clim": 0.6528,
+   "n_sources": 2,
+   "rv_blend": 11.9839,
+   "rv_blend_source": "exposure_track",
+   "dgs3mo": 3.91,
+   "dgs3mo_asof": "2026-08-31",
+   "edge": 0.0123,
+   "z": 0.033532,
+   "sigma21": 0.034595,
+   "E": 1.0,
+   "reason": "no_edge"
+  }
+ ],
+ "nav_series": [],
+ "bench": {
+  "name": "spy_bh",
+  "description": "SPY buy-and-hold（inception 當日買入，永不再平衡）；序列見 nav_series[].spy_bh。"
+ },
+ "sprt": {
+  "p0": 0.5,
+  "p1": 0.65,
+  "alpha": 0.05,
+  "beta": 0.1,
+  "A": 2.8904,
+  "B": -2.2513,
+  "llr": 0.0,
+  "n_used": 0,
+  "state": "continue",
+  "decided_at": null,
+  "decided_n": null,
+  "status": "yellow",
+  "status_label": "證據累積中：有效樣本 0／需先滿 20 筆才開始判定",
+  "n_required": 20,
+  "samples": [],
+  "n_closed_months": 0,
+  "kill_condition": "SPRT（p0=0.5／p1=0.65／α=0.05／β=0.10，n_eff≥20，樣本＝逐月「當月 paper 報酬 − SPY B&H 報酬 > 0」命中序列）累積 LLR ≤ B(-2.2513) → accept_h0 → 規則撤下；期間不調參；paper only 永不連實倉（設計稿 notes/site-internal/root/_forecast_p2_design_20260902.md §4）。"
+ },
+ "stats": null,
+ "data_gaps": [
+  {
+   "date": "2026-09-07",
+   "reason": "SPY 價格序列尚無 2026-09-07（含）以後的收盤，NAV 簿記尚未起算，不捏造 nav_series。"
+  }
+ ],
+ "built_at": "2026-09-02T07:37:14Z",
+ "meta": {
+  "flowmap_prices_built_at": "2026-09-01T13:04:43Z",
+  "note": "exposure_history 逐週由本檔重算並冪等覆蓋（同 as_of 不重複 append）；nav_series 為逐日重算（見檔頭『日 NAV 迴圈設計』），下游消費者請讀 exposure_history／nav_series／sprt／stats。"
+ }
+}

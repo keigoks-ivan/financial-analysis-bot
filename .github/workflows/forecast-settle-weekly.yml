@@ -60,15 +60,33 @@ name: Weekly Forecast Ledger Settle + Flowmap Scorecard
 #      producer（市況主控台設計稿 §5：讀近 7 份 /intel/ 每日摘要的
 #      claims[]，白名單＋resolver 驗證通過即落帳；0 條合格 claims 時
 #      exit 0 不落帳，不是失敗）。
-#  24. scripts/score_flowmap.py                  — flowmap 成績單：CTA／月末
+#  24. scripts/generate_credit_forecasts.py --write — credit-lead producer
+#      （信用領先模型：HYG／LQD 比值 21 日對數變化分桶條件 SPY 跑贏；每月
+#      首個交易日落帳兩筆 21d／63d，同月查重內建，見預測帳簿第二批設計稿
+#      notes/site-internal/root/_forecast_p2_design_20260902.md §1）。
+#  25. scripts/generate_breadth_forecasts.py --write — breadth producer
+#      （市場廣度模型：11 檔 SPDR 類股 ETF 站上 50 日均線比例分桶條件 SPY
+#      跑贏；每月首個交易日落帳兩筆 21d／63d，同月查重內建，§2）。
+#  26. scripts/generate_calendar_forecasts.py --write — calendar producer
+#      （日曆效應模型：月末四日窗／假日前一日條件 SPY 上漲；每週枚舉未來
+#      60 天窗內落帳條件事件，同 resolve_by 查重內建，§3）。
+#  27. scripts/build_credit_base_rates.py --if-due — 季度自動重建信用領先
+#      base rate（同 rv 的 --if-due 慣例，§1）。
+#  28. scripts/build_breadth_base_rates.py --if-due — 季度自動重建市場廣度
+#      base rate（同上，§2）。
+#  29. scripts/build_calendar_base_rates.py --if-due — 季度自動重建日曆效應
+#      base rate（同上，§3）。
+#  30. scripts/score_flowmap.py                  — flowmap 成績單：CTA／月末
 #      模組對帳 forecast_history.jsonl 凍結預測 vs 實際（SPRT 序貫檢定），
 #      並逐字讀入 knowledge/forecast_settlement.json 的 sources 摘要，輸出
 #      docs/flowmap/data/scorecard.json（只舉旗，不改動任何模組或 CONFIG）。
-#  25. scripts/build_market_state.py              — 市況主控台合成層（市況
+#  31. scripts/build_market_state.py              — 市況主控台合成層（市況
 #      主控台設計稿 §1）：只讀不算，彙整既有 latest.json／帳簿／scorecard
 #      為 docs/market/data/state.json；缺檔不 crash（gaps 記錄）。E1 套件
 #      交付，本檔（E5）僅代為掛上這個 workflow step。F6 套件（2026-09-02）
-#      在 15–22 加掛 §9 五個 producer＋三個自建 base-rate builder。
+#      在 15–22 加掛 §9 五個 producer＋三個自建 base-rate builder；G7 套件
+#      （2026-09-02）在 24–29 加掛 §7 三個新 producer＋三個自建 base-rate
+#      builder（見上述 P2 稿）。
 #
 # 排程：週一 02:00 UTC——晚於 intel-2-daily.yml 的週日 22:30 UTC 週段（含
 # crowding COT 週更、timeout 90 分鐘），留出緩衝讓 data/cot_history.json 在本
@@ -170,6 +188,24 @@ jobs:
       - name: Harvest intel LLM claims
         run: python scripts/harvest_intel_claims.py --write || echo "harvest_intel_claims no-op this week (no eligible claims or dedupe rejected) — continuing"
 
+      - name: Generate credit-lead forecasts (monthly, dedupe-safe)
+        run: python scripts/generate_credit_forecasts.py --write || echo "generate_credit_forecasts no-op this week (monthly dedupe rejected or no data) — continuing"
+
+      - name: Generate breadth forecasts (monthly, dedupe-safe)
+        run: python scripts/generate_breadth_forecasts.py --write || echo "generate_breadth_forecasts no-op this week (monthly dedupe rejected or no data) — continuing"
+
+      - name: Generate calendar forecasts (weekly enumeration, dedupe-safe)
+        run: python scripts/generate_calendar_forecasts.py --write || echo "generate_calendar_forecasts no-op this week (no eligible window or dedupe rejected) — continuing"
+
+      - name: Rebuild credit-lead base rates if due (quarterly)
+        run: python scripts/build_credit_base_rates.py --if-due || echo "build_credit_base_rates --if-due not due or fetch failed — continuing with existing table"
+
+      - name: Rebuild breadth base rates if due (quarterly)
+        run: python scripts/build_breadth_base_rates.py --if-due || echo "build_breadth_base_rates --if-due not due or fetch failed — continuing with existing table"
+
+      - name: Rebuild calendar base rates if due (quarterly)
+        run: python scripts/build_calendar_base_rates.py --if-due || echo "build_calendar_base_rates --if-due not due or fetch failed — continuing with existing table"
+
       - name: Score flowmap (frozen forecasts vs actuals)
         run: python scripts/score_flowmap.py
 
@@ -189,6 +225,9 @@ jobs:
                    data/macro_base_rates.json data/macro_base_rates_raw_cache.json \
                    data/sop_funnel_base_rates.json data/risk_gauge_base_rates.json \
                    data/rrg_base_rates.json \
+                   data/credit_base_rates.json data/credit_base_rates_raw_cache.json \
+                   data/breadth_base_rates.json data/breadth_base_rates_raw_cache.json \
+                   data/calendar_base_rates.json data/calendar_base_rates_raw_cache.json \
                    docs/market/data/state.json; do
             [ -e "$p" ] && PATHS="$PATHS $p"
           done

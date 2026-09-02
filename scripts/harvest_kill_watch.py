@@ -7,23 +7,25 @@ notes/site-internal/root/_forecast_v2_design_20260902.md §9 conditional-frequen
 
 kill_watch.json 的 12 條引信（items[]）分兩類：data_source.type="monitor"（可直接對到
 docs/monitor/data/latest.json 的某個 key，如 fx/dxy → dxy）與 type="internals"（由偵探
-pipeline 另外算，不在 monitor latest.json 的扁平 key 清單內，如 macro/core_pce_yoy）。本檔
-**只處理 monitor 型**（設計稿原文：「items with data_source.type == "monitor" and numeric
-value；skip internals-type and non-numeric」）——internals 型一律跳過並印 stderr 原因，即使
-其中一條（macro:MACRO_USEconomy_20260708:5，10Y breakeven，data_source.key=macro/bei10y）
-概念上與本檔新建的 T10YIE climatology 序列相關：kill_watch.json 目前把它標成 internals（非
-monitor latest.json 的既有 key，該檔目前也確實沒有 bei10y／t10yie 這個 key），所以照這條
-明文規則會被跳過，不會產生新草案。這與「若 kill_watch 改標該筆為 monitor 型（或 monitor
-latest.json 未來新增 bei10y／t10yie key）即可機械收案」的設計意圖並不衝突——bei10y/t10yie
-→ T10YIE 的 climatology 映射已經就緒（見 scripts/build_macro_base_rates.py），只是「現在」
-這筆資料本身的 type 標記還沒讓它符合資格。不在此按經驗猜測繞過 type 過濾器，見本檔尾端
-main() 之後的執行紀錄／harvest() 回傳的 skipped 列表可稽核。
+pipeline 另外算，不在 monitor latest.json 的扁平 key 清單內，如 macro/core_pce_yoy）。
 
-resolver＝`monitor:<key>`，key 取 data_source.key 斜線後的最後一段（如 fx/dxy → dxy；照抄
-設計稿 §9 row F3 原文「key 取 data_source.key 的斜線後段」），並驗證該 key 確實存在於
-docs/monitor/data/latest.json（否則跳過，不猜測）。current 一律取 monitor latest.json 的
-「現在」值（非 kill_watch.json 自己快照的 current 欄——kill_watch.json 的 generated_at 常常
-落後 monitor 的 as_of，用 monitor 現值才符合 resolver=monitor:<key> 的語意，且與
+**2026-09-02 G4 改版（設計稿 P2 §6 item6）：本檔現在兩型都處理。** type="monitor" 一如既往走
+`monitor:<key>`、讀 docs/monitor/data/latest.json 現值。type="internals" 且 key（data_source.key
+斜線後段）在 `bmr.MONITOR_KEY_SERIES` 有登記（即有 climatology 序列可用）→ 收案，resolver 改用
+`internals:<key>`、現值改讀 docs/monitor/data/internals.json（schema 與 monitor latest.json
+相同）；目前四條 internals 型引信中 core_pce_yoy／payems_3m／bei10y 三條命中（分別對應
+scripts/build_macro_base_rates.py 新增的月頻衍生序列與既有 T10YIE），會產生三張新草案。
+第四條 auct_dealer 不在 MONITOR_KEY_SERIES（無對應 climatology 序列，FRED 對 primary dealer
+承接比無公開全史序列可抓）→ 跳過，原因固定為 `no_climatology_series`（機械可稽核，不猜測
+補一條假序列）。舊版「只處理 monitor 型」的限制與其理由（見本檔 2026-09-02 前的版本歷史）已
+由這次擴充取代——bei10y 不再需要 harvest_kill_watch 自己 setdefault 猜 LVL_BUCKET 桶（已改在
+harvest_macro_falsifiers.py 顯式登記，見下方「p 值」段）。
+
+resolver＝`monitor:<key>` 或 `internals:<key>`，key 取 data_source.key 斜線後的最後一段（如
+fx/dxy → dxy；照抄設計稿 §9 row F3 原文「key 取 data_source.key 的斜線後段」），並驗證該 key
+確實存在於對應資料源（monitor latest.json 或 internals.json，否則跳過，不猜測）。current 一律
+取資料源的「現在」值（非 kill_watch.json 自己快照的 current 欄——kill_watch.json 的
+generated_at 常常落後 monitor／internals 的 as_of，用現值才符合 resolver 語意，且與
 harvest_macro_falsifiers.py 一致：那支腳本的 delta 也是拿 monitor 現值算，不是報告內文的
 snapshot）。
 
@@ -36,15 +38,17 @@ unit="百分點（=+5bp）"），但 climatology() 的 sofr_iorb 序列、monito
 tp10y／dgs30）kill_watch 的 value／unit 本來就是顯示單位，不需要換算。
 
 p 值：`--p-mode conditional` 直接 import scripts/harvest_macro_falsifiers.py 的
-conditional_p()（§9 條件式歷史頻率法，PREREG 凍結常數 252/21/90/10/70/60/0.01，不重寫一份）。
-conditional_p() 內部的 LVL_BUCKET 只登記了原 6 條 macro-falsifier 草案用到的 5 個 key
-（dgs10/dgs30/tp10y/hy_oas/sofr_iorb）；本檔新增的 4 個 key（dxy/usdcny/bei10y/t10yie）用
+conditional_p()（§9 條件式歷史頻率法，PREREG 凍結常數 252/21/90/10/70/60/0.01，月頻 key
+另有 12/3/12 常數，見設計稿 P2 §6 item5，不重寫一份）。conditional_p() 內部的 LVL_BUCKET
+2026-09-02 起已顯式登記 core_pce_yoy／payems_3m／bei10y 三個新 key（見
+harvest_macro_falsifiers.py，本檔不再需要為 bei10y 用 setdefault 猜）；本檔仍對
+dxy/usdcny/t10yie 三個 key（monitor 型，非本次 G4 擴充範圍）用
 `hmf.LVL_BUCKET.setdefault(key, (">=", 90))` 在**執行期**補登記（不修改
-harvest_macro_falsifiers.py 檔案本身——那支腳本不在本套件所有權範圍內；setdefault 是
-"in-memory 擴充一個 import 進來的 dict"，不動對方原始碼一個字元）。桶方向 (">=", 90) 沿用
-原表對「breach_above 型門檻」的既有慣例（dgs10/dgs30/tp10y 皆是 ">=90 分位"）：dxy／usdcny
-在 kill_watch 的門檻語意都是「站上／突破」，故採同一慣例；bei10y/t10yie 目前不會被觸發（見
-上一段），僅為未來就緒而登記。
+harvest_macro_falsifiers.py 檔案本身——那支腳本的 conditional_p 月頻分支＋LVL_BUCKET 顯式
+登記屬另一支腳本的所有權範圍；setdefault 是"in-memory 擴充一個 import 進來的 dict"，不動對方
+原始碼一個字元）。桶方向 (">=", 90) 沿用原表對「breach_above 型門檻」的既有慣例（dgs10/dgs30/
+tp10y 皆是 ">=90 分位"）：dxy／usdcny／t10yie 在 kill_watch 的門檻語意都是「站上／突破」，故
+採同一慣例；t10yie 目前不會被觸發（kill_watch.json 該筆用 bei10y 別名），僅為未來就緒而登記。
 
 查重：與既有 status="open" 的 macro-falsifier 列以 (resolver.series, op 方向, resolver.value)
 比對（tolerance 1e-6）——op 方向正規化（>=/> 都算 ">"，<=/< 都算 "<"）是必要的，因為既有
@@ -75,6 +79,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 KILL_WATCH = ROOT / "docs" / "detective" / "data" / "kill_watch.json"
+INTERNALS_LATEST = ROOT / "docs" / "monitor" / "data" / "internals.json"  # G4 新增：internals 型現值來源
 FORECASTS = ROOT / "knowledge" / "forecasts.jsonl"
 
 # 同套件內 sibling module（scripts/ 底下，執行 `python scripts/harvest_kill_watch.py` 時
@@ -89,8 +94,10 @@ ID_PREFIX = "kw"
 DEDUPE_TOL = 1e-6
 
 # 執行期擴充 conditional_p() 的 LVL_BUCKET（見檔頭「p 值」段——不修改 harvest_macro_falsifiers.py
-# 原始檔，只在 import 進來的 dict 上 setdefault）。
-for _key in ("dxy", "usdcny", "bei10y", "t10yie"):
+# 原始檔，只在 import 進來的 dict 上 setdefault）。bei10y 已於 2026-09-02 G4 改版在
+# harvest_macro_falsifiers.py 顯式登記，這裡不再需要（setdefault 對已存在的 key 是 no-op，
+# 移除純粹是讓「猜測清單」如實反映現況，非行為變動）。
+for _key in ("dxy", "usdcny", "t10yie"):
     hmf.LVL_BUCKET.setdefault(_key, (">=", 90))
 
 # kill_watch value → series 顯示單位的換算倍率；僅 sofr_iorb 非 1（pp → bp，見檔頭「單位換算」段）。
@@ -118,6 +125,21 @@ def _load_kill_watch():
         return json.loads(KILL_WATCH.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as e:
         raise SystemExit(f"[harvest-kill-watch][ERROR] 無法讀取 {KILL_WATCH}: {e}")
+
+
+def _load_internals_keys():
+    """docs/monitor/data/internals.json categories[].items[] → {key: item}（G4 新增，同
+    hmf._load_monitor_keys() 讀法，schema 相同）。"""
+    try:
+        data = json.loads(INTERNALS_LATEST.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    out = {}
+    for cat in data.get("categories", []):
+        for it in cat.get("items", []):
+            if it.get("key"):
+                out[it["key"]] = it
+    return out
 
 
 def _existing_forecasts(path):
@@ -166,13 +188,15 @@ def _raw_cache_built_at():
 
 
 def harvest(p_mode=None, ledger_path=None):
-    """回傳 (drafts, skipped, diagnostics)。diagnostics 涵蓋每一筆「type=monitor 且 value 為
-    數字、resolver key 存在」的 kill_watch item（含最終被判定為重複而未落 drafts 的），供
-    main() 印 stderr 的逐項診斷表；skipped 是 (kill_watch_id, reason) 列表（internals-type／
-    非數字／op 不合法／key 對不到 monitor latest.json／查重重複，都算 skipped 的一種原因）。"""
+    """回傳 (drafts, skipped, diagnostics)。diagnostics 涵蓋每一筆「type∈{monitor,internals} 且
+    value 為數字、resolver key 存在」的 kill_watch item（含最終被判定為重複而未落 drafts 的），
+    供 main() 印 stderr 的逐項診斷表；skipped 是 (kill_watch_id, reason) 列表（type 不支援／
+    非數字／op 不合法／key 對不到資料源／internals key 無 climatology 序列／查重重複，都算
+    skipped 的一種原因；G4 改版見檔頭「2026-09-02 G4 改版」段）。"""
     ledger_path = Path(ledger_path) if ledger_path else FORECASTS
     kw = _load_kill_watch()
     monitor_keys = hmf._load_monitor_keys()
+    internals_keys = _load_internals_keys()
     existing = _existing_forecasts(ledger_path)
     dup_index = _dup_index(existing)
 
@@ -195,8 +219,8 @@ def harvest(p_mode=None, ledger_path=None):
         ds = item.get("data_source") or {}
         dtype, dkey = ds.get("type"), ds.get("key")
 
-        if dtype != "monitor":
-            skipped.append((iid, f"data_source.type={dtype!r}（非 monitor，internals-type 或缺失），跳過"))
+        if dtype not in ("monitor", "internals"):
+            skipped.append((iid, f"data_source.type={dtype!r}（非 monitor／internals，或缺失），跳過"))
             continue
 
         value_raw = item.get("value")
@@ -214,21 +238,40 @@ def harvest(p_mode=None, ledger_path=None):
             continue
         key = dkey.rsplit("/", 1)[-1]
 
-        mitem = monitor_keys.get(key)
-        if mitem is None:
-            skipped.append((iid, f"monitor key={key!r}（來自 data_source.key={dkey!r}）在 "
-                                  "docs/monitor/data/latest.json 找不到，跳過"))
-            continue
-
-        cur = hmf._parse_monitor_num(mitem.get("val"))
-        if cur is None:
-            skipped.append((iid, f"monitor {key} 目前值（{mitem.get('val')!r}）無法解析出數字，跳過"))
-            continue
+        if dtype == "internals":
+            # G4 新增（設計稿 P2 §6 item6）：internals 型只在 key 有登記 climatology 序列時收案
+            # （data_source.key 缺少對應的 FRED/衍生序列即無法算 p_clim／conditional_p，跳過而
+            # 非猜一個假序列）。
+            if key not in bmr.MONITOR_KEY_SERIES:
+                skipped.append((iid, "no_climatology_series"))
+                continue
+            source_item = internals_keys.get(key)
+            if source_item is None:
+                skipped.append((iid, f"internals key={key!r}（來自 data_source.key={dkey!r}）在 "
+                                      "docs/monitor/data/internals.json 找不到，跳過"))
+                continue
+            cur = hmf._parse_monitor_num(source_item.get("val"))
+            if cur is None:
+                skipped.append((iid, f"internals {key} 目前值（{source_item.get('val')!r}）無法解析出數字，跳過"))
+                continue
+            series = f"internals:{key}"
+            source_label = "internals"
+        else:
+            source_item = monitor_keys.get(key)
+            if source_item is None:
+                skipped.append((iid, f"monitor key={key!r}（來自 data_source.key={dkey!r}）在 "
+                                      "docs/monitor/data/latest.json 找不到，跳過"))
+                continue
+            cur = hmf._parse_monitor_num(source_item.get("val"))
+            if cur is None:
+                skipped.append((iid, f"monitor {key} 目前值（{source_item.get('val')!r}）無法解析出數字，跳過"))
+                continue
+            series = f"monitor:{key}"
+            source_label = "monitor"
 
         scale = KEY_VALUE_SCALE.get(key, 1.0)
         value = round(value_raw * scale, 6)
         resolver_unit = RESOLVER_UNIT_OVERRIDE.get(key, item.get("unit") or "")
-        series = f"monitor:{key}"
 
         delta = round(value - cur, 6)
         clim = bmr.climatology(key, op, delta, HORIZON_DAYS)
@@ -278,7 +321,7 @@ def harvest(p_mode=None, ledger_path=None):
             f"kill_watch 原始門檻：{op} {value_raw}{item_unit}" +
             (f"（換算為 series 顯示單位：{value}{resolver_unit}，"
              "kill_watch 以百分點記、series 以 bp 記，見本檔檔頭「單位換算」段）" if scale != 1.0 else ""),
-            f"monitor {key} 目前值＝{mitem.get('date')} {mitem.get('val')}"
+            f"{source_label} {key} 目前值＝{source_item.get('date')} {source_item.get('val')}"
             f"（delta={delta}{resolver_unit} vs threshold={value}{resolver_unit}）",
         ]
 

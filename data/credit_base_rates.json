@@ -1,0 +1,75 @@
+{
+  "schema": "credit-base-rates-v1",
+  "tickers": [
+    "HYG",
+    "LQD",
+    "SPY"
+  ],
+  "built_at": "2026-09-02T07:30:50Z",
+  "data_start": "2007-04-11",
+  "data_end": "2026-09-01",
+  "n_price_days": {
+    "HYG": 4879,
+    "LQD": 5028,
+    "SPY": 5029
+  },
+  "n_common_days": 4879,
+  "n_samples": 233,
+  "x_lookback_trading_days": 21,
+  "up_21d_trading_days": 21,
+  "up_63d_trading_days": 63,
+  "cuts": {
+    "q33": -0.4721,
+    "q67": 0.9531
+  },
+  "buckets": {
+    "low": {
+      "n": 78,
+      "n_21d": 78,
+      "n_63d": 78,
+      "freq_up_21d": 0.615,
+      "freq_up_63d": 0.744,
+      "x_range": [
+        -13.84,
+        -0.48
+      ],
+      "description": "高收益利差走闊快（HYG／LQD 比值 21 日下跌最多的一組）"
+    },
+    "mid": {
+      "n": 77,
+      "n_21d": 76,
+      "n_63d": 75,
+      "freq_up_21d": 0.671,
+      "freq_up_63d": 0.707,
+      "x_range": [
+        -0.44,
+        0.95
+      ],
+      "description": "利差變化居中的一組"
+    },
+    "high": {
+      "n": 78,
+      "n_21d": 77,
+      "n_63d": 77,
+      "freq_up_21d": 0.636,
+      "freq_up_63d": 0.74,
+      "x_range": [
+        0.96,
+        9.51
+      ],
+      "description": "高收益利差收斂快（HYG／LQD 比值 21 日上漲最多的一組）"
+    }
+  },
+  "pooled": {
+    "n_21d": 231,
+    "n_63d": 230,
+    "freq_up_21d": 0.641,
+    "freq_up_63d": 0.73
+  },
+  "p_clim": {
+    "credit_spy_up_21d": 0.641,
+    "credit_spy_up_63d": 0.73
+  },
+  "definition": "R_t ＝ HYG 收盤 ÷ LQD 收盤（同日，yfinance auto_adjust=True，口徑同 docs/monitor/data/latest.json 的 hyg_lqd item）；x_t ＝ 100 × ln(R_t ／ R_{t−21})（21 個交易日對數變化，%；t 為 HYG／LQD／SPY 三序列共同交易日索引，非日曆日）。x 為負＝HYG 相對 LQD 下跌＝高收益利差走闊；x 為正＝利差收斂。",
+  "note": "取樣點＝HYG／LQD／SPY 三序列共同交易日中每月首個「x 可算」交易日；三分位切點（q33/q67）為 in-sample（用同一組取樣點的 x 分布算出，非滾動窗口即時分位），不宣稱樣本外預測力，本表定位是 base rate 參照表。up_21d／up_63d 用三序列共同交易日索引前瞻位移，21d／63d 各自獨立計數（尾端不足者不計入該窗口，但仍計入取樣點與分桶，故 n_21d／n_63d 可能不同）。頻率為重疊樣本估計，不做假設檢定。本表用 HYG／LQD 價格比值近似信用利差方向，非 ICE BofA OAS（FRED 對 OAS 只給約 3 年史，見設計稿 §0）；builder 不做 stooq fallback（stooq 未還原股利，口徑與 auto_adjust=True 不同）。cell n（n_21d／n_63d）< 30 時由 producer 端改用 pooled，本表如實記錄各桶樣本數，不在此層做 fallback。"
+}

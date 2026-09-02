@@ -107,11 +107,21 @@ RESOLVER_UNIT = {"dgs10": "%", "dgs30": "%", "hy_oas": "%", "tp10y": "%", "sofr_
 LVL_BUCKET = {
     "dgs10": (">=", 90), "dgs30": (">=", 90), "tp10y": (">=", 90),
     "hy_oas": ("<=", 10), "sofr_iorb": (">=", 70),
+    # 2026-09-02 G4 新增（設計稿 P2 §6 item5）：顯式登記，取代 harvest_kill_watch.py 原本對
+    # bei10y 用 `hmf.LVL_BUCKET.setdefault(key, (">=", 90))` 的執行期猜法。
+    "core_pce_yoy": (">=", 90), "payems_3m": ("<=", 10), "bei10y": (">=", 90),
 }
-LVL_WINDOW_TD = 252    # 一年分位桶滾動視窗（交易日）
-MOM_WINDOW_TD = 21     # 21 日動能
-SHRINK_PRIOR_N = 60    # 向較寬桶收縮的先驗樣本數
+LVL_WINDOW_TD = 252    # 一年分位桶滾動視窗（交易日，daily key）
+MOM_WINDOW_TD = 21     # 21 日動能（daily key）
+SHRINK_PRIOR_N = 60    # 向較寬桶收縮的先驗樣本數（daily key）
 P_FLOOR = 0.01
+
+# 2026-09-02 G4 新增（設計稿 P2 §6 item5，PREREG 凍結）：月頻 key（core_pce_yoy／payems_3m，見
+# scripts/build_macro_base_rates.py 的 MONTHLY_SERIES）用這組月頻常數取代上面三個日頻常數；
+# P_FLOOR 不變。
+MONTHLY_LVL_WINDOW = 12    # 一年分位桶滾動視窗（月頻＝12 個觀測）
+MONTHLY_MOM_WINDOW = 3     # 3 個月動能
+MONTHLY_SHRINK_PRIOR_N = 12  # 向較寬桶收縮的先驗樣本數（月頻）
 
 
 def _pct_rank(window_vals, x):
@@ -151,24 +161,35 @@ def conditional_p(key, op, delta, horizon_days, p_clim, cache_path=None):
                 "broader_desc": None, "mom_today_sign": None,
                 "method": f"conditional_p: key={key!r} 不在支援清單（{sorted(LVL_BUCKET)}）"}
 
+    # 2026-09-02 G4 新增（設計稿 P2 §6 item5）：月頻 key 用 12/3/12 常數取代日頻 252/21/60。
+    is_monthly = key in getattr(bmr, "MONTHLY_SERIES", ())
+    lvl_window = MONTHLY_LVL_WINDOW if is_monthly else LVL_WINDOW_TD
+    mom_window = MONTHLY_MOM_WINDOW if is_monthly else MOM_WINDOW_TD
+    shrink_prior_n = MONTHLY_SHRINK_PRIOR_N if is_monthly else SHRINK_PRIOR_N
+
     series_name, _unit = mapped
     all_series = bmr._load_raw_series(cache_path)
     rows = all_series.get(series_name)
-    if not rows or len(rows) < LVL_WINDOW_TD + MOM_WINDOW_TD + 2:
+    if not rows or len(rows) < lvl_window + mom_window + 2:
         return {"p": None, "n_narrow": 0, "f_narrow": None, "f_broader": None,
                 "broader_desc": None, "mom_today_sign": None,
-                "method": f"conditional_p: {series_name} raw cache 資料不足，無法算一年分位桶"}
+                "method": f"conditional_p: {series_name} raw cache 資料不足，無法算"
+                          f"{'月頻' if is_monthly else '一年'}分位桶"}
 
     dates = [r[0] for r in rows]
     vals = [r[1] for r in rows]
     n_total = len(vals)
-    cutoff = bmr._shift_years(dates[-1], -bmr.LOOKBACK_YEARS)
-    start_i = max(bisect.bisect_left(dates, cutoff), LVL_WINDOW_TD)
+    if is_monthly:
+        start_i = max(n_total - bmr.MONTHLY_LOOKBACK_OBS, lvl_window)
+        H_td = max(1, round(horizon_days / 30.44))
+    else:
+        cutoff = bmr._shift_years(dates[-1], -bmr.LOOKBACK_YEARS)
+        start_i = max(bisect.bisect_left(dates, cutoff), lvl_window)
+        H_td = max(1, round(horizon_days * 252 / 365))
     op_eff = ">" if op in (">", ">=") else "<"
-    H_td = max(1, round(horizon_days * 252 / 365))
 
     lvl_op, lvl_thresh = LVL_BUCKET[key]
-    mom_today = vals[-1] - vals[-1 - MOM_WINDOW_TD]
+    mom_today = vals[-1] - vals[-1 - mom_window]
     mom_today_sign = 1 if mom_today > 0 else (-1 if mom_today < 0 else 0)
     is_qtr = (key == "sofr_iorb")
 
@@ -184,13 +205,13 @@ def conditional_p(key, op, delta, horizon_days, p_clim, cache_path=None):
             continue
         hit = (max(window_vals) - vals[t]) >= delta if op_eff == ">" else (min(window_vals) - vals[t]) <= delta
 
-        win = vals[t - LVL_WINDOW_TD + 1:t + 1]
+        win = vals[t - lvl_window + 1:t + 1]
         pr = _pct_rank(win, vals[t])
         lvl_ok = (pr >= lvl_thresh) if lvl_op == ">=" else (pr <= lvl_thresh)
 
         mom_ok = True
-        if mom_today_sign != 0 and t - MOM_WINDOW_TD >= 0:
-            mom = vals[t] - vals[t - MOM_WINDOW_TD]
+        if mom_today_sign != 0 and t - mom_window >= 0:
+            mom = vals[t] - vals[t - mom_window]
             mom_sign = 1 if mom > 0 else (-1 if mom < 0 else 0)
             mom_ok = (mom_sign == mom_today_sign)
 
@@ -216,16 +237,17 @@ def conditional_p(key, op, delta, horizon_days, p_clim, cache_path=None):
 
     p_raw = None
     if f_broader is not None:
-        p_raw = (narrow_hits + SHRINK_PRIOR_N * f_broader) / (narrow_n + SHRINK_PRIOR_N)
+        p_raw = (narrow_hits + shrink_prior_n * f_broader) / (narrow_n + shrink_prior_n)
     p = max(P_FLOOR, round(p_raw, 2)) if p_raw is not None else None
 
     f_narrow = (narrow_hits / narrow_n) if narrow_n else None
     mom_word = {1: "mom↑", -1: "mom↓", 0: "mom無濾網（今日動能=0）"}[mom_today_sign]
     narrow_desc = f"lvl{lvl_op}{lvl_thresh}×{mom_word}" + ("×窗含季末" if is_qtr else "")
-    method = (f"p 由 --p-mode conditional 條件式歷史頻率法算出（v2 設計稿 §9 凍結，"
-              f"knowledge/forecasts.jsonl schema=fc-v2）：narrow=[{narrow_desc}] "
-              f"f={f_narrow} n={narrow_n}，向 broader=[{broader_desc}] 以 {SHRINK_PRIOR_N} 樣本"
-              f"先驗收縮｜p=(n·f+{SHRINK_PRIOR_N}·f_broader)/(n+{SHRINK_PRIOR_N})，下限 {P_FLOOR}"
+    method = (f"p 由 --p-mode conditional 條件式歷史頻率法算出（v2 設計稿 §9 凍結"
+              + ("；月頻常數 12/3/12，P2 設計稿 §6 item5" if is_monthly else "")
+              + f"，knowledge/forecasts.jsonl schema=fc-v2）：narrow=[{narrow_desc}] "
+              f"f={f_narrow} n={narrow_n}，向 broader=[{broader_desc}] 以 {shrink_prior_n} 樣本"
+              f"先驗收縮｜p=(n·f+{shrink_prior_n}·f_broader)/(n+{shrink_prior_n})，下限 {P_FLOOR}"
               f"｜結果 p={p}")
     return {"p": p, "n_narrow": narrow_n, "f_narrow": f_narrow, "f_broader": f_broader,
             "broader_desc": broader_desc, "mom_today_sign": mom_today_sign, "method": method}

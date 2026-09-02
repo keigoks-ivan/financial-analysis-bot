@@ -57,10 +57,17 @@ resolver 八個 series 命名空間：
                       支援 at_expiry**（其他 window 值 → void，reason=`relspy_unsupported_
                       window:{window}`）。缺 base_px／base_spy 或缺任一價 → void，
                       reason=`relspy_missing_base:{TICKER}` 或 `relspy_missing_price:{TICKER}`。
+  - internals:<key> → docs/monitor/data/internals.json 的 categories[].items[]（key 比對，
+                      schema 與 monitor latest.json 相同），歷史序列改讀
+                      docs/monitor/data/internals_history.json 的 series[key]（[date, value]
+                      升冪，非近似反推——比 monitor: 域精確）；單位 scale 偵測與 any_close／
+                      at_expiry 語義逐字同 monitor: 域（見上）；key 缺 →
+                      void `internals_key_missing:{key}`（forecast v2 P2 設計稿 §6）。
   - detective:*     → 本期不實作。遇到即印警告、該筆保持 open，不硬判。
 
-op 支援 >／<>=／<=；window 支援 any_close（區間內任一收盤觸及即 yes）與 at_expiry（只看到期
-時的值）。
+op 支援 >／<>=／<=；window 支援 any_close（區間內任一收盤觸及即 yes）、at_expiry（只看到期
+時的值）與 **vs_base_date**（僅 pxd:／ttp: 域，見下方單位注意段；forecast v2 P2 設計稿 §3／
+§6：以 base_date 當日或之前最近收盤為基準，(close_end／close_base − 1) {op} value）。
 
 單位注意（monitor 域，v2 改版）：latest.json 的 val／spark 是各 series 自訂格式（如 dgs10
 "4.73%"、sofr_iorb "3bps"），本腳本一律先取其去除逗號後第一個數字 token 的原始數值。**v1
@@ -77,7 +84,16 @@ resolver 命名空間段落）；q.py --forecast-add／本檔 --check-resolver �
 resolver.value 尺度一致，直接比對即可，不需換算。
 
 單位注意（pxd／ttp 域）：與 price 域一致，直接是該 ticker 的日線收盤價原始尺度（美元／點數），
-resolver.value 用同尺度落帳。
+resolver.value 用同尺度落帳。**window="vs_base_date"**（forecast v2 P2 設計稿 §3／§6，G3 日曆
+效應 producer 餵料）：resolver 額外攜帶 `base_date`（"YYYY-MM-DD"）；close_base＝base_date 當日
+或之前最近收盤（該收盤日期須 ≥ base_date − 4 曆日，否則 void `vs_base_stale_base`），close_end＝
+resolve_by 當日或之前最近收盤，outcome＝(close_end／close_base − 1) {op} value，只在
+today ≥ resolve_by 時結算（同 at_expiry）；base_date ≥ resolve_by → void `vs_base_bad_dates`；
+缺價 → void `{pxd|ttp}_no_bar_vs_base:{ticker}`（如 `pxd_no_bar_vs_base:SPY`）。結算時會印出實際
+取到的 base／end 日期與收盤供核對。
+
+單位注意（internals 域）：與 monitor 域完全相同（v2 §4.1 單位正規化邏輯逐字重用），resolver.value
+一律採「顯示單位」（人讀得懂，如 3.5 = 3.5%），本腳本換算成序列尺度後再比對。
 
 單位注意（vixts 域）：slope 一律以「vol 點」為尺度（^VIX3M − ^VIX 的收盤差，可正可負；
 正＝contango，負＝inverted），與 scripts/build_vixts_base_rates.py／generate_vix_forecasts.py
@@ -95,6 +111,12 @@ CLI：
   python knowledge/settle_forecasts.py --check-resolver vixts:SLOPE
   python knowledge/settle_forecasts.py --check-resolver ttp:SPY
   python knowledge/settle_forecasts.py --check-resolver relspy:NVDA
+  python knowledge/settle_forecasts.py --check-resolver internals:bei10y
+  python knowledge/settle_forecasts.py --ledger /path/to/scratch.jsonl   # 覆寫結算目標帳簿（測試
+                                                                          # 用；輸出 settlement JSON
+                                                                          # 亦改寫到 scratch 檔旁，
+                                                                          # 絕不動真帳簿；預設不給
+                                                                          # 此旗標時行為完全不變）
 """
 import json
 import math
@@ -110,7 +132,13 @@ ROOT = KDIR.parent
 FORECASTS = KDIR / "forecasts.jsonl"
 OUT = KDIR / "forecast_settlement.json"
 CACHE_DIR = ROOT / "data" / "weekly_cache"
+WEEKLY_CACHE_UNIVERSE_DIR = ROOT / "data" / "weekly_cache_universe"  # relspy 退路鏈新增層（P2 §6/§11.2；
+                                                                      # schema 同 weekly_cache，
+                                                                      # weekly-engine.yml 首次 CI 落地前
+                                                                      # 目錄可能不存在，讀不到即跳過不crash）
 MONITOR_LATEST = ROOT / "docs" / "monitor" / "data" / "latest.json"
+INTERNALS_LATEST = ROOT / "docs" / "monitor" / "data" / "internals.json"          # internals: 域現值
+INTERNALS_HISTORY = ROOT / "docs" / "monitor" / "data" / "internals_history.json"  # internals: 域歷史序列
 FLOWMAP_PRICES = ROOT / "data" / "flowmap_prices.json"  # rv:／pxd:／relspy: 域讀法（見 build_rv_base_rates.py）
 STATLAB_PRICES = ROOT / "data" / "statlab_prices.json"  # vixts: 域讀法（見 build_vixts_base_rates.py）
 TREND_TRACK_PRICES = ROOT / "data" / "trend_track_prices.json"  # ttp: 域讀法（見 build_tsmom_base_rates.py，B 包）
@@ -263,11 +291,13 @@ def _rv21_series(ticker, _cache={}):
 
 
 # ─────────────────────────── pxd:<TICKER>／ttp:<TICKER> 讀法 ───────────────────────────
-# 兩域語義完全相同（at_expiry／any_close），差別只在資料來源：pxd: 讀 data/flowmap_prices.json、
-# ttp: 讀 data/trend_track_prices.json（forecast v2 設計稿 §4.2，B 包 tsmom producer 餵料）。
-# 共用同一段判定邏輯，coverage_gap 判法與 rv: 域一致。
+# 兩域語義完全相同（at_expiry／any_close／vs_base_date），差別只在資料來源：pxd: 讀
+# data/flowmap_prices.json、ttp: 讀 data/trend_track_prices.json（forecast v2 設計稿 §4.2，
+# B 包 tsmom producer 餵料）。共用同一段判定邏輯，coverage_gap 判法與 rv: 域一致。
+# window="vs_base_date"（forecast v2 P2 設計稿 §3／§6，G3 日曆效應 producer 餵料）：見檔頭
+# docstring「單位注意（pxd／ttp 域）」段。
 
-def _resolve_close_series(bars, resolver, ts, resolve_by, today, no_bar_reason):
+def _resolve_close_series(bars, resolver, ts, resolve_by, today, prefix, ticker):
     op_fn = OPS.get(resolver.get("op"))
     if not op_fn:
         return {"status": "void", "reason": f"bad_op:{resolver.get('op')}", "outcome": None, "coverage_gap": False}
@@ -286,6 +316,30 @@ def _resolve_close_series(bars, resolver, ts, resolve_by, today, no_bar_reason):
                 return {"status": "open", "reason": None, "outcome": None, "coverage_gap": coverage_gap}
             return {"status": "resolved_no", "reason": None, "outcome": 0, "coverage_gap": coverage_gap}
         return {"status": "open", "reason": None, "outcome": None, "coverage_gap": coverage_gap}
+    elif window == "vs_base_date":
+        base_date = resolver.get("base_date")
+        if not base_date or base_date >= resolve_by:
+            return {"status": "void", "reason": "vs_base_bad_dates", "outcome": None, "coverage_gap": False}
+        if today < resolve_by:
+            return {"status": "open", "reason": None, "outcome": None, "coverage_gap": False}
+        if last_date < resolve_by:
+            # cache 尚未追上 resolve_by（資料落後），暫不硬判
+            return {"status": "open", "reason": None, "outcome": None, "coverage_gap": coverage_gap}
+        base_at = _close_at_or_before(bars, base_date)
+        if not base_at:
+            return {"status": "void", "reason": f"{prefix}_no_bar_vs_base:{ticker}", "outcome": None, "coverage_gap": True}
+        base_d, close_base = base_at
+        if _days_between(base_d, base_date) > 4:
+            return {"status": "void", "reason": "vs_base_stale_base", "outcome": None, "coverage_gap": False}
+        end_at = _close_at_or_before(bars, resolve_by)
+        if not end_at:
+            return {"status": "void", "reason": f"{prefix}_no_bar_vs_base:{ticker}", "outcome": None, "coverage_gap": True}
+        end_d, close_end = end_at
+        outcome = 1 if op_fn((close_end / close_base) - 1, value) else 0
+        status = "resolved_yes" if outcome else "resolved_no"
+        print(f"  ℹ {prefix}:{ticker} vs_base_date：base={base_d}(close={close_base}) "
+              f"end={end_d}(close={close_end}) → {status}")
+        return {"status": status, "reason": None, "outcome": outcome, "coverage_gap": coverage_gap}
     else:  # at_expiry
         if today < resolve_by:
             return {"status": "open", "reason": None, "outcome": None, "coverage_gap": False}
@@ -293,7 +347,7 @@ def _resolve_close_series(bars, resolver, ts, resolve_by, today, no_bar_reason):
             return {"status": "open", "reason": None, "outcome": None, "coverage_gap": coverage_gap}
         at = _close_at_or_before(bars, resolve_by)
         if not at:
-            return {"status": "void", "reason": no_bar_reason, "outcome": None, "coverage_gap": True}
+            return {"status": "void", "reason": f"{prefix}_no_bar_at_expiry:{ticker}", "outcome": None, "coverage_gap": True}
         _, px = at
         outcome = 1 if op_fn(px, value) else 0
         status = "resolved_yes" if outcome else "resolved_no"
@@ -305,7 +359,7 @@ def _resolve_pxd(resolver, ts, resolve_by, today):
     bars = _flowmap_bars(ticker)
     if not bars:
         return {"status": "void", "reason": f"pxd_ticker_missing:{ticker}", "outcome": None, "coverage_gap": False}
-    return _resolve_close_series(bars, resolver, ts, resolve_by, today, f"pxd_no_bar_at_expiry:{ticker}")
+    return _resolve_close_series(bars, resolver, ts, resolve_by, today, "pxd", ticker)
 
 
 def _trend_track_prices_data(_cache={}):
@@ -332,21 +386,39 @@ def _resolve_ttp(resolver, ts, resolve_by, today):
     bars = _ttp_bars(ticker)
     if not bars:
         return {"status": "void", "reason": f"ttp_ticker_missing:{ticker}", "outcome": None, "coverage_gap": False}
-    return _resolve_close_series(bars, resolver, ts, resolve_by, today, f"ttp_no_bar_at_expiry:{ticker}")
+    return _resolve_close_series(bars, resolver, ts, resolve_by, today, "ttp", ticker)
 
 
 # ─────────────────────────── relspy:<TICKER> 讀法 ───────────────────────────
 # 相對 SPY 超額報酬命題（forecast v2 設計稿 §4.3，D 包 dd-verdict producer 餵料）。只支援
 # at_expiry；px_T 讀 weekly_cache（同 price: 域），spy_T 讀 flowmap_prices.json SPY。
 
+def _weekly_cache_universe_bars(ticker):
+    """weekly_cache_universe：schema 同 data/weekly_cache/（{"weekly_bars":[{week_end, close}, ...]}），
+    由 weekly-engine.yml 首次 CI 週跑後落地（forecast v2 P2 設計稿 §6／`_market_cockpit_design
+    _20260902.md` §11.2）。目錄可能尚不存在或缺該 ticker——不 crash，回傳 None 讓退路鏈繼續。"""
+    p = WEEKLY_CACHE_UNIVERSE_DIR / f"{ALIAS.get(ticker, ticker)}.json"
+    if not p.exists():
+        return None
+    try:
+        raw = json.loads(p.read_text(encoding="utf-8")).get("weekly_bars") or []
+        bars = [(b["week_end"], b["close"]) for b in raw if b.get("close")]
+    except (json.JSONDecodeError, KeyError, OSError):
+        return None
+    return bars or None
+
+
 def _any_daily_bars(ticker, _cache={}):
-    """relspy 用的價格退路鏈：weekly_cache（個股）→ statlab_prices（SPDR 類股／SPY／TLT／^VIX）
-    → flowmap_prices（SPY/QQQ/IWM/AGG）→ trend_track_prices（9 檔資產）。ETF 類命題（rrg-sector
+    """relspy 用的價格退路鏈：weekly_cache（個股）→ weekly_cache_universe（engine 母體週線，新增，
+    見 _weekly_cache_universe_bars）→ statlab_prices（SPDR 類股／SPY／TLT／^VIX）→
+    flowmap_prices（SPY/QQQ/IWM/AGG）→ trend_track_prices（9 檔資產）。ETF 類命題（rrg-sector
     等）不在 weekly_cache，若無此退路會全數 void（2026-09-02 整合時 F5 包發現，orchestrator 補）。"""
     key = ticker.upper()
     if key in _cache:
         return _cache[key]
     bars = _price_bars(ticker)
+    if not bars:
+        bars = _weekly_cache_universe_bars(ticker)
     if not bars:
         for path in (STATLAB_PRICES, FLOWMAP_PRICES, TREND_TRACK_PRICES):
             try:
@@ -561,6 +633,51 @@ def _compute_monitor_scale(item):
     return False, "unit_ambiguous"
 
 
+# ─────────────────────────── internals:<key> 讀法（forecast v2 P2 設計稿 §6） ───────────────────────────
+# docs/monitor/data/internals.json 的 categories[].items[] 與 monitor latest.json 同 schema
+# （key/val/spark/date/stale），單位 scale 偵測直接重用 _compute_monitor_scale()。歷史序列改讀
+# docs/monitor/data/internals_history.json 的 series[key]（[date, value] 升冪，真實日期而非
+# monitor: 域用 spark 近似反推的交易日——精度更高）。
+
+def _internals_data(_cache={}):
+    if "d" not in _cache:
+        try:
+            _cache["d"] = json.loads(INTERNALS_LATEST.read_text(encoding="utf-8"))
+        except Exception:
+            _cache["d"] = None
+    return _cache["d"]
+
+
+def _internals_item(key):
+    data = _internals_data()
+    if not data:
+        return None
+    for cat in data.get("categories", []):
+        for it in cat.get("items", []):
+            if it.get("key") == key:
+                return it
+    return None
+
+
+def _internals_history_data(_cache={}):
+    if "d" not in _cache:
+        try:
+            _cache["d"] = json.loads(INTERNALS_HISTORY.read_text(encoding="utf-8"))
+        except Exception:
+            _cache["d"] = None
+    return _cache["d"]
+
+
+def _internals_series_points(key):
+    """回傳 [(date, value), ...] 升冪；key 不在 internals_history.json 或序列為空回傳 []。"""
+    data = _internals_history_data()
+    if not data:
+        return []
+    ser = (data.get("series") or {}).get(key) or []
+    pts = [(d, v) for d, v in ser if v is not None]
+    return sorted(pts, key=lambda x: x[0])
+
+
 # ─────────────────────────── resolver 驗證（給 q.py --forecast-add 用） ───────────────────────────
 
 def check_resolver(series):
@@ -634,6 +751,23 @@ def check_resolver(series):
         d, v = pts[-1]
         state = "contango" if v > 0 else ("inverted" if v < 0 else "flat")
         return True, f"{d} slope=^VIX3M-^VIX={v:+.2f}（{state}）"
+    if ns == "internals":
+        item = _internals_item(key)
+        if item is None:
+            return False, f"docs/monitor/data/internals.json 找不到 key={key}"
+        scale, note = _compute_monitor_scale(item)
+        pts = _internals_series_points(key)
+        series_last = pts[-1][1] if pts else None
+        if scale is False:
+            return False, (f"{item.get('date')} val={item.get('val')}（顯示值）／series 尾值={series_last}："
+                            f"scale 判定為 unit_ambiguous（比值不落在 {MONITOR_SCALE_CANDIDATES} 任一值 "
+                            f"±{int(MONITOR_SCALE_TOLERANCE*100)}% 內），無法落帳／結算")
+        if scale is None:
+            return True, (f"{item.get('date')} val={item.get('val')}（顯示值）／series 尾值={series_last}／"
+                           f"scale=unknown（val 或 spark 尾值為 0 或缺值，沿用 v1 舊行為：resolver.value "
+                           f"須與序列原始尺度一致，不會換算）")
+        return True, (f"{item.get('date')} val={item.get('val')}（顯示值）／series 尾值={series_last}／"
+                       f"scale={scale}｜value 若寫 X（顯示單位）會被換成 X/{scale} 比對序列")
     if ns == "detective":
         return False, "detective 域結算未實作（見本檔 docstring），暫不接受此域落帳"
     return False, f"未知 domain：{ns}"
@@ -729,6 +863,62 @@ def _resolve_monitor(resolver, ts, resolve_by, today):
         return {"status": status, "reason": None, "outcome": outcome, "coverage_gap": False}
 
 
+def _resolve_internals(resolver, ts, resolve_by, today):
+    """internals:<key> — 與 _resolve_monitor 語義逐字相同（見檔頭 docstring），差別只在現值讀
+    docs/monitor/data/internals.json、歷史序列讀 internals_history.json 的真實 [date, value]
+    （非 spark 近似反推）。"""
+    key = resolver["series"].split(":", 1)[1]
+    item = _internals_item(key)
+    if item is None:
+        return {"status": "void", "reason": f"internals_key_missing:{key}", "outcome": None, "coverage_gap": False}
+    if item.get("stale"):
+        return {"status": "void", "reason": f"internals_series_stale:{key}", "outcome": None, "coverage_gap": False}
+    op_fn = OPS.get(resolver.get("op"))
+    if not op_fn:
+        return {"status": "void", "reason": f"bad_op:{resolver.get('op')}", "outcome": None, "coverage_gap": False}
+
+    scale, scale_note = _compute_monitor_scale(item)
+    if scale is False:
+        return {"status": "void", "reason": f"unit_ambiguous:{key}", "outcome": None, "coverage_gap": False}
+    raw_value = resolver.get("value")
+    value = (raw_value / scale) if scale else raw_value
+    if scale_note == "unit_scale_unknown":
+        print(f"  ⚠ internals:{key} scale 判定為 unit_scale_unknown（val 或序列尾值為 0/缺值），"
+              f"沿用舊行為：resolver.value 未換算，直接比對序列原始尺度")
+
+    window = resolver.get("window", "any_close")
+    as_of = item.get("date")
+    pts = _internals_series_points(key)
+    if not pts:
+        return {"status": "void", "reason": f"internals_no_history:{key}", "outcome": None, "coverage_gap": False}
+    coverage_gap = ts < pts[0][0]
+
+    if window == "any_close":
+        end = min(today, resolve_by)
+        hit = any(op_fn(v, value) for d, v in pts if ts <= d <= end)
+        if hit:
+            return {"status": "resolved_yes", "reason": None, "outcome": 1, "coverage_gap": coverage_gap}
+        if today >= resolve_by and as_of and as_of >= resolve_by:
+            return {"status": "resolved_no", "reason": None, "outcome": 0, "coverage_gap": coverage_gap}
+        return {"status": "open", "reason": None, "outcome": None, "coverage_gap": coverage_gap}
+    else:  # at_expiry
+        if today < resolve_by:
+            return {"status": "open", "reason": None, "outcome": None, "coverage_gap": False}
+        if not as_of or as_of < resolve_by:
+            return {"status": "open", "reason": None, "outcome": None, "coverage_gap": False}
+        at = None
+        for d, v in pts:
+            if d <= resolve_by:
+                at = (d, v)
+            else:
+                break
+        if at is None:
+            return {"status": "void", "reason": f"internals_no_point_at_expiry:{key}", "outcome": None, "coverage_gap": True}
+        outcome = 1 if op_fn(at[1], value) else 0
+        status = "resolved_yes" if outcome else "resolved_no"
+        return {"status": status, "reason": None, "outcome": outcome, "coverage_gap": False}
+
+
 def _resolve_rv(resolver, ts, resolve_by, today):
     ticker = resolver["series"].split(":", 1)[1]
     pts = _rv21_series(ticker)
@@ -801,6 +991,8 @@ def settle(rows, today_str):
             res = _resolve_price(resolver, ts, resolve_by, today_str)
         elif ns == "monitor":
             res = _resolve_monitor(resolver, ts, resolve_by, today_str)
+        elif ns == "internals":
+            res = _resolve_internals(resolver, ts, resolve_by, today_str)
         elif ns == "rv":
             res = _resolve_rv(resolver, ts, resolve_by, today_str)
         elif ns == "pxd":
@@ -1010,11 +1202,23 @@ def build_sources_summary(updated, prior_sources):
 
 
 def main():
-    if len(sys.argv) > 1 and sys.argv[1] == "--check-resolver":
-        if len(sys.argv) < 3:
+    global FORECASTS, OUT
+    args = sys.argv[1:]
+    if "--ledger" in args:
+        i = args.index("--ledger")
+        if i + 1 >= len(args):
+            print("用法：--ledger <path-to-forecasts.jsonl>（覆寫結算目標帳簿，測試用；絕不對真"
+                  "帳簿以外路徑外洩寫入）")
+            sys.exit(2)
+        FORECASTS = Path(args[i + 1])
+        OUT = FORECASTS.parent / (FORECASTS.stem + "_settlement.json")
+        args = args[:i] + args[i + 2:]
+
+    if args and args[0] == "--check-resolver":
+        if len(args) < 2:
             print("用法：python knowledge/settle_forecasts.py --check-resolver <domain>:<key>")
             sys.exit(2)
-        ok, msg = check_resolver(sys.argv[2])
+        ok, msg = check_resolver(args[1])
         print(("OK " if ok else "MISSING ") + msg)
         sys.exit(0 if ok else 1)
 

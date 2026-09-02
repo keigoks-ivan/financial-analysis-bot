@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""generate_list_forecasts.py — 名單 producer（forecast ledger v2 §9 row F2，包 F2）。
+"""generate_list_forecasts.py — 名單 producer（forecast ledger v2 §9 row F2＋§11.1）。
 
-把三個既有的名單（**不是新的收斂面**，只是把既有名單的成員轉成可證偽的機率命題）
-掃成 forecasts.jsonl 草案：
+把六個既有的名單（**不是新的收斂面**，只是把既有名單的成員轉成可證偽的機率命題）
+掃成 forecasts.jsonl 草案（1-3 為 §9 row F2 原批，4-6 為 §11.1 選股 v2 接線批）：
 
   1. `grp-seat` ── `docs/engine/arena.json` core_seats[]／sat_seats[]（週日更）
      「{resolve_by} 前（GRP 核心席位 {as_of} 起 91 曆日）：{ticker} 報酬跑贏 SPY」
@@ -15,52 +15,72 @@
      見設計稿 §9 row F2「currently empty」——0 筆草案是預期行為，不是錯誤）
      「{resolve_by} 前（十倍股候選 {as_of} 起 365 曆日）：{ticker} 報酬跑贏 SPY」
      claim_template=`tenbagger_beat_spy_365d`；offset +0.05（用 365d p_clim）
+  4. `own-board` ── `docs/engine/arena.json` own_board[]（`pass==true`，`score` 降冪前 15，
+     D5「甲軌前 15」；週日更）；同一檔同時掛兩個 template：
+     claim_template=`ownboard_beat_spy_91d`（91 曆日）＋`ownboard_beat_spy_365d`
+     （365 曆日，用 365d p_clim）；offset 皆 +0.05
+  5. `picks-late` ── `docs/picks/candidates.json` baofa[]（`late_cycle==true` 且
+     `above_w52==true`──只因守門被擋、否則會上榜者；週更）
+     claim_template=`picks_late_beat_spy_91d`；**offset −0.05**（方向為負：守門主張晚段
+     跑輸，這是可證偽的命題，見設計稿 §11.1／§11.3）
+  6. `mech-nodd` ── `docs/engine/arena.json` own_board[]（`src != "dd-pool"` 且
+     `pass==true`──無 DD 而機械過閘；今日 0 筆是預期行為，CI 市值回填後才會有）
+     claim_template=`nodd_beat_spy_91d`；offset +0.05
 
 resolver（relspy 新域，逐字同 scripts/generate_dd_verdict_forecasts.py 慣例，由 A1 的
 knowledge/settle_forecasts.py 結算——本檔只負責產出合法形狀，不做結算）：
     {"series": "relspy:<TICKER>", "op": ">", "value": 0, "window": "at_expiry",
      "base_date": "<list as_of>", "base_px": <price>, "base_spy": <SPY 同日或之前收盤>}
-base_date：grp 取 arena.json `run_timestamp` 的日期部分；picks／tenbagger 取各自 `as_of`。
-base_px：名單本身若帶價（目前只有 grp 的 `grp.price`）直接用；否則退回
-`data/weekly_cache/<TICKER>.json`（ALIAS 對映後）weekly_bars 中 base_date 或之前最近一根收盤
-（picks／tenbagger 目前兩份名單皆不帶價，一律走此退路）。
+base_date：grp／ownboard／mech-nodd 取 arena.json `run_timestamp` 的日期部分；
+picks／tenbagger／picks-late 取各自 `as_of`。
+base_px：名單本身若帶價（目前只有 grp 的 `grp.price`）直接用；否則退路鏈
+`data/weekly_cache/<TICKER>.json` → `data/weekly_cache_universe/<TICKER>.json`（同 schema，
+ALIAS 對映後；目錄可空或可缺，不 crash）中 base_date 或之前最近一根收盤；兩處都沒有 →
+`base_px_missing` 跳過（其餘五份名單皆不帶價，一律走此退路鏈）。
 base_spy：`data/flowmap_prices.json` series.SPY 中 base_date 或之前最近一根收盤（同
 generate_dd_verdict_forecasts.py `_close_at_or_before` 語意）。
-resolve_by = base_date + horizon_days（91；tenbagger 365）曆日。
+resolve_by = base_date + horizon_days（91；tenbagger／ownboard 365d 用 365）曆日。
 
-p 值（PREREG 凍結，設計稿 §9 row F2，sonnet 不得改）：
+p 值（PREREG 凍結，設計稿 §9 row F2／§11.1，sonnet 不得改）：
     p = clip(p_clim + offset, 0.05, 0.95)
-    offset：GRP 核心 +0.10／GRP 衛星 +0.05／精選爆發榜 +0.05／十倍股候選 +0.05
-p_clim 一律讀 data/dd_verdict_base_rates.json 的 `p_clim.dd_beat_spy_91d`（grp／picks 用）／
-`p_clim.dd_beat_spy_365d`（tenbagger 用）——借用 dd-verdict 既有的宇宙相對 SPY 頻率表，本
-producer 不自建新表（設計稿 §9 共同規則：「p_clim 一律引用 data/dd_verdict_base_rates.json
-的 p_clim…除非另有自建表」，本包沒有自建表）。claim_template 仍是本包自己的新樣板名
-（grp_beat_spy_91d／picks_beat_spy_91d／tenbagger_beat_spy_365d），與借來的 p_clim key
-（dd_beat_spy_91d／dd_beat_spy_365d）刻意不同名，note 欄會註明借用關係。
+    offset：GRP 核心 +0.10／GRP 衛星 +0.05／精選爆發榜 +0.05／十倍股候選 +0.05／
+    own-board +0.05（兩個 horizon 同）／picks-late **−0.05**／mech-nodd +0.05
+p_clim 一律讀 data/dd_verdict_base_rates.json 的 `p_clim.dd_beat_spy_91d`（91 曆日各名單
+用）／`p_clim.dd_beat_spy_365d`（tenbagger、ownboard 365d 用）——借用 dd-verdict 既有的
+宇宙相對 SPY 頻率表，本 producer 不自建新表（設計稿共同規則：「p_clim 一律引用
+data/dd_verdict_base_rates.json 的 p_clim…除非另有自建表」，六個名單都沒有自建表）。
+claim_template 仍是本包自己的新樣板名，與借來的 p_clim key（dd_beat_spy_91d／
+dd_beat_spy_365d）刻意不同名，note 欄會註明借用關係。
 
-episode_id = `{source}:{ticker}:{YYYY-MM}`（YYYY-MM 取 base_date 所在月）；
+episode_id = `{episode_prefix}:{ticker}:{YYYY-MM}`（YYYY-MM 取 base_date 所在月）；舊三個
+名單 episode_prefix 逐字等於 source（grp-seat／picks-baofa／tenbagger，設計稿 §9 row F2）；
+新三個名單設計稿 §11.1 表格明寫較短的專屬前綴 own／late／nodd（非 source 全名 own-board／
+picks-late／mech-nodd），故本檔用獨立的 `episode_prefix` 欄位而非直接沿用 source。
 block_key = base_date 所在月（同 episode_id 的月份，逐字同 dd-verdict「裁決月」慣例，
 forecast_lib.finalize() 對已設定的 block_key 不覆寫）。
 
-查重（設計稿 §9 row F2 原文：「同 source 同 ticker 已有 open 命題→不重發（一檔一次只掛一張）」）
+查重（設計稿 §11.1：「同 source 同 ticker 同 template 已有 open 命題→不重發（一檔一次只掛
+一張）」；§9 row F2 三個舊名單各自只有一個 template，行為不變）
 -----------------------------------------------------------------------------------------
-dedupe key = (source, ticker)：掃 ledger（或 --ledger 指定的測試帳）中 `status == "open"`
-的既有列，把 `resolver.series` 前綴 `relspy:` 之後的字串當 ticker（不新增專屬欄位，沿用
-resolver 本身即可反解——sentinel-noise 哨兵 twin 的 `source` 已被 forecast_lib 覆寫成
-"sentinel-noise"，不會誤入這個 (source, ticker) 集合）。同一批次執行內（例如同週 GRP 核心與
-衛星席位剛好出現同一檔）也用同一個 set 即時更新，避免同批次自己重複掛兩張。**這條規則只看
-「有沒有 open 命題」，不比較 resolve_by／claim_template──同 ticker 若已有一張在跑，即使即將
-到期也不會補發新的一張，等舊的 settle 之後才會在下一輪自然補上**（PREREG，見設計稿 §9）。
+dedupe key = (source, ticker, claim_template)：掃 ledger（或 --ledger 指定的測試帳）中
+`status == "open"` 的既有列，把 `resolver.series` 前綴 `relspy:` 之後的字串當 ticker
+（不新增專屬欄位，沿用 resolver 本身即可反解——sentinel-noise 哨兵 twin 的 `source` 已被
+forecast_lib 覆寫成 "sentinel-noise"，不會誤入這個集合）。同一批次執行內（例如同週 GRP
+核心與衛星席位剛好出現同一檔）也用同一個 set 即時更新，避免同批次自己重複掛兩張。**這條
+規則只看「有沒有 open 命題」，不比較 resolve_by──同 ticker 同 template 若已有一張在跑，
+即使即將到期也不會補發新的一張，等舊的 settle 之後才會在下一輪自然補上**（PREREG）。加入
+claim_template 是 §11.1 新增：ownboard 同一檔同時有 91d／365d 兩個 template，彼此視為不同
+鍵、不互相擋。
 
-ids：dry-run 用本檔本地 `fc_{YYYYMMDD}_{prefix}_{NN}` 生成（prefix 依名單：grp/picks/tb，
-逐名單分開配號避免撞號，不 import forecast_lib）；`--write` 才
+ids：dry-run 用本檔本地 `fc_{YYYYMMDD}_{prefix}_{NN}` 生成（prefix 依名單：
+grp/picks/tb/own/late/nodd，逐名單分開配號避免撞號，不 import forecast_lib）；`--write` 才
 `sys.path.insert(0, str(ROOT / "knowledge")); import forecast_lib as fl`，改用
 `fl.next_ids(ts, prefix, n, path=ledger)`，並經 `fl.finalize()` + `fl.append(..., write=True)`
 落帳（含哨兵 twin，由 forecast_lib 生成，本檔不重造）。
 
 CLI
 ---
-  python scripts/generate_list_forecasts.py [--list grp|picks|tenbagger|all]
+  python scripts/generate_list_forecasts.py [--list grp|picks|tenbagger|ownboard|late|nodd|all]
         dry-run（預設），草案印到 stdout（純 JSONL）
   python scripts/generate_list_forecasts.py --list all --write
         append 進 knowledge/forecasts.jsonl（經 forecast_lib，含哨兵 twin）
@@ -84,6 +104,7 @@ TENBAGGER = ROOT / "docs" / "picks" / "tenbagger.json"
 BASE_RATES = ROOT / "data" / "dd_verdict_base_rates.json"
 FLOWMAP_PRICES = ROOT / "data" / "flowmap_prices.json"
 CACHE_DIR = ROOT / "data" / "weekly_cache"
+CACHE_DIR_UNIVERSE = ROOT / "data" / "weekly_cache_universe"  # 設計稿 §11.1 新增退路（同 schema，可空/可缺）
 FORECASTS_DEFAULT = ROOT / "knowledge" / "forecasts.jsonl"
 
 P_LO, P_HI = 0.05, 0.95
@@ -104,29 +125,67 @@ ALIAS = {
 GRP_OFFSETS = {"核心": 0.10, "衛星": 0.05}   # PREREG 凍結（設計稿 §9 row F2）
 PICKS_OFFSET = 0.05                          # PREREG 凍結
 TENBAGGER_OFFSET = 0.05                      # PREREG 凍結（365d 用 p_clim_365d）
+OWNBOARD_OFFSET = 0.05                       # PREREG 凍結（設計稿 §11.1，兩個 horizon 同）
+LATE_OFFSET = -0.05                          # PREREG 凍結（設計稿 §11.1，方向為負：守門主張晚段跑輸）
+NODD_OFFSET = 0.05                           # PREREG 凍結（設計稿 §11.1）
+OWNBOARD_TOP_N = 15                          # PREREG 凍結（D5「甲軌前 15」）
 
-# 每個名單的固定參數（PREREG 凍結，設計稿 §9 row F2）
+# 每個名單的固定參數（PREREG 凍結，設計稿 §9 row F2／§11.1）。
+# "templates"：同一份名單可能同時對應多個 claim_template／horizon（目前只有 ownboard 有
+# 91d＋365d 兩個），舊三個名單各自只有一個 template，用單元素 list 表示，行為與改版前逐字相同。
+# "episode_prefix"：episode_id 的第一段。舊三個名單逐字沿用 source 本身（設計稿 §9 row F2
+# 「episode_id = {source}:{ticker}:{YYYY-MM}」）；新三個名單設計稿 §11.1 表格明寫較短的
+# 專屬前綴（own／late／nodd，非 source 全名 own-board／picks-late／mech-nodd），故獨立一欄
+# 不與 source 混用。
 LIST_SPECS = {
     "grp": {
         "source": "grp-seat",
-        "claim_template": "grp_beat_spy_91d",
-        "horizon_days": 91,
-        "p_clim_key": "dd_beat_spy_91d",
         "id_prefix": "grp",
+        "episode_prefix": "grp-seat",
+        "templates": [
+            {"claim_template": "grp_beat_spy_91d", "horizon_days": 91, "p_clim_key": "dd_beat_spy_91d"},
+        ],
     },
     "picks": {
         "source": "picks-baofa",
-        "claim_template": "picks_beat_spy_91d",
-        "horizon_days": 91,
-        "p_clim_key": "dd_beat_spy_91d",
         "id_prefix": "picks",
+        "episode_prefix": "picks-baofa",
+        "templates": [
+            {"claim_template": "picks_beat_spy_91d", "horizon_days": 91, "p_clim_key": "dd_beat_spy_91d"},
+        ],
     },
     "tenbagger": {
         "source": "tenbagger",
-        "claim_template": "tenbagger_beat_spy_365d",
-        "horizon_days": 365,
-        "p_clim_key": "dd_beat_spy_365d",
         "id_prefix": "tb",
+        "episode_prefix": "tenbagger",
+        "templates": [
+            {"claim_template": "tenbagger_beat_spy_365d", "horizon_days": 365, "p_clim_key": "dd_beat_spy_365d"},
+        ],
+    },
+    "ownboard": {
+        "source": "own-board",
+        "id_prefix": "own",
+        "episode_prefix": "own",
+        "templates": [
+            {"claim_template": "ownboard_beat_spy_91d", "horizon_days": 91, "p_clim_key": "dd_beat_spy_91d"},
+            {"claim_template": "ownboard_beat_spy_365d", "horizon_days": 365, "p_clim_key": "dd_beat_spy_365d"},
+        ],
+    },
+    "late": {
+        "source": "picks-late",
+        "id_prefix": "late",
+        "episode_prefix": "late",
+        "templates": [
+            {"claim_template": "picks_late_beat_spy_91d", "horizon_days": 91, "p_clim_key": "dd_beat_spy_91d"},
+        ],
+    },
+    "nodd": {
+        "source": "mech-nodd",
+        "id_prefix": "nodd",
+        "episode_prefix": "nodd",
+        "templates": [
+            {"claim_template": "nodd_beat_spy_91d", "horizon_days": 91, "p_clim_key": "dd_beat_spy_91d"},
+        ],
     },
 }
 
@@ -252,10 +311,104 @@ def extract_tenbagger_items():
     return items
 
 
+def extract_ownboard_items():
+    """own-board（設計稿 §11.1 row 1）：`arena.own_board[]` 中 `pass == true`，依 `score`
+    降冪取前 15（D5「甲軌前 15」）。base_date 取 arena `run_timestamp` 日期部分（同 grp）。"""
+    data = _load_json(ARENA)
+    if data is None:
+        warn(f"{ARENA} 不存在或無法讀取，ownboard 名單本輪略過")
+        return []
+    base_date = _date_part(data.get("run_timestamp"))
+    if not base_date:
+        warn(f"{ARENA} 缺 run_timestamp，ownboard 名單本輪略過")
+        return []
+    board = data.get("own_board") or []
+    passed = [x for x in board if x.get("pass") is True and x.get("ticker")]
+    passed.sort(key=lambda x: -(x.get("score") or 0))
+    top = passed[:OWNBOARD_TOP_N]
+    items = []
+    for seat in top:
+        ticker = seat["ticker"]
+        items.append({
+            "ticker": ticker,
+            "role_label": "擁有層前十五",
+            "base_date": base_date,
+            "list_price": None,   # own_board 不帶價，一律走 weekly_cache 退路
+            "offset": OWNBOARD_OFFSET,
+            "source_ref": (f"docs/engine/arena.json run_timestamp={data.get('run_timestamp')}"
+                           f" own_board score={seat.get('score')} ticker={ticker}"),
+        })
+    return items
+
+
+def extract_late_items():
+    """picks-late（設計稿 §11.1 row 2）：`candidates.baofa[]` 中 `late_cycle == true` 且
+    `above_w52 == true`（＝只因守門被擋、否則會上榜者）。base_date 取 candidates `as_of`。"""
+    data = _load_json(CANDIDATES)
+    if data is None:
+        warn(f"{CANDIDATES} 不存在或無法讀取，late 名單本輪略過")
+        return []
+    base_date = data.get("as_of")
+    if not base_date:
+        warn(f"{CANDIDATES} 缺 as_of，late 名單本輪略過")
+        return []
+    items = []
+    for it in data.get("baofa") or []:
+        ticker = it.get("ticker")
+        if not ticker:
+            continue
+        if it.get("late_cycle") is not True or it.get("above_w52") is not True:
+            continue
+        items.append({
+            "ticker": ticker,
+            "role_label": "爆發榜晚段（守門擋下）",
+            "base_date": base_date,
+            "list_price": None,   # baofa[] 不帶價，一律走 weekly_cache 退路
+            "offset": LATE_OFFSET,
+            "late_reason": it.get("late_reason"),
+            "source_ref": f"docs/picks/candidates.json as_of={base_date} ticker={ticker}",
+        })
+    return items
+
+
+def extract_nodd_items():
+    """mech-nodd（設計稿 §11.1 row 3）：`arena.own_board[]` 中 `src != "dd-pool"` 且
+    `pass == true`（無 DD 而機械過閘）。今日 0 筆是預期行為（CI 市值回填後才會有）。"""
+    data = _load_json(ARENA)
+    if data is None:
+        warn(f"{ARENA} 不存在或無法讀取，nodd 名單本輪略過")
+        return []
+    base_date = _date_part(data.get("run_timestamp"))
+    if not base_date:
+        warn(f"{ARENA} 缺 run_timestamp，nodd 名單本輪略過")
+        return []
+    board = data.get("own_board") or []
+    hits = [x for x in board if x.get("pass") is True and x.get("src") != "dd-pool" and x.get("ticker")]
+    if not hits:
+        info("arena.own_board 中 src != 'dd-pool' 且 pass == true 目前 0 筆——"
+             "符合設計稿 §11.1「今日 0 筆，CI 市值回填後才會有」已知現況，非錯誤")
+    items = []
+    for seat in hits:
+        ticker = seat["ticker"]
+        items.append({
+            "ticker": ticker,
+            "role_label": "無 DD 機械過閘",
+            "base_date": base_date,
+            "list_price": None,
+            "offset": NODD_OFFSET,
+            "source_ref": (f"docs/engine/arena.json run_timestamp={data.get('run_timestamp')}"
+                           f" own_board src={seat.get('src')} ticker={ticker}"),
+        })
+    return items
+
+
 EXTRACTORS = {
     "grp": extract_grp_items,
     "picks": extract_picks_items,
     "tenbagger": extract_tenbagger_items,
+    "ownboard": extract_ownboard_items,
+    "late": extract_late_items,
+    "nodd": extract_nodd_items,
 }
 
 
@@ -285,9 +438,9 @@ def _load_flowmap_spy():
     return sorted((d, c) for d, c in bars)
 
 
-def _weekly_cache_close_at_or_before(ticker, ymd):
+def _weekly_cache_close_at_or_before(ticker, ymd, cache_dir):
     fname = ALIAS.get(ticker, ticker)
-    path = CACHE_DIR / f"{fname}.json"
+    path = cache_dir / f"{fname}.json"
     data = _load_json(path)
     if not data:
         return None
@@ -297,6 +450,18 @@ def _weekly_cache_close_at_or_before(ticker, ymd):
     if not bars:
         return None
     return _close_at_or_before(bars, ymd)
+
+
+def _base_px_lookup(ticker, ymd):
+    """base_px 退路鏈（設計稿 §11.1）：`data/weekly_cache/` → 新增
+    `data/weekly_cache_universe/`（同 schema，目錄可空或可缺，不 crash）→ 都沒有回傳
+    (None, None)，呼叫端視為 base_px_missing 跳過。"""
+    for cache_dir, label in ((CACHE_DIR, "weekly_cache"), (CACHE_DIR_UNIVERSE, "weekly_cache_universe")):
+        hit = _weekly_cache_close_at_or_before(ticker, ymd, cache_dir)
+        if hit is not None:
+            wc_date, px = hit
+            return px, f"{label}@{wc_date}"
+    return None, None
 
 
 def p_clim_ref_text(base_rates, p_clim_key):
@@ -326,17 +491,22 @@ def _existing_forecasts(path):
 
 
 def _existing_open_keys(existing_rows):
+    """dedupe key = (source, ticker, claim_template)（設計稿 §11.1：「同 source 同 ticker
+    同 template 已有 open 命題不重發」）。加入 claim_template 對舊三個名單（grp/picks/
+    tenbagger，各自只有一個 template）行為不變；ownboard 的 91d／365d 兩個 template 因而
+    被視為不同鍵，彼此不互相擋。"""
     keys = set()
     for r in existing_rows:
         if r.get("status") != "open":
             continue
         source = r.get("source")
+        template = r.get("claim_template")
         series = (r.get("resolver") or {}).get("series") or ""
         if not series.startswith("relspy:"):
             continue
         ticker = series[len("relspy:"):]
-        if source and ticker:
-            keys.add((source, ticker))
+        if source and ticker and template:
+            keys.add((source, ticker, template))
     return keys
 
 
@@ -358,11 +528,12 @@ def _local_next_ids(ts_str, prefix, n, existing_rows):
 # 草案產生
 # ═══════════════════════════════════════════════════════════════════════════
 
-def build_draft(item, spec, ts_str, base_rates, spy_bars):
+def build_draft(item, spec, template, ts_str, base_rates, spy_bars):
     ticker = item["ticker"]
     base_date = item["base_date"]
-    horizon_days = spec["horizon_days"]
-    p_clim_key = spec["p_clim_key"]
+    horizon_days = template["horizon_days"]
+    p_clim_key = template["p_clim_key"]
+    claim_template = template["claim_template"]
     offset = item["offset"]
 
     p_clim = (base_rates.get("p_clim") or {}).get(p_clim_key)
@@ -373,11 +544,9 @@ def build_draft(item, spec, ts_str, base_rates, spy_bars):
     if base_px is not None:
         base_px_source = "list"
     else:
-        hit = _weekly_cache_close_at_or_before(ticker, base_date)
-        if hit is None:
+        base_px, base_px_source = _base_px_lookup(ticker, base_date)
+        if base_px is None:
             return None, "base_px_missing"
-        wc_date, base_px = hit
-        base_px_source = f"weekly_cache@{wc_date}"
 
     if not spy_bars:
         return None, "base_spy_missing"
@@ -389,16 +558,25 @@ def build_draft(item, spec, ts_str, base_rates, spy_bars):
     p = round(_clip(p_clim + offset, P_LO, P_HI), 4)
     resolve_by = _plus_days(base_date, horizon_days)
     month_key = base_date[:7]
-    episode_id = f"{spec['source']}:{ticker}:{month_key}"
+    episode_id = f"{spec['episode_prefix']}:{ticker}:{month_key}"
     p_clim_ref = p_clim_ref_text(base_rates, p_clim_key)
 
     claim = (f"{resolve_by} 前（{item['role_label']} {base_date} 起 {horizon_days} 曆日）："
              f"{ticker} 報酬跑贏 SPY")
 
-    note = (f"{spec['source']} 機械賦值（PREREG offset，非人工判斷）｜role={item['role_label']}｜"
-            f"offset={offset:+.2f}｜p_clim[{p_clim_key}]={p_clim}（{p_clim_ref}）｜"
-            f"base_date={base_date}｜base_px={base_px}（{base_px_source}）｜"
-            f"base_spy={base_spy_px}（{base_spy_date}）｜source_ref={item['source_ref']}")
+    note_parts = [
+        f"{spec['source']} 機械賦值（PREREG offset，非人工判斷）",
+        f"role={item['role_label']}",
+        f"offset={offset:+.2f}",
+        f"p_clim[{p_clim_key}]={p_clim}（{p_clim_ref}）",
+        f"base_date={base_date}",
+        f"base_px={base_px}（{base_px_source}）",
+        f"base_spy={base_spy_px}（{base_spy_date}）",
+    ]
+    if item.get("late_reason"):
+        note_parts.append(f"late_reason={item['late_reason']}")
+    note_parts.append(f"source_ref={item['source_ref']}")
+    note = "｜".join(note_parts)
 
     draft = {
         "id": None,
@@ -407,7 +585,7 @@ def build_draft(item, spec, ts_str, base_rates, spy_bars):
         "source": spec["source"],
         "source_ref": item["source_ref"],
         "claim": claim,
-        "claim_template": spec["claim_template"],
+        "claim_template": claim_template,
         "p": p,
         "p_clim": p_clim,
         "p_clim_ref": p_clim_ref,
@@ -439,34 +617,37 @@ def gather_for_list(list_name, items, ts_str, base_rates, spy_bars, dedupe_keys,
     drafts = []
     for item in items:
         ticker = item["ticker"]
-        key = (spec["source"], ticker)
-        if key in dedupe_keys:
-            skip_counts[f"{list_name}:dedupe_open"] += 1
-            continue
+        for template in spec["templates"]:
+            claim_template = template["claim_template"]
+            key = (spec["source"], ticker, claim_template)
+            if key in dedupe_keys:
+                skip_counts[f"{list_name}:dedupe_open"] += 1
+                continue
 
-        resolve_by = _plus_days(item["base_date"], spec["horizon_days"])
-        if resolve_by < ts_str:
-            skip_counts[f"{list_name}:resolve_by_in_past"] += 1
-            warn(f"{list_name}/{ticker}：resolve_by={resolve_by} < today={ts_str}，跳過")
-            continue
+            resolve_by = _plus_days(item["base_date"], template["horizon_days"])
+            if resolve_by < ts_str:
+                skip_counts[f"{list_name}:resolve_by_in_past"] += 1
+                warn(f"{list_name}/{ticker}/{claim_template}：resolve_by={resolve_by} < today={ts_str}，跳過")
+                continue
 
-        draft, skip_reason = build_draft(item, spec, ts_str, base_rates, spy_bars)
-        if draft is None:
-            skip_counts[f"{list_name}:{skip_reason}"] += 1
-            warn(f"{list_name}/{ticker}：{skip_reason}，跳過")
-            continue
+            draft, skip_reason = build_draft(item, spec, template, ts_str, base_rates, spy_bars)
+            if draft is None:
+                skip_counts[f"{list_name}:{skip_reason}"] += 1
+                warn(f"{list_name}/{ticker}/{claim_template}：{skip_reason}，跳過")
+                continue
 
-        drafts.append(draft)
-        dedupe_keys.add(key)  # 同批次內同 (source, ticker) 不重複掛（例如同週核心與衛星剛好同檔）
+            drafts.append(draft)
+            dedupe_keys.add(key)  # 同批次內同 (source, ticker, template) 不重複掛
 
     return drafts
 
 
 def main():
     ap = argparse.ArgumentParser(
-        description="名單 producer（GRP 席位／精選爆發榜／十倍股候選 → 跑贏 SPY 機率命題，設計稿 §9 row F2）")
-    ap.add_argument("--list", choices=["grp", "picks", "tenbagger", "all"], default="all",
-                     help="只跑指定名單（預設 all＝三個都跑）")
+        description="名單 producer（GRP 席位／精選爆發榜／十倍股候選／擁有層前15／爆發榜晚段／"
+                    "無 DD 機械過閘 → 跑贏 SPY 機率命題，設計稿 §9 row F2＋§11.1）")
+    ap.add_argument("--list", choices=["grp", "picks", "tenbagger", "ownboard", "late", "nodd", "all"],
+                     default="all", help="只跑指定名單（預設 all＝六個都跑）")
     ap.add_argument("--write", action="store_true",
                      help="append 進 ledger（經 forecast_lib，含哨兵 twin；預設 dry-run）")
     ap.add_argument("--ledger", default=str(FORECASTS_DEFAULT),
@@ -474,7 +655,8 @@ def main():
     args = ap.parse_args()
 
     ledger_path = Path(args.ledger)
-    lists_to_run = ["grp", "picks", "tenbagger"] if args.list == "all" else [args.list]
+    lists_to_run = (["grp", "picks", "tenbagger", "ownboard", "late", "nodd"]
+                     if args.list == "all" else [args.list])
 
     today = date.today()
     ts_str = today.isoformat()

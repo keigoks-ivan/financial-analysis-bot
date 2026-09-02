@@ -1,0 +1,119 @@
+{
+  "schema": "breadth-base-rates-v1",
+  "tickers": [
+    "SPY",
+    "XLK",
+    "XLF",
+    "XLE",
+    "XLV",
+    "XLI",
+    "XLY",
+    "XLP",
+    "XLU",
+    "XLB",
+    "XLRE",
+    "XLC"
+  ],
+  "built_at": "2026-09-02T07:28:12Z",
+  "data_start": {
+    "SPY": "1993-01-29",
+    "XLK": "1998-12-22",
+    "XLF": "1998-12-22",
+    "XLE": "1998-12-22",
+    "XLV": "1998-12-22",
+    "XLI": "1998-12-22",
+    "XLY": "1998-12-22",
+    "XLP": "1998-12-22",
+    "XLU": "1998-12-22",
+    "XLB": "1998-12-22",
+    "XLRE": "2015-10-08",
+    "XLC": "2018-06-19"
+  },
+  "data_end": {
+    "SPY": "2026-09-01",
+    "XLK": "2026-09-01",
+    "XLF": "2026-09-01",
+    "XLE": "2026-09-01",
+    "XLV": "2026-09-01",
+    "XLI": "2026-09-01",
+    "XLY": "2026-09-01",
+    "XLP": "2026-09-01",
+    "XLU": "2026-09-01",
+    "XLB": "2026-09-01",
+    "XLRE": "2026-09-01",
+    "XLC": "2026-09-01"
+  },
+  "n_price_days": {
+    "SPY": 8455,
+    "XLK": 6964,
+    "XLF": 6965,
+    "XLE": 6965,
+    "XLV": 6965,
+    "XLI": 6964,
+    "XLY": 6964,
+    "XLP": 6964,
+    "XLU": 6964,
+    "XLB": 6964,
+    "XLRE": 2740,
+    "XLC": 2061
+  },
+  "n_breadth_series": 6915,
+  "n_monthly_samples": 331,
+  "n_samples": 331,
+  "sma_window": 50,
+  "up_21d_trading_days": 21,
+  "up_63d_trading_days": 63,
+  "min_available_sectors": 9,
+  "min_cell_n": 30,
+  "cuts": {
+    "low_max": 30,
+    "high_min": 80
+  },
+  "buckets": {
+    "low": {
+      "n_21d": 68,
+      "n_63d": 68,
+      "freq_up_21d": 0.603,
+      "freq_up_63d": 0.706,
+      "b_range": [
+        0.0,
+        27.27
+      ],
+      "description": "廣度低：b < 30（參與度低，洗盤區）"
+    },
+    "mid": {
+      "n_21d": 131,
+      "n_63d": 129,
+      "freq_up_21d": 0.664,
+      "freq_up_63d": 0.713,
+      "b_range": [
+        30.0,
+        80.0
+      ],
+      "description": "廣度中性：30 ≤ b ≤ 80"
+    },
+    "high": {
+      "n_21d": 131,
+      "n_63d": 131,
+      "freq_up_21d": 0.588,
+      "freq_up_63d": 0.656,
+      "b_range": [
+        81.82,
+        100.0
+      ],
+      "description": "廣度高：b > 80（參與度高，廣度強）"
+    }
+  },
+  "pooled": {
+    "n_21d": 330,
+    "n_63d": 328,
+    "freq_up_21d": 0.621,
+    "freq_up_63d": 0.689
+  },
+  "p_clim": {
+    "breadth_spy_up_21d": 0.621,
+    "breadth_spy_up_63d": 0.689
+  },
+  "definition": "b_t = 100 × (收盤 > 自身 50 日簡單均線 的類股 ETF 檔數) ÷ (當日有 ≥ 50 根 bar 的類股 ETF 檔數)；母體 11 檔 SPDR：XLK, XLF, XLE, XLV, XLI, XLY, XLP, XLU, XLB, XLRE, XLC；可用檔數 < 9 的日子不取樣。取樣點＝SPY 每月首個交易日 t；結果＝SPY 收盤(t+21／63 個 SPY 自身交易日) > 收盤(t)，21d／63d 各自獨立計數（尾端不足者該窗不計，不影響另一窗）。桶為 PREREG 固定門檻（非資料推算切點）：low b<30 ／ mid 30≤b≤80 ／ high b>80。",
+  "note": "重疊樣本，非獨立樣本：月頻取樣降低但未消除 21/63 交易日前瞻視窗的跨月重疊，本表只報告經驗頻率與樣本數，不做假設檢定。固定門檻非資料切點：low/high 桶樣本量取決於歷史上廣度觸及極端值的頻率，可能明顯薄於 mid 桶；cell n < 30 時 producer 以 pooled 取代（本次重建三桶皆達門檻，未觸發 pooled 退回）。XLRE（2015 上市）／XLC（2018 上市）在各自上市初期累計根數不足 50 時暫不計入分母，屬預期行為非資料缺陷。無 stooq fallback（yfinance 失敗時沿用既有本地快取並 warn）。"
+}

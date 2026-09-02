@@ -18,6 +18,12 @@
 刻意對齊 docs/monitor/data/latest.json 的 sofr_iorb 顯示值格式（"3bps" 這類字串），讓
 harvest_macro_falsifiers.py 算 delta 時不必再做一次尺度換算。
 
+另兩條衍生序列 core_pce_yoy／payems_3m（forecast v2 P2 設計稿 §6 item4，G4 包新增）：抓
+PCEPILFE（核心 PCE 平減指數，月頻）與 PAYEMS（非農就業人數，月頻）全史後，衍生
+core_pce_yoy＝(PCEPILFE_t／PCEPILFE_{t−12} − 1) × 100（12 期 YoY，%）、payems_3m＝最近 3 個月
+ΔPAYEMS 平均（千人）——公式與 scripts/build_monitor_internals.py 的 yoy_series()／
+mom_3mavg_series() 逐字一致（見 derive_core_pce_yoy()／derive_payems_3m()）。
+
 另有一條非 FRED 序列 DXY（美元指數）：yfinance `DX-Y.NYB` 日收盤 ~20 年，stooq `dx.f`
 連續期貨為 fallback（2026-09-02 實測：本機網路環境下 stooq CSV endpoint 一律回傳 JS
 challenge 頁、非 CSV，即使對已知有效代碼如 spy.us 亦然——推測 stooq 現在全站擋爬蟲，此
@@ -43,6 +49,12 @@ PREREG 凍結（設計稿 §5.5，sonnet 不得改）：
   * op ">"（含 ">="）：對每個有完整未來 H_td 筆視窗的起點 t，命中＝max(x[t+1..t+H_td]) − x[t] ≥ delta。
   * op "<"（含 "<="）：命中＝min(x[t+1..t+H_td]) − x[t] ≤ delta。
   * p = hits / n（n＝可判斷起點數，非全樣本筆數）。
+  * **MONTHLY_SERIES = {core_pce_yoy, payems_3m}**（2026-09-02 G4 新增，設計稿 P2 §6 item4）：
+    這兩個 key 是月頻序列（非交易日），H 改為 max(1, round(horizon_days / 30.44)) 個觀測
+    （曆日轉「月」筆數，30.44＝365.25/12）；樣本窗改為最近 240 個觀測（20 年×12 個月，不足取
+    全部），取代日頻的「近 20 年」日期窗；op／命中規則不變（同上，只是視窗單位是觀測筆數而非
+    交易日）。climatology() 回傳 dict 新增 `freq`："monthly"（MONTHLY_SERIES 成員）或
+    "daily"（其餘 key）。
 
 用法
 ----
@@ -70,11 +82,18 @@ SCHEMA_RAW = "macro-base-rates-raw-v1"
 SCHEMA_META = "macro-base-rates-v1"
 
 FRED_SERIES = ["DGS10", "DGS30", "BAMLH0A0HYM2", "THREEFYTP10", "SOFR", "IORB",
-               "DEXCHUS", "T10YIE"]           # DEXCHUS／T10YIE：2026-09-02 F3 新增，走既有
+               "DEXCHUS", "T10YIE", "PCEPILFE", "PAYEMS"]
+                                               # DEXCHUS／T10YIE：2026-09-02 F3 新增，走既有
                                                # FRED 抓取／全數失敗即中止整批重建的既有行為
-                                               # （不享受 DXY 的「record gap」特例，見檔頭）
+                                               # （不享受 DXY 的「record gap」特例，見檔頭）。
+                                               # PCEPILFE／PAYEMS：2026-09-02 G4 新增（設計稿 P2
+                                               # §6 item4），月頻，衍生 core_pce_yoy／payems_3m
+                                               # （見 derive_core_pce_yoy()／derive_payems_3m()）。
 SOFR_IORB_START = "2021-07-29"     # PREREG（設計稿 §5.5／§0）：IORB 序列本身從這天開始
-LOOKBACK_YEARS = 20                # PREREG（設計稿 §5.5）：climatology 樣本窗
+LOOKBACK_YEARS = 20                # PREREG（設計稿 §5.5）：climatology 樣本窗（日頻 key）
+MONTHLY_SERIES = {"core_pce_yoy", "payems_3m"}  # PREREG（設計稿 P2 §6 item4，G4 新增）：月頻
+                                                 # climatology key 清單
+MONTHLY_LOOKBACK_OBS = 240         # PREREG：月頻樣本窗＝240 個觀測（20 年×12 個月，不足取全部）
 IF_DUE_MAX_AGE_DAYS = 85           # --if-due 門檻（比照 build_rv_base_rates.py 慣例）
 
 DXY_YF_TICKER = "DX-Y.NYB"         # 2026-09-02 F3 新增：美元指數，非 FRED 序列
@@ -87,6 +106,8 @@ DXY_FETCH_PERIOD = "20y"           # 對齊 LOOKBACK_YEARS
 # 單位，直接是指數點數）；usdcny 對應 FRED DEXCHUS（USD/CNY 匯率，直接是匯率數字）；bei10y
 # 與 t10yie 是同一條 FRED T10YIE（10Y breakeven 通膨預期，%）的兩個別名——kill_watch.json 對
 # 這條門檻的 data_source.key 目前記作 macro/bei10y，未來若改用 t10yie 兩個 key 都能命中。
+# core_pce_yoy／payems_3m 為 2026-09-02 G4 新增（設計稿 P2 §6 item4）：對應本檔衍生的月頻序列
+# （非 FRED 原始 id，同 sofr_iorb 慣例），亦登記於 MONTHLY_SERIES（climatology() 走月頻分支）。
 MONITOR_KEY_SERIES = {
     "dgs10": ("DGS10", "%"),
     "dgs30": ("DGS30", "%"),
@@ -97,6 +118,8 @@ MONITOR_KEY_SERIES = {
     "usdcny": ("DEXCHUS", "USD/CNY"),
     "bei10y": ("T10YIE", "%"),
     "t10yie": ("T10YIE", "%"),
+    "core_pce_yoy": ("core_pce_yoy", "%"),
+    "payems_3m": ("payems_3m", "K"),
 }
 
 
@@ -188,6 +211,33 @@ def derive_sofr_iorb(series: dict) -> list:
     iorb = dict(series.get("IORB", []))
     common_dates = sorted(d for d in (set(sofr) & set(iorb)) if d >= SOFR_IORB_START)
     return [(d, round((sofr[d] - iorb[d]) * 100, 4)) for d in common_dates]
+
+
+def derive_core_pce_yoy(series: dict) -> list:
+    """PCEPILFE 12 期 YoY（%）＝(PCEPILFE_t／PCEPILFE_{t−12} − 1) × 100。公式與
+    scripts/build_monitor_internals.py::yoy_series() 逐字一致（2026-09-02 G4 新增，設計稿 P2
+    §6 item4）。"""
+    pts = series.get("PCEPILFE", [])
+    out = []
+    for i in range(12, len(pts)):
+        d, v = pts[i]
+        _, v12 = pts[i - 12]
+        if v12:
+            out.append((d, round((v / v12 - 1) * 100, 4)))
+    return out
+
+
+def derive_payems_3m(series: dict) -> list:
+    """PAYEMS 月增的 3 個月移動平均（單位千人）。公式與
+    scripts/build_monitor_internals.py::mom_3mavg_series() 逐字一致（2026-09-02 G4 新增，
+    設計稿 P2 §6 item4）。"""
+    pts = series.get("PAYEMS", [])
+    diffs = [(pts[i][0], pts[i][1] - pts[i - 1][1]) for i in range(1, len(pts))]
+    out = []
+    for i in range(2, len(diffs)):
+        w = [diffs[i - 2][1], diffs[i - 1][1], diffs[i][1]]
+        out.append((diffs[i][0], round(sum(w) / 3, 2)))
+    return out
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -294,6 +344,14 @@ def build_raw_cache(skip_fetch: bool) -> dict:
     if not series["sofr_iorb"]:
         warn("sofr_iorb 衍生序列為空（SOFR／IORB 無共同交易日 ≥ "
              f"{SOFR_IORB_START}）——climatology(key='sofr_iorb', ...) 之後會回傳 n=0")
+    series["core_pce_yoy"] = derive_core_pce_yoy(series)
+    if not series["core_pce_yoy"]:
+        warn("core_pce_yoy 衍生序列為空（PCEPILFE 筆數不足 12 期）——"
+             "climatology(key='core_pce_yoy', ...) 之後會回傳 n=0")
+    series["payems_3m"] = derive_payems_3m(series)
+    if not series["payems_3m"]:
+        warn("payems_3m 衍生序列為空（PAYEMS 筆數不足）——"
+             "climatology(key='payems_3m', ...) 之後會回傳 n=0")
     series["DXY"] = fetch_dxy_series(skip_fetch, existing_cache_series)
 
     cache = {
@@ -302,8 +360,9 @@ def build_raw_cache(skip_fetch: bool) -> dict:
         "meta": {
             "built_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "note": ("build_macro_base_rates.py 專用 FRED 快取（DGS10/DGS30/"
-                     "BAMLH0A0HYM2/THREEFYTP10/SOFR/IORB/DEXCHUS/T10YIE 全史 + 衍生 sofr_iorb "
-                     "bp 序列 + 非 FRED 的 DXY 美元指數序列），手動／--if-due 重建，非逐日 cron。"),
+                     "BAMLH0A0HYM2/THREEFYTP10/SOFR/IORB/DEXCHUS/T10YIE/PCEPILFE/PAYEMS 全史 + "
+                     "衍生 sofr_iorb bp 序列 + 衍生 core_pce_yoy／payems_3m 月頻序列 + 非 FRED 的 "
+                     "DXY 美元指數序列），手動／--if-due 重建，非逐日 cron。"),
         },
     }
     RAW_CACHE.parent.mkdir(parents=True, exist_ok=True)
@@ -337,31 +396,37 @@ def _load_raw_series(cache_path: Path = RAW_CACHE) -> dict:
 
 def climatology(key: str, op: str, delta: float, horizon_days: int,
                  cache_path: Path = RAW_CACHE) -> dict:
-    """PREREG 凍結公式，見檔頭。key 為 monitor 域 key（dgs10/dgs30/hy_oas/tp10y/sofr_iorb），
+    """PREREG 凍結公式，見檔頭。key 為 monitor 域 key（dgs10/dgs30/hy_oas/tp10y/sofr_iorb 等），
     非 FRED series id。op ∈ {">", ">=", "<", "<="}；delta 帶號＝門檻 − 現值，單位與快取序列
-    一致（dgs10/dgs30/hy_oas/tp10y 為 %，sofr_iorb 為 bp）。"""
+    一致（dgs10/dgs30/hy_oas/tp10y 為 %，sofr_iorb 為 bp）。key ∈ MONTHLY_SERIES（core_pce_yoy／
+    payems_3m）走月頻分支（見檔頭 PREREG 段），回傳 dict 多一個 `freq` 欄位。"""
     mapped = MONITOR_KEY_SERIES.get(key)
     if mapped is None:
         raise ValueError(f"climatology: 未知 monitor key={key!r}（僅支援 {sorted(MONITOR_KEY_SERIES)}）")
     series_name, unit = mapped
+    freq = "monthly" if key in MONTHLY_SERIES else "daily"
 
     all_series = _load_raw_series(cache_path)
     rows = all_series.get(series_name)
     if not rows:
         return {"p": None, "n": 0, "window": f"{series_name}：raw cache 無資料（未 build 或序列為空）",
-                "series": series_name}
+                "series": series_name, "freq": freq}
 
     dates = [r[0] for r in rows]
     vals = [r[1] for r in rows]
     n_total = len(vals)
     if n_total < 2:
         return {"p": None, "n": 0, "window": f"{series_name}：樣本不足（僅 {n_total} 筆）",
-                "series": series_name}
+                "series": series_name, "freq": freq}
 
-    cutoff = _shift_years(dates[-1], -LOOKBACK_YEARS)
-    start_i = bisect.bisect_left(dates, cutoff)
     op_eff = ">" if op in (">", ">=") else "<"
-    H_td = max(1, round(horizon_days * 252 / 365))
+    if freq == "monthly":
+        start_i = max(0, n_total - MONTHLY_LOOKBACK_OBS)
+        H_td = max(1, round(horizon_days / 30.44))
+    else:
+        cutoff = _shift_years(dates[-1], -LOOKBACK_YEARS)
+        start_i = bisect.bisect_left(dates, cutoff)
+        H_td = max(1, round(horizon_days * 252 / 365))
 
     hits = 0
     count = 0
@@ -381,11 +446,17 @@ def climatology(key: str, op: str, delta: float, horizon_days: int,
             hits += 1
 
     p = (hits / count) if count else None
-    window_desc = (f"{series_name} 近{LOOKBACK_YEARS}年（不足取全部，實際取樣 "
-                    f"{dates[start_i]}..{dates[-1] if start_i < n_total else dates[-1]}）、"
-                    f"H_td={H_td} 交易日視窗（horizon_days={horizon_days}×252/365 四捨五入）、"
-                    f"op={op_eff}、delta={delta}{unit}")
-    return {"p": p, "n": count, "window": window_desc, "series": series_name}
+    if freq == "monthly":
+        window_desc = (f"{series_name} 最近 {n_total - start_i} 個觀測（月頻，不足取全部，"
+                        f"實際取樣 {dates[start_i]}..{dates[-1]}）、"
+                        f"H={H_td} 個月觀測視窗（horizon_days={horizon_days}÷30.44 四捨五入）、"
+                        f"op={op_eff}、delta={delta}{unit}")
+    else:
+        window_desc = (f"{series_name} 近{LOOKBACK_YEARS}年（不足取全部，實際取樣 "
+                        f"{dates[start_i]}..{dates[-1] if start_i < n_total else dates[-1]}）、"
+                        f"H_td={H_td} 交易日視窗（horizon_days={horizon_days}×252/365 四捨五入）、"
+                        f"op={op_eff}、delta={delta}{unit}")
+    return {"p": p, "n": count, "window": window_desc, "series": series_name, "freq": freq}
 
 
 # ═══════════════════════════════════════════════════════════════════════════

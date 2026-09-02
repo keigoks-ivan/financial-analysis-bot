@@ -137,3 +137,34 @@
 - freshness 表加「系統主控台（實單主系統）」列（as_of＝data_date）。
 - 頁面：環境區說明句改為「五套讀法各自獨立，不合成一個分數；第五磚是實單執行層的目標曝險，來自系統主控台。」；磚可點連到 `/long-track/`；來源 pills 加 `/long-track/`；移除所有「六態」字樣（退役橫幅仍在 /six-state/ 頁）。
 - 首頁市況卡不變。
+
+## §11 選股系統 v2 → 帳簿與市況主控台整合（2026-09-02 深夜凍結；sonnet 實作，只讀對方 JSON、不改 engine／picks 任何 pipeline）
+
+**對方交接（選股 session，已全部併入 main）**：v2 設計與執行紀錄在 `_picks_first_principles_review_20260902.md` Part D／E；`docs/engine/arena.json` 升 `schema_version 2.0`（排序＝擁有層分 own_score、R 降為燈號、DD 只 veto／角色、遲滯 2/4、美股限定）；新增 `own_board`（60 列，含 `pass`／`src`／`route`／`verdict`）、`challengers_top`、`core_bench`；`docs/picks/candidates.json` 爆發候選加 `late_cycle`／`late_reason`／`above_w52`／`not_promoted_reason`（峰頂與共識路徑守門，被擋者只列候選）；engine 母體週線將落 `data/weekly_cache_universe/`（schema 同 `data/weekly_cache/`，由 weekly-engine.yml 首次 CI 週跑落地）。**既有 grp-seat／picks-baofa producer 與 v2 JSON 相容**（2026-09-02 dry-run：grp 8 候選→5 張＋3 張 dedupe、picks 5 張；tenbagger 5 席仍 base_px_missing）。
+
+**兩件對方留給持有人的決定（本批不動，只轉達）**：①翻 dd-screener `--include-non-dd` 旗標前，先把 `build_cyclical_track.py::passes_moat_floor()`「缺 moat 視為通過」改為「缺 moat → 只列候選不進正式榜」；②DD 180 天內「觀望」是否擋席位（現只當標籤，FIX 因此坐上衛星席）。
+
+### 11.1 三個新名單 producer（加在 `scripts/generate_list_forecasts.py` 內，共用既有 relspy／查重／offset／forecast_lib 機制；PREREG 凍結至 SPRT 判決或 2027-03 校準輪）
+
+| list（`--list`） | source | 資料 | 入選條件 | claim_template／horizon | p（PREREG） | episode／block |
+|---|---|---|---|---|---|---|
+| `ownboard` | `own-board` | `arena.own_board` | `pass == true`，依 `score` 降冪取前 **15**（D5 的「甲軌前 15」） | `ownboard_beat_spy_91d`（91 曆日）＋`ownboard_beat_spy_365d`（365 曆日，用 p_clim_365d） | clip(p_clim＋0.05) 兩個 horizon 同 | `own:{ticker}:{YYYY-MM}`／月 |
+| `late` | `picks-late` | `candidates.baofa` | `late_cycle == true` 且 `above_w52 == true`（＝只因守門被擋、否則會上榜者） | `picks_late_beat_spy_91d` | **clip(p_clim − 0.05)**——守門主張晚段跑輸，方向為負才是可證偽的命題 | `late:{ticker}:{YYYY-MM}`／月 |
+| `nodd` | `mech-nodd` | `arena.own_board` | `src != "dd-pool"` 且 `pass == true`（無 DD 而機械過閘；今日 0 筆，CI 市值回填後才會有） | `nodd_beat_spy_91d` | clip(p_clim＋0.05) | `nodd:{ticker}:{YYYY-MM}`／月 |
+
+共同規則：命題文字「{名單白話}{ticker} 於 {resolve_by} 前 91／365 曆日跑贏 SPY（基準 {base_date} 收盤 {base_px}）」；同 source 同 ticker 同 template 已有 open 命題不重發（一檔一次一張）；base_date＝該名單檔的 as-of 日（arena 用 `run_timestamp` 日期、candidates 用 `as_of`），base_px＝該日或之前最近週線收盤，SPY 同規則（沿用既有 F2 實作）；**base_px 查找順序：`data/weekly_cache/` → 新增 `data/weekly_cache_universe/`（同 schema）→ 缺則 `base_px_missing` 跳過並印原因**；p_clim 一律 `data/dd_verdict_base_rates.json` 的宇宙表。`--list all` 含三個新名單；stderr 摘要列每個名單的候選／草案／跳過原因。
+
+### 11.2 結算與合成層
+- `knowledge/settle_forecasts.py` relspy 域 px_T 退路鏈：`weekly_cache` → **`weekly_cache_universe`（新增）** → statlab → flowmap → trend-track（屬 P2 批 G4 包一併實作）。
+- `scripts/build_market_state.py`：`STOCK_LEVEL_SOURCES` 加 `own-board`／`picks-late`／`mech-nodd`（進 `stock_pulse.lists`，不進議會圖）。
+- `docs/market/index.html` 個股脈搏：`LIST_LABEL` 加三個白話名，且每個名單計數改成可點連結（grp-seat／own-board／mech-nodd → `/cockpit/`；picks-baofa／picks-late／tenbagger → `/picks/`；sop-funnel → `/dd-screener/sop-funnel/`；dd-verdict → `/research/`）。
+- `docs/flowmap/index.html` 來源名稱表同步加三個。
+- 白話名（首現括號原名）：own-board→「擁有層前十五（own-board）」、picks-late→「爆發榜晚段（守門擋下）」、mech-nodd→「無 DD 機械過閘」。
+
+### 11.3 治理（rule_ledger 三條；kill 皆＝SPRT accept_h0 → 砍）
+- own-board：另註「與 D5 甲軌 kill（前 15 名 12 個月超額中位 < 基準連兩輪）互為對照——帳簿以逐筆 BSS／SPRT 判、對方以中位數判，兩者其一觸發即排入校準輪」。
+- picks-late：另註「守門方向檢定＝picks-late 的 BSS 顯著高於 picks-baofa（p 用 −0.05 卻命中率高＝晚段名單其實跑贏）→ 守門撤，回饋對方 D5」。
+- mech-nodd：另註「這條回答持有人的方向題『減少跑 DD、靠機械欄選股』有無實績；與 dd-verdict 進場列同尺對照」。
+
+### 11.4 不做
+不改 `scripts/engine/`、`scripts/build_picks.py`、`docs/cockpit/`；不蓋新收斂面；不對 tenbagger 另抓價格（等 `weekly_cache_universe` 首次 CI 落地後看覆蓋，不覆蓋再議 ledger 自有價格快取——需持有人核准，見 P2 稿 §10）。

@@ -81,6 +81,7 @@ FLOWMAP_PRICES = DATA / "flowmap_prices.json"
 COT_HISTORY = DATA / "cot_history.json"
 FORECAST_SETTLEMENT = ROOT / "knowledge" / "forecast_settlement.json"
 EXPOSURE_TRACK = ROOT / "docs" / "market" / "data" / "exposure_track.json"
+KELLY_TRACK = ROOT / "docs" / "market" / "data" / "kelly_track.json"
 OUT_JSON = FLOWMAP_DATA_DIR / "scorecard.json"
 
 SCHEMA = "flowmap-scorecard-v2"
@@ -137,6 +138,13 @@ EXPOSURE_RULE_KILL_TEXT = (
     "SPY B&H 報酬 > 0」命中序列）累積 LLR ≤ B(-2.2513) → accept_h0 → 規則撤下、三軌"
     "新倉閘回「僅顯示無規則」；期間不調參；paper only 永不連實倉（設計稿 "
     "notes/site-internal/root/_market_cockpit_design_20260902.md §4）。"
+)
+
+KELLY_RULE_KILL_TEXT = (
+    "SPRT（p0=0.5／p1=0.65／α=0.05／β=0.10，n_eff≥20，樣本＝逐月「當月 paper 報酬 − "
+    "SPY B&H 報酬 > 0」命中序列）累積 LLR ≤ B(-2.2513) → accept_h0 → 規則撤下；期間"
+    "不調參；paper only 永不連實倉（設計稿 "
+    "notes/site-internal/root/_forecast_p2_design_20260902.md §4）。"
 )
 
 # 白話名（首現括號原名，設計稿 §6）——供 HTML／其他消費者共用同一份對照表。
@@ -651,6 +659,48 @@ def load_exposure_rule(gaps):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# kelly_rule（G5 Kelly 傾斜 paper 組合——逐字讀
+# docs/market/data/kelly_track.json 的 sprt 子物件，本檔不重算，SPRT／latch 由
+# scripts/build_kelly_track.py 依 sprt_with_latch 已算好；設計稿
+# notes/site-internal/root/_forecast_p2_design_20260902.md §4）
+# ═══════════════════════════════════════════════════════════════════════════
+
+def load_kelly_rule(gaps):
+    if not KELLY_TRACK.exists():
+        gaps.append("kelly_rule：docs/market/data/kelly_track.json 不存在（尚未跑過 "
+                    "scripts/build_kelly_track.py），本次以「尚未起跑」計")
+        return {
+            "status": "yellow",
+            "status_label": "尚未起跑",
+            "n_eff": 0,
+            "n_required": SPRT_N_EFF_FLOOR,
+            "kill_condition": KELLY_RULE_KILL_TEXT,
+        }
+
+    data = load_json(KELLY_TRACK, {}) or {}
+    sprt = data.get("sprt") or {}
+    n_eff = sprt.get("n_used", 0)
+    status = sprt.get("status") or SPRT_STATE_TO_STATUS.get(sprt.get("state"), "yellow")
+    status_label = sprt.get("status_label") or "尚未起跑"
+    exposure_history = data.get("exposure_history") or []
+    latest = exposure_history[-1] if exposure_history else None
+
+    return {
+        "status": status,
+        "status_label": status_label,
+        "n_eff": n_eff,
+        "n_required": sprt.get("n_required", SPRT_N_EFF_FLOOR),
+        "sprt": sprt,
+        "as_of": data.get("as_of"),
+        "inception_date": data.get("inception_date"),
+        "E": latest.get("E") if latest else None,
+        "edge": latest.get("edge") if latest else None,
+        "reason": latest.get("reason") if latest else None,
+        "kill_condition": KELLY_RULE_KILL_TEXT,
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # Orchestration
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -674,8 +724,9 @@ def main():
     month_end_report = build_month_end_report(fh_rows, price_series, gaps, prior_month_end_sprt)
     ledger_sources = load_ledger_sources(gaps)
     exposure_rule = load_exposure_rule(gaps)
+    kelly_rule = load_kelly_rule(gaps)
 
-    n_sprt_modules = 3  # cta, month_end, exposure_rule
+    n_sprt_modules = 4  # cta, month_end, exposure_rule, kelly_rule
     n_tested = n_sprt_modules + len([k for k in ledger_sources if k != SENTINEL_KEY])
     multiplicity = {
         "n_tested": n_tested,
@@ -720,6 +771,7 @@ def main():
         "vol_control": VOL_CONTROL_BLOCK,
         "ledger_sources": ledger_sources,
         "exposure_rule": exposure_rule,
+        "kelly_rule": kelly_rule,
         "gaps": gaps,
     }
 
@@ -728,7 +780,8 @@ def main():
          f"cta={cta_report['status']}/{cta_report['n_eff']}, "
          f"month_end={month_end_report['status']}/{month_end_report['n_eff']}, "
          f"ledger_sources={len(ledger_sources)}, "
-         f"exposure_rule={exposure_rule['status']}/{exposure_rule['n_eff']})")
+         f"exposure_rule={exposure_rule['status']}/{exposure_rule['n_eff']}, "
+         f"kelly_rule={kelly_rule['status']}/{kelly_rule['n_eff']})")
 
 
 if __name__ == "__main__":
