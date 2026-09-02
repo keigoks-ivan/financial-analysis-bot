@@ -195,7 +195,7 @@ footer a{font-weight:600}
     </div>
     <div id="official-baofa" class="group-block">
       <div class="group-title g2"><span class="dot"></span>爆發・循環上修 <span class="sub">上榜規則：循環拐點形狀 ∩ 站上年線 ∩ 非過熱</span></div>
-      <p class="transparency">本組上榜＝循環拐點形狀＋站上年線的機械判定，非 DD 進場裁決（各檔 DD 狀態如標示）；投機軌性質，倉位紀律另計。</p>
+      <p class="transparency">本組上榜＝循環拐點形狀＋站上年線的機械判定，非 DD 進場裁決（各檔 DD 狀態如標示）；投機軌性質，倉位紀律另計。<br>v2 守門（2026-09-02）：12 個月 &gt;+150% 或 26 週 &gt;+80% 標晚段、FY+2 共識低於 FY+1 標共識路徑下彎——只列候選，不進正式榜。</p>
       <div id="off-baofa-body"></div>
     </div>
     <div id="official-tenbagger" class="group-block">
@@ -278,6 +278,25 @@ footer a{font-weight:600}
     return '';  // null → 年線資料缺，不掛徽章
   }
 
+  // ---- 晚段徽章（v2 守門，2026-09-02；null-safe，只在 late_cycle===true 時掛） ----
+  function lateBadgeHtml(p){
+    if(p.late_cycle!==true) return '';
+    return '<span class="hotbadge" title="'+esc(p.late_reason||'晚段')+'">晚段</span>';
+  }
+
+  // ---- 26 週報酬（v2 守門，2026-09-02）：緊接既有 12M 文字之後同格顯示，null 時不顯示 ----
+  function fmtPct(v){
+    if(v==null) return null;
+    return (v>=0?'+':'')+Math.round(v)+'%';
+  }
+  function posWithRet26w(p){
+    var txt=esc(p.position);
+    if(p.ret_26w_pct!=null && /12M/.test(p.position||'')){
+      txt+='／26W '+fmtPct(p.ret_26w_pct);
+    }
+    return txt;
+  }
+
   // ---- 正式榜 render（自動上榜：official_* from candidates.json） ----
   // 版型與候選區逐欄一致；官方僅保留組色左框＋著色表頭＋自動上榜 badge 的輕量區隔。
   function renderOfficial(list, mountId, isBaofa){
@@ -290,12 +309,13 @@ footer a{font-weight:600}
       var dimmed=p.above_w52===false;  // 年線下＝觀察帶，套用淡化列樣式
       var tkr=p.dd_path?'<a href="'+esc(p.dd_path)+'">'+esc(p.ticker)+'</a>':esc(p.ticker);
       var act=actBadgeHtml(p);
+      var late=lateBadgeHtml(p);
       return '<tr'+(dimmed?' class="muted"':'')+'>'
-        +'<td class="tkr">'+tkr+(act?'<br>'+act:'')+'</td>'
+        +'<td class="tkr">'+tkr+(late?' '+late:'')+(act?'<br>'+act:'')+'</td>'
         +'<td class="why">'+esc(p.why)+'</td>'
         +'<td class="nums">'+esc(p.multiple)+(p.horizon?'<br><span style="color:var(--muted)">'+esc(p.horizon)+'</span>':'')+'</td>'
         +'<td class="trend">'+trendCellHtml(p)+'</td>'
-        +'<td class="pos">'+esc(p.position)+'</td>'
+        +'<td class="pos">'+posWithRet26w(p)+'</td>'
         +'<td class="exit">'+esc(p.exit)+'</td>'
         +'<td>'+chipHtml(p.sources)+'</td>'
         +'</tr>';
@@ -320,15 +340,16 @@ footer a{font-weight:600}
     var trendCell=trendCellHtml;
     var rows=list.map(function(c){
       var muted=isBaofa && c.hot;
-      var tkrCell=esc(c.ticker)+(muted?'<span class="hotbadge">等回踩</span>':'');
-      if(c.dd_path){ tkrCell='<a href="'+esc(c.dd_path)+'">'+esc(c.ticker)+'</a>'+(muted?'<span class="hotbadge">等回踩</span>':''); }
+      var late=lateBadgeHtml(c);
+      var tkrCell=esc(c.ticker)+(muted?'<span class="hotbadge">等回踩</span>':(late?' '+late:''));
+      if(c.dd_path){ tkrCell='<a href="'+esc(c.dd_path)+'">'+esc(c.ticker)+'</a>'+(muted?'<span class="hotbadge">等回踩</span>':(late?' '+late:'')); }
       if(c.not_promoted_reason && !muted){ tkrCell+='<br><span class="npr">未上榜：'+esc(c.not_promoted_reason)+'</span>'; }
       return '<tr'+(muted?' class="muted"':'')+'>'
         +'<td class="tkr">'+tkrCell+'</td>'
         +'<td class="why">'+esc(c.why)+'</td>'
         +'<td class="nums">'+esc(c.multiple)+(c.horizon?'<br><span style="color:var(--muted)">'+esc(c.horizon)+'</span>':'')+'</td>'
         +'<td class="trend">'+trendCell(c)+'</td>'
-        +'<td class="pos">'+esc(c.position)+'</td>'
+        +'<td class="pos">'+posWithRet26w(c)+'</td>'
         +'<td class="exit">'+esc(c.exit)+'</td>'
         +'<td>'+chipHtml(c.sources)+'</td>'
         +'</tr>';
