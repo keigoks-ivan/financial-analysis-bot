@@ -1,0 +1,72 @@
+{
+  "schema": "vrp-base-rates-v1",
+  "tickers": [
+    "^VIX",
+    "SPY"
+  ],
+  "built_at": "2026-09-01T23:45:53Z",
+  "data_start": {
+    "^VIX": "2016-09-01",
+    "SPY": "2016-09-02"
+  },
+  "data_end": {
+    "^VIX": "2026-09-01",
+    "SPY": "2026-09-01"
+  },
+  "n_price_days": {
+    "^VIX": 2513,
+    "SPY": 2512
+  },
+  "n_vrp_series": 2490,
+  "n_monthly_samples": 120,
+  "n_transition_sample": 117,
+  "rv_window_trading_days": 21,
+  "up_21d_trading_days": 21,
+  "up_63d_trading_days": 63,
+  "vrp_definition": "VRP_t = VIX_t^2 - RV21_t^2；VIX_t=^VIX 收盤（年化隱含波動，vol 點）；RV21_t=SPY 21 交易日日對數報酬年化 sample std（ddof=1）×sqrt(252)×100（vol 點），口徑逐字同 scripts/build_rv_base_rates.py",
+  "sampling": "每月首個交易日（^VIX 與 SPY 共同交易日、且該日 RV21 已可算的子集合）",
+  "tercile_cutoffs_pct33_67": [
+    78.2792,
+    165.1902
+  ],
+  "terciles": [
+    {
+      "tercile": "T1",
+      "n": 39,
+      "vrp_range": [
+        -5135.69,
+        76.59
+      ],
+      "freq_up_21d": 0.59,
+      "freq_up_63d": 0.769,
+      "description": "隱含波動高於已實現波動最少的一組"
+    },
+    {
+      "tercile": "T2",
+      "n": 39,
+      "vrp_range": [
+        79.28,
+        163.94
+      ],
+      "freq_up_21d": 0.718,
+      "freq_up_63d": 0.667,
+      "description": "隱含波動高於已實現波動居中的一組"
+    },
+    {
+      "tercile": "T3",
+      "n": 39,
+      "vrp_range": [
+        167.3,
+        937.21
+      ],
+      "freq_up_21d": 0.667,
+      "freq_up_63d": 0.821,
+      "description": "隱含波動高於已實現波動最多的一組"
+    }
+  ],
+  "p_clim": {
+    "vrp_spy_up_21d": 0.658,
+    "vrp_spy_up_63d": 0.752
+  },
+  "methodology_note": "三分位切點（tercile_cutoffs）用同一個可驗證子樣本（in-sample：月度取樣點中，未來 21 與 63 個 SPY 自身交易日皆可驗證者）的 33.3/66.7 百分位算出，非滾動或擴張窗口即時分位，不能宣稱樣本外預測力——本表定位是 base rate 參照表，不是模型。up_21d／up_63d 前瞻位移用 SPY 自身交易日序列（bisect 定位），不受 ^VIX 共同交易日子集壓縮；p_clim 為同一取樣點、同一窗口下的無條件頻率（terciles 與 p_clim 共用同一個 sample_rows，滿足設計稿 §3.1「同一窗口、同一取樣點」要求）。頻率為重疊樣本估計（月頻取樣降低但未消除 63 交易日視窗的跨月重疊），不做假設檢定。"
+}

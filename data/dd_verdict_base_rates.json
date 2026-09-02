@@ -1,0 +1,60 @@
+{
+  "schema": "dd-verdict-base-rates-v1",
+  "built_at": "2026-09-01T23:50:24Z",
+  "clim_window_years": 5,
+  "clim_window_start": "2021-09-01",
+  "clim_window_end": "2026-09-01",
+  "p_clim": {
+    "dd_beat_spy_91d": 0.5271,
+    "dd_beat_spy_365d": 0.5823
+  },
+  "p_clim_cells": {
+    "dd_beat_spy_91d": {
+      "n_cells": 14163,
+      "n_hit": 7465,
+      "n_tickers": 251
+    },
+    "dd_beat_spy_365d": {
+      "n_cells": 11658,
+      "n_hit": 6788,
+      "n_tickers": 251
+    }
+  },
+  "p_clim_definition": "對 data/weekly_cache/ 全部 ticker，取近 5 年（clim_window_years）每個曆月首個可得週線收盤為取樣點，算「該取樣點起 91／365 曆日後 ticker 報酬 > SPY 同窗報酬」的 pooled 無條件頻率（跨全部 ticker、跨全部取樣月合併計）；SPY 收盤自本檔專用 data/dd_verdict_base_rates_raw_cache.json 10 年日線讀取。ticker／SPY 兩端皆採「目標日或之前最近收盤」（_at_or_before，語意同 knowledge/settle_outcomes.py _close_at_or_before）；任一端缺資料（含視窗尚未到期，即該 ticker 或 SPY 最後一根資料日 < 目標日）即跳過該 cell，不補值、不外推。",
+  "empirical_table": {
+    "dd_beat_spy_91d": {
+      "進場": {
+        "freq": null,
+        "n": 0
+      },
+      "觀望": {
+        "freq": null,
+        "n": 0
+      },
+      "迴避": {
+        "freq": null,
+        "n": 0
+      }
+    },
+    "dd_beat_spy_365d": {
+      "進場": {
+        "freq": null,
+        "n": 0
+      },
+      "觀望": {
+        "freq": null,
+        "n": 0
+      },
+      "迴避": {
+        "freq": null,
+        "n": 0
+      }
+    }
+  },
+  "empirical_table_note": "經驗表樣本數以 knowledge/settlement.json 已到期（h91／h365 非 null）且 verdict 非 null 的筆數為準；目前預期 n≈0（decisions.jsonl 的 verdict 欄自 2026-06-22 起才普遍存在，distance 尚不足 91／365 曆日成熟），隨每週 settle_outcomes.py 重跑自動累積，設計已知現象非 bug。producer（scripts/generate_dd_verdict_forecasts.py）CONFIG USE_EMPIRICAL_TABLE 目前恆為 False（只用下方 p_clim + PREREG offset），本表僅供觀察，只有校準輪能翻旗標改讀本表。",
+  "spy_data_start": "2016-09-02",
+  "spy_data_end": "2026-09-01",
+  "n_spy_daily_bars": 2512,
+  "n_weekly_cache_files_scanned": 252,
+  "config_note": "USE_EMPIRICAL_TABLE 是 producer（scripts/generate_dd_verdict_forecasts.py）的 CONFIG 常數，不在本檔——本檔只負責產出上面兩張表；producer 目前恆讀 p_clim（PREREG offset 表），只有校準輪可翻該旗標。"
+}
