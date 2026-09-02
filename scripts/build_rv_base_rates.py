@@ -276,6 +276,18 @@ def _quintile_label(v, cutoffs):
     return "Q5"
 
 
+def compute_pooled_p_clim(sample_rows):
+    """forecast v2 設計稿 §5.1：頂層 p_clim（無條件、不分五分位的 pooled 頻率），與五分位
+    轉移表用同一批 sample_rows、同一窗口（21 交易日）、同一 +5 vol 點門檻——差別只在不依
+    quintile 分組，直接對整個可驗證樣本取頻率。"""
+    n = len(sample_rows)
+    if n == 0:
+        return {"rv21_higher_21d": None, "rv21_touch_plus5_21d": None}
+    freq_higher = sum(1 for r in sample_rows if r["higher_after"]) / n
+    freq_touch = sum(1 for r in sample_rows if r["touch_plus_threshold"]) / n
+    return {"rv21_higher_21d": round(freq_higher, 3), "rv21_touch_plus5_21d": round(freq_touch, 3)}
+
+
 def build_quintile_table(sample_rows):
     rv_vals = sorted(r["rv21"] for r in sample_rows)
     cutoffs = [
@@ -358,6 +370,7 @@ def main():
                           f"未來 {WINDOW_TRADING_DAYS} 交易日 RV21），中止")
 
     quintiles, cutoffs = build_quintile_table(sample_rows)
+    p_clim = compute_pooled_p_clim(sample_rows)
 
     payload = {
         "schema": SCHEMA,
@@ -372,6 +385,13 @@ def main():
         "rv21_definition": "年化 21 交易日日對數報酬 sample std（ddof=1）× sqrt(252) × 100，單位＝vol 點（百分比）",
         "quintile_cutoffs_pct20_40_60_80": cutoffs,
         "quintiles": quintiles,
+        "p_clim": p_clim,
+        "p_clim_n": len(sample_rows),
+        "p_clim_note": (
+            "forecast v2 設計稿 §5.1：無條件（pooled，不分五分位）頻率，供 forecasts.jsonl "
+            "逐筆 p_clim 欄位取值——與同檔 quintiles 用同一批可驗證樣本、同一窗口／門檻，"
+            "差別只在不依 quintile 分組。"
+        ),
         "methodology_note": (
             "頻率為重疊樣本估計（overlapping windows），相鄰交易日的 21 日視窗共用 20 根日線，"
             "非獨立樣本；本表只報告經驗頻率與樣本數 n，不做假設檢定，信賴區間不適用傳統獨立樣本公式。"
@@ -390,6 +410,7 @@ def main():
         info(f"  {q['quintile']}: n={q['n']:<5} range={q['rv21_range']}  "
              f"freq_higher_after_21d={q['freq_rv21_higher_after_21d']}  "
              f"freq_touch_plus5_within_21d={q['freq_touch_plus5_within_21d']}")
+    info(f"  p_clim（pooled，n={len(sample_rows)}）: {p_clim}")
 
 
 if __name__ == "__main__":

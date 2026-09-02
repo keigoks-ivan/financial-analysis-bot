@@ -19,6 +19,12 @@ p 值完全由轉移表機械給出（該分位的經驗頻率，已四捨五入
 向前看（約一個月的交易日數），但 forecast 的 resolve_by 用「30 個曆日」（含週末假日）——
 兩者是同一件事的兩種近似表達（皆≈一個月），非精確對齊，此為設計稿既有取捨。
 
+v2（forecast v2 設計稿 §5.1，`_forecast_v2_design_20260902.md`）：改用 knowledge/forecast_lib.py
+（next_ids／finalize／append，含哨兵 twin 產生）；每筆額外填 claim_template
+（rv21_higher_21d／rv21_touch_plus5_21d）、p_clim（取自 data/rv_base_rates.json 頂層 pooled
+頻率，同表同 built_at、不分五分位）、p_clim_ref、p_table_built_at、episode_id
+（`rv:{YYYY-MM}`）。查重規則、dry-run/--write 行為、stdout=JSONL only 慣例不變。
+
 CLI
 ---
   python scripts/generate_rv_forecasts.py            dry-run，兩筆草案印到 stdout（純 JSONL）
@@ -41,6 +47,9 @@ ROOT = Path(__file__).resolve().parent.parent
 FLOWMAP_PRICES = ROOT / "data" / "flowmap_prices.json"
 BASE_RATES = ROOT / "data" / "rv_base_rates.json"
 FORECASTS = ROOT / "knowledge" / "forecasts.jsonl"
+
+sys.path.insert(0, str(ROOT / "knowledge"))
+import forecast_lib as fl  # noqa: E402 — id 產生／v2 欄位補齊／落帳＋哨兵 twin，見 forecast_lib.py
 
 SOURCE = "rv-model"
 TICKER = "SPY"
@@ -136,29 +145,6 @@ def lookup_probabilities(base_rates, rv21):
 # 草案產生
 # ═══════════════════════════════════════════════════════════════════════════
 
-def _next_ids(ts_str, n, path=FORECASTS):
-    """回傳 n 個未被佔用的 fc_{YYYYMMDD}_rv_NN id（掃現有檔避免同日重跑撞號）。"""
-    used = set()
-    if path.exists():
-        for line in path.read_text(encoding="utf-8").splitlines():
-            if not line.strip():
-                continue
-            try:
-                rid = json.loads(line).get("id", "")
-            except json.JSONDecodeError:
-                continue
-            used.add(rid)
-    prefix = f"fc_{ts_str.replace('-', '')}_rv_"
-    seq = 0
-    out = []
-    while len(out) < n:
-        seq += 1
-        cand = f"{prefix}{seq:02d}"
-        if cand not in used:
-            out.append(cand)
-    return out
-
-
 def build_drafts(today=None, prices_path=FLOWMAP_PRICES, base_rates_path=BASE_RATES,
                   forecasts_path=FORECASTS):
     today = today or date.today()
@@ -175,12 +161,21 @@ def build_drafts(today=None, prices_path=FLOWMAP_PRICES, base_rates_path=BASE_RA
     p_touch = row["freq_touch_plus5_within_21d"]
     touch_threshold = round(rv21 + VOL_POINT_THRESHOLD, 2)
 
-    base_meta = (f"base_rate built_at={base_rates.get('built_at')}｜quintile={quintile}"
+    # v2（forecast v2 設計稿 §5.1）：p_clim 取自同一份表的頂層 pooled 頻率（見
+    # scripts/build_rv_base_rates.py compute_pooled_p_clim），與 p（五分位條件頻率）同表
+    # 同 built_at、同窗口／門檻，差別只在不分五分位。
+    p_clim_map = base_rates.get("p_clim") or {}
+    built_at = base_rates.get("built_at")
+    p_clim_ref = (f"data/rv_base_rates.json p_clim（pooled，全部五分位合併，"
+                  f"n={base_rates.get('n_transition_sample')}）built_at={built_at}")
+    episode_id = f"rv:{ts_str[:7]}"
+
+    base_meta = (f"base_rate built_at={built_at}｜quintile={quintile}"
                  f"（range={row.get('rv21_range')}, n={row.get('n')}）｜"
                  f"quintile_cutoffs={base_rates.get('quintile_cutoffs_pct20_40_60_80')}")
     source_ref = f"data/flowmap_prices.json SPY as_of={as_of}｜data/rv_base_rates.json {base_meta}"
 
-    ids = _next_ids(ts_str, 2, forecasts_path)
+    ids = fl.next_ids(ts_str, "rv", 2, forecasts_path)
 
     draft_higher = {
         "id": ids[0], "ts": ts_str, "source": SOURCE, "source_ref": source_ref,
@@ -190,6 +185,8 @@ def build_drafts(today=None, prices_path=FLOWMAP_PRICES, base_rates_path=BASE_RA
         "status": "open", "resolved_ts": None, "outcome": None, "brier": None,
         "note": (f"rv-model 機械賦值（無需人工判斷）｜今日 RV21={rv21}%（as_of {as_of}）｜"
                  f"p 取自五分位轉移表 freq_rv21_higher_after_21d｜{base_meta}"),
+        "claim_template": "rv21_higher_21d", "p_clim": p_clim_map.get("rv21_higher_21d"),
+        "p_clim_ref": p_clim_ref, "p_table_built_at": built_at, "episode_id": episode_id,
     }
     draft_touch = {
         "id": ids[1], "ts": ts_str, "source": SOURCE, "source_ref": source_ref,
@@ -199,33 +196,22 @@ def build_drafts(today=None, prices_path=FLOWMAP_PRICES, base_rates_path=BASE_RA
         "status": "open", "resolved_ts": None, "outcome": None, "brier": None,
         "note": (f"rv-model 機械賦值（無需人工判斷）｜今日 RV21={rv21}%（as_of {as_of}）｜"
                  f"p 取自五分位轉移表 freq_touch_plus5_within_21d｜{base_meta}"),
+        "claim_template": "rv21_touch_plus5_21d", "p_clim": p_clim_map.get("rv21_touch_plus5_21d"),
+        "p_clim_ref": p_clim_ref, "p_table_built_at": built_at, "episode_id": episode_id,
     }
-    return [draft_higher, draft_touch]
+    return fl.finalize([draft_higher, draft_touch])
 
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 查重 + 落帳
 # ═══════════════════════════════════════════════════════════════════════════
 
-def _existing_forecasts(path):
-    if not path.exists():
-        return []
-    return [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines() if l.strip()]
-
-
 def month_already_has_source(path, month_prefix, source=SOURCE):
     """同月同 source 已有落帳紀錄 → True（查重口徑：整批月頻拒絕重複，見檔頭 docstring）。"""
-    for r in _existing_forecasts(path):
+    for r in fl.existing(path):
         if r.get("source") == source and (r.get("ts") or "").startswith(month_prefix):
             return True
     return False
-
-
-def write_drafts(drafts, path=FORECASTS):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("a", encoding="utf-8") as f:
-        for d in drafts:
-            f.write(json.dumps(d, ensure_ascii=False) + "\n")
 
 
 def main():
@@ -237,13 +223,13 @@ def main():
     month_prefix = today.strftime("%Y-%m")
     drafts = build_drafts(today=today)
 
-    for d in drafts:
-        print(json.dumps(d, ensure_ascii=False))
-
     dup = month_already_has_source(FORECASTS, month_prefix)
     if dup:
         warn(f"{month_prefix} 已有 source={SOURCE} 的落帳紀錄——本月重複落帳將被拒絕"
              f"（查重口徑：同月同 source 整批拒絕，見檔頭 docstring）。")
+
+    do_write = args.write and not dup
+    n_written, n_twins = fl.append(drafts, path=FORECASTS, write=do_write)
 
     if not args.write:
         info(f"dry-run：共 {len(drafts)} 筆草案。--write 才會 append 進 {FORECASTS}"
@@ -255,8 +241,7 @@ def main():
               file=sys.stderr)
         sys.exit(1)
 
-    write_drafts(drafts, FORECASTS)
-    print(f"\n# --write：寫入 {len(drafts)} 筆 → {FORECASTS}", file=sys.stderr)
+    print(f"\n# --write：寫入 {n_written} 筆＋{n_twins} 筆哨兵 twin → {FORECASTS}", file=sys.stderr)
 
 
 if __name__ == "__main__":

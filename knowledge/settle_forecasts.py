@@ -8,7 +8,7 @@ forecasts.jsonl（整檔重寫、保序，其他欄位原樣）；彙總統計�
 （衍生物，gitignore，本地重算）。q.py --forecasts 消費本檔：無檔或比 forecasts.jsonl／
 monitor latest.json／週線 cache 舊會自動重跑。
 
-resolver 六個 series 命名空間：
+resolver 八個 series 命名空間：
   - price:<TICKER>  → data/weekly_cache/<TICKER>.json 週線收盤（完整歷史；ALIAS／
                       _close_at_or_before 讀法照抄 settle_outcomes.py）。
   - monitor:<key>   → docs/monitor/data/latest.json 的 categories[].items[]（key 比對）。
@@ -18,6 +18,13 @@ resolver 六個 series 命名空間：
                       觸及可能被錯過（spark 只留最近窗，不保證看到全歷史）。每次執行都會在
                       輸出 JSON 記錄 last_run／prev_run，間隔過久或個別 forecast 的 ts 早於
                       本次可觀察範圍時一併印 coverage_warning，不靜默硬判。
+                      **v2 單位正規化（forecast v2 設計稿 §4.1，根治 sofr_iorb bug）**：
+                      scale = item.val 解析值 / spark 最後一點解析值（兩者皆非 0 時），若落在
+                      {0.01, 0.1, 1, 10, 100, 1000} 任一值的 ±5% 內則取該值；否則 void，
+                      reason=`unit_ambiguous:{key}`。比較時把 resolver.value（維持人讀得懂的
+                      「顯示單位」，如 5 = 5bp）除以 scale 換算成 spark 的尺度再比對。兩者皆為
+                      0 或 spark 空 → 沿用 v1 舊行為（不換算），並印警告（不寫入 forecast 列
+                      本身的 note，只在本次結算的 stdout 提醒）。
   - rv:<TICKER>     → data/flowmap_prices.json 該 ticker 日線，逐日算 RV21（年化 21 交易日
                       日對數報酬 sample std×√252×100，口徑與 scripts/build_rv_base_rates.py／
                       scripts/generate_rv_forecasts.py 逐字一致），支援 at_expiry／any_close。
@@ -36,27 +43,48 @@ resolver 六個 series 命名空間：
                       **該筆保持 open＋印警告，不 void**（資料層暫缺是暫時狀態，非永久不可
                       判——與其他域「查無 ticker 即 void」不同，因為 statlab_prices.json 由
                       另一條 pipeline 維護，本腳本執行當下可能尚未產出或尚未追上）。
+  - ttp:<TICKER>    → data/trend_track_prices.json 該 ticker 日線收盤（與 flowmap_prices
+                      同構：{"meta":..., "series": {TICKER: [[date, close], ...]}}），語義與
+                      pxd: 完全相同（at_expiry／any_close），由 B 包（tsmom producer）餵料
+                      （forecast v2 設計稿 §4.2）。ticker 不在該快取→void。
+  - relspy:<TICKER> → 相對 SPY 超額報酬命題（forecast v2 設計稿 §4.3；由 D 包 dd-verdict
+                      producer 餵料）。resolver 額外攜帶 base_date／base_px／base_spy：
+                      {"series":"relspy:NVDA","op":">","value":0,"window":"at_expiry",
+                       "base_date":"YYYY-MM-DD","base_px":123.4,"base_spy":567.8}。
+                      px_T＝data/weekly_cache/<ALIAS(TICKER)>.json resolve_by 當日或之前最近
+                      收盤（_close_at_or_before，同 price: 域）；spy_T＝data/flowmap_prices.json
+                      SPY 同規則；outcome = 1 若 (px_T/base_px − spy_T/base_spy) > value。**只
+                      支援 at_expiry**（其他 window 值 → void，reason=`relspy_unsupported_
+                      window:{window}`）。缺 base_px／base_spy 或缺任一價 → void，
+                      reason=`relspy_missing_base:{TICKER}` 或 `relspy_missing_price:{TICKER}`。
   - detective:*     → 本期不實作。遇到即印警告、該筆保持 open，不硬判。
 
 op 支援 >／<>=／<=；window 支援 any_close（區間內任一收盤觸及即 yes）與 at_expiry（只看到期
 時的值）。
 
-單位注意（monitor 域）：latest.json 的 val／spark 是各 series 自訂格式（如 dgs10 "4.73%"、
-sofr_iorb "0bps"），本腳本一律取其去除逗號後第一個數字 token 的原始尺度（例：hy_oas
-val="2.60%" → 比較數值 2.60，非 260bp；sofr_iorb val="0bps" → 比較數值 0，本身就是 bp 整數）。
-**尺度因 series 而異、不統一換算**——resolver.value 須採與該 series 原始數值相同的尺度落帳，
-q.py --forecast-add／本檔 --check-resolver 都會印出目前值供對齊。
+單位注意（monitor 域，v2 改版）：latest.json 的 val／spark 是各 series 自訂格式（如 dgs10
+"4.73%"、sofr_iorb "3bps"），本腳本一律先取其去除逗號後第一個數字 token 的原始數值。**v1
+舊行為**（resolver.value 須採與 spark 原始數值相同的尺度落帳）已於 v2 廢除——sofr_iorb 的
+val 顯示「3bps」但 spark 陣列卻是以「百分點」記錄（如 0.03），v1 舊行為下 resolver.value 若
+寫「顯示值」5（=5bp）永遠不會等於 spark 尺度的 0.05，門檻形同虛設（實測 bug，見設計稿
+§0）。**v2 起 resolver.value 一律採「顯示單位」落帳**（人讀得懂：5 = 5bp），本腳本在結算前
+會先算出 scale = val 解析值 / spark 最後一點解析值，換算成 spark 尺度後再比對（見上方
+resolver 命名空間段落）；q.py --forecast-add／本檔 --check-resolver 都會印出顯示值、spark
+尺度、scale 供對齊。
 
 單位注意（rv 域）：RV21 一律以「百分比 vol 點」為尺度（例：10.26 代表年化已實現波動 10.26%，
 非 0.1026）——與 scripts/build_rv_base_rates.py／scripts/generate_rv_forecasts.py 產出的
 resolver.value 尺度一致，直接比對即可，不需換算。
 
-單位注意（pxd 域）：與 price 域一致，直接是該 ticker 的日線收盤價原始尺度（美元／點數），
+單位注意（pxd／ttp 域）：與 price 域一致，直接是該 ticker 的日線收盤價原始尺度（美元／點數），
 resolver.value 用同尺度落帳。
 
 單位注意（vixts 域）：slope 一律以「vol 點」為尺度（^VIX3M − ^VIX 的收盤差，可正可負；
 正＝contango，負＝inverted），與 scripts/build_vixts_base_rates.py／generate_vix_forecasts.py
 產出的 resolver.value 尺度一致。
+
+單位注意（relspy 域）：value 為「相對報酬差」的小數（如 0 = 兩者報酬率相等），base_px／
+base_spy 為落帳當時記錄的基準收盤價，皆與 resolver 內攜帶的原始尺度一致，不需額外換算。
 
 CLI：
   python knowledge/settle_forecasts.py                       # 正常結算，重寫 forecasts.jsonl + 輸出 settlement
@@ -65,12 +93,15 @@ CLI：
   python knowledge/settle_forecasts.py --check-resolver rv:SPY
   python knowledge/settle_forecasts.py --check-resolver pxd:SPY
   python knowledge/settle_forecasts.py --check-resolver vixts:SLOPE
+  python knowledge/settle_forecasts.py --check-resolver ttp:SPY
+  python knowledge/settle_forecasts.py --check-resolver relspy:NVDA
 """
 import json
 import math
+import random
 import re
 import sys
-from collections import Counter
+from collections import Counter, defaultdict
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
@@ -80,10 +111,26 @@ FORECASTS = KDIR / "forecasts.jsonl"
 OUT = KDIR / "forecast_settlement.json"
 CACHE_DIR = ROOT / "data" / "weekly_cache"
 MONITOR_LATEST = ROOT / "docs" / "monitor" / "data" / "latest.json"
-FLOWMAP_PRICES = ROOT / "data" / "flowmap_prices.json"  # rv:／pxd: 域讀法（見 build_rv_base_rates.py）
+FLOWMAP_PRICES = ROOT / "data" / "flowmap_prices.json"  # rv:／pxd:／relspy: 域讀法（見 build_rv_base_rates.py）
 STATLAB_PRICES = ROOT / "data" / "statlab_prices.json"  # vixts: 域讀法（見 build_vixts_base_rates.py）
+TREND_TRACK_PRICES = ROOT / "data" / "trend_track_prices.json"  # ttp: 域讀法（見 build_tsmom_base_rates.py，B 包）
 
 RV_WINDOW_TRADING_DAYS = 21  # 須與 scripts/build_rv_base_rates.py／generate_rv_forecasts.py 一致（PREREG 凍結）
+
+# ─────────────────────────── SPRT 常數（forecast v2 設計稿 §3.3，PREREG 凍結） ───────────────────────────
+SPRT_P0 = 0.5
+SPRT_P1 = 0.65
+SPRT_ALPHA = 0.05
+SPRT_BETA = 0.10
+SPRT_A = 2.8904       # ln((1-beta)/alpha) = ln(18)
+SPRT_B = -2.2513      # ln(beta/(1-alpha)) = ln(0.1/0.95)
+SPRT_LLR_HIT = 0.26236    # ln(0.65/0.50)
+SPRT_LLR_MISS = -0.35667  # ln(0.35/0.50)
+SPRT_MIN_N_EFF = 20
+
+# ─────────────────────────── block-bootstrap（§3.5，PREREG 凍結） ───────────────────────────
+BOOTSTRAP_N = 2000
+BOOTSTRAP_SEED = 20260902
 
 # price:<TICKER> → weekly_cache 檔名（dd-meta ticker 慣例與 cache 命名不一致者）。
 # 照抄 settle_outcomes.py 的 ALIAS —— 同一份 weekly_cache，同一批例外。
@@ -215,15 +262,12 @@ def _rv21_series(ticker, _cache={}):
     return _cache[ticker]
 
 
-# ─────────────────────────── pxd:<TICKER> 讀法 ───────────────────────────
-# data/flowmap_prices.json 該 ticker 日線收盤，直接讀（非 rv: 域的 RV21 轉換）。
-# 同一份 rolling ~500 交易日快取，coverage_gap 判法與 rv: 域一致。
+# ─────────────────────────── pxd:<TICKER>／ttp:<TICKER> 讀法 ───────────────────────────
+# 兩域語義完全相同（at_expiry／any_close），差別只在資料來源：pxd: 讀 data/flowmap_prices.json、
+# ttp: 讀 data/trend_track_prices.json（forecast v2 設計稿 §4.2，B 包 tsmom producer 餵料）。
+# 共用同一段判定邏輯，coverage_gap 判法與 rv: 域一致。
 
-def _resolve_pxd(resolver, ts, resolve_by, today):
-    ticker = resolver["series"].split(":", 1)[1]
-    bars = _flowmap_bars(ticker)
-    if not bars:
-        return {"status": "void", "reason": f"pxd_ticker_missing:{ticker}", "outcome": None, "coverage_gap": False}
+def _resolve_close_series(bars, resolver, ts, resolve_by, today, no_bar_reason):
     op_fn = OPS.get(resolver.get("op"))
     if not op_fn:
         return {"status": "void", "reason": f"bad_op:{resolver.get('op')}", "outcome": None, "coverage_gap": False}
@@ -249,11 +293,89 @@ def _resolve_pxd(resolver, ts, resolve_by, today):
             return {"status": "open", "reason": None, "outcome": None, "coverage_gap": coverage_gap}
         at = _close_at_or_before(bars, resolve_by)
         if not at:
-            return {"status": "void", "reason": f"pxd_no_bar_at_expiry:{ticker}", "outcome": None, "coverage_gap": True}
+            return {"status": "void", "reason": no_bar_reason, "outcome": None, "coverage_gap": True}
         _, px = at
         outcome = 1 if op_fn(px, value) else 0
         status = "resolved_yes" if outcome else "resolved_no"
         return {"status": status, "reason": None, "outcome": outcome, "coverage_gap": coverage_gap}
+
+
+def _resolve_pxd(resolver, ts, resolve_by, today):
+    ticker = resolver["series"].split(":", 1)[1]
+    bars = _flowmap_bars(ticker)
+    if not bars:
+        return {"status": "void", "reason": f"pxd_ticker_missing:{ticker}", "outcome": None, "coverage_gap": False}
+    return _resolve_close_series(bars, resolver, ts, resolve_by, today, f"pxd_no_bar_at_expiry:{ticker}")
+
+
+def _trend_track_prices_data(_cache={}):
+    if "d" not in _cache:
+        try:
+            _cache["d"] = json.loads(TREND_TRACK_PRICES.read_text(encoding="utf-8"))
+        except Exception:
+            _cache["d"] = None
+    return _cache["d"]
+
+
+def _ttp_bars(ticker):
+    data = _trend_track_prices_data()
+    if not data:
+        return None
+    bars = (data.get("series") or {}).get(ticker)
+    if not bars:
+        return None
+    return sorted(((d, c) for d, c in bars), key=lambda x: x[0])
+
+
+def _resolve_ttp(resolver, ts, resolve_by, today):
+    ticker = resolver["series"].split(":", 1)[1]
+    bars = _ttp_bars(ticker)
+    if not bars:
+        return {"status": "void", "reason": f"ttp_ticker_missing:{ticker}", "outcome": None, "coverage_gap": False}
+    return _resolve_close_series(bars, resolver, ts, resolve_by, today, f"ttp_no_bar_at_expiry:{ticker}")
+
+
+# ─────────────────────────── relspy:<TICKER> 讀法 ───────────────────────────
+# 相對 SPY 超額報酬命題（forecast v2 設計稿 §4.3，D 包 dd-verdict producer 餵料）。只支援
+# at_expiry；px_T 讀 weekly_cache（同 price: 域），spy_T 讀 flowmap_prices.json SPY。
+
+def _resolve_relspy(resolver, ts, resolve_by, today):
+    ticker = resolver["series"].split(":", 1)[1]
+    op_fn = OPS.get(resolver.get("op"))
+    if not op_fn:
+        return {"status": "void", "reason": f"bad_op:{resolver.get('op')}", "outcome": None, "coverage_gap": False}
+    window = resolver.get("window", "at_expiry")
+    if window != "at_expiry":
+        return {"status": "void", "reason": f"relspy_unsupported_window:{window}", "outcome": None, "coverage_gap": False}
+    value = resolver.get("value")
+    base_px = resolver.get("base_px")
+    base_spy = resolver.get("base_spy")
+    if not base_px or not base_spy:
+        return {"status": "void", "reason": f"relspy_missing_base:{ticker}", "outcome": None, "coverage_gap": False}
+
+    if today < resolve_by:
+        return {"status": "open", "reason": None, "outcome": None, "coverage_gap": False}
+
+    px_bars = _price_bars(ticker)
+    spy_bars = _flowmap_bars("SPY")
+    if not px_bars or not spy_bars:
+        return {"status": "void", "reason": f"relspy_missing_price:{ticker}", "outcome": None, "coverage_gap": False}
+    if px_bars[-1][0] < resolve_by or spy_bars[-1][0] < resolve_by:
+        # 任一快取尚未追上 resolve_by（資料落後），暫不硬判
+        return {"status": "open", "reason": None, "outcome": None, "coverage_gap": False}
+
+    px_at = _close_at_or_before(px_bars, resolve_by)
+    # SPY 對齊到 ticker 實際採用的那根 bar 日期（weekly_cache 為週線，可能早於 resolve_by 數日；
+    # 兩腿若量到不同日期會系統性偏差），而非各自對齊 resolve_by。
+    spy_at = _close_at_or_before(spy_bars, px_at[0]) if px_at else None
+    if not px_at or not spy_at:
+        return {"status": "void", "reason": f"relspy_missing_price:{ticker}", "outcome": None, "coverage_gap": False}
+
+    _, px_T = px_at
+    _, spy_T = spy_at
+    outcome = 1 if op_fn((px_T / base_px) - (spy_T / base_spy), value) else 0
+    status = "resolved_yes" if outcome else "resolved_no"
+    return {"status": status, "reason": None, "outcome": outcome, "coverage_gap": False}
 
 
 # ─────────────────────────── vixts:SLOPE 讀法 ───────────────────────────
@@ -385,6 +507,39 @@ def _monitor_series_points(item):
     return [(d, v) for d, v in pts if v is not None]
 
 
+# ─────────────────────────── monitor 域單位正規化（forecast v2 設計稿 §4.1） ───────────────────────────
+
+MONITOR_SCALE_CANDIDATES = [0.01, 0.1, 1, 10, 100, 1000]
+MONITOR_SCALE_TOLERANCE = 0.05  # ±5%
+
+
+def _compute_monitor_scale(item):
+    """回傳 (scale, note)：
+      scale=<候選值>, note=None            → 正常換算（scale 落在候選值 ±5% 內）
+      scale=None, note="unit_scale_unknown" → val 或 spark 尾值為 0／缺值／spark 空，
+                                               沿用 v1 舊行為（resolver.value 不換算，直接
+                                               比對 spark 尺度）
+      scale=False, note="unit_ambiguous"    → val/spark 尾值的比值不落在任何候選尺度 ±5%
+                                               內，無法判定，落帳／結算皆拒絕（void）
+    設計稿原文只點名「兩者皆為 0 或 spark 空」對應 unit_scale_unknown；val 無法解析
+    （None）、或僅 spark 尾值為 0（除以零）皆屬同一精神下的防禦性延伸，一併退回舊行為
+    而非拋例外。"""
+    val = _parse_num(item.get("val"))
+    spark = item.get("spark") or []
+    spark_last = _parse_num(spark[-1]) if spark else None
+    if val is None or spark_last is None or not spark:
+        return None, "unit_scale_unknown"
+    if val == 0 and spark_last == 0:
+        return None, "unit_scale_unknown"
+    if spark_last == 0:
+        return None, "unit_scale_unknown"
+    raw_scale = val / spark_last
+    for cand in MONITOR_SCALE_CANDIDATES:
+        if abs(raw_scale - cand) <= cand * MONITOR_SCALE_TOLERANCE:
+            return cand, None
+    return False, "unit_ambiguous"
+
+
 # ─────────────────────────── resolver 驗證（給 q.py --forecast-add 用） ───────────────────────────
 
 def check_resolver(series):
@@ -405,8 +560,19 @@ def check_resolver(series):
         item = _monitor_item(key)
         if item is None:
             return False, f"docs/monitor/data/latest.json 找不到 key={key}"
-        return True, (f"{item.get('date')} val={item.get('val')}"
-                       f"（比較數值＝去除逗號/單位符號後的原始數字，尺度依 series 而定，非統一 bp 或 %，落帳前請對齊）")
+        scale, note = _compute_monitor_scale(item)
+        spark = item.get("spark") or []
+        spark_last = _parse_num(spark[-1]) if spark else None
+        if scale is False:
+            return False, (f"{item.get('date')} val={item.get('val')}（顯示值）／spark 尾值={spark_last}："
+                            f"scale 判定為 unit_ambiguous（比值不落在 {MONITOR_SCALE_CANDIDATES} 任一值 "
+                            f"±{int(MONITOR_SCALE_TOLERANCE*100)}% 內），無法落帳／結算")
+        if scale is None:
+            return True, (f"{item.get('date')} val={item.get('val')}（顯示值）／spark 尾值={spark_last}／"
+                           f"scale=unknown（val 或 spark 尾值為 0 或缺值，沿用 v1 舊行為：resolver.value "
+                           f"須與 spark 原始尺度一致，不會換算）")
+        return True, (f"{item.get('date')} val={item.get('val')}（顯示值）／spark 尾值={spark_last}／"
+                       f"scale={scale}｜value 若寫 X（顯示單位）會被換成 X/{scale} 比對 spark")
     if ns == "rv":
         pts = _rv21_series(key)
         if not pts:
@@ -419,6 +585,23 @@ def check_resolver(series):
             return False, f"data/flowmap_prices.json 找不到 ticker={key}"
         d, c = bars[-1]
         return True, f"{d} close={c}"
+    if ns == "ttp":
+        bars = _ttp_bars(key)
+        if not bars:
+            return False, f"data/trend_track_prices.json 找不到 ticker={key}"
+        d, c = bars[-1]
+        return True, f"{d} close={c}"
+    if ns == "relspy":
+        bars = _price_bars(key)
+        spy_bars = _flowmap_bars("SPY")
+        if not bars:
+            return False, f"找不到 {CACHE_DIR / (ALIAS.get(key, key) + '.json')}"
+        if not spy_bars:
+            return False, "data/flowmap_prices.json 找不到 SPY"
+        d, c = bars[-1]
+        ds, cs = spy_bars[-1]
+        return True, (f"{key}={d} close={c}／SPY={ds} close={cs}"
+                       f"（relspy 另需 resolver.base_px／base_spy／base_date，由落帳端提供，本檢查不驗證）")
     if ns == "vixts":
         if key != "SLOPE":
             return False, f"vixts 域目前只支援 key=SLOPE（收到 {key}）"
@@ -481,7 +664,17 @@ def _resolve_monitor(resolver, ts, resolve_by, today):
     op_fn = OPS.get(resolver.get("op"))
     if not op_fn:
         return {"status": "void", "reason": f"bad_op:{resolver.get('op')}", "outcome": None, "coverage_gap": False}
-    value = resolver.get("value")
+
+    # v2 單位正規化（§4.1）：resolver.value 維持「顯示單位」，換算成 spark 尺度後才比對。
+    scale, scale_note = _compute_monitor_scale(item)
+    if scale is False:
+        return {"status": "void", "reason": f"unit_ambiguous:{key}", "outcome": None, "coverage_gap": False}
+    raw_value = resolver.get("value")
+    value = (raw_value / scale) if scale else raw_value  # scale=None（舊行為）時不換算
+    if scale_note == "unit_scale_unknown":
+        print(f"  ⚠ monitor:{key} scale 判定為 unit_scale_unknown（val 或 spark 尾值為 0/缺值），"
+              f"沿用 v1 舊行為：resolver.value 未換算，直接比對 spark 原始尺度")
+
     window = resolver.get("window", "any_close")
     as_of = item.get("date")
     pts = _monitor_series_points(item)
@@ -591,6 +784,10 @@ def settle(rows, today_str):
             res = _resolve_rv(resolver, ts, resolve_by, today_str)
         elif ns == "pxd":
             res = _resolve_pxd(resolver, ts, resolve_by, today_str)
+        elif ns == "ttp":
+            res = _resolve_ttp(resolver, ts, resolve_by, today_str)
+        elif ns == "relspy":
+            res = _resolve_relspy(resolver, ts, resolve_by, today_str)
         elif ns == "vixts":
             res = _resolve_vixts(resolver, ts, resolve_by, today_str)
             if res["status"] == "open" and res.get("reason") in ("vixts_data_unavailable", "vixts_stale"):
@@ -607,17 +804,188 @@ def settle(rows, today_str):
             r["status"] = "void"
             r["outcome"] = None
             r["brier"] = None
+            r["brier_clim"] = None
+            r["beat_clim"] = None
             void_pairs.append((r.get("id"), res["reason"]))
         else:
             r["status"] = res["status"]
-            r["outcome"] = res["outcome"]
+            outcome = res["outcome"]
+            r["outcome"] = outcome
             p = r.get("p")
-            r["brier"] = round((p - res["outcome"]) ** 2, 4) if p is not None else None
+            r["brier"] = round((p - outcome) ** 2, 4) if p is not None else None
+            # §4.4：每筆回寫 brier_clim／beat_clim（無 p_clim 的筆只計 raw Brier，見 §1）。
+            p_clim = r.get("p_clim")
+            if p_clim is not None:
+                r["brier_clim"] = round((p_clim - outcome) ** 2, 4)
+                if r["brier"] is None:
+                    r["beat_clim"] = None
+                elif r["brier"] < r["brier_clim"]:
+                    r["beat_clim"] = True
+                elif r["brier"] > r["brier_clim"]:
+                    r["beat_clim"] = False
+                else:
+                    r["beat_clim"] = None  # 相等為 null（§2 原文）
+            else:
+                r["brier_clim"] = None
+                r["beat_clim"] = None
             resolved_ids.append(r.get("id"))
         if res.get("coverage_gap"):
             coverage_ids.append(r.get("id"))
         updated.append(r)
     return updated, resolved_ids, void_pairs, det_pending, coverage_ids
+
+
+# ─────────────────────────── sources 摘要（forecast v2 設計稿 §3.2） ───────────────────────────
+
+def _calibration_buckets(rows):
+    """10 桶校準曲線（預測機率 vs 實際頻率），對象＝該 source 全部 resolved 筆（不限定要有
+    p_clim——校準曲線只看「p 本身準不準」，與 base rate 無關）。"""
+    buckets = [[] for _ in range(10)]
+    for r in rows:
+        p = r.get("p")
+        if p is None or r.get("outcome") is None:
+            continue
+        buckets[min(int(p * 10), 9)].append(r)
+    labels = [f"[{i * 10}-{(i + 1) * 10}%]" for i in range(10)]
+    out = []
+    for i, b in enumerate(buckets):
+        if not b:
+            out.append({"bucket": labels[i], "n": 0, "avg_p": None, "freq": None})
+            continue
+        avg_p = round(sum(r["p"] for r in b) / len(b), 3)
+        freq = round(sum(r["outcome"] for r in b) / len(b), 3)
+        out.append({"bucket": labels[i], "n": len(b), "avg_p": avg_p, "freq": freq})
+    return out
+
+
+def _block_bootstrap_bss_ci(clim_rows):
+    """§3.5：以 block_key 分塊整塊重抽（block bootstrap），2000 次，seed=20260902，
+    回傳 [p5, p95] 的 BSS 90% 信賴區間。clim_rows 須已是「resolved 且 p_clim／brier／
+    brier_clim 齊備」的列表。呼叫端負責先判斷 n_eff>=20 才呼叫本函式。"""
+    blocks = defaultdict(list)
+    for r in clim_rows:
+        blocks[r.get("block_key")].append(r)
+    block_keys = list(blocks.keys())
+    if not block_keys:
+        return [None, None]
+    rng = random.Random(BOOTSTRAP_SEED)
+    samples = []
+    for _ in range(BOOTSTRAP_N):
+        chosen = [rng.choice(block_keys) for _ in block_keys]
+        pooled = [r for bk in chosen for r in blocks[bk]]
+        if not pooled:
+            continue
+        mb = sum(r["brier"] for r in pooled) / len(pooled)
+        mbc = sum(r["brier_clim"] for r in pooled) / len(pooled)
+        if mbc <= 0:
+            continue
+        samples.append(1 - mb / mbc)
+    if not samples:
+        return [None, None]
+    samples.sort()
+
+    def _pct(q):
+        idx = min(len(samples) - 1, max(0, int(round(q / 100 * (len(samples) - 1)))))
+        return round(samples[idx], 4)
+
+    return [_pct(5), _pct(95)]
+
+
+def _compute_sprt(beat_clim_seq, n_eff, prior_sprt):
+    """§3.3：SPRT 序貫檢定。beat_clim_seq 為依 resolved_ts 升冪排序的 bool 序列（每筆
+    resolved 且 beat_clim 非 null 的 beat_clim）。決策需 n_eff>=SPRT_MIN_N_EFF 才允許落定；
+    一旦落定（prior_sprt.state 為 accept_h1／accept_h0）即鎖存 state／decided_at／
+    decided_n，之後樣本仍持續累計顯示（llr／n_used 每次都重算），但狀態不再改變——只有
+    校準輪能重設（人工改 forecast_settlement.json 或砍檔重跑，本函式不提供自動重設）。"""
+    llr = sum(SPRT_LLR_HIT if hit else SPRT_LLR_MISS for hit in beat_clim_seq)
+    n_used = len(beat_clim_seq)
+
+    prior_state = (prior_sprt or {}).get("state")
+    if prior_state in ("accept_h1", "accept_h0"):
+        state = prior_state
+        decided_at = (prior_sprt or {}).get("decided_at")
+        decided_n = (prior_sprt or {}).get("decided_n")
+    else:
+        decided_at, decided_n = None, None
+        if n_eff < SPRT_MIN_N_EFF:
+            state = "continue"
+        elif llr >= SPRT_A:
+            state = "accept_h1"
+            decided_at = date.today().isoformat()
+            decided_n = n_used
+        elif llr <= SPRT_B:
+            state = "accept_h0"
+            decided_at = date.today().isoformat()
+            decided_n = n_used
+        else:
+            state = "continue"
+
+    return {
+        "p0": SPRT_P0, "p1": SPRT_P1, "alpha": SPRT_ALPHA, "beta": SPRT_BETA,
+        "A": SPRT_A, "B": SPRT_B,
+        "llr": round(llr, 5), "n_used": n_used, "state": state,
+        "decided_at": decided_at, "decided_n": decided_n,
+    }
+
+
+def _source_summary(rows_for_src, prior_sprt):
+    resolved = [r for r in rows_for_src if r.get("status") in ("resolved_yes", "resolved_no")]
+    n_resolved = len(resolved)
+
+    episodes = {(r.get("episode_id") or r.get("id")) for r in resolved}
+    n_eff = len(episodes)
+
+    clim_rows = [r for r in resolved
+                 if r.get("p_clim") is not None and r.get("brier") is not None
+                 and r.get("brier_clim") is not None]
+    n_with_clim = len(clim_rows)
+
+    all_briers = [r["brier"] for r in resolved if r.get("brier") is not None]
+    mean_brier = round(sum(all_briers) / len(all_briers), 4) if all_briers else None
+
+    mean_brier_clim, bss = None, None
+    if clim_rows:
+        mbc = sum(r["brier_clim"] for r in clim_rows) / len(clim_rows)
+        mb_clim_subset = sum(r["brier"] for r in clim_rows) / len(clim_rows)
+        mean_brier_clim = round(mbc, 4)
+        if mbc > 0:
+            bss = round(1 - mb_clim_subset / mbc, 4)
+
+    bss_ci90 = [None, None]
+    if n_eff >= SPRT_MIN_N_EFF and clim_rows:
+        bss_ci90 = _block_bootstrap_bss_ci(clim_rows)
+
+    beat_clim_rows = sorted((r for r in resolved if r.get("beat_clim") is not None),
+                            key=lambda r: r.get("resolved_ts") or "")
+    beat_clim_seq = [bool(r["beat_clim"]) for r in beat_clim_rows]
+    sprt = _compute_sprt(beat_clim_seq, n_eff, prior_sprt)
+
+    if sprt["state"] == "accept_h1":
+        status, status_label = "green", "🟢 已證實優於基準"
+    elif sprt["state"] == "accept_h0":
+        status, status_label = "red", "🔴 已證實不優於基準，等校準輪處決"
+    else:
+        status, status_label = "yellow", f"🟡 證據累積中（n_eff={n_eff}／{SPRT_MIN_N_EFF}，LLR={sprt['llr']}）"
+
+    return {
+        "n_resolved": n_resolved, "n_eff": n_eff, "n_with_clim": n_with_clim,
+        "mean_brier": mean_brier, "mean_brier_clim": mean_brier_clim,
+        "bss": bss, "bss_ci90": bss_ci90,
+        "sprt": sprt,
+        "status": status, "status_label": status_label,
+        "calibration_buckets": _calibration_buckets(resolved),
+    }
+
+
+def build_sources_summary(updated, prior_sources):
+    by_source = defaultdict(list)
+    for r in updated:
+        by_source[r.get("source") or "—"].append(r)
+    out = {}
+    for src, rs in by_source.items():
+        prior_sprt = (prior_sources.get(src) or {}).get("sprt")
+        out[src] = _source_summary(rs, prior_sprt)
+    return out
 
 
 def main():
@@ -633,11 +1001,15 @@ def main():
     rows = _load_forecasts()
 
     prev_last_run = None
+    prior_sources = {}
     if OUT.exists():
         try:
-            prev_last_run = json.loads(OUT.read_text(encoding="utf-8")).get("last_run")
+            prev_out = json.loads(OUT.read_text(encoding="utf-8"))
+            prev_last_run = prev_out.get("last_run")
+            prior_sources = prev_out.get("sources") or {}
         except Exception:
             prev_last_run = None
+            prior_sources = {}
 
     updated, resolved_ids, void_pairs, det_pending, coverage_ids = settle(rows, today_str)
     _write_forecasts(updated)
@@ -660,8 +1032,10 @@ def main():
     n_resolved_no = sum(1 for r in updated if r.get("status") == "resolved_no")
     n_void = sum(1 for r in updated if r.get("status") == "void")
 
+    sources = build_sources_summary(updated, prior_sources)
+
     out = {
-        "schema": "forecast-settlement-v1",
+        "schema": "forecast-settlement-v2",
         "generated_at": datetime.now().isoformat(timespec="seconds"),
         "last_run": today_str,
         "prev_run": prev_last_run,
@@ -672,6 +1046,7 @@ def main():
         "n_void": n_void,
         "n_detective_pending": det_pending,
         "void_reasons": void_pairs,
+        "sources": sources,
         "rows": updated,
     }
     OUT.write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
@@ -681,6 +1056,10 @@ def main():
         print(f"⚠ {coverage_warning}")
     if void_pairs:
         print("  void 原因：", dict(Counter(reason for _, reason in void_pairs)))
+    for src, summ in sorted(sources.items()):
+        print(f"  sources[{src}]：n_resolved={summ['n_resolved']} n_eff={summ['n_eff']} "
+              f"n_with_clim={summ['n_with_clim']} bss={summ['bss']} sprt={summ['sprt']['state']} "
+              f"status={summ['status']}")
 
 
 if __name__ == "__main__":

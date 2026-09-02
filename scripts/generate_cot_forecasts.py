@@ -21,6 +21,14 @@ resolve_by = ts+30 曆日（同 generate_rv_forecasts.py／generate_vix_forecast
 `pooled.reversal_hit_rate`（三市場合併 base rate，不分市場各自的 hit rate——設計稿 §G5「p
 取 pooled base rate」）——不接受人工覆寫。
 
+v2（forecast v2 設計稿 §5.1）：改用 knowledge/forecast_lib.py（next_ids／finalize／append，
+含哨兵 twin 產生）；每筆額外填 claim_template（單一樣板 `cot_reversal_20d`，不分方向）、
+p_clim（依方向取 data/cot_base_rates.json 頂層 unconditional 頻率——極端偏多對應
+px_down_20d、極端偏空對應 px_up_20d，方向判斷與 claim 本身的漲跌方向一致）、p_clim_ref、
+p_table_built_at、episode_id（`cot:{code}:{run_start_week}`，run_start_week 為回看
+cot_history 找到的「本次連續極端週」起點，見 _run_start_week()）。查重規則、dry-run/--write
+行為、stdout=JSONL only 慣例不變。
+
 CLI
 ---
   python scripts/generate_cot_forecasts.py            dry-run，草案（若有）印到 stdout（純 JSONL）
@@ -42,7 +50,11 @@ FLOWMAP_PRICES = ROOT / "data" / "flowmap_prices.json"
 BASE_RATES = ROOT / "data" / "cot_base_rates.json"
 FORECASTS = ROOT / "knowledge" / "forecasts.jsonl"
 
+sys.path.insert(0, str(ROOT / "knowledge"))
+import forecast_lib as fl  # noqa: E402 — id 產生／v2 欄位補齊／落帳＋哨兵 twin，見 forecast_lib.py
+
 SOURCE = "cot-model"
+CLAIM_TEMPLATE = "cot_reversal_20d"  # forecast v2 設計稿 §5.1（單一樣板，不分方向）
 PCTILE_WINDOW_WEEKS = 156   # 須與 build_cot_base_rates.py 一致（PREREG 凍結）
 EXTREME_HI = 95
 EXTREME_LO = 5
@@ -76,8 +88,10 @@ def pctile_incl(values, x):
 
 
 def current_extremes():
-    """回傳 [{code, label, proxy, cot_date, net_pct_oi, pctile, direction}, ...]
-    只含目前處於極端分位（≥95 或 ≤5）的市場；direction ∈ {"long","short"}。"""
+    """回傳 ([{code, label, proxy, cot_date, net_pct_oi, pctile, direction}, ...], cot_history)。
+    第一項只含目前處於極端分位（≥95 或 ≤5）的市場；direction ∈ {"long","short"}。第二項
+    （cot_history 原始 dict）回傳給呼叫端供 _run_start_week() 回看連續極端週的 run 起點
+    （episode_id 用，見 §5.1），避免重複讀檔。"""
     if not COT_HISTORY.exists():
         raise SystemExit(f"找不到 {COT_HISTORY}")
     cot_history = json.loads(COT_HISTORY.read_text(encoding="utf-8"))
@@ -109,7 +123,38 @@ def current_extremes():
         if direction:
             out.append({"code": code, "label": label, "proxy": proxy, "cot_date": cur_date,
                         "net_pct_oi": cur_val, "pctile": p, "direction": direction})
-    return out
+    return out, cot_history
+
+
+def _run_start_week(code, cot_history, direction, cur_date):
+    """episode_id（§5.1：`cot:{code}:{run_start_week}`）用——從 cur_date 往回走，只要前一週
+    在「該週自己的 156 週滾動視窗」下仍是同方向極端，就把 run_start 往前推；遇到非極端、
+    方向反轉、或視窗不足 156 週（無法判定）即停。回傳 run 起點的週日期字串；查無市場資料或
+    cur_date 不在序列內則保守回傳 cur_date 本身（run 視為只有一週）。"""
+    m = (cot_history.get("markets") or {}).get(code)
+    if not m or not m.get("series"):
+        return cur_date
+    s = sorted(tuple(pt) for pt in m["series"])
+    dates = [d for d, _ in s]
+    vals = [v for _, v in s]
+    try:
+        i = dates.index(cur_date)
+    except ValueError:
+        return cur_date
+    run_start_idx = i
+    j = i
+    while j - 1 >= PCTILE_WINDOW_WEEKS - 1:
+        jj = j - 1
+        w = vals[jj - PCTILE_WINDOW_WEEKS + 1:jj + 1]
+        p = pctile_incl(w, vals[jj])
+        if p is None:
+            break
+        d = "long" if p >= EXTREME_HI else ("short" if p <= EXTREME_LO else None)
+        if d != direction:
+            break
+        run_start_idx = jj
+        j = jj
+    return dates[run_start_idx]
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -146,45 +191,17 @@ def load_base_rates():
 # 草案產生 + 查重 + 落帳
 # ═══════════════════════════════════════════════════════════════════════════
 
-def _next_ids(ts_str, n, used_so_far, path=FORECASTS):
-    used = set(used_so_far)
-    if path.exists():
-        for line in path.read_text(encoding="utf-8").splitlines():
-            if not line.strip():
-                continue
-            try:
-                rid = json.loads(line).get("id", "")
-            except json.JSONDecodeError:
-                continue
-            used.add(rid)
-    prefix = f"fc_{ts_str.replace('-', '')}_cot_"
-    seq = 0
-    out = []
-    while len(out) < n:
-        seq += 1
-        cand = f"{prefix}{seq:02d}"
-        if cand not in used:
-            out.append(cand)
-    return out
-
-
-def _existing_forecasts(path):
-    if not path.exists():
-        return []
-    return [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines() if l.strip()]
-
-
 def market_week_already_logged(path, code, cot_date, source=SOURCE):
     """同一市場（code）同一 COT 事件週（cot_date）已有落帳紀錄 → True（查重口徑：設計稿 §G5
     「同市場同事件週拒重複」）。"""
     needle = f"cot_code={code}|cot_week={cot_date}"
-    for r in _existing_forecasts(path):
+    for r in fl.existing(path):
         if r.get("source") == source and needle in (r.get("source_ref") or ""):
             return True
     return False
 
 
-def build_draft(today, extreme, pooled_p, base_rates):
+def build_draft(today, extreme, pooled_p, base_rates, cot_history):
     code, label, proxy = extreme["code"], extreme["label"], extreme["proxy"]
     cot_date, pctile, direction = extreme["cot_date"], extreme["pctile"], extreme["direction"]
 
@@ -198,7 +215,19 @@ def build_draft(today, extreme, pooled_p, base_rates):
     direction_zh = "偏多（long，可能過度樂觀）" if direction == "long" else "偏空（short，可能過度悲觀）"
     move_zh = "下跌、低於" if direction == "long" else "上漲、高於"
 
-    base_meta = (f"base_rate built_at={base_rates.get('built_at')}｜"
+    # v2（forecast v2 設計稿 §5.1）：p_clim 依方向取「同一份表」的頂層 unconditional 頻率——
+    # 極端偏多（long）事件的命題方向是「跌」，對應 px_down_20d；極端偏空（short）事件的命題
+    # 方向是「漲」，對應 px_up_20d（與上面 op/move_zh 的方向判斷邏輯一致）。
+    p_clim_map = base_rates.get("p_clim") or {}
+    clim_key = "px_down_20d" if direction == "long" else "px_up_20d"
+    p_clim = (p_clim_map.get(clim_key) or {}).get(proxy)
+    built_at = base_rates.get("built_at")
+    p_clim_ref = (f"data/cot_base_rates.json p_clim.{clim_key}.{proxy}"
+                  f"（unconditional，全樣本交易日取樣）built_at={built_at}")
+    run_start_week = _run_start_week(code, cot_history, direction, cot_date)
+    episode_id = f"cot:{code}:{run_start_week}"
+
+    base_meta = (f"base_rate built_at={built_at}｜"
                  f"pooled.n_valid={base_rates.get('pooled', {}).get('n_valid')}｜"
                  f"pooled.reversal_hit_rate={pooled_p}｜confidence={base_rates.get('confidence')}")
     source_ref = (f"cot_code={code}|cot_week={cot_date}｜market={label}｜net_pct_oi={extreme['net_pct_oi']}｜"
@@ -216,15 +245,10 @@ def build_draft(today, extreme, pooled_p, base_rates):
         "note": (f"cot-model 機械賦值（無需人工判斷）｜{label} pctile_3y={pctile}（{cot_date} 當週，"
                  f"net_pct_oi={extreme['net_pct_oi']}）｜p 取自 cot_base_rates.json "
                  f"pooled.reversal_hit_rate（三市場合併，非該市場單獨 hit rate）｜{base_meta}"),
+        "claim_template": CLAIM_TEMPLATE, "p_clim": p_clim,
+        "p_clim_ref": p_clim_ref, "p_table_built_at": built_at, "episode_id": episode_id,
     }
     return draft
-
-
-def write_drafts(drafts, path=FORECASTS):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("a", encoding="utf-8") as f:
-        for d in drafts:
-            f.write(json.dumps(d, ensure_ascii=False) + "\n")
 
 
 def main():
@@ -233,7 +257,7 @@ def main():
     args = ap.parse_args()
 
     today = date.today()
-    extremes = current_extremes()
+    extremes, cot_history = current_extremes()
 
     if not extremes:
         info("無事件：權益三指數目前皆未處於 3 年滾動極端分位（≥95 或 ≤5）。exit 0，不落帳。")
@@ -249,36 +273,38 @@ def main():
              f"direction={ex['direction']}｜cot_week={ex['cot_date']}")
 
     ts_str = today.isoformat()
-    drafts = []
     dup_codes = []
-    used_ids = []
+    non_dup_extremes = []
     for ex in extremes:
-        dup = market_week_already_logged(FORECASTS, ex["code"], ex["cot_date"])
-        if dup:
+        if market_week_already_logged(FORECASTS, ex["code"], ex["cot_date"]):
             dup_codes.append(ex["code"])
             warn(f"{ex['label']}（{ex['code']}）cot_week={ex['cot_date']} 已有 source={SOURCE} "
                  f"落帳紀錄——本次落帳將被拒絕（同市場同事件週不重複記）。")
             continue
-        draft = build_draft(today, ex, pooled_p, base_rates)
-        rid = _next_ids(ts_str, 1, used_ids)[0]
-        used_ids.append(rid)
-        draft["id"] = rid
-        drafts.append(draft)
+        non_dup_extremes.append(ex)
 
-    for d in drafts:
-        print(json.dumps(d, ensure_ascii=False))
+    drafts = []
+    if non_dup_extremes:
+        ids = fl.next_ids(ts_str, "cot", len(non_dup_extremes), FORECASTS)
+        for ex, rid in zip(non_dup_extremes, ids):
+            draft = build_draft(today, ex, pooled_p, base_rates, cot_history)
+            draft["id"] = rid
+            drafts.append(draft)
+        drafts = fl.finalize(drafts)
 
     if not drafts:
         info(f"本次偵測到的 {len(extremes)} 個極端事件皆已查重命中（{dup_codes}），無新草案可產。")
         return
+
+    n_written, n_twins = fl.append(drafts, path=FORECASTS, write=args.write)
 
     if not args.write:
         info(f"dry-run：共 {len(drafts)} 筆草案（另有 {len(dup_codes)} 筆查重被拒）。"
              f"--write 才會 append 進 {FORECASTS}。")
         return
 
-    write_drafts(drafts, FORECASTS)
-    print(f"\n# --write：寫入 {len(drafts)} 筆 → {FORECASTS}（另有 {len(dup_codes)} 筆查重被拒）", file=sys.stderr)
+    print(f"\n# --write：寫入 {n_written} 筆＋{n_twins} 筆哨兵 twin → {FORECASTS}"
+          f"（另有 {len(dup_codes)} 筆查重被拒）", file=sys.stderr)
 
 
 if __name__ == "__main__":

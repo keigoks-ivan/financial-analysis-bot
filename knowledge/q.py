@@ -434,9 +434,14 @@ def cmd_forecasts(source=None):
     if data.get("coverage_warning"):
         print(f"⚠ {data['coverage_warning']}\n")
 
-    opens = sorted([r for r in rows if r.get("status") == "open"], key=lambda r: r.get("resolve_by") or "")
-    print(f"未結算（open）：{len(opens)} 筆")
-    for r in opens:
+    opens_all = sorted([r for r in rows if r.get("status") == "open"], key=lambda r: r.get("resolve_by") or "")
+    n_twins_open = sum(1 for r in opens_all if r.get("source") == "sentinel-noise")
+    opens = [r for r in opens_all if r.get("source") != "sentinel-noise"]
+    OPEN_LIST_MAX = 40
+    print(f"未結算（open）：{len(opens_all)} 筆（本尊 {len(opens)}／哨兵 twin {n_twins_open}，twin 不逐筆列）")
+    if len(opens) > OPEN_LIST_MAX:
+        print(f"  （只列最近到期 {OPEN_LIST_MAX} 筆，其餘 {len(opens) - OPEN_LIST_MAX} 筆略；用 --forecasts <source> 縮小範圍）")
+    for r in opens[:OPEN_LIST_MAX]:
         rb = r.get("resolve_by") or ""
         overdue = bool(rb) and today and rb < today
         mark = "⚠ 逾期未結算  " if overdue else "  "
@@ -456,41 +461,50 @@ def cmd_forecasts(source=None):
           + (f"；detective 域待實作 {data.get('n_detective_pending')} 筆" if data.get("n_detective_pending") else ""))
     print()
 
-    by_src = defaultdict(list)
-    for r in resolved:
-        if r.get("p") is not None and r.get("outcome") is not None:
-            by_src[r.get("source") or "—"].append(r)
+    # v2（forecast v2 設計稿 §3.6）：per-source 統計（n_resolved／n_eff／mean Brier／
+    # mean Brier_clim／BSS[CI]／SPRT 狀態／校準 10 桶）全部由 settle_forecasts.py 算好放進
+    # forecast_settlement.json 的 sources 段，本函式只讀不算（A2 讀法同此）。哨兵
+    # （sentinel-noise）獨立成一段，不與其他 producer source 混排。
+    sources_summary = data.get("sources") or {}
 
-    sources = [source] if source else sorted(by_src)
-    for src in sources:
-        rs = by_src.get(src, [])
-        if not rs:
-            continue
-        n = len(rs)
-        mean_brier = sum(r["brier"] for r in rs) / n
-        print(f"── {src}（resolved {n} 筆）── raw Brier 均值 {mean_brier:.4f}")
-        if n < 20:
-            print("   樣本不足（<20 筆），不出 BSS／校準曲線（見 README 樣本誠實條款）。\n")
-            continue
-        base_rate = sum(r["outcome"] for r in rs) / n
-        brier_clim = base_rate * (1 - base_rate)
-        if brier_clim > 0:
-            bss = 1 - mean_brier / brier_clim
-            print(f"   climatology（該 source resolved 集合的 in-sample outcome 頻率）= {base_rate:.3f}；"
-                  f"Brier skill score = 1 − Brier/Brier_clim = {bss:.3f}")
+    def _print_source_block(src, summ):
+        print(f"── {src}（resolved {summ.get('n_resolved', 0)} 筆／n_eff {summ.get('n_eff', 0)}／"
+              f"n_with_clim {summ.get('n_with_clim', 0)}）── {summ.get('status_label', '')}")
+        mb, mbc = summ.get("mean_brier"), summ.get("mean_brier_clim")
+        print(f"   mean Brier={mb if mb is not None else '—'}　"
+              f"mean Brier_clim={mbc if mbc is not None else '—'}")
+        bss = summ.get("bss")
+        ci = summ.get("bss_ci90") or [None, None]
+        if bss is not None:
+            ci_str = f"[{ci[0]}, {ci[1]}]" if ci[0] is not None else "（n_eff<20，CI 未算）"
+            print(f"   BSS = 1 − mean Brier / mean Brier_clim = {bss}　90% block-bootstrap CI {ci_str}")
         else:
-            print(f"   climatology = {base_rate:.3f}（0 或 1，分母為 0，無法算 BSS）")
-        print("   校準曲線（10 桶：預測機率 vs 實際頻率）：")
-        buckets = [[] for _ in range(10)]
-        for r in rs:
-            buckets[min(int(r["p"] * 10), 9)].append(r)
-        for i, b in enumerate(buckets):
-            if not b:
-                continue
-            avg_p = sum(r["p"] for r in b) / len(b)
-            freq = sum(r["outcome"] for r in b) / len(b)
-            print(f"     [{i * 10:>3}-{(i + 1) * 10:>3}%]  n={len(b):<3}  預測均值={avg_p:.2f}  實際頻率={freq:.2f}")
+            print("   BSS：n_with_clim 樣本不足，或 mean Brier_clim=0，未計算。")
+        sprt = summ.get("sprt") or {}
+        decided = (f"（決於 {sprt.get('decided_at')}，n={sprt.get('decided_n')}）"
+                   if sprt.get("decided_at") else "")
+        print(f"   SPRT：p0={sprt.get('p0')} p1={sprt.get('p1')} α={sprt.get('alpha')} β={sprt.get('beta')}　"
+              f"LLR={sprt.get('llr')}（A={sprt.get('A')}／B={sprt.get('B')}）　"
+              f"n_used={sprt.get('n_used')}　狀態={sprt.get('state')}{decided}")
+        buckets = summ.get("calibration_buckets") or []
+        if any(b.get("n") for b in buckets):
+            print("   校準曲線（10 桶：預測機率 vs 實際頻率）：")
+            for b in buckets:
+                if not b.get("n"):
+                    continue
+                print(f"     {b['bucket']:>10}  n={b['n']:<3}  預測均值={b['avg_p']}  實際頻率={b['freq']}")
         print()
+
+    producer_sources = sorted(s for s in sources_summary if s != "sentinel-noise")
+    if source:
+        if source in sources_summary:
+            _print_source_block(source, sources_summary[source])
+    else:
+        for src in producer_sources:
+            _print_source_block(src, sources_summary[src])
+        if "sentinel-noise" in sources_summary:
+            print("═" * 12 + " 哨兵（sentinel-noise，無技巧對照組，見設計稿 §3.4）" + "═" * 12)
+            _print_source_block("sentinel-noise", sources_summary["sentinel-noise"])
 
 
 def cmd_forecast_add():
@@ -564,8 +578,13 @@ def cmd_forecast_add():
         "id": _next_forecast_id(ts, source), "ts": ts, "source": source, "source_ref": source_ref,
         "claim": claim, "p": p, "horizon_days": horizon_days, "resolve_by": resolve_by,
         "resolver": {"series": series, "op": op, "value": value, "window": window},
-        "status": "open", "resolved_ts": None, "outcome": None, "brier": None,
+        "status": "open", "resolved_ts": None, "outcome": None, "brier": None, "note": None,
     }
+    # v2（forecast v2 設計稿 §2）：schema／claim_template="manual"／p_clim=None／episode_id=id／
+    # block_key／twin_of=None 由 forecast_lib.finalize() 統一補齊（手動落帳不主動設定這些欄位，
+    # 靠 finalize() 的預設值機制吃到 manual 樣板——見該函式 docstring）。
+    import forecast_lib
+    row = forecast_lib.finalize([row])[0]
     print("\n" + json.dumps(row, ensure_ascii=False, indent=1))
     if input("\n確認落帳？(y/N)：").strip().lower() != "y":
         print("已取消，未寫入。")

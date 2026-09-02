@@ -75,20 +75,72 @@ python knowledge/rule_audit.py --report   # 印 markdown 審計預覽表（貼�
 **讀數紀律**：v13/v14 決策層 2026-06-22 才起跑，成熟樣本（結算齡 ≥28 天）現多為 0，
 mean to_date 取全部已結算命中、方向可讀量級慎讀。
 
-## 機率化判讀對帳簿（forecasts.jsonl，2026-09-01 起）
+## 機率化判讀對帳簿（forecasts.jsonl，2026-09-01 起；v2 改版 2026-09-02）
 
-把站內判讀（detective-read／monitor-read／macro 證偽表等）升級成可記分的機率預測：落款凍結
-→機械結算→Brier／校準曲線。設計見 `notes/site-internal/root/_flowmap_forecast_ledger_design_20260901.md` §B。
+把站內判讀升級成可記分的機率預測：落帳凍結→機械結算→**方向命中率**（非流量／波動率本身）
+記分。v1 設計見 `_flowmap_forecast_ledger_design_20260901.md` §B；**v2（現行）** 把目標函數
+從「in-sample climatology」改成「逐筆 p_clim（該命題型別的無條件歷史頻率）算 Brier skill
+score」+ SPRT 序貫檢定當唯一 kill 機制 + 哨兵（sentinel-noise）對照組，設計見
+`notes/site-internal/root/_forecast_v2_design_20260902.md`（§0 講 WHY，§1-§5 講規格）。
 
-- `forecasts.jsonl`（append-only，真相，commit）：每筆 `{claim, p, resolve_by, resolver, status, outcome, brier}`；
-  **resolver 必須機械可判**（`price:<TICKER>`／`monitor:<key>` 兩域可結算，`detective:*` 本期未實作）。
-- `settle_forecasts.py`：機械結算（open → resolved_yes/resolved_no/void），回寫 forecasts.jsonl 的
-  status/resolved_ts/outcome/brier 四欄，彙總輸出 `forecast_settlement.json`（衍生物，gitignore）。
-- `python knowledge/q.py --forecasts [source]`：open 清單（含逾期未結算標記）＋依 source 的校準統計
-  （resolved ≥20 筆才出 Brier skill score／10 桶校準曲線，<20 筆只印 raw Brier）；會自動先跑結算。
-- `python knowledge/q.py --forecast-add`：互動式落帳精靈，落帳前驗證 resolver 可解析，寫不出來就拒絕。
-- `scripts/harvest_macro_falsifiers.py`：把 `docs/macro/MACRO_*.html` 證偽表擬成落帳草案（dry-run 印
-  stdout，`--write` 才 append；p 值需人工賦值，草案預設 null 不會被寫入）。
+### schema v2 欄位（additive，舊 13 欄不動）
+
+每筆新增：`schema`（固定 `"fc-v2"`）、`claim_template`（命題型別 id，如 `rv21_higher_21d`；
+人工落帳固定 `"manual"`）、`p_clim`（float｜null，該命題型別的無條件歷史頻率）、
+`p_clim_ref`（p_clim 來源描述：表檔＋built_at＋窗口）、`p_table_built_at`（賦 p 所用表的
+built_at）、`episode_id`（有效樣本計數單位，跨 producer 各有定義，見下）、`block_key`
+（block-bootstrap 分塊鍵＝ts 所在月 `YYYY-MM`）、`twin_of`（哨兵筆指向本尊 id；本尊為
+null）。`knowledge/forecast_lib.py` 是這些欄位的**唯一產生點**（`finalize()`），六個
+producer 與 `q.py --forecast-add` 都透過它，不各自重算。
+
+### 有效樣本、記分、kill 機制
+
+- **n_eff** ＝ resolved 集合中 distinct `episode_id` 數；所有「≥20 筆」門檻讀 n_eff（非
+  resolved 筆數本身，因為同一波事件的多筆樣本高度相關，不是獨立試驗）。
+- **BSS**（Brier skill score）＝ 1 − mean(Brier) / mean(Brier_clim)，只在有 p_clim 的子集
+  計算；90% 信賴區間為 block bootstrap（按 `block_key` 整塊重抽 2000 次，seed 20260902）。
+- **決策機制唯一為 SPRT**（序貫機率比檢定，取代 v1 的固定 n 二項檢定）：H0 p0=0.5 vs H1
+  p1=0.65，α=0.05／β=0.10，上界 A=ln(18)≈2.8904／下界 B=ln(0.1/0.95)≈−2.2513；每筆
+  `beat_clim`（該筆 Brier 是否優於 Brier_clim）命中 LLR+0.26236、未命中 −0.35667；
+  n_eff<20 恆 `continue`；LLR 觸頂 `accept_h1`（🟢）／觸底 `accept_h0`（🔴＝kill 門檻，
+  舉旗待校準輪處決）。**決策一旦落定即鎖存**（`decided_at`／`decided_n`），之後樣本仍持續
+  累計顯示但狀態不變，只有校準輪能重設。
+- **哨兵（`source="sentinel-noise"`）**：每筆有 p_clim 的 producer 落帳同時 append 一筆
+  twin（`p = clip(p_clim + N(0, 0.15), 0.05, 0.95)`，seed 依 twin id 雜湊、可重現），期望
+  BSS<0 且技巧為零——哨兵判綠＝記分機制壞了，哨兵遲遲不判紅＝淘汰機制無力，兩個方向都要看。
+  哨兵不進其他 source 的 n_eff，`forecast_settlement.json` 與 `q.py --forecasts` 都獨立
+  成一段呈現。
+
+### 檔案與指令
+
+- `forecasts.jsonl`（append-only，真相，commit）：每筆含上述 v1+v2 全部欄位。**resolver
+  必須機械可判**：`price:<TICKER>`／`monitor:<key>`（v2 起單位正規化，見下）／`rv:<TICKER>`／
+  `pxd:<TICKER>`／`vixts:SLOPE`／`ttp:<TICKER>`（trend-track 價格快取，語義同 pxd）／
+  `relspy:<TICKER>`（相對 SPY 超額報酬，只支援 at_expiry）可結算；`detective:*` 本期未實作。
+- `knowledge/forecast_lib.py`：v2 欄位的共用函式庫（`next_ids`／`finalize`／
+  `make_sentinel_twin`／`append`／`existing`／`migrate`）。`python knowledge/forecast_lib.py
+  --migrate` 一次性把舊（v1）筆補齊 v2 欄位＋補生哨兵 twin，冪等可重複執行。
+- `settle_forecasts.py`：機械結算（open → resolved_yes/resolved_no/void），回寫
+  status/resolved_ts/outcome/brier/**brier_clim/beat_clim**（v2 新增）六欄，彙總輸出
+  `forecast_settlement.json`（schema `forecast-settlement-v2`，衍生物，gitignore）——新增
+  `sources`：每個 source（含哨兵）一段 n_resolved／n_eff／n_with_clim／mean Brier／
+  mean Brier_clim／BSS＋CI／SPRT 狀態／10 桶校準曲線。**monitor 域單位正規化**（v2 根治
+  `sofr_iorb` 顯示值與 spark 尺度不一致的 bug）：resolver.value 一律採「顯示單位」落帳，
+  結算時自動換算成 spark 尺度比對，`--check-resolver monitor:<key>` 會印出換算後的 scale。
+- `python knowledge/q.py --forecasts [source]`：open 清單（含逾期未結算標記）＋每 source 一段
+  n_resolved／n_eff／mean Brier／mean Brier_clim／BSS[CI]／SPRT 狀態（LLR、n_used、state）／
+  校準 10 桶（統計全部由 `settle_forecasts.py` 算好，本指令只讀不算）；哨兵獨立成一段；
+  會自動先跑結算。
+- `python knowledge/q.py --forecast-add`：互動式落帳精靈，落帳前驗證 resolver 可解析，寫不
+  出來就拒絕；v2 起自動經 `forecast_lib.finalize()` 補齊 v2 欄位（`claim_template="manual"`／
+  `p_clim=null`／`episode_id`=自身 id）。
+- Producer（機械產生 forecast 草案，dry-run 預設印 stdout JSONL、`--write` 才落帳）：
+  `scripts/generate_rv_forecasts.py`（月頻）／`scripts/generate_vix_forecasts.py`（VIX 期限
+  結構倒掛 onset 事件觸發）／`scripts/generate_cot_forecasts.py`（COT 極端部位事件觸發）；
+  各自的 base-rate 表（`scripts/build_{rv,vixts,cot}_base_rates.py`）除既有條件頻率外，v2
+  起頂層新增 `p_clim`（無條件、全樣本取樣的 pooled 頻率，同窗口同門檻）。
+  `scripts/harvest_macro_falsifiers.py`：把 `docs/macro/MACRO_*.html` 證偽表擬成落帳草案
+  （p 值需人工賦值，草案預設 null 不會被寫入）。
 
 ## 回填 outcome（人工複盤，機械結算不取代）
 

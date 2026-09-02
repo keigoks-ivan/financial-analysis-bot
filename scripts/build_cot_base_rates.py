@@ -288,6 +288,31 @@ def evaluate_events(events, price_bars, lookahead=LOOKAHEAD_TRADING_DAYS):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# forecast v2 設計稿 §5.1：頂層 p_clim（無條件、全樣本日取樣，每檔 SPY/QQQ/IWM 各自算）
+# ═══════════════════════════════════════════════════════════════════════════
+
+def compute_unconditional_px_dir_freq(bars, lookahead=LOOKAHEAD_TRADING_DAYS):
+    """在 bars（自建 6 年日線快取）的每一個交易日起算：第 lookahead 個交易日後收盤相對今日
+    上漲／下跌的無條件頻率——與 evaluate_events() 用同一個 lookahead（20 交易日）、同一份
+    價格快取，差別只在取樣點放寬到全樣本日（不需要 COT 極端事件觸發）。"""
+    closes = [c for _, c in bars]
+    n = len(bars)
+    n_valid = n_up = n_down = 0
+    for i in range(n):
+        j = i + lookahead
+        if j >= n:
+            continue
+        n_valid += 1
+        if closes[j] > closes[i]:
+            n_up += 1
+        elif closes[j] < closes[i]:
+            n_down += 1
+    freq_up = round(n_up / n_valid, 3) if n_valid else None
+    freq_down = round(n_down / n_valid, 3) if n_valid else None
+    return freq_up, freq_down, n_valid
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # Orchestration
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -372,6 +397,14 @@ def main():
     pooled_hit_rate = round(pooled_n_hit / pooled_n_valid, 3) if pooled_n_valid else None
     confidence = "lo" if pooled_n_valid < LOW_SAMPLE_EVENT_THRESHOLD else "med"
 
+    p_clim_up, p_clim_down, p_clim_n = {}, {}, {}
+    for t in PRICE_TICKERS:
+        fu, fd, nv = compute_unconditional_px_dir_freq(price_bars.get(t) or [])
+        p_clim_up[t] = fu
+        p_clim_down[t] = fd
+        p_clim_n[t] = nv
+    p_clim = {"px_up_20d": p_clim_up, "px_down_20d": p_clim_down}
+
     payload = {
         "schema": SCHEMA,
         "built_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -398,6 +431,14 @@ def main():
         "price_data_start": {t: price_bars[t][0][0] for t in PRICE_TICKERS if price_bars.get(t)},
         "price_data_end": {t: price_bars[t][-1][0] for t in PRICE_TICKERS if price_bars.get(t)},
         "events_by_market": all_events_out,
+        "p_clim": p_clim,
+        "p_clim_n": p_clim_n,
+        "p_clim_note": (
+            "forecast v2 設計稿 §5.1：無條件（unconditional）頻率——在自建 6 年日線快取的每一"
+            "個交易日（不需要 COT 極端事件觸發）起算 20 個交易日後價格漲跌，與 lookahead_"
+            "trading_days／事件驅動的 reversal_hit_rate 用同一個 lookahead 與同一份價格快取，"
+            "差別只在取樣點放寬到全樣本日。"
+        ),
     }
 
     out_path = Path(args.out)
@@ -411,6 +452,7 @@ def main():
              f"reversal_hit_rate={row.get('reversal_hit_rate')}")
     info(f"  pooled: n_valid={pooled_n_valid} n_hit={pooled_n_hit} reversal_hit_rate={pooled_hit_rate} "
          f"confidence={confidence}")
+    info(f"  p_clim（unconditional）: {p_clim}（n_valid={p_clim_n}）")
 
 
 if __name__ == "__main__":

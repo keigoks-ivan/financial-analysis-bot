@@ -30,6 +30,14 @@ freq_recovery_within_21td／freq_spy_higher_after_63td）——不接受人工�
 docstring 的先例）：base rate 用「交易日」（21／63）向前看，但 forecast 的 resolve_by 用
 「曆日」（30／92）——兩者是同一件事的兩種近似表達，非精確對齊。
 
+v2（forecast v2 設計稿 §5.1）：改用 knowledge/forecast_lib.py（next_ids／finalize／append，
+含哨兵 twin 產生）；每筆額外填 claim_template（vixts_recover_21d／spy_up_63d_after_onset）、
+p_clim（取自 data/vixts_base_rates.json 頂層 unconditional 頻率，同表同 built_at、不限
+onset 日取樣）、p_clim_ref、p_table_built_at、episode_id——預設 `vix:{onset_date}`，但若距
+前一筆 vix-model 本尊 onset ≤63 個交易日（在本次 slope_ts 上量測）則沿用前一筆 episode_id
+（同一波倒掛延續，不重算有效樣本）。查重規則、dry-run/--write 行為、stdout=JSONL only
+慣例不變。
+
 CLI
 ---
   python scripts/generate_vix_forecasts.py            dry-run，草案（若有）印到 stdout（純 JSONL）
@@ -42,6 +50,7 @@ from __future__ import annotations
 import argparse
 import bisect
 import json
+import re
 import sys
 from datetime import date, timedelta
 from pathlib import Path
@@ -52,6 +61,9 @@ RAW_CACHE = ROOT / "data" / "vixts_base_rates_raw_cache.json"
 FLOWMAP_PRICES = ROOT / "data" / "flowmap_prices.json"
 BASE_RATES = ROOT / "data" / "vixts_base_rates.json"
 FORECASTS = ROOT / "knowledge" / "forecasts.jsonl"
+
+sys.path.insert(0, str(ROOT / "knowledge"))
+import forecast_lib as fl  # noqa: E402 — id 產生／v2 欄位補齊／落帳＋哨兵 twin，見 forecast_lib.py
 
 SOURCE = "vix-model"
 ONSET_STREAK_DAYS = 5              # 須與 build_vixts_base_rates.py 一致（PREREG 凍結）
@@ -177,46 +189,53 @@ def load_base_rates():
 # 草案產生 + 查重 + 落帳
 # ═══════════════════════════════════════════════════════════════════════════
 
-def _next_ids(ts_str, n, path=FORECASTS):
-    used = set()
-    if path.exists():
-        for line in path.read_text(encoding="utf-8").splitlines():
-            if not line.strip():
-                continue
-            try:
-                rid = json.loads(line).get("id", "")
-            except json.JSONDecodeError:
-                continue
-            used.add(rid)
-    prefix = f"fc_{ts_str.replace('-', '')}_vix_"
-    seq = 0
-    out = []
-    while len(out) < n:
-        seq += 1
-        cand = f"{prefix}{seq:02d}"
-        if cand not in used:
-            out.append(cand)
-    return out
-
-
-def _existing_forecasts(path):
-    if not path.exists():
-        return []
-    return [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines() if l.strip()]
-
-
 def onset_already_logged(path, onset_date, source=SOURCE):
     """同一 onset_date 已有 source=vix-model 落帳紀錄 → True（查重口徑：同 onset 事件拒重複，
     設計稿 §G5「dry-run 預設、--write 查重（同市場同事件週拒重複）」的 vix-model 版本——這裡
     是「同一次倒掛 onset」而非「週」，因為 onset 是離散事件、天生不會同週重複觸發兩次）。"""
     needle = f"onset_date={onset_date}"
-    for r in _existing_forecasts(path):
+    for r in fl.existing(path):
         if r.get("source") == source and needle in (r.get("source_ref") or ""):
             return True
     return False
 
 
-def build_drafts(today, onset_date, onset_slope, base_rates):
+def _previous_vix_episode(forecasts_path, before_ts):
+    """回傳 (prev_onset_date, prev_episode_id) 或 (None, None)：forecasts.jsonl 中所有
+    source=vix-model 的本尊（twin_of is None，排除哨兵）筆，取 ts 嚴格早於 before_ts 者的
+    最新一筆（依 ts 排序）。用於 episode_id 63 交易日內沿用判斷（§5.1）。"""
+    candidates = []
+    for r in fl.existing(forecasts_path):
+        if r.get("source") != SOURCE or r.get("twin_of") is not None:
+            continue
+        ts = r.get("ts") or ""
+        if not ts or ts >= before_ts:
+            continue
+        m = re.search(r"onset_date=([\d-]+)", r.get("source_ref") or "")
+        onset_date = m.group(1) if m else None
+        eid = r.get("episode_id")
+        if onset_date and eid:
+            candidates.append((ts, onset_date, eid))
+    if not candidates:
+        return None, None
+    candidates.sort(key=lambda x: x[0])
+    _, onset_date, eid = candidates[-1]
+    return onset_date, eid
+
+
+def _trading_day_gap(slope_ts, d1, d2):
+    """slope_ts 上 d1→d2 的交易日位移（正整數＝d2 晚於 d1）；任一日期不在 slope_ts 內回傳
+    None（無法判定，episode_id 判斷端會保守視為「非同一 episode」）。"""
+    dates = [d for d, _ in slope_ts]
+    try:
+        i1 = dates.index(d1)
+        i2 = dates.index(d2)
+    except ValueError:
+        return None
+    return i2 - i1
+
+
+def build_drafts(today, onset_date, onset_slope, base_rates, slope_ts, forecasts_path=FORECASTS):
     ts_str = today.isoformat()
     spy_date, spy_close = spy_close_on_or_before(onset_date)
     if spy_close is None:
@@ -227,15 +246,35 @@ def build_drafts(today, onset_date, onset_slope, base_rates):
     if p_recovery is None or p_spy is None:
         raise SystemExit(f"{BASE_RATES} 缺 freq_recovery_within_21td／freq_spy_higher_after_63td，中止（不可硬猜 p）")
 
+    # v2（forecast v2 設計稿 §5.1）：p_clim 取自同一份表的頂層 unconditional 頻率（見
+    # scripts/build_vixts_base_rates.py compute_unconditional_recovery_freq／
+    # compute_unconditional_spy_up_freq），與 p（只在 onset 事件當天取樣的條件頻率）同表、
+    # 同 built_at、同窗口，差別只在取樣點不限 onset 日。
+    p_clim_map = base_rates.get("p_clim") or {}
+    built_at = base_rates.get("built_at")
+    p_clim_ref = (f"data/vixts_base_rates.json p_clim（unconditional，全樣本交易日取樣）"
+                  f"built_at={built_at}")
+
+    # episode_id：預設用 onset 日本身；若距前一筆 vix-model 本尊 onset ≤63 個交易日則沿用
+    # 前一筆的 episode_id（同一波倒掛的延續，不重算有效樣本）。
+    episode_id = f"vix:{onset_date}"
+    prev_onset_date, prev_episode_id = _previous_vix_episode(forecasts_path, ts_str)
+    if prev_onset_date and prev_episode_id:
+        gap_td = _trading_day_gap(slope_ts, prev_onset_date, onset_date)
+        if gap_td is not None and 0 < gap_td <= 63:
+            episode_id = prev_episode_id
+            info(f"episode_id 沿用前一筆 vix-model onset（{prev_onset_date}，episode={prev_episode_id}）"
+                 f"——距本次 onset {onset_date} 相隔 {gap_td} 個交易日 ≤63")
+
     resolve_by_1 = (today + timedelta(days=RECOVERY_HORIZON_CALENDAR_DAYS)).isoformat()
     resolve_by_2 = (today + timedelta(days=SPY_HORIZON_CALENDAR_DAYS)).isoformat()
 
-    base_meta = (f"base_rate built_at={base_rates.get('built_at')}｜n_events={base_rates.get('n_events')}｜"
+    base_meta = (f"base_rate built_at={built_at}｜n_events={base_rates.get('n_events')}｜"
                  f"confidence={base_rates.get('confidence')}")
     source_ref = (f"onset_date={onset_date}｜onset_slope={onset_slope}｜"
                   f"spy_close_at_onset={spy_close}（{spy_date}）｜data/vixts_base_rates.json {base_meta}")
 
-    ids = _next_ids(ts_str, 2)
+    ids = fl.next_ids(ts_str, "vix", 2, forecasts_path)
 
     draft_recovery = {
         "id": ids[0], "ts": ts_str, "source": SOURCE, "source_ref": source_ref,
@@ -245,6 +284,8 @@ def build_drafts(today, onset_date, onset_slope, base_rates):
         "status": "open", "resolved_ts": None, "outcome": None, "brier": None,
         "note": (f"vix-model 機械賦值（無需人工判斷）｜onset={onset_date}（slope={onset_slope}）｜"
                  f"p 取自 vixts_base_rates.json freq_recovery_within_21td｜{base_meta}"),
+        "claim_template": "vixts_recover_21d", "p_clim": p_clim_map.get("vixts_recover_21d"),
+        "p_clim_ref": p_clim_ref, "p_table_built_at": built_at, "episode_id": episode_id,
     }
     draft_spy = {
         "id": ids[1], "ts": ts_str, "source": SOURCE, "source_ref": source_ref,
@@ -254,15 +295,10 @@ def build_drafts(today, onset_date, onset_slope, base_rates):
         "status": "open", "resolved_ts": None, "outcome": None, "brier": None,
         "note": (f"vix-model 機械賦值（無需人工判斷）｜onset={onset_date}（slope={onset_slope}）｜"
                  f"p 取自 vixts_base_rates.json freq_spy_higher_after_63td｜{base_meta}"),
+        "claim_template": "spy_up_63d_after_onset", "p_clim": p_clim_map.get("spy_up_63d"),
+        "p_clim_ref": p_clim_ref, "p_table_built_at": built_at, "episode_id": episode_id,
     }
-    return [draft_recovery, draft_spy]
-
-
-def write_drafts(drafts, path=FORECASTS):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("a", encoding="utf-8") as f:
-        for d in drafts:
-            f.write(json.dumps(d, ensure_ascii=False) + "\n")
+    return fl.finalize([draft_recovery, draft_spy])
 
 
 def main():
@@ -295,14 +331,14 @@ def main():
     info(f"偵測到 onset：{onset_date}（slope={onset_slope}，來源={source_label}，前 {consec_pos} 個交易日連續 slope>0）")
 
     base_rates = load_base_rates()
-    drafts = build_drafts(today, onset_date, onset_slope, base_rates)
-
-    for d in drafts:
-        print(json.dumps(d, ensure_ascii=False))
+    drafts = build_drafts(today, onset_date, onset_slope, base_rates, slope_ts)
 
     dup = onset_already_logged(FORECASTS, onset_date)
     if dup:
         warn(f"onset_date={onset_date} 已有 source={SOURCE} 落帳紀錄——本次落帳將被拒絕（同一次 onset 不重複記）。")
+
+    do_write = args.write and not dup
+    n_written, n_twins = fl.append(drafts, path=FORECASTS, write=do_write)
 
     if not args.write:
         info(f"dry-run：共 {len(drafts)} 筆草案。--write 才會 append 進 {FORECASTS}"
@@ -314,8 +350,7 @@ def main():
               file=sys.stderr)
         sys.exit(1)
 
-    write_drafts(drafts, FORECASTS)
-    print(f"\n# --write：寫入 {len(drafts)} 筆 → {FORECASTS}", file=sys.stderr)
+    print(f"\n# --write：寫入 {n_written} 筆＋{n_twins} 筆哨兵 twin → {FORECASTS}", file=sys.stderr)
 
 
 if __name__ == "__main__":

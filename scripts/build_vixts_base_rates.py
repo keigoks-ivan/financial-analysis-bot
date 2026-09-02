@@ -326,6 +326,50 @@ def evaluate_events(onset_events, slope_ts, spy_bars):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# forecast v2 設計稿 §5.1：頂層 p_clim（無條件、全樣本日取樣，非只在 onset 事件當天取樣）
+# ═══════════════════════════════════════════════════════════════════════════
+
+def compute_unconditional_recovery_freq(slope_ts, window=RECOVERY_WINDOW_TRADING_DAYS):
+    """在 slope_ts 的「每一個」交易日（不只 onset 日）起算：未來 window 個交易日內 slope 是否
+    回正（>0，any_close 語義）——與 evaluate_events()「①」同一套 valid/hit 判定邏輯（命中即
+    valid；未命中則需完整視窗走完才算 valid「未命中」，視窗未走完的最近期樣本不計入分母），
+    只是取樣點從「只在 onset 日」放寬到「全樣本日」（§5.1 原文：全樣本日取樣）。"""
+    n = len(slope_ts)
+    n_valid = n_hit = 0
+    for idx in range(n):
+        window_end = min(idx + window, n - 1)
+        future = slope_ts[idx + 1:window_end + 1]
+        if not future:
+            continue
+        hit = any(v > 0 for _, v in future)
+        full_window_available = (n - 1) >= idx + window
+        if hit:
+            n_valid += 1
+            n_hit += 1
+        elif full_window_available:
+            n_valid += 1
+    freq = round(n_hit / n_valid, 3) if n_valid else None
+    return freq, n_valid, n_hit
+
+
+def compute_unconditional_spy_up_freq(spy_bars, window=SPY_WINDOW_TRADING_DAYS):
+    """在 spy_bars 的每一個交易日起算：第 window 個交易日後收盤是否高於當日（at_expiry
+    語義）——與 evaluate_events()「②」同一套判定，取樣點放寬到全樣本日。"""
+    closes = [c for _, c in spy_bars]
+    n = len(spy_bars)
+    n_valid = n_hit = 0
+    for i in range(n):
+        j = i + window
+        if j >= n:
+            continue
+        n_valid += 1
+        if closes[j] > closes[i]:
+            n_hit += 1
+    freq = round(n_hit / n_valid, 3) if n_valid else None
+    return freq, n_valid, n_hit
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # Orchestration
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -373,6 +417,12 @@ def main():
     n_events = summary["n_events_total"]
     confidence = "lo" if n_events < LOW_SAMPLE_EVENT_THRESHOLD else "med"
 
+    uncond_recovery_freq, uncond_recovery_n_valid, uncond_recovery_n_hit = \
+        compute_unconditional_recovery_freq(slope_ts)
+    uncond_spy_freq, uncond_spy_n_valid, uncond_spy_n_hit = \
+        compute_unconditional_spy_up_freq(spy_bars)
+    p_clim = {"vixts_recover_21d": uncond_recovery_freq, "spy_up_63d": uncond_spy_freq}
+
     payload = {
         "schema": SCHEMA,
         "built_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -401,6 +451,14 @@ def main():
         "n_spy_valid": summary["n_spy_valid"],
         "n_spy_hit": summary["n_spy_hit"],
         "events": events_out,
+        "p_clim": p_clim,
+        "p_clim_n": {"vixts_recover_21d": uncond_recovery_n_valid, "spy_up_63d": uncond_spy_n_valid},
+        "p_clim_note": (
+            "forecast v2 設計稿 §5.1：無條件（unconditional）頻率——在 slope_ts／spy_bars 的"
+            "每一個交易日（不只 onset 當天）起算，與上方 freq_recovery_within_21td／"
+            "freq_spy_higher_after_63td（只在 onset 事件當天取樣的條件頻率）用同一套窗口與"
+            "valid/hit 判定邏輯，差別只在取樣點放寬到全樣本日。"
+        ),
         "methodology_note": (
             "onset 事件彼此不重疊（離散狀態轉換），與 rv-model base rate 的重疊 21 日視窗性質"
             "不同，不需要「重疊樣本」警語；但兩個 base rate 頻率各自的分母排除「資料不足以判定"
@@ -419,6 +477,8 @@ def main():
     info(f"  freq_spy_higher_after_63td={summary['freq_spy_higher_after_63td']} "
          f"(n_valid={summary['n_spy_valid']}, n_hit={summary['n_spy_hit']})")
     info(f"  confidence={confidence}")
+    info(f"  p_clim（unconditional）: {p_clim}"
+         f"（n_valid=recovery {uncond_recovery_n_valid} / spy {uncond_spy_n_valid}）")
 
 
 if __name__ == "__main__":
