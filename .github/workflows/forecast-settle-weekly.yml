@@ -20,8 +20,26 @@ name: Weekly Forecast Ledger Settle + Flowmap Scorecard
 #      base rate（同 rv 的 --if-due 慣例）。
 #   7. scripts/build_cot_base_rates.py --if-due   — 季度自動重建 COT 極端部位
 #      base rate（同上）。
-#   8. scripts/score_flowmap.py                  — flowmap 成績單：對帳
-#      forecast_history.jsonl 凍結預測 vs 實際，輸出
+#   8. scripts/generate_tsmom_forecasts.py --write — tsmom producer（趨勢方向
+#      模型；每月首個交易日才落帳，同月同 ticker 查重內建，見設計稿
+#      notes/site-internal/root/_forecast_v2_design_20260902.md §5.2）。
+#   9. scripts/generate_vrp_forecasts.py --write  — vrp producer（波動風險
+#      溢酬模型；每月首個交易日落帳兩筆 21d／63d，同月查重內建，§5.3）。
+#  10. scripts/generate_dd_verdict_forecasts.py --write — dd-verdict producer
+#      （個股裁決跑贏 SPY；掃 knowledge/decisions.jsonl 未落帳者，事件觸發，
+#      §5.4）。
+#  11. scripts/build_tsmom_base_rates.py --if-due — 季度自動重建 tsmom base
+#      rate（同 rv 的 --if-due 慣例，§5.2）。
+#  12. scripts/build_vrp_base_rates.py --if-due   — 季度自動重建 vrp base
+#      rate（同上，§5.3）。
+#  13. scripts/build_dd_verdict_base_rates.py --if-due — 季度自動重建
+#      dd-verdict base rate（同上，§5.4）。
+#  14. scripts/build_macro_base_rates.py --if-due — 季度自動重建 macro
+#      climatology 快取（僅 base rate，harvest_macro_falsifiers.py 的 p 需
+#      持有人人工賦值，不上 cron，§5.5）。
+#  15. scripts/score_flowmap.py                  — flowmap 成績單：CTA／月末
+#      模組對帳 forecast_history.jsonl 凍結預測 vs 實際（SPRT 序貫檢定），
+#      並逐字讀入 knowledge/forecast_settlement.json 的 sources 摘要，輸出
 #      docs/flowmap/data/scorecard.json（只舉旗，不改動任何模組或 CONFIG）。
 #
 # 排程：週一 02:00 UTC——晚於 intel-2-daily.yml 的週日 22:30 UTC 週段（含
@@ -76,6 +94,27 @@ jobs:
       - name: Rebuild COT base rates if due (quarterly)
         run: python scripts/build_cot_base_rates.py --if-due || echo "build_cot_base_rates --if-due not due or fetch failed — continuing with existing table"
 
+      - name: Generate tsmom forecasts (monthly, dedupe-safe)
+        run: python scripts/generate_tsmom_forecasts.py --write || echo "generate_tsmom_forecasts no-op this week (monthly dedupe rejected or no data) — continuing"
+
+      - name: Generate vrp forecasts (monthly, dedupe-safe)
+        run: python scripts/generate_vrp_forecasts.py --write || echo "generate_vrp_forecasts no-op this week (monthly dedupe rejected or no data) — continuing"
+
+      - name: Generate dd-verdict forecasts (event-triggered, dedupe-safe)
+        run: python scripts/generate_dd_verdict_forecasts.py --write || echo "generate_dd_verdict_forecasts no-op this week (no eligible decisions or dedupe rejected) — continuing"
+
+      - name: Rebuild tsmom base rates if due (quarterly)
+        run: python scripts/build_tsmom_base_rates.py --if-due || echo "build_tsmom_base_rates --if-due not due or fetch failed — continuing with existing table"
+
+      - name: Rebuild vrp base rates if due (quarterly)
+        run: python scripts/build_vrp_base_rates.py --if-due || echo "build_vrp_base_rates --if-due not due or fetch failed — continuing with existing table"
+
+      - name: Rebuild dd-verdict base rates if due (quarterly)
+        run: python scripts/build_dd_verdict_base_rates.py --if-due || echo "build_dd_verdict_base_rates --if-due not due or fetch failed — continuing with existing table"
+
+      - name: Rebuild macro base rates if due (quarterly)
+        run: python scripts/build_macro_base_rates.py --if-due || echo "build_macro_base_rates --if-due not due or fetch failed — continuing with existing table"
+
       - name: Score flowmap (frozen forecasts vs actuals)
         run: python scripts/score_flowmap.py
 
@@ -85,7 +124,11 @@ jobs:
           for p in knowledge/forecasts.jsonl data/rv_base_rates.json \
                    data/rv_base_rates_raw_cache.json docs/flowmap/data/scorecard.json \
                    data/vixts_base_rates.json data/vixts_base_rates_raw_cache.json \
-                   data/cot_base_rates.json data/cot_base_rates_raw_cache.json; do
+                   data/cot_base_rates.json data/cot_base_rates_raw_cache.json \
+                   data/tsmom_base_rates.json data/tsmom_base_rates_raw_cache.json \
+                   data/vrp_base_rates.json data/vrp_base_rates_raw_cache.json \
+                   data/dd_verdict_base_rates.json data/dd_verdict_base_rates_raw_cache.json \
+                   data/macro_base_rates.json data/macro_base_rates_raw_cache.json; do
             [ -e "$p" ] && PATHS="$PATHS $p"
           done
           if git status --porcelain $PATHS | grep -q .; then

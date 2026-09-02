@@ -127,6 +127,13 @@ h2 .en{font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--text-mut
 .score-note{font-size:.8rem;color:var(--text-secondary);line-height:1.7}
 .score-kill{margin-top:.6rem;font-size:.76rem;color:var(--neg);line-height:1.7;
             background:var(--neg-bg);border-radius:6px;padding:.5rem .6rem}
+.scorecard-subhead{font-family:'Playfair Display','Noto Serif TC',Georgia,serif;font-size:1.02rem;
+                   font-weight:700;margin:1.7rem 0 .4rem;color:var(--text)}
+.score-card .src-id{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted);
+                    font-weight:400;margin-left:.4rem}
+.score-card.is-sentinel{border-style:dashed;border-color:var(--text-muted);margin-top:.3rem}
+.sentinel-note{margin-top:.6rem;font-size:.8rem;color:var(--text-secondary);line-height:1.7;
+               background:var(--warn-bg);border-radius:6px;padding:.5rem .6rem}
 
 /* details / gaps / disclaimer */
 details{margin-top:.8rem}
@@ -294,10 +301,17 @@ footer.imq-foot a{color:var(--text-secondary)}
     <h2>成績單<span class="en">Scorecard</span></h2>
     <p class="section-sub">
       本頁的模型每天把預測凍結存檔，這裡是它們的答案卷——錯了你看得到。
-      每個模組獨立對帳、獨立記分；<strong>紅燈只代表「已達淘汰門檻，等持有人在校準輪決定要不要收掉」，
+      每個模組、每個預測來源獨立對帳、獨立記分，判定方式是「序貫檢定」（見下方方法論折疊）；
+      <strong>紅燈只代表「已達淘汰門檻，等持有人在校準輪決定要不要收掉」，
       本頁不會自動關閉或修改任何模組</strong>。
     </p>
     <div class="scorecard-grid" id="scorecard-grid"></div>
+
+    <h3 class="scorecard-subhead">預測對帳簿<span class="en">Ledger Sources</span></h3>
+    <p class="section-sub" id="ledger-sources-note"></p>
+    <div class="scorecard-grid" id="ledger-sources-grid"></div>
+    <div id="sentinel-host"></div>
+
     <details id="scorecard-detail">
       <summary>對帳方法論與誠實限制</summary>
       <div class="body" id="scorecard-method"></div>
@@ -721,17 +735,35 @@ footer.imq-foot a{color:var(--text-secondary)}
     host.appendChild(ul);
   }
 
-  // ── 成績單（scorecard.json，獨立 fetch，失敗整段隱藏）───────────────────
+  // ── 成績單（scorecard.json，schema flowmap-scorecard-v2，獨立 fetch，失敗整段隱藏）───
+  // 判定機制＝SPRT 序貫檢定（p0=0.5／p1=0.65／α=0.05／β=0.10，n_eff≥20 才開始判定；
+  // notes/site-internal/root/_forecast_v2_design_20260902.md §3.3／§6）。
+  var SPRT_FLOOR = 20;
+  var SPRT_LLR_HIT = 0.26236;   // ln(0.65/0.50)
+  var SPRT_LLR_MISS = 0.35667;  // |ln(0.35/0.50)|，只取絕對值供「還差幾次未命中」換算
+  var SPRT_B_CONST = -2.2513;   // ln(0.1/0.95)，僅供 kill 說明文字 fallback（s.sprt 缺失時）
+
   var SCORE_MODULE_LABEL = {
     cta: "CTA 趨勢跟隨",
-    month_end: "月末／季末再平衡",
-    rv_model: "波動率預測（rv-model）"
+    month_end: "月末／季末再平衡"
   };
-  var SCORE_DOT = { green: "🟢", yellow: "🟡", red: "🔴" };
+  // 白話名（首現括號原名，設計稿 §6）
+  var SOURCE_LABEL = {
+    "rv-model": "波動率模型",
+    "vix-model": "VIX 期限結構模型",
+    "cot-model": "COT 極端部位模型",
+    "tsmom": "趨勢方向模型",
+    "vrp": "波動風險溢酬模型",
+    "dd-verdict": "個股裁決",
+    "macro-falsifier": "總經證偽表",
+    "sentinel-noise": "哨兵（無技巧對照組）"
+  };
+  var SCORE_DOT = { green: "🟢", yellow: "🟡", red: "🔴", descriptor: "⚪" };
   var SCORE_STATUS_TEXT = {
-    green: "健康：統計上顯著優於擲硬幣",
-    yellow: "樣本累積中，尚不評分",
-    red: "已觸發淘汰門檻"
+    green: "已證實優於基準",
+    yellow: "證據累積中（有效樣本 n／決策需累積 LLR）",
+    red: "已證實不優於基準，等校準輪處決",
+    descriptor: "描述器，不評分"
   };
 
   function scoreStat(label, val) {
@@ -741,55 +773,178 @@ footer.imq-foot a{color:var(--text-secondary)}
     return box;
   }
 
+  // SPRT 白話狀態句：累積證據距離判綠／判紅門檻還差多少，換算成「約再 N 次
+  // 命中／未命中」——只是門檻距離的簡單換算，不是機率預測。
+  function sprtStateText(sprt, nEff, floor) {
+    floor = floor || SPRT_FLOOR;
+    if (!sprt) return "";
+    if (sprt.state === "accept_h1") {
+      return "已證實優於基準（SPRT 判定 accept_h1，判定於 " + esc(sprt.decided_at || "—") +
+        "，n=" + esc(sprt.decided_n) + "）。";
+    }
+    if (sprt.state === "accept_h0") {
+      return "已證實不優於基準（SPRT 判定 accept_h0），等校準輪處決（判定於 " +
+        esc(sprt.decided_at || "—") + "，n=" + esc(sprt.decided_n) + "）。";
+    }
+    var toGreen = Math.max(0, Math.ceil((sprt.A - sprt.llr) / SPRT_LLR_HIT));
+    var toRed = Math.max(0, Math.ceil((sprt.llr - sprt.B) / SPRT_LLR_MISS));
+    var txt = "證據累積中：有效樣本 " + nEff + "，離判綠還差約再 " + toGreen +
+      " 次命中（或離判紅還差約再 " + toRed + " 次未命中，皆假設此後同向不中斷，只是距離換算非機率預測）。";
+    if (nEff < floor) {
+      txt += "未滿 " + floor + " 筆前不判定，即使累積 LLR 已達門檻。";
+    }
+    return txt;
+  }
+
+  function renderSprtCard(key, m) {
+    var card = el("div", "score-card");
+    card.appendChild(el("h3", "", esc(SCORE_MODULE_LABEL[key] || key)));
+
+    var statusRow = el("div", "score-status");
+    statusRow.appendChild(el("span", "dot", SCORE_DOT[m.status] || "⚪"));
+    statusRow.appendChild(el("span", "label", esc(SCORE_STATUS_TEXT[m.status] || m.status || "—")));
+    card.appendChild(statusRow);
+
+    var stats = el("div", "score-stats");
+    stats.appendChild(scoreStat("有效樣本 n_eff", (m.n_eff == null ? "—" : m.n_eff) + "／需 " + m.n_required));
+    stats.appendChild(scoreStat("命中／樣本", (m.hits == null ? "—" : m.hits) + "／" + (m.n_eff == null ? "—" : m.n_eff)));
+    stats.appendChild(scoreStat("累積 LLR", m.sprt ? fmtSigned(m.sprt.llr, 3) : "—"));
+    card.appendChild(stats);
+
+    card.appendChild(el("div", "score-note", esc(sprtStateText(m.sprt, m.n_eff, m.n_required))));
+
+    if (m.status === "red") {
+      card.appendChild(el("div", "score-kill", "淘汰門檻：" + esc(m.kill_condition || "") +
+        "——本頁只舉旗，不會自動關閉或修改此模組。"));
+    }
+    return card;
+  }
+
+  function renderVolControlCard(vc) {
+    var card = el("div", "score-card is-descriptor");
+    card.appendChild(el("h3", "", "目標波動控制曝險模組"));
+    var statusRow = el("div", "score-status");
+    statusRow.appendChild(el("span", "dot", "⚪"));
+    statusRow.appendChild(el("span", "label", esc(vc.status_label || "描述器，不評分")));
+    card.appendChild(statusRow);
+    card.appendChild(el("div", "score-note",
+      "沒有可公開對帳的實現流量資料，因此不參與序貫檢定，只作為條件層參考，不掛淘汰門檻。"));
+    return card;
+  }
+
+  function renderSourceCard(key, s) {
+    var card = el("div", "score-card");
+    var h3 = el("h3", "", esc(SOURCE_LABEL[key] || key));
+    h3.appendChild(el("span", "src-id", "(" + esc(key) + ")"));
+    card.appendChild(h3);
+
+    var statusRow = el("div", "score-status");
+    statusRow.appendChild(el("span", "dot", SCORE_DOT[s.status] || "⚪"));
+    statusRow.appendChild(el("span", "label", esc(SCORE_STATUS_TEXT[s.status] || s.status || "—")));
+    card.appendChild(statusRow);
+
+    var stats = el("div", "score-stats");
+    stats.appendChild(scoreStat("有效樣本 n_eff", (s.n_eff == null ? "—" : s.n_eff) +
+      "／已結算 " + (s.n_resolved == null ? "—" : s.n_resolved)));
+    var bssTxt = (s.bss === null || s.bss === undefined) ? "—" : fmtSigned(s.bss, 3);
+    if (s.bss_ci90 && s.bss_ci90[0] != null && s.bss_ci90[1] != null) {
+      bssTxt += "［" + fmtSigned(s.bss_ci90[0], 3) + "，" + fmtSigned(s.bss_ci90[1], 3) + "］";
+    }
+    stats.appendChild(scoreStat("BSS（vs 逐筆基準機率）", bssTxt));
+    stats.appendChild(scoreStat("累積 LLR", s.sprt ? fmtSigned(s.sprt.llr, 3) : "—"));
+    card.appendChild(stats);
+
+    var noteTxt = s.sprt ? sprtStateText(s.sprt, s.n_eff, SPRT_FLOOR) : (s.status_label || "");
+    card.appendChild(el("div", "score-note", esc(noteTxt)));
+
+    if (s.status === "red") {
+      card.appendChild(el("div", "score-kill",
+        "淘汰門檻：SPRT accept_h0（n_eff≥20 起累積 LLR ≤ " + esc(fmtSigned(s.sprt ? s.sprt.B : SPRT_B_CONST, 4)) +
+        "）——本頁只舉旗，不會自動關閉或修改此來源。"));
+    }
+    return card;
+  }
+
+  function renderSentinelCard(s) {
+    var card = el("div", "score-card is-sentinel");
+    var h3 = el("h3", "", esc(SOURCE_LABEL["sentinel-noise"]));
+    h3.appendChild(el("span", "src-id", "(sentinel-noise)"));
+    card.appendChild(h3);
+
+    var statusRow = el("div", "score-status");
+    statusRow.appendChild(el("span", "dot", SCORE_DOT[s.status] || "⚪"));
+    statusRow.appendChild(el("span", "label", esc(SCORE_STATUS_TEXT[s.status] || s.status || "—")));
+    card.appendChild(statusRow);
+
+    var stats = el("div", "score-stats");
+    stats.appendChild(scoreStat("有效樣本 n_eff", (s.n_eff == null ? "—" : s.n_eff)));
+    stats.appendChild(scoreStat("BSS", (s.bss === null || s.bss === undefined) ? "—" : fmtSigned(s.bss, 3)));
+    card.appendChild(stats);
+
+    card.appendChild(el("div", "sentinel-note",
+      "哨兵是每個預測來源的無技巧對照組（機率＝基準機率加隨機雜訊），不是真預測。" +
+      "哨兵判綠＝記分機制本身壞掉；哨兵遲遲不判紅＝淘汰機制形同虛設——兩個方向都要看。"));
+    return card;
+  }
+
   function renderScorecard(sc) {
     if (!sc || !sc.modules) throw new Error("scorecard.json 格式不完整");
     var grid = document.getElementById("scorecard-grid");
     grid.innerHTML = "";
 
-    ["cta", "month_end", "rv_model"].forEach(function (key) {
+    ["cta", "month_end"].forEach(function (key) {
       var m = sc.modules[key];
       if (!m) return;
-      var card = el("div", "score-card");
-      card.appendChild(el("h3", "", esc(SCORE_MODULE_LABEL[key] || key)));
-
-      var statusRow = el("div", "score-status");
-      statusRow.appendChild(el("span", "dot", SCORE_DOT[m.status] || "⚪"));
-      statusRow.appendChild(el("span", "label", esc(SCORE_STATUS_TEXT[m.status] || m.status || "—")));
-      card.appendChild(statusRow);
-
-      var isRv = key === "rv_model";
-      var nNow = isRv ? m.n_resolved : m.n_samples;
-      var nReq = m.n_required;
-      var stats = el("div", "score-stats");
-      stats.appendChild(scoreStat("樣本數", (nNow === undefined || nNow === null ? "—" : nNow) + "／需 " + nReq));
-      if (m.status === "yellow") {
-        stats.appendChild(scoreStat("狀態", "樣本累積中（" + nNow + "／" + nReq + "）"));
-      } else if (isRv) {
-        stats.appendChild(scoreStat("raw Brier", fmtNum(m.raw_brier_mean, 4)));
-        stats.appendChild(scoreStat("BSS（vs climatology）", (m.bss === null || m.bss === undefined) ? "—" : fmtSigned(m.bss, 3)));
-      } else {
-        stats.appendChild(scoreStat("命中率", (m.hit_rate === null || m.hit_rate === undefined) ? "—" : fmtNum(m.hit_rate * 100, 1) + "%"));
-        stats.appendChild(scoreStat("命中／樣本", m.hits + "／" + nNow));
-      }
-      card.appendChild(stats);
-
-      card.appendChild(el("div", "score-note", esc(m.status_label || "")));
-
-      if (m.status === "red") {
-        card.appendChild(el("div", "score-kill", "淘汰門檻：" + esc(m.kill_condition || "") +
-          "——本頁只舉旗，不會自動關閉或修改此模組。"));
-      }
-
-      grid.appendChild(card);
+      grid.appendChild(renderSprtCard(key, m));
     });
+    if (sc.vol_control) {
+      grid.appendChild(renderVolControlCard(sc.vol_control));
+    }
+
+    var lsGrid = document.getElementById("ledger-sources-grid");
+    var lsNote = document.getElementById("ledger-sources-note");
+    var sentinelHost = document.getElementById("sentinel-host");
+    lsGrid.innerHTML = "";
+    sentinelHost.innerHTML = "";
+    var sources = sc.ledger_sources || {};
+    var keys = Object.keys(sources).filter(function (k) { return k !== "sentinel-noise"; }).sort();
+    if (!keys.length) {
+      lsNote.textContent = "本站每筆可機械結算的方向命題（波動率／VIX 期限結構／COT 極端部位／" +
+        "趨勢方向／波動風險溢酬／個股裁決／總經證偽表），逐一對帳後的技巧分數與判定狀態；" +
+        "目前尚無資料可對帳。";
+      lsGrid.appendChild(el("div", "loading",
+        "尚無可對帳的預測來源（帳簿尚未升級，或尚未累積出可結算的筆數，見下方資料缺口）。"));
+    } else {
+      lsNote.textContent = "本站每筆可機械結算的方向命題（波動率／VIX 期限結構／COT 極端部位／" +
+        "趨勢方向／波動風險溢酬／個股裁決／總經證偽表），逐一對帳後的技巧分數與判定狀態；" +
+        "原始代號標註於卡片標題旁小字。";
+      keys.forEach(function (key) {
+        lsGrid.appendChild(renderSourceCard(key, sources[key]));
+      });
+    }
+    if (sources["sentinel-noise"]) {
+      sentinelHost.appendChild(renderSentinelCard(sources["sentinel-noise"]));
+    }
 
     var method = document.getElementById("scorecard-method");
     var meta = sc.meta || {};
+    var mult = meta.multiplicity || {};
     method.innerHTML =
       "<p>資料日 " + esc(sc.as_of || "—") + "。" + esc(meta.method_note || "") + "</p>" +
       "<p style=\"margin-top:.6rem\">CTA 對帳採用的 COT 部位類別：<b>" + esc(meta.cot_category_used || "—") +
       "</b>——" + esc(meta.cot_category_reason || "") + "</p>" +
-      "<p style=\"margin-top:.6rem\">顯著性判定：" + esc(meta.significance_test || "") + "</p>" +
+      "<p style=\"margin-top:.6rem\"><strong>為什麼用序貫檢定（SPRT）：</strong>" +
+      "本頁的模型每天都在對帳，等於每天都在「偷看」一次結果——如果用固定樣本數的檢定，反覆偷看會讓" +
+      "「碰巧顯著」被低估成「真的有技巧」。序貫檢定把這件事算進門檻裡：證據（累積 LLR）不到判定線，" +
+      "狀態就停在「證據累積中」，不會因為多看幾次就誤判。真實命中率 60% 時，預期約需 200 個樣本才會" +
+      "判綠；完全沒有技巧（命中率 50%）時，預期約 50 個樣本就會判紅——判紅比判綠快，是序貫檢定設計" +
+      "本身如此，不是門檻不公平。</p>" +
+      "<p style=\"margin-top:.6rem\"><strong>多重比較（multiplicity）：</strong>本頁同時對 " +
+      esc(mult.n_tested != null ? mult.n_tested : "—") + " 個模組／來源記分，即使每一個都是誠實的隨機" +
+      "雜訊，仍預期會有約 " + esc(mult.expected_false_green != null ? mult.expected_false_green : "—") +
+      " 個純屬運氣判綠（＝來源數 × α " + esc(mult.alpha != null ? mult.alpha : 0.05) +
+      "）。序貫檢定不適用一般的多重比較校正，改用哨兵（sentinel-noise）當經驗對照組——" +
+      "哨兵判綠就是本頁記分機制在灌水的第一手證據。</p>" +
       "<p style=\"margin-top:.6rem\"><strong>月末模組月頻更新——一年約 12 次讀數，" +
       "累積到能判斷「準不準」約需 2 年；目前只有極少量歷史，全部模組顯示樣本累積中屬正常狀態，不是系統故障。</strong></p>";
 

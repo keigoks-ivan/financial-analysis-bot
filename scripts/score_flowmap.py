@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""score_flowmap.py — flowmap 成績單：凍結預測 vs 實際的機械對帳（設計稿 §F2）。
+"""score_flowmap.py — flowmap 成績單：凍結預測 vs 實際的機械對帳（v2，設計稿
 
-設計依據：notes/site-internal/root/_flowmap_forecast_ledger_design_20260901.md
-§F（自動對帳與進化迴路）。判斷已在設計稿凍結，本檔只負責對帳與舉旗——**不刪除
-任何模組、不調整任何 CONFIG／門檻**；kill 條款觸發時只在輸出標記 🔴，處決一律
-留給持有人於校準輪決定（§F4）。
+notes/site-internal/root/_forecast_v2_design_20260902.md §6／§3.3／§3.2）。
+判斷已在設計稿凍結，本檔只負責對帳與舉旗——**不刪除任何模組、不調整任何
+CONFIG／門檻**；kill 條款觸發時只在輸出標記 🔴，處決一律留給持有人於校準輪
+決定。
 
 三個對帳對象
 ------------
@@ -13,40 +13,48 @@
                  nearest-flip-level，判斷次一交易日價格是否穿越（用
                  data/flowmap_prices.json 判定）；穿越週依 CFTC COT 報告週界
                  分組（多次穿越取淨向），對帳對象為該市場 COT 淨部位的週變化
-                 方向（data/cot_history.json）。rolling 26 週命中率。另計
-                 「自我一致性」：穿越後重新計算的實際 composite 是否等於凍結
-                 時記錄的 if_breached_composite（sanity 欄，非 kill 依據）。
+                 方向（data/cot_history.json）。樣本定義（週度分組邏輯）沿用
+                 v1 不動，決策機制改為 SPRT（見下）。另計「自我一致性」：穿越
+                 後重新計算的實際 composite 是否等於凍結時記錄的
+                 if_breached_composite（sanity 欄，非 kill 依據）。
   月末件       ：對凍結於生效窗首日的方向，比對生效窗 3 個交易日的實際
-                 SPY−AGG 相對報酬方向。rolling 8 次。
-  rv-model     ：讀 knowledge/forecast_settlement.json（由
-                 knowledge/settle_forecasts.py 產生，本檔不重跑），算 raw
-                 Brier；resolved ≥20 筆才算 BSS（口徑與 knowledge/q.py
-                 cmd_forecasts 逐字一致：base_rate=該 source resolved 集合的
-                 in-sample outcome 頻率，brier_clim=base_rate×(1−base_rate)，
-                 BSS=1−Brier/Brier_clim）。
+                 SPY−AGG 相對報酬方向。樣本定義沿用 v1，決策機制改為 SPRT。
+  ledger_sources：逐字複製 knowledge/forecast_settlement.json 的 `sources`
+                 摘要（由 knowledge/settle_forecasts.py 產生，本檔不重跑、
+                 不重算——A2 只讀不算）。含 rv-model／vix-model／cot-model／
+                 tsmom／vrp／dd-verdict／macro-falsifier／sentinel-noise。
+  vol_control  ：降為描述器，不評分（無可對帳的公開流量資料，設計稿 §0-4）。
 
-CTA 對帳的 COT 類別選擇（設計稿 §F2：「優先 leveraged funds，快取無此類別則
-用 non-commercial，實際採用類別寫進 scorecard meta」）
+SPRT 序貫檢定（所有 kill 決策的唯一機制，設計稿 §3.3，PREREG 凍結）
+-----------------------------------------------------------------------------
+CTA／月末件的樣本＝逐週／逐次「命中」序列（hit=True/False，依樣本日期升冪）；
+ledger_sources 的 SPRT 由 settle_forecasts.py 算好、本檔逐字讀出。
+  H0 命中率 p0=0.50；H1 p1=0.65；α=0.05；β=0.10。
+  上界 A=ln((1−β)/α)=ln(18)=2.8904；下界 B=ln(β/(1−α))=ln(0.1/0.95)=−2.2513。
+  每樣本 LLR 增量：命中 +ln(0.65/0.50)=+0.26236；未命中 +ln(0.35/0.50)=−0.35667。
+  決策：n_eff<20 一律 continue（🟡）；n_eff≥20 且累積 LLR≥A → accept_h1（🟢）；
+  ≤B → accept_h0（🔴＝kill 門檻觸發，舉旗待校準輪處決）；否則 continue（🟡）。
+  決策一旦落定即**鎖存**（記 decided_at／decided_n，讀上一輪 scorecard.json 取
+  得）：之後樣本繼續累計顯示但狀態不變；只有校準輪可重設。
+2026-09-02 起本檔移除 α=0.10 固定 n 二項檢定（原因：無法處理反覆偷看，設計稿
+§3.3）；改用序貫檢定，CTA／月末件的「rolling window」上限亦一併移除——SPRT
+本身就是對全部歷史樣本累計，不需要再另外裁一個滾動視窗。
+
+CTA 對帳的 COT 類別選擇（沿用 v1 判斷，設計稿未變更此段）
 -----------------------------------------------------------------------------
 data/cot_history.json 由 scripts/build_crowding.py 維護，其 meta.methodology
 明文為 legacy futures-only 報告的 net_pct_oi（僅 non-commercial 一種類別，
 無 disaggregated report 的 leveraged funds 細分）。本檔因此落在「無 leveraged
 funds 則用 non-commercial」分支，非本檔自行選擇——已寫入輸出 meta 供稽核。
 
-顯著性檢定（kill 判定用，設計稿未指定顯著水準，本檔選定，供持有人複審）
--------------------------------------------------------------------------
-精確二項檢定（雙尾），α=0.10。n 達到 rolling 視窗大小（CTA=26／月末=8）才
-評分；n 不足一律 🟡 樣本不足不評分。判定規則：
-  🟢 健康  — p ≤ α 且命中率 > 50%（統計上顯著優於擲硬幣）
-  🔴 kill  — 其餘情形（含「與擲硬幣無統計差異」的字面 kill 條件，以及本檔
-             額外判為同等失格的「顯著劣於擲硬幣」——後者是本檔在設計稿字面
-             之外的判斷延伸，非逐字條文，供持有人於校準輪複審是否要收斂
-             回原字面定義）。
-rv-model 的 kill 判準則是設計稿逐字條文：resolved≥20 筆後 BSS<0 → 🔴。
+multiplicity（多重比較揭露，設計稿 §3.3 揭露義務／§6）
+-----------------------------------------------------------------------------
+每次輸出附「同時受檢 source／模組數」與「預期假綠數＝數目 × α」；不做 BH 校
+正（序貫檢定不適用），以哨兵（sentinel-noise）為經驗對照。
 
 輸出
 ----
-  docs/flowmap/data/scorecard.json（schema="flowmap-scorecard-v1"，zero-churn
+  docs/flowmap/data/scorecard.json（schema="flowmap-scorecard-v2"，zero-churn
   寫入：剝除 generated_at 後內容不變則不落盤）。
 
 CLI
@@ -74,17 +82,21 @@ COT_HISTORY = DATA / "cot_history.json"
 FORECAST_SETTLEMENT = ROOT / "knowledge" / "forecast_settlement.json"
 OUT_JSON = FLOWMAP_DATA_DIR / "scorecard.json"
 
-SCHEMA = "flowmap-scorecard-v1"
+SCHEMA = "flowmap-scorecard-v2"
 
 # ═══════════════════════════════════════════════════════════════════════════
-# CONFIG — PREREG 凍結（設計稿 §F2／§A6／§E2／§E3）。不得依單一案例調參。
+# CONFIG — PREREG 凍結（設計稿 §3.3／§A6／§E2；SPRT 常數不得依單一案例調參）。
 # ═══════════════════════════════════════════════════════════════════════════
 
-CTA_ROLLING_WEEKS = 26          # 設計稿 §A6：「連兩季（26 週）」
-CTA_MIN_SAMPLES = CTA_ROLLING_WEEKS
-MONTH_END_ROLLING_N = 8          # 設計稿 §E2：「連八次月末」
-RV_MIN_RESOLVED_FOR_BSS = 20     # 設計稿 §E3：「resolved ≥20 筆」
-SIGNIFICANCE_ALPHA = 0.10        # 本檔選定（見檔頭說明），非設計稿逐字給定
+SPRT_P0 = 0.5
+SPRT_P1 = 0.65
+SPRT_ALPHA = 0.05
+SPRT_BETA = 0.10
+SPRT_A = 2.8904          # ln((1-beta)/alpha) = ln(18)
+SPRT_B = -2.2513         # ln(beta/(1-alpha)) = ln(0.1/0.95)
+SPRT_LLR_HIT = 0.26236   # ln(0.65/0.50)
+SPRT_LLR_MISS = -0.35667  # ln(0.35/0.50)
+SPRT_N_EFF_FLOOR = 20
 
 CTA_MARKET_TO_PROXY = {"SPX": "SPY", "NDX": "QQQ", "RTY": "IWM"}
 # COT 合約代碼（data/cot_history.json 的 markets key），對齊 build_flowmap.py CTA_MARKETS
@@ -97,14 +109,40 @@ COT_CATEGORY_USED = "non_commercial"
 COT_CATEGORY_REASON = (
     "data/cot_history.json（scripts/build_crowding.py 維護）meta.methodology="
     "legacy futures-only net_pct_oi，僅 non-commercial 一種類別、無 disaggregated "
-    "report 的 leveraged funds 細分——依設計稿 §F2 優先序「無 leveraged funds 則用 "
+    "report 的 leveraged funds 細分——依設計稿優先序「無 leveraged funds 則用 "
     "non-commercial」，本檔落在此分支，非本檔自行選擇。"
 )
 
-CTA_KILL_TEXT = "連兩季（26 週）COT 方向對帳命中率與擲硬幣無統計差異 → 模組降級為 gaps 或刪除（設計稿 §A6）"
-MONTH_END_KILL_TEXT = ("連八次月末（含季末）方向對帳命中與擲硬幣無統計差異 → 模組降級為 gaps 或刪除"
-                       "（月頻樣本慢，約需 2 年才足量，設計稿 §E2）")
-RV_KILL_TEXT = "rv-model source resolved ≥20 筆後 BSS < 0（輸給 climatology）→ producer 砍（設計稿 §E3）"
+CTA_KILL_TEXT = (
+    "SPRT（p0=0.5／p1=0.65／α=0.05／β=0.10，n_eff≥20，樣本＝frozen_forecast 與 "
+    "CFTC COT 週度部位變化方向逐週命中序列）累積 LLR ≤ B(-2.2513) → accept_h0 "
+    "→ 模組降級為 gaps 或刪除（2026-09-02 由固定 n 二項檢定改列 SPRT，處理反覆"
+    "偷看，設計稿 §3.3）"
+)
+MONTH_END_KILL_TEXT = (
+    "SPRT（p0=0.5／p1=0.65／α=0.05／β=0.10，n_eff≥20，樣本＝逐次月末方向對帳"
+    "命中序列）累積 LLR ≤ B(-2.2513) → accept_h0 → 模組降級為 gaps 或刪除（月頻"
+    "樣本慢，約需 2 年才足量；2026-09-02 由 α=0.10 精確二項檢定改列 SPRT，設計稿 "
+    "§3.3）"
+)
+
+VOL_CONTROL_BLOCK = {
+    "status": "descriptor",
+    "status_label": "描述器，不評分（無可對帳的公開流量資料）",
+}
+
+# 白話名（首現括號原名，設計稿 §6）——供 HTML／其他消費者共用同一份對照表。
+SOURCE_LABEL = {
+    "rv-model": "波動率模型",
+    "vix-model": "VIX 期限結構模型",
+    "cot-model": "COT 極端部位模型",
+    "tsmom": "趨勢方向模型",
+    "vrp": "波動風險溢酬模型",
+    "dd-verdict": "個股裁決",
+    "macro-falsifier": "總經證偽表",
+    "sentinel-noise": "哨兵（無技巧對照組）",
+}
+SENTINEL_KEY = "sentinel-noise"
 
 
 def warn(msg: str) -> None:
@@ -232,35 +270,66 @@ def _close_before(series_pts, ymd):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 顯著性檢定：精確二項檢定（雙尾）
+# SPRT 序貫檢定（設計稿 §3.3，PREREG 凍結——不得改常數／不得改決策規則）
 # ═══════════════════════════════════════════════════════════════════════════
 
-def _binom_two_sided_pvalue(hits, n, p=0.5):
-    if n == 0:
-        return None
-    p_obs = math.comb(n, hits) * (p ** hits) * ((1 - p) ** (n - hits))
-    total = 0.0
-    for k in range(n + 1):
-        pk = math.comb(n, k) * (p ** k) * ((1 - p) ** (n - k))
-        if pk <= p_obs * (1 + 1e-9):
-            total += pk
-    return round(total, 6)
+def sprt_compute(hit_seq):
+    """hit_seq：依樣本日期升冪排序的 bool 序列（True=命中）。回傳 §3.2 schema
+    的 sprt 子物件（不含 decided_at／decided_n——那兩欄由 sprt_with_latch 依
+    上一輪 scorecard.json 補上，本函式只算「這次重新從頭累計會是什麼狀態」）。
+    """
+    llr = 0.0
+    for h in hit_seq:
+        llr += SPRT_LLR_HIT if h else SPRT_LLR_MISS
+    n_used = len(hit_seq)
+    if n_used < SPRT_N_EFF_FLOOR:
+        state = "continue"
+    elif llr >= SPRT_A:
+        state = "accept_h1"
+    elif llr <= SPRT_B:
+        state = "accept_h0"
+    else:
+        state = "continue"
+    return {
+        "p0": SPRT_P0, "p1": SPRT_P1, "alpha": SPRT_ALPHA, "beta": SPRT_BETA,
+        "A": SPRT_A, "B": SPRT_B,
+        "llr": round(llr, 5), "n_used": n_used, "state": state,
+    }
 
 
-def _status_from_binom(n, hits, min_n, alpha=SIGNIFICANCE_ALPHA):
-    """回傳 (status, hit_rate, p_value)。status ∈ {"yellow","green","red"}。
-    yellow：n < min_n（樣本不足不評分）。
-    green：n ≥ min_n 且統計上顯著優於擲硬幣（p ≤ alpha 且命中率 > 0.5）。
-    red：其餘（含「與擲硬幣無統計差異」的字面 kill 條件，以及本檔判為同等
-         失格的「顯著劣於擲硬幣」，見檔頭說明）。"""
-    if n < min_n:
-        hit_rate = rnd(hits / n, 3) if n else None
-        return "yellow", hit_rate, None
-    hit_rate = hits / n
-    p_value = _binom_two_sided_pvalue(hits, n)
-    if p_value is not None and p_value <= alpha and hit_rate > 0.5:
-        return "green", rnd(hit_rate, 3), p_value
-    return "red", rnd(hit_rate, 3), p_value
+def sprt_with_latch(hit_seq, prior_sprt):
+    """套用鎖存語意：若上一輪 scorecard.json 該模組已 accept_h1／accept_h0，
+    狀態與 decided_at／decided_n 維持上一輪的值不變（樣本仍重新累計顯示 llr／
+    n_used，只是不再改變 state）；否則用這次算出的新狀態，若新狀態剛好落定，
+    記今天為 decided_at。"""
+    fresh = sprt_compute(hit_seq)
+    prior_state = (prior_sprt or {}).get("state")
+    if prior_state in ("accept_h1", "accept_h0"):
+        fresh["state"] = prior_state
+        fresh["decided_at"] = (prior_sprt or {}).get("decided_at")
+        fresh["decided_n"] = (prior_sprt or {}).get("decided_n")
+    elif fresh["state"] in ("accept_h1", "accept_h0"):
+        fresh["decided_at"] = date.today().isoformat()
+        fresh["decided_n"] = fresh["n_used"]
+    else:
+        fresh["decided_at"] = None
+        fresh["decided_n"] = None
+    return fresh
+
+
+SPRT_STATE_TO_STATUS = {"accept_h1": "green", "accept_h0": "red", "continue": "yellow"}
+
+
+def sprt_status_label(status, sprt, n_eff):
+    if status == "yellow":
+        if n_eff < SPRT_N_EFF_FLOOR:
+            return f"證據累積中：有效樣本 {n_eff}／需先滿 {SPRT_N_EFF_FLOOR} 筆才開始判定"
+        return (f"證據累積中：有效樣本 {n_eff}，累積 LLR={sprt['llr']}"
+                f"（判綠需 ≥{sprt['A']}，判紅需 ≤{sprt['B']}）")
+    if status == "green":
+        return f"已證實優於基準（SPRT accept_h1，判定於 {sprt.get('decided_at') or '—'}，n={sprt.get('decided_n')}）"
+    return (f"已證實不優於基準（SPRT accept_h0），等校準輪處決"
+            f"（判定於 {sprt.get('decided_at') or '—'}，n={sprt.get('decided_n')}）")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -395,34 +464,29 @@ def _aggregate_cta_weekly(events, gaps):
     return samples
 
 
-def build_cta_report(fh_rows, price_series, gaps):
+def build_cta_report(fh_rows, price_series, gaps, prior_sprt):
     events, consistency = _detect_cta_breaches(fh_rows, price_series, gaps)
-    samples = _aggregate_cta_weekly(events, gaps)
+    samples = _aggregate_cta_weekly(events, gaps)  # 已升冪排序，SPRT 用全部歷史累計，不裁滾動視窗
 
-    distinct_dates = sorted({s["report_date"] for s in samples})
-    rolling_dates = set(distinct_dates[-CTA_ROLLING_WEEKS:])
-    rolling = [s for s in samples if s["report_date"] in rolling_dates]
-    n = len(rolling)
-    hits = sum(1 for s in rolling if s["hit"])
+    hit_seq = [s["hit"] for s in samples]
+    n_eff = len(hit_seq)
+    hits = sum(1 for h in hit_seq if h)
+    hit_rate = rnd(hits / n_eff, 3) if n_eff else None
 
-    status, hit_rate, p_value = _status_from_binom(n, hits, CTA_MIN_SAMPLES)
-    status_label = {
-        "yellow": f"樣本累積中（{n}／需 {CTA_MIN_SAMPLES}）",
-        "green": "健康：命中率統計上顯著優於擲硬幣",
-        "red": "kill 門檻觸發：命中率與擲硬幣無統計差異或更差，待校準輪處決",
-    }[status]
+    sprt = sprt_with_latch(hit_seq, prior_sprt)
+    status = SPRT_STATE_TO_STATUS[sprt["state"]]
+    status_label = sprt_status_label(status, sprt, n_eff)
 
     consistency_rate = rnd(consistency["consistent"] / consistency["n"], 3) if consistency["n"] else None
 
     return {
         "status": status,
         "status_label": status_label,
-        "n_samples": n,
-        "n_required": CTA_MIN_SAMPLES,
+        "n_eff": n_eff,
+        "n_required": SPRT_N_EFF_FLOOR,
         "hits": hits,
         "hit_rate": hit_rate,
-        "p_value": p_value,
-        "significance_alpha": SIGNIFICANCE_ALPHA,
+        "sprt": sprt,
         "self_consistency": {
             "n": consistency["n"],
             "consistent": consistency["consistent"],
@@ -430,7 +494,7 @@ def build_cta_report(fh_rows, price_series, gaps):
             "mismatches": consistency["mismatches"],
         },
         "cot_category_used": COT_CATEGORY_USED,
-        "recent_samples": rolling[-20:],
+        "recent_samples": samples[-20:],
         "kill_condition": CTA_KILL_TEXT,
     }
 
@@ -446,7 +510,7 @@ DIR_LABEL = {
 }
 
 
-def build_month_end_report(fh_rows, price_series, gaps):
+def build_month_end_report(fh_rows, price_series, gaps, prior_sprt):
     events = []
     for row in fh_rows:
         me = (row.get("frozen_forecast") or {}).get("month_end")
@@ -491,82 +555,50 @@ def build_month_end_report(fh_rows, price_series, gaps):
             "hit": bool(direction_pred == actual_dir),
         })
 
-    rolling = resolved[-MONTH_END_ROLLING_N:]
-    n = len(rolling)
-    hits = sum(1 for r in rolling if r["hit"])
-    status, hit_rate, p_value = _status_from_binom(n, hits, MONTH_END_ROLLING_N)
-    status_label = {
-        "yellow": f"樣本累積中（{n}／需 {MONTH_END_ROLLING_N}）——月頻更新，約需 2 年才足量",
-        "green": "健康：命中率統計上顯著優於擲硬幣",
-        "red": "kill 門檻觸發：命中率與擲硬幣無統計差異或更差，待校準輪處決",
-    }[status]
+    # SPRT 用全部歷史累計，不裁滾動視窗（resolved 已依 as_of 升冪串接）
+    hit_seq = [r["hit"] for r in resolved]
+    n_eff = len(hit_seq)
+    hits = sum(1 for h in hit_seq if h)
+    hit_rate = rnd(hits / n_eff, 3) if n_eff else None
+
+    sprt = sprt_with_latch(hit_seq, prior_sprt)
+    status = SPRT_STATE_TO_STATUS[sprt["state"]]
+    status_label = sprt_status_label(status, sprt, n_eff)
+    if status == "yellow":
+        status_label += "——月頻更新，約需 2 年才足量"
 
     return {
         "status": status,
         "status_label": status_label,
-        "n_samples": n,
-        "n_required": MONTH_END_ROLLING_N,
+        "n_eff": n_eff,
+        "n_required": SPRT_N_EFF_FLOOR,
         "hits": hits,
         "hit_rate": hit_rate,
-        "p_value": p_value,
-        "significance_alpha": SIGNIFICANCE_ALPHA,
+        "sprt": sprt,
         "n_pending_resolution": pending,
-        "recent_samples": rolling,
+        "recent_samples": resolved[-20:],
         "kill_condition": MONTH_END_KILL_TEXT,
     }
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# rv-model 對帳（讀 knowledge/forecast_settlement.json，本檔不重跑 settle）
+# ledger_sources（逐字複製 knowledge/forecast_settlement.json 的 sources 摘要
+# ——A2 只讀不算，SPRT／BSS 由 knowledge/settle_forecasts.py 算好）
 # ═══════════════════════════════════════════════════════════════════════════
 
-def build_rv_report(gaps):
-    base = {
-        "n_resolved": 0, "n_required": RV_MIN_RESOLVED_FOR_BSS,
-        "raw_brier_mean": None, "bss": None, "base_rate": None,
-        "kill_condition": RV_KILL_TEXT,
-    }
+def load_ledger_sources(gaps):
     if not FORECAST_SETTLEMENT.exists():
-        gaps.append("rv-model：knowledge/forecast_settlement.json 不存在（尚未跑過 "
-                    "knowledge/settle_forecasts.py），本次以 0 筆計")
-        base["status"] = "yellow"
-        base["status_label"] = f"樣本累積中（0／需 {RV_MIN_RESOLVED_FOR_BSS}）"
-        return base
-
+        gaps.append("ledger_sources：knowledge/forecast_settlement.json 不存在"
+                    "（尚未跑過 knowledge/settle_forecasts.py），本次以空集合計")
+        return {}
     data = load_json(FORECAST_SETTLEMENT, {}) or {}
-    rows = data.get("rows") or []
-    resolved = [r for r in rows if r.get("source") == "rv-model"
-               and r.get("status") in ("resolved_yes", "resolved_no")
-               and r.get("p") is not None and r.get("outcome") is not None
-               and r.get("brier") is not None]
-    n = len(resolved)
-    base["n_resolved"] = n
-    if n == 0:
-        base["status"] = "yellow"
-        base["status_label"] = f"樣本累積中（0／需 {RV_MIN_RESOLVED_FOR_BSS}）"
-        return base
-
-    mean_brier = sum(r["brier"] for r in resolved) / n
-    base["raw_brier_mean"] = round(mean_brier, 4)
-
-    if n < RV_MIN_RESOLVED_FOR_BSS:
-        base["status"] = "yellow"
-        base["status_label"] = f"樣本累積中（{n}／需 {RV_MIN_RESOLVED_FOR_BSS}），只列 raw Brier 不出 BSS"
-        return base
-
-    base_rate = sum(r["outcome"] for r in resolved) / n
-    brier_clim = base_rate * (1 - base_rate)
-    base["base_rate"] = round(base_rate, 4)
-    if brier_clim > 0:
-        bss = 1 - mean_brier / brier_clim
-        base["bss"] = round(bss, 4)
-        base["status"] = "green" if bss >= 0 else "red"
-        base["status_label"] = ("健康：BSS ≥ 0（優於 climatology 基準）" if bss >= 0
-                                else "kill 門檻觸發：BSS < 0（輸給 climatology），待校準輪處決")
-    else:
-        base["status"] = "yellow"
-        base["status_label"] = "climatology 為 0 或 1（分母為 0），無法算 BSS"
-    return base
+    sources = data.get("sources")
+    if not sources:
+        gaps.append("ledger_sources：knowledge/forecast_settlement.json 尚無 "
+                    "sources 欄位（帳簿仍是 v1 舊格式或尚未產生），本次以空集合計，"
+                    "待帳簿升級 v2 後自動補上")
+        return {}
+    return sources
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -584,9 +616,22 @@ def main():
 
     price_series, price_built_at = load_price_series()
 
-    cta_report = build_cta_report(fh_rows, price_series, gaps)
-    month_end_report = build_month_end_report(fh_rows, price_series, gaps)
-    rv_report = build_rv_report(gaps)
+    prior = load_json(OUT_JSON, {}) or {}
+    prior_modules = prior.get("modules") or {}
+    prior_cta_sprt = (prior_modules.get("cta") or {}).get("sprt")
+    prior_month_end_sprt = (prior_modules.get("month_end") or {}).get("sprt")
+
+    cta_report = build_cta_report(fh_rows, price_series, gaps, prior_cta_sprt)
+    month_end_report = build_month_end_report(fh_rows, price_series, gaps, prior_month_end_sprt)
+    ledger_sources = load_ledger_sources(gaps)
+
+    n_sprt_modules = 2  # cta, month_end
+    n_tested = n_sprt_modules + len([k for k in ledger_sources if k != SENTINEL_KEY])
+    multiplicity = {
+        "n_tested": n_tested,
+        "alpha": SPRT_ALPHA,
+        "expected_false_green": round(n_tested * SPRT_ALPHA, 3),
+    }
 
     forecast_settlement_last_run = None
     if FORECAST_SETTLEMENT.exists():
@@ -600,14 +645,17 @@ def main():
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "meta": {
             "method_note": "把每日凍結的 flowmap 預測（forecast_history.jsonl）與後續實際資料對帳："
-                          "CTA 對 CFTC COT 週度部位變化方向、月末件對生效窗 3 日 SPY−AGG 相對報酬方向、"
-                          "rv-model 對 knowledge/forecasts.jsonl 的機械結算 Brier／BSS。本檔只舉旗，"
-                          "不自動刪除模組、不自動改動任何 CONFIG——處決與調整一律走校準輪＋rule_ledger"
-                          "（設計稿 §F4）。",
+                          "CTA 對 CFTC COT 週度部位變化方向、月末件對生效窗 3 日 SPY−AGG 相對報酬方向，"
+                          "決策一律走 SPRT 序貫檢定；ledger_sources 為 knowledge/forecasts.jsonl 全部"
+                          "predictor 的機械結算摘要（逐字複製，本檔不重算）。本檔只舉旗，不自動刪除"
+                          "模組、不自動改動任何 CONFIG——處決與調整一律走校準輪＋rule_ledger。",
             "cot_category_used": COT_CATEGORY_USED,
             "cot_category_reason": COT_CATEGORY_REASON,
-            "significance_test": (f"精確二項檢定（雙尾），α={SIGNIFICANCE_ALPHA}"
-                                  "（設計稿未指定顯著水準，本檔選定，供持有人於校準輪複審或調整）"),
+            "sprt_note": ("決策機制＝SPRT 序貫檢定（p0=0.5／p1=0.65／α=0.05／β=0.10，n_eff≥20 才開始判定；"
+                         "2026-09-02 由固定 n 二項檢定改列，設計稿 §3.3）。真實技巧 60% 時預期約需 200 樣本"
+                         "才判綠，完全無技巧時預期約 50 樣本即判紅——判紅遠快於判綠是序貫檢定的設計特性，"
+                         "不是門檻不對稱的錯誤。"),
+            "multiplicity": multiplicity,
             "data_asof": {
                 "forecast_history_last_date": fh_rows[-1]["date"] if fh_rows else None,
                 "forecast_history_n_rows": len(fh_rows),
@@ -618,16 +666,17 @@ def main():
         "modules": {
             "cta": cta_report,
             "month_end": month_end_report,
-            "rv_model": rv_report,
         },
+        "vol_control": VOL_CONTROL_BLOCK,
+        "ledger_sources": ledger_sources,
         "gaps": gaps,
     }
 
     wrote = write_json_if_changed(OUT_JSON, payload)
     info(f"scorecard.json: {'written' if wrote else 'no change'} (as_of={as_of}, "
-         f"cta={cta_report['status']}/{cta_report['n_samples']}, "
-         f"month_end={month_end_report['status']}/{month_end_report['n_samples']}, "
-         f"rv_model={rv_report['status']}/{rv_report['n_resolved']})")
+         f"cta={cta_report['status']}/{cta_report['n_eff']}, "
+         f"month_end={month_end_report['status']}/{month_end_report['n_eff']}, "
+         f"ledger_sources={len(ledger_sources)})")
 
 
 if __name__ == "__main__":
