@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import sys
+import unicodedata
 from datetime import datetime, timezone
 from html import escape
 from pathlib import Path
@@ -254,7 +255,7 @@ def row_dict(s: dict) -> dict:
         g = dict(g); g["pass"] = False; g["why"] = ["DD 迴避（veto）"] + list(g["why"])
     return {"ticker": s["ticker"], "verdict": s.get("dca_verdict"),
             "role": role, "route": route, "route_why": route_why,
-            "role_mismatch": mismatch, "dd_tag": dd_tag(s), "dd_fresh": fresh,
+            "role_mismatch": mismatch, "dd_tag": dd_tag(s), "dd_age_days": age, "dd_fresh": fresh,
             "src": s.get("_src") or "dd-pool", "g_method": s.get("_g_method") or "FY1→FY3 CAGR",
             "grp": g, "score": g["score"],
             "roic": g["quality"].get("roic"), "fcf": g["quality"].get("fcf"),
@@ -331,30 +332,131 @@ def load_light_rows(stocks_map: dict) -> list[dict]:
 
 def _n(v, w=5, d=1):
     if v is None:
-        return "—".rjust(w)
+        return "-".rjust(w)   # ASCII 連字號（非 CJK 全形或 em dash）——欄位須 ASCII-only，見規則 A
     try:
         return f"{float(v):{w}.{d}f}"
     except (TypeError, ValueError):
         return str(v)[:w].rjust(w)
 
 
+# ── 顯示寬度感知補白（規則 B）：f-string 的 {x:w} 只算 code point，CJK/emoji 在瀏覽器
+#    fallback 字型下常不是精準 2×等寬格寬，故看板主表改走規則 A（欄位全 ASCII，見下）；
+#    _pad() 是終端機顯示層的再一道防呆，用 unicodedata.east_asian_width 抓 W/F 全形字元
+#    ＋常見 emoji/符號區塊（≥U+1F300、Misc Symbols U+2600-27BF／U+2B00-2BFF）算 2 格。
+def _char_width(ch: str) -> int:
+    o = ord(ch)
+    if o >= 0x1F300 or 0x2600 <= o <= 0x27BF or 0x2B00 <= o <= 0x2BFF:
+        return 2
+    return 2 if unicodedata.east_asian_width(ch) in ("W", "F") else 1
+
+
+def _display_width(s: str) -> int:
+    return sum(_char_width(c) for c in s)
+
+
+def _pad(s, w: int, right: bool = False) -> str:
+    s = str(s)
+    fill = " " * max(0, w - _display_width(s))
+    return (fill + s) if right else (s + fill)
+
+
+# ── 規則 A：等寬看板 note 欄以左一律 ASCII 代碼（timing/seat/dd/moat），保證任何
+#    字型都對齊；中文只留在 note（最後一欄，無需再對齊）與圖例行（表頭上方 prose）。
+TIMING_CODE = {"breakout": "BRK", "pullback": "PB", "in_trend": "TR",
+               "overheated": "HOT", None: "DN"}
 TIMING_TXT = {"breakout": "🟢 突破帶", "pullback": "🟢 回踩", "in_trend": "🟡 趨勢內",
-              "overheated": "🟠 過熱", None: "🔴 52 週線下／缺"}
+              "overheated": "🟠 過熱", None: "🔴 52 週線下／缺"}   # HTML 表格（seat_tr 等）另用 P_LABEL_HTML，此表僅供未來 board 之外的中文呈現備用
+
+_ROLE_CODE = {"核心": "core", "核心持倉": "core", "條件式核心持倉": "core",
+              "衛星": "sat", "衛星持倉": "sat", "追蹤": "trk", "追蹤池": "trk", "不持有": ""}
+_ARROW_ASCII = {"↑": "+", "→": "=", "↓": "-", "": ""}
+
+# 等寬看板欄寬（header 與資料列共用同一組常數，保證 note 欄起始 index 對齊）
+W_IDX, W_TICKER, W_SCORE, W_GROW = 2, 9, 5, 6
+W_EY, W_ROIC, W_FCF, W_PEG, W_REV = 5, 5, 5, 5, 6
+W_TIMING, W_SEAT, W_DD, W_MOAT = 6, 4, 19, 4
+
+
+def _role_code(role) -> str:
+    role = role or ""
+    if role in _ROLE_CODE:
+        return _ROLE_CODE[role]
+    if "核心" in role:
+        return "core"
+    if "衛星" in role or "投機" in role:
+        return "sat"
+    if "追蹤" in role or "候選" in role:
+        return "trk"
+    return ""
+
+
+def dd_ascii(r: dict) -> str:
+    """等寬看板專用 ASCII 版 dd_tag——從列的 verdict/role/dd_age_days 直接映射，不 parse
+    中文 dd_tag 字串。IN/WATCH/AVOID(/role) Nd；legacy＝舊版無裁決；none＝無 DD；
+    >180 天（同 DD_FRESH_DAYS 門檻）附加 !old。"""
+    verdict = r.get("verdict")
+    if not verdict:
+        return "legacy" if r.get("dd_path") else "none"
+    if verdict.startswith("進場"):
+        code = "IN"
+    elif verdict == "觀望":
+        code = "WATCH"
+    elif verdict == "迴避":
+        code = "AVOID"
+    else:
+        code = "?"
+    rc = _role_code(r.get("role"))
+    tag = f"{code}/{rc}" if rc else code
+    age = r.get("dd_age_days")
+    if age is not None:
+        tag += f" {int(age)}d"
+        if age > DD_FRESH_DAYS:
+            tag += "!old"
+    return tag
+
+
+def moat_ascii(m) -> str:
+    """護城河欄 ASCII 化：箭頭→ +/=/-（升/平/降），缺值→ -。"""
+    if not m or m == "—":
+        return "-"
+    grade, arrow = m[0], m[1:]
+    return f"{grade}{_ARROW_ASCII.get(arrow, '')}"
 
 
 def render_board_text(as_of, rows, core_seats, sat_seats, prev_snap, entered) -> str:
-    """附錄 B 式等寬看板（持有人 2026-09-02 指定形式）：擁有層排序表＋席位對照＋
-    DD 進場 vs 機械資格＋無 DD 過閘候選。純文字，同時寫 docs/engine/board.txt 與 <pre> 嵌頁。"""
+    """附錄 B 式等寬看板（持有人 2026-09-02 指定形式；2026-09-02 對齊修正）：擁有層排序表
+    ＋席位對照＋DD 進場 vs 機械資格＋無 DD 過閘候選。純文字，同時寫 docs/engine/board.txt
+    與 <pre> 嵌頁（docs/engine/_arena_body.html、docs/cockpit/index.html 皆讀同一份文字）。
+
+    對齊規則：瀏覽器對 CJK 常用 fallback 字型，其字寬不保證是等寬字型 cell 的精準 2 倍，
+    f-string {x:w} 補白也只算 code point 不算顯示寬度——兩者都會讓含中文/emoji 的欄位
+    在瀏覽器 <pre> 裡跑版。故主表 note 欄以左（#/ticker/score/grow/EY/ROIC/FCF/PEG/
+    rev1m/timing/seat/dd/moat）一律 ASCII 代碼，任何字型都保證對齊；中文只留在最後的
+    note 欄（不需要再對齊）與表頭上方的圖例行（純 prose，非欄位）。"""
     seat_of = {r["ticker"]: "核心席" for r in core_seats}
     seat_of.update({r["ticker"]: "衛星席" for r in sat_seats})
+    seat_code = {r["ticker"]: f"C{j}" for j, r in enumerate(core_seats, 1)}
+    seat_code.update({r["ticker"]: f"S{j}" for j, r in enumerate(sat_seats, 1)})
     prev_seats = {t: "核心席" for t in prev_snap.get("core", [])}
     prev_seats.update({t: "衛星席" for t in prev_snap.get("sat", [])})
+    track_code = {"核心席": "C", "衛星席": "S"}
+
+    def tk(t) -> str:
+        return _pad(str(t)[:W_TICKER], W_TICKER)
+
     L = []
     L.append(f"選股看板 v2｜as_of {as_of}｜母體 {len(rows)}（DD 池＋QGM 無 DD＋快審卡）"
              "｜母體＝美股含 ADR；台股另建（.TW 不在本看板）")
     L.append("甲 擁有層｜資格：品質閘 ROIC≥15∧FCF≥10（或 ROIC≥25∧FCF≥0）× 成長閘 ≥15 × 市值 ≥$20B"
              "｜排序＝min(成長，30)＋FY1 盈餘殖利率（ROIC≥30 +2；PEG>2 −5）｜時機燈獨立、不進排序")
-    hdr = f"{'#':>2} {'ticker':9} {'分':>5} {'成長':>6} {'EY':>5} {'ROIC':>5} {'FCF':>5} {'PEG':>5} {'1M修':>6} {'時機':10} {'席位':6} {'DD':26} {'moat':5} 註記"
+    L.append("欄位說明：score＝擁有層分、grow＝FY1→FY3 成長%、EY＝FY1 盈餘殖利率%、rev1m＝FY+1 單月修正%、"
+             "timing＝時機燈、seat＝席位、dd＝DD 標籤、moat＝護城河；note＝註記")
+    L.append("timing 代碼：BRK＝突破帶、PB＝回踩、TR＝趨勢內、HOT＝過熱、DN＝52 週線下或缺"
+             "｜seat：C1-C5＝核心席次、S1-S5＝衛星席次｜moat：字母＝評級，+/=/-＝護城河趨勢升/平/降"
+             "｜dd：IN/WATCH/AVOID/legacy/none，core/sat/trk＝角色，Nd＝天數，!old＝逾 180 天過期")
+    hdr = (f"{'#':>{W_IDX}} {'ticker':<{W_TICKER}} {'score':>{W_SCORE}} {'grow':>{W_GROW}} "
+           f"{'EY':>{W_EY}} {'ROIC':>{W_ROIC}} {'FCF':>{W_FCF}} {'PEG':>{W_PEG}} {'rev1m':>{W_REV}} "
+           f"{'timing':<{W_TIMING}} {'seat':<{W_SEAT}} {'dd':<{W_DD}} {'moat':<{W_MOAT}} note")
     L.append(hdr)
     own = [r for r in rows if (r["grp"].get("quality") or {}).get("pass") and (r["score"] or 0) > 0]
     for i, r in enumerate(own[:40], 1):
@@ -364,36 +466,54 @@ def render_board_text(as_of, rows, core_seats, sat_seats, prev_snap, entered) ->
             note = ("成長=FY1→FY2 單年；" + note) if note else "成長=FY1→FY2 單年"
         if r.get("hyst") and "候補" in r["hyst"]:
             note = (r["hyst"] + "；" + note) if note else r["hyst"]
-        L.append(f"{i:>2} {r['ticker']:9} {_n(r['score'])} {_n(g.get('g'),6)} {_n(o.get('ey'))} {_n(r.get('roic'))} "
-                 f"{_n(r.get('fcf'))} {_n(r.get('peg'),5,2)} {_n(g.get('r_fy1'),6)} "
-                 f"{TIMING_TXT.get(g.get('p_label'), '—'):10} {seat_of.get(r['ticker'], ''):6} "
-                 f"{(r.get('dd_tag') or '—')[:26]:26} {(r.get('moat') or '—'):5} {note}")
+        L.append(
+            f"{i:>{W_IDX}} {tk(r['ticker'])} {_n(r['score'], W_SCORE)} {_n(g.get('g'), W_GROW)} "
+            f"{_n(o.get('ey'), W_EY)} {_n(r.get('roic'), W_ROIC)} {_n(r.get('fcf'), W_FCF)} "
+            f"{_n(r.get('peg'), W_PEG, 2)} {_n(g.get('r_fy1'), W_REV)} "
+            f"{_pad(TIMING_CODE.get(g.get('p_label'), 'DN'), W_TIMING)} "
+            f"{_pad(seat_code.get(r['ticker'], ''), W_SEAT)} "
+            f"{_pad(dd_ascii(r)[:W_DD], W_DD)} {_pad(moat_ascii(r.get('moat')), W_MOAT)} {note}"
+        )
     L.append("")
     L.append("== 席位（核心 5／衛星 5）與上期對照")
     for track, seats in (("核心席", core_seats), ("衛星席", sat_seats)):
         for j, r in enumerate(seats, 1):
-            chg = "" if prev_seats.get(r["ticker"]) == track else ("↑新席" if r["ticker"] not in prev_seats else f"↔自{prev_seats[r['ticker']]}")
-            L.append(f"  {track} {j}. {r['ticker']:8} 分 {_n(r['score'])} {TIMING_TXT.get(r['grp'].get('p_label'), '—'):8} "
-                     f"{r.get('dd_tag') or '—'}  {r.get('hyst') or ''} {chg}")
+            if prev_seats.get(r["ticker"]) == track:
+                chg = ""
+            elif r["ticker"] not in prev_seats:
+                chg = "NEW"
+            else:
+                chg = f"FROM:{track_code.get(prev_seats[r['ticker']], '?')}"
+            L.append(
+                f"  {track_code[track]}{j} {tk(r['ticker'])} {_n(r['score'], W_SCORE)} "
+                f"{_pad(TIMING_CODE.get(r['grp'].get('p_label'), 'DN'), W_TIMING)} "
+                f"{_pad(dd_ascii(r)[:W_DD], W_DD)} {_pad(chg, 6)} {r.get('hyst') or ''}"
+            )
     gone = [t for t in prev_seats if t not in seat_of]
     if gone:
         why = {r["ticker"]: r for r in rows}
-        for tk in gone:
-            r = why.get(tk)
+        for t in gone:
+            r = why.get(t)
             why_txt = "；".join((((r or {}).get("grp") or {}).get("why") or [])[:2]) or ("擁有層分數被擠下" if r else "不在母體")
-            L.append(f"  ↓下席 {tk:8} {(r or {}).get('hyst') or ''}：{why_txt}")
+            L.append(f"  DOWN {tk(t)} {(r or {}).get('hyst') or ''}：{why_txt}")
     L.append("")
     L.append("== DD 裁決進場 vs 機械資格")
     ok = [r for r in entered if r["grp"]["pass"]]; ng = [r for r in entered if not r["grp"]["pass"]]
     L.append(f"  進場 {len(entered)}：過閘 {len(ok)}／未過 {len(ng)}")
     for r in ng:
-        L.append(f"   ✗ {r['ticker']:8} {'；'.join((r['grp'].get('why') or [])[:3])}  時機 {TIMING_TXT.get(r['grp'].get('p_label'), '—')}")
+        L.append(
+            f"   X {tk(r['ticker'])} {_pad(TIMING_CODE.get(r['grp'].get('p_label'), 'DN'), W_TIMING)} "
+            f"{'；'.join((r['grp'].get('why') or [])[:3])}"
+        )
     L.append("")
     L.append("== 無 DD 而機械過閘（DD 選配層的候選；有興趣才跑 DD）")
     for r in own:
         if r.get("src") == "qgm" and r["grp"]["pass"]:
-            L.append(f"   {r['ticker']:8} 分 {_n(r['score'])} 成長 {_n(r['grp'].get('g'))} ROIC {_n(r.get('roic'))} "
-                     f"PEG {_n(r.get('peg'),5,2)} 時機 {TIMING_TXT.get(r['grp'].get('p_label'), '—')} {r.get('hyst') or ''}")
+            L.append(
+                f"   {tk(r['ticker'])} score {_n(r['score'], W_SCORE)} grow {_n(r['grp'].get('g'), W_GROW)} "
+                f"ROIC {_n(r.get('roic'), W_ROIC)} PEG {_n(r.get('peg'), W_PEG, 2)} "
+                f"{_pad(TIMING_CODE.get(r['grp'].get('p_label'), 'DN'), W_TIMING)} {r.get('hyst') or ''}"
+            )
     return "\n".join(L) + "\n"
 
 
