@@ -92,6 +92,10 @@ section.block{padding:1.1rem 0}
 .roster-tk{font-weight:700}
 .roster-note{font-size:.74rem;color:var(--muted);margin-top:.55rem;line-height:1.7}
 .v-in{color:var(--green)}.v-watch{color:var(--amber)}.v-avoid{color:var(--red)}
+.roster-table td.num,.roster-table th.num{text-align:right;font-family:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace}
+.roster-table tr.rgroup td{background:var(--border-soft);color:var(--muted);font-family:'IBM Plex Mono',monospace;
+  font-size:.66rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:.42rem .9rem;border-bottom:1px solid var(--border)}
+.roster-table td .imq-badge{margin:0 .15rem .15rem 0}
 
 /* ③ 想法四路（發現層）——四欄純連結卡片 */
 .disc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.9rem}
@@ -442,10 +446,7 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
   var pending = Object.keys(sources).map(function(k){
     return getJSON(sources[k]).then(function(d){S[k]=d;}).catch(function(){S[k]=null;});
   });
-  // board.txt 是純文字看板（非 JSON），fetch 失敗時整塊靜默隱藏，其餘陣容照常渲染
-  pending.push(fetch('/engine/board.txt',{cache:'no-store'}).then(function(r){
-    if(!r.ok) throw new Error(r.status); return r.text();
-  }).then(function(t){S.boardTxt=t;}).catch(function(){S.boardTxt=null;}));
+  // board.txt 不再 fetch 進本頁——陣容表本身就是看板的 HTML 化，等寬版留一個純連結見 roster-note
 
   Promise.all(pending).then(function(){
     try{ renderEnv(); }catch(e){ $('env-mount').innerHTML=ph('環境資料暫缺'); }
@@ -495,11 +496,11 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     $('env-mount').innerHTML = '<div class="card env-strip">'+cells+links+'</div>';
   }
 
-  // ---------- ② 陣容（唯一名單：席位 × 裁決 × 板機，一行一檔讀完整條鏈） ----------
+  // ---------- ② 陣容（唯一名單，即 board.txt 的 HTML 化——欄位對齊等寬看板，一行一檔讀完整條鏈） ----------
   // 時機路由（2026-07-11 持有人拍板，登記 knowledge/rule_ledger.md）：
   // 核心席＝sop-funnel 板機；衛星席＝cyclical-track 位置閘（sop 品質閘系統性排除
   // 爆發/循環型，衛星在 sop 裡永遠不亮）。低熱名單外的衛星席誠實標「未覆蓋」不猜。
-  // 板機狀態的白話補充（機制短語不變，肉眼可見的下方 small muted 說明——手機無 hover，不能只靠 title）
+  // 板機狀態的白話補充：肉眼看板機字串本身即可判讀，機制細節收進 title（手機長按可看）
   var GATE_GLOSS = {
     '🎯 板機亮': '進場訊號今天亮了，規則上今天就是出手日',
     '待命 A2': '續勢型對照訊號：股價貼著歷史新高、持續強勢，但還不是正式買點',
@@ -513,40 +514,45 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
   // in_trend＝其餘趨勢內、overheated＝26 週漲幅 >+80%、null＝站在 52 週線下或資料缺）——燈號只標示不排序
   var PLABEL_GLOSS = {'breakout':'突破帶','pullback':'回踩','in_trend':'趨勢內','overheated':'過熱'};
   var TIMING_DOT = {'breakout':'🟢','pullback':'🟢','in_trend':'🟡','overheated':'🟠'};
-  function timingLight(p_label){
-    var g = PLABEL_GLOSS[p_label];
-    return (TIMING_DOT[p_label]||'🔴')+' '+(g||'線下');
+  function timingPill(p_label, r26){
+    var g = PLABEL_GLOSS[p_label] || '線下';
+    var dot = TIMING_DOT[p_label] || '🔴';
+    var r26t = (r26!=null && !isNaN(r26)) ? ('26 週漲幅 '+(r26>=0?'+':'')+fmt(r26,1)+'%') : '26 週漲幅資料缺';
+    return '<span class="imq-badge" title="時機燈只標示不排序——'+esc(r26t)+'">'+dot+' '+esc(g)+'</span>';
   }
-  // 上修燈：FY+1 單月修正，v2 降為燈號不參與排序（否決線 −10%，見 grp.py R_VETO_FY1）
-  function revLight(r){
-    if(r==null||isNaN(r)) return '<span style="color:var(--muted)">上修燈 —</span>';
-    var dot = (r<=-10)?'🔴':(r<0?'🟡':'🟢');
-    return dot+' 上修燈 '+(r>=0?'+':'')+fmt(r,1)+'%';
+  // 上修燈：FY+1 單月修正，v2 降為燈號不參與排序（≤−10% 仍是資格否決線，見 grp.py R_VETO_FY1；veto 後不會出現在席位表）
+  function revPill(r){
+    if(r==null||isNaN(r)) return '<span class="imq-badge">—</span>';
+    var cls = (r>=5) ? 'imq-badge pos' : ((r<=-10) ? 'imq-badge neg' : 'imq-badge');
+    var label = (r>=5) ? ('上修 +'+fmt(r,1)+'%') : ((r<=-10) ? ('否決 '+fmt(r,1)+'%') : ('持平 '+(r>=0?'+':'')+fmt(r,1)+'%'));
+    return '<span class="'+cls+'" title="FY+1 單月 EPS 修正——是燈號不是排序鍵；≤−10% 仍是資格否決線，veto 後不會出現在席位表">'+label+'</span>';
   }
-  // 入選原因子列：白話說明，直接沿用後端已算好的 route_why／dd_tag／hyst 欄，不重造分類邏輯
-  function whyRow(s, isSat, rank){
-    var grp = s.grp||{};
-    var head = [];
-    if(s.verdict) head.push('DD 裁決'+esc(s.verdict));
-    if(s.route_why) head.push(esc(s.route_why));
-    if(grp.pass) head.push('擁有層品質閘全過');
-    if(!head.length) return '';
-    var metricBits = [];
-    if(grp.g!=null && !isNaN(grp.g)) metricBits.push('成長 '+fmt(grp.g,1));
-    if(grp.r_fy1!=null && !isNaN(grp.r_fy1)) metricBits.push(revLight(grp.r_fy1));
-    var pg = PLABEL_GLOSS[grp.p_label];
-    if(pg) metricBits.push(timingLight(grp.p_label));
-    var sc = s.score!=null ? s.score : grp.score;
-    var scoreBit = (sc!=null && !isNaN(sc)) ? ('擁有層分 '+fmt(sc,1)+' 排'+(isSat?'衛星':'核心')+'第 '+rank) : '';
-    var extraBits = [];
-    if(s.dd_tag) extraBits.push('DD 標記：'+esc(s.dd_tag));
-    if(s.hyst) extraBits.push('遲滯：'+esc(s.hyst));
-    var txt = '入選原因：'+head.join('＋');
-    if(metricBits.length) txt += '——'+metricBits.join('、');
-    if(scoreBit) txt += (metricBits.length?'；':'——')+scoreBit;
-    if(extraBits.length) txt += '｜'+extraBits.join('・');
-    return '<tr><td colspan="5" style="padding-top:0"><small style="color:var(--muted);font-size:.72rem;line-height:1.6">'+txt+'</small></td></tr>';
+  function vCls(v){ return v==='進場'?'v-in':(v==='觀望'?'v-watch':(v==='迴避'?'v-avoid':'')); }
+  // 擁有層分公式白話（見 scripts/engine/grp.py own_score）：min(成長,30) ＋ EY（盈餘殖利率）＋ ROIC≥30 持續 +2 － PEG>2 罰 −5
+  function ownTooltip(grp, scoreVal){
+    var own = grp.own || {};
+    var parts = [];
+    if(own.g_capped!=null) parts.push('min(成長,30)='+fmt(own.g_capped,1));
+    if(own.ey!=null) parts.push('EY='+fmt(own.ey,1));
+    parts.push(own.durable ? 'ROIC≥30 持續 +2' : 'ROIC<30 +0');
+    parts.push(own.peg_penalty ? 'PEG>2 罰 −5' : 'PEG≤2 −0');
+    var eq = (scoreVal!=null && !isNaN(scoreVal)) ? (' ＝ '+fmt(scoreVal,2)) : '';
+    return '擁有層分＝'+parts.join(' + ')+eq;
   }
+  function ddCell(s, liveV){
+    var tag = s.dd_tag || '待 DD';
+    var cls = vCls(s.verdict);
+    var drift = (liveV[s.ticker] && s.verdict && liveV[s.ticker] !== s.verdict)
+      ? ' <span style="color:var(--amber)" title="現行 DD 裁決（'+esc(liveV[s.ticker])+'）與週更快照（'+esc(s.verdict)+'）分歧——換席裁決待下次擁有層引擎週更">⚠</span>' : '';
+    return '<span class="'+cls+'">'+esc(tag)+'</span>'+drift;
+  }
+  function hystCell(s, newSeat, isSat){
+    var ns = newSeat[isSat?'sat':'core'][s.ticker];
+    var newBadge = ns ? ('<span class="imq-badge warn" title="本期新換入（'+esc(ns.from)+' → '+esc(ns.to)+'）">新</span> ') : '';
+    var h = s.hyst ? ('<span class="imq-badge">'+esc(s.hyst)+'</span>') : '<span class="imq-badge">—</span>';
+    return newBadge + h;
+  }
+  function groupRow(label){ return '<tr class="rgroup"><td colspan="13">'+esc(label)+'</td></tr>'; }
   function renderRoster(){
     var mount = $('roster-mount');
     if(!S.arena || !Array.isArray(S.arena.core_seats)){ mount.innerHTML = ph('陣容資料暫缺'); return; }
@@ -591,44 +597,53 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
           : ('本期無換席（'+esc(sd)+'）');
       }
     }catch(e){ newSeat = {core:{}, sat:{}}; ledgerNote = ''; }
-    function vCls(v){ return v==='進場'?'v-in':(v==='觀望'?'v-watch':(v==='迴避'?'v-avoid':'')); }
+    function numTd(v,d){ return '<td class="num">'+((v==null||isNaN(v))?'—':fmt(v,d))+'</td>'; }
     function row(seatLabel, s, isSat){
       var grp = s.grp||{};
-      var hasV = !!(liveV[s.ticker] || s.verdict);
-      var v = liveV[s.ticker] || s.verdict || '待 DD';
-      var drift = (liveV[s.ticker] && s.verdict && liveV[s.ticker] !== s.verdict)
-        ? ' <span style="color:var(--amber)" title="現行 DD 裁決與週更快照不同——換席裁決待下次擁有層引擎週更">⚠</span>' : '';
+      var own = grp.own||{};
+      var scoreVal = own.score!=null ? own.score : (s.score!=null?s.score:grp.score);
       var gate = isSat ? (cycGate[s.ticker] || '無時機訊號') : (trig[s.ticker] || '－');
       var gloss = GATE_GLOSS[gate] || '';
-      var ns = newSeat[isSat?'sat':'core'][s.ticker];
-      var newBadge = ns ? (' <span class="imq-badge warn" title="本期新換入（'+esc(ns.from)+' → '+esc(ns.to)+'）">新</span>') : '';
+      var tkTitle = (grp.pass===false && Array.isArray(grp.why) && grp.why.length) ? (' title="'+esc(grp.why[0])+'"') : '';
+      var tkTxt = esc(s.ticker);
+      var tkHtml = s.dd_path
+        ? ('<a href="'+esc(s.dd_path)+'#decision"'+tkTitle+'>'+tkTxt+'</a>')
+        : ('<span'+tkTitle+'>'+tkTxt+'</span>');
+      var scoreCell = '<td class="num" title="'+esc(ownTooltip(grp,scoreVal))+'">'+((scoreVal==null||isNaN(scoreVal))?'—':fmt(scoreVal,1))+'</td>';
       return '<tr><td class="roster-seat">'+esc(seatLabel)+'</td>'+
-        '<td class="roster-tk">'+esc(s.ticker)+newBadge+'</td>'+
-        '<td class="'+(hasV?vCls(v):'')+'">'+esc(v)+drift+'</td>'+
-        '<td class="num">'+(grp.score!=null?fmt(grp.score,2):'—')+' <small style="color:var(--muted)">'+timingLight(grp.p_label)+'</small></td>'+
-        '<td>'+esc(gate)+(gloss?('<br><small style="color:var(--muted)">'+esc(gloss)+'</small>'):'')+'</td></tr>';
+        '<td class="roster-tk">'+tkHtml+'</td>'+
+        scoreCell +
+        numTd(grp.g,1) + numTd(own.ey,1) + numTd(s.roic,1) + numTd(s.fcf,1) + numTd(s.peg,2) +
+        '<td>'+revPill(grp.r_fy1)+'</td>'+
+        '<td>'+timingPill(grp.p_label, s.r26)+'</td>'+
+        '<td>'+ddCell(s, liveV)+'</td>'+
+        '<td>'+hystCell(s, newSeat, isSat)+'</td>'+
+        '<td title="'+esc(gloss)+'">'+esc(gate)+'</td>'+
+      '</tr>';
     }
     var rows = '';
-    S.arena.core_seats.forEach(function(s,i){ rows += row('核心 '+(i+1), s, false) + whyRow(s, false, i+1); });
-    (S.arena.sat_seats||[]).forEach(function(s,i){ rows += row('衛星 '+(i+1), s, true) + whyRow(s, true, i+1); });
+    rows += groupRow('核心席（'+S.arena.core_seats.length+'/5）');
+    S.arena.core_seats.forEach(function(s,i){ rows += row('核心 '+(i+1), s, false); });
+    rows += groupRow('衛星席（'+((S.arena.sat_seats||[]).length)+'/5）');
+    (S.arena.sat_seats||[]).forEach(function(s,i){ rows += row('衛星 '+(i+1), s, true); });
     var vac = S.arena.sat_vacant||0;
     if(vac>0) rows += '<tr><td class="roster-seat">衛星 '+((S.arena.sat_seats||[]).length+1)+'–5</td>'+
-      '<td colspan="4" style="color:var(--muted);font-size:.8rem">空 '+vac+' 席——空位是刻意的，空位即倉位管理</td></tr>';
+      '<td colspan="12" style="color:var(--muted);font-size:.8rem">空 '+vac+' 席——空位是刻意的，空位即倉位管理</td></tr>';
     var bench = (S.arena.core_bench||[]).map(function(b){return b.ticker;}).filter(Boolean);
     var asof = S.arena.run_timestamp ? String(S.arena.run_timestamp).slice(0,10) : '';
-    var boardHtml = S.boardTxt
-      ? '<pre style="font-family:\'IBM Plex Mono\',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;line-height:1.45;overflow-x:auto;white-space:pre;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:.8rem">'+esc(S.boardTxt)+'</pre>'
-      : '';
-    mount.innerHTML = boardHtml +
-      '<div class="card" style="overflow-x:auto"><table class="roster-table">'+
-      '<tr><th>席</th><th>Ticker</th><th>DD 裁決</th><th title="own_score">擁有層分 · 時機燈</th><th>板機（時機）</th></tr>'+rows+'</table></div>'+
+    var thead = '<tr><th>席</th><th>Ticker</th>'+
+      '<th class="num" title="'+esc('擁有層分＝min(成長,30) ＋ EY（盈餘殖利率）＋ ROIC≥30 持續 +2 － PEG>2 罰 −5；逐檔算式見該列 hover')+'">擁有層分</th>'+
+      '<th class="num">成長%</th><th class="num">EY%</th><th class="num">ROIC%</th><th class="num">FCF%</th><th class="num">PEG</th>'+
+      '<th title="'+esc('FY+1 單月 EPS 修正——是燈號不是排序鍵；≤−10% 仍是資格否決線，veto 後不會出現在席位表')+'">上修燈</th>'+
+      '<th title="'+esc('位置燈只標示不排序，定義見 scripts/engine/grp.py')+'">時機燈</th>'+
+      '<th>DD</th><th>遲滯</th><th>板機</th></tr>';
+    mount.innerHTML =
+      '<div class="card" style="overflow-x:auto"><table class="roster-table">'+thead+rows+'</table></div>'+
       '<div class="roster-note">'+
       (bench.length?('板凳前排：'+esc(bench.join('、'))+' · '):'')+
       (asof?('席位歸屬 as-of '+esc(asof)+'（擁有層引擎週更）· '):'')+
-      '裁決欄＝日更 DD Screener 現值（⚠＝與週更快照分歧，換席待週更；無 DD 名字標「待 DD」，DD 只做 veto／角色標籤，不參與排序）· '+
-      '時機路由：核心席＝流程板機、衛星席＝循環股位置閘（2026-07-11 拍板）· '+
-      '「精選榜」分頁＝席位規格外的兩個獵場（爆發＝循環拐點型、十倍＝市值低於席位門檻），與本表零重疊是設計'+
-      (ledgerNote?('<br>'+ledgerNote):'')+
+      (ledgerNote?(ledgerNote+' · '):'')+
+      'DD 只做 veto／角色標籤，不參與排序；上修為燈號；等寬版看 <a href="/engine/board.txt">/engine/board.txt</a>'+
       '</div>';
   }
 })();
