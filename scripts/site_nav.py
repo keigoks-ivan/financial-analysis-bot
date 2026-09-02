@@ -87,6 +87,9 @@ Change log:
         五個已消失的下拉項鍵，統一改 ("pick", None)（群高亮、無選單項，
         與同批市場群六條目的處理方式一致）。build_nav() 不變——系統群仍是 4
         項，維持下拉形態，不觸發選股群式的單項 flat-link 特例。
+    2026-09-02 市況主控台上線：MENU["market"] 新增「市況主控台」("market", /market/)
+        置於群首位（原首位情報監視器順移第二）；PREFIX_ACTIVE 新增 market/ 前綴映射。
+        見 notes/site-internal/root/_market_cockpit_design_20260902.md。
 """
 
 import re
@@ -167,6 +170,9 @@ MENU = {
     # PREFIX_ACTIVE 的六個舊前綴映射改 ("market", None)：頁面仍歸市場群高亮，
     # 但不再對應任何選單項目。
     "market": [
+        # 2026-09-02 市況主控台（market cockpit）上線：把十一條市況管線的今日狀態收成
+        # 單頁合成層（state.json，日更零 LLM），置於市場群首位（原首位情報監視器順移）。
+        ("market", "/market/", "市況主控台"),
         ("intel", "/intel/", "情報監視器"),  # 2026-08-19 新增；2026-08-20 Phase C 升為市場群首位
         ("brief", "/briefing/", "每日簡報"),  # 2026-08-17 日報恢復（週一至週六 06:15），重新掛回頁首
         ("radar", "/rotation/radar.html", "資產輪動雷達"),
@@ -311,6 +317,7 @@ PREFIX_ACTIVE = [
     ("comparisons/", ("research", "thub")),
     ("supply-chain/", ("research", "id")),
     # 市場群
+    ("market/", ("market", "market")),  # 市況主控台（2026-09-02 新增，合成層 hub）
     ("earnings/", ("market", "earn")),
     # 2026-08-20 Phase C：六個舊監看入口自選單移除後，其頁面映射改
     # ("market", None)——仍歸市場群高亮，但不再有對應選單項目。

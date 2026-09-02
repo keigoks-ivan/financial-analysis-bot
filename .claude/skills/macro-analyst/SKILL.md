@@ -1,5 +1,7 @@
 # macro-analyst skill v1.2 — 總經深度報告（macro ID）
 
+**2026-09-02 增補（持有人拍板「判讀必留命題」）**：發稿流程第 5 步把證偽表機械化門檻 harvest 進預測帳簿（p 由條件式歷史頻率法給），見【發稿流程】。
+
 **v1.2（2026-07-10）**：八份實跑＋七輪 critic 的完整校準（素材：`notes/site-internal/macro/_v12_calibration_notes.md`）。新增八條 sourcing 紀律（見【數據紀律】一節）：非美／無官方統計主題的 T1 條款、T3 現值取捨、觸及紀錄強制查證、證據新鮮度標籤、carry-forward 數字二次查證、無 sourced base rate 出口、衝突數字割捨協議、數據窗標準動作；critic spawn 歸屬明文化。累計錯誤型態譜系（全部「真數字錯上下文」、幻覺 0）：①過時數字 ②錯標系列/口徑 ③時間標籤錯 ④引信無現值 ⑤站內引用美化 ⑥舊證據當新引信 ⑦當局行動漏記。stance 鑑別力議題（八份全中性）不動條文，forward 對帳日 2027-01。
 
 **v1.1（2026-07-09）**：首跑四份 critic 實證驅動——①證偽表每條必附現值＋as-of；②站內引用忠實性。均為 sourcing／格式紀律，非判斷類規則，不入 rule_ledger。
@@ -105,7 +107,8 @@
 2. **強制 cold-review critic**（比照 industry-analyst Step 8.7）：**必須是獨立 agent**——由主 session 或 writer spawn 皆可（實跑兩型皆有效），但 writer 不得自任 critic、critic 用不同 model tier（sonnet）、結果與修復記錄一律存檔。checklist 7 條——①§0 stance 與 §5 情境樹一致；②傳導鏈每環有來源；③base rate 統計非 cherry-pick；④證偽表可操作（門檻＋頻率＋源＋**現值**；並查該指標近 12 個月是否曾觸及門檻而報告未載）；⑤描述器紀律無違反；⑥priced-in 分歧真非共識；⑦與 regime/crowding 現況無未解釋矛盾＋**站內引用忠實抽查 ≥2 處**（開被引原檔逐字比對）。另固定用 WebSearch 抽查 5-6 個關鍵數字（首跑實證：主要錯誤型態是「真數字但過時／錯標系列」，非幻覺）。報告存 `notes/site-internal/macro/_critic_{Slug}_{YYYYMMDD}.md`。大錯必修，cosmetic 記錄即可。
 3. index.html insert 卡片（比照 push-earnings 模式，skill-appended）；**同步檢視 index 宏觀投資時鐘的編輯針**——機械針由 `scripts/build_macro_clock.py` 週更自動（weekly-market-update 班車，PREREG 方法凍結），skill 只管編輯針與判讀文字：新報告若改變增長／通膨軸的水位判讀，撥編輯針＋更新換位觸發現值；雙針分歧（動能 vs 水位）是資訊，照實呈現不強行對齊。
 4. commit 前跑 `python3 scripts/inject_report_primer.py --family macro`，讓新報告帶上白話導讀塊（冪等，可重複跑）。
-5. **預設停下複審**——用戶說 push 才 commit（報告＋index＋critic md 三檔一 commit），push 前 `git pull --rebase`。
+5. **證偽表進預測帳簿（2026-09-02 持有人拍板「判讀必留命題」）**：跑 `python scripts/harvest_macro_falsifiers.py --p-mode conditional --write`——證偽表中可機械化的門檻自動成為 forecast，p 以條件式歷史頻率法機械賦值（方法凍結於 `_forecast_v2_design_20260902.md` §9），無需人工填 p；harvest 抓不到的門檻（非 monitor 序列）維持只在報告內。
+6. **預設停下複審**——用戶說 push 才 commit（報告＋index＋critic md 三檔一 commit），push 前 `git pull --rebase`。
 
 ## 【治理登記】
 

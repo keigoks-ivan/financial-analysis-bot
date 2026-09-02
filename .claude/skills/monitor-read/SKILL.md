@@ -1,4 +1,6 @@
 ---
+
+**2026-09-02 增補（持有人拍板「判讀必留命題」）**：每次判讀至少 1 條、至多 3 條帶 resolver＋p 的命題進預測帳簿，由本 skill 自行給 p、跑 `scripts/ledger_from_editorial.py` 落帳；沒有命題＝判讀未完成。詳見硬規則末條與 schema 的 `forecasts[]`。設計稿：`notes/site-internal/root/_market_cockpit_design_20260902.md` §3。
 name: monitor-read
 description: 對 /monitor/ 全資產市場監測的機械層跑一次「解讀」（editorial read）——讀 docs/monitor/data/latest.json＋alerts.json 近 10 個交易日留痕，交叉站內研究資產（知識帳本 q.py／ID 機器欄／crowding／regime 若新鮮），把當日跨資產狀態收斂成 headline＋3-5 段主題判讀＋watch list，寫入 docs/monitor/data/editorial.json 由頁面渲染。判斷層與機械層嚴格分離：描述器紀律（環境判讀與情境準備，禁擇時結論、禁買賣指令），每個判讀句必須錨定當日機械層的具體數字。觸發：用戶說「解讀市場監測」「解讀今天的市場監測」「今天市場怎麼看」「monitor 解讀」「market read」「跑 monitor read」。
 ---
@@ -43,7 +45,12 @@ description: 對 /monitor/ 全資產市場監測的機械層跑一次「解讀�
       {"sev": "red|yellow", "text": "哪條 kill／閾值／現值／差多少（red=觸發, yellow=接近）"}
     ]
   },
-  "watch": ["未來幾天盯的具體數字＋閾值", "…"]
+  "watch": ["未來幾天盯的具體數字＋閾值", "…"],
+  "forecasts": [                     // 必留命題（1–3 條；2026-09-02 起必填）
+    {"claim": "一句可判真偽的話（含門檻與到期日）", "p": 0.30, "horizon_days": 30,
+     "resolver": {"series": "monitor:hy_oas", "op": ">", "value": 3.0, "window": "any_close"},
+     "why": "一句白話理由（錨定今日數字）"}
+  ]
 }
 ```
 
@@ -69,4 +76,5 @@ description: 對 /monitor/ 全資產市場監測的機械層跑一次「解讀�
 - **誠實面對混沌**：訊號矛盾時明說矛盾，不硬編一個故事；沒有值得說的主題時 sections 可以只有 2 段，不灌水。
 - 中文全形標點；機構研究語調（styleguide v1）；無鷹架語言（「本次新增」「補上」）。
 - 解讀不留歷史檔（單一 editorial.json 覆寫）——歷史判讀的留痕是 git history，不另建 archive；異常留痕歸機械層 alerts.json。
+- **判讀必留命題（2026-09-02 持有人拍板）**：每次判讀寫 1–3 條 `forecasts[]`（claim／p／horizon_days／resolver／why），**p 由本 skill 自己給**（持有人授權不再人工確認），resolver 域限 `monitor:<key>`／`pxd:SPY|QQQ|IWM`／`vixts:SLOPE`／`price:<TICKER>`，window 為 `any_close` 或 `at_expiry`；寫完必跑 `python scripts/ledger_from_editorial.py --source monitor-read --file docs/monitor/data/editorial.json --write`（機械驗 resolver、查重、append＋哨兵 twin，resolver 寫不出的命題不准落帳）。沒有命題＝判讀未完成。記分＝SPRT（同帳簿 v2 條款），kill 登 `knowledge/rule_ledger.md`。
 - **白話呈現條款（2026-09-01 持有人拍板，全站適用）**：`editorial.json` 寫入頁面的 `headline`／`sections`／`watch` 等顯示文字遵守 `notes/site-internal/root/_plainlang_styleguide.md`（『二補、實作定案』節優先）——①白話為主、術語為輔（對照表已定白話主名的詞一律用白話主名，原代號降小字或首現括號）；②新造術語前先查表，表上沒有的要先照鐵律③讀機制查證、定白話名並回寫對照表；③解釋深入淺出：每個承重判讀用讀者能懂的話講一遍，不堆行話。

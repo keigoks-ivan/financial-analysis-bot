@@ -1,0 +1,66 @@
+name: Market State Daily
+
+# 市況主控台合成層日更（設計稿 §1／§6 package E1：notes/site-internal/root/
+# _market_cockpit_design_20260902.md）。
+#
+# scripts/build_market_state.py 只讀不算：彙整既有 monitor／detective／
+# flowmap／statlab／intel／regime／macro clock／crowding／forecast ledger／
+# decisions／exposure_track／flowmap scorecard 等既有 latest.json／帳簿／
+# scorecard 為單一合成檔 docs/market/data/state.json，供 /market/ 頁面
+# fetch 渲染。stdlib-only（無第三方套件依賴），缺檔不 crash（該區塊記為
+# null／空並寫進 gaps[]）。
+#
+# 排程：週二至週六 08:30 UTC——晚於 monitor/detective/flowmap/statlab/intel
+# 等上游日更管線（皆在更早的 UTC 時段跑），確保本檔彙整到當天最新資料。
+on:
+  schedule:
+    - cron: "30 8 * * 2-6"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: market-state-daily
+  cancel-in-progress: false
+
+jobs:
+  build-market-state:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Build market state
+        run: python scripts/build_market_state.py
+
+      - name: Commit and push if changed
+        run: |
+          PATHS="docs/market/data/state.json"
+          if git status --porcelain $PATHS | grep -q .; then
+            echo "Changes detected"
+          else
+            echo "No changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add $PATHS
+          DATE=$(date -u +"%Y-%m-%d")
+          git commit -m "market-state: daily synthesis refresh ${DATE}"
+          for i in 1 2 3 4 5 6; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+            git pull --rebase --autostash origin main || { echo "Rebase failed"; exit 1; }
+            sleep $((RANDOM % 20 + 5))
+          done
+          echo "Push failed after 6 attempts"
+          exit 1

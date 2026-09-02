@@ -1,0 +1,97 @@
+{
+ "schema": "exposure-track-v0",
+ "prereg": {
+  "title": "市況曝險規則 v0（paper，PREREG 凍結至判決或 24 個月）",
+  "source_doc": "notes/site-internal/root/_market_cockpit_design_20260902.md §4",
+  "frozen_date": "2026-09-02",
+  "positioning": "本規則是市況主控台（market cockpit）合成層下的機械化目標曝險 paper track，非收斂面：不產名單、不進 picks/GRP/三軌/cockpit 任何清單，不得被引用為個股或資產配置依據；描述器紀律——公開頁只講機率與條件、不下買賣指令。上線即 paper 記分，SPRT 判綠前只顯示不執行；判紅即撤。",
+  "cadence": "週頻：每週六 weekly-market-update 班車以週五收盤算，週一生效；inception 2026-09-07，NAV=100。",
+  "data_sources": {
+   "prices": "SPY／AGG 日線＝data/flowmap_prices.json（唯讀，本檔不寫入）。",
+   "credit": "HY OAS 21 交易日變化＝docs/monitor/data/latest.json hy_oas spark（百分點）。"
+  },
+  "factors": {
+   "vol": "vol＝clip(0.15 / RV_blend, 0.25, 1.0)，RV_blend＝0.5×RV21＋0.5×RV63（SPY 日對數報酬年化 %，口徑同 rv-model）。",
+   "vol_unit_note": "σ_target 0.15（15% 年化波動目標）與 RV_blend（rv-model 慣例，以「vol 點」＝年化百分比數字表示，例如 14.08 代表 14.08%）需同單位相除；本檔實作為 clip(15.0 / RV_blend_vol_points, 0.25, 1.0)——與寫成 clip(0.15 / (RV_blend_vol_points/100), 0.25, 1.0) 數學等價，僅顯性化單位換算，避免 0.15 除以兩位數 vol 點數字被誤讀成恆等於下限 0.25。",
+   "trend": "trend＝1.0 若 SPY 12-1 動能（t−252 至 t−21 總報酬）> 0，否則 0.5。",
+   "credit": "credit＝0.5 若 HY OAS 近 21 交易日上升 > 0.50 個百分點，否則 1.0。"
+  },
+  "target": {
+   "formula": "目標曝險＝clip(vol × trend × credit, 0.25, 1.0)；其餘現金 0%。"
+  },
+  "benchmarks": {
+   "spy_bh": "SPY buy-and-hold（inception 當日買入，永不再平衡）。",
+   "b6040": "60/40（SPY／AGG，月初再平衡）。"
+  },
+  "gates": {
+   "core": "core 恆「open」。",
+   "satellite_structural": "satellite_structural：目標曝險 ≥ 0.5 →「open」否則「caution」。",
+   "satellite_cyclical": "satellite_cyclical：trend=1.0 且 credit=1.0 且 RV21 < 19.93（rv 表 Q5 切點）→「open」否則「closed」。19.93 來源＝data/rv_base_rates.json quintile_cutoffs_pct20_40_60_80[3]（Q4/Q5 分界，built_at 2026-09-01T23:51:11Z 快照，PREREG 凍結為常數，非本檔即時重算）。",
+   "note": "三軌新倉閘寫進本檔／state.json，PM 讀為輸入之一，非指令。"
+  },
+  "scoring": {
+   "monthly_sample": "月樣本＝當月 paper 報酬 − SPY B&H 報酬 > 0 為命中。",
+   "sprt": "SPRT 同 forecast ledger v2 §3.3 參數：p0=0.5／p1=0.65／α=0.05／β=0.10，上界 A=ln(18)=2.8904，下界 B=ln(0.1/0.95)=−2.2513，n_eff<20 一律 continue，決策一旦落定即鎖存（decided_at／decided_n），只有校準輪可重設。",
+   "info_only": "另列 Sharpe／MaxDD 對兩基準（資訊欄，≥3 個月才計算，不做決策）。"
+  },
+  "kill_conditions": {
+   "kill_1": "SPRT accept_h0 → 規則撤下、三軌新倉閘回「僅顯示無規則」；期間不調參；paper only 永不連實倉。"
+  },
+  "disclosure": "誠實標注：paper track、無交易成本、無滑價、機械式、非投資建議。目標曝險與三軌新倉閘皆為描述性資訊，PM 與各判讀 skill 讀為輸入之一，非執行指令。"
+ },
+ "as_of": "2026-08-31",
+ "inception_date": "2026-09-07",
+ "factors_history": [
+  {
+   "date": "2026-08-31",
+   "rv21": 10.2564,
+   "rv63": 13.7114,
+   "rv_blend": 11.9839,
+   "vol": 1.0,
+   "mom_12_1": 16.3945,
+   "trend": 1.0,
+   "hy_oas_chg_21td": -0.22,
+   "hy_oas_asof": "2026-08-31",
+   "credit": 1.0,
+   "target": 1.0,
+   "gates": {
+    "core": "open",
+    "satellite_structural": "open",
+    "satellite_cyclical": "open"
+   }
+  }
+ ],
+ "nav_series": [],
+ "sprt": {
+  "p0": 0.5,
+  "p1": 0.65,
+  "alpha": 0.05,
+  "beta": 0.1,
+  "A": 2.8904,
+  "B": -2.2513,
+  "llr": 0.0,
+  "n_used": 0,
+  "state": "continue",
+  "decided_at": null,
+  "decided_n": null,
+  "status": "yellow",
+  "status_label": "證據累積中：有效樣本 0／需先滿 20 筆才開始判定",
+  "n_required": 20,
+  "samples": [],
+  "n_closed_months": 0,
+  "kill_condition": "SPRT（p0=0.5／p1=0.65／α=0.05／β=0.10，n_eff≥20，樣本＝逐月「當月 paper 報酬 − SPY B&H 報酬 > 0」命中序列）累積 LLR ≤ B(-2.2513) → accept_h0 → 規則撤下、三軌新倉閘回「僅顯示無規則」；期間不調參；paper only 永不連實倉（設計稿 §4）。"
+ },
+ "stats": null,
+ "data_gaps": [
+  {
+   "date": "2026-08-31",
+   "reason": "pre-inception：今日（2026-09-02）< inception_date（2026-09-07），NAV 簿記尚未起算，本次僅寫入 factors_history 供事前檢視，不捏造 nav_series。"
+  }
+ ],
+ "built_at": "2026-09-02T03:00:16Z",
+ "_bookkeeping": null,
+ "meta": {
+  "flowmap_prices_built_at": "2026-09-01T13:04:43Z",
+  "note": "三因子與 NAV 簿記逐週由本檔重算；factors_history／nav_series 依日期冪等覆蓋，不重複 append。'_bookkeeping' 為簿記內部狀態（60/40 units／現金／上次再平衡月份），非 §4 凍結輸出契約的一部分，供本檔自身冪等重算使用，下游消費者請讀 factors_history／nav_series／sprt／stats。"
+ }
+}
