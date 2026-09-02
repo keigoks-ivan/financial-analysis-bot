@@ -370,6 +370,8 @@ def _ticker_of_claim(claim):
     return tail.split(" ")[0] if tail else None
 
 
+STOCK_LEVEL_SOURCES = ("dd-verdict", "sop-funnel", "grp-seat", "picks-baofa", "tenbagger")  # 個股層命題：進 stock_pulse.lists，不進議會圖
+
 def _council_label(r):
     """議會圖用的短標籤（白話、≤ 22 字）；claim 全文仍保留在 claim 欄供 tooltip。"""
     t = r.get("claim_template") or ""
@@ -410,7 +412,8 @@ def build_council(forecasts_rows):
 
     council_rows = [r for r in forecasts_rows
                      if r.get("status") == "open"
-                     and r.get("source") not in ("sentinel-noise", "dd-verdict")]
+                     and r.get("source") not in ("sentinel-noise", "dd-verdict")
+                    and r.get("source") not in STOCK_LEVEL_SOURCES]
 
     council = [{
         "id": r.get("id"), "source": r.get("source"), "template": r.get("claim_template"),
@@ -565,6 +568,13 @@ def build_fuses(intel_data, forecasts_rows, monitor_data, gaps):
     for r in ledger_rows:
         r["_theme"] = _extract_theme(r.get("source_ref"))
         r["_segments"] = _extract_segments(r.get("source_ref"))
+        # kill_watch 來源的 macro-falsifier 列 source_ref 格式不同：改由 episode_id「macro:{theme}:{metric}」取 theme／metric，
+        # 才能與 intel 雷達 flags 併成同一列（2026-09-02 整合補訂）
+        ep = r.get("episode_id") or ""
+        if (not r["_theme"] or not r["_segments"]) and ep.startswith("macro:") and ep.count(":") >= 2:
+            _, th, met = ep.split(":", 2)
+            r["_theme"] = r["_theme"] or th
+            r["_segments"] = r["_segments"] or [met]
 
     fuses = []
     matched_ids = set()
@@ -1159,6 +1169,12 @@ def main():
     fuses = build_fuses(intel_data, forecasts_rows, monitor_data, gaps)
     anomalies = build_anomalies(monitor_data)
     stock_pulse = build_stock_pulse(decisions_rows, today, gaps)
+    # 名單層開放命題計數（板機訊號／GRP 席位／精選榜／十倍股），供頁面「個股脈搏」顯示
+    _lists = {}
+    for r in (forecasts_rows or []):
+        if r.get("status") == "open" and r.get("source") in STOCK_LEVEL_SOURCES and r.get("source") != "dd-verdict":
+            _lists[r["source"]] = _lists.get(r["source"], 0) + 1
+    stock_pulse["lists"] = _lists
     scoreboard = build_scoreboard(scorecard_data, gaps)
     triggers = build_triggers(flowmap_data, forecasts_rows, gaps)
     top_fuse = top_macro_fuse(forecasts_rows)

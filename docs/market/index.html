@@ -446,7 +446,12 @@ footer.imq-foot a{color:var(--text-secondary)}
   var SOURCE_LABEL = {
     "rv-model": "波動率模型", "vix-model": "VIX 期限結構模型", "cot-model": "COT 極端部位模型",
     "tsmom": "趨勢方向模型", "vrp": "波動風險溢酬模型", "dd-verdict": "個股裁決",
-    "macro-falsifier": "總經證偽表", "sentinel-noise": "哨兵（無技巧對照組）"
+    "macro-falsifier": "總經證偽表",
+    "sop-funnel": "板機訊號模型", "grp-seat": "GRP 席位", "picks-baofa": "精選爆發榜",
+    "tenbagger": "十倍股候選", "risk-gauge": "風險偏好模型", "rrg-sector": "類股輪動模型",
+    "intel-llm": "新聞閱讀模型", "monitor-read": "市場監測判讀", "detective-read": "警報網判讀",
+    "crowding-monitor": "擁擠交易判讀",
+    "sentinel-noise": "哨兵（無技巧對照組）"
   };
   var SCORE_DOT = { green: "🟢", yellow: "🟡", red: "🔴", descriptor: "⚪" };
   var SCORE_STATUS_TEXT = {
@@ -798,7 +803,16 @@ footer.imq-foot a{color:var(--text-secondary)}
     $("#pulse").innerHTML = '<div class="kv" style="margin:6px 0 8px"><b>近 30 天</b><span>' + p.n_30d +
       ' 個裁決 <span class="chip good">新鮮度通過</span></span><b>v13 以來</b><span>' + (sv.n || "—") +
       ' 個裁決：進場 ' + (sv["進場"] || 0) + '／觀望 ' + (sv["觀望"] || 0) + '／迴避 ' + (sv["迴避"] || 0) + '</span></div>' +
-      s + '<p class="note">DD 鏈在挑名字，不是在躲市場。近 60 天裁決數低於門檻時本區改顯示「不判讀」。</p>';
+      s + renderListsLine(p.lists) + '<p class="note">DD 鏈在挑名字，不是在躲市場。近 60 天裁決數低於門檻時本區改顯示「不判讀」。</p>';
+  }
+
+  var LIST_LABEL = {"sop-funnel": "板機訊號", "grp-seat": "GRP 席位", "picks-baofa": "精選爆發榜", "tenbagger": "十倍股候選"};
+  function renderListsLine(lists) {
+    if (!lists) return '';
+    var parts = Object.keys(lists).map(function (k) { return (LIST_LABEL[k] || k) + ' ' + lists[k]; });
+    if (!parts.length) return '';
+    return '<div class="kv" style="margin:8px 0 4px"><b>名單層開放命題</b><span>' + esc(parts.join('／')) +
+      '（各名單每檔一張「跑贏 SPY」單，記分在下方記分板）</span></div>';
   }
 
   function renderTriggers(list) {

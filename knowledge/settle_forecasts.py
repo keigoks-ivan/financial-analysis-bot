@@ -339,6 +339,27 @@ def _resolve_ttp(resolver, ts, resolve_by, today):
 # 相對 SPY 超額報酬命題（forecast v2 設計稿 §4.3，D 包 dd-verdict producer 餵料）。只支援
 # at_expiry；px_T 讀 weekly_cache（同 price: 域），spy_T 讀 flowmap_prices.json SPY。
 
+def _any_daily_bars(ticker, _cache={}):
+    """relspy 用的價格退路鏈：weekly_cache（個股）→ statlab_prices（SPDR 類股／SPY／TLT／^VIX）
+    → flowmap_prices（SPY/QQQ/IWM/AGG）→ trend_track_prices（9 檔資產）。ETF 類命題（rrg-sector
+    等）不在 weekly_cache，若無此退路會全數 void（2026-09-02 整合時 F5 包發現，orchestrator 補）。"""
+    key = ticker.upper()
+    if key in _cache:
+        return _cache[key]
+    bars = _price_bars(ticker)
+    if not bars:
+        for path in (STATLAB_PRICES, FLOWMAP_PRICES, TREND_TRACK_PRICES):
+            try:
+                data = json.loads(path.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            ser = (data.get("series") or {}).get(ticker) or (data.get("series") or {}).get(key)
+            if ser:
+                bars = sorted(((d, c) for d, c in ser), key=lambda x: x[0])
+                break
+    _cache[key] = bars or None
+    return _cache[key]
+
 def _resolve_relspy(resolver, ts, resolve_by, today):
     ticker = resolver["series"].split(":", 1)[1]
     op_fn = OPS.get(resolver.get("op"))
@@ -356,7 +377,7 @@ def _resolve_relspy(resolver, ts, resolve_by, today):
     if today < resolve_by:
         return {"status": "open", "reason": None, "outcome": None, "coverage_gap": False}
 
-    px_bars = _price_bars(ticker)
+    px_bars = _any_daily_bars(ticker)
     spy_bars = _flowmap_bars("SPY")
     if not px_bars or not spy_bars:
         return {"status": "void", "reason": f"relspy_missing_price:{ticker}", "outcome": None, "coverage_gap": False}
@@ -592,7 +613,7 @@ def check_resolver(series):
         d, c = bars[-1]
         return True, f"{d} close={c}"
     if ns == "relspy":
-        bars = _price_bars(key)
+        bars = _any_daily_bars(key)
         spy_bars = _flowmap_bars("SPY")
         if not bars:
             return False, f"找不到 {CACHE_DIR / (ALIAS.get(key, key) + '.json')}"
