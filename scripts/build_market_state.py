@@ -571,10 +571,10 @@ def build_fuses(intel_data, forecasts_rows, monitor_data, gaps):
         # kill_watch 來源的 macro-falsifier 列 source_ref 格式不同：改由 episode_id「macro:{theme}:{metric}」取 theme／metric，
         # 才能與 intel 雷達 flags 併成同一列（2026-09-02 整合補訂）
         ep = r.get("episode_id") or ""
-        if (not r["_theme"] or not r["_segments"]) and ep.startswith("macro:") and ep.count(":") >= 2:
+        if ep.startswith("macro:") and ep.count(":") >= 2:
             _, th, met = ep.split(":", 2)
-            r["_theme"] = r["_theme"] or th
-            r["_segments"] = r["_segments"] or [met]
+            r["_theme"] = th
+            r["_segments"] = [met]  # episode_id 為權威（harvest_macro／harvest_kill_watch 同格式）
 
     fuses = []
     matched_ids = set()
