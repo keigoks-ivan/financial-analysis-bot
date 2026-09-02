@@ -10,11 +10,18 @@ name: Market State Daily
 # fetch 渲染。stdlib-only（無第三方套件依賴），缺檔不 crash（該區塊記為
 # null／空並寫進 gaps[]）。
 #
-# 排程：週二至週六 08:30 UTC——晚於 monitor/detective/flowmap/statlab/intel
-# 等上游日更管線（皆在更早的 UTC 時段跑），確保本檔彙整到當天最新資料。
+# 排程：一天兩班。
+# ①07:30 台北（23:30 UTC，週一至週五）——緊接 intel-2 鏈（22:30 UTC）之後起
+#   跑，給一份台北早班快照，讓 intel／kill-watch／detective 三塊都是當日新
+#   資料；但 monitor-daily 與 flowmap-daily 仍在 07:00 UTC（台北 15:00）才
+#   跑，故 07:30 這個班次裡這兩塊還停在前一個美股交易日，落後一個美股交易日。
+# ②16:30 台北（08:30 UTC，週二至週六，原有班次）——晚於 monitor/detective/
+#   flowmap/statlab/intel 等全部上游日更管線，是當天完整、無落後區塊的
+#   full refresh。
 on:
   schedule:
-    - cron: "30 8 * * 2-6"
+    - cron: "30 23 * * 1-5"   # 07:30 台北（UTC+8）＝週二至週六台北早班快照
+    - cron: "30 8 * * 2-6"    # 16:30 台北＝原有完整 full refresh 班次
   workflow_dispatch:
 
 permissions:
@@ -52,7 +59,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add $PATHS
-          DATE=$(date -u +"%Y-%m-%d")
+          DATE=$(TZ=Asia/Taipei date +"%Y-%m-%d %H:%M")
           git commit -m "market-state: daily synthesis refresh ${DATE}"
           for i in 1 2 3 4 5 6; do
             if git push; then
