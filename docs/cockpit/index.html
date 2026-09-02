@@ -96,6 +96,10 @@ section.block{padding:1.1rem 0}
 .roster-table tr.rgroup td{background:var(--border-soft);color:var(--muted);font-family:'IBM Plex Mono',monospace;
   font-size:.66rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:.42rem .9rem;border-bottom:1px solid var(--border)}
 .roster-table td .imq-badge{margin:0 .15rem .15rem 0}
+.card-title{font-family:'IBM Plex Mono',monospace;font-size:.7rem;font-weight:700;letter-spacing:.06em;
+  color:var(--muted);text-transform:uppercase;padding:.65rem .9rem;border-bottom:1px solid var(--border)}
+.board{font-family:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;line-height:1.45;
+  overflow-x:auto;white-space:pre;margin:0;padding:12px;background:var(--card);border:1px solid var(--border)}
 
 /* ③ 想法四路（發現層）——四欄純連結卡片 */
 .disc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.9rem}
@@ -446,7 +450,10 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
   var pending = Object.keys(sources).map(function(k){
     return getJSON(sources[k]).then(function(d){S[k]=d;}).catch(function(){S[k]=null;});
   });
-  // board.txt 不再 fetch 進本頁——陣容表本身就是看板的 HTML 化，等寬版留一個純連結見 roster-note
+  // board.txt 是純文字看板（非 JSON），fetch 失敗時整塊靜默隱藏，其餘陣容照常渲染
+  pending.push(fetch('/engine/board.txt',{cache:'no-store'}).then(function(r){
+    if(!r.ok) throw new Error(r.status); return r.text();
+  }).then(function(t){S.boardTxt=t;}).catch(function(){S.boardTxt=null;}));
 
   Promise.all(pending).then(function(){
     try{ renderEnv(); }catch(e){ $('env-mount').innerHTML=ph('環境資料暫缺'); }
@@ -496,7 +503,7 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     $('env-mount').innerHTML = '<div class="card env-strip">'+cells+links+'</div>';
   }
 
-  // ---------- ② 陣容（唯一名單，即 board.txt 的 HTML 化——欄位對齊等寬看板，一行一檔讀完整條鏈） ----------
+  // ---------- ② 陣容（唯一名單：等寬看板原文 + 欄位對齊表，一行一檔讀完整條鏈） ----------
   // 時機路由（2026-07-11 持有人拍板，登記 knowledge/rule_ledger.md）：
   // 核心席＝sop-funnel 板機；衛星席＝cyclical-track 位置閘（sop 品質閘系統性排除
   // 爆發/循環型，衛星在 sop 裡永遠不亮）。低熱名單外的衛星席誠實標「未覆蓋」不猜。
@@ -637,7 +644,10 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
       '<th title="'+esc('FY+1 單月 EPS 修正——是燈號不是排序鍵；≤−10% 仍是資格否決線，veto 後不會出現在席位表')+'">上修燈</th>'+
       '<th title="'+esc('位置燈只標示不排序，定義見 scripts/engine/grp.py')+'">時機燈</th>'+
       '<th>DD</th><th>遲滯</th><th>板機</th></tr>';
-    mount.innerHTML =
+    var boardHtml = S.boardTxt
+      ? ('<div class="card" style="margin-bottom:.8rem"><div class="card-title">選股看板（等寬版・週更）</div><pre class="board">'+esc(S.boardTxt)+'</pre></div>')
+      : '';
+    mount.innerHTML = boardHtml +
       '<div class="card" style="overflow-x:auto"><table class="roster-table">'+thead+rows+'</table></div>'+
       '<div class="roster-note">'+
       (bench.length?('板凳前排：'+esc(bench.join('、'))+' · '):'')+
