@@ -1,0 +1,70 @@
+name: Market Read Notify
+
+# 市況判讀 email 摘要通知（設計稿 §5.1／§5.5：notes/site-internal/root/
+# _market_read_design_20260903.md）。
+#
+# 零 LLM：判讀本身由雲端 routine market-read-auto（或 orchestrator 手動跑
+# market-read skill）產生並 push 到 main；本工作流只在 read.json 或
+# read_status.json 變動時被 push 事件觸發，跑 scripts/market_read_summary.py
+# 產生純文字主旨與信文，寄一封摘要 email 給持有人。判讀成功寄摘要；
+# read_status.json.status=failed 時寄失敗信（含原因）——分支邏輯全部收在
+# market_read_summary.py 內，本工作流只是把腳本輸出轉寄出去。
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - docs/market/data/read.json
+      - docs/market/data/read_status.json
+
+permissions:
+  contents: read
+
+concurrency:
+  group: market-read-notify
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Build market-read summary (subject + body)
+        id: summary
+        run: |
+          OUTPUT="$(python3 scripts/market_read_summary.py)"
+          SUBJECT="$(printf '%s\n' "$OUTPUT" | sed -n '1p')"
+          BODY="$(printf '%s\n' "$OUTPUT" | tail -n +3)"
+          echo "subject=$SUBJECT" >> "$GITHUB_OUTPUT"
+          DELIM="EOF_$(date +%s%N)_${RANDOM}"
+          {
+            echo "body<<$DELIM"
+            printf '%s\n' "$BODY"
+            echo "$DELIM"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Email market-read summary
+        uses: dawidd6/action-send-mail@v3
+        continue-on-error: true
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_APP_PASSWORD }}
+          subject: ${{ steps.summary.outputs.subject }}
+          to: keigoks@gmail.com
+          from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
+          body: |
+            ${{ steps.summary.outputs.body }}
+
+            —
+            InvestMQuest · 市況主控台判讀層自動通知

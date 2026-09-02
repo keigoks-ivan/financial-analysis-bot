@@ -75,3 +75,50 @@ K2 依本稿同日的 `read.json` 與 K1 的 evidence 欄位名渲染；K1 未�
 3. `ledger_from_editorial.py --source market-read` dry-run 7 張 p_clim 全非 null（SPY 25 年表）；`--write` 到 scratch 帳簿 7＋7 張；真帳簿落帳由 orchestrator 在驗收最後執行。
 4. 本機 http.server 開 `/market/`：第一屏是判讀；ref 現值全部解析（無「—」）；證偽表距離 % 正確；過期模擬（把 read.json as_of 改成 30 天前）整塊灰化；首頁卡第一行是主張。
 5. `qc.py`、py_compile、node --check。
+
+## §5 判讀層全自動化（2026-09-03 持有人拍板：「你按 merge 上站也變成全自動化，好了之後寄重點摘要給我 email，全部交給 sonnet 完成」；全部在 Claude 月租內，不用 API 計費）
+
+### 5.1 架構
+- **雲端 routine `market-read-auto`**（`/schedule`，每日 08:00 台北＝`0 0 * * 1-5` UTC，週一至週五）：fresh checkout → `python3 scripts/check_read_triggers.py --json` → `run_read` 為 false 就結束（幾百 token）；為 true 才跑 `market-read` skill 的 **auto 模式**：寫判讀 → 冷讀 subagent → 修稿（≤2 輪）→ 機械 critic → 落帳 → 重建 state → qc → commit → `pull --rebase` → push main。
+- **通知工作流 `.github/workflows/market-read-notify.yml`**（GitHub Actions，零 LLM）：`on: push` 到 main 且 paths 含 `docs/market/data/read.json` 或 `docs/market/data/read_status.json` → `python3 scripts/market_read_summary.py` 產生主旨與信文 → `dawidd6/action-send-mail@v3`（smtp.gmail.com 465，`secrets.MAIL_USERNAME`／`MAIL_APP_PASSWORD`，to 與 from 照抄 `daily-non-fundamental-refresh.yml` 的既有寫法）。判讀成功寄摘要；`read_status.json.status=failed` 寄失敗信（含原因）。
+- **事件觸發**由純腳本判定，不花用量。`check_read_triggers.py` 讀 `docs/market/data/state.json`、`docs/monitor/data/score_history.json`、`docs/detective/data/kill_watch.json`、`docs/market/data/read.json`，輸出 `{run_read, reasons[], as_of, taipei_date}`；`run_read` 為真的條件（任一）：①台北週一；②壓力分數 s 較 5 個交易日前變動 ≥10；③kill_watch `breached` 非空，或 state.fuses 任一 `dist_pct ≤ 0`；④VIX（`evidence.quotes["monitor:vix"].num`）≥ 25；⑤判讀過期（today − read.as_of > valid_days）；⑥`read_status.json` 存在且 status=failed（上次失敗，隔天重試）。**同一天不重跑**：若 read.json 的 as_of＝今天則 `run_read=false`（reason `already_read_today`）。
+
+### 5.2 模型配對（寫與審永不同模型）
+| 判讀者（routine 的 session model） | 冷讀者（Agent subagent model） |
+|---|---|
+| `claude-fable-5-1`（優先，建立 routine 時先試此值） | `claude-opus-5` |
+| `claude-opus-5`（fable 不被接受時的退路） | `claude-sonnet-5` |
+| 手動由 orchestrator（Fable）跑 | `claude-opus-5` |
+routine 的 `allowed_tools` 須含 `Agent`（冷讀 subagent）、`Skill`、`Bash`、`Read`、`Write`、`Edit`、`Glob`、`Grep`。
+
+### 5.3 冷讀職責書（skill 內逐字；subagent 只回報不改稿，輸出 JSON `review`）
+輸入：`docs/market/data/read.json`、`python3 scripts/build_market_state.py --evidence-pack` 的證據包、`docs/market/data/state.json` 的 council_summary 與 fuses、上一期 read.json（若有）。
+六項檢查，每項列 findings `{severity: "🔴"|"🟡", field, issue, suggestion}`：
+1. **錨定**：每個 ref 引用的數字、分位、方向是否與證據包現值一致；判斷句有無無錨的數字。
+2. **內部一致性**：三框架 p 與回撤 p 是否互相說得通；證偽表方向與主張一致；**每張命題的 p 是否與主張方向一致**（2026-09-02 初稿 30 年期 25% 對財政主導論即為此類 🔴）。
+3. **分歧理由**：`deviations_from_tables` 每條理由是否具體到可證偽，而非「我認為」。
+4. **類比誠實**：每個歷史類比是否附不同之處，且不同之處是否真的削弱類比（若削弱卻仍當主要類比→🟡）。
+5. **紀律與白話**：禁語、術語首現括號、全形標點、無流程劇場。
+6. **遺漏**：證據包中分位 ≥95 或 ≤5、或 30 天變化 |Δ|≥10% 的數字，有無被判讀完全忽略；列出未被引用的極端值。
+`verdict`：任一 🔴 → `revise`；否則 `pass`。判讀者依 findings 修稿，最多 2 輪；第 2 輪後仍有 🔴 → 本次判讀**失敗**（見 5.4）。`review`（模型、verdict、輪次、最後一輪 findings）寫入 read.json 供頁面「判讀記分」區與 email 顯示。
+
+### 5.4 失敗處置與硬規則
+- 任一關卡（冷讀 2 輪後仍 🔴／機械 critic FAIL／落帳 0 張／qc 失敗／push 三次失敗）→ 不改 read.json、不落帳，寫 `docs/market/data/read_status.json` `{as_of, status:"failed", stage, reasons[]}` 並單獨 commit push 該檔（通知工作流寄失敗信）；成功時同檔寫 `status:"ok"`。
+- routine 內不得 `--no-verify`；先 `bash scripts/install_hooks.sh` 讓 pre-commit／pre-push 生效；commit 只 stage：`read.json`、`read_history.jsonl`、`read_status.json`、`state.json`、`knowledge/forecasts.jsonl`、`knowledge/forecast_settlement.json`（若 settle 有跑）。
+- 描述器紀律、白話關卡、不改機械層檔案、加一提刪一，全部照舊；routine 的判讀與手動判讀同尺記分（同一 source `market-read`）。kill：market-read SPRT 判紅 → 停用 routine（`enabled:false`）並在 rule_ledger 註記。
+
+### 5.5 Email 內容（`scripts/market_read_summary.py`，純文字）
+主旨：`市況判讀 {as_of}｜{thesis_zh 前 28 字}…`（失敗：`市況判讀失敗 {as_of}｜{stage}`）。信文依序：主張／路徑；三框架表（收高 p 對基準、回撤 p 對基準）；三股力量標題各一句；證偽表前 5 條（現值→門檻、距離）；與表格分歧條數＋最大一條；冷讀結果（模型、輪次、剩餘 🟡 數）；落帳編號；連結 `https://research.investmquest.com/market/`。全形標點。
+
+### 5.6 分包（sonnet 一包做完，含建 routine、煙霧測試、commit & push）
+擁有：`.claude/skills/market-read/SKILL.md`（auto 模式＋§5.3 職責書＋模型配對）、新 `scripts/check_read_triggers.py`、新 `scripts/market_read_summary.py`、新 `.github/workflows/market-read-notify.yml`、`docs/market/data/read_status.json`（首筆 ok）、routine 建立（`RemoteTrigger create`，environment `env_017VN8k12DeEt359CtkKbgMv`，repo `https://github.com/keigoks-ivan/financial-analysis-bot`）、routine 煙霧測試（非週一無觸發→應立即結束不改檔）、本稿 §5 完成紀錄、CLAUDE.md 條目一句「已自動化」。驗收：`check_read_triggers.py --json` 今日輸出 `run_read=false`／`already_read_today`；summary 腳本對現行 read.json 印出合法信文；workflow YAML 合法；routine 列表可見且 enabled。
+
+### §5 完成紀錄（repo 側，2026-09-02 sonnet 執行；routine 建立留給 orchestrator）
+
+**檔案**：`.claude/skills/market-read/SKILL.md`（新增「Auto 模式」＋ §5.2 模型配對＋ §5.3 冷讀職責書，手動模式步驟 1–6 原文不動）、新 `scripts/check_read_triggers.py`（六條件＋同日守門，stdlib、缺檔降級不 crash）、新 `scripts/market_read_summary.py`（印主旨＋信文，讀 read.json 或失敗時讀 read_status.json）、新 `.github/workflows/market-read-notify.yml`（`on: push` 到 `docs/market/data/read.json`／`read_status.json`，跑 summary 腳本→`$GITHUB_OUTPUT`→`dawidd6/action-send-mail@v3`）、`docs/market/data/read_status.json`（首筆 `status:"ok"`）。**本包不建立雲端 routine、不寄任何 email**——僅完成 repo 側可被 routine 呼叫的腳本／skill／workflow。
+
+**routine 建立後預期做的事**：`market-read-auto` 每日 08:00 台北喚醒後應直接執行下方逐字 prompt；prompt 內已包含觸發判定（不 run 就零成本結束）、auto 模式全流程（讀證據→寫 read.json→冷讀 subagent→修稿≤2 輪→機械 critic→落帳→重建 state→qc）、成功／失敗兩種 `read_status.json` 寫法、只 stage SKILL 列出的檔案、commit＋rebase＋push（失敗重試 3 次）。orchestrator 建立 routine 時把下方整段貼進 routine 的 prompt 欄位即可，不需另外改寫。
+
+**建立 routine 時貼入的逐字 prompt**：
+
+> 你在 InvestMQuest research repo（keigoks-ivan/financial-analysis-bot）的雲端 session，任務是市況主控台判讀層的自動判讀。步驟：①`bash scripts/install_hooks.sh`；②`python3 scripts/check_read_triggers.py --json`，若 run_read 為 false，印出 reasons 後直接結束，不改任何檔、不 commit；③若為 true，打開 `.claude/skills/market-read/SKILL.md`，依其「auto 模式」逐步執行：讀證據包與上一期判讀 → 寫 docs/market/data/read.json → 依 SKILL 的模型配對表用 Agent 工具開冷讀 subagent（職責書逐字照 SKILL）→ 依 findings 修稿最多 2 輪 → `python3 scripts/check_market_read.py` 必須 PASS → `python3 scripts/ledger_from_editorial.py --source market-read --file docs/market/data/read.json --write` → 回填 claim_ids 並 append docs/market/data/read_history.jsonl → `python3 scripts/build_market_state.py` → `python3 scripts/qc.py`；④寫 docs/market/data/read_status.json（成功 status ok；任一關卡失敗則不改 read.json、不落帳，寫 status failed 與 stage、reasons）；⑤只 stage SKILL 列出的檔案，commit（訊息：`market-read 自動判讀 {as_of}：{thesis 前 30 字}`，結尾加 `Co-Authored-By: Claude <noreply@anthropic.com>`），`git pull --rebase origin main` 後 `git push origin main`，失敗重試 3 次。硬規則：描述器紀律（不下買賣指令）、白話（術語首現括號）、每個判斷句錨定活數字、不改機械層任何檔、不用 --no-verify、不改 routine 以外的排程。
