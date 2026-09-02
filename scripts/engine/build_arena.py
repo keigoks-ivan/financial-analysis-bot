@@ -323,7 +323,7 @@ def render_board_text(as_of, rows, core_seats, sat_seats, prev_snap, entered) ->
     L = []
     L.append(f"選股看板 v2｜as_of {as_of}｜母體 {len(rows)}（DD 池＋QGM 無 DD＋快審卡）")
     L.append("甲 擁有層｜資格：品質閘 ROIC≥15∧FCF≥10（或 ROIC≥25∧FCF≥0）× 成長閘 ≥15 × 市值 ≥$20B"
-             "｜排序＝min(成長,30)＋FY1 盈餘殖利率（ROIC≥30 +2；PEG>2 −5）｜時機燈獨立、不進排序")
+             "｜排序＝min(成長，30)＋FY1 盈餘殖利率（ROIC≥30 +2；PEG>2 −5）｜時機燈獨立、不進排序")
     hdr = f"{'#':>2} {'ticker':9} {'分':>5} {'成長':>6} {'EY':>5} {'ROIC':>5} {'FCF':>5} {'PEG':>5} {'1M修':>6} {'時機':10} {'席位':6} {'DD':26} {'moat':5} 註記"
     L.append(hdr)
     own = [r for r in rows if (r["grp"].get("quality") or {}).get("pass") and (r["score"] or 0) > 0]
@@ -639,7 +639,7 @@ def main() -> int:
 ⚔ 警報＝挑戰者分數超過席位 → 進<b>每月擂台的人工複審清單</b>。引擎不自動換席——換人是人的裁決。
 席位資格（<b>v2 擁有層×時機層</b>，2026-09-02 持有人拍板）＝<b>品質閘</b>（ROIC ≥15 ∧ FCF ≥10；capex 週期豁免 ROIC ≥25 ∧ FCF ≥0）×
 <b>成長閘</b>（FY1→FY3 EPS CAGR ≥15%）× <b>位置閘</b>（站上 52 週線且 26 週漲幅 ≤+80%）× 無重下修否決（FY+1 單月 ≤−10%）。
-排序＝<b>擁有層分數</b>＝min(成長,30)＋FY1 盈餘殖利率（ROIC ≥30 +2；PEG &gt;2 −5）；上修幅度降為燈號。
+排序＝<b>擁有層分數</b>＝min(成長，30)＋FY1 盈餘殖利率（ROIC ≥30 +2；PEG &gt;2 −5）；上修幅度降為燈號。
 <b>DD 只做 veto（迴避）與角色標籤</b>（≤180 天有效）；無 DD 名字（QGM 品質池）同場排序、標「待 DD」。
 <b>遲滯</b>：新席連 2 次週跑過閘、現任連 4 次不過才下席（硬 veto 除外）。
 <b>軌別路由</b>：DD 角色優先；無 DD 走護城河 S/A 非↓（QGM 5 年 ROIC 穩定 ≥75% 亦可核心）；其餘衛星。

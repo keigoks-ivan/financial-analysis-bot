@@ -16,7 +16,7 @@ EV5y×確定性自本日降級為 DD 裁決內部資訊，不再參與排序。�
 
 v2（2026-09-02 持有人拍板「照推薦執行」；依據 notes/site-internal/root/
 _picks_first_principles_review_20260902.md Part A／D）——**擁有層與時機層分離**：
-  擁有層（排序鍵，月尺度）：own_score ＝ min(G, 30) ＋ FY1 盈餘殖利率% ＋ 持續期加分
+  擁有層（排序鍵，月尺度）：own_score ＝ min(G，30) ＋ FY1 盈餘殖利率% ＋ 持續期加分
       （ROIC ≥30 → +2）－ 倍數風險（PEG >2 → −5）。回答「值不值得擁有、排第幾」。
   品質閘（資格，擁有層）：ROIC ≥15 ∧ FCF margin ≥10；capex 週期豁免＝ROIC ≥25 ∧ FCF ≥0
       （FCF margin 在資本週期上半場量的是投資強度，用更高 ROIC 當代價換一條路）。
@@ -177,7 +177,7 @@ def quality_gate(s: dict) -> dict:
 
 
 def own_score(s: dict, g=None) -> dict:
-    """擁有層排序鍵（v2）：min(G,30) ＋ FY1 盈餘殖利率% ＋ 持續期加分 － 倍數風險。
+    """擁有層排序鍵（v2）：min(G，30) ＋ FY1 盈餘殖利率% ＋ 持續期加分 － 倍數風險。
     盈餘殖利率優先取 live_fpe_est（與現價同尺）；缺則 eps_fy_next / price。"""
     if g is None:
         g = _f(s.get("eps_fy1_fy3_cagr_pct"))
