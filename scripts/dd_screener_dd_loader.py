@@ -20,6 +20,7 @@ from typing import Optional
 # ── path setup ───────────────────────────────────────────────────────────────
 sys.path.insert(0, str(Path(__file__).parent))
 from dd_meta_reader import iter_dd_metas  # noqa: E402
+from engine.grp import market_ok  # noqa: E402
 
 # ── constants ─────────────────────────────────────────────────────────────────
 
@@ -246,6 +247,11 @@ def load_non_dd_universe(existing_tickers: set) -> list[dict]:
     collected: dict[str, dict] = {}
 
     for path, src_tag in _QGM_SOURCES:
+        if not market_ok(f"0000{'.TW' if src_tag == 'qgm-tw' else ''}"):
+            # 2026-09-02 持有人拍板：v2 先只做美股，台股另建——qgm-tw 源不產母體列
+            # （探測值走 market_ok 而非硬寫死排除，未來拍板改變時自動跟著恢復）。
+            print(f"  load_non_dd_universe: skipping {src_tag} source (market_ok gate)", file=sys.stderr)
+            continue
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as exc:
@@ -259,6 +265,8 @@ def load_non_dd_universe(existing_tickers: set) -> list[dict]:
                 ticker = x.get("ticker")
                 if not ticker:
                     continue
+                if not market_ok(ticker):
+                    continue  # 2026-09-02 拍板：台股另建，逐檔亦排除 .TW（雙保險）
                 if ticker in existing_tickers or ticker in collected:
                     continue  # DD-sourced row wins, or already claimed by a higher-priority pool
 

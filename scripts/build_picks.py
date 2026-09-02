@@ -46,6 +46,15 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 DOCS = os.path.join(ROOT, "docs")
 
+if HERE not in sys.path:
+    sys.path.insert(0, HERE)
+try:
+    from engine.grp import market_ok  # noqa: E402
+except ImportError:
+    # standalone fallback（2026-09-02 持有人拍板：v2 先只做美股，台股另建，同一排除口徑）
+    def market_ok(ticker) -> bool:
+        return not str(ticker or "").endswith(".TW")
+
 LATEST = os.path.join(DOCS, "dd-screener", "latest.json")
 CYCLICAL = os.path.join(DOCS, "dd-screener", "cyclical-track.json")
 SOP = os.path.join(DOCS, "dd-screener", "sop-funnel", "latest.json")
@@ -546,6 +555,9 @@ def main():
             x["not_promoted_reason"] = "🔥 等回踩"
         elif x.get("late_cycle"):
             x["not_promoted_reason"] = x["late_reason"] + "・只列候選"
+            rest_baofa.append(x)
+        elif not market_ok(x["ticker"]):
+            x["not_promoted_reason"] = "台股另建・不進正式榜"
             rest_baofa.append(x)
         elif x["above_w52"] is True:
             official_baofa.append(x)

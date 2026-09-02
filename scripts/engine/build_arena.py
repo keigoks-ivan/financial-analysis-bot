@@ -30,6 +30,7 @@ from engine.common import OUT_DIR, ROOT, page_embed_shell, pct  # noqa: E402
 from engine.build_scoreboard import _bars, classify_shape  # noqa: E402
 from engine.grp import (  # noqa: E402
     DD_FRESH_DAYS, MKTCAP_MIN, P_LABEL_HTML, R_VETO_FY1, cap_ok, fetch_caps, grp_route, grp_score,
+    market_ok,
 )
 
 WEEKLY_CACHE_UNIVERSE = ROOT / "data" / "weekly_cache_universe"   # 非 DD 池週線 fallback（見 build_radar.py 檔頭 docstring）
@@ -128,6 +129,11 @@ def load_qgm_rows(stocks_map: dict, exclude: set | None = None) -> list[dict]:
     rows = []
     seen = set(exclude or ())
     for path, src, fx in ((QGM_US, "qgm-us", 1.0), (QGM_TW, "qgm-tw", TWD_PER_USD)):
+        if src == "qgm-tw" and not market_ok("0000.TW"):
+            # 2026-09-02 持有人拍板：v2 先只做美股，台股另建——不讀 QGM-TW 供母體列
+            #（探測值用 market_ok 而非硬寫死排除，未來拍板改變時這裡自動跟著恢復）。
+            # qgm_cap_map() 仍讀 QGM_TW 當市值 fallback，無害（不產生 universe row）。
+            continue
         try:
             q = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
@@ -294,6 +300,8 @@ def load_light_rows(stocks_map: dict) -> list[dict]:
             continue
         if c.get("qual_tier") != "light" or c["ticker"] in verdict_tickers:
             continue   # dd-meta 裁決優先，光卡不重複
+        if not market_ok(c["ticker"]):
+            continue   # 2026-09-02 持有人拍板：台股另建，快審卡母體亦排除 .TW
         t = c["ticker"]
         if t in stocks_map:
             grp = grp_score(stocks_map[t])   # 池內待補 DD：全口徑
@@ -342,7 +350,8 @@ def render_board_text(as_of, rows, core_seats, sat_seats, prev_snap, entered) ->
     prev_seats = {t: "核心席" for t in prev_snap.get("core", [])}
     prev_seats.update({t: "衛星席" for t in prev_snap.get("sat", [])})
     L = []
-    L.append(f"選股看板 v2｜as_of {as_of}｜母體 {len(rows)}（DD 池＋QGM 無 DD＋快審卡）")
+    L.append(f"選股看板 v2｜as_of {as_of}｜母體 {len(rows)}（DD 池＋QGM 無 DD＋快審卡）"
+             "｜母體＝美股含 ADR；台股另建（.TW 不在本看板）")
     L.append("甲 擁有層｜資格：品質閘 ROIC≥15∧FCF≥10（或 ROIC≥25∧FCF≥0）× 成長閘 ≥15 × 市值 ≥$20B"
              "｜排序＝min(成長，30)＋FY1 盈餘殖利率（ROIC≥30 +2；PEG>2 −5）｜時機燈獨立、不進排序")
     hdr = f"{'#':>2} {'ticker':9} {'分':>5} {'成長':>6} {'EY':>5} {'ROIC':>5} {'FCF':>5} {'PEG':>5} {'1M修':>6} {'時機':10} {'席位':6} {'DD':26} {'moat':5} 註記"
@@ -393,6 +402,8 @@ def main() -> int:
     # latest.json 若以 --include-non-dd 產出，無 DD 列（dd_status="none"）改由 load_qgm_rows 供給
     #（帶 _src／_durable_5y／_mktcap），這裡先排除以免搶走 QGM 列的身份標記
     stocks = [s for s in stocks if s.get("dd_status") != "none"]
+    # 2026-09-02 持有人拍板：v2 先只做美股（含 ADR），台股另建獨立系統——母體排除 .TW
+    stocks = [s for s in stocks if market_ok(s["ticker"])]
     try:
         sectors = {r["ticker"]: r["sector"]
                    for r in json.loads(UNIVERSE.read_text(encoding="utf-8"))["tickers"]}
@@ -668,6 +679,7 @@ def main() -> int:
 <b>遲滯</b>：新席連 2 次週跑過閘、現任連 4 次不過才下席（硬 veto 除外）。
 <b>軌別路由</b>：DD 角色優先；無 DD 走護城河 S/A 非↓（QGM 5 年 ROIC 穩定 ≥75% 亦可核心）；其餘衛星。
 <b>市值門檻 ≥ ${MKTCAP_MIN/1e9:.0f}B</b>（持有人 2026-07-04 拍板：席位與主榜資格層；雷達發現層照掃全宇宙）。
+<b>母體＝美股含 ADR；台股另建（.TW 不在本看板，2026-09-02 持有人拍板）</b>。
 <b>兩級資格</b>：核心席必須完整 v14 DD；衛星席另接受 🪶 快審卡（週期位置＋陷阱＋護城河快評）。
 DD 角色與機械軌別衝突標 ⚠ 供人裁。三閘未過的進場票落板凳、寧缺勿濫。</div>
 <div class="asof">資料源 dd-screener latest.json ＋ QGM 品質池（US／TW）＋週線 cache ｜ v2 擁有層×時機層 ｜ 週更</div>

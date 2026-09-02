@@ -33,7 +33,10 @@ from typing import Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from site_nav import DD_SCREENER_SUBNAV, build_subnav, full_nav_block  # noqa: E402
-from engine.grp import grp_score  # noqa: E402  排序主幹＝GRP（2026-07-04 mandate）
+# 排序主幹＝擁有層分 own_score（v2，2026-09-02 持有人拍板「照推薦執行」；
+# notes/site-internal/root/_picks_first_principles_review_20260902.md Part D）——
+# 取代舊 GRP R 上修排序；quality_gate() 僅供本頁 display-only 標記，不進資格閘判定。
+from engine.grp import grp_score, own_score, quality_gate  # noqa: E402
 
 # ── paths ─────────────────────────────────────────────────────────────────────
 ROOT = Path(__file__).resolve().parent.parent
@@ -43,6 +46,7 @@ CYCLICAL_JSON = DDS / "cyclical-track.json"
 SOP_LATEST = DDS / "sop-funnel" / "latest.json"
 SOP_LEDGER = DDS / "sop-funnel" / "ledger.json"
 PRE_ID_SCAN = DDS / "pre_id_scan.json"
+ARENA_JSON = ROOT / "docs" / "engine" / "arena.json"   # own_board[]：擁有層分單一 source（v2）
 WEEKLY_CACHE_DIR = ROOT / "data" / "weekly_cache"
 # 2026-07-10 選股主控台整併：pipeline 改輸出 nav-less 片段，供 /cockpit/#pipeline
 # 分頁 iframe 嵌入；/dd-screener/pipeline.html 已改為 redirect stub（見 site_nav SKIP_FILES）。
@@ -209,18 +213,60 @@ def _certainty(s: dict) -> float:
             + (_safe_float(s.get("quality_score")) or 0.0)) / 20.0
 
 
-def _grp_key(s: dict) -> tuple:
-    """GRP 排序鍵（對齊 2026-07-04 mandate：排序主幹＝GRP，EV5y×確定性降參考子訊號）。
-    回傳 (pass 1/0, GRP score)——GRP 全過者在前、pass 內按 GRP score（R 上修幅度）降冪。
-    grp.py 邏輯零改動，本頁僅取用其判定當席位排序主鍵。"""
-    g = grp_score(s)
-    return (1 if g.get("pass") else 0, g.get("score") or 0.0)
+# ── 擁有層分（own_score，v2 排序主幹）───────────────────────────────────────
+# 2026-09-02 持有人拍板「照推薦執行」：擁有層與時機層分離，Pipeline 的席位排序改讀
+# own_score，與 /engine/ 決策引擎席位看板同源（優先讀 docs/engine/arena.json own_board
+# 單一 source；缺 arena 列才 fallback 現算 engine.grp.own_score()）。DD 統一裁決在此
+# 只做否決／角色標籤（walked upstream by 資格閘 + is_core_role），不是排序鍵本身。
+_ARENA_OWN_CACHE: dict = {}   # ticker -> own_board row，_load_arena_own() 於 build() 填一次
 
 
-def _grp_disp(s: dict) -> str:
-    """GRP 排序欄顯示：pass 標記 ＋ score（R 上修主鍵）。"""
-    gk = s.get("_grpk") or _grp_key(s)
-    return f'{"✓" if gk[0] else "·"} {gk[1]:.1f}'
+def _load_arena_own() -> dict:
+    d = _load(ARENA_JSON) or {}
+    return {r["ticker"]: r for r in (d.get("own_board") or []) if r.get("ticker")}
+
+
+def _own_info(s: dict) -> dict:
+    """擁有層資訊：{score, p_label}。優先讀 arena.json own_board（與席位看板同源）；
+    缺列（未進 own_board 池，如非 DD-pool 名字）才 fallback 現算 own_score()/grp_score()。"""
+    row = _ARENA_OWN_CACHE.get(s["ticker"])
+    if row is not None:
+        return {"score": row.get("score") or 0.0, "p_label": row.get("p_label"), "source": "arena"}
+    o = own_score(s)
+    p_label = grp_score(s).get("p_label")   # 純計算、無 I/O，離線安全
+    return {"score": o.get("score") or 0.0, "p_label": p_label, "source": "grp"}
+
+
+def _own_score_val(s: dict) -> float:
+    return s.get("_own", _own_info(s)["score"])
+
+
+def _own_disp(s: dict) -> str:
+    """擁有層分欄顯示（own_score，v2 排序鍵）。"""
+    return f'{_own_score_val(s):.1f}'
+
+
+_PLABEL_TXT = {"breakout": "🟢 突破帶", "pullback": "🟢 回踩", "in_trend": "🟡 趨勢內", None: "🔴 線下"}
+
+
+def _plabel_badge(s: dict) -> str:
+    """時機燈（p_label，燈號非資格——2026-09-02 v2：R 上修幅度已降為燈號，位置閘同列參考）。"""
+    p = s.get("_plabel", _own_info(s)["p_label"])
+    return f'<span class="plabel pl-{p or "none"}">{_PLABEL_TXT.get(p, "🔴 線下")}</span>'
+
+
+def _qgate_tag(s: dict) -> str:
+    """品質閘顯示（display-only，2026-09-02 v2 新增；不動任何既有資格閘邏輯）。
+    ROIC≥15∧FCF≥10（或 capex 週期豁免 ROIC≥25∧FCF≥0）；pass=None＝金融股等品質欄缺，另軌不判。"""
+    qg = quality_gate(s)
+    p = qg.get("pass")
+    if p is None:
+        return '<span class="qg qg-na" title="品質欄缺（金融／另軌，不判過不過）">— 另軌</span>'
+    if p:
+        return '<span class="qg qg-ok">✓ 品質閘</span>'
+    reason = (qg.get("why") or [None])[0]
+    title = f' title="{escape(reason)}"' if reason else ""
+    return f'<span class="qg qg-bad"{title}>✗ 品質閘</span>'
 
 
 def _ev5y_raw(s: dict):
@@ -326,7 +372,9 @@ def _core_row(s: dict) -> str:
   <td class="left">{_dd_link(s)}{_de_badge(s)}</td>
   <td>{_verdict_badge(s.get("dca_verdict"), s.get("dca_verdict_source"))}</td>
   <td>{escape(s.get("dca_role") or "—")}</td>
-  <td class="num"><strong>{_grp_disp(s)}</strong></td>
+  <td class="num"><strong>{_own_disp(s)}</strong></td>
+  <td>{_plabel_badge(s)}</td>
+  <td>{_qgate_tag(s)}</td>
   <td class="num">{s["_score"]:.2f}</td>
   <td class="num">{_pct(_ev5y(s), signed=False)}</td>
   <td class="meta">{escape(s.get("moat_grade") or "?")}{escape(s.get("moat_trend") or "")} · {escape(s.get("runway_post_y5") or "—")}</td>
@@ -340,7 +388,8 @@ def _core_table(rows: list, empty: str) -> str:
     return f"""<table>
 <thead><tr>
   <th class="left">Ticker</th><th>裁決</th><th>角色</th>
-  <th class="num">GRP 排序</th><th class="num">EV5y×確定<span style="font-weight:400">（參考）</span></th><th class="num">EV5y</th>
+  <th class="num">擁有層分</th><th>時機燈</th><th class="left">品質閘</th>
+  <th class="num">EV5y×確定<span style="font-weight:400">（參考）</span></th><th class="num">EV5y</th>
   <th class="left">護城河 · runway</th>
 </tr></thead>
 <tbody>
@@ -352,10 +401,9 @@ def render_core(core_sorted: list) -> str:
     exe_all = [s for s in core_sorted if s.get("dca_verdict") == "進場"]
     # 核心席位只認「進場＋核心角色」；角色優先＝無條件核心先佔位，再依潛力分補足 5 席
     exe_core = [s for s in exe_all if is_core_role(s)]
-    # 角色優先（無條件核心先佔位）→ GRP 排序主幹 → EV5y×確定性 tiebreak
+    # 角色優先（無條件核心先佔位）→ 擁有層分（own_score，v2 排序主幹）→ EV5y×確定性 tiebreak
     exe_core.sort(key=lambda s: (0 if _is_unconditional_core(s) else 1,
-                                 -(s.get("_grpk") or _grp_key(s))[0],
-                                 -(s.get("_grpk") or _grp_key(s))[1],
+                                 -_own_score_val(s),
                                  -s["_score"], s["ticker"]))
     sleeve = exe_core[:CORE_SLOTS]
     bench_core = exe_core[CORE_SLOTS:]
@@ -371,11 +419,13 @@ def render_core(core_sorted: list) -> str:
   <h3>核心軌 <span class="cnt">席位 {len(sleeve)}/{CORE_SLOTS}</span></h3>
   <div class="track-desc">
     <b>方式甲 · 結構長抱線的核心分軌。</b>軌別＝<b>DD 裁決＝進場 且 角色含「核心持倉」</b>；<b>席位硬上限 {CORE_SLOTS} 檔</b>（章程 core ≤5）。
-    選席＝<b>角色優先</b>：無條件核心持倉先佔位，餘席依 <b>GRP 排序</b>（R 上修幅度，2026-07-04 mandate 的排序主幹）補足；超出落板凳。
-    <b>EV5y × 確定性已降為參考子訊號</b>（僅列示、不再主導排序）；EV5y 取 <code>live_ev5y_pct</code> 優先、缺則 <code>ev5y_pct</code>。單檔上限 {CORE_CAP_PCT:.0f}%（個股部淨值）。
+    選席＝<b>角色優先</b>：無條件核心持倉先佔位，餘席依 <b>擁有層分</b>（own_score＝min(成長，30)＋FY1 盈餘殖利率＋持續期加分－倍數風險，2026-09-02 v2 拍板的排序主幹，與 <a href="/engine/">GRP 決策引擎</a> 席位看板同源）補足；超出落板凳。
+    <b>DD 統一裁決在此只做否決／角色標籤，不是排序鍵</b>——資格仍由上方資格閘與角色判定，own_score 只回答「同樣過關者排第幾」。
+    <b>EV5y × 確定性維持參考子訊號</b>（僅列示、不主導排序）；EV5y 取 <code>live_ev5y_pct</code> 優先、缺則 <code>ev5y_pct</code>。單檔上限 {CORE_CAP_PCT:.0f}%（個股部淨值）。
   </div>
   <div class="seg-h seg-in">核心席位（最終 {CORE_SLOTS}）· {len(sleeve)} 檔</div>
   {_core_table(sleeve, "目前無可執行核心進場票。")}
+  <div class="track-note">排序鍵＝擁有層分（min(成長，30)＋FY1 盈餘殖利率；ROIC ≥30 +2、PEG >2 −5），與席位看板同源；上修幅度降為燈號。</div>
   {noncore_note}
   <div class="seg-h seg-watch">核心板凳（進場核心·超出席位，等席位開遞補）· {len(bench_core)} 檔</div>
   {_core_table(bench_core, "無溢出板凳名字。")}
@@ -708,7 +758,7 @@ def render_leaderboard(univ: list, artifacts: list, n_total: int) -> str:
     return f"""<section class="block" id="leaderboard">
   <h2 class="block-h"><span class="step">6</span> 全宇宙潛力榜 · 補 DD 導航</h2>
   <div class="block-sub">
-    把 <b>EV5y × 確定性</b> 套到全宇宙 {n_total} 檔——<b>這是研究補 DD 優先序，非席位排序</b>（席位排序主幹＝<a href="/engine/">GRP 決策引擎</a>，EV5y 在此僅作補 DD 導航的參考子訊號）。
+    把 <b>EV5y × 確定性</b> 套到全宇宙 {n_total} 檔——<b>這是研究補 DD 優先序，非席位排序</b>（席位排序主幹＝<b>擁有層分</b>〔own_score，2026-09-02 v2 拍板，與 <a href="/engine/">GRP 決策引擎</a> 席位看板同源；DD 統一裁決在席位排序只做否決／角色標籤，不是資格本身〕，EV5y 在此僅作補 DD 導航的參考子訊號）。
     <b>確定性</b>（moat+quality/20）全宇宙皆有；<b>EV5y</b> 出處分兩級：
     <span class="prov prov-rig">🟢 §11.5</span> 機率加權情境（嚴謹、有反偏差防線）vs
     <span class="prov prov-heur">🟡 heur</span> 啟發式估計（僅方向性）。
@@ -804,9 +854,19 @@ code{background:var(--paper);padding:1px 5px;border-radius:5px;font-size:11px;co
 .track-desc.warn-inline{background:#fbf3df;border:1px solid var(--line);border-radius:5px;padding:8px 10px;color:var(--warn)}
 .seg-h{font-size:11.5px;font-weight:700;padding:6px 0 4px;margin-top:8px;border-top:1px dashed var(--line)}
 .seg-note{font-size:11px;color:var(--sec);padding:4px 0 2px;line-height:1.6}
+.track-note{font-size:10.5px;color:var(--muted);padding:4px 0 2px;line-height:1.6}
 .prov{font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:5px;white-space:nowrap}
 .prov-rig{background:#eafaef;color:var(--pos)}
 .prov-heur{background:#fbf3df;color:var(--warn)}
+/* 擁有層分 v2：時機燈 ＋ 品質閘（display-only tags） */
+.plabel{font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:99px;white-space:nowrap}
+.pl-breakout,.pl-pullback{background:#eafaef;color:var(--pos)}
+.pl-in_trend{background:#fbf3df;color:var(--warn)}
+.pl-none{background:#fbeceb;color:var(--neg)}
+.qg{font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:99px;white-space:nowrap}
+.qg-ok{background:#eafaef;color:var(--pos)}
+.qg-bad{background:#fbeceb;color:var(--neg)}
+.qg-na{background:var(--line-soft);color:var(--muted);font-weight:600}
 .lb-fill{font-size:10.5px;font-weight:700;color:var(--accent);white-space:nowrap}
 .eps-flag{display:inline-block;font-size:10px;font-weight:700;color:var(--warn);background:#fbf3df;border-radius:5px;padding:1px 5px;margin-left:4px;white-space:nowrap;cursor:help}
 table.lb-score td,table.lb-score th{padding:5px 8px}
@@ -856,6 +916,7 @@ td.big{font-weight:700;color:var(--pos)}
 
 
 def build(dry_run: bool = False) -> int:
+    global _ARENA_OWN_CACHE
     print(f"=== Pipeline-page build · {_now_taipei_iso()} ===\n")
     latest = _load(LATEST_JSON)
     if not latest:
@@ -867,6 +928,9 @@ def build(dry_run: bool = False) -> int:
     sop = _load(SOP_LATEST)
     ledger = _load(SOP_LEDGER)
     pre_id = _load(PRE_ID_SCAN)
+    _ARENA_OWN_CACHE = _load_arena_own()   # own_score 單一 source（缺檔時空 dict，全 fallback 現算）
+    print(f"  arena own_board: {len(_ARENA_OWN_CACHE)} 檔"
+          + ("" if _ARENA_OWN_CACHE else f"（{ARENA_JSON} 缺或空，擁有層分全 fallback 現算）"))
 
     # ── 資格閘 ──
     gated = [s for s in stocks if passes_gate(s)]
@@ -881,10 +945,12 @@ def build(dry_run: bool = False) -> int:
             core[s["ticker"]] = s
     for s in core.values():
         s["_score"] = _ev5y(s) * _certainty(s)   # EV5y×確定性：降為參考子訊號/tiebreak
-        s["_grpk"] = _grp_key(s)                  # GRP：排序主幹（2026-07-04 mandate）
-    # 排序主鍵＝GRP（pass 在前、score 降冪）；EV5y×確定性退為 tiebreak
+        _oi = _own_info(s)
+        s["_own"] = _oi["score"]                  # 擁有層分（own_score，v2 排序主幹 2026-09-02）
+        s["_plabel"] = _oi["p_label"]              # 時機燈（燈號，非資格）
+    # 排序主鍵＝擁有層分 own_score 降冪；EV5y×確定性退為 tiebreak
     core_sorted = sorted(core.values(),
-                         key=lambda s: (-s["_grpk"][0], -s["_grpk"][1], -s["_score"], s["ticker"]))
+                         key=lambda s: (-s["_own"], -s["_score"], s["ticker"]))
 
     # ── 衛星·結構軌 ── runway🟢 + eps2y/peg 不 fail + moat 過 + 非核心角色
     # 一檔一軌：循環軌成員（trailing fcf/roic fail 形狀）優先歸循環軌，不重複列入結構軌
@@ -1032,7 +1098,7 @@ body{{background:transparent}}</style>
       <b>發現 → 資格閘 → 三軌射擊名單 → 板機 → 監控 → 回看鏡</b>。所有數字來自既有 JSON，每週隨基本面刷新自動更新。
       本頁只呈現<b>研究層</b>，實際持倉與權重不上站。
       <b>分工（兩條線＋一個板機＋一個對照）</b>：本頁是<b>方式甲（結構長抱線）</b>與<b>方式乙（循環時機線）</b>共用的<b>流程與板機</b>視圖——核心／衛星結構軌＝甲線，衛星循環軌＝乙線，sop-funnel＝兩線共用板機。
-      <b>席位排序主幹＝GRP</b>（見 <a href="/engine/">決策引擎</a>，EV5y×確定性已降參考子訊號），對外成品榜見 <a href="/picks/">精選清單</a>。
+      <b>席位排序主幹＝擁有層分</b>（own_score，2026-09-02 v2 拍板，與 <a href="/engine/">GRP 決策引擎</a> 席位看板同源；EV5y×確定性維持參考子訊號，DD 統一裁決只做否決／角色標籤非資格本身），對外成品榜見 <a href="/picks/">精選清單</a>。
     </div>
     <div class="hero-stats">
       <div class="hero-stat"><strong>{_fmt_stamp(run_ts)}</strong>最後更新（台北）</div>

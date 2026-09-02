@@ -19,7 +19,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from engine.grp import (  # noqa: E402
-    MKTCAP_MIN, cap_ok, grp_route, grp_score,
+    MKTCAP_MIN, cap_ok, grp_route, grp_score, market_ok,
 )
 from engine.build_cards import settle_claim  # noqa: E402
 
@@ -100,6 +100,12 @@ def test_cap_floor():
     ok(cap_ok(None) is None, "市值未知 → None（資格層 fail-closed）")
 
 
+def test_market_gate():
+    print("[3b] 母體市場門檻（v2：美股含 ADR，台股另建 2026-09-02）")
+    ok(market_ok("2330.TW") is False, ".TW 掛牌 → 排除")
+    ok(market_ok("TSM") is True, "ADR → 照常納入")
+
+
 def test_claim_settlement():
     print("[4] 卡片 claim 結算")
     # 防衛：非價格單位的 auto_price 不得用股價結算
@@ -162,6 +168,8 @@ def test_site_consistency():
        "席位全數通過市值門檻")
     ok(all(r["route"] == "core" for r in arena["core_seats"]), "核心席全為 core 路由")
     ok(all(r["route"] == "satellite" for r in arena["sat_seats"]), "衛星席全為 satellite 路由")
+    ok(all(not r["ticker"].endswith(".TW") for r in seats),
+       "無席位為 .TW 掛牌（v2：台股另建，2026-09-02 拍板）")
     radar = json.loads((ENG / "radar.json").read_text(encoding="utf-8"))
     ok(all(r.get("sector") != "Real Estate" for r in radar["grp_board"]),
        "REIT 不在 GRP 主榜（Bug #1 迴歸防線）")
@@ -178,7 +186,7 @@ def test_site_consistency():
 
 
 if __name__ == "__main__":
-    for fn in (test_grp_gates, test_route, test_cap_floor,
+    for fn in (test_grp_gates, test_route, test_cap_floor, test_market_gate,
                test_claim_settlement, test_dual_source_r, test_light_merge,
                test_site_consistency):
         fn()

@@ -44,6 +44,15 @@ OWN_PEG_PENALTY = 2.0    # PEG >2 → −5
 # 理由：不要小股票的 risk profile；發現層看得見 ≠ 有資格買。
 MKTCAP_MIN = 20_000_000_000
 _CAP_CACHE = Path(__file__).resolve().parent.parent.parent / "data" / "engine" / "mktcap.json"
+# 持有人 2026-09-02 拍板：選股系統 v2 先只做美股（含 ADR），台股另建獨立系統——
+# 母體／席位／爆發正式榜一律排除 .TW（其他海外掛牌不受此拍板影響，維持原狀）。
+EXCLUDED_SUFFIXES = (".TW",)
+
+
+def market_ok(ticker) -> bool:
+    """False＝該 ticker 屬本輪排除範圍（見上 EXCLUDED_SUFFIXES 拍板）。"""
+    t = str(ticker or "")
+    return not t.endswith(EXCLUDED_SUFFIXES)
 
 
 def load_caps() -> dict:

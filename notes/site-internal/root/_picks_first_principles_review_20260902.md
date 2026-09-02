@@ -326,7 +326,14 @@ GRP 現在把時機層的 R（單月上修）當擁有層的排序鍵，所以�
 - 低影響：`build_radar.py::load_pool()` 掃描池擴大（成本）；index.html 裁決欄對無 DD 列的 tooltip 文案不準（純文案）。
 - 已驗證安全：sop_funnel quality_check 缺 moat 即 fail-closed；build_quality_entry 缺欄自降分；update_dd_index 不吃 latest.json；build_picks 直接讀欄皆 null-safe。
 
+**市場範圍與頁面同步（2026-09-02 稍後）**
+
+- 持有人拍板：選股系統先只做美股（含 ADR），`.TW` 不進母體、席位、爆發正式榜；台股之後另建獨立系統。實作：`engine.grp.market_ok`，arena／picks／非 DD 載入器同步；QGM-TW 不再讀入母體。重跑後席位：核心 NVDA／AVGO／ASML／TSM／LLY，衛星 VRT／PLTR／FIX（兩席空缺，寧缺勿濫）；爆發正式榜 MTSI／TTMI／CRS／PWR／KEYS。
+- cockpit 同步 v2：頂部三關文案改「品質閘＝資格 → 擁有層排序＝席位 → 板機＝時機」；總覽陣容區直接嵌 `board.txt` 看板；席位分頁方法論頁（build_index.py）全文改 v2；板機分頁核心軌排序改讀 arena.json 擁有層分，加時機燈與品質閘標記；Momentum-5／P10 標為對照組。
+
 **首跑看板（as_of 2026-09-01，本地資料）**
+
+（下方為台股排除前的首跑快照；台股排除後的席位見上段。）
 
 ```
 選股看板 v2｜as_of 2026-09-01｜母體 319（DD 池＋QGM 無 DD＋快審卡）
