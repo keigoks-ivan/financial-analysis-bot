@@ -35,7 +35,7 @@
 ```
 
 **凍結規則**：
-- `council`＝forecasts.jsonl 中 status=open、source ≠ sentinel-noise、source ≠ dd-verdict 的本尊（dd 進 stock_pulse 不進議會）。`council_summary` 聚合＝同 template 各 source 的 p 簡單平均（Tetlock 議會；template 對應：spy_up_21d ← tsmom SPY＋vrp_spy_up_21d；spy_up_63d ← vrp_spy_up_63d；vol_up_21d ← rv21_higher_21d；vol_spike_21d ← rv21_touch_plus5_21d），p_clim 同法平均。
+- `council`＝forecasts.jsonl 中 status=open、source ≠ sentinel-noise、且非個股層來源（dd-verdict／sop-funnel／grp-seat／picks-baofa／tenbagger）的本尊；個股層來源的開放命題數進 `stock_pulse.lists`（2026-09-02 §9 接線後補訂）。`council_summary` 聚合＝同 template 各 source 的 p 簡單平均（Tetlock 議會；template 對應：spy_up_21d ← tsmom SPY＋vrp_spy_up_21d；spy_up_63d ← vrp_spy_up_63d；vol_up_21d ← rv21_higher_21d；vol_spike_21d ← rv21_touch_plus5_21d），p_clim 同法平均。
 - `stock_pulse.fresh` ＝ n_60d ≥ 10（PREREG 暫定，2026-10 校準輪複審）；不新鮮時 `read_zh` 個股句改為「個股層無新資料，本期不判讀」。
 - `triggers` 三條機械規則：①SPY 最近 CTA 翻轉位（flowmap cta SPX nearest_flip_level）；②vol-control 階梯下一階 rv；③帳上 p 最高的總經證偽命題（macro-falsifier open 中 p 最大者，含 p）。
 - `read_zh` 為模板句（無 LLM）：headline＝「接下來一個月 SPY 收高機率 {p}%（基準 {clim}%）＝{無邊際|略偏多|略偏空}；波動升高機率 {p}%（基準 {clim}%）；下方 {dist}% 有機械賣壓；三個月 {p}%（基準 {clim}%）。」判定詞：|p−clim| < 5pp → 無邊際；≥5pp 依方向。bullets 依序：環境分歧句、流量不對稱句、引信句（p 最高者）、個股脈搏句（含新鮮度）、記分板句（幾綠幾黃幾紅、哨兵狀態）。全形標點。
@@ -113,3 +113,18 @@
 **不接／延後**：P10 動能 paper track（prereg 明文禁止被引用，NAV 已自帶記分）；long-track／turtle-sleeve 家族（已有 replay 記分，與實單系統相鄰，不進帳簿）；entry-state（資料停在 2026-07-05，先修管線）；comparisons／weekly（停更）；DD／ID 文字型 kill 門檻（由 kill_watch 已結構化者代表，其餘不機械化）。
 
 **掃描順帶發現**：crowding 週更已併入 crossasset-weekly（週日），COT 最新 2026-08-18 為 CFTC 延遲非管線停擺；dd-screener 四個子篩（alpha-rank／breakout／bottom-out／earnings-acceleration）依 CLAUDE.md 為已封存頁，非過期；`docs/track-record` 已是 DD 裁決對 SPY 的回顧記分板，dd-verdict producer 的經驗表日後改讀它的 cohort 統計而非 settlement.json。
+
+## §9 §8 接線批的凍結細節（2026-09-02 晚，持有人授權 sonnet 實作；PREREG 凍結至 SPRT 判決或 2027-03 校準輪）
+
+共同規則：全部走 `knowledge/forecast_lib.py`（fc-v2、哨兵 twin）；dry-run 預設、`--write` 落帳、`--ledger` 測試覆寫；p_clim 一律引用 `data/dd_verdict_base_rates.json` 的 `p_clim`（dd_beat_spy_91d／365d，宇宙相對 SPY）除非另有自建表；relspy 的 base_spy 取 `data/flowmap_prices.json` SPY 於 base_date 當日或之前收盤；kill＝SPRT accept_h0 → 砍（同 v2 條款）；Python 3.9、stdlib（yfinance 只在 builder 抓資料時允許）。
+
+| 包 | source | 資料源 | 命題（claim_template） | p 來源（PREREG） | episode／block | 節奏 |
+|---|---|---|---|---|---|---|
+| F1 板機訊號 | `sop-funnel` | `docs/dd-screener/sop-funnel/ledger.json` events，status ∈ {entered, skipped, closed}（vetoed 不算訊號） | 「{ticker} 板機訊號（{signal_date}，{entry_type}）後 91 曆日跑贏 SPY」`sop_beat_spy_91d`；relspy，base_px＝signal_close，base_date＝signal_date | 自建表 `data/sop_funnel_base_rates.json`：`backtest.json.trades_charter`（53 筆，2021–2026）每筆 entry_date 起 91 曆日 ticker 對 SPY 勝率（ticker 週線 weekly_cache、SPY 用 `data/dd_verdict_base_rates_raw_cache.json` 唯讀）；n ≥ 30 用表，否則 PREREG 0.58；by_type 只列不採 | `sop:{ticker}:{signal_date}`／signal 月 | 週一 settle 後；回填 signal_date ≥ 2026-06-01 且 resolve_by ≥ today |
+| F2 名單 | `grp-seat`／`picks-baofa`／`tenbagger` | `docs/engine/arena.json` core_seats＋sat_seats；`docs/picks/candidates.json` official_baofa；`docs/picks/tenbagger.json` official（正式席位；candidates 為候補退路，2026-09-02 整合定案；**目前 5 席皆不在 `data/weekly_cache/`，relspy 無法結算，producer 誠實跳過（base_px_missing），待價格快取涵蓋後自動落帳**） | 「本週 GRP {核心|衛星}席位 {ticker} 91 曆日跑贏 SPY」`grp_beat_spy_91d`；「精選爆發榜 {ticker} 91 曆日跑贏 SPY」`picks_beat_spy_91d`；「十倍股候選 {ticker} 365 曆日跑贏 SPY」`tenbagger_beat_spy_365d` | p＝clip(p_clim＋offset)：核心席位 +0.10、衛星席位 +0.05、爆發榜 +0.05、十倍股 +0.05（365d 用 p_clim_365d） | `{source}:{ticker}:{YYYY-MM}`／月；同 source 同 ticker 已有 open 命題→不重發（一檔一次只掛一張） | 週一 settle 後 |
+| F3 kill_watch 引信 | `macro-falsifier`（同源） | `docs/detective/data/kill_watch.json` items，data_source.type=monitor 且 `value` 為數字 | 「{metric_text} 90 曆日內 {op} {value}」`macro_threshold`；resolver monitor:<key>（key 取 data_source.key 的斜線後段） | 條件式歷史頻率法（同 harvest_macro `--p-mode conditional`）；`build_macro_base_rates.py` 序列擴充：DXY（yfinance `DX-Y.NYB` 20 年）、USD/CNY（FRED DEXCHUS）、10Y breakeven（FRED T10YIE）；無歷史者不落帳只顯示 | `macro:{theme}:{metric_text}`／月；與既有 macro-falsifier open 命題以 (series, op, value) 查重 | 週一 settle 後 |
+| F4 風險偏好 | `risk-gauge` | `docs/cache/risk_history.json`（weeks／score／spx，1,345 週） | 「SPY 13 週後更高」`risk_spy_up_13w`；pxd:SPY at_expiry，resolve_by＝ts＋91 曆日 | 自建表 `data/risk_gauge_base_rates.json`：每月首週取樣，score 五分位（in-sample 切點）→ 13 週後 spx 更高頻率；p_clim＝無條件 | `risk:{YYYY-MM}`／月 | 每月首週（查重同月） |
+| F5 類股輪動 | `rrg-sector` | `data/statlab_prices.json` 11 檔 SPDR 對 SPY；象限公式逐字照 `scripts/build_rotation_radar.py` frame 120（rs_ratio／rs_mom；可 import 則 import） | 「{ETF} 63 個交易日跑贏 SPY」`rrg_beat_spy_63d`；relspy:{ETF}，horizon 91 曆日 | 自建表 `data/rrg_base_rates.json`：3 年每月首日取樣 × 11 檔，象限（Leading／Weakening／Lagging／Improving）→ 63 td 跑贏 SPY 頻率；cell n < 30 用 pooled；p_clim 每檔無條件；樣本薄標 lo | `rrg:{YYYY-MM}:{ETF}`／月 | 每月首週（查重同月） |
+| F6 接線與治理 | — | — | forecast-settle-weekly.yml 加五個 producer `--write`＋四個 builder `--if-due`＋PATHS；rule_ledger 五條 kill；加一提刪一提名：**regime 大類資產環境頁**（資料停 2026-07-06、定性非可交易、環境磚已吸收）；新 source 白話名補進 `docs/flowmap/index.html` 與 `docs/market/index.html` 的名稱表（板機訊號模型／GRP 席位／精選爆發榜／十倍股候選／風險偏好模型／類股輪動模型）及 `scripts/build_market_state.py` 若有名稱表 | — | — | — |
+
+**§9 整合紀錄（2026-09-02）**：F1–F6 全落地並首次落帳（板機 20／GRP 席位 10／精選榜 5／風險偏好 1／類股輪動 11／kill_watch 新增 USD/CNY 7.2 與 DXY 102 各一）；十倍股 5 席不在價格快取暫跳過；通膨預期門檻在 internals 層非 monitor 層，待 monitor 補 bei10y 序列後再落帳；relspy 結算加價格退路鏈（statlab／flowmap／trend-track）讓 ETF 命題可結算；kill_watch 同批次同門檻只落一張；議會圖排除個股層來源，名單層開放命題數改進個股脈搏。
