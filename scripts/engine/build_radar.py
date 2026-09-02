@@ -17,7 +17,17 @@
     外國掛牌仍排除，小型股由 GRP 板市值閘續擋。詳 build_universe.py docstring）
 
 輸出：docs/engine/radar.json + docs/engine/radar.html（成功才寫檔 — fail-safe 慣例）。
-Usage: python3 scripts/engine/build_radar.py [--skip-stage2]
+
+兩份週線 cache 目錄的分工（2026-09 新增；勿合併）：
+  data/weekly_cache/          DD 池（~252 檔）唯一權威週線來源。knowledge/settle_outcomes.py
+                               與 scripts/build_dd_verdict_base_rates.py 的 p_clim（歷史裁決結算
+                               基準率）以「此目錄下全部 ticker」為母體——寫入非 DD 名字會稀釋
+                               base rate，故絕不可污染。
+  data/weekly_cache_universe/ Stage 1 順手抓到、但不在 DD 池的 engine universe 名字（如 QGM
+                               名單）。純為補上 build_arena.py 的 52 週線 / 距高 / 26 週報酬
+                               （原本因不在 weekly_cache 而顯示「缺」），與 base rate 母體無關，
+                               分離目錄即可兩全。
+Usage: python3 scripts/engine/build_radar.py [--skip-stage2] [--no-persist]
 """
 from __future__ import annotations
 
@@ -37,6 +47,10 @@ from engine.common import OUT_DIR, ROOT, page_embed_shell, pct  # noqa: E402
 UNIVERSE = ROOT / "data" / "engine" / "universe.json"
 DD_LATEST = ROOT / "docs" / "dd-screener" / "latest.json"
 WEEKLY_CACHE = ROOT / "data" / "weekly_cache"
+# 非 DD 池的 engine universe 週線 persist 目的地（見上方 docstring 分工說明）——
+# 絕不可與 WEEKLY_CACHE 合併或互相覆寫。
+WEEKLY_CACHE_UNIVERSE = ROOT / "data" / "weekly_cache_universe"
+MIN_PERSIST_WEEKS = 30   # 短於此不寫（不足以撐 weekly_structure() 的 26w/52w 窗）
 RADAR_JSON = OUT_DIR / "radar.json"
 # 2026-07-10 席位分頁整併：輸出 nav-less 片段供 /cockpit/#seats-radar 子分頁 iframe 嵌入；
 # /engine/radar.html 已改為 redirect stub（見 site_nav SKIP_FILES）。
@@ -64,11 +78,12 @@ SHAPES = {
 }
 
 
-def stage1(universe: list[dict]) -> tuple[list[dict], str]:
+def stage1(universe: list[dict], persist: bool = True) -> tuple[list[dict], str, dict[str, "pd.Series"]]:
     import yfinance as yf
     yf_map = {r["ticker"]: r["ticker"].replace(".", "-") for r in universe}
     meta = {r["ticker"]: r for r in universe}
     rows: list[dict] = []
+    universe_bars: dict[str, pd.Series] = {}   # ticker → full 25mo weekly close series (persist step)
     as_of = None
     tickers = list(yf_map.values())
     CHUNK = 250
@@ -81,6 +96,9 @@ def stage1(universe: list[dict]) -> tuple[list[dict], str]:
             closes = closes.to_frame(chunk[0])
         for col in closes.columns:
             s = closes[col].dropna()
+            t = next((k for k, v in yf_map.items() if v == col), col)
+            if persist and len(s) >= MIN_PERSIST_WEEKS:
+                universe_bars[t] = s
             if len(s) < 56:
                 continue
             px = float(s.iloc[-1])
@@ -94,7 +112,6 @@ def stage1(universe: list[dict]) -> tuple[list[dict], str]:
             trough = float(after.min())
             depth = trough / hi * 100 - 100
             ma40 = float(s.iloc[-40:].mean())
-            t = next((k for k, v in yf_map.items() if v == col), col)
             rows.append({
                 "ticker": t, "sector": meta.get(t, {}).get("sector", ""),
                 "tier": meta.get(t, {}).get("tier", ""),
@@ -112,7 +129,64 @@ def stage1(universe: list[dict]) -> tuple[list[dict], str]:
     for r in rows:
         import bisect
         r["rs_pct"] = round(bisect.bisect_left(rets, r["ret_12m"]) / n * 100, 1)
-    return rows, as_of or "—"
+    return rows, as_of or "—", universe_bars
+
+
+def persist_universe_bars(universe_bars: dict[str, "pd.Series"], existing_cache: set[str]) -> tuple[int, int]:
+    """把 Stage 1 抓到、但**不在** data/weekly_cache/ 的 ticker 週線寫進
+    data/weekly_cache_universe/<TICKER>.json（欄位格式對齊 data/weekly_cache/ 既有 schema：
+    ticker / last_full_refresh / last_attempt_failed_at / source / weekly_bars）。
+
+    刻意寫獨立目錄而非 data/weekly_cache/ 本身——後者是 knowledge/settle_outcomes.py 與
+    scripts/build_dd_verdict_base_rates.py 的 p_clim 母體（『weekly_cache 下全部 ticker』），
+    混入非 DD 池名字會稀釋歷史裁決基準率，見本檔開頭 docstring。
+
+    已在 data/weekly_cache/ 的 ticker 一律跳過（DD 池版本才是權威，不重複/不覆蓋）；
+    週數 < MIN_PERSIST_WEEKS 的 ticker 跳過（太短撐不起 weekly_structure() 的 26w/52w 窗）。
+    Fail-safe：單檔寫入失敗只 warn 並跳過該檔，不中斷整個 run。
+
+    回傳 (成功寫入數, 因太短跳過數)。
+    """
+    n_ok, n_short = 0, 0
+    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    try:
+        WEEKLY_CACHE_UNIVERSE.mkdir(parents=True, exist_ok=True)
+    except OSError as e:
+        print(f"  WARN: cannot create {WEEKLY_CACHE_UNIVERSE}: {e}", file=sys.stderr)
+        return 0, 0
+    for t, s in universe_bars.items():
+        if t in existing_cache:
+            continue
+        bars: list[dict] = []
+        for idx, close in s.items():
+            try:
+                week_end = idx.strftime("%Y-%m-%d")
+                c = float(close)
+            except (TypeError, ValueError, AttributeError):
+                continue
+            if c != c:   # NaN
+                continue
+            bars.append({"week_end": week_end, "close": round(c, 4)})
+        if len(bars) < MIN_PERSIST_WEEKS:
+            n_short += 1
+            continue
+        payload = {
+            "ticker": t,
+            "last_full_refresh": today_str,
+            "last_attempt_failed_at": None,
+            "source": "yfinance:25mo:1wk auto_adjust=True (engine universe, build_radar.py Stage 1)",
+            "weekly_bars": bars,
+        }
+        try:
+            safe = t.replace("/", "_").replace(":", "_")
+            p = WEEKLY_CACHE_UNIVERSE / f"{safe}.json"
+            tmp = p.with_suffix(p.suffix + ".tmp")
+            tmp.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
+            tmp.replace(p)
+            n_ok += 1
+        except OSError as e:
+            print(f"  WARN: universe cache write failed for {t}: {e}", file=sys.stderr)
+    return n_ok, n_short
 
 
 def tag_shapes(rows: list[dict]) -> dict[str, list[dict]]:
@@ -286,10 +360,12 @@ def render(payload: dict) -> str:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--skip-stage2", action="store_true")
+    ap.add_argument("--no-persist", action="store_true",
+                    help="不寫 data/weekly_cache_universe/（省時間/離線測試用；預設會寫）")
     args = ap.parse_args()
 
     universe = json.loads(UNIVERSE.read_text(encoding="utf-8"))["tickers"]
-    rows, as_of = stage1(universe)
+    rows, as_of, universe_bars = stage1(universe, persist=not args.no_persist)
     shapes, hot = tag_shapes(rows)
 
     # GRP 主榜的結構資格（P 閘，週線版）：站上 40 週線；位置標籤同 grp.py 語意
@@ -366,8 +442,20 @@ def main() -> int:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     RADAR_JSON.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
     RADAR_HTML.write_text(render(payload), encoding="utf-8")
+
+    # 非 DD 池 engine universe 週線 persist（見檔頭 docstring 分工說明）——獨立 fail-safe，
+    # 這步失敗不影響上面雷達本體已寫成功的 JSON/HTML。
+    n_persisted = n_persist_short = 0
+    if not args.no_persist:
+        try:
+            existing_cache = {p.stem for p in WEEKLY_CACHE.glob("*.json")}
+            n_persisted, n_persist_short = persist_universe_bars(universe_bars, existing_cache)
+        except Exception as e:  # noqa: BLE001 — fail-safe: 任何錯誤都不可讓 radar run 失敗
+            print(f"  WARN: persist_universe_bars 整體失敗（跳過）: {e}", file=sys.stderr)
+
     print(f"radar: as_of={as_of} 可算={len(rows)} 形狀命中={shape_counts} 池外={blind_total} "
-          f"stage2={payload['coverage']['stage2_ok']}/{len(cands)}")
+          f"stage2={payload['coverage']['stage2_ok']}/{len(cands)} "
+          f"universe_cache寫入={n_persisted}（太短跳過={n_persist_short}）")
     return 0
 
 

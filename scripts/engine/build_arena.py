@@ -32,6 +32,7 @@ from engine.grp import (  # noqa: E402
     DD_FRESH_DAYS, MKTCAP_MIN, P_LABEL_HTML, R_VETO_FY1, cap_ok, fetch_caps, grp_route, grp_score,
 )
 
+WEEKLY_CACHE_UNIVERSE = ROOT / "data" / "weekly_cache_universe"   # 非 DD 池週線 fallback（見 build_radar.py 檔頭 docstring）
 QGM_US = ROOT / "docs" / "qgm" / "latest.json"
 QGM_TW = ROOT / "docs" / "qgm-tw" / "latest.json"
 BOARD_TXT = OUT_DIR / "board.txt"
@@ -85,9 +86,29 @@ def shape_of(ticker: str) -> str:
     return classify_shape(bars, bars[-1][0])
 
 
+def _universe_bars(t, _c={}):
+    """Fallback 週線讀取：data/weekly_cache_universe/<TICKER>.json（build_radar.py Stage 1
+    為不在 DD 池的 engine universe 名字〔如 QGM〕另存的 cache，見該檔 docstring）。與
+    build_scoreboard._bars() 讀的 data/weekly_cache/ 是刻意分離的兩個目錄——後者是
+    p_clim 基準率母體，不可混入非 DD 池名字，故這裡另開一份獨立、同格式的讀取＋記憶體 cache。"""
+    if t not in _c:
+        p = WEEKLY_CACHE_UNIVERSE / f"{t}.json"
+        if p.exists():
+            try:
+                raw = json.loads(p.read_text(encoding="utf-8")).get("weekly_bars") or []
+                _c[t] = [(b["week_end"], b["close"]) for b in raw if b.get("close")]
+            except (json.JSONDecodeError, KeyError, OSError):
+                _c[t] = None
+        else:
+            _c[t] = None
+    return _c[t]
+
+
 def weekly_structure(ticker: str) -> dict:
-    """週線 cache → 26 週漲幅／52 週線／距 52 週高（時機層用，不依賴 DD）。"""
-    bars = _bars(ticker)
+    """週線 cache → 26 週漲幅／52 週線／距 52 週高（時機層用，不依賴 DD）。
+    DD 池（data/weekly_cache/）沒有時 fall back 到 data/weekly_cache_universe/——
+    讓池外名字（如 QGM）也有 52 週線 / 距高 / 26 週報酬，不再一律顯示「缺」。"""
+    bars = _bars(ticker) or _universe_bars(ticker)
     if not bars or len(bars) < 30:
         return {}
     closes = [c for _, c in bars]
