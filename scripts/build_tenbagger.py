@@ -11,7 +11,7 @@ WHAT THIS IS
 × 低稀釋 × 自籌資力 × 估值防線）的中小型股。這是與前兩軌互補的發現層——
 市值太小、尚未經 DD 深度驗證，風險等級高於「長熬」「爆發」兩組。
 
-治理模型同 build_picks.py：規則自動上榜（rank by 營收成長）＋ 持有人 veto
+治理模型同 build_picks.py：規則自動上榜（rank by 最近 4 季營收 yoy 中位數，v0.2）＋ 持有人 veto
 （讀 docs/picks/picks.json 的 veto[]，本檔只讀不寫）。SEAT_CAP_10X＝5 進正式榜，
 next 15 進候選區。
 
@@ -42,6 +42,32 @@ SPLIT-ADJUSTED DILUTION（已驗證的雷，fallback 路徑仍強制修正）
 ------------------------------------------------
 get_shares_full 的股數 CAGR **必須先除掉區間內的分割因子**（tk.splits 累乘）
 ——否則 SMCI 這種 10:1 分割會被讀成 +134%/年的假稀釋而被誤殺。此修正為強制項。
+
+RANK KEY v0.2（2026-09-02，持有人拍板——治「最近一次爆發性成長」基期效應）
+------------------------------------------------
+v0.1 排序鍵「3 年營收 CAGR」與「最近一次起漲點多近」高度等價：低基期起漲的名字
+天生贏過穩健複利的名字（TGTX +505%，基期僅約 $280 萬——單一年度的分母效應，不
+是九倍坡道的證據）。v0.2 改排序鍵為「最近 4 季營收 yoy 的中位數」（quarterly_
+income_stmt 的 Total Revenue，逐季配對約一年前同季算 yoy，取中位數）——量的是
+「最近是否持續成長」而非單一起訖點的比值，較不受單季基期異常主導；3 年 CAGR
+（rev_cagr_3y）保留為既有主閘（gate_rev_cagr 不變）與顯示欄，不下架。輸出 JSON
+記 `rank_key_version: "v0.2"`（gate_version 仍是 v0.1——本次只換排序鍵，六條件
+gate-set 本身未動）。
+
+同一輪冷讀（G7：notes/site-internal/dd/_coldread_20260902/G7_tenbagger.md；
+Part D3：notes/site-internal/root/_picks_first_principles_review_20260902.md）
+另指出本 gate-set 完全沒有「坡道還有多長」這一軸——TGTX（單一產品 ~95%＋類別
+生物相似藥 2029+ 到期）、HRMY（單一產品 ~100%＋學名藥 2029-09 到期）這類「近三
+年漲得快但終局已在望」的名字，六條件機械閘全數放行。v0.2 不新增機械 veto
+gate（單一產品佔比／專利到期年／TAM 上限這三者跨產業口徑不可比、自動化易誤
+殺或誤放），改為三個**持有人手填顯示欄**：`single_product_pct`（單一產品營收
+占比）／`patent_expiry_year`（主要專利或獨占到期年）／`tam_cap_note`（TAM 上
+限估，文字）。讀 `docs/picks/picks.json` 的可選鍵 `tenbagger_notes{TICKER:{...}}`
+（本檔對 picks.json 只讀不寫，veto[] 同源沿用既有慣例）；缺填 → 三欄皆 null、
+`runway_status="坡長未知"`；`single_product_pct ≥ 70` 或
+`patent_expiry_year ≤ 今年+5` → `runway_status="短坡警示"`；否則
+`runway_status="已填"`。**這三欄與 runway_status 純顯示，不影響 gate 通過/淘
+汰**（Part D3 拍板：本軌是發現層不是收斂面，見上 CADENCE／treatment 段）。
 """
 import io
 import json
@@ -90,6 +116,7 @@ CAND_CAP = 15             # 候選區席位（正式榜之後接續 15 檔）
 # 這些門檻是十倍發現層的 pre-registered 規則。**未調參**——調參前先跟持有人討論
 # 方法（優化 logic/structure 不是 tune 數字，避免 in-sample overfit）。
 GATE_VERSION = "v0.1"
+RANK_KEY_VERSION = "v0.2"  # 2026-09-02：排序鍵改「最近 4 季營收 yoy 中位數」（gate-set 本身未動，見上 docstring）
 CAP_LO = 1e9               # 市值地板 $10 億（太小流動性/資料品質不可靠）    未調參
 CAP_HI = 20e9             # 市值天板 $200 億——DD universe 地板之下＝發現層互補   未調參
 # v0.1 成長雙閘：v0 的「最近季 yoy ≥25%」單點代理會放進運價/週期尖峰（實證：
@@ -410,6 +437,127 @@ def attach_dilution(survivors):
 
 
 # ---------------------------------------------------------------------------
+# Rank key v0.2：最近 4 季營收 yoy 中位數（治 v0.1「3Y CAGR≈最近一次起漲點」
+# 的基期效應；見上 docstring RANK KEY v0.2 段）。
+# ---------------------------------------------------------------------------
+def _yoy_pairs_from_quarterly_revenue(rev):
+    """rev：pandas Series，index=季末 Timestamp（升冪、已去 NaN），value=營收。
+
+    對「最近 4 季」逐季找「約一年前」的同季營收配對算 yoy（350–400 天窗，取離
+    365 天最近者）；找不到配對的季度跳過——yfinance quarterly_income_stmt 常
+    只回 4-5 欄，未必湊得滿 8 季，故本函式盡力配對而非硬性要求 8 欄。
+    回傳 [(asof_date, yoy), ...]，可能為空 list。
+    """
+    dates = list(rev.index)
+    n = len(dates)
+    if n < 2:
+        return []
+    recent = dates[-4:] if n >= 4 else dates[:]
+    pairs = []
+    for d in recent:
+        cur_val = float(rev.loc[d])
+        lo, hi = d - timedelta(days=400), d - timedelta(days=330)
+        cands = [dd for dd in dates if dd < d and lo <= dd <= hi]
+        if not cands:
+            continue
+        match = min(cands, key=lambda dd: abs((d - dd).days - 365))
+        prev_val = float(rev.loc[match])
+        if prev_val == 0:
+            continue
+        pairs.append((d, cur_val / prev_val - 1.0))
+    return pairs
+
+
+def rev_yoy_4q_median_from_series(rev):
+    """回傳 (median_yoy 或 None, 可配對的季數 n)。找不到任何可配對季度 → (None, 0)。"""
+    pairs = _yoy_pairs_from_quarterly_revenue(rev)
+    if not pairs:
+        return None, 0
+    yoys = [p[1] for p in pairs]
+    return float(np.median(yoys)), len(yoys)
+
+
+def attach_quarterly_yoy_median(passers):
+    """只對已過完整 gate-set 的 survivors（passers，非全 universe）抓
+    tk.quarterly_income_stmt 算 rank key。同 income_stmt fetch 的 fail-safe
+    文化：per-ticker try/except，缺 → rev_yoy_4q_median=None（排序墊底，不 raise）。
+    """
+    if not passers:
+        return
+    for r in passers:
+        r["rev_yoy_4q_median"], r["rev_yoy_4q_n"] = None, 0
+        try:
+            q = yf.Ticker(r["ticker"]).quarterly_income_stmt
+            if q is None or q.empty or "Total Revenue" not in q.index:
+                continue
+            rev = q.loc["Total Revenue"].dropna()
+            if len(rev) < 2:
+                continue
+            rev.index = pd.to_datetime(rev.index)
+            if getattr(rev.index, "tz", None) is not None:
+                rev.index = rev.index.tz_localize(None)
+            rev = rev.sort_index()
+            med, n = rev_yoy_4q_median_from_series(rev)
+            r["rev_yoy_4q_median"], r["rev_yoy_4q_n"] = med, n
+        except Exception:
+            continue  # 缺 → None，排序墊底，不 raise（fail-safe 文化）
+    got = sum(1 for r in passers if r.get("rev_yoy_4q_median") is not None)
+    print(f"[build_tenbagger] 排序鍵（近4季yoy中位數）：{got}/{len(passers)} 檔取得")
+
+
+def _rank_key(r):
+    """None 墊底；有值者依 yoy 中位數由高到低（Python 排序：先比 tuple[0]，
+    False(0) < True(1)，故 None 一律排在有值者之後）。"""
+    v = r.get("rev_yoy_4q_median")
+    return (v is None, -(v if v is not None else 0.0))
+
+
+# ---------------------------------------------------------------------------
+# 十倍軌 v0.2 手填顯示欄（single_product_pct / patent_expiry_year /
+# tam_cap_note）：讀 picks.json 可選鍵 tenbagger_notes{}，本檔只讀不寫，
+# 純顯示不影響 gate 通過/淘汰（見上 docstring）。
+# ---------------------------------------------------------------------------
+SHORT_RUNWAY_SINGLE_PRODUCT_PCT = 70   # 單一產品營收占比 ≥ 此值 → 短坡警示
+SHORT_RUNWAY_PATENT_YEARS_OUT = 5      # 專利/獨占到期年 ≤ 今年 + 此值 → 短坡警示
+
+
+def load_tenbagger_notes():
+    """讀 docs/picks/picks.json 的可選鍵 tenbagger_notes{TICKER: {...}}（只讀不寫）。
+    缺檔／缺鍵／格式不符 → 回傳空 dict，不 raise。"""
+    try:
+        with open(PICKS, encoding="utf-8") as f:
+            pj = json.load(f)
+        tn = pj.get("tenbagger_notes")
+        if isinstance(tn, dict):
+            return tn
+    except Exception as e:
+        warn(f"picks.json tenbagger_notes 讀取失敗（{type(e).__name__}）——手填欄留空")
+    return {}
+
+
+def compute_runway_status(note, current_year):
+    """note：tenbagger_notes[TICKER]（dict 或 None/缺）。
+
+    回傳 (single_product_pct, patent_expiry_year, tam_cap_note, runway_status)。
+    三欄皆缺 → ('坡長未知')；觸發短坡條件（單一產品占比 ≥70 或專利到期 ≤ 今年+5）
+    → '短坡警示'；否則（至少一欄有填且未觸發）→ '已填'。純顯示，不影響 gate。
+    """
+    sp = pey = tam = None
+    if isinstance(note, dict):
+        sp = note.get("single_product_pct")
+        pey = note.get("patent_expiry_year")
+        tam = note.get("tam_cap_note")
+    if sp is None and pey is None and tam is None:
+        return None, None, None, "坡長未知"
+    short_flag = (
+        (isinstance(sp, (int, float)) and not isinstance(sp, bool) and sp >= SHORT_RUNWAY_SINGLE_PRODUCT_PCT)
+        or (isinstance(pey, (int, float)) and not isinstance(pey, bool)
+            and pey <= current_year + SHORT_RUNWAY_PATENT_YEARS_OUT)
+    )
+    return sp, pey, tam, ("短坡警示" if short_flag else "已填")
+
+
+# ---------------------------------------------------------------------------
 # Gate-set v0.1（結構六條件機械化）
 # ---------------------------------------------------------------------------
 def gate_cap(r):
@@ -551,7 +699,7 @@ def attach_prices(passers):
 # ---------------------------------------------------------------------------
 # 四件事 + per-name record
 # ---------------------------------------------------------------------------
-def make_record(r):
+def make_record(r, note=None, current_year=None):
     g = r.get("revenueGrowth")
     m = r.get("grossMargins")
     i = r.get("heldPercentInsiders")
@@ -568,15 +716,24 @@ def make_record(r):
     cagr_p = cagr * 100 if cagr is not None else None
     cagr_years = r.get("rev_cagr_years")
 
+    med = r.get("rev_yoy_4q_median")
+    med_p = med * 100 if med is not None else None
+    med_n = r.get("rev_yoy_4q_n") or 0
+
     itxt = f"{ip:.0f}%" if ip is not None else "n/a"
     # v0.1：why 的營收數字改用持續性口徑（3Y CAGR），非單季尖峰；2Y 年化如實標示
     if cagr_p is not None:
         gtxt = f"CAGR {cagr_p:+.0f}%" + ("（2Y 年化）" if cagr_years == 2 else "")
     else:
         gtxt = f"{gp:+.0f}%"
-    why = (f"營收 {gtxt}×毛利 {mp:.0f}%×內部人 {itxt}"
+    # v0.2：排序鍵已改「近4季yoy中位數」，why 開頭改帶這個數字，CAGR 降為併陳
+    medtxt = f"近4季yoy中位數 {med_p:+.0f}%（n={med_n}）" if med_p is not None else "近4季yoy中位數 n/a"
+    why = (f"{medtxt}；3Y {gtxt}×毛利 {mp:.0f}%×內部人 {itxt}"
            "——雙渦輪體質（盈餘成長×重評）")
     multiple = f"10x 目標／5-10 年；起始 EV/S {ev:.1f}"
+
+    cy = current_year if current_year is not None else datetime.now(timezone.utc).year
+    sp, pey, tam, runway_status = compute_runway_status(note, cy)
 
     ret = r.get("ret_12m_pct")
     above = r.get("above_w52")
@@ -599,6 +756,9 @@ def make_record(r):
         "growth_pct": round(gp, 1) if gp is not None else None,
         "rev_cagr_3y": round(cagr_p, 1) if cagr_p is not None else None,
         "rev_cagr_years": cagr_years,
+        # v0.2 排序鍵：最近 4 季營收 yoy 中位數（rev_cagr_3y 仍保留為 gate + 顯示欄）
+        "rev_yoy_4q_median_pct": round(med_p, 1) if med_p is not None else None,
+        "rev_yoy_4q_n": med_n,
         "margin_pct": round(mp, 1) if mp is not None else None,
         "insiders_pct": round(ip, 1) if ip is not None else None,
         "dilution_cagr_pct": round(cp, 1) if cp is not None else None,
@@ -607,6 +767,11 @@ def make_record(r):
         "cap_B": round(mc / 1e9, 2) if mc is not None else None,
         "ret_12m_pct": ret,
         "above_w52": above,
+        # v0.2 手填顯示欄（picks.json tenbagger_notes；缺 → null + 坡長未知）
+        "single_product_pct": sp,
+        "patent_expiry_year": pey,
+        "tam_cap_note": tam,
+        "runway_status": runway_status,
     }
 
 
@@ -694,8 +859,10 @@ def main():
         print(f"[build_tenbagger] veto 生效（持有人 veto，排除）：{sorted(vetoed)}")
     passers = [p for p in passers if p["ticker"] not in veto]
 
-    # rank by 營收成長 desc
-    passers.sort(key=lambda r: -(r.get("revenueGrowth") or -999))
+    # v0.2 排序鍵：只對已過完整 gate-set 的 survivors 抓 quarterly_income_stmt
+    # 算「最近 4 季營收 yoy 中位數」（treat TGTX 型基期效應；見上 docstring）
+    attach_quarterly_yoy_median(passers)
+    passers.sort(key=_rank_key)  # None 墊底；有值者由高到低
 
     official_recs = passers[:SEAT_CAP_10X]
     candidate_recs = passers[SEAT_CAP_10X:SEAT_CAP_10X + CAND_CAP]
@@ -703,10 +870,15 @@ def main():
     # price context 只對進榜/候選（≤25 檔）
     attach_prices(official_recs + candidate_recs)
 
-    official = [make_record(r) for r in official_recs]
-    candidates = [make_record(r) for r in candidate_recs]
-
+    # v0.2 手填顯示欄（single_product_pct/patent_expiry_year/tam_cap_note）
+    tb_notes = load_tenbagger_notes()
     now = datetime.now(timezone.utc)
+    current_year = now.year
+    official = [make_record(r, note=tb_notes.get(r["ticker"]), current_year=current_year)
+                for r in official_recs]
+    candidates = [make_record(r, note=tb_notes.get(r["ticker"]), current_year=current_year)
+                  for r in candidate_recs]
+
     payload = {
         "as_of": datetime.now(TW8).strftime("%Y-%m-%d"),
         "refreshed_at": now.isoformat(),
@@ -717,11 +889,15 @@ def main():
         },
         "gate_funnel": funnel,
         "gate_version": GATE_VERSION,
+        "rank_key_version": RANK_KEY_VERSION,
         "seat_cap": SEAT_CAP_10X,
         "note": ("十倍・結構長坡＝發現層：S&P 400+600 universe 過結構六條件 gate-set v0.1"
                  "（市值 $10–200 億 × 營收 3Y CAGR≥20% ∩ 最近季 yoy≥15% × 毛利≥35% × "
                  "內部人≥5% × 稀釋≤3%/年（年報股數為主源）× 自籌資力 × EV/S≤15）；"
-                 "rank by 營收成長；SEAT_CAP=5 進正式榜、next 15 候選；持有人 veto 通用。"
+                 "排序鍵 v0.2＝最近 4 季營收 yoy 中位數（治基期效應，3Y CAGR 仍為"
+                 "gate＋顯示欄）；SEAT_CAP=5 進正式榜、next 15 候選；持有人 veto 通用。"
+                 "single_product_pct／patent_expiry_year／tam_cap_note 三欄由持有人"
+                 "手填（picks.json tenbagger_notes，本檔只讀不寫），純顯示不影響 gate。"
                  "月頻刷新。未經 DD 深度驗證，風險高於前兩組。"),
         "official": official,
         "candidates": candidates,
@@ -747,13 +923,16 @@ def main():
     def _fmt(p):
         yr = p.get("rev_cagr_years")
         cagr_txt = f"CAGR{p['rev_cagr_3y']}%" + (f"({yr}Y)" if yr else "")
-        return (f"{p['ticker']:<7} {cagr_txt:<16} 季yoy{p['growth_pct']}% "
+        med = p.get("rev_yoy_4q_median_pct")
+        med_txt = f"近4Qyoy中位{med}%(n={p.get('rev_yoy_4q_n')})" if med is not None else "近4Qyoy中位n/a"
+        return (f"{p['ticker']:<7} {med_txt:<24} {cagr_txt:<16} 季yoy{p['growth_pct']}% "
                 f"毛利{p['margin_pct']}% 內部人{p['insiders_pct']}% "
                 f"稀釋{p['dilution_cagr_pct']}%/y[{p['dilution_source']}] "
                 f"EV/S {p['ev_s']} 市值${p['cap_B']}B  12M {p['ret_12m_pct']}% "
-                f"{'站上' if p['above_w52'] else '跌破' if p['above_w52'] is False else '?'}年線")
+                f"{'站上' if p['above_w52'] else '跌破' if p['above_w52'] is False else '?'}年線 "
+                f"坡道：{p['runway_status']}")
 
-    print(f"[build_tenbagger] 正式榜 {len(official)} 檔（rank by 營收成長）：")
+    print(f"[build_tenbagger] 正式榜 {len(official)} 檔（rank by 近4季yoy中位數，v0.2）：")
     for i, p in enumerate(official, 1):
         print(f"    #{i:>2} {_fmt(p)}")
     print(f"[build_tenbagger] 候選 {len(candidates)} 檔：")
@@ -762,5 +941,82 @@ def main():
     return 0
 
 
+# ---------------------------------------------------------------------------
+# 離線自測（stub 資料，不打 yfinance／網路）：
+#   python3.12 scripts/build_tenbagger.py --selftest
+# ---------------------------------------------------------------------------
+def _selftest():
+    ok_msg = []
+
+    # ── rev_yoy_4q_median_from_series：4 季齊全，yoy 各 30/20/10/5% → 中位數 15% ──
+    dates = pd.to_datetime([
+        "2023-03-31", "2023-06-30", "2023-09-30", "2023-12-31",
+        "2024-03-31", "2024-06-30", "2024-09-30", "2024-12-31",
+    ])
+    vals = [100, 100, 100, 100, 130, 120, 110, 105]
+    rev = pd.Series(vals, index=dates).sort_index()
+    med, n = rev_yoy_4q_median_from_series(rev)
+    assert n == 4, f"預期配對 4 季，實得 {n}"
+    assert med is not None and abs(med - 0.15) < 1e-9, f"預期中位數 0.15，實得 {med}"
+    ok_msg.append(f"rev_yoy_4q_median_from_series（8 季齊全）：median={med:.3f} n={n}")
+
+    # ── 資料只有 1 季（<2 季）→ 無法配對 → None ──
+    short_rev = pd.Series([100.0], index=pd.to_datetime(["2024-01-01"]))
+    med2, n2 = rev_yoy_4q_median_from_series(short_rev)
+    assert med2 is None and n2 == 0, f"預期 (None, 0)，實得 ({med2}, {n2})"
+    ok_msg.append("rev_yoy_4q_median_from_series（資料不足 <2 季）：(None, 0)")
+
+    # ── 只有 5 季（僅 1 組可配對 yoy）→ median = 該 1 個值 ──
+    dates5 = pd.to_datetime([
+        "2023-12-31", "2024-03-31", "2024-06-30", "2024-09-30", "2024-12-31",
+    ])
+    vals5 = [100, 130, 120, 110, 105]
+    rev5 = pd.Series(vals5, index=dates5).sort_index()
+    med5, n5 = rev_yoy_4q_median_from_series(rev5)
+    assert n5 == 1 and med5 is not None and abs(med5 - 0.05) < 1e-9, f"預期 (0.05, 1)，實得 ({med5}, {n5})"
+    ok_msg.append(f"rev_yoy_4q_median_from_series（5 季僅 1 組可配對）：median={med5:.3f} n={n5}")
+
+    # ── 排序鍵 _rank_key：有值者高到低、None 一律墊底（穩定排序）──
+    stub = [
+        {"ticker": "AAA", "rev_yoy_4q_median": 0.30},
+        {"ticker": "BBB", "rev_yoy_4q_median": None},
+        {"ticker": "CCC", "rev_yoy_4q_median": 0.10},
+        {"ticker": "DDD", "rev_yoy_4q_median": 0.50},
+        {"ticker": "EEE", "rev_yoy_4q_median": None},
+    ]
+    stub.sort(key=_rank_key)
+    order = [r["ticker"] for r in stub]
+    assert order == ["DDD", "AAA", "CCC", "BBB", "EEE"], f"排序錯誤：{order}"
+    ok_msg.append(f"_rank_key 排序（None 墊底）：{order}")
+
+    # ── compute_runway_status：四情境（缺填／單一產品觸發／專利觸發／已填不觸發）──
+    cy = 2026
+    r1 = compute_runway_status(None, cy)
+    assert r1 == (None, None, None, "坡長未知"), f"缺填案例錯誤：{r1}"
+    r2 = compute_runway_status(
+        {"single_product_pct": 95, "patent_expiry_year": None, "tam_cap_note": None}, cy)
+    assert r2[3] == "短坡警示", f"單一產品觸發案例錯誤：{r2}"
+    r3 = compute_runway_status(
+        {"single_product_pct": None, "patent_expiry_year": 2029, "tam_cap_note": None}, cy)
+    assert r3[3] == "短坡警示", f"專利到期觸發案例錯誤（2029 ≤ 2026+5）：{r3}"
+    r4 = compute_runway_status(
+        {"single_product_pct": 20, "patent_expiry_year": 2040, "tam_cap_note": "1000店天花板"}, cy)
+    assert r4 == (20, 2040, "1000店天花板", "已填"), f"已填不觸發案例錯誤：{r4}"
+    r5 = compute_runway_status(
+        {"single_product_pct": None, "patent_expiry_year": None, "tam_cap_note": None}, cy)
+    assert r5[3] == "坡長未知", f"全 None dict 案例錯誤：{r5}"
+    r6 = compute_runway_status(
+        {"single_product_pct": None, "patent_expiry_year": 2032, "tam_cap_note": None}, cy)
+    assert r6[3] == "已填", f"專利到期未觸發案例錯誤（2032 > 2026+5）：{r6}"
+    ok_msg.append("compute_runway_status 六情境（缺填/單一產品觸發/專利觸發/已填/全None/未觸發）：OK")
+
+    print("[selftest] build_tenbagger.py 自測全數通過：")
+    for m in ok_msg:
+        print(f"    - {m}")
+    return 0
+
+
 if __name__ == "__main__":
+    if "--selftest" in sys.argv:
+        sys.exit(_selftest())
     sys.exit(main())
