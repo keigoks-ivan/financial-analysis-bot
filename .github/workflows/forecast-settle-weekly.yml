@@ -37,10 +37,18 @@ name: Weekly Forecast Ledger Settle + Flowmap Scorecard
 #  14. scripts/build_macro_base_rates.py --if-due — 季度自動重建 macro
 #      climatology 快取（僅 base rate，harvest_macro_falsifiers.py 的 p 需
 #      持有人人工賦值，不上 cron，§5.5）。
-#  15. scripts/score_flowmap.py                  — flowmap 成績單：CTA／月末
+#  15. scripts/harvest_intel_claims.py --write    — intel-llm 新聞閱讀命題
+#      producer（市況主控台設計稿 §5：讀近 7 份 /intel/ 每日摘要的
+#      claims[]，白名單＋resolver 驗證通過即落帳；0 條合格 claims 時
+#      exit 0 不落帳，不是失敗）。
+#  16. scripts/score_flowmap.py                  — flowmap 成績單：CTA／月末
 #      模組對帳 forecast_history.jsonl 凍結預測 vs 實際（SPRT 序貫檢定），
 #      並逐字讀入 knowledge/forecast_settlement.json 的 sources 摘要，輸出
 #      docs/flowmap/data/scorecard.json（只舉旗，不改動任何模組或 CONFIG）。
+#  17. scripts/build_market_state.py              — 市況主控台合成層（市況
+#      主控台設計稿 §1）：只讀不算，彙整既有 latest.json／帳簿／scorecard
+#      為 docs/market/data/state.json；缺檔不 crash（gaps 記錄）。E1 套件
+#      交付，本檔（E5）僅代為掛上這個 workflow step。
 #
 # 排程：週一 02:00 UTC——晚於 intel-2-daily.yml 的週日 22:30 UTC 週段（含
 # crowding COT 週更、timeout 90 分鐘），留出緩衝讓 data/cot_history.json 在本
@@ -115,8 +123,14 @@ jobs:
       - name: Rebuild macro base rates if due (quarterly)
         run: python scripts/build_macro_base_rates.py --if-due || echo "build_macro_base_rates --if-due not due or fetch failed — continuing with existing table"
 
+      - name: Harvest intel LLM claims
+        run: python scripts/harvest_intel_claims.py --write || echo "harvest_intel_claims no-op this week (no eligible claims or dedupe rejected) — continuing"
+
       - name: Score flowmap (frozen forecasts vs actuals)
         run: python scripts/score_flowmap.py
+
+      - name: Build market state
+        run: python scripts/build_market_state.py || echo "build_market_state failed — continuing"
 
       - name: Commit and push if changed
         run: |
@@ -128,7 +142,8 @@ jobs:
                    data/tsmom_base_rates.json data/tsmom_base_rates_raw_cache.json \
                    data/vrp_base_rates.json data/vrp_base_rates_raw_cache.json \
                    data/dd_verdict_base_rates.json data/dd_verdict_base_rates_raw_cache.json \
-                   data/macro_base_rates.json data/macro_base_rates_raw_cache.json; do
+                   data/macro_base_rates.json data/macro_base_rates_raw_cache.json \
+                   docs/market/data/state.json; do
             [ -e "$p" ] && PATHS="$PATHS $p"
           done
           if git status --porcelain $PATHS | grep -q .; then

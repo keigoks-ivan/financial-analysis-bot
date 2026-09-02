@@ -854,6 +854,90 @@ def build_site_snapshot() -> str | None:
     return "；".join(bits)[:SITE_SNAPSHOT_MAX_CHARS]
 
 
+# ── claims（forecast v2 設計稿 §5：新聞閱讀 LLM 進淘汰賽，2026-09-02） ────────
+# resolver.series 白名單——與 knowledge/settle_forecasts.py 已支援的 series 命名空間對齊，
+# 只收 monitor 五個 FRED key（macro-falsifier 已在用同一組）＋ pxd 三檔指數 ETF＋vixts:SLOPE。
+CLAIM_SERIES_WHITELIST = {
+    "monitor:dgs10", "monitor:dgs30", "monitor:hy_oas", "monitor:tp10y", "monitor:sofr_iorb",
+    "pxd:SPY", "pxd:QQQ", "pxd:IWM",
+    "vixts:SLOPE",
+}
+CLAIM_OPS = {">", "<", ">=", "<="}
+CLAIM_WINDOWS = {"any_close", "at_expiry"}
+CLAIM_MAX_ITEMS = 2
+CLAIM_HORIZON_MIN, CLAIM_HORIZON_MAX = 7, 90
+
+
+def _validate_claims(raw) -> list:
+    """驗證 brief.md 新增的 `claims` 欄位：型別／白名單／範圍檢查，壞格式一律靜默丟棄
+    （只印一行 stderr 說明原因，不 raise、不擋 digest 其餘輸出——claims 是選填的淘汰賽
+    項目，不是任務必答項）。claim 文字視為純文字：過一次 ANY_TAG_RE 整段去 HTML（比
+    sanitize_brief_html 的 allow-list 更嚴——claims 是餵給 scripts/harvest_intel_claims.py
+    機械落帳消費的陳述句，不是給讀者看的 HTML fragment，不需要保留任何標籤）。"""
+    if not isinstance(raw, list):
+        if raw is not None:
+            print(f"[intel/summarize] claims 不是陣列，忽略整欄（type={type(raw).__name__}）", file=sys.stderr)
+        return []
+    out = []
+    for i, item in enumerate(raw):
+        if len(out) >= CLAIM_MAX_ITEMS:
+            print(f"[intel/summarize] claims[{i}] 略過：已達上限 {CLAIM_MAX_ITEMS} 條", file=sys.stderr)
+            break
+        if not isinstance(item, dict):
+            print(f"[intel/summarize] claims[{i}] 略過：非物件", file=sys.stderr)
+            continue
+
+        claim_text = item.get("claim")
+        if not isinstance(claim_text, str):
+            print(f"[intel/summarize] claims[{i}] 略過：claim 非字串", file=sys.stderr)
+            continue
+        claim_text = ANY_TAG_RE.sub("", claim_text).strip()
+        if not claim_text:
+            print(f"[intel/summarize] claims[{i}] 略過：claim 去標籤後為空字串", file=sys.stderr)
+            continue
+
+        p = item.get("p")
+        if not isinstance(p, (int, float)) or isinstance(p, bool) or not (0.0 <= float(p) <= 1.0):
+            print(f"[intel/summarize] claims[{i}] 略過：p={p!r} 不是 [0,1] 內的數字", file=sys.stderr)
+            continue
+
+        horizon = item.get("horizon_days")
+        if (not isinstance(horizon, int) or isinstance(horizon, bool)
+                or not (CLAIM_HORIZON_MIN <= horizon <= CLAIM_HORIZON_MAX)):
+            print(f"[intel/summarize] claims[{i}] 略過：horizon_days={horizon!r} 不是 "
+                  f"[{CLAIM_HORIZON_MIN},{CLAIM_HORIZON_MAX}] 內的整數", file=sys.stderr)
+            continue
+
+        resolver = item.get("resolver")
+        if not isinstance(resolver, dict):
+            print(f"[intel/summarize] claims[{i}] 略過：resolver 非物件", file=sys.stderr)
+            continue
+        series = resolver.get("series")
+        if series not in CLAIM_SERIES_WHITELIST:
+            print(f"[intel/summarize] claims[{i}] 略過：resolver.series={series!r} 不在白名單", file=sys.stderr)
+            continue
+        op = resolver.get("op")
+        if op not in CLAIM_OPS:
+            print(f"[intel/summarize] claims[{i}] 略過：resolver.op={op!r} 不合法", file=sys.stderr)
+            continue
+        value = resolver.get("value")
+        if not isinstance(value, (int, float)) or isinstance(value, bool):
+            print(f"[intel/summarize] claims[{i}] 略過：resolver.value={value!r} 不是數字", file=sys.stderr)
+            continue
+        window = resolver.get("window")
+        if window not in CLAIM_WINDOWS:
+            print(f"[intel/summarize] claims[{i}] 略過：resolver.window={window!r} 不合法", file=sys.stderr)
+            continue
+
+        out.append({
+            "claim": claim_text,
+            "p": round(float(p), 4),
+            "horizon_days": int(horizon),
+            "resolver": {"series": series, "op": op, "value": value, "window": window},
+        })
+    return out
+
+
 def build_digest(all_classified_cards: list[dict], finalized_market_cards: list[dict],
                   ledger: Ledger, name_map: dict, short_map: dict | None = None) -> dict:
     """2026-08-19 起 gauges／flags 已全數移出這通 LLM 呼叫（見 build_gauges／
@@ -901,9 +985,9 @@ def build_digest(all_classified_cards: list[dict], finalized_market_cards: list[
         card_count=0,  # digest doesn't consume per-card budget, only tokens
     )
     if not parsed or not isinstance(parsed, dict):
-        return {"brief_zh": []}
+        return {"brief_zh": [], "claims": []}
     brief_zh = sanitize_brief_html(parsed.get("brief_zh") or [])
-    result = {"brief_zh": brief_zh}
+    result = {"brief_zh": brief_zh, "claims": _validate_claims(parsed.get("claims"))}
     if site_snapshot:
         site_read_raw = parsed.get("site_read_zh")
         if isinstance(site_read_raw, str) and site_read_raw.strip():
