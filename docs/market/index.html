@@ -76,6 +76,8 @@ h2 .en{font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--text-mut
 .card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
       padding:1.05rem 1.2rem;box-shadow:var(--shadow-sm)}
 .card.stale{opacity:.72;border-style:dashed}
+a.card{display:block;color:inherit;text-decoration:none}
+a.card:hover{border-color:var(--accent)}
 
 .grid{display:grid;gap:14px}
 .g5{grid-template-columns:repeat(5,1fr)}.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:2fr 1fr}
@@ -257,7 +259,7 @@ footer.imq-foot a{color:var(--text-secondary)}
     <h1>市況主控台</h1>
     <p class="lede">
       站上有十一條各自獨立運作的市況管線——機械層異常掃描、警報網、條件流量、統計性質、
-      預測帳簿、大類資產 regime、總經時鐘、擁擠交易、成績單、曝險規則、已退役的六態曝險燈。
+      預測帳簿、大類資產 regime、總經時鐘、擁擠交易、成績單、曝險規則、系統主控台（實單執行層）。
       平常要看懂「現在市況」得逐一開十一個頁面。<strong>這頁把它們的今日狀態收成一頁：
       每個數字都帶來源日期，判讀句只講機率與條件，不下買賣指令。</strong>
     </p>
@@ -283,16 +285,15 @@ footer.imq-foot a{color:var(--text-secondary)}
 
   <section id="sec-env">
     <h2>現在是什麼環境<span class="en">Environment</span></h2>
-    <p class="section-sub">五套判讀並排，分歧照實顯示——各自獨立，不合成一個分數。</p>
+    <p class="section-sub">五套讀法各自獨立，不合成一個分數；第五磚是實單執行層的目標曝險，來自系統主控台。</p>
     <div class="srclinks">
       <a href="/regime/">來源 → 大類資產 regime</a>
       <a href="/macro/">來源 → 總經時鐘</a>
       <a href="/detective/">來源 → 市場偵探</a>
       <a href="/monitor/">來源 → 市場監測</a>
-      <a href="/six-state/">來源 → 六態曝險燈（已退役）</a>
+      <a href="/long-track/">來源 → 系統主控台</a>
     </div>
     <div class="grid g5" id="env"></div>
-    <p class="note">六態曝險燈已停更兩個月，灰顯保留供對照；它的角色由下方「市況曝險規則（paper）」接手。</p>
   </section>
 
   <section class="grid g2">
@@ -589,13 +590,15 @@ footer.imq-foot a{color:var(--text-secondary)}
   // ── 環境五磚 ──
   function renderEnv(list) {
     $("#env").innerHTML = (list || []).map(function (e) {
-      return '<div class="card tile' + (e.stale ? ' stale' : '') + '">' +
+      var tag = e.link ? "a" : "div";
+      var hrefAttr = e.link ? ' href="' + esc(e.link) + '"' : "";
+      return '<' + tag + ' class="card tile' + (e.stale ? ' stale' : '') + '"' + hrefAttr + '>' +
         '<div class="lab">' + esc(e.label) + '</div>' +
         '<div class="val">' + esc(e.value) + '</div>' +
         '<p class="sub">' + esc(e.sub || "") + '</p>' +
         '<div class="meta"><span>as-of ' + esc(e.as_of || "—") + '</span>' +
         '<span class="chip ' + esc(e.tone || "neutral") + '">' + esc(e.stale ? "過期" : (e.cadence || "")) + '</span></div>' +
-        '</div>';
+        '</' + tag + '>';
     }).join("");
   }
 
@@ -825,7 +828,7 @@ footer.imq-foot a{color:var(--text-secondary)}
   var FRESH_LINK = {
     "monitor 跨資產監測": "/monitor/", "detective 警報網": "/detective/", "flowmap 條件流量": "/flowmap/",
     "statlab 統計面板": "/statlab/", "intel 情報監視器": "/intel/", "regime 大類資產環境": "/regime/",
-    "crowding COT 部位": "/crowding/", "總經時鐘": "/macro/", "六態曝險燈": "/six-state/"
+    "crowding COT 部位": "/crowding/", "總經時鐘": "/macro/", "系統主控台（實單主系統）": "/long-track/"
   };
   var FRESH_STATUS = { ok: ["good", "新鮮"], warn: ["warn", "偏舊"], stale: ["stale", "停更"] };
   function renderFresh(list) {

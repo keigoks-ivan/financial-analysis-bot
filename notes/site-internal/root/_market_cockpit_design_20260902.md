@@ -128,3 +128,12 @@
 | F6 接線與治理 | — | — | forecast-settle-weekly.yml 加五個 producer `--write`＋四個 builder `--if-due`＋PATHS；rule_ledger 五條 kill；加一提刪一提名：**regime 大類資產環境頁**（資料停 2026-07-06、定性非可交易、環境磚已吸收）；新 source 白話名補進 `docs/flowmap/index.html` 與 `docs/market/index.html` 的名稱表（板機訊號模型／GRP 席位／精選爆發榜／十倍股候選／風險偏好模型／類股輪動模型）及 `scripts/build_market_state.py` 若有名稱表 | — | — | — |
 
 **§9 整合紀錄（2026-09-02）**：F1–F6 全落地並首次落帳（板機 20／GRP 席位 10／精選榜 5／風險偏好 1／類股輪動 11／kill_watch 新增 USD/CNY 7.2 與 DXY 102 各一）；十倍股 5 席不在價格快取暫跳過；通膨預期門檻在 internals 層非 monitor 層，待 monitor 補 bei10y 序列後再落帳；relspy 結算加價格退路鏈（statlab／flowmap／trend-track）讓 ETF 命題可結算；kill_watch 同批次同門檻只落一張；議會圖排除個股層來源，名單層開放命題數改進個股脈搏。
+
+## §10 環境列第五磚改為「系統主控台（實單執行層）」（2026-09-02 深夜持有人拍板；sonnet 實作）
+
+- 六態曝險燈磚**移除**（頁面退役橫幅與 `components.six_state.retired` 紀錄保留，freshness 表刪六態列）。
+- 第五磚 `key="system_cockpit"`，資料源 `docs/long-track-w52-adaptive/state.json`（實單主系統，與首頁「實單執行層目標」磚同源）：label 「實單執行層（系統主控台）」；value 「美 {combined_exposure_us_pct:.1f}% · 台 {combined_exposure_tw_pct:.1f}%」；sub 「現持 美 {Σ executed_pct（market＝美股）}%／台 {Σ executed_pct（market＝台股）}% · 52 週線動能 × 自適應波動率」；as_of＝`data_date`；cadence 日更；tone＝neutral（`good` 若兩市場目標曝險皆 ≥ 100%，否則 `warn`）；link `/long-track/`；stale 判定日更門檻 4 天。缺檔→磚顯示「—」＋gap。
+- `read_zh.bullets[0]`（環境句）末尾加「實單執行層目標曝險 美 {us}%／台 {tw}%」。
+- freshness 表加「系統主控台（實單主系統）」列（as_of＝data_date）。
+- 頁面：環境區說明句改為「五套讀法各自獨立，不合成一個分數；第五磚是實單執行層的目標曝險，來自系統主控台。」；磚可點連到 `/long-track/`；來源 pills 加 `/long-track/`；移除所有「六態」字樣（退役橫幅仍在 /six-state/ 頁）。
+- 首頁市況卡不變。

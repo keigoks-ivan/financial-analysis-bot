@@ -54,6 +54,7 @@ DEFAULT_PATHS = {
     "regime": os.path.join(DOCS, "regime", "data", "latest.json"),
     "macro_clock": os.path.join(DOCS, "macro", "data", "clock.json"),
     "six_state": os.path.join(DOCS, "six-state", "state.json"),
+    "long_track": os.path.join(DOCS, "long-track-w52-adaptive", "state.json"),
     "crowding": os.path.join(DOCS, "crowding", "data", "latest.json"),
     "forecasts": os.path.join(KNOWLEDGE, "forecasts.jsonl"),
     "decisions": os.path.join(KNOWLEDGE, "decisions.jsonl"),
@@ -266,7 +267,7 @@ def fg_rating_zh(rating):
 
 
 def build_environment(regime_data, macro_clock_data, detective_data, monitor_data,
-                       score_history_data, six_state_data, today, gaps):
+                       score_history_data, long_track_data, today, gaps):
     tiles = []
     bands = (score_history_data or {}).get("bands")
 
@@ -342,16 +343,26 @@ def build_environment(regime_data, macro_clock_data, detective_data, monitor_dat
         "tone": BAND_TONE.get(band, "neutral"),
     })
 
-    # 5) six_state（退役，固定 stale/retired/tone=stale）
-    if six_state_data is None:
-        gaps.append("six-state/state.json 缺檔，environment.six_state 記為空")
-    ss = six_state_data or {}
+    # 5) system_cockpit（實單執行層／系統主控台，取代已退役的六態曝險燈）
+    if long_track_data is None:
+        gaps.append("long-track state.json 缺檔，environment.system_cockpit 記為空")
+    lt = long_track_data or {}
+    us, tw = lt.get("combined_exposure_us_pct"), lt.get("combined_exposure_tw_pct")
+    tickers = lt.get("tickers") or {}
+    exec_us = sum((v.get("executed_pct") or 0) for v in tickers.values() if v.get("market") == "美股")
+    exec_tw = sum((v.get("executed_pct") or 0) for v in tickers.values() if v.get("market") == "台股")
+    lt_as_of = lt.get("data_date")
+    stale, _st = classify_stale(lt_as_of, today, "daily")
+    tone = "good" if (us is not None and tw is not None and us >= 100 and tw >= 100) else "warn"
     tiles.append({
-        "key": "six_state", "label": "六態曝險燈",
-        "value": (f"{ss.get('state')} · {ss.get('exposure_pct')}%" if ss.get("state") is not None else None),
-        "sub": (f"{ss.get('state_name')}（已退役）" if ss.get("state_name") else "已退役"),
-        "as_of": ss.get("data_date"), "cadence": "已退役", "stale": True, "tone": "stale",
-        "retired": True,
+        "key": "system_cockpit", "label": "實單執行層（系統主控台）",
+        "value": (f"美 {us:.1f}% · 台 {tw:.1f}%" if us is not None and tw is not None else "—"),
+        "sub": (f"現持 美 {exec_us:.1f}%／台 {exec_tw:.1f}% · 52 週線動能 × 自適應波動率"
+                if long_track_data is not None else None),
+        "as_of": lt_as_of, "cadence": cadence_label("daily"),
+        "stale": (True if long_track_data is None else stale),
+        "tone": ("stale" if long_track_data is None else tone),
+        "link": "/long-track/",
     })
 
     return tiles
@@ -840,7 +851,7 @@ def judge_word(p, clim):
     return "略偏多" if diff > 0 else "略偏空"
 
 
-def build_read_zh(council_summary, flows, top_fuse, stock_pulse, scoreboard, environment, gaps):
+def build_read_zh(council_summary, flows, top_fuse, stock_pulse, scoreboard, environment, long_track_data, gaps):
     spy21 = council_summary.get("spy_up_21d", {}) or {}
     spy63 = council_summary.get("spy_up_63d", {}) or {}
     vol21 = council_summary.get("vol_up_21d", {}) or {}
@@ -876,10 +887,14 @@ def build_read_zh(council_summary, flows, top_fuse, stock_pulse, scoreboard, env
     val_by_key = {t["key"]: t.get("value") for t in environment}
     n_warn = sum(1 for k in ("regime", "macro_clock", "detective", "monitor")
                  if tone_by_key.get(k) in ("warn", "crit"))
+    lt_us = (long_track_data or {}).get("combined_exposure_us_pct")
+    lt_tw = (long_track_data or {}).get("combined_exposure_tw_pct")
+    exposure_suffix = (f"；實單執行層目標曝險 美 {lt_us:.1f}%／台 {lt_tw:.1f}%"
+                        if lt_us is not None and lt_tw is not None else "")
     bullets.append(
         f"環境讀數：regime「{val_by_key.get('regime') or '—'}」・總經時鐘「{val_by_key.get('macro_clock') or '—'}」・"
         f"警戒度「{val_by_key.get('detective') or '—'}」・跨資產壓力「{val_by_key.get('monitor') or '—'}」，"
-        f"{n_warn}／4 轉警戒。"
+        f"{n_warn}／4 轉警戒{exposure_suffix}。"
     )
 
     # 2) 流量不對稱句
@@ -964,7 +979,7 @@ def build_components(sources, ledger_asof, exposure_track_asof, today):
     return comps
 
 
-def build_freshness(sources, ledger_asof, nowcast_as_of, today):
+def build_freshness(sources, ledger_asof, nowcast_as_of, today, long_track_data):
     rows = []
 
     def row(pipeline, as_of, cadence):
@@ -981,8 +996,7 @@ def build_freshness(sources, ledger_asof, nowcast_as_of, today):
         if sources["regime"] else None, "regime")
     row("crowding COT 部位", (sources["crowding"] or {}).get("cot_as_of") if sources["crowding"] else None, "weekly")
     row("總經時鐘", (sources["macro_clock"] or {}).get("as_of") if sources["macro_clock"] else None, "monthly")
-    ss = sources["six_state"] or {}
-    rows.append({"pipeline": "六態曝險燈", "as_of": ss.get("data_date"), "cadence": "已退役", "status": "stale"})
+    row("系統主控台（實單主系統）", (long_track_data or {}).get("data_date") if long_track_data else None, "daily")
     row("今日狀態讀數（nowcast）", nowcast_as_of, "daily")
     return rows
 
@@ -1142,6 +1156,7 @@ def main():
     regime_data = _load_json(paths["regime"], gaps, "regime")
     macro_clock_data = _load_json(paths["macro_clock"], gaps, "macro_clock")
     six_state_data = _load_json(paths["six_state"], gaps, "six_state")
+    long_track_data = _load_json(paths["long_track"], gaps, "long_track")
     crowding_data = _load_json(paths["crowding"], gaps, "crowding")
     forecasts_rows = _load_jsonl(paths["forecasts"], gaps, "forecasts")
     decisions_rows = _load_jsonl(paths["decisions"], gaps, "decisions")
@@ -1160,7 +1175,7 @@ def main():
     nowcast = build_nowcast(paths, gaps)
 
     environment = build_environment(regime_data, macro_clock_data, detective_data, monitor_data,
-                                     score_history_data, six_state_data, today, gaps)
+                                     score_history_data, long_track_data, today, gaps)
     council, council_summary = build_council(forecasts_rows)
     if forecasts_rows is None:
         gaps.append("forecasts.jsonl 缺檔，council／council_summary／fuses／triggers③ 連動受影響")
@@ -1178,9 +1193,10 @@ def main():
     scoreboard = build_scoreboard(scorecard_data, gaps)
     triggers = build_triggers(flowmap_data, forecasts_rows, gaps)
     top_fuse = top_macro_fuse(forecasts_rows)
-    read_zh = build_read_zh(council_summary, flows, top_fuse, stock_pulse, scoreboard, environment, gaps)
+    read_zh = build_read_zh(council_summary, flows, top_fuse, stock_pulse, scoreboard, environment,
+                             long_track_data, gaps)
     components = build_components(sources, ledger_asof, exposure_track_asof, today)
-    freshness = build_freshness(sources, ledger_asof, nowcast.get("as_of"), today)
+    freshness = build_freshness(sources, ledger_asof, nowcast.get("as_of"), today, long_track_data)
 
     as_of_candidates = [
         (monitor_data or {}).get("as_of"),
