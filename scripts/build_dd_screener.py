@@ -73,7 +73,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = ROOT / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
-from dd_screener_dd_loader import load_dd_universe, _norm_dca_role  # noqa: E402
+from dd_screener_dd_loader import load_dd_universe, load_non_dd_universe, _norm_dca_role  # noqa: E402
 from dd_screener_quality import (  # noqa: E402
     EU_SUFFIX_MAP,
     TICKER_YF_OVERRIDE,
@@ -1951,7 +1951,8 @@ def _finalize_overlay_stats(universe: list[dict], stats: dict) -> dict:
     return stats
 
 
-def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int) -> dict:
+def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
+          include_non_dd: bool = False) -> dict:
     print(f"=== DD Screener build · {datetime.now().isoformat(timespec='seconds')} ===\n")
     t0 = time.time()
 
@@ -1969,6 +1970,21 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int) -> dict
     if top_n:
         universe = universe[:top_n]
     print(f"  Step 1-2  DD universe: {len(universe)} tickers")
+
+    # Step 1-2c (選股系統 v2, 2026-09): optional non-DD universe from QGM quality
+    # pools (US + TW) — DD becomes optional. OFF by default so CI/prod build
+    # behaviour is unchanged until this is flipped on deliberately; every field
+    # that would normally come from dd-meta is null on these rows (dd_status
+    # "none"), and Step 5's evaluate_criteria()/enrich_ticker() are already
+    # None-safe on those fields (see downstream-risk audit in the PR notes).
+    if include_non_dd:
+        existing_tickers = {e["ticker"] for e in universe}
+        non_dd_universe = load_non_dd_universe(existing_tickers)
+        universe = universe + non_dd_universe
+        print(f"  Step 1-2c non-DD universe (QGM): +{len(non_dd_universe)} tickers "
+              f"({sum(1 for r in non_dd_universe if r['universe_source'] == 'qgm-us')} US, "
+              f"{sum(1 for r in non_dd_universe if r['universe_source'] == 'qgm-tw')} TW) "
+              f"→ total {len(universe)}")
 
     # Step 1-2b: P1 — 補機器抽取的 v12 舊 DD 裁決（失敗安全；overlay 缺檔則行為回到現狀）
     ov = apply_verdict_overlay(universe)
@@ -2208,8 +2224,13 @@ def main() -> None:
     p.add_argument("--no-ma", action="store_true", help="Skip MA fetch (faster smoke)")
     p.add_argument("--dry-run", action="store_true", help="Don't write latest.json")
     p.add_argument("--workers", type=int, default=8, help="Concurrent yfinance fetchers (default 8)")
+    p.add_argument("--include-non-dd", action="store_true",
+                   help="選股系統 v2: also carry QGM quality-pool tickers with no DD "
+                        "(dd_status=none). Default OFF — CI/prod behaviour unchanged "
+                        "until deliberately flipped on.")
     args = p.parse_args()
-    build(top_n=args.top, skip_ma=args.no_ma, dry_run=args.dry_run, workers=args.workers)
+    build(top_n=args.top, skip_ma=args.no_ma, dry_run=args.dry_run, workers=args.workers,
+          include_non_dd=args.include_non_dd)
 
     # Discovery pool refresh (v2.4 chain): "ID 標 🔴 核心受益但尚未建 DD" 名單
     # → docs/dd-screener/discovery_pool.json，供 /dd-screener/ 折疊區塊渲染。

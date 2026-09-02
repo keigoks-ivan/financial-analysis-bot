@@ -390,6 +390,9 @@ def render_board_text(as_of, rows, core_seats, sat_seats, prev_snap, entered) ->
 
 def main() -> int:
     stocks = json.loads(DD_LATEST.read_text(encoding="utf-8"))["stocks"]
+    # latest.json 若以 --include-non-dd 產出，無 DD 列（dd_status="none"）改由 load_qgm_rows 供給
+    #（帶 _src／_durable_5y／_mktcap），這裡先排除以免搶走 QGM 列的身份標記
+    stocks = [s for s in stocks if s.get("dd_status") != "none"]
     try:
         sectors = {r["ticker"]: r["sector"]
                    for r in json.loads(UNIVERSE.read_text(encoding="utf-8"))["tickers"]}

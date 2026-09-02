@@ -2,6 +2,7 @@
 
 Public API:
     load_dd_universe(dd_dir, dca_dir) -> list[dict]
+    load_non_dd_universe(existing_tickers) -> list[dict]
 
 CLI self-test:
     python3 scripts/dd_screener_dd_loader.py
@@ -46,6 +47,37 @@ _TREND_NORM: dict[str, str] = {
 
 # DD filename date pattern: DD_{STEM}_{YYYYMMDD}[_suffix].html
 _DD_FILENAME_DATE_RE = re.compile(r"^DD_.+?_(\d{8})(?:_.*)?\.html$")
+
+# ── 選股系統 v2 (2026-09) — non-DD universe from QGM (姊妹 repo quality pools) ──
+# DD becomes optional: names that never got a DD report still need to be
+# carriable in the screener universe. QGM (minervini-quality-backtest) already
+# produces a fundamentals-gated + trend-template-gated quality pool for US
+# (docs/qgm/latest.json) and TW (docs/qgm-tw/latest.json); load_non_dd_universe
+# adapts those rows into the same shape load_dd_universe() returns, with every
+# DD-derived field null so downstream consumers can branch on `dd_status`.
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+_QGM_SOURCES = (
+    (_REPO_ROOT / "docs" / "qgm" / "latest.json", "qgm-us"),
+    (_REPO_ROOT / "docs" / "qgm-tw" / "latest.json", "qgm-tw"),
+)
+_QGM_POOL_KEYS = ("candidates", "watch_list", "quality_pool")  # priority order
+
+# 本地掛牌 → ADR（同一家公司只留一席）— 與 scripts/engine/build_arena.py 的
+# LISTING_ALIAS 同一份對照表（維持單一事實來源的意圖，但兩處各自獨立載入，
+# 改動時務必同步）。
+_LISTING_ALIAS = {"2330.TW": "TSM"}
+
+# Fields in load_dd_universe()'s output dict that are DD/DCA-derived and must
+# be null for a non-DD (QGM-sourced) row.
+_DD_ONLY_FIELDS = (
+    "moat_score", "moat_grade", "moat_trend", "moat_execution", "moat_pricing_power",
+    "signal", "trap", "val",
+    "upside_mid_pct", "upside_5y_pct", "fpe_fy2",
+    "pct_5y", "growth_durability", "quality_score", "ai_risk",
+    "price_at_dd", "runway_post_y5",
+    "bull_5y_price", "bear_5y_price", "p_bull_pct", "p_bear_pct",
+    "dd_path", "dd_date", "dca_path", "dca_date", "dca_verdict", "dca_role",
+)
 
 
 # ── helpers ───────────────────────────────────────────────────────────────────
@@ -151,6 +183,102 @@ def _latest_per_ticker_with_paths(
     return best
 
 
+def _qgm_seed_from_record(x: dict) -> dict:
+    """Extract the raw QGM numbers a non-DD row carries forward as fallback
+    inputs for the quality (Step 3) and EPS (Step 8+) stages — same numbers
+    `get_quality_for_ticker()` / `enrich_ticker()` would read for a QGM-sourced
+    DD ticker, just pre-shaped so those stages don't need to special-case
+    'no dd-meta' vs 'has dd-meta but QGM-sourced quality'.
+    """
+    hfd = x.get("hard_filter_details") or {}
+
+    def _hv(key: str):
+        d = hfd.get(key)
+        return d.get("value") if isinstance(d, dict) else None
+
+    qb = x.get("quality_breakdown") or {}
+    roic_stability = qb.get("roic_5y_stability") or {}
+    conds = (x.get("trend_template") or {}).get("conditions") or {}
+
+    return {
+        "price": x.get("price"),
+        "market_cap_b": x.get("market_cap_b"),
+        "fy1_eps": x.get("fy1_eps"),
+        "fy2_eps": x.get("fy2_eps"),
+        "fy1_per": x.get("fy1_per"),
+        "quality_score": x.get("quality_score"),  # QGM's own 0-100 score (NOT dd-meta's 1-10 field)
+        "pool_tier": x.get("pool"),                # QGM MLB/3A tier tag
+        "hard_filter_details": {
+            "fcf_margin": _hv("fcf_margin"),
+            "roic": _hv("roic"),
+            "eps_cagr_2y_fwd": _hv("eps_cagr_2y_fwd"),
+            "peg": _hv("peg"),
+            "debt_to_equity": _hv("debt_to_equity"),
+        },
+        "roic_5y_stability_pct_above": roic_stability.get("pct_above"),
+        "trend_template_conditions": conds,
+    }
+
+
+def load_non_dd_universe(existing_tickers: set) -> list[dict]:
+    """QGM quality-pool rows (US + TW) for tickers with no DD report.
+
+    Returns one dict per unique ticker in the SAME shape load_dd_universe()
+    returns, with every DD/DCA-derived field (see `_DD_ONLY_FIELDS`) set to
+    None, plus three additions:
+        dd_status:       "none" (always — this loader never emits DD rows)
+        universe_source: "qgm-us" | "qgm-tw" (which QGM file the row came from)
+        qgm_seed:        raw QGM numbers (price / EPS / hard_filter_details /
+                          roic_5y_stability / trend_template.conditions) for
+                          the quality/eps stages to use as fallback input.
+
+    Dedup / precedence rules:
+      - A ticker already in `existing_tickers` (i.e. it has a DD) is skipped
+        — the DD-sourced row is authoritative, this loader never shadows it.
+      - Within and across the two QGM files, first-write-wins by pool
+        priority candidates > watch_list > quality_pool, US file read before
+        TW (mirrors `dd_screener_quality.load_qgm_index()`'s own priority).
+      - ADR/local alias (`_LISTING_ALIAS`, e.g. "2330.TW" -> "TSM"): the local
+        listing is dropped whenever the ADR ticker is present either in
+        `existing_tickers` (has a DD) or in this loader's own collected set
+        (QGM also carries the ADR) — same company, one seat.
+    """
+    collected: dict[str, dict] = {}
+
+    for path, src_tag in _QGM_SOURCES:
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            print(f"WARN load_non_dd_universe: skipping {path} ({exc})", file=sys.stderr)
+            continue
+
+        for pool_key in _QGM_POOL_KEYS:
+            for x in data.get(pool_key) or []:
+                if not isinstance(x, dict):
+                    continue
+                ticker = x.get("ticker")
+                if not ticker:
+                    continue
+                if ticker in existing_tickers or ticker in collected:
+                    continue  # DD-sourced row wins, or already claimed by a higher-priority pool
+
+                row = {"ticker": ticker, "name": ticker, "sector": ""}
+                for field in _DD_ONLY_FIELDS:
+                    row[field] = None
+                row["dd_status"] = "none"
+                row["universe_source"] = src_tag
+                row["qgm_seed"] = _qgm_seed_from_record(x)
+                collected[ticker] = row
+
+    for local, adr in _LISTING_ALIAS.items():
+        if local in collected and (adr in existing_tickers or adr in collected):
+            print(f"  load_non_dd_universe: dropping local listing {local} "
+                  f"(ADR {adr} already covers this company)", file=sys.stderr)
+            del collected[local]
+
+    return [collected[t] for t in sorted(collected)]
+
+
 # ── public API ────────────────────────────────────────────────────────────────
 
 def load_dd_universe(
@@ -171,7 +299,8 @@ def load_dd_universe(
         upside_mid_pct, upside_5y_pct, fpe_fy2,
         pct_5y, growth_durability, quality_score, ai_risk,  # v1.2 quality-entry inputs
         dd_path, dd_date,
-        dca_path, dca_date
+        dca_path, dca_date,
+        dd_status ("dd"), universe_source (None), qgm_seed (None)  # see load_non_dd_universe
     """
     dd_dir = Path(dd_dir)
     dca_dir = Path(dca_dir)
@@ -299,6 +428,13 @@ def load_dd_universe(
             "dca_date": dca_date,
             "dca_verdict": dca_verdict,
             "dca_role": dca_role,
+            # 選股系統 v2 (2026-09): DD becomes optional — every row (DD-sourced
+            # or QGM-sourced via load_non_dd_universe) carries dd_status so
+            # downstream consumers can branch without inferring it from which
+            # fields happen to be null. "dd" here always means a real DD report.
+            "dd_status": "dd",
+            "universe_source": None,
+            "qgm_seed": None,
         })
 
     return results
@@ -351,6 +487,22 @@ def main() -> None:
 
     print("Sample entry:")
     print(json.dumps(sample, indent=2, ensure_ascii=False))
+
+    # ── non-DD universe summary (選股系統 v2, 2026-09) ──────────────────────
+    existing_tickers = {u["ticker"] for u in universe}
+    non_dd = load_non_dd_universe(existing_tickers)
+    src_counts = collections.Counter(r["universe_source"] for r in non_dd)
+    print()
+    print("=" * 60)
+    print("load_non_dd_universe() summary")
+    print("=" * 60)
+    print(f"Total non-DD tickers loaded:    {len(non_dd)}")
+    for src in sorted(src_counts):
+        print(f"  {src:8s}: {src_counts[src]}")
+    print()
+    print(f"Sample entries (2 of {len(non_dd)}):")
+    for row in non_dd[:2]:
+        print(json.dumps(row, indent=2, ensure_ascii=False))
 
 
 if __name__ == "__main__":

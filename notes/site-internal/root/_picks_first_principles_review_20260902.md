@@ -319,6 +319,13 @@ GRP 現在把時機層的 R（單月上修）當擁有層的排序鍵，所以�
 - tenbagger 排序鍵換最近 4 季 yoy 中位數＋三個手填欄。
 - 本地跑出的看板有「市值資料缺漏」（CRS／SBUX／FSLR 等）是快取缺、非規則判定；CI 週跑 yfinance 回填後自動修正。
 
+**dd-screener `--include-non-dd` 旗標（已實作、預設關）翻開前的 go/no-go 清單（sonnet 稽核，2026-09-02）**
+
+- 已修：`build_arena.py` 讀 latest.json 時排除 `dd_status="none"` 列（否則會搶走 QGM 列的身份標記，導致「無 DD 過閘」段消失）；`docs/dd-screener/index.html` 缺 moat_grade 時原本預設顯示 S，改顯示「—」。
+- 待你決定：`scripts/build_cyclical_track.py::passes_moat_floor()` 把缺 moat_grade 視為通過——旗標翻開後，QGM 無 DD 名字只要 trailing 品質差＋任何上修就能進循環軌，再經 build_picks 自動上正式榜，全程零護城河檢查。建議改為「缺 moat_grade → 不進正式榜、只列候選」再翻旗標。
+- 低影響：`build_radar.py::load_pool()` 掃描池擴大（成本）；index.html 裁決欄對無 DD 列的 tooltip 文案不準（純文案）。
+- 已驗證安全：sop_funnel quality_check 缺 moat 即 fail-closed；build_quality_entry 缺欄自降分；update_dd_index 不吃 latest.json；build_picks 直接讀欄皆 null-safe。
+
 **首跑看板（as_of 2026-09-01，本地資料）**
 
 ```

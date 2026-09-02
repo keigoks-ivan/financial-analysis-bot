@@ -165,6 +165,7 @@ Each entry in `stocks[]`:
 | `dd_date` | "YYYY-MM-DD" | from dd-meta `date` |
 | `dca_path` | "/dca/DCA_*.html" or null | latest DCA in `docs/dca/` matching ticker |
 | `dca_date` | "YYYY-MM-DD" or null | from DCA filename |
+| `dd_status` | "dd" \| "none" | 選股系統 v2 (2026-09, `--include-non-dd`): "dd" = real DD report (all fields above populated); "none" = QGM-sourced non-DD row (`dd_screener_dd_loader.load_non_dd_universe`) — every field above is null. `universe_source` ("qgm-us"/"qgm-tw"/null) tags which QGM file a "none" row came from, and `qgm_seed` (object \| null) carries that row's raw QGM numbers (price/market_cap_b/fy1_eps/fy2_eps/fy1_per/quality_score/pool_tier/hard_filter_details/roic_5y_stability_pct_above/trend_template_conditions) as fallback input for the quality/EPS stages. |
 
 ### Quality (Step 3 — Opus task)
 All 5 quality fields are **percent** units except `peg` and `de`:
