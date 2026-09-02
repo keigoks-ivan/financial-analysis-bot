@@ -720,8 +720,10 @@ footer a{color:var(--muted)}
   function mcPct(v){return (v==null)?'—':Math.round(v*100)+'%';}
   var p5=getJSON('/market/data/state.json').then(function(d){
     var rz=d.read_zh||{}, cs=d.council_summary||{}, env=d.environment||[];
-    if(!rz.headline)return;
-    el('mcHeadline').textContent=rz.headline;
+    // v4：判讀層主張優先，過期或尚無判讀時 K1 的 read_headline 為 null，退回既有機械 headline
+    var headline=(d.read_headline!=null && d.read_headline!=='')?d.read_headline:rz.headline;
+    if(!headline)return;
+    el('mcHeadline').textContent=headline;
     if(d.as_of)el('mcAsof').textContent='as-of '+d.as_of;
     var chips=[];
     var spy21=cs.spy_up_21d;

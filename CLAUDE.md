@@ -239,6 +239,14 @@ DS 觸發語現一律觸發 `industry-analyst`；legacy DS 維護走 `id-review 
 
 **硬規則**：描述器紀律（禁擇時結論、禁買賣指令）；每個判讀句錨定機械層具體數字；預設不上網；訊號矛盾明說不硬編故事；中文全形標點；git flow＝預設停下複審、用戶說 push 才 commit。
 
+## Workflow: 市況判讀（market-read，市況主控台判讀層）
+
+當用戶說「跑市況判讀」/「market read」/「本週市況判讀」/「更新市況主控台判讀」時，自動觸發 `market-read` skill（`.claude/skills/market-read/`）。
+
+**定位**：`/market/` 兩層＝機械證據層（`build_market_state.py` 日更零 LLM，含 `evidence` 塊）＋判讀層（本 skill）。**判讀由 orchestrator 自己寫（opus 級），不外包 sonnet、不上 cron**；週頻＋事件觸發（壓力分數週變動 ≥10／引信觸及／VIX ≥25／判讀過期 10 天）。輸出 `docs/market/data/read.json`（三股力量／傳導／部位／類比／三框架機率／證偽表／與表格分歧），機械 critic `scripts/check_market_read.py` 過後以 `ledger_from_editorial.py --source market-read` 落 5–8 張命題進帳簿（前四張型別凍結：3m／6m／12m 方向＋3m 回撤 10%），同尺 SPRT 記分、判紅降為評論。設計稿 `notes/site-internal/root/_market_read_design_20260903.md`。
+
+**硬規則**：描述器紀律（禁買賣指令語）；每個判斷句錨定 ref＋as_of；與帳簿表格分歧必寫；歷史類比必附不同之處；白話全形；不改機械層任何檔；git flow＝做完停下複審、用戶說 push 才 commit。
+
 ## Workflow: 總經深度報告（macro-analyst）
 
 當用戶說「總經研究 {主題}」/「macro {topic}」/「{主題} 總經報告」/「總體經濟分析 {主題}」/「宏觀分析 {主題}」/「{主題} 宏觀傳導」時，自動觸發 `macro-analyst` skill（v1.2，`.claude/skills/macro-analyst/`）。

@@ -162,6 +162,9 @@ table.mt td.num{font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabul
              letter-spacing:.07em;border:1px dashed var(--warn);color:var(--warn);
              padding:2px 8px;border-radius:999px;margin-left:.6rem;vertical-align:middle}
 
+details{margin-top:.8rem}
+details summary{cursor:pointer;font-size:.82rem;font-weight:600;color:var(--accent);list-style:revert}
+
 footer.imq-foot{margin-top:2.8rem;padding:1.4rem 20px;border-top:1px solid var(--border);
                  text-align:center;font-size:12.5px;color:var(--text-muted)}
 footer.imq-foot a{color:var(--text-secondary)}
@@ -171,9 +174,40 @@ footer.imq-foot a{color:var(--text-secondary)}
 .disclaimer strong{color:var(--text-secondary)}
 .loading{color:var(--text-muted);font-size:.85rem;padding:1rem 0}
 
+/* ── v4：判讀層（sticky 小導覽、判讀卡、時間框架、力量／傳導／部位／類比／證偽／記分） ── */
+.mini-nav{position:sticky;top:0;z-index:900;background:var(--bg-card);border-bottom:1px solid var(--border);
+          margin:0 -20px 1.4rem;padding:.55rem 20px;box-shadow:var(--shadow-sm)}
+.mini-nav-inner{max-width:1180px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:nowrap;overflow-x:auto}
+.mini-nav a{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--text-secondary);
+            padding:.32rem .68rem;border-radius:999px;white-space:nowrap;background:var(--bg-card2)}
+.mini-nav a:hover{color:var(--accent);background:var(--s1-bg)}
+
+.judgment-card{position:relative}
+.judgment-card.stale{opacity:.72;border-style:dashed}
+.stale-banner{background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:.55rem .8rem;
+              font-size:.82rem;margin-bottom:.8rem;font-weight:600}
+.judgment-thesis{font-size:1.05rem;color:var(--text);line-height:1.85;margin-bottom:.5rem}
+.judgment-path{font-size:.9rem;color:var(--text-secondary);line-height:1.8;margin-bottom:.7rem}
+.judgment-meta{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-muted);margin-bottom:.9rem}
+.judgment-numbers{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:.6rem}
+.judgment-numbers .jn{background:var(--bg-card2);border:1px solid var(--border-light);border-radius:8px;padding:.7rem .8rem}
+.judgment-numbers .jn .lab{font-size:11.5px;color:var(--text-muted)}
+.judgment-numbers .jn .val{font-family:'Playfair Display','Noto Serif TC',Georgia,serif;font-size:1.7rem;font-weight:700;color:var(--accent);margin:.2rem 0}
+.judgment-numbers .jn .base{font-size:11px;color:var(--text-muted)}
+
+.g4{grid-template-columns:repeat(4,1fr)}
+.g3eq{grid-template-columns:repeat(3,1fr)}
+@media(max-width:900px){.g4{grid-template-columns:repeat(2,1fr)}.g3eq{grid-template-columns:1fr}}
+
+.evidence-heading{margin:2.6rem 0 .4rem;padding-top:1.6rem;border-top:2px solid var(--border)}
+.evidence-heading h2{font-size:1.55rem}
+
 @media(max-width:768px){
   h1{font-size:1.5rem}
   .exp-top{flex-direction:column}
+  .judgment-numbers{grid-template-columns:1fr}
+  .mini-nav{position:static;margin:0 0 1.2rem;padding:.4rem 0;border-bottom:none;box-shadow:none;background:transparent}
+  .mini-nav-inner{padding-bottom:.2rem}
 }
   </style>
 </head>
@@ -275,6 +309,83 @@ footer.imq-foot a{color:var(--text-secondary)}
 
   <div id="page-body" hidden>
 
+  <nav class="mini-nav" id="miniNav" aria-label="頁內導覽">
+    <div class="mini-nav-inner">
+      <a href="#sec-judgment">判讀</a>
+      <a href="#sec-forces">力量</a>
+      <a href="#sec-transmission">傳導</a>
+      <a href="#sec-positioning">部位</a>
+      <a href="#sec-analogs">類比</a>
+      <a href="#sec-falsifiers">證偽</a>
+      <a href="#sec-judgment-score">記分</a>
+      <a href="#sec-evidence">證據</a>
+      <a href="#sec-exposure">曝險</a>
+    </div>
+  </nav>
+
+  <section id="sec-judgment">
+    <div class="card judgment-card" id="judgmentCard">
+      <div class="stale-banner" id="staleBanner" hidden></div>
+      <div class="overline" style="margin-bottom:.4rem">本週判讀</div>
+      <p id="judgmentThesis" class="judgment-thesis"></p>
+      <p id="judgmentPath" class="judgment-path"></p>
+      <div class="judgment-meta" id="judgmentMeta"></div>
+      <div class="judgment-numbers" id="judgmentNumbers"></div>
+      <p class="note" id="judgmentMechFallback" hidden></p>
+    </div>
+
+    <div class="card" style="margin-top:14px" id="horizonCard">
+      <h2 style="margin-bottom:.3rem">三個時間框架<span class="en">Horizons</span></h2>
+      <div class="legend"><span><i style="background:var(--s1)"></i>判讀 p</span><span><i class="hollow"></i>基準（climatology）</span></div>
+      <div id="horizonDumbbell"></div>
+      <div class="tw"><table class="mt" id="horizonTable"></table></div>
+    </div>
+  </section>
+
+  <section id="sec-forces">
+    <h2>三股力量<span class="en">Forces</span></h2>
+    <p class="section-sub">判讀寫死的是「看哪個數字、為什麼」；數字本身永遠是活的，來自機械層即時輸出。</p>
+    <div class="grid" id="forcesGrid" style="grid-template-columns:repeat(auto-fit,minmax(420px,1fr))"></div>
+  </section>
+
+  <section id="sec-transmission">
+    <h2>傳導與內部訊號<span class="en">Transmission</span></h2>
+    <p class="section-sub">四格數字全部機械即時，每格底下一句判讀。</p>
+    <div class="grid g4" id="transmissionGrid"></div>
+  </section>
+
+  <section id="sec-positioning">
+    <h2>部位與流量<span class="en">Positioning &amp; Flows</span></h2>
+    <div class="grid g3eq" id="positioningGrid"></div>
+    <p class="note" id="positioningJudgment"></p>
+  </section>
+
+  <section id="sec-analogs">
+    <h2>歷史類比<span class="en">Analogs</span></h2>
+    <div class="grid" id="analogsGrid" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))"></div>
+  </section>
+
+  <section id="sec-falsifiers">
+    <h2>什麼會改變這個判讀<span class="en">Falsifiers</span></h2>
+    <p class="section-sub">與引信區同款式，但這是判讀者選的證偽條件。</p>
+    <div class="tw"><table class="mt" id="falsifiersTable"></table></div>
+
+    <h2 style="margin-top:1.8rem">與帳簿表格的分歧<span class="en">Deviations</span></h2>
+    <div class="tw"><table class="mt" id="deviationsTable"></table></div>
+  </section>
+
+  <section id="sec-judgment-score">
+    <h2>判讀記分<span class="en">Judgment Score</span></h2>
+    <div class="scorecard-grid" id="judgmentScoreGrid"></div>
+    <h3 class="scorecard-subhead">歷次判讀<span class="en">History</span></h3>
+    <div id="judgmentHistoryHost"></div>
+  </section>
+
+  <div class="evidence-heading" id="sec-evidence">
+    <h2>證據層<span class="en">Evidence Layer</span></h2>
+    <p class="section-sub">以下區塊為機械層原始輸出，一個不刪；判讀邏輯見上方，這裡的數字全部即時。</p>
+  </div>
+
   <section id="sec-thesis">
     <div class="card" style="border-left:3px solid var(--accent);border-radius:0 var(--radius) var(--radius) 0">
       <div class="overline" style="margin-bottom:.4rem">今日讀法（機械生成，議會機率＋流量位置）</div>
@@ -372,6 +483,18 @@ footer.imq-foot a{color:var(--text-secondary)}
       <div id="navChartHost"></div>
       <p class="note" id="expSprtNote"></p>
       <p class="note" id="expGapNote" hidden>曝險追蹤檔（exposure_track.json）尚未取得，NAV 對比走勢暫不顯示。</p>
+      <div id="kellyCard"></div>
+      <details>
+        <summary>方法論：Kelly 傾斜與 100% 基準</summary>
+        <p class="note" style="margin-top:.5rem">
+          這是另一條獨立的 paper 帳戶，回答「預測議會的機率有沒有錢的價值」，不是曝險規則本身的一部分。
+          做法：把議會對「SPY 一個月後收高」的機率，與歷史空手猜基準比較，差距（edge）未達
+          5 個百分點時視為<strong>無邊際</strong>——與上方「今日讀法」headline 判定「無邊際／略偏多／略偏空」
+          用的是同一把尺——這時維持 100% 曝險，不做任何傾斜。差距達 5 個百分點以上時，才用四分之一 Kelly
+          公式把曝險上調或下調（上限 150%、下限 50%），邊際越大、傾斜越多。這條規則永遠是 paper，
+          在序貫檢定證明優於基準前不連任何實倉。
+        </p>
+      </details>
     </div>
   </section>
 
@@ -379,7 +502,8 @@ footer.imq-foot a{color:var(--text-secondary)}
     <strong>免責與定位：</strong>本頁為 InvestMQuest Research 內部研究文件，<strong>合成層描述器，非投資建議</strong>。
     所有區塊的判定機制、信心度與資料延遲，皆已在各自來源頁標註；本頁不重算、不加權合成單一總分。
     「市況曝險規則」為 paper 帳戶記分，在序貫檢定證明優於基準前不連任何實倉；判紅即撤，期間不因單一案例調參。
-    過往統計關係不保證未來重演。
+    過往統計關係不保證未來重演。「本週判讀」同樣進帳簿以序貫檢定（SPRT）記分，若判定不優於基準（accept_h0），
+    判讀層即降為純文字評論，頁面拿掉機率呈現，只留證據層機械讀法。
   </div>
 
   </div>
@@ -443,15 +567,19 @@ footer.imq-foot a{color:var(--text-secondary)}
   var SPRT_LLR_MISS = 0.35667;
   var SPRT_B_CONST = -2.2513;
 
-  var SCORE_MODULE_LABEL = { cta: "CTA 趨勢跟隨", month_end: "月末／季末再平衡", exposure_rule: "市況曝險規則（paper）" };
+  var SCORE_MODULE_LABEL = {
+    cta: "CTA 趨勢跟隨", month_end: "月末／季末再平衡", exposure_rule: "市況曝險規則（paper）",
+    kelly_rule: "Kelly 傾斜組合（paper）"
+  };
   var SOURCE_LABEL = {
     "rv-model": "波動率模型", "vix-model": "VIX 期限結構模型", "cot-model": "COT 極端部位模型",
     "tsmom": "趨勢方向模型", "vrp": "波動風險溢酬模型", "dd-verdict": "個股裁決",
     "macro-falsifier": "總經證偽表",
     "sop-funnel": "板機訊號模型", "grp-seat": "GRP 席位", "picks-baofa": "精選爆發榜",
     "tenbagger": "十倍股候選", "risk-gauge": "風險偏好模型", "rrg-sector": "類股輪動模型",
+    "credit-lead": "信用領先模型", "breadth": "市場廣度模型", "calendar": "日曆效應模型",
     "intel-llm": "新聞閱讀模型", "monitor-read": "市場監測判讀", "detective-read": "警報網判讀",
-    "crowding-monitor": "擁擠交易判讀",
+    "crowding-monitor": "擁擠交易判讀", "market-read": "市況判讀（market-read）",
     "sentinel-noise": "哨兵（無技巧對照組）"
   };
   var SCORE_DOT = { green: "🟢", yellow: "🟡", red: "🔴", descriptor: "⚪" };
@@ -585,6 +713,380 @@ footer.imq-foot a{color:var(--text-secondary)}
       var expCard = renderSprtCard("exposure_rule", sc.exposure_rule);
       grid.appendChild(expCard);
     }
+    if (sc.kelly_rule) {
+      grid.appendChild(renderSprtCard("kelly_rule", sc.kelly_rule));
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // v4 判讀層：本週判讀／三個時間框架／三股力量／傳導與內部訊號／
+  // 部位與流量／歷史類比／證偽表／與帳簿分歧／判讀記分。
+  // 讀 data/read.json（判讀者寫）＋ state.json.evidence（K1，可能尚未
+  // 落地）；evidence 缺塊或缺 ref 一律顯示「—」，不拋錯、不擋 v3 區塊。
+  // ══════════════════════════════════════════════════════════════
+
+  function todayTaipeiISO() {
+    var p = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Taipei", year: "numeric", month: "2-digit", day: "2-digit"
+    }).formatToParts(new Date()).reduce(function (o, x) { o[x.type] = x.value; return o; }, {});
+    return p.year + "-" + p.month + "-" + p.day;
+  }
+  function daysBetween(a, b) {
+    var da = new Date(a + "T00:00:00Z"), db = new Date(b + "T00:00:00Z");
+    return Math.round((db - da) / 86400000);
+  }
+  function kvRows(pairs) {
+    return pairs.map(function (p) { return "<b>" + esc(p[0]) + "</b><span>" + esc(p[1]) + "</span>"; }).join("");
+  }
+  function evField(v, unit, digits) {
+    if (v === null || v === undefined) return "—";
+    return fmtNum(v, digits == null ? 1 : digits) + (unit || "");
+  }
+  // 部分 evidence 欄位（如 pc_equity／vrp_20d）schema 註記「(+pctile)」「(+z)」但巢狀形狀未定案，
+  // 這兩個 helper 同時容忍「純數字」與「{val,pctile|z}」兩種形狀，落地後不用動渲染碼。
+  function valPctile(x, digits) {
+    if (x == null) return "—";
+    if (typeof x === "object") {
+      var v = x.val != null ? fmtNum(x.val, digits) : "—";
+      return v + (x.pctile != null ? "（分位 " + Math.round(x.pctile) + "）" : "");
+    }
+    return fmtNum(x, digits);
+  }
+  function valZ(x, digits) {
+    if (x == null) return "—";
+    if (typeof x === "object") {
+      var v = x.val != null ? fmtNum(x.val, digits) : "—";
+      return v + (x.z != null ? "（z " + fmtSigned(x.z, 2) + "）" : "");
+    }
+    return fmtNum(x, digits);
+  }
+  function resolveQuote(state, ref) {
+    var q = state && state.evidence && state.evidence.quotes;
+    return (q && q[ref]) || null;
+  }
+
+  // ── 本週判讀（block 1）＋三個時間框架（block 2）──
+  function ddInfo(h) {
+    if (h.p_dd10 != null) return { label: "10% 回撤", p: h.p_dd10, clim: h.p_clim_dd };
+    if (h.p_dd20 != null) return { label: "20% 回撤", p: h.p_dd20, clim: h.p_clim_dd };
+    return null;
+  }
+  function renderHorizonDumbbell(rows) {
+    var W = 600, L = 190, R = W - 24, rh = 26, H = rows.length * rh + 34;
+    var x = function (v) { return L + (R - L) * v; };
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="max-width:' + W + 'px;display:block">';
+    [0, .25, .5, .75, 1].forEach(function (v) {
+      s += '<line class="gridline" x1="' + x(v) + '" y1="8" x2="' + x(v) + '" y2="' + (H - 24) + '"/>' +
+        '<text x="' + x(v) + '" y="' + (H - 8) + '" text-anchor="middle">' + Math.round(v * 100) + '%</text>';
+    });
+    rows.forEach(function (r, i) {
+      var y = 18 + i * rh;
+      var p = r.p == null ? 0 : r.p, b = r.clim == null ? p : r.clim;
+      s += '<text class="lab" x="' + (L - 10) + '" y="' + (y + 4) + '" text-anchor="end">' + esc(r.label) + '</text>';
+      s += '<line class="link-line" x1="' + x(b) + '" y1="' + y + '" x2="' + x(p) + '" y2="' + y + '"/>';
+      s += '<circle class="dotb" cx="' + x(b) + '" cy="' + y + '" r="5"><title>基準 ' + Math.round(b * 100) + '%</title></circle>';
+      s += '<circle class="dot" cx="' + x(p) + '" cy="' + y + '" r="5.5"><title>判讀 ' + Math.round(p * 100) + '%</title></circle>';
+      var dx = p >= b ? 10 : -10;
+      s += '<text x="' + (x(p) + dx) + '" y="' + (y + 4) + '" text-anchor="' + (dx > 0 ? "start" : "end") +
+        '" style="fill:var(--text);font-weight:600">' + Math.round(p * 100) + '%</text>';
+    });
+    s += '</svg>';
+    return s;
+  }
+  function renderHorizons(read, state) {
+    var host = $("#horizonDumbbell");
+    var tableHost = $("#horizonTable");
+    var horizons = (read && read.horizons) || [];
+    if (!horizons.length) {
+      host.innerHTML = "";
+      tableHost.innerHTML = "<tr><th>框架</th><th colspan=\"6\" class=\"loading\">本期判讀尚無時間框架資料。</th></tr>";
+      return;
+    }
+    host.innerHTML = renderHorizonDumbbell(horizons.map(function (h) {
+      return { label: h.label || h.key, p: h.p_up, clim: h.p_clim_up };
+    }));
+    var html = "<tr><th>框架</th><th>SPY 收高 p</th><th>基準</th><th>回撤 p</th><th>基準</th><th>邏輯</th><th>帳簿命題</th></tr>";
+    horizons.forEach(function (h) {
+      var dd = ddInfo(h);
+      var claimHtml = (h.claim_ids && h.claim_ids.length)
+        ? h.claim_ids.map(function (id) { return '<a href="/flowmap/#ledger">' + esc(id) + '</a>'; }).join("　")
+        : "—";
+      html += "<tr><td>" + esc(h.label || h.key) + "</td>" +
+        "<td class=\"num\">" + (h.p_up != null ? Math.round(h.p_up * 100) + "%" : "—") + "</td>" +
+        "<td class=\"num\">" + (h.p_clim_up != null ? Math.round(h.p_clim_up * 100) + "%" : "—") + "</td>" +
+        "<td class=\"num\">" + (dd && dd.p != null ? dd.label + " " + Math.round(dd.p * 100) + "%" : "—") + "</td>" +
+        "<td class=\"num\">" + (dd && dd.clim != null ? Math.round(dd.clim * 100) + "%" : "—") + "</td>" +
+        "<td style=\"max-width:340px\">" + esc(h.logic_zh || "") + "</td>" +
+        "<td class=\"num\">" + claimHtml + "</td></tr>";
+    });
+    tableHost.innerHTML = html;
+  }
+  function renderJudgment(read, state) {
+    var card = $("#judgmentCard");
+    var banner = $("#staleBanner");
+    var mechFallback = $("#judgmentMechFallback");
+    if (!read) {
+      card.classList.remove("stale");
+      banner.hidden = true;
+      $("#judgmentThesis").textContent = "尚無本週判讀，見下方證據層機械讀法。";
+      $("#judgmentPath").textContent = "";
+      $("#judgmentMeta").textContent = "";
+      $("#judgmentNumbers").innerHTML = "";
+      mechFallback.hidden = true;
+      renderHorizons(null, state);
+      return;
+    }
+    var stale = false;
+    if (read.as_of && read.valid_days != null) {
+      stale = daysBetween(read.as_of, todayTaipeiISO()) > read.valid_days;
+    }
+    card.classList.toggle("stale", stale);
+    if (stale) {
+      banner.hidden = false;
+      banner.textContent = "判讀已過期（" + read.as_of + "），以下為機械讀法";
+      mechFallback.hidden = false;
+      var rz = state.read_zh || {};
+      mechFallback.textContent = rz.headline || "今日無合成判讀。";
+    } else {
+      banner.hidden = true;
+      mechFallback.hidden = true;
+    }
+    $("#judgmentThesis").textContent = read.thesis_zh || "";
+    $("#judgmentPath").textContent = read.path_zh || "";
+    $("#judgmentMeta").textContent = "as-of " + (read.as_of || "—") +
+      "　·　有效期 " + (read.valid_days != null ? read.valid_days + " 天" : "—") +
+      "　·　" + (read.author || "—");
+    var byKey = {};
+    (read.horizons || []).forEach(function (h) { byKey[h.key] = h; });
+    var order = [["3m", "3 個月"], ["6m", "6 個月"], ["12m", "12 個月"]];
+    $("#judgmentNumbers").innerHTML = order.map(function (o) {
+      var h = byKey[o[0]];
+      var p = h && h.p_up != null ? Math.round(h.p_up * 100) + "%" : "—";
+      var base = h && h.p_clim_up != null ? "基準 " + Math.round(h.p_clim_up * 100) + "%" : "基準 —";
+      return '<div class="jn"><div class="lab">' + o[1] + '收高</div><div class="val">' + p + '</div><div class="base">' + base + '</div></div>';
+    }).join("");
+    renderHorizons(read, state);
+  }
+
+  // ── 三股力量（block 3）──
+  function renderForces(read, state) {
+    var host = $("#forcesGrid");
+    var forces = (read && read.forces) || [];
+    if (!forces.length) { host.innerHTML = '<div class="loading">本期判讀尚無力量拆解。</div>'; return; }
+    host.innerHTML = forces.map(function (f) {
+      var rows = (f.refs || []).map(function (r) {
+        var q = resolveQuote(state, r.ref);
+        return "<tr><td>" + esc(q ? q.label : r.ref) +
+          "<div class=\"note\" style=\"margin:2px 0 0\">" + esc(r.ref) + "</div></td>" +
+          "<td class=\"num\">" + esc(q && q.val != null ? q.val : "—") + "</td>" +
+          "<td class=\"num\">" + (q && q.pctile != null ? Math.round(q.pctile) : "—") + "</td>" +
+          "<td class=\"num\">" + (q && q.chg30_pct != null ? fmtSigned(q.chg30_pct, 1) + "%" : "—") + "</td>" +
+          "<td class=\"num\">" + esc(q && q.as_of ? q.as_of : "—") + "</td>" +
+          "<td>" + esc(r.why || "") + "</td></tr>";
+      }).join("");
+      return '<div class="card"><h3 style="font-family:\'Playfair Display\',\'Noto Serif TC\',Georgia,serif;font-size:1.02rem;margin-bottom:.5rem">' +
+        esc(f.title) + '</h3><p style="font-size:.86rem;color:var(--text-secondary);line-height:1.8;margin-bottom:.7rem">' +
+        esc(f.mechanism_zh) + '</p><div class="tw"><table class="mt"><tr><th>指標</th><th>現值</th><th>分位</th><th>30 天變化</th><th>as-of</th><th>為什麼看這個</th></tr>' +
+        rows + '</table></div></div>';
+    }).join("");
+  }
+
+  // ── 傳導與內部訊號（block 4）──
+  var TRANSMISSION_LABEL = { erp: "估值緩衝", credit: "信用分裂", split: "指數 vs 平均股", liquidity: "流動性" };
+  var TRANSMISSION_ORDER = ["erp", "credit", "split", "liquidity"];
+  function renderTransmission(read, state) {
+    var host = $("#transmissionGrid");
+    var ev = (state && state.evidence) || {};
+    var tmap = {};
+    ((read && read.transmission) || []).forEach(function (t) { tmap[t.key] = t.read_zh; });
+    host.innerHTML = TRANSMISSION_ORDER.map(function (key) {
+      var d = ev[key] || null;
+      var rows = "";
+      var flagsHtml = "";
+      if (key === "erp") {
+        rows = kvRows([
+          ["前瞻本益比", d ? evField(d.fwd_pe, "×", 1) : "—"],
+          ["盈餘殖利率", d ? evField(d.ey_pct, "%") : "—"],
+          ["實質利率", d ? evField(d.real10y, "%") : "—"],
+          ["實質風險溢酬", d ? evField(d.real_erp_pp, " pp") : "—"],
+          ["盈餘殖利率 − 10Y", d ? evField(d.nominal_gap_pp, " pp") : "—"]
+        ]);
+      } else if (key === "credit") {
+        rows = kvRows([
+          ["高收益利差", d ? evField(d.hy_oas, "%") : "—"],
+          ["投資級利差", d ? evField(d.ig_oas, "%") : "—"],
+          ["CCC 級利差", d ? evField(d.ccc_oas, "%") : "—"],
+          ["CCC−HY 利差", d ? evField(d.ccc_minus_hy_pp, " pp") : "—"],
+          ["解壓縮", d ? (d.decompression ? "是" : "否") : "—"]
+        ]);
+        if (d && d.decompression) flagsHtml += '<span class="chip crit" style="margin-top:.4rem">解壓縮</span>';
+      } else if (key === "split") {
+        var rv = d && d.recession_votes;
+        rows = kvRows([
+          ["合成壓力分數", d ? evField(d.stress_s, "", 0) : "—"],
+          ["內部壓力分數", d ? evField(d.int_s, "", 0) : "—"],
+          ["站上 200 日線比例", d ? evField(d.brd_above200, "%", 0) : "—"],
+          ["站上 50 日線比例", d ? evField(d.brd_above50, "%", 0) : "—"],
+          ["衰退票數", rv ? (rv.n + "／" + rv.of) : "—"]
+        ]);
+        if (d && d.surface_calm_internal_riskoff) flagsHtml += '<span class="chip warn" style="margin-top:.4rem">表面平靜內部 risk-off</span>';
+      } else {
+        rows = kvRows([
+          ["隔夜逆回購", d ? evField(d.rrp, "") : "—"],
+          ["財政部帳戶", d ? evField(d.tga, "") : "—"],
+          ["準備金分位", d ? evField(d.reserves_pctile, "", 0) : "—"],
+          ["SOFR−IORB", d ? evField(d.sofr_iorb_bp, " bp", 0) : "—"],
+          ["Fed 資產負債表 30 天變化", d ? evField(d.walcl_chg30, "") : "—"]
+        ]);
+      }
+      return '<div class="card tile"><div class="lab" style="font-weight:600;color:var(--text)">' + esc(TRANSMISSION_LABEL[key]) + '</div>' +
+        '<div class="kv" style="margin:.6rem 0">' + rows + '</div>' + flagsHtml +
+        '<p class="note" style="margin-top:.6rem">' + esc(tmap[key] || "—") + '</p></div>';
+    }).join("");
+  }
+
+  // ── 部位與流量（block 5）──
+  function positioningLeft(pos) {
+    var f = pos && pos.flows;
+    var rows = kvRows([
+      ["CTA 翻轉距離", f && f.cta_flip_dist_pct != null ? fmtSigned(f.cta_flip_dist_pct, 1) + "%" : "—"],
+      ["CTA 下一階水位", f && f.cta_flip_level != null ? fmtNum(f.cta_flip_level, 2) : "—"],
+      ["波動控制基金下一階已實現波動", f && f.vc_next_rv != null ? fmtNum(f.vc_next_rv, 1) : "—"],
+      ["對應賣壓（十億美元）", f && f.vc_next_flow_bn != null ? fmtNum(f.vc_next_flow_bn, 1) : "—"],
+      ["月末方向", f && f.month_end_dir ? f.month_end_dir : "—"]
+    ]);
+    var buyback = (f && f.buyback_cov_next4) || [];
+    var bbHtml = buyback.length ? '<p class="note" style="margin-top:.5rem">庫藏股靜默未來四週覆蓋率：' +
+      buyback.map(function (v) { return fmtNum(v, 0) + "%"; }).join(" → ") + '</p>' : "";
+    return '<div class="card"><div class="lab" style="font-weight:600;color:var(--text)">機械賣家在哪裡</div>' +
+      '<div class="kv" style="margin:.6rem 0">' + rows + '</div>' + bbHtml + '</div>';
+  }
+  function positioningMid(pos) {
+    var list = (pos && pos.cot_extremes) || [];
+    var rowsHtml = list.length ? list.map(function (c) {
+      return "<tr><td>" + esc(c.market) + "</td><td class=\"num\">" + fmtSigned(c.net_pct_oi, 1) + "%</td>" +
+        "<td class=\"num\">" + fmtNum(c.pctile_3y, 0) + "</td><td>" + esc(c.side || "") + "</td></tr>";
+    }).join("") : "<tr><td colspan=\"4\" class=\"loading\">尚無 COT 極端部位。</td></tr>";
+    return '<div class="card"><div class="lab" style="font-weight:600;color:var(--text)">COT 部位極端表</div>' +
+      '<div class="tw"><table class="mt" style="margin-top:.5rem"><tr><th>市場</th><th>淨部位 %OI</th><th>三年分位</th><th>方向</th></tr>' + rowsHtml + '</table></div></div>';
+  }
+  function positioningRight(pos) {
+    var vm = pos && pos.vol_mispricing;
+    var rows = kvRows([
+      ["VIX", vm && vm.vix != null ? fmtNum(vm.vix, 1) : "—"],
+      ["VIX9D", vm && vm.vix9d != null ? fmtNum(vm.vix9d, 1) : "—"],
+      ["VIX3M", vm && vm.vix3m != null ? fmtNum(vm.vix3m, 1) : "—"],
+      ["MOVE（分位）", vm && vm.move != null ? fmtNum(vm.move, 0) + "（" + (vm.move_pctile != null ? Math.round(vm.move_pctile) : "—") + "）" : "—"],
+      ["OVX", vm && vm.ovx != null ? fmtNum(vm.ovx, 1) : "—"],
+      ["NAAIM", pos && pos.naaim != null ? fmtNum(pos.naaim, 0) : "—"],
+      ["個股賣權比", valPctile(pos && pos.pc_equity, 2)],
+      ["VRP（20 日）", valZ(pos && pos.vrp_20d, 1)],
+      ["空頭覆蓋率", pos && pos.short_vol_ratio != null ? fmtNum(pos.short_vol_ratio, 2) : "—"]
+    ]);
+    return '<div class="card"><div class="lab" style="font-weight:600;color:var(--text)">波動錯價</div>' +
+      '<div class="kv" style="margin:.6rem 0">' + rows + '</div></div>';
+  }
+  function renderPositioning(read, state) {
+    var pos = (state && state.evidence && state.evidence.positioning) || null;
+    $("#positioningGrid").innerHTML = positioningLeft(pos) + positioningMid(pos) + positioningRight(pos);
+    $("#positioningJudgment").textContent = (read && read.positioning_zh) || "—";
+  }
+
+  // ── 歷史類比（block 6）──
+  function renderAnalogs(read, state) {
+    var host = $("#analogsGrid");
+    var analogs = (read && read.analogs) || [];
+    if (!analogs.length) { host.innerHTML = '<div class="loading">本期判讀尚無歷史類比。</div>'; return; }
+    host.innerHTML = analogs.map(function (a) {
+      var matches = (a.matches || []).map(function (m) {
+        var q = resolveQuote(state, m.today_ref);
+        var live = q && q.val != null ? q.val : "—";
+        return "<li>" + esc(m.feature) + "　<span class=\"mono\" style=\"color:var(--text-muted)\">今日 " + esc(live) + "</span></li>";
+      }).join("");
+      var differs = (a.differs || []).map(function (d) { return "<li>" + esc(d) + "</li>"; }).join("");
+      return '<div class="card"><h3 style="font-family:\'Playfair Display\',\'Noto Serif TC\',Georgia,serif;font-size:1.02rem;margin-bottom:.5rem">' +
+        esc(a.period) + '</h3>' +
+        '<div class="overline" style="font-size:10px;margin-bottom:.2rem">吻合特徵</div><ul style="margin:0 0 .6rem 1.1rem;padding:0;font-size:.83rem;color:var(--text-secondary);line-height:1.8">' + matches + '</ul>' +
+        '<div class="overline" style="font-size:10px;margin-bottom:.2rem">不同之處</div><ul style="margin:0 0 .6rem 1.1rem;padding:0;font-size:.83rem;color:var(--text-secondary);line-height:1.8">' + differs + '</ul>' +
+        '<p class="note"><strong style="color:var(--text-secondary)">當年結果：</strong>' + esc(a.outcome_zh) + '</p></div>';
+    }).join("");
+  }
+
+  // ── 證偽表（block 7）＋與帳簿分歧（block 8）──
+  var FALSIFIER_DIR_LABEL = { bearish: ["crit", "轉空"], bullish: ["good", "轉多"], neutral: ["neutral", "中性轉向"] };
+  function distancePct(cur, threshold) {
+    if (cur == null || threshold == null || cur === 0) return null;
+    return (threshold - cur) / Math.abs(cur) * 100;
+  }
+  function renderFalsifiers(read, state) {
+    var list = (read && read.falsifiers) || [];
+    var councilById = {};
+    ((state && state.council) || []).forEach(function (c) { councilById[c.id] = c; });
+    var html = "<tr><th>方向</th><th>訊號</th><th>現值</th><th>門檻</th><th>距離</th><th>判讀</th><th>帳簿 p</th></tr>";
+    if (!list.length) {
+      html += "<tr><td colspan=\"7\" class=\"loading\">本期判讀尚無證偽表。</td></tr>";
+    } else {
+      list.forEach(function (f) {
+        var q = resolveQuote(state, f.ref);
+        var field = f.field || "num";
+        var cur = q ? q[field] : null;
+        var curDisplay = "—";
+        if (cur != null) {
+          curDisplay = (field === "num" && q.val != null) ? q.val : (fmtSigned(cur, 1) + (field === "chg30_pct" ? "%" : ""));
+        }
+        var dist = distancePct(cur, f.threshold);
+        var dir = FALSIFIER_DIR_LABEL[f.direction] || ["neutral", f.direction || "—"];
+        var claim = f.claim_id ? councilById[f.claim_id] : null;
+        html += "<tr><td><span class=\"chip " + dir[0] + "\">" + dir[1] + "</span></td>" +
+          "<td>" + esc(f.label) + "<div class=\"note\" style=\"margin:2px 0 0\">" + esc(f.ref) + "</div></td>" +
+          "<td class=\"num\">" + esc(curDisplay) + "</td>" +
+          "<td class=\"num\">" + esc(f.op || "") + " " + esc(f.threshold) + esc(f.unit || "") + "</td>" +
+          "<td class=\"num\">" + (dist != null ? fmtSigned(dist, 1) + "%" : "—") + "</td>" +
+          "<td>" + esc(f.read_zh) + "</td>" +
+          "<td class=\"num\">" + (claim && claim.p != null ? Math.round(claim.p * 100) + "%" : "—") + "</td></tr>";
+      });
+    }
+    $("#falsifiersTable").innerHTML = html;
+  }
+  function renderDeviations(read) {
+    var list = (read && read.deviations_from_tables) || [];
+    var html = "<tr><th>命題</th><th>表格 p</th><th>判讀 p</th><th>理由</th></tr>";
+    if (!list.length) {
+      html += "<tr><td colspan=\"4\" class=\"loading\">本期判讀與帳簿表格無記錄分歧。</td></tr>";
+    } else {
+      list.forEach(function (d) {
+        html += "<tr><td>" + esc(d.claim) + "</td>" +
+          "<td class=\"num\">" + (d.table_p != null ? Math.round(d.table_p * 100) + "%" : "—") + "</td>" +
+          "<td class=\"num\">" + (d.my_p != null ? Math.round(d.my_p * 100) + "%" : "—") + "</td>" +
+          "<td>" + esc(d.why) + "</td></tr>";
+      });
+    }
+    $("#deviationsTable").innerHTML = html;
+  }
+
+  // ── 判讀記分（block 9）──
+  function renderJudgmentScore(state) {
+    var host = $("#judgmentScoreGrid");
+    host.innerHTML = "";
+    var src = state.scoreboard && state.scoreboard.ledger_sources && state.scoreboard.ledger_sources["market-read"];
+    if (src) {
+      host.appendChild(renderSourceCard("market-read", src));
+    } else {
+      host.appendChild(el("div", "loading", "首次判讀，尚無成績。"));
+    }
+  }
+  function renderJudgmentHistory(list) {
+    var host = $("#judgmentHistoryHost");
+    if (!list || !list.length) {
+      host.innerHTML = '<p class="note">尚無歷次判讀紀錄。</p>';
+      return;
+    }
+    var rows = list.slice().reverse().map(function (h) {
+      var n = (h.claim_ids || []).length;
+      return "<tr><td class=\"num\">" + esc(h.as_of || "—") + "</td><td>" + esc(h.thesis_zh || "—") +
+        "</td><td class=\"num\">" + n + "</td></tr>";
+    }).join("");
+    host.innerHTML = '<div class="tw"><table class="mt"><tr><th>as-of</th><th>主張</th><th>命題數</th></tr>' + rows + '</table></div>';
   }
 
   // ── 環境五磚 ──
@@ -603,10 +1105,14 @@ footer.imq-foot a{color:var(--text-secondary)}
   }
 
   // ── 預測議會 dumbbell ──
+  // 判讀層命題落帳後，命題型態走 K3 命名（ledger_from_editorial.py DIRECTION_NAMESPACES／
+  // 其餘門檻類）：editorial_direction／editorial_threshold。這裡是「命題」在頁面上唯一顯示
+  // template 欄位的地方，故白話對照表放在這，非另建新機制。
+  var TEMPLATE_LABEL = { editorial_direction: "判讀方向命題", editorial_threshold: "判讀門檻命題" };
   function renderCouncil(rows) {
     rows = rows || [];
     if (!rows.length) { $("#council").innerHTML = '<div class="loading">帳上目前沒有待結算命題。</div>'; return; }
-    var W = 560, L = 260, R = W - 24, rh = 26, H = rows.length * rh + 34;
+    var W = 660, L = 360, R = W - 24, rh = 26, H = rows.length * rh + 34;
     var x = function (v) { return L + (R - L) * v; };
     var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="max-width:' + W + 'px;display:block">';
     [0, .25, .5, .75, 1].forEach(function (v) {
@@ -616,7 +1122,8 @@ footer.imq-foot a{color:var(--text-secondary)}
     rows.forEach(function (r, i) {
       var y = 18 + i * rh;
       var p = r.p == null ? 0 : r.p, b = r.p_clim == null ? p : r.p_clim;
-      s += '<text class="lab" x="' + (L - 10) + '" y="' + (y + 4) + '" text-anchor="end">' + esc(r.label || r.claim) + '</text>';
+      var tmplTag = TEMPLATE_LABEL[r.template] ? "　" + TEMPLATE_LABEL[r.template] : "";
+      s += '<text class="lab" x="' + (L - 10) + '" y="' + (y + 4) + '" text-anchor="end">' + esc(r.label || r.claim) + esc(tmplTag) + '</text>';
       s += '<line class="link-line" x1="' + x(b) + '" y1="' + y + '" x2="' + x(p) + '" y2="' + y + '"/>';
       s += '<circle class="dotb" cx="' + x(b) + '" cy="' + y + '" r="5"><title>空手猜 ' + Math.round(b * 100) + '%</title></circle>';
       s += '<circle class="dot" cx="' + x(p) + '" cy="' + y + '" r="5.5"><title>系統 ' + Math.round(p * 100) + '%</title></circle>';
@@ -809,12 +1316,24 @@ footer.imq-foot a{color:var(--text-secondary)}
       s + renderListsLine(p.lists) + '<p class="note">DD 鏈在挑名字，不是在躲市場。近 60 天裁決數低於門檻時本區改顯示「不判讀」。</p>';
   }
 
-  var LIST_LABEL = {"sop-funnel": "板機訊號", "grp-seat": "GRP 席位", "picks-baofa": "精選爆發榜", "tenbagger": "十倍股候選"};
+  var LIST_LABEL = {
+    "sop-funnel": "板機訊號", "grp-seat": "GRP 席位", "picks-baofa": "精選爆發榜", "tenbagger": "十倍股候選",
+    "own-board": "擁有層前十五（own-board）", "picks-late": "爆發榜晚段（守門擋下）", "mech-nodd": "無 DD 機械過閘"
+  };
+  var LIST_LINK = {
+    "sop-funnel": "/dd-screener/sop-funnel/", "grp-seat": "/cockpit/", "picks-baofa": "/picks/",
+    "tenbagger": "/picks/", "own-board": "/cockpit/", "picks-late": "/picks/", "mech-nodd": "/cockpit/",
+    "dd-verdict": "/research/"
+  };
   function renderListsLine(lists) {
     if (!lists) return '';
-    var parts = Object.keys(lists).map(function (k) { return (LIST_LABEL[k] || k) + ' ' + lists[k]; });
+    var parts = Object.keys(lists).map(function (k) {
+      var label = (LIST_LABEL[k] || k) + ' ' + lists[k];
+      var link = LIST_LINK[k];
+      return link ? '<a href="' + esc(link) + '">' + esc(label) + '</a>' : esc(label);
+    });
     if (!parts.length) return '';
-    return '<div class="kv" style="margin:8px 0 4px"><b>名單層開放命題</b><span>' + esc(parts.join('／')) +
+    return '<div class="kv" style="margin:8px 0 4px"><b>名單層開放命題</b><span>' + parts.join('／') +
       '（各名單每檔一張「跑贏 SPY」單，記分在下方記分板）</span></div>';
   }
 
@@ -865,7 +1384,7 @@ footer.imq-foot a{color:var(--text-secondary)}
       sprtModule ? sprtModule.n_eff : 0, sprtModule ? sprtModule.n_required : SPRT_FLOOR);
   }
 
-  function renderNavChart(track, fetched) {
+  function renderNavChart(track, fetched, kellyTrack) {
     var host = $("#navChartHost");
     if (!track || !track.nav_series || !track.nav_series.length) {
       var gap = $("#expGapNote");
@@ -878,10 +1397,17 @@ footer.imq-foot a{color:var(--text-secondary)}
     }
     $("#expGapNote").hidden = true;
     var pts = track.nav_series;
+    // Kelly 傾斜組合（paper）NAV 併入同一張圖：兩條 track 同 inception_date、同一組
+    // SPY 日線，依 date 對齊；kelly_track.json 尚無資料（inception 前）時本段自然
+    // 略過，pts[].nav_kelly 全部缺值，該條線不畫，不影響既有兩條線。
+    var kellySeries = (kellyTrack && kellyTrack.nav_series) || [];
+    var kellyByDate = {};
+    kellySeries.forEach(function (p) { kellyByDate[p.date] = p.nav; });
+    pts.forEach(function (p) { p.nav_kelly = kellyByDate.hasOwnProperty(p.date) ? kellyByDate[p.date] : null; });
     var W = 640, H = 160, L = 46, R = W - 16, T = 12, B = 28;
     var allVals = [];
     pts.forEach(function (p) {
-      ["nav", "nav_spy", "nav_b6040"].forEach(function (k) { if (p[k] != null) allVals.push(p[k]); });
+      ["nav", "nav_spy", "nav_b6040", "nav_kelly"].forEach(function (k) { if (p[k] != null) allVals.push(p[k]); });
     });
     var lo = Math.min.apply(null, allVals), hi = Math.max.apply(null, allVals);
     if (lo === hi) { lo -= 1; hi += 1; }
@@ -905,12 +1431,39 @@ footer.imq-foot a{color:var(--text-secondary)}
     s += line("nav_b6040", "var(--text-muted)");
     s += line("nav_spy", "var(--s2)");
     s += line("nav", "var(--s1)");
+    s += line("nav_kelly", "var(--pos)");
     s += '<text x="' + L + '" y="' + (H - 6) + '">' + esc(pts[0].date) + '</text>';
     s += '<text x="' + R + '" y="' + (H - 6) + '" text-anchor="end">' + esc(pts[pts.length - 1].date) + '</text>';
     s += '</svg><div class="legend"><span><i style="background:var(--s1)"></i>paper 曝險規則 NAV</span>' +
+      '<span><i style="background:var(--pos)"></i>Kelly 傾斜組合 NAV（paper）</span>' +
       '<span><i style="background:var(--s2)"></i>SPY buy-and-hold</span>' +
       '<span><i style="background:var(--text-muted)"></i>60/40（SPY／AGG）</span></div>';
     host.innerHTML = s;
+  }
+
+  var KELLY_REASON_ZH = {
+    no_edge: "議會邊際不足 5 個百分點，維持 100%",
+    thin_council: "投票來源不足兩個，維持 100%",
+    missing_input: "輸入缺漏，維持 100%",
+    kelly_tilt: "依議會邊際傾斜"
+  };
+  function renderKelly(kr) {
+    var host = $("#kellyCard");
+    if (!kr) {
+      host.innerHTML = '<p class="note">Kelly 傾斜組合（paper）尚未取得（kelly_track.json 缺檔或尚無可用資料）。</p>';
+      return;
+    }
+    var reasonTxt = KELLY_REASON_ZH[kr.reason] || (kr.reason || "—");
+    host.innerHTML =
+      '<div class="card" style="background:var(--bg-card2);margin-top:.7rem">' +
+      '<div class="overline" style="margin-bottom:.5rem">Kelly 傾斜組合（paper）</div>' +
+      '<div class="kv">' +
+      '<b>E 曝險倍率</b><span>' + (kr.exposure != null ? fmtNum(kr.exposure, 2) + '×' : '—') + '</span>' +
+      '<b>edge</b><span>' + (kr.edge != null ? fmtSigned(kr.edge * 100, 1) + ' pp' : '—') + '</span>' +
+      '<b>z</b><span>' + (kr.z != null ? fmtNum(kr.z, 3) : '—') + '</span>' +
+      '<b>σ21</b><span>' + (kr.sigma21 != null ? fmtNum(kr.sigma21 * 100, 2) + '%' : '—') + '</span>' +
+      '<b>原因</b><span>' + esc(reasonTxt) + '</span>' +
+      '</div></div>';
   }
 
   // ── 主流程 ──
@@ -938,15 +1491,65 @@ footer.imq-foot a{color:var(--text-secondary)}
     renderFresh(data.freshness);
     renderScoreboard(data.scoreboard);
     renderExposure(data.exposure_rule, (data.scoreboard || {}).exposure_rule);
+    renderKelly(data.kelly_rule);
+    renderJudgmentScore(data);
 
-    // 曝險追蹤檔（NAV 對比走勢）獨立 fetch，fail-safe
+    // 判讀層（read.json）獨立 fetch，fail-safe：缺檔/壞檔只讓判讀區塊顯示「尚無」，
+    // 不影響上面已渲染完成的 v3 證據層區塊。傳導／部位兩區塊即使 read.json 缺席，
+    // 仍讀 state.evidence（若已由 K1 落地）顯示即時數字。
+    fetch("data/read.json").then(function (r) {
+      if (!r.ok) throw new Error("read.json HTTP " + r.status);
+      return r.json();
+    }).then(function (read) {
+      renderJudgment(read, data);
+      renderForces(read, data);
+      renderTransmission(read, data);
+      renderPositioning(read, data);
+      renderAnalogs(read, data);
+      renderFalsifiers(read, data);
+      renderDeviations(read);
+    }).catch(function () {
+      renderJudgment(null, data);
+      renderForces(null, data);
+      renderTransmission(null, data);
+      renderPositioning(null, data);
+      renderAnalogs(null, data);
+      renderFalsifiers(null, data);
+      renderDeviations(null);
+    });
+
+    // 判讀記分歷史（read_history.jsonl）獨立 fetch，同樣 fail-safe。
+    fetch("data/read_history.jsonl").then(function (r) {
+      if (!r.ok) throw new Error("read_history.jsonl HTTP " + r.status);
+      return r.text();
+    }).then(function (txt) {
+      var lines = txt.split("\n").map(function (l) { return l.trim(); }).filter(Boolean);
+      var list = lines.map(function (l) {
+        try { return JSON.parse(l); } catch (e) { return null; }
+      }).filter(Boolean);
+      renderJudgmentHistory(list);
+    }).catch(function () {
+      renderJudgmentHistory(null);
+    });
+
+    // 曝險追蹤檔＋Kelly 追蹤檔（NAV 對比走勢）各自獨立 fetch，fail-safe，缺一不擋另一
+    function withKellyTrack(track, fetched) {
+      fetch("data/kelly_track.json").then(function (r) {
+        if (!r.ok) throw new Error("kelly_track.json HTTP " + r.status);
+        return r.json();
+      }).then(function (kelly) {
+        renderNavChart(track, fetched, kelly);
+      }).catch(function () {
+        renderNavChart(track, fetched, null);
+      });
+    }
     fetch("data/exposure_track.json").then(function (r) {
       if (!r.ok) throw new Error("exposure_track.json HTTP " + r.status);
       return r.json();
     }).then(function (track) {
-      renderNavChart(track, true);
+      withKellyTrack(track, true);
     }).catch(function () {
-      renderNavChart(null, false);
+      withKellyTrack(null, false);
     });
   }).catch(function (err) {
     $("#asof").hidden = true;

@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""ledger_from_editorial.py — 把判讀層（monitor-read／detective-read／crowding-monitor）
-editorial JSON 裡的 `forecasts[]` 命題擬成 knowledge/forecasts.jsonl 草案（市況主控台設計稿
-`notes/site-internal/root/_market_cockpit_design_20260902.md` §3；schema="fc-v2"）。
+"""ledger_from_editorial.py — 把判讀層（monitor-read／detective-read／crowding-monitor／
+market-read）editorial JSON 裡的 `forecasts[]` 命題擬成 knowledge/forecasts.jsonl 草案（市況
+主控台設計稿 `notes/site-internal/root/_market_cockpit_design_20260902.md` §3；schema="fc-v2"；
+market-read 分包規格見 `notes/site-internal/root/_market_read_design_20260903.md` §2.3）。
 
 背景：§0 拍板 2「判讀必留命題」——monitor-read／detective-read／crowding-monitor／
-macro-analyst 每次判讀至少 1 條、至多 3 條帶 resolver＋p 的命題進帳簿；不留命題＝沒說話。
-本檔是共用的機械落帳腳本：驗 resolver、查重、生 p_clim、append（含哨兵 twin）。判讀技能本身
-（monitor-read.md／detective-read.md／crowding-monitor.md）產出 `forecasts[]` 這個欄位是
-orchestrator 的職責（改 skill 條文），本檔只消費既有 JSON 檔的這個欄位，不管它從哪個 skill
-產生。
+macro-analyst／market-read 每次判讀至少 1 條、至多 8 條（market-read 5–8 條，見 §2.3）帶
+resolver＋p 的命題進帳簿；不留命題＝沒說話。本檔是共用的機械落帳腳本：驗 resolver、查重、生
+p_clim、append（含哨兵 twin）。判讀技能本身（monitor-read.md／detective-read.md／
+crowding-monitor.md／market-read.md）產出 `forecasts[]` 這個欄位是 orchestrator 的職責
+（改 skill 條文），本檔只消費既有 JSON 檔的這個欄位，不管它從哪個 skill 產生。
 
 輸入 `--file` 指向的 JSON 須有：
   - 頂層 `as_of`（或 `date`）：判讀所屬日期，YYYY-MM-DD；缺欄退回今天並印警告。
@@ -30,9 +31,20 @@ orchestrator 的職責（改 skill 條文），本檔只消費既有 JSON 檔的
        - `monitor:{dgs10,dgs30,hy_oas,tp10y,sofr_iorb}` → `build_macro_base_rates.climatology()`
          （delta＝resolver.value（顯示單位門檻）− monitor 現值，同 harvest_macro_falsifiers.py
          的單位口徑：dgs10/dgs30/hy_oas/tp10y 為 %、sofr_iorb 為 bp）。
-       - `pxd:{SPY,QQQ,IWM}` 方向命題（value≈現價，語意上是 at_expiry 型的漲跌判斷）→
-         data/flowmap_prices.json 近 ~2 年（快取本身 rolling ~500 交易日）在同一 horizon
-         （交易日=round(horizon_days×252/365)）下「t+H_td 收盤 op t 收盤」的無條件頻率。
+       - **`pxd:SPY`（2026-09-03 起，market-read 專用覆寫，見設計稿 §2.3）** → 一律改用
+         `data/calendar_base_rates_raw_cache.json`（25 年 SPY 日線，季度手動重建，非
+         flowmap 的 ~2 年 rolling 快取）。H_td=round(horizon_days×252/365)：
+         `window="at_expiry"` 算「t+H_td 收盤 op t 收盤」在全部起始日 t 上的無條件頻率
+         （op ">"／">=" 算上漲、"<"／"<=" 算下跌，同 `_pxd_direction_p_clim` 的方向判定）；
+         `window="any_close"` 先把 resolver.value 換算成相對比例 r＝value／快取最後收盤，
+         再算全部起始日 t 上「close(t+1..t+H_td)／close(t) 的最大值（op 為 ">"／">="）或
+         最小值（op 為 "<"／"<="）是否穿越 r」的無條件頻率（即「H_td 天內任一收盤達到該相對
+         漲跌幅」的頻率，價格本身跨 25 年成長約 30 倍，故不能直接比較絕對價位，只能比例對齊）。
+         `pxd:{QQQ,IWM}` 與其餘 source 不受影響，仍走下一條的 2 年規則。
+       - `pxd:{SPY,QQQ,IWM}`（SPY 已被上一條攔截，此處實際只剩 QQQ／IWM）方向命題
+         （value≈現價，語意上是 at_expiry 型的漲跌判斷）→ data/flowmap_prices.json 近 ~2 年
+         （快取本身 rolling ~500 交易日）在同一 horizon（交易日=round(horizon_days×252/365)）
+         下「t+H_td 收盤 op t 收盤」的無條件頻率。
        - `vixts:SLOPE` → data/vixts_base_rates_raw_cache.json 的 SLOPE（^VIX3M−^VIX 共同
          交易日）同一 horizon 下對 resolver.value／op／window 的無條件頻率。
        - 其餘 series（price:／rv:／ttp:／relspy:／pxd 非白名單 ticker 等）→ p_clim=None
@@ -52,9 +64,16 @@ CLI
   python scripts/ledger_from_editorial.py --source monitor-read --file <path> --write
                                             # 落帳：append 進 knowledge/forecasts.jsonl（含哨兵 twin）
   python scripts/ledger_from_editorial.py --source crowding-monitor --file docs/crowding/data/forecasts_20260906.json --write
+  python scripts/ledger_from_editorial.py --source market-read --file docs/market/data/read.json --write
+                                            # 市況主控台判讀層（設計稿 §2.3）；--write 後把落帳
+                                            # id 依序回填 docs/market/data/read.json 的
+                                            # claim_ids[]（僅當落帳目標是預設真帳簿時才回填，
+                                            # 見下方 --ledger 說明）
 
 `--ledger PATH`：覆寫查重／落帳目標（預設 knowledge/forecasts.jsonl）。測試或離線核對用，
-指向 scratch 檔即可，絕不可指向真帳簿之外的用途誤用來覆蓋真檔。
+指向 scratch 檔即可，絕不可指向真帳簿之外的用途誤用來覆蓋真檔。**回填 claim_ids[] 只在落帳
+目標是預設真帳簿（未給 `--ledger`）時才會寫回 `--file` 來源檔**；給了 `--ledger`（測試／離線）
+時，落帳 id 仍會印出，但不會動來源檔一根汗毛（stderr 會明講原因）。
 
 拒絕原因、每筆 p_clim 診斷與統計印到 stderr，不混進 stdout 的 JSONL。
 """
@@ -72,6 +91,8 @@ FORECASTS = ROOT / "knowledge" / "forecasts.jsonl"
 MONITOR_LATEST = ROOT / "docs" / "monitor" / "data" / "latest.json"
 FLOWMAP_PRICES = ROOT / "data" / "flowmap_prices.json"
 VIXTS_RAW_CACHE = ROOT / "data" / "vixts_base_rates_raw_cache.json"
+CALENDAR_RAW_CACHE = ROOT / "data" / "calendar_base_rates_raw_cache.json"  # SPY 25 年日線，
+# market-read 專用 p_clim 覆寫（設計稿 §2.3；build_calendar_base_rates.py 季度手動重建）
 
 sys.path.insert(0, str(ROOT / "knowledge"))
 import forecast_lib as fl  # noqa: E402 — id 產生／v2 欄位補齊（block_key）／落帳＋哨兵 twin
@@ -80,7 +101,7 @@ import settle_forecasts as sf  # noqa: E402 — check_resolver()（resolver 廣�
 sys.path.insert(0, str(ROOT / "scripts"))
 import build_macro_base_rates as bmr  # noqa: E402 — climatology()／raw cache（monitor 五個 FRED key）
 
-SOURCES = ("monitor-read", "detective-read", "crowding-monitor")
+SOURCES = ("monitor-read", "detective-read", "crowding-monitor", "market-read")
 ID_PREFIX = "ed"
 
 MONITOR_CLIMATOLOGY_KEYS = {"dgs10", "dgs30", "hy_oas", "tp10y", "sofr_iorb"}
@@ -169,6 +190,80 @@ def _pxd_direction_p_clim(ticker, op, horizon_days, prices_path=FLOWMAP_PRICES):
     return round(p, 4), ref
 
 
+def _spy_calendar_bars(cache_path=CALENDAR_RAW_CACHE):
+    try:
+        data = json.loads(cache_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    bars = (data.get("series") or {}).get("SPY")
+    if not bars:
+        return None
+    return sorted(bars, key=lambda x: x[0])
+
+
+def _spy_calendar_p_clim(op, value, horizon_days, window, cache_path=CALENDAR_RAW_CACHE):
+    """`pxd:SPY` 專用覆寫（2026-09-03 起，設計稿 §2.3）：一律改用
+    `data/calendar_base_rates_raw_cache.json` 的 25 年 SPY 日線（非 flowmap 的 ~2 年 rolling
+    快取），理由是市況判讀層的三框架機率與回撤命題需要橫跨多個景氣循環的無條件參照，而不是近
+    兩年這種單一體制樣本。
+
+    window="at_expiry"：與 `_pxd_direction_p_clim` 同一種「t+H_td 收盤 op t 收盤」方向頻率，
+    只是換一個更長的價格序列。
+
+    window="any_close"：resolver.value 是絕對價位（如「跌破 685.62」），但 25 年裡 SPY 從
+    24 漲到 761，絕對價位無法跨期比較，所以先換算成相對今收的比例 r=value/最後收盤，再算
+    「未來 H_td 個交易日內，close(t+1..t+H_td)/close(t) 的最大值（op 為漲）或最小值（op 為跌）
+    是否穿越 r」在全部起始日 t 上的無條件頻率——即「H_td 天內任一收盤達到這個相對漲跌幅」的
+    歷史頻率。"""
+    vals_bars = _spy_calendar_bars(cache_path)
+    if not vals_bars:
+        return None, f"{cache_path} 無法讀取或找不到 SPY，無法算 p_clim"
+    vals = [c for _, c in vals_bars]
+    n_total = len(vals)
+    H_td = max(1, round(horizon_days * 252 / 365))
+    op_eff = ">" if op in (">", ">=") else "<"
+    last_close = vals[-1]
+
+    if window == "at_expiry":
+        hits = count = 0
+        for t in range(0, n_total - H_td):
+            future, cur = vals[t + H_td], vals[t]
+            hit = (future > cur) if op_eff == ">" else (future < cur)
+            count += 1
+            hits += hit
+        if count == 0:
+            return None, f"{cache_path} SPY 歷史不足 H_td={H_td} 交易日，無法算 p_clim"
+        p = hits / count
+        ref = (f"data/calendar_base_rates_raw_cache.json SPY 25 年（{vals_bars[0][0]}~"
+               f"{vals_bars[-1][0]}，n={n_total} 交易日）｜H_td={H_td}"
+               f"（horizon_days={horizon_days}×252/365 四捨五入）｜at_expiry｜op={op_eff} 無條件"
+               f"{'上漲' if op_eff == '>' else '下跌'}頻率（t+H_td 收盤 vs t 收盤）｜n={count}")
+        return round(p, 4), ref
+
+    # window == "any_close"
+    r = value / last_close
+    hits = count = 0
+    for t in range(0, n_total - H_td):
+        cur = vals[t]
+        window_vals = vals[t + 1:t + H_td + 1]
+        if len(window_vals) != H_td:
+            continue
+        ratios = [w / cur for w in window_vals]
+        extreme = max(ratios) if op_eff == ">" else min(ratios)
+        hit = (extreme > r) if op_eff == ">" else (extreme < r)
+        count += 1
+        hits += hit
+    if count == 0:
+        return None, f"{cache_path} SPY 歷史不足 H_td={H_td} 交易日，無法算 p_clim"
+    p = hits / count
+    ref = (f"data/calendar_base_rates_raw_cache.json SPY 25 年（{vals_bars[0][0]}~"
+           f"{vals_bars[-1][0]}，n={n_total} 交易日）｜H_td={H_td}"
+           f"（horizon_days={horizon_days}×252/365 四捨五入）｜any_close｜r=value/最後收盤="
+           f"{value}/{last_close}={r:.4f}｜op={op_eff} 任一收盤穿越比例 r 的無條件頻率"
+           f"（close(t+1..t+H_td)/close(t) 的{'最大值' if op_eff == '>' else '最小值'}）｜n={count}")
+    return round(p, 4), ref
+
+
 def _vixts_slope_series(cache_path=VIXTS_RAW_CACHE):
     try:
         data = json.loads(cache_path.read_text(encoding="utf-8"))
@@ -217,6 +312,8 @@ def compute_p_clim(resolver: dict, horizon_days: int):
     op, value, window = resolver.get("op"), resolver.get("value"), resolver.get("window")
     if ns == "monitor" and key in MONITOR_CLIMATOLOGY_KEYS:
         return _monitor_p_clim(key, op, value, horizon_days)
+    if ns == "pxd" and key == "SPY":
+        return _spy_calendar_p_clim(op, value, horizon_days, window)
     if ns == "pxd" and key in PXD_TICKERS:
         return _pxd_direction_p_clim(key, op, horizon_days)
     if ns == "vixts" and key == "SLOPE":
@@ -288,13 +385,16 @@ def _validate_item(item):
 
 
 def build_drafts(source, file_path, items, as_of, ledger_path, today=None):
-    """回傳 (drafts_without_id, rejected)。rejected：[(index, reason), ...]。drafts 尚未經
-    fl.next_ids／fl.finalize（呼叫端負責，與 generate_cot_forecasts.py 既有慣例一致）。"""
+    """回傳 (drafts_without_id, rejected, orig_indices)。rejected：[(index, reason), ...]。
+    orig_indices[i] = drafts[i] 對應在原始 `items`（即來源檔 forecasts[]）的索引，供呼叫端
+    落帳後把 id 依序回填回來源檔 claim_ids[]（與 forecasts[] 同序，未通過驗證／查重的位置留
+    None）。drafts 尚未經 fl.next_ids／fl.finalize（呼叫端負責，與 generate_cot_forecasts.py
+    既有慣例一致）。"""
     today = today or date.today()
     ts_str = today.isoformat()
     recent_claims = _existing_recent_claims(ledger_path, source, today)
 
-    drafts, rejected = [], []
+    drafts, rejected, orig_indices = [], [], []
     n = 0
     for idx, item in enumerate(items):
         ok, reason, norm = _validate_item(item)
@@ -306,6 +406,7 @@ def build_drafts(source, file_path, items, as_of, ledger_path, today=None):
             continue
 
         n += 1
+        orig_indices.append(idx)
         resolver = norm["resolver"]
         series = resolver["series"]
         ns = series.split(":", 1)[0]
@@ -332,7 +433,7 @@ def build_drafts(source, file_path, items, as_of, ledger_path, today=None):
             "episode_id": episode_id,
             # block_key 刻意不設——交給 fl.finalize() 用預設規則（ts 所在月）補齊
         })
-    return drafts, rejected
+    return drafts, rejected, orig_indices
 
 
 def main():
@@ -366,7 +467,8 @@ def main():
         items = []
 
     today = date.today()
-    drafts, rejected = build_drafts(args.source, str(args.file), items, as_of, ledger_path, today=today)
+    drafts, rejected, orig_indices = build_drafts(args.source, str(args.file), items, as_of,
+                                                   ledger_path, today=today)
 
     if drafts:
         ids = fl.next_ids(today.isoformat(), ID_PREFIX, len(drafts), ledger_path)
@@ -389,6 +491,20 @@ def main():
     else:
         info(f"--write：寫入 {n_written} 本尊 + {n_twins} 哨兵 → {ledger_path}"
              f"（{len(rejected)} 筆拒絕，{len(items) - len(drafts) - len(rejected)} 筆其他原因跳過）。")
+
+        # 回填 claim_ids[]（與 forecasts[] 同序；未通過驗證／查重的位置留 None）——只有落帳
+        # 目標是預設真帳簿（未給 --ledger）時才動來源檔，測試／離線核對絕不可誤寫回真判讀檔。
+        ordered_ids = [None] * len(items)
+        for d, oidx in zip(drafts, orig_indices):
+            ordered_ids[oidx] = d["id"]
+        info(f"落帳 id（依 forecasts[] 原序，未落帳位置為 null）：{ordered_ids}")
+        if args.ledger is None:
+            data["claim_ids"] = ordered_ids
+            file_path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            info(f"已回填 claim_ids[] → {file_path}")
+        else:
+            warn(f"--ledger 指向非預設路徑（{ledger_path}），僅印出落帳 id，"
+                 f"不回填來源檔 {file_path} 的 claim_ids[]")
 
     if not items:
         warn(f"{file_path}（as_of={as_of}）forecasts[] 為空——本次判讀未留下任何命題"

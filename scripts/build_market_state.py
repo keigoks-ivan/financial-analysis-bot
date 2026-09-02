@@ -26,11 +26,12 @@ from __future__ import annotations
 
 import argparse
 import calendar
+import html
 import importlib.util
 import json
 import os
 import re
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -46,6 +47,9 @@ VERDICTS = ("進場", "觀望", "迴避")
 DEFAULT_PATHS = {
     "monitor": os.path.join(DOCS, "monitor", "data", "latest.json"),
     "monitor_score_history": os.path.join(DOCS, "monitor", "data", "score_history.json"),
+    "internals": os.path.join(DOCS, "monitor", "data", "internals.json"),
+    "macro_calendar": os.path.join(DOCS, "monitor", "data", "macro_calendar.json"),
+    "read": os.path.join(DOCS, "market", "data", "read.json"),
     "detective": os.path.join(DOCS, "detective", "data", "latest.json"),
     "flowmap": os.path.join(DOCS, "flowmap", "data", "latest.json"),
     "flowmap_prices": os.path.join(DATA, "flowmap_prices.json"),
@@ -59,6 +63,7 @@ DEFAULT_PATHS = {
     "forecasts": os.path.join(KNOWLEDGE, "forecasts.jsonl"),
     "decisions": os.path.join(KNOWLEDGE, "decisions.jsonl"),
     "exposure_track": os.path.join(DOCS, "market", "data", "exposure_track.json"),
+    "kelly_track": os.path.join(DOCS, "market", "data", "kelly_track.json"),
     "scorecard": os.path.join(DOCS, "flowmap", "data", "scorecard.json"),
     "rv_base_rates": os.path.join(DATA, "rv_base_rates.json"),
     "trend_track_prices": os.path.join(DATA, "trend_track_prices.json"),
@@ -224,6 +229,20 @@ def cadence_label(c):
     return CADENCE_LABEL.get(c, c)
 
 
+def long_track_as_of(lt):
+    """實單執行層真實 as_of（P2 稿 §0／§7(a) 修法）：`data_date` 是週線 bar 標籤
+    （本週五），會領先真正的資料日，讀者看到未來日期、stale 判定也因此晚判。
+    改用 history_us[-1].date／history_tw[-1].date 兩市場最後一筆真實交易日取
+    max，environment 磚與 freshness 列一致採用本函式。"""
+    lt = lt or {}
+    hist_us = lt.get("history_us") or []
+    hist_tw = lt.get("history_tw") or []
+    us_last = hist_us[-1].get("date") if hist_us else None
+    tw_last = hist_tw[-1].get("date") if hist_tw else None
+    real_dates = [d for d in (us_last, tw_last) if d]
+    return max(real_dates) if real_dates else None
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 # band／tone 詞彙（沿用 docs/monitor/index.html 既有 BAND_LABELS 中文對照，
 # score_history.json 的 bands 門檻）
@@ -351,13 +370,14 @@ def build_environment(regime_data, macro_clock_data, detective_data, monitor_dat
     tickers = lt.get("tickers") or {}
     exec_us = sum((v.get("executed_pct") or 0) for v in tickers.values() if v.get("market") == "美股")
     exec_tw = sum((v.get("executed_pct") or 0) for v in tickers.values() if v.get("market") == "台股")
-    lt_as_of = lt.get("data_date")
+    lt_as_of = long_track_as_of(lt)
+    data_date = lt.get("data_date")
     stale, _st = classify_stale(lt_as_of, today, "daily")
     tone = "good" if (us is not None and tw is not None and us >= 100 and tw >= 100) else "warn"
     tiles.append({
         "key": "system_cockpit", "label": "實單執行層（系統主控台）",
         "value": (f"美 {us:.1f}% · 台 {tw:.1f}%" if us is not None and tw is not None else "—"),
-        "sub": (f"現持 美 {exec_us:.1f}%／台 {exec_tw:.1f}% · 52 週線動能 × 自適應波動率"
+        "sub": (f"現持 美 {exec_us:.1f}%／台 {exec_tw:.1f}% · 52 週線動能 × 自適應波動率 · 週線 bar {data_date}"
                 if long_track_data is not None else None),
         "as_of": lt_as_of, "cadence": cadence_label("daily"),
         "stale": (True if long_track_data is None else stale),
@@ -381,7 +401,8 @@ def _ticker_of_claim(claim):
     return tail.split(" ")[0] if tail else None
 
 
-STOCK_LEVEL_SOURCES = ("dd-verdict", "sop-funnel", "grp-seat", "picks-baofa", "tenbagger")  # 個股層命題：進 stock_pulse.lists，不進議會圖
+STOCK_LEVEL_SOURCES = ("dd-verdict", "sop-funnel", "grp-seat", "picks-baofa", "tenbagger",
+                       "own-board", "picks-late", "mech-nodd")  # 個股層命題：進 stock_pulse.lists，不進議會圖
 
 def _council_label(r):
     """議會圖用的短標籤（白話、≤ 22 字）；claim 全文仍保留在 claim 欄供 tooltip。"""
@@ -401,6 +422,18 @@ def _council_label(r):
         return "SPY 一個月後更高（波動溢酬）"
     if t == "vrp_spy_up_63d":
         return "SPY 三個月後更高（波動溢酬）"
+    if t == "credit_spy_up_21d":
+        return "SPY 一個月後更高（信用領先）"
+    if t == "credit_spy_up_63d":
+        return "SPY 三個月後更高（信用領先）"
+    if t == "breadth_spy_up_21d":
+        return "SPY 一個月後更高（市場廣度）"
+    if t == "breadth_spy_up_63d":
+        return "SPY 三個月後更高（市場廣度）"
+    if t == "tom_spy_up_4d":
+        return "SPY 月末窗更高（日曆效應）"
+    if t == "preholiday_spy_up_1d":
+        return "SPY 假日前更高（日曆效應）"
     if t == "vixts_recover_21d":
         return "VIX 曲線 21 日內回正"
     if t == "spy_up_63d_after_onset":
@@ -438,9 +471,19 @@ def build_council(forecasts_rows):
              and r.get("claim_template") == "tsmom_up_21d" and _ticker_of_claim(r.get("claim")) == "SPY"]
             + [r for r in council_rows if r.get("source") == "vrp"
                and r.get("claim_template") == "vrp_spy_up_21d"]
+            + [r for r in council_rows if r.get("source") == "credit-lead"
+               and r.get("claim_template") == "credit_spy_up_21d"]
+            + [r for r in council_rows if r.get("source") == "breadth"
+               and r.get("claim_template") == "breadth_spy_up_21d"]
         ),
-        "spy_up_63d": [r for r in council_rows if r.get("source") == "vrp"
-                       and r.get("claim_template") == "vrp_spy_up_63d"],
+        "spy_up_63d": (
+            [r for r in council_rows if r.get("source") == "vrp"
+             and r.get("claim_template") == "vrp_spy_up_63d"]
+            + [r for r in council_rows if r.get("source") == "credit-lead"
+               and r.get("claim_template") == "credit_spy_up_63d"]
+            + [r for r in council_rows if r.get("source") == "breadth"
+               and r.get("claim_template") == "breadth_spy_up_63d"]
+        ),
         "vol_up_21d": [r for r in council_rows if r.get("source") == "rv-model"
                        and r.get("claim_template") == "rv21_higher_21d"],
         "vol_spike_21d": [r for r in council_rows if r.get("source") == "rv-model"
@@ -772,6 +815,39 @@ def build_exposure_rule(exposure_track_data, gaps):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# kelly_rule（讀 docs/market/data/kelly_track.json 最新一筆，P2 稿 §4／§7(c)；
+# 缺檔→null＋gap，週更；nav 在 inception 前為 null 屬正常狀態，不是缺檔）
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+def build_kelly_rule(kelly_track_data, gaps):
+    if not kelly_track_data:
+        gaps.append("docs/market/data/kelly_track.json 缺檔（G5 尚未產出），kelly_rule 記為 null")
+        return None
+
+    exposure_history = kelly_track_data.get("exposure_history") or []
+    last = exposure_history[-1] if exposure_history else {}
+    nav_series = kelly_track_data.get("nav_series") or []
+    last_nav = nav_series[-1] if nav_series else {}
+    if not last:
+        gaps.append("kelly_track.json 存在但 exposure_history 為空，kelly_rule 記為 null")
+        return None
+
+    return {
+        "as_of": kelly_track_data.get("as_of"),
+        "exposure": last.get("E"),
+        "edge": last.get("edge"),
+        "z": last.get("z"),
+        "sigma21": last.get("sigma21"),
+        "reason": last.get("reason"),
+        "n_sources": last.get("n_sources"),
+        "nav": last_nav.get("nav"),
+        "bench": {"spy_bh": last_nav.get("spy_bh")},
+        "sprt": kelly_track_data.get("sprt"),
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # scoreboard（scorecard.json 全量 pass-through，E2 renderScoreboard 需要完整
 # sprt/kill_condition/bss_ci90 等欄位，不可只留 status/n_eff 子集）
 # ═══════════════════════════════════════════════════════════════════════════
@@ -787,6 +863,8 @@ def build_scoreboard(scorecard_data, gaps):
     }
     if "exposure_rule" in scorecard_data:
         sb["exposure_rule"] = scorecard_data["exposure_rule"]
+    if "kelly_rule" in scorecard_data:
+        sb["kelly_rule"] = scorecard_data["kelly_rule"]
     return sb
 
 
@@ -934,6 +1012,9 @@ def build_read_zh(council_summary, flows, top_fuse, stock_pulse, scoreboard, env
     modules = scoreboard.get("modules") or {}
     sources = scoreboard.get("ledger_sources") or {}
     all_status = [m.get("status") for m in modules.values()] + [s.get("status") for s in sources.values()]
+    kelly_rule_sb = scoreboard.get("kelly_rule")
+    if kelly_rule_sb:
+        all_status.append(kelly_rule_sb.get("status"))
     n_green = sum(1 for s in all_status if s == "green")
     n_yellow = sum(1 for s in all_status if s == "yellow")
     n_red = sum(1 for s in all_status if s == "red")
@@ -979,7 +1060,7 @@ def build_components(sources, ledger_asof, exposure_track_asof, today):
     return comps
 
 
-def build_freshness(sources, ledger_asof, nowcast_as_of, today, long_track_data):
+def build_freshness(sources, ledger_asof, nowcast_as_of, today, long_track_data, kelly_track_data=None):
     rows = []
 
     def row(pipeline, as_of, cadence):
@@ -996,7 +1077,8 @@ def build_freshness(sources, ledger_asof, nowcast_as_of, today, long_track_data)
         if sources["regime"] else None, "regime")
     row("crowding COT 部位", (sources["crowding"] or {}).get("cot_as_of") if sources["crowding"] else None, "weekly")
     row("總經時鐘", (sources["macro_clock"] or {}).get("as_of") if sources["macro_clock"] else None, "monthly")
-    row("系統主控台（實單主系統）", (long_track_data or {}).get("data_date") if long_track_data else None, "daily")
+    row("系統主控台（實單主系統）", long_track_as_of(long_track_data), "daily")
+    row("Kelly 傾斜組合（paper）", (kelly_track_data or {}).get("as_of") if kelly_track_data else None, "weekly")
     row("今日狀態讀數（nowcast）", nowcast_as_of, "daily")
     return rows
 
@@ -1130,6 +1212,531 @@ def ledger_as_of(forecasts_rows):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# evidence（package K1，設計凍結稿 §2.2）：market-read 判讀者要引用的每個數字，
+# 扁平化成 ref -> {label, val, num, pctile, chg30_pct, z, as_of}，外加 8 個
+# 判讀傳導用的衍生小塊（erp／credit／split／labor_inflation／liquidity／
+# fx_commod／positioning／events）。零判斷、只做單位換算與門檻布林。
+# ═══════════════════════════════════════════════════════════════════════════
+
+STRESS_LABELS_ZH = {
+    "s": "跨資產壓力綜合分數", "int": "市場內部壓力（長窗）", "int_s": "市場內部壓力（短窗）",
+    "b.vol": "壓力分項·波動", "b.credit": "壓力分項·信用", "b.liq": "壓力分項·流動性",
+    "b.app": "壓力分項·風險偏好", "b.rates": "壓力分項·利率",
+}
+MONTH_END_DIR_ZH = {"sell_equity_buy_bond": "賣股買債", "buy_equity_sell_bond": "買股賣債", "flat": "持平"}
+RECESSION_VOTE_MEMBERS = ["itb_spy", "xly_xlp", "kre_xlf", "djt_dji", "iwm_spy"]
+
+
+def _chg30_from_series(values):
+    """values＝一串按時間排序的數字（spark 首尾，或 score_history 近 30 筆序列值）；
+    首尾皆為數字且首值非零才算，否則回傳 None（與 monitor 既有 spark 邏輯一致）。"""
+    vals = [v for v in (values or []) if isinstance(v, (int, float))]
+    if len(vals) < 2:
+        return None
+    first, last = vals[0], vals[-1]
+    if not first:
+        return None
+    return round((last / first - 1.0) * 100, 2)
+
+
+def _quote_from_item(item):
+    if not item:
+        return None
+    return {
+        "label": item.get("label"),
+        "val": item.get("val"),
+        "num": parse_num(item.get("val")),
+        "pctile": item.get("pctile"),
+        "chg30_pct": _chg30_from_series(item.get("spark")),
+        "z": item.get("z"),
+        "as_of": item.get("date"),
+    }
+
+
+def _items_to_quotes(data, prefix, gaps, label):
+    quotes = {}
+    if not data:
+        gaps.append(f"{label} 缺檔，{prefix}:* quotes 記為空")
+        return quotes
+    for cat in data.get("categories", []) or []:
+        for it in cat.get("items", []) or []:
+            key = it.get("key")
+            if key:
+                quotes[f"{prefix}:{key}"] = _quote_from_item(it)
+    return quotes
+
+
+def _stress_quotes(score_history_data, gaps):
+    quotes = {}
+    series = (score_history_data or {}).get("series") or []
+    if not series:
+        gaps.append("score_history.json 缺檔或無序列，stress:* quotes 記為空")
+        return quotes
+    last = series[-1]
+    as_of = last.get("d")
+    window = series[-30:]
+
+    def top_vals(key):
+        return [r.get(key) for r in window]
+
+    def b_vals(key):
+        return [(r.get("b") or {}).get(key) for r in window]
+
+    specs = [("s", last.get("s"), top_vals("s")), ("int", last.get("int"), top_vals("int")),
+             ("int_s", last.get("int_s"), top_vals("int_s"))]
+    for comp in ("vol", "credit", "liq", "app", "rates"):
+        specs.append((f"b.{comp}", (last.get("b") or {}).get(comp), b_vals(comp)))
+    for suffix, val, series_vals in specs:
+        quotes[f"stress:{suffix}"] = {
+            "label": STRESS_LABELS_ZH.get(suffix, suffix),
+            "val": (fmt_num(val) if val is not None else None),
+            "num": val, "pctile": None,
+            "chg30_pct": _chg30_from_series(series_vals),
+            "z": None, "as_of": as_of,
+        }
+    return quotes
+
+
+def _cot_quotes(crowding_data, gaps):
+    quotes = {}
+    cot = (crowding_data or {}).get("cot")
+    if not cot:
+        gaps.append("crowding latest.json 缺檔或無 cot 清單，cot:* quotes 記為空")
+        return quotes
+    as_of = crowding_data.get("cot_as_of")
+    for c in cot:
+        market = c.get("market")
+        if not market:
+            continue
+        net = c.get("net_pct_oi")
+        quotes[f"cot:{market}"] = {
+            "label": market,
+            "val": (f"{net:+.2f}%" if net is not None else None),
+            "num": net, "pctile": c.get("pctile_3y"),
+            "chg30_pct": None, "z": None, "as_of": as_of,
+        }
+    return quotes
+
+
+def _flow_quotes(flowmap_data, flows, gaps):
+    quotes = {}
+    if not flowmap_data:
+        gaps.append("flowmap latest.json 缺檔，flow:* quotes 記為空")
+        return quotes
+    as_of = flowmap_data.get("as_of")
+
+    cta_list = (flows or {}).get("cta") or []
+    spx = next((m for m in cta_list if m.get("market") == "SPX"), None)
+    if spx and spx.get("levels"):
+        nearest = min(spx["levels"], key=lambda l: abs(l.get("dist_pct", 999)))
+        quotes["flow:cta_flip_dist_pct"] = {
+            "label": "CTA 複合體最近翻轉距離",
+            "val": (f"{nearest['dist_pct']:+.2f}%" if nearest.get("dist_pct") is not None else None),
+            "num": nearest.get("dist_pct"), "pctile": None, "chg30_pct": None, "z": None, "as_of": as_of,
+        }
+        quotes["flow:cta_flip_level"] = {
+            "label": "CTA 複合體最近翻轉價位",
+            "val": (fmt_num(nearest["level"]) if nearest.get("level") is not None else None),
+            "num": nearest.get("level"), "pctile": None, "chg30_pct": None, "z": None, "as_of": as_of,
+        }
+    else:
+        gaps.append("flow quotes：flowmap cta 無 SPX 資料，cta_flip_dist_pct／cta_flip_level 記為空")
+
+    vc = (flows or {}).get("vol_control") or {}
+    if vc.get("exposure_pct") is not None:
+        quotes["flow:vc_exposure_pct"] = {
+            "label": "波動控制基金隱含曝險", "val": f"{vc['exposure_pct']:.1f}%",
+            "num": vc.get("exposure_pct"), "pctile": None, "chg30_pct": None, "z": None, "as_of": as_of,
+        }
+    else:
+        gaps.append("flow quotes：flowmap vol_control 無 exposure_pct，vc_exposure_pct 記為空")
+
+    ladder = vc.get("ladder") or []
+    if ladder:
+        rung = ladder[0]
+        quotes["flow:vc_next_rv"] = {
+            "label": "波動控制基金下一階已實現波動門檻",
+            "val": (fmt_num(rung.get("rv")) if rung.get("rv") is not None else None),
+            "num": rung.get("rv"), "pctile": None, "chg30_pct": None, "z": None, "as_of": as_of,
+        }
+        quotes["flow:vc_next_flow_bn"] = {
+            "label": "波動控制基金下一階賣壓（十億美元）",
+            "val": (f"{rung['flow_usd_bn']:+.1f}" if rung.get("flow_usd_bn") is not None else None),
+            "num": rung.get("flow_usd_bn"), "pctile": None, "chg30_pct": None, "z": None, "as_of": as_of,
+        }
+    else:
+        gaps.append("flow quotes：flowmap vol_control 無 ladder，vc_next_rv／vc_next_flow_bn 記為空")
+
+    direction = ((flows or {}).get("month_end") or {}).get("direction")
+    if direction:
+        quotes["flow:month_end_dir"] = {
+            "label": "月末再平衡方向", "val": MONTH_END_DIR_ZH.get(direction, direction),
+            "num": None, "pctile": None, "chg30_pct": None, "z": None, "as_of": as_of,
+        }
+    else:
+        gaps.append("flow quotes：flowmap month_end 無 direction，month_end_dir 記為空")
+
+    return quotes
+
+
+def build_quotes(monitor_data, internals_data, score_history_data, crowding_data, flowmap_data, flows, gaps):
+    quotes = {}
+    quotes.update(_items_to_quotes(monitor_data, "monitor", gaps, "monitor latest.json"))
+    quotes.update(_items_to_quotes(internals_data, "internals", gaps, "internals.json"))
+    quotes.update(_stress_quotes(score_history_data, gaps))
+    quotes.update(_cot_quotes(crowding_data, gaps))
+    quotes.update(_flow_quotes(flowmap_data, flows, gaps))
+    return quotes
+
+
+def _qget(quotes, ref, field):
+    q = quotes.get(ref)
+    return q.get(field) if q else None
+
+
+def _all_none(d, exclude=("as_of",)):
+    for k, v in d.items():
+        if k in exclude:
+            continue
+        if isinstance(v, dict):
+            if not _all_none(v, exclude=()):
+                return False
+        elif isinstance(v, list):
+            if v:
+                return False
+        elif v is not None:
+            return False
+    return True
+
+
+def build_erp(quotes, read_data, gaps):
+    fwd_pe, fwd_pe_source = None, "assumed"
+    spx_fwd_pe = ((read_data or {}).get("assumptions") or {}).get("spx_fwd_pe")
+    if isinstance(spx_fwd_pe, (int, float)):
+        fwd_pe, fwd_pe_source = spx_fwd_pe, "read.json"
+    else:
+        fwd_pe = 22.0
+    real10y = _qget(quotes, "monitor:real10y", "num")
+    dgs10 = _qget(quotes, "monitor:dgs10", "num")
+    if real10y is None or dgs10 is None:
+        gaps.append("evidence.erp：monitor real10y／dgs10 缺值，erp 記為 null")
+        return None
+    ey_pct = round(100.0 / fwd_pe, 2)
+    return {
+        "fwd_pe": fwd_pe, "fwd_pe_source": fwd_pe_source,
+        "ey_pct": ey_pct, "real10y": real10y,
+        "real_erp_pp": round(ey_pct - real10y, 2),
+        "dgs10": dgs10, "nominal_gap_pp": round(ey_pct - dgs10, 2),
+        "as_of": _qget(quotes, "monitor:dgs10", "as_of") or _qget(quotes, "monitor:real10y", "as_of"),
+    }
+
+
+def build_credit(quotes, gaps):
+    hy_oas = _qget(quotes, "monitor:hy_oas", "num")
+    ccc_oas = _qget(quotes, "monitor:ccc_oas", "num")
+    if hy_oas is None or ccc_oas is None:
+        gaps.append("evidence.credit：monitor hy_oas／ccc_oas 缺值，credit 記為 null")
+        return None
+    hy_pctile = _qget(quotes, "monitor:hy_oas", "pctile")
+    ccc_pctile = _qget(quotes, "monitor:ccc_oas", "pctile")
+    decompression = (hy_pctile is not None and ccc_pctile is not None
+                      and ccc_pctile >= 90 and hy_pctile <= 20)
+    return {
+        "hy_oas": hy_oas, "ig_oas": _qget(quotes, "monitor:ig_oas", "num"), "ccc_oas": ccc_oas,
+        "ccc_minus_hy_pp": round(ccc_oas - hy_oas, 2),
+        "hy_pctile": hy_pctile, "ccc_pctile": ccc_pctile,
+        "decompression": bool(decompression),
+        "hyg_lqd_pctile": _qget(quotes, "monitor:hyg_lqd", "pctile"),
+        "as_of": _qget(quotes, "monitor:hy_oas", "as_of"),
+    }
+
+
+def build_split(quotes, gaps):
+    stress_s = _qget(quotes, "stress:s", "num")
+    int_s = _qget(quotes, "stress:int_s", "num")
+    if stress_s is None or int_s is None:
+        gaps.append("evidence.split：stress:s／stress:int_s 缺值，split 記為 null")
+        return None
+    members = []
+    n = 0
+    for key in RECESSION_VOTE_MEMBERS:
+        pctile = _qget(quotes, f"monitor:{key}", "pctile")
+        members.append({"key": key, "pctile": pctile})
+        if pctile is not None and pctile <= 25:
+            n += 1
+    return {
+        "stress_s": stress_s, "int_s": int_s, "int_long": _qget(quotes, "stress:int", "num"),
+        "brd_above200": _qget(quotes, "internals:brd_above200", "num"),
+        "brd_above50": _qget(quotes, "internals:brd_above50", "num"),
+        "brd_sec_above50": _qget(quotes, "internals:brd_sec_above50", "num"),
+        "recession_votes": {"n": n, "of": len(RECESSION_VOTE_MEMBERS), "members": members},
+        "surface_calm_internal_riskoff": bool(stress_s < 60 and int_s >= 75),
+        "as_of": _qget(quotes, "stress:s", "as_of"),
+    }
+
+
+def build_labor_inflation(quotes, gaps):
+    dgs2 = _qget(quotes, "monitor:dgs2", "num")
+    dgs3mo = _qget(quotes, "monitor:dgs3mo", "num")
+    hike_pricing_bp = round((dgs2 - dgs3mo) * 100, 1) if dgs2 is not None and dgs3mo is not None else None
+    d = {
+        "payems_3m": _qget(quotes, "internals:payems_3m", "num"),
+        "claims": _qget(quotes, "monitor:claims", "num"),
+        "sahm": _qget(quotes, "internals:sahm", "num"),
+        "cpi_yoy": _qget(quotes, "internals:cpi_yoy", "num"),
+        "core_pce_yoy": _qget(quotes, "internals:core_pce_yoy", "num"),
+        "bei10y": _qget(quotes, "internals:bei10y", "num"),
+        "bei5y5y": _qget(quotes, "monitor:bei5y5y", "num"),
+        "oil_chg30": _qget(quotes, "monitor:brent", "chg30_pct"),
+        "ags_chg30": {
+            "soybean": _qget(quotes, "monitor:soybean", "chg30_pct"),
+            "corn": _qget(quotes, "monitor:corn", "chg30_pct"),
+            "wheat": _qget(quotes, "monitor:wheat", "chg30_pct"),
+        },
+        "dgs3mo": dgs3mo, "dgs2": dgs2, "hike_pricing_bp": hike_pricing_bp,
+        "as_of": _qget(quotes, "internals:payems_3m", "as_of") or _qget(quotes, "monitor:dgs2", "as_of"),
+    }
+    if _all_none(d):
+        gaps.append("evidence.labor_inflation：monitor／internals 缺檔或缺值，labor_inflation 記為 null")
+        return None
+    return d
+
+
+def build_liquidity(quotes, gaps):
+    d = {
+        "rrp": _qget(quotes, "monitor:rrp", "num"),
+        "tga": _qget(quotes, "monitor:tga", "num"),
+        "reserves": _qget(quotes, "monitor:reserves", "num"),
+        "reserves_pctile": _qget(quotes, "monitor:reserves", "pctile"),
+        "sofr_iorb_bp": _qget(quotes, "monitor:sofr_iorb", "num"),
+        "walcl_chg30": _qget(quotes, "monitor:walcl", "chg30_pct"),
+        "nfci": _qget(quotes, "monitor:nfci", "num"),
+        "as_of": _qget(quotes, "monitor:rrp", "as_of") or _qget(quotes, "monitor:reserves", "as_of"),
+    }
+    if _all_none(d):
+        gaps.append("evidence.liquidity：monitor 缺檔或缺值，liquidity 記為 null")
+        return None
+    return d
+
+
+def build_fx_commod(quotes, gaps):
+    dxy_chg30 = _qget(quotes, "monitor:dxy", "chg30_pct")
+    dgs10_chg30 = _qget(quotes, "monitor:dgs10", "chg30_pct")
+    gold_chg30 = _qget(quotes, "monitor:gold", "chg30_pct")
+    bad_yields = (dgs10_chg30 is not None and dxy_chg30 is not None and gold_chg30 is not None
+                  and dgs10_chg30 > 0 and dxy_chg30 < 0 and gold_chg30 > 0)
+    core = {
+        "dxy": _qget(quotes, "monitor:dxy", "num"), "dxy_chg30_pct": dxy_chg30,
+        "usdjpy": _qget(quotes, "monitor:usdjpy", "num"),
+        "usdcny": _qget(quotes, "monitor:usdcny", "num"),
+        "usdkrw": _qget(quotes, "monitor:usdkrw", "num"),
+        "usdtwd": _qget(quotes, "monitor:usdtwd", "num"),
+        "gold": _qget(quotes, "monitor:gold", "num"),
+        "copper": _qget(quotes, "monitor:copper", "num"),
+        "copper_gold": _qget(quotes, "monitor:copper_gold", "num"),
+        "wti": _qget(quotes, "monitor:wti", "num"),
+        "brent": _qget(quotes, "monitor:brent", "num"),
+    }
+    if _all_none(core):
+        gaps.append("evidence.fx_commod：monitor 缺檔或缺值，fx_commod 記為 null")
+        return None
+    core["bad_yields_signature"] = bool(bad_yields)
+    core["as_of"] = _qget(quotes, "monitor:dxy", "as_of")
+    return core
+
+
+def build_positioning(quotes, flowmap_data, gaps):
+    cot_extremes = []
+    for ref, q in quotes.items():
+        if not ref.startswith("cot:") or not q:
+            continue
+        pctile = q.get("pctile")
+        if pctile is None or (10 < pctile < 90):
+            continue
+        net = q.get("num")
+        side = None
+        if net is not None:
+            side = "net_long" if net > 0 else ("net_short" if net < 0 else "flat")
+        cot_extremes.append({
+            "market": ref.split(":", 1)[1], "net_pct_oi": net, "pctile_3y": pctile, "side": side,
+        })
+    cot_extremes.sort(key=lambda r: r["market"])
+
+    bb = (flowmap_data or {}).get("buyback") or {}
+    weeks = bb.get("blackout_cov_pct_by_week") or []
+    buyback_cov_next4 = [w.get("coverage_pct") for w in weeks[:4]]
+    if not buyback_cov_next4:
+        gaps.append("evidence.positioning：flowmap buyback 無 blackout_cov_pct_by_week，buyback_cov_next4 記為空")
+
+    return {
+        "cot_extremes": cot_extremes,
+        "naaim": _qget(quotes, "internals:naaim", "num"),
+        "pc_equity": _qget(quotes, "internals:pc_equity", "num"),
+        "pc_equity_pctile": _qget(quotes, "internals:pc_equity", "pctile"),
+        "vrp_20d": _qget(quotes, "internals:vrp_20d", "num"),
+        "vrp_20d_z": _qget(quotes, "internals:vrp_20d", "z"),
+        "short_vol_ratio": _qget(quotes, "internals:short_vol_ratio", "num"),
+        "vol_mispricing": {
+            "vix": _qget(quotes, "monitor:vix", "num"),
+            "vix9d": _qget(quotes, "monitor:vix9d", "num"),
+            "vix3m": _qget(quotes, "internals:vix3m", "num"),
+            "move": _qget(quotes, "monitor:move", "num"),
+            "move_pctile": _qget(quotes, "monitor:move", "pctile"),
+            "ovx": _qget(quotes, "internals:ovx", "num"),
+        },
+        "flows": {
+            "cta_flip_dist_pct": _qget(quotes, "flow:cta_flip_dist_pct", "num"),
+            "cta_flip_level": _qget(quotes, "flow:cta_flip_level", "num"),
+            "vc_next_rv": _qget(quotes, "flow:vc_next_rv", "num"),
+            "vc_next_flow_bn": _qget(quotes, "flow:vc_next_flow_bn", "num"),
+            "buyback_cov_next4": buyback_cov_next4,
+            "month_end_dir": _qget(quotes, "flow:month_end_dir", "val"),
+        },
+        "as_of": _qget(quotes, "monitor:vix", "as_of"),
+    }
+
+
+def _strip_html(s):
+    if not s:
+        return None
+    text = re.sub(r"<[^>]+>", "", s)
+    text = html.unescape(text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def build_events(internals_data, macro_calendar_data, intel_data, today, gaps):
+    upcoming = []
+    if internals_data and internals_data.get("upcoming_events"):
+        for e in internals_data["upcoming_events"]:
+            upcoming.append({"date": e.get("date"), "type": e.get("type"), "label": e.get("label"),
+                              "confidence": e.get("confidence"), "source": "monitor"})
+    else:
+        gaps.append("evidence.events：internals upcoming_events 缺檔或為空")
+
+    if macro_calendar_data and macro_calendar_data.get("events"):
+        cutoff = today + timedelta(days=30)
+        for e in macro_calendar_data["events"]:
+            d = parse_date_loose(e.get("date"))
+            if d is None or d < today or d > cutoff:
+                continue
+            upcoming.append({"date": e.get("date"), "type": e.get("type"), "label": e.get("label"),
+                              "confidence": e.get("confidence"), "source": "macro_calendar"})
+    else:
+        gaps.append("evidence.events：macro_calendar.json 缺檔或無 events")
+
+    seen, deduped = set(), []
+    for e in sorted(upcoming, key=lambda x: (x.get("date") or "", x.get("type") or "")):
+        k = (e.get("date"), e.get("type"))
+        if k in seen:
+            continue
+        seen.add(k)
+        deduped.append(e)
+
+    geo_headline = None
+    briefs = (intel_data or {}).get("brief_zh") or []
+    if briefs:
+        geo_headline = (_strip_html(briefs[0]) or "")[:120] or None
+    else:
+        gaps.append("evidence.events：intel 最新檔缺 brief_zh，geo_headline 記為 null")
+
+    return {
+        "upcoming": deduped, "geo_headline": geo_headline,
+        "as_of": (internals_data or {}).get("as_of") or (intel_data or {}).get("date"),
+    }
+
+
+def build_evidence(monitor_data, internals_data, score_history_data, crowding_data, flowmap_data,
+                    macro_calendar_data, intel_data, flows, read_data, today, gaps):
+    quotes = build_quotes(monitor_data, internals_data, score_history_data, crowding_data, flowmap_data,
+                           flows, gaps)
+    return {
+        "quotes": quotes,
+        "erp": build_erp(quotes, read_data, gaps),
+        "credit": build_credit(quotes, gaps),
+        "split": build_split(quotes, gaps),
+        "labor_inflation": build_labor_inflation(quotes, gaps),
+        "liquidity": build_liquidity(quotes, gaps),
+        "fx_commod": build_fx_commod(quotes, gaps),
+        "positioning": build_positioning(quotes, flowmap_data, gaps),
+        "events": build_events(internals_data, macro_calendar_data, intel_data, today, gaps),
+    }
+
+
+def read_headline_fields(read_data, today):
+    """首頁卡／頁面第一屏用：read.json 存在且 as_of 在 valid_days 內才給 headline；
+    read_as_of 只要 read.json 存在就回填（供頁面判斷「已過期」時仍能顯示日期）。"""
+    if not read_data:
+        return None, None
+    read_as_of = read_data.get("as_of")
+    headline = None
+    d = parse_date_loose(read_as_of)
+    valid_days = read_data.get("valid_days", 10)
+    if d is not None and (today - d).days <= valid_days:
+        headline = read_data.get("thesis_zh")
+    return headline, read_as_of
+
+
+def _fmt_pack_val(x):
+    if x is None:
+        return "—"
+    return x
+
+
+def print_evidence_pack(evidence):
+    lines = ["=== 市況判讀證據包（build_market_state.py --evidence-pack）==="]
+    quotes = evidence.get("quotes") or {}
+    lines.append("")
+    lines.append(f"── quotes（monitor／internals／stress／cot／flow，共 {len(quotes)} 筆）──")
+    for ref in sorted(quotes.keys()):
+        q = quotes.get(ref) or {}
+        lines.append(
+            f"{ref}：{q.get('label')}｜現值 {_fmt_pack_val(q.get('val'))}｜分位 {_fmt_pack_val(q.get('pctile'))}"
+            f"｜30 天變化 {_fmt_pack_val(q.get('chg30_pct'))}%｜z {_fmt_pack_val(q.get('z'))}"
+            f"｜as_of {_fmt_pack_val(q.get('as_of'))}"
+        )
+
+    def pack_block(name, block):
+        lines.append("")
+        lines.append(f"── {name} ──")
+        if block is None:
+            lines.append("（上游缺檔，記為 null）")
+            return
+        as_of = block.get("as_of")
+        for k, v in block.items():
+            if k == "as_of":
+                continue
+            if isinstance(v, dict):
+                lines.append(f"{k}：")
+                for kk, vv in v.items():
+                    lines.append(f"　{kk}＝{_fmt_pack_val(vv)}")
+            elif isinstance(v, list):
+                lines.append(f"{k}：")
+                for row in v:
+                    lines.append(f"　{row}")
+            else:
+                lines.append(f"{k}＝{_fmt_pack_val(v)}")
+        lines.append(f"as_of＝{_fmt_pack_val(as_of)}")
+
+    pack_block("erp 估值緩衝", evidence.get("erp"))
+    pack_block("credit 信用分裂", evidence.get("credit"))
+    pack_block("split 指數 vs 平均股", evidence.get("split"))
+    pack_block("labor_inflation 就業與通膨", evidence.get("labor_inflation"))
+    pack_block("liquidity 流動性", evidence.get("liquidity"))
+    pack_block("fx_commod 匯率與大宗", evidence.get("fx_commod"))
+    pack_block("positioning 部位與流量", evidence.get("positioning"))
+
+    ev = evidence.get("events") or {}
+    lines.append("")
+    lines.append("── events 事件曆 ──")
+    for e in ev.get("upcoming") or []:
+        lines.append(f"{e.get('date')}｜{e.get('type')}｜{e.get('label')}｜信心 {e.get('confidence')}")
+    lines.append(f"geo_headline＝{_fmt_pack_val(ev.get('geo_headline'))}")
+    lines.append(f"as_of＝{_fmt_pack_val(ev.get('as_of'))}")
+
+    print("\n".join(lines))
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # main
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -1140,6 +1747,8 @@ def main():
     for key, default in DEFAULT_PATHS.items():
         ap.add_argument("--" + key.replace("_", "-"), default=default,
                          help=f"覆寫 {key} 路徑（缺檔測試用），預設 {default}")
+    ap.add_argument("--evidence-pack", action="store_true",
+                     help="只印 evidence 純文字包到 stdout（給 market-read 判讀者讀），不寫 state.json")
     args = ap.parse_args()
     paths = {key: getattr(args, key) for key in DEFAULT_PATHS}
 
@@ -1148,6 +1757,9 @@ def main():
 
     monitor_data = _load_json(paths["monitor"], gaps, "monitor")
     score_history_data = _load_json(paths["monitor_score_history"], gaps, "monitor_score_history")
+    internals_data = _load_json(paths["internals"], gaps, "internals")
+    macro_calendar_data = _load_json(paths["macro_calendar"], gaps, "macro_calendar")
+    read_data = _load_json(paths["read"])  # 選填（判讀尚未落地前正常缺檔），不記 gap
     detective_data = _load_json(paths["detective"], gaps, "detective")
     flowmap_data = _load_json(paths["flowmap"], gaps, "flowmap")
     flowmap_prices_data = _load_json(paths["flowmap_prices"], gaps, "flowmap_prices")
@@ -1161,6 +1773,7 @@ def main():
     forecasts_rows = _load_jsonl(paths["forecasts"], gaps, "forecasts")
     decisions_rows = _load_jsonl(paths["decisions"], gaps, "decisions")
     exposure_track_data = _load_json(paths["exposure_track"])  # 缺檔另外處理訊息（見 build_exposure_rule）
+    kelly_track_data = _load_json(paths["kelly_track"])  # 缺檔另外處理訊息（見 build_kelly_rule）
     scorecard_data = _load_json(paths["scorecard"], gaps, "scorecard")
 
     sources = {
@@ -1170,8 +1783,20 @@ def main():
         "scorecard": scorecard_data,
     }
 
+    # flows 提前算（K1 evidence／positioning 需要 CTA 翻轉位與波動控制階梯；
+    # 原本在 fuses 前才算，這裡只是往前挪，內容邏輯不變，避免 --evidence-pack 也要跑一次 nowcast）
+    flows = build_flows(flowmap_data, flowmap_prices_data, gaps)
+    evidence = build_evidence(monitor_data, internals_data, score_history_data, crowding_data, flowmap_data,
+                               macro_calendar_data, intel_data, flows, read_data, today, gaps)
+    read_headline, read_as_of = read_headline_fields(read_data, today)
+
+    if args.evidence_pack:
+        print_evidence_pack(evidence)
+        return
+
     ledger_asof = ledger_as_of(forecasts_rows)
     exposure_rule, exposure_track_asof = build_exposure_rule(exposure_track_data, gaps)
+    kelly_rule = build_kelly_rule(kelly_track_data, gaps)
     nowcast = build_nowcast(paths, gaps)
 
     environment = build_environment(regime_data, macro_clock_data, detective_data, monitor_data,
@@ -1180,7 +1805,6 @@ def main():
     if forecasts_rows is None:
         gaps.append("forecasts.jsonl 缺檔，council／council_summary／fuses／triggers③ 連動受影響")
 
-    flows = build_flows(flowmap_data, flowmap_prices_data, gaps)
     fuses = build_fuses(intel_data, forecasts_rows, monitor_data, gaps)
     anomalies = build_anomalies(monitor_data)
     stock_pulse = build_stock_pulse(decisions_rows, today, gaps)
@@ -1196,7 +1820,8 @@ def main():
     read_zh = build_read_zh(council_summary, flows, top_fuse, stock_pulse, scoreboard, environment,
                              long_track_data, gaps)
     components = build_components(sources, ledger_asof, exposure_track_asof, today)
-    freshness = build_freshness(sources, ledger_asof, nowcast.get("as_of"), today, long_track_data)
+    freshness = build_freshness(sources, ledger_asof, nowcast.get("as_of"), today, long_track_data,
+                                 kelly_track_data)
 
     as_of_candidates = [
         (monitor_data or {}).get("as_of"),
@@ -1210,6 +1835,7 @@ def main():
         ledger_asof,
         (scorecard_data or {}).get("as_of"),
         exposure_track_asof,
+        (kelly_rule or {}).get("as_of"),
         nowcast.get("as_of"),
     ]
     as_of_candidates = [x for x in as_of_candidates if x]
@@ -1228,11 +1854,15 @@ def main():
         "anomalies": anomalies,
         "stock_pulse": stock_pulse,
         "exposure_rule": exposure_rule,
+        "kelly_rule": kelly_rule,
         "scoreboard": scoreboard,
         "triggers": triggers,
         "nowcast": nowcast,
         "read_zh": read_zh,
         "freshness": freshness,
+        "evidence": evidence,
+        "read_headline": read_headline,
+        "read_as_of": read_as_of,
         "gaps": gaps,
     }
 
@@ -1243,11 +1873,14 @@ def main():
     for b in read_zh["bullets"]:
         print(f"    - {b}")
     print(f"  council_summary: {json.dumps(council_summary, ensure_ascii=False)}")
+    print(f"  kelly_rule: {json.dumps(kelly_rule, ensure_ascii=False)}")
     print(f"  triggers: {json.dumps(triggers, ensure_ascii=False)}")
     print(f"  stock_pulse: {json.dumps(stock_pulse, ensure_ascii=False)}")
     print(f"  nowcast.as_of={nowcast.get('as_of')} tsmom_n={len(nowcast.get('tsmom') or [])} "
           f"vrp={'ok' if nowcast.get('vrp') else 'None'} rv={'ok' if nowcast.get('rv') else 'None'}")
     print(f"  freshness: {json.dumps([[r['pipeline'], r['status']] for r in freshness], ensure_ascii=False)}")
+    print(f"  evidence.quotes: {len(evidence['quotes'])} refs; read_headline={'set' if read_headline else 'None'} "
+          f"read_as_of={read_as_of}")
     print(f"  gaps ({len(gaps)}):")
     for g in gaps:
         print(f"    - {g}")

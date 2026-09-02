@@ -114,9 +114,16 @@ producer 與 `q.py --forecast-add` 都透過它，不各自重算。
 ### 檔案與指令
 
 - `forecasts.jsonl`（append-only，真相，commit）：每筆含上述 v1+v2 全部欄位。**resolver
-  必須機械可判**：`price:<TICKER>`／`monitor:<key>`（v2 起單位正規化，見下）／`rv:<TICKER>`／
-  `pxd:<TICKER>`／`vixts:SLOPE`／`ttp:<TICKER>`（trend-track 價格快取，語義同 pxd）／
-  `relspy:<TICKER>`（相對 SPY 超額報酬，只支援 at_expiry）可結算；`detective:*` 本期未實作。
+  必須機械可判**：`price:<TICKER>`／`monitor:<key>`（v2 起單位正規化，見下）／
+  `internals:<key>`（2026-09-02 P2 §6 新增，讀 `docs/monitor/data/internals.json`＋
+  `internals_history.json`，單位正規化與 any_close／at_expiry 語義逐字同 `monitor:`）／
+  `rv:<TICKER>`／`pxd:<TICKER>`／`vixts:SLOPE`／`ttp:<TICKER>`（trend-track 價格快取，語義同
+  pxd）／`relspy:<TICKER>`（相對 SPY 超額報酬，只支援 at_expiry；px_T 讀法退路鏈
+  `weekly_cache`→`weekly_cache_universe`→`statlab`→`flowmap`→`trend-track`）可結算；
+  `detective:*` 本期未實作。**window** 支援 `any_close`／`at_expiry`／`vs_base_date`（僅
+  `pxd:`／`ttp:` 域，2026-09-02 P2 §3／§6 新增，日曆效應 producer 用：以 `base_date` 當日或
+  之前最近收盤為基準算報酬率，見 `settle_forecasts.py` 檔頭 docstring）。`--ledger <path>`
+  可覆寫 `settle_forecasts.py` 的結算目標帳簿與輸出（測試用，預設不給時行為不變）。
 - `knowledge/forecast_lib.py`：v2 欄位的共用函式庫（`next_ids`／`finalize`／
   `make_sentinel_twin`／`append`／`existing`／`migrate`）。`python knowledge/forecast_lib.py
   --migrate` 一次性把舊（v1）筆補齊 v2 欄位＋補生哨兵 twin，冪等可重複執行。
@@ -141,6 +148,19 @@ producer 與 `q.py --forecast-add` 都透過它，不各自重算。
   起頂層新增 `p_clim`（無條件、全樣本取樣的 pooled 頻率，同窗口同門檻）。
   `scripts/harvest_macro_falsifiers.py`：把 `docs/macro/MACRO_*.html` 證偽表擬成落帳草案
   （p 值需人工賦值，草案預設 null 不會被寫入）。
+- `scripts/ledger_from_editorial.py --source {monitor-read,detective-read,crowding-monitor,
+  market-read}`：判讀層 editorial JSON 的 `forecasts[]` 共用落帳腳本（人工判讀，非機械
+  producer；p 由判讀者自行給定，本檔只補 p_clim）。**`pxd:SPY` 的 p_clim 有專屬覆寫**（僅
+  `market-read` 來源會用到，2026-09-03 起）：不用其他 pxd ticker 沿用的 flowmap ~2 年 rolling
+  快取，改讀 `data/calendar_base_rates_raw_cache.json`（25 年 SPY 日線，季度手動重建）——
+  `at_expiry` window 算「t+H_td 收盤 op t 收盤」在全部起始日上的無條件頻率；`any_close`
+  window 因 25 年間 SPY 價位漲了約 30 倍、不能直接比較絕對價位，故先把 resolver.value 換算
+  成相對今收的比例 r，再算「H_td 天內任一收盤是否穿越 r」的無條件頻率。`pxd:{QQQ,IWM}` 與
+  monitor／vixts 域不受影響。`--write` 後把落帳 id 依序回填來源檔的 `claim_ids[]`（**只在
+  落帳目標是預設真帳簿、未給 `--ledger` 時才回填**；測試／離線核對走 `--ledger <scratch路徑>`
+  時只印出 id，不動來源檔）。`scripts/check_market_read.py` 是 `market-read` 專屬的機械
+  critic（schema／ref 可解析／forces／horizons／forecasts 型別／禁語／falsifiers／deviations
+  ／全形標點），取代逐次判讀都要 spawn 一個 LLM critic 冷讀。
 
 ## 回填 outcome（人工複盤，機械結算不取代）
 
