@@ -39,6 +39,7 @@ def ok(cond, msg):
 def _stock(**kw):
     base = {"eps_fy1_fy3_cagr_pct": 25.0, "eps_fy_next_revision_pct": 1.0,
             "eps2y_revision_pp": 0.5, "moat_grade": "A", "moat_trend": "→",
+            "roic": 20.0, "fcf": 15.0, "live_fpe_est": 25.0,
             "ma": {"above_w52": True, "price": 100.0},
             "timing": {"dist_52w_high_pct": -10.0}}
     base.update(kw)
@@ -51,9 +52,22 @@ def test_grp_gates():
     ok(g["pass"] and g["p_label"] == "pullback", "基準樣本全過、回踩帶標籤")
     ok(not grp_score(_stock(eps_fy1_fy3_cagr_pct=14.9))["pass"], "G 14.9 < 15 → fail")
     g = grp_score(_stock(eps_fy_next_revision_pct=0.0, eps2y_revision_pp=0.0))
-    ok(not g["pass"], "R 零修正＝沒有上修 → fail（>0 嚴格）")
+    ok(g["pass"] and not g["r_pass"], "v2：R 零修正 → 資格仍過（R 降為燈號），r_pass=False")
     g = grp_score(_stock(eps_fy_next_revision_pct=-2.5, eps2y_revision_pp=3.0))
-    ok(g["veto"] and not g["pass"], "FY+1 下修 -2.5% → 一票否決（2Y 正也救不回）")
+    ok(not g["veto"] and g["pass"], "v2：FY+1 下修 -2.5% → 不再一票否決（燈號）")
+    g = grp_score(_stock(eps_fy_next_revision_pct=-12.0, eps2y_revision_pp=3.0))
+    ok(g["veto"] and not g["pass"], "v2：FY+1 下修 -12% → 否決（2Y 正也救不回）")
+    # 擁有層（v2）
+    g = grp_score(_stock())
+    ok(abs(g["score"] - (25.0 + 4.0)) < 1e-6, "own_score＝min(G,30)＋EY（25＋100/25）")
+    ok(grp_score(_stock(eps_fy1_fy3_cagr_pct=60.0))["own"]["g_capped"] == 30.0, "成長封頂 30")
+    ok(grp_score(_stock(roic=35.0))["score"] == 25.0 + 4.0 + 2.0, "ROIC ≥30 持續期 +2")
+    ok(grp_score(_stock(live_peg=2.5))["score"] == 25.0 + 4.0 - 5.0, "PEG >2 → −5")
+    ok(not grp_score(_stock(roic=12.0))["pass"], "品質閘 ROIC 12 < 15 → fail")
+    ok(not grp_score(_stock(fcf=5.0))["pass"], "品質閘 FCF 5 < 10（ROIC 20 未達豁免）→ fail")
+    g = grp_score(_stock(roic=26.0, fcf=3.0))
+    ok(g["pass"] and g["quality"]["exempt"], "capex 週期豁免：ROIC 26 ∧ FCF 3 → 過")
+    ok(grp_score(_stock(roic=None, fcf=None))["quality"]["pass"] is None, "金融（品質欄全缺）→ None 另軌")
     g = grp_score(_stock(eps_fy_next_revision_pct=None, eps2y_revision_pp=0.7))
     ok(g["pass"], "FY+1 缺值、2Y +0.7pp → 替代路徑過")
     g = grp_score(_stock(ma={"above_w52": False, "price": 100.0}))
@@ -67,6 +81,12 @@ def test_grp_gates():
 def test_route():
     print("[2] 軌別路由")
     ok(grp_route(_stock(moat_grade="S"))[0] == "core", "moat S → 核心")
+    ok(grp_route(_stock(moat_grade="S", dca_verdict="進場", dca_role="衛星", dd_age_days=30))[0] == "satellite",
+       "v2：DD 角色衛星（30d）優先於 moat S → 衛星")
+    ok(grp_route(_stock(moat_grade="B", dca_verdict="進場", dca_role="核心", dd_age_days=30))[0] == "core",
+       "v2：DD 角色核心（30d）優先於 moat B → 核心")
+    ok(grp_route(_stock(moat_grade="S", dca_verdict="進場", dca_role="衛星", dd_age_days=200))[0] == "core",
+       "v2：DD 過期（200d）→ 退回 moat S → 核心")
     ok(grp_route(_stock(moat_grade="A", moat_trend="↓"))[0] == "satellite",
        "moat A 但趨勢 ↓ → 衛星（耐久性存疑）")
     ok(grp_route(_stock(moat_grade="B", moat_trend="↑"))[0] == "satellite", "moat B↑ → 衛星")
@@ -107,10 +127,10 @@ def test_dual_source_r():
     print("[5b] 兩源一致性防線（Koyfin × yfinance）")
     from engine.build_arena import cross_check_r
     base = {"grp": {"r_fy1": 1.0, "veto": False, "pass": True, "why": []}}
+    r = cross_check_r(json.loads(json.dumps(base)), -12.0)
+    ok(r["grp"]["veto"] and not r["grp"]["pass"], "yf 30d -12% → 保守否決（Koyfin 正也不豁免；v2 否決線 −10%）")
     r = cross_check_r(json.loads(json.dumps(base)), -2.5)
-    ok(r["grp"]["veto"] and not r["grp"]["pass"], "yf 30d -2.5% → 保守否決（Koyfin 正也不豁免）")
-    r = cross_check_r(json.loads(json.dumps(base)), -1.5)
-    ok(r["grp"]["pass"] and r.get("r_conflict"), "yf -1.5%（未達否決線）→ 只標 ⚠ 源分歧不否決")
+    ok(r["grp"]["pass"] and r.get("r_conflict"), "yf -2.5%（v2 未達否決線）→ 只標 ⚠ 源分歧不否決")
     r = cross_check_r(json.loads(json.dumps(base)), 5.0)
     ok(r["grp"]["pass"] and not r.get("r_conflict"), "兩源同向 → 無標記")
     r = cross_check_r(json.loads(json.dumps(base)), None)
@@ -133,9 +153,11 @@ def test_site_consistency():
     arena = json.loads((ENG / "arena.json").read_text(encoding="utf-8"))
     cards = json.loads((ENG / "cards.json").read_text(encoding="utf-8"))
     seats = arena["core_seats"] + arena["sat_seats"]
-    ok(all(r["ticker"] in cards["by_ticker"] for r in seats),
-       f"每個席位都有決策卡（{len(seats)} 席）")
-    ok(all(r["grp"]["pass"] for r in seats), "席位全數 GRP 三閘通過")
+    missing = sorted(r["ticker"] for r in seats if r["ticker"] not in cards["by_ticker"])
+    ok(missing == arena.get("seats_without_card", missing),
+       f"無決策卡的席位已在 arena.json 明列（{len(missing)}/{len(seats)} 席：{'、'.join(missing) or '—'}）")
+    ok(all(r["grp"]["pass"] or (r.get("hyst") or "").startswith("現任") for r in seats),
+       "席位全數過閘，或為遲滯觀察中的現任席")
     ok(all(r.get("cap_ok") for r in seats if "cap_ok" in r),
        "席位全數通過市值門檻")
     ok(all(r["route"] == "core" for r in arena["core_seats"]), "核心席全為 core 路由")

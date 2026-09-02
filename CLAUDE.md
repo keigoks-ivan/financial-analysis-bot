@@ -88,6 +88,8 @@ Agent({
 3. `scripts/state_machine/study/` 是活的（`daily-taipei-morning.yml` Step 8 呼叫 `write_daily_close.py`）；`scripts/state_machine/` 下其餘檔案已於 2026-07-19 稽核——**除 `test_state_machine.py`（純測試檔，零下游引用，已歸檔）外，`run_daily.py`／`config.py`／`price_cache.py`／`indicators.py`／`state_machine.py` 皆是 `write_daily_close.py` 的 import 依賴鏈，不得移動**。生產六態頁由 `scripts/update_six_state.py` 負責（已退役、僅手動）。
 4. 舊 `daily-screener-{jp,my,tw,us}.yml` 等殭屍 workflow 檔＝刻意保留（schedule 已停用、`workflow_dispatch` 留作手動備援，檔頭有整合對照註記），勿誤判為現行排程並刪除。
 
+5. **選股系統 v2（2026-09-02 持有人拍板「照推薦執行」）＝擁有層×時機層分離、DD 降為選配層**：`scripts/engine/grp.py` 排序鍵改 own_score（min(成長,30)＋FY1 盈餘殖利率＋持續期加分－倍數風險）、新增品質閘（ROIC/FCF＋capex 週期豁免）、R 上修降為燈號（否決線 −2%→−10%）；`build_arena.py` 母體＝DD 池 ∪ QGM 品質池無 DD 名字（US／TW）∪ 快審卡，DD 只做 veto（迴避）與角色標籤（≤180 天），遲滯 2/4，輸出附錄 B 式等寬看板 `docs/engine/board.txt`（同嵌 `_arena_body.html`）；`build_picks.py` 爆發榜加峰頂守門與共識路徑守門。設計與冷讀依據：`notes/site-internal/root/_picks_first_principles_review_20260902.md`；規則登記 `knowledge/rule_ledger.md`（v2 四條）。**未完成**（需 CI 網路）：dd-screener loader 放行無 DD 名字走 yfinance quality、weekly_cache 擴到 engine universe、tenbagger 排序鍵換最近 4 季 yoy。
+
 `scripts/dd_alpha_ranker.py`、`scripts/pm_render.py`、`scripts/state_machine/test_state_machine.py` 於 2026-07-19 歸檔至 `_archived/scripts/`（`dd_alpha_ranker.py` 的 HTML/JSON 輸出 `docs/dd-screener/alpha-rank.*` 沿用既有「noindex stub 留 docs/、完整內容存 `_archived/dd-screener/`」慣例，不另移動——與 targets/bottom-out/breakout/earnings-acceleration 等已封存頁面待遇一致）。
 
 ## Workflow: 每次 DD / DCA 必同步 research 頁（DD 組合快照）

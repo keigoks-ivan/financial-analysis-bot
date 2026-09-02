@@ -29,8 +29,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from engine.common import OUT_DIR, ROOT, page_embed_shell, pct  # noqa: E402
 from engine.build_scoreboard import _bars, classify_shape  # noqa: E402
 from engine.grp import (  # noqa: E402
-    MKTCAP_MIN, P_LABEL_HTML, cap_ok, fetch_caps, grp_route, grp_score,
+    DD_FRESH_DAYS, MKTCAP_MIN, P_LABEL_HTML, R_VETO_FY1, cap_ok, fetch_caps, grp_route, grp_score,
 )
+
+QGM_US = ROOT / "docs" / "qgm" / "latest.json"
+QGM_TW = ROOT / "docs" / "qgm-tw" / "latest.json"
+BOARD_TXT = OUT_DIR / "board.txt"
+TWD_PER_USD = 32.0          # QGM-TW 市值（新台幣十億）換算門檻用，近似值
+OVERHEAT_R26_PCT = 80.0     # 時機燈：26 週漲幅 >+80% ＝ 過熱（不進席位，只列擁有層）
+LISTING_ALIAS = {"2330.TW": "TSM"}   # 本地掛牌 → ADR（同公司只留一席）
+HYST_NEW_RUNS = 2           # 遲滯：新席需連 2 次週跑過閘
+HYST_INCUMBENT_FAILS = 4    # 遲滯：現任席連 4 次不過閘才下席（硬 veto 除外）
 
 DD_LATEST = ROOT / "docs" / "dd-screener" / "latest.json"
 MARKET_STATE = ROOT / "docs" / "screener" / "market_state.json"
@@ -76,6 +85,88 @@ def shape_of(ticker: str) -> str:
     return classify_shape(bars, bars[-1][0])
 
 
+def weekly_structure(ticker: str) -> dict:
+    """週線 cache → 26 週漲幅／52 週線／距 52 週高（時機層用，不依賴 DD）。"""
+    bars = _bars(ticker)
+    if not bars or len(bars) < 30:
+        return {}
+    closes = [c for _, c in bars]
+    last = closes[-1]
+    r26 = (last / closes[-27] - 1) * 100 if len(closes) > 27 else None
+    r52 = (last / closes[-53] - 1) * 100 if len(closes) > 53 else None
+    w52 = sum(closes[-52:]) / min(52, len(closes))
+    hi52 = max(closes[-52:])
+    return {"px": last, "r26": r26, "r52": r52, "above_w52": last > w52,
+            "dist_hi52": (last / hi52 - 1) * 100}
+
+
+def load_qgm_rows(stocks_map: dict, exclude: set | None = None) -> list[dict]:
+    """QGM（姊妹 repo 品質池，US＋TW）→ 無 DD 名字的擁有層列（v2：DD 選配）。
+    欄位對齊 latest.json 口徑：roic／fcf／成長（FY1→FY2 單年，QGM 的 cagr2y 以 FY0 為基期會膨脹）
+    ／live_fpe_est＝fy1_per／時機取週線 cache，缺則用 QGM trend template 條件 1＋3。"""
+    rows = []
+    seen = set(exclude or ())
+    for path, src, fx in ((QGM_US, "qgm-us", 1.0), (QGM_TW, "qgm-tw", TWD_PER_USD)):
+        try:
+            q = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        for key in ("candidates", "watch_list", "quality_pool"):
+            for x in q.get(key) or []:
+                tk = x.get("ticker")
+                if not tk or tk in stocks_map or tk in seen:
+                    continue
+                seen.add(tk)
+                h = x.get("hard_filter_details") or {}
+                def hv(k):
+                    v = (h.get(k) or {}).get("value")
+                    return None if v is None else float(v)
+                fy1, fy2 = x.get("fy1_eps"), x.get("fy2_eps")
+                g1 = ((fy2 / fy1 - 1) * 100) if fy1 and fy2 and fy1 > 0 else None
+                per1 = x.get("fy1_per")
+                st = weekly_structure(tk)
+                conds = (x.get("trend_template") or {}).get("conditions") or {}
+                c1 = (conds.get("condition_1") or {}).get("pass")
+                c3 = (conds.get("condition_3") or {}).get("pass")
+                qb = x.get("quality_breakdown") or {}
+                durable = (qb.get("roic_5y_stability") or {}).get("pct_above")
+                roic = hv("roic"); fcf = hv("fcf_margin")
+                rows.append({
+                    "ticker": tk, "name": tk, "sector": "", "_src": "qgm", "_qgm_pool": src,
+                    "_durable_5y": durable, "_g_method": "FY1→FY2 單年",
+                    "roic": roic * 100 if roic is not None else None,
+                    "fcf": fcf * 100 if fcf is not None else None,
+                    "de": hv("debt_to_equity"),
+                    "eps_fy1_fy3_cagr_pct": g1, "eps_fy_next": fy2, "eps_fy_curr": fy1,
+                    "live_fpe_est": per1, "live_peg": (per1 / g1) if per1 and g1 and g1 > 0 else None,
+                    "eps_fy_next_revision_pct": None, "eps2y_revision_pp": None,
+                    "ma": {"above_w52": st.get("above_w52") if st else bool(c1 and c3),
+                           "price": st.get("px") or x.get("price")},
+                    "timing": {"dist_52w_high_pct": st.get("dist_hi52") if st else None,
+                               "timing_source": "weekly_cache" if st else "qgm-tt"},
+                    "_r26": st.get("r26") if st else None, "_r52": st.get("r52") if st else None,
+                    "_mktcap": (x.get("market_cap_b") or 0) * 1e9 / fx,
+                    "moat_grade": None, "moat_trend": None,
+                    "dca_verdict": None, "dca_role": None, "dd_path": None, "dd_age_days": None,
+                })
+    return rows
+
+
+def qgm_cap_map() -> dict:
+    """QGM 市值（含 DD 池重疊名字）當 mktcap.json／yfinance 缺漏時的 fallback（TW 以近似匯率換算）。"""
+    out = {}
+    for path, fx in ((QGM_US, 1.0), (QGM_TW, TWD_PER_USD)):
+        try:
+            q = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        for key in ("candidates", "watch_list", "quality_pool"):
+            for x in q.get(key) or []:
+                if x.get("ticker") and x.get("market_cap_b"):
+                    out.setdefault(x["ticker"], x["market_cap_b"] * 1e9 / fx)
+    return out
+
+
 def _yf_rev_map() -> dict:
     """雷達 stage2 的 yfinance 30 天修正（第二源，覆蓋主榜候選 ~250 檔）。"""
     try:
@@ -96,7 +187,7 @@ def cross_check_r(r: dict, yf_rev) -> dict:
     koy = g.get("r_fy1")
     if koy is not None and ((koy > 0) != (yf_rev > 0)) and abs(koy - yf_rev) > 2:
         r["r_conflict"] = True
-    if yf_rev <= -2.0 and not g.get("veto"):
+    if yf_rev <= R_VETO_FY1 and not g.get("veto"):   # v2：否決線與主源同步（−10%）
         r["grp"] = g = dict(g)
         g["veto"] = True
         g["pass"] = False
@@ -105,16 +196,44 @@ def cross_check_r(r: dict, yf_rev) -> dict:
     return r
 
 
+def dd_tag(s: dict) -> str:
+    v = s.get("dca_verdict"); age = s.get("dd_age_days")
+    if not v:
+        return "DD 舊版無裁決" if s.get("dd_path") else "無 DD"
+    tag = f"DD {v}" + (f"·{s.get('dca_role')}" if s.get("dca_role") else "")
+    if age is not None:
+        tag += f"（{int(age)}d）"
+        if age > DD_FRESH_DAYS:
+            tag += "⚠過期"
+    return tag
+
+
 def row_dict(s: dict) -> dict:
+    if "_r26" not in s:
+        st = weekly_structure(s["ticker"])
+        s["_r26"] = st.get("r26") if st else None
+        s["_r52"] = st.get("r52") if st else None
     g = grp_score(s)
+    # 時機燈：過熱（26 週 >+80%）——不進席位，擁有層照列
+    if g["p_label"] and s.get("_r26") is not None and s["_r26"] > OVERHEAT_R26_PCT:
+        g = dict(g); g["p_label"] = "overheated"; g["pass"] = False
+        g["why"] = [f"位置閘：過熱（26 週 {s['_r26']:+.0f}%）"] + list(g["why"])
     route, route_why = grp_route(s)
     role = s.get("dca_role") or ""
-    mismatch = (route == "satellite" and "核心" in role) or (route == "core" and "衛星" in role)
+    age = s.get("dd_age_days")
+    fresh = bool(s.get("dca_verdict")) and (age is None or age <= DD_FRESH_DAYS)
+    mismatch = fresh and ((route == "satellite" and "核心" in role) or (route == "core" and "衛星" in role))
+    if s.get("dca_verdict") == "迴避":
+        g = dict(g); g["pass"] = False; g["why"] = ["DD 迴避（veto）"] + list(g["why"])
     return {"ticker": s["ticker"], "verdict": s.get("dca_verdict"),
             "role": role, "route": route, "route_why": route_why,
-            "role_mismatch": mismatch,
+            "role_mismatch": mismatch, "dd_tag": dd_tag(s), "dd_fresh": fresh,
+            "src": s.get("_src") or "dd-pool", "g_method": s.get("_g_method") or "FY1→FY3 CAGR",
             "grp": g, "score": g["score"],
-            "moat": f'{s.get("moat_grade") or "?"}{s.get("moat_trend") or ""}',
+            "roic": g["quality"].get("roic"), "fcf": g["quality"].get("fcf"),
+            "peg": (s.get("live_peg") if s.get("live_peg") is not None else s.get("peg")),
+            "r26": s.get("_r26"), "r52": s.get("_r52"),
+            "moat": f'{s.get("moat_grade") or "?"}{s.get("moat_trend") or ""}' if s.get("moat_grade") else "—",
             "shape": shape_of(s["ticker"]),
             "dd_path": s.get("dd_path")}
 
@@ -181,6 +300,73 @@ def load_light_rows(stocks_map: dict) -> list[dict]:
     return rows
 
 
+def _n(v, w=5, d=1):
+    if v is None:
+        return "—".rjust(w)
+    try:
+        return f"{float(v):{w}.{d}f}"
+    except (TypeError, ValueError):
+        return str(v)[:w].rjust(w)
+
+
+TIMING_TXT = {"breakout": "🟢 突破帶", "pullback": "🟢 回踩", "in_trend": "🟡 趨勢內",
+              "overheated": "🟠 過熱", None: "🔴 52 週線下／缺"}
+
+
+def render_board_text(as_of, rows, core_seats, sat_seats, prev_snap, entered) -> str:
+    """附錄 B 式等寬看板（持有人 2026-09-02 指定形式）：擁有層排序表＋席位對照＋
+    DD 進場 vs 機械資格＋無 DD 過閘候選。純文字，同時寫 docs/engine/board.txt 與 <pre> 嵌頁。"""
+    seat_of = {r["ticker"]: "核心席" for r in core_seats}
+    seat_of.update({r["ticker"]: "衛星席" for r in sat_seats})
+    prev_seats = {t: "核心席" for t in prev_snap.get("core", [])}
+    prev_seats.update({t: "衛星席" for t in prev_snap.get("sat", [])})
+    L = []
+    L.append(f"選股看板 v2｜as_of {as_of}｜母體 {len(rows)}（DD 池＋QGM 無 DD＋快審卡）")
+    L.append("甲 擁有層｜資格：品質閘 ROIC≥15∧FCF≥10（或 ROIC≥25∧FCF≥0）× 成長閘 ≥15 × 市值 ≥$20B"
+             "｜排序＝min(成長,30)＋FY1 盈餘殖利率（ROIC≥30 +2；PEG>2 −5）｜時機燈獨立、不進排序")
+    hdr = f"{'#':>2} {'ticker':9} {'分':>5} {'成長':>6} {'EY':>5} {'ROIC':>5} {'FCF':>5} {'PEG':>5} {'1M修':>6} {'時機':10} {'席位':6} {'DD':26} {'moat':5} 註記"
+    L.append(hdr)
+    own = [r for r in rows if (r["grp"].get("quality") or {}).get("pass") and (r["score"] or 0) > 0]
+    for i, r in enumerate(own[:40], 1):
+        g = r["grp"]; o = g.get("own") or {}
+        note = "；".join(list(g.get("why") or [])[:2])
+        if r.get("g_method") == "FY1→FY2 單年":
+            note = ("成長=FY1→FY2 單年；" + note) if note else "成長=FY1→FY2 單年"
+        if r.get("hyst") and "候補" in r["hyst"]:
+            note = (r["hyst"] + "；" + note) if note else r["hyst"]
+        L.append(f"{i:>2} {r['ticker']:9} {_n(r['score'])} {_n(g.get('g'),6)} {_n(o.get('ey'))} {_n(r.get('roic'))} "
+                 f"{_n(r.get('fcf'))} {_n(r.get('peg'),5,2)} {_n(g.get('r_fy1'),6)} "
+                 f"{TIMING_TXT.get(g.get('p_label'), '—'):10} {seat_of.get(r['ticker'], ''):6} "
+                 f"{(r.get('dd_tag') or '—')[:26]:26} {(r.get('moat') or '—'):5} {note}")
+    L.append("")
+    L.append("== 席位（核心 5／衛星 5）與上期對照")
+    for track, seats in (("核心席", core_seats), ("衛星席", sat_seats)):
+        for j, r in enumerate(seats, 1):
+            chg = "" if prev_seats.get(r["ticker"]) == track else ("↑新席" if r["ticker"] not in prev_seats else f"↔自{prev_seats[r['ticker']]}")
+            L.append(f"  {track} {j}. {r['ticker']:8} 分 {_n(r['score'])} {TIMING_TXT.get(r['grp'].get('p_label'), '—'):8} "
+                     f"{r.get('dd_tag') or '—'}  {r.get('hyst') or ''} {chg}")
+    gone = [t for t in prev_seats if t not in seat_of]
+    if gone:
+        why = {r["ticker"]: r for r in rows}
+        for tk in gone:
+            r = why.get(tk)
+            why_txt = "；".join((((r or {}).get("grp") or {}).get("why") or [])[:2]) or ("擁有層分數被擠下" if r else "不在母體")
+            L.append(f"  ↓下席 {tk:8} {(r or {}).get('hyst') or ''}：{why_txt}")
+    L.append("")
+    L.append("== DD 裁決進場 vs 機械資格")
+    ok = [r for r in entered if r["grp"]["pass"]]; ng = [r for r in entered if not r["grp"]["pass"]]
+    L.append(f"  進場 {len(entered)}：過閘 {len(ok)}／未過 {len(ng)}")
+    for r in ng:
+        L.append(f"   ✗ {r['ticker']:8} {'；'.join((r['grp'].get('why') or [])[:3])}  時機 {TIMING_TXT.get(r['grp'].get('p_label'), '—')}")
+    L.append("")
+    L.append("== 無 DD 而機械過閘（DD 選配層的候選；有興趣才跑 DD）")
+    for r in own:
+        if r.get("src") == "qgm" and r["grp"]["pass"]:
+            L.append(f"   {r['ticker']:8} 分 {_n(r['score'])} 成長 {_n(r['grp'].get('g'))} ROIC {_n(r.get('roic'))} "
+                     f"PEG {_n(r.get('peg'),5,2)} 時機 {TIMING_TXT.get(r['grp'].get('p_label'), '—')} {r.get('hyst') or ''}")
+    return "\n".join(L) + "\n"
+
+
 def main() -> int:
     stocks = json.loads(DD_LATEST.read_text(encoding="utf-8"))["stocks"]
     try:
@@ -193,22 +379,33 @@ def main() -> int:
     except (OSError, json.JSONDecodeError):
         card_stats = {}
 
-    # 席位資格（GRP v1，2026-07-04 拍板）：DD 裁決＝進場 ∩ GRP 三閘全過；排序＝R 上修幅度。
-    # 軌別路由（同日拍板）：核心＝護城河 S/A 非↓（複利耐久）；衛星＝其餘 GRP 全過者
-    # （moat B、循環/爆發型）。DD 角色與機械軌別衝突 → 標 ⚠ 供人裁。
-    # GRP 未過的進場票落板凳並列原因——寧可席位空缺，不硬塞下修中的名字。
-    entered = [row_dict(s) for s in stocks if s.get("dca_verdict") == "進場"]
-    light = load_light_rows({s["ticker"]: s for s in stocks})
-    entered += [r for r in light if r["verdict"] == "進場"]
+    # ── v2 席位資格（2026-09-02）：擁有層 ∩ 時機層，DD 只做 veto／角色標籤 ──
+    #   母體＝DD 池（全部裁決，迴避者 veto）∪ QGM 品質池無 DD 名字（US＋TW）∪ 快審卡
+    #   資格＝品質閘（ROIC/FCF）∩ G 成長閘 ∩ 市值 ∩ P 位置閘（未過熱）∩ 無重下修否決
+    #   排序＝own_score（擁有層），R 上修只作燈號；遲滯：新席連 2 次過、現任連 4 次不過才下
+    stocks_map = {s["ticker"]: s for s in stocks}
+    # 同一家公司的 ADR／本地掛牌只留一個（席位不得重複曝險）：本地掛牌讓位給 ADR
+    aliased = set()
+    for local, adr in LISTING_ALIAS.items():
+        if adr in stocks_map:
+            stocks_map.pop(local, None); aliased.add(local)
+    stocks = [s for s in stocks if s["ticker"] in stocks_map]
+    qgm_rows = load_qgm_rows(stocks_map, exclude=aliased)
+    universe_rows = [row_dict(s) for s in stocks] + [row_dict(s) for s in qgm_rows]
+    light = load_light_rows(stocks_map)
+    universe_rows += [r for r in light if r["verdict"] in ("進場", "觀望", None)]
 
     # 兩源一致性防線：任一源重下修即否決＋方向矛盾標記
     yf_map = _yf_rev_map()
-    entered = [cross_check_r(r, yf_map.get(r["ticker"])) for r in entered]
+    universe_rows = [cross_check_r(r, yf_map.get(r["ticker"])) for r in universe_rows]
 
     # 市值門檻（持有人拍板 ≥$200 億）：席位/挑戰者資格層——未達或未知者降板凳並列原因
-    watch_rows = [cross_check_r(row_dict(s), yf_map.get(s["ticker"]))
-                  for s in stocks if s.get("dca_verdict") == "觀望"]
-    caps = fetch_caps(sorted({r["ticker"] for r in entered + light + watch_rows}))
+    qgm_caps = {s["ticker"]: s.get("_mktcap") for s in qgm_rows}
+    caps = fetch_caps(sorted({r["ticker"] for r in universe_rows if r["ticker"] not in qgm_caps}))
+    for k, v in qgm_cap_map().items():          # fallback：yfinance 缺漏時用 QGM 市值
+        if v and not caps.get(k):
+            caps[k] = v
+    caps.update({k: v for k, v in qgm_caps.items() if v})
     def apply_cap(r):
         r["mktcap"] = caps.get(r["ticker"])
         ok = cap_ok(r["mktcap"])
@@ -220,26 +417,63 @@ def main() -> int:
                                else [f"市值 {r['mktcap']/1e9:.0f}B 低於門檻 {MKTCAP_MIN/1e9:.0f}B"]) \
                               + list(r["grp"]["why"])
         return r
-    entered = [apply_cap(r) for r in entered]
+    universe_rows = [apply_cap(r) for r in universe_rows]
+    universe_rows.sort(key=lambda r: -(r["score"] or 0))
 
-    passed = sorted([r for r in entered if r["grp"]["pass"]], key=lambda r: -r["score"])
-    failed = sorted([r for r in entered if not r["grp"]["pass"]], key=lambda r: -r["score"])
+    # ── 遲滯（arena-ledger gate_history，append-only）──
+    try:
+        ledger0 = json.loads(LEDGER_JSON.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        ledger0 = {"schema_version": "1.0", "snapshots": []}
+    bootstrap = not ledger0.get("gate_history")   # 首跑：無歷史，新席只需本次過閘
+    hist = ledger0.setdefault("gate_history", {})
+    prev = ledger0["snapshots"][-1] if ledger0.get("snapshots") else {"core": [], "sat": []}
+    incumbents = set(prev.get("core", [])) | set(prev.get("sat", []))
+    try:
+        as_of = json.loads(DD_LATEST.read_text(encoding="utf-8")).get("as_of", "—")
+    except (OSError, json.JSONDecodeError):
+        as_of = "—"
+    for r in universe_rows:
+        h = hist.setdefault(r["ticker"], [])
+        if h and h[-1][0] == as_of:
+            h[-1] = [as_of, bool(r["grp"]["pass"])]
+        else:
+            h.append([as_of, bool(r["grp"]["pass"])])
+        del h[:-8]
+    def hard_veto(r):
+        return r["grp"].get("veto") or r["verdict"] == "迴避" or not r.get("cap_ok")
+    def eligible(r):
+        h = hist.get(r["ticker"], [])
+        if r["ticker"] in incumbents:
+            if hard_veto(r):
+                r["hyst"] = "硬 veto 下席"; return False
+            recent = [x[1] for x in h[-HYST_INCUMBENT_FAILS:]]
+            if r["grp"]["pass"]:
+                r["hyst"] = "現任"; return True
+            if len(recent) >= HYST_INCUMBENT_FAILS and not any(recent):
+                r["hyst"] = f"連 {HYST_INCUMBENT_FAILS} 次不過閘下席"; return False
+            r["hyst"] = f"現任·觀察中（近 {len(recent)} 次 {sum(recent)} 過）"; return True
+        recent = [x[1] for x in h[-HYST_NEW_RUNS:]]
+        if r["grp"]["pass"] and bootstrap:
+            r["hyst"] = "新席（首跑免遲滯）"; return True
+        if r["grp"]["pass"] and len(recent) >= HYST_NEW_RUNS and all(recent):
+            r["hyst"] = "新席（連 2 次過閘）"; return True
+        if r["grp"]["pass"]:
+            r["hyst"] = f"候補·待第 2 次過閘（{len(recent)}/{HYST_NEW_RUNS}）"
+        return False
+    passed = [r for r in universe_rows if eligible(r)]
+    passed.sort(key=lambda r: (0 if r["grp"]["pass"] else 1, -(r["score"] or 0)))   # 過閘者優先，觀察中現任其後
+    failed = [r for r in universe_rows if r not in passed]
     core_pass = [r for r in passed if r["route"] == "core"]
     sat_pass = [r for r in passed if r["route"] == "satellite"]
     core_seats = core_pass[:CORE_SLOTS]
     sat_seats = sat_pass[:SAT_SLOTS]
-    core_bench = core_pass[CORE_SLOTS:] + [r for r in failed if "核心" in (r["role"] or "")]
-    sat_bench = sat_pass[SAT_SLOTS:] + [r for r in failed if "核心" not in (r["role"] or "")]
+    core_bench = core_pass[CORE_SLOTS:] + [r for r in failed if r["route"] == "core" and r["grp"]["pass"]]
+    sat_bench = sat_pass[SAT_SLOTS:] + [r for r in failed if r["route"] == "satellite" and r["grp"]["pass"]]
+    entered = [r for r in universe_rows if r["verdict"] == "進場"]
 
     seated = {r["ticker"] for r in core_seats + sat_seats}
-    challengers = [r for r in (apply_cap(cross_check_r(row_dict(s), yf_map.get(s["ticker"])))
-                               for s in stocks
-                               if s.get("dca_verdict") in ("進場", "觀望")
-                               and s["ticker"] not in seated)
-                   if r["grp"]["pass"]]
-    challengers += [r for r in (apply_cap(r) for r in light
-                                if r["verdict"] == "觀望" and r["ticker"] not in seated)
-                    if r["grp"]["pass"]]
+    challengers = [r for r in universe_rows if r["grp"]["pass"] and r["ticker"] not in seated]
     challengers.sort(key=lambda r: -r["score"])
 
     # 擂台配對（v2）：軌別配對——核心席 vs 核心向挑戰者、衛星席 vs 衛星向挑戰者
@@ -261,14 +495,7 @@ def main() -> int:
     max_share = (conc_rows[0][1] / n_seated * 100) if n_seated else 0
 
     # ── 席位變動帳本（append-only）：席位組成變了才記一筆，換席決策從此可結算 ──
-    try:
-        as_of = json.loads(DD_LATEST.read_text(encoding="utf-8")).get("as_of", "—")
-    except (OSError, json.JSONDecodeError):
-        as_of = "—"
-    try:
-        ledger = json.loads(LEDGER_JSON.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        ledger = {"schema_version": "1.0", "snapshots": []}
+    ledger = ledger0
     snap = {"date": as_of,
             "core": [r["ticker"] for r in core_seats],
             "sat": [r["ticker"] for r in sat_seats]}
@@ -288,14 +515,30 @@ def main() -> int:
             ledger["snapshots"].append(snap)
         else:
             ledger["snapshots"][-1] = snap   # 同日重跑覆蓋（冪等）
-        LEDGER_JSON.parent.mkdir(parents=True, exist_ok=True)
-        LEDGER_JSON.write_text(json.dumps(ledger, ensure_ascii=False, indent=1),
-                               encoding="utf-8")
+    LEDGER_JSON.parent.mkdir(parents=True, exist_ok=True)   # gate_history 每跑必寫（遲滯狀態）
+    LEDGER_JSON.write_text(json.dumps(ledger, ensure_ascii=False, indent=1),
+                           encoding="utf-8")
     recent_changes = [c for s in ledger["snapshots"][-6:] for c in (s.get("changes") or [])]
 
     dial = regime_dial()
+    def compact(r):
+        g = r["grp"]
+        return {"ticker": r["ticker"], "score": r["score"], "g": g.get("g"), "g_method": r.get("g_method"),
+                "ey": (g.get("own") or {}).get("ey"), "roic": r.get("roic"), "fcf": r.get("fcf"),
+                "peg": r.get("peg"), "r_fy1": g.get("r_fy1"), "p_label": g.get("p_label"),
+                "r26": r.get("r26"), "pass": g.get("pass"), "why": g.get("why"),
+                "route": r["route"], "dd_tag": r.get("dd_tag"), "verdict": r.get("verdict"),
+                "moat": r.get("moat"), "src": r.get("src"), "hyst": r.get("hyst"), "dd_path": r.get("dd_path")}
+    own_board = [compact(r) for r in universe_rows
+                 if (r["grp"].get("quality") or {}).get("pass") and (r["score"] or 0) > 0][:60]
+    board_text = render_board_text(as_of, universe_rows, core_seats, sat_seats, prev, entered)
+    BOARD_TXT.write_text(board_text, encoding="utf-8")
     payload = {
-        "schema_version": "1.0",
+        "schema_version": "2.0",
+        "method": "v2 擁有層×時機層分離（2026-09-02）：排序＝own_score；R 為燈號；DD 只 veto／角色；遲滯 2/4",
+        "universe_n": len(universe_rows),
+        "seats_without_card": sorted(r["ticker"] for r in core_seats + sat_seats if r["ticker"] not in card_stats),
+        "own_board": own_board,
         "run_timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "regime": dial,
         "core_seats": core_seats, "core_bench": core_bench[:8],
@@ -394,15 +637,20 @@ def main() -> int:
 <h1>席位擂台 · 組合層</h1>
 <div class="hero-sub">組合才是產品：核心 {CORE_SLOTS} 席＋衛星 {SAT_SLOTS} 席，每席對決「同形狀最強挑戰者」。
 ⚔ 警報＝挑戰者分數超過席位 → 進<b>每月擂台的人工複審清單</b>。引擎不自動換席——換人是人的裁決。
-席位資格（三閘評分 GRP v1，2026-07-04 持有人拍板）＝DD 裁決進場 ∩ <b>三閘全過</b>：
-<b>成長閘</b>（FY1→FY3 EPS CAGR ≥15%）× <b>上修閘</b>（FY+1 月修 &gt;0 或 2Y &gt;0pp；下修 ≤-2% 否決）×
-<b>位置閘</b>（站上 52 週線且未過熱）。排序＝上修幅度——<b>不再依賴 5Y EV/IRR</b>。
-<b>軌別路由</b>：核心＝護城河 S/A 非↓（複利耐久）；衛星＝其餘三閘全過者（moat B／循環爆發型）。
+席位資格（<b>v2 擁有層×時機層</b>，2026-09-02 持有人拍板）＝<b>品質閘</b>（ROIC ≥15 ∧ FCF ≥10；capex 週期豁免 ROIC ≥25 ∧ FCF ≥0）×
+<b>成長閘</b>（FY1→FY3 EPS CAGR ≥15%）× <b>位置閘</b>（站上 52 週線且 26 週漲幅 ≤+80%）× 無重下修否決（FY+1 單月 ≤−10%）。
+排序＝<b>擁有層分數</b>＝min(成長,30)＋FY1 盈餘殖利率（ROIC ≥30 +2；PEG &gt;2 −5）；上修幅度降為燈號。
+<b>DD 只做 veto（迴避）與角色標籤</b>（≤180 天有效）；無 DD 名字（QGM 品質池）同場排序、標「待 DD」。
+<b>遲滯</b>：新席連 2 次週跑過閘、現任連 4 次不過才下席（硬 veto 除外）。
+<b>軌別路由</b>：DD 角色優先；無 DD 走護城河 S/A 非↓（QGM 5 年 ROIC 穩定 ≥75% 亦可核心）；其餘衛星。
 <b>市值門檻 ≥ ${MKTCAP_MIN/1e9:.0f}B</b>（持有人 2026-07-04 拍板：席位與主榜資格層；雷達發現層照掃全宇宙）。
 <b>兩級資格</b>：核心席必須完整 v14 DD；衛星席另接受 🪶 快審卡（週期位置＋陷阱＋護城河快評）。
 DD 角色與機械軌別衝突標 ⚠ 供人裁。三閘未過的進場票落板凳、寧缺勿濫。</div>
-<div class="asof">資料源 dd-screener latest.json ｜ 席位口徑與 Pipeline 頁一致 ｜ 週更</div>
+<div class="asof">資料源 dd-screener latest.json ＋ QGM 品質池（US／TW）＋週線 cache ｜ v2 擁有層×時機層 ｜ 週更</div>
 </div>
+<div class="block"><h2>選股看板 v2（等寬版）</h2>
+<div class="block-sub">擁有層排序（值不值得擁有）與時機燈（現在能不能動）分開讀；DD 只做 veto 與角色標籤。同內容另存 <a href="/engine/board.txt">board.txt</a>。</div>
+<pre class="board" style="font-family:var(--mono);font-size:11.5px;line-height:1.45;overflow-x:auto;white-space:pre;background:var(--paper);border:1px solid var(--line);padding:12px">{escape(board_text)}</pre></div>
 <div class="stat-row">
 <div class="stat"><strong>{dial['label'] if dial['level'] else '—'}</strong><span>Regime 撥盤（{dial['level'] if dial['level'] else '—'}×）</span></div>
 <div class="stat"><strong>{sum(1 for d in duels if d['alert'])}</strong><span>⚔ 擂台警報</span></div>

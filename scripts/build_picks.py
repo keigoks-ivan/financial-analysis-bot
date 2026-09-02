@@ -68,6 +68,34 @@ def warn(msg):
     print(f"[build_picks] WARN: {msg}", file=sys.stderr)
 
 
+# 乙軌峰頂守門（v2，2026-09-02 持有人拍板；依據 _picks_first_principles_review_20260902.md Part A2／D3）：
+# 循環股的物理是「上修最猛時倍數最低」，用上修幅度排序＋站上年線放行會在頂部上榜
+# （2026-09-01 正式榜 5 席 4 席為晚循環指紋）。12M >+150% 或 26W >+80% → 標「晚段」，只留候選不進正式榜。
+LATE_R52_PCT = 150.0
+LATE_R26_PCT = 80.0
+WEEKLY_CACHE = os.path.join(ROOT, "data", "weekly_cache")
+
+
+def late_cycle(ticker):
+    """回傳 (is_late, r52, r26)；週線 cache 缺 → (None, None, None) 不判。"""
+    for cand in (ticker, ticker.replace(".TW", "TW")):
+        p = os.path.join(WEEKLY_CACHE, f"{cand}.json")
+        if os.path.exists(p):
+            break
+    else:
+        return None, None, None
+    try:
+        bars = [b["close"] for b in json.load(open(p, encoding="utf-8")).get("weekly_bars") or [] if b.get("close")]
+    except (OSError, json.JSONDecodeError, TypeError):
+        return None, None, None
+    if len(bars) < 28:
+        return None, None, None
+    r26 = (bars[-1] / bars[-27] - 1) * 100
+    r52 = (bars[-1] / bars[-53] - 1) * 100 if len(bars) > 53 else None
+    late = (r52 is not None and r52 > LATE_R52_PCT) or r26 > LATE_R26_PCT
+    return late, r52, r26
+
+
 def load_json(path, label):
     """Return parsed JSON or None (with warning) — never raises."""
     try:
@@ -487,6 +515,28 @@ def main():
         x["above_w52"] = ma.get("above_w52") if isinstance(ma, dict) else None
 
     # 爆發：非過熱 ∩ 站上年線 → 自動上榜（右側確認代替 DD 裁決）
+    # 乙軌兩道守門（v2）：①峰頂＝12M >+150% 或 26W >+80%（週線 cache 缺時退用 cyclical 的 12M）；
+    # ②共識路徑下彎＝FY+2 EPS < FY+1（市場自己說明年衰退＝峰值盈餘，例 8299.TW FY27 −29%）
+    eps_path = {}
+    if stock_idx:
+        for tk, s in stock_idx.items():
+            e1, e2 = fnum(s.get("eps_fy_next")), fnum(s.get("eps_fy3"))
+            if e1 is not None and e2 is not None and e1 > 0:
+                eps_path[tk] = (e2 / e1 - 1) * 100
+    for x in baofa:
+        late, r52, r26 = late_cycle(x["ticker"])
+        if late is None and fnum(x.get("ret_12m_pct")) is not None:
+            r52 = fnum(x.get("ret_12m_pct")); late = r52 > LATE_R52_PCT
+        x["late_cycle"] = late
+        x["ret_26w_pct"] = round(r26, 1) if r26 is not None else None
+        if late:
+            x["late_reason"] = (f"晚循環（12M {r52:+.0f}%／26W {r26:+.0f}%）" if r26 is not None
+                                else f"晚循環（12M {r52:+.0f}%）")
+        path = eps_path.get(x["ticker"])
+        x["eps_fy2_vs_fy1_pct"] = round(path, 1) if path is not None else None
+        if path is not None and path < 0:
+            x["late_cycle"] = True
+            x["late_reason"] = (x.get("late_reason") + "；" if x.get("late_reason") else "") + f"共識路徑下彎（FY+2 vs FY+1 {path:+.0f}%）"
     official_baofa, rest_baofa = [], []
     for x in baofa:
         if x["ticker"] in veto:
@@ -494,6 +544,8 @@ def main():
             rest_baofa.append(x)
         elif x["hot"]:
             x["not_promoted_reason"] = "🔥 等回踩"
+        elif x.get("late_cycle"):
+            x["not_promoted_reason"] = x["late_reason"] + "・只列候選"
             rest_baofa.append(x)
         elif x["above_w52"] is True:
             official_baofa.append(x)
