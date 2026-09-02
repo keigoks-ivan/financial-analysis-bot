@@ -849,13 +849,13 @@ footer.imq-foot a{color:var(--text-secondary)}
     "monitor-read": "市場監測判讀",
     "detective-read": "警報網判讀",
     "crowding-monitor": "擁擠交易判讀",
-    "market-read": "市況判讀（market-read）",
+    "market-read": "市況判讀",
     "sentinel-noise": "哨兵（無技巧對照組）"
   };
   var SCORE_DOT = { green: "🟢", yellow: "🟡", red: "🔴", descriptor: "⚪" };
   var SCORE_STATUS_TEXT = {
     green: "已證實優於基準",
-    yellow: "證據累積中（有效樣本 n／決策需累積 LLR）",
+    yellow: "證據累積中",
     red: "已證實不優於基準，等校準輪處決",
     descriptor: "描述器，不評分"
   };
@@ -885,7 +885,7 @@ footer.imq-foot a{color:var(--text-secondary)}
     var txt = "證據累積中：有效樣本 " + nEff + "，離判綠還差約再 " + toGreen +
       " 次命中（或離判紅還差約再 " + toRed + " 次未命中，皆假設此後同向不中斷，只是距離換算非機率預測）。";
     if (nEff < floor) {
-      txt += "未滿 " + floor + " 筆前不判定，即使累積 LLR 已達門檻。";
+      txt += "未滿 " + floor + " 筆前不判定，即使累積證據分（LLR）已達門檻。";
     }
     return txt;
   }
@@ -900,9 +900,9 @@ footer.imq-foot a{color:var(--text-secondary)}
     card.appendChild(statusRow);
 
     var stats = el("div", "score-stats");
-    stats.appendChild(scoreStat("有效樣本 n_eff", (m.n_eff == null ? "—" : m.n_eff) + "／需 " + m.n_required));
+    stats.appendChild(scoreStat("有效樣本", (m.n_eff == null ? "—" : m.n_eff) + "／需 " + m.n_required));
     stats.appendChild(scoreStat("命中／樣本", (m.hits == null ? "—" : m.hits) + "／" + (m.n_eff == null ? "—" : m.n_eff)));
-    stats.appendChild(scoreStat("累積 LLR", m.sprt ? fmtSigned(m.sprt.llr, 3) : "—"));
+    stats.appendChild(scoreStat("累積證據分（LLR）", m.sprt ? fmtSigned(m.sprt.llr, 3) : "—"));
     card.appendChild(stats);
 
     card.appendChild(el("div", "score-note", esc(sprtStateText(m.sprt, m.n_eff, m.n_required))));
@@ -929,7 +929,7 @@ footer.imq-foot a{color:var(--text-secondary)}
   function renderSourceCard(key, s) {
     var card = el("div", "score-card");
     var h3 = el("h3", "", esc(SOURCE_LABEL[key] || key));
-    h3.appendChild(el("span", "src-id", "(" + esc(key) + ")"));
+    h3.title = key;
     card.appendChild(h3);
 
     var statusRow = el("div", "score-status");
@@ -938,14 +938,14 @@ footer.imq-foot a{color:var(--text-secondary)}
     card.appendChild(statusRow);
 
     var stats = el("div", "score-stats");
-    stats.appendChild(scoreStat("有效樣本 n_eff", (s.n_eff == null ? "—" : s.n_eff) +
+    stats.appendChild(scoreStat("有效樣本", (s.n_eff == null ? "—" : s.n_eff) +
       "／已結算 " + (s.n_resolved == null ? "—" : s.n_resolved)));
     var bssTxt = (s.bss === null || s.bss === undefined) ? "—" : fmtSigned(s.bss, 3);
     if (s.bss_ci90 && s.bss_ci90[0] != null && s.bss_ci90[1] != null) {
       bssTxt += "［" + fmtSigned(s.bss_ci90[0], 3) + "，" + fmtSigned(s.bss_ci90[1], 3) + "］";
     }
-    stats.appendChild(scoreStat("BSS（vs 逐筆基準機率）", bssTxt));
-    stats.appendChild(scoreStat("累積 LLR", s.sprt ? fmtSigned(s.sprt.llr, 3) : "—"));
+    stats.appendChild(scoreStat("相對基準的技巧分（BSS，vs 逐筆基準機率）", bssTxt));
+    stats.appendChild(scoreStat("累積證據分（LLR）", s.sprt ? fmtSigned(s.sprt.llr, 3) : "—"));
     card.appendChild(stats);
 
     var noteTxt = s.sprt ? sprtStateText(s.sprt, s.n_eff, SPRT_FLOOR) : (s.status_label || "");
@@ -953,7 +953,7 @@ footer.imq-foot a{color:var(--text-secondary)}
 
     if (s.status === "red") {
       card.appendChild(el("div", "score-kill",
-        "淘汰門檻：SPRT accept_h0（n_eff≥20 起累積 LLR ≤ " + esc(fmtSigned(s.sprt ? s.sprt.B : SPRT_B_CONST, 4)) +
+        "淘汰門檻：序貫檢定（SPRT）判定不優於基準（accept_h0，有效樣本≥20 起累積證據分 ≤ " + esc(fmtSigned(s.sprt ? s.sprt.B : SPRT_B_CONST, 4)) +
         "）——本頁只舉旗，不會自動關閉或修改此來源。"));
     }
     return card;
@@ -962,7 +962,7 @@ footer.imq-foot a{color:var(--text-secondary)}
   function renderSentinelCard(s) {
     var card = el("div", "score-card is-sentinel");
     var h3 = el("h3", "", esc(SOURCE_LABEL["sentinel-noise"]));
-    h3.appendChild(el("span", "src-id", "(sentinel-noise)"));
+    h3.title = "sentinel-noise";
     card.appendChild(h3);
 
     var statusRow = el("div", "score-status");
@@ -971,8 +971,8 @@ footer.imq-foot a{color:var(--text-secondary)}
     card.appendChild(statusRow);
 
     var stats = el("div", "score-stats");
-    stats.appendChild(scoreStat("有效樣本 n_eff", (s.n_eff == null ? "—" : s.n_eff)));
-    stats.appendChild(scoreStat("BSS", (s.bss === null || s.bss === undefined) ? "—" : fmtSigned(s.bss, 3)));
+    stats.appendChild(scoreStat("有效樣本", (s.n_eff == null ? "—" : s.n_eff)));
+    stats.appendChild(scoreStat("相對基準的技巧分（BSS）", (s.bss === null || s.bss === undefined) ? "—" : fmtSigned(s.bss, 3)));
     card.appendChild(stats);
 
     card.appendChild(el("div", "sentinel-note",

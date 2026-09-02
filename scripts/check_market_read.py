@@ -35,6 +35,10 @@ Exit 0＝全部通過（WARN 不算失敗，只有 FAIL 會擋 exit code）；Ex
      判讀必須至少申報一筆分歧（見函式 docstring 說明本檢查的必然是**啟發式**：schema 裡
      deviations_from_tables 只有自由文字 claim，沒有結構化的 series/ref 欄位可精確對帳）。
   10. 全形標點：*_zh 字串中，CJK 字元後面不得緊接 ASCII 的 , : ; ! ?。
+  11.（WARN only）術語白話註解：*_zh 字串中若出現指定術語清單裡的字詞，同一欄位字串裡應該
+     要能找到括號白話註解（（...）或(...）），否則列為 WARN 提醒補註解——白話工程規範見
+     `notes/site-internal/root/_plainlang_styleguide.md` §一模板 3。此檢查只提醒不擋 commit，
+     因為判斷「這個括號是不是在解釋這個術語」本質上是語意問題，機械只能做粗略提醒。
 """
 from __future__ import annotations
 
@@ -73,6 +77,19 @@ EXCEPTION_PHRASES = (
 )
 
 FULLWIDTH_PUNCT_FORBIDDEN = set(",:;!?")
+
+# 白話工程術語清單（WARN only，見模組 docstring 第 11 項）：白話風格指南 style targets 段落
+# 舉例的一批＋ ERP／SPRT／LLR／BSS／TIPS／DXY，加上 §2.5 已拍板的名稱（高收益債利差／投資級債
+# 利差／CCC 級債利差、RRP、TGA、長期通膨預期、否證指標、資金鬆緊狀態）。任何一個字詞出現在
+# *_zh 字串裡卻同一欄位找不到括號註解，就 WARN 提醒——不精確也沒關係，這只是提醒補註解用。
+JARGON_TERMS = (
+    "期限溢價", "實質利率", "本益比", "解壓縮", "bad yields", "LDI 事件", "K 型晚週期",
+    "risk-off", "左肥尾", "中位路徑", "逼空", "去化", "三分位", "NAAIM", "CTA", "COT",
+    "SOFR−IORB", "SOFR-IORB", "MOVE", "OVX", "VRP", "超大雲", "自由現金流率",
+    "ERP", "SPRT", "LLR", "BSS", "TIPS", "DXY",
+    "高收益債利差", "投資級債利差", "CCC 級債利差", "RRP", "TGA", "長期通膨預期",
+    "否證指標", "資金鬆緊狀態",
+)
 
 
 def is_cjk(ch: str) -> bool:
@@ -351,6 +368,25 @@ def check_fullwidth_punct(data: dict):
     return PASS, "*_zh 字串中無「CJK 字元後緊接半形 , : ; ! ?」"
 
 
+def check_jargon_gloss(data: dict):
+    """WARN only（見模組 docstring 第 11 項）：對每個 *_zh 字串裡出現的 JARGON_TERMS 字詞，要求
+    該字詞在同一欄位字串裡「至少有一次」緊接著括號白話註解（術語（白話）／術語(白話)，比照風格
+    指南模板 3）——同一術語在同欄位出現多次時，只要其中一次緊接括號即算已註解（比照站上「首次
+    出現處加註即可」的慣例），但不同術語彼此不能互相頂替：field 裡有 A 術語的括號註解，不代表
+    field 裡的 B 術語也算註解過。"""
+    missing = []
+    for path, text in collect_zh_strings(data):
+        for term in JARGON_TERMS:
+            if term not in text:
+                continue
+            pattern = re.escape(term) + r"\s*[（(]"
+            if not re.search(pattern, text):
+                missing.append(f"{path} 含術語「{term}」但該術語後面找不到緊接的括號白話註解")
+    if missing:
+        return WARN, "；".join(missing)
+    return PASS, "*_zh 字串中出現的術語（如有）皆在同欄位找到緊接的括號白話註解"
+
+
 CHECKS = (
     ("schema_keys", check_schema_keys, False),
     ("refs_resolvable", check_refs_resolvable, True),
@@ -362,6 +398,7 @@ CHECKS = (
     ("falsifiers_fields", check_falsifiers, False),
     ("deviations_required", check_deviations, False),
     ("fullwidth_punct", check_fullwidth_punct, False),
+    ("jargon_gloss", check_jargon_gloss, False),
 )
 
 

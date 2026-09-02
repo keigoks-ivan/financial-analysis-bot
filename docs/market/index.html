@@ -327,6 +327,7 @@ footer.imq-foot a{color:var(--text-secondary)}
     <div class="card judgment-card" id="judgmentCard">
       <div class="stale-banner" id="staleBanner" hidden></div>
       <div class="overline" style="margin-bottom:.4rem">本週判讀</div>
+      <p class="section-sub" style="margin-top:-.1rem">這裡回答「這週市況怎麼看」：判讀者對下方力量／傳導／部位／類比四塊證據的主觀綜合，機率隨新資料每週更新，不是機械公式算出來的。</p>
       <p id="judgmentThesis" class="judgment-thesis"></p>
       <p id="judgmentPath" class="judgment-path"></p>
       <div class="judgment-meta" id="judgmentMeta"></div>
@@ -336,7 +337,7 @@ footer.imq-foot a{color:var(--text-secondary)}
 
     <div class="card" style="margin-top:14px" id="horizonCard">
       <h2 style="margin-bottom:.3rem">三個時間框架<span class="en">Horizons</span></h2>
-      <div class="legend"><span><i style="background:var(--s1)"></i>判讀 p</span><span><i class="hollow"></i>基準（climatology）</span></div>
+      <div class="legend"><span><i style="background:var(--s1)"></i>判讀 p</span><span><i class="hollow"></i>基準（歷史無條件頻率）</span></div>
       <div id="horizonDumbbell"></div>
       <div class="tw"><table class="mt" id="horizonTable"></table></div>
     </div>
@@ -356,18 +357,20 @@ footer.imq-foot a{color:var(--text-secondary)}
 
   <section id="sec-positioning">
     <h2>部位與流量<span class="en">Positioning &amp; Flows</span></h2>
+    <p class="section-sub">機械賣家現在站在哪裡、投機部位擠在哪個方向、波動有沒有錯價——三張卡各自回答一塊，數字全部即時。</p>
     <div class="grid g3eq" id="positioningGrid"></div>
     <p class="note" id="positioningJudgment"></p>
   </section>
 
   <section id="sec-analogs">
     <h2>歷史類比<span class="en">Analogs</span></h2>
+    <p class="section-sub">列出判讀者認為現在最像的歷史時期：吻合特徵與不同之處都攤開，當年結果只是參考，不是這次的預測。</p>
     <div class="grid" id="analogsGrid" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))"></div>
   </section>
 
   <section id="sec-falsifiers">
     <h2>什麼會改變這個判讀<span class="en">Falsifiers</span></h2>
-    <p class="section-sub">與引信區同款式，但這是判讀者選的證偽條件。</p>
+    <p class="section-sub">這些數字一旦走到門檻，判讀就要改；距離都是機械算的，與引信區同款式，但這是判讀者選的證偽條件。</p>
     <div class="tw"><table class="mt" id="falsifiersTable"></table></div>
 
     <h2 style="margin-top:1.8rem">與帳簿表格的分歧<span class="en">Deviations</span></h2>
@@ -376,6 +379,7 @@ footer.imq-foot a{color:var(--text-secondary)}
 
   <section id="sec-judgment-score">
     <h2>判讀記分<span class="en">Judgment Score</span></h2>
+    <p class="section-sub">本週判讀自己也要接受記分：寫下的機率會像下方其他模組一樣落帳，用序貫檢定（SPRT）追蹤長期是否優於基準，不是判讀者自己說了算。</p>
     <div class="scorecard-grid" id="judgmentScoreGrid"></div>
     <h3 class="scorecard-subhead">歷次判讀<span class="en">History</span></h3>
     <div id="judgmentHistoryHost"></div>
@@ -470,7 +474,7 @@ footer.imq-foot a{color:var(--text-secondary)}
 
   <section id="sec-exposure">
     <h2>市況曝險規則<span class="en">Exposure Rule</span><span class="proto-badge">paper · 未證明前只顯示不執行</span></h2>
-    <p class="section-sub">週頻規則：vol×trend×credit 三因子決定目標曝險，三軌各自的新倉閘只是輸入之一，不是指令。SPRT 判紅即撤，期間不調參。</p>
+    <p class="section-sub">週頻規則：波動度×趨勢×信用 三因子決定目標曝險，三軌各自的新倉閘只是輸入之一，不是指令。SPRT 判紅即撤，期間不調參。</p>
     <div class="card">
       <div class="exp-top">
         <div class="exp-target">
@@ -579,12 +583,12 @@ footer.imq-foot a{color:var(--text-secondary)}
     "tenbagger": "十倍股候選", "risk-gauge": "風險偏好模型", "rrg-sector": "類股輪動模型",
     "credit-lead": "信用領先模型", "breadth": "市場廣度模型", "calendar": "日曆效應模型",
     "intel-llm": "新聞閱讀模型", "monitor-read": "市場監測判讀", "detective-read": "警報網判讀",
-    "crowding-monitor": "擁擠交易判讀", "market-read": "市況判讀（market-read）",
+    "crowding-monitor": "擁擠交易判讀", "market-read": "市況判讀",
     "sentinel-noise": "哨兵（無技巧對照組）"
   };
   var SCORE_DOT = { green: "🟢", yellow: "🟡", red: "🔴", descriptor: "⚪" };
   var SCORE_STATUS_TEXT = {
-    green: "已證實優於基準", yellow: "證據累積中（有效樣本 n／決策需累積 LLR）",
+    green: "已證實優於基準", yellow: "證據累積中",
     red: "已證實不優於基準，等校準輪處決", descriptor: "描述器，不評分"
   };
 
@@ -613,7 +617,7 @@ footer.imq-foot a{color:var(--text-secondary)}
     var toRed = Math.max(0, Math.ceil((sprt.llr - sprt.B) / SPRT_LLR_MISS));
     var txt = "證據累積中：有效樣本 " + nEff + "，離判綠還差約再 " + toGreen +
       " 次命中（或離判紅還差約再 " + toRed + " 次未命中，皆假設此後同向不中斷，只是距離換算非機率預測）。";
-    if (nEff < floor) txt += "未滿 " + floor + " 筆前不判定，即使累積 LLR 已達門檻。";
+    if (nEff < floor) txt += "未滿 " + floor + " 筆前不判定，即使累積證據分（LLR）已達門檻。";
     return txt;
   }
 
@@ -625,13 +629,13 @@ footer.imq-foot a{color:var(--text-secondary)}
     statusRow.appendChild(el("span", "label", esc(SCORE_STATUS_TEXT[m.status] || m.status || "—")));
     card.appendChild(statusRow);
     var stats = el("div", "score-stats");
-    stats.appendChild(scoreStat("有效樣本 n_eff", (m.n_eff == null ? "—" : m.n_eff) + "／需 " + (m.n_required == null ? "—" : m.n_required)));
+    stats.appendChild(scoreStat("有效樣本", (m.n_eff == null ? "—" : m.n_eff) + "／需 " + (m.n_required == null ? "—" : m.n_required)));
     stats.appendChild(scoreStat("命中／樣本", (m.hits == null ? "—" : m.hits) + "／" + (m.n_eff == null ? "—" : m.n_eff)));
-    stats.appendChild(scoreStat("累積 LLR", m.sprt ? fmtSigned(m.sprt.llr, 3) : "—"));
+    stats.appendChild(scoreStat("累積證據分（LLR）", m.sprt ? fmtSigned(m.sprt.llr, 3) : "—"));
     card.appendChild(stats);
     card.appendChild(el("div", "score-note", esc(sprtStateText(m.sprt, m.n_eff, m.n_required))));
     if (m.status === "red") {
-      card.appendChild(el("div", "score-kill", "淘汰門檻：" + esc(m.kill_condition || "SPRT accept_h0") +
+      card.appendChild(el("div", "score-kill", "淘汰門檻：" + esc(m.kill_condition || "序貫檢定（SPRT）判定不優於基準（accept_h0）") +
         "——本頁只舉旗，不會自動關閉或修改此模組。"));
     }
     return card;
@@ -640,25 +644,25 @@ footer.imq-foot a{color:var(--text-secondary)}
   function renderSourceCard(key, s) {
     var card = el("div", "score-card");
     var h3 = el("h3", "", esc(SOURCE_LABEL[key] || key));
-    h3.appendChild(el("span", "src-id", "(" + esc(key) + ")"));
+    h3.title = key;
     card.appendChild(h3);
     var statusRow = el("div", "score-status");
     statusRow.appendChild(el("span", "dot", SCORE_DOT[s.status] || "⚪"));
     statusRow.appendChild(el("span", "label", esc(SCORE_STATUS_TEXT[s.status] || s.status || "—")));
     card.appendChild(statusRow);
     var stats = el("div", "score-stats");
-    stats.appendChild(scoreStat("有效樣本 n_eff", (s.n_eff == null ? "—" : s.n_eff) + "／已結算 " + (s.n_resolved == null ? "—" : s.n_resolved)));
+    stats.appendChild(scoreStat("有效樣本", (s.n_eff == null ? "—" : s.n_eff) + "／已結算 " + (s.n_resolved == null ? "—" : s.n_resolved)));
     var bssTxt = (s.bss === null || s.bss === undefined) ? "—" : fmtSigned(s.bss, 3);
     if (s.bss_ci90 && s.bss_ci90[0] != null && s.bss_ci90[1] != null) {
       bssTxt += "［" + fmtSigned(s.bss_ci90[0], 3) + "，" + fmtSigned(s.bss_ci90[1], 3) + "］";
     }
-    stats.appendChild(scoreStat("BSS（vs 逐筆基準機率）", bssTxt));
-    stats.appendChild(scoreStat("累積 LLR", s.sprt ? fmtSigned(s.sprt.llr, 3) : "—"));
+    stats.appendChild(scoreStat("相對基準的技巧分（BSS，vs 逐筆基準機率）", bssTxt));
+    stats.appendChild(scoreStat("累積證據分（LLR）", s.sprt ? fmtSigned(s.sprt.llr, 3) : "—"));
     card.appendChild(stats);
     var noteTxt = s.sprt ? sprtStateText(s.sprt, s.n_eff, SPRT_FLOOR) : (s.status_label || "證據累積中。");
     card.appendChild(el("div", "score-note", esc(noteTxt)));
     if (s.status === "red") {
-      card.appendChild(el("div", "score-kill", "淘汰門檻：SPRT accept_h0（n_eff≥20 起累積 LLR ≤ " +
+      card.appendChild(el("div", "score-kill", "淘汰門檻：序貫檢定（SPRT）判定不優於基準（accept_h0，有效樣本≥20 起累積證據分 ≤ " +
         esc(fmtSigned(s.sprt ? s.sprt.B : SPRT_B_CONST, 4)) + "）——本頁只舉旗，不會自動關閉或修改此來源。"));
     }
     return card;
@@ -667,15 +671,15 @@ footer.imq-foot a{color:var(--text-secondary)}
   function renderSentinelCard(s) {
     var card = el("div", "score-card is-sentinel");
     var h3 = el("h3", "", esc(SOURCE_LABEL["sentinel-noise"]));
-    h3.appendChild(el("span", "src-id", "(sentinel-noise)"));
+    h3.title = "sentinel-noise";
     card.appendChild(h3);
     var statusRow = el("div", "score-status");
     statusRow.appendChild(el("span", "dot", SCORE_DOT[s.status] || "⚪"));
     statusRow.appendChild(el("span", "label", esc(SCORE_STATUS_TEXT[s.status] || s.status || "—")));
     card.appendChild(statusRow);
     var stats = el("div", "score-stats");
-    stats.appendChild(scoreStat("有效樣本 n_eff", (s.n_eff == null ? "—" : s.n_eff)));
-    stats.appendChild(scoreStat("BSS", (s.bss === null || s.bss === undefined) ? "—" : fmtSigned(s.bss, 3)));
+    stats.appendChild(scoreStat("有效樣本", (s.n_eff == null ? "—" : s.n_eff)));
+    stats.appendChild(scoreStat("相對基準的技巧分（BSS）", (s.bss === null || s.bss === undefined) ? "—" : fmtSigned(s.bss, 3)));
     card.appendChild(stats);
     card.appendChild(el("div", "sentinel-note",
       "哨兵是每個預測來源的無技巧對照組（機率＝基準機率加隨機雜訊），不是真預測。" +
@@ -764,8 +768,26 @@ footer.imq-foot a{color:var(--text-secondary)}
     var q = state && state.evidence && state.evidence.quotes;
     return (q && q[ref]) || null;
   }
+  // COT（期貨持倉報告）市場英文名的白話對照——quotes.cot:* 的 label 目前是原始英文市場名，
+  // 這裡覆寫成中文，monitor:*／internals:* 的 label 已是中文不需要這層。
+  var COT_MARKET_ZH = {
+    "S&P 500 E-mini": "S&P 500 期貨投機淨部位", "Nasdaq-100 E-mini": "那斯達克 100 期貨投機淨部位",
+    "Russell 2000 E-mini": "羅素 2000 期貨投機淨部位", "VIX futures": "VIX 期貨投機淨部位",
+    "US Treasury 2Y": "2 年期公債投機淨部位", "US Treasury 5Y": "5 年期公債投機淨部位",
+    "US Treasury 10Y": "10 年期公債投機淨部位", "US Treasury Bonds (30Y)": "30 年期公債投機淨部位",
+    "US Dollar Index (DX)": "美元指數期貨投機淨部位", "EUR (Euro FX)": "歐元期貨投機淨部位",
+    "JPY (Japanese Yen)": "日圓期貨投機淨部位", "Gold": "黃金期貨投機淨部位",
+    "Silver": "白銀期貨投機淨部位", "Copper": "銅期貨投機淨部位", "WTI Crude": "WTI 原油期貨投機淨部位"
+  };
+  var COT_SIDE_ZH = { net_long: "偏多", net_short: "偏空" };
+  function refLabel(state, ref) {
+    var q = resolveQuote(state, ref);
+    if (ref.indexOf("cot:") === 0) return COT_MARKET_ZH[ref.slice(4)] || (q && q.label) || ref.slice(4);
+    return (q && q.label) || ref;
+  }
 
   // ── 本週判讀（block 1）＋三個時間框架（block 2）──
+  var AUTHOR_LABEL = { orchestrator: "站方判讀" };
   function ddInfo(h) {
     if (h.p_dd10 != null) return { label: "10% 回撤", p: h.p_dd10, clim: h.p_clim_dd };
     if (h.p_dd20 != null) return { label: "20% 回撤", p: h.p_dd20, clim: h.p_clim_dd };
@@ -855,7 +877,7 @@ footer.imq-foot a{color:var(--text-secondary)}
     $("#judgmentPath").textContent = read.path_zh || "";
     $("#judgmentMeta").textContent = "as-of " + (read.as_of || "—") +
       "　·　有效期 " + (read.valid_days != null ? read.valid_days + " 天" : "—") +
-      "　·　" + (read.author || "—");
+      "　·　" + (AUTHOR_LABEL[read.author] || read.author || "—");
     var byKey = {};
     (read.horizons || []).forEach(function (h) { byKey[h.key] = h; });
     var order = [["3m", "3 個月"], ["6m", "6 個月"], ["12m", "12 個月"]];
@@ -876,8 +898,7 @@ footer.imq-foot a{color:var(--text-secondary)}
     host.innerHTML = forces.map(function (f) {
       var rows = (f.refs || []).map(function (r) {
         var q = resolveQuote(state, r.ref);
-        return "<tr><td>" + esc(q ? q.label : r.ref) +
-          "<div class=\"note\" style=\"margin:2px 0 0\">" + esc(r.ref) + "</div></td>" +
+        return "<tr><td title=\"" + esc(r.ref) + "\">" + esc(refLabel(state, r.ref)) + "</td>" +
           "<td class=\"num\">" + esc(q && q.val != null ? q.val : "—") + "</td>" +
           "<td class=\"num\">" + (q && q.pctile != null ? Math.round(q.pctile) : "—") + "</td>" +
           "<td class=\"num\">" + (q && q.chg30_pct != null ? fmtSigned(q.chg30_pct, 1) + "%" : "—") + "</td>" +
@@ -917,9 +938,9 @@ footer.imq-foot a{color:var(--text-secondary)}
           ["投資級利差", d ? evField(d.ig_oas, "%") : "—"],
           ["CCC 級利差", d ? evField(d.ccc_oas, "%") : "—"],
           ["CCC−HY 利差", d ? evField(d.ccc_minus_hy_pp, " pp") : "—"],
-          ["解壓縮", d ? (d.decompression ? "是" : "否") : "—"]
+          ["解壓縮（頂端無事、底層先失血）", d ? (d.decompression ? "是" : "否") : "—"]
         ]);
-        if (d && d.decompression) flagsHtml += '<span class="chip crit" style="margin-top:.4rem">解壓縮</span>';
+        if (d && d.decompression) flagsHtml += '<span class="chip crit" style="margin-top:.4rem">底層信用先失血</span>';
       } else if (key === "split") {
         var rv = d && d.recession_votes;
         rows = kvRows([
@@ -929,7 +950,7 @@ footer.imq-foot a{color:var(--text-secondary)}
           ["站上 50 日線比例", d ? evField(d.brd_above50, "%", 0) : "—"],
           ["衰退票數", rv ? (rv.n + "／" + rv.of) : "—"]
         ]);
-        if (d && d.surface_calm_internal_riskoff) flagsHtml += '<span class="chip warn" style="margin-top:.4rem">表面平靜內部 risk-off</span>';
+        if (d && d.surface_calm_internal_riskoff) flagsHtml += '<span class="chip warn" style="margin-top:.4rem">表面平靜、內部趨避</span>';
       } else {
         rows = kvRows([
           ["隔夜逆回購", d ? evField(d.rrp, "") : "—"],
@@ -949,7 +970,7 @@ footer.imq-foot a{color:var(--text-secondary)}
   function positioningLeft(pos) {
     var f = pos && pos.flows;
     var rows = kvRows([
-      ["CTA 翻轉距離", f && f.cta_flip_dist_pct != null ? fmtSigned(f.cta_flip_dist_pct, 1) + "%" : "—"],
+      ["CTA（趨勢跟隨基金）翻轉距離", f && f.cta_flip_dist_pct != null ? fmtSigned(f.cta_flip_dist_pct, 1) + "%" : "—"],
       ["CTA 下一階水位", f && f.cta_flip_level != null ? fmtNum(f.cta_flip_level, 2) : "—"],
       ["波動控制基金下一階已實現波動", f && f.vc_next_rv != null ? fmtNum(f.vc_next_rv, 1) : "—"],
       ["對應賣壓（十億美元）", f && f.vc_next_flow_bn != null ? fmtNum(f.vc_next_flow_bn, 1) : "—"],
@@ -964,10 +985,10 @@ footer.imq-foot a{color:var(--text-secondary)}
   function positioningMid(pos) {
     var list = (pos && pos.cot_extremes) || [];
     var rowsHtml = list.length ? list.map(function (c) {
-      return "<tr><td>" + esc(c.market) + "</td><td class=\"num\">" + fmtSigned(c.net_pct_oi, 1) + "%</td>" +
-        "<td class=\"num\">" + fmtNum(c.pctile_3y, 0) + "</td><td>" + esc(c.side || "") + "</td></tr>";
+      return "<tr><td title=\"" + esc(c.market) + "\">" + esc(COT_MARKET_ZH[c.market] || c.market) + "</td><td class=\"num\">" + fmtSigned(c.net_pct_oi, 1) + "%</td>" +
+        "<td class=\"num\">" + fmtNum(c.pctile_3y, 0) + "</td><td>" + esc(COT_SIDE_ZH[c.side] || c.side || "") + "</td></tr>";
     }).join("") : "<tr><td colspan=\"4\" class=\"loading\">尚無 COT 極端部位。</td></tr>";
-    return '<div class="card"><div class="lab" style="font-weight:600;color:var(--text)">COT 部位極端表</div>' +
+    return '<div class="card"><div class="lab" style="font-weight:600;color:var(--text)">COT（期貨持倉報告）部位極端表</div>' +
       '<div class="tw"><table class="mt" style="margin-top:.5rem"><tr><th>市場</th><th>淨部位 %OI</th><th>三年分位</th><th>方向</th></tr>' + rowsHtml + '</table></div></div>';
   }
   function positioningRight(pos) {
@@ -976,11 +997,11 @@ footer.imq-foot a{color:var(--text-secondary)}
       ["VIX", vm && vm.vix != null ? fmtNum(vm.vix, 1) : "—"],
       ["VIX9D", vm && vm.vix9d != null ? fmtNum(vm.vix9d, 1) : "—"],
       ["VIX3M", vm && vm.vix3m != null ? fmtNum(vm.vix3m, 1) : "—"],
-      ["MOVE（分位）", vm && vm.move != null ? fmtNum(vm.move, 0) + "（" + (vm.move_pctile != null ? Math.round(vm.move_pctile) : "—") + "）" : "—"],
-      ["OVX", vm && vm.ovx != null ? fmtNum(vm.ovx, 1) : "—"],
-      ["NAAIM", pos && pos.naaim != null ? fmtNum(pos.naaim, 0) : "—"],
+      ["MOVE 債市波動（分位）", vm && vm.move != null ? fmtNum(vm.move, 0) + "（" + (vm.move_pctile != null ? Math.round(vm.move_pctile) : "—") + "）" : "—"],
+      ["OVX（油價波動指數）", vm && vm.ovx != null ? fmtNum(vm.ovx, 1) : "—"],
+      ["NAAIM（主動經理人曝險調查）", pos && pos.naaim != null ? fmtNum(pos.naaim, 0) : "—"],
       ["個股賣權比", valPctile(pos && pos.pc_equity, 2)],
-      ["VRP（20 日）", valZ(pos && pos.vrp_20d, 1)],
+      ["VRP 波動風險溢酬（20 日）", valZ(pos && pos.vrp_20d, 1)],
       ["空頭覆蓋率", pos && pos.short_vol_ratio != null ? fmtNum(pos.short_vol_ratio, 2) : "—"]
     ]);
     return '<div class="card"><div class="lab" style="font-weight:600;color:var(--text)">波動錯價</div>' +
@@ -1038,7 +1059,7 @@ footer.imq-foot a{color:var(--text-secondary)}
         var dir = FALSIFIER_DIR_LABEL[f.direction] || ["neutral", f.direction || "—"];
         var claim = f.claim_id ? councilById[f.claim_id] : null;
         html += "<tr><td><span class=\"chip " + dir[0] + "\">" + dir[1] + "</span></td>" +
-          "<td>" + esc(f.label) + "<div class=\"note\" style=\"margin:2px 0 0\">" + esc(f.ref) + "</div></td>" +
+          "<td title=\"" + esc(f.ref) + "\">" + esc(f.label) + "</td>" +
           "<td class=\"num\">" + esc(curDisplay) + "</td>" +
           "<td class=\"num\">" + esc(f.op || "") + " " + esc(f.threshold) + esc(f.unit || "") + "</td>" +
           "<td class=\"num\">" + (dist != null ? fmtSigned(dist, 1) + "%" : "—") + "</td>" +
@@ -1090,12 +1111,15 @@ footer.imq-foot a{color:var(--text-secondary)}
   }
 
   // ── 環境五磚 ──
+  // 部分 label 是機械層原樣輸出、內嵌了內部系統代號（如「警戒度（detective）」），
+  // 這裡覆寫成純中文顯示，不動 state.json 本身的欄位內容。
+  var ENV_LABEL_OVERRIDE = { detective: "警戒度", monitor: "跨資產壓力" };
   function renderEnv(list) {
     $("#env").innerHTML = (list || []).map(function (e) {
       var tag = e.link ? "a" : "div";
       var hrefAttr = e.link ? ' href="' + esc(e.link) + '"' : "";
       return '<' + tag + ' class="card tile' + (e.stale ? ' stale' : '') + '"' + hrefAttr + '>' +
-        '<div class="lab">' + esc(e.label) + '</div>' +
+        '<div class="lab">' + esc(ENV_LABEL_OVERRIDE[e.key] || e.label) + '</div>' +
         '<div class="val">' + esc(e.value) + '</div>' +
         '<p class="sub">' + esc(e.sub || "") + '</p>' +
         '<div class="meta"><span>as-of ' + esc(e.as_of || "—") + '</span>' +
@@ -1366,6 +1390,7 @@ footer.imq-foot a{color:var(--text-secondary)}
     open: ["good", "🟢 開"], caution: ["warn", "🟡 謹慎"], closed: ["crit", "🔴 關"]
   };
   var GATE_NAME = { core: "核心軌", satellite_structural: "衛星·結構", satellite_cyclical: "衛星·循環" };
+  var FACTOR_LABEL = { vol: "波動度", trend: "趨勢", credit: "信用" };
   function renderExposure(er, sprtModule) {
     er = er || {};
     $("#expTarget").textContent = er.target != null ? Math.round(er.target * 100) + "%" : "—";
@@ -1373,7 +1398,7 @@ footer.imq-foot a{color:var(--text-secondary)}
     $("#expFactors").innerHTML = ["vol", "trend", "credit"].map(function (k) {
       var v = factors[k];
       var tone = v == null ? "neutral" : (v >= 1 ? "good" : "warn");
-      return '<div class="row"><b>' + k + '</b><span class="chip ' + tone + '">' + (v == null ? "—" : fmtNum(v, 2)) + '</span></div>';
+      return '<div class="row"><b>' + esc(FACTOR_LABEL[k] || k) + '</b><span class="chip ' + tone + '">' + (v == null ? "—" : fmtNum(v, 2)) + '</span></div>';
     }).join("");
     var gates = er.gates || {};
     $("#expGates").innerHTML = Object.keys(GATE_NAME).map(function (k) {
@@ -1459,9 +1484,9 @@ footer.imq-foot a{color:var(--text-secondary)}
       '<div class="overline" style="margin-bottom:.5rem">Kelly 傾斜組合（paper）</div>' +
       '<div class="kv">' +
       '<b>E 曝險倍率</b><span>' + (kr.exposure != null ? fmtNum(kr.exposure, 2) + '×' : '—') + '</span>' +
-      '<b>edge</b><span>' + (kr.edge != null ? fmtSigned(kr.edge * 100, 1) + ' pp' : '—') + '</span>' +
+      '<b>差距（edge）</b><span>' + (kr.edge != null ? fmtSigned(kr.edge * 100, 1) + ' pp' : '—') + '</span>' +
       '<b>z</b><span>' + (kr.z != null ? fmtNum(kr.z, 3) : '—') + '</span>' +
-      '<b>σ21</b><span>' + (kr.sigma21 != null ? fmtNum(kr.sigma21 * 100, 2) + '%' : '—') + '</span>' +
+      '<b>21 日波動（σ21）</b><span>' + (kr.sigma21 != null ? fmtNum(kr.sigma21 * 100, 2) + '%' : '—') + '</span>' +
       '<b>原因</b><span>' + esc(reasonTxt) + '</span>' +
       '</div></div>';
   }

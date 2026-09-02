@@ -7,6 +7,8 @@ description: market-read — 市況主控台判讀層（週頻＋事件觸發）
 
 **定位**：`/market/` 是機械證據層（日更、零 LLM）＋判讀層（本 skill）兩層。判讀層回答「未來 3／6／12 個月股市的可能方向與背後邏輯」，每一個機率都進帳簿被 SPRT 打分；判紅即降為評論。設計凍結稿：`notes/site-internal/root/_market_read_design_20260903.md`。**判讀者＝orchestrator（opus 級），不外包給 sonnet、不上 cron。**
 
+**白話關卡（持有人 2026-09-03 指出漏掉，列為硬規則）**：判讀文字＝外資券商白話，照 `_plainlang_styleguide.md` 四句式——每個術語在同一欄位首次出現必附「術語（一句白話）」（期限溢價（投資人要求多付的長債補償）、解壓縮（頂端無事、底層失血）、NAAIM（主動經理人曝險調查）…），先講為什麼再列數字，短句、一句一個意思；頁面永遠不露 `monitor:dgs10` 這類代碼與 SPRT／LLR／n_eff／orchestrator 等內部詞（顯示層用「序貫檢定」「累積證據分」「有效樣本」「站方判讀」）。`check_market_read.py` 的 `jargon_gloss` WARN 必須清零才算完成。
+
 **憲法**：描述器紀律（只講機率與條件；禁「買／賣／加碼／減碼／避開／進場／出場／建議」）；不是收斂面；每個判斷句錨定一個 ref（`monitor:<key>`／`internals:<key>`／`stress:<欄>`／`cot:<市場>`／`flow:<欄>`）並帶 as_of；與帳簿表格分歧必明寫；白話全形（`_plainlang_styleguide.md`）；不改任何機械層檔案。
 
 ## 步驟

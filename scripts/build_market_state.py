@@ -1019,9 +1019,14 @@ def build_read_zh(council_summary, flows, top_fuse, stock_pulse, scoreboard, env
     n_yellow = sum(1 for s in all_status if s == "yellow")
     n_red = sum(1 for s in all_status if s == "red")
     sentinel = sources.get("sentinel-noise") or {}
+    _sn_state = (sentinel.get("sprt") or {}).get("state") or sentinel.get("status")
+    _sn_neff = sentinel.get("n_eff")
+    _sn_plain = {"accept_h1": "已證實優於基準（記分壞掉，需檢查）", "accept_h0": "已證實不優於基準（淘汰機制有效）",
+                 "green": "已證實優於基準（記分壞掉，需檢查）", "red": "已證實不優於基準（淘汰機制有效）"}.get(
+        _sn_state, f"證據累積中，有效樣本 {_sn_neff if _sn_neff is not None else '—'}／20")
     bullets.append(
         f"記分板：{n_green} 綠／{n_yellow} 黃／{n_red} 紅（共 {len(all_status)} 個模組＋來源）；"
-        f"哨兵 sentinel-noise 狀態「{sentinel.get('status_label', '—')}」。"
+        f"哨兵（無技巧對照組）狀態「{_sn_plain}」。"
     )
 
     return {"headline": headline, "bullets": bullets}
