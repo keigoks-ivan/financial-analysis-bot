@@ -381,7 +381,7 @@ QC-1~QC-46多為**通用成長複利股**累積的tripwire；§0判為非複利a
 1.6. **知識帳本先讀後裁（Part II動筆前必跑）**：`python knowledge/q.py {TICKER}`（衍生物不存在時自動rebuild），載入歷次裁決/thesis演進/已回填outcome。**硬規則**：前次裁決為觀望/迴避且to-date報酬**>+30%**→該證據**強制列入§11.3**，且§14複審**不得只以「估值更貴了」維持觀望**——須明寫「上次觀望/迴避後漲__%，本次維持/翻面理由是___」。
 2. **⛔強制靜默（最高優先級）**：收到ticker後對話框嚴禁出現任何章節文字/分析段落/表格/「正在分析…」過渡描述。所有章節直接在context內完成、寫入body檔。
 3. **在context內完成全部章節→一次Write body檔→render_dd.py→四支驗證**（工具級禁令見下）：
-   a. 全部章節在context內一次寫齊，**單次Write**到`.dd_build/DD_{TICKER}_{YYYYMMDD}.body.html`（裝不下最多2次part1/part2再cat合併；**禁用Edit**）。
+   a. 全部章節在context內寫齊後，**預設分兩次Write**（單則輸出過長會撞上限而整段作廢）：`.dd_build/DD_{TICKER}_{YYYYMMDD}.body.part1.html`（dd-meta＋TITLE／SOURCES註解＋dashboard＋s1–s7）與`.body.part2.html`（s8–s14＋appA/appB＋revlog），`cat part1 part2 > ….body.html`合併；短報告可單次Write；**禁用Edit、禁第三段**。
    b. `dd_sections.py bytes ….body.html`——超標章節依QC-38三條省法收斂後重寫（`replace`），不重寫整份。
    c. `dd_sections.py leaks ….body.html`——命中改寫為讀者語言（QC-40）；未過不得進下一步。
    d. **QC-52 Stage 2對帳**（writer自行執行，非spawn）：讀q.py主題行機器欄+canonical ID §0/§4全文，對帳本DD產業判斷。
