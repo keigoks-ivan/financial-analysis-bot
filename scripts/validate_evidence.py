@@ -54,14 +54,18 @@ DATE_FORMATS = ["%Y-%m-%d", "%Y/%m/%d", "%Y%m%d"]
 
 
 def parse_date(s):
+    """接受 YYYY-MM-DD／YYYY/MM/DD／YYYY-MM／YYYY；月與年精度取該期間第一天。
+    前後可帶括號註記（如「2026-05 (approx)」），只取開頭的日期樣式；其餘自由文字＝None。"""
     if not isinstance(s, str):
         return None
-    for fmt in DATE_FORMATS:
-        try:
-            return datetime.strptime(s.strip(), fmt)
-        except ValueError:
-            continue
-    return None
+    m = re.match(r"\s*(\d{4})(?:[-/](\d{1,2}))?(?:[-/](\d{1,2}))?", s)
+    if not m:
+        return None
+    y, mo, d = int(m.group(1)), int(m.group(2) or 1), int(m.group(3) or 1)
+    try:
+        return datetime(y, mo, d)
+    except ValueError:
+        return None
 
 
 def required_axes(matrix, evidence):
