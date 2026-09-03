@@ -32,3 +32,16 @@
 
 - **v2.7（2026-07-08）情境判斷手冊**：四個挖掘 agent 對 5 份高密度 ID（AI 算力旗艦/PublicBuilder/TokenEconomics/WFE/SpaceEconomy）反萃取 20 條強模型判斷動作 → `references/judgment-playbook.md`（觸發索引式:命中才必答）＋Gate 14 阻斷。代表:過剩改道偵測、最難造假指標優先＋領先性排序、會計自白＋擴散門檻 kill、敗局劇本化（時序＋前例＋buffer 耗損）、風險住 E 還是倍數、存量缺口 vs 流量需求、讓利永久性四判準、P×Q 拆解、瓶頸層裁決、換尺重估（含 sell-side 措辭訊號）、錯殺型分歧、sum-of-parts 雙向、反方吸收、Phase 雙閘、承諾剛性、週期底度量切換。審計制同 DD playbook（2026-10 逐條）。
 
+- **v4.0（2026-09-03）規則層重寫＋必交物制＋研究引擎降級旗艦專用**（持有人拍板全採「提案版」，依據 `notes/site-internal/id/_id_skill_v4_review_20260903.md` 全文分析：v3.0 上線六週僅一份、字數地板獎勵填充、critic 抓到的錯全落在沒算的量化模組、白話目標被 template 英文標籤打架）：
+  - **骨架不變、規則層全面重寫**：八段錨點（summary/thesis/debates/mechanics/valuation/risks/stocks/appendix）不動；舊 §0–§9 內容模組編號、QC-1~20／QC-M1~6、Pre-Publish 16 道 gate 全數退役，SKILL.md 從 86KB 壓到 ~21KB。
+  - **必交決策物制取代字數**：新「必交決策物 D1-D13」表（含機器可驗欄）是品質唯一判準；舊「16,000–22,000 可見字，低於視為偷懶」地板廢除，篇幅只設上界警告（主閱讀線 11,000–14,000 可見字無地板）。
+  - **研究引擎降為旗艦專用**：五軸 fan-out＋承重數字 3-skeptic＋completeness critic 三件套，由「新 ID／裁決級 refresh 常設」降為「持有人明說『旗艦』才開啟」；預設走標準流程（單一封閉式採集 agent＋writer 自搜＋completeness critic），成本估 1.5–2.5M tokens（原引擎估 12–24M）。
+  - **機械閘收斂**：16 道 Pre-Publish gate 與 pre_publish_check.md（49KB）由 `scripts/check_id.py`（另一 agent 同步實作）取代；判斷閘收進 id-review critic 職責書，critic 改餵 `check_id.py --excerpt` 摘錄不餵整份 HTML。
+  - **CSS 外掛**：新增 `docs/assets/id-v4.css`（家族共用，比照 `imq-base.css`／`supply-chain/assets/engine.css` 先例），省每檔 inline CSS 一份。
+  - **白話層**：正文全面禁 claim tag／T 級／內部欄位名／方法論標籤/NC# 一類內部編號，收進 evidence-fold 折疊層；固定樣板塊（「怎麼讀」「對投資的意義」「本節參考來源」）大砍，來源收斂為附錄單一來源總表。
+  - **T1 floor 分型**：由固定 60% 改依 id-meta `mega` 分型——`macro`／`cloud`／`space` 45%，其餘 60%（v3.0 首發 cloud 主題 36% 卡稿為依據）。
+  - **spurious specificity 唯一例外**：三情境表／三視野表允許 5 點步進主觀權重（標明主觀、加總 100），已登記 `knowledge/rule_ledger.md`。
+  - **新檔案**：`references/sources.md`（來源紀律全搬遷，~10.7KB）、`references/research-queries.md`（Axis A-E 查詢模板，只給採集 agent，~3.4KB）。`judgment-playbook.md` 內容一字不動，只把觸發索引欄的舊 §N 章節代號改為新八段錨點名。
+  - **ledger 六項**：Gate 15 研究引擎三件套降級旗艦專用（kill condition 改寫）；新增 D8 估值錨必交登記；新增三情境表 5 點步進主觀權重例外登記；ID 全文字數地板 16,000–22,000 追溯登記並立即 KILL；QC-1 🟡 比例 ≤20% 追溯登記並立即 KILL（加一提刪一提名對象）；既有 T1 60% floor 列更新為分型 60/45。
+  - **存量**：188 檔不遷移，隨改版自然汰換。`pre_publish_check.md`／`templates/schema_fields.md` 已刪除（機械閘進 check_id.py，判斷閘進 id-review J1–J10）。
+
