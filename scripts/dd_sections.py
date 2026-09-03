@@ -26,8 +26,10 @@ Two ways a section's start can be located in an existing file:
 attr-only and requires *exactly one* attribute match — falling back to text
 inference for a destructive rewrite would be unsafe, so it exits 2 instead.
 
-Subcommands: bytes / text / extract / replace / leaks — see module docstring
-sections below and the design spec for exact behaviour.
+Subcommands: bytes / text / extract (optional `--out DIR` — one file per id
+instead of stdout) / replace / replace-many (batch `replace`, all-or-nothing
+against a DIR of `{id}.html` files) / leaks — see module docstring sections
+below and the design spec for exact behaviour.
 """
 from __future__ import annotations
 
@@ -315,12 +317,22 @@ class ReplaceError(Exception):
     pass
 
 
-def replace(html: str, cid: str, new_block: str) -> str:
-    """Splice `new_block` in place of the sole occurrence of `cid`.
+class ReplaceManyError(Exception):
+    """Raised by replace_many() when >=1 patch fails validation. `.errors` is
+    a list of (cid, reason) covering EVERY failing id (not just the first),
+    so the batch can be reported and rejected atomically."""
 
-    attr-only (no text-fallback) — see module docstring. Raises ReplaceError
-    (caller maps to exit 2) if the id is not found exactly once, or if
-    new_block doesn't look like it carries the same outer wrapper.
+    def __init__(self, errors):
+        self.errors = errors
+        super().__init__("; ".join(f"{c}: {r}" for c, r in errors))
+
+
+def _locate_for_replace(html: str, cid: str, new_block: str):
+    """Return (start, end) span that `replace()`/`replace_many()` would
+    splice `new_block` into. Raises ReplaceError under the same conditions
+    `replace()` used to (id not found exactly once, wrapper missing) —
+    shared so replace_many() can dry-run validation against the pristine
+    html without duplicating the location logic.
     """
     if cid == "dashboard":
         span = _dashboard_span(html)
@@ -328,38 +340,80 @@ def replace(html: str, cid: str, new_block: str) -> str:
             raise ReplaceError("dashboard region not found (need <div class=\"topbar\"> ... <nav class=\"dd-toc\">)")
         if 'class="topbar"' not in new_block:
             raise ReplaceError('NEWFILE 缺少外層 wrapper（找不到 class="topbar"）')
-        start, end = span
-    elif cid == "dd-meta":
+        return span
+    if cid == "dd-meta":
         span = _dd_meta_span(html)
         if span is None:
             raise ReplaceError("dd-meta block not found")
         if 'id="dd-meta"' not in new_block and "id='dd-meta'" not in new_block:
             raise ReplaceError('NEWFILE 缺少外層 wrapper（找不到 id="dd-meta"）')
-        start, end = span
-    else:
-        matches = _attr_matches(html, cid)
-        if len(matches) != 1:
-            raise ReplaceError(
-                f'id="{cid}" 命中 {len(matches)} 次（需恰好 1 次）— replace 只支援帶 canonical id 的檔'
-            )
-        m = matches[0]
-        if f'id="{cid}"' not in new_block and f"id='{cid}'" not in new_block:
-            raise ReplaceError(f'NEWFILE 缺少外層 wrapper（找不到 id="{cid}"）')
-        wrapped = m.group(1) in ("section", "details", "div")
-        if wrapped:
-            end = _matching_close(html, m.end(), m.group(1))
-        else:
-            markers = split_sections(html)
-            end = None
-            for i, mk in enumerate(markers):
-                if mk["id"] == cid and mk["start"] == m.start():
-                    end = mk["end"]
-                    break
-            if end is None:
-                end = _end_of_content(html, m.start())
-        start = m.start()
+        return span
 
+    matches = _attr_matches(html, cid)
+    if len(matches) != 1:
+        raise ReplaceError(
+            f'id="{cid}" 命中 {len(matches)} 次（需恰好 1 次）— replace 只支援帶 canonical id 的檔'
+        )
+    m = matches[0]
+    if f'id="{cid}"' not in new_block and f"id='{cid}'" not in new_block:
+        raise ReplaceError(f'NEWFILE 缺少外層 wrapper（找不到 id="{cid}"）')
+    wrapped = m.group(1) in ("section", "details", "div")
+    if wrapped:
+        end = _matching_close(html, m.end(), m.group(1))
+    else:
+        markers = split_sections(html)
+        end = None
+        for i, mk in enumerate(markers):
+            if mk["id"] == cid and mk["start"] == m.start():
+                end = mk["end"]
+                break
+        if end is None:
+            end = _end_of_content(html, m.start())
+    return (m.start(), end)
+
+
+def replace(html: str, cid: str, new_block: str) -> str:
+    """Splice `new_block` in place of the sole occurrence of `cid`.
+
+    attr-only (no text-fallback) — see module docstring. Raises ReplaceError
+    (caller maps to exit 2) if the id is not found exactly once, or if
+    new_block doesn't look like it carries the same outer wrapper.
+    """
+    start, end = _locate_for_replace(html, cid, new_block)
     return html[:start] + new_block + html[end:]
+
+
+def replace_many(html: str, patches):
+    """Batch, all-or-nothing `replace()`.
+
+    `patches`: ordered list of (cid, new_block) tuples. Phase 1 validates
+    EVERY patch against the pristine `html` (exactly-one-match + wrapper
+    checks, via `_locate_for_replace`) and collects ALL failures; if any
+    patch fails, raises ReplaceManyError (nothing applied — the caller must
+    not write a file). Phase 2 (only reached if phase 1 is clean) applies
+    the patches sequentially, re-locating each cid against the
+    progressively-updated html (so later patches see earlier ones' output).
+
+    Returns (new_html, results) where results is a list of
+    (cid, old_bytes, new_bytes) in `patches` order.
+    """
+    errors = []
+    for cid, new_block in patches:
+        try:
+            _locate_for_replace(html, cid, new_block)
+        except ReplaceError as e:
+            errors.append((cid, str(e)))
+    if errors:
+        raise ReplaceManyError(errors)
+
+    cur = html
+    results = []
+    for cid, new_block in patches:
+        start, end = _locate_for_replace(cur, cid, new_block)
+        old_bytes = len(cur[start:end].encode("utf-8"))
+        cur = cur[:start] + new_block + cur[end:]
+        results.append((cid, old_bytes, len(new_block.encode("utf-8"))))
+    return cur, results
 
 
 # ---------------------------------------------------------------------------
@@ -731,6 +785,29 @@ def _cmd_text(args):
 def _cmd_extract(args):
     html = Path(args.file).read_text(encoding="utf-8")
     ids = args.ids.split(",")
+
+    if args.out_dir:
+        out_dir = Path(args.out_dir)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        written = []
+        missing = []
+        for cid in ids:
+            span = _span_for_id(html, cid)
+            if span is None:
+                missing.append(cid)
+                continue
+            chunk = html[span[0]:span[1]]
+            (out_dir / f"{cid}.html").write_text(chunk, encoding="utf-8")
+            written.append((cid, len(chunk.encode("utf-8"))))
+        if not written:
+            print(f"找不到任何指定 id：{args.ids}", file=sys.stderr)
+            sys.exit(2)
+        for cid, nbytes in written:
+            print(f"{cid}: {nbytes}B -> {out_dir / (cid + '.html')}")
+        if missing:
+            print(f"找不到（跳過）：{','.join(missing)}", file=sys.stderr)
+        sys.exit(0)
+
     out = extract(html, ids)
     if not out:
         print(f"找不到任何指定 id：{args.ids}", file=sys.stderr)
@@ -754,6 +831,31 @@ def _cmd_replace(args):
     new_bytes = len(new_block.encode("utf-8"))
     old_s = "?" if old_bytes is None else f"{old_bytes}B"
     print(f"{args.id}: {old_s} → {new_bytes}B")
+    sys.exit(0)
+
+
+def _cmd_replace_many(args):
+    html = Path(args.file).read_text(encoding="utf-8")
+    src_dir = Path(args.dir)
+    files = sorted(src_dir.glob("*.html"))
+    if not files:
+        print(f"目錄內沒有 .html 檔：{args.dir}", file=sys.stderr)
+        sys.exit(2)
+    patches = [(f.stem, f.read_text(encoding="utf-8")) for f in files]
+
+    try:
+        new_html, results = replace_many(html, patches)
+    except ReplaceManyError as e:
+        print("replace-many 失敗，整批不寫檔：", file=sys.stderr)
+        for cid, reason in e.errors:
+            print(f"  {cid}: {reason}", file=sys.stderr)
+        sys.exit(2)
+
+    Path(args.file).write_text(new_html, encoding="utf-8")
+    for cid, old_b, new_b in results:
+        print(f"{cid}: {old_b}B → {new_b}B")
+    total_bytes = len(new_html.encode("utf-8"))
+    print(f"總檔案: {total_bytes}B ({total_bytes / KB:.2f}KB)")
     sys.exit(0)
 
 
@@ -784,6 +886,7 @@ def main():
     p_extract = sub.add_parser("extract", help="原始 HTML 片段")
     p_extract.add_argument("file")
     p_extract.add_argument("ids", help="逗號分隔")
+    p_extract.add_argument("--out", dest="out_dir", default=None, help="逐段寫入 DIR/{id}.html，取代印到 stdout")
     p_extract.set_defaults(func=_cmd_extract)
 
     p_replace = sub.add_parser("replace", help="整段替換")
@@ -791,6 +894,11 @@ def main():
     p_replace.add_argument("id")
     p_replace.add_argument("newfile")
     p_replace.set_defaults(func=_cmd_replace)
+
+    p_replace_many = sub.add_parser("replace-many", help="批次整段替換（DIR 下每個 {id}.html；全部命中恰 1 才寫檔，任一失敗整批不寫）")
+    p_replace_many.add_argument("file")
+    p_replace_many.add_argument("dir")
+    p_replace_many.set_defaults(func=_cmd_replace_many)
 
     p_leaks = sub.add_parser("leaks", help="可見正文機器語言掃描")
     p_leaks.add_argument("file")

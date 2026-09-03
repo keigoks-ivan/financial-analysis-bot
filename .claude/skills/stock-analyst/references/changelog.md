@@ -425,3 +425,9 @@ QC-39（AVGO 型過度樂觀 / SNDK 型過嚴的全文敘事）、QC-40（鷹架
 - `scripts/verify_dd_math.py` 新增檢查 E：`import dd_scenario`，dd-meta 有 `scenario_tree` 即呼叫 `check_meta` 併入 FAIL/WARN，無則 WARN 建議改用腳本產出。
 - `scripts/validate_dd_meta.py`：`V13_OPTIONAL_TYPES` 加 `scenario_tree`（dict，選填）。
 - 文字接線三處：SKILL.md §10.5＋10.6 節首加腳本化指令與 Guardrail 改為「(1+EPS)(1+re-rate)−1 與不含息 IRR 差 ≤0.1%p」（原 2%p 對機率加權 Base IRR 口徑作廢）；Patch 段補「重建情境樹一律重跑 `dd_scenario.py`，不手改數字」；`references/data-collection.md` 任務 3 加客戶簽約查詢（`{CUSTOMERS}` 參數）；`ddreport/SKILL.md` 4.4 改「GATE＝FAIL 才 re-gate，PASS-with-fixes 收工」。
+
+### v15.2.2（2026-09-03）patch 批次化
+
+**WHY**：AVGO 首跑的 patch agent 花 410 輪／150M cache——56 次 `dd_sections.py replace` 逐段做、18 次 `extract`、26 次 Write＋30 次 Edit 產 patch 檔、21 次驗證、6 次 WebSearch、且把全部 section 抽成一個檔 Read 進 context（50KB）；每段修補約 3 輪，context 從 64k 長到 552k、每輪都重付。改動把「一段一輪來回」壓成「一次取段、一次寫、一次套用、一次驗證」。
+
+**改動清單**：`scripts/dd_sections.py` 新增 `extract FILE IDS --out DIR`（逐 id 各寫 `DIR/{id}.html`，不印 stdout）與 `replace-many FILE DIR`（掃 `DIR/*.html`，檔名即 canonical id，先對原始 html 逐一 dry-run 驗證全部命中恰 1，任一失敗整批不寫且列出全部失敗 id，全過才依序套用寫檔）；`replace()` 內部拆出共用的 `_locate_for_replace()` 供兩者重用，既有 `bytes`／`text`／`extract`（無 `--out`）／`replace`／`leaks` 行為不變。stock-analyst／ddreport 兩份 SKILL.md 的 Patch agent 契約改口：輸入從「critic md 路徑＋DD 路徑」改為「orchestrator 已 `sed -n` 取好的 FINDINGS 摘錄＋`extract --out` 段落」，patch agent 禁讀 critic 檔／skill 檔／WebSearch，四步固定（cat 讀入→逐段 Write→一次 `replace-many`→一次複合驗證），目標一輪 ≤25 輪。
