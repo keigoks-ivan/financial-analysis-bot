@@ -436,5 +436,5 @@ QC-39（AVGO 型過度樂觀 / SNDK 型過嚴的全文敘事）、QC-40（鷹架
 
 **WHY**：(a) 步驟 0 的 `transcripts_for_dd.py` 只列磁碟既有 `.md`，不先跑 Koyfin 增量下載會漏最近一季法說（2026-08-31 修復下載器後仍是兩段式）；(b) AVGO 實跑證實 writer 對 `.dd_build` part 檔的小幅 Edit 無害（真正燒 cache 的是對 `docs/dd/` 產物的 Edit 與重讀），全面禁 Edit 反而逼 writer 為改一個數字重 Write 整個 part。
 
-**改動清單**：`ddreport/SKILL.md` v2.3 Step 1 新增「spawn writer 前 orchestrator 自跑 `koyfin_downloader.py --tickers {T}`」（不阻塞：session 過期告知用戶跑 `--login`、DD 照跑並註明；雙機勿同跑同 ticker）；Edit 禁令三處（SKILL.md 步驟 3a／3f、`references/html-output.md`、ddreport 4.1）改口為「part 檔可小幅 Edit（Edit 後重新 `cat`），`docs/dd/` 產物禁 Edit 只准 `extract`/`replace`」；patch agent 禁 Edit 不變。判斷機器零變動。
+**改動清單**：Koyfin 增量下載 `koyfin_downloader.py --tickers {T}` 併入 writer（sonnet）步驟 0、在 `transcripts_for_dd.py` 之前（持有人拍板「Koyfin 也用 sonnet」，orchestrator 不跑；不阻塞：session 過期在回報標明、用磁碟既有稿；`ddreport/SKILL.md` v2.3 Step 1 只留 prompt 提醒）；Edit 禁令三處（SKILL.md 步驟 3a／3f、`references/html-output.md`、ddreport 4.1）改口為「part 檔可小幅 Edit（Edit 後重新 `cat`），`docs/dd/` 產物禁 Edit 只准 `extract`/`replace`」；patch agent 禁 Edit 不變。判斷機器零變動。
 

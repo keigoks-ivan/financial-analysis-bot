@@ -19,7 +19,7 @@ stock-analyst writer（sonnet，BODY 檔一次 Write→render_dd→四支驗證�
 
 1. **解析 ticker(s)**。模糊或不確定的 ticker **先問用戶**，不要瞎猜（memory `feedback_dca_session_pitfalls`）。
    - 開始前先 `git log --oneline -5` + `git status`，確認沒有並行 session 的背景動作 / orphan 檔（parallel-session git hygiene）。
-   - **Koyfin 逐字稿增量下載（spawn writer 前，orchestrator 自跑）**：`cd ~/scripts/koyfin-downloader && .venv/bin/python koyfin_downloader.py --tickers {T1,T2,…}`（headless，只抓 `download_log.json` 沒有的新逐字稿並同步產 `.md`；ticker 用 Drive 資料夾原形如 `2330.TW`）。WHY：writer 步驟 0 的 `transcripts_for_dd.py` 只看磁碟，不先下載就會漏最近一季法說。**不阻塞 DD**：印出 session 過期 → 告知用戶自行跑 `--login`（需人工登入，orchestrator 不做），DD 照跑（用磁碟既有逐字稿，回報時註明）；Drive 未掛載／Koyfin 查無該 ticker 同樣只記警告。兩台機器勿同時跑同一 ticker（`download_log.json` 在 Drive 共用）。
+   - **Koyfin 逐字稿增量下載由 writer（sonnet）在步驟 0 自跑**（2026-09-03 持有人拍板「Koyfin 也用 sonnet」，orchestrator 不跑）：spawn writer 的 prompt 明寫「先跑 `koyfin_downloader.py --tickers {T}` 再跑 `transcripts_for_dd.py`」與逐字稿範圍（最近四季法說＋明確高訊號會議稿）。writer 回報「session 過期」→ orchestrator 轉告用戶自行跑 `--login`，DD 不因此重跑。
 
 2. **（可選）peer 自動偵測**。用戶給單一 ticker 且語氣是「這個 theme / 這群」時，可從 `docs/dd/` 同產業、或 `docs/id/ID_*.html` 的 `related_tickers[]` 帶出 1–3 檔 peer 一起跑（如 KLAC → ASML / LRCX）。**會擴張範圍時先跟用戶確認要不要連 peer**。
 

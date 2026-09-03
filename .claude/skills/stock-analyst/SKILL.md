@@ -375,7 +375,7 @@ QC-1~QC-46多為**通用成長複利股**累積的tripwire；§0判為非複利a
 ### 執行順序（不得跳過或壓縮任何步驟）
 **所有 spawn 出去的執行型 agent（採集／查證／critic／patch／fix pass）派工 prompt 一律附帶「機械輪次批次化」三條**（見【Token紀律】）。**writer 本體是單一 sonnet agent，只跑到步驟3產出合格HTML為止；critic／patch／同步／commit 是 orchestrator 在 writer 交棒後另外驅動的階段（見步驟6）。**
 
-0. **隨附文件前置處理（條件性）**：用戶提供外部文件→消化成「與本公司相關」read-through寫入§8.5；無附件→整段省略。**Koyfin逐字稿**：先跑`python3 ~/scripts/koyfin-downloader/transcripts_for_dd.py {ticker}`取必讀/可略讀清單（此工具只看磁碟；增量下載由orchestrator在spawn writer前跑，見ddreport Step 1），必讀全讀（不先digest），併入§8.5，**只讀`.md`不開`.pdf`**；資料夾不存在→靜默跳過。
+0. **隨附文件前置處理（條件性）**：用戶提供外部文件→消化成「與本公司相關」read-through寫入§8.5；無附件→整段省略。**Koyfin逐字稿**：先跑增量下載`cd ~/scripts/koyfin-downloader && .venv/bin/python koyfin_downloader.py --tickers {ticker}`（headless、只抓新檔、約1-5分鐘；session過期→在最終回報標「Koyfin session過期，用磁碟既有逐字稿」不阻塞），再跑`python3 ~/scripts/koyfin-downloader/transcripts_for_dd.py {ticker}`取必讀/可略讀清單（讀最近四季法說＋明確高訊號會議稿，不讀全歷史），必讀全讀（不先digest），併入§8.5，**只讀`.md`不開`.pdf`**；資料夾不存在→靜默跳過。
 1. **先執行所有搜尋**（見【即時數據協議】）——spawn採集agent取回機械數字包，判斷性搜尋（QC-39/QC-12/Munger/QC-19深查）本agent自行執行。**基本面研究只在此做一次**；Part II引用結論不另起搜尋。
 1.5. **Archetype判定（QC-43）**：資料齊後、進章節前，判定primary（+secondary）+信心，路由gate-set。§1開頭/頁首明寫「archetype+信心+換了哪套gate」。
 1.6. **知識帳本先讀後裁（Part II動筆前必跑）**：`python knowledge/q.py {TICKER}`（衍生物不存在時自動rebuild），載入歷次裁決/thesis演進/已回填outcome。**硬規則**：前次裁決為觀望/迴避且to-date報酬**>+30%**→該證據**強制列入§11.3**，且§14複審**不得只以「估值更貴了」維持觀望**——須明寫「上次觀望/迴避後漲__%，本次維持/翻面理由是___」。
