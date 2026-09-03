@@ -431,3 +431,10 @@ QC-39（AVGO 型過度樂觀 / SNDK 型過嚴的全文敘事）、QC-40（鷹架
 **WHY**：AVGO 首跑的 patch agent 花 410 輪／150M cache——56 次 `dd_sections.py replace` 逐段做、18 次 `extract`、26 次 Write＋30 次 Edit 產 patch 檔、21 次驗證、6 次 WebSearch、且把全部 section 抽成一個檔 Read 進 context（50KB）；每段修補約 3 輪，context 從 64k 長到 552k、每輪都重付。改動把「一段一輪來回」壓成「一次取段、一次寫、一次套用、一次驗證」。
 
 **改動清單**：`scripts/dd_sections.py` 新增 `extract FILE IDS --out DIR`（逐 id 各寫 `DIR/{id}.html`，不印 stdout）與 `replace-many FILE DIR`（掃 `DIR/*.html`，檔名即 canonical id，先對原始 html 逐一 dry-run 驗證全部命中恰 1，任一失敗整批不寫且列出全部失敗 id，全過才依序套用寫檔）；`replace()` 內部拆出共用的 `_locate_for_replace()` 供兩者重用，既有 `bytes`／`text`／`extract`（無 `--out`）／`replace`／`leaks` 行為不變。stock-analyst／ddreport 兩份 SKILL.md 的 Patch agent 契約改口：輸入從「critic md 路徑＋DD 路徑」改為「orchestrator 已 `sed -n` 取好的 FINDINGS 摘錄＋`extract --out` 段落」，patch agent 禁讀 critic 檔／skill 檔／WebSearch，四步固定（cat 讀入→逐段 Write→一次 `replace-many`→一次複合驗證），目標一輪 ≤25 輪。
+
+### v15.2.3（2026-09-03）兩個小缺口
+
+**WHY**：(a) 步驟 0 的 `transcripts_for_dd.py` 只列磁碟既有 `.md`，不先跑 Koyfin 增量下載會漏最近一季法說（2026-08-31 修復下載器後仍是兩段式）；(b) AVGO 實跑證實 writer 對 `.dd_build` part 檔的小幅 Edit 無害（真正燒 cache 的是對 `docs/dd/` 產物的 Edit 與重讀），全面禁 Edit 反而逼 writer 為改一個數字重 Write 整個 part。
+
+**改動清單**：`ddreport/SKILL.md` v2.3 Step 1 新增「spawn writer 前 orchestrator 自跑 `koyfin_downloader.py --tickers {T}`」（不阻塞：session 過期告知用戶跑 `--login`、DD 照跑並註明；雙機勿同跑同 ticker）；Edit 禁令三處（SKILL.md 步驟 3a／3f、`references/html-output.md`、ddreport 4.1）改口為「part 檔可小幅 Edit（Edit 後重新 `cat`），`docs/dd/` 產物禁 Edit 只准 `extract`/`replace`」；patch agent 禁 Edit 不變。判斷機器零變動。
+

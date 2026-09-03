@@ -375,18 +375,18 @@ QC-1~QC-46多為**通用成長複利股**累積的tripwire；§0判為非複利a
 ### 執行順序（不得跳過或壓縮任何步驟）
 **所有 spawn 出去的執行型 agent（採集／查證／critic／patch／fix pass）派工 prompt 一律附帶「機械輪次批次化」三條**（見【Token紀律】）。**writer 本體是單一 sonnet agent，只跑到步驟3產出合格HTML為止；critic／patch／同步／commit 是 orchestrator 在 writer 交棒後另外驅動的階段（見步驟6）。**
 
-0. **隨附文件前置處理（條件性）**：用戶提供外部文件→消化成「與本公司相關」read-through寫入§8.5；無附件→整段省略。**Koyfin逐字稿**：先跑`python3 ~/scripts/koyfin-downloader/transcripts_for_dd.py {ticker}`取必讀/可略讀清單，必讀全讀（不先digest），併入§8.5，**只讀`.md`不開`.pdf`**；資料夾不存在→靜默跳過。
+0. **隨附文件前置處理（條件性）**：用戶提供外部文件→消化成「與本公司相關」read-through寫入§8.5；無附件→整段省略。**Koyfin逐字稿**：先跑`python3 ~/scripts/koyfin-downloader/transcripts_for_dd.py {ticker}`取必讀/可略讀清單（此工具只看磁碟；增量下載由orchestrator在spawn writer前跑，見ddreport Step 1），必讀全讀（不先digest），併入§8.5，**只讀`.md`不開`.pdf`**；資料夾不存在→靜默跳過。
 1. **先執行所有搜尋**（見【即時數據協議】）——spawn採集agent取回機械數字包，判斷性搜尋（QC-39/QC-12/Munger/QC-19深查）本agent自行執行。**基本面研究只在此做一次**；Part II引用結論不另起搜尋。
 1.5. **Archetype判定（QC-43）**：資料齊後、進章節前，判定primary（+secondary）+信心，路由gate-set。§1開頭/頁首明寫「archetype+信心+換了哪套gate」。
 1.6. **知識帳本先讀後裁（Part II動筆前必跑）**：`python knowledge/q.py {TICKER}`（衍生物不存在時自動rebuild），載入歷次裁決/thesis演進/已回填outcome。**硬規則**：前次裁決為觀望/迴避且to-date報酬**>+30%**→該證據**強制列入§11.3**，且§14複審**不得只以「估值更貴了」維持觀望**——須明寫「上次觀望/迴避後漲__%，本次維持/翻面理由是___」。
 2. **⛔強制靜默（最高優先級）**：收到ticker後對話框嚴禁出現任何章節文字/分析段落/表格/「正在分析…」過渡描述。所有章節直接在context內完成、寫入body檔。
 3. **在context內完成全部章節→一次Write body檔→render_dd.py→四支驗證**（工具級禁令見下）：
-   a. 全部章節在context內寫齊後，**預設分兩次Write**（單則輸出過長會撞上限而整段作廢）：`.dd_build/DD_{TICKER}_{YYYYMMDD}.body.part1.html`（dd-meta＋TITLE／SOURCES註解＋dashboard＋s1–s7）與`.body.part2.html`（s8–s14＋appA/appB＋revlog），`cat part1 part2 > ….body.html`合併；短報告可單次Write；**禁用Edit、禁第三段**。
+   a. 全部章節在context內寫齊後，**預設分兩次Write**（單則輸出過長會撞上限而整段作廢）：`.dd_build/DD_{TICKER}_{YYYYMMDD}.body.part1.html`（dd-meta＋TITLE／SOURCES註解＋dashboard＋s1–s7）與`.body.part2.html`（s8–s14＋appA/appB＋revlog），`cat part1 part2 > ….body.html`合併；短報告可單次Write；**part檔可小幅Edit（局部修字／數字，非整段重寫；Edit後重新`cat`合併）、禁第三段**。
    b. `dd_sections.py bytes ….body.html`——超標章節依QC-38三條省法收斂後重寫（`replace`），不重寫整份。
    c. `dd_sections.py leaks ….body.html`——命中改寫為讀者語言（QC-40）；未過不得進下一步。
    d. **QC-52 Stage 2對帳**（writer自行執行，非spawn）：讀q.py主題行機器欄+canonical ID §0/§4全文，對帳本DD產業判斷。
    e. `render_dd.py ….body.html -o docs/dd/DD_{TICKER}_{YYYYMMDD}.html`。
-   f. 四支驗證：`verify_dd_math.py`、`validate_dd_meta.py --report`、`qc.py`、`dd_sections.py bytes`。任一FAIL或WARN→`extract FILE ID`取段→context內重寫→`replace`→重跑；**禁Read整份輸出HTML、禁Read自己的body檔、禁Edit**；驗證輪次≤3。
+   f. 四支驗證：`verify_dd_math.py`、`validate_dd_meta.py --report`、`qc.py`、`dd_sections.py bytes`。任一FAIL或WARN→`extract FILE ID`取段→context內重寫→`replace`→重跑；**禁Read整份輸出HTML、禁Read自己的body檔、`docs/dd/`產物禁Edit（只准`extract`/`replace`）**；驗證輪次≤3。
    **writer到此結束**：不spawn critic、不修補、不跑`update_dd_index.py`、不commit（見步驟6）。
 4. 搜尋與body撰寫期間唯一允許輸出：「搜尋完成，正在生成v15.0 DD報告…」；驗證通過後最終回報（≤400字＋INDEX行＋`bytes`表原文，見【Token紀律】）。
 5. 若步驟0跑過Koyfin工具，驗證通過後補跑`--mark`記錄已讀，供下次增量判斷。
@@ -420,7 +420,7 @@ QC-1~QC-46多為**通用成長複利股**累積的tripwire；§0判為非複利a
 ### HTML 輸出指令
 搜尋完成、body檔四支驗證通過後，`scripts/render_dd.py`產出`docs/dd/DD_[標的代碼]_[YYYYMMDD].html`即最終輸出——**writer不再直接Write完整HTML**。BODY檔內容契約、dashboard模板、組裝規則、INDEX.md append格式→**body撰寫前必Read`references/html-output.md`**。QC-40機械sweep已內建於步驟3c，此處不重複。
 ### Token 紀律（**本改制的第一槓桿，v15.2 起改口**）
-**工具級禁令**（見上【執行順序】步驟3）：① writer**禁用Edit工具**——修改一律in-context重寫該段後`dd_sections.py replace`；②writer**禁Read整份輸出HTML、禁Read自己的body檔**——驗證用四支腳本，定位用`dd_sections.py extract`；③**驗證輪次≤3輪**，未收斂列入最終回報而非無限重試。
+**工具級禁令**（見上【執行順序】步驟3）：① writer對`docs/dd/`產物**禁用Edit工具**——修改一律in-context重寫該段後`dd_sections.py replace`（`.dd_build` part檔小幅Edit可，Edit後重新`cat`）；②writer**禁Read整份輸出HTML、禁Read自己的body檔**——驗證用四支腳本，定位用`dd_sections.py extract`；③**驗證輪次≤3輪**，未收斂列入最終回報而非無限重試。
 **critic讀`dd_sections.py text FILE`全文**（不是HTML、不是摘錄）——不再收摘錄，關卡數量與嚴格度不變，只改讀法。前份DD只讀dd-meta＋§13 E12觸發器清單，禁Read整份舊DD；禁「寫完再壓縮重寫」。
 **外包界線**：有唯一正確答案、派工前就能定義清楚的查證可外包（步驟0數字包、封閉式事實查證）；需要先知道自己在找什麼才看得見答案的閱讀（§8.5逐字稿、前份DD假設觸發器、ID事實區塊）與判斷端（證據等級、moat_trend方向、QC-39兩閘裁定）一律本體自讀自判，不外包。
 **模型鐵律**：QC-41/48/50 critic用**opus**（writer為sonnet時），**writer與critic永不同模型**——writer改opus，critic須同時改sonnet。

@@ -18,7 +18,7 @@
 6. `<details id="appA">`／`<details id="appB">`（B 僅循環 archetype 才寫）
 7. `<section id="revlog">`、`<section id="sources">`（選填）
 
-**預設分兩次 Write**（單則輸出過長會撞輸出上限而整段作廢）：`.body.part1.html`＝dd-meta＋TITLE／SOURCES 註解＋dashboard＋`s1`–`s7`；`.body.part2.html`＝`s8`（含 `s85`）–`s14`＋`appA`／`appB`＋`revlog`／`sources`；`cat part1 part2 > .dd_build/DD_{T}_{D}.body.html` 合併。短報告可單次 Write；**禁止 Edit 工具**；分三次以上＝篇幅已失控，先套分章節省法再 render。
+**預設分兩次 Write**（單則輸出過長會撞輸出上限而整段作廢）：`.body.part1.html`＝dd-meta＋TITLE／SOURCES 註解＋dashboard＋`s1`–`s7`；`.body.part2.html`＝`s8`（含 `s85`）–`s14`＋`appA`／`appB`＋`revlog`／`sources`；`cat part1 part2 > .dd_build/DD_{T}_{D}.body.html` 合併。短報告可單次 Write；**part 檔可小幅 Edit（局部修字／數字，非整段重寫；Edit 後重新 `cat` 合併）**；分三次以上＝篇幅已失控，先套分章節省法再 render。
 
 ### render 與四支驗證
 
@@ -33,7 +33,7 @@ render 完成後**跑四支驗證**：`verify_dd_math.py FILE`、`validate_dd_me
 3. `python3 scripts/dd_sections.py replace FILE ID NEWFILE` 就地覆寫
 4. 重跑四支驗證
 
-**驗證輪次 ≤3**；**禁止 Read 整份輸出 HTML、禁止 Read 自己的 BODY 檔、禁止 Edit 工具**。確認 `id="decision"` 錨點存在；確認 dca_verdict 三處（頁首 status-bar／§13／dd-meta）一致。
+**驗證輪次 ≤3**；**禁止 Read 整份輸出 HTML、禁止 Read 自己的 BODY 檔、`docs/dd/` 產物禁止 Edit（只准 `extract`/`replace`）**。確認 `id="decision"` 錨點存在；確認 dca_verdict 三處（頁首 status-bar／§13／dd-meta）一致。
 
 ### 視覺規格
 
@@ -123,7 +123,7 @@ BODY 檔第一段必須是 `<script id="dd-meta" type="application/json">{...}</
 
 ### 篇幅紀律（v15.2）
 
-篇幅規則以 SKILL.md QC-38＋【分章節 byte 預算】為準（75-105KB 帶、估值 ~7%、決策層 ≤12KB 渲染結論物）。機械閘＝`python3 scripts/dd_sections.py bytes FILE`（見上方「render 與四支驗證」）。BODY 預設分 2 次 Write 再 `cat` 合併（切點 s7／s8），**禁 Edit**；分三次以上＝篇幅已失控，回頭套分章節省法。
+篇幅規則以 SKILL.md QC-38＋【分章節 byte 預算】為準（75-105KB 帶、估值 ~7%、決策層 ≤12KB 渲染結論物）。機械閘＝`python3 scripts/dd_sections.py bytes FILE`（見上方「render 與四支驗證」）。BODY 預設分 2 次 Write 再 `cat` 合併（切點 s7／s8），part 檔可小幅 Edit（`docs/dd/` 產物禁 Edit）；分三次以上＝篇幅已失控，回頭套分章節省法。
 
 
 ## 頁首結論儀表板（不編號，最頂部；BODY 第 4 段）

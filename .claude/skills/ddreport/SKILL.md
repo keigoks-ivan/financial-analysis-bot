@@ -1,11 +1,11 @@
 ---
 name: ddreport
-version: v2.2
+version: v2.3
 released: 2026-09-03
 description: "單一指令跑完整條 DD→sync→commit pipeline。收到一個或多個 ticker 後，依序觸發 stock-analyst（現 v15.2，一號到底的單一報告；報告端 schema 仍 v15.0：商業本質優先章序，writer 只產 BODY 檔、`render_dd.py` 組裝＋四支驗證）→ 寫稿後獨立 critic（opus，讀 `dd_sections.py text` 全文）→ patch agent（sonnet，乾淨 context，`extract`/`replace` 修 🔴🟡）→ 需要時 critic re-gate → patch 第二輪 → python scripts/update_dd_index.py（同步 research 頁 + dd-screener + picks）→ size-budget gate（schema v15 新檔 70KB 下界·115KB 上界警告，`dd_sections.py bytes` 分章 WARN）→ commit & push main。DCA 已併入單一 DD 報告，不再有獨立 deep-conviction-analyst 步驟（單一報告即含決策層）。可選自動偵測同產業 peer 一起跑。本 skill 是 thin orchestrator，不重做分析邏輯（那是 stock-analyst 的職責），只把固定鏈固化成一鍵。觸發：用戶說『跑 {ticker} ddreport』、『{ticker} 全套』、『{ticker} 走完整流程』、『ddreport {ticker}』、『/ddreport {ticker}』。若用戶只要單檔報告不要 commit，直接走 stock-analyst。"
 ---
 
-# DD Report Pipeline（thin orchestrator，v2.2 — 單檔 DD）
+# DD Report Pipeline（thin orchestrator，v2.3 — 單檔 DD）
 
 把這條每次都重複的鏈固化成一鍵，並把 writer→critic→patch 鏈、size-floor 與 sync 步驟內建，避免漏跑：
 
@@ -19,13 +19,14 @@ stock-analyst writer（sonnet，BODY 檔一次 Write→render_dd→四支驗證�
 
 1. **解析 ticker(s)**。模糊或不確定的 ticker **先問用戶**，不要瞎猜（memory `feedback_dca_session_pitfalls`）。
    - 開始前先 `git log --oneline -5` + `git status`，確認沒有並行 session 的背景動作 / orphan 檔（parallel-session git hygiene）。
+   - **Koyfin 逐字稿增量下載（spawn writer 前，orchestrator 自跑）**：`cd ~/scripts/koyfin-downloader && .venv/bin/python koyfin_downloader.py --tickers {T1,T2,…}`（headless，只抓 `download_log.json` 沒有的新逐字稿並同步產 `.md`；ticker 用 Drive 資料夾原形如 `2330.TW`）。WHY：writer 步驟 0 的 `transcripts_for_dd.py` 只看磁碟，不先下載就會漏最近一季法說。**不阻塞 DD**：印出 session 過期 → 告知用戶自行跑 `--login`（需人工登入，orchestrator 不做），DD 照跑（用磁碟既有逐字稿，回報時註明）；Drive 未掛載／Koyfin 查無該 ticker 同樣只記警告。兩台機器勿同時跑同一 ticker（`download_log.json` 在 Drive 共用）。
 
 2. **（可選）peer 自動偵測**。用戶給單一 ticker 且語氣是「這個 theme / 這群」時，可從 `docs/dd/` 同產業、或 `docs/id/ID_*.html` 的 `related_tickers[]` 帶出 1–3 檔 peer 一起跑（如 KLAC → ASML / LRCX）。**會擴張範圍時先跟用戶確認要不要連 peer**。
 
 3. **決策意圖 → 先跑 critic**。若用戶語氣是「要不要加倉 / 新進 / 退出某 theme」這種**決策**（不是純研究），先按 repo 頂部「Decision-time critic」規則 spawn `industry-thesis-critic`，再產報告。純資訊查詢不觸發。
 
 4. **跑 DD——writer → critic → patch 鏈**（模型：writer／patch agent＝`sonnet`；critic＝`opus`，**writer↔critic 永不同模型**；2026-08-06 起試行至 2026-10 校準，orchestrator 本身維持 opus；理由與 kill condition 見 repo CLAUDE.md「DD 層 writer↔critic 對調」）：
-   - **4.1 Writer**：對每個 ticker 觸發 `stock-analyst`（spawn 模型＝`sonnet`）。writer 只產出 `.dd_build/DD_{T}_{D}.body.html`（預設分 part1／part2 兩次 Write 再 `cat` 合併，切點 s7／s8；禁 Edit），再自行跑 `python3 scripts/render_dd.py` 組裝＋四支驗證（`verify_dd_math.py`／`validate_dd_meta.py --report`／`qc.py`／`python3 scripts/dd_sections.py bytes`），任一 FAIL 或 bytes WARN 用 `dd_sections.py extract`/`replace` 修段，驗證輪次 ≤3、禁 Edit、禁 Read 自己輸出的 HTML。產出單一 `docs/dd/DD_{TICKER}_{YYYYMMDD}.html`，schema v15.0，含 dd-meta 決策層欄位（`dca_verdict`/`dca_role`/`moat_trend`/`runway_post_y5`/`ev5y_pct`）+ 統一裁決 `id="decision"` 錨點（§13）。writer 最終回報含 INDEX.md ready-to-paste 行與 `bytes` 表原文，**不 spawn critic、不 commit**。
+   - **4.1 Writer**：對每個 ticker 觸發 `stock-analyst`（spawn 模型＝`sonnet`）。writer 只產出 `.dd_build/DD_{T}_{D}.body.html`（預設分 part1／part2 兩次 Write 再 `cat` 合併，切點 s7／s8；part 檔可小幅 Edit，Edit 後重新 `cat` 合併），再自行跑 `python3 scripts/render_dd.py` 組裝＋四支驗證（`verify_dd_math.py`／`validate_dd_meta.py --report`／`qc.py`／`python3 scripts/dd_sections.py bytes`），任一 FAIL 或 bytes WARN 用 `dd_sections.py extract`/`replace` 修段，驗證輪次 ≤3、`docs/dd/` 產物禁 Edit、禁 Read 自己輸出的 HTML。產出單一 `docs/dd/DD_{TICKER}_{YYYYMMDD}.html`，schema v15.0，含 dd-meta 決策層欄位（`dca_verdict`/`dca_role`/`moat_trend`/`runway_post_y5`/`ev5y_pct`）+ 統一裁決 `id="decision"` 錨點（§13）。writer 最終回報含 INDEX.md ready-to-paste 行與 `bytes` 表原文，**不 spawn critic、不 commit**。
    - **4.2 Critic**：orchestrator 依 QC-41／QC-48／QC-50／row 8b 觸發規則（合併載具規則不變）spawn 獨立 `opus` critic，輸入＝`python3 scripts/dd_sections.py text FILE` 全文（前份 DD 亦同法讀 `text`），輸出存 `notes/site-internal/dd/_critic_{T}_{D}.md`，檔頭固定 FINDINGS 表＋GATE 行（PASS／PASS-with-fixes／FAIL；格式見 stock-analyst `references/critic-gates.md` §4.2）。
    - **4.3 Patch agent**：orchestrator 先 `sed -n` 取出 critic md 的 FINDINGS 區塊（要處理的 finding 編號，預設全部 🔴＋🟡）＋跑 `dd_sections.py extract FILE IDS --out .dd_build/patch_in/`，把 FINDINGS 摘錄＋段落清單一起交給乾淨 context 的 `sonnet` patch agent。patch agent 四步：① 一次 `cat` 讀入 `.dd_build/patch_in/` 全部段落（**不讀 critic 檔、不讀任何 skill／reference 檔**，需要的規則由 orchestrator 摘進 prompt）；② context 內逐段改好，每段一次 Write 到 `.dd_build/patch_out/{id}.html`（含 dd-meta／dashboard 連動段；情境樹重建先跑 `dd_scenario.py --html/--meta`）；③ 一次 `dd_sections.py replace-many FILE .dd_build/patch_out/`（全部命中恰 1 才寫檔，原子性）；④ 一次複合 Bash 跑四支驗證＋`leaks`＋`dd_scenario.py --check`。**禁 WebSearch／WebFetch**（未採納要標「無證據」）、禁 Edit、禁 Read 整份 HTML、禁逐段 replace；驗證 FAIL 只准再一輪 ②③④。回報每條 finding 的處置（已修／不採納＋理由）與改動段落 bytes 前後。
    - **4.4 需要時 re-gate**：patch 後 **GATE＝FAIL** 才 SendMessage 同一 critic agent（讀 `text` 全文重驗）；**PASS-with-fixes → patch agent 跑完五支驗證即收工，不 re-gate**。re-gate 後仍有 findings → **另 spawn 乾淨的 sonnet patch agent 只餵 R2 findings**（不沿用第一輪 patch agent：AVGO 首跑同一 agent 跨兩輪 410 輪／150M cache，抵銷了 writer 端省下的量）。
