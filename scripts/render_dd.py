@@ -40,6 +40,7 @@ from __future__ import annotations
 
 import argparse
 import difflib
+import json
 import os
 import re
 import shutil
@@ -207,38 +208,19 @@ def to_body(html: str) -> str:
 # render (BODY -> full HTML)
 # ---------------------------------------------------------------------------
 
-def assemble(body: str) -> str:
-    guard = _body_guard(body)
-    if guard is not None:
-        raise ValueError(f"BODY 已含 {guard!r}，看起來是完整 HTML 而非 BODY，拒絕組裝")
-
-    meta_span = dd_sections.dd_meta_span(body)
-    if meta_span is None:
-        raise ValueError("BODY 缺少 <script id=\"dd-meta\"> 區塊")
-    meta_block = body[meta_span[0]:meta_span[1]]
-    meta = dd_sections.dd_meta_json(body) or {}
-    schema = meta.get("schema", "v15.0")
-
-    rest = body[meta_span[1]:]
-
-    title_m = re.search(r"<!--\s*TITLE:\s*(.*?)\s*-->", rest, re.DOTALL)
-    title = title_m.group(1).strip() if title_m else ""
-    if title_m:
-        rest = rest[:title_m.start()] + rest[title_m.end():]
-
-    src_m = re.search(r"<!--\s*SOURCES:\s*(.*?)\s*-->", rest, re.DOTALL)
-    sources = src_m.group(1).strip() if src_m else ""
-    if src_m:
-        rest = rest[:src_m.start()] + rest[src_m.end():]
-
-    rest = rest.strip("\n")
-
-    markers = dd_sections.split_sections(rest)
+def _render_shell(meta_block: str, schema: str, title: str, sources: str,
+                   dash_block: str, sections_block: str) -> str:
+    """Shared tail: given the four already-resolved pieces (dd-meta script
+    block, schema string, TITLE text, SOURCES text, dashboard fragment,
+    sections fragment), build the full standalone HTML document. Used by
+    both single-file `assemble()` (BODY -> full HTML) and
+    `assemble_from_parts()` (v16 prose/+tables/ -> full HTML) so the two
+    modes share one <head>/<nav>/footer/printbtn/toc-script pipeline (v16
+    WP1e requirement: "組好後走同一條既有 head／toc／footer／post-process
+    管線")."""
+    markers = dd_sections.split_sections(sections_block)
     if not markers:
-        raise ValueError("BODY 找不到任何 canonical section id（s1..s14/decision/appA/appB/...）")
-
-    dash_block = rest[:markers[0]["start"]].strip("\n")
-    sections_block = rest[markers[0]["start"]:].strip("\n")
+        raise ValueError("找不到任何 canonical section id（s1..s14/decision/appA/appB/...）")
 
     present = {m["id"] for m in markers}
     toc_links = "".join(
@@ -278,6 +260,182 @@ def assemble(body: str) -> str:
 </html>
 """
     return html
+
+
+def assemble(body: str) -> str:
+    guard = _body_guard(body)
+    if guard is not None:
+        raise ValueError(f"BODY 已含 {guard!r}，看起來是完整 HTML 而非 BODY，拒絕組裝")
+
+    meta_span = dd_sections.dd_meta_span(body)
+    if meta_span is None:
+        raise ValueError("BODY 缺少 <script id=\"dd-meta\"> 區塊")
+    meta_block = body[meta_span[0]:meta_span[1]]
+    meta = dd_sections.dd_meta_json(body) or {}
+    schema = meta.get("schema", "v15.0")
+
+    rest = body[meta_span[1]:]
+
+    title_m = re.search(r"<!--\s*TITLE:\s*(.*?)\s*-->", rest, re.DOTALL)
+    title = title_m.group(1).strip() if title_m else ""
+    if title_m:
+        rest = rest[:title_m.start()] + rest[title_m.end():]
+
+    src_m = re.search(r"<!--\s*SOURCES:\s*(.*?)\s*-->", rest, re.DOTALL)
+    sources = src_m.group(1).strip() if src_m else ""
+    if src_m:
+        rest = rest[:src_m.start()] + rest[src_m.end():]
+
+    rest = rest.strip("\n")
+
+    markers = dd_sections.split_sections(rest)
+    if not markers:
+        raise ValueError("BODY 找不到任何 canonical section id（s1..s14/decision/appA/appB/...）")
+
+    dash_block = rest[:markers[0]["start"]].strip("\n")
+    sections_block = rest[markers[0]["start"]:].strip("\n")
+
+    return _render_shell(meta_block, schema, title, sources, dash_block, sections_block)
+
+
+# ---------------------------------------------------------------------------
+# --assemble PROSE_DIR --tables TABLES_DIR  (v16 mode, WP1e)
+# ---------------------------------------------------------------------------
+
+# Canonical prose ids in document order. s85/appB/sources stay conditional
+# (matches html-output.md); "s1–s14、decision、appA、revlog 缺任一 → FAIL"
+# per the WP1e brief.
+_ASSEMBLE_ORDER = [
+    "s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s85", "s9", "s10",
+    "s11", "s12", "decision", "s14", "appA", "appB", "revlog", "sources",
+]
+_ASSEMBLE_REQUIRED = [
+    "s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10",
+    "s11", "s12", "decision", "s14", "appA", "revlog",
+]
+# gen_dd_tables.py's always-written outputs; e11.html (dd_scenario.py
+# --html product) and audit.html (only when decision_out.audit_rows is
+# non-empty) are conditional, so not required here.
+_TABLES_REQUIRED = ["dd-meta.html", "dashboard.html", "e2.html", "e12.html", "appA-table.html"]
+
+
+def _read_opt(path: Path):
+    return path.read_text(encoding="utf-8") if path.exists() else None
+
+
+def _outer_tag(chunk: str):
+    """First real tag name in a prose fragment (leading HTML comments
+    skipped) — used to find that fragment's own closing tag for
+    append-fallback injection."""
+    m = re.match(r"\s*(?:<!--.*?-->\s*)*<(\w+)\b", chunk, re.DOTALL)
+    return m.group(1) if m else None
+
+
+def _inject_marker_or_append(chunk: str, marker: str, insert_html, tag) -> str:
+    """Splice `insert_html` at `marker` if present; else append it just
+    before the chunk's own closing tag (still inside the outer element).
+    No-op (marker stripped) when insert_html is falsy/None."""
+    if marker in chunk:
+        return chunk.replace(marker, insert_html or "", 1)
+    if not insert_html:
+        return chunk
+    if not tag:
+        return chunk + insert_html
+    idx = chunk.rfind(f"</{tag}>")
+    if idx == -1:
+        return chunk + insert_html
+    return chunk[:idx] + insert_html + chunk[idx:]
+
+
+def _inject_e2(chunk: str, e2_html, tag) -> str:
+    """E2 (§2.B 三個核心假設表) has its own fallback anchor: right after
+    s2's first "B｜" <h3> heading, not at the section's tail."""
+    if "<!-- E2 -->" in chunk:
+        return chunk.replace("<!-- E2 -->", e2_html or "", 1)
+    if not e2_html:
+        return chunk
+    m = re.search(r"<h3[^>]*>\s*B｜.*?</h3>", chunk, re.DOTALL)
+    if m:
+        idx = m.end()
+        return chunk[:idx] + "\n" + e2_html + chunk[idx:]
+    # no marker, no "B｜" heading found -> fall back to tail-append like
+    # every other injection point.
+    return _inject_marker_or_append(chunk, "\x00no-such-marker\x00", e2_html, tag)
+
+
+def _title_from_judgment(j: dict) -> str:
+    meta = j.get("meta") or {}
+    ticker = meta.get("ticker") or ""
+    company = meta.get("company_name") or ticker
+    date = meta.get("date") or ""
+    verdict = (j.get("decision_out") or {}).get("verdict") or ""
+    return f"DD {company}（{ticker}）— {date}（統一裁決：{verdict}）"
+
+
+def assemble_from_parts(prose_dir: Path, tables_dir: Path, title=None,
+                         sources=None, judgment_path=None) -> str:
+    """v16 mode: PROSE_DIR/{sid}.html (writer-authored prose — each file is
+    that section's full outer element, e.g. `<section id="s5">…</section>`)
+    + TABLES_DIR/*.html (gen_dd_tables.py mechanical output) -> full
+    standalone HTML, via the same _render_shell tail as single-file
+    assemble(). Table injection points: e2.html into s2 (after the "B｜"
+    <h3>, or at `<!-- E2 -->`), e11.html into s10 (`<!-- E11 -->` or tail),
+    audit.html then e12.html into decision (`<!-- AUDIT -->`/`<!-- E12 -->`
+    or tail, audit first so a double-fallback still lands before E12),
+    appA-table.html into appA (`<!-- APPA_TABLE -->` or tail)."""
+    missing_prose = [cid for cid in _ASSEMBLE_REQUIRED
+                      if not (prose_dir / f"{cid}.html").exists()]
+    if missing_prose:
+        raise ValueError(f"PROSE_DIR 缺少必要段落：{', '.join(missing_prose)}")
+
+    missing_tables = [name for name in _TABLES_REQUIRED
+                       if not (tables_dir / name).exists()]
+    if missing_tables:
+        raise ValueError(f"TABLES_DIR 缺少必要檔案：{', '.join(missing_tables)}")
+
+    meta_block = (tables_dir / "dd-meta.html").read_text(encoding="utf-8")
+    meta = dd_sections.dd_meta_json(meta_block) or {}
+    schema = meta.get("schema", "v15.0")
+
+    judgment = None
+    if judgment_path is not None:
+        judgment = json.loads(Path(judgment_path).read_text(encoding="utf-8"))
+
+    if title is None:
+        title = _title_from_judgment(judgment) if judgment else ""
+    if sources is None:
+        # judgment.json 目前無 sources 欄位（見 dd_schema/judgment.schema.json）
+        # -- 只能靠 --sources 旗標帶入，這裡留空不捏造。
+        sources = ""
+
+    dash_block = (tables_dir / "dashboard.html").read_text(encoding="utf-8").strip("\n")
+
+    e2_html = _read_opt(tables_dir / "e2.html")
+    e11_html = _read_opt(tables_dir / "e11.html")
+    e12_html = _read_opt(tables_dir / "e12.html")
+    audit_html = _read_opt(tables_dir / "audit.html")
+    appA_table_html = _read_opt(tables_dir / "appA-table.html")
+
+    chunks = []
+    for cid in _ASSEMBLE_ORDER:
+        p = prose_dir / f"{cid}.html"
+        if not p.exists():
+            continue
+        chunk = p.read_text(encoding="utf-8")
+        tag = _outer_tag(chunk)
+        if cid == "s2":
+            chunk = _inject_e2(chunk, e2_html, tag)
+        elif cid == "s10":
+            chunk = _inject_marker_or_append(chunk, "<!-- E11 -->", e11_html, tag)
+        elif cid == "decision":
+            chunk = _inject_marker_or_append(chunk, "<!-- AUDIT -->", audit_html, tag)
+            chunk = _inject_marker_or_append(chunk, "<!-- E12 -->", e12_html, tag)
+        elif cid == "appA":
+            chunk = _inject_marker_or_append(chunk, "<!-- APPA_TABLE -->", appA_table_html, tag)
+        chunks.append(chunk)
+
+    sections_block = "\n\n".join(chunks)
+    return _render_shell(meta_block, schema, title, sources, dash_block, sections_block)
 
 
 def _direct_site_nav(out_path: Path):
@@ -453,6 +611,33 @@ def _cmd_check(args):
     sys.exit(0)
 
 
+def _cmd_assemble(args):
+    if not args.output:
+        print("render_dd: --assemble 需要搭配 -o OUT", file=sys.stderr)
+        sys.exit(2)
+    if not args.tables:
+        print("render_dd: --assemble 需要搭配 --tables DIR", file=sys.stderr)
+        sys.exit(2)
+    try:
+        html = assemble_from_parts(
+            Path(args.assemble), Path(args.tables),
+            title=args.title, sources=args.sources,
+            judgment_path=Path(args.judgment) if args.judgment else None,
+        )
+    except ValueError as e:
+        print(f"render_dd: {e}", file=sys.stderr)
+        sys.exit(2)
+    out_path = Path(args.output).resolve()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(html, encoding="utf-8")
+    print(f"寫入 {out_path}（{len(html.encode('utf-8'))}B）")
+    if not args.no_postprocess:
+        report = _postprocess(out_path)
+        for k, v in report.items():
+            print(f"  post-process {k}: {v}")
+    sys.exit(0)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("body", nargs="?", help="BODY 檔路徑（render 模式）")
@@ -460,9 +645,16 @@ def main():
     ap.add_argument("--no-postprocess", action="store_true", help="跳過 nav/primer/livebar 注入")
     ap.add_argument("--to-body", metavar="FILE", help="既有完整 HTML 檔 -> BODY")
     ap.add_argument("--check", metavar="FILE", help="回歸測試：既有檔 to-body 再 render，比對可見文字")
+    ap.add_argument("--assemble", metavar="PROSE_DIR", help="v16 模式：組裝 prose/ 目錄（需搭配 --tables）")
+    ap.add_argument("--tables", metavar="TABLES_DIR", help="v16 模式：gen_dd_tables.py 產物目錄")
+    ap.add_argument("--title", help="v16 模式：TITLE 註解內容（覆蓋 judgment 推導）")
+    ap.add_argument("--sources", help="v16 模式：SOURCES 註解內容（judgment.json 無此欄位，建議手動帶）")
+    ap.add_argument("--judgment", metavar="JUDGMENT.json", help="v16 模式：judgment.json 路徑，用於推導 TITLE")
     args = ap.parse_args()
 
-    if args.check:
+    if args.assemble:
+        _cmd_assemble(args)
+    elif args.check:
         _cmd_check(args)
     elif args.to_body:
         if not args.output:
