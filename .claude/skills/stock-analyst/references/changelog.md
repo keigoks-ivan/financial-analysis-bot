@@ -415,3 +415,13 @@ QC-39（AVGO 型過度樂觀 / SNDK 型過嚴的全文敘事）、QC-40（鷹架
 - 「critic 只收摘錄省 63%」（180k→66-84k tokens）——**本次已推翻**，改為全文讀法，見上「Critic 契約改口」。
 - 機械輪次批次化 WHY 原始實測句：「實測一支 94 次 Edit 的 agent 燒 27.7M cache_read，機械輪次約佔七成」——本輪最新實測（見上 WHY①）取代此例，規則本體（三條硬規則）不變。
 - Token 紀律「界線」段原例句：「逐字稿全讀僅約 25-35k tokens ≈ 單份成本 6%，省 6% 去賭最高價值發現是壞交易」——規則本體（隨附逐字稿一律本體自讀、禁先 digest）保留，例句移此。
+
+### v15.2.1（2026-09-03）情境樹腳本化
+
+**WHY**：AVGO 首份 v15.2 實測 critic 8 🔴 中 3 條為純算術（§10.6 年期混用／Bear EPS 未下滑致 AR 10.3 虛高／內生天花板未真算），LLM 手算與 LLM 修補都不該處理算術；改動＝dd_scenario.py＋verify_dd_math 檢查 E＋validate 選填欄＋採集端客戶簽約查詢＋re-gate 只在 FAIL。
+
+**改動清單**：
+- 新增 `scripts/dd_scenario.py`（stdlib only）：讀 `.dd_build/{T}_{D}.scenario.json`（EPS 路徑五年／終端倍數／機率／yield／second_stage），確定性算出 §10.5／§10.6／AR／10Y 全部算術，輸出終端機表格＋`--html` E11 表片段＋`--meta` dd-meta 情境欄片段；內建 FAIL/WARN 驗證（終端 EPS 排序、Bear 未下滑、機率加總與防線、endo_ceiling、eps_path 長度；bull terminal_pe 超同業、base 不含息 IRR >15%）；`--check DD.html` 從既有 dd-meta 的 `scenario_tree` 重算比對六情境欄。`check_meta()` 供 `verify_dd_math.py` 匯入。
+- `scripts/verify_dd_math.py` 新增檢查 E：`import dd_scenario`，dd-meta 有 `scenario_tree` 即呼叫 `check_meta` 併入 FAIL/WARN，無則 WARN 建議改用腳本產出。
+- `scripts/validate_dd_meta.py`：`V13_OPTIONAL_TYPES` 加 `scenario_tree`（dict，選填）。
+- 文字接線三處：SKILL.md §10.5＋10.6 節首加腳本化指令與 Guardrail 改為「(1+EPS)(1+re-rate)−1 與不含息 IRR 差 ≤0.1%p」（原 2%p 對機率加權 Base IRR 口徑作廢）；Patch 段補「重建情境樹一律重跑 `dd_scenario.py`，不手改數字」；`references/data-collection.md` 任務 3 加客戶簽約查詢（`{CUSTOMERS}` 參數）；`ddreport/SKILL.md` 4.4 改「GATE＝FAIL 才 re-gate，PASS-with-fixes 收工」。

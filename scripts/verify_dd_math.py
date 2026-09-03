@@ -15,6 +15,11 @@ schema 形狀，本檔驗「數字之間的數學關係」。
      僅 1 次＝WARN（疑似只有交叉引用、模組本體缺席）。
   D. 版本戳一致：dd-schema-version meta tag／topbar／頁尾 skill 版號必須等於
      dd-meta "schema"（報告端一號到底，skill 檔內部版號不外流）。
+  E. 情境樹確定性比對（v15.2.1）：dd-meta 有 `scenario_tree` → 呼叫
+     `dd_scenario.check_meta()` 從原始情境輸入重算，比對 bull_5y_price／
+     bear_5y_price／p_bull_pct／p_bear_pct／upside_5y_pct／asym_ratio 六欄
+     （價格 tol 1%、% tol 1.0pp、AR tol 0.06）；無 `scenario_tree` → WARN
+     （情境樹未由 dd_scenario.py 產出，v15.2.1 起建議）。
 
 未覆蓋（由 skill 條文＋critic 把守）：upside_short/mid 與附錄 A 的對帳（附錄
 為散文無機器欄）、一手財報數字 vs yfinance、PEG 分母窗口。
@@ -28,6 +33,8 @@ import json
 import re
 import sys
 from pathlib import Path
+
+import dd_scenario
 
 ROOT = Path(__file__).resolve().parent.parent
 DD_DIR = ROOT / "docs" / "dd"
@@ -120,6 +127,14 @@ def check_file(path):
         if dd_year and abs(terminal - (dd_year + 5)) > 1:
             warns.append(f"終端年 FY{terminal} 與報告年+5（{dd_year + 5}）差 >1 年"
                          f"——確認主時距宣告與財年口徑")
+
+    # ---- E. 情境樹確定性比對（v15.2.1，import dd_scenario） ----
+    if meta.get("scenario_tree"):
+        e_fails, e_warns = dd_scenario.check_meta(meta)
+        fails.extend(e_fails)
+        warns.extend(e_warns)
+    else:
+        warns.append("情境樹未由 dd_scenario.py 產出（v15.2.1 起建議）")
 
     # ---- C. v15 必交模組存在性 ----
     for mod, kws in MODULES.items():

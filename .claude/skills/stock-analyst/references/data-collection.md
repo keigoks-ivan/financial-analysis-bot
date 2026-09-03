@@ -24,7 +24,7 @@ WHY：yfinance 腳本原始輸出（5 年三表 dump、6 年週線序列、共�
 
 界線一句話：**有唯一正確答案、派工前就問得死的＝採集 agent；需要先知道自己在找什麼才看得見答案的＝writer 自讀自搜。**
 
-### spawn 模板（照抄即用；`{TICKER}` / `{PEERS}` 換成實際值後直接送出）
+### spawn 模板（照抄即用；`{TICKER}` / `{PEERS}` / `{CUSTOMERS}` 換成實際值後直接送出）
 
 ````js
 Agent({
@@ -135,6 +135,8 @@ print(f"現價 vs W104: {idx_current:.2f} vs {idx_w104:.2f} | 破線: {idx_curre
 ## 任務 3：QC-19 重大事件初掃（只列 headline，嚴禁解讀）
 
 \`{TICKER} acquisition OR lawsuit OR investigation OR recall OR guidance cut 2026\`，涵蓋近 12 個月。每則只給「日期｜一句話事實｜來源」。**不要判斷影響大小、不要說「對 thesis 有利／不利」**——那是委派者的工作。
+
+\`{TICKER} top customers supplier agreement OR contract signed 2026\`＋\`{CUSTOMERS} custom chip OR component second source agreement 2026\`（近 90 天，每則 日期｜事實｜來源；\`{CUSTOMERS}\`＝spawn 時代入前三大客戶名，未知則用 ticker 名）。
 
 ## 任務 4：kill_watch 現況（2026-08-08 接線）
 

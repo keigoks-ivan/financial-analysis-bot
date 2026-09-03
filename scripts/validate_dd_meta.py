@@ -192,6 +192,13 @@ V13_OPTIONAL_TYPES = {
     # Type-checked here (must be list when present); per-item shape validated in
     # validate_meta(). Always optional — never promoted to required.
     "kill_metrics": (list,),
+    # v15.2.1 (2026-09-03): OPTIONAL scenario-tree source-of-truth, produced by
+    # scripts/dd_scenario.py --meta. Shape checked here (must be dict); its
+    # sub-fields are re-derived and cross-checked against the six flat
+    # bull_5y_price/bear_5y_price/p_bull_pct/p_bear_pct/upside_5y_pct/asym_ratio
+    # fields by dd_scenario.check_meta() (invoked from verify_dd_math.py), not
+    # here. Always optional — never promoted to required.
+    "scenario_tree": (dict,),
 }
 
 # Keys knowingly tolerated beyond required/optional — silences their warning.

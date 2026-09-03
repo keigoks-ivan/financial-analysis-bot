@@ -404,7 +404,7 @@ QC-1~QC-46多為**通用成長複利股**累積的tripwire；§0判為非複利a
 ```
 段落id用canonical id（`s1`…`s14`／`decision`／`s85`／`appA`／`appB`）；連動段（dd-meta／dashboard）也列。其後才是逐軸敘述。
 
-**Patch agent（sonnet，乾淨context）**：輸入critic md路徑、DD路徑、要處理的finding編號（orchestrator指定，預設全部🔴＋🟡）。步驟：`sed -n`只取FINDINGS區塊→對每個受影響id用`dd_sections.py extract`取HTML→context內改寫→寫暫存檔→`dd_sections.py replace`→連動欄位同法→跑四支驗證＋`leaks`→回報「每條finding的處置＋改動段落bytes前後」。**禁Read整份HTML；禁Edit工具**；重建情境樹時Bull/Base/Bear三列須同框架同時重算並連動§10.6與dd-meta六個情境欄。re-gate後第二輪修補沿用同一patch agent。**delta-refresh的patch手法段同法走extract/replace**（其餘見`references/delta-refresh.md`）。模型鐵律：writer／patch＝sonnet；critic＝opus，**永不同模型**。
+**Patch agent（sonnet，乾淨context）**：輸入critic md路徑、DD路徑、要處理的finding編號（orchestrator指定，預設全部🔴＋🟡）。步驟：`sed -n`只取FINDINGS區塊→對每個受影響id用`dd_sections.py extract`取HTML→context內改寫→寫暫存檔→`dd_sections.py replace`→連動欄位同法→跑四支驗證＋`leaks`→回報「每條finding的處置＋改動段落bytes前後」。**禁Read整份HTML；禁Edit工具**；重建情境樹時Bull/Base/Bear三列須同框架同時重算並連動§10.6與dd-meta六個情境欄，一律重跑`dd_scenario.py`產表與meta，不手改數字。re-gate後第二輪修補沿用同一patch agent。**delta-refresh的patch手法段同法走extract/replace**（其餘見`references/delta-refresh.md`）。模型鐵律：writer／patch＝sonnet；critic＝opus，**永不同模型**。
 
 ### 【隨附文件處理協議】
 **觸發**：用戶請求報告時同時附上外部文件（券商報告／逐字稿／白皮書／新聞PDF／Excel）。
@@ -822,12 +822,13 @@ pricing power維度下散文交代單一「定價事件帳」，作§6.B②、§
 **分析師目標價參考**：高$__／中位$__／低$__（n=__位）；是否認同共識中位？若不同，一句話說明分歧點。
 
 ### 11.5＋11.6｜不對稱報酬 Bull/Base/Bear 5Y ＋ 機率 ＋ IRR 三分量拆解（合一表，E11）
+**v15.2.1 起情境樹禁手算**：先寫 `.dd_build/{T}_{D}.scenario.json`（EPS 路徑五年、終端倍數、機率、yield、second_stage），跑 `python3 scripts/dd_scenario.py FILE --html .dd_build/e11.html --meta .dd_build/scenario_meta.json`，FAIL 未清不得進 §11；E11 表直接貼 `--html` 產物，dd-meta 六個情境欄＋`scenario_tree` 直接貼 `--meta` 產物。dd-meta `irr_base_pct` 為**不含息**；§10.6 Guardrail 改為「(1+EPS)(1+re-rate)−1 與不含息 IRR 差 ≤0.1%p」（含息合計另列，不與 IRR 比）。
 > 5Y multiple與EPS用§4／§3同輪consensus+同業band，不另搜。**ev5y_pct由本表填dd-meta**；`irr_base_pct`（選填）=Base列年化IRR。
 
 合一表：Bull／Base／Bear各一列，欄＝5年絕對%｜年化IRR｜機率｜EPS CAGR貢獻｜估值re-rate貢獻｜股息+淨買回貢獻，另加一列**機率加權期望值**。
 **IRR公式**：`(1+5Y_pct)^(1/5)-1`（5Y絕對%跨案件不可比，須年化）。
 **三分量換算**：EPS貢獻=EPS CAGR直接寫；re-rate=`(end_PE/start_PE)^(1/5)-1`；股息+淨買回=平均股息率+平均淨買回率（扣SBC後）；合計≈三項相加（≤1%p誤差容忍）。
-**Guardrail**：三分量合計年化與機率加權Base列年化IRR偏差>2%p→整個E11打回校驗。
+**Guardrail**：(1+EPS貢獻)(1+re-rate貢獻)−1 與不含息IRR差 >0.1%p→整個E11打回校驗（含息合計另列，不與IRR比較）。
 **質感解讀（≤80字narrative，必填）**：「Base __% IRR中，__%/yr來自EPS複利，__%/yr來自估值re-rate，__%/yr來自股息+回購。可抱性主要靠___（EPS/re-rate/shareholder return）—___（自然複利好抱／需市場配合難抱／防禦型穩拿）。」
 **估值依賴型標記（硬規則）**：**re-rate貢獻≥Base合計IRR的40%→強制標記「估值依賴型」**，餵入§13決策矩陣Soft Veto。
 **QC-45未獲利股**：負EPS下三分量改拆「**營收CAGR貢獻／EV/S re-rate貢獻**（`(end_EVS/start_EVS)^(1/5)-1`）／**股權稀釋拖累**」；§10.5三情境改以「轉正年+轉正後EPS×該年合理PE」推5Y目標價，AR公式與機率防線不變；估值依賴型標記改看**EV/S re-rate佔比≥40%**。
