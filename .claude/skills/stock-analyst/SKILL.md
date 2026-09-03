@@ -344,8 +344,8 @@ QC-1~QC-46多為**通用成長複利股**累積的tripwire；§0判為非複利a
 
 ### QC-52｜DD↔ID 對帳（事實先讀、結論後對——防錨定的接線）
 **接線鐵律＝ID的結論永遠不出現在輸入位置，只出現在對帳位置**（QC-17/18「指定區塊讀取」哲學的跨層版）。
-**Stage 1（研究階段）**：`q.py {TICKER}`解析canonical ID後，**允許讀該ID事實區塊**（§2供給／§8需求sourced數據、產能時程、利潤池、玩家矩陣）作QC-39補充彈藥，標「ID:{theme}＋as-of」；**禁讀§0決策層、§4供需裁決、§5分歧敘事**。無ID→照舊純搜尋。
-**Stage 2（草稿完成後——強制對帳）**：讀q.py機器欄＋該ID §0/§4全文，對帳：①**一致**→§3一行「產業物理供需＝{sd_verdict}（ID:{theme}，as-of {date}）」——**sd_verdict只當事實錨，禁作方向論據**。②**分歧**→§11須明文「本DD判斷與ID:{theme}（{sd_verdict}／Phase {clock_phase}）分歧，理由＝___」，terminal輸出「⚠️分歧→建議重跑ID:{theme}」。③**Phase II打折**：不得直接引用，須經DD自身位置閘交叉驗證後才可載入§3；Phase III/IV可直接引用；`priced_in=high`時§11須正面處理含義。④ID stale／無機器欄→散文參考+標信心折扣；無ID→§3標「ID gap:{industry}」，不阻斷。
+**Stage 1（研究階段）**：`q.py {TICKER}`解析canonical ID後，**允許讀該ID事實區塊**（v4 ID＝`mechanics` 段 3.1 需求／3.2 供給的 sourced 數據、產能時程、利潤池、玩家矩陣；legacy §2供給／§8需求）作QC-39補充彈藥，標「ID:{theme}＋as-of」；**禁讀決策層與分歧敘事**（v4＝`summary`／`thesis`／`debates` 段與 mechanics 3.4 裁決；legacy §0/§4/§5）。無ID→照舊純搜尋。
+**Stage 2（草稿完成後——強制對帳）**：讀q.py機器欄＋該ID決策層全文（v4＝`summary`＋`thesis` 段；legacy §0/§4），對帳：①**一致**→§3一行「產業物理供需＝{sd_verdict}（ID:{theme}，as-of {date}）」——**sd_verdict只當事實錨，禁作方向論據**。②**分歧**→§11須明文「本DD判斷與ID:{theme}（{sd_verdict}／Phase {clock_phase}）分歧，理由＝___」，terminal輸出「⚠️分歧→建議重跑ID:{theme}」。③**Phase II打折**：不得直接引用，須經DD自身位置閘交叉驗證後才可載入§3；Phase III/IV可直接引用；`priced_in=high`時§11須正面處理含義。④ID stale／無機器欄→散文參考+標信心折扣；無ID→§3標「ID gap:{industry}」，不阻斷。
 **Fail-safe**：QC-52是加值層非依賴層——q.py失敗／無ID／欄位缺漏一律照舊自主完成DD，永不阻斷、永不降級裁決。
 ### QC-53｜情境判斷手冊（32 條情境觸發式必答題；全文條件載入）
 手冊收32個「協議沒要求、但會改變裁決/倉位/觸發器品質」的判斷動作（觸發錨型路由、領先導數tripwire、內部人賣出三步模板、Bear地板非平穩、核心可守測試…），多數只在特定情境需要，故走**情境觸發式**、命中才作答。
@@ -384,7 +384,7 @@ QC-1~QC-46多為**通用成長複利股**累積的tripwire；§0判為非複利a
    a. 全部章節在context內寫齊後，**預設分兩次Write**（單則輸出過長會撞上限而整段作廢）：`.dd_build/DD_{TICKER}_{YYYYMMDD}.body.part1.html`（dd-meta＋TITLE／SOURCES註解＋dashboard＋s1–s7）與`.body.part2.html`（s8–s14＋appA/appB＋revlog），`cat part1 part2 > ….body.html`合併；短報告可單次Write；**part檔可小幅Edit（局部修字／數字，非整段重寫；Edit後重新`cat`合併）、禁第三段**。
    b. `dd_sections.py bytes ….body.html`——超標章節依QC-38三條省法收斂後重寫（`replace`），不重寫整份。
    c. `dd_sections.py leaks ….body.html`——命中改寫為讀者語言（QC-40）；未過不得進下一步。
-   d. **QC-52 Stage 2對帳**（writer自行執行，非spawn）：讀q.py主題行機器欄+canonical ID §0/§4全文，對帳本DD產業判斷。
+   d. **QC-52 Stage 2對帳**（writer自行執行，非spawn）：讀q.py主題行機器欄+canonical ID決策層全文（v4＝summary＋thesis段；legacy §0/§4），對帳本DD產業判斷。
    e. `render_dd.py ….body.html -o docs/dd/DD_{TICKER}_{YYYYMMDD}.html`。
    f. 四支驗證：`verify_dd_math.py`、`validate_dd_meta.py --report`、`qc.py`、`dd_sections.py bytes`。任一FAIL或WARN→`extract FILE ID`取段→context內重寫→`replace`→重跑；**禁Read整份輸出HTML、禁Read自己的body檔、`docs/dd/`產物禁Edit（只准`extract`/`replace`）**；驗證輪次≤3。
    **writer到此結束**：不spawn critic、不修補、不跑`update_dd_index.py`、不commit（見步驟6）。

@@ -99,7 +99,7 @@ ls ${DCA_DIR}/DCA_${TICKER}_*${FILE_EXT} 2>/dev/null | sort -r | head -1
 - **4a 股價 + IRR cascade**:報告日距今 > 3 天 → `WebSearch` 抓最新股價,重算 Fwd PE / PEG **且必須連 §C IRR 的 re-rate 段一起用新價重算**(IRR 是用進場價算的,價格漂移 20% 時舊 IRR 整個錯掉)。
 - **4b 財報 staleness gate**:對每檔檢查「報告日之後是否有財報發布」(`WebSearch "{ticker} earnings date"` 一輪)。有 → 再 WebSearch 該季結果(EPS/rev vs consensus、guidance、盤後反應),比對報告核心假設是否漂移;重大漂移(guidance 砍 / thesis 級事件)→ §A verdict card 加警語,§B 該檔打分必須吃進新資訊,不准照抄舊報告結論。
 - **4c 估值同源正規化**:讀 `DD_SCREENER_JSON`(統一 Koyfin consensus、同一 snapshot 日)。§A.2 表 1 的 forward 成長與 §A 的 Fwd PE / PEG **優先取 latest.json**,各檔報告內數字只當 fallback(ticker 不在 screener universe 時)。同表內混源必須在 footnote 標明哪檔用哪個來源。
-- **4d 產業 ID 共同 beta**:若 ≥2 檔屬同一產業(查 `docs/id/ID_*.html` id-meta `related_tickers[]` 或常識 mapping),Read 該 ID 的 §0 決策層,供 §E「共同 beta vs 相對 alpha」段引用。無對應 ID → §E 該段註明「無 ID 可引,共同風險判斷為本報告自建」。
+- **4d 產業 ID 共同 beta**:若 ≥2 檔屬同一產業(查 `docs/id/ID_*.html` id-meta `related_tickers[]` 或常識 mapping),Read 該 ID 的決策層(v4 ID＝`summary` 段;legacy＝§0),供 §E「共同 beta vs 相對 alpha」段引用。無對應 ID → §E 該段註明「無 ID 可引，共同風險判斷為本報告自建」。
 
 > 本 repo 的 `scripts/fetch_prices.py` 是 weekly GitHub Actions 批次 job(讀 `docs/dd/INDEX.md`,不收 ticker 參數),**無法做 ad-hoc 個股 fetch**。重抓一律走 `WebSearch`。MA50 / MA200 / RSI 沿用報告日數據,但 report-meta 必標 as-of(v1.7 取代 v1.3 純無痕規則)。
 
