@@ -57,6 +57,12 @@ def process(path, dry_run):
     return "injected"
 
 
+def inject_one(path) -> bool:
+    """Single-file idempotent injection (for render_dd.py). Returns True iff
+    the marker was actually inserted (status == "injected")."""
+    return process(str(path), False) == "injected"
+
+
 def main():
     ap = argparse.ArgumentParser(description="Inject DD live staleness bar loader.")
     ap.add_argument("--dry-run", action="store_true", help="print planned changes, write nothing")

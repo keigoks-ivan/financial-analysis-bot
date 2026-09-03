@@ -383,3 +383,35 @@ QC-39（AVGO 型過度樂觀 / SNDK 型過嚴的全文敘事）、QC-40（鷹架
 - **三件套**：① SKILL.md 新增 **QC-54｜白話呈現（深入淺出・賣方風）**，緊接 QC-40 之後——§1/§13 開場強制白話敘事、決策矩陣逐 row 檢核表與 Hard/Soft Veto 逐項列舉移入 `<details>`/附錄、燈號/emoji 不得單獨承載承重結論；② `references/critic-gates.md` QC-41 六軸 critic checklist 新增 **⑦ QC-54 白話呈現核**（SKILL.md 對應處同步「六軸」→「七軸」），違反一項 🟡、§13 開場全無白話敘事 ＝ 🔴；③ 範本句品質標竿——「用未確認風險的價格買進仍是為未解問題付價」（DD_VIK_20260831 §13）。
 - **無版本 bump**：本次為純呈現層規則，裁決矩陣、fail-safe 方向、dd-meta schema（維持 `v15.0`）與 `id="decision"` 錨點契約一字未動，下游 pipeline 零影響——比照 QC-38（2026-07-17）等格式類規則的治理歸類，**不需登記 rule_ledger kill condition**。
 - **證據**：2026-08-31 批次 4 份首輪鷹架洩漏；CRM §13 正文渲染整張 row 檢核表；兩位 critic 對「row 8」是否違規的執法標準不一致（同一份報告一位判過、一位判不過）。
+
+---
+
+## v15.2（2026-09-03）流程層＋機械閘＋呈現層＋文本層（判斷機器零變動）
+
+**WHY（四點，設計稿 `notes/site-internal/dd/_v15_2_design_spec_20260903.md` §0）**：
+1. 2026-08-31／09-01 批次實測（sonnet writer，session 記錄逐輪加總）：VIK 199M／CRWD 302M／SBUX 333M cache tokens；**critic 回覆之後的修補回合佔 77%／73%／47%**；Edit 26／113／101 次；重讀自己輸出 HTML 14／5／22 次；context 終值約 80 萬 token，報告本體僅 3–4 萬。critic 端（opus）每份 7–15M、採集 agent 2–5M，都不是成本大頭——成本大頭是 writer 自己對輸出的重複 Read/Edit 迴圈，不是 critic 輸入大小。
+2. 28 份 v15 檔中位數 115KB，19 份超過 105KB。分章實測：§10 估值 12–14KB（預算 5）、§13 8–10KB（預算 5）、§14 5–7KB（預算 2）；§7 財務品質 2–7KB、§4 商模 2–6KB。沒有任何腳本檢查分章 byte，「分章節預算為主閘」只存在於散文。
+3. 可見正文機器語言殘留：VIK 命中 signal 5 次、估值燈 9 次、runway_post_y5 5 次、dd-meta 6 次；SE 命中 MA 燈號 10 次；NVDA「row10進場」因 sweep pattern `row \d` 帶空格而漏過。每份 32–51 張可見表格。
+4. 假設與觸發器在 §1 監測指標／§2.B／§2.C／§2.E／§2.F／§13b／§14／dd-meta 八處重複；critic 在前份 VIK 找到 ≥5 個互相矛盾的重啟條件版本；writer 在肥 context 裡對規則的反應：以「預測 gate 會打回」繞過 QC-48；改 §5.F 標題讓關鍵字檢查通過而本體是倍數表；修補 Bull 改 bottom-up、Base 留 top-down 造成 Bull EPS < Base EPS。
+
+**判斷機器零變動**：QC-1~QC-54 編號與標題、所有數字門檻、enum、決策矩陣 rows 1–10、Hard/Soft Veto 方向、critic gate 觸發條件與 fail-safe 方向、PREREG、hysteresis、dd-meta schema v15.0 欄位契約、`id="decision"` 錨點——一字未動。改的是流程層、機械閘、呈現層、文本層。
+
+**改動清單**：
+- **腳本契約**（WP1 實作，SKILL.md 只引用）：`scripts/dd_sections.py`（`bytes`／`text`／`extract`／`replace`／`leaks` 五個子命令，canonical section id `s1`…`s14`/`decision`/`s85`/`appA`/`appB`）、`scripts/render_dd.py`（BODY 檔組裝＋`--check` 回歸）、`scripts/dd_template/dd.css`；`qc.py` 擴充分章 byte（warning）與機器語言 leaks（added-only error，其餘 warning）。
+- **Writer 契約**：一次 Write body 檔（`.dd_build/DD_{T}_{D}.body.html`）→ `render_dd.py` 組裝 → 四支驗證（`verify_dd_math.py`／`validate_dd_meta.py --report`／`qc.py`／`dd_sections.py bytes`）；FAIL 或 bytes WARN 用 `extract`/`replace` 局部修補，驗證輪次 ≤3；**禁 Edit 工具、禁 Read 整份輸出 HTML、禁 Read 自己的 body 檔**。writer 不再自行草稿→critic gate→Write，不 spawn critic、不做修補、不跑 `update_dd_index.py`、不 commit。
+- **Critic 契約改口（推翻 v15.0-v15.1「只收摘錄」）**：critic 讀 `dd_sections.py text FILE` **全文**（60–80KB），不是摘錄、不是整份 HTML。**實測依據**：critic 端 opus 每份僅 7–15M token（相對 writer 自身 199–333M 是零頭），全文冷讀在 VIK 抓到 8 個 🔴（含跨章節矛盾、dd-meta 連動欄位不一致），這些恰是「餵摘錄」版本結構性看不到的——2026-07-30 那版「critic 只收摘錄省 63%（180k→66-84k）」的優化錯了對象：省的是 critic 這一端（本就便宜），代價是 critic 看不到全貌；真正的大頭（writer 自身 Read/Edit churn）反而沒人動。輸出格式新增機器可讀 `## FINDINGS` 表頭 + `## GATE` 區塊，段落 id 用 canonical id，讓 patch agent 可程式化解析。
+- **修補換乾淨 agent（推翻「同一 writer 自己改」）**：critic 🔴/🟡 findings 交給**乾淨 context 的 sonnet patch agent**（非原 writer session）處理，用 `dd_sections.py extract`/`replace` 局部改段，不 Read 整份 HTML、不用 Edit 工具。**實測依據**：2026-08-31/09-01 批次顯示「critic 回覆之後的修補回合」佔 writer 總 context 47–77%，是單一最大成本中心；讓帶著滿版 context（含已讀過的舊版全文、多輪失敗嘗試）的原 writer 繼續修補，每輪都要重付這包 context；換乾淨 agent＋機械 `extract`/`replace` 把修補退化成「讀 critic 摘要＋改一小段＋覆寫」，理論上可把這 47–77% 壓到接近 critic 輸入本身的量級。
+- **機械閘取代散文自檢**：分章節 byte 預算與可見表格數（E1–E12，≤14 張）由 `dd_sections.py bytes` 檢查（WARN，不阻斷）；QC-40 機器語言 sweep 由 `dd_sections.py leaks` 檢查，詞表唯一權威在腳本，SKILL.md 不再自維 grep pattern 清單。
+- **呈現層**：假設驗證／風險／Single Thing／rearm／加碼／減碼／清倉觸發器，從 §1／§2.B／§2.C／§2.E／§2.F／§13b／§14／dd-meta 八處重複收斂為 §13 末段單一 **E12 監測與觸發器表**（`<table id="triggers">`），dd-meta `kill_metrics[]`/`rearm_trigger`/`catalysts[]` 與此表同源；決策矩陣逐 row 檢核表與附錄 A/B 全部收進 `<details>`；儀表板移除基本面評級/估值燈/MA 整列（移入附錄 A）。
+- **文本層**：SKILL.md 最終自檢清單 40 條 → 12 條；QC-2/4/10/14/21/24/25/27/36 壓縮為一行制或指向採集數字包（門檻數字不變）；QC-38 與舊「篇幅預算指令」「分章節 byte 預算」兩個獨立段落合併為一節；§7 中場邊界即時檢查（舊 MPWR 教訓那版）改為「body 寫完後跑一次 bytes」，不再要求寫到 §7 半路實量；§2.E 四情境表刪除，內容併入 §13b/E12（一處推導）。
+
+**退場訊號（可證偽，比照 rule_ledger 精神；登記人＝下一輪校準 orchestrator）**：
+① 下三份 v15.2 DD 的 writer 總 cache tokens 未較 v15.0/v15.1 批次基線（199–333M）降 ≥50% → 檢討【Critic／Patch agent 契約】§4.1（writer 工具禁令與 critic 全文讀法的成本模型）；
+② patch agent 修補後上站的檔，被下一輪 re-gate 或人工複審抓到「連動欄位未同步」（dd-meta 與 dashboard 或情境樹三列半邊重建）≥2 例 → patch 契約加強制對帳表（改動段落 × 連動段落 × 是否同步核對一次過）。
+
+**收容（本次瘦身移出 SKILL.md 正文、原文字未刪除，記於此供追溯）**：
+- 篇幅密度標竿檔名：`docs/dd/DD_SIMO_20260710.html`（116KB）、`DD_TSM_20260623.html`（110KB，兩者皆舊章序僅作密度標竿）；§8.5 壓縮 read-through 寫法範本＝`DD_NFLX_20260717.html` 逐字稿章節（該檔 308KB 屬舊制超帶，僅取寫法）。
+- 分章節省法的量化估計（三條省法各自可省的 KB／%，非獨立門檻，可由分章節預算表自行加總推出）：①程序性自檢不渲染可省 ~68-75KB（17-19%）②深度表只留承重列可省 ~40KB ③主敘事去重可省 ~80-100KB；商業本質章合計 ~44KB（≈ 半數內容段）。
+- 「critic 只收摘錄省 63%」（180k→66-84k tokens）——**本次已推翻**，改為全文讀法，見上「Critic 契約改口」。
+- 機械輪次批次化 WHY 原始實測句：「實測一支 94 次 Edit 的 agent 燒 27.7M cache_read，機械輪次約佔七成」——本輪最新實測（見上 WHY①）取代此例，規則本體（三條硬規則）不變。
+- Token 紀律「界線」段原例句：「逐字稿全讀僅約 25-35k tokens ≈ 單份成本 6%，省 6% 去賭最高價值發現是壞交易」——規則本體（隨附逐字稿一律本體自讀、禁先 digest）保留，例句移此。

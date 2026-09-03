@@ -1,7 +1,21 @@
 # references/critic-gates.md｜寫稿後 critic gate 協議全文（條件載入）
 
 > **載入時點**：Part I + Part II 草稿完成後、spawn 任何 critic 之前（QC-41／QC-48／QC-50／QC-51 任一觸發即載入）。核心 SKILL.md 只留各 gate 的觸發條件與 fail-safe 方向;spawn prompt、checklist 全文、查證預算與合併載具條款在本檔。
-> **本檔為 v15.1 文本層拆分的搬移件——條文逐字未動**（編號、門檻、失敗方向、模型指派一字未改）。
+> **本檔為 v15.1 文本層拆分的搬移件——條文逐字未動**（編號、門檻、失敗方向、模型指派一字未改）。四個 gate 的觸發條件、七軸 checklist、查證預算 ≤10／14、合併載具三條、fail-safe 方向、模型指派同樣一字不動；v15.2 只改下方「輸入與輸出格式」一節（讀法從摘錄改讀全文＋輸出檔頭固定機器可讀區塊）。
+
+### 輸入與輸出格式（v15.2）
+
+**輸入**：`python3 scripts/dd_sections.py text FILE` 全文（不是 HTML、不是摘錄；約 60–80KB）；前份 DD 亦用 `text`（QC-49 觸發器版本對照、QC-51 peer 對帳時適用）。WHY：全文冷讀在 VIK 實測抓到 8 個 🔴，優於舊摘錄規則；critic 端（opus）成本每份僅 7–15M token，本來就不是省 token 的優化對象——省 token 的正確目標是 writer 端修補迴合（詳見 SKILL.md【Token 紀律】與 changelog.md）。
+
+**輸出**：critic 報告存 `notes/site-internal/dd/_critic_{TICKER}_{YYYYMMDD}.md`，**開頭固定機器可讀區塊**：
+```
+## FINDINGS
+| # | 嚴重度 | 段落 id | 一句話 | 最小修法 |
+|---|---|---|---|---|
+| F1 | 🔴 | s10 | … | … |
+## GATE: PASS / PASS-with-fixes / FAIL
+```
+段落 id 用 canonical id（`s1`…`s14`、`decision`、`s85`、`appA`／`appB`、`revlog`、`sources`、`dashboard`、`dd-meta`）；連動段（dd-meta／dashboard）也列。固定區塊之後才是下方各 gate checklist 的逐軸敘述全文。此區塊供 patch agent（乾淨 context，見 SKILL.md／delta-refresh.md）以 `sed -n` 直接取用 FINDINGS，不需重讀整份 critic 報告。
 
 ---
 
@@ -14,11 +28,7 @@ Agent({
   description: "Industry red-team {TICKER} DD",
   subagent_type: "general-purpose",
   model: "opus",            // 跨模型冷讀：writer 現為 sonnet，critic 必為 opus
-  prompt: "你是獨立產業 critic（冷讀，未參與寫稿）。以下是一份 {TICKER} DD 對產業態勢的關鍵判讀：\n
-    - moat_trend = {↑/→/↓} + 依據：{§5 一句}\n
-    - §3 供需 durability 裁決：{一句}\n
-    - §2 核心假設 H1/H2/H3：{三句}\n
-    - 統一裁決：{進場/觀望/迴避} + 主因：{一句}\n
+  prompt: "你是獨立產業 critic（冷讀，未參與寫稿）。以下是 `dd_sections.py text` 全文：{貼上}\n
     請沿 4 軸找出這份 DD **漏掉或低估**的產業結構變化，每軸給「有沒有 sourced 證據顯示報告判錯」：\n
     ① 競爭惡化（份額流失 / 新進入者 / 客戶 second-source / 大客戶轉單）\n
     ② 供需 durability（緊缺/過剩是結構還週期、能否撐住、供給可逆性）\n

@@ -77,7 +77,7 @@
 | 【假設驗證對照】 | append 一列組：H1/H2/H3 上次→本次→邊際變化、R1–R3 是否觸發、裁決變化欄寫「維持（delta）」 |
 | dd-meta | `date`／`price_at_dd`／`fpe_fy2`／`pct_5y`／`peg_fy2`／`upside_short_pct`／`upside_mid_pct`／`ev5y_pct`／`irr_base_pct`／`kill_metrics[].last_status`。**`verdict`／`dca_verdict`／`dca_role`／`moat`／`moat_trend`／`runway_post_y5` 一律不動**（判斷級欄位，delta 無權改） |
 
-**patch 手法（token 紀律）**：先區段擷取取得待換原文，再以 `python3 - <<'EOF'` 做精確字串替換（`assert` 命中數 ==1）；或對該段 `Read` 加 `offset/limit` 後用 Edit。**禁止整檔 Read**、禁止整檔重寫（重寫＝把省下的 token 全部退回去）。
+**patch 手法（token 紀律，v15.2）**：`python3 scripts/dd_sections.py extract FILE ID` 取待換段原文（canonical id，多個可逗號分隔一次取）→ 在 context 內改寫 → 寫暫存檔 → `python3 scripts/dd_sections.py replace FILE ID NEWFILE` 就地覆寫（命中須恰 1，否則 exit 2 不寫檔，印「ID 舊 bytes → 新 bytes」）。**禁止整檔 Read**、禁止整檔重寫（重寫＝把省下的 token 全部退回去）。
 
 **誠實標示原則（不可退讓）**：讀者必須一眼看出「Part I 敘事層 as-of 是上次全套日期、數據層是今日」。badge ＋ 版本修訂紀錄雙標示，缺一即違規，**不得把 delta 版包裝成全新報告**。（與 memory「報告資料更新要無痕」不衝突——那條講全套 refresh 時新數據融入敘事；delta 沒重寫敘事，隱藏落差就是誤導。）
 
@@ -93,6 +93,7 @@ delta 版**不跑 QC-41／QC-48／QC-50／row 8b**：裁決未變、無新判斷
 
 1. **dd-meta 不新增 `refresh_mode` 欄**。`validate_dd_meta.py` 對 v13+ 的 unknown-key sweep 是 **warn-only 不擋 commit**，但 `WHITELIST_KEYS` **刻意留空**（讓 schema drift 保持可見），加欄會讓每份 delta 永久噴一條 `unknown dd-meta key` 警告、稀釋該訊號。delta 標記因此只走 **badge ＋ 版本修訂紀錄**；日後要落機器欄須同時改 validator 的 `V13_OPTIONAL_TYPES`。
 2. **pre-commit size gate**：delta 產出是 added 檔且帶 `"schema":"v15`，走 **70／80／115KB**。delta 只加不減，起點是已過關的 75–105KB 全套檔，必然過 floor；若 patch 後 <70KB ＝ 誤刪章節，**先查刪了什麼再談 commit**。基檔含 §8.5 逼近 115KB 時可能觸上界警告——上界只警告不擋，delta 不是重寫時機，不因此壓縮。
+4. **qc.py 機器語言檢查（v15.2）**：`cp` 自 v15.0／15.1 舊檔的 delta 版沒有 `<meta name="dd-render">` 標記，`dd_sections.py leaks` 命中只列 warning 不擋 push；基檔本身由 `render_dd.py` 產出（含標記）時，delta 版仍是整檔新增，leaks 命中會 error——patch 段落請維持零機器語言。
 3. **QC-17／QC-18 沿用**：只讀最近一份、只讀指定區塊、一律區段擷取。delta 沒放寬讀取紀律，只把「讀完之後做什麼」從重寫改成對帳。
 
 ---

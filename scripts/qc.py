@@ -2,7 +2,7 @@
 """Deterministic QC gate for the research.investmquest.com site (docs/).
 
 Replaces "ask the model to eyeball it" with a fast, stdlib-only, no-network
-checker suitable for a pre-push hook. Four checks:
+checker suitable for a pre-push hook. Six checks:
 
   1. dd-meta JSON schema  — DELEGATED to scripts/validate_dd_meta.py (single
      source of truth; qc.py never re-implements the schema so the two can't
@@ -14,6 +14,26 @@ checker suitable for a pre-push hook. Four checks:
      file under docs/ which does not exist. External URLs are never fetched.
   4. CJK punctuation      — a CJK char immediately followed by a half-width
      , . : is a typo for the full-width form （，。：）.
+  5. v15 DD section-byte budgets — DELEGATED to scripts/dd_sections.py
+     (`section_bytes`), which is the single source of truth for the §2.1
+     per-section/aggregate byte table. Only runs on docs/dd/DD_*.html whose
+     dd-meta `"schema"` starts with "v15". ALWAYS a warning (never blocks —
+     the budgets are a feedback signal, not a gate; see
+     notes/site-internal/dd/_v15_2_design_spec_20260903.md §2.4/§3.4).
+  6. v15 DD visible machine-language leaks — DELEGATED to
+     scripts/dd_sections.py (`leak_hits`), whose wordlist (row N / Hard Veto /
+     val🟠 / MA✅ / dd-meta / QC-N / archetype / metadata / gate / ...) is also
+     the canonical QC-40 sweep list. A hit is a HARD ERROR only when ALL
+     THREE hold: (a) changed-files mode, (b) the file is a whole new git
+     addition (line 1 is in added_lines), AND (c) the file carries
+     <meta name="dd-render" content="render_dd-v15.2"> (scripts/render_dd.py's
+     provenance marker). Condition (c) exists because delta-refresh `cp`s an
+     old v15.0 report to a new dated filename then patches it — that's a
+     whole-file git addition too, but the prose is the OLD report's (known
+     pre-existing leaks, never itself produced by render_dd.py), so it must
+     not trip the "brand-new report must ship leak-free" gate. Anything
+     failing (a)/(b)/(c) — modified file / --all / explicit / no marker —
+     stays a warning.
 
 Severity model (why baseline stays green while new problems are blocked):
   - Checks 1 & 2 are structural and the current corpus already passes them, so
@@ -27,6 +47,16 @@ Severity model (why baseline stays green while new problems are blocked):
         on a git-ADDED line; a pre-existing violation on an untouched line of
         a touched file stays a warning. This blocks *newly introduced*
         problems without forcing you to fix inherited debt on every commit.
+  - Check 5 (section-byte budgets) is never an error — it is a feedback
+    signal for the writer/critic loop, not a commit gate (the actual commit
+    gate is the whole-file byte floor/warn in scripts/hooks/pre-commit).
+  - Check 6 (leaks) follows the same "new vs. pre-existing" asymmetry as 3/4,
+    but at whole-file granularity (a brand-new report should never ship with
+    QC-40-style scaffolding language visible to the reader) rather than
+    per-line, because a single leaked word taints the whole new report either
+    way — gated further by the dd-render marker so a delta-refresh `cp` of an
+    old report (which is a whole-file git addition but not a fresh render)
+    isn't wrongly held to that same bar.
 
 Interface:
   python3 scripts/qc.py           # default: only git changed/staged/unpushed
@@ -52,6 +82,7 @@ SCRIPTS = ROOT / "scripts"
 # Reuse the canonical dd-meta validator instead of re-declaring the schema.
 sys.path.insert(0, str(SCRIPTS))
 import validate_dd_meta  # noqa: E402
+import dd_sections  # noqa: E402 — single source of truth for §2.1 byte budgets + QC-40 leak wordlist
 
 
 # ── shared regexes ──────────────────────────────────────────────────────────
@@ -130,6 +161,75 @@ def check_decision_anchor(path: Path, text: str):
     if DECISION_ANCHOR_RE.search(text):
         return []
     return [(1, 'v13/v14 DD missing id="decision" anchor (research page links here)')]
+
+
+# ── check 5: v15 DD section-byte budgets (always warning) ──────────────────
+V15_SCHEMA_RE = re.compile(r'"schema"\s*:\s*"v15')
+
+
+def is_v15_dd_html(path: Path, text: str) -> bool:
+    return is_dd_html(path) and bool(V15_SCHEMA_RE.search(text))
+
+
+def _format_bytes_warning(row: dict) -> str:
+    if row["kind"] == "section":
+        b, budget = row["bytes"], row["budget"]
+        if isinstance(budget, tuple):
+            lo, hi = budget
+            return (f"章節 {row['id']} {b/1000:.1f}KB 超出預算區間 "
+                     f"{lo/1000:.1f}-{hi/1000:.1f}KB")
+        return f"章節 {row['id']} {b/1000:.1f}KB > 預算 {budget/1000:.1f}KB"
+    label = row.get("label", row["id"])
+    if "value_pct" in row:
+        return f"彙總 {label} {row['value_pct']:.1f}% < 下限 {row['budget_pct_min']}%"
+    if "value_bytes" in row and "budget_bytes_max" in row:
+        return f"彙總 {label} {row['value_bytes']/1000:.1f}KB > 上限 {row['budget_bytes_max']/1000:.1f}KB"
+    if "value_bytes" in row:
+        return (f"彙總 {label} {row['value_bytes']}B 超出範圍 "
+                 f"floor={row['floor']}/warn_low={row['warn_low']}/warn_high={row['warn_high']}")
+    return f"彙總 {label} {row.get('value')} > 上限 {row.get('budget_max')}"
+
+
+def check_section_bytes(path: Path, text: str):
+    """Return list of (lineno, reason) WARNINGS from dd_sections.section_bytes.
+
+    Never returns errors — the byte table is a writer/critic feedback signal,
+    not a commit gate (see module docstring check 5).
+    """
+    try:
+        rows = dd_sections.section_bytes(text)
+    except Exception as e:  # defensive: a malformed report must not crash qc.py
+        return [(1, f"dd_sections.section_bytes 執行失敗：{e}")]
+    return [
+        (r.get("line") or 1, _format_bytes_warning(r))
+        for r in rows if r.get("status") == "WARN"
+    ]
+
+
+# ── check 6: v15 DD visible machine-language leaks ──────────────────────────
+DD_RENDER_MARKER_RE = re.compile(r'<meta\s+name="dd-render"')
+
+
+def is_render_dd_output(text: str) -> bool:
+    """True iff this exact file carries <meta name="dd-render" ...> — i.e. it
+    was produced by scripts/render_dd.py (a fresh writer BODY assembled into
+    a full report), as opposed to a delta-refresh `cp` of an old v15.0 report
+    to a new filename (which inherits that old file's own pre-existing leaks
+    and was never itself run through render_dd.py)."""
+    return bool(DD_RENDER_MARKER_RE.search(text))
+
+
+def check_leaks_dd(path: Path, text: str):
+    """Return list of (lineno, reason) from dd_sections.leak_hits.
+
+    Severity (error vs. warning) is decided by the caller in scan_file() —
+    this function only surfaces the raw hits.
+    """
+    try:
+        hits = dd_sections.leak_hits(text)
+    except Exception as e:  # defensive: a malformed report must not crash qc.py
+        return [(1, f"dd_sections.leak_hits 執行失敗：{e}")]
+    return [(ln, f"可見正文機器語言外洩：{word} ｜ {ctx}") for ln, word, ctx in hits]
 
 
 # ── check 3: dead internal links ────────────────────────────────────────────
@@ -326,6 +426,32 @@ def scan_file(path: Path, escalate_added: bool):
             errors.append((path, ln, reason))
         for ln, reason in check_decision_anchor(path, text):
             errors.append((path, ln, reason))
+
+    # v15 DD: section-byte budgets (always warning) + visible machine-language
+    # leaks (error only when ALL THREE hold: changed-files mode, this is a
+    # whole new git addition, AND the file carries the render_dd.py
+    # provenance marker — see module docstring checks 5/6) — warning otherwise.
+    #
+    # The marker condition exists because delta-refresh (see
+    # .claude/skills/stock-analyst/references/delta-refresh.md) `cp`s an old
+    # v15.0 report to a new dated filename and then patches it — that `cp`
+    # makes the new filename a whole-file git addition too, but the file's
+    # prose is the OLD report's (25-40 pre-existing leaks are normal and were
+    # never render_dd.py output), so it must not hit the same "brand new
+    # report must ship leak-free" gate as an actual fresh render.
+    if is_v15_dd_html(path, text):
+        for ln, reason in check_section_bytes(path, text):
+            warnings.append((path, ln, reason))
+        leak_hits_ = check_leaks_dd(path, text)
+        if leak_hits_:
+            is_new_render = (
+                escalate_added
+                and (1 in added_lines(path))
+                and is_render_dd_output(text)
+            )
+            target = errors if is_new_render else warnings
+            for ln, reason in leak_hits_:
+                target.append((path, ln, reason))
 
     # regression-class (dead links + CJK)
     reg = []

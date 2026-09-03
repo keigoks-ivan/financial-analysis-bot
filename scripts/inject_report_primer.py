@@ -230,6 +230,16 @@ def process_file(path: Path, family: str, template_fn, dry_run: bool):
     return "inject", anchor_kind
 
 
+def inject_one(path: Path) -> bool:
+    """單檔冪等注入（DD 家族限定；供 render_dd.py 呼叫）。
+
+    回傳是否實際寫入了變更（True＝inject 或 reinject-with-change）。不改變
+    既有 CLI 行為，純粹是 process_file() 對 DD 家族的薄包裝。
+    """
+    action, _reason = process_file(Path(path), "dd", dd_template_for, dry_run=False)
+    return action in ("inject", "reinject")
+
+
 def main():
     ap = argparse.ArgumentParser(description="注入報告家族「怎麼讀這份報告」導讀塊")
     ap.add_argument("--dry-run", action="store_true", help="只列出將注入/跳過清單，不寫檔")
