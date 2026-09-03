@@ -53,6 +53,23 @@ for k in ['currentPrice', 'regularMarketPrice', 'marketCap', 'fiftyTwoWeekHigh',
           'beta', 'heldPercentInsiders', 'heldPercentInstitutions']:
     print(f"{k}: {info.get(k)}")
 
+# 1.5 財報時效閘（v15.2.4 新增；SNOW 2026-09-03 教訓：財報後次日跑 DD 用了財報前價格與共識）
+print("\\n=== 財報時效 ===")
+try:
+    edates = t.earnings_dates
+    last_earnings = edates[edates.index <= __import__("pandas").Timestamp.now(tz=edates.index.tz)].index.max()
+except Exception:
+    last_earnings = None
+print(f"最近財報日: {last_earnings}")
+if last_earnings is not None:
+    trading_days_since = __import__("numpy").busday_count(last_earnings.date(), __import__("datetime").date.today())
+    print(f"距今交易日數(概估): {trading_days_since}")
+    if trading_days_since <= 3:
+        print("⚠ earnings_recency: ≤3d —— 財報後價格與共識未穩定，見下方盤後/盤前價")
+        print(f"postMarketPrice: {info.get('postMarketPrice')}")
+        print(f"preMarketPrice: {info.get('preMarketPrice')}")
+        print(f"regularMarketPrice(RTH收盤): {info.get('regularMarketPrice')}")
+
 # 2. EPS / Revenue 共識
 print("\\n=== EPS Estimates ===")
 print(t.earnings_estimate)  # 0q, +1q, 0y (FY+1), +1y (FY+2)
@@ -145,7 +162,9 @@ print(f"現價 vs W104: {idx_current:.2f} vs {idx_w104:.2f} | 破線: {idx_curre
 ## 回傳格式（Markdown；逐節照填；總量 ≤6KB）
 
 ### 0. 頂部標註
-資料抓取時間（含時區）｜最新股價（含幣別＋as-of）｜最近財報季｜下次財報日｜yfinance 呼叫成功與否＋web_search 次數
+資料抓取時間（含時區）｜最新股價（含幣別＋as-of）｜最近財報季｜下次財報日｜yfinance 呼叫成功與否＋web_search 次數｜**財報時效**（`earnings_recency`：最近財報日 vs 報告日相隔交易日數；≤3d 時附加標註，見下）
+
+**若 `earnings_recency` ≤3 個交易日**，本節第一行加醒目警語：「⚠ 財報後 ≤3 天：估值層一律用財報後價格（盤後/盤前），共識 EPS 標『財報前快照，財報後共識未更新』，不得宣稱已納入財報後共識」；同時給 RTH 收盤價與 postMarketPrice/preMarketPrice 兩者（取不到 postMarketPrice/preMarketPrice 時標 N/A，並要求 writer 用 web_search「{ticker} after hours stock price {日期}」補查一次）。
 
 ### 1. §8 財報（最近季）
 最近季營收／毛利／營益／EPS 與 YoY、QoQ（來源：yfinance income_stmt 或 quarterly，標 as-of）
@@ -157,7 +176,7 @@ print(f"現價 vs W104: {idx_current:.2f} vs {idx_w104:.2f} | 破線: {idx_curre
 insider %／institutional %／top holders 前 3；股息、回購、capex、D&A 逐年（已在第 2 節表內者寫「見上表」不重複）
 
 ### 4. §10 估值與共識
-現價／市值／Forward PE／Trailing PE／EV/EBITDA／P/B／Beta(yfinance)／Beta(TradingView)／52W H/L；
+現價（`earnings_recency` ≤3d 時取財報後最新價 postMarketPrice/preMarketPrice，並同列 RTH 收盤價供對照）／市值／Forward PE／Trailing PE／EV/EBITDA／P/B／Beta(yfinance)／Beta(TradingView)／52W H/L；
 EPS 共識 FY+1／FY+2（avg、分析師數、YoY）；eps_trend 7/30/60/90d 修正方向；Revenue estimate；
 web 補項逐條一行：**5Y Fwd PE 分位｜同業倍數｜目標價 consensus｜5Y ROIC 與毛利率｜5Y forward PE band｜FY+3 EPS 與長期成長共識**，每條後綴「查詢詞｜來源｜日期」
 
@@ -182,7 +201,7 @@ web 補項逐條一行：**5Y Fwd PE 分位｜同業倍數｜目標價 consensus
 - **每個數字帶來源與 as-of**。yfinance 來源可在每張表下方標一次「yfinance，抓取時間 YYYY-MM-DD HH:MM TZ」；**web_search 來的每一項各自附「查詢詞｜來源｜日期」一行**，不得合併省略。
 - **三表多年數據收斂為「關鍵行 × 年」緊湊表**（沿用腳本現有 keys），**不回傳原始 dump**。
 - **總量目標 ≤6KB。** 超出多半代表回傳了原始輸出或加了解讀，退回要求收斂。
-- **頂部標註**（資料抓取時間｜最新股價｜最近財報季｜搜尋次數）由 writer 從數字包第 0 節**轉錄**至報告頂部，不另行查證、不改寫數字。
+- **頂部標註**（資料抓取時間｜最新股價｜最近財報季｜搜尋次數｜財報時效）由 writer 從數字包第 0 節**轉錄**至報告頂部，不另行查證、不改寫數字。**`earnings_recency` ≤3d 時，`price_at_dd`（dd-meta／頁首）一律取財報後最新價（postMarketPrice/preMarketPrice），並在 as-of 標「盤後」或「盤前」；共識 EPS 標「財報前快照」。**
 
 ### 缺項處置（禁止整包重做）
 

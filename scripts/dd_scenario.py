@@ -182,6 +182,21 @@ def validate(data, result):
         if n != 5:
             fails.append(f"{k} eps_path 長度 {n} ≠ 5")
 
+    bull_path, base_path = scen["bull"]["eps_path"], scen["base"]["eps_path"]
+    if len(bull_path) >= 2 and len(base_path) >= 2 and bull_path[0] == base_path[0] and bull_path[1] == base_path[1]:
+        fails.append(
+            "Bull 前兩年 EPS 與 Base 相同＝情境退化，Bull 只靠終端倍數分岔；"
+            "Bull 路徑須自第 1 年起高於 Base"
+        )
+
+    if base["terminal_eps"]:
+        bull_over_base = bull["terminal_eps"] / base["terminal_eps"]
+        if bull_over_base < 1.15:
+            warns.append(
+                f"Bull 終端 EPS 僅高於 Base {(bull_over_base - 1) * 100:.1f}%，"
+                f"價差主要來自倍數"
+            )
+
     peer_max = data.get("peer_max_fpe")
     if peer_max is not None and bull["terminal_pe"] > peer_max:
         warns.append(f"bull terminal_pe {bull['terminal_pe']} > peer_max_fpe {peer_max}")
@@ -389,6 +404,20 @@ def check_meta(meta):
         return fails, warns
 
     rows = result["rows"]
+    bull_path, base_path = st["eps"]["bull"], st["eps"]["base"]
+    if len(bull_path) >= 2 and len(base_path) >= 2 and bull_path[0] == base_path[0] and bull_path[1] == base_path[1]:
+        fails.append(
+            "Bull 前兩年 EPS 與 Base 相同＝情境退化，Bull 只靠終端倍數分岔；"
+            "Bull 路徑須自第 1 年起高於 Base"
+        )
+    if rows["base"]["terminal_eps"]:
+        bull_over_base = rows["bull"]["terminal_eps"] / rows["base"]["terminal_eps"]
+        if bull_over_base < 1.15:
+            warns.append(
+                f"Bull 終端 EPS 僅高於 Base {(bull_over_base - 1) * 100:.1f}%，"
+                f"價差主要來自倍數"
+            )
+
     checks = [
         ("bull_5y_price", rows["bull"]["terminal_price"], "price"),
         ("bear_5y_price", rows["bear"]["terminal_price"], "price"),

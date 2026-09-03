@@ -438,3 +438,11 @@ QC-39（AVGO 型過度樂觀 / SNDK 型過嚴的全文敘事）、QC-40（鷹架
 
 **改動清單**：Koyfin 增量下載 `koyfin_downloader.py --tickers {T}` 併入 writer（sonnet）步驟 0、在 `transcripts_for_dd.py` 之前（持有人拍板「Koyfin 也用 sonnet」，orchestrator 不跑；不阻塞：session 過期在回報標明、用磁碟既有稿；`ddreport/SKILL.md` v2.3 Step 1 只留 prompt 提醒）；Edit 禁令三處（SKILL.md 步驟 3a／3f、`references/html-output.md`、ddreport 4.1）改口為「part 檔可小幅 Edit（Edit 後重新 `cat`），`docs/dd/` 產物禁 Edit 只准 `extract`/`replace`」；patch agent 禁 Edit 不變。判斷機器零變動。
 
+
+### v15.2.4（2026-09-03）兩個零 token 機械閘
+
+**WHY**：AVGO／SNOW／PLTR 三份 v15.2 實跑暴露兩個純機械但反覆重犯的錯：①SNOW 於財報（9/2 盤後）次日跑 DD，採集包沿用財報前價格與共識，整份估值層帶 −17% 價格誤差（critic 3 個 🔴）；②情境樹 Bull 前兩年 EPS 與 Base 完全相同、只靠終端倍數分岔，AVGO／PLTR／SNOW 三例皆犯（critic 🔴）。兩者皆有唯一正確答案、可在採集端／驗算端 0 token 攔下，不需 LLM 判斷。
+
+**改動清單**：
+- **財報時效閘（採集端）**：`references/data-collection.md` yfinance 腳本新增「1.5 財報時效」段，用 `t.earnings_dates` 判斷最近財報日距報告日的交易日數，≤3 個交易日時附 `postMarketPrice`/`preMarketPrice`/`regularMarketPrice`；回傳格式§0 頂部標註加 `earnings_recency` 欄與 ≤3d 醒目警語（估值層用財報後價格、共識 EPS 標「財報前快照」）；§10 估值與共識段與數字包規格段同步加註 `price_at_dd` 取用規則。SKILL.md【即時數據協議】加一句指向本閘。
+- **情境樹 Bull 退化檢查（`scripts/dd_scenario.py`）**：`validate()` 新增 FAIL（Bull 前兩年 EPS 與 Base 相同）與 WARN（Bull 終端 EPS ÷ Base < 1.15，價差主要來自倍數）；`check_meta()` 同步加相同兩檢查，讓 `verify_dd_math.py` 檢查 E 與 `--check` 都會報。既有 SNOW／AVGO scenario.json 皆 PASS 無此 WARN；臨時構造 Bull 前兩年退化案例確認 FAIL 正確觸發。
