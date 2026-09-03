@@ -1,0 +1,212 @@
+# stock-analyst v16 設計規格草案（流程重建：證據 → 判斷 → 呈現三段式；判斷機器仍凍結）
+
+> 狀態：**草案，待持有人裁定**（2026-09-03）。前身：`_v15_2_design_spec_20260903.md`（v15.2 只改流程與機械閘，writer 仍是單一巨石 agent）。本稿把 writer 拆成三段、中間用結構化資料接，讓修補不再重付整個 context，並把「覆蓋面」從 writer 自覺變成 validator 輸入。
+> 硬邊界：判斷機器（QC 門檻、決策矩陣 rows 1–10、fail-safe 方向、dd-meta 契約、critic 觸發條件）**一字不動**，PREREG 凍結至 2026-10 校準輪；本稿只重排「誰在什麼 context 裡做什麼、用什麼格式交接」。
+
+---
+
+## 0. 證據摘要（WHY）
+
+三份 v15.2 實跑（2026-09-03，session jsonl 逐輪加總 cache_read）：
+
+| | AVGO | SNOW | DELL |
+|---|---|---|---|
+| writer（sonnet） | 48M／151 輪 | 61M／199 輪（Edit 9） | **107M／309 輪（Edit 30、Read 15）** |
+| critic（opus，兩輪） | 6.3M | 5.3M | 7.0M |
+| patch（sonnet，兩輪） | **150M**（同 agent 跨兩輪） | 21M | 15M＋R2 |
+| critic 首輪 🔴 | 8 | 7 | 5 |
+| 整軸覆蓋缺口 | 1（Apple） | 1（法規／資料主權） | 2（客戶集中度、關稅 §232） |
+
+四個結構性結論：
+1. **修補成本＝context 大小 × 修補輪數**。DELL writer 107M 中 64M 發生在 part 檔寫完之後（30 次 Edit＋去讀 render_dd.py／dd_sections.py 原始碼）。單一巨石 agent 的任何一處小修都重付 500k context。
+2. **規則佔 context 大頭**。writer 每份先讀 SKILL.md（125.8KB）＋7–8 份 references（約 100KB），cache 建立 1.2–1.5M；這些文字絕大多數是「檢查」（三處同源、表格上限、跳脫、bytes、leaks），不是「判斷」。
+3. **整軸缺口三份三中**。QC-39 三軸與 critic ⑤ 覆蓋面掃描都寫在規則裡，但「哪些軸必須查」從未成為 writer 的**輸入**；critic 抓到後 patch 再補，等於每份都付一次「先漏再補」。
+4. **critic 便宜且有效**（每份 5–7M、$3 上下），抓到的 🔴 中約半數是 writer 自己看不見的（財報前價格、Databricks 數字、`<` 截斷、觸發器棘輪）；三個純機械項已於今日轉成閘（財報時效、Bull 退化、未跳脫 `<`）。剩下的 🔴 類型＝覆蓋缺口、sourced 數字錯、決策層自洽（rearm 互斥／棘輪）。
+
+## 1. 總則
+
+- **判斷機器零變動**：QC-1～QC-54 的門檻、決策矩陣、archetype 路由、critic gate 觸發條件、dd-meta `schema:"v15.0"` 全部凍結。本稿把它們**搬家**（散文 → validator／腳本／JSON 欄位），不改語意。搬家後必過「回溯考卷」（§9）。
+- **三段一契約**：證據包（evidence pack）→ 判斷物（judgment）→ 呈現（render）。每段的輸出是**可驗證的檔案**，下一段只讀檔案，不讀上一段的 context。
+- **數字只有一個居所**：任何進裁決的數字只存在於判斷物 JSON，表格與 dd-meta 由腳本生成。「三處一致」從規則變成結構。
+- **模型鐵律不變**：判斷層與冷讀 critic 永不同模型；呈現層可與判斷層同模型（它不做判斷）。
+- **可 A/B**：判斷層模型（sonnet／opus／Fable）是一個旗標，因為它的輸入輸出都小，換模型的成本可量。
+
+## 2. 架構
+
+```
+Stage 0  證據包（sonnet fan-out，平行）
+  ├─ 0a 數字包（現有 data-collection.md 採集 agent，含財報時效閘）
+  ├─ 0b 覆蓋矩陣（新）：依 archetype 固定軸清單，每軸一個搜尋子任務 → sourced 發現 或 明確「查無」
+  ├─ 0c 事件掃描（QC-19 五組查詢，現有，併入 0b 的「事件」軸）
+  ├─ 0d 前份 DD 三區塊（QC-17/18 grep 擷取，腳本化）＋ 知識帳本 q.py ＋ canonical ID 事實區塊（QC-52 Stage 1）
+  └─ 0e 逐字稿：路徑清單（transcripts_for_dd.py）；**讀取歸判斷層**（見 §8 待決 1）
+  輸出：.dd_build/{T}_{D}.evidence.json（validator：validate_evidence.py）
+
+Stage 1  判斷物（單一 agent；模型旗標；不上網、不寫 HTML）
+  輸入：evidence.json ＋ 逐字稿 .md ＋ 判斷規則精簡版（judgment-rules.md，目標 ≤35KB）
+  輸出：.dd_build/{T}_{D}.judgment.json（validator：validate_judgment.py）
+        ＋ .dd_build/{T}_{D}.scenario.json（現有 dd_scenario.py 契約）
+  機械：dd_scenario.py → dd_decision.py（矩陣路由腳本化，輸出 dca_verdict／role／命中 row／執行語骨架）
+        → verify_dd_math.py（改讀 judgment.json）
+  critic（跨模型冷讀）：讀 evidence.json ＋ judgment.json（合計約 40–60KB），FINDINGS 對準 JSON 欄位；
+        patch＝改欄位 → 重跑三支腳本。**不再對 80KB 散文做 extract/replace。**
+
+Stage 2  呈現（sonnet；讀 evidence.json ＋ judgment.json；只鋪陳不判斷）
+  機械先行：gen_dd_tables.py 由 judgment.json 生成 dashboard／E1／E2／E11／E12／dd-meta／appA 表／情境欄
+  agent：寫 §1–§14 散文段落到 .dd_build/{T}_{D}.prose/{sid}.html（每段一檔、一次 Write）
+  組裝：render_dd.py（擴充：吃 prose/ 目錄＋生成表格 → 單一 HTML）
+  閘：dd_sections.py bytes／leaks（含未跳脫 <）、qc.py、validate_dd_meta.py
+  修補：只重寫超標或命中的那一段檔（prose 段落級，不動判斷物）
+  輕 critic（可選）：只核白話開場與敘事是否與判斷物一致（QC-54 ⑦ 軸），不重審判斷
+```
+
+Orchestrator（opus）只做：spawn、傳檔名、讀 validator 結果、決定是否 re-gate、commit。**不讀任何報告內容進自己的 context。**
+
+## 3. 交接物 schema（草案，validator 為權威；欄名待 WP1 定稿）
+
+### 3.1 `evidence.json`
+```
+{ "ticker","date","archetype_hint","earnings_recency",
+  "numbers": {…數字包全部欄位，含 price_at_dd 與 as-of、共識三年＋快照日、週線狀態機旗標…},
+  "coverage": {                       ← 覆蓋矩陣，軸清單由 archetype 決定（見 3.3）
+     "<axis_id>": {"status":"found|none|not_applicable",
+                   "findings":[{"claim","source","as_of","direction":"+|0|-","affects":["H1","moat","bear",…]}],
+                   "queries_run":[…], "note"} },
+  "events": {…QC-19 五組結果…},
+  "prior_dd": {"path","schema","verdict","role","H":[…],"R":[…],"triggers":[{"id","text","status_now"}]},
+  "ledger": {…q.py 輸出的機器欄…},
+  "canonical_id": {"theme","as_of","facts":[…只有事實區塊…]},
+  "transcripts": {"must_read":[paths],"optional":[paths]}
+}
+```
+**validator 規則**：每個 `coverage.<axis>` 的 `status` 必填；`found` 至少一條帶 `source`＋`as_of` 的 finding；`none` 必附 `queries_run`（≥2 條）；`not_applicable` 必附一句理由。**任一軸缺 key＝FAIL**。這就是 critic ⑤ 覆蓋面掃描的機械版。
+
+### 3.2 `judgment.json`
+```
+{ "archetype":{"primary","secondary","confidence","fingerprint"},
+  "thesis":{"holding_period","H":[{"id","text","2y","5y","10y","threshold","source","drift_rule"}×3],
+            "R":[{"id","text","H_ref","clock":"⚡|🔥|🐢","threshold"}×3],
+            "single_thing":{…五格…}},
+  "industry":{"clock_phase","sd_verdict_source","bargaining":{"up","down","geo"},"profit_pool_dir","tam_table":[…E3 列…]},
+  "moat":{"execution","pricing","combined","grade","trend","trend_evidence","spread_table":[…],"threats":[{"level","text","p"}],
+          "roic_durability":{"quadrant","checkpoints":[…4…],"roiic","reinvest_rate","endo_ceiling","formula_note"}},
+  "growth":{"runway_years","runway_post_y5","seven_questions":[…],"segments":[…E8 列…],"decay_signals":[…10 列…],"trap_rating"},
+  "quality":{"three_year":[…],"dupont":[…],"ccc":[…],"buyback":{…},"lumpiness":{…}},
+  "governance":{"capalloc_grade","scorecard":[…],"sbc":{…}},
+  "valuation":{"tier","peers":[…],"fwd_pe","peg","percentile_5y","val_light","val_light_derivation","targets":{…}},
+  "scenario_ref":"{T}_{D}.scenario.json",
+  "decision_inputs":{"signal","trap","val","ma","runway_post_y5","moat_trend","moat_grade","capalloc_grade",
+                     "valuation_dependent","week26_return","ar","hard_veto_reasons":[…],"soft_veto_reasons":[…]},
+  "decision_out": {…由 dd_decision.py 寫入：verdict, role, row_hit, exec_line 骨架, audit_rows…},
+  "triggers":[{"n","text","type","maps_to","metric","threshold","action","source_freq","date"}],   ← E12 唯一居所
+  "contradictions":[{"axis","side_a","side_b","ruling","evidence_level","settle_metric","if_then":[…]}],
+  "premortem":{"blind_spots":[…],"failure_story","second_failure","max_dd":{"lo","hi","path_risk","trigger_time"}},
+  "reasoning":{"<module>":"≤3 行推導"}   ← 每個承重數字的 QC-33 三段推導，呈現層原樣鋪進 <div class="reasoning">
+}
+```
+**規則**：所有進裁決的數字只在這裡；dd-meta 由 `gen_dd_tables.py` 從此生成（`kill_metrics`＝triggers 的減碼／清倉／風險列，`rearm_trigger`＝估值 rearm／進場首倉列，`catalysts`＝有 date 列）。
+
+### 3.3 覆蓋矩陣軸清單（依 archetype，WP1 定稿；先列通用＋兩個 archetype 範例）
+
+通用（全 archetype）：競爭份額／新進入者、客戶 second-source 與 in-house、客戶集中度與客戶信用、供需 durability、法規／反壟斷、關稅／出口管制、地緣（生產地與供應鏈單點）、各主要終端市場（依 §3 營收段逐一列）、替代技術、通路／商業模式轉移、資本市場定價（共識 vs guide、目標價 as-of）、重大事件（QC-19）。
+循環／商品加：供給紀律與新產能時程、庫存與價格週期位置、上一輪下行的實際價格行為。
+未獲利高成長加：NRR／Rule of 40 同業帶、稀釋軌跡、轉正路徑。
+金融加：資本／信用週期、監管資本規則變動。
+
+軸清單放 `references/coverage-axes.md`（機器可讀表），由 0b 的 fan-out 直接展開成子任務；`not_applicable` 需理由，避免 agent 用它逃避。
+
+## 4. 新增／改動腳本（WP1）
+
+| 腳本 | 職責 | 取代的散文規則 |
+|---|---|---|
+| `scripts/validate_evidence.py` | evidence.json schema＋覆蓋矩陣完整性＋as-of 時效（>180 天標記） | critic ⑤、QC-15、QC-39 ①「≥3 query」 |
+| `scripts/validate_judgment.py` | judgment.json schema、enum、必填模組（五模組七表的資料是否齊）、內部恆等式（H↔R↔triggers 對映、moat 閘 A、runway↔row 7、QC-49 翻面須引前份觸發器） | QC-7、QC-14、QC-36、QC-37、QC-38 模組閘、QC-49 |
+| `scripts/dd_decision.py` | 決策矩陣 rows 1–10 機械路由（max-severity wins）＋ row 4/5 節奏修飾＋ 8a/8b 資格檢核；輸出 verdict／role／row_hit／audit 表；`--check DD.html` 從既有 dd-meta 重算比對 | decision-layer.md 矩陣散文（**語意不動，只是腳本化**） |
+| `scripts/gen_dd_tables.py` | 由 judgment.json＋scenario 產物生成 dashboard／E1／E2／E3／E5／E6／E7／E8／E9／E10／E11／E12／dd-meta／appA 表／appB 表 | QC-7 三處同源、E12 同源、html-output.md 模板段 |
+| `scripts/render_dd.py`（擴充） | 吃 `prose/` 目錄＋生成表格，依 canonical 順序組裝；表格位置由 section 模板固定 | 現有 render 邏輯不變 |
+| `scripts/verify_dd_math.py`（改讀 judgment.json） | 檢查 A–E 不變；新增「judgment ↔ 產出 HTML dd-meta 一致」 | — |
+| `scripts/dd_sections.py`／`qc.py` | 不動（bytes／leaks／未跳脫 `<` 已在） | — |
+
+回溯考卷：`dd_decision.py --check` 對現行 30 份 v15 DD 重算 `dca_verdict`／`dca_role`，**必須 30/30 相同**（差異＝腳本翻譯錯，非規則變動）才准上線。
+
+## 5. Agent 契約
+
+### 5.1 Stage 0 採集（sonnet，fan-out）
+- 0a 沿用 data-collection.md 模板（含 v15.2.4 財報時效閘）。
+- 0b 覆蓋矩陣：orchestrator 依 archetype_hint（前份 DD 或 q.py 給；無則通用清單）展開軸清單，**每軸一個子 agent 或一個 agent 批次跑 3–5 軸**，每軸 ≤3 輪搜尋，回傳該軸 JSON 片段；orchestrator 只 merge 檔案不讀內容。
+- 0d 腳本化：`scripts/dd_prior.py` 擷取前份三區塊＋q.py＋ID 事實區塊，寫進 evidence.json（零 LLM）。
+- 預算：0a 約 2M、0b 約 8–15 軸 × 1–2M、0d 0。合計 ≤ 25M sonnet。
+
+### 5.2 Stage 1 判斷（模型旗標，預設 sonnet；A/B 用 Fable／opus）
+- 讀：evidence.json、逐字稿必讀清單（最近四季法說＋高訊號會議稿）、`judgment-rules.md`（由 SKILL.md 抽出**只保留判斷類**：archetype 判定、Munger 門檻、護城河二維與 §5.R、成長七問與 runway、trap 四層、QC-39 三軸裁決句、QC-45/44/46 換尺、情境樹機率防線、QC-53 觸發式手冊、§11–§12 判斷句式；目標 ≤35KB）＋ archetype 對應 reference（條件載入不變）。
+- 寫：judgment.json（一次 Write）、scenario.json（一次 Write）→ 跑 dd_scenario.py／dd_decision.py／validate_judgment.py／verify_dd_math.py → FAIL 只准改欄位重跑，≤3 輪。
+- 禁：WebSearch（證據不足→在該軸 `note` 標「證據包未涵蓋」，不得自搜補洞；orchestrator 可決定回 Stage 0 補一軸）、寫 HTML、Read 任何 docs/dd。
+- 回報：≤300 字＋validator 輸出原文。
+
+### 5.3 Critic（跨模型冷讀；判斷層為 sonnet 時 critic＝opus，判斷層為 opus／Fable 時 critic＝sonnet）
+- 讀：evidence.json＋judgment.json＋scenario 產物（合計 40–60KB），**不讀散文**。
+- 七軸 checklist 不變，但 ⑤ 覆蓋面改為「validator 已擋缺軸，critic 只審 `none`／`not_applicable` 的理由是否成立」；⑥ 量化模組改為對 judgment 欄位驗算；⑦ 白話呈現移到 Stage 2 輕 critic。
+- 輸出：FINDINGS 表的「段落 id」欄改為 **JSON 路徑**（如 `moat.roic_durability.reinvest_rate`）；GATE 判準不變。
+- 查證預算不變（≤10／合併 ≤14）。
+
+### 5.4 Patch（sonnet，乾淨 context）
+- 輸入：FINDINGS＋受影響的 JSON 子樹（orchestrator 用 `jq`／小腳本抽出）＋證據補件。
+- 動作：改子樹 → merge → 重跑三支腳本。一輪 ≤10 輪。**不碰散文。**
+- re-gate 規則沿用 v15.2.1（GATE=FAIL 才 re-gate；第二輪另 spawn）。
+
+### 5.5 Stage 2 呈現（sonnet）
+- 讀：evidence.json＋judgment.json（含 reasoning 段）＋`render-rules.md`（由 html-output.md＋QC-40／QC-54＋分章 byte 預算抽出，≤15KB）＋ `gen_dd_tables.py` 已產出的表格片段清單。
+- 寫：`prose/{sid}.html` 每段一次 Write（s1…s14、appA 敘述、revlog）；**段內不得出現判斷物沒有的數字**（validator：正文數字集合 ⊆ judgment 數字集合，容忍格式差）。
+- 機械：render_dd.py 組裝 → bytes／leaks／qc.py／validate_dd_meta.py；超標或命中只重寫該段檔。
+- 輕 critic（可選，sonnet 或 opus 皆可，因為不涉裁決）：QC-54 ⑦ 三問＋「散文有無與判斷物矛盾」；PASS-with-fixes 直接段落重寫。
+
+### 5.6 Orchestrator／ddreport v3
+`koyfin 增量下載（sonnet 0e）→ Stage 0 fan-out → validate_evidence → Stage 1 → 三支腳本 → critic → patch → [re-gate] → gen_dd_tables → Stage 2 → 閘 → [輕 critic] → INDEX／update_dd_index → commit`。orchestrator 全程只看 validator 輸出與 FINDINGS 表。
+
+## 6. 規則遷移地圖（QC-1～QC-54 三分法；WP2 定稿逐條表）
+
+| 去向 | 條文（例） | 落點 |
+|---|---|---|
+| **validator／腳本**（不再要 LLM 記得） | QC-2/10/24/25（採集旗標）、QC-4（分位公式）、QC-7/14/36/37（同源）、QC-15（時效）、QC-17/18（前份擷取）、QC-21（R:R 假象）、QC-22（漂移）、QC-32（schema）、QC-34/35（漂移門檻）、QC-38（模組／表格／bytes）、QC-40（leaks）、QC-49（翻面須引觸發器）、決策矩陣、E12 同源、財報時效、Bull 退化、未跳脫 `<` | Stage 0/1/2 validators、dd_decision.py、gen_dd_tables.py |
+| **判斷規則**（留給 Stage 1 agent） | QC-1/3/5/6/9/11/13/16/19（深查）/20/23/26/27/28/30/31/33/39（三軸裁決）/42–47/50–53、§2–§12 各模組的判準句式、機率防線、archetype 換尺 | `judgment-rules.md`（≤35KB）＋條件載入 references |
+| **呈現規則**（留給 Stage 2 agent） | QC-40 文字面、QC-54、html-output 模板、分章預算、白話對照表 | `render-rules.md`（≤15KB） |
+| **退役候選**（本稿只提名，2026-10 審計裁） | QC-8（不中斷——由流程保證）、QC-29（已退役）、QC-12（併 QC-39）、附錄 A 品質分六步表中純機械部分（改腳本） | rule_ledger 審計欄 |
+
+## 7. 成本模型（牌價；cache read 為主量，sonnet $0.20/M、opus $0.50/M、Fable $0.25/M；cache 建立 sonnet $2.5/M、Fable $12.5/M；輸出 sonnet $10/M、Fable $50/M）
+
+| 段 | v15.2 實測（SNOW／DELL） | v16 估計（sonnet 判斷層） | v16 估計（Fable 判斷層） |
+|---|---|---|---|
+| Stage 0 | 2M（併在 writer 內） | 15–25M sonnet ≈ $4 | 同左 |
+| Stage 1 判斷 | （writer 61／107M ≈ $12–21＋建立 $4） | 讀 ≈150k、寫 30KB、≤3 輪修：**10–20M** ≈ $3＋建立 $0.5 | 10–20M ≈ $4＋建立 $2＋輸出 $2 |
+| critic | 5–7M opus ≈ $3 | 讀 60KB：3–5M opus ≈ $2 | 3–5M sonnet ≈ $1 |
+| patch | 15–21M sonnet ≈ $3–4 | 改 JSON：2–5M ≈ $1 | 同左 |
+| Stage 2 呈現 | （併在 writer） | 讀 80KB＋寫 80KB 散文、段落級修：**15–25M** ≈ $4 | 同左 |
+| **合計** | **$23–32** | **≈ $14–16** | **≈ $17–20** |
+
+省的不是單價，是**修補不再重付整個 context**與**規則不再每份重讀 225KB**。判斷層換 Fable 只多 $3–4，A/B 變得可負擔。
+
+## 8. 待決（持有人裁定，影響 WP 切法）
+
+1. **逐字稿讀法**：現行鐵律「逐字稿由分析 agent 親讀」。v16 判斷層親讀四季法說（約 50k tokens）仍可行，成本進 Stage 1；替代方案是 Stage 0 產「結構化摘錄」（guidance 數字、被迴避的問題、語氣句），判斷層只讀摘錄。**建議維持親讀**（摘錄會丟掉「需要先知道自己在找什麼才看得見」的訊號），僅 optional 會議稿改摘錄。
+2. **散文與推理脫節風險**：Stage 2 若只鋪陳，§5／§6 的「產品是推理本身」會變套話。解法＝judgment.json `reasoning` 段強制每模組 ≥3 行，且呈現層對 §5／§6／§11 可「擴寫推理但不得新增數字」。是否接受這個折衷？
+3. **判斷層預設模型**：sonnet（延續 2026-08-08 拍板）或藉重建之機直接 A/B。建議：WP 完成後前兩份用 sonnet、第三份用 Fable，比 critic 首輪 🔴 數與整軸缺口（v16 下缺軸應為 0，比較的是 sourced 數字錯與決策自洽）。
+4. **delta 複審**：v16 下 delta＝只重跑 Stage 0（證據更新）＋ Stage 1 的 diff 模式（判斷物欄位級比對，翻面仍禁）；是否納入本輪或留 v16.1。
+5. **critic 是否保留兩層**：判斷層 critic（必要）＋呈現層輕 critic（可選）。建議輕 critic 先做旗標，預設關，前三份開著量。
+
+## 9. 工作包與驗收
+
+| WP | 內容 | 驗收 |
+|---|---|---|
+| WP1 腳本 | validate_evidence／validate_judgment／dd_decision／gen_dd_tables／render_dd 擴充／dd_prior／coverage-axes.md | **回溯考卷**：dd_decision --check 30/30 現行 v15 DD 裁決相同；gen_dd_tables 對 DELL／SNOW／AVGO 的 judgment（由現行 dd-meta 反推）生成的 dd-meta 與原檔逐欄相同 |
+| WP2 規則拆分 | SKILL.md → judgment-rules.md（≤35KB）＋render-rules.md（≤15KB）＋validators；SKILL.md 本體降為路由表＋三段契約（目標 ≤30KB）；rule_ledger 登記遷移（判斷類規則搬家不算新增，不觸發「加一提刪一」，但退役候選要提名） | 三檔合計 <90KB；每條 QC 有去向 |
+| WP3 agent 契約與 ddreport v3 | 5.1–5.6 寫進 SKILL.md／critic-gates.md／ddreport | 一份 dry-run（不上站）跑通全鏈 |
+| WP4 試點 | 三份實跑（兩份 sonnet 判斷層、一份 Fable），量 Stage 0/1/2/critic/patch 五端 cache_read | 退場訊號：合計未較 v15.2（88–130M）降 ≥40%、或 critic 首輪 🔴 未較 5–8 降 ≥50% → 回 v15.2 檢討 |
+
+**試點順序建議（投報率）**：先做 WP1 的 `coverage-axes.md`＋`validate_evidence.py`＋0b fan-out（可獨立掛到 v15.2 現行鏈上，直接消掉最常見的 🔴），再做 `dd_decision.py`＋`gen_dd_tables.py`（消同源類錯誤），最後才拆 writer。這樣每一步都能單獨上線、單獨量效果。
+
+## 10. 不做的事
+
+- 不改任何門檻、機率防線、矩陣語意、dd-meta 欄位語意（PREREG）。
+- 不把逐字稿讀取外包成摘要（待決 1 未裁前）。
+- 不新建收斂面、不動下游聚合器（update_dd_index／screener／picks 讀 dd-meta 不變）。
+- 不在本輪處理 8 份既有 DD 的未跳脫 `<`（另案 batch fix）。
