@@ -123,9 +123,19 @@ def has_upward_revision(s: dict) -> bool:
 
 
 def passes_moat_floor(s: dict) -> bool:
-    """Rule 3: moat_grade ≠ X 且非（C 且 trend ↓）."""
+    """Rule 3: moat_grade ≠ X 且非（C 且 trend ↓）。
+
+    2026-09-03 拍板（見 CLAUDE.md 選股體系治理第 5 條、
+    notes/site-internal/root/_picks_first_principles_review_20260902.md Part E）：
+    moat_grade 缺值（None）改視為**不通過**——此前缺值被當作通過，`--include-non-dd`
+    旗標翻開後 QGM 無 DD 名字只要 trailing 品質差＋任何上修就能零護城河檢查進循環軌。
+    缺值名字由呼叫端（build_pipeline）另存為 moat_missing 候選，只列候選不進
+    qualified／正式榜。
+    """
     mg = s.get("moat_grade")
     mt = s.get("moat_trend")
+    if mg is None:
+        return False
     if mg == "X":
         return False
     if mg == "C" and mt == "↓":
@@ -163,6 +173,7 @@ def build_row(s: dict) -> dict:
         "signal": s.get("signal"),
         "moat_grade": s.get("moat_grade"),
         "moat_trend": s.get("moat_trend"),
+        "moat_missing": s.get("moat_grade") is None,
         "fail_criteria": s.get("fail_criteria") or [],
         "eps2y_revision_pp": _safe_float(s.get("eps2y_revision_pp")),
         "eps_fy_next_revision_pct": _safe_float(s.get("eps_fy_next_revision_pct")),
@@ -195,14 +206,19 @@ def build_pipeline() -> dict:
           f"universe={len(universe)} stocks")
 
     qualified: list[dict] = []
+    moat_missing: list[dict] = []
     for s in universe:
         if not is_cyclical(s):
             continue
         if not has_upward_revision(s):
             continue
-        if not passes_moat_floor(s):
-            continue
         if already_quality_passed(s):
+            continue
+        if not passes_moat_floor(s):
+            # 2026-09-03 拍板：moat_grade 缺值只列候選，不通過品質閘（不進 qualified／正式榜）。
+            # 真的不過（X／C+↓）仍整批排除，不進候選清單。
+            if s.get("moat_grade") is None:
+                moat_missing.append(build_row(s))
             continue
         qualified.append(build_row(s))
 
@@ -212,12 +228,17 @@ def build_pipeline() -> dict:
     low_heat.sort(key=lambda r: (-r["revision_rank_score"], r["ticker"]))
     hot_heat.sort(key=lambda r: (-r["revision_rank_score"], r["ticker"]))
 
+    moat_missing.sort(key=lambda r: (-r["revision_rank_score"], r["ticker"]))
+
     print(f"  Qualified: {len(qualified)} "
           f"(低熱 {len(low_heat)} / 🔥已熱 {len(hot_heat)})")
     if low_heat:
         print(f"  低熱 top: {[r['ticker'] for r in low_heat[:8]]}")
     if hot_heat:
         print(f"  🔥已熱: {[r['ticker'] for r in hot_heat]}")
+    if moat_missing:
+        print(f"  護城河缺值候選（不通過品質閘，僅列候選）: {len(moat_missing)} "
+              f"{[r['ticker'] for r in moat_missing[:8]]}")
 
     return {
         "schema_version": SCHEMA_VERSION,
@@ -228,6 +249,7 @@ def build_pipeline() -> dict:
         "qualified_total": len(qualified),
         "low_heat_count": len(low_heat),
         "hot_count": len(hot_heat),
+        "moat_missing_count": len(moat_missing),
         "thresholds": {
             "cyclical_fail_keys": sorted(CYCLICAL_FAIL_KEYS),
             "rev_eps2y_pp_min": REV_EPS2Y_PP_MIN,
@@ -238,6 +260,9 @@ def build_pipeline() -> dict:
         },
         "low_heat": low_heat,
         "hot": hot_heat,
+        # moat_grade 缺值候選（2026-09-03 拍板）：不通過品質閘，不進 low_heat/hot（即不進
+        # build_picks 正式榜），只在此列表供人工追蹤／待 DD 補護城河評等。
+        "moat_missing": moat_missing,
     }
 
 
@@ -336,6 +361,7 @@ def render_html(doc: dict, out_path: Path) -> None:
     qualified_total = doc["qualified_total"]
     low_heat = doc["low_heat"]
     hot = doc["hot"]
+    moat_missing = doc.get("moat_missing") or []
 
     low_html = _section_table(
         low_heat,
@@ -344,6 +370,10 @@ def render_html(doc: dict, out_path: Path) -> None:
     hot_html = _section_table(
         hot,
         '目前無 🔥 已熱候選。'
+    )
+    moat_missing_html = _section_table(
+        moat_missing,
+        '目前無護城河評等缺值候選。'
     )
 
     html = f"""<!DOCTYPE html>
@@ -481,6 +511,12 @@ body{{font-family:var(--sans);background:var(--paper);color:var(--body);line-hei
     <h2>🔥 已熱組 — 等回踩，明文不可追 <span class="badge">12M &gt; +250%</span></h2>
     <div class="desc">同樣通過循環＋上修資格，但 12M 報酬已 &gt; +250%，反動能閘擋在門外。保留追蹤，等回踩到 sweet spot 再由 DD／板機把關；<b>此組不可直接追高</b>。</div>
     {hot_html}
+  </div>
+
+  <div class="tier-card tier-candidate">
+    <h2>⚪ 護城河評等缺值候選 — 未過品質閘 <span class="badge">moat_grade 缺值</span></h2>
+    <div class="desc">循環＋上修條件皆符合，但 <code>moat_grade</code> 缺值（多為無 DD 的 QGM 來源名字）——2026-09-03 拍板：缺值<b>不視為通過護城河底線</b>，僅列候選供追蹤／待 DD 補護城河評等，<b>不進入低熱／已熱組、不上 build_picks 正式榜</b>。</div>
+    {moat_missing_html}
   </div>
 
   <div class="meta-note">
