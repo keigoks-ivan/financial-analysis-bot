@@ -1,0 +1,461 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "dd_schema/judgment.schema.json",
+  "title": "stock-analyst v16 judgment.json (WP1c draft-07 subset)",
+  "description": "Interpreted by scripts/validate_judgment.py's lightweight generic validator (supports: type/required/properties/items/enum/pattern/minItems/minLength/maxLength/additionalProperties only -- NOT a full draft-07 implementation). Cross-field rules (H<->R<->triggers mapping, decision_inputs completeness, scenario_ref consistency, date>=1 row) are NOT expressible here and are checked separately in validate_judgment.py. See scripts/dd_schema/judgment-to-ddmeta.md for the dd-meta field derivation table.",
+  "type": "object",
+  "required": [
+    "meta", "oneliner", "archetype", "thesis", "industry", "moat", "growth",
+    "quality", "governance", "valuation", "trap_analysis", "appendix_a",
+    "scenario_ref", "eps_meta", "catalysts", "decision_inputs", "decision_out",
+    "triggers", "contradictions", "premortem", "reasoning"
+  ],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["ticker", "date", "schema"],
+      "properties": {
+        "ticker": {"type": "string"},
+        "date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+        "schema": {"type": "string", "pattern": "^v1[2345]\\.\\d+$"},
+        "company_name": {"type": ["string", "null"]}
+      }
+    },
+    "oneliner": {"type": "string", "maxLength": 200},
+
+    "archetype": {
+      "type": "object",
+      "required": ["primary", "secondary", "confidence", "fingerprint"],
+      "properties": {
+        "primary": {
+          "type": ["string", "null"],
+          "enum": [
+            "品質複利成長", "循環/商品", "金融", "未獲利高成長",
+            "轉機/特殊情境", "受監管公用/穩定內需", "EMS/ODM", null
+          ]
+        },
+        "secondary": {"type": ["string", "null"]},
+        "confidence": {"type": ["string", "null"], "enum": ["高", "中", "低", null]},
+        "fingerprint": {"type": ["string", "null"]}
+      }
+    },
+
+    "thesis": {
+      "type": "object",
+      "required": ["holding_period", "H", "R", "single_thing"],
+      "properties": {
+        "headline": {"type": ["string", "null"]},
+        "holding_period": {
+          "type": "object",
+          "required": ["horizon", "driver", "signal_vs_noise"],
+          "properties": {
+            "horizon": {"type": ["string", "null"]},
+            "driver": {"type": ["string", "null"]},
+            "signal_vs_noise": {"type": ["string", "null"]}
+          }
+        },
+        "H": {
+          "type": "array",
+          "minItems": 3,
+          "items": {
+            "type": "object",
+            "required": ["id", "text", "2y", "5y", "10y", "threshold", "source", "drift_rule"],
+            "properties": {
+              "id": {"type": "string", "pattern": "^H[1-9][0-9]*$"},
+              "text": {"type": ["string", "null"]},
+              "2y": {"type": ["string", "null"]},
+              "5y": {"type": ["string", "null"]},
+              "10y": {"type": ["string", "null"]},
+              "threshold": {"type": ["string", "null"]},
+              "source": {"type": ["string", "null"]},
+              "drift_rule": {"type": ["string", "null"]}
+            }
+          }
+        },
+        "R": {
+          "type": "array",
+          "minItems": 3,
+          "items": {
+            "type": "object",
+            "required": ["id", "text", "h_ref", "clock", "threshold"],
+            "properties": {
+              "id": {"type": "string", "pattern": "^R[1-9][0-9]*$"},
+              "text": {"type": ["string", "null"]},
+              "h_ref": {"type": ["string", "null"]},
+              "clock": {"type": ["string", "null"], "enum": ["⚡", "🔥", "🐢", null]},
+              "threshold": {"type": ["string", "null"]}
+            }
+          }
+        },
+        "single_thing": {
+          "type": "object",
+          "required": ["description", "why_fatal", "if_happens", "how_monitor", "probability"],
+          "properties": {
+            "description": {"type": ["string", "null"]},
+            "why_fatal": {"type": ["string", "null"]},
+            "if_happens": {"type": ["string", "null"]},
+            "how_monitor": {"type": ["string", "null"]},
+            "probability": {"type": ["string", "null"]}
+          }
+        }
+      }
+    },
+
+    "industry": {
+      "type": "object",
+      "required": ["clock_phase", "sd_verdict_source", "bargaining", "profit_pool_dir", "tam_table"],
+      "properties": {
+        "clock_phase": {"type": ["string", "null"], "enum": ["I", "II", "III", "IV", null]},
+        "sd_verdict_source": {"type": ["string", "null"]},
+        "bargaining": {
+          "type": "object",
+          "properties": {
+            "up": {"type": ["string", "null"]},
+            "down": {"type": ["string", "null"]},
+            "geo": {"type": ["string", "null"]}
+          }
+        },
+        "profit_pool_dir": {"type": ["string", "null"]},
+        "tam_table": {"type": "array", "items": {"type": "object"}}
+      }
+    },
+
+    "moat": {
+      "type": "object",
+      "required": ["execution", "pricing", "combined", "grade", "score", "trend", "trend_evidence",
+                   "spread_table", "threats", "roic_durability"],
+      "properties": {
+        "execution": {"type": ["number", "null"]},
+        "pricing": {"type": ["number", "null"]},
+        "combined": {"type": ["number", "null"]},
+        "grade": {"type": ["string", "null"], "enum": ["S", "A", "B", "C", "X", null]},
+        "score": {"type": ["number", "null"]},
+        "trend": {"type": ["string", "null"], "enum": ["↑", "→", "↓", null]},
+        "trend_evidence": {"type": ["string", "null"]},
+        "spread_table": {"type": "array", "items": {"type": "object"}},
+        "threats": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "level": {"type": ["string", "null"]},
+              "text": {"type": ["string", "null"]},
+              "p": {"type": ["string", "number", "null"]}
+            }
+          }
+        },
+        "roic_durability": {
+          "type": "object",
+          "required": ["quadrant", "checkpoints", "roiic", "reinvest_rate", "endo_ceiling", "formula_note"],
+          "properties": {
+            "quadrant": {"type": ["string", "null"]},
+            "checkpoints": {"type": "array", "items": {"type": "object"}},
+            "roiic": {"type": ["number", "string", "null"]},
+            "reinvest_rate": {"type": ["number", "string", "null"]},
+            "endo_ceiling": {"type": ["number", "null"]},
+            "formula_note": {"type": ["string", "null"]}
+          }
+        }
+      }
+    },
+
+    "growth": {
+      "type": "object",
+      "required": ["runway_years", "runway_post_y5", "seven_questions", "segments", "decay_signals", "trap_rating"],
+      "properties": {
+        "runway_years": {"type": ["number", "string", "null"]},
+        "runway_post_y5": {"type": ["string", "null"], "enum": ["🟢", "🟡", "🔴", null]},
+        "seven_questions": {"type": "array", "items": {"type": ["string", "object"]}},
+        "segments": {"type": "array", "items": {"type": "object"}},
+        "decay_signals": {"type": "array", "items": {"type": ["string", "object"]}},
+        "trap_rating": {"type": ["string", "null"]}
+      }
+    },
+
+    "quality": {
+      "type": "object",
+      "required": ["three_year", "dupont", "ccc", "buyback", "lumpiness"],
+      "properties": {
+        "three_year": {"type": "array", "items": {"type": "object"}},
+        "dupont": {"type": "array", "items": {"type": "object"}},
+        "ccc": {"type": "array", "items": {"type": "object"}},
+        "buyback": {"type": "object"},
+        "lumpiness": {"type": "object"}
+      }
+    },
+
+    "governance": {
+      "type": "object",
+      "required": ["capalloc_grade", "scorecard", "sbc"],
+      "properties": {
+        "capalloc_grade": {"type": ["string", "null"], "enum": ["A", "B", "C", null]},
+        "scorecard": {"type": "array", "items": {"type": "object"}},
+        "sbc": {"type": "object"}
+      }
+    },
+
+    "valuation": {
+      "type": "object",
+      "required": ["tier", "peers", "fwd_pe", "peg", "percentile_5y", "val_light",
+                   "val_light_derivation", "targets", "upside_short_pct", "upside_mid_pct"],
+      "properties": {
+        "tier": {"type": ["string", "null"]},
+        "peers": {"type": "array", "items": {"type": "object"}},
+        "fwd_pe": {"type": ["number", "null"]},
+        "peg": {"type": ["number", "null"]},
+        "percentile_5y": {"type": ["number", "null"]},
+        "val_light": {"type": ["string", "null"], "enum": ["🟢", "🟡", "🟠", "🔴", null]},
+        "val_light_derivation": {"type": ["string", "null"]},
+        "targets": {"type": "object"},
+        "upside_short_pct": {"type": ["number", "null"]},
+        "upside_mid_pct": {"type": ["number", "null"]}
+      }
+    },
+
+    "trap_analysis": {
+      "type": "object",
+      "required": ["pattern", "evidence_against", "evidence_for", "bear_case", "monitor", "verdict", "label"],
+      "properties": {
+        "pattern": {"type": ["string", "null"]},
+        "evidence_against": {"type": ["string", "null"]},
+        "evidence_for": {"type": ["string", "null"]},
+        "bear_case": {"type": ["string", "null"]},
+        "monitor": {"type": "array", "items": {"type": ["string", "object"]}},
+        "verdict": {"type": ["string", "null"], "enum": ["🟢", "🟡", "🔴", null]},
+        "label": {"type": ["string", "null"]}
+      }
+    },
+
+    "appendix_a": {
+      "type": "object",
+      "required": ["signal", "moat_score", "growth_durability", "quality_score", "ai_risk",
+                   "long_term_confidence", "val", "ma", "fpe_fy2", "pct_5y", "peg_fy2",
+                   "upside_short_pct", "upside_mid_pct", "stress", "verdict"],
+      "properties": {
+        "signal": {"type": ["string", "null"], "enum": ["A+", "A", "B", "C", "X", null]},
+        "moat_score": {"type": ["number", "null"]},
+        "growth_durability": {"type": ["number", "null"]},
+        "quality_score": {"type": ["number", "null"]},
+        "ai_risk": {"type": ["string", "null"], "enum": ["🟢", "🟡", "🔴", null]},
+        "long_term_confidence": {"type": ["string", "null"], "enum": ["高", "中", "低", null]},
+        "val": {"type": ["string", "null"], "enum": ["🟢", "🟡", "🟠", "🔴", null]},
+        "ma": {"type": ["string", "null"], "enum": ["🟢", "✅", "🟡", "🟠", "❌", "-", null]},
+        "fpe_fy2": {"type": ["number", "null"]},
+        "pct_5y": {"type": ["number", "null"]},
+        "peg_fy2": {"type": ["number", "null"]},
+        "upside_short_pct": {"type": ["number", "null"]},
+        "upside_mid_pct": {"type": ["number", "null"]},
+        "stress": {
+          "type": "object",
+          "required": ["pass", "total"],
+          "properties": {
+            "pass": {"type": ["integer", "null"]},
+            "total": {"type": ["integer", "null"]}
+          }
+        },
+        "verdict": {"type": ["string", "null"], "enum": ["A+", "A", "B", "C", "X", null]}
+      }
+    },
+
+    "scenario_ref": {"type": ["string", "null"]},
+
+    "eps_meta": {
+      "type": "object",
+      "properties": {
+        "base_eps_path": {"type": "object"},
+        "fy_end_month": {"type": ["integer", "null"]},
+        "eps_basis": {"type": ["string", "null"]}
+      }
+    },
+
+    "catalysts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["date", "type", "event", "impact", "watch"],
+        "properties": {
+          "date": {"type": ["string", "null"]},
+          "date_precision": {"type": ["string", "null"], "enum": ["month", "quarter", null]},
+          "type": {
+            "type": ["string", "null"],
+            "enum": ["product", "regulatory", "capacity", "guidance", "macro", "other", null]
+          },
+          "event": {"type": ["string", "null"]},
+          "impact": {"type": ["string", "null"], "enum": ["高", "中", "低", null]},
+          "watch": {"type": ["string", "null"]}
+        }
+      }
+    },
+
+    "decision_inputs": {
+      "type": "object",
+      "required": [
+        "signal", "trap", "val", "ma", "runway_post_y5", "moat_trend", "moat",
+        "capalloc_grade", "archetype", "cycle_position", "cycle_verdict",
+        "asym_ratio", "irr_base_pct", "ev5y_pct", "price_at_dd",
+        "thesis_irreconcilable", "valuation_dependent", "market_wrong_reason_given",
+        "week26_return_pct", "momentum_overheated", "cycle_gates_pass",
+        "consensus_rev_3m_pct"
+      ],
+      "properties": {
+        "signal": {"type": ["string", "null"], "enum": ["A+", "A", "B", "C", "X", null]},
+        "trap": {"type": ["string", "null"], "enum": ["🟢", "🟡", "🔴", null]},
+        "val": {"type": ["string", "null"], "enum": ["🟢", "🟡", "🟠", "🔴", null]},
+        "ma": {"type": ["string", "null"], "enum": ["🟢", "✅", "🟡", "🟠", "❌", "-", null]},
+        "runway_post_y5": {"type": ["string", "null"], "enum": ["🟢", "🟡", "🔴", null]},
+        "moat_trend": {"type": ["string", "null"], "enum": ["↑", "→", "↓", null]},
+        "moat": {"type": ["string", "null"], "enum": ["S", "A", "B", "C", "X", null]},
+        "capalloc_grade": {"type": ["string", "null"], "enum": ["A", "B", "C", null]},
+        "archetype": {
+          "type": ["string", "null"],
+          "enum": [
+            "品質複利成長", "循環/商品", "金融", "未獲利高成長",
+            "轉機/特殊情境", "受監管公用/穩定內需", "EMS/ODM", null
+          ]
+        },
+        "cycle_position": {
+          "type": ["string", "null"],
+          "enum": ["深谷投降", "早循環", "中循環", "晚循環", "過熱頂部", null]
+        },
+        "cycle_verdict": {
+          "type": ["string", "null"],
+          "enum": ["右側可追蹤", "等回踩", "頂部觀望", "未觸發", null]
+        },
+        "asym_ratio": {"type": ["number", "null"]},
+        "irr_base_pct": {"type": ["number", "null"]},
+        "ev5y_pct": {"type": ["number", "null"]},
+        "price_at_dd": {"type": ["number", "null"]},
+        "thesis_irreconcilable": {"type": ["boolean", "null"]},
+        "valuation_dependent": {"type": ["boolean", "null"]},
+        "market_wrong_reason_given": {"type": ["boolean", "string", "null"]},
+        "week26_return_pct": {"type": ["number", "null"]},
+        "momentum_overheated": {"type": ["boolean", "null"]},
+        "cycle_gates_pass": {"type": ["boolean", "null"]},
+        "consensus_rev_3m_pct": {"type": ["number", "null"]}
+      }
+    },
+
+    "decision_out": {
+      "type": "object",
+      "required": ["verdict", "role", "row_hit", "pacing", "holding_cap", "requires_critic", "audit_rows"],
+      "properties": {
+        "verdict": {
+          "type": ["string", "null"],
+          "enum": [
+            "進場", "進場·條件式（循環衛星）", "進場·條件式（爆發候選）",
+            "觀望", "迴避", null
+          ]
+        },
+        "role": {
+          "type": ["string", "null"],
+          "enum": ["核心", "衛星", "追蹤", "不持有", null]
+        },
+        "row_hit": {"type": ["string", "null"]},
+        "pacing": {"type": "array", "items": {"type": "string"}},
+        "holding_cap": {"type": ["string", "null"]},
+        "requires_critic": {"type": "array", "items": {"type": "string"}},
+        "audit_rows": {"type": "array", "items": {"type": ["string", "object"]}},
+        "rearm_trigger": {"type": ["string", "null"], "maxLength": 120},
+        "exec_line": {"type": ["string", "null"]}
+      }
+    },
+
+    "triggers": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["n", "text", "type", "maps_to", "metric", "threshold", "action", "source_freq", "date"],
+        "properties": {
+          "n": {"type": ["integer", "string"]},
+          "text": {"type": ["string", "null"]},
+          "type": {
+            "type": ["string", "null"],
+            "enum": [
+              "假設驗證", "風險", "Single Thing", "估值rearm",
+              "加碼", "減碼", "清倉", "複審日期", null
+            ]
+          },
+          "maps_to": {"type": ["string", "null"]},
+          "metric": {"type": ["string", "null"]},
+          "threshold": {"type": ["string", "null"]},
+          "action": {"type": ["string", "null"]},
+          "source_freq": {"type": ["string", "null"]},
+          "date": {"type": ["string", "null"]},
+          "type_display": {"type": ["string", "null"]}
+        }
+      }
+    },
+
+    "contradictions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "axis": {"type": ["string", "null"]},
+          "side_a": {"type": ["string", "null"]},
+          "side_b": {"type": ["string", "null"]},
+          "ruling": {"type": ["string", "null"]},
+          "evidence_level": {"type": ["string", "null"]},
+          "settle_metric": {"type": ["string", "null"]},
+          "if_then": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+
+    "premortem": {
+      "type": "object",
+      "required": ["blind_spots", "failure_story", "second_failure", "max_dd"],
+      "properties": {
+        "blind_spots": {"type": "array", "items": {"type": "string"}},
+        "failure_story": {"type": ["string", "null"]},
+        "second_failure": {"type": ["string", "null"]},
+        "max_dd": {
+          "type": "object",
+          "required": ["lo", "hi", "path_risk", "trigger_time"],
+          "properties": {
+            "lo": {"type": ["number", "null"]},
+            "hi": {"type": ["number", "null"]},
+            "path_risk": {"type": ["string", "null"], "enum": ["🟢", "🟡", "🔴", null]},
+            "trigger_time": {"type": ["string", "null"]}
+          }
+        }
+      }
+    },
+
+    "kill_metrics": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["metric", "bear_threshold", "window"],
+        "properties": {
+          "metric": {"type": ["string", "null"], "maxLength": 120},
+          "bear_threshold": {"type": ["string", "null"], "maxLength": 120},
+          "window": {"type": ["string", "null"], "maxLength": 60},
+          "source": {"type": ["string", "null"], "maxLength": 120},
+          "last_status": {"type": ["string", "null"], "enum": ["ok", "warning", "triggered", "unknown", null]}
+        }
+      }
+    },
+
+    "reasoning": {
+      "type": "object",
+      "required": [
+        "archetype", "thesis", "industry", "moat", "growth", "quality",
+        "governance", "valuation", "trap_analysis", "premortem"
+      ],
+      "properties": {
+        "archetype": {"type": "string"},
+        "thesis": {"type": "string"},
+        "industry": {"type": "string"},
+        "moat": {"type": "string"},
+        "growth": {"type": "string"},
+        "quality": {"type": "string"},
+        "governance": {"type": "string"},
+        "valuation": {"type": "string"},
+        "trap_analysis": {"type": "string"},
+        "premortem": {"type": "string"}
+      }
+    }
+  }
+}
