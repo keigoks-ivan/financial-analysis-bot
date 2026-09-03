@@ -446,3 +446,9 @@ QC-39（AVGO 型過度樂觀 / SNDK 型過嚴的全文敘事）、QC-40（鷹架
 **改動清單**：
 - **財報時效閘（採集端）**：`references/data-collection.md` yfinance 腳本新增「1.5 財報時效」段，用 `t.earnings_dates` 判斷最近財報日距報告日的交易日數，≤3 個交易日時附 `postMarketPrice`/`preMarketPrice`/`regularMarketPrice`；回傳格式§0 頂部標註加 `earnings_recency` 欄與 ≤3d 醒目警語（估值層用財報後價格、共識 EPS 標「財報前快照」）；§10 估值與共識段與數字包規格段同步加註 `price_at_dd` 取用規則。SKILL.md【即時數據協議】加一句指向本閘。
 - **情境樹 Bull 退化檢查（`scripts/dd_scenario.py`）**：`validate()` 新增 FAIL（Bull 前兩年 EPS 與 Base 相同）與 WARN（Bull 終端 EPS ÷ Base < 1.15，價差主要來自倍數）；`check_meta()` 同步加相同兩檢查，讓 `verify_dd_math.py` 檢查 E 與 `--check` 都會報。既有 SNOW／AVGO scenario.json 皆 PASS 無此 WARN；臨時構造 Bull 前兩年退化案例確認 FAIL 正確觸發。
+
+### v15.2.5（2026-09-03）未跳脫 `<` 機械閘
+
+**WHY**：DELL 第三份 v15.2 實跑，critic 抓到正文五處未跳脫的 `<`（「連2季<12%」「（<5%）」「合併分<8」…）——瀏覽器把 `<` 當標籤起點吃掉整段承重句，`dd_sections.py text`／`leaks` 也因先做 tag-strip 而一併漏掉，附錄 A 一句含「QC-31／MA✅／trap🟢」的機器語言因此躲過掃描。回掃全站 v15 檔另有 8 份（SBUX 43 處、VIK 34 處、COHR 13 處等）同病，屬既有問題另案修。
+
+**改動清單**：`scripts/dd_sections.py` `leak_hits()` 新增第一道掃描——只遮 script／style／code、**不分 `<details>` 內外**，凡 `<` 後面不是標籤起始字元（字母／`/`／`!`／`?`）即記一筆「未跳脫<」命中，與既有詞表命中同列輸出；`leaks` 命中 0 才准 render 的規則不變，qc.py check 6 自動繼承（新檔 error、舊檔 warning）。writer 端規則：正文比較符一律寫 `&lt;`／`&gt;`。

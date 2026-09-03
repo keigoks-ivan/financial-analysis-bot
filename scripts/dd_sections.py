@@ -560,6 +560,8 @@ LEAK_PATTERNS = [
     r"循環衛星進場路徑",
 ]
 _LEAK_RES = [re.compile(p) for p in LEAK_PATTERNS]  # case-sensitive, per spec
+# `<` 後面不是標籤起始字元（字母／`/`／`!`／`?`）＝正文未跳脫的小於號
+_UNESCAPED_LT_RE = re.compile(r"<(?![A-Za-z/!?])")
 
 
 def _leak_scan_html(html: str) -> str:
@@ -602,6 +604,17 @@ def leak_hits(html: str):
     """List of (lineno, word, context) for every LEAK_PATTERNS hit in visible text."""
     scanned = _leak_scan_html(html)
     hits = []
+    # v15.2.5：未跳脫的 `<`（後接數字／$／−／空白等非標籤字元）會被瀏覽器當成標籤
+    # 起點吃掉整段承重句，且躲過下方的 tag-strip 掃描（DELL 2026-09-03 五處實例）。
+    # 這一項不分 <details> 內外（折疊區一樣會被截斷），只遮 script/style/code。
+    light = html
+    for tag in ("script", "style", "code"):
+        light = re.sub(rf"<{tag}\b.*?</{tag}>", _blank_preserve_lines, light,
+                       flags=re.DOTALL | re.IGNORECASE)
+    for i, line in enumerate(light.split("\n"), 1):
+        for m in _UNESCAPED_LT_RE.finditer(line):
+            ctx = line[max(0, m.start() - 15):m.start() + 25].strip()
+            hits.append((i, "未跳脫<", ctx))
     for i, line in enumerate(scanned.split("\n"), 1):
         text = re.sub(r"<[^>]+>", " ", line)
         claimed = []  # (start,end) spans already reported on this line
