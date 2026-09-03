@@ -404,7 +404,7 @@ QC-1~QC-46多為**通用成長複利股**累積的tripwire；§0判為非複利a
 ```
 段落id用canonical id（`s1`…`s14`／`decision`／`s85`／`appA`／`appB`）；連動段（dd-meta／dashboard）也列。其後才是逐軸敘述。
 
-**Patch agent（sonnet，乾淨context）**：輸入critic md路徑、DD路徑、要處理的finding編號（orchestrator指定，預設全部🔴＋🟡）。步驟：`sed -n`只取FINDINGS區塊→對每個受影響id用`dd_sections.py extract`取HTML→context內改寫→寫暫存檔→`dd_sections.py replace`→連動欄位同法→跑四支驗證＋`leaks`→回報「每條finding的處置＋改動段落bytes前後」。**禁Read整份HTML；禁Edit工具**；重建情境樹時Bull/Base/Bear三列須同框架同時重算並連動§10.6與dd-meta六個情境欄，一律重跑`dd_scenario.py`產表與meta，不手改數字。re-gate後第二輪修補沿用同一patch agent。**delta-refresh的patch手法段同法走extract/replace**（其餘見`references/delta-refresh.md`）。模型鐵律：writer／patch＝sonnet；critic＝opus，**永不同模型**。
+**Patch agent（sonnet，乾淨context）**：輸入critic md路徑、DD路徑、要處理的finding編號（orchestrator指定，預設全部🔴＋🟡）。步驟：`sed -n`只取FINDINGS區塊→對每個受影響id用`dd_sections.py extract`取HTML→context內改寫→寫暫存檔→`dd_sections.py replace`→連動欄位同法→跑四支驗證＋`leaks`→回報「每條finding的處置＋改動段落bytes前後」。**禁Read整份HTML；禁Edit工具**；重建情境樹時Bull/Base/Bear三列須同框架同時重算並連動§10.6與dd-meta六個情境欄，一律重跑`dd_scenario.py`產表與meta，不手改數字。re-gate後第二輪修補**另spawn乾淨patch agent**（只餵R2 findings），不沿用第一輪context（AVGO實測：同一agent跨兩輪410輪／150M cache，與舊制writer自修同量級）。**delta-refresh的patch手法段同法走extract/replace**（其餘見`references/delta-refresh.md`）。模型鐵律：writer／patch＝sonnet；critic＝opus，**永不同模型**。
 
 ### 【隨附文件處理協議】
 **觸發**：用戶請求報告時同時附上外部文件（券商報告／逐字稿／白皮書／新聞PDF／Excel）。
