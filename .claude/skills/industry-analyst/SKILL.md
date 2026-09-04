@@ -132,6 +132,7 @@ Agent({
   prompt: "對產業主題「{Theme}」，依 references/research-queries.md 的 Axis A-E 查詢模板逐項查證（每軸至少一題，Axis E 五條機械查詢不得因『顯然無關』跳過）。
   每項證據回傳結構化格式：{數字}｜{來源 URL}｜{as-of 日期}｜{T1/T2/T3-A/T3-B/T3-C/T4}。
   查不到就回報「查不到」，不得用訓練知識推估或以合理猜測代替。
+  承重數字（capex／指引／RPO／折舊／發債／TAM）直讀 10-Q／8-K／官方新聞稿，不得只抓財經彙整站。
   彙整成一份證據包，按 Axis A-E 分節。"
 })
 ```
@@ -177,6 +178,7 @@ thesis sketch＋id-meta 草稿 → appendix → mechanics → valuation → deba
 - **前一版 ID 只讀 id-meta＋kill 表＋分歧卡標題，不讀全文**（防錨定亦省 token）。
 - **critic 餵摘錄**（`check_id.py --excerpt`），不餵 mechanics 全文與附錄；critic 需要更多內容時自己 grep 指定段。
 - **一次寫到帶內，禁止「寫完再壓縮重寫」**——重寫等於同一份報告的 output token 付兩次。
+- **writer 超過約 60 輪或遇 API 500 後的修補一律換乾淨 patch agent，不再續用同一 writer。**
 - **同一資料只抓一次**，抓齊後建表，不回頭補抓。
 - **機械輪次批次化三條**：①定位先於動手——動手改檔前先用一輪複合 grep 把所有目標行號一次取齊；②同一檔案的機械性修改（措辭替換、數字更新，不需逐處判斷者）≥5 處時禁止逐個修補，改一次讀相關區段、一次重寫該段；③驗證性查詢一律併成單條複合指令，**驗證輪次 ≤3 輪**。
 - **最終回報 ≤300 字＋INDEX 行**：只給路徑／KB／可見字／五格燈號／check 狀態／critic 🔴🟡 數／INDEX 行，不複述報告內容。

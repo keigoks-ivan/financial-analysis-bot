@@ -2,7 +2,11 @@
 """
 id_dd_mapping.py — 建 ticker ↔ ID 對應表
 
-讀 docs/id/INDEX.md 每行的「備注」欄，抽出「涵蓋 TICKER1 / TICKER2 / ...」清單，
+每份 ID 優先讀該 HTML 內 `<script id="id-meta">` 的 `related_tickers[]`
+（v4 家族的權威 ticker 清單，逐檔核實，不會撿到假 ticker）；讀不到（無
+id-meta 或無 related_tickers，多為 legacy 檔）才 fallback 到舊法——從
+docs/id/INDEX.md 每行的「備注」欄抽「涵蓋 TICKER1 / TICKER2 / ...」字串。
+
 與 docs/dd/INDEX.md 的 v11+ DD 對照。
 
 輸出 portfolio/id_dd_map.json：
@@ -18,9 +22,12 @@ import re
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
+ID_DIR = REPO / "docs" / "id"
 ID_INDEX = REPO / "docs" / "id" / "INDEX.md"
 DD_INDEX = REPO / "docs" / "dd" / "INDEX.md"
 OUT = REPO / "portfolio" / "id_dd_map.json"
+
+ID_META_RE = re.compile(r'<script\s+id="id-meta"[^>]*>(.*?)</script>', re.DOTALL)
 
 
 # 常見 ticker 格式：1-5 個大寫字母，或 4 位數（台股），可帶 .TW/.T/.AS/.KS/.PA/.DE
@@ -37,7 +44,7 @@ BLACKLIST = {
 
 
 def extract_tickers_from_note(note: str) -> set[str]:
-    """從 ID INDEX 備注欄抽 ticker。"""
+    """從 ID INDEX 備注欄抽 ticker（fallback，讀不到 id-meta 才用）。"""
     tickers = set()
     # 先找「涵蓋 X / Y / Z」或「；X / Y / Z」段
     for m in TICKER_RE.finditer(note):
@@ -49,6 +56,49 @@ def extract_tickers_from_note(note: str) -> set[str]:
             t = t + ".TW"
         tickers.add(t)
     return tickers
+
+
+def extract_tickers_from_id_meta(id_file: str):
+    """優先來源：讀該 ID HTML 的 id-meta `related_tickers[]`。
+
+    元素可能是 dict（v4：{"ticker": "NVDA", ...}）或純字串（legacy）,
+    兩種都處理。讀不到 id-meta／無 related_tickers／清單為空一律回傳
+    None，由呼叫端 fallback 到備注抽字串。
+    """
+    path = ID_DIR / id_file
+    if not path.exists():
+        return None
+    try:
+        html = path.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return None
+    m = ID_META_RE.search(html)
+    if not m:
+        return None
+    try:
+        meta = json.loads(m.group(1))
+    except json.JSONDecodeError:
+        return None
+    related = meta.get("related_tickers")
+    if not related:
+        return None
+    tickers = set()
+    for el in related:
+        if isinstance(el, dict):
+            t = el.get("ticker")
+        elif isinstance(el, str):
+            t = el
+        else:
+            t = None
+        if not t:
+            continue
+        t = str(t).strip()
+        if not t:
+            continue
+        if re.fullmatch(r"\d{4,5}", t):
+            t = t + ".TW"
+        tickers.add(t)
+    return tickers if tickers else None
 
 
 def parse_id_index():
@@ -64,7 +114,9 @@ def parse_id_index():
         # 最後一個有意義欄前是檔名
         id_file = cols[8]
         note = cols[9]
-        tickers = extract_tickers_from_note(note)
+        tickers = extract_tickers_from_id_meta(id_file)
+        if tickers is None:
+            tickers = extract_tickers_from_note(note)
         result[id_file] = {"date": date, "topic": topic, "tickers": sorted(tickers)}
     return result
 

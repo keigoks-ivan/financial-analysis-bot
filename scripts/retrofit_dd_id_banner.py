@@ -21,6 +21,9 @@ BANNER_END = "<!-- ID_BANNER_END -->"
 
 
 def build_banner(ticker: str, id_files: list[str], id_meta: dict) -> str:
+    # id_files 來自 id_dd_map.json 的 ticker_to_ids[t]（list，非 set）；這裡仍
+    # 明確 sorted() 依檔名排序，確保重跑輸出順序決定性——不依賴上游 dict/set
+    # 疊代順序，避免 banner 連結順序在不同 process/機器間漂移導致誤判為內容變動。
     links = []
     for fn in sorted(id_files):
         topic = id_meta.get(fn, {}).get("topic", fn)

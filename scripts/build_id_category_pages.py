@@ -38,6 +38,14 @@ from site_nav import full_nav_block  # noqa: E402
 
 NAV_BLOCK = full_nav_block("research", "id")
 
+# 只用來比對「內容是否真的變了」——把 footer 的 ISO timestamp 正規化掉，
+# 避免每次重跑都因為時間戳不同而讓 15 張 cat 頁全部 churn。
+_TIMESTAMP_RE = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z")
+
+
+def _normalize_for_diff(html: str) -> str:
+    return _TIMESTAMP_RE.sub("TIMESTAMP", html)
+
 # ── Taxonomy: source of truth for mega ordering and metadata ──────────────────
 # Derived from docs/id/taxonomy.md
 TAXONOMY = [
@@ -551,6 +559,13 @@ def main():
         )
 
         out_path = OUT_DIR / f"cat-{mega}.html"
+        if out_path.exists():
+            existing = out_path.read_text(encoding="utf-8")
+            if _normalize_for_diff(existing) == _normalize_for_diff(page_html):
+                generated.append(f"cat-{mega}.html")
+                counts[mega] = article_count
+                print(f"  {mega:12s} → {article_count:3d} articles → {out_path.name} (unchanged, skipped)", file=sys.stderr)
+                continue
         out_path.write_text(page_html, encoding="utf-8")
         generated.append(f"cat-{mega}.html")
         counts[mega] = article_count

@@ -76,7 +76,7 @@
 </script>
 
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Noto+Serif+TC:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/id-v4.css">
+<link rel="stylesheet" href="../assets/id-v4.css">
 </head>
 <body id="top">
 <!-- canonical site header：現跑現貼 site_nav.py full_nav_block('research','id') 輸出，取代此佔位符；規則見下方「站內 nav 注入區塊照抄規則」 -->
@@ -552,4 +552,4 @@
 - Emoji 僅語意用途（🔴🟡🟢 深度、🟢🔵 claim tag、⚠ 證偽），禁裝飾性 emoji。
 - light-only（`color-scheme:light` ＋ meta 宣告）；`@media print` 隱藏 nav／TOC／back-top。
 - 版號一律 `{{SKILL_VERSION}}`（隨 SKILL.md frontmatter），出現在 `<meta name="id-skill-version">`、id-meta JSON `skill_version`、colophon 三處，三處同值。
-- **篇幅**：主閱讀線可見字 11,000–14,000；HTML ≤55KB（CSS 外掛 `/assets/id-v4.css`，不 inline）。超過只警告不擋。
+- **篇幅**：主閱讀線可見字 11,000–14,000；HTML ≤55KB（CSS 外掛 `../assets/id-v4.css`，不 inline）。超過只警告不擋。

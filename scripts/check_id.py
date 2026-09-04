@@ -123,12 +123,19 @@ def exclude_spans(text, *regexes):
 
 
 def get_segments(clean_html):
-    """回傳 (positions dict, ordered_found list, segments dict)。"""
+    """回傳 (positions dict, ordered_found list, segments dict)。
+
+    positions 定位到該錨點所在標籤的開頭 `<`（而非 `id="..."` 屬性本身），
+    否則切出的 segment 會以標籤尾段（如 `id="thesis" class="section">`）
+    開頭——這段殘缺標籤沒有前導 `<`，strip_tags 抓不到，會以純文字漏進
+    主閱讀線／重複掃描視窗（例如 `class="section">Section1核心`）。
+    """
     positions = {}
     for a in ANCHORS:
         m = re.search(r'id="%s"' % re.escape(a), clean_html)
         if m:
-            positions[a] = m.start()
+            tag_start = clean_html.rfind('<', 0, m.start())
+            positions[a] = tag_start if tag_start != -1 else m.start()
     ordered = sorted(positions.items(), key=lambda kv: kv[1])
     segments = {}
     for i, (a, p) in enumerate(ordered):
@@ -702,22 +709,18 @@ def build_excerpt(segments, meta_raw):
 
     mech = segments.get("mechanics", "")
     if mech:
-        h3s = list(re.finditer(r'<h3\b[^>]*>(.*?)</h3>', mech, re.DOTALL))
-        verdict_start = None
-        for hm in h3s:
-            if "裁決" in strip_tags(hm.group(1)):
-                verdict_start = hm.start()
-                break
-        if verdict_start is not None:
-            mech_excerpt = mech[verdict_start:]
-        else:
-            mech_excerpt = mech[int(len(mech) * 0.6):]
-        parts.append("## [mechanics 裁決小節]\n\n%s" % html_fragment_to_text(mech_excerpt))
+        # 全段擷入（含 3.1 需求對帳／3.2 玩家矩陣／3.3 為什麼是現在／3.4 裁決），
+        # critic 的 J-checklist 需要這些小節做完整檢查，不能只給裁決小節。
+        parts.append("## [mechanics]\n\n%s" % html_fragment_to_text(mech))
 
     for name in ("valuation", "risks", "stocks"):
         body = segments.get(name, "")
         if body:
             parts.append("## [%s]\n\n%s" % (name, html_fragment_to_text(body)))
+
+    appendix = segments.get("appendix", "")
+    if appendix:
+        parts.append("## [appendix]\n\n%s" % html_fragment_to_text(appendix))
 
     if meta_raw:
         parts.append("## [id-meta]\n\n```json\n%s\n```" % meta_raw)
