@@ -45,6 +45,11 @@ OVERHEAT_R26_PCT = 80.0     # 時機燈：26 週漲幅 >+80% ＝ 過熱（不進
 LISTING_ALIAS = {"2330.TW": "TSM"}   # 本地掛牌 → ADR（同公司只留一席）
 HYST_NEW_RUNS = 2           # 遲滯：新席需連 2 次週跑過閘
 HYST_INCUMBENT_FAILS = 4    # 遲滯：現任席連 4 次不過閘才下席（硬 veto 除外）
+# B4② 降權版（2026-09-04 持有人拍板）：DD 180 天內裁決＝觀望的現任席，遲滯保護降權
+# 4→2 次不過閘即下席（新席遲滯與硬 veto 不變）。依據：席位層回溯考卷只命中 FIX 一檔；
+# DD 池全體 miss 組（觀望但後續漲）8 檔中位 +39% vs save 組（觀望且後續跌）112 檔中位 −10.5%，
+# miss 尾巴太肥故不硬擋、只降權。詳 knowledge/rule_ledger.md。
+HYST_INCUMBENT_FAILS_WATCH = 2
 
 DD_LATEST = ROOT / "docs" / "dd-screener" / "latest.json"
 MARKET_STATE = ROOT / "docs" / "screener" / "market_state.json"
@@ -881,6 +886,7 @@ def main() -> int:
     #   母體＝DD 池（全部裁決，迴避者 veto）∪ QGM 品質池無 DD 名字（US＋TW）∪ 快審卡
     #   資格＝品質閘（ROIC/FCF）∩ G 成長閘 ∩ 市值 ∩ P 位置閘（未過熱）∩ 無重下修否決
     #   排序＝own_score（擁有層），R 上修只作燈號；遲滯：新席連 2 次過、現任連 4 次不過才下
+    #   （DD 180 天內觀望之現任席降權為連 2 次不過即下，B4② 2026-09-04）
     stocks_map = {s["ticker"]: s for s in stocks}
     # 同一家公司的 ADR／本地掛牌只留一個（席位不得重複曝險）：本地掛牌讓位給 ADR
     aliased = set()
@@ -945,12 +951,16 @@ def main() -> int:
         if r["ticker"] in incumbents:
             if hard_veto(r):
                 r["hyst"] = "硬 veto 下席"; return False
-            recent = [x[1] for x in h[-HYST_INCUMBENT_FAILS:]]
+            # B4② 降權版：DD 新鮮且裁決＝觀望的現任席，下席門檻用 2 次而非 4 次
+            watch = bool(r.get("dd_fresh")) and r.get("verdict") == "觀望"
+            fails_n = HYST_INCUMBENT_FAILS_WATCH if watch else HYST_INCUMBENT_FAILS
+            tag = "（DD 觀望）" if watch else ""
+            recent = [x[1] for x in h[-fails_n:]]
             if r["grp"]["pass"]:
                 r["hyst"] = "現任"; return True
-            if len(recent) >= HYST_INCUMBENT_FAILS and not any(recent):
-                r["hyst"] = f"連 {HYST_INCUMBENT_FAILS} 次不過閘下席"; return False
-            r["hyst"] = f"現任·觀察中（近 {len(recent)} 次 {sum(recent)} 過）"; return True
+            if len(recent) >= fails_n and not any(recent):
+                r["hyst"] = f"連 {fails_n} 次不過閘下席{tag}"; return False
+            r["hyst"] = f"現任·觀察中 {len(recent)}/{fails_n}{tag}"; return True
         recent = [x[1] for x in h[-HYST_NEW_RUNS:]]
         if r["grp"]["pass"] and bootstrap:
             r["hyst"] = "新席（首跑免遲滯）"; return True
@@ -1035,7 +1045,7 @@ def main() -> int:
     BOARD_HTML.write_text(board_html, encoding="utf-8")
     payload = {
         "schema_version": "2.0",
-        "method": "v2 擁有層×時機層分離（2026-09-02）：排序＝own_score；R 為燈號；DD 只 veto／角色；遲滯 2/4",
+        "method": "v2 擁有層×時機層分離（2026-09-02）：排序＝own_score；R 為燈號；DD 只 veto／角色；遲滯 2/4（DD 180 天內觀望之現任席 2，B4② 降權版 2026-09-04）",
         "universe_n": len(universe_rows),
         "seats_without_card": sorted(r["ticker"] for r in core_seats + sat_seats if r["ticker"] not in card_stats),
         "own_board": own_board,
@@ -1141,7 +1151,7 @@ def main() -> int:
 <b>成長閘</b>（FY1→FY3 EPS CAGR ≥15%）× <b>位置閘</b>（站上 52 週線且 26 週漲幅 ≤+80%）× 無重下修否決（FY+1 單月 ≤−10%）。
 排序＝<b>擁有層分數</b>＝min(成長，30)＋FY1 盈餘殖利率（ROIC ≥30 +2；PEG &gt;2 −5）；上修幅度降為燈號。
 <b>DD 只做 veto（迴避）與角色標籤</b>（≤180 天有效）；無 DD 名字（QGM 品質池）同場排序、標「待 DD」。
-<b>遲滯</b>：新席連 2 次週跑過閘、現任連 4 次不過才下席（硬 veto 除外）。
+<b>遲滯</b>：新席連 2 次週跑過閘、現任連 4 次不過才下席（硬 veto 除外；DD 180 天內裁決＝觀望的現任席降權為連 2 次不過即下，B4② 2026-09-04）。
 <b>軌別路由</b>：DD 角色優先；無 DD 走護城河 S/A 非↓（QGM 5 年 ROIC 穩定 ≥75% 亦可核心）；其餘衛星。
 <b>市值門檻 ≥ ${MKTCAP_MIN/1e9:.0f}B</b>（持有人 2026-07-04 拍板：席位與主榜資格層；雷達發現層照掃全宇宙）。
 <b>母體＝美股含 ADR；台股另建（.TW 不在本看板，2026-09-02 持有人拍板）</b>。

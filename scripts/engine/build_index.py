@@ -66,7 +66,8 @@ def main() -> int:
              時點看板機（A1 突破／B 回踩／C 冷卻完成）＋ regime 撥盤（現 {escape(regime.get('label') or '—')}）
 
 ⑤ 守門    一席一卡（現 {n_cards} 張／{n_claims} 條宣稱）
-             遲滯：新席需連 2 次週跑過閘才上席；現任連 4 次不過閘才下席（硬 veto 除外，即刻下席）
+             遲滯：新席需連 2 次週跑過閘才上席；現任連 4 次不過閘才下席（硬 veto 除外，即刻下席；
+             DD 180 天內裁決＝觀望的現任席降權為連 2 次不過即下，B4② 2026-09-04）
              GRP 守門週更自動結算（成長跌破／轉下修／破線 → 卡片自己亮 ⛔）
              ＋ DD 深層宣稱帶期限（到期亮 ⏰ 人工結算）
              觀望也被盯：錯過成本／上修觸發 → 強制複審（複審對 DD 扳機，不因上修就追）"""
@@ -128,7 +129,7 @@ def main() -> int:
 </tbody></table>
 <div class="note">變動是<b>不對稱設計</b>：衛星席＝快時鐘（爆發型，預期高輪動）；核心席＝慢時鐘
 （S/A 護城河是慢變數，若核心每週換人＝bug）。<b>遲滯已上線</b>：新席需連 2 次週跑過閘才上席，
-現任連 4 次不過閘才下席（硬 veto 除外，即刻生效）。每次上席/下席都記入
+現任連 4 次不過閘才下席（硬 veto 除外，即刻生效；DD 180 天內裁決＝觀望的現任席降權為連 2 次不過即下，B4② 2026-09-04）。每次上席/下席都記入
 <a href="/engine/arena.html">席位變動帳本</a>（append-only，含 gate_history 逐週過閘紀錄）——
 2026-10 季檢時用帳本 gate_history 校準遲滯厚度是否合適，不憑感覺預設。</div>
 </div>
@@ -178,6 +179,7 @@ def main() -> int:
 <tr><td class="left">1-2</td><td class="left">雷達＋GRP 主榜＋擂台＋決策卡＋記分板＋快審層＋市值門檻＋系統測試（32 斷言）</td><td class="left">✅ 2026-07-04 上線</td></tr>
 <tr><td class="left">3</td><td class="left">形狀檢查表與 GRP 閾值首次季度校準（記分板滿 91 天後）</td><td class="left">2026-10—</td></tr>
 <tr><td class="left">v2</td><td class="left">擁有層×時機層分離：own_score 排序、品質閘（含 capex 週期豁免）、R 降為燈號、DD 只做 veto／角色標籤、遲滯 2/4</td><td class="left">✅ 2026-09-02</td></tr>
+<tr><td class="left">B4②</td><td class="left">遲滯降權版：DD 180 天內裁決＝觀望的現任席，下席門檻 4→2 次不過閘</td><td class="left">✅ 2026-09-04</td></tr>
 <tr><td class="left">v2 校準</td><td class="left">v2 首輪校準：甲軌前 15 對 p_clim（DD 池 365 天無條件基準 0.582）</td><td class="left">2026-12</td></tr>
 </tbody></table>
 </div>"""
