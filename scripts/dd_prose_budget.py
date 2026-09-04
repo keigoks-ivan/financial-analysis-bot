@@ -54,6 +54,14 @@ REPORT_TARGET_BYTES = 100 * dd_sections.KB
 BIZ_MIN_PCT = 0.45
 PROSE_FLOOR_RATIO = 0.70  # 下限＝上界目標的 70%（B 組修法 2 定義）
 
+# v16 修法(d)（2026-09-04 SNOW dry-run §12）：decision 段的表格（e12 觸發表，audit
+# 折疊表已由 dd_sections.section_bytes 排除不計）常態即逼近甚至超過 decision 的 budget
+# ceiling（SNOW 實測：ceiling 5000B − e12 7170B → 用 70% ratio 算出退化的「0-0」散文
+# 目標，對 Stage 2 agent 是無意義指令）。decision 段改用固定下界 2KB，不再套 70% ratio。
+# 只影響本檔（v16-only 的 Stage 2 prompt 提示），不動 dd_sections.py 的 BUDGETS/實際量測
+# gate——那是 v15/v15.2 共用權威，PREREG 凍結不改。
+DECISION_PROSE_FLOOR_V16 = 2 * dd_sections.KB
+
 CYCLICAL_ARCHETYPE = "循環/商品"
 
 
@@ -100,7 +108,13 @@ def build_rows(tables_dir: Path, judgment: dict):
         budget_floor = budget[0] if isinstance(budget, tuple) else None
         budget_ceiling = budget[1] if isinstance(budget, tuple) else budget
         target_hi = max(budget_ceiling - table_bytes, 0)
-        target_lo = target_hi * PROSE_FLOOR_RATIO
+        if cid == "decision":
+            # 固定下界，見上方 DECISION_PROSE_FLOOR_V16 註解；target_hi 不得低於
+            # target_lo（table_bytes 逼近/超過 ceiling 時，70% ratio 算法會退化成 0）。
+            target_lo = DECISION_PROSE_FLOOR_V16
+            target_hi = max(target_hi, target_lo)
+        else:
+            target_lo = target_hi * PROSE_FLOOR_RATIO
         rows.append({
             "section": cid,
             "budget": budget,

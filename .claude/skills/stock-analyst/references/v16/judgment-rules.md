@@ -1,8 +1,6 @@
-# stock-analyst v16 — judgment-rules.md(Stage 1判斷層唯一always-on規則檔)
+# stock-analyst v16.1 — judgment-rules.md(Writer判斷層唯一always-on規則檔)
 
-> v16-draft(WP2壓縮版，2026-09再壓)。門檻/enum/fail-safe方向/矩陣語意/critic觸發條件逐字未動，餘刪範例/WHY/沿革/schema重複描述。
-> 你是誰：Stage 1判斷層agent。輸入=`evidence.json`＋逐字稿 `.md`＋本檔(＋條件載入reference)。輸出=`.dd_build/{T}_{D}.judgment.json`與`.dd_build/{T}_{D}.scenario.json`，各一次Write。
-> 禁：WebSearch/WebFetch(證據不足標「證據包未涵蓋」，不得自搜補洞)、寫HTML、Read `docs/dd/`(前份三區塊已在`evidence.json.prior_dd`)。
+> 你是誰：v16.1 Writer的判斷階段。輸入=`evidence.json`＋逐字稿 `.md`＋本檔(＋條件載入reference)。
 > 輸出契約：欄位形狀見`scripts/dd_schema/judgment.schema.json`；`decision_inputs`語意見`decision_inputs.md`；judgment→dd-meta對映見`judgment-to-ddmeta.md`，本檔不重述schema。
 
 ---
@@ -32,7 +30,7 @@
 | 任一(Part II前) | `references/judgment-playbook.md`(QC-53觸發索引) |
 | 填appendix_a四欄前 | `references/timing-appendix.md`(未讀不得填) |
 
-QC-47：非複利archetype下被gate-set取代的通用tripwire降為「取代、不重複套」。永不修剪：不中斷/自我攻擊/先前報告三區塊/重大事件/dd-meta契約/推導可追溯/深度標準/產業雙向掃描/輸出潔淨/獨立critic/分類器本身。(QC-8/13/17/18/19/32/33/38/39/40/41/43)
+QC-47：非複利archetype下被gate-set取代的通用tripwire降為「取代、不重複套」。永不修剪：不中斷/自我攻擊/先前報告三區塊/重大事件/dd-meta契約/推導可追溯/深度標準/產業雙向掃描/輸出潔淨/交稿前自查/分類器本身。(QC-8/13/17/18/19/32/33/38/39/40/41/43)
 
 | 通用tripwire | 循環/商品 | 金融 | 未獲利高成長 | 轉機/公用 |
 |:---|:---|:---|:---|:---|
@@ -41,7 +39,7 @@ QC-47：非複利archetype下被gate-set取代的通用tripwire降為「取代�
 | R:R/Bear/5Y目標 | normalized/P-B | P/TBV-based | EV/S-based | 資產底-based |
 | signal X觸發 | cycle-aware | QC-44 X | QC-45 X | QC-46 X |
 | margin・Rev-OI・絕對成長 | 適用 | 不適用(無毛利) | 適用 | 視個案 |
-(QC-26/27/28對映見末列。原：QC-47)
+(QC-26/27/28。原QC-47)
 
 ---
 
@@ -246,8 +244,8 @@ QC-12(併入本條)：近90天內、與核心假設或護城河相關之產業/�
 ## 11｜QC-52 DD↔ID對帳(事實先讀、結論後對)
 
 接線鐵律=ID的結論永遠不出現在輸入位置，只出現在對帳位置。
-- Stage 1：只用`evidence.json.canonical_id.facts`(需求/供給sourced數據、產能時程、利潤池、玩家矩陣)作補充彈藥，標「ID:{theme}+as-of」；禁讀決策層與分歧敘事。
-- Stage 2(強制對帳)：對ID決策層機器欄(`sd_verdict`/`clock_phase`/`priced_in`)對帳：①一致→§3一行「產業物理供需={sd_verdict}(ID:{theme}，as-of{date})」——sd_verdict只當事實錨，禁作方向論據。②分歧→`contradictions[]`須明文分歧理由，標「⚠️分歧→建議重跑ID:{theme}」。③Phase II打折：須經自身位置閘交叉驗證後才可載入§3；Phase III/IV可直接引用。④無ID→§3標「ID gap:{industry}」，不阻斷。
+- 引用：只用`evidence.json.canonical_id.facts`(需求/供給sourced數據、產能時程、利潤池、玩家矩陣)作補充彈藥，標「ID:{theme}+as-of」；禁讀決策層與分歧敘事。
+- 對帳(強制)：對ID決策層機器欄(`sd_verdict`/`clock_phase`/`priced_in`)對帳：①一致→§3一行「產業物理供需={sd_verdict}(ID:{theme}，as-of{date})」——sd_verdict只當事實錨，禁作方向論據。②分歧→`contradictions[]`須明文分歧理由，標「⚠️分歧→建議重跑ID:{theme}」。③Phase II打折：須經自身位置閘交叉驗證後才可載入§3；Phase III/IV可直接引用。④無ID→§3標「ID gap:{industry}」，不阻斷。
 Fail-safe：QC-52是加值層非依賴層，ledger失敗/無ID照舊自主判斷，永不阻斷、永不降級裁決。
 
 知識帳本先讀後裁：硬規則：前次裁決為觀望/迴避且to-date報酬>+30%→強制列入`contradictions[]`，複審不得只以「估值更貴了」維持觀望——須明寫「上次觀望/迴避後漲__%，本次維持/翻面理由是___」。
@@ -258,7 +256,7 @@ Fail-safe：QC-52是加值層非依賴層，ledger失敗/無ID照舊自主判斷
 
 1. 共識清單——列方向一致的判斷。矛盾拓撲判定：爭議集中單一軸或瀰漫多處？集中→點名該軸；瀰漫→信心整體下修。
 2. 矛盾清單——每則含矛盾點/A側結論/B側結論/性質(可調和〔程度差異〕/不可調和〔方向相反〕)。
-3. 與上一份報告的交叉矛盾——每則含矛盾點/本次結論/上一份結論/可能原因；裁決翻面三元歸因機制見3b(`dca_verdict`已在drift_watch清單內)。
+3. 與上一份報告的交叉矛盾——每則含矛盾點/本次結論/上一份結論/可能原因(`dca_verdict`在drift_watch內，歸因機制見3b)。
 3b. 前份逐欄漂移歸因(`evidence.prior_dd.drift_watch`固定20欄；QC-49執行細則，屬既有規則的執行細則非新判斷規則)——`decision_inputs`／情境六欄／`rearm`／`val`／`runway_post_y5`與`evidence.prior_dd.prior_meta`任一欄不同，每一項須在`contradictions[]`有獨立條目：本次值／前份值／三元歸因(基本面變了／價格變了／方法論變了)並排序主因；方法論驅動者明標；**每條目必帶`prior_field`鍵＝dd-meta欄名**(validate以此對帳)。無歸因＝validate FAIL。
 4. ⚖強制裁決(每個「不可調和」矛盾必填)——矛盾/我選哪邊/依據(不能是「直覺」「平衡考慮」)/會settle此衝突的硬數據點/執行路徑。執行路徑：≥2條if-then，兩條觸發方向相反，動作具體(升級小倉測試/減持/加碼至X%/清倉)，禁「再評估」「持續觀察」。
 
@@ -317,18 +315,18 @@ row 8b資格：無Hard Veto+archetype∈循環子型+附錄B位置∈{深谷投�
 
 ---
 
-## 16｜critic觸發(你只標記，不spawn)
+## 16｜自查觸發(v16.1兩步制，流程內無critic)
 
-critic由orchestrator spawn(跨模型冷讀，讀`evidence.json`+`judgment.json`)。你只在`decision_out.requires_critic[]`標記命中gate名稱與一句觸發理由：
+`decision_out.requires_critic[]`仍要標記命中gate與一句理由(供下游與事後抽查)，但**沒有人會替你查**——命中即該軸自查必須實答，fail-safe由你自己執行：
 
-| gate | 觸發條件(任一) | fail-safe方向 |
+| gate | 觸發條件(任一) | 自查未過的fail-safe |
 |---|---|---|
-| QC-41產業態勢獨立critic | 裁決強方向(進場/迴避)；moat_trend方向性(↑/↓)；屬競爭動態/循環商品/法規敏感/B2B客戶集中型，餘可選 | 2次spawn仍失敗/無回覆→標「未能執行」，不阻斷finalize |
-| QC-48爆發候選Bull冷讀 | row 8a資格全過時強制 | 任一項🔴或2次spawn失敗→裁決降row 8觀望 |
-| QC-50錯過成本反向critic | 裁決落觀望，且①前次同ticker觀望/迴避且to-date報酬>+30%②FY1/FY2共識EPS近3個月上修≥+10% | 只能建議升級為進場・條件式，不能強制翻面；spawn失敗2次→維持觀望，不阻斷 |
-| row 8b循環位置critic | row 8b命中時強制(機制同QC-48) | 驗證失敗→降回row 8觀望 |
+| QC-41產業態勢 | 裁決強方向(進場/迴避)；moat_trend方向性(↑/↓)；屬競爭動態/循環商品/法規敏感/B2B客戶集中型，餘可選 | 該軸🔴且證據包內釐清不了→回報需回Stage 0補搜，不阻斷finalize |
+| QC-48爆發候選Bull | row 8a資格全過時強制 | 自查任一項🔴→裁決降row 8觀望 |
+| QC-50錯過成本反向 | 裁決落觀望，且①前次同ticker觀望/迴避且to-date報酬>+30%②FY1/FY2共識EPS近3個月上修≥+10% | 只能升級為進場・條件式，不得強制翻面；不成立→維持觀望 |
+| row 8b循環位置 | row 8b命中時強制(機制同QC-48) | 自查未過→降回row 8觀望 |
 
-無效輸出=失敗一次，必重試。QC-41是backstop不是主力(主力是QC-39覆蓋矩陣)，不得因有critic就鬆懈自身三軸裁決與兩閘。(QC-41/48/50/42 row 8b)
+QC-39覆蓋矩陣仍是主力，自查是backstop——**不得為交稿而讓自查全綠**，🟡/🔴照實填(自查表是回報必要欄位)。(QC-41/48/50/42 row 8b)
 
 ---
 
@@ -344,27 +342,27 @@ trap五問(`trap_analysis`，強制回答)：最可能的陷阱模式是哪一�
 
 ## 19｜QC-33推導可追溯(`reasoning` 每模組必填)
 
-任何承重結論數字(PE/PEG/訊號燈/品質等級/目標價/漂移判定/IRR/Max DD/moat分數/runway燈)須附≤3行壓縮推導：`輸入數字→計算過程→對下游implication`。禁止光寫結論不寫過程。v16落地方式：`judgment.reasoning`的每個模組key必填(≥3行)，呈現層原樣鋪陳進`<div class="reasoning">`，呈現層不得新增數字。(QC-33)
+任何承重結論數字(PE/PEG/訊號燈/品質等級/目標價/漂移判定/IRR/Max DD/moat分數/runway燈)須附≤3行壓縮推導：`輸入數字→計算過程→對下游implication`。禁止光寫結論不寫過程。v16落地方式：`judgment.reasoning`的每個模組key必填(≥3行)。(QC-33)
+
+### 19.1｜數字引用優先序(v16.1，違反即無效輸出)
+
+1. 任何營運指標(客戶數/NRR/RPO/GM/SBC等)以`numbers.latest_quarter_kpis.items[]`為準——**同指標只准引最新一季官方值**，證據包他處較舊值不得進judgment或散文。
+2. 四個**必引來源**，缺項標「證據包未涵蓋」，禁以記憶或推估補：§10五年高低點→`valuation_history`(禁由現價外推分位)；共識上修下修(含QC-50、盲點3救援)→`consensus_revision`(`stale=true`降為旁證，不得作唯一依據)；客戶/地區集中度→`edgar_concentrations`；§5.F對手財務→`peer_financials`。
+3. `numbers.momentum_26w.rsi14_usable=false`(52週新高3%內)時，`appendix_a` timing欄不得引RSI，改以26週漲幅與位置描述；`decision_inputs.momentum_overheated`亦不得單以RSI認定。
 
 ## 20｜輸出與禁令
 
-- 一次Write`judgment.json`、一次Write`scenario.json`；跑`dd_scenario.py`→`dd_decision.py`→`validate_judgment.py`→`verify_dd_math.py`。FAIL只准改欄位重跑，≤3輪；未收斂列入回報。
+- 一次Write`judgment.json`、一次Write`scenario.json`；三支驗證FAIL只准改欄位重跑，≤3輪，未收斂列入回報。
 - 禁WebSearch/WebFetch：證據不足標「證據包未涵蓋」，不得自搜補洞。
-- 禁寫HTML、禁Read `docs/dd/`(前份DD只透過`evidence.json.prior_dd`三區塊)。
+- 判斷三支驗證全過前禁寫散文/HTML(呈現規則見`render-rules.md`)；禁Read `docs/dd/`(前份DD只透過`evidence.json.prior_dd`三區塊)。
 - 禁從上一份報告複製結論文字；假設表、TAM、評分一律從本輪證據重推。
-- 機械輪次批次化：定位先於動手；同檔修改≥5處禁逐個修補；Bash驗證併成單條複合指令，輪次≤3。
-- 回報≤300字＋validator輸出原文。
 
 ---
 
-## 21｜QC-19重大事件判讀判準(Stage 1評估；搜尋已由Stage 0b覆蓋矩陣執行)
+## 21｜QC-19重大事件判讀判準
 
-輸入：`evidence.json.coverage.major_events`軸(近12個月，Stage 0b已搜)，本層職責=判讀重大性與路由，不重搜。
+輸入：`evidence.json.coverage.major_events`軸(近12個月)；本層只判讀重大性與路由，不重搜。
 
 五類必查判讀：①M&A(>市值5%或5年最大2倍)=🔴，入§2.R/§7·§9/§10稀釋評估②集體訴訟=入§9+§1(trap)重評③臨床/FDA讀數(醫療/生技類)=直接讀正負向④CEO/CFO離職、SEC調查、財報重編=🔴高風險初篩(進governance §9)⑤主要客戶流失=重算§6成長假設。無重大事件→§9標🟢正面確認。
 
 判讀原則：近90天且與核心假設/護城河相關事件，須納入risk清單(`R1-R3`)或護城河威脅清單(QC-23)，不得只記錄不接線。與QC-20分工：QC-19判「發生了什麼、多嚴重」，QC-20判「催化劑是否已兌現」。(QC-19)
-
----
-
-壓縮紀錄：刪解釋句/WHY、schema重複描述、範例與沿革；門檻/enum/fail-safe/QC編號逐字未動。

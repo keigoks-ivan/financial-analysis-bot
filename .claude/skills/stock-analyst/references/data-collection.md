@@ -216,6 +216,38 @@ spawn 連續失敗 2 次（agent 未回、回傳空、或回傳完全不符格�
 - **頁首儀表板與各章數字一律引用數字包的同一來源**（同一個現價、同一組共識、同一組倍數）。這是 QC-7 內部一致性最便宜的保證——分歧只可能來自 writer 的補查，而補查處都有標注。
 - **時效閘**：數字包的抓取時間距離當下 **> 3 個交易日**（writer 中途中斷後重跑的典型情況）→ **重 spawn 採集 agent**取新包，不得沿用舊價格與舊共識寫估值章。
 
+### 【v16.1 新增】最新一季官方 KPI（`numbers.latest_quarter_kpis.items[]`）
+
+**WHY**：v16 兩次 dry-run critic 首輪 🔴 的共同模式是「判斷層引用比最新一季更舊的數字」——某段落引用的是財報前或上上季的 KPI，而不是最新一季官方公布值。此段把「最新一季 KPI」結構化成必填清單，讓判斷層只准引這一份，不得自己從逐字稿或舊報告裡東拼西湊。
+
+**任務 5（新增，接在任務 3 之後）**：採集 agent 從最新一季財報新聞稿／10-Q／法說投影片，逐項填 `numbers.latest_quarter_kpis.items[]`，每項格式：
+
+```json
+{"metric": "Non-GAAP operating margin", "value": 23.4, "unit": "%",
+ "as_of": "Q2 FY2027（季末 2026-07-31，公告於 2026-09-02）",
+ "source": "公司新聞稿 investor.snowflake.com Q2 FY27 press release",
+ "vs_consensus": "consensus 21.8%（來源：dd_numbers_extra.py consensus_revision 或 web_search）",
+ "prior_quarter": "Q1 FY2027: 21.1%"}
+```
+
+**通用必填（每份 DD 都要）**：
+1. 營收（GAAP，含 YoY／QoQ）
+2. Non-GAAP 營業利益／利益率
+3. GAAP 營業利益／利益率
+4. 自由現金流（FCF）
+5. SBC 占營業利益（或占營收）%
+6. 管理層對下一季／全年的指引（guidance，含區間）
+
+**依 archetype 追加**（archetype_hint 對照 `coverage-axes.md` 分類）：
+- **SaaS／未獲利高成長**：客戶數 ≥$1M ARR、NRR（淨留存率）、RPO 與 cRPO（及 vs 共識）、product gross margin
+- **硬體／設備**：backlog、book-to-bill、產能利用率
+- **循環／商品**：ASP（平均售價）、庫存天數
+- **平台／消費**：MAU（月活）、ARPU
+
+**鐵律**：同一指標只准引最新一季，`as_of` 必填（季別＋公告日期）；判斷層（Stage 1／writer 決策段）引用官方 KPI 數字時，一律以 `numbers.latest_quarter_kpis.items[]` 為準，不得從逐字稿原文或前份 DD 另行摘一個舊數字替換。若某項查無，整筆省略而非填造。
+
+**與 `dd_numbers_extra.py` 的分工**：Stage 0a 會先跑 `python3 scripts/dd_numbers_extra.py {TICKER} {DATE} [--peers ...] [--evidence ...]`（零 LLM，見 `evidence-pack.md`），已算好 `numbers.valuation_history`／`numbers.momentum_26w`／`numbers.consensus_revision`／`numbers.peer_financials`／`numbers.edgar_concentrations` 五個欄位，並留一個空的 `numbers.latest_quarter_kpis` 佔位符（`{"_required": true, "quarter": "...", "items": []}`）。採集 agent **只需要填 `items[]`**，其餘五個欄位已存在時**不要重抓、不要改寫其 `method`／`source` 標籤**——那五欄的口徑（trailing vs fwd、TTM 季數、annual 樣本點數）已在欄位內自我說明，重複查證只會製造第二個不一致的數字。若某欄為 `null` 且帶 `note`（例如某 peer 查無資料），才視情況個別補查該一格，不必整段重做。
+
 ---
 
 ## 【fallback：writer 自跑協議】（僅在採集 agent spawn 失敗 2 次時啟用）

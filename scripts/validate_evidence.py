@@ -15,11 +15,17 @@
        否則 FAIL（不得用「不適用」逃避查證）。
   4. numbers 必含 price_at_dd／price_as_of／earnings_recency（v15.2.4 命名沿用）。
   5. events 必含 QC-19 五組各一個 key（值可為 "none"，缺 key＝FAIL）。
+  6.（v16.1 新增，預設 WARN，--strict 才 FAIL——讓舊 evidence 檔仍可跑）
+     numbers.latest_quarter_kpis.items ≥4 項且每項有 as_of／source，quarter 與可推得的
+     最新季標籤（numbers.header 內含 "quarter" 字樣的欄位，或頂層 earnings_recency）一致；
+     numbers.valuation_history／momentum_26w／consensus_revision／peer_financials／
+     edgar_concentrations 五個 key 必須存在（值可為 null，但需帶 note 說明）；
+     peer_financials 需 ≥2 個對手（不含自身列）。見 scripts/dd_numbers_extra.py。
 
 用法：
   python3 scripts/validate_evidence.py .dd_build/AVGO_20260910.evidence.json
   python3 scripts/validate_evidence.py FILE --report   # 逐軸列印狀態，非僅錯誤行
-  python3 scripts/validate_evidence.py FILE --strict   # WARN 一併視為 FAIL（exit 1）
+  python3 scripts/validate_evidence.py FILE --strict   # WARN 一併視為 FAIL（exit 1，含 v16.1 KPI 檢查）
 """
 import json
 import re
@@ -36,6 +42,14 @@ TOP_LEVEL_KEYS = [
 ]
 
 NUMBERS_REQUIRED = ["price_at_dd", "price_as_of", "earnings_recency"]
+
+# v16.1 新增：dd_numbers_extra.py 應交付的五個結構化欄位（見 evidence-pack.md Stage 0a）
+NUMBERS_EXTRA_KEYS = [
+    "valuation_history", "momentum_26w", "consensus_revision",
+    "peer_financials", "edgar_concentrations",
+]
+KPI_MIN_ITEMS = 4
+KPI_REQUIRED_FIELDS = ["as_of", "source"]
 
 # QC-19 五組（順序對齊 coverage-axes.md major_events 軸的 5 條 queries 模板）
 EVENTS_KEYS = [
@@ -89,6 +103,89 @@ def required_axes(matrix, evidence):
     if not segments:
         ids.add("end_markets")  # 無 segments 來源時，允許用單一未展開列
     return ids, None
+
+
+def _has_content_or_note(value):
+    """v16.1：判定 numbers.<key> 是否『有內容，或雖無內容但帶 note 說明原因』。
+    遞迴掃一層即可——這五個欄位（見 NUMBERS_EXTRA_KEYS）都是 dd_numbers_extra.py 輸出的
+    扁平/一層巢狀 dict，不需要深度遞迴。"""
+    if value is None:
+        return False
+    if isinstance(value, dict):
+        if not value:
+            return False
+        if value.get("note"):
+            return True
+        for v in value.values():
+            if isinstance(v, dict):
+                if v.get("note") or any(x not in (None, "", {}, []) for x in v.values()):
+                    return True
+            elif isinstance(v, list):
+                if v:
+                    return True
+            elif v not in (None, "", {}):
+                return True
+        return False
+    if isinstance(value, list):
+        return bool(value)
+    return True
+
+
+def _extract_quarter_tokens(s):
+    if not isinstance(s, str):
+        return set()
+    return set(re.findall(r"Q\d\b|FY\s?\d{2,4}\b|\b20\d{2}\b", s, re.I))
+
+
+def check_numbers_extra(evidence, numbers, warns):
+    """v16.1 新增（見 dd_numbers_extra.py／evidence-pack.md Stage 0a）。
+    全部走 warns（不進 fails）——main() 的 --strict 既有邏輯會把 warns 一併升級成 FAIL，
+    天然滿足『預設 WARN、--strict 才擋、舊 evidence 檔仍可跑』。"""
+    ticker = evidence.get("ticker")
+
+    for key in NUMBERS_EXTRA_KEYS:
+        if key not in numbers:
+            warns.append(f"numbers 缺 key：{key}（v16.1 新增 Stage 0a 欄位，--strict 才擋；見 scripts/dd_numbers_extra.py）")
+            continue
+        if not _has_content_or_note(numbers.get(key)):
+            warns.append(f"numbers.{key} 無內容且無 note 說明原因")
+
+    pf = numbers.get("peer_financials")
+    if isinstance(pf, dict):
+        peer_keys = [k for k in pf.keys() if k != ticker and not str(k).startswith("_")]
+        if len(peer_keys) < 2:
+            warns.append(f"numbers.peer_financials 對手數僅 {len(peer_keys)}（<2，不含自身列）")
+
+    kpis = numbers.get("latest_quarter_kpis") or {}
+    items = kpis.get("items") or []
+    if len(items) < KPI_MIN_ITEMS:
+        warns.append(f"numbers.latest_quarter_kpis.items 僅 {len(items)} 項（<{KPI_MIN_ITEMS}）")
+    else:
+        for i, item in enumerate(items):
+            missing = [f for f in KPI_REQUIRED_FIELDS if not (isinstance(item, dict) and item.get(f))]
+            if missing:
+                warns.append(f"numbers.latest_quarter_kpis.items[{i}] 缺欄位：{missing}")
+
+    quarter_label = kpis.get("quarter")
+    if not quarter_label:
+        warns.append("numbers.latest_quarter_kpis.quarter 未填")
+    else:
+        ref = evidence.get("earnings_recency")
+        if not ref:
+            header = (numbers.get("header") or {})
+            if isinstance(header, dict):
+                for k, v in header.items():
+                    if "quarter" in k.lower() and isinstance(v, str):
+                        ref = v
+                        break
+        if ref:
+            ref_tokens = _extract_quarter_tokens(ref)
+            kpi_tokens = _extract_quarter_tokens(quarter_label)
+            if ref_tokens and kpi_tokens and not (ref_tokens & kpi_tokens):
+                warns.append(
+                    f"numbers.latest_quarter_kpis.quarter={quarter_label!r} 與最新季標籤"
+                    f"（{ref!r}）找不到共同季別/年份 token，疑似引用非最新一季"
+                )
 
 
 def check_file(path, matrix, strict=False):
@@ -185,6 +282,9 @@ def check_file(path, matrix, strict=False):
     for k in EVENTS_KEYS:
         if k not in events:
             fails.append(f"events 缺 QC-19 分組：{k}")
+
+    # ---- 6. v16.1 新增：numbers_extra 五欄 + latest_quarter_kpis（預設 WARN） ----
+    check_numbers_extra(evidence, numbers, warns)
 
     if strict:
         fails.extend(f"(strict) {w}" for w in warns)

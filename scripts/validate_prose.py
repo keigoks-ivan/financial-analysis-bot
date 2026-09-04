@@ -23,6 +23,23 @@ whether they appear in judgment/evidence):
     never tokenized in the first place (excluded structurally by the token
     regex's lookbehind, not by this tolerance list)
 
+Symbol/full-width normalization (v16 修法 a, 2026-09-04 SNOW dry-run 教訓：
+「未覆蓋」多是符號差不是真的漏數字，NOT tolerances — these are folded into
+the token's parsed value/raw form before comparison, same as $19.3 vs 19.30):
+  - negative sign variants "負"/"−"/"－"/"–"/"-" all normalize to the same
+    signed value (NOT "—" em dash — that's Chinese rhetorical punctuation,
+    e.g. "——命中則……", and would wrongly negate the number after it)
+  - full-width digits/percent/decimal-point (０-９／％／．) normalize to their
+    ASCII equivalents (full-width "，" is NOT treated as a digit-grouping
+    comma — in Chinese prose it is sentence punctuation between numbers far
+    more often than a thousands separator inside one, e.g. "...07-31，
+    2026-09-01..."; merging it into the token regex mis-glued "31" and
+    "2026" into one bogus token during regression testing)
+  - ASCII thousands separators ("1,234") are stripped
+  - a currency-unit suffix immediately after the digits (B/M/K/億/百萬/萬,
+    e.g. "$1.2B" vs "12億美元") is also compared after converting both sides
+    to a common "millions" scale, in addition to the raw digit comparison
+
 Everything else must be traceable to a number that appears somewhere in
 judgment.json (recursively — both real JSON numbers and numeric substrings
 inside its string values) or, if --evidence is given, evidence.json.
@@ -60,16 +77,41 @@ import dd_sections  # noqa: E402
 # unconsumed and the next number starts clean).
 _NUM_TOKEN_RE = re.compile(
     r"(?<![A-Za-z0-9§#.])"
-    r"[+\-−－]?\$?\d[\d,]*(?:\.\d+)?%?"
+    r"[+\-−－–]?\$?\d[\d,]*(?:[.．]\d+)?(?:%|％)?"
 )
 
-_FULLWIDTH_DIGITS = str.maketrans("０１２３４５６７８９．，", "0123456789.,")
+_FULLWIDTH_DIGITS = str.maketrans("０１２３４５６７８９．％", "0123456789.%")
 
 
 def _normalize_raw(raw: str) -> str:
     raw = raw.translate(_FULLWIDTH_DIGITS)
-    raw = raw.replace("−", "-").replace("－", "-")
+    raw = raw.replace("−", "-").replace("－", "-").replace("–", "-")
     return raw
+
+
+# unit prefix/suffix normalization: "$1.2B" / "12億美元" / "100百萬美元" 都換算成
+# 同一個「百萬美元」canonical scale 後再比對一次，讓幣別單位不同但數值相同的寫法
+# 不互相誤判為「未覆蓋」。只在數字不是百分比時套用（%.與貨幣單位不應同時出現）。
+_UNIT_MULTIPLIER = {
+    "B": 1000.0,
+    "M": 1.0,
+    "K": 0.001,
+    "百萬": 1.0,
+    "億": 100.0,
+    "萬": 0.01,
+}
+_UNIT_RE = re.compile(r"(百萬|億|萬|[BMK])(?![A-Za-z])")
+
+
+def _canonical_unit_value(raw: str, val: float, text: str, end: int):
+    """若數字後緊接單位（B/M/K/億/百萬/萬），回傳換算成「百萬」尺度後的值；
+    否則回傳 None（不參與 unit 比對）。百分比一律不換算。"""
+    if raw.rstrip().endswith(("%", "％")):
+        return None
+    m = _UNIT_RE.match(text, end)
+    if not m:
+        return None
+    return val * _UNIT_MULTIPLIER[m.group(1)]
 
 
 def normalize_num(raw: str):
@@ -103,14 +145,22 @@ def _is_tolerated(raw: str, value: float) -> bool:
 
 
 def extract_tokens(text: str):
-    """Yield (raw, value, start, end) for every numeric token in `text`
-    that survives normalize_num (skips unparseable junk)."""
+    """Yield (raw, value, start, end, canon) for every numeric token in
+    `text` that survives normalize_num (skips unparseable junk). `canon` is
+    the unit-converted value (see _canonical_unit_value) or None when no
+    B/M/K/億/百萬/萬 suffix follows. A bare Chinese "負" immediately before
+    the token (e.g. "負38.6%", not captured by the regex's sign class since
+    it's a Han character, not a Latin sign) negates `value`."""
     for m in _NUM_TOKEN_RE.finditer(text):
         raw = m.group(0)
         val = normalize_num(raw)
         if val is None:
             continue
-        yield raw, val, m.start(), m.end()
+        start, end = m.start(), m.end()
+        if val > 0 and start > 0 and text[start - 1] == "負":
+            val = -val
+        canon = _canonical_unit_value(raw, val, text, end)
+        yield raw, val, start, end, canon
 
 
 # ---------------------------------------------------------------------------
@@ -136,8 +186,10 @@ def collect_numbers(obj) -> set:
         elif isinstance(v, (int, float)):
             out.add(round(float(v), 1))
         elif isinstance(v, str):
-            for _raw, val, _s, _e in extract_tokens(v):
+            for _raw, val, _s, _e, canon in extract_tokens(v):
                 out.add(round(val, 1))
+                if canon is not None:
+                    out.add(round(canon, 1))
 
     walk(obj)
     return out
@@ -151,10 +203,12 @@ def uncovered_in_text(text: str, ref_numbers: set):
     """List of (raw, context) for every numeric token in `text` that is
     neither tolerated nor covered (at 1-decimal rounding) by ref_numbers."""
     misses = []
-    for raw, val, start, end in extract_tokens(text):
+    for raw, val, start, end, canon in extract_tokens(text):
         if _is_tolerated(raw, val):
             continue
         if round(val, 1) in ref_numbers:
+            continue
+        if canon is not None and round(canon, 1) in ref_numbers:
             continue
         ctx = text[max(0, start - 20):end + 20].strip()
         ctx = re.sub(r"\s+", " ", ctx)

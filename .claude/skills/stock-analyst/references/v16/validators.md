@@ -10,6 +10,7 @@
 | QC-7／QC-14／QC-36／QC-37 | 頁首／§13／dd-meta 數字須三處同源、5Y 目標價四處一致 | **結構性消除**：v16 下頁首/decision/dd-meta 皆由 `gen_dd_tables.py` 從同一份 `judgment.json` 生成，不存在「抄三次」的動作，故不再需要事後比對 | — |
 | QC-9 | 品質分＝min(底分+體質veto,10)，5 項 veto 降級制 | `validate_judgment.py` 驗 `appendix_a.quality_score` 型別＋範圍 1-10；veto 加減本身仍是判斷（見 judgment-rules.md §8） | WARN |
 | QC-15 | 引用產業/市場數據須標發布日期，>180 天加註 | `validate_evidence.py`：`coverage.<axis>.findings[].as_of` 必填，>180 天標記 | WARN |
+| v16.1 新增 | 估值歷史/動能/共識修正/同業財務/客戶集中度五欄＋最新一季 KPI 須存在且≥4 項有 as_of/source | `dd_numbers_extra.py`（零 LLM 算五欄＋KPI 佔位符）＋`validate_evidence.py::check_numbers_extra`（`numbers.valuation_history`／`momentum_26w`／`consensus_revision`／`peer_financials`／`edgar_concentrations` 存在性、`peer_financials`≥2 對手、`latest_quarter_kpis.items`≥4 項＋quarter 與最新季標籤 token 一致） | WARN（預設）／FAIL（`--strict`，讓舊 evidence 檔仍可跑） |
 | QC-17／QC-18 | 先前報告只讀三區塊，嚴禁整檔 Read | `dd_prior.py`（零 LLM 擷取 revlog／H1-H3+R1-R3／E12 表，寫入 `evidence.json.prior_dd`），從不把整份舊 HTML 交給任何 agent | 結構性（無 FAIL/WARN，機制本身防呆） |
 | QC-19 | 重大事件 5 組強制搜尋 | `coverage-axes.md` `major_events` 軸（5 條 query 模板）＋`validate_evidence.py` 驗 `queries_run`≥2 | FAIL（缺軸） |
 | QC-21 | R:R 數學假象防禦（<5% 下行失效，改極端 Bear） | `dd_scenario.py` 算術本體＋`verify_dd_math.py` 檢查 A；「是否套用極端 Bear」仍是 judgment-rules.md §9 的判斷 | FAIL（算術部分） |

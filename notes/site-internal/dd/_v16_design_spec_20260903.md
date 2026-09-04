@@ -247,3 +247,26 @@ Orchestrator（opus）只做：spawn、傳檔名、讀 validator 結果、決定
 **讀數**：①判斷品質：覆蓋缺軸 0（兩份 v16 皆 0）、裁決與 v15.2 同向；critic 🔴 未降（6），且多為判斷層資料新鮮度（733→828）與口徑一致性，非覆蓋缺口——這類要靠 Stage 0 把「最新一季官方數字」結構化進數字包（`numbers.latest_quarter_kpis`），判斷層不得引用比它舊的數字。②成本：呈現層仍是最大項（40.6M），其中 validate_prose 的符號正規化（負／−／-）可省一輪；Stage 1 因七表必填由 9.8M 升至 28.4M；patch 兩輪 25M 是 critic 首輪 6🔴 的直接後果。③兩個新機械閘實測有效：漂移歸因檢查（3 欄）、Soft Veto 與無 Veto 路徑互斥（critic 抓到，**尚未機械化**→ dd_decision 應自檢 audit_rows 互斥）。
 
 **下一輪修法（第三份 dry-run 前）**：(a) validate_prose 符號／全半形正規化；(b) numbers 包加 `latest_quarter_kpis`（customers ≥$1M、NRR、RPO vs 共識、product GM、SBC vs OI）並在 judgment-rules 加「引用數字以此為準」；(c) dd_decision run 自檢互斥（Soft Veto hit ⇒ baseline 行不得 hit）；(d) decision 段預算下界在 v16 改 2KB（audit 已排除）；(e) 判斷層 A/B：第三份用 Fable 判斷層，比較 critic 首輪 🔴 數與 Stage 1 成本。
+
+---
+
+## 13. v16.1 兩步制（2026-09-04 持有人拍板：大道至簡）
+
+**新鏈**：**第一步 sonnet 收資料**（`dd_numbers_extra.py` 六個結構化欄位＋0b 覆蓋矩陣 fan-out＋`dd_prior.py`；`validate_evidence.py --strict` 過才准開寫）→ **第二步 Fable 一次寫完**（判斷物→產表→算段落預算→散文→組裝→六支機械閘→交稿前自查），閘全過即上站。**流程內沒有 critic、沒有修補、沒有 re-gate。**
+
+**明文推翻的兩條既有拍板**（不是繞過，是覆蓋）：
+1. **「DD 寫稿後必掛獨立 critic gate」**（repo CLAUDE.md 模型路由表＋QC-41/48/50/row 8b）——v16.1 流程內取消，改為 writer 交稿前自查表（QC-41 四軸＋覆蓋面掃描＋量化模組抽查＋數字新鮮度＋散文一致性，條文語意逐字沿用，只換執行者）。
+2. **「writer 與 critic 永不同模型」**——流程內已無 critic，鐵律以**流程外事後抽查**維持：前三份上站後另 spawn 一次與 writer 不同模型的冷讀，只計數不修補。
+
+**砍掉了什麼**：獨立 patch agent、re-gate、輕 critic、Stage 1↔Stage 2 兩段式交接、`--judge-model`／`--light-critic`／`--writer-model` 的 A/B 分歧（writer 固定 Fable，旗標保留但不預期切換）。
+
+**理由**：兩次 dry-run（§11 DELL／§12 SNOW）的 critic 首輪 🔴 **全為資料級**——資料新鮮度（733→828）、口徑一致（GAAP vs non-GAAP）、漂移未歸因——沒有一條是「另一個模型看出不同的產業判斷」。資料級問題的正確解法是把資料在 Stage 0 結構化（`latest_quarter_kpis`／`valuation_history`／`consensus_revision`／`edgar_concentrations`／`peer_financials`／`momentum_26w`）＋`--strict` 前置閘＋機械閘，不是在下游多養一個 agent 重讀 80KB 去抓。成本面同向：v16.0 的錢全花在交接（呈現層重讀 71.9M／40.6M、patch 兩輪 20.4M／25.4M），兩步制把交接次數壓到一次。
+
+**代價（明寫，不粉飾）**：失去「不同模型的眼睛」當作發布前的 gate。writer 的自查與自己的盲點共享同一個模型——覆蓋面掃描與量化模組抽查原本正是為了對付這件事（PLTR A/B 教訓）。v16.1 只剩兩道防線：機械閘（結構、數字集合、bytes、leaks、dd-meta）＋writer 自查表。這是刻意接受的風險，用下面第 2 條退場訊號限期驗證。
+
+**退場訊號（三條，任一未達即回退）**：
+1. **覆蓋缺軸 0**（v16.0 兩份皆 0，此為不得倒退的底線；`--strict` 前置閘是主要保證）。
+2. **前三份上站後事後冷讀抽查，判斷級 🔴 合計為 0 → 永久拿掉本驗收；出現 1 例 → 把 Fable 驗收放回流程內**（恢復流程內 critic gate）。
+3. **每份成本 ≤ v15.2 同檔**：SNOW ≤88M、DELL ≤138M。
+
+登記：`knowledge/rule_ledger.md`「v16.1 移除流程內 critic gate」條（kill condition 同上第 2 條）。

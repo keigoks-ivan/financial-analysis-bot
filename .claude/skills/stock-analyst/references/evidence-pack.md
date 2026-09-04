@@ -5,6 +5,34 @@
 > `scripts/validate_evidence.py` 怎麼守門。判斷語意不變——這是把 QC-39／QC-19／archetype 換尺條文
 > 的「搜什麼」變成結構化派工單，不改「怎麼判斷」。
 
+## 0. Stage 0a（v16.1 新增）：`dd_numbers_extra.py` 先跑，再 fan-out 覆蓋矩陣
+
+WP1a 只把「軸該查什麼」機械化；v16 兩次 dry-run 顯示另一批 🔴 不是缺軸，是**數字本身**（估值分位口徑不一、共識修正沒查、動能指標在 52 週新高仍用 RSI、客戶集中度沒查原文、KPI 引用比最新一季更舊）。這批一律在 Stage 0a 用零 LLM 腳本先解決，判斷層只准引腳本算好的欄位：
+
+```
+1. python3 scripts/dd_numbers_extra.py {TICKER} {DATE} \
+       [--peers A,B,C] [--evidence .dd_build/{TICKER}_{DATE}.evidence.json] \
+       --out .dd_build/evidence_parts/numbers_extra.json
+   → 算好 numbers.valuation_history／momentum_26w／consensus_revision／
+     peer_financials／edgar_concentrations 五欄（每項帶 as_of／source／method，
+     算不出來一律 null＋note，不捏造），並留一個空的
+     numbers.latest_quarter_kpis={"_required":true,"quarter":...,"items":[]} 佔位符。
+     未給 --peers 時會嘗試從 --evidence 的 numbers.peer_valuation 取。
+
+2. 採集 agent（見 data-collection.md【v16.1 新增】段）只需要把
+   numbers.latest_quarter_kpis.items[] 填好（最新一季官方 KPI，逐項 as_of＋source），
+   五個已算好的欄位不重抓、不改其 method／source 標籤。
+
+3. python3 scripts/dd_evidence.py merge {evidence.json} {numbers_extra.json}
+   （或採集 agent 的 KPI 片段）合併進同一份 evidence.json。
+
+4. python3 scripts/validate_evidence.py {evidence.json} --report
+   （預設只 WARN 缺 numbers_extra/KPI，讓舊 evidence 檔仍可跑；--strict 才擋，
+   建議 Stage 0 收尾前跑一次 --strict 看清單，但不強制擋 Stage 1）。
+```
+
+Stage 0a 與下方 Stage 0b（覆蓋矩陣 fan-out）互不依賴、可平行跑；兩者都做完再進 Stage 1 判斷層。
+
 ## 1. Orchestrator 派工流程（Stage 0b）
 
 ```

@@ -802,6 +802,26 @@ def cmd_check_all(glob_pat: str, infer=False) -> int:
 # CLI
 # ---------------------------------------------------------------------------
 
+# v16 修法(c)（2026-09-04 SNOW dry-run §12 讀數③）：critic 徒手抓到「Soft
+# Veto 與無 Veto baseline 互斥」尚未機械化——只加自檢斷言，不改矩陣任何 row
+# 的語意或門檻（PREREG 凍結）。_evaluate_matrix 的 early-return 控制流本已
+# 保證兩者互斥（has_soft_veto=True 時，函式在跑到 rows 8/9/9b/10 判斷之前就
+# 已經 return），這裡只是把它從「結構上理所當然」變成「機械可驗證」的事後
+# 斷言，供未來若有人改動控制流時當場攔下，而不是留給下一輪 critic 徒手抓。
+_SOFT_VETO_ROW_IDS = {"6", "7", "7a"}
+_BASELINE_NO_VETO_ROW_IDS = {"8", "9", "9b", "10"}
+
+
+def check_soft_veto_baseline_exclusivity(audit_rows):
+    """回傳互斥自檢的衝突 audit-row 清單（Soft Veto 命中列 + 無 Veto baseline
+    命中列各自附上），空 list = 通過。"""
+    soft_hits = [r for r in audit_rows if r.get("row") in _SOFT_VETO_ROW_IDS and r.get("hit")]
+    baseline_hits = [r for r in audit_rows if r.get("row") in _BASELINE_NO_VETO_ROW_IDS and r.get("hit")]
+    if soft_hits and baseline_hits:
+        return soft_hits + baseline_hits
+    return []
+
+
 # WP1c 修法4：run 對一份完整 judgment.json（帶既有 decision_out）寫回時，只
 # 覆寫機械可判欄；rearm_trigger／exec_line／人工補的 requires_critic 條目
 #一律保留，不被矩陣重跑清空（v16 dry-run §11 item 4 教訓）。
@@ -828,6 +848,14 @@ def cmd_run(args):
     data = json.loads(Path(args.input).read_text(encoding="utf-8"))
     inputs = data.get("decision_inputs", data)  # 容許直接餵 decision_inputs 或包一層
     computed = evaluate(inputs)
+
+    conflicts = check_soft_veto_baseline_exclusivity(computed["audit_rows"])
+    if conflicts:
+        print("dd_decision run 自檢失敗：Soft Veto(6/7/7a) 與無 Veto baseline(8/9/9b/10) 同時命中：",
+              file=sys.stderr)
+        for r in conflicts:
+            print(f"  衝突：row {r['row']} 命中 — {r['basis']}", file=sys.stderr)
+        return 1
 
     # 輸入若是完整 judgment.json（帶既有 decision_out）→ 合併寫回，不覆蓋
     # 手填欄；輸入若只是裸 decision_inputs.json（無 decision_out）→ 舊行為
