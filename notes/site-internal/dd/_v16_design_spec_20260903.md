@@ -282,3 +282,5 @@ Orchestrator（opus）只做：spawn、傳檔名、讀 validator 結果、決定
 **讀數**：①裁決 觀望｜追蹤（row 8）與 v15.2／v16.0 同向；覆蓋缺軸 0；數字新鮮度以 KPI 段為準，未再出現前兩輪的「舊季數字」問題。②自查表 6🟢 2🟡（③結構變數：EU AI Act／CLOUD Act 只入盲點未成觸發器，因地區營收占比證據包未涵蓋；④priced-in：方向與前份同向，邊際資訊在倍數 regime 與價格錨）。③牌價換算（§7 單價）：Stage 0 ≈ $6.5、Writer ≈ $51（cache_create 3.11M × $12.5 佔 $39——Fable 的 cache 建立單價是主因，token 量降 60% 但美元成本高於 v15.2 sonnet writer 的 $23–32）。④欄位級缺口清單（地區營收占比、Databricks 財務、管理層薪酬與內部人交易、可轉債條款、AI 收入金額）應回 Stage 0 補為結構化欄位。⑤機械小修：`render_dd --assemble` 的 site_nav 後處理在非 docs/ 路徑拋 ValueError（dry-run 限制，檔已寫）；dd_decision 條件文字（深谷投降／早循環）內含半形逗號觸發 qc 警告。
 
 **退場訊號對照**：覆蓋缺軸 0 ✓；成本 ≤ v15.2 同檔 ✓（token 口徑）；事後抽查待前三份上站後執行。**待持有人裁定**：美元成本口徑是否納入退場訊號。
+
+**§14 補：流程外冷讀抽查（opus，2026-09-04，`notes/site-internal/dd/_audit_SNOW_20260904.md`）**：判斷級 🔴 2／資料級 🔴 2／🟡 11，裁決方向同意觀望｜追蹤。orchestrator 對質兩個判斷級：①「Databricks 相對速度差連 4 季 >2 倍才升趨勢↓，現計 1 季」——證據包自述 2025-10 季度超車且差距逐季拉大，計數是否該為 3–4 季屬真實判斷分歧，且落在 row 8（觀望）↔ row 3（迴避）分界，**成立**；②「GAAP 轉盈利 Q4 FY28 承諾無據」——Investor Day 2026-06-02 逐字稿第 590 行明寫，writer 親讀逐字稿正確，冷讀者只拿證據包未拿逐字稿，**不成立**（改列 Stage 0 資料級缺口：網搜漏掉該公告；抽查輸入須加 must_read 逐字稿）。**依 rule_ledger kill condition（判斷級 🔴 ≥1 例）觸發：Fable 驗收應放回流程內，待持有人裁定形式。**
