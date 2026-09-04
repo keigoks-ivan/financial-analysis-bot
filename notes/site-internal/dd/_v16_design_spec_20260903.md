@@ -210,3 +210,25 @@ Orchestrator（opus）只做：spawn、傳檔名、讀 validator 結果、決定
 - 不把逐字稿讀取外包成摘要（待決 1 未裁前）。
 - 不新建收斂面、不動下游聚合器（update_dd_index／screener／picks 讀 dd-meta 不變）。
 - 不在本輪處理 8 份既有 DD 的未跳脫 `<`（另案 batch fix）。
+
+---
+
+## 11. 首次 dry-run 實測（DELL，2026-09-04，不上站）
+
+| 段 | 輪數 | cache_read | 備註 |
+|---|---|---|---|
+| Stage 0（數字包＋4 組覆蓋軸） | 159 | 11.8M | 17 軸全填；validator 只卡 as_of 格式（已放寬）與 `numbers.segments` 型別 |
+| Stage 1 判斷（sonnet） | 53 | 9.8M | 一輪過；transcripts 因前份已 mark 為 no-new 未讀 |
+| critic 兩輪（opus） | 65 | 9.1M | 首輪 **3🔴＋7🟡**（v15.2 三份 8／7／5），**覆蓋缺軸 0**；🔴 全是判斷層一天內放寬 Bear／無交叉矛盾歸因 |
+| patch 兩輪（sonnet，只改 JSON） | 150 | 20.4M | 兩輪各一次過，裁決不翻 |
+| Stage 2 呈現（sonnet） | **286** | **71.9M** | 87.5KB 全閘過；validate_prose 抓到 3 個捏造數字；但 12 輪都在一分一分湊「商業本質 ≥45%」與補七表缺口 |
+| **合計** | | **≈123M** | v15.2 DELL 138M（−11%），**未達 −40% 退場訊號**；判斷側（0+1+critic+patch）51M 達標，成本被呈現層吃掉 |
+
+**結論**：證據→判斷→critic→patch 這一半已證明有效（🔴 8→3、缺軸 0、判斷層 9.8M）。呈現層失敗原因與修法：
+1. `gen_dd_tables.py` 只產 dashboard／E2／E11／E12／appA／audit，**七表（E3/E5/E6/E7/E8/E9/E10）未從 judgment 生成**，散文只好硬撐篇幅與模組關鍵字（verify_dd_math 的模組偵測是關鍵字式，被「改標題」繞過——要改成檢查表格 id）。→ WP1c 補：從 `industry.tam_table`／`moat.spread_table`／`moat.roic_durability.checkpoints`／`growth.segments`／`quality.dupont`／`quality.ccc`／`governance.scorecard` 生成七表，並在 judgment schema 標必填。
+2. 呈現 agent 為湊「商業本質 ≥45%」逐輪加字（43 次 Edit）。→ render-rules 改：先算好每段目標 bytes 再一次寫；生成表格計入分子；**禁 Edit prose，一段最多重寫一次**。
+3. 機械表內容也會 leak（`judgment.triggers[].action` 含「row8a/8b」）與半形標點。→ `validate_judgment.py` 加 leaks 詞表掃描與 CJK 標點檢查（判斷層就攔）。
+4. `dd_decision.py run` 會覆蓋掉手填的 `rearm_trigger`／`exec_line`／row 8 `requires_critic`。→ run 改為只寫 decision_out 的機械欄，保留其餘。
+5. 判斷層一天內把 Bear 放寬且無歸因（critic 3🔴 的根因）。→ judgment-rules 加「與前份 dd-meta 逐欄 diff 必列於 contradictions（腳本先算 diff 餵進 evidence.prior_dd）」；`dd_prior.py` 輸出 `prior_meta_diff_targets`。
+
+修完 1–5 再跑第二份 dry-run；預期 Stage 2 降到 20–30M、合計 70–80M。
