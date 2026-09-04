@@ -274,7 +274,7 @@ def _evaluate_matrix(inputs: dict) -> dict:
             row8b_hit = bool(cycle_gates_pass)
     _audit(
         audit_rows, "8b",
-        "無 Hard Veto + archetype∈循環子型 + cycle_position∈{深谷投降,早循環} + QC-42反動能五閘全過 + "
+        "無 Hard Veto + archetype∈循環子型 + cycle_position∈{深谷投降／早循環} + QC-42反動能五閘全過 + "
         "moat底線（≠X 且非「↓且C」）→ 進場·條件式（循環衛星）",
         row8b_hit,
         f"archetype={archetype!r}, cycle_position={cycle_position!r}, moat={moat!r}, moat_trend={moat_trend!r}, "

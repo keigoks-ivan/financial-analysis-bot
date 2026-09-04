@@ -284,3 +284,13 @@ Orchestrator（opus）只做：spawn、傳檔名、讀 validator 結果、決定
 **退場訊號對照**：覆蓋缺軸 0 ✓；成本 ≤ v15.2 同檔 ✓（token 口徑）；事後抽查待前三份上站後執行。**待持有人裁定**：美元成本口徑是否納入退場訊號。
 
 **§14 補：流程外冷讀抽查（opus，2026-09-04，`notes/site-internal/dd/_audit_SNOW_20260904.md`）**：判斷級 🔴 2／資料級 🔴 2／🟡 11，裁決方向同意觀望｜追蹤。orchestrator 對質兩個判斷級：①「Databricks 相對速度差連 4 季 >2 倍才升趨勢↓，現計 1 季」——證據包自述 2025-10 季度超車且差距逐季拉大，計數是否該為 3–4 季屬真實判斷分歧，且落在 row 8（觀望）↔ row 3（迴避）分界，**成立**；②「GAAP 轉盈利 Q4 FY28 承諾無據」——Investor Day 2026-06-02 逐字稿第 590 行明寫，writer 親讀逐字稿正確，冷讀者只拿證據包未拿逐字稿，**不成立**（改列 Stage 0 資料級缺口：網搜漏掉該公告；抽查輸入須加 must_read 逐字稿）。**依 rule_ledger kill condition（判斷級 🔴 ≥1 例）觸發：Fable 驗收應放回流程內，待持有人裁定形式。**
+
+## 15. v16.1 兩步制首份正式上站（PANW，2026-09-04）
+
+| 段 | 輪數 | cache_read | cache_create | 備註 |
+|---|---|---|---|---|
+| Stage 0（sonnet ×6） | 210 | 15.7M | 1.21M | 14 軸全 found；KPI 28 項＋`management_commitments` 4 項（新欄）；頂層 `events` 由 batch4 直接交付；財報日三方不一致（8/18 vs 9/1）由 orchestrator 查官方新聞稿定案 9/1；數字包鍵名為巢狀，orchestrator 機械對映 `price_at_dd`／`earnings_recency`；Koyfin 全量回補 139 篇後才拿到 9/1 稿 |
+| Writer（Fable） | 87 | 26.5M | 2.01M | 44 分；判斷 2 輪；整檔重寫 3 段（s8 符號／decision 補下界／s3）；105.8KB 全閘過 |
+| **合計** | | **42.2M** | 3.22M | 裁決 觀望｜追蹤（row 8），前份 6/29 觀望｜條件式核心持倉 |
+
+上站前 orchestrator 機械修正：`gen_dd_tables.render_audit_html` 改沿用 `dd_decision.build_audit_html`（原本把 audit_rows dict 逐行印成 `<p>`）；`dd_decision` 條件字串半形逗號改全形。漏步：`docs/dd/INDEX.md` 登錄（研究頁只收 INDEX.md 有的 DD）——ddreport v3 步驟 4 需明列。來源檔已存 `notes/site-internal/dd/_src/PANW_20260904/`（judgment／scenario／scenario_meta／evidence／prose），作為差異模式（下一次同檔只收資料、只改動到的欄位與段落）的首個基底。

@@ -313,12 +313,12 @@ def render_audit_html(j: dict) -> str | None:
     rows = (j.get("decision_out") or {}).get("audit_rows") or []
     if not rows:
         return None
-    body = "".join(f"<p>{esc(r)}</p>" for r in rows)
-    return (
-        '<details class="audit">\n'
-        "<summary>決策矩陣逐row檢核（機械稽核用，展開查看）</summary>\n"
-        f"{body}\n</details>\n"
-    )
+    # 沿用 dd_decision.build_audit_html 的表格渲染（Row／條件／命中／依據／備註），
+    # 不再把 audit_rows dict 逐行印成 <p>（2026-09-04 PANW 上站前修正）。
+    import sys as _sys
+    _sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from dd_decision import build_audit_html  # noqa: E402
+    return build_audit_html(j["decision_out"]) + "\n"
 
 
 # ---------------------------------------------------------------------------
