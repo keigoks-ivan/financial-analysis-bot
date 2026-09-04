@@ -21,6 +21,12 @@
      numbers.valuation_history／momentum_26w／consensus_revision／peer_financials／
      edgar_concentrations 五個 key 必須存在（值可為 null，但需帶 note 說明）；
      peer_financials 需 ≥2 個對手（不含自身列）。見 scripts/dd_numbers_extra.py。
+  7.（v16.2 新增，預設 WARN，--strict 才 FAIL）
+     transcripts.must_read_all 長度 >1 時，evidence.json 必須有
+     transcripts.digest_path（0e 逐字稿摘要 agent 產出的 .transcript_digest.json 路徑）
+     且該檔案存在於檔案系統——沒有摘要檔代表判斷層拿不到「除最新一季外」逐字稿的結構化
+     內容。本檢查只驗路徑存在，不驗摘要內容本身（內容正確性由 scripts/validate_digest.py
+     另外把關，見該腳本）。
 
 用法：
   python3 scripts/validate_evidence.py .dd_build/AVGO_20260910.evidence.json
@@ -135,6 +141,22 @@ def _extract_quarter_tokens(s):
     if not isinstance(s, str):
         return set()
     return set(re.findall(r"Q\d\b|FY\s?\d{2,4}\b|\b20\d{2}\b", s, re.I))
+
+
+def check_transcript_digest(evidence, warns):
+    """v16.2 新增（見 agent-prompts.md (a2)／validate_digest.py）。
+    全部走 warns——main() 的 --strict 既有邏輯會把 warns 一併升級成 FAIL，
+    天然滿足『預設 WARN、--strict 才擋、舊 evidence 檔仍可跑』。"""
+    transcripts = evidence.get("transcripts") or {}
+    must_read = transcripts.get("must_read_all") or []
+    if len(must_read) <= 1:
+        return
+    digest_path = transcripts.get("digest_path")
+    if not digest_path:
+        warns.append("transcripts.must_read_all 有 >1 篇但缺 transcripts.digest_path（0e 摘要未接線或未回填路徑）")
+        return
+    if not Path(digest_path).exists():
+        warns.append(f"transcripts.digest_path={digest_path!r} 指向的檔案不存在")
 
 
 def check_numbers_extra(evidence, numbers, warns):
@@ -285,6 +307,9 @@ def check_file(path, matrix, strict=False):
 
     # ---- 6. v16.1 新增：numbers_extra 五欄 + latest_quarter_kpis（預設 WARN） ----
     check_numbers_extra(evidence, numbers, warns)
+
+    # ---- 7. v16.2 新增：transcripts.digest_path（預設 WARN） ----
+    check_transcript_digest(evidence, warns)
 
     if strict:
         fails.extend(f"(strict) {w}" for w in warns if not w.startswith("(info)"))

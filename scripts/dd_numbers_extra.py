@@ -239,6 +239,95 @@ def compute_valuation_history(ticker, date_dt):
 
 
 # ---------------------------------------------------------------------------
+# numbers.price_at_dd / price_as_of / earnings_recency（v16.2 新增，扁平三欄）
+# ---------------------------------------------------------------------------
+# WHY（PANW 教訓，見設計稿 §15）：validate_evidence.py 的 NUMBERS_REQUIRED 三欄
+# （price_at_dd／price_as_of／earnings_recency）過去全靠採集 agent 自由發揮回傳格式，
+# PANW dry-run 實際回傳是巢狀鍵（塞在 top_banner 之類的物件裡），orchestrator 得手動
+# 機械對映。這裡直接算好扁平三欄，採集 agent 只補值、不得改鍵名（見 data-collection.md）。
+
+
+def compute_price_and_earnings_recency(ticker, date_dt):
+    """回傳 (price_at_dd, price_as_of, earnings_recency) 三個扁平值。
+    查不到一律 None，並在對應欄位帶 note 說明原因，不得捏造。"""
+    price_at_dd = None
+    price_as_of = None
+    earnings_recency = {
+        "last_earnings_date": None, "trading_days_since": None,
+        "flag_within_3d": None, "note": None,
+    }
+    try:
+        np, pd, yf = _lazy_imports()
+        t = yf.Ticker(ticker)
+        info = {}
+        try:
+            info = t.info or {}
+        except Exception as e:
+            price_at_dd = None
+            price_as_of = None
+
+        rth_close = info.get("regularMarketPrice")
+        rth_time = info.get("regularMarketTime")  # yfinance 有時給 epoch int，有時缺
+        if rth_close is None:
+            # 退回：抓最近一筆日線收盤
+            daily = yf.download(ticker, period="10d", interval="1d", auto_adjust=False, progress=False)
+            if daily is not None and not daily.empty:
+                try:
+                    close_series = daily["Close"][ticker]
+                except Exception:
+                    close_series = daily["Close"]
+                close_series = close_series.dropna()
+                if not close_series.empty:
+                    rth_close = float(close_series.iloc[-1])
+                    price_as_of = close_series.index[-1].strftime("%Y-%m-%d") + "（RTH 收盤，日線 fallback）"
+        if rth_close is not None:
+            price_at_dd = round(float(rth_close), 2)
+            if price_as_of is None:
+                if isinstance(rth_time, (int, float)):
+                    try:
+                        price_as_of = datetime.utcfromtimestamp(rth_time).strftime("%Y-%m-%d") + "（RTH 收盤，UTC）"
+                    except Exception:
+                        price_as_of = date_dt.strftime("%Y-%m-%d") + "（RTH 收盤，regularMarketPrice，時間戳缺失以報告日代）"
+                else:
+                    price_as_of = date_dt.strftime("%Y-%m-%d") + "（RTH 收盤，regularMarketPrice）"
+        else:
+            earnings_recency["note"] = "價格查詢失敗，price_at_dd/price_as_of 留 null"
+
+        try:
+            edates = t.earnings_dates
+            if edates is not None and not edates.empty:
+                now = pd.Timestamp.now(tz=edates.index.tz)
+                past = edates[edates.index <= now]
+                if not past.empty:
+                    last = past.index.max()
+                    earnings_recency["last_earnings_date"] = last.strftime("%Y-%m-%d")
+                    trading_days = int(np.busday_count(last.date(), date_dt.date()))
+                    earnings_recency["trading_days_since"] = trading_days
+                    earnings_recency["flag_within_3d"] = trading_days <= 3
+                    if trading_days <= 3:
+                        earnings_recency["note"] = (
+                            f"距最近財報僅 {trading_days} 個交易日（≤3）——估值層須用財報後價格"
+                            "（postMarketPrice/preMarketPrice），共識 EPS 標「財報前快照」"
+                        )
+                else:
+                    earnings_recency["note"] = "earnings_dates 內查無已發生的財報日"
+            else:
+                earnings_recency["note"] = "t.earnings_dates 為空，改嘗試 t.calendar"
+                cal = t.calendar
+                if isinstance(cal, dict) and cal.get("Earnings Date"):
+                    ed = cal["Earnings Date"]
+                    earnings_recency["note"] += f"；calendar 顯示下次財報日 {ed}（非最近一次已發生財報，僅供參考）"
+        except Exception as e:
+            earnings_recency["note"] = ((earnings_recency["note"] + "；") if earnings_recency["note"] else "") + \
+                f"earnings_dates 查詢失敗：{e}"
+    except Exception as e:
+        earnings_recency["note"] = ((earnings_recency["note"] + "；") if earnings_recency.get("note") else "") + \
+            f"整體計算失敗：{e}"
+
+    return price_at_dd, price_as_of, earnings_recency
+
+
+# ---------------------------------------------------------------------------
 # numbers.momentum_26w
 # ---------------------------------------------------------------------------
 
@@ -685,6 +774,12 @@ def main(argv):
 
     numbers = {}
     print(f"[dd_numbers_extra] {args.ticker} {args.date} peers={peers or '(none)'}", file=sys.stderr)
+
+    print("  -> price_at_dd / price_as_of / earnings_recency (flat) ...", file=sys.stderr)
+    price_at_dd, price_as_of, earnings_recency = compute_price_and_earnings_recency(args.ticker, date_dt)
+    numbers["price_at_dd"] = price_at_dd
+    numbers["price_as_of"] = price_as_of
+    numbers["earnings_recency"] = earnings_recency
 
     print("  -> valuation_history ...", file=sys.stderr)
     numbers["valuation_history"] = compute_valuation_history(args.ticker, date_dt)

@@ -1,7 +1,7 @@
 # stock-analyst v16 — render-rules.md(Stage 2呈現層唯一always-on規則檔)
 
 > v16-draft(WP2)。呈現層規則非判斷類——不動裁決機器、dd-meta契約與`id="decision"`錨點，不需rule_ledger登記。條文逐字搬自SKILL.md QC-37/38/40/54與`references/html-output.md`，語意未動，只砍描述。
-> **你是誰**：Stage 2呈現層agent(sonnet)。輸入=`evidence.json`+`judgment.json`(含`reasoning`段)+本檔+`gen_dd_tables.py`已產出的表格片段。輸出=`prose/{sid}.html`每段一次Write，`render_dd.py --assemble`組裝。
+> **你是誰**：v16.2 (b2)散文agent(sonnet，與(b1)判斷agent分開spawn)。輸入=`judgment.json`(含`reasoning`段，承重數字唯一來源)+本檔+`gen_dd_tables.py`已產出的表格片段；**不讀`evidence.json`全文**(`validate_prose.py`以judgment為主要比對集合，非evidence)。輸出=`prose/{sid}.html`每段一次Write，`render_dd.py --assemble`組裝。
 > **禁**：段內不得出現判斷物沒有的數字(`validate_prose.py`機械擋)；不得新增判斷或改動裁決；不得渲染QC-40詞表命中的機器語言；**不得用`Edit`工具改`prose/`目錄下任何檔案**(只准`Write`整檔，見§0)。
 
 ---
@@ -48,6 +48,8 @@
 | `<!-- APPA_TABLE -->` | `appA` | 附錄A一列式機械評等表 |
 
 `dashboard.html`/`dd-meta.html`/`e2.html`/`e12.html`/`appA-table.html`為`gen_dd_tables.py`必然輸出(缺任一組裝即FAIL)；`e11.html`/`audit.html`條件性。
+
+**段落↔judgment路徑對映的唯一權威＝`scripts/dd_schema/section_map.json`**（`judgment_path_to_sid`/`numbers_sid_overrides`/`always_rewrite_sids`）。散文 agent 決定「這次重跑要不要動某段」與 `dd_delta.py` 算 `sections_to_rewrite` 同讀此檔，讀不到才各自 fallback 內建表。**改對映只改該檔**，不要各自維護一份；檔內 `_note` 欄標了哪些對映是推測、待持有人審。
 
 ---
 

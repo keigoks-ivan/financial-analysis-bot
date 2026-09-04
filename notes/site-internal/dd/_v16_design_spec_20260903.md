@@ -275,22 +275,34 @@ Orchestrator（opus）只做：spawn、傳檔名、讀 validator 結果、決定
 
 | 段 | 輪數 | cache_read | cache_create | output | 備註 |
 |---|---|---|---|---|---|
-| Stage 0（sonnet ×6：4 批覆蓋軸＋數字包／KPI＋Koyfin） | 214 | 16.9M | 1.16M | 25K | 16 軸全 found；KPI 17 項（Q2 FY2027）；`--strict` 首輪 FAIL 兩類：頂層 `events` 五組沒人寫（由 major_events 軸機械分組補）、8 條歷史事實 as_of >180 天（改為 info，strict 不升級） |
-| Writer（Fable，單一 context：判斷→散文→自查） | 70 | 18.7M | 3.11M | 143K | 44 分；判斷 3 輪（首輪 4 FAIL 皆字串含 QC 代號）；verify_dd_math 首輪 FAIL（Max DD 下界 vs Bear 終點）判斷側修正；整檔重寫 3 段（s11／s12／revlog，同一根因）；99.4KB 全閘過 |
-| **合計** | | **35.5M** | 4.27M | 168K | v15.2 SNOW 88M（**−60%**）；v16.0 SNOW 112M（−68%） |
+| Stage 0（sonnet ×6：4 批覆蓋軸＋數字包／KPI＋Koyfin） | 214 | **7.5M**（去重尺） | 1.16M | 25K | 16 軸全 found；KPI 17 項（Q2 FY2027）；`--strict` 首輪 FAIL 兩類：頂層 `events` 五組沒人寫（由 major_events 軸機械分組補）、8 條歷史事實 as_of >180 天（改為 info，strict 不升級） |
+| Writer（Fable，單一 context：判斷→散文→自查） | 70 | **7.5M**（去重尺） | 3.11M | 143K | 44 分；判斷 3 輪（首輪 4 FAIL 皆字串含 QC 代號）；verify_dd_math 首輪 FAIL（Max DD 下界 vs Bear 終點）判斷側修正；整檔重寫 3 段（s11／s12／revlog，同一根因）；99.4KB 全閘過 |
+| **合計** | | **≈14.9M**（去重尺） | 4.27M | 168K | v15.2 SNOW 49M（去重尺，**−70%**）；v16.0 SNOW 60M（去重尺，−75%） |
 
-**讀數**：①裁決 觀望｜追蹤（row 8）與 v15.2／v16.0 同向；覆蓋缺軸 0；數字新鮮度以 KPI 段為準，未再出現前兩輪的「舊季數字」問題。②自查表 6🟢 2🟡（③結構變數：EU AI Act／CLOUD Act 只入盲點未成觸發器，因地區營收占比證據包未涵蓋；④priced-in：方向與前份同向，邊際資訊在倍數 regime 與價格錨）。③牌價換算（§7 單價）：Stage 0 ≈ $6.5、Writer ≈ $51（cache_create 3.11M × $12.5 佔 $39——Fable 的 cache 建立單價是主因，token 量降 60% 但美元成本高於 v15.2 sonnet writer 的 $23–32）。④欄位級缺口清單（地區營收占比、Databricks 財務、管理層薪酬與內部人交易、可轉債條款、AI 收入金額）應回 Stage 0 補為結構化欄位。⑤機械小修：`render_dd --assemble` 的 site_nav 後處理在非 docs/ 路徑拋 ValueError（dry-run 限制，檔已寫）；dd_decision 條件文字（深谷投降／早循環）內含半形逗號觸發 qc 警告。
+**讀數**：①裁決 觀望｜追蹤（row 8）與 v15.2／v16.0 同向；覆蓋缺軸 0；數字新鮮度以 KPI 段為準，未再出現前兩輪的「舊季數字」問題。②自查表 6🟢 2🟡（③結構變數：EU AI Act／CLOUD Act 只入盲點未成觸發器，因地區營收占比證據包未涵蓋；④priced-in：方向與前份同向，邊際資訊在倍數 regime 與價格錨）。③牌價換算（§7 單價）：Stage 0 ≈ $6.5、Writer ≈ $51（cache_create 3.11M × $12.5 佔 $39——Fable 的 cache 建立單價是主因，cache_read 量降 70%（去重尺）但美元成本高於 v15.2 sonnet writer 的 $23–32）。④欄位級缺口清單（地區營收占比、Databricks 財務、管理層薪酬與內部人交易、可轉債條款、AI 收入金額）應回 Stage 0 補為結構化欄位。⑤機械小修：`render_dd --assemble` 的 site_nav 後處理在非 docs/ 路徑拋 ValueError（dry-run 限制，檔已寫）；dd_decision 條件文字（深谷投降／早循環）內含半形逗號觸發 qc 警告。
 
 **退場訊號對照**：覆蓋缺軸 0 ✓；成本 ≤ v15.2 同檔 ✓（token 口徑）；事後抽查待前三份上站後執行。**待持有人裁定**：美元成本口徑是否納入退場訊號。
 
 **§14 補：流程外冷讀抽查（opus，2026-09-04，`notes/site-internal/dd/_audit_SNOW_20260904.md`）**：判斷級 🔴 2／資料級 🔴 2／🟡 11，裁決方向同意觀望｜追蹤。orchestrator 對質兩個判斷級：①「Databricks 相對速度差連 4 季 >2 倍才升趨勢↓，現計 1 季」——證據包自述 2025-10 季度超車且差距逐季拉大，計數是否該為 3–4 季屬真實判斷分歧，且落在 row 8（觀望）↔ row 3（迴避）分界，**成立**；②「GAAP 轉盈利 Q4 FY28 承諾無據」——Investor Day 2026-06-02 逐字稿第 590 行明寫，writer 親讀逐字稿正確，冷讀者只拿證據包未拿逐字稿，**不成立**（改列 Stage 0 資料級缺口：網搜漏掉該公告；抽查輸入須加 must_read 逐字稿）。**依 rule_ledger kill condition（判斷級 🔴 ≥1 例）觸發：Fable 驗收應放回流程內，待持有人裁定形式。**
 
+## 16. v16.2（2026-09-04）：Fable 只寫判斷、散文交 sonnet、逐字稿三季摘要
+
+**動機**：持有人月租方案有兩個週用量上限，PANW（§15）實測 Fable cache_read 7.7M（去重尺）＋cache_creation 2.01M（單價 $12.5/M）在美元成本上佔大頭——v16.1 把判斷與呈現塞進同一個 Fable context，呈現本身不需要 Fable 的判斷力，等於用最貴的模型做最便宜的工作。目標：**Fable cache_read 從 7.7M（PANW，去重尺）壓到 ≤3M／份、sonnet 散文 agent ≤4M／份、每份合計 ≤15M，整週美元成本下降，品質不掉**。
+
+**改法**：Stage 0 新增 **0e 逐字稿摘要（sonnet）**——除最新一季外的三篇法說稿讀成 `transcript_digest.json`（每篇 ≥12 條逐字 quote＋qa_flags），`validate_digest.py` 逐字比對原文把關真偽；判斷 agent 只親讀最新一季，其餘引摘要並標「來源：摘要」。**判斷層（Fable）拆成獨立 agent**，只寫 `judgment.json`／`scenario.json`，不讀 render-rules.md、不產表、不寫散文；交稿前自查收斂為①-⑦（判斷類）。**呈現層另 spawn sonnet agent**，只讀 `judgment.json`（含 `reasoning`）鋪陳，不重讀 `evidence.json` 全文；自查只做⑧散文一致性＋QC-54。Stage 0 三個既有漏洞（PANW 教訓）同步修：`dd_numbers_extra.py` 直接產扁平 `numbers.price_at_dd`／`price_as_of`／`earnings_recency` 三欄（採集 agent 只補值不改鍵名）；`major_events` 批次明文要求同時交付頂層 `events` 五組；財報日唯一來源改為公司 IR 新聞稿。
+
+**品質保險**（機械閘＋逐字驗證，取代原流程內 critic）：`validate_evidence.py --strict` 新增第 7 項檢查 `transcripts.digest_path` 存在；`validate_digest.py` 逐條 quote 在原文找不到逐字子字串即 FAIL，防摘要 agent 幻覺竄改法說內容；六支既有機械閘（bytes／leaks／qc／dd-meta／verify_dd_math／validate_prose）不變；兩個 agent 各自的交稿前自查表覆蓋原七軸 checklist 全部條文，只是拆成①-⑦（判斷）＋⑧+QC-54（呈現）兩份。
+
+**退場訊號**（見 SKILL.v16.draft.md §四，四條，任一未達即回退）：①覆蓋缺軸 0；②前三份上站後事後冷讀抽查判斷級 🔴 合計 0（出現 1 例→判斷層驗收放回流程內，沿用 §13 kill condition）；③機械閘全過、裁決與前份同向或有歸因；④**Fable 每份 cache_read ≤3M、sonnet 散文 agent ≤4M、每份合計 ≤15M**（去重尺；取代 v16.1 的「成本 ≤ v15.2 同檔」與舊目標「Fable ≤8M」——v16.1 已證明總 token 可以更低但美元成本因 Fable 單價更高，v16.2 直接把北極星換成真正要壓的量，判斷 agent 讀取範圍收斂至約 85K token context、≤15 輪即為 ≤3M 的操作定義）。
+
+> **計量尺修正（2026-09-04）**：2026-09-04 起所有數字改用 `dd_token_report.py` 去重尺（依 `message.id` 去重，舊尺重複加總同一則訊息的多個 tool_use 行，高估 2–3 倍）；§11–§15 舊表為未去重尺，已在 §16 重述。
+
 ## 15. v16.1 兩步制首份正式上站（PANW，2026-09-04）
 
 | 段 | 輪數 | cache_read | cache_create | 備註 |
 |---|---|---|---|---|
-| Stage 0（sonnet ×6） | 210 | 15.7M | 1.21M | 14 軸全 found；KPI 28 項＋`management_commitments` 4 項（新欄）；頂層 `events` 由 batch4 直接交付；財報日三方不一致（8/18 vs 9/1）由 orchestrator 查官方新聞稿定案 9/1；數字包鍵名為巢狀，orchestrator 機械對映 `price_at_dd`／`earnings_recency`；Koyfin 全量回補 139 篇後才拿到 9/1 稿 |
-| Writer（Fable） | 87 | 26.5M | 2.01M | 44 分；判斷 2 輪；整檔重寫 3 段（s8 符號／decision 補下界／s3）；105.8KB 全閘過 |
-| **合計** | | **42.2M** | 3.22M | 裁決 觀望｜追蹤（row 8），前份 6/29 觀望｜條件式核心持倉 |
+| Stage 0（sonnet ×6） | 210 | **7.1M**（去重尺） | 1.21M | 14 軸全 found；KPI 28 項＋`management_commitments` 4 項（新欄）；頂層 `events` 由 batch4 直接交付；財報日三方不一致（8/18 vs 9/1）由 orchestrator 查官方新聞稿定案 9/1；數字包鍵名為巢狀，orchestrator 機械對映 `price_at_dd`／`earnings_recency`；Koyfin 全量回補 139 篇後才拿到 9/1 稿 |
+| Writer（Fable） | 87 | **7.7M**（去重尺） | 2.01M | 44 分；判斷 2 輪；整檔重寫 3 段（s8 符號／decision 補下界／s3）；105.8KB 全閘過 |
+| **合計** | | **≈14.8M**（去重尺） | 3.22M | 裁決 觀望｜追蹤（row 8），前份 6/29 觀望｜條件式核心持倉 |
 
 上站前 orchestrator 機械修正：`gen_dd_tables.render_audit_html` 改沿用 `dd_decision.build_audit_html`（原本把 audit_rows dict 逐行印成 `<p>`）；`dd_decision` 條件字串半形逗號改全形。漏步：`docs/dd/INDEX.md` 登錄（研究頁只收 INDEX.md 有的 DD）——ddreport v3 步驟 4 需明列。來源檔已存 `notes/site-internal/dd/_src/PANW_20260904/`（judgment／scenario／scenario_meta／evidence／prose），作為差異模式（下一次同檔只收資料、只改動到的欄位與段落）的首個基底。

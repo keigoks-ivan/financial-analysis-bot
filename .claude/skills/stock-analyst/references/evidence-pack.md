@@ -118,6 +118,36 @@ Agent({
 })
 ```
 
+### 【v16.2 新增】負責 `major_events` 軸的那批，同時交付頂層 `events` 五組
+
+`validate_evidence.py` 的第 5 項檢查（`events` 必含 QC-19 五組）讀的是 evidence.json **頂層**
+`events` 物件，不是 `coverage.major_events`——這兩個是分開的鍵，過去只填了前者、漏填後者，
+造成 `--strict` FAIL 且要靠 orchestrator 事後機械分組補齊（PANW 教訓，見設計稿 §14）。
+
+**規則**：orchestrator 派工時，凡分到 `major_events` 軸的那一批子 agent，spawn prompt 除了
+（a）該軸本身的 `coverage.major_events` 一般作答，**還要**（b）把同一批查證結果拆成 QC-19
+五組，寫進回傳 JSON 的頂層 `events` 鍵：
+
+```json
+{
+  "coverage": { "major_events": { "status": "found", "findings": [...], "queries_run": [...], "note": "" } },
+  "events": {
+    "ma_merger":                       {"status": "found|none", "findings": [...], "queries_run": [...], "note": ""},
+    "lawsuit_class_action":            {"status": "found|none", "findings": [...], "queries_run": [...], "note": ""},
+    "clinical_fda":                    {"status": "found|none", "findings": [...], "queries_run": [...], "note": ""},
+    "product_recall_warning":          {"status": "found|none", "findings": [...], "queries_run": [...], "note": ""},
+    "sec_investigation_restatement":   {"status": "found|none", "findings": [...], "queries_run": [...], "note": ""}
+  }
+}
+```
+
+每組欄位規則與 `coverage.<axis>` 相同（found 需 ≥1 條帶 source／as_of／direction／affects 的
+finding；none 需 ≥2 條 queries_run；不適用如 `clinical_fda` 用 `status:"none"`＋queries_run 說明
+「非藥品/器材業務，已查證無相關監管動作」，**不得省略該組鍵**）。`dd_evidence.py merge` 對頂層鍵
+做深合併，`coverage` 與 `events` 兩個頂層鍵可在同一份 part JSON 裡並存，直接一次 `merge` 即可，
+不需要拆兩個檔案。範例見 `.dd_build/evidence_parts_panw/batch4.json`（PANW 正式上站首份的
+major_events 批次）。
+
 ## 3. Orchestrator 收尾
 
 - 全部軸 merge 完成、`validate_evidence.py` PASS 後，evidence.json 即為 Stage 1 判斷層的唯一輸入

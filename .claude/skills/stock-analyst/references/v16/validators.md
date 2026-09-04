@@ -12,7 +12,9 @@
 | QC-15 | 引用產業/市場數據須標發布日期，>180 天加註 | `validate_evidence.py`：`coverage.<axis>.findings[].as_of` 必填，>180 天標記 | WARN |
 | v16.1 新增 | 估值歷史/動能/共識修正/同業財務/客戶集中度五欄＋最新一季 KPI 須存在且≥4 項有 as_of/source | `dd_numbers_extra.py`（零 LLM 算五欄＋KPI 佔位符）＋`validate_evidence.py::check_numbers_extra`（`numbers.valuation_history`／`momentum_26w`／`consensus_revision`／`peer_financials`／`edgar_concentrations` 存在性、`peer_financials`≥2 對手、`latest_quarter_kpis.items`≥4 項＋quarter 與最新季標籤 token 一致） | WARN（預設）／FAIL（`--strict`，讓舊 evidence 檔仍可跑） |
 | QC-17／QC-18 | 先前報告只讀三區塊，嚴禁整檔 Read | `dd_prior.py`（零 LLM 擷取 revlog／H1-H3+R1-R3／E12 表，寫入 `evidence.json.prior_dd`），從不把整份舊 HTML 交給任何 agent | 結構性（無 FAIL/WARN，機制本身防呆） |
-| QC-19 | 重大事件 5 組強制搜尋 | `coverage-axes.md` `major_events` 軸（5 條 query 模板）＋`validate_evidence.py` 驗 `queries_run`≥2 | FAIL（缺軸） |
+| QC-19 | 重大事件 5 組強制搜尋 | `coverage-axes.md` `major_events` 軸（5 條 query 模板）＋`validate_evidence.py` 驗 `queries_run`≥2；**v16.2**：頂層 `events` 五組鍵齊全性另由 `validate_evidence.py` 第 5 項檢查（`ma_merger`／`lawsuit_class_action`／`clinical_fda`／`product_recall_warning`／`sec_investigation_restatement`），負責 `major_events` 軸的批次須同時交付（`evidence-pack.md` §2 v16.2 段） | FAIL（缺軸／缺頂層 events 鍵） |
+| v16.2 新增 | 頁首/dd-meta 必填三扁平欄 `price_at_dd`／`price_as_of`／`earnings_recency` 不得巢狀藏在 top_banner 之類自造物件裡 | `dd_numbers_extra.py::compute_price_and_earnings_recency`（零 LLM，yfinance `regularMarketPrice`＋`earnings_dates`）；`validate_evidence.py::NUMBERS_REQUIRED`（既有第 4 項檢查，PANW 教訓下新增產出腳本） | FAIL（缺欄或空值） |
+| v16.2 新增 | 逐字稿摘要（除最新一季外三篇）之引句須逐字存在於原文，防摘要 agent 幻覺 | `scripts/validate_digest.py FILE --transcripts DIR`（正規化空白後子字串比對；每篇≥12 條 items；topic 白名單）＋`validate_evidence.py` 第 7 項檢查 `transcripts.digest_path` 存在 | FAIL（`validate_digest.py` 本身）／WARN（`validate_evidence.py` 預設，`--strict` 才 FAIL） |
 | QC-21 | R:R 數學假象防禦（<5% 下行失效，改極端 Bear） | `dd_scenario.py` 算術本體＋`verify_dd_math.py` 檢查 A；「是否套用極端 Bear」仍是 judgment-rules.md §9 的判斷 | FAIL（算術部分） |
 | QC-22 | 股價漂移>10%/20% 標警語 | 無腳本（見末段缺口②） | — |
 | QC-27 | Revenue YoY−OI YoY divergence 分級 | 無腳本重算 divergence（見末段缺口③） | — |
