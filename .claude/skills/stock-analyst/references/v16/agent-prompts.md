@@ -1,7 +1,7 @@
 # references/v16/agent-prompts.md｜v16 五份派工 prompt 模板（WP3）
 
 > 條件載入時點：`ddreport --v16 {ticker}`（`.claude/skills/ddreport/SKILL.v3.draft.md`）Steps 2-6。
-> 佔位符：`{TICKER}` `{DATE}` `{EVIDENCE}`＝`.dd_build/{T}_{D}.evidence.json`；`{JUDGMENT}`／`{SCENARIO}` 同構命名。
+> 佔位符：`{TICKER}` `{DATE}` `{EVIDENCE}`＝`.dd_build/{T}_{D}.evidence.json`；`{JUDGMENT}`／`{SCENARIO}` 同構命名；`{PROSE_BUDGET_TABLE}`＝`dd_prose_budget.py JUDGMENT.json --tables TABLES_DIR` 的輸出（模板 (e) 專用，B 組修法 2）。
 > 判斷語意（QC 門檻、矩陣、checklist 條文本身）一字不動——本檔只改「讀什麼、寫什麼、跑什麼腳本」。
 
 ---
@@ -58,6 +58,12 @@ FAIL → 只准改 judgment.json/scenario.json 欄位、重跑上述三支，≤
 judgment.json 頂層 \`reasoning\` 物件：每個承重數字模組（roic_durability／scenario／valuation／
 premortem 等）≤3 行推導，呈現層會原樣鋪進 <div class="reasoning">——敷衍或寫「估計約 X%」無算式
 即無效輸出。
+
+## 前份漂移逐欄歸因（B 組修法 5，judgment-rules.md §12 item 3b，QC-49 執行細則）
+\`evidence.json.prior_dd.prior_meta\`（前份 dd-meta 全欄）＋\`.drift_watch\`（固定 20 欄清單）已由
+\`dd_prior.py\` 準備好——\`decision_inputs\`／情境六欄／\`rearm\`／\`val\`／\`runway_post_y5\` 與
+\`prior_meta\` 任一欄不同，逐欄在 \`contradictions[]\` 開獨立條目（本次值／前份值／三元歸因排序主因，
+方法論驅動須明標）；無歸因＝\`validate_judgment.py\` FAIL。
 
 ## 最終回報（≤300 字）
 validate_judgment.py --report 原文（成功也附）／decision_out.verdict/role/row_hit/
@@ -206,14 +212,19 @@ Agent({
 - ${EVIDENCE}
 - ${JUDGMENT}（含 reasoning 段——每個承重數字的 ≤3 行推導，原樣鋪進 <div class="reasoning">）
 - .claude/skills/stock-analyst/references/v16/render-rules.md（呈現規則唯一 always-on 檔，
-  由 html-output.md＋QC-40／QC-54＋分章 byte 預算抽出，≤15KB）
+  由 html-output.md＋QC-40／QC-54＋分章 byte 預算抽出，≤15KB；**§0 一次寫條款是本輪新規，讀熟**）
 - .dd_build/{TICKER}_{DATE}.tables/ 下 gen_dd_tables.py 已產出的表格片段（dashboard/e2/e12/
   dd-meta/appA-table/audit〔若存在〕/e11）——**不重寫，只在對應段落插入固定注入標記**，
   render_dd.py 組裝時用標記位置貼入原表格。
+- {PROSE_BUDGET_TABLE}（orchestrator 貼入：`dd_prose_budget.py JUDGMENT.json --tables TABLES_DIR`
+  的輸出——各段預算／已知表格 bytes／散文目標區間；寫每段前先看這裡，不要邊寫邊猜篇幅夠不夠）
 
-## 寫（每段一次 Write，禁分次 Edit）
+## 寫（每段一次性 `Write`，禁一切 `Edit`——見 render-rules.md §0 一次寫條款）
 .dd_build/{TICKER}_{DATE}.prose/{sid}.html（sid ∈ s1…s14／decision／s85〔若有附文獻〕／appA／
-revlog）。每檔只含該段散文＋注入標記，不含 <section>/<details> 外殼（--assemble 會加殼）。
+revlog）。每檔只含該段散文＋注入標記，不含 <section>/<details> 外殼（--assemble 會加殼）。**先在
+context 內把全部段落內容想清楚、對照 {PROSE_BUDGET_TABLE} 落在目標區間內，再逐段一次 Write**——
+禁止先寫短稿再用 `Edit` 加字湊篇幅；驗證 FAIL 時只准該段整檔重寫一次（重新 `Write` 整份
+`prose/{sid}.html`，非局部 Edit），同一段連續兩次仍 FAIL 才回報 orchestrator。
 
 ## 注入標記（精確比對，不得改寫標記文字本身，每個獨立一行，不得被散文包住）
 `<!-- E2 -->`＝§2.B 三假設表插入點／`<!-- E11 -->`＝情境樹表／`<!-- E12 -->`＝觸發器監測表／
@@ -238,10 +249,12 @@ python3 scripts/dd_sections.py bytes docs/dd/DD_{TICKER}_{DATE}.html
 python3 scripts/dd_sections.py leaks docs/dd/DD_{TICKER}_{DATE}.html
 python3 scripts/qc.py docs/dd/DD_{TICKER}_{DATE}.html
 python3 scripts/validate_dd_meta.py docs/dd/DD_{TICKER}_{DATE}.html --report
-超標或命中只重寫該段 prose 檔（{sid}.html），不動 judgment.json、不動其他段檔。
+超標或命中只重寫該段 prose 檔（{sid}.html，整檔 `Write` 重寫一次，非 Edit），不動 judgment.json、
+不動其他段檔。
 
 ## 回報（≤300 字）
-各段 bytes、validate_prose 是否有未覆蓋數字、bytes/leaks/qc 輸出摘要。
+各段 bytes、validate_prose 是否有未覆蓋數字、bytes/leaks/qc 輸出摘要、**重寫段數**（依 render-rules.md
+§0 一次寫條款，每段最多重寫一次；列出因超標/命中而整檔重寫過的 sid 清單，全部一次過寫 0）。
 `
 })
 ```

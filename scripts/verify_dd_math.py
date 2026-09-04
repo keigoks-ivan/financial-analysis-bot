@@ -11,8 +11,10 @@ schema 形狀，本檔驗「數字之間的數學關係」。
      （tol 1.0pp）、AR＝bull_ret/|bear_ret|（tol 0.06）、|max_dd| ≥ |bear_ret|−2pp。
   B. 情境樹年期：正文宣告「FY20XX 情境樹」必須等於情境表頭 max「FY20XX EPS」
      （FAIL）；終端年與報告年+5 差 >1 年（WARN，容忍財年錯位）。
-  C. v15 必交模組存在性：§6.I／§5.F／§7.E／§3.F／§9.D 出現 0 次＝FAIL、
-     僅 1 次＝WARN（疑似只有交叉引用、模組本體缺席）。
+  C. 必交模組存在性：legacy（v15.x 散文寫稿）用 §6.I／§5.F／§7.E／§3.F／§9.D
+     關鍵字計數，0 次＝FAIL、僅 1 次＝WARN（疑似只有交叉引用、模組本體缺席）；
+     v16 產出（dd-meta `"pipeline":"v16"`，gen_dd_tables.py 產生）改檢查
+     <table id="e3">…id="e10"> 是否存在（關鍵字式偵測會被「改標題」繞過）。
   D. 版本戳一致：dd-schema-version meta tag／topbar／頁尾 skill 版號必須等於
      dd-meta "schema"（報告端一號到底，skill 檔內部版號不外流）。
   E. 情境樹確定性比對（v15.2.1）：dd-meta 有 `scenario_tree` → 呼叫
@@ -51,6 +53,9 @@ MODULES = {
     "§3.F": ["TAM／SAM", "TAM/SAM", "逐段 TAM"],
     "§9.D": ["資本配置"],
 }
+# v16 pipeline（gen_dd_tables.py 產出，dd-meta "pipeline":"v16"）改檢查表格 id
+# 存在性——關鍵字式偵測會被「改標題」繞過（v16 dry-run §11 item 1 教訓）。
+V16_TABLE_IDS = ["e3", "e5", "e6", "e7", "e8", "e9", "e10"]
 SP = "[  \\t]*"   # 半形/全形空白
 
 
@@ -136,13 +141,21 @@ def check_file(path):
     else:
         warns.append("情境樹未由 dd_scenario.py 產出（v15.2.1 起建議）")
 
-    # ---- C. v15 必交模組存在性 ----
-    for mod, kws in MODULES.items():
-        n = html.count(mod) + sum(html.count(k) for k in kws)
-        if n == 0:
-            fails.append(f"必交模組 {mod} 全文 0 次出現（含關鍵字 fallback）——整章缺席")
-        elif n == 1:
-            warns.append(f"必交模組 {mod} 僅 1 處痕跡——疑似只有交叉引用、本體缺席")
+    # ---- C. 必交模組存在性 ----
+    if meta.get("pipeline") == "v16":
+        # v16 產出：gen_dd_tables.py 一律產生 <table id="e{N}">，直接查表格
+        # id 存在性（不會被「改標題」繞過）。
+        for tid in V16_TABLE_IDS:
+            if not re.search(rf'<table\b[^>]*\bid="{tid}"', html):
+                fails.append(f"必交模組表格 <table id=\"{tid}\"> 全文缺席（v16 pipeline 表格存在性檢查）")
+    else:
+        # legacy（v15.x 散文寫稿）：關鍵字式偵測。
+        for mod, kws in MODULES.items():
+            n = html.count(mod) + sum(html.count(k) for k in kws)
+            if n == 0:
+                fails.append(f"必交模組 {mod} 全文 0 次出現（含關鍵字 fallback）——整章缺席")
+            elif n == 1:
+                warns.append(f"必交模組 {mod} 僅 1 處痕跡——疑似只有交叉引用、本體缺席")
 
     # ---- D. 版本戳一致 ----
     stamps = set(re.findall(r'dd-schema-version"\s+content="(v[\d.]+)"', html))

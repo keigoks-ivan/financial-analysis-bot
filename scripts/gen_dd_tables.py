@@ -14,6 +14,13 @@ mechanical fragments that used to be hand-written by the Stage 2 writer:
   appA-table.html  Appendix A one-row mechanical grade table
   audit.html       <details class="audit"> block (only if decision_out has
                    audit_rows; omitted otherwise -- no empty-shell rendering)
+  e3/e5/e6/e7/e8/e9/e10.html
+                   QC-38 商業本質七表（WP1c 修法1）-- <table id="e{N}"> each,
+                   sourced from industry.tam_table / moat.{spread_table,
+                   competitors,roic_durability.checkpoints} / growth.segments
+                   / quality.{dupont,ccc} / governance.{capital_returns,
+                   scorecard}; field shapes documented in
+                   scripts/dd_schema/judgment-to-ddmeta.md §五之二
 
 Usage:
   python3 scripts/gen_dd_tables.py JUDGMENT.json --out DIR \\
@@ -189,6 +196,13 @@ def build_dd_meta(j: dict, scenario_meta: dict | None) -> dict:
     if km:
         meta["kill_metrics"] = km
 
+    # v16 pipeline provenance -- verify_dd_math.py's §C module-existence check
+    # reads this to switch from the legacy keyword-count heuristic to a
+    # table-id existence check (<table id="e3">…id="e10">) for gen_dd_tables.py
+    # output (WP1c 修法1 §11 item 1). Unconditional: this script IS the v16
+    # table generator, there is no non-v16 caller.
+    meta["pipeline"] = "v16"
+
     # Drop None values -- dd-meta contract forbids `null` for present keys
     # (validate_dd_meta.py: "must not be null (omit field instead)").
     return {k: v for k, v in meta.items() if v is not None}
@@ -308,6 +322,187 @@ def render_audit_html(j: dict) -> str | None:
 
 
 # ---------------------------------------------------------------------------
+# E3 -- §3.F 逐段 TAM/SAM + 利潤池合一 (industry.tam_table[])
+# ---------------------------------------------------------------------------
+
+def render_e3_html(j: dict) -> str:
+    rows_data = (j.get("industry") or {}).get("tam_table") or []
+    rows = []
+    for r in rows_data:
+        rows.append(
+            "<tr><td>{seg}</td><td>{now}</td><td>{y5}</td><td>{pen}</td><td>{cagr}</td>"
+            "<td>{vcp}</td><td>{pp}</td></tr>".format(
+                seg=esc(r.get("segment")), now=esc(r.get("tam_now")), y5=esc(r.get("tam_5y")),
+                pen=esc(r.get("penetration_pct")), cagr=esc(r.get("cagr_pct")),
+                vcp=esc(r.get("value_chain_position")), pp=esc(r.get("profit_pool_shift")),
+            )
+        )
+    header = (
+        "<tr><th>段</th><th>TAM(現)</th><th>TAM(5Y)</th><th>滲透率</th>"
+        "<th>段CAGR</th><th>Value Chain位置</th><th>利潤池占比遷移</th></tr>"
+    )
+    return '<table id="e3">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n"
+
+
+# ---------------------------------------------------------------------------
+# E5 -- 二維評分 + Moat-to-Numbers 合一 (moat.{execution,pricing,combined,
+# grade} 摘要 + moat.spread_table[])
+# ---------------------------------------------------------------------------
+
+def render_e5_html(j: dict) -> str:
+    moat = j.get("moat") or {}
+    summary = (
+        '<p class="e5-summary">執行力 {ex} ｜ 定價力 {pr} ｜ 綜合 {comb} ｜ 護城河評級 {grade}</p>'
+    ).format(ex=esc(moat.get("execution")), pr=esc(moat.get("pricing")),
+              comb=esc(moat.get("combined")), grade=esc(moat.get("grade")))
+    rows_data = moat.get("spread_table") or []
+    rows = []
+    for r in rows_data:
+        rows.append(
+            "<tr><td>{drv}</td><td>{now}</td><td>{hist}</td><td>{spread}</td><td>{link}</td></tr>".format(
+                drv=esc(r.get("driver")), now=esc(r.get("metric_now")),
+                hist=esc(r.get("metric_hist_avg")), spread=esc(r.get("spread")),
+                link=esc(r.get("moat_linkage")),
+            )
+        )
+    header = "<tr><th>驅動因子</th><th>現值</th><th>歷史均值</th><th>價差</th><th>護城河連結</th></tr>"
+    table = '<table id="e5">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n"
+    return summary + "\n" + table
+
+
+# ---------------------------------------------------------------------------
+# E6 -- §5.F 對手 P&L 對照 (moat.competitors[])
+# ---------------------------------------------------------------------------
+
+def render_e6_html(j: dict) -> str:
+    rows_data = (j.get("moat") or {}).get("competitors") or []
+    rows = []
+    for r in rows_data:
+        rows.append(
+            "<tr><td>{name}</td><td>{rg}</td><td>{gm}</td><td>{om}</td><td>{rd}</td>"
+            "<td>{fcf}</td><td>{nc}</td><td>{note}</td></tr>".format(
+                name=esc(r.get("name")), rg=esc(r.get("rev_growth")), gm=esc(r.get("gm")),
+                om=esc(r.get("om")), rd=esc(r.get("rd_intensity")), fcf=esc(r.get("fcf_margin")),
+                nc=esc(r.get("net_cash")), note=esc(r.get("strategy_note")),
+            )
+        )
+    header = (
+        "<tr><th>對手</th><th>營收成長</th><th>毛利率</th><th>營業利益率</th>"
+        "<th>研發密度</th><th>FCF利潤率</th><th>淨現金</th><th>策略備註</th></tr>"
+    )
+    return '<table id="e6">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n"
+
+
+# ---------------------------------------------------------------------------
+# E7 -- §5.R 四檢查點 (moat.roic_durability.checkpoints[] + 摘要列)
+# ---------------------------------------------------------------------------
+
+def render_e7_html(j: dict) -> str:
+    rd = (j.get("moat") or {}).get("roic_durability") or {}
+    rows_data = rd.get("checkpoints") or []
+    rows = []
+    for r in rows_data:
+        rows.append(
+            "<tr><td>{n}</td><td>{q}</td><td>{status}</td><td>{ev}</td></tr>".format(
+                n=esc(r.get("n")), q=esc(r.get("question")), status=esc(r.get("status")),
+                ev=esc(r.get("evidence")),
+            )
+        )
+    header = "<tr><th>#</th><th>檢查點</th><th>狀態</th><th>證據</th></tr>"
+    summary = (
+        '<tr><td colspan="4">象限：{quad}｜ROIIC：{roiic}｜再投資率：{ri}｜'
+        "內生成長天花板：{ceil}（{note}）</td></tr>"
+    ).format(quad=esc(rd.get("quadrant")), roiic=esc(rd.get("roiic")),
+              ri=esc(rd.get("reinvest_rate")), ceil=esc(rd.get("endo_ceiling")),
+              note=esc(rd.get("formula_note")))
+    return '<table id="e7">\n' + header + "\n" + "\n".join(rows) + "\n" + summary + "\n</table>\n"
+
+
+# ---------------------------------------------------------------------------
+# E8 -- §6.I 分部前瞻 build (growth.segments[])
+# ---------------------------------------------------------------------------
+
+def render_e8_html(j: dict) -> str:
+    rows_data = (j.get("growth") or {}).get("segments") or []
+    rows = []
+    for r in rows_data:
+        rows.append(
+            "<tr><td>{seg}</td><td>{fy0}</td><td>{fy1}</td><td>{fy2}</td>"
+            "<td>{om0}→{om1}→{om2}</td><td>{eps}</td></tr>".format(
+                seg=esc(r.get("segment")), fy0=esc(r.get("fy0_rev")), fy1=esc(r.get("fy1e_rev")),
+                fy2=esc(r.get("fy2e_rev")), om0=esc(r.get("om_fy0")), om1=esc(r.get("om_fy1e")),
+                om2=esc(r.get("om_fy2e")), eps=esc(r.get("eps_contribution_pct")),
+            )
+        )
+    header = (
+        "<tr><th>段</th><th>FY0營收</th><th>FY+1E</th><th>FY+2E</th>"
+        "<th>OM軌跡(FY0→FY+2E)</th><th>對EPS貢獻%</th></tr>"
+    )
+    return '<table id="e8">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n"
+
+
+# ---------------------------------------------------------------------------
+# E9 -- §7.E DuPont + CCC 合一 (quality.dupont[] + quality.ccc[], joined by
+# `year`)
+# ---------------------------------------------------------------------------
+
+def render_e9_html(j: dict) -> str:
+    quality = j.get("quality") or {}
+    dupont = {r.get("year"): r for r in (quality.get("dupont") or []) if isinstance(r, dict)}
+    ccc = {r.get("year"): r for r in (quality.get("ccc") or []) if isinstance(r, dict)}
+    years = sorted({y for y in list(dupont.keys()) + list(ccc.keys()) if y is not None},
+                   key=lambda y: str(y))
+    rows = []
+    for y in years:
+        d = dupont.get(y, {})
+        c = ccc.get(y, {})
+        rows.append(
+            "<tr><td>{y}</td><td>{nm}</td><td>{at}</td><td>{lev}</td><td>{roe}</td>"
+            "<td>{dso}</td><td>{dio}</td><td>{dpo}</td><td>{ccc}</td></tr>".format(
+                y=esc(y), nm=esc(d.get("net_margin")), at=esc(d.get("asset_turnover")),
+                lev=esc(d.get("leverage")), roe=esc(d.get("roe")), dso=esc(c.get("dso")),
+                dio=esc(c.get("dio")), dpo=esc(c.get("dpo")), ccc=esc(c.get("ccc")),
+            )
+        )
+    header = (
+        "<tr><th>年度</th><th>淨利率</th><th>資產週轉</th><th>槓桿</th><th>ROE</th>"
+        "<th>DSO</th><th>DIO</th><th>DPO</th><th>CCC</th></tr>"
+    )
+    return '<table id="e9">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n"
+
+
+# ---------------------------------------------------------------------------
+# E10 -- §9.D 資本配置 track (governance.capital_returns[] 逐年表 +
+# governance.scorecard[] 附列)
+# ---------------------------------------------------------------------------
+
+def render_e10_html(j: dict) -> str:
+    gov = j.get("governance") or {}
+    rows_data = gov.get("capital_returns") or []
+    rows = []
+    for r in rows_data:
+        rows.append(
+            "<tr><td>{y}</td><td>{bb}</td><td>{div}</td><td>{capex}</td><td>{rd}</td></tr>".format(
+                y=esc(r.get("year")), bb=esc(r.get("buyback")), div=esc(r.get("dividend")),
+                capex=esc(r.get("capex")), rd=esc(r.get("rd")),
+            )
+        )
+    header = "<tr><th>年度</th><th>回購</th><th>股利</th><th>資本支出</th><th>研發</th></tr>"
+    table = '<table id="e10">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n"
+    score_rows = gov.get("scorecard") or []
+    if score_rows:
+        items = "".join(
+            "<li>{y}：{action}（{grade}）{rationale}</li>".format(
+                y=esc(r.get("year")), action=esc(r.get("action")), grade=esc(r.get("grade")),
+                rationale=(("—" + esc(r.get("rationale"))) if r.get("rationale") else ""),
+            )
+            for r in score_rows
+        )
+        table += f"<ul class=\"e10-scorecard\">{items}</ul>\n"
+    return table
+
+
+# ---------------------------------------------------------------------------
 # dashboard.html -- status-bar + hypothesis-box (best-effort; not a byte-for-
 # byte target of the WP1c round-trip test, which only diffs dd-meta / e12)
 # ---------------------------------------------------------------------------
@@ -389,6 +584,15 @@ def main():
     (out_dir / "appA-table.html").write_text(render_appA_table_html(j), encoding="utf-8")
     (out_dir / "dashboard.html").write_text(render_dashboard_html(j, scenario_meta), encoding="utf-8")
 
+    # WP1c 修法1（七表由判斷物生成）
+    (out_dir / "e3.html").write_text(render_e3_html(j), encoding="utf-8")
+    (out_dir / "e5.html").write_text(render_e5_html(j), encoding="utf-8")
+    (out_dir / "e6.html").write_text(render_e6_html(j), encoding="utf-8")
+    (out_dir / "e7.html").write_text(render_e7_html(j), encoding="utf-8")
+    (out_dir / "e8.html").write_text(render_e8_html(j), encoding="utf-8")
+    (out_dir / "e9.html").write_text(render_e9_html(j), encoding="utf-8")
+    (out_dir / "e10.html").write_text(render_e10_html(j), encoding="utf-8")
+
     audit_html = render_audit_html(j)
     if audit_html:
         (out_dir / "audit.html").write_text(audit_html, encoding="utf-8")
@@ -398,7 +602,8 @@ def main():
         if src.exists():
             (out_dir / "e11.html").write_text(src.read_text(encoding="utf-8"), encoding="utf-8")
 
-    print(f"寫入 {out_dir}: dd-meta.html, e2.html, e12.html, appA-table.html, dashboard.html"
+    print(f"寫入 {out_dir}: dd-meta.html, e2.html, e12.html, appA-table.html, dashboard.html, "
+          "e3.html, e5.html, e6.html, e7.html, e8.html, e9.html, e10.html"
           + (", audit.html" if audit_html else "（無 audit_rows，略過 audit.html）"))
 
 

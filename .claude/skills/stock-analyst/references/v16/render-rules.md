@@ -2,7 +2,24 @@
 
 > v16-draft(WP2)。呈現層規則非判斷類——不動裁決機器、dd-meta契約與`id="decision"`錨點，不需rule_ledger登記。條文逐字搬自SKILL.md QC-37/38/40/54與`references/html-output.md`，語意未動，只砍描述。
 > **你是誰**：Stage 2呈現層agent(sonnet)。輸入=`evidence.json`+`judgment.json`(含`reasoning`段)+本檔+`gen_dd_tables.py`已產出的表格片段。輸出=`prose/{sid}.html`每段一次Write，`render_dd.py --assemble`組裝。
-> **禁**：段內不得出現判斷物沒有的數字(`validate_prose.py`機械擋)；不得新增判斷或改動裁決；不得渲染QC-40詞表命中的機器語言。
+> **禁**：段內不得出現判斷物沒有的數字(`validate_prose.py`機械擋)；不得新增判斷或改動裁決；不得渲染QC-40詞表命中的機器語言；**不得用`Edit`工具改`prose/`目錄下任何檔案**(只准`Write`整檔，見§0)。
+
+---
+
+## 0｜一次寫(One-Shot Write)條款(B組修法2，2026-09-04)
+
+**成因**：dry-run實測(設計稿§11)DELL呈現層為湊「商業本質(s3-s7)含表格≥45%」逐段Edit 43次，71.9M cache_read，未達降本目標。修法＝把「該寫多少」提前算好一次寫齊，事後不逐輪加字。
+
+1. orchestrator在spawn呈現agent前先跑`python3 scripts/dd_prose_budget.py JUDGMENT.json --tables TABLES_DIR`，輸出表整段貼進`{PROSE_BUDGET_TABLE}`佔位符(見agent-prompts.md模板(e))——該表已用`dd_sections.py`的分章預算逐段扣掉將注入的表格bytes，得散文目標區間(下限＝上限的70%)。
+2. 呈現agent在context內把全部段落(依§1內部分析順序)的散文內容想清楚，對照`{PROSE_BUDGET_TABLE}`落在目標區間內，**逐段一次性`Write`到`prose/{sid}.html`**——禁止先寫短稿再用`Edit`加字湊篇幅，`Write`是唯一允許的寫入操作。
+3. 篇幅目標一律以orchestrator給的`dd_prose_budget`表為準，**不得為湊45%商業本質占比逐輪加字**；某段寫完仍低於目標下界，先檢查是否有承重推導漏寫(`reasoning`欄未鋪陳完)，不是灌水填充句。
+4. 驗證(`dd_sections.py bytes`／`leaks`／`validate_prose.py`，見§10)FAIL時，**只准該段整檔重寫一次**(重新`Write`整份`prose/{sid}.html`，非局部Edit)；同一段連續兩次仍FAIL才回報orchestrator(可能是判斷物本身有問題)。
+5. **機械表內容若觸發`leaks`／標點檢查**(如`gen_dd_tables.py`產出的`e12.html`/`audit.html`片段含未跳脫標點或洩漏詞)，**呈現層不得自行改表格檔**——回報orchestrator由判斷層(Stage 1／`gen_dd_tables.py`)修正後重新產表；呈現層只負責散文段落。
+6. **模組偵測改以表格id為準**：`verify_dd_math.py`判斷五模組/七表是否存在看的是表格檔(`e3.html`/`e5.html`…等`gen_dd_tables.py`產物)是否存在，不是散文標題字樣關鍵字——**散文不需要為了讓`verify_dd_math.py`偵測到模組而改章節標題**(v15.2曾用「改標題」繞過關鍵字式偵測，是漏檢成因之一；v16已改偵測依據，此條專指v16產出，不回溯套用v15.2遺留檔案的標題慣例)。
+
+### 0.1｜§5.R／§5.F／§6.I標題慣例
+
+三個承重子模組維持既有標題字樣，寫法固定為「§5.R報酬持續期檢核」「§5.F對手財務深度對照」「§6.I分部前瞻」(對應`references/html-output.md`既有章節顯示順序表)——這是可讀性慣例，非機械偵測依據(偵測已改表格id，見§0第6點)：三段可依§7篇幅預算收斂內容(留解釋、餘自證)，但子標題本身不可省略、不可與其他子模組合併改寫，維持讀者與稽核可辨識的固定錨點。
 
 ---
 

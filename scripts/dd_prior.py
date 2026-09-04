@@ -96,6 +96,17 @@ def _version_tuple(s):
 
 _FNAME_RE = re.compile(r"^DD_(?P<ticker>.+)_(?P<date>\d{8})\.html$")
 
+# v16 修法 5（judgment-rules.md §12 item 3b, QC-49 執行細則）：Stage 1 判斷層
+# 逐欄比對 prior_meta 與本次 decision_inputs/情境六欄/rearm/val/runway_post_y5，
+# 任一不同須在 contradictions[] 有獨立條目。固定清單，語意見設計稿 §5.5。
+DRIFT_WATCH = [
+    "dca_verdict", "dca_role", "signal", "val", "ma", "trap",
+    "moat_trend", "runway_post_y5", "asym_ratio", "ev5y_pct",
+    "irr_base_pct", "max_dd_pct", "bull_5y_price", "bear_5y_price",
+    "p_bull_pct", "p_bear_pct", "rearm_trigger", "price_at_dd",
+    "archetype", "cycle_position",
+]
+
 
 def find_dd_files(ticker_norm: str):
     """[(YYYYMMDD, Path), ...] ascending by date, for this ticker only."""
@@ -321,6 +332,11 @@ def build_prior_dd(ticker_norm: str, before_date: str | None) -> dict:
         "dca_role": meta.get("dca_role") if meta else None,
         "price_at_dd": meta.get("price_at_dd") if meta else None,
         "revlog": extract_revlog(html),
+        # v16 修法 5: 前份 dd-meta 全欄原樣（判斷層逐欄 diff 用；不裁剪）＋固定
+        # drift_watch 清單（Stage 1 據此在 contradictions[] 逐項歸因，見
+        # judgment-rules.md §12 item 3b）。
+        "prior_meta": meta if meta else None,
+        "drift_watch": DRIFT_WATCH,
     }
     hr = extract_hr_tables(html)
     out["H"] = hr["H"]

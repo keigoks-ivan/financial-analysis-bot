@@ -802,14 +802,53 @@ def cmd_check_all(glob_pat: str, infer=False) -> int:
 # CLI
 # ---------------------------------------------------------------------------
 
+# WP1c 修法4：run 對一份完整 judgment.json（帶既有 decision_out）寫回時，只
+# 覆寫機械可判欄；rearm_trigger／exec_line／人工補的 requires_critic 條目
+#一律保留，不被矩陣重跑清空（v16 dry-run §11 item 4 教訓）。
+_MECHANICAL_DECISION_OUT_KEYS = ["verdict", "role", "row_hit", "pacing", "holding_cap", "audit_rows"]
+
+
+def _merge_decision_out(existing: dict, computed: dict) -> dict:
+    """合併規則：`_MECHANICAL_DECISION_OUT_KEYS`（矩陣機械輸出，逐次覆寫）＋
+    `requires_critic`（既有＋新算，去重、保留順序）；`existing` 其餘欄位
+    （rearm_trigger／exec_line／任何未來新增的人工欄）原樣保留。"""
+    merged = dict(existing)
+    for k in _MECHANICAL_DECISION_OUT_KEYS:
+        merged[k] = computed.get(k)
+    combined_rc = list(existing.get("requires_critic") or []) + list(computed.get("requires_critic") or [])
+    seen = []
+    for item in combined_rc:
+        if item not in seen:
+            seen.append(item)
+    merged["requires_critic"] = seen
+    return merged
+
+
 def cmd_run(args):
     data = json.loads(Path(args.input).read_text(encoding="utf-8"))
     inputs = data.get("decision_inputs", data)  # 容許直接餵 decision_inputs 或包一層
-    out = evaluate(inputs)
+    computed = evaluate(inputs)
+
+    # 輸入若是完整 judgment.json（帶既有 decision_out）→ 合併寫回，不覆蓋
+    # 手填欄；輸入若只是裸 decision_inputs.json（無 decision_out）→ 舊行為
+    # 不變（out＝矩陣機械輸出本身）。
+    is_judgment = isinstance(data, dict) and "decision_out" in data
+    if is_judgment:
+        out = _merge_decision_out(data.get("decision_out") or {}, computed)
+        data["decision_out"] = out
+    else:
+        out = computed
+
     print(json.dumps(out, ensure_ascii=False, indent=2))
     if args.json:
-        Path(args.json).write_text(json.dumps(out, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        print(f"已寫 {args.json}", file=sys.stderr)
+        payload = data if is_judgment else out
+        Path(args.json).write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        print(
+            f"已寫 {args.json}"
+            + ("（輸入含既有 decision_out：已合併機械欄，rearm_trigger/exec_line/人工requires_critic保留）"
+               if is_judgment else ""),
+            file=sys.stderr,
+        )
     if args.html:
         Path(args.html).write_text(build_audit_html(out), encoding="utf-8")
         print(f"已寫 {args.html}", file=sys.stderr)
@@ -820,10 +859,30 @@ def main(argv):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="cmd", required=True)
 
-    p_run = sub.add_parser("run", help="跑一份 decision_inputs.json，輸出 decision_out")
+    p_run = sub.add_parser(
+        "run",
+        help="跑一份 decision_inputs.json 或完整 judgment.json，輸出 decision_out",
+        description=(
+            "INPUT 可以是裸 decision_inputs.json，也可以是完整 judgment.json"
+            "（帶 decision_inputs + 既有 decision_out）。\n"
+            "INPUT 帶既有 decision_out 時（WP1c 修法4）：只覆寫機械可判欄"
+            "（verdict/role/row_hit/pacing/holding_cap/audit_rows）＋"
+            "requires_critic（既有條目＋矩陣新算條目，合併去重，保留順序）；"
+            "既有 decision_out 其餘欄（rearm_trigger／exec_line／任何人工欄）"
+            "原樣保留，不被本次重跑清空。--json 此時寫回的是整份 judgment.json"
+            "（decision_out 已合併），不是裸 decision_out。\n"
+            "INPUT 不帶 decision_out（裸 decision_inputs.json）時：行為不變，"
+            "--json 寫的就是矩陣機械輸出本身。"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     p_run.add_argument("input")
-    p_run.add_argument("--html", metavar="OUT")
-    p_run.add_argument("--json", metavar="OUT")
+    p_run.add_argument("--html", metavar="OUT", help="寫 <details class=\"audit\"> HTML 片段")
+    p_run.add_argument(
+        "--json", metavar="OUT",
+        help="寫回 JSON；INPUT 是完整 judgment.json 時寫回整份合併後檔案，"
+             "INPUT 是裸 decision_inputs.json 時寫回裸 decision_out",
+    )
 
     p_check = sub.add_parser("check", help="從既有 DD html 的 dd-meta 抽 decision_inputs，跑矩陣比對")
     p_check.add_argument("html")

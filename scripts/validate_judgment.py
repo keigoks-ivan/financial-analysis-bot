@@ -25,6 +25,11 @@ Two layers:
        - scenario_ref, when it resolves to an existing file, is cross-checked
          via dd_scenario.check_meta() (reuses the existing, already-tested
          scenario arithmetic instead of re-deriving it here)
+  3. Machine-language / CJK-punctuation leak scan (WP1c 修法3): every string
+     leaf is checked against dd_sections.LEAK_PATTERNS and qc.CJK_PUNCT_RE;
+     any hit is a FAIL with its JSON path + snippet. Exempt:
+     decision_out.audit_rows[] (whole subtree) and the "（QC-\\d+）" citation
+     inside reasoning.* strings only.
 
 Usage:
   python3 scripts/validate_judgment.py FILE.json [--report]
@@ -47,6 +52,10 @@ try:
     import dd_scenario  # noqa: E402
 except Exception:  # pragma: no cover - defensive; scenario cross-check just skips
     dd_scenario = None
+
+# WP1c 修法3：判斷層就攔機器語言與半形標點——重用既有詞表/regex，不複製。
+import dd_sections  # noqa: E402 — LEAK_PATTERNS（QC-40 詞表，單一權威）
+import qc  # noqa: E402 — CJK_PUNCT_RE（半形標點規則，單一權威）
 
 
 # ---------------------------------------------------------------------------
@@ -254,6 +263,62 @@ def cross_field_checks(data: dict, judgment_path: Path) -> tuple[list, list]:
 
 
 # ---------------------------------------------------------------------------
+# layer 3: machine-language / CJK-punctuation leak scan (WP1c 修法3)
+#
+# 判斷層就攔——散文/呈現層才攔已經太晚（v16 dry-run §11 item 3 教訓：
+# `judgment.triggers[].action` 含「row8a/8b」直接流進 E12 表）。掃所有字串
+# 葉節點，命中 dd_sections.LEAK_PATTERNS（QC-40 詞表，import 重用不複製）或
+# qc.CJK_PUNCT_RE（半形標點）即 FAIL。
+#
+# 豁免（僅此兩類，見 _v16_design_spec_20260903.md §11 item 3）：
+#   - decision_out.audit_rows[] 整個子樹——機器稽核表本就用矩陣語言
+#     （row/signal/val/moat_trend/…），渲染在 <details class="audit"> 折疊區。
+#   - reasoning.* 字串中的「（QC-\d+）」括注——QC-33 推導允許引用查核代號，
+#     只遮蔽這個括注片段，reasoning 內其餘 leak pattern（如欄名外洩）仍抓。
+# ---------------------------------------------------------------------------
+
+_LEAK_CHECK_RES = [(p, re.compile(p)) for p in dd_sections.LEAK_PATTERNS]
+_QC_ANNOTATION_RE = re.compile(r"[（(]QC-\d+[）)]")
+_LEAK_SKIP_SUBTREES = ("decision_out.audit_rows",)
+
+
+def _walk_strings(obj, path):
+    """Yield (path, string_value) for every string leaf, skipping the paths
+    (and their descendants) listed in `_LEAK_SKIP_SUBTREES`."""
+    if any(path == p or path.startswith(p + ".") or path.startswith(p + "[")
+           for p in _LEAK_SKIP_SUBTREES):
+        return
+    if isinstance(obj, str):
+        if obj:
+            yield path, obj
+    elif isinstance(obj, dict):
+        for k, v in obj.items():
+            yield from _walk_strings(v, f"{path}.{k}" if path else k)
+    elif isinstance(obj, list):
+        for i, v in enumerate(obj):
+            yield from _walk_strings(v, f"{path}[{i}]")
+
+
+def leak_and_punct_checks(data: dict) -> list:
+    fails = []
+    for path, text in _walk_strings(data, ""):
+        scan_text = text
+        if path.startswith("reasoning."):
+            scan_text = _QC_ANNOTATION_RE.sub(lambda m: " " * len(m.group(0)), scan_text)
+        for pat_src, pat in _LEAK_CHECK_RES:
+            m = pat.search(scan_text)
+            if m:
+                ctx = scan_text[max(0, m.start() - 15):m.start() + 25].strip()
+                fails.append(
+                    f"$.{path}: 機器語言外洩 {m.group(0)!r}（詞表 {pat_src!r}）—「…{ctx}…」"
+                )
+        for m in qc.CJK_PUNCT_RE.finditer(text):
+            ctx = text[max(0, m.start() - 10):m.start() + 15].strip()
+            fails.append(f"$.{path}: CJK 接半形標點 {m.group(0)!r}（應用全形，如 ，。：）—「…{ctx}…」")
+    return fails
+
+
+# ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
 
@@ -263,8 +328,9 @@ def validate_file(path: Path):
 
     struct_errs = schema_validate(data, schema, "$")
     cross_fails, cross_warns = cross_field_checks(data, path)
+    leak_fails = leak_and_punct_checks(data)
 
-    fails = struct_errs + cross_fails
+    fails = struct_errs + cross_fails + leak_fails
     warns = cross_warns
     return fails, warns
 

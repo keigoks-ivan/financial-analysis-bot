@@ -116,14 +116,14 @@
           }
         },
         "profit_pool_dir": {"type": ["string", "null"]},
-        "tam_table": {"type": "array", "items": {"type": "object"}}
+        "tam_table": {"type": "array", "minItems": 1, "items": {"type": "object"}}
       }
     },
 
     "moat": {
       "type": "object",
       "required": ["execution", "pricing", "combined", "grade", "score", "trend", "trend_evidence",
-                   "spread_table", "threats", "roic_durability"],
+                   "spread_table", "threats", "roic_durability", "competitors"],
       "properties": {
         "execution": {"type": ["number", "null"]},
         "pricing": {"type": ["number", "null"]},
@@ -132,7 +132,7 @@
         "score": {"type": ["number", "null"]},
         "trend": {"type": ["string", "null"], "enum": ["↑", "→", "↓", null]},
         "trend_evidence": {"type": ["string", "null"]},
-        "spread_table": {"type": "array", "items": {"type": "object"}},
+        "spread_table": {"type": "array", "minItems": 1, "items": {"type": "object"}},
         "threats": {
           "type": "array",
           "items": {
@@ -144,12 +144,31 @@
             }
           }
         },
+        "competitors": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["name", "rev_growth", "gm", "om", "rd_intensity", "fcf_margin",
+                         "net_cash", "strategy_note"],
+            "properties": {
+              "name": {"type": ["string", "null"]},
+              "rev_growth": {"type": ["number", "string", "null"]},
+              "gm": {"type": ["number", "string", "null"]},
+              "om": {"type": ["number", "string", "null"]},
+              "rd_intensity": {"type": ["number", "string", "null"]},
+              "fcf_margin": {"type": ["number", "string", "null"]},
+              "net_cash": {"type": ["number", "string", "null"]},
+              "strategy_note": {"type": ["string", "null"]}
+            }
+          }
+        },
         "roic_durability": {
           "type": "object",
           "required": ["quadrant", "checkpoints", "roiic", "reinvest_rate", "endo_ceiling", "formula_note"],
           "properties": {
             "quadrant": {"type": ["string", "null"]},
-            "checkpoints": {"type": "array", "items": {"type": "object"}},
+            "checkpoints": {"type": "array", "minItems": 4, "items": {"type": "object"}},
             "roiic": {"type": ["number", "string", "null"]},
             "reinvest_rate": {"type": ["number", "string", "null"]},
             "endo_ceiling": {"type": ["number", "null"]},
@@ -166,7 +185,7 @@
         "runway_years": {"type": ["number", "string", "null"]},
         "runway_post_y5": {"type": ["string", "null"], "enum": ["🟢", "🟡", "🔴", null]},
         "seven_questions": {"type": "array", "items": {"type": ["string", "object"]}},
-        "segments": {"type": "array", "items": {"type": "object"}},
+        "segments": {"type": "array", "minItems": 1, "items": {"type": "object"}},
         "decay_signals": {"type": "array", "items": {"type": ["string", "object"]}},
         "trap_rating": {"type": ["string", "null"]}
       }
@@ -177,8 +196,8 @@
       "required": ["three_year", "dupont", "ccc", "buyback", "lumpiness"],
       "properties": {
         "three_year": {"type": "array", "items": {"type": "object"}},
-        "dupont": {"type": "array", "items": {"type": "object"}},
-        "ccc": {"type": "array", "items": {"type": "object"}},
+        "dupont": {"type": "array", "minItems": 1, "items": {"type": "object"}},
+        "ccc": {"type": "array", "minItems": 1, "items": {"type": "object"}},
         "buyback": {"type": "object"},
         "lumpiness": {"type": "object"}
       }
@@ -186,10 +205,11 @@
 
     "governance": {
       "type": "object",
-      "required": ["capalloc_grade", "scorecard", "sbc"],
+      "required": ["capalloc_grade", "scorecard", "sbc", "capital_returns"],
       "properties": {
         "capalloc_grade": {"type": ["string", "null"], "enum": ["A", "B", "C", null]},
-        "scorecard": {"type": "array", "items": {"type": "object"}},
+        "scorecard": {"type": "array", "minItems": 1, "items": {"type": "object"}},
+        "capital_returns": {"type": "array", "minItems": 1, "items": {"type": "object"}},
         "sbc": {"type": "object"}
       }
     },

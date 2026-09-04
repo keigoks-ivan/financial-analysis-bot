@@ -85,6 +85,22 @@
 - **附錄 A 表（`appA-table.html`）** ＝ `appendix_a.*`（品質分／估值燈／MA／trap 一列式）。
 - **`audit.html`（`<details class="audit">`）** ＝ `decision_out.audit_rows[]`（若為空陣列則整段略過，不渲染空殼）。
 
+## 五之二、七表來源（`gen_dd_tables.py` WP1c 修法1，E3/E5/E6/E7/E8/E9/E10）
+
+`gen_dd_tables.py` 從 judgment.json 機械生成 QC-38「可見表格清單」中商業本質七表，各表輸出 `{out}/e{N}.html`（`<table id="e{N}">…`），由 `render_dd.py --assemble` 注入對應 prose 段（見 render_dd.py 內 `_ASSEMBLE_ORDER` 旁的 marker 對照）。欄名為 WP1c 落地判斷，schema `required`/`minItems` 已鎖定：
+
+| 表 | 來源路徑 | items 欄位 | 注入段 |
+|---|---|---|---|
+| E3（逐段TAM/SAM＋利潤池） | `industry.tam_table[]`（minItems 1） | `segment`／`tam_now`／`tam_5y`／`penetration_pct`／`cagr_pct`／`value_chain_position`／`profit_pool_shift` | s3（`<!-- E3 -->`） |
+| E5（二維評分＋Moat-to-Numbers） | `moat.{execution,pricing,combined,grade}` 摘要列＋`moat.spread_table[]`（minItems 1） | spread_table：`driver`／`metric_now`／`metric_hist_avg`／`spread`／`moat_linkage` | s5（`<!-- E5 -->`） |
+| E6（對手P&L對照） | `moat.competitors[]`（minItems 1，schema 必填 8 欄） | `name`／`rev_growth`／`gm`／`om`／`rd_intensity`／`fcf_margin`／`net_cash`／`strategy_note` | s5（`<!-- E6 -->`） |
+| E7（§5.R四檢查點） | `moat.roic_durability.checkpoints[]`（minItems 4）＋同物件 `quadrant`/`roiic`/`reinvest_rate`/`endo_ceiling`/`formula_note` 摘要列 | checkpoints：`n`／`question`／`status`／`evidence` | s5（`<!-- E7 -->`） |
+| E8（分部前瞻build） | `growth.segments[]`（minItems 1） | `segment`／`fy0_rev`／`fy1e_rev`／`fy2e_rev`／`om_fy0`／`om_fy1e`／`om_fy2e`／`eps_contribution_pct` | s6（`<!-- E8 -->`） |
+| E9（DuPont＋CCC合一） | `quality.dupont[]`（minItems 1）與 `quality.ccc[]`（minItems 1），依 `year` 合併 | dupont：`year`／`net_margin`／`asset_turnover`／`leverage`／`roe`；ccc：`year`／`dso`／`dio`／`dpo`／`ccc` | s7（`<!-- E9 -->`） |
+| E10（資本配置track） | `governance.capital_returns[]`（minItems 1，逐年）＋`governance.scorecard[]`（minItems 1，附於表後列點） | capital_returns：`year`／`buyback`／`dividend`／`capex`／`rd`（選填）；scorecard：`year`／`action`／`rationale`／`grade` | s9（`<!-- E10 -->`） |
+
+E3/E5/E6/E7/E8/E9/E10 缺對應 judgment 子物件或子物件為空陣列 → `validate_judgment.py`（schema `required`＋`minItems`）FAIL；`verify_dd_math.py` 對 v16 產出（dd-meta `"pipeline":"v16"`）另外檢查渲染後 HTML 是否真的有 `<table id="e3">`…`id="e10">`（防止 judgment 有資料但呈現層漏注入）。
+
 ## 六、v16 新增、dd-meta 沒有的 `decision_inputs` 七欄
 
 `thesis_irreconcilable`／`valuation_dependent`／`market_wrong_reason_given`／`week26_return_pct`／`momentum_overheated`／`cycle_gates_pass`／`consensus_rev_3m_pct` 是決策矩陣（`dd_decision.py`，WP1b）需要但 dd-meta 從未落欄的中間變數，**不進 dd-meta**，只在 `judgment.json` 內供矩陣腳本讀取；反推工具（`dd_judgment_from_meta.py`）一律填 `null`（回溯反推，無法從既有 dd-meta 取得）。

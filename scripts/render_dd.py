@@ -316,7 +316,10 @@ _ASSEMBLE_REQUIRED = [
 # gen_dd_tables.py's always-written outputs; e11.html (dd_scenario.py
 # --html product) and audit.html (only when decision_out.audit_rows is
 # non-empty) are conditional, so not required here.
-_TABLES_REQUIRED = ["dd-meta.html", "dashboard.html", "e2.html", "e12.html", "appA-table.html"]
+_TABLES_REQUIRED = [
+    "dd-meta.html", "dashboard.html", "e2.html", "e12.html", "appA-table.html",
+    "e3.html", "e5.html", "e6.html", "e7.html", "e8.html", "e9.html", "e10.html",
+]
 
 
 def _read_opt(path: Path):
@@ -379,10 +382,14 @@ def assemble_from_parts(prose_dir: Path, tables_dir: Path, title=None,
     + TABLES_DIR/*.html (gen_dd_tables.py mechanical output) -> full
     standalone HTML, via the same _render_shell tail as single-file
     assemble(). Table injection points: e2.html into s2 (after the "B｜"
-    <h3>, or at `<!-- E2 -->`), e11.html into s10 (`<!-- E11 -->` or tail),
-    audit.html then e12.html into decision (`<!-- AUDIT -->`/`<!-- E12 -->`
-    or tail, audit first so a double-fallback still lands before E12),
-    appA-table.html into appA (`<!-- APPA_TABLE -->` or tail)."""
+    <h3>, or at `<!-- E2 -->`), e3.html into s3 (`<!-- E3 -->` or tail),
+    e5.html/e6.html/e7.html into s5 (`<!-- E5 -->`/`<!-- E6 -->`/`<!-- E7 -->`
+    or tail, in that order), e8.html into s6 (`<!-- E8 -->` or tail), e9.html
+    into s7 (`<!-- E9 -->` or tail), e10.html into s9 (`<!-- E10 -->` or
+    tail), e11.html into s10 (`<!-- E11 -->` or tail), audit.html then
+    e12.html into decision (`<!-- AUDIT -->`/`<!-- E12 -->` or tail, audit
+    first so a double-fallback still lands before E12), appA-table.html into
+    appA (`<!-- APPA_TABLE -->` or tail)."""
     missing_prose = [cid for cid in _ASSEMBLE_REQUIRED
                       if not (prose_dir / f"{cid}.html").exists()]
     if missing_prose:
@@ -411,6 +418,13 @@ def assemble_from_parts(prose_dir: Path, tables_dir: Path, title=None,
     dash_block = (tables_dir / "dashboard.html").read_text(encoding="utf-8").strip("\n")
 
     e2_html = _read_opt(tables_dir / "e2.html")
+    e3_html = _read_opt(tables_dir / "e3.html")
+    e5_html = _read_opt(tables_dir / "e5.html")
+    e6_html = _read_opt(tables_dir / "e6.html")
+    e7_html = _read_opt(tables_dir / "e7.html")
+    e8_html = _read_opt(tables_dir / "e8.html")
+    e9_html = _read_opt(tables_dir / "e9.html")
+    e10_html = _read_opt(tables_dir / "e10.html")
     e11_html = _read_opt(tables_dir / "e11.html")
     e12_html = _read_opt(tables_dir / "e12.html")
     audit_html = _read_opt(tables_dir / "audit.html")
@@ -425,6 +439,18 @@ def assemble_from_parts(prose_dir: Path, tables_dir: Path, title=None,
         tag = _outer_tag(chunk)
         if cid == "s2":
             chunk = _inject_e2(chunk, e2_html, tag)
+        elif cid == "s3":
+            chunk = _inject_marker_or_append(chunk, "<!-- E3 -->", e3_html, tag)
+        elif cid == "s5":
+            chunk = _inject_marker_or_append(chunk, "<!-- E5 -->", e5_html, tag)
+            chunk = _inject_marker_or_append(chunk, "<!-- E6 -->", e6_html, tag)
+            chunk = _inject_marker_or_append(chunk, "<!-- E7 -->", e7_html, tag)
+        elif cid == "s6":
+            chunk = _inject_marker_or_append(chunk, "<!-- E8 -->", e8_html, tag)
+        elif cid == "s7":
+            chunk = _inject_marker_or_append(chunk, "<!-- E9 -->", e9_html, tag)
+        elif cid == "s9":
+            chunk = _inject_marker_or_append(chunk, "<!-- E10 -->", e10_html, tag)
         elif cid == "s10":
             chunk = _inject_marker_or_append(chunk, "<!-- E11 -->", e11_html, tag)
         elif cid == "decision":

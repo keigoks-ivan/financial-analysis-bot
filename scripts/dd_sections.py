@@ -675,6 +675,13 @@ def section_bytes(html: str):
         mk = by_id.get(cid)
         present = mk is not None
         nbytes = (mk["end"] - mk["start"]) if present else 0
+        if present and cid == "decision":
+            # v16：決策矩陣稽核表 <details class="audit"> 由腳本生成、預設折疊，
+            # 不計入 decision 段的散文預算（DELL dry-run 實測 audit+E12 已 8KB）。
+            seg = html[mk["start"]:mk["end"]]
+            for m in re.finditer(r'<details class="audit"', seg):
+                oe = _open_tag_end(seg, m.start()); ce = _matching_close(seg, oe, "details")
+                nbytes -= (ce - m.start())
         section_total[cid] = nbytes
         rows.append({
             "id": cid, "kind": "section", "present": present, "bytes": nbytes,
