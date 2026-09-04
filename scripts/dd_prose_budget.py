@@ -10,7 +10,7 @@ references/v16/agent-prompts.md 模板 (e) 的 `{PROSE_BUDGET_TABLE}` 佔位符�
 算法：對 `dd_sections.py` 的分章 byte 預算（BUDGETS，數字唯一居所，本檔只 import 不複製），
 逐段減去 `gen_dd_tables.py` 已產出、將由 `render_dd.py --assemble` 注入該段的表格 bytes
 （對應關係見 render-rules.md §2 與設計稿 §11 修法 1：s2←e2、s3←e3、s5←e5+e6+e7、s6←e8、
-s7←e9、s9←e10、s10←e11、decision←e12+audit、appA←appA-table），得到該段「散文目標上界」
+s7←e9、s9←e10、s10←e11、decision←e12（audit 折疊表不計）、appA←appA-table），得到該段「散文目標上界」
 ＝預算−表格bytes；下界＝上界的 70%。另算「商業本質(s3-s7)含表格 ≥45%」所需散文總量提示
 （假設整檔目標 ~100KB，見 render-rules.md §7 篇幅目標）。
 
@@ -44,7 +44,7 @@ TABLE_MAP = {
     "s7": ["e9"],
     "s9": ["e10"],
     "s10": ["e11"],
-    "decision": ["e12", "audit"],
+    "decision": ["e12"],  # audit 折疊表不計入 decision 段計量（dd_sections.section_bytes 同步排除）
     "appA": ["appA-table"],
 }
 

@@ -205,7 +205,7 @@ V13_OPTIONAL_TYPES = {
 # Empty by design: ad-hoc descriptive keys (name / company / regime /
 # market_cap_b / inception_dd / …) SHOULD surface as warnings so schema drift
 # stays visible. Warnings are warn-only and never fail CI (see main()).
-WHITELIST_KEYS: set = set()
+WHITELIST_KEYS: set = {"pipeline"}  # v16：gen_dd_tables 標記產出管線（"v16"），下游不讀
 
 
 def _known_keys() -> set:

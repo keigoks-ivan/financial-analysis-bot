@@ -232,3 +232,18 @@ Orchestrator（opus）只做：spawn、傳檔名、讀 validator 結果、決定
 5. 判斷層一天內把 Bear 放寬且無歸因（critic 3🔴 的根因）。→ judgment-rules 加「與前份 dd-meta 逐欄 diff 必列於 contradictions（腳本先算 diff 餵進 evidence.prior_dd）」；`dd_prior.py` 輸出 `prior_meta_diff_targets`。
 
 修完 1–5 再跑第二份 dry-run；預期 Stage 2 降到 20–30M、合計 70–80M。
+
+## 12. 第二次 dry-run 實測（SNOW，2026-09-04，修法 A＋B 後，不上站）
+
+| 段 | 輪數 | cache_read | 備註 |
+|---|---|---|---|
+| Stage 0 | 149 | 10.7M | 16 軸全 found（法規／資料主權軸一開始就在）；財報時效閘用 9/3 盤後價 |
+| Stage 1（sonnet） | 125 | 28.4M | 七表必填＋親讀 Q2 法說；矩陣機械輸出 row 9b，agent 依 QC-49 承繼觀望 |
+| critic 三輪（opus） | 59 | 6.8M | 首輪 **6🔴＋8🟡**（DELL v16 3🔴）；核心裁定：GAAP 為準→EV/S 主錨對規則，val 🟡／9b 成立，承繼合規 |
+| patch 兩輪＋補漂移 | 197 | 25.4M | R1 引入 momentum 誤判→R2 修回；漂移機械檢查抓到 3 欄無 prior_field |
+| Stage 2（sonnet） | 177 | 40.6M | 91KB 全閘過；重寫 7 段各一次＋decision 二次；validate_prose 11 個未覆蓋（多為「負38.6%」vs「−38.6%」符號差） |
+| **合計** | | **≈112M** | v15.2 SNOW 88M（＋27%）；v15.2 DELL 138M（−19%）。**未達 −40%** |
+
+**讀數**：①判斷品質：覆蓋缺軸 0（兩份 v16 皆 0）、裁決與 v15.2 同向；critic 🔴 未降（6），且多為判斷層資料新鮮度（733→828）與口徑一致性，非覆蓋缺口——這類要靠 Stage 0 把「最新一季官方數字」結構化進數字包（`numbers.latest_quarter_kpis`），判斷層不得引用比它舊的數字。②成本：呈現層仍是最大項（40.6M），其中 validate_prose 的符號正規化（負／−／-）可省一輪；Stage 1 因七表必填由 9.8M 升至 28.4M；patch 兩輪 25M 是 critic 首輪 6🔴 的直接後果。③兩個新機械閘實測有效：漂移歸因檢查（3 欄）、Soft Veto 與無 Veto 路徑互斥（critic 抓到，**尚未機械化**→ dd_decision 應自檢 audit_rows 互斥）。
+
+**下一輪修法（第三份 dry-run 前）**：(a) validate_prose 符號／全半形正規化；(b) numbers 包加 `latest_quarter_kpis`（customers ≥$1M、NRR、RPO vs 共識、product GM、SBC vs OI）並在 judgment-rules 加「引用數字以此為準」；(c) dd_decision run 自檢互斥（Soft Veto hit ⇒ baseline 行不得 hit）；(d) decision 段預算下界在 v16 改 2KB（audit 已排除）；(e) 判斷層 A/B：第三份用 Fable 判斷層，比較 critic 首輪 🔴 數與 Stage 1 成本。
