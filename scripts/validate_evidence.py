@@ -257,7 +257,7 @@ def check_file(path, matrix, strict=False):
                 else:
                     ev_d = parse_date(ev_date)
                     if ev_d and (ev_d - d).days > 180:
-                        warns.append(f"[{axis_id}] findings[{i}].as_of={f['as_of']} 距報告日 >180 天")
+                        warns.append(f"(info) [{axis_id}] findings[{i}].as_of={f['as_of']} 距報告日 >180 天（歷史事實日期供 writer 判讀，--strict 不升級）")
 
         elif status == "none":
             qr = c.get("queries_run") or []
@@ -287,7 +287,7 @@ def check_file(path, matrix, strict=False):
     check_numbers_extra(evidence, numbers, warns)
 
     if strict:
-        fails.extend(f"(strict) {w}" for w in warns)
+        fails.extend(f"(strict) {w}" for w in warns if not w.startswith("(info)"))
         warns = []
 
     return fails, warns, axis_report

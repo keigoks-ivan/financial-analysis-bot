@@ -270,3 +270,15 @@ Orchestrator（opus）只做：spawn、傳檔名、讀 validator 結果、決定
 3. **每份成本 ≤ v15.2 同檔**：SNOW ≤88M、DELL ≤138M。
 
 登記：`knowledge/rule_ledger.md`「v16.1 移除流程內 critic gate」條（kill condition 同上第 2 條）。
+
+## 14. 第三次 dry-run 實測（SNOW，2026-09-04，v16.1 兩步制，不上站）
+
+| 段 | 輪數 | cache_read | cache_create | output | 備註 |
+|---|---|---|---|---|---|
+| Stage 0（sonnet ×6：4 批覆蓋軸＋數字包／KPI＋Koyfin） | 214 | 16.9M | 1.16M | 25K | 16 軸全 found；KPI 17 項（Q2 FY2027）；`--strict` 首輪 FAIL 兩類：頂層 `events` 五組沒人寫（由 major_events 軸機械分組補）、8 條歷史事實 as_of >180 天（改為 info，strict 不升級） |
+| Writer（Fable，單一 context：判斷→散文→自查） | 70 | 18.7M | 3.11M | 143K | 44 分；判斷 3 輪（首輪 4 FAIL 皆字串含 QC 代號）；verify_dd_math 首輪 FAIL（Max DD 下界 vs Bear 終點）判斷側修正；整檔重寫 3 段（s11／s12／revlog，同一根因）；99.4KB 全閘過 |
+| **合計** | | **35.5M** | 4.27M | 168K | v15.2 SNOW 88M（**−60%**）；v16.0 SNOW 112M（−68%） |
+
+**讀數**：①裁決 觀望｜追蹤（row 8）與 v15.2／v16.0 同向；覆蓋缺軸 0；數字新鮮度以 KPI 段為準，未再出現前兩輪的「舊季數字」問題。②自查表 6🟢 2🟡（③結構變數：EU AI Act／CLOUD Act 只入盲點未成觸發器，因地區營收占比證據包未涵蓋；④priced-in：方向與前份同向，邊際資訊在倍數 regime 與價格錨）。③牌價換算（§7 單價）：Stage 0 ≈ $6.5、Writer ≈ $51（cache_create 3.11M × $12.5 佔 $39——Fable 的 cache 建立單價是主因，token 量降 60% 但美元成本高於 v15.2 sonnet writer 的 $23–32）。④欄位級缺口清單（地區營收占比、Databricks 財務、管理層薪酬與內部人交易、可轉債條款、AI 收入金額）應回 Stage 0 補為結構化欄位。⑤機械小修：`render_dd --assemble` 的 site_nav 後處理在非 docs/ 路徑拋 ValueError（dry-run 限制，檔已寫）；dd_decision 條件文字（深谷投降／早循環）內含半形逗號觸發 qc 警告。
+
+**退場訊號對照**：覆蓋缺軸 0 ✓；成本 ≤ v15.2 同檔 ✓（token 口徑）；事後抽查待前三份上站後執行。**待持有人裁定**：美元成本口徑是否納入退場訊號。
