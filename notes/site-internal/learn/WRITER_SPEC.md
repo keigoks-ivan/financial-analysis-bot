@@ -74,9 +74,9 @@
 
 ## 4. 允許使用的連結（只准用這張表；其他一律不准）
 
-`index.html`　`review.html`　與以下 36 個檔名（相對路徑，例如 `href="06-capital-cycle.html"`）：
+`index.html`　`review.html`　與以下 40 個檔名（相對路徑，例如 `href="06-capital-cycle.html"`）：
 
-01-framework.html · 02-language-of-numbers.html · 03-demand.html · 04-supply.html · 05-profit-pool.html · 06-capital-cycle.html · 07-substitution.html · 08-business-model.html · 09-moat-sources.html · 10-moat-numbers.html · 11-roic-durability.html · 12-moat-trend.html · 13-growth-quality.html · 14-earnings-quality.html · 15-management-capital.html · 16-archetypes.html · 17-cyclicals.html · 18-price-expectations.html · 19-reflexivity.html · 20-valuation.html · 21-evidence.html · 22-thesis.html · 23-inversion.html · 24-act-wait-avoid.html · 25-biases-process.html · 26-portfolio-structure.html · 27-asset-allocation.html · 28-backtest-honesty.html · 29-framework-checklist.html · 30-case-tsmc.html · 31-case-micron.html · 32-case-jpmorgan.html · 33-case-uber.html · 34-case-ge.html · 35-case-nextera.html · 36-case-honhai.html
+01-framework.html · 02-language-of-numbers.html · 03-demand.html · 04-supply.html · 05-profit-pool.html · 06-capital-cycle.html · 07-substitution.html · 08-business-model.html · 09-moat-sources.html · 10-moat-numbers.html · 11-roic-durability.html · 12-moat-trend.html · 13-growth-quality.html · 14-earnings-quality.html · 15-management-capital.html · 16-archetypes.html · 17-cyclicals.html · 18-price-expectations.html · 19-reflexivity.html · 20-valuation.html · 21-evidence.html · 22-thesis.html · 23-inversion.html · 24-act-wait-avoid.html · 25-biases-process.html · 26-portfolio-structure.html · 27-asset-allocation.html · 28-backtest-honesty.html · 29-framework-checklist.html · 30-case-tsmc.html · 31-case-micron.html · 32-case-jpmorgan.html · 33-case-uber.html · 34-case-ge.html · 35-case-nextera.html · 36-case-honhai.html · 37-case-intel.html · 38-case-zoom.html · 39-case-luckin.html · 40-case-exxon.html
 
 ## 5. 交稿前自檢
 
