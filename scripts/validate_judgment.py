@@ -28,11 +28,18 @@ Two layers:
   3. Machine-language / CJK-punctuation leak scan (WP1c 修法3): every string
      leaf is checked against dd_sections.LEAK_PATTERNS and qc.CJK_PUNCT_RE;
      any hit is a FAIL with its JSON path + snippet. Exempt:
-     decision_out.audit_rows[] (whole subtree) and the "（QC-\\d+）" citation
-     inside reasoning.* strings only.
+     decision_out.audit_rows[] (whole subtree), decision_out.row_hit /
+     decision_out.pacing[] (dd_decision.py 機械寫入的矩陣語言，同一豁免理由)
+     and the "（QC-\\d+）" citation inside reasoning.* strings only.
+  4. Drift-vs-prior attribution check (--evidence, 選配): every drift_watch
+     field (evidence.prior_dd.drift_watch, 20 欄) that differs between
+     evidence.prior_dd.prior_meta and this judgment's current dd-meta value
+     (via gen_dd_tables.build_dd_meta — the single judgment→dd-meta mapping,
+     reused not re-derived) must have a corresponding entry in
+     judgment.contradictions[] (see _v16_design_spec §5.5 / drift_check_spec.md).
 
 Usage:
-  python3 scripts/validate_judgment.py FILE.json [--report]
+  python3 scripts/validate_judgment.py FILE.json [--report] [--evidence EVIDENCE.json]
 
 Exit 0 = no FAIL-level issues (or --report). Exit 1 otherwise.
 """
@@ -42,6 +49,7 @@ import argparse
 import json
 import re
 import sys
+import unicodedata
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -56,6 +64,8 @@ except Exception:  # pragma: no cover - defensive; scenario cross-check just ski
 # WP1c 修法3：判斷層就攔機器語言與半形標點——重用既有詞表/regex，不複製。
 import dd_sections  # noqa: E402 — LEAK_PATTERNS（QC-40 詞表，單一權威）
 import qc  # noqa: E402 — CJK_PUNCT_RE（半形標點規則，單一權威）
+# layer 4（漂移歸因）：current 側 judgment→dd-meta 映射單一權威，import 重用。
+import gen_dd_tables  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -270,16 +280,24 @@ def cross_field_checks(data: dict, judgment_path: Path) -> tuple[list, list]:
 # 葉節點，命中 dd_sections.LEAK_PATTERNS（QC-40 詞表，import 重用不複製）或
 # qc.CJK_PUNCT_RE（半形標點）即 FAIL。
 #
-# 豁免（僅此兩類，見 _v16_design_spec_20260903.md §11 item 3）：
+# 豁免（見 _v16_design_spec_20260903.md §11 item 3；B 組修法漏洞修正新增
+# decision_out.row_hit / decision_out.pacing[]）：
 #   - decision_out.audit_rows[] 整個子樹——機器稽核表本就用矩陣語言
 #     （row/signal/val/moat_trend/…），渲染在 <details class="audit"> 折疊區。
+#   - decision_out.row_hit 與 decision_out.pacing[]——dd_decision.py 機械寫入
+#     的矩陣語言（同含「row 8」「QC-49」），比照 audit_rows 豁免；
+#     decision_out.rearm_trigger / decision_out.exec_line 仍照常檢查，不豁免。
 #   - reasoning.* 字串中的「（QC-\d+）」括注——QC-33 推導允許引用查核代號，
 #     只遮蔽這個括注片段，reasoning 內其餘 leak pattern（如欄名外洩）仍抓。
 # ---------------------------------------------------------------------------
 
 _LEAK_CHECK_RES = [(p, re.compile(p)) for p in dd_sections.LEAK_PATTERNS]
 _QC_ANNOTATION_RE = re.compile(r"[（(]QC-\d+[）)]")
-_LEAK_SKIP_SUBTREES = ("decision_out.audit_rows",)
+_LEAK_SKIP_SUBTREES = (
+    "decision_out.audit_rows",
+    "decision_out.row_hit",
+    "decision_out.pacing",
+)
 
 
 def _walk_strings(obj, path):
@@ -319,19 +337,128 @@ def leak_and_punct_checks(data: dict) -> list:
 
 
 # ---------------------------------------------------------------------------
+# layer 4: drift-vs-prior attribution check (--evidence, 選配)
+#
+# drift_check_spec.md（B 組修法5）：evidence.prior_dd.prior_meta（前份 dd-meta
+# 全欄）＋ evidence.prior_dd.drift_watch（固定 20 欄，dd_prior.py 產出，單一
+# 權威）逐欄對比 current 側（gen_dd_tables.build_dd_meta 重算，不另建映射）；
+# 漂移出的欄位須在 judgment.contradictions[] 找到歸因條目，否則 FAIL。
+# ---------------------------------------------------------------------------
+
+_DRIFT_NUMERIC_FIELDS = {
+    "ev5y_pct", "irr_base_pct", "max_dd_pct", "bull_5y_price",
+    "bear_5y_price", "price_at_dd", "asym_ratio",
+}
+_DRIFT_PCT_FIELDS = {"p_bull_pct", "p_bear_pct"}
+_DRIFT_NUM_TOL = 0.05
+_DRIFT_PCT_TOL = 0.5
+# token 邊界用負向 lookaround（非 \b）——欄名含底線，\b 在 "_" 兩側不會斷詞，
+# 這裡改用「前後不是英數底線字元」才算獨立 token，避免如 "ma" 誤中
+# "max_dd_pct" 這種子字串誤判（欄名互為子字串是本檢查唯一已知的假陽性源）。
+def _token_re(field: str):
+    return re.compile(r"(?<![A-Za-z0-9_])" + re.escape(field) + r"(?![A-Za-z0-9_])", re.I)
+
+
+def _norm_str_for_drift(v):
+    if v is None:
+        return None
+    return unicodedata.normalize("NFKC", str(v)).strip().lower()
+
+
+def _field_drifted(field: str, prior_v, cur_v) -> bool:
+    if prior_v is None and cur_v is None:
+        return False
+    if field in _DRIFT_NUMERIC_FIELDS or field in _DRIFT_PCT_FIELDS:
+        if prior_v is None or cur_v is None:
+            return True  # 一側缺一側有 → 視為漂移
+        tol = _DRIFT_PCT_TOL if field in _DRIFT_PCT_FIELDS else _DRIFT_NUM_TOL
+        try:
+            return abs(float(prior_v) - float(cur_v)) > tol
+        except (TypeError, ValueError):
+            return prior_v != cur_v
+    return _norm_str_for_drift(prior_v) != _norm_str_for_drift(cur_v)
+
+
+def drift_checks(data: dict, judgment_path: Path, evidence_path: Path | None) -> tuple[list, list]:
+    fails, warns = [], []
+
+    if evidence_path is None:
+        warns.append("未提供 evidence，漂移檢查略過")
+        return fails, warns
+    if not evidence_path.exists():
+        warns.append(f"--evidence {evidence_path} 檔案不存在，漂移檢查略過")
+        return fails, warns
+
+    try:
+        evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        fails.append(f"--evidence {evidence_path}: JSON parse error: {e}")
+        return fails, warns
+
+    prior_dd = evidence.get("prior_dd") or {}
+    if prior_dd.get("status") != "ok":
+        warns.append(f"evidence.prior_dd.status={prior_dd.get('status')!r}（非 ok，無前份），漂移檢查略過")
+        return fails, warns
+
+    prior_meta = prior_dd.get("prior_meta")
+    if not prior_meta:
+        warns.append("evidence.prior_dd 無 prior_meta，漂移檢查略過")
+        return fails, warns
+
+    drift_watch = prior_dd.get("drift_watch") or []
+    if not drift_watch:
+        warns.append("evidence.prior_dd 無 drift_watch 清單，漂移檢查略過")
+        return fails, warns
+
+    # current 側：重用 gen_dd_tables 的唯一 judgment→dd-meta 映射，不另建。
+    scenario_meta = gen_dd_tables.resolve_scenario_meta(data, judgment_path, None)
+    current_meta = gen_dd_tables.build_dd_meta(data, scenario_meta)
+
+    contradictions = data.get("contradictions") or []
+
+    drifted = []
+    for f in drift_watch:
+        pv, cv = prior_meta.get(f), current_meta.get(f)
+        if _field_drifted(f, pv, cv):
+            drifted.append((f, cv, pv))
+
+    for f, cv, pv in drifted:
+        tok_re = _token_re(f)
+        attributed = False
+        for c in contradictions:
+            if not isinstance(c, dict):
+                continue
+            if c.get("prior_field") == f:
+                attributed = True
+                break
+            axis = c.get("axis") or ""
+            if tok_re.search(axis):
+                attributed = True
+                break
+        if not attributed:
+            fails.append(
+                f"漂移未歸因：{f}（本次={cv!r}／前份={pv!r}）— judgment.contradictions[] "
+                f"找不到 prior_field={f!r} 或 axis 含 {f!r} token 的條目"
+            )
+
+    return fails, warns
+
+
+# ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
 
-def validate_file(path: Path):
+def validate_file(path: Path, evidence_path: Path | None = None):
     schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
     data = json.loads(path.read_text(encoding="utf-8"))
 
     struct_errs = schema_validate(data, schema, "$")
     cross_fails, cross_warns = cross_field_checks(data, path)
     leak_fails = leak_and_punct_checks(data)
+    drift_fails, drift_warns = drift_checks(data, path, evidence_path)
 
-    fails = struct_errs + cross_fails + leak_fails
-    warns = cross_warns
+    fails = struct_errs + cross_fails + leak_fails + drift_fails
+    warns = cross_warns + drift_warns
     return fails, warns
 
 
@@ -339,6 +466,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("file", help="judgment.json 路徑")
     ap.add_argument("--report", action="store_true", help="永遠 exit 0，只印報告")
+    ap.add_argument("--evidence", help="evidence.json 路徑；給了才啟用漂移檢查（layer 4）")
     args = ap.parse_args()
 
     path = Path(args.file)
@@ -346,7 +474,8 @@ def main():
         print(f"✗ {path}: 檔案不存在")
         sys.exit(1)
 
-    fails, warns = validate_file(path)
+    evidence_path = Path(args.evidence) if args.evidence else None
+    fails, warns = validate_file(path, evidence_path)
 
     tag = "FAIL" if fails else "PASS"
     print(f"[{tag}] {path.name}（{len(fails)} FAIL／{len(warns)} WARN）")

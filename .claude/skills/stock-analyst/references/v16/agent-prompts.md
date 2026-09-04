@@ -62,7 +62,7 @@ premortem 等）≤3 行推導，呈現層會原樣鋪進 <div class="reasoning"
 ## 前份漂移逐欄歸因（B 組修法 5，judgment-rules.md §12 item 3b，QC-49 執行細則）
 \`evidence.json.prior_dd.prior_meta\`（前份 dd-meta 全欄）＋\`.drift_watch\`（固定 20 欄清單）已由
 \`dd_prior.py\` 準備好——\`decision_inputs\`／情境六欄／\`rearm\`／\`val\`／\`runway_post_y5\` 與
-\`prior_meta\` 任一欄不同，逐欄在 \`contradictions[]\` 開獨立條目（本次值／前份值／三元歸因排序主因，
+\`prior_meta\` 任一欄不同，逐欄在 \`contradictions[]\` 開獨立條目（本次值／前份值／三元歸因排序主因，每條目帶 \`prior_field\`＝dd-meta 欄名，
 方法論驅動須明標）；無歸因＝\`validate_judgment.py\` FAIL。
 
 ## 最終回報（≤300 字）
