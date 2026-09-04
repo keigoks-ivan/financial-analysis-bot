@@ -92,6 +92,12 @@ Agent({
 5. direction 欄：這條 finding 對本標的是正面(+)／中性(0)／負面(-)，僅標事實方向，不要寫成裁決語。
 6. affects 欄：這條 finding 影響哪些判斷面（可填 moat_trend／thesis.H／thesis.R／
    decision_inputs.bear／valuation／triggers 等，可複選）。
+7. **【v16.2 新增，CRDO 教訓】現價一律引 `numbers.price_at_dd`／`price_as_of`，不得自行寫「現價」數字**：
+   claim 內提到現價、市值、距 52 週高低點 %，一律引用 `numbers.price_at_dd`（`dd_numbers_extra.py`
+   由 yfinance 算好的錨），不得從聚合站／新聞頁另抓一個「現價」數字寫進 claim。`capital_markets_pricing`
+   軸引用目標價 vs 現價時，寫法固定為「目標價 $X vs `numbers.price_at_dd`」，不填自己查到的現價字面
+   數字。CRDO 2026-09-04：聚合站顯示現價 $234 為財報前舊價，實際財報後現價 $164.17，差 30%——
+   `validate_evidence.py` 第 8 項檢查會抓 claim 內「現價 $N」與 `numbers.price_at_dd` 差 >10% 的情形。
 
 ## 回傳格式（嚴格 JSON，不得夾雜其他文字；直接寫入下方路徑）
 {

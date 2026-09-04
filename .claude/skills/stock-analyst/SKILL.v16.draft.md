@@ -177,6 +177,8 @@ repo CLAUDE.md「writer 與 critic 永不同模型」的鐵律在 v16.2 試點�
 
 **成本模型**（三個數字：Fable／opus／sonnet；**2026-09-04 起一律用 `scripts/dd_token_report.py` 按 message.id 去重的 cache_read 尺**，舊尺把同一則訊息的多個 tool_use 行重複加總，高估 2–3 倍）：v15.2 同檔實測 SNOW ≈49M（writer 34.1／critic 2.4／patch 12.1）、DELL ≈78M（writer 59.7／critic 3.2／patch 14.7）；v16.0 兩段式實測 SNOW ≈60M（Stage 0 4.8／判斷 16.3／critic 3.0／patch 13.7／呈現 21.7）、DELL ≈68M（5.5／5.2／4.8／12.0／40.2）；v16.1 兩步制實測 SNOW dry-run ≈14.9M（Stage 0 sonnet 7.5／Fable writer 7.5）、PANW ≈14.8M（Stage 0 sonnet 7.1／Fable writer 7.7）——單一 Fable context 同時判斷＋呈現，cache_creation（PANW 2.01M，單價 $12.5/M）是美元成本主因。**v16.2 目標**：拆開判斷／呈現後，**Fable 每份 ≤3M（cache_read；判斷只讀約 85K token context、≤15 輪）、sonnet 散文 ≤4M、每份合計 ≤15M**——目標不是壓總 token，是把貴的 Fable 用量壓到最小，讓整週美元成本下降。前三份試點回填實測值。
 
+**散文 agent ≤4M 目標的達成手段（2026-09-04，CRDO 實測 6.8M 超標後補課）**：CRDO 首份散文 agent 54 次工具呼叫燒 6.8M——13 次讀規則/表格、3 次讀 `render_dd.py` 原始碼、18 次段落 Write、19 次驗證/修補（3 輪 render+validate、3 次誤用 `Edit` 局部補符號違反 §0 一次寫條款、1 次 grep `validate_prose.py` 原始碼、2 次 grep 定位字串）。五項修法：①`validate_prose.py --dump-numbers` 產逐字數字白名單（含 −/%/$ 符號慣例），(b2) 動筆前先讀、逐字複製，避免符號漏帶（如「年減 2.9%」漏負號）多跑一輪；②`dd_sections.py leaks` 詞表與 `validate_prose.py` 符號正規化規則抽成 11 行摘要內嵌 `agent-prompts.md` (b2) 模板，動筆前對照，不必 grep 原始碼；③六支機械閘合成 `scripts/dd_gates.sh {T} {D} {OUT_HTML}`（順序執行＋彙總輸出＋任一真正擋下的閘 exit 1），(b2) 只呼叫這一支，驗證輪次上限由 3 降 2；④「prose 目錄任何 `Edit` 視為無效輸出」改模板層明文強調（放棄 mtime 機械偵測——跨 session/跨工具寫入序號比對成本高於效益，本輪刻意選擇模板強調而非機制擋）；⑤`render-rules.md` 由 18.4KB 砍歷史/沿革敘述與冗餘表格欄壓縮至 15.9KB，(b2) 讀取量同步下降。下一份看散文 cache_read 能否落回 ≤4M。
+
 **退場訊號（設計稿 §13、§16，四條，任一未達即回退）**：
 1. **覆蓋缺軸 0**（v16.0/v16.1 皆 0，此為不得倒退的底線；`--strict` 前置閘是主要保證）。
 2. **前三份上站後事後冷讀抽查，判斷級 🔴 合計為 0 → 永久拿掉本驗收；出現 1 例 → 判斷層驗收放回流程內**（恢復流程內 critic gate）。

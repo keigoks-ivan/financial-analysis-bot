@@ -216,6 +216,10 @@ spawn 連續失敗 2 次（agent 未回、回傳空、或回傳完全不符格�
 - **財報日唯一來源＝公司 IR 新聞稿**（`investors.{company}.com` 或公司官網 IR 頁的正式新聞稿），媒體轉載／彙整站（如財經媒體標題頁）的日期不採；`numbers.latest_quarter_kpis.quarter` 與任何「最近財報日」欄位**必附該新聞稿 URL**。PANW 教訓：三方來源對財報日期（8/18 vs 9/1）不一致，最終須回查官方新聞稿定案。
 - **數字包必須扁平**：`scripts/dd_numbers_extra.py` 已產出 `numbers.price_at_dd`／`numbers.price_as_of`／`numbers.earnings_recency` 三個扁平鍵（validate_evidence.py 必填）。採集 agent **只能在這三個鍵原地補值**（例如 yfinance 查詢失敗時用 web_search 補一個 price_at_dd），**不得改鍵名、不得把它們包進另一個巢狀物件**（例如塞進 `top_banner` 之類的自造結構）——PANW dry-run 就是回傳巢狀鍵，orchestrator 得手動機械對映。其餘欄位可自由巢狀，但這三個扁平鍵一律在 `numbers` 頂層原地存在。
 
+### 【v16.2 新增】現價一律引 numbers.price_at_dd（CRDO 教訓）
+
+**硬規則**：任何章節或子 agent 提到「現價」「trading at」時，一律引用 `numbers.price_at_dd`／`price_as_of`（`scripts/dd_numbers_extra.py` 由 yfinance 算好的錨），不得自行從網頁／聚合站抓一個「現價」數字寫進報告或 claim。市值、距 52 週高低點 % 同理，一律由 `numbers.price_at_dd` 換算，不得另查一個市值/現價數字。**理由**：CRDO 2026-09-04 一份聚合站顯示現價 $234，實為財報前舊價，財報後（9/2 財報，9/3 收盤）實際現價 $164.17，差 30%——聚合站的快取／未更新頁面是系統性風險，`numbers.price_at_dd` 是財報時效閘（見上方「財報時效」段）已處理過的唯一可信來源。
+
 ### 一致性紅利與時效
 
 - **頁首儀表板與各章數字一律引用數字包的同一來源**（同一個現價、同一組共識、同一組倍數）。這是 QC-7 內部一致性最便宜的保證——分歧只可能來自 writer 的補查，而補查處都有標注。

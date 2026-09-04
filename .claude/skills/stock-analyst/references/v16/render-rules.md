@@ -1,21 +1,21 @@
 # stock-analyst v16 — render-rules.md(Stage 2呈現層唯一always-on規則檔)
 
-> v16-draft(WP2)。呈現層規則非判斷類——不動裁決機器、dd-meta契約與`id="decision"`錨點，不需rule_ledger登記。條文逐字搬自SKILL.md QC-37/38/40/54與`references/html-output.md`，語意未動，只砍描述。
-> **你是誰**：v16.2 (b2)散文agent(sonnet，與(b1)判斷agent分開spawn)。輸入=`judgment.json`(含`reasoning`段，承重數字唯一來源)+本檔+`gen_dd_tables.py`已產出的表格片段；**不讀`evidence.json`全文**(`validate_prose.py`以judgment為主要比對集合，非evidence)。輸出=`prose/{sid}.html`每段一次Write，`render_dd.py --assemble`組裝。
-> **禁**：段內不得出現判斷物沒有的數字(`validate_prose.py`機械擋)；不得新增判斷或改動裁決；不得渲染QC-40詞表命中的機器語言；**不得用`Edit`工具改`prose/`目錄下任何檔案**(只准`Write`整檔，見§0)。
+> v16-draft(WP2)。呈現層規則非判斷類，不需rule_ledger登記(沿革見`notes/site-internal/dd/_v16_design_spec_20260903.md`)。
+> **你是誰**：v16.2 (b2)散文agent(sonnet，與(b1)判斷agent分開spawn)。輸入=`judgment.json`(含`reasoning`段，承重數字唯一來源)+本檔+`gen_dd_tables.py`表格片段；**不讀`evidence.json`全文**(`validate_prose.py`以judgment為主要比對集合)。輸出=`prose/{sid}.html`每段一次Write，`render_dd.py --assemble`組裝。
+> **禁**：判斷物沒有的數字(`validate_prose.py`機械擋)；新增判斷或改動裁決；渲染QC-40詞表命中的機器語言；**用`Edit`改`prose/`目錄任何檔案，任何Edit視為無效輸出**(只准`Write`整檔，見§0)。
 
 ---
 
 ## 0｜一次寫(One-Shot Write)條款(B組修法2，2026-09-04)
 
-**成因**：dry-run實測(設計稿§11)DELL呈現層為湊「商業本質(s3-s7)含表格≥45%」逐段Edit 43次，71.9M cache_read，未達降本目標。修法＝把「該寫多少」提前算好一次寫齊，事後不逐輪加字。
+**成因**(細節見設計稿§11 DELL dry-run)：逐段Edit湊篇幅耗費cache_read過高。修法＝把「該寫多少」提前算好一次寫齊，事後不逐輪加字。
 
-1. orchestrator在spawn呈現agent前先跑`python3 scripts/dd_prose_budget.py JUDGMENT.json --tables TABLES_DIR`，輸出表整段貼進`{PROSE_BUDGET_TABLE}`佔位符(見agent-prompts.md模板(e))——該表已用`dd_sections.py`的分章預算逐段扣掉將注入的表格bytes，得散文目標區間(下限＝上限的70%)。
-2. 呈現agent在context內把全部段落(依§1內部分析順序)的散文內容想清楚，對照`{PROSE_BUDGET_TABLE}`落在目標區間內，**逐段一次性`Write`到`prose/{sid}.html`**——禁止先寫短稿再用`Edit`加字湊篇幅，`Write`是唯一允許的寫入操作。
-3. 篇幅目標一律以orchestrator給的`dd_prose_budget`表為準，**不得為湊45%商業本質占比逐輪加字**；某段寫完仍低於目標下界，先檢查是否有承重推導漏寫(`reasoning`欄未鋪陳完)，不是灌水填充句。
-4. 驗證(`dd_sections.py bytes`／`leaks`／`validate_prose.py`，見§10)FAIL時，**只准該段整檔重寫一次**(重新`Write`整份`prose/{sid}.html`，非局部Edit)；同一段連續兩次仍FAIL才回報orchestrator(可能是判斷物本身有問題)。
-5. **機械表內容若觸發`leaks`／標點檢查**(如`gen_dd_tables.py`產出的`e12.html`/`audit.html`片段含未跳脫標點或洩漏詞)，**呈現層不得自行改表格檔**——回報orchestrator由判斷層(Stage 1／`gen_dd_tables.py`)修正後重新產表；呈現層只負責散文段落。
-6. **模組偵測改以表格id為準**：`verify_dd_math.py`判斷五模組/七表是否存在看的是表格檔(`e3.html`/`e5.html`…等`gen_dd_tables.py`產物)是否存在，不是散文標題字樣關鍵字——**散文不需要為了讓`verify_dd_math.py`偵測到模組而改章節標題**(v15.2曾用「改標題」繞過關鍵字式偵測，是漏檢成因之一；v16已改偵測依據，此條專指v16產出，不回溯套用v15.2遺留檔案的標題慣例)。
+1. orchestrator先跑`dd_prose_budget.py JUDGMENT.json --tables TABLES_DIR`(已用`dd_sections.py`分章預算扣掉將注入的表格bytes)，輸出貼進`{PROSE_BUDGET_TABLE}`佔位符(見agent-prompts.md模板(e))，得散文目標區間(下限＝上限70%)。
+2. 呈現agent在context內把全部段落(依§1內部分析順序)想清楚，對照`{PROSE_BUDGET_TABLE}`落在區間內，**逐段一次性`Write`到`prose/{sid}.html`**——`Write`是唯一允許的寫入操作，禁先寫短稿再加字湊篇幅。
+3. 篇幅一律以`dd_prose_budget`表為準，**不得逐輪加字湊占比**；某段低於下界先檢查`reasoning`欄有沒有推導漏寫，不是灌水填充句。
+4. 驗證FAIL的重寫規則見§10(只重寫該段整檔`Write`，非局部`Edit`)。
+5. **機械表觸發`leaks`／標點檢查時，呈現層不得自行改表格檔**——回報orchestrator由判斷層(Stage 1／`gen_dd_tables.py`)修正後重產表。
+6. **模組偵測以表格id為準**(`verify_dd_math.py`看`e3.html`/`e5.html`等產物是否存在，非散文標題字樣)：散文不需為了偵測而改章節標題(此條專指v16產出)。
 
 ### 0.1｜§5.R／§5.F／§6.I標題慣例
 
@@ -49,7 +49,7 @@
 
 `dashboard.html`/`dd-meta.html`/`e2.html`/`e12.html`/`appA-table.html`為`gen_dd_tables.py`必然輸出(缺任一組裝即FAIL)；`e11.html`/`audit.html`條件性。
 
-**段落↔judgment路徑對映的唯一權威＝`scripts/dd_schema/section_map.json`**（`judgment_path_to_sid`/`numbers_sid_overrides`/`always_rewrite_sids`）。散文 agent 決定「這次重跑要不要動某段」與 `dd_delta.py` 算 `sections_to_rewrite` 同讀此檔，讀不到才各自 fallback 內建表。**改對映只改該檔**，不要各自維護一份；檔內 `_note` 欄標了哪些對映是推測、待持有人審。
+**段落↔judgment路徑對映的唯一權威＝`scripts/dd_schema/section_map.json`**——delta-refresh重跑時決定「這次要不要動某段」讀此檔（讀不到才fallback內建表），首次全寫不需要查。改對映只改該檔，不要另外維護一份。
 
 ---
 
@@ -65,7 +65,7 @@
 
 **§1結論與§13統一裁決須以白話敘事開場**(2-4句，賣方研究口吻)：這是什麼生意、為何是這個裁決、什麼會改變它——不認識本站機器語言的讀者讀完就能懂。範本句品質標竿：「用未確認風險的價格買進仍是為未解問題付價」。
 
-**決策矩陣逐row檢核表、Hard/Soft Veto逐項列舉、row編號語言一律移出正文**，收進`<details>`折疊區塊或附錄(矩陣不刪只搬家，稽核性不減)；`decision`段正文只寫「命中哪條路徑+一句白話理由」。**燈號/emoji/機器欄**(`val🟡`、`MA✅`等)**不得是任何承重結論的唯一表述**——表格照放，但進裁決的結論須同時有完整白話句。**判準**：不認識本站機器的讀者只讀§1與§13開場段，能否知道這是什麼生意、為何這個裁決、什麼會改變它？
+**決策矩陣逐row檢核表、Hard/Soft Veto逐項列舉、row編號語言一律移出正文**，收進`<details>`折疊區塊或附錄(矩陣不刪只搬家，稽核性不減)；`decision`段正文只寫「命中哪條路徑+一句白話理由」。**燈號/emoji/機器欄**(`val🟡`、`MA✅`等)**不得是任何承重結論的唯一表述**——表格照放，但進裁決的結論須同時有完整白話句。
 
 **儀表板收斂**：頁首儀表板**不放**「基本面評級A+/A/B/C/X(品質/估值燈/Pure MA/陷阱定性)」整列，移入附錄A(`<details id="appA">`)；儀表板保留統一裁決+角色+判定理由/護城河趨勢/Y5後跑道/Max DD/5Y EV·IRR/opportunity cost/長期持有信心+建議持有年限/Inception與倒數，**5Y EV·IRR列不得出現AR或路徑對帳句**。決策矩陣逐row檢核表統一收進`<details class="audit">`。
 
@@ -79,11 +79,7 @@
 
 **允許呈現**：失敗故事narrative、Max DD範圍與路徑、`<div class="reasoning">`推導、矛盾裁決「我選哪邊+依據」、所有sourced數字、雙向產業態勢裁決一句結論。**判準**：這句話是寫給讀者理解股票，還是證明我照skill做了？後者不渲染。
 
-**機械sweep(唯一權威在腳本)**：`prose/`全部段落寫完、組裝前跑一次`python3 scripts/dd_sections.py leaks .dd_build/DD_{T}_{D}.body.html`(也可組裝後對完整body再跑一次)——詞表命中即改寫為讀者語言。**唯一權威詞表在`scripts/dd_sections.py`的`LEAK_PATTERNS`**(下列供人讀對照，若不一致以腳本為準)：
-
-`row ?\d`、`Hard Veto`、`Soft Veto`、`signal ?[ABCX]\b`、估值燈、`val ?[🟢🟡🟠🔴]`、`MA ?[✅❌🟢🟡🟠]`、Pure MA、`盲點 ?\d`、PREREG、dd-meta、runway_post_y5、capalloc、`QC-\d`、archetype、metadata、硬接線、`接線[:：]`、Guardrail、校驗紀錄、判定規則、`\bgate\b`、`\bF2\b`、`row 8[ab]`、爆發候選路徑、循環衛星進場路徑。
-
-**代號改寫對照**：「盲點3上修救援」→「共識上修救援條款」；「row 8a」→「爆發候選路徑」；「row 8b」→「循環衛星進場路徑」；「row 8」→「觀望(估值主因)」；版本括注刪除(版號只留`<title>`/`dd-schema-version`/dd-meta三處)。**`leaks`未過不得呼叫`render_dd.py --assemble`組裝最終HTML。**
+**機械sweep(唯一權威在腳本)**：組裝前跑一次`python3 scripts/dd_sections.py leaks FILE`——詞表命中即改寫為讀者語言。**唯一權威詞表在`scripts/dd_sections.py`的`LEAK_PATTERNS`**；(b2) agent-prompts.md模板已內嵌精簡版詞表供動筆時對照，不必另外讀本檔或原始碼。代號改寫範例：「row 8a」→「爆發候選路徑」；「row 8b」→「循環衛星進場路徑」；版本括注刪除(版號只留`<title>`/`dd-schema-version`/dd-meta三處)。**`leaks`未過不得呼叫`render_dd.py --assemble`組裝最終HTML。**
 
 ---
 
@@ -99,27 +95,9 @@
 
 **省法三條**(binding，超標時依此收斂，不是刪分析也不是指控灌水)：①不印程序性自檢(QC-40已禁止渲染的機制詞，本來就不該出現)。②深度表只留承重列(判準=這張表有無進裁決？沒有→散文；有→留表)。③主敘事同一數字只出現一次(§1/§2/§13對同一結論性數字一律「見§X」引用，不重貼)。
 
-**機械閘**：`dd_sections.py bytes FILE`(body或最終HTML皆可跑)逐段量bytes比對下表，超標WARN(`--strict`時exit1)；彙總檢查Part I≥60%、商業本質(s3-s7)≥45%、估值(s10+appA)≤6.5KB、決策層(s11+s12+decision+s14)≤12KB、可見表格≤14。段落寫完跑一次，超標依三條省法收斂後才組裝。
+**機械閘**：`dd_sections.py bytes FILE`(body或最終HTML皆可跑)逐段量bytes比對`dd_sections.py`的`BUDGETS`常數(機械權威；每份報告的精確目標由`dd_prose_budget.py`扣掉表格bytes後動態輸出，(b2)讀那份即可)，超標WARN(`--strict`時exit1)；彙總檢查Part I≥60%、商業本質(s3-s7)≥45%、估值(s10+appA)≤6.5KB、決策層(s11+s12+decision+s14)≤12KB、可見表格≤14。段落寫完跑一次，超標依三條省法收斂後才組裝。
 
-| 章節/section id | 預算 | 超支優先砍 |
-|---|---|---|
-| 頁首+head/CSS(`dashboard`) | ≤7KB+~8KB | 欄位不增列 |
-| §1(`s1`) | ≤4KB | 不預演§13推理 |
-| §2(`s2`，含≤1KB序章) | ≤7KB | 引子一段話；表自證 |
-| §3(`s3`) | ≤8KB | E3保留，解釋合併 |
-| §4(`s4`) | ≤5KB | E4自證 |
-| **§5(`s5`，核心，含§5.R~4KB)** | **≤15KB** | 承重子模組留解釋，餘自證 |
-| §6(`s6`) | ≤11KB | 只留進裁決的子區塊解釋 |
-| §7(`s7`) | ≤5KB | E9收斂為關鍵年+變化率 |
-| §8(`s8`) | ≤3KB | beat/miss+guidance變化 |
-| §8.5(`s85`) | 無上限(實測12-16KB) | 不砍 |
-| §9(`s9`) | ≤3.5KB | E10自證 |
-| §10(`s10`) | **≤5KB** | 只留裁決用的尺+E11 |
-| §11(`s11`) | ≤3KB | 矛盾點→裁定表 |
-| §12(`s12`) | ≤2.5KB | 死法top3+Max DD範圍 |
-| §13(`decision`) | ≤5KB(**≥4KB**) | chip+角色+執行語+kill_metrics+rearm_trigger+矩陣命中列+E12 |
-| §14(`s14`) | ≤2KB | 保質期+一句upside/downside |
-| 附錄A/B | ≤1.5KB/≤3KB(B僅循環檔) | 表格自證 |
+**各段超標時優先砍什麼**（KB數字見`dd_prose_budget.py`輸出，此處只列方向）：dashboard欄位不增列／s1不預演§13推理／s2引子一段話+表自證／s3 E3保留解釋合併／s4 E4自證／**s5(核心)承重子模組留解釋餘自證**／s6只留進裁決的子區塊解釋／s7 E9收斂為關鍵年+變化率／s8 beat/miss+guidance變化／s85不砍(無上限)／s9 E10自證／s10只留裁決用的尺+E11／s11矛盾點→裁定表／s12死法top3+Max DD範圍／decision(§13，下限≥4KB)＝chip+角色+執行語+kill_metrics+rearm_trigger+矩陣命中列+E12／s14保質期+一句upside/downside／appA・appB表格自證。
 
 **可見表格(E1-E12，正文上限≤14張)**：E1儀表板/E2三假設H1-H3/E3逐段TAM+利潤池/E4 Munger門檻/E5二維評分+Moat-to-Numbers/E6對手P&L/E7 §5.R四檢查點/E8分部前瞻build/E9 DuPont+CCC/E10資本配置track/E11情境樹+三分量/E12監測觸發器表。除E1-E12外其餘表改散文或折疊區(數據要求不減，只是不渲染成表)。
 
@@ -129,26 +107,7 @@
 
 ## 8｜視覺規格(只用 `dd.css` class，不寫行內CSS)
 
-**樣式全部由`scripts/dd_template/dd.css`內嵌**，Stage 2不寫`<style>`、不寫行內CSS細節，只在prose內容中挑用既有class：
-
-| 用途 | class | 顏色 |
-|---|---|---|
-| 頁首固定列 | `.topbar` | 深底白字 |
-| grid儀表板 | `.status-bar`(`.sb-cell` `.lab` `.val`) | 淺灰底+左右4px藍線 |
-| thesis大字 | `.thesis` | #EFF6FF |
-| 儀表板要點 | `.hypothesis-box` | 淺藍底+左4px藍線 |
-| §2核心假設 | `.sec-assume` | #EFF6FF |
-| 價值陷阱警示 | `.sec-trap` | #FFF0E6 |
-| §11矛盾 | `.sec-contra` | #FFF7ED |
-| §12b Pre-mortem | `.sec-premortem` | #FEF2F2 |
-| §10情境樹 | `.sec-irr` | #F0F9FF |
-| §13決策晶片 | `.chip`+行內`style="background:{色}"` | 進場#166534/觀望#92400E/迴避#991B1B |
-| §12c Max DD大數字 | `.maxdd-num` | 依下界：≥−30綠/−30~−50 amber/<−50紅 |
-| §12c color bar | `.bar` | 綠→amber→紅三段(0~−30/−30~−50/<−50) |
-| 狀態小標記 | `.g`(綠)/`.y`(黃)/`.r`(紅)/`.b`(藍) | Beat符合/中性/Miss不符合/一般 |
-| 折疊區 | `<details>`及`id="appA"/"appB"`/`class="audit"` | 白底卡片 |
-
-**§13裁決晶片色碼**：進場背景#F0FDF4/左線#166534；觀望背景#FEF9C3/左線#92400E；迴避背景#FFF1F2/左線#991B1B；副標籤13px #475569斜體(`.chip-sub`)。風格：金融研究報告質感，無圓角過度裝飾，線條簡潔留白充足，**禁止**漸層背景、過重陰影、非專業裝飾。
+**樣式全部由`scripts/dd_template/dd.css`內嵌**(實際色碼以該檔為準)，Stage 2不寫`<style>`、不寫行內CSS細節，只在prose內容中挑用既有class：頁首固定列`.topbar`／grid儀表板`.status-bar`(`.sb-cell` `.lab` `.val`)／thesis大字`.thesis`／儀表板要點`.hypothesis-box`／§2核心假設`.sec-assume`／價值陷阱警示`.sec-trap`／§11矛盾`.sec-contra`／§12b Pre-mortem `.sec-premortem`／§10情境樹`.sec-irr`／§13決策晶片`.chip`(仍需行內`style="background:{色}"`：進場#166534/觀望#92400E/迴避#991B1B；副標籤`.chip-sub`)／§12c Max DD大數字`.maxdd-num`(依下界：≥−30綠/−30~−50 amber/<−50紅)＋color bar `.bar`(同三段)／狀態小標記`.g`(綠)/`.y`(黃)/`.r`(紅)/`.b`(藍)＝Beat符合/中性/Miss不符合/一般／折疊區`<details>`及`id="appA"/"appB"`/`class="audit"`。風格：金融研究報告質感，線條簡潔留白充足，**禁止**漸層背景、過重陰影、非專業裝飾。
 
 **比較符跳脫(強制)**：正文出現 `<` `>` 作比較符(非HTML標籤)一律寫 `&lt;` `&gt;`，未跳脫的 `<` 由 `dd_sections.py leaks` 的 `_UNESCAPED_LT_RE` 機械攔(`<` 後面不是標籤起始字元即命中)。
 
@@ -162,14 +121,13 @@
 
 ---
 
-## 10｜輸出流程與驗證
+## 10｜輸出流程與驗證(2026-09-04起改呼叫`dd_gates.sh`，見agent-prompts.md (b2))
 
 1. Stage 2在context內完成全部`prose/{sid}.html`(每段一次Write，含條件性`s85`/`appB`)。
 2. `python3 scripts/gen_dd_tables.py judgment.json --out TABLES_DIR [--scenario-html E11.html] [--scenario-meta META.json]`(機械先行，零判斷)。
-3. `python3 scripts/render_dd.py --assemble PROSE_DIR --tables TABLES_DIR --judgment judgment.json -o docs/dd/DD_{T}_{D}.html`。
-4. 驗證鏈：`dd_sections.py leaks`(§5)→`validate_prose.py PROSE_DIR --judgment judgment.json`(§3)→`dd_sections.py bytes`(§7)→`verify_dd_math.py`→`validate_dd_meta.py --report`→`qc.py`。任一FAIL：`dd_sections.py extract FILE ID`取段→context內重寫該prose檔→重新組裝→重跑驗證；**只重寫超標或命中的那一段prose檔，不動判斷物、不動其餘段落**。驗證輪次≤3。
-5. **禁止**：Stage 2 Read `docs/dd/`產物、Edit已組裝的最終HTML(只能改`prose/{sid}.html`重新組裝)、對`judgment.json`做任何寫入(判斷物有誤須回報orchestrator，不得自行改)。
+3. **一次呼叫`bash scripts/dd_gates.sh {T} {D} {OUT_HTML}`**：內部依序跑render_dd組裝→六支驗證(validate_prose§3／dd_sections bytes§7／dd_sections leaks§5／qc／validate_dd_meta／verify_dd_math)，彙總輸出、任一真正擋下的閘exit 1。任一FAIL：`dd_sections.py extract FILE ID`取段→context內重寫該prose檔(整檔`Write`，非`Edit`)→重跑`dd_gates.sh`；**只重寫命中的那一段，不動判斷物、不動其餘段落**。**驗證輪次≤2**。
+4. **禁止**：Stage 2 Read `docs/dd/`產物、Edit已組裝的最終HTML或`prose/`任何檔(只能重新`Write`整檔)、對`judgment.json`做任何寫入(判斷物有誤須回報orchestrator，不得自行改)。
 
 **輕critic**(可選，旗標控制，預設關)：只核白話開場與敘事是否與判斷物一致(QC-54七軸之⑦)，不重審判斷。
 
-**回報≤300字**：路徑+KB+Part I佔比、`dd_sections.py bytes`表原文、leaks命中數、validate_prose結果、四支驗證gate狀態。
+**回報≤300字**：路徑+KB+Part I佔比、`dd_sections.py bytes`表原文、`dd_gates.sh`輸出摘要(七步任一FAIL標明)。

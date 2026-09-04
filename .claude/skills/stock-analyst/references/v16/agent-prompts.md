@@ -217,21 +217,29 @@ critic 也沒有修補回合——六支機械閘與你的自查就是最後一�
 3. \`scripts/gen_dd_tables.py\` 已產出的 \`.dd_build/{T}_{D}.tables/*.html\` 清單（機械先行，你只讀
    產物、不重算、不重寫表格內容）
 4. \`scripts/dd_prose_budget.py\` 輸出的各段目標 bytes 表
+5. **動筆前先讀** \`.dd_build/{T}_{D}.numbers_whitelist.txt\`（下方「呈現」段第一步產生）——
+   承重數字動筆時**逐字複製清單裡的字串**（含 −／%／$ 符號），不要用「年減／年增／下滑」這類中文
+   詞代替符號、不要自己重新排版或心算派生新數字（CRDO 教訓：「年減2.9個百分點」漏帶負號，
+   清單裡逐字是「−2.9」，照抄即過，不必等 \`validate_prose.py\` FAIL 後才回頭補）。
 
 **不讀** ${EVIDENCE} 全文——承重數字一律來自 ${JUDGMENT}（含其 \`reasoning\`），\`validate_prose.py\`
 以 judgment 為主要比對集合。若判斷物某處引用需要 evidence 佐證細節（例如某條 finding 的完整原文），
 以 judgment.json 內已摘錄的內容為準，不回頭翻 evidence.json 找更多。
 
 ## 呈現（機械先行，看完整張表再動筆）
-先一次複合 Bash 產表與算預算（若 (b1) 或 orchestrator 尚未跑過）：
+先一次複合 Bash 產表、算預算、產數字白名單（若 (b1) 或 orchestrator 尚未跑過）：
 python3 scripts/gen_dd_tables.py ${JUDGMENT} --out .dd_build/{T}_{D}.tables \\
     --scenario-html .dd_build/{T}_{D}.tables/e11.html --scenario-meta .dd_build/{T}_{D}.scenario_meta.json
 python3 scripts/dd_prose_budget.py ${JUDGMENT} --tables .dd_build/{T}_{D}.tables
+python3 scripts/validate_prose.py --dump-numbers ${JUDGMENT} --evidence ${EVIDENCE} \\
+    --out .dd_build/{T}_{D}.numbers_whitelist.txt
 
 \`dd_prose_budget.py\` 的輸出＝各段散文目標 bytes 區間（已扣掉將注入該段的表格 bytes，**表格計入分子**）。
 每段 \`.dd_build/{T}_{D}.prose/{sid}.html\` **一次性 \`Write\`**（sid ∈ s1…s14／decision／s85〔若有附
-文獻〕／appA／appB〔僅循環 archetype〕／revlog）。**禁一切 \`Edit\`**（render-rules §0 一次寫條款）；
-禁先寫短稿再加字湊篇幅。prose 檔內容即該段完整外層元素（\`<section id="s5">…</section>\`）。
+文獻〕／appA／appB〔僅循環 archetype〕／revlog）。**禁一切 \`Edit\`——prose 目錄任何 \`Edit\` 視為無效
+輸出**（render-rules §0 一次寫條款；CRDO 教訓：三次用 \`Edit\` 局部補標點/符號違反本條，正確做法是
+整檔重寫，見下方「組裝與驗證」）；禁先寫短稿再加字湊篇幅。prose 檔內容即該段完整外層元素
+（\`<section id="s5">…</section>\`）。
 
 ### 注入標記（精確比對，不得改寫標記文字，各自獨立一行，不得被散文包住）
 \`<!-- E2 -->\`§2.B 三假設表／\`<!-- E11 -->\`情境樹／\`<!-- E12 -->\`觸發器監測表／\`<!-- AUDIT -->\`
@@ -250,17 +258,27 @@ python3 scripts/dd_prose_budget.py ${JUDGMENT} --tables .dd_build/{T}_{D}.tables
    §11-§14 決策層合計 ≤12KB 只渲染結論物）。
 6. 機械表若觸發 leaks／標點檢查，**不得自行改表格檔**——回報 orchestrator 由 (b1) 判斷側修正後重產表。
 
-### 組裝與六支驗證（一次複合 Bash）
-python3 scripts/render_dd.py --assemble .dd_build/{T}_{D}.prose \\
-    --tables .dd_build/{T}_{D}.tables --judgment ${JUDGMENT} -o {OUT_HTML}
-python3 scripts/validate_prose.py .dd_build/{T}_{D}.prose --judgment ${JUDGMENT} --evidence ${EVIDENCE}
-python3 scripts/dd_sections.py bytes {OUT_HTML}
-python3 scripts/dd_sections.py leaks {OUT_HTML}
-python3 scripts/qc.py {OUT_HTML}
-python3 scripts/validate_dd_meta.py {OUT_HTML} --report
-python3 scripts/verify_dd_math.py {OUT_HTML}
-未過 → **只重寫命中的那一段 \`prose/{sid}.html\`（整檔 \`Write\`，非 Edit），每段最多重寫一次**；同一段
-連續兩次仍 FAIL 才回報 orchestrator，不動 judgment.json、不動其他段檔。
+### 動筆前速查表（≤15 行，不必外部讀檔；權威仍在 \`dd_sections.py\`／\`validate_prose.py\` 原始碼）
+**洩漏詞（動筆時不要寫，事後 \`leaks\` 才抓就多一輪）**：\`row ?\\d\`／Hard Veto／Soft Veto／
+\`signal ?[ABCX]\`／估值燈／\`val ?[🟢🟡🟠🔴]\`／\`MA ?[✅❌🟢🟡🟠]\`／Pure MA／\`盲點 ?\\d\`／PREREG／
+dd-meta／runway_post_y5／capalloc／\`QC-\\d\`／archetype／metadata／硬接線／接線[:：]／Guardrail／
+校驗紀錄／判定規則／gate／F2／row 8a→改寫「爆發候選路徑」／row 8b→「循環衛星進場路徑」。
+**符號慣例（\`validate_prose.py\` 的正規化規則，逐字對齊白名單就不用記細節）**：
+①負數一律在數字前直接放 \`−\`（或 \`-\`）——**不要**只用「年減／下滑／衰退」等中文詞代替符號，
+沒有符號的正數會被判定方向錯誤；②百分比一律 \`%\` 緊接數字，不留空格；③金額 \`$\` 緊接數字；
+④千分位逗號、全形數字/％/．都可以但不強制，兩種寫法驗證器都認；⑤**不要自己心算生出白名單裡
+沒有的衍生數字**（如兩個既有數字的差值百分比）——那不是符號問題，是新數字，一律 FAIL。
+
+### 組裝與驗證（一次複合 Bash，只呼叫 \`dd_gates.sh\`）
+bash scripts/dd_gates.sh {T} {D} {OUT_HTML}
+
+\`dd_gates.sh\` 依序跑 render_dd 組裝 → 六支驗證（validate_prose／dd_sections bytes／dd_sections
+leaks／qc／validate_dd_meta／verify_dd_math），彙總輸出、任一真正擋下的閘 exit 1（bytes 與
+dd_meta 維持既有 WARN／\`--report\`診斷慣例，不因合成腳本改變各閘既有 pass/warn/fail 語意）。
+**只准呼叫這一支**，不要拆開個別跑（CRDO 教訓：拆開跑導致漏掉幾支閘、驗證輪次吃到 3 輪）。
+未過 → **只重寫命中的那一段 \`prose/{sid}.html\`（整檔 \`Write\`，非 \`Edit\`），每段最多重寫一次**；
+同一段連續兩次仍 FAIL 才回報 orchestrator，不動 judgment.json、不動其他段檔。**驗證輪次 ≤2**
+（第 1 輪找出 FAIL 段、第 2 輪確認全過；仍不過才回報，不第 3 輪）。
 
 ## 交稿前自查（只做 ⑧＋QC-54，判斷層自查已在 (b1) 做過，不重複）
 ⑧ **散文一致性**——散文結論有沒有與 \`judgment.json\` 矛盾？有沒有出現判斷物裡不存在的數字
@@ -271,12 +289,15 @@ python3 scripts/verify_dd_math.py {OUT_HTML}
 
 ## 禁（token 紀律）
 - WebSearch／WebFetch、Read 任何 \`docs/dd/\`、重讀自己寫過的 prose/tables 檔
-- 每檔一次 \`Write\`；prose 目錄一律禁 \`Edit\`
+- 每檔一次 \`Write\`；**prose 目錄任何 \`Edit\` 一律視為無效輸出**（機制上不擋——\`dd_gates.sh\` 不驗
+  寫入方式，靠這條硬規則自律；發現自己剛用了 \`Edit\` 補字，立刻整檔 \`Write\` 重寫該段蓋過去）
+- 拆開個別呼叫 \`dd_gates.sh\` 內的六支腳本（那是 orchestrator／除錯用，(b2) 只准呼叫 \`dd_gates.sh\`）
 - 改 \`judgment.json\` 任何欄位（發現判斷有問題只能回報 orchestrator，不得自行修改判斷）
 
 ## 最終回報（≤200 字）
-①各段 bytes 與 \`dd_sections.py bytes\` 表原文②六支驗證輸出摘要③**重寫段數**（列出整檔重寫過的
-sid，全部一次過寫 0）④自查⑧與 QC-54 的 🟢/🟡/🔴 與一句依據（🔴 須註明已如何修正）。
+①各段 bytes 與 \`dd_sections.py bytes\` 表原文②\`dd_gates.sh\` 輸出摘要（七步任一 FAIL 標明）
+③**重寫段數**（列出整檔重寫過的 sid，全部一次過寫 0）④自查⑧與 QC-54 的 🟢/🟡/🔴 與一句依據
+（🔴 須註明已如何修正）。
 `
 })
 ```

@@ -216,6 +216,67 @@ def uncovered_in_text(text: str, ref_numbers: set):
     return misses
 
 
+# ---------------------------------------------------------------------------
+# --dump-numbers（v16.2 新增，CRDO 教訓：散文 agent 逐字複製比自己重新排版省一輪驗證）
+# ---------------------------------------------------------------------------
+
+def _display_sign(raw: str) -> str:
+    """把 raw token 的符號正規化成固定顯示慣例：負號一律 −（非 -/－/–），
+    全形數字/百分比轉半形，正號不顯示。不動小數位數與千分位逗號——
+    白名單要逐字可複製，不是重新格式化。"""
+    s = raw.translate(_FULLWIDTH_DIGITS)
+    if s[:1] in ("+", "-", "−", "－", "–"):
+        sign, rest = s[0], s[1:]
+        s = rest if sign == "+" else "−" + rest
+    return s
+
+
+def _display_number(v: float) -> str:
+    """原生 JSON int/float（非字串內嵌數字）→ 顯示字串；沒有 $/% 等單位資訊
+    （那是字串脈絡帶的，原生數字沒有），符號用 −。"""
+    sign = "−" if v < 0 else ""
+    v = abs(v)
+    if float(v).is_integer():
+        s = str(int(v))
+    else:
+        s = f"{v:.6f}".rstrip("0").rstrip(".")
+    return sign + s
+
+
+def dump_number_whitelist(obj) -> list:
+    """遞迴走一遍 judgment（+ evidence）物件，把每個可引用數字的「原樣字串」
+    （含 $／%／− 符號慣例）收成一份去重排序清單，供散文 agent 逐字複製引用——
+    比自己重新排版數字更不容易在 validate_prose 首輪被判「未覆蓋」（CRDO 教訓：
+    「年減2.9個百分點」的中文詞「減」不帶機械可辨識的負號，散文 agent 若照抄
+    本清單裡的「−2.9%」字面字串就不會漏帶符號）。"""
+    out = set()
+
+    def walk(v):
+        if isinstance(v, dict):
+            for vv in v.values():
+                walk(vv)
+        elif isinstance(v, list):
+            for vv in v:
+                walk(vv)
+        elif isinstance(v, bool):
+            return
+        elif isinstance(v, (int, float)):
+            out.add(_display_number(float(v)))
+        elif isinstance(v, str):
+            for raw, _val, _s, _e, _canon in extract_tokens(v):
+                out.add(_display_sign(raw))
+
+    walk(obj)
+
+    def sort_key(s: str):
+        try:
+            return (0, float(s.replace("−", "-").replace("$", "").rstrip("%")))
+        except ValueError:
+            return (1, s)
+
+    return sorted(out, key=sort_key)
+
+
 def check_prose_dir(prose_dir: Path, ref_numbers: set):
     """dict: {sid: [(raw, context), ...]} for every prose file with >=1
     uncovered number. Uses dd_sections.readable_text() on each standalone
@@ -238,12 +299,36 @@ def check_prose_dir(prose_dir: Path, ref_numbers: set):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("prose_dir", help="PROSE_DIR（含 {sid}.html 段落檔）")
-    ap.add_argument("--judgment", required=True, help="judgment.json 路徑")
-    ap.add_argument("--evidence", help="evidence.json 路徑（選填，併入參照數字集合）")
+    ap.add_argument("prose_dir", nargs="?", help="PROSE_DIR（含 {sid}.html 段落檔）；--dump-numbers 模式不需要")
+    ap.add_argument("--judgment", help="judgment.json 路徑")
+    ap.add_argument("--evidence", help="evidence.json 路徑（選填，併入參照數字集合／白名單）")
     ap.add_argument("--warn-only", action="store_true", help="永遠 exit 0，只印報告")
     ap.add_argument("--json", action="store_true", help="輸出 JSON 而非人讀格式")
+    ap.add_argument("--dump-numbers", metavar="JUDGMENT",
+                     help="v16.2 新增：不跑覆蓋檢查，改把 JUDGMENT（+ --evidence）內"
+                          "可引用數字的原樣字串（含 $/%/− 符號慣例）列成白名單，"
+                          "供散文 agent 動筆前逐字複製引用（見 render-rules.md §0.2）")
+    ap.add_argument("--out", help="--dump-numbers 模式的輸出檔路徑（省略則印 stdout）")
     args = ap.parse_args()
+
+    if args.dump_numbers:
+        judgment = json.loads(Path(args.dump_numbers).read_text(encoding="utf-8"))
+        numbers = dump_number_whitelist(judgment)
+        if args.evidence:
+            evidence = json.loads(Path(args.evidence).read_text(encoding="utf-8"))
+            numbers = sorted(set(numbers) | set(dump_number_whitelist(evidence)))
+        text = "\n".join(numbers) + "\n"
+        if args.out:
+            Path(args.out).write_text(text, encoding="utf-8")
+            print(f"寫入 {args.out}（{len(numbers)} 個數字）")
+        else:
+            print(text, end="")
+        sys.exit(0)
+
+    if not args.prose_dir or not args.judgment:
+        print("用法：validate_prose.py PROSE_DIR --judgment JUDGMENT.json [--evidence EVIDENCE.json] [--warn-only] [--json]\n"
+              "      validate_prose.py --dump-numbers JUDGMENT.json [--evidence EVIDENCE.json] [--out FILE]", file=sys.stderr)
+        sys.exit(2)
 
     prose_dir = Path(args.prose_dir)
     if not prose_dir.is_dir():

@@ -27,6 +27,12 @@
      且該檔案存在於檔案系統——沒有摘要檔代表判斷層拿不到「除最新一季外」逐字稿的結構化
      內容。本檢查只驗路徑存在，不驗摘要內容本身（內容正確性由 scripts/validate_digest.py
      另外把關，見該腳本）。
+  8.（v16.2 新增，預設 WARN，--strict 才 FAIL；CRDO 2026-09-04 教訓）
+     coverage 任一 finding 的 claim 內若出現「現價約 $N」「現價 $N」「trading at $N」，
+     N 與 numbers.price_at_dd 差 >10% → WARN，列出該軸與抓到的數字（財報前後聚合站舊價
+     常年落差 20-30%，claim 內硬寫的現價字面數字最容易漂移，不像 numbers.price_at_dd
+     是腳本算好的錨）。子 agent／採集 agent 規則見 data-collection.md／evidence-pack.md
+     §2：現價一律引 numbers.price_at_dd，不得自行寫死查到的數字。
 
 用法：
   python3 scripts/validate_evidence.py .dd_build/AVGO_20260910.evidence.json
@@ -69,6 +75,10 @@ EVENTS_KEYS = [
 FINDING_FIELDS = ["claim", "source", "as_of", "direction", "affects"]
 VALID_DIRECTIONS = {"+", "0", "-"}
 VALID_STATUS = {"found", "none", "not_applicable"}
+
+# v16.2 新增：claim 內硬寫「現價 $N」字面數字 vs numbers.price_at_dd 對帳（CRDO 教訓）
+PRICE_MENTION_RE = re.compile(r"(?:現價約?|trading at)\s*\$\s*([\d,]+(?:\.\d+)?)", re.I)
+PRICE_MENTION_THRESHOLD_PCT = 10.0
 
 DATE_FORMATS = ["%Y-%m-%d", "%Y/%m/%d", "%Y%m%d"]
 
@@ -210,6 +220,35 @@ def check_numbers_extra(evidence, numbers, warns):
                 )
 
 
+def check_price_mentions(evidence, numbers, warns):
+    """v16.2 新增（CRDO 2026-09-04 教訓：聚合站顯示財報前舊價 $234，實際財報後 $164.17，
+    差 30%）。掃 coverage 所有 finding 的 claim，抓「現價約 $N」「現價 $N」「trading at $N」
+    字面數字，與 numbers.price_at_dd（dd_numbers_extra.py 算好的錨）比對，差 >10% 才示警——
+    避免把「財報前價」「歷史某日收盤價」這類有明確時間限定語的引用誤判（那些不會被
+    PRICE_MENTION_RE 命中，因為它們前面不是「現價」二字）。"""
+    price_at_dd = numbers.get("price_at_dd")
+    try:
+        price_at_dd = float(price_at_dd)
+    except (TypeError, ValueError):
+        return  # numbers 缺 price_at_dd 已由既有第 4 項檢查 FAIL，此處不重複告警
+
+    coverage = evidence.get("coverage") or {}
+    for axis_id, c in coverage.items():
+        for i, f in enumerate(c.get("findings") or []):
+            claim = f.get("claim") or ""
+            for m in PRICE_MENTION_RE.finditer(claim):
+                try:
+                    n = float(m.group(1).replace(",", ""))
+                except ValueError:
+                    continue
+                diff_pct = abs(n - price_at_dd) / price_at_dd * 100 if price_at_dd else 0
+                if diff_pct > PRICE_MENTION_THRESHOLD_PCT:
+                    warns.append(
+                        f"[{axis_id}] findings[{i}] claim 內「{m.group(0)}」＝{n} 與 "
+                        f"numbers.price_at_dd={price_at_dd} 差 {diff_pct:.1f}%（>{PRICE_MENTION_THRESHOLD_PCT:.0f}%，疑用舊價）"
+                    )
+
+
 def check_file(path, matrix, strict=False):
     fails, warns, axis_report = [], [], []
     try:
@@ -310,6 +349,9 @@ def check_file(path, matrix, strict=False):
 
     # ---- 7. v16.2 新增：transcripts.digest_path（預設 WARN） ----
     check_transcript_digest(evidence, warns)
+
+    # ---- 8. v16.2 新增：claim 內「現價 $N」字面數字 vs price_at_dd（預設 WARN） ----
+    check_price_mentions(evidence, numbers, warns)
 
     if strict:
         fails.extend(f"(strict) {w}" for w in warns if not w.startswith("(info)"))
