@@ -306,3 +306,5 @@ Orchestrator（opus）只做：spawn、傳檔名、讀 validator 結果、決定
 | **合計** | | **≈14.8M**（去重尺） | 3.22M | 裁決 觀望｜追蹤（row 8），前份 6/29 觀望｜條件式核心持倉 |
 
 上站前 orchestrator 機械修正：`gen_dd_tables.render_audit_html` 改沿用 `dd_decision.build_audit_html`（原本把 audit_rows dict 逐行印成 `<p>`）；`dd_decision` 條件字串半形逗號改全形。漏步：`docs/dd/INDEX.md` 登錄（研究頁只收 INDEX.md 有的 DD）——ddreport v3 步驟 4 需明列。來源檔已存 `notes/site-internal/dd/_src/PANW_20260904/`（judgment／scenario／scenario_meta／evidence／prose），作為差異模式（下一次同檔只收資料、只改動到的欄位與段落）的首個基底。
+
+**§16 補：v16.2 首份正式上站（CRDO，2026-09-04，去重尺）**：Stage 0 sonnet ×7＝8.4M（含 0e 摘要 1.2M，61 條逐字引句全過 validate_digest）→ **Fable 判斷 2.4M**（30 輪 20 分；首輪 4 FAIL 皆字串洩漏詞，第 2 輪過；裁決 進場｜衛星 row 9b，前份 6/23 觀望翻面，引用前份觸發器歸因）→ sonnet 散文 6.8M（54 輪 16 分；94.6KB 六支閘全過；agent 曾誤用 Edit 後自行改回整檔 Write）。**合計 17.6M：Fable ≤3M ✓；sonnet 散文 6.8M > 4M 目標 ✗；合計 >15M ✗**。散文超標原因＝validate_prose 符號正規化三處＋leaks 一處各重跑一輪；下一份看散文能否 ≤4M。上站前 orchestrator 機械修正：`dd_decision.build_audit_html` requires_critic 串接改頓號。Stage 0 資料級修正一處：`capital_markets_pricing` 聚合站舊價 $234（財報後實價 $164.17）由 orchestrator 用 yfinance 序列定案並註記——採集模板應要求「現價一律引 numbers.price_at_dd，不自抓」。

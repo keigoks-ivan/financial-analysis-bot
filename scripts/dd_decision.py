@@ -568,7 +568,7 @@ def build_audit_html(decision_out: dict) -> str:
             row_hit=html_lib.escape(str(decision_out["row_hit"])),
             pacing=("；pacing：" + html_lib.escape("；".join(decision_out["pacing"])) if decision_out["pacing"] else ""),
             cap=("；holding_cap：" + html_lib.escape(decision_out["holding_cap"]) if decision_out["holding_cap"] else ""),
-            critic=("；requires_critic：" + html_lib.escape(",".join(decision_out["requires_critic"])) if decision_out["requires_critic"] else ""),
+            critic=("；requires_critic：" + html_lib.escape("、".join(decision_out["requires_critic"])) if decision_out["requires_critic"] else ""),
         )
     )
     lines.append("</details>")
