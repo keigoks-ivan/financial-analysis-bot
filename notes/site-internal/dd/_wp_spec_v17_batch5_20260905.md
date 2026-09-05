@@ -39,3 +39,16 @@
 | judge_1 | 9（上限 8）| 0.61M | 58.9K | 142K | $5.95 | 寫完 judgment.json 77KB（含 plain、6 條不採納、負向引用）與 scenario.json；未跑到 judge check |
 | judge_fix_1 | 5（上限 4）| — | — | — | — | 未產出；4 輪不夠讀 77KB＋改＋寫＋check |
 | orchestrator 機械修正 | 0 | 0 | 0 | 0 | 0 | 去 QC 代號、補 rearm 方法論歸因、修 gen_dd_tables 誤判 → 0 FAIL |
+
+## WP7d 摘要子 agent 拆成一篇一個（HPE 第二次真跑實測，sonnet）
+**擁有**：`scripts/ddreport.py`（plan 的 a2 派工改為 `a2_{k}` 每篇一個 spawn，各 max_turns 8、budget 0.7M；finalize 前用零 LLM 腳本把各篇 digest 片段合併成 `digest.json`，再跑 `validate_digest.py`）、`scripts/dd_prompts/digest.md.tmpl`（改單篇契約：輸入一篇路徑，輸出 `parts/digest_{k}.json` 片段）。
+**依據**：HPE a2_digest 一人讀三篇：17 輪（上限 16）、cache_read 2.54M（預算 1.5M）、$1.79；AVGO 重派 14 輪 1.42M。context 隨每篇累積是主因；三個小 agent 各約 0.5M 合計 1.5M 且可平行。
+**驗收**：CIEN replay 仍過（fake 需支援 a2_{k}）；HPE parts 可重放合併；`validate_digest.py` 對合併檔 0 FAIL。
+
+## HPE 第二次真跑 Stage 0 實測（2026-09-05，帶 --peers DELL,SMCI,NTAP,CSCO）
+| agent | 輪 | cache_read | 備註 |
+|---|---|---|---|
+| a_1–a_7 | 9–13 | 0.44–0.85M（合計 4.27M） | a_2／a_5 撞 12 輪上限但 part 已寫、finalize 過 |
+| a1_numbers | 15 | 1.09M | 預算 1.2M 內 |
+| a2_digest | 17 | 2.54M | 超 1.5M → 熔斷停下，`--accept-over-budget` 放行 |
+| Stage 0 合計 | | 7.9M | Koyfin 零 LLM、清單先 merge、peers 早停三項修正皆生效；無重派 |

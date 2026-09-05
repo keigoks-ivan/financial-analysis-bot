@@ -535,6 +535,13 @@ def leak_and_punct_checks(data: dict) -> list:
         # 2026-09-05 WP1d 重放 BE 查出兩支腳本互相打架，此欄整個豁免。
         if path.startswith("decision_out.requires_critic"):
             continue
+        # contradictions[].prior_field 依 QC-49 執行細則必須填 dd-meta 欄名（runway_post_y5／
+        # archetype 等本身就在洩漏詞表內），該欄整個豁免；axis 以「前份漂移：」開頭時，
+        # 冒號後的欄名 token 同樣豁免（HPE 2026-09-05 真跑查出驗證器自相矛盾）。
+        if re.match(r"contradictions\[\d+\]\.prior_field$", path):
+            continue
+        if re.match(r"contradictions\[\d+\]\.axis$", path) and text.startswith("前份漂移："):
+            continue
         scan_text = text
         if path.startswith("reasoning."):
             scan_text = _QC_ANNOTATION_RE.sub(lambda m: " " * len(m.group(0)), scan_text)
