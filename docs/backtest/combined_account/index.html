@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>美台合併帳戶層：一份資金同時扛兩個市場之後的真實回撤 | InvestMQuest Research</title>
+<meta name="description" content="把美股（QQQ/SMH）與台股（0050/2330）兩套實單合成一個帳戶，量合併後的 CAGR／MDD／Calmar、兩邊回撤的同步性、四格閘門空手時間，以及匯率對合併淨值的分解，並以預註冊的分散比判定分散是否有效。">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+:root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
+      --text:#111827;--muted:#6b7280;--border:#e5e7eb}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans TC',sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1180px;margin:0 auto;padding:0 1.5rem}
+.page-hdr{padding:1.75rem 0 1.25rem;background:linear-gradient(180deg,#eff6ff 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
+.page-hdr h1{font-size:1.55rem;font-weight:700;letter-spacing:-.03em}
+.page-hdr .sub{color:var(--muted);font-size:.88rem;margin-top:.2rem}
+.crumb{font-size:.82rem;color:var(--muted);margin-bottom:.4rem}
+.crumb a{color:var(--muted)}
+.section{padding:1.75rem 0 0}
+.section-title{font-size:1.08rem;font-weight:700;margin-bottom:.6rem;
+               padding-bottom:.45rem;border-bottom:2px solid var(--brand)}
+.sub-h{font-size:.95rem;font-weight:700;margin:1.1rem 0 .5rem}
+.sub-line{font-size:.84rem;color:var(--muted);margin-bottom:.8rem}
+table{width:100%;border-collapse:collapse;font-size:.82rem;background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:.5rem}
+th,td{text-align:left;padding:.5rem .6rem;border-bottom:1px solid var(--border)}
+th{background:#f9fafb;font-weight:600;font-size:.68rem;letter-spacing:.03em;color:var(--muted)}
+td{font-variant-numeric:tabular-nums;vertical-align:top}
+td.num,th.num{text-align:right}
+td.lbl{font-weight:500}
+tbody tr:last-child td{border-bottom:0}
+tbody tr.main td{background:#f5f8ff;font-weight:600}
+tbody tr.ref td{color:#4b5563}
+tbody tr.hit td{background:#ecfdf5}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.hero{margin:1.25rem 0;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--card)}
+.hero-top{background:linear-gradient(135deg,#eff6ff 0%,#f5f8ff 100%);padding:1.4rem 1.6rem;border-bottom:1px solid var(--border)}
+.hero-top .verdict-tag{display:inline-block;background:#1a56db;color:#fff;font-size:.74rem;font-weight:700;
+                       letter-spacing:.05em;padding:.25rem .7rem;border-radius:99px;margin-bottom:.5rem}
+.hero-top h2{font-size:1.15rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.35rem}
+.hero-top p{font-size:.9rem;color:#374151;max-width:66rem;margin-bottom:.5rem}
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card)}
+.hero-stats > div{padding:1rem 1.2rem;text-align:center;border-right:1px solid var(--border)}
+.hero-stats > div:last-child{border-right:none}
+.hero-stats .hs-label{font-size:.66rem;color:var(--muted);letter-spacing:.04em}
+.hero-stats .hs-value{font-size:1.35rem;font-weight:800;letter-spacing:-.02em}
+.note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;
+      padding:.85rem 1.1rem;font-size:.82rem;color:#92400e;margin:1rem 0}
+.tiny{font-size:.72rem;color:var(--muted);font-weight:400}
+code{background:#f3f4f6;border-radius:4px;padding:.05rem .3rem;font-size:.9em}
+.ok{color:#059669;font-weight:700}
+.no{color:#dc2626;font-weight:700}
+.disc{margin-left:1.1rem;font-size:.86rem}
+.disc li{margin-bottom:.5rem}
+details summary{cursor:pointer;font-size:.88rem}
+.chart-wrap{position:relative;height:340px;margin:1rem 0}
+footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
+       text-align:center;padding:1.25rem 0;font-size:.78rem;margin-top:2rem}
+@media(max-width:768px){
+  .hero-stats{grid-template-columns:repeat(2,1fr)}
+  table{font-size:.74rem}th,td{padding:.4rem .4rem}
+}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/market/">市況主控台</a>
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <a href="/cockpit/">選股</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">個股研究</a>
+          <a href="/id/">產業研究</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/" class="active">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/flow/">投資流程</a>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="page-hdr">
+  <div class="container">
+    <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / 美台合併帳戶層</div>
+    <h1>美台合併帳戶層：一份資金同時扛兩個市場之後的真實回撤</h1>
+    <div class="sub">描述層＋一條預註冊判定（分散有效與否），不含配置建議・
+    預註冊 docs/Combined_Account_Spec.md（2026-09-05 凍結）・
+    頁面生成 2026-09-05 21:38，美股資料截至 2026-06-11、台股截至 2026-09-03，合併窗結束於 2026-06-11</div>
+    <style id="bt-subnav-style">.bt-subnav{margin-top:.75rem;border:1px solid var(--border,#e5e7eb);border-radius:8px;overflow:hidden;font-size:.78rem;line-height:1.3}.bt-subnav-row{display:flex;align-items:flex-start;gap:.55rem;padding:.32rem .55rem;border-top:1px solid var(--border,#e5e7eb)}.bt-subnav-row:first-child{border-top:0}.bt-subnav-lbl{flex:0 0 5.4em;font-size:.64rem;font-weight:700;color:var(--muted,#6b7280);text-transform:uppercase;letter-spacing:.04em;padding-top:.34rem}.bt-subnav-pills{display:flex;flex-wrap:wrap;gap:.3rem;min-width:0}.bt-subnav-pills a{display:inline-flex;align-items:center;gap:.28rem;padding:.26rem .6rem;background:#eef1f4;color:#374151;border-radius:999px;text-decoration:none;font-weight:500;white-space:nowrap;transition:background .12s}.bt-subnav-pills a:hover{background:#e1e6ea}.bt-subnav-pills a.bt-dead{color:#7a828d;background:#f2f3f5}.bt-subnav-pills a.bt-on{background:linear-gradient(135deg,#081832,#173564);color:#fff;font-weight:600}.bt-subnav-pills a.bt-on:hover{background:linear-gradient(135deg,#081832,#173564)}.bt-tag{font-size:.6rem;font-weight:600;padding:.02rem .3rem;border-radius:4px;line-height:1.4}.bt-tag-dead{background:rgba(220,38,38,.12);color:#b42318}.bt-tag-watch{background:rgba(180,118,20,.15);color:#986a12}.bt-on .bt-tag-dead{background:rgba(255,255,255,.22);color:#fff}.bt-on .bt-tag-watch{background:rgba(255,255,255,.22);color:#fff}@media(max-width:640px){.bt-subnav-row{flex-direction:column;gap:.28rem;padding:.4rem .55rem}.bt-subnav-lbl{flex-basis:auto;padding-top:0}}</style><nav class="bt-subnav" aria-label="回測子導航"><div class="bt-subnav-row"><div class="bt-subnav-lbl">對比總覽</div><div class="bt-subnav-pills"><a href="/backtest/">20 年</a><a href="/backtest/10y/">10 年</a><a href="/backtest/criteria/">評估標準</a><a href="/backtest/tw/">台股總覽</a><a href="/backtest/multi/">多資產總覽</a><a href="/backtest/leverage/">槓桿疊加總覽</a><a href="/backtest/ma_sensitivity/">MA 敏感度</a><a href="/backtest/free_lunch/">分散與免費午餐</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">個別系統</div><div class="bt-subnav-pills"><a href="/backtest/long_track/">SPY/QQQ 長軌</a><a href="/backtest/long_track_qqq/">QQQ 長軌純攻</a><a href="/backtest/long_track_ensemble/">SPY/QQQ 集成</a><a href="/backtest/long_track_smh/">SMH/QQQ 進攻</a><a href="/backtest/six_state/">QQQ＋SMH 六狀態</a><a href="/backtest/six_state_v1r1/">QQQ 六狀態實盤</a><a href="/backtest/gem/">SPY/ACWX 雙動能</a><a href="/backtest/slope_filter/">SPY/AGG 斜率</a><a href="/backtest/rsi2_mr/">SPY/QQQ 均值回歸</a><a href="/backtest/supertrend/">週線 Supertrend</a><a href="/backtest/minervini/">Minervini RS+VCP</a><a href="/backtest/mom_volscaling/">動能·波動縮放</a><a href="/backtest/dual_track_study/">雙軌分散研究</a><a href="/backtest/leverage_voltarget/">期貨槓桿疊加</a><a href="/backtest/vol_targeting/">波動目標倉位<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/dual_track/" class="bt-dead">SPY/QQQ 雙軌多空<span class="bt-tag bt-tag-dead">否決</span></a><a href="/backtest/exit_switch/" class="bt-dead">出場法切換<span class="bt-tag bt-tag-dead">否決</span></a><a href="/backtest/short_system/" class="bt-dead">指數做空<span class="bt-tag bt-tag-dead">失敗</span></a><a href="/backtest/cndr/" class="bt-dead">Iron Condor<span class="bt-tag bt-tag-dead">失敗</span></a><a href="/backtest/covered_call/" class="bt-dead">Covered Call<span class="bt-tag bt-tag-dead">負貢獻</span></a><a href="/backtest/put_timing/" class="bt-dead">SPY/QQQ 買 put 避險<span class="bt-tag bt-tag-dead">負貢獻</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">多資產</div><div class="bt-subnav-pills"><a href="/backtest/turtle/">唐奇安突破</a><a href="/backtest/clenow/">跨資產趨勢</a><a href="/backtest/multiasset_trend/">SG Trend 複製</a><a href="/backtest/turtle_adopt/">組合採用 Sleeve</a><a href="/backtest/slope_filter_global/">全球斜率穩健性</a><a href="/backtest/crossasset_defense/">跨資產防守</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">台股波段</div><div class="bt-subnav-pills"><a href="/backtest/tw_0050_compare/">0050 總覽·台美差異</a><a href="/backtest/tw_0050/">0050 進攻趨勢（移植）</a><a href="/backtest/tw_0050_lt/">0050 長軌趨勢</a><a href="/backtest/long_track_tw/">2330/0050 E3 長軌</a><a href="/backtest/tw_0050_six/">0050 六狀態機</a><a href="/backtest/tw_0050_dual/" class="bt-dead">0050 雙軌多空<span class="bt-tag bt-tag-dead">否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">台股選擇權</div><div class="bt-subnav-pills"><a href="/backtest/tw_options/">台股選擇權專區<span class="bt-tag bt-tag-watch">專區</span></a><a href="/backtest/txo_vol_seller/">台指選擇權賣方<span class="bt-tag bt-tag-watch">模擬中</span></a><a href="/backtest/txo_put_seller/">台指賣方下檔<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_iron_condor/">台指雙賣<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_covered_call_0050/">台指 Covered Call<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_tail_hedge/">台指尾端避險<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">日內交易</div><div class="bt-subnav-pills"><a href="/backtest/txf_intraday/">台指當沖<span class="bt-tag bt-tag-watch">未過</span></a><a href="/backtest/txf_chips/">籌碼偏向<span class="bt-tag bt-tag-watch">觀察</span></a><a href="/backtest/ssf_xsec/">個股期橫斷面<span class="bt-tag bt-tag-watch">未過</span></a><a href="/backtest/txf_basis/" class="bt-dead">基差偏向<span class="bt-tag bt-tag-dead">否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・主動式ETF</div><div class="bt-subnav-pills"><a href="/backtest/active_etf/">主動式ETF總結<span class="bt-tag bt-tag-watch">專區</span></a><a href="/backtest/tw_active_etf/">台股主動式ETF<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/us_active_etf/">美股主動式ETF<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/tw_mutual_fund/">台股共同基金<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・頻率</div><div class="bt-subnav-pills"><a href="/backtest/daily_vs_weekly/">日/週線</a><a href="/backtest/daily_vs_weekly_deep/">日/週·深掘</a><a href="/backtest/daily_vs_weekly_global/">日/週·全球</a><a href="/backtest/daily_vs_weekly_tw/">日/週·台股</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・均線</div><div class="bt-subnav-pills"><a href="/backtest/ma_cross/">MA 交叉</a><a href="/backtest/ma_deviation/">MA 乖離</a><a href="/backtest/ma_dynband/">MA 動態帶</a><a href="/backtest/ma_squeeze/">MA 擠壓</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・崩盤</div><div class="bt-subnav-pills"><a href="/backtest/smh_vcrash/">SMH V崩</a><a href="/backtest/tw_vcrash/">台股 V崩防禦</a><a href="/backtest/tw_crash/">台股含崩盤驗證</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・總經</div><div class="bt-subnav-pills"><a href="/backtest/housing_gdp/">人均GDP與房價<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・可轉債</div><div class="bt-subnav-pills"><a href="/backtest/tw_cb/">台股可轉債專區<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・因子</div><div class="bt-subnav-pills"><a href="/backtest/return_driver/">美股漲跌歸因：獲利與估值<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/pead/">美股財報驚喜後漂移<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/accruals/">美股獲利品質（應計項目）<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/share_issuance/">美股股數增減（發行與回購）<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/profitability/">美股獲利能力因子<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/asset_growth/">美股資產成長異象<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/index_inclusion/">指數納入效應<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/insider/">內部人買賣叢集買進<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・跨標的驗證</div><div class="bt-subnav-pills"><a href="/backtest/w52_adaptive_oos/">W52×自適應 σ 跨標的證偽<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/insurance_premium/">深熊保險的價格<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/adopted_bootstrap/">已採用系統的統計不確定性帶<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/combined_account/" class="bt-on">美台合併帳戶層<span class="bt-tag bt-tag-watch">研究</span></a></div></div></nav>
+  </div>
+</div>
+
+<div class="container">
+
+
+<div class="hero">
+  <div class="hero-top">
+    <span class="verdict-tag">預註冊判定命中：第 3 列</span>
+    <h2>分散比 0.962——<span style="color:#dc2626">兩邊實質同一個賭注</span>；
+    合併後（每月再平衡、以新台幣計）的最大回撤是 -20.62%。</h2>
+    <p>站上的兩套實單是<b>兩個各自 100% 的市場</b>（美股 QQQ／SMH、台股 0050／2330），
+    但實際上是<b>一份資金同時扛兩邊</b>。這頁把兩邊合成一個帳戶，回答四件事：合併後的報酬與回撤、
+    兩邊跌起來有多同步、兩邊同時空手多久、匯率幫了還是害了。
+    主窗 2014-01-02 ～ 2026-06-11。</p>
+    <p><b>分散比</b>（本頁最重要的一個數字）＝合併後的最大回撤 ÷ 兩個 sleeve 各自最大回撤的平均。
+    白話說：如果把錢分兩邊真的有用，合併後最深的那一跌應該<b>比兩邊平均還淺</b>，分散比就會小於 1；
+    等於 1 表示「分兩邊完全沒幫上忙」。這裡量到 0.962——
+    20.62% 相對於 21.43% 的平均，
+    只淺了 0.81 個百分點。</p>
+  </div>
+  <div class="hero-stats">
+    <div><div class="hs-label">分散比（判準）</div><div class="hs-value" style="color:#dc2626">0.962</div></div>
+    <div><div class="hs-label">合併 MDD（TWD）</div><div class="hs-value">-20.62%</div></div>
+    <div><div class="hs-label">兩邊同時空手時間</div><div class="hs-value">10.6%</div></div>
+    <div><div class="hs-label">最長連續都空手</div><div class="hs-value">199 日</div></div>
+  </div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">一、判準原文（預註冊，跑之前鎖死）</h2>
+<div class="sub-line">以 C-monthly／TWD／主窗 判定，只判「分散有效與否」，不判系統好壞、不含任何配置建議。</div>
+<div class="scroll"><table>
+<thead><tr><th>分散比（合併 MDD ÷ 平均 sleeve MDD）</th><th>判定</th><th class="num">命中</th></tr></thead>
+<tbody><tr class=""><td class='lbl'>分散比 ≤ 0.80</td><td>分散有效：合併回撤比兩邊平均淺 ≥20%</td><td class='num'><span class='no'>✗</span></td></tr><tr class=""><td class='lbl'>0.80 < 分散比 ≤ 0.95</td><td>分散微弱</td><td class='num'><span class='no'>✗</span></td></tr><tr class="hit"><td class='lbl'>分散比 > 0.95</td><td>兩邊實質同一個賭注（半導體 beta），合併不降回撤</td><td class='num'><span class='ok'>✓</span></td></tr></tbody></table></div>
+<div class="note">門檻由來（誠實預告）：0.80／0.95 是先驗，不是從資料推的。兩個高度相關的資產等權合併，
+最大回撤通常落在兩邊平均的 0.9–1.0 之間；0.80 是「明顯有分散」的常識線。
+附帶條件（不進判定）：合併 Calmar 是否高於兩 sleeve 各自的 Calmar＝
+<span class='no'>✗</span>
+（合併 1.102 vs 美股 0.906／
+台股 1.217）；合併後兩向 matched-cash 是否仍勝＝
+<span class='ok'>✓</span>。</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">二、復現核對（合併之前的閘門）</h2>
+<div class="sub-line">先用完全相同的程式路徑重建兩個 sleeve，對上站上已發布的數字；核對不過就停，
+不會產出這一頁。容忍帶 CAGR／MDD ±0.05 個百分點、Calmar ±0.01（快取自發布日之後前進了幾個月）。</div>
+<div class="scroll"><table>
+<thead><tr><th>sleeve</th><th>窗</th><th class="num">CAGR%</th><th class="num">MDD%</th>
+<th class="num">Calmar</th><th>發布值 CAGR／MDD／Calmar</th><th class="num">通過</th></tr></thead>
+<tbody><tr><td class='lbl'>A-US（QQQ 50／SMH 50，cap1.5＋A2）</td><td>2005-01-03 ～ 2026-06-11</td><td class='num'>14.11</td><td class='num'>-23.7</td><td class='num'>0.596</td><td class='num'>14.1／-23.7／0.595</td><td class='num'><span class='ok'>✓</span></td></tr><tr><td class='lbl'>A-TW（0050 50／2330 50，cap1.5＋A2）</td><td>2014-01-02 ～ 2026-09-03</td><td class='num'>23.0</td><td class='num'>-18.9</td><td class='num'>1.219</td><td class='num'>22.98／-18.9／1.217</td><td class='num'><span class='ok'>✓</span></td></tr></tbody></table></div>
+<div class="note">合併演算法的機械驗證：把 C-daily 的再平衡成本設為 0 之後，它必須逐位元等於
+「每日 50/50 報酬加權」的封閉式（本 repo 的 Rule 1：組合一律用報酬加權，絕不相加淨值曲線）。
+實測最大相對誤差 TWD 5.67e-15、
+USD 1.48e-14——浮點數層級，通過。</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">三、合併主表（三個版本 × 兩種計價幣別）</h2>
+<div class="sub-line">主窗 2014-01-02 ～ 2026-06-11，聯集交易日 3226 天
+（美股原生 3129 天、台股原生 3028 天）。
+三個版本差在「多久把兩邊拉回一半一半」：C-daily 每天拉（實務上沒人這樣做，它的成本是上界）、
+C-monthly 每月最後一個交易日拉一次、C-drift 起始之後就不管了。再平衡成本 7 bps
+（bps ＝ basis point，萬分之一；7 bps ＝ 0.07%），只對真正換手的部位收。</div>
+
+<div class="sub-h">新台幣計價（主結果——持有人在台灣）</div>
+<div class="sub-line">美股 sleeve 的新台幣淨值 ＝ 美元淨值 × 當日 USD/TWD 收盤。</div>
+<div class="scroll"><table>
+<thead><tr><th>版本</th><th class='num'>年化報酬</th><th class='num'>最大回撤</th><th class='num'>Calmar</th><th class='num'>年化波動</th><th class='num'>Sharpe</th><th class='num'>Martin</th><th class='num'>水下逾 10% 時間</th><th class='num'>最長水下天數</th></tr></thead>
+<tbody><tr class='main'><td class='lbl'>C-daily．每日回到一半一半</td><td class='num'>23.39%</td><td class='num'>-20.56%</td><td class='num'>1.138</td><td class='num'>15.49%</td><td class='num'>1.40</td><td class='num'>3.393</td><td class='num'>17.7%</td><td class='num'>413</td></tr><tr class='main'><td class='lbl'>C-monthly．每月底回到一半一半（判準用）</td><td class='num'>22.72%</td><td class='num'>-20.62%</td><td class='num'>1.102</td><td class='num'>15.48%</td><td class='num'>1.36</td><td class='num'>3.213</td><td class='num'>18.8%</td><td class='num'>478</td></tr><tr class='main'><td class='lbl'>C-drift．起始一半一半、之後不動</td><td class='num'>22.37%</td><td class='num'>-20.79%</td><td class='num'>1.076</td><td class='num'>15.43%</td><td class='num'>1.35</td><td class='num'>3.107</td><td class='num'>19.9%</td><td class='num'>478</td></tr><tr class='ref'><td class='lbl'>參考．美股 sleeve 單獨</td><td class='num'>21.73%</td><td class='num'>-23.99%</td><td class='num'>0.906</td><td class='num'>23.11%</td><td class='num'>0.94</td><td class='num'>2.642</td><td class='num'>24.9%</td><td class='num'>528</td></tr><tr class='ref'><td class='lbl'>參考．台股 sleeve 單獨</td><td class='num'>22.98%</td><td class='num'>-18.88%</td><td class='num'>1.217</td><td class='num'>17.84%</td><td class='num'>1.22</td><td class='num'>2.538</td><td class='num'>34.2%</td><td class='num'>461</td></tr><tr class='ref'><td class='lbl'>參考．合併買進持有</td><td class='num'>27.10%</td><td class='num'>-31.75%</td><td class='num'>0.853</td><td class='num'>18.29%</td><td class='num'>1.37</td><td class='num'>3.390</td><td class='num'>16.9%</td><td class='num'>373</td></tr><tr class='ref'><td class='lbl'>參考．美股買進持有</td><td class='num'>27.00%</td><td class='num'>-31.20%</td><td class='num'>0.865</td><td class='num'>27.65%</td><td class='num'>0.98</td><td class='num'>3.170</td><td class='num'>19.3%</td><td class='num'>367</td></tr><tr class='ref'><td class='lbl'>參考．台股買進持有</td><td class='num'>26.41%</td><td class='num'>-39.47%</td><td class='num'>0.669</td><td class='num'>21.44%</td><td class='num'>1.17</td><td class='num'>2.681</td><td class='num'>25.4%</td><td class='num'>540</td></tr></tbody></table></div>
+
+
+<div class="sub-h">美元計價（並列，只為看匯率效果的方向）</div>
+<div class="sub-line">台股 sleeve 的美元淨值 ＝ 新台幣淨值 ÷ 當日 USD/TWD 收盤。</div>
+<div class="scroll"><table>
+<thead><tr><th>版本</th><th class='num'>年化報酬</th><th class='num'>最大回撤</th><th class='num'>Calmar</th><th class='num'>年化波動</th><th class='num'>Sharpe</th><th class='num'>Martin</th><th class='num'>水下逾 10% 時間</th><th class='num'>最長水下天數</th></tr></thead>
+<tbody><tr class='main'><td class='lbl'>C-daily．每日回到一半一半</td><td class='num'>22.58%</td><td class='num'>-20.28%</td><td class='num'>1.113</td><td class='num'>15.85%</td><td class='num'>1.33</td><td class='num'>2.427</td><td class='num'>33.0%</td><td class='num'>472</td></tr><tr class='main'><td class='lbl'>C-monthly．每月底回到一半一半（判準用）</td><td class='num'>21.91%</td><td class='num'>-21.10%</td><td class='num'>1.039</td><td class='num'>15.86%</td><td class='num'>1.29</td><td class='num'>2.301</td><td class='num'>33.7%</td><td class='num'>488</td></tr><tr class='main'><td class='lbl'>C-drift．起始一半一半、之後不動</td><td class='num'>21.56%</td><td class='num'>-21.27%</td><td class='num'>1.014</td><td class='num'>15.91%</td><td class='num'>1.27</td><td class='num'>2.215</td><td class='num'>34.1%</td><td class='num'>488</td></tr><tr class='ref'><td class='lbl'>參考．美股 sleeve 單獨</td><td class='num'>20.92%</td><td class='num'>-23.68%</td><td class='num'>0.883</td><td class='num'>19.67%</td><td class='num'>1.04</td><td class='num'>2.219</td><td class='num'>33.6%</td><td class='num'>467</td></tr><tr class='ref'><td class='lbl'>參考．台股 sleeve 單獨</td><td class='num'>22.17%</td><td class='num'>-26.59%</td><td class='num'>0.834</td><td class='num'>22.10%</td><td class='num'>0.99</td><td class='num'>1.790</td><td class='num'>42.0%</td><td class='num'>540</td></tr><tr class='ref'><td class='lbl'>參考．合併買進持有</td><td class='num'>26.26%</td><td class='num'>-41.32%</td><td class='num'>0.635</td><td class='num'>18.84%</td><td class='num'>1.30</td><td class='num'>2.520</td><td class='num'>22.7%</td><td class='num'>521</td></tr><tr class='ref'><td class='lbl'>參考．美股買進持有</td><td class='num'>26.16%</td><td class='num'>-40.21%</td><td class='num'>0.651</td><td class='num'>24.87%</td><td class='num'>1.03</td><td class='num'>2.564</td><td class='num'>20.0%</td><td class='num'>404</td></tr><tr class='ref'><td class='lbl'>參考．台股買進持有</td><td class='num'>25.57%</td><td class='num'>-48.41%</td><td class='num'>0.528</td><td class='num'>25.41%</td><td class='num'>1.00</td><td class='num'>1.940</td><td class='num'>33.6%</td><td class='num'>556</td></tr></tbody></table></div>
+
+<div class="note">換手量的量級：C-daily 每日平均換手 0.619%
+的組合部位（＝把漂掉的權重拉回一半一半所需的雙邊交易量），
+C-monthly 全窗累計換手 2.71 倍組合（約 12.5 年 150 次再平衡）。
+三個版本的年化報酬差不到 1 個百分點、最大回撤差不到 0.3 個百分點——再平衡頻率不是這頁的重點，
+兩邊會不會一起跌才是。</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">四、同步性：兩邊是不是同一個賭注</h2>
+<div class="sub-line"><b>相關係數</b>（correlation coefficient）是一個介於 −1 與 +1 的數字，
+量「兩邊漲跌的步調有多一致」：+1 ＝ 完全同進同退，0 ＝ 各走各的，−1 ＝ 一邊漲另一邊必跌。
+分散之所以能降低回撤，靠的就是這個數字小於 1。</div>
+<div class="scroll"><table>
+<thead><tr><th>比較</th><th class="num">各自幣別</th><th class="num">兩邊都換成新台幣</th></tr></thead>
+<tbody>
+<tr><td class="lbl">日報酬相關係數</td><td class="num">0.183</td>
+    <td class="num">0.130</td></tr>
+<tr><td class="lbl">月報酬相關係數</td><td class="num">0.668</td>
+    <td class="num">0.622</td></tr>
+<tr><td class="lbl">回撤序列相關係數（兩邊各自「離自己最高點還差多少」的曲線）</td>
+    <td class="num">—</td><td class="num">0.573</td></tr>
+<tr><td class="lbl">兩邊同時回撤深於 10% 的日數比</td>
+    <td class="num">—</td><td class="num">16.2%</td></tr>
+</tbody></table></div>
+<div class="note">日報酬相關只有 0.13——但那大半是<b>時差</b>造成的假分散：
+台股收盤在美股開盤前，同一則消息會被記在不同的日期。把頻率拉長到月，相關立刻升到
+0.62；真正決定回撤能不能互相抵銷的，是回撤序列的相關
+0.57，而且有 16.2% 的日子
+兩邊<b>同時</b>陷在超過 10% 的水下。這就是分散比壓不下來的機制。</div>
+
+<div class="sub-h">四格閘門表：整個帳戶有多少時間在現金</div>
+<div class="sub-line"><b>四格閘門</b>是把每個交易日按「兩個市場各自在場還是空手」分成四種狀態的統計表。
+每個市場的「空手」定義是：該市場<b>兩條腿的週線 52 週均線閘門都是 0</b>（都跌破年線出場）。
+四格加總必定是 100%（程式內有 assert 驗證，實測 100.0000%）。</div>
+<div class="scroll"><table>
+<thead><tr><th>狀態</th><th class="num">時間比</th><th>白話</th></tr></thead>
+<tbody>
+<tr><td class="lbl">兩邊都在場</td><td class="num">83.9%</td><td>滿倉暴露，兩邊的風險會疊加</td></tr>
+<tr><td class="lbl">美在場、台空手</td><td class="num">3.2%</td><td>只剩美股一邊在跑</td></tr>
+<tr><td class="lbl">美空手、台在場</td><td class="num">2.2%</td><td>只剩台股一邊在跑</td></tr>
+<tr class="main"><td class="lbl">兩邊都空手</td><td class="num">10.6%</td>
+    <td>整個帳戶都在現金；最長一次連續 <b>199</b> 個交易日（約 9.5 個月）</td></tr>
+</tbody></table></div>
+<div class="note">兩邊只有 5.5% 的時間「一邊在、一邊不在」——
+也就是說閘門本身也很同步。兩邊都空手的 10.6% 是這個帳戶真正的空窗期：
+帳面不動、但心理上要能忍受連續 199 個交易日完全不參與市場。</div>
+
+<div class="sub-h">最深的那一次合併回撤，兩邊各貢獻多少</div>
+<div class="scroll"><table>
+<thead><tr><th>項目</th><th class="num">數值</th></tr></thead>
+<tbody>
+<tr><td class="lbl">期間（峰 → 谷）</td><td class="num">2025-01-23 → 2025-05-06（103 天）</td></tr>
+<tr class="main"><td class="lbl">合併帳戶回撤（C-monthly、TWD）</td><td class="num">-20.62%</td></tr>
+<tr><td class="lbl">同期間美股 sleeve 報酬（TWD）</td><td class="num">-23.99%</td></tr>
+<tr><td class="lbl">同期間台股 sleeve 報酬（TWD）</td><td class="num">-17.49%</td></tr>
+<tr><td class="lbl">期間平均美股權重</td><td class="num">50.14%</td></tr>
+<tr><td class="lbl">美股貢獻（權重 × 報酬）</td><td class="num">-12.03%</td></tr>
+<tr><td class="lbl">台股貢獻（權重 × 報酬）</td><td class="num">-8.72%</td></tr>
+<tr><td class="lbl">兩者相加（與合併回撤的差＝複利交互作用）</td><td class="num">-20.75%</td></tr>
+</tbody></table></div>
+<div class="note">最深的一段是 2025-01-23 到 2025-05-06——<b>兩邊同時在跌</b>，
+所以合併帳戶並沒有靠另一邊撐住。這正是分散比接近 1 的具體長相。
+（「權重 × 報酬」是簡單歸因，相加後與實際回撤差
+0.13 個百分點，來自期間內的複利交互作用，
+不是計算誤差。）</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">五、回撤時間軸疊圖（新台幣計價）</h2>
+<div class="sub-line">「回撤」＝當下淨值離自己走過的最高點還差多少（0% 代表正在創新高）。
+三條線疊在一起看的是：合併帳戶那條有沒有比兩條 sleeve 都淺——若兩條 sleeve 的谷底常常對齊，
+合併線就會貼著它們一起下去。週頻取樣，只為畫圖；所有表格數字仍以日頻計算。</div>
+<div class="chart-wrap"><canvas id="chart-dd"></canvas></div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">六、匯率分解：新台幣計價多出來的那一塊</h2>
+<div class="sub-line">美股 sleeve 換算成新台幣之後，報酬會拆成三塊，而且是<b>恆等式</b>不是近似：
+1 ＋ 新台幣報酬 ＝（1 ＋ 美元報酬）×（1 ＋ 匯率報酬），展開就是
+<code>新台幣報酬 ＝ 美元報酬 ＋ 匯率報酬 ＋ 交叉項</code>。
+其中<b>交叉項</b>（cross term）就是「美元報酬 × 匯率報酬」那一小塊——
+它代表「賺到的美元又乘上匯率變動」的二次效果，日頻之下兩個小數相乘會很小，
+但它必須算進去，等式才會嚴格成立（實測最大殘差 5.38e-16，浮點層級）。</div>
+<div class="scroll"><table>
+<thead><tr><th>成分</th><th class="num">年化</th><th>說明</th></tr></thead>
+<tbody>
+<tr><td class="lbl">美元報酬（系統本身賺的）</td><td class="num">20.92%</td>
+    <td>美股 sleeve 以美元計的年化</td></tr>
+<tr><td class="lbl">匯率報酬（USD/TWD 變動）</td><td class="num">0.67%</td>
+    <td>期間 29.144 → 31.650（新台幣貶值 ＝ 正貢獻）</td></tr>
+<tr><td class="lbl">交叉項</td><td class="num">-0.01%</td>
+    <td>兩者相乘的二次效果</td></tr>
+<tr class="main"><td class="lbl">合計＝新台幣計價年化</td><td class="num">21.73%</td>
+    <td>與主表的美股 sleeve（TWD）一致</td></tr>
+</tbody></table></div>
+<div class="scroll"><table>
+<thead><tr><th>匯率與回撤的關係</th><th class="num">數值</th></tr></thead>
+<tbody>
+<tr><td class="lbl">匯率日報酬 vs 美股 sleeve 美元日報酬的相關係數</td><td class="num">-0.0024</td></tr>
+<tr><td class="lbl">合併最大回撤（實際，C-monthly、TWD）</td><td class="num">-20.62%</td></tr>
+<tr class="main"><td class="lbl">反事實：若匯率整段凍結在窗首值 29.144 不動</td>
+    <td class="num">-17.83%</td></tr>
+</tbody></table></div>
+<div class="note">相關係數 -0.002 幾乎是 0——匯率既不是天然避險（那需要顯著負相關），
+也不是放大器（那需要顯著正相關），它只是<b>另一個獨立的隨機來源</b>。
+但把匯率凍結之後，合併最大回撤從 -20.62% 變成
+-17.83%——
+匯率實際上把回撤加深了 2.79 個百分點。
+這是描述，不是預測：下一段匯率往哪走本頁不回答，也不建議是否換匯或避險。</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">七、對照：合併帳戶 vs 買進持有 vs「單純少放一點錢」</h2>
+<div class="sub-line"><b>matched-cash 稀釋</b>是一把尺，不是一個策略：把買進持有的組合<b>只放一部分錢進去、
+其餘擺現金</b>，調整那個比例，直到它跟系統的<b>年化報酬一樣</b>（叫 E-cagr）或
+<b>最大回撤一樣</b>（叫 E-mdd），然後比另一個指標。
+如果系統贏不了這條線，就代表系統的下檔保護可以用「少放一點錢」複製，而且更省。
+兩向都要贏才算過（沿用站上保險價格頁的同一把尺）。現金腿用 backtest_tw.cash_series 1%／年 TWD 名目現金。</div>
+<div class="scroll"><table>
+<thead><tr><th>對照對象</th><th class='num'>年化報酬</th><th class='num'>最大回撤</th><th class='num'>Calmar</th><th class='num'>年化波動</th><th class='num'>Sharpe</th><th class='num'>Martin</th><th class='num'>水下逾 10% 時間</th><th class='num'>最長水下天數</th></tr></thead>
+<tbody>
+<tr class="main"><td class="lbl">合併帳戶 C-monthly（TWD）</td><td class='num'>22.72%</td><td class='num'>-20.62%</td><td class='num'>1.102</td><td class='num'>15.48%</td><td class='num'>1.36</td><td class='num'>3.213</td><td class='num'>18.8%</td><td class='num'>478</td></tr>
+<tr><td class="lbl">合併買進持有（TWD，同月度再平衡口徑）</td><td class='num'>27.10%</td><td class='num'>-31.75%</td><td class='num'>0.853</td><td class='num'>18.29%</td><td class='num'>1.37</td><td class='num'>3.390</td><td class='num'>16.9%</td><td class='num'>373</td></tr>
+<tr><td class="lbl">E-cagr．把合併 B&amp;H 稀釋到與系統同年化（持股 83.7%、現金 16.3%）</td><td class='num'>22.71%</td><td class='num'>-27.04%</td><td class='num'>0.840</td><td class='num'>15.31%</td><td class='num'>1.38</td><td class='num'>3.400</td><td class='num'>13.3%</td><td class='num'>373</td></tr>
+<tr><td class="lbl">E-mdd．把合併 B&amp;H 稀釋到與系統同回撤（持股 62.6%、現金 37.4%）</td><td class='num'>17.12%</td><td class='num'>-20.62%</td><td class='num'>0.830</td><td class='num'>11.46%</td><td class='num'>1.40</td><td class='num'>3.447</td><td class='num'>7.4%</td><td class='num'>372</td></tr>
+<tr><td class="lbl">美股 sleeve 單獨（TWD）</td><td class='num'>21.73%</td><td class='num'>-23.99%</td><td class='num'>0.906</td><td class='num'>23.11%</td><td class='num'>0.94</td><td class='num'>2.642</td><td class='num'>24.9%</td><td class='num'>528</td></tr>
+<tr><td class="lbl">台股 sleeve 單獨（TWD）</td><td class='num'>22.98%</td><td class='num'>-18.88%</td><td class='num'>1.217</td><td class='num'>17.84%</td><td class='num'>1.22</td><td class='num'>2.538</td><td class='num'>34.2%</td><td class='num'>461</td></tr>
+</tbody></table></div>
+<div class="scroll"><table>
+<thead><tr><th>兩向 matched-cash</th><th>問題</th><th class="num">結果</th></tr></thead>
+<tbody>
+<tr><td class="lbl">同報酬比回撤</td>
+    <td>合併帳戶的回撤（-20.62%）是否比 E-cagr（-27.04%）淺？</td>
+    <td class="num"><span class='ok'>✓</span></td></tr>
+<tr><td class="lbl">同回撤比報酬</td>
+    <td>合併帳戶的年化（22.72%）是否比 E-mdd（17.12%）高？</td>
+    <td class="num"><span class='ok'>✓</span></td></tr>
+<tr class="main"><td class="lbl">兩向合計</td><td>兩題都是「是」才算過</td>
+    <td class="num"><span class='ok'>✓</span></td></tr>
+</tbody></table></div>
+<div class="note">這一段是<b>附帶</b>，不進本頁的判定。它說的是：合併帳戶相對於「合併買進持有再稀釋」
+仍站得住——但這件事在兩個 sleeve 各自的頁面上早就成立過，合併並沒有讓它變得更強，
+也沒有因為合併而失效。</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">八、2020 年起的次要窗與實錄期</h2>
+<div class="sub-h">2020-01-01 起（含 COVID 與 2022），新台幣計價</div>
+<div class="sub-line">2020-01-02 ～ 2026-06-11，聯集交易日 1671 天。
+這是次要窗，不是判準窗；列出來是為了看主窗的結論在較短、較新的一段裡有沒有翻掉。</div>
+<div class="scroll"><table>
+<thead><tr><th>版本</th><th class='num'>年化報酬</th><th class='num'>最大回撤</th><th class='num'>Calmar</th><th class='num'>年化波動</th><th class='num'>Sharpe</th><th class='num'>Martin</th><th class='num'>水下逾 10% 時間</th><th class='num'>最長水下天數</th></tr></thead>
+<tbody><tr class=""><td class='lbl'>C-daily．每日回到一半一半</td><td class='num'>31.24%</td><td class='num'>-20.56%</td><td class='num'>1.519</td><td class='num'>16.68%</td><td class='num'>1.67</td><td class='num'>4.192</td><td class='num'>19.0%</td><td class='num'>346</td></tr><tr class="main"><td class='lbl'>C-monthly．每月底回到一半一半（判準用）</td><td class='num'>30.55%</td><td class='num'>-20.62%</td><td class='num'>1.481</td><td class='num'>16.68%</td><td class='num'>1.64</td><td class='num'>4.038</td><td class='num'>19.6%</td><td class='num'>346</td></tr><tr class=""><td class='lbl'>C-drift．起始一半一半、之後不動</td><td class='num'>30.05%</td><td class='num'>-21.05%</td><td class='num'>1.427</td><td class='num'>16.82%</td><td class='num'>1.60</td><td class='num'>3.907</td><td class='num'>20.7%</td><td class='num'>346</td></tr><tr class=""><td class='lbl'>參考．美股 sleeve 單獨</td><td class='num'>30.42%</td><td class='num'>-23.99%</td><td class='num'>1.268</td><td class='num'>23.99%</td><td class='num'>1.20</td><td class='num'>3.504</td><td class='num'>27.1%</td><td class='num'>352</td></tr><tr class=""><td class='lbl'>參考．台股 sleeve 單獨</td><td class='num'>29.67%</td><td class='num'>-18.88%</td><td class='num'>1.572</td><td class='num'>19.56%</td><td class='num'>1.39</td><td class='num'>3.156</td><td class='num'>35.5%</td><td class='num'>364</td></tr><tr class=""><td class='lbl'>參考．合併買進持有</td><td class='num'>32.97%</td><td class='num'>-31.75%</td><td class='num'>1.038</td><td class='num'>20.63%</td><td class='num'>1.45</td><td class='num'>3.261</td><td class='num'>26.6%</td><td class='num'>373</td></tr></tbody></table></div>
+<div class="sub-h">實錄期（實單上線後）</div>
+<div class="note">本窗<b>不可得</b>。窗起點 2026-07-18 晚於兩市場資料的共同截止日 2026-06-11（美股快取先結束），合併層無任何可用交易日。
+合併層的窗結束日一律取兩市場資料的共同截止日；實錄期起點（2026-07-18）已經晚於它，
+所以這一段沒有任何一天是兩邊都有資料的。用台股單腿代替會產生一條「美股腿凍結」的假平滑曲線，
+所以這裡直接回報不可得，而不是生一個數字。等美股快取推進到 7 月之後，本窗才會有內容——
+而且即使有，也只有約一個半月，年化與回撤都不可解讀，純粹描述。</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">九、誠實揭露</h2>
+<ul class="disc">
+<li><b>美台資料截止日不同</b>：美股快取到 2026-06-11、台股到 2026-09-03。
+合併主窗取兩者交集的結束日 2026-06-11，兩邊都不外推。</li>
+<li><b>統計證據強度不因合併而變強</b>：兩個 sleeve 各自的證據強度已在
+<a href="/backtest/adopted_bootstrap/">bootstrap 頁</a>判為運氣帶（p_B 落在邊際區間）；
+本頁的合併數字繼承同樣的不確定性。合併只是換一個看法，不是新的證據。</li>
+<li><b>匯率用日收盤中價</b>，不含換匯點差、不含匯費。持有人若不換匯（美股部位長期留在美元），
+新台幣計價的匯率波動是「帳面」而不是「實現」的。
+匯率來源：既有快取 six_state_backtest/data/TWD_X.pkl（未重抓），2009-06-01 ～ 2026-06-25；
+抽查 2022-10-31 ＝ 32.114、2024-12-31 ＝ 32.760；
+聯集日曆上匯率最長連續沿用 5 個交易日（美台假期錯開）。</li>
+<li><b>執行層 A2 在各 sleeve 內獨立運作</b>，合併層的再平衡是另一層動作；C-daily 的成本是上界，
+真實帳戶不會每天再平衡。</li>
+<li><b>本頁不做的事</b>：不掃「美台該幾比幾」的權重、不做最佳化、不建議是否換匯或避險、
+不建議加減任何一邊。這是描述層加一條預註冊判定。</li>
+</ul>
+<details style="margin-top:1rem">
+<summary>本檔的 JUDGMENT CALL 完整記錄（9 條）</summary>
+<ul class="disc" style="margin-top:.6rem"><li><b>聯集日曆與 ffill</b>：以美台交易日的聯集為合併索引；某市場當日休市則該 sleeve 淨值 ffill（當日報酬 0），匯率同樣 ffill。<br><span class='tiny'>理由：spec §合併規則明文把這列為 JUDGMENT CALL 並要求寫進頁面。替代作法（取交集）會丟掉單邊市場約 15% 的交易日，把兩邊都在動的日子系統性刪掉，回撤會被低估。</span></li><li><b>匯率資料來源</b>：USD/TWD 日收用 repo 內既有快取 six_state_backtest/data/TWD_X.pkl（yfinance TWD=X，2009-06-01 起，覆蓋整個主窗），本次未新增下載；壞 tick（|日報酬|>12%）以「當日設 NaN 後 ffill」中和，保留匯率水準值。<br><span class='tiny'>理由：spec 允許「缺檔可下載一次並揭露」——但檔已存在且覆蓋整個主窗，重抓只會引入與站上其他頁不一致的第二份 FX。壞 tick 中和的作法與 vcrash_defense._clean_spikes（報酬歸零後 cumprod）不同：那個作法會把假跳沒抵銷乾淨的殘差（1.029／1.021）永久推進之後所有水準，本頁要用水準值乘 NAV，故改用保留水準的版本；2022-10-31／2024-12-31 抽查值與原始快取相同。</span></li><li><b>TWD 現金代理</b>：合併層 matched-cash（E-cagr／E-mdd）的現金腿一律用 backtest_tw.cash_series(1%／年 TWD)，不因合併帳戶橫跨兩幣別而混用美元現金。<br><span class='tiny'>理由：spec 要求「沿用 insurance_premium 的 E-cagr／E-mdd 定義」；持有人的計價幣別是 TWD，主結果也以 TWD 計，故用單一 TWD 現金代理最一致。這確實是判斷：混合幣別帳戶的「無風險現金」本來就無單一定義，改用美元現金會讓 E 線多吃一段匯率報酬。</span></li><li><b>復現核對容忍帶</b>：CAGR／MDD ±0.05pp、Calmar ±0.01，逐字沿用 insurance_premium。<br><span class='tiny'>理由：快取自站上發布日之後前進（台股到 2026-09-03），完全兩位小數相符不可能；超出容忍即 FAIL 並 sys.exit(1)。</span></li><li><b>最深回撤分解的平均權重</b>：取該段期間每日「日初目標權重」的簡單時間平均，不用價值加權。<br><span class='tiny'>理由：價值加權會把跌得少的那一腿權重再放大一次，把歸因往「分散有效」的方向偏；簡單時間平均較保守且可手算覆核。分解只作描述，不進判準。</span></li><li><b>sleeve MDD 的口徑（分散比分母）</b>：兩 sleeve 的 MDD 一律先切到同一主窗、再 renorm 到窗首日＝INITIAL 之後才算，不用 sleeve 各自全歷史的 MDD。<br><span class='tiny'>理由：分散比是「合併 vs 平均 sleeve」的同尺比較；A-US 全歷史從 2005 起、含 2008，拿它的 −23.7% 當分母等於用不同窗比，分散比會被系統性壓低（假裝分散有效）。</span></li><li><b>CAGR 的部分年處理</b>：一律用 dd_metrics 的 (末值/初值)^(365.25/天數)−1，不做曆年對齊、不丟部分年。<br><span class='tiny'>理由：與站上所有既有頁同一支函式；實錄期（約 1.5 個月）年化後數字會極度放大，頁面已標明該窗只作描述、不可解讀。</span></li><li><b>實錄期窗（W-LIVE）的處理</b>：合併窗結束日一律 ＝ min(美股截止／台股截止)。實錄期起點 2026-07-18 已晚於該共同截止日（美股快取 2026-06-11），故本窗回報「不可得」，不用台股單腿代替。<br><span class='tiny'>理由：若讓台股跑到 9/3 而美股停在 6/11，合併層會出現一條「美股腿凍結」的假平滑曲線，回撤與相關係數都會失真。誠實回報不可得比生一個假數字保守。</span></li><li><b>C-daily 成本模型</b>：換手 ＝ |漂移後 w_us − 0.5| × 2（兩腿都動），成本 ＝ 換手 × 7 bps，當日報酬扣抵。<br><span class='tiny'>理由：spec 只寫「量＝|w_us − 0.5| 漂移」，未明說單邊或雙邊。取雙邊是保守（成本較高），且 spec 自己說 C-daily 的成本是上界。</span></li></ul>
+</details>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">十、術語白話（其餘名詞已在第一次出現處就地解釋）</h2>
+<ul class="disc"><li><b>sleeve（分艙）</b>：一個獨立運作的策略單元。本頁有兩個 sleeve：美股那一套規則、台股那一套規則，各自有自己的進出場與現金，合併只發生在資金分配這一層。</li><li><b>最大回撤（MDD）</b>：從歷史最高點跌到之後最低點的最大跌幅，是「最痛的那一次」的量化版。</li><li><b>Calmar 比</b>：年化報酬 ÷ 最大回撤的絕對值——每承受一分回撤換到多少報酬，越高越好。</li><li><b>Martin 比</b>：年化報酬 ÷ Ulcer Index（整段期間所有時點回撤幅度的均方根）。比 Calmar 更在意「長期泡在水下」而不只是最深的那一次。</li><li><b>水下（underwater）</b>：淨值低於自己歷史最高點的狀態。「最長水下天數」＝從創新高到下一次創新高之間最久的一段。</li><li><b>bps（基點）</b>：萬分之一。7 bps ＝ 0.07%，本頁的再平衡交易成本。</li><li><b>再平衡（rebalance）</b>：把漂掉的權重拉回目標比例的動作。兩邊漲跌不同，放著不管權重就會偏掉。</li><li><b>恆等式 vs 近似</b>：本頁的匯率分解是恆等式：三個成分相加後<b>嚴格</b>等於新台幣報酬，殘差只有浮點運算的精度（1e-16 量級），不是「差不多」。</li></ul>
+<div class="note">已在正文首次出現處解釋過的：分散比（開頭結論段）、相關係數（第四節）、
+四格閘門（第四節）、交叉項（第六節）、matched-cash 稀釋（第七節）。</div>
+</div>
+
+
+</div>
+
+<footer>
+  <div class="container">
+    &copy; 2026 InvestMQuest Research &middot; 美台合併帳戶層（描述性研究頁，不含配置建議、不做權重最佳化）&middot;
+    規格 docs/Combined_Account_Spec.md・頁面生成 2026-09-05 &middot; 僅供研究參考，不構成投資建議
+  </div>
+</footer>
+
+<script>
+new Chart(document.getElementById('chart-dd'), {
+  type: 'line',
+  data: { labels: ["2014-01-03", "2014-01-10", "2014-01-17", "2014-01-24", "2014-01-31", "2014-02-07", "2014-02-14", "2014-02-21", "2014-02-28", "2014-03-07", "2014-03-14", "2014-03-21", "2014-03-28", "2014-04-04", "2014-04-11", "2014-04-18", "2014-04-25", "2014-05-02", "2014-05-09", "2014-05-16", "2014-05-23", "2014-05-30", "2014-06-06", "2014-06-13", "2014-06-20", "2014-06-27", "2014-07-04", "2014-07-11", "2014-07-18", "2014-07-25", "2014-08-01", "2014-08-08", "2014-08-15", "2014-08-22", "2014-08-29", "2014-09-05", "2014-09-12", "2014-09-19", "2014-09-26", "2014-10-03", "2014-10-10", "2014-10-17", "2014-10-24", "2014-10-31", "2014-11-07", "2014-11-14", "2014-11-21", "2014-11-28", "2014-12-05", "2014-12-12", "2014-12-19", "2014-12-26", "2015-01-02", "2015-01-09", "2015-01-16", "2015-01-23", "2015-01-30", "2015-02-06", "2015-02-13", "2015-02-20", "2015-02-27", "2015-03-06", "2015-03-13", "2015-03-20", "2015-03-27", "2015-04-03", "2015-04-10", "2015-04-17", "2015-04-24", "2015-05-01", "2015-05-08", "2015-05-15", "2015-05-22", "2015-05-29", "2015-06-05", "2015-06-12", "2015-06-19", "2015-06-26", "2015-07-03", "2015-07-10", "2015-07-17", "2015-07-24", "2015-07-31", "2015-08-07", "2015-08-14", "2015-08-21", "2015-08-28", "2015-09-04", "2015-09-11", "2015-09-18", "2015-09-25", "2015-10-02", "2015-10-09", "2015-10-16", "2015-10-23", "2015-10-30", "2015-11-06", "2015-11-13", "2015-11-20", "2015-11-27", "2015-12-04", "2015-12-11", "2015-12-18", "2015-12-25", "2016-01-01", "2016-01-08", "2016-01-15", "2016-01-22", "2016-01-29", "2016-02-05", "2016-02-12", "2016-02-19", "2016-02-26", "2016-03-04", "2016-03-11", "2016-03-18", "2016-03-25", "2016-04-01", "2016-04-08", "2016-04-15", "2016-04-22", "2016-04-29", "2016-05-06", "2016-05-13", "2016-05-20", "2016-05-27", "2016-06-03", "2016-06-10", "2016-06-17", "2016-06-24", "2016-07-01", "2016-07-08", "2016-07-15", "2016-07-22", "2016-07-29", "2016-08-05", "2016-08-12", "2016-08-19", "2016-08-26", "2016-09-02", "2016-09-09", "2016-09-16", "2016-09-23", "2016-09-30", "2016-10-07", "2016-10-14", "2016-10-21", "2016-10-28", "2016-11-04", "2016-11-11", "2016-11-18", "2016-11-25", "2016-12-02", "2016-12-09", "2016-12-16", "2016-12-23", "2016-12-30", "2017-01-06", "2017-01-13", "2017-01-20", "2017-01-27", "2017-02-03", "2017-02-10", "2017-02-17", "2017-02-24", "2017-03-03", "2017-03-10", "2017-03-17", "2017-03-24", "2017-03-31", "2017-04-07", "2017-04-14", "2017-04-21", "2017-04-28", "2017-05-05", "2017-05-12", "2017-05-19", "2017-05-26", "2017-06-02", "2017-06-09", "2017-06-16", "2017-06-23", "2017-06-30", "2017-07-07", "2017-07-14", "2017-07-21", "2017-07-28", "2017-08-04", "2017-08-11", "2017-08-18", "2017-08-25", "2017-09-01", "2017-09-08", "2017-09-15", "2017-09-22", "2017-09-29", "2017-10-06", "2017-10-13", "2017-10-20", "2017-10-27", "2017-11-03", "2017-11-10", "2017-11-17", "2017-11-24", "2017-12-01", "2017-12-08", "2017-12-15", "2017-12-22", "2017-12-29", "2018-01-05", "2018-01-12", "2018-01-19", "2018-01-26", "2018-02-02", "2018-02-09", "2018-02-16", "2018-02-23", "2018-03-02", "2018-03-09", "2018-03-16", "2018-03-23", "2018-03-30", "2018-04-06", "2018-04-13", "2018-04-20", "2018-04-27", "2018-05-04", "2018-05-11", "2018-05-18", "2018-05-25", "2018-06-01", "2018-06-08", "2018-06-15", "2018-06-22", "2018-06-29", "2018-07-06", "2018-07-13", "2018-07-20", "2018-07-27", "2018-08-03", "2018-08-10", "2018-08-17", "2018-08-24", "2018-08-31", "2018-09-07", "2018-09-14", "2018-09-21", "2018-09-28", "2018-10-05", "2018-10-12", "2018-10-19", "2018-10-26", "2018-11-02", "2018-11-09", "2018-11-16", "2018-11-23", "2018-11-30", "2018-12-07", "2018-12-14", "2018-12-21", "2018-12-28", "2019-01-04", "2019-01-11", "2019-01-18", "2019-01-25", "2019-02-01", "2019-02-08", "2019-02-15", "2019-02-22", "2019-03-01", "2019-03-08", "2019-03-15", "2019-03-22", "2019-03-29", "2019-04-05", "2019-04-12", "2019-04-19", "2019-04-26", "2019-05-03", "2019-05-10", "2019-05-17", "2019-05-24", "2019-05-31", "2019-06-07", "2019-06-14", "2019-06-21", "2019-06-28", "2019-07-05", "2019-07-12", "2019-07-19", "2019-07-26", "2019-08-02", "2019-08-09", "2019-08-16", "2019-08-23", "2019-08-30", "2019-09-06", "2019-09-13", "2019-09-20", "2019-09-27", "2019-10-04", "2019-10-11", "2019-10-18", "2019-10-25", "2019-11-01", "2019-11-08", "2019-11-15", "2019-11-22", "2019-11-29", "2019-12-06", "2019-12-13", "2019-12-20", "2019-12-27", "2020-01-03", "2020-01-10", "2020-01-17", "2020-01-24", "2020-01-31", "2020-02-07", "2020-02-14", "2020-02-21", "2020-02-28", "2020-03-06", "2020-03-13", "2020-03-20", "2020-03-27", "2020-04-03", "2020-04-10", "2020-04-17", "2020-04-24", "2020-05-01", "2020-05-08", "2020-05-15", "2020-05-22", "2020-05-29", "2020-06-05", "2020-06-12", "2020-06-19", "2020-06-26", "2020-07-03", "2020-07-10", "2020-07-17", "2020-07-24", "2020-07-31", "2020-08-07", "2020-08-14", "2020-08-21", "2020-08-28", "2020-09-04", "2020-09-11", "2020-09-18", "2020-09-25", "2020-10-02", "2020-10-09", "2020-10-16", "2020-10-23", "2020-10-30", "2020-11-06", "2020-11-13", "2020-11-20", "2020-11-27", "2020-12-04", "2020-12-11", "2020-12-18", "2020-12-25", "2021-01-01", "2021-01-08", "2021-01-15", "2021-01-22", "2021-01-29", "2021-02-05", "2021-02-12", "2021-02-19", "2021-02-26", "2021-03-05", "2021-03-12", "2021-03-19", "2021-03-26", "2021-04-02", "2021-04-09", "2021-04-16", "2021-04-23", "2021-04-30", "2021-05-07", "2021-05-14", "2021-05-21", "2021-05-28", "2021-06-04", "2021-06-11", "2021-06-18", "2021-06-25", "2021-07-02", "2021-07-09", "2021-07-16", "2021-07-23", "2021-07-30", "2021-08-06", "2021-08-13", "2021-08-20", "2021-08-27", "2021-09-03", "2021-09-10", "2021-09-17", "2021-09-24", "2021-10-01", "2021-10-08", "2021-10-15", "2021-10-22", "2021-10-29", "2021-11-05", "2021-11-12", "2021-11-19", "2021-11-26", "2021-12-03", "2021-12-10", "2021-12-17", "2021-12-24", "2021-12-31", "2022-01-07", "2022-01-14", "2022-01-21", "2022-01-28", "2022-02-04", "2022-02-11", "2022-02-18", "2022-02-25", "2022-03-04", "2022-03-11", "2022-03-18", "2022-03-25", "2022-04-01", "2022-04-08", "2022-04-15", "2022-04-22", "2022-04-29", "2022-05-06", "2022-05-13", "2022-05-20", "2022-05-27", "2022-06-03", "2022-06-10", "2022-06-17", "2022-06-24", "2022-07-01", "2022-07-08", "2022-07-15", "2022-07-22", "2022-07-29", "2022-08-05", "2022-08-12", "2022-08-19", "2022-08-26", "2022-09-02", "2022-09-09", "2022-09-16", "2022-09-23", "2022-09-30", "2022-10-07", "2022-10-14", "2022-10-21", "2022-10-28", "2022-11-04", "2022-11-11", "2022-11-18", "2022-11-25", "2022-12-02", "2022-12-09", "2022-12-16", "2022-12-23", "2022-12-30", "2023-01-06", "2023-01-13", "2023-01-20", "2023-01-27", "2023-02-03", "2023-02-10", "2023-02-17", "2023-02-24", "2023-03-03", "2023-03-10", "2023-03-17", "2023-03-24", "2023-03-31", "2023-04-07", "2023-04-14", "2023-04-21", "2023-04-28", "2023-05-05", "2023-05-12", "2023-05-19", "2023-05-26", "2023-06-02", "2023-06-09", "2023-06-16", "2023-06-23", "2023-06-30", "2023-07-07", "2023-07-14", "2023-07-21", "2023-07-28", "2023-08-04", "2023-08-11", "2023-08-18", "2023-08-25", "2023-09-01", "2023-09-08", "2023-09-15", "2023-09-22", "2023-09-29", "2023-10-06", "2023-10-13", "2023-10-20", "2023-10-27", "2023-11-03", "2023-11-10", "2023-11-17", "2023-11-24", "2023-12-01", "2023-12-08", "2023-12-15", "2023-12-22", "2023-12-29", "2024-01-05", "2024-01-12", "2024-01-19", "2024-01-26", "2024-02-02", "2024-02-09", "2024-02-16", "2024-02-23", "2024-03-01", "2024-03-08", "2024-03-15", "2024-03-22", "2024-03-29", "2024-04-05", "2024-04-12", "2024-04-19", "2024-04-26", "2024-05-03", "2024-05-10", "2024-05-17", "2024-05-24", "2024-05-31", "2024-06-07", "2024-06-14", "2024-06-21", "2024-06-28", "2024-07-05", "2024-07-12", "2024-07-19", "2024-07-26", "2024-08-02", "2024-08-09", "2024-08-16", "2024-08-23", "2024-08-30", "2024-09-06", "2024-09-13", "2024-09-20", "2024-09-27", "2024-10-04", "2024-10-11", "2024-10-18", "2024-10-25", "2024-11-01", "2024-11-08", "2024-11-15", "2024-11-22", "2024-11-29", "2024-12-06", "2024-12-13", "2024-12-20", "2024-12-27", "2025-01-03", "2025-01-10", "2025-01-17", "2025-01-24", "2025-01-31", "2025-02-07", "2025-02-14", "2025-02-21", "2025-02-28", "2025-03-07", "2025-03-14", "2025-03-21", "2025-03-28", "2025-04-04", "2025-04-11", "2025-04-18", "2025-04-25", "2025-05-02", "2025-05-09", "2025-05-16", "2025-05-23", "2025-05-30", "2025-06-06", "2025-06-13", "2025-06-20", "2025-06-27", "2025-07-04", "2025-07-11", "2025-07-18", "2025-07-25", "2025-08-01", "2025-08-08", "2025-08-15", "2025-08-22", "2025-08-29", "2025-09-05", "2025-09-12", "2025-09-19", "2025-09-26", "2025-10-03", "2025-10-10", "2025-10-17", "2025-10-24", "2025-10-31", "2025-11-07", "2025-11-14", "2025-11-21", "2025-11-28", "2025-12-05", "2025-12-12", "2025-12-19", "2025-12-26", "2026-01-02", "2026-01-09", "2026-01-16", "2026-01-23", "2026-01-30", "2026-02-06", "2026-02-13", "2026-02-20", "2026-02-27", "2026-03-06", "2026-03-13", "2026-03-20", "2026-03-27", "2026-04-03", "2026-04-10", "2026-04-17", "2026-04-24", "2026-05-01", "2026-05-08", "2026-05-15", "2026-05-22", "2026-05-29", "2026-06-05", "2026-06-12"],
+    datasets: [
+      { label: '合併（C-monthly、TWD）', data: [0.0, -0.333, -0.585, -1.716, -3.278, -3.751, -0.389, -0.23, 0.0, 0.0, -1.275, -0.808, 0.0, -2.476, -4.765, -1.208, -3.233, -2.959, -2.407, -1.326, 0.0, -0.998, -1.148, -0.501, -0.526, 0.0, 0.0, 0.0, -3.07, -3.828, -5.525, -6.045, -3.159, -2.108, -1.877, -0.401, -1.463, -1.447, -3.507, -1.631, -6.399, -8.331, -3.988, -1.168, -0.856, -0.143, -1.157, 0.0, 0.0, -4.3, -1.037, -0.744, -1.092, -1.938, -2.685, 0.0, -2.594, -1.021, -0.005, 0.0, -0.981, -1.661, -2.263, 0.0, -4.111, -3.568, -2.538, -6.028, -0.349, -1.763, -2.283, -2.199, -1.676, -0.579, -3.27, -2.45, -3.141, -2.123, -4.35, -5.494, -2.752, -4.184, -3.415, -5.16, -5.079, -6.414, -7.199, -8.414, -7.059, -7.325, -6.589, -7.104, -7.418, -7.803, -6.585, -7.44, -6.169, -10.049, -8.164, -7.863, -9.797, -8.026, -9.299, -8.845, -9.286, -13.106, -11.043, -12.073, -12.087, -11.095, -12.342, -11.494, -11.72, -12.009, -9.771, -9.18, -10.089, -9.521, -11.974, -9.944, -12.72, -14.786, -15.235, -15.739, -14.622, -12.877, -11.886, -11.555, -12.738, -14.526, -11.529, -11.242, -9.419, -8.234, -7.524, -6.368, -6.311, -6.677, -5.472, -5.815, -7.179, -6.601, -3.583, -3.127, -2.557, -3.084, -2.846, -2.728, -5.955, -4.849, -3.678, -2.311, -4.747, -1.415, -1.395, -2.215, -1.791, -0.555, -0.698, -0.952, 0.0, -0.918, 0.0, 0.0, -0.728, -1.807, -1.016, 0.0, -0.235, -0.951, -0.349, -2.983, -1.205, -0.163, 0.0, -0.278, -1.233, -0.085, 0.0, -2.083, -2.822, -0.005, -2.98, -2.807, -0.015, -0.547, -1.389, -1.21, -2.641, -2.799, -0.909, 0.0, -0.85, 0.0, -1.495, -1.082, 0.0, 0.0, -0.074, 0.0, -0.054, -1.329, -1.182, 0.0, -4.81, -6.171, -4.894, -4.83, -5.295, -1.598, -1.474, 0.0, -1.57, -3.53, -10.08, -8.951, -6.87, -7.351, -5.072, -5.196, -8.248, -7.982, -9.221, -7.937, -10.239, -10.929, -9.745, -8.806, -9.544, -8.233, -7.503, -7.196, -6.655, -7.14, -8.816, -7.879, -6.998, -4.566, -3.649, -2.761, -3.713, -5.671, -3.018, -0.57, -1.31, -0.876, -0.619, -0.58, -4.581, -8.184, -8.667, -10.102, -10.671, -10.811, -10.516, -10.479, -10.673, -10.388, -10.51, -10.488, -10.38, -10.218, -10.311, -10.21, -10.116, -10.365, -10.166, -10.117, -9.86, -9.568, -11.538, -9.219, -8.395, -8.234, -5.765, -4.26, -1.262, -1.814, -0.413, -4.505, -8.545, -10.868, -11.646, -12.654, -12.541, -11.903, -11.756, -10.675, -9.282, -8.573, -7.179, -10.529, -10.96, -11.766, -11.56, -9.842, -8.247, -8.532, -8.281, -7.779, -6.612, -6.028, -4.05, -2.664, -0.833, -0.56, 0.0, -1.724, -1.7, -0.207, 0.0, -0.746, 0.0, -0.778, -0.275, -0.399, -0.367, -4.359, -2.023, 0.0, -1.639, -6.74, -7.144, -11.766, -15.734, -16.94, -17.005, -17.015, -17.191, -17.637, -17.712, -17.036, -17.325, -16.881, -16.501, -13.768, -14.622, -13.472, -13.804, -11.417, -8.944, -7.193, -5.61, -0.368, -0.74, -0.763, -0.899, -0.226, -3.557, -4.819, -4.303, -5.208, -4.268, -0.705, -1.552, -1.834, -6.04, 0.0, 0.0, -0.453, 0.0, 0.0, -1.434, -0.519, -0.469, 0.0, 0.0, -0.434, -2.213, -8.332, -4.5, -2.593, -1.916, -6.219, -7.753, -5.985, -6.196, -4.982, -3.208, -1.653, -1.681, -2.614, -3.645, -3.706, -9.356, -7.677, -5.3, -4.953, -4.216, -4.482, -3.405, -1.824, -2.179, -3.821, -1.954, -2.246, -0.658, -2.38, -5.393, 0.0, 0.0, -1.041, -2.555, -2.704, -7.818, -7.661, -4.422, -3.729, -2.698, 0.0, -0.673, 0.0, -4.668, -3.41, -1.906, -3.458, -1.799, -0.547, -3.902, -0.554, -7.449, -8.295, -7.226, -6.828, -7.3, -8.519, -9.599, -11.122, -11.32, -10.115, -10.637, -11.469, -11.738, -11.226, -10.96, -10.713, -10.371, -10.688, -11.105, -11.407, -10.647, -10.455, -10.562, -10.474, -10.308, -10.028, -10.056, -9.974, -9.889, -9.861, -9.793, -9.437, -8.861, -8.368, -7.788, -7.276, -7.1, -7.196, -6.702, -6.296, -6.325, -6.122, -7.169, -7.674, -7.799, -8.238, -8.378, -7.812, -7.869, -7.919, -7.965, -8.362, -8.302, -7.285, -7.35, -6.654, -7.055, -7.801, -6.264, -7.984, -6.58, -4.603, -2.985, -4.238, -5.087, -6.357, -6.541, -6.374, -6.956, -0.226, 0.0, -0.114, 0.0, -0.662, -2.044, -1.049, -2.611, 0.0, -4.251, -0.827, -3.862, -6.636, -8.056, -6.543, -3.571, -5.829, -4.947, -9.602, -9.012, -6.887, -5.358, -7.56, -10.806, -5.517, -2.172, -0.141, -1.028, -1.259, -1.483, 0.0, -0.798, -0.771, -4.703, -2.077, 0.0, -0.851, -0.6, 0.0, -1.186, -0.008, 0.0, -0.531, -2.507, 0.0, -0.396, -0.657, -1.597, -9.457, -4.625, -4.473, -2.332, -0.795, 0.0, -3.832, -0.882, 0.0, -1.966, -2.538, 0.0, -1.571, -6.994, -10.045, -12.967, -12.693, -9.755, -10.333, -10.989, -13.672, -10.676, -9.854, -8.707, -8.552, -5.274, -4.574, -5.043, -7.802, -2.398, -6.33, -5.165, -7.101, -2.669, -1.959, -4.408, -1.147, -1.379, -3.749, -1.119, -0.764, -3.278, -4.188, -4.974, -4.479, -8.495, -11.792, -14.011, -13.093, -13.871, -15.814, -16.083, -16.565, -16.45, -16.826, -19.172, -18.479, -19.685, -19.105, -18.529, -18.929, -18.107, -15.017, -13.532, -11.962, -8.716, -9.003, -8.504, -5.43, -4.026, -5.726, -5.418, -3.885, 0.0, -0.239, -1.062, 0.0, -3.081, -0.882, -0.097, -0.28, -3.255, -4.102, -7.291, -2.45, -0.789, -2.414, -2.824, 0.0, 0.0, -0.234, 0.0, 0.0, -2.235, -2.815, -0.947, -0.002, -1.907, -5.38, -5.658, -6.671, -8.303, -7.542, -0.987, -0.1, 0.0, -1.199, 0.0, -1.584, -0.163, 0.0, -5.346, -4.942],
+         borderColor: '#1a56db', borderWidth: 1.8, pointRadius: 0, fill: false },
+      { label: '美股 sleeve（TWD）', data: [0.0, -0.362, -1.257, -3.559, -4.087, -3.371, 0.0, -0.3, 0.0, -0.348, -2.831, -0.801, -2.866, -4.51, -10.157, -5.21, -5.669, -5.524, -5.695, -5.11, -3.198, -1.697, -2.173, 0.0, 0.0, 0.0, 0.0, -0.849, -0.346, -2.418, -3.494, -4.144, -0.8, -0.805, -0.336, 0.0, -0.555, -1.678, -2.809, -1.449, -10.6, -11.482, -7.529, -5.296, -3.657, -3.732, -2.172, -0.297, 0.0, -6.807, -1.218, -1.723, -1.92, -1.264, -3.226, -1.109, -4.743, -2.63, -0.266, 0.0, -0.951, -2.423, -3.559, -0.93, -4.576, -5.306, -3.394, -8.622, -2.608, -3.592, -3.975, -3.552, -2.658, -0.662, -2.107, -2.507, -2.647, -3.394, -7.995, -6.175, -2.978, -3.618, -2.78, -3.023, -1.139, -3.844, -5.443, -7.937, -5.194, -5.754, -4.273, -5.339, -5.998, -6.78, -4.995, -5.787, -4.24, -10.514, -6.24, -5.091, -9.442, -5.592, -8.869, -8.22, -9.125, -14.472, -10.066, -12.148, -13.05, -11.826, -14.293, -13.828, -13.817, -15.199, -11.439, -11.82, -12.594, -11.545, -15.007, -11.906, -15.926, -16.949, -16.679, -16.33, -15.66, -14.915, -14.636, -16.377, -17.223, -18.897, -19.024, -17.764, -17.283, -15.938, -15.123, -14.846, -15.326, -14.362, -13.55, -12.59, -17.924, -13.474, -13.582, -11.803, -11.799, -12.689, -12.664, -12.79, -15.685, -12.373, -10.321, -8.548, -11.95, -8.733, -7.789, -6.177, -7.202, -6.351, -5.664, -5.538, -3.892, -4.875, -4.402, -3.019, -3.224, -2.568, -0.739, -0.779, -1.795, -1.045, -0.934, -4.928, -1.665, -0.911, 0.0, 0.0, -1.348, -0.12, 0.0, -3.641, -4.662, -1.884, -5.814, -4.3, -1.714, -0.59, -1.918, -2.339, -3.257, -3.46, -2.575, 0.0, -1.893, 0.0, -1.064, 0.0, -0.016, -0.17, 0.0, 0.0, 0.0, -1.392, -1.584, 0.0, -3.911, -4.415, -2.557, -2.019, -3.903, 0.0, 0.0, 0.0, -0.371, -4.868, -9.172, -7.584, -5.16, -5.269, -2.45, -3.6, -8.061, -7.91, -9.715, -7.544, -8.361, -7.841, -6.479, -4.573, -4.237, -2.597, -0.821, -1.363, 0.0, -1.337, -4.654, -2.473, -1.23, -0.031, -1.277, 0.0, -2.469, -4.177, -0.266, -0.212, -3.136, -2.096, -1.95, -2.095, -4.916, -7.692, -7.852, -9.006, -10.313, -10.29, -9.738, -9.682, -10.092, -9.536, -9.799, -9.772, -9.574, -9.258, -9.462, -9.278, -9.106, -9.618, -9.216, -9.135, -8.634, -8.21, -10.476, -5.867, -5.834, -5.499, -1.355, -0.195, 0.0, -1.078, -0.324, -4.884, -7.387, -10.076, -11.159, -12.785, -13.32, -12.998, -12.406, -11.29, -9.984, -10.223, -7.855, -11.269, -12.337, -12.997, -13.841, -12.038, -10.553, -11.077, -11.643, -12.254, -11.107, -11.176, -10.892, -8.874, -7.332, -6.539, -5.075, -6.584, -5.062, -4.631, -1.753, 0.0, 0.0, -1.609, -0.986, 0.0, -0.713, -4.171, -0.872, 0.0, -2.662, -10.736, -11.32, -15.085, -19.62, -20.124, -20.256, -20.291, -20.634, -20.849, -21.564, -20.095, -20.589, -19.311, -18.595, -16.735, -18.865, -16.979, -18.402, -16.007, -14.02, -13.968, -14.549, -11.805, -9.357, -8.993, -7.678, -4.733, -7.416, -10.655, -11.097, -9.83, -9.858, -6.346, -5.668, -6.824, -11.649, -3.38, -4.353, -3.497, -1.027, 0.0, -2.404, -0.375, -0.636, 0.0, 0.0, -1.833, -1.088, -6.443, -3.132, 0.0, -1.359, -5.677, -8.048, -6.237, -4.691, -2.635, -0.21, 0.0, -0.437, -1.787, -4.039, -3.972, -6.974, -6.055, -3.695, -3.622, -2.912, -3.486, -0.807, 0.0, -0.636, -4.732, 0.0, -0.152, -0.785, -2.012, -3.021, 0.0, -0.586, -1.614, -2.159, -1.883, -7.458, -7.333, -4.091, -2.722, 0.0, 0.0, -0.813, 0.0, -4.903, -5.391, -2.156, -5.714, -2.625, -2.321, -6.09, -4.685, -12.862, -13.875, -11.687, -12.777, -12.686, -11.421, -12.959, -13.506, -13.874, -11.766, -12.811, -13.31, -13.431, -12.453, -11.949, -11.474, -10.817, -11.461, -12.303, -12.922, -11.451, -11.094, -11.32, -11.164, -10.851, -10.314, -10.387, -10.241, -10.088, -10.051, -9.932, -9.24, -8.106, -7.129, -5.979, -4.967, -4.629, -4.843, -3.844, -3.031, -3.109, -2.708, -4.896, -5.961, -6.239, -7.147, -7.449, -6.317, -6.452, -6.571, -6.681, -7.505, -7.39, -5.325, -5.476, -5.586, -4.265, -5.433, -2.741, -5.797, -3.711, -3.303, 0.0, -2.229, -2.391, -3.529, -2.626, -2.168, -2.478, -0.884, 0.0, 0.0, 0.0, -0.988, -2.613, 0.0, -2.18, -0.844, -4.148, 0.0, -3.745, -7.904, -8.772, -6.866, -1.714, -4.427, -6.812, -10.113, -8.994, -6.167, -6.201, -10.163, -13.268, -5.541, -0.199, -0.544, -1.922, -2.903, -1.875, 0.0, -0.983, -1.857, -6.088, -2.08, 0.0, -2.043, -0.56, 0.0, -1.784, -0.546, 0.0, -2.916, -4.867, 0.0, -0.491, -1.432, -3.03, -12.696, -5.86, -5.802, -3.773, -1.676, 0.0, -2.185, -1.064, 0.0, -3.662, -4.196, -0.545, -2.552, -8.849, -11.698, -15.825, -15.704, -11.315, -11.855, -13.11, -17.82, -13.594, -13.36, -12.754, -11.121, -8.035, -9.194, -9.088, -11.944, -5.438, -9.856, -7.916, -7.932, -5.1, -3.796, -6.739, -4.089, -3.388, -5.848, -1.533, -1.505, -6.456, -6.579, -4.585, -5.811, -10.295, -14.098, -14.815, -14.456, -14.063, -14.2, -14.765, -15.769, -15.55, -16.324, -21.077, -19.694, -22.117, -20.658, -19.544, -21.485, -20.713, -16.714, -14.5, -12.969, -11.145, -11.268, -11.935, -7.88, -6.305, -6.075, -7.118, -5.22, -2.831, 0.0, 0.0, -0.57, -6.577, -1.708, 0.0, -0.679, -3.608, -3.652, -7.098, -1.198, 0.0, -3.7, -2.099, 0.0, -0.692, 0.0, 0.0, -0.284, -2.305, -3.132, -3.728, -1.81, -3.974, -5.689, -5.353, -6.874, -9.274, -7.22, -1.456, 0.0, 0.0, 0.0, 0.0, -2.791, -0.387, 0.0, -8.434, -4.232],
+         borderColor: '#dc2626', borderWidth: 1, pointRadius: 0, fill: false },
+      { label: '台股 sleeve（TWD）', data: [-0.089, -0.496, 0.0, 0.0, -2.645, -4.324, -1.567, -1.353, -1.037, 0.0, -1.349, -3.19, 0.0, -0.8, 0.0, 0.0, -3.546, -3.181, -1.891, -0.323, 0.0, -3.206, -1.03, -1.454, -1.05, 0.0, 0.0, 0.0, -6.496, -6.513, -8.781, -9.17, -6.762, -4.715, -4.715, -3.927, -6.003, -5.217, -8.105, -5.845, -6.316, -9.15, -4.621, -1.361, -1.263, -0.121, -0.113, 0.0, -1.517, -3.137, -2.349, -1.229, -0.419, -2.815, -2.306, 0.0, -2.306, -1.317, 0.0, 0.0, -1.322, -1.991, -2.049, -0.086, -4.621, -2.799, -2.673, -4.369, 0.0, -1.901, -2.552, -2.822, -2.697, -2.552, -6.411, -4.412, -5.629, -2.9, -2.684, -6.808, -4.584, -6.788, -6.103, -9.261, -10.923, -10.906, -10.888, -10.87, -10.853, -10.835, -10.817, -10.803, -10.789, -10.793, -10.132, -11.027, -10.044, -11.578, -11.99, -12.497, -12.105, -12.339, -11.688, -11.428, -11.419, -13.667, -13.933, -13.916, -13.062, -12.323, -12.323, -11.112, -11.569, -10.732, -10.092, -8.525, -9.551, -9.518, -10.856, -9.996, -11.403, -14.513, -15.693, -17.063, -15.512, -12.777, -11.082, -8.642, -10.144, -12.007, -5.778, -6.608, -3.315, -2.348, -1.779, 0.0, -1.011, -2.865, -1.278, -3.079, -2.674, -6.402, -0.183, -1.217, -0.06, -0.649, -0.83, -2.021, -5.262, -6.742, -6.682, -5.916, -7.027, -3.917, -4.868, -8.155, -6.251, -4.751, -5.719, -6.33, -3.661, -4.446, -2.563, -0.599, -0.99, -3.828, -4.128, 0.0, -1.517, -3.299, -2.231, -3.472, -3.188, -0.627, -0.642, -0.692, -2.134, -0.049, 0.0, -0.555, -1.018, -0.368, -2.986, -4.201, -0.621, -0.956, -1.572, -1.108, -3.003, -3.114, -0.237, -0.324, -0.222, -0.593, -1.93, -3.384, 0.0, -0.129, -0.73, -0.512, -1.577, -1.632, -1.54, -0.192, -6.018, -8.192, -7.474, -7.861, -6.972, -3.957, -4.542, 0.0, -2.714, -2.191, -10.941, -10.262, -8.515, -9.355, -7.598, -6.729, -8.419, -8.041, -8.714, -8.316, -12.102, -13.999, -12.942, -12.925, -14.684, -13.688, -13.885, -13.367, -13.607, -13.492, -13.68, -13.881, -13.338, -9.82, -7.55, -7.159, -7.448, -9.593, -8.216, -4.684, -3.501, -3.664, -3.312, -3.095, -8.102, -12.38, -13.162, -14.818, -14.646, -14.934, -14.893, -14.876, -14.859, -14.842, -14.825, -14.808, -14.792, -14.781, -14.764, -14.748, -14.731, -14.721, -14.721, -14.704, -14.687, -14.53, -16.141, -16.064, -14.534, -14.539, -13.689, -11.934, -8.217, -9.398, -7.498, -10.873, -16.04, -17.864, -18.307, -18.675, -17.975, -17.091, -17.362, -16.39, -15.013, -13.46, -13.082, -16.142, -15.933, -16.823, -15.627, -14.11, -12.521, -12.552, -11.521, -9.969, -8.844, -7.639, -4.087, -3.443, -1.517, -1.576, -1.455, -1.82, -3.259, -0.76, 0.0, -3.103, -1.132, -1.17, -1.388, -2.298, -2.057, -6.517, -5.179, -3.821, -5.497, -7.346, -7.544, -12.819, -15.996, -17.87, -17.86, -17.844, -17.839, -18.499, -17.909, -18.098, -18.158, -18.607, -18.596, -15.127, -14.663, -14.306, -13.53, -11.238, -8.389, -4.975, -1.239, -0.683, -0.422, -0.989, -1.794, -1.01, -1.767, -0.975, -1.227, -4.282, -2.375, 0.0, -2.099, -1.451, -4.798, -0.489, 0.0, -1.092, -1.153, 0.0, -1.196, -1.709, -1.361, 0.0, 0.0, -0.279, -3.213, -10.008, -5.67, -5.67, -3.33, -7.578, -8.279, -6.568, -8.5, -8.122, -6.983, -5.881, -5.517, -6.028, -5.862, -6.048, -14.142, -11.764, -9.433, -8.814, -8.072, -8.037, -9.611, -9.585, -10.166, -9.072, -10.167, -11.102, -9.354, -11.373, -15.943, -8.775, -5.376, -5.182, -7.54, -8.085, -12.547, -12.366, -9.284, -9.28, -10.377, -8.86, -8.071, -5.646, -9.813, -7.079, -7.268, -6.869, -6.633, -4.505, -3.423, 0.0, -6.528, -7.181, -7.181, -5.244, -6.282, -10.044, -10.594, -13.04, -13.055, -12.831, -12.788, -13.913, -14.319, -14.302, -14.285, -14.271, -14.254, -14.237, -14.22, -14.207, -14.19, -14.173, -14.156, -14.139, -14.122, -14.105, -14.088, -14.071, -14.053, -14.036, -14.019, -14.002, -13.985, -13.972, -13.955, -13.937, -13.92, -13.903, -13.89, -13.873, -13.855, -13.838, -13.821, -13.804, -13.787, -13.77, -13.753, -13.736, -13.719, -13.701, -13.688, -13.671, -13.664, -13.664, -13.647, -12.242, -14.207, -14.528, -14.116, -14.563, -13.835, -10.562, -11.326, -11.756, -13.166, -14.475, -15.613, -15.708, -16.489, -9.655, -3.814, -3.726, -2.995, -0.329, -1.463, -2.55, -4.118, 0.0, -5.128, -3.282, -5.848, -7.235, -9.16, -8.054, -7.236, -9.019, -5.072, -10.911, -10.83, -9.435, -6.404, -6.84, -10.159, -7.424, -6.177, -2.353, -2.69, -2.108, -3.602, -0.152, -0.889, -0.136, -3.746, -2.54, 0.0, 0.0, -1.417, -0.361, -1.26, 0.0, -0.833, 0.0, -2.134, 0.0, -0.303, -0.783, -0.328, -6.413, -3.545, -3.405, -1.153, -0.334, -0.53, -5.647, -1.487, 0.0, -0.691, -1.294, -0.145, -2.75, -7.19, -10.375, -12.027, -11.605, -10.177, -10.78, -10.824, -11.366, -9.699, -8.292, -6.617, -7.987, -4.584, -1.961, -3.018, -5.64, -1.573, -4.877, -4.585, -8.556, -2.643, -2.541, -4.441, -0.652, -1.908, -2.911, -2.039, 0.0, 0.0, -1.751, -5.507, -3.173, -6.682, -9.451, -13.23, -11.732, -13.727, -17.558, -17.542, -17.525, -17.509, -17.496, -17.479, -17.463, -17.473, -17.753, -17.737, -16.538, -15.667, -13.528, -12.809, -11.203, -6.525, -6.979, -5.257, -3.228, -2.009, -5.729, -4.002, -2.852, 0.0, -0.735, -2.935, 0.0, 0.0, -1.933, -1.695, 0.0, -3.026, -4.682, -7.606, -3.836, -2.858, -1.482, -3.886, 0.0, 0.0, -1.123, 0.0, 0.0, -2.315, -2.647, 0.0, 0.0, -0.466, -5.736, -6.648, -7.128, -7.952, -8.56, -1.285, -1.618, 0.0, -3.689, -0.647, -1.663, -1.283, 0.0, -2.205, -5.661],
+         borderColor: '#059669', borderWidth: 1, pointRadius: 0, fill: false }
+    ] },
+  options: { responsive: true, maintainAspectRatio: false, interaction: {mode:'index', intersect:false},
+    plugins: { title: {display:true, text:'回撤時間軸（新台幣計價，週頻）'},
+                legend: {position:'bottom'} },
+    scales: { y: { title: {display:true, text:'回撤 %'} },
+               x: { ticks: {maxTicksLimit: 14} } } }
+});</script>
+</body>
+</html>
