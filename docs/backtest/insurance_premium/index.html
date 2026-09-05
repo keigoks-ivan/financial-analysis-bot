@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>深熊保險的價格：均線閘門 vs 跨資產分散 vs 倉位稀釋 | InvestMQuest Research</title>
+<meta name="description" content="把三種形式不同的下檔保險（均線閘門、跨資產分散、倉位稀釋）放在同一把尺上，量出每一種的保費（少賺的年化）與理賠（少跌的回撤），在含深熊與只有 V 型兩種窗各比一次。">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+:root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
+      --text:#111827;--muted:#6b7280;--border:#e5e7eb}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans TC',sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1180px;margin:0 auto;padding:0 1.5rem}
+.page-hdr{padding:1.75rem 0 1.25rem;background:linear-gradient(180deg,#eff6ff 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
+.page-hdr h1{font-size:1.55rem;font-weight:700;letter-spacing:-.03em}
+.page-hdr .sub{color:var(--muted);font-size:.88rem;margin-top:.2rem}
+.crumb{font-size:.82rem;color:var(--muted);margin-bottom:.4rem}
+.crumb a{color:var(--muted)}
+.section{padding:1.75rem 0 0}
+.section-title{font-size:1.08rem;font-weight:700;margin-bottom:.6rem;
+               padding-bottom:.45rem;border-bottom:2px solid var(--brand)}
+.sub-h{font-size:.95rem;font-weight:700;margin:1rem 0 .5rem}
+.sub-line{font-size:.84rem;color:var(--muted);margin-bottom:.8rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.1rem 1.25rem;margin-bottom:1rem}
+.card h3{font-size:.98rem;font-weight:700;margin-bottom:.4rem}
+.card p{font-size:.87rem;margin-bottom:.5rem}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+table{width:100%;border-collapse:collapse;font-size:.82rem;background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+th,td{text-align:left;padding:.5rem .6rem;border-bottom:1px solid var(--border)}
+th{background:#f9fafb;font-weight:600;font-size:.68rem;letter-spacing:.03em;color:var(--muted)}
+td{font-variant-numeric:tabular-nums;vertical-align:top}
+td.num,th.num{text-align:right}
+td.lbl{white-space:nowrap;font-weight:500}
+tbody tr:last-child td{border-bottom:0}
+tr.hi{background:#eff6ff}
+tr.dil{background:#fafafa;color:#4b5563}
+tr.bench{background:#f3f4f6;font-weight:600}
+tr.hit{background:#ecfdf5}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.hero{margin:1.25rem 0;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--card)}
+.hero-top{background:linear-gradient(135deg,#eff6ff 0%,#f5f8ff 100%);padding:1.4rem 1.6rem;border-bottom:1px solid var(--border)}
+.hero-top .verdict-tag{display:inline-block;background:#1a56db;color:#fff;font-size:.74rem;font-weight:700;
+                       letter-spacing:.05em;padding:.25rem .7rem;border-radius:99px;margin-bottom:.5rem}
+.hero-top h2{font-size:1.2rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.35rem}
+.hero-top p{font-size:.9rem;color:#374151;max-width:66rem}
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card)}
+.hero-stats > div{padding:1rem 1.2rem;text-align:center;border-right:1px solid var(--border)}
+.hero-stats > div:last-child{border-right:none}
+.hero-stats .hs-label{font-size:.66rem;color:var(--muted);letter-spacing:.04em}
+.hero-stats .hs-value{font-size:1.35rem;font-weight:800;letter-spacing:-.02em}
+.takeaway{font-size:.86rem;margin:.9rem 0;padding:.7rem .95rem;border-radius:6px;background:var(--brand-light);
+    border-left:3px solid var(--brand);color:#1f2c44}
+.takeaway b{color:#12213a}
+.note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;
+      padding:.85rem 1.1rem;font-size:.82rem;color:#92400e;margin:1rem 0}
+.tiny{font-size:.72rem;color:var(--muted);font-weight:400}
+.ok{color:#059669;font-weight:700}
+.no{color:#dc2626;font-weight:700}
+.disc{margin-left:1.1rem;font-size:.86rem}
+.disc li{margin-bottom:.5rem}
+details summary{cursor:pointer;font-size:.88rem}
+.chart-wrap{position:relative}
+footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
+       text-align:center;padding:1.25rem 0;font-size:.78rem;margin-top:2rem}
+@media(max-width:900px){.grid3{grid-template-columns:1fr}}
+@media(max-width:768px){
+  .hero-stats{grid-template-columns:repeat(2,1fr)}
+  table{font-size:.74rem}th,td{padding:.4rem .4rem}
+}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/market/">市況主控台</a>
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <a href="/cockpit/">選股</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">個股研究</a>
+          <a href="/id/">產業研究</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/" class="active">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/flow/">投資流程</a>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="page-hdr">
+  <div class="container">
+    <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / 深熊保險的價格</div>
+    <h1>深熊保險的價格：均線閘門 vs 跨資產分散 vs 倉位稀釋</h1>
+    <div class="sub">三種形式不同的下檔保險放在同一把尺上，量保費與理賠・
+    預註冊 docs/Insurance_Premium_Comparison_Spec.md（2026-09-05 凍結）・
+    頁面生成 2026-09-05 18:48，美股資料截至 2026-06-11、台股截至 2026-09-03</div>
+    <style id="bt-subnav-style">.bt-subnav{margin-top:.75rem;border:1px solid var(--border,#e5e7eb);border-radius:8px;overflow:hidden;font-size:.78rem;line-height:1.3}.bt-subnav-row{display:flex;align-items:flex-start;gap:.55rem;padding:.32rem .55rem;border-top:1px solid var(--border,#e5e7eb)}.bt-subnav-row:first-child{border-top:0}.bt-subnav-lbl{flex:0 0 5.4em;font-size:.64rem;font-weight:700;color:var(--muted,#6b7280);text-transform:uppercase;letter-spacing:.04em;padding-top:.34rem}.bt-subnav-pills{display:flex;flex-wrap:wrap;gap:.3rem;min-width:0}.bt-subnav-pills a{display:inline-flex;align-items:center;gap:.28rem;padding:.26rem .6rem;background:#eef1f4;color:#374151;border-radius:999px;text-decoration:none;font-weight:500;white-space:nowrap;transition:background .12s}.bt-subnav-pills a:hover{background:#e1e6ea}.bt-subnav-pills a.bt-dead{color:#7a828d;background:#f2f3f5}.bt-subnav-pills a.bt-on{background:linear-gradient(135deg,#081832,#173564);color:#fff;font-weight:600}.bt-subnav-pills a.bt-on:hover{background:linear-gradient(135deg,#081832,#173564)}.bt-tag{font-size:.6rem;font-weight:600;padding:.02rem .3rem;border-radius:4px;line-height:1.4}.bt-tag-dead{background:rgba(220,38,38,.12);color:#b42318}.bt-tag-watch{background:rgba(180,118,20,.15);color:#986a12}.bt-on .bt-tag-dead{background:rgba(255,255,255,.22);color:#fff}.bt-on .bt-tag-watch{background:rgba(255,255,255,.22);color:#fff}@media(max-width:640px){.bt-subnav-row{flex-direction:column;gap:.28rem;padding:.4rem .55rem}.bt-subnav-lbl{flex-basis:auto;padding-top:0}}</style><nav class="bt-subnav" aria-label="回測子導航"><div class="bt-subnav-row"><div class="bt-subnav-lbl">對比總覽</div><div class="bt-subnav-pills"><a href="/backtest/">20 年</a><a href="/backtest/10y/">10 年</a><a href="/backtest/criteria/">評估標準</a><a href="/backtest/tw/">台股總覽</a><a href="/backtest/multi/">多資產總覽</a><a href="/backtest/leverage/">槓桿疊加總覽</a><a href="/backtest/ma_sensitivity/">MA 敏感度</a><a href="/backtest/free_lunch/">分散與免費午餐</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">個別系統</div><div class="bt-subnav-pills"><a href="/backtest/long_track/">SPY/QQQ 長軌</a><a href="/backtest/long_track_qqq/">QQQ 長軌純攻</a><a href="/backtest/long_track_ensemble/">SPY/QQQ 集成</a><a href="/backtest/long_track_smh/">SMH/QQQ 進攻</a><a href="/backtest/six_state/">QQQ＋SMH 六狀態</a><a href="/backtest/six_state_v1r1/">QQQ 六狀態實盤</a><a href="/backtest/gem/">SPY/ACWX 雙動能</a><a href="/backtest/slope_filter/">SPY/AGG 斜率</a><a href="/backtest/rsi2_mr/">SPY/QQQ 均值回歸</a><a href="/backtest/supertrend/">週線 Supertrend</a><a href="/backtest/minervini/">Minervini RS+VCP</a><a href="/backtest/mom_volscaling/">動能·波動縮放</a><a href="/backtest/dual_track_study/">雙軌分散研究</a><a href="/backtest/leverage_voltarget/">期貨槓桿疊加</a><a href="/backtest/vol_targeting/">波動目標倉位<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/dual_track/" class="bt-dead">SPY/QQQ 雙軌多空<span class="bt-tag bt-tag-dead">否決</span></a><a href="/backtest/exit_switch/" class="bt-dead">出場法切換<span class="bt-tag bt-tag-dead">否決</span></a><a href="/backtest/short_system/" class="bt-dead">指數做空<span class="bt-tag bt-tag-dead">失敗</span></a><a href="/backtest/cndr/" class="bt-dead">Iron Condor<span class="bt-tag bt-tag-dead">失敗</span></a><a href="/backtest/covered_call/" class="bt-dead">Covered Call<span class="bt-tag bt-tag-dead">負貢獻</span></a><a href="/backtest/put_timing/" class="bt-dead">SPY/QQQ 買 put 避險<span class="bt-tag bt-tag-dead">負貢獻</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">多資產</div><div class="bt-subnav-pills"><a href="/backtest/turtle/">唐奇安突破</a><a href="/backtest/clenow/">跨資產趨勢</a><a href="/backtest/multiasset_trend/">SG Trend 複製</a><a href="/backtest/turtle_adopt/">組合採用 Sleeve</a><a href="/backtest/slope_filter_global/">全球斜率穩健性</a><a href="/backtest/crossasset_defense/">跨資產防守</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">台股波段</div><div class="bt-subnav-pills"><a href="/backtest/tw_0050_compare/">0050 總覽·台美差異</a><a href="/backtest/tw_0050/">0050 進攻趨勢（移植）</a><a href="/backtest/tw_0050_lt/">0050 長軌趨勢</a><a href="/backtest/long_track_tw/">2330/0050 E3 長軌</a><a href="/backtest/tw_0050_six/">0050 六狀態機</a><a href="/backtest/tw_0050_dual/" class="bt-dead">0050 雙軌多空<span class="bt-tag bt-tag-dead">否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">台股選擇權</div><div class="bt-subnav-pills"><a href="/backtest/tw_options/">台股選擇權專區<span class="bt-tag bt-tag-watch">專區</span></a><a href="/backtest/txo_vol_seller/">台指選擇權賣方<span class="bt-tag bt-tag-watch">模擬中</span></a><a href="/backtest/txo_put_seller/">台指賣方下檔<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_iron_condor/">台指雙賣<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_covered_call_0050/">台指 Covered Call<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_tail_hedge/">台指尾端避險<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">日內交易</div><div class="bt-subnav-pills"><a href="/backtest/txf_intraday/">台指當沖<span class="bt-tag bt-tag-watch">未過</span></a><a href="/backtest/txf_chips/">籌碼偏向<span class="bt-tag bt-tag-watch">觀察</span></a><a href="/backtest/ssf_xsec/">個股期橫斷面<span class="bt-tag bt-tag-watch">未過</span></a><a href="/backtest/txf_basis/" class="bt-dead">基差偏向<span class="bt-tag bt-tag-dead">否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・主動式ETF</div><div class="bt-subnav-pills"><a href="/backtest/active_etf/">主動式ETF總結<span class="bt-tag bt-tag-watch">專區</span></a><a href="/backtest/tw_active_etf/">台股主動式ETF<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/us_active_etf/">美股主動式ETF<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/tw_mutual_fund/">台股共同基金<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・頻率</div><div class="bt-subnav-pills"><a href="/backtest/daily_vs_weekly/">日/週線</a><a href="/backtest/daily_vs_weekly_deep/">日/週·深掘</a><a href="/backtest/daily_vs_weekly_global/">日/週·全球</a><a href="/backtest/daily_vs_weekly_tw/">日/週·台股</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・均線</div><div class="bt-subnav-pills"><a href="/backtest/ma_cross/">MA 交叉</a><a href="/backtest/ma_deviation/">MA 乖離</a><a href="/backtest/ma_dynband/">MA 動態帶</a><a href="/backtest/ma_squeeze/">MA 擠壓</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・崩盤</div><div class="bt-subnav-pills"><a href="/backtest/smh_vcrash/">SMH V崩</a><a href="/backtest/tw_vcrash/">台股 V崩防禦</a><a href="/backtest/tw_crash/">台股含崩盤驗證</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・總經</div><div class="bt-subnav-pills"><a href="/backtest/housing_gdp/">人均GDP與房價<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・可轉債</div><div class="bt-subnav-pills"><a href="/backtest/tw_cb/">台股可轉債專區<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・因子</div><div class="bt-subnav-pills"><a href="/backtest/return_driver/">美股漲跌歸因：獲利與估值<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/pead/">美股財報驚喜後漂移<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/accruals/">美股獲利品質（應計項目）<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/share_issuance/">美股股數增減（發行與回購）<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/profitability/">美股獲利能力因子<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/asset_growth/">美股資產成長異象<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/index_inclusion/">指數納入效應<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/insider/">內部人買賣叢集買進<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・跨標的驗證</div><div class="bt-subnav-pills"><a href="/backtest/w52_adaptive_oos/">W52×自適應 σ 跨標的證偽<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/insurance_premium/" class="bt-on">深熊保險的價格<span class="bt-tag bt-tag-watch">研究</span></a></div></div></nav>
+  </div>
+</div>
+
+<div class="container">
+
+
+<div class="hero">
+  <div class="hero-top">
+    <span class="verdict-tag">預註冊判定命中：第 1 列、第 6 列</span>
+    <h2>在 2010 年後的 V 型時代，均線閘門買到的保險仍然比「單純少放一點錢」划算。跨資產分散在主判準窗沒有贏過閘門。</h2>
+    <p>這頁不選系統，只做一件事：把三種<b>形式不同的保險</b>放在同一把尺上，量出每一種的
+    「<b>保費</b>」（為了買保險而比單純持有少賺的年化報酬，單位 pp／年〔pp ＝ percentage point，
+    百分點；「少賺 5.94pp」意思是年化報酬少了 5.94 個百分點，不是少了 5.94%〕）與
+    「<b>理賠</b>」（比單純持有少跌的最大回撤，單位 pp）。在主判準窗（2010 年起、
+    這 16 年沒有出現過深熊的「V 型時代」），QQQ/SMH 各半買進持有的年化是
+    23.35%、最大回撤 -40.21%；均線閘門系統 A 是 17.41% ／
+    -23.68%；而把同一組買進持有用現金稀釋到<b>同樣年化</b>（E-cagr，現金比重
+    28.1%）之後，回撤只降到 -30.04%——
+    A 比稀釋多躲了 6.36pp。</p>
+  </div>
+  <div class="hero-stats">
+    <div><div class="hs-label">A 的保費（W2）</div><div class="hs-value">5.94pp</div></div>
+    <div><div class="hs-label">A 的理賠（W2）</div><div class="hs-value">16.53pp</div></div>
+    <div><div class="hs-label">每 pp 理賠的年保費</div><div class="hs-value">0.360</div></div>
+    <div><div class="hs-label">D1 每 pp 理賠的年保費</div><div class="hs-value">0.558</div></div>
+  </div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">一、三種保險分別是什麼</h2>
+<div class="grid3">
+  <div class="card"><h3>A．均線閘門型</h3>
+    <p>就是現在的實單主系統：QQQ 與 SMH 各半，每一腿看週線 52 週均線決定在不在場，
+    再依市場波動高低調整持股比例（平靜時最多借到 1.5 倍，波動大時自動降），
+    加上一層避免頻繁進出的執行層。<b>保險的形式是「跌破線就出場」。</b></p>
+    <p class="tiny">QQQ 50／SMH 50，每腿 gate_w52 × clip(σ_t/RV, 1.5) × 執行層 A2（20pp／10 格／clamp 75pp），融資利差 1.5%</p></div>
+  <div class="card"><h3>D．跨資產分散型</h3>
+    <p>股（SPY）、長債（TLT）、黃金（GLD）、廣義商品（DBC）各佔四分之一，每一腿各自跑
+    趨勢訊號，沒訊號的腿就領現金；D1 再多一層 Chandelier 給回吐閘（從近期高點回落一定
+    幅度就減半倉）。<b>保險的形式是「四類資產不會同時垮」。</b></p>
+    <p class="tiny">D0 ＋ Chandelier 半倉 give-back 閘（站上 crossasset_defense 正式版）</p></div>
+  <div class="card"><h3>E．倉位稀釋型</h3>
+    <p>完全不預測、不擇時，就是同一組買進持有，只放一部分錢進去，其餘擺現金，每天再平衡。
+    E-cagr 是「稀釋到年化跟 A 一樣」、E-mdd 是「稀釋到回撤跟 A 一樣」、E-60 是固定六成。
+    <b>保險的形式是「只放扛得住的量」。</b></p>
+    <p class="tiny">QQQ/SMH 50/50 B&H 以現金稀釋到 CAGR ＝ A 的 CAGR（每窗解一次 k）；QQQ/SMH 50/50 B&H 固定 60% ＋ 現金 40%，每日再平衡</p></div>
+</div>
+<div class="takeaway">E 系列是本頁的<b>尺</b>，不是候選策略。任何主動規則若贏不了「事後才知道要放多少現金」
+的稀釋線，就代表它的下檔保護可以用「少放一點錢」複製，而且更省。</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">二、判準與判定表（預註冊原文，跑之前就鎖死）</h2>
+<div class="takeaway">三把尺（每窗各判一次）：<br>
+① <b>A 勝 E</b>：A 對 E-cagr 的回撤更淺 <b>且</b> A 對 E-mdd 的年化更高（兩個方向都要贏；只贏一向＝與稀釋等價）。<br>
+② <b>D 勝 A</b>：D1 的 Calmar（年化報酬 ÷ 最大回撤的絕對值，數字愈大代表每承受一單位下跌換到的報酬愈多）高於 A，且 D1 的回撤比 A 淺。<br>
+③ <b>D 勝 E</b>：以 D1 自己的年化與回撤各解一次 k，D1 對 E-cagr 的回撤更淺 且 對 E-mdd 的年化更高。</div>
+<div class="scroll"><table>
+<thead><tr><th>W2（主判準窗）結果</th><th>預註冊判定</th><th class="num">命中</th></tr></thead>
+<tbody><tr class="hit"><td class='lbl'>A 勝 E 於 W2</td><td>均線閘門在 V 型時代仍有保險價值（與跨標的證偽矛盾，須解釋為何 QQQ/SMH 特殊）</td><td class='num'><span class='ok'>✓</span></td></tr><tr class=""><td class='lbl'>A 不勝 E 於 W2，但勝於 W1</td><td>A 是純深熊保單：只有理賠過才值回保費（頁面主結論）</td><td class='num'><span class='no'>✗</span></td></tr><tr class=""><td class='lbl'>A 於 W1、W2 皆不勝 E</td><td>A 連深熊保險都不比稀釋便宜；rule_ledger 加註</td><td class='num'><span class='no'>✗</span></td></tr><tr class=""><td class='lbl'>D 勝 A 且 D 勝 E 於兩窗</td><td>分散型保險比閘門型便宜且有效（同尺確認，非新結論）</td><td class='num'><span class='no'>✗</span></td></tr><tr class=""><td class='lbl'>D 勝 A 但不勝 E</td><td>分散比閘門好，但都不如倉位稀釋</td><td class='num'><span class='no'>✗</span></td></tr><tr class="hit"><td class='lbl'>F 的 Calmar > max(A, D1) 於兩窗</td><td>兩種保險互補（描述性，不進 ledger）</td><td class='num'><span class='ok'>✓</span></td></tr></tbody></table></div>
+<div class="scroll" style="margin-top:.8rem"><table>
+<thead><tr><th>窗</th><th class="num">尺① A 勝 E</th><th class="num">尺② D 勝 A</th>
+<th class="num">尺③ D 勝 E</th><th class="num">F 的 Calmar &gt; max(A, D1)</th></tr></thead>
+<tbody>
+<tr><td class="lbl">W1 含深熊 2007-07 起</td><td class="num"><span class='ok'>✓</span></td>
+<td class="num"><span class='no'>✗</span></td><td class="num"><span class='ok'>✓</span></td>
+<td class="num"><span class='ok'>✓</span></td></tr>
+<tr><td class="lbl">W2 V 型時代 2010-01 起（主）</td><td class="num"><span class='ok'>✓</span></td>
+<td class="num"><span class='no'>✗</span></td><td class="num"><span class='no'>✗</span></td>
+<td class="num"><span class='ok'>✓</span></td></tr>
+</tbody></table></div>
+<div class="note">門檻由來（誠實預告）：三把尺全是「嚴格大於」，沒有容忍帶——這裡比的是同一份資料上的
+確定性數字，不是抽樣估計。抽樣不確定性由另一份規格（Adopted_System_Bootstrap_Spec.md）處理，
+本頁不跑 bootstrap（一種靠重抽樣估計「這個結果有多容易是運氣」的方法）。</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">三、W2 保險價格表（主判準窗）</h2>
+<div class="sub-line">2010-01-04 ～ 2026-06-11　共 4135 個交易日，每位參賽者都在窗起點重新正規化到 $1,000,000。</div>
+<div class='takeaway'><b>怎麼讀這張表</b>：<b>保費</b>＝買進持有的年化減掉該策略的年化（正值＝為了保險少賺）；<b>理賠</b>＝買進持有的最大回撤深度減掉該策略的回撤深度（正值＝少跌）；<b>每 pp 理賠的年保費</b>＝保費 ÷ 理賠，<b>數字愈小的保險愈便宜</b>；<b>超額理賠</b>＝在「同樣少賺」的前提下，比 E-cagr 多躲掉幾個百分點的回撤（正值才有價值）；<b>超額報酬</b>＝在「同樣少跌」的前提下，比 E-mdd 多賺幾個百分點（正值才有價值）。<b>Martin</b>（＝年化報酬 ÷ Ulcer Index，Ulcer Index 是「整段期間平均泡在水下多深」的均方根，比只看單一最深點的 Calmar 更能反映『長期難受程度』）愈大愈好。<b>年換手</b>＝一年之內部位權重變動量的總和（邊／年），是交易成本的代理。</div>
+<div class="scroll"><table>
+<thead><tr><th>參賽者</th><th class="num">年化</th><th class="num">最大回撤</th>
+<th class="num">Calmar</th><th class="num">Martin</th>
+<th class="num">保費<br>pp／年</th><th class="num">理賠<br>pp</th>
+<th class="num">每 pp 理賠<br>的年保費</th><th class="num">超額理賠<br>vs E-cagr</th>
+<th class="num">超額報酬<br>vs E-mdd</th><th class="num">年換手</th></tr></thead>
+<tbody><tr class='bench'><td class='lbl'>參考．QQQ/SMH 各半買進持有</td><td class='num'>23.35%</td><td class='num'>-40.21%</td><td class='num'>0.581</td><td class='num'>2.46</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td><td class='num'>0.00</td></tr><tr class='hi'><td class='lbl'>A．均線閘門（實單主系統）</td><td class='num'>17.41%</td><td class='num'>-23.68%</td><td class='num'>0.735</td><td class='num'>1.65</td><td class='num'>5.94</td><td class='num'>16.53</td><td class='num'><b>0.360</b></td><td class='num'>+6.36</td><td class='num'>+3.55</td><td class='num'>4.06</td></tr><tr><td class='lbl'>A0．同 A 但無槓桿</td><td class='num'>15.43%</td><td class='num'>-22.38%</td><td class='num'>0.689</td><td class='num'>1.67</td><td class='num'>7.92</td><td class='num'>17.83</td><td class='num'><b>0.444</b></td><td class='num'>+7.66</td><td class='num'>+1.57</td><td class='num'>2.53</td></tr><tr><td class='lbl'>D0．跨資產分散（無閘門）</td><td class='num'>6.17%</td><td class='num'>-7.98%</td><td class='num'>0.773</td><td class='num'>2.06</td><td class='num'>17.18</td><td class='num'>32.23</td><td class='num'><b>0.533</b></td><td class='num'>+22.06</td><td class='num'>-7.69</td><td class='num'>2.43</td></tr><tr><td class='lbl'>D1．跨資產分散＋給回吐閘</td><td class='num'>5.32%</td><td class='num'>-7.92%</td><td class='num'>0.672</td><td class='num'>1.60</td><td class='num'>18.03</td><td class='num'>32.30</td><td class='num'><b>0.558</b></td><td class='num'>+22.12</td><td class='num'>-8.54</td><td class='num'>3.33</td></tr><tr class='dil'><td class='lbl'>E-cagr．稀釋到與 A 同報酬<br><span class='tiny'>k＝0.719</span></td><td class='num'>17.41%</td><td class='num'>-30.04%</td><td class='num'>0.579</td><td class='num'>2.58</td><td class='num'>5.95</td><td class='num'>10.17</td><td class='num'><b>0.585</b></td><td class='num'>+0.00</td><td class='num'>+3.55</td><td class='num'>0.54</td></tr><tr class='dil'><td class='lbl'>E-mdd．稀釋到與 A 同回撤<br><span class='tiny'>k＝0.557</span></td><td class='num'>13.86%</td><td class='num'>-23.68%</td><td class='num'>0.585</td><td class='num'>2.69</td><td class='num'>9.49</td><td class='num'>16.53</td><td class='num'><b>0.574</b></td><td class='num'>+6.35</td><td class='num'>+0.00</td><td class='num'>0.66</td></tr><tr class='dil'><td class='lbl'>E-60．固定六成持股<br><span class='tiny'>k＝0.600（固定）</span></td><td class='num'>14.81%</td><td class='num'>-25.40%</td><td class='num'>0.583</td><td class='num'>2.65</td><td class='num'>8.54</td><td class='num'>14.81</td><td class='num'><b>0.577</b></td><td class='num'>+4.64</td><td class='num'>+0.95</td><td class='num'>0.65</td></tr><tr><td class='lbl'>F．A 與 D1 各半</td><td class='num'>11.68%</td><td class='num'>-12.89%</td><td class='num'>0.906</td><td class='num'>2.07</td><td class='num'>11.68</td><td class='num'>27.32</td><td class='num'><b>0.427</b></td><td class='num'>+17.15</td><td class='num'>-2.18</td><td class='num'>3.69</td></tr></tbody></table></div>
+<h3 class="sub-h">D 的第二參考欄：改用「四資產等權買進持有」當基準</h3>
+<div class="sub-line">D 的四條腿就是 SPY／TLT／GLD／DBC，用 QQQ/SMH 當它的基準其實換了資產類別；
+這張表把 D 對照它自己的無趨勢版本（四資產等權買進持有：年化 7.53%、
+回撤 -19.43%），才看得出「趨勢層本身」買到的保險有多貴。</div>
+<div class="scroll"><table>
+<thead><tr><th>參賽者</th><th class="num">年化</th><th class="num">最大回撤</th>
+<th class="num">保費 pp／年</th><th class="num">理賠 pp</th>
+<th class="num">每 pp 理賠的年保費</th></tr></thead><tbody><tr><td class='lbl'>D0．跨資產分散（無閘門）</td><td class='num'>6.17%</td><td class='num'>-7.98%</td><td class='num'>1.37</td><td class='num'>11.45</td><td class='num'><b>0.119</b></td></tr><tr><td class='lbl'>D1．跨資產分散＋給回吐閘</td><td class='num'>5.32%</td><td class='num'>-7.92%</td><td class='num'>2.21</td><td class='num'>11.51</td><td class='num'><b>0.192</b></td></tr></tbody></table></div>
+<div class="chart-wrap" style="height:340px;margin-top:1rem">
+  <canvas id="chart-w2"></canvas></div>
+<div class="tiny" style="text-align:center">橫軸＝理賠（少跌幾個百分點），縱軸＝保費（少賺幾個百分點／年）。
+灰線是「<b>稀釋線</b>」（E-60／E-cagr／E-mdd 三點連成），<b>落在稀釋線下方＝比單純少放錢更便宜的保險</b>。</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">四、W1 保險價格表（含深熊）</h2>
+<div class="sub-line">2007-07-02 ～ 2026-06-11　共 4767 個交易日。</div>
+
+<div class="scroll"><table>
+<thead><tr><th>參賽者</th><th class="num">年化</th><th class="num">最大回撤</th>
+<th class="num">Calmar</th><th class="num">Martin</th>
+<th class="num">保費<br>pp／年</th><th class="num">理賠<br>pp</th>
+<th class="num">每 pp 理賠<br>的年保費</th><th class="num">超額理賠<br>vs E-cagr</th>
+<th class="num">超額報酬<br>vs E-mdd</th><th class="num">年換手</th></tr></thead>
+<tbody><tr class='bench'><td class='lbl'>參考．QQQ/SMH 各半買進持有</td><td class='num'>19.01%</td><td class='num'>-56.93%</td><td class='num'>0.334</td><td class='num'>1.30</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td><td class='num'>0.00</td></tr><tr class='hi'><td class='lbl'>A．均線閘門（實單主系統）</td><td class='num'>16.38%</td><td class='num'>-23.68%</td><td class='num'>0.692</td><td class='num'>1.60</td><td class='num'>2.64</td><td class='num'>33.25</td><td class='num'><b>0.079</b></td><td class='num'>+25.80</td><td class='num'>+8.11</td><td class='num'>3.79</td></tr><tr><td class='lbl'>A0．同 A 但無槓桿</td><td class='num'>14.28%</td><td class='num'>-22.38%</td><td class='num'>0.638</td><td class='num'>1.59</td><td class='num'>4.73</td><td class='num'>34.55</td><td class='num'><b>0.137</b></td><td class='num'>+27.10</td><td class='num'>+6.02</td><td class='num'>2.38</td></tr><tr><td class='lbl'>D0．跨資產分散（無閘門）</td><td class='num'>6.63%</td><td class='num'>-12.77%</td><td class='num'>0.519</td><td class='num'>1.75</td><td class='num'>12.38</td><td class='num'>44.16</td><td class='num'><b>0.280</b></td><td class='num'>+36.71</td><td class='num'>-1.63</td><td class='num'>2.42</td></tr><tr><td class='lbl'>D1．跨資產分散＋給回吐閘</td><td class='num'>6.05%</td><td class='num'>-9.39%</td><td class='num'>0.644</td><td class='num'>1.72</td><td class='num'>12.97</td><td class='num'>47.54</td><td class='num'><b>0.273</b></td><td class='num'>+40.09</td><td class='num'>-2.22</td><td class='num'>3.24</td></tr><tr class='dil'><td class='lbl'>E-cagr．稀釋到與 A 同報酬<br><span class='tiny'>k＝0.832</span></td><td class='num'>16.38%</td><td class='num'>-49.48%</td><td class='num'>0.331</td><td class='num'>1.36</td><td class='num'>2.64</td><td class='num'>7.45</td><td class='num'><b>0.354</b></td><td class='num'>+0.00</td><td class='num'>+8.11</td><td class='num'>0.40</td></tr><tr class='dil'><td class='lbl'>E-mdd．稀釋到與 A 同回撤<br><span class='tiny'>k＝0.364</span></td><td class='num'>8.27%</td><td class='num'>-23.68%</td><td class='num'>0.349</td><td class='num'>1.69</td><td class='num'>10.75</td><td class='num'>33.24</td><td class='num'><b>0.323</b></td><td class='num'>+25.80</td><td class='num'>+0.00</td><td class='num'>0.66</td></tr><tr class='dil'><td class='lbl'>E-60．固定六成持股<br><span class='tiny'>k＝0.600（固定）</span></td><td class='num'>12.48%</td><td class='num'>-37.73%</td><td class='num'>0.331</td><td class='num'>1.47</td><td class='num'>6.53</td><td class='num'>19.20</td><td class='num'><b>0.340</b></td><td class='num'>+11.75</td><td class='num'>+4.22</td><td class='num'>0.68</td></tr><tr><td class='lbl'>F．A 與 D1 各半</td><td class='num'>11.53%</td><td class='num'>-12.89%</td><td class='num'>0.895</td><td class='num'>2.16</td><td class='num'>7.48</td><td class='num'>44.04</td><td class='num'><b>0.170</b></td><td class='num'>+36.59</td><td class='num'>+3.27</td><td class='num'>3.52</td></tr></tbody></table></div>
+<h3 class="sub-h">D 的第二參考欄：改用「四資產等權買進持有」當基準</h3>
+<div class="sub-line">D 的四條腿就是 SPY／TLT／GLD／DBC，用 QQQ/SMH 當它的基準其實換了資產類別；
+這張表把 D 對照它自己的無趨勢版本（四資產等權買進持有：年化 7.49%、
+回撤 -27.56%），才看得出「趨勢層本身」買到的保險有多貴。</div>
+<div class="scroll"><table>
+<thead><tr><th>參賽者</th><th class="num">年化</th><th class="num">最大回撤</th>
+<th class="num">保費 pp／年</th><th class="num">理賠 pp</th>
+<th class="num">每 pp 理賠的年保費</th></tr></thead><tbody><tr><td class='lbl'>D0．跨資產分散（無閘門）</td><td class='num'>6.63%</td><td class='num'>-12.77%</td><td class='num'>0.86</td><td class='num'>14.79</td><td class='num'><b>0.058</b></td></tr><tr><td class='lbl'>D1．跨資產分散＋給回吐閘</td><td class='num'>6.05%</td><td class='num'>-9.39%</td><td class='num'>1.45</td><td class='num'>18.18</td><td class='num'><b>0.080</b></td></tr></tbody></table></div>
+<div class="chart-wrap" style="height:340px;margin-top:1rem">
+  <canvas id="chart-w1"></canvas></div>
+<div class="tiny" style="text-align:center">橫軸＝理賠（少跌幾個百分點），縱軸＝保費（少賺幾個百分點／年）。
+灰線是「<b>稀釋線</b>」（E-60／E-cagr／E-mdd 三點連成），<b>落在稀釋線下方＝比單純少放錢更便宜的保險</b>。</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">四之二、W3：理賠那一次，各家賠了多少（描述性）</h2>
+<div class="sub-line">2007-07-02 ～ 2009-12-31　只有金融海嘯這一段。
+參考 B&amp;H：年化 -6.47%、回撤 -56.93%。</div>
+<div class="scroll"><table>
+<thead><tr><th>參賽者</th><th class="num">年化</th><th class="num">最大回撤</th>
+<th class="num">Calmar</th><th class="num">保費 pp／年</th><th class="num">理賠 pp</th></tr></thead>
+<tbody><tr><td class='lbl'>A．均線閘門（實單主系統）</td><td class='num'>8.91%</td><td class='num'>-13.15%</td><td class='num'>0.677</td><td class='num'>-15.38</td><td class='num'>43.78</td></tr><tr><td class='lbl'>A0．同 A 但無槓桿</td><td class='num'>6.56%</td><td class='num'>-12.32%</td><td class='num'>0.532</td><td class='num'>-13.03</td><td class='num'>44.60</td></tr><tr><td class='lbl'>D0．跨資產分散（無閘門）</td><td class='num'>9.07%</td><td class='num'>-12.77%</td><td class='num'>0.710</td><td class='num'>-15.54</td><td class='num'>44.16</td></tr><tr><td class='lbl'>D1．跨資產分散＋給回吐閘</td><td class='num'>10.38%</td><td class='num'>-9.39%</td><td class='num'>1.106</td><td class='num'>-16.86</td><td class='num'>47.54</td></tr><tr><td class='lbl'>E-cagr．稀釋到與 A 同報酬</td><td class='num'>-6.47%</td><td class='num'>-56.93%</td><td class='num'>-0.114</td><td class='num'>0.00</td><td class='num'>0.00</td></tr><tr><td class='lbl'>E-mdd．稀釋到與 A 同回撤</td><td class='num'>0.79%</td><td class='num'>-13.15%</td><td class='num'>0.060</td><td class='num'>-7.26</td><td class='num'>43.77</td></tr><tr><td class='lbl'>E-60．固定六成持股</td><td class='num'>-1.98%</td><td class='num'>-37.73%</td><td class='num'>-0.053</td><td class='num'>-4.49</td><td class='num'>19.20</td></tr><tr><td class='lbl'>F．A 與 D1 各半</td><td class='num'>9.89%</td><td class='num'>-6.64%</td><td class='num'>1.489</td><td class='num'>-16.36</td><td class='num'>50.29</td></tr></tbody></table></div>
+<div class="note">這一窗 A 的年化高於買進持有，所以「稀釋到與 A 同年化」無解（現金只會拉低報酬），
+E-cagr 退化成未稀釋的 B&amp;H、k＝1.000，該窗的「超額理賠」欄沒有意義故不列。
+W3 只做描述，不進任何判定。</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">五、其餘指標（W2 主判準窗）</h2>
+<div class="scroll"><table>
+<thead><tr><th>參賽者</th><th class="num">年化波動</th><th class="num">Sharpe</th>
+<th class="num">最差單年</th><th class="num">水下時間比</th>
+<th class="num">最長水下天數</th><th class="num">對 B&amp;H 月相關</th></tr></thead>
+<tbody><tr><td class='lbl'>A．均線閘門（實單主系統）</td><td class='num'>19.7%</td><td class='num'>0.92</td><td class='num'>2022　-13.8%</td><td class='num'>40.1%</td><td class='num'>669</td><td class='num'>0.80</td></tr><tr><td class='lbl'>A0．同 A 但無槓桿</td><td class='num'>16.8%</td><td class='num'>0.94</td><td class='num'>2022　-13.8%</td><td class='num'>33.3%</td><td class='num'>600</td><td class='num'>0.82</td></tr><tr><td class='lbl'>D0．跨資產分散（無閘門）</td><td class='num'>6.5%</td><td class='num'>0.95</td><td class='num'>2015　-5.1%</td><td class='num'>0.0%</td><td class='num'>510</td><td class='num'>0.36</td></tr><tr><td class='lbl'>D1．跨資產分散＋給回吐閘</td><td class='num'>6.1%</td><td class='num'>0.88</td><td class='num'>2015　-5.0%</td><td class='num'>0.0%</td><td class='num'>698</td><td class='num'>0.35</td></tr><tr><td class='lbl'>E-cagr．稀釋到與 A 同報酬</td><td class='num'>17.3%</td><td class='num'>1.02</td><td class='num'>2022　-23.5%</td><td class='num'>11.4%</td><td class='num'>385</td><td class='num'>1.00</td></tr><tr><td class='lbl'>E-mdd．稀釋到與 A 同回撤</td><td class='num'>13.4%</td><td class='num'>1.04</td><td class='num'>2022　-18.0%</td><td class='num'>7.0%</td><td class='num'>366</td><td class='num'>1.00</td></tr><tr><td class='lbl'>E-60．固定六成持股</td><td class='num'>14.4%</td><td class='num'>1.03</td><td class='num'>2022　-19.5%</td><td class='num'>8.1%</td><td class='num'>366</td><td class='num'>1.00</td></tr><tr><td class='lbl'>F．A 與 D1 各半</td><td class='num'>11.3%</td><td class='num'>1.03</td><td class='num'>2022　-6.5%</td><td class='num'>7.6%</td><td class='num'>619</td><td class='num'>0.79</td></tr><tr><td class='lbl'>參考．QQQ/SMH 各半買進持有</td><td class='num'>24.1%</td><td class='num'>0.99</td><td class='num'>2022　-32.8%</td><td class='num'>19.4%</td><td class='num'>389</td><td class='num'>1.00</td></tr><tr><td class='lbl'>參考．四資產等權買進持有</td><td class='num'>9.3%</td><td class='num'>0.83</td><td class='num'>2015　-9.6%</td><td class='num'>10.4%</td><td class='num'>1237</td><td class='num'>0.55</td></tr></tbody></table></div>
+<div class="note"><b>水下時間比</b>＝淨值處在「距前高超過 10%」狀態的日數佔比（愈低愈舒服）；
+<b>最長水下天數</b>＝從某個高點跌下去、到重新站回同一個高點，中間隔最久的一次有幾個日曆天；
+<b>年化波動</b>＝日報酬標準差年化，衡量顛簸程度；<b>Sharpe</b>＝每承擔一單位波動換到多少報酬
+（此處未扣無風險利率，與站上其他頁同慣例）；<b>月相關</b>＝與 QQQ/SMH 各半買進持有的月報酬相關係數，
+愈低代表愈能分散。最差單年含部分年（首尾年不是完整曆年時已標註）。</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">六、壓力事件（六次，每格：窗內峰到谷／回到那個高點的天數／事件窗報酬）</h2>
+<div class="scroll"><table>
+<thead><tr><th>事件</th><th class='num'>A</th><th class='num'>A0</th><th class='num'>D0</th><th class='num'>D1</th><th class='num'>E-cagr</th><th class='num'>E-mdd</th><th class='num'>E-60</th><th class='num'>F</th><th class='num'>B&H</th></tr></thead><tbody><tr><td class='lbl'>2008 GFC<br><span class='tiny'>2008-09-01 ～ 2009-03-31</span></td><td class='num'>0.0%<br><span class='tiny'>1d／+0.2%</span></td><td class='num'>0.0%<br><span class='tiny'>1d／+0.2%</span></td><td class='num'>-5.8%<br><span class='tiny'>78d／+0.1%</span></td><td class='num'>-4.5%<br><span class='tiny'>66d／+2.0%</span></td><td class='num'>-39.4%<br><span class='tiny'>468d／-27.3%</span></td><td class='num'>-18.7%<br><span class='tiny'>373d／-11.5%</span></td><td class='num'>-29.7%<br><span class='tiny'>407d／-19.4%</span></td><td class='num'>-2.2%<br><span class='tiny'>64d／+1.2%</span></td><td class='num'>-45.7%<br><span class='tiny'>476d／-33.0%</span></td></tr><tr><td class='lbl'>2011 歐債<br><span class='tiny'>2011-05-01 ～ 2011-10-31</span></td><td class='num'>-17.8%<br><span class='tiny'>889d／-16.1%</span></td><td class='num'>-14.9%<br><span class='tiny'>858d／-13.4%</span></td><td class='num'>-5.0%<br><span class='tiny'>367d／+2.2%</span></td><td class='num'>-4.7%<br><span class='tiny'>107d／-0.2%</span></td><td class='num'>-17.2%<br><span class='tiny'>267d／-5.6%</span></td><td class='num'>-7.8%<br><span class='tiny'>266d／-2.2%</span></td><td class='num'>-12.6%<br><span class='tiny'>267d／-3.8%</span></td><td class='num'>-9.0%<br><span class='tiny'>870d／-8.3%</span></td><td class='num'>-20.5%<br><span class='tiny'>267d／-7.0%</span></td></tr><tr><td class='lbl'>2015 中國股災<br><span class='tiny'>2015-08-01 ～ 2016-02-29</span></td><td class='num'>-13.9%<br><span class='tiny'>558d／-13.2%</span></td><td class='num'>-13.9%<br><span class='tiny'>525d／-13.2%</span></td><td class='num'>-5.4%<br><span class='tiny'>297d／-3.1%</span></td><td class='num'>-5.5%<br><span class='tiny'>316d／-3.3%</span></td><td class='num'>-14.2%<br><span class='tiny'>186d／-3.2%</span></td><td class='num'>-6.4%<br><span class='tiny'>179d／-1.2%</span></td><td class='num'>-10.4%<br><span class='tiny'>180d／-2.1%</span></td><td class='num'>-9.6%<br><span class='tiny'>553d／-8.3%</span></td><td class='num'>-16.9%<br><span class='tiny'>186d／-4.1%</span></td></tr><tr><td class='lbl'>2018 Q4<br><span class='tiny'>2018-10-01 ～ 2018-12-31</span></td><td class='num'>-9.0%<br><span class='tiny'>191d／-8.6%</span></td><td class='num'>-7.3%<br><span class='tiny'>184d／-6.9%</span></td><td class='num'>-6.6%<br><span class='tiny'>264d／-5.7%</span></td><td class='num'>-5.7%<br><span class='tiny'>264d／-4.8%</span></td><td class='num'>-19.1%<br><span class='tiny'>167d／-13.9%</span></td><td class='num'>-8.4%<br><span class='tiny'>161d／-5.8%</span></td><td class='num'>-13.9%<br><span class='tiny'>163d／-9.9%</span></td><td class='num'>-7.2%<br><span class='tiny'>202d／-6.7%</span></td><td class='num'>-22.7%<br><span class='tiny'>169d／-16.7%</span></td></tr><tr><td class='lbl'>2020 COVID<br><span class='tiny'>2020-02-19 ～ 2020-04-30</span></td><td class='num'>-20.3%<br><span class='tiny'>196d／-20.3%</span></td><td class='num'>-22.2%<br><span class='tiny'>261d／-22.2%</span></td><td class='num'>-7.6%<br><span class='tiny'>45d／+0.3%</span></td><td class='num'>-6.9%<br><span class='tiny'>113d／+0.3%</span></td><td class='num'>-26.0%<br><span class='tiny'>107d／-7.4%</span></td><td class='num'>-11.8%<br><span class='tiny'>104d／-2.3%</span></td><td class='num'>-19.1%<br><span class='tiny'>105d／-4.6%</span></td><td class='num'>-12.9%<br><span class='tiny'>167d／-10.3%</span></td><td class='num'>-30.8%<br><span class='tiny'>107d／-9.7%</span></td></tr><tr><td class='lbl'>2022 通膨熊<br><span class='tiny'>2022-01-03 ～ 2022-10-31</span></td><td class='num'>-16.6%<br><span class='tiny'>507d／-15.6%</span></td><td class='num'>-16.6%<br><span class='tiny'>508d／-15.6%</span></td><td class='num'>-6.4%<br><span class='tiny'>743d／+0.4%</span></td><td class='num'>-5.4%<br><span class='tiny'>730d／+1.7%</span></td><td class='num'>-34.0%<br><span class='tiny'>556d／-29.7%</span></td><td class='num'>-15.6%<br><span class='tiny'>508d／-13.1%</span></td><td class='num'>-25.2%<br><span class='tiny'>526d／-21.7%</span></td><td class='num'>-7.9%<br><span class='tiny'>500d／-7.2%</span></td><td class='num'>-40.0%<br><span class='tiny'>561d／-35.2%</span></td></tr></tbody></table></div>
+<div class="note">事件日期沿用站上既有的 <code>dual_track_backtest.EVENTS</code>，一天都沒有改。
+「回到那個高點的天數」允許往事件窗之外一路搜到資料末端（否則多數事件都會被截斷成「未回復」，
+失去比較力）；峰的定義是事件窗內的滾動最高點（含窗首日）。全部以 W1 共同索引、
+起點同時正規化到 $1,000,000 後計算。</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">七、閘門保費 vs 槓桿淨效果（A 拆成兩段）</h2>
+<div class="scroll"><table>
+<thead><tr><th>窗</th><th class="num">B&amp;H 年化</th><th class="num">A0 年化<br>(無槓桿)</th>
+<th class="num">A 年化<br>(cap 1.5)</th><th class="num">閘門保費<br>B&amp;H − A0</th>
+<th class="num">槓桿淨效果<br>A0 − A</th><th class="num">A0 回撤</th><th class="num">A 回撤</th></tr></thead>
+<tbody><tr><td class='lbl'>W2　2010-01-04 ～ 2026-06-11</td><td class='num'>23.35%</td><td class='num'>15.43%</td><td class='num'>17.41%</td><td class='num'><b>7.92</b></td><td class='num'><b>-1.98</b></td><td class='num'>-22.38%</td><td class='num'>-23.68%</td></tr><tr><td class='lbl'>W1　2007-07-02 ～ 2026-06-11</td><td class='num'>19.01%</td><td class='num'>14.28%</td><td class='num'>16.38%</td><td class='num'><b>4.73</b></td><td class='num'><b>-2.09</b></td><td class='num'>-22.38%</td><td class='num'>-23.68%</td></tr><tr><td class='lbl'>W3　2007-07-02 ～ 2009-12-31</td><td class='num'>-6.47%</td><td class='num'>6.56%</td><td class='num'>8.91%</td><td class='num'><b>-13.03</b></td><td class='num'><b>-2.35</b></td><td class='num'>-12.32%</td><td class='num'>-13.15%</td></tr></tbody></table></div>
+<div class="note">槓桿淨效果為<b>負值代表槓桿讓 A 比 A0 多賺</b>（已扣掉 1.5%／年的借款利差；
+利差只發生在 A，A0 不借錢）。這一欄把「閘門本身的保費」與「槓桿把保費賺回來多少」拆開，
+避免兩件事互相掩蓋。</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">八、台股：A vs E（沒有 D）</h2>
+<div class="takeaway"><b>台股沒有 D。</b>台灣市場沒有對應 TLT／GLD／DBC 的長債、黃金、商品 ETF
+（有的歷史也太短），跨資產分散型保險在台股根本組不出四條腿，所以本節只比均線閘門 A 與倉位稀釋 E。
+台股現金腿用 1%／年的名目新台幣利率（站上既有假設）。</div>
+<h3 class="sub-h">TW1　2014-01-02 ～ 2026-09-03
+        （尺① A 勝 E：<span class='ok'>✓</span>）</h3>
+<div class="scroll"><table>
+<thead><tr><th>參賽者</th><th class="num">年化</th><th class="num">最大回撤</th>
+<th class="num">Calmar</th><th class="num">保費 pp／年</th><th class="num">理賠 pp</th>
+<th class="num">每 pp 理賠的年保費</th></tr></thead><tbody><tr class='bench'><td class='lbl'>參考．0050/2330 各半買進持有</td><td class='num'>26.52%</td><td class='num'>-39.47%</td><td class='num'>0.672</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td></tr><tr class='hi'><td class='lbl'>A．均線閘門（實單主系統）</td><td class='num'>23.00%</td><td class='num'>-18.88%</td><td class='num'>1.218</td><td class='num'>3.51</td><td class='num'>20.59</td><td class='num'><b>0.171</b></td></tr><tr class='dil'><td class='lbl'>E-cagr．稀釋到與 A 同報酬<br><span class='tiny'>k＝0.862</span></td><td class='num'>23.00%</td><td class='num'>-34.86%</td><td class='num'>0.660</td><td class='num'>3.52</td><td class='num'>4.61</td><td class='num'><b>0.764</b></td></tr><tr class='dil'><td class='lbl'>E-mdd．稀釋到與 A 同回撤<br><span class='tiny'>k＝0.438</span></td><td class='num'>12.12%</td><td class='num'>-18.89%</td><td class='num'>0.642</td><td class='num'>14.40</td><td class='num'>20.59</td><td class='num'><b>0.699</b></td></tr><tr class='dil'><td class='lbl'>E-60．固定六成持股<br><span class='tiny'>k＝0.600（固定）</span></td><td class='num'>16.28%</td><td class='num'>-25.33%</td><td class='num'>0.643</td><td class='num'>10.24</td><td class='num'>14.14</td><td class='num'><b>0.724</b></td></tr></tbody></table></div><h3 class="sub-h">TW2　2016-01-04 ～ 2026-09-03
+        （尺① A 勝 E：<span class='ok'>✓</span>）</h3>
+<div class="scroll"><table>
+<thead><tr><th>參賽者</th><th class="num">年化</th><th class="num">最大回撤</th>
+<th class="num">Calmar</th><th class="num">保費 pp／年</th><th class="num">理賠 pp</th>
+<th class="num">每 pp 理賠的年保費</th></tr></thead><tbody><tr class='bench'><td class='lbl'>參考．0050/2330 各半買進持有</td><td class='num'>29.14%</td><td class='num'>-39.47%</td><td class='num'>0.738</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td></tr><tr class='hi'><td class='lbl'>A．均線閘門（實單主系統）</td><td class='num'>25.28%</td><td class='num'>-18.88%</td><td class='num'>1.339</td><td class='num'>3.87</td><td class='num'>20.59</td><td class='num'><b>0.188</b></td></tr><tr class='dil'><td class='lbl'>E-cagr．稀釋到與 A 同報酬<br><span class='tiny'>k＝0.864</span></td><td class='num'>25.27%</td><td class='num'>-34.94%</td><td class='num'>0.723</td><td class='num'>3.87</td><td class='num'>4.53</td><td class='num'><b>0.853</b></td></tr><tr class='dil'><td class='lbl'>E-mdd．稀釋到與 A 同回撤<br><span class='tiny'>k＝0.438</span></td><td class='num'>13.17%</td><td class='num'>-18.89%</td><td class='num'>0.697</td><td class='num'>15.97</td><td class='num'>20.59</td><td class='num'><b>0.776</b></td></tr><tr class='dil'><td class='lbl'>E-60．固定六成持股<br><span class='tiny'>k＝0.600（固定）</span></td><td class='num'>17.76%</td><td class='num'>-25.33%</td><td class='num'>0.701</td><td class='num'>11.38</td><td class='num'>14.14</td><td class='num'><b>0.805</b></td></tr></tbody></table></div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">九、F：兩種保險疊起來會不會互補（描述性，不進主判準）</h2>
+<div class="card">
+<p>F ＝ 50% A ＋ 50% D1，用<b>日報酬加權</b>合成（絕不把兩條淨值曲線直接相加——那在數學上是錯的）。
+W2：年化 11.68%、回撤 -12.89%、Calmar 0.906、
+Martin 2.07、對 B&amp;H 月相關 0.79；
+W1：年化 11.53%、回撤 -12.89%、Calmar 0.895。
+對照同窗的 A（Calmar 0.735／0.692）與
+D1（0.672／0.644）。</p>
+<p>兩窗的 F Calmar 是否高於 A 與 D1 的最大值，判定結果已列在第二節的判定表第 6 列。
+這一欄純描述，不進 rule_ledger、也不構成任何配置建議。F 的年換手取 A 與 D1 的平均，
+未計入兩個 sleeve 之間每日再平衡的額外交易。</p>
+</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">十、核對區塊：本頁的輸入就是站上已發布的那兩套系統</h2>
+<div class="scroll"><table>
+<thead><tr><th>參賽者</th><th>重跑窗</th><th class="num">本次重跑<br>年化／回撤／Calmar</th>
+<th class="num">站上已發布</th><th class="num">相符</th></tr></thead>
+<tbody><tr><td class='lbl'>A（US 實單主系統 cap1.5＋A2）</td><td class='tiny'>2005-01-03 ～ 2026-06-11</td><td class='num'>14.11／-23.7／0.596</td><td class='num'>14.10／-23.7／0.595</td><td class='num'><span class='ok'>✓</span></td></tr><tr><td class='lbl'>A（TW 0050/2330 cap1.5＋A2）</td><td class='tiny'>2014-01-02 ～ 2026-09-03</td><td class='num'>23.00／-18.9／1.219</td><td class='num'>22.98／-18.9／1.217</td><td class='num'><span class='ok'>✓</span></td></tr><tr><td class='lbl'>D（crossasset base）</td><td class='tiny'>2007-07-02 ～ 2026-06-11</td><td class='num'>6.63／-12.8／0.520</td><td class='num'>6.62／-12.8／0.520</td><td class='num'><span class='ok'>✓</span></td></tr><tr><td class='lbl'>D（crossasset system）</td><td class='tiny'>2007-07-02 ～ 2026-06-11</td><td class='num'>6.05／-9.4／0.640</td><td class='num'>6.04／-9.4／0.640</td><td class='num'><span class='ok'>✓</span></td></tr></tbody></table></div>
+<div class="note">A 的核對值取自實單主系統頁，D 的取自 <a href="/backtest/crossasset_defense/">跨資產防守</a> 頁。
+兩者都是<b>先逐位元重跑對上、才拿來當參賽者</b>——如果核對不過，程式會直接停住不出頁。
+殘差（0.01～0.02pp）來自資料快取自那兩頁發布日之後又前進了幾個交易日，非邏輯差異。</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">十一、誠實揭露</h2>
+<div class="card"><ul class="disc">
+<li><b>兩邊都是樣本內。</b>D 的 E3 訊號與 Chandelier 閘是 2026-06／07 在同一段歷史上挑的
+（站上已揭露）；A 的規則是 2026-07-17 凍結，W1／W2 對 A 也都是樣本內。<b>本頁比的是「已凍結
+規則之間的相對價格」，不是任何一方的樣本外證據</b>——樣本外證據見
+<a href="/backtest/w52_adaptive_oos/">W52×自適應 σ 跨標的證偽</a>頁。</li>
+<li><b>E 有「事後知道答案」的優勢。</b>它是用整段窗的年化／回撤才解得出 k 的。這正是它作為尺的
+用途：它是「你事後才知道要放多少現金」的上界，任何主動規則若贏不了它，就沒有比「猜對倉位」
+更有價值。E-60 是不解方程的版本，讓讀者看真實可事前執行的稀釋長什麼樣。</li>
+<li><b>W1 的 A 數字會與實單頁不同。</b>DBC 2006-02 才上市，把 W1 起點限制在
+2007-07-02，A 的 2005-07 那段（含 2005–07 多頭）不在 W1 內。實單頁窗的核對值列在第十節。</li>
+<li><b>融資利差 1.5% 只發生在 A（cap 1.5）</b>，A0 無槓桿。第七節把「閘門保費」與
+「槓桿淨效果」拆開列。</li>
+<li><b>兩套現金慣例並存。</b>A／A0：引擎內建 ^IRX 應計；D／E：SHY/BIL 總報酬接續線；台股 E：1%/年 NT$ 名目現金。統一就得改被引用的規則檔，違反「重用不改」；
+差異只影響空手期的現金收益。</li>
+<li><b>資料截止不對齊。</b>美股窗到 2026-06-11（受六態快取的 SMH／SPY 限制），
+台股窗到 2026-09-03。各自報自己的截止日，不為了對齊而重抓資料。</li>
+<li><b>本頁不做的事：</b>不調任何一方的參數、不加濾網、不做「建議換成 D」或「建議降槓桿」的句子、
+不跑 bootstrap。</li>
+</ul></div>
+<details class="card"><summary><b>規格未明處的判斷紀錄（judgment calls，共 10 條）</b></summary>
+<ul class="disc"><li><b>資料快取</b>：TLT.pkl／GLD.pkl 於 six_state_backtest/data/ 已被別的下載器覆寫成 2009-06 起的Series（非 OHLC DataFrame），本次以 taiwan_lt.load_ohlc（該模組自己的 loader）重抓一次，壞檔改名為 *.bad_series_bak 保留。<br><span class='tiny'>理由：沒有這兩檔 crossasset_system 直接崩潰；spec 允許缺檔時用模組自己的 loader 抓一次。</span></li><li><b>現金慣例</b>：A（含 A0）沿用引擎內建的 ^IRX 應計現金；D／E 用 SHY/BIL 總報酬接續線（load_cash_close）。兩者不統一。<br><span class='tiny'>理由：統一就得改被 import 的規則檔，違反『重用不改』；差異只影響空手期的現金收益，量級 <0.2pp／年，且已在頁面揭露。</span></li><li><b>共同索引</b>：W1/W2/W3 的共同交易日 ＝ A／A0／D0／D1／QQQ-SMH B&H／4 資產籃子 B&H 六條原生 NAV 索引的交集後再切窗；E 與 F 都建在這條索引上。<br><span class='tiny'>理由：spec 要求每窗所有參賽者同索引、同起點；先交集再切窗可保證 E/F 不會偷到別人沒有的日子。</span></li><li><b>資料截止</b>：美股窗結束於 SMH／SPY 快取的 2026-06-11（六態快取），台股窗結束於 2026-09-03。兩邊不對齊，各自報自己的截止日。<br><span class='tiny'>理由：spec 禁止為了對齊而重抓資料；A 的 US 腿吃六態 SMH 快取，D 的 SPY 腿也吃六態快取。</span></li><li><b>F 的換手</b>：取 0.5×(A 換手 ＋ D1 換手)，不含兩 sleeve 之間每日再平衡的額外交易。<br><span class='tiny'>理由：F 是描述性欄位、不進主判準；把組合層再平衡成本算進來需要額外假設。</span></li><li><b>最差單年</b>：窗內所有曆年都納入（含部分年），另標 partial 旗標。<br><span class='tiny'>理由：丟掉部分年會系統性漏掉 W1 首年的 2008 下半年，那正是最有資訊量的一段。</span></li><li><b>壓力事件回復天數</b>：從事件窗內的峰往後搜到資料末端（不限於事件窗內）。<br><span class='tiny'>理由：限制在事件窗內會讓多數事件都變成『未回復』，失去比較力。</span></li><li><b>E 的年換手</b>：以「每日把基礎腿權重拉回固定 k 所需的交易量」計算，而非 0。<br><span class='tiny'>理由：稀釋線是每日再平衡的，漂移確實要交易；直接寫 0 會低估它的成本。</span></li><li><b>E-cagr 無解時</b>：matched_cash_line 在 B&H 的 CAGR 已 ≤ 目標時回傳 k=1（E-cagr 退化成未稀釋 B&H），以 k_capped 旗標標出，該窗的『超額理賠 vs E-cagr』欄不作解讀。<br><span class='tiny'>理由：現金只會拉低報酬，往上匹配無解；硬跑一個假 k 比標旗標更危險。W3（只有 GFC）踩到此況。</span></li><li><b>核對容忍帶</b>：CAGR／MDD ±0.05pp、Calmar ±0.01。<br><span class='tiny'>理由：快取自站上發布日之後前進（台股到 2026-09-03），完全兩位小數相符不可能；超出容忍即視為 FAIL。</span></li></ul></details>
+</div>
+
+
+</div>
+
+<footer>
+  <div class="container">
+    &copy; 2026 InvestMQuest Research &middot; 深熊保險的價格（效度比較研究頁，不是選系統，不含配置建議）&middot;
+    規格 docs/Insurance_Premium_Comparison_Spec.md・頁面生成 2026-09-05 &middot; 僅供研究參考，不構成投資建議
+  </div>
+</footer>
+
+<script>
+new Chart(document.getElementById('chart-w2'), {
+  type: 'scatter',
+  data: { datasets: [
+    { label: '稀釋線（E-60／E-cagr／E-mdd）', data: [{"x": 10.17, "y": 5.95, "label": "E-cagr"}, {"x": 14.81, "y": 8.54, "label": "E-60"}, {"x": 16.53, "y": 9.49, "label": "E-mdd"}],
+       showLine: true, borderColor: '#9ca3af', backgroundColor: '#9ca3af',
+       borderDash: [5,4], pointRadius: 5 },
+    { label: '主動規則（A／A0／D0／D1／F）', data: [{"x": 16.53, "y": 5.94, "label": "A"}, {"x": 17.83, "y": 7.92, "label": "A0"}, {"x": 32.23, "y": 17.18, "label": "D0"}, {"x": 32.3, "y": 18.03, "label": "D1"}, {"x": 27.32, "y": 11.68, "label": "F"}],
+       backgroundColor: '#1a56db', pointRadius: 6 }
+  ]},
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: { x: { title: {display:true, text:'理賠（比買進持有少跌，pp）'} },
+               y: { title: {display:true, text:'保費（比買進持有少賺，pp／年）'} } },
+    plugins: { title: {display:true, text:'W2　2010-01-04 ～ 2026-06-11'},
+      tooltip: { callbacks: { label: c => c.raw.label + '：理賠 ' + c.raw.x
+        + 'pp、保費 ' + c.raw.y + 'pp／年' } } }
+  }
+});
+
+new Chart(document.getElementById('chart-w1'), {
+  type: 'scatter',
+  data: { datasets: [
+    { label: '稀釋線（E-60／E-cagr／E-mdd）', data: [{"x": 7.45, "y": 2.64, "label": "E-cagr"}, {"x": 19.2, "y": 6.53, "label": "E-60"}, {"x": 33.24, "y": 10.75, "label": "E-mdd"}],
+       showLine: true, borderColor: '#9ca3af', backgroundColor: '#9ca3af',
+       borderDash: [5,4], pointRadius: 5 },
+    { label: '主動規則（A／A0／D0／D1／F）', data: [{"x": 33.25, "y": 2.64, "label": "A"}, {"x": 34.55, "y": 4.73, "label": "A0"}, {"x": 44.16, "y": 12.38, "label": "D0"}, {"x": 47.54, "y": 12.97, "label": "D1"}, {"x": 44.04, "y": 7.48, "label": "F"}],
+       backgroundColor: '#1a56db', pointRadius: 6 }
+  ]},
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: { x: { title: {display:true, text:'理賠（比買進持有少跌，pp）'} },
+               y: { title: {display:true, text:'保費（比買進持有少賺，pp／年）'} } },
+    plugins: { title: {display:true, text:'W1　2007-07-02 ～ 2026-06-11'},
+      tooltip: { callbacks: { label: c => c.raw.label + '：理賠 ' + c.raw.x
+        + 'pp、保費 ' + c.raw.y + 'pp／年' } } }
+  }
+});</script>
+</body>
+</html>

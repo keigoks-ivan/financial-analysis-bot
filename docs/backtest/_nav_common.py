@@ -15,6 +15,7 @@ Every backtest page header renders the same groups via make_toggle(active):
     研究・可轉債：tw_cb
     研究・因子：  return_driver | pead | accruals | share_issuance | profitability
                   | asset_growth | index_inclusion | insider
+    研究・跨標的驗證： w52_oos | ins_prem
 
 Design (2026-07-11 redesign):
   * Colour discipline — every pill is neutral (grey fill, dark-grey text); the
@@ -171,6 +172,14 @@ TW_CB_LINKS = [
 # 2026-08-29 新增：美股「獲利 vs 估值」報酬歸因研究（事後分解 + 事前預測五分位 +
 # 先知測試三段），非可交易系統，也不是台股/選擇權主題，自成一群（同 TW_CB_LINKS
 # 的做法）。
+# 2026-09-05 新增：實單規則鏈（W52 閘門×自適應 σ×cap1.5）的跨標的前瞻證偽——
+# 凍結規則丟到規則選擇時從未看過的 ~30 檔標的，量化是否「普遍」或該進 kill 訊號
+# 檢討清單。非可交易系統、非既有四群主題，自成一群（同 TW_CB_LINKS 的做法）。
+RESEARCH_OOS_LINKS = [
+    ("/backtest/w52_adaptive_oos/", "W52×自適應 σ 跨標的證偽", "w52_oos", "研究"),
+    ("/backtest/insurance_premium/", "深熊保險的價格", "ins_prem", "研究"),
+]
+
 RESEARCH_FACTOR_LINKS = [
     ("/backtest/return_driver/", "美股漲跌歸因：獲利與估值", "return_driver", "研究"),
     ("/backtest/pead/", "美股財報驚喜後漂移", "pead", "研究"),
@@ -261,4 +270,5 @@ def make_toggle(active: str) -> str:
             + _row("研究・總經", RESEARCH_MACRO_LINKS, active)
             + _row("研究・可轉債", TW_CB_LINKS, active)
             + _row("研究・因子", RESEARCH_FACTOR_LINKS, active)
+            + _row("研究・跨標的驗證", RESEARCH_OOS_LINKS, active)
             + '</nav>')

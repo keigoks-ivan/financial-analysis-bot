@@ -293,8 +293,10 @@ def fetch_close(ticker: str) -> pd.Series:
 # ---------------------------------------------------------------------------
 def _gate_core(px: pd.Series):
     """W52 單線閘門（週收 > SMA52w 在場、< 出場，W-FRI，無滯後條件）。逐位元對齊
-    run_w52_adaptive.gate_w52。回傳 (wk, pos, w52, w104, w250, s104, s250)——W104/W250
-    與斜率僅供頁面卡片作參考背景，<b>閘門決策只用 W52</b>；共用給 gate_state 與 build_backfill。"""
+    run_w52_adaptive.gate_w52：閘門值＝「已收完的」W-FRI 週棒 ffill 到當日，未收完的
+    當週（週五未到）之週棒不計入決策——只用於 recent[] 顯示背景。回傳
+    (wk, pos, w52, w104, w250, s104, s250, pos_daily)——W104/W250 與斜率僅供頁面卡片
+    作參考背景，<b>閘門決策只用 W52</b>；共用給 gate_state 與 build_backfill。"""
     wk = px.resample("W-FRI").last().dropna()
     w52 = wk.rolling(52).mean()
     w104 = wk.rolling(104).mean()
@@ -304,11 +306,19 @@ def _gate_core(px: pd.Series):
     pos = (wk > w52).astype(int)      # W52 單線：無 W104/W250 斜率滯後條件
     pos[w52.isna()] = 0
     pos = pos.astype(int)
-    return wk, pos, w52, w104, w250, s104, s250
+    # 逐位元對齊 gate_w52：只有「已收完」的週棒才會透過 ffill 影響某日的閘門值——
+    # 若 px 最後一天 < wk 最後一根的週五標籤（本週尚未收），該根不會被 ffill 選到，
+    # 等同回測端 gate_w52 的行為（不需額外丟棄，reindex+ffill 本身就有此效果）。
+    pos_daily = pos.reindex(px.index, method="ffill").fillna(0).astype(int)
+    return wk, pos, w52, w104, w250, s104, s250, pos_daily
 
 
 def gate_state(px: pd.Series) -> dict:
-    wk, pos, w52, w104, w250, s104, s250 = _gate_core(px)
+    wk, pos, w52, w104, w250, s104, s250, pos_daily = _gate_core(px)
+
+    # recent[] 僅供頁面背景顯示；若最後一根週棒尚未收完（px 最後一天 < 週五標籤），
+    # 該根不是決策依據，顯示時標記 incomplete 供人判讀，不影響 gate 本身。
+    last_wk_complete = wk.index[-1] <= px.index[-1]
 
     recent = []
     for i in range(-8, 0):
@@ -321,9 +331,10 @@ def gate_state(px: pd.Series) -> dict:
             "s104_pos": bool(s104.iloc[i] > 0) if not pd.isna(s104.iloc[i]) else None,
             "s250_pos": bool(s250.iloc[i] > 0) if not pd.isna(s250.iloc[i]) else None,
             "in": bool(pos.iloc[i]),
+            **({"incomplete": True} if (i == -1 and not last_wk_complete) else {}),
         })
     return {
-        "gate": bool(pos.iloc[-1]),
+        "gate": bool(pos_daily.iloc[-1]),   # 已收完週棒 ffill 到今日，逐位元對齊 gate_w52
         "wk_date": wk.index[-1].strftime("%Y-%m-%d"),
         "wk_close": float(wk.iloc[-1]),
         "w52": float(w52.iloc[-1]), "w104": float(w104.iloc[-1]), "w250": float(w250.iloc[-1]),
@@ -385,14 +396,15 @@ def compute_ticker(t: str, px: pd.Series) -> dict:
 # ---------------------------------------------------------------------------
 def _daily_record(px_map: dict, legs: list, d: pd.Timestamp, source: str) -> dict:
     """One market's one-day target weights, computed byte-identically to the
-    live path: gate = _gate_core(px[:d]).pos.iloc[-1]；sleeve = adaptive median
-    on px[:d]. source ∈ {'replay','live'}. Records sigma_t_pct per leg."""
+    live path: gate = 已收完 W-FRI 週棒 ffill 到 d（_gate_core(px[:d]).pos_daily.iloc[-1]，
+    逐位元對齊 run_w52_adaptive.gate_w52）；sleeve = adaptive median on px[:d].
+    source ∈ {'replay','live'}. Records sigma_t_pct per leg."""
     rec = {"date": d.strftime("%Y-%m-%d"), "source": source, "tickers": {}}
     combined = 0.0
     for t in legs:
         pxd = px_map[t].loc[:d]
-        _, pos, *_ = _gate_core(pxd)
-        gate = bool(pos.iloc[-1])
+        *_, pos_daily = _gate_core(pxd)
+        gate = bool(pos_daily.iloc[-1])
         rv_now, sig_now, sleeve, raw = _sleeve_from(pxd)
         final = WEIGHTS[t] * ((1 if gate else 0) * sleeve)
         combined += final
