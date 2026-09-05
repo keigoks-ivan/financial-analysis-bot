@@ -1,12 +1,21 @@
 #!/usr/bin/env python3
-"""dd_brief.py — WP4a: zero-LLM "quick verdict" (速判) HTML renderer.
+"""dd_brief.py — WP4a/WP5c: zero-LLM "quick verdict" (速判) HTML renderer.
 
-Reads a v16 judgment.json (+ scenario_meta.json, evidence.json, optional
+Reads a v16/v17 judgment.json (+ scenario_meta.json, evidence.json, optional
 gate audit / decision-matrix audit fragment) and mechanically renders a
 one-page brief, `scripts/dd_templates/brief.html` filled in with `{{TOKEN}}`
 placeholders. No LLM call, no network. Reuses scripts/gen_dd_tables.py's
-dd-meta builder and E2 (H1-H3)/E12 (triggers) table fragments verbatim
-rather than re-implementing them.
+dd-meta builder and E12 (triggers) table fragment verbatim rather than
+re-implementing them.
+
+v17 (2026-09-05, WP5c): the page is now plain-language-first. The judgment
+agent writes a `plain` block (see notes/site-internal/dd/_wp_spec_v17_batch3
+_20260905.md) straight into judgment.json at judgment time; this script only
+reads `judgment.get('plain')` and renders it verbatim. When `plain` (or one
+of its sub-fields) is absent, each section falls back to a mechanical
+rendering of the underlying structured fields (never raises, never leaves a
+"{{" placeholder) and is wrapped in `class="fallback"` so the page visually
+flags which prose is judgment-agent-authored vs. machine-assembled.
 
 Usage:
   python3 scripts/dd_brief.py --run-dir DIR --out FILE
@@ -88,8 +97,13 @@ def num(x, digits=1):
         return str(x)
 
 
+def _truncate(s, n=60):
+    s = str(s)
+    return s if len(s) <= n else s[:n] + "…"
+
+
 # ---------------------------------------------------------------------------
-# section renderers
+# header
 # ---------------------------------------------------------------------------
 
 def render_header(j, evidence):
@@ -97,20 +111,26 @@ def render_header(j, evidence):
     di = j.get("decision_inputs") or {}
     dout = j.get("decision_out") or {}
     thesis = j.get("thesis") or {}
+    plain = j.get("plain") or {}
 
     ticker = meta_top.get("ticker") or ""
     company = meta_top.get("company_name") or ticker
     archetype = di.get("archetype") or j.get("archetype") or ""
     eyebrow = f"DD 速判 · {esc(ticker)} {esc(company)} · {esc(archetype)}"
 
-    verdict = dout.get("verdict") or "—"
+    verdict_line = plain.get("verdict_line")
+    verdict = verdict_line or dout.get("verdict") or "—"
     role = dout.get("role")
     h1 = esc(verdict) + (f' <span class="role">｜{esc(role)}</span>' if role else "")
 
-    oneliner = esc(j.get("oneliner") or thesis.get("headline") or "")
+    verdict_sub = plain.get("verdict_sub")
+    if verdict_sub:
+        sub, sub_fallback = esc(verdict_sub), False
+    else:
+        oneliner = j.get("oneliner") or thesis.get("headline") or ""
+        sub, sub_fallback = (esc(oneliner), True) if oneliner else ("—", True)
 
     price = di.get("price_at_dd")
-    row_hit = dout.get("row_hit")
 
     prior = (evidence or {}).get("prior_dd") or {}
     prior_meta = prior.get("prior_meta") or {}
@@ -124,16 +144,19 @@ def render_header(j, evidence):
             f"（{label}）"
         )
     else:
-        prior_line = "—"
+        prior_line = "—（首份）"
 
     meta_box = (
         f'判斷日 <b>{dash(meta_top.get("date"))}</b><br>\n'
         f'    現價 <b>{"$" + esc(num(price, 2)) if price is not None else "—"}</b><br>\n'
-        f'    決策矩陣 <b>{"Row " + esc(row_hit) if row_hit else "—"}</b><br>\n'
         f"    前份 <b>{prior_line}</b>"
     )
-    return eyebrow, h1, oneliner, meta_box
+    return eyebrow, h1, sub, sub_fallback, meta_box
 
+
+# ---------------------------------------------------------------------------
+# tiles (unchanged from WP4a)
+# ---------------------------------------------------------------------------
 
 def _tile(label, value, small=None):
     small_html = f"<small> {esc(small)}</small>" if small else ""
@@ -181,7 +204,7 @@ def render_tiles(j, scenario_meta):
         trap_small = trap_label[len(str(trap_verdict)):].strip() or trap_label
 
     endo = (moat.get("roic_durability") or {}).get("endo_ceiling")
-    runway_small = f"內生天花板 {endo}%" if endo is not None else None
+    runway_small = f"內生天花板 {endo}%" if isinstance(endo, (int, float)) else None
 
     rows = [
         _tile("5Y 期望值 EV", (gdt._fmt_signed_pct(ev5y) if ev5y is not None else None)),
@@ -196,45 +219,142 @@ def render_tiles(j, scenario_meta):
     return "\n".join(rows)
 
 
-def render_r_list(j):
+# ---------------------------------------------------------------------------
+# plain-language sections (v17 WP5c)
+# ---------------------------------------------------------------------------
+
+_FIVE_ORDER = [
+    ("how_it_makes_money", "這家公司靠什麼賺錢"),
+    ("why_now", "為什麼現在值得或不值得"),
+    ("why_this_size", "為什麼是這個倉位／節奏"),
+    ("biggest_fear", "我最怕什麼"),
+    ("how_to_act", "怎麼做"),
+]
+
+
+def render_five(j):
+    five = ((j.get("plain") or {}).get("five")) or {}
+    if not five:
+        oneliner = j.get("oneliner") or (j.get("thesis") or {}).get("headline")
+        return (f"    <p>{dash(oneliner)}</p>", True)
+    parts = [
+        f"    <p><b>{label}</b>：{dash(five.get(key))}</p>"
+        for key, label in _FIVE_ORDER
+    ]
+    return "\n".join(parts), False
+
+
+def render_business(j):
+    business = ((j.get("plain") or {}).get("business")) or {}
+    moat = j.get("moat") or {}
+    fallback = not business
+    moat_bits = f"{moat.get('grade') or ''} {moat.get('trend') or ''}".strip()
+    moat_fallback = esc(moat_bits) if moat_bits else "—"
+    parts = [
+        f"    <p><b>賣什麼給誰、怎麼收錢</b>：{dash(business.get('what_to_whom'))}</p>",
+        f"    <p><b>客戶為什麼離不開</b>：{dash(business.get('why_customers_stay'))}</p>",
+        f"    <p><b>護城河等級、方向與最弱處</b>："
+        f"{esc(business['moat_direction']) if business.get('moat_direction') else moat_fallback}</p>",
+    ]
+    return "\n".join(parts), fallback
+
+
+def render_bets(j):
+    bets = ((j.get("plain") or {}).get("bets")) or []
+    if bets:
+        items = "\n".join(
+            f"    <li><b>{esc(b.get('claim'))}</b>"
+            f"<br><span class=\"note\">算錯的門檻：{esc(b.get('wrong_when'))}</span></li>"
+            for b in bets[:3]
+        )
+        return items, False
+    H = (j.get("thesis") or {}).get("H") or []
+    if not H:
+        return "    <li>—</li>", True
+    items = "\n".join(
+        f"    <li><b>{esc(h.get('text'))}</b>"
+        f"<br><span class=\"note\">算錯的門檻：{esc(h.get('threshold'))}</span></li>"
+        for h in H[:3]
+    )
+    return items, True
+
+
+def render_fears(j):
+    fears = ((j.get("plain") or {}).get("fears")) or []
+    if fears:
+        items = "\n".join(
+            f"    <li><span class=\"tag\">{esc(f.get('clock'))}</span>{esc(f.get('text'))}</li>"
+            for f in fears[:3]
+        )
+        return items, False
     R = (j.get("thesis") or {}).get("R") or []
     if not R:
-        return "    <li>—</li>"
-    out = []
-    for r in R:
-        tag = f"{r.get('id') or ''} {r.get('clock') or ''}".strip()
-        out.append(
-            f"    <li><span class=\"hr\">{esc(tag)}</span>{esc(r.get('text'))}"
-            f"<br><b>門檻</b>：{esc(r.get('threshold'))}</li>"
-        )
-    return "\n".join(out)
+        return "    <li>—</li>", True
+    items = "\n".join(
+        f"    <li><span class=\"tag\">{esc(r.get('clock'))}</span>{esc(r.get('text'))}"
+        f"<br><span class=\"note\">門檻：{esc(r.get('threshold'))}</span></li>"
+        for r in R[:3]
+    )
+    return items, True
 
 
-def render_single_thing(j):
-    st = (j.get("thesis") or {}).get("single_thing")
-    if not st:
-        return "<p>—</p>"
-    if isinstance(st, str):
-        return f"<p>{esc(st)}</p>"
-    parts = []
-    if st.get("description"):
-        parts.append(f"<p><b>{esc(st['description'])}</b></p>")
-    if st.get("why_fatal"):
-        parts.append(f"<p>為何致命：{esc(st['why_fatal'])}</p>")
-    if st.get("if_happens"):
-        parts.append(f"<p>發生後：{esc(st['if_happens'])}</p>")
-    if st.get("how_monitor"):
-        parts.append(f"<p>怎麼監測：{esc(st['how_monitor'])}</p>")
-    if st.get("probability"):
-        parts.append(f"<p>機率：{esc(st['probability'])}</p>")
-    return "\n  ".join(parts) if parts else "<p>—</p>"
+def render_market_wrong(j):
+    plain = j.get("plain") or {}
+    market_wrong = plain.get("market_wrong")
+    if market_wrong:
+        return f"    <p>{esc(market_wrong)}</p>", False
+    fallback = ((j.get("valuation") or {}).get("targets") or {}).get("market_wrong_where")
+    return f"    <p>{dash(fallback)}</p>", True
 
 
-def _terminal_year(scenario_meta):
-    tl = ((scenario_meta or {}).get("scenario_tree") or {}).get("terminal_label") or ""
-    m = re.search(r"FY(\d{4})", tl)
-    return int(m.group(1)) if m else None
+def _growth_cell(v):
+    if v is None or v == "":
+        return "—"
+    try:
+        f = float(v)
+        return f"{f:g}%"
+    except (TypeError, ValueError):
+        return esc(_truncate(v, 60))
 
+
+def _implied_cagr(valuation):
+    blob = json.dumps(valuation or {}, ensure_ascii=False)
+    m = re.search(r"CAGR[^\d%]{0,10}([\d.]+%(?:[~～\-–][\d.]+%)?)", blob)
+    return m.group(1) if m else None
+
+
+def render_growth_table(j):
+    rd = (j.get("moat") or {}).get("roic_durability") or {}
+    val = j.get("valuation") or {}
+    rows = [
+        ("增量投資報酬率（ROIIC）", _growth_cell(rd.get("roiic"))),
+        ("再投資率", _growth_cell(rd.get("reinvest_rate"))),
+        ("自己賺的錢能撐的成長上限", _growth_cell(rd.get("endo_ceiling"))),
+        ("市場隱含成長（CAGR）", dash(_implied_cagr(val))),
+    ]
+    return "\n".join(
+        f'    <tr><td>{esc(label)}</td><td class="num">{value}</td></tr>'
+        for label, value in rows
+    )
+
+
+def render_growth_funding(j):
+    growth_funding = (j.get("plain") or {}).get("growth_funding")
+    if growth_funding:
+        return esc(growth_funding), False
+    return "—", True
+
+
+def render_how_to_lose(j):
+    how_to_lose = (j.get("plain") or {}).get("how_to_lose")
+    if how_to_lose:
+        return f"    <p>{esc(how_to_lose)}</p>", False
+    return render_premortem(j), True
+
+
+# ---------------------------------------------------------------------------
+# scenario tree + stories
+# ---------------------------------------------------------------------------
 
 def render_scenario(j, scenario_meta):
     di = j.get("decision_inputs") or {}
@@ -246,34 +366,47 @@ def render_scenario(j, scenario_meta):
     upside5y = sm.get("upside_5y_pct")
     base_p = (price * (1 + upside5y / 100.0)) if (price is not None and upside5y is not None) else None
 
+    scenario_tree = sm.get("scenario_tree") or {}
+    eps_map = scenario_tree.get("eps") or {}
+    pe_map = scenario_tree.get("pe") or {}
+
+    def terminal(key):
+        arr = eps_map.get(key) or []
+        eps_t = arr[-1] if arr else None
+        pe_t = pe_map.get(key)
+        return eps_t, pe_t
+
     def vs_now(target):
         if price in (None, 0) or target is None:
             return None
         return (target / price - 1) * 100.0
 
-    def row(label, prob, tprice, cls_extra=""):
+    def row(label, prob, tprice, key):
         vs = vs_now(tprice)
         vs_cls = "ok" if (vs is not None and vs >= 0) else ("bad" if vs is not None else "")
+        eps_t, pe_t = terminal(key)
         return (
             f"    <tr><td>{esc(label)}</td>"
             f"<td class=\"num\">{esc(prob)}{'%' if prob is not None else ''}</td>"
+            f"<td class=\"num\">{num(eps_t, 2) if eps_t is not None else '—'}</td>"
+            f"<td class=\"num\">{num(pe_t, 0) + 'x' if pe_t is not None else '—'}</td>"
             f"<td class=\"num\">{'$' + num(tprice, 1) if tprice is not None else '—'}</td>"
             f"<td class=\"num {vs_cls}\">{gdt._fmt_signed_pct(vs) if vs is not None else '—'}</td></tr>"
         )
 
     rows = [
-        row("Bull", p_bull, bull_p),
-        row("Base", p_base, base_p),
-        row("Bear", p_bear, bear_p),
+        row("Bull", p_bull, bull_p, "bull"),
+        row("Base", p_base, base_p, "base"),
+        row("Bear", p_bear, bear_p, "bear"),
     ]
-    scenario_rows = "\n".join(rows) if scenario_meta else "    <tr><td colspan=\"4\">—（無 scenario_meta）</td></tr>"
+    scenario_rows = "\n".join(rows) if scenario_meta else '    <tr><td colspan="6">—（無 scenario_meta）</td></tr>'
 
     note_bits = []
     if upside5y is not None:
         note_bits.append(f"Base 5Y 價由 upside_5y {upside5y}% 換算")
     note = "；".join(note_bits) if note_bits else "—"
 
-    eps_base = (((sm.get("scenario_tree") or {}).get("eps") or {}).get("base")) or []
+    eps_base = eps_map.get("base") or []
     if eps_base:
         end_year = _terminal_year(scenario_meta)
         if end_year:
@@ -297,52 +430,123 @@ def render_scenario(j, scenario_meta):
     return scenario_rows, note, eps_html, eps_note
 
 
-def render_val_kv(j):
-    aa = j.get("appendix_a") or {}
-    val = j.get("valuation") or {}
-    industry = j.get("industry") or {}
-    gov = j.get("governance") or {}
-    growth = j.get("growth") or {}
+def _terminal_year(scenario_meta):
+    tl = ((scenario_meta or {}).get("scenario_tree") or {}).get("terminal_label") or ""
+    m = re.search(r"FY(\d{4})", tl)
+    return int(m.group(1)) if m else None
 
-    rows = [
-        ("Fwd PE FY2", f"{val.get('fwd_pe')}x" if val.get("fwd_pe") is not None else None),
-        ("PEG FY2", val.get("peg")),
-        ("5Y 分位", f"{val.get('percentile_5y')}%" if val.get("percentile_5y") is not None else None),
-        ("品質分", f"{aa.get('quality_score')}／capalloc {gov.get('capalloc_grade')}" if aa.get("quality_score") is not None else None),
-        ("成長持續期", f"{aa.get('growth_durability')}／長期信心 {aa.get('long_term_confidence')}" if aa.get("growth_durability") is not None else None),
-        ("產業時鐘", industry.get("clock_phase")),
-        ("賣方共識", (val.get("targets") or {}).get("consensus_pt")),
-        ("Y5 後跑道", growth.get("runway_post_y5")),
+
+def render_stories(j):
+    stories = (j.get("plain") or {}).get("stories") or {}
+    fallback = not stories
+    labels = [("bull", "Bull 怎麼發生"), ("base", "Base 怎麼發生"), ("bear", "Bear 怎麼發生")]
+    parts = [
+        f'    <div class="story"><b>{label}</b>：{dash(stories.get(key))}</div>'
+        for key, label in labels
     ]
-    out = []
-    for label, v in rows:
-        out.append(f"    <dt>{esc(label)}</dt><dd>{dash(v)}</dd>")
-    return "\n".join(out)
+    return "\n".join(parts), fallback
 
 
-def render_decision_audit(j, decision_audit_html):
-    if decision_audit_html:
-        return decision_audit_html
-    frag = gdt.render_audit_html(j)
-    if frag:
-        return frag
-    return "<p>—（judgment 未含 decision_out.audit_rows）</p>"
+# ---------------------------------------------------------------------------
+# change-my-mind + prior compare + rulings
+# ---------------------------------------------------------------------------
+
+_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
-def render_contradictions(j):
-    rows = j.get("contradictions") or []
-    if not rows:
-        return '    <tr><td colspan="5">—</td></tr>'
-    out = []
-    for c in rows:
-        out.append(
-            "    <tr><td>{axis}</td><td>{a}</td><td>{b}</td><td>{ruling}</td><td>{settle}</td></tr>".format(
-                axis=esc(c.get("axis")), a=esc(c.get("side_a")), b=esc(c.get("side_b")),
-                ruling=esc(c.get("ruling")), settle=esc(c.get("settle_metric")),
+def render_change_my_mind(j):
+    cmm = (j.get("plain") or {}).get("change_my_mind") or []
+    if cmm:
+        rows = "\n".join(
+            "    <tr><td>{w}</td><td>{t}</td><td>{n}</td><td class=\"num\">{d}</td></tr>".format(
+                w=esc(c.get("what")), t=esc(c.get("threshold")), n=esc(c.get("then")),
+                d=dash(c.get("when")),
+            )
+            for c in cmm[:3]
+        )
+        return rows, False
+    triggers = j.get("triggers") or []
+    if not triggers:
+        return '    <tr><td colspan="4">—</td></tr>', True
+    rows = "\n".join(
+        "    <tr><td>{w}</td><td>{t}</td><td>{n}</td><td class=\"num\">{d}</td></tr>".format(
+            w=esc(t.get("text")), t=esc(t.get("threshold")), n=esc(t.get("action")),
+            d=dash(t.get("date")),
+        )
+        for t in triggers[:3]
+    )
+    return rows, True
+
+
+def render_next_checkpoint(j):
+    triggers = j.get("triggers") or []
+    dated = [t for t in triggers if _DATE_RE.match(str(t.get("date") or ""))]
+    if not dated:
+        return "下一個檢核點：—"
+    dated.sort(key=lambda t: t["date"])
+    nxt = dated[0]
+    return f"下一個檢核點：<b>{esc(nxt.get('date'))} {esc(_truncate(nxt.get('text') or '', 40))}</b>"
+
+
+_PRIOR_ROWS = [
+    ("裁決", "dca_verdict", "dca_verdict"),
+    ("股價", "price_at_dd", "price_at_dd"),
+    ("5 年期望報酬", "ev5y_pct", "ev5y_pct"),
+    ("Base 年化", "irr_base_pct", "irr_base_pct"),
+    ("估值燈", "val", "val"),
+    ("Bear 機率", "p_bear_pct", "p_bear_pct"),
+]
+
+
+def render_prior_compare(j, evidence, meta):
+    prior = (evidence or {}).get("prior_dd") or {}
+    prior_meta = prior.get("prior_meta") or {}
+    if not prior_meta:
+        return '    <tr><td colspan="3">—（首份，無前份可比）</td></tr>'
+    rows = []
+    for label, cur_key, prior_key in _PRIOR_ROWS:
+        cur_v = meta.get(cur_key)
+        prior_v = prior_meta.get(prior_key)
+        if cur_key == "price_at_dd" and cur_v is not None:
+            cur_v = "$" + num(cur_v, 2)
+        if prior_key == "price_at_dd" and prior_v is not None:
+            prior_v = "$" + num(prior_v, 2)
+        rows.append(
+            f"    <tr><td>{esc(label)}</td>"
+            f'<td class="num">{dash(prior_v)}</td>'
+            f'<td class="num">{dash(cur_v)}</td></tr>'
+        )
+    return "\n".join(rows)
+
+
+def render_prior_reason(j):
+    reason = (j.get("plain") or {}).get("prior_compare_reason")
+    if reason:
+        return esc(reason), False
+    return "—", True
+
+
+def render_rulings(j):
+    contradictions = j.get("contradictions") or []
+    debates = [c for c in contradictions if not c.get("prior_field")]
+    if not debates:
+        return "    <li>—</li>"
+    items = []
+    for c in debates:
+        axis = c.get("axis") or ""
+        topic = re.split(r"[:：]", axis, maxsplit=1)[0]
+        items.append(
+            "    <li><b>{topic}</b>：{a} 對 {b}。<b>裁定</b>：{ruling}</li>".format(
+                topic=esc(_truncate(topic, 30)), a=esc(_truncate(c.get("side_a") or "", 120)),
+                b=esc(_truncate(c.get("side_b") or "", 120)), ruling=esc(_truncate(c.get("ruling") or "", 160)),
             )
         )
-    return "\n".join(out)
+    return "\n".join(items)
 
+
+# ---------------------------------------------------------------------------
+# reused / lightly-adapted mechanical renderers
+# ---------------------------------------------------------------------------
 
 def render_premortem(j):
     prem = j.get("premortem") or {}
@@ -367,21 +571,6 @@ def render_premortem(j):
     return "\n  ".join(parts) if parts else "<p>—</p>"
 
 
-def render_catalysts(j):
-    cats = j.get("catalysts") or []
-    if not cats:
-        return '    <tr><td colspan="4">—</td></tr>'
-    out = []
-    for c in cats:
-        out.append(
-            "    <tr><td class=\"num\">{d}</td><td>{e}</td><td>{w}</td><td>{i}</td></tr>".format(
-                d=esc(c.get("date")), e=esc(c.get("event")), w=esc(c.get("watch")),
-                i=esc(c.get("impact")),
-            )
-        )
-    return "\n".join(out)
-
-
 def render_exec_rows(j):
     dout = j.get("decision_out") or {}
     pacing = dout.get("pacing")
@@ -398,11 +587,26 @@ def render_exec_rows(j):
     return "\n".join(out)
 
 
+def render_catalysts(j):
+    cats = j.get("catalysts") or []
+    if not cats:
+        return '    <tr><td colspan="4">—</td></tr>'
+    out = []
+    for c in cats:
+        out.append(
+            "    <tr><td class=\"num\">{d}</td><td>{e}</td><td>{w}</td><td>{i}</td></tr>".format(
+                d=esc(c.get("date")), e=esc(c.get("event")), w=esc(c.get("watch")),
+                i=esc(c.get("impact")),
+            )
+        )
+    return "\n".join(out)
+
+
 def _collect_evidence_refs(j):
     """Best-effort index of anything the judgment already claims as an
     evidence_refs / evidence_dismissed pointer, wherever in the tree it
-    lives. Current v16 fixtures (2026-09-05) carry neither field yet -- this
-    walk is forward-compatible, not fabricated: absent data renders '—'."""
+    lives. Forward-compatible with v17 schema addition -- absent data
+    renders '—', never fabricated."""
     refs = set()
     dismissed = {}
 
@@ -444,7 +648,7 @@ def render_negative_evidence(j, evidence):
             elif key in refs or axis in refs:
                 disp = "已採納"
             else:
-                disp = "—（judgment 未列 evidence_refs／evidence_dismissed，此版 schema 未附）"
+                disp = "—（judgment 未列 evidence_refs／evidence_dismissed）"
             out.append(
                 "    <tr><td>{axis}</td><td>{claim}</td><td>{src}</td><td>{disp}</td></tr>".format(
                     axis=esc(axis), claim=esc(claim[:200]), src=esc(src_line), disp=esc(disp),
@@ -453,6 +657,15 @@ def render_negative_evidence(j, evidence):
     if not out:
         return '    <tr><td colspan="4">—（evidence 內無 direction=- 的 finding）</td></tr>'
     return "\n".join(out)
+
+
+def render_decision_audit(j, decision_audit_html):
+    if decision_audit_html:
+        return decision_audit_html
+    frag = gdt.render_audit_html(j)
+    if frag:
+        return frag
+    return "<p>—（judgment 未含 decision_out.audit_rows）</p>"
 
 
 def _fallback_parse_audit(text):
@@ -468,10 +681,18 @@ def _fallback_parse_audit(text):
     return {"red": red, "yellow_rows": yellow_rows}
 
 
+def _audit_counts(text):
+    red = re.search(r"🔴\s*[=＝]?\s*(\d+)", text)
+    yellow = re.search(r"🟡\s*[=＝]?\s*(\d+)", text)
+    return (red.group(1) if red else None, yellow.group(1) if yellow else None)
+
+
 def render_gate_yellow(audit_path):
     if not audit_path or not Path(audit_path).exists():
         return "<p>—（本次未提供 gate audit）</p>"
     text = Path(audit_path).read_text(encoding="utf-8")
+    red, yellow = _audit_counts(text)
+    summary = f"<p>跨模型冷讀：判斷級 🔴 {dash(red)}、🟡 {dash(yellow)}</p>"
     if dd_gate is not None and hasattr(dd_gate, "parse_audit"):
         try:
             parsed = dd_gate.parse_audit(str(audit_path))
@@ -481,19 +702,23 @@ def render_gate_yellow(audit_path):
         parsed = None
     if parsed:
         findings = [f for f in parsed.get("findings", []) if f.get("level") == "🟡"]
-        if not findings:
-            return "<p>🟡 = 0</p>"
-        items = "".join(
-            f"<li><b>{esc(f.get('axis'))}</b>：{esc(f.get('note'))}"
-            f"（{esc(f.get('path'))}）</li>"
-            for f in findings
-        )
-        return f"<ul>{items}</ul>"
-    parsed_fb = _fallback_parse_audit(text)
-    if not parsed_fb["yellow_rows"]:
-        return "<p>（未解析出 🟡 表格列，見 gate audit 原文）</p>"
-    items = "".join("<li>" + " ／ ".join(esc(c) for c in row) + "</li>" for row in parsed_fb["yellow_rows"])
-    return f"<ul>{items}</ul>"
+        if findings:
+            items = "".join(
+                f"<li><b>{esc(f.get('axis'))}</b>：{esc(f.get('note'))}"
+                f"（{esc(f.get('path'))}）</li>"
+                for f in findings
+            )
+            return summary + f"<ul>{items}</ul>"
+        return summary
+    return summary + f"<details><summary>gate audit 原文</summary><pre style=\"white-space:pre-wrap\">{esc(text)}</pre></details>"
+
+
+def _audit_summary_line(audit_path):
+    if not audit_path or not Path(audit_path).exists():
+        return "—（本次未提供 gate audit）"
+    text = Path(audit_path).read_text(encoding="utf-8")
+    red, yellow = _audit_counts(text)
+    return f"opus 抽查：判斷級 🔴 {dash(red)}、🟡 {dash(yellow)}"
 
 
 def render_reasoning(j):
@@ -509,8 +734,75 @@ def render_reasoning(j):
 
 
 # ---------------------------------------------------------------------------
+# evidence quality (證據品質)
+# ---------------------------------------------------------------------------
+
+def render_evidence_quality(j, evidence, audit_path):
+    plain_lead = (j.get("plain") or {}).get("evidence_quality")
+    lead_html, lead_fallback = (esc(plain_lead), False) if plain_lead else ("—", True)
+
+    if not evidence:
+        rows = '    <tr><td colspan="4">—（無 evidence.json）</td></tr>'
+        return lead_html, lead_fallback, rows
+
+    coverage = evidence.get("coverage") or {}
+    total_axes = len(coverage)
+    found = sum(1 for v in coverage.values() if v.get("status") == "found")
+    none_n = sum(1 for v in coverage.values() if v.get("status") == "none")
+    total_findings = sum(len(v.get("findings") or []) for v in coverage.values())
+    neg = sum(
+        1 for v in coverage.values() for f in (v.get("findings") or []) if f.get("direction") == "-"
+    )
+    coverage_cell = f"{found}/{total_axes} 軸有料，{none_n} 軸查無"
+
+    numbers = evidence.get("numbers") or {}
+    lqk = numbers.get("latest_quarter_kpis") or {}
+    quarter = str(lqk.get("quarter") or "").split("（")[0].strip() or "—"
+    numbers_cell = f"{quarter}，共 {total_findings} 條 finding，其中 {neg} 條負向" if quarter != "—" else dash(None)
+
+    transcripts = evidence.get("transcripts") or {}
+    selected = (transcripts.get("selected") or {}).get("recent_four_quarters") or []
+    if selected:
+        m = re.search(r"_(Q\d)_(\d{4})_", selected[-1])
+        latest_q = f"{m.group(1)} {m.group(2)}" if m else selected[-1]
+        transcripts_cell = f"{latest_q} 法說親讀；前 {max(len(selected) - 1, 0)} 季讀摘要"
+    else:
+        transcripts_cell = "—"
+
+    audit_cell = _audit_summary_line(audit_path)
+
+    canonical_id = (evidence.get("canonical_id") or {}).get("primary") or {}
+    if canonical_id.get("theme"):
+        id_cell = f"{canonical_id['theme']}（as-of {canonical_id.get('as_of') or '—'}）"
+    else:
+        id_cell = "—"
+
+    ledger = evidence.get("ledger") or {}
+    cv = ledger.get("current_verdict") or {}
+    history = ledger.get("decision_history") or []
+    if cv:
+        ledger_cell = f"前份 {cv.get('date')} {cv.get('verdict')}；帳本 {len(history)} 筆歷史"
+    else:
+        ledger_cell = "—"
+
+    rows = (
+        f'    <tr><td>覆蓋軸</td><td>{esc(coverage_cell)}</td>'
+        f'<td>營運數字</td><td>{esc(numbers_cell)}</td></tr>\n'
+        f'    <tr><td>逐字稿</td><td>{esc(transcripts_cell)}</td>'
+        f'<td>跨模型冷讀</td><td>{esc(audit_cell)}</td></tr>\n'
+        f'    <tr><td>產業報告對帳</td><td>{esc(id_cell)}</td>'
+        f'<td>知識帳本</td><td>{esc(ledger_cell)}</td></tr>'
+    )
+    return lead_html, lead_fallback, rows
+
+
+# ---------------------------------------------------------------------------
 # main assembly
 # ---------------------------------------------------------------------------
+
+def _cls(fallback: bool) -> str:
+    return " fallback" if fallback else ""
+
 
 def build_brief_html(j, scenario_meta, evidence, audit_path, decision_audit_html):
     template = TEMPLATE_PATH.read_text(encoding="utf-8")
@@ -519,8 +811,19 @@ def build_brief_html(j, scenario_meta, evidence, audit_path, decision_audit_html
     ticker = meta_top.get("ticker") or ""
     date = meta_top.get("date") or ""
 
-    eyebrow, h1, oneliner, meta_box = render_header(j, evidence)
+    eyebrow, h1, sub, sub_fallback, meta_box = render_header(j, evidence)
     scenario_rows, scenario_note, scenario_eps, scenario_eps_note = render_scenario(j, scenario_meta)
+    stories_html, stories_fallback = render_stories(j)
+    five_html, five_fallback = render_five(j)
+    business_html, business_fallback = render_business(j)
+    bets_html, bets_fallback = render_bets(j)
+    fears_html, fears_fallback = render_fears(j)
+    market_wrong_html, market_wrong_fallback = render_market_wrong(j)
+    growth_funding_html, growth_funding_fallback = render_growth_funding(j)
+    change_rows, change_fallback = render_change_my_mind(j)
+    how_to_lose_html, how_to_lose_fallback = render_how_to_lose(j)
+    prior_reason, prior_reason_fallback = render_prior_reason(j)
+    evidence_lead, evidence_lead_fallback, evidence_rows = render_evidence_quality(j, evidence, audit_path)
 
     meta = gdt.build_dd_meta(j, scenario_meta)
     meta["brief"] = True
@@ -530,28 +833,51 @@ def build_brief_html(j, scenario_meta, evidence, audit_path, decision_audit_html
         "{{TITLE}}": esc(f"{ticker} 速判 {date}"),
         "{{EYEBROW}}": eyebrow,
         "{{H1}}": h1,
-        "{{ONELINER}}": oneliner,
+        "{{SUB_CLASS}}": _cls(sub_fallback),
+        "{{SUB}}": sub,
         "{{META_BOX}}": meta_box,
         "{{TILES}}": render_tiles(j, scenario_meta),
-        "{{H_TABLE}}": gdt.render_e2_html(j),
-        "{{R_LIST}}": render_r_list(j),
-        "{{SINGLE_THING}}": render_single_thing(j),
+        "{{FIVE_CLASS}}": _cls(five_fallback),
+        "{{FIVE_HTML}}": five_html,
+        "{{BUSINESS_CLASS}}": _cls(business_fallback),
+        "{{BUSINESS_HTML}}": business_html,
+        "{{BETS_CLASS}}": _cls(bets_fallback).strip(),
+        "{{BETS_HTML}}": bets_html,
+        "{{FEARS_CLASS}}": _cls(fears_fallback).strip(),
+        "{{FEARS_HTML}}": fears_html,
+        "{{MARKET_WRONG_CLASS}}": _cls(market_wrong_fallback),
+        "{{MARKET_WRONG_HTML}}": market_wrong_html,
+        "{{GROWTH_TABLE_ROWS}}": render_growth_table(j),
+        "{{GROWTH_FUNDING_CLASS}}": _cls(growth_funding_fallback),
+        "{{GROWTH_FUNDING_HTML}}": growth_funding_html,
         "{{SCENARIO_ROWS}}": scenario_rows,
         "{{SCENARIO_NOTE}}": esc(scenario_note),
         "{{SCENARIO_EPS}}": scenario_eps,
         "{{SCENARIO_EPS_NOTE}}": esc(scenario_eps_note),
-        "{{VAL_KV}}": render_val_kv(j),
-        "{{DECISION_AUDIT}}": render_decision_audit(j, decision_audit_html),
-        "{{CONTRADICTIONS_ROWS}}": render_contradictions(j),
-        "{{PREMORTEM}}": render_premortem(j),
-        "{{TRIGGERS_TABLE}}": gdt.render_e12_html(j),
+        "{{STORIES_CLASS}}": _cls(stories_fallback).strip(),
+        "{{STORIES_HTML}}": stories_html,
+        "{{CHANGE_ROWS}}": change_rows,
+        "{{NEXT_CHECKPOINT}}": render_next_checkpoint(j),
+        "{{PRIOR_TABLE_ROWS}}": render_prior_compare(j, evidence, meta),
+        "{{PRIOR_REASON_CLASS}}": ("note" + _cls(prior_reason_fallback)).strip(),
+        "{{PRIOR_REASON}}": prior_reason,
+        "{{RULINGS_HTML}}": render_rulings(j),
+        "{{HOW_TO_LOSE_CLASS}}": _cls(how_to_lose_fallback),
+        "{{HOW_TO_LOSE_HTML}}": how_to_lose_html,
         "{{EXEC_ROWS}}": render_exec_rows(j),
+        "{{EVIDENCE_LEAD_CLASS}}": _cls(evidence_lead_fallback),
+        "{{EVIDENCE_LEAD}}": evidence_lead,
+        "{{EVIDENCE_TABLE_ROWS}}": evidence_rows,
+        "{{TRIGGERS_TABLE}}": gdt.render_e12_html(j),
         "{{CATALYST_ROWS}}": render_catalysts(j),
         "{{NEGATIVE_EVIDENCE_ROWS}}": render_negative_evidence(j, evidence),
+        "{{DECISION_AUDIT}}": render_decision_audit(j, decision_audit_html),
         "{{GATE_YELLOW}}": render_gate_yellow(audit_path),
         "{{REASONING_DETAILS}}": render_reasoning(j),
         "{{FOOTER}}": (
             "頁面由 judgment.json 零 LLM 渲染；dd-meta 欄位與完整版同義，加 brief:true。"
+            "白話段落來源：judgment.json 的 plain 欄，由判斷 agent 與判斷同時寫；"
+            "標灰（fallback）段落表示這次判斷物未附 plain，改用結構欄位機械組成。"
             "完整散文版可隨時從同一份判斷物補跑。"
         ),
         "{{DD_META_SCRIPT}}": dd_meta_script,
