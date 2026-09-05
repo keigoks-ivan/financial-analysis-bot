@@ -267,5 +267,145 @@ def test_run_resume_skips_completed_stages(monkeypatch):
         shutil.rmtree(run_dir, ignore_errors=True)
 
 
+# ---------------------------------------------------------------------------
+# 5) WP7a #1：Koyfin 步驟改零 LLM——`_run_koyfin_step` 直接 subprocess，不再
+#    走 spawn；輸出 parts/transcripts.json 並 merge 進 evidence.json。
+# ---------------------------------------------------------------------------
+
+def test_run_koyfin_step_zero_llm_writes_transcripts_and_merges(tmp_path, monkeypatch):
+    ticker, date = "ZKOYFIN", "20260101"
+    run_dir = tmp_path / "run"
+    (run_dir / "parts").mkdir(parents=True)
+    evidence_dest = run_dir / "evidence.json"
+    evidence_dest.write_text(json.dumps({"ticker": ticker, "transcripts": {}}), encoding="utf-8")
+
+    drive_dir = tmp_path / "drive" / ticker
+    drive_dir.mkdir(parents=True)
+    (drive_dir / "Q1.md").write_text("q1", encoding="utf-8")
+    (drive_dir / "Q2.md").write_text("q2", encoding="utf-8")
+
+    fake_selector = tmp_path / "selector.py"
+    fake_selector.write_text("", encoding="utf-8")
+
+    monkeypatch.setattr(ddreport, "KOYFIN_DOWNLOADER", tmp_path / "no_such_downloader.py")
+    monkeypatch.setattr(ddreport, "KOYFIN_SELECTOR", fake_selector)
+    monkeypatch.setattr(ddreport, "_find_koyfin_drive_folder", lambda t: drive_dir)
+
+    def fake_run(cmd, **kw):
+        cmd = [str(c) for c in cmd]
+        if cmd[1].endswith("selector.py"):
+            payload = json.dumps({
+                "ticker": ticker, "mode": "first-run",
+                "must_read": ["Q1.md", "Q2.md"], "optional_read": [],
+                "must_read_tokens_total": 100,
+            })
+            return _FakeCompleted(0, stdout=payload)
+        if "dd_evidence.py" in cmd[1] and "merge" in cmd:
+            # 忠實模擬 dd_evidence.py merge：把 part 檔淺層併進 evidence.json
+            file_arg, part_arg = cmd[-2], cmd[-1]
+            base = json.loads(Path(file_arg).read_text(encoding="utf-8"))
+            part = json.loads(Path(part_arg).read_text(encoding="utf-8"))
+            base.update(part)
+            Path(file_arg).write_text(json.dumps(base), encoding="utf-8")
+            return _FakeCompleted(0)
+        return _FakeCompleted(0)
+
+    monkeypatch.setattr(ddreport.subprocess, "run", fake_run)
+
+    manifest = {"steps": []}
+    result = ddreport._run_koyfin_step(ticker, date, run_dir, evidence_dest, manifest)
+
+    assert result["transcripts"]["koyfin_session_status"] == "downloader_missing"
+    sel = result["transcripts"]["selected"]
+    assert sel["recent_four_quarters"] == [str(drive_dir / "Q1.md"), str(drive_dir / "Q2.md")]
+    assert sel["high_signal_optional"] == []
+
+    out = json.loads((run_dir / "parts" / "transcripts.json").read_text(encoding="utf-8"))
+    assert out["transcripts"]["selected"]["recent_four_quarters"] == sel["recent_four_quarters"]
+
+    merged = json.loads(evidence_dest.read_text(encoding="utf-8"))
+    assert merged["transcripts"]["selected"]["recent_four_quarters"] == sel["recent_four_quarters"]
+    assert manifest["koyfin_session_status"] == "downloader_missing"
+
+
+# ---------------------------------------------------------------------------
+# 6) WP7a #3：peers 來源優先順序 --peers → archive(_src) → id-meta → 都沒有
+# ---------------------------------------------------------------------------
+
+def test_resolve_peers_cli_takes_priority():
+    peers, src = ddreport._resolve_peers("AMD,NVDA", "AVGO")
+    assert (peers, src) == ("AMD,NVDA", "cli")
+
+
+def test_resolve_peers_falls_back_to_archive(tmp_path, monkeypatch):
+    monkeypatch.setattr(ddreport, "SRC_ARCHIVE_DIR", tmp_path)
+    monkeypatch.setattr(ddreport, "ID_DIR", tmp_path / "no_such_id_dir")
+
+    run_dir = tmp_path / "ZPEER_20260101"
+    run_dir.mkdir()
+    ev_path = run_dir / "ZPEER_20260101.evidence.json"
+    ev_path.write_text(json.dumps({
+        "numbers": {"peer_financials": {
+            "ZPEER": {"gm": 1}, "AMD": {"gm": 2}, "NVDA": {"gm": 3}, "_note": "x",
+        }},
+    }), encoding="utf-8")
+
+    peers, src = ddreport._resolve_peers(None, "ZPEER")
+    assert src == "archive"
+    assert set(peers.split(",")) == {"AMD", "NVDA"}
+
+
+def test_resolve_peers_falls_back_to_id_meta(tmp_path, monkeypatch):
+    monkeypatch.setattr(ddreport, "SRC_ARCHIVE_DIR", tmp_path / "no_such_archive")
+    fake_id_dir = tmp_path / "id"
+    fake_id_dir.mkdir()
+    monkeypatch.setattr(ddreport, "ID_DIR", fake_id_dir)
+
+    def fake_find(id_dir, ticker):
+        assert ticker == "ZPEER"
+        return [(fake_id_dir / "ID_Fake.html", {
+            "related_tickers": [
+                {"ticker": "ZPEER"}, {"ticker": "AMD"}, {"ticker": "NVDA"},
+                {"ticker": "MU"}, {"ticker": "WDC"}, {"ticker": "STX"},
+            ],
+        })]
+
+    monkeypatch.setattr(ddreport.dd_meta_reader, "find_ids_for_ticker", fake_find)
+    peers, src = ddreport._resolve_peers(None, "ZPEER")
+    assert src == "id_meta"
+    assert peers.split(",") == ["AMD", "NVDA", "MU", "WDC"]
+
+
+def test_resolve_peers_none_when_all_sources_exhausted(tmp_path, monkeypatch):
+    monkeypatch.setattr(ddreport, "SRC_ARCHIVE_DIR", tmp_path / "no_archive")
+    monkeypatch.setattr(ddreport, "ID_DIR", tmp_path / "no_id")
+    peers, src = ddreport._resolve_peers(None, "ZPEER")
+    assert (peers, src) == (None, None)
+
+
+# ---------------------------------------------------------------------------
+# 7) cmd_plan：peers 都沒有時（非 offline）印錯誤並提早退出，不跑
+#    dd_numbers_extra.py
+# ---------------------------------------------------------------------------
+
+def test_cmd_plan_aborts_when_no_peers_resolved_and_not_offline(monkeypatch):
+    ticker, date = "ZPLANNOPEER", "20260101"
+    run_dir = _clean_run_dir(ticker, date)
+
+    monkeypatch.setattr(ddreport, "_resolve_peers", lambda cli, t: (None, None))
+
+    try:
+        args = argparse.Namespace(
+            ticker=ticker, date=date, archetype="品質複利成長", peers=None,
+            segments=None, axes_per_batch=2, offline=False,
+        )
+        rc = ddreport.cmd_plan(args)
+        assert rc == 1
+        assert not (run_dir / "parts" / "numbers_extra.json").exists()
+        assert not (run_dir / "spawn_list.json").exists()
+    finally:
+        shutil.rmtree(run_dir, ignore_errors=True)
+
+
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-v"]))

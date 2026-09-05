@@ -31,6 +31,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import dd_headless  # noqa: E402  （WP1c 無頭執行器，import 呼叫，不改其內部）
+import dd_meta_reader  # noqa: E402  （WP7a peers 來源③：讀 id-meta related_tickers，不改其內部）
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS_DIR = Path(__file__).resolve().parent
@@ -64,9 +65,22 @@ AXES_PER_BATCH_DEFAULT = 2
 SPAWN_TOOLS_COVERAGE = ["WebSearch", "WebFetch", "Read", "Write", "Bash"]
 SPAWN_TOOLS_NUMBERS = ["WebSearch", "WebFetch", "Read", "Write", "Bash"]
 SPAWN_TOOLS_DIGEST = ["Read", "Write", "Bash"]
-SPAWN_TOOLS_KOYFIN = ["Bash", "Read", "Write"]
 
-BUDGET_CACHE_READ_DEFAULT = 700000
+# WP7a #5：Stage 0 預算重校（AVGO 2026-09-05 實測），Stage 0 段總目標 ≤6M
+# （母稿 §4 表同步改，不在本檔範圍）。
+BUDGET_CACHE_READ_COVERAGE = 900_000
+BUDGET_CACHE_READ_NUMBERS = 1_200_000
+BUDGET_CACHE_READ_DIGEST = 1_500_000
+DIGEST_MAX_TURNS = 16
+
+# WP7a #1：Koyfin 步驟改零 LLM，plan 內直接 subprocess 呼叫，不再走 spawn。
+KOYFIN_DIR = Path.home() / "scripts" / "koyfin-downloader"
+KOYFIN_DOWNLOADER = KOYFIN_DIR / "koyfin_downloader.py"
+KOYFIN_SELECTOR = KOYFIN_DIR / "transcripts_for_dd.py"
+KOYFIN_VENV_PYTHON = KOYFIN_DIR / ".venv" / "bin" / "python"
+KOYFIN_DOWNLOAD_TIMEOUT = 300
+KOYFIN_SELECTOR_TIMEOUT = 60
+KOYFIN_DRIVE_GLOB = "Library/CloudStorage/GoogleDrive-*/我的雲端硬碟/007美股"
 
 # ---------------------------------------------------------------------------
 # WP6a: finish／index-row 用的固定路徑（模組層常數，供測試 monkeypatch 覆寫）
@@ -77,6 +91,7 @@ RESEARCH_BODY_PATH = REPO_ROOT / "docs" / "research" / "_body.html"
 DD_SCREENER_LATEST_PATH = REPO_ROOT / "docs" / "dd-screener" / "latest.json"
 PICKS_CANDIDATES_PATH = REPO_ROOT / "docs" / "picks" / "candidates.json"
 SRC_ARCHIVE_DIR = REPO_ROOT / "notes" / "site-internal" / "dd" / "_src"
+ID_DIR = REPO_ROOT / "docs" / "id"
 
 
 # ---------------------------------------------------------------------------
@@ -176,6 +191,291 @@ def _resolve_archetype(cli_archetype, prior):
         if a:
             return a, "prior.archetype_hint"
     return None, None
+
+
+# ---------------------------------------------------------------------------
+# WP7a #3：peers 來源優先順序 --peers → SRC_ARCHIVE_DIR 前份 evidence.json 的
+# numbers.peer_financials → docs/id/ID_*.html id-meta related_tickers[] →
+# 都沒有則交由呼叫端印錯誤退出（strict 會擋 <2 對手，早停比晚停省）。
+# ---------------------------------------------------------------------------
+
+def _peers_from_archive(ticker):
+    """從 `SRC_ARCHIVE_DIR/{T}_*/` 找最新一份 evidence.json 的
+    `numbers.peer_financials` 鍵，去自身與 `_` 開頭的鍵（如 `_note`）。
+    回傳 list 或 None（找不到／無可用鍵）。"""
+    if not SRC_ARCHIVE_DIR.exists():
+        return None
+    candidates = sorted(
+        (p for p in SRC_ARCHIVE_DIR.glob("{0}_*".format(ticker)) if p.is_dir()),
+        key=lambda p: p.name, reverse=True,
+    )
+    for cand in candidates:
+        ev_path = cand / "{0}.evidence.json".format(cand.name)
+        if not ev_path.exists():
+            ev_path = cand / "evidence.json"
+        if not ev_path.exists():
+            continue
+        try:
+            evidence = _load_json(ev_path)
+        except Exception:
+            continue
+        pf = (evidence.get("numbers") or {}).get("peer_financials") or {}
+        peers = [k for k in pf.keys() if k != ticker and not k.startswith("_")]
+        if peers:
+            return peers
+    return None
+
+
+def _peers_from_id_meta(ticker):
+    """`docs/id/ID_*.html` id-meta `related_tickers[]` 含 {T} 的那份，取前 4 檔
+    （去自身）。回傳 list 或 None。"""
+    if not ID_DIR.exists():
+        return None
+    try:
+        matches = dd_meta_reader.find_ids_for_ticker(ID_DIR, ticker)
+    except Exception:
+        return None
+    if not matches:
+        return None
+    _, meta = matches[0]
+    related = meta.get("related_tickers") or []
+    tickers = []
+    target = ticker.strip().upper()
+    for r in related:
+        t = (r.get("ticker") or "").strip().upper()
+        if t and t != target and t not in tickers:
+            tickers.append(t)
+    return tickers[:4] or None
+
+
+def _resolve_peers(cli_peers, ticker):
+    """回傳 (peers_str_or_None, source)。優先序：--peers → archive →
+    id-meta → (None, None)（呼叫端負責印錯誤退出）。"""
+    if cli_peers:
+        return cli_peers, "cli"
+    from_archive = _peers_from_archive(ticker)
+    if from_archive:
+        return ",".join(from_archive), "archive"
+    from_id_meta = _peers_from_id_meta(ticker)
+    if from_id_meta:
+        return ",".join(from_id_meta), "id_meta"
+    return None, None
+
+
+# ---------------------------------------------------------------------------
+# WP7a #1：Koyfin 步驟改零 LLM——plan 內直接呼叫，不再走 spawn。
+# ---------------------------------------------------------------------------
+
+def _koyfin_python():
+    if KOYFIN_VENV_PYTHON.exists():
+        return str(KOYFIN_VENV_PYTHON)
+    return "python3"
+
+
+def _find_koyfin_drive_folder(drive_ticker):
+    """`~/Library/CloudStorage/GoogleDrive-*/我的雲端硬碟/007美股/{T}/` glob 找
+    第一個存在的資料夾；找不到回傳 None。"""
+    home = Path.home()
+    for m in sorted(home.glob(KOYFIN_DRIVE_GLOB + "/" + drive_ticker)):
+        if m.is_dir():
+            return m
+    return None
+
+
+def _replay_koyfin_transcripts(replay_dir):
+    """`--replay-from` 生效時（`DD_REPLAY_FROM` 環境變數）：跳過真的
+    Koyfin 網路呼叫，改讀 fixture 既有的 `parts/transcripts.json`，沒有就
+    退回 fixture 已合併 evidence.json 內嵌的 `transcripts` 區塊；都沒有則
+    回傳空清單＋`koyfin_session_status:"folder_missing"`。"""
+    cand = replay_dir / "parts" / "transcripts.json"
+    if cand.exists():
+        try:
+            data = _load_json(cand)
+            if isinstance(data, dict) and data.get("transcripts"):
+                return data
+        except Exception:
+            pass
+    ev_cand = replay_dir / "{0}.evidence.json".format(replay_dir.name)
+    if not ev_cand.exists():
+        ev_cand = replay_dir / "evidence.json"
+    if ev_cand.exists():
+        try:
+            evidence = _load_json(ev_cand)
+            t = evidence.get("transcripts")
+            if t:
+                return {"transcripts": t}
+        except Exception:
+            pass
+    return {
+        "transcripts": {
+            "selected": {"recent_four_quarters": [], "high_signal_optional": []},
+            "koyfin_session_status": "folder_missing",
+            "must_read_all": [],
+            "optional_read_all": [],
+        }
+    }
+
+
+def _run_koyfin_step(ticker, date, run_dir, evidence_dest, manifest, drive_ticker=None):
+    """WP7a #1：跑增量下載＋逐字稿必讀/可略讀清單，寫 `parts/transcripts.json`
+    並立刻 merge 進 evidence.json。失敗（下載逾時／腳本缺席／session 過期）
+    只 warn 標記 `koyfin_session_status`，不 abort plan。`--replay-from` 生效
+    時（`DD_REPLAY_FROM` 環境變數）改讀 fixture，不打真實網路。"""
+    drive_ticker = drive_ticker or ticker
+    parts_dir = run_dir / "parts"
+    transcripts_out = parts_dir / "transcripts.json"
+
+    replay_from = os.environ.get("DD_REPLAY_FROM")
+    if replay_from:
+        transcripts_obj = _replay_koyfin_transcripts(Path(replay_from))
+        _atomic_write_json(transcripts_out, transcripts_obj)
+        if evidence_dest.exists():
+            py = _pick_python()
+            subprocess.run(
+                [py, str(SCRIPTS_DIR / "dd_evidence.py"), "merge",
+                 str(evidence_dest), str(transcripts_out)],
+                capture_output=True, text=True,
+            )
+        sel = (transcripts_obj.get("transcripts") or {}).get("selected") or {}
+        status = (transcripts_obj.get("transcripts") or {}).get("koyfin_session_status")
+        print("koyfin: replay 模式（{0}）session={1} 必讀={2} 可略讀={3}".format(
+            replay_from, status,
+            len(sel.get("recent_four_quarters") or []),
+            len(sel.get("high_signal_optional") or []),
+        ))
+        manifest["koyfin_session_status"] = status
+        return transcripts_obj
+
+    session_status = "ok"
+
+    if not KOYFIN_DOWNLOADER.exists():
+        session_status = "downloader_missing"
+    else:
+        try:
+            r = subprocess.run(
+                [_koyfin_python(), str(KOYFIN_DOWNLOADER), "--tickers", ticker],
+                cwd=str(KOYFIN_DIR), capture_output=True, text=True,
+                timeout=KOYFIN_DOWNLOAD_TIMEOUT,
+            )
+            manifest["steps"].append({"step": "koyfin_download", "returncode": r.returncode})
+            if r.returncode != 0:
+                session_status = "expired"
+                print(
+                    "[warn] koyfin_downloader.py 失敗（exit {0}），改用磁碟既有逐字稿：{1}".format(
+                        r.returncode, (r.stderr or "").strip()[-300:]),
+                    file=sys.stderr,
+                )
+        except subprocess.TimeoutExpired:
+            session_status = "expired"
+            print(
+                "[warn] koyfin_downloader.py 逾時（{0}s），改用磁碟既有逐字稿".format(
+                    KOYFIN_DOWNLOAD_TIMEOUT),
+                file=sys.stderr,
+            )
+        except Exception as e:
+            session_status = "expired"
+            print("[warn] koyfin_downloader.py 執行失敗：{0}".format(e), file=sys.stderr)
+
+    selected = {"recent_four_quarters": [], "high_signal_optional": []}
+    must_read_all = []
+    optional_read_all = []
+    must_read_tokens_total = None
+    mode = None
+
+    if not KOYFIN_SELECTOR.exists():
+        if session_status == "ok":
+            session_status = "folder_missing"
+    else:
+        try:
+            r = subprocess.run(
+                ["python3", str(KOYFIN_SELECTOR), drive_ticker, "--full", "--n", "4"],
+                capture_output=True, text=True, timeout=KOYFIN_SELECTOR_TIMEOUT,
+            )
+            manifest["steps"].append({"step": "koyfin_transcripts_for_dd", "returncode": r.returncode})
+            data = None
+            for line in reversed((r.stdout or "").splitlines()):
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    data = json.loads(line)
+                    break
+                except json.JSONDecodeError:
+                    continue
+            if data is None:
+                if session_status == "ok":
+                    session_status = "folder_missing"
+                print(
+                    "[warn] transcripts_for_dd.py 無 JSON 輸出：{0}".format(
+                        (r.stdout or r.stderr or "").strip()[-300:]),
+                    file=sys.stderr,
+                )
+            else:
+                must = data.get("must_read") or []
+                optional = data.get("optional_read") or []
+                must_read_all = must
+                optional_read_all = optional
+                mode = data.get("mode")
+                must_read_tokens_total = data.get("must_read_tokens_total")
+                drive_dir = _find_koyfin_drive_folder(drive_ticker)
+
+                def _abs(fname):
+                    if drive_dir is None:
+                        return None
+                    p = drive_dir / fname
+                    return str(p) if p.exists() else None
+
+                for fname in must:
+                    ap = _abs(fname)
+                    if ap:
+                        selected["recent_four_quarters"].append(ap)
+                    else:
+                        print("[warn] 找不到必讀逐字稿檔：{0}".format(fname), file=sys.stderr)
+                for fname in optional:
+                    ap = _abs(fname)
+                    if ap:
+                        selected["high_signal_optional"].append(ap)
+        except subprocess.TimeoutExpired:
+            if session_status == "ok":
+                session_status = "folder_missing"
+            print("[warn] transcripts_for_dd.py 逾時", file=sys.stderr)
+        except Exception as e:
+            if session_status == "ok":
+                session_status = "folder_missing"
+            print("[warn] transcripts_for_dd.py 執行失敗：{0}".format(e), file=sys.stderr)
+
+    transcripts_obj = {
+        "transcripts": {
+            "selected": selected,
+            "koyfin_session_status": session_status,
+            "must_read_all": must_read_all,
+            "optional_read_all": optional_read_all,
+        }
+    }
+    if mode is not None:
+        transcripts_obj["transcripts"]["mode"] = mode
+    if must_read_tokens_total is not None:
+        transcripts_obj["transcripts"]["must_read_tokens_total"] = must_read_tokens_total
+
+    _atomic_write_json(transcripts_out, transcripts_obj)
+
+    # 立刻 merge 進 evidence.json：evidence.json 需在 plan 結束時就含
+    # transcripts.selected，不必等到 stage0 finalize 才看得到（下游 a2_digest
+    # 直接讀 parts/transcripts.json，這裡的 merge 主要供 evidence.json 本身
+    # 的一致性與後續 finalize 冪等）。
+    if evidence_dest.exists():
+        py = _pick_python()
+        subprocess.run(
+            [py, str(SCRIPTS_DIR / "dd_evidence.py"), "merge",
+             str(evidence_dest), str(transcripts_out)],
+            capture_output=True, text=True,
+        )
+
+    n_recent = len(selected["recent_four_quarters"])
+    n_hi = len(selected["high_signal_optional"])
+    print("koyfin: session={0} 必讀={1} 可略讀={2}".format(session_status, n_recent, n_hi))
+    manifest["koyfin_session_status"] = session_status
+    return transcripts_obj
 
 
 def _run_subprocess(cmd, manifest, step_name, cwd=None):
@@ -288,16 +588,33 @@ def cmd_plan(args):
     if args.offline:
         manifest["steps"].append({"step": "dd_numbers_extra", "skipped": "offline"})
     else:
+        peers_str, peers_src = _resolve_peers(args.peers, ticker)
+        if not peers_str:
+            print(
+                "[error] 找不到可用對手清單（--peers 未給、{0}/{1}_*/ 無歷史 "
+                "numbers.peer_financials、docs/id/ID_*.html 無含 {1} 的 "
+                "related_tickers）：請帶 --peers a,b 手動指定（strict 會擋 <2 "
+                "對手，早停比晚停省）".format(SRC_ARCHIVE_DIR, ticker),
+                file=sys.stderr,
+            )
+            _atomic_write_json(run_dir / "manifest.json", manifest)
+            return 1
+        print("peers={0!r}（來源：{1}）".format(peers_str, peers_src))
+        manifest["peers"] = peers_str
+        manifest["peers_source"] = peers_src
         numbers_extra_out = parts_dir / "numbers_extra.json"
-        ne_cmd = [py, SCRIPTS_DIR / "dd_numbers_extra.py", ticker, date, "--out", numbers_extra_out]
-        if args.peers:
-            ne_cmd += ["--peers", args.peers]
+        ne_cmd = [py, SCRIPTS_DIR / "dd_numbers_extra.py", ticker, date, "--out", numbers_extra_out,
+                  "--peers", peers_str]
         if evidence_dest.exists():
             ne_cmd += ["--evidence", evidence_dest]
         r = _run_subprocess(ne_cmd, manifest, "dd_numbers_extra")
         if r.returncode != 0:
             print("[warn] dd_numbers_extra.py 失敗（不 abort）：{0}".format(
                 r.stderr.strip()[-500:]), file=sys.stderr)
+
+    # 5b. Koyfin 逐字稿（WP7a #1：零 LLM，plan 內直接跑，立刻 merge 進
+    # evidence.json；失敗只 warn，不 abort）
+    _run_koyfin_step(ticker, date, run_dir, evidence_dest, manifest)
 
     # 6. 軸分批：major_events 單獨一批，其餘每 --axes-per-batch 軸一批
     axis_list = axes if isinstance(axes, list) else []
@@ -333,7 +650,7 @@ def cmd_plan(args):
             "out": part_rel,
             "tools": SPAWN_TOOLS_COVERAGE,
             "max_turns": 12,
-            "budget_cache_read": BUDGET_CACHE_READ_DEFAULT,
+            "budget_cache_read": BUDGET_CACHE_READ_COVERAGE,
         })
 
     # a1_numbers
@@ -348,22 +665,24 @@ def cmd_plan(args):
     spawn_list.append({
         "id": "a1_numbers", "model": "sonnet", "prompt": "prompts/a1_numbers.md",
         "out": "parts/numbers_collect.json", "tools": SPAWN_TOOLS_NUMBERS,
-        "max_turns": 15, "budget_cache_read": BUDGET_CACHE_READ_DEFAULT,
+        "max_turns": 15, "budget_cache_read": BUDGET_CACHE_READ_NUMBERS,
     })
 
-    # a2_digest
+    # a2_digest（WP7a #2：在 5b. Koyfin 步驟之後才派工，prompt 改讀
+    # parts/transcripts.json——parts/transcripts.json 由 plan 當下的零 LLM
+    # Koyfin 步驟同步寫好，不再有「evidence.json 當時無逐字稿清單」的race）
     digest_mapping = {
         "TICKER": ticker,
         "DATE": date,
         "DIGEST_PATH": str(run_dir / "digest.json"),
-        "EVIDENCE_PATH": str(evidence_dest),
+        "TRANSCRIPTS_PATH": str(parts_dir / "transcripts.json"),
     }
     (prompts_dir / "a2_digest.md").write_text(
         _render_template(PROMPTS_TMPL_DIR / "digest.md.tmpl", digest_mapping), encoding="utf-8")
     spawn_list.append({
         "id": "a2_digest", "model": "sonnet", "prompt": "prompts/a2_digest.md",
         "out": "digest.json", "tools": SPAWN_TOOLS_DIGEST,
-        "max_turns": 10, "budget_cache_read": BUDGET_CACHE_READ_DEFAULT,
+        "max_turns": DIGEST_MAX_TURNS, "budget_cache_read": BUDGET_CACHE_READ_DIGEST,
     })
     # digest.json 路徑本身零 LLM、plan 當下就確定，直接寫成 part（WP1b
     # _select_parts 固定會挑 parts/digest_path.json 合併進 evidence.json 的
@@ -371,21 +690,6 @@ def cmd_plan(args):
     # 已接線」；不必等 a2_digest agent 交稿才知道這個路徑）。
     _atomic_write_json(parts_dir / "digest_path.json",
                         {"transcripts": {"digest_path": str(run_dir / "digest.json")}})
-
-    # k_koyfin
-    koyfin_mapping = {
-        "TICKER": ticker,
-        "DATE": date,
-        "PART_PATH": str(parts_dir / "transcripts.json"),
-        "EVIDENCE_PATH": str(evidence_dest),
-    }
-    (prompts_dir / "k_koyfin.md").write_text(
-        _render_template(PROMPTS_TMPL_DIR / "koyfin.md.tmpl", koyfin_mapping), encoding="utf-8")
-    spawn_list.append({
-        "id": "k_koyfin", "model": "sonnet", "prompt": "prompts/k_koyfin.md",
-        "out": "parts/transcripts.json", "tools": SPAWN_TOOLS_KOYFIN,
-        "max_turns": 10, "budget_cache_read": BUDGET_CACHE_READ_DEFAULT,
-    })
 
     _atomic_write_json(run_dir / "spawn_list.json", spawn_list)
 
@@ -532,8 +836,9 @@ def _append_replay_marker(prompt_path, obj):
 
 
 def _apply_replay_markers_stage0(run_dir, replay_dir):
-    """Stage 0 四類 spawn（覆蓋軸批次／數字／逐字稿摘要／Koyfin）prompt 逐一附
-    replay marker。批次的軸清單讀 `batches.json`（`plan` 時已寫出）。"""
+    """Stage 0 三類 spawn（覆蓋軸批次／數字／逐字稿摘要）prompt 逐一附
+    replay marker。批次的軸清單讀 `batches.json`（`plan` 時已寫出）。Koyfin
+    已於 WP7a 改零 LLM，plan 內直接跑，不再是 spawn，不需要 marker。"""
     if not replay_dir:
         return
     prompts_dir = run_dir / "prompts"
@@ -552,13 +857,11 @@ def _apply_replay_markers_stage0(run_dir, replay_dir):
     _append_replay_marker(prompts_dir / "a2_digest.md", {
         "kind": "digest", "out": str(run_dir / "digest.json"),
     })
-    _append_replay_marker(prompts_dir / "k_koyfin.md", {
-        "kind": "transcripts", "out": str(run_dir / "parts" / "transcripts.json"),
-    })
 
 
 # ---------------------------------------------------------------------------
-# WP1d stage0：plan（未 plan 時）→ spawn k_koyfin → spawn_many 其餘 → finalize
+# WP1d stage0：plan（未 plan 時，Koyfin 於 plan 內零 LLM 完成）→ spawn_many
+# 覆蓋/數字/摘要 → finalize（WP7a #4：resume 時只重派需要的部分）
 # ---------------------------------------------------------------------------
 
 def _finalize_run_dir(run_dir):
@@ -658,11 +961,28 @@ def _do_stage0(ticker, date, plan_kwargs, replay_dir, accept_over_budget, manife
                 fixture_prior.read_text(encoding="utf-8"), encoding="utf-8")
 
     spawn_list = _load_json_or(run_dir / "spawn_list.json", [])
-    koyfin_specs = [_spawn_spec_for(s, run_dir) for s in spawn_list if s.get("id") == "k_koyfin"]
-    other_specs = [_spawn_spec_for(s, run_dir) for s in spawn_list if s.get("id") != "k_koyfin"]
 
-    if koyfin_specs:
-        stage["agent_usage"].extend(dd_headless.spawn_many(koyfin_specs, max_parallel=1))
+    # WP7a #4：重派真的重派——resume 情境（此 run_dir 已有部分 part 檔，代表
+    # 先前跑過一輪 stage0 但未整體 PASS）不盲目重派全部：先問一次 finalize
+    # 拿「需重派」清單，只重派清單內＋完全沒產出過的 spec；全新 run（尚無
+    # 任何本批產物）才維持「全部 spawn」。`--resume` 進到 stage0 時走的是
+    # 同一個 `_do_stage0` 入口，故也吃到這條路徑，不是只重跑 finalize。
+    has_existing_output = any(
+        (run_dir / s.get("out", "")).exists() for s in spawn_list
+    )
+    if has_existing_output:
+        _, _, needs0 = _finalize_run_dir(run_dir)
+        to_spawn = [
+            s for s in spawn_list
+            if _spec_out_basename(s) in needs0 or not (run_dir / s.get("out", "")).exists()
+        ]
+        if to_spawn:
+            print("[stage0] resume：只重派 {0}".format(
+                ", ".join(s["id"] for s in to_spawn)))
+    else:
+        to_spawn = spawn_list
+
+    other_specs = [_spawn_spec_for(s, run_dir) for s in to_spawn]
     if other_specs:
         stage["agent_usage"].extend(dd_headless.spawn_many(other_specs, max_parallel=4))
 
@@ -1017,7 +1337,7 @@ def _do_gate(ticker, date, judgment_model, replay_dir, accept_over_budget, manif
 # WP1d brief：dd_brief.py（WP4a 交付）零 LLM 渲染；不存在時印警告跳過
 # ---------------------------------------------------------------------------
 
-def _do_brief(ticker, date, do_full, manifest):
+def _do_brief(ticker, date, do_full, manifest, dry_run=False):
     run_dir = _run_dir(ticker, date)
     manifest_path = run_dir / "manifest.json"
     dd_brief_path = SCRIPTS_DIR / "dd_brief.py"
@@ -1037,7 +1357,12 @@ def _do_brief(ticker, date, do_full, manifest):
         _print_step_status("brief", "dd_brief.py missing", "PASS", "SKIPPED")
     else:
         py = _pick_python()
-        out_path = REPO_ROOT / "docs" / "dd" / "brief" / "BRIEF_{0}_{1}.html".format(ticker, date)
+        # WP7a #6：--dry-run 時輸出到 run 目錄內的 brief.html，不寫
+        # docs/dd/brief/（避免 dry-run 汙染會上站/被 git 追蹤的目錄）。
+        if dry_run:
+            out_path = run_dir / "brief.html"
+        else:
+            out_path = REPO_ROOT / "docs" / "dd" / "brief" / "BRIEF_{0}_{1}.html".format(ticker, date)
         out_path.parent.mkdir(parents=True, exist_ok=True)
         r = subprocess.run(
             [py, str(dd_brief_path), "--run-dir", str(run_dir), "--out", str(out_path)],
@@ -1531,7 +1856,7 @@ def cmd_run(args):
         elif stage_name == "gated":
             rc = _do_gate(ticker, date, judgment_model, replay_dir, args.accept_over_budget, manifest)
         elif stage_name == "brief":
-            rc = _do_brief(ticker, date, args.full, manifest)
+            rc = _do_brief(ticker, date, args.full, manifest, dry_run=args.dry_run)
         manifest = _load_json_or(manifest_path, manifest)
         st = manifest.get("stages", {}).get(stage_name, {})
         if st.get("state") not in ("PASS", "SKIPPED"):
@@ -1661,6 +1986,8 @@ def build_parser():
     br.add_argument("ticker")
     br.add_argument("date")
     br.add_argument("--full", action="store_true")
+    br.add_argument("--dry-run", action="store_true",
+                     help="輸出到 run 目錄內 brief.html，不寫 docs/dd/brief/")
 
     def _cmd_brief(args):
         ticker = args.ticker.strip().upper()
@@ -1669,7 +1996,7 @@ def build_parser():
             "ticker": ticker, "date": date, "state": "new", "created": _now(),
             "steps": [], "agents": [], "stages": {},
         })
-        return _do_brief(ticker, date, args.full, manifest)
+        return _do_brief(ticker, date, args.full, manifest, dry_run=args.dry_run)
 
     br.set_defaults(func=_cmd_brief)
 
