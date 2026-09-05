@@ -91,3 +91,31 @@
 🔴 1（Vertiv kill metric 可執行性）／🟡 4／🟢 3。Verdict：**AT_RISK**（不是 BROKEN——短缺／Phase II／利潤池裁決的核心方向查證後站得住，甚至證據比報告呈現的更強；風險集中在單一 kill metric 的可執行性與呈現層的證據集中度，建議下次 patch 只動 §risks 第 4 列＋ PM Action ②＋ thesis 段雙鴻/富世達引用，不需動 sd_verdict/clock_phase/conviction 等機器欄）。
 
 WebSearch 使用次數：13
+
+---
+
+## Re-gate（獨立冷讀後，2026-09-05）
+
+> 對象：patch 後的 `docs/id/ID_LiquidCooling_20260905.html`（未 commit）。方法：`check_id.py --t1-floor 45` 輸出 excerpt／report＋逐條 grep -n 對帳 writer_fix_memo 全表，禁 Read 整份 HTML。機械閘：17 項全 PASS（僅篇幅位元組 WARN 80,774 bytes，同批既有慣例），可見字 13,946（≤14,000）、T1 45.5%（≥45%）。
+
+- **🔴①（Vertiv kill metric 可執行性）｜已解**——kill 表第 4 列、id-meta `kill_metrics[3]`、summary kill-brief③／PM Action②、催化劑 Vertiv 列、debates 分歧 2 市場版、§risks 推導行、R9 新增折疊層全數同步改為「年度 10-K backlog＋季度 organic 成長」三腳指標＋ETN 交叉驗證；`bear_threshold`／`window`（by 2027-Q1）／`last_status`（ok）與內文熊線一字對應。grep 確認舊句「恢復揭露後在手訂單環比下滑，或 book-to-bill 低於 1.5x」與「低於 1.5x」門檻均已 0 命中；僅存 1 處「恢復揭露後」出現在 R9 折疊層引號內，作為說明「原熊線前提為何不成立」的歷史引用，非殘留矛盾。第 4 列推導行明寫「屬公司自報，不計入 §3.4 換相雙閘」，§3.4 正文的撮合價（奇鋐）與外部驗證器（Dell'Oro）兩列之熊線／來源／頻率／可操縱度欄位確認未被此次改動觸碰。定位：`#risks` kill 表第 4 列、`#meta` kill_metrics[3]、`#summary`。
+
+- **🟡②（撮合價單一公司代理）｜已解**——kill 表第 1 列現值欄與 thesis「被否證的一半」均已補雙鴻 29.66%／富世達 32.31%（2026-Q1 實績，非目標）交叉確認，且明寫「三家台廠實績同向，非單一公司的組合效果」；WebSearch 複查 statementdog／台視財經／豐雲學堂三數字與 writer 引用一致。row1 的 bear_threshold／來源／頻率／可操縱度欄未被此次改動觸碰，第 5 列交叉讀的推導邏輯保留。定位：`#risks` kill 表第 1 列、`#thesis` T6。
+
+- **🟡③（機櫃功耗跨姊妹 ID 不一致）｜已解**——`#thesis` 首段已加註「（IT 負載口徑）」並指向姊妹報告「含供電損耗口徑（150／225kW），差 8–12%」；查證 `ID_AIDCPowerElectronics_20260905.html` 表格數字（150kW／225kW）與本 ID 引用一致，姊妹檔本身未被改動（在其獨立 commit 範圍內，符合本輪只改單側的判斷）。定位：`#thesis` T2。
+
+- **🟡④（bear 未劇本化）｜已解**——§3.4 三視野表 3Y Bear 欄已補「無輝達認證通用件中小廠先退（單價年減逾 15%）→ 二線廠比價 → 頭部廠最後受壓」＋兩相浸沒式 2022 年斷供後約 12 個月出清的歷史類比，時序＋機制＋前例三件齊備；§3.2 原句已改為指向 §3.4，無重複也無斷鏈。定位：`#mechanics` 3.4 表 3Y 列、3.2 段。
+
+- **🟡⑤（分歧 3 未做反方吸收）｜已解**——分歧 3「看什麼分勝負」末句已加「這條反方全對也不否定本 ID：Kyber 延到 2028 會拉長 VR200 世代加價窗期，反而強化『利潤池由零件端毛利率決定』」，且保留原「⚠ 若機櫃延後但液冷營收不受影響，本卡作廢」的證偽句，未把機率分歧偷渡成方向判斷，符合判斷手冊條目 15 的邊界要求。定位：`#debates` 分歧 3 signal 行。
+
+- **🟢⑥（EBITDA vs 現金流用語）｜部分**——thesis／debates 段 5 處「現金流價格」／「現金流」已改為 EBITDA（T7／T11／T16／D2／D3 全數確認），但 **appendix 來源引註表仍有 2 處殘留舊用語**，屬 writer 備忘未列入的漏網（備忘只規劃了「全稿 5 處」，appendix 未算入）：
+  - 檔案定位｜`#appendix` 來源表第 6 列（Eaton／Boyd 引註）｜原句：`Eaton 宣布以 95 億美元收購 Boyd Thermal（22.5 倍預估現金流價格）`｜新句：`Eaton 宣布以 95 億美元收購 Boyd Thermal（22.5 倍預估 EBITDA）`
+  - 檔案定位｜`#appendix` 來源表第 8 列（Ecolab／CoolIT 引註）｜原句：`Ecolab 宣布以 47.5 億美元收購 CoolIT（29 倍未來 12 個月現金流價格）`｜新句：`Ecolab 宣布以 47.5 億美元收購 CoolIT（29 倍未來 12 個月 EBITDA）`
+  （此為 cosmetic 級純用語一致性問題，不影響裁決方向，可與下次任何小改一併順手帶過，不構成單獨擋 commit 的理由。）
+
+- **🟢⑦⑧（承重數字準確／V2-13 施壓三問）｜已解／維持**——上一輪已判定不需 patch，本輪未再變動，覆核仍成立。
+
+**總判定：可發布（AT_RISK → RESOLVED，僅餘 1 條 appendix cosmetic 殘留，不擋 commit；建議 writer 順手帶過 2 處 EBITDA 用語再 commit，或直接 commit 後於下次小改處理）。**
+
+### Re-gate 殘留處置（orchestrator，2026-09-05）
+🟢⑥ 殘留兩行：附錄來源表第 6、8 列「現金流價格」已 replace 為「EBITDA」，全檔用語一致。本輪修補至此結束。

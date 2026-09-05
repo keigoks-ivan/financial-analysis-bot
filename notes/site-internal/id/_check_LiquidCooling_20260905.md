@@ -16,8 +16,8 @@
 | 12. 附錄歷史錨點 | PASS | 3/4 段含年份+量化 | OK |
 | 13. 情境權重 | PASS | 2 張含權重欄的表 | OK |
 | 14. 流程劇場外漏 | PASS | 0 處 | OK |
-| 15. 篇幅 | WARN | 13946 可見字 / 80200 bytes | HTML 80200 bytes > 上限 55000（外掛 CSS） |
-| 16. 重複掃描 | PASS | 2.4%（308/13048 windows） | 「InvestMQuestResearch&nbs」x3 @ appendix, summary；「nvestMQuestResearch&nbsp」x3 @ appendix, summary；「vestMQuestResearch&nbsp;」x3 @ appendix, summary；「estMQuestResearch&nbsp;&」x3 @ appendix, summary；「stMQuestResearch&nbsp;&n」x3 @ appendix, summary |
+| 15. 篇幅 | WARN | 13946 可見字 / 80774 bytes | HTML 80774 bytes > 上限 55000（外掛 CSS） |
+| 16. 重複掃描 | PASS | 2.3%（297/13052 windows） | 「InvestMQuestResearch&nbs」x3 @ appendix, summary；「nvestMQuestResearch&nbsp」x3 @ appendix, summary；「vestMQuestResearch&nbsp;」x3 @ appendix, summary；「estMQuestResearch&nbsp;&」x3 @ appendix, summary；「stMQuestResearch&nbsp;&n」x3 @ appendix, summary |
 | 17. 全形標點(qc.py) | PASS | exit 0 | OK |
 
 ## T1 floor 覆蓋說明（--t1-floor 45）
