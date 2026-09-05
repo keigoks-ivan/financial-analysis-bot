@@ -175,10 +175,13 @@ TW_CB_LINKS = [
 # 2026-09-05 新增：實單規則鏈（W52 閘門×自適應 σ×cap1.5）的跨標的前瞻證偽——
 # 凍結規則丟到規則選擇時從未看過的 ~30 檔標的，量化是否「普遍」或該進 kill 訊號
 # 檢討清單。非可交易系統、非既有四群主題，自成一群（同 TW_CB_LINKS 的做法）。
+# 2026-09-05 再新增：保留 regime 的 bootstrap（以真實牛熊段為重抽單位，對照
+# adopted_bootstrap 固定 block 63 對趨勢規則不公平的疑慮）。
 RESEARCH_OOS_LINKS = [
     ("/backtest/w52_adaptive_oos/", "W52×自適應 σ 跨標的證偽", "w52_oos", "研究"),
     ("/backtest/insurance_premium/", "深熊保險的價格", "ins_prem", "研究"),
     ("/backtest/adopted_bootstrap/", "已採用系統的統計不確定性帶", "adopt_boot", "研究"),
+    ("/backtest/regime_bootstrap/", "保留 regime 的 bootstrap", "regime_boot", "研究"),
     ("/backtest/combined_account/", "美台合併帳戶層", "comb_acct", "研究"),
     ("/backtest/slow_bear_base_rate/", "慢熊的 base rate", "slow_bear", "研究"),
 ]
