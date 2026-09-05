@@ -991,6 +991,20 @@ def _spec_out_basename(spec):
     return Path(spec.get("out", "")).name
 
 
+def _respawn_candidates(spawn_list, needs, run_dir):
+    """回傳需要重派的 spec 清單——依「需重派」清單（part 檔存在但驗證內容
+    不合格）**或**該 spec 對應的 part 檔完全不存在（子 agent 撞輪次上限、
+    從未 Write 出產物）。resume 與首跑共用這支，修補「首跑 finalize FAIL
+    但缺件檔案根本沒被寫出、`_finalize_run_dir` 的『需重派』清單只涵蓋
+    『檔案在但內容不合格』一類、不含『整批沒交出來』一類」這個缺洞——
+    WP8 待補 #4（STRL 首跑 a_2／a_5 撞輪次上限 → finalize FAIL 直接停、
+    retries=0；根因即此）。"""
+    return [
+        s for s in spawn_list
+        if _spec_out_basename(s) in needs or not (run_dir / s.get("out", "")).exists()
+    ]
+
+
 def _spawn_spec_for(spec, run_dir):
     """把 `spawn_list.json` 一筆 spec 轉成餵給 `dd_headless.spawn_many` 的呼叫
     參數。**刻意不把 `spec["out"]`（子 agent 應該用 Write 工具寫入的實際產物
@@ -1071,10 +1085,7 @@ def _do_stage0(ticker, date, plan_kwargs, replay_dir, accept_over_budget, manife
     )
     if has_existing_output:
         _, _, needs0 = _finalize_run_dir(run_dir)
-        to_spawn = [
-            s for s in spawn_list
-            if _spec_out_basename(s) in needs0 or not (run_dir / s.get("out", "")).exists()
-        ]
+        to_spawn = _respawn_candidates(spawn_list, needs0, run_dir)
         if to_spawn:
             print("[stage0] resume：只重派 {0}".format(
                 ", ".join(s["id"] for s in to_spawn)))
@@ -1090,14 +1101,11 @@ def _do_stage0(ticker, date, plan_kwargs, replay_dir, accept_over_budget, manife
 
     rc, out_text, needs = _finalize_run_dir(run_dir)
     retries = 0
-    while needs and rc != 0 and retries < 2:
-        retry_specs = [
-            _spawn_spec_for(s, run_dir)
-            for s in spawn_list
-            if _spec_out_basename(s) in needs
-        ]
-        if not retry_specs:
+    while rc != 0 and retries < 2:
+        retry_candidates = _respawn_candidates(spawn_list, needs, run_dir)
+        if not retry_candidates:
             break
+        retry_specs = [_spawn_spec_for(s, run_dir) for s in retry_candidates]
         stage["agent_usage"].extend(dd_headless.spawn_many(retry_specs, max_parallel=4))
         rc, out_text, needs = _finalize_run_dir(run_dir)
         retries += 1
@@ -1817,6 +1825,12 @@ def _finish_file_set(ticker, date, file_cell):
     ]
 
 
+def _ignore_inline_prompt_files(dirpath, names):
+    """`shutil.copytree(ignore=...)` callback：略過 `*_inline.md`（bundle
+    內嵌版 prompt，見 `_write_inline_prompt`），只留模板渲染版存查。"""
+    return [n for n in names if n.endswith("_inline.md")]
+
+
 def _archive_run_dir(run_dir, archive_dir):
     """把 run 目錄的固定產物複製到 `notes/site-internal/dd/_src/{T}_{D}/`，
     檔名照既有慣例加 `{T}_{D}.` 前綴；`parts/`／`prompts/`／`agents/` 各自
@@ -1847,7 +1861,12 @@ def _archive_run_dir(run_dir, archive_dir):
             dst_dir = archive_dir / sub
             if dst_dir.exists():
                 shutil.rmtree(str(dst_dir))
-            shutil.copytree(str(src_dir), str(dst_dir))
+            # WP8 待補 #5：`prompts/` 底下的 `*_inline.md`（judge／gate／patch
+            # 把 bundle 全文接在模板之後另存的內嵌版，見 `_write_inline_prompt`）
+            # 只是餵子 agent 用的一次性大檔（bundle 內嵌證據原文，體積大且
+            # 半形標點未正規化），存查只需留模板渲染版，故存檔時略過。
+            ignore = _ignore_inline_prompt_files if sub == "prompts" else None
+            shutil.copytree(str(src_dir), str(dst_dir), ignore=ignore)
             copied.append(sub + "/")
 
     manifest_src = run_dir / "manifest.json"
@@ -1877,6 +1896,48 @@ def _git_ahead_behind():
         return int(parts[0]), int(parts[1])
     except ValueError:
         return (0, 0)
+
+
+DD_WORKTREE_DIR = Path("/tmp/dd_wt")
+
+
+def _push_head_via_worktree(commit_sha):
+    """遠端領先時的自救推送：開一個 detached worktree（`origin/main`），
+    只把本次 finish 產生的那顆 commit（`commit_sha`）cherry-pick 上去再推，
+    本地 main（目前所在 working tree／分支）完全不動——不 update-ref、
+    不 checkout 任何檔。回傳 (ok: bool, reason: str)；ok=False 時 reason
+    說明是 cherry-pick 衝突還是 push 被擋（例如 pre-push QC gate）。
+    """
+    wt = DD_WORKTREE_DIR
+    # 清掉可能殘留的舊 worktree 註冊（不假設乾淨環境）
+    _git(["worktree", "remove", "--force", str(wt)])
+    if wt.exists():
+        shutil.rmtree(str(wt), ignore_errors=True)
+    _git(["worktree", "prune"])
+
+    add_r = _git(["worktree", "add", "--detach", str(wt), "origin/main"])
+    if add_r.returncode != 0:
+        return False, "worktree add 失敗：{0}".format(
+            ((add_r.stdout or "") + (add_r.stderr or "")).strip()
+        )
+
+    cp_r = _git(["cherry-pick", commit_sha], cwd=wt)
+    if cp_r.returncode != 0:
+        _git(["cherry-pick", "--abort"], cwd=wt)
+        _git(["worktree", "remove", "--force", str(wt)])
+        return False, "cherry-pick 衝突：{0}".format(
+            ((cp_r.stdout or "") + (cp_r.stderr or "")).strip()
+        )
+
+    push_r = _git(["push", "origin", "HEAD:main"], cwd=wt)
+    if push_r.returncode != 0:
+        _git(["worktree", "remove", "--force", str(wt)])
+        return False, "push 被擋（可能 pre-push QC gate）：{0}".format(
+            ((push_r.stdout or "") + (push_r.stderr or "")).strip()
+        )
+
+    _git(["worktree", "remove", "--force", str(wt)])
+    return True, ""
 
 
 def _do_finish(ticker, date, dry_run=False, no_push=False, skip_dd_screener=False):
@@ -1983,9 +2044,20 @@ def _do_finish(ticker, date, dry_run=False, no_push=False, skip_dd_screener=Fals
 
     ahead, behind = _git_ahead_behind()
     if behind > 0:
+        rev_r = _git(["rev-parse", "HEAD"])
+        commit_sha = (rev_r.stdout or "").strip()
+        ok, reason = _push_head_via_worktree(commit_sha)
+        if ok:
+            print(
+                "[ok] 遠端領先 {0}，已透過 worktree cherry-pick 推送 "
+                "origin/main（commit {1}）".format(behind, commit_sha[:12])
+            )
+            return 0
         print(
-            "[HOLD] 遠端領先 {0}，請 orchestrator "
-            "用 worktree cherry-pick 推".format(behind)
+            "[HOLD] 遠端領先 {0}，worktree cherry-pick 推送失敗：{1}".format(
+                behind, reason
+            ),
+            file=sys.stderr,
         )
         return 2
     push_r = _git(["push", "origin", "main"])

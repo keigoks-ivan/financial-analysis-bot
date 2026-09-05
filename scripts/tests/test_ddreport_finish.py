@@ -346,7 +346,11 @@ def test_finish_missing_brief_stage_errors(tmp_path, monkeypatch):
 # finish：遠端領先 → exit 2，且不 push
 # ---------------------------------------------------------------------------
 
-def test_finish_remote_ahead_exits_2_without_push(tmp_path, monkeypatch):
+def test_finish_remote_ahead_worktree_push_succeeds(tmp_path, monkeypatch):
+    """遠端領先時：自動走 worktree cherry-pick 推送，成功則 rc==0。
+    本地 main 不動——不得出現 `checkout` 或 `update-ref` 呼叫；
+    直接對 main 的 `push origin main` 也不得被呼叫（只能是
+    worktree 內的 `push origin HEAD:main`）。"""
     paths = _setup_fake_repo(tmp_path, monkeypatch)
     ticker, date = "ZTEST", "20260906"
     html_path = paths["brief_dir"] / "BRIEF_{0}_{1}.html".format(ticker, date)
@@ -356,7 +360,9 @@ def test_finish_remote_ahead_exits_2_without_push(tmp_path, monkeypatch):
     git_calls = []
 
     def _fake_git(args, cwd=None):
-        git_calls.append(list(args))
+        git_calls.append((list(args), cwd))
+        if args and args[0] == "rev-parse":
+            return _FakeCompleted(0, "deadbeef1234\n", "")
         return _FakeCompleted(0, "", "")
 
     monkeypatch.setattr(ddreport, "_git", _fake_git)
@@ -364,11 +370,77 @@ def test_finish_remote_ahead_exits_2_without_push(tmp_path, monkeypatch):
     monkeypatch.setattr(ddreport.subprocess, "run", lambda *a, **k: _FakeCompleted(0, "", ""))
 
     rc = ddreport._do_finish(ticker, date)
+    assert rc == 0
+
+    kinds = [c[0][0] for c in git_calls]
+    assert "commit" in kinds
+    assert not any(c[0] == ["checkout"] or (c[0] and c[0][0] == "checkout") for c in git_calls)
+    assert not any(c[0] and c[0][0] == "update-ref" for c in git_calls)
+    # main 分支直接 push 不得被呼叫
+    assert not any(c[0] == ["push", "origin", "main"] for c in git_calls)
+    # worktree 內對 HEAD:main 的 push 必須被呼叫
+    assert any(c[0] == ["push", "origin", "HEAD:main"] for c in git_calls)
+    assert any(c[0][:2] == ["worktree", "add"] for c in git_calls)
+    assert any(c[0][:2] == ["cherry-pick", "deadbeef1234"] or c[0] == ["cherry-pick", "deadbeef1234"] for c in git_calls)
+    assert any(c[0][:2] == ["worktree", "remove"] for c in git_calls)
+
+
+def test_finish_remote_ahead_worktree_cherry_pick_conflict_holds(tmp_path, monkeypatch):
+    """cherry-pick 衝突時：HOLD、exit 2、絕不 push，本地 main 不動。"""
+    paths = _setup_fake_repo(tmp_path, monkeypatch)
+    ticker, date = "ZTEST", "20260908"
+    html_path = paths["brief_dir"] / "BRIEF_{0}_{1}.html".format(ticker, date)
+    _write_brief_html(html_path, _sample_meta())
+    _make_run_dir(paths, ticker, date, html_path)
+
+    git_calls = []
+
+    def _fake_git(args, cwd=None):
+        git_calls.append((list(args), cwd))
+        if args and args[0] == "rev-parse":
+            return _FakeCompleted(0, "deadbeef1234\n", "")
+        if args and args[0] == "cherry-pick" and args[1] != "--abort":
+            return _FakeCompleted(1, "", "CONFLICT")
+        return _FakeCompleted(0, "", "")
+
+    monkeypatch.setattr(ddreport, "_git", _fake_git)
+    monkeypatch.setattr(ddreport, "_git_ahead_behind", lambda: (0, 2))
+    monkeypatch.setattr(ddreport.subprocess, "run", lambda *a, **k: _FakeCompleted(0, "", ""))
+
+    rc = ddreport._do_finish(ticker, date)
     assert rc == 2
 
-    # commit 仍應完成（HOLD 只擋 push），但 push 絕不能被呼叫
-    assert any(c[0] == "commit" for c in git_calls)
-    assert not any(c[0] == "push" for c in git_calls)
+    assert not any(c[0][0] == "push" for c in git_calls)
+    assert any(c[0] == ["cherry-pick", "--abort"] for c in git_calls)
+    assert not any(c[0] and c[0][0] == "update-ref" for c in git_calls)
+    assert not any(c[0] and c[0][0] == "checkout" for c in git_calls)
+
+
+def test_finish_remote_ahead_worktree_push_blocked_holds(tmp_path, monkeypatch):
+    """worktree push 被擋（例如 pre-push QC gate）時：HOLD、exit 2。"""
+    paths = _setup_fake_repo(tmp_path, monkeypatch)
+    ticker, date = "ZTEST", "20260909"
+    html_path = paths["brief_dir"] / "BRIEF_{0}_{1}.html".format(ticker, date)
+    _write_brief_html(html_path, _sample_meta())
+    _make_run_dir(paths, ticker, date, html_path)
+
+    git_calls = []
+
+    def _fake_git(args, cwd=None):
+        git_calls.append((list(args), cwd))
+        if args and args[0] == "rev-parse":
+            return _FakeCompleted(0, "deadbeef1234\n", "")
+        if args and args[0] == "push":
+            return _FakeCompleted(1, "", "pre-push QC gate failed")
+        return _FakeCompleted(0, "", "")
+
+    monkeypatch.setattr(ddreport, "_git", _fake_git)
+    monkeypatch.setattr(ddreport, "_git_ahead_behind", lambda: (0, 1))
+    monkeypatch.setattr(ddreport.subprocess, "run", lambda *a, **k: _FakeCompleted(0, "", ""))
+
+    rc = ddreport._do_finish(ticker, date)
+    assert rc == 2
+    assert any(c[0] == ["worktree", "remove", "--force", str(ddreport.DD_WORKTREE_DIR)] for c in git_calls)
 
 
 def test_finish_no_push_flag_skips_push(tmp_path, monkeypatch):
@@ -398,6 +470,38 @@ def test_finish_no_push_flag_skips_push(tmp_path, monkeypatch):
     assert not any(c[0] == "push" for c in git_calls)
     # --no-push 應該連遠端領先檢查都省了（不必要的 fetch）
     assert ahead_behind_calls == []
+
+
+# ---------------------------------------------------------------------------
+# finish：存檔到 `_src/{T}_{D}/prompts/` 略過 `*_inline.md`
+# ---------------------------------------------------------------------------
+
+def test_finish_archives_prompts_skip_inline_variants(tmp_path, monkeypatch):
+    paths = _setup_fake_repo(tmp_path, monkeypatch)
+    ticker, date = "ZTEST", "20260910"
+    html_path = paths["brief_dir"] / "BRIEF_{0}_{1}.html".format(ticker, date)
+    _write_brief_html(html_path, _sample_meta())
+    run_dir, _ = _make_run_dir(paths, ticker, date, html_path)
+
+    # `_make_run_dir` 已建好 prompts/x.json；再補一組模板版 + 內嵌版
+    # （judge/gate/patch 走 `_write_inline_prompt` 時的實際命名慣例）。
+    (run_dir / "prompts" / "judge.md").write_text("模板渲染版", encoding="utf-8")
+    (run_dir / "prompts" / "judge_inline.md").write_text(
+        "模板 + bundle 全文內嵌版（體積大，含證據原文）", encoding="utf-8"
+    )
+
+    monkeypatch.setattr(ddreport, "_git", lambda args, cwd=None: _FakeCompleted(0, "", ""))
+    monkeypatch.setattr(ddreport, "_git_ahead_behind", lambda: (0, 0))
+    monkeypatch.setattr(ddreport.subprocess, "run", lambda *a, **k: _FakeCompleted(0, "", ""))
+
+    rc = ddreport._do_finish(ticker, date)
+    assert rc == 0
+
+    archive_prompts = paths["src_archive"] / "{0}_{1}".format(ticker, date) / "prompts"
+    assert (archive_prompts / "judge.md").exists()
+    assert not (archive_prompts / "judge_inline.md").exists()
+    # 非 prompts 子目錄（parts／agents）不受影響，`_inline.md` 過濾只作用於 prompts/
+    assert (paths["src_archive"] / "{0}_{1}".format(ticker, date) / "parts" / "x.json").exists()
 
 
 if __name__ == "__main__":

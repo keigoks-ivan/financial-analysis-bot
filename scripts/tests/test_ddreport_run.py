@@ -168,6 +168,12 @@ def test_stage0_finalize_retry_respawns_only_failing_batch(monkeypatch):
 
     def fake_spawn_many(specs, max_parallel=4):
         spawn_many_calls.append([s["id"] for s in specs])
+        # a_1 每次都「成功交出」part 檔（模擬正常完成）；a_2 從不寫出檔案
+        # （模擬撞輪次上限、從未 Write 出產物）——驗證新版重派候選判斷
+        # （needs 清單 ∪ 檔案缺件）不會把已交件的 a_1 誤重派。
+        for s in specs:
+            if s["id"] == "a_1":
+                (run_dir / "parts" / "axes_1.json").write_text("{}", encoding="utf-8")
         return [{"ok": True, "over_budget": False, "num_turns": 1, "id": s["id"]} for s in specs]
 
     monkeypatch.setattr(ddreport.dd_headless, "spawn_many", fake_spawn_many)
@@ -201,6 +207,80 @@ def test_stage0_finalize_retry_respawns_only_failing_batch(monkeypatch):
         for retry_call in spawn_many_calls[1:]:
             assert retry_call == ["a_2"]
         assert len(spawn_many_calls) == 3  # 初次 + 2 次重試
+    finally:
+        shutil.rmtree(run_dir, ignore_errors=True)
+
+
+def test_stage0_first_run_respawns_once_when_part_file_never_written(monkeypatch):
+    """WP8 待補 #4：首跑 finalize FAIL 若是因為某 spec 撞輪次上限、從未
+    Write 出 part 檔（`dd_evidence.py finalize` 的「需重派」清單只涵蓋
+    『檔案存在但驗證不合格』，不含『整批沒交出來』，故 `needs` 對這種缺件
+    是空集合）——舊版 `while needs and rc != 0` 因 `needs` 為空而完全不進
+    迴圈、retries 卡在 0 就直接停（STRL 首跑 a_2/a_5 實測症狀）。新版改用
+    `_respawn_candidates`（needs ∪ 檔案缺件）判斷，應該還是會重派一次；
+    這裡讓重派後 a_2 補寫出檔案、finalize 轉 PASS，驗證 retries 計數為 1
+    且整段最終 PASS（不是「仍 FAIL 才停」的另一半，那半由前一個測試涵蓋）。
+    """
+    ticker, date = "ZTESTFIRSTRETRY", "20260101"
+    run_dir = _clean_run_dir(ticker, date)
+    (run_dir / "parts").mkdir(parents=True)
+    (run_dir / "prompts").mkdir(parents=True)
+
+    spawn_list = [
+        {"id": "a_1", "model": "sonnet", "prompt": "prompts/a_1.md", "out": "parts/axes_1.json",
+         "tools": [], "max_turns": 1, "budget_cache_read": 1000},
+        {"id": "a_2", "model": "sonnet", "prompt": "prompts/a_2.md", "out": "parts/axes_2.json",
+         "tools": [], "max_turns": 1, "budget_cache_read": 1000},
+    ]
+    (run_dir / "spawn_list.json").write_text(json.dumps(spawn_list), encoding="utf-8")
+    for p in ("prompts/a_1.md", "prompts/a_2.md"):
+        (run_dir / p).write_text("dummy", encoding="utf-8")
+
+    spawn_many_calls = []
+
+    def fake_spawn_many(specs, max_parallel=4):
+        ids = [s["id"] for s in specs]
+        spawn_many_calls.append(ids)
+        for s in specs:
+            if s["id"] == "a_1":
+                (run_dir / "parts" / "axes_1.json").write_text("{}", encoding="utf-8")
+            elif s["id"] == "a_2" and len(spawn_many_calls) >= 2:
+                # 第一次撞輪次上限、什麼都沒寫；重派（第二次派工）才補上。
+                (run_dir / "parts" / "axes_2.json").write_text("{}", encoding="utf-8")
+        return [{"ok": True, "over_budget": False, "num_turns": 1, "id": s["id"]} for s in specs]
+
+    monkeypatch.setattr(ddreport.dd_headless, "spawn_many", fake_spawn_many)
+
+    finalize_calls = {"n": 0}
+
+    def fake_finalize(run_dir_arg):
+        finalize_calls["n"] += 1
+        axes2 = run_dir / "parts" / "axes_2.json"
+        if axes2.exists():
+            return 0, "finalize PASS #{0}".format(finalize_calls["n"]), set()
+        # a_2 檔案根本不存在——`dd_evidence.py finalize` 的「需重派」清單
+        # 只列「檔案在但驗證不合格」，故這裡回傳空 needs 集合模擬真實症狀。
+        return 1, "finalize FAIL #{0}".format(finalize_calls["n"]), set()
+
+    monkeypatch.setattr(ddreport, "_finalize_run_dir", fake_finalize)
+
+    try:
+        manifest = {"ticker": ticker, "date": date, "stages": {}}
+        plan_kwargs = {"archetype": None, "peers": None, "segments": None,
+                       "axes_per_batch": 2, "offline": True}
+        rc = ddreport._do_stage0(ticker, date, plan_kwargs, None, False, manifest)
+
+        assert rc == 0
+        assert finalize_calls["n"] == 2  # 首次 FAIL + 重派後一次 PASS
+
+        m = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
+        assert m["stages"]["stage0"]["state"] == "PASS"
+        assert m["stages"]["stage0"]["finalize_retries"] == 1
+
+        assert spawn_many_calls[0] == ["a_1", "a_2"]
+        # 重派只挑缺件的 a_2，不重派已交件的 a_1
+        assert spawn_many_calls[1] == ["a_2"]
+        assert len(spawn_many_calls) == 2
     finally:
         shutil.rmtree(run_dir, ignore_errors=True)
 

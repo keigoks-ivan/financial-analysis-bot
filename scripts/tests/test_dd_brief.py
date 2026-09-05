@@ -279,3 +279,54 @@ def test_valid_plain_block_renders_five_and_stories_without_fallback(tmp_path):
     assert "產能順利擴大" in html_text
     assert "訂單照走但倍數會收斂" in html_text
     assert "材料被卡、渦輪回歸" in html_text
+
+
+# ---------------------------------------------------------------------------
+# WP8 待補 #5：CJK 後半形標點轉全形（`,;:!?`），不動英文/數字間的標點
+# ---------------------------------------------------------------------------
+
+def test_cjk_punct_fullwidth_converts_five_marks_after_cjk():
+    assert dd_brief._cjk_punct_fullwidth("停產,復工") == "停產，復工"
+    assert dd_brief._cjk_punct_fullwidth("市場;供給") == "市場；供給"
+    assert dd_brief._cjk_punct_fullwidth("重點:缺料") == "重點：缺料"
+    assert dd_brief._cjk_punct_fullwidth("擴產!") == "擴產！"
+    assert dd_brief._cjk_punct_fullwidth("為什麼?") == "為什麼？"
+
+
+def test_cjk_punct_fullwidth_does_not_touch_ascii_context():
+    # 英文/數字之間的半形標點不得被改
+    assert dd_brief._cjk_punct_fullwidth("3,000 units") == "3,000 units"
+    assert dd_brief._cjk_punct_fullwidth("GAAP, non-GAAP") == "GAAP, non-GAAP"
+    # 混合句：只有緊接在 CJK 字元後面的那個標點才轉
+    mixed = dd_brief._cjk_punct_fullwidth("營收 3,000 億,續創新高")
+    assert mixed == "營收 3,000 億，續創新高"
+
+
+def test_esc_applies_cjk_punct_fullwidth_before_html_escape():
+    assert dd_brief.esc("場,景") == "場，景"
+    # 與 html.escape 相容：特殊字元仍要轉義
+    assert dd_brief.esc("A&B,場,景") == "A&amp;B,場，景"
+
+
+def test_render_negative_evidence_claim_fullwidths_half_width_punct_after_cjk():
+    """WP8 待補 #5 的實測場景重現（STRL）：子 agent 寫的 finding claim 帶
+    半形逗號（如「…市場,占比…」），render_negative_evidence 渲染進負向
+    證據處置表時必須已轉全形，不能讓半形逗號原樣流進上站 HTML 被
+    pre-push QC（CJK 後半形標點）擋下。"""
+    evidence = {
+        "coverage": {
+            "demand": {
+                "findings": [
+                    {
+                        "claim": "資料中心市場,占比持續上升，但終端需求疲弱",
+                        "source": "法說",
+                        "as_of": "2026-08",
+                        "direction": "-",
+                    }
+                ]
+            }
+        }
+    }
+    row_html = dd_brief.render_negative_evidence({}, evidence)
+    assert "市場,占比" not in row_html
+    assert "市場，占比" in row_html

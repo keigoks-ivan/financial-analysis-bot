@@ -49,8 +49,28 @@ except Exception:
     dd_gate = None
 
 
+# CJK 後半形標點轉全形（沿用 scripts/qc.py CJK_PUNCT_RE 的判準：CJK 字元
+# 直接後面接半形標點才算，不動英文/數字之間的標點如 "3,000" 或 "GAAP, non-GAAP"）
+# —— qc.py 本身只查 `,.:` 三個（`;?!` 會在它的既有模板文案裡誤觸發，
+# 那支是「檢查」不是「改寫」，寧可漏抓也不能誤傷）；這裡是「渲染時改寫」，
+# 來源是 evidence／judgment 子 agent 寫的散文而非站內模板文案，按派工單
+# 涵蓋 `,;:!?` 五個。
+_CJK_CHAR = r'[㐀-䶿一-鿿豈-﫿]'
+_CJK_HALFWIDTH_PUNCT_RE = re.compile(_CJK_CHAR + r'([,;:!?])')
+_FULLWIDTH_PUNCT = {",": "，", ";": "；", ":": "：", "!": "！", "?": "？"}
+
+
+def _cjk_punct_fullwidth(text: str) -> str:
+    if not text:
+        return text
+    return _CJK_HALFWIDTH_PUNCT_RE.sub(
+        lambda m: m.group(0)[0] + _FULLWIDTH_PUNCT[m.group(1)], text
+    )
+
+
 def esc(v) -> str:
-    return html_lib.escape("" if v is None else str(v))
+    text = "" if v is None else str(v)
+    return html_lib.escape(_cjk_punct_fullwidth(text))
 
 
 def load_json(path):
