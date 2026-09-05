@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>慢熊的 base rate | InvestMQuest Research</title>
+<meta name="description" content="長歷史、多市場（美/日/德/英/港/台/那斯達克）量化「慢熊」（峰谷回撤≥9個月）多久來一次：合併池每十年約 0.87 次、未來十年至少一次的機率約 58.3%；並把凍結規則（W52 閘門×自適應 σ）套在每次 ≥20% 回撤上算理賠與保費。判定：慢熊約十年一遇：保費要用十年攤。">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+:root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
+      --text:#111827;--muted:#6b7280;--border:#e5e7eb}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans TC',sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1120px;margin:0 auto;padding:0 1.5rem}
+.page-hdr{padding:1.75rem 0 1.25rem;background:linear-gradient(180deg,#eff6ff 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
+.page-hdr h1{font-size:1.55rem;font-weight:700;letter-spacing:-.03em}
+.page-hdr .sub{color:var(--muted);font-size:.88rem;margin-top:.2rem}
+.crumb{font-size:.82rem;color:var(--muted);margin-bottom:.4rem}
+.crumb a{color:var(--muted)}
+.section{padding:1.75rem 0 0}
+.section-title{font-size:1.08rem;font-weight:700;margin-bottom:1rem;
+               padding-bottom:.45rem;border-bottom:2px solid var(--brand)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.1rem 1.25rem;margin-bottom:1rem}
+table{width:100%;border-collapse:collapse;font-size:.82rem;background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+th,td{text-align:left;padding:.5rem .6rem;border-bottom:1px solid var(--border)}
+th{background:#f9fafb;font-weight:600;font-size:.68rem;text-transform:uppercase;
+   letter-spacing:.03em;color:var(--muted)}
+td{font-variant-numeric:tabular-nums;vertical-align:top}
+td.num,th.num{text-align:right}
+td.lbl{white-space:nowrap;font-weight:500}
+tbody tr:last-child td{border-bottom:0}
+tr.dim{background:#f4f5f6;color:#8b93a1}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.hero{margin:1.25rem 0;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--card)}
+.hero-top{background:linear-gradient(135deg,#eff6ff 0%,#f5f8ff 100%);padding:1.4rem 1.6rem;border-bottom:1px solid var(--border)}
+.hero-top .verdict-tag{display:inline-block;color:#fff;font-size:.74rem;font-weight:700;
+                       letter-spacing:.05em;padding:.25rem .7rem;border-radius:99px;margin-bottom:.5rem}
+.hero-top h2{font-size:1.15rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.35rem}
+.hero-top p{font-size:.9rem;color:#374151;max-width:64rem}
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card)}
+.hero-stats > div{padding:1rem 1.2rem;text-align:center;border-right:1px solid var(--border)}
+.hero-stats > div:last-child{border-right:none}
+.hero-stats .hs-label{font-size:.66rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.hero-stats .hs-value{font-size:1.35rem;font-weight:800;letter-spacing:-.02em}
+.takeaway{font-size:.86rem;margin:.9rem 0;padding:.7rem .95rem;border-radius:6px;background:var(--brand-light);
+    border-left:3px solid var(--brand);color:#1f2c44}
+.takeaway b{color:#12213a}
+.note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;
+      padding:.85rem 1.1rem;font-size:.82rem;color:#92400e;margin:1rem 0}
+.ok{color:#059669;font-weight:700}
+.no{color:#dc2626;font-weight:700}
+.chart-wrap{position:relative}
+footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
+       text-align:center;padding:1.25rem 0;font-size:.78rem;margin-top:2rem}
+@media(max-width:768px){
+  .hero-stats{grid-template-columns:repeat(2,1fr)}
+  table{font-size:.74rem}th,td{padding:.4rem .4rem}
+}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/market/">市況主控台</a>
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <a href="/cockpit/">選股</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">個股研究</a>
+          <a href="/id/">產業研究</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/" class="active">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/flow/">投資流程</a>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="page-hdr">
+  <div class="container">
+    <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / 市況主控台 / 慢熊的 base rate</div>
+    <h1>慢熊的 base rate</h1>
+    <div class="sub">長歷史、多市場（美/日/德/英/港/台/那斯達克）量化慢熊多久來一次，
+    並用凍結規則（W52 閘門×自適應 σ）算理賠與保費・生成 2026-09-05</div>
+    <style id="bt-subnav-style">.bt-subnav{margin-top:.75rem;border:1px solid var(--border,#e5e7eb);border-radius:8px;overflow:hidden;font-size:.78rem;line-height:1.3}.bt-subnav-row{display:flex;align-items:flex-start;gap:.55rem;padding:.32rem .55rem;border-top:1px solid var(--border,#e5e7eb)}.bt-subnav-row:first-child{border-top:0}.bt-subnav-lbl{flex:0 0 5.4em;font-size:.64rem;font-weight:700;color:var(--muted,#6b7280);text-transform:uppercase;letter-spacing:.04em;padding-top:.34rem}.bt-subnav-pills{display:flex;flex-wrap:wrap;gap:.3rem;min-width:0}.bt-subnav-pills a{display:inline-flex;align-items:center;gap:.28rem;padding:.26rem .6rem;background:#eef1f4;color:#374151;border-radius:999px;text-decoration:none;font-weight:500;white-space:nowrap;transition:background .12s}.bt-subnav-pills a:hover{background:#e1e6ea}.bt-subnav-pills a.bt-dead{color:#7a828d;background:#f2f3f5}.bt-subnav-pills a.bt-on{background:linear-gradient(135deg,#081832,#173564);color:#fff;font-weight:600}.bt-subnav-pills a.bt-on:hover{background:linear-gradient(135deg,#081832,#173564)}.bt-tag{font-size:.6rem;font-weight:600;padding:.02rem .3rem;border-radius:4px;line-height:1.4}.bt-tag-dead{background:rgba(220,38,38,.12);color:#b42318}.bt-tag-watch{background:rgba(180,118,20,.15);color:#986a12}.bt-on .bt-tag-dead{background:rgba(255,255,255,.22);color:#fff}.bt-on .bt-tag-watch{background:rgba(255,255,255,.22);color:#fff}@media(max-width:640px){.bt-subnav-row{flex-direction:column;gap:.28rem;padding:.4rem .55rem}.bt-subnav-lbl{flex-basis:auto;padding-top:0}}</style><nav class="bt-subnav" aria-label="回測子導航"><div class="bt-subnav-row"><div class="bt-subnav-lbl">對比總覽</div><div class="bt-subnav-pills"><a href="/backtest/">20 年</a><a href="/backtest/10y/">10 年</a><a href="/backtest/criteria/">評估標準</a><a href="/backtest/tw/">台股總覽</a><a href="/backtest/multi/">多資產總覽</a><a href="/backtest/leverage/">槓桿疊加總覽</a><a href="/backtest/ma_sensitivity/">MA 敏感度</a><a href="/backtest/free_lunch/">分散與免費午餐</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">個別系統</div><div class="bt-subnav-pills"><a href="/backtest/long_track/">SPY/QQQ 長軌</a><a href="/backtest/long_track_qqq/">QQQ 長軌純攻</a><a href="/backtest/long_track_ensemble/">SPY/QQQ 集成</a><a href="/backtest/long_track_smh/">SMH/QQQ 進攻</a><a href="/backtest/six_state/">QQQ＋SMH 六狀態</a><a href="/backtest/six_state_v1r1/">QQQ 六狀態實盤</a><a href="/backtest/gem/">SPY/ACWX 雙動能</a><a href="/backtest/slope_filter/">SPY/AGG 斜率</a><a href="/backtest/rsi2_mr/">SPY/QQQ 均值回歸</a><a href="/backtest/supertrend/">週線 Supertrend</a><a href="/backtest/minervini/">Minervini RS+VCP</a><a href="/backtest/mom_volscaling/">動能·波動縮放</a><a href="/backtest/dual_track_study/">雙軌分散研究</a><a href="/backtest/leverage_voltarget/">期貨槓桿疊加</a><a href="/backtest/vol_targeting/">波動目標倉位<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/dual_track/" class="bt-dead">SPY/QQQ 雙軌多空<span class="bt-tag bt-tag-dead">否決</span></a><a href="/backtest/exit_switch/" class="bt-dead">出場法切換<span class="bt-tag bt-tag-dead">否決</span></a><a href="/backtest/short_system/" class="bt-dead">指數做空<span class="bt-tag bt-tag-dead">失敗</span></a><a href="/backtest/cndr/" class="bt-dead">Iron Condor<span class="bt-tag bt-tag-dead">失敗</span></a><a href="/backtest/covered_call/" class="bt-dead">Covered Call<span class="bt-tag bt-tag-dead">負貢獻</span></a><a href="/backtest/put_timing/" class="bt-dead">SPY/QQQ 買 put 避險<span class="bt-tag bt-tag-dead">負貢獻</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">多資產</div><div class="bt-subnav-pills"><a href="/backtest/turtle/">唐奇安突破</a><a href="/backtest/clenow/">跨資產趨勢</a><a href="/backtest/multiasset_trend/">SG Trend 複製</a><a href="/backtest/turtle_adopt/">組合採用 Sleeve</a><a href="/backtest/slope_filter_global/">全球斜率穩健性</a><a href="/backtest/crossasset_defense/">跨資產防守</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">台股波段</div><div class="bt-subnav-pills"><a href="/backtest/tw_0050_compare/">0050 總覽·台美差異</a><a href="/backtest/tw_0050/">0050 進攻趨勢（移植）</a><a href="/backtest/tw_0050_lt/">0050 長軌趨勢</a><a href="/backtest/long_track_tw/">2330/0050 E3 長軌</a><a href="/backtest/tw_0050_six/">0050 六狀態機</a><a href="/backtest/tw_0050_dual/" class="bt-dead">0050 雙軌多空<span class="bt-tag bt-tag-dead">否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">台股選擇權</div><div class="bt-subnav-pills"><a href="/backtest/tw_options/">台股選擇權專區<span class="bt-tag bt-tag-watch">專區</span></a><a href="/backtest/txo_vol_seller/">台指選擇權賣方<span class="bt-tag bt-tag-watch">模擬中</span></a><a href="/backtest/txo_put_seller/">台指賣方下檔<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_iron_condor/">台指雙賣<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_covered_call_0050/">台指 Covered Call<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_tail_hedge/">台指尾端避險<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">日內交易</div><div class="bt-subnav-pills"><a href="/backtest/txf_intraday/">台指當沖<span class="bt-tag bt-tag-watch">未過</span></a><a href="/backtest/txf_chips/">籌碼偏向<span class="bt-tag bt-tag-watch">觀察</span></a><a href="/backtest/ssf_xsec/">個股期橫斷面<span class="bt-tag bt-tag-watch">未過</span></a><a href="/backtest/txf_basis/" class="bt-dead">基差偏向<span class="bt-tag bt-tag-dead">否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・主動式ETF</div><div class="bt-subnav-pills"><a href="/backtest/active_etf/">主動式ETF總結<span class="bt-tag bt-tag-watch">專區</span></a><a href="/backtest/tw_active_etf/">台股主動式ETF<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/us_active_etf/">美股主動式ETF<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/tw_mutual_fund/">台股共同基金<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・頻率</div><div class="bt-subnav-pills"><a href="/backtest/daily_vs_weekly/">日/週線</a><a href="/backtest/daily_vs_weekly_deep/">日/週·深掘</a><a href="/backtest/daily_vs_weekly_global/">日/週·全球</a><a href="/backtest/daily_vs_weekly_tw/">日/週·台股</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・均線</div><div class="bt-subnav-pills"><a href="/backtest/ma_cross/">MA 交叉</a><a href="/backtest/ma_deviation/">MA 乖離</a><a href="/backtest/ma_dynband/">MA 動態帶</a><a href="/backtest/ma_squeeze/">MA 擠壓</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・崩盤</div><div class="bt-subnav-pills"><a href="/backtest/smh_vcrash/">SMH V崩</a><a href="/backtest/tw_vcrash/">台股 V崩防禦</a><a href="/backtest/tw_crash/">台股含崩盤驗證</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・總經</div><div class="bt-subnav-pills"><a href="/backtest/housing_gdp/">人均GDP與房價<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・可轉債</div><div class="bt-subnav-pills"><a href="/backtest/tw_cb/">台股可轉債專區<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・因子</div><div class="bt-subnav-pills"><a href="/backtest/return_driver/">美股漲跌歸因：獲利與估值<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/pead/">美股財報驚喜後漂移<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/accruals/">美股獲利品質（應計項目）<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/share_issuance/">美股股數增減（發行與回購）<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/profitability/">美股獲利能力因子<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/asset_growth/">美股資產成長異象<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/index_inclusion/">指數納入效應<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/insider/">內部人買賣叢集買進<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・跨標的驗證</div><div class="bt-subnav-pills"><a href="/backtest/w52_adaptive_oos/">W52×自適應 σ 跨標的證偽<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/insurance_premium/">深熊保險的價格<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/adopted_bootstrap/">已採用系統的統計不確定性帶<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/combined_account/">美台合併帳戶層<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/slow_bear_base_rate/" class="bt-on">慢熊的 base rate<span class="bt-tag bt-tag-watch">研究</span></a></div></div></nav>
+  </div>
+</div>
+
+<div class="container">
+
+
+<div class="hero">
+  <div class="hero-top">
+    <span class="verdict-tag" style="background:#d97706">慢熊約十年一遇：保費要用十年攤</span>
+    <h2>美股慢熊每十年約 0.81 次（1990 後 0.82 次）；
+    合併多市場池每十年約 0.87 次；未來十年至少一次慢熊的機率約 58.3%。</h2>
+    <p><b>base rate</b>（基礎機率——不看個別故事、只看長期歷史裡某類事件平均多久發生一次的統計基準率）
+    問的是「慢熊多久來一次」而不是「該不該續保」。峰谷 ≥9 個月的回撤定義為「慢熊」，&lt;3 個月為「急跌」，
+    3–9 個月為「中」；門檻先驗凍結、跑完不改（見下方判準）。</p>
+  </div>
+  <div class="hero-stats">
+    <div><div class="hs-label">美股 GSPC 慢熊/十年</div><div class="hs-value">0.81</div></div>
+    <div><div class="hs-label">1990 後</div><div class="hs-value">0.82</div></div>
+    <div><div class="hs-label">合併池慢熊/十年</div><div class="hs-value">0.87</div></div>
+    <div><div class="hs-label">未來 10 年 ≥1 次機率</div><div class="hs-value">58.3%</div></div>
+  </div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">一、判準與定義（預註冊原文，跑之前鎖死）</h2>
+<div class="takeaway"><b>「慢熊」＝峰到谷（自歷史高點回撤首次 ≤ −20% 起算之谷底）之時長 ≥9 個月；
+「急跌」＜3 個月；3–9 個月為「中」。</b>9 個月的門檻由來：約是 W52 週線閘門從觸發（跌破 52 週均）到
+有意義減少曝險所需典型時滯的兩倍；3 個月＝一季，也是 bootstrap 敏感度顯示規則失去 edge 的區間下限。
+兩者皆為先驗設定，跑完不因單一結果回頭調整。</p></div>
+<div class="scroll"><table>
+<thead><tr><th>慢熊每十年次數（美股 GSPC 1928 起＋各市場合併池，兩者皆看）</th><th>讀法</th></tr></thead>
+<tbody>
+<tr><td class="lbl">≥ 1.5</td><td>慢熊是常態：保單十年內大概率理賠 ≥1 次</td></tr>
+<tr><td class="lbl">0.7 – 1.5</td><td>慢熊約十年一遇：保費要用十年攤</td></tr>
+<tr><td class="lbl">&lt; 0.7</td><td>慢熊罕見：保費多半白付</td></tr>
+</tbody></table></div>
+<div class="note">附帶必印：λ（<b>Poisson λ</b>——卜瓦松過程的年發生率參數，這裡是「每年平均出現幾次慢熊」）
+的 95% 信賴區間；1990 後（現代市場結構）與全樣本分開算，若 1990 後 λ 明顯低於全樣本，
+必須明說「慢熊頻率在下降」而不是只印全樣本數字。本回測不調規則、不掃門檻擇優、不寫續保建議——
+只回答資料在說什麼。</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">二、偵測器單元測試（^GSPC／Shiller，五個教科書級事件）</h2>
+<div class="takeaway">回撤偵測器（見判準區定義）先在五個史上公認的美股慢熊/急跌上驗證，
+確認峰谷日期與分類正確，才套用到全部市場。</div>
+<div class="scroll"><table>
+<thead><tr><th>事件</th><th>偵測峰日</th><th>偵測谷日</th><th class="num">時長（月）</th><th>分類</th><th>結果</th></tr></thead>
+<tbody><tr><td class='lbl'>1929 大蕭條</td><td>1929-09-30</td><td>1932-06-30</td><td class='num'>33.00</td><td>慢熊</td><td><span class='ok'>✓ 命中</span></td></tr><tr><td class='lbl'>2000-03 網路泡沫</td><td>2000-03-24</td><td>2002-10-09</td><td class='num'>30.52</td><td>慢熊</td><td><span class='ok'>✓ 命中</span></td></tr><tr><td class='lbl'>2007-10 GFC</td><td>2007-10-09</td><td>2009-03-09</td><td class='num'>16.98</td><td>慢熊</td><td><span class='ok'>✓ 命中</span></td></tr><tr><td class='lbl'>2020-02 COVID</td><td>2020-02-19</td><td>2020-03-23</td><td class='num'>1.08</td><td>急跌</td><td><span class='ok'>✓ 命中</span></td></tr><tr><td class='lbl'>2022-01 通膨熊</td><td>2022-01-03</td><td>2022-10-12</td><td class='num'>9.26</td><td>慢熊</td><td><span class='ok'>✓ 命中</span></td></tr></tbody></table></div>
+</div>
+
+<div class="section">
+<h2 class="section-title">散布：深度 vs 時長（顏色＝類別，大小＝GS1.5 理賠）</h2>
+<div class="chart-wrap" style="height:380px"><canvas id="chart-scatter"></canvas></div>
+</div>
+
+<div class="section">
+<h2 class="section-title">三、事件總表（每市場每次 ≥20% 回撤一列）</h2>
+<div class="takeaway">灰底列＝暖機篩選未通過（事件峰日在該序列前 52 週內，統計上排除，但仍列出供對照）。
+<b>理賠</b>（正值 pp，百分點——指凍結規則同一峰谷窗少跌的百分比）＝指數回撤深度 − 變體回撤深度；
+理賠只算該市場策略自身暖機（505 個交易日）之後的事件。</div>
+
+<h3 style="font-size:.92rem;margin:1.1rem 0 .5rem">美股 S&P 500
+（1927-12-30 →
+2026-09-04）</h3>
+<div class="scroll"><table><thead><tr><th>峰日</th><th>谷日</th><th class="num">深度</th>
+<th class="num">時長（月）</th><th>類別</th><th class="num">G 理賠 pp</th>
+<th class="num">GS1.0 理賠 pp</th><th class="num">GS1.5 理賠 pp</th></tr></thead>
+<tbody><tr><td>1929-09-16</td><td>1932-06-01</td><td class='num'>-86.19%</td><td class='num'>32.49</td><td style='color:#dc2626'>慢熊</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td></tr><tr><td>1956-08-03</td><td>1957-10-22</td><td class='num'>-21.47%</td><td class='num'>14.62</td><td style='color:#dc2626'>慢熊</td><td class='num'>+5.5</td><td class='num'>+8.1</td><td class='num'>+6.2</td></tr><tr><td>1961-12-12</td><td>1962-06-26</td><td class='num'>-27.97%</td><td class='num'>6.44</td><td style='color:#d97706'>中</td><td class='num'>+16.9</td><td class='num'>+16.9</td><td class='num'>+13.0</td></tr><tr><td>1966-02-09</td><td>1966-10-07</td><td class='num'>-22.18%</td><td class='num'>7.88</td><td style='color:#d97706'>中</td><td class='num'>+14.2</td><td class='num'>+15.8</td><td class='num'>+15.8</td></tr><tr><td>1968-11-29</td><td>1970-05-26</td><td class='num'>-36.06%</td><td class='num'>17.84</td><td style='color:#dc2626'>慢熊</td><td class='num'>+30.2</td><td class='num'>+30.1</td><td class='num'>+24.3</td></tr><tr><td>1973-01-11</td><td>1974-10-03</td><td class='num'>-48.20%</td><td class='num'>20.70</td><td style='color:#dc2626'>慢熊</td><td class='num'>+40.2</td><td class='num'>+44.3</td><td class='num'>+44.1</td></tr><tr><td>1980-11-28</td><td>1982-08-12</td><td class='num'>-27.11%</td><td class='num'>20.43</td><td style='color:#dc2626'>慢熊</td><td class='num'>+23.0</td><td class='num'>+25.8</td><td class='num'>+23.6</td></tr><tr><td>1987-08-25</td><td>1987-12-04</td><td class='num'>-33.51%</td><td class='num'>3.32</td><td style='color:#d97706'>中</td><td class='num'>+0.7</td><td class='num'>+14.0</td><td class='num'>+14.0</td></tr><tr><td>2000-03-24</td><td>2002-10-09</td><td class='num'>-49.15%</td><td class='num'>30.52</td><td style='color:#dc2626'>慢熊</td><td class='num'>+35.6</td><td class='num'>+39.8</td><td class='num'>+35.9</td></tr><tr><td>2007-10-09</td><td>2009-03-09</td><td class='num'>-56.78%</td><td class='num'>16.98</td><td style='color:#dc2626'>慢熊</td><td class='num'>+43.3</td><td class='num'>+49.2</td><td class='num'>+49.2</td></tr><tr><td>2020-02-19</td><td>2020-03-23</td><td class='num'>-33.92%</td><td class='num'>1.08</td><td style='color:#059669'>急跌</td><td class='num'>+25.1</td><td class='num'>+28.1</td><td class='num'>+28.1</td></tr><tr><td>2022-01-03</td><td>2022-10-12</td><td class='num'>-25.43%</td><td class='num'>9.26</td><td style='color:#dc2626'>慢熊</td><td class='num'>+12.2</td><td class='num'>+16.5</td><td class='num'>+16.5</td></tr></tbody></table></div>
+<h3 style="font-size:.92rem;margin:1.1rem 0 .5rem">美股 那斯達克綜合
+（1971-02-05 →
+2026-09-04）</h3>
+<div class="scroll"><table><thead><tr><th>峰日</th><th>谷日</th><th class="num">深度</th>
+<th class="num">時長（月）</th><th>類別</th><th class="num">G 理賠 pp</th>
+<th class="num">GS1.0 理賠 pp</th><th class="num">GS1.5 理賠 pp</th></tr></thead>
+<tbody><tr><td>1973-01-11</td><td>1974-10-03</td><td class='num'>-59.90%</td><td class='num'>20.70</td><td style='color:#dc2626'>慢熊</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td></tr><tr><td>1978-09-13</td><td>1978-11-14</td><td class='num'>-20.37%</td><td class='num'>2.04</td><td style='color:#059669'>急跌</td><td class='num'>+1.3</td><td class='num'>+7.7</td><td class='num'>+7.6</td></tr><tr><td>1980-02-08</td><td>1980-03-27</td><td class='num'>-24.91%</td><td class='num'>1.58</td><td style='color:#059669'>急跌</td><td class='num'>+6.4</td><td class='num'>+12.3</td><td class='num'>+12.0</td></tr><tr><td>1981-05-29</td><td>1982-08-13</td><td class='num'>-28.79%</td><td class='num'>14.49</td><td style='color:#dc2626'>慢熊</td><td class='num'>+25.1</td><td class='num'>+25.4</td><td class='num'>+24.1</td></tr><tr><td>1983-06-24</td><td>1984-07-25</td><td class='num'>-31.50%</td><td class='num'>13.04</td><td style='color:#dc2626'>慢熊</td><td class='num'>+18.7</td><td class='num'>+20.8</td><td class='num'>+18.1</td></tr><tr><td>1987-08-27</td><td>1987-10-28</td><td class='num'>-35.96%</td><td class='num'>2.04</td><td style='color:#059669'>急跌</td><td class='num'>+15.0</td><td class='num'>+20.9</td><td class='num'>+20.9</td></tr><tr><td>1989-10-09</td><td>1990-10-16</td><td class='num'>-33.00%</td><td class='num'>12.22</td><td style='color:#dc2626'>慢熊</td><td class='num'>+23.9</td><td class='num'>+26.0</td><td class='num'>+21.3</td></tr><tr><td>1998-07-20</td><td>1998-10-08</td><td class='num'>-29.55%</td><td class='num'>2.63</td><td style='color:#059669'>急跌</td><td class='num'>-4.6</td><td class='num'>+8.2</td><td class='num'>+7.7</td></tr><tr><td>2000-03-10</td><td>2002-10-09</td><td class='num'>-77.93%</td><td class='num'>30.98</td><td style='color:#dc2626'>慢熊</td><td class='num'>+35.7</td><td class='num'>+50.5</td><td class='num'>+47.4</td></tr><tr><td>2018-08-29</td><td>2018-12-24</td><td class='num'>-23.64%</td><td class='num'>3.84</td><td style='color:#d97706'>中</td><td class='num'>+10.8</td><td class='num'>+13.2</td><td class='num'>+11.5</td></tr><tr><td>2020-02-19</td><td>2020-03-23</td><td class='num'>-30.12%</td><td class='num'>1.08</td><td style='color:#059669'>急跌</td><td class='num'>+0.4</td><td class='num'>+17.0</td><td class='num'>+17.0</td></tr><tr><td>2021-11-19</td><td>2022-12-28</td><td class='num'>-36.40%</td><td class='num'>13.27</td><td style='color:#dc2626'>慢熊</td><td class='num'>+24.3</td><td class='num'>+26.9</td><td class='num'>+25.6</td></tr><tr><td>2024-12-16</td><td>2025-04-08</td><td class='num'>-24.32%</td><td class='num'>3.71</td><td style='color:#d97706'>中</td><td class='num'>+12.8</td><td class='num'>+12.5</td><td class='num'>+10.1</td></tr></tbody></table></div>
+<h3 style="font-size:.92rem;margin:1.1rem 0 .5rem">日本 日經 225
+（1965-01-05 →
+2026-09-04）</h3>
+<div class="scroll"><table><thead><tr><th>峰日</th><th>谷日</th><th class="num">深度</th>
+<th class="num">時長（月）</th><th>類別</th><th class="num">G 理賠 pp</th>
+<th class="num">GS1.0 理賠 pp</th><th class="num">GS1.5 理賠 pp</th></tr></thead>
+<tbody><tr class='dim'><td>1965-01-14</td><td>1965-07-12</td><td class='num'>-20.86%</td><td class='num'>5.88</td><td style='color:#d97706'>中</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td></tr><tr><td>1966-04-01</td><td>1967-12-14</td><td class='num'>-20.80%</td><td class='num'>20.43</td><td style='color:#dc2626'>慢熊</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td></tr><tr><td>1970-04-06</td><td>1970-05-27</td><td class='num'>-23.86%</td><td class='num'>1.68</td><td style='color:#059669'>急跌</td><td class='num'>+6.5</td><td class='num'>+7.1</td><td class='num'>+5.6</td></tr><tr><td>1971-08-13</td><td>1971-08-24</td><td class='num'>-20.71%</td><td class='num'>0.36</td><td style='color:#059669'>急跌</td><td class='num'>-0.0</td><td class='num'>+6.1</td><td class='num'>+5.7</td></tr><tr><td>1973-01-24</td><td>1974-10-09</td><td class='num'>-37.40%</td><td class='num'>20.47</td><td style='color:#dc2626'>慢熊</td><td class='num'>+22.4</td><td class='num'>+22.2</td><td class='num'>+21.2</td></tr><tr><td>1987-10-14</td><td>1987-11-11</td><td class='num'>-21.05%</td><td class='num'>0.92</td><td style='color:#059669'>急跌</td><td class='num'>-0.0</td><td class='num'>+9.8</td><td class='num'>+9.8</td></tr><tr><td>1989-12-29</td><td>2009-03-10</td><td class='num'>-81.87%</td><td class='num'>230.32</td><td style='color:#dc2626'>慢熊</td><td class='num'>+88.0</td><td class='num'>+85.7</td><td class='num'>+73.3</td></tr><tr><td>2024-07-11</td><td>2025-04-07</td><td class='num'>-26.26%</td><td class='num'>8.87</td><td style='color:#d97706'>中</td><td class='num'>+0.8</td><td class='num'>+4.8</td><td class='num'>+3.3</td></tr></tbody></table></div>
+<h3 style="font-size:.92rem;margin:1.1rem 0 .5rem">德國 DAX
+（1987-12-30 →
+2026-09-04）</h3>
+<div class="scroll"><table><thead><tr><th>峰日</th><th>谷日</th><th class="num">深度</th>
+<th class="num">時長（月）</th><th>類別</th><th class="num">G 理賠 pp</th>
+<th class="num">GS1.0 理賠 pp</th><th class="num">GS1.5 理賠 pp</th></tr></thead>
+<tbody><tr><td>1990-03-30</td><td>1991-01-15</td><td class='num'>-33.03%</td><td class='num'>9.56</td><td style='color:#dc2626'>慢熊</td><td class='num'>+20.5</td><td class='num'>+21.8</td><td class='num'>+19.8</td></tr><tr><td>1998-07-20</td><td>1998-10-08</td><td class='num'>-37.57%</td><td class='num'>2.63</td><td style='color:#059669'>急跌</td><td class='num'>+16.6</td><td class='num'>+22.2</td><td class='num'>+21.6</td></tr><tr><td>2000-03-07</td><td>2003-03-12</td><td class='num'>-72.68%</td><td class='num'>36.14</td><td style='color:#dc2626'>慢熊</td><td class='num'>+46.5</td><td class='num'>+47.7</td><td class='num'>+43.6</td></tr><tr><td>2007-07-16</td><td>2009-03-06</td><td class='num'>-54.77%</td><td class='num'>19.68</td><td style='color:#dc2626'>慢熊</td><td class='num'>+38.5</td><td class='num'>+40.5</td><td class='num'>+39.6</td></tr><tr><td>2015-04-10</td><td>2016-02-11</td><td class='num'>-29.27%</td><td class='num'>10.09</td><td style='color:#dc2626'>慢熊</td><td class='num'>+4.9</td><td class='num'>+8.9</td><td class='num'>+8.9</td></tr><tr><td>2018-01-23</td><td>2018-12-27</td><td class='num'>-23.44%</td><td class='num'>11.10</td><td style='color:#dc2626'>慢熊</td><td class='num'>+7.6</td><td class='num'>+7.5</td><td class='num'>+4.5</td></tr><tr><td>2020-02-19</td><td>2020-03-18</td><td class='num'>-38.78%</td><td class='num'>0.92</td><td style='color:#059669'>急跌</td><td class='num'>+24.7</td><td class='num'>+29.5</td><td class='num'>+29.5</td></tr><tr><td>2022-01-05</td><td>2022-09-29</td><td class='num'>-26.40%</td><td class='num'>8.77</td><td style='color:#d97706'>中</td><td class='num'>+18.9</td><td class='num'>+19.5</td><td class='num'>+18.2</td></tr></tbody></table></div>
+<h3 style="font-size:.92rem;margin:1.1rem 0 .5rem">英國 FTSE 100
+（1984-01-03 →
+2026-09-04）</h3>
+<div class="scroll"><table><thead><tr><th>峰日</th><th>谷日</th><th class="num">深度</th>
+<th class="num">時長（月）</th><th>類別</th><th class="num">G 理賠 pp</th>
+<th class="num">GS1.0 理賠 pp</th><th class="num">GS1.5 理賠 pp</th></tr></thead>
+<tbody><tr><td>1987-07-16</td><td>1987-11-09</td><td class='num'>-35.94%</td><td class='num'>3.81</td><td style='color:#d97706'>中</td><td class='num'>+4.8</td><td class='num'>+9.2</td><td class='num'>+8.8</td></tr><tr><td>1998-07-20</td><td>1998-10-05</td><td class='num'>-24.77%</td><td class='num'>2.53</td><td style='color:#059669'>急跌</td><td class='num'>+13.2</td><td class='num'>+16.1</td><td class='num'>+16.1</td></tr><tr><td>1999-12-30</td><td>2003-03-12</td><td class='num'>-52.57%</td><td class='num'>38.37</td><td style='color:#dc2626'>慢熊</td><td class='num'>+28.7</td><td class='num'>+30.6</td><td class='num'>+27.6</td></tr><tr><td>2015-04-27</td><td>2016-02-11</td><td class='num'>-22.06%</td><td class='num'>9.53</td><td style='color:#dc2626'>慢熊</td><td class='num'>+12.6</td><td class='num'>+14.8</td><td class='num'>+14.8</td></tr><tr><td>2018-05-22</td><td>2020-03-23</td><td class='num'>-36.61%</td><td class='num'>22.04</td><td style='color:#dc2626'>慢熊</td><td class='num'>+10.3</td><td class='num'>+12.5</td><td class='num'>+8.3</td></tr></tbody></table></div>
+<h3 style="font-size:.92rem;margin:1.1rem 0 .5rem">香港 恆生指數
+（1986-12-31 →
+2026-09-04）</h3>
+<div class="scroll"><table><thead><tr><th>峰日</th><th>谷日</th><th class="num">深度</th>
+<th class="num">時長（月）</th><th>類別</th><th class="num">G 理賠 pp</th>
+<th class="num">GS1.0 理賠 pp</th><th class="num">GS1.5 理賠 pp</th></tr></thead>
+<tbody><tr class='dim'><td>1987-10-01</td><td>1987-12-07</td><td class='num'>-52.02%</td><td class='num'>2.20</td><td style='color:#059669'>急跌</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td></tr><tr><td>1992-11-12</td><td>1992-12-03</td><td class='num'>-22.78%</td><td class='num'>0.69</td><td style='color:#059669'>急跌</td><td class='num'>-0.0</td><td class='num'>+9.1</td><td class='num'>+9.1</td></tr><tr><td>1994-01-04</td><td>1995-01-23</td><td class='num'>-42.89%</td><td class='num'>12.61</td><td style='color:#dc2626'>慢熊</td><td class='num'>+3.6</td><td class='num'>+16.0</td><td class='num'>+15.9</td></tr><tr><td>1997-08-07</td><td>1998-08-13</td><td class='num'>-60.05%</td><td class='num'>12.19</td><td style='color:#dc2626'>慢熊</td><td class='num'>+37.8</td><td class='num'>+42.4</td><td class='num'>+42.0</td></tr><tr><td>2000-03-28</td><td>2003-04-25</td><td class='num'>-54.05%</td><td class='num'>36.89</td><td style='color:#dc2626'>慢熊</td><td class='num'>+19.8</td><td class='num'>+23.2</td><td class='num'>+16.7</td></tr><tr><td>2007-10-30</td><td>2008-10-27</td><td class='num'>-65.18%</td><td class='num'>11.93</td><td style='color:#dc2626'>慢熊</td><td class='num'>+31.4</td><td class='num'>+48.8</td><td class='num'>+48.8</td></tr><tr><td>2018-01-26</td><td>2022-10-31 <span class='no'>（未復原）</span></td><td class='num'>-55.70%</td><td class='num'>57.13</td><td style='color:#dc2626'>慢熊</td><td class='num'>+24.4</td><td class='num'>+25.5</td><td class='num'>+22.2</td></tr></tbody></table></div>
+<h3 style="font-size:.92rem;margin:1.1rem 0 .5rem">台灣 加權指數
+（1997-07-02 →
+2026-09-04）</h3>
+<div class="scroll"><table><thead><tr><th>峰日</th><th>谷日</th><th class="num">深度</th>
+<th class="num">時長（月）</th><th>類別</th><th class="num">G 理賠 pp</th>
+<th class="num">GS1.0 理賠 pp</th><th class="num">GS1.5 理賠 pp</th></tr></thead>
+<tbody><tr class='dim'><td>1997-08-26</td><td>1999-02-05</td><td class='num'>-45.88%</td><td class='num'>17.35</td><td style='color:#dc2626'>慢熊</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td></tr><tr><td>2000-02-17</td><td>2001-10-03</td><td class='num'>-66.22%</td><td class='num'>19.51</td><td style='color:#dc2626'>慢熊</td><td class='num'>+47.5</td><td class='num'>+47.5</td><td class='num'>+43.5</td></tr><tr><td>2020-01-14</td><td>2020-03-19</td><td class='num'>-28.72%</td><td class='num'>2.14</td><td style='color:#059669'>急跌</td><td class='num'>+8.4</td><td class='num'>+15.0</td><td class='num'>+15.0</td></tr><tr><td>2022-01-04</td><td>2022-10-25</td><td class='num'>-31.63%</td><td class='num'>9.66</td><td style='color:#dc2626'>慢熊</td><td class='num'>+21.9</td><td class='num'>+23.6</td><td class='num'>+22.1</td></tr><tr><td>2024-07-11</td><td>2025-04-09</td><td class='num'>-28.69%</td><td class='num'>8.94</td><td style='color:#d97706'>中</td><td class='num'>+19.3</td><td class='num'>+17.8</td><td class='num'>+17.4</td></tr></tbody></table></div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">四、base rate 表（每市場＋合併＋1990 後）</h2>
+<div class="scroll"><table>
+<thead><tr><th>市場</th><th class="num">事件數</th><th class="num">慢熊數（佔比）</th>
+<th class="num">慢熊/十年（全樣本）</th><th class="num">慢熊/十年（1990 後）</th>
+<th class="num">間隔中位數（年）</th><th class="num">間隔最長（年）</th><th class="num">距上次慢熊（年）</th></tr></thead>
+<tbody><tr><td class='lbl'>美股 S&P 500</td><td class='num'>12</td><td class='num'>8 (66.7%)</td><td class='num'>0.81</td><td class='num'>0.82</td><td class='num'>12.32</td><td class='num'>26.88</td><td class='num'>4.7</td></tr><tr><td class='lbl'>美股 那斯達克綜合</td><td class='num'>13</td><td class='num'>6 (46.2%)</td><td class='num'>1.08</td><td class='num'>0.55</td><td class='num'>8.38</td><td class='num'>21.69</td><td class='num'>4.8</td></tr><tr><td class='lbl'>日本 日經 225</td><td class='num'>7</td><td class='num'>3 (42.9%)</td><td class='num'>0.49</td><td class='num'>0.00</td><td class='num'>11.87</td><td class='num'>16.93</td><td class='num'>36.7</td></tr><tr><td class='lbl'>德國 DAX</td><td class='num'>8</td><td class='num'>5 (62.5%)</td><td class='num'>1.29</td><td class='num'>1.36</td><td class='num'>7.55</td><td class='num'>9.94</td><td class='num'>8.6</td></tr><tr><td class='lbl'>英國 FTSE 100</td><td class='num'>5</td><td class='num'>3 (60.0%)</td><td class='num'>0.70</td><td class='num'>0.82</td><td class='num'>9.2</td><td class='num'>15.32</td><td class='num'>8.3</td></tr><tr><td class='lbl'>香港 恆生指數</td><td class='num'>6</td><td class='num'>5 (83.3%)</td><td class='num'>1.26</td><td class='num'>1.36</td><td class='num'>5.59</td><td class='num'>10.24</td><td class='num'>8.6</td></tr><tr><td class='lbl'>台灣 加權指數</td><td class='num'>4</td><td class='num'>2 (50.0%)</td><td class='num'>0.69</td><td class='num'>0.69</td><td class='num'>21.88</td><td class='num'>21.88</td><td class='num'>4.7</td></tr><tr class='dim'><td class='lbl'>美股延伸池（Shiller 1871起＋GSPC）</td><td class='num'>17</td><td class='num'>13 (76.5%)</td><td class='num'>0.84</td><td class='num'>0.82</td><td class='num'>10.7</td><td class='num'>26.88</td><td class='num'>—</td></tr><tr><td class='lbl'><b>合併池（不獨立）</b></td><td class='num'>55</td><td class='num'>32 (58.2%)</td><td class='num'><b>0.87</b></td><td class='num'>0.80</td><td class='num'>—</td><td class='num'>—</td><td class='num'>—</td></tr></tbody></table></div>
+<div class="note">美股慢熊頻率未見下降：全樣本 λ=0.0811/年，1990 後 λ=0.0818/年台灣只有 1997 年起資料，2000 與 2008 事件雖在樣本內，
+但慢熊樣本數極少，分母年數短、任何比率的不確定性都大，判讀時務必看信賴區間而非點值。</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">五、Poisson 機率表（未來 5 年／10 年至少一次慢熊）</h2>
+<div class="takeaway"><b>CI</b>（Confidence Interval，信賴區間——重複抽樣下有 95% 機率涵蓋真實值的範圍，
+樣本數少時區間會很寬）用精確 Poisson 區間（scipy chi2 方法）算出；機率 ＝ 1 − exp(−λT)，
+λ 愈大、CI 上界對應機率也愈大（單調），已核對。</div>
+<div class="scroll"><table>
+<thead><tr><th>市場</th><th class="num">λ（次/年）</th><th class="num">λ 95% CI</th>
+<th class="num">P(≥1 慢熊／5年)</th><th class="num">P(≥1 慢熊／10年)</th></tr></thead>
+<tbody><tr><td class='lbl'>美股 S&P 500（全樣本）</td><td class='num'>0.0811</td><td class='num'>[0.0350, 0.1597]</td><td class='num'>33.3% [16.1%, 55.0%]</td><td class='num'>55.5% [29.5%, 79.8%]</td></tr><tr><td class='lbl'>美股 那斯達克綜合（全樣本）</td><td class='num'>0.1080</td><td class='num'>[0.0396, 0.2350]</td><td class='num'>41.7% [18.0%, 69.1%]</td><td class='num'>66.0% [32.7%, 90.5%]</td></tr><tr><td class='lbl'>日本 日經 225（全樣本）</td><td class='num'>0.0487</td><td class='num'>[0.0100, 0.1422]</td><td class='num'>21.6% [4.9%, 50.9%]</td><td class='num'>38.5% [9.6%, 75.9%]</td></tr><tr><td class='lbl'>德國 DAX（全樣本）</td><td class='num'>0.1293</td><td class='num'>[0.0420, 0.3017]</td><td class='num'>47.6% [18.9%, 77.9%]</td><td class='num'>72.5% [34.3%, 95.1%]</td></tr><tr><td class='lbl'>英國 FTSE 100（全樣本）</td><td class='num'>0.0703</td><td class='num'>[0.0145, 0.2055]</td><td class='num'>29.6% [7.0%, 64.2%]</td><td class='num'>50.5% [13.5%, 87.2%]</td></tr><tr><td class='lbl'>香港 恆生指數（全樣本）</td><td class='num'>0.1260</td><td class='num'>[0.0409, 0.2941]</td><td class='num'>46.8% [18.5%, 77.0%]</td><td class='num'>71.6% [33.6%, 94.7%]</td></tr><tr><td class='lbl'>台灣 加權指數（全樣本）</td><td class='num'>0.0686</td><td class='num'>[0.0083, 0.2476]</td><td class='num'>29.0% [4.1%, 71.0%]</td><td class='num'>49.6% [8.0%, 91.6%]</td></tr><tr><td class='lbl'><b>合併池（全樣本）</b></td><td class='num'>0.0874</td><td class='num'>[0.0598, 0.1234]</td><td class='num'>35.4%</td><td class='num'>58.3%</td></tr><tr class='dim'><td class='lbl'>合併池（1990 後）</td><td class='num'>0.0803</td><td class='num'>[0.0490, 0.1239]</td><td class='num'>—</td><td class='num'>—</td></tr></tbody></table></div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">六、理賠彙總（GS1.5 主變體，pp＝百分點）</h2>
+<div class="takeaway">理賠＝指數峰谷回撤深度 − 變體峰谷回撤深度（正值代表變體少跌）。
+按<b>類別</b>彙總直接回答本頁的核心問題——保單是不是只在慢熊理賠：</div>
+<div class="scroll"><table><thead><tr><th>類別</th><th class="num">事件數</th>
+<th class="num">平均理賠 pp</th><th class="num">理賠為正比例</th></tr></thead>
+<tbody><tr><td class='lbl' style='color:#dc2626'>慢熊</td><td class='num'>29</td><td class='num'>+27.9</td><td class='num'>100.0%</td></tr><tr><td class='lbl' style='color:#d97706'>中</td><td class='num'>9</td><td class='num'>+12.5</td><td class='num'>100.0%</td></tr><tr><td class='lbl' style='color:#059669'>急跌</td><td class='num'>14</td><td class='num'>+14.7</td><td class='num'>100.0%</td></tr></tbody></table></div>
+<h3 style="font-size:.92rem;margin:1.1rem 0 .5rem">按市場</h3>
+<div class="scroll"><table><thead><tr><th>市場</th><th class="num">事件數</th>
+<th class="num">平均理賠 pp</th><th class="num">理賠為正比例</th></tr></thead>
+<tbody><tr><td class='lbl'>美股 S&P 500</td><td class='num'>11</td><td class='num'>+24.6</td><td class='num'>100.0%</td></tr><tr><td class='lbl'>日本 日經 225</td><td class='num'>6</td><td class='num'>+19.8</td><td class='num'>100.0%</td></tr><tr><td class='lbl'>德國 DAX</td><td class='num'>8</td><td class='num'>+23.2</td><td class='num'>100.0%</td></tr><tr><td class='lbl'>英國 FTSE 100</td><td class='num'>5</td><td class='num'>+15.1</td><td class='num'>100.0%</td></tr><tr><td class='lbl'>香港 恆生指數</td><td class='num'>6</td><td class='num'>+25.8</td><td class='num'>100.0%</td></tr><tr><td class='lbl'>台灣 加權指數</td><td class='num'>4</td><td class='num'>+24.5</td><td class='num'>100.0%</td></tr><tr><td class='lbl'>美股 那斯達克綜合</td><td class='num'>12</td><td class='num'>+18.6</td><td class='num'>100.0%</td></tr></tbody></table></div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">七、保費（非事件期，年化報酬差 vs 指數，%）</h2>
+<div class="takeaway">非事件期＝扣掉所有「峰→回前高」窗口後剩下的日子；負值代表規則在平時的年化報酬
+低於單純持有指數——這就是「保費」，付出去換慢熊理賠的代價。</div>
+<div class="scroll"><table><thead><tr><th>市場</th><th class="num">G</th>
+<th class="num">GS1.0</th><th class="num">GS1.5</th></tr></thead><tbody><tr><td class='lbl'>美股 S&P 500</td><td class='num'>-2.00%</td><td class='num'>-3.68%</td><td class='num'>-4.01%</td></tr><tr><td class='lbl'>美股 那斯達克綜合</td><td class='num'>-0.94%</td><td class='num'>-4.51%</td><td class='num'>-3.69%</td></tr><tr><td class='lbl'>日本 日經 225</td><td class='num'>-1.64%</td><td class='num'>-4.97%</td><td class='num'>-2.44%</td></tr><tr><td class='lbl'>德國 DAX</td><td class='num'>-3.16%</td><td class='num'>-6.94%</td><td class='num'>-6.39%</td></tr><tr><td class='lbl'>英國 FTSE 100</td><td class='num'>-5.08%</td><td class='num'>-6.79%</td><td class='num'>-7.46%</td></tr><tr><td class='lbl'>香港 恆生指數</td><td class='num'>-4.21%</td><td class='num'>-11.99%</td><td class='num'>-8.68%</td></tr><tr><td class='lbl'>台灣 加權指數</td><td class='num'>-3.93%</td><td class='num'>-10.47%</td><td class='num'>-10.03%</td></tr></tbody></table></div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">八、門檻敏感度（只描述，不改判定）</h2>
+<div class="takeaway">「慢熊」9 個月門檻是先驗設定；這裡同時印 6 個月與 12 個月門檻下的慢熊/十年次數，
+只做描述，不回頭挑一個讓結果好看的門檻。</div>
+<div class="scroll"><table><thead><tr><th>市場</th><th class="num">9 月門檻（主判準）</th>
+<th class="num">6 月門檻</th><th class="num">12 月門檻</th></tr></thead><tbody><tr><td class='lbl'>美股 S&P 500</td><td class='num'>0.81（9月，主判準）</td><td class='num'>1.01</td><td class='num'>0.71</td></tr><tr><td class='lbl'>美股 那斯達克綜合</td><td class='num'>1.08（9月，主判準）</td><td class='num'>1.08</td><td class='num'>1.08</td></tr><tr><td class='lbl'>日本 日經 225</td><td class='num'>0.49（9月，主判準）</td><td class='num'>0.65</td><td class='num'>0.49</td></tr><tr><td class='lbl'>德國 DAX</td><td class='num'>1.29（9月，主判準）</td><td class='num'>1.55</td><td class='num'>0.52</td></tr><tr><td class='lbl'>英國 FTSE 100</td><td class='num'>0.70（9月，主判準）</td><td class='num'>0.70</td><td class='num'>0.47</td></tr><tr><td class='lbl'>香港 恆生指數</td><td class='num'>1.26（9月，主判準）</td><td class='num'>1.26</td><td class='num'>1.01</td></tr><tr><td class='lbl'>台灣 加權指數</td><td class='num'>0.69（9月，主判準）</td><td class='num'>1.03</td><td class='num'>0.34</td></tr></tbody></table></div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">九、誠實揭露</h2>
+<div class="card">
+<h3 style="font-size:.95rem;margin-bottom:.5rem">資料可用性</h3><ul><li>美股 S&P 500：可用 ['1927-12-30', '2026-09-04']</li><li>日本 日經 225：可用 ['1965-01-05', '2026-09-04']</li><li>德國 DAX：可用 ['1987-12-30', '2026-09-04']</li><li>英國 FTSE 100：可用 ['1984-01-03', '2026-09-04']</li><li>香港 恆生指數：可用 ['1986-12-31', '2026-09-04']</li><li>台灣 加權指數：可用 ['1997-07-02', '2026-09-04']</li><li>美股 那斯達克綜合：可用 ['1971-02-05', '2026-09-04']</li><li>Shiller S&P 月頻：可用，來源 https://img1.wsimg.com/blobby/go/e5e77e0b-59d1-44d9-ab25-4763ac982e53/downloads/70fec4f5-727f-4e53-b5f1-179af109c5fa/ie_data.xls?ver=1788371540009，下載時間 2026-09-05 22:05</li></ul>
+<h3 style="font-size:.95rem;margin:1rem 0 .5rem">已知限制</h3>
+<p style="font-size:.87rem">全部序列皆為<b>價格指數</b>（不含股利），回撤深度會比總報酬指數略深、時長略長，
+但各市場處理一致，仍可橫向比較。月頻（Shiller）段的時長以月計、深度以月收計，會低估盤中真實深度。
+市場之間<b>不獨立</b>（例如 2008 全球金融危機同時打到所有市場），合併池只做描述性參考。
+yfinance 對 1927–1950 的 ^GSPC 資料為回填（非逐日原始報價），精細度較低。
+台灣僅 1997 年起有資料，2000 與 2008 兩次危機雖在樣本內，但慢熊事件數極少，統計不確定性大。</p>
+<h3 style="font-size:.95rem;margin:1rem 0 .5rem">實作中的 JUDGMENT CALL（規格未明文之處的保守選擇）</h3>
+<ul><li>台灣序列優先用 src/tw_0050_backtest/data/IDX_TWII_adj.pkl（既有幻影分割修復快取，1997-07 起）取代重抓 yfinance ^TWII——同一份標的，資料品質更高，符合 spec 允許之選項。</li><li>合併池（pooled）的 Poisson λ 分母 T＝各市場各自年數加總（Σ年數），而非用跨市場最早起點到最晚終點的單一時間跨度——後者會讓分母虛增（例如台股 1997 起才有資料，卻對美股 1927 年的事件也計入同一分母），前者才反映「總曝險市場-年數」，是 pooled Poisson rate 的標準做法。</li><li>回撤事件偵測器完全依 spec 逐位元文字實作：running-max 觸發 ≤-20% 起算事件、峰＝觸發前最近一次創高日、谷＝事件內最低收盤日、復原＝首次收盤≥前高，未復原則 open=true。</li><li>事件『時長』日頻以「(谷-峰).days/30.44」計算（spec 原文公式）；Shiller 月頻以月曆月數差計算（spec：『Shiller 月頻：時長以月計』），兩者不可直接數字比對長度定義但分類門檻（9/3 個月）一致適用。</li><li>美股長史池（GSPC extended）＝Shiller 月頻事件（僅取早於 ^GSPC 資料起點 1927-12 的部分，避免與 ^GSPC 日頻事件重複計）＋^GSPC 日頻事件（1927-12 起，套用 52 週暖機）；衍接處刻意不做峰谷平滑處理（兩段各自獨立偵測），若某事件橫跨銜接點，年代與量測基準不同會在該事件上打斷成兩段而非一段——樣本中未實際觸發（銜接點 1927-12 附近無事件），故不影響本次數字，但頁面誠實揭露此界限存在。</li><li>規則套用（G/GS1.0/GS1.5）僅套在日頻序列（不含 Shiller 月頻延伸段），因為 W52 閘門與自適應 σ_t(756 日中位數) 需要日頻資料；spec 原文『對每個市場的日頻序列跑三個變體』已明文排除月頻。</li><li>事件層『理賠』只計算 peak≥ev（策略自身 505 個交易日暖機起點）之後的事件；ev 之前的歷史事件（若有）列在 base rate 統計但不進理賠/保費計算，因為策略尚未有 756 日 σ_t 中位數可用——spec 未明文此邊界，取保守做法（避免用尚未熱機的規則權重去算理賠，製造假象）。</li><li>台灣現金利率固定 0%（非美股一律 r=0，spec 明文『其他市場 r=0』且揭露理由：本回測比較事件內相對表現，現金利率對這裡的結果影響很小）；未使用台股常見的 1% flat 慣例（那是其他套件的假設，本回測以 spec 原文為準）。</li><li>非事件期『保費』用『年化化的日報酬差幾何複利』（(1+Σdiff)^(1/years)-1），而非簡單算術平均年化——與 dd_metrics 的 CAGR 定義一致，避免長窗下算術平均高估/低估複利效果。</li><li>^TWII 序列優先取用套件既有『幻影分割修復』快取（見上方 load_index_series 註解），非直接重抓 yfinance ^TWII——spec 原文允許『台灣（若有六態快取則用）』此選項。</li><li>（非 JUDGMENT CALL，僅記錄自動生成的比較句）美股慢熊頻率未見下降：全樣本 λ=0.0811/年，1990 後 λ=0.0818/年</li></ul>
+</div>
+</div>
+
+
+</div>
+
+<footer>
+  <div class="container">
+    &copy; 2026 InvestMQuest Research &middot; 慢熊的 base rate（研究頁，非新交易系統，不構成續保建議）&middot;
+    規格 docs/Slow_Bear_Base_Rate_Spec.md・頁面生成 2026-09-05 &middot; 僅供研究參考，不構成投資建議
+  </div>
+</footer>
+
+<script>
+new Chart(document.getElementById('chart-scatter'), {
+  type: 'bubble',
+  data: { datasets: [{label:'慢熊', data:[{"x": 14.62, "y": 21.47, "r": 4, "label": "\u7f8e\u80a1 S&P 500 1956-08-03\uff08\u7406\u8ce0 6.24 pp\uff09"}, {"x": 17.84, "y": 36.06, "r": 12.14, "label": "\u7f8e\u80a1 S&P 500 1968-11-29\uff08\u7406\u8ce0 24.28 pp\uff09"}, {"x": 20.7, "y": 48.2, "r": 22, "label": "\u7f8e\u80a1 S&P 500 1973-01-11\uff08\u7406\u8ce0 44.09 pp\uff09"}, {"x": 20.43, "y": 27.11, "r": 11.82, "label": "\u7f8e\u80a1 S&P 500 1980-11-28\uff08\u7406\u8ce0 23.64 pp\uff09"}, {"x": 30.52, "y": 49.15, "r": 17.955, "label": "\u7f8e\u80a1 S&P 500 2000-03-24\uff08\u7406\u8ce0 35.91 pp\uff09"}, {"x": 16.98, "y": 56.78, "r": 22, "label": "\u7f8e\u80a1 S&P 500 2007-10-09\uff08\u7406\u8ce0 49.17 pp\uff09"}, {"x": 9.26, "y": 25.43, "r": 8.25, "label": "\u7f8e\u80a1 S&P 500 2022-01-03\uff08\u7406\u8ce0 16.5 pp\uff09"}, {"x": 14.49, "y": 28.79, "r": 12.065, "label": "\u7f8e\u80a1 \u90a3\u65af\u9054\u514b\u7d9c\u5408 1981-05-29\uff08\u7406\u8ce0 24.13 pp\uff09"}, {"x": 13.04, "y": 31.5, "r": 9.065, "label": "\u7f8e\u80a1 \u90a3\u65af\u9054\u514b\u7d9c\u5408 1983-06-24\uff08\u7406\u8ce0 18.13 pp\uff09"}, {"x": 12.22, "y": 33.0, "r": 10.67, "label": "\u7f8e\u80a1 \u90a3\u65af\u9054\u514b\u7d9c\u5408 1989-10-09\uff08\u7406\u8ce0 21.34 pp\uff09"}, {"x": 30.98, "y": 77.93, "r": 22, "label": "\u7f8e\u80a1 \u90a3\u65af\u9054\u514b\u7d9c\u5408 2000-03-10\uff08\u7406\u8ce0 47.37 pp\uff09"}, {"x": 13.27, "y": 36.4, "r": 12.805, "label": "\u7f8e\u80a1 \u90a3\u65af\u9054\u514b\u7d9c\u5408 2021-11-19\uff08\u7406\u8ce0 25.61 pp\uff09"}, {"x": 20.47, "y": 37.4, "r": 10.595, "label": "\u65e5\u672c \u65e5\u7d93 225 1973-01-24\uff08\u7406\u8ce0 21.19 pp\uff09"}, {"x": 230.32, "y": 81.87, "r": 22, "label": "\u65e5\u672c \u65e5\u7d93 225 1989-12-29\uff08\u7406\u8ce0 73.26 pp\uff09"}, {"x": 9.56, "y": 33.03, "r": 9.875, "label": "\u5fb7\u570b DAX 1990-03-30\uff08\u7406\u8ce0 19.75 pp\uff09"}, {"x": 36.14, "y": 72.68, "r": 21.82, "label": "\u5fb7\u570b DAX 2000-03-07\uff08\u7406\u8ce0 43.64 pp\uff09"}, {"x": 19.68, "y": 54.77, "r": 19.78, "label": "\u5fb7\u570b DAX 2007-07-16\uff08\u7406\u8ce0 39.56 pp\uff09"}, {"x": 10.09, "y": 29.27, "r": 4.47, "label": "\u5fb7\u570b DAX 2015-04-10\uff08\u7406\u8ce0 8.94 pp\uff09"}, {"x": 11.1, "y": 23.44, "r": 4, "label": "\u5fb7\u570b DAX 2018-01-23\uff08\u7406\u8ce0 4.54 pp\uff09"}, {"x": 38.37, "y": 52.57, "r": 13.82, "label": "\u82f1\u570b FTSE 100 1999-12-30\uff08\u7406\u8ce0 27.64 pp\uff09"}, {"x": 9.53, "y": 22.06, "r": 7.425, "label": "\u82f1\u570b FTSE 100 2015-04-27\uff08\u7406\u8ce0 14.85 pp\uff09"}, {"x": 22.04, "y": 36.61, "r": 4.135, "label": "\u82f1\u570b FTSE 100 2018-05-22\uff08\u7406\u8ce0 8.27 pp\uff09"}, {"x": 12.61, "y": 42.89, "r": 7.955, "label": "\u9999\u6e2f \u6046\u751f\u6307\u6578 1994-01-04\uff08\u7406\u8ce0 15.91 pp\uff09"}, {"x": 12.19, "y": 60.05, "r": 20.99, "label": "\u9999\u6e2f \u6046\u751f\u6307\u6578 1997-08-07\uff08\u7406\u8ce0 41.98 pp\uff09"}, {"x": 36.89, "y": 54.05, "r": 8.365, "label": "\u9999\u6e2f \u6046\u751f\u6307\u6578 2000-03-28\uff08\u7406\u8ce0 16.73 pp\uff09"}, {"x": 11.93, "y": 65.18, "r": 22, "label": "\u9999\u6e2f \u6046\u751f\u6307\u6578 2007-10-30\uff08\u7406\u8ce0 48.8 pp\uff09"}, {"x": 57.13, "y": 55.7, "r": 11.12, "label": "\u9999\u6e2f \u6046\u751f\u6307\u6578 2018-01-26\uff08\u7406\u8ce0 22.24 pp\uff09"}, {"x": 19.51, "y": 66.22, "r": 21.74, "label": "\u53f0\u7063 \u52a0\u6b0a\u6307\u6578 2000-02-17\uff08\u7406\u8ce0 43.48 pp\uff09"}, {"x": 9.66, "y": 31.63, "r": 11.065, "label": "\u53f0\u7063 \u52a0\u6b0a\u6307\u6578 2022-01-04\uff08\u7406\u8ce0 22.13 pp\uff09"}], backgroundColor:'#dc262680', borderColor:'#dc2626'}, {label:'中', data:[{"x": 6.44, "y": 27.97, "r": 6.48, "label": "\u7f8e\u80a1 S&P 500 1961-12-12\uff08\u7406\u8ce0 12.96 pp\uff09"}, {"x": 7.88, "y": 22.18, "r": 7.92, "label": "\u7f8e\u80a1 S&P 500 1966-02-09\uff08\u7406\u8ce0 15.84 pp\uff09"}, {"x": 3.32, "y": 33.51, "r": 6.99, "label": "\u7f8e\u80a1 S&P 500 1987-08-25\uff08\u7406\u8ce0 13.98 pp\uff09"}, {"x": 3.84, "y": 23.64, "r": 5.73, "label": "\u7f8e\u80a1 \u90a3\u65af\u9054\u514b\u7d9c\u5408 2018-08-29\uff08\u7406\u8ce0 11.46 pp\uff09"}, {"x": 3.71, "y": 24.32, "r": 5.045, "label": "\u7f8e\u80a1 \u90a3\u65af\u9054\u514b\u7d9c\u5408 2024-12-16\uff08\u7406\u8ce0 10.09 pp\uff09"}, {"x": 8.87, "y": 26.26, "r": 4, "label": "\u65e5\u672c \u65e5\u7d93 225 2024-07-11\uff08\u7406\u8ce0 3.34 pp\uff09"}, {"x": 8.77, "y": 26.4, "r": 9.1, "label": "\u5fb7\u570b DAX 2022-01-05\uff08\u7406\u8ce0 18.2 pp\uff09"}, {"x": 3.81, "y": 35.94, "r": 4.395, "label": "\u82f1\u570b FTSE 100 1987-07-16\uff08\u7406\u8ce0 8.79 pp\uff09"}, {"x": 8.94, "y": 28.69, "r": 8.725, "label": "\u53f0\u7063 \u52a0\u6b0a\u6307\u6578 2024-07-11\uff08\u7406\u8ce0 17.45 pp\uff09"}], backgroundColor:'#d9770680', borderColor:'#d97706'}, {label:'急跌', data:[{"x": 1.08, "y": 33.92, "r": 14.045, "label": "\u7f8e\u80a1 S&P 500 2020-02-19\uff08\u7406\u8ce0 28.09 pp\uff09"}, {"x": 2.04, "y": 20.37, "r": 4, "label": "\u7f8e\u80a1 \u90a3\u65af\u9054\u514b\u7d9c\u5408 1978-09-13\uff08\u7406\u8ce0 7.64 pp\uff09"}, {"x": 1.58, "y": 24.91, "r": 6.015, "label": "\u7f8e\u80a1 \u90a3\u65af\u9054\u514b\u7d9c\u5408 1980-02-08\uff08\u7406\u8ce0 12.03 pp\uff09"}, {"x": 2.04, "y": 35.96, "r": 10.47, "label": "\u7f8e\u80a1 \u90a3\u65af\u9054\u514b\u7d9c\u5408 1987-08-27\uff08\u7406\u8ce0 20.94 pp\uff09"}, {"x": 2.63, "y": 29.55, "r": 4, "label": "\u7f8e\u80a1 \u90a3\u65af\u9054\u514b\u7d9c\u5408 1998-07-20\uff08\u7406\u8ce0 7.71 pp\uff09"}, {"x": 1.08, "y": 30.12, "r": 8.505, "label": "\u7f8e\u80a1 \u90a3\u65af\u9054\u514b\u7d9c\u5408 2020-02-19\uff08\u7406\u8ce0 17.01 pp\uff09"}, {"x": 1.68, "y": 23.86, "r": 4, "label": "\u65e5\u672c \u65e5\u7d93 225 1970-04-06\uff08\u7406\u8ce0 5.62 pp\uff09"}, {"x": 0.36, "y": 20.71, "r": 4, "label": "\u65e5\u672c \u65e5\u7d93 225 1971-08-13\uff08\u7406\u8ce0 5.7 pp\uff09"}, {"x": 0.92, "y": 21.05, "r": 4.89, "label": "\u65e5\u672c \u65e5\u7d93 225 1987-10-14\uff08\u7406\u8ce0 9.78 pp\uff09"}, {"x": 2.63, "y": 37.57, "r": 10.785, "label": "\u5fb7\u570b DAX 1998-07-20\uff08\u7406\u8ce0 21.57 pp\uff09"}, {"x": 0.92, "y": 38.78, "r": 14.76, "label": "\u5fb7\u570b DAX 2020-02-19\uff08\u7406\u8ce0 29.52 pp\uff09"}, {"x": 2.53, "y": 24.77, "r": 8.075, "label": "\u82f1\u570b FTSE 100 1998-07-20\uff08\u7406\u8ce0 16.15 pp\uff09"}, {"x": 0.69, "y": 22.78, "r": 4.535, "label": "\u9999\u6e2f \u6046\u751f\u6307\u6578 1992-11-12\uff08\u7406\u8ce0 9.07 pp\uff09"}, {"x": 2.14, "y": 28.72, "r": 7.515, "label": "\u53f0\u7063 \u52a0\u6b0a\u6307\u6578 2020-01-14\uff08\u7406\u8ce0 15.03 pp\uff09"}], backgroundColor:'#05966980', borderColor:'#059669'}] },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: { x: { title: {display:true, text:'時長（月）'} },
+               y: { title: {display:true, text:'深度（%）'} } },
+    plugins: { tooltip: { callbacks: { label: c => c.raw.label } } }
+  }
+});
+</script>
+</body>
+</html>

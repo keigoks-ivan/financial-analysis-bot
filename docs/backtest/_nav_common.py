@@ -15,7 +15,7 @@ Every backtest page header renders the same groups via make_toggle(active):
     研究・可轉債：tw_cb
     研究・因子：  return_driver | pead | accruals | share_issuance | profitability
                   | asset_growth | index_inclusion | insider
-    研究・跨標的驗證： w52_oos | ins_prem | adopt_boot | comb_acct
+    研究・跨標的驗證： w52_oos | ins_prem | adopt_boot | comb_acct | slow_bear
 
 Design (2026-07-11 redesign):
   * Colour discipline — every pill is neutral (grey fill, dark-grey text); the
@@ -180,6 +180,7 @@ RESEARCH_OOS_LINKS = [
     ("/backtest/insurance_premium/", "深熊保險的價格", "ins_prem", "研究"),
     ("/backtest/adopted_bootstrap/", "已採用系統的統計不確定性帶", "adopt_boot", "研究"),
     ("/backtest/combined_account/", "美台合併帳戶層", "comb_acct", "研究"),
+    ("/backtest/slow_bear_base_rate/", "慢熊的 base rate", "slow_bear", "研究"),
 ]
 
 RESEARCH_FACTOR_LINKS = [
