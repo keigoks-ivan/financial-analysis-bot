@@ -664,6 +664,7 @@ details.lsb-prereg summary{{cursor:pointer;font-size:.82rem;color:#57606a;margin
 details.lsb-prereg pre{{max-height:280px;overflow:auto;background:#f6f8fa;border:1px solid #d0d7de;border-radius:6px;padding:.6rem;font-size:.72rem;white-space:pre-wrap}}
 </style></head>
 <body>
+<p class="lsb-note"><a href="/backtest/live_system_evidence/">這套系統的九項證據總覽 →</a></p>
 <div class="lsb-plain">💬 白話：這不是回測，是「只用實際發生過的紀錄」每個月記一次系統有沒有贏過同標的的稀釋基準（<b>SPRT</b>＝序貫檢定，累積證據到夠強才判定；<b>LLR</b>＝累積證據強度；<b>命中</b>＝當月系統報酬贏過基準；<b>稀釋基準</b>＝把 50/50 買進持有的一部分換成現金，讓風險與系統相近再比）的淘汰賽。判紅只代表「證據支持系統不比稀釋好」，是登記進帳本待持有人檢討的訊號，不是自動平倉指令；本頁面不下任何買賣或配置建議。</div>
 {us_sec}
 {tw_sec}

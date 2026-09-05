@@ -179,6 +179,7 @@ TW_CB_LINKS = [
 # 2026-09-05 再新增：保留 regime 的 bootstrap（以真實牛熊段為重抽單位，對照
 # adopted_bootstrap 固定 block 63 對趨勢規則不公平的疑慮）。
 RESEARCH_OOS_LINKS = [
+    ("/backtest/live_system_evidence/", "證據總覽（先看這頁）", "evidence_hub", "研究"),
     ("/backtest/w52_adaptive_oos/", "W52×自適應 σ 跨標的證偽", "w52_oos", "研究"),
     ("/backtest/insurance_premium/", "深熊保險的價格", "ins_prem", "研究"),
     ("/backtest/adopted_bootstrap/", "已採用系統的統計不確定性帶", "adopt_boot", "研究"),
