@@ -315,18 +315,20 @@ row 8b資格：無Hard Veto+archetype∈循環子型+附錄B位置∈{深谷投�
 
 ---
 
-## 16｜自查觸發(v16.1兩步制，流程內無critic)
+## 16｜驗收(v17：J1 validator＋Stage 1G跨模型閘)
 
-`decision_out.requires_critic[]`仍要標記命中gate與一句理由(供下游與事後抽查)，但**沒有人會替你查**——命中即該軸自查必須實答，fail-safe由你自己執行：
+**判斷agent不自查**——交稿前沒有「自查表全綠」這個動作。**負向證據由validator硬擋**：每條負向finding必須落 `evidence_refs` 或寫明 `evidence_dismissed`，缺項即FAIL不放行(J1)。**判斷級🔴由不同模型的閘擋**：Stage 1G在上站前跨模型複核，只擋判斷級。
 
-| gate | 觸發條件(任一) | 自查未過的fail-safe |
+`decision_out.requires_critic[]`仍要標記命中gate與一句理由(供Stage 1G與下游讀)。下表觸發條件與fail-safe方向不變，執行者改為Stage 1G：
+
+| gate | 觸發條件(任一) | 未過的fail-safe |
 |---|---|---|
 | QC-41產業態勢 | 裁決強方向(進場/迴避)；moat_trend方向性(↑/↓)；屬競爭動態/循環商品/法規敏感/B2B客戶集中型，餘可選 | 該軸🔴且證據包內釐清不了→回報需回Stage 0補搜，不阻斷finalize |
 | QC-48爆發候選Bull | row 8a資格全過時強制 | 自查任一項🔴→裁決降row 8觀望 |
 | QC-50錯過成本反向 | 裁決落觀望，且①前次同ticker觀望/迴避且to-date報酬>+30%②FY1/FY2共識EPS近3個月上修≥+10% | 只能升級為進場・條件式，不得強制翻面；不成立→維持觀望 |
 | row 8b循環位置 | row 8b命中時強制(機制同QC-48) | 自查未過→降回row 8觀望 |
 
-QC-39覆蓋矩陣仍是主力，自查是backstop——**不得為交稿而讓自查全綠**，🟡/🔴照實填(自查表是回報必要欄位)。(QC-41/48/50/42 row 8b)
+QC-39覆蓋矩陣仍是主力，本表是backstop——**不得為交稿而讓它全綠**，🟡/🔴照實填(是`judgment.json`回報必要欄位)；蓋章的是Stage 1G，不是判斷agent自己。(QC-41/48/50/42 row 8b)
 
 ---
 
