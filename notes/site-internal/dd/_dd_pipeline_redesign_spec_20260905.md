@@ -289,4 +289,9 @@ notes/site-internal/dd/_src/{T}_{D}/         存查（加 parts/、gate 檔、to
 | 2026-09-05 | WP1c dd_headless.py | — | 0.12M／26／7 分 | — | — | — | 同上；真呼叫 4 次（超規 1 次，已據實回報） |
 | 2026-09-05 | WP2 J1／J2／J3＋bundle | — | 0.22M／61／15 分 | — | — | — | commit ad4204a5c；J1 基線 BE 18／CIEN 15／CRDO 14 |
 
-四個建置子任務合計 <0.7M、皆 ≤61 tool uses，對照 v15.2／v16 建置期單一 agent 50–117M：§9.1 的「≤40 輪、驗收即測試」紀律有效。
+| 2026-09-05 | WP-text 三份 prompt 模板（opus） | — | — | — | 0.10M／20／4 分 | — | commit 85ad2dc84；判斷 70／閘 70／修補 40 行 |
+| 2026-09-05 | WP3 dd_gate.py | — | 0.15M／26／9 分 | — | — | — | 同上；BE 抽查解析 red=1 |
+| 2026-09-05 | WP4a dd_brief.py | — | 0.17M／47／10 分 | — | — | — | commit d526900d2；四份 fixture dd-meta 逐欄同 |
+| 2026-09-05 | WP1d ddreport.py run＋replay | — | 0.28M／**98**／28 分 | — | 誤呼叫真 opus 閘 1 次（≈$0.85） | — | commit f4154f428；超出 40 輪上限（串接任務切太大，下次拆 stage0／judge／gate 三件）；查出 dd_decision 與洩漏檢查打架，已修 |
+
+八個建置子任務合計 ≈1.4M、除 WP1d 外皆 ≤61 tool uses，對照 v15.2／v16 建置期單一 agent 50–117M：§9.1 的「≤40 輪、驗收即測試」紀律有效。**整條線已可零 LLM 重放**：CIEN fixture stage0→judged→gated（red 0／yellow 4，與抽查一致）→brief 75KB；BE 到 gated red=1 走修補路徑。`scripts/tests` 44 passed。
