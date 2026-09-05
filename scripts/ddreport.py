@@ -46,7 +46,7 @@ STAGE_ORDER = ["stage0", "judged", "gated", "brief"]
 DEFAULT_JUDGMENT_MODEL = "fable"
 # 判斷模型↔閘模型對調表（跨模型冷讀，見 _wp_spec_v17_batch2_20260905.md WP1d §4）
 GATE_MODEL_FOR = {"fable": "opus", "opus": "sonnet", "sonnet": "opus"}
-JUDGE_MAX_TURNS = 8
+JUDGE_MAX_TURNS = 10  # 2026-09-05：AVGO／WDAY 第 9 輪才寫完，8 太緊
 # WP7b #1（_wp_spec_v17_batch5_20260905.md）：bundle 改內嵌進 prompt（不再讓
 # agent 自己 Read 240KB 檔）後，fix agent 仍要讀 77KB judgment.json＋改＋
 # 寫＋judge check，4 輪不夠，實測至少 4 步驟＋緩衝，上調為 6。
@@ -656,7 +656,7 @@ def cmd_plan(args):
             "prompt": prompt_rel,
             "out": part_rel,
             "tools": SPAWN_TOOLS_COVERAGE,
-            "max_turns": 12,
+            "max_turns": 8,  # 2026-09-05：覆蓋子 agent 實測 8–13 輪、0.4–0.8M，是 Stage 0 最大項；壓到 8 逼它每軸 ≤3 輪搜尋
             "budget_cache_read": BUDGET_CACHE_READ_COVERAGE,
         })
 
