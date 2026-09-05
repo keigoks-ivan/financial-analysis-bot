@@ -45,6 +45,7 @@ OUT_BODY = DOCS / "long-track" / "_scoreboard_body.html"
 sys.path.insert(0, str(ROOT / "scripts"))
 import score_flowmap as _sf  # noqa: E402  (top-level imports stdlib-only; reuse SPRT helper + latch)
 import update_long_track_w52_adaptive as _w52  # noqa: E402  (reuse fetch_close / band_exec_replay / WEIGHTS)
+import _crossasset_frozen as _d1  # noqa: E402  (S-F 影子帳戶 D1 腿；凍結搬運自 v7-backtest，見檔頭 docstring)
 
 SCHEMA = "live-scoreboard-v0"
 
@@ -71,6 +72,27 @@ TW_CASH_ANNUAL = 0.01
 BORROW_SPREAD_ANNUAL = 0.015     # 借款部分 1.5%/年
 TURNOVER_COST_FRAC = 0.0007      # 7 bps
 TRADING_DAYS = 252
+
+# ═══════════════════════════════════════════════════════════════════════
+# 影子帳戶 CONFIG（PREREG 凍結；v7-backtest/docs/Shadow_Tracks_Spec.md）
+# ═══════════════════════════════════════════════════════════════════════
+S60_K = 0.6                # S-60：同標的 50/50 B&H 固定 60% + 現金 40%
+SA10_CAP = 1.0              # S-A10：cap 1.0（無槓桿），leg weight = gate × min(1, raw_ratio)
+SA10_CLAMP = 50.0 * SA10_CAP  # 執行層 clamp（A2 同門檻/格，clamp 隨 cap 改為 50pp／腿）
+
+SHADOW_DEFINITIONS = {
+    "s60": "S-60：同標的 50/50 B&H 固定 60% ＋ 現金 40%，月再平衡，7 bps（保險價格頁 E-60 的事前可執行版本）。",
+    "sf": "S-F：50% 系統實錄 NAV ＋ 50% D1（SPY/TLT/GLD/DBC 等權、E3 趨勢＋Chandelier 半倉閘門，逐日重算），月再平衡，7 bps。僅美股。",
+    "sa10": "S-A10：系統規則但 cap 1.0（無槓桿），執行層同 A2（20pp 門檻／10% 取整），clamp 改為 50pp／腿。",
+}
+
+SHADOW_SPRT_TEXT = (
+    "每條影子帳戶對「系統實錄」各一條 SPRT（同參數：p0=0.5／p1=0.65／α=0.05／β=0.10、"
+    "n_eff floor 20；月樣本；命中＝影子帳戶月報酬 > 系統月報酬）——方向與主記分板（系統 vs "
+    "稀釋基準）相反：這裡問「如果當初選了這條影子，會不會比現在的系統好」。判定：綠＝影子帳戶"
+    "實錄勝過系統（回顧點的反事實證據）；紅＝系統勝過該影子；黃＝進行中。任何判定都不觸發帳本"
+    "動作——影子帳戶是回顧點的資訊，不是 kill condition。"
+)
 
 K_SOURCE_NOTE = (
     "k 凍結為 Insurance_Premium_Comparison_Spec.md 的 2010 起主判準窗（US W2：E-cagr "
@@ -135,6 +157,46 @@ PREREG = {
         },
     },
     "kill_conditions": {"kill_d": SPRT_KILL_TEXT},
+    "shadows": {
+        "source_doc": "v7-backtest/docs/Shadow_Tracks_Spec.md",
+        "positioning": (
+            "10 月回顧點無論決定什麼，之後都需要前瞻的、非回測的對照：如果當初改成別的，會怎樣。"
+            "三條影子帳戶從同一天起、用同一套實錄與價格、同樣的成本，每天記、每月一個位元。"
+            "不是收斂面，任何判定都不觸發帳本動作。"
+        ),
+        "definitions": SHADOW_DEFINITIONS,
+        "coverage": "美股三條（S-60／S-F／S-A10）都跑；台股跑 S-60 與 S-A10（無 D1 腿，spec 明文 D1 僅美股）。",
+        "scoring": SHADOW_SPRT_TEXT,
+        "no_ledger_action": "任何判定都不觸發帳本動作（spec 明文）——影子帳戶是回顧點的資訊，不是 kill condition。",
+        "disclosure": (
+            "影子帳戶與系統共用同一段實錄期，樣本同樣只有幾個月；它們的價值在累積，不在現在的數字。"
+            "S-F 的 D1 腿是回測期選的規則，影子期是它的第一段 OOS。"
+        ),
+        "judgment_calls": {
+            "d1_cash_proxy": (
+                "S-F 的 D1 腿現金部位（TSMOM 比較基準、run_pos_tw 未投入部位的現金報酬）改用 "
+                "yfinance 即時抓 SHY 當代理，取代 v7-backtest 原版 SHY→BIL 價格拼接（該拼接來自 "
+                "v7 repo 內部 pickle 快照，fab CI 抓不到、也不該跨 repo 讀本機檔案）；SHY 現時仍在"
+                "存續中，短率與 BIL 高度貼近，差異遠小於本影子帳戶要看的訊號雜訊。"
+            ),
+            "d1_vendoring": (
+                "fab 這支 repo 的 CI 跑不到 /Users/ivanchang/v7-backtest 本機路徑（既有 v7 相依一律"
+                "走「CANONICAL COPY + try/except」或「靜態轉錄常數」慣例，從無跨 repo import）。故將"
+                "e3_pos／chand_gate／half_gate／build_signals 等函式逐行搬運進 scripts/_crossasset_frozen.py，"
+                "功能上對齊 v7-backtest 對應原始函式（檔頭列出每個函式的搬運來源）。"
+            ),
+            "sa10_clamp": (
+                "S-A10「cap 1.0」翻譯為執行層 clamp＝50pp／腿（cap1.0×50pp 滿載）；A2 的 band=20pp／"
+                "grid=10% 逐字沿用（spec 明文「執行層 A2 同」，只有 clamp 隨 cap 改變，非另開一套"
+                "執行層參數）。"
+            ),
+            "sf_rebalance": (
+                "S-F 月再平衡的時點採月末再平衡（同主記分板 B-cagr/B-mdd 的既有 JUDGMENT CALL，"
+                "維持口徑一致）；換手成本＝|實際權重−0.5|×7bps×淨值。"
+            ),
+            "s60_rebalance": "S-60 直接重用主記分板既有的 build_diluted(k) 月末再平衡＋7bps 邏輯，k 固定 0.6，不走 k_cagr/k_mdd 兩個 PREREG 凍結值。",
+        },
+    },
     "disclosure": (
         "誠實預告：n_eff floor 20 個月＝最快 2028 年中才可能判定；本頁上線後大部分時間是"
         "「進行中」。它的價值是把每月的一個位元誠實記下來，而不是在校準點靠回測做決定。"
@@ -235,6 +297,92 @@ def px_at_or_before(series_dict, dates_sorted, ymd):
         else:
             break
     return best
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# 影子帳戶：S-A10 執行層重放（同 A2 band/grid，clamp 隨 cap 改變）
+# ═══════════════════════════════════════════════════════════════════════
+
+def band_exec_replay_capped(history, legs, weights, clamp):
+    """S-A10：對每腿逐日重放執行層，target 用「系統規則但 cap 1.0」——
+    weights[t] × (1 if gate else 0) × min(1.0, raw_ratio) × 100（pp）——取代
+    _w52.band_exec_replay 用的 final_pct（cap 1.5）。band/grid 逐字沿用 A2
+    （_w52.EXEC_BAND=20pp／_w52.EXEC_GRID=10%），只有 clamp 隨 cap 改變。"""
+    executed = {t: [] for t in legs}
+    cur = {t: 0.0 for t in legs}
+    for r in history:
+        for t in legs:
+            tk = r["tickers"][t]
+            gate = bool(tk["gate"])
+            raw = float(tk["raw_ratio"])
+            target = weights[t] * 100.0 * (1.0 if gate else 0.0) * min(1.0, raw)
+            if abs(target - cur[t]) >= _w52.EXEC_BAND:
+                new = min(round(target / _w52.EXEC_GRID) * _w52.EXEC_GRID, clamp)
+                cur[t] = new
+            executed[t].append(cur[t])
+    return executed
+
+
+def leg_daily_returns_generic(mkt, legs, history, live_dates, date_to_idx, executed,
+                              px, px_dates, cash_series, cash_dates, gaps, tag):
+    """逐字對齊 build_market() 內系統本身 nav_sys 迴圈的日報酬公式，改參數化
+    executed 讓 S-A10 可重用同一套簿記（腿報酬×前日執行率＋現金×剩餘比例－借款
+    利差×超額比例－換手成本×7bps）。獨立於 build_market 之外，供影子帳戶重用，
+    不動 build_market 原本的迴圈（風險最低的加法式改動）。"""
+    rows = []
+    for d in live_dates:
+        idx = date_to_idx[d]
+        if idx == 0:
+            rows.append({"date": d, "ret": 0.0})
+            continue
+        prev_row = history[idx - 1]
+        prev_d = prev_row["date"]
+        exec_prev = {t: executed[t][idx - 1] for t in legs}
+        exec_now = {t: executed[t][idx] for t in legs}
+        sum_exec_prev = sum(exec_prev.values()) / 100.0
+
+        r_leg = {}
+        ok = True
+        for t in legs:
+            p_now = px[t].get(d) or px_at_or_before(px[t], px_dates[t], d)
+            p_prev = px[t].get(prev_d) or px_at_or_before(px[t], px_dates[t], prev_d)
+            if p_now is None or p_prev is None or p_prev == 0:
+                gaps.append({"market": mkt["key"], "date": d,
+                             "reason": f"[{tag}] {t} 缺 {prev_d}→{d} 收盤價，本日報酬計為 0"})
+                ok = False
+                break
+            r_leg[t] = p_now / p_prev - 1.0
+        if not ok:
+            rows.append({"date": d, "ret": 0.0})
+            continue
+
+        if mkt["cash_ticker"] == "^IRX":
+            r_cash = cash_daily_return_us(cash_series, cash_dates, d)
+            if r_cash is None:
+                r_cash = 0.0
+        else:
+            r_cash = TW_CASH_ANNUAL / TRADING_DAYS
+
+        r_leg_contrib = sum((exec_prev[t] / 100.0) * r_leg[t] for t in legs)
+        cash_frac = max(0.0, 1.0 - sum_exec_prev)
+        borrow_frac = max(0.0, sum_exec_prev - 1.0)
+        turnover_frac = sum(abs(exec_now[t] - exec_prev[t]) for t in legs) / 100.0
+
+        r = (r_leg_contrib + cash_frac * r_cash
+             - borrow_frac * (BORROW_SPREAD_ANNUAL / TRADING_DAYS)
+             - turnover_frac * TURNOVER_COST_FRAC)
+        rows.append({"date": d, "ret": r})
+    return rows
+
+
+def nav_from_returns(rows, inception):
+    nav = 100.0
+    out = []
+    for row in rows:
+        if row["date"] != inception:
+            nav *= (1.0 + row["ret"])
+        out.append({"date": row["date"], "nav": round(nav, 4)})
+    return out
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -343,7 +491,7 @@ def build_market(mkt, state, gaps, judgment_calls):
     p0 = {t: (px[t].get(inception) or px_at_or_before(px[t], px_dates[t], inception)) for t in legs}
     if any(v is None for v in p0.values()):
         gaps.append({"market": key, "reason": "inception 日缺腿收盤價，無法建基準序列"})
-        raw_bh, b_cagr, b_mdd = [], [], []
+        raw_bh, b_cagr, b_mdd, nav_s60 = [], [], [], []
     else:
         raw_units = {t: 50.0 / p0[t] for t in legs}
         raw_bh = []
@@ -384,6 +532,15 @@ def build_market(mkt, state, gaps, judgment_calls):
 
         b_cagr = build_diluted(mkt["k_cagr"])
         b_mdd = build_diluted(mkt["k_mdd"])
+        nav_s60 = build_diluted(S60_K)   # S-60：同標的 50/50 B&H 固定 60%＋現金 40%，重用同一套月末再平衡＋7bps 邏輯
+
+    # 影子帳戶 S-A10：系統規則但 cap 1.0（無槓桿），執行層同 A2、clamp 改 50pp／腿。
+    executed_a10 = band_exec_replay_capped(history, legs, _w52.WEIGHTS, SA10_CLAMP)
+    a10_rows = leg_daily_returns_generic(mkt, legs, history, live_dates, date_to_idx,
+                                        executed_a10, px, px_dates, cash_series, cash_dates,
+                                        gaps, tag="S-A10")
+    nav_a10 = nav_from_returns(a10_rows, inception)
+    a10_last_exec_pct = {t: executed_a10[t][-1] for t in legs}
 
     monthly_samples_cagr, n_closed_cagr = compute_monthly_samples(nav_series, b_cagr)
     monthly_samples_mdd, n_closed_mdd = compute_monthly_samples(nav_series, b_mdd)
@@ -408,6 +565,11 @@ def build_market(mkt, state, gaps, judgment_calls):
         "current_dd_pct": cur_dd_sys,
         "cum_diff_vs_b_cagr": round(cum_diff_cagr, 4) if cum_diff_cagr is not None else None,
         "cum_diff_vs_b_mdd": round(cum_diff_mdd, 4) if cum_diff_mdd is not None else None,
+        # 供影子帳戶重用（不進既有渲染/既有下游，純加法）：
+        "sys_returns_by_date": {row["date"]: row["ret"] for row in nav_sys},
+        "nav_s60": nav_s60,
+        "nav_a10": nav_a10,
+        "a10_last_exec_pct": a10_last_exec_pct,
     }
 
 
@@ -483,6 +645,83 @@ def load_backtest_prior(gaps):
 # ═══════════════════════════════════════════════════════════════════════
 # 兩市場合併（TWD，50/50 月再平衡）
 # ═══════════════════════════════════════════════════════════════════════
+
+def build_sf_series(mkt_us, d1_returns, gaps):
+    """S-F：50% 系統實錄 NAV ＋ 50% D1，月末再平衡＋7bps（同主記分板 build_diluted
+    月末再平衡口徑，但這裡再平衡的兩腿是「系統 NAV」與「D1 NAV」而非個股腿）。"""
+    live_dates = [r["date"] for r in mkt_us["nav_sys"]]
+    inception = mkt_us["inception"]
+    sys_ret = mkt_us["sys_returns_by_date"]
+    sys_val, d1_val = 50.0, 50.0
+    out = [{"date": inception, "nav": 100.0}]
+    for i in range(1, len(live_dates)):
+        d = live_dates[i]
+        r_sys = sys_ret.get(d, 0.0)
+        r_d1 = d1_returns.get(d)
+        if r_d1 is None:
+            gaps.append({"market": "us", "date": d, "reason": "[S-F] D1 缺當日報酬，計為 0（不捏造）"})
+            r_d1 = 0.0
+        sys_val *= (1.0 + r_sys)
+        d1_val *= (1.0 + r_d1)
+        nav_pre = sys_val + d1_val
+        is_month_end = (i == len(live_dates) - 1) or (month_of(live_dates[i + 1]) != month_of(d))
+        if is_month_end and nav_pre > 0:
+            turnover = abs(0.5 - sys_val / nav_pre)
+            cost = turnover * TURNOVER_COST_FRAC * nav_pre
+            nav_post = nav_pre - cost
+            sys_val, d1_val = 0.5 * nav_post, 0.5 * nav_post
+            out.append({"date": d, "nav": round(nav_post, 4)})
+        else:
+            out.append({"date": d, "nav": round(nav_pre, 4)})
+    return out
+
+
+def build_shadow_block(shadow_key, mkt, shadow_nav, prior_sprt):
+    """一條影子帳戶對「系統實錄」的月度比較與 SPRT——命中＝影子帳戶月報酬 > 系統
+    月報酬（方向與主記分板相反），逐字重用 compute_monthly_samples/build_sprt_block
+    （nav_series 傳影子帳戶、bench_series 傳系統，函式本身語意不變，只是誰當
+    「基準」互換）。"""
+    samples, n_closed = compute_monthly_samples(shadow_nav, mkt["nav_sys"])
+    sprt = build_sprt_block(samples, prior_sprt)
+    cum_diff = (shadow_nav[-1]["nav"] - mkt["nav_sys"][-1]["nav"]) if (shadow_nav and mkt["nav_sys"]) else None
+    return {
+        "definition": SHADOW_DEFINITIONS[shadow_key],
+        "nav": shadow_nav,
+        "monthly_samples": samples,
+        "n_closed_months": n_closed,
+        "sprt": sprt,
+        "cum_diff_vs_sys": round(cum_diff, 4) if cum_diff is not None else None,
+    }
+
+
+def build_shadows_for_market(mk, m, prior_shadow_mk, gaps, judgment_calls):
+    out = {}
+    for shadow_key, nav_field in (("s60", "nav_s60"), ("sa10", "nav_a10")):
+        nav_series = m.get(nav_field) or []
+        if not nav_series:
+            gaps.append({"market": mk, "reason": f"{shadow_key} 缺 NAV 序列，跳過"})
+            continue
+        prior_sprt = (prior_shadow_mk.get(shadow_key) or {}).get("sprt")
+        out[shadow_key] = build_shadow_block(shadow_key, m, nav_series, prior_sprt)
+    if mk == "us":
+        try:
+            d1_returns, d1_diag = _d1.build_d1_daily_returns()
+        except Exception as e:  # noqa: BLE001
+            gaps.append({"market": "us", "reason": f"S-F D1 建置失敗（{type(e).__name__}: {e}），S-F 跳過本次"})
+            d1_returns, d1_diag = {}, {}
+        if d1_returns:
+            judgment_calls.append(
+                "S-F D1 現金腿：SHY 代理取代 v7-backtest 原版 SHY→BIL 拼接（見 PREREG['shadows']"
+                "['judgment_calls']['d1_cash_proxy']）；D1 訊號逐日重算，不用回測快取。"
+            )
+            sf_nav = build_sf_series(m, d1_returns, gaps)
+            prior_sprt = (prior_shadow_mk.get("sf") or {}).get("sprt")
+            out["sf"] = build_shadow_block("sf", m, sf_nav, prior_sprt)
+            out["sf"]["d1_leg_diag"] = d1_diag
+        else:
+            gaps.append({"market": "us", "reason": "S-F：D1 日報酬序列為空，跳過本次"})
+    return out
+
 
 def build_combined_twd(mkt_us, mkt_tw, gaps, judgment_calls):
     if not mkt_us or not mkt_tw:
@@ -633,9 +872,78 @@ def mkt_section(mkt):
 </div>"""
 
 
+SHADOW_LABELS = {"s60": "S-60（固定 60% B&H）", "sf": "S-F（50% 系統 ＋ 50% D1）", "sa10": "S-A10（cap 1.0 無槓桿）"}
+SHADOW_COLORS = {"s60": "#8250df", "sf": "#0969da", "sa10": "#bf3989"}
+
+
+def shadow_market_section(mk, mkt, shadows):
+    if not mkt or not shadows:
+        return ""
+    canvas_id = f"lsb-shadow-chart-{mk}"
+    labels = [r["date"] for r in mkt["nav_sys"]]
+    sys_data = [r["nav"] for r in mkt["nav_sys"]]
+    datasets = [f"{{ label: '系統（實錄）', data: {json.dumps(sys_data)}, borderColor: '#1a7f37', borderWidth:2, pointRadius:0 }}"]
+    for key, block in shadows.items():
+        by_date = {r["date"]: r["nav"] for r in block["nav"]}
+        data = [by_date.get(d) for d in labels]
+        datasets.append(
+            f"{{ label: {json.dumps(SHADOW_LABELS.get(key, key))}, data: {json.dumps(data)}, "
+            f"borderColor: '{SHADOW_COLORS.get(key,'#57606a')}', borderWidth:1, pointRadius:0 }}"
+        )
+    chart_js = f"""
+<canvas id="{canvas_id}" height="90"></canvas>
+<script>
+(function(){{
+  if (typeof Chart === 'undefined') return;
+  new Chart(document.getElementById('{canvas_id}').getContext('2d'), {{
+    type: 'line',
+    data: {{ labels: {json.dumps(labels)}, datasets: [{','.join(datasets)}] }},
+    options: {{ responsive:true, animation:false, scales:{{ x:{{display:false}}, y:{{title:{{display:true,text:'NAV（inception=100）'}}}} }} }}
+  }});
+}})();
+</script>"""
+
+    tiles = "<div class=\"lsb-tiles\">"
+    for key, block in shadows.items():
+        tiles += (f'<div class="lsb-tile"><div class="lsb-k">{esc(SHADOW_LABELS.get(key,key))} vs 系統</div>'
+                  f'<div class="lsb-v">{status_pill(block["sprt"]["status"])}</div>'
+                  f'<div class="lsb-sub">{esc(block["sprt"]["status_label"])}（已收 {block["n_closed_months"]} 月）</div></div>\n')
+    tiles += "</div>"
+
+    tables = ""
+    for key, block in shadows.items():
+        rows = ""
+        for s in block["monthly_samples"]:
+            mark = "✅" if s["hit"] else "—"
+            rows += (f'<tr><td>{esc(s["month"])}</td><td class="num">{s["ret_sys_pct"]:+.2f}%</td>'
+                     f'<td class="num">{s["ret_bench_pct"]:+.2f}%</td><td>{mark}</td></tr>\n')
+        if not rows:
+            rows = '<tr><td colspan="4" style="text-align:center;color:#888">尚無已收月樣本（n_eff floor 20 前皆是「進行中」）</td></tr>'
+        tables += (f'<h4 style="margin:.6rem 0 .2rem;font-size:.88rem">{esc(SHADOW_LABELS.get(key,key))}</h4>'
+                   f'<table class="lsb-table"><thead><tr><th>月</th><th class="num">影子帳戶報酬</th>'
+                   f'<th class="num">系統報酬</th><th>影子帳戶命中</th></tr></thead><tbody>{rows}</tbody></table>')
+
+    a10_exec = mkt.get("a10_last_exec_pct") or {}
+    a10_note = ""
+    if a10_exec:
+        a10_note = ("<p class='lsb-note'>S-A10 目前各腿執行層持股率：" +
+                    "／".join(f"{t} {v:.0f}%" for t, v in a10_exec.items()) + "。</p>")
+
+    return f"""<div class="lsb-market">
+<h3>{esc(mkt['label'])}影子帳戶</h3>
+{tiles}
+{chart_js}
+{a10_note}
+{tables}
+</div>"""
+
+
 def render_body(out):
     us_sec = mkt_section(out["markets"].get("us"))
     tw_sec = mkt_section(out["markets"].get("tw"))
+    shadows_out = out.get("shadows") or {}
+    us_shadow_sec = shadow_market_section("us", out["markets"].get("us"), shadows_out.get("us"))
+    tw_shadow_sec = shadow_market_section("tw", out["markets"].get("tw"), shadows_out.get("tw"))
     combined = out.get("combined_twd")
     combined_note = ""
     if combined:
@@ -669,6 +977,10 @@ details.lsb-prereg pre{{max-height:280px;overflow:auto;background:#f6f8fa;border
 {us_sec}
 {tw_sec}
 {combined_note}
+<h2 style="margin:1.4rem 0 .3rem;font-size:1.05rem">影子帳戶：如果當初選別的</h2>
+<div class="lsb-plain">💬 白話：這裡的三條線不是本站現在真的在跑的東西，是「如果 10 月回顧點當初選了別的做法，帳會怎麼記」的平行對照——S-60 是不解方程、事前就能執行的固定六成持股版本；S-F 是把一半資金換成一籃子跨資產（美股／公債／黃金／原物料）趨勢規則；S-A10 是拿掉槓桿上限的系統本尊。上面每個市場的 SPRT 淘汰賽問的是「系統有沒有贏過稀釋現金的基準」，這裡的 SPRT 問的是相反方向的問題：「如果當初選了這條影子帳戶，會不會比現在的系統好」。判紅只代表某條影子帳戶的實錄目前不如系統，判綠代表某條影子帳戶目前贏過系統——兩者都只是留給 10 月回顧點參考的證據，不會觸發任何帳本動作或配置調整。</div>
+{us_shadow_sec}
+{tw_shadow_sec}
 <details class="lsb-prereg"><summary>PREREG（凍結口徑，展開查看逐字條文）</summary><pre>{esc(prereg_json)}</pre></details>
 <p class="lsb-note">as_of {esc(out['as_of'])} · built_at {esc(out['built_at'])} · 回測先驗（保險價格頁 2010 起月勝率）：{esc(out['backtest_prior'])}</p>
 </body></html>
@@ -712,6 +1024,14 @@ def build():
     combined = build_combined_twd(markets_out.get("us"), markets_out.get("tw"), gaps, judgment_calls)
     backtest_prior = load_backtest_prior(gaps)
 
+    prior_shadows = prior_out.get("shadows") or {}
+    shadows_out = {}
+    for mk in ("us", "tw"):
+        m = markets_out.get(mk)
+        if not m:
+            continue
+        shadows_out[mk] = build_shadows_for_market(mk, m, prior_shadows.get(mk) or {}, gaps, judgment_calls)
+
     as_of = max((m["data_through"] for m in markets_out.values() if m), default=date.today().isoformat())
 
     out = {
@@ -720,6 +1040,7 @@ def build():
         "as_of": as_of,
         "markets": markets_out,
         "combined_twd": combined,
+        "shadows": shadows_out,
         "backtest_prior": backtest_prior,
         "data_gaps": gaps,
         "judgment_calls": judgment_calls,
