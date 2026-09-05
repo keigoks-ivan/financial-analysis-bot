@@ -68,7 +68,18 @@ def resolve_scenario_meta(j: dict, judgment_path: Path, override: Path | None):
     if not ref_path.is_absolute():
         ref_path = judgment_path.parent / ref
     if ref_path.exists():
-        return load_json(ref_path)
+        meta = load_json(ref_path)
+        # v17 per-run 目錄：scenario_ref 指向 dd_scenario.py 的輸入檔 scenario.json，
+        # 六個結果欄在同目錄的 scenario_meta.json（或 {stem}.scenario_meta.json）——
+        # 輸入檔缺 bull_5y_price 時改讀 meta 檔（AVGO 2026-09-05 真跑查出：漂移檢查誤判本次=None）。
+        if isinstance(meta, dict) and meta.get("bull_5y_price") is None:
+            for cand in (ref_path.parent / "scenario_meta.json",
+                         ref_path.with_name(ref_path.name.replace(".scenario.json", ".scenario_meta.json"))):
+                if cand != ref_path and cand.exists():
+                    alt = load_json(cand)
+                    if isinstance(alt, dict) and alt.get("bull_5y_price") is not None:
+                        return alt
+        return meta
     return None
 
 
