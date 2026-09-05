@@ -33,6 +33,30 @@ bundle 證據包內**每一條 `dir=-` 的 finding**，都必須落到下列其�
 
 judgment.json 頂層 `reasoning` 物件：每個承重數字模組（roic_durability／scenario／valuation／premortem 等）≤3 行推導，下游會原樣鋪進 `<div class="reasoning">`——敷衍或寫「估計約 X%」無算式即無效輸出。
 
+## plain 白話欄必填
+
+judgment.json 頂層 `plain` 物件（快速版頁面直接渲染這段、零 LLM 二次加工；讀者是持有人本人，不是分析師）：
+
+- `verdict_line` 一句話裁決（≤40 字）、`verdict_sub` 怎麼做的一句話（≤80 字）
+- `five`：`how_it_makes_money`／`why_now`／`why_this_size`／`biggest_fear`／`how_to_act`，各 1–2 句
+- `business`：`what_to_whom`／`why_customers_stay`／`moat_direction`（等級、方向與最弱處），各 1–2 句
+- `bets` 3 條 `{{"claim": "我押的事", "wrong_when": "什麼時候算我錯"}}`
+- `fears` 3 條 `{{"clock": "⚡|🔥|🐢", "text": "怕什麼（含關鍵數字）"}}`
+- `market_wrong` 2–4 句（跟共識差在哪個假設）；`growth_funding` 1–2 句（引天花板與共識數字）
+- `stories`：`bull`／`base`／`bear` 各 1–2 句「怎麼發生」
+- `change_my_mind` 3 條 `{{"what": "看什麼", "threshold": "門檻", "then": "就會", "when": "日期或—"}}`
+- `prior_compare_reason` 1–2 句（主因是價格、方法論還是基本面；無前份填「首份」）
+- `how_to_lose` 2–3 句（含第二種死法）；`evidence_quality` 1–2 句（軸覆蓋、數字季別、逐字稿親讀哪季）
+
+寫作規則五條：
+1. 先講人話再給數字，不要用數字開頭。
+2. 每句 ≤40 字，一段 ≤2 句。
+3. 數字只能引 judgment 其他欄位已有的，`plain` 不得新增數字或自行換算。
+4. `plain` 內不得出現 QC 代號、欄位名、row 編號等機器語言。
+5. `change_my_mind` 三條必含唯一那條清倉級觸發器，且每條寫出日期（無明確日期填「—」）。
+
+中文全形標點；`plain` 是內容欄，不改變任何機器欄位語意，缺欄或字數超標由 validator 以 WARN 逐項列出。
+
 ## 前份漂移逐欄歸因（judgment-rules.md §12 item 3b，QC-49 執行細則）
 
 `evidence.json.prior_dd.prior_meta`（前份 dd-meta 全欄）＋`.drift_watch`（固定 20 欄清單）已由 `dd_prior.py` 準備好——`decision_inputs`／情境六欄／`rearm`／`val`／`runway_post_y5` 與 `prior_meta` 任一欄不同，逐欄在 `contradictions[]` 開獨立條目（本次值／前份值／三元歸因排序主因，每條目帶 `prior_field`＝dd-meta 欄名，方法論驅動須明標）；無歸因＝`validate_judgment.py` FAIL。
