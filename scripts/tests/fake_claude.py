@@ -32,7 +32,8 @@ fixture 目錄形狀（`notes/site-internal/dd/_src/{T}_{D}/`，見該目錄
                                   major_events 那批另帶頂層 `"events"`）
     parts/numbers_agent.json 或
     parts/numbers_collect.json — 數字採集 part（`{"numbers": {...}}`）
-    {T}_{D}.transcript_digest.json — 逐字稿摘要（充當 a2_digest 產物）
+    {T}_{D}.transcript_digest.json — 逐字稿摘要（WP7d 起依 `file` 欄拆篇，
+                                  充當各 a2_{k} 單篇片段的來源）
     parts/transcripts.json     — Koyfin 路徑清單 part
     {T}_{D}.judgment.json／{T}_{D}.scenario.json — 判斷 agent 產物
     （gate 用的稽核檔在 fixture 目錄的**上一層**：`_audit_{T}_{D}.md`）
@@ -159,8 +160,41 @@ def _replay_numbers(replay_dir, obj):
 
 
 def _replay_digest(replay_dir, obj):
+    """WP7d：`obj` 帶 `file` 時（一篇一個 spawn 的 a2_{k}）從 fixture 的
+    `{T}_{D}.transcript_digest.json` 依 `file` 的 basename 拆出對應那篇的
+    items/qa_flags，寫成單篇片段（形狀與合併後 digest.json 相同）；不帶
+    `file`（舊的單一 a2_digest 呼叫方式，理論上已不再由 ddreport.py 產生，
+    保留供其他呼叫端相容）則整檔複製。"""
     out_path = Path(obj["out"])
     cand = replay_dir / "{0}.transcript_digest.json".format(replay_dir.name)
+    target_file = obj.get("file")
+    if target_file:
+        target_base = Path(target_file).name
+        if cand.exists():
+            try:
+                data = json.loads(cand.read_text(encoding="utf-8"))
+            except Exception:
+                data = None
+            if isinstance(data, dict):
+                items = [
+                    it for it in (data.get("items") or [])
+                    if isinstance(it, dict) and Path(it.get("file") or "").name == target_base
+                ]
+                qa_flags = [
+                    q for q in (data.get("qa_flags") or [])
+                    if isinstance(q, dict) and Path(q.get("file") or "").name == target_base
+                ]
+                result = {
+                    "source_files": [target_file] if items else [],
+                    "items": items,
+                    "qa_flags": qa_flags,
+                }
+                _replay_write(out_path, json.dumps(result, ensure_ascii=False, indent=2))
+                return "{0} <- {1}（拆 file={2}，{3} items）".format(
+                    Path(out_path).name, cand.name, target_base, len(items))
+        empty = json.dumps({"source_files": [], "items": [], "qa_flags": []}, ensure_ascii=False)
+        _replay_write(out_path, empty)
+        return "{0}: fixture 無 {1} 對應片段，寫入空白佔位".format(Path(out_path).name, target_base)
     if cand.exists():
         _replay_write(out_path, cand.read_text(encoding="utf-8"))
         return "digest.json <- {0}".format(cand.name)

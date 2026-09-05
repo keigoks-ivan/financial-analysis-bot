@@ -703,5 +703,80 @@ def test_run_resume_from_judged_fail_calls_precheck_not_full_judge(monkeypatch):
         shutil.rmtree(run_dir, ignore_errors=True)
 
 
+# ---------------------------------------------------------------------------
+# 6) WP7d：摘要子 agent 拆成一篇一個 spawn（a2_{k}）＋零 LLM 合併回 digest.json
+# ---------------------------------------------------------------------------
+
+def test_merge_digest_parts_combines_per_file_parts_into_digest_json(tmp_path):
+    run_dir = tmp_path / "run"
+    (run_dir / "parts").mkdir(parents=True)
+    (run_dir / "parts" / "digest_1.json").write_text(json.dumps({
+        "source_files": ["A.md"],
+        "items": [{"topic": "guidance", "claim": "c1", "quote": "q1",
+                    "speaker": "CFO", "date": "2026-01-01", "file": "A.md"}],
+        "qa_flags": [{"question": "q?", "response_pattern": "評避", "file": "A.md"}],
+    }), encoding="utf-8")
+    (run_dir / "parts" / "digest_2.json").write_text(json.dumps({
+        "source_files": ["B.md"],
+        "items": [{"topic": "margin", "claim": "c2", "quote": "q2",
+                    "speaker": "CEO", "date": "2026-02-01", "file": "B.md"}],
+        "qa_flags": [],
+    }), encoding="utf-8")
+    # 非 digest part（如 axes_1.json）不該被誤吃進來
+    (run_dir / "parts" / "axes_1.json").write_text(json.dumps({"coverage": {}}), encoding="utf-8")
+
+    merged = ddreport._merge_digest_parts(run_dir)
+
+    assert merged["source_files"] == ["A.md", "B.md"]
+    assert [it["claim"] for it in merged["items"]] == ["c1", "c2"]
+    assert len(merged["qa_flags"]) == 1
+
+    on_disk = json.loads((run_dir / "digest.json").read_text(encoding="utf-8"))
+    assert on_disk == merged
+
+
+def test_merge_digest_parts_empty_when_no_digest_parts(tmp_path):
+    run_dir = tmp_path / "run"
+    (run_dir / "parts").mkdir(parents=True)
+
+    merged = ddreport._merge_digest_parts(run_dir)
+
+    assert merged == {"source_files": [], "items": [], "qa_flags": []}
+
+
+@pytest.mark.skipif(not CIEN_FIXTURE.exists(), reason="CIEN_20260905 回溯 fixture 不存在")
+def test_plan_spawns_one_digest_agent_per_transcript_not_a2_digest(monkeypatch):
+    """CIEN fixture 的 evidence.json `selected.recent_four_quarters` 有 4 篇，
+    去掉最後一篇（最新一季）剩 3 篇、`high_signal_optional` 為空 → 應該產生
+    `a2_1`／`a2_2`／`a2_3` 三個 spawn，絕不再有單一的 `a2_digest`。"""
+    ticker, date = "CIEN", "20260905"
+    run_dir = _clean_run_dir(ticker, date)
+    monkeypatch.setenv("DD_REPLAY_FROM", str(CIEN_FIXTURE))
+    try:
+        args = argparse.Namespace(
+            ticker=ticker, date=date, archetype=None, peers=None, segments=None,
+            axes_per_batch=2, offline=True,
+        )
+        rc = ddreport.cmd_plan(args)
+        assert rc == 0
+
+        spawn_list = json.loads((run_dir / "spawn_list.json").read_text(encoding="utf-8"))
+        ids = [s["id"] for s in spawn_list]
+        assert "a2_digest" not in ids
+        digest_ids = sorted(i for i in ids if i.startswith("a2_"))
+        assert digest_ids == ["a2_1", "a2_2", "a2_3"]
+        for s in spawn_list:
+            if s["id"] in digest_ids:
+                assert s["max_turns"] == ddreport.DIGEST_PER_FILE_MAX_TURNS
+                assert s["budget_cache_read"] == ddreport.BUDGET_CACHE_READ_DIGEST_PER_FILE
+                assert s["out"] == "parts/digest_{0}.json".format(s["id"].split("_", 1)[1])
+
+        targets = json.loads((run_dir / "digest_targets.json").read_text(encoding="utf-8"))
+        assert [t["id"] for t in targets] == ["a2_1", "a2_2", "a2_3"]
+    finally:
+        monkeypatch.delenv("DD_REPLAY_FROM", raising=False)
+        shutil.rmtree(run_dir, ignore_errors=True)
+
+
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-v"]))

@@ -73,8 +73,12 @@ SPAWN_TOOLS_DIGEST = ["Read", "Write", "Bash"]
 # （母稿 §4 表同步改，不在本檔範圍）。
 BUDGET_CACHE_READ_COVERAGE = 900_000
 BUDGET_CACHE_READ_NUMBERS = 1_200_000
-BUDGET_CACHE_READ_DIGEST = 1_500_000
-DIGEST_MAX_TURNS = 16
+
+# WP7d：摘要子 agent 拆成一篇逐字稿一個 spawn（HPE 第二次真跑實測：一人讀三篇
+# 17 輪撞 16 上限、cache_read 2.54M 超 1.5M 預算——單篇合計約 0.5M×3≈1.5M 且
+# 可平行，見 _wp_spec_v17_batch5_20260905.md WP7d）。
+DIGEST_PER_FILE_MAX_TURNS = 8
+BUDGET_CACHE_READ_DIGEST_PER_FILE = 700_000
 
 # WP7a #1：Koyfin 步驟改零 LLM，plan 內直接 subprocess 呼叫，不再走 spawn。
 KOYFIN_DIR = Path.home() / "scripts" / "koyfin-downloader"
@@ -463,9 +467,9 @@ def _run_koyfin_step(ticker, date, run_dir, evidence_dest, manifest, drive_ticke
     _atomic_write_json(transcripts_out, transcripts_obj)
 
     # 立刻 merge 進 evidence.json：evidence.json 需在 plan 結束時就含
-    # transcripts.selected，不必等到 stage0 finalize 才看得到（下游 a2_digest
-    # 直接讀 parts/transcripts.json，這裡的 merge 主要供 evidence.json 本身
-    # 的一致性與後續 finalize 冪等）。
+    # transcripts.selected，不必等到 stage0 finalize 才看得到（下游 a2_{k}
+    # 直接讀這次 plan 算出的 transcripts_obj，這裡的 merge 主要供
+    # evidence.json 本身的一致性與後續 finalize 冪等）。
     if evidence_dest.exists():
         py = _pick_python()
         subprocess.run(
@@ -617,7 +621,7 @@ def cmd_plan(args):
 
     # 5b. Koyfin 逐字稿（WP7a #1：零 LLM，plan 內直接跑，立刻 merge 進
     # evidence.json；失敗只 warn，不 abort）
-    _run_koyfin_step(ticker, date, run_dir, evidence_dest, manifest)
+    transcripts_obj = _run_koyfin_step(ticker, date, run_dir, evidence_dest, manifest)
 
     # 6. 軸分批：major_events 單獨一批，其餘每 --axes-per-batch 軸一批
     axis_list = axes if isinstance(axes, list) else []
@@ -671,26 +675,44 @@ def cmd_plan(args):
         "max_turns": 15, "budget_cache_read": BUDGET_CACHE_READ_NUMBERS,
     })
 
-    # a2_digest（WP7a #2：在 5b. Koyfin 步驟之後才派工，prompt 改讀
-    # parts/transcripts.json——parts/transcripts.json 由 plan 當下的零 LLM
-    # Koyfin 步驟同步寫好，不再有「evidence.json 當時無逐字稿清單」的race）
-    digest_mapping = {
-        "TICKER": ticker,
-        "DATE": date,
-        "DIGEST_PATH": str(run_dir / "digest.json"),
-        "TRANSCRIPTS_PATH": str(parts_dir / "transcripts.json"),
-    }
-    (prompts_dir / "a2_digest.md").write_text(
-        _render_template(PROMPTS_TMPL_DIR / "digest.md.tmpl", digest_mapping), encoding="utf-8")
-    spawn_list.append({
-        "id": "a2_digest", "model": "sonnet", "prompt": "prompts/a2_digest.md",
-        "out": "digest.json", "tools": SPAWN_TOOLS_DIGEST,
-        "max_turns": DIGEST_MAX_TURNS, "budget_cache_read": BUDGET_CACHE_READ_DIGEST,
-    })
+    # a2_{k}（WP7d：一篇逐字稿一個 spawn，取代原本一人讀全部的 a2_digest——
+    # HPE 實測一人讀三篇 17 輪撞 16 上限、cache_read 2.54M 超 1.5M 預算；
+    # 拆開後單篇約 0.5M×3≈1.5M 且可平行）。範圍＝
+    # transcripts.selected.recent_four_quarters[:-1]（去掉最後一篇＝最新一
+    # 季，留給判斷 agent 親讀）＋ high_signal_optional[]（若有），順序與
+    # digest.md.tmpl 既有規則一致。
+    sel = ((transcripts_obj or {}).get("transcripts") or {}).get("selected") or {}
+    recent4 = sel.get("recent_four_quarters") or []
+    optional = sel.get("high_signal_optional") or []
+    digest_targets = list(recent4[:-1]) + list(optional)
+
+    digest_targets_meta = []
+    for k, file_path in enumerate(digest_targets, start=1):
+        part_rel = "parts/digest_{0}.json".format(k)
+        digest_mapping = {
+            "TICKER": ticker,
+            "DATE": date,
+            "TRANSCRIPT_FILE": str(file_path),
+            "PART_PATH": str(run_dir / part_rel),
+        }
+        prompt_rel = "prompts/a2_{0}.md".format(k)
+        (run_dir / prompt_rel).write_text(
+            _render_template(PROMPTS_TMPL_DIR / "digest.md.tmpl", digest_mapping), encoding="utf-8")
+        spawn_id = "a2_{0}".format(k)
+        spawn_list.append({
+            "id": spawn_id, "model": "sonnet", "prompt": prompt_rel,
+            "out": part_rel, "tools": SPAWN_TOOLS_DIGEST,
+            "max_turns": DIGEST_PER_FILE_MAX_TURNS,
+            "budget_cache_read": BUDGET_CACHE_READ_DIGEST_PER_FILE,
+        })
+        digest_targets_meta.append({"id": spawn_id, "file": str(file_path), "out": part_rel})
+    _atomic_write_json(run_dir / "digest_targets.json", digest_targets_meta)
+
     # digest.json 路徑本身零 LLM、plan 當下就確定，直接寫成 part（WP1b
     # _select_parts 固定會挑 parts/digest_path.json 合併進 evidence.json 的
     # transcripts.digest_path，strict 驗證靠它判斷「>1 篇逐字稿時 0e 摘要是否
-    # 已接線」；不必等 a2_digest agent 交稿才知道這個路徑）。
+    # 已接線」；不必等 a2_{k} agent 交稿才知道這個路徑——finalize 前
+    # `_merge_digest_parts` 會把 parts/digest_*.json 合併成這個檔）。
     _atomic_write_json(parts_dir / "digest_path.json",
                         {"transcripts": {"digest_path": str(run_dir / "digest.json")}})
 
@@ -864,8 +886,10 @@ def _append_replay_marker(prompt_path, obj):
 
 def _apply_replay_markers_stage0(run_dir, replay_dir):
     """Stage 0 三類 spawn（覆蓋軸批次／數字／逐字稿摘要）prompt 逐一附
-    replay marker。批次的軸清單讀 `batches.json`（`plan` 時已寫出）。Koyfin
-    已於 WP7a 改零 LLM，plan 內直接跑，不再是 spawn，不需要 marker。"""
+    replay marker。批次的軸清單讀 `batches.json`（`plan` 時已寫出）；摘要的
+    逐篇清單讀 `digest_targets.json`（WP7d：一篇一個 spawn，`plan` 時已寫
+    出）。Koyfin 已於 WP7a 改零 LLM，plan 內直接跑，不再是 spawn，不需要
+    marker。"""
     if not replay_dir:
         return
     prompts_dir = run_dir / "prompts"
@@ -881,9 +905,12 @@ def _apply_replay_markers_stage0(run_dir, replay_dir):
     _append_replay_marker(prompts_dir / "a1_numbers.md", {
         "kind": "numbers", "out": str(run_dir / "parts" / "numbers_collect.json"),
     })
-    _append_replay_marker(prompts_dir / "a2_digest.md", {
-        "kind": "digest", "out": str(run_dir / "digest.json"),
-    })
+    digest_targets = _load_json_or(run_dir / "digest_targets.json", [])
+    for dt in digest_targets:
+        out_path = run_dir / dt["out"]
+        _append_replay_marker(prompts_dir / "{0}.md".format(dt["id"]), {
+            "kind": "digest", "file": dt.get("file"), "out": str(out_path),
+        })
 
 
 # ---------------------------------------------------------------------------
@@ -891,9 +918,54 @@ def _apply_replay_markers_stage0(run_dir, replay_dir):
 # 覆蓋/數字/摘要 → finalize（WP7a #4：resume 時只重派需要的部分）
 # ---------------------------------------------------------------------------
 
+_DIGEST_PART_RE = re.compile(r"^digest_(\d+)\.json$")
+
+
+def _merge_digest_parts(run_dir):
+    """WP7d：零 LLM 合併 `parts/digest_{k}.json`（每篇逐字稿一個 spawn 交回
+    的片段，形狀同 `digest.json`：`{source_files, items, qa_flags}`）成單一
+    `digest.json`（形狀不變，`validate_digest.py` 直接吃）。依檔名數字序合
+    併，`source_files` 依序去重、`items`／`qa_flags` 直接接尾。沒有任何
+    `digest_*.json`（例如 Koyfin 找不到逐字稿）時寫出空殼，維持既有
+    fallback 語意。"""
+    parts_dir = Path(run_dir) / "parts"
+    digest_files = []
+    if parts_dir.exists():
+        for f in parts_dir.iterdir():
+            m = _DIGEST_PART_RE.match(f.name)
+            if m:
+                digest_files.append((int(m.group(1)), f))
+    digest_files.sort(key=lambda t: t[0])
+
+    source_files, items, qa_flags = [], [], []
+    seen = set()
+    for _, f in digest_files:
+        try:
+            d = json.loads(f.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if not isinstance(d, dict):
+            continue
+        for sf in d.get("source_files") or []:
+            if sf not in seen:
+                seen.add(sf)
+                source_files.append(sf)
+        items.extend(d.get("items") or [])
+        qa_flags.extend(d.get("qa_flags") or [])
+
+    merged = {"source_files": source_files, "items": items, "qa_flags": qa_flags}
+    _atomic_write_json(Path(run_dir) / "digest.json", merged)
+    return merged
+
+
 def _finalize_run_dir(run_dir):
     """跑 `dd_evidence.py finalize --run-dir DIR`，回傳
-    (returncode, 原始輸出全文, 需重派的 part 檔名 set)。"""
+    (returncode, 原始輸出全文, 需重派的 part 檔名 set)。finalize 前先零
+    LLM 合併 `parts/digest_{k}.json` 成 `digest.json`（WP7d）——digest 不在
+    `dd_evidence.py` 的 merge 範圍內（那是 evidence.json 的 merge），故在
+    這裡自己補做，確保每次 finalize（含 resume／retry）看到的 digest.json
+    都是最新片段的合併結果。"""
+    _merge_digest_parts(run_dir)
     py = _pick_python()
     r = subprocess.run(
         [py, str(SCRIPTS_DIR / "dd_evidence.py"), "finalize", "--run-dir", str(run_dir)],
