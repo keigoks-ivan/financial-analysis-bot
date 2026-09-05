@@ -19,9 +19,11 @@
 from __future__ import annotations
 
 import argparse
+import html as html_lib
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -65,6 +67,16 @@ SPAWN_TOOLS_DIGEST = ["Read", "Write", "Bash"]
 SPAWN_TOOLS_KOYFIN = ["Bash", "Read", "Write"]
 
 BUDGET_CACHE_READ_DEFAULT = 700000
+
+# ---------------------------------------------------------------------------
+# WP6a: finish／index-row 用的固定路徑（模組層常數，供測試 monkeypatch 覆寫）
+# ---------------------------------------------------------------------------
+DD_DIR = REPO_ROOT / "docs" / "dd"
+INDEX_MD_PATH = DD_DIR / "INDEX.md"
+RESEARCH_BODY_PATH = REPO_ROOT / "docs" / "research" / "_body.html"
+DD_SCREENER_LATEST_PATH = REPO_ROOT / "docs" / "dd-screener" / "latest.json"
+PICKS_CANDIDATES_PATH = REPO_ROOT / "docs" / "picks" / "candidates.json"
+SRC_ARCHIVE_DIR = REPO_ROOT / "notes" / "site-internal" / "dd" / "_src"
 
 
 # ---------------------------------------------------------------------------
@@ -1049,6 +1061,426 @@ def _do_brief(ticker, date, do_full, manifest):
 
 
 # ---------------------------------------------------------------------------
+# WP6a: index-row — 從最終 HTML 的 dd-meta 生成 docs/dd/INDEX.md 一列
+# ---------------------------------------------------------------------------
+
+_DD_META_RE = re.compile(
+    r'<script id="dd-meta"[^>]*>(.*?)</script>', re.S
+)
+_SUB_P_RE = re.compile(r'<p class="sub[^"]*">(.*?)</p>', re.S)
+_TAG_RE = re.compile(r"<[^>]+>")
+
+
+def _extract_dd_meta(html_text):
+    m = _DD_META_RE.search(html_text)
+    if not m:
+        raise ValueError("dd-meta script block 找不到")
+    return json.loads(m.group(1))
+
+
+def _extract_sub_text(html_text):
+    """取 `<p class="sub...">…</p>`（`dd_brief.py render_header` 已把
+    `plain.verdict_sub`（有）或 `oneliner`（無，class 多帶 fallback）決定好
+    優先序寫進這段），HTML entity 反轉義＋防禦性剝標籤。"""
+    m = _SUB_P_RE.search(html_text)
+    if not m:
+        return None
+    text = html_lib.unescape(m.group(1))
+    text = _TAG_RE.sub("", text)
+    return text.strip()
+
+
+def _fmt_signed_pct(v, decimals=1):
+    if v is None:
+        return None
+    try:
+        v = float(v)
+    except (TypeError, ValueError):
+        return str(v)
+    sign = "+" if v > 0 else ("−" if v < 0 else "")
+    return "{0}{1:.{2}f}%".format(sign, abs(v), decimals)
+
+
+def _index_row_fields(html_path):
+    """回傳 dict：`row`（INDEX.md 一列 markdown）＋各拆解欄位，供
+    `cmd_index_row`／`_do_finish` 共用（後者拿 meta 組 commit 訊息）。"""
+    html_path = Path(html_path)
+    text = html_path.read_text(encoding="utf-8")
+    meta = _extract_dd_meta(text)
+    sub_text = _extract_sub_text(text)
+
+    ticker = meta.get("ticker") or "—"
+    date_disp = meta.get("date") or "—"
+    schema = meta.get("schema") or "—"
+
+    verdict = meta.get("dca_verdict") or "—"
+    role = meta.get("dca_role")
+    rearm = meta.get("rearm_trigger")
+    verdict_cell = verdict
+    if role:
+        verdict_cell += "｜" + role
+    if rearm:
+        verdict_cell += "·rearm＝" + rearm
+
+    trap_label = meta.get("trap_label") or "—"
+
+    moat = meta.get("moat_grade") or meta.get("moat") or "—"
+    moat_trend = meta.get("moat_trend") or ""
+    val = meta.get("val") or "—"
+    trap = meta.get("trap") or "—"
+    col6 = "{0}{1}/{2}/{3}".format(moat, moat_trend, val, trap)
+
+    is_brief = bool(meta.get("brief"))
+    try:
+        rel = html_path.resolve().relative_to(DD_DIR.resolve())
+        file_cell = str(rel)
+    except ValueError:
+        file_cell = html_path.name
+
+    note_lead = sub_text or meta.get("oneliner") or "—"
+    number_parts = []
+    ev5y = _fmt_signed_pct(meta.get("ev5y_pct"), decimals=1)
+    irr = _fmt_signed_pct(meta.get("irr_base_pct"), decimals=1)
+    maxdd = _fmt_signed_pct(meta.get("max_dd_pct"), decimals=0)
+    if ev5y is not None:
+        number_parts.append("EV5y {0}".format(ev5y))
+    if irr is not None:
+        number_parts.append("IRR {0}/yr".format(irr))
+    if maxdd is not None:
+        number_parts.append("Max DD {0}".format(maxdd))
+    note = note_lead
+    if number_parts:
+        note += "（{0}）".format("／".join(number_parts))
+    suffix = (
+        "**v17 快速版（sonnet 收證據→Fable 判斷→opus 閘→零 LLM 渲染）**"
+        if is_brief else "**v17 完整版**"
+    )
+    note += "。" + suffix
+
+    row = "| {date} | {ticker} | {schema} | {verdict} | {trap} | {col6} | {file} | {note} |".format(
+        date=date_disp, ticker=ticker, schema=schema, verdict=verdict_cell,
+        trap=trap_label, col6=col6, file=file_cell, note=note,
+    )
+    return {
+        "meta": meta,
+        "row": row,
+        "file_cell": file_cell,
+        "ticker": ticker,
+        "date": date_disp,
+        "is_brief": is_brief,
+        "verdict": verdict,
+        "role": role,
+    }
+
+
+def _append_index_row(row, file_cell):
+    """append 到 INDEX.md 末尾；冪等——同檔名（`file_cell`）已存在則跳過。"""
+    INDEX_MD_PATH.parent.mkdir(parents=True, exist_ok=True)
+    text = INDEX_MD_PATH.read_text(encoding="utf-8") if INDEX_MD_PATH.exists() else ""
+    if file_cell and file_cell in text:
+        print("[skip] INDEX.md 已含 {0}，冪等不重複 append".format(file_cell))
+        return False
+    if text and not text.endswith("\n"):
+        text += "\n"
+    text += row + "\n"
+    INDEX_MD_PATH.write_text(text, encoding="utf-8")
+    print("[ok] appended to {0}".format(INDEX_MD_PATH))
+    return True
+
+
+def cmd_index_row(args):
+    fields = _index_row_fields(args.html)
+    print(fields["row"])
+    if args.append:
+        _append_index_row(fields["row"], fields["file_cell"])
+    return 0
+
+
+# ---------------------------------------------------------------------------
+# WP6a: finish — index-row append → update_dd_index.py → 存查 → commit → push
+# ---------------------------------------------------------------------------
+
+def _model_bucket(model_id):
+    m = (model_id or "").lower()
+    if "opus" in m:
+        return "opus"
+    if "fable" in m:
+        return "fable"
+    if "sonnet" in m:
+        return "sonnet"
+    if "haiku" in m:
+        return "haiku"
+    return "other"
+
+
+def _empty_bucket():
+    return {"cache_read": 0, "cache_creation": 0, "output": 0}
+
+
+def _sum_usage_by_model(usage_list):
+    buckets = {}
+    for u in usage_list or []:
+        by_model = (u or {}).get("by_model") or {}
+        for mid, vals in by_model.items():
+            b = buckets.setdefault(_model_bucket(mid), _empty_bucket())
+            b["cache_read"] += (vals or {}).get("cacheReadInputTokens", 0) or 0
+            b["cache_creation"] += (vals or {}).get("cacheCreationInputTokens", 0) or 0
+            b["output"] += (vals or {}).get("outputTokens", 0) or 0
+    return buckets
+
+
+def _build_token_ledger(manifest):
+    """從 manifest 的 `stages.*.agent_usage` 彙總三欄（fable/opus/sonnet，
+    另有 haiku/other 兜底）＋每段輪次，回傳 `{totals, by_stage}`。"""
+    totals = {}
+    by_stage = {}
+    for stage_name, stage in (manifest.get("stages") or {}).items():
+        usage_list = (stage or {}).get("agent_usage") or []
+        buckets = _sum_usage_by_model(usage_list)
+        turns = sum((u or {}).get("num_turns", 0) or 0 for u in usage_list)
+        by_stage[stage_name] = dict(buckets, turns=turns)
+        for k, v in buckets.items():
+            t = totals.setdefault(k, _empty_bucket())
+            for kk in ("cache_read", "cache_creation", "output"):
+                t[kk] += v[kk]
+    return {"totals": totals, "by_stage": by_stage}
+
+
+def _ledger_cache_read_total(ledger, models=("fable", "opus", "sonnet", "other", "haiku")):
+    return sum((ledger["totals"].get(m) or {}).get("cache_read", 0) for m in models)
+
+
+def _ledger_summary_line(ledger):
+    total = _ledger_cache_read_total(ledger)
+    fable = (ledger["totals"].get("fable") or {}).get("cache_read", 0)
+    opus = (ledger["totals"].get("opus") or {}).get("cache_read", 0)
+    sonnet = (ledger["totals"].get("sonnet") or {}).get("cache_read", 0)
+    return "全帳 {0:.1f}M（fable {1:.1f}M／opus {2:.1f}M／sonnet {3:.1f}M）".format(
+        total / 1_000_000.0, fable / 1_000_000.0, opus / 1_000_000.0, sonnet / 1_000_000.0,
+    )
+
+
+def _finish_target_html(ticker, date, manifest):
+    """本次 run 實際產出的報告檔——優先信 manifest 的 `stages.brief.out_path`
+    （這個 run 自己寫過什麼就是什麼，不用檔案系統猜；`--full` 一旦交付、
+    `_do_brief` 把 out_path 換成完整版路徑時，這裡不用跟著改）。只有
+    out_path 缺失或已不存在時才退回按檔名慣例猜測（先 brief 再完整版——
+    brief 是 v17 現行預設產物，缺 out_path 多半代表這次跑的正是它）。"""
+    brief_stage = (manifest.get("stages") or {}).get("brief") or {}
+    out_path = brief_stage.get("out_path")
+    if out_path and Path(out_path).exists():
+        return Path(out_path)
+    brief_default = DD_DIR / "brief" / "BRIEF_{0}_{1}.html".format(ticker, date)
+    if brief_default.exists():
+        return brief_default
+    return DD_DIR / "DD_{0}_{1}.html".format(ticker, date)
+
+
+def _finish_file_set(ticker, date, file_cell):
+    return [
+        DD_DIR / file_cell,
+        INDEX_MD_PATH,
+        RESEARCH_BODY_PATH,
+        DD_SCREENER_LATEST_PATH,
+        PICKS_CANDIDATES_PATH,
+        SRC_ARCHIVE_DIR / "{0}_{1}".format(ticker, date),
+    ]
+
+
+def _archive_run_dir(run_dir, archive_dir):
+    """把 run 目錄的固定產物複製到 `notes/site-internal/dd/_src/{T}_{D}/`，
+    檔名照既有慣例加 `{T}_{D}.` 前綴；`parts/`／`prompts/`／`agents/` 各自
+    整個目錄複製（子目錄內原檔名不變）。回傳複製項目清單。"""
+    run_dir = Path(run_dir)
+    archive_dir = Path(archive_dir)
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    stem = archive_dir.name
+
+    renamed = {
+        "evidence.json": "{0}.evidence.json".format(stem),
+        "digest.json": "{0}.transcript_digest.json".format(stem),
+        "judgment.json": "{0}.judgment.json".format(stem),
+        "scenario.json": "{0}.scenario.json".format(stem),
+        "scenario_meta.json": "{0}.scenario_meta.json".format(stem),
+        "gate_audit.md": "{0}.gate_audit.md".format(stem),
+    }
+    copied = []
+    for src_name, dst_name in renamed.items():
+        src = run_dir / src_name
+        if src.exists():
+            shutil.copy2(str(src), str(archive_dir / dst_name))
+            copied.append(dst_name)
+
+    for sub in ("parts", "prompts", "agents"):
+        src_dir = run_dir / sub
+        if src_dir.exists():
+            dst_dir = archive_dir / sub
+            if dst_dir.exists():
+                shutil.rmtree(str(dst_dir))
+            shutil.copytree(str(src_dir), str(dst_dir))
+            copied.append(sub + "/")
+
+    manifest_src = run_dir / "manifest.json"
+    if manifest_src.exists():
+        shutil.copy2(str(manifest_src), str(archive_dir / "manifest.json"))
+        copied.append("manifest.json")
+
+    print("[archive] {0} → {1}（{2} 項）".format(run_dir, archive_dir, len(copied)))
+    return copied
+
+
+def _git(args, cwd=None):
+    """git 呼叫的唯一入口——測試 monkeypatch 這支即可隔離真實 git。"""
+    return subprocess.run(["git"] + list(args), cwd=str(cwd or REPO_ROOT), capture_output=True, text=True)
+
+
+def _git_ahead_behind():
+    """回傳 (ahead, behind)；behind>0 代表遠端領先（先 fetch 再比）。"""
+    _git(["fetch", "origin", "main"])
+    r = _git(["rev-list", "--left-right", "--count", "HEAD...origin/main"])
+    if r.returncode != 0:
+        return (0, 0)
+    parts = (r.stdout or "").strip().split()
+    if len(parts) != 2:
+        return (0, 0)
+    try:
+        return int(parts[0]), int(parts[1])
+    except ValueError:
+        return (0, 0)
+
+
+def _do_finish(ticker, date, dry_run=False, no_push=False, skip_dd_screener=False):
+    run_dir = _run_dir(ticker, date)
+    manifest_path = run_dir / "manifest.json"
+    manifest = _load_json_or(manifest_path, None)
+    if manifest is None:
+        print("[error] 找不到 manifest：{0}".format(manifest_path), file=sys.stderr)
+        return 1
+    brief_stage = (manifest.get("stages") or {}).get("brief") or {}
+    if brief_stage.get("state") != "PASS":
+        print(
+            "[error] brief 段尚未 PASS（現況：{0}），finish 中止".format(
+                brief_stage.get("state")
+            ),
+            file=sys.stderr,
+        )
+        return 1
+
+    html_path = _finish_target_html(ticker, date, manifest)
+    if not html_path.exists():
+        print("[error] 找不到報告檔：{0}".format(html_path), file=sys.stderr)
+        return 1
+
+    fields = _index_row_fields(html_path)
+    meta = fields["meta"]
+
+    files = _finish_file_set(ticker, date, fields["file_cell"])
+    print("[plan] 檔案集：")
+    for f in files:
+        print("  - {0}".format(f))
+
+    ledger = _build_token_ledger(manifest)
+    ledger_line = _ledger_summary_line(ledger)
+    print(ledger_line)
+
+    if dry_run:
+        print("[dry-run] 不寫 INDEX、不跑 update_dd_index、不 commit、不 push")
+        return 0
+
+    _append_index_row(fields["row"], fields["file_cell"])
+
+    py = _pick_python()
+    cmd = [py, str(SCRIPTS_DIR / "update_dd_index.py")]
+    if skip_dd_screener:
+        cmd.append("--skip-dd-screener")
+    r = subprocess.run(cmd, cwd=str(REPO_ROOT), capture_output=True, text=True)
+    if r.returncode != 0:
+        print(
+            "[warn] update_dd_index.py 失敗（rc={0}），僅警告不中止：\n{1}".format(
+                r.returncode, (r.stdout + r.stderr)[-1000:]
+            )
+        )
+    else:
+        print("[ok] update_dd_index.py rc=0")
+
+    archive_dir = SRC_ARCHIVE_DIR / "{0}_{1}".format(ticker, date)
+    _archive_run_dir(run_dir, archive_dir)
+    token_path = archive_dir / "token.json"
+    _atomic_write_json(token_path, ledger)
+    print(ledger_line)
+
+    verdict = meta.get("dca_verdict") or "—"
+    role = meta.get("dca_role") or "—"
+    label = "DD 快速版" if meta.get("brief") else "DD 完整版"
+    total_m = _ledger_cache_read_total(ledger) / 1_000_000.0
+    commit_subject = (
+        "Add {0} {1} {2}（{3}｜{4}；v17 全帳 {5:.1f}M）; "
+        "resync research+screener".format(ticker, label, date, verdict, role, total_m)
+    )
+    trailer = os.environ.get("DD_COMMIT_TRAILER")
+    commit_msg = commit_subject if not trailer else "{0}\n\n{1}".format(commit_subject, trailer)
+
+    existing_files = [f for f in files if Path(f).exists()]
+    add_r = _git(["add"] + [str(f) for f in existing_files])
+    if add_r.returncode != 0:
+        print("[error] git add 失敗：\n{0}".format((add_r.stdout or "") + (add_r.stderr or "")), file=sys.stderr)
+        return 1
+    commit_r = _git(["commit", "-m", commit_msg])
+    if commit_r.returncode != 0:
+        print(
+            "[error] git commit 失敗：\n{0}".format(
+                (commit_r.stdout or "") + (commit_r.stderr or "")
+            ),
+            file=sys.stderr,
+        )
+        return 1
+    print("[ok] committed: {0}".format(commit_subject))
+
+    status_r = _git(["status", "--porcelain"])
+    modified_paths = [ln[3:] for ln in (status_r.stdout or "").splitlines() if ln.strip()]
+    whitelist_set = set()
+    for f in files:
+        try:
+            whitelist_set.add(str(Path(f).resolve().relative_to(REPO_ROOT)))
+        except ValueError:
+            whitelist_set.add(str(f))
+    skipped = [p for p in modified_paths if p not in whitelist_set]
+    print("[skip] 略過 {0} 個非白名單變動檔".format(len(skipped)))
+
+    if no_push:
+        print("[ok] --no-push，未推送")
+        return 0
+
+    ahead, behind = _git_ahead_behind()
+    if behind > 0:
+        print(
+            "[HOLD] 遠端領先 {0}，請 orchestrator "
+            "用 worktree cherry-pick 推".format(behind)
+        )
+        return 2
+    push_r = _git(["push", "origin", "main"])
+    if push_r.returncode != 0:
+        print(
+            "[error] git push 失敗：\n{0}".format(
+                (push_r.stdout or "") + (push_r.stderr or "")
+            ),
+            file=sys.stderr,
+        )
+        return 1
+    print("[ok] pushed to origin/main")
+    return 0
+
+
+def cmd_finish(args):
+    ticker = args.ticker.strip().upper()
+    date = args.date
+    return _do_finish(
+        ticker, date,
+        dry_run=args.dry_run, no_push=args.no_push, skip_dd_screener=args.skip_dd_screener,
+    )
+
+
+# ---------------------------------------------------------------------------
 # WP1d run：串接 stage0 → judged → gated → brief，支援 --until／--resume
 # ---------------------------------------------------------------------------
 
@@ -1060,6 +1492,7 @@ def cmd_run(args):
 
     replay_dir = _ensure_replay_env(args.replay_from)
 
+    until_explicit = args.until is not None
     until = args.until or "brief"
     if until not in STAGE_ORDER:
         print("[error] --until 必須是 {0} 之一".format(STAGE_ORDER), file=sys.stderr)
@@ -1104,6 +1537,14 @@ def cmd_run(args):
         if st.get("state") not in ("PASS", "SKIPPED"):
             return rc if rc != 0 else 1
 
+    # WP6a：run 預設接 finish；--no-finish／--dry-run／明講 --until 皆不接
+    # （含明講 `--until brief`——語意上等同「就跑到這裡，先別 finish」）。
+    if (not until_explicit) and until == "brief" and not args.no_finish and not args.dry_run:
+        return _do_finish(
+            ticker, date,
+            dry_run=False, no_push=args.no_push, skip_dd_screener=args.skip_dd_screener,
+        )
+
     return rc
 
 
@@ -1139,10 +1580,17 @@ def build_parser():
     rn.add_argument("--judgment-model", default=None, choices=["fable", "opus", "sonnet"])
     rn.add_argument("--full", action="store_true", help="WP4b 未交付，本輪僅印警告")
     rn.add_argument("--replay-from", default=None, metavar="DIR")
-    rn.add_argument("--until", default="brief", choices=STAGE_ORDER)
+    rn.add_argument("--until", default=None, choices=STAGE_ORDER,
+                     help="預設跑到 brief 並自動接 finish；明講此旗標（含 --until brief）視為"
+                          "刻意要求停在該段，不自動接 finish")
     rn.add_argument("--resume", action="store_true")
     rn.add_argument("--offline", action="store_true")
     rn.add_argument("--accept-over-budget", action="store_true")
+    rn.add_argument("--no-finish", action="store_true", help="brief 完成後不自動接 finish")
+    rn.add_argument("--dry-run", action="store_true", help="同 --no-finish；WP6a 精神對齊")
+    rn.add_argument("--no-push", action="store_true", help="finish 時 commit 但不 push")
+    rn.add_argument("--skip-dd-screener", action="store_true",
+                     help="finish 時透傳給 update_dd_index.py")
     rn.set_defaults(func=cmd_run)
 
     s0 = sub.add_parser("stage0")
@@ -1224,6 +1672,19 @@ def build_parser():
         return _do_brief(ticker, date, args.full, manifest)
 
     br.set_defaults(func=_cmd_brief)
+
+    ir = sub.add_parser("index-row")
+    ir.add_argument("--html", required=True, metavar="FILE")
+    ir.add_argument("--append", action="store_true")
+    ir.set_defaults(func=cmd_index_row)
+
+    fi = sub.add_parser("finish")
+    fi.add_argument("ticker")
+    fi.add_argument("date")
+    fi.add_argument("--dry-run", action="store_true")
+    fi.add_argument("--no-push", action="store_true")
+    fi.add_argument("--skip-dd-screener", action="store_true")
+    fi.set_defaults(func=cmd_finish)
 
     return p
 
