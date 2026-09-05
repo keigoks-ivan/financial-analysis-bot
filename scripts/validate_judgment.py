@@ -651,10 +651,18 @@ def drift_checks(data: dict, judgment_path: Path, evidence_path: Path | None) ->
                 attributed = True
                 break
         if not attributed:
-            fails.append(
-                f"漂移未歸因：{f}（本次={cv!r}／前份={pv!r}）— judgment.contradictions[] "
-                f"找不到 prior_field={f!r} 或 axis 含 {f!r} token 的條目"
-            )
+            if pv is None:
+                # WP7b 2026-09-05：前份 dd-meta 本就沒有這個欄位（缺欄或值為
+                # None，例如 rearm_trigger 這種 v16 後才新增的欄）——本次新
+                # 出現的值不算「未歸因的漂移」，降為 WARN 提醒可不歸因。
+                warns.append(
+                    f"漂移未歸因（前份格式無此欄，可不歸因）：{f}（本次={cv!r}／前份={pv!r}）"
+                )
+            else:
+                fails.append(
+                    f"漂移未歸因：{f}（本次={cv!r}／前份={pv!r}）— judgment.contradictions[] "
+                    f"找不到 prior_field={f!r} 或 axis 含 {f!r} token 的條目"
+                )
 
     return fails, warns
 
@@ -814,6 +822,24 @@ def apply_fixes(data: dict, judgment_path: Path) -> list:
         if abs_path.exists():
             data["scenario_ref"] = str(abs_path)
             applied.append(f"scenario_ref 相對路徑 {scenario_ref!r} → {data['scenario_ref']!r}")
+
+    # WP7b 2026-09-05：contradictions[].axis 內的「（QC-\d+）」/「(QC-\d+)」
+    # 括注整段刪除（純代號去除，不改語意）並去尾空白——判斷 agent 常把
+    # judgment-rules 段名（含 QC 代號）直接抄進讀者面 axis 欄，被 leak scan
+    # 擋下；_QC_ANNOTATION_RE 沿用既有詞表（layer 3 leak scan 已定義）。
+    n_qc = 0
+    for c in (data.get("contradictions") or []):
+        if not isinstance(c, dict):
+            continue
+        axis = c.get("axis")
+        if not isinstance(axis, str):
+            continue
+        fixed_axis = _QC_ANNOTATION_RE.sub("", axis).rstrip()
+        if fixed_axis != axis:
+            c["axis"] = fixed_axis
+            n_qc += 1
+    if n_qc:
+        applied.append(f"contradictions[].axis 內 QC-\\d+ 代號括注已刪除：{n_qc} 處")
 
     n_punct = 0
     for container, key, s in list(_walk_fix_strings(data)):
