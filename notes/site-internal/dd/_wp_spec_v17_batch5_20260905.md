@@ -52,3 +52,10 @@
 | a1_numbers | 15 | 1.09M | 預算 1.2M 內 |
 | a2_digest | 17 | 2.54M | 超 1.5M → 熔斷停下，`--accept-over-budget` 放行 |
 | Stage 0 合計 | | 7.9M | Koyfin 零 LLM、清單先 merge、peers 早停三項修正皆生效；無重派 |
+
+## WP8 待補（批次 1 實測，2026-09-05 晚）
+1. **J4 加一項**：`plain.verdict_line`／`five.why_this_size`／`five.how_to_act` 內出現「核心／衛星／追蹤」字樣時，須與 `decision_out.role` 一致，否則 FAIL（CDNS：Fable 白話寫「當核心持股」，矩陣給衛星 9b；orchestrator 手動對齊）。根因＝plain 在 dd_decision 跑之前寫；判斷 prompt 加一句「role 以矩陣輸出為準，白話欄不得自定角色，寫『依決策矩陣』或留待 check 後修正」。
+2. **finish 遇遠端領先自動走 worktree cherry-pick 推**（現在 exit 2 等 orchestrator），本地 main 有其他 session 的 commit 時只挑自己的 commit。
+3. 覆蓋子 agent 輪次 10（8 太緊：CDNS 六個全在第 9 輪被砍）；摘要單篇 10。已改。
+4. **首跑 finalize FAIL 要自動重派一次再停**：現在只有 `--resume` 會走「只重派缺件」（STRL 首跑 a_2／a_5 撞 10 輪上限 → finalize FAIL 直接停、retries=0）；stage0 首跑應同樣先重派缺件 ≤1 次，仍 FAIL 才停。
+5. **dd_brief 對證據原文做標點正規化**：負向證據處置表把 finding claim 原樣印出，子 agent 寫的半形逗號讓 pre-push QC 擋下（STRL）；渲染時 CJK 後半形 `,;:!?` 轉全形（沿用 qc 規則），bundle 內嵌 prompt 的存檔副本同理（或存檔時不含 prompts/ 的 inline 版）。
