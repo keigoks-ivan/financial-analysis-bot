@@ -24,3 +24,9 @@ metadata:
 
 **2026-09-05 批次進度與中斷**：已上站 AdvancedPackaging（c2e8ea047）、AIAcceleratorDemand（34ddc9b90，priced_in 刻意 mid）；CUDARocmMoat（463b7a016，balanced→split·II·mid·high·×6.0）、MemorySupercycle（23c08d9a5，shortage→split·II 末段·mid·high·×1.1，T1 45 覆蓋）、AIDataCenter（1d96e51ac，shortage·II·mid·mid·×2.2）皆已上站；批次 2026-09-05 收在 6 份（5 成 1 敗），剩 17 份＋AINetworking 重跑待新 session；**AINetworking 失敗**（無撮合價可得＋WebSearch 額度耗盡）。**中斷原因＝WebSearch 每 session 上限 200 次、子 agent 共用**（`CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION` 可調）；4 份並行約一份半即耗盡。續跑資料全在 `notes/site-internal/id/_wip_id_refresh_20260905/`（未追蹤：playbook、queue、prior_brief 全套、scripts、AINetworking 素材、README 說明）。續跑方式：新 session 啟動前設該環境變數 ≥1500，並行 2–3 份，照 playbook 派 opus orchestrator。資料警訊：weekly_cache APH 未做 2:1 分割調整（26W −57% 是假象）；NVDA FY27 起不揭露 Networking 營收。
 
+
+## 2026-09-05 雲端續跑補記（session_01J7V3psq7NVKdMBu3RmnJAi）
+- 雲端 sub-agent 不能再 spawn sub-agent → 單 agent orchestrator 會違反 writer≠critic；改用主線程 Workflow 跑整條鏈（writer opus／採集・critic・patch・發布 sonnet）。AIDCPE／LiquidCooling 首輪無跨模型冷讀，事後補 sonnet 獨立 critic：各抓到 🔴2／🔴1（SU.PA 無倍數、Vertiv 永久停揭露訂單致 kill metric 失效），證明單 agent 自任 critic 會漏。
+- Workflow 的 WebSearch 池＝每 run 200 次（與主線程 Agent 派工分池）；每 run 只排 2 份，預算 採集 ≤45／P2 ≤25／critic ≤10／備忘 ≤5。
+- 發布鎖：兩份同 run 並行時後者可能等鎖逾時，發布 agent 應先備好 INDEX row／卡片／commit 訊息再取鎖。
+- 本輪上站 6 份：AIDCPE 370e5baf、LiquidCooling f8bacfd5、WFE dc78baa8、LeadingEdgeNode 86a123bd、FoundryGeography cca02fe4、HybridBondingSoIC f52b27b1。WFE 與 Hybrid 供需翻為 split。
