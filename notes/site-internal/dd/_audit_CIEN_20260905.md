@@ -1,0 +1,36 @@
+## AUDIT: 判斷級🔴 = 0
+
+事後冷讀抽查｜標的 CIEN（Ciena）｜DD 日期 2026-09-05｜判斷物 schema v15.0／pipeline v16｜抽查者 opus（與判斷 agent Fable 不同模型）｜母體＝`.dd_build/CIEN_20260905.{judgment,evidence,transcript_digest}.json` ＋ Q3 FY26 法說全文 ＋ 上站報告全文，禁外部檢索。
+
+判斷級🔴＝0（①—⑦）；🟡＝4（②④⑥⑦）；🟢＝3（①③⑤）；⑧另記🟡（不計入）。
+
+---
+
+## ①—⑧ 逐條複核
+
+| # | 軸 | 燈 | 依據（一句） | 指向欄位 |
+|---|---|---|---|---|
+| ① | 競爭惡化 | 🟢 | 證據包四軸的**每一條負向競爭事實**都已接線：Nokia-Infinera 20%／光營收 +80%（`moat.threats[0]` 🟡 40%）、Marvell 800ZR 領先 12 個月＋Celestial AI $3.25B（`threats[1]` 🔴 35%，已扣 pricing −1）、Cisco 全棧 9x 資本（`moat.competitors[1]`）、客戶架構層拆解（`threats[2]` 🔴 25%＋`premortem.second_failure`）、Huawei MWC 2026 單波 2T（`industry.tam_table`／`threats`）、LPO 對抗 Coherent-Lite（`tam_table[2]`）、800ZR 讓份預期（`contradictions[3]` 專條實答＋`triggers[7]` 閾值）；未見「有料而沒接」的負向事實 | `moat.threats[]`／`moat.pricing`／`thesis.R[2]`／`contradictions[3]` |
+| ② | 供需 durability | 🟡 | 「供給可逆性高」與最新法說一致（CFO：多年旅程、`we don't see that happening before '28`、與供應商簽至 2029 並加購產能），Bear 30% 亦是內生天花板 sanity 失敗的**規則下限**、非隨手給值；但證據包 `supply_demand_durability` 第 2 條（電網併網排隊致 2026 規劃 AI 資料中心產能 30–50% 遞延至 2028 完工，需求由遞延專案接住而非提前用盡，direction「+」、`affects` 直指 `decision_inputs.bear`）**全文零引用**，且 FPX 同一來源只取空方半邊（光模組較 capex 早 6 個月轉負），多方半邊（光通訊支出占雲端 capex 由 2026 3.1% 升至 2031 4.1%）未取——判斷規則 §10 閘 B 要求「有 sourced 結構性 durability 仍套 bear 須說明為何不採信」，此二項未被說明 | `industry.clock_phase`／`reasoning.industry`／`scenario.bear.p`＝30 ↔ `evidence.coverage.supply_demand_durability.findings[1][3]` |
+| ③ | 其他結構變數 | 🟢 | 關稅（Q3 +70bp 一次性、加拿大新制每季約 $10M、轉嫁中性）→`industry.geo`＋`catalysts[6]`；Section 232 適用性未明→`premortem.blind_spots[3]`；地緣單點（泵浦雷射／相干元件單一來源、代工 Flex／Sanmina／Celestica／Fabrinet、墨西哥泰國中國）→`industry.bargaining.up`／`.geo`；通路轉直銷 42%→53%→`premortem.second_failure`＋`thesis.R[2]`；替代技術 CPO／LPO／800ZR→`threats`＋`tam_table`＋`triggers[6]`；客戶集中 41.7%／28.5%→`thesis.R[3]`＋`single_thing`＋`triggers[7][8]`。中國產能占比與 Section 232 僅落催化劑與盲點、未進 `triggers[]`，屬次要 | `industry.geo`／`premortem.blind_spots`／`catalysts[6]`／`triggers[7][8]` |
+| ④ | priced-in | 🟡 | **論點有據、非複述**：Steelman 五點逐點回應（`contradictions[1].ruling`），「市場以週期峰值利潤套複利倍數」由四項可查證據撐住——FY22–25 GAAP 營益率 4.8–8.8%＋ROIC 四年低於 WACC 10.6%（`quality.three_year`）、P/S 8.2x／EV/S 8.3x 站 100% 分位（`valuation_history`）、賣方中位 $520＝34x FY28E、同業硬體對手現值約 20x（`peer_valuation_multiples`）；rearm $250 亦有推導（$250 → 對 Base $380 隱含 8.7%／yr，過自訂 8% 門檻）。扣分處在 rearm 本身：`reasoning.decision` 自稱「唯一約束＝通盤基準下的價格」，卻把 rearm 設成價格 ≤$250 **AND** 12-10 事件確認，並自註「兩理由故 AND」——與判斷規則 §14 四問③「rearm＝該（唯一）約束之否定」有張力；且此舉緊接在前份 rearm（fpe FY27 ≤35x）已於本次達成（30.1x）之後改設更嚴門檻，雖已在 `contradictions[5][23]` 明標為方法論改變、非基本面轉弱，仍屬觸發後提高門檻的形態 | `decision_out.rearm_trigger`／`reasoning.decision`／`contradictions[1][5][7][23]` |
+| ⑤ | 覆蓋面 | 🟢 | `regulatory_antitrust`＝not_applicable 有三輪具名查證（Ciena 自身／DOJ・FTC・EU／產業層）與可驗理由（10-K 內反壟斷語句指的是**客戶**而非 Ciena；產業為 Huawei／Cisco／Nokia／Ciena／ZTE 並存），並已回收進 `roic_durability.checkpoints[4]` 社會容忍度 🟢；events 四組 none（集體訴訟／臨床 FDA／產品召回／SEC 調查重編）各附 2–3 條 queries 與理由，clinical_fda 對光網路設備商屬本質不適用，皆站得住 | `evidence.coverage.regulatory_antitrust`／`evidence.events.*`／`moat.roic_durability.checkpoints[3]` |
+| ⑥ | 量化模組 | 🟡 | **(i) 真算且可追**：ROIIC＝($0.82B−$0.30B)÷($6.09B−$4.51B)＝32.6%，FY26E NOPAT 由調整後營益 $1.316B（＝FY26 指引 $6.42B×20.5%）減 SBC $0.225B（＝3.47%×6.42B）減攤銷 $0.05B×0.79 推出，FY23 由 $385M（＝$4.387B×8.8%）×0.79 推出，再投資率 (270−150+200+0)÷820＝39.0%，乘積 12.7% 算術正確；天花板 <共識 CAGR 34.7%（缺口 22pp）已按規則「超出⚠→Bear 強制 ≥30%」落到 `scenario.bear.p`＝30 並在 `reasoning.moat`／`.scenario` 兩處復述，且缺口有歸因（營益率 20.5%→28% 約 11pp／yr、漲價、供應商長約資本）。**(ii) 情境樹 EPS 價差為實質**：終端 Bull 27.0／Base 19.0／Bear 10.0（Bull 較 Base +42%、Bear −47%），非只有倍數差。**(iii) 對帳全通**：Base 19.0×20＝$380（+18.4%，IRR (380/321)^0.2−1＝3.4%）、Bull 27.0×25＝$675、Bear 10.0×14＝$140、EV＝0.25×675＋0.45×380＋0.30×140＝$381.8（+18.9%）、AR＝(0.25×110)÷(0.30×56)＝1.6（與規則公式一字相符）、Max DD −65%~−45% 寬度 20pp 過 guardrail。三處扣分：**(a)** `formula_note` 稱投入資本口徑為「權益＋總負債」，但 FY23 $4.51B 與證據包自身 DuPont 推得之總資產 $5.62B（＝4.386÷0.78）不符，實際用的是權益＋有息負債，口徑標籤與數字不一致；**(b)** 同一個「成長熄火至 10%」概念在三處給三個倍數——`growth_stall` 表 17x、`bear_anchor` 15x（$144）、`scenario.bear` 終端 14x（$140）；**(c)** pricing power 推導寫「上限 7、生態攻擊 −1」但落分 6.5（7−1＝6）；另 `upside_mid_pct` 33.0 用共識 FY28E 15.24×28x，而同一份判斷物的 Base 案認定 FY28 應為 14.0（低於共識 8%），兩處分母不同源 | `moat.roic_durability.{roiic,reinvest_rate,endo_ceiling,formula_note}`／`scenario.json`／`scenario_meta.json`／`valuation.targets.{growth_stall,bear_anchor}`／`moat.pricing` |
+| ⑦ | 數字新鮮度 | 🟡 | 營運指標**全為 Q3 FY26**（營收 $1,671.1M／調整後 GM 46.4%／調整後 OM 22.5%／GAAP OM 18.0%／SBC $57.9M 3.47%／DSO 67／backlog $8.5B／前兩大 41.7%・A 28.5%・B 13.1%／直接雲端 53%・+82%／分部五項），無引到較舊值；四個必引來源（`valuation_history`／`consensus_revision` 90 天 +20.5%／`edgar_concentrations` 10-Q 逐字／`peer_financials`）皆實際使用未以記憶補；digest 引用多處標「來源：摘要」（pump laser 瓶頸、FY26 指引三度上修、CFO「不要過度解讀」）；Q3 單季 FCF $116M 取自法說逐字而非新聞稿（證據包已列為缺口），屬親讀正解非無據；`prior_dd` 為 v12.7 無決策層欄，13 條漂移歸因全部誠實標為「方法論驅動」並點名前份 rearm 已達成。三處扣分：**(a)** 「2022–23 backlog $4B+」為承重前例（同時出現在 `trap_analysis`／`contradictions[1]`／`reasoning.scenario` pattern match），證據包與 digest 皆無此數（digest 只有 FY25 出場約 $5B），屬無來源數字；**(b)** Q1 回購均價約 $202 源自 digest 但未標「來源：摘要」；**(c)** `moat.spread_table` 以 CIEN Q3 **調整後** GM 46.4%／OM 22.5% 對比同業 **TTM GAAP**，而證據包 `peer_financials` 內 CIEN 同口徑 TTM 為 GM 43.05%／OM 11.2%（同業中位而非「中段偏上」），比較基準不同源 | `numbers.latest_quarter_kpis`／`moat.spread_table`／`quality.buyback`／`trap_analysis.pattern`／`contradictions[10]–[27]` |
+| ⑧ | 散文↔判斷物一致性（不計判斷級） | 🟡 | 主體高度忠實（§1／§2／§5.R／§10／§11／§13 均可逐句對回 `judgment.json`，數字無漂移）。四處瑕疵：**(a)** 附錄段「中期（2 年）目標價 $427，較現價有 +33.0% 的空間……這代表市場目前定價，比本檔的中期基準情境更樂觀一截」——同段自陳 2Y 目標高於現價 33%，結論卻寫市場比中期基準更樂觀，方向相反（僅 1Y $299 一項才是市場較樂觀）；**(b)** §10 散文寫「5 年 trailing PE 分位也只有 22%」，但判斷物 `val_light_derivation` 自陳樣本僅 4 個年度點、且「234x 高點是 FY25 低基期造成、不是有效分位」，散文把 4 年樣本寫成 5 年並丟掉該保留；**(c)** §9 散文把計分卡「1/2 過＝B」壓成「→評級 B」，過關比例消失；**(d)** 判斷物內 RLS／plug／Waveserver 成長在 `reasoning.growth` 寫 >60%（法說：YTD 三品線）、在 `reasoning.industry` 寫 >55%（法說：RLS 與 Waveserver 之 YoY，不含 plug），兩個口徑共用同一組名稱 | 報告 §9／§10／附錄 ↔ `valuation.val_light_derivation`／`governance.scorecard`／`reasoning.{growth,industry}` |
+
+---
+
+## 補充觀察（非判斷級，供設計稿 §13 參考）
+
+- **證據使用的方向性不對稱**：證據包 14 軸中未被接線的條目集中在多方／中性側——電網遞延（②）、FPX 光通訊占 capex 3.1%→4.1%、「in-and-around data center 營收 YTD 翻四倍」（法說＋`end_markets__雲端` 皆有）、ADTRAN 估歐洲 Huawei 汰換每年約 $8 億、400ZR 占比 93%→61% 的世代換代速度、Lumen／AT&T／Verizon 信用面改善、StockAnalysis 第二組目標價共識（15 位／$550.53）、法說中的 neoscalers（Oracle 類新雲，CEO 稱 '27–'28 將成日益重要部分）。空方側證據則近乎 100% 被使用。裁決本身落在保守側（觀望），故此不對稱不會把裁決推向更冒進的錯誤方向；但同一組遺漏若出現在裁決為「進場」的檔上，方向性就會反轉。
+- **自查表全綠**：`decision_out.requires_critic[]` 兩條（QC-41 產業態勢、QC-50 錯過成本反向）均寫「已在矛盾表第 2／4／8 條實答」，無任何 🟡／🔴；判斷規則 §16 明訂「不得為交稿而讓自查全綠，🟡／🔴 照實填」。以上 ②⑥⑦ 三項至少有一項本可落在該自查表內。
+- **機械閘全部通過複驗**：AR、EV5y、IRR、Max DD 寬度、Bear 機率下限、Base 機率上限、Bull/Bear 5Y 散布較 1Y 寬 >50%、10Y 二段（Base 6%→4.7%、Bull 10%→13.0%）、estimated `valuation_dependent=false`（re-rate 為負）、row 11.4b-denom 觸發條件，均與 `judgment-rules.md` 條文逐項相符，無誤用。
+
+## Stage 0 覆蓋缺口（不算判斷級）
+
+1. `canonical_id`＝gap：無光網路／AI networking 產業報告可對帳，`sd_verdict`／`clock_phase` 全為自判，QC-52 三軸對帳無錨。
+2. backlog／book-to-bill／direct cloud 占比／FY27 展望之精確值皆為法說轉述，無公司新聞稿或投影片逐字版；Q3 單季 FCF 只存在於逐字稿。
+3. 分部營益率、Q3 季末存貨與應付帳款、Q2 FY26 GAAP 營益率未採集——CCC 只算到 DSO，§6 分部利潤率全為代理估算。
+4. backlog 取消條款與「客戶承諾至 2029」之法律性質、供應商具名與金額、WaveLogic 6 DSP 代工廠、Section 232 是否涵蓋該 DSP，四者皆未涵蓋。
+5. 5Y forward PE 逐年分位表不存在（trailing 僅 4 個年度點、forward 僅 2026-05 起 9 份快照）；ROIC 無逐年序列；同業 ROIC 未涵蓋，護城河閘三之「對手絕對美元新增」亦缺。
