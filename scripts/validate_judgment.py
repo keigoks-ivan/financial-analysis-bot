@@ -796,7 +796,11 @@ def j5_plain_role_checks(data: dict) -> tuple:
         for tok in _ROLE_TOKENS:
             if tok == role or tok not in t:
                 continue
-            strong = any(pat in t for pat in (f"當{tok}", f"{tok}持股", f"{tok}角色", f"{tok}席位", f"列為{tok}"))
+            # 否定句（不當核心／不是核心／非核心／不列核心）不算矛盾
+            neg = re.compile(r"(不當|不是|並非|非|不列為|不做|不當作)" + re.escape(tok))
+            strong = any(pat in t for pat in (f"當{tok}", f"{tok}持股", f"{tok}角色", f"{tok}席位", f"列為{tok}")) and not neg.search(t)
+            if neg.search(t) and not any(pat in t.replace("不當"+tok, "").replace("不是"+tok, "").replace("非"+tok, "") for pat in (f"當{tok}", f"{tok}持股", f"{tok}角色")):
+                continue
             msg = f"J5：{path} 出現「{tok}」但 decision_out.role＝{role}（角色以決策矩陣為準）"
             (fails if strong else warns).append(msg)
     return fails, warns

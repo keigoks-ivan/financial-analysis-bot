@@ -187,3 +187,10 @@ def test_j5_plain_role_match_is_clean():
     data = {"decision_out": {"role": "衛星"}, "plain": {"verdict_line": "進場，當衛星持股。", "five": {"why_this_size": "矩陣給衛星"}}}
     fails, warns = vj.j5_plain_role_checks(data)
     assert not fails and not warns
+
+
+def test_j5_negated_role_is_not_a_conflict():
+    import validate_judgment as vj
+    data = {"decision_out": {"role": "衛星"}, "plain": {"five": {"why_this_size": "所以只能當衛星，不當核心。"}}}
+    fails, warns = vj.j5_plain_role_checks(data)
+    assert not fails
