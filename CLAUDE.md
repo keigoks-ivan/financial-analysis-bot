@@ -16,7 +16,7 @@
 | 大型 PDF 平行讀取拆 digest | sonnet |
 | 網站樣板 / 資料同步 / 機械層 script（無判斷） | sonnet |
 
-**註記**：v16.2 試點期間本表 DD writer／critic 兩列不適用於 `ddreport --v16`（該鏈流程內無 critic，判斷與呈現拆成兩個 agent；設計稿 `notes/site-internal/dd/_v16_design_spec_20260903.md` §13、§16）。
+**註記**：v16.2 試點期間本表 DD writer／critic 兩列不適用於 `ddreport --v16`（該鏈流程內無 critic，判斷與呈現拆成兩個 agent；設計稿 `notes/site-internal/dd/_v16_design_spec_20260903.md` §13、§16）。 **2026-09-05 持有人拍板：任何 DD 觸發語（「跑 X dd report」「ddreport X」「X DD」「X 全套」）預設一律走 repo 內最新版管線（現為 v16.2 三步制），不需帶 `--v16` 旗標；ddreport／stock-analyst SKILL.md 的預設文字若落後，以本條為準。用戶明講「v15」「舊鏈」才走 v15.2。**
 
 **DD writer 路由（2026-08-08 持有人拍板：全面 sonnet，取代 2026-08-06 的四情境升 opus 分層）**——**所有 DD 一律 sonnet writer＋opus critic**，不再有升 opus writer 的例外情境。品質前提兩件（永不隨成本降級）：①critic＝opus＋強化職責書（覆蓋面掃描＋量化模組抽查，見下段）；②**機械驗算 gate `scripts/verify_dd_math.py`**（pre-commit 對 v15+ 檔重算 EV/IRR/AR/Max DD 恆等式/情境樹年期/必交模組存在性/版本戳，FAIL 擋 commit，0 token）——2026-08-08 SHOP/ANET 同尺稽核證實兩模型都會犯的純算術錯由 gate 攔，LLM critic 只管判斷與覆蓋。**實測依據**：2026-08-06 TSM（乾淨檔，sonnet ≈ opus 水準、唯一帶內 84KB）＋PLTR 盲測（爭議檔，已知 8 發現覆蓋 5/8＋1 個 opus 沒有的新發現、決策層 7/8 欄獨立同值；漏的集中在社會容忍度/priced-in 軸）。**退場訊號（可證偽，比照 rule_ledger 精神）**：sonnet 所寫 DD 於 90 天內因「writer 當時應見未見的既有證據」（非新資訊）被翻面 → 該類型立即收回 opus；累積兩例 → 整條預設道收回並檢討。critic=opus 端與「無效輸出必重試」（stock-analyst QC-41/48 條文）為本路由的品質前提，**永不隨成本降級**。
 
