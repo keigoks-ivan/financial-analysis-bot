@@ -38,6 +38,12 @@ jobs:
       - name: Run W52 × adaptive vol-target update
         run: python scripts/update_long_track_w52_adaptive.py
 
+      - name: Run live scoreboard (PREREG 2026-09-05 forward SPRT vs diluted B&H)
+        # 只用 state.json 的 source=='live' 實錄，date-keyed 冪等；讀不到資料/例外一律
+        # exit 0 不動輸出檔（build_live_scoreboard.py 內建 fail-safe）。見
+        # docs/Live_Scoreboard_Spec.md（v7-backtest）。
+        run: python scripts/build_live_scoreboard.py
+
       - name: Run W52 × adaptive cap 1.0 shadow control page
         # cap 1.0 (100%) shadow control page (docs/long-track-w52-adaptive/leverage.html).
         # Since 2026-07-18 main/shadow swap: LIVE main is now cap 1.5 (index.html);
@@ -111,7 +117,7 @@ jobs:
         run: |
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
-          git add docs/long-track-w52-adaptive/_body.html docs/long-track-w52-adaptive/state.json docs/long-track-w52-adaptive/leverage.html docs/long-track-w52-adaptive/leverage_state.json docs/long-track-w52-adaptive/tw-semivol.html docs/long-track-w52-adaptive/tw_semivol_state.json
+          git add docs/long-track-w52-adaptive/_body.html docs/long-track-w52-adaptive/state.json docs/long-track-w52-adaptive/leverage.html docs/long-track-w52-adaptive/leverage_state.json docs/long-track-w52-adaptive/tw-semivol.html docs/long-track-w52-adaptive/tw_semivol_state.json docs/market/data/live_scoreboard.json docs/long-track/_scoreboard_body.html
           git diff --staged --quiet || git commit -m "Auto update W52 × adaptive vol-target (US+TW): $(date -u '+%Y-%m-%d')"
           for i in 1 2 3 4 5 6; do
             if git push; then

@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>實單前瞻記分板</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+body{margin:0;padding:.75rem 1rem 1.5rem;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;color:#1f2328;background:#fff}
+h3{margin:1rem 0 .4rem;font-size:1rem}
+.lsb-plain{background:#f3f6fb;border-left:3px solid #6b8fd6;padding:.5rem .75rem;margin:.4rem 0 .8rem;font-size:.85rem;border-radius:4px}
+.lsb-tiles{display:flex;flex-wrap:wrap;gap:.5rem;margin:.4rem 0}
+.lsb-tile{flex:1 1 140px;background:#f6f8fa;border:1px solid #d0d7de;border-radius:6px;padding:.5rem .6rem}
+.lsb-k{font-size:.72rem;color:#57606a}
+.lsb-v{font-size:1rem;font-weight:600;margin-top:.15rem}
+.lsb-sub{font-size:.72rem;color:#57606a;margin-top:.2rem}
+.lsb-table{width:100%;border-collapse:collapse;margin:.5rem 0 1rem;font-size:.82rem}
+.lsb-table th,.lsb-table td{border-bottom:1px solid #eaeef2;padding:.3rem .5rem;text-align:left}
+.lsb-table td.num,.lsb-table th.num{text-align:right;font-variant-numeric:tabular-nums}
+.lsb-note{font-size:.8rem;color:#57606a}
+details.lsb-prereg summary{cursor:pointer;font-size:.82rem;color:#57606a;margin:.6rem 0 .3rem}
+details.lsb-prereg pre{max-height:280px;overflow:auto;background:#f6f8fa;border:1px solid #d0d7de;border-radius:6px;padding:.6rem;font-size:.72rem;white-space:pre-wrap}
+</style></head>
+<body>
+<div class="lsb-plain">💬 白話：這不是回測，是「只用實際發生過的紀錄」每個月記一次系統有沒有贏過同標的的稀釋基準（<b>SPRT</b>＝序貫檢定，累積證據到夠強才判定；<b>LLR</b>＝累積證據強度；<b>命中</b>＝當月系統報酬贏過基準；<b>稀釋基準</b>＝把 50/50 買進持有的一部分換成現金，讓風險與系統相近再比）的淘汰賽。判紅只代表「證據支持系統不比稀釋好」，是登記進帳本待持有人檢討的訊號，不是自動平倉指令；本頁面不下任何買賣或配置建議。</div>
+<div class="lsb-market">
+<h3>美股（QQQ／SMH）</h3>
+
+<div class="lsb-tiles">
+  <div class="lsb-tile"><div class="lsb-k">實錄起始</div><div class="lsb-v">2026-08-14</div></div>
+  <div class="lsb-tile"><div class="lsb-k">資料截至</div><div class="lsb-v">2026-09-04</div></div>
+  <div class="lsb-tile"><div class="lsb-k">實錄天數</div><div class="lsb-v">16</div></div>
+  <div class="lsb-tile"><div class="lsb-k">已收月數</div><div class="lsb-v">1</div></div>
+  <div class="lsb-tile"><div class="lsb-k">當前回撤</div><div class="lsb-v">-0.8657%</div></div>
+</div>
+<div class="lsb-tiles">
+  <div class="lsb-tile"><div class="lsb-k">SPRT vs B-mdd（主判準）</div><div class="lsb-v"><span style="display:inline-block;padding:.15rem .55rem;border-radius:999px;font-size:.78rem;font-weight:600;color:#fff;background:#9a6700">🟡 進行中</span></div>
+    <div class="lsb-sub">證據累積中：有效樣本 0／需先滿 20 筆才開始判定</div></div>
+  <div class="lsb-tile"><div class="lsb-k">SPRT vs B-cagr（並列）</div><div class="lsb-v"><span style="display:inline-block;padding:.15rem .55rem;border-radius:999px;font-size:.78rem;font-weight:600;color:#fff;background:#9a6700">🟡 進行中</span></div>
+    <div class="lsb-sub">證據累積中：有效樣本 0／需先滿 20 筆才開始判定</div></div>
+  <div class="lsb-tile"><div class="lsb-k">累積差 vs B-mdd</div><div class="lsb-v">0.7313</div></div>
+  <div class="lsb-tile"><div class="lsb-k">累積差 vs B-cagr</div><div class="lsb-v">1.182</div></div>
+</div>
+
+<canvas id="lsb-chart-us" height="90"></canvas>
+<script>
+(function(){
+  if (typeof Chart === 'undefined') return;
+  new Chart(document.getElementById('lsb-chart-us').getContext('2d'), {
+    type: 'line',
+    data: { labels: ["2026-08-14", "2026-08-17", "2026-08-18", "2026-08-19", "2026-08-20", "2026-08-21", "2026-08-24", "2026-08-25", "2026-08-26", "2026-08-27", "2026-08-28", "2026-08-31", "2026-09-01", "2026-09-02", "2026-09-03", "2026-09-04"], datasets: [
+      { label: '系統（實錄）', data: [100.0, 100.2577, 98.3527, 97.8204, 97.6338, 97.6599, 96.5623, 97.285, 97.3223, 98.7647, 97.4842, 97.6926, 96.5785, 96.9974, 97.99, 99.3898], borderColor: '#1a7f37', borderWidth:2, pointRadius:0 },
+      { label: 'B-mdd（k=稀釋）', data: [100.0, 100.2582, 98.6338, 98.1639, 98.0556, 98.052, 97.137, 97.7416, 97.7706, 98.9708, 97.8506, 98.0368, 97.1313, 97.4584, 97.8922, 98.6585], borderColor: '#cf222e', borderWidth:1, pointRadius:0 },
+      { label: 'B-cagr（稀釋）', data: [100.0, 100.3278, 98.2351, 97.6267, 97.4832, 97.4744, 96.2937, 97.0669, 97.1, 98.6389, 97.1945, 97.4299, 96.2688, 96.6826, 97.2327, 98.2078], borderColor: '#9a6700', borderWidth:1, pointRadius:0 }
+    ]},
+    options: { responsive:true, animation:false, scales:{ x:{display:false}, y:{title:{display:true,text:'NAV（inception=100）'}} } }
+  });
+})();
+</script>
+<table class="lsb-table"><thead><tr><th>月</th><th class="num">系統報酬</th><th class="num">B-mdd 基準報酬</th><th>命中</th></tr></thead>
+<tbody><tr><td colspan="4" style="text-align:center;color:#888">尚無已收月樣本（n_eff floor 20 前皆是「進行中」）</td></tr></tbody></table>
+<table class="lsb-table"><thead><tr><th>日期</th><th>腿</th><th>執行層變化</th></tr></thead>
+<tbody><tr><td>2026-09-02</td><td>SMH</td><td>30% → 50%</td></tr>
+<tr><td>2026-09-01</td><td>QQQ</td><td>40% → 70%</td></tr>
+</tbody></table>
+</div>
+<div class="lsb-market">
+<h3>台股（0050／2330）</h3>
+
+<div class="lsb-tiles">
+  <div class="lsb-tile"><div class="lsb-k">實錄起始</div><div class="lsb-v">2026-08-17</div></div>
+  <div class="lsb-tile"><div class="lsb-k">資料截至</div><div class="lsb-v">2026-09-04</div></div>
+  <div class="lsb-tile"><div class="lsb-k">實錄天數</div><div class="lsb-v">15</div></div>
+  <div class="lsb-tile"><div class="lsb-k">已收月數</div><div class="lsb-v">1</div></div>
+  <div class="lsb-tile"><div class="lsb-k">當前回撤</div><div class="lsb-v">-1.776%</div></div>
+</div>
+<div class="lsb-tiles">
+  <div class="lsb-tile"><div class="lsb-k">SPRT vs B-mdd（主判準）</div><div class="lsb-v"><span style="display:inline-block;padding:.15rem .55rem;border-radius:999px;font-size:.78rem;font-weight:600;color:#fff;background:#9a6700">🟡 進行中</span></div>
+    <div class="lsb-sub">證據累積中：有效樣本 0／需先滿 20 筆才開始判定</div></div>
+  <div class="lsb-tile"><div class="lsb-k">SPRT vs B-cagr（並列）</div><div class="lsb-v"><span style="display:inline-block;padding:.15rem .55rem;border-radius:999px;font-size:.78rem;font-weight:600;color:#fff;background:#9a6700">🟡 進行中</span></div>
+    <div class="lsb-sub">證據累積中：有效樣本 0／需先滿 20 筆才開始判定</div></div>
+  <div class="lsb-tile"><div class="lsb-k">累積差 vs B-mdd</div><div class="lsb-v">-0.2932</div></div>
+  <div class="lsb-tile"><div class="lsb-k">累積差 vs B-cagr</div><div class="lsb-v">-0.3079</div></div>
+</div>
+
+<canvas id="lsb-chart-tw" height="90"></canvas>
+<script>
+(function(){
+  if (typeof Chart === 'undefined') return;
+  new Chart(document.getElementById('lsb-chart-tw').getContext('2d'), {
+    type: 'line',
+    data: { labels: ["2026-08-17", "2026-08-18", "2026-08-19", "2026-08-20", "2026-08-21", "2026-08-24", "2026-08-25", "2026-08-26", "2026-08-27", "2026-08-28", "2026-08-31", "2026-09-01", "2026-09-02", "2026-09-03", "2026-09-04"], datasets: [
+      { label: '系統（實錄）', data: [100.0, 99.3148, 98.4295, 98.9457, 99.6278, 98.9526, 99.4382, 100.0548, 100.0368, 100.3826, 99.6802, 101.5819, 99.4347, 99.2799, 99.7778], borderColor: '#1a7f37', borderWidth:2, pointRadius:0 },
+      { label: 'B-mdd（k=稀釋）', data: [100.0, 99.4986, 98.8538, 99.2298, 99.7286, 99.2343, 99.5897, 100.0394, 100.0268, 100.3067, 100.0267, 100.8048, 99.9621, 99.8858, 100.071], borderColor: '#cf222e', borderWidth:1, pointRadius:0 },
+      { label: 'B-cagr（稀釋）', data: [100.0, 99.0161, 97.7521, 98.4833, 99.4543, 98.4844, 99.1752, 100.0505, 100.022, 100.5653, 100.0143, 101.5313, 99.8804, 99.7275, 100.0857], borderColor: '#9a6700', borderWidth:1, pointRadius:0 }
+    ]},
+    options: { responsive:true, animation:false, scales:{ x:{display:false}, y:{title:{display:true,text:'NAV（inception=100）'}} } }
+  });
+})();
+</script>
+<table class="lsb-table"><thead><tr><th>月</th><th class="num">系統報酬</th><th class="num">B-mdd 基準報酬</th><th>命中</th></tr></thead>
+<tbody><tr><td colspan="4" style="text-align:center;color:#888">尚無已收月樣本（n_eff floor 20 前皆是「進行中」）</td></tr></tbody></table>
+<table class="lsb-table"><thead><tr><th>日期</th><th>腿</th><th>執行層變化</th></tr></thead>
+<tbody><tr><td>2026-08-28</td><td>2330</td><td>30% → 60%</td></tr>
+<tr><td>2026-08-28</td><td>0050</td><td>30% → 50%</td></tr>
+</tbody></table>
+</div>
+<p class='lsb-note'>兩市場合併（TWD，50/50 月再平衡）最新 NAV：99.014（inception=100，僅附帶顯示，不進 SPRT 判定）。</p>
+<details class="lsb-prereg"><summary>PREREG（凍結口徑，展開查看逐字條文）</summary><pre>{
+ "title": "實單前瞻記分板（PREREG 2026-09-05）",
+ "source_doc": "v7-backtest/docs/Live_Scoreboard_Spec.md",
+ "frozen_date": "2026-09-05",
+ "positioning": "不是回測，是 paper-track 機械層；不是收斂面：不產名單、不下買賣指令；判紅只是「證據累積到該檢討」，動作由持有人決。",
+ "data": {
+  "records": "系統實錄：docs/long-track-w52-adaptive/state.json 的 history_us／history_tw，只取 source=='live' 的日紀錄；每日四腿的 final_pct 經 band_exec_replay（A2：20pp／10 格／clamp 75）得到執行層持股率（＝實際該持有的部位）。",
+  "daily_return_formula": "系統日報酬 ＝ Σ腿 執行持股率(前一日) × 腿日報酬 ＋ 現金部分 × 現金日率（美 ^IRX／台 1%） − 借款部分 × 1.5%/252 − |Δ執行持股率| × 7 bps。腿日報酬用 auto-adjust 收盤（與 live 腳本同源 fetch_close）。"
+ },
+ "benchmarks": {
+  "definition": "兩個基準（每市場，皆固定比例、每月再平衡、成本 7 bps）：B-cagr＝同標的 50/50 B&amp;H 以現金稀釋到 k＝保險價格頁 W2 的 E-cagr k（美 0.72、台 0.86）；B-mdd＝k＝E-mdd k（美 0.56、台 0.44）。k 凍結為上述數值，不隨新資料重解。",
+  "k_source": "k 凍結為 Insurance_Premium_Comparison_Spec.md 的 2010 起主判準窗（US W2：E-cagr k=0.7193≈0.72／E-mdd k=0.5569≈0.56）與台股 2014 起主窗（TW1：E-cagr k=0.862≈0.86／E-mdd k=0.4377≈0.44）——results/vol_targeting/insurance_premium.json 轉錄；PREREG 凍結，不隨新資料重解（比照 build_exposure_track.py RV21 gate 常數慣例）。",
+  "rebalance": "JUDGMENT CALL：規格文件僅寫「每月再平衡」未明訂月初或月末；本檔採月末再平衡（本月最後一個 live 交易日，以當日已計入市場變動後的淨值為基礎再平衡回 k，換手成本＝|實際權重−k|×7bps×淨值）——與 build_exposure_track.py 的 60/40 基準（月初再平衡、不收成本）刻意不同，因本規格明文要求收成本，月末再平衡讓「當月報酬」與「再平衡後淨值」在同一天結算，語意較乾淨。"
+ },
+ "scoring": {
+  "monthly_sample": "月樣本＝當月系統報酬 − 基準月報酬 &gt; 0 為命中（依日曆月分桶，最後一個未走完的月不計）。",
+  "sprt": "SPRT 參數逐字沿用 scripts/score_flowmap.py：p0=0.5、p1=0.65、α=0.05、β=0.10、A=ln(18)=2.8904、B=ln(0.1/0.95)=−2.2513、n_eff floor 20；用 sprt_with_latch；兩基準各自一條 SPRT，判定以 B-mdd（同風險）為主、B-cagr 並列。",
+  "verdict": {
+   "green": "SPRT LLR ≥ A → 實錄支持 edge → 帳本記「前瞻證據轉正」。",
+   "yellow": "進行中（樣本不足，n_eff floor 20 個月＝最快 2028 年中才可能判定）。",
+   "red": "SPRT LLR ≤ B → 實錄證據支持「系統不比稀釋好」＝kill condition (d)，登記帳本、持有人檢討。"
+  }
+ },
+ "kill_conditions": {
+  "kill_d": "SPRT（p0=0.5／p1=0.65／α=0.05／β=0.10，n_eff≥20，樣本＝逐月「系統月報酬 − 基準月報酬 &gt; 0」命中序列）累積 LLR ≤ B(-2.2513) → accept_h0 → 實錄證據支持「系統不比稀釋好」＝kill condition (d)，登記帳本、持有人檢討；累積 LLR ≥ A(2.8904) → accept_h1 → 帳本記「前瞻證據轉正」；期間不調參、paper only 永不連實倉。"
+ },
+ "disclosure": "誠實預告：n_eff floor 20 個月＝最快 2028 年中才可能判定；本頁上線後大部分時間是「進行中」。它的價值是把每月的一個位元誠實記下來，而不是在校準點靠回測做決定。不調 k、不調 SPRT 參數、不因回測結果改口徑；不在頁面寫任何配置或停單建議。"
+}</pre></details>
+<p class="lsb-note">as_of 2026-09-04 · built_at 2026-09-05T14:40:57Z · 回測先驗（保險價格頁 2010 起月勝率）：未計算（insurance_premium.json 的 W2 窗只有彙總統計，無月度序列可供計算月勝率）</p>
+</body></html>
