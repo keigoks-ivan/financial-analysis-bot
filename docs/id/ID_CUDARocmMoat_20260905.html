@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<meta name="color-scheme" content="only light">
+<title>CUDA／ROCm 軟體護城河 — 功能鎖定已破，經濟鎖定未破 | InvestMQuest</title>
+<meta name="id-skill-version" content="v4.0">
+<meta name="id-theme" content="CUDA / ROCm Moat">
+<meta name="id-publish-date" content="2026-09-05">
+<script id="id-meta" type="application/json">
+{
+  "theme": "CUDA / ROCm Moat",
+  "skill_version": "v4.0",
+  "id_version": "v3.0",
+  "publish_date": "2026-09-05",
+  "thesis_type": "structural",
+  "ai_exposure": "🟢",
+  "oneliner": "CUDA 的功能鎖定已破、經濟鎖定未破：租價折價率仍達 43%；真正在吃份額的是客製 ASIC（AVGO AI 半導體單季 167 億美元、年增 221%）而非 ROCm，但市場把溢價預付給了 AMD。",
+  "now_state": "非 CUDA 棧在推論已出箱可用，但 Azure 同區同節點 MI300X 對 H200 仍折價 43.4%（2026-09-05）；八季內 AMD 資料中心單季環比從未連兩季領先輝達 10 個百分點以上，功能替代完成、經濟替代未完成。",
+  "future_state": "護城河不會一次崩塌，而是以折價率收斂的方式融化；抽象層開源化把租金推向自有矽的垂直整合者，客製 ASIC 是實際生效的繞道；訓練大規模互連仍是最硬那層牆，開放互連只有規格與展示、無量產出貨。",
+  "action": "看好非輝達不等於買超微——吃到份額的是客製 ASIC 陣營而非 ROCm 陣營；輝達在自身五年估值帶第 10 百分位、超微在第 55 百分位，護城河折價與挑戰者溢價同時存在，盯租價折價率與非輝達矽占比兩條序列決定加減。",
+  "sd_verdict": "split",
+  "sd_verdict_detail": "推論段＝替代供給接近充足（三後端並列）；訓練與大規模互連段＝替代供給短缺（官方自承多節點通訊缺陷）",
+  "clock_phase": "II",
+  "conviction": "mid",
+  "priced_in": "high",
+  "kill_metrics": [
+    {"metric": "同區同機型每卡每小時租價折扣（市場撮合價）", "bear_threshold": "連兩季 ≤15%（現值 43.4%）＝換棧補償金消失、護城河已無經濟現值", "window": "4Q", "source": "雲端業者官方定價介面／每季", "last_status": "ok"},
+    {"metric": "非輝達加速器矽占同期單季合計比重", "bear_threshold": "≥35%（現值 22.7%，一年前 20.2%）＝份額實際轉移而非只在測試機上", "window": "6Q", "source": "四家供應商 10-Q 與 8-K 分部揭露／每季", "last_status": "ok"},
+    {"metric": "上游框架中替代硬體變更的非該公司員工作者占比", "bear_threshold": "連兩季 ≥50%（現值 33%）＝維護不再靠單一廠商員工撐", "window": "4Q", "source": "GitHub 官方介面抽樣／每季", "last_status": "ok"},
+    {"metric": "開放互連相容硬體的量產出貨公告家數", "bear_threshold": "≥2 家雲端業者公告量產部署（現值 0，僅規格與展示）＝訓練互連牆被繞過", "window": "6Q", "source": "標準聯盟與成員公司原始新聞稿／每季", "last_status": "ok"},
+    {"metric": "商用替代品與護城河持有者的資料中心季增速差", "bear_threshold": "連兩季 ≥+10 個百分點（八季內最佳單季 +9.4，從未連兩季）", "window": "4Q", "source": "兩家 10-Q 分部揭露／每季", "last_status": "ok"}
+  ],
+  "related_tickers": [
+    {"ticker": "NVDA", "role": "CUDA、通訊庫與高速互連的全棧持有者，護城河的收租方", "depth": "🔴", "beneficiary": true, "purity_pct": 90, "mcap_bucket": "mega"},
+    {"ticker": "AVGO", "role": "客製 AI 加速器與網通——非 CUDA 路線真正在吃份額的一方", "depth": "🔴", "beneficiary": true, "purity_pct": 56, "mcap_bucket": "mega"},
+    {"ticker": "AMD", "role": "ROCm 與 Instinct——功能面追上、經濟面尚未兌現的挑戰者", "depth": "🔴", "beneficiary": true, "purity_pct": 48, "mcap_bucket": "mega"},
+    {"ticker": "GOOGL", "role": "自研張量處理器加上自有編譯棧與模型，繞過 CUDA 最完整的垂直整合者", "depth": "🟡", "beneficiary": true, "purity_pct": 5, "mcap_bucket": "mega"},
+    {"ticker": "AMZN", "role": "自研訓練晶片與編譯棧，換棧成本由自己吸收", "depth": "🟡", "beneficiary": true, "purity_pct": 4, "mcap_bucket": "mega"},
+    {"ticker": "MRVL", "role": "客製晶片與互連——與博通同軸但客戶集中度較高", "depth": "🟡", "beneficiary": true, "purity_pct": 45, "mcap_bucket": "large"},
+    {"ticker": "META", "role": "框架最大貢獻者（治理在基金會、非單一公司所有）加自研推論晶片，有影響力無租金", "depth": "🟢", "beneficiary": true, "purity_pct": 2, "mcap_bucket": "mega"},
+    {"ticker": "MSFT", "role": "自研加速器進度落後前兩家，主要仍是輝達最大買方之一", "depth": "🟢", "beneficiary": true, "purity_pct": 2, "mcap_bucket": "mega"},
+    {"ticker": "INTC", "role": "加速器業務已由公司自承不成功，對本主題純度接近零", "depth": "🟢", "beneficiary": false, "purity_pct": 2, "mcap_bucket": "large"},
+    {"ticker": "ARM", "role": "處理器與運算子系統授權，軟體生態成熟但非加速器棧主戰場", "depth": "🟢", "beneficiary": true, "purity_pct": 3, "mcap_bucket": "mega"}
+  ],
+  "demand_5y_multiple": 6.0,
+  "tam_usd_2030": 270,
+  "cagr_pct_5y": 43.0,
+  "growth_phase": "mid",
+  "value_chain_position": "cross-tier",
+  "industry_structure": "oligopoly",
+  "quality_tier": "Q1",
+  "mega": "semi",
+  "sub_group": "compute_demand",
+  "sister_ids": ["ID_AIAcceleratorDemand_20260905.html", "ID_AIComputeCapexCycle_20260903.html", "ID_AIInferenceEconomics_20260720.html", "ID_HBM_Supercycle_20260904.html"],
+  "sections_refreshed": {"technical": "2026-09-05", "market": "2026-09-05", "judgment": "2026-09-05"}
+}
+</script>
+
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Noto+Serif+TC:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/id-v4.css">
+</head>
+<body id="top">
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/market/">市況主控台</a>
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <a href="/cockpit/">選股</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">個股研究</a>
+          <a href="/id/" class="active">產業研究</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/flow/">投資流程</a>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<!-- PLAIN_PRIMER_START -->
+<details style="max-width:900px;margin:16px auto;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:2px 18px 14px;font-family:'Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;line-height:1.9;color:#334155">
+<summary style="cursor:pointer;padding:12px 0;font-weight:600;color:#1E3A5F;font-size:13.5px">📖 第一次讀這種報告？點開看怎麼讀</summary>
+<div style="margin:2px 0 4px;padding-top:8px;border-top:1px solid #E2E8F0">
+<p style="margin:6px 0">這是一份「產業深度報告」（ID），研究整個產業的供需結構、競爭格局與展望，不是單一公司的結論。</p>
+<p style="margin:6px 0"><strong>結論在哪：</strong>報告開頭的「決策摘要層」濃縮全篇重點；完整的情境判斷通常在後段標示「裁決」或「情境」的段落。</p>
+<p style="margin:6px 0"><strong>常見詞：</strong>「論點」（thesis）是這份報告對產業走向的核心假設；「否證指標」是一旦數字打到某個門檻，代表論點可能已經不成立的監測指標；「priced-in」是指這個看法是不是已經反映在股價裡——如果已經反映，代表就算利多兌現，股價也不一定會再漲。</p>
+<p style="margin:6px 0"><strong>時效提醒：</strong>報告日期寫在檔名，產業情勢變化快；相關個股的最新結論請看個別 DD 報告或 <a href="/research/" style="color:#2563EB;text-decoration:underline">/research/</a>。</p>
+<p style="margin:6px 0 0">想查其他詞的意思，見<a href="/learn/glossary.html" style="color:#2563EB;text-decoration:underline">投資詞彙表</a>。</p>
+</div>
+</details>
+<!-- PLAIN_PRIMER_END -->
+
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+
+
+<div class="report-sheet">
+
+<header id="summary" class="masthead" style="scroll-margin-top:96px">
+  <div class="masthead-strip">
+    <span><span class="brand">InvestMQuest Research</span>&nbsp;&nbsp;·&nbsp;&nbsp;產業深度研究</span>
+    <span>半導體 · 運算需求&nbsp;&nbsp;·&nbsp;&nbsp;2026 年 9 月 5 日 · 台北</span>
+  </div>
+  <div class="report-kicker">產業深度報告<small>Industry Deep Report</small></div>
+  <h1 class="report-title">CUDA 的牆<em>沒有倒</em>，但收租的人換了</h1>
+  <p class="report-deck">功能上，非 CUDA 的軟體棧已能直接跑推論；經濟上，換棧的人仍要拿到四成以上的租金折扣才願意成交。而真正在吃輝達份額的，不是市場買爆的 ROCm 陣營，是安靜的客製晶片陣營。</p>
+  <div class="report-byline">
+    <span>發布日 2026-09-05 ｜ 涵蓋股票 10 檔</span>
+    <span class="data-window" data-asof="2026-09-05">資料截至 2026-09-05</span>
+  </div>
+
+  <div class="rating-strip">
+    <div class="rating-cell"><span class="k">供需<small>Supply/Demand</small></span><span class="v" data-field="sd_verdict" data-value="split">分裂</span><span class="s">推論段替代供給接近充足；訓練互連段仍短缺</span></div>
+    <div class="rating-cell"><span class="k">時鐘<small>Clock Phase</small></span><span class="v" data-field="clock_phase" data-value="II">擴張中段</span><span class="s">Phase II ｜ 換相雙閘兩個訊號皆未達成</span></div>
+    <div class="rating-cell"><span class="k">信心<small>Conviction</small></span><span class="v" data-field="conviction" data-value="mid">中</span><span class="s">撮合價只有單一時點、雲端業者不揭露自研矽占比</span></div>
+    <div class="rating-cell"><span class="k">已定價<small>Priced-in</small></span><span class="v" data-field="priced_in" data-value="high">大多反映</span><span class="s">溢價蒸發已定價，但定在挑戰者身上</span></div>
+    <div class="rating-cell"><span class="k">5 年需求倍數<small>Demand 5Y Multiple</small></span><span class="v" data-field="demand_5y_multiple" data-value="6.0">×6.0</span><span class="s">不流經 CUDA 的加速器矽金額，2025→2030 基準情境</span></div>
+  </div>
+
+  <div class="key-call">
+    <div class="kc-label">一句話結論<small>Key Call</small></div>
+    <p>市場把「CUDA 溢價會蒸發」定價完了，卻定錯對象——付成長股倍數給功能追平、經濟未兌現的超微，同時給真正在搶份額的客製晶片陣營與護城河持有者本身歷史低位的倍數。</p>
+  </div>
+
+  <div class="view-grid">
+    <div class="view-card is-now"><div class="view-tag">現在</div><p>非 CUDA 的軟體棧在推論端已可直接使用，但同區域、同規格機型的超微加速器仍要便宜四成以上才賣得動；八個季度裡，超微資料中心營收的季增速從沒連續兩季超過輝達十個百分點。</p></div>
+    <div class="view-card is-next"><div class="view-tag">未來</div><p>這道牆會用租金折扣慢慢縮小的方式融化，不會一次倒下。抽象層開源化的好處落在自己有晶片的買方身上，客製晶片是唯一真正生效的繞道；訓練用的大規模互連仍是最硬的一層。</p></div>
+    <div class="view-card is-act"><div class="view-tag">怎麼做</div><p>看好非輝達路線，不等於買超微。真正在吃份額的那一方漲幅落後大盤近十八個百分點、估值在自身五年帶第 15 百分位；被買爆的那一方一年漲逾兩倍、估值在第 55 百分位。</p></div>
+  </div>
+
+  <div class="section-no">三條要盯的否證指標</div>
+  <ul class="kill-brief">
+    <li><strong>租價折扣</strong>　現值 43.4%（2026-09-05），跌破 15% 論點作廢</li>
+    <li><strong>非輝達加速器矽占比</strong>　現值 22.7%（2026 年中對齊季），升破 35% 論點作廢</li>
+    <li><strong>開放互連量產出貨</strong>　現值 0 家（2026-09-05），達 2 家雲端業者論點作廢</li>
+  </ul>
+
+  <div class="judgment-card">
+    <div class="j-head">怎麼做<small>PM Action</small></div>
+    <ul>
+      <li>① 把「非 CUDA 曝險」的代表標的從超微換成客製晶片陣營：後者加速器營收年增 221%、前者 107%，但前者一年超額報酬 190 個百分點、後者負 18 個百分點。</li>
+      <li>② 護城河持有者不因本報告減碼：估值在自身五年帶第 10 百分位，市場已替護城河蝕付過一次帳；風險改藏在被外推的盈餘假設裡，見第 4 節的雙重下修算式。</li>
+      <li>③ 超微維持觀察不加碼：加碼的板機是租價折扣收斂，不是又一次版本更新。</li>
+      <li>④ 每季固定抓兩個數字：雲端官方定價頁的同區同機型牌價，以及四家加速器供應商當季分部營收。</li>
+    </ul>
+  </div>
+
+  <div class="crosslink">
+    母題與姊妹報告：<a href="/id/ID_AIAcceleratorDemand_20260905.html">AI 加速器需求</a>、<a href="/id/ID_AIComputeCapexCycle_20260903.html">AI 運算資本支出循環</a>、<a href="/id/ID_AIInferenceEconomics_20260720.html">AI 推論經濟學</a>、<a href="/id/ID_HBM_Supercycle_20260904.html">高頻寬記憶體超級循環</a>。前一版本：<a href="/id/ID_CUDARocmMoat_20260501.html">2026-05-01 版</a>。
+  </div>
+</header>
+
+<nav class="toc-bar" aria-label="section navigation">
+  <a href="#summary">一頁看完</a><a href="#thesis">1 核心判斷</a><a href="#debates">2 市場哪裡看錯</a><a href="#mechanics">3 機制與供需</a><a href="#valuation">4 現在貴不貴</a><a href="#risks">5 我怎麼知道錯了</a><a href="#stocks">6 誰受影響</a><a href="#appendix">附錄</a>
+</nav>
+
+<section id="thesis" class="section">
+  <div class="section-no">Section 1</div>
+  <h2>核心判斷<small>Investment Thesis</small></h2>
+  <div class="section-lede">護城河要用什麼單位計價，決定了你會得到什麼答案。用「能不能跑」計價，這道牆早就破了；用「換過去要付多少錢」計價，它還收著四成以上的過路費。</div>
+
+  <p>過去兩年，關於這道護城河的辯論幾乎都繞著功能打轉：某個版本支不支援某個模型、某個核心函式庫補齊了沒有。到 2026 年 9 月，這個層面的答案已經沒有爭議——業界最主流的推論服務軟體在官方安裝文件裡，把輝達、超微、英特爾三家的硬體後端並列為正式支援對象；在編譯器專案裡，今年以來提到超微的變更佔了全部合併變更的三成。功能上，換棧是可行的。</p>
+
+  <p>但可行不等於划算。同一時點、同一家雲端業者、同一個區域、同樣是八張卡的機型，超微的加速器每張卡每小時要價六美元，輝達上一代要價十點六美元——換句話說，買方要拿到四成三的折扣才願意把工作負載搬過去。這個折扣就是換棧成本的市場報價：它包含重寫核心、重調參數、重建監控、承擔多節點通訊風險的所有工時，而且是由願意付錢的人投票決定的，不是由技術文件宣稱的。護城河沒有消失，它只是從「不能用」變成「要打折」。</p>
+
+  <p><strong>供需怎麼判</strong>：這個主題的「供給」不是晶片，是能替代 CUDA 的開發者工時與編譯器成熟度；「需求」不是伺服器台數，是願意換棧的工作負載量。兩者在推論端已經接近平衡甚至偏鬆——三後端並列、服務層統一；但在訓練用的大規模多節點互連上，替代供給仍然明顯短缺：超微自己在最新版本的官方發行說明裡承認，其集合通訊庫在 64MB 到 512MB 訊息長度、多節點配置下表現不理想，並直接點名一個常見的大型開源模型是已知受影響的工作負載。供應商在自家發行說明裡承認缺陷，是可信度最高的一種自白。因此裁決是分裂，不是平衡。</p>
+
+  <p><strong>投資時鐘</strong>：現在處於擴張中段（Phase II）。換相的兩個條件與資本週期證據見 §3.4。</p>
+
+  <div class="thesis-box">
+    <span class="label">一句話講完</span><br>
+    <strong>功能鎖定已破、經濟鎖定未破；而真正在拆這道牆的是客製晶片，不是市場買爆的那條路線。</strong>
+  </div>
+
+  <div class="exhibit">
+    <div class="exhibit-head">護城河三層現況：哪一層破了、哪一層沒有</div>
+    <div class="exhibit-body">
+      <table>
+        <thead><tr><th>層次</th><th>現況與最硬的一個數字</th><th>判定</th></tr></thead>
+        <tbody>
+          <tr><td>框架與服務層<br>（能不能跑）</td><td>主流推論服務軟體官方並列三家硬體後端；編譯器專案今年提到超微的變更佔比 30.5%</td><td>已破——功能鎖定不再是門檻</td></tr>
+          <tr><td>經濟層<br>（換過去划不划算）</td><td>同區同機型每卡每小時：超微 $6.00 對輝達上一代 $10.60，折扣 43.4%；純 AI 雲端業者官方定價頁根本沒有超微選項</td><td>未破——換棧仍需大幅補償</td></tr>
+          <tr><td>訓練互連層<br>（多機能不能擴）</td><td>挑戰者官方發行說明自承多節點通訊在特定訊息長度下表現不理想；開放互連標準僅有規格與展示，零量產出貨公告</td><td>未破——且供應商自己承認</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <p class="exhibit-source">資料來源：Azure 官方零售定價 API［#1］、CoreWeave 官方定價頁［#2］、GitHub 官方 API［#3］、ROCm 官方發行說明［#7］、UALink Consortium［#11］、vLLM 官方文件［#16］</p>
+
+  <details class="evidence-fold">
+    <summary>推導與考證</summary>
+    <div class="fold-body">
+      <p><span class="derive">推導：折扣率＝1 −（超微每卡每小時牌價 ÷ 輝達同代同機型每卡每小時牌價）。兩者取自同一家雲端業者官方零售定價介面、同一區域、同為八卡節點、同為隨需即付計費，排除競價執行個體與預留方案，故不受合約折扣與地區差異汙染。</span></p>
+      <p>三層框架取代前一版的「推論已裂、訓練未裂」兩分法。前版的兩分法是對的，但停在功能層；當功能層的答案已經確定，它就不再是分歧，只有經濟層與互連層還在移動。🔵 [X: base 折扣率在未來四季緩慢收斂至三成上下；bull 收斂至一成五以內；bear 折扣率不動甚至擴大]</p>
+    </div>
+  </details>
+</section>
+
+<section id="debates" class="section">
+  <div class="section-no">Section 2</div>
+  <h2>市場哪裡看錯<small>Key Debates</small></h2>
+  <div class="section-lede">前一版本留下三條與市場相左的判斷。一年後，一條要修正、一條被更硬的證據支持、一條必須翻面；另外兩條分歧是這一年才浮現的。</div>
+
+  <div class="debate-card">
+    <div class="debate-head"><span class="dt"><span class="dn">分歧 1</span>「開箱即用等於護城河消失」</span><span class="badge is-high">信心：高</span></div>
+    <div class="debate-row is-market"><div class="dr-k">市場最強版本</div><div class="dr-v">挑戰者的軟體棧已達成主流推論引擎開箱可用，主流服務軟體官方支援三家後端，編譯器層今年三成變更與其相關；既然跑得動又便宜，份額轉移只是時間問題。這個版本引用的每一個事實都成立。</div></div>
+    <div class="debate-row is-view"><div class="dr-k">我們認為</div><div class="dr-v">事實成立，推論不成立。前一版判斷「推論層護城河已裂」成立，這次的修正是加上經濟層——護城河沒有消失，只是從「不能用」變成「要打折」。如果護城河真的消失，價差應該收斂；實際上同區同機型仍有 43.4% 的折扣，而純 AI 雲端業者定價頁上超微選項掛零，比價資格都沒取得。已反映：功能面已反映在挑戰者倍數第 55 百分位，經濟面未反映。</div></div>
+    <div class="debate-row is-signal"><div class="dr-k">看什麼分勝負</div><div class="dr-v"><span class="path-pos">折扣率四季內收斂到兩成以內，或純 AI 雲端業者上架超微機型</span> → 經濟鎖定鬆動，本報告估值結論要翻；<span class="path-neg">折扣率維持四成以上且新一代仍無公開牌價</span> → 功能勝利無法變現。⚠ 若挑戰者新一代產品在任一大型雲端業者以低於一成五的折扣上架，本卡作廢。</div></div>
+  </div>
+
+  <div class="debate-card">
+    <div class="debate-head"><span class="dt"><span class="dn">分歧 2</span>「訓練用的大規模互連很快就會被開放標準取代」</span><span class="badge is-high">信心：高</span></div>
+    <div class="debate-row is-market"><div class="dr-k">市場最強版本</div><div class="dr-v">開放互連聯盟的推動者名單涵蓋超微、博通、思科、谷歌、惠與、英特爾、Meta、微軟，2025 年初再加入阿里巴巴、蘋果、新思；200G 規格已經發布。當所有大買方站在同一邊，專屬互連的壽命是可以倒數的。</div></div>
+    <div class="debate-row is-view"><div class="dr-k">我們認為</div><div class="dr-v">陣營成立，時程不成立。截至資料窗，該聯盟官方渠道只有規格與展示，沒有任何量產出貨公告；而挑戰者自家的集合通訊庫在多節點特定訊息長度下的缺陷，是它自己在官方發行說明裡寫的。前一版判斷「訓練層 2028 年前不破」，一年後的證據比當時更硬，這條維持。已反映：幾乎沒有反映——市場對這層的定價還停在「遲早會破」的敘事，沒有對「規格到量產之間有幾年」定價。</div></div>
+    <div class="debate-row is-signal"><div class="dr-k">看什麼分勝負</div><div class="dr-v"><span class="path-pos">兩家以上雲端業者公告開放互連相容硬體量產部署</span> → 最硬那層牆開始被繞過；<span class="path-neg">再過六個季度仍只有規格與展示</span> → 訓練端的定價權延續。⚠ 若挑戰者在官方發行說明中撤除多節點通訊的已知缺陷聲明並提出可複製的多機基準，本卡的技術根據消失。</div></div>
+  </div>
+
+  <div class="debate-card">
+    <div class="debate-head"><span class="dt"><span class="dn">分歧 3</span>「掌握框架抽象層的人是終局贏家」</span><span class="badge is-mid">信心：中</span></div>
+    <div class="debate-row is-market"><div class="dr-k">市場最強版本</div><div class="dr-v">框架決定硬體是不是可替換的後端，掌握框架治理權就掌握了商品化的開關；因此長期價值會流向框架的擁有者，而不是晶片廠。前一版本自己也持這個看法，並據此把框架貢獻最大的那家公司列為核心受影響標的。</div></div>
+    <div class="debate-row is-view"><div class="dr-k">我們認為</div><div class="dr-v">這條要翻面，理由有兩層。治理層面：主流框架早已移交獨立基金會，治理董事會由超微、亞馬遜雲、谷歌雲、Meta、微軟、輝達六家共同組成，技術決策留在個別維護者手上——沒有任何單一公司是所有者，「治理權」不存在可收租的形式。經濟層面：抽象層是開源公共財，零貨幣化。租金實際上落在能同時擁有晶片、雲、模型的垂直整合者身上，以及替他們設計晶片的供應商身上。已反映：市場其實已經悄悄同意了——框架貢獻最大的那家公司過去一年報酬落後大盤 43.2 個百分點。</div></div>
+    <div class="debate-row is-signal"><div class="dr-k">看什麼分勝負</div><div class="dr-v"><span class="path-pos">框架基金會出現單一公司主導的治理變更，或框架本身出現商業授權層</span> → 收租形式成立，本卡翻回；<span class="path-neg">基金會維持多方共治且無授權收入</span> → 抽象層維持公共財。⚠ 若自研推論晶片的部署規模被公開揭露且顯著大於本報告假設，框架貢獻者的評級須上調。</div></div>
+  </div>
+
+  <div class="debate-card">
+    <div class="debate-head"><span class="dt"><span class="dn">分歧 4</span>「買超微就是買 CUDA 溢價蒸發」</span><span class="badge is-high">信心：高</span></div>
+    <div class="debate-row is-market"><div class="dr-k">市場最強版本</div><div class="dr-v">要表達「護城河會蝕」這個看法，最直接的工具是唯一以同架構替代品正面挑戰的那家公司。過去一年它上漲 216%、超額大盤 190.6 個百分點，市場用腳投票的結果非常一致。</div></div>
+    <div class="debate-row is-view"><div class="dr-k">我們認為</div><div class="dr-v">工具選錯了。看實際份額：客製晶片供應商最近一季 AI 半導體營收 167 億美元、年增 221%，下一季指引 217 億美元；同期輝達資料中心營收年增約 117%、超微資料中心營收年增約 107%。也就是說，超微的成長速度和輝達差不多——它跟上了產業，但沒有從輝達手上搶到東西；真正跑贏產業兩倍速的是客製晶片。而後者過去一年報酬落後大盤 17.8 個百分點、估值在自身五年帶第 15 百分位。已反映：溢價蒸發的敘事在超微身上大多反映，在客製晶片陣營身上幾乎沒有反映——這是一個錯殺型分歧，屬防守型機會而非追高機會。</div></div>
+    <div class="debate-row is-signal"><div class="dr-k">看什麼分勝負</div><div class="dr-v"><span class="path-pos">客製晶片供應商連兩季 AI 營收年增維持在輝達兩倍以上，且合併營收中該業務占比續升</span> → 錯殺持續成立；<span class="path-neg">超微資料中心季增速連兩季領先輝達十個百分點以上</span> → 份額真的開始轉移，工具選擇要改。⚠ 客製晶片的成長高度集中於少數客戶，任一客戶把設計收回自製或轉單，本卡立即失效。</div></div>
+  </div>
+
+  <div class="debate-card" data-debate="external-threat">
+    <div class="debate-head"><span class="dt"><span class="dn">分歧 5</span>圈外威脅：中立編譯器層被晶片商買走</span><span class="badge is-mid">信心：中</span></div>
+    <div class="debate-row is-market"><div class="dr-k">市場最強版本</div><div class="dr-v">真正能瓦解專屬軟體棧的不是另一家 GPU 廠，而是「一次編譯、多後端執行」的中立編譯器層——它會讓硬體徹底變成可替換零件。這一層一直被視為產業的公共基礎建設。</div></div>
+    <div class="debate-row is-view"><div class="dr-k">我們認為</div><div class="dr-v">威脅是真的，但方向變了。2026 年 6 月 24 日高通宣布收購該領域最受矚目的編譯器公司、7 月 29 日完成交割，同一天發布自己的資料中心產品藍圖。原本被當成中立公共財的那一層，現在是一家有加速器野心的晶片商的資產——這使「中立抽象層瓦解專屬棧」的路徑機率下降、「垂直整合者各自擁有抽象層」的路徑機率上升。已反映：完全沒有反映。</div></div>
+    <div class="debate-row is-signal"><div class="dr-k">看什麼分勝負</div><div class="dr-v"><span class="path-pos">出現具名的生產環境跨後端部署</span> → 中立層路徑復活；<span class="path-neg">該編譯器逐步綁定收購方硬體</span> → 抽象層私有化，競爭回到垂直整合者之間。⚠ 若另一個開源統一中介表示層取得兩家以上雲端業者的生產採用，本卡結論反轉。</div></div>
+  </div>
+
+  <p><strong>市場最低估的風險</strong>：不是護城河突然崩塌，而是護城河完好無損、但它保護的那塊地在縮小。若客製晶片以目前兩倍於產業的速度續增，專屬軟體棧會維持技術優勢卻只覆蓋一個相對變小的市場——這種結局不會有崩盤式的股價事件，只會有連續幾季找不到單一壞消息的估值下修。</p>
+
+  <div class="callout is-implication"><span class="co-label">對投資的意義</span>五張卡指向同一個操作結論：這個主題的可操作性不在「誰的技術會贏」，在「誰的價格還沒反映」。</div>
+
+  <details class="evidence-fold">
+    <summary>推導與考證</summary>
+    <div class="fold-body">
+      <p><span class="derive">推導：份額轉移的判別採「同期單季年增率比較」而非累計金額比較——因為三家公司財年結束日不同，累計數字不可比，但各自最近一季的年增率反映的是同一段市況。輝達資料中心單季 890.23 億美元對前年同期 410.96 億美元得年增約 117%；超微資料中心單季 67.18 億美元對前年同期 32.40 億美元得年增約 107%。</span></p>
+      <p>對最強反方的吸收：假設分歧 1 的市場版本全對、折扣率明年收斂到一成，本報告的哪個配置反而更成立？答案是分歧 4 的錯殺結論——折扣收斂代表非 CUDA 路線整體變便宜可用，客製晶片陣營是受惠更深的一方（它連折扣都不用給，因為買方就是設計方）。故強反方成立時，本報告的第一順位配置不變，只有第二順位（護城河持有者）需要下修。🟡 [I: 折扣收斂 → 非 CUDA 路線總量擴大 → 不需靠折扣競爭的客製路線受惠幅度大於靠折扣競爭的商用路線]</p>
+    </div>
+  </details>
+</section>
+
+<section id="mechanics" class="section">
+  <div class="section-no">Section 3</div>
+  <h2>機制與供需<small>Industry Mechanics</small></h2>
+  <div class="section-lede">把軟體護城河翻譯成供需語言：供給是可替代的開發者工時與編譯器成熟度，需求是願意換棧的工作負載量。兩者的交易價格，就寫在雲端牌價上。</div>
+
+  <h3>3.1 需求：不流經 CUDA 的錢有多少</h3>
+  <p>這個主題的需求量不是伺服器台數，是「有多少加速器支出不必付 CUDA 這道過路費」。這筆錢有三個來源：商用替代品（超微的加速器）、客製晶片（雲端業者自研、由第三方設計代工）、以及完全自建棧的垂直整合者。前兩者有公開財報可讀，第三者沒有——四家大型雲端業者都不揭露自研晶片占自身部署的比例，這是本報告最大的觀測盲區，後面會說明我們如何繞過。</p>
+
+  <div class="exhibit">
+    <div class="exhibit-head">需求三角對帳<small>由上而下的資本支出 vs 由下而上的晶片營收</small></div>
+    <div class="exhibit-body">
+      <table>
+        <thead><tr><th>路徑</th><th>最近完整年度金額</th><th>對帳結論</th></tr></thead>
+        <tbody>
+          <tr><td>由上而下：四家大型雲端業者資本支出合計</td><td class="num">約 4,088 億美元</td><td>其中加速器矽估占五成五到六成 → 2,250–2,450 億美元</td></tr>
+          <tr><td>由下而上：四家主要加速器供應商年度營收合計</td><td class="num">約 2,390 億美元</td><td>落在上述區間內</td></tr>
+          <tr><td>兩條路徑差距</td><td class="num">約 3%</td><td>低於 20% 門檻，不需額外解釋缺口</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <p class="exhibit-source">資料來源：美國證券交易委員會 XBRL 財報介面［#15］、NVDA 10-K［#5］、AMD 10-K［#4］、AVGO 8-K［#6］、MRVL 財報［#18］</p>
+  <p class="exhibit-note"><span class="derive">推導：由上而下＝谷歌母公司 2025 年 914 億＋微軟 2026 會計年度 1,159 億＋Meta 2025 年 697 億＋亞馬遜 2025 年 1,318 億美元。由下而上＝輝達 2026 會計年度資料中心 1,937 億＋超微 2025 年資料中心 166 億＋客製晶片供應商 2025 會計年度 AI 半導體約 200 億＋另一家客製晶片商 2026 會計年度總營收 82 億美元。兩邊各有一個方向相反的偏誤：由上而下漏掉了雲端業者以外的買方（主權基金、企業、純 AI 雲端業者），由下而上把非加速器業務也算了進來，兩者部分互抵。</span></p>
+
+  <div class="exhibit">
+    <div class="exhibit-head">不流經 CUDA 的加速器矽金額：三情境</div>
+    <div class="exhibit-body">
+      <table>
+        <thead><tr><th>情境</th><th>2030E 加速器矽總額</th><th>2030E 非輝達占比 → 金額</th><th>假設</th><th>權重（主觀）</th></tr></thead>
+        <tbody>
+          <tr><td>Base</td><td class="num">約 9,000 億美元</td><td class="num">30% → 約 2,700 億</td><td>客製晶片維持高速、商用替代品維持份額不搶份額</td><td class="num">50</td></tr>
+          <tr><td>Bull</td><td class="num">約 1.2 兆美元</td><td class="num">38% → 約 4,560 億</td><td>租價折扣收斂，商用替代品開始真正搶份額，客製晶片同步擴散到二線雲</td><td class="num">25</td></tr>
+          <tr><td>Bear</td><td class="num">約 5,000 億美元</td><td class="num">26% → 約 1,300 億</td><td>資本支出降溫，但成本壓力反而讓雲端業者優先砍外購、保自研，非輝達占比不跌反升</td><td class="num">25</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <p class="exhibit-source">資料來源：InvestMQuest Research 推導；分母與現況份額取自［#4］［#5］［#6］［#18］</p>
+  <p class="exhibit-note"><span class="derive">推導：2025 年基準＝加速器矽合計約 2,390 億美元，其中非輝達約 450 億、占 19%。基準情境的五年需求倍數＝2,700 ÷ 450 ≈ 6.0 倍，隱含年複合成長約 43%。這是自建口徑：業界沒有「非 CUDA 可服務市場」的公開統計，本報告以四家可查財報的供應商營收自建分母，因此是低估而非高估。中國受出口管制驅動的自主棧（華為昇騰、寒武紀）同樣不流經本報告四家供應商財報，是分母的另一低估來源；其國產化驅動力與西方自願換棧邏輯不可類比，不納入撮合機制。權重為主觀評估，三情境加總 100、5 點步進。</span>（熊市情境非輝達占比高於基準非筆誤：資本支出降溫時最先被砍的是外購商用加速器，自研晶片因省現金成本反而會被保留。）</p>
+
+  <h3>3.2 供給：能替代的工時有多少，利潤又落在誰身上</h3>
+  <div class="exhibit">
+    <div class="exhibit-head">替代供給成熟度矩陣</div>
+    <div class="exhibit-body">
+      <table>
+        <thead><tr><th>路線</th><th>現在</th><th>未來 12 個月</th><th>未來 3 年</th></tr></thead>
+        <tbody>
+          <tr><td>專屬全棧（輝達）</td><td>工具鏈 13.3 版、通訊庫與推論引擎持續更新；授權條款明文禁止透過翻譯層在他家硬體執行其輸出</td><td>維持推論與訓練雙優勢</td><td>推論端定價權下降、訓練端維持</td></tr>
+          <tr><td>商用替代品（超微）</td><td>推論端開箱可用；官方自承多節點通訊在特定訊息長度下表現不理想</td><td>補多節點；新一代仍待公開牌價</td><td>能否從折扣競爭轉為平價競爭，是這條路線的成敗點</td></tr>
+          <tr><td>客製晶片（雲端業者＋設計商）</td><td>單季 AI 半導體 167 億美元、年增 221%，下一季指引 217 億</td><td>指引已隱含續加速</td><td>擴散至二線雲與主權買方是最大變數</td></tr>
+          <tr><td>垂直整合自研棧（谷歌、亞馬遜、Meta、微軟）</td><td>不揭露部署占比；單一機櫃規模已達 9,216 顆晶片、約 10 兆瓦等級</td><td>世代更新持續，揭露習慣不變</td><td>觀測只能靠外部代理，永遠落後真實進度</td></tr>
+          <tr><td>其他挑戰者（英特爾）</td><td>公司在年報中自承加速器嘗試不成功，2025 與 2024 年分別認列 3.75 億與 9.22 億美元存貨相關費用</td><td>路線改走推論最佳化新架構</td><td>對本主題貢獻接近零</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <p class="exhibit-source">資料來源：ROCm 官方發行說明［#7］、NVIDIA 官方文件與授權條款［#8］、AVGO 8-K［#6］、Intel 10-K［#9］、Google 官方部落格［#13］</p>
+  <p class="exhibit-note">同一欄位的三個時間點對照，重點在第三欄：三年後真正分勝負的不是誰的軟體比較好用，是誰不需要靠折扣賣。</p>
+
+  <div class="exhibit">
+    <div class="exhibit-head">利潤池<small>誰把錢留了下來</small></div>
+    <div class="exhibit-body">
+      <table>
+        <thead><tr><th>環節</th><th>議價地位</th><th>走向</th></tr></thead>
+        <tbody>
+          <tr><td>專屬全棧供應商</td><td>主導</td><td>推論端轉均勢、訓練端維持主導</td></tr>
+          <tr><td>客製晶片設計與網通</td><td>由次要轉均勢</td><td>上升最快的一環</td></tr>
+          <tr><td>商用替代加速器</td><td>次要（資料中心分部營業利益率 31.3%）</td><td>取決於折扣能否收斂</td></tr>
+          <tr><td>框架與抽象層</td><td>無議價地位（開源、零貨幣化）</td><td>維持公共財</td></tr>
+          <tr><td>雲端買方</td><td>次要轉均勢</td><td>自研愈深、議價地位愈高</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <p class="exhibit-source">資料來源：AMD 10-Q 分部揭露［#4］；其餘環節無公開的跨環節營業利益總額占比統計，一律以定性表述，不填無來源百分比</p>
+
+  <p><strong>成本曲線</strong>：本主題是結構成長型而非商品週期型，沒有邊際生產者停產的價格點，故不做成本曲線。最接近的替代物是租價曲線——目前的邊際成交價就是那個四成三的折扣，它才是這個市場真正的清算價格。</p>
+
+  <h3>3.3 為什麼是現在：兩條 S 曲線錯開了</h3>
+  <pre class="figure-ascii">
+成熟度
+  ^
+  |                                   專屬全棧 ────────────  高原
+  |                          ╱
+  |                    ╱                  客製晶片 ／  ← 現在在這裡（陡升段）
+  |              ╱                              ／
+  |        ╱                        ／───── 商用替代品（推論已上肩、訓練仍在坡底）
+  |   ╱              ／
+  +--------------------------------------------------------> 時間
+     2016        2020        2023        2026        2029
+     替代棧起步   框架抽象化   推論可用    經濟未平    互連是最後一關
+</pre>
+  <p>時間點之所以是現在，有三個同時發生的變化。第一，推論在總工作負載中的比重上升，而推論對多節點通訊的要求遠低於訓練——這讓替代品第一次能在一個完整的商業區塊裡正面競爭。第二，服務層取代框架層成為換棧的操作單位：主流推論服務軟體官方並列三家後端之後，換棧不再需要重寫模型程式碼。第三，買方規模大到自研晶片的固定成本可以攤掉，於是最有能力繞過的人同時也是最有誘因繞過的人。</p>
+  <p><strong>誰是造王者</strong>：不是框架，是雲端業者的採購部門——它決定哪一種替代品能拿到足夠的量去攤平軟體工程投資，而它的偏好目前明顯偏向自己能控制設計的那一種。</p>
+
+  <h3>3.4 裁決：供需裁決與三視野推估</h3>
+  <p><strong>資本週期</strong>：兩家主要供應商的資本支出都跑在折舊前面——輝達最近半個會計年度資本支出對折舊攤銷約 2.09 倍，超微約 2.80 倍，皆遠高於 1 倍，代表產能仍在擴張期而非成熟期；另一項可查指標是存貨，輝達最近一季存貨 315.75 億美元、週轉約 120 天，超微 84.68 億美元、週轉約 152 天（全公司口徑）。資本仍在大量湧入，而需求端年增率仍在三位數，這組合指向擴張中段而非高原。第三項指標（投入資本報酬率對資金成本）本輪未取得可對帳的計算輸入，故資本週期以兩項有數字的指標作結，不以第三項的缺席改變裁決。</p>
+
+  <div class="exhibit">
+    <div class="exhibit-head">三視野 × 三情境推估</div>
+    <div class="exhibit-body">
+      <table>
+        <thead><tr><th>時間窗</th><th>Base</th><th>Bull</th><th>Bear</th><th>權重（主觀）</th><th>觸發指標</th></tr></thead>
+        <tbody>
+          <tr><td><strong>12M</strong></td><td>折扣率緩降至三成上下；非輝達矽占比升至 25% 附近</td><td>折扣率降破兩成，新一代替代品公開上架</td><td>折扣率不動，新一代仍無公開牌價</td><td class="num">40</td><td>雲端官方定價頁每季牌價</td></tr>
+          <tr><td><strong>3Y</strong></td><td>非輝達矽占比 28–32%，成長主要來自客製晶片</td><td>占比破 38%，商用替代品開始真正搶份額</td><td>占比停在 25% 以下，替代淪為議價籌碼</td><td class="num">35</td><td>四家供應商當季分部營收</td></tr>
+          <tr><td><strong>5Y+</strong></td><td>不流經 CUDA 的金額約 2,700 億美元</td><td>約 4,560 億美元</td><td>約 1,300 億美元</td><td class="num">25</td><td>開放互連量產出貨家數</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <p class="exhibit-source">資料來源：InvestMQuest Research 推導；輸入見［#1］［#4］［#5］［#6］［#15］</p>
+  <p class="exhibit-note">權重欄為各時間窗在本裁決中的主觀比重，三列加總 100、5 點步進；每一列內的三情境權重沿用 §3.1 的 50／25／25，不重複列示。觸發指標皆為可回溯查證的公開序列。</p>
+
+  <p><strong>投資時鐘換相雙閘</strong>：必要條件＝替代棧在上游與服務層具備生產級供給（領先看：主流推論服務軟體官方後端清單、編譯器專案中替代硬體相關變更占比）——<strong>這個條件已經達成</strong>。<strong>並且</strong>充分條件＝以下兩個彼此獨立的訊號同時成立：其一是市場撮合價，同區同機型的租價折扣收斂到 15% 以內；其二是外部驗證器，非輝達加速器矽在同期單季合計中的占比達到 35%。現值分別是 43.4% 與 22.7%，兩者皆未達成，且分屬價格與數量兩個獨立維度、不是同一個數字換算兩次。因此時鐘維持在擴張中段，不進入高原。單一訊號亮燈只算預警，不構成換相。</p>
+
+  <details class="evidence-fold">
+    <summary>推導與考證</summary>
+    <div class="fold-body">
+      <p><span class="derive">推導：非輝達占比＝（客製晶片 AI 半導體 167.0 億＋商用替代品資料中心 67.18 億＋另一家客製晶片商總營收 27.4 億）÷（前三者＋輝達資料中心 890.23 億）＝261.6 ÷ 1,151.8 ≈ 22.7%。一年前同一組對齊季的算法得 20.2%。此處刻意用單季對齊而非年度加總，因為三家公司財年結束日不同，年度數字不可比。</span></p>
+      <p><strong>Bear 情境長什麼樣</strong>：不是一次崩盤，而是一段找不到壞消息的下修。第一步是最弱的邊際買家先收手——不是四大雲端業者，而是靠外部融資擴張的純 AI 雲端業者與主權專案，他們的訂單本來就最沒有黏性。第二步，外購商用加速器先被砍，因為自研晶片省的是現金成本、砍它等於自斷；這會讓非輝達占比在總量萎縮時反而上升，造成「份額在轉移」的錯覺。第三步，約兩到三季後傳導到供應商的訂單能見度，屆時存貨天數會先於營收轉向——輝達目前 120 天、超微 152 天，這兩個數字是這條劇本最早的觀測點。整段劇本的緩衝來自客戶集中度：輝達最近會計年度有單一直接客戶占營收 22%、另一家 14%，緩衝很薄，一旦這兩家延後，速度會比想像快。🔵 [X: base 50 / bull 25 / bear 25]</p>
+    </div>
+  </details>
+</section>
+
+<section id="valuation" class="section">
+  <div class="section-no">Section 4</div>
+  <h2>現在貴不貴<small>Valuation</small></h2>
+  <div class="section-lede">這一節只回答一個問題：市場是不是已經在替「CUDA 溢價蒸發」付錢？答案是已經付了，而且付給了錯的人。</div>
+
+  <div class="exhibit">
+    <div class="exhibit-head">單位經濟：三條路線各自靠什麼賺錢</div>
+    <div class="exhibit-body">
+      <table>
+        <thead><tr><th>路線</th><th>毛利驅動</th><th>未來 2 年</th><th>抗商品化能力</th></tr></thead>
+        <tbody>
+          <tr><td>專屬全棧</td><td>軟體鎖定支撐的定價權，加上訓練互連的獨家性</td><td>推論端定價權遞減、訓練端維持</td><td>高，但保護的市場區塊在相對縮小</td></tr>
+          <tr><td>商用替代加速器</td><td>用四成以上折扣換取上架與量</td><td>折扣若不收斂，量增而利潤不增</td><td>低——它的商業模式現在就是折扣本身</td></tr>
+          <tr><td>客製晶片設計</td><td>設計服務費加上晶片出貨，不需要對外折扣競爭</td><td>已有下一季加速的官方指引</td><td>中——不靠折扣，但靠少數客戶</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <p class="exhibit-source">資料來源：AVGO 8-K［#6］、AMD 10-Q［#4］、Azure 官方定價 API［#1］</p>
+
+  <p><strong>估值怎麼傳導</strong>：軟體護城河不會直接出現在任何一行財報上，它透過「同樣的矽賣得比別人貴多少」轉成毛利率，再轉成倍數。所以當市場相信護城河會蝕，第一個反應不是砍營收預估，是壓縮倍數。<span class="derive">敏感度推導：租價折扣每收斂十個百分點，等於替代品相對定價權提高十個百分點；以目前 43.4% 的折扣為起點，收斂到 15% 需讓出約 28 個百分點的相對價格空間，這部分會直接從專屬全棧的毛利假設裡扣掉。</span></p>
+
+  <h3>Priced-in 位置：核心標的現在貴不貴</h3>
+  <div class="exhibit">
+    <div class="exhibit-head">核心標的現行倍數 vs 自身五年歷史帶</div>
+    <div class="exhibit-body">
+      <table>
+        <thead><tr><th>Ticker</th><th>現行倍數（次年預估基準）</th><th>外部彙整站口徑（未來一年）</th><th>自身五年估值分位</th></tr></thead>
+        <tbody>
+          <tr><td><strong>NVDA</strong></td><td class="num">16.7 倍</td><td class="num">19.1 倍</td><td class="num">第 10 百分位</td></tr>
+          <tr><td><strong>AVGO</strong></td><td class="num">18.8 倍</td><td class="num">未取得</td><td class="num">第 15 百分位</td></tr>
+          <tr><td><strong>AMD</strong></td><td class="num">33.8 倍</td><td class="num">43.0 倍</td><td class="num">第 55 百分位</td></tr>
+          <tr><td><strong>MRVL</strong></td><td class="num">34.3 倍</td><td class="num">41.0 倍</td><td class="num">第 55 百分位</td></tr>
+          <tr><td><strong>INTC</strong></td><td class="num">63.0 倍</td><td class="num">57.6 倍</td><td class="num">第 88 百分位</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <p class="exhibit-source">資料來源：站內個股估值資料集，資料截至 2026-09-05［#20］；外部彙整站口徑［#19］。兩組數字口徑不同，說明見下段</p>
+  <p><strong>兩組倍數為何不同</strong>：站內數字以「第二個預估會計年度」的每股盈餘為分母，外部彙整站以「未來十二個月」為分母。因為這幾家公司的盈餘仍在快速上升，愈往後的年度盈餘愈高、算出來的倍數就愈低，這是口徑差不是數據錯誤——兩組數字的排序完全一致（護城河持有者最低、英特爾最高），故不影響任何結論。本報告主表採站內口徑以維持與站內其他報告可比，並將外部口徑並列，不偷偷擇一。</p>
+  <p>過去 52 週的超額報酬把這件事講得更白：商用替代品超額大盤 190.6 個百分點、英特爾 265.8、另一家客製晶片商 228.3，而護城河持有者只有 12.7，真正在吃份額的客製晶片供應商是負 17.8。（26 週漲幅與擁擠度呈同一方向，前三者皆在百分之百以上。）現價隱含成長方面，護城河持有者被外推的次年到第三年每股盈餘年複合成長高達 48.6%——這正是它倍數看起來便宜的原因。收斂：low 「還沒反映」的是客製晶片陣營的份額轉移；mid 「部分反映」的是訓練互連牆的持久性；high 「大多反映」的是護城河會蝕這件事本身。整體判定為大多反映。</p>
+
+  <details class="evidence-fold">
+    <summary>推導與考證</summary>
+    <div class="fold-body">
+      <p><span class="derive">推導：倍數低不等於便宜——這裡必須檢查風險是住在分母（盈餘假設）還是住在倍數。護城河持有者的次年到第三年每股盈餘年複合成長假設為 48.6%，倍數 16.7 倍是被這個高成長分母機械稀釋出來的。雙重下修情境：若盈餘實現值比預估低 25%、同時倍數從 16.7 倍壓到 13 倍，價格衝擊約為 1 −（0.75 × 13 ÷ 16.7）≈ −42%。所以第 10 百分位的估值分位不是安全邊際，是風險換了個地方藏。</span></p>
+      <p>本輪未能取得四家標的的五年預估本益比逐年區間（僅有分位數），故本節只用分位與超額報酬交叉，不宣稱區間中點。🟡 [I: 高成長分母 → 倍數機械偏低 → 分位數低估真實估值風險]</p>
+    </div>
+  </details>
+</section>
+
+<section id="risks" class="section">
+  <div class="section-no">Section 5</div>
+  <h2>我怎麼知道我錯了<small>Risks &amp; Falsification</small></h2>
+  <div class="section-lede">五條指標，兩條是價格、三條是數量；沒有一條的門檻取自任何一家公司自己的財測，所以它們不會永遠為真。</div>
+
+  <div class="exhibit">
+    <div class="exhibit-head">否證指標對帳表<small>Kill Metrics</small></div>
+    <div class="exhibit-body">
+      <table class="kill-table">
+        <thead><tr><th>指標</th><th>現值（as-of）</th><th>熊線（論點作廢點）</th><th>來源／頻率</th><th>領先幾季</th><th>可否操縱</th><th>破線後姿態</th></tr></thead>
+        <tbody>
+          <tr><td>同區同機型每卡每小時租價折扣（市場撮合價）</td><td class="cv">43.4%（2026-09-05）</td><td><strong>連兩季 ≤15%</strong></td><td>雲端業者官方定價介面／每季</td><td class="num">2–3</td><td>低（買賣雙方撮合，非公司自報）</td><td>護城河持有者由核心降衛星，客製晶片陣營維持第一順位</td></tr>
+          <tr><td>非輝達加速器矽占同期單季合計比重</td><td class="cv">22.7%（2026 年中對齊季）</td><td><strong>≥35%</strong></td><td>四家供應商 10-Q 與 8-K／每季</td><td class="num">1–2</td><td>低（財報分部揭露）</td><td>時鐘換相至高原，全面下修護城河持有者的定價權假設</td></tr>
+          <tr><td>上游框架中替代硬體變更的非該公司員工作者占比</td><td class="cv">33%（2026-09-05 抽樣 30 筆）</td><td><strong>連兩季 ≥50%</strong></td><td>GitHub 官方介面抽樣／每季</td><td class="num">3–4</td><td>中（作者公司欄位為自填）</td><td>供給端真正社群化，替代路線的長期成本結構改善，上調商用替代品評級</td></tr>
+          <tr><td>開放互連相容硬體的量產出貨公告家數</td><td class="cv">0 家（2026-09-05）</td><td><strong>≥2 家雲端業者</strong></td><td>標準聯盟與成員公司原始新聞稿／每季</td><td class="num">4–6</td><td>中（公告時點可選擇，但量產事實不可造假）</td><td>訓練互連判斷翻面，護城河持有者的訓練端溢價假設作廢</td></tr>
+          <tr><td>商用替代品與護城河持有者的資料中心季增速差</td><td class="cv">−2.0 個百分點（2026 年中對齊季；八季最佳 +9.4）</td><td><strong>連兩季 ≥+10 個百分點</strong></td><td>兩家 10-Q 分部揭露／每季</td><td class="num">1–2</td><td>低</td><td>份額真的開始轉移，第 2 節分歧 4 的工具選擇結論翻面</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <p class="exhibit-source">資料來源：Azure 官方定價 API［#1］、GitHub 官方 API［#3］、AMD 與 NVDA 10-Q［#4］［#5］、UALink Consortium［#11］。第一條為市場撮合價；本表與機器欄位逐條同步。</p>
+  <p class="exhibit-note"><span class="derive">推導：五條門檻沒有一條取自公司自己的財測，故不會出現「公司達標＝指標永遠不破」的套套邏輯。口徑各自唯一——租價折扣固定同一業者、同一區域、同為八卡隨需即付機型；占比的分子分母固定為同一組四家供應商的同期單季分部營收，不混用年度數字。</span></p>
+
+  <h3>催化劑：如果對了 vs 如果錯了</h3>
+  <div class="event-line">
+    <p><span class="event-date">2026 Q4</span>客製晶片供應商公布下一季實際 AI 半導體營收（官方指引 217 億美元）。<span class="path-pos">達標或超標且年增維持在護城河持有者兩倍以上</span> → 錯殺型分歧續成立，維持第一順位；<span class="path-neg">明顯低於指引</span> → 客戶集中風險兌現，本報告第一順位配置須重評。</p>
+    <p><span class="event-date">2026 Q4</span>新一代商用替代加速器是否在任一大型雲端業者公開牌價上架。<span class="path-pos">上架且折扣低於兩成</span> → 經濟鎖定開始鬆動，時鐘進入換相預警；<span class="path-neg">仍無公開牌價</span> → 功能勝利無法變現的判斷延續。</p>
+    <p><span class="event-date">2027 H1</span>開放互連標準是否出現首個量產出貨公告。<span class="path-pos">出現且來自雲端業者</span> → 訓練互連牆開始被繞過，下修護城河持有者的訓練端假設；<span class="path-neg">仍只有規格與展示</span> → 訓練端定價權延續至少再一年。</p>
+    <p><span class="event-date">2027 H1</span>四家大型雲端業者的資本支出指引方向。<span class="path-pos">維持年增</span> → 需求三角對帳的上路徑不變；<span class="path-neg">出現首次年減指引</span> → 進入第 3 節折疊層描述的敗局劇本第一步，優先觀測存貨天數。</p>
+    <p><span class="event-date">2027 全年</span>被高通收購的編譯器層是否出現具名的跨後端生產部署。<span class="path-pos">出現且不限於收購方硬體</span> → 中立抽象層路徑復活，全面下修所有專屬棧的長期定價權；<span class="path-neg">逐步綁定收購方硬體</span> → 抽象層私有化，護城河競爭回到垂直整合者之間。</p>
+  </div>
+</section>
+
+<section id="stocks" class="section">
+  <div class="section-no">Section 6</div>
+  <h2>誰受影響<small>Stock Implications</small></h2>
+  <div class="section-lede">純度欄位在這個主題有個先天限制：軟體護城河不會單獨出現在任何一段財報上。所以純度衡量的是「該公司營收中與加速器矽直接相關的比例」，對雲端業者而言會嚴重低估其戰略重要性——他們的曝險在成本結構裡，不在營收裡。</div>
+
+  <div class="exhibit">
+    <div class="exhibit-head">關聯個股 · 🔴 核心｜🟡 中度相關｜🟢 邊緣相關<small>資料截至 2026-09-05</small></div>
+    <div class="exhibit-body">
+      <table>
+        <thead><tr><th>Ticker</th><th>深度</th><th>受益／受害</th><th>純度</th><th>市值級距</th></tr></thead>
+        <tbody>
+          <tr><td><strong>NVDA</strong></td><td>🔴</td><td>受益（護城河收租方）</td><td class="num">90%</td><td>超大型</td></tr>
+          <tr><td><strong>AVGO</strong></td><td>🔴</td><td>受益（非 CUDA 路線實際吃份額者）</td><td class="num">56%</td><td>超大型</td></tr>
+          <tr><td><strong>AMD</strong></td><td>🔴</td><td>受益（功能面已勝、經濟面未兌現）</td><td class="num">48%</td><td>超大型</td></tr>
+          <tr><td><strong>GOOGL</strong></td><td>🟡</td><td>受益（垂直整合最完整）</td><td class="num">5%</td><td>超大型</td></tr>
+          <tr><td><strong>MRVL</strong></td><td>🟡</td><td>受益（客製晶片第二供應商）</td><td class="num">45%</td><td>大型</td></tr>
+          <tr><td><strong>AMZN</strong></td><td>🟡</td><td>受益（自研訓練晶片與編譯棧）</td><td class="num">4%</td><td>超大型</td></tr>
+          <tr><td><strong>META</strong></td><td>🟢</td><td>受益（有影響力無租金）</td><td class="num">2%</td><td>超大型</td></tr>
+          <tr><td><strong>MSFT</strong></td><td>🟢</td><td>受益（自研進度落後前兩家）</td><td class="num">2%</td><td>超大型</td></tr>
+          <tr><td><strong>ARM</strong></td><td>🟢</td><td>受益（非加速器棧主戰場）</td><td class="num">3%</td><td>超大型</td></tr>
+          <tr><td><strong>INTC</strong></td><td>🟢</td><td>受害（加速器嘗試已自承不成功）</td><td class="num">2%</td><td>大型</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <p class="exhibit-source">資料來源：各公司 10-K 與 10-Q 分部揭露［#4］［#5］［#6］［#9］［#18］；市值級距取自［#19］</p>
+  <p class="exhibit-note"><span class="derive">推導：輝達＝資料中心 1,937 億 ÷ 2026 會計年度總營收 2,159 億＝90%。客製晶片商＝當季 AI 半導體 167 億 ÷ 當季合併營收 296 億＝56%。超微＝2025 年資料中心 166 億 ÷ 總營收 346 億＝48%（含伺服器處理器，對本主題是高估）。另一家客製晶片商未拆分資料中心金額，以其終端市場結構取四成五的估計值。四家雲端業者的自研晶片營收未單獨揭露，其對本主題的曝險走成本結構而非營收，純度取個位數並在上方導言說明此限制。英特爾以自承不成功的加速器業務計，接近零。</span></p>
+
+  <p><strong>不明顯的受益者</strong>：真正被漏看的是客製晶片供應商。它的 AI 業務年增 221%、是產業平均的兩倍速，但這塊業務被包在一個同時有基礎設施軟體與傳統網通的大集團裡，整包的成長率被平均稀釋掉，於是市場給了它第 15 百分位的估值分位與落後大盤 17.8 個百分點的一年報酬。相反地，商用替代加速器那條路線是純度敘事最漂亮的一家，成長率被外推到整包，估值分位 55、一年超額報酬 190.6 個百分點。看好一個產業就買純度最高的標的，在這個主題會買到定價最完美的那一個。</p>
+  <p><strong>營運槓桿最大的是誰</strong>：客製晶片供應商。它的加速器業務不需要對外提供折扣（買方就是設計方），因此每增加一塊錢營收落到營業利益的比例，高於必須靠四成折扣搶量的商用替代品。</p>
+
+  <p class="section-lede">本表只給特徵與分類，買賣由個股 DD 與系統訊號決定，非買入推薦。與站內個股裁決有三處分歧須說明：框架貢獻最大的那家公司在個股層仍是進場核心，本報告只把它在<strong>本主題</strong>的深度降為邊緣，理由是治理事實與無貨幣化路徑，與其廣告現金流無關；商用替代加速器在個股層是進場衛星，本報告同意衛星定位但指出加碼的邊際報酬已被計價吃掉；英特爾一年 265.8 個百分點的超額報酬來自代工與政策敘事，與本主題脫鉤，故給予最低深度。</p>
+</section>
+
+<section id="appendix" class="section">
+  <div class="section-no">Appendix</div>
+  <h2>背景、歷史與來源<small>Appendix</small></h2>
+  <div class="section-lede">產業白話定義、歷史脈絡與來源總表——支撐正文判斷的背景層。</div>
+
+  <p>買一張 AI 加速器，買到的不只是矽，還有一整套讓程式跑得快的軟體——編譯器、數學函式庫、多卡通訊庫、推論引擎。這套軟體用了十幾年才長出來，換一家硬體就要重來一次，這個「重來一次的成本」就是軟體護城河。CUDA 是輝達那一套的名字，ROCm 是超微對應的那一套。<strong>邊界界定</strong>：本報告談軟體棧的替代成本與其經濟現值；加速器出貨量、每 token 成本、記憶體供給分屬三個姊妹母題，不在此重做，亦不含消費級顯示卡與邊緣裝置。</p>
+
+  <p>第一次轉折在 <mark class="time">2007-02</mark>：專屬平行運算工具鏈首次公開發布，此後十餘年成為深度學習事實標準；到 <mark class="time">2016-04-20</mark> 開源替代棧才釋出首版，起步落後 9 年。這 9 年的差距至今仍寫在營收上——最近完整年度資料中心營收 1,937 億美元對 166 億美元，相差 11.7 倍。</p>
+
+  <p>第二次轉折是功能追趕的三個節點，集中在 20 個月內：<mark class="time">2023-12-15</mark> 替代棧發行說明首次載明主流框架已獲上游支援、<mark class="time">2024-04-16</mark> 首次載明高階注意力核心、<mark class="time">2024-08-02</mark> 首次載明主流推論服務軟體；到今年，該服務軟體專案中提及替代棧的變更已占 14.2%。第三次轉折是追趕的停止點：<mark class="time">2026-07-16</mark> 現行版本官方自承多節點通訊在特定訊息長度下表現不理想並點名受影響工作負載。另有兩個制度性節點——<mark class="time">2022</mark> 年主流框架移交獨立基金會、由 6 家公司共治；<mark class="time">2026-01-26</mark> 專屬工具鏈授權條款仍明文禁止為在他家硬體執行而反向工程其輸出。</p>
+
+  <div class="exhibit">
+    <div class="exhibit-head">歷史類比<small>開放標準挑戰專屬平台的三個先例</small></div>
+    <div class="exhibit-body">
+      <table>
+        <thead><tr><th>先例</th><th>挑戰形式</th><th>結果與時間</th><th>贏家</th></tr></thead>
+        <tbody>
+          <tr><td>開放平行運算標準對專屬工具鏈</td><td>跨廠商開放標準</td><td>標準存活但未成為深度學習主流後端；十餘年未撼動</td><td>專屬平台</td></tr>
+          <tr><td>另一家處理器大廠的統一程式模型</td><td>第二套專屬棧＋開放包裝</td><td>該公司在最新年報中自承加速器嘗試不成功，兩年認列 12.97 億美元存貨相關費用</td><td>專屬平台</td></tr>
+          <tr><td>買方自研晶片＋自有編譯棧</td><td>繞過而非替代</td><td>單一機櫃已達 9,216 顆晶片、約 10 兆瓦等級；設計端供應商當季 AI 營收 167 億美元、年增 221%</td><td>目前領先的挑戰路徑</td></tr>
+          <tr><td><strong>本主題現況</strong></td><td class="num">三條路徑並行</td><td>功能面追平、經濟面折扣 43.4%、互連面零量產</td><td>未定</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <p class="exhibit-source">資料來源：Intel 10-K［#9］、Google 官方部落格［#13］、AVGO 8-K［#6］、Khronos Group 官方頁面［#22］</p>
+  <p class="exhibit-note">本主題尚未經歷兩輪完整循環，故不附循環統計表；三個先例的共同教訓是：正面複製專屬棧的挑戰者全部失敗，繞過它的挑戰者才有進展。</p>
+
+  <table class="src-table">
+    <caption>來源總表<small>Sources</small></caption>
+    <thead><tr><th>#</th><th>段落</th><th>T 級</th><th>來源</th><th>as-of</th></tr></thead>
+    <tbody>
+      <tr><td class="num">1</td><td>核心判斷／機制／估值／證偽</td><td><span class="tier">T1</span></td><td><a href="https://prices.azure.com/api/retail/prices">Azure Retail Prices 官方零售定價 API</a></td><td class="num">2026-09-05</td></tr>
+      <tr><td class="num">2</td><td>核心判斷／分歧</td><td><span class="tier">T1</span></td><td><a href="https://www.coreweave.com/pricing">CoreWeave 官方定價頁</a></td><td class="num">2026-09-05</td></tr>
+      <tr><td class="num">3</td><td>核心判斷／分歧／證偽</td><td><span class="tier">T1</span></td><td><a href="https://api.github.com/">GitHub 官方 REST API（pytorch／vllm／triton 專案）</a></td><td class="num">2026-09-05</td></tr>
+      <tr><td class="num">4</td><td>機制／估值／個股</td><td><span class="tier">T1</span></td><td><a href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0000002488&amp;type=10-">AMD 10-Q／10-K（SEC EDGAR）</a></td><td class="num">2026-06-27</td></tr>
+      <tr><td class="num">5</td><td>機制／估值／個股</td><td><span class="tier">T1</span></td><td><a href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0001045810&amp;type=10-">NVDA 10-Q／10-K（SEC EDGAR）</a></td><td class="num">2026-07-26</td></tr>
+      <tr><td class="num">6</td><td>分歧／機制／估值／個股</td><td><span class="tier">T1</span></td><td><a href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0001730168&amp;type=8-K">AVGO 8-K 季度業績新聞稿</a></td><td class="num">2026-09-02</td></tr>
+      <tr><td class="num">7</td><td>核心判斷／機制／附錄</td><td><span class="tier">T1</span></td><td><a href="https://github.com/ROCm/ROCm/releases">ROCm 官方發行說明（GitHub Releases）</a></td><td class="num">2026-07-16</td></tr>
+      <tr><td class="num">8</td><td>機制／附錄</td><td><span class="tier">T1</span></td><td><a href="https://docs.nvidia.com/cuda/eula/index.html">NVIDIA CUDA 授權條款與官方開發者文件</a></td><td class="num">2026-01-26</td></tr>
+      <tr><td class="num">9</td><td>機制／個股／附錄</td><td><span class="tier">T1</span></td><td><a href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0000050863&amp;type=10-K">Intel FY2025 10-K（SEC EDGAR）</a></td><td class="num">2026-01-23</td></tr>
+      <tr><td class="num">10</td><td>分歧／附錄</td><td><span class="tier">T1</span></td><td><a href="https://pytorch.org/blog/pytorchfoundation/">PyTorch Foundation 官方治理公告</a></td><td class="num">2022</td></tr>
+      <tr><td class="num">11</td><td>分歧／證偽</td><td><span class="tier">T1</span></td><td><a href="https://ualinkconsortium.org/">UALink Consortium 官方網站</a></td><td class="num">2026-09-05</td></tr>
+      <tr><td class="num">12</td><td>分歧／證偽</td><td><span class="tier">T1</span></td><td><a href="https://www.qualcomm.com/news/releases">Qualcomm 官方新聞稿（收購 Modular）</a></td><td class="num">2026-07-29</td></tr>
+      <tr><td class="num">13</td><td>機制／附錄</td><td><span class="tier">T1</span></td><td><a href="https://blog.google/products/google-cloud/ironwood-tpu-age-of-inference/">Google 官方部落格（自研張量處理器規格）</a></td><td class="num">2025-04-09</td></tr>
+      <tr><td class="num">14</td><td>機制</td><td><span class="tier">T1</span></td><td><a href="https://ai.meta.com/blog/next-generation-meta-training-inference-accelerator-AI-MTIA/">Meta 官方部落格（自研推論晶片）</a></td><td class="num">2024-04-10</td></tr>
+      <tr><td class="num">15</td><td>機制</td><td><span class="tier">T1</span></td><td><a href="https://data.sec.gov/api/xbrl/">SEC XBRL 財報資料介面（四家雲端業者資本支出）</a></td><td class="num">2026-06-30</td></tr>
+      <tr><td class="num">16</td><td>核心判斷／機制</td><td><span class="tier">T1</span></td><td><a href="https://docs.vllm.ai/">vLLM 官方安裝與硬體支援文件</a></td><td class="num">2026-05-11</td></tr>
+      <tr><td class="num">17</td><td>機制</td><td><span class="tier">T1</span></td><td><a href="https://awsdocs-neuron.readthedocs-hosted.com/">AWS Neuron SDK 官方文件</a></td><td class="num">2026-08-17</td></tr>
+      <tr><td class="num">18</td><td>機制／個股</td><td><span class="tier">T1</span></td><td><a href="https://data.sec.gov/api/xbrl/companyconcept/CIK0001835632/us-gaap/RevenueFromContractWithCustomerExcludingAssessedTax.json">MRVL 財報營收（SEC XBRL）</a></td><td class="num">2026-08-01</td></tr>
+      <tr><td class="num">19</td><td>估值／個股</td><td><span class="tier">T3-C</span></td><td><a href="https://stockanalysis.com/">stockanalysis.com 估值彙整</a></td><td class="num">2026-09-04</td></tr>
+      <tr><td class="num">20</td><td>估值</td><td><span class="tier">T2</span></td><td>InvestMQuest 站內個股估值資料集（分析師預估基準）</td><td class="num">2026-09-05</td></tr>
+      <tr><td class="num">21</td><td>估值／個股</td><td><span class="tier">T2</span></td><td>InvestMQuest 站內週線報酬資料集</td><td class="num">2026-08-31</td></tr>
+      <tr><td class="num">22</td><td>附錄</td><td><span class="tier">T4</span></td><td><a href="https://www.khronos.org/opencl/">Khronos Group 開放平行運算標準官方頁面／百科時間軸</a></td><td class="num">2026-09-05</td></tr>
+    </tbody>
+  </table>
+  <p class="exhibit-source">正文以［#n］對應本表列號。本主題分類屬硬體與製造型，一手來源占比門檻 60%。</p>
+
+  <details class="evidence-fold">
+    <summary>claim 標記說明</summary>
+    <div class="fold-body">
+      <p>折疊層與來源表內用 4 類標記：<strong>[F:]</strong> 事實｜<strong>[I:]</strong> 推論（A→B）｜<strong>[X:]</strong> 情境（base/bull/bear）｜<strong>[A:]</strong> 假設。機率用「很可能／可能／不太可能」詞彙級，不用精確百分比（需求三情境與三視野表的「權重（主觀）」欄除外，見 §3.1／§3.4，5 點步進、加總 100）。</p>
+      <p>本輪未取得的承重數字，一律以缺席方式呈現而非以推估填補：四家雲端業者自研晶片的部署占比（業界不揭露）、四家標的的五年預估本益比逐年區間（僅取得分位）、券商產業層報告的立場分布（未取得）、跨環節利潤池的營業利益總額占比（無單一來源，已改定性）。🟢 [F: 上述四項在本輪查證中確認為公開資訊缺口，非查詢失敗]</p>
+    </div>
+  </details>
+</section>
+
+<div class="pull-quote">
+  <div class="pq-label">The One Line</div>
+  <p>這道牆沒有倒，但站在牆外收租的人已經換了一批——而市場還在對著舊的那批出價。</p>
+</div>
+
+<section class="section" style="margin-top:24px">
+  <h3 style="margin-top:0">這份報告刻意不做的三件事</h3>
+  <ol>
+    <li>不告訴你哪一檔該買——表格是「特徵的代表案例」，買賣由你的個股 DD 與 Pure MA 系統決定。</li>
+    <li>不預測哪一個軟體版本會在哪一季補齊哪一個功能——功能追趕的方向早已確定，預測它的時程對決策沒有邊際價值，真正有價值的是折扣率什麼時候收斂。</li>
+    <li>不重做加速器出貨量與每 token 成本的推估——那是姊妹報告的工作，本報告只借用它們的結論作為分母。</li>
+  </ol>
+</section>
+
+<div class="disclosures">
+  <div class="dh">Disclosures &amp; Important Information</div>
+  本報告由 InvestMQuest Research 內部買方研究流程產生，僅供研究與投資決策參考，不構成要約、招攬或個別投資建議。資料來源含公司公告與第三方研究（美國證券交易委員會申報文件、公司官方新聞稿與技術文件、雲端業者官方定價介面、GitHub 官方介面、第三方估值彙整）；前瞻性陳述（base/bull/bear）含不確定性。本報告的市場規模為自建口徑，已於 §3.1 說明其限制。持倉揭露：本研究流程關聯帳戶可能持有文中標的部位。個股買賣由個股 DD 與系統訊號決定。© 2026 InvestMQuest Research.
+</div>
+<div class="report-colophon">
+  產業深度報告 · industry-analyst v4.0 · 主題：CUDA / ROCm Moat · 發布日 2026-09-05<br>
+  <a href="/research/">回研究首頁</a> · <a href="/id/">所有產業報告</a>
+</div>
+
+</div><!-- /report-sheet -->
+
+<a class="back-top" href="#top">↑ TOP</a>
+
+</body>
+</html>
