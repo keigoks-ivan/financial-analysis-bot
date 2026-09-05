@@ -184,7 +184,10 @@ def spawn(
         output_tokens = int(usage.get("output_tokens", 0) or 0)
 
     is_error = bool(raw.get("is_error", False)) or parse_error or (proc.returncode != 0)
-    over_budget = (budget_cache_read is not None) and (cache_read > budget_cache_read)
+    # 母稿 §4.1：budget 是目標值，熔斷線＝目標 2×；超過目標只記 over_target（回報用），
+    # 超過 2× 才 over_budget 停流程（WDAY 2026-09-05：一篇摘要 0.77M 對 0.7M 目標就停，屬誤停）。
+    over_target = (budget_cache_read is not None) and (cache_read > budget_cache_read)
+    over_budget = (budget_cache_read is not None) and (cache_read > 2 * budget_cache_read)
 
     return {
         "ok": not is_error,
@@ -194,6 +197,7 @@ def spawn(
         "output_tokens": output_tokens,
         "by_model": model_usage,
         "over_budget": over_budget,
+        "over_target": over_target,
         "cost_usd": raw.get("total_cost_usd"),
         "duration_ms": raw.get("duration_ms"),
         "result_text": raw.get("result"),

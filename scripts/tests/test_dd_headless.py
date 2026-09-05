@@ -123,11 +123,12 @@ def test_over_budget_true_when_cache_read_exceeds_budget(tmp_path, monkeypatch):
         model="sonnet",
         allowed_tools=None,
         max_turns=1,
-        budget_cache_read=50_000,  # 77719 > 50000
+        budget_cache_read=30_000,  # 77719 > 2×30000（熔斷線＝目標 2×）
         out_json=tmp_path / "out.json",
     )
     assert result["cache_read"] == 77719
     assert result["over_budget"] is True
+    assert result["over_target"] is True
 
 
 def test_over_budget_false_when_under_budget(tmp_path, monkeypatch):
