@@ -11,6 +11,13 @@
           coverage.<axis> 重複 merge 以後者為準，但 queries_run 取聯集。
   status  FILE
           列出每軸 status 與 findings 數，統計 pending 幾軸。
+  finalize --run-dir DIR | --parts DIR --out FILE
+          v17 WP1b：依固定順序合併 Stage 0 子 agent 交回的 parts/*.json（prior →
+          numbers_extra → numbers_collect|numbers_agent|numbers_flat →
+          axes_*|batch* → events → transcripts → digest_path），merge 前逐 part
+          跑 validate_evidence.check_axis，FAIL 的 part 不合併、列入需重派清單；
+          合併後給每條 coverage finding 補 id（{axis_id}#{index}，已有不覆寫），
+          最後跑 validate_evidence.py --strict 當總 gate。
 
 軸清單唯一權威：references/coverage-axes.md 內的單一 ```json fenced block。
 用法：
@@ -23,8 +30,11 @@ import argparse
 import json
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 ROOT = Path(__file__).resolve().parent.parent
 AXES_MD = ROOT / ".claude" / "skills" / "stock-analyst" / "references" / "coverage-axes.md"
@@ -204,6 +214,162 @@ def cmd_status(args):
     return 0
 
 
+# v17 WP1b：finalize 的固定合併順序（正規檔名先於 glob 分類；_all_axes.json／
+# batch{n}.axes.json 這類軸清單元資料檔不在任何分類裡，永不合併）。
+_AXIS_PART_RE = re.compile(r"^(axes_\d+|batch\d+)\.json$")
+_METADATA_ONLY_RE = re.compile(r"(^_all_axes\.json$|\.axes\.json$)")
+
+
+def _axis_part_sort_key(path):
+    m = re.search(r"(\d+)", path.stem)
+    return (0 if path.name.startswith("axes_") else 1, int(m.group(1)) if m else 0)
+
+
+def _select_parts(parts_dir):
+    """依 v17 WP1b 固定順序回傳待 merge 的 part 檔路徑清單：
+    prior → numbers_extra → numbers_collect|numbers_agent|numbers_flat →
+    axes_*|batch*（coverage part，依編號排序） → events → transcripts →
+    digest_path → 其餘未分類的 *.json（排除軸清單元資料檔，見 _METADATA_ONLY_RE）。"""
+    order = []
+    seen = set()
+
+    def pick(*names):
+        for name in names:
+            p = parts_dir / name
+            if p.exists():
+                order.append(p)
+                seen.add(p)
+
+    pick("prior.json")
+    pick("numbers_extra.json")
+    pick("numbers_collect.json", "numbers_agent.json", "numbers_flat.json")
+
+    axis_parts = sorted(
+        (p for p in parts_dir.glob("*.json") if _AXIS_PART_RE.match(p.name)),
+        key=_axis_part_sort_key,
+    )
+    for p in axis_parts:
+        order.append(p)
+        seen.add(p)
+
+    pick("events.json")
+    pick("transcripts.json")
+    pick("digest_path.json")
+
+    # 其餘未分類檔：排除軸清單元資料檔（_all_axes.json／batch{n}.axes.json 等），
+    # 其餘按檔名排序附加在最後，仍走「有 coverage/events 就查證、否則直接合併」邏輯。
+    leftovers = sorted(
+        p for p in parts_dir.glob("*.json")
+        if p not in seen and not _METADATA_ONLY_RE.search(p.name)
+    )
+    order.extend(leftovers)
+    return order
+
+
+def _add_finding_ids(coverage):
+    """幫每條 coverage finding 補 id＝{axis_id}#{index}（index 為該軸 findings 順序，
+    從 0 起算；已有 id 不覆寫）。"""
+    for axis_id, c in (coverage or {}).items():
+        findings = (c or {}).get("findings") or []
+        for i, f in enumerate(findings):
+            if isinstance(f, dict) and "id" not in f:
+                f["id"] = f"{axis_id}#{i}"
+
+
+def _empty_evidence_skeleton():
+    """finalize 找不到既有 evidence.json 骨架時的起點（頂層 key 齊全、值皆空，
+    形狀比照 cmd_init 的輸出），避免純 --parts 模式下純粹因「key 不存在」洗出一堆
+    與覆蓋面/合併本身無關的頂層缺 key 訊息。"""
+    return {
+        "ticker": None, "date": None, "archetype_hint": None, "earnings_recency": None,
+        "numbers": {}, "coverage": {}, "events": {}, "prior_dd": {}, "ledger": {},
+        "canonical_id": {}, "transcripts": {},
+    }
+
+
+def cmd_finalize(args):
+    # 延遲 import：validate_evidence.py 頂層會 `import dd_evidence`，若這裡放在檔頭
+    # import 會形成雙向循環；放進函式內、等 dd_evidence 模組自己完全載入完才觸發，
+    # 兩邊都能安全解析（沿用 validate_evidence.py 既有「import 同目錄腳本」慣例）。
+    import validate_evidence
+
+    if args.run_dir:
+        run_dir = Path(args.run_dir)
+        parts_dir = run_dir / "parts"
+        out_path = Path(args.out) if args.out else run_dir / "evidence.json"
+        base_path = run_dir / "evidence.json"
+        base = json.loads(base_path.read_text(encoding="utf-8")) if base_path.exists() else _empty_evidence_skeleton()
+    else:
+        if not args.parts or not args.out:
+            raise SystemExit("finalize 需要 --run-dir DIR，或 --parts DIR --out FILE")
+        parts_dir = Path(args.parts)
+        out_path = Path(args.out)
+        base = _empty_evidence_skeleton()
+        # 純 --parts 模式常沒有 run-dir 骨架（如對歷史 fixture 重放），嘗試從
+        # parts 上層目錄名稱 {TICKER}_{DATE} 補 ticker/date，減少頂層缺 key 的雜訊。
+        m = re.match(r"^([A-Za-z0-9.]+)_(\d{8})$", parts_dir.parent.name)
+        if m:
+            if base.get("ticker") is None:
+                base["ticker"] = m.group(1)
+            if base.get("date") is None:
+                base["date"] = m.group(2)
+
+    if not parts_dir.exists():
+        raise SystemExit(f"parts 目錄不存在：{parts_dir}")
+
+    matrix = load_matrix()
+    merged, failed = [], []
+
+    for part_path in _select_parts(parts_dir):
+        try:
+            part = json.loads(part_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as e:
+            failed.append((part_path.name, [f"JSON 解析失敗：{e}"]))
+            continue
+        if not isinstance(part, dict):
+            failed.append((part_path.name, ["非 JSON object，略過（疑似軸清單元資料檔）"]))
+            continue
+
+        part_fails = []
+        for key in ("coverage", "events"):
+            for axis_id, axis_obj in (part.get(key) or {}).items():
+                f, _w = validate_evidence.check_axis(axis_id, axis_obj, matrix)
+                part_fails.extend(f)
+
+        if part_fails:
+            failed.append((part_path.name, part_fails))
+            continue
+
+        _deep_merge(base, part)
+        merged.append(part_path.name)
+
+    _add_finding_ids(base.get("coverage") or {})
+    _atomic_write(out_path, base)
+
+    print(f"finalize：合併 {len(merged)} 個 part → {out_path}")
+    for name in merged:
+        print(f"  + {name}")
+    if failed:
+        print(f"需重派（{len(failed)} 個 part 未合併）：")
+        for name, fails in failed:
+            print(f"  ✗ {name}")
+            for f in fails:
+                print(f"      {f}")
+
+    result = subprocess.run(
+        [sys.executable, str(Path(__file__).resolve().parent / "validate_evidence.py"),
+         str(out_path), "--strict", "--report"],
+        capture_output=True, text=True,
+    )
+    if result.stdout:
+        print(result.stdout, end="" if result.stdout.endswith("\n") else "\n")
+    if result.stderr:
+        print(result.stderr, file=sys.stderr)
+    ok = result.returncode == 0 and not failed
+    print(f"—— finalize {'PASS' if ok else 'FAIL'}")
+    return 0 if ok else 1
+
+
 def main(argv):
     p = argparse.ArgumentParser(prog="dd_evidence.py")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -233,6 +399,12 @@ def main(argv):
     st = sub.add_parser("status")
     st.add_argument("file")
     st.set_defaults(func=cmd_status)
+
+    fin = sub.add_parser("finalize")
+    fin.add_argument("--run-dir")
+    fin.add_argument("--parts")
+    fin.add_argument("--out")
+    fin.set_defaults(func=cmd_finalize)
 
     args = p.parse_args(argv)
     return args.func(args)

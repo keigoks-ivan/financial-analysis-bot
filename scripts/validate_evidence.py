@@ -38,6 +38,7 @@
   python3 scripts/validate_evidence.py .dd_build/AVGO_20260910.evidence.json
   python3 scripts/validate_evidence.py FILE --report   # 逐軸列印狀態，非僅錯誤行
   python3 scripts/validate_evidence.py FILE --strict   # WARN 一併視為 FAIL（exit 1，含 v16.1 KPI 檢查）
+  python3 scripts/validate_evidence.py --part PART.json   # v17 WP1b：只驗單一 part 檔的逐軸 schema
 """
 import json
 import re
@@ -249,6 +250,69 @@ def check_price_mentions(evidence, numbers, warns):
                     )
 
 
+def _find_na_allowed(axis_id, matrix):
+    """查該軸（或其 per_segment 展開前的 base id）是否 na_allowed=true，跨 common／
+    所有 archetype 找（同一 axis_id 在各 archetype 定義的 na_allowed 一致，見
+    coverage-axes.md，故不需傳入 archetype 即可查）。找不到＝預設 False（比照原
+    check_file 的 na_allowed_map.get(axis_id, False) 行為）。"""
+    base = axis_id.split("__", 1)[0] if "__" in axis_id else axis_id
+    for axis in matrix.get("common", []):
+        if axis.get("id") == base:
+            return bool(axis.get("na_allowed", False))
+    for axes in matrix.get("by_archetype", {}).values():
+        for axis in axes:
+            if axis.get("id") == base:
+                return bool(axis.get("na_allowed", False))
+    return False
+
+
+def check_axis(axis_id, axis_obj, matrix):
+    """單一軸檢查（v17 WP1b 抽出自 check_file，供 --part 模式與 dd_evidence.py
+    finalize 重用）：status 合法／found 需 findings 且每條 claim/source/as_of 齊／
+    as_of 可解析／none 需 queries_run≥2／not_applicable 需 na_allowed+理由。
+    不含 as_of 距報告日 >180 天的 info-warn（那個檢查需要 evidence.date，留在
+    check_file 內，因為 --part / finalize 逐軸檢查時未必有完整 evidence 上下文）。
+    回傳 (fails, warns)。"""
+    fails, warns = [], []
+    c = axis_obj or {}
+    status = c.get("status")
+
+    if status not in VALID_STATUS:
+        fails.append(f"[{axis_id}] status={status!r} 非法（pending 或未知值一律 FAIL）")
+        return fails, warns
+
+    if status == "found":
+        findings = c.get("findings") or []
+        if not findings:
+            fails.append(f"[{axis_id}] status=found 但 findings 為空")
+        for i, f in enumerate(findings):
+            missing_fields = [k for k in FINDING_FIELDS if not f.get(k)]
+            if missing_fields:
+                fails.append(f"[{axis_id}] findings[{i}] 缺欄位：{missing_fields}")
+                continue
+            if f["direction"] not in VALID_DIRECTIONS:
+                fails.append(f"[{axis_id}] findings[{i}].direction={f['direction']!r} 須為 +/0/-")
+            if not isinstance(f.get("affects"), list) or not f["affects"]:
+                fails.append(f"[{axis_id}] findings[{i}].affects 須為非空陣列")
+            d = parse_date(f["as_of"])
+            if d is None:
+                fails.append(f"[{axis_id}] findings[{i}].as_of={f['as_of']!r} 無法解析為日期")
+
+    elif status == "none":
+        qr = c.get("queries_run") or []
+        if len(qr) < 2:
+            fails.append(f"[{axis_id}] status=none 但 queries_run 僅 {len(qr)} 條（須 ≥2）")
+
+    elif status == "not_applicable":
+        note = c.get("note") or ""
+        if not note.strip():
+            fails.append(f"[{axis_id}] status=not_applicable 但 note 為空")
+        if not _find_na_allowed(axis_id, matrix):
+            fails.append(f"[{axis_id}] status=not_applicable 但該軸 na_allowed=false（不得逃避查證）")
+
+    return fails, warns
+
+
 def check_file(path, matrix, strict=False):
     fails, warns, axis_report = [], [], []
     try:
@@ -275,62 +339,27 @@ def check_file(path, matrix, strict=False):
     for axis_id in missing:
         fails.append(f"coverage 缺軸：{axis_id}")
 
-    # 供 not_applicable 的 na_allowed 查核用：axis_id → na_allowed
-    na_allowed_map = {}
-    archetype = evidence.get("archetype_hint")
-    if archetype in matrix.get("by_archetype", {}):
-        for axis in matrix.get("common", []) + matrix["by_archetype"][archetype]:
-            if axis.get("per_segment"):
-                # per_segment 軸的展開 id 前綴比對
-                for cid in coverage:
-                    if cid == axis["id"] or cid.startswith(axis["id"] + "__"):
-                        na_allowed_map[cid] = axis.get("na_allowed", False)
-            else:
-                na_allowed_map[axis["id"]] = axis.get("na_allowed", False)
-
-    # ---- 3. 逐軸 status 檢查 ----
+    # ---- 3. 逐軸 status 檢查（單軸邏輯抽到 check_axis，此處另補 as_of>180 天 info-warn，
+    #      因為那個檢查需要 evidence.date，check_axis 簽名不帶它）----
     for axis_id in sorted(req_ids & set(coverage.keys())):
         c = coverage.get(axis_id, {})
         status = c.get("status")
         n_findings = len(c.get("findings") or [])
         axis_report.append((axis_id, status, n_findings, (c.get("note") or "")[:40]))
 
-        if status not in VALID_STATUS:
-            fails.append(f"[{axis_id}] status={status!r} 非法（pending 或未知值一律 FAIL）")
-            continue
+        axis_fails, axis_warns = check_axis(axis_id, c, matrix)
+        fails.extend(axis_fails)
+        warns.extend(axis_warns)
 
         if status == "found":
-            findings = c.get("findings") or []
-            if not findings:
-                fails.append(f"[{axis_id}] status=found 但 findings 為空")
-            for i, f in enumerate(findings):
-                missing_fields = [k for k in FINDING_FIELDS if not f.get(k)]
-                if missing_fields:
-                    fails.append(f"[{axis_id}] findings[{i}] 缺欄位：{missing_fields}")
-                    continue
-                if f["direction"] not in VALID_DIRECTIONS:
-                    fails.append(f"[{axis_id}] findings[{i}].direction={f['direction']!r} 須為 +/0/-")
-                if not isinstance(f.get("affects"), list) or not f["affects"]:
-                    fails.append(f"[{axis_id}] findings[{i}].affects 須為非空陣列")
+            for i, f in enumerate(c.get("findings") or []):
+                if any(not f.get(k) for k in FINDING_FIELDS):
+                    continue  # 缺欄位已由 check_axis 記錄，此處只補算 as_of 天數
                 d = parse_date(f["as_of"])
-                if d is None:
-                    fails.append(f"[{axis_id}] findings[{i}].as_of={f['as_of']!r} 無法解析為日期")
-                else:
+                if d is not None:
                     ev_d = parse_date(ev_date)
                     if ev_d and (ev_d - d).days > 180:
                         warns.append(f"(info) [{axis_id}] findings[{i}].as_of={f['as_of']} 距報告日 >180 天（歷史事實日期供 writer 判讀，--strict 不升級）")
-
-        elif status == "none":
-            qr = c.get("queries_run") or []
-            if len(qr) < 2:
-                fails.append(f"[{axis_id}] status=none 但 queries_run 僅 {len(qr)} 條（須 ≥2）")
-
-        elif status == "not_applicable":
-            note = c.get("note") or ""
-            if not note.strip():
-                fails.append(f"[{axis_id}] status=not_applicable 但 note 為空")
-            if not na_allowed_map.get(axis_id, False):
-                fails.append(f"[{axis_id}] status=not_applicable 但該軸 na_allowed=false（不得逃避查證）")
 
     # ---- 4. numbers 必含三欄 ----
     numbers = evidence.get("numbers") or {}
@@ -360,7 +389,50 @@ def check_file(path, matrix, strict=False):
     return fails, warns, axis_report
 
 
+def cmd_part(path):
+    """v17 WP1b：驗 Stage 0 子 agent 交回的單一 part 檔（形狀 {"coverage": {...},
+    "events"?: {...}}）——逐軸跑 check_axis，任一軸 FAIL 即整檔 FAIL。part 檔若不含
+    coverage／events（如 numbers_*／prior 類 part），只驗 JSON 可解析並印 skip。"""
+    if not path.exists():
+        print(f"[FAIL] {path.name}")
+        print("    ✗ 檔案不存在")
+        return 1
+    try:
+        obj = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        print(f"[FAIL] {path.name}")
+        print(f"    ✗ JSON 解析失敗：{e}")
+        return 1
+    if not isinstance(obj, dict) or not ({"coverage", "events"} & set(obj.keys())):
+        print(f"[skip] {path.name}（非 coverage/events part，僅驗 JSON 可解析）")
+        return 0
+
+    matrix = dd_evidence.load_matrix()
+    fails, warns = [], []
+    for key in ("coverage", "events"):
+        for axis_id, axis_obj in (obj.get(key) or {}).items():
+            f2, w2 = check_axis(axis_id, axis_obj, matrix)
+            fails.extend(f2)
+            warns.extend(w2)
+
+    tag = "FAIL" if fails else "pass"
+    print(f"[{tag}] {path.name}")
+    for f in fails:
+        print(f"    ✗ {f}")
+    for w in warns:
+        print(f"    ⚠ {w}")
+    return 1 if fails else 0
+
+
 def main(argv):
+    if "--part" in argv:
+        i = argv.index("--part")
+        rest = argv[i + 1:i + 2]
+        if not rest:
+            print("用法：validate_evidence.py --part FILE")
+            return 2
+        return cmd_part(Path(rest[0]))
+
     args = [a for a in argv if not a.startswith("--")]
     report = "--report" in argv
     strict = "--strict" in argv
