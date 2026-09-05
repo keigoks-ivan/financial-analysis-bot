@@ -283,4 +283,10 @@ notes/site-internal/dd/_src/{T}_{D}/         存查（加 parts/、gate 檔、to
 
 | 日期 | 項目（WP 或 DD） | orchestrator | sonnet | Fable | opus | 全帳 | 輪次備註 |
 |---|---|---|---|---|---|---|---|
-| 2026-09-05 | WP0 fixture 搶救 | 本對話內完成，零子 agent | — | — | — | — | 複製＋README |
+| 2026-09-05 | WP0 fixture 搶救 | 本對話內完成，零子 agent | — | — | — | — | 複製＋README；WP1b 重放查出 CRDO parts 實為 SNOW dry-run，已修正（2d42d47ed） |
+| 2026-09-05 | WP1a ddreport.py plan／status | — | 0.16M（總 token）／40 tool uses／12 分 | — | — | — | commit 24657e01d |
+| 2026-09-05 | WP1b part check＋finalize | — | 0.17M／31／11 分 | — | — | — | 同上；BE batch2 因自然語言 as_of 整批拒收（設計內） |
+| 2026-09-05 | WP1c dd_headless.py | — | 0.12M／26／7 分 | — | — | — | 同上；真呼叫 4 次（超規 1 次，已據實回報） |
+| 2026-09-05 | WP2 J1／J2／J3＋bundle | — | 0.22M／61／15 分 | — | — | — | commit ad4204a5c；J1 基線 BE 18／CIEN 15／CRDO 14 |
+
+四個建置子任務合計 <0.7M、皆 ≤61 tool uses，對照 v15.2／v16 建置期單一 agent 50–117M：§9.1 的「≤40 輪、驗收即測試」紀律有效。
