@@ -524,6 +524,11 @@ def _walk_strings(obj, path):
 def leak_and_punct_checks(data: dict) -> list:
     fails = []
     for path, text in _walk_strings(data, ""):
+        # decision_out.requires_critic 是 dd_decision.py 機械寫入的觸發標記
+        # （值即 "QC-48" 等代號，供 orchestrator 讀），不是讀者面文字——
+        # 2026-09-05 WP1d 重放 BE 查出兩支腳本互相打架，此欄整個豁免。
+        if path.startswith("decision_out.requires_critic"):
+            continue
         scan_text = text
         if path.startswith("reasoning."):
             scan_text = _QC_ANNOTATION_RE.sub(lambda m: " " * len(m.group(0)), scan_text)

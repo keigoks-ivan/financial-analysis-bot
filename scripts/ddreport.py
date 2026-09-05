@@ -21,16 +21,34 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 import time
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import dd_headless  # noqa: E402  （WP1c 無頭執行器，import 呼叫，不改其內部）
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS_DIR = Path(__file__).resolve().parent
 BUILD_DIR = REPO_ROOT / ".dd_build"
 RUNS_DIR = BUILD_DIR / "runs"
 PROMPTS_TMPL_DIR = SCRIPTS_DIR / "dd_prompts"
+
+# ---------------------------------------------------------------------------
+# WP1d: run 目錄狀態機（Stage 0 → 判斷 → 閘 → 快速版）串接常數
+# ---------------------------------------------------------------------------
+STAGE_ORDER = ["stage0", "judged", "gated", "brief"]
+DEFAULT_JUDGMENT_MODEL = "fable"
+# 判斷模型↔閘模型對調表（跨模型冷讀，見 _wp_spec_v17_batch2_20260905.md WP1d §4）
+GATE_MODEL_FOR = {"fable": "opus", "opus": "sonnet", "sonnet": "opus"}
+JUDGE_MAX_TURNS = 8
+JUDGE_FIX_MAX_TURNS = 4
+GATE_MAX_TURNS = 6
+GATE_PATCH_MAX_TURNS = 6
+JUDGE_BUDGET_CACHE_READ = 1_200_000
+GATE_BUDGET_CACHE_READ = 2_500_000
 
 # 最後手段的預設 archetype：coverage-axes.md 裡 by_archetype 附加軸數為 0 的
 # 那一類（即「只查 common 軸」的基準情境），在 --archetype 未給、且前份 DD
@@ -335,6 +353,12 @@ def cmd_plan(args):
         "out": "digest.json", "tools": SPAWN_TOOLS_DIGEST,
         "max_turns": 10, "budget_cache_read": BUDGET_CACHE_READ_DEFAULT,
     })
+    # digest.json 路徑本身零 LLM、plan 當下就確定，直接寫成 part（WP1b
+    # _select_parts 固定會挑 parts/digest_path.json 合併進 evidence.json 的
+    # transcripts.digest_path，strict 驗證靠它判斷「>1 篇逐字稿時 0e 摘要是否
+    # 已接線」；不必等 a2_digest agent 交稿才知道這個路徑）。
+    _atomic_write_json(parts_dir / "digest_path.json",
+                        {"transcripts": {"digest_path": str(run_dir / "digest.json")}})
 
     # k_koyfin
     koyfin_mapping = {
@@ -352,6 +376,17 @@ def cmd_plan(args):
     })
 
     _atomic_write_json(run_dir / "spawn_list.json", spawn_list)
+
+    # WP1d：另存每批軸清單（batch id → axis_ids／is_major），供 --replay-from
+    # 重放時比對「這一批該回填哪幾個軸」，不用去反解析 prompt 文字。
+    batches_meta = []
+    for k, batch in enumerate(batches, start=1):
+        batches_meta.append({
+            "id": "a_{0}".format(k),
+            "axis_ids": [a.get("id") for a in batch],
+            "is_major": any(a.get("id") == "major_events" for a in batch),
+        })
+    _atomic_write_json(run_dir / "batches.json", batches_meta)
 
     manifest["state"] = "planned"
     manifest["agents"] = [s["id"] for s in spawn_list]
@@ -410,6 +445,669 @@ def cmd_status(args):
 
 
 # ---------------------------------------------------------------------------
+# WP1d small helpers：時間戳、format_map 安全渲染、replay marker、log 印格式
+# ---------------------------------------------------------------------------
+
+def _now():
+    return time.strftime("%Y-%m-%dT%H:%M:%S")
+
+
+class _SafeFormatDict(dict):
+    """`str.format_map` 用：缺的變數給空字串，不 KeyError。
+
+    judge.md.tmpl／gate.md.tmpl／judge_patch.md.tmpl 用單括號 `{var}`（其他
+    大括號已在檔內寫成 `{{ }}`），依協調者指示改走 format_map，不再用
+    `plan` 那組舊模板的 `{{VAR}}` 字面取代法。
+    """
+
+    def __missing__(self, key):
+        return ""
+
+
+def _render_format_template(tmpl_path, mapping):
+    text = Path(tmpl_path).read_text(encoding="utf-8")
+    return text.format_map(_SafeFormatDict(mapping))
+
+
+def _print_step_status(step, actual, target, status):
+    print("{0}／實測={1}／目標={2}／{3}".format(step, actual, target, status))
+
+
+def _print_resume_hint(ticker, date, stage):
+    print(
+        "中斷於 {0}。可用 --resume 從此處接續：\n"
+        "  python3 scripts/ddreport.py run {1} --date {2} --resume".format(
+            stage, ticker, date
+        )
+    )
+
+
+def _load_json_or(path, default):
+    path = Path(path)
+    if not path.exists():
+        return default
+    try:
+        return _load_json(path)
+    except Exception:
+        return default
+
+
+REPLAY_FAKE_CLAUDE = SCRIPTS_DIR / "tests" / "fake_claude.py"
+
+
+def _ensure_replay_env(replay_from):
+    """`--replay-from DIR` 啟用時：設 `DD_CLAUDE_BIN` 指向假 binary、
+    `DD_REPLAY_FROM` 指向 fixture 目錄（皆轉絕對路徑，因 spawn 可能以
+    run_dir 為 cwd 呼叫子行程）。回傳絕對化後的 Path，或 None。"""
+    if not replay_from:
+        return None
+    replay_dir = Path(replay_from).resolve()
+    os.environ["DD_CLAUDE_BIN"] = str(REPLAY_FAKE_CLAUDE.resolve())
+    os.environ["DD_REPLAY_FROM"] = str(replay_dir)
+    return replay_dir
+
+
+def _append_replay_marker(prompt_path, obj):
+    """把 `<!-- DD_REPLAY {json} -->` 附在 prompt 檔尾——`fake_claude.py`
+    的 replay 模式只認這個 marker（不去猜測散文措辭），marker 只在
+    `--replay-from` 生效時附加，正式跑（真 claude）不受影響。"""
+    prompt_path = Path(prompt_path)
+    if not prompt_path.exists():
+        return
+    text = prompt_path.read_text(encoding="utf-8")
+    marker = "\n\n<!-- DD_REPLAY {0} -->\n".format(json.dumps(obj, ensure_ascii=False))
+    prompt_path.write_text(text + marker, encoding="utf-8")
+
+
+def _apply_replay_markers_stage0(run_dir, replay_dir):
+    """Stage 0 四類 spawn（覆蓋軸批次／數字／逐字稿摘要／Koyfin）prompt 逐一附
+    replay marker。批次的軸清單讀 `batches.json`（`plan` 時已寫出）。"""
+    if not replay_dir:
+        return
+    prompts_dir = run_dir / "prompts"
+    batches = _load_json_or(run_dir / "batches.json", [])
+    for b in batches:
+        bid = b["id"]
+        k = bid.split("_", 1)[1]
+        out_path = run_dir / "parts" / "axes_{0}.json".format(k)
+        _append_replay_marker(prompts_dir / "{0}.md".format(bid), {
+            "kind": "coverage", "axes": b.get("axis_ids") or [],
+            "major": bool(b.get("is_major")), "out": str(out_path),
+        })
+    _append_replay_marker(prompts_dir / "a1_numbers.md", {
+        "kind": "numbers", "out": str(run_dir / "parts" / "numbers_collect.json"),
+    })
+    _append_replay_marker(prompts_dir / "a2_digest.md", {
+        "kind": "digest", "out": str(run_dir / "digest.json"),
+    })
+    _append_replay_marker(prompts_dir / "k_koyfin.md", {
+        "kind": "transcripts", "out": str(run_dir / "parts" / "transcripts.json"),
+    })
+
+
+# ---------------------------------------------------------------------------
+# WP1d stage0：plan（未 plan 時）→ spawn k_koyfin → spawn_many 其餘 → finalize
+# ---------------------------------------------------------------------------
+
+def _finalize_run_dir(run_dir):
+    """跑 `dd_evidence.py finalize --run-dir DIR`，回傳
+    (returncode, 原始輸出全文, 需重派的 part 檔名 set)。"""
+    py = _pick_python()
+    r = subprocess.run(
+        [py, str(SCRIPTS_DIR / "dd_evidence.py"), "finalize", "--run-dir", str(run_dir)],
+        capture_output=True, text=True,
+    )
+    out = (r.stdout or "") + (r.stderr or "")
+    needs = set()
+    in_block = False
+    for line in (r.stdout or "").splitlines():
+        if line.startswith("需重派"):
+            in_block = True
+            continue
+        if in_block:
+            m = re.match(r"\s*✗\s+(\S+)", line)
+            if m:
+                needs.add(m.group(1))
+            elif not line.startswith("      "):
+                in_block = False
+    return r.returncode, out, needs
+
+
+def _spec_out_basename(spec):
+    return Path(spec.get("out", "")).name
+
+
+def _spawn_spec_for(spec, run_dir):
+    """把 `spawn_list.json` 一筆 spec 轉成餵給 `dd_headless.spawn_many` 的呼叫
+    參數。**刻意不把 `spec["out"]`（子 agent 應該用 Write 工具寫入的實際產物
+    路徑，如 `parts/axes_1.json`）當作 `dd_headless.spawn` 的 `out_json`**——
+    `out_json` 存的是 `claude -p` 子行程的原始回傳 JSON（`result`／usage 等
+    metadata），跟子 agent 用 Write 工具寫出的工作產物是兩個不同的檔；兩者
+    共用同一路徑會讓 dd_headless 收工時把原始回傳包整個蓋掉子 agent 真正寫
+    的內容（replay 模式下觀測到此問題）。原始回傳改存 `agents/{id}.json`
+    供除錯用，`spec["out"]` 只作為「finalize 後去哪裡找這批產物」的紀錄，
+    不動它的語意。"""
+    s = dict(spec)
+    s["run_dir"] = str(run_dir)
+    s["out"] = str(Path(run_dir) / "agents" / "{0}.json".format(spec.get("id", "spawn")))
+    return s
+
+
+def _do_stage0(ticker, date, plan_kwargs, replay_dir, accept_over_budget, manifest):
+    run_dir = _run_dir(ticker, date)
+    manifest_path = run_dir / "manifest.json"
+    stage = {"state": "RUNNING", "started": _now(), "agent_usage": [], "over_budget": False}
+    manifest.setdefault("stages", {})["stage0"] = stage
+    manifest["state"] = "stage0_running"
+    _atomic_write_json(manifest_path, manifest)
+
+    if not (run_dir / "spawn_list.json").exists():
+        plan_args = argparse.Namespace(
+            ticker=ticker, date=date,
+            archetype=plan_kwargs.get("archetype"),
+            peers=plan_kwargs.get("peers"),
+            segments=plan_kwargs.get("segments"),
+            axes_per_batch=plan_kwargs.get("axes_per_batch") or AXES_PER_BATCH_DEFAULT,
+            offline=plan_kwargs.get("offline", False),
+        )
+        rc = cmd_plan(plan_args)
+        if rc != 0:
+            manifest = _load_json(manifest_path)
+            stage = manifest.setdefault("stages", {}).setdefault("stage0", stage)
+            stage["state"] = "FAIL"
+            stage["ended"] = _now()
+            stage["note"] = "plan 失敗"
+            _atomic_write_json(manifest_path, manifest)
+            _print_step_status("stage0", "plan_rc={0}".format(rc), "PASS", "FAIL")
+            return 1
+        manifest = _load_json(manifest_path)
+        manifest.setdefault("stages", {})["stage0"] = stage
+
+    # offline + replay：零 LLM 的 dd_numbers_extra.py 在 plan 時被 --offline 跳過，
+    # 但 finalize 仍需要這份歷史快照才能 strict 通過——from fixture 直接補進
+    # parts/（這是刻意的 replay-only 補洞，不影響非 replay 的正常 plan 行為）。
+    if replay_dir and plan_kwargs.get("offline"):
+        src = replay_dir / "parts" / "numbers_extra.json"
+        dst = run_dir / "parts" / "numbers_extra.json"
+        if src.exists() and not dst.exists():
+            dst.write_text(src.read_text(encoding="utf-8"), encoding="utf-8")
+
+    if replay_dir:
+        _apply_replay_markers_stage0(run_dir, replay_dir)
+        # 回溯重放時，「今天」常常等於 fixture 原本的報告日期（甚至該日期
+        # 已有上站報告），這時 plan 剛跑的**即時** dd_prior.py 會把「同一天
+        # 已上站的那份報告自己」誤當成 prior（自我參照），judge check 的
+        # QC-49 漂移歸因因此對不上。改用 fixture 當時真正捕捉到的
+        # parts/prior.json（產這份報告當下、報告本身還不存在時的歷史快照）
+        # 才是對的 replay 語意——這只在 --replay-from 生效，不影響正常路徑。
+        fixture_prior = replay_dir / "parts" / "prior.json"
+        if fixture_prior.exists():
+            (run_dir / "parts" / "prior.json").write_text(
+                fixture_prior.read_text(encoding="utf-8"), encoding="utf-8")
+
+    spawn_list = _load_json_or(run_dir / "spawn_list.json", [])
+    koyfin_specs = [_spawn_spec_for(s, run_dir) for s in spawn_list if s.get("id") == "k_koyfin"]
+    other_specs = [_spawn_spec_for(s, run_dir) for s in spawn_list if s.get("id") != "k_koyfin"]
+
+    if koyfin_specs:
+        stage["agent_usage"].extend(dd_headless.spawn_many(koyfin_specs, max_parallel=1))
+    if other_specs:
+        stage["agent_usage"].extend(dd_headless.spawn_many(other_specs, max_parallel=4))
+
+    over_budget = any(r.get("over_budget") for r in stage["agent_usage"])
+    stage["over_budget"] = over_budget
+
+    rc, out_text, needs = _finalize_run_dir(run_dir)
+    retries = 0
+    while needs and rc != 0 and retries < 2:
+        retry_specs = [
+            _spawn_spec_for(s, run_dir)
+            for s in spawn_list
+            if _spec_out_basename(s) in needs
+        ]
+        if not retry_specs:
+            break
+        stage["agent_usage"].extend(dd_headless.spawn_many(retry_specs, max_parallel=4))
+        rc, out_text, needs = _finalize_run_dir(run_dir)
+        retries += 1
+    stage["finalize_retries"] = retries
+    stage["finalize_tail"] = out_text[-3000:]
+
+    ok = (rc == 0) and (over_budget is False or accept_over_budget)
+    stage["state"] = "PASS" if ok else ("FAIL" if rc != 0 else "OVER_BUDGET")
+    stage["ended"] = _now()
+    manifest["stages"]["stage0"] = stage
+    manifest["state"] = "stage0_{0}".format(stage["state"].lower())
+    _atomic_write_json(manifest_path, manifest)
+    _print_step_status(
+        "stage0",
+        "finalize_rc={0} retries={1} over_budget={2}".format(rc, retries, over_budget),
+        "finalize PASS",
+        stage["state"],
+    )
+    if stage["state"] != "PASS":
+        _print_resume_hint(ticker, date, "stage0")
+    return 0 if stage["state"] == "PASS" else 1
+
+
+# ---------------------------------------------------------------------------
+# WP1d judge：bundle → prompt(judge.md.tmpl) → spawn → judge check → 修一輪
+# ---------------------------------------------------------------------------
+
+def _judge_check(ticker, date):
+    """`ddreport.py judge check TICKER DATE`：依序跑 dd_scenario.py／
+    dd_decision.py run／validate_judgment.py --fix --report，回傳
+    (ok, report_text)。`validate_judgment.py --report` 恆 exit 0，PASS/FAIL
+    要從輸出的 `[PASS]`／`[FAIL]` 首行判斷，不能只看 returncode。"""
+    run_dir = _run_dir(ticker, date)
+    py = _pick_python()
+    scenario_path = run_dir / "scenario.json"
+    judgment_path = run_dir / "judgment.json"
+    evidence_path = run_dir / "evidence.json"
+    tables_dir = run_dir / "tables"
+    tables_dir.mkdir(parents=True, exist_ok=True)
+
+    parts = []
+    ok = True
+
+    if not scenario_path.exists():
+        parts.append("[error] 找不到 {0}".format(scenario_path))
+        ok = False
+    else:
+        r1 = subprocess.run(
+            [py, str(SCRIPTS_DIR / "dd_scenario.py"), str(scenario_path),
+             "--html", str(tables_dir / "e11.html"), "--meta", str(run_dir / "scenario_meta.json")],
+            capture_output=True, text=True,
+        )
+        parts.append("[dd_scenario.py] rc={0}\n{1}".format(r1.returncode, (r1.stdout + r1.stderr).strip()))
+        ok = ok and (r1.returncode == 0)
+
+    if not judgment_path.exists():
+        parts.append("[error] 找不到 {0}".format(judgment_path))
+        ok = False
+    else:
+        r2 = subprocess.run(
+            [py, str(SCRIPTS_DIR / "dd_decision.py"), "run", str(judgment_path),
+             "--html", str(tables_dir / "audit.html"), "--json", str(judgment_path)],
+            capture_output=True, text=True,
+        )
+        parts.append("[dd_decision.py run] rc={0}\n{1}".format(r2.returncode, (r2.stdout + r2.stderr).strip()))
+        ok = ok and (r2.returncode == 0)
+
+        vj_cmd = [py, str(SCRIPTS_DIR / "validate_judgment.py"), str(judgment_path),
+                  "--evidence", str(evidence_path), "--fix", "--report"]
+        if os.environ.get("DD_J1_WARN") == "1":
+            vj_cmd.append("--j1-warn")
+        r3 = subprocess.run(vj_cmd, capture_output=True, text=True)
+        vj_out = (r3.stdout + r3.stderr).strip()
+        parts.append("[validate_judgment.py] rc={0}\n{1}".format(r3.returncode, vj_out))
+        if re.search(r"^\[FAIL\]", vj_out, re.M):
+            ok = False
+        elif not re.search(r"^\[PASS\]", vj_out, re.M):
+            ok = False
+
+    return ok, "\n\n".join(parts)
+
+
+def cmd_judge_check(args):
+    ok, report = _judge_check(args.ticker.strip().upper(), args.date)
+    print(report)
+    return 0 if ok else 1
+
+
+def _read_decision_verdict(run_dir):
+    j = _load_json_or(run_dir / "judgment.json", {})
+    return ((j.get("decision_out") or {}).get("verdict"))
+
+
+def _do_judge(ticker, date, judgment_model, replay_dir, accept_over_budget, manifest):
+    run_dir = _run_dir(ticker, date)
+    manifest_path = run_dir / "manifest.json"
+    stage = {"state": "RUNNING", "started": _now(), "agent_usage": [], "over_budget": False}
+    manifest.setdefault("stages", {})["judged"] = stage
+    manifest["judgment_model"] = judgment_model
+    manifest["state"] = "judged_running"
+    _atomic_write_json(manifest_path, manifest)
+
+    py = _pick_python()
+    bundle_path = run_dir / "bundles" / "judge.md"
+    rb = subprocess.run(
+        [py, str(SCRIPTS_DIR / "dd_bundle.py"), "judge", "--run-dir", str(run_dir)],
+        capture_output=True, text=True,
+    )
+    if rb.returncode != 0:
+        stage["state"] = "FAIL"
+        stage["ended"] = _now()
+        stage["note"] = "dd_bundle.py judge 失敗：{0}".format((rb.stdout + rb.stderr)[-1000:])
+        manifest["stages"]["judged"] = stage
+        _atomic_write_json(manifest_path, manifest)
+        _print_step_status("judged", "bundle_rc={0}".format(rb.returncode), "PASS", "FAIL")
+        _print_resume_hint(ticker, date, "judged")
+        return 1
+
+    judgment_path = run_dir / "judgment.json"
+    scenario_path = run_dir / "scenario.json"
+    prompt_path = run_dir / "prompts" / "b1_judge.md"
+    mapping = {
+        "run_dir": str(run_dir), "bundle_path": str(bundle_path),
+        "judgment_path": str(judgment_path), "scenario_path": str(scenario_path),
+        "ticker": ticker, "date": date, "max_turns": str(JUDGE_MAX_TURNS),
+    }
+    prompt_path.write_text(_render_format_template(PROMPTS_TMPL_DIR / "judge.md.tmpl", mapping), encoding="utf-8")
+    if replay_dir:
+        _append_replay_marker(prompt_path, {
+            "kind": "judgment", "judgment_out": str(judgment_path), "scenario_out": str(scenario_path),
+        })
+
+    agents_dir = run_dir / "agents"
+    r_spawn = dd_headless.spawn(
+        prompt_path=prompt_path, model=judgment_model, allowed_tools=["Read", "Write", "Bash"],
+        max_turns=JUDGE_MAX_TURNS, budget_cache_read=JUDGE_BUDGET_CACHE_READ,
+        out_json=agents_dir / "judge_1.json", cwd=run_dir,
+    )
+    stage["agent_usage"].append(r_spawn)
+
+    ok, report = _judge_check(ticker, date)
+    if not ok:
+        fix_path = run_dir / "prompts" / "b1_fix.md"
+        fix_text = (
+            "你是 stock-analyst v17 判斷 agent，回來做一輪定點修正。標的 {0}（{1}）。\n\n"
+            "`judge check` 的失敗原文如下，**只准改被點名的欄位**，改完一次 Write 整檔 "
+            "`{2}`，重跑：\n\n"
+            "```\npython3 scripts/ddreport.py judge check {0} {1}\n```\n\n"
+            "≤1 輪；仍 FAIL 就照實回報。\n\n## judge check 失敗原文\n\n```\n{3}\n```\n"
+        ).format(ticker, date, judgment_path, report)
+        fix_path.write_text(fix_text, encoding="utf-8")
+        if replay_dir:
+            _append_replay_marker(fix_path, {
+                "kind": "judgment", "judgment_out": str(judgment_path), "scenario_out": str(scenario_path),
+            })
+        r_spawn2 = dd_headless.spawn(
+            prompt_path=fix_path, model=judgment_model, allowed_tools=["Read", "Write", "Bash"],
+            max_turns=JUDGE_FIX_MAX_TURNS, budget_cache_read=JUDGE_BUDGET_CACHE_READ,
+            out_json=agents_dir / "judge_fix_1.json", cwd=run_dir,
+        )
+        stage["agent_usage"].append(r_spawn2)
+        ok, report = _judge_check(ticker, date)
+
+    over_budget = any(r.get("over_budget") for r in stage["agent_usage"])
+    stage["over_budget"] = over_budget
+    stage["check_report_tail"] = report[-4000:]
+    j1_warn = None
+    m = re.search(r"（(\d+) FAIL／(\d+) WARN）", report)
+    if m:
+        j1_warn = {"fail": int(m.group(1)), "warn": int(m.group(2))}
+    stage["validate_summary"] = j1_warn
+
+    final_ok = ok and (over_budget is False or accept_over_budget)
+    stage["state"] = "PASS" if final_ok else ("OVER_BUDGET" if (ok and over_budget) else "FAIL")
+    stage["ended"] = _now()
+    manifest["stages"]["judged"] = stage
+    manifest["state"] = "judged_{0}".format(stage["state"].lower())
+    _atomic_write_json(manifest_path, manifest)
+    _print_step_status(
+        "judged", "ok={0} over_budget={1} validate={2}".format(ok, over_budget, j1_warn),
+        "validate PASS", stage["state"],
+    )
+    if stage["state"] != "PASS":
+        _print_resume_hint(ticker, date, "judged")
+    return 0 if stage["state"] == "PASS" else 1
+
+
+# ---------------------------------------------------------------------------
+# WP1d gate：dd_gate.py／dd_brief.py 由 WP3／WP4a 並行交付；不存在時印警告跳過
+# ---------------------------------------------------------------------------
+
+def _do_gate(ticker, date, judgment_model, replay_dir, accept_over_budget, manifest, _depth=0):
+    run_dir = _run_dir(ticker, date)
+    manifest_path = run_dir / "manifest.json"
+    dd_gate_path = SCRIPTS_DIR / "dd_gate.py"
+    stage = manifest.setdefault("stages", {}).get("gated") or {
+        "state": "RUNNING", "started": _now(), "agent_usage": [], "over_budget": False,
+    }
+    manifest["stages"]["gated"] = stage
+    manifest["state"] = "gated_running"
+    _atomic_write_json(manifest_path, manifest)
+
+    if not dd_gate_path.exists():
+        print("[warn] scripts/dd_gate.py 不存在（WP3 尚未交付），gate 步驟跳過")
+        stage["state"] = "SKIPPED"
+        stage["ended"] = _now()
+        stage["note"] = "dd_gate.py missing"
+        manifest["stages"]["gated"] = stage
+        manifest["state"] = "gated_skipped"
+        _atomic_write_json(manifest_path, manifest)
+        _print_step_status("gated", "dd_gate.py missing", "PASS", "SKIPPED")
+        return 0
+
+    py = _pick_python()
+    rb = subprocess.run(
+        [py, str(SCRIPTS_DIR / "dd_bundle.py"), "gate", "--run-dir", str(run_dir)],
+        capture_output=True, text=True,
+    )
+    if rb.returncode != 0:
+        stage["state"] = "FAIL"
+        stage["ended"] = _now()
+        stage["note"] = "dd_bundle.py gate 失敗：{0}".format((rb.stdout + rb.stderr)[-1000:])
+        manifest["stages"]["gated"] = stage
+        _atomic_write_json(manifest_path, manifest)
+        _print_step_status("gated", "bundle_rc={0}".format(rb.returncode), "PASS", "FAIL")
+        _print_resume_hint(ticker, date, "gated")
+        return 1
+
+    audit_path = run_dir / "gate_audit.md"
+    gate_prompt_path = run_dir / "prompts" / "g_gate.md"
+    mapping = {
+        "run_dir": str(run_dir), "bundle_path": str(run_dir / "bundles" / "gate.md"),
+        "ticker": ticker, "date": date, "audit_path": str(audit_path),
+        "max_turns": str(GATE_MAX_TURNS),
+    }
+    gate_prompt_path.write_text(_render_format_template(PROMPTS_TMPL_DIR / "gate.md.tmpl", mapping), encoding="utf-8")
+    if replay_dir:
+        _append_replay_marker(gate_prompt_path, {"kind": "gate", "out": str(audit_path)})
+
+    gate_model = GATE_MODEL_FOR.get(judgment_model, "opus")
+    agents_dir = run_dir / "agents"
+    r_spawn = dd_headless.spawn(
+        prompt_path=gate_prompt_path, model=gate_model, allowed_tools=["Read", "Write"],
+        max_turns=GATE_MAX_TURNS, budget_cache_read=GATE_BUDGET_CACHE_READ,
+        out_json=agents_dir / "gate_{0}.json".format(_depth + 1), cwd=run_dir,
+    )
+    stage["agent_usage"].append(r_spawn)
+    over_budget = any(r.get("over_budget") for r in stage["agent_usage"])
+    stage["over_budget"] = over_budget
+
+    if not audit_path.exists():
+        stage["state"] = "FAIL"
+        stage["ended"] = _now()
+        stage["note"] = "spawn 未產出 gate_audit.md"
+        manifest["stages"]["gated"] = stage
+        _atomic_write_json(manifest_path, manifest)
+        _print_step_status("gated", "no_audit_file", "PASS", "FAIL")
+        _print_resume_hint(ticker, date, "gated")
+        return 1
+
+    r_parse = subprocess.run(
+        [py, str(dd_gate_path), "parse", str(audit_path), "--json"],
+        capture_output=True, text=True,
+    )
+    parsed = None
+    if r_parse.returncode == 0:
+        try:
+            parsed = json.loads(r_parse.stdout)
+        except Exception:
+            parsed = None
+    stage["gate_parsed"] = parsed
+
+    red = (parsed or {}).get("red", 0)
+    if red and red > 0:
+        prior_verdict = _read_decision_verdict(run_dir)
+        patch_prompt_path = run_dir / "prompts" / "b1_patch.md"
+        rp = subprocess.run(
+            [py, str(dd_gate_path), "patch-prompt",
+             "--audit", str(audit_path), "--judgment", str(run_dir / "judgment.json"),
+             "--evidence", str(run_dir / "evidence.json"), "--out", str(patch_prompt_path)],
+            capture_output=True, text=True,
+        )
+        if rp.returncode != 0 or not patch_prompt_path.exists():
+            stage["state"] = "FAIL"
+            stage["ended"] = _now()
+            stage["note"] = "dd_gate.py patch-prompt 失敗：{0}".format((rp.stdout + rp.stderr)[-1000:])
+            manifest["stages"]["gated"] = stage
+            _atomic_write_json(manifest_path, manifest)
+            _print_step_status("gated", "patch_prompt_rc={0}".format(rp.returncode), "PASS", "FAIL")
+            _print_resume_hint(ticker, date, "gated")
+            return 1
+        if replay_dir:
+            _append_replay_marker(patch_prompt_path, {
+                "kind": "judgment", "judgment_out": str(run_dir / "judgment.json"),
+            })
+        r_spawn2 = dd_headless.spawn(
+            prompt_path=patch_prompt_path, model=judgment_model, allowed_tools=["Read", "Write", "Bash"],
+            max_turns=GATE_PATCH_MAX_TURNS, budget_cache_read=JUDGE_BUDGET_CACHE_READ,
+            out_json=agents_dir / "gate_patch_{0}.json".format(_depth + 1), cwd=run_dir,
+        )
+        stage["agent_usage"].append(r_spawn2)
+        over_budget = any(r.get("over_budget") for r in stage["agent_usage"])
+        stage["over_budget"] = over_budget
+
+        ok_check, report_check = _judge_check(ticker, date)
+        stage["patch_check_tail"] = report_check[-3000:]
+        new_verdict = _read_decision_verdict(run_dir)
+
+        if new_verdict != prior_verdict and _depth < 1:
+            manifest["stages"]["gated"] = stage
+            _atomic_write_json(manifest_path, manifest)
+            print("[gate] verdict 翻面（{0} → {1}），重跑一次 gate".format(prior_verdict, new_verdict))
+            return _do_gate(ticker, date, judgment_model, replay_dir, accept_over_budget, manifest, _depth=_depth + 1)
+
+        final_ok = ok_check and (over_budget is False or accept_over_budget)
+        stage["state"] = "PASS" if final_ok else ("OVER_BUDGET" if (ok_check and over_budget) else "FAIL")
+    else:
+        final_ok = (over_budget is False) or accept_over_budget
+        stage["state"] = "PASS" if final_ok else "OVER_BUDGET"
+
+    stage["ended"] = _now()
+    manifest["stages"]["gated"] = stage
+    manifest["state"] = "gated_{0}".format(stage["state"].lower())
+    _atomic_write_json(manifest_path, manifest)
+    _print_step_status(
+        "gated", "red={0} yellow={1} over_budget={2}".format(
+            (parsed or {}).get("red"), (parsed or {}).get("yellow"), over_budget),
+        "red=0", stage["state"],
+    )
+    if stage["state"] != "PASS":
+        _print_resume_hint(ticker, date, "gated")
+    return 0 if stage["state"] == "PASS" else 1
+
+
+# ---------------------------------------------------------------------------
+# WP1d brief：dd_brief.py（WP4a 交付）零 LLM 渲染；不存在時印警告跳過
+# ---------------------------------------------------------------------------
+
+def _do_brief(ticker, date, do_full, manifest):
+    run_dir = _run_dir(ticker, date)
+    manifest_path = run_dir / "manifest.json"
+    dd_brief_path = SCRIPTS_DIR / "dd_brief.py"
+    stage = {"state": "RUNNING", "started": _now()}
+    manifest.setdefault("stages", {})["brief"] = stage
+    manifest["state"] = "brief_running"
+    _atomic_write_json(manifest_path, manifest)
+
+    if not dd_brief_path.exists():
+        print("[warn] scripts/dd_brief.py 不存在（WP4a 尚未交付），brief 步驟跳過")
+        stage["state"] = "SKIPPED"
+        stage["ended"] = _now()
+        stage["note"] = "dd_brief.py missing"
+        manifest["stages"]["brief"] = stage
+        manifest["state"] = "brief_skipped"
+        _atomic_write_json(manifest_path, manifest)
+        _print_step_status("brief", "dd_brief.py missing", "PASS", "SKIPPED")
+    else:
+        py = _pick_python()
+        out_path = REPO_ROOT / "docs" / "dd" / "brief" / "BRIEF_{0}_{1}.html".format(ticker, date)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        r = subprocess.run(
+            [py, str(dd_brief_path), "--run-dir", str(run_dir), "--out", str(out_path)],
+            capture_output=True, text=True,
+        )
+        stage["out_path"] = str(out_path)
+        stage["state"] = "PASS" if r.returncode == 0 else "FAIL"
+        stage["ended"] = _now()
+        stage["note"] = (r.stdout + r.stderr)[-1000:]
+        manifest["stages"]["brief"] = stage
+        manifest["state"] = "brief_{0}".format(stage["state"].lower())
+        _atomic_write_json(manifest_path, manifest)
+        _print_step_status("brief", "rc={0}".format(r.returncode), "PASS", stage["state"])
+        if stage["state"] != "PASS":
+            _print_resume_hint(ticker, date, "brief")
+
+    if do_full:
+        print("[warn] --full 本輪未實作（WP4b 未交付），略過快速版之外的完整渲染")
+
+    return 0 if stage["state"] in ("PASS", "SKIPPED") else 1
+
+
+# ---------------------------------------------------------------------------
+# WP1d run：串接 stage0 → judged → gated → brief，支援 --until／--resume
+# ---------------------------------------------------------------------------
+
+def cmd_run(args):
+    ticker = args.ticker.strip().upper()
+    date = args.date or time.strftime("%Y%m%d")
+    run_dir = _run_dir(ticker, date)
+    manifest_path = run_dir / "manifest.json"
+
+    replay_dir = _ensure_replay_env(args.replay_from)
+
+    until = args.until or "brief"
+    if until not in STAGE_ORDER:
+        print("[error] --until 必須是 {0} 之一".format(STAGE_ORDER), file=sys.stderr)
+        return 2
+    until_idx = STAGE_ORDER.index(until)
+
+    manifest = _load_json_or(manifest_path, {
+        "ticker": ticker, "date": date, "state": "new", "created": _now(),
+        "steps": [], "agents": [], "stages": {},
+    })
+    manifest.setdefault("stages", {})
+
+    judgment_model = args.judgment_model or manifest.get("judgment_model") or DEFAULT_JUDGMENT_MODEL
+
+    start_idx = 0
+    if args.resume:
+        for i, name in enumerate(STAGE_ORDER):
+            st = manifest["stages"].get(name, {})
+            if st.get("state") in ("PASS", "SKIPPED"):
+                start_idx = i + 1
+            else:
+                break
+
+    plan_kwargs = {
+        "archetype": args.archetype, "peers": args.peers, "segments": None,
+        "axes_per_batch": args.axes_per_batch, "offline": args.offline,
+    }
+
+    rc = 0
+    for i in range(start_idx, until_idx + 1):
+        stage_name = STAGE_ORDER[i]
+        if stage_name == "stage0":
+            rc = _do_stage0(ticker, date, plan_kwargs, replay_dir, args.accept_over_budget, manifest)
+        elif stage_name == "judged":
+            rc = _do_judge(ticker, date, judgment_model, replay_dir, args.accept_over_budget, manifest)
+        elif stage_name == "gated":
+            rc = _do_gate(ticker, date, judgment_model, replay_dir, args.accept_over_budget, manifest)
+        elif stage_name == "brief":
+            rc = _do_brief(ticker, date, args.full, manifest)
+        manifest = _load_json_or(manifest_path, manifest)
+        st = manifest.get("stages", {}).get(stage_name, {})
+        if st.get("state") not in ("PASS", "SKIPPED"):
+            return rc if rc != 0 else 1
+
+    return rc
+
+
+# ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
 
@@ -432,10 +1130,113 @@ def build_parser():
     st.add_argument("date")
     st.set_defaults(func=cmd_status)
 
+    rn = sub.add_parser("run")
+    rn.add_argument("ticker")
+    rn.add_argument("--date", default=None, help="YYYYMMDD；預設今天")
+    rn.add_argument("--archetype", default=None)
+    rn.add_argument("--peers", default=None)
+    rn.add_argument("--axes-per-batch", type=int, default=AXES_PER_BATCH_DEFAULT)
+    rn.add_argument("--judgment-model", default=None, choices=["fable", "opus", "sonnet"])
+    rn.add_argument("--full", action="store_true", help="WP4b 未交付，本輪僅印警告")
+    rn.add_argument("--replay-from", default=None, metavar="DIR")
+    rn.add_argument("--until", default="brief", choices=STAGE_ORDER)
+    rn.add_argument("--resume", action="store_true")
+    rn.add_argument("--offline", action="store_true")
+    rn.add_argument("--accept-over-budget", action="store_true")
+    rn.set_defaults(func=cmd_run)
+
+    s0 = sub.add_parser("stage0")
+    s0.add_argument("ticker")
+    s0.add_argument("--date", default=None)
+    s0.add_argument("--archetype", default=None)
+    s0.add_argument("--peers", default=None)
+    s0.add_argument("--axes-per-batch", type=int, default=AXES_PER_BATCH_DEFAULT)
+    s0.add_argument("--offline", action="store_true")
+    s0.add_argument("--replay-from", default=None, metavar="DIR")
+    s0.add_argument("--accept-over-budget", action="store_true")
+
+    def _cmd_stage0(args):
+        ticker = args.ticker.strip().upper()
+        date = args.date or time.strftime("%Y%m%d")
+        replay_dir = _ensure_replay_env(args.replay_from)
+        manifest = _load_json_or(_run_dir(ticker, date) / "manifest.json", {
+            "ticker": ticker, "date": date, "state": "new", "created": _now(),
+            "steps": [], "agents": [], "stages": {},
+        })
+        plan_kwargs = {"archetype": args.archetype, "peers": args.peers, "segments": None,
+                       "axes_per_batch": args.axes_per_batch, "offline": args.offline}
+        return _do_stage0(ticker, date, plan_kwargs, replay_dir, args.accept_over_budget, manifest)
+
+    s0.set_defaults(func=_cmd_stage0)
+
+    jg = sub.add_parser("judge")
+    jg.add_argument("ticker")
+    jg.add_argument("date")
+    jg.add_argument("--judgment-model", default=None, choices=["fable", "opus", "sonnet"])
+    jg.add_argument("--replay-from", default=None, metavar="DIR")
+    jg.add_argument("--accept-over-budget", action="store_true")
+
+    def _cmd_judge(args):
+        ticker = args.ticker.strip().upper()
+        date = args.date
+        replay_dir = _ensure_replay_env(args.replay_from)
+        manifest = _load_json_or(_run_dir(ticker, date) / "manifest.json", {
+            "ticker": ticker, "date": date, "state": "new", "created": _now(),
+            "steps": [], "agents": [], "stages": {},
+        })
+        model = args.judgment_model or manifest.get("judgment_model") or DEFAULT_JUDGMENT_MODEL
+        return _do_judge(ticker, date, model, replay_dir, args.accept_over_budget, manifest)
+
+    jg.set_defaults(func=_cmd_judge)
+
+    ga = sub.add_parser("gate")
+    ga.add_argument("ticker")
+    ga.add_argument("date")
+    ga.add_argument("--judgment-model", default=None, choices=["fable", "opus", "sonnet"])
+    ga.add_argument("--replay-from", default=None, metavar="DIR")
+    ga.add_argument("--accept-over-budget", action="store_true")
+
+    def _cmd_gate(args):
+        ticker = args.ticker.strip().upper()
+        date = args.date
+        replay_dir = _ensure_replay_env(args.replay_from)
+        manifest = _load_json_or(_run_dir(ticker, date) / "manifest.json", {
+            "ticker": ticker, "date": date, "state": "new", "created": _now(),
+            "steps": [], "agents": [], "stages": {},
+        })
+        model = args.judgment_model or manifest.get("judgment_model") or DEFAULT_JUDGMENT_MODEL
+        return _do_gate(ticker, date, model, replay_dir, args.accept_over_budget, manifest)
+
+    ga.set_defaults(func=_cmd_gate)
+
+    br = sub.add_parser("brief")
+    br.add_argument("ticker")
+    br.add_argument("date")
+    br.add_argument("--full", action="store_true")
+
+    def _cmd_brief(args):
+        ticker = args.ticker.strip().upper()
+        date = args.date
+        manifest = _load_json_or(_run_dir(ticker, date) / "manifest.json", {
+            "ticker": ticker, "date": date, "state": "new", "created": _now(),
+            "steps": [], "agents": [], "stages": {},
+        })
+        return _do_brief(ticker, date, args.full, manifest)
+
+    br.set_defaults(func=_cmd_brief)
+
     return p
 
 
 def main(argv):
+    argv = list(argv)
+    # `judge check TICKER DATE` 是給 spawn 出去的判斷 agent（透過 Bash 工具）與
+    # orchestrator 共用的獨立子命令，前置獨立判斷比硬塞進 argparse 巢狀
+    # subparsers（`judge`／`judge check` 位置參數數量會互相打架）簡單可靠。
+    if len(argv) >= 3 and argv[0] == "judge" and argv[1] == "check":
+        ns = argparse.Namespace(ticker=argv[2], date=argv[3] if len(argv) > 3 else None)
+        return cmd_judge_check(ns)
+
     parser = build_parser()
     args = parser.parse_args(argv)
     return args.func(args)
