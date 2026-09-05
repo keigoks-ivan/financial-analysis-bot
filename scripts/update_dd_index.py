@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import html
+import itertools
 import json
 import re
 import sys
@@ -500,7 +501,9 @@ def _v13_dca_overlay() -> dict:
     if not DD_DIR.exists():
         return {}
     latest: dict[str, tuple[str, dict, str]] = {}  # norm -> (date, meta, fname)
-    for path in DD_DIR.glob("DD_*.html"):
+    # v17: 快速版 docs/dd/brief/BRIEF_{T}_{D}.html 與完整版同 dd-meta 欄位（多 "brief":true）
+    # ——同 ticker 取日期最新者，不論完整或快速版。
+    for path in itertools.chain(DD_DIR.glob("DD_*.html"), (DD_DIR / "brief").glob("BRIEF_*.html")):
         try:
             text = path.read_text(encoding="utf-8", errors="ignore")
         except OSError:
@@ -515,7 +518,8 @@ def _v13_dca_overlay() -> dict:
         date = meta.get("date") or ""
         prev = latest.get(norm)
         if prev is None or date > prev[0]:
-            latest[norm] = (date, meta, path.name)
+            fname = path.name if path.parent == DD_DIR else f"{path.parent.name}/{path.name}"
+            latest[norm] = (date, meta, fname)
     out: dict = {}
     for norm, (_, meta, fname) in latest.items():
         ev = meta.get("ev5y_pct")
@@ -1170,10 +1174,23 @@ def parse_index_md() -> dict:
 
 
 def scan_files(index_data: dict):
-    """Build entries list for v9.x/v10.x DDs, enriched with INDEX.md metadata."""
+    """Build entries list for v9.x/v10.x DDs, enriched with INDEX.md metadata.
+
+    v17: also walks docs/dd/brief/BRIEF_*.html (快速版；同 dd-meta schema，多
+    "brief":true) — same ticker/date filename shape with a BRIEF_ prefix.
+    """
     entries = []
-    for f in sorted(DD_DIR.glob("DD_*.html")):
+    for f in sorted(itertools.chain(DD_DIR.glob("DD_*.html"), (DD_DIR / "brief").glob("BRIEF_*.html"))):
         version = extract_version(f)
+        if not version:
+            # 快速版 thin template 目前無 <meta name="dd-schema-version">，
+            # fallback 到 dd-meta JSON 的 "schema" 欄。
+            try:
+                meta_fallback = extract_dd_meta_json(f.read_text(encoding="utf-8", errors="ignore"))
+            except OSError:
+                meta_fallback = None
+            if meta_fallback and meta_fallback.get("schema"):
+                version = str(meta_fallback["schema"])
         # Only show v11+ on the website
         try:
             major = int(version.lstrip("v").split(".")[0])
@@ -1181,15 +1198,16 @@ def scan_files(index_data: dict):
             continue
         if major < 11:
             continue
-        m = re.match(r"DD_(.+?)_(\d{4})(\d{2})(\d{2})(?:_v\d+)?\.html", f.name)
+        m = re.match(r"(?:DD|BRIEF)_(.+?)_(\d{4})(\d{2})(\d{2})(?:_v\d+)?\.html", f.name)
         if not m:
-            m = re.match(r"DD_(.+?)_v\d+_(\d{4})(\d{2})(\d{2})\.html", f.name)
+            m = re.match(r"(?:DD|BRIEF)_(.+?)_v\d+_(\d{4})(\d{2})(\d{2})\.html", f.name)
         if not m:
             continue
         ticker = m.group(1)
         date_str = f"{m.group(2)}-{m.group(3)}-{m.group(4)}"
+        relname = f.name if f.parent == DD_DIR else f"{f.parent.name}/{f.name}"
 
-        md = index_data.get(f.name, {})
+        md = index_data.get(relname, {})
         comment = extract_comment(f) or md.get("comment", "")
         # v12.0 policy: 無論來源為何（DD HTML §2 I 或 INDEX.md fallback），
         # 備註統一套用 120 字上限 + 句號切斷邏輯。
@@ -1221,7 +1239,7 @@ def scan_files(index_data: dict):
             "currency": currency,
             "date": date_str,
             "version": version,
-            "href": f"/dd/{f.name}",
+            "href": f"/dd/{relname}",
             "verdict": md.get("verdict", "—"),
             "trap": md.get("trap", "—"),
             "quality": md.get("quality", "—"),
@@ -1424,18 +1442,26 @@ def _norm_dca_role(role: "str | None") -> str:
 
 
 def _render_verdict_cell(href: str, verdict: str, role: str,
-                         rearm: str) -> "tuple[str, str]":
+                         rearm: str, brief: bool = False) -> "tuple[str, str]":
     """(td_html, rank_attr) for the primary 裁決 column.
 
     verdict: 進場/觀望/迴避（v13/v14 決策層）— empty for legacy v12 → 「—」.
     role:    normalized 核心/衛星/追蹤/不持有（may be '').
     rearm:   一行執行語（rearm_trigger，≤40 字；過長截斷 + title tooltip）.
+    brief:   v17 快速版（dd-meta "brief":true）— 判斷同完整版、未寫散文，
+             裁決欄加一個小標「速判」。
     The whole badge links to the DD's #decision anchor.
     """
     if verdict not in _VERDICT_RANK:
         return ('<td class="verdict-cell verdict-none">—</td>', "0")
     css = _VERDICT_BADGE_CSS[verdict]
     role_html = f'<span class="dec-role">{html.escape(role)}</span>' if role else ""
+    brief_html = (
+        '<span class="brief-tag" title="快速版：判斷同完整版，未寫散文" '
+        'style="display:inline-block;margin-left:4px;padding:0 4px;font-size:10px;'
+        'border:1px solid currentColor;border-radius:2px;color:#64748B">速判</span>'
+        if brief else ""
+    )
     rearm_html = ""
     r = (rearm or "").strip()
     if r:
@@ -1447,7 +1473,7 @@ def _render_verdict_cell(href: str, verdict: str, role: str,
     inner = (
         f'<a href="{href}#decision" target="_blank" rel="noopener" '
         f'title="投資決策層統一裁決（#decision）">'
-        f'<span class="dec-badge {css}">{verdict}</span>{role_html}</a>'
+        f'<span class="dec-badge {css}">{verdict}</span>{role_html}{brief_html}</a>'
         f'{rearm_html}'
     )
     return (f'<td class="verdict-cell">{inner}</td>', str(_VERDICT_RANK[verdict]))
@@ -1925,6 +1951,7 @@ def build_row_v12(entry: dict, dca_map: dict | None = None,
     verdict_cell, verdict_rank = _render_verdict_cell(
         entry["href"], entry.get("dca_verdict", ""),
         entry.get("dca_role", ""), entry.get("rearm_trigger", ""),
+        entry.get("brief", False),
     )
 
     # §7 門檻 cell: {emoji} {pass}/{total}, colour-coded background by pass %.
@@ -2147,6 +2174,7 @@ def collect_v12_entries(force_refresh_eps: bool = False):
                 "dca_verdict": (meta.get("dca_verdict") or "").strip(),
                 "dca_role": _norm_dca_role(meta.get("dca_role")),
                 "rearm_trigger": (meta.get("rearm_trigger") or "").strip(),
+                "brief": bool(meta.get("brief")),  # v17 快速版旗標
             }
             entries.append(entry)
             continue

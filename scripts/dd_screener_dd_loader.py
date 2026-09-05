@@ -19,7 +19,7 @@ from typing import Optional
 
 # ── path setup ───────────────────────────────────────────────────────────────
 sys.path.insert(0, str(Path(__file__).parent))
-from dd_meta_reader import iter_dd_metas  # noqa: E402
+from dd_meta_reader import iter_dd_metas, read_dd_meta  # noqa: E402
 from engine.grp import market_ok  # noqa: E402
 
 # ── constants ─────────────────────────────────────────────────────────────────
@@ -47,7 +47,8 @@ _TREND_NORM: dict[str, str] = {
 }
 
 # DD filename date pattern: DD_{STEM}_{YYYYMMDD}[_suffix].html
-_DD_FILENAME_DATE_RE = re.compile(r"^DD_.+?_(\d{8})(?:_.*)?\.html$")
+# v17: also accepts the 快速版 filename brief/BRIEF_{STEM}_{YYYYMMDD}.html.
+_DD_FILENAME_DATE_RE = re.compile(r"^(?:DD|BRIEF)_.+?_(\d{8})(?:_.*)?\.html$")
 
 # ── 選股系統 v2 (2026-09) — non-DD universe from QGM (姊妹 repo quality pools) ──
 # DD becomes optional: names that never got a DD report still need to be
@@ -164,16 +165,42 @@ def _find_latest_dca(dca_dir: Path, ticker: str) -> tuple[Optional[str], Optiona
     return dca_path, dca_date
 
 
+def _iter_dd_and_brief_metas(dd_dir: Path):
+    """Like dd_meta_reader.iter_dd_metas but also walks dd_dir/brief/BRIEF_*.html
+    (v17 快速版 — same dd-meta schema, plus "brief":true). Yields (path, meta)."""
+    yield from iter_dd_metas(dd_dir)
+    brief_dir = dd_dir / "brief"
+    if not brief_dir.exists():
+        return
+    for p in sorted(brief_dir.glob("BRIEF_*.html")):
+        meta = read_dd_meta(p)
+        if meta is not None:
+            yield p, meta
+
+
+def _dd_href(path: Path, dd_dir: Path) -> str:
+    """Public /dd/... href for a DD or brief file, preserving the brief/
+    subdirectory when present."""
+    try:
+        rel = path.relative_to(dd_dir)
+    except ValueError:
+        rel = Path(path.name)
+    return f"/dd/{rel.as_posix()}"
+
+
 def _latest_per_ticker_with_paths(
     dd_dir: Path,
 ) -> dict[str, tuple[Path, dict]]:
     """Return {ticker: (path, meta)} keeping the latest DD per ticker.
 
-    Uses dd_meta_reader.iter_dd_metas; deduplicates by ticker keeping the
-    highest 'date' value (same logic as latest_per_ticker, but preserves path).
-    """
+    Uses dd_meta_reader.iter_dd_metas plus the brief/BRIEF_*.html 快速版
+    scan (_iter_dd_and_brief_metas); dedupes by ticker keeping the highest
+    'date' value across BOTH file kinds — for downstream consumers a 快速版
+    is just as much "the DD" as a full report (same dd-meta schema, plus
+    "brief":true). Same-date ties keep whichever was seen first (full DDs
+    are yielded before brief ones)."""
     best: dict[str, tuple[Path, dict]] = {}
-    for path, meta in iter_dd_metas(dd_dir):
+    for path, meta in _iter_dd_and_brief_metas(dd_dir):
         ticker = meta.get("ticker")
         date = meta.get("date")
         if not ticker or not date:
@@ -388,9 +415,12 @@ def load_dd_universe(
         p_bear_pct = meta.get("p_bear_pct")
 
         # ── dd_path / dd_date ─────────────────────────────────────────────
+        # v17: path may be docs/dd/brief/BRIEF_{T}_{D}.html (快速版) — keep the
+        # brief/ subdir in the href, use its filename for date extraction.
         dd_filename = path.name
-        dd_path = f"/dd/{dd_filename}"
+        dd_path = _dd_href(path, dd_dir)
         dd_date = _extract_date_from_dd_filename(dd_filename) or meta.get("date")
+        is_brief = bool(meta.get("brief"))
 
         # ── DCA lookup ────────────────────────────────────────────────────
         # v13 merged report folds the decision layer into the DD itself, so the
@@ -443,6 +473,9 @@ def load_dd_universe(
             "dd_status": "dd",
             "universe_source": None,
             "qgm_seed": None,
+            # v17: True for docs/dd/brief/BRIEF_*.html 快速版（判斷同完整版，
+            # 未寫散文）；False for a full DD report. Same dd-meta schema either way.
+            "brief": is_brief,
         })
 
     return results

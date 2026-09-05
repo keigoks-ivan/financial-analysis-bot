@@ -630,6 +630,8 @@ def discover():
             out.append((f, family, ex))
 
     add("docs/dd/DD_*.html", "dd", ex_dd)
+    # v17 快速版（同 dd-meta schema，多 "brief":true）——來源型別仍記 "dd"，帳本不分快慢。
+    add("docs/dd/brief/BRIEF_*.html", "dd", ex_dd)
     add("docs/dca/DCA_*.html", "dca", ex_dca)
 
     id_files = sorted(glob.glob(str(REPO / "docs/id/ID_*.html")))

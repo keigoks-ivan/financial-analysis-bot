@@ -233,6 +233,10 @@ def grp_route(s: dict) -> tuple[str, str]:
     無 DD 或 DD 過期才退回護城河字母；無護城河資料（非 DD 池）一律衛星。"""
     role = (s.get("dca_role") or "")
     age = _f(s.get("dd_age_days"))
+    # v17: grp.py never reads DD/BRIEF HTML directly — dca_verdict/dca_role/
+    # dd_age_days come from latest.json, and dd_screener_dd_loader.py already
+    # treats docs/dd/brief/BRIEF_*.html 快速版 as a same-schema DD, so a fresh
+    # 快速版 verdict/role flows through here unchanged.
     fresh = s.get("dca_verdict") and (age is None or age <= DD_FRESH_DAYS)
     if fresh and "核心" in role:
         return "core", f"DD 角色核心（{int(age) if age is not None else '—'}d）"

@@ -21,6 +21,9 @@ from datetime import datetime, date
 REPO = Path(__file__).resolve().parent.parent          # financial-analysis-bot/
 KDIR = Path(__file__).resolve().parent                 # knowledge/
 DD_GLOB = str(REPO / "docs" / "dd" / "DD_*.html")
+# v17 快速版（docs/dd/brief/BRIEF_*.html，同 dd-meta schema，多 "brief":true）——
+# 帳本不分快慢，一併掃入 source="dd-meta"。
+DD_BRIEF_GLOB = str(REPO / "docs" / "dd" / "brief" / "BRIEF_*.html")
 ID_GLOB = str(REPO / "docs" / "id" / "ID_*.html")
 SC_DIR = REPO / "docs" / "supply-chain" / "data"
 
@@ -144,7 +147,7 @@ def _load_sc_topics():
 
 def build_decisions(manual_decisions, outcomes):
     rows = []
-    for f in sorted(glob.glob(DD_GLOB)):
+    for f in sorted(glob.glob(DD_GLOB) + glob.glob(DD_BRIEF_GLOB)):
         meta = _extract(f, DD_META_RE)
         if not meta:
             continue
