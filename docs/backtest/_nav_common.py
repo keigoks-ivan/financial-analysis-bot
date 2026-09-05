@@ -15,7 +15,7 @@ Every backtest page header renders the same groups via make_toggle(active):
     研究・可轉債：tw_cb
     研究・因子：  return_driver | pead | accruals | share_issuance | profitability
                   | asset_growth | index_inclusion | insider
-    研究・跨標的驗證： w52_oos | ins_prem | adopt_boot | regime_boot | comb_acct | slow_bear
+    研究・跨標的驗證： w52_oos | ins_prem | adopt_boot | regime_boot | comb_acct | slow_bear | slow_bear_onset
                   | cross_sec_trend
 
 Design (2026-07-11 redesign):
@@ -186,6 +186,7 @@ RESEARCH_OOS_LINKS = [
     ("/backtest/regime_bootstrap/", "保留 regime 的 bootstrap", "regime_boot", "研究"),
     ("/backtest/combined_account/", "美台合併帳戶層", "comb_acct", "研究"),
     ("/backtest/slow_bear_base_rate/", "慢熊的 base rate", "slow_bear", "研究"),
+    ("/backtest/slow_bear_onset/", "慢熊：起點認得出來嗎？", "slow_bear_onset", "研究"),
     ("/backtest/cross_sectional_trend/", "橫斷面版趨勢", "cross_sec_trend", "研究"),
 ]
 

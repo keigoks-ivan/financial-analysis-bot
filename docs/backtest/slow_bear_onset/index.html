@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>慢熊在起點認得出來嗎？ | InvestMQuest Research</title>
+<meta name="description" content="在跌到 −10% 的那一天，用當時已知的資訊，慢熊（峰谷≥9個月）與非慢熊（中熊/急跌/假警報）在 11 個候選變數上分得開嗎？116 個起點事件（慢熊 32 個）、AUC／Bonferroni／LOO 邏輯迴歸的可分辨性檢定。判定：有跡象但樣本不夠：只記錄。">
+<style>
+:root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
+      --text:#111827;--muted:#6b7280;--border:#e5e7eb}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans TC',sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1120px;margin:0 auto;padding:0 1.5rem}
+.page-hdr{padding:1.75rem 0 1.25rem;background:linear-gradient(180deg,#eff6ff 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
+.page-hdr h1{font-size:1.55rem;font-weight:700;letter-spacing:-.03em}
+.page-hdr .sub{color:var(--muted);font-size:.88rem;margin-top:.2rem}
+.crumb{font-size:.82rem;color:var(--muted);margin-bottom:.4rem}
+.crumb a{color:var(--muted)}
+.section{padding:1.75rem 0 0}
+.section-title{font-size:1.08rem;font-weight:700;margin-bottom:1rem;
+               padding-bottom:.45rem;border-bottom:2px solid var(--brand)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.1rem 1.25rem;margin-bottom:1rem}
+.plain-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:1.1rem 1.3rem}
+table{width:100%;border-collapse:collapse;font-size:.82rem;background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+th,td{text-align:left;padding:.5rem .6rem;border-bottom:1px solid var(--border)}
+th{background:#f9fafb;font-weight:600;font-size:.68rem;text-transform:uppercase;
+   letter-spacing:.03em;color:var(--muted)}
+td{font-variant-numeric:tabular-nums;vertical-align:top}
+td.num,th.num{text-align:right}
+td.lbl{white-space:nowrap;font-weight:500}
+tbody tr:last-child td{border-bottom:0}
+tr.dim{background:#f4f5f6;color:#8b93a1}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.hero{margin:1.25rem 0;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--card)}
+.hero-top{background:linear-gradient(135deg,#eff6ff 0%,#f5f8ff 100%);padding:1.4rem 1.6rem;border-bottom:1px solid var(--border)}
+.hero-top .verdict-tag{display:inline-block;color:#fff;font-size:.74rem;font-weight:700;
+                       letter-spacing:.05em;padding:.25rem .7rem;border-radius:99px;margin-bottom:.5rem}
+.hero-top h2{font-size:1.15rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.35rem}
+.hero-top p{font-size:.9rem;color:#374151;max-width:64rem}
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card)}
+.hero-stats > div{padding:1rem 1.2rem;text-align:center;border-right:1px solid var(--border)}
+.hero-stats > div:last-child{border-right:none}
+.hero-stats .hs-label{font-size:.66rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.hero-stats .hs-value{font-size:1.35rem;font-weight:800;letter-spacing:-.02em}
+.takeaway{font-size:.86rem;margin:.9rem 0;padding:.7rem .95rem;border-radius:6px;background:var(--brand-light);
+    border-left:3px solid var(--brand);color:#1f2c44}
+.takeaway b{color:#12213a}
+.note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;
+      padding:.85rem 1.1rem;font-size:.82rem;color:#92400e;margin:1rem 0}
+.ok{color:#059669;font-weight:700}
+.no{color:#dc2626;font-weight:700}
+footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
+       text-align:center;padding:1.25rem 0;font-size:.78rem;margin-top:2rem}
+@media(max-width:768px){
+  .hero-stats{grid-template-columns:repeat(2,1fr)}
+  table{font-size:.74rem}th,td{padding:.4rem .4rem}
+}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/market/">市況主控台</a>
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <a href="/cockpit/">選股</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">個股研究</a>
+          <a href="/id/">產業研究</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/" class="active">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/flow/">投資流程</a>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="page-hdr">
+  <div class="container">
+    <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / 慢熊的 base rate / 慢熊在起點認得出來嗎？</div>
+    <h1>慢熊在起點認得出來嗎？</h1>
+    <div class="sub">在跌到 −10% 的那一天，用當時已知的資訊看慢熊與非慢熊分不分得開——
+    可分辨性檢定，不是新濾網・生成 2026-09-05</div>
+    <style id="bt-subnav-style">.bt-subnav{margin-top:.75rem;border:1px solid var(--border,#e5e7eb);border-radius:8px;overflow:hidden;font-size:.78rem;line-height:1.3}.bt-subnav-row{display:flex;align-items:flex-start;gap:.55rem;padding:.32rem .55rem;border-top:1px solid var(--border,#e5e7eb)}.bt-subnav-row:first-child{border-top:0}.bt-subnav-lbl{flex:0 0 5.4em;font-size:.64rem;font-weight:700;color:var(--muted,#6b7280);text-transform:uppercase;letter-spacing:.04em;padding-top:.34rem}.bt-subnav-pills{display:flex;flex-wrap:wrap;gap:.3rem;min-width:0}.bt-subnav-pills a{display:inline-flex;align-items:center;gap:.28rem;padding:.26rem .6rem;background:#eef1f4;color:#374151;border-radius:999px;text-decoration:none;font-weight:500;white-space:nowrap;transition:background .12s}.bt-subnav-pills a:hover{background:#e1e6ea}.bt-subnav-pills a.bt-dead{color:#7a828d;background:#f2f3f5}.bt-subnav-pills a.bt-on{background:linear-gradient(135deg,#081832,#173564);color:#fff;font-weight:600}.bt-subnav-pills a.bt-on:hover{background:linear-gradient(135deg,#081832,#173564)}.bt-tag{font-size:.6rem;font-weight:600;padding:.02rem .3rem;border-radius:4px;line-height:1.4}.bt-tag-dead{background:rgba(220,38,38,.12);color:#b42318}.bt-tag-watch{background:rgba(180,118,20,.15);color:#986a12}.bt-on .bt-tag-dead{background:rgba(255,255,255,.22);color:#fff}.bt-on .bt-tag-watch{background:rgba(255,255,255,.22);color:#fff}@media(max-width:640px){.bt-subnav-row{flex-direction:column;gap:.28rem;padding:.4rem .55rem}.bt-subnav-lbl{flex-basis:auto;padding-top:0}}</style><nav class="bt-subnav" aria-label="回測子導航"><div class="bt-subnav-row"><div class="bt-subnav-lbl">對比總覽</div><div class="bt-subnav-pills"><a href="/backtest/">20 年</a><a href="/backtest/10y/">10 年</a><a href="/backtest/criteria/">評估標準</a><a href="/backtest/tw/">台股總覽</a><a href="/backtest/multi/">多資產總覽</a><a href="/backtest/leverage/">槓桿疊加總覽</a><a href="/backtest/ma_sensitivity/">MA 敏感度</a><a href="/backtest/free_lunch/">分散與免費午餐</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">個別系統</div><div class="bt-subnav-pills"><a href="/backtest/long_track/">SPY/QQQ 長軌</a><a href="/backtest/long_track_qqq/">QQQ 長軌純攻</a><a href="/backtest/long_track_ensemble/">SPY/QQQ 集成</a><a href="/backtest/long_track_smh/">SMH/QQQ 進攻</a><a href="/backtest/six_state/">QQQ＋SMH 六狀態</a><a href="/backtest/six_state_v1r1/">QQQ 六狀態實盤</a><a href="/backtest/gem/">SPY/ACWX 雙動能</a><a href="/backtest/slope_filter/">SPY/AGG 斜率</a><a href="/backtest/rsi2_mr/">SPY/QQQ 均值回歸</a><a href="/backtest/supertrend/">週線 Supertrend</a><a href="/backtest/minervini/">Minervini RS+VCP</a><a href="/backtest/mom_volscaling/">動能·波動縮放</a><a href="/backtest/dual_track_study/">雙軌分散研究</a><a href="/backtest/leverage_voltarget/">期貨槓桿疊加</a><a href="/backtest/vol_targeting/">波動目標倉位<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/dual_track/" class="bt-dead">SPY/QQQ 雙軌多空<span class="bt-tag bt-tag-dead">否決</span></a><a href="/backtest/exit_switch/" class="bt-dead">出場法切換<span class="bt-tag bt-tag-dead">否決</span></a><a href="/backtest/short_system/" class="bt-dead">指數做空<span class="bt-tag bt-tag-dead">失敗</span></a><a href="/backtest/cndr/" class="bt-dead">Iron Condor<span class="bt-tag bt-tag-dead">失敗</span></a><a href="/backtest/covered_call/" class="bt-dead">Covered Call<span class="bt-tag bt-tag-dead">負貢獻</span></a><a href="/backtest/put_timing/" class="bt-dead">SPY/QQQ 買 put 避險<span class="bt-tag bt-tag-dead">負貢獻</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">多資產</div><div class="bt-subnav-pills"><a href="/backtest/turtle/">唐奇安突破</a><a href="/backtest/clenow/">跨資產趨勢</a><a href="/backtest/multiasset_trend/">SG Trend 複製</a><a href="/backtest/turtle_adopt/">組合採用 Sleeve</a><a href="/backtest/slope_filter_global/">全球斜率穩健性</a><a href="/backtest/crossasset_defense/">跨資產防守</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">台股波段</div><div class="bt-subnav-pills"><a href="/backtest/tw_0050_compare/">0050 總覽·台美差異</a><a href="/backtest/tw_0050/">0050 進攻趨勢（移植）</a><a href="/backtest/tw_0050_lt/">0050 長軌趨勢</a><a href="/backtest/long_track_tw/">2330/0050 E3 長軌</a><a href="/backtest/tw_0050_six/">0050 六狀態機</a><a href="/backtest/tw_0050_dual/" class="bt-dead">0050 雙軌多空<span class="bt-tag bt-tag-dead">否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">台股選擇權</div><div class="bt-subnav-pills"><a href="/backtest/tw_options/">台股選擇權專區<span class="bt-tag bt-tag-watch">專區</span></a><a href="/backtest/txo_vol_seller/">台指選擇權賣方<span class="bt-tag bt-tag-watch">模擬中</span></a><a href="/backtest/txo_put_seller/">台指賣方下檔<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_iron_condor/">台指雙賣<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_covered_call_0050/">台指 Covered Call<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_tail_hedge/">台指尾端避險<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">日內交易</div><div class="bt-subnav-pills"><a href="/backtest/txf_intraday/">台指當沖<span class="bt-tag bt-tag-watch">未過</span></a><a href="/backtest/txf_chips/">籌碼偏向<span class="bt-tag bt-tag-watch">觀察</span></a><a href="/backtest/ssf_xsec/">個股期橫斷面<span class="bt-tag bt-tag-watch">未過</span></a><a href="/backtest/txf_basis/" class="bt-dead">基差偏向<span class="bt-tag bt-tag-dead">否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・主動式ETF</div><div class="bt-subnav-pills"><a href="/backtest/active_etf/">主動式ETF總結<span class="bt-tag bt-tag-watch">專區</span></a><a href="/backtest/tw_active_etf/">台股主動式ETF<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/us_active_etf/">美股主動式ETF<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/tw_mutual_fund/">台股共同基金<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・頻率</div><div class="bt-subnav-pills"><a href="/backtest/daily_vs_weekly/">日/週線</a><a href="/backtest/daily_vs_weekly_deep/">日/週·深掘</a><a href="/backtest/daily_vs_weekly_global/">日/週·全球</a><a href="/backtest/daily_vs_weekly_tw/">日/週·台股</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・均線</div><div class="bt-subnav-pills"><a href="/backtest/ma_cross/">MA 交叉</a><a href="/backtest/ma_deviation/">MA 乖離</a><a href="/backtest/ma_dynband/">MA 動態帶</a><a href="/backtest/ma_squeeze/">MA 擠壓</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・崩盤</div><div class="bt-subnav-pills"><a href="/backtest/smh_vcrash/">SMH V崩</a><a href="/backtest/tw_vcrash/">台股 V崩防禦</a><a href="/backtest/tw_crash/">台股含崩盤驗證</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・總經</div><div class="bt-subnav-pills"><a href="/backtest/housing_gdp/">人均GDP與房價<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・可轉債</div><div class="bt-subnav-pills"><a href="/backtest/tw_cb/">台股可轉債專區<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・因子</div><div class="bt-subnav-pills"><a href="/backtest/return_driver/">美股漲跌歸因：獲利與估值<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/pead/">美股財報驚喜後漂移<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/accruals/">美股獲利品質（應計項目）<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/share_issuance/">美股股數增減（發行與回購）<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/profitability/">美股獲利能力因子<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/asset_growth/">美股資產成長異象<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/index_inclusion/">指數納入效應<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/insider/">內部人買賣叢集買進<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・跨標的驗證</div><div class="bt-subnav-pills"><a href="/backtest/live_system_evidence/">證據總覽（先看這頁）<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/w52_adaptive_oos/">W52×自適應 σ 跨標的證偽<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/insurance_premium/">深熊保險的價格<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/adopted_bootstrap/">已採用系統的統計不確定性帶<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/regime_bootstrap/">保留 regime 的 bootstrap<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/combined_account/">美台合併帳戶層<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/slow_bear_base_rate/">慢熊的 base rate<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/cross_sectional_trend/">橫斷面版趨勢<span class="bt-tag bt-tag-watch">研究</span></a></div></div></nav>
+  </div>
+</div>
+
+<div class="container">
+
+
+<div class="hero">
+  <div class="hero-top">
+    <span class="verdict-tag" style="background:#d97706">有跡象但樣本不夠：只記錄</span>
+    <h2>116 個 −10% 起點事件（真實 ≥20% 事件 55 個、
+    假警報 61 個，其中慢熊 32 個）裡，11 個候選變數中
+    有 0 個變數的 <b>AUC</b> 95% 信賴區間下界穩定超過 0.65。</h2>
+    <p><b>AUC</b>（Area Under the Curve，此處等價 Mann–Whitney 排序檢定——把慢熊事件與其他事件的某個變數值
+    全部混在一起排序，AUC 就是「隨機抽一個慢熊事件、一個其他事件，慢熊那個變數值比較大」的機率；
+    0.5＝完全分不開，1.0＝完美分開）問的是：在回撤剛開始（跌到 −10% 那天）就能不能分辨這次是
+    2008 型慢熊還是 2020 型急跌。判準原文見下方第一節。</p>
+  </div>
+  <div class="hero-stats">
+    <div><div class="hs-label">總起點事件</div><div class="hs-value">116</div></div>
+    <div><div class="hs-label">慢熊事件</div><div class="hs-value">32</div></div>
+    <div><div class="hs-label">假警報</div><div class="hs-value">61</div></div>
+    <div><div class="hs-label">CI 下界過關變數數</div><div class="hs-value">0／11</div></div>
+  </div>
+</div>
+
+
+<div class="section">
+<div class="plain-box">
+<h2 class="section-title" style="border-bottom:none;margin-bottom:.6rem">給沒有統計背景的讀者</h2>
+<p style="font-size:.9rem;margin-bottom:.6rem">這頁回答一個很具體的問題：<b>股市剛開始跌 10% 的那一天，
+有沒有辦法看出「這次會不會演變成又深又久的慢熊（通常要 9 個月以上才落底）」？</b>
+如果可以看出來，理論上避險保單可以只在「這次像慢熊」時才買，平常不用一直付保費。</p>
+<p style="font-size:.9rem;margin-bottom:.6rem">做法是：把歷史上所有「跌到 −10%」的時刻（不管後來有沒有
+繼續跌到 −20%）都挖出來，每個時刻算 11 個當時就已經知道的數字（例如：跌到 −10% 花了幾天、
+當時的波動度、離均線多遠……），然後看「後來真的變慢熊」的那些時刻，這 11 個數字是不是系統性地
+跟其他時刻不一樣。用的檢定叫 <b>Mann–Whitney</b>（一種不假設資料是常態分布、只看排序高低的比較法，
+統計學上很常見也很穩健），量出來的分開程度叫 <b>AUC</b>（見上方 hero 區說明）。</p>
+<p style="font-size:.9rem">因為一次測 11 個變數，光靠運氣就有機會冒出一兩個「看起來分得開」的假訊號，
+所以除了 AUC 本身，還要看它的 <b>95% 信賴區間</b>（CI，重複做這個實驗 100 次、有 95 次會落在的範圍——
+樣本數只有幾十個時，這個範圍通常很寬）夠不夠穩，以及 <b>Bonferroni 校正</b>（把顯著性門檻除以 11，
+懲罰同時測很多變數的運氣成分）過不過關。這頁最誠實的結論，很可能是「分不太開」——那也是有用的答案：
+代表這張保單的保費省不了，只能整張買或整張不買，沒辦法用「猜這次是不是慢熊」來精打細算。</p>
+</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">一、判準與定義（預註冊原文，跑之前鎖死）</h2>
+<div class="takeaway"><b>起點</b>＝峰之後收盤首次 ≤ 峰 × 0.90 的那一天（跌到 −10% 的那天）。
+主結果比較「慢熊起點」vs「其他所有 −10% 起點」（中熊＋急跌＋假警報）；次結果比較「慢熊起點」
+vs「非慢熊 ≥20% 事件起點」（不含假警報）。</p></div>
+<div class="scroll"><table>
+<thead><tr><th>結果</th><th>判定</th></tr></thead>
+<tbody>
+<tr><td class="lbl">任一變數 AUC 的 95% CI 下界 &gt; 0.65，或兩變數 LOO-AUC &gt; 0.70</td>
+<td>起點可分辨：慢熊有事前指紋（進下一輪預註冊，不直接加濾網）</td></tr>
+<tr><td class="lbl">有變數 AUC 點值 &gt; 0.65 但 CI 下界 ≤ 0.65</td><td>有跡象但樣本不夠：只記錄</td></tr>
+<tr><td class="lbl">皆否</td><td>起點分不出來：保費無法靠擇時省，保單只能整張買或整張不買</td></tr>
+</tbody></table></div>
+<div class="note">多重測試揭露：11 個變數同時看，「至少一個 AUC 看起來 &gt;0.65」在零假設下的機率不小，
+所以判準用 <b>CI 下界</b>做主要依據，另印 <b>Bonferroni 校正</b>（把顯著性門檻除以 11，這裡採
+α=0.05/11≈0.0045）下的 p 值當佐證。變數 1（到 −10% 花了幾天）有內生性——「跌得慢」本身就是慢熊定義
+的一部分，是最強但最無趣的變數，故本頁同時報「排除變數 1 之後」的整套結果。</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">二、樣本組成</h2>
+<div class="scroll"><table>
+<thead><tr><th>市場</th><th class="num">慢熊</th><th class="num">中</th><th class="num">急跌</th>
+<th class="num">真實 ≥20% 事件合計</th><th class="num">假警報（觸及 −10% 但未達 −20%）</th></tr></thead>
+<tbody><tr><td class='lbl'>美股 S&P 500</td><td class='num'>8</td><td class='num'>3</td><td class='num'>1</td><td class='num'>12</td><td class='num'>13</td></tr><tr><td class='lbl'>美股 那斯達克綜合</td><td class='num'>6</td><td class='num'>2</td><td class='num'>5</td><td class='num'>13</td><td class='num'>17</td></tr><tr><td class='lbl'>日本 日經 225</td><td class='num'>3</td><td class='num'>1</td><td class='num'>3</td><td class='num'>7</td><td class='num'>6</td></tr><tr><td class='lbl'>德國 DAX</td><td class='num'>5</td><td class='num'>1</td><td class='num'>2</td><td class='num'>8</td><td class='num'>7</td></tr><tr><td class='lbl'>英國 FTSE 100</td><td class='num'>3</td><td class='num'>1</td><td class='num'>1</td><td class='num'>5</td><td class='num'>9</td></tr><tr><td class='lbl'>香港 恆生指數</td><td class='num'>5</td><td class='num'>0</td><td class='num'>1</td><td class='num'>6</td><td class='num'>6</td></tr><tr><td class='lbl'>台灣 加權指數</td><td class='num'>2</td><td class='num'>1</td><td class='num'>1</td><td class='num'>4</td><td class='num'>3</td></tr></tbody></table></div>
+<h3 style="font-size:.92rem;margin:1.1rem 0 .5rem">^GSPC 指標事件驗證（2000／2007／2020／2022）</h3>
+<div class="scroll"><table><thead><tr><th>年代</th><th>峰日</th><th>起點日</th><th>類別</th>
+<th class="num">變數1：到 −10% 天數</th></tr></thead><tbody><tr><td class='lbl'>2000</td><td>2000-03-24</td><td>2000-04-14</td><td style='color:#dc2626'>慢熊</td><td class='num'>15</td></tr><tr><td class='lbl'>2007</td><td>2007-10-09</td><td>2007-11-26</td><td style='color:#dc2626'>慢熊</td><td class='num'>33</td></tr><tr><td class='lbl'>2020</td><td>2020-02-19</td><td>2020-02-27</td><td style='color:#059669'>急跌</td><td class='num'>6</td></tr><tr><td class='lbl'>2022</td><td>2022-01-03</td><td>2022-02-22</td><td style='color:#dc2626'>慢熊</td><td class='num'>34</td></tr></tbody></table></div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">三、AUC 表 — 主結果（慢熊 vs 其他所有 −10% 起點）</h2>
+<div class="takeaway">n1/n0＝慢熊組／對照組可用樣本數；<b>availability</b>（可用率——該變數在此母體中
+能算出數值、非缺值的事件比例；變數 9-11 只用美股兩市場、且需要對應總經資料在起點日附近可查得）。
+方向自由——AUC 已取 max(AUC, 1−AUC)，direction 欄標示「高值→慢熊」或「低值→慢熊」。</div>
+<div class="scroll"><table><thead><tr><th>變數</th><th class="num">AUC</th><th class="num">95% CI</th>
+<th>方向</th><th class="num">n1/n0</th><th class="num">可用率</th>
+<th class="num">Bonferroni p（✓=顯著）</th></tr></thead>
+<tbody><tr><td class='lbl'>1. 到 −10% 花了幾天</td><td class='num'>0.577</td><td class='num'>[0.458, 0.699]</td><td>高值→慢熊</td><td class='num'>32/84</td><td class='num'>100.0%</td><td class='num'>1.0000</td></tr><tr><td class='lbl'>2. RV20（起點日 20 日年化波動）</td><td class='num'>0.529</td><td class='num'>[0.410, 0.651]</td><td>低值→慢熊</td><td class='num'>32/84</td><td class='num'>100.0%</td><td class='num'>1.0000</td></tr><tr><td class='lbl'>3. RV20／RV252 比</td><td class='num'>0.558</td><td class='num'>[0.447, 0.666]</td><td>低值→慢熊</td><td class='num'>32/84</td><td class='num'>100.0%</td><td class='num'>1.0000</td></tr><tr><td class='lbl'>4. 起點收盤相對 200 日均線距離</td><td class='num'>0.514</td><td class='num'>[0.388, 0.636]</td><td>高值→慢熊</td><td class='num'>32/84</td><td class='num'>100.0%</td><td class='num'>1.0000</td></tr><tr><td class='lbl'>5. 200 日均線 20 日斜率</td><td class='num'>0.536</td><td class='num'>[0.414, 0.663]</td><td>低值→慢熊</td><td class='num'>32/84</td><td class='num'>100.0%</td><td class='num'>1.0000</td></tr><tr><td class='lbl'>6. 峰前 12-1 動能</td><td class='num'>0.562</td><td class='num'>[0.431, 0.695]</td><td>高值→慢熊</td><td class='num'>32/84</td><td class='num'>100.0%</td><td class='num'>1.0000</td></tr><tr><td class='lbl'>7. 峰日相對 52 週均線乖離</td><td class='num'>0.519</td><td class='num'>[0.390, 0.649]</td><td>高值→慢熊</td><td class='num'>32/84</td><td class='num'>100.0%</td><td class='num'>1.0000</td></tr><tr><td class='lbl'>8. 起點前 60 交易日最大單日跌幅</td><td class='num'>0.544</td><td class='num'>[0.426, 0.662]</td><td>低值→慢熊</td><td class='num'>32/84</td><td class='num'>100.0%</td><td class='num'>1.0000</td></tr><tr><td class='lbl'>9. 殖利率曲線 10Y−3M</td><td class='num'>0.606</td><td class='num'>[0.423, 0.785]</td><td>低值→慢熊</td><td class='num'>12/39</td><td class='num'>92.7%</td><td class='num'>1.0000</td></tr><tr><td class='lbl'>10. VIX 水準</td><td class='num'>0.528</td><td class='num'>[0.297, 0.762]</td><td>高值→慢熊</td><td class='num'>5/29</td><td class='num'>61.8%</td><td class='num'>1.0000</td></tr><tr><td class='lbl'>11. 起點前 6 個月 IRX 變化</td><td class='num'>0.716</td><td class='num'>[0.513, 0.885]</td><td>高值→慢熊</td><td class='num'>12/39</td><td class='num'>92.7%</td><td class='num'>0.2738</td></tr></tbody></table></div>
+<h3 style="font-size:.92rem;margin:1.3rem 0 .5rem">次結果 — 慢熊 vs 非慢熊 ≥20% 事件（不含假警報）</h3>
+<div class="scroll"><table><thead><tr><th>變數</th><th class="num">AUC</th><th class="num">95% CI</th>
+<th>方向</th><th class="num">n1/n0</th><th class="num">可用率</th>
+<th class="num">Bonferroni p（✓=顯著）</th></tr></thead>
+<tbody><tr><td class='lbl'>1. 到 −10% 花了幾天</td><td class='num'>0.654</td><td class='num'>[0.499, 0.791]</td><td>高值→慢熊</td><td class='num'>32/23</td><td class='num'>100.0%</td><td class='num'>0.5791</td></tr><tr><td class='lbl'>2. RV20（起點日 20 日年化波動）</td><td class='num'>0.564</td><td class='num'>[0.405, 0.703]</td><td>低值→慢熊</td><td class='num'>32/23</td><td class='num'>100.0%</td><td class='num'>1.0000</td></tr><tr><td class='lbl'>3. RV20／RV252 比</td><td class='num'>0.674</td><td class='num'>[0.520, 0.812]</td><td>低值→慢熊</td><td class='num'>32/23</td><td class='num'>100.0%</td><td class='num'>0.3185</td></tr><tr><td class='lbl'>4. 起點收盤相對 200 日均線距離</td><td class='num'>0.537</td><td class='num'>[0.387, 0.689]</td><td>高值→慢熊</td><td class='num'>32/23</td><td class='num'>100.0%</td><td class='num'>1.0000</td></tr><tr><td class='lbl'>5. 200 日均線 20 日斜率</td><td class='num'>0.564</td><td class='num'>[0.409, 0.711]</td><td>低值→慢熊</td><td class='num'>32/23</td><td class='num'>100.0%</td><td class='num'>1.0000</td></tr><tr><td class='lbl'>6. 峰前 12-1 動能</td><td class='num'>0.561</td><td class='num'>[0.408, 0.712]</td><td>高值→慢熊</td><td class='num'>32/23</td><td class='num'>100.0%</td><td class='num'>1.0000</td></tr><tr><td class='lbl'>7. 峰日相對 52 週均線乖離</td><td class='num'>0.531</td><td class='num'>[0.382, 0.686]</td><td>高值→慢熊</td><td class='num'>32/23</td><td class='num'>100.0%</td><td class='num'>1.0000</td></tr><tr><td class='lbl'>8. 起點前 60 交易日最大單日跌幅</td><td class='num'>0.561</td><td class='num'>[0.406, 0.707]</td><td>低值→慢熊</td><td class='num'>32/23</td><td class='num'>100.0%</td><td class='num'>1.0000</td></tr><tr><td class='lbl'>9. 殖利率曲線 10Y−3M</td><td class='num'>0.504</td><td class='num'>[0.265, 0.742]</td><td>高值→慢熊</td><td class='num'>12/11</td><td class='num'>92.0%</td><td class='num'>1.0000</td></tr><tr><td class='lbl'>10. VIX 水準</td><td class='num'>0.640</td><td class='num'>[0.200, 1.000]</td><td>低值→慢熊</td><td class='num'>5/5</td><td class='num'>40.0%</td><td class='num'>1.0000</td></tr><tr><td class='lbl'>11. 起點前 6 個月 IRX 變化</td><td class='num'>0.583</td><td class='num'>[0.333, 0.818]</td><td>高值→慢熊</td><td class='num'>12/11</td><td class='num'>92.0%</td><td class='num'>1.0000</td></tr></tbody></table></div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">四、兩變數組合（事前指定：變數1 × 變數3）— LOO 邏輯迴歸</h2>
+<div class="takeaway"><b>邏輯迴歸</b>（logistic regression——用幾個數字去預測「是/否」這種二元結果的
+機率模型，輸出 0～1 之間的機率）用變數1（到 −10% 天數）與變數3（RV20/RV252，波動相對自身一年的比值）
+兩個一起預測「是不是慢熊」。因為樣本只有幾十個，直接在全部資料上配適再看準不準會樂觀高估，
+所以用 <b>LOO</b>（Leave-One-Out——每次拿掉一個事件當「考題」，用剩下全部事件訓練模型後去猜這一個，
+輪流做完全部事件，模擬每一個預測都是「事前沒看過答案」）算出樣本外 AUC。</div>
+<div class="scroll"><table><thead><tr><th>比較</th><th class="num">LOO-AUC</th><th class="num">n（n1/n0）</th></tr></thead>
+<tbody>
+<tr><td class="lbl">主結果（慢熊 vs 其他 −10% 起點）</td><td class="num">0.5048</td>
+<td class="num">116（32/84）</td></tr>
+<tr><td class="lbl">次結果（慢熊 vs 非慢熊 ≥20% 事件）</td><td class="num">0.6019</td>
+<td class="num">55（32/23）</td></tr>
+</tbody></table></div>
+<div class="note">判準門檻 LOO-AUC &gt; 0.70：主結果 未過關；
+次結果 未過關。
+最終判定（含變數1）— 主結果：<b>有跡象但樣本不夠：只記錄</b>；次結果：<b>有跡象但樣本不夠：只記錄</b>。</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">五、排除變數 1 之後的重述</h2>
+<div class="takeaway">變數1（到 −10% 花了幾天）有內生性：「跌得慢」本身就是慢熊定義（時長 ≥9 個月）
+的一部分，等於用結果的一半去預測結果，是最強但最無趣的變數。這裡拿掉變數1，重跑同一套判準邏輯，
+看其餘 10 個變數還剩多少分辨力。（兩變數 LOO 組合本身即含變數1，排除後該條件標「不適用」。）</div>
+<div class="scroll"><table><thead><tr><th>變數</th><th class="num">AUC</th><th class="num">95% CI</th>
+<th>方向</th><th class="num">n1/n0</th><th class="num">可用率</th>
+<th class="num">Bonferroni p（✓=顯著）</th></tr></thead>
+<tbody><tr><td class='lbl'>2. RV20（起點日 20 日年化波動）</td><td class='num'>0.529</td><td class='num'>[0.410, 0.651]</td><td>低值→慢熊</td><td class='num'>32/84</td><td class='num'>100.0%</td><td class='num'>1.0000</td></tr><tr><td class='lbl'>3. RV20／RV252 比</td><td class='num'>0.558</td><td class='num'>[0.447, 0.666]</td><td>低值→慢熊</td><td class='num'>32/84</td><td class='num'>100.0%</td><td class='num'>1.0000</td></tr><tr><td class='lbl'>4. 起點收盤相對 200 日均線距離</td><td class='num'>0.514</td><td class='num'>[0.388, 0.636]</td><td>高值→慢熊</td><td class='num'>32/84</td><td class='num'>100.0%</td><td class='num'>1.0000</td></tr><tr><td class='lbl'>5. 200 日均線 20 日斜率</td><td class='num'>0.536</td><td class='num'>[0.414, 0.663]</td><td>低值→慢熊</td><td class='num'>32/84</td><td class='num'>100.0%</td><td class='num'>1.0000</td></tr><tr><td class='lbl'>6. 峰前 12-1 動能</td><td class='num'>0.562</td><td class='num'>[0.431, 0.695]</td><td>高值→慢熊</td><td class='num'>32/84</td><td class='num'>100.0%</td><td class='num'>1.0000</td></tr><tr><td class='lbl'>7. 峰日相對 52 週均線乖離</td><td class='num'>0.519</td><td class='num'>[0.390, 0.649]</td><td>高值→慢熊</td><td class='num'>32/84</td><td class='num'>100.0%</td><td class='num'>1.0000</td></tr><tr><td class='lbl'>8. 起點前 60 交易日最大單日跌幅</td><td class='num'>0.544</td><td class='num'>[0.426, 0.662]</td><td>低值→慢熊</td><td class='num'>32/84</td><td class='num'>100.0%</td><td class='num'>1.0000</td></tr><tr><td class='lbl'>9. 殖利率曲線 10Y−3M</td><td class='num'>0.606</td><td class='num'>[0.423, 0.785]</td><td>低值→慢熊</td><td class='num'>12/39</td><td class='num'>92.7%</td><td class='num'>1.0000</td></tr><tr><td class='lbl'>10. VIX 水準</td><td class='num'>0.528</td><td class='num'>[0.297, 0.762]</td><td>高值→慢熊</td><td class='num'>5/29</td><td class='num'>61.8%</td><td class='num'>1.0000</td></tr><tr><td class='lbl'>11. 起點前 6 個月 IRX 變化</td><td class='num'>0.716</td><td class='num'>[0.513, 0.885]</td><td>高值→慢熊</td><td class='num'>12/39</td><td class='num'>92.7%</td><td class='num'>0.2738</td></tr></tbody></table></div>
+<div class="note">排除變數1後判定 — 主結果：<b>有跡象但樣本不夠：只記錄</b>（LOO 條件不適用）；
+次結果：<b>有跡象但樣本不夠：只記錄</b>（LOO 條件不適用）。</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">六、反事實理賠（描述性近似，非新交易系統）</h2>
+<div class="note">⚠ 這一節是<b>描述性近似</b>，不是真實回測、不進判準：假設「gate 只在事件起點
+變數1 ≥ 全樣本中位數（27 個交易日）時才保持理賠，否則當時
+就只是持有指數、不進 options」，重算每次事件的理賠會變多少。保費（非事件期年化報酬差）維持與
+慢熊 base-rate 報告相同數字不變——理由見頁尾揭露。</div>
+<div class="scroll"><table><thead><tr><th>類別</th><th class="num">事件數</th>
+<th class="num">原始平均理賠 pp</th><th class="num">反事實平均理賠 pp</th>
+<th class="num">gate 仍保持理賠比例</th></tr></thead><tbody><tr><td class='lbl' style='color:#dc2626'>慢熊</td><td class='num'>29</td><td class='num'>+27.91</td><td class='num'>+15.31</td><td class='num'>58.6%</td></tr><tr><td class='lbl' style='color:#d97706'>中</td><td class='num'>9</td><td class='num'>+12.46</td><td class='num'>+9.17</td><td class='num'>66.7%</td></tr><tr><td class='lbl' style='color:#059669'>急跌</td><td class='num'>14</td><td class='num'>+14.70</td><td class='num'>+3.11</td><td class='num'>21.4%</td></tr></tbody></table></div>
+<h3 style="font-size:.92rem;margin:1.1rem 0 .5rem">按市場</h3>
+<div class="scroll"><table><thead><tr><th>市場</th><th class="num">事件數</th>
+<th class="num">原始平均理賠 pp</th><th class="num">反事實平均理賠 pp</th>
+<th class="num">gate 仍保持理賠比例</th></tr></thead><tbody><tr><td class='lbl'>美股 S&P 500</td><td class='num'>11</td><td class='num'>+24.61</td><td class='num'>+18.79</td><td class='num'>81.8%</td></tr><tr><td class='lbl'>日本 日經 225</td><td class='num'>6</td><td class='num'>+19.82</td><td class='num'>+12.21</td><td class='num'>16.7%</td></tr><tr><td class='lbl'>德國 DAX</td><td class='num'>8</td><td class='num'>+23.22</td><td class='num'>+11.32</td><td class='num'>50.0%</td></tr><tr><td class='lbl'>英國 FTSE 100</td><td class='num'>5</td><td class='num'>+15.14</td><td class='num'>+4.62</td><td class='num'>40.0%</td></tr><tr><td class='lbl'>香港 恆生指數</td><td class='num'>6</td><td class='num'>+25.79</td><td class='num'>+0.00</td><td class='num'>0.0%</td></tr><tr><td class='lbl'>台灣 加權指數</td><td class='num'>4</td><td class='num'>+24.52</td><td class='num'>+9.29</td><td class='num'>50.0%</td></tr><tr><td class='lbl'>美股 那斯達克綜合</td><td class='num'>12</td><td class='num'>+18.62</td><td class='num'>+11.61</td><td class='num'>66.7%</td></tr></tbody></table></div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">七、誠實揭露</h2>
+<div class="card">
+<p style="font-size:.87rem;margin-bottom:.6rem">n≈55 個真實 ≥20% 事件（主結果併入假警報後 n=116，
+正例仍約 30），檢定力低，CI 會很寬——這正是要印出來的事。事件不獨立（例如 2008 年七個市場幾乎同時
+觸發），bootstrap 以事件為單位重抽，無法完全修正跨市場相關性。變數 9-11（總經類）只涵蓋美股兩市場
+（^GSPC／^IXIC），且 ^VIX 僅 1990 年後可用、^TNX／^IRX 僅 1962／1960 年後可用，早期事件標「不可用」
+而非捏造數字（可用率逐變數印於上方表格）。</p>
+<h3 style="font-size:.95rem;margin:1rem 0 .5rem">實作中的 JUDGMENT CALL（規格未明文之處的保守選擇）</h3>
+<ul><li>尾端未復原的 -10% episode（若有）一律捨棄不計入假警報集——其最終深度與時長在資料截止時仍未知，貼上任何標籤都是預判未來，不符合『起點可分辨性』只用起點時已知資訊的精神。</li><li>反事實理賠的『變數1中位數』門檻取全樣本（跨全部市場）真實 >=20% 事件的中位數（=27.0 個交易日），不分市場各自算中位數——spec 原文『變數1 >= 中位數』未指明母體範圍，取全樣本單一門檻是最簡單、最不會被單一市場樣本數少扭曲的保守選項。</li><li>反事實理賠只重算『理賠』（payout_pp）：gate 不達門檻（變數1<中位數）的事件，假設當時『就只是持有指數、不進options』，故該事件的變體回撤深度視同指數回撤深度＝payout_pp強制為0，事件窗報酬改用指數同窗報酬（index_window_return_pct）；『保費』（premium_annualized_pct）維持原始數字不變——因為保費是用『非事件期』（所有事件窗口以外的交易日）的報酬差年化算出，與『某次事件當下要不要持有避險』這個 per-event 開關無關，此反事實情境不改變非事件期的行為，故無新數字可算；若要估『保費也降低』必須另外假設一個連續開關策略（哪些非事件期也不避險），那已經不是 spec 描述的『只在起點看變數1』的簡單替代規則，會變成真正的策略設計——spec 明文『不做的事：不掃門檻、不寫該在什麼時候保險的建議』，故不外推，維持保費原數字並在頁面上明說這點是本反事實的邊界。</li><li>起點日定義逐字照 spec：peak_date 之後（不含當天）第一個收盤 <= 0.90*peak_value 的交易日；真實 >=20% 事件的 peak_date/peak_value 直接沿用 base-rate JSON 已凍結的偵測結果，不重跑偵測器（避免兩份報告對同一事件的峰值認定不一致）。</li><li>假警報偵測器與 base-rate 的 >=20% 偵測器共用同一套 running-max 演算法骨架，只把觸發門檻改成-10%、並在復原時檢查『事件內是否曾經觸及 -20%』決定要不要算作假警報——確保假警報與真實事件之間不會重複計數同一段回撤。</li><li>變數 1-8 的所有滾動窗口（20/60/200/252 日）一律要求『完整』N 筆歷史資料才計算，資料不足（多半是台股 1997 年起、事件太早）一律標 NaN 並排除該變數該事件的 AUC 計算——不用不足窗口頂替，避免用短窗高估/低估波動或均線乖離；覆蓋率（availability_pct）在 AUC 表逐變數印出。</li><li>變數 10 原文『VIX 水準與 VIX／RV20 比』只取『VIX 水準』計入正式 11 次檢定（Bonferroni 分母=11）；『VIX／RV20 比』另外算出存進事件紀錄（vix_over_rv20 欄）供頁面描述性參考，不計入正式 AUC 表——spec 11 個變數＝11 次檢定的凍結陳述若把兩個指標都算正式檢定會變 12 次，故取其一為正式、另一為附註，是對『恰好 11 次檢定』最保守的讀法。</li><li>^TNX/^IRX 在起點日的取值採『當天或之前最近 7 個日曆天內』的最後一筆收盤（nearest-on-or-before，非未來值，符合『無 look-ahead』）；超過 7 天找不到值標不可用。IRX 六個月前的比較點放寬到 14 天容忍窗（月曆月換算交易日本就有誤差）。</li><li>反事實理賠比對用『peak_date + trough_date 雙欄配對』把 slow_bear_onset 自算的事件與 base-rate JSON 的 rule_application per_event 對起來（兩者事件偵測邏輯相同、日期應完全一致）；找不到配對（理論上不該發生）的事件跳過不計入反事實統計。</li><li>LOO 邏輯迴歸的兩個共變數在每次留一法的訓練折內用『訓練集自身』的均值/標準差做 z-score標準化（held-out 事件的共變數套用訓練集的標準化參數，不使用其自身資訊），避免用測試點污染標準化參數；加極小 ridge（1e-6）純為 55 筆量級小樣本下 Newton-Raphson 數值穩定，對估計係數影響可忽略。</li><li>bootstrap 對正例/負例『分別各自』重抽（各自抽出與原組別相同人數，可重複），是 Mann-Whitney型 AUC 的標準 bootstrap 做法（相對於對全部事件混合重抽再依標籤重新分組，後者在標籤本身隨重抽變動時邊界案例的定義較模糊）；bootstrap 方向（要不要取 1-auc）固定用全樣本點估計的方向，不逐次重新判斷方向，避免均值往兩端偏誤。</li></ul>
+</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">八、術語白話對照</h2>
+<div class="card">
+<ul style="font-size:.86rem;line-height:1.9">
+<li><b>AUC</b>（Area Under the Curve）：把兩組事件的某個數值混在一起排序，AUC 是「隨機抽一個慢熊事件、
+一個非慢熊事件，慢熊那個數值比較大」的機率；0.5＝分不開，1.0＝完美分開。</li>
+<li><b>Mann–Whitney</b>（曼-惠特尼檢定）：不假設資料常態分布、只比較兩組排序高低的統計檢定，
+AUC 在數學上等價於這個檢定的秩和統計量標準化後的結果。</li>
+<li><b>Bootstrap</b>（拔靴法）：從既有樣本中「有放回」地重複抽樣很多次（本頁 2,000 次），
+每次重算一次統計量，看這些重算結果的分布多寬，用來估計信賴區間。</li>
+<li><b>95% CI</b>（信賴區間）：如果重複做同一個實驗很多次，理論上有 95% 的機率，算出來的區間會
+涵蓋真實值；樣本數少時這個區間會很寬，代表「不確定性很大」。</li>
+<li><b>Bonferroni 校正</b>：同時做很多次檢定時（本頁 11 次），單獨看每一個的顯著性門檻（通常 0.05）
+會被運氣灌水，所以把門檻除以檢定次數（0.05/11），讓判定更嚴格保守。</li>
+<li><b>邏輯迴歸</b>（Logistic Regression）：用幾個數值變數去預測一個「是/否」結果的機率，輸出永遠
+落在 0 到 1 之間的機率模型。</li>
+<li><b>LOO 交叉驗證</b>（Leave-One-Out）：每次拿掉一筆資料當「考題」、用剩下全部資料訓練模型去猜
+這一筆，輪流做完全部資料，用來估計模型在「沒看過的新資料」上大概多準，避免用同一批資料訓練又
+考試造成的樂觀高估。</li>
+<li><b>p 值</b>：假設「兩組其實根本沒有差異」（零假設）為真的前提下，觀察到目前這麼極端或更極端結果的
+機率；p 值越小，代表「兩組真的沒差異」這個假設越站不住腳。</li>
+<li><b>假警報</b>（false alarm）：本頁指跌到 −10% 但最終沒有繼續跌到 −20%、而是先復原創新高的事件——
+實務上在跌到 −10% 那天，沒有人知道它會不會演變成 −20% 以上的熊市，所以主結果把假警報也算進
+「其他 −10% 事件」對照組。</li>
+</ul>
+</div>
+</div>
+
+
+</div>
+
+<footer>
+  <div class="container">
+    &copy; 2026 InvestMQuest Research &middot; 慢熊在起點認得出來嗎？（可分辨性研究，非新交易系統，
+    不構成投資或投保建議）&middot; 規格 docs/Slow_Bear_Onset_Spec.md・頁面生成 2026-09-05 &middot; 僅供研究參考
+  </div>
+</footer>
+
+</body>
+</html>
