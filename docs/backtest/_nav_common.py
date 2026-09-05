@@ -187,6 +187,7 @@ RESEARCH_OOS_LINKS = [
     ("/backtest/combined_account/", "美台合併帳戶層", "comb_acct", "研究"),
     ("/backtest/slow_bear_base_rate/", "慢熊的 base rate", "slow_bear", "研究"),
     ("/backtest/slow_bear_onset/", "慢熊：起點認得出來嗎？", "slow_bear_onset", "研究"),
+    ("/backtest/f_portfolio/", "F 組合：疊兩種保險", "f_portfolio", "研究"),
     ("/backtest/cross_sectional_trend/", "橫斷面版趨勢", "cross_sec_trend", "研究"),
 ]
 
