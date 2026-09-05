@@ -37,9 +37,25 @@ Two layers:
      (via gen_dd_tables.build_dd_meta — the single judgment→dd-meta mapping,
      reused not re-derived) must have a corresponding entry in
      judgment.contradictions[] (see _v16_design_spec §5.5 / drift_check_spec.md).
+  5. J1 負向證據可追溯（--evidence 給定才啟用，WP2 2026-09-05）: evidence
+     coverage／events 內每條 direction=="-" 的 finding（無 id 時以
+     {axis}#{index} 現算）須出現在 judgment 任一 evidence_refs 陣列
+     （contradictions[]／moat.threats[]／premortem.blind_spots[]／
+     triggers[]／thesis.R[]）或頂層 evidence_dismissed[].ref，否則 FAIL；
+     `--j1-warn` 可降為 WARN（校準用）。
+  6. J2 判斷層恆等式（WP2）: verify_dd_math.py 檢查 A/B/E 中只需
+     judgment.json + 同目錄 scenario_meta.json（由 scenario_ref 推）即可算
+     的子集——Max DD 下限 vs Bear 終點跌幅、decision_inputs.irr_base_pct／
+     ev5y_pct 對 scenario_meta、情境樹年期、Bull EPS 對 Base 的退化、
+     scenario_meta.valuation_dependent 與 decision_inputs 同名欄一致性；
+     容差沿用 verify_dd_math.py 原腳本常數，恆常執行（不需 --evidence）。
+  7. J3 `--fix`（WP2）: 自動修正 scenario_ref 相對路徑→絕對路徑、字串內半形
+     標點轉全形；scenario_meta.valuation_dependent 與 decision_inputs 不一致
+     不自動修，仍由 J2 列 FAIL。
 
 Usage:
   python3 scripts/validate_judgment.py FILE.json [--report] [--evidence EVIDENCE.json]
+                                        [--j1-warn] [--fix]
 
 Exit 0 = no FAIL-level issues (or --report). Exit 1 otherwise.
 """
@@ -273,6 +289,194 @@ def cross_field_checks(data: dict, judgment_path: Path) -> tuple[list, list]:
 
 
 # ---------------------------------------------------------------------------
+# J2: judgment-layer copy of verify_dd_math.py 檢查 A/B/E 的可算子集（WP2
+# 2026-09-05）——只需 judgment.json ＋ 同目錄 scenario_meta.json（由
+# scenario_ref 推），不需渲染後 HTML，故不能直接 import verify_dd_math（其
+# check_file 讀 dd-meta script tag）。容差沿用該腳本常數，邏輯照抄不改判定。
+# ---------------------------------------------------------------------------
+
+J2_MAXDD_TOL = 2.0    # pp，同 verify_dd_math.MAXDD_TOL
+J2_EV_TOL = 1.5       # pp，同 verify_dd_math.EV_TOL
+J2_IRR_TOL = 1.0      # pp，同 verify_dd_math.IRR_TOL
+J2_YEAR_WARN_TOL = 1  # 年，同 verify_dd_math 檢查 B 的終端年寬容度
+_FY_YEAR_RE = re.compile(r"FY\s*(\d{4})")
+
+
+def _extract_fy_year(s) -> int | None:
+    if not isinstance(s, str):
+        return None
+    m = _FY_YEAR_RE.search(s)
+    return int(m.group(1)) if m else None
+
+
+def _load_scenario_meta_for_j2(data: dict, judgment_path: Path):
+    """回傳 (scenario_meta_dict_or_None, warn_msg_or_None)。獨立於
+    cross_field_checks 既有的 scenario_ref 解析（不動既有函式），解析規則
+    相同：相對路徑以 judgment 所在目錄為準。"""
+    scenario_ref = data.get("scenario_ref")
+    if not scenario_ref:
+        return None, "scenario_ref 未填，J2 判斷層恆等式略過"
+    ref_path = Path(scenario_ref)
+    if not ref_path.is_absolute():
+        ref_path = judgment_path.parent / scenario_ref
+    if not ref_path.exists():
+        return None, f"scenario_ref {scenario_ref!r} 指向的檔案不存在（{ref_path}），J2 略過"
+    try:
+        return json.loads(ref_path.read_text(encoding="utf-8")), None
+    except json.JSONDecodeError as e:
+        return None, f"scenario_ref {ref_path}: JSON parse error: {e}"
+
+
+def j2_math_checks(data: dict, judgment_path: Path) -> tuple[list, list]:
+    """WP2 J2 — 判斷層恆等式：Max DD 下限 vs Bear 終點跌幅、
+    decision_inputs.irr_base_pct／ev5y_pct 對 scenario_meta、情境樹年期、
+    Bull EPS 對 Base 的退化、scenario_meta.valuation_dependent 與
+    decision_inputs 同名欄一致性。恆常執行（不需 --evidence）。"""
+    fails, warns = [], []
+    sref, warn = _load_scenario_meta_for_j2(data, judgment_path)
+    if sref is None:
+        if warn:
+            warns.append(f"J2｜{warn}")
+        return fails, warns
+
+    di = data.get("decision_inputs") or {}
+    price = di.get("price_at_dd")
+
+    # Max DD 下限 ≥ Bear 終點跌幅（verify_dd_math 檢查 A 的 Max DD 恆等式）
+    bear_p = sref.get("bear_5y_price")
+    mdd = ((data.get("premortem") or {}).get("max_dd") or {}).get("lo")
+    if price is not None and bear_p is not None and mdd is not None and price > 0:
+        bear_ret = (bear_p / price - 1) * 100
+        if abs(mdd) + J2_MAXDD_TOL < abs(bear_ret):
+            fails.append(
+                f"J2｜Max DD 恆等式違反：premortem.max_dd.lo={mdd} 但 Bear 終點跌幅"
+                f"={bear_ret:.1f}%（price_at_dd={price}／scenario_meta.bear_5y_price="
+                f"{bear_p}）——路徑最大回撤不可能小於任一情境終點跌幅"
+            )
+    else:
+        warns.append("J2｜缺 price_at_dd／bear_5y_price／premortem.max_dd.lo 任一，Max DD 恆等式略過")
+
+    # decision_inputs.irr_base_pct／ev5y_pct 對 scenario_meta
+    for key, tol in (("irr_base_pct", J2_IRR_TOL), ("ev5y_pct", J2_EV_TOL)):
+        di_v, sref_v = di.get(key), sref.get(key)
+        if di_v is None or sref_v is None:
+            continue
+        if abs(di_v - sref_v) > tol:
+            fails.append(
+                f"J2｜decision_inputs.{key}={di_v} 與 scenario_meta.{key}={sref_v} 對不上"
+                f"（容忍 {tol}pp）"
+            )
+
+    # 情境樹年期：scenario_meta 終端年 vs eps_meta.base_eps_path 終端年；
+    # 與報告年+5 差 >1 年只 WARN（容忍財年錯位，同 verify_dd_math 檢查 B）
+    scenario_tree = sref.get("scenario_tree") or {}
+    term_year = _extract_fy_year(scenario_tree.get("terminal_label"))
+    eps_path = (data.get("eps_meta") or {}).get("base_eps_path") or {}
+    eps_years = [y for y in (_extract_fy_year(k) for k in eps_path) if y is not None]
+    if term_year and eps_years:
+        max_eps_year = max(eps_years)
+        if max_eps_year != term_year:
+            fails.append(
+                f"J2｜情境樹年期錯配：scenario_meta.scenario_tree.terminal_label 宣告 "
+                f"FY{term_year}，但 eps_meta.base_eps_path 終端年是 FY{max_eps_year}"
+            )
+    dd_date = (data.get("meta") or {}).get("date") or ""
+    if term_year and re.match(r"^\d{4}", dd_date):
+        dd_year = int(dd_date[:4])
+        if abs(term_year - (dd_year + 5)) > J2_YEAR_WARN_TOL:
+            warns.append(
+                f"J2｜終端年 FY{term_year} 與報告年+5（{dd_year + 5}）差 "
+                f">{J2_YEAR_WARN_TOL} 年——確認主時距宣告與財年口徑"
+            )
+
+    # Bull 前兩年 EPS 與 Base 相同＝情境退化（verify_dd_math 檢查 E 同款）
+    bull_path = (scenario_tree.get("eps") or {}).get("bull") or []
+    base_path = (scenario_tree.get("eps") or {}).get("base") or []
+    if (len(bull_path) >= 2 and len(base_path) >= 2
+            and bull_path[0] == base_path[0] and bull_path[1] == base_path[1]):
+        fails.append(
+            "J2｜Bull 前兩年 EPS 與 Base 相同＝情境退化，Bull 只靠終端倍數分岔；"
+            "Bull 路徑須自第 1 年起高於 Base"
+        )
+
+    # scenario_meta.valuation_dependent 與 decision_inputs 同名欄一致性
+    # （J3 --fix 不自動修此欄，不一致必須人工裁定）
+    sref_vd = sref.get("valuation_dependent")
+    di_vd = di.get("valuation_dependent")
+    if sref_vd is not None and di_vd is not None and bool(sref_vd) != bool(di_vd):
+        fails.append(
+            f"J2｜scenario_meta.valuation_dependent={sref_vd} 與 "
+            f"decision_inputs.valuation_dependent={di_vd} 不一致（J3 --fix 不自動修此欄）"
+        )
+
+    return fails, warns
+
+
+# ---------------------------------------------------------------------------
+# J1: negative-evidence traceability (--evidence 給定才啟用，WP2 2026-09-05)
+# ---------------------------------------------------------------------------
+
+def _collect_evidence_refs(data: dict) -> set:
+    referenced = set()
+    for c in (data.get("contradictions") or []):
+        if isinstance(c, dict):
+            referenced.update(c.get("evidence_refs") or [])
+    for t in ((data.get("moat") or {}).get("threats") or []):
+        if isinstance(t, dict):
+            referenced.update(t.get("evidence_refs") or [])
+    for b in ((data.get("premortem") or {}).get("blind_spots") or []):
+        if isinstance(b, dict):
+            referenced.update(b.get("evidence_refs") or [])
+    for tr in (data.get("triggers") or []):
+        if isinstance(tr, dict):
+            referenced.update(tr.get("evidence_refs") or [])
+    for r in ((data.get("thesis") or {}).get("R") or []):
+        if isinstance(r, dict):
+            referenced.update(r.get("evidence_refs") or [])
+    for d in (data.get("evidence_dismissed") or []):
+        if isinstance(d, dict) and d.get("ref"):
+            referenced.add(d["ref"])
+    return referenced
+
+
+def j1_traceability_checks(data: dict, evidence_path: Path | None, warn_only: bool = False) -> tuple[list, list]:
+    """WP2 J1 — 負向證據可追溯：evidence coverage／events 內每條
+    direction=="-" 的 finding（無 id 時以 {axis}#{index} 現算）須出現在
+    judgment 任一 evidence_refs 陣列或頂層 evidence_dismissed[].ref，否則
+    FAIL（逐條列 axis#n｜claim 前 60 字）；--j1-warn 降為 WARN。僅在
+    --evidence 給定時啟用。"""
+    fails, warns = [], []
+    if evidence_path is None:
+        return fails, warns
+    if not evidence_path.exists():
+        warns.append(f"J1｜--evidence {evidence_path} 檔案不存在，J1 略過")
+        return fails, warns
+    try:
+        evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        warns.append(f"J1｜--evidence {evidence_path}: JSON parse error: {e}，J1 略過")
+        return fails, warns
+
+    referenced = _collect_evidence_refs(data)
+    target = warns if warn_only else fails
+
+    for section in ("coverage", "events"):
+        block = evidence.get(section) or {}
+        for axis, v in block.items():
+            if not isinstance(v, dict):
+                continue
+            for i, f in enumerate(v.get("findings") or []):
+                if not isinstance(f, dict) or f.get("direction") != "-":
+                    continue
+                ref_id = f.get("id") or f"{axis}#{i}"
+                if ref_id not in referenced:
+                    claim = (f.get("claim") or "")[:60]
+                    target.append(f"J1｜{ref_id}｜{claim}")
+
+    return fails, warns
+
+
+# ---------------------------------------------------------------------------
 # layer 3: machine-language / CJK-punctuation leak scan (WP1c 修法3)
 #
 # 判斷層就攔——散文/呈現層才攔已經太晚（v16 dry-run §11 item 3 教訓：
@@ -448,7 +652,7 @@ def drift_checks(data: dict, judgment_path: Path, evidence_path: Path | None) ->
 # main
 # ---------------------------------------------------------------------------
 
-def validate_file(path: Path, evidence_path: Path | None = None):
+def validate_file(path: Path, evidence_path: Path | None = None, j1_warn: bool = False):
     schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
     data = json.loads(path.read_text(encoding="utf-8"))
 
@@ -456,17 +660,75 @@ def validate_file(path: Path, evidence_path: Path | None = None):
     cross_fails, cross_warns = cross_field_checks(data, path)
     leak_fails = leak_and_punct_checks(data)
     drift_fails, drift_warns = drift_checks(data, path, evidence_path)
+    j2_fails, j2_warns = j2_math_checks(data, path)
+    j1_fails, j1_warns = j1_traceability_checks(data, evidence_path, warn_only=j1_warn)
 
-    fails = struct_errs + cross_fails + leak_fails + drift_fails
-    warns = cross_warns + drift_warns
+    fails = struct_errs + cross_fails + leak_fails + drift_fails + j2_fails + j1_fails
+    warns = cross_warns + drift_warns + j2_warns + j1_warns
     return fails, warns
+
+
+# ---------------------------------------------------------------------------
+# J3: --fix（WP2 2026-09-05）——可自動修的直接改檔：scenario_ref 相對路徑
+# → 絕對路徑；字串內半形標點轉全形（沿用 qc.CJK_PUNCT_RE 偵測，qc.py 無現成
+# 轉換函式故轉換表另建，正則本身 import 重用不複製）。
+# scenario_meta.valuation_dependent 與 decision_inputs 同名欄不一致「不」在
+# 此自動修，維持由 j2_math_checks 列 FAIL。
+# ---------------------------------------------------------------------------
+
+_PUNCT_FULLWIDTH = {",": "，", ".": "。", ":": "："}
+
+
+def _fullwidth_punct(s: str) -> str:
+    return qc.CJK_PUNCT_RE.sub(lambda m: m.group(0)[:-1] + _PUNCT_FULLWIDTH[m.group(0)[-1]], s)
+
+
+def _walk_fix_strings(obj):
+    """就地走訪 dict/list，yield (container, key_or_index, string_value)。"""
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            if isinstance(v, str):
+                yield obj, k, v
+            else:
+                yield from _walk_fix_strings(v)
+    elif isinstance(obj, list):
+        for i, v in enumerate(obj):
+            if isinstance(v, str):
+                yield obj, i, v
+            else:
+                yield from _walk_fix_strings(v)
+
+
+def apply_fixes(data: dict, judgment_path: Path) -> list:
+    """就地修改 data，回傳套用紀錄字串清單。"""
+    applied = []
+
+    scenario_ref = data.get("scenario_ref")
+    if scenario_ref and not Path(scenario_ref).is_absolute():
+        abs_path = (judgment_path.parent / scenario_ref).resolve()
+        if abs_path.exists():
+            data["scenario_ref"] = str(abs_path)
+            applied.append(f"scenario_ref 相對路徑 {scenario_ref!r} → {data['scenario_ref']!r}")
+
+    n_punct = 0
+    for container, key, s in list(_walk_fix_strings(data)):
+        fixed = _fullwidth_punct(s)
+        if fixed != s:
+            container[key] = fixed
+            n_punct += 1
+    if n_punct:
+        applied.append(f"半形標點轉全形：{n_punct} 處字串已修")
+
+    return applied
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("file", help="judgment.json 路徑")
     ap.add_argument("--report", action="store_true", help="永遠 exit 0，只印報告")
-    ap.add_argument("--evidence", help="evidence.json 路徑；給了才啟用漂移檢查（layer 4）")
+    ap.add_argument("--evidence", help="evidence.json 路徑；給了才啟用漂移檢查（layer 4）與 J1")
+    ap.add_argument("--j1-warn", action="store_true", help="J1 負向證據可追溯 FAIL 降為 WARN（校準用）")
+    ap.add_argument("--fix", action="store_true", help="套用 J3 可自動修正項並寫回檔案，再照常跑驗證報告")
     args = ap.parse_args()
 
     path = Path(args.file)
@@ -474,8 +736,19 @@ def main():
         print(f"✗ {path}: 檔案不存在")
         sys.exit(1)
 
+    if args.fix:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        applied = apply_fixes(data, path)
+        if applied:
+            path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        print(f"[J3 --fix] {path.name}：套用 {len(applied)} 項修正")
+        for a in applied:
+            print(f"  ✓ {a}")
+        if not applied:
+            print("  無可自動修正項")
+
     evidence_path = Path(args.evidence) if args.evidence else None
-    fails, warns = validate_file(path, evidence_path)
+    fails, warns = validate_file(path, evidence_path, j1_warn=args.j1_warn)
 
     tag = "FAIL" if fails else "PASS"
     print(f"[{tag}] {path.name}（{len(fails)} FAIL／{len(warns)} WARN）")

@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "dd_schema/judgment.schema.json",
-  "title": "stock-analyst v16 judgment.json (WP1c draft-07 subset)",
+  "title": "stock-analyst v17 judgment.json (WP1c draft-07 subset)",
   "description": "Interpreted by scripts/validate_judgment.py's lightweight generic validator (supports: type/required/properties/items/enum/pattern/minItems/minLength/maxLength/additionalProperties only -- NOT a full draft-07 implementation). Cross-field rules (H<->R<->triggers mapping, decision_inputs completeness, scenario_ref consistency, date>=1 row) are NOT expressible here and are checked separately in validate_judgment.py. See scripts/dd_schema/judgment-to-ddmeta.md for the dd-meta field derivation table.",
   "type": "object",
   "required": [
@@ -427,7 +427,16 @@
       "type": "object",
       "required": ["blind_spots", "failure_story", "second_failure", "max_dd"],
       "properties": {
-        "blind_spots": {"type": "array", "items": {"type": "string"}},
+        "blind_spots": {
+          "type": "array",
+          "items": {
+            "type": ["string", "object"],
+            "properties": {
+              "text": {"type": ["string", "null"]},
+              "evidence_refs": {"type": "array", "items": {"type": "string"}}
+            }
+          }
+        },
         "failure_story": {"type": ["string", "null"]},
         "second_failure": {"type": ["string", "null"]},
         "max_dd": {
@@ -475,6 +484,17 @@
         "valuation": {"type": "string"},
         "trap_analysis": {"type": "string"},
         "premortem": {"type": "string"}
+      }
+    },
+
+    "evidence_dismissed": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "ref": {"type": ["string", "null"]},
+          "reason": {"type": ["string", "null"]}
+        }
       }
     }
   }
