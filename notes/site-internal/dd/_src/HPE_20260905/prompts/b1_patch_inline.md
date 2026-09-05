@@ -1,0 +1,1649 @@
+你是 stock-analyst v17 判斷 agent，回來做**一輪定點修補**。標的 HPE（20260905）。判斷物已由跨模型閘（gate）冷讀過，下面是它點名的判斷級發現。你的任務只有一件：**針對被點名的欄位做最小修正**，不重寫判斷。
+
+## 讀（判斷物全文附於本訊息之後，不要 Read 任何檔）
+
+判斷物（judgment.json）全文接在本訊息最後（「===== BUNDLE =====」分隔行之後）。
+
+不要重讀 bundle、evidence.json、gate_audit.md、`docs/dd/` 任何檔，也不要回讀你等一下寫出的新版 judgment。你需要的稽核意見全文已附在下方，判斷物全文已附在最後。
+
+## 閘的發現（gate findings）
+
+### 發現 1：3 其他結構變數 🔴
+- **依據**：channel_business_model_shift#2（GreenLake 消費制已成產業標配、弱化護城河邊際貢獻）與 #1（轉售通路利潤率被壓縮）未進任何風險欄亦不在 evidence_dismissed，moat 決策層級反以 GreenLake 44,000 客戶當黏性正證
+- **建議改法**：於 moat.threats 或 contradictions 新增一條承接消費制商品化（或寫入 evidence_dismissed 給理由），並調整決策層級檢查點措辭
+- **指向欄位**：moat.roic_durability.checkpoints[1]／evidence_dismissed[]
+
+**受影響子樹原文**：
+
+`moat.roic_durability.checkpoints[1]`：
+```json
+{
+  "name": "決策層級",
+  "light": "🟡",
+  "evidence": "網通：Mist／Aruba 裝機與營運軟體使切換以『整個網路』為單位，續約黏性高（GreenLake 約 44,000 客戶，來源：摘要）；伺服器：以單一標案為單位，超大規模可自製",
+  "proxy": "網通 OM 23.7% vs 伺服器 OM 約 10%（來源：摘要）"
+}
+```
+
+**相關 evidence finding 原文**：
+
+`channel_business_model_shift#2`：
+```json
+{
+  "claim": "HPE GreenLake消費制/訂閱模式FY2026目標營收US$3.5B、平台上約50,000個客戶；但產業評論指出消費制定價已從差異化優勢變成產業標配（不再是HPE獨有賣點），弱化其作為護城河的邊際貢獻。",
+  "source": "TechTarget \"What is HPE GreenLake and how does it work?\"; news-articles.net \"HPE's Strategic Pivot: AI-Native Architecture and the GreenLake Consumption Model\"",
+  "as_of": "2026-05-04",
+  "direction": "0",
+  "affects": [
+    "moat_trend",
+    "thesis.R",
+    "valuation"
+  ],
+  "id": "channel_business_model_shift#2"
+}
+```
+
+---
+
+### 發現 2：6 量化模組完整性 🔴
+- **依據**：reasoning.valuation 記「Base IRR 6.7%＋yield 2.6＝9.3%」，但 governance 殖利率 1.1%、quality.buyback 稱淨回購貢獻 <1pp，而 formula_note 已把淨回購 3pp 併入 EPS CAGR＝回購計兩次；reinvest_rate「約 35%」無分子分母
+- **建議改法**：拆明 yield 組成並剔除已含於 EPS 路徑的回購（irr_base 應降至約 7.8–8.0%）；reinvest_rate 補實算算式
+- **指向欄位**：decision_inputs.irr_base_pct／moat.roic_durability.reinvest_rate
+
+**受影響子樹原文**：
+
+`decision_inputs.irr_base_pct`：
+```json
+9.3
+```
+
+`moat.roic_durability.reinvest_rate`：
+```json
+"約 35%（capex≈D&A、ΔWC 為預購記憶體、去槓桿吃掉多數 FCF）"
+```
+
+**相關 evidence finding 原文**：
+
+（未定位到對應 evidence finding）
+
+---
+
+### 發現 3：8 QC-49 漂移歸因 🔴
+- **依據**：drift_watch 的 runway_post_y5（本次 🟡）與 archetype（本次 品質複利成長）前份皆無欄，卻未比照 moat_trend／irr_base_pct 等同類欄給帶 prior_field 的獨立條目
+- **建議改法**：補兩條 prior_field 漂移條目，主因標「方法論變了（v12.4 無此欄）」
+- **指向欄位**：contradictions[]（缺 prior_field="runway_post_y5"／"archetype"）
+
+**受影響子樹原文**：
+
+`contradictions`：
+```json
+[
+  {
+    "axis": "共識清單",
+    "side_a": "方向一致：網通已成獲利主體（OM 23–24%、占 OP 逾半）；Q3 FY26 全線超預期且 FY26／FY27 上修；訂單 +42% > 營收 +34%；供給受限至 2027；去槓桿與回饋紀律在軌",
+    "side_b": "矛盾拓撲＝集中兩軸：估值（五年高倍數 vs PEG <1）與週期性（記憶體轉嫁／AI 系統 mix 是否為 FY27 EPS 的巔峰成分）；其餘為程度差異",
+    "ruling": "爭議集中→點名估值×週期軸為 binding；信心不整體下修，角色落追蹤",
+    "evidence_level": "L1",
+    "settle_metric": "FY27 框架於 Q4 FY26 法說原文重申＋Cloud & AI OM 守 10%",
+    "if_then": [
+      "若 Q4 FY26 重申框架且股價 ≤$44→衛星首倉 1/3",
+      "若框架下修→追蹤名單移除"
+    ]
+  },
+  {
+    "axis": "矛盾：伺服器份額下滑 vs 營收 +34%",
+    "side_a": "IDC Q4 2025：HPE 全市場份額 3.1%、第五、營收 −8.6% YoY，歸因 Dell 組合、Lenovo、超大規模自製",
+    "side_b": "Q3 FY26（2026-07 季末）Cloud & AI +25.4%、AI 系統訂單 $2.4B、$3.5B 推論大單——最新一季官方值優先",
+    "ruling": "不可調和（方向相反）：兩者皆 L1 但時點不同——IDC 反映 2025 底 HPE 主動挑毛利訂單（FY26 Cloud & AI 指引曾下修，來源：摘要）；Q3 反映供給鬆動後出貨。裁決：份額結構性流向 ODM 為真且長期，Q3 放量為週期性補償，兩者可同時為真；護城河 pricing 6.5 已扣",
+    "evidence_level": "L1",
+    "settle_metric": "IDC 2026 Q3／Q4 HPE 份額是否回到 ≥4%",
+    "if_then": [
+      "若份額回升且 OM 守 10%→R2 降級",
+      "若份額續降而營收靖增（純轉嫁膨脹）→Bear 機率 35%"
+    ],
+    "evidence_refs": [
+      "competitive_share_entrants#0",
+      "customer_second_source#0"
+    ]
+  },
+  {
+    "axis": "矛盾：估值兩把尺方向相反",
+    "side_a": "trailing P/E／P/S／EV/S 皆五年 100 分位（valuation_history）；26 週 +148%",
+    "side_b": "Fwd PE FY27 11.4x、PEG 0.97、FCF yield 約 7%（FY27 ≥$5B／市值約 $68B）；共識 90 天上修 12–16%",
+    "ruling": "可調和（程度差異）：複利尺以前瞻優先→診斷『公允至便宜』；但色階規則取較嚴→🔴。本檔採色階規則並明文兩規則相衝；且前瞻分母（FY27 EPS）正是週期爭點→分母爭議成立，便宜論證降權。市場錯在哪：市場把 FY27 當持久基期，本檔認為其中含記憶體轉嫁與 AI 巔峰 mix，FY28 共識成長已降至 +8% 即為線索",
+    "evidence_level": "L2",
+    "settle_metric": "FY28 共識 EPS 方向（上修＝市場對；下修＝本檔對）",
+    "if_then": [
+      "若 FY28 共識上修至 ≥$5.3 且股價 ≤$55→PEG 尺勝出、rearm",
+      "若 FY28 共識下修→維持觀望、rearm 價下修"
+    ]
+  },
+  {
+    "axis": "矛盾：供給受限是利多還是天花板",
+    "side_a": "『AI 伺服器做不夠賣』、訂單與 backlog 創高＝需求能見度至 2027",
+    "side_b": "財報後股價 −5%：市場讀為記憶體／CPU／硬碟缺貨限制出貨與毛利；管理層預期緊張延續至 2027",
+    "ruling": "可調和：兩者是同一事實的兩面——對營收是天花板、對定價是支撐；對 HPE 環節淨效果取決於轉嫁率，Cloud & AI OM 是唯一裁判",
+    "evidence_level": "L1",
+    "settle_metric": "Cloud & AI OM 連 2 季方向",
+    "if_then": [
+      "若 OM ≥11% 連 2 季→天花板論退場、Bull 機率 30%",
+      "若 OM <10% 連 2 季→減碼／延後 rearm"
+    ],
+    "evidence_refs": [
+      "capital_markets_pricing#2",
+      "major_events#4"
+    ]
+  },
+  {
+    "axis": "矛盾：Juniper 反壟斷——和解定案 vs 程序爭議",
+    "side_a": "2026-08-12 北加州法院核准 DOJ 和解，交易 2025-07 已完成；EC 亦已核准",
+    "side_b": "DOJ 2025-01-30 起訴、和解遭 12 州檢察長＋DC 介入、眾院司法委員會民主黨質疑程序；Instant On 出脫買家出價偏低未決",
+    "ruling": "可調和：法院核准為 L1 終局事實，程序爭議未推翻交易；殘餘風險只剩 Instant On 出脫價與 Mist 授權執行，列治理扣點與觸發器 10，不進護城河扣分（記帳一次）",
+    "evidence_level": "L1",
+    "settle_metric": "Instant On 成交公告",
+    "if_then": [
+      "若 2026-12 前成交→本軸關閉",
+      "若流標致法院重審→治理降 B、複審"
+    ],
+    "evidence_refs": [
+      "regulatory_antitrust#1",
+      "regulatory_antitrust#3",
+      "major_events#1",
+      "major_events#2",
+      "ma_merger#1"
+    ]
+  },
+  {
+    "axis": "與前份報告交叉：觀望維持但理由更新；知識帳本先讀後裁",
+    "side_a": "本次：觀望／追蹤，binding＝估值×週期（五年 100 分位＋FY27 分母爭議），rearm ≤$44 或共識追上",
+    "side_b": "前份 2026-06-02（$47）：B 觀望、等回測 $38–42；估值 🟠、五年分位 87、FY27 PE 12.1x。首份 2026-05-18（$33.1）B 觀望",
+    "ruling": "前次觀望後漲 +6%（自首份 +57%）；本次維持觀望的理由不是『更貴了』——fwd 倍數反而由 12.1x 降至 11.4x（共識上修快於股價），而是 trailing 尺升至 100 分位且 FY27 分母含週期成分；前份『等 $38–42』未觸發，本次 rearm 上修至 $44 反映 FCF 指引 ×2 與網通 OM 兌現。同形狀 peer 對帳：證據包未涵蓋近 30 天 DELL／ANET 裁決，一句帶過",
+    "evidence_level": "L1",
+    "settle_metric": "FY28 共識方向與股價相對 $44／$55",
+    "if_then": [
+      "若 ≤$44→進場首倉",
+      "若 >$60 而框架未重申→不追、維持追蹤"
+    ]
+  },
+  {
+    "axis": "前份漂移：price_at_dd",
+    "prior_field": "price_at_dd",
+    "side_a": "本次 52.00（2026-09-04 收盤，財報後）",
+    "side_b": "前份 47.00",
+    "ruling": "主因＝價格變了（+10.6%）；基本面同步變（Q3 大 beat、FY27 框架首揭）；方法論未變",
+    "evidence_level": "L1",
+    "settle_metric": "—",
+    "if_then": [
+      "若回落 ≤$44→rearm",
+      "若 >$60→停止追蹤加碼考慮"
+    ]
+  },
+  {
+    "axis": "前份漂移：val",
+    "prior_field": "val",
+    "side_a": "本次 🔴（trailing 五年 100 分位）",
+    "side_b": "前份 🟠（五年分位 87）",
+    "ruling": "主因＝方法論變了（本次以 valuation_history trailing 三年度點取分位，前份
+... (截斷，原長 8587 字元)
+```
+
+`decision_inputs`：
+```json
+{
+  "signal": "B",
+  "trap": "🟡",
+  "val": "🔴",
+  "ma": "✅",
+  "runway_post_y5": "🟡",
+  "moat_trend": "→",
+  "moat": "B",
+  "capalloc_grade": "A",
+  "archetype": "品質複利成長",
+  "cycle_position": null,
+  "cycle_verdict": null,
+  "asym_ratio": 3.2,
+  "irr_base_pct": 9.3,
+  "ev5y_pct": 38.8,
+  "price_at_dd": 52.0,
+  "thesis_irreconcilable": false,
+  "valuation_dependent": false,
+  "market_wrong_reason_given": true,
+  "week26_return_pct": 148.41,
+  "momentum_overheated": false,
+  "cycle_gates_pass": null,
+  "consensus_rev_3m_pct": 13.72,
+  "val_denominator_disputed": true,
+  "qc49_inherit_prior": false,
+  "prior_verdict": "觀望",
+  "prior_role": "追蹤",
+  "held_now": null
+}
+```
+
+`premortem`：
+```json
+{
+  "blind_spots": [
+    {
+      "text": "假設①FY27 框架的 EPS +16–20% 主要來自綜效與網通 mix，而非記憶體轉嫁——若轉嫁占比高，記憶體回落時營收與 EPS 同步縮水；管理層拒絕量化 pull-forward（來源：摘要）使此假設無法從外部驗證",
+      "evidence_refs": [
+        "customer_concentration_credit#4",
+        "major_events#3"
+      ]
+    },
+    {
+      "text": "假設②供給受限只延後而不流失需求——若客戶因等不到貨轉向 ODM 直供或 Dell，backlog 會在缺貨結束時被取消而非出貨",
+      "evidence_refs": [
+        "customer_second_source#0",
+        "competitive_share_entrants#0"
+      ]
+    },
+    {
+      "text": "假設③週線均線為強勢排列（✅）——證據包無均線序列，由動能數據推定；若實際已破 W52，節奏調節應改為分批",
+      "evidence_refs": []
+    },
+    {
+      "text": "假設④第二階段關稅對伺服器有資料中心豁免——商務部 2026-09-02 只確認範圍，未確認豁免；GPU 全數台灣製造使地緣尾部無法對沖",
+      "evidence_refs": [
+        "reg_tariff_export#2",
+        "geo_supply_chain#0"
+      ]
+    },
+    {
+      "text": "假設⑤Juniper 和解殘餘不影響網通整合——Instant On 流標若致法院重審，Mist 授權範圍可能擴大",
+      "evidence_refs": [
+        "regulatory_antitrust#3",
+        "major_events#2"
+      ]
+    }
+  ],
+  "failure_story": "五年後虧 50% 的故事：2027 記憶體回落＋AI 資本支出消化，伺服器名目營收縮水、預購存貨跌價，FY27 框架於 2026-12 或 2027-03 下修；市場把 HPE 從『網通混合體』打回『循環硬體』，倍數 9x、EPS 3.9→$35。此失敗＝Single Thing（框架下修）✅直接撞上，不動",
+  "second_failure": "成功但劣化：網通 OM 如期升至 26%、FCF ≥$5B 兌現，但以『伺服器持續失份額、營收成長靠價格』形態兌現，市場把估值框架從『成長混合體 13x』切換到『高股息硬體 10x』，5 年報酬只剩股息＋回購約 3–4%／年、總報酬約 +20%。機率不可忽略（約 25%）→已反映於 Base 終端 12x 而非 13.6x",
+  "max_dd": {
+    "lo": -50.0,
+    "hi": -35.0,
+    "path_risk": "🟡",
+    "trigger_time": "最可能 2026-12～2027-06（Q4 FY26／Q1 FY27 法說撞上記憶體價格轉折與第二階段關稅）；恢復峰值需 FY28 綜效兌現後約 18–24 個月；若框架撤回則 thesis 已破不談恢復。範圍寬度 15pp ≥10pp"
+  }
+}
+```
+
+**相關 evidence finding 原文**：
+
+（未定位到對應 evidence finding）
+
+
+## 修補紀律
+
+1. **只准改被點名的欄位**——findings 的「指向欄位」是你的動刀範圍。沒被點名的欄位一字不動，包含 `decision_out`（由 `dd_decision.py` 回填，你不要手改）與未涉及的 `reasoning` 段。
+2. **裁決方向不由你主動翻**——修正欄位後若 `judge check` 重算出的 `decision_out.verdict` 自己翻面，那是機械層的結果，照實接受並在回報點名；但你不得為了配合閘的語氣直接改寫裁決字串。
+3. **可以不採納**——閘的意見不是命令。判斷你認為原判正確時，該條不改欄位，改為在頂層 `evidence_dismissed[]` 補一條 `{"ref": "<閘點名的 finding ref 或欄位路徑>", "reason": "<不採納的具體理由>"}`。理由要指得出證據或推導本身的問題（口徑不可比、來源不可回溯、已被更新一季數字取代、閘誤讀了哪個欄位…），不得寫「影響不大」這類無內容句。**每一條 🔴 都必須有處置**：要嘛改欄位，要嘛進 `evidence_dismissed[]`，不得沉默略過。
+4. **🟡 選擇性處理**——能一句話補上就補（通常是 `contradictions[]`／`triggers[]` 加一條或補 `formula_note`），代價過大就依第 3 條寫不採納理由。
+5. **不得編造數字**——證據包未涵蓋的數字不准補；該欄位標「證據包未涵蓋」並在回報請 orchestrator 判斷是否回 Stage 0 補軸。
+6. 禁 WebSearch／WebFetch。
+
+## 寫（一次 Write 整檔）
+
+改完後把**完整的 judgment.json**一次 `Write` 回 `/Users/ivanchang/financial-analysis-bot/.dd_build/runs/HPE_20260905/judgment.json`（不要分次 Edit、不要只寫片段），接著跑：
+
+```
+python3 scripts/ddreport.py judge check HPE 20260905
+```
+
+這支會依序重跑 `dd_scenario.py`、`dd_decision.py run`、`validate_judgment.py --evidence --fix --report`，一次把結果回給你；你不需要也不得自行分別呼叫這三支腳本。
+
+FAIL → **只准改 FAIL 訊息點名的欄位**，重跑同一條 `judge check`，**≤1 輪**。一輪後仍 FAIL 就照實回報，交給 orchestrator 處置，不得為湊過驗證而改動判斷實質。
+
+**輪次上限 `6` 輪。** 逼近上限時停下並照實回報。
+
+## 回報（≤200 字）
+
+① 逐條列閘的發現與你的處置（改了哪個欄位／或進 `evidence_dismissed[]` 及理由摘要）
+② `judge check` 最後一次的 `validate_judgment.py --report` 原文
+③ `decision_out.verdict`／`role`／`row_hit`，以及是否與修補前不同（翻面要明講）
+
+
+===== BUNDLE =====
+
+{
+  "meta": {
+    "ticker": "HPE",
+    "date": "2026-09-05",
+    "schema": "v15.0",
+    "company_name": "Hewlett Packard Enterprise Co"
+  },
+  "oneliner": "Q3 FY26 營收 $12.2B +34%、非 GAAP OM 16.2%、訂單 +42%、FY27 框架 EPS +16–20%／FCF ≥$5B；網通已占逾半獲利。惟 26 週 +148%、trailing 倍數居五年 100 分位、伺服器份額流向 ODM、記憶體成本占 BOM 逾半——觀望，rearm ≤$44 或共識追上。",
+  "archetype": {
+    "primary": "品質複利成長",
+    "secondary": "轉機/特殊情境",
+    "confidence": "低",
+    "fingerprint": "GM 33.9%、GAAP OM TTM 5.8%（單季非 GAAP 已達 16.2%）、FCF 利潤率 10.3%、R&D 8.2%；Juniper 併購一年內網通占獲利逾半＝混合體轉機，成長由 AI 資本週期驅動帶循環色彩"
+  },
+  "thesis": {
+    "headline": "HPE 正從低倍數伺服器商轉為『網通為獲利主體＋AI 系統放量』的混合體；轉型是真的，但現價已為 FY27 巔峰年付五年最高倍數，等價格或等共識追上再進。",
+    "holding_period": {
+      "horizon": "中期 2–5 年（本次追蹤、首階 0%；rearm 後以衛星持有 3–5 年）",
+      "driver": "網通 OM 軌跡與 FCF 兌現是訊號；單季 AI 系統出貨時點與記憶體價格波動是噪音，除非連 2 季改變 OM 方向",
+      "signal_vs_noise": "持有期 >2 年：以護城河趨勢（網通份額／OM）與 ROIC 方向為主，財報 newsflow 只在觸及門檻時計入"
+    },
+    "H": [
+      {
+        "id": "H1",
+        "text": "網通（Aruba＋Juniper）成為獲利主體：OM 自 Q3 FY25 的 20.8% 升至 Q1 FY26 23.7%，管理層目標 FY28 25–28%（來源：摘要）；Q3 FY26 網通訂單 +36% YoY、Oracle GW 級交換器合作與 Networks-for-AI 累計訂單 $2.2B 為第二成長曲線",
+        "2y": "FY27 網通 OM ≥24% 且網通營收成長 ≥10%（pro forma）",
+        "5y": "FY30 網通占非 GAAP 營業利益 ≥55%、OM ≥26%",
+        "10y": "校園網通守住第二、DC 交換器進 top-3（AI 後端）",
+        "threshold": "OM 24%／營收成長 10%／OP 占比 55%",
+        "source": "季報分部揭露；Gartner MQ；IDC WLAN 份額",
+        "drift_rule": "網通 OM 連 2 季 TTM <22% 削弱；連 3 季 <20% 反轉"
+      },
+      {
+        "id": "H2",
+        "text": "AI 系統與伺服器升級週期轉成現金：FY26 FCF ≥$3.75B（Q3 單季 $958M 為同期新高）、FY27 框架 FCF ≥$5.0B；AI 系統訂單 $2.4B（QoQ +30%）、單一超大規模客戶 $3.5B 推論訂單",
+        "2y": "FY27 FCF ≥$5.0B 且 Cloud & AI 分部 OM ≥10%",
+        "5y": "FY30 FCF ≥$5.5B 且能撐過一個 AI 資本支出消化年（FCF 谷底不低於 5 年均 70%）",
+        "10y": "企業／主權 AI 裝機帶來服務與 GreenLake 續約性營收",
+        "threshold": "FCF $5.0B／Cloud & AI OM 10%／谷底占均 70%",
+        "source": "季報 FCF reconciliation；分部 OM",
+        "drift_rule": "FCF TTM 連 2 季落後年化指引 ≥5% 削弱；連 3 季 ≥10% 反轉"
+      },
+      {
+        "id": "H3",
+        "text": "去槓桿＋回饋轉成每股複利：淨槓桿由 3.1x 降至 2.6x（Q1 FY26，來源：摘要）、目標 FY27 2x，之後 FCF ≥75% 回饋（來源：摘要）；EPS FY26→FY31 Base 年化約 9%，終端倍數守 12x 不 de-rate 回 8–9x",
+        "2y": "FY27 淨槓桿 ≤2.0x；淨回購 ≥1.5%／年",
+        "5y": "FY31 EPS ≥$6.0；倍數 ≥12x",
+        "10y": "跨一個下行週期後倍數不回 8x",
+        "threshold": "槓桿 2.0x／回購 1.5%／EPS 6.0",
+        "source": "季報資產負債表；回購揭露",
+        "drift_rule": "槓桿連 4 季高於路徑 ≥0.3x 削弱；FCF 回饋比率連 6 季 <50% 反轉"
+      }
+    ],
+    "R": [
+      {
+        "id": "R1",
+        "text": "記憶體／供給驅動的利潤與時點衝擊：DRAM／NAND 占伺服器 BOM 逾半、缺貨至 2027（來源：摘要）；AI 大單 lumpy 且公司預購稀缺料件把時點風險變成資產負債表風險；2025-10 曾因指引低於共識單日 −10%，2026-09 財報後因供給限制 −5%",
+        "h_ref": "H2",
+        "clock": "⚡",
+        "threshold": "Cloud & AI 分部 OM 連 2 季 <10%，或單季營收低於指引下緣",
+        "evidence_refs": [
+          "customer_concentration_credit#4",
+          "capital_markets_pricing#2",
+          "major_events#3",
+          "major_events#4",
+          "reg_tariff_export#1"
+        ]
+      },
+      {
+        "id": "R2",
+        "text": "伺服器份額流向 ODM 直供與 Dell：IDC Q4 2025 HPE 全市場份額 3.1%（第五、營收 −8.6% YoY）vs Dell $12.5B 約 10%；超大規模自製伺服器與白牌交換器（埠數 30–40%、ODM 直售 +150%）同時侵蝕伺服器與 DC 網通；WLAN 合計 21.2% 仍遠落後 Cisco 39.5%",
+        "h_ref": "H1",
+        "clock": "🔥",
+        "threshold": "IDC 伺服器份額連 4 季下滑，或網通 DC 交換器訂單成長連 4 季低於 Arista",
+        "evidence_refs": [
+          "competitive_share_entrants#0",
+          "competitive_share_entrants#2",
+          "customer_second_source#0",
+          "customer_second_source#1",
+          "substitute_technology#0"
+        ]
+      },
+      {
+        "id": "R3",
+        "text": "政策與地緣：Section 232 第一階段 25% 晶片關稅（2026-01-15）、商務部 2026-09-02 確認第二階段將納入伺服器；GPU 全數 TSMC 台灣製造；對台／印／越 26–49% 關稅風險列於 proxy",
+        "h_ref": "H2",
+        "clock": "🐢",
+        "threshold": "第二階段關稅對伺服器生效且無資料中心豁免→GM 指引下修 ≥100bp；或非 GAAP OM 指引 <14%",
+        "evidence_refs": [
+          "reg_tariff_export#0",
+          "reg_tariff_export#2",
+          "geo_supply_chain#0",
+          "geo_supply_chain#2"
+        ]
+      }
+    ],
+    "single_thing": {
+      "description": "FY27 框架（營收 +13–17%／非 GAAP EPS +16–20%／FCF ≥$5.0B）在 Q4 FY26（2026-12）或 Q1 FY27（2027-03）法說被撤回或任一項下修",
+      "why_fatal": "現價 13.6x FY26／11.4x FY27 的 re-rate 全靠 FY27 框架成立；2025-10-15 指引低於共識時單日 −10%、月內 −27% 已示範倍數對指引的彈性",
+      "if_happens": "thesis 由『轉型兌現』退回『循環硬體』，倍數回 9x、EPS 回 4.1→目標 $37；追蹤名單移除、rearm 改為事件錨（需重跑 DD）",
+      "how_monitor": "每季法說 outlook 段：FY27 三項數字是否原文重申；預警導數＝AI 系統 backlog QoQ 轉負或 Cloud & AI OM 單季 <10%",
+      "probability": "30%（12–24 個月；記憶體缺貨至 2027–2028 是雙面刃：撐定價亦卡出貨）"
+    }
+  },
+  "industry": {
+    "clock_phase": "II",
+    "sd_verdict_source": "ID gap：企業 IT 基礎設施／AI 伺服器（無 canonical ID）。自判 Phase II 擴張：超大規模業者 2026 法說皆稱需求超過供給、資本支出 2027 續增；Goldman 模型 DRAM 缺口 2026–2028 為 5.0／5.9／3.9%；HPE 訂單 +42% > 營收 +34%（book-to-bill >1）、AI backlog QoQ +14%。供需 durability 裁決＝結構性持久至 2027 但對 HPE 環節屬『供給可逆性高』：HPE 賺的是轉嫁差價與整合費，不是產能租金，缺貨反轉時下行更猛",
+    "bargaining": {
+      "up": "弱：DRAM／NAND 三家寡占且產能轉向 HBM、GPU 由 Nvidia／TSMC 單源；記憶體占伺服器 BOM 逾半（Neri，來源：摘要），公司稱成本『大多轉嫁』但 Cloud & AI OM 僅約 10%",
+      "down": "中：超大規模客戶集中（單一客戶 $3.5B 推論訂單、Oracle GW 級）議價強且有自製替代；企業與主權客戶分散、GreenLake 約 44,000 客戶（來源：摘要）黏性較高；10-Q 未揭露單一客戶 ≥10%",
+      "geo": "GPU 全數台灣製造、系統整合再加 8–16 週；H3C 出脫後中國曝險極低（proxy 稱『更乾淨的西方資產』）；關稅第二階段納入伺服器為未定變數"
+    },
+    "profit_pool_dir": "AI 伺服器利潤池流向 GPU／記憶體／ODM，品牌 OEM 環節 OI 池占比五年淨流出（HPE 伺服器份額 3.1% 且降）；企業網通利潤池向 AI 後端交換器與白牌流動，HPE 藉 Juniper 由校園跨入 DC／路由屬淨流入。合併：伺服器淨流出、網通淨流入，Runway 評級不因單軸降檔但不得標『結構性轉好』。三軸裁決＝雙向拉鋸：A 競爭惡化（伺服器份額→ODM／Dell、白牌 DC 交換器）、B 結構轉好（供給受限帶來 2027 能見度、網通 AI 化）、C 其他（第二階段關稅、Juniper 和解 2026-08-12 定案）",
+    "tam_table": [
+      {
+        "segment": "網通（校園＋DC 交換器＋路由）",
+        "tam_now": "管理層全組合 TAM FY28 >$1.1T（來源：摘要，2025-10-15）；分段 TAM 證據包未涵蓋",
+        "tam_5y": "白牌交換器市場 2025 $2.95B→2027 $3.87B（CAGR 14.6%）為替代側尺度",
+        "sam": "FY26 網通營收錨 $11B（來源：摘要）",
+        "penetration": "企業 WLAN：Aruba 15.9%＋Juniper 5.3%（IDC Q1 2025）vs Cisco 39.5%；校園第二（來源：摘要）",
+        "cagr": "FY26 網通營收 +68–73%（含併購，來源：摘要）；Q3 訂單 +36%",
+        "position": "品牌＋軟體（Mist AIOps、授權對手為和解條件）",
+        "pool_shift": "OI 池向 AI 後端交換器流動；HPE 由校園跨入 DC／路由＝淨流入",
+        "ceiling": "天花板＝Cisco 主導校園、Arista 主導雲端 DC；被替代路徑＝解構化白牌（63% 大型 DC 轉向）"
+      },
+      {
+        "segment": "伺服器（傳統＋AI 系統）",
+        "tam_now": "AI 伺服器 2026 約 $157B（Grand View）、出貨 +28%（TrendForce）；各機構口徑差距達數量級",
+        "tam_5y": "Grand View 2033 $598B（CAGR 21.2%）；Gartner AI 最佳化伺服器五年三倍",
+        "sam": "Cloud & AI 分部 Q3 FY26 $9.0B（+25.4%）；AI 系統訂單 $2.4B／季",
+        "penetration": "IDC Q4 2025 全市場 3.1%（第五）；EC 口徑 14.5%（top-3，品牌 OEM 口徑）",
+        "cagr": "FY26 Cloud & AI 指引曾下修至中高個位數以挑高毛利訂單（來源：摘要）；Q3 實績 +25%",
+        "position": "系統整合＋通路；記憶體與 GPU 由上游定價",
+        "pool_shift": "OI 池五年淨流出至 ODM／GPU／記憶體",
+        "ceiling": "天花板＝超大規模自製；HPE 出路＝企業／主權／推論與液冷 Cray（20 國部署，來源：摘要）"
+      },
+      {
+        "segment": "儲存／混合雲",
+        "tam_now": "證據包未涵蓋",
+        "tam_5y": "證據包未涵蓋",
+        "sam": "約占營收 16%；Q1 FY26 儲存 $1.1B",
+        "penetration": "面對 Dell／Pure／NTAP（NTAP OM 24.5%、FCF 27%）",
+        "cagr": "Alletra MP 轉 ratable 過渡期（來源：摘要）",
+        "position": "外部 OEM 儲存，OM 5%（Q4 FY25，來源：摘要）",
+        "pool_shift": "淨流出",
+        "ceiling": "天花板＝雲端原生儲存；出路＝AI 資料管線節點（X10000）"
+      }
+    ]
+  },
+  "moat": {
+    "execution": 7.0,
+    "pricing": 6.5,
+    "combined": 6.75,
+    "grade": "B",
+    "score": 7.0,
+    "trend": "→",
+    "trend_evidence": "網通擴大：Q3 FY26 網通訂單 +36%、Oracle GW 級交換器合作（2026-09-02）、Gartner MQ 雙領導者（來源：摘要）；伺服器縮減：IDC Q4 2025 份額 3.1%、營收 −8.6% YoY（2026-03-19 sourced）。兩軸相反，取對 thesis 更關鍵的網通軸傾向擴大，但最大 program（伺服器）有 sourced 份額下滑，依規則不得標 ↑，定 →；前瞻 2–3 年：網通份額升、伺服器份額續降",
+    "spread_table": [
+      {
+        "metric": "GAAP 營業利益率（TTM 至 2026-04）",
+        "self": 5.79,
+        "peer": "DELL 8.10／SMCI 4.48／NTAP 24.48／CSCO 23.72",
+        "spread_pp": -2.31,
+        "trend": "HPE 單季非 GAAP OM 8.5%→16.2%（YoY +770bp）擴張中；DELL 三年趨勢證據包未涵蓋",
+        "note": "對最直接伺服器同業 DELL 為負 spread，但擴張中；合併分 <8 故閘一不適用"
+      },
+      {
+        "metric": "毛利率（TTM）",
+        "self": 33.9,
+        "peer": "DELL 19.07／SMCI 8.39／NTAP 70.74／CSCO 64.33",
+        "spread_pp": 14.83,
+        "trend": "逐年 GM 序列證據包未涵蓋；記憶體轉嫁使 GM 率被稀釋（金額增、率降）",
+        "note": "混合體：伺服器毛利低、網通高"
+      },
+      {
+        "metric": "FCF 利潤率（TTM）",
+        "self": 10.28,
+        "peer": "DELL 7.05／SMCI −20.33／NTAP 26.99／CSCO 19.41",
+        "spread_pp": 3.23,
+        "trend": "Q3 FCF $958M 同期新高、FY26 指引上修至 ≥$3.75B",
+        "note": "低於 15% 門檻"
+      },
+      {
+        "metric": "R&D 強度（TTM）",
+        "self": 8.17,
+        "peer": "DELL 2.48／SMCI 2.23／NTAP 14.31／CSCO 15.66",
+        "spread_pp": 5.69,
+        "trend": "Juniper 併入拉高",
+        "note": "介於伺服器與網通同業之間"
+      }
+    ],
+    "threats": [
+      {
+        "level": "⛔ 架構替代",
+        "text": "超大規模業者自製伺服器與 ODM 直供分食品牌 OEM；IDC 將 HPE 份額下滑部分歸因於此，伺服器環節客戶架構層級切換（−2 分已反映於 pricing 6.5）",
+        "p": "70%（已在發生）",
+        "evidence_refs": [
+          "competitive_share_entrants#0",
+          "customer_second_source#0"
+        ]
+      },
+      {
+        "level": "🔴 生態攻擊",
+        "text": "白牌／解構化交換器：超大規模 DC 埠數 30–40%、ODM 直售 +150%、市場 CAGR 14.6%；Juniper 剛跨入的 DC 交換器正是主戰場",
+        "p": "50%（對 DC 網通；校園受影響小）",
+        "evidence_refs": [
+          "customer_second_source#1",
+          "substitute_technology#0"
+        ]
+      },
+      {
+        "level": "🟡 點對點",
+        "text": "Cisco 在企業 WLAN 39.5% vs Aruba＋Juniper 21.2%；規模差距未因併購逆轉",
+        "p": "持續",
+        "evidence_refs": [
+          "competitive_share_entrants#2"
+        ]
+      }
+    ],
+    "competitors": [
+      {
+        "name": "DELL",
+        "rev_growth": "證據包未涵蓋",
+        "gm": 19.07,
+        "om": 8.1,
+        "rd_intensity": 2.48,
+        "fcf_margin": 7.05,
+        "net_cash": "證據包未涵蓋",
+        "strategy_note": "AI 伺服器份額龍頭（單季 $12.5B、約 10%）以量與組合廣度取勝；GM 僅 HPE 一半但 OM 較高＝營運槓桿與低 R&D。對 HPE 伺服器構成規模壓力，對網通無交鋒"
+      },
+      {
+        "name": "SMCI",
+        "rev_growth": "證據包未涵蓋",
+        "gm": 8.39,
+        "om": 4.48,
+        "rd_intensity": 2.23,
+        "fcf_margin": -20.33,
+        "net_cash": "證據包未涵蓋",
+        "strategy_note": "純 AI 伺服器組裝、FCF 為負；2026 出口管制調查使企業客戶 flight to quality 轉向 HPE，屬對手失誤非 HPE 護城河"
+      },
+      {
+        "name": "CSCO",
+        "rev_growth": "證據包未涵蓋",
+        "gm": 64.33,
+        "om": 23.72,
+        "rd_intensity": 15.66,
+        "fcf_margin": 19.41,
+        "net_cash": "證據包未涵蓋",
+        "strategy_note": "網通現任者，WLAN 39.5%；HPE 網通分部 OM 23–24% 已接近 Cisco 全公司 OM，顯示網通環節經濟體質可比、規模不可比"
+      },
+      {
+        "name": "NTAP",
+        "rev_growth": "證據包未涵蓋",
+        "gm": 70.74,
+        "om": 24.48,
+        "rd_intensity": 14.31,
+        "fcf_margin": 26.99,
+        "net_cash": "證據包未涵蓋",
+        "strategy_note": "儲存純玩家，OM 是 HPE 混合雲分部（5%）的五倍；HPE 儲存屬淨流出環節"
+      }
+    ],
+    "roic_durability": {
+      "quadrant": "伺服器＝低利益率×低周轉；網通＝高利益率×低周轉（含 $14B 商譽）；合併落『低利益率×低周轉』邊緣，GAAP OM TTM 5.8%、投入資本周轉率證據包未涵蓋（含商譽估 <1.0x）→ROIC 約 6–9%，低於 15% 門檻與 Munger 尺",
+      "checkpoints": [
+        {
+          "name": "需求基礎值",
+          "light": "🟡",
+          "evidence": "需要型（IT 基礎設施停擺代價高），但 AI 系統需求屬急迫非必然持久：超大規模業者稱需求超過供給至 2027，30–50% 資料中心產能因電力遞延至 2027–2028",
+          "proxy": "訂單 +42% > 營收 +34%；AI backlog QoQ +14%"
+        },
+        {
+          "name": "決策層級",
+          "light": "🟡",
+          "evidence": "網通：Mist／Aruba 裝機與營運軟體使切換以『整個網路』為單位，續約黏性高（GreenLake 約 44,000 客戶，來源：摘要）；伺服器：以單一標案為單位，超大規模可自製",
+          "proxy": "網通 OM 23.7% vs 伺服器 OM 約 10%（來源：摘要）"
+        },
+        {
+          "name": "價值鏈分配",
+          "light": "🔴",
+          "evidence": "記憶體占 BOM 逾半、GPU 單源，成本『大多轉嫁』後 AI 系統 OM 約 10%（來源：摘要）；利益留在 Nvidia／記憶體三家／TSMC，HPE 賺整合費",
+          "proxy": "Cloud & AI OM 10.2%（Q1 FY26，來源：摘要）"
+        },
+        {
+          "name": "社會容忍度",
+          "light": "🟢",
+          "evidence": "無價格管制；反壟斷風險已於 2026-08-12 法院核准和解定案，殘餘為 Instant On 出脫；主權 AI 案受政府流程影響（來源：摘要）",
+          "proxy": "州檢察長介入未推翻和解"
+        }
+      ],
+      "roiic": "約 18%（FY25→FY26 非 GAAP OP 增量約 $3.4B 稅後÷Juniper $14B＋營運資金；含併購與循環高點，不可外推）；正常化取 12%",
+      "reinvest_rate": "約 35%（capex≈D&A、ΔWC 為預購記憶體、去槓桿吃掉多數 FCF）",
+      "endo_ceiling": 4.2,
+      "formula_note": "內生成長＝正常化增量 ROIC 12%×再投資率 35%＝4.2%；Base EPS CAGR FY26→FY31 約 9.4%，缺口 5.2pp 歸因：合併 OM 由 14–15% 走向 16%（Juniper $600M 綜效，來源：摘要）約 2pp＋淨回購約 3pp；可歸因故不標『依賴 re-rate』，但超出天花板→Bear 機率 ≥30%"
+    }
+  },
+  "growth": {
+    "runway_years": "6（AI 系統與網通 AI 化至 2028 能見度高；FY29 後依賴企業推論擴散）",
+    "runway_post_y5": "🟡",
+    "seven_questions": [
+      "①結構性或週期反彈：兩者疊加——網通混合體轉型是結構性，AI 系統放量與記憶體轉嫁定價是週期性",
+      "②資本投入多少：Q3 淨 capex $653M（含 GreenLake 資產）、預購 DDR5／NAND 佈存貨；資本強度中等",
+      "③增量 ROIC 是否 >資金成本：正常化 12% > WACC 約 9%，但 AI 系統環節僅約 10% OM，接近邊際",
+      "④成長變現金流或被吃掉：FY26 FCF ≥$3.75B、FY27 ≥$5.0B，去槓桿優先，FY28 起 75% 回饋（來源：摘要）",
+      "⑤競爭者會否被吸引：已在——ODM 直供、Dell、白牌；伺服器環節無法阻擋",
+      "⑥股價反映多少期待：26 週 +148%、trailing 倍數五年 100 分位、fwd 11.4x FY27 已假設框架兌現——最弱的一題",
+      "⑦成長率下修估值撐得住嗎：FY27 EPS −10% 且倍數回 9x→−29%；撐不住"
+    ],
+    "segments": [
+      {
+        "name": "網通（Aruba＋Juniper）",
+        "fy0": "FY26 營收錨 $11B（來源：摘要）；Q3 $2.9B",
+        "driver": "量：校園更新＋DC／路由新市場（Oracle GW 級）；價：Mist 軟體附加",
+        "fy1e": "FY27 +10–12%（pro forma）",
+        "fy2e": "FY28 +8%",
+        "fy3e": "FY29 +6%",
+        "om_path": "23.7%（Q1 FY26）→FY28 25–28%（管理層）",
+        "eps_contrib_pct": "約 55–60%"
+      },
+      {
+        "name": "Cloud & AI（伺服器＋儲存＋金融服務）",
+        "fy0": "Q3 FY26 $9.0B（+25.4%）；FY26 全年約 $34B",
+        "driver": "量：AI 系統訂單 $2.4B／季、$3.5B 推論大單；價：記憶體成本轉嫁",
+        "fy1e": "FY27 +14–18%（框架合併 13–17% 反推）",
+        "fy2e": "FY28 +5%（記憶體回落名目縮水）",
+        "fy3e": "FY29 +3%",
+        "om_path": "10.2%（Q1 FY26）→11–12%",
+        "eps_contrib_pct": "約 40–45%"
+      }
+    ],
+    "decay_signals": [
+      "盈餘品質：EPS CAGR 顯著高於 Rev CAGR（FY27 框架 EPS +16–20% vs 營收 +13–17%，差距 3pp 未達 5pp，但 FY26 EPS 約 +100% vs 營收 +34–37% 差距遠超）——亮燈（含併購與基期效應）",
+      "護城河侵蝕：核心伺服器市占近 12 個月縮減（IDC Q4 2025 −8.6% YoY、第五）——亮燈",
+      "其餘八項：GM 連 2 季 YoY 下滑證據包未涵蓋逐季序列；FCF/NI、SBC 1.35%、TAM、倍數下移、維持性 capex、停止投資皆未亮"
+    ],
+    "trap_rating": "🟡（2 個信號）"
+  },
+  "quality": {
+    "three_year": [
+      {
+        "metric": "FCF 利潤率",
+        "fy23": "證據包未涵蓋",
+        "fy24": "證據包未涵蓋",
+        "fy25_ttm": "10.28（TTM 至 2026-04）；Q3 FY26 單季 7.8%（$958M／$12,213M）",
+        "peer_median": "DELL 7.05／SMCI −20.33／NTAP 26.99／CSCO 19.41",
+        "assessment": "優於伺服器同業、遠低於網通與儲存純玩家"
+      },
+      {
+        "metric": "非 GAAP 營業利益率",
+        "fy23": "證據包未涵蓋",
+        "fy24": "證據包未涵蓋",
+        "fy25_ttm": "Q3 FY25 8.5%→Q4 FY25 12.2%→Q1 FY26 12.7%→Q2 13.3%→Q3 16.2%",
+        "peer_median": "GAAP OM：DELL 8.10／CSCO 23.72",
+        "assessment": "五季連續擴張，混合體轉型的最強證據"
+      },
+      {
+        "metric": "SBC／營收",
+        "fy23": "證據包未涵蓋",
+        "fy24": "證據包未涵蓋",
+        "fy25_ttm": "Q2 FY26 2.04%→Q3 1.35%（$165M）",
+        "peer_median": "證據包未涵蓋",
+        "assessment": "低，無稀釋警訊"
+      },
+      {
+        "metric": "ROIC−WACC",
+        "fy23": "證據包未涵蓋",
+        "fy24": "證據包未涵蓋",
+        "fy25_ttm": "ROIC 約 6–9% vs WACC 約 9%＝約 0 至 −3pp（含 Juniper 商譽）",
+        "peer_median": "證據包未涵蓋",
+        "assessment": "未達 Munger 尺；改善依賴綜效兌現"
+      }
+    ],
+    "dupont": [
+      {
+        "component": "NOPAT 利潤率",
+        "value": "非 GAAP OM 16.2%（Q3 FY26）；GAAP 11.4%；TTM GAAP 5.79%",
+        "note": "GAAP／非 GAAP 差距主為 Juniper 無形資產攤銷、整合與重組成本"
+      },
+      {
+        "component": "投入資本周轉率",
+        "value": "證據包未涵蓋（含 $14B 商譽估 <1.0x）",
+        "note": "低周轉是 ROIC 低於 15% 的主因，非利益率"
+      }
+    ],
+    "ccc": [
+      {
+        "metric": "DSO／DIO／DPO／CCC 三年逐年",
+        "value": "證據包未涵蓋",
+        "note": "已知 Q3 FY26 預購 DDR5／NAND 推高存貨（分析師評論），CCC 短期惡化為刻意選擇；需回補軸"
+      }
+    ],
+    "buyback": {
+      "authorization": "新 $3B 授權、合計 $3.7B（2025-10-15，來源：摘要）",
+      "recent": "Q3 FY25 因持有重大未公開資訊暫停；Q4 FY25 $100M；Q1 FY26 $158M（來源：摘要）",
+      "buyback_to_fcf": "FY26 迄今遠低於 FCF 的 20%，去槓桿優先，未觸 >80% 警示",
+      "avg_price_vs_now": "證據包未涵蓋",
+      "eps_cagr_ex_buyback": "淨回購對 FY26 EPS 貢獻 <1pp，剔除後 CAGR 差距遠低於 5pp 警示"
+    },
+    "lumpiness": {
+      "fcf_5y": "證據包未涵蓋逐年；已知 FY26 指引由 2025-12 的 $1.7–2.0B（來源：摘要）升至 ≥$3.75B，Q2 $915M、Q3 $958M",
+      "maint_capex_method": "以季度淨 capex $653M 全數視為維持性（保守法，含 GreenLake 出租資產）",
+      "owner_earnings": "Q3 OCF $1,641M − $653M ≈ $988M",
+      "verdict": "🟡 需關注（AI 大單 lumpy＋預購存貨使季度 FCF 波動大；指引一年內 ×2 顯示可預測性低）"
+    }
+  },
+  "governance": {
+    "capalloc_grade": "A",
+    "scorecard": [
+      {
+        "item": "M&A 已實現 ROIIC（Juniper $14B，2025-07 完成）",
+        "value": "第一年：網通 OM 23.7%、Juniper 八年高 OM（來源：摘要）、綜效目標 $450M→$600M 上修；增量 NOPAT 估 $1.5–2.0B÷$14B≈11–14% > WACC——第 3 年檢核 FY28 前列『暫過』",
+        "pass": true
+      },
+      {
+        "item": "回購買入收益率",
+        "value": "FY26 回購價位 $21–45 對應 FY26 EPS 3.82 之 earnings yield 8–18% ≫ 10Y 殖利率＋2%",
+        "pass": true
+      },
+      {
+        "item": "SBC 淨稀釋率",
+        "value": "SBC 1.35% 營收、Q1–Q3 回購約 $258M 抵銷大半，年化淨稀釋 ≤1%",
+        "pass": true
+      }
+    ],
+    "capital_returns": [
+      {
+        "type": "股息",
+        "detail": "年股息 +10% 至 $0.57（FY26 起，來源：摘要）；殖利率約 1.1%"
+      },
+      {
+        "type": "回購",
+        "detail": "新 $3B 授權、合計 $3.7B；FY28 起目標回饋 FCF ≥75%（來源：摘要）"
+      },
+      {
+        "type": "去槓桿",
+        "detail": "淨槓桿 3.1x→2.7x→2.6x（$2B 定期貸款償還，來源：摘要）；目標 FY27 2x；H3C 剩餘 19% 以約 $1.4B 出脫（來源：摘要）"
+      },
+      {
+        "type": "M&A 與剝離",
+        "detail": "Juniper $14B 全現金；和解條件出脫 Instant On（2026-03 買家出價偏低、未決）並授權 Mist 原始碼"
+      }
+    ],
+    "sbc": {
+      "pct_revenue": 1.35,
+      "pct_non_gaap_oi": 8.34,
+      "trend": "Q2 FY26 2.04%→Q3 1.35%",
+      "note": "近 12 個月內部人交易與薪酬結構：證據包未涵蓋（數據限制）；治理事件：DOJ 和解程序遭 12 州檢察長與眾院司法委員會民主黨質疑，法院 2026-08-12 仍核准；無證券集體訴訟、無 SEC 調查、無重編"
+    }
+  },
+  "valuation": {
+    "tier": "混合硬體 OEM（伺服器＋企業網通），⚠️無 ideal peer group：DELL 最近（伺服器）但無網通；CSCO／ANET 為網通純玩家跨 tier，不作 anchor，溢折價獨立推導",
+    "peers": [
+      {
+        "name": "DELL",
+        "fwd_pe": "證據包未涵蓋",
+        "note": "GM 19.07／OM 8.10，伺服器龍頭"
+      },
+      {
+        "name": "CSCO",
+        "fwd_pe": "證據包未涵蓋",
+        "note": "OM 23.72，網通現任者；HPE 網通分部 OM 可比"
+      },
+      {
+        "name": "NTAP",
+        "fwd_pe": "證據包未涵蓋",
+        "note": "儲存純玩家"
+      },
+      {
+        "name": "SMCI",
+        "fwd_pe": "證據包未涵蓋",
+        "note": "AI 伺服器組裝，FCF 負"
+      }
+    ],
+    "fwd_pe": 11.4,
+    "peg": 0.97,
+    "percentile_5y": 100.0,
+    "val_light": "🔴",
+    "val_light_derivation": "分位：trailing P/E 26.8 對 valuation_history 三個年度點（高 19.52／低 9.64）＝100 分位、P/S 1.65（高 0.89）＝100 分位、EV/S 1.98（高 1.43）＝100 分位；本站 fwd 短窗（2026-05 起 9 點）13.6x 落 16 分位但不得作五年分位。PEG：Fwd PE FY27 11.4÷三年前瞻 CAGR 11.8%（FY26 3.82→FY29E 5.34，FY29 以 FY28 4.94×1.08 外推）＝0.97→🟢。取較嚴者＝🔴；救援條款只適用 🟠，🔴 不適用。多尺矛盾：複利尺以 Fwd P/E・PEG 優先→估值診斷『公允至便宜』，但色階規則明定取較嚴者，兩條規則相衝，本檔採色階規則填 🔴 並把矛盾明文於矛盾清單；分母爭議：FY27 EPS 4.56 內含記憶體轉嫁定價與 AI 巔峰 mix，正是本檔爭點→便宜論證降權",
+    "targets": {
+      "short_1y": {
+        "eps": 4.56,
+        "pe": 12,
+        "price": 54.7,
+        "upside_pct": 5.2,
+        "basis": "FY27 共識 EPS × 合理 12x（護城河 B、成長 🟡）"
+      },
+      "mid_2y": {
+        "eps": 4.94,
+        "pe": 12,
+        "price": 59.3,
+        "upside_pct": 14.0,
+        "basis": "FY28 共識 EPS × 12x"
+      },
+      "five_y": {
+        "eps": 6.0,
+        "pe": 12,
+        "price": 72.0,
+        "upside_pct": 38.5,
+        "basis": "Base FY31 EPS × 長期 12x"
+      },
+      "bear_anchor": {
+        "eps": 4.1,
+        "pe": 9,
+        "price": 36.9,
+        "downside_pct": -29.0,
+        "basis": "FY27 4.56×0.9＝4.10；成長熄火至 10% 情境 9x；下行距離 29% >15%，無數學假象"
+      },
+      "consensus_pt": "彙總平均 $67.5–69.8（16–23 位）；財報後個別 $57（Piper）–$88（BofA），全距 1.54x <2.5x；現價 52 低於均值→對照『支持不迴避』但不改觀望（均值隱含的是 FY27 兌現）"
+    },
+    "upside_short_pct": 5.2,
+    "upside_mid_pct": 14.0
+  },
+  "trap_analysis": {
+    "pattern": "循環高點被當結構成長：記憶體轉嫁膨脹營收、AI 系統低毛利放量、併購基期效應三者疊加，使 FY26 EPS 約翻倍看似複利起點",
+    "evidence_against": "非 GAAP OM 五季連升 8.5%→16.2%（+770bp YoY）是利潤率擴張非只放量；訂單 +42% > 營收 +34%；Q3 FCF $958M 同期新高、FY26 FCF 指引一年內由 $1.7–2.0B 升至 ≥$3.75B；網通（OM 23–24%）已占獲利逾半，結構已變",
+    "evidence_for": "trailing P/E／P/S／EV/S 皆五年 100 分位；伺服器份額 3.1% 且降；DRAM／NAND 占 BOM 逾半、AI 系統 OM 約 10%；26 週 +148%；FY28 共識成長已降至 +8%；管理層對 pull-forward 拒絕量化（來源：摘要）",
+    "bear_case": "18 個月 −30% 路徑：記憶體缺貨卡出貨但成本續漲，Q4 FY26／Q1 FY27 法說下修 FY27 框架（2025-10 前例：單日 −10%、月內 −27%）；第二階段關稅同時落地；FY27 EPS 回 4.1、倍數 9x→$37（−29%）。監測：Cloud & AI OM、AI backlog QoQ、FY27 框架原文重申",
+    "monitor": [
+      "Cloud & AI 分部 OM（<10% 連 2 季＝陷阱正在發生）",
+      "AI 系統 backlog QoQ 方向（轉負＝需求端而非供給端問題）",
+      "存貨 QoQ 與 DRAM 現貨價同步（存貨升＋現貨價跌＝跌價損失前兆）",
+      "網通 OM 是否守 22%（守住＝結構性部分完好）"
+    ],
+    "verdict": "🟡",
+    "label": "🟡 觀察期"
+  },
+  "appendix_a": {
+    "signal": "B",
+    "moat_score": 7.0,
+    "growth_durability": 6.0,
+    "quality_score": 6.5,
+    "ai_risk": "🟢",
+    "long_term_confidence": "中",
+    "val": "🔴",
+    "ma": "✅",
+    "fpe_fy2": 11.4,
+    "pct_5y": 100.0,
+    "peg_fy2": 0.97,
+    "upside_short_pct": 5.2,
+    "upside_mid_pct": 14.0,
+    "stress": {
+      "pass": 2,
+      "total": 2
+    },
+    "verdict": "B"
+  },
+  "scenario_ref": "/Users/ivanchang/financial-analysis-bot/.dd_build/runs/HPE_20260905/scenario.json",
+  "eps_meta": {
+    "base_eps_path": {
+      "FY2026": 3.82,
+      "FY2027": 4.56,
+      "FY2028": 4.94,
+      "FY2029": 5.35,
+      "FY2030": 5.7,
+      "FY2031": 6.0
+    },
+    "fy_end_month": 10,
+    "eps_basis": "non-gaap-usd"
+  },
+  "catalysts": [
+    {
+      "date": "2026-12",
+      "date_precision": "month",
+      "type": "guidance",
+      "event": "Q4 FY26 財報：FY26 EPS $3.75–3.85／FCF ≥$3.75B 結帳，FY27 框架是否原文重申或給正式指引",
+      "impact": "高",
+      "watch": "Q4 營收 $13.9–14.8B、非 GAAP EPS $1.20–1.30 落點；FY27 三數字"
+    },
+    {
+      "date": "2026-Q4",
+      "date_precision": "quarter",
+      "type": "regulatory",
+      "event": "Section 232 第二階段（晶片／伺服器／多晶矽）公告與豁免範圍",
+      "impact": "中",
+      "watch": "伺服器是否納入、資料中心豁免是否延續；公司 GM 指引反應"
+    },
+    {
+      "date": "2026-12",
+      "date_precision": "month",
+      "type": "regulatory",
+      "event": "Instant On 出脫定案（和解要求時限已過、買家出價偏低）",
+      "impact": "低",
+      "watch": "成交價與是否影響 Mist 授權條款"
+    },
+    {
+      "date": "2027-03",
+      "date_precision": "month",
+      "type": "product",
+      "event": "Q1 FY27：Oracle GW 級交換器出貨起量、Networks-for-AI 累計訂單對 $2.5–3.0B 目標",
+      "impact": "中",
+      "watch": "網通 DC 訂單成長、網通 OM 是否 ≥24%"
+    },
+    {
+      "date": "2027-Q2",
+      "date_precision": "quarter",
+      "type": "macro",
+      "event": "DRAM／NAND 合約價轉折（Goldman 缺口 2027 5.9%→2028 3.9%）",
+      "impact": "中",
+      "watch": "存貨跌價、轉嫁定價消失對伺服器名目營收影響"
+    }
+  ],
+  "decision_inputs": {
+    "signal": "B",
+    "trap": "🟡",
+    "val": "🔴",
+    "ma": "✅",
+    "runway_post_y5": "🟡",
+    "moat_trend": "→",
+    "moat": "B",
+    "capalloc_grade": "A",
+    "archetype": "品質複利成長",
+    "cycle_position": null,
+    "cycle_verdict": null,
+    "asym_ratio": 3.2,
+    "irr_base_pct": 9.3,
+    "ev5y_pct": 38.8,
+    "price_at_dd": 52.0,
+    "thesis_irreconcilable": false,
+    "valuation_dependent": false,
+    "market_wrong_reason_given": true,
+    "week26_return_pct": 148.41,
+    "momentum_overheated": false,
+    "cycle_gates_pass": null,
+    "consensus_rev_3m_pct": 13.72,
+    "val_denominator_disputed": true,
+    "qc49_inherit_prior": false,
+    "prior_verdict": "觀望",
+    "prior_role": "追蹤",
+    "held_now": null
+  },
+  "decision_out": {
+    "verdict": "觀望",
+    "role": "追蹤",
+    "row_hit": "8(val爭議)",
+    "pacing": [],
+    "holding_cap": null,
+    "requires_critic": [
+      "QC-41 產業態勢：屬 B2B 客戶集中型（單一超大規模客戶 $3.5B、Oracle GW 級）＋競爭動態（伺服器份額→ODM／Dell、白牌 DC 交換器）→必跑；重點覆核 IDC 3.1%（全市場含 ODM）與 EC 14.5%（品牌 OEM）何者為 thesis 相關口徑，以及供給受限是否已在 FY27 框架內定價",
+      "QC-50 錯過成本反向：裁決落觀望且 FY2 共識 EPS 近 90 天上修 +13.7%（≥+10%，consensus_revision stale=false）→觸發；閘可依規則升級為進場・條件式（不得強制翻面）；第①條不成立（前次 2026-06-02 觀望至今 +6%，<30%；自 2026-05-18 首份 +57% 為參考）",
+      "證據品質提醒：最新一季（Q3 FY26）逐字稿不在庫，僅有網路轉載摘要；週線均線序列不在證據包，均線狀態由 26 週 +148%／距 52 週低 +164% 推定為強勢排列；建議閘覆核此二欄"
+    ],
+    "audit_rows": [
+      {
+        "row": "1",
+        "condition": "基本面評級 signal = X → 迴避",
+        "hit": false,
+        "basis": "signal='B'"
+      },
+      {
+        "row": "2",
+        "condition": "§11 強制裁決：thesis 不可調和不成立 → 迴避",
+        "hit": false,
+        "basis": "thesis_irreconcilable=False"
+      },
+      {
+        "row": "3",
+        "condition": "moat_trend ↓（§5）且 moat 等級 ≤ B → 迴避",
+        "hit": false,
+        "basis": "moat_trend='→', moat='B'"
+      },
+      {
+        "row": "4",
+        "condition": "週線結構趨勢過濾 ❌（附錄 A：價 < W250 或 W250 斜率轉負）",
+        "hit": false,
+        "basis": "ma='✅'"
+      },
+      {
+        "row": "5",
+        "condition": "動能過熱（RSI 14d > 70 或 4 週漂移 > +10%，附錄 A）",
+        "hit": false,
+        "basis": "momentum_overheated=False"
+      },
+      {
+        "row": "6",
+        "condition": "基本面評級 signal = C → ≥ 觀望",
+        "hit": false,
+        "basis": "signal='B'"
+      },
+      {
+        "row": "7",
+        "condition": "runway_post_y5 = 🔴（§6.A''）→ ≥ 觀望（§13c ≤ 3Y 警示）",
+        "hit": false,
+        "basis": "runway_post_y5='🟡'"
+      },
+      {
+        "row": "7a",
+        "condition": "§10.6 標記「估值依賴型」且 §11 未給出「市場錯在哪」的具體理由 → ≥ 觀望，且持有年限上限中期 2-5 年",
+        "hit": false,
+        "basis": "valuation_dependent=False, market_wrong_reason_given=True"
+      },
+      {
+        "row": "7b",
+        "condition": "dd-meta capalloc_grade = C（DD 未提供 → N/A 不觸發）→ 持有年限上限中期 2-5 年（不降裁決）",
+        "hit": false,
+        "basis": "capalloc_grade='A'"
+      },
+      {
+        "row": "8a",
+        "condition": "無 Veto(6/7/7a) + signal≥B + runway_post_y5=🟢 + 26週漲幅<100%(邊界100-150%裁量) + 非估值依賴型 + moat_trend≠↓ + val∈{🟠,🔴} → 進場·條件式（爆發候選）",
+        "hit": false,
+        "basis": "signal='B', runway='🟡', val='🔴', moat_trend='→', week26=148.41, valuation_dependent=False"
+      },
+      {
+        "row": "8b",
+        "condition": "無 Hard Veto + archetype∈循環子型 + cycle_position∈{深谷投降／早循環} + QC-42反動能五閘全過 + moat底線（≠X 且非「↓且C」）→ 進場·條件式（循環衛星）",
+        "hit": false,
+        "basis": "archetype='品質複利成長', cycle_position=None, moat='B', moat_trend='→', cycle_gates_pass=None"
+      },
+      {
+        "row": "11.4b-denom",
+        "condition": "§11 4b.1 分母爭議檢查成立 → val 燈機械讀數判定不可用，baseline rows 8/9/9b/10 的估值條件視為不可判 → 落 row8 觀望（保守方向）",
+        "hit": true,
+        "basis": "val_denominator_disputed=True, val(機械讀數)='🔴'"
+      },
+      {
+        "row": "QC-49",
+        "condition": "qc49_inherit_prior=False，不套用",
+        "hit": false,
+        "basis": "qc49_inherit_prior=False"
+      },
+      {
+        "row": "role-held_now",
+        "condition": "觀望→role 預設追蹤，除非 held_now=True 沿用 prior_role",
+        "hit": false,
+        "basis": "輸入缺(held_now=null)，依保守方向處理：維持預設追蹤",
+        "input_gap": [
+          "held_now"
+        ]
+      }
+    ],
+    "rearm_trigger": "股價 ≤$44（≈9.6x FY27 4.56）或 FY27 共識 EPS ≥$5.00 且股價 ≤$55（倍數 ≤11x）；Q4 FY26 原文重申 FY27 框架為前置條件",
+    "exec_line": "新資金：0%，追蹤名單；兩條 rearm 任一觸發＋FY27 框架重申→衛星首倉 1/3（上限 3%），其餘掛網通 OM ≥24% 加碼。已持有者：不因觀望賣出，thesis 級觸發（網通 OM <20% 連 2 季／FY27 框架撤回）才清倉，估值偏高最多 trim。"
+  },
+  "triggers": [
+    {
+      "n": 1,
+      "text": "網通 OM 與訂單成長（H1）",
+      "type": "假設驗證",
+      "maps_to": "H1",
+      "metric": "網通分部非 GAAP OM；網通訂單 YoY",
+      "threshold": "OM ≥24%（FY27）；訂單成長 ≥10%",
+      "action": "達標→rearm 後可加碼至衛星上限；連 2 季 <22%→H1 削弱、凍結加碼",
+      "source_freq": "季報／每季",
+      "date": "2026-12（Q4 FY26 財報，日期待公司公告）"
+    },
+    {
+      "n": 2,
+      "text": "FCF 兌現（H2）",
+      "type": "假設驗證",
+      "maps_to": "H2",
+      "metric": "FY26 FCF；FY27 FCF 指引",
+      "threshold": "FY26 ≥$3.75B；FY27 ≥$5.0B 維持",
+      "action": "達標→H2 驗證；FY27 FCF 指引下修 >20%→視同 Single Thing 觸發",
+      "source_freq": "季報／每季",
+      "date": "2026-12"
+    },
+    {
+      "n": 3,
+      "text": "記憶體／供給驅動的利潤衝擊（R1）",
+      "type": "風險",
+      "maps_to": "R1",
+      "metric": "Cloud & AI 分部 OM；存貨 QoQ vs DRAM 現貨價",
+      "threshold": "OM 連 2 季 <10%；或存貨升而現貨價跌",
+      "action": "連 2 季→減碼一半（若持有）；追蹤者延後 rearm",
+      "source_freq": "季報＋記憶體現貨價／每季",
+      "date": "—",
+      "evidence_refs": [
+        "customer_concentration_credit#4",
+        "capital_markets_pricing#2",
+        "major_events#4"
+      ]
+    },
+    {
+      "n": 4,
+      "text": "伺服器份額流向 ODM／Dell、白牌 DC 交換器（R2）",
+      "type": "風險",
+      "maps_to": "R2",
+      "metric": "IDC 伺服器份額；DC 交換器訂單成長 vs Arista",
+      "threshold": "份額連 4 季下滑；DC 網通訂單連 4 季落後",
+      "action": "連 4 季→護城河重審、等級降 C 即迴避",
+      "source_freq": "IDC 季報／每季",
+      "date": "—",
+      "evidence_refs": [
+        "competitive_share_entrants#0",
+        "customer_second_source#0",
+        "customer_second_source#1",
+        "substitute_technology#0"
+      ]
+    },
+    {
+      "n": 5,
+      "text": "第二階段關稅與地緣（R3）→公司損益閘",
+      "type": "風險",
+      "maps_to": "R3",
+      "metric": "GM 指引；非 GAAP OM 指引",
+      "threshold": "伺服器納入關稅且 GM 指引下修 ≥100bp，或 OM 指引 <14%",
+      "action": "觸發→Bear 機率上修至 35%、rearm 價下修至 ≤$40",
+      "source_freq": "商務部公告＋季報／事件",
+      "date": "2026-Q4",
+      "evidence_refs": [
+        "reg_tariff_export#0",
+        "reg_tariff_export#2",
+        "geo_supply_chain#0",
+        "geo_supply_chain#2"
+      ]
+    },
+    {
+      "n": 6,
+      "text": "FY27 框架撤回或下修（Single Thing）",
+      "type": "Single Thing",
+      "maps_to": "single_thing",
+      "metric": "法說 outlook：營收 +13–17%／EPS +16–20%／FCF ≥$5.0B",
+      "threshold": "任一項未原文重申或下修",
+      "action": "追蹤名單移除、rearm 改事件錨；持有者清倉",
+      "source_freq": "法說／每季",
+      "date": "2026-12",
+      "evidence_refs": [
+        "major_events#3"
+      ]
+    },
+    {
+      "n": 7,
+      "text": "估值 rearm（進場首倉）",
+      "type": "估值rearm",
+      "maps_to": "decision_out",
+      "metric": "股價；FY27 共識 EPS",
+      "threshold": "≤$44，或 FY27 EPS ≥$5.00 且股價 ≤$55；前置：FY27 框架重申",
+      "action": "衛星首倉 1/3（上限 3%）；價格先走而未驗證（>$60 且框架未重申）→不追",
+      "source_freq": "日價＋月度共識快照／每週",
+      "date": "—"
+    },
+    {
+      "n": 8,
+      "text": "加碰（論點增強）",
+      "type": "加碼",
+      "maps_to": "H1／H2",
+      "metric": "網通 OM；FY27 FCF",
+      "threshold": "網通 OM ≥24% 連 2 季，或 FY27 FCF 指引上修 ≥$5.5B",
+      "action": "加碼至衛星上限 3%",
+      "source_freq": "季報／每季",
+      "date": "—"
+    },
+    {
+      "n": 9,
+      "text": "清倉（thesis 級）",
+      "type": "清倉",
+      "maps_to": "H1／single_thing",
+      "metric": "網通 OM；FY27 框架",
+      "threshold": "網通 OM 連 2 季 <20%，或 FY27 框架撤回",
+      "action": "清倉；估值偏高或漲幅本身最多 trim",
+      "source_freq": "季報／每季",
+      "date": "—"
+    },
+    {
+      "n": 10,
+      "text": "Juniper 和解殘餘：Instant On 出脫",
+      "type": "風險",
+      "maps_to": "R3",
+      "metric": "出脫成交與 Mist 授權執行",
+      "threshold": "出脫流標致法院重審和解條款",
+      "action": "治理扣點、複審",
+      "source_freq": "法院文件／事件",
+      "date": "2026-12",
+      "evidence_refs": [
+        "regulatory_antitrust#1",
+        "regulatory_antitrust#3"
+      ]
+    },
+    {
+      "n": 11,
+      "text": "複審日期",
+      "type": "複審日期",
+      "maps_to": "全檔",
+      "metric": "Q4 FY26 財報後重跑",
+      "threshold": "—",
+      "action": "重跑 DD",
+      "source_freq": "—",
+      "date": "2026-12"
+    }
+  ],
+  "contradictions": [
+    {
+      "axis": "共識清單",
+      "side_a": "方向一致：網通已成獲利主體（OM 23–24%、占 OP 逾半）；Q3 FY26 全線超預期且 FY26／FY27 上修；訂單 +42% > 營收 +34%；供給受限至 2027；去槓桿與回饋紀律在軌",
+      "side_b": "矛盾拓撲＝集中兩軸：估值（五年高倍數 vs PEG <1）與週期性（記憶體轉嫁／AI 系統 mix 是否為 FY27 EPS 的巔峰成分）；其餘為程度差異",
+      "ruling": "爭議集中→點名估值×週期軸為 binding；信心不整體下修，角色落追蹤",
+      "evidence_level": "L1",
+      "settle_metric": "FY27 框架於 Q4 FY26 法說原文重申＋Cloud & AI OM 守 10%",
+      "if_then": [
+        "若 Q4 FY26 重申框架且股價 ≤$44→衛星首倉 1/3",
+        "若框架下修→追蹤名單移除"
+      ]
+    },
+    {
+      "axis": "矛盾：伺服器份額下滑 vs 營收 +34%",
+      "side_a": "IDC Q4 2025：HPE 全市場份額 3.1%、第五、營收 −8.6% YoY，歸因 Dell 組合、Lenovo、超大規模自製",
+      "side_b": "Q3 FY26（2026-07 季末）Cloud & AI +25.4%、AI 系統訂單 $2.4B、$3.5B 推論大單——最新一季官方值優先",
+      "ruling": "不可調和（方向相反）：兩者皆 L1 但時點不同——IDC 反映 2025 底 HPE 主動挑毛利訂單（FY26 Cloud & AI 指引曾下修，來源：摘要）；Q3 反映供給鬆動後出貨。裁決：份額結構性流向 ODM 為真且長期，Q3 放量為週期性補償，兩者可同時為真；護城河 pricing 6.5 已扣",
+      "evidence_level": "L1",
+      "settle_metric": "IDC 2026 Q3／Q4 HPE 份額是否回到 ≥4%",
+      "if_then": [
+        "若份額回升且 OM 守 10%→R2 降級",
+        "若份額續降而營收靖增（純轉嫁膨脹）→Bear 機率 35%"
+      ],
+      "evidence_refs": [
+        "competitive_share_entrants#0",
+        "customer_second_source#0"
+      ]
+    },
+    {
+      "axis": "矛盾：估值兩把尺方向相反",
+      "side_a": "trailing P/E／P/S／EV/S 皆五年 100 分位（valuation_history）；26 週 +148%",
+      "side_b": "Fwd PE FY27 11.4x、PEG 0.97、FCF yield 約 7%（FY27 ≥$5B／市值約 $68B）；共識 90 天上修 12–16%",
+      "ruling": "可調和（程度差異）：複利尺以前瞻優先→診斷『公允至便宜』；但色階規則取較嚴→🔴。本檔採色階規則並明文兩規則相衝；且前瞻分母（FY27 EPS）正是週期爭點→分母爭議成立，便宜論證降權。市場錯在哪：市場把 FY27 當持久基期，本檔認為其中含記憶體轉嫁與 AI 巔峰 mix，FY28 共識成長已降至 +8% 即為線索",
+      "evidence_level": "L2",
+      "settle_metric": "FY28 共識 EPS 方向（上修＝市場對；下修＝本檔對）",
+      "if_then": [
+        "若 FY28 共識上修至 ≥$5.3 且股價 ≤$55→PEG 尺勝出、rearm",
+        "若 FY28 共識下修→維持觀望、rearm 價下修"
+      ]
+    },
+    {
+      "axis": "矛盾：供給受限是利多還是天花板",
+      "side_a": "『AI 伺服器做不夠賣』、訂單與 backlog 創高＝需求能見度至 2027",
+      "side_b": "財報後股價 −5%：市場讀為記憶體／CPU／硬碟缺貨限制出貨與毛利；管理層預期緊張延續至 2027",
+      "ruling": "可調和：兩者是同一事實的兩面——對營收是天花板、對定價是支撐；對 HPE 環節淨效果取決於轉嫁率，Cloud & AI OM 是唯一裁判",
+      "evidence_level": "L1",
+      "settle_metric": "Cloud & AI OM 連 2 季方向",
+      "if_then": [
+        "若 OM ≥11% 連 2 季→天花板論退場、Bull 機率 30%",
+        "若 OM <10% 連 2 季→減碼／延後 rearm"
+      ],
+      "evidence_refs": [
+        "capital_markets_pricing#2",
+        "major_events#4"
+      ]
+    },
+    {
+      "axis": "矛盾：Juniper 反壟斷——和解定案 vs 程序爭議",
+      "side_a": "2026-08-12 北加州法院核准 DOJ 和解，交易 2025-07 已完成；EC 亦已核准",
+      "side_b": "DOJ 2025-01-30 起訴、和解遭 12 州檢察長＋DC 介入、眾院司法委員會民主黨質疑程序；Instant On 出脫買家出價偏低未決",
+      "ruling": "可調和：法院核准為 L1 終局事實，程序爭議未推翻交易；殘餘風險只剩 Instant On 出脫價與 Mist 授權執行，列治理扣點與觸發器 10，不進護城河扣分（記帳一次）",
+      "evidence_level": "L1",
+      "settle_metric": "Instant On 成交公告",
+      "if_then": [
+        "若 2026-12 前成交→本軸關閉",
+        "若流標致法院重審→治理降 B、複審"
+      ],
+      "evidence_refs": [
+        "regulatory_antitrust#1",
+        "regulatory_antitrust#3",
+        "major_events#1",
+        "major_events#2",
+        "ma_merger#1"
+      ]
+    },
+    {
+      "axis": "與前份報告交叉：觀望維持但理由更新；知識帳本先讀後裁",
+      "side_a": "本次：觀望／追蹤，binding＝估值×週期（五年 100 分位＋FY27 分母爭議），rearm ≤$44 或共識追上",
+      "side_b": "前份 2026-06-02（$47）：B 觀望、等回測 $38–42；估值 🟠、五年分位 87、FY27 PE 12.1x。首份 2026-05-18（$33.1）B 觀望",
+      "ruling": "前次觀望後漲 +6%（自首份 +57%）；本次維持觀望的理由不是『更貴了』——fwd 倍數反而由 12.1x 降至 11.4x（共識上修快於股價），而是 trailing 尺升至 100 分位且 FY27 分母含週期成分；前份『等 $38–42』未觸發，本次 rearm 上修至 $44 反映 FCF 指引 ×2 與網通 OM 兌現。同形狀 peer 對帳：證據包未涵蓋近 30 天 DELL／ANET 裁決，一句帶過",
+      "evidence_level": "L1",
+      "settle_metric": "FY28 共識方向與股價相對 $44／$55",
+      "if_then": [
+        "若 ≤$44→進場首倉",
+        "若 >$60 而框架未重申→不追、維持追蹤"
+      ]
+    },
+    {
+      "axis": "前份漂移：price_at_dd",
+      "prior_field": "price_at_dd",
+      "side_a": "本次 52.00（2026-09-04 收盤，財報後）",
+      "side_b": "前份 47.00",
+      "ruling": "主因＝價格變了（+10.6%）；基本面同步變（Q3 大 beat、FY27 框架首揭）；方法論未變",
+      "evidence_level": "L1",
+      "settle_metric": "—",
+      "if_then": [
+        "若回落 ≤$44→rearm",
+        "若 >$60→停止追蹤加碼考慮"
+      ]
+    },
+    {
+      "axis": "前份漂移：val",
+      "prior_field": "val",
+      "side_a": "本次 🔴（trailing 五年 100 分位）",
+      "side_b": "前份 🟠（五年分位 87）",
+      "ruling": "主因＝方法論變了（本次以 valuation_history trailing 三年度點取分位，前份以 fwd 分位估 87）；次因＝價格 +10.6%；基本面（fwd 倍數）反而改善 12.1x→11.4x。方法論驅動，明標",
+      "evidence_level": "L2",
+      "settle_metric": "—",
+      "if_then": [
+        "若 fwd 分位法回補入證據包且 <85→降 🟠",
+        "若 trailing 續升→維持 🔴"
+      ]
+    },
+    {
+      "axis": "前份漂移：dca_verdict／dca_role",
+      "prior_field": "dca_verdict",
+      "side_a": "本次 觀望／追蹤",
+      "side_b": "前份 v12.4 無決策層欄（散文層為 B 觀望）",
+      "ruling": "方法論變了（v12.4→v17 新增決策層）；實質裁決一致",
+      "evidence_level": "L1",
+      "settle_metric": "—",
+      "if_then": [
+        "若 rearm→進場・衛星",
+        "若 Single Thing→迴避"
+      ]
+    },
+    {
+      "axis": "前份漂移：dca_role",
+      "prior_field": "dca_role",
+      "side_a": "本次 追蹤",
+      "side_b": "前份無此欄",
+      "ruling": "方法論變了；前份散文『衛星候選』對應本次追蹤",
+      "evidence_level": "L1",
+      "settle_metric": "—",
+      "if_then": [
+        "若 rearm→衛星",
+        "若迴避→不持有"
+      ]
+    },
+    {
+      "axis": "前份漂移：moat_trend",
+      "prior_field": "moat_trend",
+      "side_a": "本次 →",
+      "side_b": "前份無此欄",
+      "ruling": "方法論變了（新增欄）；基本面：網通擴大、伺服器縮減，取 →",
+      "evidence_level": "L1",
+      "settle_metric": "IDC 份額；網通 OM",
+      "if_then": [
+        "若伺服器份額回升→↑",
+        "若網通 OM <22%→↓"
+      ]
+    },
+    {
+      "axis": "前份漂移：ev5y_pct／irr_base_pct／asym_ratio",
+      "prior_field": "ev5y_pct",
+      "side_a": "本次 EV5Y 38.8%／Base IRR 9.3%／AR 3.2",
+      "side_b": "前份無情境樹機器欄（散文 upside_5y 40%）",
+      "ruling": "方法論變了（v17 情境樹）；數值與前份 5Y upside 40% 接近，基本面未致漂移",
+      "evidence_level": "L2",
+      "settle_metric": "—",
+      "if_then": [
+        "若 FY28 共識上修→EV5Y 上修",
+        "若框架下修→Bear 35%"
+      ]
+    },
+    {
+      "axis": "前份漂移：irr_base_pct",
+      "prior_field": "irr_base_pct",
+      "side_a": "本次 9.3%",
+      "side_b": "前份無此欄",
+      "ruling": "方法論變了（新增欄）",
+      "evidence_level": "L2",
+      "settle_metric": "—",
+      "if_then": [
+        "若股價 ≤$44→IRR 升至 >12%",
+        "若 >$60→IRR <7%"
+      ]
+    },
+    {
+      "axis": "前份漂移：asym_ratio",
+      "prior_field": "asym_ratio",
+      "side_a": "本次 3.2",
+      "side_b": "前份無此欄",
+      "ruling": "方法論變了（新增欄）",
+      "evidence_level": "L2",
+      "settle_metric": "—",
+      "if_then": [
+        "—",
+        "—"
+      ]
+    },
+    {
+      "axis": "前份漂移：max_dd_pct",
+      "prior_field": "max_dd_pct",
+      "side_a": "本次 −35%～−50%",
+      "side_b": "前份無此欄",
+      "ruling": "方法論變了（新增欄）；依 2025-10 月內 −27% 前例校準",
+      "evidence_level": "L2",
+      "settle_metric": "—",
+      "if_then": [
+        "—",
+        "—"
+      ]
+    },
+    {
+      "axis": "前份漂移：bull_5y_price／bear_5y_price／p_bull_pct／p_bear_pct",
+      "prior_field": "bull_5y_price",
+      "side_a": "本次 Bull $117／Bear $35；P 25／30",
+      "side_b": "前份無情境樹機器欄",
+      "ruling": "方法論變了（v17 情境樹）",
+      "evidence_level": "L2",
+      "settle_metric": "—",
+      "if_then": [
+        "—",
+        "—"
+      ]
+    },
+    {
+      "axis": "前份漂移：bear_5y_price",
+      "prior_field": "bear_5y_price",
+      "side_a": "本次 $35",
+      "side_b": "前份無此欄",
+      "ruling": "方法論變了",
+      "evidence_level": "L2",
+      "settle_metric": "—",
+      "if_then": [
+        "—",
+        "—"
+      ]
+    },
+    {
+      "axis": "前份漂移：p_bull_pct",
+      "prior_field": "p_bull_pct",
+      "side_a": "本次 25",
+      "side_b": "前份無此欄",
+      "ruling": "方法論變了",
+      "evidence_level": "L2",
+      "settle_metric": "—",
+      "if_then": [
+        "—",
+        "—"
+      ]
+    },
+    {
+      "axis": "前份漂移：p_bear_pct",
+      "prior_field": "p_bear_pct",
+      "side_a": "本次 30",
+      "side_b": "前份無此欄",
+      "ruling": "方法論變了；內生天花板超出→下限 30",
+      "evidence_level": "L2",
+      "settle_metric": "—",
+      "if_then": [
+        "—",
+        "—"
+      ]
+    },
+    {
+      "axis": "前份漂移：rearm_trigger",
+      "prior_field": "rearm_trigger",
+      "side_a": "本次 ≤$44 或 FY27 EPS ≥$5.00 且 ≤$55",
+      "side_b": "前份散文『等回測 $38–42』（無機器欄）",
+      "ruling": "主因＝基本面變了（FCF 指引 $3.5B→≥$3.75B、FY27 FCF ≥$5B 首揭、網通 OM 兌現）故 rearm 價上修；次因＝方法論新增欄",
+      "evidence_level": "L1",
+      "settle_metric": "—",
+      "if_then": [
+        "若 ≤$44→首倉",
+        "若框架下修→改事件錨"
+      ]
+    },
+    {
+      "axis": "⚖ 強制裁決：現在就買的最強論證 vs 觀望",
+      "side_a": "Steelman 買方：fwd 11.4x FY27／PEG 0.97；FCF yield 約 7% 且 FY28 起 75% 回饋；共識 90 天上修 12–16% 且指引全面上修；網通已占獲利逾半、OM 逼近 Cisco；供給受限＝2027 能見度；股價距 52 週高 −13%、均值目標價 $67–70 高於現價",
+      "side_b": "逐點回應：①分母爭議——FY27 EPS 含記憶體轉嫁與 AI 巔峰 mix，FY28 共識成長已降至 +8%；②trailing 三尺皆五年 100 分位，re-rate（前份 H3）已完成，剩下的是兌現而非重估；③26 週 +148% 的動能尾端，2025-10 前例示範指引失望的彈性；④伺服器份額 3.1% 且降、AI 系統 OM 約 10%，利潤留在上游；⑤FCF 指引一年內 ×2 顯示可預測性低，7% yield 的分母未經壓測",
+      "ruling": "選觀望／追蹤（價格與時機問題→觀望，非結構→非迴避）。相鄰檢核：為何不進場——為巔峰年付五年最高倍數；為何不迴避——thesis 完整（網通轉型、FCF、去槓桿皆在軌）。binding constraint＝估值×週期，rearm＝其否定（價格降或共識追上）",
+      "evidence_level": "L1",
+      "settle_metric": "FY28 共識 EPS 方向＋Cloud & AI OM",
+      "if_then": [
+        "若股價 ≤$44 且框架重申→衛星首倉 1/3",
+        "若 FY27 EPS 共識 ≥$5.00 且股價 ≤$55→衛星首倉 1/3",
+        "若股價 >$60 而 Q4 未重申框架→不追、維持追蹤",
+        "若框架下修→追蹤名單移除、rearm 改事件錨"
+      ]
+    }
+  ],
+  "premortem": {
+    "blind_spots": [
+      {
+        "text": "假設①FY27 框架的 EPS +16–20% 主要來自綜效與網通 mix，而非記憶體轉嫁——若轉嫁占比高，記憶體回落時營收與 EPS 同步縮水；管理層拒絕量化 pull-forward（來源：摘要）使此假設無法從外部驗證",
+        "evidence_refs": [
+          "customer_concentration_credit#4",
+          "major_events#3"
+        ]
+      },
+      {
+        "text": "假設②供給受限只延後而不流失需求——若客戶因等不到貨轉向 ODM 直供或 Dell，backlog 會在缺貨結束時被取消而非出貨",
+        "evidence_refs": [
+          "customer_second_source#0",
+          "competitive_share_entrants#0"
+        ]
+      },
+      {
+        "text": "假設③週線均線為強勢排列（✅）——證據包無均線序列，由動能數據推定；若實際已破 W52，節奏調節應改為分批",
+        "evidence_refs": []
+      },
+      {
+        "text": "假設④第二階段關稅對伺服器有資料中心豁免——商務部 2026-09-02 只確認範圍，未確認豁免；GPU 全數台灣製造使地緣尾部無法對沖",
+        "evidence_refs": [
+          "reg_tariff_export#2",
+          "geo_supply_chain#0"
+        ]
+      },
+      {
+        "text": "假設⑤Juniper 和解殘餘不影響網通整合——Instant On 流標若致法院重審，Mist 授權範圍可能擴大",
+        "evidence_refs": [
+          "regulatory_antitrust#3",
+          "major_events#2"
+        ]
+      }
+    ],
+    "failure_story": "五年後虧 50% 的故事：2027 記憶體回落＋AI 資本支出消化，伺服器名目營收縮水、預購存貨跌價，FY27 框架於 2026-12 或 2027-03 下修；市場把 HPE 從『網通混合體』打回『循環硬體』，倍數 9x、EPS 3.9→$35。此失敗＝Single Thing（框架下修）✅直接撞上，不動",
+    "second_failure": "成功但劣化：網通 OM 如期升至 26%、FCF ≥$5B 兌現，但以『伺服器持續失份額、營收成長靠價格』形態兌現，市場把估值框架從『成長混合體 13x』切換到『高股息硬體 10x』，5 年報酬只剩股息＋回購約 3–4%／年、總報酬約 +20%。機率不可忽略（約 25%）→已反映於 Base 終端 12x 而非 13.6x",
+    "max_dd": {
+      "lo": -50.0,
+      "hi": -35.0,
+      "path_risk": "🟡",
+      "trigger_time": "最可能 2026-12～2027-06（Q4 FY26／Q1 FY27 法說撞上記憶體價格轉折與第二階段關稅）；恢復峰值需 FY28 綜效兌現後約 18–24 個月；若框架撤回則 thesis 已破不談恢復。範圍寬度 15pp ≥10pp"
+    }
+  },
+  "kill_metrics": [
+    {
+      "metric": "Cloud & AI 分部非 GAAP OM",
+      "bear_threshold": "連 2 季 <10%→減碼一半",
+      "window": "2 季",
+      "source": "季報分部揭露",
+      "last_status": "ok"
+    },
+    {
+      "metric": "網通分部非 GAAP OM",
+      "bear_threshold": "連 2 季 <20%→清倉（thesis 級）",
+      "window": "2 季",
+      "source": "季報分部揭露",
+      "last_status": "ok"
+    },
+    {
+      "metric": "FY27 框架三數字（營收 +13–17%／EPS +16–20%／FCF ≥$5.0B）",
+      "bear_threshold": "任一撤回或下修→追蹤移除／清倉",
+      "window": "每季法說",
+      "source": "法說 outlook",
+      "last_status": "ok"
+    },
+    {
+      "metric": "AI 系統 backlog QoQ",
+      "bear_threshold": "連 2 季轉負→需求端問題、Bear 35%",
+      "window": "2 季",
+      "source": "法說口頭揭露",
+      "last_status": "ok"
+    },
+    {
+      "metric": "GM 指引對第二階段關稅",
+      "bear_threshold": "下修 ≥100bp→rearm 價下修至 ≤$40",
+      "window": "事件",
+      "source": "商務部公告＋季報",
+      "last_status": "unknown"
+    }
+  ],
+  "reasoning": {
+    "archetype": "提示為品質複利成長，但財務指紋不符：FCF 利潤率 10.3%（<15%）、ROIC 約 6–9%（<15%）、GM 33.9%；Juniper 併購一年內網通占獲利逾半＝轉機混合體，AI 系統放量帶循環色彩。非複利型換尺參考未在載入包內，依規則不得換尺→維持品質複利預設尺、信心低、次型標轉機待確認；下游影響：Munger 門檻多數不過，品質分只能靠護城河 7＋成長 6 撐 6.5。",
+    "thesis": "H1 網通：OM 20.8%（Q3 FY25）→23.7%（Q1 FY26）、目標 FY28 25–28%（來源：摘要）；Q3 FY26 訂單 +36%、Oracle GW 級。H2 現金：FCF Q3 $958M、FY26 ≥$3.75B、FY27 ≥$5.0B。H3 每股複利：槓桿 3.1x→2.6x→FY27 2x、回饋 ≥75%。Single Thing 取 FY27 框架下修（敏感度最大：EPS −10%×倍數 −30%＝−29%）。持有期宣告中期，故單季出貨時點為噪音。",
+    "industry": "無 canonical ID（ID gap）。時鐘 II：超大規模需求>供給至 2027、Goldman DRAM 缺口 5.0／5.9／3.9%、HPE 訂單 +42% > 營收 +34%。durability 裁決＝結構性至 2027 但 HPE 環節供給可逆性高（賺轉嫁差價非產能租金）→Bear 情境含『轉嫁消失』。三軸＝雙向拉鋸（A 伺服器份額→ODM／白牌；B 供給受限能見度＋網通 AI 化；C 第二階段關稅、和解定案）。利潤池：伺服器淨流出、網通淨流入，不標『結構性轉好』。",
+    "moat": "execution 7（併購一年網通 OM 23.7%、訂單 +36%、MQ 雙領導）、pricing 6.5（架構替代 −2 已計：超大規模自製、記憶體占 BOM 逾半、AI 系統 OM 約 10%）→合併 6.75 記 7.0＝B。閘三：DELL 單季伺服器 $12.5B vs HPE $3.8B→規模優勢質變警示成立於伺服器。trend →：網通擴大／伺服器縮減，最大 program 有 sourced 份額下滑故不得 ↑。ROIC durability：低利益率×低周轉邊緣，四檢查點 🟡🟡🔴🟢；內生天花板＝12%×35%＝4.2% < Base CAGR 9.4%，缺口歸因綜效 2pp＋回購 3pp→Bear ≥30%。",
+    "growth": "Runway 6 年（AI 系統＋網通 AI 化至 2028 能見度，之後靠企業推論擴散）；Y5 後 🟡：滲透率無可靠口徑（TAM 各機構差數量級）、Networks-for-AI 為 sourced 第二曲線但規模（$2.5–3.0B）不足以定義 S 曲線。七問最弱＝⑥股價已反映。衰退信號 2 個（EPS≫Rev、伺服器份額縮）→🟡。分段：網通 FY27 +10–12%／Cloud & AI +14–18%，合併 13–17% 對得上框架。",
+    "quality": "非 GAAP OM 五季 8.5→16.2%＝最強證據；FCF 利潤率 TTM 10.28% 低於 15%；SBC 1.35% 無警訊；ROIC−WACC 約 0 至 −3pp（含商譽）。體質五項 veto 0 不過（GM 未連續下滑 >2pp／FCF·NI ≥0.7／共識上修中／營收 YoY 正／淨槓桿 2.6x ≤3.0）→品質分 (7+6)/2＝6.5，B 級。lumpiness 🟡：FCF 指引一年內由 $1.7–2.0B 升至 ≥$3.75B，可預測性低。",
+    "governance": "計分卡：Juniper ROIIC 首年估 11–14% > WACC（第 3 年檢核在 FY28，暫過）；回購 earnings yield 8–18% 過；SBC 淨稀釋 ≤1% 過→3/3＝A。質性：和解程序爭議與 Instant On 未決記治理扣點不改等級；內部人交易與薪酬結構證據包未涵蓋（數據限制）。A 級→不觸發 7b、不壓長期信心。",
+    "valuation": "52÷4.56＝11.4x FY27；52÷3.82＝13.6x FY26。三年前瞻 CAGR：FY26 3.82→FY29E 5.34（4.94×1.08）＝11.8%→PEG 0.97。trailing P/E 26.8 對三年度點高 19.52＝100 分位；P/S、EV/S 同 100。取較嚴→🔴，救援不適用。目標：1Y 4.56×12＝$54.7（+5.2%）、2Y 4.94×12＝$59.3（+14.0%）、5Y 6.0×12＝$72（+38.5%）；Bear 4.10×9＝$36.9（−29%）。情境樹：Bull 7.8×15＝$117（+125%）P25／Base P45／Bear 3.9×9＝$35（−32.5%）P30→EV5Y 38.8%、Base IRR 6.7%＋yield 2.6＝9.3%、AR 3.2；re-rate 貢獻 1.0/6.7＝15% <40% 非估值依賴型。分母爭議成立（FY27 EPS 為爭點）。",
+    "trap_analysis": "模式＝循環高點當結構成長。反證：OM 五季連升 +770bp、訂單 > 營收、FCF 同期新高。支持：三尺 100 分位、份額 3.1% 且降、BOM 記憶體逾半、26 週 +148%、FY28 共識 +8%。空頭一擊：框架下修→EPS 4.1×9x＝$37（−29%）。監測四項以 Cloud & AI OM 為首。定性 🟡 觀察期。自我攻擊三反駁：①fwd 便宜→分母爭議；②供給受限＝能見度→OM 才是裁判；③共識上修 +13.7%→歸錯過成本反向閘裁量升級條件式，不自行翻面。",
+    "premortem": "失敗故事＝框架下修→9x×3.9＝$35（−33%），與 Single Thing 直接撞上 ✅。第二敗局＝兌現但以失份額形態、框架切至高股息硬體 10x，機率約 25%→Base 終端取 12x 非 13.6x。Max DD −35%～−50%：以 2025-10 月內 −27% 前例×26 週 +148% 動能尾端校準，下界 −50% 涵蓋 Bear 終點 −32.5%；🟡 路徑風險，thesis 非脆弱（moat → 、Y5 後 🟡、非估值依賴）故不下修倉位上限。"
+  },
+  "evidence_dismissed": [
+    {
+      "ref": "customer_concentration_credit#1",
+      "reason": "口徑不可比：兩家全球經銷商整併是公司主動的通路重組（同軸 channel_business_model_shift#0 記為正向、當日股價 +6.9%），非客戶集中；且未附經銷商占營收比例，無法量化為信用或集中度風險"
+    },
+    {
+      "ref": "geo_supply_chain#5",
+      "reason": "已被更新數字取代：2025-02 裁員期的『關稅侵蝕 $120M 毛利』口徑，已由 2025-09-04 管理層『全年關稅影響約 $0.04 EPS、環境穩定』（來源：摘要）與 Q3 FY26 非 GAAP OM 16.2% 實績覆蓋；關稅風險以 reg_tariff_export#0／#2 的現行條款接進 R3"
+    }
+  ],
+  "plain": {
+    "verdict_line": "HPE 轉型是真的，但現在的價格是為最好的一年付最高的倍數，先觀望。",
+    "verdict_sub": "不買新倉、放追蹤名單。股價回到 44 元以下，或 2027 年獲利預估追上來，再用小部位進場。",
+    "five": {
+      "how_it_makes_money": "賣伺服器、企業網路設備和儲存給企業與雲端業者。買下 Juniper 後，網路設備已經賺走公司一半以上的利潤。",
+      "why_now": "最新一季營收成長 34%、訂單成長 42%，公司首次給出 2027 年獲利成長 16 到 20% 的框架。市場已經用半年漲 148% 回應。",
+      "why_this_size": "現在是零部位。因為以過去獲利算的倍數站在五年最高，而支撐便宜的 2027 年獲利裡混著記憶體漲價轉嫁這種週期成分。",
+      "biggest_fear": "記憶體缺貨卡住出貨、成本卻繼續漲，公司在年底或明年三月的法說會下修 2027 框架。去年十月同樣的事讓股價一天跌 10%。",
+      "how_to_act": "股價 44 元以下，或 2027 年每股獲利預估升到 5 元而股價還在 55 元以下，先買三分之一的衛星部位。"
+    },
+    "business": {
+      "what_to_whom": "把伺服器、交換器、無線網路和儲存設備賣給企業、政府和大型雲端公司，並用 GreenLake 訂閱方式收費。",
+      "why_customers_stay": "網路設備一旦裝機，整套管理軟體和人員訓練綁在一起，換供應商要換整個網路。伺服器則沒有這種黏性，客戶能隨時換家甚至自己做。",
+      "moat_direction": "護城河中等、方向持平。網路這一半在變寬，伺服器這一半在變窄，最弱處是伺服器：全球份額只剩 3.1%，利潤留在晶片和記憶體廠手上。"
+    },
+    "bets": [
+      {
+        "claim": "網路事業會成為獲利主體，利潤率從 23% 走向 25% 以上。",
+        "wrong_when": "網路事業利潤率連兩季掉到 22% 以下。"
+      },
+      {
+        "claim": "AI 伺服器和換機潮會變成現金，2027 年自由現金流達到 50 億美元。",
+        "wrong_when": "現金流連兩季落後年化指引 5% 以上，或 2027 年現金流目標被下修。"
+      },
+      {
+        "claim": "還完債之後，公司會把七成五以上的現金流還給股東，每股獲利靠回購持續複利。",
+        "wrong_when": "負債倍數連四季高於原訂路徑，或回饋比例長期不到一半。"
+      }
+    ],
+    "fears": [
+      {
+        "clock": "⚡",
+        "text": "記憶體占伺服器成本超過一半，缺貨延續到 2027 年。若 AI 系統部門利潤率連兩季跌破 10%，就是成本轉嫁失靈。"
+      },
+      {
+        "clock": "🔥",
+        "text": "伺服器份額持續流向 Dell 和代工廠直供，白牌交換器也在雲端資料中心拿下三到四成埠數。"
+      },
+      {
+        "clock": "🐢",
+        "text": "美國第二階段晶片關稅可能把伺服器納入，加上 GPU 全在台灣製造。若毛利率指引因此下修 100 個基點以上，就要重算。"
+      }
+    ],
+    "market_wrong": "市場把 2027 年的獲利當成可以長期站穩的基期，用 11.4 倍本益比說它便宜。我認為這一年裡混著記憶體漲價轉嫁和 AI 訂單高峰，2028 年的獲利成長預估已經掉到 8%，就是線索。另一面，市場對供給受限的反應是賣出，但這對定價其實是支撐，真正的裁判是 AI 部門的利潤率。",
+    "growth_funding": "靠自身資本再投資只能撐出約 4.2% 的成長，市場預期的 9% 左右靠的是併購綜效與回購。差額說得出來源，但意味著成長不是生意本身長出來的。",
+    "stories": {
+      "bull": "記憶體成本順利轉嫁，網路利潤率如期到 25% 以上，Oracle 這類十億瓦級資料中心訂單持續。市場把它當成網路公司定價，股價到 117 元。",
+      "base": "2027 年照公司框架兌現，之後 AI 成長放慢、記憶體價格回落讓伺服器營收名目縮水但毛利回升。倍數維持 12 倍，五年股價到 72 元。",
+      "bear": "2027 到 2028 年 AI 資本支出消化期碰上記憶體降價，轉嫁定價消失、囤的存貨跌價，公司下修框架。市場改回 9 倍硬體公司倍數，股價 35 元。"
+    },
+    "change_my_mind": [
+      {
+        "what": "股價，或 2027 年每股獲利預估",
+        "threshold": "股價 44 元以下；或預估升到 5 元而股價 55 元以下",
+        "then": "買進三分之一衛星部位",
+        "when": "—"
+      },
+      {
+        "what": "年底法說會的 2027 年框架",
+        "threshold": "營收、獲利、現金流三個數字任一被撤回或下修",
+        "then": "從追蹤名單移除；若已持有則清倉",
+        "when": "2026-12"
+      },
+      {
+        "what": "網路事業利潤率",
+        "threshold": "連兩季低於 20%",
+        "then": "清倉，這是唯一的結構性出場條件",
+        "when": "—"
+      }
+    ],
+    "prior_compare_reason": "上一份也是觀望，主因是方法論：本次改用過去獲利算五年分位，燈號由偏貴變過熱；以未來獲利算的倍數其實比上次還低。價格漲了 6%，基本面則變好。",
+    "how_to_lose": "第一種死法是框架下修，獲利和倍數一起掉，股價回到 35 到 37 元。第二種是成長兌現了但靠的是漲價不是份額，市場把它當高股息硬體股定價，五年只賺股息和回購。",
+    "evidence_quality": "覆蓋十二個軸，數字以 2026 年 7 月止的季報為準。最新一季逐字稿不在庫，只有網路轉載摘要；前四季法說摘要由他人整理，本檔標註來源為摘要。均線狀態由動能數據推定，未直接讀到均線序列。"
+  }
+}
