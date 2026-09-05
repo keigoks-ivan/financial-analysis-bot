@@ -47,7 +47,10 @@ DEFAULT_JUDGMENT_MODEL = "fable"
 # 判斷模型↔閘模型對調表（跨模型冷讀，見 _wp_spec_v17_batch2_20260905.md WP1d §4）
 GATE_MODEL_FOR = {"fable": "opus", "opus": "sonnet", "sonnet": "opus"}
 JUDGE_MAX_TURNS = 8
-JUDGE_FIX_MAX_TURNS = 4
+# WP7b #1（_wp_spec_v17_batch5_20260905.md）：bundle 改內嵌進 prompt（不再讓
+# agent 自己 Read 240KB 檔）後，fix agent 仍要讀 77KB judgment.json＋改＋
+# 寫＋judge check，4 輪不夠，實測至少 4 步驟＋緩衝，上調為 6。
+JUDGE_FIX_MAX_TURNS = 6
 GATE_MAX_TURNS = 6
 GATE_PATCH_MAX_TURNS = 6
 JUDGE_BUDGET_CACHE_READ = 1_200_000
@@ -785,6 +788,30 @@ def _render_format_template(tmpl_path, mapping):
     return text.format_map(_SafeFormatDict(mapping))
 
 
+BUNDLE_SEPARATOR = "\n\n===== BUNDLE =====\n\n"
+
+
+def _write_inline_prompt(prompt_path, extra_content_path):
+    """WP7b #1：judge／gate／patch 三種 prompt 渲染完模板後，把 bundle
+    （或修補時的 judgment.json 全文）整段接在 prompt 之後（分隔行
+    `===== BUNDLE =====`），寫成一個新的 `*_inline.md` 檔給 `dd_headless.spawn`
+    當真正的 prompt（經 stdin 餵給 `claude -p`，無長度上限）。模板本身的
+    「讀」段已改為「不要 Read 任何檔」，原本較短的 `prompt_path` 仍保留
+    （供人工核對渲染結果），不再是實際餵給 agent 的內容。
+
+    理由：Fable 判斷 agent 曾為了讀 240KB 的 judge bundle 花到撞 8 輪
+    上限（見 notes/site-internal/dd/_wp_spec_v17_batch5_20260905.md
+    WP7b #1 的 AVGO 實測記錄）。
+    """
+    prompt_path = Path(prompt_path)
+    extra_path = Path(extra_content_path)
+    extra_text = extra_path.read_text(encoding="utf-8") if extra_path.exists() else ""
+    combined = prompt_path.read_text(encoding="utf-8") + BUNDLE_SEPARATOR + extra_text
+    inline_path = prompt_path.with_name(prompt_path.stem + "_inline" + prompt_path.suffix)
+    inline_path.write_text(combined, encoding="utf-8")
+    return inline_path
+
+
 def _print_step_status(step, actual, target, status):
     print("{0}／實測={1}／目標={2}／{3}".format(step, actual, target, status))
 
@@ -1131,15 +1158,36 @@ def _do_judge(ticker, date, judgment_model, replay_dir, accept_over_budget, mani
             "kind": "judgment", "judgment_out": str(judgment_path), "scenario_out": str(scenario_path),
         })
 
+    inline_prompt_path = _write_inline_prompt(prompt_path, bundle_path)
+
     agents_dir = run_dir / "agents"
     r_spawn = dd_headless.spawn(
-        prompt_path=prompt_path, model=judgment_model, allowed_tools=["Read", "Write", "Bash"],
+        prompt_path=inline_prompt_path, model=judgment_model, allowed_tools=["Read", "Write", "Bash"],
         max_turns=JUDGE_MAX_TURNS, budget_cache_read=JUDGE_BUDGET_CACHE_READ,
         out_json=agents_dir / "judge_1.json", cwd=run_dir,
     )
     stage["agent_usage"].append(r_spawn)
 
     ok, report = _judge_check(ticker, date)
+    return _judge_finalize_after_check(
+        ticker, date, judgment_model, replay_dir, accept_over_budget, manifest, stage,
+        agents_dir, ok, report, fix_suffix="1",
+    )
+
+
+def _judge_finalize_after_check(ticker, date, judgment_model, replay_dir, accept_over_budget,
+                                 manifest, stage, agents_dir, ok, report, fix_suffix="1"):
+    """判斷物已寫出（或沿用既有）、`judge check` 剛跑過一次的結果為
+    `(ok, report)`：FAIL 時派一輪『定點修正』agent、重跑一次 check；把結果
+    收斂進 `stage` 並回寫 manifest。共用於 `_do_judge`（首次判斷後）與
+    WP7b #5 的 `--resume`（`judged_fail` 狀態先重跑 judge check，FAIL 才
+    派修補 agent，不重派整段判斷）。"""
+    run_dir = _run_dir(ticker, date)
+    manifest_path = run_dir / "manifest.json"
+    judgment_path = run_dir / "judgment.json"
+    scenario_path = run_dir / "scenario.json"
+    stage.setdefault("agent_usage", [])
+
     if not ok:
         fix_path = run_dir / "prompts" / "b1_fix.md"
         fix_text = (
@@ -1157,7 +1205,7 @@ def _do_judge(ticker, date, judgment_model, replay_dir, accept_over_budget, mani
         r_spawn2 = dd_headless.spawn(
             prompt_path=fix_path, model=judgment_model, allowed_tools=["Read", "Write", "Bash"],
             max_turns=JUDGE_FIX_MAX_TURNS, budget_cache_read=JUDGE_BUDGET_CACHE_READ,
-            out_json=agents_dir / "judge_fix_1.json", cwd=run_dir,
+            out_json=agents_dir / "judge_fix_{0}.json".format(fix_suffix), cwd=run_dir,
         )
         stage["agent_usage"].append(r_spawn2)
         ok, report = _judge_check(ticker, date)
@@ -1174,7 +1222,7 @@ def _do_judge(ticker, date, judgment_model, replay_dir, accept_over_budget, mani
     final_ok = ok and (over_budget is False or accept_over_budget)
     stage["state"] = "PASS" if final_ok else ("OVER_BUDGET" if (ok and over_budget) else "FAIL")
     stage["ended"] = _now()
-    manifest["stages"]["judged"] = stage
+    manifest.setdefault("stages", {})["judged"] = stage
     manifest["state"] = "judged_{0}".format(stage["state"].lower())
     _atomic_write_json(manifest_path, manifest)
     _print_step_status(
@@ -1184,6 +1232,41 @@ def _do_judge(ticker, date, judgment_model, replay_dir, accept_over_budget, mani
     if stage["state"] != "PASS":
         _print_resume_hint(ticker, date, "judged")
     return 0 if stage["state"] == "PASS" else 1
+
+
+def _resume_judge_stage(ticker, date, judgment_model, replay_dir, accept_over_budget, manifest):
+    """WP7b #5：`--resume` 落在 `judged_fail`（或 judged 段先前狀態為
+    FAIL）時的專用入口。判斷物可能已被機械層（`validate_judgment.py --fix`）
+    或人工直接修正過，先重跑一次 `judge check`——PASS 就不再燒一次完整
+    判斷 agent，直接把 judged 標成功；FAIL 才派一輪『定點修正』agent
+    （沿用 `_judge_finalize_after_check` 的 fix 流程），仍然不重派整段判斷
+    agent。見 notes/site-internal/dd/_wp_spec_v17_batch5_20260905.md WP7b #5。
+    """
+    run_dir = _run_dir(ticker, date)
+    manifest_path = run_dir / "manifest.json"
+    stage = manifest.setdefault("stages", {}).get("judged") or {
+        "state": "RUNNING", "started": _now(), "agent_usage": [], "over_budget": False,
+    }
+    stage.setdefault("agent_usage", [])
+    stage["resume_precheck"] = True
+    agents_dir = run_dir / "agents"
+
+    ok, report = _judge_check(ticker, date)
+    if ok:
+        stage["state"] = "PASS"
+        stage["ended"] = _now()
+        stage["check_report_tail"] = report[-4000:]
+        stage["resume_note"] = "resume：judge check 免修即過（判斷物已由機械或人工修正），未派任何 agent"
+        manifest["stages"]["judged"] = stage
+        manifest["state"] = "judged_pass"
+        _atomic_write_json(manifest_path, manifest)
+        _print_step_status("judged", "resume judge check", "validate PASS", "PASS")
+        return 0
+
+    return _judge_finalize_after_check(
+        ticker, date, judgment_model, replay_dir, accept_over_budget, manifest, stage,
+        agents_dir, ok, report, fix_suffix="resume",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -1228,9 +1311,10 @@ def _do_gate(ticker, date, judgment_model, replay_dir, accept_over_budget, manif
         return 1
 
     audit_path = run_dir / "gate_audit.md"
+    gate_bundle_path = run_dir / "bundles" / "gate.md"
     gate_prompt_path = run_dir / "prompts" / "g_gate.md"
     mapping = {
-        "run_dir": str(run_dir), "bundle_path": str(run_dir / "bundles" / "gate.md"),
+        "run_dir": str(run_dir), "bundle_path": str(gate_bundle_path),
         "ticker": ticker, "date": date, "audit_path": str(audit_path),
         "max_turns": str(GATE_MAX_TURNS),
     }
@@ -1238,10 +1322,12 @@ def _do_gate(ticker, date, judgment_model, replay_dir, accept_over_budget, manif
     if replay_dir:
         _append_replay_marker(gate_prompt_path, {"kind": "gate", "out": str(audit_path)})
 
+    inline_gate_prompt_path = _write_inline_prompt(gate_prompt_path, gate_bundle_path)
+
     gate_model = GATE_MODEL_FOR.get(judgment_model, "opus")
     agents_dir = run_dir / "agents"
     r_spawn = dd_headless.spawn(
-        prompt_path=gate_prompt_path, model=gate_model, allowed_tools=["Read", "Write"],
+        prompt_path=inline_gate_prompt_path, model=gate_model, allowed_tools=["Read", "Write"],
         max_turns=GATE_MAX_TURNS, budget_cache_read=GATE_BUDGET_CACHE_READ,
         out_json=agents_dir / "gate_{0}.json".format(_depth + 1), cwd=run_dir,
     )
@@ -1259,6 +1345,25 @@ def _do_gate(ticker, date, judgment_model, replay_dir, accept_over_budget, manif
         _print_resume_hint(ticker, date, "gated")
         return 1
 
+    return _gate_finalize_from_audit(
+        ticker, date, judgment_model, replay_dir, accept_over_budget, manifest, stage,
+        audit_path, _depth=_depth,
+    )
+
+
+def _gate_finalize_from_audit(ticker, date, judgment_model, replay_dir, accept_over_budget,
+                               manifest, stage, audit_path, _depth=0):
+    """`gate_audit.md` 已存在（剛 spawn 產出，或 WP7b #5 `--resume` 在
+    `gated_fail`／`gated_running` 時發現既有稽核檔）：parse 它、red>0 才派
+    修補 agent（inline judgment.json 全文，不重跑一次 gate spawn），
+    red=0 直接收斂為 PASS／OVER_BUDGET。"""
+    run_dir = _run_dir(ticker, date)
+    manifest_path = run_dir / "manifest.json"
+    py = _pick_python()
+    dd_gate_path = SCRIPTS_DIR / "dd_gate.py"
+    agents_dir = run_dir / "agents"
+    stage.setdefault("agent_usage", [])
+
     r_parse = subprocess.run(
         [py, str(dd_gate_path), "parse", str(audit_path), "--json"],
         capture_output=True, text=True,
@@ -1271,13 +1376,15 @@ def _do_gate(ticker, date, judgment_model, replay_dir, accept_over_budget, manif
             parsed = None
     stage["gate_parsed"] = parsed
 
+    over_budget = any(r.get("over_budget") for r in stage["agent_usage"])
     red = (parsed or {}).get("red", 0)
     if red and red > 0:
         prior_verdict = _read_decision_verdict(run_dir)
+        judgment_path = run_dir / "judgment.json"
         patch_prompt_path = run_dir / "prompts" / "b1_patch.md"
         rp = subprocess.run(
             [py, str(dd_gate_path), "patch-prompt",
-             "--audit", str(audit_path), "--judgment", str(run_dir / "judgment.json"),
+             "--audit", str(audit_path), "--judgment", str(judgment_path),
              "--evidence", str(run_dir / "evidence.json"), "--out", str(patch_prompt_path)],
             capture_output=True, text=True,
         )
@@ -1292,10 +1399,11 @@ def _do_gate(ticker, date, judgment_model, replay_dir, accept_over_budget, manif
             return 1
         if replay_dir:
             _append_replay_marker(patch_prompt_path, {
-                "kind": "judgment", "judgment_out": str(run_dir / "judgment.json"),
+                "kind": "judgment", "judgment_out": str(judgment_path),
             })
+        inline_patch_prompt_path = _write_inline_prompt(patch_prompt_path, judgment_path)
         r_spawn2 = dd_headless.spawn(
-            prompt_path=patch_prompt_path, model=judgment_model, allowed_tools=["Read", "Write", "Bash"],
+            prompt_path=inline_patch_prompt_path, model=judgment_model, allowed_tools=["Read", "Write", "Bash"],
             max_turns=GATE_PATCH_MAX_TURNS, budget_cache_read=JUDGE_BUDGET_CACHE_READ,
             out_json=agents_dir / "gate_patch_{0}.json".format(_depth + 1), cwd=run_dir,
         )
@@ -1316,6 +1424,7 @@ def _do_gate(ticker, date, judgment_model, replay_dir, accept_over_budget, manif
         final_ok = ok_check and (over_budget is False or accept_over_budget)
         stage["state"] = "PASS" if final_ok else ("OVER_BUDGET" if (ok_check and over_budget) else "FAIL")
     else:
+        stage["over_budget"] = over_budget
         final_ok = (over_budget is False) or accept_over_budget
         stage["state"] = "PASS" if final_ok else "OVER_BUDGET"
 
@@ -1325,12 +1434,36 @@ def _do_gate(ticker, date, judgment_model, replay_dir, accept_over_budget, manif
     _atomic_write_json(manifest_path, manifest)
     _print_step_status(
         "gated", "red={0} yellow={1} over_budget={2}".format(
-            (parsed or {}).get("red"), (parsed or {}).get("yellow"), over_budget),
+            (parsed or {}).get("red"), (parsed or {}).get("yellow"), stage["over_budget"]),
         "red=0", stage["state"],
     )
     if stage["state"] != "PASS":
         _print_resume_hint(ticker, date, "gated")
     return 0 if stage["state"] == "PASS" else 1
+
+
+def _resume_gate_stage(ticker, date, judgment_model, replay_dir, accept_over_budget, manifest):
+    """WP7b #5：`--resume` 落在 `gated_fail`／`gated_running` 時的專用入口。
+    既有 `gate_audit.md` 可能是上一輪已經跑完的稽核結果（只是後續
+    parse／patch 步驟中斷），先直接 parse 它，不重新花一次 gate spawn；
+    parse 不到（audit 檔不存在）才退回完整 `_do_gate`。"""
+    run_dir = _run_dir(ticker, date)
+    audit_path = run_dir / "gate_audit.md"
+    if not audit_path.exists():
+        return _do_gate(ticker, date, judgment_model, replay_dir, accept_over_budget, manifest)
+
+    stage = manifest.setdefault("stages", {}).get("gated") or {
+        "state": "RUNNING", "started": _now(), "agent_usage": [], "over_budget": False,
+    }
+    stage.setdefault("agent_usage", [])
+    stage["resume_precheck"] = True
+    manifest["stages"]["gated"] = stage
+    manifest["state"] = "gated_running"
+    _atomic_write_json(run_dir / "manifest.json", manifest)
+
+    return _gate_finalize_from_audit(
+        ticker, date, judgment_model, replay_dir, accept_over_budget, manifest, stage, audit_path,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -1849,12 +1982,28 @@ def cmd_run(args):
     rc = 0
     for i in range(start_idx, until_idx + 1):
         stage_name = STAGE_ORDER[i]
+        # WP7b #5：`--resume` 落在這一段先前狀態為 FAIL（judged）或
+        # FAIL／RUNNING（gated，涵蓋中斷於 spawn 之後、parse 之前的
+        # gated_running）時，先重跑機械檢查（judge check／parse 既有
+        # gate_audit.md）而非直接重派整段判斷／閘 agent。只在「--resume
+        # 接續的第一段」判定，往後正常推進的段仍走全套流程。
+        resuming_this_stage = (
+            args.resume and i == start_idx
+            and manifest["stages"].get(stage_name, {}).get("state")
+            in (("FAIL",) if stage_name == "judged" else ("FAIL", "RUNNING"))
+        )
         if stage_name == "stage0":
             rc = _do_stage0(ticker, date, plan_kwargs, replay_dir, args.accept_over_budget, manifest)
         elif stage_name == "judged":
-            rc = _do_judge(ticker, date, judgment_model, replay_dir, args.accept_over_budget, manifest)
+            if resuming_this_stage:
+                rc = _resume_judge_stage(ticker, date, judgment_model, replay_dir, args.accept_over_budget, manifest)
+            else:
+                rc = _do_judge(ticker, date, judgment_model, replay_dir, args.accept_over_budget, manifest)
         elif stage_name == "gated":
-            rc = _do_gate(ticker, date, judgment_model, replay_dir, args.accept_over_budget, manifest)
+            if resuming_this_stage:
+                rc = _resume_gate_stage(ticker, date, judgment_model, replay_dir, args.accept_over_budget, manifest)
+            else:
+                rc = _do_gate(ticker, date, judgment_model, replay_dir, args.accept_over_budget, manifest)
         elif stage_name == "brief":
             rc = _do_brief(ticker, date, args.full, manifest, dry_run=args.dry_run)
         manifest = _load_json_or(manifest_path, manifest)

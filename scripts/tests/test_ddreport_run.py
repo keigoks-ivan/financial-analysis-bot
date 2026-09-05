@@ -229,7 +229,9 @@ def test_run_resume_skips_completed_stages(monkeypatch):
         calls.append("stage0")
         return 0
 
-    def fake_judge(t, d, model, replay_dir, accept_over_budget, manifest_arg):
+    def fake_resume_judge(t, d, model, replay_dir, accept_over_budget, manifest_arg):
+        # WP7b #5：`judged_fail` 狀態下 --resume 應叫 `_resume_judge_stage`
+        # （先重跑 judge check），不是直接重派整段判斷的 `_do_judge`。
         calls.append("judged")
         mm = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
         mm["stages"]["judged"] = {"state": "PASS"}
@@ -247,8 +249,12 @@ def test_run_resume_skips_completed_stages(monkeypatch):
         calls.append("brief")
         return 0
 
+    def _unexpected_do_judge(*a, **k):
+        raise AssertionError("judged_fail 下 --resume 不該直接呼叫 _do_judge（應先走 _resume_judge_stage）")
+
     monkeypatch.setattr(ddreport, "_do_stage0", fake_stage0)
-    monkeypatch.setattr(ddreport, "_do_judge", fake_judge)
+    monkeypatch.setattr(ddreport, "_do_judge", _unexpected_do_judge)
+    monkeypatch.setattr(ddreport, "_resume_judge_stage", fake_resume_judge)
     monkeypatch.setattr(ddreport, "_do_gate", fake_gate)
     monkeypatch.setattr(ddreport, "_do_brief", fake_brief)
 
@@ -403,6 +409,296 @@ def test_cmd_plan_aborts_when_no_peers_resolved_and_not_offline(monkeypatch):
         assert rc == 1
         assert not (run_dir / "parts" / "numbers_extra.json").exists()
         assert not (run_dir / "spawn_list.json").exists()
+    finally:
+        shutil.rmtree(run_dir, ignore_errors=True)
+
+
+# ---------------------------------------------------------------------------
+# 8) WP7b #1：bundle（或修補時的 judgment.json 全文）內嵌進 prompt，
+#    分隔行 `===== BUNDLE =====`，agent 不必自己 Read 大檔。
+# ---------------------------------------------------------------------------
+
+def test_write_inline_prompt_appends_bundle_after_separator(tmp_path):
+    prompt_path = tmp_path / "b1_judge.md"
+    prompt_path.write_text("這是渲染後的 prompt 本文。", encoding="utf-8")
+    bundle_path = tmp_path / "bundle.md"
+    bundle_path.write_text("這是 bundle 全文，含 {大括號} 也不影響。", encoding="utf-8")
+
+    inline_path = ddreport._write_inline_prompt(prompt_path, bundle_path)
+
+    assert inline_path.name == "b1_judge_inline.md"
+    text = inline_path.read_text(encoding="utf-8")
+    assert "===== BUNDLE =====" in text
+    assert (
+        text.index("這是渲染後的 prompt 本文。")
+        < text.index("===== BUNDLE =====")
+        < text.index("這是 bundle 全文")
+    )
+
+
+def test_write_inline_prompt_missing_extra_file_writes_empty_tail(tmp_path):
+    prompt_path = tmp_path / "g_gate.md"
+    prompt_path.write_text("base prompt", encoding="utf-8")
+    inline_path = ddreport._write_inline_prompt(prompt_path, tmp_path / "no_such_bundle.md")
+    text = inline_path.read_text(encoding="utf-8")
+    assert text == "base prompt" + ddreport.BUNDLE_SEPARATOR
+
+
+def test_do_judge_spawns_inline_prompt_with_bundle(monkeypatch):
+    ticker, date = "ZTESTINLINEJ", "20260101"
+    run_dir = _clean_run_dir(ticker, date)
+    (run_dir / "prompts").mkdir(parents=True)
+    (run_dir / "agents").mkdir(parents=True)
+    (run_dir / "bundles").mkdir(parents=True)
+    (run_dir / "bundles" / "judge.md").write_text("JUDGE-BUNDLE-CONTENT-MARKER", encoding="utf-8")
+
+    monkeypatch.setattr(ddreport.subprocess, "run", lambda *a, **k: _FakeCompleted(0))
+    monkeypatch.setattr(ddreport, "_pick_python", lambda: "python3")
+    spawn_calls = []
+
+    def fake_spawn(**kw):
+        spawn_calls.append(kw)
+        return {"ok": True, "over_budget": False, "num_turns": 1, "cache_read": 0}
+
+    monkeypatch.setattr(ddreport.dd_headless, "spawn", fake_spawn)
+    monkeypatch.setattr(ddreport, "_judge_check", lambda t, d: (True, "[PASS] 假造：judge check ok"))
+
+    try:
+        manifest = {"ticker": ticker, "date": date, "stages": {}}
+        rc = ddreport._do_judge(ticker, date, "fable", None, False, manifest)
+        assert rc == 0
+        assert len(spawn_calls) == 1
+        prompt_path = Path(spawn_calls[0]["prompt_path"])
+        assert prompt_path.name == "b1_judge_inline.md"
+        text = prompt_path.read_text(encoding="utf-8")
+        assert "===== BUNDLE =====" in text
+        assert "JUDGE-BUNDLE-CONTENT-MARKER" in text
+        assert "不要 Read" in text
+    finally:
+        shutil.rmtree(run_dir, ignore_errors=True)
+
+
+def test_do_gate_patch_branch_spawns_inline_prompt_with_judgment(monkeypatch):
+    ticker, date = "ZTESTINLINEG", "20260101"
+    run_dir = _clean_run_dir(ticker, date)
+    (run_dir / "prompts").mkdir(parents=True)
+    (run_dir / "agents").mkdir(parents=True)
+    (run_dir / "bundles").mkdir(parents=True)
+    (run_dir / "bundles" / "gate.md").write_text("GATE-BUNDLE-CONTENT-MARKER", encoding="utf-8")
+    (run_dir / "judgment.json").write_text(
+        json.dumps({"decision_out": {"verdict": "進場"}}), encoding="utf-8")
+    (run_dir / "evidence.json").write_text("{}", encoding="utf-8")
+    audit_path = run_dir / "gate_audit.md"
+    audit_path.write_text(
+        "## AUDIT: 判斷級🔴 = 1\n\n"
+        "| # | 軸 | 燈 | 依據 | 指向欄位 | 建議改法 |\n|---|---|---|---|---|---|\n"
+        "| 1 | 競爭惡化 | 🔴 | 測試 | contradictions[0] | 補一條 |\n",
+        encoding="utf-8",
+    )
+
+    def fake_subprocess_run(cmd, *a, **k):
+        prog = str(cmd[1])
+        if prog.endswith("dd_bundle.py"):
+            return _FakeCompleted(0)
+        if prog.endswith("dd_gate.py") and "patch-prompt" in cmd:
+            out_path = Path(cmd[cmd.index("--out") + 1])
+            out_path.write_text(
+                "你是 stock-analyst v17 判斷 agent，回來做一輪定點修補。\n\n"
+                "## 讀（判斷物全文附於本訊息之後，不要 Read 任何檔）\n",
+                encoding="utf-8",
+            )
+            return _FakeCompleted(0)
+        if prog.endswith("dd_gate.py") and "parse" in cmd:
+            return _FakeCompleted(0, stdout=json.dumps({"red": 1, "yellow": 0, "findings": []}))
+        raise AssertionError("未預期的 subprocess.run 呼叫：{0}".format(cmd))
+
+    monkeypatch.setattr(ddreport.subprocess, "run", fake_subprocess_run)
+    monkeypatch.setattr(ddreport, "_pick_python", lambda: "python3")
+
+    spawn_calls = []
+
+    def fake_spawn(**kw):
+        spawn_calls.append(kw)
+        return {"ok": True, "over_budget": False, "num_turns": 1, "cache_read": 0}
+
+    monkeypatch.setattr(ddreport.dd_headless, "spawn", fake_spawn)
+    monkeypatch.setattr(ddreport, "_judge_check", lambda t, d: (True, "[PASS] 假造"))
+    monkeypatch.setattr(ddreport, "_read_decision_verdict", lambda rd: "進場")
+
+    try:
+        manifest = {"ticker": ticker, "date": date, "stages": {}}
+        rc = ddreport._do_gate(ticker, date, "fable", None, False, manifest)
+        assert rc == 0
+        # 第一個 spawn 是 gate 稽核本身、第二個是 patch agent
+        assert len(spawn_calls) == 2
+        patch_prompt_path = Path(spawn_calls[1]["prompt_path"])
+        assert patch_prompt_path.name == "b1_patch_inline.md"
+        text = patch_prompt_path.read_text(encoding="utf-8")
+        assert "===== BUNDLE =====" in text
+        assert '"decision_out"' in text  # judgment.json 全文接在分隔行之後
+        assert "不要 Read" in text
+    finally:
+        shutil.rmtree(run_dir, ignore_errors=True)
+
+
+# ---------------------------------------------------------------------------
+# 9) WP7b #5：`--resume` 在 `judged_fail` 狀態下先重跑 judge check（判斷物
+#    可能已被機械修正），PASS 就不派 agent，FAIL 才派修補 agent（不是重派
+#    整段判斷 agent）。
+# ---------------------------------------------------------------------------
+
+def test_resume_judge_stage_precheck_passes_without_any_agent(monkeypatch):
+    ticker, date = "ZTESTRESUMEJ1", "20260101"
+    run_dir = _clean_run_dir(ticker, date)
+    (run_dir / "prompts").mkdir(parents=True)
+    (run_dir / "agents").mkdir(parents=True)
+
+    spawn_calls = []
+    monkeypatch.setattr(
+        ddreport.dd_headless, "spawn",
+        lambda **kw: spawn_calls.append(kw) or {"ok": True, "over_budget": False, "num_turns": 1},
+    )
+    monkeypatch.setattr(ddreport, "_judge_check", lambda t, d: (True, "[PASS] 假造：機械已修正過"))
+
+    try:
+        manifest = {"ticker": ticker, "date": date, "stages": {"judged": {"state": "FAIL", "agent_usage": []}}}
+        rc = ddreport._resume_judge_stage(ticker, date, "fable", None, False, manifest)
+        assert rc == 0
+        assert spawn_calls == []  # 不派任何 agent（既有判斷物免修即過）
+        m = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
+        assert m["stages"]["judged"]["state"] == "PASS"
+        assert m["state"] == "judged_pass"
+    finally:
+        shutil.rmtree(run_dir, ignore_errors=True)
+
+
+def test_resume_judge_stage_precheck_fail_dispatches_fix_only(monkeypatch):
+    ticker, date = "ZTESTRESUMEJ2", "20260101"
+    run_dir = _clean_run_dir(ticker, date)
+    (run_dir / "prompts").mkdir(parents=True)
+    (run_dir / "agents").mkdir(parents=True)
+
+    spawn_calls = []
+
+    def fake_spawn(**kw):
+        spawn_calls.append(kw)
+        return {"ok": True, "over_budget": False, "num_turns": 1}
+
+    monkeypatch.setattr(ddreport.dd_headless, "spawn", fake_spawn)
+
+    check_results = iter([(False, "[FAIL] 缺 evidence_dismissed"), (True, "[PASS] 修好了")])
+    monkeypatch.setattr(ddreport, "_judge_check", lambda t, d: next(check_results))
+
+    try:
+        manifest = {"ticker": ticker, "date": date, "stages": {"judged": {"state": "FAIL", "agent_usage": []}}}
+        rc = ddreport._resume_judge_stage(ticker, date, "fable", None, False, manifest)
+        assert rc == 0
+        # 只派一次「定點修正」agent，不是整段判斷 agent（那需要先建 bundle、
+        # 呼叫 dd_bundle.py，這裡完全沒 monkeypatch subprocess.run，若誤呼叫
+        # 整段流程會在 dd_bundle.py 真的跑之前就因為找不到 evidence.json 等
+        # 檔案而以不同方式失敗，不會静默通過）
+        assert len(spawn_calls) == 1
+        assert spawn_calls[0]["max_turns"] == ddreport.JUDGE_FIX_MAX_TURNS
+        m = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
+        assert m["stages"]["judged"]["state"] == "PASS"
+    finally:
+        shutil.rmtree(run_dir, ignore_errors=True)
+
+
+def test_resume_gate_stage_parses_existing_audit_without_respawn(monkeypatch):
+    ticker, date = "ZTESTRESUMEG1", "20260101"
+    run_dir = _clean_run_dir(ticker, date)
+    (run_dir / "prompts").mkdir(parents=True)
+    (run_dir / "agents").mkdir(parents=True)
+    (run_dir / "gate_audit.md").write_text(
+        "## AUDIT: 判斷級🔴 = 0\n\n"
+        "| # | 軸 | 燈 | 依據 | 指向欄位 | 建議改法 |\n|---|---|---|---|---|---|\n",
+        encoding="utf-8",
+    )
+
+    spawn_calls = []
+    monkeypatch.setattr(
+        ddreport.dd_headless, "spawn",
+        lambda **kw: spawn_calls.append(kw) or {"ok": True, "over_budget": False, "num_turns": 1},
+    )
+    monkeypatch.setattr(
+        ddreport.subprocess, "run",
+        lambda cmd, *a, **k: _FakeCompleted(0, stdout=json.dumps({"red": 0, "yellow": 0, "findings": []})),
+    )
+
+    try:
+        manifest = {"ticker": ticker, "date": date, "stages": {"gated": {"state": "RUNNING", "agent_usage": []}}}
+        rc = ddreport._resume_gate_stage(ticker, date, "fable", None, False, manifest)
+        assert rc == 0
+        assert spawn_calls == []  # red=0，不需要 patch agent，也沒有重跑 gate spawn
+        m = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
+        assert m["stages"]["gated"]["state"] == "PASS"
+    finally:
+        shutil.rmtree(run_dir, ignore_errors=True)
+
+
+def test_resume_gate_stage_falls_back_to_full_gate_when_no_audit(monkeypatch):
+    ticker, date = "ZTESTRESUMEG2", "20260101"
+    run_dir = _clean_run_dir(ticker, date)
+    run_dir.mkdir(parents=True)
+
+    calls = []
+
+    def fake_do_gate(t, d, model, replay_dir, accept_over_budget, manifest_arg):
+        calls.append("do_gate")
+        return 0
+
+    monkeypatch.setattr(ddreport, "_do_gate", fake_do_gate)
+
+    try:
+        manifest = {"ticker": ticker, "date": date, "stages": {"gated": {"state": "FAIL", "agent_usage": []}}}
+        rc = ddreport._resume_gate_stage(ticker, date, "fable", None, False, manifest)
+        assert rc == 0
+        assert calls == ["do_gate"]
+    finally:
+        shutil.rmtree(run_dir, ignore_errors=True)
+
+
+def test_run_resume_from_judged_fail_calls_precheck_not_full_judge(monkeypatch):
+    """端到端一層：`cmd_run` 在 manifest state 為 judged_fail 時，資派給
+    `_resume_judge_stage` 而不是 `_do_judge`（見上方 test_run_resume_
+    skips_completed_stages 對同一情境的既有斷言；本測試額外鎖定
+    `resuming_this_stage` 判斷式本身，避免日後改動誤判 gated 也吃到
+    judged 的規則或反過來）。"""
+    ticker, date = "ZTESTRESUMEDISPATCH", "20260101"
+    run_dir = _clean_run_dir(ticker, date)
+    run_dir.mkdir(parents=True)
+    manifest = {
+        "ticker": ticker, "date": date, "state": "judged_fail",
+        "stages": {"stage0": {"state": "PASS"}, "judged": {"state": "FAIL"}},
+    }
+    (run_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+    calls = []
+
+    def fake_resume_judge(t, d, model, replay_dir, accept_over_budget, manifest_arg):
+        calls.append("resume_judge")
+        mm = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
+        mm["stages"]["judged"] = {"state": "PASS"}
+        (run_dir / "manifest.json").write_text(json.dumps(mm), encoding="utf-8")
+        return 0
+
+    def _unexpected(*a, **k):
+        raise AssertionError("不該呼叫")
+
+    monkeypatch.setattr(ddreport, "_resume_judge_stage", fake_resume_judge)
+    monkeypatch.setattr(ddreport, "_do_judge", _unexpected)
+    monkeypatch.setattr(ddreport, "_do_stage0", _unexpected)
+
+    try:
+        args = argparse.Namespace(
+            ticker=ticker, date=date, archetype=None, peers=None, axes_per_batch=2,
+            judgment_model=None, full=False, replay_from=None, until="judged",
+            resume=True, offline=False, accept_over_budget=False,
+        )
+        rc = ddreport.cmd_run(args)
+        assert rc == 0
+        assert calls == ["resume_judge"]
     finally:
         shutil.rmtree(run_dir, ignore_errors=True)
 
