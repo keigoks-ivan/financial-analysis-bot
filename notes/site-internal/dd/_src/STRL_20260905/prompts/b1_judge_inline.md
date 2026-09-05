@@ -469,9 +469,9 @@ ticker=STRL　date=20260905　archetype_hint=品質複利成長　earnings_recen
 | reg_tariff_export#0 | - | 2026-04-06 | 2026年4月2日總統公告重整鋼鐵/鋁/銅第232條關稅，4月6日生效：鋼鐵/鋁/銅製品加徵50%關稅，衍生品加徵25%關稅，且計稅基礎改為進口品全額完稅價值（含衍生品）；6月再調整擴大低稅率適用範圍並將美國原產金屬含量門檻從95%降至85%。 | Perkins Coie "Restructured and Additional Section 232 Tariffs on Aluminum, Steel, and Copper"; White & Case "United States modifies steel, aluminum, and copper Section 232 tariffs" | thesis.R,decision_inputs.bear,valuation |
 | reg_tariff_export#1 | - | 2026-08-01 | STRL 為重型土木與混凝土承包商，對瀝青、混凝土、鋼鐵等主要營建原料價格波動高度暴露；在固定價格合約下，原料或人工成本意外上漲會侵蝕毛利並影響專案獲利能力。 | Simply Wall St — Sterling Infrastructure (Nasdaq:STRL) Stock Analysis risk disclosure | thesis.R,decision_inputs.bear |
 | reg_tariff_export#2 | + | 2026-08-04 | 儘管面臨關稅逆風，STRL 2026 Q2（2026-08-04 發布）營收年增90%至11.68億美元、調整後EPS年增116%至5.80美元，均優於市場預期（EPS優於預期16.2%、營收優於預期21.5%）；已簽約在手訂單年增116%至43億美元，合併在手訂單達56億美元；E-Infrastructure（資料中心/半導體相關）營收年增192%，利潤率維持24%；公司上修2026全年營收指引至40-41.5億美元。 | Sterling Infrastructure Q2 2026 earnings release/call coverage — Investing.com "Sterling Infrastructure Q2 2026 slides: 90% revenue jump, shares fall"; The Motley Fool Q2 2026 earnings call transcript (2026-08-10) | thesis.H,moat_trend,decision_inputs.bear |
-| geo_supply_chain#0 | - | 2026-03-02 | Sterling 的 E-Infrastructure（資料中心）主力專案地理上集中於德州、亞利桑那州與卡羅來納州三個市場,尚未見到全國性分散的揭露,屬國內專案地理集中風險（非離岸地緣風險）。 | FinancialContent/Finterra, 'The Infrastructure Renaissance: A Deep Dive into Sterling Infrastructure (STRL)' | thesis.R,decision_inputs.bear |
-| geo_supply_chain#1 | + | 2026-03-02 | 同篇分析指出「friend-shoring」（供應鏈回流美國本土/友岸國家）趨勢對 Sterling 構成長期結構性需求利多,因其資料中心/半導體廠營造工程全數為美國境內施作,不涉及海外製造據點曝險。 | FinancialContent/Finterra, 'The Infrastructure Renaissance: A Deep Dive into Sterling Infrastructure (STRL)' | thesis.H,moat_trend |
-| geo_supply_chain#2 | 0 | 2026-08-01 | Sterling 資料中心與晶圓廠營造客戶群為少數超大規模業者（hyperscaler）與半導體廠商,單一專案規模持續擴大,部分園區型專案簽約可長達 12 年。 | Yahoo Finance, 'Sterling Infrastructure (STRL) Is Recasting Its Business Around Data Centers And Chip Plants' | thesis.R |
+| geo_supply_chain#0 | - | 2026-03-02 | Sterling 的 E-Infrastructure（資料中心）主力專案地理上集中於德州、亞利桑那州與卡羅來納州三個市場，尚未見到全國性分散的揭露，屬國內專案地理集中風險（非離岸地緣風險）。 | FinancialContent/Finterra, 'The Infrastructure Renaissance: A Deep Dive into Sterling Infrastructure (STRL)' | thesis.R,decision_inputs.bear |
+| geo_supply_chain#1 | + | 2026-03-02 | 同篇分析指出「friend-shoring」（供應鏈回流美國本土/友岸國家）趨勢對 Sterling 構成長期結構性需求利多，因其資料中心/半導體廠營造工程全數為美國境內施作，不涉及海外製造據點曝險。 | FinancialContent/Finterra, 'The Infrastructure Renaissance: A Deep Dive into Sterling Infrastructure (STRL)' | thesis.H,moat_trend |
+| geo_supply_chain#2 | 0 | 2026-08-01 | Sterling 資料中心與晶圓廠營造客戶群為少數超大規模業者（hyperscaler）與半導體廠商，單一專案規模持續擴大，部分園區型專案簽約可長達 12 年。 | Yahoo Finance, 'Sterling Infrastructure (STRL) Is Recasting Its Business Around Data Centers And Chip Plants' | thesis.R |
 | end_markets#0 | + | 2026-08-10 | 2026年第2季 E-Infrastructure Solutions 營收年增192%達9.05億美元；公司將2026全年 E-Infrastructure 營收成長指引上修至逾100%（含 CEC 與 Stone Ridge 併購貢獻）；已簽約在手訂單逾90%為資料中心、大型製造與半導體等task-critical工程；管理層重申資料中心需求可望持續。 | PRNewswire, 'Sterling Reports Record Second Quarter Results and Raises Full Year 2026 Guidance'; The Globe and Mail, "Is Sterling's 192% E-Infrastructure Growth Just Getting Started Now?" | thesis.H,growth,valuation |
 | end_markets#1 | 0 | 2026-08-10 | 分析師預估 E-Infrastructure 2027年成長率放緩至約25%（較2026年108.6%大幅趨緩），但公司合併在手訂單較去年成長131%達52億美元，並提及「未來階段」可見度上看約65億美元，資料中心專案規模擴大且部分延長至5-8年以上。 | Yahoo Finance, "STRL's Backlog Visibility: What It Means for 2026-2027 Growth" | growth,valuation |
 | end_markets#2 | 0 | 2026-08-10 | 2026年第2季 Transportation Solutions 營收年減20%，主因公司主動將資源移轉至毛利率較高的 E-Infrastructure 業務；管理層預期2026全年營收下滑7%至10%；惟該季調整後營業利益率逆勢擴張逾500個基點至19.5%，顯示營收下滑主因是資源配置策略而非單純終端市場需求疲弱。 | Investing.com, 'Earnings call transcript: Sterling Infrastructure beats Q2 2026 estimates, shares fall' | thesis.H,growth |
@@ -1489,7 +1489,7 @@ consensus落後註記：bottom-up vs共識FY3 EPS差>20%→標「consensus落後
 - QC-45未獲利版雙尺(GAAP負EPS)：取較嚴者——①growth-adjusted EV/S=fwd EV/S÷fwd營收成長%：<0.5🟢/0.5-1.0🟡/1.0-1.5🟠/>1.5🔴；②自身上市以來fwd EV/S分位(同30/70/85切點；上市<3年僅輔助)。EPS轉正(FY+1>0)後改回PE/PEG尺。
 
 ### 品質分與signal(`appendix_a.*`；metadata-only)
-底分=(護城河分+成長持久性)/2；品質分=`min(底分+體質veto加減,10)`。5項veto(毛利率近3年未連續下滑>2%p/FCF・NI≥0.7/FY+1 EPS共識近90天未連續下修/近4季營收YoY未全負/Net Debt・EBITDA≤3.0非金融)：0-2項不過不變；3項降1級；4-5項直接拒絕。等級：≥7.5 A/6.0-7.4 B/<6.0迴避。
+底分=(護城河分+成長持久性)/2；品質分=`min(底分+體質veto加減，10)`。5項veto(毛利率近3年未連續下滑>2%p/FCF・NI≥0.7/FY+1 EPS共識近90天未連續下修/近4季營收YoY未全負/Net Debt・EBITDA≤3.0非金融)：0-2項不過不變；3項降1級；4-5項直接拒絕。等級：≥7.5 A/6.0-7.4 B/<6.0迴避。
 
 QC-31 signal對映(強制)：A+=品質≥7.5+估值🟢+MA🟢/✅，短/中期R:R≥2.0為參考項。A=品質≥7.5+長期持有信心=高，中期R:R≥1.0為參考項。B=品質≥6.0+thesis完整但時機不到。C=任一：品質<6.0；護城河X級或侵蝕信號≥3；陷阱🔴；AI取代🔴。X=任一：重大治理問題/舞弊；結構性產業衰退；獲利品質崩壞(FCF/NI<0.5連2年)。核心規則：①R:R不足或估值🔴均≠C，落B；②C/X須有thesis-level失敗證據；③都不過非signal對映；④估值🔴+動能爆衝+品質A/B一律落B。
 
@@ -1848,8 +1848,8 @@ ROIC＝稅後營業利益率 × 投入資本周轉率（兩數直接引 §7.E Du
 ---
 
 ### B / H｜基本面評級機制（品質分等級＝B 錨點、綜合訊號 final_signal＝H 錨點，metadata-only）
-品質分：底分 = (護城河 §5 + 成長持久性 §6) / 2;品質分 = min(底分 + 體質 veto 加減，10)。體質檢核 5 項 veto 制（毛利率近 3 年未連續下滑 >2%p／FCF·NI ≥ 0.7／FY+1 EPS 共識近 90 天未連續下修／近 4 季營收 YoY 未全部為負／Net Debt·EBITDA ≤ 3.0 非金融）：0-2 項不過 等級不變;3 項 降 1 級;4-5 項 直接拒絕。品質等級 ≥ 7.5 A 級／6.0-7.4 B 級／< 6.0 迴避。
-**final_signal = A+/A/B/C/X**：依 quality × 估值燈 × 週線結構過濾 × 大盤豁免 × trap 組合;**權威定義以 QC-31 為準**，本表與 QC-31 衝突時以 QC-31 為準;R:R 為參考項不作硬條件。**輸出進 dd-meta `signal`/`verdict`**。
+品質分：底分 = (護城河 §5 + 成長持久性 §6) / 2;品質分 = min(底分 + 體質 veto 加減，10)。體質檢核 5 項 veto 制（毛利率近 3 年未連續下滑 >2%p／FCF·NI ≥ 0.7／FY+1 EPS 共識近 90 天未連續下修／近 4 季營收 YoY 未全部為負／Net Debt·EBITDA ≤ 3.0 非金融）：0-2 項不過 等級不變；3 項 降 1 級；4-5 項 直接拒絕。品質等級 ≥ 7.5 A 級／6.0-7.4 B 級／< 6.0 迴避。
+**final_signal = A+/A/B/C/X**：依 quality × 估值燈 × 週線結構過濾 × 大盤豁免 × trap 組合；**權威定義以 QC-31 為準**，本表與 QC-31 衝突時以 QC-31 為準；R:R 為參考項不作硬條件。**輸出進 dd-meta `signal`/`verdict`**。
 
 | 步驟 | 條件 | 輸出 |
 |:---|:---|:---|
@@ -1872,8 +1872,8 @@ Fwd PE 5Y 分位 = (當前 − 5Y 低)/(5Y 高 − 5Y 低)×100%;PEG = 當前 Fw
 
 優先序：分位與 PEG 取**較嚴**者。**輸出進 dd-meta `val`**。
 - **盲點 1 救援**：結構性高成長股觸發 🟠 時，三條件同時滿足（§6 綜合 🟢 高確信 + PEG < 2.0 + §6.F AI 🟢）→ 🟠 救回 🟡;不適用情境（分位 > 85% / PEG ≥ 2.0 / QC-19 近 90 天重大利空）維持 🟠。須在附錄 A 明確標註。
-- **盲點 3 救援（上修救援）**：🟠 時若 FY+1 或 FY+2 共識 EPS **近 3 個月內上修 ≥ +10%**（資料源：dd-screener eps-estimates snapshots 跨期對照、步驟零' Excel revision 欄、或 sourced 券商共識追蹤;**引不出可溯數字＝不觸發，不得以敘事代替**）→ 🟠 救回 🟡。邏輯：5Y 分位的分母在共識快速上修時系統性過時，燈號懲罰的是「還沒印進共識的成長」。**僅升一級、🔴 不適用**（🔴 的條件路徑歸 row 8a），與盲點 1 合計救援上限一級。§10 結論段 consensus 落後註記是本救援的觸發偵測器——命中時**必查**上修資料，不得只留註記。須在附錄 A 明確標註。（校準證據見 references/changelog.md）
-- **QC-45 未獲利高成長版估值燈**：GAAP 負 EPS 時 PE 分位與 PEG 全 undefined，但 `val` 是必填 enum 且 §13 baseline row 依賴它。改用雙尺取**較嚴**者：① **growth-adjusted EV/S** = fwd EV/S ÷ fwd 營收成長%：< 0.5 🟢 / 0.5-1.0 🟡 / 1.0-1.5 🟠 / > 1.5 🔴;② **自身上市以來 fwd EV/S 分位**（同 30/70/85 切點;上市 < 3 年僅輔助不單獨定色）。毛利率 < 50% 的硬體/服務型須另列 EV/gross-profit 對照（防高 EV/S 低毛利被 growth-adjust 美化）。燈色推導須寫明。EPS 轉正（FY+1 > 0）後改回 PE/PEG 尺。
+- **盲點 3 救援（上修救援）**：🟠 時若 FY+1 或 FY+2 共識 EPS **近 3 個月內上修 ≥ +10%**（資料源：dd-screener eps-estimates snapshots 跨期對照、步驟零' Excel revision 欄、或 sourced 券商共識追蹤；**引不出可溯數字＝不觸發，不得以敘事代替**）→ 🟠 救回 🟡。邏輯：5Y 分位的分母在共識快速上修時系統性過時，燈號懲罰的是「還沒印進共識的成長」。**僅升一級、🔴 不適用**（🔴 的條件路徑歸 row 8a），與盲點 1 合計救援上限一級。§10 結論段 consensus 落後註記是本救援的觸發偵測器——命中時**必查**上修資料，不得只留註記。須在附錄 A 明確標註。（校準證據見 references/changelog.md）
+- **QC-45 未獲利高成長版估值燈**：GAAP 負 EPS 時 PE 分位與 PEG 全 undefined，但 `val` 是必填 enum 且 §13 baseline row 依賴它。改用雙尺取**較嚴**者：① **growth-adjusted EV/S** = fwd EV/S ÷ fwd 營收成長%：< 0.5 🟢 / 0.5-1.0 🟡 / 1.0-1.5 🟠 / > 1.5 🔴;② **自身上市以來 fwd EV/S 分位**（同 30/70/85 切點；上市 < 3 年僅輔助不單獨定色）。毛利率 < 50% 的硬體/服務型須另列 EV/gross-profit 對照（防高 EV/S 低毛利被 growth-adjust 美化）。燈色推導須寫明。EPS 轉正（FY+1 > 0）後改回 PE/PEG 尺。
 
 ### F｜週線結構趨勢過濾（週線 W52 / W104 / W250，SMA）
 > 把「價相對長期均線的結構位置」量化成 §13 row 4 節奏訊號 + dd-meta `ma`（必填欄，8 條下游管線在讀，欄名不動）。**不輸出倉位乘數**——倉位歸 PM（QC-11），狀態只調節節奏（❌ → 分批接刀，非封鎖）。
@@ -1888,7 +1888,7 @@ Fwd PE 5Y 分位 = (當前 − 5Y 低)/(5Y 高 − 5Y 低)×100%;PEG = 當前 Fw
 | ❌ 系統失效 | 價 < W250 或 W250 斜率轉負（→ §13 row 4 節奏調節，分批 starter，非封鎖裁決） |
 
 W250 斜率定義：當週 W250 vs 13 週前 W250（正 > +3% / 持平 −3~+3% / 負 < −3%）。**盲點 2 救援**：MA ❌ 但三條件全滿足（附錄 A I 長期持有信心高 + §6 綜合 🟢 + 護城河 §5 ≥ 8）→ 降級為「🟠 暫不進場（追蹤池）」;例外失效（大盤破 W104 / QC-19 重大利空 / W250 斜率 < −10%）。**狀態判定 Python 實作（接續批量採集腳本的 closes / w52 / w104 / w250 / slope_pct）見 `references/data-collection.md`。** **輸出進 dd-meta `ma`**。
-**「過熱」定義註記**：本附錄之過熱（RSI > 70 / 4 週漂移 +10%）只管 §13 進場節奏;GRP P 閘（週線布林 +2σ）與 picks 爆發 🔥（12M > +250%）各自獨立定義，不互相覆蓋。
+**「過熱」定義註記**：本附錄之過熱（RSI > 70 / 4 週漂移 +10%）只管 §13 進場節奏；GRP P 閘（週線布林 +2σ）與 picks 爆發 🔥（12M > +250%）各自獨立定義，不互相覆蓋。
 
 ### G｜大盤豁免層（系統性風險）
 大盤週收 < 自身 W104 → 系統性風險。對應大盤：美股 SPX、台股 TAIEX、ADR/跨市場 母市場 + 上市市場取保守。係數 × 1.0（正常）/ × 0.5（破 W104）。此係數為 final_signal 的減半輸入（metadata），不主導 §13。
@@ -1902,5 +1902,5 @@ W250 斜率定義：當週 W250 vs 13 週前 W250（正 > +3% / 持平 −3~+3% 
 
 ### R:R 三時距（資訊性，3 個數字 + 1 行 Bear anchor）
 合理 P/E 參考自 §5 護城河分數 + §6 成長評級決定的倍數基準。短期（1 年）＝FY+1 EPS × 合理 P/E;中期（2 年）＝FY+2 EPS × 合理 P/E;5Y ＝ §6.E Base 5Y EPS × 長期合理 PE;各給目標價與 R:R。
-**Bear anchor（1 行）**：Bear EPS = FY+1 EPS × 0.9;Bear PE = §6.E 成長熄火「降至 10%」情境;Bear 股價 = $__（現價下行 __%）。**dd-meta `stress`** 記錄 2/2（base + bear 兩情境，QC-29）;`upside_short_pct`/`upside_mid_pct` 取短/中期 R:R 對應 upside。QC-21 R:R 數學假象防禦適用。
+**Bear anchor（1 行）**：Bear EPS = FY+1 EPS × 0.9;Bear PE = §6.E 成長熄火「降至 10%」情境；Bear 股價 = $__（現價下行 __%）。**dd-meta `stress`** 記錄 2/2（base + bear 兩情境，QC-29）;`upside_short_pct`/`upside_mid_pct` 取短/中期 R:R 對應 upside。QC-21 R:R 數學假象防禦適用。
 
