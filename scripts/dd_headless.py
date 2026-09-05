@@ -184,6 +184,13 @@ def spawn(
         output_tokens = int(usage.get("output_tokens", 0) or 0)
 
     is_error = bool(raw.get("is_error", False)) or parse_error or (proc.returncode != 0)
+    # 訂閱額度耗盡（2026-09-05 批次實測：result＝"You've hit your session limit · resets 8:50pm"）：
+    # 不是 agent 失敗，標 quota_exhausted 讓上層明確停下、等重置再 resume。
+    _rtxt = str(raw.get("result") or "")
+    quota_exhausted = ("hit your session limit" in _rtxt) or ("usage limit" in _rtxt.lower() and "reset" in _rtxt.lower())
+    if quota_exhausted:
+        is_error = True
+        print("[quota] 訂閱額度耗盡：" + _rtxt[:120], file=sys.stderr)
     # 母稿 §4.1：budget 是目標值，熔斷線＝目標 2×；超過目標只記 over_target（回報用），
     # 超過 2× 才 over_budget 停流程（WDAY 2026-09-05：一篇摘要 0.77M 對 0.7M 目標就停，屬誤停）。
     over_target = (budget_cache_read is not None) and (cache_read > budget_cache_read)
@@ -198,6 +205,7 @@ def spawn(
         "by_model": model_usage,
         "over_budget": over_budget,
         "over_target": over_target,
+        "quota_exhausted": quota_exhausted,
         "cost_usd": raw.get("total_cost_usd"),
         "duration_ms": raw.get("duration_ms"),
         "result_text": raw.get("result"),
