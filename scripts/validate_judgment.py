@@ -771,6 +771,36 @@ def j4_plain_checks(data: dict) -> list:
 # main
 # ---------------------------------------------------------------------------
 
+
+# J5 白話欄角色一致（2026-09-05 CDNS：Fable 白話寫「當核心持股」，dd_decision 給衛星 9b；
+# plain 在矩陣跑之前寫，角色以 decision_out.role 為權威）
+_ROLE_TOKENS = ("核心", "衛星", "追蹤")
+
+
+def j5_plain_role_checks(data: dict) -> tuple:
+    fails, warns = [], []
+    plain = data.get("plain") or {}
+    role = ((data.get("decision_out") or {}).get("role") or "").strip()
+    if not plain or role not in _ROLE_TOKENS:
+        return fails, warns
+    five = plain.get("five") or {}
+    texts = {
+        "plain.verdict_line": plain.get("verdict_line"),
+        "plain.verdict_sub": plain.get("verdict_sub"),
+        "plain.five.why_this_size": five.get("why_this_size"),
+        "plain.five.how_to_act": five.get("how_to_act"),
+    }
+    for path, t in texts.items():
+        if not isinstance(t, str):
+            continue
+        for tok in _ROLE_TOKENS:
+            if tok == role or tok not in t:
+                continue
+            strong = any(pat in t for pat in (f"當{tok}", f"{tok}持股", f"{tok}角色", f"{tok}席位", f"列為{tok}"))
+            msg = f"J5：{path} 出現「{tok}」但 decision_out.role＝{role}（角色以決策矩陣為準）"
+            (fails if strong else warns).append(msg)
+    return fails, warns
+
 def validate_file(path: Path, evidence_path: Path | None = None, j1_warn: bool = False):
     schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
     data = json.loads(path.read_text(encoding="utf-8"))
@@ -782,9 +812,10 @@ def validate_file(path: Path, evidence_path: Path | None = None, j1_warn: bool =
     j2_fails, j2_warns = j2_math_checks(data, path)
     j1_fails, j1_warns = j1_traceability_checks(data, evidence_path, warn_only=j1_warn)
     j4_warns = j4_plain_checks(data)
+    j5_fails, j5_warns = j5_plain_role_checks(data)
 
-    fails = struct_errs + cross_fails + leak_fails + drift_fails + j2_fails + j1_fails
-    warns = cross_warns + drift_warns + j2_warns + j1_warns + j4_warns
+    fails = struct_errs + cross_fails + leak_fails + drift_fails + j2_fails + j1_fails + j5_fails
+    warns = cross_warns + drift_warns + j2_warns + j1_warns + j4_warns + j5_warns
     return fails, warns
 
 

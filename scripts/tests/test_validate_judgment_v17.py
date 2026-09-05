@@ -173,3 +173,17 @@ def test_src_judgment_zero_fail(subdir, fname):
         pytest.skip(f"fixture 不存在：{path}")
     fails, _warns = vj.validate_file(path, None, j1_warn=False)
     assert fails == [], f"{fname} 出現非預期 FAIL：{fails}"
+
+
+def test_j5_plain_role_mismatch_is_fail():
+    import validate_judgment as vj
+    data = {"decision_out": {"role": "衛星"}, "plain": {"verdict_line": "進場，當核心持股，但先買三分之一。", "five": {"how_to_act": "首階三分之一"}}}
+    fails, warns = vj.j5_plain_role_checks(data)
+    assert any("J5" in f and "核心" in f for f in fails)
+
+
+def test_j5_plain_role_match_is_clean():
+    import validate_judgment as vj
+    data = {"decision_out": {"role": "衛星"}, "plain": {"verdict_line": "進場，當衛星持股。", "five": {"why_this_size": "矩陣給衛星"}}}
+    fails, warns = vj.j5_plain_role_checks(data)
+    assert not fails and not warns
