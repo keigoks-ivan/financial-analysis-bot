@@ -77,7 +77,7 @@ BUDGET_CACHE_READ_NUMBERS = 1_200_000
 # WP7d：摘要子 agent 拆成一篇逐字稿一個 spawn（HPE 第二次真跑實測：一人讀三篇
 # 17 輪撞 16 上限、cache_read 2.54M 超 1.5M 預算——單篇合計約 0.5M×3≈1.5M 且
 # 可平行，見 _wp_spec_v17_batch5_20260905.md WP7d）。
-DIGEST_PER_FILE_MAX_TURNS = 8
+DIGEST_PER_FILE_MAX_TURNS = 10  # 2026-09-05：CDNS 長稿一半在第 9 輪被砍
 BUDGET_CACHE_READ_DIGEST_PER_FILE = 700_000
 
 # WP7a #1：Koyfin 步驟改零 LLM，plan 內直接 subprocess 呼叫，不再走 spawn。
@@ -656,7 +656,7 @@ def cmd_plan(args):
             "prompt": prompt_rel,
             "out": part_rel,
             "tools": SPAWN_TOOLS_COVERAGE,
-            "max_turns": 8,  # 2026-09-05：覆蓋子 agent 實測 8–13 輪、0.4–0.8M，是 Stage 0 最大項；壓到 8 逼它每軸 ≤3 輪搜尋
+            "max_turns": 10,  # 2026-09-05：8 太緊（CDNS 六個子 agent 全在第 9 輪被砍），10 是實測 8–13 輪的折衷
             "budget_cache_read": BUDGET_CACHE_READ_COVERAGE,
         })
 
