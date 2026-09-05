@@ -248,7 +248,7 @@ def render() -> str:
 </div>
 <div class="console-tab-panel" id="panel-overview">{overview_body}</div>
 <div class="console-tab-panel" id="panel-live">
-  <p class="console-embed-note">W52 × 自適應波動率 cap 1.5（美＋台）· 2026-07-18 起實單主系統 · <a href="/long-track-w52-adaptive/">獨立頁</a></p>
+  <p class="console-embed-note">W52 × 自適應波動率 cap 1.5（美＋台）· 2026-07-18 起實單主系統 · <a href="/long-track-w52-adaptive/">獨立頁</a> · <a href="/backtest/live_system_evidence/">這套系統的證據總覽（12 頁，白話）→</a></p>
   <iframe class="console-embed-frame" id="live-frame" data-src="/long-track-w52-adaptive/_body.html" title="實單主系統" scrolling="no" loading="lazy"></iframe>
 </div>
 <div class="console-tab-panel" id="panel-positions">

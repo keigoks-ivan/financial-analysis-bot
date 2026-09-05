@@ -247,7 +247,7 @@ SECTIONS = [
              "指數納入／內部人買賣等八個題目，皆非可交易系統。",
          cta=None,
          rows=[("研究", _conv(navc.RESEARCH_FACTOR_LINKS))]),
-    dict(id="oos-validation", region="research", emoji="🧪", name="跨標的證偽",
+    dict(id="oos-validation", region="research", emoji="🧪", name="實單系統證據（明細）",
          sub="用已上線規則對域外標的做跨標的證偽，只報聚合過尺率與信賴區間，不挑單一標的講故事。",
          cta=None,
          rows=[("研究", _conv(navc.RESEARCH_OOS_LINKS))]),
@@ -439,6 +439,20 @@ def sections_html() -> str:
     return out
 
 
+def featured_evidence_html() -> str:
+    """實單主系統的證據總覽——置頂顯眼區塊（2026-09-06）。Owner 反映舊版把 evidence hub
+    的入口埋在～20 張卡片中的倒數一張，找不到路。這裡在 live-wrap 之前另開一個跨欄寬卡，
+    複用 .card 視覺語彙但加寬＋左側色條標高亮，主連結 + 底下一排 RESEARCH_OOS_LINKS 全部
+    連結（含 hub 自己），順序照 _nav_common 定義，不重排。"""
+    pills = "".join(_pill(u, lb, None, False) for u, lb, _k, _st in navc.RESEARCH_OOS_LINKS)
+    return f"""<div class="featured-evidence">
+  <div class="fe-tag">實單主系統・證據總覽</div>
+  <h2><a href="/backtest/live_system_evidence/">實單主系統的證據總覽（先看這頁）</a></h2>
+  <p>九＋二項預註冊測試，白話串講：規則普不普遍、保費多少、慢熊多久來一次、贏了多少是運氣、美台是不是同一注。</p>
+  <div class="fe-pills">{pills}</div>
+</div>"""
+
+
 def render():
     c = LIVE_CARD
     card = f"""<div class="acard">
@@ -483,6 +497,7 @@ def render():
         "%NAV%": NAV_BLOCK, "%STATUS_OVERVIEW%": status_overview,
         "%SECTIONS%": sections_html(),
         "%CARD%": card,
+        "%FEATURED_EVIDENCE%": featured_evidence_html(),
         "%JS_LEGACY_HASH%": json.dumps(LEGACY_HASH),
         "%NOW%": datetime.now().strftime("%Y-%m-%d"),
     }.items():
@@ -561,6 +576,15 @@ a{color:var(--ink);text-decoration:none}a:hover{text-decoration:underline}
 .b-b{background:var(--accent-bg);color:var(--accent)}
 .b-g{background:var(--gold-bg);color:var(--gold-deep)}
 .pills a.entry .b{background:rgba(255,255,255,.22);color:#fff}
+/* 置頂證據總覽卡（2026-09-06）——比一般 .card 寬、左側粗色條標高亮，放在 live-wrap 之前 */
+.featured-evidence{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:12px;padding:1.1rem 1.3rem;margin-top:1rem;box-shadow:var(--sh-1)}
+.fe-tag{display:inline-block;font-size:.72rem;font-weight:700;padding:.2rem .6rem;border-radius:99px;margin-bottom:.5rem;background:var(--accent-bg);color:var(--accent)}
+.featured-evidence h2{font-family:var(--serif);font-size:1.1rem;font-weight:700;letter-spacing:-.01em}
+.featured-evidence h2 a{color:var(--ink)}
+.featured-evidence p{font-size:.84rem;color:var(--sec);margin:.4rem 0 .7rem;line-height:1.7}
+.fe-pills{display:flex;flex-wrap:wrap;gap:.3rem}
+.fe-pills a{display:inline-flex;align-items:center;gap:.24rem;padding:.22rem .58rem;background:var(--neutral-bg);color:var(--text);border-radius:999px;font-size:.7rem;font-weight:500;white-space:nowrap}
+.fe-pills a:hover{background:var(--line);text-decoration:none}
 .live-wrap{display:grid;grid-template-columns:1.3fr 1fr;gap:1rem;margin-top:1rem}
 /* 引導卡——實單卡不再貼會過期的數字快照，只給定位＋連結 */
 .acard{background:var(--card);border:1px solid var(--gold);border-radius:12px;padding:1.2rem 1.3rem;box-shadow:0 0 0 1px var(--gold) inset;display:flex;flex-direction:column}
@@ -616,6 +640,8 @@ footer{background:var(--card);border-top:1px solid var(--border);color:var(--mut
 </div></div>
 
 <div class="container">
+
+%FEATURED_EVIDENCE%
 
 <div class="live-wrap">%CARD%</div>
 
