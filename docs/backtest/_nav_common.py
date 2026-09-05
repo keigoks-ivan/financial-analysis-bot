@@ -15,7 +15,7 @@ Every backtest page header renders the same groups via make_toggle(active):
     研究・可轉債：tw_cb
     研究・因子：  return_driver | pead | accruals | share_issuance | profitability
                   | asset_growth | index_inclusion | insider
-    研究・跨標的驗證： w52_oos | ins_prem
+    研究・跨標的驗證： w52_oos | ins_prem | adopt_boot
 
 Design (2026-07-11 redesign):
   * Colour discipline — every pill is neutral (grey fill, dark-grey text); the
@@ -178,6 +178,7 @@ TW_CB_LINKS = [
 RESEARCH_OOS_LINKS = [
     ("/backtest/w52_adaptive_oos/", "W52×自適應 σ 跨標的證偽", "w52_oos", "研究"),
     ("/backtest/insurance_premium/", "深熊保險的價格", "ins_prem", "研究"),
+    ("/backtest/adopted_bootstrap/", "已採用系統的統計不確定性帶", "adopt_boot", "研究"),
 ]
 
 RESEARCH_FACTOR_LINKS = [
