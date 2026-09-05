@@ -8,6 +8,8 @@
 
 > **2026-09-05 持有人拍板**：三題皆採本稿建議（①A ②A ③A）；§8 的 C-1／C-2 啟用；WP0 已於同日執行（四份 `_src/` 補 `parts/`）。持有人同時指出實跑用量遠大於設計帳，已補 §1.1 全帳、§4.1 熔斷、§9.1 WP 執行紀律。
 
+> **2026-09-05 持有人第二次拍板：「把力氣花在判斷而不是寫報告」。** 預設產物改為 **快速版**（judgment.json 的一頁渲染，零 LLM）；完整散文報告降為選配 `--full`。用量與工程優先序全部向判斷層傾斜：Stage 0 證據深度不砍、判斷 agent 與跨模型閘不砍、散文可不跑。快速版位置採工作假設 `docs/dd/brief/BRIEF_{T}_{D}.html`（帶同欄位 dd-meta，研究頁標「速判」），持有人未明示反對即照此做（§8 C-5）。
+
 ## 0. 三個待裁定題，本稿採用的工作假設（已拍板，留作理由紀錄）
 
 | 題 | 本稿採用 | 替代案 | 翻案影響 |
@@ -90,6 +92,10 @@ Stage 1G 跨模型判斷層閘（opus；讀 bundle，輸出 FINDINGS 表對準 J
 ddreport.py gate check {audit.md}          ← 解析：判斷級 🔴＝0 → 放行；>0 → 寫 patch prompt
                                               （只含 findings＋受影響子樹），重 spawn 判斷 agent patch 模式
                                               （≤1 輪），再跑 judge check；第二次仍 🔴 → 停下給持有人
+ddreport.py brief                          ← 零 LLM：gen_dd_tables → 一頁模板渲染 judgment.json 成
+                                              docs/dd/brief/BRIEF_{T}_{D}.html（dd-meta 同欄位）；
+                                              **預設到此為止**（2026-09-05 第二次拍板），接 finish
+—— 以下僅 `--full` 時執行 ——
 ddreport.py prose prepare                  ← gen_dd_tables → dd_prose_budget → 數字白名單 → 機械段
                                               生成（§8 選配）→ 打包 prose bundle；寫 prompt
 Stage 2  散文 agent（sonnet，一次讀 bundle、兩次 Write〔s1–s7／s8–附錄〕、一次 ddreport.py gates）
@@ -139,7 +145,17 @@ ddreport.py finish                         ← INDEX 列由 dd-meta 生成、upd
 - `dd_token_report.py --run {run}` 從 manifest 記的 agent id 直接算三欄，寫 `token.json`，回報格式沿用 SKILL.v16.draft §五。
 - commit 訊息固定樣式，附 `[v17]` 與 token 三欄。push 前 `git pull --rebase` 與並行 session 四步自檢照舊。
 
-### 3.7 Orchestrator 契約（合併後的 `ddreport` skill 本體，目標 ≤8KB）
+### 3.8 無頭模式（2026-09-05 持有人拍板「釜底抽薪」；WP1 直接做此版）
+指揮者不用 LLM。`ddreport.py run {T}` 是一支 Python 程式，四個需要腦的時刻（覆蓋軸子 agent、0e 摘要、判斷、閘、散文）由程式以 `claude -p` 無頭呼叫，prompt 從檔案餵入，產物寫回 run 目錄。已驗證（2026-09-05，Claude Code 2.1.258）：
+- 登入為 claude.ai 訂閱（`authMethod: claude.ai`，無 `ANTHROPIC_API_KEY`），無頭呼叫走同一額度。
+- `-p --allowedTools WebSearch --max-turns N --output-format json` 可上網：3 輪 11.7 秒查得 BE Q2 營收。
+- 回傳 JSON 含 `num_turns`、`usage.cache_read_input_tokens`、`modelUsage{model: {cacheReadInputTokens, outputTokens, webSearchRequests}}`：**計量直接從回傳拿**，`dd_token_report.py` 退為歷史工具。
+- 基準 context 約 78K／輪（系統提示＋家規＋工具），是每輪固定成本；`--max-turns` 就是熔斷的硬上限，程式另以目標 2× 判 `over_budget`。
+- 待 WP1c 實測：`--setting-sources user` 能否略過 41KB 專案 CLAUDE.md 以壓基準 context；並行 spawn（subprocess 同時起 N 個 `claude -p`）是否受額度節流。
+
+互動 session 只剩：`python3 scripts/ddreport.py run BE` → 看一行結果。§3.7 的 skill 縮為 2KB 包裝；§4 的 orchestrator 一列歸零。
+
+### 3.7 Orchestrator 契約（合併後的 `ddreport` skill 本體，無頭版 ≤2KB；以下為退路版 ≤8KB）
 只含：觸發語與短路檢查（90 天內同檔提示）、模型表、`plan → spawn(list) → stage0 finalize → judge prepare → spawn(b1) → judge check → gate prepare → spawn(g) → gate check [→ spawn(b1 patch) → judge check] → prose prepare → spawn(b2) → finish` 的呼叫序、每步的「FAIL 怎麼辦」（重派上限、何時停下問持有人）、最終回報格式。**禁**：讀任何 bundle／報告／validator 全文、手敲 `dd_*.py`。
 
 ---
@@ -157,7 +173,8 @@ ddreport.py finish                         ← INDEX 列由 dd-meta 生成、upd
 | 判斷層閘（g） | opus | 事後抽查 12.6／4.1M（67／29 輪） | **≤2.5M** | 5.0M | 一次讀 bundle、一次寫；抽查模板現行讓 opus 自己 cat 檔、跑腳本，輪次失控，改為只讀 bundle |
 | patch（b1 patch，僅 🔴>0） | Fable | — | ≤0.4M | 0.8M | 30K context × ≤6 輪 |
 | 散文（b2） | sonnet | 2.4／13.5M（18／69 輪） | **≤1.5M** | 3.0M | ≤7 輪 × 45K；兩次 Write 取代 18 次 |
-| **全帳合計** | | **36.6／42.0M** | **≤12M** | — | 較實跑 −70%；Fable −60%、opus −85% |
+| **全帳合計（`--full`）** | | **36.6／42.0M** | **≤12M** | — | 較實跑 −70%；Fable −60%、opus −85% |
+| **快速版全帳（預設）** | | — | **≤8M** | — | 無散文段、無頭模式 orchestrator 歸零；證據、判斷、閘三段一毛不省 |
 
 目標是估算，不是實測；WP6 前三份回填。**Fable 目標由 ≤3M 改為 ≤1.2M**，且新增 KPI「每個 agent 的輪次上限」（表內）——token 是輪次的函數，管輪次比管 token 直接。
 
@@ -236,6 +253,8 @@ notes/site-internal/dd/_src/{T}_{D}/         存查（加 parts/、gate 檔、to
 | C-2 附錄 B 新增「負向證據處置表」 | 由 `evidence_refs`／`evidence_dismissed` 生成：每條負向 finding → 進了哪個欄位／不採納理由 | 新增一張表（約 2–3KB），讀者看得到「哪些壞消息被考慮過」 | 零 | **啟用**（透明度是品質） |
 | C-3 `reasoning` 段直接渲染 | 現行已把 reasoning 鋪進 `<div class="reasoning">`；改為散文 agent 對 §5／§6／§11 只准擴寫不准改寫 | 無 | 略減 | 維持現狀即可 |
 | C-4 §8 財報章由 KPI 表機械生成骨架 | `latest_quarter_kpis` 已結構化，可先生成表，散文只寫解讀 | 無 | 散文少寫 3–5KB | 可延後 |
+| **C-5 快速版（預設產物）** | `ddreport.py brief`：judgment.json → 一頁 `docs/dd/brief/BRIEF_{T}_{D}.html`，零 LLM。內容固定＝dashboard、統一裁決＋倉位角色＋rearm、thesis H／R、決策矩陣命中列與稽核表、contradictions 裁定表、情境樹 E11、triggers E12、pre-mortem 與 Max DD、負向證據處置表（C-2）、reasoning 各模組原文、閘的 🟡 清單、前份漂移歸因。帶與完整版**同欄位** dd-meta（`schema:"v15.0"` 語意不變，另加 `"brief":true`），noindex | 新頁型；研究頁表可收並標「速判」（動到既有聚合面讀法，持有人 2026-09-05 默示同意，反對即改為不入表） | 每份省散文段全部（目標 1.5M，實跑 2.4–13.5M） | **啟用且為預設**；完整版 `--full` 隨時可從同一 judgment.json 補跑散文，不重做證據與判斷 |
+| **C-6 白話欄 `judgment.plain`（2026-09-05 第三次拍板，樣張核可）** | 判斷 agent 寫判斷時一併寫五句話、這門生意、我押的三件事／最怕的三件事、市場錯在哪、成長靠什麼、三種未來故事、改變主意的三件事、跟上一份比的主因、怎麼賠、證據品質；快速版照此順序重排，先講人話再給數字；validator 只 WARN；契約見 `_wp_spec_v17_batch3_20260905.md` | 快速版整頁白話化 | Fable 輸出多約 1–2K token | **啟用** |
 
 ---
 
@@ -249,7 +268,8 @@ notes/site-internal/dd/_src/{T}_{D}/         存查（加 parts/、gate 檔、to
 | **WP1 入口與 Stage 0** | `ddreport.py` 骨架、manifest 狀態機、`plan`／`part check`／`stage0 finalize`、finding id、prompt 模板化與 JSON 派工契約、per-run 目錄 | sonnet（腳本）；prompt 模板文字 opus | 用 WP0 fixture 重放 CRDO／BE／CIEN：finalize PASS；plan 對三檔產出的軸清單與批數與當時一致；`part check` 對 BE 當時手剪前的 part（若可還原）能指出缺 as_of 的項目 |
 | **WP2 判斷層** | schema v17（evidence_refs／dismissed）、J1／J2／J3 進 validate_judgment、bundle 生成、judge prepare／check、判斷 prompt 改寫（刪自查） | sonnet（腳本）；prompt／規則文字 opus | (i) BE 原 judgment 跑 J1 → 列出 Crossroads `supply_demand_durability#0` 未處置（真陽性）；CRDO／CIEN 的未處置清單存檔當校準基線；(ii) BE 原 judgment 跑 J2 → 重現當時 verify_dd_math 攔到的 Max DD 恆等式 FAIL；(iii) `dd_decision --check` 對四份 v16 與 30 份 v15 DD 裁決全同（不變的既有考卷） |
 | **WP3 判斷層閘** | gate bundle、gate prompt（沿 `_audit_*` 格式）、`gate check` 解析器、patch prompt 生成（section_map 抽子樹）、dissent 存檔 | sonnet（腳本）；checklist 文字 opus | 解析 `_audit_BE` → 🔴=1、路徑 `supply_demand_durability`；解析 `_audit_CIEN` → 🔴=0；對 BE 產出的 patch prompt 只含 `decision_inputs.bear`／`contradictions[1]`／`scenario` 子樹 |
-| **WP4 散文層與 finish** | prose bundle、兩檔合併 Write＋split、gates 併入 Python、C-1／C-2 生成、index-row、DD commit 檔案集、`_src` 存查、token.json | sonnet | (i) 四份 `_src` 的 prose 合併成 A／B 再 split → 與原 prose/ 逐檔相同；(ii) gates 對四份原 HTML 全過；(iii) `index-row` 對四份 v16 DD 生成的列與 INDEX.md 既有列在前七欄相同；(iv) 對 BE 的 update_dd_index 產物，commit 集排除 weekly_cache 229 檔 |
+| **WP4a 快速版與 finish（優先）** | `ddreport.py brief` 一頁模板（C-5 欄目）、C-2 負向證據處置表、index-row、DD commit 檔案集、`_src` 存查、token.json、研究頁「速判」標記 | sonnet | (i) 四份 `_src` judgment → brief 全部渲染成功、qc.py 過、dd-meta 與原 DD 的 dd-meta 逐欄相同（多 `brief:true`）；(ii) `index-row` 對四份 v16 DD 生成的列與 INDEX.md 既有列在前七欄相同；(iii) 對 BE 的 update_dd_index 產物，commit 集排除 weekly_cache 229 檔 |
+| WP4b 散文層（選配，`--full`，排最後） | prose bundle、兩檔合併 Write＋split、gates 併入 Python、C-1 機械段 | sonnet | (i) 四份 `_src` 的 prose 合併成 A／B 再 split → 與原 prose/ 逐檔相同；(ii) gates 對四份原 HTML 全過 |
 | **WP5 收斂** | §7 歸檔與 tag、skill 合併、judgment-rules 瘦身、ledger 三條登記、CLAUDE.md 同步、retire 執行 | opus（規則文字）；搬檔 sonnet | `ls` 後 always-on 讀本只剩三份；`grep -r "v15.2\|--v16" .claude/skills CLAUDE.md` 無殘留路由語；qc.py 全過 |
 | **WP6 試點** | 三份實跑上站（建議含一份同檔重跑、一份無前份新檔、一份爆發候選） | 依 §4 | 退場訊號 §10 四條 |
 | WP7（後續） | delta 模式接 `dd_delta.py`；C-4 | — | 另案 |
@@ -261,7 +281,7 @@ notes/site-internal/dd/_src/{T}_{D}/         存查（加 parts/、gate 檔、to
 - 每個 WP 收工時附 `dd_token_report` 三欄，寫進本稿 §12 實測欄；單一 WP 超過 15M 即檢討切法。
 - 建置期間不做「順手清理」（並行 session 與 259 檔未 commit 的 working tree 是現況，只 add 自己列出的檔）。
 
-順序：WP0 立刻（零風險、防資料流失）→ WP1＋WP2 並行 → WP3 → WP4 → WP5 → WP6。WP1–WP4 全程不動現行檔，新腳本以 `ddreport.py` 為入口、既有 `dd_*.py` 只加參數不改語意；WP5 才切換路由。
+順序（2026-09-05 第二次拍板後）：WP0 已做 → WP1＋WP2 並行（進行中）→ WP3 閘 → WP4a 快速版與 finish → WP5 收斂 → WP6 試點（以快速版跑）→ WP4b 散文層最後、可延後。力氣順序＝證據 → 判斷 → 閘 → 快速版 → 其他。WP1–WP4 全程不動現行檔，新腳本以 `ddreport.py` 為入口、既有 `dd_*.py` 只加參數不改語意；WP5 才切換路由。
 
 ---
 
