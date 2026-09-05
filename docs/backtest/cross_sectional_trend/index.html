@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>橫斷面版趨勢 | InvestMQuest Research</title>
+<meta name="description" content="同一套趨勢直覺、同一批 10 檔美股 ETF、同樣的成本與現金慣例，把「每腿各自看均線」改成「持有相對最強的幾腿」，風險調整後有沒有不同？判定：形式不是關鍵。">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+:root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
+      --text:#111827;--muted:#6b7280;--border:#e5e7eb}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans TC',sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1120px;margin:0 auto;padding:0 1.5rem}
+.page-hdr{padding:1.75rem 0 1.25rem;background:linear-gradient(180deg,#eff6ff 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
+.page-hdr h1{font-size:1.55rem;font-weight:700;letter-spacing:-.03em}
+.page-hdr .sub{color:var(--muted);font-size:.88rem;margin-top:.2rem}
+.crumb{font-size:.82rem;color:var(--muted);margin-bottom:.4rem}
+.crumb a{color:var(--muted)}
+.section{padding:1.75rem 0 0}
+.section-title{font-size:1.08rem;font-weight:700;margin-bottom:1rem;
+               padding-bottom:.45rem;border-bottom:2px solid var(--brand)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.1rem 1.25rem;margin-bottom:1rem}
+table{width:100%;border-collapse:collapse;font-size:.82rem;background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+th,td{text-align:left;padding:.5rem .6rem;border-bottom:1px solid var(--border)}
+th{background:#f9fafb;font-weight:600;font-size:.68rem;text-transform:uppercase;
+   letter-spacing:.03em;color:var(--muted)}
+td{font-variant-numeric:tabular-nums;vertical-align:top}
+td.num,th.num{text-align:right}
+td.lbl{white-space:nowrap;font-weight:500}
+tbody tr:last-child td{border-bottom:0}
+tr.dim{background:#f4f5f6;color:#8b93a1}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.hero{margin:1.25rem 0;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--card)}
+.hero-top{background:linear-gradient(135deg,#eff6ff 0%,#f5f8ff 100%);padding:1.4rem 1.6rem;border-bottom:1px solid var(--border)}
+.hero-top .verdict-tag{display:inline-block;color:#fff;font-size:.74rem;font-weight:700;
+                       letter-spacing:.05em;padding:.25rem .7rem;border-radius:99px;margin-bottom:.5rem}
+.hero-top h2{font-size:1.2rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.35rem}
+.hero-top p{font-size:.9rem;color:#374151;max-width:64rem}
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card)}
+.hero-stats > div{padding:1rem 1.2rem;text-align:center;border-right:1px solid var(--border)}
+.hero-stats > div:last-child{border-right:none}
+.hero-stats .hs-label{font-size:.66rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.hero-stats .hs-value{font-size:1.35rem;font-weight:800;letter-spacing:-.02em}
+.takeaway{font-size:.86rem;margin:.9rem 0;padding:.7rem .95rem;border-radius:6px;background:var(--brand-light);
+    border-left:3px solid var(--brand);color:#1f2c44}
+.takeaway b{color:#12213a}
+.note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;
+      padding:.85rem 1.1rem;font-size:.82rem;color:#92400e;margin:1rem 0}
+.ok{color:#059669;font-weight:700}
+.no{color:#dc2626;font-weight:700}
+.chart-wrap{position:relative}
+footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
+       text-align:center;padding:1.25rem 0;font-size:.78rem;margin-top:2rem}
+@media(max-width:768px){
+  .hero-stats{grid-template-columns:repeat(2,1fr)}
+  table{font-size:.74rem}th,td{padding:.4rem .4rem}
+}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/market/">市況主控台</a>
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <a href="/cockpit/">選股</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">個股研究</a>
+          <a href="/id/">產業研究</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/" class="active">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/flow/">投資流程</a>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="page-hdr">
+  <div class="container">
+    <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / 橫斷面版趨勢</div>
+    <h1>橫斷面版趨勢</h1>
+    <div class="sub">同一套趨勢直覺、同一批 10 檔美股 ETF、同樣的成本與現金慣例——「持有相對最強的
+    幾腿」是否優於「每腿各自看均線」・生成 2026-09-05</div>
+    <style id="bt-subnav-style">.bt-subnav{margin-top:.75rem;border:1px solid var(--border,#e5e7eb);border-radius:8px;overflow:hidden;font-size:.78rem;line-height:1.3}.bt-subnav-row{display:flex;align-items:flex-start;gap:.55rem;padding:.32rem .55rem;border-top:1px solid var(--border,#e5e7eb)}.bt-subnav-row:first-child{border-top:0}.bt-subnav-lbl{flex:0 0 5.4em;font-size:.64rem;font-weight:700;color:var(--muted,#6b7280);text-transform:uppercase;letter-spacing:.04em;padding-top:.34rem}.bt-subnav-pills{display:flex;flex-wrap:wrap;gap:.3rem;min-width:0}.bt-subnav-pills a{display:inline-flex;align-items:center;gap:.28rem;padding:.26rem .6rem;background:#eef1f4;color:#374151;border-radius:999px;text-decoration:none;font-weight:500;white-space:nowrap;transition:background .12s}.bt-subnav-pills a:hover{background:#e1e6ea}.bt-subnav-pills a.bt-dead{color:#7a828d;background:#f2f3f5}.bt-subnav-pills a.bt-on{background:linear-gradient(135deg,#081832,#173564);color:#fff;font-weight:600}.bt-subnav-pills a.bt-on:hover{background:linear-gradient(135deg,#081832,#173564)}.bt-tag{font-size:.6rem;font-weight:600;padding:.02rem .3rem;border-radius:4px;line-height:1.4}.bt-tag-dead{background:rgba(220,38,38,.12);color:#b42318}.bt-tag-watch{background:rgba(180,118,20,.15);color:#986a12}.bt-on .bt-tag-dead{background:rgba(255,255,255,.22);color:#fff}.bt-on .bt-tag-watch{background:rgba(255,255,255,.22);color:#fff}@media(max-width:640px){.bt-subnav-row{flex-direction:column;gap:.28rem;padding:.4rem .55rem}.bt-subnav-lbl{flex-basis:auto;padding-top:0}}</style><nav class="bt-subnav" aria-label="回測子導航"><div class="bt-subnav-row"><div class="bt-subnav-lbl">對比總覽</div><div class="bt-subnav-pills"><a href="/backtest/">20 年</a><a href="/backtest/10y/">10 年</a><a href="/backtest/criteria/">評估標準</a><a href="/backtest/tw/">台股總覽</a><a href="/backtest/multi/">多資產總覽</a><a href="/backtest/leverage/">槓桿疊加總覽</a><a href="/backtest/ma_sensitivity/">MA 敏感度</a><a href="/backtest/free_lunch/">分散與免費午餐</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">個別系統</div><div class="bt-subnav-pills"><a href="/backtest/long_track/">SPY/QQQ 長軌</a><a href="/backtest/long_track_qqq/">QQQ 長軌純攻</a><a href="/backtest/long_track_ensemble/">SPY/QQQ 集成</a><a href="/backtest/long_track_smh/">SMH/QQQ 進攻</a><a href="/backtest/six_state/">QQQ＋SMH 六狀態</a><a href="/backtest/six_state_v1r1/">QQQ 六狀態實盤</a><a href="/backtest/gem/">SPY/ACWX 雙動能</a><a href="/backtest/slope_filter/">SPY/AGG 斜率</a><a href="/backtest/rsi2_mr/">SPY/QQQ 均值回歸</a><a href="/backtest/supertrend/">週線 Supertrend</a><a href="/backtest/minervini/">Minervini RS+VCP</a><a href="/backtest/mom_volscaling/">動能·波動縮放</a><a href="/backtest/dual_track_study/">雙軌分散研究</a><a href="/backtest/leverage_voltarget/">期貨槓桿疊加</a><a href="/backtest/vol_targeting/">波動目標倉位<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/dual_track/" class="bt-dead">SPY/QQQ 雙軌多空<span class="bt-tag bt-tag-dead">否決</span></a><a href="/backtest/exit_switch/" class="bt-dead">出場法切換<span class="bt-tag bt-tag-dead">否決</span></a><a href="/backtest/short_system/" class="bt-dead">指數做空<span class="bt-tag bt-tag-dead">失敗</span></a><a href="/backtest/cndr/" class="bt-dead">Iron Condor<span class="bt-tag bt-tag-dead">失敗</span></a><a href="/backtest/covered_call/" class="bt-dead">Covered Call<span class="bt-tag bt-tag-dead">負貢獻</span></a><a href="/backtest/put_timing/" class="bt-dead">SPY/QQQ 買 put 避險<span class="bt-tag bt-tag-dead">負貢獻</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">多資產</div><div class="bt-subnav-pills"><a href="/backtest/turtle/">唐奇安突破</a><a href="/backtest/clenow/">跨資產趨勢</a><a href="/backtest/multiasset_trend/">SG Trend 複製</a><a href="/backtest/turtle_adopt/">組合採用 Sleeve</a><a href="/backtest/slope_filter_global/">全球斜率穩健性</a><a href="/backtest/crossasset_defense/">跨資產防守</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">台股波段</div><div class="bt-subnav-pills"><a href="/backtest/tw_0050_compare/">0050 總覽·台美差異</a><a href="/backtest/tw_0050/">0050 進攻趨勢（移植）</a><a href="/backtest/tw_0050_lt/">0050 長軌趨勢</a><a href="/backtest/long_track_tw/">2330/0050 E3 長軌</a><a href="/backtest/tw_0050_six/">0050 六狀態機</a><a href="/backtest/tw_0050_dual/" class="bt-dead">0050 雙軌多空<span class="bt-tag bt-tag-dead">否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">台股選擇權</div><div class="bt-subnav-pills"><a href="/backtest/tw_options/">台股選擇權專區<span class="bt-tag bt-tag-watch">專區</span></a><a href="/backtest/txo_vol_seller/">台指選擇權賣方<span class="bt-tag bt-tag-watch">模擬中</span></a><a href="/backtest/txo_put_seller/">台指賣方下檔<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_iron_condor/">台指雙賣<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_covered_call_0050/">台指 Covered Call<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/txo_tail_hedge/">台指尾端避險<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">日內交易</div><div class="bt-subnav-pills"><a href="/backtest/txf_intraday/">台指當沖<span class="bt-tag bt-tag-watch">未過</span></a><a href="/backtest/txf_chips/">籌碼偏向<span class="bt-tag bt-tag-watch">觀察</span></a><a href="/backtest/ssf_xsec/">個股期橫斷面<span class="bt-tag bt-tag-watch">未過</span></a><a href="/backtest/txf_basis/" class="bt-dead">基差偏向<span class="bt-tag bt-tag-dead">否決</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・主動式ETF</div><div class="bt-subnav-pills"><a href="/backtest/active_etf/">主動式ETF總結<span class="bt-tag bt-tag-watch">專區</span></a><a href="/backtest/tw_active_etf/">台股主動式ETF<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/us_active_etf/">美股主動式ETF<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/tw_mutual_fund/">台股共同基金<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・頻率</div><div class="bt-subnav-pills"><a href="/backtest/daily_vs_weekly/">日/週線</a><a href="/backtest/daily_vs_weekly_deep/">日/週·深掘</a><a href="/backtest/daily_vs_weekly_global/">日/週·全球</a><a href="/backtest/daily_vs_weekly_tw/">日/週·台股</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・均線</div><div class="bt-subnav-pills"><a href="/backtest/ma_cross/">MA 交叉</a><a href="/backtest/ma_deviation/">MA 乖離</a><a href="/backtest/ma_dynband/">MA 動態帶</a><a href="/backtest/ma_squeeze/">MA 擠壓</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・崩盤</div><div class="bt-subnav-pills"><a href="/backtest/smh_vcrash/">SMH V崩</a><a href="/backtest/tw_vcrash/">台股 V崩防禦</a><a href="/backtest/tw_crash/">台股含崩盤驗證</a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・總經</div><div class="bt-subnav-pills"><a href="/backtest/housing_gdp/">人均GDP與房價<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・可轉債</div><div class="bt-subnav-pills"><a href="/backtest/tw_cb/">台股可轉債專區<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・因子</div><div class="bt-subnav-pills"><a href="/backtest/return_driver/">美股漲跌歸因：獲利與估值<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/pead/">美股財報驚喜後漂移<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/accruals/">美股獲利品質（應計項目）<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/share_issuance/">美股股數增減（發行與回購）<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/profitability/">美股獲利能力因子<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/asset_growth/">美股資產成長異象<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/index_inclusion/">指數納入效應<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/insider/">內部人買賣叢集買進<span class="bt-tag bt-tag-watch">研究</span></a></div></div><div class="bt-subnav-row"><div class="bt-subnav-lbl">研究・跨標的驗證</div><div class="bt-subnav-pills"><a href="/backtest/w52_adaptive_oos/">W52×自適應 σ 跨標的證偽<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/insurance_premium/">深熊保險的價格<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/adopted_bootstrap/">已採用系統的統計不確定性帶<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/regime_bootstrap/">保留 regime 的 bootstrap<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/combined_account/">美台合併帳戶層<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/slow_bear_base_rate/">慢熊的 base rate<span class="bt-tag bt-tag-watch">研究</span></a><a href="/backtest/cross_sectional_trend/" class="bt-on">橫斷面版趨勢<span class="bt-tag bt-tag-watch">研究</span></a></div></div></nav>
+  </div>
+</div>
+
+<div class="container">
+
+
+<div class="hero">
+  <div class="hero-top">
+    <span class="verdict-tag" style="background:#dc2626">形式不是關鍵</span>
+    <h2>同一套趨勢直覺、同一批標的、同樣的成本與現金慣例，改成「持有相對最強的幾腿」而不是「每腿各自看均線」，風險調整後有沒有不同？</h2>
+    <p>三個橫斷面變體（XS／XS+G／XS+G+σ）與兩個對照（TS-10 時序無槓桿版／A 實單主系統）
+    ＋一個基準（EW B&H）在同一批 10 檔美股 ETF（QQQ, SMH, SPY, XLK, XLY, XLI, XLV, IWM, EFA, EEM）、同樣的成本
+    （7 bps／邊）與現金慣例（閒置資金領 SHY/BIL）下並列比較。核心尺①：Calmar(XS+G)
+    是否在 W1、W2 兩個評估窗的全窗與前後兩半都優於 Calmar(TS-10)（同母體形式比較）；
+    核心尺②：Calmar(XS+G) 是否同時贏過 EW B&H 的兩向 matched-cash（稀釋）尺。
+    A 的復現核對（CAGR/MDD/Calmar 對照實單釘住值 14.10/−23.7/0.595）：<span class='ok'>✓</span>
+    （CAGR 14.11%、MDD -23.68%、Calmar 0.596）。</p>
+  </div>
+  <div class="hero-stats">
+    <div><div class="hs-label">判定</div><div class="hs-value" style="font-size:1.05rem">形式不是關鍵</div></div>
+    <div><div class="hs-label">A 復現核對</div><div class="hs-value"><span class='ok'>✓</span></div></div>
+    <div><div class="hs-label">單腿引擎驗證</div><div class="hs-value" style="font-size:.95rem">
+      5.74e-02</div></div>
+    <div><div class="hs-label">母體</div><div class="hs-value" style="font-size:1.05rem">10 腿</div></div>
+  </div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">一、判準（預註冊原文，跑之前鎖死）</h2>
+<div class="takeaway"><b>本回測只回答一個問題：同一套趨勢直覺、同一批標的、同樣的成本與現金慣例，
+改成「持有相對最強的幾腿」（橫斷面選擇）而不是「每腿各自看均線」（時序趨勢），風險調整後有沒有不同？</b>
+Calmar（風險調整後報酬，＝年化報酬 ÷ 最大回撤的絕對值，數字愈大代表每承擔一單位下檔風險換到的報酬愈多）、
+MDD（Maximum Drawdown，最大回撤——從最高點到最低點的最大跌幅）、matched-cash 尺
+（把某個對照組用現金稀釋到跟系統一樣的年化報酬或一樣的最大回撤，再比另一項指標——如果系統的優勢只是
+「多冒險換來的」，稀釋後的對照組應該也能追平；系統若真的更有效率，稀釋版仍會落後）。</p></div>
+<div class="scroll"><table>
+<thead><tr><th>W1 與 W2 皆</th><th>判定</th></tr></thead>
+<tbody>
+<tr><td class="lbl">尺① 且 尺② 成立</td><td>橫斷面形式在同母體優於時序形式且勝稀釋：值得進入下一輪
+（前瞻 paper track）——不是採用</td></tr>
+<tr><td class="lbl">只尺① 成立</td><td>形式有差，但整體仍不如倉位稀釋</td></tr>
+<tr><td class="lbl">尺① 不成立</td><td>形式不是關鍵；時序 edge 的失效不能靠改成橫斷面救回</td></tr>
+</tbody></table></div>
+<div class="note">任一窗（W1 或 W2）不成立即歸「不成立」。三變體（XS→XS+G→XS+G+σ）只用來看
+G（W52 gate）與 σ（自適應波動率套袖）各貢獻多少，不擇優、不是找新系統。</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">二、復現核對</h2>
+<div class="card">
+<h3 style="font-size:.95rem;margin-bottom:.5rem">A（實單主系統）全窗核對（2005-01-03→）</h3>
+<div class="scroll"><table><thead><tr><th></th><th class="num">CAGR</th><th class="num">MDD</th>
+<th class="num">Calmar</th><th>結果</th></tr></thead><tbody>
+<tr><td class="lbl">本檔重算</td><td class="num">14.1%</td>
+<td class="num">-23.7%</td><td class="num">0.596</td>
+<td rowspan="2"><span class='ok'>✓</span></td></tr>
+<tr><td class="lbl">站上釘住值</td><td class="num">14.1%</td>
+<td class="num">-23.7%</td>
+<td class="num">0.595</td></tr>
+</tbody></table></div>
+<h3 style="font-size:.95rem;margin:1rem 0 .5rem">單腿引擎驗證：本檔通用引擎 vs backtest_lto_qqq.run
+（W52 gate 單腿、無槓桿）</h3>
+<p style="font-size:.87rem">最大相對淨值差 <b>5.738e-02</b>（5705 個交易日，
+未達 1e-9）。
+未達門檻的殘差根因已定位並揭露於下方 JUDGMENT CALL——來自兩個既有凍結模組本身對「週」的定義不同（W250 額外門檻的暖機延遲、假日週的曆法標籤 vs 實際交易日錯位），非本檔通用引擎的位移邏輯錯誤。</p>
+</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">三、W2 主表（2010-01-01→，主判準窗）</h2>
+<div class="scroll"><table>
+<thead><tr><th>變體</th><th class="num">CAGR</th><th class="num">MDD</th><th class="num">Calmar</th>
+<th class="num">Martin（用 Ulcer Index 取代 MDD 當分母的風險調整報酬，較不受單一極端日左右）</th>
+<th class="num">Sharpe</th><th class="num">年化波動</th></tr></thead>
+<tbody><tr><td class='lbl'>A・實單主系統（對照）</td><td class='num'>17.4%</td><td class='num'>-23.7%</td><td class='num'>0.735</td><td class='num'>1.654</td><td class='num'>0.92</td><td class='num'>19.70</td></tr><tr><td class='lbl'>XS</td><td class='num'>15.8%</td><td class='num'>-30.7%</td><td class='num'>0.515</td><td class='num'>1.992</td><td class='num'>0.79</td><td class='num'>21.73</td></tr><tr><td class='lbl'>XS+G</td><td class='num'>12.2%</td><td class='num'>-30.7%</td><td class='num'>0.398</td><td class='num'>1.284</td><td class='num'>0.68</td><td class='num'>19.75</td></tr><tr><td class='lbl'>XS+G+σ</td><td class='num'>10.2%</td><td class='num'>-21.1%</td><td class='num'>0.483</td><td class='num'>1.153</td><td class='num'>0.70</td><td class='num'>15.51</td></tr><tr><td class='lbl'>TS-10（時序對照）</td><td class='num'>7.1%</td><td class='num'>-18.1%</td><td class='num'>0.396</td><td class='num'>1.060</td><td class='num'>0.69</td><td class='num'>10.79</td></tr><tr><td class='lbl'>EW B&H（基準）</td><td class='num'>12.9%</td><td class='num'>-33.4%</td><td class='num'>0.386</td><td class='num'>1.699</td><td class='num'>0.75</td><td class='num'>18.51</td></tr></tbody></table></div>
+<div class="takeaway">
+尺①（Calmar(XS+G) &gt; Calmar(TS-10)）：全窗 <span class='ok'>✓</span>、H1 <span class='ok'>✓</span>、H2 <span class='ok'>✓</span>。
+尺②（XS+G 對 EW B&H 兩向 matched-cash）：同 CAGR 比 MDD <span class='ok'>✓</span>
+（k=0.931，系統 MDD -30.7%
+vs 稀釋版 -31.3%）、
+同 MDD 比 CAGR <span class='no'>✗</span>
+（k=1.000，系統 CAGR 12.2%
+vs 稀釋版 12.9%）；兩向皆過才算尺②成立。
+尺③（Calmar(XS+G) vs Calmar(A)，參考、不進判定）：<span class='no'>✗</span>。
+</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">三之二、W2 淨值走勢（對數座標，六條線）</h2>
+<div class="chart-wrap" style="height:380px"><canvas id="chart-nav"></canvas></div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">三之一、W1 表（2005-01-03→，含更長歷史）</h2>
+<div class="scroll"><table>
+<thead><tr><th>變體</th><th class="num">CAGR</th><th class="num">MDD</th><th class="num">Calmar</th>
+<th class="num">Martin（用 Ulcer Index 取代 MDD 當分母的風險調整報酬，較不受單一極端日左右）</th>
+<th class="num">Sharpe</th><th class="num">年化波動</th></tr></thead>
+<tbody><tr><td class='lbl'>A・實單主系統（對照）</td><td class='num'>14.1%</td><td class='num'>-23.7%</td><td class='num'>0.596</td><td class='num'>1.283</td><td class='num'>0.80</td><td class='num'>18.69</td></tr><tr><td class='lbl'>XS</td><td class='num'>13.2%</td><td class='num'>-55.7%</td><td class='num'>0.236</td><td class='num'>0.903</td><td class='num'>0.66</td><td class='num'>22.53</td></tr><tr><td class='lbl'>XS+G</td><td class='num'>11.6%</td><td class='num'>-30.7%</td><td class='num'>0.378</td><td class='num'>1.134</td><td class='num'>0.68</td><td class='num'>18.89</td></tr><tr><td class='lbl'>XS+G+σ</td><td class='num'>9.9%</td><td class='num'>-21.1%</td><td class='num'>0.468</td><td class='num'>1.122</td><td class='num'>0.71</td><td class='num'>14.87</td></tr><tr><td class='lbl'>TS-10（時序對照）</td><td class='num'>6.8%</td><td class='num'>-18.1%</td><td class='num'>0.379</td><td class='num'>1.056</td><td class='num'>0.69</td><td class='num'>10.48</td></tr><tr><td class='lbl'>EW B&H（基準）</td><td class='num'>10.3%</td><td class='num'>-55.6%</td><td class='num'>0.185</td><td class='num'>0.815</td><td class='num'>0.59</td><td class='num'>20.16</td></tr></tbody></table></div>
+<div class="takeaway">
+尺①（Calmar(XS+G) &gt; Calmar(TS-10)）：全窗 <span class='no'>✗</span>、H1 <span class='ok'>✓</span>、H2 <span class='ok'>✓</span>。
+尺②（XS+G 對 EW B&H 兩向 matched-cash）：同 CAGR 比 MDD <span class='ok'>✓</span>
+（k=1.000，系統 MDD -30.7%
+vs 稀釋版 -55.6%）、
+同 MDD 比 CAGR <span class='ok'>✓</span>
+（k=1.000，系統 CAGR 11.6%
+vs 稀釋版 10.3%）；兩向皆過才算尺②成立。
+尺③（Calmar(XS+G) vs Calmar(A)，參考、不進判定）：<span class='no'>✗</span>。
+</div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">四、H1／H2 對半（評估窗依交易日數對半切、各自重新正規化）</h2>
+<div class="scroll"><table>
+<thead><tr><th>窗</th><th>變體</th><th class="num">Calmar H1</th><th class="num">Calmar H2</th></tr></thead>
+<tbody><tr><td class='lbl'>W1</td><td class='lbl'>A・實單主系統（對照）</td><td class='num'>0.263</td><td class='num'>—</td></tr><tr><td class='lbl'>W1</td><td class='lbl'>XS</td><td class='num'>0.143</td><td class='num'>0.606</td></tr><tr><td class='lbl'>W1</td><td class='lbl'>XS+G</td><td class='num'>0.402</td><td class='num'>0.462</td></tr><tr><td class='lbl'>W1</td><td class='lbl'>XS+G+σ</td><td class='num'>0.379</td><td class='num'>0.615</td></tr><tr><td class='lbl'>W1</td><td class='lbl'>TS-10（時序對照）</td><td class='num'>0.266</td><td class='num'>0.734</td></tr><tr><td class='lbl'>W1</td><td class='lbl'>EW B&H（基準）</td><td class='num'>0.118</td><td class='num'>0.422</td></tr><tr><td class='lbl'>W2</td><td class='lbl'>A・實單主系統（對照）</td><td class='num'>0.421</td><td class='num'>—</td></tr><tr><td class='lbl'>W2</td><td class='lbl'>XS</td><td class='num'>0.571</td><td class='num'>0.636</td></tr><tr><td class='lbl'>W2</td><td class='lbl'>XS+G</td><td class='num'>0.417</td><td class='num'>0.484</td></tr><tr><td class='lbl'>W2</td><td class='lbl'>XS+G+σ</td><td class='num'>0.355</td><td class='num'>0.657</td></tr><tr><td class='lbl'>W2</td><td class='lbl'>TS-10（時序對照）</td><td class='num'>0.288</td><td class='num'>0.773</td></tr><tr><td class='lbl'>W2</td><td class='lbl'>EW B&H（基準）</td><td class='num'>0.523</td><td class='num'>0.434</td></tr></tbody></table></div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">五、換手／持股數／在場時間／對 A 的月報酬相關</h2>
+<div class="takeaway">月頻 XS 家族與日頻 TS-10 的執行時點不同，換手與成本結構本來就不同——這裡並列
+不是要「比誰換手少」，是讓讀者看清楚代價落在哪裡。</div>
+<div class="scroll"><table>
+<thead><tr><th>窗</th><th>變體</th><th class="num">年換手（Σ|Δw|/年）</th>
+<th class="num">平均持股數</th><th class="num">在場時間比</th>
+<th class="num">對 A 月報酬相關</th></tr></thead>
+<tbody><tr><td class='lbl'>W1</td><td class='lbl'>XS</td><td class='num'>4.68</td><td class='num'>3.00</td><td class='num'>100.0%</td><td class='num'>0.721</td></tr><tr><td class='lbl'>W1</td><td class='lbl'>XS+G</td><td class='num'>4.89</td><td class='num'>2.55</td><td class='num'>89.2%</td><td class='num'>0.838</td></tr><tr><td class='lbl'>W1</td><td class='lbl'>XS+G+σ</td><td class='num'>6.89</td><td class='num'>2.55</td><td class='num'>89.2%</td><td class='num'>0.853</td></tr><tr><td class='lbl'>W1</td><td class='lbl'>TS-10（時序對照）</td><td class='num'>4.48</td><td class='num'>7.40</td><td class='num'>91.0%</td><td class='num'>0.869</td></tr><tr><td class='lbl'>W1</td><td class='lbl'>EW B&H（基準）</td><td class='num'>0.00</td><td class='num'>10.00</td><td class='num'>100.0%</td><td class='num'>0.646</td></tr><tr><td class='lbl'>W2</td><td class='lbl'>XS</td><td class='num'>4.64</td><td class='num'>3.00</td><td class='num'>100.0%</td><td class='num'>0.790</td></tr><tr><td class='lbl'>W2</td><td class='lbl'>XS+G</td><td class='num'>5.08</td><td class='num'>2.67</td><td class='num'>93.0%</td><td class='num'>0.883</td></tr><tr><td class='lbl'>W2</td><td class='lbl'>XS+G+σ</td><td class='num'>7.17</td><td class='num'>2.67</td><td class='num'>93.0%</td><td class='num'>0.893</td></tr><tr><td class='lbl'>W2</td><td class='lbl'>TS-10（時序對照）</td><td class='num'>4.57</td><td class='num'>7.78</td><td class='num'>94.0%</td><td class='num'>0.873</td></tr><tr><td class='lbl'>W2</td><td class='lbl'>EW B&H（基準）</td><td class='num'>0.00</td><td class='num'>10.00</td><td class='num'>100.0%</td><td class='num'>0.703</td></tr></tbody></table></div>
+</div>
+
+
+<div class="section">
+<h2 class="section-title">六、誠實揭露</h2>
+<div class="card">
+<h3 style="font-size:.95rem;margin-bottom:.5rem">母體偏誤</h3>
+<p style="font-size:.87rem">10 腿母體（QQQ, SMH, SPY, XLK, XLY, XLI, XLV, IWM, EFA, EEM）是事後知道歷史的選擇
+（含科技類 QQQ／SMH／XLK／XLY），有母體偏誤；本頁的過尺與否只在這批標的上成立，不代表
+「橫斷面選擇」這個形式在任意母體都優於時序趨勢。</p>
+<h3 style="font-size:.95rem;margin:1rem 0 .5rem">選腿診斷</h3>
+<p style="font-size:.87rem">XS 每月決策日平均合格腿數 9.6／最少
+0（暖機期間曾為 0，此時全數留現金）；XS 平均實際持有腿數
+2.87；XS+G 平均實際持有腿數
+2.45（比 XS 低，即 gate_w52 不合格被擋在場外的比例）。</p>
+<h3 style="font-size:.95rem;margin:1rem 0 .5rem">這頁不回答的事</h3>
+<p style="font-size:.87rem">這頁不回答「該不該換系統」；若判定為第一列（值得前瞻追蹤），下一步是
+預註冊前瞻 paper track，不是實單。三個橫斷面變體不擇優，只用來拆解 G 與 σ 各貢獻多少。</p>
+<h3 style="font-size:.95rem;margin:1rem 0 .5rem">實作中的 JUDGMENT CALL（規格未明文之處的保守選擇）</h3>
+<ul><li>動能不足 3 檔合格時的處置：spec 未明文——本檔取『min(3, 合格數) 等權，其餘現金』而非強制湊滿 3 檔或直接空手；實務上暖機後 10 腿中合格數幾乎恆 ≥3（見 diagnostics.avg_eligible），此分支極少觸發，屬保守防呆。</li><li>月末決策日採真實交易日標籤（每月最後一個共同交易日），而非 sector_rotation.py 原文用的日曆 'ME' 標籤——後者需要雙重 shift 修正日曆標籤與實際交易日的落差；本檔改用真實交易日標籤＋單一 shift（reindex(ffill).shift(1)）在數學上達成同一件事（『決策於月末收盤已知、次一交易日生效』），且能與 backtest_lto_qqq.run 的單一位移慣例對齊做逐位元引擎驗證。</li><li>XS+G+σ 的日頻套袖：月頻選腿的目標權重（0 或 1/3）先 ffill 到日頻，再逐日乘上該腿當日raw_ratio.clip(upper=1.0)（同 cap1.0 套袖，未加槓桿），最後整條合成日頻序列送進同一顆『reindex(ffill).shift(1)＋7bps/|Δw|』引擎——月頻選腿與日頻縮放因此共用同一次位移，不疊加兩層落後日；spec 原文『日頻套袖、月頻選腿』未明講兩者如何在同一引擎內對齊，此為本檔的具體實作選擇。</li><li>單腿引擎驗證（gate_w52×QQQ，vs backtest_lto_qqq.run entry=faber/exit=w52/無槓桿）：max relative NAV diff = 5.738e-02（未達 1e-9，見下段誠實揭露）。 已定位殘差根因（非本檔引擎邏輯問題，而是被比較的兩個既有凍結模組本身對『週』的定義不同）：① 2004 年附近——backtest_lto_qqq.weekly_positions 對『faber』進場仍要求 W104/W250/s104/s250 全部非 NaN 才會出手（即便 faber 規則本身只用 W52），導致其實際出場門檻比單純 gate_w52 晚約 2 年才生效；② 假日週（例：2020 復活節前的 Good Friday 週，實際最後交易日為週四 4/9）——gate_w52 用 pandas 'W-FRI' resample 的曆法週五標籤取值，backtest_lto_qqq.weekly_indicators 另外記錄 exec_date=該週實際最後交易日並以此對齊，兩者在非交易日週五的假日週會相差 1 個交易日，恰好撞上 2020-04-09→04-13 這種單日 >10% 反彈，放大成尾端 NAV 缺口。兩個模組都是規格凍結、不得修改的既有規則（本檔只做『量測』），故殘差如實測量與揭露，不做事後調整湊近 1e-9；本檔自身的 run_engine 位移邏輯（raw/w_held/turn）已於排除上述兩個既有已知差異後的窗口交叉核對一致。</li><li>EW B&H 對照＝10 腿等權、月底再平衡（非每日再平衡），7bps 於 |Δw|——與站上既有sector_rotation.py 的 EW 9-sector B&H 定義一致（月頻而非日頻再平衡），非 buy-and-hold零再平衡版本；spec 只寫『10 腿等權、月再平衡』，此為字面直譯，非另一種選擇。</li><li>A 的窗口對齊：A 原生 eval_start=2005-01-03，恰為 W1 起點；W2（2010-01-01）用 renorm 切片重新正規化到 INITIAL，其原始執行層（20pp 門檻/10% 格/A2）完全未變動，只是取子窗指標。</li></ul>
+</div>
+</div>
+
+
+</div>
+
+<footer>
+  <div class="container">
+    &copy; 2026 InvestMQuest Research &middot; 橫斷面版趨勢（研究頁，形式比較，非新交易系統）&middot;
+    規格 docs/Cross_Sectional_Trend_Spec.md・頁面生成 2026-09-05 &middot; 僅供研究參考，不構成投資建議
+  </div>
+</footer>
+
+<script>
+new Chart(document.getElementById('chart-nav'), {
+  type: 'line',
+  data: { labels: ["2010-01", "2010-02", "2010-03", "2010-04", "2010-05", "2010-06", "2010-07", "2010-08", "2010-09", "2010-10", "2010-11", "2010-12", "2011-01", "2011-02", "2011-03", "2011-04", "2011-05", "2011-06", "2011-07", "2011-08", "2011-09", "2011-10", "2011-11", "2011-12", "2012-01", "2012-02", "2012-03", "2012-04", "2012-05", "2012-06", "2012-07", "2012-08", "2012-09", "2012-10", "2012-11", "2012-12", "2013-01", "2013-02", "2013-03", "2013-04", "2013-05", "2013-06", "2013-07", "2013-08", "2013-09", "2013-10", "2013-11", "2013-12", "2014-01", "2014-02", "2014-03", "2014-04", "2014-05", "2014-06", "2014-07", "2014-08", "2014-09", "2014-10", "2014-11", "2014-12", "2015-01", "2015-02", "2015-03", "2015-04", "2015-05", "2015-06", "2015-07", "2015-08", "2015-09", "2015-10", "2015-11", "2015-12", "2016-01", "2016-02", "2016-03", "2016-04", "2016-05", "2016-06", "2016-07", "2016-08", "2016-09", "2016-10", "2016-11", "2016-12", "2017-01", "2017-02", "2017-03", "2017-04", "2017-05", "2017-06", "2017-07", "2017-08", "2017-09", "2017-10", "2017-11", "2017-12", "2018-01", "2018-02", "2018-03", "2018-04", "2018-05", "2018-06", "2018-07", "2018-08", "2018-09", "2018-10", "2018-11", "2018-12", "2019-01", "2019-02", "2019-03", "2019-04", "2019-05", "2019-06", "2019-07", "2019-08", "2019-09", "2019-10", "2019-11", "2019-12", "2020-01", "2020-02", "2020-03", "2020-04", "2020-05", "2020-06", "2020-07", "2020-08", "2020-09", "2020-10", "2020-11", "2020-12", "2021-01", "2021-02", "2021-03", "2021-04", "2021-05", "2021-06", "2021-07", "2021-08", "2021-09", "2021-10", "2021-11", "2021-12", "2022-01", "2022-02", "2022-03", "2022-04", "2022-05", "2022-06", "2022-07", "2022-08", "2022-09", "2022-10", "2022-11", "2022-12", "2023-01", "2023-02", "2023-03", "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", "2023-10", "2023-11", "2023-12", "2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06", "2024-07", "2024-08", "2024-09", "2024-10", "2024-11", "2024-12", "2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"], datasets: [{"label": "A\u30fb\u5be6\u55ae\u4e3b\u7cfb\u7d71\uff08\u5c0d\u7167\uff09", "data": [5.9393, 5.9604, 5.994, 6.0126, 5.9765, 5.951, 5.9522, 5.9294, 5.9488, 5.9845, 5.999, 6.0269, 6.052, 6.0729, 6.0547, 6.0831, 6.0723, 6.0482, 6.0354, 6.0058, 6.0014, 6.003, 5.9947, 5.9868, 6.0004, 6.0279, 6.0533, 6.0384, 5.9981, 6.0061, 6.003, 6.0149, 6.0081, 5.9916, 5.987, 5.9873, 5.9967, 6.0023, 6.0148, 6.0279, 6.0433, 6.0297, 6.0499, 6.0386, 6.0713, 6.0936, 6.1038, 6.1242, 6.1102, 6.1362, 6.1383, 6.1289, 6.1474, 6.1724, 6.1715, 6.1993, 6.1942, 6.1811, 6.2046, 6.197, 6.1848, 6.2168, 6.2053, 6.2102, 6.2314, 6.2061, 6.2109, 6.1831, 6.1795, 6.1844, 6.1875, 6.1762, 6.1487, 6.1488, 6.1564, 6.1332, 6.1403, 6.1232, 6.1472, 6.1588, 6.1715, 6.1639, 6.175, 6.1815, 6.2028, 6.2192, 6.2371, 6.2438, 6.2732, 6.2563, 6.2735, 6.2849, 6.2959, 6.3317, 6.3373, 6.3366, 6.3804, 6.3618, 6.3513, 6.3417, 6.362, 6.3488, 6.3626, 6.3837, 6.3786, 6.339, 6.3399, 6.3406, 6.3415, 6.3439, 6.3585, 6.3918, 6.3367, 6.3402, 6.3516, 6.3366, 6.3441, 6.3647, 6.3817, 6.4161, 6.4242, 6.4077, 6.3604, 6.3604, 6.3718, 6.3889, 6.4176, 6.4497, 6.4347, 6.4304, 6.4797, 6.5033, 6.5163, 6.5271, 6.5326, 6.5424, 6.5436, 6.5734, 6.5816, 6.6009, 6.5685, 6.6077, 6.6472, 6.6515, 6.6064, 6.6016, 6.5895, 6.5792, 6.5795, 6.58, 6.5808, 6.5818, 6.5829, 6.5842, 6.5857, 6.5872, 6.5978, 6.6006, 6.6253, 6.6104, 6.6817, 6.7089, 6.7343, 6.7208, 6.6836, 6.6642, 6.7338, 6.7751, 6.7974, 6.8485, 6.8647, 6.8291, 6.8698, 6.9054, 6.8892, 6.8822, 6.8888, 6.883, 6.8988, 6.8997, 6.904, 6.8863, 6.8649, 6.8665, 6.8752, 6.914, 6.931, 6.9344, 6.9851, 7.021, 7.0112, 7.0153, 7.0449, 7.039, 7.0087, 7.0916, 7.1507, 7.1453], "borderColor": "#6b7280", "backgroundColor": "transparent", "borderWidth": 2.5, "pointRadius": 0, "tension": 0.05}, {"label": "XS", "data": [5.9527, 5.9706, 6.0042, 6.0185, 5.9798, 5.9417, 5.9751, 5.9474, 5.9933, 6.0094, 6.0197, 6.0415, 6.0455, 6.067, 6.0637, 6.0803, 6.0724, 6.0603, 6.0483, 6.0194, 5.9909, 6.0298, 6.0262, 6.0293, 6.0539, 6.0709, 6.0894, 6.0878, 6.0596, 6.0708, 6.0739, 6.0887, 6.0951, 6.0753, 6.0825, 6.0795, 6.1018, 6.1038, 6.1223, 6.1297, 6.1414, 6.1337, 6.1608, 6.1468, 6.1665, 6.1855, 6.1959, 6.2014, 6.1894, 6.2106, 6.1993, 6.1956, 6.2057, 6.2123, 6.2077, 6.2277, 6.2248, 6.2372, 6.2599, 6.2511, 6.2449, 6.2724, 6.2649, 6.2666, 6.2872, 6.269, 6.273, 6.241, 6.2269, 6.2581, 6.258, 6.2467, 6.2233, 6.2207, 6.2502, 6.2382, 6.251, 6.2485, 6.2793, 6.2884, 6.2973, 6.2906, 6.2903, 6.2918, 6.3006, 6.3125, 6.3234, 6.3275, 6.3497, 6.3341, 6.353, 6.3647, 6.3723, 6.3999, 6.4078, 6.4078, 6.4416, 6.4324, 6.424, 6.4145, 6.4343, 6.4285, 6.4399, 6.4645, 6.4637, 6.4233, 6.4237, 6.3841, 6.4171, 6.4249, 6.4349, 6.4473, 6.3973, 6.4296, 6.4354, 6.4289, 6.4379, 6.4536, 6.469, 6.4889, 6.495, 6.4691, 6.4272, 6.4854, 6.5126, 6.5422, 6.5728, 6.6119, 6.5941, 6.5829, 6.6395, 6.6604, 6.6651, 6.676, 6.6822, 6.6928, 6.7015, 6.7078, 6.7045, 6.7136, 6.6914, 6.7177, 6.7334, 6.7397, 6.6984, 6.683, 6.7002, 6.6628, 6.6732, 6.6413, 6.677, 6.658, 6.6202, 6.6637, 6.6892, 6.6714, 6.6864, 6.6756, 6.6831, 6.6898, 6.7187, 6.7504, 6.7674, 6.7591, 6.7305, 6.7215, 6.7749, 6.8005, 6.8159, 6.8491, 6.8605, 6.8383, 6.8736, 6.8923, 6.8775, 6.878, 6.8855, 6.8796, 6.898, 6.8812, 6.8892, 6.8682, 6.835, 6.8356, 6.8687, 6.8824, 6.8861, 6.8949, 6.9241, 6.9403, 6.9264, 6.9315, 6.9661, 6.9703, 6.9417, 7.0106, 7.0711, 7.084, 7.0348, 7.0546, 7.0615], "borderColor": "#1a56db", "backgroundColor": "transparent", "borderWidth": 1.6, "pointRadius": 0, "tension": 0.05}, {"label": "XS+G", "data": [5.9527, 5.9706, 6.0042, 6.0185, 5.9798, 5.9417, 5.9751, 5.9474, 5.9933, 6.0094, 6.0197, 6.0415, 6.0455, 6.067, 6.0637, 6.0803, 6.0724, 6.0603, 6.0483, 6.0193, 6.0192, 6.0187, 6.0148, 6.0145, 6.0273, 6.0443, 6.0628, 6.0612, 6.033, 6.0442, 6.0473, 6.0621, 6.0685, 6.0487, 6.0559, 6.0528, 6.0713, 6.0734, 6.0918, 6.0993, 6.111, 6.1032, 6.1303, 6.1164, 6.1361, 6.1551, 6.1655, 6.171, 6.159, 6.1802, 6.1689, 6.1652, 6.1753, 6.1819, 6.1773, 6.1973, 6.1944, 6.2068, 6.2294, 6.2207, 6.2145, 6.2419, 6.2345, 6.2362, 6.2568, 6.2385, 6.2426, 6.2106, 6.1965, 6.2089, 6.2095, 6.1982, 6.1744, 6.1744, 6.1742, 6.1669, 6.1669, 6.1643, 6.1951, 6.2042, 6.2132, 6.2065, 6.2061, 6.2077, 6.2164, 6.2283, 6.2392, 6.2433, 6.2655, 6.2499, 6.2689, 6.2806, 6.2881, 6.3157, 6.3237, 6.3237, 6.3575, 6.3483, 6.3399, 6.3304, 6.3501, 6.3444, 6.3558, 6.3804, 6.3796, 6.3389, 6.3396, 6.3279, 6.3285, 6.3305, 6.3405, 6.3529, 6.3027, 6.3251, 6.3309, 6.3244, 6.3334, 6.3491, 6.3644, 6.3843, 6.3905, 6.3645, 6.3224, 6.322, 6.3492, 6.3788, 6.4094, 6.4485, 6.4307, 6.4195, 6.4761, 6.4969, 6.5017, 6.5126, 6.5188, 6.5293, 6.5381, 6.5444, 6.5411, 6.5502, 6.5279, 6.5543, 6.5699, 6.5763, 6.5349, 6.5235, 6.5407, 6.5032, 6.5032, 6.4991, 6.4992, 6.4911, 6.492, 6.4926, 6.5002, 6.4924, 6.4955, 6.4846, 6.4901, 6.4929, 6.5218, 6.5535, 6.5705, 6.5622, 6.5337, 6.5247, 6.578, 6.6036, 6.619, 6.6523, 6.6636, 6.6415, 6.6768, 6.6955, 6.6806, 6.6812, 6.6886, 6.6828, 6.7012, 6.6843, 6.6924, 6.6714, 6.6378, 6.6393, 6.6406, 6.6543, 6.658, 6.6668, 6.696, 6.7122, 6.6984, 6.7034, 6.738, 6.7422, 6.7136, 6.7825, 6.8431, 6.8559, 6.8067, 6.8265, 6.8334], "borderColor": "#059669", "backgroundColor": "transparent", "borderWidth": 1.6, "pointRadius": 0, "tension": 0.05}, {"label": "XS+G+\u03c3", "data": [5.9535, 5.9685, 6.002, 6.0164, 5.9837, 5.9542, 5.9849, 5.9575, 6.0031, 6.0192, 6.0295, 6.0513, 6.0553, 6.0768, 6.0736, 6.0901, 6.0822, 6.0701, 6.0582, 6.0157, 6.0156, 6.0152, 6.0125, 6.0122, 6.0248, 6.0418, 6.0603, 6.0587, 6.0309, 6.0384, 6.0412, 6.0558, 6.0622, 6.0424, 6.0498, 6.0466, 6.065, 6.0671, 6.0855, 6.0926, 6.1022, 6.0944, 6.1183, 6.1043, 6.124, 6.1413, 6.1517, 6.157, 6.1446, 6.1597, 6.1481, 6.1431, 6.1533, 6.1599, 6.1554, 6.175, 6.1721, 6.1714, 6.1919, 6.1836, 6.1779, 6.1996, 6.1919, 6.1914, 6.2109, 6.1924, 6.1949, 6.164, 6.1558, 6.1639, 6.1626, 6.1543, 6.1374, 6.1374, 6.1372, 6.1299, 6.1295, 6.1221, 6.1405, 6.1495, 6.157, 6.1507, 6.1499, 6.1479, 6.1566, 6.1686, 6.1793, 6.1834, 6.205, 6.191, 6.2063, 6.2179, 6.2256, 6.2532, 6.2609, 6.2612, 6.2951, 6.2777, 6.266, 6.2614, 6.2752, 6.2691, 6.2789, 6.3022, 6.3013, 6.2652, 6.2659, 6.2617, 6.2624, 6.2639, 6.2729, 6.2817, 6.2388, 6.2515, 6.2554, 6.2422, 6.2462, 6.2585, 6.2724, 6.2923, 6.2995, 6.2895, 6.2776, 6.2774, 6.2919, 6.308, 6.3288, 6.3617, 6.3455, 6.335, 6.3794, 6.3991, 6.4041, 6.4112, 6.4135, 6.4179, 6.4236, 6.4293, 6.426, 6.4349, 6.4126, 6.4389, 6.455, 6.4595, 6.4276, 6.4203, 6.4298, 6.4029, 6.403, 6.3997, 6.3998, 6.3918, 6.3927, 6.3933, 6.4006, 6.3929, 6.3957, 6.3848, 6.3883, 6.3909, 6.4196, 6.4513, 6.4683, 6.46, 6.4315, 6.4224, 6.4758, 6.5014, 6.5168, 6.55, 6.5612, 6.539, 6.5724, 6.591, 6.5762, 6.5755, 6.5827, 6.5781, 6.5961, 6.5797, 6.5855, 6.565, 6.5341, 6.5356, 6.5369, 6.5495, 6.5532, 6.562, 6.5912, 6.6059, 6.5924, 6.5948, 6.6287, 6.6313, 6.608, 6.654, 6.7049, 6.7069, 6.6847, 6.6953, 6.7026], "borderColor": "#7c3aed", "backgroundColor": "transparent", "borderWidth": 1.6, "pointRadius": 0, "tension": 0.05}, {"label": "TS-10\uff08\u6642\u5e8f\u5c0d\u7167\uff09", "data": [5.9698, 5.9835, 6.0112, 6.0189, 5.9865, 5.967, 5.9637, 5.9454, 5.9672, 5.986, 5.986, 6.0098, 6.0166, 6.0307, 6.0315, 6.0479, 6.0422, 6.028, 6.0159, 5.9871, 5.9842, 5.984, 5.9798, 5.9771, 5.9867, 5.9992, 6.0087, 6.0023, 5.9756, 5.9788, 5.9792, 5.9888, 5.9954, 5.988, 5.987, 5.989, 6.0046, 6.0077, 6.0188, 6.0267, 6.0333, 6.0255, 6.0441, 6.0344, 6.0522, 6.0677, 6.0775, 6.0844, 6.0718, 6.0874, 6.0859, 6.0837, 6.0956, 6.1047, 6.099, 6.114, 6.1038, 6.1017, 6.1121, 6.1084, 6.1015, 6.1181, 6.1122, 6.1122, 6.1191, 6.1085, 6.1118, 6.0934, 6.092, 6.0963, 6.0935, 6.0879, 6.0816, 6.0816, 6.0865, 6.0794, 6.0837, 6.0757, 6.0889, 6.0907, 6.0932, 6.0842, 6.093, 6.0934, 6.1058, 6.1191, 6.1251, 6.1324, 6.143, 6.1415, 6.1521, 6.1563, 6.1649, 6.1777, 6.1865, 6.188, 6.2164, 6.1971, 6.185, 6.1842, 6.1936, 6.1918, 6.2021, 6.2156, 6.2153, 6.1903, 6.1918, 6.1878, 6.1892, 6.1909, 6.1934, 6.2034, 6.1791, 6.1874, 6.1893, 6.1775, 6.1755, 6.1849, 6.1985, 6.2114, 6.2076, 6.1918, 6.1878, 6.1905, 6.1963, 6.1967, 6.2061, 6.2283, 6.216, 6.2068, 6.2417, 6.2578, 6.2615, 6.2687, 6.2783, 6.2907, 6.2929, 6.3023, 6.3053, 6.3132, 6.2926, 6.3177, 6.319, 6.3253, 6.3011, 6.2961, 6.2947, 6.2892, 6.2889, 6.2887, 6.2889, 6.2867, 6.2876, 6.2882, 6.2915, 6.2904, 6.2956, 6.2862, 6.2921, 6.2897, 6.2984, 6.3219, 6.3366, 6.3241, 6.3013, 6.2936, 6.317, 6.3379, 6.3394, 6.3633, 6.3745, 6.3558, 6.3751, 6.3864, 6.3926, 6.3943, 6.4042, 6.3953, 6.4116, 6.4017, 6.4078, 6.399, 6.387, 6.383, 6.3874, 6.4053, 6.413, 6.4216, 6.4409, 6.4528, 6.4515, 6.4515, 6.4684, 6.4723, 6.4436, 6.4734, 6.4992, 6.4995, 6.4894, 6.496, 6.4994], "borderColor": "#d97706", "backgroundColor": "transparent", "borderWidth": 1.6, "pointRadius": 0, "tension": 0.05}, {"label": "EW B&H\uff08\u57fa\u6e96\uff09", "data": [5.9694, 5.9846, 6.0124, 6.0202, 5.9846, 5.9594, 5.9912, 5.9672, 6.0128, 6.0316, 6.0316, 6.0554, 6.0622, 6.0764, 6.0773, 6.0937, 6.0881, 6.0781, 6.067, 6.0376, 6.001, 6.0489, 6.0442, 6.0409, 6.07, 6.0878, 6.098, 6.0929, 6.0597, 6.0752, 6.0768, 6.089, 6.0963, 6.0881, 6.0951, 6.1004, 6.1193, 6.1225, 6.1335, 6.1429, 6.1503, 6.1398, 6.1608, 6.15, 6.1716, 6.1893, 6.2003, 6.2082, 6.1918, 6.2133, 6.2133, 6.2119, 6.2237, 6.2328, 6.2271, 6.244, 6.2319, 6.2433, 6.2564, 6.2488, 6.2398, 6.2667, 6.2596, 6.265, 6.2725, 6.2593, 6.2625, 6.233, 6.2202, 6.255, 6.2572, 6.2439, 6.2171, 6.2168, 6.2472, 6.2454, 6.2538, 6.2513, 6.2754, 6.2781, 6.2828, 6.2721, 6.2844, 6.2876, 6.3017, 6.3156, 6.3217, 6.329, 6.3397, 6.3378, 6.3495, 6.3537, 6.3622, 6.375, 6.3839, 6.3854, 6.4137, 6.3998, 6.3902, 6.3879, 6.4014, 6.3965, 6.4116, 6.4228, 6.4226, 6.3811, 6.3918, 6.3511, 6.3883, 6.4032, 6.4092, 6.4265, 6.3918, 6.4218, 6.426, 6.4163, 6.4237, 6.4384, 6.4526, 6.4655, 6.4607, 6.4293, 6.3683, 6.419, 6.4422, 6.4573, 6.482, 6.511, 6.4986, 6.4909, 6.5434, 6.5616, 6.5649, 6.5752, 6.5876, 6.6031, 6.6067, 6.6163, 6.6193, 6.6298, 6.609, 6.6353, 6.6346, 6.6466, 6.6171, 6.6052, 6.6151, 6.5717, 6.5732, 6.5317, 6.5721, 6.5511, 6.5057, 6.5316, 6.5659, 6.5365, 6.5728, 6.5635, 6.58, 6.5787, 6.5876, 6.6146, 6.6303, 6.6183, 6.5949, 6.5803, 6.6213, 6.645, 6.6454, 6.6709, 6.6822, 6.6635, 6.6834, 6.6946, 6.7013, 6.7071, 6.717, 6.7075, 6.7267, 6.7119, 6.7248, 6.7165, 6.6937, 6.6942, 6.7212, 6.7444, 6.7505, 6.7625, 6.7822, 6.7976, 6.7966, 6.7978, 6.8153, 6.8205, 6.791, 6.8411, 6.8707, 6.88, 6.8617, 6.8732, 6.8759], "borderColor": "#dc2626", "backgroundColor": "transparent", "borderWidth": 1.6, "pointRadius": 0, "tension": 0.05}] },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: { y: { title: {display:true, text:'log10(淨值，$1M 起算)'} } },
+    plugins: { legend: { position: 'bottom', labels: { boxWidth: 14, font: {size: 10} } } }
+  }
+});
+</script>
+</body>
+</html>
