@@ -4,7 +4,7 @@
 只測本輪新增的東西：
 - `index-row`：從一份含 dd-meta＋`<p class="sub…">` 的 HTML 生出 INDEX.md 八欄一列。
 - append 冪等：同一份檔名（file_cell）重複 append 不重複。
-- `finish` 的 commit 檔案集白名單：只 stage 六類白名單檔（`_git` 全程 monkeypatch，
+- `finish` 的 commit 檔案集白名單：只 stage 七類白名單檔（含 docs/t/ 樞紐頁）（`_git` 全程 monkeypatch，
   不碰真實 git）。
 - 遠端領先時 `finish` 回傳 exit code 2、且不呼叫 push。
 
@@ -93,6 +93,10 @@ def _setup_fake_repo(tmp_path, monkeypatch):
     src_archive = repo / "notes" / "site-internal" / "dd" / "_src"
     src_archive.mkdir(parents=True)
 
+    hub_dir = repo / "docs" / "t"
+    hub_dir.mkdir(parents=True)
+    (hub_dir / "index.html").write_text("<div>hubs</div>", encoding="utf-8")
+
     runs_dir = repo / ".dd_build" / "runs"
     runs_dir.mkdir(parents=True)
 
@@ -103,12 +107,14 @@ def _setup_fake_repo(tmp_path, monkeypatch):
     monkeypatch.setattr(ddreport, "DD_SCREENER_LATEST_PATH", screener)
     monkeypatch.setattr(ddreport, "PICKS_CANDIDATES_PATH", picks)
     monkeypatch.setattr(ddreport, "SRC_ARCHIVE_DIR", src_archive)
+    monkeypatch.setattr(ddreport, "TICKER_HUB_DIR", hub_dir)
     monkeypatch.setattr(ddreport, "RUNS_DIR", runs_dir)
 
     return {
         "repo": repo, "dd_dir": dd_dir, "brief_dir": brief_dir,
         "index_md": index_md, "research_body": research_body,
         "screener": screener, "picks": picks, "src_archive": src_archive,
+        "hub_dir": hub_dir,
         "runs_dir": runs_dir,
     }
 
@@ -278,6 +284,7 @@ def test_finish_commit_file_whitelist_and_push(tmp_path, monkeypatch):
         str(paths["research_body"]),
         str(paths["screener"]),
         str(paths["picks"]),
+        str(paths["hub_dir"] / "index.html"),  # docs/t/{T}.html 假 repo 內不存在 → 不 stage
         str(paths["src_archive"] / "{0}_{1}".format(ticker, date)),
     }
     assert staged == expected, "commit 檔案集白名單不符：{0} vs {1}".format(staged, expected)

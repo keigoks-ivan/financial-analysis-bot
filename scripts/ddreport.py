@@ -97,6 +97,7 @@ INDEX_MD_PATH = DD_DIR / "INDEX.md"
 RESEARCH_BODY_PATH = REPO_ROOT / "docs" / "research" / "_body.html"
 DD_SCREENER_LATEST_PATH = REPO_ROOT / "docs" / "dd-screener" / "latest.json"
 PICKS_CANDIDATES_PATH = REPO_ROOT / "docs" / "picks" / "candidates.json"
+TICKER_HUB_DIR = REPO_ROOT / "docs" / "t"  # build_ticker_hubs.py 輸出（update_dd_index 連鎖重生）
 SRC_ARCHIVE_DIR = REPO_ROOT / "notes" / "site-internal" / "dd" / "_src"
 ID_DIR = REPO_ROOT / "docs" / "id"
 
@@ -1821,6 +1822,8 @@ def _finish_file_set(ticker, date, file_cell):
         RESEARCH_BODY_PATH,
         DD_SCREENER_LATEST_PATH,
         PICKS_CANDIDATES_PATH,
+        TICKER_HUB_DIR / "{0}.html".format(ticker),
+        TICKER_HUB_DIR / "index.html",
         SRC_ARCHIVE_DIR / "{0}_{1}".format(ticker, date),
     ]
 

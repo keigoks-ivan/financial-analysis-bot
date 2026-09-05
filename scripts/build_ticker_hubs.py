@@ -166,12 +166,15 @@ def gather_dd():
     universe_meta[ticker] = newest dd-meta dict for that ticker.
     dd_by_ticker[ticker]  = list of {date, verdict, era, path} newest-first.
     """
-    file_re = re.compile(r"^DD_(.+?)_(?:v\d+_)?(\d{8})(?:_.*)?\.html$")
+    # v17: 快速版 docs/dd/brief/BRIEF_{T}_{D}.html 與完整版同 dd-meta 欄位（多 "brief":true）
+    file_re = re.compile(r"^(?:DD|BRIEF)_(.+?)_(?:v\d+_)?(\d{8})(?:_.*)?\.html$")
     token_map = {}          # filename-token -> canonical ticker (from meta files)
-    meta_files = []         # (canonical, date, path, meta)
-    plain_files = []        # (token, date, path)  (no parseable meta)
+    meta_files = []         # (canonical, date, url_path, meta)
+    plain_files = []        # (token, date, url_path)  (no parseable meta)
     skipped = []
-    for p in sorted((DOCS / "dd").glob("DD_*.html")):
+    dd_files = [(p, f"/dd/{p.name}") for p in sorted((DOCS / "dd").glob("DD_*.html"))]
+    dd_files += [(p, f"/dd/brief/{p.name}") for p in sorted((DOCS / "dd" / "brief").glob("BRIEF_*.html"))]
+    for p, url in dd_files:
         m = file_re.match(p.name)
         if not m:
             skipped.append(p.name)
@@ -182,26 +185,27 @@ def gather_dd():
         if meta and meta.get("ticker"):
             canon = str(meta["ticker"]).strip()
             token_map.setdefault(token, canon)
-            meta_files.append((canon, date, p.name, meta))
+            meta_files.append((canon, date, url, meta))
         else:
-            plain_files.append((token, date, p.name))
+            plain_files.append((token, date, url))
 
     dd_by_ticker = defaultdict(list)
-    for canon, date, name, meta in meta_files:
+    for canon, date, url, meta in meta_files:
         if "dca_verdict" in meta:
             verdict, era = str(meta["dca_verdict"]), "裁決"
         else:
             verdict, era = str(meta.get("signal") or meta.get("verdict") or "—"), "訊號〔legacy〕"
         dd_by_ticker[canon].append({"date": date, "verdict": verdict, "era": era,
-                                    "path": f"/dd/{name}", "meta": meta})
+                                    "path": url, "meta": meta,
+                                    "brief": bool(meta.get("brief"))})
     # attach no-meta historical files whose token resolves to a known ticker
-    for token, date, name in plain_files:
+    for token, date, url in plain_files:
         canon = token_map.get(token)
         if not canon:
-            skipped.append(name)
+            skipped.append(url.rsplit("/", 1)[-1])
             continue
         dd_by_ticker[canon].append({"date": date, "verdict": "—", "era": "",
-                                    "path": f"/dd/{name}", "meta": None})
+                                    "path": url, "meta": None, "brief": False})
 
     for canon in dd_by_ticker:
         dd_by_ticker[canon].sort(key=lambda r: r["date"], reverse=True)
@@ -341,7 +345,8 @@ def load_screener():
 
 # ───────────────────────────────────────────────── render ──────────────────
 def page_head(title, desc, active_group="research"):
-    nav = full_nav_block(group=active_group)
+    # item="thub" 對齊 site_nav.PREFIX_ACTIVE 的 t/ 映射（站內 nav 同步腳本會把「個股研究」標 active，產生器不帶則每次重生都翻掉）
+    nav = full_nav_block(group=active_group, item="thub")
     return f"""<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
@@ -513,7 +518,8 @@ def render_ticker_page(ticker, dd_rows, cur, ids, sc, comps, syns, stock, as_of)
             era = f' <span class="it-sub">{esc(r["era"])}</span>' if r["era"] else ""
             lis.append(
                 f'<li><span class="dt">{esc(r["date"])}</span>'
-                f'<span class="it-main"><a href="{esc(r["path"])}">DD 報告</a>{era}</span>'
+                f'<span class="it-main"><a href="{esc(r["path"])}">'
+                f'{"DD 快速版" if r.get("brief") else "DD 報告"}</a>{era}</span>'
                 f'{vtag}</li>'
             )
         parts.append(section("個股研究", len(dd_rows), f'<ul class="items">{"".join(lis)}</ul>'))
