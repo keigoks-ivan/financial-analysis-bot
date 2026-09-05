@@ -6,14 +6,7 @@
 <title>量化回測總覽 | InvestMQuest Research</title>
 <link rel="stylesheet" href="/assets/imq-base.css">
 <style>
-/* 2026-08-24 視覺改版：全站奶油紙×深海軍藍×金 design token（/assets/imq-base.css）取代原本
-   灰白 generic 配色（--bg:#f7f8fa + 孤立 --green/--red）。以下 :root 只「別名」imq-base 既有
-   token（--ink/--body/--sec/--paper/--line/--accent/--gold*/--pos/--neg/--warn），不重定義其值；
-   保留 --red/--green/--muted/--bg/--border/--text 等舊名是因為 _build_index.py（GROUPS 資料層，
-   不在本次改版範圍）的 Python 內嵌 inline style 仍寫死 var(--red)/var(--green)/var(--muted)，
-   別名讓那些既有 inline style 不必逐一修改就能自動吃到新色，數字/文字內容全部不動。四檔語意色：
-   實單=金(--gold*) / 採用·候補=綠(--pos 別名 --green) / 實驗·研究=藍(--accent) /
-   否決·歸檔=紅(--neg 別名 --red) / 基準=灰(--sec 別名 --grey)。 */
+/* 別名 imq-base token，數字/文字內容全部不動（沿用 2026-08-24 版規則）。 */
 :root{
   --text:var(--body); --muted:var(--sec); --border:var(--line); --bg:var(--paper);
   --green:var(--pos); --green-bg:#eafaef; --green-border:#bfe0c8;
@@ -27,94 +20,84 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--sans),-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;font-size:15px}
 a{color:var(--ink);text-decoration:none}a:hover{text-decoration:underline}
-.container{max-width:1080px;margin:0 auto;padding:0 1.5rem}
+.container{max-width:1100px;margin:0 auto;padding:0 1.5rem}
 .page-hdr{padding:1.5rem 0 1rem;background:var(--card);border-bottom:1px solid var(--border)}
 .page-hdr h1{font-family:var(--serif);font-size:1.6rem;font-weight:700;letter-spacing:-.01em;color:var(--ink)}
-.page-hdr .sub{color:var(--muted);font-size:.85rem;margin-top:.15rem}
+.page-hdr .sub{color:var(--muted);font-size:.88rem;margin-top:.3rem;max-width:70ch;line-height:1.7}
 .crumb{font-size:.8rem;color:var(--muted);margin-bottom:.35rem}.crumb a{color:var(--muted)}
-.methods{display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;margin-top:.9rem;font-size:.8rem}
-.methods .m-lbl{font-size:.66rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
-.methods a{padding:.2rem .6rem;background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:999px;color:var(--accent);font-weight:600}
-/* 狀態總覽——頁首下方第一屏，四張狀態卡 */
+/* 狀態總覽——現在是可點篩選 chip */
 .stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;margin-top:1rem}
-.stat-card{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--grey);border-radius:10px;padding:.75rem .9rem;color:inherit}
+.stat-card{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--grey);border-radius:10px;padding:.75rem .9rem;color:inherit;cursor:pointer;user-select:none;transition:box-shadow .12s,border-color .12s}
+.stat-card:hover{box-shadow:var(--sh-1)}
+.stat-card.chip-active{border-color:var(--ink);box-shadow:0 0 0 2px var(--ink) inset}
 .stat-card .stat-n{font-family:var(--mono);font-size:1.5rem;font-weight:700;color:var(--ink);line-height:1.1}
 .stat-card .stat-k{font-size:.78rem;font-weight:700;color:var(--ink);margin-top:.2rem}
 .stat-card .stat-d{font-size:.7rem;color:var(--muted);margin-top:.15rem}
+.stat-card .stat-d a{color:inherit;font-weight:600}
 .stat-live{border-left-color:var(--gold-deep)}
-.stat-live .stat-n,.stat-live .stat-d{color:var(--gold-deep)}
-.stat-live:hover{border-color:var(--gold-deep);text-decoration:none;box-shadow:var(--sh-1)}
+.stat-live .stat-n{color:var(--gold-deep)}
 .stat-cand{border-left-color:var(--green)}
 .stat-exp{border-left-color:var(--accent)}
 .stat-rej{border-left-color:var(--red)}
-.region-title{font-family:var(--serif);font-size:1.3rem;font-weight:700;color:var(--ink);margin:2rem 0 .3rem;padding-top:1.3rem;border-top:2px solid var(--ink)}
-/* 多欄卡片牆（2026-08-31）——CSS columns masonry：桌機 3 欄／平板 2 欄／手機 1 欄 */
-.masonry{column-count:3;column-gap:1rem}
-@media(max-width:1100px){.masonry{column-count:2}}
-@media(max-width:680px){.masonry{column-count:1}}
-.card{break-inside:avoid;background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:var(--sh-1);padding:.9rem 1rem;margin:0 0 1rem}
-.card h3{font-size:.94rem;font-weight:700;color:var(--ink);display:flex;align-items:baseline;gap:.4rem;padding-bottom:.45rem;border-bottom:1px solid var(--border);margin-bottom:.55rem}
-.card h3 .n{margin-left:auto;font-size:.66rem;font-weight:600;color:var(--muted);font-family:var(--mono)}
-.grp{margin-bottom:.5rem}
-.grp:last-child{margin-bottom:0}
-.grp-lbl{font-size:.6rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.28rem}
-.pills{display:flex;flex-wrap:wrap;gap:.26rem}
-.pills a{display:inline-flex;align-items:center;gap:.24rem;padding:.18rem .48rem;background:var(--neutral-bg);color:var(--text);border-radius:999px;font-size:.68rem;font-weight:500;white-space:nowrap;line-height:1.4}
-.pills a:hover{background:var(--line);text-decoration:none}
-.pills a.on{background:var(--neutral-bg);color:var(--text);font-weight:700;border:1px solid var(--accent)}
-.pills a.entry{background:linear-gradient(135deg,var(--accent-ink),var(--accent));color:#fff;font-weight:700}
-.pills a.entry:hover{opacity:.92}
+.filter-bar{display:flex;gap:.5rem;margin-top:.7rem}
+.filter-bar #bt-search{flex:1;padding:.5rem .8rem;border:1px solid var(--border);border-radius:8px;font-size:.85rem;background:var(--card);color:var(--text)}
+.filter-bar #bt-search:focus{outline:2px solid var(--accent);outline-offset:1px}
+.filter-bar button{padding:.5rem 1rem;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--muted);font-size:.8rem;font-weight:600;cursor:pointer}
+.filter-bar button:hover{color:var(--ink);border-color:var(--ink)}
+/* B. 先看這三個 */
+.top3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:1.4rem}
+.t3-card{display:block;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1.2rem;color:inherit;display:flex;flex-direction:column}
+.t3-live{border:1px solid var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
+.t3-tag{font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.4rem}
+.t3-live .t3-tag{color:var(--gold-deep)}
+.t3-name{font-family:var(--serif);font-size:1.02rem;font-weight:700;color:var(--ink);margin-bottom:.4rem}
+.t3-sub{font-size:.82rem;color:var(--sec);line-height:1.65;flex:1}
+.t3-arrow{margin-top:.7rem;font-size:.84rem;font-weight:700;color:var(--gold-deep)}
+.t3-pills{display:flex;flex-wrap:wrap;gap:.28rem;margin-top:.7rem}
+.t3-pills a{display:inline-flex;padding:.16rem .5rem;background:var(--neutral-bg);color:var(--text);border-radius:999px;font-size:.68rem;font-weight:500;white-space:nowrap}
+.t3-pills a:hover{background:var(--line);text-decoration:none}
+@media(max-width:820px){.top3{grid-template-columns:1fr}}
+/* C. 系統記分表 */
+.section-block{margin-top:2.2rem}
+.section-h{font-family:var(--serif);font-size:1.25rem;font-weight:700;color:var(--ink);padding-top:1rem;border-top:2px solid var(--ink)}
+.section-note{font-size:.8rem;color:var(--muted);margin:.35rem 0 .9rem}
+.sb-wrap{overflow-x:auto;background:var(--card);border:1px solid var(--border);border-radius:10px}
+table.scoreboard{width:100%;border-collapse:collapse;font-size:.86rem}
+table.scoreboard th,table.scoreboard td{text-align:left;padding:.6rem .8rem;border-bottom:1px solid var(--border);vertical-align:top}
+table.scoreboard th{background:var(--neutral-bg);font-weight:600;font-size:.72rem;text-transform:uppercase;letter-spacing:.03em;color:var(--muted)}
+table.scoreboard tbody tr:last-child td{border-bottom:0}
+table.scoreboard tbody tr:hover td{background:#fbf8f1}
+.sb-verdict{color:var(--sec);font-size:.82rem;line-height:1.55}
+.sb-footnote{font-size:.76rem;color:var(--muted);margin-top:.6rem}
+/* D. 研究目錄（手風琴） */
+details.d-theme{background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:.7rem}
+details.d-theme summary{padding:.85rem 1.1rem;font-weight:700;font-size:.95rem;cursor:pointer;list-style:none;display:flex;align-items:center;gap:.6rem;color:var(--ink);font-family:var(--serif)}
+details.d-theme summary::before{content:'▸';color:var(--grey);transition:transform .15s;font-family:sans-serif}
+details.d-theme[open] summary::before{transform:rotate(90deg)}
+.d-n{font-size:.66rem;font-weight:600;color:var(--muted);font-family:var(--mono)}
+.d-tally{font-size:.68rem;font-weight:500;color:var(--muted);margin-left:auto;text-align:right}
+.d-body{padding:.2rem 1.1rem 1rem}
+.d-subhead{font-size:.82rem;font-weight:700;color:var(--ink);margin:1rem 0 .3rem;padding-top:.7rem;border-top:1px solid var(--border)}
+.d-subhead:first-child{margin-top:.2rem;padding-top:0;border-top:0}
+.d-grouplbl{font-size:.62rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:.5rem 0 .15rem}
+.d-row{display:flex;align-items:baseline;flex-wrap:wrap;gap:.4rem;padding:.28rem 0;font-size:.84rem;border-bottom:1px dotted var(--border)}
+.d-row:last-child{border-bottom:0}
+.d-row a{font-weight:600;color:var(--ink)}
+.d-verdict{color:var(--sec);font-size:.78rem;flex-basis:100%;line-height:1.5}
+@media(min-width:720px){.d-verdict{flex-basis:auto;margin-left:.3rem}}
 .b{font-size:.6rem;font-weight:700;padding:.03rem .32rem;border-radius:4px;line-height:1.5}
 .b-d{background:var(--red-bg);color:var(--red)}
 .b-b{background:var(--accent-bg);color:var(--accent)}
 .b-g{background:var(--gold-bg);color:var(--gold-deep)}
-.pills a.entry .b{background:rgba(255,255,255,.22);color:#fff}
-/* 置頂證據總覽卡（2026-09-06）——比一般 .card 寬、左側粗色條標高亮，放在 live-wrap 之前 */
-.featured-evidence{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:12px;padding:1.1rem 1.3rem;margin-top:1rem;box-shadow:var(--sh-1)}
-.fe-tag{display:inline-block;font-size:.72rem;font-weight:700;padding:.2rem .6rem;border-radius:99px;margin-bottom:.5rem;background:var(--accent-bg);color:var(--accent)}
-.featured-evidence h2{font-family:var(--serif);font-size:1.1rem;font-weight:700;letter-spacing:-.01em}
-.featured-evidence h2 a{color:var(--ink)}
-.featured-evidence p{font-size:.84rem;color:var(--sec);margin:.4rem 0 .7rem;line-height:1.7}
-.fe-pills{display:flex;flex-wrap:wrap;gap:.3rem}
-.fe-pills a{display:inline-flex;align-items:center;gap:.24rem;padding:.22rem .58rem;background:var(--neutral-bg);color:var(--text);border-radius:999px;font-size:.7rem;font-weight:500;white-space:nowrap}
-.fe-pills a:hover{background:var(--line);text-decoration:none}
-.live-wrap{display:grid;grid-template-columns:1.3fr 1fr;gap:1rem;margin-top:1rem}
-/* 引導卡——實單卡不再貼會過期的數字快照，只給定位＋連結 */
-.acard{background:var(--card);border:1px solid var(--gold);border-radius:12px;padding:1.2rem 1.3rem;box-shadow:0 0 0 1px var(--gold) inset;display:flex;flex-direction:column}
-.ac-tag{display:inline-block;font-size:.72rem;font-weight:700;padding:.2rem .6rem;border-radius:99px;margin-bottom:.5rem;background:var(--gold-deep);color:#fff;align-self:flex-start}
-.ac-name{font-family:var(--serif);font-size:1.25rem;font-weight:700;letter-spacing:-.01em;color:var(--ink)}
-.ac-sub{font-size:.84rem;color:var(--sec);margin:.4rem 0 1rem;line-height:1.7}
-.ac-link{font-size:.86rem;font-weight:700;color:var(--gold-deep);margin-top:auto}
-.acard-note{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1.3rem}
-.acn-title{font-size:.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.6rem}
-.acard-note ul{list-style:none;font-size:.84rem;line-height:1.9}
-.acard-note li{padding-left:.9rem;position:relative}
-.acard-note li::before{content:'·';position:absolute;left:0;color:var(--grey);font-weight:700}
-table{width:100%;border-collapse:collapse;font-size:.86rem}
-th,td{text-align:left;padding:.55rem .7rem;border-bottom:1px solid var(--border)}
-th{background:var(--neutral-bg);font-weight:600;font-size:.74rem;text-transform:uppercase;letter-spacing:.03em;color:var(--muted)}
-td{font-variant-numeric:tabular-nums}
-tbody tr:hover td{background:#fbf8f1}
-.tag{display:inline-block;padding:.13rem .5rem;border-radius:4px;font-size:.7rem;font-weight:600;white-space:nowrap;background:var(--neutral-bg);color:var(--text);border:1px solid var(--border)}
-.tag-best{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
-.tag-fail{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
-.tag-bh{background:var(--neutral-bg);color:var(--muted);border:1px solid var(--border)}
-.link-card{display:flex;align-items:center;gap:.75rem;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem 1.2rem;margin-bottom:1rem;color:var(--ink)}
-.link-card:hover{border-color:var(--ink);text-decoration:none}
-.link-card .lc-name{font-weight:700;font-size:1rem}.link-card .lc-sub{font-size:.78rem;color:var(--muted)}.link-card .lc-arrow{margin-left:auto;color:var(--ink);font-weight:700}
-.chart-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.1rem;margin-bottom:1rem}
-.chart-card h3{font-size:.92rem;font-weight:600;color:var(--ink);margin-bottom:.4rem}
-.chart-sub{font-size:.76rem;color:var(--muted);margin-bottom:.5rem}
-.chart-wrap{position:relative;width:100%;height:330px}
-.grid2{display:grid;grid-template-columns:3fr 2fr;gap:1rem}
-details{background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:.75rem}
-details summary{padding:.85rem 1.2rem;font-weight:600;font-size:.9rem;cursor:pointer;list-style:none;display:flex;align-items:center;gap:.5rem;color:var(--ink)}
-details summary::before{content:'▸';color:var(--grey);transition:transform .15s}
-details[open] summary::before{transform:rotate(90deg)}
-details .d-body{padding:0 1.2rem 1.2rem;overflow-x:auto}
 footer{background:var(--card);border-top:1px solid var(--border);color:var(--muted);text-align:center;padding:1.2rem 0;font-size:.78rem;margin-top:2rem}
-@media(max-width:820px){.live-wrap{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}table{font-size:.76rem}th,td{padding:.4rem .45rem}
-.stat-row{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:768px){
+  .stat-row{grid-template-columns:repeat(2,1fr)}
+  table.scoreboard{font-size:.76rem}
+  table.scoreboard th,table.scoreboard td{padding:.45rem .5rem}
+  table.scoreboard thead{display:none}
+  table.scoreboard tbody tr{display:block;padding:.6rem .5rem;border-bottom:1px solid var(--border)}
+  table.scoreboard tbody td{display:block;border-bottom:0;padding:.15rem 0}
+}
 </style>
 </head>
 <body>
@@ -195,76 +178,160 @@ footer{background:var(--card);border-top:1px solid var(--border);color:var(--mut
 <script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
 <div class="page-hdr"><div class="container">
   <div class="crumb"><a href="/">首頁</a> / 量化回測</div>
-  <h1>量化回測總覽</h1>
-  <div class="sub">全展開分類總表——十三個分類、全部回測頁面，捲動即可看完，不需要點 tab。</div>
-  <div class="methods">
-    <span class="m-lbl">方法論（跨類通用）</span>
-    <a href="/backtest/criteria/">評估標準</a>
-    <a href="/backtest/glossary/">術語對照表</a>
-    <a href="/backtest/free_lunch/">分散與免費午餐</a>
-  </div>
+  <h1>量化回測</h1>
+  <div class="sub">全部回測頁的目錄：先看實單系統與它的證據，再看系統記分表，最後是研究目錄。</div>
   <div class="stat-row">
-  <a class="stat-card stat-live" href="/long-track/#live">
+  <div class="stat-card stat-live" data-filter="live">
     <div class="stat-n">1</div><div class="stat-k">實單</div>
-    <div class="stat-d">套 · 系統主控台 →</div>
-  </a>
-  <div class="stat-card stat-cand">
+    <div class="stat-d">套 · <a href="/long-track/#live" onclick="event.stopPropagation()">系統主控台 →</a></div>
+  </div>
+  <div class="stat-card stat-cand" data-filter="candidate">
     <div class="stat-n">6</div><div class="stat-k">合格候補</div>
     <div class="stat-d">通過 L1 門檻，未上實倉</div>
   </div>
-  <div class="stat-card stat-exp">
+  <div class="stat-card stat-exp" data-filter="research">
     <div class="stat-n">79</div><div class="stat-k">實驗・研究</div>
     <div class="stat-d">探索性頁面，非實倉候選</div>
   </div>
-  <div class="stat-card stat-rej">
+  <div class="stat-card stat-rej" data-filter="rejected">
     <div class="stat-n">15</div><div class="stat-k">否決・歸檔</div>
     <div class="stat-d">已否決或降級為對照</div>
   </div>
+</div>
+<div class="filter-bar">
+  <input id="bt-search" type="search" placeholder="搜尋系統名稱或一句結論…" aria-label="搜尋">
+  <button id="bt-filter-reset" type="button">全部</button>
 </div>
 </div></div>
 
 <div class="container">
 
-<div class="featured-evidence">
-  <div class="fe-tag">實單主系統・證據總覽</div>
-  <h2><a href="/backtest/live_system_evidence/">實單主系統的證據總覽（先看這頁）</a></h2>
-  <p>九＋二項預註冊測試，白話串講：規則普不普遍、保費多少、慢熊多久來一次、贏了多少是運氣、美台是不是同一注。</p>
-  <div class="fe-pills"><a href="/backtest/live_system_evidence/">證據總覽（先看這頁）</a><a href="/backtest/w52_adaptive_oos/">W52×自適應 σ 跨標的證偽</a><a href="/backtest/insurance_premium/">深熊保險的價格</a><a href="/backtest/adopted_bootstrap/">已採用系統的統計不確定性帶</a><a href="/backtest/regime_bootstrap/">保留 regime 的 bootstrap</a><a href="/backtest/combined_account/">美台合併帳戶層</a><a href="/backtest/slow_bear_base_rate/">慢熊的 base rate</a><a href="/backtest/slow_bear_onset/">慢熊：起點認得出來嗎？</a><a href="/backtest/f_portfolio/">F 組合：疊兩種保險</a><a href="/backtest/cross_sectional_trend/">橫斷面版趨勢</a></div>
+<div class="top3">
+  <a class="t3-card t3-live" href="/long-track/#live" data-cat="live">
+    <div class="t3-tag">① 實單主系統</div>
+    <div class="t3-name">QQQ/SMH 與 0050/2330・W52×自適應波動率 cap 1.5</div>
+    <div class="t3-sub">兩市場各 70% 指數部＝W52 週線閘門 × 自適應波動率 × cap 1.5 ＋ A2 執行層。即時淨值、曝險與執行層參數以系統主控台為準。</div>
+    <span class="t3-arrow">前往系統主控台 →</span>
+  </a>
+  <div class="t3-card">
+    <div class="t3-tag">② 實單系統的證據總覽</div>
+    <div class="t3-name"><a href="/backtest/live_system_evidence/">先看這頁</a></div>
+    <div class="t3-sub">十一項預註冊測試白話串講：規則普不普遍、保費多少、慢熊多久來一次、
+      贏了多少是運氣、美台是不是同一注。</div>
+    <div class="t3-pills"><a href="/backtest/w52_adaptive_oos/" data-cat="research">W52×自適應 σ 跨標的證偽</a><a href="/backtest/insurance_premium/" data-cat="research">深熊保險的價格</a><a href="/backtest/adopted_bootstrap/" data-cat="research">已採用系統的統計不確定性帶</a><a href="/backtest/regime_bootstrap/" data-cat="research">保留 regime 的 bootstrap</a><a href="/backtest/combined_account/" data-cat="research">美台合併帳戶層</a><a href="/backtest/slow_bear_base_rate/" data-cat="research">慢熊的 base rate</a><a href="/backtest/slow_bear_onset/" data-cat="research">慢熊：起點認得出來嗎？</a><a href="/backtest/f_portfolio/" data-cat="research">F 組合：疊兩種保險</a><a href="/backtest/cross_sectional_trend/" data-cat="research">橫斷面版趨勢</a></div>
+  </div>
+  <div class="t3-card">
+    <div class="t3-tag">③ 方法論</div>
+    <div class="t3-name">跨分類通用</div>
+    <div class="t3-sub">判定框架、名詞定義與「為什麼分散/免費午餐不是萬能」三頁。</div>
+    <div class="t3-pills">
+      <a href="/backtest/criteria/">評估標準</a>
+      <a href="/backtest/glossary/">術語對照表</a>
+      <a href="/backtest/free_lunch/">分散與免費午餐</a>
+    </div>
+  </div>
 </div>
 
-<div class="live-wrap"><div class="acard">
-  <div class="ac-tag">實單主系統</div>
-  <div class="ac-name">QQQ/SMH · W52 × 自適應波動率 cap 1.5</div>
-  <div class="ac-sub">實單即時淨值、曝險與執行層參數以系統主控台為準——本頁只做研究排名與分類目錄，不重貼會過期的快照數字。</div>
-  <a class="ac-link" href="/long-track/#live">前往系統主控台 →</a>
+<div class="section-block">
+  <h2 class="section-h">系統記分表</h2>
+  <div class="section-note">已上實單或通過 L1 門檻的候補系統——7 個。</div>
+  <div class="sb-wrap"><table class="scoreboard">
+    <thead><tr><th>系統</th><th>市場</th><th>狀態</th><th>一句結論</th><th></th></tr></thead>
+    <tbody><tr data-cat="live"><td><a href="/long-track/#live">QQQ/SMH · 0050/2330 · W52×自適應波動率 cap 1.5</a></td><td>美股+台股</td><td><span class="b b-g">實單</span></td><td class="sb-verdict">兩市場各 70% 指數部＝W52 週線閘門 × 自適應波動率 × cap 1.5 ＋ A2 執行層。</td><td><a href="/long-track/#live">看詳頁 →</a></td></tr><tr data-cat="candidate"><td><a href="/backtest/long_track_smh/">SMH/QQQ 週線趨勢＋Supertrend 出場（進攻位）</a></td><td>美股</td><td><span class="b b-b">候補</span></td><td class="sb-verdict">半倉掛上 ATR 通道出場閘門，塌陷時比均線更快離場，且打敗同 CAGR 的現金稀釋對照。</td><td><a href="/backtest/long_track_smh/">看詳頁 →</a></td></tr><tr data-cat="candidate"><td><a href="/backtest/long_track_ensemble/">SPY/QQQ 三訊號趨勢集成（核心）</a></td><td>美股</td><td><span class="b b-b">候補</span></td><td class="sb-verdict">集成治得了盤整病，治不了 gap risk——MDD 換了形狀，系統擁有者接受這個交換。</td><td><a href="/backtest/long_track_ensemble/">看詳頁 →</a></td></tr><tr data-cat="candidate"><td><a href="/backtest/slope_filter/">SPY/AGG 週線斜率擇時（防守）</a></td><td>美股</td><td><span class="b b-b">候補</span></td><td class="sb-verdict">用嚴格進場換更小回撤：CAGR 比 Faber 略低，Sharpe／Calmar／MDD 全面更好。</td><td><a href="/backtest/slope_filter/">看詳頁 →</a></td></tr><tr data-cat="candidate"><td><a href="/backtest/long_track/">SPY/QQQ 週線長軌趨勢</a></td><td>美股</td><td><span class="b b-b">候補</span></td><td class="sb-verdict">保險費付在盤整、保障兌現在崩盤——修正 warmup 後 CAGR +9.75%。</td><td><a href="/backtest/long_track/">看詳頁 →</a></td></tr><tr data-cat="candidate"><td><a href="/backtest/long_track_qqq/">QQQ 純攻擊週線長軌趨勢</a></td><td>美股</td><td><span class="b b-b">候補</span></td><td class="sb-verdict">回撤保護全來自 W52 出場線——修正 warmup 後 CAGR +10.83%、MDD -25.37%。</td><td><a href="/backtest/long_track_qqq/">看詳頁 →</a></td></tr><tr data-cat="candidate"><td><a href="/backtest/gem/">SPY/ACWX/AGG 雙動能月切換</a></td><td>美股</td><td><span class="b b-b">候補</span></td><td class="sb-verdict">發表後(2014~2026)優勢消失——全樣本風險調整優勢整包來自 2008 單一事件。</td><td><a href="/backtest/gem/">看詳頁 →</a></td></tr></tbody>
+  </table></div>
+  <div class="sb-footnote">數字見 <a href="/backtest/criteria/">評估標準</a> 頁與
+    <a href="/long-track/#live">系統主控台</a>。</div>
 </div>
-<div class="acard-note">
-  <div class="acn-title">其餘已採用 / 候補(未上實倉)</div>
-  <ul>
-    <li><a href="/backtest/long_track_ensemble/">SPY/QQQ E3 集成</a> — 合格候補(原列採用，未上實倉)· 核心防守</li>
-    <li><a href="/backtest/slope_filter/">SPY/AGG 斜率</a> — 合格候補 · 勝 B&amp;H 風險調整(SPY 特定；2026-06 審計改還原日線 MDD −22.13% 後，「近支配」已撤回)</li>
-  </ul>
-</div></div>
 
-<h2 class="region-title">系統・可交易</h2><div class="masonry"><div class="card" id="us-swing"><h3>🇺🇸 美股波段系統<span class="n">25 頁</span></h3><div class="grp"><div class="grp-lbl">總覽・工具</div><div class="pills"><a href="/backtest/" class="on">20 年總覽</a><a href="/backtest/10y/">10 年對比</a><a href="/backtest/ma_sensitivity/">MA 敏感度</a><a href="/backtest/free_lunch/">分散與免費午餐</a></div></div><div class="grp"><div class="grp-lbl">個別系統</div><div class="pills"><a href="/backtest/long_track_smh/">SMH/QQQ 進攻</a><a href="/backtest/long_track_ensemble/">SPY/QQQ 集成</a><a href="/backtest/slope_filter/">SPY/AGG 斜率</a><a href="/backtest/long_track/">SPY/QQQ 長軌</a><a href="/backtest/long_track_qqq/">QQQ 長軌純攻</a><a href="/backtest/six_state/">QQQ＋SMH 六狀態</a><a href="/backtest/six_state_v1r1/">QQQ 六狀態實盤</a><a href="/backtest/supertrend/">週線 Supertrend</a><a href="/backtest/minervini/">Minervini RS+VCP</a><a href="/backtest/mom_volscaling/">動能·波動縮放</a><a href="/backtest/dual_track_study/">雙軌分散研究</a><a href="/backtest/vol_targeting/">波動目標倉位<span class="b b-b">研究</span></a><a href="/backtest/vol_targeting/adaptive.html">波動率變體實驗室<span class="b b-b">研究</span></a><a href="/backtest/rsi2_mr/">SPY/QQQ 均值回歸</a><a href="/backtest/dual_track/">SPY/QQQ 雙軌多空<span class="b b-d">否決</span></a><a href="/backtest/exit_switch/">出場法切換<span class="b b-d">否決</span></a><a href="/backtest/short_system/">指數做空<span class="b b-d">失敗</span></a></div></div><div class="grp"><div class="grp-lbl">前瞻追蹤</div><div class="pills"><a href="/long-track-w52-adaptive/">W52 × 自適應波動率 150%（實單主系統）<span class="b b-g">實單</span></a><a href="/long-track-qs-vt/">QQQ+SMH 固定 σ（歸檔）</a><a href="/long-track-qs-vt/adaptive.html">QQQ+SMH 自適應（歸檔）</a><a href="/long-track-adaptive-vt/">自適應美台總覽（歸檔）</a></div></div></div><div class="card" id="us-options"><h3>🇺🇸 美股選擇權<span class="n">3 頁</span></h3><div class="grp"><div class="grp-lbl">選擇權研究</div><div class="pills"><a href="/backtest/cndr/">Iron Condor<span class="b b-d">失敗</span></a><a href="/backtest/covered_call/">Covered Call<span class="b b-d">負貢獻</span></a><a href="/backtest/put_timing/">SPY/QQQ 買 put 避險<span class="b b-d">負貢獻</span></a></div></div></div><div class="card" id="tw-swing"><h3>🇹🇼 台股波段<span class="n">11 頁</span></h3><div class="grp"><div class="grp-lbl">波段</div><div class="pills"><a href="/backtest/tw/">台股總覽<span class="b b-b">專區</span></a><a href="/backtest/tw_0050_compare/">0050 總覽·台美差異</a><a href="/backtest/tw_0050/">0050 進攻趨勢</a><a href="/backtest/tw_0050_lt/">0050 長軌趨勢</a><a href="/backtest/long_track_tw/">2330/0050 E3 長軌</a><a href="/backtest/vol_targeting/tw.html">0050+2330 波動率變體<span class="b b-b">研究</span></a><a href="/backtest/tw_0050_six/">0050 六狀態機</a><a href="/backtest/tw_0050_dual/">0050 雙軌多空<span class="b b-d">否決</span></a></div></div><div class="grp"><div class="grp-lbl">前瞻追蹤</div><div class="pills"><a href="/long-track-w52-adaptive/">W52 × 自適應波動率 150%（實單主系統）<span class="b b-g">實單</span></a><a href="/long-track-tw-vt/">0050+2330 固定 σ（歸檔）</a><a href="/long-track-tw-vt/adaptive.html">0050+2330 自適應（歸檔）</a><a href="/long-track-adaptive-vt/">自適應美台總覽（歸檔）</a></div></div></div><div class="card" id="tw-options"><h3>🇹🇼 台股選擇權<span class="n">6 頁</span></h3><div class="grp"><div class="grp-lbl">選擇權</div><div class="pills"><a href="/backtest/tw_options/">台股選擇權專區<span class="b b-b">專區</span></a><a href="/backtest/txo_vol_seller/">台指選擇權賣方<span class="b b-b">模擬中</span></a><a href="/backtest/txo_put_seller/">台指賣方下檔<span class="b b-b">研究</span></a><a href="/backtest/txo_iron_condor/">台指雙賣<span class="b b-b">研究</span></a><a href="/backtest/txo_covered_call_0050/">台指 Covered Call<span class="b b-b">研究</span></a><a href="/backtest/txo_tail_hedge/">台指尾端避險<span class="b b-b">研究</span></a></div></div></div><div class="card" id="tw-intraday"><h3>🇹🇼 台股日內<span class="n">4 頁</span></h3><div class="grp"><div class="grp-lbl">日內</div><div class="pills"><a href="/backtest/txf_intraday/">台指當沖<span class="b b-d">未過</span></a><a href="/backtest/txf_chips/">籌碼偏向<span class="b b-b">觀察</span></a><a href="/backtest/ssf_xsec/">個股期橫斷面<span class="b b-d">未過</span></a><a href="/backtest/txf_basis/">基差偏向<span class="b b-d">否決</span></a></div></div></div><div class="card" id="multi-classic"><h3>🧩 多資產·經典複製<span class="n">9 頁</span></h3><div class="grp"><div class="grp-lbl">系統</div><div class="pills"><a href="/backtest/multi/">多資產總覽<span class="b b-b">專區</span></a><a href="/backtest/turtle/">唐奇安突破</a><a href="/backtest/clenow/">跨資產趨勢</a><a href="/backtest/multiasset_trend/">SG Trend 複製</a><a href="/backtest/turtle_adopt/">組合採用 Sleeve</a><a href="/backtest/slope_filter_global/">全球斜率穩健性</a><a href="/backtest/crossasset_defense/">跨資產防守</a><a href="/backtest/gem/">SPY/ACWX 雙動能</a><a href="/backtest/nonequity/">非股票 sleeve<span class="b b-b">研究</span></a><a href="/backtest/reits/">REITs 三地延伸<span class="b b-b">研究</span></a></div></div></div><div class="card" id="leverage"><h3>🔧 槓桿疊加<span class="n">2 頁</span></h3><div class="grp"><div class="grp-lbl">系統</div><div class="pills"><a href="/backtest/leverage/">槓桿疊加總覽<span class="b b-b">專區</span></a><a href="/backtest/leverage_voltarget/">期貨槓桿疊加</a><a href="/backtest/vol_targeting/leverage.html">W52×自適應 150% 槓桿<span class="b b-b">研究</span></a></div></div></div></div><h2 class="region-title">研究・非交易</h2><div class="masonry"><div class="card" id="factor"><h3>🧬 個股因子（美股）<span class="n">8 頁</span></h3><div class="grp"><div class="grp-lbl">研究</div><div class="pills"><a href="/backtest/return_driver/">美股漲跌歸因：獲利與估值<span class="b b-b">研究</span></a><a href="/backtest/pead/">美股財報驚喜後漂移<span class="b b-b">研究</span></a><a href="/backtest/accruals/">美股獲利品質（應計項目）<span class="b b-b">研究</span></a><a href="/backtest/share_issuance/">美股股數增減（發行與回購）<span class="b b-b">研究</span></a><a href="/backtest/profitability/">美股獲利能力因子<span class="b b-b">研究</span></a><a href="/backtest/asset_growth/">美股資產成長異象<span class="b b-b">研究</span></a><a href="/backtest/index_inclusion/">指數納入效應<span class="b b-b">研究</span></a><a href="/backtest/insider/">內部人買賣叢集買進<span class="b b-b">研究</span></a></div></div></div><div class="card" id="oos-validation"><h3>🧪 實單系統證據（明細）<span class="n">10 頁</span></h3><div class="grp"><div class="grp-lbl">研究</div><div class="pills"><a href="/backtest/live_system_evidence/">證據總覽（先看這頁）<span class="b b-b">研究</span></a><a href="/backtest/w52_adaptive_oos/">W52×自適應 σ 跨標的證偽<span class="b b-b">研究</span></a><a href="/backtest/insurance_premium/">深熊保險的價格<span class="b b-b">研究</span></a><a href="/backtest/adopted_bootstrap/">已採用系統的統計不確定性帶<span class="b b-b">研究</span></a><a href="/backtest/regime_bootstrap/">保留 regime 的 bootstrap<span class="b b-b">研究</span></a><a href="/backtest/combined_account/">美台合併帳戶層<span class="b b-b">研究</span></a><a href="/backtest/slow_bear_base_rate/">慢熊的 base rate<span class="b b-b">研究</span></a><a href="/backtest/slow_bear_onset/">慢熊：起點認得出來嗎？<span class="b b-b">研究</span></a><a href="/backtest/f_portfolio/">F 組合：疊兩種保險<span class="b b-b">研究</span></a><a href="/backtest/cross_sectional_trend/">橫斷面版趨勢<span class="b b-b">研究</span></a></div></div></div><div class="card" id="active-fund"><h3>📊 主動式ETF與基金<span class="n">4 頁</span></h3><div class="grp"><div class="grp-lbl">研究</div><div class="pills"><a href="/backtest/active_etf/">主動式ETF總結<span class="b b-b">專區</span></a><a href="/backtest/tw_active_etf/">台股主動式ETF<span class="b b-b">研究</span></a><a href="/backtest/us_active_etf/">美股主動式ETF<span class="b b-b">研究</span></a><a href="/backtest/tw_mutual_fund/">台股共同基金<span class="b b-b">研究</span></a></div></div></div><div class="card" id="tw-cb"><h3>💵 台股可轉債<span class="n">1 頁</span></h3><div class="grp"><div class="grp-lbl">研究</div><div class="pills"><a href="/backtest/tw_cb/">台股可轉債專區<span class="b b-b">研究</span></a></div></div></div><div class="card" id="method"><h3>📐 方法研究<span class="n">11 頁</span></h3><div class="grp"><div class="grp-lbl">頻率</div><div class="pills"><a href="/backtest/daily_vs_weekly/">日/週線</a><a href="/backtest/daily_vs_weekly_deep/">日/週·深掘</a><a href="/backtest/daily_vs_weekly_global/">日/週·全球</a><a href="/backtest/daily_vs_weekly_tw/">日/週·台股</a></div></div><div class="grp"><div class="grp-lbl">均線</div><div class="pills"><a href="/backtest/ma_cross/">MA 交叉</a><a href="/backtest/ma_deviation/">MA 乖離</a><a href="/backtest/ma_dynband/">MA 動態帶</a><a href="/backtest/ma_squeeze/">MA 擠壓</a></div></div><div class="grp"><div class="grp-lbl">崩盤防禦</div><div class="pills"><a href="/backtest/smh_vcrash/">SMH V崩</a><a href="/backtest/tw_vcrash/">台股 V崩防禦</a><a href="/backtest/tw_crash/">台股含崩盤驗證</a></div></div></div><div class="card" id="macro"><h3>🌏 總經・房價×GDP<span class="n">39 頁</span></h3><div class="grp"><div class="grp-lbl">研究・主線</div><div class="pills"><a href="/backtest/housing_gdp/" class="entry">人均 GDP 與房價（42 國因子矩陣）<span class="b b-b">研究</span></a><a href="/backtest/housing_gdp/catchup.html" class="entry">補漲假說：所得領先、房價落後<span class="b b-b">研究</span></a><a href="/backtest/housing_gdp/city_catchup.html" class="entry">補漲假說：換成城市層級，訊號還在嗎？<span class="b b-b">研究</span></a><a href="/backtest/housing_gdp/gdp_band.html" class="entry">GDP 帶假說：3,000→10,000 美元最快？<span class="b b-b">研究</span></a></div></div><div class="grp"><div class="grp-lbl">個案・亞洲</div><div class="pills"><a href="/backtest/housing_gdp/taiwan.html">台灣：二十五年房價史<span class="b b-b">研究</span></a><a href="/backtest/housing_gdp/japan.html">日本：七十年房價史<span class="b b-b">研究</span></a><a href="/backtest/housing_gdp/korea.html">南韓：與日本同年見頂<span class="b b-b">研究</span></a><a href="/backtest/housing_gdp/hongkong.html">香港：撤辣之後仍在跌<span class="b b-b">研究</span></a><a href="/backtest/housing_gdp/malaysia.html">馬來西亞：所得跑贏房價<span class="b b-b">研究</span></a><a href="/backtest/housing_gdp/thailand.html">泰國：失落的十三年<span class="b b-b">研究</span></a><a href="/backtest/housing_gdp/china.html">中國：官方指數換過口徑，分級城市差很大<span class="b b-b">研究</span></a><a href="/backtest/housing_gdp/singapore.html">新加坡：政府自己蓋，所得贏了房價<span class="b b-b">研究</span></a><a href="/backtest/housing_gdp/indonesia.html">印尼：22 年跌勢未收復<span class="b b-b">研究</span></a><a href="/backtest/housing_gdp/india.html">印度：跨過 3,000 美元門檻，房價卻沒漲<span class="b b-b">研究</span></a></div></div><div class="grp"><div class="grp-lbl">個案・英語系</div><div class="pills"><a href="/backtest/housing_gdp/usa.html">美國：崩盤與收復<span class="b b-b">研究</span></a><a href="/backtest/housing_gdp/canada.html">加拿大：從未崩過的市場正在崩<span class="b b-b">研究</span></a><a href="/backtest/housing_gdp/uk.html">英國：最深崩盤是通膨<span class="b b-b">研究</span></a><a href="/backtest/housing_gdp/ireland.html">愛爾蘭：42 國最深崩盤<span class="b b-b">研究</span></a><a href="/backtest/housing_gdp/australia.html">澳洲：從未真正崩過<span class="b b-b">研究</span></a><a href="/backtest/housing_gdp/newzealand.html">紐西蘭：政策工具全試過一輪<span class="b b-b">研究</span></a></div></div><div class="grp"><div class="grp-lbl">個案・歐陸</div><div class="pills"><a href="/backtest/housing_gdp/germany.html">德國：沒有泡沫的 25 年凍結<span class="b b-b">研究</span></a><a href="/backtest/housing_gdp/spain.html">西班牙：人口驅動的兩次泡沫<span class="b b-b">研究</span></a><a href="/backtest/housing_gdp/greece.html">希臘：失落的十年，19 年未收復<span class="b b-b">研究</span></a><a href="/backtest/housing_gdp/italy.html">義大利：18 年未收復 2007 高點<span class="b b-b">研究</span></a><a href="/backtest/housing_gdp/portugal.html">葡萄牙：谷底比紓困期早 4 年<span class="b b-b">研究</span></a><a href="/backtest/housing_gdp/netherlands.html">荷蘭：供給彈性倒數第 2<span class="b b-b">研究</span></a><a href="/backtest/housing_gdp/denmark.html">丹麥：房貸債券吸收利率衝擊<span class="b b-b">研究</span></a><a href="/backtest/housing_gdp/norway.html">挪威：石油而非人口外移<span class="b b-b">研究</span></a><a href="/backtest/housing_gdp/austria.html">奧地利：實質利率係數 37 國最正<span class="b b-b">研究</span></a><a href="/backtest/housing_gdp/poland.html">波蘭：負實質利率卻刻意降息<span class="b b-b">研究</span></a><a href="/backtest/housing_gdp/france.html">法國：所得解釋不了房價的異數<span class="b b-b">研究</span></a><a href="/backtest/housing_gdp/switzerland.html">瑞士：升息循環中紋風不動的房價<span class="b b-b">研究</span></a><a href="/backtest/housing_gdp/sweden.html">瑞典：銀行危機與負債爭議兩張臉<span class="b b-b">研究</span></a><a href="/backtest/housing_gdp/czechia.html">捷克：看不見的修正，不磁吸資金的首都<span class="b b-b">研究</span></a></div></div><div class="grp"><div class="grp-lbl">個案・其他新興市場</div><div class="pills"><a href="/backtest/housing_gdp/turkey.html">土耳其：通膨 80% 仍降息<span class="b b-b">研究</span></a><a href="/backtest/housing_gdp/brazil.html">巴西：同期相關拉滿，長期方向消失<span class="b b-b">研究</span></a><a href="/backtest/housing_gdp/southafrica.html">南非：被遺忘的 1983 年崩盤<span class="b b-b">研究</span></a><a href="/backtest/housing_gdp/israel.html">以色列：房市抗議運動打輸的那一場<span class="b b-b">研究</span></a><a href="/backtest/housing_gdp/mexico.html">墨西哥：升息打不下去的 20 年<span class="b b-b">研究</span></a></div></div></div><div class="card" id="scan"><h3>🔍 國家掃描<span class="n">4 頁</span></h3><div class="grp"><div class="grp-lbl">市場初掃</div><div class="pills"><a href="/backtest/country_scan/us.html">美國：市場結構與九個投資鏡頭<span class="b b-b">研究</span></a><a href="/backtest/country_scan/taiwan.html">台灣：市場結構與八個投資鏡頭<span class="b b-b">研究</span></a><a href="/backtest/country_scan/japan.html">日本：市場結構與七個投資鏡頭<span class="b b-b">研究</span></a><a href="/backtest/country_scan/malaysia.html">馬來西亞：市場結構與四個投資鏡頭<span class="b b-b">研究</span></a></div></div></div></div>
+<div class="section-block">
+  <h2 class="section-h">研究目錄</h2>
+  <div class="section-note">十三個分類重分組成七個主題，展開看完整清單；點標題可收合。</div>
+  <details class="d-theme" open>
+  <summary>趨勢與波段<span class="d-n">47 頁</span><span class="d-tally">—×35 · 研究×6 · 否決×3 · 實單×2 · 失敗×1</span></summary>
+  <div class="d-body"><h4 class="d-subhead" id="us-swing">🇺🇸 美股波段系統</h4><div class="d-grouplbl">總覽・工具</div><div class="d-row" data-cat=""><a href="/backtest/">20 年總覽</a></div><div class="d-row" data-cat=""><a href="/backtest/10y/">10 年對比</a><span class="d-verdict">怎麼讀這一頁(2026-06 刷新): 這個窗口沒有 2008,終點落在 AI/半導體多頭高點 — 所有數字都被窗口加持， 每個 ⚠ 可疑帶…</span></div><div class="d-row" data-cat=""><a href="/backtest/ma_sensitivity/">MA 敏感度</a><span class="d-verdict">結論：平台，不是孤峰 — 維持現行 W40/W52 30–60 週是一整片平台、沒有方法系統性勝出、最佳長度因標的而異 → 現行規則不是過擬…</span></div><div class="d-row" data-cat=""><a href="/backtest/free_lunch/">分散與免費午餐</a><span class="d-verdict">💡 核心論點 分散吃的是免費午餐；金融怪傑吃的是別人的午餐 投資裡只有一頓「不需要技能、也不需要別人輸」的免費午餐——把彼此不相關的資產疊在…</span></div><div class="d-grouplbl">個別系統</div><div class="d-row" data-cat="candidate"><a href="/backtest/long_track_smh/">SMH/QQQ 進攻</a><span class="d-verdict">半倉掛上 ATR 通道出場閘門，塌陷時比均線更快離場，且打敗同 CAGR 的現金稀釋對照。</span></div><div class="d-row" data-cat="candidate"><a href="/backtest/long_track_ensemble/">SPY/QQQ 集成</a><span class="d-verdict">集成治得了盤整病，治不了 gap risk——MDD 換了形狀，系統擁有者接受這個交換。</span></div><div class="d-row" data-cat="candidate"><a href="/backtest/slope_filter/">SPY/AGG 斜率</a><span class="d-verdict">用嚴格進場換更小回撤：CAGR 比 Faber 略低，Sharpe／Calmar／MDD 全面更好。</span></div><div class="d-row" data-cat="candidate"><a href="/backtest/long_track/">SPY/QQQ 長軌</a><span class="d-verdict">保險費付在盤整、保障兌現在崩盤——修正 warmup 後 CAGR +9.75%。</span></div><div class="d-row" data-cat="candidate"><a href="/backtest/long_track_qqq/">QQQ 長軌純攻</a><span class="d-verdict">回撤保護全來自 W52 出場線——修正 warmup 後 CAGR +10.83%、MDD -25.37%。</span></div><div class="d-row" data-cat=""><a href="/backtest/six_state/">QQQ＋SMH 六狀態</a><span class="d-verdict">⚠ 深熊 MDD 仍偏深 v1.1 · 2026-06-11 移除 Grid 層 狀態層單獨運作 — 移除 Grid 後 MDD 大幅收斂，…</span></div><div class="d-row" data-cat=""><a href="/backtest/six_state_v1r1/">QQQ 六狀態實盤</a><span class="d-verdict">⚠ MDD 突破 E-6 悲觀線 閘門補做 · 2026-06-11 報酬端達 E-6 樂觀情境，風險端突破悲觀下限 — G2 壓力路徑 -…</span></div><div class="d-row" data-cat=""><a href="/backtest/supertrend/">週線 Supertrend</a><span class="d-verdict">🔬 證據頁 — standalone 不採用 三個標的全部輸給 W52 單成員，但虧損時段系統性錯開 — E4 集成成員候選資格保留 來源是…</span></div><div class="d-row" data-cat=""><a href="/backtest/minervini/">Minervini RS+VCP</a><span class="d-verdict">機械版 ≠ 超級績效 即使偏誤在幫它，機械版仍跑輸大盤 — 它買到的是「回撤控制」，不是 alpha 把站上 RS+VCP screener…</span></div><div class="d-row" data-cat=""><a href="/backtest/mom_volscaling/">動能·波動縮放</a><span class="d-verdict">🔬 複驗 · 機制存活性成立、不答可交易性 把「動能崩盤」用波動率縮放事前削平——機制在真 OOS 存活且統計顯著，但這頁只答存活性，不答可…</span></div><div class="d-row" data-cat=""><a href="/backtest/dual_track_study/">雙軌分散研究</a><span class="d-verdict">✓ 過尺：雙軌 Calmar &gt; 單獨 E3 真實引擎驗證：E3 長軌 + RSI(2) 短軌，Calmar 0.65 → 0.68 …</span></div><div class="d-row" data-cat="research"><a href="/backtest/vol_targeting/">波動目標倉位</a><span class="b b-b">研究</span><span class="d-verdict">研究結論 · 未採用為實盤變更 免付保費、只在市場變晃時自動減碼——用已實現波動反推倉位（w = min(1, σ目標／RV20)），是六輪…</span></div><div class="d-row" data-cat="research"><a href="/backtest/vol_targeting/adaptive.html">波動率變體實驗室</a><span class="b b-b">研究</span><span class="d-verdict">研究結論 · 未採用為實盤變更 免付保費、只在市場變晃時自動減碼——用已實現波動反推倉位（w = min(1, σ目標／RV20)），是六輪…</span></div><div class="d-row" data-cat=""><a href="/backtest/rsi2_mr/">SPY/QQQ 均值回歸</a><span class="d-verdict">⚠ 候選系統 — 未採用 紅旗 4/4 通過，但「不大賠」依賴收盤 MOC 成交 — 矩陣裡所有次日開盤變體都破限 設計目標是雙軌趨勢系統的…</span></div><div class="d-row" data-cat="rejected"><a href="/backtest/dual_track/">SPY/QQQ 雙軌多空</a><span class="b b-d">否決</span><span class="d-verdict">✗ 維持否決 — 2026-06-12 修正基準重檢確認 做空腿是致命傷；但移除它之後，任何權重下仍不及 Long Track Only v…</span></div><div class="d-row" data-cat="rejected"><a href="/backtest/exit_switch/">出場法切換</a><span class="b b-d">否決</span><span class="d-verdict">🔬 證據頁 — 假設否決，不採用 切換從不打贏純 W52;「最好的切換版」只是最少切換的那個 — 而且切換方向是反的 擁有者假設(2026-…</span></div><div class="d-row" data-cat="rejected"><a href="/backtest/short_system/">指數做空</a><span class="b b-d">失敗</span><span class="d-verdict">✗ 已否決 — 結構性失效(2026-04 判定 · 2026-07-11 時序修正後再確認) 做空美股大盤指數是結構性虧損業務 — 不是參…</span></div><div class="d-grouplbl">前瞻追蹤</div><div class="d-row" data-cat="live"><a href="/long-track-w52-adaptive/">W52 × 自適應波動率 150%（實單主系統）</a><span class="b b-g">實單</span><span class="d-verdict">兩市場各 70% 指數部＝W52 週線閘門 × 自適應波動率 × cap 1.5 ＋ A2 執行層。</span></div><div class="d-row" data-cat="rejected"><a href="/long-track-qs-vt/">QQQ+SMH 固定 σ（歸檔）</a></div><div class="d-row" data-cat="rejected"><a href="/long-track-qs-vt/adaptive.html">QQQ+SMH 自適應（歸檔）</a></div><div class="d-row" data-cat="rejected"><a href="/long-track-adaptive-vt/">自適應美台總覽（歸檔）</a></div><h4 class="d-subhead" id="tw-swing">🇹🇼 台股波段</h4><div class="d-row" data-cat="research"><a href="/backtest/tw/">台股總覽（專區入口）</a><span class="b b-b">專區</span></div><div class="d-grouplbl">波段</div><div class="d-row" data-cat=""><a href="/backtest/tw_0050_compare/">0050 總覽·台美差異</a><span class="d-verdict">🔬 分析：差異一半是樣本窗口，一半是台股結構 「台股趨勢比較差」是錯的 —— 在同一個無崩盤窗口，美股的 B&H 也一樣難打敗 把美股系統關…</span></div><div class="d-row" data-cat=""><a href="/backtest/tw_0050/">0050 進攻趨勢</a><span class="d-verdict">🧪 探索性方法移植 — 未採用 STX50 的疊加在 0050 上不複現：原始 Ch12 binary 反而最好，B&H 因樣本無崩盤而難敗…</span></div><div class="d-row" data-cat=""><a href="/backtest/tw_0050_lt/">0050 長軌趨勢</a><span class="d-verdict">★ 0050 上最強的趨勢變體(風險調整勝 B&H) 最簡單那一軌反而最好：Sharpe 1.10、Calmar 0.68,全面勝過 B&H…</span></div><div class="d-row" data-cat=""><a href="/backtest/long_track_tw/">2330/0050 E3 長軌</a><span class="d-verdict">✓ 2026-06-23 採用：E3 三訊號集成 — ST 半倉閘門測試後否決 趨勢出場把大盤回撤砍半；美股加掛的 ST 閘門搬到台股反而過…</span></div><div class="d-row" data-cat="research"><a href="/backtest/vol_targeting/tw.html">0050+2330 波動率變體</a><span class="b b-b">研究</span><span class="d-verdict">研究結論 · 未採用為實盤變更 免付保費、只在市場變晃時自動減碼——用已實現波動反推倉位（w = min(1, σ目標／RV20)），是六輪…</span></div><div class="d-row" data-cat=""><a href="/backtest/tw_0050_six/">0050 六狀態機</a><span class="d-verdict">🎰 風險調整勝 B&H,但輸給更簡單的純長軌 曝險縮放狀態機：贏 B&H 的 Sharpe/Calmar/MDD,但被樸素的 Long Tr…</span></div><div class="d-row" data-cat="rejected"><a href="/backtest/tw_0050_dual/">0050 雙軌多空</a><span class="b b-d">否決</span><span class="d-verdict">✗ 否決 — 被自己的純長軌子成分支配 雙軌多空在 0050 被支配：做空全程虧、日線軌加劇 whipsaw,純週線長軌每一軸都更好 把 v…</span></div><div class="d-grouplbl">前瞻追蹤</div><div class="d-row" data-cat="live"><a href="/long-track-w52-adaptive/">W52 × 自適應波動率 150%（實單主系統）</a><span class="b b-g">實單</span><span class="d-verdict">兩市場各 70% 指數部＝W52 週線閘門 × 自適應波動率 × cap 1.5 ＋ A2 執行層。</span></div><div class="d-row" data-cat="rejected"><a href="/long-track-tw-vt/">0050+2330 固定 σ（歸檔）</a></div><div class="d-row" data-cat="rejected"><a href="/long-track-tw-vt/adaptive.html">0050+2330 自適應（歸檔）</a></div><div class="d-row" data-cat="rejected"><a href="/long-track-adaptive-vt/">自適應美台總覽（歸檔）</a></div><h4 class="d-subhead" id="multi-classic">🧩 多資產·經典複製</h4><div class="d-row" data-cat="research"><a href="/backtest/multi/">多資產總覽（專區入口）</a><span class="b b-b">專區</span></div><div class="d-grouplbl">系統</div><div class="d-row" data-cat=""><a href="/backtest/turtle/">唐奇安突破</a><span class="d-verdict">△ 邊際補充 — 全額版平庸，僅商品 sleeve 有條件價值 修正後真相：全額 System 2 是平庸的高回撤系統(CAGR +7.72…</span></div><div class="d-row" data-cat=""><a href="/backtest/clenow/">跨資產趨勢</a><span class="d-verdict">△ 多資產補充 — 不與股票系統同表比較 危機年 alpha + 全站最高絕對報酬；代價是 -44% 回撤與「失落十年」 Andreas C…</span></div><div class="d-row" data-cat=""><a href="/backtest/multiasset_trend/">SG Trend 複製</a><span class="d-verdict">🔬 複驗 · 風格複製成立、報酬水準不及 忠實複製 SG Trend 的訊號風格，不是發明新策略——複製到的是「風格」，不是「報酬水準」 這…</span></div><div class="d-row" data-cat=""><a href="/backtest/turtle_adopt/">組合採用 Sleeve</a><span class="d-verdict">⚠ L4 採用評估 — 樣本內探索，擁有者決策 把商品趨勢 sleeve 當「其他資產」分散腿：組合 Calmar 0.65 → 0.85,…</span></div><div class="d-row" data-cat=""><a href="/backtest/slope_filter_global/">全球斜率穩健性</a><span class="d-verdict">✓ 穩健性地圖 — 要求普世性，但要問對軸 回撤控制全球普世(MDD 15/15 更淺),但風險調整報酬只在乾淨週期市成立(Sharpe 7…</span></div><div class="d-row" data-cat=""><a href="/backtest/crossasset_defense/">跨資產防守</a><span class="d-verdict">🛡️ 多資產候選 — 防守/分散補位 把「回吐」研究推到底的產物：真正的回吐減法不是任何閘門，是把腿分散到不同資產類別 這頁是 give-b…</span></div><div class="d-row" data-cat="candidate"><a href="/backtest/gem/">SPY/ACWX 雙動能</a><span class="d-verdict">發表後(2014~2026)優勢消失——全樣本風險調整優勢整包來自 2008 單一事件。</span></div><div class="d-row" data-cat="research"><a href="/backtest/nonequity/">非股票 sleeve</a><span class="b b-b">研究</span><span class="d-verdict">結論先行：五個 sleeve 的判準裁決 四燈＝四條事前凍結判準（1 主列 Calmar≥B&H｜2 MDD 淺≥5pp｜3 月相關&lt;…</span></div><div class="d-row" data-cat="research"><a href="/backtest/reits/">REITs 三地延伸</a><span class="b b-b">研究</span><span class="d-verdict">結論先行：三地 REITs 的判準裁決 四燈＝四條事前凍結判準（1 主列 Calmar≥B&H｜2 MDD 淺≥5pp｜3 月相關&lt;0…</span></div><h4 class="d-subhead" id="leverage">🔧 槓桿疊加</h4><div class="d-row" data-cat="research"><a href="/backtest/leverage/">槓桿疊加總覽（專區入口）</a><span class="b b-b">專區</span></div><div class="d-grouplbl">系統</div><div class="d-row" data-cat=""><a href="/backtest/leverage_voltarget/">期貨槓桿疊加</a><span class="d-verdict">⚠ 候選 · 2026-07-02 walk-forward 後降級：n=1 危機保險論點 期貨是約 1:1 的風險／報酬放大器——「平靜時…</span></div><div class="d-row" data-cat="research"><a href="/backtest/vol_targeting/leverage.html">W52×自適應 150% 槓桿</a><span class="b b-b">研究</span><span class="d-verdict">研究結論 · 未採用為實盤變更 免付保費、只在市場變晃時自動減碼——用已實現波動反推倉位（w = min(1, σ目標／RV20)），是六輪…</span></div></div>
+</details><details class="d-theme">
+  <summary>選擇權與衍生品<span class="d-n">14 頁</span><span class="d-tally">研究×5 · 負貢獻×2 · 未過×2 · 失敗×1 · 專區×1 · 模擬中×1 · 觀察×1 · 否決×1</span></summary>
+  <div class="d-body"><h4 class="d-subhead" id="us-options">🇺🇸 美股選擇權</h4><div class="d-grouplbl">選擇權研究</div><div class="d-row" data-cat="rejected"><a href="/backtest/cndr/">Iron Condor</a><span class="b b-d">失敗</span><span class="d-verdict">✗ 失敗案例 — 左尾驗證通過、報酬驗證不通過(2026-06-12 判定) 翼確實把左尾封住了 — 但代價是全部的報酬：20 年 CAGR…</span></div><div class="d-row" data-cat="rejected"><a href="/backtest/covered_call/">Covered Call</a><span class="b b-d">負貢獻</span><span class="d-verdict">✗ 效用交換非報酬來源 — 三個 overlay 變體全部淨負貢獻（2026-07-11 判定） 三個 overlay 變體全部淨負貢獻；c…</span></div><div class="d-row" data-cat="rejected"><a href="/backtest/put_timing/">SPY/QQQ 買 put 避險</a><span class="b b-d">負貢獻</span><span class="d-verdict">誠實負結果 — 六輪研究 × 真實資料雙重校準 事前擇時買 put 無法穩定地「有利」。</span></div><h4 class="d-subhead" id="tw-options">🇹🇼 台股選擇權</h4><div class="d-grouplbl">選擇權</div><div class="d-row" data-cat="research"><a href="/backtest/tw_options/">台股選擇權專區</a><span class="b b-b">專區</span><span class="d-verdict">決策引擎專區 — 前瞻模擬與研究，非深歷史回測 同一份資料，餵給五種不同的選擇權策略邏輯 這個專區底下的五個策略頁——台指選擇權賣方、台指賣…</span></div><div class="d-row" data-cat="research"><a href="/backtest/txo_vol_seller/">台指選擇權賣方</a><span class="b b-b">模擬中</span><span class="d-verdict">模擬中 — 管線與形狀展示，非已驗證的 edge 它對方向沒有看法。</span></div><div class="d-row" data-cat="research"><a href="/backtest/txo_put_seller/">台指賣方下檔</a><span class="b b-b">研究</span><span class="d-verdict">GO 賣 put 收權利金、買更低履約價封頂虧損——真正的敵人是下跌崩盤 結構：SELL 13口 202608 put K=38900（Δ=…</span></div><div class="d-row" data-cat="research"><a href="/backtest/txo_iron_condor/">台指雙賣</a><span class="b b-b">研究</span><span class="d-verdict">GO 同時賣 call 價差＋put 價差——兩翼同時收租，也同時扛尾巴 結構：SELL 14口 CALL 52200 / BUY 14口 …</span></div><div class="d-row" data-cat="research"><a href="/backtest/txo_covered_call_0050/">台指 Covered Call</a><span class="b b-b">研究</span><span class="d-verdict">今日判定：GO（可執行） 用上檔換權利金：多頭持股不動，每月賣一口價外 call 收租。</span></div><div class="d-row" data-cat="research"><a href="/backtest/txo_tail_hedge/">台指尾端避險</a><span class="b b-b">研究</span><span class="d-verdict">今日判定：AVOID 買深度價外 put，當現貨組合的崩盤保險——這是買波動，不是賣波動。</span></div><h4 class="d-subhead" id="tw-intraday">🇹🇼 台股日內</h4><div class="d-grouplbl">日內</div><div class="d-row" data-cat="rejected"><a href="/backtest/txf_intraday/">台指當沖</a><span class="b b-d">未過</span><span class="d-verdict">未通過 · 不導入實單 毛利優勢真實存在，但只有約 1 tick 寬 —— 被交易成本整碗端走 8 個變體在 2006-01-02 ~ 20…</span></div><div class="d-row" data-cat="research"><a href="/backtest/txf_chips/">籌碼偏向</a><span class="b b-b">觀察</span><span class="d-verdict">Z2 否決 · Z1 證據不足，列 Forward 觀察 PCR 沒有任何訊號；外資動向跟單方向正確但統計力不足 —— 不可上線 預註冊門檻…</span></div><div class="d-row" data-cat="rejected"><a href="/backtest/ssf_xsec/">個股期橫斷面</a><span class="b b-d">未過</span><span class="d-verdict">Phase 1 未通過 · 反轉訊號撞成本牆 「強者恆強」被決定性否決(t=-13);鏡像是真實的日反轉，但毛利 +0.13% 卡在 0.1…</span></div><div class="d-row" data-cat="rejected"><a href="/backtest/txf_basis/">基差偏向</a><span class="b b-d">否決</span><span class="d-verdict">否決 · 假訊號 原始掃描 +17.9 點/筆的「優勢」，在量測對齊後蒸發為 +0.28 點 這是日內結案報告後的第一個合格候選：用了新資訊…</span></div><h4 class="d-subhead" id="tw-cb">💵 台股可轉債</h4><div class="d-grouplbl">研究</div><div class="d-row" data-cat="research"><a href="/backtest/tw_cb/">台股可轉債專區</a><span class="b b-b">研究</span><span class="d-verdict">研究專區 — 五條回測線，一個 CBAS 槓桿化的正式回答 五條台股可轉債研究線裡，只有一條可以安心小資金實盤 「賣回保底攤大餅」是唯一的 …</span></div></div>
+</details><details class="d-theme">
+  <summary>因子與基金<span class="d-n">12 頁</span><span class="d-tally">研究×11 · 專區×1</span></summary>
+  <div class="d-body"><h4 class="d-subhead" id="factor">🧬 個股因子（美股）</h4><div class="d-grouplbl">研究</div><div class="d-row" data-cat="research"><a href="/backtest/return_driver/">美股漲跌歸因：獲利與估值</a><span class="b b-b">研究</span><span class="d-verdict">用 SEC EDGAR 逐季財報 + 835 檔美股 17 年資料拆解報酬：長期報酬靠獲利、短期靠估值；但用過去獲利成長事前選股不管用，先知…</span></div><div class="d-row" data-cat="research"><a href="/backtest/pead/">美股財報驚喜後漂移</a><span class="b b-b">研究</span><span class="d-verdict">用 SEC EDGAR 逐季財報 + 835 檔美股 17 年資料驗 PEAD（盈餘公告後漂移）異象生死：全樣本邊緣未達顯著，train/O…</span></div><div class="d-row" data-cat="research"><a href="/backtest/accruals/">美股獲利品質（應計項目）</a><span class="b b-b">研究</span><span class="d-verdict">用 SEC EDGAR 年度財報 + 835 檔美股 17 年資料驗應計項目（Sloan 1996）異象生死：全樣本顯著、OOS 比 tra…</span></div><div class="d-row" data-cat="research"><a href="/backtest/share_issuance/">美股股數增減（發行與回購）</a><span class="b b-b">研究</span><span class="d-verdict">用 SEC EDGAR 逐年股數 + 835 檔美股 17 年資料驗淨發行率（Daniel-Titman／Pontiff-Woodgate）…</span></div><div class="d-row" data-cat="research"><a href="/backtest/profitability/">美股獲利能力因子</a><span class="b b-b">研究</span><span class="d-verdict">用 SEC EDGAR 年度財報 + 835 檔美股 17 年資料驗 Novy-Marx (2013) GP/A 獲利能力因子與營業利益率變…</span></div><div class="d-row" data-cat="research"><a href="/backtest/asset_growth/">美股資產成長異象</a><span class="b b-b">研究</span><span class="d-verdict">用 SEC EDGAR 年度財報 + 835 檔美股 17 年資料驗資產成長異象（Cooper, Gulen & Schill 2008）生…</span></div><div class="d-row" data-cat="research"><a href="/backtest/index_inclusion/">指數納入效應</a><span class="b b-b">研究</span><span class="d-verdict">用 S&P 500 成分異動表（693 筆事件，2009–2026）驗指數納入／剔除效應生死：效應集中在生效日之前，生效日收盤才進場已經賺不…</span></div><div class="d-row" data-cat="research"><a href="/backtest/insider/">內部人買賣叢集買進</a><span class="b b-b">研究</span><span class="d-verdict">用 SEC 官方 Insider Transactions Data Sets 逐季彙整包，驗證「叢集買進」（同一檔股票短時間內 2 位以上…</span></div><h4 class="d-subhead" id="active-fund">📊 主動式ETF與基金</h4><div class="d-grouplbl">研究</div><div class="d-row" data-cat="research"><a href="/backtest/active_etf/">主動式ETF總結</a><span class="b b-b">專區</span><span class="d-verdict">你買一檔主動式 ETF、付比較貴的費用，買到的到底是什麼？答案有兩種，差別很大。</span></div><div class="d-row" data-cat="research"><a href="/backtest/tw_active_etf/">台股主動式ETF</a><span class="b b-b">研究</span><span class="d-verdict">ALPHA 測不出來 · 分散是幻覺 它們有沒有真本事，現在無法回答；但可以確定的是，買好幾檔不同投信，買的是同一筆押注 這頁問一件跟你的錢…</span></div><div class="d-row" data-cat="research"><a href="/backtest/us_active_etf/">美股主動式ETF</a><span class="b b-b">研究</span><span class="d-verdict">虛無假設無法拒絕 現實中最強的基金，比「沒有人有技能」的模擬世界裡的最強者還弱 這是台股研究的美國對照組。</span></div><div class="d-row" data-cat="research"><a href="/backtest/tw_mutual_fund/">台股共同基金</a><span class="b b-b">研究</span><span class="d-verdict">結論：大多無法檢定，而非證明沒有 這個模型只能可信檢定 1.6％ 的基金；在可及範圍與母體分布層次都測不到 alpha，但這遠不足以說台股基…</span></div></div>
+</details><details class="d-theme">
+  <summary>方法研究<span class="d-n">11 頁</span><span class="d-tally">—×11</span></summary>
+  <div class="d-body"><h4 class="d-subhead" id="method">📐 方法研究</h4><div class="d-grouplbl">頻率</div><div class="d-row" data-cat=""><a href="/backtest/daily_vs_weekly/">日/週線</a><span class="d-verdict">✓ 全軸封閉：週線 long-only 是最優，動不得 把同一條長軌規則搬到日線、再加遍出場確認 / 盤整閘門 / 多空 / 200日方向濾…</span></div><div class="d-row" data-cat=""><a href="/backtest/daily_vs_weekly_deep/">日/週·深掘</a><span class="d-verdict">✓ 結構性可預測(r=+0.88) · 但動態輪動不可吃 市場趨勢度以 r=+0.88 預測長軌 Calmar(事前可算)—— 但這是慢的結…</span></div><div class="d-row" data-cat=""><a href="/backtest/daily_vs_weekly_global/">日/週·全球</a><span class="d-verdict">⚠ 長軌的 edge 集中在強趨勢市場 · 「日線過尺」是弱基準假象 多數國家 ETF 的週線 Calmar 都很弱(0.05–0.30,中…</span></div><div class="d-row" data-cat=""><a href="/backtest/daily_vs_weekly_tw/">日/週·台股</a><span class="d-verdict">✓ 全軸封閉：週線 long-only 是最優，動不得 把同一條長軌規則搬到日線、再加遍出場確認 / 盤整閘門 / 多空 / 200日方向濾…</span></div><div class="d-grouplbl">均線</div><div class="d-row" data-cat=""><a href="/backtest/ma_cross/">MA 交叉</a><span class="d-verdict">✗ 0/20 過尺 — 交叉系統打不贏週線 雙均線交叉是個「慢、晚、回吐大」的趨勢跟隨：CAGR 不差，但交叉出場太晚、回撤很深；交叉事件本…</span></div><div class="d-row" data-cat=""><a href="/backtest/ma_deviation/">MA 乖離</a><span class="d-verdict">乖離 = 好買訊(極端) · 爛賣訊(全部) 把所有交易日按乖離率分桶，前瞻超額報酬是一條「微笑曲線」——兩端(深超賣 / 強噴出)有 ed…</span></div><div class="d-row" data-cat=""><a href="/backtest/ma_dynband/">MA 動態帶</a><span class="d-verdict">部分成功：稀有→變密 ✓ ;但仍不可系統化 ✗ 波動標準化把深超賣訊號從「每檔 1–2 次」變成「70–110 次」——稀有問題解決了；但它…</span></div><div class="d-row" data-cat=""><a href="/backtest/ma_squeeze/">MA 擠壓</a><span class="d-verdict">✗ 糾結不加值 — 點火 edge 為負，過尺是底層趨勢在做工 把多條均線糾結(收斂)後的向上突破當「趨勢點火」進場——但糾結這道濾網的前瞻…</span></div><div class="d-grouplbl">崩盤防禦</div><div class="d-row" data-cat=""><a href="/backtest/smh_vcrash/">SMH V崩</a><span class="d-verdict">⚠ 同方法、不同結論：美股的債券危機腿在 2022 反向，只有黃金跨 regime 穩健 分散腿仍是唯一過尺解 —— 但美股沒有匯率腿，且 …</span></div><div class="d-row" data-cat=""><a href="/backtest/tw_vcrash/">台股 V崩防禦</a><span class="d-verdict">✓ 唯一過尺解 = 正 carry 分散腿(黃金/長債),不是對沖股票 你不能用「擋股票」來防 V 崩 — put/加速出場/vol-tar…</span></div><div class="d-row" data-cat=""><a href="/backtest/tw_crash/">台股含崩盤驗證</a><span class="d-verdict">✓ 結論：含崩盤樣本一進來，趨勢就反過來風險調整支配 B&H 「台股 B&H 難敗」確實是 2009+ 無崩盤的樣本假象 所有 0050 波…</span></div></div>
+</details><details class="d-theme">
+  <summary>總經・房價×GDP<span class="d-n">39 頁</span><span class="d-tally">研究×39</span></summary>
+  <div class="d-body"><h4 class="d-subhead" id="macro">🌏 總經・房價×GDP</h4><div class="d-grouplbl">研究・主線</div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/">人均 GDP 與房價（42 國因子矩陣）</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/catchup.html">補漲假說：所得領先、房價落後</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/city_catchup.html">補漲假說：換成城市層級，訊號還在嗎？</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/gdp_band.html">GDP 帶假說：3,000→10,000 美元最快？</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-grouplbl">個案・亞洲</div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/taiwan.html">台灣：二十五年房價史</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/japan.html">日本：七十年房價史</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/korea.html">南韓：與日本同年見頂</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/hongkong.html">香港：撤辣之後仍在跌</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/malaysia.html">馬來西亞：所得跑贏房價</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/thailand.html">泰國：失落的十三年</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/china.html">中國：官方指數換過口徑，分級城市差很大</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/singapore.html">新加坡：政府自己蓋，所得贏了房價</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/indonesia.html">印尼：22 年跌勢未收復</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/india.html">印度：跨過 3,000 美元門檻，房價卻沒漲</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-grouplbl">個案・英語系</div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/usa.html">美國：崩盤與收復</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/canada.html">加拿大：從未崩過的市場正在崩</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/uk.html">英國：最深崩盤是通膨</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/ireland.html">愛爾蘭：42 國最深崩盤</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/australia.html">澳洲：從未真正崩過</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/newzealand.html">紐西蘭：政策工具全試過一輪</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-grouplbl">個案・歐陸</div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/germany.html">德國：沒有泡沫的 25 年凍結</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/spain.html">西班牙：人口驅動的兩次泡沫</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/greece.html">希臘：失落的十年，19 年未收復</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/italy.html">義大利：18 年未收復 2007 高點</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/portugal.html">葡萄牙：谷底比紓困期早 4 年</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/netherlands.html">荷蘭：供給彈性倒數第 2</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/denmark.html">丹麥：房貸債券吸收利率衝擊</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/norway.html">挪威：石油而非人口外移</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/austria.html">奧地利：實質利率係數 37 國最正</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/poland.html">波蘭：負實質利率卻刻意降息</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/france.html">法國：所得解釋不了房價的異數</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/switzerland.html">瑞士：升息循環中紋風不動的房價</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/sweden.html">瑞典：銀行危機與負債爭議兩張臉</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/czechia.html">捷克：看不見的修正，不磁吸資金的首都</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-grouplbl">個案・其他新興市場</div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/turkey.html">土耳其：通膨 80% 仍降息</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/brazil.html">巴西：同期相關拉滿，長期方向消失</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/southafrica.html">南非：被遺忘的 1983 年崩盤</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/israel.html">以色列：房市抗議運動打輸的那一場</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div><div class="d-row" data-cat="research"><a href="/backtest/housing_gdp/mexico.html">墨西哥：升息打不下去的 20 年</a><span class="b b-b">研究</span><span class="d-verdict">以 42 個經濟體、1465 個國家—年資料檢定人均 GDP 成長對實質房價的解釋力，並把 12 個總經因子做成國家群與個別國家的矩陣。</span></div></div>
+</details><details class="d-theme">
+  <summary>國家掃描<span class="d-n">4 頁</span><span class="d-tally">研究×4</span></summary>
+  <div class="d-body"><h4 class="d-subhead" id="scan">🔍 國家掃描</h4><div class="d-grouplbl">市場初掃</div><div class="d-row" data-cat="research"><a href="/backtest/country_scan/us.html">美國：市場結構與九個投資鏡頭</a><span class="b b-b">研究</span></div><div class="d-row" data-cat="research"><a href="/backtest/country_scan/taiwan.html">台灣：市場結構與八個投資鏡頭</a><span class="b b-b">研究</span></div><div class="d-row" data-cat="research"><a href="/backtest/country_scan/japan.html">日本：市場結構與七個投資鏡頭</a><span class="b b-b">研究</span></div><div class="d-row" data-cat="research"><a href="/backtest/country_scan/malaysia.html">馬來西亞：市場結構與四個投資鏡頭</a><span class="b b-b">研究</span></div></div>
+</details><details class="d-theme">
+  <summary>實單系統證據（明細）<span class="d-n">10 頁</span><span class="d-tally">研究×10</span></summary>
+  <div class="d-body"><h4 class="d-subhead" id="oos-validation">🧪 實單系統證據（明細）</h4><div class="d-grouplbl">研究</div><div class="d-row" data-cat="research"><a href="/backtest/live_system_evidence/">證據總覽（先看這頁）</a><span class="b b-b">研究</span><span class="d-verdict">十一項證據總覽：跨標的證偽、保險價格、兩種洗牌測試、慢熊 base rate、美台合併帳戶等，一頁看完整體證據強度。</span></div><div class="d-row" data-cat="research"><a href="/backtest/w52_adaptive_oos/">W52×自適應 σ 跨標的證偽</a><span class="b b-b">研究</span><span class="d-verdict">實單規則鏈丟到規則選擇時從未看過的約 30 檔標的做前瞻證偽：過尺率 20.6%（95% CI [10.3%, 36.8%]），判定：kill 訊號。</span></div><div class="d-row" data-cat="research"><a href="/backtest/insurance_premium/">深熊保險的價格</a><span class="b b-b">研究</span><span class="d-verdict">把三種下檔保險（均線閘門、跨資產分散、倉位稀釋）放在同一把尺上，量出每一種的保費與理賠。</span></div><div class="d-row" data-cat="research"><a href="/backtest/adopted_bootstrap/">已採用系統的統計不確定性帶</a><span class="b b-b">研究</span><span class="d-verdict">用價格路徑與報酬流兩種 bootstrap，量出系統勝過買進持有的統計強度 p_B，回答「這個裁決有多少是運氣」。</span></div><div class="d-row" data-cat="research"><a href="/backtest/regime_bootstrap/">保留 regime 的 bootstrap</a><span class="b b-b">研究</span><span class="d-verdict">用真實牛熊段（非固定長度 block）當重抽單位，回答固定 block bootstrap 是否對趨勢規則不公平。</span></div><div class="d-row" data-cat="research"><a href="/backtest/combined_account/">美台合併帳戶層</a><span class="b b-b">研究</span><span class="d-verdict">把美股與台股兩套實單合成一個帳戶，量合併後的 CAGR／MDD／Calmar 與回撤同步性、匯率分解。</span></div><div class="d-row" data-cat="research"><a href="/backtest/slow_bear_base_rate/">慢熊的 base rate</a><span class="b b-b">研究</span><span class="d-verdict">量化慢熊多久來一次：合併池每十年約 0.87 次。判定：慢熊約十年一遇，保費要用十年攤。</span></div><div class="d-row" data-cat="research"><a href="/backtest/slow_bear_onset/">慢熊：起點認得出來嗎？</a><span class="b b-b">研究</span><span class="d-verdict">116 個起點事件的可分辨性檢定，判定：有跡象但樣本不夠，只記錄。</span></div><div class="d-row" data-cat="research"><a href="/backtest/f_portfolio/">F 組合：疊兩種保險</a><span class="b b-b">研究</span><span class="d-verdict">F＝0.5×均線閘門實單A＋0.5×跨資產分散D1，問「疊兩種保險」是結構性優勢還是歷史巧合。</span></div><div class="d-row" data-cat="research"><a href="/backtest/cross_sectional_trend/">橫斷面版趨勢</a><span class="b b-b">研究</span><span class="d-verdict">把「每腿各自看均線」改成「持有相對最強的幾腿」，判定：形式不是關鍵。</span></div></div>
+</details>
+</div>
 
 </div>
-<footer><div class="container">&copy; 2026 InvestMQuest Research · 量化回測總覽 · 真實 yfinance · 生成 2026-09-06</div></footer>
+<footer><div class="container">
+  &copy; 2026 InvestMQuest Research · 量化回測總覽 · 共 137 頁 ·
+  <a href="/backtest/glossary/">術語對照表</a> · 生成 2026-09-06
+</div></footer>
 
 <script>
 var LEGACY_HASH={"us": "us-swing", "tw": "tw-swing", "multi": "multi-classic", "lev": "leverage", "macro": "macro", "scan": "scan"};
 (function(){
-  // 舊六 tab hash(#us/#tw/#multi/#lev/#macro/#scan) 相容：映射到新 section id 並捲動過去。
-  // 新 13 個 section 的 id 本身就是合法錨點，就算 JS 失敗，瀏覽器原生 #id 跳轉一樣能到位。
   function jump(){
     var h=(location.hash||'').slice(1);
     if(!h)return;
     var target=LEGACY_HASH[h]||h;
     var el=document.getElementById(target);
-    if(el)el.scrollIntoView({block:'start'});
+    if(el){
+      var det=el.closest('details');
+      if(det)det.open=true;
+      el.scrollIntoView({block:'start'});
+    }
   }
   window.addEventListener('load',jump);
   window.addEventListener('hashchange',jump);
+})();
+(function(){
+  // 篩選 chips + 即時搜尋，純前端、零依賴。
+  var chips=Array.prototype.slice.call(document.querySelectorAll('.stat-card[data-filter]'));
+  var resetBtn=document.getElementById('bt-filter-reset');
+  var searchBox=document.getElementById('bt-search');
+  var rows=Array.prototype.slice.call(document.querySelectorAll('[data-cat]'));
+  var themes=Array.prototype.slice.call(document.querySelectorAll('details.d-theme'));
+  var active=null;
+
+  function apply(){
+    var q=(searchBox.value||'').trim().toLowerCase();
+    rows.forEach(function(el){
+      var cat=el.getAttribute('data-cat');
+      var catOk=!active||cat===active;
+      var textOk=!q||el.textContent.toLowerCase().indexOf(q)!==-1;
+      el.style.display=(catOk&&textOk)?'':'none';
+    });
+    themes.forEach(function(det){
+      var anyVisible=false;
+      det.querySelectorAll('[data-cat]').forEach(function(el){
+        if(el.style.display!=='none')anyVisible=true;
+      });
+      det.style.display=anyVisible?'':'none';
+      if(anyVisible&&(active||q))det.open=true;
+    });
+    chips.forEach(function(c){
+      c.classList.toggle('chip-active',c.getAttribute('data-filter')===active);
+    });
+  }
+  chips.forEach(function(c){
+    c.addEventListener('click',function(e){
+      if(e.target.tagName==='A')return; // let inner links (系統主控台 →) navigate normally
+      var f=c.getAttribute('data-filter');
+      active=(active===f)?null:f;
+      apply();
+    });
+  });
+  if(resetBtn)resetBtn.addEventListener('click',function(){active=null;searchBox.value='';apply();});
+  if(searchBox)searchBox.addEventListener('input',apply);
 })();
 </script>
 </body></html>

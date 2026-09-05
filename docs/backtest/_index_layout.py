@@ -1,100 +1,41 @@
-"""LIVE renderer for /backtest/index.html — full-expand classification directory.
+"""LIVE renderer for /backtest/index.html — decision-first overview (v4, 2026-09-06).
 
 This is the layout that actually builds the live page: _build_index.py's
 main() calls render() here and writes docs/backtest/index.html.  Data
 (GROUPS/RET/SCATTER/BH_ROWS/PERIOD_CAGR...) still lives in _build_index.py;
 its legacy render()/TEMPLATE are DEAD code kept only as data helpers.
+SECTIONS (13 分類清單，完整性守門用) is defined in this module and unchanged
+by this redesign — only how it's *rendered* changed.
 
-2026-08-29 — 全展開分類總表重構（取代 2026-07-17～2026-08-24 的六 tab 設計）
+2026-09-06 — 目錄頁重設計（取代 2026-08-29～2026-08-31 的全展開卡片牆）
 ================================================================================
-Owner feedback（逐字）:「首頁的設計不好啊 分類的不完全 重新設計整個」「要非常清楚現在有哪些
-以及裡面有哪些回測 都要分類好」「要一目了然那種」。
+Owner-approved plan（見對話紀錄）。舊版問題：13 張卡片牆一次全展開，找「現在該看
+哪個」要靠肉眼掃 13 張卡；證據總覽入口埋在卡片深處；無篩選/搜尋。
 
-問題診斷：舊版六個 tab＋<details> 收合把內容藏起來，落地只看得到一個 tab（預設 us）；且分類
-清單本身漏頁——DIRECTORY["us"]「研究・因子」漏了 profitability／asset_growth／index_inclusion／
-insider 四頁（_nav_common.RESEARCH_FACTOR_LINKS 早已補齊 8 頁，但這裡沒同步）；「研究・主動式
-ETF」同時掛在 us 與 tw 兩個 tab（active_etf 專區頁重複出現）。
+新結構（由上到下）：
+  A. 頁首 — 標題 + 一句話定位 + 四格狀態統計改成可點篩選 chips + 即時搜尋框
+     （純前端 JS，零依賴，過濾下面的系統記分表與研究目錄兩個清單）。
+  B. 「先看這三個」— 三張等寬卡：實單主系統(→系統主控台) / 證據總覽(→
+     live_system_evidence + 9 個子證據 pill) / 方法論(評估標準/術語/分散)。
+  C. 系統記分表 — 單一表格，只收「實單」與「合格候補」（GROUPS[0]+GROUPS[1]，
+     人工判定 6+1=7 個系統，同舊版狀態統計的判定依據不變），欄位：系統/市場/
+     狀態徽章/一句結論/連結；一句結論來自 VERDICT_OVERRIDES 或抽取器。
+  D. 研究目錄 — 手風琴 <details>，13 個原分類重分組為 7 個主題（不遺漏任何
+     連結，原分類名稱保留為子標題），第一個主題預設展開。每列改成「標題 [狀態
+     徽章] — 一句結論」的 row（非 pill）。
+  E. 頁尾 — 生成戳記 + 頁數 + 術語對照表連結。
 
-新設計：拿掉 JS tab 過濾與所有分類清單的 <details> 收合，改成單頁全展開——十三個分類 section
-由上到下依序排列，捲動就能看到全部。結構：
+一句結論抽取器 `_extract_verdict()`：讀對應 docs/backtest/<dir>/index.html，
+優先 <meta name="description">，其次抓 class/id 含 hero/verdict/conclusion/
+lede/summary 的區塊文字，再退而求其次抓第一個 <h1> 之後的第一個 <p>；抓不到
+或太短(<12 字)或像 HTML/JS 殘渣就留空。VERDICT_OVERRIDES 只人工覆寫 11 項證據
+頁與 7 個實單/候補系統（讀原頁面 hero/meta 得出，未杜撰）。
 
-  1. 頁首（h1 + 方法論工具列）
-  2. 狀態總覽（4 張 stat 卡；研究／否決兩個數字改成從 SECTIONS 資料程式即時統計 _count_status()，
-     不再寫死；實單 1／合格候補 6 維持寫死＋註解，因為那是人工判定，不是可從 pill 狀態字串推導
-     的東西）
-  3. 實單主系統卡＋合格候補小卡（%CARD%，內容不動）
-  4. 錨點快跳列（13 個分類的 pill，純 <a href="#id">，無 JS 過濾；舊 hash #us/#tw/#multi/#lev/
-     #macro/#scan 用一小段 JS 映射到新 section id，讓外部深連結不斷）
-  5. 分類總表主體——兩區、十三個 section，全展開，見 SECTIONS 定義
-  6. 數據對比區（原本塞在 us tab 尾端的排名表／完整比較表／scatter／逐年/分期 CAGR／
-     US_RESEARCH／MULTI_RESEARCH link-card，內容與數字一個不動，搬到目錄之後）
-
-分類修正（對照舊六 tab → 新十三 section）：
-  * 個股因子（美股）section 直接從 _nav_common.RESEARCH_FACTOR_LINKS 取全部 8 頁（不再手抄
-    4 頁的舊清單）——這是漏頁修復的關鍵。
-  * 主動式ETF與基金 section 直接從 _nav_common.RESEARCH_ETF_LINKS 取（active_etf 專區 +
-    us_active_etf + tw_active_etf + tw_mutual_fund，共 4 頁），全站只在這裡掛一次；US/TW
-    波段 section 不再各自重複列一次。
-  * 頻率／均線／崩盤防禦三個研究主題原本分散在 us/tw/multi 三個 tab 各登一次，現併入「方法研究」
-    一個 section 的三個子列（直接取 _nav_common 對應的 RESEARCH_FREQ/MA/CRASH_LINKS），避免
-    同一頁在多分類重複出現。
-  * 台股選擇權／台股日內 section 直接取 _nav_common.OPTIONS_LINKS / INTRADAY_LINKS。
-  * 美股波段系統／台股波段／多資產·經典複製／槓桿疊加／總經／國家掃描 沿用舊 DIRECTORY 手抄清單
-    （_nav_common 對應清單頁數對不上，例如 MULTI_LINKS 6 頁 vs 這裡系統 9 頁含 gem/nonequity/
-    reits），逐字保留。
-  * 前瞻追蹤（美/台各 4 條）刻意在美股波段系統與台股波段兩個 section 都各自出現一次——同一顆
-    實單系統本來就橫跨美台兩市場，這不是需要去重的重複，_count_status() 用 URL 做 set 去重，
-    不會把它算成兩個不同頁面。
-
-完整性守門：_build_index.py main() 新增 _completeness_check()，走訪 docs/backtest/*/index.html
-的所有一層目錄，比對是否出現在 SECTIONS 的某個 url 裡；白名單（tw/multi/leverage/criteria/
-glossary，逐項附一行理由）之外沒掛到就印 WARNING。
-
-2026-08-31 — 移除「數據對比」區
-================================================================================
-Owner 指示：首頁只留「整個回測系列有哪些東西」的分類目錄，上方結構第 6 項數據對比區（排名表／
-完整比較表／scatter／逐年·分期 CAGR／US_RESEARCH／MULTI_RESEARCH link-card）整段拿掉，首頁到
-第 5 項分類總表為止。連帶清掉只服務該區塊的死碼：本檔局部 lane()/is_position()/slim_row()/
-section_header()（非 idx.group_header）/render() 內的 scat_color()、US_RESEARCH／
-MULTI_RESEARCH 常數、GREEN/RED/GREY/BLUE/GOLD 色碼常數、`import _build_index as idx`（無其他
-引用）、Chart.js CDN 與 chart-nav/chart-scatter 兩張圖、%MAIN_ROWS%/%TAIL_ROWS%/%BH_ROWS%/
-%US_RESEARCH%/%MULTI_RESEARCH%/%PERIOD_ROWS%/%FULL_ROWS%/%YEARLY_HEAD%/%YEARLY_ROWS%/
-%JS_RET%/%JS_SCATTER%/%JS_YEARS% 等 placeholder 與其填充邏輯。_build_index.py 本身不動——
-GROUPS/RET/BH_ROWS/PERIOD_CAGR/YEARLY_COLS/SCATTER/group_header/sys_row/yearly_cell 仍被
-_build_10y.py／_build_tw.py／_build_leverage.py／_build_multi.py 等子頁 builder 引用，只是
-首頁不再消費。
-
-2026-08-31 — 首頁改多欄卡片牆（masonry card wall）
-================================================================================
-Owner 從四份 mockup（variant_a/b/c/d）中拍板 A：多欄卡片牆。SECTIONS 資料常數一筆不動，只改
-render 邏輯：
-
-  * 十三個分類 section 從整行式 .section/.dir 改成緊湊 .card，桌機 3 欄 CSS columns masonry
-    （.masonry{column-count:3}）、平板 2 欄、手機 1 欄，卡片 break-inside:avoid 避免跨欄斷裂；
-    兩大區標題（系統・可交易／研究・非交易）維持 masonry 區塊前的 region-title。
-  * section sub（分類說明文字）不再渲染——資料留在 SECTIONS，render_section() 不輸出
-    section-sub div 了。
-  * 錨點快跳列整段拿掉（anchor_jump() 函式與 %ANCHOR_JUMP% placeholder 一併移除）——頁面縮
-    到卡片牆後已冗餘；但每個 section 的 id 仍原樣留在對應 .card 上，頁尾 LEGACY_HASH（舊六
-    tab hash → 新 section id）的 scrollIntoView script 不動，外部深連結（如 #us-swing／#us）
-    仍能捲到正確卡片。
-  * 有 CTA 專區入口的三個分類（tw-swing／multi-classic／leverage）原本佔滿版寬的 .cta banner
-    改為卡片頂部一顆 .card-cta pill（「{label} →」），入口不丟但不再佔整條卡片高度。
-  * _dir_rows_html() 更名 _card_body_html()，輸出從 .dir/.dir-row/.dir-lbl/.dir-pills 改成
-    .grp/.grp-lbl/.pills（沿用 mockup 命名並重寫對應 CSS）；卡內仍依 dir-lbl 子群分組（如總經
-    卡的 主線/亞洲/英語系/歐陸/新興 照舊），pill 樣式改緊湊版，狀態 badge（.b/.b-d/.b-b/.b-g）
-    色語意不變。舊 .section/.section-title/.sec-n/.section-sub/.dir*/.cta*/.anchor-jump CSS，
-    以及早已死碼的 .card{overflow-x:auto}（本檔內 0 處引用的表格卡殘留）一併移除，避免跟新
-    .card 選擇器衝突。
-
-2026-08-31 — pill 樣式一致化
-================================================================================
-Owner 看了卡片牆截圖後指示「都要用成一致的」：台股波段／多資產·經典複製／槓桿疊加三張卡的
-`.card-cta` 全寬深藍按鈕，與 us-swing 卡「20 年總覽」的 `.on` 深色填滿樣式，跟其他 pill 視覺
-不同級。改法：三個 hub 連結在 render_section() 動態併入該卡第一個子群的 pills（帶「專區」小標
-沿用既有 badge 體系，SECTIONS 資料不動——cta 併入純屬 render 層邏輯）；`.on` 拉平成一般 pill 底
-色＋細邊框＋粗體辨識，不再是深色填滿按鈕。清掉死碼 `.card-cta`/`.card-cta:hover` CSS 與
-render_section() 內的 cta_html 分支。
+SECTIONS 的 13 個分類、每個分類內的子群標籤、pill 版狀態徽章色語意（.b/.b-d/
+.b-b/.b-g）、完整性守門 (`_build_index._completeness_check`) 均原樣保留 —
+本次改版只動「呈現層」。舊 masonry 卡片牆 render 邏輯
+(render_section/_card_body_html/_pill/sections_html/featured_evidence_html/
+REGION_TITLE) 與其死碼一併移除。
 
 Run: python3 _build_index.py   (this module is imported, not run directly)
 """
@@ -111,16 +52,23 @@ import _nav_common as navc
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 from site_nav import full_nav_block
 
+# late-safe: _index_layout is only ever imported from inside
+# _build_index.main() (after GROUPS etc. are already defined at module
+# load time), so this import finds an already-populated sys.modules entry
+# instead of re-running _build_index.py from the top.
+import _build_index as bidx
+
 NAV_BLOCK = full_nav_block("system", "bt")
 OUT = Path(__file__).parent / "index.html"
+BASE_DIR = Path(__file__).parent
 
-# 現役卡片改為「引導卡」（2026-08-24）：不再貼會過期的績效快照與執行層參數（曾寫「10pp 門檻＋
-# 5% 取整」，已被 2026-07-22 升格的 20pp/10% 取整＋clamp 150% 取代而變成錯誤陳述）。單一事實
-# 來源改為系統主控台 /long-track/#live，本頁只給一句定位＋連結，不再重複任何會漂移的數字。
+# 現役卡片改為「引導卡」（2026-08-24）：不再貼會過期的績效快照與執行層參數。
+# 一句結論取自 /long-track/ 系統主控台頁 .sys-one 原文（未杜撰）。
 LIVE_CARD = {
     "tag": "實單主系統",
     "name": "QQQ/SMH · W52 × 自適應波動率 cap 1.5",
-    "sub": "實單即時淨值、曝險與執行層參數以系統主控台為準——本頁只做研究排名與分類目錄，不重貼會過期的快照數字。",
+    "sub": "兩市場各 70% 指數部＝W52 週線閘門 × 自適應波動率 × cap 1.5 ＋ A2 執行層。"
+           "即時淨值、曝險與執行層參數以系統主控台為準。",
     "url": "/long-track/#live",
 }
 
@@ -131,7 +79,7 @@ def _conv(links):
     return [(u, lb, st, False) for (u, lb, _k, st) in links]
 
 
-# ── 十三個分類 section（由上到下即為落地全展開順序）──────────────────────────
+# ── 十三個分類 section（規類資料本身不變，見 2026-08-29 設計註記）──────────────
 # region: "sys"=第一區「系統・可交易」／"research"=第二區「研究・非交易」
 # cta: 可選 (url, label, sub) —— 該分類自己的總覽/專區入口頁（既有 .cta 版型，逐字沿用）
 # rows: [ (row_label, [ (url, text, status_or_None, is_current[, emph]), ... ] ), ... ]
@@ -340,15 +288,289 @@ SECTIONS = [
 
 REGION_TITLE = {"sys": "系統・可交易", "research": "研究・非交易"}
 
-# 舊六 tab hash → 新 section id（讓外部深連結不斷；section id 本身就是錨點，JS 只是保險）
+# 舊六 tab hash → 新 section id（部分沿用自 2026-08-29 masonry 版；section id 本身
+# 仍以 <h4 id="…"> 的形式保留在手風琴子標題上，深連結一樣能命中並展開該手風琴）。
 LEGACY_HASH = {
     "us": "us-swing", "tw": "tw-swing", "multi": "multi-classic",
     "lev": "leverage", "macro": "macro", "scan": "scan",
 }
 
+# ── 7 大研究目錄主題（regroup，不遺漏任何連結；原 13 分類名稱保留為子標題）────
+THEMES = [
+    ("趨勢與波段", ["us-swing", "tw-swing", "multi-classic", "leverage"]),
+    ("選擇權與衍生品", ["us-options", "tw-options", "tw-intraday", "tw-cb"]),
+    ("因子與基金", ["factor", "active-fund"]),
+    ("方法研究", ["method"]),
+    ("總經・房價×GDP", ["macro"]),
+    ("國家掃描", ["scan"]),
+    ("實單系統證據（明細）", ["oos-validation"]),
+]
 
-def _section_count(sec) -> int:
-    return sum(len(items) for _label, items in sec["rows"])
+_SECTION_BY_ID = {sec["id"]: sec for sec in SECTIONS}
+
+# ── 一句結論人工覆寫：只覆寫 11 個證據頁（RESEARCH_OOS_LINKS 全部 10 條，含 hub）
+# 與 7 個實單/候補系統（GROUPS[0] 1 個 + GROUPS[1] 5 個 + 真正實單 1 個）。文字
+# 逐字取自各頁 <meta name="description"> 或 hero 區塊，僅做截字，未杜撰新內容。
+VERDICT_OVERRIDES = {
+    # 實單主系統的系統主控台入口（系統記分表用；文字取自 /long-track/ .sys-one）
+    "/long-track/#live": "兩市場各 70% 指數部＝W52 週線閘門 × 自適應波動率 × cap 1.5 ＋ A2 執行層。",
+    "/long-track-w52-adaptive/": "兩市場各 70% 指數部＝W52 週線閘門 × 自適應波動率 × cap 1.5 ＋ A2 執行層。",
+    # 7 個實單/候補系統（GROUPS[0]+GROUPS[1]，文字取自各頁 hero-top）
+    "/backtest/long_track_smh/": "半倉掛上 ATR 通道出場閘門，塌陷時比均線更快離場，且打敗同 CAGR 的現金稀釋對照。",
+    "/backtest/long_track_ensemble/": "集成治得了盤整病，治不了 gap risk——MDD 換了形狀，系統擁有者接受這個交換。",
+    "/backtest/slope_filter/": "用嚴格進場換更小回撤：CAGR 比 Faber 略低，Sharpe／Calmar／MDD 全面更好。",
+    "/backtest/long_track/": "保險費付在盤整、保障兌現在崩盤——修正 warmup 後 CAGR +9.75%。",
+    "/backtest/long_track_qqq/": "回撤保護全來自 W52 出場線——修正 warmup 後 CAGR +10.83%、MDD -25.37%。",
+    "/backtest/gem/": "發表後(2014~2026)優勢消失——全樣本風險調整優勢整包來自 2008 單一事件。",
+    # 11 個證據頁（RESEARCH_OOS_LINKS，文字取自各頁 <meta name="description">）
+    "/backtest/live_system_evidence/": "十一項證據總覽：跨標的證偽、保險價格、兩種洗牌測試、慢熊 base rate、"
+                                       "美台合併帳戶等，一頁看完整體證據強度。",
+    "/backtest/w52_adaptive_oos/": "實單規則鏈丟到規則選擇時從未看過的約 30 檔標的做前瞻證偽：過尺率 20.6%"
+                                    "（95% CI [10.3%, 36.8%]），判定：kill 訊號。",
+    "/backtest/insurance_premium/": "把三種下檔保險（均線閘門、跨資產分散、倉位稀釋）放在同一把尺上，"
+                                     "量出每一種的保費與理賠。",
+    "/backtest/adopted_bootstrap/": "用價格路徑與報酬流兩種 bootstrap，量出系統勝過買進持有的統計強度 p_B，"
+                                     "回答「這個裁決有多少是運氣」。",
+    "/backtest/regime_bootstrap/": "用真實牛熊段（非固定長度 block）當重抽單位，回答固定 block bootstrap "
+                                    "是否對趨勢規則不公平。",
+    "/backtest/combined_account/": "把美股與台股兩套實單合成一個帳戶，量合併後的 CAGR／MDD／Calmar 與"
+                                    "回撤同步性、匯率分解。",
+    "/backtest/slow_bear_base_rate/": "量化慢熊多久來一次：合併池每十年約 0.87 次。判定：慢熊約十年一遇，"
+                                       "保費要用十年攤。",
+    "/backtest/slow_bear_onset/": "116 個起點事件的可分辨性檢定，判定：有跡象但樣本不夠，只記錄。",
+    "/backtest/f_portfolio/": "F＝0.5×均線閘門實單A＋0.5×跨資產分散D1，問「疊兩種保險」是結構性優勢還是"
+                               "歷史巧合。",
+    "/backtest/cross_sectional_trend/": "把「每腿各自看均線」改成「持有相對最強的幾腿」，判定：形式不是關鍵。",
+}
+
+# _extract_verdict() 抓取用關鍵字（class 或 id 命中其一即視為候選區塊）
+_VERDICT_KEYWORDS = ("hero", "verdict", "conclusion", "lede", "summary")
+_verdict_cache: dict[str, tuple[str, str]] = {}
+_verdict_stats = {"auto": 0, "override": 0, "blank": 0}
+
+
+def _clean_text(raw: str) -> str:
+    t = re.sub(r"<[^>]+>", " ", raw)
+    t = t.replace("&amp;", "&").replace("&nbsp;", " ")
+    t = re.sub(r"\s+", " ", t).strip()
+    return t
+
+
+def _trim(text: str) -> str:
+    cut = text.find("。")
+    if cut != -1 and cut < 70:
+        return text[: cut + 1]
+    if len(text) > 70:
+        return text[:70] + "…"
+    return text
+
+
+def _extract_verdict(url: str) -> tuple[str, str]:
+    """回傳 (一句結論, 來源) — 來源 ∈ {override, auto, blank}。逐 url 記憶化。"""
+    if url in _verdict_cache:
+        return _verdict_cache[url]
+
+    override = VERDICT_OVERRIDES.get(url)
+    if override:
+        result = (override, "override")
+        _verdict_cache[url] = result
+        _verdict_stats["override"] += 1
+        return result
+
+    m = re.match(r"^/backtest/([^/#]+)/", url)
+    path = BASE_DIR / m.group(1) / "index.html" if m else None
+    html = None
+    if path and path.exists():
+        try:
+            html = path.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            html = None
+
+    text = None
+    if html:
+        md = re.search(
+            r'<meta\s+name=["\']description["\']\s+content=["\']([^"\']*)["\']',
+            html, re.I)
+        if md:
+            text = _clean_text(md.group(1))
+        if not text:
+            kw = "|".join(_VERDICT_KEYWORDS)
+            km = re.search(rf'(?:class|id)="[^"]*(?:{kw})[^"]*"[^>]*>', html, re.I)
+            if km:
+                chunk = html[km.end(): km.end() + 800]
+                candidate = _clean_text(chunk)
+                if len(candidate) >= 12:
+                    text = candidate
+        if not text:
+            h1m = re.search(r"<h1[^>]*>.*?</h1>", html, re.I | re.S)
+            if h1m:
+                pm = re.search(r"<p[^>]*>(.*?)</p>",
+                                html[h1m.end(): h1m.end() + 2000], re.I | re.S)
+                if pm:
+                    text = _clean_text(pm.group(1))
+
+    if not text or len(text) < 12 or re.match(r"^[{<]|^function\b|^var\b", text):
+        result = ("", "blank")
+        _verdict_stats["blank"] += 1
+    else:
+        result = (_trim(text), "auto")
+        _verdict_stats["auto"] += 1
+    _verdict_cache[url] = result
+    return result
+
+
+# ── 資料層分類：實單 / 合格候補 兩組系統的 url 集合（人工判定，來自 GROUPS）───
+_CANDIDATE_ROWS = bidx.GROUPS[0][1] + bidx.GROUPS[1][1]  # ✓ 採用(1) + 合格候補(5)
+_CANDIDATE_URLS = {row[1] for row in _CANDIDATE_ROWS}
+_LIVE_URLS = {"/long-track/#live", "/long-track-w52-adaptive/"}
+_REJECTED_STATUS = ("否決", "失敗", "負貢獻", "未過")
+
+
+def _row_cat(url: str, status: str | None, text: str) -> str:
+    """篩選 chip 用的分類：live / candidate / research / rejected / ''（無狀態）。"""
+    if url in _LIVE_URLS or status == "實單":
+        return "live"
+    if url in _CANDIDATE_URLS:
+        return "candidate"
+    if (status in _REJECTED_STATUS) or ("（歸檔）" in text):
+        return "rejected"
+    if status:
+        return "research"
+    return ""
+
+
+def _badge(status):
+    # 四檔語意色（2026-08-24 統一）：否決/失敗/負貢獻/未過 → 紅；實單 → 金；
+    # 其餘（研究/專區/模擬中/觀察/追蹤中/即將，皆屬「實驗·研究」廣義）→ 藍。
+    if not status:
+        return ""
+    if status in _REJECTED_STATUS:
+        kind = "d"
+    elif status == "實單":
+        kind = "g"
+    else:
+        kind = "b"
+    return f'<span class="b b-{kind}">{status}</span>'
+
+
+# ══════════════════════ B. 先看這三個 ══════════════════════
+def top3_html() -> str:
+    evidence_pills = "".join(
+        f'<a href="{u}" data-cat="research">{lb}</a>'
+        for (u, lb, _k, _st) in navc.RESEARCH_OOS_LINKS if _k != "evidence_hub")
+    return f"""<div class="top3">
+  <a class="t3-card t3-live" href="{LIVE_CARD['url']}" data-cat="live">
+    <div class="t3-tag">① 實單主系統</div>
+    <div class="t3-name">QQQ/SMH 與 0050/2330・W52×自適應波動率 cap 1.5</div>
+    <div class="t3-sub">{LIVE_CARD['sub']}</div>
+    <span class="t3-arrow">前往系統主控台 →</span>
+  </a>
+  <div class="t3-card">
+    <div class="t3-tag">② 實單系統的證據總覽</div>
+    <div class="t3-name"><a href="/backtest/live_system_evidence/">先看這頁</a></div>
+    <div class="t3-sub">十一項預註冊測試白話串講：規則普不普遍、保費多少、慢熊多久來一次、
+      贏了多少是運氣、美台是不是同一注。</div>
+    <div class="t3-pills">{evidence_pills}</div>
+  </div>
+  <div class="t3-card">
+    <div class="t3-tag">③ 方法論</div>
+    <div class="t3-name">跨分類通用</div>
+    <div class="t3-sub">判定框架、名詞定義與「為什麼分散/免費午餐不是萬能」三頁。</div>
+    <div class="t3-pills">
+      <a href="/backtest/criteria/">評估標準</a>
+      <a href="/backtest/glossary/">術語對照表</a>
+      <a href="/backtest/free_lunch/">分散與免費午餐</a>
+    </div>
+  </div>
+</div>"""
+
+
+# ══════════════════════ C. 系統記分表 ══════════════════════
+def scoreboard_html() -> str:
+    rows = []
+    live_verdict, _ = _extract_verdict(LIVE_CARD["url"])
+    rows.append(("QQQ/SMH · 0050/2330 · W52×自適應波動率 cap 1.5", LIVE_CARD["url"],
+                 "美股+台股", "實單", live_verdict))
+    for (name, url, _sub, *_rest) in _CANDIDATE_ROWS:
+        verdict, _src = _extract_verdict(url)
+        market = "台股" if ("2330" in name or "0050" in name) else "美股"
+        rows.append((name, url, market, "候補", verdict))
+
+    # sort: 實單 first, then 候補 (stable — preserves GROUPS order within each)
+    rows.sort(key=lambda r: 0 if r[3] == "實單" else 1)
+
+    body = ""
+    for name, url, market, status, verdict in rows:
+        cat = "live" if status == "實單" else "candidate"
+        badge = _badge(status)
+        body += (f'<tr data-cat="{cat}"><td><a href="{url}">{name}</a></td>'
+                  f'<td>{market}</td><td>{badge}</td>'
+                  f'<td class="sb-verdict">{verdict}</td>'
+                  f'<td><a href="{url}">看詳頁 →</a></td></tr>')
+
+    return f"""<div class="section-block">
+  <h2 class="section-h">系統記分表</h2>
+  <div class="section-note">已上實單或通過 L1 門檻的候補系統——{len(rows)} 個。</div>
+  <div class="sb-wrap"><table class="scoreboard">
+    <thead><tr><th>系統</th><th>市場</th><th>狀態</th><th>一句結論</th><th></th></tr></thead>
+    <tbody>{body}</tbody>
+  </table></div>
+  <div class="sb-footnote">數字見 <a href="/backtest/criteria/">評估標準</a> 頁與
+    <a href="/long-track/#live">系統主控台</a>。</div>
+</div>"""
+
+
+# ══════════════════════ D. 研究目錄（手風琴） ══════════════════════
+def _theme_row_html(item) -> str:
+    url, text, status = item[0], item[1], item[2]
+    verdict, _src = _extract_verdict(url)
+    cat = _row_cat(url, status, text)
+    badge = _badge(status)
+    verdict_html = f'<span class="d-verdict">{verdict}</span>' if verdict else ""
+    cat_attr = f' data-cat="{cat}"' if cat else ' data-cat=""'
+    return (f'<div class="d-row"{cat_attr}>'
+            f'<a href="{url}">{text}</a>{badge}{verdict_html}</div>')
+
+
+def _theme_html(theme_name: str, sec_ids: list[str], is_first: bool) -> str:
+    body = ""
+    page_count = 0
+    tally: dict[str, int] = {}
+    for sid in sec_ids:
+        sec = _SECTION_BY_ID[sid]
+        cta_row = ""
+        if sec["cta"]:
+            url, label, _sub = sec["cta"]
+            cta_row = _theme_row_html((url, f"{label}（專區入口）", "專區"))
+        body += f'<h4 class="d-subhead" id="{sid}">{sec["emoji"]} {sec["name"]}</h4>{cta_row}'
+        for label, items in sec["rows"]:
+            if label:
+                body += f'<div class="d-grouplbl">{label}</div>'
+            for item in items:
+                page_count += 1
+                status = item[2] or "—"
+                tally[status] = tally.get(status, 0) + 1
+                body += _theme_row_html(item)
+    tally_str = " · ".join(f"{k}×{v}" for k, v in
+                            sorted(tally.items(), key=lambda kv: -kv[1]))
+    open_attr = " open" if is_first else ""
+    return f"""<details class="d-theme"{open_attr}>
+  <summary>{theme_name}<span class="d-n">{page_count} 頁</span><span class="d-tally">{tally_str}</span></summary>
+  <div class="d-body">{body}</div>
+</details>"""
+
+
+def directory_html() -> str:
+    body = "".join(_theme_html(name, ids, i == 0) for i, (name, ids) in enumerate(THEMES))
+    return f"""<div class="section-block">
+  <h2 class="section-h">研究目錄</h2>
+  <div class="section-note">十三個分類重分組成七個主題，展開看完整清單；點標題可收合。</div>
+  {body}
+</div>"""
+
+
+def _total_page_count() -> int:
+    return sum(len(items) for sec in SECTIONS for _label, items in sec["rows"])
 
 
 def _count_status():
@@ -362,143 +584,58 @@ def _count_status():
             for item in items:
                 url, text, status = item[0], item[1], item[2]
                 archived = "（歸檔）" in text
-                if (status in ("否決", "失敗", "負貢獻", "未過")) or archived:
+                if (status in _REJECTED_STATUS) or archived:
                     rej_urls.add(url)
                 elif status and status != "實單":
                     exp_urls.add(url)
     return len(exp_urls), len(rej_urls)
 
 
-def _badge(status):
-    # 四檔語意色（2026-08-24 統一）：否決/失敗/負貢獻/未過 → 紅；實單 → 金；
-    # 其餘（研究/專區/模擬中/觀察/追蹤中/即將，皆屬「實驗·研究」廣義）→ 藍。
-    if not status:
-        return ""
-    if status in ("否決", "失敗", "負貢獻", "未過"):
-        kind = "d"
-    elif status == "實單":
-        kind = "g"
-    else:
-        kind = "b"
-    return f'<span class="b b-{kind}">{status}</span>'
-
-
-def _pill(url, text, status=None, current=False, emph=False):
-    # emph: macro-only "entry page" flag (5th tuple element) — reuses the
-    # same navy-gradient look as the current-page ".on" state so the two
-    # housing_gdp/ entry pages visually outrank the 14 country case pills
-    # without introducing a new color. Other sections' 4-tuples default emph=False.
-    classes = []
-    if current:
-        classes.append("on")
-    if emph:
-        classes.append("entry")
-    cls = f' class="{" ".join(classes)}"' if classes else ""
-    return f'<a href="{url}"{cls}>{text}{_badge(status)}</a>'
-
-
-def _card_body_html(rows):
-    body = ""
-    for label, items in rows:
-        pills = "".join(_pill(*p) for p in items)
-        body += (f'<div class="grp"><div class="grp-lbl">{label}</div>'
-                 f'<div class="pills">{pills}</div></div>')
-    return body
-
-
-def render_section(sec) -> str:
-    """Render one分類 as a compact masonry card. sec['sub'] (section 副標) is
-    intentionally not emitted here (2026-08-31) — the data stays in SECTIONS,
-    the card wall just doesn't render it.
-
-    sec['cta'] (hub 專區入口，2026-08-31 起不再是全寬 .card-cta 按鈕) is spliced
-    into the first row group as an ordinary leading pill tagged with a "專區"
-    status badge — SECTIONS itself is not mutated, this is render-layer only."""
-    n = _section_count(sec)
-    rows = sec["rows"]
-    if sec["cta"]:
-        url, label, _sub = sec["cta"]
-        hub_pill = (url, label, "專區", False)
-        first_label, first_items = rows[0]
-        rows = [(first_label, (hub_pill,) + tuple(first_items))] + list(rows[1:])
-    return (f'<div class="card" id="{sec["id"]}">'
-            f'<h3>{sec["emoji"]} {sec["name"]}<span class="n">{n} 頁</span></h3>'
-            f'{_card_body_html(rows)}</div>')
-
-
-def sections_html() -> str:
-    out, last_region = "", None
-    for sec in SECTIONS:
-        if sec["region"] != last_region:
-            if last_region is not None:
-                out += "</div>"
-            out += f'<h2 class="region-title">{REGION_TITLE[sec["region"]]}</h2><div class="masonry">'
-            last_region = sec["region"]
-        out += render_section(sec)
-    out += "</div>"
-    return out
-
-
-def featured_evidence_html() -> str:
-    """實單主系統的證據總覽——置頂顯眼區塊（2026-09-06）。Owner 反映舊版把 evidence hub
-    的入口埋在～20 張卡片中的倒數一張，找不到路。這裡在 live-wrap 之前另開一個跨欄寬卡，
-    複用 .card 視覺語彙但加寬＋左側色條標高亮，主連結 + 底下一排 RESEARCH_OOS_LINKS 全部
-    連結（含 hub 自己），順序照 _nav_common 定義，不重排。"""
-    pills = "".join(_pill(u, lb, None, False) for u, lb, _k, _st in navc.RESEARCH_OOS_LINKS)
-    return f"""<div class="featured-evidence">
-  <div class="fe-tag">實單主系統・證據總覽</div>
-  <h2><a href="/backtest/live_system_evidence/">實單主系統的證據總覽（先看這頁）</a></h2>
-  <p>九＋二項預註冊測試，白話串講：規則普不普遍、保費多少、慢熊多久來一次、贏了多少是運氣、美台是不是同一注。</p>
-  <div class="fe-pills">{pills}</div>
-</div>"""
-
-
 def render():
-    c = LIVE_CARD
-    card = f"""<div class="acard">
-  <div class="ac-tag">{c['tag']}</div>
-  <div class="ac-name">{c['name']}</div>
-  <div class="ac-sub">{c['sub']}</div>
-  <a class="ac-link" href="{c['url']}">前往系統主控台 →</a>
-</div>
-<div class="acard-note">
-  <div class="acn-title">其餘已採用 / 候補(未上實倉)</div>
-  <ul>
-    <li><a href="/backtest/long_track_ensemble/">SPY/QQQ E3 集成</a> — 合格候補(原列採用，未上實倉)· 核心防守</li>
-    <li><a href="/backtest/slope_filter/">SPY/AGG 斜率</a> — 合格候補 · 勝 B&amp;H 風險調整(SPY 特定；2026-06 審計改還原日線 MDD −22.13% 後，「近支配」已撤回)</li>
-  </ul>
-</div>"""
-
-    # 狀態總覽（2026-08-29 改版）：研究／否決兩數字改為即時統計（見 _count_status），
-    # 實單=1／合格候補=6 維持人工判定寫死——合格候補＝GROUPS「✓ 採用」+「合格候補」兩組
-    # 共 6 個系統，屬人工分類判斷，不是能從 pill 狀態字串機械推導的東西。
     exp_n, rej_n = _count_status()
-    status_overview = f"""<div class="stat-row">
-  <a class="stat-card stat-live" href="/long-track/#live">
+    n_candidate = len(_CANDIDATE_ROWS)
+
+    header_stats = f"""<div class="stat-row">
+  <div class="stat-card stat-live" data-filter="live">
     <div class="stat-n">1</div><div class="stat-k">實單</div>
-    <div class="stat-d">套 · 系統主控台 →</div>
-  </a>
-  <div class="stat-card stat-cand">
-    <div class="stat-n">6</div><div class="stat-k">合格候補</div>
+    <div class="stat-d">套 · <a href="/long-track/#live" onclick="event.stopPropagation()">系統主控台 →</a></div>
+  </div>
+  <div class="stat-card stat-cand" data-filter="candidate">
+    <div class="stat-n">{n_candidate}</div><div class="stat-k">合格候補</div>
     <div class="stat-d">通過 L1 門檻，未上實倉</div>
   </div>
-  <div class="stat-card stat-exp">
+  <div class="stat-card stat-exp" data-filter="research">
     <div class="stat-n">{exp_n}</div><div class="stat-k">實驗・研究</div>
     <div class="stat-d">探索性頁面，非實倉候選</div>
   </div>
-  <div class="stat-card stat-rej">
+  <div class="stat-card stat-rej" data-filter="rejected">
     <div class="stat-n">{rej_n}</div><div class="stat-k">否決・歸檔</div>
     <div class="stat-d">已否決或降級為對照</div>
   </div>
+</div>
+<div class="filter-bar">
+  <input id="bt-search" type="search" placeholder="搜尋系統名稱或一句結論…" aria-label="搜尋">
+  <button id="bt-filter-reset" type="button">全部</button>
 </div>"""
+
+    # verdict extraction 統計（放在 build console，非頁面內容）——覆蓋 top3/scoreboard/
+    # directory 三處全部呼叫過 _extract_verdict 之後才印，統計以 url 記憶化去重。
+    top3 = top3_html()
+    scoreboard = scoreboard_html()
+    directory = directory_html()
+    print(f"Verdict extraction — override: {_verdict_stats['override']}, "
+          f"auto: {_verdict_stats['auto']}, blank: {_verdict_stats['blank']} "
+          f"(unique urls: {len(_verdict_cache)})")
 
     html = TEMPLATE
     for k, v in {
-        "%NAV%": NAV_BLOCK, "%STATUS_OVERVIEW%": status_overview,
-        "%SECTIONS%": sections_html(),
-        "%CARD%": card,
-        "%FEATURED_EVIDENCE%": featured_evidence_html(),
+        "%NAV%": NAV_BLOCK,
+        "%HEADER_STATS%": header_stats,
+        "%TOP3%": top3,
+        "%SCOREBOARD%": scoreboard,
+        "%DIRECTORY%": directory,
         "%JS_LEGACY_HASH%": json.dumps(LEGACY_HASH),
+        "%PAGE_COUNT%": str(_total_page_count()),
         "%NOW%": datetime.now().strftime("%Y-%m-%d"),
     }.items():
         html = html.replace(k, v)
@@ -513,14 +650,7 @@ TEMPLATE = r"""<!DOCTYPE html>
 <title>量化回測總覽 | InvestMQuest Research</title>
 <link rel="stylesheet" href="/assets/imq-base.css">
 <style>
-/* 2026-08-24 視覺改版：全站奶油紙×深海軍藍×金 design token（/assets/imq-base.css）取代原本
-   灰白 generic 配色（--bg:#f7f8fa + 孤立 --green/--red）。以下 :root 只「別名」imq-base 既有
-   token（--ink/--body/--sec/--paper/--line/--accent/--gold*/--pos/--neg/--warn），不重定義其值；
-   保留 --red/--green/--muted/--bg/--border/--text 等舊名是因為 _build_index.py（GROUPS 資料層，
-   不在本次改版範圍）的 Python 內嵌 inline style 仍寫死 var(--red)/var(--green)/var(--muted)，
-   別名讓那些既有 inline style 不必逐一修改就能自動吃到新色，數字/文字內容全部不動。四檔語意色：
-   實單=金(--gold*) / 採用·候補=綠(--pos 別名 --green) / 實驗·研究=藍(--accent) /
-   否決·歸檔=紅(--neg 別名 --red) / 基準=灰(--sec 別名 --grey)。 */
+/* 別名 imq-base token，數字/文字內容全部不動（沿用 2026-08-24 版規則）。 */
 :root{
   --text:var(--body); --muted:var(--sec); --border:var(--line); --bg:var(--paper);
   --green:var(--pos); --green-bg:#eafaef; --green-border:#bfe0c8;
@@ -534,136 +664,165 @@ TEMPLATE = r"""<!DOCTYPE html>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--sans),-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;font-size:15px}
 a{color:var(--ink);text-decoration:none}a:hover{text-decoration:underline}
-.container{max-width:1080px;margin:0 auto;padding:0 1.5rem}
+.container{max-width:1100px;margin:0 auto;padding:0 1.5rem}
 .page-hdr{padding:1.5rem 0 1rem;background:var(--card);border-bottom:1px solid var(--border)}
 .page-hdr h1{font-family:var(--serif);font-size:1.6rem;font-weight:700;letter-spacing:-.01em;color:var(--ink)}
-.page-hdr .sub{color:var(--muted);font-size:.85rem;margin-top:.15rem}
+.page-hdr .sub{color:var(--muted);font-size:.88rem;margin-top:.3rem;max-width:70ch;line-height:1.7}
 .crumb{font-size:.8rem;color:var(--muted);margin-bottom:.35rem}.crumb a{color:var(--muted)}
-.methods{display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;margin-top:.9rem;font-size:.8rem}
-.methods .m-lbl{font-size:.66rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
-.methods a{padding:.2rem .6rem;background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:999px;color:var(--accent);font-weight:600}
-/* 狀態總覽——頁首下方第一屏，四張狀態卡 */
+/* 狀態總覽——現在是可點篩選 chip */
 .stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;margin-top:1rem}
-.stat-card{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--grey);border-radius:10px;padding:.75rem .9rem;color:inherit}
+.stat-card{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--grey);border-radius:10px;padding:.75rem .9rem;color:inherit;cursor:pointer;user-select:none;transition:box-shadow .12s,border-color .12s}
+.stat-card:hover{box-shadow:var(--sh-1)}
+.stat-card.chip-active{border-color:var(--ink);box-shadow:0 0 0 2px var(--ink) inset}
 .stat-card .stat-n{font-family:var(--mono);font-size:1.5rem;font-weight:700;color:var(--ink);line-height:1.1}
 .stat-card .stat-k{font-size:.78rem;font-weight:700;color:var(--ink);margin-top:.2rem}
 .stat-card .stat-d{font-size:.7rem;color:var(--muted);margin-top:.15rem}
+.stat-card .stat-d a{color:inherit;font-weight:600}
 .stat-live{border-left-color:var(--gold-deep)}
-.stat-live .stat-n,.stat-live .stat-d{color:var(--gold-deep)}
-.stat-live:hover{border-color:var(--gold-deep);text-decoration:none;box-shadow:var(--sh-1)}
+.stat-live .stat-n{color:var(--gold-deep)}
 .stat-cand{border-left-color:var(--green)}
 .stat-exp{border-left-color:var(--accent)}
 .stat-rej{border-left-color:var(--red)}
-.region-title{font-family:var(--serif);font-size:1.3rem;font-weight:700;color:var(--ink);margin:2rem 0 .3rem;padding-top:1.3rem;border-top:2px solid var(--ink)}
-/* 多欄卡片牆（2026-08-31）——CSS columns masonry：桌機 3 欄／平板 2 欄／手機 1 欄 */
-.masonry{column-count:3;column-gap:1rem}
-@media(max-width:1100px){.masonry{column-count:2}}
-@media(max-width:680px){.masonry{column-count:1}}
-.card{break-inside:avoid;background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:var(--sh-1);padding:.9rem 1rem;margin:0 0 1rem}
-.card h3{font-size:.94rem;font-weight:700;color:var(--ink);display:flex;align-items:baseline;gap:.4rem;padding-bottom:.45rem;border-bottom:1px solid var(--border);margin-bottom:.55rem}
-.card h3 .n{margin-left:auto;font-size:.66rem;font-weight:600;color:var(--muted);font-family:var(--mono)}
-.grp{margin-bottom:.5rem}
-.grp:last-child{margin-bottom:0}
-.grp-lbl{font-size:.6rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.28rem}
-.pills{display:flex;flex-wrap:wrap;gap:.26rem}
-.pills a{display:inline-flex;align-items:center;gap:.24rem;padding:.18rem .48rem;background:var(--neutral-bg);color:var(--text);border-radius:999px;font-size:.68rem;font-weight:500;white-space:nowrap;line-height:1.4}
-.pills a:hover{background:var(--line);text-decoration:none}
-.pills a.on{background:var(--neutral-bg);color:var(--text);font-weight:700;border:1px solid var(--accent)}
-.pills a.entry{background:linear-gradient(135deg,var(--accent-ink),var(--accent));color:#fff;font-weight:700}
-.pills a.entry:hover{opacity:.92}
+.filter-bar{display:flex;gap:.5rem;margin-top:.7rem}
+.filter-bar #bt-search{flex:1;padding:.5rem .8rem;border:1px solid var(--border);border-radius:8px;font-size:.85rem;background:var(--card);color:var(--text)}
+.filter-bar #bt-search:focus{outline:2px solid var(--accent);outline-offset:1px}
+.filter-bar button{padding:.5rem 1rem;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--muted);font-size:.8rem;font-weight:600;cursor:pointer}
+.filter-bar button:hover{color:var(--ink);border-color:var(--ink)}
+/* B. 先看這三個 */
+.top3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:1.4rem}
+.t3-card{display:block;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1.2rem;color:inherit;display:flex;flex-direction:column}
+.t3-live{border:1px solid var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
+.t3-tag{font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.4rem}
+.t3-live .t3-tag{color:var(--gold-deep)}
+.t3-name{font-family:var(--serif);font-size:1.02rem;font-weight:700;color:var(--ink);margin-bottom:.4rem}
+.t3-sub{font-size:.82rem;color:var(--sec);line-height:1.65;flex:1}
+.t3-arrow{margin-top:.7rem;font-size:.84rem;font-weight:700;color:var(--gold-deep)}
+.t3-pills{display:flex;flex-wrap:wrap;gap:.28rem;margin-top:.7rem}
+.t3-pills a{display:inline-flex;padding:.16rem .5rem;background:var(--neutral-bg);color:var(--text);border-radius:999px;font-size:.68rem;font-weight:500;white-space:nowrap}
+.t3-pills a:hover{background:var(--line);text-decoration:none}
+@media(max-width:820px){.top3{grid-template-columns:1fr}}
+/* C. 系統記分表 */
+.section-block{margin-top:2.2rem}
+.section-h{font-family:var(--serif);font-size:1.25rem;font-weight:700;color:var(--ink);padding-top:1rem;border-top:2px solid var(--ink)}
+.section-note{font-size:.8rem;color:var(--muted);margin:.35rem 0 .9rem}
+.sb-wrap{overflow-x:auto;background:var(--card);border:1px solid var(--border);border-radius:10px}
+table.scoreboard{width:100%;border-collapse:collapse;font-size:.86rem}
+table.scoreboard th,table.scoreboard td{text-align:left;padding:.6rem .8rem;border-bottom:1px solid var(--border);vertical-align:top}
+table.scoreboard th{background:var(--neutral-bg);font-weight:600;font-size:.72rem;text-transform:uppercase;letter-spacing:.03em;color:var(--muted)}
+table.scoreboard tbody tr:last-child td{border-bottom:0}
+table.scoreboard tbody tr:hover td{background:#fbf8f1}
+.sb-verdict{color:var(--sec);font-size:.82rem;line-height:1.55}
+.sb-footnote{font-size:.76rem;color:var(--muted);margin-top:.6rem}
+/* D. 研究目錄（手風琴） */
+details.d-theme{background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:.7rem}
+details.d-theme summary{padding:.85rem 1.1rem;font-weight:700;font-size:.95rem;cursor:pointer;list-style:none;display:flex;align-items:center;gap:.6rem;color:var(--ink);font-family:var(--serif)}
+details.d-theme summary::before{content:'▸';color:var(--grey);transition:transform .15s;font-family:sans-serif}
+details.d-theme[open] summary::before{transform:rotate(90deg)}
+.d-n{font-size:.66rem;font-weight:600;color:var(--muted);font-family:var(--mono)}
+.d-tally{font-size:.68rem;font-weight:500;color:var(--muted);margin-left:auto;text-align:right}
+.d-body{padding:.2rem 1.1rem 1rem}
+.d-subhead{font-size:.82rem;font-weight:700;color:var(--ink);margin:1rem 0 .3rem;padding-top:.7rem;border-top:1px solid var(--border)}
+.d-subhead:first-child{margin-top:.2rem;padding-top:0;border-top:0}
+.d-grouplbl{font-size:.62rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:.5rem 0 .15rem}
+.d-row{display:flex;align-items:baseline;flex-wrap:wrap;gap:.4rem;padding:.28rem 0;font-size:.84rem;border-bottom:1px dotted var(--border)}
+.d-row:last-child{border-bottom:0}
+.d-row a{font-weight:600;color:var(--ink)}
+.d-verdict{color:var(--sec);font-size:.78rem;flex-basis:100%;line-height:1.5}
+@media(min-width:720px){.d-verdict{flex-basis:auto;margin-left:.3rem}}
 .b{font-size:.6rem;font-weight:700;padding:.03rem .32rem;border-radius:4px;line-height:1.5}
 .b-d{background:var(--red-bg);color:var(--red)}
 .b-b{background:var(--accent-bg);color:var(--accent)}
 .b-g{background:var(--gold-bg);color:var(--gold-deep)}
-.pills a.entry .b{background:rgba(255,255,255,.22);color:#fff}
-/* 置頂證據總覽卡（2026-09-06）——比一般 .card 寬、左側粗色條標高亮，放在 live-wrap 之前 */
-.featured-evidence{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:12px;padding:1.1rem 1.3rem;margin-top:1rem;box-shadow:var(--sh-1)}
-.fe-tag{display:inline-block;font-size:.72rem;font-weight:700;padding:.2rem .6rem;border-radius:99px;margin-bottom:.5rem;background:var(--accent-bg);color:var(--accent)}
-.featured-evidence h2{font-family:var(--serif);font-size:1.1rem;font-weight:700;letter-spacing:-.01em}
-.featured-evidence h2 a{color:var(--ink)}
-.featured-evidence p{font-size:.84rem;color:var(--sec);margin:.4rem 0 .7rem;line-height:1.7}
-.fe-pills{display:flex;flex-wrap:wrap;gap:.3rem}
-.fe-pills a{display:inline-flex;align-items:center;gap:.24rem;padding:.22rem .58rem;background:var(--neutral-bg);color:var(--text);border-radius:999px;font-size:.7rem;font-weight:500;white-space:nowrap}
-.fe-pills a:hover{background:var(--line);text-decoration:none}
-.live-wrap{display:grid;grid-template-columns:1.3fr 1fr;gap:1rem;margin-top:1rem}
-/* 引導卡——實單卡不再貼會過期的數字快照，只給定位＋連結 */
-.acard{background:var(--card);border:1px solid var(--gold);border-radius:12px;padding:1.2rem 1.3rem;box-shadow:0 0 0 1px var(--gold) inset;display:flex;flex-direction:column}
-.ac-tag{display:inline-block;font-size:.72rem;font-weight:700;padding:.2rem .6rem;border-radius:99px;margin-bottom:.5rem;background:var(--gold-deep);color:#fff;align-self:flex-start}
-.ac-name{font-family:var(--serif);font-size:1.25rem;font-weight:700;letter-spacing:-.01em;color:var(--ink)}
-.ac-sub{font-size:.84rem;color:var(--sec);margin:.4rem 0 1rem;line-height:1.7}
-.ac-link{font-size:.86rem;font-weight:700;color:var(--gold-deep);margin-top:auto}
-.acard-note{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1.3rem}
-.acn-title{font-size:.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.6rem}
-.acard-note ul{list-style:none;font-size:.84rem;line-height:1.9}
-.acard-note li{padding-left:.9rem;position:relative}
-.acard-note li::before{content:'·';position:absolute;left:0;color:var(--grey);font-weight:700}
-table{width:100%;border-collapse:collapse;font-size:.86rem}
-th,td{text-align:left;padding:.55rem .7rem;border-bottom:1px solid var(--border)}
-th{background:var(--neutral-bg);font-weight:600;font-size:.74rem;text-transform:uppercase;letter-spacing:.03em;color:var(--muted)}
-td{font-variant-numeric:tabular-nums}
-tbody tr:hover td{background:#fbf8f1}
-.tag{display:inline-block;padding:.13rem .5rem;border-radius:4px;font-size:.7rem;font-weight:600;white-space:nowrap;background:var(--neutral-bg);color:var(--text);border:1px solid var(--border)}
-.tag-best{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
-.tag-fail{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
-.tag-bh{background:var(--neutral-bg);color:var(--muted);border:1px solid var(--border)}
-.link-card{display:flex;align-items:center;gap:.75rem;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem 1.2rem;margin-bottom:1rem;color:var(--ink)}
-.link-card:hover{border-color:var(--ink);text-decoration:none}
-.link-card .lc-name{font-weight:700;font-size:1rem}.link-card .lc-sub{font-size:.78rem;color:var(--muted)}.link-card .lc-arrow{margin-left:auto;color:var(--ink);font-weight:700}
-.chart-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.1rem;margin-bottom:1rem}
-.chart-card h3{font-size:.92rem;font-weight:600;color:var(--ink);margin-bottom:.4rem}
-.chart-sub{font-size:.76rem;color:var(--muted);margin-bottom:.5rem}
-.chart-wrap{position:relative;width:100%;height:330px}
-.grid2{display:grid;grid-template-columns:3fr 2fr;gap:1rem}
-details{background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:.75rem}
-details summary{padding:.85rem 1.2rem;font-weight:600;font-size:.9rem;cursor:pointer;list-style:none;display:flex;align-items:center;gap:.5rem;color:var(--ink)}
-details summary::before{content:'▸';color:var(--grey);transition:transform .15s}
-details[open] summary::before{transform:rotate(90deg)}
-details .d-body{padding:0 1.2rem 1.2rem;overflow-x:auto}
 footer{background:var(--card);border-top:1px solid var(--border);color:var(--muted);text-align:center;padding:1.2rem 0;font-size:.78rem;margin-top:2rem}
-@media(max-width:820px){.live-wrap{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}table{font-size:.76rem}th,td{padding:.4rem .45rem}
-.stat-row{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:768px){
+  .stat-row{grid-template-columns:repeat(2,1fr)}
+  table.scoreboard{font-size:.76rem}
+  table.scoreboard th,table.scoreboard td{padding:.45rem .5rem}
+  table.scoreboard thead{display:none}
+  table.scoreboard tbody tr{display:block;padding:.6rem .5rem;border-bottom:1px solid var(--border)}
+  table.scoreboard tbody td{display:block;border-bottom:0;padding:.15rem 0}
+}
 </style>
 </head>
 <body>
 %NAV%
 <div class="page-hdr"><div class="container">
   <div class="crumb"><a href="/">首頁</a> / 量化回測</div>
-  <h1>量化回測總覽</h1>
-  <div class="sub">全展開分類總表——十三個分類、全部回測頁面，捲動即可看完，不需要點 tab。</div>
-  <div class="methods">
-    <span class="m-lbl">方法論（跨類通用）</span>
-    <a href="/backtest/criteria/">評估標準</a>
-    <a href="/backtest/glossary/">術語對照表</a>
-    <a href="/backtest/free_lunch/">分散與免費午餐</a>
-  </div>
-  %STATUS_OVERVIEW%
+  <h1>量化回測</h1>
+  <div class="sub">全部回測頁的目錄：先看實單系統與它的證據，再看系統記分表，最後是研究目錄。</div>
+  %HEADER_STATS%
 </div></div>
 
 <div class="container">
 
-%FEATURED_EVIDENCE%
+%TOP3%
 
-<div class="live-wrap">%CARD%</div>
+%SCOREBOARD%
 
-%SECTIONS%
+%DIRECTORY%
 
 </div>
-<footer><div class="container">&copy; 2026 InvestMQuest Research · 量化回測總覽 · 真實 yfinance · 生成 %NOW%</div></footer>
+<footer><div class="container">
+  &copy; 2026 InvestMQuest Research · 量化回測總覽 · 共 %PAGE_COUNT% 頁 ·
+  <a href="/backtest/glossary/">術語對照表</a> · 生成 %NOW%
+</div></footer>
 
 <script>
 var LEGACY_HASH=%JS_LEGACY_HASH%;
 (function(){
-  // 舊六 tab hash(#us/#tw/#multi/#lev/#macro/#scan) 相容：映射到新 section id 並捲動過去。
-  // 新 13 個 section 的 id 本身就是合法錨點，就算 JS 失敗，瀏覽器原生 #id 跳轉一樣能到位。
   function jump(){
     var h=(location.hash||'').slice(1);
     if(!h)return;
     var target=LEGACY_HASH[h]||h;
     var el=document.getElementById(target);
-    if(el)el.scrollIntoView({block:'start'});
+    if(el){
+      var det=el.closest('details');
+      if(det)det.open=true;
+      el.scrollIntoView({block:'start'});
+    }
   }
   window.addEventListener('load',jump);
   window.addEventListener('hashchange',jump);
+})();
+(function(){
+  // 篩選 chips + 即時搜尋，純前端、零依賴。
+  var chips=Array.prototype.slice.call(document.querySelectorAll('.stat-card[data-filter]'));
+  var resetBtn=document.getElementById('bt-filter-reset');
+  var searchBox=document.getElementById('bt-search');
+  var rows=Array.prototype.slice.call(document.querySelectorAll('[data-cat]'));
+  var themes=Array.prototype.slice.call(document.querySelectorAll('details.d-theme'));
+  var active=null;
+
+  function apply(){
+    var q=(searchBox.value||'').trim().toLowerCase();
+    rows.forEach(function(el){
+      var cat=el.getAttribute('data-cat');
+      var catOk=!active||cat===active;
+      var textOk=!q||el.textContent.toLowerCase().indexOf(q)!==-1;
+      el.style.display=(catOk&&textOk)?'':'none';
+    });
+    themes.forEach(function(det){
+      var anyVisible=false;
+      det.querySelectorAll('[data-cat]').forEach(function(el){
+        if(el.style.display!=='none')anyVisible=true;
+      });
+      det.style.display=anyVisible?'':'none';
+      if(anyVisible&&(active||q))det.open=true;
+    });
+    chips.forEach(function(c){
+      c.classList.toggle('chip-active',c.getAttribute('data-filter')===active);
+    });
+  }
+  chips.forEach(function(c){
+    c.addEventListener('click',function(e){
+      if(e.target.tagName==='A')return; // let inner links (系統主控台 →) navigate normally
+      var f=c.getAttribute('data-filter');
+      active=(active===f)?null:f;
+      apply();
+    });
+  });
+  if(resetBtn)resetBtn.addEventListener('click',function(){active=null;searchBox.value='';apply();});
+  if(searchBox)searchBox.addEventListener('input',apply);
 })();
 </script>
 </body></html>
