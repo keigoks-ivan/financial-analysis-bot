@@ -1,0 +1,60 @@
+你是 stock-analyst v17 判斷 agent，回來做**一輪定點修補**。標的 FN（20260905）。判斷物已由跨模型閘（gate）冷讀過，下面是它點名的判斷級發現。你的任務只有一件：**針對被點名的欄位做最小修正**，不重寫判斷。
+
+## 讀（判斷物全文附於本訊息之後，不要 Read 任何檔）
+
+判斷物（judgment.json）全文接在本訊息最後（「===== BUNDLE =====」分隔行之後）。
+
+不要重讀 bundle、evidence.json、gate_audit.md、`docs/dd/` 任何檔，也不要回讀你等一下寫出的新版 judgment。你需要的稽核意見全文已附在下方，判斷物全文已附在最後。
+
+## 閘的發現（gate findings）
+
+### 發現 1：8 QC-49 前份漂移歸因 🔴
+- **依據**：drift_watch 20 欄全有帶 prior_field 的獨立條目與三元歸因排序；但 dca_verdict 列寫「本次：進場」、dca_role 列寫「衛星」、rearm_trigger 列寫「不適用（進場）」，與 decision_out.verdict＝觀望／role＝追蹤／rearm_trigger＝null 互斥；oneliner、exec_line、plain.verdict_sub、plain.five.how_to_act、trap_analysis.ruling 亦全寫「進場｜衛星、三段建倉」，plain.five.why_this_size 卻寫「現在不建倉」
+- **建議改法**：以機械裁決（audit_rows row 11.4b-denom 命中 → 觀望）為準，統一改寫三條漂移列與 oneliner／exec_line／plain 五問；觀望須補 rearm_trigger（如資料中心 QoQ 轉正或本益比回落門檻），三段建倉語言改為進場前置條件
+- **指向欄位**：contradictions[7].side_a、decision_out.verdict
+
+**受影響子樹原文**：
+
+`contradictions[7].side_a`：
+```json
+"本次：進場"
+```
+
+`decision_out.verdict`：
+```json
+"觀望"
+```
+
+**相關 evidence finding 原文**：
+
+（未定位到對應 evidence finding）
+
+
+## 修補紀律
+
+1. **只准改被點名的欄位**——findings 的「指向欄位」是你的動刀範圍。沒被點名的欄位一字不動，包含 `decision_out`（由 `dd_decision.py` 回填，你不要手改）與未涉及的 `reasoning` 段。
+2. **裁決方向不由你主動翻**——修正欄位後若 `judge check` 重算出的 `decision_out.verdict` 自己翻面，那是機械層的結果，照實接受並在回報點名；但你不得為了配合閘的語氣直接改寫裁決字串。
+3. **可以不採納**——閘的意見不是命令。判斷你認為原判正確時，該條不改欄位，改為在頂層 `evidence_dismissed[]` 補一條 `{"ref": "<閘點名的 finding ref 或欄位路徑>", "reason": "<不採納的具體理由>"}`。理由要指得出證據或推導本身的問題（口徑不可比、來源不可回溯、已被更新一季數字取代、閘誤讀了哪個欄位…），不得寫「影響不大」這類無內容句。**每一條 🔴 都必須有處置**：要嘛改欄位，要嘛進 `evidence_dismissed[]`，不得沉默略過。
+4. **🟡 選擇性處理**——能一句話補上就補（通常是 `contradictions[]`／`triggers[]` 加一條或補 `formula_note`），代價過大就依第 3 條寫不採納理由。
+5. **不得編造數字**——證據包未涵蓋的數字不准補；該欄位標「證據包未涵蓋」並在回報請 orchestrator 判斷是否回 Stage 0 補軸。
+6. 禁 WebSearch／WebFetch。
+
+## 寫（一次 Write 整檔）
+
+改完後把**完整的 judgment.json**一次 `Write` 回 `/Users/ivanchang/financial-analysis-bot/.dd_build/runs/FN_20260905/judgment.json`（不要分次 Edit、不要只寫片段），接著跑：
+
+```
+python3 scripts/ddreport.py judge check FN 20260905
+```
+
+這支會依序重跑 `dd_scenario.py`、`dd_decision.py run`、`validate_judgment.py --evidence --fix --report`，一次把結果回給你；你不需要也不得自行分別呼叫這三支腳本。
+
+FAIL → **只准改 FAIL 訊息點名的欄位**，重跑同一條 `judge check`，**≤1 輪**。一輪後仍 FAIL 就照實回報，交給 orchestrator 處置，不得為湊過驗證而改動判斷實質。
+
+**輪次上限 `6` 輪。** 逼近上限時停下並照實回報。
+
+## 回報（≤200 字）
+
+① 逐條列閘的發現與你的處置（改了哪個欄位／或進 `evidence_dismissed[]` 及理由摘要）
+② `judge check` 最後一次的 `validate_judgment.py --report` 原文
+③ `decision_out.verdict`／`role`／`row_hit`，以及是否與修補前不同（翻面要明講）
