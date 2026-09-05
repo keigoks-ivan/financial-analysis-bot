@@ -52,6 +52,12 @@ Two layers:
   7. J3 `--fix`（WP2）: 自動修正 scenario_ref 相對路徑→絕對路徑、字串內半形
      標點轉全形；scenario_meta.valuation_dependent 與 decision_inputs 不一致
      不自動修，仍由 J2 列 FAIL。
+  8. J4 plain 完整性（WARN，WP5a 2026-09-05）: 頂層選填 `plain`（白話區塊，
+     契約見 `_wp_spec_v17_batch3_20260905.md`）缺、或任一子欄缺／空字串、或
+     `bets`／`fears`／`change_my_mind` 三個陣列長度 ≠3 → WARN 逐項列出（不
+     FAIL；`plain` 是內容欄不是判斷規則）。另檢查 plain 內數字 ⊆ judgment
+     其他欄位數字集合（正規化去千分位／%／$／全半形，只比對 ≥2 位數字的
+     token）為 WARN。`plain` 內字串仍照常走 leak_and_punct_checks（FAIL）。
 
 Usage:
   python3 scripts/validate_judgment.py FILE.json [--report] [--evidence EVIDENCE.json]
@@ -654,6 +660,99 @@ def drift_checks(data: dict, judgment_path: Path, evidence_path: Path | None) ->
 
 
 # ---------------------------------------------------------------------------
+# J4: plain 白話區塊完整性（WARN only，WP5a 2026-09-05）
+#
+# `plain` 是選填內容欄（見 _wp_spec_v17_batch3_20260905.md「plain 區塊定義」），
+# 缺欄／短陣列一律 WARN 不 FAIL——它不是判斷規則。字串本身仍照常過
+# leak_and_punct_checks（跑在 data 全樹，plain 已含在內，不需另呼叫）。
+# ---------------------------------------------------------------------------
+
+_PLAIN_FIVE_KEYS = ("how_it_makes_money", "why_now", "why_this_size", "biggest_fear", "how_to_act")
+_PLAIN_BUSINESS_KEYS = ("what_to_whom", "why_customers_stay", "moat_direction")
+_PLAIN_STORIES_KEYS = ("bull", "base", "bear")
+_PLAIN_TOP_SCALAR_KEYS = (
+    "verdict_line", "verdict_sub", "market_wrong", "growth_funding",
+    "prior_compare_reason", "how_to_lose", "evidence_quality",
+)
+_PLAIN_ARRAY_KEYS = ("bets", "fears", "change_my_mind")
+_PLAIN_NUM_TOKEN_RE = re.compile(r"\d+(?:\.\d+)?")
+_PLAIN_NUM_STRIP_RE = re.compile(r"[,，%＄$]")
+
+
+def _normalize_numbers(text) -> set:
+    """抽出字串內 ≥2 位數字的 token，正規化去千分位／%／$／全半形後回傳集合。"""
+    if not isinstance(text, str) or not text:
+        return set()
+    t = unicodedata.normalize("NFKC", text)
+    t = _PLAIN_NUM_STRIP_RE.sub("", t)
+    out = set()
+    for tok in _PLAIN_NUM_TOKEN_RE.findall(t):
+        if len(tok.replace(".", "")) >= 2:
+            out.add(tok)
+    return out
+
+
+def _collect_numbers(obj) -> set:
+    nums = set()
+    if isinstance(obj, str):
+        nums |= _normalize_numbers(obj)
+    elif isinstance(obj, bool):
+        pass
+    elif isinstance(obj, (int, float)):
+        nums |= _normalize_numbers(str(obj))
+    elif isinstance(obj, dict):
+        for v in obj.values():
+            nums |= _collect_numbers(v)
+    elif isinstance(obj, list):
+        for v in obj:
+            nums |= _collect_numbers(v)
+    return nums
+
+
+def j4_plain_checks(data: dict) -> list:
+    warns = []
+    plain = data.get("plain")
+    if not plain or not isinstance(plain, dict):
+        warns.append("J4：plain 缺")
+        return warns
+
+    def _check(container, key, label):
+        v = (container or {}).get(key)
+        if not isinstance(v, str) or not v.strip():
+            warns.append(f"J4：plain 缺欄或空字串｜{label}")
+
+    for k in _PLAIN_TOP_SCALAR_KEYS:
+        _check(plain, k, f"plain.{k}")
+
+    five = plain.get("five") or {}
+    for k in _PLAIN_FIVE_KEYS:
+        _check(five, k, f"plain.five.{k}")
+
+    business = plain.get("business") or {}
+    for k in _PLAIN_BUSINESS_KEYS:
+        _check(business, k, f"plain.business.{k}")
+
+    stories = plain.get("stories") or {}
+    for k in _PLAIN_STORIES_KEYS:
+        _check(stories, k, f"plain.stories.{k}")
+
+    for k in _PLAIN_ARRAY_KEYS:
+        arr = plain.get(k)
+        n = len(arr) if isinstance(arr, list) else 0
+        if n != 3:
+            warns.append(f"J4：plain.{k} 長度應為 3，實際 {n}")
+
+    other = {k: v for k, v in data.items() if k != "plain"}
+    other_nums = _collect_numbers(other)
+    plain_nums = _collect_numbers(plain)
+    extra = plain_nums - other_nums
+    if extra:
+        warns.append(f"J4：plain 內出現 judgment 其他欄位查無的數字：{sorted(extra)}")
+
+    return warns
+
+
+# ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
 
@@ -667,9 +766,10 @@ def validate_file(path: Path, evidence_path: Path | None = None, j1_warn: bool =
     drift_fails, drift_warns = drift_checks(data, path, evidence_path)
     j2_fails, j2_warns = j2_math_checks(data, path)
     j1_fails, j1_warns = j1_traceability_checks(data, evidence_path, warn_only=j1_warn)
+    j4_warns = j4_plain_checks(data)
 
     fails = struct_errs + cross_fails + leak_fails + drift_fails + j2_fails + j1_fails
-    warns = cross_warns + drift_warns + j2_warns + j1_warns
+    warns = cross_warns + drift_warns + j2_warns + j1_warns + j4_warns
     return fails, warns
 
 
