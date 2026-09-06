@@ -189,6 +189,7 @@ RESEARCH_OOS_LINKS = [
     ("/backtest/slow_bear_onset/", "慢熊：起點認得出來嗎？", "slow_bear_onset", "研究"),
     ("/backtest/f_portfolio/", "F 組合：疊兩種保險", "f_portfolio", "研究"),
     ("/backtest/cross_sectional_trend/", "橫斷面版趨勢", "cross_sec_trend", "研究"),
+    ("/backtest/a0_proposal/", "A0 提案（10 月回顧點）", "a0_proposal", "研究"),
 ]
 
 RESEARCH_FACTOR_LINKS = [
