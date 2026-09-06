@@ -72,39 +72,80 @@ def _task_header(ticker, date, mode: str) -> str:
     )
 
 
-def _schema_cheatsheet() -> str:
-    schema = _load_json(SCHEMA_PATH)
-    lines = ["## ② Schema 速查（機械生成自 judgment.schema.json）", ""]
+# 2026-09-06：schema 速查瘦身用型別簡寫表（語意不變，只縮寫 type 字面值）。
+_TYPE_ABBR = {
+    "string": "str", "object": "obj", "array": "arr",
+    "integer": "int", "number": "num", "boolean": "bool", "null": "null",
+}
 
-    def walk(node, path, required_flag):
+
+def _schema_cheatsheet() -> str:
+    """機械生成 schema 速查。
+
+    2026-09-06：改成縮排巢狀格式（不重複完整路徑，只在陣列/物件邊界縮排一格），
+    type/enum/pattern/maxLength/minItems 壓成一行緊湊記法；required 標記從
+    「（必填）」全字改成行首 `*`。語意（哪些欄位/型別/enum/pattern/必填與否）
+    一個不少，只是省掉逐行重複的路徑前綴與中文標籤字。
+    """
+    schema = _load_json(SCHEMA_PATH)
+    lines = ["## ② Schema 速查（機械生成自 judgment.schema.json，緊湊版）", ""]
+    lines.append(
+        "格式：縮排＝巢狀層級（不重複完整路徑）；行首 `*`＝必填；"
+        "型別簡寫 str/obj/arr/int/num/bool，`a|b`＝可為多型別（含 null）；"
+        "`enum[...]`＝允許值；`pat=`＝正則；`≤N`＝maxLength；`≥N`＝minItems；"
+        "陣列欄位以 `key[]` 表示，其元素（items）型別接在同一行，物件元素的欄位在下一層縮排列出。"
+    )
+    lines.append("")
+
+    def type_str(t) -> str:
+        if isinstance(t, list):
+            return "|".join(_TYPE_ABBR.get(x, x) for x in t)
+        return _TYPE_ABBR.get(t, t)
+
+    def scalar_bits(node: dict) -> list:
+        bits = []
+        if "type" in node and node["type"] != "object" and node["type"] != "array":
+            bits.append(type_str(node["type"]))
+        if "enum" in node:
+            bits.append("enum[" + ",".join(str(x) for x in node["enum"]) + "]")
+        if "pattern" in node:
+            bits.append(f"pat={node['pattern']}")
+        if "maxLength" in node:
+            bits.append(f"≤{node['maxLength']}")
+        return bits
+
+    def walk(node, key, required_flag, depth):
         if not isinstance(node, dict):
             return
-        bits = []
-        if "type" in node:
-            bits.append(f"type={node['type']}")
-        if "enum" in node:
-            bits.append(f"enum={node['enum']}")
-        if "pattern" in node:
-            bits.append(f"pattern={node['pattern']!r}")
-        if "maxLength" in node:
-            bits.append(f"maxLength={node['maxLength']}")
-        if "minItems" in node:
-            bits.append(f"minItems={node['minItems']}")
-        if path != "$":
-            marker = "必填" if required_flag else "選填"
-            suffix = f"：{'; '.join(bits)}" if bits else ""
-            lines.append(f"- `{path}`（{marker}）{suffix}")
-        props = node.get("properties")
-        if isinstance(props, dict):
-            req = set(node.get("required") or [])
-            for k, v in props.items():
-                child = f"{path}.{k}" if path != "$" else f"$.{k}"
-                walk(v, child, k in req)
-        items = node.get("items")
-        if items:
-            walk(items, f"{path}[]", True)
+        indent = "  " * depth
+        is_array = node.get("type") == "array"
+        items = node.get("items") if is_array else None
+        display_key = f"{key}[]" if is_array else key
+        marker = "*" if required_flag else ""
 
-    walk(schema, "$", True)
+        bits = []
+        if is_array:
+            bits.append("arr")
+            if "minItems" in node:
+                bits.append(f"≥{node['minItems']}")
+            if isinstance(items, dict) and items.get("type") not in (None, "object"):
+                bits.extend(scalar_bits(items))
+        else:
+            bits.extend(scalar_bits(node))
+        suffix = f": {' '.join(bits)}" if bits else ""
+        lines.append(f"{indent}{marker}{display_key}{suffix}")
+
+        target = items if is_array and isinstance(items, dict) else node
+        props = target.get("properties") if isinstance(target, dict) else None
+        if isinstance(props, dict):
+            req = set(target.get("required") or [])
+            for k, v in props.items():
+                walk(v, k, k in req, depth + 1)
+
+    top_props = schema.get("properties") or {}
+    top_req = set(schema.get("required") or [])
+    for k, v in top_props.items():
+        walk(v, k, k in top_req, 0)
 
     lines.append("")
     lines.append("### evidence_refs 用法（v17 新增）")
@@ -118,17 +159,23 @@ def _schema_cheatsheet() -> str:
     )
     lines.append("")
     lines.append("### 機器語言／半形標點洩漏詞表（單一權威：`dd_sections.LEAK_PATTERNS` ＋ `qc.CJK_PUNCT_RE`）")
-    for p in dd_sections.LEAK_PATTERNS:
-        lines.append(f"- `{p}`")
+    lines.append("、".join(f"`{p}`" for p in dd_sections.LEAK_PATTERNS))
     lines.append(f"- CJK 字元後接半形 `,` `.` `:`（正則 `{qc.CJK_PUNCT_RE.pattern}`）——一律應為全形 ，。：")
     return "\n".join(lines)
 
 
-def _json_block(obj, indent=None) -> str:
-    return "```json\n" + json.dumps(obj, ensure_ascii=False, indent=indent) + "\n```"
+# 2026-09-06：JSON 區塊一律緊湊（無縮排、無多餘空白，separators 去掉逗號/冒號後的
+# 空格）——只省格式性空白，內容（鍵值）一字不減。所有呼叫點跟著改，不再傳 indent。
+_JSON_NOTE = "（以下 JSON 為緊湊格式（省空白），內容完整）"
+
+
+def _json_block(obj) -> str:
+    return "```json\n" + json.dumps(obj, ensure_ascii=False, separators=(",", ":")) + "\n```"
 
 
 def _coverage_table(cov: dict) -> str:
+    # 2026-09-06：曾試改緊湊 JSON 陣列，量測反而 +2%（欄位分隔比 ` | ` 還肥）且位置
+    # 欄位對判斷 agent 可讀性較差，故維持 markdown 表格原樣。
     lines = ["| id | dir | as_of | claim | source | affects |", "|---|---|---|---|---|---|"]
     for axis, v in (cov or {}).items():
         if not isinstance(v, dict):
@@ -154,7 +201,8 @@ def _evidence_compact(evidence: dict) -> str:
         f"earnings_recency={evidence.get('earnings_recency')}"
     )
     lines.append("")
-    lines.append("### numbers（原樣 JSON，不縮排）")
+    lines.append("### numbers（原樣 JSON）")
+    lines.append(_JSON_NOTE)
     lines.append(_json_block(evidence.get("numbers") or {}))
     lines.append("")
     lines.append("### coverage（逐軸表格）")
@@ -163,7 +211,8 @@ def _evidence_compact(evidence: dict) -> str:
     for key, label in (("events", "events"), ("prior_dd", "prior_dd"),
                         ("ledger", "ledger"), ("canonical_id", "canonical_id")):
         lines.append(f"### {label}（原樣）")
-        lines.append(_json_block(evidence.get(key) or {}, indent=1))
+        lines.append(_JSON_NOTE)
+        lines.append(_json_block(evidence.get(key) or {}))
         lines.append("")
     return "\n".join(lines).rstrip() + "\n"
 
@@ -207,13 +256,23 @@ def _transcript_section(evidence: dict, explicit_path) -> str:
 
 
 def _digest_section(digest_path) -> str:
+    """2026-09-06：digest.json 落地檔是 pretty-print（indent=2），改讀入後轉緊湊
+    JSON 再嵌入 bundle（省縮排空白，鍵值內容不變）；若不是合法 JSON（理論上不會，
+    保留防呆）就原樣塞入，不因壓縮功能而讓 bundle 開天窗。"""
     lines = ["## ⑤ Digest", ""]
     if not digest_path or not Path(digest_path).exists():
         lines.append(f"[找不到 digest：{digest_path}]")
         return "\n".join(lines)
-    lines.append("```json")
-    lines.append(Path(digest_path).read_text(encoding="utf-8"))
-    lines.append("```")
+    raw = Path(digest_path).read_text(encoding="utf-8")
+    try:
+        obj = json.loads(raw)
+    except (json.JSONDecodeError, ValueError):
+        lines.append("```json")
+        lines.append(raw)
+        lines.append("```")
+        return "\n".join(lines)
+    lines.append(_JSON_NOTE)
+    lines.append(_json_block(obj))
     return "\n".join(lines)
 
 
@@ -305,10 +364,19 @@ def cmd_gate(args) -> int:
         print(f"✗ evidence 檔不存在：{evidence_path}", file=sys.stderr)
         return 1
     evidence = _load_json(evidence_path)
-    judgment_text = (
-        judgment_path.read_text(encoding="utf-8") if judgment_path.exists()
-        else f"[找不到 judgment：{judgment_path}]"
-    )
+    # 2026-09-06：judgment.json 落地檔是 pretty-print，嵌入 gate bundle 前轉緊湊
+    # JSON（省縮排空白）；找不到檔／非合法 JSON 時原樣保留既有錯誤訊息或原始文字。
+    if judgment_path.exists():
+        judgment_raw = judgment_path.read_text(encoding="utf-8")
+        try:
+            judgment_text = json.dumps(json.loads(judgment_raw), ensure_ascii=False, separators=(",", ":"))
+            judgment_note = _JSON_NOTE + "\n\n"
+        except (json.JSONDecodeError, ValueError):
+            judgment_text = judgment_raw
+            judgment_note = ""
+    else:
+        judgment_text = f"[找不到 judgment：{judgment_path}]"
+        judgment_note = ""
     critic_gates_path = Path(args.critic_gates) if args.critic_gates else CRITIC_GATES_PATH
     critic_gates_text = (
         critic_gates_path.read_text(encoding="utf-8") if critic_gates_path.exists()
@@ -320,7 +388,7 @@ def cmd_gate(args) -> int:
         _evidence_compact(evidence),
         _transcript_section(evidence, args.transcript),
         _digest_section(digest_path),
-        "## judgment.json 全文\n\n```json\n" + judgment_text + "\n```",
+        "## judgment.json 全文\n\n" + judgment_note + "```json\n" + judgment_text + "\n```",
         "## references/critic-gates.md 全文\n\n" + critic_gates_text,
     ]
     _write_bundle(parts, out_path)
