@@ -1608,7 +1608,7 @@ def _judge_finalize_after_check(ticker, date, judgment_model, replay_dir, accept
             "本輪沒有任何工具、只回覆一次。\n\n"
             "`judge check` 的失敗原文如下，**只准改被點名的欄位**，其餘一字不動。"
             "回覆**只含一個** ```json:patch 程式碼區塊，內容形狀固定：\n\n"
-            "```json:patch\n{{\n  \"judgment\": {{\"$.欄位.路徑\": <該欄位修正後的完整新值>, ...}},\n"
+            "```json:patch\n{{\n  \"judgment\": {{\"$.section.field\": <該欄位修正後的完整新值>, ...}},\n"
             "  \"scenario\": {{\"$.路徑\": <新值>, ...}}\n}}\n```\n\n"
             "- 路徑用失敗原文裡的寫法（`$.a.b[2].c`）；值是**該路徑整個欄位**的新值"
             "（字串就給整段新字串，物件就給整個物件），不是差異描述。\n"
