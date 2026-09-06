@@ -525,6 +525,8 @@ def test_write_inline_prompt_missing_extra_file_writes_empty_tail(tmp_path):
 
 
 def test_do_judge_spawns_inline_prompt_with_bundle(monkeypatch):
+    # 2026-09-06：本測試驗的是 loop 路徑（agent 自己 Write／check／修）；預設已改 short／patchmap，這裡釘回 loop
+    monkeypatch.setattr(ddreport, "_JUDGE_MODE_OVERRIDE", "loop")
     ticker, date = "ZTESTINLINEJ", "20260101"
     run_dir = _clean_run_dir(ticker, date)
     (run_dir / "prompts").mkdir(parents=True)
@@ -559,6 +561,8 @@ def test_do_judge_spawns_inline_prompt_with_bundle(monkeypatch):
 
 
 def test_do_gate_patch_branch_spawns_inline_prompt_with_judgment(monkeypatch):
+    # 2026-09-06：本測試驗的是 loop 路徑（agent 自己 Write／check／修）；預設已改 short／patchmap，這裡釘回 loop
+    monkeypatch.setattr(ddreport, "_GATE_PATCH_MODE_OVERRIDE", "loop")
     ticker, date = "ZTESTINLINEG", "20260101"
     run_dir = _clean_run_dir(ticker, date)
     (run_dir / "prompts").mkdir(parents=True)
@@ -653,6 +657,8 @@ def test_resume_judge_stage_precheck_passes_without_any_agent(monkeypatch):
 
 
 def test_resume_judge_stage_precheck_fail_dispatches_fix_only(monkeypatch):
+    # 2026-09-06：本測試驗的是 loop 路徑（agent 自己 Write／check／修）；預設已改 short／patchmap，這裡釘回 loop
+    monkeypatch.setattr(ddreport, "_JUDGE_MODE_OVERRIDE", "loop")
     ticker, date = "ZTESTRESUMEJ2", "20260101"
     run_dir = _clean_run_dir(ticker, date)
     (run_dir / "prompts").mkdir(parents=True)

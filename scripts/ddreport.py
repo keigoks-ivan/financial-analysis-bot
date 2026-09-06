@@ -68,6 +68,15 @@ GATE_PATCH_MAX_TURNS = 6
 JUDGE_BUDGET_CACHE_READ = 1_200_000
 GATE_BUDGET_CACHE_READ = 2_500_000
 
+# 2026-09-06 閘 🔴 修補改 patch map（比照判斷段 short 模式）：CDNS／HPE 實測
+# 舊 loop 修補（agent 自己 Read／Write／Bash、重跑 judge check）要 6–9 輪；
+# 改無工具單輪回 patch map、orchestrator 代套用＋代跑 check，同樣的修補動作
+# 省掉逐輪重讀整包判斷物的 cache_read。`--gate-patch-mode loop`／
+# `DD_GATE_PATCH_MODE=loop` 回舊路；replay 模式一律 loop（與判斷段 short/loop
+# 對調同一理由：fake_claude.py 的 replay marker 目前只認得 loop 那套逐輪腳本）。
+GATE_PATCH_MODE_DEFAULT = "patchmap"
+_GATE_PATCH_MODE_OVERRIDE = None
+
 # 最後手段的預設 archetype：coverage-axes.md 裡 by_archetype 附加軸數為 0 的
 # 那一類（即「只查 common 軸」的基準情境），在 --archetype 未給、且前份 DD
 # 是不含 archetype 欄位的 legacy schema（v14.x 以前）時使用。此為刻意的工程
@@ -76,6 +85,20 @@ GATE_BUDGET_CACHE_READ = 2_500_000
 DEFAULT_ARCHETYPE = "品質複利成長"
 
 AXES_PER_BATCH_DEFAULT = 2
+
+# 2026-09-06：Stage 0 平行度改讀環境變數，可調（預設 6，較舊值 4 快）——
+# 這只影響牆鐘時間（同時開幾個子行程），不影響 token 用量（token 是逐 agent
+# 累計、與平行度無關）；若跑批次時撞 rate limit，設回 4（`DD_MAX_PARALLEL=4`）。
+STAGE0_MAX_PARALLEL = int(os.environ.get("DD_MAX_PARALLEL", "6"))
+
+# 2026-09-06：軸分批輪次上限常數化（原本硬編在 spawn_list 組裝處）。
+# AXES_MAX_TURNS_DEFAULT 沿用既有實測值 10，不改數值；AXES_MAX_TURNS_SEGMENTED
+# 給獨立成批的 per_segment 展開軸（如 end_markets）用——FIX 2026-09-06 的
+# a_5 批同時含 geo_supply_chain＋end_markets（依 §3 營收段逐一展開）三次在
+# 10 輪上限被砍、兩軸全 pending 導致 finalize FAIL，手動改 16 才 13 輪收完；
+# 獨立成批後只剩 per_segment 展開軸，14 輪為新實測折衷。
+AXES_MAX_TURNS_DEFAULT = 10
+AXES_MAX_TURNS_SEGMENTED = 14
 
 SPAWN_TOOLS_COVERAGE = ["WebSearch", "WebFetch", "Read", "Write", "Bash"]
 SPAWN_TOOLS_NUMBERS = ["WebSearch", "WebFetch", "Read", "Write", "Bash"]
@@ -155,6 +178,18 @@ def _render_template(tmpl_path, mapping):
     for k, v in mapping.items():
         text = text.replace("{{" + k + "}}", v)
     return text
+
+
+def _is_segmented_axis(axis):
+    """2026-09-06：判定一個（已展開的）軸是否來自 coverage-axes.md 的
+    `per_segment: true` 軸（現行唯一一條是 `end_markets`，見
+    `.claude/skills/stock-analyst/references/coverage-axes.md`）。直接讀
+    `dd_evidence.py::resolve_axes()` 留在 axis dict 上的 `per_segment` 旗標
+    ——這是機械可得的既有欄位，不需要另猜 axis id 字面（segments 展開時 id
+    會變成 `end_markets__xxx`，只比對字面 `== "end_markets"` 反而漏掉展開後
+    的情況；未展開／`_template_only` 情況 id 仍是 `end_markets` 本身，兩種
+    情況這個旗標都在）。"""
+    return bool(axis.get("per_segment"))
 
 
 def _axis_block(axes):
@@ -636,13 +671,22 @@ def cmd_plan(args):
     # evidence.json；失敗只 warn，不 abort）
     transcripts_obj = _run_koyfin_step(ticker, date, run_dir, evidence_dest, manifest)
 
-    # 6. 軸分批：major_events 單獨一批，其餘每 --axes-per-batch 軸一批
+    # 6. 軸分批：major_events 單獨一批；per_segment 展開軸（如 end_markets，
+    #    依 §3 營收段逐一列）也獨立一批（2026-09-06，見 AXES_MAX_TURNS_SEGMENTED
+    #    註解的 FIX a_5 事故）；其餘每 --axes-per-batch 軸一批。
+    #    機械判定用 `resolve_axes()`（dd_evidence.py）保留下來的 `per_segment`
+    #    旗標本身——`dict(axis)` 複製時這個鍵原樣留著，不需要另外用 axis id
+    #    字串比對猜測（segments 展開時 id 會變成 `end_markets__xxx`，id 相等
+    #    判斷法反而抓不到）。
     axis_list = axes if isinstance(axes, list) else []
     major = [a for a in axis_list if a.get("id") == "major_events"]
-    rest = [a for a in axis_list if a.get("id") != "major_events"]
+    segmented = [a for a in axis_list if a.get("id") != "major_events" and _is_segmented_axis(a)]
+    rest = [a for a in axis_list if a.get("id") != "major_events" and not _is_segmented_axis(a)]
     batches = []
     if major:
         batches.append(major)
+    if segmented:
+        batches.append(segmented)
     step = max(1, args.axes_per_batch)
     for i in range(0, len(rest), step):
         batches.append(rest[i:i + step])
@@ -650,6 +694,7 @@ def cmd_plan(args):
     spawn_list = []
     for k, batch in enumerate(batches, start=1):
         is_major = any(a.get("id") == "major_events" for a in batch)
+        is_segmented = (not is_major) and any(_is_segmented_axis(a) for a in batch)
         part_rel = "parts/axes_{0}.json".format(k)
         part_path = run_dir / part_rel
         mapping = {
@@ -663,13 +708,17 @@ def cmd_plan(args):
         prompt_text = _render_template(PROMPTS_TMPL_DIR / "coverage.md.tmpl", mapping)
         prompt_rel = "prompts/a_{0}.md".format(k)
         (run_dir / prompt_rel).write_text(prompt_text, encoding="utf-8")
+        # 2026-09-05：8 太緊（CDNS 六個子 agent 全在第 9 輪被砍），10 是實測
+        # 8–13 輪的折衷；2026-09-06：per_segment 展開批（如 end_markets）改用
+        # 更寬的 AXES_MAX_TURNS_SEGMENTED（見上方常數註解）。
+        batch_max_turns = AXES_MAX_TURNS_SEGMENTED if is_segmented else AXES_MAX_TURNS_DEFAULT
         spawn_list.append({
             "id": "a_{0}".format(k),
             "model": "sonnet",
             "prompt": prompt_rel,
             "out": part_rel,
             "tools": SPAWN_TOOLS_COVERAGE,
-            "max_turns": 10,  # 2026-09-05：8 太緊（CDNS 六個子 agent 全在第 9 輪被砍），10 是實測 8–13 輪的折衷
+            "max_turns": batch_max_turns,
             "budget_cache_read": BUDGET_CACHE_READ_COVERAGE,
         })
 
@@ -733,12 +782,16 @@ def cmd_plan(args):
 
     # WP1d：另存每批軸清單（batch id → axis_ids／is_major），供 --replay-from
     # 重放時比對「這一批該回填哪幾個軸」，不用去反解析 prompt 文字。
+    # 2026-09-06：多記 is_segmented，供人工核對／未來重放區分這批是否吃
+    # AXES_MAX_TURNS_SEGMENTED（不是覆蓋規則，純分批與輪數記錄）。
     batches_meta = []
     for k, batch in enumerate(batches, start=1):
+        b_is_major = any(a.get("id") == "major_events" for a in batch)
         batches_meta.append({
             "id": "a_{0}".format(k),
             "axis_ids": [a.get("id") for a in batch],
-            "is_major": any(a.get("id") == "major_events" for a in batch),
+            "is_major": b_is_major,
+            "is_segmented": (not b_is_major) and any(_is_segmented_axis(a) for a in batch),
         })
     _atomic_write_json(run_dir / "batches.json", batches_meta)
 
@@ -1034,10 +1087,28 @@ def _spawn_spec_for(spec, run_dir):
     return s
 
 
+def _fresh_stage_preserving_prior(manifest, stage_name):
+    """2026-09-06：`_do_stage0`／`_do_judge`／`_do_gate` 重建某段 `stage` 字典時
+    共用——若 manifest 既有同名 stage 且帶 `agent_usage`（如 `--resume` 前一輪
+    已燒過 token 但沒 PASS），把它（連同它可能已帶的 `agent_usage_prior`，
+    支援多次 resume 累積）搬進新 stage 的 `agent_usage_prior`，新 stage 自己
+    的 `agent_usage` 從空開始收這一輪。不這樣做的話，`_do_stage0`／`_do_judge`
+    原本無條件蓋掉舊 stage 字典，`--resume` 後 finish 算的『全帳 X.XM』只計
+    這次重跑燒的量，漏記前面失敗但已花掉的 token（實例：FIX 早上 stage0
+    失敗三次共燒 8M，resume 後全帳完全沒算進這段）。回傳全新的 RUNNING
+    狀態 stage 字典，只有真的有東西可搬時才帶 `agent_usage_prior` 鍵。"""
+    old = (manifest.get("stages") or {}).get(stage_name) or {}
+    prior = list(old.get("agent_usage_prior") or []) + list(old.get("agent_usage") or [])
+    stage = {"state": "RUNNING", "started": _now(), "agent_usage": [], "over_budget": False}
+    if prior:
+        stage["agent_usage_prior"] = prior
+    return stage
+
+
 def _do_stage0(ticker, date, plan_kwargs, replay_dir, accept_over_budget, manifest):
     run_dir = _run_dir(ticker, date)
     manifest_path = run_dir / "manifest.json"
-    stage = {"state": "RUNNING", "started": _now(), "agent_usage": [], "over_budget": False}
+    stage = _fresh_stage_preserving_prior(manifest, "stage0")
     manifest.setdefault("stages", {})["stage0"] = stage
     manifest["state"] = "stage0_running"
     _atomic_write_json(manifest_path, manifest)
@@ -1107,7 +1178,7 @@ def _do_stage0(ticker, date, plan_kwargs, replay_dir, accept_over_budget, manife
 
     other_specs = [_spawn_spec_for(s, run_dir) for s in to_spawn]
     if other_specs:
-        stage["agent_usage"].extend(dd_headless.spawn_many(other_specs, max_parallel=4))
+        stage["agent_usage"].extend(dd_headless.spawn_many(other_specs, max_parallel=STAGE0_MAX_PARALLEL))
 
     over_budget = any(r.get("over_budget") for r in stage["agent_usage"])
     stage["over_budget"] = over_budget
@@ -1119,7 +1190,7 @@ def _do_stage0(ticker, date, plan_kwargs, replay_dir, accept_over_budget, manife
         if not retry_candidates:
             break
         retry_specs = [_spawn_spec_for(s, run_dir) for s in retry_candidates]
-        stage["agent_usage"].extend(dd_headless.spawn_many(retry_specs, max_parallel=4))
+        stage["agent_usage"].extend(dd_headless.spawn_many(retry_specs, max_parallel=STAGE0_MAX_PARALLEL))
         rc, out_text, needs = _finalize_run_dir(run_dir)
         retries += 1
     stage["finalize_retries"] = retries
@@ -1215,6 +1286,13 @@ def _read_decision_verdict(run_dir):
 def _judge_mode():
     m = _JUDGE_MODE_OVERRIDE or os.environ.get("DD_JUDGE_MODE") or JUDGE_MODE_DEFAULT
     return m if m in ("short", "loop") else JUDGE_MODE_DEFAULT
+
+
+def _gate_patch_mode():
+    """2026-09-06：閘 🔴 修補跑法選擇，同 `_judge_mode()` 的三層優先序
+    （CLI 旗標 > 環境變數 > 預設）。"""
+    m = _GATE_PATCH_MODE_OVERRIDE or os.environ.get("DD_GATE_PATCH_MODE") or GATE_PATCH_MODE_DEFAULT
+    return m if m in ("patchmap", "loop") else GATE_PATCH_MODE_DEFAULT
 
 
 _JUDGE_LOOP_WRITE_MARKER = "## 寫（各一次 Write"
@@ -1412,7 +1490,7 @@ def _compact_json_text(text):
 def _do_judge(ticker, date, judgment_model, replay_dir, accept_over_budget, manifest):
     run_dir = _run_dir(ticker, date)
     manifest_path = run_dir / "manifest.json"
-    stage = {"state": "RUNNING", "started": _now(), "agent_usage": [], "over_budget": False}
+    stage = _fresh_stage_preserving_prior(manifest, "judged")
     manifest.setdefault("stages", {})["judged"] = stage
     manifest["judgment_model"] = judgment_model
     manifest["state"] = "judged_running"
@@ -1650,9 +1728,12 @@ def _do_gate(ticker, date, judgment_model, replay_dir, accept_over_budget, manif
     run_dir = _run_dir(ticker, date)
     manifest_path = run_dir / "manifest.json"
     dd_gate_path = SCRIPTS_DIR / "dd_gate.py"
-    stage = manifest.setdefault("stages", {}).get("gated") or {
-        "state": "RUNNING", "started": _now(), "agent_usage": [], "over_budget": False,
-    }
+    # 2026-09-06：既有「gated」stage（同一次 run 內的 _depth 遞迴、或
+    # --resume 落回這裡）直接沿用同一物件、不重建——`agent_usage` 本來就
+    # 累積在同一 list，不會漏記；只有完全沒有既有 stage 時才走
+    # `_fresh_stage_preserving_prior`（此時 old 必空，等同純新建，回傳值不帶
+    # `agent_usage_prior`），三段重建處理式維持一致。
+    stage = manifest.setdefault("stages", {}).get("gated") or _fresh_stage_preserving_prior(manifest, "gated")
     manifest["stages"]["gated"] = stage
     manifest["state"] = "gated_running"
     _atomic_write_json(manifest_path, manifest)
@@ -1754,33 +1835,80 @@ def _gate_finalize_from_audit(ticker, date, judgment_model, replay_dir, accept_o
     if red and red > 0:
         prior_verdict = _read_decision_verdict(run_dir)
         judgment_path = run_dir / "judgment.json"
-        patch_prompt_path = run_dir / "prompts" / "b1_patch.md"
-        rp = subprocess.run(
-            [py, str(dd_gate_path), "patch-prompt",
-             "--audit", str(audit_path), "--judgment", str(judgment_path),
-             "--evidence", str(run_dir / "evidence.json"), "--out", str(patch_prompt_path)],
-            capture_output=True, text=True,
-        )
-        if rp.returncode != 0 or not patch_prompt_path.exists():
-            stage["state"] = "FAIL"
-            stage["ended"] = _now()
-            stage["note"] = "dd_gate.py patch-prompt 失敗：{0}".format((rp.stdout + rp.stderr)[-1000:])
-            manifest["stages"]["gated"] = stage
-            _atomic_write_json(manifest_path, manifest)
-            _print_step_status("gated", "patch_prompt_rc={0}".format(rp.returncode), "PASS", "FAIL")
-            _print_resume_hint(ticker, date, "gated")
-            return 1
-        if replay_dir:
-            _append_replay_marker(patch_prompt_path, {
-                "kind": "judgment", "judgment_out": str(judgment_path),
-            })
-        inline_patch_prompt_path = _write_inline_prompt(patch_prompt_path, judgment_path)
-        r_spawn2 = dd_headless.spawn(
-            prompt_path=inline_patch_prompt_path, model=judgment_model, allowed_tools=["Read", "Write", "Bash"],
-            max_turns=GATE_PATCH_MAX_TURNS, budget_cache_read=JUDGE_BUDGET_CACHE_READ,
-            out_json=agents_dir / "gate_patch_{0}.json".format(_depth + 1), cwd=run_dir,
-        )
-        stage["agent_usage"].append(r_spawn2)
+        scenario_path = run_dir / "scenario.json"
+        # 2026-09-06：閘 🔴 修補模式（patchmap／loop）——replay 模式一律 loop
+        # （fake_claude.py 的 replay marker 目前只認 loop 那套逐輪腳本）。
+        mode = "loop" if replay_dir else _gate_patch_mode()
+        stage["gate_patch_mode"] = mode
+        patched_by_map = False
+
+        if mode == "patchmap":
+            patch_short_path = run_dir / "prompts" / "b1_gate_patch_short.md"
+            patch_short_path.write_text(
+                _render_format_template(PROMPTS_TMPL_DIR / "gate_patch_short.md.tmpl", {
+                    "ticker": ticker, "date": date,
+                    "audit_text": audit_path.read_text(encoding="utf-8") if audit_path.exists() else "",
+                    "judgment_compact": (
+                        _compact_json_text(judgment_path.read_text(encoding="utf-8"))
+                        if judgment_path.exists() else "{}"
+                    ),
+                    "scenario_compact": (
+                        _compact_json_text(scenario_path.read_text(encoding="utf-8"))
+                        if scenario_path.exists() else "{}"
+                    ),
+                }),
+                encoding="utf-8",
+            )
+            r_fix = _spawn_oneshot(
+                patch_short_path, judgment_model,
+                agents_dir / "gate_patch_{0}.json".format(_depth + 1),
+                run_dir, JUDGE_BUDGET_CACHE_READ,
+            )
+            stage["agent_usage"].append(r_fix)
+            patches = (
+                _parse_patch_map(r_fix.get("result_text"))
+                if (r_fix.get("ok") and not r_fix.get("quota_exhausted")) else None
+            )
+            if patches is not None:
+                n, errs = _apply_patch_map(run_dir, patches)
+                stage["gate_patch_patch"] = {"applied": n, "errors": errs}
+                print("[gate] patch map 套用 {0} 筆，錯誤 {1}".format(n, len(errs)))
+                patched_by_map = True
+            else:
+                stage["gate_patch_fallback"] = "patch map 回覆無法解析（ok={0}），改派 loop 修補 agent".format(
+                    r_fix.get("ok"))
+                print("[gate] " + stage["gate_patch_fallback"])
+                mode = "loop"
+
+        if mode == "loop" and not patched_by_map:
+            patch_prompt_path = run_dir / "prompts" / "b1_patch.md"
+            rp = subprocess.run(
+                [py, str(dd_gate_path), "patch-prompt",
+                 "--audit", str(audit_path), "--judgment", str(judgment_path),
+                 "--evidence", str(run_dir / "evidence.json"), "--out", str(patch_prompt_path)],
+                capture_output=True, text=True,
+            )
+            if rp.returncode != 0 or not patch_prompt_path.exists():
+                stage["state"] = "FAIL"
+                stage["ended"] = _now()
+                stage["note"] = "dd_gate.py patch-prompt 失敗：{0}".format((rp.stdout + rp.stderr)[-1000:])
+                manifest["stages"]["gated"] = stage
+                _atomic_write_json(manifest_path, manifest)
+                _print_step_status("gated", "patch_prompt_rc={0}".format(rp.returncode), "PASS", "FAIL")
+                _print_resume_hint(ticker, date, "gated")
+                return 1
+            if replay_dir:
+                _append_replay_marker(patch_prompt_path, {
+                    "kind": "judgment", "judgment_out": str(judgment_path),
+                })
+            inline_patch_prompt_path = _write_inline_prompt(patch_prompt_path, judgment_path)
+            r_spawn2 = dd_headless.spawn(
+                prompt_path=inline_patch_prompt_path, model=judgment_model, allowed_tools=["Read", "Write", "Bash"],
+                max_turns=GATE_PATCH_MAX_TURNS, budget_cache_read=JUDGE_BUDGET_CACHE_READ,
+                out_json=agents_dir / "gate_patch_{0}.json".format(_depth + 1), cwd=run_dir,
+            )
+            stage["agent_usage"].append(r_spawn2)
+
         over_budget = any(r.get("over_budget") for r in stage["agent_usage"])
         stage["over_budget"] = over_budget
 
@@ -2062,11 +2190,14 @@ def _sum_usage_by_model(usage_list):
 
 def _build_token_ledger(manifest):
     """從 manifest 的 `stages.*.agent_usage` 彙總三欄（fable/opus/sonnet，
-    另有 haiku/other 兜底）＋每段輪次，回傳 `{totals, by_stage}`。"""
+    另有 haiku/other 兜底）＋每段輪次，回傳 `{totals, by_stage}`。2026-09-06：
+    一併疊入 `stages.*.agent_usage_prior`（見 `_fresh_stage_preserving_prior`）
+    ——`--resume` 前一輪已燒但未 PASS 的段搬到這裡，全帳（totals／by_stage）
+    才是真正的整趟花費，不是只算本次重跑那一段。"""
     totals = {}
     by_stage = {}
     for stage_name, stage in (manifest.get("stages") or {}).items():
-        usage_list = (stage or {}).get("agent_usage") or []
+        usage_list = list((stage or {}).get("agent_usage") or []) + list((stage or {}).get("agent_usage_prior") or [])
         buckets = _sum_usage_by_model(usage_list)
         turns = sum((u or {}).get("num_turns", 0) or 0 for u in usage_list)
         by_stage[stage_name] = dict(buckets, turns=turns)
@@ -2081,14 +2212,32 @@ def _ledger_cache_read_total(ledger, models=("fable", "opus", "sonnet", "other",
     return sum((ledger["totals"].get(m) or {}).get("cache_read", 0) for m in models)
 
 
-def _ledger_summary_line(ledger):
+def _prior_usage_cache_read_total(manifest):
+    """2026-09-06：只加總 `stages.*.agent_usage_prior`（--resume 前先前失敗
+    但已燒的段）的 cache_read，供 `_ledger_summary_line` 附註用；沒有任何
+    prior 段時回傳 0（呼叫端據此決定要不要印附註）。"""
+    total = 0
+    for stage in (manifest.get("stages") or {}).values():
+        buckets = _sum_usage_by_model((stage or {}).get("agent_usage_prior") or [])
+        total += sum((b or {}).get("cache_read", 0) for b in buckets.values())
+    return total
+
+
+def _ledger_summary_line(ledger, prior_total=0):
+    """2026-09-06：`prior_total`（cache_read，來自 `_prior_usage_cache_read_total`）
+    非零時附一句「（含先前段 Y.YM）」，讓 --resume 後的全帳行看得出這次數字
+    有沒有含前面失敗但已燒的段；`total` 本身已經含 prior（見
+    `_build_token_ledger`），這裡只是額外標註來源，不重複相加。"""
     total = _ledger_cache_read_total(ledger)
     fable = (ledger["totals"].get("fable") or {}).get("cache_read", 0)
     opus = (ledger["totals"].get("opus") or {}).get("cache_read", 0)
     sonnet = (ledger["totals"].get("sonnet") or {}).get("cache_read", 0)
-    return "全帳 {0:.1f}M（fable {1:.1f}M／opus {2:.1f}M／sonnet {3:.1f}M）".format(
+    line = "全帳 {0:.1f}M（fable {1:.1f}M／opus {2:.1f}M／sonnet {3:.1f}M）".format(
         total / 1_000_000.0, fable / 1_000_000.0, opus / 1_000_000.0, sonnet / 1_000_000.0,
     )
+    if prior_total:
+        line += "（含先前段 {0:.1f}M）".format(prior_total / 1_000_000.0)
+    return line
 
 
 def _finish_target_html(ticker, date, manifest):
@@ -2266,7 +2415,7 @@ def _do_finish(ticker, date, dry_run=False, no_push=False, skip_dd_screener=Fals
         print("  - {0}".format(f))
 
     ledger = _build_token_ledger(manifest)
-    ledger_line = _ledger_summary_line(ledger)
+    ledger_line = _ledger_summary_line(ledger, _prior_usage_cache_read_total(manifest))  # 2026-09-06：含先前段附註
     print(ledger_line)
 
     if dry_run:
@@ -2403,8 +2552,9 @@ def cmd_run(args):
     manifest.setdefault("stages", {})
 
     judgment_model = args.judgment_model or manifest.get("judgment_model") or DEFAULT_JUDGMENT_MODEL
-    global _JUDGE_MODE_OVERRIDE
+    global _JUDGE_MODE_OVERRIDE, _GATE_PATCH_MODE_OVERRIDE
     _JUDGE_MODE_OVERRIDE = getattr(args, "judge_mode", None)
+    _GATE_PATCH_MODE_OVERRIDE = getattr(args, "gate_patch_mode", None)  # 2026-09-06
 
     start_idx = 0
     if args.resume:
@@ -2464,6 +2614,198 @@ def cmd_run(args):
 
 
 # ---------------------------------------------------------------------------
+# 2026-09-06 batch：一條指令排一串 ticker 依序（不平行，避免 finish 的 git
+# 互撞）各走一次完整 `run`（含 finish／push），持有人不需開互動 session 盯
+# 進度、跑完只讀摘要。每檔用子行程呼叫本檔自己的 `run` 子命令（而不是同行程
+# 內直接呼叫 `cmd_run`）——這樣每檔的 stdout／stderr 能乾淨分檔導出、且
+# `_JUDGE_MODE_OVERRIDE`／`_GATE_PATCH_MODE_OVERRIDE` 這類 module-level
+# override 不會跨檔互相污染。
+# ---------------------------------------------------------------------------
+
+def _resolve_batch_tickers(positional, from_file):
+    """位置參數＋`--from-file` 合併、保序去重（大小寫正規化為大寫）。
+    `--from-file` 每行一個 ticker，`#` 開頭整行略過，空行略過。"""
+    items = list(positional or [])
+    if from_file:
+        text = Path(from_file).read_text(encoding="utf-8")
+        for line in text.splitlines():
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            items.append(line)
+    seen = set()
+    out = []
+    for t in items:
+        tt = t.strip().upper()
+        if not tt or tt in seen:
+            continue
+        seen.add(tt)
+        out.append(tt)
+    return out
+
+
+def _manifest_has_quota_exhausted(manifest):
+    """掃 manifest 每個 stage 的 `agent_usage`／`agent_usage_prior`（見
+    `_fresh_stage_preserving_prior`），任一筆帶 `quota_exhausted: true`
+    （見 `dd_headless.py` 對『訂閱額度耗盡』回覆的判定）即算命中。"""
+    for stage in (manifest.get("stages") or {}).values():
+        usage_list = list((stage or {}).get("agent_usage") or []) + list((stage or {}).get("agent_usage_prior") or [])
+        for u in usage_list:
+            if (u or {}).get("quota_exhausted"):
+                return True
+    return False
+
+
+def _fmt_pct(v):
+    return "{0:.1f}%".format(v) if isinstance(v, (int, float)) else "—"
+
+
+def _batch_row_from_run_dir(ticker, date, run_dir, rc, elapsed_min, log_path):
+    """讀一檔跑完後留在 run 目錄的 manifest／judgment／scenario_meta，收斂成
+    一列摘要用的 dict。任一檔缺，對應欄位就是「—」（見 `_fmt_pct`），不是
+    ddreport.py 這輪四項機械改動要動的『覆蓋規則』——單純讀值失敗容忍。"""
+    run_dir = Path(run_dir)
+    manifest = _load_json_or(run_dir / "manifest.json", {})
+    judgment = _load_json_or(run_dir / "judgment.json", {})
+    scenario_meta = _load_json_or(run_dir / "scenario_meta.json", {})
+    decision_out = judgment.get("decision_out") or {}
+    decision_inputs = judgment.get("decision_inputs") or {}
+    verdict = decision_out.get("verdict") or "—"
+    role = decision_out.get("role") or "—"
+    ev5y = scenario_meta.get("ev5y_pct")
+    if ev5y is None:
+        ev5y = decision_inputs.get("ev5y_pct")
+    irr_base = scenario_meta.get("irr_base_pct")
+    if irr_base is None:
+        irr_base = decision_inputs.get("irr_base_pct")
+    max_dd = ((judgment.get("premortem") or {}).get("max_dd") or {}).get("lo")
+    ledger = _build_token_ledger(manifest)
+    ledger_line = _ledger_summary_line(ledger, _prior_usage_cache_read_total(manifest))
+    return {
+        "ticker": ticker, "date": date,
+        "state": manifest.get("state") or "—",
+        "verdict": verdict, "role": role,
+        "ev5y_pct": ev5y, "irr_base_pct": irr_base, "max_dd_pct": max_dd,
+        "ledger": ledger, "ledger_line": ledger_line,
+        "elapsed_min": elapsed_min, "rc": rc,
+        "log_path": str(log_path),
+        "quota_hit": _manifest_has_quota_exhausted(manifest),
+    }
+
+
+def _build_batch_summary_md(rows, date, quota_stopped_ticker=None, remaining=None):
+    lines = [
+        "# DD batch 摘要 {0}".format(date), "",
+        "| ticker | state | 裁決／角色 | 5Y EV | IRR base | Max DD | 全帳 | 耗時(分) | rc | 備註 |",
+        "|---|---|---|---|---|---|---|---|---|---|",
+    ]
+    total_cache_read = 0
+    total_elapsed = 0.0
+    ok_n = 0
+    fail_n = 0
+    for r in rows:
+        verdict_role = "{0}／{1}".format(r["verdict"], r["role"])
+        note = ""
+        if r["rc"] != 0:
+            note = "`python3 scripts/ddreport.py run {0} --date {1} --resume`".format(r["ticker"], r["date"])
+        lines.append(
+            "| {0} | {1} | {2} | {3} | {4} | {5} | {6} | {7:.1f} | {8} | {9} |".format(
+                r["ticker"], r["state"], verdict_role,
+                _fmt_pct(r["ev5y_pct"]), _fmt_pct(r["irr_base_pct"]), _fmt_pct(r["max_dd_pct"]),
+                r["ledger_line"], r["elapsed_min"], r["rc"], note,
+            )
+        )
+        total_cache_read += _ledger_cache_read_total(r["ledger"])
+        total_elapsed += r["elapsed_min"]
+        if r["rc"] == 0:
+            ok_n += 1
+        else:
+            fail_n += 1
+    lines.append("")
+    lines.append(
+        "總計：成功 {0}／失敗 {1}／總耗時 {2:.1f} 分／全帳合計 {3:.1f}M".format(
+            ok_n, fail_n, total_elapsed, total_cache_read / 1_000_000.0
+        )
+    )
+    if quota_stopped_ticker:
+        lines.append("")
+        lines.append(
+            "⚠️ 訂閱額度耗盡，整批於 `{0}` 中斷。剩餘未跑：{1}。額度重置後接續（該檔先 `--resume`，"
+            "其餘照跑）：".format(quota_stopped_ticker, "、".join(remaining or []) or "（無）")
+        )
+        lines.append("```")
+        lines.append("python3 scripts/ddreport.py run {0} --date {1} --resume".format(quota_stopped_ticker, date))
+        for t in (remaining or []):
+            lines.append("python3 scripts/ddreport.py run {0} --date {1}".format(t, date))
+        lines.append("```")
+    return "\n".join(lines) + "\n"
+
+
+def _write_batch_summary(rows, date, quota_stopped_ticker=None, remaining=None):
+    md = _build_batch_summary_md(rows, date, quota_stopped_ticker=quota_stopped_ticker, remaining=remaining)
+    path = BUILD_DIR / "batch_{0}.md".format(time.strftime("%Y%m%d_%H%M"))
+    path.write_text(md, encoding="utf-8")
+    return path
+
+
+def cmd_batch(args):
+    tickers = _resolve_batch_tickers(args.tickers, args.from_file)
+    if not tickers:
+        print("[error] 沒有任何 ticker（位置參數與 --from-file 都是空的）", file=sys.stderr)
+        return 1
+
+    date = args.date or time.strftime("%Y%m%d")
+    log_dir = BUILD_DIR / "batch_logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    py = _pick_python()
+    script_path = str(Path(__file__).resolve())
+    n = len(tickers)
+    rows = []
+
+    for i, t in enumerate(tickers, start=1):
+        print("[batch] {0}/{1} {2} 開始 {3}".format(i, n, t, time.strftime("%H:%M")))
+        log_path = log_dir / "{0}_{1}.log".format(t, date)
+        cmd = [py, script_path, "run", t, "--date", date]
+        if args.full:
+            cmd.append("--full")
+        if args.judgment_model:
+            cmd += ["--judgment-model", args.judgment_model]
+        if args.judge_mode:
+            cmd += ["--judge-mode", args.judge_mode]
+        if args.gate_patch_mode:
+            cmd += ["--gate-patch-mode", args.gate_patch_mode]
+        if args.no_push:
+            cmd.append("--no-push")
+        if args.resume:
+            cmd.append("--resume")
+
+        t0 = time.time()
+        with open(log_path, "w", encoding="utf-8") as lf:
+            r = subprocess.run(cmd, stdout=lf, stderr=subprocess.STDOUT, cwd=str(REPO_ROOT))
+        elapsed_min = (time.time() - t0) / 60.0
+
+        run_dir = _run_dir(t, date)
+        row = _batch_row_from_run_dir(t, date, run_dir, r.returncode, elapsed_min, log_path)
+        rows.append(row)
+        print("[batch] {0}/{1} {2} 結束 rc={3} state={4}".format(i, n, t, r.returncode, row["state"]))
+
+        try:
+            log_text = log_path.read_text(encoding="utf-8", errors="ignore")
+        except Exception:
+            log_text = ""
+        if row["quota_hit"] or "訂閱額度耗盡" in log_text:
+            remaining = tickers[i:]
+            summary_path = _write_batch_summary(rows, date, quota_stopped_ticker=t, remaining=remaining)
+            print("[batch] 額度耗盡，整批停下（{0}）".format(t))
+            print(summary_path)
+            return 3
+
+    summary_path = _write_batch_summary(rows, date)
+    print(summary_path)
+    return 0 if all(r["rc"] == 0 for r in rows) else 1
+
+
+# ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
 
@@ -2495,6 +2837,8 @@ def build_parser():
     rn.add_argument("--judgment-model", default=None, choices=["fable", "opus", "sonnet"])
     rn.add_argument("--judge-mode", default=None, choices=["short", "loop"],
                     help="判斷段跑法：short（預設，只給 Write、≤4 輪，check 由 orchestrator 跑）／loop（舊：agent 自己 Write＋check＋修）")
+    rn.add_argument("--gate-patch-mode", default=None, choices=["patchmap", "loop"],
+                    help="閘 🔴 修補跑法：patchmap（預設，無工具單輪回 patch map）／loop（舊：agent 自己 Read／Write／Bash＋重跑 check）")  # 2026-09-06
     rn.add_argument("--full", action="store_true", help="WP4b 未交付，本輪僅印警告")
     rn.add_argument("--replay-from", default=None, metavar="DIR")
     rn.add_argument("--until", default=None, choices=STAGE_ORDER,
@@ -2561,6 +2905,9 @@ def build_parser():
     ga.add_argument("ticker")
     ga.add_argument("date")
     ga.add_argument("--judgment-model", default=None, choices=["fable", "opus", "sonnet"])
+    ga.add_argument("--gate-patch-mode", default=None, choices=["patchmap", "loop"],
+                     help="閘 🔴 修補跑法：patchmap（預設，無工具單輪回 patch map，orchestrator 代套用＋代跑 check）"
+                          "／loop（舊：agent 自己 Read／Write／Bash＋重跑 check）")  # 2026-09-06
     ga.add_argument("--replay-from", default=None, metavar="DIR")
     ga.add_argument("--accept-over-budget", action="store_true")
 
@@ -2573,6 +2920,8 @@ def build_parser():
             "steps": [], "agents": [], "stages": {},
         })
         model = args.judgment_model or manifest.get("judgment_model") or DEFAULT_JUDGMENT_MODEL
+        global _GATE_PATCH_MODE_OVERRIDE
+        _GATE_PATCH_MODE_OVERRIDE = args.gate_patch_mode  # 2026-09-06
         return _do_gate(ticker, date, model, replay_dir, args.accept_over_budget, manifest)
 
     ga.set_defaults(func=_cmd_gate)
@@ -2607,6 +2956,21 @@ def build_parser():
     fi.add_argument("--no-push", action="store_true")
     fi.add_argument("--skip-dd-screener", action="store_true")
     fi.set_defaults(func=cmd_finish)
+
+    # 2026-09-06：batch——一條指令排一串 ticker 依序各跑一次完整 `run`。
+    ba = sub.add_parser("batch")
+    ba.add_argument("tickers", nargs="*", help="依序跑的 ticker 清單（可與 --from-file 合併去重）")
+    ba.add_argument("--from-file", default=None, metavar="LIST.txt",
+                     help="每行一個 ticker，# 開頭整行略過")
+    ba.add_argument("--date", default=None, help="YYYYMMDD；預設今天，所有 ticker 共用同一天")
+    ba.add_argument("--full", action="store_true")
+    ba.add_argument("--judgment-model", default=None, choices=["fable", "opus", "sonnet"])
+    ba.add_argument("--judge-mode", default=None, choices=["short", "loop"])
+    ba.add_argument("--gate-patch-mode", default=None, choices=["patchmap", "loop"])
+    ba.add_argument("--no-push", action="store_true")
+    ba.add_argument("--resume", action="store_true",
+                     help="透傳給每一檔的 `run --resume`（批次本身不記自己的續跑點，續跑靠各檔 manifest）")
+    ba.set_defaults(func=cmd_batch)
 
     return p
 

@@ -1,0 +1,44 @@
+你是 stock-analyst v17 判斷 agent，回來做**一輪定點修補**（patch map，無工具單輪）。標的 {ticker}（{date}）。判斷物已由跨模型閘（gate）冷讀過，下面是它的稽核全文，其中 🔴 是判斷級發現、🟡 是選擇性發現。你的任務只有一件：**針對被點名的欄位做最小修正**，不重寫判斷。
+
+本輪沒有任何工具、只回覆一次。不要 Read 任何檔——稽核全文與判斷物全文已附在下面；也不要自己跑 `judge check`，套用與重跑由 orchestrator 代做。
+
+## 修補紀律（與 loop 模式定點修補一致，見 `judge_patch.md.tmpl`）
+
+1. **只准改被點名的欄位**——稽核意見的「指向欄位」是你的動刀範圍。沒被點名的欄位一字不動，包含 `decision_out`（由 `dd_decision.py` 回填，你不要手改）與未涉及的 `reasoning` 段。**若某條 🔴 實質要求的是裁決層級的改動，照實改 `decision_inputs` 對應欄，不得直接改 `decision_out`**——`decision_out` 一律由機械層依 `decision_inputs` 重算。
+2. **裁決方向不由你主動翻**——修正欄位後若 `judge check` 重算出的 `decision_out.verdict` 自己翻面，那是機械層的結果，照實接受；但你不得為了配合閘的語氣直接改寫裁決字串。
+3. **可以不採納**——閘的意見不是命令。判斷你認為原判正確時，該條不改欄位，改為在頂層 `evidence_dismissed[]` 補一條 `{{"ref": "<閘點名的 finding ref 或欄位路徑>", "reason": "<不採納的具體理由>"}}`。理由要指得出證據或推導本身的問題（口徑不可比、來源不可回溯、已被更新一季數字取代、閘誤讀了哪個欄位…），不得寫「影響不大」這類無內容句。**每一條 🔴 都必須有處置**：要嘛改欄位，要嘛進 `evidence_dismissed[]`，不得沉默略過。
+4. **🟡 選擇性處理**——能一句話補上就補（通常是 `contradictions[]`／`triggers[]` 加一條或補 `formula_note`），代價過大就依第 3 條寫不採納理由。
+5. **不得編造數字**——證據包未涵蓋的數字不准補；該欄位標「證據包未涵蓋」，回報中請 orchestrator 判斷是否回 Stage 0 補軸。
+6. 禁 WebSearch／WebFetch／Read／Write。
+
+## 輸出（只回一個 fenced 區塊，區塊外不寫任何文字）
+
+回覆**只含一個** ```json:patch 程式碼區塊，內容形狀固定：
+
+```json:patch
+{{
+  "judgment": {{"$.欄位.路徑": <該路徑整個欄位的新值>, ...}},
+  "scenario": {{"$.路徑": <新值>, ...}}
+}}
+```
+
+- 路徑用稽核意見裡的寫法或 `judgment.json`／`scenario.json` 既有結構（`$.a.b[2].c`）；值是**該路徑整個欄位**的新值（字串給整段新字串、物件給整個物件、陣列給整個陣列），不是差異描述或 diff。
+- 沒被點名的欄位不要出現在 patch 裡；某一檔沒有要改就給空物件 `{{}}`。
+- 需要在 `evidence_dismissed[]` 新增一條時，路徑寫 `$.evidence_dismissed`，值給**加了新條目之後的完整陣列**（不是單一新條目、也不支援索引 append）。
+- 不得為湊過驗證而編造缺證據的數字（FAIL 通常指欄位缺失或內部恆等式不符）；不得整段改寫判斷。
+
+## 閘的稽核全文（gate_audit.md）
+
+{audit_text}
+
+## 目前 judgment.json 全文（緊湊格式，僅省空白、內容與縮排版相同）
+
+```json
+{judgment_compact}
+```
+
+## 目前 scenario.json 全文（緊湊格式，僅省空白、內容與縮排版相同）
+
+```json
+{scenario_compact}
+```
