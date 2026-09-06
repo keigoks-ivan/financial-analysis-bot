@@ -468,7 +468,7 @@ def top3_html() -> str:
   <div class="t3-card">
     <div class="t3-tag">② 實單系統的證據總覽</div>
     <div class="t3-name"><a href="/backtest/live_system_evidence/">先看這頁</a></div>
-    <div class="t3-sub">十一項預註冊測試白話串講：規則普不普遍、保費多少、慢熊多久來一次、
+    <div class="t3-sub">十一項預註冊（跑測試前先寫死、不能事後改的規則）測試白話串講：規則普不普遍、保費多少、慢熊多久來一次、
       贏了多少是運氣、美台是不是同一注。</div>
     <div class="t3-pills">{evidence_pills}</div>
   </div>
@@ -510,7 +510,7 @@ def scoreboard_html() -> str:
 
     return f"""<div class="section-block">
   <h2 class="section-h">系統記分表</h2>
-  <div class="section-note">已上實單或通過 L1 門檻的候補系統——{len(rows)} 個。</div>
+  <div class="section-note">已上實單或通過 L1 門檻（第一關資格測試）的候補系統——{len(rows)} 個。</div>
   <div class="sb-wrap"><table class="scoreboard">
     <thead><tr><th>系統</th><th>市場</th><th>狀態</th><th>一句結論</th><th></th></tr></thead>
     <tbody>{body}</tbody>
@@ -602,7 +602,7 @@ def render():
   </div>
   <div class="stat-card stat-cand" data-filter="candidate">
     <div class="stat-n">{n_candidate}</div><div class="stat-k">合格候補</div>
-    <div class="stat-d">通過 L1 門檻，未上實倉</div>
+    <div class="stat-d">通過 L1 門檻（第一關資格測試），未上實倉</div>
   </div>
   <div class="stat-card stat-exp" data-filter="research">
     <div class="stat-n">{exp_n}</div><div class="stat-k">實驗・研究</div>

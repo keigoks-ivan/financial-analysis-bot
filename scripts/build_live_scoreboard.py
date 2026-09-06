@@ -812,12 +812,12 @@ def mkt_section(mkt):
   <div class="lsb-tile"><div class="lsb-k">資料截至</div><div class="lsb-v">{esc(mkt['data_through'])}</div></div>
   <div class="lsb-tile"><div class="lsb-k">實錄天數</div><div class="lsb-v">{n}</div></div>
   <div class="lsb-tile"><div class="lsb-k">已收月數</div><div class="lsb-v">{mkt['n_closed_months']}</div></div>
-  <div class="lsb-tile"><div class="lsb-k">當前回撤</div><div class="lsb-v">{mkt['current_dd_pct']}%</div></div>
+  <div class="lsb-tile"><div class="lsb-k">當前回撤（從近期最高點跌了多少）</div><div class="lsb-v">{mkt['current_dd_pct']}%</div></div>
 </div>
 <div class="lsb-tiles">
-  <div class="lsb-tile"><div class="lsb-k">SPRT vs B-mdd（主判準）</div><div class="lsb-v">{status_pill(mkt['sprt_b_mdd']['status'])}</div>
+  <div class="lsb-tile"><div class="lsb-k">系統 vs B-mdd（同風險稀釋基準，主判準）</div><div class="lsb-v">{status_pill(mkt['sprt_b_mdd']['status'])}</div>
     <div class="lsb-sub">{esc(mkt['sprt_b_mdd']['status_label'])}</div></div>
-  <div class="lsb-tile"><div class="lsb-k">SPRT vs B-cagr（並列）</div><div class="lsb-v">{status_pill(mkt['sprt_b_cagr']['status'])}</div>
+  <div class="lsb-tile"><div class="lsb-k">系統 vs B-cagr（同報酬稀釋基準，並列）</div><div class="lsb-v">{status_pill(mkt['sprt_b_cagr']['status'])}</div>
     <div class="lsb-sub">{esc(mkt['sprt_b_cagr']['status_label'])}</div></div>
   <div class="lsb-tile"><div class="lsb-k">累積差 vs B-mdd</div><div class="lsb-v">{mkt['cum_diff_vs_b_mdd']}</div></div>
   <div class="lsb-tile"><div class="lsb-k">累積差 vs B-cagr</div><div class="lsb-v">{mkt['cum_diff_vs_b_cagr']}</div></div>
@@ -842,7 +842,7 @@ def mkt_section(mkt):
       {{ label: 'B-mdd（k={mkt['sprt_b_mdd']['n_required'] and ''}稀釋）', data: {json.dumps(mdd_data)}, borderColor: '#cf222e', borderWidth:1, pointRadius:0 }},
       {{ label: 'B-cagr（稀釋）', data: {json.dumps(cagr_data)}, borderColor: '#9a6700', borderWidth:1, pointRadius:0 }}
     ]}},
-    options: {{ responsive:true, animation:false, scales:{{ x:{{display:false}}, y:{{title:{{display:true,text:'NAV（inception=100）'}}}} }} }}
+    options: {{ responsive:true, animation:false, scales:{{ x:{{display:false}}, y:{{title:{{display:true,text:'NAV（帳戶淨值，起點設為100）'}}}} }} }}
   }});
 }})();
 </script>"""
@@ -853,7 +853,7 @@ def mkt_section(mkt):
         hit_rows += (f'<tr><td>{esc(s["month"])}</td><td class="num">{s["ret_sys_pct"]:+.2f}%</td>'
                      f'<td class="num">{s["ret_bench_pct"]:+.2f}%</td><td>{mark}</td></tr>\n')
     if not hit_rows:
-        hit_rows = '<tr><td colspan="4" style="text-align:center;color:#888">尚無已收月樣本（n_eff floor 20 前皆是「進行中」）</td></tr>'
+        hit_rows = '<tr><td colspan="4" style="text-align:center;color:#888">尚無已收月樣本（樣本要滿20個月以上才能下判定，之前都算「進行中」）</td></tr>'
 
     ev_rows = ""
     for e in mkt["exec_events"][-20:][::-1]:
@@ -898,7 +898,7 @@ def shadow_market_section(mk, mkt, shadows):
   new Chart(document.getElementById('{canvas_id}').getContext('2d'), {{
     type: 'line',
     data: {{ labels: {json.dumps(labels)}, datasets: [{','.join(datasets)}] }},
-    options: {{ responsive:true, animation:false, scales:{{ x:{{display:false}}, y:{{title:{{display:true,text:'NAV（inception=100）'}}}} }} }}
+    options: {{ responsive:true, animation:false, scales:{{ x:{{display:false}}, y:{{title:{{display:true,text:'NAV（帳戶淨值，起點設為100）'}}}} }} }}
   }});
 }})();
 </script>"""
@@ -918,7 +918,7 @@ def shadow_market_section(mk, mkt, shadows):
             rows += (f'<tr><td>{esc(s["month"])}</td><td class="num">{s["ret_sys_pct"]:+.2f}%</td>'
                      f'<td class="num">{s["ret_bench_pct"]:+.2f}%</td><td>{mark}</td></tr>\n')
         if not rows:
-            rows = '<tr><td colspan="4" style="text-align:center;color:#888">尚無已收月樣本（n_eff floor 20 前皆是「進行中」）</td></tr>'
+            rows = '<tr><td colspan="4" style="text-align:center;color:#888">尚無已收月樣本（樣本要滿20個月以上才能下判定，之前都算「進行中」）</td></tr>'
         tables += (f'<h4 style="margin:.6rem 0 .2rem;font-size:.88rem">{esc(SHADOW_LABELS.get(key,key))}</h4>'
                    f'<table class="lsb-table"><thead><tr><th>月</th><th class="num">影子帳戶報酬</th>'
                    f'<th class="num">系統報酬</th><th>影子帳戶命中</th></tr></thead><tbody>{rows}</tbody></table>')
@@ -981,7 +981,7 @@ details.lsb-prereg pre{{max-height:280px;overflow:auto;background:#f6f8fa;border
 <div class="lsb-plain">💬 白話：這裡的三條線不是本站現在真的在跑的東西，是「如果 10 月回顧點當初選了別的做法，帳會怎麼記」的平行對照——S-60 是不解方程、事前就能執行的固定六成持股版本；S-F 是把一半資金換成一籃子跨資產（美股／公債／黃金／原物料）趨勢規則；S-A10 是拿掉槓桿上限的系統本尊。上面每個市場的 SPRT 淘汰賽問的是「系統有沒有贏過稀釋現金的基準」，這裡的 SPRT 問的是相反方向的問題：「如果當初選了這條影子帳戶，會不會比現在的系統好」。判紅只代表某條影子帳戶的實錄目前不如系統，判綠代表某條影子帳戶目前贏過系統——兩者都只是留給 10 月回顧點參考的證據，不會觸發任何帳本動作或配置調整。</div>
 {us_shadow_sec}
 {tw_shadow_sec}
-<details class="lsb-prereg"><summary>PREREG（凍結口徑，展開查看逐字條文）</summary><pre>{esc(prereg_json)}</pre></details>
+<details class="lsb-prereg"><summary>PREREG（預先寫死、事後不能改的規則，展開查看逐字條文）</summary><pre>{esc(prereg_json)}</pre></details>
 <p class="lsb-note">as_of {esc(out['as_of'])} · built_at {esc(out['built_at'])} · 回測先驗（保險價格頁 2010 起月勝率）：{esc(out['backtest_prior'])}</p>
 </body></html>
 """
