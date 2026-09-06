@@ -1,9 +1,9 @@
-## 寫（短迴圈：你只有 Write 工具，各一次 Write 就停）
+## 寫（短迴圈：Write 兩次、Bash 一次自檢，就停）
 
-你這一輪**只有 Write**：沒有 Read、沒有 Bash、沒有搜尋。judgment-rules.md 或 bundle 內凡提到「跑 judge check」「三支驗證」「FAIL 只准改欄位重跑」的字句，在本模式下都由 orchestrator 代跑——你只負責把判斷物的**內容**一次寫滿、寫對。
+你這一輪只有 **Write** 與 **Bash** 兩個工具：沒有 Read、沒有搜尋。judgment-rules.md 或 bundle 內凡提到「跑 judge check」「三支驗證」「FAIL 只准改欄位重跑」的字句，在本模式下都由 orchestrator 代跑——你只負責把判斷物的**內容**一次寫滿、寫對，Bash 只給你做語法自檢（見下方步驟③），不是給你跑別的東西。
 
 1. 一次 `Write` → `{judgment_path}`（schema：`scripts/dd_schema/judgment.schema.json`；欄位語意見 bundle 內速查）
-2. 一次 `Write` → `{scenario_path}`（`dd_scenario.py` 輸入格式，**鍵名與形狀必須完全照下面這份**，不得增刪改名——本模式沒有 Bash，你不會看到腳本的 KeyError，寫錯鍵名就是整段 FAIL）：
+2. 一次 `Write` → `{scenario_path}`（`dd_scenario.py` 輸入格式，**鍵名與形狀必須完全照下面這份**，不得增刪改名——步驟③的 Bash 只做 JSON 語法檢查、不會跑 `dd_scenario.py`，你不會看到腳本的 KeyError，寫錯鍵名就是整段 FAIL）：
 
 ```json
 {{
@@ -24,7 +24,14 @@
 ```
 
    `dd_scenario.py` 會擋：`eps_path` 長度 ≠ 5、終端 EPS 非 Bear＜Base＜Bull、Bear 終端 EPS＞`consensus.fy2`、三機率加總 ≠ 100、`p_bear`＜20、`endo_ceiling_exceeded=true` 且 `p_bear`＜30、`p_base`＞50。機率是你的判斷，算術（IRR／三分量／AR／10Y）全由腳本算，不要自己填結果欄。
-3. 回覆一行 `DONE`，不要摘要、不要最終回報。
+3. 一次 `Bash`，**只准跑這一條指令**，不准跑其他任何指令、不准 `cat` 自己剛寫的檔、不准跑驗證腳本：
+
+```
+{check_cmd}
+```
+
+   沒有任何輸出＝過。若跳出 `JSONDecodeError`，就把**那一份報錯的檔**整檔重新 `Write` 一次（不 `Edit`、不分次寫），再跑**同一條**上面的 Bash 一次確認過了。
+4. 回覆一行 `DONE`，不要摘要、不要最終回報。
 
 - 兩檔都是可直接 `json.loads` 的嚴格 JSON：雙引號、無註解、無尾逗號、無省略號、不得用「同上」代替內容。
 - 兩檔一律寫**緊湊 JSON**（不縮排、不換行、逗號與冒號後不留空白，等同 `json.dumps(obj, separators=(",", ":"))`）——省輸出 token，鍵名與 schema 不變；orchestrator 落檔後會自動轉回縮排格式，讀者看到的仍是正常排版。

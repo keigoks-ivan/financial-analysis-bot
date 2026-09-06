@@ -60,8 +60,16 @@ JUDGE_FIX_MAX_TURNS = 6
 # 判斷規則、schema、驗證三支腳本一字不動；只改「誰操作工具」。
 # `--judge-mode loop`／`DD_JUDGE_MODE=loop` 回舊路（A/B 用）；replay 模式一律 loop。
 JUDGE_MODE_DEFAULT = "short"
-JUDGE_SHORT_MAX_TURNS = 4      # Write judgment → Write scenario → 回 DONE，留 1 輪餘裕
+# 2026-09-06（FIX_20260908 opus 當判斷模型實測缺口）：緊湊 JSON 輸出偶爾不合法
+# （如 `Expecting ',' delimiter`），原 4 輪只夠 Write judgment → Write scenario
+# → DONE；加一輪 Bash 語法自檢（`judge_oneshot_tail.md.tmpl` 步驟③）後最壞情況
+# 是自檢報錯→整檔重寫一次→再自檢一次→DONE，故上調為 6，留一輪餘裕。
+JUDGE_SHORT_MAX_TURNS = 6
 JUDGE_SHORT_FIX_MAX_TURNS = 3  # （保留給 loop 回退路徑參考；short 的修正是無工具單輪 patch map）
+# 2026-09-06：`_normalize_judge_outputs` 仍解析失敗時的「語法修復」短迴圈上限
+# ——一次 Write 整檔修好、一次 Bash 自檢、（若還錯）一次重寫、一次再自檢、回
+# DONE；與判斷段主迴圈用同一顆模型，見 `_repair_judge_json_file`。
+JUDGE_JSON_REPAIR_MAX_TURNS = 4
 _JUDGE_MODE_OVERRIDE = None
 GATE_MAX_TURNS = 6
 GATE_PATCH_MAX_TURNS = 6
@@ -1397,14 +1405,28 @@ def _parse_patch_map(text):
 
 
 def _apply_patch_map(run_dir, patches):
-    """把 patch map 套到 judgment.json／scenario.json；回傳 (套用筆數, 錯誤清單)。"""
+    """把 patch map 套到 judgment.json／scenario.json；回傳 (套用筆數, 錯誤清單)。
+
+    2026-09-06（FIX_20260908 opus 實測缺口）：底檔存在但解析失敗（如 short
+    模式寫出的緊湊 JSON 被截斷）時，該檔**一筆都不套、不寫檔**——舊版用
+    `_load_json_or(path, {})` 讀不成就從空物件開始，16 筆 patch 套完直接把
+    整份判斷物覆寫成只剩 16 個欄位（資料破壞，不是修補）。錯誤訊息含檔名與
+    `JSONDecodeError` 原文，讓呼叫端可以判斷「這份 patch 其實整檔沒套到」。
+    """
     applied, errors = 0, []
     for name in ("judgment", "scenario"):
         pm = patches.get(name) or {}
         if not pm:
             continue
         path = run_dir / "{0}.json".format(name)
-        obj = _load_json_or(path, {})
+        if path.exists():
+            try:
+                obj = json.loads(path.read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, ValueError) as e:
+                errors.append("{0} ({1}) 底檔解析失敗，本檔 patch 全數跳過未套用：{2}".format(name, path, e))
+                continue
+        else:
+            obj = {}
         for jp, val in pm.items():
             try:
                 _set_json_path(obj, jp, val)
@@ -1426,10 +1448,13 @@ def _spawn_oneshot(prompt_path, model, out_json, cwd, budget):
 
 
 def _spawn_short(prompt_path, model, out_json, cwd, budget, max_turns):
-    """只給 Write 的短迴圈 `claude -p`（slim 前綴下 `--tools Write` 只帶一個
-    工具 schema）。產物由 agent 用 Write 落檔，orchestrator 之後自己跑 check。"""
+    """只給 Write／Bash 的短迴圈 `claude -p`（slim 前綴下 `--tools Write,Bash`
+    帶兩個工具 schema）。產物由 agent 用 Write 落檔，orchestrator 之後自己跑
+    check。2026-09-06（FIX_20260908）：新增 Bash，僅供模板內建的一條 JSON
+    語法自檢指令用（見 `judge_oneshot_tail.md.tmpl`／`judge_json_repair.md.tmpl`）
+    ——不是給 agent 自由跑腳本或驗證內容。"""
     return dd_headless.spawn(
-        prompt_path=prompt_path, model=model, allowed_tools=["Write"], max_turns=max_turns,
+        prompt_path=prompt_path, model=model, allowed_tools=["Write", "Bash"], max_turns=max_turns,
         budget_cache_read=budget, out_json=out_json, cwd=cwd,
     )
 
@@ -1453,6 +1478,18 @@ def _write_oneshot_outputs(run_dir, parsed):
         json.dumps(parsed["judgment"], ensure_ascii=False, indent=2), encoding="utf-8")
     (run_dir / "scenario.json").write_text(
         json.dumps(parsed["scenario"], ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _judge_syntax_check_cmd(judgment_path, scenario_path):
+    """2026-09-06（FIX_20260908）：`judge_oneshot_tail.md.tmpl`（步驟③）與
+    `judge_json_repair.md.tmpl`（修復後自檢）共用同一條 Bash 語法自檢指令
+    ——`json.load` 掃過兩份判斷物，任一份不是合法 JSON 就丟
+    `JSONDecodeError`（有輸出）、都過就沒有任何輸出。路徑走 `sys.argv`
+    （不內嵌進 `-c` 字串），避免路徑含空白或特殊字元被誤拆。"""
+    return (
+        "python3 -c \"import json,sys; [json.load(open(p, encoding='utf-8')) "
+        "for p in sys.argv[1:]]\" {0} {1}"
+    ).format(judgment_path, scenario_path)
 
 
 def _normalize_judge_outputs(run_dir):
@@ -1487,6 +1524,83 @@ def _compact_json_text(text):
         return text
 
 
+def _repair_judge_json_file(run_dir, name, err_msg, ticker, date, judgment_model, agents_dir, budget):
+    """2026-09-06（FIX_20260908）：對單一壞檔（`judgment.json`／`scenario.json`）
+    派一輪『只修語法』的短迴圈修復——不當成判斷段的定點修正（patch map）
+    處理，因為連 JSON 都解析不了就沒有『欄位路徑』可指。
+
+    Write 工具拒絕覆寫本 session 未 Read 過的檔，而修復 agent（`_spawn_short`）
+    沒有 Read 工具，故寫檔前先把原檔（連同其壞內容）搬去 `agents/` 備份、
+    原路徑清空，讓 agent 能對同一路徑重新整檔 Write；agent 沒寫回、或寫回的
+    仍不是合法 JSON，就從備份還原（不留半殘檔）。
+
+    回傳 (repaired: bool, agent_usage: dict|None)。"""
+    run_dir = Path(run_dir)
+    agents_dir = Path(agents_dir)
+    path = run_dir / "{0}.json".format(name)
+    if not path.exists():
+        return False, None
+    original_text = path.read_text(encoding="utf-8")
+    backup_path = agents_dir / "{0}_broken_backup.json".format(name)
+    backup_path.write_text(original_text, encoding="utf-8")
+    path.unlink()
+
+    judgment_path = run_dir / "judgment.json"
+    scenario_path = run_dir / "scenario.json"
+    prompt_path = agents_dir / "{0}_repair.md".format(name)
+    prompt_path.write_text(
+        _render_format_template(PROMPTS_TMPL_DIR / "judge_json_repair.md.tmpl", {
+            "ticker": ticker, "date": date, "name": name, "path": str(path),
+            "error": err_msg,
+            "check_cmd": _judge_syntax_check_cmd(str(judgment_path), str(scenario_path)),
+            "max_turns": str(JUDGE_JSON_REPAIR_MAX_TURNS),
+        }),
+        encoding="utf-8",
+    )
+    # 原檔全文（壞內容）走 `_write_inline_prompt` 接在分隔行之後——同 bundle／
+    # 修補全文的既有作法，避免 JSON 裡的大括號被 `.format_map` 誤判成佔位符。
+    inline_prompt_path = _write_inline_prompt(prompt_path, backup_path)
+    usage = _spawn_short(
+        inline_prompt_path, judgment_model, agents_dir / "{0}_repair_1.json".format(name),
+        run_dir, budget, JUDGE_JSON_REPAIR_MAX_TURNS,
+    )
+
+    if not path.exists():
+        path.write_text(backup_path.read_text(encoding="utf-8"), encoding="utf-8")
+        return False, usage
+    try:
+        json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, ValueError):
+        return False, usage
+    return True, usage
+
+
+def _repair_broken_judge_files(run_dir, ticker, date, judgment_model, agents_dir, budget, normalize_errors):
+    """2026-09-06（FIX_20260908）：對 `_normalize_judge_outputs` 回報的每一個
+    壞檔各派一次 `_repair_judge_json_file`。回傳
+    `{"files": [{"name": ..., "repaired": bool}, ...], "ok": bool,
+    "agent_usage": [...]}`（`ok` 為 True 僅當所有回報的壞檔事後都能重新
+    `json.loads`）。"""
+    files_result = []
+    agent_usage = []
+    for name in ("judgment", "scenario"):
+        err_msg = None
+        for e in normalize_errors:
+            if e.startswith(name + ":"):
+                err_msg = e
+                break
+        if err_msg is None:
+            continue
+        repaired, usage = _repair_judge_json_file(
+            run_dir, name, err_msg, ticker, date, judgment_model, agents_dir, budget,
+        )
+        files_result.append({"name": name, "repaired": repaired})
+        if usage is not None:
+            agent_usage.append(usage)
+    ok = bool(files_result) and all(f["repaired"] for f in files_result)
+    return {"files": files_result, "ok": ok, "agent_usage": agent_usage}
+
+
 def _do_judge(ticker, date, judgment_model, replay_dir, accept_over_budget, manifest):
     run_dir = _run_dir(ticker, date)
     manifest_path = run_dir / "manifest.json"
@@ -1519,6 +1633,9 @@ def _do_judge(ticker, date, judgment_model, replay_dir, accept_over_budget, mani
         "run_dir": str(run_dir), "bundle_path": str(bundle_path),
         "judgment_path": str(judgment_path), "scenario_path": str(scenario_path),
         "ticker": ticker, "date": date, "max_turns": str(JUDGE_MAX_TURNS),
+        # 2026-09-06（FIX_20260908）：short 模板步驟③與語法修復模板共用同一條
+        # 自檢指令，這裡先算好塞進 mapping，兩邊模板都直接取用同一份字串。
+        "check_cmd": _judge_syntax_check_cmd(str(judgment_path), str(scenario_path)),
     }
     prompt_path.write_text(_render_format_template(PROMPTS_TMPL_DIR / "judge.md.tmpl", mapping), encoding="utf-8")
     if replay_dir:
@@ -1541,18 +1658,42 @@ def _do_judge(ticker, date, judgment_model, replay_dir, accept_over_budget, mani
                             run_dir, JUDGE_BUDGET_CACHE_READ, JUDGE_SHORT_MAX_TURNS)
         stage["agent_usage"].append(r_os)
         ready = _short_outputs_ready(run_dir, t0, r_os.get("result_text")) if not r_os.get("quota_exhausted") else False
+        json_ready_ok = False
         if ready:
-            # 2026-09-06：agent 寫的是緊湊 JSON（省輸出 token），check 前先轉回
-            # 縮排格式；解析失敗就記一筆 note、原檔不動，讓 judge check 照常報錯。
+            # 2026-09-06（FIX_20260908 opus 實測缺口）：agent 寫的是緊湊 JSON
+            # （省輸出 token），check 前先轉回縮排格式；解析失敗不直接放給
+            # judge check 去報錯——先派一輪「語法修復」短迴圈補救（見
+            # `_repair_broken_judge_files`），仍失敗才真的回退 loop。
             _, normalize_errors = _normalize_judge_outputs(run_dir)
             if normalize_errors:
                 stage["normalize_error"] = normalize_errors
+                repair = _repair_broken_judge_files(
+                    run_dir, ticker, date, judgment_model, agents_dir,
+                    JUDGE_BUDGET_CACHE_READ, normalize_errors,
+                )
+                stage["json_repair"] = repair
+                stage["agent_usage"].extend(repair["agent_usage"])
+                if repair["ok"]:
+                    _, normalize_errors = _normalize_judge_outputs(run_dir)
+                    stage["normalize_error"] = normalize_errors
+                json_ready_ok = repair["ok"] and not normalize_errors
+            else:
+                json_ready_ok = True
+
+        if ready and json_ready_ok:
             ok, report = _judge_check(ticker, date)
             return _judge_finalize_after_check(
                 ticker, date, judgment_model, replay_dir, accept_over_budget, manifest, stage,
                 agents_dir, ok, report, fix_suffix="1", fix_mode="short",
             )
-        if r_os.get("quota_exhausted"):
+        if ready and not json_ready_ok:
+            # 語法修復仍失敗：不能假裝有修就跑 judge check——直接回退 loop，
+            # 讓下面既有的 loop-mode 判斷 agent 重新整段來過。
+            stage["short_fallback"] = "short：JSON 語法修復後仍無法解析（{0}），回退 loop 模式".format(
+                stage.get("normalize_error"))
+            print("[judged] " + stage["short_fallback"])
+            _atomic_write_json(manifest_path, manifest)
+        elif r_os.get("quota_exhausted"):
             stage["state"] = "FAIL"
             stage["ended"] = _now()
             stage["note"] = "short：訂閱額度耗盡"
@@ -1562,10 +1703,11 @@ def _do_judge(ticker, date, judgment_model, replay_dir, accept_over_budget, mani
             _print_step_status("judged", "short quota_exhausted", "validate PASS", "FAIL")
             _print_resume_hint(ticker, date, "judged")
             return 1
-        stage["short_fallback"] = "短迴圈未寫出 judgment／scenario 兩檔、回覆也無可解析 JSON（ok={0} turns={1}），回退 loop 模式".format(
-            r_os.get("ok"), r_os.get("num_turns"))
-        print("[judged] " + stage["short_fallback"])
-        _atomic_write_json(manifest_path, manifest)
+        else:
+            stage["short_fallback"] = "短迴圈未寫出 judgment／scenario 兩檔、回覆也無可解析 JSON（ok={0} turns={1}），回退 loop 模式".format(
+                r_os.get("ok"), r_os.get("num_turns"))
+            print("[judged] " + stage["short_fallback"])
+            _atomic_write_json(manifest_path, manifest)
 
     r_spawn = dd_headless.spawn(
         prompt_path=inline_prompt_path, model=judgment_model, allowed_tools=["Read", "Write", "Bash"],
@@ -1632,7 +1774,16 @@ def _judge_finalize_after_check(ticker, date, judgment_model, replay_dir, accept
             n, errs = _apply_patch_map(run_dir, patches)
             stage["short_fix_patch"] = {"applied": n, "errors": errs}
             print("[judged] patch map 套用 {0} 筆，錯誤 {1}".format(n, len(errs)))
-            ok, report = _judge_check(ticker, date)
+            if errs and n == 0:
+                # 2026-09-06（FIX_20260908）：底檔解析失敗等情形讓 patch 整批
+                # 一筆都沒套到——不能假裝修過就跑 judge check，直接回退 loop
+                # （見 `_apply_patch_map` 註解：套不到就不寫檔，原檔保持不變）。
+                stage["short_fix_fallback"] = "patch map 全數未套用（errors={0}），改派 loop 修正 agent".format(errs)
+                print("[judged] " + stage["short_fix_fallback"])
+                fix_mode = "loop"
+                fix_suffix = "{0}_loop".format(fix_suffix)
+            else:
+                ok, report = _judge_check(ticker, date)
         else:
             stage["short_fix_fallback"] = "patch map 回覆無法解析（ok={0}），改派 loop 修正 agent".format(r_fix.get("ok"))
             print("[judged] " + stage["short_fix_fallback"])
@@ -1873,7 +2024,15 @@ def _gate_finalize_from_audit(ticker, date, judgment_model, replay_dir, accept_o
                 n, errs = _apply_patch_map(run_dir, patches)
                 stage["gate_patch_patch"] = {"applied": n, "errors": errs}
                 print("[gate] patch map 套用 {0} 筆，錯誤 {1}".format(n, len(errs)))
-                patched_by_map = True
+                if errs and n == 0:
+                    # 2026-09-06（FIX_20260908）：同判斷段——底檔解析失敗讓整批
+                    # patch 一筆都沒套到，不能當作修過，直接回退 loop（`mode`
+                    # 一併切回 loop，否則下面 `if mode == "loop"` 判斷會被跳過）。
+                    stage["gate_patch_fallback"] = "patch map 全數未套用（errors={0}），改派 loop 修補 agent".format(errs)
+                    print("[gate] " + stage["gate_patch_fallback"])
+                    mode = "loop"
+                else:
+                    patched_by_map = True
             else:
                 stage["gate_patch_fallback"] = "patch map 回覆無法解析（ok={0}），改派 loop 修補 agent".format(
                     r_fix.get("ok"))
