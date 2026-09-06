@@ -51,6 +51,18 @@ JUDGE_MAX_TURNS = 10  # 2026-09-05：AVGO／WDAY 第 9 輪才寫完，8 太緊
 # agent 自己 Read 240KB 檔）後，fix agent 仍要讀 77KB judgment.json＋改＋
 # 寫＋judge check，4 輪不夠，實測至少 4 步驟＋緩衝，上調為 6。
 JUDGE_FIX_MAX_TURNS = 6
+# 2026-09-06 判斷段短迴圈（short）：判斷 agent 只拿 Write 工具、≤4 輪——各一次
+# Write 寫 judgment／scenario 就停，judge check 與定點修正的派工由 orchestrator
+# 代跑（FIX 實測舊 loop 10 輪、cache_read 1.23M；每輪重讀的是整包 bundle）。
+# 曾試「無工具單輪回兩個 fenced JSON」：Fable 一次規劃全部會思考 40K token，
+# 連同 33K 正文撞 64K 輸出上限被切段，`result` 只剩尾段，故改 Write 短迴圈
+# （思考分攤到各輪、產物走工具不走回覆文字）。fenced JSON 解析保留為備援。
+# 判斷規則、schema、驗證三支腳本一字不動；只改「誰操作工具」。
+# `--judge-mode loop`／`DD_JUDGE_MODE=loop` 回舊路（A/B 用）；replay 模式一律 loop。
+JUDGE_MODE_DEFAULT = "short"
+JUDGE_SHORT_MAX_TURNS = 4      # Write judgment → Write scenario → 回 DONE，留 1 輪餘裕
+JUDGE_SHORT_FIX_MAX_TURNS = 3  # （保留給 loop 回退路徑參考；short 的修正是無工具單輪 patch map）
+_JUDGE_MODE_OVERRIDE = None
 GATE_MAX_TURNS = 6
 GATE_PATCH_MAX_TURNS = 6
 JUDGE_BUDGET_CACHE_READ = 1_200_000
@@ -1200,6 +1212,171 @@ def _read_decision_verdict(run_dir):
     return ((j.get("decision_out") or {}).get("verdict"))
 
 
+def _judge_mode():
+    m = _JUDGE_MODE_OVERRIDE or os.environ.get("DD_JUDGE_MODE") or JUDGE_MODE_DEFAULT
+    return m if m in ("short", "loop") else JUDGE_MODE_DEFAULT
+
+
+_JUDGE_LOOP_WRITE_MARKER = "## 寫（各一次 Write"
+
+
+def _render_oneshot_judge_prompt(mapping):
+    """judge.md.tmpl 的規則段（「## 寫」之前）原樣沿用，只把「寫／禁／最終回報」
+    三段換成 judge_oneshot_tail.md.tmpl——規則文字單一來源，不複製一份。"""
+    tmpl = (PROMPTS_TMPL_DIR / "judge.md.tmpl").read_text(encoding="utf-8")
+    idx = tmpl.find(_JUDGE_LOOP_WRITE_MARKER)
+    if idx < 0:
+        raise RuntimeError("judge.md.tmpl 找不到分段標記 {0!r}".format(_JUDGE_LOOP_WRITE_MARKER))
+    tail = (PROMPTS_TMPL_DIR / "judge_oneshot_tail.md.tmpl").read_text(encoding="utf-8")
+    return (tmpl[:idx] + tail).format_map(_SafeFormatDict(mapping))
+
+
+_FENCE_RE = re.compile(r"```json:(judgment|scenario)[ \t]*\n(.*?)\n```", re.S)
+_FENCE_ANY_RE = re.compile(r"```(?:json)?[ \t]*\n(.*?)\n```", re.S)
+
+
+def _parse_oneshot_judgment(text):
+    """從一次性呼叫的回覆抽出 judgment／scenario 兩份 JSON。回傳 dict 或 None
+    （缺任一、JSON 解析失敗都算 None，由呼叫端決定回退）。優先認 `json:judgment`
+    ／`json:scenario` 標記；沒標記時退而取回覆內恰好兩個 JSON 區塊、依序視為
+    judgment／scenario。"""
+    text = text or ""
+    found = {}
+    for tag, body in _FENCE_RE.findall(text):
+        found.setdefault(tag, body)
+    if not ("judgment" in found and "scenario" in found):
+        blocks = _FENCE_ANY_RE.findall(text)
+        if len(blocks) == 2:
+            found = {"judgment": blocks[0], "scenario": blocks[1]}
+    if not ("judgment" in found and "scenario" in found):
+        return None
+    out = {}
+    for tag in ("judgment", "scenario"):
+        try:
+            obj = json.loads(found[tag])
+        except (json.JSONDecodeError, ValueError):
+            return None
+        if not isinstance(obj, dict):
+            return None
+        out[tag] = obj
+    return out
+
+
+_JSONPATH_TOKEN_RE = re.compile(r"\.?([^.\[\]]+)|\[(\d+)\]")
+
+
+def _set_json_path(obj, path, value):
+    """把 `$.a.b[2].c` 這種（validate_judgment.py 報錯用的）路徑設成 value；
+    中途缺的 dict 鍵自動建立，list 索引越界則 raise。回傳 True。"""
+    p = path.strip()
+    if p.startswith("$"):
+        p = p[1:]
+    toks = []
+    for m in _JSONPATH_TOKEN_RE.finditer(p):
+        toks.append(int(m.group(2)) if m.group(2) is not None else m.group(1))
+    if not toks:
+        raise ValueError("空路徑 {0!r}".format(path))
+    cur = obj
+    for t in toks[:-1]:
+        if isinstance(t, int):
+            cur = cur[t]
+        else:
+            if not isinstance(cur, dict):
+                raise TypeError("路徑 {0!r} 在 {1!r} 處不是物件".format(path, t))
+            cur = cur.setdefault(t, {})
+    last = toks[-1]
+    if isinstance(last, int):
+        cur[last] = value
+    else:
+        if not isinstance(cur, dict):
+            raise TypeError("路徑 {0!r} 末端不是物件".format(path))
+        cur[last] = value
+    return True
+
+
+_PATCH_FENCE_RE = re.compile(r"```json:patch[ \t]*\n(.*?)\n```", re.S)
+
+
+def _parse_patch_map(text):
+    """從修正回覆抽 ```json:patch``` 區塊：{"judgment": {path: value}, "scenario": {path: value}}。
+    解析不到回 None。"""
+    m = _PATCH_FENCE_RE.search(text or "")
+    if not m:
+        return None
+    try:
+        obj = json.loads(m.group(1))
+    except (json.JSONDecodeError, ValueError):
+        return None
+    if not isinstance(obj, dict):
+        return None
+    out = {}
+    for k in ("judgment", "scenario"):
+        v = obj.get(k) or {}
+        if not isinstance(v, dict):
+            return None
+        out[k] = v
+    return out
+
+
+def _apply_patch_map(run_dir, patches):
+    """把 patch map 套到 judgment.json／scenario.json；回傳 (套用筆數, 錯誤清單)。"""
+    applied, errors = 0, []
+    for name in ("judgment", "scenario"):
+        pm = patches.get(name) or {}
+        if not pm:
+            continue
+        path = run_dir / "{0}.json".format(name)
+        obj = _load_json_or(path, {})
+        for jp, val in pm.items():
+            try:
+                _set_json_path(obj, jp, val)
+                applied += 1
+            except (KeyError, IndexError, TypeError, ValueError) as e:
+                errors.append("{0} {1}: {2}".format(name, jp, e))
+        path.write_text(json.dumps(obj, ensure_ascii=False, indent=2), encoding="utf-8")
+    return applied, errors
+
+
+def _spawn_oneshot(prompt_path, model, out_json, cwd, budget):
+    """無工具、單輪的 `claude -p`（`--tools ""`）：回覆全文在 result_text。
+    只用於輸出很小的場合（定點修正的 patch map）；整份判斷物太大會撞輸出上限。"""
+    return dd_headless.spawn(
+        prompt_path=prompt_path, model=model, allowed_tools=None, max_turns=1,
+        budget_cache_read=budget, out_json=out_json, cwd=cwd,
+        extra_args=["--tools", ""],
+    )
+
+
+def _spawn_short(prompt_path, model, out_json, cwd, budget, max_turns):
+    """只給 Write 的短迴圈 `claude -p`（slim 前綴下 `--tools Write` 只帶一個
+    工具 schema）。產物由 agent 用 Write 落檔，orchestrator 之後自己跑 check。"""
+    return dd_headless.spawn(
+        prompt_path=prompt_path, model=model, allowed_tools=["Write"], max_turns=max_turns,
+        budget_cache_read=budget, out_json=out_json, cwd=cwd,
+    )
+
+
+def _short_outputs_ready(run_dir, started_at, result_text):
+    """短迴圈收工判定：兩檔都在且 mtime 晚於本輪開跑 → True；否則退而解析
+    回覆內的 fenced JSON（備援），有就落檔回 True；都沒有 → False。"""
+    jp = run_dir / "judgment.json"
+    sp = run_dir / "scenario.json"
+    if jp.exists() and sp.exists() and jp.stat().st_mtime >= started_at and sp.stat().st_mtime >= started_at:
+        return True
+    parsed = _parse_oneshot_judgment(result_text)
+    if parsed:
+        _write_oneshot_outputs(run_dir, parsed)
+        return True
+    return False
+
+
+def _write_oneshot_outputs(run_dir, parsed):
+    (run_dir / "judgment.json").write_text(
+        json.dumps(parsed["judgment"], ensure_ascii=False, indent=2), encoding="utf-8")
+    (run_dir / "scenario.json").write_text(
+        json.dumps(parsed["scenario"], ensure_ascii=False, indent=2), encoding="utf-8")
+
+
 def _do_judge(ticker, date, judgment_model, replay_dir, accept_over_budget, manifest):
     run_dir = _run_dir(ticker, date)
     manifest_path = run_dir / "manifest.json"
@@ -1242,22 +1419,56 @@ def _do_judge(ticker, date, judgment_model, replay_dir, accept_over_budget, mani
     inline_prompt_path = _write_inline_prompt(prompt_path, bundle_path)
 
     agents_dir = run_dir / "agents"
+    mode = "loop" if replay_dir else _judge_mode()
+    stage["judge_mode"] = mode
+    if mode == "short":
+        os_prompt_path = run_dir / "prompts" / "b1_judge_short.md"
+        mapping_short = dict(mapping, max_turns=str(JUDGE_SHORT_MAX_TURNS))
+        os_prompt_path.write_text(_render_oneshot_judge_prompt(mapping_short), encoding="utf-8")
+        inline_os_path = _write_inline_prompt(os_prompt_path, bundle_path)
+        t0 = time.time()
+        r_os = _spawn_short(inline_os_path, judgment_model, agents_dir / "judge_1.json",
+                            run_dir, JUDGE_BUDGET_CACHE_READ, JUDGE_SHORT_MAX_TURNS)
+        stage["agent_usage"].append(r_os)
+        ready = _short_outputs_ready(run_dir, t0, r_os.get("result_text")) if not r_os.get("quota_exhausted") else False
+        if ready:
+            ok, report = _judge_check(ticker, date)
+            return _judge_finalize_after_check(
+                ticker, date, judgment_model, replay_dir, accept_over_budget, manifest, stage,
+                agents_dir, ok, report, fix_suffix="1", fix_mode="short",
+            )
+        if r_os.get("quota_exhausted"):
+            stage["state"] = "FAIL"
+            stage["ended"] = _now()
+            stage["note"] = "short：訂閱額度耗盡"
+            manifest["stages"]["judged"] = stage
+            manifest["state"] = "judged_fail"
+            _atomic_write_json(manifest_path, manifest)
+            _print_step_status("judged", "short quota_exhausted", "validate PASS", "FAIL")
+            _print_resume_hint(ticker, date, "judged")
+            return 1
+        stage["short_fallback"] = "短迴圈未寫出 judgment／scenario 兩檔、回覆也無可解析 JSON（ok={0} turns={1}），回退 loop 模式".format(
+            r_os.get("ok"), r_os.get("num_turns"))
+        print("[judged] " + stage["short_fallback"])
+        _atomic_write_json(manifest_path, manifest)
+
     r_spawn = dd_headless.spawn(
         prompt_path=inline_prompt_path, model=judgment_model, allowed_tools=["Read", "Write", "Bash"],
         max_turns=JUDGE_MAX_TURNS, budget_cache_read=JUDGE_BUDGET_CACHE_READ,
-        out_json=agents_dir / "judge_1.json", cwd=run_dir,
+        out_json=agents_dir / "judge_1{0}.json".format("_loop" if mode == "short" else ""), cwd=run_dir,
     )
     stage["agent_usage"].append(r_spawn)
 
     ok, report = _judge_check(ticker, date)
     return _judge_finalize_after_check(
         ticker, date, judgment_model, replay_dir, accept_over_budget, manifest, stage,
-        agents_dir, ok, report, fix_suffix="1",
+        agents_dir, ok, report, fix_suffix="1", fix_mode="loop",
     )
 
 
 def _judge_finalize_after_check(ticker, date, judgment_model, replay_dir, accept_over_budget,
-                                 manifest, stage, agents_dir, ok, report, fix_suffix="1"):
+                                 manifest, stage, agents_dir, ok, report, fix_suffix="1",
+                                 fix_mode=None):
     """判斷物已寫出（或沿用既有）、`judge check` 剛跑過一次的結果為
     `(ok, report)`：FAIL 時派一輪『定點修正』agent、重跑一次 check；把結果
     收斂進 `stage` 並回寫 manifest。共用於 `_do_judge`（首次判斷後）與
@@ -1268,8 +1479,52 @@ def _judge_finalize_after_check(ticker, date, judgment_model, replay_dir, accept
     judgment_path = run_dir / "judgment.json"
     scenario_path = run_dir / "scenario.json"
     stage.setdefault("agent_usage", [])
+    if fix_mode is None:
+        fix_mode = "loop" if replay_dir else _judge_mode()
 
-    if not ok:
+    if not ok and fix_mode == "short":
+        # 定點修正＝patch map：失敗原文＋目前兩檔全文進 prompt、無工具單輪，
+        # 回覆只列「路徑 → 新值」，orchestrator 套用後再跑 check。
+        # 不整檔重寫：FIX A/B 實測整檔重寫一次 32K 輸出 token（$3.2），比省下的
+        # cache_read 還貴——判斷段的錢在輸出，不在上下文。
+        fix_os_path = run_dir / "prompts" / "b1_fix_short.md"
+        fix_os_path.write_text(
+            "你是 stock-analyst v17 判斷 agent，回來做一輪定點修正。標的 {0}（{1}）。"
+            "本輪沒有任何工具、只回覆一次。\n\n"
+            "`judge check` 的失敗原文如下，**只准改被點名的欄位**，其餘一字不動。"
+            "回覆**只含一個** ```json:patch 程式碼區塊，內容形狀固定：\n\n"
+            "```json:patch\n{{\n  \"judgment\": {{\"$.欄位.路徑\": <該欄位修正後的完整新值>, ...}},\n"
+            "  \"scenario\": {{\"$.路徑\": <新值>, ...}}\n}}\n```\n\n"
+            "- 路徑用失敗原文裡的寫法（`$.a.b[2].c`）；值是**該路徑整個欄位**的新值"
+            "（字串就給整段新字串，物件就給整個物件），不是差異描述。\n"
+            "- 沒被點名的欄位不要出現在 patch 裡；某一檔沒有要改就給空物件 {{}}。\n"
+            "- 不得為湊過驗證而編造缺證據的數字（FAIL 通常指欄位缺失或內部恆等式不符）；"
+            "不得整段改寫判斷；區塊外不寫任何文字。\n\n"
+            "## judge check 失敗原文\n\n```\n{2}\n```\n\n"
+            "## 目前 judgment.json 全文\n\n```json\n{3}\n```\n\n"
+            "## 目前 scenario.json 全文\n\n```json\n{4}\n```\n".format(
+                ticker, date, report,
+                judgment_path.read_text(encoding="utf-8") if judgment_path.exists() else "{}",
+                scenario_path.read_text(encoding="utf-8") if scenario_path.exists() else "{}",
+            ),
+            encoding="utf-8")
+        r_fix = _spawn_oneshot(fix_os_path, judgment_model,
+                               agents_dir / "judge_fix_{0}.json".format(fix_suffix),
+                               run_dir, JUDGE_BUDGET_CACHE_READ)
+        stage["agent_usage"].append(r_fix)
+        patches = _parse_patch_map(r_fix.get("result_text")) if (r_fix.get("ok") and not r_fix.get("quota_exhausted")) else None
+        if patches is not None:
+            n, errs = _apply_patch_map(run_dir, patches)
+            stage["short_fix_patch"] = {"applied": n, "errors": errs}
+            print("[judged] patch map 套用 {0} 筆，錯誤 {1}".format(n, len(errs)))
+            ok, report = _judge_check(ticker, date)
+        else:
+            stage["short_fix_fallback"] = "patch map 回覆無法解析（ok={0}），改派 loop 修正 agent".format(r_fix.get("ok"))
+            print("[judged] " + stage["short_fix_fallback"])
+            fix_mode = "loop"
+            fix_suffix = "{0}_loop".format(fix_suffix)
+
+    if not ok and fix_mode == "loop":
         fix_path = run_dir / "prompts" / "b1_fix.md"
         fix_text = (
             "你是 stock-analyst v17 判斷 agent，回來做一輪定點修正。標的 {0}（{1}）。\n\n"
@@ -2111,6 +2366,8 @@ def cmd_run(args):
     manifest.setdefault("stages", {})
 
     judgment_model = args.judgment_model or manifest.get("judgment_model") or DEFAULT_JUDGMENT_MODEL
+    global _JUDGE_MODE_OVERRIDE
+    _JUDGE_MODE_OVERRIDE = getattr(args, "judge_mode", None)
 
     start_idx = 0
     if args.resume:
@@ -2199,6 +2456,8 @@ def build_parser():
     rn.add_argument("--peers", default=None)
     rn.add_argument("--axes-per-batch", type=int, default=AXES_PER_BATCH_DEFAULT)
     rn.add_argument("--judgment-model", default=None, choices=["fable", "opus", "sonnet"])
+    rn.add_argument("--judge-mode", default=None, choices=["short", "loop"],
+                    help="判斷段跑法：short（預設，只給 Write、≤4 輪，check 由 orchestrator 跑）／loop（舊：agent 自己 Write＋check＋修）")
     rn.add_argument("--full", action="store_true", help="WP4b 未交付，本輪僅印警告")
     rn.add_argument("--replay-from", default=None, metavar="DIR")
     rn.add_argument("--until", default=None, choices=STAGE_ORDER,
@@ -2242,6 +2501,7 @@ def build_parser():
     jg.add_argument("ticker")
     jg.add_argument("date")
     jg.add_argument("--judgment-model", default=None, choices=["fable", "opus", "sonnet"])
+    jg.add_argument("--judge-mode", default=None, choices=["short", "loop"])
     jg.add_argument("--replay-from", default=None, metavar="DIR")
     jg.add_argument("--accept-over-budget", action="store_true")
 
@@ -2254,6 +2514,8 @@ def build_parser():
             "steps": [], "agents": [], "stages": {},
         })
         model = args.judgment_model or manifest.get("judgment_model") or DEFAULT_JUDGMENT_MODEL
+        global _JUDGE_MODE_OVERRIDE
+        _JUDGE_MODE_OVERRIDE = args.judge_mode
         return _do_judge(ticker, date, model, replay_dir, args.accept_over_budget, manifest)
 
     jg.set_defaults(func=_cmd_judge)

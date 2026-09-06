@@ -1,0 +1,40 @@
+## 寫（短迴圈：你只有 Write 工具，各一次 Write 就停）
+
+你這一輪**只有 Write**：沒有 Read、沒有 Bash、沒有搜尋。judgment-rules.md 或 bundle 內凡提到「跑 judge check」「三支驗證」「FAIL 只准改欄位重跑」的字句，在本模式下都由 orchestrator 代跑——你只負責把判斷物的**內容**一次寫滿、寫對。
+
+1. 一次 `Write` → `{judgment_path}`（schema：`scripts/dd_schema/judgment.schema.json`；欄位語意見 bundle 內速查）
+2. 一次 `Write` → `{scenario_path}`（`dd_scenario.py` 輸入格式，**鍵名與形狀必須完全照下面這份**，不得增刪改名——本模式沒有 Bash，你不會看到腳本的 KeyError，寫錯鍵名就是整段 FAIL）：
+
+```json
+{{
+  "ticker": "{ticker}", "date": "YYYY-MM-DD", "price": <現價，數字>,
+  "start": {{"eps": <起點 EPS>, "pe": <起點 P/E＝price÷eps>, "basis": "<起點口徑一句話，TTM 或 FY1 須與終端倍數分母同口徑>"}},
+  "yield_pct": {{"dividend": <股息殖利率 %>, "net_buyback": <淨回購殖利率 %>}},
+  "terminal_label": "FY20XXE",
+  "consensus": {{"fy1": <共識 EPS>, "fy2": <共識 EPS>, "fy3": <共識 EPS>}},
+  "endo_ceiling_exceeded": <true|false，共識 CAGR 是否超過 §5.R 內生天花板>,
+  "scenarios": {{
+    "bull": {{"eps_path": [<Y1>, <Y2>, <Y3>, <Y4>, <Y5>], "terminal_pe": <倍數>, "p": <機率整數>, "basis": "<路徑假設一句話>"}},
+    "base": {{"eps_path": [五個數], "terminal_pe": <倍數>, "p": <整數>, "basis": "…"}},
+    "bear": {{"eps_path": [五個數], "terminal_pe": <倍數>, "p": <整數>, "basis": "…"}}
+  }},
+  "second_stage": {{"bull_cagr_pct": <Y6–Y10 EPS CAGR %>, "base_cagr_pct": <%>}},
+  "peer_max_fpe": <同業最高 Fwd P/E，可省略>
+}}
+```
+
+   `dd_scenario.py` 會擋：`eps_path` 長度 ≠ 5、終端 EPS 非 Bear＜Base＜Bull、Bear 終端 EPS＞`consensus.fy2`、三機率加總 ≠ 100、`p_bear`＜20、`endo_ceiling_exceeded=true` 且 `p_bear`＜30、`p_base`＞50。機率是你的判斷，算術（IRR／三分量／AR／10Y）全由腳本算，不要自己填結果欄。
+3. 回覆一行 `DONE`，不要摘要、不要最終回報。
+
+- 兩檔都是可直接 `json.loads` 的嚴格 JSON：雙引號、無註解、無尾逗號、無省略號、不得用「同上」代替內容。
+- 不得為了省字砍欄位；required 欄位缺一即機械閘 FAIL。
+- 不重讀自己寫過的檔、不 Edit、不分次寫。
+
+寫完後 orchestrator 會跑 `judge check`（dd_scenario.py → dd_decision.py run → validate_judgment.py）。若 FAIL，你會在下一次呼叫收到失敗原文與目前檔案全文，屆時只准改被點名的欄位。
+
+## 禁（token 紀律）
+
+- 不自搜補洞：證據不足 → 在對應 judgment 欄位標「證據包未涵蓋」。
+- 不引用 bundle 之外的任何資料；不重述 bundle 內容。
+
+**輪次上限 `{max_turns}` 輪**。

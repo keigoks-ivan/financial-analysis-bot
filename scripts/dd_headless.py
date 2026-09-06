@@ -78,6 +78,24 @@ from typing import Any, Dict, List, Optional
 
 DEFAULT_CLAUDE_BIN = "claude"
 
+# 2026-09-06 前綴瘦身（實測 1 輪「只回 OK」、sonnet、同一組 allowedTools）：
+#   預設                                  首輪 context 62,020 tokens
+#   + --setting-sources user / --no-chrome / --strict-mcp-config  34,476
+#   + --tools <同 allowedTools> / --disable-slash-commands        22,494
+# 子 agent 不需要專案 CLAUDE.md、四個 MCP 伺服器的工具說明、skill 清單與
+# 其餘內建工具 schema；這些每一輪都重讀，砍掉後每輪 cache_read 少約 40K。
+# 預設開啟；A/B 或除錯時 `DD_HEADLESS_SLIM=0` 關閉，manifest 每筆 usage 記 `slim`。
+SLIM_ARGS = [
+    "--setting-sources", "user",
+    "--no-chrome",
+    "--strict-mcp-config", "--mcp-config", '{"mcpServers":{}}',
+    "--disable-slash-commands",
+]
+
+
+def _slim_enabled() -> bool:
+    return os.environ.get("DD_HEADLESS_SLIM", "1") != "0"
+
 
 def _claude_bin() -> str:
     return os.environ.get("DD_CLAUDE_BIN", DEFAULT_CLAUDE_BIN)
@@ -139,6 +157,13 @@ def spawn(
     if allowed_tools:
         cmd.append("--allowedTools")
         cmd.extend(list(allowed_tools))
+    slim = _slim_enabled()
+    if slim:
+        cmd.extend(SLIM_ARGS)
+        if allowed_tools:
+            # 內建工具集只留 allowedTools 同一組，其餘 schema 不進前綴
+            cmd.append("--tools")
+            cmd.extend(list(allowed_tools))
     if extra_args:
         cmd.extend(list(extra_args))
 
@@ -198,6 +223,7 @@ def spawn(
 
     return {
         "ok": not is_error,
+        "slim": slim,
         "num_turns": raw.get("num_turns"),
         "cache_read": cache_read,
         "cache_creation": cache_creation,
