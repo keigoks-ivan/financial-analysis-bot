@@ -1377,6 +1377,38 @@ def _write_oneshot_outputs(run_dir, parsed):
         json.dumps(parsed["scenario"], ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def _normalize_judge_outputs(run_dir):
+    """2026-09-06：short 模式的判斷 agent 只被要求輸出緊湊 JSON（省輸出
+    token，見 judge_oneshot_tail.md.tmpl），落檔後這裡轉回縮排格式，讓下游
+    （judge check／人工複審/patch）讀到的仍是原本排版；不改鍵名或內容。
+    解析失敗（不是合法 JSON）就保留原檔不動、不吞錯，讓後面的 judge check
+    照常報錯——呼叫端把回傳的 errors 記進 manifest stage["normalize_error"]。
+    回傳 (已正規化的檔名清單, 錯誤訊息清單)。"""
+    normalized, errors = [], []
+    for name in ("judgment", "scenario"):
+        path = run_dir / "{0}.json".format(name)
+        if not path.exists():
+            continue
+        try:
+            obj = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, ValueError) as e:
+            errors.append("{0}: {1}".format(name, e))
+            continue
+        _atomic_write_json(path, obj)
+        normalized.append(name)
+    return normalized, errors
+
+
+def _compact_json_text(text):
+    """2026-09-06：把落檔的縮排 JSON 轉回緊湊格式再嵌進修正輪 prompt（省輸入
+    token）；讀不成 JSON（理論上不該發生，因為套用這裡的檔案先前已通過
+    `_normalize_judge_outputs`）就原樣退回，不炸。"""
+    try:
+        return json.dumps(json.loads(text), ensure_ascii=False, separators=(",", ":"))
+    except (json.JSONDecodeError, ValueError):
+        return text
+
+
 def _do_judge(ticker, date, judgment_model, replay_dir, accept_over_budget, manifest):
     run_dir = _run_dir(ticker, date)
     manifest_path = run_dir / "manifest.json"
@@ -1432,6 +1464,11 @@ def _do_judge(ticker, date, judgment_model, replay_dir, accept_over_budget, mani
         stage["agent_usage"].append(r_os)
         ready = _short_outputs_ready(run_dir, t0, r_os.get("result_text")) if not r_os.get("quota_exhausted") else False
         if ready:
+            # 2026-09-06：agent 寫的是緊湊 JSON（省輸出 token），check 前先轉回
+            # 縮排格式；解析失敗就記一筆 note、原檔不動，讓 judge check 照常報錯。
+            _, normalize_errors = _normalize_judge_outputs(run_dir)
+            if normalize_errors:
+                stage["normalize_error"] = normalize_errors
             ok, report = _judge_check(ticker, date)
             return _judge_finalize_after_check(
                 ticker, date, judgment_model, replay_dir, accept_over_budget, manifest, stage,
@@ -1501,11 +1538,11 @@ def _judge_finalize_after_check(ticker, date, judgment_model, replay_dir, accept
             "- 不得為湊過驗證而編造缺證據的數字（FAIL 通常指欄位缺失或內部恆等式不符）；"
             "不得整段改寫判斷；區塊外不寫任何文字。\n\n"
             "## judge check 失敗原文\n\n```\n{2}\n```\n\n"
-            "## 目前 judgment.json 全文\n\n```json\n{3}\n```\n\n"
-            "## 目前 scenario.json 全文\n\n```json\n{4}\n```\n".format(
+            "## 目前 judgment.json 全文（緊湊格式，僅省空白、內容與縮排版相同）\n\n```json\n{3}\n```\n\n"
+            "## 目前 scenario.json 全文（緊湊格式，僅省空白、內容與縮排版相同）\n\n```json\n{4}\n```\n".format(
                 ticker, date, report,
-                judgment_path.read_text(encoding="utf-8") if judgment_path.exists() else "{}",
-                scenario_path.read_text(encoding="utf-8") if scenario_path.exists() else "{}",
+                _compact_json_text(judgment_path.read_text(encoding="utf-8")) if judgment_path.exists() else "{}",
+                _compact_json_text(scenario_path.read_text(encoding="utf-8")) if scenario_path.exists() else "{}",
             ),
             encoding="utf-8")
         r_fix = _spawn_oneshot(fix_os_path, judgment_model,
