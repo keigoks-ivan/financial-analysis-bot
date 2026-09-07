@@ -31,7 +31,6 @@
 CLI：--dry-run 只印報告不寫檔。
 """
 import argparse
-import glob
 import hashlib
 import json
 import os
@@ -39,8 +38,11 @@ import re
 import sys
 from datetime import datetime, timezone
 
+import dd_meta_reader  # 2026-09-07：候選集合改走共用 iterator（含 brief/）
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DOCS = os.path.join(ROOT, "docs")
+DD_DIR = os.path.join(DOCS, "dd")
 REGISTRY_PATH = os.path.join(DOCS, "detective", "data", "kill_registry.json")
 
 SOURCE_TAG = "dd_auto_sync"
@@ -86,9 +88,14 @@ def load_registry():
 
 
 def scan_dd_kill_metrics():
-    """回傳 [(stem, doc_rel, ticker, kill_metrics_list), ...]，僅含有 kill_metrics 的 DD。"""
+    """回傳 [(stem, doc_rel, ticker, kill_metrics_list), ...]，僅含有 kill_metrics 的 DD。
+
+    2026-09-07：候選集合改走 dd_meta_reader.iter_dd_paths（含 docs/dd/brief/
+    BRIEF_*.html），否則 v17 快速版帶的 kill_metrics[]（每份 4-7 條）永遠同步
+    不進 registry，週日 kill-watch-weekly.yml 就看不到這些證偽門檻。
+    """
     out = []
-    for path in sorted(glob.glob(os.path.join(DOCS, "dd", "DD_*.html"))):
+    for path in dd_meta_reader.iter_dd_paths(DD_DIR, include_brief=True):
         try:
             with open(path, encoding="utf-8") as fh:
                 txt = fh.read()

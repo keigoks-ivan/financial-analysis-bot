@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -43,6 +44,12 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 DD_DIR = ROOT / "docs" / "dd"
 DATA_DIR = ROOT / "docs" / "intel" / "data"
 CACHE_FILE = DATA_DIR / "earnings_cache.json"
+
+# 2026-09-07：DD 掃描候選集合改走共用 iterator（含 brief/）。calendar_ext.py
+# 跑在 scripts/intel/ 下（sys.path[0] 是 intel/，非 scripts/），沿用
+# scripts/intel/render.py:inject_nav() 已用過的手法把 scripts/ 補進 sys.path。
+sys.path.insert(0, str(ROOT / "scripts"))
+import dd_meta_reader  # noqa: E402
 
 DD_META_RE = re.compile(
     r'<script\s+id="dd-meta"\s+type="application/json"\s*>(.*?)</script>', re.DOTALL
@@ -64,7 +71,10 @@ def _load_watchlist() -> list[str]:
     排序回傳（穩定順序，方便快取檔案 diff 好讀）。"""
     tickers = set(MEGA_CAP_FIXED)
     if DD_DIR.exists():
-        for p in DD_DIR.glob("DD_*.html"):
+        # 2026-09-07：候選集合改走 dd_meta_reader.iter_dd_paths（含 docs/dd/
+        # brief/BRIEF_*.html），讓 v17 快速版的 dca_verdict 也算進財報日曆
+        # watchlist（否則快速版覆蓋的 ticker 若無舊版全套 DD 佐證會被漏掉）。
+        for p in dd_meta_reader.iter_dd_paths(DD_DIR, include_brief=True):
             try:
                 text = p.read_text(encoding="utf-8", errors="ignore")
             except OSError:

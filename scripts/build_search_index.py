@@ -20,6 +20,9 @@ import json
 import os
 import re
 import sys
+from pathlib import Path
+
+from dd_meta_reader import emit_dd_diagnostics, iter_dd_paths, read_dd_meta
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DOCS = os.path.join(ROOT, "docs")
@@ -83,13 +86,15 @@ def collect_inventory() -> list[dict]:
     ent: list[dict] = []
 
     # ── 個股 DD ──
-    for f in glob.glob(os.path.join(DOCS, "dd", "DD_*.html")):
-        base = os.path.basename(f)
-        m = re.match(r"^DD_(.+)_(\d{8})\.html$", base)
+    diagnostics: list[dict] = []
+    dd_dir = Path(DOCS) / "dd"
+    for path in iter_dd_paths(dd_dir, include_brief=True):
+        base = path.name
+        m = re.match(r"^(?:DD|BRIEF)_(.+)_(\d{8})\.html$", base)
         if not m:
             continue
         ticker, ymd = m.group(1), m.group(2)
-        meta = _meta(_read(f), "dd-meta") or {}
+        meta = read_dd_meta(path, diagnostics=diagnostics) or {}
         verdict = meta.get("dca_verdict") or meta.get("verdict") or meta.get("signal") or ""
         role = meta.get("dca_role") or ""
         title = f"{ticker} 個股 DD"
@@ -97,8 +102,11 @@ def collect_inventory() -> list[dict]:
             title += f"｜{verdict}"
         if role:
             title += f"｜{role}"
-        ent.append({"u": f"/dd/{base}", "t": _trim(title), "k": T_DD,
+        rel = path.relative_to(dd_dir).as_posix()
+        ent.append({"u": f"/dd/{rel}", "t": _trim(title), "k": T_DD,
                     "s": [ticker], "d": _fdate(ymd)})
+    # 2026-09-07：搜尋索引保留 legacy 無 meta 報告，但顯式列出壞 JSON。
+    emit_dd_diagnostics(diagnostics, "search-index")
 
     # ── 產業 ID（無 id-meta 者跳過）──
     for f in glob.glob(os.path.join(DOCS, "id", "ID_*.html")):

@@ -16,9 +16,9 @@
 | `moat` | `moat.grade`（＝`decision_inputs.moat`） | 字母，非數字 |
 | `val` | `appendix_a.val`（＝`decision_inputs.val`） | |
 | `ma` | `appendix_a.ma`（＝`decision_inputs.ma`） | |
-| `fpe_fy2` | `appendix_a.fpe_fy2`（＝`valuation.fwd_pe`） | |
+| `fpe_fy2` | `appendix_a.fpe_fy2`（**非**同源，見下方 2026-09-07 附註） | |
 | `pct_5y` | `appendix_a.pct_5y`（＝`valuation.percentile_5y`） | |
-| `peg_fy2` | `appendix_a.peg_fy2`（＝`valuation.peg`） | |
+| `peg_fy2` | `appendix_a.peg_fy2`（**非**同源，見下方 2026-09-07 附註） | |
 | `upside_short_pct` | `appendix_a.upside_short_pct`（＝`valuation.upside_short_pct`） | |
 | `upside_mid_pct` | `appendix_a.upside_mid_pct`（＝`valuation.upside_mid_pct`） | |
 | `stress` | `appendix_a.stress`（`{pass,total}`） | |
@@ -31,6 +31,8 @@
 | `oneliner` | 頂層 `oneliner` | ≤200 字 |
 
 **`scenario_ref` 的落地形狀（WP1c 判斷）**：草案 §3.2 只寫 `"scenario_ref":"{T}_{D}.scenario.json"`，未定形狀。WP1c 落地為指向 `scripts/dd_scenario.py --meta` 的**輸出**檔（不是它的輸入檔）——即已含 `bull_5y_price`／`bear_5y_price`／`p_bull_pct`／`p_bear_pct`／`upside_5y_pct`／`ev5y_pct`／`irr_base_pct`／`asym_ratio`／`scenario_tree` 的 JSON，這樣 `gen_dd_tables.py` 與 `validate_judgment.py`（重用 `dd_scenario.check_meta()`）都能直接消費，不必重新跑一次情境樹輸入格式的 schema。`gen_dd_tables.py` 也接受 `--scenario-meta FILE` 明示覆蓋（優先於 `scenario_ref`）。
+
+**`fpe_fy2`／`peg_fy2` 口徑待定義（2026-09-07 附註，P2-1 複審）**：本表原寫「`appendix_a.fpe_fy2`＝`valuation.fwd_pe`」「`appendix_a.peg_fy2`＝`valuation.peg`」，但複審實測 18 份 2026-09 存查 judgment 發現 `fpe_fy2` 有 10 份、`peg_fy2` 有 8 份兩側不同值——AVGO 的 reasoning 明確區分 FY26（30.77x／0.51）與 FY27（18.51x／0.31）兩個不同財年。appendix 側與 valuation 側很可能各自鎖定不同財年（FY1 vs FY2，或報告當下 vs 下一財年），**口徑待定義，兩者不得視為同義，不加 equality 檢查**。`scripts/validate_judgment.py::SAME_SOURCE_PAIRS` 因此故意不含這兩欄；日後若要合併需先由持有人拍板財年口徑，而非直接改程式複製其中一側覆蓋另一側。
 
 ## 二、v13 必填 5 欄（決策層）
 

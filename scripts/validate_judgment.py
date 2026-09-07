@@ -295,6 +295,69 @@ def cross_field_checks(data: dict, judgment_path: Path) -> tuple[list, list]:
 
 
 # ---------------------------------------------------------------------------
+# 同源欄位 equality 檢查（P2-1，2026-09-07 新增）
+#
+# scripts/dd_schema/judgment-to-ddmeta.md 宣告多組「＝同源」的 judgment.json
+# 欄位 pair（agent 被要求兩處填同一個值；dd-meta 渲染／矩陣讀取只取其中一
+# 側，另一側純粹是重複填寫成本，且若兩處填不同值，最終呈現由 renderer 的
+# 任意取邊決定，agent 不會被攔下）。這裡只驗證 mapping 文件裡「真正同義」
+# 的 pair——`fpe_fy2`／`peg_fy2` 不在此列：複審實測 18 份 2026-09 存查中兩
+# 者分別有 10／8 份不同（AVGO 明確區分 FY26/FY27 兩個財年），mapping 文件
+# 寫的「appendix_a.fpe_fy2＝valuation.fwd_pe」在財年口徑未定義前不成立，不
+# 得比對，見 judgment-to-ddmeta.md 相關兩行附註。兩側都有值（非 null）才
+# 比；任一側缺值（schema 允許 null）不視為不一致。
+# ---------------------------------------------------------------------------
+
+SAME_SOURCE_PAIRS = [
+    ("signal", "decision_inputs.signal", "appendix_a.signal"),
+    ("trap", "decision_inputs.trap", "trap_analysis.verdict"),
+    ("moat", "decision_inputs.moat", "moat.grade"),
+    ("val", "decision_inputs.val", "appendix_a.val"),
+    ("ma", "decision_inputs.ma", "appendix_a.ma"),
+    ("moat_trend", "decision_inputs.moat_trend", "moat.trend"),
+    ("runway_post_y5", "decision_inputs.runway_post_y5", "growth.runway_post_y5"),
+    ("capalloc_grade", "decision_inputs.capalloc_grade", "governance.capalloc_grade"),
+    ("archetype", "decision_inputs.archetype", "archetype.primary"),
+    ("pct_5y", "appendix_a.pct_5y", "valuation.percentile_5y"),
+    ("upside_short_pct", "appendix_a.upside_short_pct", "valuation.upside_short_pct"),
+    ("upside_mid_pct", "appendix_a.upside_mid_pct", "valuation.upside_mid_pct"),
+    ("moat_score", "moat.score", "appendix_a.moat_score"),
+]
+
+
+def _get_path(d, path):
+    cur = d
+    for part in path.split("."):
+        if not isinstance(cur, dict) or part not in cur:
+            return None
+        cur = cur[part]
+    return cur
+
+
+def _same_source_equal(v1, v2) -> bool:
+    if (
+        isinstance(v1, (int, float)) and isinstance(v2, (int, float))
+        and not isinstance(v1, bool) and not isinstance(v2, bool)
+    ):
+        return abs(v1 - v2) < 1e-9
+    return v1 == v2
+
+
+def same_source_pair_checks(data: dict) -> list:
+    fails = []
+    for name, path1, path2 in SAME_SOURCE_PAIRS:
+        v1, v2 = _get_path(data, path1), _get_path(data, path2)
+        if v1 is None or v2 is None:
+            continue
+        if not _same_source_equal(v1, v2):
+            fails.append(
+                f"同源欄位不一致（{name}）：{path1}={v1!r} 與 {path2}={v2!r}"
+                f"（judgment-to-ddmeta.md 宣告同源，須同值）"
+            )
+    return fails
+
+
+# ---------------------------------------------------------------------------
 # J2: judgment-layer copy of verify_dd_math.py 檢查 A/B/E 的可算子集（WP2
 # 2026-09-05）——只需 judgment.json ＋ 同目錄 scenario_meta.json（由
 # scenario_ref 推），不需渲染後 HTML，故不能直接 import verify_dd_math（其
@@ -811,6 +874,7 @@ def validate_file(path: Path, evidence_path: Path | None = None, j1_warn: bool =
 
     struct_errs = schema_validate(data, schema, "$")
     cross_fails, cross_warns = cross_field_checks(data, path)
+    pair_fails = same_source_pair_checks(data)  # 2026-09-07（P2-1）：同源欄位 equality
     leak_fails = leak_and_punct_checks(data)
     drift_fails, drift_warns = drift_checks(data, path, evidence_path)
     j2_fails, j2_warns = j2_math_checks(data, path)
@@ -818,7 +882,7 @@ def validate_file(path: Path, evidence_path: Path | None = None, j1_warn: bool =
     j4_warns = j4_plain_checks(data)
     j5_fails, j5_warns = j5_plain_role_checks(data)
 
-    fails = struct_errs + cross_fails + leak_fails + drift_fails + j2_fails + j1_fails + j5_fails
+    fails = struct_errs + cross_fails + pair_fails + leak_fails + drift_fails + j2_fails + j1_fails + j5_fails
     warns = cross_warns + drift_warns + j2_warns + j1_warns + j4_warns + j5_warns
     return fails, warns
 

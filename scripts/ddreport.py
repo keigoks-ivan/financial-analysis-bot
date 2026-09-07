@@ -32,6 +32,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import dd_headless  # noqa: E402  （WP1c 無頭執行器，import 呼叫，不改其內部）
 import dd_meta_reader  # noqa: E402  （WP7a peers 來源③：讀 id-meta related_tickers，不改其內部）
+import dd_metric_resolver  # noqa: E402  （2026-09-07：batch 摘要 Max DD 改用共用 helper，只 import 不改其內部）
 import dd_sections  # noqa: E402  （2026-09-06 WP4b：leak_hits／split_sections，gates 用來把 FAIL 歸因到 sid）
 import gen_dd_tables as gdt  # noqa: E402  （2026-09-06 WP4b：C-1 機械段生成＋E12 說明句，不改其內部語意）
 import verify_dd_math  # noqa: E402  （2026-09-07：finish 三方一致性沿用同一組權威容差）
@@ -1040,6 +1041,14 @@ def cmd_status(args):
         print("finish={0} site_sync={1} deferred={2}".format(
             finish_state.get("state", "—"), site_sync.get("state", "—"),
             site_sync.get("deferred", False)))
+        # 2026-09-07（P1-5）：validated／archived／commit sha／pushed sha 一併
+        # 印出，讓「已產出」與「已發布」在 status 一行內就能分辨，不必手翻
+        # manifest.json 原始欄位。
+        print("validated={0} archived={1} commit_sha={2} pushed_sha={3}".format(
+            finish_state.get("validated", False), finish_state.get("archived", False),
+            (finish_state.get("report_commit_sha") or "—")[:12],
+            (finish_state.get("report_pushed_sha") or "—")[:12],
+        ))
 
     print()
     for name in _TOP_LEVEL_FILES:
@@ -2468,7 +2477,10 @@ def _do_prose_prepare(ticker, date):
     # gen_dd_tables as gdt`），不另外幫 gen_dd_tables.py 的 CLI 加旗標。
     judgment = _load_json(judgment_path)
     evidence = _load_json_or(evidence_path, {})
-    written_mech = gdt.write_mechanical_prose(judgment, evidence.get("prior_dd"), prose_dir)
+    # 2026-09-07：完整版 revlog 必須拿到 scenario_meta，不能再只讀 null judgment。
+    scenario_meta = _load_json_or(scenario_meta_path, {})
+    written_mech = gdt.write_mechanical_prose(
+        judgment, evidence.get("prior_dd"), prose_dir, scenario_meta=scenario_meta)
     print("[ok] C-1 機械段：{0}".format(", ".join(written_mech)))
 
     bundle_path = run_dir / "bundles" / "prose.md"
@@ -3240,11 +3252,17 @@ def _finish_target_html(ticker, date, manifest):
     完整版，比快速版更接近「這次真正要上站的東西」），沒有才退回
     `stages.brief.out_path`（這個 run 自己寫過什麼就是什麼，不用檔案系統
     猜）。兩者都缺失或已不存在時才退回按檔名慣例猜測（先 brief 再完整版
-    ——brief 是 v17 現行預設產物，缺 out_path 多半代表這次跑的正是它）。"""
+    ——brief 是 v17 現行預設產物，缺 out_path 多半代表這次跑的正是它）。
+
+    2026-09-07（P1-2）：prose 只在該 stage state＝PASS 時才可被選中——
+    out_path 指到的檔即使仍實際存在於磁碟（例如上一輪 FAIL 前的殘留產出），
+    未 PASS 的 prose 也不算數，一律退回 brief。`_do_finish` 已在呼叫本函式
+    前用 `_finish_required_stages` 擋過一次；這裡是第二層防線，讓任何直接
+    呼叫本函式的路徑（如批尾同步 `_sync_batch_site`）也不會選錯檔。"""
     stages = manifest.get("stages") or {}
     prose_stage = stages.get("prose") or {}
     prose_out = prose_stage.get("out_path")
-    if prose_out and Path(prose_out).exists():
+    if prose_stage.get("state") == "PASS" and prose_out and Path(prose_out).exists():
         return Path(prose_out)
     brief_stage = stages.get("brief") or {}
     out_path = brief_stage.get("out_path")
@@ -3254,6 +3272,71 @@ def _finish_target_html(ticker, date, manifest):
     if brief_default.exists():
         return brief_default
     return DD_DIR / "DD_{0}_{1}.html".format(ticker, date)
+
+
+def _finish_required_stages(manifest):
+    """2026-09-07（P1-2）：finish 發布前逐一驗必要 stage，不再只信 brief
+    一段——公開的 `finish` 子命令可以繞過 `cmd_run` 的 stage loop 直接呼叫，
+    那條序列保證因此不能只靠正常 run 路徑撐著。
+
+    brief 發布固定要求 stage0／judged／gated／brief 全 PASS；manifest 只要
+    記錄過 `prose` 這個 stage（代表這輪跑過 `--full`），就再加驗 prose PASS
+    ——不論 prose 最後有沒有真的被 `_finish_target_html` 選中，未 PASS 的
+    prose 都不該讓 finish 帶著任何一段失敗往下走。
+
+    這裡刻意不比照 `cmd_run` 的 `--resume` 相容邏輯（該邏輯為了向後相容舊
+    manifest，允許 gated／brief 以外的段以 SKIPPED 視為「可以繼續跑」）——
+    finish 問的是「可不可以發布」，門檻要嚴格：SKIPPED 一律不算 PASS，
+    比照 gated／brief 現行處置（3.9 相容、無 walrus）。"""
+    stages = manifest.get("stages") or {}
+    required = list(STAGE_ORDER[:4])  # stage0, judged, gated, brief
+    if "prose" in stages:
+        required.append("prose")
+    missing = []
+    for name in required:
+        state = (stages.get(name) or {}).get("state")
+        if state != "PASS":
+            missing.append((name, state))
+    return required, missing
+
+
+def _load_finish_manifest(run_dir, manifest_path, ticker, date):
+    """2026-09-07（P1-4）：manifest 併入同一套 source resolver——`.dd_build`
+    整輪被清掉、run 目錄的 manifest 讀不到時，退回存查
+    `notes/site-internal/dd/_src/{T}_{D}/manifest.json`（archive 流程本就
+    會複製一份，見 `_archive_run_dir`），讓 finish 能由此續行而不是立刻
+    結束。
+
+    archive 裡各 stage 的 `out_path` 是『當時那台機器 run 目錄』寫下的絕對
+    路徑，換一台機器或換一個 clone 就可能不存在或（更危險）恰好撞到別的
+    檔——不可直接信；回傳前一律按 ticker／date／輸出型態，用這台機器現行
+    的 `DD_DIR` 重新解出 docs 目標，只覆寫 out_path，其餘欄位（state／
+    agent_usage 等）原樣保留，不改變任何判斷或機械驗算的輸入。
+
+    回傳 `(manifest, fallback_info)`；兩者來源都讀不到時 `manifest` 為
+    `None`、`fallback_info` 為 `None`。"""
+    manifest = _load_json_or(manifest_path, None)
+    if manifest is not None:
+        return manifest, None
+    archive_manifest_path = SRC_ARCHIVE_DIR / run_dir.name / "manifest.json"
+    manifest = _load_json_or(archive_manifest_path, None)
+    if manifest is None:
+        return None, None
+    manifest = json.loads(json.dumps(manifest, ensure_ascii=False))  # 深拷貝，不動存查原檔
+    stages = manifest.get("stages") or {}
+    recomputed_out_path = {
+        "brief": DD_DIR / "brief" / "BRIEF_{0}_{1}.html".format(ticker, date),
+        "prose": DD_DIR / "DD_{0}_{1}.html".format(ticker, date),
+    }
+    for stage_name, out_default in recomputed_out_path.items():
+        stage = stages.get(stage_name)
+        if isinstance(stage, dict) and stage.get("out_path"):
+            stage["out_path"] = str(out_default)
+    return manifest, {
+        "source": "manifest",
+        "run_path": str(manifest_path),
+        "path": str(archive_manifest_path),
+    }
 
 
 def _finish_file_set(ticker, date, file_cell, include_sync=True):
@@ -3615,15 +3698,23 @@ def _do_finish(ticker, date, dry_run=False, no_push=False, skip_dd_screener=Fals
                sync_later=False, accept_mismatch=False):
     run_dir = _run_dir(ticker, date)
     manifest_path = run_dir / "manifest.json"
-    manifest = _load_json_or(manifest_path, None)
+    # 2026-09-07（P1-4）：manifest 缺失時併入同一套 source resolver 退回存查。
+    manifest, manifest_fallback = _load_finish_manifest(run_dir, manifest_path, ticker, date)
     if manifest is None:
-        print("[error] 找不到 manifest：{0}".format(manifest_path), file=sys.stderr)
+        print("[error] 找不到 manifest（run 目錄與存查皆無）：{0}".format(manifest_path), file=sys.stderr)
         return 1
-    brief_stage = (manifest.get("stages") or {}).get("brief") or {}
-    if brief_stage.get("state") != "PASS":
+    if manifest_fallback:
+        print("[finish-check] 使用存查 fallback：manifest：{0} 不存在，改讀 {1}".format(
+            manifest_fallback["run_path"], manifest_fallback["path"]))
+
+    # 2026-09-07（P1-2）：任何副作用與 HTML 選擇之前，逐一驗必要 stage 皆
+    # PASS——不再只信 brief 一段，SKIPPED 也不算數。
+    required_stages, missing_stages = _finish_required_stages(manifest)
+    if missing_stages:
         print(
-            "[error] brief 段尚未 PASS（現況：{0}），finish 中止".format(
-                brief_stage.get("state")
+            "[error] finish 必要 stage 未全數 PASS，中止（必要段：{0}；未過：{1}）".format(
+                "＋".join(required_stages),
+                "；".join("{0}={1}".format(name, state or "—") for name, state in missing_stages),
             ),
             file=sys.stderr,
         )
@@ -3639,6 +3730,10 @@ def _do_finish(ticker, date, dry_run=False, no_push=False, skip_dd_screener=Fals
             run_dir, manifest, manifest_path, html_path,
             accept_mismatch=accept_mismatch):
         return 1
+    # 2026-09-07（P1-5）：機械閘通過即記 validated——manifest 的『這份 HTML
+    # 有沒有過三方一致性與 verify_dd_math』狀態，不必再從有沒有錯誤輸出反推。
+    manifest.setdefault("finish", {})["validated"] = True
+    _atomic_write_json(manifest_path, manifest)
 
     fields = _index_row_fields(html_path)
     meta = fields["meta"]
@@ -3724,14 +3819,19 @@ def _do_finish(ticker, date, dry_run=False, no_push=False, skip_dd_screener=Fals
         return 1
     commit_r = _git(["commit", "-m", commit_msg])
     if commit_r.returncode != 0:
-        print(
-            "[error] git commit 失敗：\n{0}".format(
-                (commit_r.stdout or "") + (commit_r.stderr or "")
-            ),
-            file=sys.stderr,
-        )
-        return 1
-    print("[ok] committed: {0}".format(commit_subject))
+        combined = (commit_r.stdout or "") + (commit_r.stderr or "")
+        # 2026-09-07（P1-5）：resume 撞上「這份報告先前已 commit 成功，只是
+        # 後續步驟（push／同步）中斷」時，nothing-to-commit 是預期狀態、
+        # 不是錯誤——比照 `_sync_batch_site` 既有對批尾同步 commit 的同一種
+        # 容忍；沒有這條，resume 會把已完成的副作用（commit）誤判成失敗，
+        # 永遠卡在這一步、走不到重試 push。
+        if "nothing to commit" in combined or "沒有要提交的變更" in combined:
+            print("[finish] 無新變動可提交（先前已 commit 過），視為已完成，略過重複 commit")
+        else:
+            print("[error] git commit 失敗：\n{0}".format(combined), file=sys.stderr)
+            return 1
+    else:
+        print("[ok] committed: {0}".format(commit_subject))
     # 2026-09-07：commit 後立即把 SHA 寫進 gitignored run manifest；
     # sync-later 仍保持 PENDING_SITE_SYNC，供下次開工補同步。
     commit_sha_r = _git(["rev-parse", "HEAD"])
@@ -4000,7 +4100,10 @@ def _batch_row_from_run_dir(ticker, date, run_dir, rc, elapsed_min, log_path):
     irr_base = scenario_meta.get("irr_base_pct")
     if irr_base is None:
         irr_base = decision_inputs.get("irr_base_pct")
-    max_dd = ((judgment.get("premortem") or {}).get("max_dd") or {}).get("lo")
+    # 2026-09-07（P2-3）：改用與 finish／HTML 發布契約同一個共用 helper
+    # （`min(lo, hi)`），不再直取 `.lo`——lo／hi 次序異常時 batch 摘要才不會
+    # 跟上站 dd-meta 兜不起來；不新增任何門檻，純換算法來源。
+    max_dd = dd_metric_resolver.resolve_max_dd_pct(judgment)
     ledger = _build_token_ledger(manifest)
     ledger_line = _ledger_summary_line(ledger, _prior_usage_cache_read_total(manifest))
     # 2026-09-06：batch 摘要直接列分段牆鐘與列表成本，不必再逐檔翻 token.json。

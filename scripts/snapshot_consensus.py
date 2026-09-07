@@ -316,10 +316,16 @@ def fetch_implied_move(ticker: str, earnings_date: str, price: Optional[float],
 # ── base_path_ref from dd-meta ────────────────────────────────────────────────
 def resolve_base_path_ref(ticker: str, earnings_date: str,
                           notes: list) -> Optional[dict]:
-    """讀最新 v13/v14 dd-meta，取財報季所屬財年的 fy_label / base_eps / dd_file。"""
+    """讀最新 v13/v14 dd-meta，取財報季所屬財年的 fy_label / base_eps / dd_file。
+
+    2026-09-07：候選集合含 docs/dd/brief/BRIEF_*.html（include_brief=True），
+    否則某 ticker 最新一份是 v17 快速版時，這裡會回傳更舊完整版的
+    base_eps_path，讓賽前凍結錨錨在過期財年假設上。dd_file 改用相對 DD_DIR
+    的路徑（brief 檔需要 "brief/BRIEF_..." 前綴）。
+    """
     latest_path = None
     latest_meta = None
-    for path, meta in iter_dd_metas(DD_DIR):
+    for path, meta in iter_dd_metas(DD_DIR, include_brief=True):
         if not str(meta.get("schema", "")).startswith(("v13", "v14", "v15")):
             continue
         if meta.get("ticker") != ticker:
@@ -336,7 +342,7 @@ def resolve_base_path_ref(ticker: str, earnings_date: str,
 
     base_path = latest_meta.get("base_eps_path") or {}
     fy_end_month = latest_meta.get("fy_end_month")
-    dd_file = f"/dd/{latest_path.name}"
+    dd_file = f"/dd/{latest_path.relative_to(DD_DIR).as_posix()}"
     if not base_path or not isinstance(fy_end_month, int):
         notes.append(f"base_path_ref：DD 無 base_eps_path/fy_end_month（{dd_file}）")
         return {"fy_label": None, "base_eps": None, "dd_file": dd_file}

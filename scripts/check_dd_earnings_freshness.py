@@ -24,6 +24,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from html import escape
 from pathlib import Path
 
+import dd_meta_reader  # 2026-09-07：latest-per-ticker 候選集合改走共用 iterator（含 brief/）
+
 warnings.filterwarnings("ignore")
 
 ROOT = Path(__file__).parent.parent
@@ -40,26 +42,22 @@ THR_YEL_CHG = 10.0
 
 
 def load_records():
-    """Return {ticker: meta} keyed by latest DD per ticker."""
+    """Return {ticker: meta} keyed by latest DD per ticker.
+
+    2026-09-07：候選集合改走 dd_meta_reader.iter_latest_dd_metas（含
+    docs/dd/brief/BRIEF_*.html），否則 v17 快速版一旦是某 ticker 最新一份，
+    這支財報新鮮度掃描永遠讀到已被取代的舊 DD 日期，誤判財報後未重跑。
+    _path 改存相對 DD_DIR 的路徑（brief 檔需要 "brief/BRIEF_..." 前綴）。
+    """
     records = {}
-    for p in sorted(DD_DIR.glob("DD_*.html")):
-        try:
-            text = p.read_text(encoding="utf-8")
-        except Exception:
-            continue
-        m = META_RE.search(text)
-        if not m:
-            continue
-        try:
-            d = json.loads(m.group(1).strip())
-        except json.JSONDecodeError:
-            continue
-        if not d.get("ticker") or not d.get("date"):
-            continue
-        d["_path"] = p.name
-        t = d["ticker"]
-        if t not in records or d["date"] > records[t]["date"]:
-            records[t] = d
+    diagnostics: list = []
+    for p, d in dd_meta_reader.iter_latest_dd_metas(
+        DD_DIR, include_brief=True, diagnostics=diagnostics
+    ):
+        d = dict(d)
+        d["_path"] = p.relative_to(DD_DIR).as_posix()
+        records[d["ticker"]] = d
+    dd_meta_reader.emit_dd_diagnostics(diagnostics, "dd-earnings-freshness")
     return records
 
 

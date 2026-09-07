@@ -17,6 +17,8 @@ Usage:
 
     dd_delta.py check DELTA.json --judgment NEW_JUDGMENT.json
                 --prior-judgment PRIOR_JUDGMENT.json
+                [--scenario-meta CURRENT_SCENARIO_META.json]
+                [--prior-scenario-meta PRIOR_SCENARIO_META.json]
 
 See scripts/dd_schema/delta.md for the field/rule reference and
 notes/site-internal/dd/_v16_design_spec_20260903.md for the surrounding
@@ -24,6 +26,12 @@ pipeline. Judgment-path <-> dd-meta field authority: scripts/dd_schema/
 judgment-to-ddmeta.md. Prior-report extraction convention (prior_meta /
 DRIFT_WATCH) reused from scripts/dd_prior.py — this script imports its
 DRIFT_WATCH constant rather than duplicating the list.
+
+2026-09-07（P2-2 修法）：EV/IRR/AR 三欄與 bull/bear price、p_bull/p_bear 四欄
+一律經 scripts/dd_metric_resolver.py::resolve_scenario_metrics() 解析（scenario
+有值時為權威，judgment 為 null 時才 fallback），prior／current 兩側同一支
+resolver，不再各自為政——見 cmd_generate 的 prior_meta 與 cmd_check 的
+missing_prior_field 兩處。
 """
 from __future__ import annotations
 
@@ -37,6 +45,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import dd_prior  # sibling module — reuse DRIFT_WATCH (single source of truth)
+import dd_metric_resolver  # sibling module — reuse resolve_scenario_metrics (P2-2 2026-09-07)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -194,8 +203,11 @@ ALWAYS_ALLOWED_JUDGMENT_PATHS = sorted({
 
 # DRIFT_WATCH field -> its one authoritative judgment.json path, per
 # scripts/dd_schema/judgment-to-ddmeta.md §二/§三. Fields with `None` live
-# only in scenario_meta.json (bull/bear price, p_bull/p_bear) and are out of
-# scope for a judgment.json-only `check` — documented gap, not a guess.
+# only in scenario_meta.json (bull/bear price, p_bull/p_bear — see
+# SCENARIO_ONLY_FIELDS below) — judgment.json itself never re-stores them.
+# 2026-09-07（P2-2 修法）：這四欄過去在 `check` 被整個略過（"out of scope for
+# a judgment.json-only check"）；現在 cmd_generate／cmd_check 兩處都會嘗試讀
+# 同層 scenario_meta sidecar 一併比較（sidecar 缺席時才維持略過，非新猜測）。
 DRIFT_FIELD_JUDGMENT_PATH = {
     "dca_verdict": "decision_out.verdict",
     "dca_role": "decision_out.role",
@@ -229,6 +241,12 @@ IGNORE_EVIDENCE_LEAF_KEYS = frozenset({
 
 FULL_REWRITE_PRICE_MOVE_PCT = 40.0
 FULL_REWRITE_MAX_AGE_DAYS = 180
+
+# 2026-09-07（P2-2 修法）：四個 scenario-only DRIFT_WATCH 欄——judgment.json
+# 從不重存，只活在 scenario_meta.json（dd_metric_resolver 的
+# SCENARIO_METRIC_FIELDS 是另外三個「judgment 亦有存但 scenario 為權威」的
+# 欄，兩組欄不重疊）。
+SCENARIO_ONLY_FIELDS = ("bull_5y_price", "bear_5y_price", "p_bull_pct", "p_bear_pct")
 
 
 # ---------------------------------------------------------------------------
@@ -309,6 +327,33 @@ def _get_path(d, path):
             return None
         cur = cur[part]
     return cur
+
+
+# 2026-09-07（P2-2 修法）：scenario_meta sidecar 解析，供 cmd_generate／
+# cmd_check 兩處共用。不追 judgment.json 裡的 scenario_ref——archive 後該欄
+# 常指向已清掉的 .dd_build/runs/... 暫存路徑（見 AVGO_20260905 實例：
+# scenario_ref 指到不存在的檔，但同目錄有 archive 慣例的
+# {ticker}_{date}.scenario_meta.json sidecar）。改直接找兩種已知慣例：
+# archive 後的 "{judgment 檔名去掉 .judgment.json}.scenario_meta.json"，或
+# in-flight run 目錄慣例的同層 "scenario_meta.json"。找不到回 None——這是
+# 已知範圍缺口（沒有 sidecar 就不能比 scenario-only 欄），不是新猜測。
+def _load_json_optional(path):
+    if path is None or not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+
+
+def _sibling_scenario_meta(judgment_path: Path):
+    name = judgment_path.name
+    if name.endswith(".judgment.json"):
+        cand = judgment_path.with_name(name[: -len(".judgment.json")] + ".scenario_meta.json")
+        if cand.exists():
+            return cand
+    cand = judgment_path.parent / "scenario_meta.json"
+    return cand if cand.exists() else None
 
 
 def _normalize_claim(s):
@@ -523,7 +568,24 @@ def cmd_generate(argv):
 
     full_rewrite = build_full_rewrite_required(args.date, prior_date, numbers_changed, prior_judgment, new_evidence)
 
+    # 2026-09-07（P2-2 修法）：prior_meta 過去直接抄 prior judgment.json 的
+    # decision_inputs 三欄（ev5y_pct/irr_base_pct/asym_ratio），與「新版
+    # judgment 三欄一律填 null、真值改由 scenario 算回」的現行契約脫鉤——
+    # 名叫 prior_meta 實際上不是任何一份發布過的 dd-meta。改用與
+    # gen_dd_tables／validate_judgment 同一支 resolve_scenario_metrics()，
+    # scenario_meta sidecar 有值時一律採其為權威（判斷值僅供漂移警告參考），
+    # 讓 prior_meta 名副其實地代表「prior 那次若要發布會落地的 dd-meta 值」。
+    prior_scenario_meta = _load_json_optional(_sibling_scenario_meta(prior_judgment_path))
     prior_meta = {f: _get_path(prior_judgment, p) for f, p in DRIFT_FIELD_JUDGMENT_PATH.items() if p}
+    prior_meta.update(
+        dd_metric_resolver.resolve_scenario_metrics(
+            prior_judgment, prior_scenario_meta, source=f"dd_delta prior {prior_ticker}_{prior_date}"
+        )
+    )
+    # 四個 scenario-only 欄（judgment.json 本不重存）直接從 sidecar 讀；沒有
+    # sidecar 就維持 None——已知範圍缺口，不是新猜測。
+    for f in SCENARIO_ONLY_FIELDS:
+        prior_meta[f] = (prior_scenario_meta or {}).get(f)
     prior_meta_diff = {"prior_meta": prior_meta, "drift_watch": dd_prior.DRIFT_WATCH}
 
     delta = {
@@ -588,11 +650,29 @@ def cmd_check(argv):
     ap.add_argument("delta_json")
     ap.add_argument("--judgment", required=True)
     ap.add_argument("--prior-judgment", required=True)
+    # 2026-09-07（P2-2 修法）：選填——現行 scenario 三欄（ev5y_pct/irr_base_pct/
+    # asym_ratio）與 scenario-only 四欄（bull/bear price、p_bull/p_bear）的
+    # 比較都要走 scenario_meta，不再只看 judgment.json。省略時自動嘗試同層
+    # sidecar（_sibling_scenario_meta）；兩側都找不到就維持舊行為（略過，
+    # 非新猜測）。
+    ap.add_argument("--scenario-meta", default=None, help="選填：current 側 scenario_meta.json")
+    ap.add_argument("--prior-scenario-meta", default=None, help="選填：prior 側 scenario_meta.json")
     args = ap.parse_args(argv)
 
     delta = json.loads(Path(args.delta_json).read_text(encoding="utf-8"))
-    judgment = json.loads(Path(args.judgment).read_text(encoding="utf-8"))
-    prior_judgment = json.loads(Path(args.prior_judgment).read_text(encoding="utf-8"))
+    judgment_path = Path(args.judgment)
+    prior_judgment_path = Path(args.prior_judgment)
+    judgment = json.loads(judgment_path.read_text(encoding="utf-8"))
+    prior_judgment = json.loads(prior_judgment_path.read_text(encoding="utf-8"))
+
+    scenario_meta = (
+        _load_json_optional(Path(args.scenario_meta)) if args.scenario_meta
+        else _load_json_optional(_sibling_scenario_meta(judgment_path))
+    )
+    prior_scenario_meta = (
+        _load_json_optional(Path(args.prior_scenario_meta)) if args.prior_scenario_meta
+        else _load_json_optional(_sibling_scenario_meta(prior_judgment_path))
+    )
 
     review_paths = delta.get("judgment_fields_to_review", [])
     allowed_bare = set()
@@ -610,16 +690,34 @@ def cmd_check(argv):
         violations.append({"path": path, "kind": kind, "old": old_v, "new": new_v})
 
     # contradictions[] must carry a prior_field entry for every DRIFT_WATCH
-    # field whose value actually changed (fields living only in
-    # scenario_meta.json are skipped — out of scope for a judgment-only check).
+    # field whose value actually changed.
+    # 2026-09-07（P2-2 修法）：ev5y_pct/irr_base_pct/asym_ratio 三欄與
+    # bull_5y_price/bear_5y_price/p_bull_pct/p_bear_pct 四欄改走
+    # resolve_scenario_metrics()／scenario_meta 直讀，兩側同一套解法，不再
+    # 對三欄只看 judgment 的（可能是 null 的）decision_inputs 原始值、對四欄
+    # 整個略過。其餘欄位維持原本的 judgment.json 路徑直讀。
+    resolved_current = dict(
+        dd_metric_resolver.resolve_scenario_metrics(judgment, scenario_meta, source="check current")
+    )
+    resolved_prior = dict(
+        dd_metric_resolver.resolve_scenario_metrics(prior_judgment, prior_scenario_meta, source="check prior")
+    )
+    for f in SCENARIO_ONLY_FIELDS:
+        resolved_current[f] = (scenario_meta or {}).get(f)
+        resolved_prior[f] = (prior_scenario_meta or {}).get(f)
+    special_fields = set(dd_metric_resolver.SCENARIO_METRIC_FIELDS) | set(SCENARIO_ONLY_FIELDS)
+
     contradictions = judgment.get("contradictions") or []
     prior_fields_present = {c.get("prior_field") for c in contradictions if c.get("prior_field")}
     missing_prior_field = []
     for field, jpath in DRIFT_FIELD_JUDGMENT_PATH.items():
-        if not jpath:
-            continue
-        old_v = _get_path(prior_judgment, jpath)
-        new_v = _get_path(judgment, jpath)
+        if field in special_fields:
+            old_v, new_v = resolved_prior.get(field), resolved_current.get(field)
+        else:
+            if not jpath:
+                continue
+            old_v = _get_path(prior_judgment, jpath)
+            new_v = _get_path(judgment, jpath)
         if old_v is not None and old_v != new_v and field not in prior_fields_present:
             missing_prior_field.append({"field": field, "path": jpath, "old": old_v, "new": new_v})
 

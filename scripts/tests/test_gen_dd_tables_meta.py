@@ -19,6 +19,7 @@ SCRIPTS_DIR = Path(__file__).resolve().parent.parent
 
 sys.path.insert(0, str(SCRIPTS_DIR))
 import gen_dd_tables  # noqa: E402
+import dd_brief  # noqa: E402
 
 
 def _write(path: Path, obj: dict):
@@ -100,3 +101,47 @@ def test_resolve_scenario_meta_missing_file_returns_none(tmp_path):
     _write(judgment_path, judgment)
 
     assert gen_dd_tables.resolve_scenario_meta(judgment, judgment_path, None) is None
+
+
+def test_scenario_metrics_are_identical_across_four_render_entrypoints():
+    """2026-09-07：null judgment 不得讓 full dashboard／revlog 漏掉三欄。"""
+    judgment = {
+        "meta": {"ticker": "ZTEST", "date": "20260907", "schema": "v17"},
+        "decision_inputs": {
+            "price_at_dd": 100,
+            "ev5y_pct": None,
+            "irr_base_pct": None,
+            "asym_ratio": None,
+        },
+        "decision_out": {"verdict": "觀望", "role": "追蹤"},
+        "appendix_a": {"val": "🟡"},
+    }
+    scenario_meta = {"ev5y_pct": 6.8, "irr_base_pct": 0.9, "asym_ratio": 1.7}
+
+    meta = gen_dd_tables.build_dd_meta(judgment, scenario_meta)
+    dashboard = gen_dd_tables.render_dashboard_html(judgment, scenario_meta)
+    revlog = gen_dd_tables.render_revlog_html(judgment, scenario_meta=scenario_meta)
+    tiles = dd_brief.render_tiles(judgment, scenario_meta)
+
+    assert [meta[field] for field in ("ev5y_pct", "irr_base_pct", "asym_ratio")] == [
+        6.8, 0.9, 1.7,
+    ]
+    assert "+6.8%／Base +0.9%/yr" in dashboard
+    assert "不對稱比率 1.7" in revlog
+    assert "5 年機率加權報酬 +6.8%" in revlog
+    assert "+6.8%" in tiles
+    assert ">0.9<" in tiles
+    assert ">1.7<" in tiles
+
+
+def test_wdc_ev_uses_scenario_meta_even_inside_historical_tolerance():
+    """2026-09-07：重現 WDC 7.0／6.8；發布值必須採 scenario 的 6.8。"""
+    src = SCRIPTS_DIR.parent / "notes" / "site-internal" / "dd" / "_src" / "WDC_20260906"
+    judgment = json.loads(
+        (src / "WDC_20260906.judgment.json").read_text(encoding="utf-8"))
+    scenario_meta = json.loads(
+        (src / "WDC_20260906.scenario_meta.json").read_text(encoding="utf-8"))
+
+    assert judgment["decision_inputs"]["ev5y_pct"] == 7
+    assert scenario_meta["ev5y_pct"] == 6.8
+    assert gen_dd_tables.build_dd_meta(judgment, scenario_meta)["ev5y_pct"] == 6.8

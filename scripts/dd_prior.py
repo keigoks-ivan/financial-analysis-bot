@@ -6,9 +6,11 @@ that `dd_evidence.py merge` (WP1a, written in parallel) can fold into
 evidence.json:
 
   prior_dd     — QC-17/18 three-block extraction from the latest existing
-                 DD_{TICKER}_*.html (revlog / §2.B H1-H3 + §2.C R1-R3 / E12
-                 trigger table), plus inception_dd and dd_12m_ago pointers.
-                 NEVER loads the whole prior HTML into the output (QC-17).
+                 DD_{TICKER}_*.html or docs/dd/brief/BRIEF_{TICKER}_*.html
+                 (2026-09-07: brief included, see find_dd_files) (revlog /
+                 §2.B H1-H3 + §2.C R1-R3 / E12 trigger table), plus
+                 inception_dd and dd_12m_ago pointers. NEVER loads the whole
+                 prior HTML into the output (QC-17).
   ledger       — knowledge/q.py's decision history + usernote + falsifiers
                  for this ticker, read from the derived JSON files
                  (knowledge/decisions.jsonl, graph.json, settlement.json,
@@ -94,7 +96,9 @@ def _version_tuple(s):
 # prior_dd
 # ---------------------------------------------------------------------------
 
-_FNAME_RE = re.compile(r"^DD_(?P<ticker>.+)_(?P<date>\d{8})\.html$")
+# 2026-09-07：DD 與快速版共用一個 filename 形狀（{PREFIX}_{ticker}_{date}.html），
+# 讓 find_dd_files() 能用同一個 regex 比對兩種前綴（見下）。
+_FNAME_RE = re.compile(r"^(?:DD|BRIEF)_(?P<ticker>.+)_(?P<date>\d{8})\.html$")
 
 # v16 修法 5（judgment-rules.md §12 item 3b, QC-49 執行細則）：Stage 1 判斷層
 # 逐欄比對 prior_meta 與本次 decision_inputs/情境六欄/rearm/val/runway_post_y5，
@@ -109,14 +113,23 @@ DRIFT_WATCH = [
 
 
 def find_dd_files(ticker_norm: str):
-    """[(YYYYMMDD, Path), ...] ascending by date, for this ticker only."""
+    """[(YYYYMMDD, Path), ...] ascending by date, for this ticker only.
+
+    2026-09-07：候選集合改走 dd_meta_reader.iter_dd_paths（含 docs/dd/brief/
+    BRIEF_*.html）而非只 glob 根目錄 DD_*.html——否則 v17 快速版一旦是某 ticker
+    最新一份報告，下一輪 DD 判斷的 prior_dd／drift_watch／inception/12m-ago 會
+    把它當作不存在，繼續錨定在更舊的完整版上（P1-3）。同 ticker 同日期若完整版
+    與快速版並存，排序讓完整版排在後面，使 build_prior_dd() 的 cands[-1] 選中
+    完整版——與 dd_meta_reader.iter_latest_dd_metas 的「同日完整版優先」慣例一致。
+    """
     out = []
-    for f in DD_DIR.glob(f"DD_{ticker_norm}_*.html"):
+    for f in dd_meta_reader.iter_dd_paths(DD_DIR, include_brief=True):
         m = _FNAME_RE.match(f.name)
         if m and m.group("ticker") == ticker_norm:
-            out.append((m.group("date"), f))
-    out.sort(key=lambda x: x[0])
-    return out
+            is_full = f.name.startswith("DD_")
+            out.append((m.group("date"), is_full, f))
+    out.sort(key=lambda x: (x[0], x[1]))
+    return [(date_str, path) for date_str, _is_full, path in out]
 
 
 def _read(f: Path) -> str:

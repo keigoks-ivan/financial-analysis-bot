@@ -963,5 +963,312 @@ def test_finish_archives_prompts_skip_inline_variants(tmp_path, monkeypatch):
     assert (paths["src_archive"] / "{0}_{1}".format(ticker, date) / "parts" / "x.json").exists()
 
 
+# ---------------------------------------------------------------------------
+# 2026-09-07（P1-2）：finish 依輸出型態逐一驗必要 stage，不只信 brief PASS。
+# ---------------------------------------------------------------------------
+
+def test_finish_required_stages_brief_only_vs_full():
+    """`_finish_required_stages` 單元測試：無 prose 段只驗四段；有 prose
+    段（代表跑過 `--full`）再加一段，且 SKIPPED 不算 PASS。"""
+    manifest_brief_only = {"stages": {
+        "stage0": {"state": "PASS"}, "judged": {"state": "PASS"},
+        "gated": {"state": "PASS"}, "brief": {"state": "PASS"},
+    }}
+    required, missing = ddreport._finish_required_stages(manifest_brief_only)
+    assert required == ["stage0", "judged", "gated", "brief"]
+    assert missing == []
+
+    manifest_full_skipped = {"stages": {
+        "stage0": {"state": "PASS"}, "judged": {"state": "PASS"},
+        "gated": {"state": "PASS"}, "brief": {"state": "PASS"},
+        "prose": {"state": "SKIPPED"},
+    }}
+    required2, missing2 = ddreport._finish_required_stages(manifest_full_skipped)
+    assert required2 == ["stage0", "judged", "gated", "brief", "prose"]
+    assert missing2 == [("prose", "SKIPPED")]
+
+
+def test_finish_blocks_before_selecting_html_when_required_stage_fails(
+        tmp_path, monkeypatch, capsys):
+    """P1-2 驗收案例：brief=PASS、gated=FAIL、prose=FAIL，但 prose.out_path
+    指向一份存在且數學可過的 HTML——finish 必須在選檔前就擋下，不得選中
+    prose（用 monkeypatch `_finish_target_html` 直接證明它從未被呼叫）。"""
+    paths = _setup_fake_repo(tmp_path, monkeypatch)
+    ticker, date = "ZTEST", "20260905"
+    brief_html = paths["brief_dir"] / "BRIEF_{0}_{1}.html".format(ticker, date)
+    _write_brief_html(brief_html, _sample_meta())
+    full_html = paths["dd_dir"] / "DD_{0}_{1}.html".format(ticker, date)
+    _write_brief_html(full_html, _sample_meta(brief=False))
+
+    extra_stages = {
+        "gated": {"state": "FAIL"},
+        "prose": {"state": "FAIL", "out_path": str(full_html)},
+    }
+    _make_run_dir(paths, ticker, date, brief_html, extra_stages=extra_stages)
+
+    def _fail_if_called(*a, **k):
+        pytest.fail("必要 stage 未全數 PASS 時不得走到選檔")
+
+    monkeypatch.setattr(ddreport, "_finish_target_html", _fail_if_called)
+    monkeypatch.setattr(ddreport, "_git", lambda *a, **k: pytest.fail("不得呼叫 git"))
+    monkeypatch.setattr(
+        ddreport.subprocess, "run",
+        lambda *a, **k: pytest.fail("不得呼叫 verify_dd_math.py 等子行程"),
+    )
+
+    rc = ddreport._do_finish(ticker, date, dry_run=True)
+    assert rc != 0
+    err = capsys.readouterr().err
+    assert "gated=FAIL" in err
+    assert "prose=FAIL" in err
+
+
+def test_finish_target_html_ignores_non_pass_prose_out_path(tmp_path, monkeypatch):
+    """`_finish_target_html` 單元測試：prose 存在於磁碟但未 PASS 時退回
+    brief，不管 out_path 指到的檔是否真的存在。"""
+    paths = _setup_fake_repo(tmp_path, monkeypatch)
+    ticker, date = "ZTEST", "20260905"
+    brief_html = paths["brief_dir"] / "BRIEF_{0}_{1}.html".format(ticker, date)
+    _write_brief_html(brief_html, _sample_meta())
+    full_html = paths["dd_dir"] / "DD_{0}_{1}.html".format(ticker, date)
+    _write_brief_html(full_html, _sample_meta(brief=False))
+
+    manifest = {"stages": {
+        "brief": {"state": "PASS", "out_path": str(brief_html)},
+        "prose": {"state": "FAIL", "out_path": str(full_html)},
+    }}
+    selected = ddreport._finish_target_html(ticker, date, manifest)
+    assert selected == brief_html
+
+
+def test_finish_target_html_selects_prose_out_path_when_pass(tmp_path, monkeypatch):
+    """`_finish_target_html` 單元測試：prose PASS 時才選它的 out_path。"""
+    paths = _setup_fake_repo(tmp_path, monkeypatch)
+    ticker, date = "ZTEST", "20260905"
+    brief_html = paths["brief_dir"] / "BRIEF_{0}_{1}.html".format(ticker, date)
+    _write_brief_html(brief_html, _sample_meta())
+    full_html = paths["dd_dir"] / "DD_{0}_{1}.html".format(ticker, date)
+    _write_brief_html(full_html, _sample_meta(brief=False))
+
+    manifest = {"stages": {
+        "brief": {"state": "PASS", "out_path": str(brief_html)},
+        "prose": {"state": "PASS", "out_path": str(full_html)},
+    }}
+    selected = ddreport._finish_target_html(ticker, date, manifest)
+    assert selected == full_html
+
+
+# ---------------------------------------------------------------------------
+# 2026-09-07（P1-4）：manifest 併入 archive fallback resolver。
+# ---------------------------------------------------------------------------
+
+def test_finish_manifest_falls_back_to_archive_and_ignores_stale_out_path(
+        tmp_path, monkeypatch, capsys):
+    """P1-4 驗收案例：`_run_dir()` 指向不存在的暫存路徑（模擬 `.dd_build`
+    整輪被清掉），存查 `_src/{T}_{D}/manifest.json` 還在——finish 能由此續行
+    而不是立刻結束；且 archive 裡『舊機器』的絕對 out_path（此處刻意指向一份
+    磁碟上真的存在、但內容錯誤的誘餌檔）不可被直接信任，必須按 ticker／
+    date／輸出型態重新解出這台機器現行的正確 docs 目標。"""
+    paths = _setup_fake_repo(tmp_path, monkeypatch)
+    ticker, date = "ZTEST", "20260905"
+    html_path = paths["brief_dir"] / "BRIEF_{0}_{1}.html".format(ticker, date)
+    _write_brief_html(html_path, _sample_meta())
+    run_dir, _ = _make_run_dir(paths, ticker, date, html_path)
+
+    archive_dir = paths["src_archive"] / "{0}_{1}".format(ticker, date)
+    ddreport._archive_run_dir(run_dir, archive_dir)
+
+    # 誘餌：磁碟上真實存在、但屬於別份報告的 HTML，證明 out_path 不能只靠
+    # 「檔案存不存在」判斷，必須整條重算，不能沿用存查裡的舊絕對路徑。
+    decoy_html = tmp_path / "decoy" / "BRIEF_WRONG_20260101.html"
+    _write_brief_html(decoy_html, _sample_meta(), sub_text="這是別份報告，不該被選到。")
+
+    archive_manifest_path = archive_dir / "manifest.json"
+    archive_manifest = json.loads(archive_manifest_path.read_text(encoding="utf-8"))
+    archive_manifest["stages"]["brief"]["out_path"] = str(decoy_html)
+    archive_manifest_path.write_text(
+        json.dumps(archive_manifest, ensure_ascii=False), encoding="utf-8")
+
+    # run 目錄整輪被清掉：RUNS_DIR 換成一個新的空目錄，_run_dir() 從此指向
+    # 不存在的路徑，但同一個 ticker/date 的存查（_src/）維持原樣。
+    empty_runs = tmp_path / "empty_runs"
+    empty_runs.mkdir()
+    monkeypatch.setattr(ddreport, "RUNS_DIR", empty_runs)
+    assert not (empty_runs / "{0}_{1}".format(ticker, date)).exists()
+
+    sub_calls = []
+
+    def fake_subprocess_run(cmd, *a, **k):
+        sub_calls.append(list(cmd))
+        return _FakeCompleted(0, "[pass]", "")
+
+    monkeypatch.setattr(ddreport.subprocess, "run", fake_subprocess_run)
+    monkeypatch.setattr(ddreport, "_git", lambda *a, **k: pytest.fail("dry-run 不得呼叫 git"))
+
+    rc = ddreport._do_finish(ticker, date, dry_run=True)
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "使用存查 fallback：manifest" in out
+    assert str(archive_manifest_path) in out
+
+    math_calls = [c for c in sub_calls if "verify_dd_math.py" in " ".join(c)]
+    assert len(math_calls) == 1
+    assert str(html_path) in math_calls[0]
+    assert str(decoy_html) not in math_calls[0]
+
+
+def test_finish_manifest_missing_everywhere_still_errors(tmp_path, monkeypatch, capsys):
+    """兩邊都沒有 manifest 時，finish 仍必須明確報錯，不能悄悄用 None 往下走。"""
+    paths = _setup_fake_repo(tmp_path, monkeypatch)
+    ticker, date = "ZGONE", "20260905"
+    rc = ddreport._do_finish(ticker, date, dry_run=True)
+    assert rc != 0
+    assert "找不到 manifest" in capsys.readouterr().err
+
+
+# ---------------------------------------------------------------------------
+# 2026-09-07（P1-5）：finish 可恢復狀態——validated／commit 冪等。
+# ---------------------------------------------------------------------------
+
+def test_finish_records_validated_flag_after_consistency_gate_passes(
+        tmp_path, monkeypatch):
+    """一致性閘通過後，manifest 必須留下 `finish.validated`，讓後續 status／
+    resume 能區分『已產出且過機械閘』與『只是產出』。"""
+    paths = _setup_fake_repo(tmp_path, monkeypatch)
+    ticker, date = "ZTEST", "20260905"
+    html_path = paths["brief_dir"] / "BRIEF_{0}_{1}.html".format(ticker, date)
+    _write_brief_html(html_path, _sample_meta())
+    run_dir, _ = _make_run_dir(paths, ticker, date, html_path)
+
+    monkeypatch.setattr(
+        ddreport.subprocess, "run", lambda *a, **k: _FakeCompleted(0, "[pass]", ""))
+    monkeypatch.setattr(ddreport, "_git", lambda *a, **k: pytest.fail("dry-run 不得呼叫 git"))
+
+    assert ddreport._do_finish(ticker, date, dry_run=True) == 0
+    manifest = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["finish"]["validated"] is True
+
+
+def test_finish_commit_tolerates_nothing_to_commit_on_resume(
+        tmp_path, monkeypatch, capsys):
+    """P1-5 驗收案例：resume 撞上『這份報告先前已 commit 成功、只是後續
+    （push／同步）步驟中斷』時，git commit 回報 nothing-to-commit 不得被當
+    成 finish 失敗——否則 resume 會永遠卡在這一步，走不到重試 push。"""
+    paths = _setup_fake_repo(tmp_path, monkeypatch)
+    ticker, date = "ZTEST", "20260905"
+    html_path = paths["brief_dir"] / "BRIEF_{0}_{1}.html".format(ticker, date)
+    _write_brief_html(html_path, _sample_meta())
+    run_dir, _ = _make_run_dir(paths, ticker, date, html_path)
+
+    git_calls = []
+
+    def fake_git(args, cwd=None):
+        git_calls.append(list(args))
+        if args and args[0] == "commit":
+            return _FakeCompleted(1, "", "On branch main\nnothing to commit, working tree clean\n")
+        if args and args[0] == "rev-parse":
+            return _FakeCompleted(0, "deadbeef1234567890abcdef\n", "")
+        return _FakeCompleted(0, "", "")
+
+    monkeypatch.setattr(ddreport, "_git", fake_git)
+    monkeypatch.setattr(ddreport, "_git_ahead_behind", lambda: (0, 0))
+    monkeypatch.setattr(
+        ddreport.subprocess, "run", lambda *a, **k: _FakeCompleted(0, "[pass]", ""))
+
+    rc = ddreport._do_finish(ticker, date, no_push=True)
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "無新變動可提交" in out
+    commit_attempts = [c for c in git_calls if c and c[0] == "commit"]
+    assert len(commit_attempts) == 1  # 仍真的嘗試過 commit，只是容忍它的失敗
+
+    manifest = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["finish"]["state"] == "COMPLETE_NO_PUSH"
+    assert manifest["finish"]["report_commit_sha"] == "deadbeef1234567890abcdef"
+
+
+def test_finish_commit_real_failure_still_blocks(tmp_path, monkeypatch, capsys):
+    """對照組：真正的 git commit 失敗（非 nothing-to-commit）仍必須擋下，
+    不能被 P1-5 的容忍誤放行。"""
+    paths = _setup_fake_repo(tmp_path, monkeypatch)
+    ticker, date = "ZTEST", "20260905"
+    html_path = paths["brief_dir"] / "BRIEF_{0}_{1}.html".format(ticker, date)
+    _write_brief_html(html_path, _sample_meta())
+    _make_run_dir(paths, ticker, date, html_path)
+
+    def fake_git(args, cwd=None):
+        if args and args[0] == "commit":
+            return _FakeCompleted(1, "", "fatal: unable to write new_index file")
+        return _FakeCompleted(0, "", "")
+
+    monkeypatch.setattr(ddreport, "_git", fake_git)
+    monkeypatch.setattr(ddreport, "_git_ahead_behind", lambda: (0, 0))
+    monkeypatch.setattr(
+        ddreport.subprocess, "run", lambda *a, **k: _FakeCompleted(0, "[pass]", ""))
+
+    rc = ddreport._do_finish(ticker, date, no_push=True)
+    assert rc == 1
+    assert "git commit 失敗" in capsys.readouterr().err
+
+
+def test_status_shows_validated_archived_and_shas(tmp_path, monkeypatch, capsys):
+    """status 一行就能看出 validated／archived／commit sha／pushed sha，
+    不必手翻 manifest.json 原始欄位（P1-5：resume／status 要能分辨『已產出』
+    與『已發布』）。"""
+    paths = _setup_fake_repo(tmp_path, monkeypatch)
+    ticker, date = "ZTEST", "20260905"
+    html_path = paths["brief_dir"] / "BRIEF_{0}_{1}.html".format(ticker, date)
+    _write_brief_html(html_path, _sample_meta())
+    run_dir, manifest = _make_run_dir(paths, ticker, date, html_path)
+    manifest["finish"] = {
+        "state": "COMPLETE",
+        "validated": True,
+        "archived": True,
+        "report_commit_sha": "abc123def456",
+        "report_pushed_sha": "abc123def456",
+        "site_sync": {"state": "PASS", "deferred": False},
+    }
+    (run_dir / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False), encoding="utf-8")
+
+    ns = ddreport.build_parser().parse_args(["status", ticker, date])
+    rc = ns.func(ns)
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "validated=True archived=True" in out
+    assert "commit_sha=abc123def456" in out
+    assert "pushed_sha=abc123def456" in out
+
+
+# ---------------------------------------------------------------------------
+# 2026-09-07（P2-3）：batch 摘要 Max DD 改用共用 resolver（min(lo, hi)）。
+# ---------------------------------------------------------------------------
+
+def test_batch_row_max_dd_uses_min_lo_hi_not_raw_lo(tmp_path, monkeypatch):
+    """lo／hi 次序異常時，batch 摘要不能再直取 `.lo`——改用
+    `dd_metric_resolver.resolve_max_dd_pct`，與 finish／HTML 發布契約同一
+    個來源，不新增任何門檻。"""
+    paths = _setup_fake_repo(tmp_path, monkeypatch)
+    ticker, date = "ZTEST", "20260905"
+    run_dir = paths["runs_dir"] / "{0}_{1}".format(ticker, date)
+    run_dir.mkdir(parents=True)
+    (run_dir / "manifest.json").write_text(
+        json.dumps({"state": "brief_pass", "stages": {}}), encoding="utf-8")
+    # lo／hi 次序異常：lo 比 hi 溫和（正常制度上 lo 該是較深的負值）。
+    judgment = {
+        "decision_out": {"verdict": "觀望", "role": "追蹤"},
+        "decision_inputs": {},
+        "premortem": {"max_dd": {"lo": -30, "hi": -65}},
+    }
+    (run_dir / "judgment.json").write_text(json.dumps(judgment), encoding="utf-8")
+    (run_dir / "scenario_meta.json").write_text("{}", encoding="utf-8")
+
+    row = ddreport._batch_row_from_run_dir(
+        ticker, date, run_dir, 0, 1.0, run_dir / "log.txt")
+
+    assert row["max_dd_pct"] == -65
+    assert row["max_dd_pct"] == ddreport.dd_metric_resolver.resolve_max_dd_pct(judgment)
+    assert row["max_dd_pct"] != (judgment["premortem"]["max_dd"]["lo"])
+
+
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-v"]))

@@ -24,6 +24,8 @@ from html import escape
 from pathlib import Path
 from typing import Optional
 
+import dd_meta_reader  # 2026-09-07：v13+ overlay 候選集合改走共用 iterator（含 brief/）
+
 ROOT = Path(__file__).parent.parent
 DCA_DIR = ROOT / "docs" / "dca"
 DD_DIR = ROOT / "docs" / "dd"
@@ -142,9 +144,13 @@ def load_dca_records() -> dict:
 
     # v13 merged reports: dca_role/dca_verdict live in dd-meta. Overlay over the
     # legacy DCA records, newest date wins (a v13 DD supersedes a stale stand-
-    # alone DCA for the same ticker). No-op for the current all-v12 corpus.
+    # alone DCA for the same ticker).
+    # 2026-09-07：候選集合改走 dd_meta_reader.iter_dd_paths（含 docs/dd/brief/
+    # BRIEF_*.html），否則 v17 快速版一旦是某 ticker 最新一份，這段 overlay
+    # 看不到它、研究頁組合快照就繼續顯示已被取代的舊裁決。path 改存相對
+    # DD_DIR 的路徑（brief 檔需要 "brief/BRIEF_..." 前綴，見 _ticker_link）。
     if DD_DIR.exists():
-        for p in sorted(DD_DIR.glob("DD_*.html")):
+        for p in dd_meta_reader.iter_dd_paths(DD_DIR, include_brief=True):
             try:
                 text = p.read_text(encoding="utf-8")
             except Exception:
@@ -168,7 +174,9 @@ def load_dca_records() -> dict:
                 records[ticker] = {
                     "date": f"{datestr[:4]}-{datestr[4:6]}-{datestr[6:8]}",
                     "_datestr": datestr,
-                    "path": p.name,  # DD_* → _ticker_link routes to /dd/...#decision
+                    # DD_* → _ticker_link routes to /dd/...#decision；
+                    # brief/BRIEF_* → routes to /dd/brief/BRIEF_....html（無 #decision 錨點）。
+                    "path": p.relative_to(DD_DIR).as_posix(),
                     "role_raw": role_raw,
                     "role_category": _categorize(role_raw),
                     "verdict": verdict,
@@ -179,9 +187,12 @@ def load_dca_records() -> dict:
 def _ticker_link(ticker: str, path: str) -> str:
     if path:
         # v13 records store the DD filename (DD_*) → link to its #decision anchor;
-        # legacy records store the DCA filename (DCA_*) → link to /dca/.
+        # v17 快速版 overlay 存的是 "brief/BRIEF_*"（2026-09-07）→ 連到 /dd/brief/
+        # 下同名檔（快速版無 #decision 錨點）；legacy records 存 DCA 檔名 → /dca/。
         if path.startswith("DD_"):
             href = f"/dd/{escape(path)}#decision"
+        elif path.startswith("brief/BRIEF_"):
+            href = f"/dd/{escape(path)}"
         else:
             href = f"/dca/{escape(path)}"
         return (

@@ -125,9 +125,18 @@ def test_three_file_cli_matches_live_dd_meta(t, tmp_path):
     diff = {
         k: (brief_meta.get(k), live_meta.get(k))
         for k in live_meta
-        if k != "brief" and brief_meta.get(k) != live_meta.get(k)
+        # 2026-09-07：歷史完整版可能仍保存 judgment 的近似 EV／IRR／AR；
+        # 新產物三欄改以 scenario 為權威，不能再拿舊 HTML 當 expected。
+        if k not in ("brief", "ev5y_pct", "irr_base_pct", "asym_ratio")
+        and brief_meta.get(k) != live_meta.get(k)
     }
     assert diff == {}, f"{t} dd-meta 欄位不同：{diff}"
+    expected_meta = dd_brief.gdt.build_dd_meta(
+        json.loads((src / f"{t}.judgment.json").read_text(encoding="utf-8")),
+        json.loads((src / f"{t}.scenario_meta.json").read_text(encoding="utf-8")),
+    )
+    for field in ("ev5y_pct", "irr_base_pct", "asym_ratio"):
+        assert brief_meta.get(field) == expected_meta.get(field)
 
 
 @pytest.mark.parametrize("t", TICKERS)

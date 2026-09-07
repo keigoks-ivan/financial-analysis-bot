@@ -44,6 +44,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from dd_metric_resolver import resolve_max_dd_pct, resolve_scenario_metrics  # noqa: E402
 
 E12_ID_TOKEN_RE = re.compile(r"[HR]\d+")
 
@@ -147,43 +148,18 @@ def build_dd_meta(j: dict, scenario_meta: dict | None) -> dict:
         "dca_role": dout.get("role"),
         "moat_trend": moat.get("trend"),
         "runway_post_y5": growth.get("runway_post_y5"),
-        "ev5y_pct": di.get("ev5y_pct"),
     }
 
-    # 2026-09-07：判斷值與機械重算不一致的取捨與 dd_brief._mech_first 同政策——
-    # 差距在容差內用判斷值（精度較高），超出容差改用重算值並警告。原本無條件
-    # di 優先，是 2026-09-05／06 四份快速版帶著判斷層算錯的 irr_base_pct 上站的機制。
-    _override_tol = {"irr_base_pct": 0.5, "asym_ratio": 0.06, "ev5y_pct": 1.0}
-    for _k in ("irr_base_pct", "asym_ratio"):
-        _sm_val = (scenario_meta or {}).get(_k)
-        _di_val = di.get(_k)
-        if _di_val is None:
-            if _sm_val is not None:
-                meta[_k] = _sm_val
-            continue
-        if _sm_val is not None and abs(_sm_val - _di_val) > _override_tol[_k]:
-            print("[warn] {0} 判斷值 {1} 與機械重算 {2} 相差 {3:.2f}——改採重算值".format(
-                _k, _di_val, _sm_val, abs(_sm_val - _di_val)), file=sys.stderr)
-            meta[_k] = _sm_val
-        else:
-            meta[_k] = _di_val
-
-    max_dd = prem.get("max_dd") or {}
-    lo, hi = max_dd.get("lo"), max_dd.get("hi")
-    if lo is not None and hi is not None:
-        meta["max_dd_pct"] = min(lo, hi)
-    elif lo is not None:
-        meta["max_dd_pct"] = lo
+    # 2026-09-07：四個呈現入口共用同一 resolver；scenario 有值時是權威，
+    # judgment 的歷史非 null 值只參與既有容差警告。
+    meta.update(resolve_scenario_metrics(j, scenario_meta, source="gen_dd_tables"))
+    meta["max_dd_pct"] = resolve_max_dd_pct(j)
 
     if scenario_meta:
         for k in ("bull_5y_price", "bear_5y_price", "p_bull_pct", "p_bear_pct",
                   "upside_5y_pct", "scenario_tree"):
             if scenario_meta.get(k) is not None:
                 meta[k] = scenario_meta[k]
-        for k in ("irr_base_pct", "asym_ratio", "ev5y_pct"):
-            if meta.get(k) is None and scenario_meta.get(k) is not None:
-                meta[k] = scenario_meta[k]
-
     if di.get("archetype"):
         meta["archetype"] = di["archetype"]
     rearm = dout.get("rearm_trigger")
@@ -549,8 +525,10 @@ def render_dashboard_html(j: dict, scenario_meta: dict | None) -> str:
     date = meta_top.get("date") or ""
     price = di.get("price_at_dd")
     max_dd = prem.get("max_dd") or {}
-    ev5y = di.get("ev5y_pct")
-    irr = di.get("irr_base_pct")
+    # 2026-09-07：完整版頁首不得繞過 scenario 衍生欄的共用權威解析。
+    scenario_metrics = resolve_scenario_metrics(j, scenario_meta, source="dashboard")
+    ev5y = scenario_metrics.get("ev5y_pct")
+    irr = scenario_metrics.get("irr_base_pct")
     headline = thesis.get("headline") or j.get("oneliner") or ""
 
     lines = []
@@ -700,7 +678,8 @@ def _revlog_row(date, price, verdict, role, note) -> str:
     ).format(date=esc(date), price=esc(price), verdict=esc(verdict), role=esc(role), note=esc(note))
 
 
-def render_revlog_html(j: dict, prior: dict | None = None) -> str:
+def render_revlog_html(j: dict, prior: dict | None = None,
+                       scenario_meta: dict | None = None) -> str:
     """revlog 完整 `<section>`——沿用 BE 2026-09-05 的最簡表格寫法（日期／
     股價／裁決／角色／備註）。`prior` 為 evidence.json 的 `prior_dd` 子物件
     （`{"status":"ok","prior_meta":{...}}` 或 `{"status":"unavailable"}`）；
@@ -718,9 +697,14 @@ def render_revlog_html(j: dict, prior: dict | None = None) -> str:
             prior_meta.get("dca_role"),
             _revlog_note_bits(prior_meta.get("val"), prior_meta.get("asym_ratio"), prior_meta.get("ev5y_pct")),
         ))
+    # 2026-09-07：當期 revlog 與 dashboard／dd-meta／brief 使用同一組值。
+    scenario_metrics = resolve_scenario_metrics(j, scenario_meta, source="revlog")
     rows.append(_revlog_row(
         meta.get("date"), di.get("price_at_dd"), dout.get("verdict"), dout.get("role"),
-        _revlog_note_bits(aa.get("val") or di.get("val"), di.get("asym_ratio"), di.get("ev5y_pct")),
+        _revlog_note_bits(
+            aa.get("val") or di.get("val"),
+            scenario_metrics.get("asym_ratio"), scenario_metrics.get("ev5y_pct"),
+        ),
     ))
     header = "<tr><th>日期</th><th>股價</th><th>裁決</th><th>角色</th><th>備註</th></tr>"
     return (
@@ -758,12 +742,14 @@ def render_s14_html(j: dict) -> str:
     return "\n".join(parts) + "\n"
 
 
-def write_mechanical_prose(j: dict, prior: dict | None, out_dir: Path) -> list:
+def write_mechanical_prose(j: dict, prior: dict | None, out_dir: Path,
+                           scenario_meta: dict | None = None) -> list:
     """把 revlog／s14／appA 三個機械段寫進 `out_dir/{sid}.html`（`out_dir`
     即 run 目錄的 `prose/`）。散文 agent 不寫這三段，見 render-rules.md 之外
     另行約定的 v17 prose bundle §⑦。回傳已寫入的 sid 清單。"""
     out_dir.mkdir(parents=True, exist_ok=True)
-    (out_dir / "revlog.html").write_text(render_revlog_html(j, prior), encoding="utf-8")
+    (out_dir / "revlog.html").write_text(
+        render_revlog_html(j, prior, scenario_meta), encoding="utf-8")
     (out_dir / "s14.html").write_text(render_s14_html(j), encoding="utf-8")
     (out_dir / "appA.html").write_text(render_appA_section_html(j), encoding="utf-8")
     return ["revlog", "s14", "appA"]

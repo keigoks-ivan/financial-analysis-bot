@@ -30,6 +30,8 @@ import json
 import re
 from pathlib import Path
 
+from dd_meta_reader import emit_dd_diagnostics, iter_latest_dd_metas
+
 ROOT = Path(__file__).resolve().parents[1]
 DD_DIR = ROOT / "docs" / "dd"
 OUT = ROOT / "docs" / "supply-chain" / "data" / "dd_links.json"
@@ -39,17 +41,17 @@ PAT = re.compile(r"^DD_(?P<ticker>[A-Za-z0-9.]+)_(?P<date>\d{8})\.html$")
 
 
 def latest_per_ticker(dd_dir: Path) -> dict[str, str]:
-    """Returns {ticker: filename} keeping latest YYYYMMDD per ticker."""
-    latest: dict[str, tuple[str, str]] = {}
-    for p in dd_dir.glob("DD_*.html"):
-        m = PAT.match(p.name)
-        if not m:
-            continue
-        ticker = m.group("ticker")
-        date = m.group("date")
-        if ticker not in latest or date > latest[ticker][0]:
-            latest[ticker] = (date, p.name)
-    return {t: fn for t, (_d, fn) in latest.items()}
+    """Returns {ticker: relative path} keeping the canonical latest DD."""
+    diagnostics: list[dict] = []
+    latest = {
+        str(meta.get("ticker")): path.relative_to(dd_dir).as_posix()
+        for path, meta in iter_latest_dd_metas(
+            dd_dir, include_brief=True, diagnostics=diagnostics
+        )
+    }
+    # 2026-09-07：壞 meta 必須顯式回報，不能讓 latest 集合靜默縮水。
+    emit_dd_diagnostics(diagnostics, "supply-chain-dd-index")
+    return latest
 
 
 def derive_aliases(ticker: str) -> list[str]:

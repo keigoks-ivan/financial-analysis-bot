@@ -32,6 +32,8 @@ import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
+import dd_meta_reader  # 2026-09-07：DD 掃描候選集合改走共用 iterator（含 brief/）
+
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
@@ -224,9 +226,12 @@ def get_recent_dd_signals(days: int = 7) -> dict[str, dict]:
     cutoff = (datetime.now() - timedelta(days=days)).date()
     result: dict[str, dict] = {}
 
-    for dd_file in DD_DIR.glob("DD_*_*.html"):
-        # Parse filename for ticker and date
-        m = re.match(r"DD_([A-Z0-9]+)_(\d{8})\.html", dd_file.name)
+    # 2026-09-07：候選集合改走 dd_meta_reader.iter_dd_paths（含 docs/dd/brief/
+    # BRIEF_*.html），否則 v17 快速版永遠不會被視為「近期 DD 訊號變動」，
+    # tier matrix 半衰期/新訊號 gap 掃描漏看最新一輪快速版裁決。
+    for dd_file in dd_meta_reader.iter_dd_paths(DD_DIR, include_brief=True):
+        # Parse filename for ticker and date (DD_ or BRIEF_ prefix)
+        m = re.match(r"(?:DD|BRIEF)_([A-Z0-9]+)_(\d{8})\.html", dd_file.name)
         if not m:
             continue
         ticker, date_str = m.group(1), m.group(2)

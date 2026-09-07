@@ -22,6 +22,8 @@ from html import escape
 from pathlib import Path
 from typing import Optional
 
+import dd_meta_reader  # 2026-09-07：latest-per-ticker 候選集合改走共用 iterator（含 brief/）
+
 ROOT = Path(__file__).parent.parent
 DD_DIR = ROOT / "docs" / "dd"
 DCA_DIR = ROOT / "docs" / "dca"
@@ -139,26 +141,22 @@ def load_records():
 
     For filter-relevant fields (signal / moat-trend / §7 munger), the
     research table is the source of truth — see _build_table_attrs_map.
+
+    2026-09-07：候選集合改走 dd_meta_reader.iter_latest_dd_metas（含
+    docs/dd/brief/BRIEF_*.html），否則 v17 快速版一旦是某 ticker最新一份，
+    研究頁組合快照（DD_AUTO_STATS）就會顯示更舊、已被取代的裁決。
+    _path 改存相對 DD_DIR 的路徑（brief 檔需要 "brief/BRIEF_..." 前綴才能
+    正確連到 /dd/brief/BRIEF_....html，見 _ticker_link）。
     """
     records = {}
-    for p in sorted(DD_DIR.glob("DD_*.html")):
-        try:
-            text = p.read_text(encoding="utf-8")
-        except Exception:
-            continue
-        m = META_RE.search(text)
-        if not m:
-            continue
-        try:
-            d = json.loads(m.group(1).strip())
-        except json.JSONDecodeError:
-            continue
-        if not d.get("ticker") or not d.get("date"):
-            continue
-        d["_path"] = p.name
-        t = d["ticker"]
-        if t not in records or d["date"] > records[t]["date"]:
-            records[t] = d
+    diagnostics: list = []
+    for p, d in dd_meta_reader.iter_latest_dd_metas(
+        DD_DIR, include_brief=True, diagnostics=diagnostics
+    ):
+        d = dict(d)
+        d["_path"] = p.relative_to(DD_DIR).as_posix()
+        records[d["ticker"]] = d
+    dd_meta_reader.emit_dd_diagnostics(diagnostics, "aggregate-dd-stats")
     # Overlay table-attrs (signal / moat_trend / munger_gate / eps_cagr / ev5y) —
     # single source of truth = the rendered research table.
     table_attrs = _get_table_attrs()

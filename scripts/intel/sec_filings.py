@@ -29,6 +29,7 @@ from __future__ import annotations
 import html
 import json
 import re
+import sys
 import time
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
@@ -37,6 +38,13 @@ from pathlib import Path
 import requests
 
 ROOT = Path(__file__).resolve().parent.parent.parent
+
+# 2026-09-07：DD 掃描候選集合改走共用 iterator（含 brief/）。sec_filings.py
+# 跑在 scripts/intel/ 下（sys.path[0] 是 intel/，非 scripts/），沿用
+# scripts/intel/render.py:inject_nav() 已用過的手法把 scripts/ 補進 sys.path
+# 才能 import 同層以外的 sibling module。
+sys.path.insert(0, str(ROOT / "scripts"))
+import dd_meta_reader  # noqa: E402
 DD_DIR = ROOT / "docs" / "dd"
 ID_DIR = ROOT / "docs" / "id"
 DATA_DIR = ROOT / "docs" / "intel" / "data"
@@ -169,7 +177,9 @@ def load_site_ticker_universe() -> set:
     不做 verdict 篩選——見模組 docstring。"""
     tickers = set()
     if DD_DIR.exists():
-        for p in DD_DIR.glob("DD_*.html"):
+        # 2026-09-07：候選集合改走 dd_meta_reader.iter_dd_paths（含 docs/dd/
+        # brief/BRIEF_*.html），讓 v17 快速版覆蓋的 ticker 也算進站內 universe。
+        for p in dd_meta_reader.iter_dd_paths(DD_DIR, include_brief=True):
             try:
                 text = p.read_text(encoding="utf-8", errors="ignore")
             except OSError:

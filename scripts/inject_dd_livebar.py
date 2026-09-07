@@ -6,7 +6,9 @@ Inserts
     <!-- DD_LIVEBAR -->
     <script src="/assets/dd-livebar.js" defer></script>
 
-immediately before </body> in every docs/dd/DD_*.html that:
+immediately before </body> in every docs/dd/DD_*.html (2026-09-07: and every
+docs/dd/brief/BRIEF_*.html — v17 快速版同樣是點狀報告，需要同一支存活條，見
+dd_meta_reader.iter_dd_paths) that:
   * contains a <script id="dd-meta"> block (skip point-in-time-less legacy files), and
   * does NOT already carry the <!-- DD_LIVEBAR --> marker (idempotent re-run = no-op).
 
@@ -17,16 +19,17 @@ Usage:
     python3 scripts/inject_dd_livebar.py --dry-run  # print what would change, touch nothing
 """
 import argparse
-import glob
 import os
 import re
 import sys
+
+import dd_meta_reader  # 2026-09-07：候選集合改走共用 iterator（含 brief/）
 
 MARKER = "<!-- DD_LIVEBAR -->"
 SNIPPET = MARKER + '\n<script src="/assets/dd-livebar.js" defer></script>\n'
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DD_GLOB = os.path.join(REPO_ROOT, "docs", "dd", "DD_*.html")
+DD_DIR = os.path.join(REPO_ROOT, "docs", "dd")
 
 HAS_META = re.compile(r'<script\s+id=["\']dd-meta["\']', re.I)
 BODY_CLOSE = re.compile(r"</body>", re.I)
@@ -68,7 +71,7 @@ def main():
     ap.add_argument("--dry-run", action="store_true", help="print planned changes, write nothing")
     args = ap.parse_args()
 
-    files = sorted(glob.glob(DD_GLOB))
+    files = [str(p) for p in dd_meta_reader.iter_dd_paths(DD_DIR, include_brief=True)]
     counts = {"injected": 0, "skip-no-meta": 0, "skip-has-marker": 0, "skip-no-body": 0}
     injected_names = []
     for path in files:
@@ -80,7 +83,7 @@ def main():
     verb = "WOULD inject" if args.dry_run else "Injected"
     print("=" * 60)
     print(f"DD live-bar injector {'(DRY RUN)' if args.dry_run else ''}")
-    print(f"Scanned            : {len(files)} DD_*.html")
+    print(f"Scanned            : {len(files)} DD_*.html + brief/BRIEF_*.html")
     print(f"{verb:<19}: {counts['injected']}")
     print(f"Skipped (no meta)  : {counts['skip-no-meta']}")
     print(f"Skipped (marker)   : {counts['skip-has-marker']}")

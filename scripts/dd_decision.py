@@ -13,6 +13,7 @@
   python3 scripts/dd_decision.py run INPUT.json [--html OUT.html] [--json OUT.json]
   python3 scripts/dd_decision.py check DD.html [--infer-from-html]
   python3 scripts/dd_decision.py check-all [--glob 'docs/dd/DD_*.html'] [--infer-from-html]
+      （--glob 省略時預設含 docs/dd/brief/BRIEF_*.html，見 dd_meta_reader.iter_dd_paths）
 
 矩陣 rows 1-10 之外仍有兩層覆寫（見 `decision_inputs.md` §2.4，2026-09 追加）：
   - §11 4b.1 分母爭議檢查（`val_denominator_disputed`）——估值燈機械讀數可能因
@@ -42,7 +43,10 @@ import re
 import sys
 from pathlib import Path
 
+import dd_meta_reader  # 2026-09-07：check-all 預設候選集合改走共用 iterator（含 brief/）
+
 ROOT = Path(__file__).parent.parent
+DD_DIR = ROOT / "docs" / "dd"
 
 SIGNAL_RANK = {"X": 0, "C": 1, "B": 2, "A": 3, "A+": 4}
 MOAT_RANK = {"S": 0, "A": 1, "B": 2, "C": 3, "X": 4}
@@ -757,8 +761,15 @@ def cmd_check(html_path: str, infer=False, quiet=False) -> dict:
     return result
 
 
-def cmd_check_all(glob_pat: str, infer=False) -> int:
-    files = sorted(globmod.glob(glob_pat))
+def cmd_check_all(glob_pat: str | None, infer=False) -> int:
+    # 2026-09-07：glob_pat 為 None（CLI 未帶 --glob）時走共用 iterator（含
+    # docs/dd/brief/BRIEF_*.html），否則之前 check-all 只掃根目錄 DD_*.html，
+    # v17 快速版的機械裁決永遠不會被這支矩陣比對閘覆核到。使用者仍可用
+    # --glob 自訂 pattern 覆寫（沿用既有行為，不強制走 iterator）。
+    if glob_pat is None:
+        files = [str(p) for p in dd_meta_reader.iter_dd_paths(DD_DIR, include_brief=True)]
+    else:
+        files = sorted(globmod.glob(glob_pat))
     in_scope = []
     for f in files:
         text = Path(f).read_text(encoding="utf-8", errors="ignore")
@@ -917,7 +928,11 @@ def main(argv):
     p_check.add_argument("--infer-from-html", action="store_true", dest="infer")
 
     p_all = sub.add_parser("check-all", help="對所有 schema=v15 的 DD 逐檔 check，印彙總表")
-    p_all.add_argument("--glob", default="docs/dd/DD_*.html")
+    p_all.add_argument(
+        "--glob", default=None,
+        help="自訂 glob pattern；省略時預設用 dd_meta_reader.iter_dd_paths"
+             "（含 docs/dd/brief/BRIEF_*.html，2026-09-07）",
+    )
     p_all.add_argument("--infer-from-html", action="store_true", dest="infer")
 
     args = parser.parse_args(argv)

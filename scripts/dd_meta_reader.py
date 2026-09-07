@@ -13,12 +13,18 @@ Public API:
       Parse one DD HTML file, return its dd-meta JSON dict (or None if
       missing / unparseable).
 
-  iter_dd_metas(dd_dir) -> Iterator[(Path, dict)]
+  iter_dd_paths(dd_dir, include_brief=False) -> Iterator[Path]
+      Yield every DD HTML candidate, optionally including brief output.
+
+  iter_dd_metas(dd_dir, include_brief=False, diagnostics=None)
       Yield (path, meta) for every DD in dd_dir that has a valid
       dd-meta block. Skips files without it. Useful for batch analysis.
 
   filter_v12(metas) -> list[dict]
       Keep only entries whose schema starts with 'v12'.
+
+  iter_latest_dd_metas(dd_dir, include_brief=True, diagnostics=None)
+      Yield one latest valid DD per ticker; same-day full output wins.
 
   latest_per_ticker(metas) -> list[dict]
       Dedupe by ticker, keeping the most recent date per ticker.
@@ -36,12 +42,16 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 from pathlib import Path
 from typing import Iterator, Optional
 
 __all__ = [
     "read_dd_meta",
+    "iter_dd_paths",
     "iter_dd_metas",
+    "iter_latest_dd_metas",
+    "emit_dd_diagnostics",
     "filter_v12",
     "latest_per_ticker",
     # Industry DD (ID) helpers
@@ -62,33 +72,101 @@ _DD_META_RE = re.compile(
 )
 
 
-def read_dd_meta(path: str | Path) -> Optional[dict]:
+def _record_diagnostic(
+    diagnostics: Optional[list[dict]], path: Path, kind: str, message: str
+) -> None:
+    """Append a machine-readable parse diagnostic when the caller requests it."""
+    if diagnostics is not None:
+        diagnostics.append({"path": str(path), "kind": kind, "message": message})
+
+
+def read_dd_meta(
+    path: str | Path, diagnostics: Optional[list[dict]] = None
+) -> Optional[dict]:
     """Return parsed dd-meta dict for one DD HTML, or None if absent / invalid."""
     p = Path(path)
     try:
         text = p.read_text(encoding="utf-8", errors="ignore")
-    except OSError:
+    except OSError as exc:
+        _record_diagnostic(diagnostics, p, "read_error", str(exc))
         return None
     m = _DD_META_RE.search(text)
     if not m:
         return None
     try:
-        return json.loads(m.group(1).strip())
-    except json.JSONDecodeError:
+        value = json.loads(m.group(1).strip())
+        if not isinstance(value, dict):
+            _record_diagnostic(diagnostics, p, "invalid_meta", "dd-meta 不是 JSON object")
+            return None
+        return value
+    except json.JSONDecodeError as exc:
+        _record_diagnostic(diagnostics, p, "parse_error", str(exc))
         return None
 
 
-def iter_dd_metas(dd_dir: str | Path) -> Iterator[tuple[Path, dict]]:
-    """Yield (path, meta) for every DD HTML in dd_dir with a valid dd-meta block.
+def iter_dd_paths(
+    dd_dir: str | Path, include_brief: bool = False
+) -> Iterator[Path]:
+    """Yield DD HTML candidates; full reports precede brief reports.
 
-    DDs without a dd-meta block are silently skipped — use validate_dd_meta.py
-    to surface those gaps.
+    2026-09-07：候選集合集中在唯一入口，避免 consumer 漏讀快速版。
     """
     d = Path(dd_dir)
-    for p in sorted(d.glob("DD_*.html")):
-        meta = read_dd_meta(p)
+    yield from sorted(d.glob("DD_*.html"))
+    if include_brief:
+        yield from sorted((d / "brief").glob("BRIEF_*.html"))
+
+
+def iter_dd_metas(
+    dd_dir: str | Path,
+    include_brief: bool = False,
+    diagnostics: Optional[list[dict]] = None,
+) -> Iterator[tuple[Path, dict]]:
+    """Yield (path, meta) for every DD HTML in dd_dir with a valid dd-meta block.
+
+    DDs without a dd-meta block are skipped；parse failures are returned through
+    diagnostics so callers can surface malformed metadata.
+    """
+    d = Path(dd_dir)
+    for p in iter_dd_paths(d, include_brief=include_brief):
+        meta = read_dd_meta(p, diagnostics=diagnostics)
         if meta is not None:
             yield p, meta
+
+
+def iter_latest_dd_metas(
+    dd_dir: str | Path,
+    include_brief: bool = True,
+    diagnostics: Optional[list[dict]] = None,
+) -> Iterator[tuple[Path, dict]]:
+    """Yield the latest valid DD per ticker；same-day full output wins.
+
+    2026-09-07：latest 選擇與 full／brief 同日優先序由共用層統一定義。
+    """
+    d = Path(dd_dir)
+    latest: dict[str, tuple[str, int, Path, dict]] = {}
+    for path, meta in iter_dd_metas(d, include_brief, diagnostics):
+        ticker = str(meta.get("ticker") or "").strip().upper()
+        date = re.sub(r"[^0-9]", "", str(meta.get("date") or ""))
+        if not ticker or not date:
+            continue
+        full_rank = int(path.parent == d and path.name.startswith("DD_"))
+        candidate = (date, full_rank, path, meta)
+        previous = latest.get(ticker)
+        if previous is None or candidate[:2] > previous[:2]:
+            latest[ticker] = candidate
+    for ticker in sorted(latest):
+        _, _, path, meta = latest[ticker]
+        yield path, meta
+
+
+def emit_dd_diagnostics(diagnostics: list[dict], prefix: str = "dd-meta") -> None:
+    """Print parse diagnostics collected by the iterators."""
+    for item in diagnostics:
+        print(
+            f"[{prefix}] {item['kind']}: {item['path']}: {item['message']}",
+            file=sys.stderr,
+        )
 
 
 def filter_v12(metas: list[dict]) -> list[dict]:

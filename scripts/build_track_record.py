@@ -31,8 +31,10 @@ import re
 import statistics
 import sys
 
+from dd_meta_reader import iter_dd_paths  # 2026-09-07：候選集合改走共用 iterator（含 brief/）
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DD_GLOB = os.path.join(ROOT, "docs", "dd", "DD_*.html")
+DD_DIR = os.path.join(ROOT, "docs", "dd")
 WEEKLY_CACHE = os.path.join(ROOT, "data", "weekly_cache")
 ROTATION_BENCH = os.path.join(ROOT, "data", "rotation_bench.json")
 OWN_CACHE = os.path.join(ROOT, "data", "track_record_prices.json")
@@ -186,8 +188,20 @@ def close_on_or_before(bars, target_iso):
 
 # ── DD parsing ──
 def parse_dds():
+    """每份 DD（含快速版）都是一個獨立的歷史裁決觀察點，不在此處去重成
+    latest-per-ticker——多筆同 ticker 觀察是本頁 cohort/IQR 統計設計的一部分。
+
+    2026-09-07：候選集合改走 dd_meta_reader.iter_dd_paths（含 docs/dd/brief/
+    BRIEF_*.html），否則 v17 快速版的裁決永遠不會進入回顧性報酬統計（P1-3）。
+    iter_dd_paths 先列完整版（依檔名排序）再列快速版，同 ticker 同日同時有
+    兩者時，後面「latest-verdict-per-ticker dedup」用嚴格 `>` 比較日期、保留
+    先遇到的那筆，故完整版天然勝出——與 dd_meta_reader 的慣例一致，不需要
+    另外去重。抓價階段的 `missing` 集合本來就是以 ticker 為 key 的 set
+    （見 main() `need = {t: ... for t in missing}`），13 檔快速版對應的 ticker
+    早已在既有完整版歷史中出現過，候選檔案數 668→681 不會多抓一支新股票的價。
+    """
     obs, excluded = [], []
-    for f in sorted(glob.glob(DD_GLOB)):
+    for f in iter_dd_paths(DD_DIR, include_brief=True):
         s = open(f, encoding="utf-8").read()
         m = re.search(r'<script id="dd-meta"[^>]*>(.*?)</script>', s, re.S)
         base = os.path.basename(f)

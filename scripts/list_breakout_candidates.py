@@ -22,11 +22,20 @@ Usage:
   python3 scripts/list_breakout_candidates.py --write    # 寫 docs/dd-screener/discovery_pool.json
                                                          #（build_dd_screener.py 每次 build 後自動呼叫）
 """
+# 2026-09-07：補 __future__ annotations——`bucket_mcap(mcap) -> str | None`
+# 這個 PEP 604 寫法在 Python 3.9 執行期會直接 TypeError（3.9 只支援
+# `Optional[str]` 或延遲求值），擋住任何 python3.9 `import list_breakout_
+# candidates`（含本次為遷移共用 iterator 而寫的 pytest）。註解型別不觸發執行
+# 期求值，零行為變動，純相容性修正，不動任何判斷邏輯。
+from __future__ import annotations
+
 import argparse
 import json
 import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+import dd_meta_reader  # 2026-09-07：dd_universe() 候選集合改走共用 iterator（含 brief/）
 
 ROOT = Path(__file__).parent.parent
 ID_DIR = ROOT / "docs" / "id"
@@ -37,7 +46,8 @@ ID_META_RE = re.compile(
     r'<script\s+id="id-meta"\s+type="application/json"\s*>(.*?)</script>',
     re.DOTALL,
 )
-DD_FILE_RE = re.compile(r"^DD_([A-Za-z0-9.\-]+)_\d{8}\.html$")
+# 2026-09-07：也接受 docs/dd/brief/BRIEF_*.html（見 dd_universe()）。
+DD_FILE_RE = re.compile(r"^(?:DD|BRIEF)_([A-Za-z0-9.\-]+)_\d{8}\.html$")
 
 MCAP_ORDER = {"small": 0, "mid": 1, "large": 2, "mega": 3}
 CONVICTION_ORDER = {"high": 0, "mid": 1, "low": 2}
@@ -82,8 +92,11 @@ def load_id_metas():
 
 
 def dd_universe():
+    # 2026-09-07：候選集合改走 dd_meta_reader.iter_dd_paths（含 docs/dd/brief/
+    # BRIEF_*.html），否則某 ticker 只有 v17 快速版、沒有舊版全套 DD 時，
+    # discovery pool 會誤判它「還沒做過 DD」而繼續當候選推薦。
     tickers = set()
-    for p in DD_DIR.glob("DD_*.html"):
+    for p in dd_meta_reader.iter_dd_paths(DD_DIR, include_brief=True):
         m = DD_FILE_RE.match(p.name)
         if m:
             tickers.add(norm_ticker(m.group(1)))
