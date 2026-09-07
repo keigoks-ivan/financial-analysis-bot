@@ -102,6 +102,44 @@ def _replay_coverage(replay_dir, obj):
         except Exception:
             pass
 
+    # 2026-09-06：17 份回溯 fixture 中 PANW／SNOW 的早期 parts 不完整；
+    # 缺軸時退回該次已通過 strict 的最終 evidence，而不是捏造 none 佔位。
+    final_evidence = replay_dir / "{0}.evidence.json".format(replay_dir.name)
+    if not final_evidence.exists():
+        matches = sorted(replay_dir.glob("*.evidence.json"))
+        final_evidence = matches[0] if matches else final_evidence
+    if final_evidence.exists():
+        try:
+            final_obj = json.loads(final_evidence.read_text(encoding="utf-8"))
+        except Exception:
+            final_obj = {}
+        for axis_id, axis_obj in (final_obj.get("coverage") or {}).items():
+            merged_coverage.setdefault(axis_id, axis_obj)
+        if merged_events is None and final_obj.get("events"):
+            merged_events = final_obj["events"]
+
+    # 2026-09-06：TXN 舊 fixture 的骨架仍要求 base end_markets，但最終答案已
+    # 拆成 end_markets__*；replay 合併子軸，避免把舊骨架的 pending 原樣送回。
+    base_end_markets = merged_coverage.get("end_markets") or {}
+    expanded_end_markets = [
+        axis_obj for axis_id, axis_obj in sorted(merged_coverage.items())
+        if axis_id.startswith("end_markets__") and isinstance(axis_obj, dict)
+    ]
+    if base_end_markets.get("status") == "pending" and expanded_end_markets:
+        findings = []
+        queries_run = []
+        for axis_obj in expanded_end_markets:
+            findings.extend(axis_obj.get("findings") or [])
+            for query in axis_obj.get("queries_run") or []:
+                if query not in queries_run:
+                    queries_run.append(query)
+        merged_coverage["end_markets"] = {
+            "status": "found" if findings else "none",
+            "queries_run": queries_run,
+            "findings": findings,
+            "note": "replay 模式：由 fixture 的 end_markets__* 子軸合併",
+        }
+
     coverage_out = {}
     missing = []
     for axis_id in axes_wanted:
@@ -135,6 +173,20 @@ def _replay_numbers(replay_dir, obj):
     對齊「子 agent 有照規則做」的情境，而不是照抄未清理的草稿去踩一個
     fixture 本身的已知瑕疵。"""
     out_path = Path(obj["out"])
+    # 2026-09-06：17 份考卷的早期 numbers part 有缺扁平鍵／v16.1 五欄者；
+    # replay 優先取同次 strict 通過的最終 evidence.numbers，才是真正答案卷。
+    final_evidence = replay_dir / "{0}.evidence.json".format(replay_dir.name)
+    if not final_evidence.exists():
+        matches = sorted(replay_dir.glob("*.evidence.json"))
+        final_evidence = matches[0] if matches else final_evidence
+    if final_evidence.exists():
+        try:
+            final_obj = json.loads(final_evidence.read_text(encoding="utf-8"))
+        except Exception:
+            final_obj = {}
+        if final_obj.get("numbers"):
+            _replay_write(out_path, json.dumps({"numbers": final_obj["numbers"]}, ensure_ascii=False, indent=2))
+            return "{0} <- {1}.numbers（最終 strict 版）".format(Path(out_path).name, final_evidence.name)
     for rel in ("parts/numbers_agent.json", "parts/numbers_collect.json", "parts/numbers_flat.json"):
         cand = replay_dir / rel
         if not cand.exists():
@@ -208,6 +260,10 @@ def _replay_judgment(replay_dir, obj):
     jout = obj.get("judgment_out")
     if jout:
         jcand = replay_dir / "{0}.judgment.json".format(replay_dir.name)
+        if not jcand.exists():
+            # 2026-09-06：SNOW fixture 目錄帶 `_dryrun`，檔名不帶；容許唯一候選。
+            matches = sorted(replay_dir.glob("*.judgment.json"))
+            jcand = matches[0] if matches else jcand
         msg = _replay_copy_first(replay_dir, jout, [jcand.name])
         # fixture 的 judgment.json 是舊命名慣例產物，`scenario_ref` 內文字面
         # 存的是 `{T}_{D}.scenario_meta.json`（legacy 扁平慣例），但這次重放
@@ -228,6 +284,9 @@ def _replay_judgment(replay_dir, obj):
     sout = obj.get("scenario_out")
     if sout:
         scand = replay_dir / "{0}.scenario.json".format(replay_dir.name)
+        if not scand.exists():
+            matches = sorted(replay_dir.glob("*.scenario.json"))
+            scand = matches[0] if matches else scand
         msgs.append(_replay_copy_first(replay_dir, sout, [scand.name]))
     return "; ".join(msgs)
 

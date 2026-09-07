@@ -32,17 +32,24 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import dd_headless  # noqa: E402  （WP1c 無頭執行器，import 呼叫，不改其內部）
 import dd_meta_reader  # noqa: E402  （WP7a peers 來源③：讀 id-meta related_tickers，不改其內部）
+import dd_sections  # noqa: E402  （2026-09-06 WP4b：leak_hits／split_sections，gates 用來把 FAIL 歸因到 sid）
+import gen_dd_tables as gdt  # noqa: E402  （2026-09-06 WP4b：C-1 機械段生成＋E12 說明句，不改其內部語意）
+import verify_dd_math  # noqa: E402  （2026-09-07：finish 三方一致性沿用同一組權威容差）
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS_DIR = Path(__file__).resolve().parent
 BUILD_DIR = REPO_ROOT / ".dd_build"
 RUNS_DIR = BUILD_DIR / "runs"
 PROMPTS_TMPL_DIR = SCRIPTS_DIR / "dd_prompts"
+FINISH_MAXDD_EPSILON = 0.01  # 2026-09-07：Max DD 是 judgment 直拷值，只容許序列化微差。
 
 # ---------------------------------------------------------------------------
-# WP1d: run 目錄狀態機（Stage 0 → 判斷 → 閘 → 快速版）串接常數
+# WP1d: run 目錄狀態機（Stage 0 → 判斷 → 閘 → 快速版 → 散文〔--full〕）串接常數
 # ---------------------------------------------------------------------------
-STAGE_ORDER = ["stage0", "judged", "gated", "brief"]
+# 2026-09-06 WP4b：`prose` 加在 `brief` 之後——`cmd_run` 只在 `--full` 時把
+# 預設 `--until` 推到 "prose"（不給 `--full` 時 until 仍預設 "brief"，狀態機
+# 迴圈就不會跑到這一段，語意等同「無 --full 狀態機不含它」，見設計稿 §3.5）。
+STAGE_ORDER = ["stage0", "judged", "gated", "brief", "prose"]
 DEFAULT_JUDGMENT_MODEL = "fable"
 # 判斷模型↔閘模型對調表（跨模型冷讀，見 _wp_spec_v17_batch2_20260905.md WP1d §4）
 GATE_MODEL_FOR = {"fable": "opus", "opus": "sonnet", "sonnet": "opus"}
@@ -85,6 +92,19 @@ GATE_BUDGET_CACHE_READ = 2_500_000
 GATE_PATCH_MODE_DEFAULT = "patchmap"
 _GATE_PATCH_MODE_OVERRIDE = None
 
+# 2026-09-06 WP4b：散文（prose）agent——只給 Write／Bash（同判斷段 short 模式
+# 的 `_spawn_short`），母稿 §4 目標 ≤1.5M cache_read／≤7 輪，熔斷線＝目標 2×
+# （由 `dd_headless.spawn` 的 `over_budget` 統一算，不在這裡重算）。
+PROSE_MAX_TURNS = 7
+PROSE_BUDGET_CACHE_READ = 1_500_000
+# split 時忽略散文 agent 誤寫的這三段（C-1 機械段，`prose prepare` 已生成）。
+_PROSE_MECHANICAL_SIDS = ("revlog", "s14", "appA")
+# `prose split` 依序處理這三個來源檔；`prose_fix.html` 只在 FAIL 後的補寫輪
+# 才會出現，且刻意排最後——同一個 sid 若三個檔都有，後面的覆蓋前面的，讓
+# 「只重寫命中的 sid、合成一個小檔再 Write」的補寫語意（見 render-rules.md
+# 慣例）不需要散文 agent 重讀或重寫整份 prose_A/B。
+_PROSE_SOURCE_FILES = ("prose_A.html", "prose_B.html", "prose_fix.html")
+
 # 最後手段的預設 archetype：coverage-axes.md 裡 by_archetype 附加軸數為 0 的
 # 那一類（即「只查 common 軸」的基準情境），在 --archetype 未給、且前份 DD
 # 是不含 archetype 欄位的 legacy schema（v14.x 以前）時使用。此為刻意的工程
@@ -93,11 +113,14 @@ _GATE_PATCH_MODE_OVERRIDE = None
 DEFAULT_ARCHETYPE = "品質複利成長"
 
 AXES_PER_BATCH_DEFAULT = 2
+REUSE_DAYS_DEFAULT = 30
 
-# 2026-09-06：Stage 0 平行度改讀環境變數，可調（預設 6，較舊值 4 快）——
+# 2026-09-06：Stage 0 平行度預設 8（CLI 環境變數仍可調）——既有 manifest
+# 無法證明「所有軸一軸一 agent」不增成本，故一般軸仍維持每批 2 軸；只有
+# 實測容易撞輪次的 per_segment 展開軸逐軸派工。
 # 這只影響牆鐘時間（同時開幾個子行程），不影響 token 用量（token 是逐 agent
 # 累計、與平行度無關）；若跑批次時撞 rate limit，設回 4（`DD_MAX_PARALLEL=4`）。
-STAGE0_MAX_PARALLEL = int(os.environ.get("DD_MAX_PARALLEL", "6"))
+STAGE0_MAX_PARALLEL = int(os.environ.get("DD_MAX_PARALLEL", "8"))
 
 # 2026-09-06：軸分批輪次上限常數化（原本硬編在 spawn_list 組裝處）。
 # AXES_MAX_TURNS_DEFAULT 沿用既有實測值 10，不改數值；AXES_MAX_TURNS_SEGMENTED
@@ -323,6 +346,147 @@ def _resolve_peers(cli_peers, ticker):
     if from_id_meta:
         return ",".join(from_id_meta), "id_meta"
     return None, None
+
+
+# ---------------------------------------------------------------------------
+# 2026-09-06：Stage 0 證據沿用——只沿用仍在時效內的結構軸；數字與事件每次重抓。
+# ---------------------------------------------------------------------------
+
+def _parse_yyyymmdd(value):
+    try:
+        return time.strptime(str(value).replace("-", "")[:8], "%Y%m%d")
+    except (TypeError, ValueError):
+        return None
+
+
+def _archive_snapshot(ticker, date):
+    """找不晚於報告日的最近存查 evidence／digest，供 plan 做機械式沿用。"""
+    target = _parse_yyyymmdd(date)
+    if target is None or not SRC_ARCHIVE_DIR.exists():
+        return None
+    target_epoch = time.mktime(target)
+    candidates = []
+    prefix = "{0}_".format(ticker)
+    for archive_dir in SRC_ARCHIVE_DIR.glob(prefix + "*"):
+        if not archive_dir.is_dir():
+            continue
+        suffix = archive_dir.name[len(prefix):]
+        m = re.match(r"(\d{8})", suffix)
+        if not m:
+            continue
+        source_date = _parse_yyyymmdd(m.group(1))
+        if source_date is None:
+            continue
+        source_epoch = time.mktime(source_date)
+        if source_epoch > target_epoch:
+            continue
+        evidence_path = archive_dir / "{0}.evidence.json".format(archive_dir.name)
+        if not evidence_path.exists():
+            evidence_path = archive_dir / "evidence.json"
+        if not evidence_path.exists():
+            # 2026-09-06：SNOW dryrun 類存查目錄名帶後綴，實檔仍用 T_DATE stem。
+            matches = sorted(archive_dir.glob("*.evidence.json"))
+            evidence_path = matches[0] if len(matches) == 1 else evidence_path
+        if not evidence_path.exists():
+            continue
+        digest_path = archive_dir / "{0}.transcript_digest.json".format(archive_dir.name)
+        if not digest_path.exists():
+            digest_path = archive_dir / "digest.json"
+        if not digest_path.exists():
+            # 2026-09-06：與 evidence 同理，容納目錄後綴和歸檔檔名不同的舊 fixture。
+            matches = sorted(archive_dir.glob("*.transcript_digest.json"))
+            digest_path = matches[0] if len(matches) == 1 else digest_path
+        candidates.append((source_epoch, archive_dir, evidence_path, digest_path, m.group(1)))
+    if not candidates:
+        return None
+    source_epoch, archive_dir, evidence_path, digest_path, source_date = max(candidates, key=lambda x: x[0])
+    return {
+        "archive_dir": archive_dir,
+        "evidence_path": evidence_path,
+        "digest_path": digest_path if digest_path.exists() else None,
+        "source_date": source_date,
+        "age_days": max(0, int((target_epoch - source_epoch) // 86400)),
+    }
+
+
+def _prepare_coverage_reuse(axis_list, snapshot, reuse_days, parts_dir):
+    """把可沿用的結構軸寫成 part，回傳沿用軸 id；`major_events` 永遠重抓。"""
+    if not snapshot or reuse_days <= 0 or snapshot["age_days"] > reuse_days:
+        return []
+    try:
+        old = _load_json(snapshot["evidence_path"])
+    except Exception:
+        return []
+    old_coverage = old.get("coverage") or {}
+    reused = {}
+    source_label = snapshot["archive_dir"].name
+    for axis in axis_list:
+        axis_id = axis.get("id")
+        if not axis_id or axis_id == "major_events" or axis_id not in old_coverage:
+            continue
+        # 2026-09-06：舊存查偶有保留已拆分母軸的 pending 骨架；這種不是證據，
+        # 不能沿用後又跳過 agent，應留給本次重新收集。
+        if not isinstance(old_coverage[axis_id], dict) or old_coverage[axis_id].get("status") == "pending":
+            continue
+        axis_obj = json.loads(json.dumps(old_coverage[axis_id], ensure_ascii=False))
+        axis_obj["reused_from"] = source_label
+        axis_obj["age_days"] = snapshot["age_days"]
+        for finding in axis_obj.get("findings") or []:
+            if isinstance(finding, dict):
+                finding["reused_from"] = source_label
+                finding["age_days"] = snapshot["age_days"]
+        reused[axis_id] = axis_obj
+    if reused:
+        _atomic_write_json(Path(parts_dir) / "reused_coverage.json", {"coverage": reused})
+    return list(reused.keys())
+
+
+def _prepare_digest_reuse(targets, snapshot, reuse_days, parts_dir):
+    """相同逐字稿沿用舊 digest；新出現的檔案才回傳給摘要 agent。"""
+    if (not snapshot or reuse_days <= 0 or snapshot["age_days"] > reuse_days
+            or not snapshot.get("digest_path")):
+        return list(targets), []
+    try:
+        old = _load_json(snapshot["digest_path"])
+    except Exception:
+        return list(targets), []
+    old_items = old.get("items") or []
+    old_flags = old.get("qa_flags") or []
+    source_label = snapshot["archive_dir"].name
+    pending = []
+    reused_files = []
+    reused_items = []
+    reused_flags = []
+    for target in targets:
+        target_base = Path(target).name
+        matched = [
+            item for item in old_items
+            if isinstance(item, dict) and Path(item.get("file") or "").name == target_base
+        ]
+        if not matched:
+            pending.append(target)
+            continue
+        reused_files.append(str(target))
+        for item in matched:
+            copied = dict(item)
+            copied["file"] = str(target)
+            copied["reused_from"] = source_label
+            copied["age_days"] = snapshot["age_days"]
+            reused_items.append(copied)
+        for flag in old_flags:
+            if isinstance(flag, dict) and Path(flag.get("file") or "").name == target_base:
+                copied_flag = dict(flag)
+                copied_flag["file"] = str(target)
+                copied_flag["reused_from"] = source_label
+                copied_flag["age_days"] = snapshot["age_days"]
+                reused_flags.append(copied_flag)
+    if reused_files:
+        _atomic_write_json(Path(parts_dir) / "digest_0.json", {
+            "source_files": reused_files,
+            "items": reused_items,
+            "qa_flags": reused_flags,
+        })
+    return pending, reused_files
 
 
 # ---------------------------------------------------------------------------
@@ -568,6 +732,10 @@ def cmd_plan(args):
     prompts_dir.mkdir(parents=True, exist_ok=True)
 
     py = _pick_python()
+    # 2026-09-06：replay 必須重放原始 Stage 0 分工，不能被同日 archive 沿用短路。
+    reuse_days = 0 if os.environ.get("DD_REPLAY_FROM") else max(
+        0, int(getattr(args, "reuse_days", REUSE_DAYS_DEFAULT))
+    )
 
     manifest = {
         "ticker": ticker,
@@ -647,6 +815,22 @@ def cmd_plan(args):
         return 1
     _atomic_write_json(run_dir / "axes.json", axes)
 
+    # 2026-09-06：數字與事件仍每次重抓；只有 coverage 結構軸在時效內沿用。
+    axis_list = axes if isinstance(axes, list) else []
+    snapshot = _archive_snapshot(ticker, date)
+    reused_axis_ids = _prepare_coverage_reuse(
+        axis_list, snapshot, reuse_days, parts_dir,
+    )
+    manifest["evidence_reuse"] = {
+        "reuse_days": reuse_days,
+        "source": snapshot["archive_dir"].name if snapshot else None,
+        "age_days": snapshot["age_days"] if snapshot else None,
+        "reused_axis_ids": reused_axis_ids,
+    }
+    if reused_axis_ids:
+        print("reuse：沿用 {0} 個結構軸（來源 {1}，{2} 天）".format(
+            len(reused_axis_ids), snapshot["archive_dir"].name, snapshot["age_days"]))
+
     # 5. numbers_extra（--offline 時跳過；失敗只 warn 不 abort）
     if args.offline:
         manifest["steps"].append({"step": "dd_numbers_extra", "skipped": "offline"})
@@ -679,22 +863,22 @@ def cmd_plan(args):
     # evidence.json；失敗只 warn，不 abort）
     transcripts_obj = _run_koyfin_step(ticker, date, run_dir, evidence_dest, manifest)
 
-    # 6. 軸分批：major_events 單獨一批；per_segment 展開軸（如 end_markets，
-    #    依 §3 營收段逐一列）也獨立一批（2026-09-06，見 AXES_MAX_TURNS_SEGMENTED
-    #    註解的 FIX a_5 事故）；其餘每 --axes-per-batch 軸一批。
+    # 6. 軸分批：先排除已沿用軸；一般軸預設兩軸一 agent，CLI 仍可調批次大小。
+    #    major_events 單獨一批；per_segment 展開軸逐軸獨立，避免一批塞五個
+    #    終端市場後撞輪次上限（2026-09-06：FIX／CAMT 實跑事故）。
     #    機械判定用 `resolve_axes()`（dd_evidence.py）保留下來的 `per_segment`
     #    旗標本身——`dict(axis)` 複製時這個鍵原樣留著，不需要另外用 axis id
     #    字串比對猜測（segments 展開時 id 會變成 `end_markets__xxx`，id 相等
     #    判斷法反而抓不到）。
-    axis_list = axes if isinstance(axes, list) else []
-    major = [a for a in axis_list if a.get("id") == "major_events"]
-    segmented = [a for a in axis_list if a.get("id") != "major_events" and _is_segmented_axis(a)]
-    rest = [a for a in axis_list if a.get("id") != "major_events" and not _is_segmented_axis(a)]
+    refresh_axes = [a for a in axis_list if a.get("id") not in set(reused_axis_ids)]
+    major = [a for a in refresh_axes if a.get("id") == "major_events"]
+    segmented = [a for a in refresh_axes if a.get("id") != "major_events" and _is_segmented_axis(a)]
+    rest = [a for a in refresh_axes if a.get("id") != "major_events" and not _is_segmented_axis(a)]
     batches = []
     if major:
         batches.append(major)
-    if segmented:
-        batches.append(segmented)
+    for axis in segmented:
+        batches.append([axis])
     step = max(1, args.axes_per_batch)
     for i in range(0, len(rest), step):
         batches.append(rest[i:i + step])
@@ -754,7 +938,18 @@ def cmd_plan(args):
     sel = ((transcripts_obj or {}).get("transcripts") or {}).get("selected") or {}
     recent4 = sel.get("recent_four_quarters") or []
     optional = sel.get("high_signal_optional") or []
-    digest_targets = list(recent4[:-1]) + list(optional)
+    digest_targets_all = list(recent4[:-1]) + list(optional)
+    digest_targets, reused_digest_files = _prepare_digest_reuse(
+        digest_targets_all, snapshot, reuse_days, parts_dir,
+    )
+    manifest["transcript_reuse"] = {
+        "source": snapshot["archive_dir"].name if snapshot else None,
+        "reused_files": reused_digest_files,
+        "refresh_files": [str(p) for p in digest_targets],
+    }
+    if reused_digest_files:
+        print("reuse：沿用 {0} 篇逐字稿摘要，新摘要 {1} 篇".format(
+            len(reused_digest_files), len(digest_targets)))
 
     digest_targets_meta = []
     for k, file_path in enumerate(digest_targets, start=1):
@@ -1129,6 +1324,8 @@ def _do_stage0(ticker, date, plan_kwargs, replay_dir, accept_over_budget, manife
             segments=plan_kwargs.get("segments"),
             axes_per_batch=plan_kwargs.get("axes_per_batch") or AXES_PER_BATCH_DEFAULT,
             offline=plan_kwargs.get("offline", False),
+            # 2026-09-06：replay 強制 0，正式 run 才套 CLI 的沿用天數。
+            reuse_days=0 if replay_dir else plan_kwargs.get("reuse_days", REUSE_DAYS_DEFAULT),
         )
         rc = cmd_plan(plan_args)
         if rc != 0:
@@ -2172,10 +2369,422 @@ def _do_brief(ticker, date, do_full, manifest, dry_run=False):
         if stage["state"] != "PASS":
             _print_resume_hint(ticker, date, "brief")
 
-    if do_full:
-        print("[warn] --full 本輪未實作（WP4b 未交付），略過快速版之外的完整渲染")
+    # 2026-09-06：`--full` 完整版現由獨立的 `prose` 段負責（見下方 WP4b），
+    # 不再是這裡的旁支——`do_full` 參數保留給呼叫端相容（`cmd_run`／`brief`
+    # 子命令與既有測試皆仍傳這個位置參數），本函式對它不再做任何事。
+    del do_full
 
     return 0 if stage["state"] in ("PASS", "SKIPPED") else 1
+
+
+# ---------------------------------------------------------------------------
+# WP4b（2026-09-06）：散文層（`--full` 完整版）
+#
+# `prose prepare` — 生成 C-1 機械段（revlog／s14／appA）到 run_dir/prose/、
+#   跑 gen_dd_tables.py 產表、組 bundles/prose.md、寫 prompts/b2_prose.md。
+# `prose split`   — 把 prose_A.html／prose_B.html（＋補寫輪的 prose_fix.html）
+#   依 `<!-- SID:sX -->` 標記切成 prose/{sid}.html；機械段不被覆寫；decision
+#   段落地後在 `<!-- E12 -->` 標記後接一句機械說明（`render_e12_note_html`）。
+# `gates`         — `dd_gates.sh` 六支驗證的 Python 化版本，回 (ok, [(sid,
+#   原因)])，供 `prose check` 與最終定案組裝共用。
+# `prose check`   — split ＋ gates 一次跑完，給散文 agent 自己在 Bash 裡呼叫。
+# `prose run`     — spawn 散文 agent（sonnet／Write,Bash／≤7 輪／預算 1.5M）
+#   → check → PASS 時組出 docs/dd/DD_{T}_{D}.html。
+# ---------------------------------------------------------------------------
+
+def _do_prose_prepare(ticker, date):
+    """`prose prepare TICKER DATE`：C-1 機械段 → gen_dd_tables 產表 →
+    bundles/prose.md → prompts/b2_prose.md。可重複呼叫（每步驟都是覆寫式，
+    非累加），供 `prose run` 在 bundle／prompt 不存在時自動補跑一次。"""
+    run_dir = _run_dir(ticker, date)
+    judgment_path = run_dir / "judgment.json"
+    evidence_path = run_dir / "evidence.json"
+    scenario_meta_path = run_dir / "scenario_meta.json"
+    tables_dir = run_dir / "tables"
+    prose_dir = run_dir / "prose"
+    py = _pick_python()
+
+    if not judgment_path.exists():
+        print("[error] 找不到 {0}".format(judgment_path), file=sys.stderr)
+        return 1
+
+    tables_dir.mkdir(parents=True, exist_ok=True)
+    gen_cmd = [
+        py, str(SCRIPTS_DIR / "gen_dd_tables.py"), str(judgment_path),
+        "--out", str(tables_dir),
+        "--scenario-html", str(tables_dir / "e11.html"),
+    ]
+    if scenario_meta_path.exists():
+        gen_cmd += ["--scenario-meta", str(scenario_meta_path)]
+    r1 = subprocess.run(gen_cmd, capture_output=True, text=True)
+    if r1.returncode != 0:
+        print("[error] gen_dd_tables.py 失敗：\n{0}".format((r1.stdout + r1.stderr)[-1000:]), file=sys.stderr)
+        return 1
+    print(r1.stdout.strip())
+
+    # C-1 機械段（revlog／s14／appA）——直接 import 呼叫（見檔頭 `import
+    # gen_dd_tables as gdt`），不另外幫 gen_dd_tables.py 的 CLI 加旗標。
+    judgment = _load_json(judgment_path)
+    evidence = _load_json_or(evidence_path, {})
+    written_mech = gdt.write_mechanical_prose(judgment, evidence.get("prior_dd"), prose_dir)
+    print("[ok] C-1 機械段：{0}".format(", ".join(written_mech)))
+
+    bundle_path = run_dir / "bundles" / "prose.md"
+    r2 = subprocess.run(
+        [py, str(SCRIPTS_DIR / "dd_bundle.py"), "prose", "--run-dir", str(run_dir)],
+        capture_output=True, text=True,
+    )
+    if r2.returncode != 0:
+        print("[error] dd_bundle.py prose 失敗：\n{0}".format((r2.stdout + r2.stderr)[-1000:]), file=sys.stderr)
+        return 1
+    print(r2.stdout.strip())
+
+    prompt_path = run_dir / "prompts" / "b2_prose.md"
+    prompt_path.parent.mkdir(parents=True, exist_ok=True)
+    mapping = {
+        "ticker": ticker, "date": date, "max_turns": str(PROSE_MAX_TURNS),
+        "check_cmd": "python3 scripts/ddreport.py prose check {0} {1}".format(ticker, date),
+        "prose_a_path": str(run_dir / "prose_A.html"),
+        "prose_b_path": str(run_dir / "prose_B.html"),
+        "prose_fix_path": str(run_dir / "prose_fix.html"),
+    }
+    prompt_path.write_text(_render_format_template(PROMPTS_TMPL_DIR / "prose.md.tmpl", mapping), encoding="utf-8")
+    print("[ok] prose prepare 完成：bundle={0}／prompt={1}".format(bundle_path, prompt_path))
+    return 0
+
+
+def cmd_prose_prepare(args):
+    return _do_prose_prepare(args.ticker.strip().upper(), args.date)
+
+
+_SID_MARKER_RE = re.compile(r"<!--\s*SID:([A-Za-z0-9]+)\s*-->")
+
+
+def _split_sid_markers(text):
+    """把含 `<!-- SID:sX -->` 標記的文字切成 {sid: chunk}——chunk 不含標記
+    本身，從標記結尾到下一個標記（或檔尾）之間的內容，去頭尾換行。"""
+    matches = list(_SID_MARKER_RE.finditer(text))
+    out = {}
+    for i, m in enumerate(matches):
+        sid = m.group(1)
+        start = m.end()
+        end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
+        chunk = text[start:end].strip("\n")
+        if chunk.strip():
+            out[sid] = chunk + "\n"
+    return out
+
+
+def _inject_e12_note(run_dir, prose_dir):
+    """decision 段仍是散文 agent 寫的，但 `<!-- E12 -->` 標記之後那句機械
+    說明（觸發器件數／重啟條件）由這裡接線注入——`<!-- E12_NOTE -->` 是
+    冪等 guard，重跑 split 不會疊加第二次。"""
+    decision_path = prose_dir / "decision.html"
+    if not decision_path.exists():
+        return
+    text = decision_path.read_text(encoding="utf-8")
+    if "<!-- E12 -->" not in text or "<!-- E12_NOTE -->" in text:
+        return
+    judgment = _load_json_or(run_dir / "judgment.json", {})
+    note_html = gdt.render_e12_note_html(judgment)
+    text = text.replace("<!-- E12 -->", "<!-- E12 -->\n<!-- E12_NOTE -->\n" + note_html, 1)
+    decision_path.write_text(text, encoding="utf-8")
+
+
+def _do_prose_split(ticker, date):
+    """回傳 (written_sids, errors)。依序處理 `_PROSE_SOURCE_FILES`（prose_A
+    → prose_B → prose_fix，若存在）——同一 sid 後面的檔覆蓋前面的，讓 FAIL
+    後的補寫輪只需要 Write 一個小的 `prose_fix.html`。機械段
+    （`_PROSE_MECHANICAL_SIDS`）只在 `prose/{sid}.html` **已經存在**（即
+    `prose prepare` 的 `gdt.write_mechanical_prose` 已生成）時才拒絕覆寫、
+    記一筆警告；尚未存在時仍照樣寫入——這讓 split 本身是一支不失真的純
+    SID-marker 切割器（回溯考卷需要「合併再切回去逐位元組相同」），保護的
+    是「不被散文 agent 事後蓋掉機械產物」，不是「這三個 sid 永遠不能來自
+    A/B/fix 檔」。"""
+    run_dir = _run_dir(ticker, date)
+    prose_dir = run_dir / "prose"
+    prose_dir.mkdir(parents=True, exist_ok=True)
+
+    written, errors = [], []
+    any_source = False
+    for name in _PROSE_SOURCE_FILES:
+        p = run_dir / name
+        if not p.exists():
+            continue
+        any_source = True
+        chunks = _split_sid_markers(p.read_text(encoding="utf-8"))
+        for sid, chunk in chunks.items():
+            dest = prose_dir / "{0}.html".format(sid)
+            if sid in _PROSE_MECHANICAL_SIDS and dest.exists():
+                errors.append("{0}：機械段已存在，忽略 {1} 內寫入的內容".format(sid, name))
+                continue
+            dest.write_text(chunk, encoding="utf-8")
+            if sid not in written:
+                written.append(sid)
+    if not any_source:
+        errors.append("找不到 prose_A.html／prose_B.html，split 無來源可切")
+    if "decision" in written:
+        _inject_e12_note(run_dir, prose_dir)
+    return written, errors
+
+
+def cmd_prose_split(args):
+    written, errors = _do_prose_split(args.ticker.strip().upper(), args.date)
+    print("[split] 寫入 {0} 段：{1}".format(len(written), ", ".join(written) if written else "（無）"))
+    for e in errors:
+        print("[warn] " + e)
+    return 0 if not errors else 1
+
+
+def _sid_for_line(html_text, lineno, markers):
+    for mk in markers:
+        start_line = html_text.count("\n", 0, mk["start"]) + 1
+        end_line = html_text.count("\n", 0, mk["end"]) + 1
+        if start_line <= lineno <= end_line:
+            return mk["id"]
+    return None
+
+
+def _run_gates(run_dir, ticker, date, out_html=None, postprocess=False):
+    """`dd_gates.sh` 的 Python 化版本（見設計稿 §3.5／§8 C-1）：render_dd
+    組裝 → validate_prose（依 sid 歸因）→ dd_sections leaks（依行號歸因到
+    sid）→ dd_sections bytes（WARN 不擋，只印不回報）→ qc → validate_dd_meta
+    （診斷用，不擋）→ verify_dd_math。回傳 `(ok, [(sid, 原因), ...])`——
+    無法歸因到特定 sid 的失敗用 `_assemble`／`_validate_prose`／`_qc`／
+    `_math` 這類前綴 sid 代替（機械層或跨段問題，散文 agent 改不動）。"""
+    run_dir = Path(run_dir)
+    py = _pick_python()
+    prose_dir = run_dir / "prose"
+    tables_dir = run_dir / "tables"
+    judgment_path = run_dir / "judgment.json"
+    evidence_path = run_dir / "evidence.json"
+    out_path = Path(out_html) if out_html else run_dir / "DD_preview.html"
+
+    findings = []
+    ok = True
+
+    assemble_cmd = [
+        py, str(SCRIPTS_DIR / "render_dd.py"), "--assemble", str(prose_dir),
+        "--tables", str(tables_dir), "--judgment", str(judgment_path),
+        "-o", str(out_path),
+    ]
+    if not postprocess:
+        assemble_cmd.append("--no-postprocess")
+    r_asm = subprocess.run(assemble_cmd, capture_output=True, text=True)
+    if r_asm.returncode != 0:
+        findings.append(("_assemble", (r_asm.stdout + r_asm.stderr).strip()[-500:]))
+        return False, findings
+
+    vp_cmd = [py, str(SCRIPTS_DIR / "validate_prose.py"), str(prose_dir),
+              "--judgment", str(judgment_path), "--json"]
+    if evidence_path.exists():
+        vp_cmd += ["--evidence", str(evidence_path)]
+    r_vp = subprocess.run(vp_cmd, capture_output=True, text=True)
+    try:
+        vp_json = json.loads(r_vp.stdout) if r_vp.stdout.strip() else None
+    except (json.JSONDecodeError, ValueError):
+        vp_json = None
+    if vp_json is None:
+        ok = False
+        findings.append(("_validate_prose", (r_vp.stdout + r_vp.stderr).strip()[-500:]))
+    else:
+        for sid, misses in (vp_json.get("by_section") or {}).items():
+            sample = "；".join("{0}（{1}）".format(m.get("raw"), m.get("context")) for m in misses[:3])
+            findings.append((sid, "validate_prose：{0} 個未覆蓋數字：{1}".format(len(misses), sample)))
+        if vp_json.get("total_uncovered"):
+            ok = False
+
+    out_html_text = out_path.read_text(encoding="utf-8") if out_path.exists() else ""
+
+    hits = dd_sections.leak_hits(out_html_text) if out_html_text else []
+    if hits:
+        ok = False
+        markers = dd_sections.split_sections(out_html_text)
+        for lineno, word, ctx in hits:
+            sid = _sid_for_line(out_html_text, lineno, markers) or "_global"
+            findings.append((sid, "leaks：{0}（…{1}…）".format(word, ctx)))
+
+    # bytes：既有 WARN 慣例（不擋，只給人看），這裡跑一次只為了留在 stdout
+    # 讓呼叫端（人工核對）看得到，不納入 ok 判定、不進 findings。
+    subprocess.run([py, str(SCRIPTS_DIR / "dd_sections.py"), "bytes", str(out_path)],
+                   capture_output=True, text=True)
+
+    r_qc = subprocess.run([py, str(SCRIPTS_DIR / "qc.py"), str(out_path)], capture_output=True, text=True)
+    if r_qc.returncode != 0:
+        ok = False
+        findings.append(("_qc", (r_qc.stdout + r_qc.stderr).strip()[-500:]))
+
+    # validate_dd_meta：診斷用 --report，同既有慣例不擋。
+    subprocess.run([py, str(SCRIPTS_DIR / "validate_dd_meta.py"), str(out_path), "--report"],
+                   capture_output=True, text=True)
+
+    r_math = subprocess.run([py, str(SCRIPTS_DIR / "verify_dd_math.py"), str(out_path)],
+                             capture_output=True, text=True)
+    if r_math.returncode != 0:
+        ok = False
+        findings.append(("_math", (r_math.stdout + r_math.stderr).strip()[-500:]))
+
+    return ok, findings
+
+
+def cmd_gates(args):
+    ticker = args.ticker.strip().upper()
+    date = args.date
+    run_dir = _run_dir(ticker, date)
+    ok, findings = _run_gates(run_dir, ticker, date, out_html=args.out, postprocess=args.postprocess)
+    print("PASS" if ok else "FAIL")
+    for sid, reason in findings:
+        print("- {0}：{1}".format(sid, reason))
+    return 0 if ok else 1
+
+
+def _prose_check(ticker, date):
+    """`prose check TICKER DATE`＝split＋gates 一次跑完，輸出只有 sid 清單
+    ＋原因（不吐六支腳本全文）——散文 agent 在自己的 Bash 呼叫裡用這支。"""
+    written, split_errors = _do_prose_split(ticker, date)
+    run_dir = _run_dir(ticker, date)
+    ok, findings = _run_gates(run_dir, ticker, date)
+    lines = []
+    if split_errors:
+        for e in split_errors:
+            lines.append("[split] " + e)
+    if ok and not split_errors:
+        lines.append("PASS")
+    else:
+        lines.append("FAIL")
+        for sid, reason in findings:
+            lines.append("- {0}：{1}".format(sid, reason))
+    return (ok and not split_errors), "\n".join(lines)
+
+
+def cmd_prose_check(args):
+    ok, report = _prose_check(args.ticker.strip().upper(), args.date)
+    print(report)
+    return 0 if ok else 1
+
+
+def _do_prose_run(ticker, date, manifest, accept_over_budget=False, dry_run=False):
+    run_dir = _run_dir(ticker, date)
+    manifest_path = run_dir / "manifest.json"
+    stage = _fresh_stage_preserving_prior(manifest, "prose")
+    manifest.setdefault("stages", {})["prose"] = stage
+    manifest["state"] = "prose_running"
+    _atomic_write_json(manifest_path, manifest)
+
+    bundle_path = run_dir / "bundles" / "prose.md"
+    prompt_path = run_dir / "prompts" / "b2_prose.md"
+    if not bundle_path.exists() or not prompt_path.exists():
+        rc = _do_prose_prepare(ticker, date)
+        if rc != 0:
+            stage["state"] = "FAIL"
+            stage["ended"] = _now()
+            stage["note"] = "prose prepare 失敗（rc={0}）".format(rc)
+            manifest["stages"]["prose"] = stage
+            manifest["state"] = "prose_fail"
+            _atomic_write_json(manifest_path, manifest)
+            _print_step_status("prose", "prepare_rc={0}".format(rc), "PASS", "FAIL")
+            _print_resume_hint(ticker, date, "prose")
+            return 1
+
+    agents_dir = run_dir / "agents"
+    inline_prompt_path = _write_inline_prompt(prompt_path, bundle_path)
+    r_spawn = _spawn_short(
+        inline_prompt_path, "sonnet", agents_dir / "prose_1.json",
+        run_dir, PROSE_BUDGET_CACHE_READ, PROSE_MAX_TURNS,
+    )
+    stage["agent_usage"].append(r_spawn)
+    over_budget = any(r.get("over_budget") for r in stage["agent_usage"])
+    stage["over_budget"] = over_budget
+    _atomic_write_json(manifest_path, manifest)
+
+    if r_spawn.get("quota_exhausted"):
+        stage["state"] = "FAIL"
+        stage["ended"] = _now()
+        stage["note"] = "訂閱額度耗盡"
+        manifest["stages"]["prose"] = stage
+        manifest["state"] = "prose_fail"
+        _atomic_write_json(manifest_path, manifest)
+        _print_step_status("prose", "quota_exhausted", "PASS", "FAIL")
+        _print_resume_hint(ticker, date, "prose")
+        return 1
+
+    ok, report = _prose_check(ticker, date)
+    stage["check_report"] = report
+
+    final_ok = ok and (over_budget is False or accept_over_budget)
+    if not ok:
+        stage["state"] = "FAIL"
+    elif over_budget and not accept_over_budget:
+        stage["state"] = "OVER_BUDGET"
+    else:
+        stage["state"] = None  # 下面組最終 HTML 後才定案
+
+    if not final_ok:
+        stage["ended"] = _now()
+        manifest["stages"]["prose"] = stage
+        manifest["state"] = "prose_{0}".format(stage["state"].lower())
+        _atomic_write_json(manifest_path, manifest)
+        _print_step_status(
+            "prose", "cache_read={0}".format(r_spawn.get("cache_read")),
+            PROSE_BUDGET_CACHE_READ, stage["state"],
+        )
+        if stage["state"] == "FAIL":
+            print(report)
+        _print_resume_hint(ticker, date, "prose")
+        return 1
+
+    # PASS：組出最終定案 HTML（`--dry-run` 落在 run 目錄內，不寫 docs/）。
+    if dry_run:
+        out_path = run_dir / "DD_full_preview.html"
+    else:
+        out_path = DD_DIR / "DD_{0}_{1}.html".format(ticker, date)
+    ok2, findings2 = _run_gates(run_dir, ticker, date, out_html=out_path, postprocess=not dry_run)
+    if not ok2:
+        stage["state"] = "FAIL"
+        stage["ended"] = _now()
+        stage["note"] = "最終定案組裝 FAIL：{0}".format(findings2)
+        manifest["stages"]["prose"] = stage
+        manifest["state"] = "prose_fail"
+        _atomic_write_json(manifest_path, manifest)
+        _print_step_status("prose", "final_assemble FAIL", "PASS", "FAIL")
+        _print_resume_hint(ticker, date, "prose")
+        return 1
+
+    stage["state"] = "PASS"
+    stage["ended"] = _now()
+    stage["out_path"] = str(out_path)
+    manifest["stages"]["prose"] = stage
+    manifest["state"] = "prose_pass"
+    _atomic_write_json(manifest_path, manifest)
+    _print_step_status(
+        "prose", "cache_read={0}".format(r_spawn.get("cache_read")), PROSE_BUDGET_CACHE_READ, "PASS",
+    )
+    print("[ok] 完整版：{0}".format(out_path))
+    return 0
+
+
+def cmd_prose_run(args):
+    ticker = args.ticker.strip().upper()
+    date = args.date
+    manifest = _load_json_or(_run_dir(ticker, date) / "manifest.json", {
+        "ticker": ticker, "date": date, "state": "new", "created": _now(),
+        "steps": [], "agents": [], "stages": {},
+    })
+    return _do_prose_run(ticker, date, manifest, accept_over_budget=getattr(args, "accept_over_budget", False),
+                          dry_run=args.dry_run)
+
+
+_PROSE_HELP = (
+    "usage: ddreport.py prose {prepare,split,check,run} TICKER DATE [--dry-run] [--accept-over-budget]\n\n"
+    "  prepare  產生 C-1 機械段（revlog／s14／appA）到 run 目錄 prose/，\n"
+    "           跑 gen_dd_tables.py 產表，組 bundles/prose.md、prompts/b2_prose.md。\n"
+    "  split    把 prose_A.html／prose_B.html（／prose_fix.html，補寫輪）依\n"
+    "           <!-- SID:sX --> 標記切成 prose/{sid}.html（機械段不覆寫）。\n"
+    "  check    split ＋ gates 一次跑完，只回 sid 清單＋原因（散文 agent 用）。\n"
+    "  run      spawn 散文 agent（sonnet，Write/Bash，≤7 輪，預算 1.5M cache_read，\n"
+    "           熔斷 3.0M）→ check → PASS 時組出 docs/dd/DD_{T}_{D}.html\n"
+    "           （--dry-run 時輸出到 run 目錄內、不寫 docs/）。\n"
+)
 
 
 # ---------------------------------------------------------------------------
@@ -2332,7 +2941,7 @@ def _model_bucket(model_id):
 
 
 def _empty_bucket():
-    return {"cache_read": 0, "cache_creation": 0, "output": 0}
+    return {"cache_read": 0, "cache_creation": 0, "output": 0, "cost_usd": 0.0}
 
 
 def _sum_usage_by_model(usage_list):
@@ -2344,7 +2953,44 @@ def _sum_usage_by_model(usage_list):
             b["cache_read"] += (vals or {}).get("cacheReadInputTokens", 0) or 0
             b["cache_creation"] += (vals or {}).get("cacheCreationInputTokens", 0) or 0
             b["output"] += (vals or {}).get("outputTokens", 0) or 0
+            b["cost_usd"] += (vals or {}).get("costUSD", 0) or 0
     return buckets
+
+
+def _stage_elapsed_seconds(stage):
+    """2026-09-06：用 manifest ISO 時戳算段落牆鐘；缺任一端就回 None。"""
+    try:
+        started = time.mktime(time.strptime(stage["started"], "%Y-%m-%dT%H:%M:%S"))
+        ended = time.mktime(time.strptime(stage["ended"], "%Y-%m-%dT%H:%M:%S"))
+        return max(0.0, ended - started)
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
+def _usage_observation(stage):
+    usage = list((stage or {}).get("agent_usage") or []) + list((stage or {}).get("agent_usage_prior") or [])
+    return {
+        "cache_read": sum((u or {}).get("cache_read", 0) or 0 for u in usage),
+        "output": sum((u or {}).get("output_tokens", 0) or 0 for u in usage),
+        "cost_usd": sum((u or {}).get("cost_usd", 0) or 0 for u in usage),
+        "agent_seconds": sum(((u or {}).get("duration_ms", 0) or 0) / 1000.0 for u in usage),
+    }
+
+
+def _record_stage_observation(manifest, stage_name):
+    """2026-09-06：段落結束時把時間、token、成本寫回 manifest 並印一行。"""
+    stage = (manifest.get("stages") or {}).get(stage_name) or {}
+    obs = _usage_observation(stage)
+    elapsed = _stage_elapsed_seconds(stage)
+    if elapsed is not None:
+        obs["elapsed_seconds"] = elapsed
+    stage["observation"] = obs
+    print("[段落] {0} 結束 {1}／牆鐘 {2}／cache_read {3}／output {4}／cost ${5:.2f}".format(
+        stage_name, stage.get("ended") or _now(),
+        "{0:.1f}s".format(elapsed) if elapsed is not None else "—",
+        obs["cache_read"], obs["output"], obs["cost_usd"],
+    ))
+    return obs
 
 
 def _build_token_ledger(manifest):
@@ -2355,16 +3001,30 @@ def _build_token_ledger(manifest):
     才是真正的整趟花費，不是只算本次重跑那一段。"""
     totals = {}
     by_stage = {}
+    total_cost = 0.0
+    total_stage_wall = 0.0
     for stage_name, stage in (manifest.get("stages") or {}).items():
         usage_list = list((stage or {}).get("agent_usage") or []) + list((stage or {}).get("agent_usage_prior") or [])
         buckets = _sum_usage_by_model(usage_list)
         turns = sum((u or {}).get("num_turns", 0) or 0 for u in usage_list)
-        by_stage[stage_name] = dict(buckets, turns=turns)
+        observation = _usage_observation(stage)
+        wall_seconds = _stage_elapsed_seconds(stage)
+        by_stage[stage_name] = dict(
+            buckets, turns=turns, wall_seconds=wall_seconds,
+            agent_seconds=observation["agent_seconds"], cost_usd=observation["cost_usd"],
+            cache_read=observation["cache_read"], output=observation["output"],
+        )
+        total_cost += observation["cost_usd"]
+        total_stage_wall += wall_seconds or 0.0
         for k, v in buckets.items():
             t = totals.setdefault(k, _empty_bucket())
-            for kk in ("cache_read", "cache_creation", "output"):
+            for kk in ("cache_read", "cache_creation", "output", "cost_usd"):
                 t[kk] += v[kk]
-    return {"totals": totals, "by_stage": by_stage}
+    return {
+        "totals": totals,
+        "by_stage": by_stage,
+        "summary": {"cost_usd": total_cost, "stage_wall_seconds": total_stage_wall},
+    }
 
 
 def _ledger_cache_read_total(ledger, models=("fable", "opus", "sonnet", "other", "haiku")):
@@ -2400,12 +3060,18 @@ def _ledger_summary_line(ledger, prior_total=0):
 
 
 def _finish_target_html(ticker, date, manifest):
-    """本次 run 實際產出的報告檔——優先信 manifest 的 `stages.brief.out_path`
-    （這個 run 自己寫過什麼就是什麼，不用檔案系統猜；`--full` 一旦交付、
-    `_do_brief` 把 out_path 換成完整版路徑時，這裡不用跟著改）。只有
-    out_path 缺失或已不存在時才退回按檔名慣例猜測（先 brief 再完整版——
-    brief 是 v17 現行預設產物，缺 out_path 多半代表這次跑的正是它）。"""
-    brief_stage = (manifest.get("stages") or {}).get("brief") or {}
+    """本次 run 實際產出的報告檔——優先信 manifest 的
+    `stages.prose.out_path`（2026-09-06 WP4b 交付：`--full` 跑完後這是
+    完整版，比快速版更接近「這次真正要上站的東西」），沒有才退回
+    `stages.brief.out_path`（這個 run 自己寫過什麼就是什麼，不用檔案系統
+    猜）。兩者都缺失或已不存在時才退回按檔名慣例猜測（先 brief 再完整版
+    ——brief 是 v17 現行預設產物，缺 out_path 多半代表這次跑的正是它）。"""
+    stages = manifest.get("stages") or {}
+    prose_stage = stages.get("prose") or {}
+    prose_out = prose_stage.get("out_path")
+    if prose_out and Path(prose_out).exists():
+        return Path(prose_out)
+    brief_stage = stages.get("brief") or {}
     out_path = brief_stage.get("out_path")
     if out_path and Path(out_path).exists():
         return Path(out_path)
@@ -2415,17 +3081,27 @@ def _finish_target_html(ticker, date, manifest):
     return DD_DIR / "DD_{0}_{1}.html".format(ticker, date)
 
 
-def _finish_file_set(ticker, date, file_cell):
-    return [
+def _finish_file_set(ticker, date, file_cell, include_sync=True):
+    files = [
         DD_DIR / file_cell,
-        INDEX_MD_PATH,
-        RESEARCH_BODY_PATH,
-        DD_SCREENER_LATEST_PATH,
-        PICKS_CANDIDATES_PATH,
-        TICKER_HUB_DIR / "{0}.html".format(ticker),
-        TICKER_HUB_DIR / "index.html",
+        # 2026-09-06 WP4b：`--full` 跑完時 `file_cell` 會是完整版
+        # `DD_{T}_{D}.html`（見 `_finish_target_html`），但同一次 run 通常也
+        # 產出了快速版 `brief/BRIEF_{T}_{D}.html`——兩個檔案都上站，一併納入
+        # 白名單；`existing_files` 過濾只留真的存在的檔，不存在時這行是無害
+        # 多餘項。
+        DD_DIR / "brief" / "BRIEF_{0}_{1}.html".format(ticker, date),
         SRC_ARCHIVE_DIR / "{0}_{1}".format(ticker, date),
     ]
+    if include_sync:
+        files.extend([
+            INDEX_MD_PATH,
+            RESEARCH_BODY_PATH,
+            DD_SCREENER_LATEST_PATH,
+            PICKS_CANDIDATES_PATH,
+            TICKER_HUB_DIR / "{0}.html".format(ticker),
+            TICKER_HUB_DIR / "index.html",
+        ])
+    return files
 
 
 def _ignore_inline_prompt_files(dirpath, names):
@@ -2436,8 +3112,10 @@ def _ignore_inline_prompt_files(dirpath, names):
 
 def _archive_run_dir(run_dir, archive_dir):
     """把 run 目錄的固定產物複製到 `notes/site-internal/dd/_src/{T}_{D}/`，
-    檔名照既有慣例加 `{T}_{D}.` 前綴；`parts/`／`prompts/`／`agents/` 各自
-    整個目錄複製（子目錄內原檔名不變）。回傳複製項目清單。"""
+    檔名照既有慣例加 `{T}_{D}.` 前綴；`parts/`／`prompts/`／`agents/`／
+    `prose/`（2026-09-06 WP4b：`--full` 產出的逐段 prose/{sid}.html，C-1
+    機械段與散文 agent 寫的段落都在裡面）各自整個目錄複製（子目錄內原檔名
+    不變）。回傳複製項目清單。"""
     run_dir = Path(run_dir)
     archive_dir = Path(archive_dir)
     archive_dir.mkdir(parents=True, exist_ok=True)
@@ -2458,7 +3136,7 @@ def _archive_run_dir(run_dir, archive_dir):
             shutil.copy2(str(src), str(archive_dir / dst_name))
             copied.append(dst_name)
 
-    for sub in ("parts", "prompts", "agents"):
+    for sub in ("parts", "prompts", "agents", "prose"):
         src_dir = run_dir / sub
         if src_dir.exists():
             dst_dir = archive_dir / sub
@@ -2543,7 +3221,223 @@ def _push_head_via_worktree(commit_sha):
     return True, ""
 
 
-def _do_finish(ticker, date, dry_run=False, no_push=False, skip_dd_screener=False):
+def _finish_source_path(run_dir, source_name):
+    """2026-09-07：run 來源不存在時，回退到同一輪 DD 的 committed 存查。"""
+    run_dir = Path(run_dir)
+    run_path = run_dir / "{0}.json".format(source_name)
+    if run_path.exists():
+        return run_path, None
+    stem = run_dir.name
+    archive_path = SRC_ARCHIVE_DIR / stem / "{0}.{1}.json".format(stem, source_name)
+    if archive_path.exists():
+        return archive_path, {
+            "source": source_name,
+            "run_path": str(run_path),
+            "path": str(archive_path),
+        }
+    return archive_path, None
+
+
+def _finish_consistency_sources(run_dir, html_path):
+    """2026-09-07：讀 finish 的三個數字來源；結構性 N/A 必須明列。"""
+    run_dir = Path(run_dir)
+    judgment_path, judgment_fallback = _finish_source_path(run_dir, "judgment")
+    scenario_meta_path, scenario_fallback = _finish_source_path(run_dir, "scenario_meta")
+    judgment = _load_json_or(judgment_path, None)
+    scenario_meta = _load_json_or(scenario_meta_path, None)
+    html_meta = dd_meta_reader.read_dd_meta(html_path)
+    fallback_items = [item for item in (judgment_fallback, scenario_fallback) if item]
+    source_errors = []
+    for label, path, obj in (
+        ("judgment", judgment_path, judgment),
+        ("scenario_meta", scenario_meta_path, scenario_meta),
+        ("HTML dd-meta", Path(html_path), html_meta),
+    ):
+        if not isinstance(obj, dict):
+            source_errors.append("{0}：找不到或不是合法 JSON（{1}）".format(label, path))
+
+    source_paths = {
+        "judgment": str(judgment_path),
+        "scenario_meta": str(scenario_meta_path),
+        "html_dd_meta": str(html_path),
+    }
+    if source_errors:
+        return None, source_errors, [], source_paths, fallback_items
+
+    decision_inputs = judgment.get("decision_inputs") or {}
+    max_dd = (judgment.get("premortem") or {}).get("max_dd") or {}
+    lo, hi = max_dd.get("lo"), max_dd.get("hi")
+    if (isinstance(lo, (int, float)) and not isinstance(lo, bool)
+            and isinstance(hi, (int, float)) and not isinstance(hi, bool)):
+        judgment_max_dd = min(lo, hi)
+    elif lo is not None and hi is not None:
+        # 2026-09-07：保留非數字原值交給下一層列成 mismatch，不讓 min() 先崩潰。
+        judgment_max_dd = {"lo": lo, "hi": hi}
+    else:
+        judgment_max_dd = lo
+    values = {}
+    na_items = []
+    for field in ("ev5y_pct", "irr_base_pct", "asym_ratio"):
+        judgment_value = decision_inputs.get(field)
+        scenario_value = scenario_meta.get(field)
+        values[field] = {
+            "judgment": judgment_value,
+            "scenario_meta": scenario_value,
+            "html_dd_meta": html_meta.get(field),
+        }
+        # 2026-09-07：主判斷 prompt 明定三欄留 null；scenario 有值時明列 N/A，
+        # 但 key 缺失或 scenario 也缺值仍交給 mismatch 擋下。
+        if field in decision_inputs and judgment_value is None and scenario_value is not None:
+            na_items.append({
+                "field": field, "source": "judgment",
+                "path": str(judgment_path),
+                "reason": "judgment 依設計填 null；權威值由 scenario_meta 機械計算",
+            })
+    values["max_dd_pct"] = {
+        "judgment": judgment_max_dd,
+        "scenario_meta": None,
+        "html_dd_meta": html_meta.get("max_dd_pct"),
+    }
+    na_items.append({
+        "field": "max_dd_pct", "source": "scenario_meta",
+        "path": str(scenario_meta_path),
+        "reason": "scenario_meta 結構性不產此欄；Max DD 恆等式由 verify_dd_math.py 驗證",
+    })
+    return values, [], na_items, source_paths, fallback_items
+
+
+def _finish_consistency_mismatches(values, na_items=None):
+    """2026-09-07：前三欄沿用權威容差；Max DD 直拷欄只容許極小 epsilon。"""
+    tolerances = {
+        "ev5y_pct": verify_dd_math.EV_TOL,
+        "irr_base_pct": verify_dd_math.IRR_TOL,
+        "asym_ratio": verify_dd_math.AR_TOL,
+        "max_dd_pct": FINISH_MAXDD_EPSILON,
+    }
+    expected_sources = {
+        "ev5y_pct": ("judgment", "scenario_meta", "html_dd_meta"),
+        "irr_base_pct": ("judgment", "scenario_meta", "html_dd_meta"),
+        "asym_ratio": ("judgment", "scenario_meta", "html_dd_meta"),
+        "max_dd_pct": ("judgment", "html_dd_meta"),
+    }
+    structural_na = {
+        (item.get("field"), item.get("source")) for item in (na_items or [])
+    }
+    mismatches = []
+    for field, source_values in values.items():
+        reasons = []
+        numeric = []
+        for source in expected_sources[field]:
+            if (field, source) in structural_na:
+                continue
+            value = source_values.get(source)
+            if value is None:
+                reasons.append("{0} 缺值".format(source))
+            elif isinstance(value, bool) or not isinstance(value, (int, float)):
+                reasons.append("{0} 非數字：{1!r}".format(source, value))
+            else:
+                numeric.append((source, float(value)))
+        tolerance = tolerances[field]
+        for i, (left_source, left_value) in enumerate(numeric):
+            for right_source, right_value in numeric[i + 1:]:
+                if abs(left_value - right_value) > tolerance:
+                    reasons.append("{0} vs {1} 差 {2:.4g} > 容差 {3}".format(
+                        left_source, right_source, abs(left_value - right_value), tolerance,
+                    ))
+        if reasons:
+            mismatches.append({
+                "field": field,
+                "tolerance": tolerance,
+                "judgment": source_values.get("judgment"),
+                "scenario_meta": source_values.get("scenario_meta"),
+                "html_dd_meta": source_values.get("html_dd_meta"),
+                "reasons": reasons,
+            })
+    return mismatches
+
+
+def _run_finish_consistency_gate(run_dir, manifest, manifest_path, html_path,
+                                 accept_mismatch=False):
+    """2026-09-07：finish 發布硬閘；回傳 True 才能寫 INDEX／commit／push。"""
+    py = _pick_python()
+    math_cmd = [py, str(SCRIPTS_DIR / "verify_dd_math.py"), str(html_path)]
+    math_result = subprocess.run(math_cmd, cwd=str(REPO_ROOT), capture_output=True, text=True)
+    math_output = ((math_result.stdout or "") + (math_result.stderr or "")).strip()
+
+    values, source_errors, na_items, source_paths, fallback_items = (
+        _finish_consistency_sources(run_dir, html_path)
+    )
+    mismatches = _finish_consistency_mismatches(values, na_items) if values is not None else []
+    if fallback_items:
+        print("[finish-check] 使用存查 fallback：")
+        for item in fallback_items:
+            print("  - {0}：{1} 不存在，改讀 {2}".format(
+                item["source"], item["run_path"], item["path"]))
+    if na_items:
+        print("[finish-check] 結構性 N/A（明列、不靜默跳過）：")
+        for item in na_items:
+            print("  - {0}／{1}（{2}）：{3}".format(
+                item["field"], item["source"], item["path"], item["reason"]))
+
+    if source_errors:
+        print("[HOLD] 發布前一致性檢查無法讀取來源：", file=sys.stderr)
+        for error in source_errors:
+            print("  - " + error, file=sys.stderr)
+
+    if mismatches:
+        mismatch_tag = "[accept-mismatch]" if accept_mismatch else "[HOLD]"
+        print("{0} 發布前三方數字不一致：".format(mismatch_tag), file=sys.stderr)
+        for item in mismatches:
+            print(
+                "  - {0}：judgment（{1}）={2!r}／scenario_meta（{3}）={4!r}／"
+                "HTML dd-meta（{5}）={6!r}（容差 {7}；{8}）".format(
+                    item["field"], source_paths["judgment"], item["judgment"],
+                    source_paths["scenario_meta"], item["scenario_meta"],
+                    source_paths["html_dd_meta"], item["html_dd_meta"],
+                    item["tolerance"], "；".join(item["reasons"]),
+                ),
+                file=sys.stderr,
+            )
+
+    # 2026-09-07：旗標本身也留痕；只放行三方差異，不能繞過權威 verifier FAIL。
+    if accept_mismatch:
+        manifest.setdefault("finish_mismatch_acceptances", []).append({
+            "accepted_at": _now(),
+            "html_path": str(html_path),
+            "verifier_passed": math_result.returncode == 0,
+            "proceeded": math_result.returncode == 0 and not source_errors,
+            "fields": mismatches,
+            "structural_na": na_items,
+            "fallback_sources": fallback_items,
+            "source_paths": source_paths,
+        })
+        _atomic_write_json(manifest_path, manifest)
+
+    if math_result.returncode != 0:
+        print("[HOLD] verify_dd_math.py 未通過（rc={0}）：".format(
+            math_result.returncode), file=sys.stderr)
+        if math_output:
+            print(math_output, file=sys.stderr)
+        print("下一步：修正來源後重跑驗證；不得用旗標繞過。", file=sys.stderr)
+        return False
+    print("[finish-check] verify_dd_math.py PASS")
+
+    if source_errors:
+        print("下一步：修正來源後重跑驗證；不得用旗標繞過。", file=sys.stderr)
+        return False
+    if mismatches and not accept_mismatch:
+        print("下一步：修正來源後重跑驗證；不得加旗標繞過，除非持有人明確放行。", file=sys.stderr)
+        return False
+    if mismatches:
+        print("[accept-mismatch] 持有人明確放行 {0} 個欄位；原值已寫入 manifest".format(
+            len(mismatches)))
+    else:
+        print("[finish-check] 三方數字一致")
+    return True
+
+
+def _do_finish(ticker, date, dry_run=False, no_push=False, skip_dd_screener=False,
+               sync_later=False, accept_mismatch=False):
     run_dir = _run_dir(ticker, date)
     manifest_path = run_dir / "manifest.json"
     manifest = _load_json_or(manifest_path, None)
@@ -2565,10 +3459,17 @@ def _do_finish(ticker, date, dry_run=False, no_push=False, skip_dd_screener=Fals
         print("[error] 找不到報告檔：{0}".format(html_path), file=sys.stderr)
         return 1
 
+    # 2026-09-07：任何發布副作用前先跑權威驗算＋三方一致性；dry-run 也不略過。
+    if not _run_finish_consistency_gate(
+            run_dir, manifest, manifest_path, html_path,
+            accept_mismatch=accept_mismatch):
+        return 1
+
     fields = _index_row_fields(html_path)
     meta = fields["meta"]
 
-    files = _finish_file_set(ticker, date, fields["file_cell"])
+    # 2026-09-06：batch 每檔只收報告與存查；研究頁／screener 留到批尾一次同步。
+    files = _finish_file_set(ticker, date, fields["file_cell"], include_sync=not sync_later)
     print("[plan] 檔案集：")
     for f in files:
         print("  - {0}".format(f))
@@ -2581,21 +3482,24 @@ def _do_finish(ticker, date, dry_run=False, no_push=False, skip_dd_screener=Fals
         print("[dry-run] 不寫 INDEX、不跑 update_dd_index、不 commit、不 push")
         return 0
 
-    _append_index_row(fields["row"], fields["file_cell"])
-
-    py = _pick_python()
-    cmd = [py, str(SCRIPTS_DIR / "update_dd_index.py")]
-    if skip_dd_screener:
-        cmd.append("--skip-dd-screener")
-    r = subprocess.run(cmd, cwd=str(REPO_ROOT), capture_output=True, text=True)
-    if r.returncode != 0:
-        print(
-            "[warn] update_dd_index.py 失敗（rc={0}），僅警告不中止：\n{1}".format(
-                r.returncode, (r.stdout + r.stderr)[-1000:]
-            )
-        )
+    if sync_later:
+        print("[sync-later] 本檔不寫 INDEX、不跑 update_dd_index；交由 batch 結尾一次同步")
     else:
-        print("[ok] update_dd_index.py rc=0")
+        _append_index_row(fields["row"], fields["file_cell"])
+
+        py = _pick_python()
+        cmd = [py, str(SCRIPTS_DIR / "update_dd_index.py")]
+        if skip_dd_screener:
+            cmd.append("--skip-dd-screener")
+        r = subprocess.run(cmd, cwd=str(REPO_ROOT), capture_output=True, text=True)
+        if r.returncode != 0:
+            print(
+                "[warn] update_dd_index.py 失敗（rc={0}），僅警告不中止：\n{1}".format(
+                    r.returncode, (r.stdout + r.stderr)[-1000:]
+                )
+            )
+        else:
+            print("[ok] update_dd_index.py rc=0")
 
     archive_dir = SRC_ARCHIVE_DIR / "{0}_{1}".format(ticker, date)
     _archive_run_dir(run_dir, archive_dir)
@@ -2607,10 +3511,11 @@ def _do_finish(ticker, date, dry_run=False, no_push=False, skip_dd_screener=Fals
     role = meta.get("dca_role") or "—"
     label = "DD 快速版" if meta.get("brief") else "DD 完整版"
     total_m = _ledger_cache_read_total(ledger) / 1_000_000.0
-    commit_subject = (
-        "Add {0} {1} {2}（{3}｜{4}；v17 全帳 {5:.1f}M）; "
-        "resync research+screener".format(ticker, label, date, verdict, role, total_m)
+    commit_subject = "Add {0} {1} {2}（{3}｜{4}；v17 全帳 {5:.1f}M）".format(
+        ticker, label, date, verdict, role, total_m,
     )
+    if not sync_later:
+        commit_subject += "; resync research+screener"
     trailer = os.environ.get("DD_COMMIT_TRAILER")
     commit_msg = commit_subject if not trailer else "{0}\n\n{1}".format(commit_subject, trailer)
 
@@ -2682,6 +3587,8 @@ def cmd_finish(args):
     return _do_finish(
         ticker, date,
         dry_run=args.dry_run, no_push=args.no_push, skip_dd_screener=args.skip_dd_screener,
+        sync_later=getattr(args, "sync_later", False),
+        accept_mismatch=getattr(args, "accept_mismatch", False),
     )
 
 
@@ -2698,7 +3605,10 @@ def cmd_run(args):
     replay_dir = _ensure_replay_env(args.replay_from)
 
     until_explicit = args.until is not None
-    until = args.until or "brief"
+    # 2026-09-06 WP4b：`--full` 沒有明講 `--until` 時，預設把狀態機推到
+    # "prose"（散文層）；沒給 `--full` 仍預設停在 "brief"（快速版）——這是
+    # 「無 --full 狀態機不含 prose 段」的實作方式，STAGE_ORDER 本身不分裝。
+    until = args.until or ("prose" if args.full else "brief")
     if until not in STAGE_ORDER:
         print("[error] --until 必須是 {0} 之一".format(STAGE_ORDER), file=sys.stderr)
         return 2
@@ -2727,11 +3637,14 @@ def cmd_run(args):
     plan_kwargs = {
         "archetype": args.archetype, "peers": args.peers, "segments": None,
         "axes_per_batch": args.axes_per_batch, "offline": args.offline,
+        "reuse_days": getattr(args, "reuse_days", REUSE_DAYS_DEFAULT),
     }
 
     rc = 0
     for i in range(start_idx, until_idx + 1):
         stage_name = STAGE_ORDER[i]
+        # 2026-09-06：每段起訖與花費都在主 log 可見；結束值另寫回 manifest。
+        print("[段落] {0} 開始 {1}".format(stage_name, _now()))
         # WP7b #5：`--resume` 落在這一段先前狀態為 FAIL（judged）或
         # FAIL／RUNNING（gated，涵蓋中斷於 spawn 之後、parse 之前的
         # gated_running）時，先重跑機械檢查（judge check／parse 既有
@@ -2756,17 +3669,25 @@ def cmd_run(args):
                 rc = _do_gate(ticker, date, judgment_model, replay_dir, args.accept_over_budget, manifest)
         elif stage_name == "brief":
             rc = _do_brief(ticker, date, args.full, manifest, dry_run=args.dry_run)
+        elif stage_name == "prose":
+            rc = _do_prose_run(ticker, date, manifest, accept_over_budget=args.accept_over_budget, dry_run=args.dry_run)
         manifest = _load_json_or(manifest_path, manifest)
         st = manifest.get("stages", {}).get(stage_name, {})
+        _record_stage_observation(manifest, stage_name)
+        _atomic_write_json(manifest_path, manifest)
         if st.get("state") not in ("PASS", "SKIPPED"):
             return rc if rc != 0 else 1
 
     # WP6a：run 預設接 finish；--no-finish／--dry-run／明講 --until 皆不接
     # （含明講 `--until brief`——語意上等同「就跑到這裡，先別 finish」）。
-    if (not until_explicit) and until == "brief" and not args.no_finish and not args.dry_run:
+    # 2026-09-06：`--full` 的預設終點是 "prose"，同樣視為「跑到預設終點」
+    # 而接 finish；`until_explicit` 仍是唯一的「使用者刻意要求停在這裡」判準。
+    if (not until_explicit) and until in ("brief", "prose") and not args.no_finish and not args.dry_run:
         return _do_finish(
             ticker, date,
             dry_run=False, no_push=args.no_push, skip_dd_screener=args.skip_dd_screener,
+            sync_later=getattr(args, "sync_later", False),
+            accept_mismatch=getattr(args, "accept_mismatch", False),
         )
 
     return rc
@@ -2840,12 +3761,20 @@ def _batch_row_from_run_dir(ticker, date, run_dir, rc, elapsed_min, log_path):
     max_dd = ((judgment.get("premortem") or {}).get("max_dd") or {}).get("lo")
     ledger = _build_token_ledger(manifest)
     ledger_line = _ledger_summary_line(ledger, _prior_usage_cache_read_total(manifest))
+    # 2026-09-06：batch 摘要直接列分段牆鐘與列表成本，不必再逐檔翻 token.json。
+    stage_times = []
+    for stage_name in STAGE_ORDER:
+        seconds = (ledger.get("by_stage", {}).get(stage_name) or {}).get("wall_seconds")
+        if seconds is not None:
+            stage_times.append("{0} {1:.1f}m".format(stage_name, seconds / 60.0))
     return {
         "ticker": ticker, "date": date,
         "state": manifest.get("state") or "—",
         "verdict": verdict, "role": role,
         "ev5y_pct": ev5y, "irr_base_pct": irr_base, "max_dd_pct": max_dd,
         "ledger": ledger, "ledger_line": ledger_line,
+        "stage_times": "／".join(stage_times) or "—",
+        "cost_usd": (ledger.get("summary") or {}).get("cost_usd", 0.0),
         "elapsed_min": elapsed_min, "rc": rc,
         "log_path": str(log_path),
         "quota_hit": _manifest_has_quota_exhausted(manifest),
@@ -2855,11 +3784,12 @@ def _batch_row_from_run_dir(ticker, date, run_dir, rc, elapsed_min, log_path):
 def _build_batch_summary_md(rows, date, quota_stopped_ticker=None, remaining=None):
     lines = [
         "# DD batch 摘要 {0}".format(date), "",
-        "| ticker | state | 裁決／角色 | 5Y EV | IRR base | Max DD | 全帳 | 耗時(分) | rc | 備註 |",
-        "|---|---|---|---|---|---|---|---|---|---|",
+        "| ticker | state | 裁決／角色 | 5Y EV | IRR base | Max DD | 全帳 | cost | 分段耗時 | 耗時(分) | rc | 備註 |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     total_cache_read = 0
     total_elapsed = 0.0
+    total_cost = 0.0
     ok_n = 0
     fail_n = 0
     for r in rows:
@@ -2868,22 +3798,23 @@ def _build_batch_summary_md(rows, date, quota_stopped_ticker=None, remaining=Non
         if r["rc"] != 0:
             note = "`python3 scripts/ddreport.py run {0} --date {1} --resume`".format(r["ticker"], r["date"])
         lines.append(
-            "| {0} | {1} | {2} | {3} | {4} | {5} | {6} | {7:.1f} | {8} | {9} |".format(
+            "| {0} | {1} | {2} | {3} | {4} | {5} | {6} | ${7:.2f} | {8} | {9:.1f} | {10} | {11} |".format(
                 r["ticker"], r["state"], verdict_role,
                 _fmt_pct(r["ev5y_pct"]), _fmt_pct(r["irr_base_pct"]), _fmt_pct(r["max_dd_pct"]),
-                r["ledger_line"], r["elapsed_min"], r["rc"], note,
+                r["ledger_line"], r["cost_usd"], r["stage_times"], r["elapsed_min"], r["rc"], note,
             )
         )
         total_cache_read += _ledger_cache_read_total(r["ledger"])
         total_elapsed += r["elapsed_min"]
+        total_cost += r["cost_usd"]
         if r["rc"] == 0:
             ok_n += 1
         else:
             fail_n += 1
     lines.append("")
     lines.append(
-        "總計：成功 {0}／失敗 {1}／總耗時 {2:.1f} 分／全帳合計 {3:.1f}M".format(
-            ok_n, fail_n, total_elapsed, total_cache_read / 1_000_000.0
+        "總計：成功 {0}／失敗 {1}／總耗時 {2:.1f} 分／全帳合計 {3:.1f}M／列表成本 ${4:.2f}".format(
+            ok_n, fail_n, total_elapsed, total_cache_read / 1_000_000.0, total_cost,
         )
     )
     if quota_stopped_ticker:
@@ -2907,6 +3838,80 @@ def _write_batch_summary(rows, date, quota_stopped_ticker=None, remaining=None):
     return path
 
 
+def _sync_batch_site(rows, date, no_push=False, skip_dd_screener=False):
+    """2026-09-06：把成功檔的 INDEX／研究頁／screener 在批尾只同步一次。"""
+    completed = [r for r in rows if r.get("rc") == 0]
+    if not completed:
+        return 0
+
+    tickers = []
+    for row in completed:
+        ticker = row["ticker"]
+        manifest = _load_json_or(_run_dir(ticker, row["date"]) / "manifest.json", {})
+        html_path = _finish_target_html(ticker, row["date"], manifest)
+        if not html_path.exists():
+            print("[batch-sync] 找不到報告檔，略過 INDEX：{0}".format(html_path))
+            continue
+        fields = _index_row_fields(html_path)
+        _append_index_row(fields["row"], fields["file_cell"])
+        if ticker not in tickers:
+            tickers.append(ticker)
+
+    py = _pick_python()
+    cmd = [py, str(SCRIPTS_DIR / "update_dd_index.py")]
+    if skip_dd_screener:
+        cmd.append("--skip-dd-screener")
+    r = subprocess.run(cmd, cwd=str(REPO_ROOT), capture_output=True, text=True)
+    if r.returncode != 0:
+        print("[error] batch 尾 update_dd_index.py 失敗（rc={0}）：\n{1}".format(
+            r.returncode, (r.stdout + r.stderr)[-1000:]), file=sys.stderr)
+        return 1
+
+    files = [INDEX_MD_PATH, RESEARCH_BODY_PATH, PICKS_CANDIDATES_PATH,
+             TICKER_HUB_DIR / "index.html"]
+    if not skip_dd_screener:
+        files.append(DD_SCREENER_LATEST_PATH)
+    files.extend(TICKER_HUB_DIR / "{0}.html".format(t) for t in tickers)
+    existing_files = [f for f in files if Path(f).exists()]
+    add_r = _git(["add"] + [str(f) for f in existing_files])
+    if add_r.returncode != 0:
+        print("[error] batch-sync git add 失敗：\n{0}".format(
+            (add_r.stdout or "") + (add_r.stderr or "")), file=sys.stderr)
+        return 1
+
+    subject = "Sync DD batch {0}（{1} 檔；research+screener once）".format(date, len(tickers))
+    commit_r = _git(["commit", "-m", subject])
+    if commit_r.returncode != 0:
+        combined = (commit_r.stdout or "") + (commit_r.stderr or "")
+        if "nothing to commit" in combined or "沒有要提交的變更" in combined:
+            print("[batch-sync] 無新衍生變動，略過 commit")
+            return 0
+        print("[error] batch-sync git commit 失敗：\n{0}".format(combined), file=sys.stderr)
+        return 1
+    print("[ok] batch-sync committed: {0}".format(subject))
+
+    if no_push:
+        print("[ok] batch-sync --no-push，未推送")
+        return 0
+    ahead, behind = _git_ahead_behind()
+    if behind > 0:
+        rev_r = _git(["rev-parse", "HEAD"])
+        commit_sha = (rev_r.stdout or "").strip()
+        ok, reason = _push_head_via_worktree(commit_sha)
+        if ok:
+            print("[ok] batch-sync 遠端領先 {0}，worktree 推送完成".format(behind))
+            return 0
+        print("[HOLD] batch-sync 遠端領先 {0}：{1}".format(behind, reason), file=sys.stderr)
+        return 2
+    push_r = _git(["push", "origin", "main"])
+    if push_r.returncode != 0:
+        print("[error] batch-sync git push 失敗：\n{0}".format(
+            (push_r.stdout or "") + (push_r.stderr or "")), file=sys.stderr)
+        return 1
+    print("[ok] batch-sync pushed to origin/main")
+    return 0
+
+
 def cmd_batch(args):
     tickers = _resolve_batch_tickers(args.tickers, args.from_file)
     if not tickers:
@@ -2925,6 +3930,8 @@ def cmd_batch(args):
         print("[batch] {0}/{1} {2} 開始 {3}".format(i, n, t, time.strftime("%H:%M")))
         log_path = log_dir / "{0}_{1}.log".format(t, date)
         cmd = [py, script_path, "run", t, "--date", date]
+        # 2026-09-06：每檔只 finish 報告；聚合頁在整批結尾同步一次。
+        cmd.append("--sync-later")
         if args.full:
             cmd.append("--full")
         if args.judgment_model:
@@ -2954,13 +3961,25 @@ def cmd_batch(args):
             log_text = ""
         if row["quota_hit"] or "訂閱額度耗盡" in log_text:
             remaining = tickers[i:]
+            sync_rc = _sync_batch_site(
+                rows, date, no_push=args.no_push,
+                skip_dd_screener=getattr(args, "skip_dd_screener", False),
+            )
             summary_path = _write_batch_summary(rows, date, quota_stopped_ticker=t, remaining=remaining)
             print("[batch] 額度耗盡，整批停下（{0}）".format(t))
             print(summary_path)
+            if sync_rc != 0:
+                return sync_rc
             return 3
 
+    sync_rc = _sync_batch_site(
+        rows, date, no_push=args.no_push,
+        skip_dd_screener=getattr(args, "skip_dd_screener", False),
+    )
     summary_path = _write_batch_summary(rows, date)
     print(summary_path)
+    if sync_rc != 0:
+        return sync_rc
     return 0 if all(r["rc"] == 0 for r in rows) else 1
 
 
@@ -2979,6 +3998,8 @@ def build_parser():
     pl.add_argument("--peers", default=None)
     pl.add_argument("--segments", default=None)
     pl.add_argument("--axes-per-batch", type=int, default=AXES_PER_BATCH_DEFAULT)
+    pl.add_argument("--reuse-days", type=int, default=REUSE_DAYS_DEFAULT,
+                    help="結構軸 evidence 沿用天數；0＝全部重抓（預設 30）")  # 2026-09-06
     pl.add_argument("--offline", action="store_true")
     pl.set_defaults(func=cmd_plan)
 
@@ -2993,12 +4014,16 @@ def build_parser():
     rn.add_argument("--archetype", default=None)
     rn.add_argument("--peers", default=None)
     rn.add_argument("--axes-per-batch", type=int, default=AXES_PER_BATCH_DEFAULT)
+    rn.add_argument("--reuse-days", type=int, default=REUSE_DAYS_DEFAULT,
+                    help="結構軸 evidence 沿用天數；0＝全部重抓（預設 30）")  # 2026-09-06
     rn.add_argument("--judgment-model", default=None, choices=["fable", "opus", "sonnet"])
     rn.add_argument("--judge-mode", default=None, choices=["short", "loop"],
                     help="判斷段跑法：short（預設，只給 Write、≤4 輪，check 由 orchestrator 跑）／loop（舊：agent 自己 Write＋check＋修）")
     rn.add_argument("--gate-patch-mode", default=None, choices=["patchmap", "loop"],
                     help="閘 🔴 修補跑法：patchmap（預設，無工具單輪回 patch map）／loop（舊：agent 自己 Read／Write／Bash＋重跑 check）")  # 2026-09-06
-    rn.add_argument("--full", action="store_true", help="WP4b 未交付，本輪僅印警告")
+    rn.add_argument("--full", action="store_true",
+                     help="v17 WP4b：預設終點推到 prose（散文層），從快速版的 judgment.json 額外補跑"
+                          "完整版 docs/dd/DD_{T}_{D}.html")
     rn.add_argument("--replay-from", default=None, metavar="DIR")
     rn.add_argument("--until", default=None, choices=STAGE_ORDER,
                      help="預設跑到 brief 並自動接 finish；明講此旗標（含 --until brief）視為"
@@ -3011,6 +4036,10 @@ def build_parser():
     rn.add_argument("--no-push", action="store_true", help="finish 時 commit 但不 push")
     rn.add_argument("--skip-dd-screener", action="store_true",
                      help="finish 時透傳給 update_dd_index.py")
+    rn.add_argument("--sync-later", action="store_true",
+                    help="只 commit／push 本檔與存查；INDEX／研究頁／screener 延後同步")  # 2026-09-06
+    rn.add_argument("--accept-mismatch", action="store_true",
+                    help="僅持有人明確放行時使用；三方原值會寫入 manifest")  # 2026-09-07
     rn.set_defaults(func=cmd_run)
 
     s0 = sub.add_parser("stage0")
@@ -3019,6 +4048,8 @@ def build_parser():
     s0.add_argument("--archetype", default=None)
     s0.add_argument("--peers", default=None)
     s0.add_argument("--axes-per-batch", type=int, default=AXES_PER_BATCH_DEFAULT)
+    s0.add_argument("--reuse-days", type=int, default=REUSE_DAYS_DEFAULT,
+                    help="結構軸 evidence 沿用天數；0＝全部重抓（預設 30）")  # 2026-09-06
     s0.add_argument("--offline", action="store_true")
     s0.add_argument("--replay-from", default=None, metavar="DIR")
     s0.add_argument("--accept-over-budget", action="store_true")
@@ -3032,7 +4063,8 @@ def build_parser():
             "steps": [], "agents": [], "stages": {},
         })
         plan_kwargs = {"archetype": args.archetype, "peers": args.peers, "segments": None,
-                       "axes_per_batch": args.axes_per_batch, "offline": args.offline}
+                       "axes_per_batch": args.axes_per_batch, "offline": args.offline,
+                       "reuse_days": args.reuse_days}
         return _do_stage0(ticker, date, plan_kwargs, replay_dir, args.accept_over_budget, manifest)
 
     s0.set_defaults(func=_cmd_stage0)
@@ -3088,7 +4120,9 @@ def build_parser():
     br = sub.add_parser("brief")
     br.add_argument("ticker")
     br.add_argument("date")
-    br.add_argument("--full", action="store_true")
+    br.add_argument("--full", action="store_true",
+                     help="v17 WP4b 起此旗標在獨立的 brief 子命令上不生效（見 `_do_brief`）；"
+                          "完整版另跑 `python3 scripts/ddreport.py prose run TICKER DATE`")
     br.add_argument("--dry-run", action="store_true",
                      help="輸出到 run 目錄內 brief.html，不寫 docs/dd/brief/")
 
@@ -3114,6 +4148,10 @@ def build_parser():
     fi.add_argument("--dry-run", action="store_true")
     fi.add_argument("--no-push", action="store_true")
     fi.add_argument("--skip-dd-screener", action="store_true")
+    fi.add_argument("--sync-later", action="store_true",
+                    help="只 commit／push 本檔與存查；INDEX／研究頁／screener 延後同步")  # 2026-09-06
+    fi.add_argument("--accept-mismatch", action="store_true",
+                    help="僅持有人明確放行時使用；三方原值會寫入 manifest")  # 2026-09-07
     fi.set_defaults(func=cmd_finish)
 
     # 2026-09-06：batch——一條指令排一串 ticker 依序各跑一次完整 `run`。
@@ -3127,9 +4165,22 @@ def build_parser():
     ba.add_argument("--judge-mode", default=None, choices=["short", "loop"])
     ba.add_argument("--gate-patch-mode", default=None, choices=["patchmap", "loop"])
     ba.add_argument("--no-push", action="store_true")
+    ba.add_argument("--skip-dd-screener", action="store_true",
+                    help="批尾同步時透傳給 update_dd_index.py")  # 2026-09-06
     ba.add_argument("--resume", action="store_true",
                      help="透傳給每一檔的 `run --resume`（批次本身不記自己的續跑點，續跑靠各檔 manifest）")
     ba.set_defaults(func=cmd_batch)
+
+    # 2026-09-06 WP4b：`gates` 是單一 ticker/date 直達命令（同 `finish`／
+    # `brief`），不像 `prose` 底下還分 prepare/split/check/run 四個動作，故
+    # 正常掛進 argparse 即可，不需要 `prose` 那種 pre-dispatch。
+    ga2 = sub.add_parser("gates", help="v17 WP4b：dd_gates.sh 的 Python 化版本，回 sid 清單＋原因")
+    ga2.add_argument("ticker")
+    ga2.add_argument("date")
+    ga2.add_argument("--out", default=None, help="輸出 HTML 路徑（預設 run 目錄內 DD_preview.html）")
+    ga2.add_argument("--postprocess", action="store_true",
+                      help="組裝後跑 site_nav/primer/livebar（預設關，只在最終定案輸出到 docs/ 時開）")
+    ga2.set_defaults(func=cmd_gates)
 
     return p
 
@@ -3142,6 +4193,34 @@ def main(argv):
     if len(argv) >= 3 and argv[0] == "judge" and argv[1] == "check":
         ns = argparse.Namespace(ticker=argv[2], date=argv[3] if len(argv) > 3 else None)
         return cmd_judge_check(ns)
+
+    # 2026-09-06 WP4b：`prose {prepare,split,check,run} TICKER DATE` 同樣
+    # 前置獨立判斷——`prose` 底下四個子動作若掛進 argparse 巢狀 subparsers
+    # 會與「ticker 剛好叫 check/split/…」這種邊界案例打架（同上 `judge
+    # check` 的理由），且 `prose --help`／裸 `prose` 需要一段可讀的說明，
+    # 這裡直接印，不強求擠進 argparse 的 --help 機制。
+    if argv[:1] == ["prose"]:
+        rest = argv[1:]
+        if not rest or rest[0] in ("-h", "--help"):
+            print(_PROSE_HELP)
+            return 0
+        sub_cmd = rest[0]
+        fn = {"prepare": cmd_prose_prepare, "split": cmd_prose_split,
+              "check": cmd_prose_check, "run": cmd_prose_run}.get(sub_cmd)
+        if fn is None:
+            print("prose：未知子命令 {0!r}（可用：prepare/split/check/run）".format(sub_cmd), file=sys.stderr)
+            return 2
+        if len(rest) < 3:
+            print("用法：ddreport.py prose {0} TICKER DATE".format(sub_cmd), file=sys.stderr)
+            return 2
+        ticker, date = rest[1], rest[2]
+        extra = rest[3:]
+        ns = argparse.Namespace(
+            ticker=ticker, date=date,
+            dry_run=("--dry-run" in extra),
+            accept_over_budget=("--accept-over-budget" in extra),
+        )
+        return fn(ns)
 
     parser = build_parser()
     args = parser.parse_args(argv)

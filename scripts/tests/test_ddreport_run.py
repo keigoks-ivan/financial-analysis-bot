@@ -40,6 +40,7 @@ CIEN_FIXTURE = REPO_ROOT / "notes/site-internal/dd/_src/CIEN_20260905"
 
 sys.path.insert(0, str(SCRIPTS_DIR))
 import ddreport  # noqa: E402
+import dd_bundle  # noqa: E402  （2026-09-06：驗閘 bundle 不再夾帶逐字稿全文）
 
 
 class _FakeCompleted:
@@ -862,6 +863,153 @@ def test_plan_spawns_one_digest_agent_per_transcript_not_a2_digest(monkeypatch):
     finally:
         monkeypatch.delenv("DD_REPLAY_FROM", raising=False)
         shutil.rmtree(run_dir, ignore_errors=True)
+
+
+# ---------------------------------------------------------------------------
+# 2026-09-06：證據增量化、逐字稿摘要沿用、閘輸入瘦身。
+# ---------------------------------------------------------------------------
+
+def test_plan_reuse_days_skips_only_structural_coverage_agents(tmp_path, monkeypatch):
+    ticker = "ZREUSE"
+    build_dir = tmp_path / ".dd_build"
+    runs_dir = build_dir / "runs"
+    archive_root = tmp_path / "_src"
+    archive_dir = archive_root / "ZREUSE_20260101_dryrun"
+    archive_dir.mkdir(parents=True)
+    old_evidence = {
+        "coverage": {
+            "competitive_share_entrants": {"status": "found", "findings": [{
+                "claim": "舊結構證據", "source": "公司年報", "as_of": "2026-01-01",
+                "direction": "+", "affects": ["moat_trend"],
+            }]},
+            "channel_business_model_shift": {"status": "none", "queries_run": ["q1", "q2"]},
+            "pricing_power": {"status": "pending", "findings": [], "queries_run": []},
+            "major_events": {"status": "none", "queries_run": ["q1", "q2"]},
+        },
+    }
+    (archive_dir / "ZREUSE_20260101.evidence.json").write_text(
+        json.dumps(old_evidence, ensure_ascii=False), encoding="utf-8")
+
+    axes = [
+        {"id": "competitive_share_entrants", "name": "競爭", "question": "q"},
+        {"id": "channel_business_model_shift", "name": "通路", "question": "q"},
+        {"id": "pricing_power", "name": "定價", "question": "q"},
+        {"id": "major_events", "name": "事件", "question": "q"},
+    ]
+    monkeypatch.setattr(ddreport, "BUILD_DIR", build_dir)
+    monkeypatch.setattr(ddreport, "RUNS_DIR", runs_dir)
+    monkeypatch.setattr(ddreport, "SRC_ARCHIVE_DIR", archive_root)
+    monkeypatch.setattr(ddreport, "_run_koyfin_step", lambda *a, **k: {
+        "transcripts": {"selected": {"recent_four_quarters": [], "high_signal_optional": []}}
+    })
+
+    def fake_step(cmd, manifest, step_name, cwd=None):
+        if step_name == "dd_prior":
+            out = Path(cmd[cmd.index("--out") + 1])
+            out.write_text("{}", encoding="utf-8")
+            return _FakeCompleted(0)
+        if step_name == "dd_evidence_init":
+            out = build_dir / "{0}_{1}.evidence.json".format(ticker, cmd[4])
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_text(json.dumps({
+                "ticker": ticker, "date": cmd[4], "archetype_hint": "品質複利成長",
+                "earnings_recency": None, "numbers": {},
+                "coverage": {a["id"]: {"status": "pending"} for a in axes},
+                "events": {}, "prior_dd": {}, "ledger": {}, "canonical_id": {}, "transcripts": {},
+            }), encoding="utf-8")
+            return _FakeCompleted(0)
+        if step_name == "dd_evidence_axes":
+            return _FakeCompleted(0, stdout=json.dumps(axes, ensure_ascii=False))
+        raise AssertionError(step_name)
+
+    monkeypatch.setattr(ddreport, "_run_subprocess", fake_step)
+
+    args_reuse = argparse.Namespace(
+        ticker=ticker, date="20260102", archetype="品質複利成長", peers=None,
+        segments=None, axes_per_batch=1, offline=True, reuse_days=3650,
+    )
+    assert ddreport.cmd_plan(args_reuse) == 0
+    run_reuse = runs_dir / "ZREUSE_20260102"
+    spawn_reuse = json.loads((run_reuse / "spawn_list.json").read_text(encoding="utf-8"))
+    # 2026-09-06：事件與舊 pending 母軸都必須重抓；只有兩個有效結構軸沿用。
+    assert [s["id"] for s in spawn_reuse if s["id"].startswith("a_")] == ["a_1", "a_2"]
+    reused = json.loads((run_reuse / "parts" / "reused_coverage.json").read_text(encoding="utf-8"))
+    finding = reused["coverage"]["competitive_share_entrants"]["findings"][0]
+    assert finding["reused_from"] == "ZREUSE_20260101_dryrun"
+    assert finding["age_days"] == 1
+
+    args_fresh = argparse.Namespace(
+        ticker=ticker, date="20260103", archetype="品質複利成長", peers=None,
+        segments=None, axes_per_batch=ddreport.AXES_PER_BATCH_DEFAULT, offline=True, reuse_days=0,
+    )
+    assert ddreport.cmd_plan(args_fresh) == 0
+    spawn_fresh = json.loads((runs_dir / "ZREUSE_20260103" / "spawn_list.json").read_text(encoding="utf-8"))
+    assert len([s for s in spawn_fresh if s["id"].startswith("a_")]) == 3
+    batches_fresh = json.loads((runs_dir / "ZREUSE_20260103" / "batches.json").read_text(encoding="utf-8"))
+    assert sorted(len(b["axis_ids"]) for b in batches_fresh) == [1, 1, 2]
+    assert sum(len(b["axis_ids"]) for b in batches_fresh) == 4
+    assert ddreport.AXES_PER_BATCH_DEFAULT == 2
+    assert ddreport.STAGE0_MAX_PARALLEL == 8
+
+
+def test_digest_reuse_only_spawns_new_transcript(tmp_path):
+    archive_dir = tmp_path / "Z_20260101"
+    archive_dir.mkdir()
+    digest_path = archive_dir / "Z_20260101.transcript_digest.json"
+    digest_path.write_text(json.dumps({
+        "source_files": ["/old/Q1.md"],
+        "items": [{"topic": "guidance", "claim": "c", "quote": "q", "speaker": "CFO",
+                   "date": "2026-01-01", "file": "/old/Q1.md"}],
+        "qa_flags": [],
+    }), encoding="utf-8")
+    parts_dir = tmp_path / "parts"
+    parts_dir.mkdir()
+    snapshot = {"archive_dir": archive_dir, "digest_path": digest_path, "age_days": 10}
+
+    pending, reused = ddreport._prepare_digest_reuse(
+        ["/new/Q1.md", "/new/Q2.md"], snapshot, 30, parts_dir)
+
+    assert pending == ["/new/Q2.md"]
+    assert reused == ["/new/Q1.md"]
+    part = json.loads((parts_dir / "digest_0.json").read_text(encoding="utf-8"))
+    assert part["source_files"] == ["/new/Q1.md"]
+    assert part["items"][0]["file"] == "/new/Q1.md"
+    assert part["items"][0]["age_days"] == 10
+
+    # 2026-09-06：超過 reuse_days 時，逐字稿摘要也必須全部重做。
+    expired_dir = tmp_path / "expired_parts"
+    expired_dir.mkdir()
+    expired_snapshot = dict(snapshot, age_days=31)
+    pending, reused = ddreport._prepare_digest_reuse(
+        ["/new/Q1.md"], expired_snapshot, 30, expired_dir)
+    assert pending == ["/new/Q1.md"]
+    assert reused == []
+    assert not (expired_dir / "digest_0.json").exists()
+
+
+def test_gate_bundle_keeps_digest_but_omits_full_transcript(tmp_path):
+    run_dir = tmp_path / "run"
+    (run_dir / "bundles").mkdir(parents=True)
+    transcript = tmp_path / "Q4.md"
+    transcript.write_text("FULL-TRANSCRIPT-SECRET-MARKER", encoding="utf-8")
+    (run_dir / "evidence.json").write_text(json.dumps({
+        "ticker": "Z", "date": "20260101", "numbers": {}, "coverage": {},
+        "events": {}, "prior_dd": {}, "ledger": {}, "canonical_id": {},
+        "transcripts": {"selected": {"recent_four_quarters": [str(transcript)]}},
+    }), encoding="utf-8")
+    (run_dir / "digest.json").write_text(json.dumps({
+        "items": [{"claim": "DIGEST-MARKER"}], "source_files": [str(transcript)]
+    }), encoding="utf-8")
+    (run_dir / "judgment.json").write_text(json.dumps({"decision_out": {"verdict": "觀望"}}), encoding="utf-8")
+    args = argparse.Namespace(
+        run_dir=str(run_dir), evidence=None, digest=None, judgment=None,
+        transcript=None, critic_gates=str(tmp_path / "missing.md"), out=None,
+    )
+
+    assert dd_bundle.cmd_gate(args) == 0
+    text = (run_dir / "bundles" / "gate.md").read_text(encoding="utf-8")
+    assert "DIGEST-MARKER" in text
+    assert "FULL-TRANSCRIPT-SECRET-MARKER" not in text
 
 
 if __name__ == "__main__":

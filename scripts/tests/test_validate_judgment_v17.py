@@ -175,6 +175,22 @@ def test_src_judgment_zero_fail(subdir, fname):
     assert fails == [], f"{fname} 出現非預期 FAIL：{fails}"
 
 
+def test_derived_decision_inputs_null_remain_valid(tmp_path):
+    """2026-09-07：三個 scenario 衍生 key 留 null 不得被 validator 判 FAIL。"""
+    source = NOTES_SRC / "BE_20260905" / "BE_20260905.judgment.json"
+    if not source.exists():
+        pytest.skip(f"fixture 不存在：{source}")
+    data = json.loads(source.read_text(encoding="utf-8"))
+    for field in ("asym_ratio", "irr_base_pct", "ev5y_pct"):
+        data["decision_inputs"][field] = None
+    path = tmp_path / "judgment.json"
+    path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+
+    fails, _warns = vj.validate_file(path, None, j1_warn=False)
+
+    assert fails == []
+
+
 def test_j5_plain_role_mismatch_is_fail():
     import validate_judgment as vj
     data = {"decision_out": {"role": "衛星"}, "plain": {"verdict_line": "進場，當核心持股，但先買三分之一。", "five": {"how_to_act": "首階三分之一"}}}

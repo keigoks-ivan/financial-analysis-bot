@@ -48,8 +48,17 @@ def _sample_meta(brief=True):
         "moat_trend": "↑",
         "val": "🟢",
         "trap": "🟡",
+        # 2026-09-07：測試頁也必須通過正式 verify_dd_math.py，不靠 monkeypatch
+        # 掩蓋缺情境欄；以下六欄與 EV／IRR／AR／Max DD 彼此自洽。
+        "price_at_dd": 100,
+        "bull_5y_price": 204.2,
+        "bear_5y_price": 35,
+        "p_bull_pct": 25,
+        "p_bear_pct": 25,
+        "upside_5y_pct": 18.2,
         "ev5y_pct": 18.9,
         "irr_base_pct": 3.4,
+        "asym_ratio": 1.6,
         "max_dd_pct": -65,
         "oneliner": "fallback oneliner，不應被用到。",
         "brief": brief,
@@ -122,8 +131,21 @@ def _setup_fake_repo(tmp_path, monkeypatch):
 def _make_run_dir(paths, ticker, date, html_path, extra_stages=None):
     run_dir = paths["runs_dir"] / "{0}_{1}".format(ticker, date)
     run_dir.mkdir(parents=True)
-    for name in ("evidence.json", "digest.json", "judgment.json", "scenario.json", "scenario_meta.json"):
+    for name in ("evidence.json", "digest.json", "scenario.json"):
         (run_dir / name).write_text("{}", encoding="utf-8")
+    # 2026-09-07：finish 硬閘測試骨架提供與 HTML 一致的真實三方值；Max DD
+    # 依正式結構放在 premortem.max_dd，scenario_meta 對此欄結構性 N/A。
+    meta = ddreport.dd_meta_reader.read_dd_meta(html_path) or {}
+    numeric_fields = ("ev5y_pct", "irr_base_pct", "asym_ratio")
+    judgment = {
+        "decision_inputs": {field: meta.get(field) for field in numeric_fields},
+        "premortem": {"max_dd": {"lo": meta.get("max_dd_pct"), "hi": -45}},
+    }
+    scenario_meta = {field: meta.get(field) for field in numeric_fields}
+    (run_dir / "judgment.json").write_text(
+        json.dumps(judgment, ensure_ascii=False), encoding="utf-8")
+    (run_dir / "scenario_meta.json").write_text(
+        json.dumps(scenario_meta, ensure_ascii=False), encoding="utf-8")
     (run_dir / "gate_audit.md").write_text("# audit\n", encoding="utf-8")
     for sub in ("parts", "prompts", "agents"):
         d = run_dir / sub
@@ -319,6 +341,66 @@ def test_finish_commit_file_whitelist_and_push(tmp_path, monkeypatch):
     assert any("update_dd_index.py" in " ".join(c) for c in sub_calls)
 
 
+def test_finish_sync_later_commits_report_without_rebuilding_site(tmp_path, monkeypatch):
+    """2026-09-06：batch 單檔 finish 不碰 INDEX／研究頁／screener。"""
+    paths = _setup_fake_repo(tmp_path, monkeypatch)
+    ticker, date = "ZTEST", "20260905"
+    html_path = paths["brief_dir"] / "BRIEF_{0}_{1}.html".format(ticker, date)
+    _write_brief_html(html_path, _sample_meta())
+    _make_run_dir(paths, ticker, date, html_path)
+    index_before = paths["index_md"].read_text(encoding="utf-8")
+
+    git_calls = []
+    sub_calls = []
+    monkeypatch.setattr(ddreport, "_git", lambda args, cwd=None: git_calls.append(list(args)) or _FakeCompleted(0))
+    monkeypatch.setattr(ddreport, "_git_ahead_behind", lambda: (0, 0))
+    monkeypatch.setattr(
+        ddreport.subprocess, "run",
+        lambda cmd, *a, **k: sub_calls.append(list(cmd)) or _FakeCompleted(0),
+    )
+
+    assert ddreport._do_finish(ticker, date, sync_later=True) == 0
+    staged = set(next(c for c in git_calls if c[0] == "add")[1:])
+    assert staged == {
+        str(html_path),
+        str(paths["src_archive"] / "{0}_{1}".format(ticker, date)),
+    }
+    assert paths["index_md"].read_text(encoding="utf-8") == index_before
+    assert not any("update_dd_index.py" in " ".join(c) for c in sub_calls)
+    msg = next(c for c in git_calls if c[0] == "commit")[-1]
+    assert "resync research+screener" not in msg
+
+
+def test_batch_sync_runs_index_rebuild_once(tmp_path, monkeypatch):
+    """2026-09-06：多檔完成後只呼叫一次 update_dd_index.py。"""
+    paths = _setup_fake_repo(tmp_path, monkeypatch)
+    rows = []
+    for ticker in ("ZA", "ZB"):
+        html_path = paths["brief_dir"] / "BRIEF_{0}_20260905.html".format(ticker)
+        meta = _sample_meta()
+        meta["ticker"] = ticker
+        _write_brief_html(html_path, meta)
+        _make_run_dir(paths, ticker, "20260905", html_path)
+        rows.append({"ticker": ticker, "date": "20260905", "rc": 0})
+
+    sub_calls = []
+    git_calls = []
+    monkeypatch.setattr(
+        ddreport.subprocess, "run",
+        lambda cmd, *a, **k: sub_calls.append(list(cmd)) or _FakeCompleted(0),
+    )
+    monkeypatch.setattr(ddreport, "_git", lambda args, cwd=None: git_calls.append(list(args)) or _FakeCompleted(0))
+    monkeypatch.setattr(ddreport, "_git_ahead_behind", lambda: (0, 0))
+
+    assert ddreport._sync_batch_site(rows, "20260905") == 0
+    updates = [c for c in sub_calls if "update_dd_index.py" in " ".join(c)]
+    assert len(updates) == 1
+    index_text = paths["index_md"].read_text(encoding="utf-8")
+    assert "BRIEF_ZA_20260905.html" in index_text
+    assert "BRIEF_ZB_20260905.html" in index_text
+    assert len([c for c in git_calls if c[0] == "commit"]) == 1
+
+
 def test_finish_dry_run_touches_nothing(tmp_path, monkeypatch):
     paths = _setup_fake_repo(tmp_path, monkeypatch)
     ticker, date = "ZTEST", "20260905"
@@ -336,6 +418,227 @@ def test_finish_dry_run_touches_nothing(tmp_path, monkeypatch):
     assert git_calls == []
     assert paths["index_md"].read_text(encoding="utf-8") == index_before
     assert not (paths["src_archive"] / "{0}_{1}".format(ticker, date)).exists()
+
+
+# ---------------------------------------------------------------------------
+# 2026-09-07：finish 發布前數字一致性硬閘。
+# ---------------------------------------------------------------------------
+
+def test_judge_null_rule_is_shared_by_short_and_loop_prompts():
+    """2026-09-07：衍生欄規則必須位於 short／loop 共用的 prompt 前綴。"""
+    template = (ddreport.PROMPTS_TMPL_DIR / "judge.md.tmpl").read_text(encoding="utf-8")
+    rule = "`decision_inputs.asym_ratio`／`irr_base_pct`／`ev5y_pct` 一律填 `null`"
+    assert rule in template
+    assert template.index(rule) < template.index(ddreport._JUDGE_LOOP_WRITE_MARKER)
+
+
+def test_finish_consistency_three_sources_match_passes(tmp_path, monkeypatch, capsys):
+    paths = _setup_fake_repo(tmp_path, monkeypatch)
+    ticker, date = "ZTEST", "20260905"
+    html_path = paths["brief_dir"] / "BRIEF_{0}_{1}.html".format(ticker, date)
+    _write_brief_html(html_path, _sample_meta())
+    _make_run_dir(paths, ticker, date, html_path)
+
+    sub_calls = []
+    monkeypatch.setattr(
+        ddreport.subprocess, "run",
+        lambda cmd, *a, **k: sub_calls.append(list(cmd)) or _FakeCompleted(0, "[pass]", ""),
+    )
+    monkeypatch.setattr(ddreport, "_git", lambda *a, **k: pytest.fail("dry-run 不得呼叫 git"))
+
+    assert ddreport._do_finish(ticker, date, dry_run=True) == 0
+    output = capsys.readouterr().out
+    assert "verify_dd_math.py PASS" in output
+    assert "三方數字一致" in output
+    assert "max_dd_pct／scenario_meta" in output
+    assert any("verify_dd_math.py" in " ".join(cmd) for cmd in sub_calls)
+
+
+def test_finish_consistency_judgment_derived_fields_null_are_explicit_na(
+        tmp_path, monkeypatch, capsys):
+    """2026-09-07：主判斷刻意留 null 時，以 scenario／HTML 對帳並明列 N/A。"""
+    paths = _setup_fake_repo(tmp_path, monkeypatch)
+    ticker, date = "ZTEST", "20260905"
+    html_path = paths["brief_dir"] / "BRIEF_{0}_{1}.html".format(ticker, date)
+    _write_brief_html(html_path, _sample_meta())
+    run_dir, _ = _make_run_dir(paths, ticker, date, html_path)
+    judgment_path = run_dir / "judgment.json"
+    judgment = json.loads(judgment_path.read_text(encoding="utf-8"))
+    for field in ("ev5y_pct", "irr_base_pct", "asym_ratio"):
+        judgment["decision_inputs"][field] = None
+    judgment_path.write_text(json.dumps(judgment, ensure_ascii=False), encoding="utf-8")
+
+    monkeypatch.setattr(ddreport.subprocess, "run", lambda *a, **k: _FakeCompleted(0, "[pass]", ""))
+    monkeypatch.setattr(ddreport, "_git", lambda *a, **k: pytest.fail("dry-run 不得呼叫 git"))
+
+    assert ddreport._do_finish(ticker, date, dry_run=True) == 0
+    output = capsys.readouterr().out
+    for field in ("ev5y_pct", "irr_base_pct", "asym_ratio"):
+        assert "{0}／judgment".format(field) in output
+    assert output.count("judgment 依設計填 null") == 3
+    assert "三方數字一致" in output
+
+
+def test_finish_consistency_all_three_sources_null_blocks(tmp_path, monkeypatch, capsys):
+    """2026-09-07：三個來源全缺不是設計性 N/A，finish 必須 HOLD。"""
+    paths = _setup_fake_repo(tmp_path, monkeypatch)
+    ticker, date = "ZTEST", "20260905"
+    meta = _sample_meta()
+    for field in ("ev5y_pct", "irr_base_pct", "asym_ratio"):
+        meta[field] = None
+    html_path = paths["brief_dir"] / "BRIEF_{0}_{1}.html".format(ticker, date)
+    _write_brief_html(html_path, meta)
+    _make_run_dir(paths, ticker, date, html_path)
+
+    monkeypatch.setattr(ddreport.subprocess, "run", lambda *a, **k: _FakeCompleted(0, "[pass]", ""))
+    monkeypatch.setattr(ddreport, "_git", lambda *a, **k: pytest.fail("HOLD 前不得呼叫 git"))
+
+    assert ddreport._do_finish(ticker, date, dry_run=True) != 0
+    captured = capsys.readouterr()
+    assert "judgment 缺值" in captured.err
+    assert "scenario_meta 缺值" in captured.err
+    assert "html_dd_meta 缺值" in captured.err
+    assert "judgment 依設計填 null" not in captured.out
+
+
+def test_finish_consistency_uses_archive_fallback(tmp_path, monkeypatch, capsys):
+    """2026-09-07：run 數字來源被清掉時，改讀 committed 存查並明列路徑。"""
+    paths = _setup_fake_repo(tmp_path, monkeypatch)
+    ticker, date = "ZTEST", "20260905"
+    html_path = paths["brief_dir"] / "BRIEF_{0}_{1}.html".format(ticker, date)
+    _write_brief_html(html_path, _sample_meta())
+    run_dir, _ = _make_run_dir(paths, ticker, date, html_path)
+    archive_dir = paths["src_archive"] / "{0}_{1}".format(ticker, date)
+    archive_dir.mkdir()
+    stem = archive_dir.name
+    for source_name in ("judgment", "scenario_meta"):
+        run_path = run_dir / "{0}.json".format(source_name)
+        archive_path = archive_dir / "{0}.{1}.json".format(stem, source_name)
+        run_path.replace(archive_path)
+
+    monkeypatch.setattr(ddreport.subprocess, "run", lambda *a, **k: _FakeCompleted(0, "[pass]", ""))
+    monkeypatch.setattr(ddreport, "_git", lambda *a, **k: pytest.fail("dry-run 不得呼叫 git"))
+
+    assert ddreport._do_finish(ticker, date, dry_run=True) == 0
+    output = capsys.readouterr().out
+    assert "使用存查 fallback" in output
+    assert "judgment.json 不存在，改讀" in output
+    assert "scenario_meta.json 不存在，改讀" in output
+
+
+def test_finish_consistency_max_dd_uses_copy_epsilon(tmp_path, monkeypatch, capsys):
+    """2026-09-07：Max DD 直拷差 0.02pp 已是真實損壞，不能沿用 2pp 容差。"""
+    paths = _setup_fake_repo(tmp_path, monkeypatch)
+    ticker, date = "ZTEST", "20260905"
+    html_path = paths["brief_dir"] / "BRIEF_{0}_{1}.html".format(ticker, date)
+    _write_brief_html(html_path, _sample_meta())
+    run_dir, _ = _make_run_dir(paths, ticker, date, html_path)
+    judgment_path = run_dir / "judgment.json"
+    judgment = json.loads(judgment_path.read_text(encoding="utf-8"))
+    judgment["premortem"]["max_dd"]["lo"] = -64.98
+    judgment_path.write_text(json.dumps(judgment, ensure_ascii=False), encoding="utf-8")
+
+    monkeypatch.setattr(ddreport.subprocess, "run", lambda *a, **k: _FakeCompleted(0, "[pass]", ""))
+    monkeypatch.setattr(ddreport, "_git", lambda *a, **k: pytest.fail("HOLD 前不得呼叫 git"))
+
+    assert ddreport._do_finish(ticker, date, dry_run=True) != 0
+    captured = capsys.readouterr()
+    assert "max_dd_pct" in captured.err
+    assert "容差 0.01" in captured.err
+
+
+def test_finish_consistency_judgment_scenario_mismatch_blocks(tmp_path, monkeypatch, capsys):
+    paths = _setup_fake_repo(tmp_path, monkeypatch)
+    ticker, date = "ZTEST", "20260905"
+    meta = _sample_meta()
+    meta["irr_base_pct"] = 0.9
+    html_path = paths["brief_dir"] / "BRIEF_{0}_{1}.html".format(ticker, date)
+    _write_brief_html(html_path, meta)
+    run_dir, _ = _make_run_dir(paths, ticker, date, html_path)
+    judgment = json.loads((run_dir / "judgment.json").read_text(encoding="utf-8"))
+    judgment["decision_inputs"]["irr_base_pct"] = 3.6
+    (run_dir / "judgment.json").write_text(
+        json.dumps(judgment, ensure_ascii=False), encoding="utf-8")
+
+    git_calls = []
+    sub_calls = []
+    monkeypatch.setattr(ddreport, "_git", lambda *a, **k: git_calls.append(a) or _FakeCompleted(0))
+    monkeypatch.setattr(
+        ddreport.subprocess, "run",
+        lambda cmd, *a, **k: sub_calls.append(list(cmd)) or _FakeCompleted(0, "[pass]", ""),
+    )
+    index_before = paths["index_md"].read_text(encoding="utf-8")
+
+    assert ddreport._do_finish(ticker, date, dry_run=True) != 0
+    captured = capsys.readouterr()
+    assert "irr_base_pct：judgment（" in captured.err
+    assert "）=3.6／scenario_meta（" in captured.err
+    assert "）=0.9／HTML dd-meta（" in captured.err
+    assert str(run_dir / "judgment.json") in captured.err
+    assert str(run_dir / "scenario_meta.json") in captured.err
+    assert str(html_path) in captured.err
+    assert "修正來源後重跑驗證" in captured.err
+    assert git_calls == []
+    assert paths["index_md"].read_text(encoding="utf-8") == index_before
+    assert not any("update_dd_index.py" in " ".join(cmd) for cmd in sub_calls)
+
+
+def test_finish_accept_mismatch_passes_and_records_manifest(tmp_path, monkeypatch, capsys):
+    paths = _setup_fake_repo(tmp_path, monkeypatch)
+    ticker, date = "ZTEST", "20260905"
+    meta = _sample_meta()
+    meta["irr_base_pct"] = 0.9
+    html_path = paths["brief_dir"] / "BRIEF_{0}_{1}.html".format(ticker, date)
+    _write_brief_html(html_path, meta)
+    run_dir, _ = _make_run_dir(paths, ticker, date, html_path)
+    judgment = json.loads((run_dir / "judgment.json").read_text(encoding="utf-8"))
+    judgment["decision_inputs"]["irr_base_pct"] = 3.6
+    (run_dir / "judgment.json").write_text(
+        json.dumps(judgment, ensure_ascii=False), encoding="utf-8")
+
+    monkeypatch.setattr(ddreport.subprocess, "run", lambda *a, **k: _FakeCompleted(0, "[pass]", ""))
+    monkeypatch.setattr(ddreport, "_git", lambda *a, **k: pytest.fail("dry-run 不得呼叫 git"))
+
+    assert ddreport._do_finish(ticker, date, dry_run=True, accept_mismatch=True) == 0
+    manifest = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
+    acceptance = manifest["finish_mismatch_acceptances"][-1]
+    assert acceptance["proceeded"] is True
+    assert acceptance["fields"] == [{
+        "field": "irr_base_pct", "tolerance": ddreport.verify_dd_math.IRR_TOL,
+        "judgment": 3.6, "scenario_meta": 0.9, "html_dd_meta": 0.9,
+        "reasons": ["judgment vs scenario_meta 差 2.7 > 容差 1.0",
+                    "judgment vs html_dd_meta 差 2.7 > 容差 1.0"],
+    }]
+    assert acceptance["structural_na"][0]["field"] == "max_dd_pct"
+    assert "原值已寫入 manifest" in capsys.readouterr().out
+
+    finish_args = ddreport.build_parser().parse_args(
+        ["finish", ticker, date, "--accept-mismatch"])
+    run_args = ddreport.build_parser().parse_args(["run", ticker, "--accept-mismatch"])
+    assert finish_args.accept_mismatch is True
+    assert run_args.accept_mismatch is True
+
+
+def test_token_ledger_includes_stage_time_output_and_cost():
+    """2026-09-06：token.json 的新帳同時保留錢與時間。"""
+    manifest = {"stages": {"stage0": {
+        "started": "2026-09-06T01:00:00", "ended": "2026-09-06T01:02:30",
+        "agent_usage": [{
+            "num_turns": 2, "cache_read": 123, "output_tokens": 45,
+            "cost_usd": 1.25, "duration_ms": 80_000,
+            "by_model": {"claude-sonnet-5": {
+                "cacheReadInputTokens": 123, "cacheCreationInputTokens": 6,
+                "outputTokens": 45, "costUSD": 1.25,
+            }},
+        }],
+    }}}
+
+    ledger = ddreport._build_token_ledger(manifest)
+
+    assert ledger["by_stage"]["stage0"]["wall_seconds"] == 150.0
+    assert ledger["by_stage"]["stage0"]["agent_seconds"] == 80.0
+    assert ledger["by_stage"]["stage0"]["output"] == 45
+    assert ledger["summary"]["cost_usd"] == pytest.approx(1.25)
 
 
 def test_finish_missing_brief_stage_errors(tmp_path, monkeypatch):
