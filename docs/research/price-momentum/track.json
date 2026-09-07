@@ -6,7 +6,7 @@
   "positioning": "P10 是零基本面成分、全機械、自帶 NAV 的純價格動能 paper track——與 RS+VCP screener（發現雷達）、QGM（品質閘門後動能）、Momentum-5/shadow（EPS 修正動能）刻意分離的第四條線。它不是收斂面：不回饋 DD 裁決鏈、不進 picks/GRP/三軌/cockpit 任何清單，不得被其他 session 引用為「某檔在 P10 上」的選股依據。個股層零人為干預；唯一人類接觸點是 prereg 的 review points 與 kill conditions。",
   "universe_and_data": {
    "universe": "S&P 500 成分（Wikipedia scrape，瀏覽器 UA，完全照抄 build_momentum5.py 做法，`.`→`-`），加上 NQ100_EXTRAS（copy scripts/screener.py 的 NQ100_EXTRAS dict，24 檔，ticker→sector），與 S&P 名單 union 去重（若某 extra 已入 S&P 以 S&P 的 sector 為準）。",
-   "prices": "yf.download(tickers + ['SPY'], period='2y', interval='1d', auto_adjust=True, group_by='ticker', threads=True)，同 build_momentum5 模式。",
+   "prices": "把 tickers + ['SPY'] 切成每批約 100 檔，逐批呼叫 yf.download(period='2y', interval='1d', auto_adjust=True, group_by='ticker', threads=True)（下載參數逐字不變，同 build_momentum5 模式），批間 sleep 後合併回同一份 DataFrame；整批下載（SPY 序列是否成功、≥253-close 覆蓋率是否達標）失敗即指數退避重試，最多 4 次嘗試（約 20s／60s／150s 遞增＋jitter）。此改動僅為抓取韌性（2026-09-07，因與 build_momentum5 同一次 job 內連續發送大批 yf.download 曾觸發 Yahoo 429）——下載參數、資料來源與價格數值本身不變，不使用任何快取或延遲價格。",
    "sufficiency_floor": "個股資料充足門檻：dropna 後 close series 長度 ≥ 253，否則排除（記入 coverage 統計）。"
   },
   "signal": {
@@ -58,7 +58,7 @@
    "blend_clause": "50/50 混合 NAV 是事後衍生物：隨時可從兩條 nav_series 直接計算，不另立第三條線、不是收斂面；prereg 明文禁止未來 session 以「混合表現好」為由把混合升格為正式線（那是新規格，須重走 prereg）。"
   }
  },
- "as_of": "2026-09-01",
+ "as_of": "2026-09-07",
  "inception_date": "2026-09-01",
  "spy_close_inception": 767.05,
  "last_rebalance_month": "2026-09",
@@ -69,6 +69,13 @@
    "nav_L6": 100.0,
    "nav_spy": 100.0,
    "spy_close": 767.05
+  },
+  {
+   "date": "2026-09-07",
+   "nav_L12": 101.51,
+   "nav_L6": 98.71,
+   "nav_spy": 100.41,
+   "spy_close": 770.19
   }
  ],
  "lines": {
@@ -80,50 +87,50 @@
      "entry_date": "2026-09-01",
      "entry_price": 1566.7,
      "rank": 1,
-     "score": 19.2,
+     "score": 16.1,
      "heat": true,
      "units": 0.006382843117164908,
-     "last_price": 1566.699951171875
+     "last_price": 1740.0
     },
     {
      "ticker": "WDC",
      "entry_date": "2026-09-01",
      "entry_price": 450.55,
-     "rank": 2,
-     "score": 7.05,
+     "rank": 4,
+     "score": 4.92,
      "heat": true,
      "units": 0.02219509548537615,
-     "last_price": 450.54998779296875
+     "last_price": 467.4599914550781
     },
     {
      "ticker": "MU",
      "entry_date": "2026-09-01",
      "entry_price": 958.73,
-     "rank": 3,
-     "score": 6.89,
+     "rank": 2,
+     "score": 7.3,
      "heat": true,
      "units": 0.01043046551554664,
-     "last_price": 958.72998046875
+     "last_price": 1016.5900268554688
     },
     {
      "ticker": "STX",
      "entry_date": "2026-09-01",
      "entry_price": 828.38,
-     "rank": 4,
-     "score": 5.52,
+     "rank": 5,
+     "score": 4.92,
      "heat": true,
      "units": 0.012071754437644423,
-     "last_price": 828.3800048828125
+     "last_price": 849.280029296875
     },
     {
      "ticker": "LITE",
      "entry_date": "2026-09-01",
      "entry_price": 914.76,
-     "rank": 5,
-     "score": 4.67,
+     "rank": 3,
+     "score": 5.06,
      "heat": true,
      "units": 0.010931828996943305,
-     "last_price": 914.760009765625
+     "last_price": 881.2550048828125
     },
     {
      "ticker": "CIEN",
@@ -133,47 +140,47 @@
      "score": 4.05,
      "heat": true,
      "units": 0.026123302818411635,
-     "last_price": 382.79998779296875
+     "last_price": 321.0
     },
     {
      "ticker": "AMAT",
      "entry_date": "2026-09-01",
      "entry_price": 458.39,
-     "rank": 7,
-     "score": 3.44,
+     "rank": 6,
+     "score": 3.9,
      "heat": false,
      "units": 0.021815483933849446,
-     "last_price": 458.3900146484375
+     "last_price": 454.7099914550781
     },
     {
      "ticker": "INTC",
      "entry_date": "2026-09-01",
      "entry_price": 89.51,
-     "rank": 8,
-     "score": 3.26,
+     "rank": 7,
+     "score": 3.77,
      "heat": true,
      "units": 0.11171935829898004,
-     "last_price": 89.51000213623047
+     "last_price": 95.80000305175781
     },
     {
      "ticker": "VLO",
      "entry_date": "2026-09-01",
      "entry_price": 358.92,
-     "rank": 9,
-     "score": 3.02,
+     "rank": 19,
+     "score": 2.71,
      "heat": false,
      "units": 0.027861360821032674,
-     "last_price": 358.9200134277344
+     "last_price": 370.7200012207031
     },
     {
      "ticker": "LRCX",
      "entry_date": "2026-09-01",
      "entry_price": 301.49,
-     "rank": 10,
-     "score": 2.91,
+     "rank": 9,
+     "score": 3.17,
      "heat": false,
      "units": 0.03316859704770334,
-     "last_price": 301.489990234375
+     "last_price": 307.6499938964844
     }
    ],
    "rebalance_history": [
@@ -273,101 +280,101 @@
      "ticker": "PANW",
      "entry_date": "2026-09-01",
      "entry_price": 382.13,
-     "rank": 1,
-     "score": 2.36,
+     "rank": 2,
+     "score": 2.31,
      "heat": false,
      "units": 0.026169104420540573,
-     "last_price": 382.1300048828125
+     "last_price": 333.260009765625
     },
     {
      "ticker": "HUM",
      "entry_date": "2026-09-01",
      "entry_price": 383.23,
-     "rank": 2,
-     "score": 2.19,
+     "rank": 1,
+     "score": 2.49,
      "heat": false,
      "units": 0.026093989805920377,
-     "last_price": 383.2300109863281
+     "last_price": 401.5400085449219
     },
     {
      "ticker": "DDOG",
      "entry_date": "2026-09-01",
      "entry_price": 237.04,
-     "rank": 3,
-     "score": 1.98,
+     "rank": 46,
+     "score": 1.07,
      "heat": false,
      "units": 0.04218697385773599,
-     "last_price": 237.0399932861328
+     "last_price": 212.92999267578125
     },
     {
      "ticker": "FTNT",
      "entry_date": "2026-09-01",
      "entry_price": 170.93,
-     "rank": 4,
-     "score": 1.97,
+     "rank": 9,
+     "score": 1.86,
      "heat": false,
      "units": 0.05850348346394612,
-     "last_price": 170.92999267578125
+     "last_price": 156.2899932861328
     },
     {
      "ticker": "DELL",
      "entry_date": "2026-09-01",
      "entry_price": 456.01,
-     "rank": 5,
-     "score": 1.89,
-     "heat": false,
+     "rank": 4,
+     "score": 2.26,
+     "heat": true,
      "units": 0.021929343185119313,
-     "last_price": 456.010009765625
+     "last_price": 524.1400146484375
     },
     {
      "ticker": "CRWD",
      "entry_date": "2026-09-01",
      "entry_price": 231.0,
-     "rank": 6,
-     "score": 1.86,
+     "rank": 12,
+     "score": 1.75,
      "heat": false,
      "units": 0.04329004329004329,
-     "last_price": 231.0
+     "last_price": 213.10000610351562
     },
     {
      "ticker": "HPE",
      "entry_date": "2026-09-01",
      "entry_price": 52.24,
-     "rank": 7,
-     "score": 1.8,
+     "rank": 3,
+     "score": 2.27,
      "heat": false,
      "units": 0.19142418986793364,
-     "last_price": 52.2400016784668
+     "last_price": 52.0
     },
     {
      "ticker": "AMD",
      "entry_date": "2026-09-01",
      "entry_price": 470.72,
-     "rank": 8,
-     "score": 1.78,
+     "rank": 6,
+     "score": 1.95,
      "heat": false,
      "units": 0.02124405161044213,
-     "last_price": 470.7200012207031
+     "last_price": 477.57000732421875
     },
     {
      "ticker": "STT",
      "entry_date": "2026-09-01",
      "entry_price": 191.38,
-     "rank": 9,
-     "score": 1.73,
+     "rank": 5,
+     "score": 2.25,
      "heat": false,
      "units": 0.052252062623382674,
-     "last_price": 191.3800048828125
+     "last_price": 194.25999450683594
     },
     {
      "ticker": "MPC",
      "entry_date": "2026-09-01",
      "entry_price": 373.32,
-     "rank": 10,
-     "score": 1.61,
+     "rank": 50,
+     "score": 0.98,
      "heat": false,
      "units": 0.02678667042700248,
-     "last_price": 373.32000732421875
+     "last_price": 388.8999938964844
     }
    ],
    "rebalance_history": [
@@ -466,6 +473,10 @@
   {
    "date": "2026-09-01",
    "event": "P10 雙線（L12/L6）PREREG 凍結（2026-09-01），兩線同日 inception。"
+  },
+  {
+   "date": "2026-09-07",
+   "event": "2026-09-07 抓取韌性與失敗可見性修復：yf.download 改分批（每批約 100 檔）＋整批重試（最多 4 次、指數退避＋jitter），並在 GitHub Actions 失敗時新增 ::warning:: 標註與 step summary 一行，讓中止不再靜默綠燈。純機械層 plumbing——未變動任何 PREREG 門檻常數、訊號/資格/排序/換倉/NAV 記帳/turnover 計算邏輯或 kill conditions。"
   }
  ]
 }

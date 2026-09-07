@@ -20,6 +20,11 @@ a:hover{color:var(--accent-ink)}
 .mono{font-family:var(--mono)}
 .num{font-variant-numeric:tabular-nums}
 
+/* stale-data banner */
+.stale-banner{display:none;background:#fffaf1;border-bottom:1px solid var(--warn,#c8873b);padding:.65rem 0;font-size:.8rem;color:var(--warn,#a16207);line-height:1.7}
+.stale-banner .wrap{display:flex;align-items:baseline;gap:.5rem}
+.stale-banner b{color:var(--warn,#a16207)}
+
 /* hero */
 .hero{background:linear-gradient(180deg,#fff 0%,var(--paper) 100%);border-bottom:1px solid var(--line-soft);padding:2.6rem 0 2rem}
 .hero .eyebrow{display:inline-block;font-family:var(--mono);color:var(--accent);font-size:.66rem;font-weight:600;letter-spacing:.14em;margin-bottom:.9rem;text-transform:uppercase}
@@ -177,6 +182,10 @@ details.prereg-full .prereg-body{padding:0 1.2rem 1.2rem}
     </nav>
   </div>
 </header>
+<div class="stale-banner" id="stale-banner">
+  <div class="wrap">⚠ <span id="stale-banner-text"></span></div>
+</div>
+
 <script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
 
 <div class="hero">
@@ -335,6 +344,24 @@ details.prereg-full .prereg-body{padding:0 1.2rem 1.2rem}
   function render(d){
     var pre = d.prereg || {};
     var lines = d.lines || {};
+
+    // ── stale-data banner (display-only; does not touch PREREG/kill-condition
+    //    rendering below) —週更排程若因抓取失敗連續跳過，as_of 會停在舊日期；
+    //    超過 8 天（週更週期 + 1 天緩衝）即提示表上數字已凍結、非最新 ──
+    (function(){
+      var banner = $('stale-banner'), text = $('stale-banner-text');
+      if(!banner || !text) return;
+      var asOfDate = d.as_of ? new Date(d.as_of + 'T00:00:00Z') : null;
+      var ageDays = (asOfDate && !isNaN(asOfDate.getTime())) ?
+        Math.floor((Date.now() - asOfDate.getTime()) / 86400000) : null;
+      if(ageDays !== null && ageDays > 8){
+        text.innerHTML = '<b>資料已過期</b>——最後一次成功建置於 <b>'+esc(d.as_of)+'</b>（'+ageDays+' 天前）。' +
+          '下方 NAV、持股與換手數字凍結於該日，並非最新，可能是週更排程連續抓取失敗（見 Actions log）。';
+        banner.style.display = 'block';
+      } else {
+        banner.style.display = 'none';
+      }
+    })();
 
     // ── hero meta ──
     $('m-asof').textContent = d.as_of || '—';

@@ -124,9 +124,35 @@ Any of the following -> print a warning, exit 0, and leave track.json
 completely untouched:
   - Wikipedia scrape fails, or yields < 400 constituents.
   - Fewer than 400 tickers clear the >=253-close price-sufficiency floor
-    (shared floor — gates both lines at once).
+    (shared floor — gates both lines at once), AFTER exhausting the
+    download retry budget below.
   - Any uncaught exception anywhere in the build (top-level try/except
     around main()).
+
+DOWNLOAD RESILIENCE (2026-09-07 fix — plumbing only, no judgment change)
+--------------------------------------------------------------------------
+The 2026-09-05 run showed a single ~512-ticker yf.download burst, landing
+13s after build_momentum5.py's own ~490-ticker burst in the same job, can
+trip Yahoo's 429 rate limit (SPY comes back empty). To make that survivable
+without touching any threshold, price value, or download parameter:
+  - tickers + ['SPY'] is downloaded in ~100-ticker batches (identical
+    download kwargs per batch, byte-identical to the old single call),
+    concatenated into one DataFrame with the exact same
+    px[ticker]['Close'] access shape the rest of the file already relies
+    on.
+  - The whole batched download is retried up to 4 attempts total, with
+    exponential backoff + jitter (~20s / 60s / 150s) between attempts,
+    whenever SPY comes back empty OR price coverage on that attempt is
+    below MIN_PRICE_COVERAGE.
+  - Only after all attempts fail does this escalate to the FAIL-SAFE abort
+    above (exit 0, track.json untouched) — same fail-safe semantics, just
+    given more chances to succeed first before giving up.
+  - When running under GitHub Actions (GITHUB_ACTIONS env var set), a
+    fail-safe abort or any uncaught exception also emits a
+    `::warning title=P10 build skipped::...` annotation (and a
+    GITHUB_STEP_SUMMARY line when available) naming the reason and the
+    stale as_of date left in track.json, so a skipped run is visible in
+    the Actions run summary instead of silently no-op'ing green.
 
 Runs in the weekly-market-update GitHub Actions workflow (wired by
 maintainer), same step family as build_momentum5.py.
@@ -134,7 +160,10 @@ maintainer), same step family as build_momentum5.py.
 
 import io
 import json
+import os
+import random
 import sys
+import time
 import warnings
 from datetime import datetime, timezone
 from pathlib import Path
@@ -188,6 +217,16 @@ TURNOVER_WINDOW = 12         # trailing rebalances for turnover_12m_annualized (
 TURNOVER_KILL_PCT = 300.0    # kill condition #3 watch threshold (§8), same for both lines (§11)
 LINE_KEYS = ('L12', 'L6')
 
+# One-time changelog note for the 2026-09-07 fetch-resilience + failure-
+# visibility fix (see build()'s shared tail for the idempotency guard).
+# Plumbing only — not a PREREG change, so it lives outside the PREREG dict.
+DEPLOY_NOTE_20260907 = (
+    "2026-09-07 抓取韌性與失敗可見性修復：yf.download 改分批（每批約 100 檔）＋整批重試"
+    "（最多 4 次、指數退避＋jitter），並在 GitHub Actions 失敗時新增 ::warning:: 標註與 "
+    "step summary 一行，讓中止不再靜默綠燈。純機械層 plumbing——未變動任何 PREREG 門檻常數、"
+    "訊號/資格/排序/換倉/NAV 記帳/turnover 計算邏輯或 kill conditions。"
+)
+
 PREREG = {
     "title": "P10 純價格動能 paper track — v0（雙線 L12/L6，PREREG，2026-09-01 凍結）",
     "frozen_date": "2026-09-01",
@@ -201,7 +240,7 @@ PREREG = {
     ),
     "universe_and_data": {
         "universe": "S&P 500 成分（Wikipedia scrape，瀏覽器 UA，完全照抄 build_momentum5.py 做法，`.`→`-`），加上 NQ100_EXTRAS（copy scripts/screener.py 的 NQ100_EXTRAS dict，24 檔，ticker→sector），與 S&P 名單 union 去重（若某 extra 已入 S&P 以 S&P 的 sector 為準）。",
-        "prices": "yf.download(tickers + ['SPY'], period='2y', interval='1d', auto_adjust=True, group_by='ticker', threads=True)，同 build_momentum5 模式。",
+        "prices": "把 tickers + ['SPY'] 切成每批約 100 檔，逐批呼叫 yf.download(period='2y', interval='1d', auto_adjust=True, group_by='ticker', threads=True)（下載參數逐字不變，同 build_momentum5 模式），批間 sleep 後合併回同一份 DataFrame；整批下載（SPY 序列是否成功、≥253-close 覆蓋率是否達標）失敗即指數退避重試，最多 4 次嘗試（約 20s／60s／150s 遞增＋jitter）。此改動僅為抓取韌性（2026-09-07，因與 build_momentum5 同一次 job 內連續發送大批 yf.download 曾觸發 Yahoo 429）——下載參數、資料來源與價格數值本身不變，不使用任何快取或延遲價格。",
         "sufficiency_floor": "個股資料充足門檻：dropna 後 close series 長度 ≥ 253，否則排除（記入 coverage 統計）。",
     },
     "signal": {
@@ -402,6 +441,95 @@ def compute_turnover_flags(rebalance_history):
     }
 
 
+# ── download resilience (2026-09-07 fix, plumbing only — see docstring
+#    "DOWNLOAD RESILIENCE" section). None of these are PREREG'd judgment
+#    thresholds; they only govern how the SAME yf.download call is chunked
+#    and retried. ──
+DOWNLOAD_BATCH_SIZE = 100
+MAX_DOWNLOAD_ATTEMPTS = 4
+RETRY_BACKOFF_SECONDS = (20.0, 60.0, 150.0)  # before attempts 2, 3, 4 respectively
+
+
+def _count_price_sufficient(px, tickers):
+    """How many of `tickers` have >=MIN_CLOSES dropna'd closes in `px`.
+    Shared by the download-retry gate and build()'s own per-ticker loop so
+    both use identical counting logic."""
+    n = 0
+    for t in tickers:
+        try:
+            c = px[t]['Close'].dropna()
+        except Exception:
+            continue
+        if len(c) >= MIN_CLOSES:
+            n += 1
+    return n
+
+
+def _download_prices_once(all_tickers):
+    """One attempt: download all_tickers (already includes 'SPY') in
+    DOWNLOAD_BATCH_SIZE-sized chunks with the SAME yf.download kwargs the
+    old single-shot call used, then concat into one DataFrame with the
+    same px[ticker]['Close'] column shape. A chunk that raises is skipped
+    (not fatal by itself) — the resulting SPY/coverage check in the caller
+    decides whether this whole attempt counts as a failure."""
+    frames = []
+    n_chunks = (len(all_tickers) + DOWNLOAD_BATCH_SIZE - 1) // DOWNLOAD_BATCH_SIZE
+    for i in range(0, len(all_tickers), DOWNLOAD_BATCH_SIZE):
+        chunk = all_tickers[i:i + DOWNLOAD_BATCH_SIZE]
+        chunk_no = i // DOWNLOAD_BATCH_SIZE + 1
+        try:
+            frames.append(yf.download(chunk, period='2y', interval='1d', auto_adjust=True,
+                                       group_by='ticker', progress=False, threads=True))
+        except Exception as e:
+            print(f"      ! batch {chunk_no}/{n_chunks} ({len(chunk)} tickers) raised "
+                  f"{type(e).__name__}: {e} — skipped this batch")
+        if chunk_no < n_chunks:
+            time.sleep(3)
+    if not frames:
+        raise RuntimeError("all download batches failed")
+    return pd.concat(frames, axis=1)
+
+
+def download_prices_with_retry(tickers):
+    """Retry the whole batched download up to MAX_DOWNLOAD_ATTEMPTS times
+    with exponential backoff + jitter whenever SPY comes back empty or
+    price coverage is short (see docstring). Returns (px, spy) on success;
+    raises FailSafeAbort after the retry budget is exhausted — same
+    fail-safe semantics as before, just with more chances to succeed
+    first."""
+    all_tickers = tickers + ['SPY']
+    last_reason = None
+    for attempt in range(1, MAX_DOWNLOAD_ATTEMPTS + 1):
+        print(f"  · price download attempt {attempt}/{MAX_DOWNLOAD_ATTEMPTS} "
+              f"({len(all_tickers)} tickers incl. SPY, batches of {DOWNLOAD_BATCH_SIZE})")
+        try:
+            px = _download_prices_once(all_tickers)
+            spy = px['SPY']['Close'].dropna()
+        except Exception as e:
+            last_reason = f"attempt {attempt} raised {type(e).__name__}: {e}"
+            print(f"    ! {last_reason}")
+        else:
+            if spy.empty:
+                last_reason = f"attempt {attempt}: SPY price series empty after download"
+                print(f"    ! {last_reason}")
+            else:
+                n_sufficient = _count_price_sufficient(px, tickers)
+                if n_sufficient < MIN_PRICE_COVERAGE:
+                    last_reason = (f"attempt {attempt}: price coverage {n_sufficient} "
+                                    f"< {MIN_PRICE_COVERAGE}")
+                    print(f"    ! {last_reason}")
+                else:
+                    print(f"    ✓ attempt {attempt} succeeded: SPY ok, "
+                          f"coverage {n_sufficient} >= {MIN_PRICE_COVERAGE}")
+                    return px, spy
+        if attempt < MAX_DOWNLOAD_ATTEMPTS:
+            backoff = RETRY_BACKOFF_SECONDS[attempt - 1] + random.uniform(0, 5)
+            print(f"    … retrying in {backoff:.0f}s")
+            time.sleep(backoff)
+    raise FailSafeAbort(
+        f"price download failed after {MAX_DOWNLOAD_ATTEMPTS} attempts (last: {last_reason})")
+
+
 def load_state():
     if TRACK_JSON.exists():
         return json.loads(TRACK_JSON.read_text(encoding='utf-8'))
@@ -551,11 +679,7 @@ def build():
     tickers, sector = build_universe()
     print(f"universe (S&P500 ∪ NQ100_EXTRAS): {len(tickers)}")
 
-    px = yf.download(tickers + ['SPY'], period='2y', interval='1d', auto_adjust=True,
-                      group_by='ticker', progress=False, threads=True)
-    spy = px['SPY']['Close'].dropna()
-    if spy.empty:
-        raise FailSafeAbort("SPY price series empty after download")
+    px, spy = download_prices_with_retry(tickers)
     spy_close = float(spy.iloc[-1])
 
     price_now = {}
@@ -661,6 +785,14 @@ def build():
     state['prereg'] = PREREG  # numbers are frozen; keep the verbatim block in sync regardless
     state['data_gaps'] = (state.get('data_gaps') or []) + data_gaps
 
+    # ── one-time deployment note (2026-09-07 fetch-resilience + failure-
+    #    visibility fix). Idempotent by marker text, not by date, since this
+    #    code runs on every future weekly build too — must not re-append
+    #    forever. Plumbing only: no PREREG threshold/signal/eligibility/
+    #    selection/nav/turnover rule changed. ──
+    if not any(e.get('event') == DEPLOY_NOTE_20260907 for e in state.get('changelog', [])):
+        state.setdefault('changelog', []).append({'date': '2026-09-07', 'event': DEPLOY_NOTE_20260907})
+
     print(f"    nav_L12={nav_now['L12']:.2f}  nav_L6={nav_now['L6']:.2f}  nav_spy={nav_spy:.2f}")
     for lk in LINE_KEYS:
         ls = state['lines'][lk]
@@ -670,14 +802,48 @@ def build():
     return state, coverage
 
 
+def _existing_track_as_of():
+    """Best-effort read of the current track.json's as_of, for the GH
+    Actions warning annotation below. Must never raise — a missing or
+    corrupt file just reads as unknown."""
+    try:
+        if TRACK_JSON.exists():
+            return json.loads(TRACK_JSON.read_text(encoding='utf-8')).get('as_of')
+    except Exception:
+        pass
+    return None
+
+
+def _emit_gh_skip_warning(reason):
+    """Failure-visibility fix (2026-09-07): a fail-safe abort or uncaught
+    exception used to be a silent exit 0 (green workflow run, no trace).
+    When running under GitHub Actions, also emit a `::warning::` workflow
+    command so it shows up in the run summary, plus a GITHUB_STEP_SUMMARY
+    line when available. No-op on a local run (keeps local output clean)."""
+    if not os.environ.get('GITHUB_ACTIONS'):
+        return
+    stale_as_of = _existing_track_as_of() or '（無既有 track.json）'
+    msg = f"{reason}；track.json 未更新，本週資料停在 {stale_as_of}"
+    print(f"::warning title=P10 build skipped::{msg}")
+    summary_path = os.environ.get('GITHUB_STEP_SUMMARY')
+    if summary_path:
+        try:
+            with open(summary_path, 'a', encoding='utf-8') as f:
+                f.write(f"- ⚠️ **P10 build skipped** — {msg}\n")
+        except Exception:
+            pass
+
+
 def main():
     try:
         result = build()
     except FailSafeAbort as e:
         print(f"  ✗ fail-safe triggered: {e} — track.json left unchanged")
+        _emit_gh_skip_warning(f"fail-safe triggered: {e}")
         sys.exit(0)
     except Exception as e:
         print(f"  ✗ build failed ({type(e).__name__}: {e}) — track.json left unchanged")
+        _emit_gh_skip_warning(f"build failed ({type(e).__name__}: {e})")
         sys.exit(0)
 
     state, coverage = result
