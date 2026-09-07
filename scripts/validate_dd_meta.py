@@ -20,6 +20,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
 DD_DIR = ROOT / "docs" / "dd"
+BRIEF_DIR = DD_DIR / "brief"  # 2026-09-07：v17 預設快速版納入同一份 dd-meta schema gate。
 
 DD_META_RE = re.compile(
     r'<script\s+id="dd-meta"\s+type="application/json"\s*>(.*?)</script>',
@@ -202,10 +203,11 @@ V13_OPTIONAL_TYPES = {
 }
 
 # Keys knowingly tolerated beyond required/optional — silences their warning.
-# Empty by design: ad-hoc descriptive keys (name / company / regime /
+# Intentionally narrow: ad-hoc descriptive keys (name / company / regime /
 # market_cap_b / inception_dd / …) SHOULD surface as warnings so schema drift
 # stays visible. Warnings are warn-only and never fail CI (see main()).
-WHITELIST_KEYS: set = {"pipeline"}  # v16：gen_dd_tables 標記產出管線（"v16"），下游不讀
+# 2026-09-07：brief 是 v17 快速版的正式形態標記，不應累積永久 schema warning。
+WHITELIST_KEYS: set = {"pipeline", "brief"}
 
 
 def _known_keys() -> set:
@@ -413,10 +415,12 @@ def validate_file(path: Path) -> dict:
 
     version_m = META_VERSION_RE.search(text)
     version = version_m.group(1) if version_m else ""
+    # 2026-09-07：BRIEF_ 是 v17 的正式發布形態，不能因沒有 head 版號標籤而跳過 schema gate。
+    is_brief = path.name.startswith("BRIEF_")
     # In scope = v12.x (legacy DD) or v13.x (merged DD+DCA). The "non_v12"
     # status label is kept for back-compat with the counts/printing below;
     # it now means "out of scope" (pre-v12).
-    if not version.startswith(IN_SCOPE_VERSIONS):
+    if not is_brief and not version.startswith(IN_SCOPE_VERSIONS):
         return {"status": "non_v12", "version": version}
 
     meta_m = DD_META_RE.search(text)
@@ -447,7 +451,7 @@ def validate_file(path: Path) -> dict:
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "files", nargs="*", help="Specific DD HTML files (default: all in docs/dd/)"
+        "files", nargs="*", help="Specific DD HTML files (default: DD + brief reports)"
     )
     parser.add_argument(
         "--report",
@@ -462,7 +466,8 @@ def main():
     if args.files:
         targets = [Path(p) for p in args.files]
     else:
-        targets = sorted(DD_DIR.glob("DD_*.html"))
+        # 2026-09-07：無參數的 CI／本機全掃同時涵蓋完整版與 v17 快速版。
+        targets = sorted(DD_DIR.glob("DD_*.html")) + sorted(BRIEF_DIR.glob("BRIEF_*.html"))
 
     results = []
     for p in targets:

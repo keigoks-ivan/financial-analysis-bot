@@ -2997,6 +2997,21 @@ def inject_asym_flags(index_path: "Path", latest_path: "Path") -> int:
     return injected
 
 
+def _emit_sync_result(required_failures, optional_failures):
+    """2026-09-07：集中列出同步結果；權威輸出失敗以非零 rc 回傳。"""
+    if required_failures:
+        for item in required_failures:
+            print(f"[sync-summary] FAIL 必須同步：{item}", file=sys.stderr)
+    else:
+        print("[sync-summary] 必須同步：PASS（research 主表＋dd-screener latest.json）")
+    if optional_failures:
+        for item in optional_failures:
+            print(f"[sync-summary] WARN 非必要同步：{item}", file=sys.stderr)
+    else:
+        print("[sync-summary] 非必要同步失敗：0")
+    return 1 if required_failures else 0
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -3018,10 +3033,12 @@ def main():
     parser.add_argument(
         "--skip-dd-screener",
         action="store_true",
-        help="Skip the auto-trigger of scripts/build_dd_screener.py at the end "
-             "(use when you want only the research index sync — e.g. offline).",
+        help="Maintenance-only: update research without rebuilding dd-screener/latest.json; "
+             "not valid for a DD publish.",
     )
     args = parser.parse_args()
+    required_failures = []
+    optional_failures = []
 
     index_data = parse_index_md()
     entries = scan_files(index_data)
@@ -3034,16 +3051,24 @@ def main():
         print()
         refresh_upsides(entries)
 
-    if update_index(entries, dry_run=args.dry_run, force_refresh_eps=args.refresh_eps_cagr):
+    research_ok = update_index(
+        entries, dry_run=args.dry_run, force_refresh_eps=args.refresh_eps_cagr)
+    if research_ok:
         if args.dry_run:
             print(f"\n(dry-run; no file written)")
         else:
             print(f"\nUpdated {INDEX_HTML}")
     else:
         print("\nFailed to update index.html")
+        # 2026-09-07：實際研究主表是 INDEX_HTML（現為 research/_body.html）；
+        # update_index 明示失敗即屬發布承諾失敗。
+        required_failures.append(f"research 主表未更新：{INDEX_HTML}")
 
     if args.dry_run:
-        return
+        # 2026-09-07：dry-run 只預覽 research 寫入，不宣稱 screener 已同步。
+        return 1 if required_failures else 0
+    if required_failures:
+        return _emit_sync_result(required_failures, optional_failures)
 
     # Auto-trigger 白話導讀塊注入（scripts/inject_report_primer.py，7 家族全量冪等掃描）。
     # 放在 --skip-dd-screener 早退之前——純本地機械操作、無 yfinance/網路依賴，離線模式
@@ -3056,47 +3081,37 @@ def main():
         try:
             subprocess.run([sys.executable, str(primer_script)], check=True)
         except subprocess.CalledProcessError as e:
+            optional_failures.append(
+                f"inject_report_primer.py exit {e.returncode}")
             print(
                 f"\n⚠ inject_report_primer 失敗 (exit {e.returncode})。"
                 f"research sync 照常完成；請手動跑 `python3 {primer_script}` 補注入。",
                 file=sys.stderr,
             )
         except Exception as e:
+            optional_failures.append(f"inject_report_primer.py：{e}")
             print(f"\n⚠ inject_report_primer 錯誤：{e}。research sync 照常完成。",
                   file=sys.stderr)
 
-    # Auto-trigger DD Screener rebuild so /research/ and /dd-screener/ stay in
-    # lockstep. New DD/DCA additions are picked up via the stateless glob in
-    # build_dd_screener.py. Failure here (e.g. yfinance network blip) must NOT
-    # abort the research-sync caller — it's a separate, supplementary page.
+    # 2026-09-07：research 主表與 dd-screener/latest.json 是同一份 DD 發布
+    # 承諾；後者失敗須回非零，不能再沿用 supplementary fail-soft 語意。
     if args.skip_dd_screener:
-        return
+        # 2026-09-07：此腳本仍保留離線 maintenance 用法；發布端由
+        # ddreport 直接拒絕該旗標，單獨維護不應被誤報成執行失敗。
+        print(
+            "[sync-summary] maintenance 同步完成；本次不是發布級同步，"
+            "dd-screener/latest.json 未重建"
+        )
+        return 0
     import subprocess  # local import — only used in this terminal hook
     screener_script = Path(__file__).resolve().parent / "build_dd_screener.py"
     if not screener_script.exists():
-        return
+        required_failures.append(f"缺少必要同步腳本：{screener_script}")
+        return _emit_sync_result(required_failures, optional_failures)
 
-    # v1.4: Cascade debounce — 連續寫多 DD/DCA 時，每次寫完都 trigger 此 cascade，
-    # 每次都跑 yfinance batch (~127 檔 5Y weekly = ~25-30s)，連跑 N 次極易把 yfinance
-    # rate-limit 撞炸。Debounce 60s：若 latest.json 在 60s 內已 rebuild，跳過 cascade。
-    # 連寫 7 個 DD 的情況下，只第一次 trigger 完整 cascade，後 6 次 skip — 等使用者寫
-    # 完整批後手動跑 `python3 scripts/build_dd_screener.py` 一次補齊。
-    DEBOUNCE_SEC = 60
+    # 2026-09-07：dd-screener/latest.json 已升為 DD 發布的必要同步輸出，
+    # 不再以 60 秒 debounce 跳過；多檔成本由 ddreport batch 的批尾單次同步控制。
     screener_latest = DOCS / "dd-screener" / "latest.json"
-    if screener_latest.exists():
-        try:
-            age = time.time() - screener_latest.stat().st_mtime
-            if age < DEBOUNCE_SEC:
-                print(
-                    f"\n⏸ DD Screener cascade debounced — latest.json updated "
-                    f"{age:.0f}s ago (< {DEBOUNCE_SEC}s window).\n"
-                    f"   Skipping build_dd_screener + quality-entry.\n"
-                    f"   寫完整批後請手動跑：python3 scripts/build_dd_screener.py "
-                    f"&& python3 scripts/build_quality_entry.py"
-                )
-                return
-        except OSError:
-            pass
 
     print(f"\n→ Auto-trigger: {screener_script.name} (rebuild /dd-screener/ to match universe)")
     screener_ok = False
@@ -3107,6 +3122,7 @@ def main():
         )
         screener_ok = True
     except subprocess.CalledProcessError as e:
+        required_failures.append(f"dd-screener rebuild exit {e.returncode}：{screener_script}")
         print(
             f"\n⚠ DD Screener rebuild failed (exit {e.returncode}). "
             f"/research/ sync succeeded; rerun `python3 {screener_script}` "
@@ -3114,11 +3130,21 @@ def main():
             file=sys.stderr,
         )
     except Exception as e:
+        required_failures.append(f"dd-screener rebuild 錯誤：{e}")
         print(
             f"\n⚠ DD Screener rebuild errored: {e}. "
             f"/research/ sync succeeded.",
             file=sys.stderr,
         )
+    if screener_ok:
+        # 2026-09-07：子行程 rc=0 仍須確認發布契約檔存在且是合法 JSON object。
+        try:
+            latest_obj = json.loads(screener_latest.read_text(encoding="utf-8"))
+            if not isinstance(latest_obj, dict):
+                raise ValueError("JSON 頂層不是 object")
+        except (OSError, ValueError, json.JSONDecodeError) as e:
+            screener_ok = False
+            required_failures.append(f"dd-screener latest.json 無效：{screener_latest}（{e}）")
 
     # Post-pass: 正不對稱三級標記（◆/★★/★）注入 research 頁裁決欄。必須在
     # screener rebuild 之後——asym_flag 是 build_dd_screener 才寫進 latest.json 的。
@@ -3129,6 +3155,7 @@ def main():
         if n_asym:
             print(f"→ 正不對稱標記：注入 research 頁 {n_asym} 檔（◆/★★/★）")
     except Exception as e:
+        optional_failures.append(f"正不對稱標記注入：{e}")
         print(f"\n⚠ 正不對稱標記注入失敗：{e}（非致命，research 頁其餘正常）",
               file=sys.stderr)
 
@@ -3141,11 +3168,16 @@ def main():
         try:
             subprocess.run([sys.executable, str(sc_script)], check=True)
         except subprocess.CalledProcessError as e:
+            optional_failures.append(
+                f"build_supply_chain_dd_index.py exit {e.returncode}")
             print(
                 f"\n⚠ supply-chain DD link rebuild failed (exit {e.returncode}). "
                 f"Rerun `python3 {sc_script}` manually.",
                 file=sys.stderr,
             )
+        except Exception as e:
+            optional_failures.append(f"build_supply_chain_dd_index.py：{e}")
+            print(f"\n⚠ supply-chain DD link rebuild 錯誤：{e}。", file=sys.stderr)
 
     # Event-driven trigger for the picks list (/picks/ 精選清單). Pure local JSON
     # aggregation over latest.json + cyclical-track + id-meta — no network, sub-second.
@@ -3157,11 +3189,15 @@ def main():
         try:
             subprocess.run([sys.executable, str(picks_script)], check=True)
         except subprocess.CalledProcessError as e:
+            optional_failures.append(f"build_picks.py exit {e.returncode}")
             print(
                 f"\n⚠ picks rebuild failed (exit {e.returncode}). "
                 f"Rerun `python3 {picks_script}` manually if /picks/ needs to refresh.",
                 file=sys.stderr,
             )
+        except Exception as e:
+            optional_failures.append(f"build_picks.py：{e}")
+            print(f"\n⚠ picks rebuild 錯誤：{e}。", file=sys.stderr)
 
     # Event-driven triggers for the consumer layer (2026-07-11)：ticker hub（/t/）、
     # 搜尋索引＋首頁最新發布 strip、RSS、DD 現值條注入（冪等）、裁決實績記分板、
@@ -3178,12 +3214,14 @@ def main():
         try:
             subprocess.run([sys.executable, str(_cs)], check=True)
         except subprocess.CalledProcessError as e:
+            optional_failures.append(f"{_consumer} exit {e.returncode}")
             print(
                 f"\n⚠ {_consumer} failed (exit {e.returncode}). "
                 f"Rerun `python3 scripts/{_consumer}` manually.",
                 file=sys.stderr,
             )
         except Exception as e:
+            optional_failures.append(f"{_consumer}：{e}")
             print(f"\n⚠ {_consumer} errored: {e}.", file=sys.stderr)
 
     # ARCHIVED: alpha-rank.html is archived (stub at URL). Auto-trigger for DD Alpha Ranker
@@ -3217,7 +3255,7 @@ def main():
     #         file=sys.stderr,
     #     )
     if not screener_ok:
-        return
+        return _emit_sync_result(required_failures, optional_failures)
 
     # Event-driven trigger for Quality-Entry screener (品質複利者 + 勝率切入點).
     # Reads latest.json (schema v1.2+) and emits docs/dd-screener/quality-entry.{html,json}
@@ -3225,24 +3263,27 @@ def main():
     # this; both are supplementary to the canonical /research/ + /dd-screener/.
     qe_script = Path(__file__).resolve().parent / "build_quality_entry.py"
     if not qe_script.exists():
-        return
-    print(f"\n→ Auto-trigger: {qe_script.name}")
-    try:
-        subprocess.run(
-            [sys.executable, str(qe_script)],
-            check=True,
-        )
-    except subprocess.CalledProcessError as e:
-        print(
-            f"\n⚠ Quality-Entry build failed (exit {e.returncode}). "
-            f"Rerun `python3 {qe_script}` manually.",
-            file=sys.stderr,
-        )
-    except Exception as e:
-        print(
-            f"\n⚠ Quality-Entry errored: {e}.",
-            file=sys.stderr,
-        )
+        optional_failures.append(f"缺少 build_quality_entry.py：{qe_script}")
+    else:
+        print(f"\n→ Auto-trigger: {qe_script.name}")
+        try:
+            subprocess.run(
+                [sys.executable, str(qe_script)],
+                check=True,
+            )
+        except subprocess.CalledProcessError as e:
+            optional_failures.append(f"build_quality_entry.py exit {e.returncode}")
+            print(
+                f"\n⚠ Quality-Entry build failed (exit {e.returncode}). "
+                f"Rerun `python3 {qe_script}` manually.",
+                file=sys.stderr,
+            )
+        except Exception as e:
+            optional_failures.append(f"build_quality_entry.py：{e}")
+            print(
+                f"\n⚠ Quality-Entry errored: {e}.",
+                file=sys.stderr,
+            )
 
     # ARCHIVED 2026-07-07（選股頁面整理，見 notes/site-internal/root/
     # _proposal_stock_pages_cleanup_20260707.md）：Bottom-Out / Breakout /
@@ -3258,20 +3299,24 @@ def main():
     # Runs last — its failure is non-fatal.
     nav_script = Path(__file__).resolve().parent / "site_nav.py"
     if not nav_script.exists():
-        return
-    print(f"\n→ Auto-trigger: {nav_script.name} (site header self-heal)")
-    try:
-        subprocess.run(
-            [sys.executable, str(nav_script)],
-            check=True,
-        )
-    except Exception as e:
-        print(
-            f"\n⚠ site_nav self-heal errored: {e}. "
-            f"Rerun `python3 {nav_script}` manually.",
-            file=sys.stderr,
-        )
+        optional_failures.append(f"缺少 site_nav.py：{nav_script}")
+    else:
+        print(f"\n→ Auto-trigger: {nav_script.name} (site header self-heal)")
+        try:
+            subprocess.run(
+                [sys.executable, str(nav_script)],
+                check=True,
+            )
+        except Exception as e:
+            optional_failures.append(f"site_nav.py：{e}")
+            print(
+                f"\n⚠ site_nav self-heal errored: {e}. "
+                f"Rerun `python3 {nav_script}` manually.",
+                file=sys.stderr,
+            )
+    return _emit_sync_result(required_failures, optional_failures)
 
 
 if __name__ == "__main__":
-    main()
+    # 2026-09-07：把必要同步集合的聚合結果傳回 finish／pre-commit 呼叫端。
+    sys.exit(main())

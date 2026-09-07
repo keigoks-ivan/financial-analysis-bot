@@ -15,6 +15,8 @@ on:
   pull_request:
     paths:
       - 'docs/dd/DD_*.html'
+      # 2026-09-07：v17 預設快速版必須觸發同一個 schema gate。
+      - 'docs/dd/brief/**'
       - 'docs/id/ID_*.html'
       - 'scripts/validate_dd_meta.py'
       - 'scripts/validate_id_meta.py'
@@ -24,6 +26,8 @@ on:
       - main
     paths:
       - 'docs/dd/DD_*.html'
+      # 2026-09-07：push 到 main 時快速版亦不得繞過 validator。
+      - 'docs/dd/brief/**'
       - 'docs/id/ID_*.html'
       - 'scripts/validate_dd_meta.py'
       - 'scripts/validate_id_meta.py'
@@ -40,6 +44,8 @@ jobs:
           python-version: '3.11'
       # No third-party deps — validators are stdlib only.
       - name: Validate dd-meta JSON blocks (strict)
+        # 2026-09-07：使用 validator 自己的預設 targets，避免空目錄 glob
+        # 被 shell 當字面路徑傳入，同時由單元測試鎖住 DD＋brief 覆蓋。
         run: python scripts/validate_dd_meta.py
       - name: Validate id-meta JSON blocks (strict)
         run: python scripts/validate_id_meta.py

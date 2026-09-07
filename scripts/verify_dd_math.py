@@ -69,21 +69,45 @@ SP = "[  \\t]*"   # 半形/全形空白
 
 
 def load_meta(html):
+    """2026-09-07：回傳（meta，錯誤）；讓呼叫端區分 out-of-scope 與壞 meta。"""
     m = re.search(r'<script[^>]*id="dd-meta"[^>]*>(.*?)</script>', html, re.S)
     if not m:
-        return None
+        return None, "找不到 dd-meta"
     try:
-        return json.loads(m.group(1))
-    except json.JSONDecodeError:
-        return None
+        meta = json.loads(m.group(1))
+    except json.JSONDecodeError as exc:
+        return None, "dd-meta JSON 無法解析：{0}".format(exc)
+    if not isinstance(meta, dict):
+        return None, "dd-meta JSON 不是 object"
+    return meta, None
+
+
+def _is_v15_or_brief_target(path, html):
+    """2026-09-07：meta 壞掉時仍由檔名／版本戳辨識不可靜默略過的目標。"""
+    if path.name.startswith("BRIEF_"):
+        return True
+    version_patterns = (
+        r'dd-schema-version"\s+content="v(\d+)\.',
+        r'DD Schema v(\d+)\.',
+        r'stock-analyst v(\d+)\.',
+        r'"schema"\s*:\s*"v(\d+)\.',
+    )
+    majors = []
+    for pattern in version_patterns:
+        majors.extend(int(value) for value in re.findall(pattern, html))
+    return any(value >= 15 for value in majors)
 
 
 def check_file(path):
     fails, warns = [], []
     html = path.read_text(encoding="utf-8")
-    meta = load_meta(html)
+    meta, meta_error = load_meta(html)
     if meta is None:
-        return None  # 無 dd-meta，不在本 gate 範圍
+        # 2026-09-07：BRIEF／有 v15+ 版本戳的明確目標缺 meta 或 JSON 壞掉
+        # 必須 FAIL；legacy DD 仍維持 out-of-scope 略過。
+        if _is_v15_or_brief_target(path, html):
+            return [meta_error], []
+        return None
     schema = str(meta.get("schema", ""))
     ver = re.match(r"v(\d+)\.(\d+)", schema)
     if not ver or int(ver.group(1)) < 15:
@@ -218,7 +242,9 @@ def main(argv):
             print(f"    ⚠ {w}")
         if fails:
             any_fail = True
-    print(f"—— 驗算 {checked} 檔（v15+），{'有 FAIL' if any_fail else '全數通過'}")
+    # 2026-09-07：checked=0 不能再印「全數通過」，以免無目標被誤讀成綠燈。
+    result_text = "有 FAIL" if any_fail else ("沒有可驗算目標" if checked == 0 else "全數通過")
+    print(f"—— 驗算 {checked} 檔（v15+），{result_text}")
     return 1 if any_fail else 0
 
 

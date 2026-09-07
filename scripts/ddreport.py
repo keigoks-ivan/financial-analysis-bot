@@ -1033,6 +1033,13 @@ def cmd_status(args):
         manifest.get("ticker"), manifest.get("date"), manifest.get("state"), manifest.get("created")))
     print("archetype={0!r}（來源：{1}）".format(manifest.get("archetype"), manifest.get("archetype_source")))
     print("steps={0} agents={1}".format(len(manifest.get("steps", [])), len(manifest.get("agents", []))))
+    # 2026-09-07：status 明列 finish／延後同步狀態，讓中斷後的 pending 可見。
+    finish_state = manifest.get("finish") or {}
+    site_sync = finish_state.get("site_sync") or {}
+    if finish_state or site_sync:
+        print("finish={0} site_sync={1} deferred={2}".format(
+            finish_state.get("state", "—"), site_sync.get("state", "—"),
+            site_sync.get("deferred", False)))
 
     print()
     for name in _TOP_LEVEL_FILES:
@@ -2069,7 +2076,7 @@ def _resume_judge_stage(ticker, date, judgment_model, replay_dir, accept_over_bu
 
 
 # ---------------------------------------------------------------------------
-# WP1d gate：dd_gate.py／dd_brief.py 由 WP3／WP4a 並行交付；不存在時印警告跳過
+# WP1d gate：dd_gate.py／dd_brief.py 由 WP3／WP4a 並行交付。
 # ---------------------------------------------------------------------------
 
 def _do_gate(ticker, date, judgment_model, replay_dir, accept_over_budget, manifest, _depth=0):
@@ -2087,15 +2094,18 @@ def _do_gate(ticker, date, judgment_model, replay_dir, accept_over_budget, manif
     _atomic_write_json(manifest_path, manifest)
 
     if not dd_gate_path.exists():
-        print("[warn] scripts/dd_gate.py 不存在（WP3 尚未交付），gate 步驟跳過")
-        stage["state"] = "SKIPPED"
+        # 2026-09-07：v17 的 critic gate 是必要段，腳本遺失不可再以
+        # SKIPPED 偽裝成功；保留失敗狀態供 --resume 修正後重跑。
+        print("[error] scripts/dd_gate.py 不存在，critic gate 無法執行", file=sys.stderr)
+        stage["state"] = "FAIL"
         stage["ended"] = _now()
         stage["note"] = "dd_gate.py missing"
         manifest["stages"]["gated"] = stage
-        manifest["state"] = "gated_skipped"
+        manifest["state"] = "gated_fail"
         _atomic_write_json(manifest_path, manifest)
-        _print_step_status("gated", "dd_gate.py missing", "PASS", "SKIPPED")
-        return 0
+        _print_step_status("gated", "dd_gate.py missing", "腳本存在", "FAIL")
+        _print_resume_hint(ticker, date, "gated")
+        return 1
 
     py = _pick_python()
     rb = subprocess.run(
@@ -2171,15 +2181,43 @@ def _gate_finalize_from_audit(ticker, date, judgment_model, replay_dir, accept_o
         capture_output=True, text=True,
     )
     parsed = None
-    if r_parse.returncode == 0:
+    parse_error = None
+    if r_parse.returncode != 0:
+        parse_error = "parse rc={0}".format(r_parse.returncode)
+    else:
         try:
             parsed = json.loads(r_parse.stdout)
-        except Exception:
-            parsed = None
+        except (TypeError, ValueError) as exc:
+            parse_error = "stdout 不是合法 JSON：{0}".format(exc)
+        if parse_error is None and not isinstance(parsed, dict):
+            parse_error = "stdout JSON 不是 dict"
+        elif parse_error is None and "red" not in parsed:
+            parse_error = "stdout JSON 缺少必要欄位 red"
+        elif parse_error is None and (
+                isinstance(parsed["red"], bool) or not isinstance(parsed["red"], int)):
+            parse_error = "stdout JSON 的 red 不是整數"
     stage["gate_parsed"] = parsed
 
+    if parse_error is not None:
+        # 2026-09-07：parser 自身失敗或輸出契約損壞時必須 fail-closed；
+        # 原始輸出保留尾端供定位，但不讓無法解析的結果退化成 red=0。
+        raw_stdout = (r_parse.stdout or "")[-4000:]
+        raw_stderr = (r_parse.stderr or "")[-4000:]
+        print("[error] critic gate 解析失敗：{0}".format(parse_error), file=sys.stderr)
+        print("[gate-parse] stdout：\n{0}".format(raw_stdout or "（空）"), file=sys.stderr)
+        print("[gate-parse] stderr：\n{0}".format(raw_stderr or "（空）"), file=sys.stderr)
+        stage["state"] = "FAIL"
+        stage["ended"] = _now()
+        stage["note"] = "critic gate 解析失敗：{0}".format(parse_error)
+        manifest["stages"]["gated"] = stage
+        manifest["state"] = "gated_fail"
+        _atomic_write_json(manifest_path, manifest)
+        _print_step_status("gated", parse_error, "合法 JSON dict 且含 red", "FAIL")
+        _print_resume_hint(ticker, date, "gated")
+        return 1
+
     over_budget = any(r.get("over_budget") for r in stage["agent_usage"])
-    red = (parsed or {}).get("red", 0)
+    red = parsed["red"]
     if red and red > 0:
         prior_verdict = _read_decision_verdict(run_dir)
         judgment_path = run_dir / "judgment.json"
@@ -2324,7 +2362,8 @@ def _resume_gate_stage(ticker, date, judgment_model, replay_dir, accept_over_bud
 
 
 # ---------------------------------------------------------------------------
-# WP1d brief：dd_brief.py（WP4a 交付）零 LLM 渲染；不存在時印警告跳過
+# WP1d brief：dd_brief.py（WP4a 交付）零 LLM 渲染。
+# 2026-09-07：快速版為必經產物，renderer 缺失須 fail-closed。
 # ---------------------------------------------------------------------------
 
 def _do_brief(ticker, date, do_full, manifest, dry_run=False):
@@ -2337,14 +2376,17 @@ def _do_brief(ticker, date, do_full, manifest, dry_run=False):
     _atomic_write_json(manifest_path, manifest)
 
     if not dd_brief_path.exists():
-        print("[warn] scripts/dd_brief.py 不存在（WP4a 尚未交付），brief 步驟跳過")
-        stage["state"] = "SKIPPED"
+        # 2026-09-07：快速版是 v17 預設產物，renderer 遺失不可用
+        # SKIPPED 偽裝成功；留下 FAIL 供修正檔案後重跑。
+        print("[error] scripts/dd_brief.py 不存在，快速版無法產出", file=sys.stderr)
+        stage["state"] = "FAIL"
         stage["ended"] = _now()
         stage["note"] = "dd_brief.py missing"
         manifest["stages"]["brief"] = stage
-        manifest["state"] = "brief_skipped"
+        manifest["state"] = "brief_fail"
         _atomic_write_json(manifest_path, manifest)
-        _print_step_status("brief", "dd_brief.py missing", "PASS", "SKIPPED")
+        _print_step_status("brief", "dd_brief.py missing", "腳本存在", "FAIL")
+        _print_resume_hint(ticker, date, "brief")
     else:
         py = _pick_python()
         # WP7a #6：--dry-run 時輸出到 run 目錄內的 brief.html，不寫
@@ -2374,7 +2416,7 @@ def _do_brief(ticker, date, do_full, manifest, dry_run=False):
     # 子命令與既有測試皆仍傳這個位置參數），本函式對它不再做任何事。
     del do_full
 
-    return 0 if stage["state"] in ("PASS", "SKIPPED") else 1
+    return 0 if stage["state"] == "PASS" else 1
 
 
 # ---------------------------------------------------------------------------
@@ -2913,6 +2955,139 @@ def _append_index_row(row, file_cell):
     INDEX_MD_PATH.write_text(text, encoding="utf-8")
     print("[ok] appended to {0}".format(INDEX_MD_PATH))
     return True
+
+
+def _remove_index_row(row):
+    """2026-09-07：同步失敗時只移除本輪 append 列，保留其他 session 的內容。"""
+    if not INDEX_MD_PATH.exists():
+        return False
+    text = INDEX_MD_PATH.read_text(encoding="utf-8")
+    lines = text.splitlines(keepends=True)
+    target = row.rstrip("\n")
+    for i in range(len(lines) - 1, -1, -1):
+        if lines[i].rstrip("\r\n") == target:
+            del lines[i]
+            tmp = INDEX_MD_PATH.with_suffix(INDEX_MD_PATH.suffix + ".tmp")
+            tmp.write_text("".join(lines), encoding="utf-8")
+            os.replace(str(tmp), str(INDEX_MD_PATH))
+            print("[rollback] 已移除本輪 INDEX.md 列")
+            return True
+    return False
+
+
+def _snapshot_file(path):
+    """2026-09-07：同步前保存衍生主表原貌，供失敗路徑精確回復。"""
+    path = Path(path)
+    try:
+        return {"exists": True, "content": path.read_bytes()}
+    except FileNotFoundError:
+        return {"exists": False, "content": b""}
+
+
+def _restore_file_snapshot(path, snapshot):
+    """2026-09-07：以原子替換還原檔案，避免 INDEX 與 research 主表半套。"""
+    path = Path(path)
+    if snapshot.get("exists"):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(path.suffix + ".tmp")
+        tmp.write_bytes(snapshot.get("content", b""))
+        os.replace(str(tmp), str(path))
+    elif path.exists():
+        path.unlink()
+    print("[rollback] 已還原 {0}".format(path))
+
+
+def _set_finish_site_sync(manifest, manifest_path, state, deferred, note=None):
+    """2026-09-07：立即同步與 --sync-later 共用同一份可恢復 finish state。"""
+    finish_state = manifest.setdefault("finish", {})
+    site_sync = finish_state.setdefault("site_sync", {})
+    site_sync.update({"state": state, "deferred": bool(deferred), "updated_at": _now()})
+    if note is not None:
+        site_sync["note"] = note
+    elif "note" in site_sync:
+        del site_sync["note"]
+    if state in ("PENDING", "FAIL", "GENERATED", "COMMITTED"):
+        finish_state["state"] = "PENDING_SITE_SYNC"
+    _atomic_write_json(manifest_path, manifest)
+
+
+def _mark_sync_rows(rows, state, note=None, no_push=False):
+    """2026-09-07：批尾／補同步把每一檔 run manifest 推進同一狀態機。"""
+    for row in rows:
+        manifest_path = _run_dir(row["ticker"], row["date"]) / "manifest.json"
+        manifest = _load_json_or(manifest_path, None)
+        if not isinstance(manifest, dict):
+            continue
+        _set_finish_site_sync(manifest, manifest_path, state, True, note=note)
+        if state == "PASS":
+            manifest["finish"]["state"] = "COMPLETE_NO_PUSH" if no_push else "COMPLETE"
+            _atomic_write_json(manifest_path, manifest)
+
+
+def _pending_site_sync_rows():
+    """2026-09-07：掃描硬當掉後仍未結清的延後同步，不依賴 batch 記憶體。"""
+    rows = []
+    for manifest_path in sorted(RUNS_DIR.glob("*/manifest.json")):
+        manifest = _load_json_or(manifest_path, None)
+        if not isinstance(manifest, dict):
+            continue
+        site_sync = ((manifest.get("finish") or {}).get("site_sync") or {})
+        if site_sync.get("deferred") and site_sync.get("state") in (
+                "PENDING", "FAIL", "GENERATED", "COMMITTED"):
+            ticker, date = manifest.get("ticker"), manifest.get("date")
+            if ticker and date:
+                rows.append({
+                    "ticker": ticker, "date": date, "rc": 0,
+                    "manifest_path": str(manifest_path),
+                })
+    return rows
+
+
+def _print_pending_sync_escape(rows, skipped=False):
+    """2026-09-07：列出鎖住開工的 pending 與明確、安全的處置方式。"""
+    prefix = "[warn] 已略過" if skipped else "[error] 無法補完"
+    print("{0} {1} 檔 pending 網站同步：".format(prefix, len(rows)), file=sys.stderr)
+    for row in rows:
+        print(
+            "  - {0}_{1}；manifest={2}".format(
+                row.get("ticker"), row.get("date"), row.get("manifest_path", "—")),
+            file=sys.stderr,
+        )
+    print("修復報告檔或 screener 後重跑原命令，程式會先再次補同步。", file=sys.stderr)
+    print(
+        "若須先處理其他標的，本次命令加 --skip-pending-sync；"
+        "此旗標不會清除 pending，之後仍須修復並重跑。",
+        file=sys.stderr,
+    )
+
+
+def _recover_pending_site_sync(no_push=False):
+    """2026-09-07：新 run／batch 開工前先補完上次 --sync-later 的 pending。"""
+    rows = _pending_site_sync_rows()
+    if not rows:
+        return 0
+    print("[pending-sync] 發現 {0} 檔未結同步，先補完再開工".format(len(rows)))
+    by_date = {}
+    for row in rows:
+        by_date.setdefault(row["date"], []).append(row)
+    for date, date_rows in sorted(by_date.items()):
+        rc = _sync_batch_site(date_rows, date, no_push=no_push, skip_dd_screener=False)
+        if rc != 0:
+            # 2026-09-07：一筆壞 pending 預設仍 fail-closed，但錯誤必須可定位，
+            # 並提供只略過本次開工、不竄改狀態的逃生口。
+            _print_pending_sync_escape(date_rows)
+            return rc
+    return 0
+
+
+def _pending_sync_preflight(skip_pending_sync=False, no_push=False):
+    """2026-09-07：run／batch 共用 pending 補償與明示逃生口。"""
+    if skip_pending_sync:
+        rows = _pending_site_sync_rows()
+        if rows:
+            _print_pending_sync_escape(rows, skipped=True)
+        return 0
+    return _recover_pending_site_sync(no_push=no_push)
 
 
 def cmd_index_row(args):
@@ -3482,24 +3657,47 @@ def _do_finish(ticker, date, dry_run=False, no_push=False, skip_dd_screener=Fals
         print("[dry-run] 不寫 INDEX、不跑 update_dd_index、不 commit、不 push")
         return 0
 
+    if skip_dd_screener and not sync_later:
+        # 2026-09-07：latest.json 是發布必要集合；人工 maintenance 旗標不可
+        # 讓 finish 宣稱完成卻略過 screener。
+        print("[error] finish 不允許 --skip-dd-screener；必要同步包含 latest.json",
+              file=sys.stderr)
+        return 1
+
     if sync_later:
+        _set_finish_site_sync(manifest, manifest_path, "PENDING", True)
         print("[sync-later] 本檔不寫 INDEX、不跑 update_dd_index；交由 batch 結尾一次同步")
     else:
-        _append_index_row(fields["row"], fields["file_cell"])
+        _set_finish_site_sync(manifest, manifest_path, "PENDING", False)
+        appended = _append_index_row(fields["row"], fields["file_cell"])
+        # 2026-09-07：update_dd_index 先寫 research 主表再建 screener；後者
+        # 失敗時必須把兩邊一起回復，不能只撤 INDEX。
+        research_snapshot = _snapshot_file(RESEARCH_BODY_PATH)
 
         py = _pick_python()
         cmd = [py, str(SCRIPTS_DIR / "update_dd_index.py")]
-        if skip_dd_screener:
-            cmd.append("--skip-dd-screener")
         r = subprocess.run(cmd, cwd=str(REPO_ROOT), capture_output=True, text=True)
+        sync_output = ((r.stdout or "") + (r.stderr or "")).strip()
         if r.returncode != 0:
+            if appended:
+                _remove_index_row(fields["row"])
+            _restore_file_snapshot(RESEARCH_BODY_PATH, research_snapshot)
+            _set_finish_site_sync(
+                manifest, manifest_path, "FAIL", False,
+                note="update_dd_index.py rc={0}".format(r.returncode))
             print(
-                "[warn] update_dd_index.py 失敗（rc={0}），僅警告不中止：\n{1}".format(
-                    r.returncode, (r.stdout + r.stderr)[-1000:]
-                )
+                "[error] update_dd_index.py 失敗（rc={0}），停止發布：\n{1}".format(
+                    r.returncode, sync_output[-4000:] or "（無輸出）"
+                ),
+                file=sys.stderr,
             )
-        else:
-            print("[ok] update_dd_index.py rc=0")
+            return 1
+        _set_finish_site_sync(manifest, manifest_path, "PASS", False)
+        # 2026-09-07：把 optional cascade 的彙總搬到 finish 尾端可見位置。
+        for line in sync_output.splitlines():
+            if line.startswith("[sync-summary]"):
+                print(line)
+        print("[ok] update_dd_index.py rc=0")
 
     archive_dir = SRC_ARCHIVE_DIR / "{0}_{1}".format(ticker, date)
     _archive_run_dir(run_dir, archive_dir)
@@ -3534,6 +3732,15 @@ def _do_finish(ticker, date, dry_run=False, no_push=False, skip_dd_screener=Fals
         )
         return 1
     print("[ok] committed: {0}".format(commit_subject))
+    # 2026-09-07：commit 後立即把 SHA 寫進 gitignored run manifest；
+    # sync-later 仍保持 PENDING_SITE_SYNC，供下次開工補同步。
+    commit_sha_r = _git(["rev-parse", "HEAD"])
+    commit_sha = (commit_sha_r.stdout or "").strip() if commit_sha_r.returncode == 0 else ""
+    manifest["finish"]["report_commit_sha"] = commit_sha or None
+    manifest["finish"]["archived"] = True
+    if not sync_later:
+        manifest["finish"]["state"] = "COMMITTED"
+    _atomic_write_json(manifest_path, manifest)
 
     status_r = _git(["status", "--porcelain"])
     modified_paths = [ln[3:] for ln in (status_r.stdout or "").splitlines() if ln.strip()]
@@ -3547,15 +3754,23 @@ def _do_finish(ticker, date, dry_run=False, no_push=False, skip_dd_screener=Fals
     print("[skip] 略過 {0} 個非白名單變動檔".format(len(skipped)))
 
     if no_push:
+        manifest["finish"]["state"] = (
+            "PENDING_SITE_SYNC" if sync_later else "COMPLETE_NO_PUSH")
+        _atomic_write_json(manifest_path, manifest)
         print("[ok] --no-push，未推送")
         return 0
 
     ahead, behind = _git_ahead_behind()
     if behind > 0:
-        rev_r = _git(["rev-parse", "HEAD"])
-        commit_sha = (rev_r.stdout or "").strip()
+        if not commit_sha:
+            rev_r = _git(["rev-parse", "HEAD"])
+            commit_sha = (rev_r.stdout or "").strip()
         ok, reason = _push_head_via_worktree(commit_sha)
         if ok:
+            manifest["finish"]["report_pushed_sha"] = commit_sha
+            manifest["finish"]["state"] = (
+                "PENDING_SITE_SYNC" if sync_later else "COMPLETE")
+            _atomic_write_json(manifest_path, manifest)
             print(
                 "[ok] 遠端領先 {0}，已透過 worktree cherry-pick 推送 "
                 "origin/main（commit {1}）".format(behind, commit_sha[:12])
@@ -3577,6 +3792,9 @@ def _do_finish(ticker, date, dry_run=False, no_push=False, skip_dd_screener=Fals
             file=sys.stderr,
         )
         return 1
+    manifest["finish"]["report_pushed_sha"] = commit_sha or None
+    manifest["finish"]["state"] = "PENDING_SITE_SYNC" if sync_later else "COMPLETE"
+    _atomic_write_json(manifest_path, manifest)
     print("[ok] pushed to origin/main")
     return 0
 
@@ -3602,6 +3820,17 @@ def cmd_run(args):
     run_dir = _run_dir(ticker, date)
     manifest_path = run_dir / "manifest.json"
 
+    # 2026-09-07：獨立 run 開工前先補上次硬當留下的延後同步；batch 子行程
+    # 由父 batch 在批首／批尾統一處理，避免退化成每檔重生一次。
+    if not getattr(args, "dry_run", False) and os.environ.get("DD_BATCH_CHILD") != "1":
+        # 2026-09-07：逃生口只略過本次開工，不修改或清除 pending state。
+        pending_rc = _pending_sync_preflight(
+            skip_pending_sync=getattr(args, "skip_pending_sync", False),
+            no_push=getattr(args, "no_push", False),
+        )
+        if pending_rc != 0:
+            return pending_rc
+
     replay_dir = _ensure_replay_env(args.replay_from)
 
     until_explicit = args.until is not None
@@ -3619,6 +3848,11 @@ def cmd_run(args):
         "steps": [], "agents": [], "stages": {},
     })
     manifest.setdefault("stages", {})
+    # 2026-09-07：已完成發布的 resume 是冪等 no-op，不再重做 archive／commit。
+    if args.resume and (manifest.get("finish") or {}).get("state") in (
+            "COMPLETE", "COMPLETE_NO_PUSH"):
+        print("[resume] finish 已完成，無需重跑")
+        return 0
 
     judgment_model = args.judgment_model or manifest.get("judgment_model") or DEFAULT_JUDGMENT_MODEL
     global _JUDGE_MODE_OVERRIDE, _GATE_PATCH_MODE_OVERRIDE
@@ -3629,7 +3863,11 @@ def cmd_run(args):
     if args.resume:
         for i, name in enumerate(STAGE_ORDER):
             st = manifest["stages"].get(name, {})
-            if st.get("state") in ("PASS", "SKIPPED"):
+            # 2026-09-07：v17 critic gate 與預設 brief 產物都不適用
+            # SKIPPED；舊 manifest 若曾如此記錄，resume 必須重跑該段。
+            stage_completed = st.get("state") == "PASS" or (
+                name not in ("gated", "brief") and st.get("state") == "SKIPPED")
+            if stage_completed:
                 start_idx = i + 1
             else:
                 break
@@ -3675,7 +3913,11 @@ def cmd_run(args):
         st = manifest.get("stages", {}).get(stage_name, {})
         _record_stage_observation(manifest, stage_name)
         _atomic_write_json(manifest_path, manifest)
-        if st.get("state") not in ("PASS", "SKIPPED"):
+        # 2026-09-07：執行中的 gated／brief 只接受 PASS；SKIPPED 不得讓
+        # 主鏈繼續到發布。其他真正 N/A 的段維持既有語意。
+        stage_succeeded = st.get("state") == "PASS" or (
+            stage_name not in ("gated", "brief") and st.get("state") == "SKIPPED")
+        if not stage_succeeded:
             return rc if rc != 0 else 1
 
     # WP6a：run 預設接 finish；--no-finish／--dry-run／明講 --until 皆不接
@@ -3839,33 +4081,62 @@ def _write_batch_summary(rows, date, quota_stopped_ticker=None, remaining=None):
 
 
 def _sync_batch_site(rows, date, no_push=False, skip_dd_screener=False):
-    """2026-09-06：把成功檔的 INDEX／研究頁／screener 在批尾只同步一次。"""
+    """2026-09-07：批尾與崩潰補償共用的可恢復網站同步。"""
     completed = [r for r in rows if r.get("rc") == 0]
     if not completed:
         return 0
+    if skip_dd_screener:
+        # 2026-09-07：latest.json 是發布必要集合，批尾不得用 maintenance
+        # 旗標把它略過；pending 保留供下次正常補同步。
+        _mark_sync_rows(completed, "FAIL", note="--skip-dd-screener 不允許於發布同步")
+        print("[error] batch-sync 不允許 --skip-dd-screener；必要同步包含 latest.json",
+              file=sys.stderr)
+        return 1
 
     tickers = []
+    appended_rows = []
+    # 2026-09-07：批尾同步的 research 主表也要與 INDEX 一起具備失敗回復。
+    research_snapshot = _snapshot_file(RESEARCH_BODY_PATH)
+    _mark_sync_rows(completed, "PENDING")
+    resolved = []
     for row in completed:
         ticker = row["ticker"]
         manifest = _load_json_or(_run_dir(ticker, row["date"]) / "manifest.json", {})
         html_path = _finish_target_html(ticker, row["date"], manifest)
         if not html_path.exists():
-            print("[batch-sync] 找不到報告檔，略過 INDEX：{0}".format(html_path))
-            continue
+            # 2026-09-07：已標完成的報告若不存在，不能產生缺頁連結後仍把
+            # pending 清成 PASS；保留 FAIL 讓下一次補同步重試。
+            note = "找不到待同步報告：{0}".format(html_path)
+            _mark_sync_rows(completed, "FAIL", note=note)
+            print("[error] {0}".format(note), file=sys.stderr)
+            return 1
+        resolved.append((row, ticker, html_path))
+
+    for _row, ticker, html_path in resolved:
         fields = _index_row_fields(html_path)
-        _append_index_row(fields["row"], fields["file_cell"])
+        if _append_index_row(fields["row"], fields["file_cell"]):
+            appended_rows.append(fields["row"])
         if ticker not in tickers:
             tickers.append(ticker)
 
     py = _pick_python()
     cmd = [py, str(SCRIPTS_DIR / "update_dd_index.py")]
-    if skip_dd_screener:
-        cmd.append("--skip-dd-screener")
     r = subprocess.run(cmd, cwd=str(REPO_ROOT), capture_output=True, text=True)
+    sync_output = ((r.stdout or "") + (r.stderr or "")).strip()
     if r.returncode != 0:
+        for appended_row in reversed(appended_rows):
+            _remove_index_row(appended_row)
+        _restore_file_snapshot(RESEARCH_BODY_PATH, research_snapshot)
+        _mark_sync_rows(
+            completed, "FAIL", note="update_dd_index.py rc={0}".format(r.returncode))
         print("[error] batch 尾 update_dd_index.py 失敗（rc={0}）：\n{1}".format(
-            r.returncode, (r.stdout + r.stderr)[-1000:]), file=sys.stderr)
+            r.returncode, sync_output[-4000:] or "（無輸出）"), file=sys.stderr)
         return 1
+    _mark_sync_rows(completed, "GENERATED")
+    # 2026-09-07：optional cascade 的失敗彙總在 batch-sync 尾端重印。
+    for line in sync_output.splitlines():
+        if line.startswith("[sync-summary]"):
+            print(line)
 
     files = [INDEX_MD_PATH, RESEARCH_BODY_PATH, PICKS_CANDIDATES_PATH,
              TICKER_HUB_DIR / "index.html"]
@@ -3875,22 +4146,37 @@ def _sync_batch_site(rows, date, no_push=False, skip_dd_screener=False):
     existing_files = [f for f in files if Path(f).exists()]
     add_r = _git(["add"] + [str(f) for f in existing_files])
     if add_r.returncode != 0:
+        for appended_row in reversed(appended_rows):
+            _remove_index_row(appended_row)
+        _mark_sync_rows(completed, "FAIL", note="batch-sync git add 失敗")
         print("[error] batch-sync git add 失敗：\n{0}".format(
             (add_r.stdout or "") + (add_r.stderr or "")), file=sys.stderr)
         return 1
 
     subject = "Sync DD batch {0}（{1} 檔；research+screener once）".format(date, len(tickers))
     commit_r = _git(["commit", "-m", subject])
+    sync_commit_sha = ""
     if commit_r.returncode != 0:
         combined = (commit_r.stdout or "") + (commit_r.stderr or "")
         if "nothing to commit" in combined or "沒有要提交的變更" in combined:
             print("[batch-sync] 無新衍生變動，略過 commit")
-            return 0
-        print("[error] batch-sync git commit 失敗：\n{0}".format(combined), file=sys.stderr)
-        return 1
-    print("[ok] batch-sync committed: {0}".format(subject))
+        else:
+            for appended_row in reversed(appended_rows):
+                _remove_index_row(appended_row)
+            _mark_sync_rows(completed, "FAIL", note="batch-sync git commit 失敗")
+            print("[error] batch-sync git commit 失敗：\n{0}".format(combined), file=sys.stderr)
+            return 1
+    else:
+        print("[ok] batch-sync committed: {0}".format(subject))
+    # 2026-09-07：commit 與 nothing-to-commit 復原路徑都記 HEAD，讓 push
+    # 中斷可由同一個 COMMITTED state 接續。
+    rev_r = _git(["rev-parse", "HEAD"])
+    if rev_r.returncode == 0:
+        sync_commit_sha = (rev_r.stdout or "").strip()
+    _mark_sync_rows(completed, "COMMITTED", note=sync_commit_sha or None)
 
     if no_push:
+        _mark_sync_rows(completed, "PASS", no_push=True)
         print("[ok] batch-sync --no-push，未推送")
         return 0
     ahead, behind = _git_ahead_behind()
@@ -3899,6 +4185,7 @@ def _sync_batch_site(rows, date, no_push=False, skip_dd_screener=False):
         commit_sha = (rev_r.stdout or "").strip()
         ok, reason = _push_head_via_worktree(commit_sha)
         if ok:
+            _mark_sync_rows(completed, "PASS")
             print("[ok] batch-sync 遠端領先 {0}，worktree 推送完成".format(behind))
             return 0
         print("[HOLD] batch-sync 遠端領先 {0}：{1}".format(behind, reason), file=sys.stderr)
@@ -3908,6 +4195,7 @@ def _sync_batch_site(rows, date, no_push=False, skip_dd_screener=False):
         print("[error] batch-sync git push 失敗：\n{0}".format(
             (push_r.stdout or "") + (push_r.stderr or "")), file=sys.stderr)
         return 1
+    _mark_sync_rows(completed, "PASS")
     print("[ok] batch-sync pushed to origin/main")
     return 0
 
@@ -3919,6 +4207,13 @@ def cmd_batch(args):
         return 1
 
     date = args.date or time.strftime("%Y%m%d")
+    # 2026-09-07：批次開工前先清掉上輪崩潰留下的 pending，同一狀態機
+    # 隨後也供本批批尾結清。
+    # 2026-09-07：batch 與單跑共用逃生語意；不清除既有 pending。
+    pending_rc = _pending_sync_preflight(
+        skip_pending_sync=args.skip_pending_sync, no_push=args.no_push)
+    if pending_rc != 0:
+        return pending_rc
     log_dir = BUILD_DIR / "batch_logs"
     log_dir.mkdir(parents=True, exist_ok=True)
     py = _pick_python()
@@ -3947,7 +4242,10 @@ def cmd_batch(args):
 
         t0 = time.time()
         with open(log_path, "w", encoding="utf-8") as lf:
-            r = subprocess.run(cmd, stdout=lf, stderr=subprocess.STDOUT, cwd=str(REPO_ROOT))
+            child_env = dict(os.environ)
+            child_env["DD_BATCH_CHILD"] = "1"
+            r = subprocess.run(
+                cmd, stdout=lf, stderr=subprocess.STDOUT, cwd=str(REPO_ROOT), env=child_env)
         elapsed_min = (time.time() - t0) / 60.0
 
         run_dir = _run_dir(t, date)
@@ -4035,9 +4333,11 @@ def build_parser():
     rn.add_argument("--dry-run", action="store_true", help="同 --no-finish；WP6a 精神對齊")
     rn.add_argument("--no-push", action="store_true", help="finish 時 commit 但不 push")
     rn.add_argument("--skip-dd-screener", action="store_true",
-                     help="finish 時透傳給 update_dd_index.py")
+                     help="maintenance 相容旗標；發布 finish 會拒絕")  # 2026-09-07
     rn.add_argument("--sync-later", action="store_true",
                     help="只 commit／push 本檔與存查；INDEX／研究頁／screener 延後同步")  # 2026-09-06
+    rn.add_argument("--skip-pending-sync", action="store_true",
+                    help="只略過本次開工前的 pending 補同步；不清除 pending")  # 2026-09-07
     rn.add_argument("--accept-mismatch", action="store_true",
                     help="僅持有人明確放行時使用；三方原值會寫入 manifest")  # 2026-09-07
     rn.set_defaults(func=cmd_run)
@@ -4166,7 +4466,9 @@ def build_parser():
     ba.add_argument("--gate-patch-mode", default=None, choices=["patchmap", "loop"])
     ba.add_argument("--no-push", action="store_true")
     ba.add_argument("--skip-dd-screener", action="store_true",
-                    help="批尾同步時透傳給 update_dd_index.py")  # 2026-09-06
+                    help="maintenance 相容旗標；發布 batch-sync 會拒絕")  # 2026-09-07
+    ba.add_argument("--skip-pending-sync", action="store_true",
+                    help="只略過本次批首 pending 補同步；不清除 pending")  # 2026-09-07
     ba.add_argument("--resume", action="store_true",
                      help="透傳給每一檔的 `run --resume`（批次本身不記自己的續跑點，續跑靠各檔 manifest）")
     ba.set_defaults(func=cmd_batch)

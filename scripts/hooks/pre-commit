@@ -11,8 +11,8 @@
 #     rule-upgrade time. This prevents the "Boomer Travel" pattern where
 #     pre-existing files quietly violate new rules.
 #
-# Triggers only when staged files touch docs/dd/DD_*.html, docs/id/ID_*.html,
-# or the validators themselves (so unrelated commits aren't slowed).
+# 2026-09-07：觸發範圍包含 v17 預設快速版 docs/dd/brief/BRIEF_*.html；
+# 其他不相關 commit 仍不啟動本閘。
 #
 # To bypass in emergency: git commit --no-verify
 
@@ -168,10 +168,12 @@ fi
 TARGETS_DD=""
 MODE_DD=""
 if [ -n "$DD_VALIDATOR_CHANGED" ]; then
-  TARGETS_DD=$(find docs/dd -maxdepth 1 -name 'DD_*.html' 2>/dev/null)
+  # 2026-09-07：validator 規則變更時，完整版與快速版一起清歷史債。
+  TARGETS_DD="$(find docs/dd -maxdepth 1 -name 'DD_*.html' 2>/dev/null) $(find docs/dd/brief -maxdepth 1 -name 'BRIEF_*.html' 2>/dev/null)"
   MODE_DD="full sweep (validator changed — clearing historical debt)"
-elif [ -n "$STAGED_DD" ]; then
-  TARGETS_DD="$STAGED_DD"
+elif [ -n "$STAGED_DD" ] || [ -n "$STAGED_BRIEF" ]; then
+  # 2026-09-07：只 staged brief 時也必須送入 schema validator。
+  TARGETS_DD="$STAGED_DD $STAGED_BRIEF"
   MODE_DD="staged only"
 fi
 

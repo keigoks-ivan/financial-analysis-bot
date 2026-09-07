@@ -400,7 +400,14 @@ def added_lines(path: Path):
 
 # ── scanning orchestration ──────────────────────────────────────────────────
 def is_dd_html(path: Path) -> bool:
-    return path.parent.name == "dd" and path.name.startswith("DD_") and path.suffix == ".html"
+    # 2026-09-07：v17 快速版與完整版共用 dd-meta 結構檢查；只接受固定
+    # dd/brief/BRIEF_*.html 位置，避免其他 HTML 被誤判為 DD。
+    is_full = path.parent.name == "dd" and path.name.startswith("DD_")
+    is_brief = (
+        path.parent.name == "brief" and path.parent.parent.name == "dd"
+        and path.name.startswith("BRIEF_")
+    )
+    return path.suffix == ".html" and (is_full or is_brief)
 
 
 def scannable(path: Path) -> bool:

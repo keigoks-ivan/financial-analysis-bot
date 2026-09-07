@@ -105,7 +105,7 @@ Agent({
 - `docs/research/index.html` 主表（dd-tbody-v12 整段重生 from dd-meta JSON）
 - DD 組合快照（DD_AUTO_STATS：訊號分布、最新 8 筆、PEG 便宜 top 5、5Y P/E 分位、2Y upside、X cohort 拆分、DCA Verdict 分布、護城河面板）
 - 同跑 `DD_STALE_FRESH` / `PM_LAST_RUN` / `PM_HOLDINGS` / `PM_ACTIONS` 五段標記注入
-- **自動觸發** `scripts/build_dd_screener.py`（rebuild `docs/dd-screener/latest.json`），讓 `/research/` 與 `/dd-screener/` 兩個頁面 universe 永遠一致。yfinance 失敗時 screener rebuild 會 warn 但不 abort research sync；要離線跑加 `--skip-dd-screener`。
+- **自動觸發** `scripts/build_dd_screener.py`（rebuild `docs/dd-screener/latest.json`），讓 `/research/` 與 `/dd-screener/` 兩個頁面 universe 永遠一致。**2026-09-07 起（P0-3）**：`docs/research/_body.html` 主表與 `docs/dd-screener/latest.json` 是「DD 必須同步的最小權威集合」——任一失敗 `update_dd_index.py` 回非零，`ddreport finish`／`batch-sync` 收到非零就**停止，不 archive、不 commit、不 push**（原本只 warn 照推）。其餘 cascade（供應鏈／picks／consumer layer／quality-entry／site-nav）維持非阻斷，失敗會在結尾以 `[sync-summary] WARN` 重列。同批連寫多檔的 60 秒 debounce 已移除（會讓 latest.json 漏掉本輪 DD）；批次的成本改由 `ddreport batch` 子行程一律 `--sync-later`、批尾單次同步控制。`--skip-dd-screener` 降為純 maintenance 旗標，**不得用於發布**，`ddreport finish`／`batch-sync` 會直接拒絕。
 
 把 `docs/research/index.html`、`docs/dd-screener/latest.json`、`docs/picks/candidates.json`（2026-07-05 起 update_dd_index 自動連鎖 build_picks.py，讓精選清單即時反映新裁決）、DD 新檔**併入同一 commit**，避免任一頁面滯後於底層報告。stock-analyst v13 skill 的 HTML 輸出協議已內建此步（step 3 跑 update_dd_index.py），但**手動 patch / 補 metadata / 改 legacy DCA Verdict** 這類 skill-外路徑也必須遵守此規則。v13 DD 的決策層欄位（dca_verdict 等）在 dd-meta JSON，下游 dual-read 直接讀。
 

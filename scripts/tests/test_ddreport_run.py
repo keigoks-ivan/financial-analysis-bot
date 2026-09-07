@@ -746,6 +746,178 @@ def test_resume_gate_stage_falls_back_to_full_gate_when_no_audit(monkeypatch):
         shutil.rmtree(run_dir, ignore_errors=True)
 
 
+def test_gate_finalize_parse_nonzero_fails_closed(monkeypatch, capsys):
+    # 2026-09-07：parser rc 非零時不得把無法解析的稽核結果視為 red=0。
+    ticker, date = "ZTESTGATEPARSERC", "20260101"
+    run_dir = _clean_run_dir(ticker, date)
+    run_dir.mkdir(parents=True)
+    audit_path = run_dir / "gate_audit.md"
+    audit_path.write_text("假稽核", encoding="utf-8")
+    monkeypatch.setattr(
+        ddreport.subprocess, "run",
+        lambda cmd, *a, **k: _FakeCompleted(2, stdout="原始 stdout", stderr="原始 stderr"),
+    )
+
+    try:
+        stage = {"state": "RUNNING", "agent_usage": []}
+        manifest = {"ticker": ticker, "date": date, "stages": {"gated": stage}}
+        rc = ddreport._gate_finalize_from_audit(
+            ticker, date, "fable", None, False, manifest, stage, audit_path)
+
+        assert rc != 0
+        saved = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
+        assert saved["state"] == "gated_fail"
+        assert saved["stages"]["gated"]["state"] == "FAIL"
+        err = capsys.readouterr().err
+        assert "原始 stdout" in err
+        assert "原始 stderr" in err
+    finally:
+        shutil.rmtree(run_dir, ignore_errors=True)
+
+
+def test_gate_finalize_bad_json_fails_closed(monkeypatch, capsys):
+    # 2026-09-07：parser rc=0 但 stdout 不是 JSON，仍須 FAIL 並保留原文。
+    ticker, date = "ZTESTGATEBADJSON", "20260101"
+    run_dir = _clean_run_dir(ticker, date)
+    run_dir.mkdir(parents=True)
+    audit_path = run_dir / "gate_audit.md"
+    audit_path.write_text("假稽核", encoding="utf-8")
+    monkeypatch.setattr(
+        ddreport.subprocess, "run",
+        lambda cmd, *a, **k: _FakeCompleted(0, stdout="不是 JSON", stderr="parser 警告"),
+    )
+
+    try:
+        stage = {"state": "RUNNING", "agent_usage": []}
+        manifest = {"ticker": ticker, "date": date, "stages": {"gated": stage}}
+        rc = ddreport._gate_finalize_from_audit(
+            ticker, date, "fable", None, False, manifest, stage, audit_path)
+
+        assert rc != 0
+        saved = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
+        assert saved["state"] == "gated_fail"
+        assert saved["stages"]["gated"]["state"] == "FAIL"
+        err = capsys.readouterr().err
+        assert "不是 JSON" in err
+        assert "parser 警告" in err
+    finally:
+        shutil.rmtree(run_dir, ignore_errors=True)
+
+
+@pytest.mark.parametrize("parser_stdout", ["[]", "{}"])
+def test_gate_finalize_rejects_non_dict_or_missing_red(monkeypatch, parser_stdout):
+    # 2026-09-07：合法 JSON 仍須符合最小 parser 契約：dict 且含 red。
+    ticker = "ZTESTGATECONTRACT" + ("LIST" if parser_stdout == "[]" else "KEY")
+    date = "20260101"
+    run_dir = _clean_run_dir(ticker, date)
+    run_dir.mkdir(parents=True)
+    audit_path = run_dir / "gate_audit.md"
+    audit_path.write_text("假稽核", encoding="utf-8")
+    monkeypatch.setattr(
+        ddreport.subprocess, "run",
+        lambda cmd, *a, **k: _FakeCompleted(0, stdout=parser_stdout),
+    )
+
+    try:
+        stage = {"state": "RUNNING", "agent_usage": []}
+        manifest = {"ticker": ticker, "date": date, "stages": {"gated": stage}}
+        rc = ddreport._gate_finalize_from_audit(
+            ticker, date, "fable", None, False, manifest, stage, audit_path)
+        assert rc != 0
+        saved = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
+        assert saved["stages"]["gated"]["state"] == "FAIL"
+    finally:
+        shutil.rmtree(run_dir, ignore_errors=True)
+
+
+def test_do_gate_missing_script_fails_closed(monkeypatch):
+    # 2026-09-07：critic gate 腳本遺失是必要段失敗，不是 N/A／SKIPPED。
+    ticker, date = "ZTESTGATEMISSING", "20260101"
+    run_dir = _clean_run_dir(ticker, date)
+    monkeypatch.setattr(ddreport, "SCRIPTS_DIR", run_dir / "missing_scripts")
+
+    try:
+        manifest = {"ticker": ticker, "date": date, "stages": {}}
+        rc = ddreport._do_gate(ticker, date, "fable", None, False, manifest)
+        assert rc != 0
+        saved = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
+        assert saved["state"] == "gated_fail"
+        assert saved["stages"]["gated"]["state"] == "FAIL"
+    finally:
+        shutil.rmtree(run_dir, ignore_errors=True)
+
+
+def test_run_resume_reexecutes_legacy_skipped_gate(monkeypatch):
+    # 2026-09-07：舊 manifest 的 gated=SKIPPED 不得被 resume 視為已完成。
+    ticker, date = "ZTESTGATESKIPPED", "20260101"
+    run_dir = _clean_run_dir(ticker, date)
+    run_dir.mkdir(parents=True)
+    manifest = {
+        "ticker": ticker, "date": date, "state": "gated_skipped",
+        "stages": {
+            "stage0": {"state": "PASS"},
+            "judged": {"state": "PASS"},
+            "gated": {"state": "SKIPPED"},
+        },
+    }
+    (run_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    calls = []
+
+    def fake_do_gate(t, d, model, replay_dir, accept_over_budget, manifest_arg):
+        calls.append("do_gate")
+        manifest_arg["stages"]["gated"] = {"state": "PASS"}
+        manifest_arg["state"] = "gated_pass"
+        ddreport._atomic_write_json(run_dir / "manifest.json", manifest_arg)
+        return 0
+
+    monkeypatch.setattr(ddreport, "_do_gate", fake_do_gate)
+
+    try:
+        args = argparse.Namespace(
+            ticker=ticker, date=date, archetype=None, peers=None, axes_per_batch=2,
+            judgment_model=None, full=False, replay_from=None, until="gated",
+            resume=True, offline=False, accept_over_budget=False,
+        )
+        rc = ddreport.cmd_run(args)
+        assert rc == 0
+        assert calls == ["do_gate"]
+    finally:
+        shutil.rmtree(run_dir, ignore_errors=True)
+
+
+def test_run_resume_brief_missing_fails_closed(monkeypatch):
+    # 2026-09-07：快速版 renderer 遺失時，brief 與 cmd_run 都必須非零結束。
+    ticker, date = "ZTESTBRIEFMISSING", "20260101"
+    run_dir = _clean_run_dir(ticker, date)
+    run_dir.mkdir(parents=True)
+    manifest = {
+        "ticker": ticker, "date": date, "state": "gated_pass",
+        "stages": {
+            "stage0": {"state": "PASS"},
+            "judged": {"state": "PASS"},
+            "gated": {"state": "PASS"},
+        },
+    }
+    (run_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    monkeypatch.setattr(ddreport, "SCRIPTS_DIR", run_dir / "missing_scripts")
+    monkeypatch.setattr(ddreport, "_recover_pending_site_sync", lambda **k: 0)
+
+    try:
+        args = argparse.Namespace(
+            ticker=ticker, date=date, archetype=None, peers=None, axes_per_batch=2,
+            judgment_model=None, full=False, replay_from=None, until="brief",
+            resume=True, offline=False, accept_over_budget=False, dry_run=False,
+            no_push=True,
+        )
+        rc = ddreport.cmd_run(args)
+        assert rc != 0
+        saved = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
+        assert saved["state"] == "brief_fail"
+        assert saved["stages"]["brief"]["state"] == "FAIL"
+    finally:
+        shutil.rmtree(run_dir, ignore_errors=True)
+
+
 def test_run_resume_from_judged_fail_calls_precheck_not_full_judge(monkeypatch):
     """端到端一層：`cmd_run` 在 manifest state 為 judged_fail 時，資派給
     `_resume_judge_stage` 而不是 `_do_judge`（見上方 test_run_resume_

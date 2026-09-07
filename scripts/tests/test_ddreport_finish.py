@@ -369,6 +369,155 @@ def test_finish_sync_later_commits_report_without_rebuilding_site(tmp_path, monk
     assert not any("update_dd_index.py" in " ".join(c) for c in sub_calls)
     msg = next(c for c in git_calls if c[0] == "commit")[-1]
     assert "resync research+screener" not in msg
+    manifest = json.loads((paths["runs_dir"] / "ZTEST_20260905" / "manifest.json").read_text(
+        encoding="utf-8"))
+    # 2026-09-07：延後同步不是隱含狀態，必須可被 status／下次開工補償。
+    assert manifest["finish"]["site_sync"]["state"] == "PENDING"
+    assert manifest["finish"]["site_sync"]["deferred"] is True
+    assert manifest["finish"]["state"] == "PENDING_SITE_SYNC"
+
+
+def test_finish_sync_failure_rolls_back_index_and_stops_before_archive_or_git(
+        tmp_path, monkeypatch, capsys):
+    # 2026-09-07：必要網站同步失敗時，INDEX 回復且不得 archive／commit／push。
+    paths = _setup_fake_repo(tmp_path, monkeypatch)
+    ticker, date = "ZTEST", "20260905"
+    html_path = paths["brief_dir"] / "BRIEF_{0}_{1}.html".format(ticker, date)
+    _write_brief_html(html_path, _sample_meta())
+    run_dir, _ = _make_run_dir(paths, ticker, date, html_path)
+    index_before = paths["index_md"].read_text(encoding="utf-8")
+    research_before = paths["research_body"].read_text(encoding="utf-8")
+    git_calls = []
+
+    def fake_subprocess_run(cmd, *a, **k):
+        if "verify_dd_math.py" in " ".join(cmd):
+            return _FakeCompleted(0, "[pass]", "")
+        if "update_dd_index.py" in " ".join(cmd):
+            # 2026-09-07：模擬 research 已重生、其後 screener 才失敗的真實順序。
+            paths["research_body"].write_text("<div>half-written</div>", encoding="utf-8")
+            return _FakeCompleted(1, "[sync-summary] FAIL 必須同步：latest.json", "")
+        raise AssertionError("未預期子行程：{0}".format(cmd))
+
+    monkeypatch.setattr(ddreport.subprocess, "run", fake_subprocess_run)
+    monkeypatch.setattr(
+        ddreport, "_git", lambda args, cwd=None: git_calls.append(list(args)) or _FakeCompleted(0))
+
+    assert ddreport._do_finish(ticker, date) != 0
+    assert paths["index_md"].read_text(encoding="utf-8") == index_before
+    assert paths["research_body"].read_text(encoding="utf-8") == research_before
+    assert not (paths["src_archive"] / "{0}_{1}".format(ticker, date)).exists()
+    assert git_calls == []
+    manifest = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["finish"]["site_sync"]["state"] == "FAIL"
+    assert "停止發布" in capsys.readouterr().err
+
+
+def test_recover_pending_site_sync_uses_batch_sync_state_machine(tmp_path, monkeypatch):
+    # 2026-09-07：新工作開跑時，可從 run manifest 找回硬當留下的 pending。
+    paths = _setup_fake_repo(tmp_path, monkeypatch)
+    ticker, date = "ZTEST", "20260905"
+    html_path = paths["brief_dir"] / "BRIEF_{0}_{1}.html".format(ticker, date)
+    _write_brief_html(html_path, _sample_meta())
+    run_dir, manifest = _make_run_dir(paths, ticker, date, html_path)
+    ddreport._set_finish_site_sync(manifest, run_dir / "manifest.json", "PENDING", True)
+    calls = []
+
+    def fake_sync(rows, sync_date, no_push=False, skip_dd_screener=False):
+        calls.append((rows, sync_date, no_push, skip_dd_screener))
+        return 0
+
+    monkeypatch.setattr(ddreport, "_sync_batch_site", fake_sync)
+
+    assert ddreport._recover_pending_site_sync(no_push=True) == 0
+    assert calls == [(
+        [{
+            "ticker": ticker, "date": date, "rc": 0,
+            "manifest_path": str(run_dir / "manifest.json"),
+        }], date, True, False,
+    )]
+
+
+def test_recover_pending_failure_prints_manifest_and_escape_hatch(
+        tmp_path, monkeypatch, capsys):
+    # 2026-09-07：補同步失敗必須指出壞檔與不清 state 的逃生口。
+    paths = _setup_fake_repo(tmp_path, monkeypatch)
+    ticker, date = "ZBLOCK", "20260905"
+    run_dir = paths["runs_dir"] / "{0}_{1}".format(ticker, date)
+    run_dir.mkdir(parents=True)
+    manifest_path = run_dir / "manifest.json"
+    manifest_path.write_text(json.dumps({
+        "ticker": ticker,
+        "date": date,
+        "finish": {"site_sync": {"deferred": True, "state": "FAIL"}},
+    }), encoding="utf-8")
+    monkeypatch.setattr(ddreport, "_sync_batch_site", lambda *a, **k: 1)
+
+    assert ddreport._recover_pending_site_sync(no_push=True) != 0
+    error = capsys.readouterr().err
+    assert "ZBLOCK_20260905" in error
+    assert str(manifest_path) in error
+    assert "--skip-pending-sync" in error
+
+
+def test_pending_preflight_escape_skips_retry_without_clearing(monkeypatch, capsys):
+    # 2026-09-07：逃生口允許本次開工，且不呼叫同步或改寫 pending。
+    row = {
+        "ticker": "ZBLOCK", "date": "20260905", "rc": 0,
+        "manifest_path": "/tmp/ZBLOCK_20260905/manifest.json",
+    }
+    monkeypatch.setattr(ddreport, "_pending_site_sync_rows", lambda: [row])
+    monkeypatch.setattr(
+        ddreport, "_recover_pending_site_sync",
+        lambda **kwargs: pytest.fail("逃生口不應重試 pending 同步"),
+    )
+
+    assert ddreport._pending_sync_preflight(skip_pending_sync=True) == 0
+    error = capsys.readouterr().err
+    assert "已略過 1 檔" in error
+    assert "此旗標不會清除 pending" in error
+
+
+def test_run_and_batch_accept_skip_pending_sync_flag():
+    # 2026-09-07：兩個會執行開工前補償的入口都必須提供同一逃生口。
+    parser = ddreport.build_parser()
+    run_args = parser.parse_args(["run", "ZTEST", "--skip-pending-sync"])
+    batch_args = parser.parse_args(["batch", "ZTEST", "--skip-pending-sync"])
+    assert run_args.skip_pending_sync is True
+    assert batch_args.skip_pending_sync is True
+
+
+def test_batch_publish_rejects_skip_dd_screener(tmp_path, monkeypatch, capsys):
+    # 2026-09-07：maintenance 旗標雖可單獨使用，發布呼叫端仍必須 fail-closed。
+    paths = _setup_fake_repo(tmp_path, monkeypatch)
+    ticker, date = "ZTEST", "20260905"
+    html_path = paths["brief_dir"] / "BRIEF_{0}_{1}.html".format(ticker, date)
+    _write_brief_html(html_path, _sample_meta())
+    _make_run_dir(paths, ticker, date, html_path)
+
+    assert ddreport._sync_batch_site(
+        [{"ticker": ticker, "date": date, "rc": 0}], date,
+        skip_dd_screener=True,
+    ) != 0
+    assert "不允許 --skip-dd-screener" in capsys.readouterr().err
+
+
+def test_batch_sync_missing_report_keeps_recoverable_failure(tmp_path, monkeypatch):
+    # 2026-09-07：pending 指到不存在的報告時必須 fail-closed，不得誤標 PASS。
+    paths = _setup_fake_repo(tmp_path, monkeypatch)
+    ticker, date = "ZMISSING", "20260905"
+    run_dir = paths["runs_dir"] / "{0}_{1}".format(ticker, date)
+    run_dir.mkdir(parents=True)
+    manifest = {
+        "ticker": ticker,
+        "date": date,
+        "stages": {"brief": {"state": "PASS"}},
+    }
+    (run_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+    assert ddreport._sync_batch_site(
+        [{"ticker": ticker, "date": date, "rc": 0}], date, no_push=True) != 0
+    saved = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert saved["finish"]["site_sync"]["state"] == "FAIL"
 
 
 def test_batch_sync_runs_index_rebuild_once(tmp_path, monkeypatch):
