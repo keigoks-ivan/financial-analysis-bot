@@ -436,6 +436,10 @@ def check_meta(meta):
             warns.append(f"{key}：dd-meta 缺此欄，無法比對（重算值 {calc:.2f}）")
             continue
         if kind == "price":
+            # 2026-09-07：dd-meta 的價格只存到小數 1 位，低價股（GRAB bear 重算
+            # 1.96、存成 2.0）會被 1% 相對容差判成不符——其實兩者四捨五入後同值。
+            # 先把重算值捨入到同精度再比，避免純顯示精度造成的假紅。
+            calc = _round1(calc)
             tol = max(abs(calc), abs(meta_val), 1e-9) * PRICE_TOL_PCT
             if abs(calc - meta_val) > tol:
                 fails.append(f"{key} 對不上：dd-meta {meta_val} vs 重算 {calc:.1f}（tol 1%）")

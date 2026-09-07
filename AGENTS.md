@@ -91,3 +91,53 @@ python3 knowledge/q.py --calibration         # 機械結算記分板（依裁決
 ---
 
 Claude Code 使用者另見 `CLAUDE.md`（含各 skill 觸發語與完整工作流）。
+
+## 寫程式 agent 的改動紀律（Codex／Claude Code 子 agent 共用，2026-09-06 補）
+
+改 `scripts/`、`scripts/dd_prompts/`、`.claude/skills/*/references/` 這類檔案時：
+
+- **只動任務點名的檔**；不順手重構、不改註解格式、不「改善」相鄰程式碼。每處改動附一句「YYYY-MM-DD：為什麼」。
+- **Python 3.9 相容**（檔頭 `from __future__ import annotations`，不用 3.10+ 語法）；本機 `python3` 是 3.9，`/tmp/ddvenv/bin/python` 是 3.12 含 yfinance。
+- **全形標點**：中文註解與任何讀者會看到的字串用 ，。：；CJK 後接半形標點會被 `qc.py` 擋 push。prompt 模板（`scripts/dd_prompts/*.tmpl`）用 `str.format_map` 渲染：佔位符一律 ASCII，字面大括號寫 `{{ }}`。
+- `.claude/skills/` 下的檔除非任務明確點名一律不動；判斷類規則（veto／gate／門檻／critic）改動要同時登記 `knowledge/rule_ledger.md` 的 kill condition。
+- **驗證（改完必跑）**：`python3 -c "import ast;ast.parse(open('<檔>').read())"`、`python3 -m pytest scripts/tests -q`（2026-09-06：112 passed）、`python3 scripts/qc.py <改到的檔…>`（0 errors 才算過）。改程式的任務裡不要真的 spawn 模型（`claude -p`）或跑會上站的指令（`ddreport.py run／finish／batch`）；dry-run 與單元測試可以。**持有人明說「跑 X 的 DD」時才可以跑管線**，且照下面「跑 DD 的規矩」。
+- **git**：不 commit、不 push、不 `git add -A`、不 `git stash`、不 `git reset --hard`。這個 working tree 常有多個 session 並行，`git status` 裡大量修改檔是別人的，不要碰。回報附 `git diff --stat` 與改了哪些函式；做不乾淨處照實寫、選最小改動。
+- **DD 管線速覽**（`scripts/ddreport.py`）：plan → Stage 0（sonnet 證據 agent）→ 判斷（Fable，`--judge-mode short`）→ 閘（opus）→ 快速版（零 LLM）→ finish；`--full` 加散文段；`scripts/dd_flash.py` 是即時初判層。run 目錄 `.dd_build/runs/{T}_{D}/`（gitignored），歸檔 `notes/site-internal/dd/_src/`，設計稿 `notes/site-internal/dd/_dd_pipeline_redesign_spec_20260905.md`。
+
+## 角色分工：Claude 指揮，Codex 執行或第二意見（2026-09-07 持有人拍板）
+
+先前「持有人明說時外部 agent 也可當指揮者」一條**作廢**。定案分工：
+
+- **指揮者一律是 Claude Code 主 session**（opus）——決定跑什麼、判讀回報、決定放不放行、決定要不要 push。
+- **Codex 等外部 agent 是執行者或第二意見**：可以跑被點名的管線指令、可以改被點名的檔、可以對某個判斷提反對意見；**但沒有放行權**。
+- **第二意見怎麼用**：對同一份證據或同一段程式獨立看一遍，把分歧點列出來交給指揮者裁決。分歧本身是訊號，不是要自己消掉的錯誤——不要為了跟指揮者一致而收回意見。
+
+### 停下來的條件（執行者的硬規則）
+
+跑完不是「沒報錯就推」。出現以下任一，**停在 finish 之前不要 push**，把原文貼回給指揮者：
+
+- 回報裡**任何一個數字對不上**——機械重算與判斷層不一致、存查與發布頁不一致、兩處引用同一欄位卻不同值。
+- 機械檢查（`verify_dd_math.py`／`qc.py`／validator）與 LLM 閘的結論方向不同。
+- 閘出現 🔴，或 🟡 指向數字口徑而非文字表述。
+- `[HOLD]`、額度耗盡、fallback 段數 > 0。
+
+WHY（2026-09-06 WDC 實例）：那次回報**正確指出**發布頁 3.6%／存查重算 0.9%，但仍然推上站，把已知錯誤的數字寫成回報的第四點補充。追查後發現 `verify_dd_math.py` 的取檔掃不到 `docs/dd/brief/`，13 份快速版全數繞過機械驗算閘、7 份帶純算術錯（IRR 偏高 4、Max DD 恆等式違反 2、AR 對不上 1，方向一致偏樂觀）。**「已知對不上」永遠是阻斷級，不是註腳級。**
+
+### 判斷登入狀態用真實探針，不要用 `claude auth status`
+
+`claude auth status` **不是子指令**，CLI 會把整串當 prompt 丟給模型，讀回來的是模型講的話、不是系統狀態（2026-09-06 曾據此誤判為未登入，實際是沙箱讀不到 macOS Keychain）。first-party 憑證存在 Keychain（項目 `Claude Code-credentials`），沙箱內看不到不等於沒登入。正確探針：
+
+```
+claude -p "Reply with exactly: OK" --model claude-haiku-4-5-20251001 --output-format json
+```
+
+回傳 `"is_error": false` 才算通過。
+
+## 跑 DD 的規矩（由指揮者指派，執行者照做）
+
+- 指令只有三種：`python3 scripts/ddreport.py run {T}`（快速版，會自動 finish＋commit＋push 該檔）、`python3 scripts/ddreport.py batch T1 T2 …`（逐檔）、`python3 scripts/dd_flash.py {T}`（即時初判，不上站）。不加 `--full`（持有人 2026-09-06 拍板完整版不跑）、不加 `--no-verify`、不手敲 `dd_*.py`。
+- 開跑前 `git status --short scripts/` 必須乾淨（沒有你自己改到一半的 `scripts/` 檔）；有就先交 diff 給持有人處理，不要在半成品程式上跑。
+- 一檔 20 到 40 分鐘：用 `nohup … > .dd_build/logs/{T}.log 2>&1 &` 放背景，每幾分鐘看一次 log 尾，不要用會逾時的前景指令。
+- 結束回報固定格式：報告路徑、統一裁決＋角色、5Y EV／IRR base／Max DD、全帳（含先前段）、閘 🔴 n 🟡 n、fallback 段數、push 結果（`[ok] 推送` 或 `[HOLD]`）。`[HOLD]` 就把原文貼給持有人，不要自己 `--no-verify`。
+- 額度耗盡（log 出現「訂閱額度耗盡」）就停，回報從哪檔 `--resume`。
+

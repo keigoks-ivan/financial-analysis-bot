@@ -183,6 +183,40 @@ def _tile(label, value, small=None):
     return f'    <div class="tile"><div class="k">{esc(label)}</div><div class="v">{esc(value) if value is not None else "—"}{small_html}</div></div>'
 
 
+# 2026-09-07：覆蓋門檻＝verify_dd_math.py 對應欄位的容差。設計取捨：判斷層的數字
+# 通常帶兩位小數（如 GRAB asym_ratio 5.17），scenario_meta 的重算值經 _round1 只留
+# 一位（5.2），所以「一律採重算值」反而降低精度；正確做法是平時尊重判斷值，只有
+# 在兩者差到機械閘會判 FAIL 的程度時才用重算值蓋掉並警告。
+_MECH_OVERRIDE_TOL = {
+    "irr_base_pct": 0.5,   # 閘 IRR_TOL 1.0pp；此處取半，因 sm 已四捨五入到一位
+    "ev5y_pct": 1.0,
+    "asym_ratio": 0.06,    # 同閘 AR_TOL
+}
+
+
+def _mech_first(ticker, field, di_val, sm_val):
+    """判斷值（decision_inputs）與機械重算值（scenario_meta）不一致時的取捨。
+
+    差距在容差內 → 用判斷值（精度較高）；超出容差 → 用機械重算值並警告。
+    這是定義一致性不是判斷規則：irr_base_pct 的權威定義在 dd_scenario.py
+    的 irr_ex_div（不含息）。2026-09-05／06 那批快速版有四份因判斷層誤填
+    含息 IRR 而偏高上站，且 verify_dd_math.py 當時掃不到 brief 子目錄。"""
+    if sm_val is None:
+        return di_val
+    if di_val is None:
+        return sm_val
+    tol = _MECH_OVERRIDE_TOL.get(field, 1.0)
+    if abs(sm_val - di_val) > tol:
+        print(
+            "[warn] dd_brief: {0} {1} 判斷值 {2} 與機械重算 {3} 相差 {4:.2f}"
+            "（>{5} 門檻）——改採機械重算值".format(
+                ticker, field, di_val, sm_val, abs(sm_val - di_val), tol),
+            file=sys.stderr,
+        )
+        return sm_val
+    return di_val
+
+
 def render_tiles(j, scenario_meta):
     di = j.get("decision_inputs") or {}
     sm = scenario_meta or {}
@@ -192,9 +226,10 @@ def render_tiles(j, scenario_meta):
     trap = j.get("trap_analysis") or {}
     val = j.get("valuation") or {}
 
-    ev5y = di.get("ev5y_pct", sm.get("ev5y_pct"))
-    irr = di.get("irr_base_pct", sm.get("irr_base_pct"))
-    ar = di.get("asym_ratio", sm.get("asym_ratio"))
+    ticker = (j.get("meta") or {}).get("ticker")
+    ev5y = _mech_first(ticker, "ev5y_pct", di.get("ev5y_pct"), sm.get("ev5y_pct"))
+    irr = _mech_first(ticker, "irr_base_pct", di.get("irr_base_pct"), sm.get("irr_base_pct"))
+    ar = _mech_first(ticker, "asym_ratio", di.get("asym_ratio"), sm.get("asym_ratio"))
 
     max_dd = prem.get("max_dd") or {}
     lo, hi = max_dd.get("lo"), max_dd.get("hi")

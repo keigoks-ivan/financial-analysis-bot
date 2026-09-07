@@ -26,9 +26,17 @@ schema 形狀，本檔驗「數字之間的數學關係」。
 未覆蓋（由 skill 條文＋critic 把守）：upside_short/mid 與附錄 A 的對帳（附錄
 為散文無機器欄）、一手財報數字 vs yfinance、PEG 分母窗口。
 
+brief 模式（2026-09-07 新增）：v17 快速版報告 `docs/dd/brief/BRIEF_*.html` 不帶
+完整版散文與必交模組表格（§6.I／§5.F／§7.E／§3.F／§9.D 或其 v16 表格
+id="e3"…"e10"），檔名 `BRIEF_` 前綴即判定為 brief（不用路徑判斷，因為
+brief 檔未來可能被複製到其他目錄，檔名前綴較穩定）——brief 模式下跳過
+C 組必交模組存在性檢查，但 A／B／D／E 組全部恆等式與版本戳檢查照跑不減。
+
 用法：
   python3 scripts/verify_dd_math.py docs/dd/DD_XXX_YYYYMMDD.html [...]
-  python3 scripts/verify_dd_math.py --all        # 全掃 docs/dd/ 的 v15+ 檔
+  python3 scripts/verify_dd_math.py docs/dd/brief/BRIEF_XXX_YYYYMMDD.html [...]
+  python3 scripts/verify_dd_math.py --all
+      # 全掃 docs/dd/ 的 v15+ DD_*.html 與 docs/dd/brief/ 的 BRIEF_*.html
 非 v15+ 檔（legacy v12–v14）自動跳過。任何 FAIL → exit 1。
 """
 import json
@@ -40,6 +48,7 @@ import dd_scenario
 
 ROOT = Path(__file__).resolve().parent.parent
 DD_DIR = ROOT / "docs" / "dd"
+BRIEF_DIR = ROOT / "docs" / "dd" / "brief"
 
 EV_TOL = 1.5      # pp
 IRR_TOL = 1.0     # pp
@@ -79,6 +88,7 @@ def check_file(path):
     ver = re.match(r"v(\d+)\.(\d+)", schema)
     if not ver or int(ver.group(1)) < 15:
         return None  # legacy（<v15）跳過
+    is_brief = path.name.startswith("BRIEF_")
 
     # ---- A. dd-meta 內部重算 ----
     price = meta.get("price_at_dd")
@@ -104,7 +114,17 @@ def check_file(path):
         if bear_ret < 0 and p_bear:
             # canonical（SKILL.md）：AR = (P_bull×|Bull 5Y%|)/(P_bear×|Bear 5Y%|)
             ar_calc = (p_bull * abs(bull_ret)) / (p_bear * abs(bear_ret))
-            if ar is not None and abs(ar_calc - ar) > AR_TOL:
+            # 2026-09-07：bull／bear 價在 dd-meta 只存到小數 1 位，低價股（GRAB
+            # bear 1.96 存成 2.0）這 ±0.05 的捨入會被報酬率放大，讓 AR 誤差遠超
+            # 固定容差 0.06、產生假紅。把捨入誤差傳播進容差——只按輸入精度放寬，
+            # 不是整體放鬆閘門。
+            _ar_span = 0.0
+            for _b in (bull_p - 0.05, bull_p + 0.05):
+                for _r in (bear_p - 0.05, bear_p + 0.05):
+                    _br, _rr = (_b / price - 1) * 100, (_r / price - 1) * 100
+                    if _rr < 0:
+                        _ar_span = max(_ar_span, abs((p_bull * abs(_br)) / (p_bear * abs(_rr)) - ar_calc))
+            if ar is not None and abs(ar_calc - ar) > max(AR_TOL, _ar_span):
                 fails.append(f"AR 對不上（canonical 機率加權口徑）：meta {ar} vs 重算 "
                              f"{ar_calc:.2f}（({p_bull}×{abs(bull_ret):.1f})/"
                              f"({p_bear}×{abs(bear_ret):.1f})）")
@@ -142,7 +162,9 @@ def check_file(path):
         warns.append("情境樹未由 dd_scenario.py 產出（v15.2.1 起建議）")
 
     # ---- C. 必交模組存在性 ----
-    if meta.get("pipeline") == "v16":
+    if is_brief:
+        pass  # brief 版本零 LLM 渲染、不含完整版散文與必交模組表格，此檢查不適用
+    elif meta.get("pipeline") == "v16":
         # v16 產出：gen_dd_tables.py 一律產生 <table id="e{N}">，直接查表格
         # id 存在性（不會被「改標題」繞過）。
         for tid in V16_TABLE_IDS:
@@ -171,7 +193,7 @@ def check_file(path):
 
 def main(argv):
     if "--all" in argv:
-        targets = sorted(DD_DIR.glob("DD_*.html"))
+        targets = sorted(DD_DIR.glob("DD_*.html")) + sorted(BRIEF_DIR.glob("BRIEF_*.html"))
     else:
         targets = [Path(a) for a in argv if a.endswith(".html")]
     if not targets:

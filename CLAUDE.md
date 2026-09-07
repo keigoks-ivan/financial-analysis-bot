@@ -303,6 +303,16 @@ WHY：2026-07 全鏈驗屍證實，五月那批僵化閘（MA Soft Veto / AR≥4
 
 任何 commit 前必跑 `python3 scripts/qc.py`（預設 changed-files 模式，`--all` 全掃；exit non-zero = 不可 commit，先修完再 commit）。此為單一品質總閘，取代先前散落的「commit 前跑標點檢查」等 prose 提醒；pre-push hook 會強制擋。
 
+## 改產物路徑或預設輸出形態時，必須逐一點名既有的閘還掃不掃得到（2026-09-07）
+
+改變報告的輸出路徑、檔名前綴或預設產物形態（例如 v17 把預設從完整版改成 `docs/dd/brief/BRIEF_*.html` 快速版）時，**必須逐一檢查既有品質閘的取檔範圍是否仍涵蓋新產物**，並在 commit 訊息裡點名檢查過哪幾道閘。
+
+WHY：2026-09-05 快速版變成預設輸出，`scripts/verify_dd_math.py` 的取檔是 `DD_DIR.glob("DD_*.html")`、pre-commit 是 `find docs/dd -maxdepth 1`，兩者都掃不到 brief 子目錄——CLAUDE.md 明訂「永不隨成本降級」的機械驗算閘，就這樣**沒有人做錯任何事地失效了三天**，13 份快速版全數繞過，7 份帶純算術錯上站（IRR 偏高 4、Max DD 恆等式違反 2、AR 假紅 1），方向一致偏樂觀。抓到它的不是任何自動檢查，是「為什麼這個安全網沒響」這個問句。
+
+**檢查清單（改路徑／改預設產物時逐條回答）**：`scripts/verify_dd_math.py`、`scripts/hooks/pre-commit`（size floor、meta validator、math gate）、`scripts/qc.py`、`scripts/update_dd_index.py` 的掃描面、各 build 腳本的 glob。任一道答不出「涵蓋」就當作不涵蓋，先補接線再改預設。
+
+此為流程紀律非裁決閘，不適用 rule_ledger kill-condition 登記。
+
 ## Git pre-commit hook
 
 Repo 有 pre-commit hook（`core.hooksPath=scripts/hooks`，已啟用）跑：dd/id-meta validator、cache schema、supply-chain schema、`.nojekyll` guard、supply-chain hub rollup，以及 **DD/DCA size-floor gate（added-only，見上）**。新 clone 啟用方式（`bash scripts/install_hooks.sh`）與 bypass 細節（`--no-verify`）：見 `scripts/README.md`。

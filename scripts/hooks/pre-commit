@@ -53,6 +53,7 @@ if echo "$STAGED_DEL" | grep -qx 'docs/\.nojekyll'; then
 fi
 
 STAGED_DD=$(echo "$STAGED" | grep -E '^docs/dd/DD_.*\.html$' || true)
+STAGED_BRIEF=$(echo "$STAGED" | grep -E '^docs/dd/brief/BRIEF_.*\.html$' || true)
 STAGED_ID=$(echo "$STAGED" | grep -E '^docs/id/ID_.*\.html$' || true)
 STAGED_CACHE=$(echo "$STAGED" | grep -E '^docs/cache/(fundamentals|prices)-(us|tw|jp)\.json$' || true)
 STAGED_SC=$(echo "$STAGED" | grep -E '^docs/supply-chain/data/.*\.json$' | grep -v 'dd_links\.json$' || true)
@@ -72,7 +73,7 @@ ADDED_DD=$(echo "$ADDED" | grep -E '^docs/dd/DD_.*\.html$' || true)
 ADDED_DCA=$(echo "$ADDED" | grep -E '^docs/dca/DCA_.*\.html$' || true)
 
 # Bail early if nothing relevant in scope
-if [ -z "$STAGED_DD" ] && [ -z "$STAGED_ID" ] && [ -z "$STAGED_CACHE" ] && [ -z "$STAGED_SC" ] && \
+if [ -z "$STAGED_DD" ] && [ -z "$STAGED_BRIEF" ] && [ -z "$STAGED_ID" ] && [ -z "$STAGED_CACHE" ] && [ -z "$STAGED_SC" ] && \
    [ -z "$STAGED_RADAR" ] && [ -z "$DD_VALIDATOR_CHANGED" ] && [ -z "$ID_VALIDATOR_CHANGED" ] && \
    [ -z "$CACHE_VALIDATOR_CHANGED" ] && [ -z "$SC_VALIDATOR_CHANGED" ] && \
    [ -z "$RADAR_VALIDATOR_CHANGED" ] && [ -z "$ADDED_DCA" ]; then
@@ -196,9 +197,11 @@ fi
 # is exactly what a 0-token script catches. Staged-only even when the script
 # itself changes: known historical debt (e.g. SNDK §5.F) is fixed on next touch
 # of each file, not by mass retrofit (token discipline).
-if [ -n "$STAGED_DD" ]; then
-  echo "→ pre-commit: DD math gate (v15+, staged only)"
-  if ! python3 scripts/verify_dd_math.py $STAGED_DD > /tmp/_dd_math.log 2>&1; then
+# 2026-09-07：v17 快速版 docs/dd/brief/BRIEF_*.html 併入同一道閘（先前完全
+# 沒被掃到，7 份帶算術錯的 brief 因此上站未被攔下）——一樣 staged-only。
+if [ -n "$STAGED_DD" ] || [ -n "$STAGED_BRIEF" ]; then
+  echo "→ pre-commit: DD math gate (v15+ / brief, staged only)"
+  if ! python3 scripts/verify_dd_math.py $STAGED_DD $STAGED_BRIEF > /tmp/_dd_math.log 2>&1; then
     echo ""
     echo "❌ DD math gate FAILED — commit blocked."
     tail -30 /tmp/_dd_math.log | sed 's/^/   /'

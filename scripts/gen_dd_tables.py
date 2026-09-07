@@ -150,10 +150,23 @@ def build_dd_meta(j: dict, scenario_meta: dict | None) -> dict:
         "ev5y_pct": di.get("ev5y_pct"),
     }
 
-    if di.get("irr_base_pct") is not None:
-        meta["irr_base_pct"] = di["irr_base_pct"]
-    if di.get("asym_ratio") is not None:
-        meta["asym_ratio"] = di["asym_ratio"]
+    # 2026-09-07：判斷值與機械重算不一致的取捨與 dd_brief._mech_first 同政策——
+    # 差距在容差內用判斷值（精度較高），超出容差改用重算值並警告。原本無條件
+    # di 優先，是 2026-09-05／06 四份快速版帶著判斷層算錯的 irr_base_pct 上站的機制。
+    _override_tol = {"irr_base_pct": 0.5, "asym_ratio": 0.06, "ev5y_pct": 1.0}
+    for _k in ("irr_base_pct", "asym_ratio"):
+        _sm_val = (scenario_meta or {}).get(_k)
+        _di_val = di.get(_k)
+        if _di_val is None:
+            if _sm_val is not None:
+                meta[_k] = _sm_val
+            continue
+        if _sm_val is not None and abs(_sm_val - _di_val) > _override_tol[_k]:
+            print("[warn] {0} 判斷值 {1} 與機械重算 {2} 相差 {3:.2f}——改採重算值".format(
+                _k, _di_val, _sm_val, abs(_sm_val - _di_val)), file=sys.stderr)
+            meta[_k] = _sm_val
+        else:
+            meta[_k] = _di_val
 
     max_dd = prem.get("max_dd") or {}
     lo, hi = max_dd.get("lo"), max_dd.get("hi")
@@ -567,6 +580,193 @@ def render_dashboard_html(j: dict, scenario_meta: dict | None) -> str:
     lines.append("</div>")
     lines.append(f'<p class="note"><strong>讀法：</strong>本份報告的人面對結論是「統一裁決 {esc(dout.get("verdict"))}」（§13）。倉位組合佔比由 portfolio-manager skill 依組合狀態決定。</p>')
     return "\n".join(lines) + "\n"
+
+
+# ---------------------------------------------------------------------------
+# v17 WP4b C-1（2026-09-06）：revlog / s14（複審表）/ appA 敘述 三個機械段
+# ——全部是 judgment（+ evidence.prior_dd）欄位的復述，散文 agent 不再撰寫，
+# 省一輪散文輸出與一輪 validate_prose 覆蓋檢查。刻意只用「原樣或逐字複製」
+# 的欄位值，不做任何算術（如價格漲跌幅），避免 validate_prose.py 把衍生出
+# 的新數字判定為「判斷物沒有」而 FAIL——見
+# notes/site-internal/dd/_dd_pipeline_redesign_spec_20260905.md §8 C-1。
+# ---------------------------------------------------------------------------
+
+_VAL_DESC = {
+    "🔴": "落在最嚴一檔",
+    "🟠": "落在偏貴區間",
+    "🟡": "落在觀察區間",
+    "🟢": "落在便宜區間",
+}
+_ROLE_OTHER = {"核心": "衛星", "衛星": "核心", "追蹤": "核心", "不持有": "核心"}
+_TRAP_EMOJI_RE = re.compile(r"^[🟢🟡🔴]\s*")
+
+
+def _val_desc(val) -> str:
+    if not val:
+        return "未標示"
+    return _VAL_DESC.get(val, "訊號{0}".format(val))
+
+
+def _ma_desc(ma) -> str:
+    return "符合多頭排列" if ma == "✅" else "未通過週線結構檢核"
+
+
+def render_appA_section_html(j: dict) -> str:
+    """appA 完整 `<details>` 外層（intro 段固定文案 + `<!-- APPA_TABLE -->`
+    標記 + 機械收尾段），取代散文 agent 手寫此段——收尾段句型固定為 BE
+    2026-09-05 那份（四份樣本中最單純機械的寫法），內容依 judgment 逐檔
+    代換。"""
+    aa = j.get("appendix_a") or {}
+    moat = j.get("moat") or {}
+    trap = j.get("trap_analysis") or {}
+    gov = j.get("governance") or {}
+    dout = j.get("decision_out") or {}
+    stress = aa.get("stress") or {}
+    role = dout.get("role") or "衛星"
+    other_role = _ROLE_OTHER.get(role, "核心")
+    pass_n, total_n = stress.get("pass"), stress.get("total")
+    if pass_n is not None and total_n is not None and pass_n == total_n:
+        stress_desc = "兩項壓力測試皆通過"
+    else:
+        stress_desc = "{0}/{1} 項壓力測試通過".format(esc(pass_n), esc(total_n))
+    trap_label = _TRAP_EMOJI_RE.sub("", trap.get("label") or "")
+    intro = (
+        "本表把品質、護城河、成長三項分數與估值分色、週線結構、陷阱定性、壓力測試結果"
+        "收攏成單一機械輸出的評級卡，供跨檔比較與下游列表讀取——正文統一裁決以第 13 節"
+        "為準，本表只作評級留存用。"
+    )
+    closing = (
+        "本檔綜合訊號為 {signal}（護城河 {moat_score}、成長耐久度 {growth_d}、財務品質 "
+        "{quality_s}），估值分色{val_desc}、週線結構{ma_desc}、陷阱定性為{trap_label}、"
+        "{stress_desc}，長期持有信心因資本配置等級 {capalloc} 定在「{ltc}」——這是本檔"
+        "角色被限定在{role}而非{other_role}的機械依據。"
+    ).format(
+        signal=esc(aa.get("signal")), moat_score=esc(moat.get("score")),
+        growth_d=esc(aa.get("growth_durability")), quality_s=esc(aa.get("quality_score")),
+        val_desc=_val_desc(aa.get("val")), ma_desc=_ma_desc(aa.get("ma")),
+        trap_label=esc(trap_label) or "—", stress_desc=stress_desc,
+        capalloc=esc(gov.get("capalloc_grade")), ltc=esc(aa.get("long_term_confidence")),
+        role=esc(role), other_role=other_role,
+    )
+    return (
+        '<details id="appA">\n'
+        "<summary>附錄 A．基本面評級（機械推導）</summary>\n"
+        "<p>{intro}</p>\n"
+        "<!-- APPA_TABLE -->\n"
+        "<p>{closing}</p>\n"
+        "</details>\n"
+    ).format(intro=intro, closing=closing)
+
+
+def render_e12_note_html(j: dict) -> str:
+    """C-1「E12 觸發器說明段」：decision 段仍由散文 agent 撰寫，唯獨這一句
+    機械附加在 `<!-- E12 -->` 標記之後（由 `ddreport.py prose split` 接線，
+    不動 `render_e12_html` 本身——`dd_brief.py` 快速版也呼叫
+    `render_e12_html`，改它會連帶動到快速版語意，故另立此函式）。"""
+    triggers = j.get("triggers") or []
+    dout = j.get("decision_out") or {}
+    rearm = dout.get("rearm_trigger")
+    n = len(triggers)
+    # validate_prose 只無條件容忍 |value|<=12 的小整數；觸發器件數超過 12 時
+    # 不保證這個數字能在 judgment.json 別處找到對帳，故只在 <=12 時才印出，
+    # 避免這句機械附加句自己觸發覆蓋檢查 FAIL。
+    text = (
+        "完整的假設驗證、風險與觸發器門檻共 {0} 項見上表。".format(n)
+        if (n and n <= 12) else "完整的假設驗證、風險與觸發器門檻見上表。"
+    )
+    if rearm:
+        text += "重啟條件：{0}。".format(esc(rearm))
+    return "<p>{0}</p>\n".format(text)
+
+
+def _revlog_note_bits(val, asym, ev5y) -> str:
+    bits = []
+    if val:
+        bits.append("估值分色 {0}".format(val))
+    if asym is not None:
+        bits.append("不對稱比率 {0}".format(asym))
+    if ev5y is not None:
+        try:
+            v = float(ev5y)
+            bits.append("5 年機率加權報酬 {0}{1:.1f}%".format("+" if v > 0 else ("−" if v < 0 else ""), abs(v)))
+        except (TypeError, ValueError):
+            bits.append("5 年機率加權報酬 {0}".format(ev5y))
+    return "、".join(bits)
+
+
+def _revlog_row(date, price, verdict, role, note) -> str:
+    return (
+        "<tr><td>{date}</td><td>${price}</td><td>{verdict}</td><td>{role}</td><td>{note}</td></tr>"
+    ).format(date=esc(date), price=esc(price), verdict=esc(verdict), role=esc(role), note=esc(note))
+
+
+def render_revlog_html(j: dict, prior: dict | None = None) -> str:
+    """revlog 完整 `<section>`——沿用 BE 2026-09-05 的最簡表格寫法（日期／
+    股價／裁決／角色／備註）。`prior` 為 evidence.json 的 `prior_dd` 子物件
+    （`{"status":"ok","prior_meta":{...}}` 或 `{"status":"unavailable"}`）；
+    刻意不算價格漲跌幅這類衍生數字（見上方模組註解），只逐字複製既有欄位。"""
+    meta = j.get("meta") or {}
+    di = j.get("decision_inputs") or {}
+    dout = j.get("decision_out") or {}
+    aa = j.get("appendix_a") or {}
+    rows = []
+    prior_meta = (prior or {}).get("prior_meta") if isinstance(prior, dict) else None
+    if isinstance(prior, dict) and prior.get("status") == "ok" and prior_meta:
+        rows.append(_revlog_row(
+            prior_meta.get("date"), prior_meta.get("price_at_dd"),
+            prior_meta.get("dca_verdict") or prior_meta.get("verdict"),
+            prior_meta.get("dca_role"),
+            _revlog_note_bits(prior_meta.get("val"), prior_meta.get("asym_ratio"), prior_meta.get("ev5y_pct")),
+        ))
+    rows.append(_revlog_row(
+        meta.get("date"), di.get("price_at_dd"), dout.get("verdict"), dout.get("role"),
+        _revlog_note_bits(aa.get("val") or di.get("val"), di.get("asym_ratio"), di.get("ev5y_pct")),
+    ))
+    header = "<tr><th>日期</th><th>股價</th><th>裁決</th><th>角色</th><th>備註</th></tr>"
+    return (
+        '<section id="revlog">\n<h2>版本紀錄</h2>\n<table>\n{header}\n{rows}\n</table>\n</section>\n'
+    ).format(header=header, rows="\n".join(rows))
+
+
+def render_s14_html(j: dict) -> str:
+    """s14（複審表）：把 catalysts[] 逐字轉成一張表（日期/事件/類型/影響/
+    觀察重點），取代散文 agent 手寫的保質期敘事——事件與觀察重點文字本身
+    就是 judgment.catalysts[] 的原樣子字串，逐字複製不生新數字。"""
+    cats = sorted(j.get("catalysts") or [], key=lambda c: c.get("date") or "9999-99-99")
+    prem = j.get("premortem") or {}
+    max_dd = prem.get("max_dd") or {}
+    lead_bits = []
+    if cats:
+        nxt = cats[0]
+        lead_bits.append("下一個排定複審點：{0}　{1}".format(esc(nxt.get("date")), esc(nxt.get("event"))))
+    if max_dd.get("lo") is not None or max_dd.get("hi") is not None:
+        lead_bits.append("最大回撤路徑落在 {0}%~{1}%".format(esc(max_dd.get("lo")), esc(max_dd.get("hi"))))
+    parts = ['<section id="s14">', "<h2>14．保質期與複審</h2>"]
+    if lead_bits:
+        parts.append("<p>{0}。任一項提前發生即應重新評估，不需要等到下一個排定複審日。</p>".format("；".join(lead_bits)))
+    if cats:
+        rows = [
+            "<tr><td>{date}</td><td>{event}</td><td>{type_}</td><td>{impact}</td><td>{watch}</td></tr>".format(
+                date=esc(c.get("date")), event=esc(c.get("event")), type_=esc(c.get("type")),
+                impact=esc(c.get("impact")), watch=esc(c.get("watch")),
+            )
+            for c in cats
+        ]
+        header = "<tr><th>日期</th><th>事件</th><th>類型</th><th>影響</th><th>觀察重點</th></tr>"
+        parts.append("<table>\n{0}\n{1}\n</table>".format(header, "\n".join(rows)))
+    parts.append("</section>")
+    return "\n".join(parts) + "\n"
+
+
+def write_mechanical_prose(j: dict, prior: dict | None, out_dir: Path) -> list:
+    """把 revlog／s14／appA 三個機械段寫進 `out_dir/{sid}.html`（`out_dir`
+    即 run 目錄的 `prose/`）。散文 agent 不寫這三段，見 render-rules.md 之外
+    另行約定的 v17 prose bundle §⑦。回傳已寫入的 sid 清單。"""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / "revlog.html").write_text(render_revlog_html(j, prior), encoding="utf-8")
+    (out_dir / "s14.html").write_text(render_s14_html(j), encoding="utf-8")
+    (out_dir / "appA.html").write_text(render_appA_section_html(j), encoding="utf-8")
+    return ["revlog", "s14", "appA"]
 
 
 # ---------------------------------------------------------------------------
