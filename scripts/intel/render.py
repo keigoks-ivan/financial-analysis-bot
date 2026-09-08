@@ -103,7 +103,11 @@ GAUGE_LABEL_ZH = {
     "rates": "利率", "credit": "信用", "liquidity": "流動性", "fx": "匯率",
     "commodities": "商品", "vol": "波動", "breadth": "股市內部",
     "positioning": "部位", "econ": "經濟數據", "cb": "央行財政",
-    "geo": "地緣", "regime": "regime", "asia": "亞洲",
+    # 2026-09-08 白話工程：這欄先前是 "regime"（英文原字未翻），對讀者是純代號；
+    # 跟 brief.md 描述同一個 classify.md category="regime" 時用的「跨市場」對齊
+    # （classify.md：market 層 13 維度／regime＝「跨市場 regime」——這裡取跟卡片
+    # chip 一致的短版白話主名，不重複掛 regime 英文字）。
+    "geo": "地緣", "regime": "跨市場", "asia": "亞洲",
 }
 # 產業／個股層才會出現的類別（市場層 13 類沿用 GAUGE_LABEL_ZH）。
 INDUSTRY_LABEL_ZH = {
@@ -334,7 +338,9 @@ def fmt_full(iso_s) -> str:
 
 
 def weekday_zh(d) -> str:
-    return WEEKDAY_ZH[d.weekday()]
+    # 2026-09-08 白話工程：日期後面單獨一個「一」／「五」讀者容易看成別的意思
+    # （像是註腳編號），一律補「週」字（09/08（週一）），全站呼叫端不必各自加。
+    return "週" + WEEKDAY_ZH[d.weekday()]
 
 
 def card_time(card) -> str:
@@ -389,7 +395,7 @@ def render_gauges(gauges: list) -> str:
     for g in gauges:
         status = (g.get("status") or "green").lower()
         cls = "g crit" if status == "red" else "g warn" if status == "yellow" else "g"
-        label = esc(g.get("label") or cat_label(g.get("category")))
+        label = esc(_fix_label(g.get("label") or cat_label(g.get("category"))))
         value = (g.get("value") or "").strip()
         metric = (g.get("metric") or "").strip()
         delta = (g.get("delta") or "").strip()
@@ -554,7 +560,7 @@ def render_site_read(site_read_zh) -> str:
         '<div class="box" style="margin-top:10px">'
         '<h3>站內監測判讀'
         '<span><a href="/intel/change.html" style="color:inherit;text-decoration:none">'
-        "機械層數字→ 變化分頁</a></span></h3>"
+        "站內數據明細→ 變化分頁</a></span></h3>"
         f'<p style="margin:8px 0 0;font-size:13px;line-height:1.7">{body}</p>'
         "</div>"
     )
@@ -579,7 +585,7 @@ def source_short(card) -> str:
     括號後的補述。長度由 CSS 省略號負責，這裡只做語意裁切。"""
     s = (card.get("source_short") or "").strip()
     if s:
-        return s
+        return _fix_label(s)
     name = (card.get("source_name") or card.get("source") or "").strip()
     if not name:
         return ""
@@ -587,7 +593,7 @@ def source_short(card) -> str:
         if sep in name:
             name = name.split(sep, 1)[0].strip()
             break
-    return name.strip(" ·")
+    return _fix_label(name.strip(" ·"))
 
 
 def tier_badge(card) -> str:
@@ -620,12 +626,18 @@ def card_tags_html(card, thread_map=None) -> str:
 
 _DATA_KEYS = (("value", "現值"), ("pctile", "分位"), ("threshold", "門檻"),
               ("change_20d", "20 日變化"), ("prev", "前值"), ("status", "狀態"),
-              ("as_of", "截至"), ("rule", "規則"), ("severity", "等級"),
-              ("series", "序列"))
+              ("as_of", "截至"), ("severity", "等級"))
+# 2026-09-08 白話工程：拿掉 ("rule","規則")／("series","序列") 兩欄——這兩個欄位的值
+# 是站內機械層原始代號（如 move_z／usdjpy／DGS10），不管標成什麼中文欄名，值本身讀者
+# 一樣看不懂；卡片標題/摘要已經把同一件事講成白話句，這兩欄純屬內部欄位外洩，直接不顯示
+# （不動 JSON 本身，schema 不變，只是顯示層不再挑這兩個 key 出來畫）。
+_SEVERITY_ZH = {"red": "紅", "yellow": "黃", "green": "綠"}
 
 
 def render_data_line(data) -> str:
-    """數字卡的 data 欄：把 value／分位／門檻等以「鍵：值」列出（純文字、全部 escape）。"""
+    """數字卡的 data 欄：把 value／分位／門檻等以「鍵：值」列出（純文字、全部 escape）。
+    severity／status 的值原始是站內機械層代號（red/yellow、breached/near/green），
+    顯示前一律查表轉中文（_SEVERITY_ZH／KILL_STATUS_ZH），查不到才照原值顯示。"""
     if not isinstance(data, dict):
         return ""
     parts = []
@@ -633,6 +645,10 @@ def render_data_line(data) -> str:
         v = data.get(key)
         if v is None or v == "":
             continue
+        if key == "severity":
+            v = _SEVERITY_ZH.get(str(v).lower(), v)
+        elif key == "status":
+            v = KILL_STATUS_ZH.get(str(v).lower(), v)
         parts.append(f"{label} {esc(fmt_num(v))}")
     if data.get("doc"):
         parts.append(f'<a href="/{esc(str(data["doc"]).replace("docs/", "", 1))}">相關報告</a>')
@@ -644,12 +660,56 @@ _TITLE_PREFIX_RE = re.compile(r"^\s*\[[^\]]{1,20}\]\s*")
 
 _KEY_PREFIX_RE = re.compile(r"^[a-z0-9_]{2,24}：")
 
+# 2026-09-08 白話工程：onsite_regime 卡片的原始 title 是 fetch.py 寫死的
+# "[regime] 跨市場 regime：{label}"——上面兩個正則只清得掉開頭的 "[xxx] " 與
+# "xxx：" 前綴，清不掉「regime」這個英文字混在句子中間；這裡直接對這個固定
+# 子字串做顯示層替換（不動 fetch.py 產出的資料本身，只在 render 端轉一次白話）。
+_INLINE_REGIME_RE = re.compile(r"跨市場\s*regime：")
+
+
+def _clean_data_text(t: str) -> str:
+    """data 卡（kind=="data"）的顯示文字清理：去 `[xxx]` 前綴、去 `key：` 機械
+    序列代號前綴、去內嵌的英文 regime 字樣。只給 data 卡用——news/company 卡
+    的文字是 LLM 依 prompts/*.md 寫的白話句，不需要也不應該套這組規則。"""
+    t = _KEY_PREFIX_RE.sub("", _TITLE_PREFIX_RE.sub("", t))
+    t = _INLINE_REGIME_RE.sub("跨市場情境：", t)
+    return t
+
 
 def _card_title(card) -> str:
     t = card.get("summary_zh") or card.get("title") or ""
     if card.get("kind") == "data":
-        t = _KEY_PREFIX_RE.sub("", _TITLE_PREFIX_RE.sub("", t))
+        t = _clean_data_text(t)
     return esc(t)
+
+
+def _clean_summary_zh(card) -> str:
+    """summary_zh 的顯示版：data 卡套用 `_clean_data_text`（同 `_card_title`
+    邏輯），避免 body 內文段落（`render_row` 的 `<div>{summary_zh}</div>`）與
+    「今日重點」摘要繞過 `_card_title` 直接顯示未清理的原始 summary_zh，讓
+    機械序列代號（如 "usdjpy："）外洩給讀者。"""
+    s = card.get("summary_zh") or ""
+    if card.get("kind") == "data":
+        s = _clean_data_text(s)
+    return s
+
+
+# 2026-09-08 白話工程：以下幾個字串是 `scripts/intel/common.py` 的
+# `CATEGORY_LABELS_ZH`／`_ONSITE_NAMES`／`_ONSITE_SHORTS` 三個表焙進卡片 JSON
+# 的固定值（gauge label、source_name、source_short），裡面混了英文內部代號
+# （"跨市場 regime"／"站內regime"／"站內 kill-watch"）。common.py 不在本次白話
+# 工程可編輯範圍（任務範圍：只改 render.py 與 prompts/*.md），這裡在顯示前對
+# 這幾個已知的固定字串做完全比對替換，不做通用正則猜測、不影響其他文字。
+_LABEL_FIX_ZH = {
+    "跨市場 regime": "跨市場情境",
+    "站內跨市場 regime": "站內大類資產環境",
+    "站內regime": "站內環境",
+    "站內 kill-watch": "站內證偽對帳",
+}
+
+
+def _fix_label(s: str) -> str:
+    return _LABEL_FIX_ZH.get(s, s)
 
 
 _CONF_LABEL_ZH = {"high": "高信心", "med": "中信心", "low": "低信心"}
@@ -723,19 +783,28 @@ def render_row(card, thread_map=None) -> str:
         )
         return (
             '<div class="plain">' + head_cells + ttl
-            + f'<span class="src" title="{esc(card.get("source_name") or "")}">{src}</span>'
+            + f'<span class="src" title="{esc(_fix_label(card.get("source_name") or ""))}">{src}</span>'
             + f'<span class="end">{tier}</span></div>'
         )
 
     tags_html = card_tags_html(card, thread_map)
     why = esc(card.get("why_zh") or "")
-    summary_zh = esc(card.get("summary_zh") or "")
+    summary_zh = esc(_clean_summary_zh(card))
     full_title = esc(card.get("title") or "")
 
     body_bits = []
     if summary_zh and summary_zh != title:
         body_bits.append(f"<div>{summary_zh}</div>")
-    elif full_title and _TITLE_PREFIX_RE.sub("", full_title).strip() != title:
+    elif (
+        card.get("kind") != "data"
+        and full_title
+        and _TITLE_PREFIX_RE.sub("", full_title).strip() != title
+    ):
+        # data 卡（kind=="data"）沒有「原標題」這個概念——card["title"] 本身就是
+        # fetch.py 組出來的機械字串（含 [monitor]／key： 前綴），不是一則新聞的
+        # 原始標題；2026-09-08 白話工程前這條件沒排除 data 卡，會把
+        # "[monitor] usdjpy：USD/JPY 單日跌幅…" 這種未清理過的原始字串直接顯示
+        # 給讀者（跟 _card_title() 費心清理過的標題並列，等於白清）。
         body_bits.append(f'<div class="why"><b>原標題：</b>{full_title}</div>')
     if why:
         body_bits.append(f'<div class="why"><b>為什麼重要：</b>{why}</div>')
@@ -746,12 +815,12 @@ def render_row(card, thread_map=None) -> str:
         body_bits.append(render_deep_block(card["deep"]))
 
     meta_bits = []
-    src_full = esc(card.get("source_name") or card.get("source") or "")
+    src_full = esc(_fix_label(card.get("source_name") or card.get("source") or ""))
     if src_full:
         meta_bits.append(f"來源 {src_full}")
     corrob = card.get("corroboration")
     if corrob and int(corrob) >= 2:
-        meta_bits.append(f"{int(corrob)} 源交叉")
+        meta_bits.append(f"{int(corrob)} 家來源交叉印證")
     cat = card.get("category")
     if cat:
         meta_bits.append(esc(cat_label(cat)))
@@ -876,7 +945,7 @@ def _title_only_text(card) -> str:
     ——同題去重比對用原文 token，escape 與否不影響比對結果，直接用原文較省事。"""
     t = card.get("summary_zh") or card.get("title") or ""
     if card.get("kind") == "data":
-        t = _KEY_PREFIX_RE.sub("", _TITLE_PREFIX_RE.sub("", t))
+        t = _clean_data_text(t)
     return t
 
 
@@ -1308,7 +1377,7 @@ def _site_event_items(payload: dict) -> list:
                 continue
             items.append({
                 "summary": summary,
-                "why": "今日新觸發之紅色警示訊號（機械監測分類，非擇時判斷）。",
+                "why": "今日新觸發之紅色警示訊號（依既定規則自動判定，非擇時建議）。",
                 "source": "站內偵探",
                 "url": "/detective/",
             })
@@ -1324,7 +1393,7 @@ def _site_event_items(payload: dict) -> list:
         item = {
             "summary": text_zh,
             "why": "已觸發設定門檻。" if level == "confirmed" else "接近設定門檻，尚未觸發。",
-            "source": "站內 kill-watch",
+            "source": "站內證偽對帳",
             "url": fl.get("link") or "/detective/",
         }
         if level == "confirmed":
@@ -1388,7 +1457,7 @@ def compute_today_highlights(payload: dict, n: int = 5) -> list:
                     continue
                 per_cat[cat] = per_cat.get(cat, 0) + 1
                 news_items.append({
-                    "summary": c.get("summary_zh") or _card_title(c),
+                    "summary": _clean_summary_zh(c) or _card_title(c),
                     "why": c.get("why_zh") or "",
                     "source": source_short(c),
                     "url": c.get("url") or "",
@@ -1524,7 +1593,7 @@ def render_mini_status(status: dict, cards_n: int) -> str:
             rows.append(("抓取 → 保留", f"{status.get('fetched')} → {status.get('kept', DASH)}"))
         rows.append(("卡片", str(cards_n)))
         if total_tok:
-            rows.append(("今日 token", f"{int(total_tok):,}"))
+            rows.append(("今日 AI 用量", f"{int(total_tok):,}"))
         if status.get("next_run"):
             rows.append(("下次排程", str(status["next_run"])))
     body = "".join(f"<div><span>{esc(k)}</span><b>{esc(v)}</b></div>" for k, v in rows)
@@ -1562,8 +1631,8 @@ def head(title: str, description: str, indexable: bool) -> str:
 
 FOOT = (
     '<footer class="imq-foot"><div class="in">'
-    "<div>本頁為機械聚合＋LLM 摘要：固定來源清單每日抓取 → 規則過濾 → 分類與中文摘要 →"
-    "靜態渲染；儀表與轉折警示取自站內既有監測管線，卡片內容為第三方來源之摘要，"
+    "<div>本頁由站內固定來源清單每日自動抓取，經規則篩選與分類後，由 AI 摘要為中文"
+    "並靜態產出；儀表與轉折警示取自站內既有監測管線，卡片內容為第三方來源之摘要，"
     "正確性以原文為準。</div>"
     '<div><a href="/monitor/">市場監測</a> <span class="sep">·</span> '
     '<a href="/detective/">主題偵測</a> <span class="sep">·</span> '
@@ -1809,18 +1878,22 @@ def render_status_strip(snap: dict) -> str:
         alert_bits.append(f"升級 {snap['alert_escalated']}")
     alert_sub = " · ".join(alert_bits) or DASH
 
+    # 2026-09-08 白話工程：「現況」六磚是首頁最顯眼的區塊之一，先前四塊各自把
+    # 站內模組英文代號直接掛在標籤上（monitor／detective／cross-asset 120d／
+    # kill watch），對讀者等於沒翻譯；改成跟其餘兩塊（宏觀時鐘·風險偏好／
+    # 輪動雷達）一樣的純中文標籤，讀者不需要知道站內模組叫什麼名字。
     tiles = [
-        '<div class="ss-tile"><div class="ss-lab">跨資產壓力（monitor）</div>'
+        '<div class="ss-tile"><div class="ss-lab">跨資產壓力分數</div>'
         f'<div class="ss-val">{esc(snap.get("stress_score") or DASH)}</div>'
         f'<div class="ss-sub">{esc(stress_sub)}</div>'
         '<a class="ss-link" href="/intel/gauges.html">儀表 →</a></div>',
 
-        '<div class="ss-tile"><div class="ss-lab">警戒度（detective）</div>'
+        '<div class="ss-tile"><div class="ss-lab">市場偵探警戒度</div>'
         f'<div class="ss-val">{esc(snap.get("alert_score") or DASH)}</div>'
         f'<div class="ss-sub">{esc(alert_sub)}</div>'
         '<a class="ss-link" href="/intel/change.html">變化 →</a></div>',
 
-        '<div class="ss-tile"><div class="ss-lab">Regime（週更）</div>'
+        '<div class="ss-tile"><div class="ss-lab">大類資產環境（週更）</div>'
         f'<div class="ss-val ss-val-s">{esc(snap.get("regime_label") or DASH)}</div>'
         '<a class="ss-link" href="/intel/weekly.html">週更 →</a></div>',
 
@@ -1829,12 +1902,12 @@ def render_status_strip(snap: dict) -> str:
         f'<div class="ss-sub">{esc(snap.get("risk_gauge") or DASH)}</div>'
         '<div class="ss-note">市場風險儀表保留在首頁</div></div>',
 
-        '<div class="ss-tile"><div class="ss-lab">輪動雷達 cross-asset 120d</div>'
+        '<div class="ss-tile"><div class="ss-lab">全球資產輪動雷達（120 日）</div>'
         f'<div class="ss-val ss-val-s">領先：{esc(snap.get("radar_top3") or DASH)}</div>'
         '<a class="ss-link" href="/rotation/radar.html#cross_asset/120" '
         'target="_blank" rel="noopener nofollow">開雷達 ↗</a></div>',
 
-        '<div class="ss-tile"><div class="ss-lab">證偽表（kill watch）</div>'
+        '<div class="ss-tile"><div class="ss-lab">證偽對帳表</div>'
         f'<div class="ss-val">{esc(fmt_num(snap.get("kill_near")) or "0")}</div>'
         f'<div class="ss-sub">接近 · {esc(fmt_num(snap.get("kill_breached")) or "0")} 突破</div>'
         '<a class="ss-link" href="/intel/change.html">對帳表 →</a></div>',
@@ -2066,6 +2139,14 @@ def build_day_body(date_str: str, payload: dict, mode_note: str, is_archive: boo
 
     # 2. 儀表列
     p.append(h2("儀表列", "Gauges", len(gauges) or None))
+    if gauges:
+        # 2026-09-08 白話工程：「分位」原本只靠 <span title="一年分位"> hover 解釋，
+        # 手機與大多數讀者不會去點；改成整段固定顯示在儀表列上方一次（風格指南規則②：
+        # 白話必須肉眼可見，不能只靠 hover）。
+        p.append(
+            '<p class="note">分位＝這個數值目前落在近一年歷史區間裡的位置，'
+            "數字愈高代表愈接近這段期間的最高點。</p>"
+        )
     p.append(render_gauges(gauges))
 
     # 3. 轉折警示
@@ -2118,7 +2199,10 @@ def build_day_body(date_str: str, payload: dict, mode_note: str, is_archive: boo
 
     if rumor_cards or title_only_rumor:
         p.append(h2("傳聞", "Rumor", len(rumor_cards)))
-        p.append('<p class="note">只收公開傳聞（T3／T4 來源），不做查證、不代表事實，僅供交叉比對。</p>')
+        p.append(
+            '<p class="note">只收公開傳聞（來源分層 T3／T4，即媒體轉述或未具名'
+            "消息來源，可信度低於一手資料的 T1／T2），不做查證、不代表事實，僅供交叉比對。</p>"
+        )
         p.append(render_flat_list(rumor_cards, "今日無 T3／T4 傳聞卡片。", thread_map))
         if title_only_rumor:
             shown = sorted(title_only_rumor, key=card_sort_key)[:_RUMOR_TITLE_ONLY_SHOW_LIMIT]
@@ -2173,7 +2257,7 @@ def build_change_body(date_str: str, det: dict, state: dict, kw: dict, badges: d
     p.append(h2("證偽對帳表", "Kill watch"))
     p.append(render_kill_table(kw))
 
-    p.append(h2("複合規則靶盤", "Composites"))
+    p.append(h2("組合規則靶盤", "Composites"))
     p.append(render_composite_table(det.get("composites") or []))
 
     p.append("</div>")
@@ -2185,7 +2269,7 @@ def build_gauges_body(badges: dict) -> str:
     p = ['<div class="wrap">']
     p.append(
         '<div class="mast"><div class="ttl"><h1>儀表</h1>'
-        '<div class="date">機械層 96 條序列，來自 /monitor/'
+        '<div class="date">彙整市場監測（/monitor/）96 項數據指標'
         '　·　<a href="/market/">市況主控台 →</a></div></div>'
         + _util_chips() + "</div>"
     )
@@ -2297,12 +2381,12 @@ def render_weekly_regime() -> str:
     d = load_json_safe(REGIME_LATEST_FILE) or {}
     if not d:
         return (
-            _weekly_section_head("Regime", "Regime", None)
+            _weekly_section_head("大類資產環境", "Regime", None)
             + '<div class="empty">今日尚無資料，見 <a href="/regime/">/regime/</a>。</div>'
         )
     meta = d.get("meta") or {}
     as_of = meta.get("publish_date") or (d.get("generated_at") or "")[:10]
-    parts = [_weekly_section_head("Regime", "Regime", as_of)]
+    parts = [_weekly_section_head("大類資產環境", "Regime", as_of)]
 
     comp = d.get("composite") or {}
     label_zh = comp.get("label_zh") or DASH
@@ -2370,7 +2454,7 @@ def render_weekly_rotation() -> str:
         )
         return (
             '<div class="twrap"><table class="t"><thead><tr>'
-            "<th>主題</th><th>RS-Ratio</th><th>RS-Mom</th>"
+            "<th>主題</th><th>相對強度</th><th>相對動能</th>"
             "</tr></thead><tbody>" + rows + "</tbody></table></div>"
         )
 
@@ -2389,6 +2473,13 @@ def render_weekly_rotation() -> str:
     parts.append(_theme_table(lagging))
 
     parts.append(
+        # 2026-09-08 白話工程：欄名已從 RS-Ratio／RS-Mom 改「相對強度／相對動能」
+        # （見 build_rotation.py 的 JdK-style 定義），這裡加一次白話說明兩欄的意思，
+        # 不逐列重複註解。
+        '<p class="note">相對強度：這個主題近半年相對大盤的強弱位置（>100 代表'
+        "跑贏基準、<100 代表落後）；相對動能：這個相對強弱正在增溫還是降溫。</p>"
+    )
+    parts.append(
         '<p class="note"><a href="/rotation/">完整互動頁 →</a> · '
         '<a href="/rotation/radar.html">輪動雷達 →</a></p>'
     )
@@ -2399,7 +2490,7 @@ def build_weekly_body(badges: dict) -> str:
     p = ['<div class="wrap">']
     p.append(
         '<div class="mast"><div class="ttl"><h1>週更</h1>'
-        '<div class="date">擁擠交易／Regime／產業輪動（原生渲染，週日更新）</div></div>'
+        '<div class="date">擁擠交易／大類資產環境／產業輪動（原生渲染，週日更新）</div></div>'
         + _util_chips() + "</div>"
     )
     p.append(render_tabstrip("weekly.html", badges))
@@ -2465,7 +2556,7 @@ def build_calendar_body(date_str: str, calendar: list, badges: dict) -> str:
     p = ['<div class="wrap">']
     p.append(
         '<div class="mast"><div class="ttl"><h1>行事曆</h1>'
-        '<div class="date">接下來 14 天　intel 日曆（總經／ForexFactory／財報）＋ catalyst 催化劑</div></div>'
+        '<div class="date">接下來 14 天的總經事件、財報時程與催化劑一覽</div></div>'
         + _util_chips() + "</div>"
     )
     p.append(render_tabstrip("calendar.html", badges))
@@ -2831,7 +2922,7 @@ def resolve_day_payload(date_str: str, sources_meta: dict, data_path: Path = Non
         }
         banner = banner_html(
             "<b>今日尚未整理（只有原始抓取）。</b>"
-            "haiku／sonnet 分類摘要步驟尚未跑完，以下卡片為未經摘要的原始標題，"
+            "AI 分類與摘要步驟尚未跑完，以下卡片為未經摘要的原始標題，"
             "無「為什麼重要」與儀表列。",
         )
         return data, banner, False
@@ -2911,7 +3002,7 @@ def render_status_page(date_str: str, payload: dict, sources_meta: dict, badges:
         )
     table = (
         '<div class="twrap"><table class="t stbl"><thead><tr>'
-        "<th>source_id</th><th>名稱</th><th>tier</th><th>狀態</th>"
+        "<th>來源代碼</th><th>名稱</th><th>分層</th><th>狀態</th>"
         "<th>延遲</th><th>抓到筆數</th><th>錯誤</th>"
         "</tr></thead><tbody>"
         + ("".join(rows) if rows else '<tr><td colspan="7">健康檢查資料尚未產出。</td></tr>')
@@ -2930,7 +3021,7 @@ def render_status_page(date_str: str, payload: dict, sources_meta: dict, badges:
         ("來源正常／失敗", f"{status.get('sources_ok', DASH)} ／ {status.get('sources_fail', DASH)}"),
         ("抓到 → 保留", f"{status.get('fetched', DASH)} → {status.get('kept', DASH)}"),
         ("分類 → 摘要", f"{status.get('classified', DASH)} → {status.get('summarized', DASH)}"),
-        ("今日 token", " · ".join(f"{esc(k)} {v:,}" for k, v in tokens.items()) or DASH),
+        ("今日 AI 用量", " · ".join(f"{esc(k)} {v:,}" for k, v in tokens.items()) or DASH),
         ("深讀（重要卡讀全文）", deep_s),
         ("故事線（進行中／總計）",
          f"{status.get('threads_active', DASH)} ／ {status.get('threads_total', DASH)}"),
@@ -2968,7 +3059,7 @@ _CHAIN_ICON = {"success": "✅", "failure": "❌", "cancelled": "◻︎", "skipp
 _CHAIN_STEP_DESC = {
     "monitor": "跨資產壓力儀表",
     "detective": "訊號網",
-    "crossasset": "週更三頁（擁擠交易／Regime／產業輪動）",
+    "crossasset": "週更三頁（擁擠交易／大類資產環境／產業輪動）",
     "catalyst": "催化劑行事曆",
     "killwatch": "證偽表",
     "intel_fetch": "新聞抓取",
@@ -3142,7 +3233,7 @@ def main():
     state_for_change = load_json_safe(DETECTIVE_STATE_FILE) or {}
     change_html = (
         head("變化 — 全球金融市場監視器 — InvestMQuest Research",
-             "今日訊號、生命週期、證偽對帳、複合規則靶盤。", indexable=False)
+             "今日訊號、生命週期、證偽對帳、組合規則靶盤。", indexable=False)
         + "\n<body>\n"
         + build_change_body(date_str, det_for_badges, state_for_change, kw_for_change, badges)
         + "\n</body>\n</html>\n"
@@ -3152,7 +3243,7 @@ def main():
 
     gauges_html = (
         head("儀表 — 全球金融市場監視器 — InvestMQuest Research",
-             "機械層 96 條序列，來自 /monitor/。", indexable=False)
+             "彙整市場監測（/monitor/）96 項數據指標。", indexable=False)
         + "\n<body>\n"
         + build_gauges_body(badges)
         + "\n</body>\n</html>\n"
@@ -3162,7 +3253,7 @@ def main():
 
     weekly_html = (
         head("週更 — 全球金融市場監視器 — InvestMQuest Research",
-             "擁擠交易／Regime／產業輪動／資產輪動雷達。", indexable=False)
+             "擁擠交易／大類資產環境／產業輪動／資產輪動雷達。", indexable=False)
         + "\n<body>\n"
         + build_weekly_body(badges)
         + "\n</body>\n</html>\n"
@@ -3172,7 +3263,7 @@ def main():
 
     calendar_html = (
         head("行事曆 — 全球金融市場監視器 — InvestMQuest Research",
-             "接下來 14 天：intel 日曆＋ catalyst 催化劑。", indexable=False)
+             "接下來 14 天的總經事件、財報時程與催化劑一覽。", indexable=False)
         + "\n<body>\n"
         + build_calendar_body(date_str, calendar, badges)
         + "\n</body>\n</html>\n"
@@ -3182,7 +3273,7 @@ def main():
 
     themes_html = (
         head("產業 — 全球金融市場監視器 — InvestMQuest Research",
-             "依主題分組的產業層卡片：熱度趨勢、今日焦點、ID／kill-watch／擁擠交易站內錨點。",
+             "依主題分組的產業層卡片：熱度趨勢、今日焦點、ID／證偽指標／擁擠交易站內錨點。",
              indexable=False)
         + "\n<body>\n"
         + build_themes_body(date_str, payload, badges)

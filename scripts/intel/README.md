@@ -5,6 +5,12 @@ haiku 分類 → sonnet 摘要／早報／儀表 → render）都在同一條 GH
 `.github/workflows/intel-daily.yml` 裡跑（§10 2026-08-19 改判：claude.ai
 Routine 推不上 GitHub，LLM 步驟改用 Claude Code CLI headless `claude -p`）。
 
+**文案治理（2026-09-08 新增）**：本管線所有讀者可見字串——`render.py` 的版型/表頭/
+空狀態/頁尾文案，以及 `prompts/*.md` 指揮 LLM 產出的 `brief_zh`／`site_read_zh`／
+`summary_zh`／`why_zh`／`takeaway_zh` 等散文——皆受 `notes/site-internal/root/
+_plainlang_styleguide.md` 管轄：白話為主、術語首見括號白話、禁站內模組英文代號與
+JSON 欄位名外洩。改動這類字串前先查該份 styleguide 是否已有定案譯法，不要另創平行翻譯。
+
 ## 這裡跑什麼
 
 `fetch.py` 是唯一入口，全程零 LLM：
