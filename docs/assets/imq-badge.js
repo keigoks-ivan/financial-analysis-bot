@@ -598,7 +598,11 @@
       });
       return buckets;
     }
-    function tickerChipHTML(ticker) {
+    // opts.hideMismatchBadge：本週清單③論點矛盾整格都是 mismatch，「DD 進場・
+    // 品質未過」文字重覆 32 遍反而難掃——外框樣式（qtm-mismatch 的 box-shadow）
+    // 與 title 說明照舊保留，只把行內文字徽章關掉。其餘呼叫端（格子、①②④）不
+    // 傳 opts，行為不變。
+    function tickerChipHTML(ticker, opts) {
       var idx = idxRef;
       var d = ddInfo(idx, ticker);
       var seat = idx.seat[ticker];
@@ -610,7 +614,8 @@
       var mismatch = d.verdict === "進場" && q && q.pass === false;
       var cls = "qtm-tk " + d.cls + (isNew ? " new-week" : "") + (mismatch ? " qtm-mismatch" : "");
       var seatBadge = seat ? ('<span class="qtm-seat">' + esc(seat) + "</span>") : "";
-      var mismatchBadge = mismatch ? '<span class="qtm-warnflag">DD 進場・品質未過</span>' : "";
+      var hideMismatchBadge = !!(opts && opts.hideMismatchBadge);
+      var mismatchBadge = (mismatch && !hideMismatchBadge) ? '<span class="qtm-warnflag">DD 進場・品質未過</span>' : "";
       var ddLabel = d.tag || d.verdict;
       var titleTxt = ticker + "：" + ddLabel + (isNew ? "（本週新進此格）" : "")
         + (mismatch ? "；DD 進場但品質未過，值得重新檢查論點" : "");
@@ -619,15 +624,16 @@
     // 本週清單的名單渲染：同一顆 tickerChipHTML（外框、標記、彈出小卡皆共用），
     // 只是排版脈絡不同（清單而非格子）；沿用格子相同的「前 8 個＋更多 N」節流，
     // 「更多」按鈕吃的是既有全域 data-qtm-more／data-qtm-rest 點擊委派，不用另外接線。
-    function weeklyChipsHTML(tickers, emptyMsg) {
+    function weeklyChipsHTML(tickers, emptyMsg, chipOpts) {
       if (!tickers.length) {
         return '<div class="qtm-weekly-empty">' + esc(emptyMsg) + "</div>";
       }
+      var chipFn = function (tk) { return tickerChipHTML(tk, chipOpts); };
       var visible = tickers.slice(0, 8), rest = tickers.slice(8);
-      var tkListHtml = visible.map(tickerChipHTML).join("");
+      var tkListHtml = visible.map(chipFn).join("");
       var moreHtml = rest.length
         ? ('<button type="button" class="qtm-more" data-qtm-more>更多 ' + rest.length + '</button>' +
-           '<span class="qtm-tk-list" data-qtm-rest hidden>' + rest.map(tickerChipHTML).join("") + "</span>")
+           '<span class="qtm-tk-list" data-qtm-rest hidden>' + rest.map(chipFn).join("") + "</span>")
         : "";
       return '<span class="qtm-tk-list">' + tkListHtml + "</span>" + moreHtml;
     }
@@ -803,7 +809,7 @@
         ? '<div class="qtm-weekly-empty">這週沒有名字</div>'
         : step3Groups.map(function (g) {
             return '<div class="qtm-weekly-substage"><b>' + esc(STAGE_LABEL[g.code] || g.code) + "</b>" +
-              weeklyChipsHTML(g.list, "") + "</div>";
+              weeklyChipsHTML(g.list, "", { hideMismatchBadge: true }) + "</div>";
           }).join("");
       var s3 = '<li class="qtm-weekly-step"><div class="qtm-weekly-head"><span class="qtm-weekly-num">③</span>' +
         '<span class="qtm-weekly-title">論點矛盾</span><span class="qtm-weekly-count">' + step3Count + " 檔</span></div>" +
