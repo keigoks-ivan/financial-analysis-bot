@@ -36,7 +36,8 @@
     lamp: "/stages/data/lamp.json",
     stages: "/stages/data/latest.json",
     history: "/stages/data/history.json",
-    dd: "/dd-screener/latest.json"
+    dd: "/dd-screener/latest.json",
+    universe: "/engine/universe_board.json"
   };
 
   // ── 小工具 ────────────────────────────────────────────────────────
@@ -82,29 +83,32 @@
     if (_dataPromise) return _dataPromise;
     _dataPromise = Promise.all([
       getJSON(URLS.arena), getJSON(URLS.lamp), getJSON(URLS.stages),
-      getJSON(URLS.history), getJSON(URLS.dd)
-    ]).then(function (r) { return buildIndex(r[0], r[1], r[2], r[3], r[4]); });
+      getJSON(URLS.history), getJSON(URLS.dd), getJSON(URLS.universe)
+    ]).then(function (r) { return buildIndex(r[0], r[1], r[2], r[3], r[4], r[5]); });
     return _dataPromise;
   }
 
-  function buildIndex(arena, lamp, stagesLatest, history, dd) {
+  function buildIndex(arena, lamp, stagesLatest, history, dd, universeBoard) {
     var idx = {
       ok: {
         arena: !!(arena && Array.isArray(arena.own_board)),
         lamp: !!(lamp && lamp.lamp),
         stages: !!(stagesLatest && Array.isArray(stagesLatest.rows)),
         history: !!(history && history.stages && history.dates),
-        dd: !!(dd && Array.isArray(dd.stocks))
+        dd: !!(dd && Array.isArray(dd.stocks)),
+        universe: !!(universeBoard && Array.isArray(universeBoard.rows))
       },
       quality: {}, dd: {}, seat: {}, ownScore: {}, gMethod: {},
-      timingCode: {}, timingDetail: {}, boardSet: {},
+      timingCode: {}, timingDetail: {}, boardSet: {}, researchSet: {},
       historyDates: (history && history.dates) || [],
       historyStages: (history && history.stages) || {},
       historyDeep: (history && history.deep) || {},
       lampAsOf: lamp && lamp.as_of,
       stagesAsOf: stagesLatest && stagesLatest.as_of,
       arenaAsOf: arena && arena.run_timestamp,
-      ddAsOf: dd && dd.as_of
+      ddAsOf: dd && dd.as_of,
+      universeAsOf: universeBoard && universeBoard.as_of,
+      universeN: universeBoard && universeBoard.n
     };
 
     if (idx.ok.arena) {
@@ -115,7 +119,7 @@
         idx.quality[r.ticker].source = "own_board";
         if (r.score != null && !isNaN(r.score)) idx.ownScore[r.ticker] = r.score;
         if (r.g_method) idx.gMethod[r.ticker] = r.g_method;
-        if (r.verdict || r.dd_path) idx.dd[r.ticker] = { verdict: r.verdict || null, dd_path: r.dd_path || null, source: "arena" };
+        if (r.verdict || r.dd_path) idx.dd[r.ticker] = { verdict: r.verdict || null, dd_path: r.dd_path || null, dd_tag: r.dd_tag || null, source: "arena" };
       });
       function seatRow(list, tag) {
         (list || []).forEach(function (r) {
@@ -134,7 +138,7 @@
           var ownScore = (g.own && g.own.score != null) ? g.own.score : (r.score != null ? r.score : null);
           if (ownScore != null) idx.ownScore[r.ticker] = ownScore;
           if (r.g_method) idx.gMethod[r.ticker] = r.g_method;
-          if (r.verdict || r.dd_path) idx.dd[r.ticker] = { verdict: r.verdict || null, dd_path: r.dd_path || null, source: "arena" };
+          if (r.verdict || r.dd_path) idx.dd[r.ticker] = { verdict: r.verdict || null, dd_path: r.dd_path || null, dd_tag: r.dd_tag || null, source: "arena" };
         });
       }
       seatRow(arena.core_seats, "C");
@@ -146,11 +150,39 @@
       dd.stocks.forEach(function (r) {
         if (!r || !r.ticker) return;
         // dd-screener 日更、比 arena 週更快照新鮮，DD 裁決優先用它
-        idx.dd[r.ticker] = { verdict: r.dca_verdict || null, dd_path: r.dd_path || null, source: "dd-screener" };
+        idx.dd[r.ticker] = { verdict: r.dca_verdict || null, dd_path: r.dd_path || null, dd_tag: null, source: "dd-screener" };
         if (!idx.quality[r.ticker]) {
           idx.quality[r.ticker] = qualityFromRoicFcf(r.roic, r.fcf);
           idx.quality[r.ticker].source = "dd-screener";
         }
+      });
+    }
+
+    // ── 研究母體（/engine/universe_board.json，DD 池美股＋QGM 品質池＋可選但先不
+    //    入席候選，即 arena.json universe_n 計數的同一份 ~277 檔全母體）：只補位
+    //    ——任何欄位若已被 arena／dd-screener 設過就不覆蓋，這裡只把「board 母體
+    //    以外」原本空白的名字（研究母體特有的候選/隊列名字）填上品質／DD／席位／
+    //    擁有層分，讓「研究母體」切換能用同一套通用 render 函式運作，不用另開
+    //    一套資料路徑。quality 直接讀 row.quality（伺服器已算好，不在瀏覽器端
+    //    重算）；DD 讀 verdict／dd_tag；席位讀 seat；時機仍統一讀 lamp.json
+    //    （universe_board 本身不帶階段欄）。────────────────────────────────
+    if (idx.ok.universe) {
+      universeBoard.rows.forEach(function (r) {
+        if (!r || !r.ticker) return;
+        idx.researchSet[r.ticker] = true;
+        if (!idx.quality[r.ticker]) {
+          var q = r.quality || {};
+          idx.quality[r.ticker] = {
+            pass: q.pass, why: q.why || [], exempt: !!q.exempt, roic: q.roic, fcf: q.fcf,
+            source: "universe-board"
+          };
+        }
+        if (!idx.dd[r.ticker] && (r.verdict || r.dd_path)) {
+          idx.dd[r.ticker] = { verdict: r.verdict || null, dd_path: r.dd_path || null, dd_tag: r.dd_tag || null, source: "universe-board" };
+        }
+        if (idx.ownScore[r.ticker] == null && r.score != null && !isNaN(r.score)) idx.ownScore[r.ticker] = r.score;
+        if (!idx.gMethod[r.ticker] && r.g_method) idx.gMethod[r.ticker] = r.g_method;
+        if (!idx.seat[r.ticker] && r.seat) idx.seat[r.ticker] = r.seat;
       });
     }
 
@@ -192,8 +224,8 @@
   }
   function ddInfo(idx, ticker) {
     var d = idx.dd[ticker];
-    if (!d || !d.verdict) return { verdict: "無 DD", cls: "dd-none", path: d ? d.dd_path : null };
-    return { verdict: d.verdict, cls: DD_CLS[d.verdict] || "dd-none", path: d.dd_path };
+    if (!d || !d.verdict) return { verdict: "無 DD", cls: "dd-none", path: d ? d.dd_path : null, tag: d ? d.dd_tag : null };
+    return { verdict: d.verdict, cls: DD_CLS[d.verdict] || "dd-none", path: d.dd_path, tag: d.dd_tag || null };
   }
 
   // ── 四格內容（品質／擁有層分／時機／DD）──────────────────────────────
@@ -213,7 +245,7 @@
   function ddCellHTML(idx, ticker) {
     var info = ddInfo(idx, ticker);
     var cls = info.verdict === "進場" ? "q-pos" : (info.verdict === "觀望" ? "q-warn" : (info.verdict === "迴避" ? "q-neg" : "q-mut"));
-    return { cls: cls, label: info.verdict, path: info.path };
+    return { cls: cls, label: info.verdict, path: info.path, tag: info.tag };
   }
 
   // 名單頁小徽章只有一種尺寸：四格各一個色點＋2 字短標，肉眼可辨、不靠 hover；
@@ -260,7 +292,7 @@
       singleYear ? "單年成長法" : ""
     );
     html += popupRow("時機", chip(t), prev ? ("來自" + esc(prev.label) + "，" + prev.days + " 天前") : "");
-    html += popupRow("DD 裁決", chip(d), "");
+    html += popupRow("DD 裁決", chip(d), (d.tag && d.tag !== d.label) ? esc(d.tag) : "");
     return html;
   }
 
@@ -404,11 +436,19 @@
           if (peakRank >= STAGE_DIGIT_RANK["3"]) peakS3plus++;
         }
       });
+      // 領先／收縮完成本身已在頂段，「期間曾到收縮完成以上」對這兩段近乎必然成立
+      // （剛進場當下就已站在那個高度），印出來是廢話——這兩段只印進場後第 60 日
+      // 還在不在頂段、有沒有跌回弱勢；轉強／築底／弱勢三段維持原本三個數字
+      // （2026-09-09 owner 走查回饋）。
+      var topTier = spec.code === "S3" || spec.code === "S4";
       var detail = "";
       if (count > 0) {
-        detail = "第 60 日在收縮完成或領先 " + fmt1(endS3S4 / count * 100) +
-          "%、期間曾到收縮完成以上 " + fmt1(peakS3plus / count * 100) +
-          "%、第 60 日在弱勢 " + fmt1(endS0 / count * 100) + "%";
+        detail = topTier
+          ? ("第 60 日仍在收縮完成或領先 " + fmt1(endS3S4 / count * 100) +
+             "%、第 60 日在弱勢 " + fmt1(endS0 / count * 100) + "%")
+          : ("第 60 日在收縮完成或領先 " + fmt1(endS3S4 / count * 100) +
+             "%、期間曾到收縮完成以上 " + fmt1(peakS3plus / count * 100) +
+             "%、第 60 日在弱勢 " + fmt1(endS0 / count * 100) + "%");
       }
       return { label: spec.label, n: count, detail: detail };
     });
@@ -490,7 +530,12 @@
     if (!el) return;
     el.classList.add("qtm-root");
     el.innerHTML = '<div class="qtm-matrix"><div class="qtm-empty">載入中…</div></div>';
-    var state = { universe: opts.universe === "all" ? "all" : "board", onlyDD: false, onlySeat: false, expandS9: false };
+    // 三態母體：board＝席位榜（own_board，約 60 檔）／research＝研究母體（universe_board，
+    // 約 277 檔，cockpit 預設）／all＝全市場（lamp.json，約 1,400 檔，階段雷達頁預設）。
+    var state = {
+      universe: opts.universe === "all" ? "all" : (opts.universe === "board" ? "board" : "research"),
+      onlyDD: false, onlySeat: false, expandS9: false
+    };
     var wired = false;
 
     function membersFor(idx) {
@@ -498,6 +543,8 @@
       if (state.universe === "board") {
         if (!idx.ok.arena) return null;
         Object.keys(idx.boardSet).forEach(function (tk) { out.push(tk); });
+      } else if (state.universe === "research") {
+        Object.keys(idx.researchSet).forEach(function (tk) { out.push(tk); });
       } else {
         if (!idx.ok.lamp) return null;
         Object.keys(idx.timingCode).forEach(function (tk) { out.push(tk); });
@@ -533,10 +580,17 @@
       var seat = idx.seat[ticker];
       var days = daysInStage(idx, ticker);
       var isNew = days != null && days <= 5;
-      var cls = "qtm-tk " + d.cls + (isNew ? " new-week" : "");
+      // DD 進場但品質未過：DD 判斷過進場，但現在的財務數字過不了品質閘——
+      // 這批是最值得重新檢查論點的名字（見矩陣說明句與規則區塊）。
+      var q = idx.quality[ticker];
+      var mismatch = d.verdict === "進場" && q && q.pass === false;
+      var cls = "qtm-tk " + d.cls + (isNew ? " new-week" : "") + (mismatch ? " qtm-mismatch" : "");
       var seatBadge = seat ? ('<span class="qtm-seat">' + esc(seat) + "</span>") : "";
-      var titleTxt = ticker + "：DD " + d.verdict + (isNew ? "（本週新進此格）" : "");
-      return '<span class="' + cls + '" data-qtm-tk="' + esc(ticker) + '" data-qtm-mtx="1" tabindex="0" role="button" title="' + esc(titleTxt) + '">' + esc(ticker) + seatBadge + "</span>";
+      var mismatchBadge = mismatch ? '<span class="qtm-warnflag">DD 進場・品質未過</span>' : "";
+      var ddLabel = d.tag || d.verdict;
+      var titleTxt = ticker + "：" + ddLabel + (isNew ? "（本週新進此格）" : "")
+        + (mismatch ? "；DD 進場但品質未過，值得重新檢查論點" : "");
+      return '<span class="' + cls + '" data-qtm-tk="' + esc(ticker) + '" data-qtm-mtx="1" tabindex="0" role="button" title="' + esc(titleTxt) + '">' + esc(ticker) + seatBadge + mismatchBadge + "</span>";
     }
     function cellHTML(stageCode, qb, tickers, prevCount) {
       var roleKey = stageCode + "|" + qb;
@@ -563,7 +617,8 @@
         body = '<span class="qtm-tk-list">' + tkListHtml + "</span>" + moreHtml;
       }
       var roleTag = role ? ('<span class="qtm-role-tag role-' + role.role + '">' + esc(role.label) + "</span><br>") : "";
-      var toggleBtn = collapsedDefault ? '<button type="button" class="qtm-toggle-collapse" data-qtm-toggle>展開名單</button>' : "";
+      // 空格（0 檔）沒有名單可展開，不印「展開名單」（2026-09-09 owner 走查回饋）
+      var toggleBtn = (collapsedDefault && tickers.length) ? '<button type="button" class="qtm-toggle-collapse" data-qtm-toggle>展開名單</button>' : "";
       return '<div class="' + cls + (collapsedDefault ? " qtm-collapsed" : "") + '" data-qtm-colname="' + esc(QCOL_LABEL[qb]) + '">' +
         roleTag +
         '<span class="qtm-cell-count">' + tickers.length + "</span>" + deltaHtml + " " + toggleBtn +
@@ -572,7 +627,8 @@
     }
     function controlsHTML() {
       return '<div class="qtm-controls">' +
-        '<button type="button" class="qtm-chip' + (state.universe === "board" ? " on" : "") + '" data-qtm-chip="uni-board">陣容母體</button>' +
+        '<button type="button" class="qtm-chip' + (state.universe === "board" ? " on" : "") + '" data-qtm-chip="uni-board">席位榜</button>' +
+        '<button type="button" class="qtm-chip' + (state.universe === "research" ? " on" : "") + '" data-qtm-chip="uni-research">研究母體</button>' +
         '<button type="button" class="qtm-chip' + (state.universe === "all" ? " on" : "") + '" data-qtm-chip="uni-all">全市場</button>' +
         '<button type="button" class="qtm-chip' + (state.onlyDD ? " on" : "") + '" data-qtm-chip="only-dd">只看有 DD</button>' +
         '<button type="button" class="qtm-chip' + (state.onlySeat ? " on" : "") + '" data-qtm-chip="only-seat">只看席位與候補</button>' +
@@ -604,13 +660,65 @@
         '<p class="qtm-foot">過去 250 個交易日回算，品質以今日判定回推；描述現況，不預測。對照數字依序為期間曾到收縮完成以上／第 60 日在弱勢。</p></div>';
     }
 
+    // ── 規則與注意事項：白話說明矩陣怎麼讀，開卡即展開、不藏在 hover 後面
+    //    （2026-09-09 owner 走查回饋）。列的說明用 STAGE_ROW_ORDER／STAGE_DESC
+    //    這組資料驅動——若「高檔整理」（S5）之後併入 STAGE_LABEL，只要同時
+    //    在下面補一行 STAGE_DESC.S5，這裡會自動排進弱勢→轉強→築底→高檔整理
+    //    →收縮完成→領先的順序；今天 S5 還沒上線，先跳過。────────────────
+    var STAGE_DESC = {
+      S0: "股價在 50 日和 200 日均線下方，近三個月落後大盤。",
+      S1: "剛從深回檔（跌破年高 25% 以上）翻上來，轉強六項條件同時滿足。",
+      S2: "站上 50 日均線、多數模板條件通過，但離年高還有一段距離（−25%～−8%），還沒真正突破。",
+      S3: "模板條件全過、離年高在 8% 以內，波動與量能都在收縮，隨時可能突破。",
+      S4: "模板條件全過、相對強度排在全市場前二成、離年高在 8% 以內——目前最強的一群。"
+    };
+    var STAGE_ROW_ORDER = ["S0", "S1", "S2", "S5", "S3", "S4"];
+    function renderRulesBlock(idx) {
+      var stageLines = STAGE_ROW_ORDER
+        .filter(function (code) { return STAGE_DESC[code] && STAGE_LABEL[code]; })
+        .map(function (code) {
+          return "<li>" + esc(STAGE_LABEL[code]) + "：" + esc(STAGE_DESC[code]) + "</li>";
+        }).join("");
+      var uniN = idx.universeN != null ? idx.universeN : "約 277";
+      return (
+        '<details class="qtm-rules" open><summary>規則與注意事項</summary><div class="qtm-rules-body">' +
+        "<p><b>欄的意思</b>：品質過＝ROIC 15% 以上且自由現金流率 10% 以上（重資本擴張期豁免：ROIC 25% 以上且自由現金流不為負；金融股不判定）；" +
+        "品質未過＝差哪一條，點徽章看差多少；無品質資料＝沒有財務資料可判，不是未過。</p>" +
+        "<p><b>列的意思</b>：每一段一行，過渡＝不符合以上任何一段的殘差態（資料不足、流動性不夠或分類不到），預設收合、可展開查看。</p>" +
+        "<ul>" + stageLines + "</ul>" +
+        "<p><b>四個有標籤的格子</b>：最該看（品質過×轉強）——基本面過關、動能剛翻上來，這批最值得花時間看。" +
+        "持股警訊（品質過×弱勢）——基本面過關但動能轉弱，若是手上持股要留意。" +
+        "研究隊列（品質未過×領先）——動能很強但財務數字還沒達標，值得研究但不是現成標的。" +
+        "略過（品質未過×弱勢）——兩邊都沒亮，預設收合、不用花時間。" +
+        "這是注意力導引，不是買賣指令，也不是排名。</p>" +
+        "<p><b>標記圖例</b>：C／S／B＝核心席／衛星席／候補，數字是席次序；外框實線＝進場、空心＝觀望、虛線＝無 DD、劃線＝迴避；" +
+        "底線＝本週新進此格；Δ＝較 5 個交易日前的家數變化；「更多」可展開看完整名單。</p>" +
+        "<p><b>母體切換</b>：席位榜（現任與候補，約 60 檔）／研究母體（DD 池美股加品質池加待 DD 隊列，約 " + esc(String(uniN)) + " 檔）／" +
+        "全市場（約 1,400 檔）。海外雙掛牌名字（如日股、KL 掛牌）沒有階段資料，一律落在過渡。</p>" +
+        "<p><b>命中率怎麼算</b>：算的是進入某格後，第 60 個交易日在哪一段、期間曾到過的最高段；品質用今天的判定回推，不是進入當時的舊資料。" +
+        "樣本數低於 20 標「樣本不足」。轉強格另外附一組對照——同樣深回檔但當天沒有轉強的股票，比較兩邊誰的後續表現好（對照資料不足會標明）。" +
+        "這些數字描述過去，不是預測。</p>" +
+        "<p><b>更新時間</b>：階段（縱軸）每個交易日美股收盤後更新，目前資料日 " + esc(idx.lampAsOf || "—") + "；" +
+        "品質、擁有層分、席位（橫軸與標記）每週日隨選股引擎更新，目前資料日 " +
+        esc(idx.arenaAsOf ? String(idx.arenaAsOf).slice(0, 10) : "—") + "；" +
+        "DD 裁決隨新報告發布更新，目前資料日 " + esc(idx.ddAsOf || "—") + "。</p>" +
+        "<p class=\"qtm-rules-close\">名單只回答「看誰」，不回答「買不買」與「何時」。</p>" +
+        "</div></details>"
+      );
+    }
+
     var idxRef = null;
     function render(idx) {
       idxRef = idx;
+      // 研究母體 404／缺檔的優雅降級：退回席位榜，不讓整塊矩陣壞掉（設計稿與
+      // owner 指示——切換鈕狀態也一併回正，不留著「研究母體」亮著但畫的是別的資料）。
+      if (state.universe === "research" && !idx.ok.universe) state.universe = "board";
       var members = membersFor(idx);
       var gridSection, s9Toggle = "", asOfNote = "";
       if (members === null) {
-        var missing = state.universe === "board" ? "陣容資料 /engine/arena.json" : "個股階段雷達 /stages/data/lamp.json";
+        var missing = state.universe === "board" ? "陣容資料 /engine/arena.json"
+          : state.universe === "research" ? "選股引擎研究母體 /engine/universe_board.json"
+          : "個股階段雷達 /stages/data/lamp.json";
         gridSection = '<div class="qtm-empty">資料尚未產出（' + esc(missing) + "）</div>";
       } else if (!members.length) {
         gridSection = '<div class="qtm-empty">目前沒有符合篩選的名字</div>';
@@ -637,6 +745,8 @@
         }
         var uniLabel = state.universe === "board"
           ? ("資料來源：擁有層引擎" + (idx.arenaAsOf ? ("（" + String(idx.arenaAsOf).slice(0, 10) + "）") : ""))
+          : state.universe === "research"
+          ? ("資料來源：選股引擎研究母體" + (idx.universeAsOf ? ("（" + idx.universeAsOf + "）") : ""))
           : ("資料來源：個股階段雷達（" + (idx.lampAsOf || "—") + "）");
         asOfNote = '<p style="font-size:.68rem;color:var(--qtm-muted);margin:.5rem 0 0">母體 ' + members.length + " 檔 · " + esc(uniLabel) + "</p>";
         gridSection = '<div class="qtm-scroll"><div class="qtm-grid">' + gridHtml + "</div></div>" + s9Toggle + asOfNote;
@@ -644,9 +754,11 @@
       el.innerHTML =
         '<div class="qtm-matrix">' +
         "<h3>品質 × 時機</h3>" +
-        '<p class="qtm-lede">橫看基本面過不過閘，直看現在走到生命週期哪一段。多層都亮的格子是觀察池，只亮一邊的格子是研究隊列，兩邊都不亮的略過。它只回答「看誰」。</p>' +
+        '<p class="qtm-lede">橫看基本面過不過閘，直看現在走到生命週期哪一段。多層都亮的格子是觀察池，只亮一邊的格子是研究隊列，兩邊都不亮的略過。它只回答「看誰」。' +
+        "代號旁若掛著「DD 進場・品質未過」的小標，是這批名單裡最值得重新檢查論點的一群——DD 判斷過進場，但現在的財務數字過不了品質閘。</p>" +
         controlsHTML() +
         gridSection +
+        renderRulesBlock(idx) +
         renderHitRate() +
         "</div>";
       if (!wired) {
@@ -656,6 +768,7 @@
           if (chip) {
             var k = chip.getAttribute("data-qtm-chip");
             if (k === "uni-board") state.universe = "board";
+            else if (k === "uni-research") state.universe = "research";
             else if (k === "uni-all") state.universe = "all";
             else if (k === "only-dd") state.onlyDD = !state.onlyDD;
             else if (k === "only-seat") state.onlySeat = !state.onlySeat;
