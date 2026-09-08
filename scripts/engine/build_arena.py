@@ -465,11 +465,11 @@ def render_board_text(as_of, rows, core_seats, sat_seats, prev_snap, entered, la
     L.append(f"選股看板 v2｜as_of {as_of}｜母體 {len(rows)}（DD 池＋QGM 無 DD＋快審卡）"
              "｜母體＝美股含 ADR；台股另建（.TW 不在本看板）")
     L.append("甲 擁有層｜資格：品質閘 ROIC≥15∧FCF≥10（或 ROIC≥25∧FCF≥0）× 成長閘 ≥15 × 市值 ≥$20B"
-             "｜排序＝min(成長，30)＋FY1 盈餘殖利率（ROIC≥30 +2；PEG>2 −5）｜時機燈獨立、不進排序")
+             "｜排序＝min(成長，30)＋FY1 盈餘殖利率（ROIC≥30 +2；PEG>2 −5）｜位置與階段都只是燈號，不進排序")
     L.append("欄位說明：score＝擁有層分、grow＝FY1→FY3 成長%、EY＝FY1 盈餘殖利率%、rev1m＝FY+1 單月修正%、"
-             "timing＝時機燈、stage＝時機（個股階段雷達的生命週期階段，只是燈號，不影響排序）、"
+             "timing＝位置、stage＝階段、"
              "seat＝席位、dd＝DD 標籤、moat＝護城河；note＝註記")
-    L.append("timing 代碼：BRK＝突破帶、PB＝回踩、TR＝趨勢內、HOT＝過熱、DN＝52 週線下或缺"
+    L.append("timing 代碼：BRK＝突破、PB＝回踩、TR＝趨勢、HOT＝過熱、DN＝線下"
              "｜stage 代碼：WEAK＝弱勢、TURN＝轉強、BASE＝築底、CONT＝收縮完成、LEAD＝領先、"
              "TRAN＝過渡、-＝資料缺"
              "｜seat：C1-C5＝核心席次、S1-S5＝衛星席次｜moat：字母＝評級，+/=/-＝護城河趨勢升/平/降"
@@ -552,11 +552,13 @@ def render_board_text(as_of, rows, core_seats, sat_seats, prev_snap, entered, la
 # _arena_body.html body（後者另有 common.py PAGE_CSS，兩邊 class 名不衝突，token 共用
 # /assets/imq-base.css，故顏色與字體在兩處視覺一致）。
 
-_TIMING_HTML = {   # p_label -> (dot, 中文, 色系)；色系對應 bw-pill-{cls}
-    "breakout": ("🟢", "突破帶", "up"),
-    "pullback": ("🟢", "回踩", "up"),
-    "in_trend": ("🟡", "趨勢內", "neu"),
-    "overheated": ("🟠", "過熱", "warn"),
+_TIMING_HTML = {   # p_label -> (中文一詞, 色系)；色系對應 bw-pill-{cls}
+    # 2026-09-08：欄名「時機燈」改叫「位置」（與 stages 的「時機」欄改叫「階段」
+    # 區分開）——值改成一詞白話（不再用色點 emoji 當主要視覺，顏色交給 bw-pill-{cls}）。
+    "breakout": ("突破", "up"),
+    "pullback": ("回踩", "up"),
+    "in_trend": ("趨勢", "neu"),
+    "overheated": ("過熱", "warn"),
 }
 
 # note 欄 chip 化：why[] 裡固定句型 -> (短 chip 文字, 原句當 title)。順序即比對順序，
@@ -661,14 +663,14 @@ def _stage_pill(ticker: str, lamp_map: dict) -> str:
 
 
 def _timing_pill(p_label, r26, dist_hi) -> str:
-    dot, label, cls = _TIMING_HTML.get(p_label, ("🔴", "線下", "dn"))
+    label, cls = _TIMING_HTML.get(p_label, ("線下", "dn"))
     bits = []
     if r26 is not None:
         bits.append(f"26 週漲幅 {r26:+.1f}%")
     if dist_hi is not None:
         bits.append(f"距 52 週高 {dist_hi:+.1f}%")
-    title = "；".join(bits) or "時機資料缺"
-    return f'<span class="bw-pill bw-pill-{cls}" title="{escape(title)}">{dot} {escape(label)}</span>'
+    title = "；".join(bits) or "位置資料缺"
+    return f'<span class="bw-pill bw-pill-{cls}" title="{escape(title)}">{escape(label)}</span>'
 
 
 def _rev_pill(r_fy1) -> str:
@@ -763,7 +765,7 @@ function refreshStageLamp(){
     });
     if(d&&d.as_of){
       document.querySelectorAll('.stage-lamp-asof').forEach(function(el){
-        el.textContent='（時機欄資料日 '+d.as_of+'）';
+        el.textContent='（階段資料日 '+d.as_of+'）';
       });
     }
   }).catch(function(){ /* 缺檔或壞檔：保留看板片段建置期的值 */ });
@@ -795,8 +797,8 @@ def render_board_html(as_of, rows, core_seats, sat_seats, prev_snap, entered, la
              '<th title="自由現金流利潤率">FCF%</th>'
              '<th title="PEG＝FY1 P/E ÷ 成長%">PEG</th>'
              '<th title="FY+1 單月 EPS 修正——燈號不參與排序；≤−10% 為資格否決線">上修燈</th>'
-             '<th title="52 週位置與熱度燈號——不參與排序，見各燈 title">時機燈</th>'
-             '<th class="bw-l" title="這檔現在在生命週期哪一段，只是燈號，不影響排序（來源：個股階段雷達 /stages/）">時機</th>'
+             '<th>位置</th>'
+             '<th class="bw-l">階段</th>'
              '<th class="bw-l" title="目前坐核心／衛星席次；空白＝未坐席">席</th>'
              '<th class="bw-l" title="DD 裁決標籤——只做 veto（迴避）與角色標籤，不參與排序；⚠過期＝逾 180 天">DD</th>'
              '<th class="bw-l" title="護城河評級與趨勢：字母＝評級，↑升 →平 ↓降">護城河</th>'
@@ -838,8 +840,8 @@ def render_board_html(as_of, rows, core_seats, sat_seats, prev_snap, entered, la
     prev_seats.update({t: "衛星席" for t in prev_snap.get("sat", [])})
     track_code = {"核心席": "C", "衛星席": "S"}
     seat_thead = ("<tr><th class=\"bw-l\">席</th><th class=\"bw-l\">Ticker</th>"
-                  "<th>擁有層分</th><th class=\"bw-l\">時機燈</th>"
-                  "<th class=\"bw-l\" title=\"這檔現在在生命週期哪一段，只是燈號，不影響排序（來源：個股階段雷達 /stages/）\">時機</th>"
+                  "<th>擁有層分</th><th class=\"bw-l\">位置</th>"
+                  "<th class=\"bw-l\">階段</th>"
                   "<th class=\"bw-l\">DD</th><th class=\"bw-l\">遲滯</th></tr>")
     seat_rows = []
     for track_label, seats, code_letter in (("核心席", core_seats, "C"), ("衛星席", sat_seats, "S")):
@@ -884,7 +886,7 @@ def render_board_html(as_of, rows, core_seats, sat_seats, prev_snap, entered, la
     ng = [r for r in entered if not r["grp"]["pass"]]
     dd_gate_sub = f"進場 {len(entered)}：過閘 {ok_n}／未過 {len(ng)}"
     if ng:
-        ng_thead = '<tr><th class="bw-l">Ticker</th><th class="bw-l">時機燈</th><th class="bw-l">原因</th></tr>'
+        ng_thead = '<tr><th class="bw-l">Ticker</th><th class="bw-l">位置</th><th class="bw-l">原因</th></tr>'
         ng_rows = []
         for r in ng:
             g = r["grp"]
@@ -904,7 +906,7 @@ def render_board_html(as_of, rows, core_seats, sat_seats, prev_snap, entered, la
     if qgm_cands:
         q_thead = ('<tr><th class="bw-l">Ticker</th><th>擁有層分</th>'
                    '<th title="FY1→FY2 單年成長率（yfinance）——非 DD 池慣用的 FY1→FY3 CAGR，兩把尺不等長">成長%（單年）</th>'
-                   '<th>ROIC%</th><th>FCF%</th><th>距高%</th><th class="bw-l">時機燈</th></tr>')
+                   '<th>ROIC%</th><th>FCF%</th><th>距高%</th><th class="bw-l">位置</th></tr>')
         q_rows = []
         for r in qgm_cands:
             g = r["grp"]
@@ -921,21 +923,20 @@ def render_board_html(as_of, rows, core_seats, sat_seats, prev_snap, entered, la
 
     head_line = f"選股看板 v2 · as_of {as_of} · 母體 {len(rows)}（美股含 ADR；台股另建）"
     rule_line = ("排序＝擁有層分（min(成長，30)＋FY1 盈餘殖利率；ROIC≥30 +2；PEG>2 −5）"
-                 "· 資格＝品質閘×成長閘×市值 · 時機燈不進排序 · 時機（生命週期階段）只是燈號、不影響排序"
-                 "· DD 只 veto／角色")
+                 "· 資格＝品質閘×成長閘×市值 · DD 只 veto／角色")
+    timing_note = "位置與階段都只是燈號，不進排序。"
 
     return (
         '<div class="board-wrap">' + _BOARD_CSS
         + f'<div class="bw-head">{escape(head_line)}</div>'
         + f'<div class="bw-rule">{escape(rule_line)}</div>'
+        + f'<div class="bw-rule">{escape(timing_note)}</div>'
         + '<h3 class="bw-sec">目前席位：核心 5 ＋ 衛星 5</h3>'
         + '<div class="bw-sub">這就是本週的陣容。C1–C5＝核心席次、S1–S5＝衛星席次；'
           'NEW＝本期新換入、FROM:X＝跨軌轉入。</div>'
         + seat_tbl + changes_html
         + '<h3 class="bw-sec">全母體看板（擁有層排序）</h3>'
-        + '<div class="bw-sub">席位是從這張表由上往下挑出來的；排序只看擁有層分，時機燈只是燈號。'
-          '「時機」欄也是——這檔現在在生命週期哪一段，只是燈號，不影響排序'
-          '<span class="stage-lamp-asof"></span>。</div>'
+        + '<div class="bw-sub">席位是從這張表由上往下挑出來的<span class="stage-lamp-asof"></span>。</div>'
         + main_tbl
         + '<h3 class="bw-sec">DD 進場 vs 機械資格</h3>'
         + f'<div class="bw-sub">{escape(dd_gate_sub)}——過閘者已在席位或候補中，這裡只列未過者供人工複審。</div>'
@@ -1253,7 +1254,7 @@ DD 角色與機械軌別衝突標 ⚠ 供人裁。三閘未過的進場票落板
 <div class="asof">資料源 dd-screener latest.json ＋ QGM 品質池（US／TW）＋週線 cache ｜ v2 擁有層×時機層 ｜ 週更</div>
 </div>
 <div class="block"><h2>選股看板 v2</h2>
-<div class="block-sub">擁有層排序（值不值得擁有）與時機燈（現在能不能動）分開讀；DD 只做 veto 與角色標籤。</div>
+<div class="block-sub">擁有層排序（值不值得擁有）與位置、階段（現在能不能動）分開讀；DD 只做 veto 與角色標籤。</div>
 {board_html}</div>
 <div class="stat-row">
 <div class="stat"><strong>{dial['label'] if dial['level'] else '—'}</strong><span>Regime 撥盤（{dial['level'] if dial['level'] else '—'}×）</span></div>
