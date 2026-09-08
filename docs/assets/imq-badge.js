@@ -364,46 +364,50 @@
     if (!s || s.length < 6) return null;
     return "S" + s.charAt(s.length - 6);
   }
+  // v2（同 scripts/build_stages.py::build_transitions_table）：不看「60 日內
+  // 是否曾觸及」，改看第 60 日當天的 end_stage，以及期間（跳過 S9 過渡日）
+  // 到過的最高 peak_stage——避免把「剛脫離深回檔、第 60 日前仍貼過一天 200
+  // 日均線下」誤記成一次完整的跌回弱勢。
+  var STAGE_DIGIT_RANK = { "0": 0, "1": 1, "2": 2, "3": 3, "4": 4 };
   function computeHitRates(idx) {
     var dates = idx.historyDates || [];
     var n = dates.length;
     var maxI = n - 1 - 60;
     var specs = [
-      { code: "S1", qb: "pass", label: "品質過 × 轉強", mode: "s1" },
-      { code: "S0", qb: "pass", label: "品質過 × 弱勢", mode: "s0-pass" },
-      { code: "S4", qb: "fail", label: "品質未過 × 領先", mode: "s4-fail" },
-      { code: "S0", qb: "fail", label: "品質未過 × 弱勢", mode: "s0-fail" }
+      { code: "S1", qb: "pass", label: "品質過 × 轉強" },
+      { code: "S0", qb: "pass", label: "品質過 × 弱勢" },
+      { code: "S4", qb: "fail", label: "品質未過 × 領先" },
+      { code: "S0", qb: "fail", label: "品質未過 × 弱勢" }
     ];
     if (maxI < 1) return specs.map(function (s) { return { label: s.label, n: 0, detail: "" }; });
     return specs.map(function (spec) {
       var ch = spec.code.replace("S", "");
-      var upRe = (spec.mode === "s1") ? /[34]/ : (/[1234]/);
-      var downRe = /0/;
-      var count = 0, upHit = 0, downHit = 0;
+      var count = 0, endS3S4 = 0, endS0 = 0, peakS3plus = 0;
       Object.keys(idx.historyStages).forEach(function (tk) {
         var s = idx.historyStages[tk];
         if (!s || s.length !== n) return;
         if (qualityBucketKey(idx.quality[tk]) !== spec.qb) return;
         for (var i = 1; i <= maxI; i++) {
-          if (s.charAt(i) === ch && s.charAt(i - 1) !== ch) {
-            count++;
-            var win = s.substring(i + 1, i + 1 + 60);
-            if (upRe.test(win)) upHit++;
-            if (downRe.test(win)) downHit++;
+          if (s.charAt(i) !== ch || s.charAt(i - 1) === ch) continue;
+          count++;
+          var endCh = s.charAt(i + 60);
+          if (endCh === "3" || endCh === "4") endS3S4++;
+          if (endCh === "0") endS0++;
+          var peakRank = -1;
+          for (var k = i + 1; k <= i + 60; k++) {
+            var c = s.charAt(k);
+            if (c === "9") continue;
+            var r = STAGE_DIGIT_RANK[c];
+            if (r !== undefined && r > peakRank) peakRank = r;
           }
+          if (peakRank >= STAGE_DIGIT_RANK["3"]) peakS3plus++;
         }
       });
       var detail = "";
       if (count > 0) {
-        if (spec.mode === "s1") {
-          detail = "60 日內走到收縮完成或領先 " + fmt1(upHit / count * 100) + "%、跌回弱勢 " + fmt1(downHit / count * 100) + "%";
-        } else if (spec.mode === "s0-pass") {
-          detail = "60 日內回升到轉強以上 " + fmt1(upHit / count * 100) + "%、仍在弱勢或過渡 " + fmt1(100 - upHit / count * 100) + "%";
-        } else if (spec.mode === "s4-fail") {
-          detail = "60 日內跌回弱勢 " + fmt1(downHit / count * 100) + "%";
-        } else {
-          detail = "60 日內回升到轉強以上 " + fmt1(upHit / count * 100) + "%、仍在弱勢或過渡（續弱）" + fmt1(100 - upHit / count * 100) + "%";
-        }
+        detail = "第 60 日在收縮完成或領先 " + fmt1(endS3S4 / count * 100) +
+          "%、期間曾到收縮完成以上 " + fmt1(peakS3plus / count * 100) +
+          "%、第 60 日在弱勢 " + fmt1(endS0 / count * 100) + "%";
       }
       return { label: spec.label, n: count, detail: detail };
     });

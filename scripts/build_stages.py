@@ -60,6 +60,10 @@ LAMP_JSON = DATA_DIR / 'lamp.json'
 DOCS_T_DIR = ROOT / 'docs' / 't'
 
 DEFINITION_VERSION = "v1"
+TRANSITIONS_VERSION = "v2"  # 2026-09 owner decision: end-state + peak-state,
+# not "ever touched" (S1 的「曾觸及弱勢」在舊口徑下把「剛脫離深回檔、第 60 日
+# 前仍有一天貼在 200 日均線下」誤記成 74–78% 的假警訊；v2 只看第 60 日當天在
+# 哪一段，以及期間到過的最高段，見 build_transitions_table()).
 
 STAGE_NAMES = {'S0': '弱勢', 'S1': '轉強', 'S2': '築底', 'S3': '收縮完成',
                'S4': '領先', 'S9': '過渡'}
@@ -299,19 +303,33 @@ def merge_history(existing, window_dates, stage_window, qqq_window):
     return merged
 
 
-# ── transitions (§4) ───────────────────────────────────────────────────────
-def compute_transitions(stage_window, from_stage, to_stages):
+# ── transitions v2 (§4, 2026-09 owner decision — end-state + peak-state) ───
+# Old v1 counted "ever touched stage X within FORWARD_DAYS", which read a
+# name that merely brushed S0 for a single day (common right after leaving a
+# deep pullback, while still under its 200dma) as a full round-trip back to
+# 弱勢. v2 instead asks two separate questions per qualifying entry event:
+#   end_stage  = stage exactly FORWARD_DAYS later (may be S9)
+#   peak_stage = highest ORDERED_STAGES stage touched in (t, t+FORWARD_DAYS],
+#                ignoring S9 days entirely (S9 is outside the lifecycle order)
+ORDERED_STAGES = ('S0', 'S1', 'S2', 'S3', 'S4')  # lifecycle order; S9 excluded
+STAGE_RANK = {s: i for i, s in enumerate(ORDERED_STAGES)}
+END_BUCKETS = ('S0', 'S1', 'S2', 'S3', 'S4', 'S9')
+
+
+def _raw_transition_stats(stage_window, from_stage):
     """For every ticker, every entry into `from_stage` (prior day != it) that
     is >= RECENCY_MIN_DAYS trading days old (i.e. has a full FORWARD_DAYS of
-    realized forward data), check whether the following FORWARD_DAYS ever
-    touched each of `to_stages`. Returns (n, {to: pct}, still_pct) where
-    still_pct = share of qualifying entries whose forward window never
-    touched ANY tracked destination."""
+    realized forward data), records end_stage (day t+FORWARD_DAYS) and
+    peak_stage (highest ORDERED_STAGES stage in (t, t+FORWARD_DAYS], S9 days
+    skipped). Returns raw (unrounded) counts, not percentages, so several
+    from-stage results can be summed into the pooled baseline without a
+    round-then-sum error."""
     values = stage_window.values
     n_dates = values.shape[0]
-    hit = {s: 0 for s in to_stages}
+    end_counts = {s: 0 for s in END_BUCKETS}
+    peak_s3plus = 0
+    peak_s4 = 0
     n_events = 0
-    still = 0
     for j in range(values.shape[1]):
         col = values[:, j]
         for i in range(1, n_dates):
@@ -319,39 +337,58 @@ def compute_transitions(stage_window, from_stage, to_stages):
                 continue
             if i > n_dates - 1 - FORWARD_DAYS:
                 continue  # not >= RECENCY_MIN_DAYS old yet (== FORWARD_DAYS here)
-            window = col[i + 1:i + 1 + FORWARD_DAYS]
             n_events += 1
-            hit_any = False
-            for s in to_stages:
-                if s in window:
-                    hit[s] += 1
-                    hit_any = True
-            if not hit_any:
-                still += 1
-    pct = {s: (round(100.0 * hit[s] / n_events, 1) if n_events else None) for s in to_stages}
-    still_pct = round(100.0 * still / n_events, 1) if n_events else None
-    return n_events, pct, still_pct
+            end_stage = col[i + FORWARD_DAYS]
+            end_counts[end_stage] = end_counts.get(end_stage, 0) + 1
+            peak_rank = -1
+            for k in range(i + 1, i + 1 + FORWARD_DAYS):
+                c = col[k]
+                if c == 'S9':
+                    continue
+                r = STAGE_RANK.get(c)
+                if r is not None and r > peak_rank:
+                    peak_rank = r
+            if peak_rank >= STAGE_RANK['S3']:
+                peak_s3plus += 1
+            if peak_rank == STAGE_RANK['S4']:
+                peak_s4 += 1
+    return {'n': n_events, 'end_counts': end_counts, 'peak_s3plus': peak_s3plus, 'peak_s4': peak_s4}
+
+
+def _finalize_transition_stats(raw):
+    n = raw['n']
+    end_pct = {s: (round(100.0 * raw['end_counts'][s] / n, 1) if n else None) for s in END_BUCKETS}
+    peak_S3plus_pct = round(100.0 * raw['peak_s3plus'] / n, 1) if n else None
+    peak_S4_pct = round(100.0 * raw['peak_s4'] / n, 1) if n else None
+    return {
+        'n': n,
+        'end_pct': end_pct,
+        'peak_S3plus_pct': peak_S3plus_pct,
+        'peak_S4_pct': peak_S4_pct,
+        'end_S0_pct': end_pct['S0'],
+        'low_sample': bool(n < LOW_SAMPLE_N),
+    }
 
 
 def build_transitions_table(stage_window):
+    """Returns {'rows': [per-from-stage v2 stats for S0/S1/S2/S3],
+    'baseline': v2 stats pooled over entry events of EVERY ordered stage
+    (S0..S4) — the unconditional 母體無條件比率 the page's 可證偽 line
+    compares 轉強's peak_S3plus_pct against."""
+    raws = {s: _raw_transition_stats(stage_window, s) for s in ORDERED_STAGES}
     rows = []
-    specs = [
-        ('S1', ['S3', 'S4', 'S0'], True),
-        ('S2', ['S3', 'S4'], False),
-        ('S3', ['S4', 'S0'], False),
-    ]
-    for from_stage, to_stages, want_still_label in specs:
-        n, pct, still_pct = compute_transitions(stage_window, from_stage, to_stages)
-        row = {'from': from_stage, 'n': n}
-        for s in to_stages:
-            row[f'to_{s}_pct'] = pct[s]
-        if want_still_label:
-            row['still_S1_or_S2_pct'] = still_pct
-        else:
-            row['still_pct'] = still_pct
-        row['low_sample'] = bool(n < LOW_SAMPLE_N)
+    for from_stage in ('S0', 'S1', 'S2', 'S3'):
+        row = {'from': from_stage}
+        row.update(_finalize_transition_stats(raws[from_stage]))
         rows.append(row)
-    return rows
+    baseline_raw = {
+        'n': sum(raws[s]['n'] for s in ORDERED_STAGES),
+        'end_counts': {b: sum(raws[s]['end_counts'][b] for s in ORDERED_STAGES) for b in END_BUCKETS},
+        'peak_s3plus': sum(raws[s]['peak_s3plus'] for s in ORDERED_STAGES),
+        'peak_s4': sum(raws[s]['peak_s4'] for s in ORDERED_STAGES),
+    }
+    baseline = _finalize_transition_stats(baseline_raw)
+    return {'rows': rows, 'baseline': baseline}
 
 
 # ── per-ticker path / stage_since (from the MERGED, potentially
@@ -479,6 +516,7 @@ def build():
     latest_payload = {
         'schema': 'stages-v1',
         'definition_version': DEFINITION_VERSION,
+        'transitions_version': TRANSITIONS_VERSION,
         'as_of': as_of,
         'run_timestamp': run_started.isoformat(),
         'benchmark': benchmark,
@@ -510,8 +548,9 @@ def build():
     print(f"  ✓ wrote {LATEST_JSON.relative_to(ROOT)}: counts_today={counts_today} rows={len(rows)}")
     print(f"  ✓ wrote {HISTORY_JSON.relative_to(ROOT)}: {len(merged_history['dates'])} dates")
     print(f"  ✓ wrote {LAMP_JSON.relative_to(ROOT)}: {len(lamp)} tickers")
-    for row in transitions:
+    for row in transitions['rows']:
         print(f"  transitions {row['from']}: n={row['n']} {row}")
+    print(f"  transitions baseline: n={transitions['baseline']['n']} {transitions['baseline']}")
     return latest_payload
 
 

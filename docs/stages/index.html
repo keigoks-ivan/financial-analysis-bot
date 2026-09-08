@@ -158,7 +158,7 @@ details.howto code{font-family:var(--mono);font-size:.78rem;background:var(--lin
         <li><b>對純技術交易者，最有價值的是「收縮完成」。</b>它是最緊、最可證偽的狀態：關鍵價位明確、停損位置明確、幾週內就知道對錯，Minervini 的優勢全在這一段。但對以擁有為先的組合，它是次要的。</li>
         <li><b>真正的價值在轉場，不在單一階段。</b>走完「弱勢→轉強→築底」這條路的名字，比任何一個靜態階段都有資訊，所以轉場基率表放在名單前面。</li>
       </ul>
-      <p class="usefor-close">結語（可證偽）：這頁有沒有用，看兩個數字——轉強名單在 60 個交易日內走到收縮完成或領先的比例<span class="mark">①</span>，應明顯高於全母體；跌回弱勢的比例<span class="mark">②</span>，應明顯低於弱勢名單的續弱率。若沒有這個差距，轉強就只是雜訊。這兩個數字直接讀上方轉場基率表「轉強」列標<span class="mark">①</span><span class="mark">②</span>的兩格。</p>
+      <p class="usefor-close" id="usefor-close">結語（可證偽）：資料尚未產出。</p>
     </div>
   </div>
 
@@ -190,16 +190,20 @@ details.howto code{font-family:var(--mono);font-size:.78rem;background:var(--lin
       <table class="stg-table" id="trans-table">
         <thead>
           <tr>
-            <th>來源段</th><th>樣本數</th><th>60 日內到收縮完成</th><th>60 日內到領先</th>
-            <th>跌回弱勢</th><th>60 日後仍原地</th>
+            <th rowspan="2">進入段</th><th rowspan="2">樣本數</th>
+            <th colspan="6">第 60 日在</th>
+            <th rowspan="2">期間曾到收縮完成以上</th><th rowspan="2">期間曾到領先</th>
+          </tr>
+          <tr>
+            <th>弱勢</th><th>轉強</th><th>築底</th><th>收縮完成</th><th>領先</th><th>過渡</th>
           </tr>
         </thead>
         <tbody id="trans-tbody">
-          <tr><td colspan="6" class="empty" style="border:0">資料尚未產出</td></tr>
+          <tr><td colspan="10" class="empty" style="border:0">資料尚未產出</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="explain-p">這是過去 250 個交易日回算，不是預測。</p>
+    <p class="explain-p">第 60 個交易日所在的階段，以及期間到過的最高階段；過去 250 個交易日回算，描述現況不預測。</p>
   </div>
 
   <div class="sec">
@@ -245,7 +249,7 @@ details.howto code{font-family:var(--mono);font-size:.78rem;background:var(--lin
         <p><b>RS 12 個月百分位</b> ＝ （2×近 63 日報酬 ＋ 近 126 日報酬 ＋ 近 189 日報酬 ＋ 近 252 日報酬）在當日全母體中的百分位排名。</p>
         <p><b>ATR 比率</b> ＝ 近 10 日真實區間（True Range，取當日高低價差與前一日收盤價差中最大者）均值 ÷ 近 60 日同一指標均值。<b>量比</b> ＝ 近 10 日均量 ÷ 近 50 日均量。</p>
         <p><b>延伸</b>旗標 ＝ 現價比 21 日 EMA 高 15% 以上，或 14 日 RSI 超過 80。<b>RS 線新高</b>旗標 ＝ 現價／SPY 這條相對強度線，在近一年高點的 0.5% 以內。</p>
-        <p><b>轉場基率</b>：對過去 250 個交易日內每一次「進入某段」事件（距今至少 60 個交易日，確保有完整的 60 日後續資料），統計 60 個交易日內是否曾到達指定的目標段。樣本數低於 20 標「樣本不足」。</p>
+        <p><b>轉場基率（v2）</b>：對過去 250 個交易日內每一次「進入某段」事件（距今至少 60 個交易日，確保有完整的 60 日後續資料），記錄第 60 個交易日當天所在的階段（<b>第 60 日在</b>），以及期間（不含 S9 過渡日）到過的最高階段（<b>期間曾到收縮完成以上／期間曾到領先</b>）。「全母體（無條件）」列把弱勢／轉強／築底／收縮完成／領先五段的進入事件全部合併計算，當作沒有條件時的比較基準。樣本數低於 20 標「樣本不足」。</p>
         <p><b>目前資料</b>：<span id="howto-asof">—</span></p>
       </div>
     </details>
@@ -329,33 +333,63 @@ details.howto code{font-family:var(--mono);font-size:.78rem;background:var(--lin
     }
   }
 
-  // ── 轉場基率表 ──────────────────────────────────────────────────
+  // ── 轉場基率表（v2：第 60 日在哪一段＋期間到過的最高段） ──────────────
+  var TRANS_LABEL = { S0: "弱勢", S1: "轉強", S2: "築底", S3: "收縮完成", S4: "領先", baseline: "全母體（無條件）" };
+
   function transRowHtml(row) {
     var lowNote = row.low_sample ? '<span class="low-sample">（樣本不足）</span>' : "";
-    var toS3 = row.to_S3_pct != null ? fmtPct(row.to_S3_pct) : "—";
-    var toS4 = row.to_S4_pct != null ? fmtPct(row.to_S4_pct) : "—";
-    var toS0 = row.to_S0_pct != null ? fmtPct(row.to_S0_pct) : "—";
-    var still = row.still_S1_or_S2_pct != null ? row.still_S1_or_S2_pct
-      : (row.still_pct != null ? row.still_pct : null);
-    var mark3 = row.from === "S1" ? '<span class="mark">①</span>' : "";
-    var mark0 = row.from === "S1" ? '<span class="mark">②</span>' : "";
+    var ep = row.end_pct || {};
+    var mark1 = (row.from === "S1" || row.from === "baseline") ? '<span class="mark">①</span>' : "";
+    var mark2 = (row.from === "S1" || row.from === "S0") ? '<span class="mark">②</span>' : "";
     return "<tr>" +
-      "<td>" + esc(STAGE_LABEL[row.from] || row.from) + lowNote + "</td>" +
+      "<td>" + esc(TRANS_LABEL[row.from] || row.from) + lowNote + "</td>" +
       '<td class="num">' + row.n + "</td>" +
-      '<td class="num">' + toS3 + mark3 + "</td>" +
-      '<td class="num">' + toS4 + mark3 + "</td>" +
-      '<td class="num">' + toS0 + mark0 + "</td>" +
-      '<td class="num">' + (still != null ? fmtPct(still) : "—") + "</td>" +
+      '<td class="num">' + fmtPct(ep.S0) + mark2 + "</td>" +
+      '<td class="num">' + fmtPct(ep.S1) + "</td>" +
+      '<td class="num">' + fmtPct(ep.S2) + "</td>" +
+      '<td class="num">' + fmtPct(ep.S3) + "</td>" +
+      '<td class="num">' + fmtPct(ep.S4) + "</td>" +
+      '<td class="num">' + fmtPct(ep.S9) + "</td>" +
+      '<td class="num">' + fmtPct(row.peak_S3plus_pct) + mark1 + "</td>" +
+      '<td class="num">' + fmtPct(row.peak_S4_pct) + "</td>" +
       "</tr>";
   }
 
   function renderTransitions(latest) {
     var tbody = document.getElementById("trans-tbody");
-    if (!latest || latest.schema !== "stages-v1" || !latest.transitions || !latest.transitions.length) {
-      tbody.innerHTML = '<tr><td colspan="6" class="empty" style="border:0">資料尚未產出</td></tr>';
+    var t = latest && latest.transitions;
+    if (!latest || latest.schema !== "stages-v1" || !t || !t.rows || !t.rows.length || !t.baseline) {
+      tbody.innerHTML = '<tr><td colspan="10" class="empty" style="border:0">資料尚未產出</td></tr>';
       return;
     }
-    tbody.innerHTML = latest.transitions.map(transRowHtml).join("");
+    var baselineRow = { from: "baseline" };
+    Object.keys(t.baseline).forEach(function (k) { baselineRow[k] = t.baseline[k]; });
+    tbody.innerHTML = t.rows.map(transRowHtml).join("") + transRowHtml(baselineRow);
+  }
+
+  // ── 「哪一段最有用」結語：可證偽的兩個數字，直接讀 v2 欄位 ───────────
+  function renderFalsifiability(latest) {
+    var el = document.getElementById("usefor-close");
+    if (!el) return;
+    var t = latest && latest.transitions;
+    if (!latest || latest.schema !== "stages-v1" || !t || !t.rows || !t.baseline) {
+      el.textContent = "結語（可證偽）：資料尚未產出。";
+      return;
+    }
+    var s1 = t.rows.filter(function (r) { return r.from === "S1"; })[0];
+    var s0 = t.rows.filter(function (r) { return r.from === "S0"; })[0];
+    var baseline = t.baseline;
+    if (!s1 || !s0) {
+      el.textContent = "結語（可證偽）：資料尚未產出。";
+      return;
+    }
+    el.innerHTML =
+      "結語（可證偽）：這頁有沒有用，看兩個數字——轉強名單期間曾到收縮完成以上的比例" +
+      '<span class="mark">①</span>（' + fmtPct(s1.peak_S3plus_pct) + "，n＝" + s1.n + "），應明顯高於全母體無條件比率（" +
+      fmtPct(baseline.peak_S3plus_pct) + "，n＝" + baseline.n + "）；轉強名單第 60 日仍在弱勢的比例" +
+      '<span class="mark">②</span>（' + fmtPct(s1.end_S0_pct) + "，n＝" + s1.n + "），應明顯低於弱勢名單自身的續弱率（" +
+      fmtPct(s0.end_S0_pct) + "，n＝" + s0.n + "）。若沒有這個差距，轉強就只是雜訊。這兩個數字直接讀上方轉場基率表" +
+      '「轉強」列標<span class="mark">①</span><span class="mark">②</span>的兩格。';
   }
 
   // ── 名單（四分頁） ──────────────────────────────────────────────
@@ -591,6 +625,7 @@ details.howto code{font-family:var(--mono);font-size:.78rem;background:var(--lin
     var latest = res[0], history = res[1];
     renderCounts(latest);
     renderTransitions(latest);
+    renderFalsifiability(latest);
     renderRows(latest);
     renderStageChart(history);
     if (window.IMQBadge) window.IMQBadge.mountMatrix("qt-matrix-mount", { universe: "all" });
