@@ -109,20 +109,24 @@ ISHARES_IWB_URL = (
     '1467271812596.ajax?fileType=csv&fileName=IWB_holdings&dataType=fund'
 )
 
-DEFINITION_VERSION = "v1"
+DEFINITION_VERSION = "v2"
 
 # ── PARAMS (LOCKED — all thresholds live here + DEFINITION_VERSION; a change
 #    requires bumping DEFINITION_VERSION, see design spec §0 "參數凍結") ──
 PARAMS = {
     # six-condition thresholds (design spec §4)
-    "rs_accel_min": 10,          # pt — condition 1
+    "rs_accel_min": 20,           # pt — condition 1 (v2, 2026-09-08: tightened 10->20, owner
+                                  # feedback that the v1 list (~50 names) was far broader than the
+                                  # ~15-name reference post; grid-searched, see design spec §4 note)
     "rs21_min": 0,                # pt — condition 1
-    "pullback_min_pct": -15,      # % — condition 2 (pullback_pct <= this)
+    "pullback_min_pct": -25,      # % — condition 2 (pullback_pct <= this; v2: tightened -15->-25, same sweep)
     "dist_high_max_pct": -8,      # % — condition 5 (dist_high_pct <= this)
     "range_pos_min": 0.7,         # 0-1 — condition 4 (range_pos >= this)
     "adv_min_usd": 20000000,      # condition 6
     "price_min": 5,               # condition 6
-    "accel_label_min": 20,        # pt — "偏加速中" status label threshold
+    "accel_label_min": 25,        # pt — "偏加速中" status label threshold (v2: raised 20->25 in lockstep
+                                  # with rs_accel_min's 10->20 so the label still marks a tier ABOVE the
+                                  # entry gate, not merely "cleared the gate")
     "deep_pullback_tag_min_pct": -25,  # tag rule: pullback_pct <= this
     # scope / data-quality thresholds
     "benchmark": "QQQ",
