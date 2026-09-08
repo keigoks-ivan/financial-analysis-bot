@@ -1008,7 +1008,7 @@ def generate_html(sigs: dict, changes: list | None, last_change_date: str | None
          '<br><span style="font-size:.78rem;color:var(--muted)">下一個交易日將部位調整至上列目標。</span></div>')
         if changes else
         ('<div style="text-align:center;font-size:.78rem;color:var(--muted);margin:.3rem 0 1rem">'
-         '無可行動變化（四腿閘門未翻轉、且無標的目標與現持差 ≥ 20pp）' +
+         '無可行動變化（四腿目標與現持執行層差皆 < 20pp；閘門翻轉本身不觸發，須一併達 20pp 門檻）' +
          (f'（上次變化：{last_change_date}）' if last_change_date else '') + '</div>'))
 
     markets_html = "\n".join(market_html(m, sigs, md_map[m["key"]]) for m in MARKETS)
@@ -1148,7 +1148,7 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 
 <div class="oos-banner">
   <span class="tag-loud">實單主系統・2026-07-18 起・cap 1.5（美+台）・email 提醒可行動變化</span>
-  <div style="font-size:.86rem">本頁是<b>{FREEZE_DATE} 凍結、2026-07-18 起正式採用的實單主系統</b>：<b>W52 單線閘門 × 自適應 σ 波動率目標 cap 1.5 × 執行層 A2（20pp 門檻＋10% 取整＋clamp 150%）</b>（美台四腿、各市場 50/50 獨立組合，曝險可上到 150%）。真波動率目標＝只在平靜 regime σ_t/RV &gt; 1 時借錢加碼、波動一高自動降回。每交易日台股／美股收盤後更新，<b>可行動變化以 email 提醒</b>（任一腿閘門翻轉，或今日目標與現持執行層差 ≥ 20pp）。
+  <div style="font-size:.86rem">本頁是<b>{FREEZE_DATE} 凍結、2026-07-18 起正式採用的實單主系統</b>：<b>W52 單線閘門 × 自適應 σ 波動率目標 cap 1.5 × 執行層 A2（20pp 門檻＋10% 取整＋clamp 150%）</b>（美台四腿、各市場 50/50 獨立組合，曝險可上到 150%）。真波動率目標＝只在平靜 regime σ_t/RV &gt; 1 時借錢加碼、波動一高自動降回。每交易日台股／美股收盤後更新，<b>可行動變化以 email 提醒</b>（任一腿今日目標與現持執行層差 ≥ 20pp；<b>閘門翻轉本身不構成觸發，須一併達到 20pp 門檻</b>，與回測 A2 一致）。
   <br><br><b>誠實紀律（兩點白紙黑字）</b>：<b>①</b> <b>原「實單前複審關卡」不再作為前置條件</b>，改為<b>上線後回顧點（60 個追蹤交易日，或首次 ≥ 10% 組合回撤事件）</b>——即先上實單、再於回顧點檢驗水下體驗是否符合預期。<b>②</b> <b>美股採 cap 1.5 是「知情決策」</b>：研究顯示<b>美股這一腿槓桿的風險調整報酬（Calmar）較不划算</b>、任何融資利差下都不佔優，<b>選擇兩市場一致性與報酬（而非風險調整最優）</b>，明知美股這一腿是為對稱操作付的代價。<b>此外</b>：槓桿放大所有模型誤差、深熊未實測（見 2330 長窗與誠實揭露）、台股須用期貨非融資、實際峰值建議壓 140% 留保證金緩衝。</div>
 </div>
 
@@ -1173,7 +1173,7 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 ⑥ <b>最終權重</b> = 0.5 × 閘門(0/1) × 套袖權重，每市場兩腿各自計算。<br>
 ⑦ <b>資料揭露</b>：yfinance auto-adjust（還原股價）；0050.TW 2014-01-02 幻影分割壞 bar 由腳本自動修復（回溯縮放，門檻單日 ±40%，台股漲跌停 ±10% 不可能誤觸）；0050 免費歷史約 2009 起。台股 2330 佔 0050 約五成，50/50 組合等效台積電曝險 ≈ 75%，非分散組合。<br>
 ⑧ <b>執行層 A2（規則凍結 {FREEZE_DATE}）</b>：|目標 − 現持| ≥ 20pp 才調整，調整取整至 10% 格、再 clamp 於 50×cap（cap1.5→75pp／組合 150%）；<b>回測主數字含此執行層</b>，與追蹤操作同規則（兩市場各自獨立重放）。<br>
-<span style="color:var(--muted);font-size:.78rem">閘門為週頻（僅週五可能翻轉），套袖 RV20／σ_t 為日頻，故本頁每交易日更新（台股收盤後、美股收盤後各一次，date-keyed 冪等）。<b>本頁為實單主系統、發 email 提醒</b>——可行動變化＝任一腿閘門翻轉，或今日目標與現持（執行層 executed）差 ≥ 20pp。</span>
+<span style="color:var(--muted);font-size:.78rem">閘門為週頻（僅週五可能翻轉），套袖 RV20／σ_t 為日頻，故本頁每交易日更新（台股收盤後、美股收盤後各一次，date-keyed 冪等）。<b>本頁為實單主系統、發 email 提醒</b>——可行動變化＝任一腿今日目標與現持（執行層 executed）差 ≥ 20pp；<b>閘門翻轉本身不觸發通知，須一併達 20pp 門檻</b>（與回測 A2 執行層一致）。</span>
 </div>
 </div>
 
@@ -1274,10 +1274,16 @@ window.addEventListener('hashchange', function(){{
 # change detection
 # ---------------------------------------------------------------------------
 def detect_changes(prev: dict, sigs: dict) -> list:
-    """可行動變化＝任一腿閘門翻轉，或 |今日目標 − 現持（執行層 executed_pct）| ≥ 20pp
-    （執行層 A2，2026-07-22 升格；門檻同步 10pp→20pp）。改為與現持比（非與前一日目標比），
-    才不會漏掉緩慢累積的漂移；alert 顯示取整後的建議動作（現持 → min(round(目標/10)×10, 50×cap)）。
-    訊息標市場前綴（美股／台股）。"""
+    """可行動變化＝任一腿今日目標與現持（執行層 executed_pct）差 ≥ 20pp（EXEC_BAND，
+    與回測 A2 執行層 band_exec_replay 用同一個門檻）。閘門翻轉本身不是獨立觸發條件——
+    若翻轉後的目標仍落在 20pp 門檻內，A2 不會調整部位，通知也不該提示調整；閘門翻轉
+    只在同時達到 20pp 門檻時才隨通知文字一併標註（見 LOGIC_AUDIT.md 一之1：先前
+    `gate_flip or drift` 會讓通知繞過 A2 門檻，唯一受影響的是「閘門開啟、但波動高導致
+    目標很小」的情境——回測 A2 不動，通知卻可能叫使用者買到 20%；出場情境 target=0，
+    動幅必達 20pp，不受影響，故修正後只會抑制小額再進場，不會抑制出場）。held is None
+    （首次執行、無前一次 executed_pct 紀錄，無法比較門檻）時仍視為需要通知。改為與現持比
+    （非與前一日目標比），才不會漏掉緩慢累積的漂移；alert 顯示取整後的建議動作
+    （現持 → min(round(目標/10)×10, 50×cap)）。訊息標市場前綴（美股／台股）。"""
     if not prev or "tickers" not in prev:
         return []
     out = []
@@ -1288,8 +1294,10 @@ def detect_changes(prev: dict, sigs: dict) -> list:
         gate_flip = bool(pt.get("gate")) != bool(sigs[t]["gate"])
         target = round(sigs[t]["final"] * 100, 1)
         held = pt.get("executed_pct")
-        drift = held is not None and abs(target - held) >= EXEC_BAND
-        if gate_flip or drift:
+        # A2 一致性修正（LOGIC_AUDIT.md 一之1）：可行動事件只用 20pp 門檻判定，
+        # 不再讓 gate_flip 單獨觸發——否則通知會在 A2 實際不動的情況下要求調整部位。
+        drift = held is None or abs(target - held) >= EXEC_BAND
+        if drift:
             new_exec = min(round(target / EXEC_GRID) * EXEC_GRID, EXEC_CLAMP)
             parts = []
             if gate_flip:
@@ -1338,7 +1346,7 @@ def build_mail_html(changes: list, sigs: dict, exp: dict, data_date) -> str:
         button_label="前往 W52 實單主系統頁 →",
         button_url=LT_W52_PAGE_URL,
         accent="navy",
-        disclaimer="實單主系統機械訊號通知（描述器）。可行動變化＝任一腿閘門翻轉或最終權重與現持差 ≥ 10pp。",
+        disclaimer="實單主系統機械訊號通知（描述器）。可行動變化＝任一腿今日目標與現持（執行層）差 ≥ 20pp；閘門翻轉本身不觸發，須一併達 20pp 門檻。",
     )
 
 
@@ -1389,7 +1397,8 @@ def main():
         print(f"{m['short']} exec layer: {len(er['events'])} events, current executed " +
               ", ".join(f"{t} {er['last'][t]:.0f}%" for t in m["legs"]))
 
-    # 實單主系統（2026-07-18 起）：可行動變化以 email 提醒（訊號＝cap 1.5 權重的閘門翻轉或 ≥ 20pp）。
+    # 實單主系統（2026-07-18 起）：可行動變化以 email 提醒（訊號＝cap 1.5 權重與現持執行層差
+    # ≥ 20pp；閘門翻轉本身不觸發，見 detect_changes 與 LOGIC_AUDIT.md 一之1）。
     if changes:
         last_change_date = data_date
         last_change_desc = "; ".join(c.replace("<b>", "").replace("</b>", "") for c in changes)
