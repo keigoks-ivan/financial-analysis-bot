@@ -155,6 +155,8 @@ table.dt-schema td.ty{font-family:var(--mono);font-size:11px;color:var(--gold-de
     <a href="#dd-screener">dd-screener</a>
     <a href="#rs-turn">rs-turn</a>
     <a href="#rs-turn-history">rs-turn/history</a>
+    <a href="#stages">stages</a>
+    <a href="#stages-history">stages/history</a>
     <a href="#rotation">rotation/latest</a>
     <a href="#radar">rotation/radar</a>
     <a href="#crowding">crowding</a>
@@ -266,6 +268,62 @@ table.dt-schema td.ty{font-family:var(--mono);font-size:11px;color:var(--gold-de
       </tbody>
     </table></div>
     <p class="dt-note"><b>穩定性</b>：<code>series</code> 為整段重算合併（窗口內覆蓋、窗口外保留），非單純逐日 append；定義調參會升 <code>definition_version</code>，不會靜默改變既有列的數字含義。</p>
+  </section>
+
+  <!-- ══ STAGES ══ -->
+  <section class="dt-ep" id="stages">
+    <div class="dt-ep-head"><h2>個股階段雷達（美股）</h2><span class="dt-path">/stages/data/latest.json</span></div>
+    <p class="dt-purpose">與 RS+VCP Screener、轉強觀察同家族的發現層描述器——把美股約 1,400 檔母體每天各放進弱勢／轉強／築底／收縮完成／領先其中一段（S0–S4），並附過去 250 個交易日「進了這一段的名字後來去了哪」的轉場基率。<b>非收斂面</b>——不跨階段排名、不合成分數，只回答「看誰」。</p>
+    <div class="dt-facts">
+      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">每日（Mon–Fri 21:45 UTC，美股收盤帶，緊接轉強觀察之後）· workflow <code>daily-us-close</code> 跑 <code>build_stages.py</code></span></div>
+      <div class="dt-fact"><span class="k">as_of 語意</span><span class="v"><code>as_of</code> = 價格資料最後交易日；<code>run_timestamp</code> = 產生時戳</span></div>
+    </div>
+    <div class="dt-tablewrap"><table class="dt-schema">
+      <thead><tr><th>欄位</th><th>型別</th><th>意義</th></tr></thead>
+      <tbody>
+        <tr><td class="f">definition_version</td><td class="ty">string</td><td>階段門檻定義版本（現 "v1"），調參即升版</td></tr>
+        <tr><td class="f">benchmark</td><td class="ty">string</td><td>轉強（S1）六條件所用相對強度基準（QQQ）</td></tr>
+        <tr><td class="f">params</td><td class="ty">object</td><td>S0–S4 全部門檻數字，S1 部分直接內嵌轉強觀察的 <code>PARAMS</code></td></tr>
+        <tr><td class="f">universe</td><td class="ty">object</td><td>母體總數／資料完整可用數／當日合格數</td></tr>
+        <tr><td class="f">counts_today</td><td class="ty">object</td><td>S0–S4、S9 六段今日家數</td></tr>
+        <tr><td class="f">transitions</td><td class="ty">array</td><td>S1→S3/S4/S0、S2→S3/S4、S3→S4/S0 的 250 日轉場基率（見下）</td></tr>
+        <tr><td class="f">rows</td><td class="ty">array</td><td>今日處於 S1–S4 的個股列（S0／S9 只進 counts_today，不進此陣列）</td></tr>
+      </tbody>
+    </table></div>
+    <div class="dt-tablewrap"><table class="dt-schema">
+      <thead><tr><th>rows[] 欄位</th><th>型別</th><th>意義</th></tr></thead>
+      <tbody>
+        <tr><td class="f">ticker / stage / stage_name</td><td class="ty">string</td><td>代號、階段碼（S1–S4）、階段中文名</td></tr>
+        <tr><td class="f">days_in_stage / stage_since</td><td class="ty">int/string</td><td>連續處於當前階段幾個交易日、起始日期</td></tr>
+        <tr><td class="f">prev_stage / prev_stage_ended / path</td><td class="ty">string/int/string</td><td>前一段代碼、前一段結束於幾天前、最近三段代碼串（如 <code>0→1→2</code>）</td></tr>
+        <tr><td class="f">rs_ibd_pct / rs21 / rs63</td><td class="ty">number</td><td>IBD 式加權報酬全母體百分位、近 21／63 日相對 QQQ 報酬</td></tr>
+        <tr><td class="f">dist_52w_high_pct / tt_pass_count</td><td class="ty">number/int</td><td>距 52 週高（負值）、Trend Template 過幾條（0–5）</td></tr>
+        <tr><td class="f">atr_ratio / vol_ratio</td><td class="ty">number</td><td>近 10／60 日 ATR 比率、近 10／50 日均量比率</td></tr>
+        <tr><td class="f">extended / rs_line_high</td><td class="ty">bool</td><td>是否偏離 21 日 EMA 過多或 RSI 過熱、RS 線（現價／SPY）是否創新高</td></tr>
+        <tr><td class="f">adv20_usd / price / hub</td><td class="ty">number/string</td><td>近 20 日均成交金額、現價、個股研究頁連結（無則 null）</td></tr>
+      </tbody>
+    </table></div>
+    <p class="dt-note"><b>穩定性</b>：門檻集中在 <code>params</code> 並隨 <code>definition_version</code> 版本化；欄位為 additive。歷史階段序列見下方 <a href="#stages-history">stages/history</a>；另有 <code>/stages/data/lamp.json</code>（<code>{ticker: 階段碼}</code> 全母體對照表，供站內其他頁面讀取當日階段燈號，非獨立公開端點）。</p>
+  </section>
+
+  <!-- ══ STAGES HISTORY ══ -->
+  <section class="dt-ep" id="stages-history">
+    <div class="dt-ep-head"><h2>個股階段雷達・階段歷史</h2><span class="dt-path">/stages/data/history.json</span></div>
+    <p class="dt-purpose">每檔個股過去 250 個交易日（隨執行日累積增長）的逐日階段碼字串，與 S0–S4 每日家數、QQQ 收盤序列。每次執行整段重算最近 250 個交易日；窗口外舊列保留。<b>描述器非擇時</b>——只回算「這一段的名字後來去了哪」，不預測轉折時點。</p>
+    <div class="dt-facts">
+      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">與 latest.json 同一 workflow、同一 run 產生</span></div>
+      <div class="dt-fact"><span class="k">as_of 語意</span><span class="v"><code>updated</code> = 本次重算涵蓋到的最後交易日</span></div>
+    </div>
+    <div class="dt-tablewrap"><table class="dt-schema">
+      <thead><tr><th>欄位</th><th>型別</th><th>意義</th></tr></thead>
+      <tbody>
+        <tr><td class="f">dates</td><td class="ty">array</td><td>交易日陣列（YYYY-MM-DD），下方 counts／qqq／stages 皆與此陣列等長且同索引對齊</td></tr>
+        <tr><td class="f">counts.S0 / S1 / S2 / S3 / S4</td><td class="ty">array</td><td>每日各段家數（與 <code>dates</code> 等長的數值陣列）</td></tr>
+        <tr><td class="f">qqq</td><td class="ty">array</td><td>每日 QQQ 收盤（與 <code>dates</code> 等長）</td></tr>
+        <tr><td class="f">stages</td><td class="ty">object</td><td><code>{ticker: 階段碼字串}</code>，每個字元對應 <code>dates</code> 同索引那天的階段（0–4／9），字串長度恆等於 <code>dates</code> 長度</td></tr>
+      </tbody>
+    </table></div>
+    <p class="dt-note"><b>穩定性</b>：整段重算合併（窗口內覆蓋、窗口外保留），非單純逐日 append；每檔字串以 9（過渡／無訊號）補齊缺口，長度不變式恆成立。定義調參會升 <code>definition_version</code>。</p>
   </section>
 
   <!-- ══ ROTATION LATEST ══ -->

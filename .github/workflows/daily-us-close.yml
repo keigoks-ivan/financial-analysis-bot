@@ -22,6 +22,8 @@ name: Daily US Close Band
 #   monitor-daily.yml           → build_monitor.py / _score / _internals / _home_pulse
 #   （2026-09-08 新增，非整併自舊 workflow）→ build_rs_turn.py（轉強觀察 + 寬度線，
 #     排在本帶最後一個 build step，與 screener.py 的下載爆量隔開最遠）
+#   （2026-09-08 新增，非整併自舊 workflow）→ build_stages.py（個股階段雷達，緊接
+#     rs-turn 之後——同一份母體、同一份 tech_core 快取，零額外下載）
 #
 # 順序理由：daily-screener-us 的 docs/screener/latest.json 是
 # daily-fundamentals-us 的輸入。原本靠 45 分鐘錯峰保證先後，現在改成同一 job
@@ -179,6 +181,12 @@ jobs:
         continue-on-error: true
         run: python scripts/build_rs_turn.py || echo "::warning::rs-turn build failed; band unaffected"
 
+      # ── 11. stages（個股階段雷達；緊接 rs-turn 之後，同一份母體、讀同一份
+      #    tech_core 同 run 快取，零額外下載——見 scripts/build_stages.py 檔頭）──
+      - name: "[stages] Build stage classifier + transitions"
+        continue-on-error: true
+        run: python scripts/build_stages.py || echo "::warning::stages build failed; band unaffected"
+
       # ── 收斂：單一 commit + push（路徑＝各原 workflow commit 路徑聯集）──
       - name: Commit and push if changed
         run: |
@@ -206,7 +214,8 @@ jobs:
             docs/monitor/data/internals_history.json \
             docs/monitor/data/internals_alerts.json \
             docs/rs-turn/data/ \
-            data/rs_turn/universe.json; do
+            data/rs_turn/universe.json \
+            docs/stages/data/; do
             [ -e "$p" ] && PATHS="$PATHS $p"
           done
           if [ -z "$PATHS" ]; then

@@ -300,6 +300,7 @@ PREFIX_ACTIVE = [
     ("screener-jp.html", ("pick", None)),
     ("screener-my.html", ("pick", None)),
     ("rs-turn/", ("pick", None)),  # 轉強觀察（2026-09-08 新增；純技術結構雷達，與 screener 家族同待遇）
+    ("stages/", ("pick", None)),  # 個股階段雷達（2026-09-08 新增；發現層描述器，與 rs-turn/screener 同待遇）
     # 研究群
     # 2026-08-20 nav 瘦身第二階段：下拉只剩 thub/id/tier 三項，故舊 dd/cmp/syn/sc
     # 四個 item 鍵已從 MENU["research"] 移除。以下映射改點到吸收方的 item——
