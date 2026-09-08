@@ -111,7 +111,13 @@
       arenaAsOf: arena && arena.run_timestamp,
       ddAsOf: dd && dd.as_of,
       universeAsOf: universeBoard && universeBoard.as_of,
-      universeN: universeBoard && universeBoard.n
+      universeN: universeBoard && universeBoard.n,
+      // 三態母體切換鈕上要顯示的即時檔數（設計拍板：labels with live counts）——
+      // 席位榜讀 own_board 列數、研究母體讀 universe_board 列數、全市場讀
+      // lamp.json 檔數，資料缺檔時維持 null（controlsHTML 顯示「—」）。
+      boardN: (arena && Array.isArray(arena.own_board)) ? arena.own_board.length : null,
+      researchN: (universeBoard && Array.isArray(universeBoard.rows)) ? universeBoard.rows.length : null,
+      allN: (lamp && lamp.lamp) ? Object.keys(lamp.lamp).length : null
     };
 
     if (idx.ok.arena) {
@@ -670,13 +676,24 @@
         body +
         "</div>";
     }
+    // 兩組分開（2026-09-09 owner 走查回饋：手機上分不清品質×時機的母體切換
+    // 與篩選 chip 是同一件事還是兩件事）——組 A「母體」單選三顆、組 B「篩選」
+    // 兩顆且標明只作用在完整矩陣（故本週清單旁原本的提醒句變多餘，一併拿掉，
+    // 見 renderWeeklyStrip）。母體 chip 上的即時檔數讀 idx.boardN／researchN／
+    // allN（buildIndex 已算好，缺資料顯示「—」）。
+    function fmtN(n) { return n == null ? "—" : String(n); }
     function controlsHTML() {
+      var idx = idxRef;
       return '<div class="qtm-controls">' +
-        '<button type="button" class="qtm-chip' + (state.universe === "board" ? " on" : "") + '" data-qtm-chip="uni-board">席位榜</button>' +
-        '<button type="button" class="qtm-chip' + (state.universe === "research" ? " on" : "") + '" data-qtm-chip="uni-research">研究母體</button>' +
-        '<button type="button" class="qtm-chip' + (state.universe === "all" ? " on" : "") + '" data-qtm-chip="uni-all">全市場</button>' +
+        '<div class="qtm-control-group"><span class="qtm-control-label">母體</span>' +
+        '<button type="button" class="qtm-chip' + (state.universe === "board" ? " on" : "") + '" data-qtm-chip="uni-board">席位榜（' + esc(fmtN(idx.boardN)) + '）</button>' +
+        '<button type="button" class="qtm-chip' + (state.universe === "research" ? " on" : "") + '" data-qtm-chip="uni-research">研究母體（' + esc(fmtN(idx.researchN)) + '）</button>' +
+        '<button type="button" class="qtm-chip' + (state.universe === "all" ? " on" : "") + '" data-qtm-chip="uni-all">全市場（' + esc(fmtN(idx.allN)) + '）</button>' +
+        "</div>" +
+        '<div class="qtm-control-group"><span class="qtm-control-label">篩選（只作用在完整矩陣）</span>' +
         '<button type="button" class="qtm-chip' + (state.onlyDD ? " on" : "") + '" data-qtm-chip="only-dd">只看有 DD</button>' +
         '<button type="button" class="qtm-chip' + (state.onlySeat ? " on" : "") + '" data-qtm-chip="only-seat">只看席位與候補</button>' +
+        "</div>" +
         "</div>";
     }
     function renderHitRate() {
@@ -753,6 +770,27 @@
       );
     }
 
+    // ── 標記圖例（一直顯示，2026-09-09 owner 走查回饋）：放在切換鈕下方、
+    //    本週清單上方，用真實樣式的示例 chip（不只文字描述）讓手機讀者秒懂
+    //    代號旁那圈框線與底線分別代表什麼。規則與注意事項內的完整版（含 Δ、
+    //    「更多」、母體切換說明）維持不動、不重覆——這裡只挑六條最常撞到的
+    //    標記，語句照 owner 指定的白話版本（「沒有 DD」而非「無 DD」等）。
+    var LEGEND_SAMPLE = "示例";
+    function legendChip(cls) {
+      return '<span class="qtm-tk qtm-legend-chip ' + cls + '">' + esc(LEGEND_SAMPLE) + "</span>";
+    }
+    function renderLegend() {
+      return '<div class="qtm-legend">' +
+        '<span class="qtm-legend-item">' + legendChip("dd-in") + "＝DD 進場</span>" +
+        '<span class="qtm-legend-item">' + legendChip("dd-watch") + "＝DD 觀望</span>" +
+        '<span class="qtm-legend-item">' + legendChip("dd-none") + "＝沒有 DD</span>" +
+        '<span class="qtm-legend-item">' + legendChip("dd-avoid") + "＝DD 迴避</span>" +
+        '<span class="qtm-legend-item"><span class="qtm-seat">C</span>核心席／<span class="qtm-seat">S</span>衛星席／' +
+        '<span class="qtm-seat">B</span>候補，數字＝席次</span>' +
+        '<span class="qtm-legend-item">' + legendChip("new-week") + "＝本週新進</span>" +
+        "</div>";
+    }
+
     // ── 本週清單：把矩陣收斂成固定順序的四步（2026-09-09 owner 回饋——18 格
     //    表格讀者不知道怎麼用）。四步都用 membersFor(idx, true) 取母體，忽略
     //    「只看有 DD」「只看席位與候補」兩個 chip（那兩個只篩完整矩陣），只吃
@@ -822,7 +860,6 @@
         weeklyChipsHTML(step4, "這週沒有名字") + "</li>";
 
       return '<div class="qtm-weekly"><h4>本週清單</h4>' +
-        '<p class="qtm-weekly-note">「只看有 DD」「只看席位與候補」只篩完整矩陣，不影響本週清單。</p>' +
         '<ol class="qtm-weekly-steps">' + s1 + s2 + s3 + s4 + "</ol></div>";
     }
 
@@ -875,6 +912,7 @@
         "<h3>品質 × 時機</h3>" +
         '<p class="qtm-lede">橫看基本面過不過閘，直看現在走到生命週期哪一段；多層都亮的格子是觀察池，只亮一邊的格子是研究隊列，兩邊都不亮的略過。它只回答「看誰」，不是買賣指令。</p>' +
         controlsHTML() +
+        renderLegend() +
         renderWeeklyStrip(idx) +
         '<details class="qtm-full-matrix"><summary>完整矩陣（6 段 × 3 欄）</summary><div class="qtm-full-matrix-body">' +
         gridSection +

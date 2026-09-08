@@ -76,17 +76,28 @@
 .qtm-matrix h3{font-family:'Playfair Display','Noto Serif TC',Georgia,serif;font-size:1.1rem;
   font-weight:700;color:var(--qtm-ink);margin:0 0 .3rem}
 .qtm-matrix .qtm-lede{font-size:.82rem;color:var(--qtm-sec);line-height:1.75;margin:0 0 .8rem;max-width:900px}
-.qtm-controls{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.85rem}
+/* 兩組分開：組 A「母體」單選、組 B「篩選」只作用在完整矩陣（2026-09-09，
+   手機上分不清兩組是同一件事還是兩件事的走查回饋）。預設（寬螢幕）兩組併排
+   同一行，塞不下才各自換行；窄螢幕強制各自一行、組標籤在前，見下方 640px
+   media query。 */
+.qtm-controls{display:flex;flex-wrap:wrap;gap:.5rem 1.2rem;margin-bottom:.85rem;align-items:center}
+.qtm-control-group{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem}
+.qtm-control-label{font-size:.7rem;font-weight:700;color:var(--qtm-muted);white-space:nowrap}
 .qtm-chip{appearance:none;background:var(--qtm-mut-bg);border:1px solid var(--qtm-line);border-radius:14px;
   font-size:.74rem;font-weight:600;color:var(--qtm-sec);padding:.28rem .75rem;cursor:pointer;font-family:inherit}
 .qtm-chip.on{background:#0d2244;border-color:#0d2244;color:#fff}
 .qtm-empty{color:var(--qtm-muted);font-size:.82rem;padding:.6rem 0}
 
+/* ── 標記圖例：切換鈕下方、本週清單上方，一直顯示（2026-09-09）───────────── */
+.qtm-legend{display:flex;flex-wrap:wrap;align-items:center;gap:.35rem 1rem;margin:0 0 1rem;
+  font-size:.72rem;color:var(--qtm-sec)}
+.qtm-legend-item{display:inline-flex;align-items:center;gap:.3rem;white-space:nowrap}
+.qtm-legend-chip{cursor:default;font-size:.68rem;padding:.05rem .35rem}
+
 /* ── 本週清單：固定順序四步，取代直接丟一張 18 格表格（2026-09-09） ────── */
 .qtm-weekly{margin:0 0 1rem}
 .qtm-weekly>h4{font-size:.88rem;font-weight:700;color:var(--qtm-ink);margin:0 0 .3rem;
   font-family:'Playfair Display','Noto Serif TC',Georgia,serif}
-.qtm-weekly-note{font-size:.7rem;color:var(--qtm-muted);margin:0 0 .7rem}
 .qtm-weekly-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.6rem}
 .qtm-weekly-step{border:1px solid var(--qtm-line-soft);border-radius:8px;padding:.6rem .75rem;background:#fbfaf7}
 .qtm-weekly-head{display:flex;align-items:baseline;flex-wrap:wrap;gap:.4rem}
@@ -139,7 +150,7 @@
 .qtm-tk.dd-none{border-style:dashed}
 .qtm-tk.dd-avoid{border-style:solid;border-color:var(--qtm-neg);text-decoration:line-through;color:var(--qtm-neg)}
 .qtm-tk.new-week{text-decoration:underline;text-decoration-style:solid}
-.qtm-tk .qtm-seat{font-size:.6rem;font-weight:700;color:#fff;background:var(--qtm-accent);
+.qtm-tk .qtm-seat,.qtm-legend .qtm-seat{font-size:.6rem;font-weight:700;color:#fff;background:var(--qtm-accent);
   border-radius:3px;padding:0 .22rem;line-height:1.35}
 /* DD 進場但品質未過：DD 判斷過進場、現在財務數字過不了品質閘——最值得重查論點 */
 .qtm-tk.qtm-mismatch{box-shadow:0 0 0 1px var(--qtm-warn) inset}
@@ -175,6 +186,10 @@
 
 /* ── 手機：矩陣三欄改每列一張卡堆疊 ─────────────────────────────────── */
 @media(max-width:640px){
+  /* 母體／篩選兩組各自獨立一行、組標籤在該行最前面（2026-09-09 owner 走查
+     回饋：窄螢幕擠成一行時分不清哪顆 chip 屬於哪組）。 */
+  .qtm-controls{flex-direction:column;align-items:flex-start;gap:.55rem}
+  .qtm-control-group{width:100%}
   .qtm-grid{grid-template-columns:1fr;min-width:0}
   .qtm-gh{display:none}
   .qtm-row-label{padding-top:.7rem;border-top:1px solid var(--qtm-line);margin-top:.3rem}
