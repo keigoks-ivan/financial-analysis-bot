@@ -395,6 +395,20 @@
       return a < b ? -1 : (a > b ? 1 : 0);
     });
   }
+  // 本週清單專用排序：席位標記（C／S／B）優先，同層再依擁有層分排序——
+  // 與 sortTickers 共用擁有層分邏輯，只多一層「有沒有席位」的優先鍵。
+  function sortTickersSeatFirst(idx, list) {
+    return list.slice().sort(function (a, b) {
+      var sa = idx.seat[a] ? 1 : 0, sb = idx.seat[b] ? 1 : 0;
+      if (sa !== sb) return sb - sa;
+      var oa = idx.ownScore[a], ob = idx.ownScore[b];
+      if (oa == null && ob == null) return a < b ? -1 : (a > b ? 1 : 0);
+      if (oa == null) return 1;
+      if (ob == null) return -1;
+      if (ob !== oa) return ob - oa;
+      return a < b ? -1 : (a > b ? 1 : 0);
+    });
+  }
   function stage5DaysAgo(idx, ticker) {
     var s = idx.historyStages[ticker];
     if (!s || s.length < 6) return null;
@@ -544,7 +558,9 @@
     };
     var wired = false;
 
-    function membersFor(idx) {
+    // ignoreToggles：本週清單只吃母體切換，不吃「只看有 DD」「只看席位與候補」
+    // 兩個 chip（那兩個 chip 明訂只篩完整矩陣，見設計拍板與 controlsHTML 旁註）。
+    function membersFor(idx, ignoreToggles) {
       var out = [];
       if (state.universe === "board") {
         if (!idx.ok.arena) return null;
@@ -555,8 +571,10 @@
         if (!idx.ok.lamp) return null;
         Object.keys(idx.timingCode).forEach(function (tk) { out.push(tk); });
       }
-      if (state.onlyDD) out = out.filter(function (tk) { var d = idx.dd[tk]; return d && d.verdict; });
-      if (state.onlySeat) out = out.filter(function (tk) { return !!idx.seat[tk]; });
+      if (!ignoreToggles) {
+        if (state.onlyDD) out = out.filter(function (tk) { var d = idx.dd[tk]; return d && d.verdict; });
+        if (state.onlySeat) out = out.filter(function (tk) { return !!idx.seat[tk]; });
+      }
       return out;
     }
     function bucketize(members) {
@@ -597,6 +615,21 @@
       var titleTxt = ticker + "：" + ddLabel + (isNew ? "（本週新進此格）" : "")
         + (mismatch ? "；DD 進場但品質未過，值得重新檢查論點" : "");
       return '<span class="' + cls + '" data-qtm-tk="' + esc(ticker) + '" data-qtm-mtx="1" tabindex="0" role="button" title="' + esc(titleTxt) + '">' + esc(ticker) + seatBadge + mismatchBadge + "</span>";
+    }
+    // 本週清單的名單渲染：同一顆 tickerChipHTML（外框、標記、彈出小卡皆共用），
+    // 只是排版脈絡不同（清單而非格子）；沿用格子相同的「前 8 個＋更多 N」節流，
+    // 「更多」按鈕吃的是既有全域 data-qtm-more／data-qtm-rest 點擊委派，不用另外接線。
+    function weeklyChipsHTML(tickers, emptyMsg) {
+      if (!tickers.length) {
+        return '<div class="qtm-weekly-empty">' + esc(emptyMsg) + "</div>";
+      }
+      var visible = tickers.slice(0, 8), rest = tickers.slice(8);
+      var tkListHtml = visible.map(tickerChipHTML).join("");
+      var moreHtml = rest.length
+        ? ('<button type="button" class="qtm-more" data-qtm-more>更多 ' + rest.length + '</button>' +
+           '<span class="qtm-tk-list" data-qtm-rest hidden>' + rest.map(tickerChipHTML).join("") + "</span>")
+        : "";
+      return '<span class="qtm-tk-list">' + tkListHtml + "</span>" + moreHtml;
     }
     function cellHTML(stageCode, qb, tickers, prevCount) {
       var roleKey = stageCode + "|" + qb;
@@ -697,6 +730,7 @@
         "研究隊列（品質未過×領先）——動能很強但財務數字還沒達標，值得研究但不是現成標的。" +
         "略過（品質未過×弱勢）——兩邊都沒亮，預設收合、不用花時間。" +
         "這是注意力導引，不是買賣指令，也不是排名。</p>" +
+        "<p><b>不限格子的小標</b>：代號旁若掛著「DD 進場・品質未過」，是 DD 判斷過進場、但現在財務數字過不了品質閘的名字，任何格子都可能出現，完整名單見上方本週清單③論點矛盾。</p>" +
         "<p><b>標記圖例</b>：C／S／B＝核心席／衛星席／候補，數字是席次序；外框實線＝進場、空心＝觀望、虛線＝無 DD、劃線＝迴避；" +
         "底線＝本週新進此格；Δ＝較 5 個交易日前的家數變化；「更多」可展開看完整名單。</p>" +
         "<p><b>母體切換</b>：席位榜（現任與候補，約 60 檔）／研究母體（DD 池美股加品質池加待 DD 隊列，約 " + esc(String(uniN)) + " 檔）／" +
@@ -711,6 +745,79 @@
         "<p class=\"qtm-rules-close\">名單只回答「看誰」，不回答「買不買」與「何時」。</p>" +
         "</div></details>"
       );
+    }
+
+    // ── 本週清單：把矩陣收斂成固定順序的四步（2026-09-09 owner 回饋——18 格
+    //    表格讀者不知道怎麼用）。四步都用 membersFor(idx, true) 取母體，忽略
+    //    「只看有 DD」「只看席位與候補」兩個 chip（那兩個只篩完整矩陣），只吃
+    //    母體切換（席位榜／研究母體／全市場）。ticker 清單一律 sortTickersSeat-
+    //    First（席位標記優先，同層再依擁有層分）＋既有 tickerChipHTML（外框／
+    //    標記／彈出小卡與完整矩陣共用）。────────────────────────────────────
+    function renderWeeklyStrip(idx) {
+      var stripMembers = membersFor(idx, true);
+      if (stripMembers === null) {
+        var missingSrc = state.universe === "board" ? "陣容資料 /engine/arena.json"
+          : state.universe === "research" ? "選股引擎研究母體 /engine/universe_board.json"
+          : "個股階段雷達 /stages/data/lamp.json";
+        return '<div class="qtm-weekly"><h4>本週清單</h4><div class="qtm-empty">資料尚未產出（' + esc(missingSrc) + "）</div></div>";
+      }
+      var buckets = bucketize(stripMembers);
+
+      // ① 持股警訊：品質過×弱勢，只列帶席位標記的名字。
+      var step1 = sortTickersSeatFirst(idx, (buckets.S0 ? buckets.S0.pass : []).filter(function (tk) { return !!idx.seat[tk]; }));
+      // ② 最該看：品質過×轉強，全部。
+      var step2 = sortTickersSeatFirst(idx, buckets.S1 ? buckets.S1.pass.slice() : []);
+      // ③ 論點矛盾：全母體中「DD 進場・品質未過」的名字，不限階段，按所在階段分組列出。
+      var step3Groups = [];
+      STAGE_ORDER.concat(["S9"]).forEach(function (code) {
+        var list = [];
+        stripMembers.forEach(function (tk) {
+          if (stageOf(idx, tk) !== code) return;
+          var d = ddInfo(idx, tk);
+          var q = idx.quality[tk];
+          if (d.verdict === "進場" && q && q.pass === false) list.push(tk);
+        });
+        if (list.length) step3Groups.push({ code: code, list: sortTickersSeatFirst(idx, list) });
+      });
+      var step3Count = step3Groups.reduce(function (n, g) { return n + g.list.length; }, 0);
+      // ④ 席位正常：品質過×（高檔整理／築底／收縮完成／領先），只列帶席位標記的名字。
+      var step4 = [];
+      ["S5", "S2", "S3", "S4"].forEach(function (code) {
+        if (buckets[code]) {
+          buckets[code].pass.forEach(function (tk) { if (idx.seat[tk]) step4.push(tk); });
+        }
+      });
+      step4 = sortTickersSeatFirst(idx, step4);
+
+      var s1 = '<li class="qtm-weekly-step"><div class="qtm-weekly-head"><span class="qtm-weekly-num">①</span>' +
+        '<span class="qtm-weekly-title">持股警訊</span><span class="qtm-weekly-count">' + step1.length + " 檔</span></div>" +
+        '<p class="qtm-weekly-desc">本來就想擁有的名字掉進弱勢了。動作是去看它的 DD 有沒有觸發證偽條件，不是賣。</p>' +
+        weeklyChipsHTML(step1, "本週沒有席位掉進弱勢") + "</li>";
+
+      var s2 = '<li class="qtm-weekly-step"><div class="qtm-weekly-head"><span class="qtm-weekly-num">②</span>' +
+        '<span class="qtm-weekly-title">最該看</span><span class="qtm-weekly-count">' + step2.length + " 檔</span></div>" +
+        '<p class="qtm-weekly-desc">基本面過關、回檔剛結束。去看 DD 裁決與板機。轉強本身沒有統計優勢（見下方對照組），這格只回答先看誰。</p>' +
+        weeklyChipsHTML(step2, "這週沒有名字") + "</li>";
+
+      var step3Body = !step3Count
+        ? '<div class="qtm-weekly-empty">這週沒有名字</div>'
+        : step3Groups.map(function (g) {
+            return '<div class="qtm-weekly-substage"><b>' + esc(STAGE_LABEL[g.code] || g.code) + "</b>" +
+              weeklyChipsHTML(g.list, "") + "</div>";
+          }).join("");
+      var s3 = '<li class="qtm-weekly-step"><div class="qtm-weekly-head"><span class="qtm-weekly-num">③</span>' +
+        '<span class="qtm-weekly-title">論點矛盾</span><span class="qtm-weekly-count">' + step3Count + " 檔</span></div>" +
+        '<p class="qtm-weekly-desc">你判斷過可以進場，但現在的財務數字過不了品質閘。重讀那份 DD：是資本週期暫時壓低，還是論點壞了。</p>' +
+        step3Body + "</li>";
+
+      var s4 = '<li class="qtm-weekly-step"><div class="qtm-weekly-head"><span class="qtm-weekly-num">④</span>' +
+        '<span class="qtm-weekly-title">席位正常</span><span class="qtm-weekly-count">' + step4.length + " 檔</span></div>" +
+        '<p class="qtm-weekly-desc">席位在正常狀態，不用動。</p>' +
+        weeklyChipsHTML(step4, "這週沒有名字") + "</li>";
+
+      return '<div class="qtm-weekly"><h4>本週清單</h4>' +
+        '<p class="qtm-weekly-note">「只看有 DD」「只看席位與候補」只篩完整矩陣，不影響本週清單。</p>' +
+        '<ol class="qtm-weekly-steps">' + s1 + s2 + s3 + s4 + "</ol></div>";
     }
 
     var idxRef = null;
@@ -760,12 +867,14 @@
       el.innerHTML =
         '<div class="qtm-matrix">' +
         "<h3>品質 × 時機</h3>" +
-        '<p class="qtm-lede">橫看基本面過不過閘，直看現在走到生命週期哪一段。多層都亮的格子是觀察池，只亮一邊的格子是研究隊列，兩邊都不亮的略過。它只回答「看誰」。' +
-        "代號旁若掛著「DD 進場・品質未過」的小標，是這批名單裡最值得重新檢查論點的一群——DD 判斷過進場，但現在的財務數字過不了品質閘。</p>" +
+        '<p class="qtm-lede">橫看基本面過不過閘，直看現在走到生命週期哪一段；多層都亮的格子是觀察池，只亮一邊的格子是研究隊列，兩邊都不亮的略過。它只回答「看誰」，不是買賣指令。</p>' +
         controlsHTML() +
+        renderWeeklyStrip(idx) +
+        '<details class="qtm-full-matrix"><summary>完整矩陣（6 段 × 3 欄）</summary><div class="qtm-full-matrix-body">' +
         gridSection +
         renderRulesBlock(idx) +
         renderHitRate() +
+        "</div></details>" +
         "</div>";
       if (!wired) {
         wired = true;
