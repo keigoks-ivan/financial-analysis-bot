@@ -7,7 +7,7 @@ A discovery-layer descriptor, same family as scripts/screener.py (RS+VCP)
 and scripts/build_rs_turn.py (轉強觀察): it does NOT rank across stages,
 does NOT blend RS×VCP into one score, and never feeds picks/GRP/dd-screener/
 cockpit rankings. It answers "which stage of the lifecycle is this name in
-right now" (弱勢→轉強→築底→收縮完成→領先) and "what happened, historically,
+right now" (弱勢→轉強→築底→高檔整理→收縮完成→領先) and "what happened, historically,
 to names that just entered a given stage" (transition base rates — a
 descriptive backward-look, never a timing call). See design spec
 notes/site-internal/root/_stages_radar_design_20260908.md §3/§4/§5.
@@ -59,7 +59,15 @@ HISTORY_JSON = DATA_DIR / 'history.json'
 LAMP_JSON = DATA_DIR / 'lamp.json'
 DOCS_T_DIR = ROOT / 'docs' / 't'
 
-DEFINITION_VERSION = "v1"
+DEFINITION_VERSION = "v2"  # 2026-09 owner decision: add S5 高檔整理 (tt_pass_count==5
+# AND dist_52w_high >= -8% AND not S4 AND not S3) — carves the residual 過渡 bucket
+# down to names that satisfy every Trend Template condition and sit within 8% of
+# their 52-week high but haven't (yet) earned S4's RS-percentile bar or S3's
+# volatility/volume contraction (NVDA 2026-09: 5/5 TT, dist -2.2%, RS just under
+# 80, no contraction — was falling into S9 with 806/1,320 other eligible names).
+# Lifecycle order updated to S0 < S1 < S2 < S5 < S3 < S4 (see ORDERED_STAGES below);
+# whole WINDOW_DAYS window is recomputed under v2 every run (§4 merge discipline),
+# so persisted history.json dates carry v2 once this build has run once.
 TRANSITIONS_VERSION = "v2"  # 2026-09 owner decision: end-state + peak-state,
 # not "ever touched" (S1 的「曾觸及弱勢」在舊口徑下把「剛脫離深回檔、第 60 日
 # 前仍有一天貼在 200 日均線下」誤記成 74–78% 的假警訊；v2 只看第 60 日當天在
@@ -73,9 +81,9 @@ CONTROL_VERSION = "v1"  # 2026-09-08 owner decision: 轉強（S1）轉場基率�
 CONTROL_NOT_S1_LOOKBACK_DAYS = 5  # 對照組成員在配對日 t 之前這麼多個交易日內
 # 本身也不能在轉強段（避免與轉強事件本身的剛轉出／即將轉入重疊，owner 決策原文）
 
-STAGE_NAMES = {'S0': '弱勢', 'S1': '轉強', 'S2': '築底', 'S3': '收縮完成',
-               'S4': '領先', 'S9': '過渡'}
-STAGE_DIGIT = {'S0': '0', 'S1': '1', 'S2': '2', 'S3': '3', 'S4': '4', 'S9': '9'}
+STAGE_NAMES = {'S0': '弱勢', 'S1': '轉強', 'S2': '築底', 'S5': '高檔整理',
+               'S3': '收縮完成', 'S4': '領先', 'S9': '過渡'}
+STAGE_DIGIT = {'S0': '0', 'S1': '1', 'S2': '2', 'S5': '5', 'S3': '3', 'S4': '4', 'S9': '9'}
 DIGIT_STAGE = {v: k for k, v in STAGE_DIGIT.items()}
 
 WINDOW_DAYS = 250      # § 4 — trading days re-persisted to history.json every run
@@ -91,6 +99,8 @@ S4_DIST_HIGH_MIN_PCT = -8
 S3_DIST_HIGH_MIN_PCT = -8
 S3_ATR_RATIO_MAX = 0.7
 S3_VOL_RATIO_MAX = 0.9
+S5_DIST_HIGH_MIN_PCT = -8  # 高檔整理: same "within 8% of 52w high" floor as S3/S4,
+# no contraction or RS-percentile requirement — see classification priority below
 S2_DIST_HIGH_MIN_PCT = -25
 S2_DIST_HIGH_MAX_PCT = -8
 S2_TT_MIN = 3
@@ -242,17 +252,24 @@ def compute_stage_frame(highs, lows, closes, volumes, qqq, spy):
     rs_line_pct_from_high = (rs_line / rs_line_roll_max - 1.0) * 100.0
     rs_line_high = rs_line_pct_from_high >= RS_LINE_HIGH_TOL_PCT
 
-    # ── stage classification (priority: S4 > S3 > S1 > S2 > S0 > S9) ──────
+    # ── stage classification (priority: S4 > S3 > S1 > S5 > S2 > S0 > S9) ──
+    # S5 高檔整理 = tt_pass_count==5 AND dist_52w_high >= -8% AND not S4 AND not S3
+    # (design: 2026-09 owner decision). cond_s5 doesn't need to explicitly AND-out
+    # cond_s4/cond_s3 — both share the same tt_pass_count==5 + dist>=-8% base, and
+    # the assignment loop below applies S3 then S4 AFTER S5, so any ticker that also
+    # qualifies for S3 or S4 gets overwritten into the higher-priority code, exactly
+    # like S1/S2/S0's existing loop-order-encodes-priority pattern.
     cond_s4 = tt_pass_count.eq(5) & (rs_ibd_pct >= S4_RS_IBD_MIN) & (dist_high_pct >= S4_DIST_HIGH_MIN_PCT)
     cond_s3 = (tt_pass_count.eq(5) & (dist_high_pct >= S3_DIST_HIGH_MIN_PCT)
                & (atr_ratio < S3_ATR_RATIO_MAX) & (vol_ratio < S3_VOL_RATIO_MAX))
     cond_s1 = s1_passed
+    cond_s5 = tt_pass_count.eq(5) & (dist_high_pct >= S5_DIST_HIGH_MIN_PCT)
     cond_s2 = ((C > sma50) & (tt_pass_count >= S2_TT_MIN)
                & (dist_high_pct >= S2_DIST_HIGH_MIN_PCT) & (dist_high_pct < S2_DIST_HIGH_MAX_PCT))
     cond_s0 = (C < sma50) & (C < sma200) & (rs63 < 0)
 
     stage = pd.DataFrame('S9', index=C.index, columns=C.columns)
-    for code, cond in [('S0', cond_s0), ('S2', cond_s2), ('S1', cond_s1),
+    for code, cond in [('S0', cond_s0), ('S2', cond_s2), ('S5', cond_s5), ('S1', cond_s1),
                         ('S3', cond_s3), ('S4', cond_s4)]:
         stage = stage.where(~cond.fillna(False), code)
     # 流動性／資料量門檻同 rs-turn：不過者一律 S9（覆蓋前面任何分類）
@@ -275,7 +292,7 @@ def merge_history(existing, window_dates, stage_window, qqq_window, deep_window)
     old_dates = set(existing.get('dates', []))
 
     counts_new = {}
-    for code in ('S0', 'S1', 'S2', 'S3', 'S4'):
+    for code in ('S0', 'S1', 'S2', 'S5', 'S3', 'S4'):
         is_code = (stage_window == code)
         counts_new[code] = dict(zip(window_dates, is_code.sum(axis=1).astype(int).tolist()))
 
@@ -283,7 +300,7 @@ def merge_history(existing, window_dates, stage_window, qqq_window, deep_window)
 
     old_counts = existing.get('counts', {})
     merged_counts_map = {}
-    for code in ('S0', 'S1', 'S2', 'S3', 'S4'):
+    for code in ('S0', 'S1', 'S2', 'S5', 'S3', 'S4'):
         m = dict(zip(existing.get('dates', []), old_counts.get(code, [])))
         m.update(counts_new[code])
         merged_counts_map[code] = m
@@ -330,7 +347,7 @@ def merge_history(existing, window_dates, stage_window, qqq_window, deep_window)
         'updated': window_dates[-1] if window_dates else existing.get('updated'),
         'dates': all_dates,
         'counts': {code: [merged_counts_map[code].get(d, 0) for d in all_dates]
-                   for code in ('S0', 'S1', 'S2', 'S3', 'S4')},
+                   for code in ('S0', 'S1', 'S2', 'S5', 'S3', 'S4')},
         'qqq': [old_qqq_map.get(d) for d in all_dates],
         'stages': merged_stages,
         'deep': merged_deep,
@@ -346,9 +363,12 @@ def merge_history(existing, window_dates, stage_window, qqq_window, deep_window)
 #   end_stage  = stage exactly FORWARD_DAYS later (may be S9)
 #   peak_stage = highest ORDERED_STAGES stage touched in (t, t+FORWARD_DAYS],
 #                ignoring S9 days entirely (S9 is outside the lifecycle order)
-ORDERED_STAGES = ('S0', 'S1', 'S2', 'S3', 'S4')  # lifecycle order; S9 excluded
+# lifecycle order; S9 excluded. S5 高檔整理 sits between S2 築底 and S3 收縮完成
+# (2026-09 owner decision) — so a peak that only reaches S5 does NOT count toward
+# peak_s3plus below, same treatment S2 already got.
+ORDERED_STAGES = ('S0', 'S1', 'S2', 'S5', 'S3', 'S4')
 STAGE_RANK = {s: i for i, s in enumerate(ORDERED_STAGES)}
-END_BUCKETS = ('S0', 'S1', 'S2', 'S3', 'S4', 'S9')
+END_BUCKETS = ORDERED_STAGES + ('S9',)
 
 
 def _raw_transition_stats(stage_window, from_stage):
@@ -484,14 +504,14 @@ def build_control_deep_pullback(stage_window, deep_window):
 
 
 def build_transitions_table(stage_window, deep_window):
-    """Returns {'rows': [per-from-stage v2 stats for S0/S1/S2/S3],
+    """Returns {'rows': [per-from-stage v2 stats for S0/S1/S2/S5/S3],
     'baseline': v2 stats pooled over entry events of EVERY ordered stage
     (S0..S4) — the unconditional 母體無條件比率, 'control_deep_pullback':
     the matched deep-pullback-but-not-S1 control (see
     build_control_deep_pullback), 'control_version': CONTROL_VERSION}."""
     raws = {s: _raw_transition_stats(stage_window, s) for s in ORDERED_STAGES}
     rows = []
-    for from_stage in ('S0', 'S1', 'S2', 'S3'):
+    for from_stage in ('S0', 'S1', 'S2', 'S5', 'S3'):
         row = {'from': from_stage}
         row.update(_finalize_transition_stats(raws[from_stage]))
         rows.append(row)
@@ -591,14 +611,14 @@ def build():
 
     stage_today = stage.loc[as_of_idx]
     counts_today = {code: int((stage_today == code).sum()) for code in
-                    ('S0', 'S1', 'S2', 'S3', 'S4', 'S9')}
+                    ('S0', 'S1', 'S2', 'S5', 'S3', 'S4', 'S9')}
     n_eligible_today = int(fields['eligible'].loc[as_of_idx].sum())
 
     merged_dates = merged_history['dates']
     rows = []
     for t in cols:
         s = stage_today[t]
-        if s not in ('S1', 'S2', 'S3', 'S4'):
+        if s not in ('S1', 'S2', 'S5', 'S3', 'S4'):
             continue
         digit_str = merged_history['stages'].get(t, '')
         info = ticker_path_info(digit_str, merged_dates)
@@ -625,7 +645,7 @@ def build():
             'hub': hub,
         })
 
-    stage_order = {'S1': 0, 'S2': 1, 'S3': 2, 'S4': 3}
+    stage_order = {'S1': 0, 'S2': 1, 'S5': 2, 'S3': 3, 'S4': 4}
     rows.sort(key=lambda r: (stage_order.get(r['stage'], 9), r['days_in_stage']))
 
     lamp = {t: stage_today[t] for t in cols}
@@ -640,7 +660,8 @@ def build():
         'params': {
             's4_rs_ibd_min': S4_RS_IBD_MIN, 's4_dist_high_min_pct': S4_DIST_HIGH_MIN_PCT,
             's3_dist_high_min_pct': S3_DIST_HIGH_MIN_PCT, 's3_atr_ratio_max': S3_ATR_RATIO_MAX,
-            's3_vol_ratio_max': S3_VOL_RATIO_MAX, 's2_dist_high_min_pct': S2_DIST_HIGH_MIN_PCT,
+            's3_vol_ratio_max': S3_VOL_RATIO_MAX, 's5_dist_high_min_pct': S5_DIST_HIGH_MIN_PCT,
+            's2_dist_high_min_pct': S2_DIST_HIGH_MIN_PCT,
             's2_dist_high_max_pct': S2_DIST_HIGH_MAX_PCT, 's2_tt_min': S2_TT_MIN,
             'extended_pct_above_e21': EXTENDED_PCT_ABOVE_E21, 'extended_rsi_min': EXTENDED_RSI_MIN,
             'window_days': WINDOW_DAYS, 'forward_days': FORWARD_DAYS,
