@@ -922,11 +922,11 @@ def build_triggers(flowmap_data, forecasts_rows, gaps):
 
 def judge_word(p, clim):
     if p is None or clim is None:
-        return "無邊際"
+        return "與基準持平"
     diff = (p - clim) * 100
     if abs(diff) < 5:
-        return "無邊際"
-    return "略偏多" if diff > 0 else "略偏空"
+        return "與基準持平"
+    return "略高於基準" if diff > 0 else "略低於基準"
 
 
 def build_read_zh(council_summary, flows, top_fuse, stock_pulse, scoreboard, environment, long_track_data, gaps):
@@ -970,7 +970,7 @@ def build_read_zh(council_summary, flows, top_fuse, stock_pulse, scoreboard, env
     exposure_suffix = (f"；實單執行層目標曝險 美 {lt_us:.1f}%／台 {lt_tw:.1f}%"
                         if lt_us is not None and lt_tw is not None else "")
     bullets.append(
-        f"環境讀數：regime「{val_by_key.get('regime') or '—'}」・總經時鐘「{val_by_key.get('macro_clock') or '—'}」・"
+        f"環境讀數：大類資產環境（regime）「{val_by_key.get('regime') or '—'}」・總經時鐘「{val_by_key.get('macro_clock') or '—'}」・"
         f"警戒度「{val_by_key.get('detective') or '—'}」・跨資產壓力「{val_by_key.get('monitor') or '—'}」，"
         f"{n_warn}／4 轉警戒{exposure_suffix}。"
     )
@@ -980,10 +980,11 @@ def build_read_zh(council_summary, flows, top_fuse, stock_pulse, scoreboard, env
     lev = (flows.get("lev_etf") or {}).get("shock_minus2_bn") or {}
     lev_txt = "、".join(f"{k} {v:+.2f}" for k, v in lev.items() if v is not None) if lev else "—"
     bullets.append(
-        f"資金流：CTA 複合體最近翻轉位距現價 {numstr(dist)}%；"
-        f"波動控制基金曝險 {vc.get('exposure_pct', '—')}%（已實現波動 1 月 {vc.get('rv_1m', '—')}、"
-        f"3 月 {vc.get('rv_3m', '—')}）；槓桿 ETF 明日跌 2% 情境賣壓 {lev_txt}（十億美元；下跌情境的"
-        f"槓桿再平衡機械上不對稱於上漲情境）。"
+        f"資金流：CTA（趨勢跟隨基金）複合體最近翻轉價位距現價 {numstr(dist)}%；"
+        f"波動控制基金（依波動度自動加減碼的基金）目前曝險 {vc.get('exposure_pct', '—')}%"
+        f"（已實現波動 1 月 {vc.get('rv_1m', '—')}、3 月 {vc.get('rv_3m', '—')}）；"
+        f"若明天大盤跌 2%，槓桿 ETF 為維持槓桿倍數的機械賣壓估計 {lev_txt}"
+        f"（十億美元；這是假設漲跌對稱的估計，實際上下跌情境的再平衡賣壓通常比同等漲幅的買盤更重）。"
     )
 
     # 3) 引信句
@@ -991,11 +992,11 @@ def build_read_zh(council_summary, flows, top_fuse, stock_pulse, scoreboard, env
         theme, metric, resolver, p, resolve_by = top_fuse
         unit = unit_from_resolver(resolver)
         bullets.append(
-            f"最逼近的總經引信：{theme}／{metric}，門檻 {fmt_val(resolver.get('value'), unit)}，"
-            f"帳上機率 {round(p * 100)}%，{resolve_by} 前判定。"
+            f"最接近觸發的總經引信（總經情勢轉向的預警門檻）：{theme}／{metric}，"
+            f"門檻 {fmt_val(resolver.get('value'), unit)}，帳上機率 {round(p * 100)}%，{resolve_by} 前判定。"
         )
     else:
-        bullets.append("帳上目前無 open 的總經證偽命題可判讀。")
+        bullets.append("帳上目前無待結算的總經證偽命題可判讀。")
 
     # 4) 個股脈搏句（新鮮度）
     if stock_pulse.get("fresh"):
@@ -1021,8 +1022,10 @@ def build_read_zh(council_summary, flows, top_fuse, stock_pulse, scoreboard, env
     sentinel = sources.get("sentinel-noise") or {}
     _sn_state = (sentinel.get("sprt") or {}).get("state") or sentinel.get("status")
     _sn_neff = sentinel.get("n_eff")
-    _sn_plain = {"accept_h1": "已證實優於基準（記分壞掉，需檢查）", "accept_h0": "已證實不優於基準（淘汰機制有效）",
-                 "green": "已證實優於基準（記分壞掉，需檢查）", "red": "已證實不優於基準（淘汰機制有效）"}.get(
+    _sn_plain = {"accept_h1": "被判定優於基準——這代表記分機制可能故障，需要人工檢查",
+                 "accept_h0": "被判定不優於基準——這是預期中的正常結果，代表淘汰機制運作正常",
+                 "green": "被判定優於基準——這代表記分機制可能故障，需要人工檢查",
+                 "red": "被判定不優於基準——這是預期中的正常結果，代表淘汰機制運作正常"}.get(
         _sn_state, f"證據累積中，有效樣本 {_sn_neff if _sn_neff is not None else '—'}／20")
     bullets.append(
         f"記分板：{n_green} 綠／{n_yellow} 黃／{n_red} 紅（共 {len(all_status)} 個模組＋來源）；"

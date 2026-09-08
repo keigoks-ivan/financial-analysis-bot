@@ -3,7 +3,7 @@
 - 狀態：**提案（尚未執行）**——本檔只盤點與建議，未動任何站上頁面、script 或 commit。
 - 範圍：手維護入口頁 10 個 + generator script 14 支（見文末「附錄：掃描覆蓋清單」誠實列出讀了多少）。
 - 用途：後續所有「改稿白話化」的 sub-agent 或 session，一律以本檔的處置欄與白話主名為準，不得各自即興翻譯，避免全站用語再度分裂。
-- 詞條總數：**178 條**，按站內系統分 11 組（2.1 Cockpit 26／2.2 SOP Funnel 24／2.3 六態 6／2.4 DD Screener 對外欄位 16／2.4b DD Screener 內部演算法 14／2.5 Monitor+Detective 40／2.6 Engine 補充 4／2.7 Picks 三軌 16／2.8 Crowding 10／2.9 首頁導覽 9／2.10 其他 13）——高於原估 60–120，依指示「寧可多列標保留，不要漏」處理，實際處置以「改名」為主的約占三分之一，其餘為「保留＋註解」或「保留」。
+- 詞條總數：**198 條**，按站內系統分 12 組（2.1 Cockpit 26／2.2 SOP Funnel 24／2.3 六態 6／2.4 DD Screener 對外欄位 16／2.4b DD Screener 內部演算法 14／2.5 Monitor+Detective 40／2.6 Engine 補充 4／2.7 Picks 三軌 16／2.8 Crowding 10／2.9 首頁導覽 9／2.10 其他 13／2.11 市況主控台 20）——高於原估 60–120，依指示「寧可多列標保留，不要漏」處理，實際處置以「改名」為主的約占三分之一，其餘為「保留＋註解」或「保留」。**2.11 例外於本檔「提案（尚未執行）」的整體狀態**——2026-09-08 已實際落地於 `docs/market/index.html`／`scripts/build_market_state.py`，非尚待執行的提案，詳見該節標頭說明。
 
 ---
 
@@ -284,6 +284,35 @@
 | Sleeve（商品 Sleeve／index_sleeve／stock_sleeve） | flow、data.html、long-track | 分策略配置區塊（金融業界詞） | 配置區塊 | 改名候選：Sleeve 是英文金融術語直翻，一般讀者不熟；"商品 Sleeve" 可改「商品配置區塊」 |
 | MNQ／STX50／E3 | flow/index.html「執行」段落 | 具體期貨/ETF 代碼 | （保留原代碼） | 保留（進階工具頁範疇，一般讀者本來就不需要記這些） |
 | 節奏表 | flow/index.html | 固定頻率檢查清單（每日/每週/每月/每季） | 節奏表 | 保留（已白話） |
+
+### 2.11 市況主控台（Market Cockpit，`/market/`）——2026-09-08 白話工程已落地，非提案
+
+本節詞條與站上其他分組不同：**已於 2026-09-08 實際改稿**（`docs/market/index.html`、
+`scripts/build_market_state.py`），非尚待執行的提案；之後任何人再動 `/market/` 文案，以本節詞條為準，
+不要另創平行翻譯。範圍與依據見 `notes/site-internal/root/_market_plainlang_20260908.md`。
+
+| 現行用語 | 出現位置 | 機制含義 | 改後白話 | 處置 |
+|---|---|---|---|---|
+| describer of describers | index.html `.mandate` 定位段 | 本頁不重算、只彙整既有管線最新輸出（`build_market_state.py` 文件開頭「只讀不算」） | 彙整層 | 已改：純內部工程比喻，讀者無從理解英文複合詞 |
+| paper（市況曝險規則／Kelly 傾斜組合／NAV legend 等 10+ 處） | index.html 多處（`.proto-badge`、`<details>`、disclaimer、`SCORE_MODULE_LABEL`、`renderKelly`、`renderNavChart`） | paper trading：僅記分、未連真實資金的模擬帳戶（`build_exposure_track.py`／`build_kelly_track.py` 設計稿用語） | 模擬（帳戶） | 已改：沿用工作單建議的「紙上模擬」精神，統一用「模擬」一詞而非英文 |
+| 無邊際／略偏多／略偏空 | `judge_word()`（`build_market_state.py:923`）；index.html Kelly `<details>` 段引用同一批字面 | \|p − p_clim\|（機率與歷史基準的差距）< 5 個百分點記為第一類，否則依正負號分兩類 | 與基準持平／略高於基準／略低於基準 | 已改：兩處字面一起改，避免「今日讀法」與 Kelly 說明互相矛盾 |
+| 議會 Forecast Council | index.html h2（`預測議會`） | 多個獨立模型對同一件事的機率彙總（非單一模型） | 議會（保留＋首次出現加註「把好幾個獨立模型對同一件事的機率彙總起來——像多方意見表決，不是單一模型說了算」） | 保留＋註解：vivid 比喻本身無害，缺的是白話定義 |
+| 落帳（3 處：`#sec-judgment-score` section-sub ~383 行、`nowcastBlock` overline ~424 行、其下 note ~425 行） | index.html 多處；機制查證自 `scripts/ledger_from_editorial.py`（把命題＋resolver＋p append 進 `knowledge/forecasts.jsonl`，`status:"open"`，之後才會被結算） | 把一筆機率命題正式記進預測帳簿，之後要被結算對錯（與同頁已用的「帳上」「待結算」「帳簿」屬同一比喻家族） | 落帳（保留＋僅在首次出現處 ~383 行加註「記進預測帳簿，之後要結算對錯」；424／425 兩處沿用不重複註解，三處字面一致） | 保留＋註解：站上「帳」系列比喻已普遍接受（帳上／帳簿／待結算），落帳是同一家族的動詞，首見加註即可，不需改名 |
+| 引信／總經引信／引信距離 Falsifier Distance | `build_read_zh()` bullet 3（`build_market_state.py:995`）；index.html「引信距離」section | 總經證偽表的門檻距離，觸及即代表原判讀可能要改判 | 引信（保留＋加註「總經情勢轉向的預警門檻」，兩處分別加註） | 保留＋註解：與「否證指標」同一類比喻，站上已接受此類軍事隱喻＋註解的模式 |
+| 空手猜（歷史無條件頻率） | index.html Forecast Council legend | `p_clim`＝不考慮當下狀況、純歷史統計出的基準機率 | 空手猜（不看今天狀況，只算歷史發生的比例） | 已改：「無條件頻率」本身是統計詞，換成白話定義 |
+| 判讀者／主觀綜合 | index.html `#sec-judgment` section-sub | 對應 `read.json.author=="orchestrator"`，market-read skill 顯示層已定案用「站方判讀」 | 站方（沿用既有 `AUTHOR_LABEL` 用詞） | 已改：改用站上既有詞，不另創新詞 |
+| 機械層原始輸出，一個不刪 | index.html 證據層 section-sub | 泛指 monitor／detective／flowmap／statlab 等機械化管線 | 各管線 | 已改：「機械層」「一個不刪」是對內部說話的措辭 |
+| regime（bullet 1 裸字） | `build_read_zh()` 環境句（`build_market_state.py:973`） | environment tile 的 regime 磚，tile 本身 label 已是「大類資產環境（regime）」 | 大類資產環境（regime） | 已改：照抄本檔 2.9「regime（大類資產）」已核定用語，不重新翻譯 |
+| SPRT／accept_h0／accept_h1 裸露狀態碼 | `sprtStateText()`／`renderSprtCard()`／`renderSourceCard()`／disclaimer／`build_read_zh()` scoreboard 句 | Sequential Probability Ratio Test 的內部判定狀態 | 序貫檢定（SPRT）；狀態一律用「已證實優於基準」／「已證實不優於基準」等既有中文句，不露 accept_h0/accept_h1 | 已改：`market-read` SKILL.md 已明訂「頁面永遠不露…SPRT／…等內部詞」，此為同一紀律的補漏 |
+| 在淘汰賽中證明前 | index.html `.mandate` | 與 disclaimer「序貫檢定證明優於基準前」同一件事 | 在序貫檢定（SPRT）證明優於基準前 | 已改：統一為頁面下方已使用的措辭，避免同頁兩種說法 |
+| as-of（6 處：judgmentMeta／forces 表頭／judgment history 表頭／env meta／freshness 表頭／asof 主戳記） | index.html 多處 | 該數字最後量測／更新的日期 | 資料日期 | 已改：英文欄位標籤全面替換 |
+| 淨部位 %OI | index.html COT 部位極端表表頭 | 該市場投機性淨部位占未平倉量（open interest）的比例 | 淨部位（未平倉量%） | 已改：`OI` 為期貨業界縮寫，一般讀者不熟 |
+| E 曝險倍率／差距（edge）／z | index.html Kelly 傾斜組合卡片（`renderKelly()`） | `E`＝Kelly 曝險乘數；`edge = p − p_clim`；`z`＝edge 的統計顯著度（`build_kelly_track.py:compute_kelly`） | 曝險倍率／領先基準幅度／z 值（統計顯著度） | 已改：拿掉裸露的英文變數字母 |
+| 新鮮度通過 | index.html `renderPulse()` chip | `stock_pulse.fresh`：近 60 天裁決數 ≥ 門檻（10 筆） | 近期樣本足夠 | 已改：「新鮮度」是資料工程詞，換成直接講門檻通過的意思 |
+| 名單層開放命題 | index.html `renderListsLine()` | 與「帳上目前沒有待結算命題」同一種「open」狀態 | 名單層待結算命題 | 已改：統一用頁面已建立的「待結算」譯法，不要兩種詞並存 |
+| DD 鏈在挑名字，不是在躲市場 | index.html `renderPulse()` note | 個股層無新資料≠對大盤方向的擇時判斷（描述器紀律的延伸） | 個股研究（DD）是在挑選值得研究的公司，不是在判斷大盤方向 | 已改：內部行話換成完整白話句 |
+| inception（NAV 對比走勢缺口說明） | index.html `expGapNote` | `exposure_track.json` 的模擬帳戶起始日 | 模擬帳戶成立（前） | 已改：英文金融詞直接嵌入中文句子 |
+| hero `.lede` 開場架構 | index.html hero | 原句先列十一條管線內部名稱，再講頁面用途 | 改為先講「這頁回答什麼問題」，管線列表退為支撐說明 | 已改（結構調整，非詞彙改名）：對應風格指南「先講結論與意義，再講數字與機制」 |
 
 ---
 

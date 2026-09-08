@@ -7,7 +7,7 @@ description: market-read — 市況主控台判讀層（週頻＋事件觸發）
 
 **定位**：`/market/` 是機械證據層（日更、零 LLM）＋判讀層（本 skill）兩層。判讀層回答「未來 3／6／12 個月股市的可能方向與背後邏輯」，每一個機率都進帳簿被 SPRT 打分；判紅即降為評論。設計凍結稿：`notes/site-internal/root/_market_read_design_20260903.md`。**判讀者＝orchestrator（opus 級），不外包給 sonnet、不上 cron。**
 
-**白話關卡（持有人 2026-09-03 指出漏掉，列為硬規則）**：判讀文字＝外資券商白話，照 `_plainlang_styleguide.md` 四句式——每個術語在同一欄位首次出現必附「術語（一句白話）」（期限溢價（投資人要求多付的長債補償）、解壓縮（頂端無事、底層失血）、NAAIM（主動經理人曝險調查）…），先講為什麼再列數字，短句、一句一個意思；頁面永遠不露 `monitor:dgs10` 這類代碼與 SPRT／LLR／n_eff／orchestrator 等內部詞（顯示層用「序貫檢定」「累積證據分」「有效樣本」「站方判讀」）。`check_market_read.py` 的 `jargon_gloss` WARN 必須清零才算完成。
+**白話關卡（持有人 2026-09-03 指出漏掉，列為硬規則）**：判讀文字＝外資券商白話，照 `_plainlang_styleguide.md` 四句式——每個術語在同一欄位首次出現必附「術語（一句白話）」（期限溢價（投資人要求多付的長債補償）、解壓縮（頂端無事、底層失血）、NAAIM（主動經理人曝險調查）…），先講為什麼再列數字，短句、一句一個意思；頁面永遠不露 `monitor:dgs10` 這類代碼與 SPRT／LLR／n_eff／orchestrator 等內部詞（顯示層用「序貫檢定」「累積證據分」「有效樣本」「站方判讀」）。`check_market_read.py` 的 `jargon_gloss` WARN 必須清零才算完成。**適用範圍不只 `read.json`**——同一把尺也涵蓋 `docs/market/index.html` 的手寫文案與 `scripts/build_market_state.py` 的機械模板句（`judge_word()`／`build_read_zh()` 等）；任何一處新增讀者可見字串，動筆前都要先過這關（對照表見 `_plainlang_styleguide.md` §2.11「市況主控台」）。
 
 **憲法**：描述器紀律（只講機率與條件；禁「買／賣／加碼／減碼／避開／進場／出場／建議」）；不是收斂面；每個判斷句錨定一個 ref（`monitor:<key>`／`internals:<key>`／`stress:<欄>`／`cot:<市場>`／`flow:<欄>`）並帶 as_of；與帳簿表格分歧必明寫；白話全形（`_plainlang_styleguide.md`）；不改任何機械層檔案。
 
@@ -104,5 +104,6 @@ Agent({
 ```
 
 ## 版本
+- v1.2 2026-09-08：白話關卡適用範圍明文擴大到 `docs/market/index.html` 手寫文案與 `build_market_state.py` 機械模板句（原本只管 `read.json`）；本輪清查對照表落 `_plainlang_styleguide.md` §2.11。
 - v1.1 2026-09-03：新增 Auto 模式（雲端 routine `market-read-auto`，見 §5）——`check_read_triggers.py` 判定觸發、冷讀 subagent 模型配對與職責書、失敗寫 `read_status.json`、email 摘要交 `market-read-notify.yml`。手動模式（步驟 1–6）不變。
 - v1.0 2026-09-03：首版；首份判讀 2026-09-02（先弱後強；3m 0.52／6m 0.55／12m 0.60；7 張命題）。
