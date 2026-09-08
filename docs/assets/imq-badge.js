@@ -24,9 +24,12 @@
 
   // ── 常數 ──────────────────────────────────────────────────────────
   var Q_ROIC_MIN = 15, Q_FCF_MIN = 10, Q_ROIC_EXEMPT = 25;
-  var STAGE_LABEL = { S0: "弱勢", S1: "轉強", S2: "築底", S3: "收縮完成", S4: "領先", S9: "過渡" };
-  var STAGE_ROLE  = { S4: "pos", S3: "pos", S1: "accent", S2: "sec", S0: "neg", S9: "mut" };
-  var STAGE_ORDER = ["S4", "S3", "S2", "S1", "S0"]; // 矩陣列序：領先／收縮完成／築底／轉強／弱勢
+  var STAGE_LABEL = { S0: "弱勢", S1: "轉強", S2: "築底", S5: "高檔整理", S3: "收縮完成", S4: "領先", S9: "過渡" };
+  // S5 高檔整理（2026-09-09 owner decision）介於 S2 築底與 S3 收縮完成之間，色階
+  // 也介於 sec（S2）與 pos（S3/S4）之間，故給它自己的 accent-muted token
+  // （imq-badge.css 的 --qtm-accent-muted，與 --qtm-sec／--qtm-pos 同色階邏輯）。
+  var STAGE_ROLE  = { S4: "pos", S3: "pos", S5: "accent-muted", S1: "accent", S2: "sec", S0: "neg", S9: "mut" };
+  var STAGE_ORDER = ["S4", "S3", "S5", "S2", "S1", "S0"]; // 矩陣列序：領先／收縮完成／高檔整理／築底／轉強／弱勢
   var QCOLS = ["pass", "fail", "none"];
   var QCOL_LABEL = { pass: "品質過", fail: "品質未過", none: "無品質資料" };
   var DD_CLS = { "進場": "dd-in", "觀望": "dd-watch", "迴避": "dd-avoid" };
@@ -251,7 +254,7 @@
   // 名單頁小徽章只有一種尺寸：四格各一個色點＋2 字短標，肉眼可辨、不靠 hover；
   // 完整說明（差多少、來自哪段、第幾天）留給點擊後的彈出小卡（renderPopupBody）。
   var Q_SHORT = { pass: "過", fail: "未過", none: "缺" };
-  var STAGE_SHORT = { S0: "弱勢", S1: "轉強", S2: "築底", S3: "收縮", S4: "領先", S9: "過渡" };
+  var STAGE_SHORT = { S0: "弱勢", S1: "轉強", S2: "築底", S5: "高檔", S3: "收縮", S4: "領先", S9: "過渡" };
   var DD_SHORT = { "進場": "進場", "觀望": "觀望", "迴避": "迴避" };
   function renderStrip(idx, ticker) {
     var qb = qualityBucketKey(idx.quality[ticker]);
@@ -401,7 +404,10 @@
   // 是否曾觸及」，改看第 60 日當天的 end_stage，以及期間（跳過 S9 過渡日）
   // 到過的最高 peak_stage——避免把「剛脫離深回檔、第 60 日前仍貼過一天 200
   // 日均線下」誤記成一次完整的跌回弱勢。
-  var STAGE_DIGIT_RANK = { "0": 0, "1": 1, "2": 2, "3": 3, "4": 4 };
+  // lifecycle order S0<S1<S2<S5<S3<S4 (2026-09-09 owner decision, mirrors
+  // scripts/build_stages.py::ORDERED_STAGES) — a peak that only reaches S5
+  // does NOT count toward peakS3plus below, same treatment S2 already got.
+  var STAGE_DIGIT_RANK = { "0": 0, "1": 1, "2": 2, "5": 3, "3": 4, "4": 5 };
   function computeHitRates(idx) {
     var dates = idx.historyDates || [];
     var n = dates.length;

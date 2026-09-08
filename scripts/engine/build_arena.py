@@ -65,11 +65,15 @@ UNIVERSE = ROOT / "data" / "engine" / "universe.json"
 # 過熱燈號是兩套獨立機制——只加欄、不改 own_score／排序／遲滯／席位任何邏輯，見
 # notes/site-internal/root/_stages_radar_design_20260908.md §7b）。
 LAMP_JSON = ROOT / "docs" / "stages" / "data" / "lamp.json"
-STAGE_LABEL = {"S0": "弱勢", "S1": "轉強", "S2": "築底", "S3": "收縮完成", "S4": "領先", "S9": "過渡"}
-# pos=領先/收縮完成、accent=轉強、sec=築底、neg=弱勢、muted=過渡（design spec §7b 色票）；
-# up/dn/mut 沿用既有 bw-pill 色系，accent/sec 是本節新增的兩個 pill 色系。
-STAGE_PILL_CLS = {"S0": "dn", "S1": "accent", "S2": "sec", "S3": "up", "S4": "up", "S9": "mut"}
-STAGE_CODE_ASCII = {"S0": "WEAK", "S1": "TURN", "S2": "BASE", "S3": "CONT", "S4": "LEAD", "S9": "TRAN"}
+STAGE_LABEL = {"S0": "弱勢", "S1": "轉強", "S2": "築底", "S5": "高檔整理", "S3": "收縮完成", "S4": "領先", "S9": "過渡"}
+# pos=領先/收縮完成、accent=轉強、sec=築底、accent-muted=高檔整理、neg=弱勢、muted=過渡
+# （design spec §7b 色票；S5 2026-09-09 owner decision，色階介於 sec 與 pos 之間，見
+# notes/site-internal/root/_stages_radar_design_20260908.md）；up/dn/mut 沿用既有
+# bw-pill 色系，accent/sec/accent-muted 是本節新增的三個 pill 色系。
+STAGE_PILL_CLS = {"S0": "dn", "S1": "accent", "S2": "sec", "S5": "accent-muted",
+                  "S3": "up", "S4": "up", "S9": "mut"}
+STAGE_CODE_ASCII = {"S0": "WEAK", "S1": "TURN", "S2": "BASE", "S5": "HIGH",
+                    "S3": "CONT", "S4": "LEAD", "S9": "TRAN"}
 W_STAGE = 4
 CARDS_JSON = OUT_DIR / "cards.json"
 LEDGER_JSON = OUT_DIR / "arena-ledger.json"   # 席位變動帳本（append-only）
@@ -481,8 +485,8 @@ def render_board_text(as_of, rows, core_seats, sat_seats, prev_snap, entered, la
              "timing＝位置、stage＝階段、"
              "seat＝席位、dd＝DD 標籤、moat＝護城河；note＝註記")
     L.append("timing 代碼：BRK＝突破、PB＝回踩、TR＝趨勢、HOT＝過熱、DN＝線下"
-             "｜stage 代碼：WEAK＝弱勢、TURN＝轉強、BASE＝築底、CONT＝收縮完成、LEAD＝領先、"
-             "TRAN＝過渡、-＝資料缺"
+             "｜stage 代碼：WEAK＝弱勢、TURN＝轉強、BASE＝築底、HIGH＝高檔整理、CONT＝收縮完成、"
+             "LEAD＝領先、TRAN＝過渡、-＝資料缺"
              "｜seat：C1-C5＝核心席次、S1-S5＝衛星席次｜moat：字母＝評級，+/=/-＝護城河趨勢升/平/降"
              "｜dd：IN/WATCH/AVOID/legacy/none，core/sat/trk＝角色，Nd＝天數，!old＝逾 180 天過期")
     L.append("")
@@ -747,6 +751,7 @@ _BOARD_CSS = """<style>
 .board-wrap .bw-pill-mut{background:var(--line-soft,#eee);color:var(--muted,#999)}
 .board-wrap .bw-pill-accent{background:#fdf4e3;color:var(--accent,#b8924a)}
 .board-wrap .bw-pill-sec{background:var(--line-soft,#eee);color:var(--sec,#666)}
+.board-wrap .bw-pill-accent-muted{background:#eaf3ee;color:#3f7d63}
 .board-wrap .bw-chip{display:inline-block;font-size:10.5px;font-family:var(--sans,inherit);
   color:var(--sec,var(--text-sec,#666));background:var(--line-soft,rgba(0,0,0,.045));
   border-radius:4px;padding:1px 6px;margin:0 3px 3px 0;cursor:help}
@@ -767,8 +772,8 @@ function refreshStageLamp(){
     return r.json();
   }).then(function(d){
     var lamp=(d&&d.lamp)||{};
-    var LABEL={S0:'弱勢',S1:'轉強',S2:'築底',S3:'收縮完成',S4:'領先',S9:'過渡'};
-    var CLS={S0:'dn',S1:'accent',S2:'sec',S3:'up',S4:'up',S9:'mut'};
+    var LABEL={S0:'弱勢',S1:'轉強',S2:'築底',S5:'高檔整理',S3:'收縮完成',S4:'領先',S9:'過渡'};
+    var CLS={S0:'dn',S1:'accent',S2:'sec',S5:'accent-muted',S3:'up',S4:'up',S9:'mut'};
     document.querySelectorAll('[data-lamp-ticker]').forEach(function(el){
       var code=lamp[el.getAttribute('data-lamp-ticker')];
       el.className='bw-pill bw-pill-'+(CLS[code]||'mut');
