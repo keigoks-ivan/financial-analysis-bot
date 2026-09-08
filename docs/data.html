@@ -169,6 +169,7 @@ table.dt-schema td.ty{font-family:var(--mono);font-size:11px;color:var(--gold-de
     <a href="#track-record">track-record</a>
     <a href="#pm-flags">pm/flags</a>
     <a href="#pm-holdings">pm/holdings</a>
+    <a href="#engine-universe-board">engine/universe-board</a>
     <a href="#long-track-state">long-track/state</a>
     <a href="#search">search-index</a>
   </div>
@@ -631,6 +632,28 @@ table.dt-schema td.ty{font-family:var(--mono);font-size:11px;color:var(--gold-de
       </tbody>
     </table></div>
     <p class="dt-note"><b>穩定性</b>：換席永遠人工拍板——本檔是系統建議排序，不是自動執行紀錄。</p>
+  </section>
+
+  <!-- ══ ENGINE UNIVERSE BOARD ══ -->
+  <section class="dt-ep" id="engine-universe-board">
+    <div class="dt-ep-head"><h2>選股引擎・研究母體</h2><span class="dt-path">/engine/universe_board.json</span></div>
+    <p class="dt-purpose">選股引擎全母體（DD 池美股 ∪ QGM 品質池 ∪ 可選但先不入席候選，即 <code>arena.json</code> 的 <code>universe_n</code> 計數同一份 ~276 檔）攤平成單一陣列——供 <a href="/cockpit/">選股主控台</a>「品質 × 時機矩陣」的「研究母體」欄使用。<code>own_board</code>（擁有層分前 60）只是這份母體的子集；本檔不新增排序或資格邏輯，直接複用 <code>arena.json</code> 已算好的品質閘／裁決／軌別。</p>
+    <div class="dt-facts">
+      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">每週（Sun 20:00 UTC＝台北週一 04:00）· workflow <code>weekly-engine</code> 跑 <code>build_arena.py</code>（與 <code>arena.json</code> 同一次 build 產出）</span></div>
+      <div class="dt-fact"><span class="k">as_of 語意</span><span class="v"><code>as_of</code> = dd-screener latest.json 的基準日（與 <code>arena.json</code> 同源）</span></div>
+    </div>
+    <div class="dt-tablewrap"><table class="dt-schema">
+      <thead><tr><th>欄位</th><th>型別</th><th>意義</th></tr></thead>
+      <tbody>
+        <tr><td class="f">schema / as_of / n</td><td class="ty">string / string / int</td><td>schema 標記、基準日、母體檔數（＝ <code>arena.json.universe_n</code>）</td></tr>
+        <tr><td class="f">rows[].ticker / src</td><td class="ty">string</td><td>代號；來源 <code>dd-pool</code>（DD 池美股，含快審卡）或 <code>qgm</code>（QGM 品質池無 DD 名字）</td></tr>
+        <tr><td class="f">rows[].score / g / g_method</td><td class="ty">number / number / string</td><td>擁有層分；FY1→FY3（或單年代替）成長%；成長口徑說明</td></tr>
+        <tr><td class="f">rows[].quality</td><td class="ty">object</td><td><code>pass</code>（true/false/null＝金融另軌未判）／<code>why[]</code>／<code>roic</code>／<code>fcf</code>／<code>exempt</code>（capex 週期豁免）</td></tr>
+        <tr><td class="f">rows[].verdict / dd_tag / dd_path</td><td class="ty">string</td><td>DD 裁決（進場／觀望／迴避／null＝無 DD）；顯示標籤；報告連結</td></tr>
+        <tr><td class="f">rows[].route / seat</td><td class="ty">string</td><td>軌別 core／satellite；席位標記 C＝核心席、S＝衛星席、B＝候補、null＝不在席位/候補</td></tr>
+      </tbody>
+    </table></div>
+    <p class="dt-note"><b>穩定性</b>：<code>rows</code> 依 ticker 字母序排列（決定性輸出）；本檔不落入 own_score 排序或席位資格判定，純供前端矩陣讀取。</p>
   </section>
 
   <!-- ══ LONG-TRACK W52-ADAPTIVE STATE ══ -->

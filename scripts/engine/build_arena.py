@@ -70,6 +70,10 @@ ARENA_JSON = OUT_DIR / "arena.json"
 # 2026-07-10 席位分頁整併：輸出 nav-less 片段供 /cockpit/#seats-arena 子分頁 iframe 嵌入；
 # /engine/arena.html 已改為 redirect stub（見 site_nav SKIP_FILES）。內容為 M5 對照組 PREREG 凍結，只換殼不改文。
 ARENA_HTML = OUT_DIR / "_arena_body.html"
+# 2026-09-09：研究母體（品質×時機矩陣「研究母體」欄，own_board 60 名以外的全 ~276 檔）——
+# design spec notes/site-internal/root/_quality_timing_matrix_design_20260908.md。純攤平
+# universe_rows 已算好的 grp.quality／verdict／route，不新增排序或資格邏輯。
+UNIVERSE_BOARD_JSON = OUT_DIR / "universe_board.json"
 
 CORE_SLOTS = 5
 SAT_SLOTS = 5
@@ -950,6 +954,33 @@ def render_board_html(as_of, rows, core_seats, sat_seats, prev_snap, entered, la
     )
 
 
+def _universe_board_row(r: dict, seat_map: dict) -> dict:
+    """universe_board.json 單列——直接複用該列已算好的 grp.quality，不重算。"""
+    g = r.get("grp") or {}
+    q = g.get("quality") or {}
+    quality = {"pass": q.get("pass"), "why": q.get("why") or [],
+               "roic": q.get("roic"), "fcf": q.get("fcf"), "exempt": bool(q.get("exempt"))}
+    return {"ticker": r["ticker"], "src": r.get("src") or "dd-pool", "score": r.get("score"),
+            "quality": quality, "g": g.get("g"), "g_method": r.get("g_method"),
+            "verdict": r.get("verdict"), "dd_tag": r.get("dd_tag"), "dd_path": r.get("dd_path"),
+            "route": r.get("route"), "seat": seat_map.get(r["ticker"])}
+
+
+def build_universe_board(universe_rows, core_seats, sat_seats, core_bench, sat_bench, as_of) -> dict:
+    """docs/engine/universe_board.json：研究母體（DD 池美股 ∪ QGM 品質池 ∪ 可選但先不入席
+    候選，即 universe_n 計數的同一份 ~276 檔全母體）——供 cockpit 品質×時機矩陣「研究母體」
+    欄；不影響 own_board／席位／遲滯任何既有邏輯。決定性排序：依 ticker 字母序。"""
+    seat_map = {}
+    for r in core_seats:
+        seat_map[r["ticker"]] = "C"
+    for r in sat_seats:
+        seat_map[r["ticker"]] = "S"
+    for r in core_bench + sat_bench:
+        seat_map.setdefault(r["ticker"], "B")
+    rows = sorted((_universe_board_row(r, seat_map) for r in universe_rows), key=lambda x: x["ticker"])
+    return {"schema": "engine-universe-board-v1", "as_of": as_of, "n": len(rows), "rows": rows}
+
+
 def main() -> int:
     stocks = json.loads(DD_LATEST.read_text(encoding="utf-8"))["stocks"]
     # latest.json 若以 --include-non-dd 產出，無 DD 列（dd_status="none"）改由 load_qgm_rows 供給
@@ -1282,6 +1313,8 @@ DD 角色與機械軌別衝突標 ⚠ 供人裁。三閘未過的進場票落板
 {_STAGE_LAMP_SCRIPT}"""
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
+    universe_board = build_universe_board(universe_rows, core_seats, sat_seats, core_bench, sat_bench, as_of)
+    UNIVERSE_BOARD_JSON.write_text(json.dumps(universe_board, ensure_ascii=False, indent=1), encoding="utf-8")
     ARENA_JSON.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
     ARENA_HTML.write_text(
         page_embed_shell("席位擂台 · 席位排序", body,
