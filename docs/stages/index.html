@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>個股階段雷達（美股） | InvestMQuest Research</title>
+<meta name="description" content="美股約 1,400 檔的技術結構生命週期定位：弱勢、轉強、築底、收縮完成、領先，附每天各段家數與過去 250 個交易日轉場基率。名單只回答看誰，不回答買不買。">
+<link rel="stylesheet" href="/assets/imq-base.css">
+<style>
+body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body)}
+.wrap{max-width:1140px;margin:0 auto;padding:2.2rem 20px 3rem}
+.hero h1{font-family:var(--serif);color:var(--ink);font-weight:700;font-size:1.6rem;letter-spacing:-.01em;margin:0 0 .5rem}
+.hero p{color:var(--sec);font-size:.92rem;line-height:1.8;max-width:820px;margin:0}
+.sec{margin-top:2.2rem}
+.sec h2{font-family:var(--serif);color:var(--ink);font-size:1.15rem;font-weight:700;margin:0 0 .8rem}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:.8rem;margin-bottom:1rem}
+.stat-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:.9rem 1.1rem;box-shadow:var(--sh-1)}
+.stat-card .v{font-family:var(--mono);font-size:1.5rem;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;line-height:1.15}
+.stat-card .k{font-size:.72rem;font-weight:500;color:var(--muted);margin-top:.2rem}
+.chart-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:1.1rem 1.2rem 1.3rem;box-shadow:var(--sh-1)}
+.chart-host{position:relative;width:100%}
+.chart-host svg{width:100%;height:auto;display:block}
+.chart-tip{position:absolute;pointer-events:none;background:var(--card);border:1px solid var(--line);border-radius:6px;box-shadow:var(--sh-2);padding:6px 9px;font-size:11.5px;font-family:var(--mono);color:var(--body);line-height:1.6;white-space:nowrap;opacity:0;transition:opacity .1s;z-index:5}
+.chart-tip b{color:var(--ink);font-size:12.5px}
+.chart-legend{display:flex;gap:1.1rem;flex-wrap:wrap;margin-top:.6rem;font-size:.76rem;color:var(--sec);align-items:center}
+.chart-legend label{display:inline-flex;align-items:center;gap:.35rem;cursor:pointer}
+.chart-legend i{width:14px;height:2px;display:inline-block}
+.explain-p{font-size:.86rem;color:var(--sec);line-height:1.85;margin:.8rem 0 0}
+.empty{font-size:.84rem;color:var(--muted);padding:1.6rem 0;text-align:center;border:1px dashed var(--line);border-radius:var(--r)}
+table.stg-table{width:100%;border-collapse:collapse;font-size:.82rem;background:var(--card)}
+table.stg-table th{font-family:var(--mono);font-size:.62rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--sec);text-align:left;padding:.6rem .7rem;border-bottom:1px solid var(--line);white-space:nowrap}
+table.stg-table td{padding:.55rem .7rem;border-bottom:1px solid var(--line-soft);color:var(--body);line-height:1.5;white-space:nowrap}
+table.stg-table tr:hover td{background:#fbf8f1}
+table.stg-table .num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+table.stg-table .pos{color:var(--pos)}
+table.stg-table .neg{color:var(--neg)}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r)}
+.mark{font-size:.68rem;color:var(--accent);font-weight:700;margin-left:.15rem}
+.low-sample{color:var(--muted);font-size:.7rem}
+.tabs{display:flex;gap:.4rem;margin-bottom:.8rem;flex-wrap:wrap}
+.tab-btn{font-size:.82rem;font-weight:600;color:var(--sec);background:var(--card);border:1px solid var(--line);border-radius:7px;padding:.45rem .9rem;cursor:pointer}
+.tab-btn.active{color:#fff;background:var(--accent);border-color:var(--accent)}
+.tab-btn .n{font-family:var(--mono);font-weight:500;opacity:.85;margin-left:.25rem}
+.flag-chip{display:inline-block;font-size:.68rem;font-weight:600;padding:.08rem .4rem;border-radius:4px;background:var(--line-soft);color:var(--sec);margin-right:.25rem}
+.cond-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.7rem}
+.cond-list li{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:.8rem 1rem;font-size:.85rem;color:var(--body);line-height:1.7}
+.cond-list b{color:var(--ink)}
+.usefor-card{margin-top:1rem;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:1.1rem 1.2rem}
+.usefor-card h3{font-family:var(--serif);color:var(--ink);font-size:1rem;font-weight:700;margin:0 0 .7rem}
+.usefor-card ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.6rem}
+.usefor-card li{font-size:.85rem;color:var(--body);line-height:1.8}
+.usefor-card b{color:var(--ink)}
+.usefor-close{margin-top:.8rem;font-size:.82rem;color:var(--sec);line-height:1.8;border-top:1px solid var(--line-soft);padding-top:.7rem}
+details.howto{margin-top:1rem;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:.8rem 1rem}
+details.howto summary{cursor:pointer;font-weight:600;color:var(--accent);font-size:.85rem}
+details.howto .body{margin-top:.7rem;font-size:.8rem;color:var(--sec);line-height:1.85}
+details.howto code{font-family:var(--mono);font-size:.78rem;background:var(--line-soft);padding:.05rem .35rem;border-radius:4px;color:var(--body)}
+.disclaimer{margin-top:2rem;font-size:.8rem;color:var(--sec);line-height:1.8;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:1rem 1.2rem}
+.crosslinks{margin-top:.8rem;font-size:.82rem;color:var(--sec)}
+.crosslinks a{color:var(--accent);font-weight:600}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/market/">市況主控台</a>
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <a href="/cockpit/" class="active">選股</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">個股研究</a>
+          <a href="/id/">產業研究</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/flow/">投資流程</a>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+<div class="wrap">
+  <div class="hero">
+    <h1>個股階段雷達（美股）</h1>
+    <p>同一檔股票通常會走過弱勢→轉強→築底→收縮完成→領先。這頁把美股約 1,400 檔每天各放進一段，看名單，也看每一段有幾檔。名單只回答「看誰」。</p>
+  </div>
+
+  <div class="sec">
+    <h2>今日各段家數</h2>
+    <div class="stats-row" id="counts-stats">
+      <div class="empty">資料尚未產出</div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2>階段家數：每天各段有幾檔</h2>
+    <div class="chart-card">
+      <div class="chart-host" id="chart-host">
+        <div class="empty">資料尚未產出</div>
+      </div>
+      <div class="chart-legend" id="chart-legend" style="display:none">
+        <label><input type="checkbox" id="toggle-s1" checked><i style="background:var(--accent)"></i>轉強</label>
+        <label><input type="checkbox" id="toggle-s3" checked><i style="background:var(--pos)"></i>收縮完成</label>
+        <label><input type="checkbox" id="toggle-s4" checked><i style="background:#8a6d3b"></i>領先</label>
+        <label><input type="checkbox" id="toggle-s0"><i style="background:var(--neg);opacity:.7"></i>弱勢</label>
+        <label><input type="checkbox" id="toggle-s2"><i style="background:var(--sec);opacity:.7"></i>築底</label>
+        <span><i style="background:var(--muted)"></i>QQQ（右軸）</span>
+      </div>
+      <p class="explain-p">轉強家數從低檔翻上、領先家數在掉，描述的是輪動早期；領先很多、轉強很少，描述的是後期。它描述現況，不預測轉折時點。</p>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2>轉場基率：過去 250 個交易日，進了這一段的名字後來去了哪</h2>
+    <div class="tbl-wrap">
+      <table class="stg-table" id="trans-table">
+        <thead>
+          <tr>
+            <th>來源段</th><th>樣本數</th><th>60 日內到收縮完成</th><th>60 日內到領先</th>
+            <th>跌回弱勢</th><th>60 日後仍原地</th>
+          </tr>
+        </thead>
+        <tbody id="trans-tbody">
+          <tr><td colspan="6" class="empty" style="border:0">資料尚未產出</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="explain-p">這是過去 250 個交易日回算，不是預測。</p>
+  </div>
+
+  <div class="sec">
+    <h2>名單</h2>
+    <div class="tabs" id="stage-tabs"></div>
+    <div class="tbl-wrap">
+      <table class="stg-table" id="rows-table">
+        <thead>
+          <tr>
+            <th>代號</th><th>在此階段天數</th><th>來路</th>
+            <th title="IBD 式加權報酬（近一季報酬加權兩倍＋近半年、近九個月、近一年報酬）在全母體中的百分位">RS 12 個月百分位</th>
+            <th title="現價相對近一年最高價的距離（顯示絕對值）">距 52 週高</th>
+            <th title="五條 Trend Template 條件過幾條：價格結構／均線排列">Trend Template</th>
+            <th title="近 10 日 ATR（真實區間均值）相對近 60 日的比率，越小代表波動收縮越多">ATR 比率</th>
+            <th title="近 10 日均量相對近 50 日均量的比率，越小代表量能越乾">量比</th>
+            <th>旗標</th>
+            <th title="近 20 日日均成交金額（美元）">日均成交金額</th>
+          </tr>
+        </thead>
+        <tbody id="rows-tbody">
+          <tr><td colspan="10" class="empty" style="border:0">資料尚未產出</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2>六段定義</h2>
+    <ul class="cond-list">
+      <li><b>弱勢（S0）</b>——股價同時低於 50 日均線與 200 日均線，而且相對大盤（QQQ）近 63 個交易日的超額報酬是負的。</li>
+      <li><b>轉強（S1）</b>——套用「轉強觀察」頁的六條件：相對大盤的強度正在加速、近一季曾經明顯回檔、剛站回或站穩 21 日均線、低點正在墊高、離一年高點還有 8% 以上、有基本的流動性。</li>
+      <li><b>築底（S2）</b>——站上 50 日均線，Trend Template（五條均線與價格結構條件）至少過 3 條，但離一年高點還有 8% 到 25% 之間，還沒完全收復。</li>
+      <li><b>收縮完成（S3）</b>——Trend Template 五條全過、離一年高點在 8% 以內，而且近 10 日的波動幅度已經收縮到近 60 日的 0.7 倍以下、近 10 日成交量也降到近 50 日的 0.9 倍以下——這是 Minervini VCP（波動收縮）形態的核心判定，關鍵價位與停損最明確的一段。</li>
+      <li><b>領先（S4）</b>——Trend Template 五條全過、離一年高點在 8% 以內，而且相對強度（IBD 式加權報酬）排在全母體前 20%。</li>
+      <li><b>過渡（S9）</b>——不符合以上任何一段的明確條件，或流動性／資料量不足以判定（近 20 日均成交金額低於 2,000 萬美元、股價低於 5 美元，或交易天數不足），只進家數統計，不進名單。</li>
+    </ul>
+
+    <div class="usefor-card">
+      <h3>哪一段最有用，看你在問什麼</h3>
+      <ul>
+        <li><b>對「先決定值不值得擁有、再談進場」的長抱型組合，最有價值的正向碼是「轉強」。</b>名字本來就在想擁有的名單上，剩下的問題只有「回檔是不是結束了」，轉強回答的正是這個。收縮完成與領先來得更晚，位置更差；領先幾乎等於市場已經定價。</li>
+        <li><b>最有價值的警訊碼是「弱勢」。</b>手上的核心持股掉進弱勢，是最便宜的論點複查觸發器，可以直接接到既有的證偽條件與持倉週掃，不用另建監測。</li>
+        <li><b>對純技術交易者，最有價值的是「收縮完成」。</b>它是最緊、最可證偽的狀態：關鍵價位明確、停損位置明確、幾週內就知道對錯，Minervini 的優勢全在這一段。但對以擁有為先的組合，它是次要的。</li>
+        <li><b>真正的價值在轉場，不在單一階段。</b>走完「弱勢→轉強→築底」這條路的名字，比任何一個靜態階段都有資訊，所以轉場基率表放在名單前面。</li>
+      </ul>
+      <p class="usefor-close">結語（可證偽）：這頁有沒有用，看兩個數字——轉強名單在 60 個交易日內走到收縮完成或領先的比例<span class="mark">①</span>，應明顯高於全母體；跌回弱勢的比例<span class="mark">②</span>，應明顯低於弱勢名單的續弱率。若沒有這個差距，轉強就只是雜訊。這兩個數字直接讀上方轉場基率表「轉強」列標<span class="mark">①</span><span class="mark">②</span>的兩格。</p>
+    </div>
+
+    <details class="howto">
+      <summary>怎麼算——公式、母體與資料時效</summary>
+      <div class="body">
+        <p><b>母體</b>：與 <a href="/rs-turn/">轉強觀察</a> 共用同一份母體（<code>data/engine/universe.json</code> 聯集 Russell 1000 代理名單），約 1,400 檔。</p>
+        <p><b>Trend Template（五條）</b>：現價 &gt; 150 日均線 &gt; 200 日均線；200 日均線比 21 個交易日前高；50 日均線 &gt; 150 日均線；現價 ≥ 52 週低點 1.30 倍；現價 ≥ 52 週高點 0.75 倍。過幾條計入 <code>tt_pass_count</code>（0–5）。</p>
+        <p><b>RS 12 個月百分位</b> ＝ （2×近 63 日報酬 ＋ 近 126 日報酬 ＋ 近 189 日報酬 ＋ 近 252 日報酬）在當日全母體中的百分位排名。</p>
+        <p><b>ATR 比率</b> ＝ 近 10 日真實區間（True Range，取當日高低價差與前一日收盤價差中最大者）均值 ÷ 近 60 日同一指標均值。<b>量比</b> ＝ 近 10 日均量 ÷ 近 50 日均量。</p>
+        <p><b>延伸</b>旗標 ＝ 現價比 21 日 EMA 高 15% 以上，或 14 日 RSI 超過 80。<b>RS 線新高</b>旗標 ＝ 現價／SPY 這條相對強度線，在近一年高點的 0.5% 以內。</p>
+        <p><b>轉場基率</b>：對過去 250 個交易日內每一次「進入某段」事件（距今至少 60 個交易日，確保有完整的 60 日後續資料），統計 60 個交易日內是否曾到達指定的目標段。樣本數低於 20 標「樣本不足」。</p>
+        <p><b>目前資料</b>：<span id="howto-asof">—</span></p>
+      </div>
+    </details>
+
+    <p class="crosslinks">相關頁面：<a href="/rs-turn/">轉強觀察</a>（轉強條件的完整細節與寬度線）· <a href="/screener.html">RS+VCP Screener</a>（收縮完成的完整 VCP 形態掃描）</p>
+  </div>
+
+  <p class="disclaimer">這是技術面觀察清單，不是買進或賣出建議。階段是「現在在哪一段」的描述，轉場基率是「過去這一段的名字後來去了哪」的回算，兩者都不是對未來的預測。進場前要自己看風險、部位與出場規則。</p>
+
+  <footer class="imq-foot">
+    <div>© 2026 InvestMQuest Research</div>
+    <div><a href="/disclosures.html">方法論與揭露</a> · 本站內容僅供研究參考，不構成投資建議</div>
+  </footer>
+</div>
+<script>
+(function () {
+  "use strict";
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function fetchJSON(path) {
+    return fetch(path).then(function (r) {
+      if (!r.ok) throw new Error("not ok: " + r.status);
+      return r.json();
+    }).catch(function (e) {
+      console.warn("stages: failed to load " + path, e);
+      return null;
+    });
+  }
+
+  function fmtNum(v, digits) {
+    if (v === null || v === undefined || typeof v !== "number" || isNaN(v)) return "—";
+    return v.toFixed(digits === undefined ? 1 : digits);
+  }
+
+  function fmtPct(v, digits) {
+    if (v === null || v === undefined || typeof v !== "number" || isNaN(v)) return "—";
+    return v.toFixed(digits === undefined ? 1 : digits) + "%";
+  }
+
+  function fmtUsd(v) {
+    if (v === null || v === undefined || typeof v !== "number" || isNaN(v)) return "—";
+    if (v >= 1e9) return "$" + (v / 1e9).toFixed(1) + "B";
+    if (v >= 1e6) return "$" + (v / 1e6).toFixed(1) + "M";
+    if (v >= 1e3) return "$" + (v / 1e3).toFixed(0) + "K";
+    return "$" + v.toFixed(0);
+  }
+
+  function statTile(k, v) {
+    return '<div class="stat-card"><div class="v">' + esc(v) + '</div><div class="k">' + esc(k) + '</div></div>';
+  }
+
+  var STAGE_LABEL = { S0: "弱勢", S1: "轉強", S2: "築底", S3: "收縮完成", S4: "領先", S9: "過渡" };
+
+  // ── 今日各段家數 ────────────────────────────────────────────────
+  function renderCounts(latest) {
+    var host = document.getElementById("counts-stats");
+    if (!latest || latest.schema !== "stages-v1" || !latest.counts_today) {
+      host.innerHTML = '<div class="empty">資料尚未產出</div>';
+      return;
+    }
+    var c = latest.counts_today;
+    host.innerHTML =
+      statTile("弱勢 S0", String(c.S0 != null ? c.S0 : "—")) +
+      statTile("轉強 S1", String(c.S1 != null ? c.S1 : "—")) +
+      statTile("築底 S2", String(c.S2 != null ? c.S2 : "—")) +
+      statTile("收縮完成 S3", String(c.S3 != null ? c.S3 : "—")) +
+      statTile("領先 S4", String(c.S4 != null ? c.S4 : "—")) +
+      statTile("過渡 S9", String(c.S9 != null ? c.S9 : "—"));
+
+    var asof = document.getElementById("howto-asof");
+    if (asof) {
+      var u = latest.universe || {};
+      asof.textContent = "資料日 " + latest.as_of + "（產生於 " + (latest.run_timestamp || "—") + "）· " +
+        "母體 " + (u.total != null ? u.total : "—") + " 檔，資料完整可用 " + (u.covered != null ? u.covered : "—") +
+        " 檔，當日合格計入分母 " + (u.eligible != null ? u.eligible : "—") + " 檔。";
+    }
+  }
+
+  // ── 轉場基率表 ──────────────────────────────────────────────────
+  function transRowHtml(row) {
+    var lowNote = row.low_sample ? '<span class="low-sample">（樣本不足）</span>' : "";
+    var toS3 = row.to_S3_pct != null ? fmtPct(row.to_S3_pct) : "—";
+    var toS4 = row.to_S4_pct != null ? fmtPct(row.to_S4_pct) : "—";
+    var toS0 = row.to_S0_pct != null ? fmtPct(row.to_S0_pct) : "—";
+    var still = row.still_S1_or_S2_pct != null ? row.still_S1_or_S2_pct
+      : (row.still_pct != null ? row.still_pct : null);
+    var mark3 = row.from === "S1" ? '<span class="mark">①</span>' : "";
+    var mark0 = row.from === "S1" ? '<span class="mark">②</span>' : "";
+    return "<tr>" +
+      "<td>" + esc(STAGE_LABEL[row.from] || row.from) + lowNote + "</td>" +
+      '<td class="num">' + row.n + "</td>" +
+      '<td class="num">' + toS3 + mark3 + "</td>" +
+      '<td class="num">' + toS4 + mark3 + "</td>" +
+      '<td class="num">' + toS0 + mark0 + "</td>" +
+      '<td class="num">' + (still != null ? fmtPct(still) : "—") + "</td>" +
+      "</tr>";
+  }
+
+  function renderTransitions(latest) {
+    var tbody = document.getElementById("trans-tbody");
+    if (!latest || latest.schema !== "stages-v1" || !latest.transitions || !latest.transitions.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty" style="border:0">資料尚未產出</td></tr>';
+      return;
+    }
+    tbody.innerHTML = latest.transitions.map(transRowHtml).join("");
+  }
+
+  // ── 名單（四分頁） ──────────────────────────────────────────────
+  var STAGE_TABS = [
+    { code: "S1", label: "轉強" }, { code: "S2", label: "築底" },
+    { code: "S3", label: "收縮完成" }, { code: "S4", label: "領先" }
+  ];
+  var currentTab = "S1";
+  var allRows = [];
+
+  function rowHtml(r) {
+    var tickerCell = r.hub ? '<a href="' + esc(r.hub) + '">' + esc(r.ticker) + "</a>" : esc(r.ticker);
+    var origin = r.prev_stage
+      ? esc(STAGE_LABEL[r.prev_stage] || r.prev_stage) + " → " + r.prev_stage_ended + " 天前"
+      : "—";
+    var distHigh = r.dist_52w_high_pct != null ? fmtNum(Math.abs(r.dist_52w_high_pct), 1) + "%" : "—";
+    var flags = [];
+    if (r.extended) flags.push('<span class="flag-chip">延伸</span>');
+    if (r.rs_line_high) flags.push('<span class="flag-chip">RS 線新高</span>');
+    return "<tr>" +
+      "<td><b>" + tickerCell + "</b></td>" +
+      '<td class="num">' + r.days_in_stage + "</td>" +
+      "<td>" + origin + "</td>" +
+      '<td class="num">' + fmtNum(r.rs_ibd_pct, 1) + "</td>" +
+      '<td class="num">' + distHigh + "</td>" +
+      '<td class="num">' + r.tt_pass_count + "/5</td>" +
+      '<td class="num">' + fmtNum(r.atr_ratio, 2) + "</td>" +
+      '<td class="num">' + fmtNum(r.vol_ratio, 2) + "</td>" +
+      "<td>" + (flags.length ? flags.join("") : "—") + "</td>" +
+      '<td class="num">' + fmtUsd(r.adv20_usd) + "</td>" +
+      "</tr>";
+  }
+
+  function renderRowsTable() {
+    var tbody = document.getElementById("rows-tbody");
+    var rows = allRows.filter(function (r) { return r.stage === currentTab; });
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="10" class="empty" style="border:0">這段目前沒有名字。</td></tr>';
+      return;
+    }
+    tbody.innerHTML = rows.map(rowHtml).join("");
+  }
+
+  function renderTabs(latest) {
+    var host = document.getElementById("stage-tabs");
+    var counts = (latest && latest.counts_today) || {};
+    host.innerHTML = STAGE_TABS.map(function (t) {
+      return '<button type="button" class="tab-btn' + (t.code === currentTab ? " active" : "") +
+        '" data-stage="' + t.code + '">' + esc(t.label) +
+        '<span class="n">' + (counts[t.code] != null ? counts[t.code] : "—") + "</span></button>";
+    }).join("");
+    Array.prototype.forEach.call(host.querySelectorAll(".tab-btn"), function (btn) {
+      btn.addEventListener("click", function () {
+        currentTab = btn.getAttribute("data-stage");
+        Array.prototype.forEach.call(host.querySelectorAll(".tab-btn"), function (b) {
+          b.classList.toggle("active", b === btn);
+        });
+        renderRowsTable();
+      });
+    });
+  }
+
+  function renderRows(latest) {
+    if (!latest || latest.schema !== "stages-v1" || !latest.rows) {
+      allRows = [];
+    } else {
+      allRows = latest.rows;
+    }
+    renderTabs(latest);
+    renderRowsTable();
+  }
+
+  // ── 階段家數折線圖（來源 history.json） ────────────────────────
+  var SERIES_COLOR = {
+    S0: "var(--neg)", S1: "var(--accent)", S2: "var(--sec)", S3: "var(--pos)", S4: "#8a6d3b"
+  };
+  var chartState = null;
+
+  function buildPoints(hist) {
+    var dates = hist.dates || [];
+    var counts = hist.counts || {};
+    var qqq = hist.qqq || [];
+    return dates.map(function (d, i) {
+      var pt = { d: d, qqq: (typeof qqq[i] === "number") ? qqq[i] : null };
+      ["S0", "S1", "S2", "S3", "S4"].forEach(function (code) {
+        pt[code] = (counts[code] && typeof counts[code][i] === "number") ? counts[code][i] : null;
+      });
+      return pt;
+    });
+  }
+
+  function renderChart(pts, visible) {
+    var host = document.getElementById("chart-host");
+    var W = 900, H = 300, padL = 38, padR = 44, padT = 10, padB = 22;
+    var plotW = W - padL - padR, plotH = H - padT - padB;
+    var n = pts.length;
+    if (!n) {
+      host.innerHTML = '<div class="empty">資料尚未產出</div>';
+      return;
+    }
+
+    var maxCount = 5;
+    pts.forEach(function (p) {
+      visible.forEach(function (code) {
+        if (typeof p[code] === "number" && p[code] > maxCount) maxCount = p[code];
+      });
+    });
+    var yMax = Math.ceil(maxCount * 1.15);
+    var qqqVals = pts.map(function (p) { return p.qqq; }).filter(function (v) { return typeof v === "number"; });
+    var qMin = qqqVals.length ? Math.min.apply(null, qqqVals) * 0.97 : 0;
+    var qMax = qqqVals.length ? Math.max.apply(null, qqqVals) * 1.03 : 1;
+
+    function xAt(i) { return padL + (n <= 1 ? 0 : plotW * i / (n - 1)); }
+    function yCount(v) { return padT + plotH * (1 - v / yMax); }
+    function yQqq(v) { return padT + plotH * (1 - (v - qMin) / ((qMax - qMin) || 1)); }
+
+    var gridLines = [0, 0.25, 0.5, 0.75, 1].map(function (f) {
+      var v = Math.round(yMax * f);
+      var y = yCount(v);
+      return '<line x1="' + padL + '" y1="' + y.toFixed(1) + '" x2="' + (padL + plotW) + '" y2="' + y.toFixed(1) +
+        '" stroke="var(--line)" stroke-width="1"/>' +
+        '<text x="' + (padL - 6) + '" y="' + (y + 3).toFixed(1) + '" font-size="9" text-anchor="end" fill="var(--muted)" font-family="var(--mono)">' + v + '</text>';
+    }).join("");
+
+    function segPath(code) {
+      var d = "", open = false;
+      pts.forEach(function (p, i) {
+        var v = p[code];
+        if (typeof v !== "number") { open = false; return; }
+        d += (open ? "L" : "M") + xAt(i).toFixed(1) + "," + yCount(v).toFixed(1) + " ";
+        open = true;
+      });
+      return d;
+    }
+
+    var seriesPaths = visible.map(function (code) {
+      return '<path d="' + segPath(code) + '" fill="none" stroke="' + SERIES_COLOR[code] +
+        '" stroke-width="1.6" opacity="' + (code === "S1" || code === "S3" || code === "S4" ? "1" : "0.7") + '"/>';
+    }).join("");
+
+    var qqqPath = "", qOpen = false;
+    pts.forEach(function (p, i) {
+      if (typeof p.qqq !== "number") { qOpen = false; return; }
+      qqqPath += (qOpen ? "L" : "M") + xAt(i).toFixed(1) + "," + yQqq(p.qqq).toFixed(1) + " ";
+      qOpen = true;
+    });
+
+    var midI = Math.floor((n - 1) / 2);
+    var dateLabels =
+      '<text x="' + xAt(0) + '" y="' + (H - 6) + '" font-size="9" text-anchor="start" fill="var(--muted)" font-family="var(--mono)">' + pts[0].d + '</text>' +
+      '<text x="' + xAt(midI) + '" y="' + (H - 6) + '" font-size="9" text-anchor="middle" fill="var(--muted)" font-family="var(--mono)">' + pts[midI].d + '</text>' +
+      '<text x="' + xAt(n - 1) + '" y="' + (H - 6) + '" font-size="9" text-anchor="end" fill="var(--muted)" font-family="var(--mono)">' + pts[n - 1].d + '</text>';
+
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet">' +
+      gridLines +
+      '<path d="' + qqqPath + '" fill="none" stroke="var(--muted)" stroke-width="1.1" opacity="0.6"/>' +
+      seriesPaths +
+      dateLabels +
+      '<g id="stg-crosshair" style="display:none">' +
+      '<line x1="0" y1="' + padT + '" x2="0" y2="' + (padT + plotH) + '" stroke="var(--muted)" stroke-width="1" stroke-dasharray="2,2"/>' +
+      '</g>' +
+      '</svg>';
+
+    host.innerHTML = svg + '<div class="chart-tip" id="chart-tip"></div>';
+
+    var svgEl = host.querySelector("svg");
+    var crosshair = svgEl.querySelector("#stg-crosshair");
+    var chLine = crosshair.querySelector("line");
+    var tip = document.getElementById("chart-tip");
+
+    function showAt(clientX) {
+      var rect = svgEl.getBoundingClientRect();
+      if (!rect.width) return;
+      var scaleX = W / rect.width;
+      var xUser = (clientX - rect.left) * scaleX;
+      var i = Math.round((xUser - padL) / plotW * (n - 1));
+      if (i < 0) i = 0;
+      if (i > n - 1) i = n - 1;
+      var p = pts[i];
+      var x = xAt(i);
+      chLine.setAttribute("x1", x); chLine.setAttribute("x2", x);
+      crosshair.style.display = "";
+      var lines = ["<b>" + esc(p.d) + "</b>"];
+      visible.forEach(function (code) {
+        lines.push(STAGE_LABEL[code] + " " + (p[code] != null ? p[code] : "—") + " 檔");
+      });
+      lines.push("QQQ " + (p.qqq != null ? p.qqq.toFixed(1) : "—"));
+      tip.innerHTML = lines.join("<br>");
+      var hostRect = host.getBoundingClientRect();
+      var tipX = (x / W) * hostRect.width;
+      tip.style.left = Math.min(Math.max(tipX + 8, 4), Math.max(hostRect.width - 150, 4)) + "px";
+      tip.style.top = "6px";
+      tip.style.opacity = "1";
+    }
+    function hide() { crosshair.style.display = "none"; tip.style.opacity = "0"; }
+
+    svgEl.addEventListener("mousemove", function (e) { showAt(e.clientX); });
+    svgEl.addEventListener("mouseleave", hide);
+    svgEl.addEventListener("touchstart", function (e) {
+      if (e.touches && e.touches[0]) showAt(e.touches[0].clientX);
+    }, { passive: true });
+  }
+
+  function currentVisible() {
+    var out = [];
+    ["s1", "s3", "s4", "s0", "s2"].forEach(function (code) {
+      var el = document.getElementById("toggle-" + code);
+      if (el && el.checked) out.push(code.toUpperCase());
+    });
+    return out;
+  }
+
+  function renderStageChart(hist) {
+    var legend = document.getElementById("chart-legend");
+    if (!hist || hist.schema !== "stages-history-v1" || !hist.dates || !hist.dates.length) {
+      document.getElementById("chart-host").innerHTML = '<div class="empty">資料尚未產出</div>';
+      legend.style.display = "none";
+      return;
+    }
+    var pts = buildPoints(hist);
+    chartState = { pts: pts };
+    legend.style.display = "";
+    renderChart(pts, currentVisible());
+    ["s0", "s1", "s2", "s3", "s4"].forEach(function (code) {
+      var el = document.getElementById("toggle-" + code);
+      if (el) el.addEventListener("change", function () { renderChart(chartState.pts, currentVisible()); });
+    });
+  }
+
+  Promise.all([fetchJSON("./data/latest.json"), fetchJSON("./data/history.json")]).then(function (res) {
+    var latest = res[0], history = res[1];
+    renderCounts(latest);
+    renderTransitions(latest);
+    renderRows(latest);
+    renderStageChart(history);
+  });
+})();
+</script>
+</body>
+</html>
