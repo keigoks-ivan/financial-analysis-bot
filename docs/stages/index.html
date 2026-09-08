@@ -367,7 +367,8 @@ details.howto code{font-family:var(--mono);font-size:.78rem;background:var(--lin
   var allRows = [];
 
   function rowHtml(r) {
-    var tickerCell = r.hub ? '<a href="' + esc(r.hub) + '">' + esc(r.ticker) + "</a>" : esc(r.ticker);
+    var tickerCell = (r.hub ? '<a href="' + esc(r.hub) + '">' + esc(r.ticker) + "</a>" : esc(r.ticker)) +
+      (window.IMQBadge ? " " + window.IMQBadge.tag(r.ticker) : "");
     var origin = r.prev_stage
       ? esc(STAGE_LABEL[r.prev_stage] || r.prev_stage) + " → " + r.prev_stage_ended + " 天前"
       : "—";
@@ -397,6 +398,7 @@ details.howto code{font-family:var(--mono);font-size:.78rem;background:var(--lin
       return;
     }
     tbody.innerHTML = rows.map(rowHtml).join("");
+    if (window.IMQBadge) window.IMQBadge.decorateAll(tbody);
   }
 
   function renderTabs(latest) {

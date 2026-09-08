@@ -6,6 +6,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>US RS + VCP Screener | Property Monitor</title>
 <meta name="color-scheme" content="light">
+<link rel="stylesheet" href="/assets/imq-badge.css">
+<script src="/assets/imq-badge.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e3a5f}
@@ -291,7 +293,7 @@ function renderTable(){
       var v='',s='padding:5px 5px;';
       switch(c.key){
         case 'rank': v=r.rank; s+='color:#94a3b8;font-size:10px;'; break;
-        case 'ticker': v='<strong>'+r.ticker+'</strong>'; break;
+        case 'ticker': v='<strong>'+r.ticker+'</strong>'+(window.IMQBadge?' '+window.IMQBadge.tag(r.ticker):''); break;
         case 'sector': v='<span style="font-size:9px;color:#6b7a92">'+r.sector+'</span>'; break;
         case 'combined': v=r.combined.toFixed(1); s+='font-weight:700;color:'+(r.combined>=70?C.green:r.combined>=50?C.navy:C.red)+';'; break;
         case 'rs_score': v=r.rs_score.toFixed(0); s+='color:'+(r.rs_score>=80?C.green:r.rs_score>=60?C.navy:C.red)+';'; break;
@@ -329,6 +331,7 @@ function renderTable(){
     h+='</tr>';
   });
   document.getElementById('tblBody').innerHTML=h;
+  if(window.IMQBadge)window.IMQBadge.decorateAll(document.getElementById('tblBody'));
 }
 
 function renderPicks(){

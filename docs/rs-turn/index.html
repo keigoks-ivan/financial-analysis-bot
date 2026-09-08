@@ -6,6 +6,8 @@
 <title>轉強觀察（美股） | InvestMQuest Research</title>
 <meta name="description" content="曾經明顯回檔、最近相對強度剛翻上來的美股觀察名單，附每天符合條件家數的寬度線。純技術結構雷達，只回答看誰，不回答買不買。">
 <link rel="stylesheet" href="/assets/imq-base.css">
+<link rel="stylesheet" href="/assets/imq-badge.css">
+<script src="/assets/imq-badge.js"></script>
 <style>
 body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body)}
 .wrap{max-width:1140px;margin:0 auto;padding:2.2rem 20px 3rem}
@@ -288,9 +290,10 @@ details.howto code{font-family:var(--mono);font-size:.78rem;background:var(--lin
   var ROWS_DEFAULT = 30;
 
   function rowHtml(r) {
-    var tickerCell = r.hub
+    var tickerCell = (r.hub
       ? '<a href="' + esc(r.hub) + '">' + esc(r.ticker) + "</a>"
-      : esc(r.ticker);
+      : esc(r.ticker)) +
+      (window.IMQBadge ? " " + window.IMQBadge.tag(r.ticker) : "");
     var newBadge = r.is_new ? ' <span class="rst-new">🆕</span>' : "";
     var distHigh = r.dist_high_pct != null ? fmtNum(Math.abs(r.dist_high_pct), 1) + "%" : "—";
     var pullback = r.pullback_pct != null ? fmtNum(Math.abs(r.pullback_pct), 1) + "%" : "—";
@@ -325,6 +328,7 @@ details.howto code{font-family:var(--mono);font-size:.78rem;background:var(--lin
       return;
     }
     tbody.innerHTML = rows.map(rowHtml).join("");
+    if (window.IMQBadge) window.IMQBadge.decorateAll(tbody);
     var trs = tbody.querySelectorAll("tr");
     if (rows.length > ROWS_DEFAULT) {
       for (var i = ROWS_DEFAULT; i < trs.length; i++) trs[i].style.display = "none";
