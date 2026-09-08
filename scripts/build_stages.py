@@ -64,6 +64,14 @@ TRANSITIONS_VERSION = "v2"  # 2026-09 owner decision: end-state + peak-state,
 # not "ever touched" (S1 的「曾觸及弱勢」在舊口徑下把「剛脫離深回檔、第 60 日
 # 前仍有一天貼在 200 日均線下」誤記成 74–78% 的假警訊；v2 只看第 60 日當天在
 # 哪一段，以及期間到過的最高段，見 build_transitions_table()).
+CONTROL_VERSION = "v1"  # 2026-09-08 owner decision: 轉強（S1）轉場基率不該拿
+# 全母體（無條件）當比較基準——全母體被築底／領先這類進場時已結構性貼近收縮
+# 完成以上的名字主導，不是轉強真正該比的對照組。v1 改成「同一天同樣剛從深回
+# 檔上來、但沒有轉強」的配對對照組，見 build_control_deep_pullback()。深回檔
+# 旗標門檻沿用 build_rs_turn.PARAMS 的 pullback_min_pct／dist_high_max_pct
+# （condition 2／5 的同一套數字），不在此重複定義。
+CONTROL_NOT_S1_LOOKBACK_DAYS = 5  # 對照組成員在配對日 t 之前這麼多個交易日內
+# 本身也不能在轉強段（避免與轉強事件本身的剛轉出／即將轉入重疊，owner 決策原文）
 
 STAGE_NAMES = {'S0': '弱勢', 'S1': '轉強', 'S2': '築底', 'S3': '收縮完成',
                'S4': '領先', 'S9': '過渡'}
@@ -163,7 +171,16 @@ def compute_stage_frame(highs, lows, closes, volumes, qqq, spy):
     e21 = m['e21']
     rs21, rs63 = m['rs21'], m['rs63']
     dist_high_pct = m['dist_high_pct']
+    pullback_pct = m['pullback_pct']
     adv20_usd = m['adv20_usd']
+
+    # 深回檔旗標（§control，2026-09-08 owner decision）——condition 2／5 的同一套
+    # 門檻，imported not copied: pullback_pct <= PARAMS['pullback_min_pct'] AND
+    # dist_high_pct <= PARAMS['dist_high_max_pct'] AND eligible（流動性／資料量）。
+    P_deep = build_rs_turn.PARAMS
+    deep = ((pullback_pct <= P_deep['pullback_min_pct'])
+            & (dist_high_pct <= P_deep['dist_high_max_pct'])
+            & eligible).fillna(False)
 
     sma50 = C.rolling(50).mean()
     sma150 = C.rolling(150).mean()
@@ -245,15 +262,15 @@ def compute_stage_frame(highs, lows, closes, volumes, qqq, spy):
         'C': C, 'e21': e21, 'rs21': rs21, 'rs63': rs63, 'dist_high_pct': dist_high_pct,
         'rs_ibd_pct': rs_ibd_pct, 'tt_pass_count': tt_pass_count, 'atr_ratio': atr_ratio,
         'vol_ratio': vol_ratio, 'extended': extended, 'rs_line_high': rs_line_high,
-        'adv20_usd': adv20_usd, 'eligible': eligible, 'qqq': m['qqq'],
+        'adv20_usd': adv20_usd, 'eligible': eligible, 'qqq': m['qqq'], 'deep': deep,
     }
     return stage, fields
 
 
 # ── history merge (§4 — same whole-window-overwrite discipline as
 #    build_rs_turn.merge_history, adapted to Stages' dates+counts+qqq+stages
-#    shape) ────────────────────────────────────────────────────────────────
-def merge_history(existing, window_dates, stage_window, qqq_window):
+#    (+ deep, since 2026-09-08 §control) shape) ─────────────────────────────
+def merge_history(existing, window_dates, stage_window, qqq_window, deep_window):
     existing = existing or {}
     old_dates = set(existing.get('dates', []))
 
@@ -282,23 +299,41 @@ def merge_history(existing, window_dates, stage_window, qqq_window):
         col = stage_window[t].tolist()
         new_stage_strings[t] = {d: STAGE_DIGIT.get(c, '9') for d, c in zip(window_dates, col)}
 
+    old_deep = existing.get('deep', {})
+    new_deep_strings = {}
+    for t in deep_window.columns:
+        col = deep_window[t].tolist()
+        new_deep_strings[t] = {d: ('1' if v else '0') for d, v in zip(window_dates, col)}
+
+    # stages 與 deep 共用同一份 ticker 集合（同一個 all_dates 長度、同一套「缺
+    # 值補預設碼」規則），下游（imq-badge.js）才能安全地逐字元對齊兩條字串。
+    all_tickers = (set(old_stages.keys()) | set(new_stage_strings.keys())
+                   | set(old_deep.keys()) | set(new_deep_strings.keys()))
+
     merged_stages = {}
-    all_tickers = set(old_stages.keys()) | set(new_stage_strings.keys())
+    merged_deep = {}
     for t in all_tickers:
         old_str = old_stages.get(t, '')
         old_map = dict(zip(existing.get('dates', []), old_str)) if old_str else {}
         old_map.update(new_stage_strings.get(t, {}))
         merged_stages[t] = ''.join(old_map.get(d, '9') for d in all_dates)
 
+        old_deep_str = old_deep.get(t, '')
+        old_deep_map = dict(zip(existing.get('dates', []), old_deep_str)) if old_deep_str else {}
+        old_deep_map.update(new_deep_strings.get(t, {}))
+        merged_deep[t] = ''.join(old_deep_map.get(d, '0') for d in all_dates)
+
     merged = {
-        'schema': 'stages-history-v1',
+        'schema': 'stages-history-v2',
         'definition_version': DEFINITION_VERSION,
+        'control_version': CONTROL_VERSION,
         'updated': window_dates[-1] if window_dates else existing.get('updated'),
         'dates': all_dates,
         'counts': {code: [merged_counts_map[code].get(d, 0) for d in all_dates]
                    for code in ('S0', 'S1', 'S2', 'S3', 'S4')},
         'qqq': [old_qqq_map.get(d) for d in all_dates],
         'stages': merged_stages,
+        'deep': merged_deep,
     }
     return merged
 
@@ -370,11 +405,90 @@ def _finalize_transition_stats(raw):
     }
 
 
-def build_transitions_table(stage_window):
+def _s1_entry_days(stage_window):
+    """Row-indices i into `stage_window` (NOT per-ticker events — the
+    underlying set of calendar days) where >= 1 ticker entered S1 on day i
+    (prior day != S1) and the entry is >= RECENCY_MIN_DAYS old (has a full
+    FORWARD_DAYS of realized forward data) — same recency gate
+    _raw_transition_stats uses for from_stage='S1', collapsed to unique
+    days so a day with several S1 entries only contributes ONE matched-day
+    control cohort (see build_control_deep_pullback docstring)."""
+    values = stage_window.values
+    n_dates = values.shape[0]
+    days = []
+    for i in range(1, n_dates):
+        if i > n_dates - 1 - FORWARD_DAYS:
+            continue
+        if np.any((values[i] == 'S1') & (values[i - 1] != 'S1')):
+            days.append(i)
+    return days
+
+
+def _raw_control_stats(stage_window, deep_window, entry_days):
+    """Matched control for S1 (§control, 2026-09-08 owner decision): for
+    every day t in `entry_days` (a day that saw >= 1 S1 entry somewhere in
+    the universe), every OTHER ticker that (a) carries the deep-pullback
+    flag on day t, (b) is itself NOT in S1 on day t, and (c) was not in S1
+    on any of the CONTROL_NOT_S1_LOOKBACK_DAYS trading days immediately
+    before t, is exactly one control event — identified by its (ticker, t)
+    pair (looping over the deduped `entry_days` set, not per S1-ticker-event,
+    is what keeps each pair unique even when several tickers enter S1 on the
+    same day t). End/peak stats computed along that ticker's own forward
+    path from t, identically to _raw_transition_stats."""
+    stage_values = stage_window.values
+    deep_values = deep_window.values
+    n_tickers = stage_values.shape[1]
+    end_counts = {s: 0 for s in END_BUCKETS}
+    peak_s3plus = 0
+    peak_s4 = 0
+    n_events = 0
+    for i in entry_days:
+        lookback_start = max(0, i - CONTROL_NOT_S1_LOOKBACK_DAYS)
+        for j in range(n_tickers):
+            if not deep_values[i, j]:
+                continue
+            if stage_values[i, j] == 'S1':
+                continue
+            if np.any(stage_values[lookback_start:i, j] == 'S1'):
+                continue
+            n_events += 1
+            end_stage = stage_values[i + FORWARD_DAYS, j]
+            end_counts[end_stage] = end_counts.get(end_stage, 0) + 1
+            peak_rank = -1
+            for k in range(i + 1, i + 1 + FORWARD_DAYS):
+                c = stage_values[k, j]
+                if c == 'S9':
+                    continue
+                r = STAGE_RANK.get(c)
+                if r is not None and r > peak_rank:
+                    peak_rank = r
+            if peak_rank >= STAGE_RANK['S3']:
+                peak_s3plus += 1
+            if peak_rank == STAGE_RANK['S4']:
+                peak_s4 += 1
+    return {'n': n_events, 'end_counts': end_counts, 'peak_s3plus': peak_s3plus, 'peak_s4': peak_s4}
+
+
+def build_control_deep_pullback(stage_window, deep_window):
+    """Matched control for 轉強（S1）— owner decision 2026-09-08: the pooled
+    `baseline` (全母體無條件) is dominated by 築底／領先 entries that are
+    structurally already near S3+ the moment they're entered, so it
+    overstates what 轉強 itself adds. This asks the narrower, owner-specified
+    question instead: of tickers that were ALSO deep-in-a-pullback the same
+    day, but did NOT show the 轉強 six-condition pattern, what happened to
+    them over the same forward window? Same v2 end/peak stats shape as
+    `baseline`/`rows`, so the page can diff them cell-for-cell."""
+    entry_days = _s1_entry_days(stage_window)
+    raw = _raw_control_stats(stage_window, deep_window, entry_days)
+    return _finalize_transition_stats(raw)
+
+
+def build_transitions_table(stage_window, deep_window):
     """Returns {'rows': [per-from-stage v2 stats for S0/S1/S2/S3],
     'baseline': v2 stats pooled over entry events of EVERY ordered stage
-    (S0..S4) — the unconditional 母體無條件比率 the page's 可證偽 line
-    compares 轉強's peak_S3plus_pct against."""
+    (S0..S4) — the unconditional 母體無條件比率, 'control_deep_pullback':
+    the matched deep-pullback-but-not-S1 control (see
+    build_control_deep_pullback), 'control_version': CONTROL_VERSION}."""
     raws = {s: _raw_transition_stats(stage_window, s) for s in ORDERED_STAGES}
     rows = []
     for from_stage in ('S0', 'S1', 'S2', 'S3'):
@@ -388,7 +502,9 @@ def build_transitions_table(stage_window):
         'peak_s4': sum(raws[s]['peak_s4'] for s in ORDERED_STAGES),
     }
     baseline = _finalize_transition_stats(baseline_raw)
-    return {'rows': rows, 'baseline': baseline}
+    control = build_control_deep_pullback(stage_window, deep_window)
+    return {'rows': rows, 'baseline': baseline,
+            'control_deep_pullback': control, 'control_version': CONTROL_VERSION}
 
 
 # ── per-ticker path / stage_since (from the MERGED, potentially
@@ -461,6 +577,7 @@ def build():
     stage_window = stage.loc[window_idx]
     window_dates = [d.strftime('%Y-%m-%d') for d in window_idx]
     qqq_window = fields['qqq'].reindex(window_idx).values
+    deep_window = fields['deep'].reindex(columns=stage_window.columns).loc[window_idx]
 
     existing_history = None
     if HISTORY_JSON.exists():
@@ -468,9 +585,9 @@ def build():
             existing_history = json.loads(HISTORY_JSON.read_text(encoding='utf-8'))
         except Exception:
             existing_history = None
-    merged_history = merge_history(existing_history, window_dates, stage_window, qqq_window)
+    merged_history = merge_history(existing_history, window_dates, stage_window, qqq_window, deep_window)
 
-    transitions = build_transitions_table(stage_window)
+    transitions = build_transitions_table(stage_window, deep_window)
 
     stage_today = stage.loc[as_of_idx]
     counts_today = {code: int((stage_today == code).sum()) for code in
@@ -529,6 +646,7 @@ def build():
             'window_days': WINDOW_DAYS, 'forward_days': FORWARD_DAYS,
             'recency_min_days': RECENCY_MIN_DAYS,
             's1_params': build_rs_turn.PARAMS,
+            'control_not_s1_lookback_days': CONTROL_NOT_S1_LOOKBACK_DAYS,
         },
         'universe': {'total': len(tickers), 'covered': n_covered, 'eligible': n_eligible_today},
         'counts_today': counts_today,
@@ -551,6 +669,8 @@ def build():
     for row in transitions['rows']:
         print(f"  transitions {row['from']}: n={row['n']} {row}")
     print(f"  transitions baseline: n={transitions['baseline']['n']} {transitions['baseline']}")
+    print(f"  transitions control_deep_pullback (control_version={transitions['control_version']}): "
+          f"n={transitions['control_deep_pullback']['n']} {transitions['control_deep_pullback']}")
     return latest_payload
 
 

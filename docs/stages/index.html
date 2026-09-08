@@ -39,6 +39,7 @@ table.stg-table .neg{color:var(--neg)}
 .tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r)}
 .mark{font-size:.68rem;color:var(--accent);font-weight:700;margin-left:.15rem}
 .low-sample{color:var(--muted);font-size:.7rem}
+tr.control-row td{background:#fbf8f1;color:var(--sec);font-size:.8rem}
 .tabs{display:flex;gap:.4rem;margin-bottom:.8rem;flex-wrap:wrap}
 .tab-btn{font-size:.82rem;font-weight:600;color:var(--sec);background:var(--card);border:1px solid var(--line);border-radius:7px;padding:.45rem .9rem;cursor:pointer}
 .tab-btn.active{color:#fff;background:var(--accent);border-color:var(--accent)}
@@ -204,6 +205,7 @@ details.howto code{font-family:var(--mono);font-size:.78rem;background:var(--lin
       </table>
     </div>
     <p class="explain-p">第 60 個交易日所在的階段，以及期間到過的最高階段；過去 250 個交易日回算，描述現況不預測。</p>
+    <p class="explain-p" id="control-def-note">對照組＝同一天同樣回檔超過 <span id="ctrl-pullback-pct">—</span>%、離 52 週高至少 <span id="ctrl-disthigh-pct">—</span>%、但沒有出現轉強條件的股票。</p>
   </div>
 
   <div class="sec">
@@ -249,7 +251,7 @@ details.howto code{font-family:var(--mono);font-size:.78rem;background:var(--lin
         <p><b>RS 12 個月百分位</b> ＝ （2×近 63 日報酬 ＋ 近 126 日報酬 ＋ 近 189 日報酬 ＋ 近 252 日報酬）在當日全母體中的百分位排名。</p>
         <p><b>ATR 比率</b> ＝ 近 10 日真實區間（True Range，取當日高低價差與前一日收盤價差中最大者）均值 ÷ 近 60 日同一指標均值。<b>量比</b> ＝ 近 10 日均量 ÷ 近 50 日均量。</p>
         <p><b>延伸</b>旗標 ＝ 現價比 21 日 EMA 高 15% 以上，或 14 日 RSI 超過 80。<b>RS 線新高</b>旗標 ＝ 現價／SPY 這條相對強度線，在近一年高點的 0.5% 以內。</p>
-        <p><b>轉場基率（v2）</b>：對過去 250 個交易日內每一次「進入某段」事件（距今至少 60 個交易日，確保有完整的 60 日後續資料），記錄第 60 個交易日當天所在的階段（<b>第 60 日在</b>），以及期間（不含 S9 過渡日）到過的最高階段（<b>期間曾到收縮完成以上／期間曾到領先</b>）。「全母體（無條件）」列把弱勢／轉強／築底／收縮完成／領先五段的進入事件全部合併計算，當作沒有條件時的比較基準。樣本數低於 20 標「樣本不足」。</p>
+        <p><b>轉場基率（v2）</b>：對過去 250 個交易日內每一次「進入某段」事件（距今至少 60 個交易日，確保有完整的 60 日後續資料），記錄第 60 個交易日當天所在的階段（<b>第 60 日在</b>），以及期間（不含 S9 過渡日）到過的最高階段（<b>期間曾到收縮完成以上／期間曾到領先</b>）。「對照：同樣深回檔、但沒有轉強」列（control_version v1）＝在每一個轉強事件發生的當天，找出同一天也符合深回檔條件、但當天不是轉強、且過去 5 個交易日內也不是轉強的其他股票，逐日配對後合併計算——這是轉強真正該比的基準，因為「全母體（無條件）」列把弱勢／轉強／築底／收縮完成／領先五段的進入事件全部合併計算，被築底／領先這類進場時已結構性貼近收縮完成以上的名字主導，拿來跟轉強比會失真。樣本數低於 20 標「樣本不足」。</p>
         <p><b>目前資料</b>：<span id="howto-asof">—</span></p>
       </div>
     </details>
@@ -334,14 +336,17 @@ details.howto code{font-family:var(--mono);font-size:.78rem;background:var(--lin
   }
 
   // ── 轉場基率表（v2：第 60 日在哪一段＋期間到過的最高段） ──────────────
-  var TRANS_LABEL = { S0: "弱勢", S1: "轉強", S2: "築底", S3: "收縮完成", S4: "領先", baseline: "全母體（無條件）" };
+  var TRANS_LABEL = {
+    S0: "弱勢", S1: "轉強", S2: "築底", S3: "收縮完成", S4: "領先",
+    control: "對照：同樣深回檔、但沒有轉強", baseline: "全母體（無條件）"
+  };
 
   function transRowHtml(row) {
     var lowNote = row.low_sample ? '<span class="low-sample">（樣本不足）</span>' : "";
     var ep = row.end_pct || {};
-    var mark1 = (row.from === "S1" || row.from === "baseline") ? '<span class="mark">①</span>' : "";
-    var mark2 = (row.from === "S1" || row.from === "S0") ? '<span class="mark">②</span>' : "";
-    return "<tr>" +
+    var mark1 = (row.from === "S1" || row.from === "control") ? '<span class="mark">①</span>' : "";
+    var mark2 = (row.from === "S1" || row.from === "control") ? '<span class="mark">②</span>' : "";
+    return "<tr" + (row.from === "control" ? ' class="control-row"' : "") + ">" +
       "<td>" + esc(TRANS_LABEL[row.from] || row.from) + lowNote + "</td>" +
       '<td class="num">' + row.n + "</td>" +
       '<td class="num">' + fmtPct(ep.S0) + mark2 + "</td>" +
@@ -362,34 +367,69 @@ details.howto code{font-family:var(--mono);font-size:.78rem;background:var(--lin
       tbody.innerHTML = '<tr><td colspan="10" class="empty" style="border:0">資料尚未產出</td></tr>';
       return;
     }
+    var htmlRows = [];
+    t.rows.forEach(function (row) {
+      htmlRows.push(transRowHtml(row));
+      // 對照組緊接在轉強列之後，視覺上分組（graceful：舊 latest.json 沒有
+      // control_deep_pullback 欄位時就不插這列，其餘表格照常渲染）。
+      if (row.from === "S1" && t.control_deep_pullback) {
+        var controlRow = { from: "control" };
+        Object.keys(t.control_deep_pullback).forEach(function (k) { controlRow[k] = t.control_deep_pullback[k]; });
+        htmlRows.push(transRowHtml(controlRow));
+      }
+    });
     var baselineRow = { from: "baseline" };
     Object.keys(t.baseline).forEach(function (k) { baselineRow[k] = t.baseline[k]; });
-    tbody.innerHTML = t.rows.map(transRowHtml).join("") + transRowHtml(baselineRow);
+    htmlRows.push(transRowHtml(baselineRow));
+    tbody.innerHTML = htmlRows.join("");
   }
 
-  // ── 「哪一段最有用」結語：可證偽的兩個數字，直接讀 v2 欄位 ───────────
+  // ── 「哪一段最有用」結語：可證偽的兩個數字，直接讀 v2 欄位（2026-09-08
+  //    起比較基準改成同樣深回檔但沒轉強的配對對照組，不再是全母體無條件）──
   function renderFalsifiability(latest) {
     var el = document.getElementById("usefor-close");
     if (!el) return;
     var t = latest && latest.transitions;
-    if (!latest || latest.schema !== "stages-v1" || !t || !t.rows || !t.baseline) {
+    if (!latest || latest.schema !== "stages-v1" || !t || !t.rows) {
       el.textContent = "結語（可證偽）：資料尚未產出。";
       return;
     }
     var s1 = t.rows.filter(function (r) { return r.from === "S1"; })[0];
-    var s0 = t.rows.filter(function (r) { return r.from === "S0"; })[0];
-    var baseline = t.baseline;
-    if (!s1 || !s0) {
+    var control = t.control_deep_pullback;
+    if (!s1 || !control) {
       el.textContent = "結語（可證偽）：資料尚未產出。";
       return;
     }
+    var peakOk = (s1.peak_S3plus_pct != null && control.peak_S3plus_pct != null)
+      ? s1.peak_S3plus_pct > control.peak_S3plus_pct : null;
+    var endOk = (s1.end_S0_pct != null && control.end_S0_pct != null)
+      ? s1.end_S0_pct < control.end_S0_pct : null;
+    var verdict = (peakOk === true && endOk === true)
+      ? "兩個數字都站得住——轉強不是雜訊。"
+      : "至少有一個數字沒有拉開差距，轉強的訊號價值要打折扣。";
     el.innerHTML =
-      "結語（可證偽）：這頁有沒有用，看兩個數字——轉強名單期間曾到收縮完成以上的比例" +
-      '<span class="mark">①</span>（' + fmtPct(s1.peak_S3plus_pct) + "，n＝" + s1.n + "），應明顯高於全母體無條件比率（" +
-      fmtPct(baseline.peak_S3plus_pct) + "，n＝" + baseline.n + "）；轉強名單第 60 日仍在弱勢的比例" +
-      '<span class="mark">②</span>（' + fmtPct(s1.end_S0_pct) + "，n＝" + s1.n + "），應明顯低於弱勢名單自身的續弱率（" +
-      fmtPct(s0.end_S0_pct) + "，n＝" + s0.n + "）。若沒有這個差距，轉強就只是雜訊。這兩個數字直接讀上方轉場基率表" +
-      '「轉強」列標<span class="mark">①</span><span class="mark">②</span>的兩格。';
+      "結語（可證偽）：這頁有沒有用，看兩個數字，對照組都是同一天同樣深回檔、但沒有出現轉強條件的股票——" +
+      "期間曾到收縮完成以上的比例" +
+      '<span class="mark">①</span>（轉強組 ' + fmtPct(s1.peak_S3plus_pct) + "，n＝" + s1.n + "／對照組 " +
+      fmtPct(control.peak_S3plus_pct) + "，n＝" + control.n + "），轉強組應明顯高於對照組；第 60 日仍在弱勢的比例" +
+      '<span class="mark">②</span>（轉強組 ' + fmtPct(s1.end_S0_pct) + "，n＝" + s1.n + "／對照組 " +
+      fmtPct(control.end_S0_pct) + "，n＝" + control.n + "），轉強組應明顯低於對照組。" + verdict +
+      "這兩個數字直接讀上方轉場基率表「轉強」與「" + esc(TRANS_LABEL.control) + '」兩列標<span class="mark">①</span><span class="mark">②</span>的欄位。';
+  }
+
+  // ── 對照組定義句：門檻數字直接讀 latest.params.s1_params，不寫死 ──────
+  function renderControlDefNote(latest) {
+    var pbEl = document.getElementById("ctrl-pullback-pct");
+    var dhEl = document.getElementById("ctrl-disthigh-pct");
+    if (!pbEl || !dhEl) return;
+    var p = latest && latest.params && latest.params.s1_params;
+    if (!p || typeof p.pullback_min_pct !== "number" || typeof p.dist_high_max_pct !== "number") {
+      pbEl.textContent = "—";
+      dhEl.textContent = "—";
+      return;
+    }
+    pbEl.textContent = fmtNum(Math.abs(p.pullback_min_pct), 0);
+    dhEl.textContent = fmtNum(Math.abs(p.dist_high_max_pct), 0);
   }
 
   // ── 名單（四分頁） ──────────────────────────────────────────────
@@ -606,7 +646,8 @@ details.howto code{font-family:var(--mono);font-size:.78rem;background:var(--lin
 
   function renderStageChart(hist) {
     var legend = document.getElementById("chart-legend");
-    if (!hist || hist.schema !== "stages-history-v1" || !hist.dates || !hist.dates.length) {
+    var HIST_SCHEMAS = ["stages-history-v1", "stages-history-v2"];
+    if (!hist || HIST_SCHEMAS.indexOf(hist.schema) === -1 || !hist.dates || !hist.dates.length) {
       document.getElementById("chart-host").innerHTML = '<div class="empty">資料尚未產出</div>';
       legend.style.display = "none";
       return;
@@ -626,6 +667,7 @@ details.howto code{font-family:var(--mono);font-size:.78rem;background:var(--lin
     renderCounts(latest);
     renderTransitions(latest);
     renderFalsifiability(latest);
+    renderControlDefNote(latest);
     renderRows(latest);
     renderStageChart(history);
     if (window.IMQBadge) window.IMQBadge.mountMatrix("qt-matrix-mount", { universe: "all" });

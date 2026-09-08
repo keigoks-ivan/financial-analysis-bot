@@ -100,6 +100,7 @@
       timingCode: {}, timingDetail: {}, boardSet: {},
       historyDates: (history && history.dates) || [],
       historyStages: (history && history.stages) || {},
+      historyDeep: (history && history.deep) || {},
       lampAsOf: lamp && lamp.as_of,
       stagesAsOf: stagesLatest && stagesLatest.as_of,
       arenaAsOf: arena && arena.run_timestamp,
@@ -413,6 +414,69 @@
     });
   }
 
+  // ── 轉強配對對照組（scripts/build_stages.py::build_control_deep_pullback
+  //    的瀏覽器端重放，identical definition）：只重放「同一天配對」的比對邏
+  //    輯，深回檔旗標本身（pullback_pct／dist_high_pct／eligible）已經在伺
+  //    服器端算好、直接讀 history.deep 字串，不在瀏覽器重抓價格重算。graceful
+  //    ：舊 history.json 沒有 deep 欄位時 idx.historyDeep 是空物件，這裡自然
+  //    回傳 n=0，呼叫端顯示「資料不足」。──────────────────────────────────
+  var CONTROL_NOT_S1_LOOKBACK_DAYS = 5;
+  function computeControlDeepPullback(idx) {
+    var dates = idx.historyDates || [];
+    var n = dates.length;
+    var maxI = n - 1 - 60;
+    var out = { n: 0, peakS3plusPct: null, endS0Pct: null };
+    if (maxI < 1) return out;
+    var stagesByTk = idx.historyStages || {};
+    var deepByTk = idx.historyDeep || {};
+    var tickers = Object.keys(stagesByTk);
+    // 1) 找出「至少一檔在當天轉強」的日子集合（不分品質，同伺服器端
+    //    _s1_entry_days：collapse 到唯一日期，不逐 S1 事件重複）。
+    var entryDays = [];
+    for (var i = 1; i <= maxI; i++) {
+      var any = false;
+      for (var ti = 0; ti < tickers.length; ti++) {
+        var s0 = stagesByTk[tickers[ti]];
+        if (!s0 || s0.length !== n) continue;
+        if (s0.charAt(i) === "1" && s0.charAt(i - 1) !== "1") { any = true; break; }
+      }
+      if (any) entryDays.push(i);
+    }
+    // 2) 每個轉強配對日 t：同一天 deep=1、當天不是轉強、且過去 5 個交易日內
+    //    也不是轉強的其他標的，逐一 (ticker, t) 計一個對照事件。
+    var count = 0, peakS3plus = 0, endS0 = 0;
+    entryDays.forEach(function (i) {
+      var lbStart = Math.max(0, i - CONTROL_NOT_S1_LOOKBACK_DAYS);
+      tickers.forEach(function (tk) {
+        var s = stagesByTk[tk];
+        var d = deepByTk[tk];
+        if (!s || s.length !== n || !d || d.length !== n) return;
+        if (d.charAt(i) !== "1") return;
+        if (s.charAt(i) === "1") return;
+        for (var k = lbStart; k < i; k++) {
+          if (s.charAt(k) === "1") return;
+        }
+        count++;
+        var endCh = s.charAt(i + 60);
+        if (endCh === "0") endS0++;
+        var peakRank = -1;
+        for (var k2 = i + 1; k2 <= i + 60; k2++) {
+          var c = s.charAt(k2);
+          if (c === "9") continue;
+          var r = STAGE_DIGIT_RANK[c];
+          if (r !== undefined && r > peakRank) peakRank = r;
+        }
+        if (peakRank >= STAGE_DIGIT_RANK["3"]) peakS3plus++;
+      });
+    });
+    out.n = count;
+    if (count > 0) {
+      out.peakS3plusPct = peakS3plus / count * 100;
+      out.endS0Pct = endS0 / count * 100;
+    }
+    return out;
+  }
+
   var ROLE_MAP = {
     "S1|pass": { label: "最該看", role: "accent" },
     "S0|pass": { label: "持股警訊", role: "neg" },
@@ -520,13 +584,24 @@
         return '<div class="qtm-hitrate"><h4>命中率</h4><div class="qtm-empty">資料尚未產出（階段歷史 /stages/data/history.json 缺檔）</div></div>';
       }
       var rates = computeHitRates(idx);
+      var control = computeControlDeepPullback(idx);
       var rowsHtml = rates.map(function (r) {
         var lowTag = r.n < 20 ? ' <span class="qtm-hit-lowsample">（樣本不足）</span>' : "";
+        var controlHtml = "";
+        if (r.label === "品質過 × 轉強") {
+          if (control.n > 0) {
+            var ctrlLowTag = control.n < 20 ? "（樣本不足）" : "";
+            controlHtml = '<div class="qtm-hit-control">對照（同樣深回檔未轉強）：' +
+              fmt1(control.peakS3plusPct) + "%／" + fmt1(control.endS0Pct) + "%，n＝" + control.n + ctrlLowTag + "</div>";
+          } else {
+            controlHtml = '<div class="qtm-hit-control">對照（同樣深回檔未轉強）：資料不足</div>';
+          }
+        }
         return '<div class="qtm-hit-row"><b>' + esc(r.label) + "</b>：過去 250 個交易日進入此格 n＝" + r.n + lowTag +
-          (r.n > 0 ? "，" + esc(r.detail) : "") + "</div>";
+          (r.n > 0 ? "，" + esc(r.detail) : "") + "</div>" + controlHtml;
       }).join("");
       return '<div class="qtm-hitrate"><h4>命中率</h4>' + rowsHtml +
-        '<p class="qtm-foot">過去 250 個交易日回算，品質以今日判定回推；描述現況，不預測。</p></div>';
+        '<p class="qtm-foot">過去 250 個交易日回算，品質以今日判定回推；描述現況，不預測。對照數字依序為期間曾到收縮完成以上／第 60 日在弱勢。</p></div>';
     }
 
     var idxRef = null;
