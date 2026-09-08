@@ -4,6 +4,8 @@ name: Weekly Decision Engine
 #   - build_universe.py   → S&P 1500 名單（月更級資料，週跑無害：抓失敗保留舊檔）
 #   - build_radar.py      → L0 全市場雷達（stage1 批量週線 + stage2 EPS 修正確認）
 #   - build_scoreboard.py → L4 形狀記分板（dd-meta 裁決 × weekly_cache 結算）
+#   - build_arena.py      → 席位擂台（帶 --ledger：全站唯一會寫 arena-ledger.json 遲滯帳本的路徑，
+#                            2026-09-09——手動重跑此腳本不帶旗標＝唯讀，遲滯時鐘只認這個排程的跑次）
 #   - build_index.py      → 總覽頁活數字
 #
 # 跑 Sun 20:00 UTC = Mon 04:00 Taipei — 排在 weekly-fundamental-refresh（18:00 UTC）
@@ -55,9 +57,12 @@ jobs:
 
       # arena ↔ cards 互相消費對方的 JSON（席位徽章 vs 卡狀態欄）：
       # arena 先跑定席位 → cards 拿到新席位徽章 → arena 再跑拿到新卡狀態（皆純本地、秒級）
+      # --ledger：帳本（gate_history／snapshots，遲滯 2/4 的計數依據）只由這個排程寫；
+      # 手動/ad-hoc 跑 build_arena.py 不帶此旗標＝唯讀，遲滯時鐘不因臨時重跑前進
+      # （2026-09-09，見 scripts/engine/build_arena.py 檔頭 docstring）。
       - name: Arena pass 1 (seat determination)
         id: build_arena1
-        run: python scripts/engine/build_arena.py
+        run: python scripts/engine/build_arena.py --ledger
         continue-on-error: true
 
       - name: Cards (L2 claim settlement + seat badges)
@@ -67,7 +72,7 @@ jobs:
 
       - name: Arena pass 2 (fresh card status column)
         id: build_arena2
-        run: python scripts/engine/build_arena.py
+        run: python scripts/engine/build_arena.py --ledger
         continue-on-error: true
 
       - name: Overview page (live numbers)

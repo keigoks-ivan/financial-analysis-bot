@@ -15,10 +15,17 @@ Regime 撥盤（v1 規則鎖定；資訊性，不接倉位系統）：
   形狀敏感度：突破帶/動能重估 對 regime 最敏感；循環轉折次之；規則詳頁尾。
 
 輸出：docs/engine/arena.json + arena.html。
-Usage: python3 scripts/engine/build_arena.py
+Usage: python3 scripts/engine/build_arena.py [--ledger]
+
+--ledger（2026-09-09）：帳本（gate_history／snapshots，遲滯 2/4 的計數依據）預設唯讀——
+不帶旗標時，用「既有帳本」算席位並照常寫 arena.json／board.txt／fragments，但不追加
+gate_history 列、不寫新 snapshot，遲滯時鐘不前進。只有 `.github/workflows/weekly-engine.yml`
+的排程跑次帶 `--ledger` 真正寫帳本，避免手動/ad-hoc 執行把遲滯用「跑次」而非「週次」計數
+（2026-09-08 VRTX/INCY 因連續數日手動重跑被提早坐席即為此故）。
 """
 from __future__ import annotations
 
+import argparse
 import json
 import re
 import sys
@@ -981,7 +988,19 @@ def build_universe_board(universe_rows, core_seats, sat_seats, core_bench, sat_b
     return {"schema": "engine-universe-board-v1", "as_of": as_of, "n": len(rows), "rows": rows}
 
 
+def _last_snapshot_before(snapshots: list[dict], as_of: str) -> dict | None:
+    """最近一筆日期嚴格早於 as_of 的 snapshot——同日重跑時跳過「今天自己已寫入」的那筆，
+    避免拿今天跟今天比較（self-referential，見 2026-09-09 修復）。"""
+    earlier = [s for s in snapshots if s.get("date") and s["date"] < as_of]
+    return earlier[-1] if earlier else None
+
+
 def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--ledger", action="store_true",
+                         help="寫入 arena-ledger.json（gate_history／snapshots，遲滯時鐘前進）；"
+                              "僅 weekly-engine.yml 排程使用，手動跑不帶此旗標＝帳本唯讀")
+    args = parser.parse_args()
     stocks = json.loads(DD_LATEST.read_text(encoding="utf-8"))["stocks"]
     # latest.json 若以 --include-non-dd 產出，無 DD 列（dd_status="none"）改由 load_qgm_rows 供給
     #（帶 _src／_durable_5y／_mktcap），這裡先排除以免搶走 QGM 列的身份標記
@@ -1047,12 +1066,13 @@ def main() -> int:
         ledger0 = {"schema_version": "1.0", "snapshots": []}
     bootstrap = not ledger0.get("gate_history")   # 首跑：無歷史，新席只需本次過閘
     hist = ledger0.setdefault("gate_history", {})
-    prev = ledger0["snapshots"][-1] if ledger0.get("snapshots") else {"core": [], "sat": []}
-    incumbents = set(prev.get("core", [])) | set(prev.get("sat", []))
     try:
         as_of = json.loads(DD_LATEST.read_text(encoding="utf-8")).get("as_of", "—")
     except (OSError, json.JSONDecodeError):
         as_of = "—"
+    # prev＝上一筆「日期嚴格早於今天」的 snapshot（同日重跑防自我比較，見檔頭 --ledger 說明）
+    prev = _last_snapshot_before(ledger0.get("snapshots", []), as_of) or {"core": [], "sat": []}
+    incumbents = set(prev.get("core", [])) | set(prev.get("sat", []))
     # v2 席位需有 DD（2026-09-08 持有人拍板，見 knowledge/rule_ledger.md）：QGM 品質池
     # 無 DD 名字（src=="qgm"）可入母體、可列「可選但先不入席」隊列，但不得入席／候補、
     # 不計遲滯——它們的成長是 FY1→FY2 單年（yfinance），DD 池名字是 FY1→FY3 CAGR
@@ -1127,29 +1147,38 @@ def main() -> int:
     max_share = (conc_rows[0][1] / n_seated * 100) if n_seated else 0
 
     # ── 席位變動帳本（append-only）：席位組成變了才記一筆，換席決策從此可結算 ──
+    # 2026-09-09：帳本寫入只在 --ledger（weekly-engine.yml 排程）才發生；手動/ad-hoc 跑
+    # 只讀既有帳本算席位、照常寫 arena.json 等輸出，不追加 gate_history／snapshots，
+    # 遲滯時鐘不前進（見檔頭 docstring 與 knowledge/rule_ledger.md v2 遲滯列 2026-09-09 註記）。
     ledger = ledger0
     snap = {"date": as_of,
             "core": [r["ticker"] for r in core_seats],
             "sat": [r["ticker"] for r in sat_seats]}
     changes = []
-    prev_snap = ledger["snapshots"][-1] if ledger["snapshots"] else None
-    if prev_snap is None or (set(prev_snap["core"]) != set(snap["core"])
-                             or set(prev_snap["sat"]) != set(snap["sat"])):
-        if prev_snap:
-            for track in ("core", "sat"):
-                up = sorted(set(snap[track]) - set(prev_snap[track]))
-                down = sorted(set(prev_snap[track]) - set(snap[track]))
-                if up or down:
-                    changes.append({"track": track, "in": up, "out": down,
-                                    "from": prev_snap["date"], "to": snap["date"]})
-            snap["changes"] = changes
-        if prev_snap is None or prev_snap["date"] != snap["date"]:
-            ledger["snapshots"].append(snap)
-        else:
-            ledger["snapshots"][-1] = snap   # 同日重跑覆蓋（冪等）
-    LEDGER_JSON.parent.mkdir(parents=True, exist_ok=True)   # gate_history 每跑必寫（遲滯狀態）
-    LEDGER_JSON.write_text(json.dumps(ledger, ensure_ascii=False, indent=1),
-                           encoding="utf-8")
+    # 比較基準＝嚴格早於今天的最後一筆——同日重跑不可拿「今天已寫入的自己」當基準
+    # （self-referential bug：會把「今天跟今天比較」的假差異當成真變動，見檔頭說明）。
+    prev_snap = _last_snapshot_before(ledger["snapshots"], as_of)
+    today_entry_exists = bool(ledger["snapshots"]) and ledger["snapshots"][-1]["date"] == as_of
+    if args.ledger:
+        if prev_snap is None or (set(prev_snap["core"]) != set(snap["core"])
+                                 or set(prev_snap["sat"]) != set(snap["sat"])):
+            if prev_snap:
+                for track in ("core", "sat"):
+                    up = sorted(set(snap[track]) - set(prev_snap[track]))
+                    down = sorted(set(prev_snap[track]) - set(snap[track]))
+                    if up or down:
+                        changes.append({"track": track, "in": up, "out": down,
+                                        "from": prev_snap["date"], "to": snap["date"]})
+                snap["changes"] = changes
+            if today_entry_exists:
+                ledger["snapshots"][-1] = snap   # 同日重跑覆蓋（冪等）——不再依附自我比較
+            else:
+                ledger["snapshots"].append(snap)
+        LEDGER_JSON.parent.mkdir(parents=True, exist_ok=True)
+        LEDGER_JSON.write_text(json.dumps(ledger, ensure_ascii=False, indent=1),
+                               encoding="utf-8")
+    else:
+        print("帳本唯讀（未帶 --ledger）：gate_history／snapshots 未寫入，遲滯未前進。")
     recent_changes = [c for s in ledger["snapshots"][-6:] for c in (s.get("changes") or [])]
 
     dial = regime_dial()
