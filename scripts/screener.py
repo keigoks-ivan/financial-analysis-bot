@@ -8,7 +8,7 @@ Usage:
   python scripts/screener.py --quick  # skip fundamentals (faster)
 """
 
-import csv, io, json, os, sys, math, warnings
+import csv, io, json, os, random, sys, math, time, warnings
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
@@ -81,8 +81,71 @@ def fetch_sp500_tickers():
         print(f"  ⚠ Failed to fetch S&P 500: {e}, using fallback")
         return None
 
+# ── Universe source (2026-09-08): data/engine/universe.json, filtered to
+# tier in {sp500, ndx100}, replaces the GitHub CSV + NQ100_EXTRAS as the
+# PRIMARY watchlist source. The old CSV/NQ100_EXTRAS path above is kept as
+# a fallback only (engine file missing, unreadable, or shorter than
+# ENGINE_UNIVERSE_MIN rows). ──
+ENGINE_UNIVERSE_PATH = ROOT / 'data' / 'engine' / 'universe.json'
+ENGINE_UNIVERSE_MIN = 450
+
+# Engine universe sector labels are GICS full names; map to the screener's
+# existing short labels so sector_ranking / sector_strength_map keys stay
+# unchanged. Sectors not listed here already match (Consumer Staples,
+# Energy, Financials, Health Care, Industrials, Materials, Real Estate,
+# Utilities).
+ENGINE_SECTOR_LABEL_MAP = {
+    'Information Technology': 'Technology',
+    'Consumer Discretionary': 'Consumer Disc',
+    'Communication Services': 'Communication',
+}
+
+# The 15 ndx100-only rows in data/engine/universe.json carry sector: ""
+# (engine build doesn't backfill GICS sector for pure-NDX100 additions).
+# Hand-mapped to the screener's short-label vocabulary so sector_ranking
+# doesn't grow a bare "" bucket; 'Other' for names with no clean fit.
+ENGINE_BLANK_SECTOR_FALLBACK = {
+    'ALNY': 'Health Care', 'ARM': 'Technology', 'ASML': 'Technology',
+    'ALAB': 'Technology', 'CCEP': 'Consumer Staples', 'CRWV': 'Technology',
+    'FER': 'Industrials', 'MELI': 'Consumer Disc', 'MSTR': 'Technology',
+    'NBIS': 'Technology', 'PDD': 'Consumer Disc', 'RKLB': 'Industrials',
+    'SHOP': 'Technology', 'SPCX': 'Other', 'TRI': 'Industrials',
+}
+
+
+def _load_engine_universe():
+    """S&P 500 + NDX100 watchlist from data/engine/universe.json. Returns
+    None (triggers the CSV+NQ100_EXTRAS fallback below) if the file is
+    missing, unreadable, or has fewer than ENGINE_UNIVERSE_MIN sp500/ndx100
+    rows."""
+    try:
+        with open(ENGINE_UNIVERSE_PATH) as f:
+            doc = json.load(f)
+        rows = [t for t in doc.get('tickers', []) if t.get('tier') in ('sp500', 'ndx100')]
+        if len(rows) < ENGINE_UNIVERSE_MIN:
+            print(f"  ⚠ engine universe only {len(rows)} sp500/ndx100 rows (<{ENGINE_UNIVERSE_MIN}), falling back")
+            return None
+        watchlist = {}
+        for row in rows:
+            sym = row['ticker'].replace('.', '-')  # BRK.B -> BRK-B (yfinance symbol form)
+            sector = row.get('sector') or ''
+            sector = ENGINE_SECTOR_LABEL_MAP.get(sector, sector)
+            if not sector:
+                sector = ENGINE_BLANK_SECTOR_FALLBACK.get(sym, 'Other')
+            watchlist[sym] = sector
+        print(f"  Fetched {len(watchlist)} tickers from data/engine/universe.json (sp500+ndx100)")
+        return watchlist
+    except Exception as e:
+        print(f"  ⚠ Failed to read engine universe: {e}, falling back")
+        return None
+
+
 def build_watchlist():
-    """Build watchlist: S&P 500 + NQ100 extras."""
+    """Build watchlist: data/engine/universe.json (sp500+ndx100) primary,
+    falling back to the GitHub S&P 500 CSV + NQ100_EXTRAS."""
+    watchlist = _load_engine_universe()
+    if watchlist is not None:
+        return watchlist
     sp500 = fetch_sp500_tickers()
     if sp500 is None:
         # Fallback: use a hardcoded subset
@@ -125,13 +188,138 @@ _FALLBACK_WATCHLIST = {
 BENCHMARK = 'SPY'
 EMA_ALPHA = 0.2
 
+# ── download resilience (2026-09-08 fix, plumbing only — code shape copied
+# from scripts/build_momentum5.py's 2026-09-08 "DOWNLOAD RESILIENCE" fix,
+# which itself mirrors build_price_momentum.py's 2026-09-07 fix,
+# commit 71cd044e4): a single-shot yf.download burst for the whole watchlist
+# can trip Yahoo's 429 rate limit. To survive that without changing any
+# scoring logic:
+#   - tickers + [BENCHMARK] is downloaded in DOWNLOAD_BATCH_SIZE-ticker
+#     batches (identical download kwargs per batch to the old single-shot
+#     call), concatenated into one DataFrame with the exact same
+#     data[ticker]['Close'] access shape the rest of main() already relies
+#     on.
+#   - The whole batched download is retried up to MAX_DOWNLOAD_ATTEMPTS
+#     times, with exponential backoff + jitter between attempts, whenever
+#     the benchmark comes back empty OR price coverage on that attempt is
+#     below the coverage floor (>= MIN_COVERAGE_BARS bars on
+#     MIN_COVERAGE_PCT of the watchlist).
+#   - Only after all attempts fail does this print a `::warning::` and
+#     exit 0 WITHOUT writing latest.json / history (fail-safe — same
+#     semantics as a stale-but-untouched output, just given more chances
+#     to succeed first).
+DOWNLOAD_BATCH_SIZE = 100
+MAX_DOWNLOAD_ATTEMPTS = 4
+RETRY_BACKOFF_SECONDS = (20.0, 60.0, 150.0)  # before attempts 2, 3, 4
+MIN_COVERAGE_BARS = 252
+MIN_COVERAGE_PCT = 0.85
 
-def fetch_all_data(tickers, period='300d'):
-    """Fetch price data for all tickers."""
-    print(f"  Fetching {len(tickers)} tickers...")
-    all_tickers = list(tickers) + [BENCHMARK]
-    data = yf.download(all_tickers, period=period, interval='1d', group_by='ticker', progress=False, threads=True)
-    return data
+
+def _count_price_sufficient(data, tickers):
+    """How many of `tickers` have >= MIN_COVERAGE_BARS dropna'd closes in
+    `data`. Used only by the download-retry coverage gate."""
+    n = 0
+    for t in tickers:
+        try:
+            c = data[t]['Close'].dropna()
+        except Exception:
+            continue
+        if len(c) >= MIN_COVERAGE_BARS:
+            n += 1
+    return n
+
+
+def _download_all_once(all_tickers, period):
+    """One attempt: download all_tickers (already includes BENCHMARK) in
+    DOWNLOAD_BATCH_SIZE-sized chunks with the SAME yf.download kwargs the
+    old single-shot call used, then concat into one DataFrame with the same
+    group_by='ticker' column shape. A chunk that raises is skipped (not
+    fatal by itself) — the coverage check in the caller decides whether
+    this whole attempt counts as a failure."""
+    frames = []
+    n_chunks = (len(all_tickers) + DOWNLOAD_BATCH_SIZE - 1) // DOWNLOAD_BATCH_SIZE
+    for i in range(0, len(all_tickers), DOWNLOAD_BATCH_SIZE):
+        chunk = all_tickers[i:i + DOWNLOAD_BATCH_SIZE]
+        chunk_no = i // DOWNLOAD_BATCH_SIZE + 1
+        try:
+            frames.append(yf.download(chunk, period=period, interval='1d',
+                                       group_by='ticker', progress=False, threads=True))
+        except Exception as e:
+            print(f"      ! batch {chunk_no}/{n_chunks} ({len(chunk)} tickers) raised "
+                  f"{type(e).__name__}: {e} — skipped this batch")
+        if chunk_no < n_chunks:
+            time.sleep(3)
+    if not frames:
+        raise RuntimeError("all download batches failed")
+    return pd.concat(frames, axis=1)
+
+
+def _emit_gh_warning(reason):
+    """Failure-visibility fix (2026-09-08, same shape as
+    build_momentum5.py's _emit_gh_skip_warning): print a `::warning::`
+    workflow command (and a GITHUB_STEP_SUMMARY line when available) so a
+    fail-safe abort shows up in the Actions run summary instead of a
+    silent green no-op. Prints regardless of environment so a local run
+    also sees the reason."""
+    print(f"::warning title=US RS+VCP screener skipped::{reason}")
+    summary_path = os.environ.get('GITHUB_STEP_SUMMARY')
+    if summary_path:
+        try:
+            with open(summary_path, 'a', encoding='utf-8') as f:
+                f.write(f"- ⚠️ **US RS+VCP screener skipped** — {reason}\n")
+        except Exception:
+            pass
+
+
+def fetch_all_data(tickers, period='15mo'):
+    """Fetch price data for all tickers, batched + retried (see
+    DOWNLOAD RESILIENCE note above). period='15mo' (~326 calendar days)
+    so the 252-bar lookbacks used elsewhere in this file have headroom —
+    the old '300d' (~206 bars) was too short for that.
+
+    On coverage-floor failure after all retries: prints a `::warning::`
+    and calls sys.exit(0) — this function is called before latest.json /
+    history are written, so a floor failure never touches either file.
+    """
+    tickers = list(tickers)
+    all_tickers = tickers + [BENCHMARK]
+    min_required = math.ceil(len(tickers) * MIN_COVERAGE_PCT)
+    last_reason = None
+    for attempt in range(1, MAX_DOWNLOAD_ATTEMPTS + 1):
+        print(f"  Fetching {len(tickers)} tickers (attempt {attempt}/{MAX_DOWNLOAD_ATTEMPTS}, "
+              f"batches of {DOWNLOAD_BATCH_SIZE})...")
+        try:
+            data = _download_all_once(all_tickers, period)
+        except Exception as e:
+            last_reason = f"attempt {attempt} raised {type(e).__name__}: {e}"
+            print(f"    ! {last_reason}")
+        else:
+            try:
+                bench = data[BENCHMARK]['Close'].dropna()
+            except Exception:
+                bench = pd.Series(dtype=float)
+            if bench.empty:
+                last_reason = f"attempt {attempt}: {BENCHMARK} price series empty after download"
+                print(f"    ! {last_reason}")
+            else:
+                n_sufficient = _count_price_sufficient(data, tickers)
+                if n_sufficient < min_required:
+                    last_reason = (f"attempt {attempt}: price coverage {n_sufficient}/{len(tickers)} "
+                                    f"< floor {min_required} ({int(MIN_COVERAGE_PCT*100)}% w/ "
+                                    f">={MIN_COVERAGE_BARS} bars)")
+                    print(f"    ! {last_reason}")
+                else:
+                    print(f"    ✓ attempt {attempt} succeeded: {BENCHMARK} ok, "
+                          f"price coverage {n_sufficient}/{len(tickers)} >= floor {min_required}")
+                    return data
+        if attempt < MAX_DOWNLOAD_ATTEMPTS:
+            backoff = RETRY_BACKOFF_SECONDS[attempt - 1] + random.uniform(0, 5)
+            print(f"    … retrying in {backoff:.0f}s")
+            time.sleep(backoff)
+    reason = f"price download failed after {MAX_DOWNLOAD_ATTEMPTS} attempts (last: {last_reason})"
+    print(f"  ✗ {reason}")
+    _emit_gh_warning(reason)
+    sys.exit(0)
 
 
 def calc_return(closes, days):
@@ -525,14 +713,15 @@ def main():
                 return True
         return False
 
-    # Minervini best × 3 (progressively relaxed)
+    # Minervini best × 3 (progressively relaxed within a strict floor — the
+    # two loosest rungs, rs>=75&vcp>=65 and rs>=70&vcp>=55, were removed
+    # 2026-09-08 so top_picks can legitimately come back empty on a day with
+    # no real setup, instead of always forcing 3 mediocre names)
     for label in ['minervini_1', 'minervini_2', 'minervini_3']:
         for cond in [
             lambda r: r['rs_score']>=80 and r['vcp_score']>=75 and r['rs_trend']=='accelerating' and r['dist_from_high_pct']<5 and r['vol_ratio']<0.8,
             lambda r: r['rs_score']>=80 and r['vcp_score']>=75 and r['rs_trend']=='accelerating' and r['dist_from_high_pct']<8,
             lambda r: r['rs_score']>=78 and r['vcp_score']>=70 and r['rs_trend'] in ('accelerating','steady'),
-            lambda r: r['rs_score']>=75 and r['vcp_score']>=65,
-            lambda r: r['rs_score']>=70 and r['vcp_score']>=55,
         ]:
             found = [r for r in results if r['ticker'] not in used and cond(r)]
             if found:
