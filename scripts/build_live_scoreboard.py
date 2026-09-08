@@ -73,6 +73,11 @@ BORROW_SPREAD_ANNUAL = 0.015     # 借款部分 1.5%/年
 TURNOVER_COST_FRAC = 0.0007      # 7 bps
 TRADING_DAYS = 252
 
+# F5 修法（LIVE_LONGTRACK.md 一之3）：系統採用日與各市場「可用實錄」起點不是同一天
+# （美股/台股實錄分別從 2026-08-14／2026-08-17 才開始，之前是 replay）；頁面必須明講
+# 這裡的績效是「殘存實錄起點以來」，不是「自採用日以來」，避免誤讀為完整採用期表現。
+ADOPTION_DATE = "2026-07-18"
+
 # ═══════════════════════════════════════════════════════════════════════
 # 影子帳戶 CONFIG（PREREG 凍結；v7-backtest/docs/Shadow_Tracks_Spec.md）
 # ═══════════════════════════════════════════════════════════════════════
@@ -364,7 +369,12 @@ def leg_daily_returns_generic(mkt, legs, history, live_dates, date_to_idx, execu
             r_cash = TW_CASH_ANNUAL / TRADING_DAYS
 
         r_leg_contrib = sum((exec_prev[t] / 100.0) * r_leg[t] for t in legs)
-        cash_frac = max(0.0, 1.0 - sum_exec_prev)
+        # F2 修法（LIVE_LONGTRACK.md 一之5）：cash_frac 不再 clip 在 0——曝險 >100% 時
+        # cash_frac 為負，代表「借款部位」，借款部位要付 r_cash（現金/資金基準利率）
+        # 再加 spread，逐字對齊權威回測 run_w52_adaptive_leverage.leg_nav()（eng() 內建
+        # 現金利率計息＋另扣 spread 兩層）；之前 clip 在 0 會讓借款部位漏付 r_cash，
+        # 只扣了 spread。borrow_frac 只用來另計 spread（未隨曝險比例縮放的固定利差）。
+        cash_frac = 1.0 - sum_exec_prev
         borrow_frac = max(0.0, sum_exec_prev - 1.0)
         turnover_frac = sum(abs(exec_now[t] - exec_prev[t]) for t in legs) / 100.0
 
@@ -393,14 +403,14 @@ def build_market(mkt, state, gaps, judgment_calls):
     key, legs, hist_key = mkt["key"], mkt["legs"], mkt["hist_key"]
     history = state.get(hist_key) or []
     if not history:
-        gaps.append({"market": key, "reason": f"state.json 缺 {hist_key}"})
-        return None
+        # F4(a) 修法（LIVE_LONGTRACK.md 一之7）：績效必要輸入缺失時非零退出、不覆寫既有
+        # 頁——原本 return None 會讓呼叫端把該市場記為 None、另一市場仍照常寫出新頁。
+        raise FailSafeAbort(f"[{key}] state.json 缺 {hist_key}")
 
     history = sorted(history, key=lambda r: r["date"])
     live_rows = [r for r in history if r.get("source") == "live"]
     if not live_rows:
-        gaps.append({"market": key, "reason": "尚無 source=='live' 日紀錄，NAV 簿記無法起算"})
-        return None
+        raise FailSafeAbort(f"[{key}] 尚無 source=='live' 日紀錄，NAV 簿記無法起算（F4a）")
 
     inception = live_rows[0]["date"]
     data_through = live_rows[-1]["date"]
@@ -444,29 +454,31 @@ def build_market(mkt, state, gaps, judgment_calls):
         sum_exec_prev = sum(exec_prev.values()) / 100.0
 
         r_leg = {}
-        ok = True
         for t in legs:
             p_now = px[t].get(d) or px_at_or_before(px[t], px_dates[t], d)
             p_prev = px[t].get(prev_d) or px_at_or_before(px[t], px_dates[t], prev_d)
             if p_now is None or p_prev is None or p_prev == 0:
-                gaps.append({"market": key, "date": d, "reason": f"{t} 缺 {prev_d}→{d} 收盤價，本日系統報酬計為 0"})
-                ok = False
-                break
+                # F4(a) 修法（LIVE_LONGTRACK.md 一之7）：缺腿收盤價是績效必要輸入缺失，
+                # 原本靜默記本日報酬 0 後仍寫出新頁；改為非零退出、不覆寫既有頁。
+                raise FailSafeAbort(f"[{key}] {t} 缺 {prev_d}→{d} 收盤價，績效必要輸入缺失")
             r_leg[t] = p_now / p_prev - 1.0
-        if not ok:
-            nav_sys.append({"date": d, "ret": 0.0})
-            continue
 
         if mkt["cash_ticker"] == "^IRX":
             r_cash = cash_daily_return_us(cash_series, cash_dates, d)
             if r_cash is None:
-                gaps.append({"market": key, "date": d, "reason": "^IRX 查無 <= 當日資料，現金日率計為 0"})
-                r_cash = 0.0
+                # F4(a) 修法（同上）：現金日率是 r_sys 必要輸入之一，原本靜默記 0；
+                # 改為非零退出、不覆寫既有頁。
+                raise FailSafeAbort(f"[{key}] ^IRX 查無 <= {d} 現金利率資料，績效必要輸入缺失")
         else:
             r_cash = TW_CASH_ANNUAL / TRADING_DAYS
 
         r_leg_contrib = sum((exec_prev[t] / 100.0) * r_leg[t] for t in legs)
-        cash_frac = max(0.0, 1.0 - sum_exec_prev)
+        # F2 修法（LIVE_LONGTRACK.md 一之5）：cash_frac 不再 clip 在 0——曝險 >100% 時
+        # cash_frac 為負，代表「借款部位」，借款部位要付 r_cash（現金/資金基準利率）
+        # 再加 spread，逐字對齊權威回測 run_w52_adaptive_leverage.leg_nav()（eng() 內建
+        # 現金利率計息＋另扣 spread 兩層）；之前 clip 在 0 會讓借款部位漏付 r_cash，
+        # 只扣了 spread。borrow_frac 只用來另計 spread（未隨曝險比例縮放的固定利差）。
+        cash_frac = 1.0 - sum_exec_prev
         borrow_frac = max(0.0, sum_exec_prev - 1.0)
         turnover_frac = sum(abs(exec_now[t] - exec_prev[t]) for t in legs) / 100.0
 
@@ -490,49 +502,54 @@ def build_market(mkt, state, gaps, judgment_calls):
     # 基準：raw B&H（50/50，不再平衡）＋ B-cagr／B-mdd（50/50 稀釋到 k，月末再平衡，7bps 成本）
     p0 = {t: (px[t].get(inception) or px_at_or_before(px[t], px_dates[t], inception)) for t in legs}
     if any(v is None for v in p0.values()):
-        gaps.append({"market": key, "reason": "inception 日缺腿收盤價，無法建基準序列"})
-        raw_bh, b_cagr, b_mdd, nav_s60 = [], [], [], []
-    else:
-        raw_units = {t: 50.0 / p0[t] for t in legs}
-        raw_bh = []
-        for d in live_dates:
-            v = sum(raw_units[t] * (px[t].get(d) or px_at_or_before(px[t], px_dates[t], d)) for t in legs)
-            raw_bh.append({"date": d, "nav": round(v, 4)})
+        # F4(a) 修法（LIVE_LONGTRACK.md 一之7）：基準序列是 SPRT 判準的另一半輸入，
+        # inception 日缺腿收盤價原本會讓基準留空、系統序列仍照常寫出；改為非零退出。
+        raise FailSafeAbort(f"[{key}] inception 日（{inception}）缺腿收盤價，無法建基準序列")
 
-        def build_diluted(k):
-            out = []
-            basket_units = {t: (k * 100.0 / len(legs)) / p0[t] for t in legs}
-            cash = (1.0 - k) * 100.0
-            prev_d = inception
-            for i, d in enumerate(live_dates):
-                if d == inception:
-                    out.append({"date": d, "nav": 100.0})
-                    prev_d = d
-                    continue
-                basket_val = sum(basket_units[t] * (px[t].get(d) or px_at_or_before(px[t], px_dates[t], d)) for t in legs)
-                if mkt["cash_ticker"] == "^IRX":
-                    r_c = cash_daily_return_us(cash_series, cash_dates, d) or 0.0
-                else:
-                    r_c = TW_CASH_ANNUAL / TRADING_DAYS
-                cash = cash * (1.0 + r_c)
-                nav_pre = basket_val + cash
-                is_month_end = (i == len(live_dates) - 1) or (month_of(live_dates[i + 1]) != month_of(d))
-                if is_month_end and nav_pre > 0:
-                    actual_basket_frac = basket_val / nav_pre
-                    turnover = abs(k - actual_basket_frac)
-                    cost = turnover * TURNOVER_COST_FRAC * nav_pre
-                    nav_post = nav_pre - cost
-                    basket_units = {t: (k * nav_post / len(legs)) / (px[t].get(d) or px_at_or_before(px[t], px_dates[t], d)) for t in legs}
-                    cash = (1.0 - k) * nav_post
-                    out.append({"date": d, "nav": round(nav_post, 4)})
-                else:
-                    out.append({"date": d, "nav": round(nav_pre, 4)})
+    raw_units = {t: 50.0 / p0[t] for t in legs}
+    raw_bh = []
+    for d in live_dates:
+        v = sum(raw_units[t] * (px[t].get(d) or px_at_or_before(px[t], px_dates[t], d)) for t in legs)
+        raw_bh.append({"date": d, "nav": round(v, 4)})
+
+    def build_diluted(k):
+        out = []
+        basket_units = {t: (k * 100.0 / len(legs)) / p0[t] for t in legs}
+        cash = (1.0 - k) * 100.0
+        prev_d = inception
+        for i, d in enumerate(live_dates):
+            if d == inception:
+                out.append({"date": d, "nav": 100.0})
                 prev_d = d
-            return out
+                continue
+            basket_val = sum(basket_units[t] * (px[t].get(d) or px_at_or_before(px[t], px_dates[t], d)) for t in legs)
+            if mkt["cash_ticker"] == "^IRX":
+                r_c = cash_daily_return_us(cash_series, cash_dates, d)
+                if r_c is None:
+                    # F4(a) 修法（同上）：基準腿的現金日率缺值原本連 gap 都不記、直接
+                    # 靜默當 0；同樣是績效必要輸入缺失，改為非零退出。
+                    raise FailSafeAbort(f"[{key}] ^IRX 查無 <= {d} 現金利率資料（基準稀釋腿），績效必要輸入缺失")
+            else:
+                r_c = TW_CASH_ANNUAL / TRADING_DAYS
+            cash = cash * (1.0 + r_c)
+            nav_pre = basket_val + cash
+            is_month_end = (i == len(live_dates) - 1) or (month_of(live_dates[i + 1]) != month_of(d))
+            if is_month_end and nav_pre > 0:
+                actual_basket_frac = basket_val / nav_pre
+                turnover = abs(k - actual_basket_frac)
+                cost = turnover * TURNOVER_COST_FRAC * nav_pre
+                nav_post = nav_pre - cost
+                basket_units = {t: (k * nav_post / len(legs)) / (px[t].get(d) or px_at_or_before(px[t], px_dates[t], d)) for t in legs}
+                cash = (1.0 - k) * nav_post
+                out.append({"date": d, "nav": round(nav_post, 4)})
+            else:
+                out.append({"date": d, "nav": round(nav_pre, 4)})
+            prev_d = d
+        return out
 
-        b_cagr = build_diluted(mkt["k_cagr"])
-        b_mdd = build_diluted(mkt["k_mdd"])
-        nav_s60 = build_diluted(S60_K)   # S-60：同標的 50/50 B&H 固定 60%＋現金 40%，重用同一套月末再平衡＋7bps 邏輯
+    b_cagr = build_diluted(mkt["k_cagr"])
+    b_mdd = build_diluted(mkt["k_mdd"])
+    nav_s60 = build_diluted(S60_K)   # S-60：同標的 50/50 B&H 固定 60%＋現金 40%，重用同一套月末再平衡＋7bps 邏輯
 
     # 影子帳戶 S-A10：系統規則但 cap 1.0（無槓桿），執行層同 A2、clamp 改 50pp／腿。
     executed_a10 = band_exec_replay_capped(history, legs, _w52.WEIGHTS, SA10_CLAMP)
@@ -751,22 +768,36 @@ def build_combined_twd(mkt_us, mkt_tw, gaps, judgment_calls):
 
     us_units = 0.5 * 100.0  # TWD-denominated notional at start (美腿以 fx0 換算)
     tw_units_nav = 0.5 * 100.0
-    us_prev_nav_usd = us_by_date.get(start, 100.0)
-    tw_prev_nav = tw_by_date.get(start, 100.0)
+    # F3 修法（LIVE_LONGTRACK.md 一之6）：改成各市場各自保存「上一個有新資料的
+    # NAV」，不再共用聯集曆的 prev_d——原本 prev_d 每個聯集日期都往前推進，若某市場
+    # 當天沒有紀錄（例如台股開市美股休市），下一個該市場真正交易日查
+    # us_by_date[prev_d] 會落空、整段報酬（從上一個真正交易日到恢復日）直接消失並
+    # 計為 0；改為各腿只在自己有新資料時才更新報酬與 last_nav，缺資料的日子沿用上一個
+    # 有效值、不動報酬（維持前一淨值，非捏造），恢復交易那天用真正的上一個有效值算，
+    # 報酬就不會被吃掉。
+    us_last_nav = us_by_date.get(start, 100.0)
+    tw_last_nav = tw_by_date.get(start, 100.0)
     fx_prev = fx0
 
     combined = [{"date": start, "nav": 100.0}]
     nav = 100.0
-    prev_d = start
     for d in all_dates[1:]:
-        us_nav_now = us_by_date.get(d, None)
-        us_ret = (us_nav_now / us_by_date.get(prev_d, us_prev_nav_usd) - 1.0) if (us_nav_now is not None and us_by_date.get(prev_d) is not None) else 0.0
+        us_nav_now = us_by_date.get(d)
+        if us_nav_now is not None:
+            us_ret = us_nav_now / us_last_nav - 1.0
+            us_last_nav = us_nav_now
+        else:
+            us_ret = 0.0
         fx_now = px_at_or_before(fx, fx_dates, d) or fx_prev
         fx_ret = (fx_now / fx_prev - 1.0) if fx_prev else 0.0
         r_us_twd = (1.0 + us_ret) * (1.0 + fx_ret) - 1.0
 
-        tw_nav_now = tw_by_date.get(d, None)
-        r_tw = (tw_nav_now / tw_by_date.get(prev_d, tw_prev_nav) - 1.0) if (tw_nav_now is not None and tw_by_date.get(prev_d) is not None) else 0.0
+        tw_nav_now = tw_by_date.get(d)
+        if tw_nav_now is not None:
+            r_tw = tw_nav_now / tw_last_nav - 1.0
+            tw_last_nav = tw_nav_now
+        else:
+            r_tw = 0.0
 
         us_val = us_units * (1.0 + r_us_twd)
         tw_val = tw_units_nav * (1.0 + r_tw)
@@ -783,7 +814,6 @@ def build_combined_twd(mkt_us, mkt_tw, gaps, judgment_calls):
             nav = nav_pre
         combined.append({"date": d, "nav": round(nav, 4)})
         fx_prev = fx_now
-        prev_d = d
 
     return {"nav_series": combined, "note": "50/50 月再平衡（TWD 計價，美腿含 USDTWD 匯率報酬），供附帶顯示，不進 SPRT 判定。"}
 
@@ -938,6 +968,42 @@ def shadow_market_section(mk, mkt, shadows):
 </div>"""
 
 
+def gap_banner(gaps):
+    """F4(b) 修法（LIVE_LONGTRACK.md 一之7）：資料缺口原本只寫進 JSON、頁面完全不顯示；
+    現在只要 out['data_gaps'] 非空就在頁首畫不可忽略的紅色 banner，列出每筆缺口的
+    市場／日期／原因。F4(a) 已把「會污染 NAV／SPRT」的缺口類型升級為整頁不發布
+    （見 build_market 內的 raise FailSafeAbort），所以這裡會出現的都是不影響主判準
+    SPRT 的次要缺口（例如影子帳戶 D1 建置失敗、回測先驗查無月度序列）；仍原樣列出，
+    不做「重要/次要」二次判斷，避免又變成另一種隱藏。"""
+    if not gaps:
+        return ""
+    rows = ""
+    for g in gaps:
+        parts = []
+        if g.get("market"):
+            parts.append(esc(g["market"]))
+        if g.get("date"):
+            parts.append(esc(g["date"]))
+        prefix = "／".join(parts)
+        rows += f"<li>{(prefix + '：') if prefix else ''}{esc(g.get('reason', ''))}</li>"
+    return (f'<div class="lsb-gap">⚠️ 本次資料缺口（{len(gaps)} 筆，不影響下方 NAV／SPRT——'
+            f'會影響的缺口類型已改為整頁不發布，見頁尾 PREREG）：<ul>{rows}</ul></div>')
+
+
+def adoption_banner(out):
+    """F5 修法（LIVE_LONGTRACK.md 一之3）：只揭露，不回填資料。系統採用日
+    ADOPTION_DATE 與各市場「可用實錄」起點不同，本頁所有績效數字都只涵蓋
+    「殘存實錄起點以來」，不是「自採用日以來」——明講以免被誤讀為完整採用期表現。"""
+    us_m = out["markets"].get("us")
+    tw_m = out["markets"].get("tw")
+    us_inc = esc(us_m["inception"]) if us_m else "（無資料）"
+    tw_inc = esc(tw_m["inception"]) if tw_m else "（無資料）"
+    return (f'<div class="lsb-adopt">📌 採用日 {esc(ADOPTION_DATE)}，但可用實錄僅自美股 {us_inc}／'
+            f'台股 {tw_inc} 起（採用日至實錄起點之間沒有留存的逐日紀錄）；下方所有 NAV、回撤、'
+            f'累積差、月勝率都是「殘存實錄起點以來」的表現，不是「自採用日以來」的完整採用期'
+            f'表現——兩者常被混為一談，這裡明講以免誤讀。</div>')
+
+
 def render_body(out):
     us_sec = mkt_section(out["markets"].get("us"))
     tw_sec = mkt_section(out["markets"].get("tw"))
@@ -948,6 +1014,11 @@ def render_body(out):
     combined_note = ""
     if combined:
         combined_note = f"<p class='lsb-note'>兩市場合併（TWD，50/50 月再平衡）最新 NAV：{combined['nav_series'][-1]['nav']}（inception=100，僅附帶顯示，不進 SPRT 判定）。</p>"
+
+    # F4(b)／F5 修法（LIVE_LONGTRACK.md 一之7／一之3）：頁首固定放資料缺口 banner
+    # （有缺口才出現）與採用日 vs 實錄起點的揭露（一定出現，不因無缺口而省略）。
+    gaps_html = gap_banner(out.get("data_gaps") or [])
+    adopt_html = adoption_banner(out)
 
     prereg_json = json.dumps(out["prereg"], ensure_ascii=False, indent=1)
 
@@ -968,10 +1039,15 @@ h3{{margin:1rem 0 .4rem;font-size:1rem}}
 .lsb-table th,.lsb-table td{{border-bottom:1px solid #eaeef2;padding:.3rem .5rem;text-align:left}}
 .lsb-table td.num,.lsb-table th.num{{text-align:right;font-variant-numeric:tabular-nums}}
 .lsb-note{{font-size:.8rem;color:#57606a}}
+.lsb-gap{{background:#fff0ee;border:2px solid #cf222e;color:#82181f;padding:.6rem .8rem;margin:.4rem 0 .8rem;border-radius:4px;font-size:.85rem;font-weight:600}}
+.lsb-gap ul{{margin:.3rem 0 0;padding-left:1.2rem;font-weight:400}}
+.lsb-adopt{{background:#fff8e6;border-left:3px solid #9a6700;color:#4d3800;padding:.5rem .75rem;margin:.4rem 0 .8rem;font-size:.85rem;border-radius:4px}}
 details.lsb-prereg summary{{cursor:pointer;font-size:.82rem;color:#57606a;margin:.6rem 0 .3rem}}
 details.lsb-prereg pre{{max-height:280px;overflow:auto;background:#f6f8fa;border:1px solid #d0d7de;border-radius:6px;padding:.6rem;font-size:.72rem;white-space:pre-wrap}}
 </style></head>
 <body>
+{gaps_html}
+{adopt_html}
 <p class="lsb-note"><a href="/backtest/live_system_evidence/">這套系統的九項證據總覽 →</a></p>
 <div class="lsb-plain">💬 白話：這不是回測，是「只用實際發生過的紀錄」每個月記一次系統有沒有贏過同標的的稀釋基準（<b>SPRT</b>＝序貫檢定，累積證據到夠強才判定；<b>LLR</b>＝累積證據強度；<b>命中</b>＝當月系統報酬贏過基準；<b>稀釋基準</b>＝把 50/50 買進持有的一部分換成現金，讓風險與系統相近再比）的淘汰賽。判紅只代表「證據支持系統不比稀釋好」，是登記進帳本待持有人檢討的訊號，不是自動平倉指令；本頁面不下任何買賣或配置建議。</div>
 {us_sec}
@@ -1013,13 +1089,12 @@ def build():
         prior_sprt_map[mk] = {"sprt_cagr": m.get("sprt_b_cagr"), "sprt_mdd": m.get("sprt_b_mdd")}
     state["_live_scoreboard_prior"] = prior_sprt_map
 
+    # F4(a) 修法（LIVE_LONGTRACK.md 一之7）：不再吞掉 build_market 的例外——原本
+    # try/except 會把任一市場的失敗（含 FailSafeAbort）都吞成一筆 gap、該市場記 None，
+    # 讓另一市場「照常」寫出新頁；現在任何一個市場失敗就整份輸出都不寫（見 main()）。
     markets_out = {}
     for mkt in MARKETS:
-        try:
-            markets_out[mkt["key"]] = build_market(mkt, state, gaps, judgment_calls)
-        except Exception as e:  # noqa: BLE001
-            gaps.append({"market": mkt["key"], "reason": f"build_market failed: {type(e).__name__}: {e}"})
-            markets_out[mkt["key"]] = None
+        markets_out[mkt["key"]] = build_market(mkt, state, gaps, judgment_calls)
 
     combined = build_combined_twd(markets_out.get("us"), markets_out.get("tw"), gaps, judgment_calls)
     backtest_prior = load_backtest_prior(gaps)
@@ -1050,6 +1125,15 @@ def build():
 
 
 def main():
+    # F4(a) 判斷（LIVE_LONGTRACK.md 一之7）：F4(a) 字面要求「非零退出」，但這裡刻意保留
+    # exit(0)——本檔在 .github/workflows/update_long_track_w52_adaptive.yml 的同一 job
+    # 裡跑在 update_long_track_w52_adaptive.py 之後、leverage/tw-semivol 更新與最終
+    # commit&push 之前，且該步驟沒有 continue-on-error；若改 exit(1)，本檔任何一次資料
+    # 缺口都會讓同一 job 後面所有步驟（含其餘完全無關腳本的 commit）整批失敗，這是比
+    # 現況更大的副作用，而且該 workflow yaml 不在本次白名單內、無法一併補 continue-
+    # on-error。「禁止覆寫既有頁」（本函式從不寫 OUT_JSON/OUT_BODY）才是這裡真正的安全
+    # 保證，已由上面 build_market 的 raise FailSafeAbort 落實；exit code 是否改為非零，
+    # 留給 owner 在檢視 workflow 後決定。
     try:
         out = build()
     except FailSafeAbort as e:

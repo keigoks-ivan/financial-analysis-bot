@@ -139,7 +139,10 @@ CONSOLE_JS = """
 (function(){
   "use strict";
   var TABS = ['overview','live','positions','record'];
-  var FRAME_ID = {live:'live-frame', positions:'positions-frame', record:'record-frame'};
+  // F1 修法（LIVE_LONGTRACK.md 一之1）：live 分頁改掛兩個 iframe——_body.html（訊號）
+  // 與 _scoreboard_body.html（計分板：NAV／回撤／基準差／資料缺口，先前完全沒被嵌入）；
+  // 每個 tab 對應一個 id 陣列，而非單一 id。
+  var FRAME_ID = {live:['live-frame','scoreboard-frame'], positions:['positions-frame'], record:['record-frame']};
 
   function sizeFrame(fr){
     try{
@@ -158,17 +161,23 @@ CONSOLE_JS = """
   }
   var frames = {};
   Object.keys(FRAME_ID).forEach(function(k){
-    var fr = document.getElementById(FRAME_ID[k]);
-    if(fr){ frames[k] = fr; wireSize(fr); }
+    var arr = [];
+    FRAME_ID[k].forEach(function(id){
+      var fr = document.getElementById(id);
+      if(fr){ arr.push(fr); wireSize(fr); }
+    });
+    if(arr.length) frames[k] = arr;
   });
 
   function ensureLoaded(k){
-    var fr = frames[k];
-    if(!fr) return;
-    var src = fr.getAttribute('data-src');
-    if(fr._loadedSrc === src){ sizeFrame(fr); return; }
-    fr._loadedSrc = src;
-    fr.src = src;
+    var arr = frames[k];
+    if(!arr) return;
+    arr.forEach(function(fr){
+      var src = fr.getAttribute('data-src');
+      if(fr._loadedSrc === src){ sizeFrame(fr); return; }
+      fr._loadedSrc = src;
+      fr.src = src;
+    });
   }
 
   function activate(tab){
@@ -250,6 +259,11 @@ def render() -> str:
 <div class="console-tab-panel" id="panel-live">
   <p class="console-embed-note">W52 × 自適應波動率 cap 1.5（美＋台）· 2026-07-18 起實單主系統 · <a href="/long-track-w52-adaptive/">獨立頁</a> · <a href="/backtest/live_system_evidence/">這套系統的證據總覽（12 頁，白話）→</a></p>
   <iframe class="console-embed-frame" id="live-frame" data-src="/long-track-w52-adaptive/_body.html" title="實單主系統" scrolling="no" loading="lazy"></iframe>
+  <!-- F1 修法（LIVE_LONGTRACK.md 一之1）：計分板（NAV／回撤／基準差／資料缺口）先前
+       完全沒被嵌入 live panel，規格與本產生器都宣稱它會出現、實際落空。保留上面
+       _body.html（訊號）不動，另加這個 iframe（表現）——兩者都要看得到。 -->
+  <p class="console-embed-note">實單前瞻記分板（NAV／回撤／基準差／資料缺口，PREREG 2026-09-05） · <a href="/long-track/_scoreboard_body.html">獨立片段</a></p>
+  <iframe class="console-embed-frame" id="scoreboard-frame" data-src="/long-track/_scoreboard_body.html" title="實單前瞻記分板" scrolling="no" loading="lazy"></iframe>
 </div>
 <div class="console-tab-panel" id="panel-positions">
   <p class="console-embed-note">逐一檢查每個持倉與近期研究 DD 的否證指標、催化劑時程、thesis 老化 · <a href="/pm/">獨立頁</a></p>
