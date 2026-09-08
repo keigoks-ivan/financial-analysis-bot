@@ -661,6 +661,29 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
       (ledgerNote?(ledgerNote+' · '):'')+
       'DD 只做 veto／角色標籤，不參與排序；上修為燈號；等寬版看 <a href="/engine/board.txt">/engine/board.txt</a>'+
       '</div></div></details>';
+    refreshLampCells(mount);
+  }
+  // 「時機」欄（個股階段雷達，/stages/data/lamp.json）：建置期看板片段已含建置當時的
+  // 階段值，這裡在頁面載入時再 fetch 一次覆寫成當天最新——404／格式錯就靜默保留建置期值。
+  var LAMP_LABEL = {S0:'弱勢',S1:'轉強',S2:'築底',S3:'收縮完成',S4:'領先',S9:'過渡'};
+  var LAMP_CLS = {S0:'dn',S1:'accent',S2:'sec',S3:'up',S4:'up',S9:'mut'};
+  function refreshLampCells(root){
+    fetch('/stages/data/lamp.json',{cache:'no-store'}).then(function(r){
+      if(!r.ok) throw new Error(String(r.status));
+      return r.json();
+    }).then(function(d){
+      var lamp = (d && d.lamp) || {};
+      root.querySelectorAll('[data-lamp-ticker]').forEach(function(el){
+        var code = lamp[el.getAttribute('data-lamp-ticker')];
+        el.className = 'bw-pill bw-pill-' + (LAMP_CLS[code] || 'mut');
+        el.textContent = LAMP_LABEL[code] || '—';
+      });
+      if(d && d.as_of){
+        root.querySelectorAll('.stage-lamp-asof').forEach(function(el){
+          el.textContent = '（時機欄資料日 ' + d.as_of + '）';
+        });
+      }
+    }).catch(function(){ /* 缺檔或壞檔：保留看板片段建置期的值 */ });
   }
 })();
 </script>

@@ -54,6 +54,16 @@ HYST_INCUMBENT_FAILS_WATCH = 2
 DD_LATEST = ROOT / "docs" / "dd-screener" / "latest.json"
 MARKET_STATE = ROOT / "docs" / "screener" / "market_state.json"
 UNIVERSE = ROOT / "data" / "engine" / "universe.json"
+# 2026-09-08：個股階段雷達「時機」欄（生命週期階段，與既有「時機燈」的 52 週位置／
+# 過熱燈號是兩套獨立機制——只加欄、不改 own_score／排序／遲滯／席位任何邏輯，見
+# notes/site-internal/root/_stages_radar_design_20260908.md §7b）。
+LAMP_JSON = ROOT / "docs" / "stages" / "data" / "lamp.json"
+STAGE_LABEL = {"S0": "弱勢", "S1": "轉強", "S2": "築底", "S3": "收縮完成", "S4": "領先", "S9": "過渡"}
+# pos=領先/收縮完成、accent=轉強、sec=築底、neg=弱勢、muted=過渡（design spec §7b 色票）；
+# up/dn/mut 沿用既有 bw-pill 色系，accent/sec 是本節新增的兩個 pill 色系。
+STAGE_PILL_CLS = {"S0": "dn", "S1": "accent", "S2": "sec", "S3": "up", "S4": "up", "S9": "mut"}
+STAGE_CODE_ASCII = {"S0": "WEAK", "S1": "TURN", "S2": "BASE", "S3": "CONT", "S4": "LEAD", "S9": "TRAN"}
+W_STAGE = 4
 CARDS_JSON = OUT_DIR / "cards.json"
 LEDGER_JSON = OUT_DIR / "arena-ledger.json"   # 席位變動帳本（append-only）
 ARENA_JSON = OUT_DIR / "arena.json"
@@ -430,7 +440,7 @@ def moat_ascii(m) -> str:
     return f"{grade}{_ARROW_ASCII.get(arrow, '')}"
 
 
-def render_board_text(as_of, rows, core_seats, sat_seats, prev_snap, entered) -> str:
+def render_board_text(as_of, rows, core_seats, sat_seats, prev_snap, entered, lamp_map) -> str:
     """附錄 B 式等寬看板（持有人 2026-09-02 指定形式；2026-09-02 對齊修正）：目前席位
     ＋擁有層排序表＋DD 進場 vs 機械資格＋無 DD 過閘候選。純文字，同時寫 docs/engine/board.txt
     與 <pre> 嵌頁（docs/engine/_arena_body.html、docs/cockpit/index.html 皆讀同一份文字）。
@@ -457,8 +467,11 @@ def render_board_text(as_of, rows, core_seats, sat_seats, prev_snap, entered) ->
     L.append("甲 擁有層｜資格：品質閘 ROIC≥15∧FCF≥10（或 ROIC≥25∧FCF≥0）× 成長閘 ≥15 × 市值 ≥$20B"
              "｜排序＝min(成長，30)＋FY1 盈餘殖利率（ROIC≥30 +2；PEG>2 −5）｜時機燈獨立、不進排序")
     L.append("欄位說明：score＝擁有層分、grow＝FY1→FY3 成長%、EY＝FY1 盈餘殖利率%、rev1m＝FY+1 單月修正%、"
-             "timing＝時機燈、seat＝席位、dd＝DD 標籤、moat＝護城河；note＝註記")
+             "timing＝時機燈、stage＝時機（個股階段雷達的生命週期階段，只是燈號，不影響排序）、"
+             "seat＝席位、dd＝DD 標籤、moat＝護城河；note＝註記")
     L.append("timing 代碼：BRK＝突破帶、PB＝回踩、TR＝趨勢內、HOT＝過熱、DN＝52 週線下或缺"
+             "｜stage 代碼：WEAK＝弱勢、TURN＝轉強、BASE＝築底、CONT＝收縮完成、LEAD＝領先、"
+             "TRAN＝過渡、-＝資料缺"
              "｜seat：C1-C5＝核心席次、S1-S5＝衛星席次｜moat：字母＝評級，+/=/-＝護城河趨勢升/平/降"
              "｜dd：IN/WATCH/AVOID/legacy/none，core/sat/trk＝角色，Nd＝天數，!old＝逾 180 天過期")
     L.append("")
@@ -474,6 +487,7 @@ def render_board_text(as_of, rows, core_seats, sat_seats, prev_snap, entered) ->
             L.append(
                 f"  {track_code[track]}{j} {tk(r['ticker'])} {_n(r['score'], W_SCORE)} "
                 f"{_pad(TIMING_CODE.get(r['grp'].get('p_label'), 'DN'), W_TIMING)} "
+                f"{_pad(STAGE_CODE_ASCII.get(lamp_map.get(r['ticker']), '-'), W_STAGE)} "
                 f"{_pad(dd_ascii(r)[:W_DD], W_DD)} {_pad(chg, 6)} {r.get('hyst') or ''}"
             )
     gone = [t for t in prev_seats if t not in seat_of]
@@ -486,7 +500,7 @@ def render_board_text(as_of, rows, core_seats, sat_seats, prev_snap, entered) ->
     L.append("")
     hdr = (f"{'#':>{W_IDX}} {'ticker':<{W_TICKER}} {'score':>{W_SCORE}} {'grow':>{W_GROW}} "
            f"{'EY':>{W_EY}} {'ROIC':>{W_ROIC}} {'FCF':>{W_FCF}} {'PEG':>{W_PEG}} {'rev1m':>{W_REV}} "
-           f"{'timing':<{W_TIMING}} {'seat':<{W_SEAT}} {'dd':<{W_DD}} {'moat':<{W_MOAT}} note")
+           f"{'timing':<{W_TIMING}} {'stage':<{W_STAGE}} {'seat':<{W_SEAT}} {'dd':<{W_DD}} {'moat':<{W_MOAT}} note")
     L.append(hdr)
     own = [r for r in rows if (r["grp"].get("quality") or {}).get("pass") and (r["score"] or 0) > 0]
     for i, r in enumerate(own[:40], 1):
@@ -501,6 +515,7 @@ def render_board_text(as_of, rows, core_seats, sat_seats, prev_snap, entered) ->
             f"{_n(o.get('ey'), W_EY)} {_n(r.get('roic'), W_ROIC)} {_n(r.get('fcf'), W_FCF)} "
             f"{_n(r.get('peg'), W_PEG, 2)} {_n(g.get('r_fy1'), W_REV)} "
             f"{_pad(TIMING_CODE.get(g.get('p_label'), 'DN'), W_TIMING)} "
+            f"{_pad(STAGE_CODE_ASCII.get(lamp_map.get(r['ticker']), '-'), W_STAGE)} "
             f"{_pad(seat_code.get(r['ticker'], ''), W_SEAT)} "
             f"{_pad(dd_ascii(r)[:W_DD], W_DD)} {_pad(moat_ascii(r.get('moat')), W_MOAT)} {note}"
         )
@@ -622,6 +637,25 @@ def _num(v, d: int = 1) -> str:
         return '<span class="bw-muted">—</span>'
 
 
+def load_lamp() -> dict:
+    """docs/stages/data/lamp.json → {ticker: 階段碼}；缺檔或壞檔回傳空字典——
+    「時機」欄整欄呈現「—」，不擋 build（stages 是每日 21:45 UTC 收盤帶最後一步，
+    engine 是週更，兩者不保證同一次 run 都成功）。頁面 JS 之後會 fetch 這份檔案
+    覆寫成當天最新值，見 docs/cockpit/index.html／docs/engine/arena.html。"""
+    try:
+        return json.loads(LAMP_JSON.read_text(encoding="utf-8")).get("lamp") or {}
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def _stage_pill(ticker: str, lamp_map: dict) -> str:
+    code = lamp_map.get(ticker)
+    label = STAGE_LABEL.get(code, "—")
+    cls = STAGE_PILL_CLS.get(code, "mut")
+    return (f'<span class="bw-pill bw-pill-{cls}" data-lamp-ticker="{escape(ticker)}">'
+            f"{escape(label)}</span>")
+
+
 def _timing_pill(p_label, r26, dist_hi) -> str:
     dot, label, cls = _TIMING_HTML.get(p_label, ("🔴", "線下", "dn"))
     bits = []
@@ -694,6 +728,8 @@ _BOARD_CSS = """<style>
 .board-wrap .bw-pill-neu{background:#fbf3df;color:var(--warn,#a16207)}
 .board-wrap .bw-pill-warn{background:#fdeedb;color:#c2610a}
 .board-wrap .bw-pill-mut{background:var(--line-soft,#eee);color:var(--muted,#999)}
+.board-wrap .bw-pill-accent{background:#fdf4e3;color:var(--accent,#b8924a)}
+.board-wrap .bw-pill-sec{background:var(--line-soft,#eee);color:var(--sec,#666)}
 .board-wrap .bw-chip{display:inline-block;font-size:10.5px;font-family:var(--sans,inherit);
   color:var(--sec,var(--text-sec,#666));background:var(--line-soft,rgba(0,0,0,.045));
   border-radius:4px;padding:1px 6px;margin:0 3px 3px 0;cursor:help}
@@ -703,8 +739,37 @@ _BOARD_CSS = """<style>
 @media(max-width:760px){.board-wrap table{font-size:11.5px}.board-wrap th,.board-wrap td{padding:4px 6px}}
 </style>"""
 
+# 「時機」欄每日刷新（2026-09-08，design spec §7b）：board_html 裡的 data-lamp-ticker
+# cell 是 engine 建置當時（週更）的階段值；stages 是每日排程，所以頁面載入時再 fetch
+# 一次 /stages/data/lamp.json 覆寫成當天最新——404／格式錯就靜默保留建置期值，不擋頁面。
+# 一般字串（非 f-string）：JS 花括號在此不需跳脫；由呼叫端以單一 {變數} 插入 f-string body。
+_STAGE_LAMP_SCRIPT = """<script>(function(){
+function refreshStageLamp(){
+  fetch('/stages/data/lamp.json',{cache:'no-store'}).then(function(r){
+    if(!r.ok) throw new Error(String(r.status));
+    return r.json();
+  }).then(function(d){
+    var lamp=(d&&d.lamp)||{};
+    var LABEL={S0:'弱勢',S1:'轉強',S2:'築底',S3:'收縮完成',S4:'領先',S9:'過渡'};
+    var CLS={S0:'dn',S1:'accent',S2:'sec',S3:'up',S4:'up',S9:'mut'};
+    document.querySelectorAll('[data-lamp-ticker]').forEach(function(el){
+      var code=lamp[el.getAttribute('data-lamp-ticker')];
+      el.className='bw-pill bw-pill-'+(CLS[code]||'mut');
+      el.textContent=LABEL[code]||'—';
+    });
+    if(d&&d.as_of){
+      document.querySelectorAll('.stage-lamp-asof').forEach(function(el){
+        el.textContent='（時機欄資料日 '+d.as_of+'）';
+      });
+    }
+  }).catch(function(){ /* 缺檔或壞檔：保留看板片段建置期的值 */ });
+}
+if(document.readyState!=='loading') refreshStageLamp();
+else document.addEventListener('DOMContentLoaded', refreshStageLamp);
+})();</script>"""
 
-def render_board_html(as_of, rows, core_seats, sat_seats, prev_snap, entered) -> str:
+
+def render_board_html(as_of, rows, core_seats, sat_seats, prev_snap, entered, lamp_map) -> str:
     """HTML TABLE 版看板（2026-09-02，取代 <pre> ASCII——持有人否決理由：對齊靠瀏覽器排版
     引擎解決，燈號用顏色不用代碼）。回傳裸片段（無 html/head/body），可直接 innerHTML 或
     接進另一頁 <body>。內容與 render_board_text 同源同排序，只是呈現層換成表格＋燈號＋chip。"""
@@ -727,6 +792,7 @@ def render_board_html(as_of, rows, core_seats, sat_seats, prev_snap, entered) ->
              '<th title="PEG＝FY1 P/E ÷ 成長%">PEG</th>'
              '<th title="FY+1 單月 EPS 修正——燈號不參與排序；≤−10% 為資格否決線">上修燈</th>'
              '<th title="52 週位置與熱度燈號——不參與排序，見各燈 title">時機燈</th>'
+             '<th class="bw-l" title="這檔現在在生命週期哪一段，只是燈號，不影響排序（來源：個股階段雷達 /stages/）">時機</th>'
              '<th class="bw-l" title="目前坐核心／衛星席次；空白＝未坐席">席</th>'
              '<th class="bw-l" title="DD 裁決標籤——只做 veto（迴避）與角色標籤，不參與排序；⚠過期＝逾 180 天">DD</th>'
              '<th class="bw-l" title="護城河評級與趨勢：字母＝評級，↑升 →平 ↓降">護城河</th>'
@@ -753,6 +819,7 @@ def render_board_html(as_of, rows, core_seats, sat_seats, prev_snap, entered) ->
             f"<td>{_num(r.get('peg'), 2)}</td>"
             f"<td>{_rev_pill(g.get('r_fy1'))}</td>"
             f"<td>{_timing_pill(g.get('p_label'), r.get('r26'), g.get('dist_hi'))}</td>"
+            f'<td class="bw-l">{_stage_pill(tk, lamp_map)}</td>'
             f'<td class="bw-l">{seat_cell}</td>'
             f'<td class="bw-l">{_dd_pill(r.get("dd_tag"))}</td>'
             f'<td class="bw-l">{moat_cell}</td>'
@@ -768,6 +835,7 @@ def render_board_html(as_of, rows, core_seats, sat_seats, prev_snap, entered) ->
     track_code = {"核心席": "C", "衛星席": "S"}
     seat_thead = ("<tr><th class=\"bw-l\">席</th><th class=\"bw-l\">Ticker</th>"
                   "<th>擁有層分</th><th class=\"bw-l\">時機燈</th>"
+                  "<th class=\"bw-l\" title=\"這檔現在在生命週期哪一段，只是燈號，不影響排序（來源：個股階段雷達 /stages/）\">時機</th>"
                   "<th class=\"bw-l\">DD</th><th class=\"bw-l\">遲滯</th></tr>")
     seat_rows = []
     for track_label, seats, code_letter in (("核心席", core_seats, "C"), ("衛星席", sat_seats, "S")):
@@ -786,6 +854,7 @@ def render_board_html(as_of, rows, core_seats, sat_seats, prev_snap, entered) ->
                 f'<td class="bw-l"><strong>{_tk_link(r)}</strong></td>'
                 f"<td>{_num(r.get('score'), 1)}</td>"
                 f'<td class="bw-l">{_timing_pill(g.get("p_label"), r.get("r26"), g.get("dist_hi"))}</td>'
+                f'<td class="bw-l">{_stage_pill(r["ticker"], lamp_map)}</td>'
                 f'<td class="bw-l">{_dd_pill(r.get("dd_tag"))}</td>'
                 f'<td class="bw-l">{hyst_txt}</td></tr>')
     seat_tbl = ('<div class="bw-scroll"><table><thead>' + seat_thead + "</thead><tbody>"
@@ -845,7 +914,8 @@ def render_board_html(as_of, rows, core_seats, sat_seats, prev_snap, entered) ->
 
     head_line = f"選股看板 v2 · as_of {as_of} · 母體 {len(rows)}（美股含 ADR；台股另建）"
     rule_line = ("排序＝擁有層分（min(成長，30)＋FY1 盈餘殖利率；ROIC≥30 +2；PEG>2 −5）"
-                 "· 資格＝品質閘×成長閘×市值 · 時機燈不進排序 · DD 只 veto／角色")
+                 "· 資格＝品質閘×成長閘×市值 · 時機燈不進排序 · 時機（生命週期階段）只是燈號、不影響排序"
+                 "· DD 只 veto／角色")
 
     return (
         '<div class="board-wrap">' + _BOARD_CSS
@@ -856,7 +926,9 @@ def render_board_html(as_of, rows, core_seats, sat_seats, prev_snap, entered) ->
           'NEW＝本期新換入、FROM:X＝跨軌轉入。</div>'
         + seat_tbl + changes_html
         + '<h3 class="bw-sec">全母體看板（擁有層排序）</h3>'
-        + '<div class="bw-sub">席位是從這張表由上往下挑出來的；排序只看擁有層分，時機燈只是燈號。</div>'
+        + '<div class="bw-sub">席位是從這張表由上往下挑出來的；排序只看擁有層分，時機燈只是燈號。'
+          '「時機」欄也是——這檔現在在生命週期哪一段，只是燈號，不影響排序'
+          '<span class="stage-lamp-asof"></span>。</div>'
         + main_tbl
         + '<h3 class="bw-sec">DD 進場 vs 機械資格</h3>'
         + f'<div class="bw-sub">{escape(dd_gate_sub)}——過閘者已在席位或候補中，這裡只列未過者供人工複審。</div>'
@@ -1043,9 +1115,10 @@ def main() -> int:
                 "moat": r.get("moat"), "src": r.get("src"), "hyst": r.get("hyst"), "dd_path": r.get("dd_path")}
     own_board = [compact(r) for r in universe_rows
                  if (r["grp"].get("quality") or {}).get("pass") and (r["score"] or 0) > 0][:60]
-    board_text = render_board_text(as_of, universe_rows, core_seats, sat_seats, prev, entered)
+    lamp_map = load_lamp()
+    board_text = render_board_text(as_of, universe_rows, core_seats, sat_seats, prev, entered, lamp_map)
     BOARD_TXT.write_text(board_text, encoding="utf-8")
-    board_html = render_board_html(as_of, universe_rows, core_seats, sat_seats, prev, entered)
+    board_html = render_board_html(as_of, universe_rows, core_seats, sat_seats, prev, entered, lamp_map)
     BOARD_HTML.write_text(board_html, encoding="utf-8")
     payload = {
         "schema_version": "2.0",
@@ -1188,7 +1261,8 @@ DD 角色與機械軌別衝突標 ⚠ 供人裁。三閘未過的進場票落板
 <div class="block"><h2>席位產業分布</h2><div class="block-sub">{conc_html}</div>{conc_warn}</div>
 <div class="note">核心板凳（進場但未坐席）：{bench_line(core_bench)}。
 衛星板凳：{bench_line(sat_bench)}。
-挑戰者池 top（三閘全過）：{escape('、'.join(r['ticker'] for r in payload['challengers_top'][:10]) or '—')}。</div>"""
+挑戰者池 top（三閘全過）：{escape('、'.join(r['ticker'] for r in payload['challengers_top'][:10]) or '—')}。</div>
+{_STAGE_LAMP_SCRIPT}"""
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     ARENA_JSON.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
