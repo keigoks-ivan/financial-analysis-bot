@@ -431,8 +431,8 @@ def moat_ascii(m) -> str:
 
 
 def render_board_text(as_of, rows, core_seats, sat_seats, prev_snap, entered) -> str:
-    """附錄 B 式等寬看板（持有人 2026-09-02 指定形式；2026-09-02 對齊修正）：擁有層排序表
-    ＋席位對照＋DD 進場 vs 機械資格＋無 DD 過閘候選。純文字，同時寫 docs/engine/board.txt
+    """附錄 B 式等寬看板（持有人 2026-09-02 指定形式；2026-09-02 對齊修正）：目前席位
+    ＋擁有層排序表＋DD 進場 vs 機械資格＋無 DD 過閘候選。純文字，同時寫 docs/engine/board.txt
     與 <pre> 嵌頁（docs/engine/_arena_body.html、docs/cockpit/index.html 皆讀同一份文字）。
 
     對齊規則：瀏覽器對 CJK 常用 fallback 字型，其字寬不保證是等寬字型 cell 的精準 2 倍，
@@ -461,28 +461,8 @@ def render_board_text(as_of, rows, core_seats, sat_seats, prev_snap, entered) ->
     L.append("timing 代碼：BRK＝突破帶、PB＝回踩、TR＝趨勢內、HOT＝過熱、DN＝52 週線下或缺"
              "｜seat：C1-C5＝核心席次、S1-S5＝衛星席次｜moat：字母＝評級，+/=/-＝護城河趨勢升/平/降"
              "｜dd：IN/WATCH/AVOID/legacy/none，core/sat/trk＝角色，Nd＝天數，!old＝逾 180 天過期")
-    hdr = (f"{'#':>{W_IDX}} {'ticker':<{W_TICKER}} {'score':>{W_SCORE}} {'grow':>{W_GROW}} "
-           f"{'EY':>{W_EY}} {'ROIC':>{W_ROIC}} {'FCF':>{W_FCF}} {'PEG':>{W_PEG}} {'rev1m':>{W_REV}} "
-           f"{'timing':<{W_TIMING}} {'seat':<{W_SEAT}} {'dd':<{W_DD}} {'moat':<{W_MOAT}} note")
-    L.append(hdr)
-    own = [r for r in rows if (r["grp"].get("quality") or {}).get("pass") and (r["score"] or 0) > 0]
-    for i, r in enumerate(own[:40], 1):
-        g = r["grp"]; o = g.get("own") or {}
-        note = "；".join(list(g.get("why") or [])[:2])
-        if r.get("g_method") == "FY1→FY2 單年":
-            note = ("成長=FY1→FY2 單年；" + note) if note else "成長=FY1→FY2 單年"
-        if r.get("hyst") and "候補" in r["hyst"]:
-            note = (r["hyst"] + "；" + note) if note else r["hyst"]
-        L.append(
-            f"{i:>{W_IDX}} {tk(r['ticker'])} {_n(r['score'], W_SCORE)} {_n(g.get('g'), W_GROW)} "
-            f"{_n(o.get('ey'), W_EY)} {_n(r.get('roic'), W_ROIC)} {_n(r.get('fcf'), W_FCF)} "
-            f"{_n(r.get('peg'), W_PEG, 2)} {_n(g.get('r_fy1'), W_REV)} "
-            f"{_pad(TIMING_CODE.get(g.get('p_label'), 'DN'), W_TIMING)} "
-            f"{_pad(seat_code.get(r['ticker'], ''), W_SEAT)} "
-            f"{_pad(dd_ascii(r)[:W_DD], W_DD)} {_pad(moat_ascii(r.get('moat')), W_MOAT)} {note}"
-        )
     L.append("")
-    L.append("== 席位（核心 5／衛星 5）與上期對照")
+    L.append("== 目前席位：核心 5 ＋ 衛星 5")
     for track, seats in (("核心席", core_seats), ("衛星席", sat_seats)):
         for j, r in enumerate(seats, 1):
             if prev_seats.get(r["ticker"]) == track:
@@ -503,6 +483,27 @@ def render_board_text(as_of, rows, core_seats, sat_seats, prev_snap, entered) ->
             r = why.get(t)
             why_txt = "；".join((((r or {}).get("grp") or {}).get("why") or [])[:2]) or ("擁有層分數被擠下" if r else "不在母體")
             L.append(f"  DOWN {tk(t)} {(r or {}).get('hyst') or ''}：{why_txt}")
+    L.append("")
+    hdr = (f"{'#':>{W_IDX}} {'ticker':<{W_TICKER}} {'score':>{W_SCORE}} {'grow':>{W_GROW}} "
+           f"{'EY':>{W_EY}} {'ROIC':>{W_ROIC}} {'FCF':>{W_FCF}} {'PEG':>{W_PEG}} {'rev1m':>{W_REV}} "
+           f"{'timing':<{W_TIMING}} {'seat':<{W_SEAT}} {'dd':<{W_DD}} {'moat':<{W_MOAT}} note")
+    L.append(hdr)
+    own = [r for r in rows if (r["grp"].get("quality") or {}).get("pass") and (r["score"] or 0) > 0]
+    for i, r in enumerate(own[:40], 1):
+        g = r["grp"]; o = g.get("own") or {}
+        note = "；".join(list(g.get("why") or [])[:2])
+        if r.get("g_method") == "FY1→FY2 單年":
+            note = ("成長=FY1→FY2 單年；" + note) if note else "成長=FY1→FY2 單年"
+        if r.get("hyst") and "候補" in r["hyst"]:
+            note = (r["hyst"] + "；" + note) if note else r["hyst"]
+        L.append(
+            f"{i:>{W_IDX}} {tk(r['ticker'])} {_n(r['score'], W_SCORE)} {_n(g.get('g'), W_GROW)} "
+            f"{_n(o.get('ey'), W_EY)} {_n(r.get('roic'), W_ROIC)} {_n(r.get('fcf'), W_FCF)} "
+            f"{_n(r.get('peg'), W_PEG, 2)} {_n(g.get('r_fy1'), W_REV)} "
+            f"{_pad(TIMING_CODE.get(g.get('p_label'), 'DN'), W_TIMING)} "
+            f"{_pad(seat_code.get(r['ticker'], ''), W_SEAT)} "
+            f"{_pad(dd_ascii(r)[:W_DD], W_DD)} {_pad(moat_ascii(r.get('moat')), W_MOAT)} {note}"
+        )
     L.append("")
     L.append("== DD 裁決進場 vs 機械資格")
     ok = [r for r in entered if r["grp"]["pass"]]; ng = [r for r in entered if not r["grp"]["pass"]]
@@ -761,7 +762,7 @@ def render_board_html(as_of, rows, core_seats, sat_seats, prev_snap, entered) ->
     main_tbl = ('<div class="bw-scroll"><table><thead>' + thead + "</thead><tbody>"
                 + "".join(body_rows) + "</tbody></table></div>")
 
-    # ── 席位對照 ──
+    # ── 目前席位：核心 5 ＋ 衛星 5 ──
     prev_seats = {t: "核心席" for t in prev_snap.get("core", [])}
     prev_seats.update({t: "衛星席" for t in prev_snap.get("sat", [])})
     track_code = {"核心席": "C", "衛星席": "S"}
@@ -850,10 +851,13 @@ def render_board_html(as_of, rows, core_seats, sat_seats, prev_snap, entered) ->
         '<div class="board-wrap">' + _BOARD_CSS
         + f'<div class="bw-head">{escape(head_line)}</div>'
         + f'<div class="bw-rule">{escape(rule_line)}</div>'
-        + main_tbl
-        + '<h3 class="bw-sec">席位對照</h3>'
-        + '<div class="bw-sub">C1–C5＝核心席次、S1–S5＝衛星席次；NEW＝本期新換入、FROM:X＝跨軌轉入。</div>'
+        + '<h3 class="bw-sec">目前席位：核心 5 ＋ 衛星 5</h3>'
+        + '<div class="bw-sub">這就是本週的陣容。C1–C5＝核心席次、S1–S5＝衛星席次；'
+          'NEW＝本期新換入、FROM:X＝跨軌轉入。</div>'
         + seat_tbl + changes_html
+        + '<h3 class="bw-sec">全母體看板（擁有層排序）</h3>'
+        + '<div class="bw-sub">席位是從這張表由上往下挑出來的；排序只看擁有層分，時機燈只是燈號。</div>'
+        + main_tbl
         + '<h3 class="bw-sec">DD 進場 vs 機械資格</h3>'
         + f'<div class="bw-sub">{escape(dd_gate_sub)}——過閘者已在席位或候補中，這裡只列未過者供人工複審。</div>'
         + ng_tbl
