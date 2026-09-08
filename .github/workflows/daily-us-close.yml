@@ -24,6 +24,8 @@ name: Daily US Close Band
 #     排在本帶最後一個 build step，與 screener.py 的下載爆量隔開最遠）
 #   （2026-09-08 新增，非整併自舊 workflow）→ build_stages.py（個股階段雷達，緊接
 #     rs-turn 之後——同一份母體、同一份 tech_core 快取，零額外下載）
+#   （2026-09-09 新增，非整併自舊 workflow）→ check_seat_stage_alerts.py（席位持股
+#     跌入/脫離 S0 弱勢的每日通知，緊接 stages 之後，含 email——同 turtle-sleeve 模式）
 #
 # 順序理由：daily-screener-us 的 docs/screener/latest.json 是
 # daily-fundamentals-us 的輸入。原本靠 45 分鐘錯峰保證先後，現在改成同一 job
@@ -186,6 +188,44 @@ jobs:
       - name: "[stages] Build stage classifier + transitions"
         continue-on-error: true
         run: python scripts/build_stages.py || echo "::warning::stages build failed; band unaffected"
+
+      # ── 12. 席位持股階段警訊（零 LLM 通知器，非判斷規則；緊接 stages 之後——
+      #    讀當天剛寫出的 lamp.json 對照 docs/engine/arena.json 席位，見
+      #    scripts/check_seat_stage_alerts.py 檔頭）──
+      - name: "[stages] Check seat-stage alerts (entered/left S0)"
+        continue-on-error: true
+        run: python scripts/check_seat_stage_alerts.py
+
+      - name: "[stages] Read seat-stage alert"
+        id: seat_alert
+        continue-on-error: true
+        run: |
+          echo "date=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+          if [ -f docs/stages/data/seat_stage_alert.txt ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            {
+              echo "body<<ALERT_EOF"
+              cat docs/stages/data/seat_stage_alert.txt
+              echo "ALERT_EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: "[stages] Email seat-stage alert"
+        if: steps.seat_alert.outputs.changed == 'true'
+        continue-on-error: true
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_APP_PASSWORD }}
+          subject: "席位持股階段變化 ${{ steps.seat_alert.outputs.date }}"
+          to: keigoks@gmail.com
+          from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
+          body: ${{ steps.seat_alert.outputs.body }}
 
       # ── 收斂：單一 commit + push（路徑＝各原 workflow commit 路徑聯集）──
       - name: Commit and push if changed
