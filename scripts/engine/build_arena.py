@@ -38,8 +38,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from engine.common import OUT_DIR, ROOT, page_embed_shell, pct  # noqa: E402
 from engine.build_scoreboard import _bars, classify_shape  # noqa: E402
 from engine.grp import (  # noqa: E402
-    DD_FRESH_DAYS, MKTCAP_MIN, P_LABEL_HTML, R_VETO_FY1, cap_ok, fetch_caps, grp_route, grp_score,
-    market_ok,
+    DD_FRESH_DAYS, G_MIN_CAGR, MKTCAP_MIN, P_LABEL_HTML, Q_FCF_MIN, Q_ROIC_MIN, R_VETO_FY1,
+    cap_ok, fetch_caps, grp_route, grp_score, market_ok,
 )
 
 WEEKLY_CACHE_UNIVERSE = ROOT / "data" / "weekly_cache_universe"   # 非 DD 池週線 fallback（見 build_radar.py 檔頭 docstring）
@@ -479,8 +479,9 @@ def render_board_text(as_of, rows, core_seats, sat_seats, prev_snap, entered, la
     L = []
     L.append(f"選股看板 v2｜as_of {as_of}｜母體 {len(rows)}（DD 池＋QGM 無 DD＋快審卡）"
              "｜母體＝美股含 ADR；台股另建（.TW 不在本看板）")
-    L.append("甲 擁有層｜資格：品質閘 ROIC≥15∧FCF≥10（或 ROIC≥25∧FCF≥0）× 成長閘 ≥15 × 市值 ≥$20B"
-             "｜排序＝min(成長，30)＋FY1 盈餘殖利率（ROIC≥30 +2；PEG>2 −5）｜位置與階段都只是燈號，不進排序")
+    L.append("甲 擁有層｜排序只看擁有層分：成長（最多算 30）加 FY1 盈餘殖利率，"
+             "ROIC 超過 30% 加 2 分，PEG 超過 2 扣 5 分。資格要過品質、成長、市值三關。"
+             "DD 只能否決或標角色。｜位置與階段都只是燈號，不進排序")
     L.append("欄位說明：score＝擁有層分、grow＝FY1→FY3 成長%、EY＝FY1 盈餘殖利率%、rev1m＝FY+1 單月修正%、"
              "timing＝位置、stage＝階段、"
              "seat＝席位、dd＝DD 標籤、moat＝護城河；note＝註記")
@@ -578,19 +579,27 @@ _TIMING_HTML = {   # p_label -> (中文一詞, 色系)；色系對應 bw-pill-{c
 
 # note 欄 chip 化：why[] 裡固定句型 -> (短 chip 文字, 原句當 title)。順序即比對順序，
 # 不影響輸出順序（輸出仍照 why[] 原順序，此表只負責「認出這句要不要變 chip」）。
+# 2026-09-09（owner 走查回饋）：短 chip 一律白話＋帶數字/差距，不留代號；未收錄的句子
+# 一律原文入 chip、不砍字看不全（見下 _chips_from_why 的 fallback，CSS 交給 .bw-note 換行）。
 _CHIP_PATTERNS = [
-    (re.compile(r"^市值資料缺漏"), lambda w, m: "市值待補"),
-    (re.compile(r"^市值 (\d+)B 低於門檻 (\d+)B"), lambda w, m: f"市值 <{m.group(2)}B"),
+    (re.compile(r"^市值資料缺漏"), lambda w, m: "市值缺資料"),
+    (re.compile(r"^市值 \d+B 低於門檻 (\d+)B"), lambda w, m: f"市值不足 {int(m.group(1)) * 10} 億美元"),
     (re.compile(r"^位置閘：過熱（26 週 ([+-]?\d+)%）"), lambda w, m: f"過熱 {m.group(1)}%"),
-    (re.compile(r"^位置閘未過"), lambda w, m: "線下"),
-    (re.compile(r"^品質閘 ROIC (\S+)"), lambda w, m: f"品質閘 ROIC {m.group(1)}"),
-    (re.compile(r"^品質閘 FCF (\S+)"), lambda w, m: f"品質閘 FCF {m.group(1)}"),
-    (re.compile(r"^成長閘用 2 年成長率代替"), lambda w, m: "2Y 代替"),
-    (re.compile(r"^成長閘未過"), lambda w, m: "成長閘"),
+    (re.compile(r"^位置閘未過"), lambda w, m: "52 週線下"),
+    (re.compile(r"^品質閘 ROIC 缺"), lambda w, m: "ROIC 缺資料"),
+    (re.compile(r"^品質閘 ROIC ([+-]?[\d.]+)"),
+     lambda w, m: f"ROIC {float(m.group(1)):.1f}%，未達 {Q_ROIC_MIN:.0f}%"),
+    (re.compile(r"^品質閘 FCF 缺"), lambda w, m: "FCF 率缺資料"),
+    (re.compile(r"^品質閘 FCF ([+-]?[\d.]+)"),
+     lambda w, m: f"FCF 率 {float(m.group(1)):.1f}%，未達 {Q_FCF_MIN:.0f}%"),
+    (re.compile(r"^品質欄缺"), lambda w, m: "品質未判定（金融股另軌）"),
+    (re.compile(r"^成長閘用 2 年成長率代替"), lambda w, m: "成長用兩年數代替"),
+    (re.compile(r"^成長閘未過"), lambda w, m: f"成長未達 {G_MIN_CAGR:.0f}%"),
     (re.compile(r"^上修閘保守否決"), lambda w, m: "上修否決"),
     (re.compile(r"^上修閘否決"), lambda w, m: "上修否決"),
     (re.compile(r"^DD 迴避"), lambda w, m: "DD 迴避"),
     (re.compile(r"^硬 veto 下席"), lambda w, m: "硬 veto"),
+    (re.compile(r"^雷達三閘資料不足或未過"), lambda w, m: "資格資料不足或未過（隨主榜週更再驗）"),
 ]
 
 
@@ -641,11 +650,13 @@ def _note_chips(r: dict) -> list:
 
 
 def _chips_from_why(why_list, limit: int = 3) -> list:
-    """通用版（不含 g_method／hyst）：給 DD-vs-機械資格、下席原因等只有 why[] 可用的表格。"""
+    """通用版（不含 g_method／hyst）：給 DD-vs-機械資格、下席原因等只有 why[] 可用的表格。
+    未收錄進 _CHIP_PATTERNS 的句子原文入 chip、不截斷（2026-09-09：舊版 w[:14]+… 會把長句
+    砍到看不全，owner 走查回饋——長句交給 .bw-note 的 white-space:normal 自然換行）。"""
     out = []
     for w in (why_list or [])[:limit]:
         c = _match_chip(w)
-        out.append(c if c else (w[:14] + ("…" if len(w) > 14 else ""), w))
+        out.append(c if c else (w, w))
     return out
 
 
@@ -671,7 +682,7 @@ def load_lamp() -> dict:
 
 def _stage_pill(ticker: str, lamp_map: dict) -> str:
     code = lamp_map.get(ticker)
-    label = STAGE_LABEL.get(code, "—")
+    label = STAGE_LABEL.get(code, "無資料")   # 海外雙掛牌等無階段資料的名字（2026-09-09 owner 走查回饋）
     cls = STAGE_PILL_CLS.get(code, "mut")
     return (f'<span class="bw-pill bw-pill-{cls}" data-lamp-ticker="{escape(ticker)}">'
             f"{escape(label)}</span>")
@@ -758,6 +769,10 @@ _BOARD_CSS = """<style>
 .board-wrap .bw-chip-more{color:var(--muted,#999)}
 .board-wrap .bw-note-line{font-size:12px;color:var(--sec,var(--text-sec,#666));margin-top:8px;line-height:1.75}
 .board-wrap .bw-note-line b{color:var(--ink,var(--text,#1a1a1a))}
+.board-wrap details.bw-fold{margin-top:4px}
+.board-wrap details.bw-fold>summary{cursor:pointer;font-size:12.5px;font-weight:650;
+  color:var(--ink,var(--text,#1a1a1a));padding:6px 2px;list-style:revert}
+.board-wrap details.bw-fold[open]>summary{margin-bottom:6px}
 @media(max-width:760px){.board-wrap table{font-size:11.5px}.board-wrap th,.board-wrap td{padding:4px 6px}}
 </style>"""
 
@@ -777,7 +792,7 @@ function refreshStageLamp(){
     document.querySelectorAll('[data-lamp-ticker]').forEach(function(el){
       var code=lamp[el.getAttribute('data-lamp-ticker')];
       el.className='bw-pill bw-pill-'+(CLS[code]||'mut');
-      el.textContent=LABEL[code]||'—';
+      el.textContent=LABEL[code]||'無資料';
     });
     if(d&&d.as_of){
       document.querySelectorAll('.stage-lamp-asof').forEach(function(el){
@@ -910,8 +925,10 @@ def render_board_html(as_of, rows, core_seats, sat_seats, prev_snap, entered, la
                 f'<tr><td class="bw-l"><strong>{_tk_link(r)}</strong></td>'
                 f'<td class="bw-l">{_timing_pill(g.get("p_label"), r.get("r26"), g.get("dist_hi"))}</td>'
                 f'<td class="bw-note">{_chips_html(_chips_from_why(g.get("why")))}</td></tr>')
-        ng_tbl = ('<div class="bw-scroll"><table><thead>' + ng_thead + "</thead><tbody>"
-                  + "".join(ng_rows) + "</tbody></table></div>")
+        ng_tbl = (
+            '<details class="bw-fold"><summary>DD 進場但機械資格未過：' + str(len(ng)) + ' 檔（點開複審）</summary>'
+            '<div class="bw-scroll"><table><thead>' + ng_thead + "</thead><tbody>"
+            + "".join(ng_rows) + "</tbody></table></div></details>")
     else:
         ng_tbl = '<div class="bw-note-line">進場票全數過機械三閘，無需人工複審。</div>'
 
@@ -938,8 +955,8 @@ def render_board_html(as_of, rows, core_seats, sat_seats, prev_snap, entered, la
         qgm_tbl = '<div class="bw-note-line">目前無候選（QGM 品質池名字皆已有 DD 或未過機械三閘）。</div>'
 
     head_line = f"選股看板 v2 · as_of {as_of} · 母體 {len(rows)}（美股含 ADR；台股另建）"
-    rule_line = ("排序＝擁有層分（min(成長，30)＋FY1 盈餘殖利率；ROIC≥30 +2；PEG>2 −5）"
-                 "· 資格＝品質閘×成長閘×市值 · DD 只 veto／角色")
+    rule_line = ("排序只看擁有層分：成長（最多算 30）加 FY1 盈餘殖利率，ROIC 超過 30% 加 2 分，"
+                 "PEG 超過 2 扣 5 分。資格要過品質、成長、市值三關。DD 只能否決或標角色。")
     timing_note = "位置與階段都只是燈號，不進排序。"
 
     return (
