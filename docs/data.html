@@ -153,6 +153,8 @@ table.dt-schema td.ty{font-family:var(--mono);font-size:11px;color:var(--gold-de
 
   <div class="dt-toc">
     <a href="#dd-screener">dd-screener</a>
+    <a href="#rs-turn">rs-turn</a>
+    <a href="#rs-turn-history">rs-turn/history</a>
     <a href="#rotation">rotation/latest</a>
     <a href="#radar">rotation/radar</a>
     <a href="#crowding">crowding</a>
@@ -211,6 +213,59 @@ table.dt-schema td.ty{font-family:var(--mono);font-size:11px;color:var(--gold-de
       </tbody>
     </table></div>
     <p class="dt-note"><b>穩定性</b>：schema 隨 DD skill 版本演進為 additive（下游 dual-read）。<code>signal</code> 為基本面 metadata，投資裁決以 <code>dca_verdict</code> 為準。任何破壞性變更會列於本頁。</p>
+  </section>
+
+  <!-- ══ RS TURN ══ -->
+  <section class="dt-ep" id="rs-turn">
+    <div class="dt-ep-head"><h2>轉強觀察（美股）</h2><span class="dt-path">/rs-turn/data/latest.json</span></div>
+    <p class="dt-purpose">曾經明顯回檔、相對強度（vs QQQ）剛翻上來的美股觀察名單——與 RS+VCP Screener 並列的另一支純技術結構雷達，看「從弱轉強」而非「已經領先」。母體為 <code>data/engine/universe.json</code> 聯集 Russell 1000。<b>非收斂面</b>——不進 picks／GRP／dd-screener 任何名單，只回答「看誰」。</p>
+    <div class="dt-facts">
+      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">每日（Mon–Fri 21:45 UTC，美股收盤帶）· workflow <code>daily-us-close</code> 跑 <code>build_rs_turn.py</code></span></div>
+      <div class="dt-fact"><span class="k">as_of 語意</span><span class="v"><code>as_of</code> = 價格資料最後交易日；<code>run_timestamp</code> = 產生時戳</span></div>
+    </div>
+    <div class="dt-tablewrap"><table class="dt-schema">
+      <thead><tr><th>欄位</th><th>型別</th><th>意義</th></tr></thead>
+      <tbody>
+        <tr><td class="f">definition_version</td><td class="ty">string</td><td>門檻定義版本（現 "v1"），調參即升版</td></tr>
+        <tr><td class="f">benchmark</td><td class="ty">string</td><td>相對強度基準（QQQ）</td></tr>
+        <tr><td class="f">params</td><td class="ty">object</td><td>六條件全部門檻數字（rs_accel_min／pullback_min_pct／dist_high_max_pct 等）</td></tr>
+        <tr><td class="f">universe</td><td class="ty">object</td><td>母體總數／資料完整可用數／當日合格數／來源拆分</td></tr>
+        <tr><td class="f">breadth_today</td><td class="ty">object</td><td>今日家數 n_full／較寬鬆苗頭 n_soft／20 日均／250 日分位</td></tr>
+        <tr><td class="f">changes</td><td class="ty">object</td><td>今日新進榜／掉榜 ticker</td></tr>
+        <tr><td class="f">rows</td><td class="ty">array</td><td>今日通過全部六條件的個股列（見下）</td></tr>
+      </tbody>
+    </table></div>
+    <div class="dt-tablewrap"><table class="dt-schema">
+      <thead><tr><th>rows[] 欄位</th><th>型別</th><th>意義</th></tr></thead>
+      <tbody>
+        <tr><td class="f">ticker / rank / status</td><td class="ty">string/int</td><td>代號、排名（依 rs_accel 降冪）、狀態標籤（偏加速中／逐漸轉強）</td></tr>
+        <tr><td class="f">tags</td><td class="ty">array</td><td>入選原因（最多 4 條白話句）</td></tr>
+        <tr><td class="f">rs_accel / rs21 / rs63</td><td class="ty">number</td><td>相對 QQQ 的強度加速度、近 21／63 日相對報酬（單位：百分點）</td></tr>
+        <tr><td class="f">dist_high_pct / pullback_pct</td><td class="ty">number</td><td>距 52 週高、近一季最深回檔（負值）</td></tr>
+        <tr><td class="f">range_pos / adv20_usd / price</td><td class="ty">number</td><td>63 日區間位置（0–1）、20 日均日成交金額、現價</td></tr>
+        <tr><td class="f">days_on_list / is_new / hub</td><td class="ty">int/bool/string</td><td>連續在榜天數、今天是否首次入榜、個股研究頁連結（無則 null）</td></tr>
+      </tbody>
+    </table></div>
+    <p class="dt-note"><b>穩定性</b>：門檻集中在 <code>params</code> 並隨 <code>definition_version</code> 版本化；欄位為 additive。寬度長歷史序列見下方 <a href="#rs-turn-history">rs-turn/history</a>。</p>
+  </section>
+
+  <!-- ══ RS TURN HISTORY ══ -->
+  <section class="dt-ep" id="rs-turn-history">
+    <div class="dt-ep-head"><h2>轉強觀察・寬度長歷史</h2><span class="dt-path">/rs-turn/data/history.json</span></div>
+    <p class="dt-purpose">轉強觀察每日符合家數（n_full／n_soft／n_eligible／pct_full）與 QQQ 收盤的逐日序列，每次執行整段重算最近 250 個交易日；窗口外舊列保留，<code>version_by_date</code> 記錄每一天套用的定義版本。<b>描述器非擇時</b>——只說明有多少檔同時轉強，不預測轉折時點。</p>
+    <div class="dt-facts">
+      <div class="dt-fact"><span class="k">更新頻率</span><span class="v">與 latest.json 同一 workflow、同一 run 產生</span></div>
+      <div class="dt-fact"><span class="k">as_of 語意</span><span class="v"><code>updated</code> = 本次重算涵蓋到的最後交易日</span></div>
+    </div>
+    <div class="dt-tablewrap"><table class="dt-schema">
+      <thead><tr><th>欄位</th><th>型別</th><th>意義</th></tr></thead>
+      <tbody>
+        <tr><td class="f">series.n_full / n_soft / n_eligible / pct_full / qqq</td><td class="ty">array</td><td>逐日 <code>[日期, 數值]</code> 序列（同 <code>internals_history.json</code> 形狀）</td></tr>
+        <tr><td class="f">version_by_date</td><td class="ty">object</td><td>每個日期套用的 <code>definition_version</code></td></tr>
+        <tr><td class="f">members</td><td class="ty">object</td><td>每個日期符合全部六條件的 ticker 陣列（供在榜天數／新進掉榜回推）</td></tr>
+      </tbody>
+    </table></div>
+    <p class="dt-note"><b>穩定性</b>：<code>series</code> 為整段重算合併（窗口內覆蓋、窗口外保留），非單純逐日 append；定義調參會升 <code>definition_version</code>，不會靜默改變既有列的數字含義。</p>
   </section>
 
   <!-- ══ ROTATION LATEST ══ -->

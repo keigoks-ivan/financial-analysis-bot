@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>轉強觀察（美股） | InvestMQuest Research</title>
+<meta name="description" content="曾經明顯回檔、最近相對強度剛翻上來的美股觀察名單，附每天符合條件家數的寬度線。純技術結構雷達，只回答看誰，不回答買不買。">
+<link rel="stylesheet" href="/assets/imq-base.css">
+<style>
+body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body)}
+.wrap{max-width:1140px;margin:0 auto;padding:2.2rem 20px 3rem}
+.hero h1{font-family:var(--serif);color:var(--ink);font-weight:700;font-size:1.6rem;letter-spacing:-.01em;margin:0 0 .5rem}
+.hero p{color:var(--sec);font-size:.92rem;line-height:1.8;max-width:820px;margin:0}
+.sec{margin-top:2.2rem}
+.sec h2{font-family:var(--serif);color:var(--ink);font-size:1.15rem;font-weight:700;margin:0 0 .8rem}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.8rem;margin-bottom:1rem}
+.stat-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:.9rem 1.1rem;box-shadow:var(--sh-1)}
+.stat-card .v{font-family:var(--mono);font-size:1.5rem;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;line-height:1.15}
+.stat-card .k{font-size:.72rem;font-weight:500;color:var(--muted);margin-top:.2rem}
+.chart-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:1.1rem 1.2rem 1.3rem;box-shadow:var(--sh-1)}
+.chart-host{position:relative;width:100%}
+.chart-host svg{width:100%;height:auto;display:block}
+.chart-tip{position:absolute;pointer-events:none;background:var(--card);border:1px solid var(--line);border-radius:6px;box-shadow:var(--sh-2);padding:6px 9px;font-size:11.5px;font-family:var(--mono);color:var(--body);line-height:1.6;white-space:nowrap;opacity:0;transition:opacity .1s;z-index:5}
+.chart-tip b{color:var(--ink);font-size:12.5px}
+.chart-legend{display:flex;gap:1.1rem;flex-wrap:wrap;margin-top:.6rem;font-size:.76rem;color:var(--sec);align-items:center}
+.chart-legend label{display:inline-flex;align-items:center;gap:.35rem;cursor:pointer}
+.chart-legend i{width:14px;height:2px;display:inline-block}
+.stale-note{font-size:.72rem;color:var(--muted);margin-top:.4rem}
+.explain-p{font-size:.86rem;color:var(--sec);line-height:1.85;margin:.8rem 0 0}
+.empty{font-size:.84rem;color:var(--muted);padding:1.6rem 0;text-align:center;border:1px dashed var(--line);border-radius:var(--r)}
+table.rst-table{width:100%;border-collapse:collapse;font-size:.82rem;background:var(--card)}
+table.rst-table th{font-family:var(--mono);font-size:.62rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--sec);text-align:left;padding:.6rem .7rem;border-bottom:1px solid var(--line);white-space:nowrap}
+table.rst-table td{padding:.55rem .7rem;border-bottom:1px solid var(--line-soft);color:var(--body);line-height:1.5;white-space:nowrap}
+table.rst-table td.why{white-space:normal;min-width:220px}
+table.rst-table tr:hover td{background:#fbf8f1}
+table.rst-table .num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+table.rst-table .pos{color:var(--pos)}
+table.rst-table .neg{color:var(--neg)}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r)}
+.rst-badge{display:inline-block;font-family:var(--mono);font-size:.66rem;font-weight:600;padding:.14rem .5rem;border-radius:5px;background:var(--line-soft);color:var(--sec)}
+.rst-new{color:var(--pos);font-weight:700}
+.more-btn{margin-top:.8rem;font-size:.8rem;font-weight:600;color:var(--accent);background:none;border:1px solid var(--line);border-radius:6px;padding:.45rem 1rem;cursor:pointer}
+.more-btn:hover{background:var(--line-soft)}
+.changes-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.changes-col{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:1rem 1.1rem}
+.changes-col h3{font-size:.86rem;margin:0 0 .5rem;color:var(--ink)}
+.changes-col .tickers{font-family:var(--mono);font-size:.82rem;line-height:2;color:var(--body)}
+.changes-col .tickers span{display:inline-block;background:var(--line-soft);border-radius:5px;padding:.15rem .5rem;margin:0 .3rem .3rem 0}
+@media(max-width:640px){.changes-grid{grid-template-columns:1fr}}
+.cond-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.7rem}
+.cond-list li{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:.8rem 1rem;font-size:.85rem;color:var(--body);line-height:1.7}
+.cond-list b{color:var(--ink)}
+details.howto{margin-top:1rem;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:.8rem 1rem}
+details.howto summary{cursor:pointer;font-weight:600;color:var(--accent);font-size:.85rem}
+details.howto .body{margin-top:.7rem;font-size:.8rem;color:var(--sec);line-height:1.85}
+details.howto code{font-family:var(--mono);font-size:.78rem;background:var(--line-soft);padding:.05rem .35rem;border-radius:4px;color:var(--body)}
+.disclaimer{margin-top:2rem;font-size:.8rem;color:var(--sec);line-height:1.8;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:1rem 1.2rem}
+</style>
+</head>
+<body>
+<style id="imq-nav-style">
+.imq-nav-root{background:linear-gradient(135deg,#081832 0%,#173564 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#d4b576}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#0d2244;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(184,146,74,.20)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(184,146,74,.26);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+.imq-subnav{background:#081832;padding:.45rem 20px;font-family:'Inter','Noto Sans TC',-apple-system,sans-serif}
+.imq-subnav-inner{max-width:1140px;margin:0 auto;display:flex;gap:.3rem;flex-wrap:wrap}
+.imq-subnav a{color:rgba(255,255,255,.55) !important;font-size:.74rem;font-weight:500;padding:.28rem .6rem;border-radius:5px;text-decoration:none !important}
+.imq-subnav a:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-subnav a.active{color:#fff !important;background:rgba(184,146,74,.30);font-weight:600}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/market/">市況主控台</a>
+          <a href="/intel/">情報監視器</a>
+          <a href="/briefing/">每日簡報</a>
+          <a href="/rotation/radar.html">資產輪動雷達</a>
+          <a href="/macro/">總經深度報告</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+        </div>
+      </div>
+      <a href="/cockpit/" class="active">選股</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/t/">個股研究</a>
+          <a href="/id/">產業研究</a>
+          <a href="/id/tier_matrix.html">Tier Matrix</a>
+        </div>
+      </div>
+      <a href="/mental-models/">心智模型</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">系統<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/long-track/">系統主控台</a>
+          <a href="/backtest/">量化回測</a>
+          <a href="/tools/">期貨部位計算機</a>
+          <a href="/data.html">公開資料</a>
+        </div>
+      </div>
+      <a href="/flow/">投資流程</a>
+      <a href="/how-to.html">使用指南</a>
+      <a href="/search.html">搜尋</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+<div class="wrap">
+  <div class="hero">
+    <h1>轉強觀察（美股）</h1>
+    <p>不是追已經飆到高點的股票，是找剛從弱轉強的：先明顯回檔過，最近一個月相對 QQQ（追蹤那斯達克 100 指數的 ETF，本頁用來當比較基準）的強度明顯改善，均線和價格結構開始抬升，離 52 週高還有一段距離。名單只回答「看誰」，不回答「買不買」。</p>
+  </div>
+
+  <div class="sec">
+    <h2>寬度：每天有幾檔在轉強</h2>
+    <div class="stats-row" id="breadth-stats">
+      <div class="empty">資料尚未產出</div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-host" id="chart-host">
+        <div class="empty">資料尚未產出</div>
+      </div>
+      <div class="chart-legend" id="chart-legend" style="display:none">
+        <span><i style="background:var(--accent)"></i>符合全部六條件（家數）</span>
+        <label><input type="checkbox" id="toggle-soft" checked><i style="background:var(--sec);opacity:.55"></i>較寬鬆的轉強苗頭（家數）</label>
+        <span><i style="background:var(--muted)"></i>QQQ（右軸）</span>
+      </div>
+      <div class="stale-note" id="stale-note" style="display:none">圖中淡色線段是舊版定義下算出的家數，門檻調整後尚未用新定義重新回算。</div>
+      <p class="explain-p">這條線算的是每天有幾檔符合全部條件。家數從低檔翻上來，代表回檔後有一批股票同時轉強；家數已經很高，代表轉強變得普遍，不再是早期。它描述現況，不預測轉折時點。</p>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2>今日名單</h2>
+    <div class="tbl-wrap">
+      <table class="rst-table" id="rst-table">
+        <thead>
+          <tr>
+            <th>排名</th><th>代號</th><th>狀態</th><th>為什麼入選</th>
+            <th title="近 21 日相對 QQQ 報酬，減去近 63 日相對 QQQ 報酬">RS 加速（pt）</th>
+            <th title="近 21 個交易日，相對 QQQ 的超額報酬">近 21 日 RS</th>
+            <th title="近 63 個交易日，相對 QQQ 的超額報酬">近 63 日 RS</th>
+            <th title="現價相對近一年最高價的距離（顯示絕對值）">距 52 週高</th>
+            <th title="近一季最深回檔（近 3 個月低點相對近一年高點，顯示絕對值）">回檔深度</th>
+            <th title="連續幾個交易日符合全部六條件，🆕 代表今天第一次入榜">在榜天數</th>
+            <th title="近 20 日日均成交金額（美元）">日均成交金額</th>
+          </tr>
+        </thead>
+        <tbody id="rst-tbody">
+          <tr><td colspan="10" class="empty" style="border:0">資料尚未產出</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <button class="more-btn" id="more-btn" style="display:none">展開全部</button>
+  </div>
+
+  <div class="sec">
+    <h2>今日變化</h2>
+    <div class="changes-grid" id="changes-grid">
+      <div class="changes-col"><h3>新進榜</h3><div class="tickers" id="changes-new">資料尚未產出</div></div>
+      <div class="changes-col"><h3>掉榜</h3><div class="tickers" id="changes-dropped">資料尚未產出</div></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2>六條件說明</h2>
+    <ul class="cond-list">
+      <li><b>① 相對強度在加速</b>——近 21 日相對 QQQ 的報酬，比近 63 日的高出 10 個百分點以上，而且近 21 日本身也要贏過 QQQ。</li>
+      <li><b>② 曾經明顯回檔</b>——近 3 個月的最低點，比近一年的最高點低超過 15%，代表這檔股票不是一路噴上來，中途有真正拉回過。</li>
+      <li><b>③ 均線結構轉佳</b>——股價站上 21 日 EMA（指數移動平均，對近期價格給較高權重的均線），而且是最近才剛站上（過去 10 個交易日內曾經跌破），或者 21 日 EMA 本身已經轉為上揚。</li>
+      <li><b>④ 價格結構改善</b>——最近 10 個交易日的低點，比再往前 20 個交易日的低點還高（低點一底比一底高），或股價已經回到近 3 個月價格區間上緣 7 成以上的位置。</li>
+      <li><b>⑤ 還沒漲到貼近高點</b>——現價比近一年最高價低 8% 以上，代表還沒回到歷史高點附近、不是在追高。</li>
+      <li><b>⑥ 有基本的流動性</b>——近 20 日日均成交金額至少 2,000 萬美元，且股價至少 5 美元，濾掉太冷門或太便宜的名字。</li>
+    </ul>
+    <details class="howto">
+      <summary>怎麼算——公式、母體與資料時效</summary>
+      <div class="body">
+        <p><b>母體</b>：<code>data/engine/universe.json</code>（S&amp;P 500 ∪ Nasdaq-100 ∪ S&amp;P 400 ∪ 已寫過深度報告的美股）聯集 Russell 1000 指數成分的代理名單（Russell 1000 本身就是市值前一千檔、每年 6 月重組，故改用 Nasdaq 官方篩選器的全美股名單取市值前 1,300 檔當代理，iShares IWB 持股清單為備援，兩者皆失敗時退回既有快取或只用前者），涵蓋較新上市、尚未進主要指數的名字。比較基準固定用 QQQ。</p>
+        <p><b>公式</b>（C＝收盤價，E21／E50＝21／50 日 EMA，Q＝QQQ 收盤價）：</p>
+        <p>近 21／63 日 RS ＝（自身 N 日報酬 − QQQ 同期 N 日報酬）× 100，單位為百分點（pt）。<br>
+        RS 加速 ＝ 近 21 日 RS − 近 63 日 RS。<br>
+        距 52 週高 ＝（現價 ÷ 近一年最高價 − 1）× 100，取絕對值顯示。<br>
+        回檔深度 ＝（近 3 個月最低價 ÷ 近一年最高價 − 1）× 100，取絕對值顯示。</p>
+        <p><b>目前資料</b>：<span id="howto-asof">—</span></p>
+      </div>
+    </details>
+  </div>
+
+  <p class="disclaimer">這是技術面觀察清單，不是買進建議，也不是說現在就要追。轉強不等於一定續漲，假突破、二次回測失敗都很常見。進場前要自己看風險、部位與出場規則。</p>
+
+  <footer class="imq-foot">
+    <div>© 2026 InvestMQuest Research</div>
+    <div><a href="/disclosures.html">方法論與揭露</a> · 本站內容僅供研究參考，不構成投資建議</div>
+  </footer>
+</div>
+<script>
+(function () {
+  "use strict";
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function fetchJSON(path) {
+    return fetch(path).then(function (r) {
+      if (!r.ok) throw new Error("not ok: " + r.status);
+      return r.json();
+    }).catch(function (e) {
+      console.warn("rs-turn: failed to load " + path, e);
+      return null;
+    });
+  }
+
+  function fmtNum(v, digits) {
+    if (v === null || v === undefined || typeof v !== "number" || isNaN(v)) return "—";
+    return v.toFixed(digits === undefined ? 1 : digits);
+  }
+
+  function fmtUsd(v) {
+    if (v === null || v === undefined || typeof v !== "number" || isNaN(v)) return "—";
+    if (v >= 1e9) return "$" + (v / 1e9).toFixed(1) + "B";
+    if (v >= 1e6) return "$" + (v / 1e6).toFixed(1) + "M";
+    if (v >= 1e3) return "$" + (v / 1e3).toFixed(0) + "K";
+    return "$" + v.toFixed(0);
+  }
+
+  function statTile(k, v) {
+    return '<div class="stat-card"><div class="v">' + esc(v) + '</div><div class="k">' + esc(k) + '</div></div>';
+  }
+
+  // ── 寬度四格（來源 latest.json） ─────────────────────────────────
+  function renderStats(latest) {
+    var host = document.getElementById("breadth-stats");
+    if (!latest || latest.schema !== "rs-turn-v1" || !latest.breadth_today) {
+      host.innerHTML = '<div class="empty">資料尚未產出</div>';
+      return;
+    }
+    var b = latest.breadth_today;
+    host.innerHTML =
+      statTile("今日家數", String(b.n_full != null ? b.n_full : "—")) +
+      statTile("20 日均", fmtNum(b.n_full_ma20, 1)) +
+      statTile("250 日分位", b.n_full_pctile_250d != null ? fmtNum(b.n_full_pctile_250d, 0) + "%" : "—") +
+      statTile("佔母體", b.pct_full != null ? fmtNum(b.pct_full, 1) + "%" : "—");
+
+    var asof = document.getElementById("howto-asof");
+    if (asof) {
+      var u = latest.universe || {};
+      asof.textContent = "資料日 " + latest.as_of + "（產生於 " + (latest.run_timestamp || "—") + "）· " +
+        "母體 " + (u.total != null ? u.total : "—") + " 檔，資料完整可用 " + (u.covered != null ? u.covered : "—") +
+        " 檔，當日合格計入分母 " + (u.eligible != null ? u.eligible : "—") + " 檔（來源：engine " +
+        (u.sources ? u.sources.engine : "—") + "／R1000 " + (u.sources ? u.sources.r1000 : "—") + "／聯集 " +
+        (u.sources ? u.sources.union : "—") + "）。";
+    }
+  }
+
+  // ── 今日名單表格 + 展開全部 ──────────────────────────────────────
+  var ROWS_DEFAULT = 30;
+
+  function rowHtml(r) {
+    var tickerCell = r.hub
+      ? '<a href="' + esc(r.hub) + '">' + esc(r.ticker) + "</a>"
+      : esc(r.ticker);
+    var newBadge = r.is_new ? ' <span class="rst-new">🆕</span>' : "";
+    var distHigh = r.dist_high_pct != null ? fmtNum(Math.abs(r.dist_high_pct), 1) + "%" : "—";
+    var pullback = r.pullback_pct != null ? fmtNum(Math.abs(r.pullback_pct), 1) + "%" : "—";
+    var accelCls = (r.rs_accel != null && r.rs_accel >= 0) ? "pos" : "neg";
+    return "<tr>" +
+      "<td>" + r.rank + "</td>" +
+      "<td><b>" + tickerCell + "</b></td>" +
+      "<td>" + esc(r.status) + "</td>" +
+      '<td class="why">' + esc((r.tags || []).join("；")) + "</td>" +
+      '<td class="num ' + accelCls + '">' + fmtNum(r.rs_accel, 1) + "</td>" +
+      '<td class="num">' + fmtNum(r.rs21, 1) + "</td>" +
+      '<td class="num">' + fmtNum(r.rs63, 1) + "</td>" +
+      '<td class="num">' + distHigh + "</td>" +
+      '<td class="num">' + pullback + "</td>" +
+      '<td class="num">' + r.days_on_list + newBadge + "</td>" +
+      '<td class="num">' + fmtUsd(r.adv20_usd) + "</td>" +
+      "</tr>";
+  }
+
+  function renderTable(latest) {
+    var tbody = document.getElementById("rst-tbody");
+    var moreBtn = document.getElementById("more-btn");
+    if (!latest || latest.schema !== "rs-turn-v1" || !latest.rows) {
+      tbody.innerHTML = '<tr><td colspan="10" class="empty" style="border:0">資料尚未產出</td></tr>';
+      moreBtn.style.display = "none";
+      return;
+    }
+    var rows = latest.rows;
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="10" class="empty" style="border:0">今天沒有名字符合全部六條件。</td></tr>';
+      moreBtn.style.display = "none";
+      return;
+    }
+    tbody.innerHTML = rows.map(rowHtml).join("");
+    var trs = tbody.querySelectorAll("tr");
+    if (rows.length > ROWS_DEFAULT) {
+      for (var i = ROWS_DEFAULT; i < trs.length; i++) trs[i].style.display = "none";
+      moreBtn.style.display = "";
+      moreBtn.textContent = "展開全部（共 " + rows.length + " 檔）";
+      moreBtn.onclick = function () {
+        for (var j = 0; j < trs.length; j++) trs[j].style.display = "";
+        moreBtn.style.display = "none";
+      };
+    } else {
+      moreBtn.style.display = "none";
+    }
+  }
+
+  // ── 今日變化 ────────────────────────────────────────────────────
+  function tickerChips(list) {
+    if (!list || !list.length) return '<span style="color:var(--muted)">無</span>';
+    return list.map(function (t) { return "<span>" + esc(t) + "</span>"; }).join("");
+  }
+
+  function renderChanges(latest) {
+    var newHost = document.getElementById("changes-new");
+    var dropHost = document.getElementById("changes-dropped");
+    if (!latest || latest.schema !== "rs-turn-v1" || !latest.changes) {
+      newHost.innerHTML = "資料尚未產出";
+      dropHost.innerHTML = "資料尚未產出";
+      return;
+    }
+    newHost.innerHTML = tickerChips(latest.changes.new);
+    dropHost.innerHTML = tickerChips(latest.changes.dropped);
+  }
+
+  // ── 寬度折線圖（來源 history.json；crosshair + tooltip + touch，
+  //    寫法沿用 docs/monitor/index.html renderScoreChart 的做法並簡化）──
+  var chartState = null;
+
+  function buildPoints(hist) {
+    var nFull = hist.series && hist.series.n_full ? hist.series.n_full : [];
+    var softMap = {}, qqqMap = {};
+    (hist.series && hist.series.n_soft ? hist.series.n_soft : []).forEach(function (p) { softMap[p[0]] = p[1]; });
+    (hist.series && hist.series.qqq ? hist.series.qqq : []).forEach(function (p) { qqqMap[p[0]] = p[1]; });
+    var vbd = hist.version_by_date || {};
+    var curVersion = hist.definition_version;
+    return nFull.map(function (p) {
+      var d = p[0];
+      return {
+        d: d,
+        full: p[1],
+        soft: softMap[d] !== undefined ? softMap[d] : null,
+        qqq: qqqMap[d] !== undefined ? qqqMap[d] : null,
+        stale: !!(vbd[d] && curVersion && vbd[d] !== curVersion)
+      };
+    });
+  }
+
+  function renderChart(pts, showSoft) {
+    var host = document.getElementById("chart-host");
+    var W = 900, H = 300, padL = 38, padR = 44, padT = 10, padB = 22;
+    var plotW = W - padL - padR, plotH = H - padT - padB;
+    var n = pts.length;
+    if (!n) {
+      host.innerHTML = '<div class="empty">資料尚未產出</div>';
+      return;
+    }
+
+    var maxCount = Math.max.apply(null, pts.map(function (p) { return Math.max(p.full || 0, p.soft || 0); }));
+    var yMax = Math.max(5, Math.ceil(maxCount * 1.15));
+    var qqqVals = pts.map(function (p) { return p.qqq; }).filter(function (v) { return typeof v === "number"; });
+    var qMin = qqqVals.length ? Math.min.apply(null, qqqVals) * 0.97 : 0;
+    var qMax = qqqVals.length ? Math.max.apply(null, qqqVals) * 1.03 : 1;
+
+    function xAt(i) { return padL + (n <= 1 ? 0 : plotW * i / (n - 1)); }
+    function yCount(v) { return padT + plotH * (1 - v / yMax); }
+    function yQqq(v) { return padT + plotH * (1 - (v - qMin) / ((qMax - qMin) || 1)); }
+
+    var gridLines = [0, 0.25, 0.5, 0.75, 1].map(function (f) {
+      var v = Math.round(yMax * f);
+      var y = yCount(v);
+      return '<line x1="' + padL + '" y1="' + y.toFixed(1) + '" x2="' + (padL + plotW) + '" y2="' + y.toFixed(1) +
+        '" stroke="var(--line)" stroke-width="1"/>' +
+        '<text x="' + (padL - 6) + '" y="' + (y + 3).toFixed(1) + '" font-size="9" text-anchor="end" fill="var(--muted)" font-family="var(--mono)">' + v + '</text>';
+    }).join("");
+
+    function segPath(key, staleWanted) {
+      var d = "", open = false;
+      pts.forEach(function (p, i) {
+        var v = p[key];
+        var match = (typeof v === "number") && (!!p.stale === !!staleWanted);
+        if (!match) { open = false; return; }
+        d += (open ? "L" : "M") + xAt(i).toFixed(1) + "," + yCount(v).toFixed(1) + " ";
+        open = true;
+      });
+      return d;
+    }
+
+    var fullSolid = segPath("full", false);
+    var fullStale = segPath("full", true);
+    var softSolid = segPath("soft", false);
+    var softStale = segPath("soft", true);
+
+    var qqqPath = "", qOpen = false;
+    pts.forEach(function (p, i) {
+      if (typeof p.qqq !== "number") { qOpen = false; return; }
+      qqqPath += (qOpen ? "L" : "M") + xAt(i).toFixed(1) + "," + yQqq(p.qqq).toFixed(1) + " ";
+      qOpen = true;
+    });
+
+    var midI = Math.floor((n - 1) / 2);
+    var dateLabels =
+      '<text x="' + xAt(0) + '" y="' + (H - 6) + '" font-size="9" text-anchor="start" fill="var(--muted)" font-family="var(--mono)">' + pts[0].d + '</text>' +
+      '<text x="' + xAt(midI) + '" y="' + (H - 6) + '" font-size="9" text-anchor="middle" fill="var(--muted)" font-family="var(--mono)">' + pts[midI].d + '</text>' +
+      '<text x="' + xAt(n - 1) + '" y="' + (H - 6) + '" font-size="9" text-anchor="end" fill="var(--muted)" font-family="var(--mono)">' + pts[n - 1].d + '</text>';
+
+    var hasStale = pts.some(function (p) { return p.stale; });
+    document.getElementById("stale-note").style.display = hasStale ? "" : "none";
+
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet">' +
+      gridLines +
+      '<path d="' + qqqPath + '" fill="none" stroke="var(--muted)" stroke-width="1.1" opacity="0.6"/>' +
+      (showSoft ? '<path d="' + softSolid + '" fill="none" stroke="var(--sec)" stroke-width="1.2" opacity="0.55"/>' : "") +
+      (showSoft ? '<path d="' + softStale + '" fill="none" stroke="var(--sec)" stroke-width="1.2" opacity="0.28" stroke-dasharray="3 2"/>' : "") +
+      '<path d="' + fullSolid + '" fill="none" stroke="var(--accent)" stroke-width="1.7"/>' +
+      '<path d="' + fullStale + '" fill="none" stroke="var(--accent)" stroke-width="1.7" opacity="0.4" stroke-dasharray="3 2"/>' +
+      dateLabels +
+      '<g id="rst-crosshair" style="display:none">' +
+      '<line x1="0" y1="' + padT + '" x2="0" y2="' + (padT + plotH) + '" stroke="var(--muted)" stroke-width="1" stroke-dasharray="2,2"/>' +
+      '<circle r="3" fill="var(--accent)"/>' +
+      '</g>' +
+      '</svg>';
+
+    host.innerHTML = svg + '<div class="chart-tip" id="chart-tip"></div>';
+
+    var svgEl = host.querySelector("svg");
+    var crosshair = svgEl.querySelector("#rst-crosshair");
+    var chLine = crosshair.querySelector("line");
+    var chCircle = crosshair.querySelector("circle");
+    var tip = document.getElementById("chart-tip");
+
+    function showAt(clientX) {
+      var rect = svgEl.getBoundingClientRect();
+      if (!rect.width) return;
+      var scaleX = W / rect.width;
+      var xUser = (clientX - rect.left) * scaleX;
+      var i = Math.round((xUser - padL) / plotW * (n - 1));
+      if (i < 0) i = 0;
+      if (i > n - 1) i = n - 1;
+      var p = pts[i];
+      var x = xAt(i);
+      chLine.setAttribute("x1", x); chLine.setAttribute("x2", x);
+      chCircle.setAttribute("cx", x); chCircle.setAttribute("cy", yCount(p.full));
+      crosshair.style.display = "";
+      tip.innerHTML = "<b>" + esc(p.d) + "</b>" + (p.stale ? "（舊定義）" : "") + "<br>符合全部條件 " + p.full +
+        " 檔<br>較寬鬆苗頭 " + (p.soft !== null ? p.soft : "—") + " 檔<br>QQQ " +
+        (p.qqq !== null ? p.qqq.toFixed(1) : "—");
+      var hostRect = host.getBoundingClientRect();
+      var tipX = (x / W) * hostRect.width;
+      tip.style.left = Math.min(Math.max(tipX + 8, 4), Math.max(hostRect.width - 150, 4)) + "px";
+      tip.style.top = "6px";
+      tip.style.opacity = "1";
+    }
+    function hide() { crosshair.style.display = "none"; tip.style.opacity = "0"; }
+
+    svgEl.addEventListener("mousemove", function (e) { showAt(e.clientX); });
+    svgEl.addEventListener("mouseleave", hide);
+    svgEl.addEventListener("touchstart", function (e) {
+      if (e.touches && e.touches[0]) showAt(e.touches[0].clientX);
+    }, { passive: true });
+  }
+
+  function renderBreadthChart(hist) {
+    var legend = document.getElementById("chart-legend");
+    if (!hist || hist.schema !== "rs-turn-history-v1" || !hist.series || !hist.series.n_full || !hist.series.n_full.length) {
+      document.getElementById("chart-host").innerHTML = '<div class="empty">資料尚未產出</div>';
+      legend.style.display = "none";
+      return;
+    }
+    var pts = buildPoints(hist);
+    chartState = { pts: pts };
+    legend.style.display = "";
+    renderChart(pts, true);
+    var toggle = document.getElementById("toggle-soft");
+    toggle.checked = true;
+    toggle.addEventListener("change", function () {
+      renderChart(chartState.pts, toggle.checked);
+    });
+  }
+
+  Promise.all([fetchJSON("./data/latest.json"), fetchJSON("./data/history.json")]).then(function (res) {
+    var latest = res[0], history = res[1];
+    renderStats(latest);
+    renderTable(latest);
+    renderChanges(latest);
+    renderBreadthChart(history);
+  });
+})();
+</script>
+</body>
+</html>
