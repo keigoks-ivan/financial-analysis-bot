@@ -504,12 +504,22 @@ def main():
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("files", nargs="*", help="Explicit files (whole-file scope).")
     ap.add_argument("--all", action="store_true", help="Sweep all of docs/.")
+    ap.add_argument(
+        "--escalate", action="store_true",
+        help="Force added-line escalation for explicit files (for generators "
+             "gating their own brand-new output; see 2026-09-08 note below).")
     args = ap.parse_args()
 
     mode = "all" if args.all else "changed"
     # Escalate added-line violations only in changed-files mode (not --all,
     # not explicit-file scope).
-    escalate = mode == "changed" and not args.files
+    #
+    # 2026-09-08：`--escalate` 是給「產生器自己驗剛寫出來的新檔」用的。
+    # 沒有它時，`qc.py FILE` 一律不升級，於是 ddreport 的 `_run_gates()` 每次
+    # 都拿到 rc=0——TXN 20260907 的完整版帶 513 個「中文後接半形標點」進到
+    # 發布鏈，管線內的 qc 全程綠燈，直到 pre-push 的無參數 changed 模式才擋
+    # 下來。同一支腳本、同一個檔，管線用的那種叫法結構上不可能失敗。
+    escalate = (mode == "changed" and not args.files) or args.escalate
     targets = collect_targets(mode, args.files)
 
     all_errors, all_warnings = [], []

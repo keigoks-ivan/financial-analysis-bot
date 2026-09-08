@@ -34,6 +34,7 @@ import dd_headless  # noqa: E402  （WP1c 無頭執行器，import 呼叫，不�
 import dd_meta_reader  # noqa: E402  （WP7a peers 來源③：讀 id-meta related_tickers，不改其內部）
 import dd_metric_resolver  # noqa: E402  （2026-09-07：batch 摘要 Max DD 改用共用 helper，只 import 不改其內部）
 import dd_sections  # noqa: E402  （2026-09-06 WP4b：leak_hits／split_sections，gates 用來把 FAIL 歸因到 sid）
+import dd_prose_budget  # noqa: E402  （2026-09-08：散文段深度下限閘沿用同一份目標區間，不另定義門檻）
 import gen_dd_tables as gdt  # noqa: E402  （2026-09-06 WP4b：C-1 機械段生成＋E12 說明句，不改其內部語意）
 import verify_dd_math  # noqa: E402  （2026-09-07：finish 三方一致性沿用同一組權威容差）
 
@@ -96,10 +97,19 @@ _GATE_PATCH_MODE_OVERRIDE = None
 # 2026-09-06 WP4b：散文（prose）agent——只給 Write／Bash（同判斷段 short 模式
 # 的 `_spawn_short`），母稿 §4 目標 ≤1.5M cache_read／≤7 輪，熔斷線＝目標 2×
 # （由 `dd_headless.spawn` 的 `over_budget` 統一算，不在這裡重算）。
-PROSE_MAX_TURNS = 7
+PROSE_MAX_TURNS = 12  # 2026-09-08：TXN 實測 terminal_reason=max_turns——散文段最少需
+# 2 次大 Write ＋1 次 check ＋1 次修補 Write ＋1 次 recheck，長段的單次 Write 本身就會
+# 跨輪；7 輪下只寫完 prose_A（18.5KB）就被砍，prose_B 整個沒寫出來，切割時撿到上一輪
+# 殘留檔，於是被誤讀成「agent 不肯寫長」。同檔的 JUDGE_MAX_TURNS 與
+# DIGEST_PER_FILE_MAX_TURNS 都在 2026-09-05 因同一種失效由 8 調到 10，散文段當時沒跟上。
 PROSE_BUDGET_CACHE_READ = 1_500_000
 # split 時忽略散文 agent 誤寫的這三段（C-1 機械段，`prose prepare` 已生成）。
 _PROSE_MECHANICAL_SIDS = ("revlog", "s14", "appA")
+
+# 2026-09-08：與 scripts/hooks/pre-commit 的 v15 DD hard floor 同值（該檔
+# `check_report_size "$f" 70000 80000 "DD" 115000`）。改這裡務必同時改那裡，
+# 否則 in-loop 閘與發布閘會各說各話。
+DD_FULL_FLOOR_BYTES = 70000
 # `prose split` 依序處理這三個來源檔；`prose_fix.html` 只在 FAIL 後的補寫輪
 # 才會出現，且刻意排最後——同一個 sid 若三個檔都有，後面的覆蓋前面的，讓
 # 「只重寫命中的 sid、合成一個小檔再 Write」的補寫語意（見 render-rules.md
@@ -2663,7 +2673,11 @@ def _run_gates(run_dir, ticker, date, out_html=None, postprocess=False):
     subprocess.run([py, str(SCRIPTS_DIR / "dd_sections.py"), "bytes", str(out_path)],
                    capture_output=True, text=True)
 
-    r_qc = subprocess.run([py, str(SCRIPTS_DIR / "qc.py"), str(out_path)], capture_output=True, text=True)
+    # 2026-09-08：帶 --escalate——不加的話 `qc.py FILE` 屬 explicit 範圍、
+    # 一律不把新增行的違規升級成 error，這道閘結構上不可能失敗（TXN
+    # 20260907 實例：513 個中文後接半形標點一路綠燈到 pre-push 才被擋）。
+    r_qc = subprocess.run([py, str(SCRIPTS_DIR / "qc.py"), "--escalate", str(out_path)],
+                          capture_output=True, text=True)
     if r_qc.returncode != 0:
         ok = False
         findings.append(("_qc", (r_qc.stdout + r_qc.stderr).strip()[-500:]))
@@ -2692,12 +2706,77 @@ def cmd_gates(args):
     return 0 if ok else 1
 
 
+# 2026-09-08：散文段只有上限閘，沒有下限閘——`dd_sections.py bytes` 對
+# 單一預算段是 `WARN if nbytes > budget else OK`，寫到目標的兩成也是 OK，
+# 整檔下限也只是 WARN。唯一會擋的是 pre-commit 的 70KB 深度閘，但那在
+# 錢與時間都花完之後才響（TXN 20260907 實跑：散文交出 61,280B，s5 寫
+# 2,592B／目標 7,558-10,797B，s6 寫 1,405B／目標 7,451-10,645B，全段
+# 顯示 OK，commit 才被擋）。CLAUDE.md 的設計意圖是「下界＝深度閘門（擋）、
+# 上界＝成本預算（只警告）」，這裡把缺的那一半補上，讓散文 agent 在自己
+# 的修補回合內就看得到，而不是留給 commit 才擋。
+# 機械段（revlog／s14／appA）由腳本生成、agent 不寫，不列入本閘。
+_PROSE_MECHANICAL_SIDS = ("revlog", "s14", "appA")
+
+
+def _prose_depth_findings(run_dir, ticker, date):
+    """回傳 [(sid, reason), ...]：整檔深度未達發布底線時擋下，並附偏低段清單。
+
+    2026-09-08 二次修正：門檻直接用 `scripts/hooks/pre-commit` 的 v15 DD
+    hard floor（70000B，見該檔 `check_report_size "$f" 70000 ...`），量的是
+    `_run_gates()` 剛組裝出來的 `DD_preview.html`——也就是**真正要上站的那
+    份檔**。
+
+    前一版把門檻設成「各段 prose_target_lo 的總和」（45394B），那是我自己
+    發明的、比發布標準嚴得多的線：TXN 實測散文 42156B → 組裝後 77671B，
+    早就過了 70000B floor、也在 75-105KB 帶內，卻仍被擋。**in-loop 的閘不
+    該比發布閘嚴**，否則會逼出為了過閘而生的重跑與灌水，正是 CLAUDE.md
+    QC-38 明講要避免的事。各段 prose_target_lo 仍拿來列「偏低段」當寫作
+    指引，但不再單獨構成阻斷。
+    """
+    preview = Path(run_dir) / "DD_preview.html"
+    if not preview.exists():
+        return []  # 組裝失敗由 _run_gates 的 _assemble finding 負責回報
+    total = preview.stat().st_size
+    if total >= DD_FULL_FLOOR_BYTES:
+        return []
+
+    # 只有真的沒過底線時才去算偏低段，給 agent 指出該補哪幾章。
+    shortfalls = []
+    judgment = _load_json_or(Path(run_dir) / "judgment.json", None)
+    tables_dir = Path(run_dir) / "tables"
+    if isinstance(judgment, dict) and tables_dir.exists():
+        try:
+            rows = dd_prose_budget.build_rows(tables_dir, judgment)
+        except Exception:
+            rows = []
+        for row in rows:
+            sid = row.get("section")
+            lo = row.get("prose_target_lo")
+            if not sid or lo is None or sid in _PROSE_MECHANICAL_SIDS:
+                continue
+            path = Path(run_dir) / "prose" / "{0}.html".format(sid)
+            nbytes = path.stat().st_size if path.exists() else 0
+            if nbytes < lo:
+                shortfalls.append("{0} {1}B<{2}B".format(sid, nbytes, lo))
+    detail = "；偏低段：" + "、".join(shortfalls) if shortfalls else ""
+    return [("prose-depth",
+             "整檔深度不足：{0}B < 發布底線 {1}B（差 {2}B）{3}"
+             "——把 reasoning 裡已推導但沒寫進正文的內容補上，不要灌水填充句".format(
+                 total, DD_FULL_FLOOR_BYTES, DD_FULL_FLOOR_BYTES - total, detail))]
+
+
 def _prose_check(ticker, date):
     """`prose check TICKER DATE`＝split＋gates 一次跑完，輸出只有 sid 清單
     ＋原因（不吐六支腳本全文）——散文 agent 在自己的 Bash 呼叫裡用這支。"""
     written, split_errors = _do_prose_split(ticker, date)
     run_dir = _run_dir(ticker, date)
     ok, findings = _run_gates(run_dir, ticker, date)
+    # 2026-09-08：深度下限與既有六支閘併列，同樣以 sid 歸因，讓 agent 的
+    # 那一輪修補能一起處理。
+    depth_findings = _prose_depth_findings(run_dir, ticker, date)
+    if depth_findings:
+        ok = False
+        findings = list(findings) + depth_findings
     lines = []
     if split_errors:
         for e in split_errors:
@@ -2715,6 +2794,52 @@ def cmd_prose_check(args):
     ok, report = _prose_check(args.ticker.strip().upper(), args.date)
     print(report)
     return 0 if ok else 1
+
+
+def _resume_prose_stage(ticker, date, manifest, accept_over_budget=False, dry_run=False):
+    """2026-09-08：`--resume` 落在 prose FAIL 時，先跑一次零成本的
+    `prose check`——過了就直接標 PASS，不重派散文 agent。
+
+    比照 `_resume_judge_stage` 既有做法（判斷段與閘段早有這條路徑，散文段
+    當時漏了）。實際代價：TXN 20260907 的散文本身合格，只是被一條設得比
+    發布標準更嚴的 in-loop 閘擋下；閘修好後若沒有這條 precheck，resume 會
+    再燒一次完整散文 agent（約 $1／17 分）去重寫一份已經可用的稿。
+    """
+    run_dir = _run_dir(ticker, date)
+    manifest_path = run_dir / "manifest.json"
+    stage = manifest.setdefault("stages", {}).get("prose") or {
+        "state": "RUNNING", "started": _now(), "agent_usage": [], "over_budget": False,
+    }
+    stage.setdefault("agent_usage", [])
+    stage["resume_precheck"] = True
+
+    ok, report = _prose_check(ticker, date)
+    if not ok:
+        print("[prose] resume precheck 未過，改派散文 agent：")
+        print(report)
+        return _do_prose_run(ticker, date, manifest,
+                             accept_over_budget=accept_over_budget, dry_run=dry_run)
+
+    out_html = DD_DIR / "DD_{0}_{1}.html".format(ticker, date)
+    rc_render, findings = _run_gates(run_dir, ticker, date, out_html=str(out_html),
+                                     postprocess=True)
+    if not rc_render:
+        print("[prose] resume precheck 過，但最終組裝仍有問題：")
+        for sid, reason in findings:
+            print("- {0}：{1}".format(sid, reason))
+        return _do_prose_run(ticker, date, manifest,
+                             accept_over_budget=accept_over_budget, dry_run=dry_run)
+
+    stage["state"] = "PASS"
+    stage["ended"] = _now()
+    stage["out_path"] = str(out_html)
+    stage["resume_note"] = "resume：prose check 免修即過（現有散文已合格），未派任何 agent"
+    manifest["stages"]["prose"] = stage
+    manifest["state"] = "prose_pass"
+    _atomic_write_json(manifest_path, manifest)
+    print("[ok] 完整版（resume 免重寫）：{0}".format(out_html))
+    _print_step_status("prose", "resume prose check", "PASS", "PASS")
+    return 0
 
 
 def _do_prose_run(ticker, date, manifest, accept_over_budget=False, dry_run=False):
@@ -4008,7 +4133,13 @@ def cmd_run(args):
         elif stage_name == "brief":
             rc = _do_brief(ticker, date, args.full, manifest, dry_run=args.dry_run)
         elif stage_name == "prose":
-            rc = _do_prose_run(ticker, date, manifest, accept_over_budget=args.accept_over_budget, dry_run=args.dry_run)
+            if resuming_this_stage:
+                # 2026-09-08：比照 judged／gated，先跑零成本 prose check
+                rc = _resume_prose_stage(ticker, date, manifest,
+                                         accept_over_budget=args.accept_over_budget,
+                                         dry_run=args.dry_run)
+            else:
+                rc = _do_prose_run(ticker, date, manifest, accept_over_budget=args.accept_over_budget, dry_run=args.dry_run)
         manifest = _load_json_or(manifest_path, manifest)
         st = manifest.get("stages", {}).get(stage_name, {})
         _record_stage_observation(manifest, stage_name)
