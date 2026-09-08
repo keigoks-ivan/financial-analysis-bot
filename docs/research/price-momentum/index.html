@@ -57,6 +57,7 @@ table.data tbody tr:last-child td{border-bottom:none}
 table.data tbody tr:hover td{background:#fbf8f1}
 .tag{display:inline-block;font-family:var(--mono);font-size:.6rem;font-weight:600;padding:.08rem .4rem;border-radius:4px;margin-left:.35rem;vertical-align:middle}
 .tag.heat{background:#fbf3df;color:var(--warn)}
+.tag.ineligible{background:#fffaf1;color:var(--warn,#a16207);border:1px solid var(--warn,#c8873b)}
 .tag.cash{background:var(--line-soft);color:var(--muted)}
 .tag.line{background:var(--line-soft);color:var(--accent)}
 .pos{color:var(--pos)}.neg{color:var(--neg)}
@@ -260,7 +261,7 @@ details.prereg-full .prereg-body{padding:0 1.2rem 1.2rem}
         <p class="foot-note" id="holdings-desc-L6"></p>
       </div>
     </div>
-    <p class="foot-note">Score ＝ 該線動能 ÷ 同窗年化波動（L12 用 12-1、L6 用 6-1，見下方 PREREG）；🔥 heat 為純資訊 12M 報酬 &gt;+250% 標記（兩線共用同一定義，不否決、不觸發賣出）。「現重」為按最新收盤反推的持股現值佔該線目前 NAV 之比重（等權重置後會隨價格漂移）。</p>
+    <p class="foot-note">Score ＝ 該線動能 ÷ 同窗年化波動（L12 用 12-1、L6 用 6-1，見下方 PREREG）；🔥 heat 為純資訊 12M 報酬 &gt;+250% 標記（兩線共用同一定義，不否決、不觸發賣出）。「現重」為按最新收盤反推的持股現值佔該線目前 NAV 之比重（等權重置後會隨價格漂移）。<span class="tag ineligible" style="margin-left:0">⚠ 已不合格</span> 標示該檔已跌破 200DMA 或動能轉負；其排名與 Score 為最後一次合格時的舊值，非最新，將於下一次月度換倉賣出（非立即賣出，賣出時點由月度換倉規則決定）。</p>
   </div>
 </section>
 
@@ -416,9 +417,16 @@ details.prereg-full .prereg-body{padding:0 1.2rem 1.2rem}
         var ret = (h.last_price!=null && h.entry_price) ? (h.last_price/h.entry_price - 1)*100 : null;
         var weight = (navLatest && h.units!=null && h.last_price!=null) ? (h.units*h.last_price/navLatest*100) : null;
         var heatTag = h.heat ? '<span class="tag heat">🔥 heat</span>' : '';
+        // 2026-09-08 fix: h.eligible is only ever explicitly false/true from the
+        // builder — an older track.json without the field leaves h.eligible
+        // undefined, which must NOT be treated as false (no badge, current
+        // behavior preserved). Only a strict === false triggers the disclosure.
+        var ineligibleTag = (h.eligible === false)
+          ? '<span class="tag ineligible" title="已不符合資格（跌破 200DMA 或動能轉負）；排名／Score 為最後一次合格時的舊值，非最新，將於下一次月度換倉賣出（非立即賣出）">⚠ 已不合格</span>'
+          : '';
         var tr = document.createElement('tr');
         tr.innerHTML =
-          '<td>'+esc(h.ticker)+heatTag+'</td>'+
+          '<td>'+esc(h.ticker)+heatTag+ineligibleTag+'</td>'+
           '<td>#'+(h.rank!=null?h.rank:'—')+'</td>'+
           '<td>'+fmtNum(h.score,2)+'</td>'+
           '<td style="text-align:left">'+esc(h.entry_date||'—')+'</td>'+

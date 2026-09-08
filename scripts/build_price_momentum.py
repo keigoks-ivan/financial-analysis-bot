@@ -154,6 +154,27 @@ without touching any threshold, price value, or download parameter:
     stale as_of date left in track.json, so a skipped run is visible in
     the Actions run summary instead of silently no-op'ing green.
 
+ELIGIBILITY DISCLOSURE (2026-09-08 fix — presentation honesty, no judgment change)
+------------------------------------------------------------------------------------
+process_line_update()'s non-rebalance-week informational refresh only ever
+recomputed rank/score/heat for holdings still present in that week's
+eligible ranking. A holding that had since turned ineligible (its line's
+ret_{12,6}_1 <= 0, or it fell below its 200DMA) was silently skipped by
+that loop, so the page kept rendering its LAST eligible-week rank/score
+untouched with no indication anything had changed (first observed
+2026-09-07: CIEN on L12 fell below its 200DMA but still displayed its
+stale 09-01 rank/score, colliding with AMAT's live rank 6). Every holding
+(both lines, both the rebalance path and the informational-refresh path)
+now carries an explicit `eligible` bool. Eligible holdings refresh
+rank/score/heat as before; ineligible holdings keep their last-known
+rank/score/heat UNCHANGED (staleness is carried by the flag, not by
+blanking the values) — the front end reads this flag to disclose that the
+number shown is stale and that the position sells at the NEXT monthly
+rebalance (sell timing itself is unchanged — still governed by the
+existing top-40 / ineligibility rule, never immediate). The judgment
+layer (who gets sold, when, and why) is completely untouched; this is
+presentation-layer honesty only.
+
 Runs in the weekly-market-update GitHub Actions workflow (wired by
 maintainer), same step family as build_momentum5.py.
 """
@@ -225,6 +246,20 @@ DEPLOY_NOTE_20260907 = (
     "（最多 4 次、指數退避＋jitter），並在 GitHub Actions 失敗時新增 ::warning:: 標註與 "
     "step summary 一行，讓中止不再靜默綠燈。純機械層 plumbing——未變動任何 PREREG 門檻常數、"
     "訊號/資格/排序/換倉/NAV 記帳/turnover 計算邏輯或 kill conditions。"
+)
+
+# One-time changelog note for the 2026-09-08 stale-rank disclosure fix (see
+# process_line_update()'s informational-refresh branch and build()'s shared
+# tail for the idempotency guard). Presentation-layer honesty only — not a
+# PREREG change, so it lives outside the PREREG dict.
+DEPLOY_NOTE_20260908 = (
+    "2026-09-08 呈現誠實性修正：process_line_update 非換倉週的資訊性刷新過去只更新還在 "
+    "eligible 名單內的持股（rank/score/heat），跌出資格的持股整檔被跳過、頁面照樣顯示凍結的舊 "
+    "排名無任何標示（09-07 首例：CIEN 跌破 200DMA 仍顯示 09-01 舊排名，與 AMAT 撞號）。現在每 "
+    "檔持股皆帶明確 eligible 旗標：合格持股照舊刷新，不合格持股保留最後已知 rank/score/heat（數 "
+    "值不清空，staleness 由旗標承載），頁面對 eligible=false 的持股標示「排名／Score 為最後合格 "
+    "時的舊值，將於下一次月度換倉賣出」。未變動任何裁決邏輯——賣出仍由既有 top-40／資格規則與 "
+    "月度換倉時點決定，不是立即賣出。"
 )
 
 PREREG = {
@@ -602,6 +637,8 @@ def process_line_inception(elig, price_now, as_of, eligible_count):
     by both L12 and L6 — see build()."""
     nav = 100.0
     holdings, cash, sells, buys, cash_seats = do_rebalance(nav, [], elig, price_now, as_of)
+    for h in holdings:
+        h['eligible'] = True  # rebalance-fresh holdings are always eligible by construction (§1c, 2026-09-08)
     rebalance_history = [{
         'date': as_of, 'event': 'inception', 'sells': [], 'buys': buys,
         'holdings': [{'ticker': h['ticker'], 'rank': h['rank'], 'score': h['score'],
@@ -636,6 +673,8 @@ def process_line_update(line_key, elig, price_now, as_of, is_new_month, line_sta
                                   'reason': 'stale price pre-rebalance', 'tickers': stale})
         new_holdings, new_cash, sells, buys, cash_seats = do_rebalance(
             nav_pre, holdings, elig, price_now, as_of)
+        for h in new_holdings:
+            h['eligible'] = True  # rebalance-fresh holdings are always eligible by construction (§1c, 2026-09-08)
         rebalance_entry = {
             'date': as_of, 'event': 'rebalance', 'sells': sells, 'buys': buys,
             'holdings': [{'ticker': h['ticker'], 'rank': h['rank'], 'score': h['score'],
@@ -656,9 +695,14 @@ def process_line_update(line_key, elig, price_now, as_of, is_new_month, line_sta
         if stale:
             print(f"    ! [{line_key}] stale price carried forward for {stale}")
             data_gaps_out.append({'date': as_of, 'line': line_key, 'reason': 'stale price', 'tickers': stale})
-        # informational refresh only (rank/score/heat) — composition/units/cash untouched
+        # informational refresh only (rank/score/heat) — composition/units/cash untouched.
+        # 2026-09-08 fix (§1c): every holding now gets an explicit `eligible` flag. A
+        # holding that dropped out of this line's elig ranking (ret<=0 or below 200DMA)
+        # keeps its LAST KNOWN rank/score/heat (staleness carried by the flag, not by
+        # blanking the values) instead of being silently skipped.
         for h in holdings:
-            if h['ticker'] in elig.index:
+            h['eligible'] = bool(h['ticker'] in elig.index)
+            if h['eligible']:
                 row = elig.loc[h['ticker']]
                 h['rank'] = int(row['rank'])
                 h['score'] = round(float(row['score']), 2)
@@ -792,6 +836,12 @@ def build():
     #    selection/nav/turnover rule changed. ──
     if not any(e.get('event') == DEPLOY_NOTE_20260907 for e in state.get('changelog', [])):
         state.setdefault('changelog', []).append({'date': '2026-09-07', 'event': DEPLOY_NOTE_20260907})
+
+    # ── one-time deployment note (2026-09-08 stale-rank disclosure fix, §1c
+    #    above). Idempotent by marker text, same pattern as the 2026-09-07
+    #    note above — must not re-append on every future weekly build. ──
+    if not any(e.get('event') == DEPLOY_NOTE_20260908 for e in state.get('changelog', [])):
+        state.setdefault('changelog', []).append({'date': '2026-09-08', 'event': DEPLOY_NOTE_20260908})
 
     print(f"    nav_L12={nav_now['L12']:.2f}  nav_L6={nav_now['L6']:.2f}  nav_spy={nav_spy:.2f}")
     for lk in LINE_KEYS:

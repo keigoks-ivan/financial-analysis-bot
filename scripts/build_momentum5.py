@@ -32,12 +32,46 @@ If eps_trend coverage < 300, or the screen throws for any reason, we print a
 warning and EXIT 0 WITHOUT touching data.json, so the page keeps its last good
 data instead of rendering a broken/empty week.
 
+DOWNLOAD RESILIENCE (2026-09-08 fix — plumbing only, no judgment change)
+--------------------------------------------------------------------------
+This script's own ~490-ticker yf.download burst runs earlier in the same
+weekly-market-update job than build_price_momentum.py's ~512-ticker burst
+(see that script's 2026-09-07 fix, commit 71cd044e4, for the incident this
+mirrors: two big yf.download bursts back-to-back in one job can trip
+Yahoo's 429 rate limit). To make THIS script survivable the same way,
+without touching any threshold, price value, or download parameter:
+  - tickers + ['SPY'] is downloaded in ~100-ticker batches (identical
+    download kwargs per batch, byte-identical to the old single call),
+    concatenated into one DataFrame with the exact same
+    px[ticker]['Close'] access shape the rest of the file already relies
+    on.
+  - The whole batched download is retried up to 4 attempts total, with
+    exponential backoff + jitter (~20s / 60s / 150s) between attempts,
+    whenever SPY comes back empty OR price coverage on that attempt is
+    below the coverage floor. The floor reused for this gate is the
+    file's OWN existing fail-safe number, MIN_EPS_COVERAGE (300) — not a
+    new number invented for this fix.
+  - Only after all attempts fail does this escalate to the existing
+    fail-safe path (print a warning, exit 0, data.json/raw_factors.json
+    untouched) — same fail-safe semantics, just given more chances to
+    succeed first before giving up.
+  - When running under GitHub Actions (GITHUB_ACTIONS env var set), any
+    fail-safe exit (download-retry exhaustion, low eps_trend coverage, or
+    any other uncaught exception) also emits a
+    `::warning title=Momentum-5 build skipped::...` annotation (and a
+    GITHUB_STEP_SUMMARY line when available) naming the reason and the
+    stale as_of date left in data.json, so a skipped run is visible in the
+    Actions run summary instead of silently no-op'ing green.
+
 Runs in the weekly-market-update GitHub Actions workflow (wired by maintainer).
 """
 
 import io
 import json
+import os
+import random
 import sys
+import time
 import warnings
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
@@ -87,6 +121,97 @@ RESMOM_MIN_OBS = RESMOM_REG_WINDOW + RESMOM_SKIP_DAYS  # 273 — data-sufficienc
 PX_52WH_WINDOW = 252                   # line H: 52-week-high lookback window (trading days)
 
 
+# ── download resilience (2026-09-08 fix, plumbing only — see docstring
+#    "DOWNLOAD RESILIENCE" section, mirrors build_price_momentum.py's
+#    2026-09-07 fix, commit 71cd044e4). Not FROZEN SCREEN SPEC — these only
+#    govern how the SAME yf.download call is chunked and retried. Coverage
+#    floor reused verbatim from MIN_EPS_COVERAGE below (no new number). ──
+DOWNLOAD_BATCH_SIZE = 100
+MAX_DOWNLOAD_ATTEMPTS = 4
+RETRY_BACKOFF_SECONDS = (20.0, 60.0, 150.0)  # before attempts 2, 3, 4 respectively
+
+
+def _count_price_sufficient(px, tickers):
+    """How many of `tickers` have >=260 dropna'd closes in `px` (mirrors
+    run_screen()'s own per-ticker sufficiency check `if len(c) < 260:
+    continue` below). Used only by the download-retry gate — does not
+    touch or replace that downstream loop."""
+    n = 0
+    for t in tickers:
+        try:
+            c = px[t]['Close'].dropna()
+        except Exception:
+            continue
+        if len(c) >= 260:
+            n += 1
+    return n
+
+
+def _download_prices_once(all_tickers):
+    """One attempt: download all_tickers (already includes 'SPY') in
+    DOWNLOAD_BATCH_SIZE-sized chunks with the SAME yf.download kwargs the
+    old single-shot call used, then concat into one DataFrame with the
+    same px[ticker]['Close'] column shape. A chunk that raises is skipped
+    (not fatal by itself) — the resulting SPY/coverage check in the caller
+    decides whether this whole attempt counts as a failure."""
+    frames = []
+    n_chunks = (len(all_tickers) + DOWNLOAD_BATCH_SIZE - 1) // DOWNLOAD_BATCH_SIZE
+    for i in range(0, len(all_tickers), DOWNLOAD_BATCH_SIZE):
+        chunk = all_tickers[i:i + DOWNLOAD_BATCH_SIZE]
+        chunk_no = i // DOWNLOAD_BATCH_SIZE + 1
+        try:
+            frames.append(yf.download(chunk, period='2y', interval='1d', auto_adjust=True,
+                                       group_by='ticker', progress=False, threads=True))
+        except Exception as e:
+            print(f"      ! batch {chunk_no}/{n_chunks} ({len(chunk)} tickers) raised "
+                  f"{type(e).__name__}: {e} — skipped this batch")
+        if chunk_no < n_chunks:
+            time.sleep(3)
+    if not frames:
+        raise RuntimeError("all download batches failed")
+    return pd.concat(frames, axis=1)
+
+
+def download_prices_with_retry(tickers):
+    """Retry the whole batched price download up to MAX_DOWNLOAD_ATTEMPTS
+    times with exponential backoff + jitter whenever SPY comes back empty
+    or price coverage is short. Returns (px, spy) on success; raises
+    RuntimeError after the retry budget is exhausted (caught by main()'s
+    existing top-level except Exception -> fail-safe exit 0, same
+    semantics as before)."""
+    all_tickers = tickers + ['SPY']
+    last_reason = None
+    for attempt in range(1, MAX_DOWNLOAD_ATTEMPTS + 1):
+        print(f"  · price download attempt {attempt}/{MAX_DOWNLOAD_ATTEMPTS} "
+              f"({len(all_tickers)} tickers incl. SPY, batches of {DOWNLOAD_BATCH_SIZE})")
+        try:
+            px = _download_prices_once(all_tickers)
+            spy = px['SPY']['Close'].dropna()
+        except Exception as e:
+            last_reason = f"attempt {attempt} raised {type(e).__name__}: {e}"
+            print(f"    ! {last_reason}")
+        else:
+            if spy.empty:
+                last_reason = f"attempt {attempt}: SPY price series empty after download"
+                print(f"    ! {last_reason}")
+            else:
+                n_sufficient = _count_price_sufficient(px, tickers)
+                if n_sufficient < MIN_EPS_COVERAGE:
+                    last_reason = (f"attempt {attempt}: price coverage {n_sufficient} "
+                                    f"< {MIN_EPS_COVERAGE}")
+                    print(f"    ! {last_reason}")
+                else:
+                    print(f"    ✓ attempt {attempt} succeeded: SPY ok, "
+                          f"price coverage {n_sufficient} >= {MIN_EPS_COVERAGE}")
+                    return px, spy
+        if attempt < MAX_DOWNLOAD_ATTEMPTS:
+            backoff = RETRY_BACKOFF_SECONDS[attempt - 1] + random.uniform(0, 5)
+            print(f"    … retrying in {backoff:.0f}s")
+            time.sleep(backoff)
+    raise RuntimeError(
+        f"price download failed after {MAX_DOWNLOAD_ATTEMPTS} attempts (last: {last_reason})")
+
+
 def run_screen():
     """Run the frozen S&P 500 12M-upside screen.
 
@@ -105,10 +230,9 @@ def run_screen():
     tickers = cons['yf'].tolist()
     print(f"constituents: {len(tickers)}")
 
-    # ── prices (batch, 2y adjusted daily) ──
-    px = yf.download(tickers + ['SPY'], period='2y', interval='1d', auto_adjust=True,
-                     group_by='ticker', progress=False, threads=True)
-    spy = px['SPY']['Close'].dropna()
+    # ── prices (batch, 2y adjusted daily; batched download + retry, 2026-09-08
+    #    fix — see download_prices_with_retry docstring) ──
+    px, spy = download_prices_with_retry(tickers)
     spy_close = float(spy.iloc[-1])
     spy6 = spy.iloc[-1] / spy.iloc[-127] - 1
     # SPY daily returns — feeds shadow line R's market-residual OLS (below).
@@ -292,6 +416,8 @@ def build():
     if coverage['eps_trend'] < MIN_EPS_COVERAGE:
         print(f"  ✗ eps_trend coverage {coverage['eps_trend']} < {MIN_EPS_COVERAGE} "
               f"— aborting, data.json left unchanged")
+        _emit_gh_skip_warning(
+            f"eps_trend coverage {coverage['eps_trend']} < {MIN_EPS_COVERAGE}")
         return None
 
     def g(t, col, default=None):
@@ -464,16 +590,50 @@ def build():
     return payload, raw_payload
 
 
+def _existing_data_json_as_of():
+    """Best-effort read of the current data.json's as_of, for the GH Actions
+    warning annotation below. Must never raise — a missing or corrupt file
+    just reads as unknown."""
+    try:
+        if DATA_JSON.exists():
+            return json.loads(DATA_JSON.read_text(encoding='utf-8')).get('as_of')
+    except Exception:
+        pass
+    return None
+
+
+def _emit_gh_skip_warning(reason):
+    """Failure-visibility fix (2026-09-08, mirrors build_price_momentum.py's
+    2026-09-07 fix, commit 71cd044e4): a fail-safe abort or uncaught
+    exception used to be a silent exit 0 (green workflow run, no trace).
+    When running under GitHub Actions, also emit a `::warning::` workflow
+    command so it shows up in the run summary, plus a GITHUB_STEP_SUMMARY
+    line when available. No-op on a local run (keeps local output clean)."""
+    if not os.environ.get('GITHUB_ACTIONS'):
+        return
+    stale_as_of = _existing_data_json_as_of() or '（無既有 data.json）'
+    msg = f"{reason}；data.json 未更新，本週資料停在 {stale_as_of}"
+    print(f"::warning title=Momentum-5 build skipped::{msg}")
+    summary_path = os.environ.get('GITHUB_STEP_SUMMARY')
+    if summary_path:
+        try:
+            with open(summary_path, 'a', encoding='utf-8') as f:
+                f.write(f"- ⚠️ **Momentum-5 build skipped** — {msg}\n")
+        except Exception:
+            pass
+
+
 def main():
     try:
         result = build()
     except Exception as e:
         # any screen/scrape failure -> keep last good data.json
         print(f"  ✗ screen failed ({type(e).__name__}: {e}) — data.json left unchanged")
+        _emit_gh_skip_warning(f"screen failed ({type(e).__name__}: {e})")
         sys.exit(0)
 
     if result is None:
-        # coverage fail-safe already logged
+        # coverage fail-safe already logged (warning already emitted in build())
         sys.exit(0)
 
     payload, raw_payload = result
