@@ -39,13 +39,15 @@ date: 2026-07-16
   // 前綴選擇器：Koyfin 的 CSS module 雜湊尾碼每次改版都會輪換，不要 hardcode 完整 class
   const heads = [...document.querySelectorAll('[class*="table__headerCell___"]')]
                   .map(h => h.innerText.replace(/\s+/g,' ').trim());
-  const idx = {ticker:-1, fy1:-1, fy2:-1, fy3:-1};
+  const idx = {ticker:-1, fy1:-1, fy2:-1, fy3:-1, roic:-1, fcfm:-1};
   heads.forEach((h,i) => {
     const l = h.toLowerCase();
     if (l === 'ticker') idx.ticker = i;
     else if (l.includes('eps norm') && l.includes('fy1')) idx.fy1 = i;
     else if (l.includes('eps norm') && l.includes('fy2')) idx.fy2 = i;
     else if (l.includes('eps norm') && l.includes('fy3')) idx.fy3 = i;
+    else if (l.includes('roic')) idx.roic = i;
+    else if ((l.includes('fcf') && l.includes('margin')) || (l.includes('free cash flow') && l.includes('margin'))) idx.fcfm = i;
   });
   const countryIdx = heads.findIndex(h => h.toLowerCase()==='country');
   window.__epsIdx = idx;
@@ -59,6 +61,8 @@ date: 2026-07-16
       if(!m) return;
       window.__eps[m[1]] = {
         fy1: cells[idx.fy1], fy2: cells[idx.fy2], fy3: cells[idx.fy3],
+        roic: idx.roic>=0 ? cells[idx.roic] : null,
+        fcfm: idx.fcfm>=0 ? cells[idx.fcfm] : null,
         country: countryIdx>=0 ? cells[countryIdx] : ''
       };
       n++;
@@ -70,7 +74,9 @@ date: 2026-07-16
 })()
 ```
 
-**Gate**：回傳的 `heads_found` 若有任一 = -1 → 表頭文字對不上，**先跑 Step 1.5 的橫向捲動再重試**（EPS 欄未渲染時表頭也讀不到）；橫向到底後仍 -1 才是 Koyfin 改欄名或欄位被移除，**停下**回報用戶。
+**Gate**：回傳的 `heads_found` 中 `ticker`／`fy1`／`fy2`／`fy3` 若有任一 = -1 → 表頭文字對不上，**先跑 Step 1.5 的橫向捲動再重試**（EPS 欄未渲染時表頭也讀不到）；橫向到底後仍 -1 才是 Koyfin 改欄名或欄位被移除，**停下**回報用戶。
+
+`roic`／`fcfm` 兩欄是**選填（OPTIONAL）**——Koyfin watchlist 目前不一定已加這兩欄，`heads_found.roic` / `heads_found.fcfm` = -1 **不擋 gate、不影響 EPS 抓取**；`grabEps()` 已對應把找不到的欄存 `null`。這兩欄一旦頁面上有值，Step 6 會把它們一併寫進 xlsx（見下），沒有就照舊只寫 EPS 三欄。
 
 **CSS class 雜湊會輪換**（2026-07-30 實測：`headerCell___gC361`→`___I7R3q`、`row___K6TSS`→`___RXyc3`、`dataCell___nRZp0`→`___V6mbY`、`scrollContainer___WBAWY`→`___E4YI-`，四個全換）。上面的程式碼已改用 `[class*="table__headerCell___"]` 這類**前綴選擇器**，對尾碼輪換免疫，不需要每次改版回來改 skill。若哪天連 `table__xxx___` 中段也變了（`rows_class_seen`=0），才用 `javascript_tool` 印出 scroll 容器內出現頻率最高的 class（≈ ticker 數）重新校準。
 
@@ -90,6 +96,8 @@ date: 2026-07-16
 推到最右後**重跑 Step 1 的注入**（讓 `heads` 在 EPS 欄已渲染的狀態下重新建立索引），確認 `heads_found` 四個值都 ≥ 0 再往下。Step 2 縱向捲動期間**不要動 `scrollLeft`**——一旦回到最左，EPS 欄會再次消失，後續抓到的列會全是空值。
 
 ⚠️ Ticker 欄通常是凍結欄（sticky），橫向捲到最右後仍可見，所以 `idx.ticker` 依然有效；若實測發現 ticker 也被捲走，改用「先抓一輪 ticker→列索引對照，再橫捲抓 EPS」兩趟合併。
+
+⚠️ **ROIC／FCF Margin 欄位可能不在最右側**——EPS 三欄固定在表格最右，但 `ROIC`／`FCF Margin` 這兩欄的水平位置由 watchlist 欄位排列決定，不保證跟 EPS 欄相鄰。捲到最右後若 `heads_found.roic` / `heads_found.fcfm` 仍是 -1，**不要當成錯誤**（這兩欄選填，見 Step 1 gate）；若確認頁面上其實有這兩欄只是還沒掃到，改採「左到右逐段捲動＋每段重讀 heads」的掃法找出實際欄位位置，再回頭捲到最右繼續 Step 2 的縱向抓取。
 
 ## Step 2 — 游標式捲動累積（虛擬列表關鍵）
 
@@ -149,16 +157,16 @@ print(','.join(sorted(set(bare(s['ticker']) for s in d['stocks']))))
 
 資料只能經 console 逐行倒出（頁面數值截斷限制）。**先在瀏覽器算指紋，落檔後重算比對**，一致才算數：
 
-瀏覽器端：
+瀏覽器端（`roic`／`fcfm` 一律併入指紋——欄位不存在時是 `null`／空字串，等同沒有訊息量，不影響既有檔案的指紋值）：
 ```javascript
 (() => {
   const e=window.__eps, keys=Object.keys(e).sort();
-  const canon = keys.map(k=>[k,e[k].fy1,e[k].fy2,e[k].fy3].join('|')).join('\n');
+  const canon = keys.map(k=>[k,e[k].fy1,e[k].fy2,e[k].fy3,e[k].roic||'',e[k].fcfm||''].join('|')).join('\n');
   let h=5381; for(let i=0;i<canon.length;i++){h=((h<<5)+h+canon.charCodeAt(i))>>>0;}
   return JSON.stringify({rows:keys.length, bytes:canon.length, djb2:h});
 })()
 ```
-倒資料：`console.log('EPSROW|'+[k,fy1,fy2,fy3,country].join('|'))` 逐檔，再 `read_console_messages{pattern:'EPSROW', limit:300}` 讀回全部。把 `EPSROW|` 後的 `ticker|fy1|fy2|fy3`（**照 sorted 順序、無尾換行**）寫入 scratchpad `eps_raw_YYYYMMDD.txt`，Python 重算 djb2：
+倒資料：`console.log('EPSROW|'+[k,fy1,fy2,fy3,roic||'',fcfm||'',country].join('|'))` 逐檔，再 `read_console_messages{pattern:'EPSROW', limit:300}` 讀回全部。把 `EPSROW|` 後的 `ticker|fy1|fy2|fy3|roic|fcfm`（**照 sorted 順序、無尾換行**）寫入 scratchpad `eps_raw_YYYYMMDD.txt`，Python 重算 djb2：
 ```python
 s=open(path).read().rstrip('\n'); h=5381
 for ch in s: h=((h<<5)+h+ord(ch))&0xffffffff
@@ -180,22 +188,35 @@ for ch in s: h=((h<<5)+h+ord(ch))&0xffffffff
 
 歐股 / ADR 特別注意 FX 與掛牌別名（LVMH→MC、SU、RMS 等）。
 
+**ROIC／FCF Margin 合理範圍 gate（2026-09-09 新增，選填欄位適用）**：兩欄數值須落在 **−100 至 200（%）** 之間，超出範圍視為**壞格**——不是整檔剔除，只把該欄**空白化**（EPS 三欄照留，該 ticker 繼續走 xlsx 主路徑，只有 ROIC 或 FCF Margin 這一格 fallback 回 QGM／yfinance）。逐檔判斷不需要 WebSearch 查證（跟 Step 5 的分割 gate 不同層級，這裡只做粗篩），單純數值落在區間外就空白。
+
 ## Step 6 — 建 xlsx
 
-7 欄 schema（loader 只讀前 4，growth/CAGR 留空由 build 自算），Sheet1「EPS Estimates」+ Sheet2「Notes」B2=snapshot 日期。`-` → 空格。**剔除清單**（Step 5 判定的壞值）不寫入：
+7 欄 schema（loader 只讀前 4，growth/CAGR 留空由 build 自算）**不變**，Sheet1「EPS Estimates」+ Sheet2「Notes」B2=snapshot 日期。`-` → 空格。**剔除清單**（Step 5 判定的壞值）不寫入。
+
+**新增兩欄（2026-09-09 起，選填）**：若這一輪有抓到 ROIC／FCF Margin（Step 1 的 `roic`/`fcfm`，通過 Step 5 合理範圍 gate），在第 7 欄之後**追加**「ROIC %」「FCF Margin %」兩欄（數字、百分比單位；壞格或缺值 `-` → 留空，不寫字串）。前 7 欄的欄序與型別完全不動，`load_eps_estimates_xlsx.py` 是表頭驅動比對（見 loader docstring），加欄不影響既有 7 欄的回讀，向下相容：
 
 ```python
 from openpyxl import Workbook
 wb=Workbook(); ws=wb.active; ws.title="EPS Estimates"
-ws.append(["Ticker","FY1E EPS","FY2E EPS","FY3E EPS","FY1->FY2 Growth %","FY2->FY3 Growth %","FY1->FY3 CAGR %"])
-for t,f1,f2,f3 in rows:  # rows 已排除 DROP 清單
-    ws.append([t,f1,f2,f3,None,None,None])
+header = ["Ticker","FY1E EPS","FY2E EPS","FY3E EPS","FY1->FY2 Growth %","FY2->FY3 Growth %","FY1->FY3 CAGR %"]
+have_quality = any(roic or fcfm for _,_,_,_,roic,fcfm in rows)  # 有抓到才加欄
+if have_quality:
+    header += ["ROIC %", "FCF Margin %"]
+ws.append(header)
+for t,f1,f2,f3,roic,fcfm in rows:  # rows 已排除 DROP 清單；roic/fcfm 抓不到或未過 Step 5 範圍 gate 時為 None
+    row = [t,f1,f2,f3,None,None,None]
+    if have_quality:
+        row += [roic, fcfm]  # None（原 "-" 或壞格）-> 空格
+    ws.append(row)
 ws2=wb.create_sheet("Notes")
 ws2["A2"]="Snapshot Date"; ws2["B2"]="YYYY-MM-DD"
+if have_quality:
+    ws2["A3"]="Quality Source"; ws2["B3"]="koyfin-web"
 ws2["B5"]="split/exclusion notes here"
 wb.save("data/eps-estimates/DD_universe_EPS_estimates_YYYYMMDD.xlsx")
 ```
-落檔後**用 loader 回讀驗證**：`load_excel(path)` → ticker 數對、抽查 3-5 檔值、剔除的不在、`-` 正確變 None。
+落檔後**用 loader 回讀驗證**：`load_excel(path)` → ticker 數對、抽查 3-5 檔值、剔除的不在、`-` 正確變 None；有加 ROIC/FCF Margin 欄時另抽查每檔的 `roic_pct`/`fcf_margin_pct` 數值與頁面一致、Excel 快照物件的 `snap.quality_source == "koyfin-web"`（讀自 Notes!B3，跟下面 Step 7 latest.json 每檔的 `quality_source == "koyfin-xlsx"` 是兩個不同欄位，別混淆）。
 
 ## Step 7 — 跑 build + 驗證
 
@@ -208,6 +229,7 @@ log 要看到 `Excel EPS source: DD_universe_EPS_estimates_YYYYMMDD.xlsx (snapsh
 - 抽查幾檔 FY EPS 已更新成新值
 - TW 檔 FX 有 fire（`eps_fx_rate` 非 None、`eps_display_currency`=TWD）
 - 剔除檔 `eps_source` 應為 yfinance
+- **有加 ROIC/FCF Margin 欄時（2026-09-09 起）**：build log 的 `quality (koyfin-xlsx path): rows=N roic=X fcf=Y` 這行，N 應約等於本輪有抓到 ROIC/FCF Margin 值的 ticker 數；抽查 3 檔 `latest.json` 的 `roic`/`fcf`/`quality_source` 與 Koyfin 頁面數值比對一致，`quality_source` 應為 `"koyfin-xlsx"`
 
 ## Step 8 — Commit + push（用戶說 push 才做）
 
@@ -237,6 +259,7 @@ commit 訊息列出：universe 數、分割調整檔、剔除檔、baseline 日�
 5b. **橫向先捲到底**（Step 1.5）——表格橫向也虛擬化，EPS 三欄未捲到就不在 DOM；縱向捲動全程不得動 `scrollLeft`。抓到整片空值時第一個要查的就是這條。
 6. **Commit scope tight**——只 add dd-screener bundle，不 add docs/dd/。
 7. **對帳 extra 應為空**——非空代表 universe 或別名沒同步。
+7b. **ROIC／FCF Margin 兩欄選填、不擋任何既有 gate**（2026-09-09）——Step 1 抓不到（`heads_found.roic`/`fcfm` = -1）不擋 Step 1 gate、不擋 EPS 抓取；Step 5 合理範圍外只空白化該格，不剔除整檔；Step 6 沒抓到就不寫這兩欄（沿用既有 7 欄 schema），dd-screener 品質欄自動 fallback 回 QGM／yfinance（見 `scripts/dd_screener_quality.py` 優先序）。
 8. **白話呈現條款（2026-09-01 持有人拍板，全站適用，極簡版）**：本 skill 為機械層資料管線，產出中若出現顯示 label（如 variant 頁欄位名），遵守 `notes/site-internal/root/_plainlang_styleguide.md` 對照表白話主名。
 
 ## 與 refresh-eps-screener 的差異速查

@@ -104,6 +104,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--paper);colo
 .src-qgm-tw{background:#eafaef;color:var(--pos)}
 .src-yfinance{background:var(--line-soft);color:var(--sec)}
 .src-yfinance-eu{background:#fbf3df;color:var(--warn)}
+.src-koyfin{background:#eaf3fb;color:#0369a1}
 /* MA badges */
 .ma-badge{font-size:9px;font-weight:600;display:block;margin-top:2px;white-space:nowrap}
 /* Timing cells (v1.1 — joined from screener/latest.json) */
@@ -463,12 +464,12 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--paper);colo
       </li>
 
       <li><strong>FCF（FCF Margin）</strong>：TTM 自由現金流 / 營收，百分比。
-        <br><em>來源：</em>優先 <code>docs/qgm/latest.json</code> 或 <code>docs/qgm-tw/latest.json</code>（<code>hard_filter_details.fcf_margin.value</code>）；不在 QGM 中的 ticker 走 <code>scripts/dd_screener_quality.py</code> → <code>fundamentals_us.calc_fcf_margin()</code>（yfinance）
+        <br><em>來源優先順序（2026-09-09 起）：</em>(1) Koyfin watchlist 頁面欄位（<code>refresh-eps-screener-web</code> 掃入 Excel 的 <code>FCF Margin %</code> 欄，經 <code>load_eps_estimates_xlsx.py</code> 解析為 <code>fcf_margin_pct</code>）— 有值即優先採用；(2) <code>docs/qgm/latest.json</code> 或 <code>docs/qgm-tw/latest.json</code>（<code>hard_filter_details.fcf_margin.value</code>）；(3) 前兩者皆無資料的 ticker 走 <code>scripts/dd_screener_quality.py</code> → <code>fundamentals_us.calc_fcf_margin()</code>（yfinance）。目前 Koyfin 欄位尚無實際資料，全數走 (2)/(3)。
         <br><em>QGM MLB 門檻：</em><code>≥ 10%</code>（綠色通過 / 紅色不過 / 灰色無資料）
       </li>
 
       <li><strong>ROIC</strong>：NOPAT / Invested Capital，百分比。
-        <br><em>來源：</em>同 FCF — QGM <code>hard_filter_details.roic.value</code> 優先；fallback <code>fundamentals_us.calc_roic()</code>（yfinance）
+        <br><em>來源優先順序：</em>同 FCF — (1) Koyfin watchlist 頁面 <code>ROIC %</code> 欄（優先）；(2) QGM <code>hard_filter_details.roic.value</code>；(3) fallback <code>fundamentals_us.calc_roic()</code>（yfinance）。任一欄位命中 Koyfin 來源時，來源 badge 顯示為「Koyfin」，兩欄（FCF／ROIC）各自獨立判斷是否採用。
         <br><em>QGM MLB 門檻：</em><code>≥ 15%</code>
       </li>
 
@@ -551,7 +552,8 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--paper);colo
         <br><em>定見：</em>v13/v14 合併報告直接跳該 DD 的 <code>#decision</code> 錨點（§13 統一裁決）；v12 舊報告無此連結。legacy <code>/dca/</code> 連結已移除（DCA 退役，凍結檔案仍在站上可從 /research/ 進入）
       </li>
 
-      <li><strong>資料來源 badge（QGM-US / QGM-TW / YF / YF-EU）</strong>：顯示在 Ticker 旁，標示 QGM-MLB 質量欄位（FCF / ROIC / EPS / PEG，＋ advisory 的 D/E）的實際資料來源。
+      <li><strong>資料來源 badge（Koyfin / QGM-US / QGM-TW / YF / YF-EU）</strong>：顯示在 Ticker 旁，標示 QGM-MLB 質量欄位（FCF / ROIC / EPS / PEG，＋ advisory 的 D/E）的實際資料來源。
+        <br><em>🔷 Koyfin：</em>ROIC／FCF Margin 兩欄任一命中 Koyfin watchlist 頁面掃入的 Excel 欄位（<code>refresh-eps-screener-web</code>）即顯示此 badge；其餘欄位（PEG／EPS CAGR／D/E）仍照各自原有來源顯示，不受此欄影響。2026-09-09 上線，尚無實際資料進來。
         <br><em>🔵 QGM-US：</em><code>docs/qgm/latest.json</code>（每週 GitHub Actions 跑 QGM 美股宇宙，~511 股）
         <br><em>🟢 QGM-TW：</em><code>docs/qgm-tw/latest.json</code>（台股宇宙）
         <br><em>⚪ YF：</em>yfinance 臨時抓取（不在 QGM 宇宙的美股、日股等）
@@ -728,7 +730,8 @@ function applyFilters(stocks) {
 // ── Rendering ──────────────────────────────────────────────────────────────
 function sourceBadge(src) {
   var cls = 'src-yfinance', label = src || '—';
-  if (src === 'qgm-us')      { cls = 'src-qgm-us';      label = 'QGM-US'; }
+  if (src === 'koyfin-xlsx') { cls = 'src-koyfin';      label = 'Koyfin'; }
+  else if (src === 'qgm-us')      { cls = 'src-qgm-us';      label = 'QGM-US'; }
   else if (src === 'qgm-tw') { cls = 'src-qgm-tw';      label = 'QGM-TW'; }
   else if (src === 'yfinance-eu') { cls = 'src-yfinance-eu'; label = 'YF-EU'; }
   else if (src === 'yfinance') { cls = 'src-yfinance';   label = 'YF'; }

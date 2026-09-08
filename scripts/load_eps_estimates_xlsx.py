@@ -12,7 +12,27 @@ Sheet 1 "EPS Estimates" columns (row 1 header):
   Ticker | FY1E EPS | FY2E EPS | FY3E EPS |
   FY1->FY2 Growth % | FY2->FY3 Growth % | FY1->FY3 CAGR %
 
-Sheet 2 "Notes" stores snapshot date at B2.
+Optional columns (2026-09-09, refresh-eps-screener-web Koyfin quality import —
+see .claude/skills/refresh-eps-screener-web/SKILL.md Step 1/6): any header
+containing "roic" (case-insensitive) maps to `roic`; any header containing
+both "fcf" and "margin" (or "free cash flow" and "margin") maps to
+`fcf_margin`. Both are OPTIONAL — files without them (all pre-2026-09 xlsx,
+and the sister `refresh-eps-screener` Excel-file skill until it adopts the
+same two columns) load exactly as before, with `roic_pct`/`fcf_margin_pct`
+simply None on every record.
+
+Percent-unit rule for the two optional columns: a value is treated as a raw
+ratio (e.g. 0.19) and multiplied by 100 iff its header has no "%" marker AND
+|value| <= 1.5 — real-world ROIC / FCF margins for this universe are well
+under 150%, so this cleanly separates "0.19" (ratio) from "19.4" (already a
+percent) without needing the header text as a cue. When the header itself
+says "%" (e.g. "ROIC %", the column refresh-eps-screener-web writes), the
+value is trusted as already being in percent units and passed through as-is.
+
+Sheet 2 "Notes" stores snapshot date at B2, and — optionally, only present on
+xlsx carrying the Koyfin ROIC/FCF Margin columns — a quality-source label at
+B3 (defaults to "koyfin-web" when absent, matching the A2/B2 label/value
+convention used for the snapshot date).
 
 Edge cases handled (per Notes B10):
   - FY3 missing (SEZL) -> fy3=None, growth_fy2_fy3=None, cagr=None
@@ -88,6 +108,11 @@ class ExcelSnapshot:
     snapshot_date: str
     source_file: str
     tickers: dict[str, dict] = field(default_factory=dict)
+    # 2026-09-09: Notes!B3 label for the optional Koyfin-scraped ROIC / FCF
+    # Margin columns (see module docstring). Defaults to "koyfin-web" — legacy
+    # xlsx files carry no B3 cell at all, so this is a snapshot-level default
+    # rather than a per-record field.
+    quality_source: str = "koyfin-web"
 
     def has(self, ticker: str) -> bool:
         return any(k in self.tickers for k in _alias_keys(ticker))
@@ -148,6 +173,10 @@ def _parse_eps_sheet(sheet_root, sst: list[str]) -> dict[str, dict]:
 
     # Header row: map column letter -> field name
     header_map: dict[str, str] = {}
+    # 2026-09-09: per-field "%" marker on the header text — drives the ratio
+    # vs already-percent decision for the optional roic/fcf_margin columns
+    # (see module docstring). Unused for the other fields.
+    field_has_pct: dict[str, bool] = {}
     for c in rows[0].findall("s:c", NS):
         v = _cell_value(c, sst)
         if not isinstance(v, str):
@@ -168,6 +197,12 @@ def _parse_eps_sheet(sheet_root, sst: list[str]) -> dict[str, dict]:
             header_map[col] = "growth_fy2_fy3"
         elif "fy1" in lv and "fy3" in lv and "cagr" in lv:
             header_map[col] = "cagr_fy1_fy3"
+        elif "roic" in lv:
+            header_map[col] = "roic"
+            field_has_pct["roic"] = "%" in lv
+        elif ("fcf" in lv and "margin" in lv) or ("free cash flow" in lv and "margin" in lv):
+            header_map[col] = "fcf_margin"
+            field_has_pct["fcf_margin"] = "%" in lv
 
     out: dict[str, dict] = {}
     for r in rows[1:]:
@@ -199,6 +234,18 @@ def _parse_eps_sheet(sheet_root, sst: list[str]) -> dict[str, dict]:
                 return None
             return round(float(x), 4)
 
+        # 2026-09-09: roic_pct / fcf_margin_pct — see module docstring for the
+        # ratio-vs-percent detection rule. `has_pct` comes from the header text
+        # captured once above; absent header (field never mapped) -> has_pct
+        # defaults False, but rec.get() will also be None so it's moot.
+        def _to_quality_pct(x, has_pct: bool):
+            if x is None or not isinstance(x, (int, float)):
+                return None
+            val = float(x)
+            if not has_pct and abs(val) <= 1.5:
+                val *= 100.0
+            return round(val, 4)
+
         out[ticker] = {
             "fy1": _to_eps(rec.get("fy1")),
             "fy2": _to_eps(rec.get("fy2")),
@@ -206,6 +253,8 @@ def _parse_eps_sheet(sheet_root, sst: list[str]) -> dict[str, dict]:
             "growth_fy1_fy2_pct": _to_pct(rec.get("growth_fy1_fy2")),
             "growth_fy2_fy3_pct": _to_pct(rec.get("growth_fy2_fy3")),
             "cagr_fy1_fy3_pct": _to_pct(rec.get("cagr_fy1_fy3")),
+            "roic_pct": _to_quality_pct(rec.get("roic"), field_has_pct.get("roic", False)),
+            "fcf_margin_pct": _to_quality_pct(rec.get("fcf_margin"), field_has_pct.get("fcf_margin", False)),
         }
     return out
 
@@ -224,6 +273,25 @@ def _parse_notes_snapshot_date(z: zipfile.ZipFile, sst: list[str]) -> str | None
     return None
 
 
+def _parse_notes_quality_source(z: zipfile.ZipFile, sst: list[str]) -> str:
+    """Optional Notes!B3 — label for the Koyfin-scraped ROIC / FCF Margin
+    columns (refresh-eps-screener-web Step 6). Absent on any xlsx that
+    predates the 2026-09-09 Koyfin quality import (or hasn't adopted it yet),
+    which is the common case — default to "koyfin-web" so callers never see
+    None here."""
+    if "xl/worksheets/sheet2.xml" not in z.namelist():
+        return "koyfin-web"
+    with z.open("xl/worksheets/sheet2.xml") as f:
+        root = ET.parse(f).getroot()
+    for r in root.findall(".//s:row", NS):
+        for c in r.findall("s:c", NS):
+            if c.attrib.get("r") == "B3":
+                v = _cell_value(c, sst)
+                if isinstance(v, str) and v.strip():
+                    return v.strip()
+    return "koyfin-web"
+
+
 def load_excel(path: Path) -> ExcelSnapshot:
     """Parse a specific xlsx file."""
     with zipfile.ZipFile(path) as z:
@@ -232,6 +300,7 @@ def load_excel(path: Path) -> ExcelSnapshot:
             sheet1 = ET.parse(f).getroot()
         tickers = _parse_eps_sheet(sheet1, sst)
         snap_date = _parse_notes_snapshot_date(z, sst)
+        quality_source = _parse_notes_quality_source(z, sst)
 
     if not snap_date:
         # Fallback: derive from filename DD_universe_EPS_estimates_YYYYMMDD.xlsx
@@ -246,6 +315,7 @@ def load_excel(path: Path) -> ExcelSnapshot:
         snapshot_date=snap_date,
         source_file=path.name,
         tickers=tickers,
+        quality_source=quality_source,
     )
 
 

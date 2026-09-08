@@ -454,7 +454,10 @@ def load_quality_cache(path: Path) -> dict[str, dict]:
     Mirrors load_ma_cache(). Only caches yfinance-source rows where at least
     one of the 5 fields was non-None last run (i.e. previous fetch wasn't
     itself a total wipe). QGM-sourced rows are skipped — those load from
-    QGM JSON on disk and don't need cache fallback.
+    QGM JSON on disk and don't need cache fallback. koyfin-xlsx rows (roic/fcf
+    override, 2026-09-09) are skipped for the same reason: they're re-derived
+    fresh from the Excel snapshot on every build, not fetched over the
+    network, so there's no outage signature to cache against.
 
     To avoid recursive cache pollution after multi-day outages, we still
     cache rows previously served from cache, but propagate the original
@@ -1677,6 +1680,13 @@ def enrich_ticker(
     both _compute_live_pe_drift() and _compute_live_eps_cagr() to avoid a
     duplicate yfinance call. Also computes EPS revision momentum vs prev_snapshot
     (monthly snapshot), live_peg, and live_ev5y_pct.
+
+    2026-09-09: source priority for roic/fcf is now koyfin-xlsx (Excel record's
+    roic_pct/fcf_margin_pct, scraped by refresh-eps-screener-web) → QGM →
+    yfinance. When the Excel record carries either field, it overrides
+    quality["roic"]/quality["fcf"] independently, quality_source becomes
+    "koyfin-xlsx", and quality_koyfin_stamp records the Excel snapshot date.
+    peg/de/eps2y are untouched by this override.
     """
     t = entry["ticker"]
     quality, source, quality_meta = get_quality_for_ticker(t, qgm_index)
@@ -1711,6 +1721,31 @@ def enrich_ticker(
         _excel_cagr = _excel_record_for_eps2y.get("cagr_fy1_fy3_pct")
         if _excel_cagr is not None:
             quality["eps2y"] = round(float(_excel_cagr), 2)
+
+    # 2026-09-09: Koyfin-scraped ROIC / FCF Margin override (refresh-eps-
+    # screener-web §1/§6, load_eps_estimates_xlsx.py roic_pct/fcf_margin_pct).
+    # Owner decision: once these two columns are present in the xlsx, they take
+    # priority over QGM/yfinance for those two fields specifically — everything
+    # else (peg/de/eps2y, and the QGM vs yfinance path for roic/fcf when the
+    # xlsx doesn't carry them) is untouched. Placed AFTER the v1.5 cache-
+    # fallback block above so cache-fallback (which only ever fires on a total
+    # yfinance wipe, checked against `source` before this block relabels it)
+    # can never clobber a Koyfin value landing here — this override always
+    # runs last and wins.
+    quality_koyfin_stamp = None
+    if _excel_record_for_eps2y is not None:
+        _koyfin_roic = _excel_record_for_eps2y.get("roic_pct")
+        _koyfin_fcf = _excel_record_for_eps2y.get("fcf_margin_pct")
+        koyfin_hit = False
+        if _koyfin_roic is not None:
+            quality["roic"] = round(float(_koyfin_roic), 2)
+            koyfin_hit = True
+        if _koyfin_fcf is not None:
+            quality["fcf"] = round(float(_koyfin_fcf), 2)
+            koyfin_hit = True
+        if koyfin_hit:
+            source = "koyfin-xlsx"
+            quality_koyfin_stamp = excel_snapshot.snapshot_date if excel_snapshot else None
 
     pass_count, fails = evaluate_criteria(quality)
 
@@ -1840,6 +1875,9 @@ def enrich_ticker(
         "quality_source": source,
         "quality_from_cache": quality_from_cache,
         "quality_cache_stamp": quality_cache_stamp,
+        # 2026-09-09: Excel snapshot date the roic/fcf koyfin-xlsx override (if
+        # any) came from. None when quality_source != "koyfin-xlsx".
+        "quality_koyfin_stamp": quality_koyfin_stamp,
         "ev5y_pct": ev5y_pct,
         "ma": ma,
         "ma_from_cache": ma_from_cache,
@@ -2140,6 +2178,13 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
     q_wipe = sum(1 for s in yf_rows if all(s.get(k) is None for k in _QUALITY_FIELDS))
     q_fresh = len(yf_rows) - q_cached - q_wipe
     print(f"  Step 5    quality (yfinance path): fresh={q_fresh} cached={q_cached} wiped={q_wipe} (of {len(yf_rows)})")
+    # 2026-09-09: koyfin-xlsx rows — relabeled by the roic/fcf Excel override in
+    # enrich_ticker(), doesn't overlap with the yfinance/QGM buckets above.
+    koyfin_rows = [s for s in enriched if s.get("quality_source") == "koyfin-xlsx"]
+    if koyfin_rows:
+        k_roic = sum(1 for s in koyfin_rows if s.get("roic") is not None)
+        k_fcf = sum(1 for s in koyfin_rows if s.get("fcf") is not None)
+        print(f"  Step 5    quality (koyfin-xlsx path): rows={len(koyfin_rows)} roic={k_roic} fcf={k_fcf}")
     print(f"  Step 5    pass distribution: pass5={sum(1 for s in enriched if s['pass_count']==5)} "
           f"pass4={sum(1 for s in enriched if s['pass_count']==4)} "
           f"pass3={sum(1 for s in enriched if s['pass_count']==3)}")
