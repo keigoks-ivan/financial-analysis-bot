@@ -529,13 +529,17 @@ def render_board_text(as_of, rows, core_seats, sat_seats, prev_snap, entered, la
             f"{'；'.join((r['grp'].get('why') or [])[:3])}"
         )
     L.append("")
-    L.append("== 無 DD 而機械過閘（DD 選配層的候選；有興趣才跑 DD）")
-    for r in own:
+    L.append("== 可選但先不入席：機械過閘、尚無 DD")
+    L.append("這些名字三閘都過，但成長只有單年預估、也還沒有人研究過，所以只列隊、不佔席。"
+             "跑完 DD 就會進 dd-screener，以三年成長率重新競爭席位。")
+    for r in own:   # own 已按擁有層分降冪排列，此處不需另外排序
         if r.get("src") == "qgm" and r["grp"]["pass"]:
+            g = r["grp"]
             L.append(
-                f"   {tk(r['ticker'])} score {_n(r['score'], W_SCORE)} grow {_n(r['grp'].get('g'), W_GROW)} "
-                f"ROIC {_n(r.get('roic'), W_ROIC)} PEG {_n(r.get('peg'), W_PEG, 2)} "
-                f"{_pad(TIMING_CODE.get(r['grp'].get('p_label'), 'DN'), W_TIMING)} {r.get('hyst') or ''}"
+                f"   {tk(r['ticker'])} score {_n(r['score'], W_SCORE)} grow(單年) {_n(g.get('g'), W_GROW)} "
+                f"ROIC {_n(r.get('roic'), W_ROIC)} FCF {_n(r.get('fcf'), W_FCF)} "
+                f"distHi {_n(g.get('dist_hi'), 6)} "
+                f"{_pad(TIMING_CODE.get(g.get('p_label'), 'DN'), W_TIMING)}"
             )
     return "\n".join(L) + "\n"
 
@@ -893,20 +897,23 @@ def render_board_html(as_of, rows, core_seats, sat_seats, prev_snap, entered, la
     else:
         ng_tbl = '<div class="bw-note-line">進場票全數過機械三閘，無需人工複審。</div>'
 
-    # ── 無 DD 而機械過閘（DD 選配層候選） ──
+    # ── 可選但先不入席：機械過閘、尚無 DD（v2 席位需有 DD，2026-09-08）──
+    # own 已按擁有層分降冪排列，qgm_cands 保留該順序（等同「Sort that table by own
+    # score desc」）。
     qgm_cands = [r for r in own if r.get("src") == "qgm" and r["grp"]["pass"]]
     if qgm_cands:
-        q_thead = ('<tr><th class="bw-l">Ticker</th><th>分</th><th>成長%</th><th>ROIC%</th>'
-                   '<th>PEG</th><th class="bw-l">時機燈</th><th class="bw-l">遲滯</th></tr>')
+        q_thead = ('<tr><th class="bw-l">Ticker</th><th>擁有層分</th>'
+                   '<th title="FY1→FY2 單年成長率（yfinance）——非 DD 池慣用的 FY1→FY3 CAGR，兩把尺不等長">成長%（單年）</th>'
+                   '<th>ROIC%</th><th>FCF%</th><th>距高%</th><th class="bw-l">時機燈</th></tr>')
         q_rows = []
         for r in qgm_cands:
             g = r["grp"]
             q_rows.append(
                 f'<tr><td class="bw-l"><strong>{_tk_link(r)}</strong></td>'
                 f"<td>{_num(r.get('score'), 1)}</td><td>{_num(g.get('g'), 1)}</td>"
-                f"<td>{_num(r.get('roic'), 1)}</td><td>{_num(r.get('peg'), 2)}</td>"
-                f'<td class="bw-l">{_timing_pill(g.get("p_label"), r.get("r26"), g.get("dist_hi"))}</td>'
-                f'<td class="bw-l">{escape(r.get("hyst") or "—")}</td></tr>')
+                f"<td>{_num(r.get('roic'), 1)}</td><td>{_num(r.get('fcf'), 1)}</td>"
+                f"<td>{_num(g.get('dist_hi'), 1)}</td>"
+                f'<td class="bw-l">{_timing_pill(g.get("p_label"), r.get("r26"), g.get("dist_hi"))}</td></tr>')
         qgm_tbl = ('<div class="bw-scroll"><table><thead>' + q_thead + "</thead><tbody>"
                    + "".join(q_rows) + "</tbody></table></div>")
     else:
@@ -933,8 +940,9 @@ def render_board_html(as_of, rows, core_seats, sat_seats, prev_snap, entered, la
         + '<h3 class="bw-sec">DD 進場 vs 機械資格</h3>'
         + f'<div class="bw-sub">{escape(dd_gate_sub)}——過閘者已在席位或候補中，這裡只列未過者供人工複審。</div>'
         + ng_tbl
-        + '<h3 class="bw-sec">無 DD 而機械過閘（DD 選配層候選）</h3>'
-        + '<div class="bw-sub">QGM 品質池名字，機械三閘全過但尚無 DD 裁決——有興趣才跑 DD。</div>'
+        + '<h3 class="bw-sec">可選但先不入席：機械過閘、尚無 DD</h3>'
+        + '<div class="bw-sub">這些名字三閘都過，但成長只有單年預估、也還沒有人研究過，所以只列隊、不佔席。'
+          '跑完 DD 就會進 dd-screener，以三年成長率重新競爭席位。</div>'
         + qgm_tbl
         + '<div class="bw-note-line">同內容另存純文字版 <a href="/engine/board.txt">board.txt</a>（終端機／郵件用）。</div>'
         + "</div>"
@@ -1013,7 +1021,15 @@ def main() -> int:
         as_of = json.loads(DD_LATEST.read_text(encoding="utf-8")).get("as_of", "—")
     except (OSError, json.JSONDecodeError):
         as_of = "—"
-    for r in universe_rows:
+    # v2 席位需有 DD（2026-09-08 持有人拍板，見 knowledge/rule_ledger.md）：QGM 品質池
+    # 無 DD 名字（src=="qgm"）可入母體、可列「可選但先不入席」隊列，但不得入席／候補、
+    # 不計遲滯——它們的成長是 FY1→FY2 單年（yfinance），DD 池名字是 FY1→FY3 CAGR
+    # （Koyfin），兩把尺不等長，30 分封頂讓單年基期效應（如 INCY +157%）直接拿滿分，
+    # 2026-09-08 VRTX／INCY 就這樣以 33 分擠掉 LLY（27.2，三年口徑）。seat_universe 把
+    # QGM 名字整批排除在遲滯累計／席位／候補之外；它們仍在 universe_rows 全母體看板與
+    # 下方「可選但先不入席」隊列露出。
+    seat_universe = [r for r in universe_rows if r.get("src") != "qgm"]
+    for r in seat_universe:
         h = hist.setdefault(r["ticker"], [])
         if h and h[-1][0] == as_of:
             h[-1] = [as_of, bool(r["grp"]["pass"])]
@@ -1045,9 +1061,9 @@ def main() -> int:
         if r["grp"]["pass"]:
             r["hyst"] = f"候補·待第 2 次過閘（{len(recent)}/{HYST_NEW_RUNS}）"
         return False
-    passed = [r for r in universe_rows if eligible(r)]
+    passed = [r for r in seat_universe if eligible(r)]
     passed.sort(key=lambda r: (0 if r["grp"]["pass"] else 1, -(r["score"] or 0)))   # 過閘者優先，觀察中現任其後
-    failed = [r for r in universe_rows if r not in passed]
+    failed = [r for r in seat_universe if r not in passed]
     core_pass = [r for r in passed if r["route"] == "core"]
     sat_pass = [r for r in passed if r["route"] == "satellite"]
     core_seats = core_pass[:CORE_SLOTS]
@@ -1057,7 +1073,7 @@ def main() -> int:
     entered = [r for r in universe_rows if r["verdict"] == "進場"]
 
     seated = {r["ticker"] for r in core_seats + sat_seats}
-    challengers = [r for r in universe_rows if r["grp"]["pass"] and r["ticker"] not in seated]
+    challengers = [r for r in seat_universe if r["grp"]["pass"] and r["ticker"] not in seated]
     challengers.sort(key=lambda r: -r["score"])
 
     # 擂台配對（v2）：軌別配對——核心席 vs 核心向挑戰者、衛星席 vs 衛星向挑戰者
