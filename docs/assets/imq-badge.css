@@ -1,0 +1,135 @@
+/* imq-badge.css — 品質 × 時機四格徽章 ＋ 品質×時機矩陣 共用元件樣式
+ * 設計稿：notes/site-internal/root/_quality_timing_matrix_design_20260908.md
+ * 純 CSS，不依賴任何外部資源。刻意不吃用站的 --pos/--accent 等 token——
+ * 徽章要求「同一檔在任何頁面長得一樣」，screener.html 沒有引入 imq-base.css，
+ * 所以本檔自帶一份固定色盤（qtm- 前綴，不與任何主頁 :root 變數同名）。
+ */
+:root{
+  --qtm-ink:#0c1521; --qtm-body:#2a3a52; --qtm-sec:#6b7a92; --qtm-muted:#9aa7b8;
+  --qtm-card:#ffffff; --qtm-line:#e5dfd0; --qtm-line-soft:#efe9da;
+  --qtm-pos:#15803d;    --qtm-pos-bg:#eafaef;
+  --qtm-neg:#b91c1c;    --qtm-neg-bg:#fbeceb;
+  --qtm-warn:#a16207;   --qtm-warn-bg:#fbf3df;
+  --qtm-accent:#8f6d2c; --qtm-accent-bg:#fdf4e3;
+  --qtm-mut:#6b7a92;    --qtm-mut-bg:#eef1f5;
+  --qtm-shadow:0 1px 3px rgba(13,34,68,.08),0 1px 2px rgba(13,34,68,.05);
+}
+
+.qtm-root,.qtm-root *{box-sizing:border-box}
+.qtm-root{font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--qtm-body)}
+
+/* ── 四格徽章 ─────────────────────────────────────────────────────── */
+.qtm-badge{display:inline-flex;align-items:stretch;gap:2px;vertical-align:middle;cursor:pointer;
+  background:none;border:0;padding:0;font:inherit;line-height:1}
+.qtm-badge:focus-visible{outline:2px solid var(--qtm-accent);outline-offset:2px}
+.qtm-cell{display:inline-flex;align-items:center;gap:.2rem;border-radius:4px;white-space:nowrap;
+  font-family:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace}
+.qtm-dot{width:6px;height:6px;border-radius:50%;flex:0 0 auto}
+/* 徽章只有一種尺寸——四格色點＋2 字短標，用於名單頁代號旁 */
+.qtm-badge .qtm-cell{font-size:9.5px;padding:1px 3px;background:var(--qtm-mut-bg);color:var(--qtm-sec)}
+.qtm-cell.q-pos,.qtm-cell.q-pos .qtm-dot{color:var(--qtm-pos)}
+.qtm-cell.q-pos{background:var(--qtm-pos-bg)}
+.qtm-cell.q-pos .qtm-dot{background:var(--qtm-pos)}
+.qtm-cell.q-neg,.qtm-cell.q-neg .qtm-dot{color:var(--qtm-neg)}
+.qtm-cell.q-neg{background:var(--qtm-neg-bg)}
+.qtm-cell.q-neg .qtm-dot{background:var(--qtm-neg)}
+.qtm-cell.q-warn,.qtm-cell.q-warn .qtm-dot{color:var(--qtm-warn)}
+.qtm-cell.q-warn{background:var(--qtm-warn-bg)}
+.qtm-cell.q-warn .qtm-dot{background:var(--qtm-warn)}
+.qtm-cell.q-accent,.qtm-cell.q-accent .qtm-dot{color:var(--qtm-accent)}
+.qtm-cell.q-accent{background:var(--qtm-accent-bg)}
+.qtm-cell.q-accent .qtm-dot{background:var(--qtm-accent)}
+.qtm-cell.q-mut,.qtm-cell.q-mut .qtm-dot{color:var(--qtm-muted)}
+.qtm-cell.q-mut .qtm-dot{background:var(--qtm-muted)}
+.qtm-badge-load{font-size:9.5px;color:var(--qtm-muted);font-family:'IBM Plex Mono',monospace}
+
+/* ── 彈出小卡 ─────────────────────────────────────────────────────── */
+.qtm-pop{position:fixed;z-index:9999;width:280px;max-width:92vw;background:var(--qtm-card);
+  border:1px solid var(--qtm-line);border-radius:10px;box-shadow:0 12px 30px rgba(13,34,68,.18);
+  padding:.85rem .95rem;font-size:.8rem;display:none}
+.qtm-pop.open{display:block}
+.qtm-pop-head{display:flex;align-items:baseline;justify-content:space-between;gap:.5rem;
+  margin-bottom:.5rem;padding-bottom:.45rem;border-bottom:1px solid var(--qtm-line-soft)}
+.qtm-pop-tk{font-weight:700;font-size:1rem;color:var(--qtm-ink)}
+.qtm-pop-close{cursor:pointer;color:var(--qtm-muted);font-size:1rem;line-height:1;background:none;border:0;padding:2px}
+.qtm-pop-row{display:flex;justify-content:space-between;gap:.6rem;padding:.3rem 0;
+  border-bottom:1px solid var(--qtm-line-soft)}
+.qtm-pop-row:last-of-type{border-bottom:0}
+.qtm-pop-k{color:var(--qtm-muted);font-size:.72rem;flex:0 0 auto;padding-top:.1rem}
+.qtm-pop-v{text-align:right;color:var(--qtm-body)}
+.qtm-pop-sub{display:block;font-size:.68rem;color:var(--qtm-muted);margin-top:.1rem}
+.qtm-pop-links{display:flex;flex-direction:column;gap:.3rem;margin-top:.6rem;padding-top:.5rem;
+  border-top:1px solid var(--qtm-line-soft)}
+.qtm-pop-links a{color:#0d2244;font-size:.76rem;text-decoration:none;font-weight:600}
+.qtm-pop-links a:hover{text-decoration:underline}
+.qtm-pop-empty{color:var(--qtm-muted);font-size:.74rem}
+
+/* ── 矩陣 ─────────────────────────────────────────────────────────── */
+.qtm-matrix{background:var(--qtm-card);border:1px solid var(--qtm-line);border-radius:10px;
+  padding:1rem 1.1rem 1.2rem;box-shadow:var(--qtm-shadow)}
+.qtm-matrix h3{font-family:'Playfair Display','Noto Serif TC',Georgia,serif;font-size:1.1rem;
+  font-weight:700;color:var(--qtm-ink);margin:0 0 .3rem}
+.qtm-matrix .qtm-lede{font-size:.82rem;color:var(--qtm-sec);line-height:1.75;margin:0 0 .8rem;max-width:900px}
+.qtm-controls{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.85rem}
+.qtm-chip{appearance:none;background:var(--qtm-mut-bg);border:1px solid var(--qtm-line);border-radius:14px;
+  font-size:.74rem;font-weight:600;color:var(--qtm-sec);padding:.28rem .75rem;cursor:pointer;font-family:inherit}
+.qtm-chip.on{background:#0d2244;border-color:#0d2244;color:#fff}
+.qtm-empty{color:var(--qtm-muted);font-size:.82rem;padding:.6rem 0}
+
+.qtm-scroll{overflow-x:auto}
+.qtm-grid{display:grid;grid-template-columns:min-content repeat(3,minmax(190px,1fr));gap:.5rem;min-width:760px}
+.qtm-gh{font-family:'IBM Plex Mono',monospace;font-size:.66rem;font-weight:700;letter-spacing:.05em;
+  color:var(--qtm-sec);text-transform:uppercase;padding:.3rem .4rem;align-self:end}
+.qtm-gh small{display:block;font-family:'Inter','Noto Sans TC',sans-serif;font-size:.66rem;
+  font-weight:500;color:var(--qtm-muted);text-transform:none;letter-spacing:0;margin-top:.15rem}
+.qtm-row-label{display:flex;align-items:center;font-weight:700;color:var(--qtm-ink);font-size:.86rem;
+  padding:.3rem .4rem;white-space:nowrap}
+.qtm-cellbox{border:1px solid var(--qtm-line-soft);border-radius:8px;padding:.55rem .65rem;min-height:64px;
+  background:#fbfaf7;position:relative}
+.qtm-cellbox.role{border-left:4px solid var(--qtm-sec)}
+.qtm-cellbox.role.role-accent{border-left-color:var(--qtm-accent)}
+.qtm-cellbox.role.role-neg{border-left-color:var(--qtm-neg)}
+.qtm-cellbox.role.role-warn{border-left-color:var(--qtm-warn)}
+.qtm-cellbox.seat-warn{background:#fdf0ef}
+.qtm-role-tag{display:inline-block;font-size:.68rem;font-weight:700;margin-bottom:.3rem}
+.qtm-role-tag.role-accent{color:var(--qtm-accent)}
+.qtm-role-tag.role-neg{color:var(--qtm-neg)}
+.qtm-role-tag.role-warn{color:var(--qtm-warn)}
+.qtm-cell-count{font-family:'IBM Plex Mono',monospace;font-size:1.15rem;font-weight:700;color:var(--qtm-ink)}
+.qtm-cell-delta{font-size:.68rem;color:var(--qtm-muted);margin-left:.35rem;font-family:'IBM Plex Mono',monospace}
+.qtm-cell-delta.up{color:var(--qtm-pos)}
+.qtm-cell-delta.down{color:var(--qtm-neg)}
+.qtm-tk-list{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.4rem}
+.qtm-tk{display:inline-flex;align-items:center;gap:.18rem;font-family:'IBM Plex Mono',monospace;font-size:.72rem;
+  font-weight:600;padding:.1rem .4rem;border-radius:4px;color:var(--qtm-ink);background:#fff;
+  border:1px solid var(--qtm-line);cursor:pointer}
+.qtm-tk.dd-in{border-style:solid;border-color:var(--qtm-pos);background:var(--qtm-pos-bg);color:var(--qtm-pos)}
+.qtm-tk.dd-watch{border-style:solid;background:#fff}
+.qtm-tk.dd-none{border-style:dashed}
+.qtm-tk.dd-avoid{border-style:solid;border-color:var(--qtm-neg);text-decoration:line-through;color:var(--qtm-neg)}
+.qtm-tk.new-week{text-decoration:underline;text-decoration-style:solid}
+.qtm-tk .qtm-seat{font-size:.6rem;font-weight:700;color:#fff;background:var(--qtm-accent);
+  border-radius:3px;padding:0 .22rem;line-height:1.35}
+.qtm-more{font-size:.7rem;color:var(--qtm-sec);cursor:pointer;background:none;border:0;padding:.1rem .3rem;
+  font-family:inherit;text-decoration:underline}
+.qtm-collapsed .qtm-tk-list,.qtm-collapsed .qtm-more{display:none}
+.qtm-toggle-collapse{font-size:.68rem;color:var(--qtm-sec);cursor:pointer;text-decoration:underline;
+  background:none;border:0;padding:0;font-family:inherit}
+
+.qtm-hitrate{margin-top:1rem;padding-top:.8rem;border-top:1px solid var(--qtm-line-soft)}
+.qtm-hitrate h4{font-size:.8rem;font-weight:700;color:var(--qtm-ink);margin:0 0 .4rem}
+.qtm-hit-row{font-size:.78rem;color:var(--qtm-body);line-height:1.8;padding:.15rem 0}
+.qtm-hit-row b{color:var(--qtm-ink)}
+.qtm-hit-lowsample{color:var(--qtm-muted);font-weight:600}
+.qtm-hitrate .qtm-foot{font-size:.68rem;color:var(--qtm-muted);margin-top:.35rem}
+
+/* ── 手機：矩陣三欄改每列一張卡堆疊 ─────────────────────────────────── */
+@media(max-width:640px){
+  .qtm-grid{grid-template-columns:1fr;min-width:0}
+  .qtm-gh{display:none}
+  .qtm-row-label{padding-top:.7rem;border-top:1px solid var(--qtm-line);margin-top:.3rem}
+  .qtm-grid>.qtm-row-label:first-of-type{border-top:0;margin-top:0}
+  .qtm-cellbox::before{content:attr(data-qtm-colname);display:block;font-size:.64rem;font-weight:700;
+    letter-spacing:.05em;text-transform:uppercase;color:var(--qtm-muted);margin-bottom:.25rem}
+  .qtm-pop{width:auto;left:4vw !important;right:4vw !important}
+}

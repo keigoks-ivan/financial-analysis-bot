@@ -7,6 +7,8 @@
 <title>選股主控台 — InvestMQuest Research</title>
 <meta name="description" content="全站選股體系的單一整合入口：總覽（天氣×陣容）／席位排序／流程板機／精選榜四分頁。">
 <link rel="stylesheet" href="/assets/imq-base.css">
+<link rel="stylesheet" href="/assets/imq-badge.css">
+<script src="/assets/imq-badge.js"></script>
 <style>
 :root{
   --bg:var(--paper);--card:var(--card);--accent:#0d2244;--text:var(--ink);--text-sec:var(--body);--muted:var(--muted);
@@ -650,7 +652,16 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
     // 選股看板（HTML TABLE 版）已含席位＋燈號＋DD/護城河，是陣容區首個元素；
     // 舊 13 欄明細表收進 <details>（板機欄是它獨有的資訊，故保留，預設收合——
     // 看板 fetch 失敗時無看板卡，明細表改預設展開，陣容不至於整塊開天窗）
+    // 品質 × 時機矩陣掛在「目前席位」之後、「全母體看板」之前——
+    // 看板片段是既有 S.boardHtml 字串（載入邏輯不動），這裡只在組字串時插一個
+    // 掛載點；不動 renderRoster() 抓看板片段的既有邏輯。
     var boardCard = S.boardHtml || '';
+    var matrixMount = '<div id="qt-matrix-mount" style="margin:1.1rem 0"></div>';
+    var splitTag = '<h3 class="bw-sec">全母體看板';
+    var splitIdx = boardCard.indexOf(splitTag);
+    boardCard = (splitIdx >= 0)
+      ? (boardCard.slice(0, splitIdx) + matrixMount + boardCard.slice(splitIdx))
+      : (matrixMount + boardCard);
     mount.innerHTML = boardCard +
       '<details class="ref-fold"'+(boardCard?'':' open')+'><summary>席位明細（含板機）<small>13 欄完整表</small></summary>'+
       '<div class="ref-body">'+
@@ -662,6 +673,7 @@ footer.foot{padding:2.2rem 0 3rem;border-top:1px solid var(--border);margin-top:
       'DD 只做 veto／角色標籤，不參與排序；上修為燈號；等寬版看 <a href="/engine/board.txt">/engine/board.txt</a>'+
       '</div></div></details>';
     refreshLampCells(mount);
+    if(window.IMQBadge) window.IMQBadge.mountMatrix('qt-matrix-mount', {universe:'board'});
   }
   // 「時機」欄（個股階段雷達，/stages/data/lamp.json）：建置期看板片段已含建置當時的
   // 階段值，這裡在頁面載入時再 fetch 一次覆寫成當天最新——404／格式錯就靜默保留建置期值。
