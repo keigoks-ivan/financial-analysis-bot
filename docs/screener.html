@@ -185,6 +185,8 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
       <b>Score</b> — RS (60%) + VCP (40%) composite score<br>
       <b>RS</b> — Relative Strength: percentile rank within the S&amp;P 500 + Nasdaq-100 population (~520 names, 1W/4W/13W weighted)<br>
       <b>Trend</b> — RS momentum: Accel (rising), Steady, Fading (declining), Choppy<br>
+      <b>RS 12M</b> — a parallel 12-month relative strength percentile, double-weighting the latest quarter's return; doesn't feed the ranking, RS above stays the ranking input<br>
+      <b>RS Line</b> — price relative to SPY (price ÷ SPY price); a dot marks names whose RS line itself is at a 52-week high<br>
       <b>VCP</b> — Volatility Contraction Pattern: gate + score — must pass the Trend Template (uptrend structure) and show a real shrinking-pullback base to score above 30/40 (Pattern✓ / Trend✗ / Contract✗ marks which gate it's on)<br>
       <b>vs200MA</b> — Current price vs 200-day moving average<br>
       <b>fm High</b> — Distance from 52-week high<br>
@@ -201,6 +203,8 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
       <b>總分</b> — RS (60%) + VCP (40%) 綜合評分<br>
       <b>RS</b> — 相對強度：在 S&amp;P 500 +那斯達克100 母體（約520支）中的百分位排名（1週/4週/13週加權）<br>
       <b>趨勢</b> — RS 動能：加速（上升）、穩定、衰退（下降）、震盪<br>
+      <b>RS 12M</b> — 平行參考欄，12個月相對強度百分位、最近一季報酬加倍計權；不參與排序，排序仍看上面的 RS 欄<br>
+      <b>RS 線</b> — 股價相對大盤（股價 ÷ SPY 股價）；有圓點代表這條線本身正處於52週新高<br>
       <b>VCP</b> — 波動收斂型態：先過閘再給分——須先符合趨勢範本（上升結構）且收縮幅度真的一波比一波小，分數才能超過30／40分（型態✓／趨勢✗／收縮✗ 標示卡在哪一關）<br>
       <b>vs200MA</b> — 現價 vs 200日均線<br>
       <b>距高點</b> — 距離52週高點<br>
@@ -235,6 +239,8 @@ var COLS=[
   {key:'combined',en:'Score',zh:'總分',align:'right',w:'40px'},
   {key:'rs_score',en:'RS',zh:'RS',align:'right',w:'34px'},
   {key:'rs_trend',en:'Trend',zh:'趨勢',align:'left',w:'36px'},
+  {key:'rs_ibd',en:'RS 12M',zh:'RS 12M',align:'right',w:'44px'},
+  {key:'rs_line_new_high',en:'RS Line',zh:'RS 線',align:'center',w:'40px'},
   {key:'vcp_score',en:'VCP',zh:'VCP',align:'right',w:'44px'},
   {key:'price',en:'Price',zh:'價格',align:'right',w:'48px'},
   {key:'vs_200ma_pct',en:'vs200MA',zh:'vs200MA',align:'right',w:'48px'},
@@ -286,6 +292,8 @@ function renderTable(){
         case 'combined': v=r.combined.toFixed(1); s+='font-weight:700;color:'+(r.combined>=70?C.green:r.combined>=50?C.navy:C.red)+';'; break;
         case 'rs_score': v=r.rs_score.toFixed(0); s+='color:'+(r.rs_score>=80?C.green:r.rs_score>=60?C.navy:C.red)+';'; break;
         case 'rs_trend': var t=TREND_MAP[r.rs_trend]||TREND_MAP.choppy; v='<span class="badge '+t.cls+'">'+(currentLang==='zh'?t.zh:t.en)+'</span>'; break;
+        case 'rs_ibd': v=(r.rs_ibd!=null)?r.rs_ibd.toFixed(0):'—'; s+='color:'+(r.rs_ibd>=80?C.green:r.rs_ibd>=60?C.navy:C.muted)+';'; break;
+        case 'rs_line_new_high': v=r.rs_line_new_high?'<span style="color:'+C.green+';font-weight:700">●</span>':''; break;
         case 'vcp_score':
           var vg={pass:{zh:'型態✓',en:'Pattern✓'},trend:{zh:'趨勢✗',en:'Trend✗'},contraction:{zh:'收縮✗',en:'Contract✗'}};
           var vgm=vg[r.vcp_gate]||vg.contraction;

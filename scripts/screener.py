@@ -677,8 +677,12 @@ def main():
     prev = load_previous_history()
 
     # ── Calculate RS for all stocks ─────────────────────────────────────
+    # (rs_raw / tickers_list / pr1w / pr4w / pr13w below are the UNTOUCHED
+    # rs_score inputs — 2026-09-08 commit 3 adds rs_ibd as a parallel,
+    # separately-computed field further down; it never feeds rs_raw.)
     print("  Calculating RS scores...")
     rs_raw = {}  # {ticker: {r1w, r4w, r13w}}
+    rs_ibd_raw = {}  # {ticker: IBD-style weighted return}, NEW field (3a), independent of rs_raw
     for ticker in WATCHLIST:
         try:
             closes = data[ticker]['Close'].dropna()
@@ -687,6 +691,16 @@ def main():
             r13w = calc_return(closes, 63)
             if r1w is not None and r4w is not None and r13w is not None:
                 rs_raw[ticker] = {'r1w': r1w, 'r4w': r4w, 'r13w': r13w}
+
+            # rs_ibd raw input (3a): 2*r63 + r126 + r189 + r252 (percent
+            # returns), None-if-insufficient — percentile-ranked below,
+            # NO EMA smoothing. Purely additive: does not touch rs_raw.
+            r63 = calc_return(closes, 63)
+            r126 = calc_return(closes, 126)
+            r189 = calc_return(closes, 189)
+            r252 = calc_return(closes, 252)
+            if None not in (r63, r126, r189, r252):
+                rs_ibd_raw[ticker] = 2 * r63 + r126 + r189 + r252
         except:
             pass
 
@@ -703,6 +717,18 @@ def main():
     pr1w = percentile_rank(r1w_vals)
     pr4w = percentile_rank(r4w_vals)
     pr13w = percentile_rank(r13w_vals)
+
+    # rs_ibd percentile (3a, NEW): ranked within the same tickers_list
+    # population as rs_score, using the existing percentile_rank (NaN-safe
+    # for tickers with insufficient bars) — no EMA smoothing.
+    rs_ibd_vals = [rs_ibd_raw.get(t, np.nan) for t in tickers_list]
+    pr_ibd = percentile_rank(rs_ibd_vals)
+
+    # SPY close series for rs_line (3a, NEW), fetched once for the loop below.
+    try:
+        spy_closes_full = data[BENCHMARK]['Close'].dropna()
+    except Exception:
+        spy_closes_full = pd.Series(dtype=float)
 
     # ── EMA smooth + trend + final RS ───────────────────────────────────
     results = []
@@ -737,6 +763,10 @@ def main():
 
         rs_score = min(100, persistence + bonus)
 
+        # rs_ibd (3a, NEW parallel field): percentile of the IBD-style
+        # weighted return, no EMA smoothing, None when insufficient bars.
+        rs_ibd = None if np.isnan(pr_ibd[i]) else round(float(pr_ibd[i]), 1)
+
         # ── VCP ─────────────────────────────────────────────────────────
         try:
             closes = data[ticker]['Close'].dropna()
@@ -749,6 +779,24 @@ def main():
 
             vcp = calc_vcp(closes, highs, lows, volumes)
             extras = calc_extra_indicators(closes, highs, lows, price)
+
+            # rs_line_pct_from_high / rs_line_new_high (3a, NEW): RS line =
+            # close / SPY close; value = today's RS line vs its own max over
+            # the last <=252 bars. None when there's no usable overlap with SPY.
+            common_idx = closes.index.intersection(spy_closes_full.index)
+            rs_line = (closes.reindex(common_idx) / spy_closes_full.reindex(common_idx)).dropna()
+            if len(rs_line) > 0:
+                rs_line_window = rs_line.iloc[-min(252, len(rs_line)):]
+                rsl_max = rs_line_window.max()
+                if rsl_max > 0:
+                    rs_line_pct_from_high = round((rs_line.iloc[-1] / rsl_max - 1) * 100, 2)
+                    rs_line_new_high = bool(rs_line_pct_from_high >= -0.5)
+                else:
+                    rs_line_pct_from_high = None
+                    rs_line_new_high = False
+            else:
+                rs_line_pct_from_high = None
+                rs_line_new_high = False
 
             # Price-action override for V-shape recovery: percentile-rank trend
             # lags after a sharp reversal because s1w/s4w/s13w ordering is noisy.
@@ -769,6 +817,8 @@ def main():
             vcp = _vcp_empty_result()
             extras = {'ma21_pct': None, 'ma50_pct': None, 'dist_52w_high_pct': None,
                       'rsi14': None, 'atr_pct': None, 'close_change_pct': None}
+            rs_line_pct_from_high = None
+            rs_line_new_high = False
 
         combined = round(rs_score * 0.6 + vcp['score'] * 0.4, 1)
 
@@ -803,6 +853,9 @@ def main():
             'rsi14': extras['rsi14'],
             'atr_pct': extras['atr_pct'],
             'close_change_pct': extras['close_change_pct'],
+            'rs_ibd': rs_ibd,
+            'rs_line_pct_from_high': rs_line_pct_from_high,
+            'rs_line_new_high': rs_line_new_high,
         })
 
     # Sort by combined score
