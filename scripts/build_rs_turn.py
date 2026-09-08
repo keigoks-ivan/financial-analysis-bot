@@ -92,6 +92,9 @@ except ImportError:
 
 import requests
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import tech_core
+
 ROOT = Path(__file__).resolve().parent.parent
 ENGINE_UNIVERSE_JSON = ROOT / 'data' / 'engine' / 'universe.json'
 RS_TURN_UNIVERSE_JSON = ROOT / 'data' / 'rs_turn' / 'universe.json'
@@ -139,8 +142,11 @@ PARAMS = {
 }
 
 # ── download resilience (2026-09-08, mirrors build_momentum5.py's own
-#    2026-09-08 fix — see module docstring) ──
-DOWNLOAD_BATCH_SIZE = 100
+#    2026-09-08 fix — see module docstring). The actual batched download +
+#    same-run cache now lives in scripts/tech_core.py (2026-09-08 refactor,
+#    see its module docstring); this module keeps its OWN coverage-floor
+#    retry loop (min_bars/coverage_floor_pct in PARAMS, benchmark=QQQ,
+#    RuntimeError -> caller fail-safe), unchanged. ──
 MAX_DOWNLOAD_ATTEMPTS = 4
 RETRY_BACKOFF_SECONDS = (20.0, 60.0, 150.0)  # before attempts 2, 3, 4 respectively
 
@@ -372,25 +378,6 @@ def _count_sufficient(close_wide, tickers, min_bars):
     return n
 
 
-def _download_prices_once(all_tickers):
-    frames = []
-    n_chunks = (len(all_tickers) + DOWNLOAD_BATCH_SIZE - 1) // DOWNLOAD_BATCH_SIZE
-    for i in range(0, len(all_tickers), DOWNLOAD_BATCH_SIZE):
-        chunk = all_tickers[i:i + DOWNLOAD_BATCH_SIZE]
-        chunk_no = i // DOWNLOAD_BATCH_SIZE + 1
-        try:
-            frames.append(yf.download(chunk, period='2y', interval='1d', auto_adjust=True,
-                                       group_by='ticker', progress=False, threads=True))
-        except Exception as e:
-            print(f"      ! batch {chunk_no}/{n_chunks} ({len(chunk)} tickers) raised "
-                  f"{type(e).__name__}: {e} — skipped this batch")
-        if chunk_no < n_chunks:
-            time.sleep(3)
-    if not frames:
-        raise RuntimeError("all download batches failed")
-    return pd.concat(frames, axis=1)
-
-
 def download_prices_with_retry(tickers):
     """Returns (closes, volumes, benchmark_close) — all wide DataFrames/Series
     keyed by date, `closes`/`volumes` columns = tickers (benchmark excluded).
@@ -401,11 +388,11 @@ def download_prices_with_retry(tickers):
     last_reason = None
     for attempt in range(1, MAX_DOWNLOAD_ATTEMPTS + 1):
         print(f"  price download attempt {attempt}/{MAX_DOWNLOAD_ATTEMPTS} "
-              f"({len(all_tickers)} tickers incl. {benchmark}, batches of {DOWNLOAD_BATCH_SIZE})")
+              f"({len(all_tickers)} tickers incl. {benchmark}, via tech_core)")
         close_all = None
         bench = pd.Series(dtype=float)
         try:
-            px = _download_prices_once(all_tickers)
+            px = tech_core.download_prices(all_tickers, period='2y', auto_adjust=True)
             close_all = px.xs('Close', axis=1, level=1)
             vol_all = px.xs('Volume', axis=1, level=1)
             if benchmark in close_all.columns:

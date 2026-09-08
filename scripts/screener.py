@@ -25,6 +25,9 @@ except ImportError:
     import pandas as pd
     import yfinance as yf
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import tech_core
+
 class NpEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, (np.integer,)): return int(obj)
@@ -193,22 +196,16 @@ EMA_ALPHA = 0.2
 # which itself mirrors build_price_momentum.py's 2026-09-07 fix,
 # commit 71cd044e4): a single-shot yf.download burst for the whole watchlist
 # can trip Yahoo's 429 rate limit. To survive that without changing any
-# scoring logic:
-#   - tickers + [BENCHMARK] is downloaded in DOWNLOAD_BATCH_SIZE-ticker
-#     batches (identical download kwargs per batch to the old single-shot
-#     call), concatenated into one DataFrame with the exact same
-#     data[ticker]['Close'] access shape the rest of main() already relies
-#     on.
-#   - The whole batched download is retried up to MAX_DOWNLOAD_ATTEMPTS
-#     times, with exponential backoff + jitter between attempts, whenever
-#     the benchmark comes back empty OR price coverage on that attempt is
-#     below the coverage floor (>= MIN_COVERAGE_BARS bars on
-#     MIN_COVERAGE_PCT of the watchlist).
-#   - Only after all attempts fail does this print a `::warning::` and
-#     exit 0 WITHOUT writing latest.json / history (fail-safe — same
-#     semantics as a stale-but-untouched output, just given more chances
-#     to succeed first).
-DOWNLOAD_BATCH_SIZE = 100
+# scoring logic, the actual batched download + same-run cache now lives in
+# scripts/tech_core.py (2026-09-08 refactor, see its module docstring and
+# design spec notes/site-internal/root/_stages_radar_design_20260908.md
+# §2/§8.2 — the rs_score/rs_trend/combined diff-vs-pre-refactor test that
+# motivated keeping this coverage-floor retry loop unchanged). This module
+# keeps its OWN coverage-floor policy (MIN_COVERAGE_BARS/MIN_COVERAGE_PCT,
+# benchmark=SPY, fail-safe exit) and just calls tech_core.download_prices()
+# instead of downloading directly — a cache-warm call from tech_core is
+# effectively free, so the retry loop below still works exactly as before
+# when coverage genuinely falls short.
 MAX_DOWNLOAD_ATTEMPTS = 4
 RETRY_BACKOFF_SECONDS = (20.0, 60.0, 150.0)  # before attempts 2, 3, 4
 MIN_COVERAGE_BARS = 252
@@ -227,31 +224,6 @@ def _count_price_sufficient(data, tickers):
         if len(c) >= MIN_COVERAGE_BARS:
             n += 1
     return n
-
-
-def _download_all_once(all_tickers, period):
-    """One attempt: download all_tickers (already includes BENCHMARK) in
-    DOWNLOAD_BATCH_SIZE-sized chunks with the SAME yf.download kwargs the
-    old single-shot call used, then concat into one DataFrame with the same
-    group_by='ticker' column shape. A chunk that raises is skipped (not
-    fatal by itself) — the coverage check in the caller decides whether
-    this whole attempt counts as a failure."""
-    frames = []
-    n_chunks = (len(all_tickers) + DOWNLOAD_BATCH_SIZE - 1) // DOWNLOAD_BATCH_SIZE
-    for i in range(0, len(all_tickers), DOWNLOAD_BATCH_SIZE):
-        chunk = all_tickers[i:i + DOWNLOAD_BATCH_SIZE]
-        chunk_no = i // DOWNLOAD_BATCH_SIZE + 1
-        try:
-            frames.append(yf.download(chunk, period=period, interval='1d',
-                                       group_by='ticker', progress=False, threads=True))
-        except Exception as e:
-            print(f"      ! batch {chunk_no}/{n_chunks} ({len(chunk)} tickers) raised "
-                  f"{type(e).__name__}: {e} — skipped this batch")
-        if chunk_no < n_chunks:
-            time.sleep(3)
-    if not frames:
-        raise RuntimeError("all download batches failed")
-    return pd.concat(frames, axis=1)
 
 
 def _emit_gh_warning(reason):
@@ -287,9 +259,9 @@ def fetch_all_data(tickers, period='15mo'):
     last_reason = None
     for attempt in range(1, MAX_DOWNLOAD_ATTEMPTS + 1):
         print(f"  Fetching {len(tickers)} tickers (attempt {attempt}/{MAX_DOWNLOAD_ATTEMPTS}, "
-              f"batches of {DOWNLOAD_BATCH_SIZE})...")
+              f"via tech_core)...")
         try:
-            data = _download_all_once(all_tickers, period)
+            data = tech_core.download_prices(all_tickers, period=period, auto_adjust=True)
         except Exception as e:
             last_reason = f"attempt {attempt} raised {type(e).__name__}: {e}"
             print(f"    ! {last_reason}")
