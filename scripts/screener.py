@@ -929,8 +929,17 @@ def main():
         r['sector_strength'] = sector_strength_map.get(r['sector'], 'weak')
 
     # ── Output JSON ─────────────────────────────────────────────────────
+    # as_of＝最後一根價格棒的日期，可能落後 `date`（跑批次當下的 UTC 日期）——
+    # 尤其週末/假日或美股開盤前跑批次時，`date` 是「今天跑的」不是「資料到哪天」。
+    # 沿用本檔既有的 SPY 交易日曆錨點（spy_closes_full，見上方），不另開資料源。
+    if len(spy_closes_full):
+        as_of = spy_closes_full.index[-1].strftime('%Y-%m-%d')
+    else:
+        as_of = today
+
     output = {
         'date': today,
+        'as_of': as_of,
         'total_stocks': len(results),
         'benchmark': BENCHMARK,
         'top_picks': picks,
