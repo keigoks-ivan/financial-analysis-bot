@@ -230,6 +230,7 @@ SECTIONS = [
                 ("/backtest/housing_gdp/gdppc_level.html", "人均 GDP 實際金額：2000 年以來誰爬得最快", "研究", False, True),
                 ("/backtest/housing_gdp/income_affordability.html", "可支配所得與房價所得比：誰的房子越來越難買", "研究", False, True),
                 ("/backtest/housing_gdp/mortgage_burden.html", "房貸負擔：利率乘上房價所得比，誰最痛", "研究", False, True),
+                ("/backtest/housing_gdp/house_price_drawdown.html", "房價回撤：最慘跌多少、多久回來", "研究", False, True),
             ]),
             ("個案・亞洲", [
                 ("/backtest/housing_gdp/taiwan.html", "台灣：二十五年房價史", "研究", False),
