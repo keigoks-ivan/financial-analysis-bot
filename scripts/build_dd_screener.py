@@ -2221,6 +2221,13 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
           f"pass4={sum(1 for s in enriched if s['pass_count']==4)} "
           f"pass3={sum(1 for s in enriched if s['pass_count']==3)}")
 
+    # 選股系統 v3 (2026-09): universe composition banner — DD vs 待DD (QGM
+    # 品質池、dd_status="none") 拆開列印，避免 universe_size 單一數字讓人誤以為
+    # 全數都是 DD 報告。
+    dd_status_counts = Counter(s.get("dd_status") for s in enriched)
+    print(f"  Step 5    universe composition: DD={dd_status_counts.get('dd', 0)} "
+          f"待DD={dd_status_counts.get('none', 0)} (total {len(enriched)})")
+
     # Summary
     pass_counts = Counter(s["pass_count"] for s in enriched)
     no_data = sum(

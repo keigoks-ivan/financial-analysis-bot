@@ -105,6 +105,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--paper);colo
 .src-yfinance{background:var(--line-soft);color:var(--sec)}
 .src-yfinance-eu{background:#fbf3df;color:var(--warn)}
 .src-koyfin{background:#eaf3fb;color:#0369a1}
+.src-pending-dd{background:#fdf0e0;color:#b45309}
 /* MA badges */
 .ma-badge{font-size:9px;font-weight:600;display:block;margin-top:2px;white-space:nowrap}
 /* Timing cells (v1.1 — joined from screener/latest.json) */
@@ -236,7 +237,8 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--paper);colo
   <div class="hero-inner">
     <div>
       <div class="hero-h1">DD Screener — S 級護城河 × QGM MLB × 起漲點</div>
-      <div class="hero-sub">DD universe 套 S 級護城河（≥ 9.5/10）+ 護城河 ↑/→ + QGM MLB 4 條件（FCF/ROIC/EPS/PEG）＋護城河否決（D/E 降為 ⚠ advisory，不計分）+ 起漲點 timing（距 ATH / 距 50DMA / RS — 與 Flow ATH Hunter 同源）</div>
+      <div class="hero-sub">母體套 S 級護城河（≥ 9.5/10）+ 護城河 ↑/→ + QGM MLB 4 條件（FCF/ROIC/EPS/PEG）＋護城河否決（D/E 降為 ⚠ advisory，不計分）+ 起漲點 timing（距 ATH / 距 50DMA / RS — 與 Flow ATH Hunter 同源）</div>
+      <div class="hero-sub" style="margin-top:4px">母體現在包含 QGM 品質池裡還沒做 DD 的名字（標「待 DD」），它們一樣有 Koyfin 三年成長與品質數字，可以競爭席位；DD 是選配。</div>
       <a href="/dd-screener/pipeline.html" style="display:inline-flex;align-items:center;gap:8px;margin-top:12px;padding:10px 16px;background:var(--accent);color:#fff;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;box-shadow:var(--sh-1)">漏斗總覽 Pipeline — 三軌觀察名單 <span style="font-weight:400;font-size:11px;opacity:.9">（發現 → 資格閘 → 核心／結構／循環三軌 → 板機，整條漏斗的即時數據彙整於單一頁面）</span> →</a>
       <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center"><a href="/dd-screener/quality-entry.html" style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;background:var(--line-soft);color:var(--accent);border:1px solid var(--line);border-radius:6px;font-size:11.5px;font-weight:600;text-decoration:none">Quality-Entry — 品質逢回 →</a><a href="/dd-screener/cyclical-track.html" style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;background:var(--line-soft);color:var(--accent);border:1px solid var(--line);border-radius:6px;font-size:11.5px;font-weight:600;text-decoration:none">衛星·循環軌 — 循環底部 × 上修 →</a><a href="/dd-screener/sop-funnel.html" style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;background:var(--line-soft);color:var(--accent);border:1px solid var(--line);border-radius:6px;font-size:11.5px;font-weight:600;text-decoration:none">SOP 漏斗 — 起漲點雷達 →</a><span style="font-size:10.5px;color:var(--sec);display:block;margin-top:4px">品質逢回 / 循環提名 / 板機執行（timing 訊號層已於 2026-07-07 收斂：深跌逆向 → 循環軌、突破動能 → SOP 板機、EPS 加速 → GRP 上修閘）</span></div>
     </div>
@@ -1410,7 +1412,10 @@ function buildTable(stocks) {
       verdictHtml = '<td class="left"><a href="' + (s.dca_path || s.dd_path) + '" target="_blank" style="text-decoration:none" title="' + vTitle.replace(/"/g, '&quot;') + '">' +
         '<span style="background:' + vc[0] + ';color:' + vc[1] + ';padding:1px 7px;border-radius:99px;font-size:10.5px;font-weight:700;white-space:nowrap">' + s.dca_verdict + '</span></a>' + overlayMark + asymHtml + '</td>';
     } else {
-      verdictHtml = '<td class="left" style="color:var(--muted)" title="v12 舊報告無決策層 metadata — DD 重跑 v14 後自動補上">—' + asymHtml + '</td>';
+      var noVerdictTitle = s.dd_status === 'none'
+        ? 'QGM 品質池名字，尚未做 DD——DD 是選配，做了才會有裁決'
+        : 'v12 舊報告無決策層 metadata — DD 重跑 v14 後自動補上';
+      verdictHtml = '<td class="left" style="color:var(--muted)" title="' + noVerdictTitle + '">—' + asymHtml + '</td>';
     }
 
     // Moat cell — 護城河評等：字母代碼降小字，主名用白話等第詞（頂級/優良/中等/薄弱/無）。
@@ -1428,9 +1433,14 @@ function buildTable(stocks) {
     var vetoMark = s.veto_all_downgrade
       ? ' <span style="color:var(--neg)" title="FY1/FY2/FY3 全下修 → 綜合評分歸 0、沉底">⛔</span>'
       : '';
+    // 選股系統 v3：dd_status="none" = QGM 品質池名字，還沒做 DD。DD 是選配，
+    // 這裡標一枚小 pill 讓讀者一眼看出這列沒有護城河評等／裁決可看。
+    var pendingDdMark = s.dd_status === 'none'
+      ? ' <span class="src-badge src-pending-dd" title="QGM 品質池名字，尚未做 DD——一樣有 Koyfin 三年成長與品質數字，可以競爭席位；DD 是選配">待 DD</span>'
+      : '';
     return '<tr' + rowStyle + '>' +
       '<td class="left">' +
-        '<span class="ticker-nm">' + s.ticker + '</span>' + vetoMark +
+        '<span class="ticker-nm">' + s.ticker + '</span>' + vetoMark + pendingDdMark +
       '</td>' +
       _renderFunnelCell(s) +
       verdictHtml +
