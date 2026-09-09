@@ -65,7 +65,7 @@ FILENAME_RE = re.compile(r"DD_universe_EPS_estimates_(\d{8})\.xlsx$")
 # Foreign exchange suffix → bare TW/JP/etc. base used in Excel.
 # Excel exports use bare numeric codes (2330, 6857) while the DD universe uses
 # yfinance-style suffixed tickers (2330.TW, 6857.T). Strip the suffix on lookup.
-_SUFFIX_STRIPS = (".TW", ".T", ".JP", ".HK", ".KS", ".KQ", ".SS", ".SZ")
+_SUFFIX_STRIPS = (".TW", ".T", ".JP", ".HK", ".KS", ".KQ", ".SS", ".SZ", ".AX", ".SW")
 
 # Explicit ticker aliases for cases where the DD-universe ticker doesn't match
 # the Excel/Koyfin code via suffix-strip alone — typically ADRs whose Koyfin
@@ -77,6 +77,15 @@ _EXPLICIT_ALIASES = {
     "LVMH": "MC",      # LVMH Moët Hennessy — Koyfin uses Paris primary "MC"
     "SU":   "SU.FR",   # Schneider Electric — Koyfin uses Euronext Paris "SU.FR"
                        # (raw "SU" key returned Suncor CAD data → bad; .FR disambiguates)
+    # 2026-09-09 web-scrape additions (refresh-eps-screener-web): Bursa
+    # Malaysia listings whose Koyfin symbol is the company mnemonic, not the
+    # numeric Bursa code the DD universe uses. AAON truncates to "AAO" in
+    # Koyfin's own ticker cell (confirmed via raw innerText, not a CSS clip).
+    "5246.KL": "WPRTS",    # Westports Holdings Berhad
+    "5326.KL": "99SMART",  # 99 Speed Mart Retail Holdings Berhad
+    "5398.KL": "GAMUDA",   # Gamuda Berhad
+    "6139.KL": "TAKAFUL",  # Syarikat Takaful Malaysia Keluarga Berhad
+    "AAON":    "AAO",      # AAON, Inc. — Koyfin ticker cell renders "AAO"
 }
 
 # Excel rows to drop on load (treated as if not present → consumers fall back
