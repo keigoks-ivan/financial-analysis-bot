@@ -172,7 +172,14 @@ def test_site_consistency():
     ok(all(r.get("cap_ok") for r in seats if "cap_ok" in r),
        "席位全數通過市值門檻")
     ok(all(r["route"] == "core" for r in arena["core_seats"]), "核心席全為 core 路由")
-    ok(all(r["route"] == "satellite" for r in arena["sat_seats"]), "衛星席全為 satellite 路由")
+    # v3 席位資格修復（2026-09-09）：衛星席公開競爭——route=="core"（耐久達標）但沒卡進
+    # 核心前 5 名的名字會跟 route=="satellite" 名字一起按 own_score 搶衛星席，故衛星席
+    # 的 route 不再限定 satellite；改驗證核心／衛星席無重複 ticker（沒人同時坐兩席）。
+    ok(all(r["route"] in ("core", "satellite") for r in arena["sat_seats"]),
+       "衛星席由 satellite 路由、或耐久達標（core 路由）但未進核心前 5 名而暫居衛星的名字組成")
+    core_tickers = {r["ticker"] for r in arena["core_seats"]}
+    sat_tickers = {r["ticker"] for r in arena["sat_seats"]}
+    ok(not (core_tickers & sat_tickers), "核心席與衛星席無重複 ticker（沒人同時坐兩席）")
     ok(all(not r["ticker"].endswith(".TW") for r in seats),
        "無席位為 .TW 掛牌（v2：台股另建，2026-09-02 拍板）")
     radar = json.loads((ENG / "radar.json").read_text(encoding="utf-8"))

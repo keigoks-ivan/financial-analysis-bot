@@ -550,11 +550,16 @@ def render_board_text(as_of, rows, core_seats, sat_seats, prev_snap, entered, la
                 chg = "NEW"
             else:
                 chg = f"FROM:{track_code.get(prev_seats[r['ticker']], '?')}"
+            hyst_txt = r.get("hyst") or ""
+            if track == "衛星席" and r.get("route") == "core":
+                # 耐久達標（route=="core"）但沒卡進核心前 5 名、改按 own_score 坐衛星席
+                # ——route 標籤仍標「核心」（語意＝耐久），這裡另外註記實際坐哪個席次。
+                hyst_txt = (hyst_txt + "；" if hyst_txt else "") + "耐久・暫居衛星"
             L.append(
                 f"  {track_code[track]}{j} {tk(r['ticker'])} {_n(r['score'], W_SCORE)} "
                 f"{_pad(TIMING_CODE.get(r['grp'].get('p_label'), 'DN'), W_TIMING)} "
                 f"{_pad(STAGE_CODE_ASCII.get(lamp_map.get(r['ticker']), '-'), W_STAGE)} "
-                f"{_pad(dd_ascii(r)[:W_DD], W_DD)} {_pad(chg, 6)} {r.get('hyst') or ''}"
+                f"{_pad(dd_ascii(r)[:W_DD], W_DD)} {_pad(chg, 6)} {hyst_txt}"
             )
     gone = [t for t in prev_seats if t not in seat_of]
     if gone:
@@ -937,6 +942,11 @@ def render_board_html(as_of, rows, core_seats, sat_seats, prev_snap, entered, la
                 chg = f'FROM:{track_code.get(prev_seats[r["ticker"]], "?")}'
             hyst_txt = (f'<span class="bw-chip" title="本期新換入或跨軌轉入">{escape(chg)}</span> ' if chg else "") \
                        + escape(r.get("hyst") or "—")
+            if track_label == "衛星席" and r.get("route") == "core":
+                # 耐久達標（route=="core"）但沒卡進核心前 5 名、改按 own_score 坐衛星席
+                # ——route 標籤仍標「核心」（語意＝耐久），這裡另外標一個 chip 說明實際坐哪席。
+                hyst_txt += " " + _chip_html("耐久・暫居衛星", "耐久達標（可長抱），但未進核心前 5 名，"
+                                              "改依擁有層分數坐衛星席")
             seat_rows.append(
                 f'<tr><td class="bw-l">{code_letter}{j}</td>'
                 f'<td class="bw-l"><strong>{_tk_link(r)}</strong></td>'
@@ -1098,6 +1108,10 @@ def main() -> int:
     #   資格＝品質閘（ROIC/FCF）∩ G 成長閘 ∩ 三年成長預估必備（Koyfin FY1→FY3 CAGR，
     #        單年 fallback 不算）∩ 市值 ∩ P 位置閘（未過熱）∩ 無重下修否決
     #   核心席另需耐久：五年 ROIC 平均 ≥15%（Koyfin）或 QGM 五年穩定度 ≥75%，見 grp.grp_route
+    #   （2026-09-09 修復：耐久達標＝核心候選，不等於保證核心席——沒卡進核心前 5 名的
+    #   耐久名字會回頭跟非耐久名字一起搶衛星 5 席，衛星資格不受 route 限制，見下方
+    #   sat_pool 註解；route 標籤本身不變，只影響「核心候選資格」，不再決定「能不能
+    #   坐衛星」）
     #   排序＝own_score（擁有層），R 上修只作燈號；遲滯：新席連 2 次過、現任連 4 次不過才下
     #   （DD 180 天內觀望之現任席降權為連 2 次不過即下，B4② 2026-09-04，未變）
     #   DD 不再是入席前提：迴避仍 veto，觀望／進場僅供角色標籤參考（role_mismatch 顯示用）
@@ -1202,11 +1216,25 @@ def main() -> int:
     passed.sort(key=lambda r: (0 if r["grp"]["pass"] else 1, -(r["score"] or 0)))   # 過閘者優先，觀察中現任其後
     failed = [r for r in seat_universe if r not in passed]
     core_pass = [r for r in passed if r["route"] == "core"]
-    sat_pass = [r for r in passed if r["route"] == "satellite"]
     core_seats = core_pass[:CORE_SLOTS]
-    sat_seats = sat_pass[:SAT_SLOTS]
-    core_bench = core_pass[CORE_SLOTS:] + [r for r in failed if r["route"] == "core" and r["grp"]["pass"]]
-    sat_bench = sat_pass[SAT_SLOTS:] + [r for r in failed if r["route"] == "satellite" and r["grp"]["pass"]]
+    core_seated = {r["ticker"] for r in core_seats}
+    # 2026-09-09 修復：衛星席公開競爭——route=="core"（耐久達標）但沒卡進核心前 5 名
+    # 的名字，跟 route=="satellite" 名字合併，一起按 own_score 搶衛星 5 席，不再讓
+    # route 本身把他們擋在衛星資格之外。修前 bug：core_pass[CORE_SLOTS:] 這批「耐久
+    # 但沒排進核心」的名字（如 LLY／ANET／APH／KLAC／LRCX）整批出局（core 排不進、
+    # sat 進不了），衛星池只剩非耐久名字這個窄池，5 席常只填出 2-4 席、且分數懸殊
+    # （見 2026-09-08 ROKU 6.8／INCY 3.3 vs 核心板凳 LLY 27.3）。route 標籤語意不變
+    # （仍代表耐久與否，供 render 端標「耐久・暫居衛星」），只是「坐哪個席次」改看
+    # own_score 排序，不再受 route 限制——衛星席＝母體中所有未坐核心席的合格名字，
+    # 不分 route，按分數前 5 入席。
+    sat_pool = [r for r in passed if r["ticker"] not in core_seated]
+    sat_seats = sat_pool[:SAT_SLOTS]
+    sat_seated = {r["ticker"] for r in sat_seats}
+    seated_all = core_seated | sat_seated
+    core_bench = [r for r in core_pass if r["ticker"] not in seated_all] \
+        + [r for r in failed if r["route"] == "core" and r["grp"]["pass"]]
+    sat_bench = [r for r in sat_pool if r["route"] == "satellite" and r["ticker"] not in seated_all] \
+        + [r for r in failed if r["route"] == "satellite" and r["grp"]["pass"]]
     entered = [r for r in universe_rows if r["verdict"] == "進場"]
 
     seated = {r["ticker"] for r in core_seats + sat_seats}
@@ -1391,7 +1419,7 @@ def main() -> int:
 排序＝<b>擁有層分數</b>＝min(成長，30)＋FY1 盈餘殖利率（ROIC ≥30 +2；PEG &gt;2 −5）；上修幅度降為燈號。
 <b>DD 選配</b>：不再是入席前提，只做 veto（迴避＝否決）與角色標籤（僅供顯示，≤180 天有效）；沒有 DD 的名字一樣同場排序、正常入席。
 <b>遲滯</b>：新席連 2 次週跑過閘、現任連 4 次不過才下席（硬 veto 除外；DD 180 天內裁決＝觀望的現任席降權為連 2 次不過即下，B4② 2026-09-04）。
-<b>軌別路由</b>：核心席另需耐久——五年 ROIC 平均 ≥15%（Koyfin）或 QGM 五年穩定度 ≥75% → 核心；未達標或無耐久資料 → 衛星。DD 角色不影響軌別，只當顯示標籤（與軌別衝突時標 ⚠ 供人裁）。
+<b>軌別路由</b>：核心席另需耐久——五年 ROIC 平均 ≥15%（Koyfin）或 QGM 五年穩定度 ≥75% → 核心；未達標或無耐久資料 → 衛星。DD 角色不影響軌別，只當顯示標籤（與軌別衝突時標 ⚠ 供人裁）。<b>耐久達標＝核心候選，不等於保證核心席</b>：沒卡進核心前 5 名的耐久名字會回頭跟非耐久名字一起搶衛星 5 席（純比 own_score），此時席位表仍標示其軌別為「核心」（代表可長抱），另加註「耐久・暫居衛星」。
 <b>市值門檻 ≥ ${MKTCAP_MIN/1e9:.0f}B</b>（持有人 2026-07-04 拍板：席位與主榜資格層；雷達發現層照掃全宇宙）。
 <b>母體＝美股含 ADR；台股另建（.TW 不在本看板，2026-09-02 持有人拍板）</b>。
 <b>快審卡</b>：衛星席另接受 🪶 快審卡（週期位置＋陷阱＋護城河快評），與三年成長閘、DD 皆無關。
