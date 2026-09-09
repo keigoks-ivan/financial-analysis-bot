@@ -232,6 +232,7 @@ SECTIONS = [
                 ("/backtest/housing_gdp/mortgage_burden.html", "房貸負擔：利率乘上房價所得比，誰最痛", "研究", False, True),
                 ("/backtest/housing_gdp/house_price_drawdown.html", "房價回撤：最慘跌多少、多久回來", "研究", False, True),
                 ("/backtest/housing_gdp/credit_lead.html", "信貸能不能提前預警：家庭負債漲太快，之後房價會怎樣", "研究", False, True),
+                ("/backtest/housing_gdp/price_to_rent.html", "房價租金比：租金是基本面，房價偏離多少", "研究", False, True),
             ]),
             ("個案・亞洲", [
                 ("/backtest/housing_gdp/taiwan.html", "台灣：二十五年房價史", "研究", False),
