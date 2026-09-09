@@ -78,6 +78,7 @@ from dd_screener_quality import (  # noqa: E402
     EU_SUFFIX_MAP,
     TICKER_YF_OVERRIDE,
     get_quality_for_ticker,
+    load_qgm_durability_index,
     load_qgm_index,
 )
 from dd_screener_ma import compute_ma_snapshot  # noqa: E402
@@ -1658,6 +1659,7 @@ def enrich_ticker(
     quality_cache: dict | None = None,
     prev_snapshot: dict | None = None,
     excel_snapshot: ExcelSnapshot | None = None,
+    qgm_durable_index: dict | None = None,
 ) -> dict:
     """Add quality + MA + ev5y_pct + pass_count + fail_criteria + timing to entry.
 
@@ -1687,6 +1689,13 @@ def enrich_ticker(
     quality["roic"]/quality["fcf"] independently, quality_source becomes
     "koyfin-xlsx", and quality_koyfin_stamp records the Excel snapshot date.
     peg/de/eps2y are untouched by this override.
+
+    2026-09-09 (v3 席位資格): also emits `durable_5y` (True/False/None) and
+    `durable_source` ("koyfin-xlsx"/"qgm"/None) — core-seat eligibility input
+    for scripts/engine/grp.py's route logic. Priority: Excel roic_5y_avg_pct
+    (>=15 -> True) first; if absent, QGM roic_5y_stability.pct_above via
+    `qgm_durable_index` (>=0.75 -> True); None when neither source has this
+    ticker. See knowledge/rule_ledger.md v3 席位資格 row.
     """
     t = entry["ticker"]
     quality, source, quality_meta = get_quality_for_ticker(t, qgm_index)
@@ -1746,6 +1755,22 @@ def enrich_ticker(
         if koyfin_hit:
             source = "koyfin-xlsx"
             quality_koyfin_stamp = excel_snapshot.snapshot_date if excel_snapshot else None
+
+    # 2026-09-09 (v3 席位資格): durable_5y — core-seat durability signal, priority
+    # Koyfin roic_5y_avg_pct (>=15% -> True) then QGM roic_5y_stability.pct_above
+    # (>=75% -> True) via qgm_durable_index; None when neither source covers t.
+    # See docstring above + knowledge/rule_ledger.md v3 席位資格 row.
+    _koyfin_r5y = _excel_record_for_eps2y.get("roic_5y_avg_pct") if _excel_record_for_eps2y else None
+    _qgm_r5y = (qgm_durable_index or {}).get(t)
+    if _koyfin_r5y is not None:
+        durable_5y = _koyfin_r5y >= 15.0
+        durable_source = "koyfin-xlsx"
+    elif _qgm_r5y is not None:
+        durable_5y = _qgm_r5y >= 0.75
+        durable_source = "qgm"
+    else:
+        durable_5y = None
+        durable_source = None
 
     pass_count, fails = evaluate_criteria(quality)
 
@@ -1878,6 +1903,9 @@ def enrich_ticker(
         # 2026-09-09: Excel snapshot date the roic/fcf koyfin-xlsx override (if
         # any) came from. None when quality_source != "koyfin-xlsx".
         "quality_koyfin_stamp": quality_koyfin_stamp,
+        # 2026-09-09 (v3 席位資格): core-seat durability signal — see docstring.
+        "durable_5y": durable_5y,
+        "durable_source": durable_source,
         "ev5y_pct": ev5y_pct,
         "ma": ma,
         "ma_from_cache": ma_from_cache,
@@ -2033,6 +2061,10 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
     # Step 3 prep
     qgm_index = load_qgm_index()
     print(f"  Step 3    QGM index: {len(qgm_index)} entries ({sum(1 for s,_ in qgm_index.values() if s=='qgm-us')} US, {sum(1 for s,_ in qgm_index.values() if s=='qgm-tw')} TW)")
+    # 2026-09-09 (v3 席位資格): QGM roic_5y_stability.pct_above index — enrich_ticker's
+    # durable_5y fallback source when the Excel roic_5y_avg_pct column is absent.
+    qgm_durable_index = load_qgm_durability_index()
+    print(f"  Step 3    QGM durability index: {len(qgm_durable_index)} entries (roic_5y_stability.pct_above)")
 
     # DCA §4 EV map → 5Y annualized IRR per ticker (96/98 typical coverage)
     dca_ev_map = collect_dca_ev_map()
@@ -2104,7 +2136,7 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int,
     enriched: list[dict] = []
     with ThreadPoolExecutor(max_workers=workers) as ex:
         futs = {
-            ex.submit(enrich_ticker, e, qgm_index, dca_ev_map, dca_trend_map, screener_timing, timing_fallback, skip_ma, ma_cache, quality_cache, prev_snapshot, excel_snapshot): e["ticker"]
+            ex.submit(enrich_ticker, e, qgm_index, dca_ev_map, dca_trend_map, screener_timing, timing_fallback, skip_ma, ma_cache, quality_cache, prev_snapshot, excel_snapshot, qgm_durable_index): e["ticker"]
             for e in universe
         }
         for i, fut in enumerate(as_completed(futs), 1):

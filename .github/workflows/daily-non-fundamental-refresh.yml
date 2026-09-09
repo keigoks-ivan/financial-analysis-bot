@@ -56,7 +56,10 @@ jobs:
         run: pip install "yfinance>=0.2.40" pandas numpy lxml
 
       - name: Step 1 — DD Screener latest.json (MA + timing refresh)
-        run: python scripts/build_dd_screener.py
+        # 2026-09-09（選股系統 v3 席位資格）：與 daily-taipei-morning.yml（實際
+        # 排程跑這步的班次）同步加 --include-non-dd，本檔排程已停用只留手動
+        # dispatch，保持一致避免手動跑出跟排程不同的 universe。
+        run: python scripts/build_dd_screener.py --include-non-dd
 
       - name: Step 3 — Quality-Entry screener
         run: python scripts/build_quality_entry.py

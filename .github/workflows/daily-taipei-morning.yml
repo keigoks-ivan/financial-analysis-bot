@@ -59,7 +59,11 @@ jobs:
 
       # ── daily-non-fundamental-refresh ──
       - name: "[non-fundamental] Step 1 — DD Screener latest.json (MA + timing refresh)"
-        run: python scripts/build_dd_screener.py
+        # 2026-09-09（選股系統 v3 席位資格）：--include-non-dd 讓 QGM 品質池名字
+        # 進 dd-screener universe，跟 DD 名字一樣拿 Koyfin FY1→FY3 EPS + 品質 +
+        # 時機——這是 v3「席位不再要求先有 DD」的資料面前提（見 CLAUDE.md 選股
+        # 體系治理 §5、knowledge/rule_ledger.md v3 席位資格列）。
+        run: python scripts/build_dd_screener.py --include-non-dd
         continue-on-error: true
 
       - name: "[non-fundamental] Step 3 — Quality-Entry screener"

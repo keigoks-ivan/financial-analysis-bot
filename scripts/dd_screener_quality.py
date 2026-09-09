@@ -172,6 +172,37 @@ def load_qgm_index() -> dict[str, tuple[str, dict]]:
     return out
 
 
+def load_qgm_durability_index() -> dict[str, float]:
+    """Return {ticker: roic_5y_stability.pct_above} merged from US + TW QGM
+    quality_breakdown (2026-09-09, v3 席位資格 core-seat durability source #2 —
+    see build_dd_screener.enrich_ticker's durable_5y/durable_source). Separate
+    from load_qgm_index() (which only carries hard_filter_details, no
+    quality_breakdown) so that function's return shape — consumed elsewhere —
+    stays untouched. Same first-write-wins priority: candidates > watch_list >
+    quality_pool, US file before TW.
+    """
+    out: dict[str, float] = {}
+    for path, _tag in ((QGM_US_PATH, "qgm-us"), (QGM_TW_PATH, "qgm-tw")):
+        if not path.exists():
+            continue
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        for pool in ("candidates", "watch_list", "quality_pool"):
+            for entry in data.get(pool, []) or []:
+                if not isinstance(entry, dict):
+                    continue
+                t = entry.get("ticker")
+                qb = entry.get("quality_breakdown") or {}
+                pct_above = (qb.get("roic_5y_stability") or {}).get("pct_above")
+                if not t or pct_above is None:
+                    continue
+                if t not in out:
+                    out[t] = pct_above
+    return out
+
+
 def _extract_qgm_quality(hfd: dict) -> dict:
     """Transform QGM hard_filter_details (decimals) to schema percent / decimal."""
     return {

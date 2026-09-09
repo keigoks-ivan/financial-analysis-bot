@@ -21,7 +21,14 @@ and the sister `refresh-eps-screener` Excel-file skill until it adopts the
 same two columns) load exactly as before, with `roic_pct`/`fcf_margin_pct`
 simply None on every record.
 
-Percent-unit rule for the two optional columns: a value is treated as a raw
+A third optional column (2026-09-09, v3 席位資格 durability source — see
+scripts/engine/build_dd_screener.py enrich_ticker's `durable_5y`/`durable_source`):
+any header containing "roic" AND ("5y" or "5 yr" or "avg") maps to
+`roic_5y_avg` (checked BEFORE the plain "roic" rule above, since a header like
+"ROIC 5Y Avg %" would otherwise match "roic" first). Also OPTIONAL, same
+ratio-vs-percent rule as roic/fcf_margin below, output field `roic_5y_avg_pct`.
+
+Percent-unit rule for the optional columns: a value is treated as a raw
 ratio (e.g. 0.19) and multiplied by 100 iff its header has no "%" marker AND
 |value| <= 1.5 — real-world ROIC / FCF margins for this universe are well
 under 150%, so this cleanly separates "0.19" (ratio) from "19.4" (already a
@@ -197,6 +204,9 @@ def _parse_eps_sheet(sheet_root, sst: list[str]) -> dict[str, dict]:
             header_map[col] = "growth_fy2_fy3"
         elif "fy1" in lv and "fy3" in lv and "cagr" in lv:
             header_map[col] = "cagr_fy1_fy3"
+        elif "roic" in lv and ("5y" in lv or "5 yr" in lv or "avg" in lv):
+            header_map[col] = "roic_5y_avg"
+            field_has_pct["roic_5y_avg"] = "%" in lv
         elif "roic" in lv:
             header_map[col] = "roic"
             field_has_pct["roic"] = "%" in lv
@@ -255,6 +265,7 @@ def _parse_eps_sheet(sheet_root, sst: list[str]) -> dict[str, dict]:
             "cagr_fy1_fy3_pct": _to_pct(rec.get("cagr_fy1_fy3")),
             "roic_pct": _to_quality_pct(rec.get("roic"), field_has_pct.get("roic", False)),
             "fcf_margin_pct": _to_quality_pct(rec.get("fcf_margin"), field_has_pct.get("fcf_margin", False)),
+            "roic_5y_avg_pct": _to_quality_pct(rec.get("roic_5y_avg"), field_has_pct.get("roic_5y_avg", False)),
         }
     return out
 
