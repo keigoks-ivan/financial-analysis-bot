@@ -227,6 +227,7 @@ SECTIONS = [
                 ("/backtest/housing_gdp/catchup.html", "補漲假說：所得領先、房價落後", "研究", False, True),
                 ("/backtest/housing_gdp/city_catchup.html", "補漲假說：換成城市層級，訊號還在嗎？", "研究", False, True),
                 ("/backtest/housing_gdp/gdp_band.html", "GDP 帶假說：3,000→10,000 美元最快？", "研究", False, True),
+                ("/backtest/housing_gdp/gdppc_level.html", "人均 GDP 實際金額：2000 年以來誰爬得最快", "研究", False, True),
             ]),
             ("個案・亞洲", [
                 ("/backtest/housing_gdp/taiwan.html", "台灣：二十五年房價史", "研究", False),
