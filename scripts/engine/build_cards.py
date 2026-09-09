@@ -22,6 +22,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from engine.common import OUT_DIR, ROOT, page_embed_shell, pct  # noqa: E402
 from engine.build_scoreboard import _bars  # noqa: E402
 from engine.grp import G_MIN_CAGR, P_LABEL_HTML, R_VETO_FY1, grp_route, grp_score  # noqa: E402
+# v3 席位資格（2026-09-09）：grp_route() 改讀 s["durable_5y"]/s["durable_source"]，
+# 這裡沿用 build_arena 的正規化 helper（dd-screener 權威值 → QGM 供給列原始值 →
+# 本地 QGM 索引 fallback），跟擂台頁同一套判定，見該函式 docstring。
+from engine.build_arena import _apply_durable_fallback  # noqa: E402
 
 DD_LATEST = ROOT / "docs" / "dd-screener" / "latest.json"
 
@@ -75,6 +79,7 @@ def grp_guard(ticker: str, latest_map: dict, radar_maps: tuple[dict, dict]) -> d
     s = latest_map.get(ticker)
     if s:
         g = grp_score(s)
+        _apply_durable_fallback(s)
         route, route_why = grp_route(s)
         return {"grp": g, "route": route, "route_why": route_why, "src": "dd-pool"}
     board, stage2 = radar_maps

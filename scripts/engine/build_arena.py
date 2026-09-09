@@ -41,6 +41,7 @@ from engine.grp import (  # noqa: E402
     DD_FRESH_DAYS, G_MIN_CAGR, MKTCAP_MIN, P_LABEL_HTML, Q_FCF_MIN, Q_ROIC_MIN, R_VETO_FY1,
     cap_ok, fetch_caps, grp_route, grp_score, market_ok,
 )
+from dd_screener_quality import load_qgm_durability_index  # noqa: E402
 
 WEEKLY_CACHE_UNIVERSE = ROOT / "data" / "weekly_cache_universe"   # 非 DD 池週線 fallback（見 build_radar.py 檔頭 docstring）
 QGM_US = ROOT / "docs" / "qgm" / "latest.json"
@@ -227,6 +228,48 @@ def qgm_cap_map() -> dict:
     return out
 
 
+_QGM_DURABLE_INDEX_CACHE: dict | None = None
+
+
+def _qgm_durable_index() -> dict:
+    """懶載入＋記憶體快取 load_qgm_durability_index()（純本地讀 docs/qgm*/latest.json，
+    零網路），供 _apply_durable_fallback() 在 dd-screener latest.json 尚未帶
+    durable_5y 時當即時 fallback 用（見該函式 docstring）。"""
+    global _QGM_DURABLE_INDEX_CACHE
+    if _QGM_DURABLE_INDEX_CACHE is None:
+        _QGM_DURABLE_INDEX_CACHE = load_qgm_durability_index()
+    return _QGM_DURABLE_INDEX_CACHE
+
+
+def _apply_durable_fallback(s: dict) -> None:
+    """v3 席位資格（2026-09-09）：確保 s["durable_5y"]/s["durable_source"] 存在，
+    就地補值，優先序：
+      1. dd-screener enrich_ticker() 已算好的權威值（s["durable_5y"] 非 None）——
+         --include-non-dd 上排程、latest.json 重建過後，任何 ticker（含 QGM 供給列）
+         都會帶這個欄位，直接採用。
+      2. build_arena 自己 load_qgm_rows() 供給列的原始 QGM 值（s["_durable_5y"]，
+         0-1 的 pct_above，只有 QGM 供給列會有這個 key）。
+      3. 本函式自己查 _qgm_durable_index()（本地讀 QGM JSON，零網路）——涵蓋
+         latest.json 尚未重建、但該 ticker 本身也在 QGM 品質池內的過渡期情形
+         （多數 DD 池大型股同時也在 QGM 池，見 commit 訊息的覆蓋率量測）。
+      4. 皆缺 → None（grp_route 落款「耐久資料不足，只能衛星」）。
+    """
+    if s.get("durable_5y") is not None:
+        return
+    raw = s.get("_durable_5y")
+    if raw is not None:
+        s["durable_5y"] = raw >= 0.75
+        s["durable_source"] = "qgm"
+        return
+    hit = _qgm_durable_index().get(s.get("ticker"))
+    if hit is not None:
+        s["durable_5y"] = hit >= 0.75
+        s["durable_source"] = "qgm"
+        return
+    s.setdefault("durable_5y", None)
+    s.setdefault("durable_source", None)
+
+
 def _yf_rev_map() -> dict:
     """雷達 stage2 的 yfinance 30 天修正（第二源，覆蓋主榜候選 ~250 檔）。"""
     try:
@@ -278,17 +321,23 @@ def row_dict(s: dict) -> dict:
     if g["p_label"] and s.get("_r26") is not None and s["_r26"] > OVERHEAT_R26_PCT:
         g = dict(g); g["p_label"] = "overheated"; g["pass"] = False
         g["why"] = [f"位置閘：過熱（26 週 {s['_r26']:+.0f}%）"] + list(g["why"])
+    _apply_durable_fallback(s)   # v3：確保 s["durable_5y"]/s["durable_source"] 就緒供 grp_route 讀
     route, route_why = grp_route(s)
     role = s.get("dca_role") or ""
     age = s.get("dd_age_days")
     fresh = bool(s.get("dca_verdict")) and (age is None or age <= DD_FRESH_DAYS)
+    # role_mismatch 現在比對的是「DD 自己講的角色」vs「耐久判定出的軌別」（v3
+    # grp_route 已不讀 DD 角色）——分歧代表 DD 判斷的可長抱程度跟耐久數字對不上，
+    # 值得人工複審，語意與 v2 時代相同、只是比對基準換了。
     mismatch = fresh and ((route == "satellite" and "核心" in role) or (route == "core" and "衛星" in role))
     if s.get("dca_verdict") == "迴避":
         g = dict(g); g["pass"] = False; g["why"] = ["DD 迴避（veto）"] + list(g["why"])
+    g_method = ({True: "FY1→FY3 CAGR", False: "FY1→FY2 單年"}.get(g.get("g_three_year")))
     return {"ticker": s["ticker"], "verdict": s.get("dca_verdict"),
             "role": role, "route": route, "route_why": route_why,
             "role_mismatch": mismatch, "dd_tag": dd_tag(s), "dd_age_days": age, "dd_fresh": fresh,
-            "src": s.get("_src") or "dd-pool", "g_method": s.get("_g_method") or "FY1→FY3 CAGR",
+            "src": s.get("_src") or "dd-pool", "g_method": g_method,
+            "durable_5y": s.get("durable_5y"), "durable_source": s.get("durable_source"),
             "grp": g, "score": g["score"],
             "roic": g["quality"].get("roic"), "fcf": g["quality"].get("fcf"),
             "peg": (s.get("live_peg") if s.get("live_peg") is not None else s.get("peg")),
@@ -545,11 +594,12 @@ def render_board_text(as_of, rows, core_seats, sat_seats, prev_snap, entered, la
             f"{'；'.join((r['grp'].get('why') or [])[:3])}"
         )
     L.append("")
-    L.append("== 可選但先不入席：機械過閘、尚無 DD")
-    L.append("這些名字三閘都過，但成長只有單年預估、也還沒有人研究過，所以只列隊、不佔席。"
-             "跑完 DD 就會進 dd-screener，以三年成長率重新競爭席位。")
+    L.append("== 可選但先不入席：缺三年成長預估（加進 Koyfin 名單即可）")
+    L.append("這些名字三閘都過，但成長只有單年預估（yfinance FY1→FY2，非 Koyfin FY1→FY3 CAGR），"
+             "所以只列隊、不佔席、不計遲滯。加進 Koyfin watchlist 補上三年成長率，"
+             "下次 build 就會脫隊、以三年成長率重新競爭席位（不需要先有 DD）。")
     for r in own:   # own 已按擁有層分降冪排列，此處不需另外排序
-        if r.get("src") == "qgm" and r["grp"]["pass"]:
+        if r.get("qual") != "light" and not r["grp"].get("g_three_year") and r["grp"]["pass"]:
             g = r["grp"]
             L.append(
                 f"   {tk(r['ticker'])} score {_n(r['score'], W_SCORE)} grow(單年) {_n(g.get('g'), W_GROW)} "
@@ -932,16 +982,17 @@ def render_board_html(as_of, rows, core_seats, sat_seats, prev_snap, entered, la
     else:
         ng_tbl = '<div class="bw-note-line">進場票全數過機械三閘，無需人工複審。</div>'
 
-    # ── 可選但先不入席：機械過閘、尚無 DD（v2 席位需有 DD，2026-09-08）──
-    # own 已按擁有層分降冪排列，qgm_cands 保留該順序（等同「Sort that table by own
-    # score desc」）。
-    qgm_cands = [r for r in own if r.get("src") == "qgm" and r["grp"]["pass"]]
-    if qgm_cands:
+    # ── 可選但先不入席：缺三年成長預估（v3 席位資格，2026-09-09）──
+    # own 已按擁有層分降冪排列，queue_rows 保留該順序（等同「Sort that table by own
+    # score desc」）。資格線改成長來源（三年 Koyfin CAGR 才入席），不再看 src——
+    # DD 池名字若也只有 FY1→FY2 單年 fallback（缺 FY3 預估）一樣進這條隊。
+    queue_rows = [r for r in own if r.get("qual") != "light" and not r["grp"].get("g_three_year") and r["grp"]["pass"]]
+    if queue_rows:
         q_thead = ('<tr><th class="bw-l">Ticker</th><th>擁有層分</th>'
-                   '<th title="FY1→FY2 單年成長率（yfinance）——非 DD 池慣用的 FY1→FY3 CAGR，兩把尺不等長">成長%（單年）</th>'
+                   '<th title="FY1→FY2 單年成長率（yfinance）——非三年期 Koyfin FY1→FY3 CAGR，兩把尺不等長">成長%（單年）</th>'
                    '<th>ROIC%</th><th>FCF%</th><th>距高%</th><th class="bw-l">位置</th></tr>')
         q_rows = []
-        for r in qgm_cands:
+        for r in queue_rows:
             g = r["grp"]
             q_rows.append(
                 f'<tr><td class="bw-l"><strong>{_tk_link(r)}</strong></td>'
@@ -952,7 +1003,7 @@ def render_board_html(as_of, rows, core_seats, sat_seats, prev_snap, entered, la
         qgm_tbl = ('<div class="bw-scroll"><table><thead>' + q_thead + "</thead><tbody>"
                    + "".join(q_rows) + "</tbody></table></div>")
     else:
-        qgm_tbl = '<div class="bw-note-line">目前無候選（QGM 品質池名字皆已有 DD 或未過機械三閘）。</div>'
+        qgm_tbl = '<div class="bw-note-line">目前無候選（都已有三年成長預估或未過機械三閘）。</div>'
 
     head_line = f"選股看板 v2 · as_of {as_of} · 母體 {len(rows)}（美股含 ADR；台股另建）"
     rule_line = ("排序只看擁有層分：成長（最多算 30）加 FY1 盈餘殖利率，ROIC 超過 30% 加 2 分，"
@@ -974,9 +1025,10 @@ def render_board_html(as_of, rows, core_seats, sat_seats, prev_snap, entered, la
         + '<h3 class="bw-sec">DD 進場 vs 機械資格</h3>'
         + f'<div class="bw-sub">{escape(dd_gate_sub)}——過閘者已在席位或候補中，這裡只列未過者供人工複審。</div>'
         + ng_tbl
-        + '<h3 class="bw-sec">可選但先不入席：機械過閘、尚無 DD</h3>'
-        + '<div class="bw-sub">這些名字三閘都過，但成長只有單年預估、也還沒有人研究過，所以只列隊、不佔席。'
-          '跑完 DD 就會進 dd-screener，以三年成長率重新競爭席位。</div>'
+        + '<h3 class="bw-sec">可選但先不入席：缺三年成長預估（加進 Koyfin 名單即可）</h3>'
+        + '<div class="bw-sub">這些名字三閘都過，但成長只有單年預估（yfinance FY1→FY2，非 Koyfin FY1→FY3 CAGR），'
+          '所以只列隊、不佔席、不計遲滯。加進 Koyfin watchlist 補上三年成長率，下次 build 就會脫隊、'
+          '以三年成長率重新競爭席位（不需要先有 DD）。</div>'
         + qgm_tbl
         + '<div class="bw-note-line">同內容另存純文字版 <a href="/engine/board.txt">board.txt</a>（終端機／郵件用）。</div>'
         + "</div>"
@@ -1039,11 +1091,14 @@ def main() -> int:
     except (OSError, json.JSONDecodeError):
         card_stats = {}
 
-    # ── v2 席位資格（2026-09-02）：擁有層 ∩ 時機層，DD 只做 veto／角色標籤 ──
-    #   母體＝DD 池（全部裁決，迴避者 veto）∪ QGM 品質池無 DD 名字（US＋TW）∪ 快審卡
-    #   資格＝品質閘（ROIC/FCF）∩ G 成長閘 ∩ 市值 ∩ P 位置閘（未過熱）∩ 無重下修否決
+    # ── v3 席位資格（2026-09-09 持有人拍板，見 knowledge/rule_ledger.md）：DD 選配 ──
+    #   母體＝DD 池（全部裁決，迴避者 veto）∪ QGM 品質池（US＋TW）∪ 快審卡
+    #   資格＝品質閘（ROIC/FCF）∩ G 成長閘 ∩ 三年成長預估必備（Koyfin FY1→FY3 CAGR，
+    #        單年 fallback 不算）∩ 市值 ∩ P 位置閘（未過熱）∩ 無重下修否決
+    #   核心席另需耐久：五年 ROIC 平均 ≥15%（Koyfin）或 QGM 五年穩定度 ≥75%，見 grp.grp_route
     #   排序＝own_score（擁有層），R 上修只作燈號；遲滯：新席連 2 次過、現任連 4 次不過才下
-    #   （DD 180 天內觀望之現任席降權為連 2 次不過即下，B4② 2026-09-04）
+    #   （DD 180 天內觀望之現任席降權為連 2 次不過即下，B4② 2026-09-04，未變）
+    #   DD 不再是入席前提：迴避仍 veto，觀望／進場僅供角色標籤參考（role_mismatch 顯示用）
     stocks_map = {s["ticker"]: s for s in stocks}
     # 同一家公司的 ADR／本地掛牌只留一個（席位不得重複曝險）：本地掛牌讓位給 ADR
     aliased = set()
@@ -1095,14 +1150,20 @@ def main() -> int:
     # prev＝上一筆「日期嚴格早於今天」的 snapshot（同日重跑防自我比較，見檔頭 --ledger 說明）
     prev = _last_snapshot_before(ledger0.get("snapshots", []), as_of) or {"core": [], "sat": []}
     incumbents = set(prev.get("core", [])) | set(prev.get("sat", []))
-    # v2 席位需有 DD（2026-09-08 持有人拍板，見 knowledge/rule_ledger.md）：QGM 品質池
-    # 無 DD 名字（src=="qgm"）可入母體、可列「可選但先不入席」隊列，但不得入席／候補、
-    # 不計遲滯——它們的成長是 FY1→FY2 單年（yfinance），DD 池名字是 FY1→FY3 CAGR
-    # （Koyfin），兩把尺不等長，30 分封頂讓單年基期效應（如 INCY +157%）直接拿滿分，
-    # 2026-09-08 VRTX／INCY 就這樣以 33 分擠掉 LLY（27.2，三年口徑）。seat_universe 把
-    # QGM 名字整批排除在遲滯累計／席位／候補之外；它們仍在 universe_rows 全母體看板與
-    # 下方「可選但先不入席」隊列露出。
-    seat_universe = [r for r in universe_rows if r.get("src") != "qgm"]
+    # v3 席位資格（2026-09-09 持有人拍板「未來不會每檔跑 DD，席位資格不能綁 DD」，
+    # 見 knowledge/rule_ledger.md）：KILL 了 2026-09-08 那條「席位需有 DD」（用 src==
+    # "qgm" 整批排除）——改用成長來源本身當資格線。單年成長（yfinance FY1→FY2）與
+    # 三年 CAGR（Koyfin FY1→FY3）兩把尺不等長，30 分封頂讓單年基期效應（如 INCY
+    # +157%）直接拿滿分，2026-09-08 VRTX／INCY 就這樣以 33 分擠掉 LLY（27.2，三年
+    # 口徑）——這個量級落差問題本身沒變，只是資格線從「有沒有 DD」換成「成長是不是
+    # 三年期」，不管 DD 池還是 QGM 池，只要成長只有單年 fallback（g_three_year 非
+    # True）就進「可選但先不入席」隊列，不得入席／候補、不計遲滯；有三年成長率的
+    # QGM 供給列（--include-non-dd 上排程後會逐步發生）則正常參與席位競爭。
+    # 快審卡（qual=="light"）是 2026-07-04 拍板的獨立衛星席第二資格來源，跟 DD／
+    # 三年成長無關（本來就不受舊 src=="qgm" 排除影響），這裡明白排除在三年成長閘
+    # 之外，維持原有行為不被本次改動波及。
+    seat_universe = [r for r in universe_rows
+                     if r.get("qual") == "light" or r["grp"].get("g_three_year")]
     for r in seat_universe:
         h = hist.setdefault(r["ticker"], [])
         if h and h[-1][0] == as_of:

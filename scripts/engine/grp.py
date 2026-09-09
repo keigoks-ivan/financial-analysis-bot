@@ -112,7 +112,15 @@ def grp_score(s: dict) -> dict:
     score 只在全過時有意義（= R 主排序鍵，tiebreak G）。"""
     why = []
     # G
-    g = _f(s.get("eps_fy1_fy3_cagr_pct"))
+    # v3 席位資格（2026-09-09）：g_three_year 記錄這個 g 是不是真的三年期 Koyfin
+    # FY1→FY3 CAGR——QGM 供給列（_g_method=="FY1→FY2 單年"）把單年成長塞進同一個
+    # eps_fy1_fy3_cagr_pct 欄位（見 build_arena.load_qgm_rows），欄位存在不代表
+    # 三年，故排除該情況；一旦這檔改走 dd-screener（--include-non-dd）拿到真 Koyfin
+    # 三年 CAGR，_g_method 就不會被設，g_three_year 會正確變 True。build_arena 的
+    # seat_universe 用這個欄位當入席資格閘（見該檔 main()）。
+    g_raw_3y = _f(s.get("eps_fy1_fy3_cagr_pct"))
+    g_three_year = g_raw_3y is not None and s.get("_g_method") != "FY1→FY2 單年"
+    g = g_raw_3y
     if g is None:
         g = _f(s.get("eps2y_live")) or _f(s.get("eps2y"))
         if g is not None:
@@ -160,6 +168,7 @@ def grp_score(s: dict) -> dict:
     q = quality_gate(s)
     return {"pass": all_pass and q["pass"], "veto": veto,
             "g": round(g, 1) if g is not None else None,
+            "g_three_year": g_three_year if g is not None else None,   # v3：入席資格用（僅 build_arena.seat_universe 讀）
             "r_fy1": r_fy1, "r_2y": r_2y, "r_pass": r_pass,
             "r_strength": round(r_strength, 2),
             "p_label": p_label, "dist_hi": dist_hi, "price": px,
@@ -217,35 +226,29 @@ P_LABEL_HTML = {"breakout": '<span class="tag tag-up">🟢 突破帶</span>',
                 None: '<span class="tag tag-dn">🔴 不適合</span>'}
 
 
-# ── 軌別路由（核心 vs 衛星，v1 2026-07-04 鎖定）─────────────────────────────
-# 核心＝複利耐久性：GRP 全過 ∩ 護城河 S/A（趨勢非↓）。衛星＝其餘 GRP 全過者
-# （moat B、循環轉折、爆發型）。分工：DD 裁決＝資格、moat＝軌別、GRP＝排序。
-CORE_MOAT_GRADES = ("S", "A")
-
-
+# ── 軌別路由（核心 vs 衛星，v3 2026-09-09 持有人拍板改版）───────────────────
+# v3 席位資格（見 knowledge/rule_ledger.md 同名列）：DD 不再是入席前提，DD 角色
+# （dca_role）也不再決定軌別，只當顯示標籤（build_arena.row_dict 的 role_mismatch
+# 仍拿它跟本函式的軌別比對、標記分歧供人工複審）。核心席資格改為單一耐久判定：
+# 五年 ROIC 平均（Koyfin roic_5y_avg_pct via s["durable_5y"]/s["durable_source"]，
+# 見 build_dd_screener.enrich_ticker）≥15%，或缺 Koyfin 資料時 fallback QGM 五年
+# ROIC 穩定度（roic_5y_stability.pct_above）≥75%——耐久達標才進核心候選，否則
+# （未達標或無耐久資料）只能衛星。s["durable_5y"]/s["durable_source"] 由呼叫方
+# （build_arena._apply_durable_fallback）先行正規化好，本函式不再自行讀 QGM 檔。
 DD_FRESH_DAYS = 180      # v2：DD 超過此天數視同無 DD（角色標籤失效、只留證據）
+
+_DURABLE_LABEL = {"koyfin-xlsx": "五年 ROIC 平均 ≥15%", "qgm": "QGM 五年穩定度 ≥75%"}
 
 
 def grp_route(s: dict) -> tuple[str, str]:
     """回傳 (軌別 core|satellite, 理由)。前提：GRP 已 pass。
-    v2：DD（≤180 天）的角色標籤優先於護城河字母——寫 DD 的人對「可不可以長抱」的判斷
-    不該被字母對照表覆蓋（LRCX 衛星→核心席、COHR 核心→衛星席的 role_mismatch 即由此而來）；
-    無 DD 或 DD 過期才退回護城河字母；無護城河資料（非 DD 池）一律衛星。"""
-    role = (s.get("dca_role") or "")
-    age = _f(s.get("dd_age_days"))
-    # v17: grp.py never reads DD/BRIEF HTML directly — dca_verdict/dca_role/
-    # dd_age_days come from latest.json, and dd_screener_dd_loader.py already
-    # treats docs/dd/brief/BRIEF_*.html 快速版 as a same-schema DD, so a fresh
-    # 快速版 verdict/role flows through here unchanged.
-    fresh = s.get("dca_verdict") and (age is None or age <= DD_FRESH_DAYS)
-    if fresh and "核心" in role:
-        return "core", f"DD 角色核心（{int(age) if age is not None else '—'}d）"
-    if fresh and ("衛星" in role or "追蹤" in role):
-        return "satellite", f"DD 角色{role}（{int(age) if age is not None else '—'}d）"
-    grade = s.get("moat_grade")
-    trend = s.get("moat_trend")
-    if grade in CORE_MOAT_GRADES and trend != "↓":
-        return "core", f"護城河 {grade}{trend or ''}＝複利耐久"
-    if grade is None and s.get("_src") == "qgm" and (s.get("_durable_5y") or 0) >= 0.75:
-        return "core", "無 DD；QGM 5 年 ROIC 穩定度 ≥75%＝複利耐久（待 DD 確認）"
-    return "satellite", f"護城河 {grade or '?'}{trend or ''}＝爆發/循環型"
+    v3：耐久達標（durable_5y is True）→ 核心候選；未達標或無耐久資料 → 只能衛星。
+    DD 角色不影響軌別，只在 build_arena.row_dict 當 role_mismatch 比對用的顯示標籤。"""
+    durable = s.get("durable_5y")
+    if durable:
+        label = _DURABLE_LABEL.get(s.get("durable_source"), "耐久達標")
+        return "core", f"{label}＝複利耐久"
+    if durable is False:
+        label = _DURABLE_LABEL.get(s.get("durable_source"), "耐久資料")
+        return "satellite", f"{label}未達標，只能衛星"
+    return "satellite", "耐久資料不足，只能衛星"

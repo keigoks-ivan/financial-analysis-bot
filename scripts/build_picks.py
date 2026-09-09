@@ -70,7 +70,8 @@ TW8 = timezone(timedelta(hours=8))
 SEAT_CAP = 5
 
 # （原長熬席位排序用的護城河分數 MOAT_PTS 隨長熬組於 2026-07-29 一併移除——
-#   護城河品質排序的職能歸 GRP 的 grp_route（moat S/A → 核心軌）。）
+#   核心／衛星軌別排序的職能歸 GRP 的 grp_route；2026-09-09 v3 席位資格起改用耐久
+#   判定〔五年 ROIC 平均或 QGM 五年穩定度〕，不再是護城河字母，見 engine/grp.py。）
 
 
 def warn(msg):

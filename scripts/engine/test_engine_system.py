@@ -4,7 +4,7 @@
 跑法：python3 scripts/engine/test_engine_system.py
 涵蓋：
   [1] GRP 三閘語義（合成輸入的邊界值）
-  [2] 軌別路由（moat → core/satellite）
+  [2] 軌別路由（v3：耐久判定 durable_5y → core/satellite；DD/moat 降為顯示標籤）
   [3] 市值門檻（cap_ok 三態：過/不過/未知 fail-closed）
   [4] 卡片 claim 結算（auto_price 比較子、非價格單位防衛、到期判定）
   [5] 光卡合併優先序（dd-meta 裁決讓位）
@@ -79,18 +79,23 @@ def test_grp_gates():
 
 
 def test_route():
-    print("[2] 軌別路由")
-    ok(grp_route(_stock(moat_grade="S"))[0] == "core", "moat S → 核心")
-    ok(grp_route(_stock(moat_grade="S", dca_verdict="進場", dca_role="衛星", dd_age_days=30))[0] == "satellite",
-       "v2：DD 角色衛星（30d）優先於 moat S → 衛星")
-    ok(grp_route(_stock(moat_grade="B", dca_verdict="進場", dca_role="核心", dd_age_days=30))[0] == "core",
-       "v2：DD 角色核心（30d）優先於 moat B → 核心")
-    ok(grp_route(_stock(moat_grade="S", dca_verdict="進場", dca_role="衛星", dd_age_days=200))[0] == "core",
-       "v2：DD 過期（200d）→ 退回 moat S → 核心")
-    ok(grp_route(_stock(moat_grade="A", moat_trend="↓"))[0] == "satellite",
-       "moat A 但趨勢 ↓ → 衛星（耐久性存疑）")
-    ok(grp_route(_stock(moat_grade="B", moat_trend="↑"))[0] == "satellite", "moat B↑ → 衛星")
-    ok(grp_route(_stock(moat_grade=None))[0] == "satellite", "moat 未知 → 衛星（保守）")
+    print("[2] 軌別路由（v3：耐久判定，DD 角色/moat 只當顯示標籤）")
+    ok(grp_route(_stock(durable_5y=True, durable_source="koyfin-xlsx"))[0] == "core",
+       "Koyfin 五年 ROIC 平均 ≥15%（durable_5y=True）→ 核心")
+    ok(grp_route(_stock(durable_5y=True, durable_source="qgm"))[0] == "core",
+       "QGM 五年穩定度 ≥75%（durable_5y=True）→ 核心")
+    ok(grp_route(_stock(durable_5y=False, durable_source="koyfin-xlsx"))[0] == "satellite",
+       "耐久數字存在但未達門檻（durable_5y=False）→ 衛星")
+    ok(grp_route(_stock(durable_5y=None))[0] == "satellite",
+       "無耐久資料（durable_5y=None）→ 衛星（保守）")
+    # DD 角色與 moat 字母不再決定軌別，只當顯示標籤（見 build_arena.row_dict 的 role_mismatch）——
+    # 就算 DD 判過進場＋核心角色、moat S，耐久未達標／缺耐久資料一樣落衛星。
+    ok(grp_route(_stock(durable_5y=None, moat_grade="S", dca_verdict="進場", dca_role="核心",
+                        dd_age_days=30))[0] == "satellite",
+       "v3：DD 角色核心＋moat S 但無耐久資料 → 仍衛星（DD/moat 降為顯示標籤，不影響軌別）")
+    ok(grp_route(_stock(durable_5y=True, durable_source="qgm", dca_verdict="迴避",
+                        dca_role="衛星"))[0] == "core",
+       "v3：DD 角色衛星但耐久達標 → 核心（軌別只看耐久，veto 由 row_dict 另外處理）")
 
 
 def test_cap_floor():
@@ -151,7 +156,7 @@ def test_light_merge():
     rows = load_light_rows(stocks_map)
     tickers = {r["ticker"] for r in rows}
     ok("NVDA" not in tickers, "dd-meta 有裁決的名字光卡讓位")
-    ok(all(r["route"] == "satellite" for r in rows), "光卡一律衛星路由（核心席必須完整 DD）")
+    ok(all(r["route"] == "satellite" for r in rows), "光卡一律衛星路由（快審卡是衛星專屬第二資格來源，與 DD／耐久無關）")
 
 
 def test_site_consistency():
