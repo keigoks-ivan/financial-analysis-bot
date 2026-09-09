@@ -13,6 +13,7 @@ body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--body)}
 .wrap{max-width:1140px;margin:0 auto;padding:2.2rem 20px 3rem}
 .hero h1{font-family:var(--serif);color:var(--ink);font-weight:700;font-size:1.6rem;letter-spacing:-.01em;margin:0 0 .5rem}
 .hero p{color:var(--sec);font-size:.92rem;line-height:1.8;max-width:820px;margin:0}
+.falsify-note{margin-top:.9rem;font-size:.82rem;color:var(--sec);line-height:1.8;max-width:820px;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:var(--r);padding:.75rem 1rem}
 .sec{margin-top:2.2rem}
 .sec h2{font-family:var(--serif);color:var(--ink);font-size:1.15rem;font-weight:700;margin:0 0 .8rem}
 .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.8rem;margin-bottom:1rem}
@@ -139,6 +140,7 @@ details.howto code{font-family:var(--mono);font-size:.78rem;background:var(--lin
   <div class="hero">
     <h1>轉強觀察（美股）</h1>
     <p>不是追已經飆到高點的股票，是找剛從弱轉強的：先明顯回檔過，最近一個月相對 QQQ（追蹤那斯達克 100 指數的 ETF，本頁用來當比較基準）的強度明顯改善，均線和價格結構開始抬升，離 52 週高還有一段距離。名單只回答「看誰」，不回答「買不買」。</p>
+    <div class="falsify-note" id="falsify-note" style="display:none"></div>
   </div>
 
   <div class="sec">
@@ -516,6 +518,34 @@ details.howto code{font-family:var(--mono);font-size:.78rem;background:var(--lin
     });
   }
 
+  // ── 可證偽揭露（2026-09-09）：轉強名單「走到收縮完成以上」的比例，是否真的
+  // 贏過同一天同樣深回檔、但沒轉強的對照組——讀 /stages/data/latest.json 的
+  // transitions.rows（S1＝轉強）與 transitions.control_deep_pullback。任一段
+  // 缺資料就整塊隱藏（404-safe），不硬湊句子。
+  function renderFalsifyNote(stagesLatest) {
+    var el = document.getElementById("falsify-note");
+    if (!el) return;
+    var t = stagesLatest && stagesLatest.transitions;
+    var rows = t && t.rows;
+    var control = t && t.control_deep_pullback;
+    var row = Array.isArray(rows) ? rows.filter(function (r) { return r && r.from === "S1"; })[0] : null;
+    var needNum = function (v) { return typeof v === "number" && !isNaN(v); };
+    if (!row || !control ||
+        !needNum(row.peak_S3plus_pct) || !needNum(row.n) || !needNum(row.end_S0_pct) ||
+        !needNum(control.peak_S3plus_pct) || !needNum(control.n) || !needNum(control.end_S0_pct)) {
+      el.style.display = "none";
+      return;
+    }
+    var xx = row.peak_S3plus_pct, n1 = row.n, aa = row.end_S0_pct;
+    var yy = control.peak_S3plus_pct, n2 = control.n, bb = control.end_S0_pct;
+    var verdict = xx > yy ? "目前轉強條件有優勢" : "目前轉強條件沒有統計優勢";
+    el.innerHTML = "可證偽檢查：轉強名單在 60 個交易日內走到收縮完成以上的比例 " + fmtNum(xx, 1) +
+      "%（n＝" + n1 + "），同一天同樣深回檔但沒轉強的對照組 " + fmtNum(yy, 1) +
+      "%（n＝" + n2 + "）；第 60 日在弱勢 " + fmtNum(aa, 1) + "% 對 " + fmtNum(bb, 1) + "%。" +
+      verdict + "，這頁只回答「先看誰」。";
+    el.style.display = "";
+  }
+
   Promise.all([fetchJSON("./data/latest.json"), fetchJSON("./data/history.json")]).then(function (res) {
     var latest = res[0], history = res[1];
     renderStats(latest);
@@ -523,6 +553,7 @@ details.howto code{font-family:var(--mono);font-size:.78rem;background:var(--lin
     renderChanges(latest);
     renderBreadthChart(history);
   });
+  fetchJSON("/stages/data/latest.json").then(renderFalsifyNote);
 })();
 </script>
 </body>

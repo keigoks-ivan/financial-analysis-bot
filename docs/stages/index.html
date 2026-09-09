@@ -174,6 +174,7 @@ details.howto code{font-family:var(--mono);font-size:.78rem;background:var(--lin
         <label><input type="checkbox" id="toggle-s1" checked><i style="background:var(--accent)"></i>轉強</label>
         <label><input type="checkbox" id="toggle-s3" checked><i style="background:var(--pos)"></i>收縮完成</label>
         <label><input type="checkbox" id="toggle-s4" checked><i style="background:#8a6d3b"></i>領先</label>
+        <label><input type="checkbox" id="toggle-s5" checked><i style="background:var(--warn)"></i>高檔整理</label>
         <label><input type="checkbox" id="toggle-s0"><i style="background:var(--neg);opacity:.7"></i>弱勢</label>
         <label><input type="checkbox" id="toggle-s2"><i style="background:var(--sec);opacity:.7"></i>築底</label>
         <span><i style="background:var(--muted)"></i>QQQ（右軸）</span>
@@ -511,7 +512,7 @@ details.howto code{font-family:var(--mono);font-size:.78rem;background:var(--lin
 
   // ── 階段家數折線圖（來源 history.json） ────────────────────────
   var SERIES_COLOR = {
-    S0: "var(--neg)", S1: "var(--accent)", S2: "var(--sec)", S3: "var(--pos)", S4: "#8a6d3b"
+    S0: "var(--neg)", S1: "var(--accent)", S2: "var(--sec)", S3: "var(--pos)", S4: "#8a6d3b", S5: "var(--warn)"
   };
   var chartState = null;
 
@@ -521,7 +522,7 @@ details.howto code{font-family:var(--mono);font-size:.78rem;background:var(--lin
     var qqq = hist.qqq || [];
     return dates.map(function (d, i) {
       var pt = { d: d, qqq: (typeof qqq[i] === "number") ? qqq[i] : null };
-      ["S0", "S1", "S2", "S3", "S4"].forEach(function (code) {
+      ["S0", "S1", "S2", "S3", "S4", "S5"].forEach(function (code) {
         pt[code] = (counts[code] && typeof counts[code][i] === "number") ? counts[code][i] : null;
       });
       return pt;
@@ -574,7 +575,7 @@ details.howto code{font-family:var(--mono);font-size:.78rem;background:var(--lin
 
     var seriesPaths = visible.map(function (code) {
       return '<path d="' + segPath(code) + '" fill="none" stroke="' + SERIES_COLOR[code] +
-        '" stroke-width="1.6" opacity="' + (code === "S1" || code === "S3" || code === "S4" ? "1" : "0.7") + '"/>';
+        '" stroke-width="1.6" opacity="' + (code === "S1" || code === "S3" || code === "S4" || code === "S5" ? "1" : "0.7") + '"/>';
     }).join("");
 
     var qqqPath = "", qOpen = false;
@@ -642,7 +643,7 @@ details.howto code{font-family:var(--mono);font-size:.78rem;background:var(--lin
 
   function currentVisible() {
     var out = [];
-    ["s1", "s3", "s4", "s0", "s2"].forEach(function (code) {
+    ["s1", "s3", "s4", "s5", "s0", "s2"].forEach(function (code) {
       var el = document.getElementById("toggle-" + code);
       if (el && el.checked) out.push(code.toUpperCase());
     });
@@ -661,7 +662,7 @@ details.howto code{font-family:var(--mono);font-size:.78rem;background:var(--lin
     chartState = { pts: pts };
     legend.style.display = "";
     renderChart(pts, currentVisible());
-    ["s0", "s1", "s2", "s3", "s4"].forEach(function (code) {
+    ["s0", "s1", "s2", "s3", "s4", "s5"].forEach(function (code) {
       var el = document.getElementById("toggle-" + code);
       if (el) el.addEventListener("change", function () { renderChart(chartState.pts, currentVisible()); });
     });
