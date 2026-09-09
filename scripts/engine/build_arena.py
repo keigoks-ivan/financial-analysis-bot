@@ -361,11 +361,15 @@ def render_seat_changes(changes: list[dict]) -> str:
             + "".join(rows) + "</tbody></table>")
 
 
-def load_light_rows(stocks_map: dict) -> list[dict]:
+def load_light_rows(stocks_map: dict, exclude: set | None = None) -> list[dict]:
     """快審卡（qual_tier=light）→ 衛星席第二資格來源（2026-07-04 拍板）。
     光卡只給衛星資格（核心席必須完整 DD）。優先序：dd-meta 有裁決的名字光卡讓位；
     池內「待補 DD」名字光卡可用（GRP 用 latest.json 全口徑）；池外用雷達主榜口徑
-    （G＝FY+1 隱含成長、R＝30 天修正），頁面標 🪶。"""
+    （G＝FY+1 隱含成長、R＝30 天修正），頁面標 🪶。
+    `exclude`（2026-09-09 dedupe 修復）＝已被更高優先序來源收走的 ticker（目前是
+    load_qgm_rows 輸出）——first source wins: dd-pool > qgm > light，本函式原本只
+    對 stocks_map（dd-pool）去重，沒對過 qgm_rows，INCY 這類名字若同時出現在 QGM
+    品質池與快審卡就會在 universe_rows 裡重複兩列（見 build_arena.py main() 呼叫端）。"""
     cards_dir = OUT_DIR / "cards" / "data"
     try:
         radar = json.loads((OUT_DIR / "radar.json").read_text(encoding="utf-8"))
@@ -374,6 +378,7 @@ def load_light_rows(stocks_map: dict) -> list[dict]:
     board = {r["ticker"]: r for r in radar.get("grp_board") or []}
     stage2 = radar.get("stage2") or {}
     verdict_tickers = {t for t, s in stocks_map.items() if s.get("dca_verdict")}
+    exclude = exclude or set()
     rows = []
     for p in sorted(cards_dir.glob("*.json")):
         try:
@@ -385,6 +390,10 @@ def load_light_rows(stocks_map: dict) -> list[dict]:
         if not market_ok(c["ticker"]):
             continue   # 2026-09-02 持有人拍板：台股另建，快審卡母體亦排除 .TW
         t = c["ticker"]
+        if t in exclude:
+            print(f"  [dedupe] 快審卡 {t} 已由 QGM 品質池供給，光卡讓位"
+                  "（first source wins: dd-pool > qgm > light）")
+            continue
         if t in stocks_map:
             grp = grp_score(stocks_map[t])   # 池內待補 DD：全口徑
         else:
@@ -1123,9 +1132,20 @@ def main() -> int:
             stocks_map.pop(local, None); aliased.add(local)
     stocks = [s for s in stocks if s["ticker"] in stocks_map]
     qgm_rows = load_qgm_rows(stocks_map, exclude=aliased)
+    qgm_tickers = {r["ticker"] for r in qgm_rows}
     universe_rows = [row_dict(s) for s in stocks] + [row_dict(s) for s in qgm_rows]
-    light = load_light_rows(stocks_map)
+    # dedupe 修復（2026-09-09）：load_qgm_rows／load_light_rows 過去只各自對
+    # stocks_map（dd-pool）去重，沒對過彼此——INCY 這類同時在 QGM 品質池與快審卡
+    # 出現的名字會在 universe_rows 進兩列。first source wins: dd-pool > qgm > light。
+    light = load_light_rows(stocks_map, exclude=qgm_tickers)
     universe_rows += [r for r in light if r["verdict"] in ("進場", "觀望", None)]
+
+    # 防線：universe_rows 不得有重複 ticker（席位不得重複曝險）。
+    _ticker_seq = [r["ticker"] for r in universe_rows]
+    _dupes = sorted({t for t in _ticker_seq if _ticker_seq.count(t) > 1})
+    if _dupes:
+        print(f"  [dedupe] ⚠ universe_rows 仍有重複 ticker（不應發生）：{_dupes}")
+    assert not _dupes, f"universe_rows 出現重複 ticker，席位會重複曝險：{_dupes}"
 
     # 兩源一致性防線：任一源重下修即否決＋方向矛盾標記
     yf_map = _yf_rev_map()
@@ -1264,9 +1284,26 @@ def main() -> int:
     # 只讀既有帳本算席位、照常寫 arena.json 等輸出，不追加 gate_history／snapshots，
     # 遲滯時鐘不前進（見檔頭 docstring 與 knowledge/rule_ledger.md v2 遲滯列 2026-09-09 註記）。
     ledger = ledger0
+
+    def _seat_meta(r: dict) -> dict:
+        """v3 稽核用列（2026-09-09）：無 DD 席位 vs 有 DD 席位 12 週報酬比較的 kill
+        condition 需要知道每個 snapshot 當下每個席位的屬性，光有 ticker 清單對不了帳。"""
+        return {
+            "ticker": r["ticker"],
+            "score": r.get("score"),
+            "has_dd": bool(r.get("dd_path")),
+            "verdict": r.get("verdict"),
+            "durable_5y": r.get("durable_5y"),
+            "route": r.get("route"),
+            "price": (r.get("grp") or {}).get("price"),
+        }
+
     snap = {"date": as_of,
             "core": [r["ticker"] for r in core_seats],
-            "sat": [r["ticker"] for r in sat_seats]}
+            "sat": [r["ticker"] for r in sat_seats],
+            "core_meta": [_seat_meta(r) for r in core_seats],
+            "sat_meta": [_seat_meta(r) for r in sat_seats],
+            "rule_version": "v3"}
     changes = []
     # 比較基準＝嚴格早於今天的最後一筆——同日重跑不可拿「今天已寫入的自己」當基準
     # （self-referential bug：會把「今天跟今天比較」的假差異當成真變動，見檔頭說明）。
