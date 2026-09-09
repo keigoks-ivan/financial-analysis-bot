@@ -223,7 +223,8 @@ SECTIONS = [
          cta=None,
          rows=[
             ("研究・主線", [
-                ("/backtest/housing_gdp/", "人均 GDP 與房價（42 國因子矩陣）", "研究", False, True),
+                ("/backtest/housing_gdp/", "研究總覽：所得、信貸、估值、房貸與回撤一次看", "研究", False, True),
+                ("/backtest/housing_gdp/regression.html", "主線迴歸（原首頁）", "研究", False, True),
                 ("/backtest/housing_gdp/catchup.html", "追趕假說：所得先漲、房價後補", "研究", False, True),
                 ("/backtest/housing_gdp/catchup_v1.html", "追趕（舊版）", "研究", False, True),
                 ("/backtest/housing_gdp/city_catchup.html", "補漲假說：換成城市層級，訊號還在嗎？", "研究", False, True),
