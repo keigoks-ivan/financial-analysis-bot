@@ -545,6 +545,7 @@
 
   var ROLE_MAP = {
     "S1|pass": { label: "最該看", role: "accent" },
+    "S3|pass": { label: "最該看", role: "accent" },
     "S0|pass": { label: "持股警訊", role: "neg" },
     "S4|fail": { label: "研究隊列：動能有、基本面沒", role: "warn" },
     "S0|fail": { label: "略過", role: "mut", collapse: true }
@@ -642,6 +643,12 @@
            '<span class="qtm-tk-list" data-qtm-rest hidden>' + rest.map(chipFn).join("") + "</span>")
         : "";
       return '<span class="qtm-tk-list">' + tkListHtml + "</span>" + moreHtml;
+    }
+    // 本週清單②「最該看」的子群組（轉強／收縮完成）：沿用 qtm-weekly-substage
+    // 樣式（與③論點矛盾的按階段分組共用外觀），標籤內附各自檔數。
+    function weeklySubgroupHTML(label, tickers) {
+      return '<div class="qtm-weekly-substage"><b>' + esc(label) + " · " + tickers.length + " 檔</b>" +
+        weeklyChipsHTML(tickers, "這週沒有名字") + "</div>";
     }
     function cellHTML(stageCode, qb, tickers, prevCount) {
       var roleKey = stageCode + "|" + qb;
@@ -748,7 +755,7 @@
         "品質未過＝差哪一條，點徽章看差多少；無品質資料＝沒有財務資料可判，不是未過。</p>" +
         "<p><b>列的意思</b>：每一段一行，過渡＝不符合以上任何一段的殘差態（資料不足、流動性不夠或分類不到），預設收合、可展開查看。</p>" +
         "<ul>" + stageLines + "</ul>" +
-        "<p><b>四個有標籤的格子</b>：最該看（品質過×轉強）——基本面過關、動能剛翻上來，這批最值得花時間看。" +
+        "<p><b>有標籤的格子</b>：最該看（品質過×轉強、品質過×收縮完成）——基本面過關，時機最明確的兩種狀態：回檔剛結束，或波動已收縮到等突破，這兩格最值得花時間看。" +
         "持股警訊（品質過×弱勢）——基本面過關但動能轉弱，若是手上持股要留意。" +
         "研究隊列（品質未過×領先）——動能很強但財務數字還沒達標，值得研究但不是現成標的。" +
         "略過（品質未過×弱勢）——兩邊都沒亮，預設收合、不用花時間。" +
@@ -810,8 +817,12 @@
 
       // ① 持股警訊：品質過×弱勢，只列帶席位標記的名字。
       var step1 = sortTickersSeatFirst(idx, (buckets.S0 ? buckets.S0.pass : []).filter(function (tk) { return !!idx.seat[tk]; }));
-      // ② 最該看：品質過×轉強，全部。
-      var step2 = sortTickersSeatFirst(idx, buckets.S1 ? buckets.S1.pass.slice() : []);
+      // ② 最該看：品質過×（轉強∪收縮完成），分兩個子群組各自列示——轉強沒有
+      //    統計優勢（見下方對照組），收縮完成是最緊、最可證偽的一段，語意不同，
+      //    不能合併成同一份無標籤清單（2026-09-09 owner 拍板延伸至 S3）。
+      var step2S1 = sortTickersSeatFirst(idx, buckets.S1 ? buckets.S1.pass.slice() : []);
+      var step2S3 = sortTickersSeatFirst(idx, buckets.S3 ? buckets.S3.pass.slice() : []);
+      var step2Count = step2S1.length + step2S3.length;
       // ③ 論點矛盾：全母體中「DD 進場・品質未過」的名字，不限階段，按所在階段分組列出。
       var step3Groups = [];
       STAGE_ORDER.concat(["S9"]).forEach(function (code) {
@@ -840,9 +851,11 @@
         weeklyChipsHTML(step1, "本週沒有席位掉進弱勢") + "</li>";
 
       var s2 = '<li class="qtm-weekly-step"><div class="qtm-weekly-head"><span class="qtm-weekly-num">②</span>' +
-        '<span class="qtm-weekly-title">最該看</span><span class="qtm-weekly-count">' + step2.length + " 檔</span></div>" +
-        '<p class="qtm-weekly-desc">基本面過關、回檔剛結束。去看 DD 裁決與板機。轉強本身沒有統計優勢（見下方對照組），這格只回答先看誰。</p>' +
-        weeklyChipsHTML(step2, "這週沒有名字") + "</li>";
+        '<span class="qtm-weekly-title">最該看</span><span class="qtm-weekly-count">' + step2Count + " 檔</span></div>" +
+        '<p class="qtm-weekly-desc">基本面過關，而且時機最明確的兩種狀態：回檔剛結束，或波動已收縮到等突破。去看 DD 裁決與板機。轉強本身沒有統計優勢（見下方對照組），收縮完成是最緊、最可證偽的一段。</p>' +
+        weeklySubgroupHTML("回檔剛結束（轉強）", step2S1) +
+        weeklySubgroupHTML("收縮完成、等突破", step2S3) +
+        "</li>";
 
       var step3Body = !step3Count
         ? '<div class="qtm-weekly-empty">這週沒有名字</div>'
