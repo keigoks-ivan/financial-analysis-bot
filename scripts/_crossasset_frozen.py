@@ -26,6 +26,13 @@ pickle 快照，fab 抓不到、也不該跨 repo 讀本機檔案）。本檔改
 
 不做的事：不快取到 docs/（避免 D1 訊號被誤認為機械日更資料層）；不重算 v7 本身
 任何回測結果；本檔輸出只餵 S-F 影子帳戶，不進系統實錄、不觸發任何帳本動作。
+
+2026-09-10 檢查（新增 S-F70＝70% 系統＋30% D1X／TLT/GLD/DBC 三腿等權，見
+build_live_scoreboard.py SHADOW_DEFINITIONS['sf70']）：build_d1_daily_returns()
+的等權重是 `r_leg / len(legs)`（見函式內迴圈），不是寫死的 0.25——docstring
+講「4 腿等權 0.25」是舉預設 4 腿情境下的算式結果，非硬編碼常數。傳 3 腿
+（legs=["TLT","GLD","DBC"]）會自動變成各 1/3；傳預設 4 腿時 1/len(legs)==0.25，
+與改動前輸出 byte-identical。
 """
 from __future__ import annotations
 

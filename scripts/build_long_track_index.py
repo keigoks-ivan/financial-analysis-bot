@@ -54,6 +54,10 @@ GROUPS = [
         {"name": "🐢 商品 Sleeve（80/20 組合）", "url": "/turtle-sleeve/",
          "one": "GLD/USO→期貨 商品 sleeve 疊上 STX50 的 80/20 組合曝險，OOS 並行追蹤。",
          "status": ("前瞻 OOS・候選", "cand"), "freq": "每交易日", "email": "—"},
+        {"name": "🧩 F70：A 70%＋D1（TLT／GLD／DBC）30%", "url": "/backtest/f_comfort/",
+         "one": "擁有者 2026-09-10 選定的 paper 候選；記分板 S-F70 影子帳戶每日追蹤，見 #live；"
+                "D1 拿掉 SPY 因為 A 已是美股。",
+         "status": ("前瞻 OOS・候選", "cand"), "freq": "每交易日（隨 W52 主系統更新）", "email": "—"},
     ]),
     ("已退役・凍結對照（被 W52×自適應取代）", "ret", False, [
         {"name": "STX50（SMH/QQQ 美股）", "url": "/long-track-smh/",
@@ -80,7 +84,8 @@ GROUPS = [
 PLAIN = ('這個家族的沿革（白話）：早期實單主線用「六狀態機」與「STX50／E3」兩套引擎；'
          '<b>2026-07-18 起改由「W52 週線閘門 × 自適應波動率 × cap 1.5 ＋ A2 執行層」接棒為實單主系統</b>'
          '（美台兩市場各 70% 指數部），舊引擎降為凍結對照。'
-         'GLD 金 sleeve 與商品 sleeve 是決策前研究通過後的<b>前瞻候選</b>——還在紙上測、尚未進實單。')
+         'GLD 金 sleeve、商品 sleeve 與 F70（A 70%＋D1 拿掉 SPY 30%）是決策前研究通過後的<b>前瞻候選</b>'
+         '——還在紙上測、尚未進實單。')
 
 CSS = """
 :root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;--text:#111827;--muted:#6b7280;--border:#e5e7eb;
