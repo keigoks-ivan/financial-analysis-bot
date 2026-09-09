@@ -173,6 +173,9 @@ GROUPS = [
          "+12.17%", "-30.83%", "0.92", "0.39", "dominated", "$6.61M", TAG["fail"]),
     ]),
     ("🔬 實驗(未採用)", [
+        ("50% A0＋50% D1 長波段舒服度組合", "/backtest/a0_d1_comfort/",
+         "QQQ/SMH W52 adaptive cap1.0 與 SPY/TLT/GLD/DBC 跨資產趨勢各半・月底再平衡・短期與全期 DD 約 −14.2%・研究候選，未採用",
+         "+10.35%", "-14.17%", "1.07", "0.73", "trade", "$6.46M", TAG["exp"]),
         ("SPY/QQQ/SMH 週線 Supertrend（ATR 10×3）", "/backtest/supertrend/",
          "SPY/QQQ/SMH 各自單獨 · ATR(10)×3 · standalone 輸 W52 → 已以出場閘門形式進 STX50;表列 SPY 基準版",
          "+8.14%", "-17.77%", "0.78", "0.46", "trade", "$4.95M", TAG["exp"]),
