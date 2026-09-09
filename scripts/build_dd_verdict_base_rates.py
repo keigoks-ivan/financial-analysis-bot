@@ -6,11 +6,13 @@
 供 scripts/generate_dd_verdict_forecasts.py 讀表用，輸出 data/dd_verdict_base_rates.json 兩張表：
 
   (a) p_clim（pooled 無條件頻率，PREREG 凍結定義，設計稿 §5.4）——對
-      data/weekly_cache/ 全部 ticker，取近 5 年（CLIM_WINDOW_YEARS）每個曆月「首個可得週線
-      收盤」為取樣點，算「該取樣點起 91／365 曆日後，該 ticker 報酬 > SPY 同窗報酬」的
-      pooled（跨全部 ticker、跨全部取樣月）無條件頻率。SPY 收盤自本檔**專用**日線快取
-      data/dd_verdict_base_rates_raw_cache.json 讀取（10 年，見下）。任一端缺資料（含視窗
-      尚未到期）即跳過該 cell，不補值、不外推。
+      data/weekly_cache/ 屬 **DD 池**的 ticker（2026-09-09 起：`docs/dd-screener/latest.json`
+      之 `dd_status=="dd"`；排除 `--include-non-dd` 收進來的 QGM 等非 DD 名字，避免母體被
+      稀釋——latest.json 讀不到才 fallback 為全部檔案，見 `_load_non_dd_exclude_set()`），取
+      近 5 年（CLIM_WINDOW_YEARS）每個曆月「首個可得週線收盤」為取樣點，算「該取樣點起
+      91／365 曆日後，該 ticker 報酬 > SPY 同窗報酬」的 pooled（跨全部 ticker、跨全部取樣
+      月）無條件頻率。SPY 收盤自本檔**專用**日線快取 data/dd_verdict_base_rates_raw_cache.json
+      讀取（10 年，見下）。任一端缺資料（含視窗尚未到期）即跳過該 cell，不補值、不外推。
   (b) 經驗表（設計稿 §5.4 (b)）——對 knowledge/settlement.json 已到期（h91／h365 非 null）
       且 verdict 非 null 的裁決筆，算「跑贏 SPY」頻率，per verdict（進場／觀望／迴避）與 n。
       **目前預期 n≈0**：decisions.jsonl 的 verdict 欄自 2026-06-22 起才普遍存在，距今
@@ -64,6 +66,7 @@ CACHE_DIR = DATA / "weekly_cache"
 RAW_CACHE = DATA / "dd_verdict_base_rates_raw_cache.json"   # 本檔專用 SPY 日線，與 flowmap_prices.json 解耦
 OUT_JSON = DATA / "dd_verdict_base_rates.json"
 SETTLEMENT = ROOT / "knowledge" / "settlement.json"         # 唯讀消費，knowledge/settle_outcomes.py 維護
+DD_SCREENER_LATEST = ROOT / "docs" / "dd-screener" / "latest.json"  # 唯讀消費，用來把 p_clim 母體限定在 DD 池
 
 SCHEMA = "dd-verdict-base-rates-v1"
 SPY_TICKER = "SPY"
@@ -269,13 +272,51 @@ def _month_first_bars(dates, closes, start_bound, end_bound):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# (a) p_clim：pooled 跨全部 weekly_cache ticker 的無條件頻率
+# p_clim 母體：data/weekly_cache/ 限定 DD 池，排除非 DD 名字（QGM --include-non-dd 等）
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _load_non_dd_exclude_set():
+    """讀 docs/dd-screener/latest.json，回傳 dd_status != "dd" 的 ticker 集合（如
+    --include-non-dd 收進來的 QGM 品質池名字），用來把 p_clim 母體限定在 DD 池、不被非 DD
+    快取稀釋（設計稿 §5.4：p_clim 母體＝「DD 池」，不是「weekly_cache 目錄下全部檔案」——
+    後者原本等價，但 QGM 名字進駐 weekly_cache 後兩者已分岔）。
+
+    用「排除非 DD ticker」而非「只收 DD ticker 白名單」，是因為國際 ADR／交易所後綴的別名
+    （如 latest.json 的 "ABB" ↔ weekly_cache 的 "ABBNY.json"、"5274.TW" ↔ "5274.TWO.json"）
+    會讓白名單字串比對誤刪本屬 DD 池的檔案；排除法不受這批別名影響（那些 ticker 從未出現在
+    非 DD 名單裡）。latest.json 讀不到時回傳 None，呼叫端 fallback 為「掃全部檔案」並印
+    ::warning::（寧可母體被稀釋也不要整包算不出來）。"""
+    if not DD_SCREENER_LATEST.exists():
+        print(f"::warning::{DD_SCREENER_LATEST} 不存在，p_clim 母體 fallback 為 "
+              f"data/weekly_cache/ 全部檔案（可能含非 DD 名字，母體被稀釋）")
+        return None
+    try:
+        data = json.loads(DD_SCREENER_LATEST.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as e:
+        print(f"::warning::{DD_SCREENER_LATEST} 讀取失敗（{e}），p_clim 母體 fallback 為 "
+              f"data/weekly_cache/ 全部檔案（可能含非 DD 名字，母體被稀釋）")
+        return None
+    stocks = data.get("stocks") or []
+    return {s.get("ticker") for s in stocks if s.get("ticker") and s.get("dd_status") != "dd"}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# (a) p_clim：pooled 跨 DD 池 weekly_cache ticker 的無條件頻率
 # ═══════════════════════════════════════════════════════════════════════════
 
 def compute_p_clim(spy_dates, spy_closes, today_str):
     start_bound = _minus_years(today_str, CLIM_WINDOW_YEARS)
     spy_last = spy_dates[-1] if spy_dates else None
-    ticker_files = sorted(CACHE_DIR.glob("*.json"))
+    all_files = sorted(CACHE_DIR.glob("*.json"))
+    exclude_set = _load_non_dd_exclude_set()
+    if exclude_set is None:
+        ticker_files = all_files
+        n_excluded_non_dd = 0
+    else:
+        ticker_files = [p for p in all_files if p.stem not in exclude_set]
+        n_excluded_non_dd = len(all_files) - len(ticker_files)
+        info(f"p_clim 母體：data/weekly_cache/ 共 {len(all_files)} 檔，排除 {n_excluded_non_dd} "
+             f"檔非 DD 名字（dd_status≠dd），實際掃描 {len(ticker_files)} 檔")
 
     results = {}
     for template, horizon_days in HORIZONS.items():
@@ -316,7 +357,7 @@ def compute_p_clim(spy_dates, spy_closes, today_str):
         freq = round(n_hit / n_total, 4) if n_total else None
         results[template] = {"p_clim": freq, "n_cells": n_total, "n_hit": n_hit,
                               "n_tickers": len(tickers_used)}
-    return results, start_bound, len(ticker_files)
+    return results, start_bound, len(ticker_files), n_excluded_non_dd
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -419,7 +460,7 @@ def main():
 
     today_str = datetime.now(timezone.utc).date().isoformat()
 
-    clim_results, start_bound, n_files = compute_p_clim(spy_dates, spy_closes, today_str)
+    clim_results, start_bound, n_files, n_excluded_non_dd = compute_p_clim(spy_dates, spy_closes, today_str)
     empirical_table, empirical_note = compute_empirical_table(spy_dates, spy_closes)
 
     p_clim = {t: clim_results[t]["p_clim"] for t in HORIZONS}
@@ -434,13 +475,16 @@ def main():
         "p_clim_cells": {t: {"n_cells": clim_results[t]["n_cells"], "n_hit": clim_results[t]["n_hit"],
                               "n_tickers": clim_results[t]["n_tickers"]} for t in HORIZONS},
         "p_clim_definition": (
-            "對 data/weekly_cache/ 全部 ticker，取近 5 年（clim_window_years）每個曆月首個可得"
-            "週線收盤為取樣點，算「該取樣點起 91／365 曆日後 ticker 報酬 > SPY 同窗報酬」的 "
-            "pooled 無條件頻率（跨全部 ticker、跨全部取樣月合併計）；SPY 收盤自本檔專用 "
+            "對 data/weekly_cache/ 屬 DD 池的 ticker（docs/dd-screener/latest.json 之 "
+            "dd_status==\"dd\"；排除 --include-non-dd 收進來的 QGM 等非 DD 名字，避免母體被"
+            "稀釋），取近 5 年（clim_window_years）每個曆月首個可得週線收盤為取樣點，算「該"
+            "取樣點起 91／365 曆日後 ticker 報酬 > SPY 同窗報酬」的 pooled 無條件頻率（跨全部"
+            "ticker、跨全部取樣月合併計）；SPY 收盤自本檔專用 "
             "data/dd_verdict_base_rates_raw_cache.json 10 年日線讀取。ticker／SPY 兩端皆採"
             "「目標日或之前最近收盤」（_at_or_before，語意同 knowledge/settle_outcomes.py "
             "_close_at_or_before）；任一端缺資料（含視窗尚未到期，即該 ticker 或 SPY 最後一根"
-            "資料日 < 目標日）即跳過該 cell，不補值、不外推。"
+            "資料日 < 目標日）即跳過該 cell，不補值、不外推。latest.json 讀不到時 fallback 為"
+            "掃 data/weekly_cache/ 全部檔案（含非 DD 名字），並印 ::warning::。"
         ),
         "empirical_table": empirical_table,
         "empirical_table_note": empirical_note,
@@ -448,6 +492,7 @@ def main():
         "spy_data_end": spy_dates[-1],
         "n_spy_daily_bars": len(spy_dates),
         "n_weekly_cache_files_scanned": n_files,
+        "n_excluded_non_dd": n_excluded_non_dd,
         "config_note": (
             "USE_EMPIRICAL_TABLE 是 producer（scripts/generate_dd_verdict_forecasts.py）的 CONFIG "
             "常數，不在本檔——本檔只負責產出上面兩張表；producer 目前恆讀 p_clim（PREREG offset "
@@ -462,7 +507,8 @@ def main():
 
     info(f"wrote {out_path}")
     info(f"SPY raw cache: {spy_dates[0]} .. {spy_dates[-1]}（{len(spy_dates)} 根日線）；"
-         f"weekly_cache 掃描 {n_files} 檔；p_clim 取樣窗 {start_bound} .. {today_str}")
+         f"weekly_cache 掃描 {n_files} 檔（排除非 DD {n_excluded_non_dd} 檔）；"
+         f"p_clim 取樣窗 {start_bound} .. {today_str}")
     for t in HORIZONS:
         c = clim_results[t]
         info(f"  p_clim[{t}] = {c['p_clim']}（n_cells={c['n_cells']} n_hit={c['n_hit']} "
