@@ -24,8 +24,10 @@ name: Daily US Close Band
 #     排在本帶最後一個 build step，與 screener.py 的下載爆量隔開最遠）
 #   （2026-09-08 新增，非整併自舊 workflow）→ build_stages.py（個股階段雷達，緊接
 #     rs-turn 之後——同一份母體、同一份 tech_core 快取，零額外下載）
-#   （2026-09-09 新增，非整併自舊 workflow）→ check_seat_stage_alerts.py（席位持股
-#     跌入/脫離 S0 弱勢的每日通知，緊接 stages 之後，含 email——同 turtle-sleeve 模式）
+#   （2026-09-09 新增，2026-09-10 主事件改為選股主控台名單變化）→
+#     check_seat_stage_alerts.py（/cockpit/ 陣容名單新增/移除/換區的每日通知，
+#     S0 進出與品質閘翻轉降為附屬區塊，緊接 stages 之後，含 email——同
+#     turtle-sleeve 模式）
 #
 # 順序理由：daily-screener-us 的 docs/screener/latest.json 是
 # daily-fundamentals-us 的輸入。原本靠 45 分鐘錯峰保證先後，現在改成同一 job
@@ -190,14 +192,15 @@ jobs:
         continue-on-error: true
         run: python scripts/build_stages.py || echo "::warning::stages build failed; band unaffected"
 
-      # ── 12. 席位持股階段警訊（零 LLM 通知器，非判斷規則；緊接 stages 之後——
-      #    讀當天剛寫出的 lamp.json 對照 docs/engine/arena.json 席位，見
-      #    scripts/check_seat_stage_alerts.py 檔頭）──
-      - name: "[stages] Check seat-stage alerts (entered/left S0)"
+      # ── 12. 選股主控台名單變化警訊（零 LLM 通知器，非判斷規則；緊接 stages 之後——
+      #    讀當天剛寫出的 lamp.json 對照 docs/engine/arena.json 席位（＝ /cockpit/
+      #    頁「陣容」render 的同一份集合），見 scripts/check_seat_stage_alerts.py
+      #    檔頭——主事件是名單新增／移除／換區，S0 進出與品質閘翻轉降為附屬區塊）──
+      - name: "[stages] Check cockpit roster alerts (added/removed/switched)"
         continue-on-error: true
         run: python scripts/check_seat_stage_alerts.py
 
-      - name: "[stages] Read seat-stage alert"
+      - name: "[stages] Read cockpit roster alert"
         id: seat_alert
         continue-on-error: true
         run: |
@@ -213,7 +216,7 @@ jobs:
             echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: "[stages] Email seat-stage alert"
+      - name: "[stages] Email cockpit roster alert"
         if: steps.seat_alert.outputs.changed == 'true'
         continue-on-error: true
         uses: dawidd6/action-send-mail@v3
@@ -223,7 +226,7 @@ jobs:
           secure: true
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_APP_PASSWORD }}
-          subject: "席位持股階段變化 ${{ steps.seat_alert.outputs.date }}"
+          subject: "🧭 選股主控台名單變化 ${{ steps.seat_alert.outputs.date }}"
           to: keigoks@gmail.com
           from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
           body: ${{ steps.seat_alert.outputs.body }}
