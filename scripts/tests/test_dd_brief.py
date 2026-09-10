@@ -414,3 +414,75 @@ def test_render_negative_evidence_claim_fullwidths_half_width_punct_after_cjk():
     row_html = dd_brief.render_negative_evidence({}, evidence)
     assert "市場,占比" not in row_html
     assert "市場，占比" in row_html
+
+
+# ---------------------------------------------------------------------------
+# WP-E（2026-09-10）：修 WP-D 修 #4（Codex 複審
+# notes/site-internal/dd/_codex_wpd_review_20260910.md 發現點 4）——新格式時
+# plain.how_to_lose 只能當前言，不得取代 premortem.blind_spots[] 三視角反證。
+# ---------------------------------------------------------------------------
+
+def test_render_how_to_lose_new_format_shows_all_three_views_with_summary():
+    """單元層級：直接呼叫 render_how_to_lose，重現 Codex 複審原始反例——
+    plain.how_to_lose 非空時，新格式仍必須完整呈現三視角各自的獨有證據。"""
+    data = {
+        "plain": {"how_to_lose": "反證詳見下列三視角。"},
+        "premortem": {
+            "blind_spots": [
+                {"view": view, "evidence": "獨有證據" + str(i)}
+                for i, view in enumerate(dd_brief._COUNTER_VIEWS)
+            ],
+        },
+    }
+    html_text, is_fallback = dd_brief.render_how_to_lose(data)
+    assert "反證詳見下列三視角。" in html_text
+    for i in range(3):
+        assert "獨有證據" + str(i) in html_text, html_text
+    assert is_fallback is False
+
+
+def test_render_how_to_lose_old_format_summary_still_replaces():
+    """舊格式（有 failure_story，blind_spots 為純字串）維持原行為：
+    how_to_lose 非空就整段用它取代機械渲染，不強制展開三視角區塊。"""
+    data = {
+        "plain": {"how_to_lose": "舊格式摘要。"},
+        "premortem": {
+            "failure_story": "舊式失敗故事",
+            "blind_spots": ["盲點一", "盲點二"],
+        },
+    }
+    html_text, is_fallback = dd_brief.render_how_to_lose(data)
+    assert html_text.strip() == "<p>舊格式摘要。</p>"
+    assert "盲點一" not in html_text
+    assert is_fallback is False
+
+
+def test_new_format_how_to_lose_summary_does_not_hide_counter_evidence_in_full_page(tmp_path):
+    """整頁 CLI 層級：新格式 + plain.how_to_lose 同時存在時，交付 HTML 裡
+    三視角的獨有證據都要出現，不能只看到摘要那一句。"""
+    src = SRC_DIR / "BE_20260905"
+    j = copy.deepcopy(json.loads((src / "BE_20260905.judgment.json").read_text(encoding="utf-8")))
+    j["plain"] = j.get("plain") or {}
+    j["plain"]["how_to_lose"] = "反證詳見下列三視角，本句不得取代之。"
+    j["premortem"]["blind_spots"] = [
+        {"view": "論點失敗", "evidence": "獨有證據Alpha"},
+        {"view": "論點成功但股東經濟變差", "evidence": "獨有證據Beta"},
+        {"view": "價格已反映太多", "evidence": "獨有證據Gamma"},
+    ]
+    j["premortem"].pop("failure_story", None)
+    j["premortem"].pop("second_failure", None)
+    jpath = tmp_path / "BE_newformat_summary.judgment.json"
+    jpath.write_text(json.dumps(j, ensure_ascii=False), encoding="utf-8")
+    out = tmp_path / "BE_newformat_summary.html"
+    r = _run_cli([
+        "--judgment", str(jpath),
+        "--scenario-meta", str(src / "BE_20260905.scenario_meta.json"),
+        "--out", str(out),
+    ])
+    assert r.returncode == 0, r.stderr
+    html_text = out.read_text(encoding="utf-8")
+    assert "{{" not in html_text
+    assert "反證詳見下列三視角，本句不得取代之。" in html_text
+    assert "獨有證據Alpha" in html_text
+    assert "獨有證據Beta" in html_text
+    assert "獨有證據Gamma" in html_text

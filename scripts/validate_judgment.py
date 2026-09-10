@@ -64,6 +64,21 @@ Two layers:
      不再逐欄催稿；三個陣列的「長度必須是 3」配額同時撤除。另檢查 plain 內數字
      ⊆ judgment 其他欄位數字集合為 WARN。`plain` 內字串仍照常走
      leak_and_punct_checks（FAIL）。
+  9. 條件式展開區塊完整性（FAIL，WP-E 2026-09-10，修 WP-D 契約接線洞 #2）:
+     generic schema_validate 不支援 oneOf，B1–B4 四個條件式展開區塊
+     （industry.tam_table／growth.segments／governance.capital_returns／
+     valuation.peers）以 object 形態出現時，schema 層放不住「必須是合法未展開
+     標記」——`expandable_block_checks()` 另開專用檢查：object 必須
+     `expanded is False` 且 `reason` 為去空白後非空字串，否則 FAIL。
+  10. 反證唯一來源完整性（FAIL，WP-E 2026-09-10，修契約接線洞 #3）: A1 撤掉
+      premortem.failure_story／second_failure 必填後，新格式的反證唯一來源
+      （blind_spots[] 依 view 分組）沒有機械契約接住「三視角全空」——
+      `premortem_counterevidence_checks()` 對新格式檔（任一 blind_spots 帶
+      view 的 object，或缺 failure_story／second_failure）要求三視角
+      （論點失敗／論點成功但股東經濟變差／價格已反映太多）各至少一條有非空
+      evidence 或 assumption，或該條有非空 not_applicable_reason（合法「不
+      適用」出口）。舊格式（有 failure_story 且 blind_spots 為純字串）不受
+      影響。
 
 Usage:
   python3 scripts/validate_judgment.py FILE.json [--report] [--evidence EVIDENCE.json]
@@ -607,7 +622,10 @@ def leak_and_punct_checks(data: dict) -> list:
         # contradictions[].prior_field 依 QC-49 執行細則必須填 dd-meta 欄名（runway_post_y5／
         # archetype 等本身就在洩漏詞表內），該欄整個豁免；axis 以「前份漂移：」開頭時，
         # 冒號後的欄名 token 同樣豁免（HPE 2026-09-05 真跑查出驗證器自相矛盾）。
-        if re.match(r"contradictions\[\d+\]\.prior_field$", path):
+        # 2026-09-10（WP-E 修 #1）：A4 開放 prior_field 為欄名陣列後，_walk_strings 對
+        # 陣列元素產生的路徑是 `prior_field[0]` 這種子路徑，原本的 `$` 收尾只匹配字串
+        # 形狀，陣列形狀會漏接、被當成讀者文字誤判外洩——整個子樹（陣列各元素）一併豁免。
+        if re.match(r"contradictions\[\d+\]\.prior_field(\[\d+\])?$", path):
             continue
         if re.match(r"contradictions\[\d+\]\.axis$", path) and text.startswith("前份漂移："):
             continue
@@ -624,6 +642,97 @@ def leak_and_punct_checks(data: dict) -> list:
         for m in qc.CJK_PUNCT_RE.finditer(text):
             ctx = text[max(0, m.start() - 10):m.start() + 15].strip()
             fails.append(f"$.{path}: CJK 接半形標點 {m.group(0)!r}（應用全形，如 ，。：）—「…{ctx}…」")
+    return fails
+
+
+# ---------------------------------------------------------------------------
+# WP-E 修 #2（2026-09-10，Codex 複審點 2）：四個 B1-B4 條件式展開區塊
+# （industry.tam_table／growth.segments／governance.capital_returns／
+# valuation.peers）schema 只放寬成 "type": ["array", "object"]——generic
+# schema_validate 不支援 oneOf，object 形態沒有 required/properties 可管，
+# 空物件 {}／{"expanded": false}（無 reason）都會被 layer 1 放行。這裡另開
+# 一個專用檢查：object 形態必須是合法的「未展開」標記（expanded 明確為
+# false，reason 為去空白後非空字串）。不對 reason 做字數或關鍵字品質判斷
+# ——理由是否「真的不承重」是判斷問題，留給人工／critic 審讀。
+# ---------------------------------------------------------------------------
+
+_EXPANDABLE_BLOCKS = (
+    ("industry", "tam_table"),
+    ("growth", "segments"),
+    ("governance", "capital_returns"),
+    ("valuation", "peers"),
+)
+
+
+def expandable_block_checks(data: dict) -> list:
+    fails = []
+    for top, key in _EXPANDABLE_BLOCKS:
+        node = data.get(top)
+        if not isinstance(node, dict):
+            continue
+        value = node.get(key)
+        if not isinstance(value, dict):
+            continue  # list（正常展開形狀）或缺欄，交給 layer1 required 檢查
+        if value.get("expanded") is not False:
+            fails.append(
+                f"$.{top}.{key}: object 形態必須是未展開標記（expanded 須明確為 false），"
+                f"得到 {value.get('expanded')!r}"
+            )
+            continue
+        reason = value.get("reason")
+        if not isinstance(reason, str) or not reason.strip():
+            fails.append(f"$.{top}.{key}: 未展開標記缺 reason（省略理由不得為空）")
+    return fails
+
+
+# ---------------------------------------------------------------------------
+# WP-E 修 #3（2026-09-10，Codex 複審點 3）：A1 撤掉 premortem.failure_story／
+# second_failure 必填後，新格式的反證唯一來源（blind_spots[] 依 view 分組）
+# 沒有機械契約接住「三視角全空」——只在 prompt 裡要求。這裡對新格式檔加一個
+# 檢查：三個視角（論點失敗／論點成功但股東經濟變差／價格已反映太多）各至少
+# 一條有非空 evidence 或 assumption，或該條有非空 not_applicable_reason（合法
+# 「此視角不適用」出口，不強逼硬湊三段散文）。舊格式（有 failure_story 且
+# blind_spots 為純字串）不受影響，維持原本沒有此檢查的路——用明確的形狀識別
+# （_premortem_is_new_format），不誤傷既有存查（BE_20260905 等）。
+# ---------------------------------------------------------------------------
+
+
+_COUNTER_VIEWS = ("論點失敗", "論點成功但股東經濟變差", "價格已反映太多")  # 與 dd_brief._COUNTER_VIEWS 同詞表
+
+
+def _premortem_is_new_format(premortem: dict) -> bool:
+    blind_spots = premortem.get("blind_spots") or []
+    has_view_obj = any(isinstance(b, dict) and b.get("view") for b in blind_spots)
+    missing_story = not premortem.get("failure_story") and not premortem.get("second_failure")
+    return bool(has_view_obj or missing_story)
+
+
+def premortem_counterevidence_checks(data: dict) -> list:
+    premortem = data.get("premortem")
+    if not isinstance(premortem, dict) or not _premortem_is_new_format(premortem):
+        return []
+    blind_spots = premortem.get("blind_spots") or []
+    by_view = {v: [] for v in _COUNTER_VIEWS}
+    for b in blind_spots:
+        if isinstance(b, dict) and b.get("view") in by_view:
+            by_view[b["view"]].append(b)
+    fails = []
+    for view in _COUNTER_VIEWS:
+        recs = by_view[view]
+
+        def _nonempty(r, k):
+            v = r.get(k)
+            return isinstance(v, str) and bool(v.strip())
+
+        ok = any(
+            _nonempty(r, "evidence") or _nonempty(r, "assumption") or _nonempty(r, "not_applicable_reason")
+            for r in recs
+        )
+        if not ok:
+            fails.append(
+                f"$.premortem.blind_spots: 視角「{view}」缺非空 evidence／assumption，"
+                f"也無 not_applicable_reason（新格式反證唯一來源不得三視角全空）"
+            )
     return fails
 
 
@@ -893,13 +1002,16 @@ def validate_file(path: Path, evidence_path: Path | None = None, j1_warn: bool =
     cross_fails, cross_warns = cross_field_checks(data, path)
     pair_fails = same_source_pair_checks(data)  # 2026-09-07（P2-1）：同源欄位 equality
     leak_fails = leak_and_punct_checks(data)
+    expand_fails = expandable_block_checks(data)  # WP-E 修 #2：B1-B4 未展開標記完整性
+    premortem_fails = premortem_counterevidence_checks(data)  # WP-E 修 #3：新格式反證三視角
     drift_fails, drift_warns = drift_checks(data, path, evidence_path)
     j2_fails, j2_warns = j2_math_checks(data, path)
     j1_fails, j1_warns = j1_traceability_checks(data, evidence_path, warn_only=j1_warn)
     j4_warns = j4_plain_checks(data)
     j5_fails, j5_warns = j5_plain_role_checks(data)
 
-    fails = struct_errs + cross_fails + pair_fails + leak_fails + drift_fails + j2_fails + j1_fails + j5_fails
+    fails = (struct_errs + cross_fails + pair_fails + leak_fails + expand_fails + premortem_fails
+             + drift_fails + j2_fails + j1_fails + j5_fails)
     warns = cross_warns + drift_warns + j2_warns + j1_warns + j4_warns + j5_warns
     return fails, warns
 

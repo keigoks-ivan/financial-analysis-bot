@@ -26,7 +26,7 @@
 | ⑤ | 覆蓋面掃描 | (c) coverage 逐軸總覽＋ status=none／not_applicable 的查詢詞明細 | （逐軸核對 `contradictions`／`premortem`／`triggers` 是否接住，同 ①③） |
 | ⑥ | 量化模組完整性抽查 | (e) `scenario_meta.json` sidecar（`scenario_tree.eps.{bull,base,bear}`／`p_bull_pct`／`p_bear_pct`／`asym_ratio`／`ev5y_pct`／`irr_base_pct`） | `moat.roic_durability.{reinvest_rate,roiic,endo_ceiling,formula_note}`／`valuation`（共識 EPS CAGR）／`decision_inputs.{irr_base_pct,ev5y_pct,asym_ratio}`／`scenario_ref` |
 | ⑦ | 數字新鮮度 | (d) numbers 摘要（`latest_quarter_kpis[].as_of`／`price_as_of`／`earnings_recency`） | 判斷物引用的每個營運數字（`oneliner`／`reasoning`／`appendix_a` 等）＋ `decision_inputs.consensus_rev_3m_pct` |
-| ⑧ | QC-49 前份漂移歸因 | (f) `prior_dd`（`drift_watch` 20 欄／`prior_meta`／`H`／`R`／`triggers`） | `contradictions[]`（逐欄變動是否有獨立條目歸因）｜前份不存在時填 🟢 |
+| ⑧ | QC-49 前份漂移歸因 | (f) `prior_dd`（`drift_watch` 20 欄／`prior_meta`／`H`／`R`／`triggers`） | `contradictions[]`（逐欄變動是否映射到一個帶 `cause` 的條目；裁決／核心假設／情境方法變更不得併入純價格原因）｜前份不存在時填 🟢 |
 
 > (a)–(g) 對照 `dd_bundle.py::_gate_view_section` 的小節標籤；`###` 標題內就標了 `(a)` `(b)` … 字樣，
 > 對照時直接找 `### (X)` 開頭的段落即可，不需要另外查行號。
@@ -53,9 +53,11 @@ Stage 0 evidence 收集的職責，不是閘的職責）。
 否已經知道」。
 
 **⑤ 覆蓋面掃描（強制）**：gate_view (c) 表逐軸點名 `status="none"`／`"not_applicable"` 的每一軸——
-理由站得住嗎？`n_queries` 是否 <2 條或（看下方查詢詞明細）不相關？**缺軸本身即 🔴，不需先證明結論
-錯**——這是 critic-gates.md QC-41 ⑤ 原文的核心主張，v17 版唯一差異是查詢詞明細已經機械列在 gate_view
-裡，閘不必自己去猜「查了什麼」。
+理由站得住嗎？查詢是否切題且足以支撐該軸結論（看下方查詢詞明細判斷，不以 `n_queries` 次數計）？
+**缺軸本身即 🔴，不需先證明結論錯**——這是 critic-gates.md QC-41 ⑤ 原文的核心主張，v17 版唯一差異是
+查詢詞明細已經機械列在 gate_view 裡，閘不必自己去猜「查了什麼」。（2026-09-10 WP-E：口徑從「次數
+<2」改「切題且足以支撐結論」，與 B8 撤配額後的機械 coverage 閘 `queries_run≥1` 同步，不再要求湊
+次數。）
 
 **⑥ 量化模組完整性抽查（強制）**：
 - (i) `moat.roic_durability.reinvest_rate`／`.roiic` 有沒有 `.formula_note` 真算（寫「估計約 X%」
@@ -73,9 +75,12 @@ Stage 0 evidence 收集的職責，不是閘的職責）。
 的欄位要標「來源：摘要」。
 
 **⑧ QC-49 前份漂移歸因**：gate_view (f) `prior_dd.prior_meta` 存在時，`drift_watch` 20 欄中有變動的
-每一欄是否都在 `contradictions[]` 有帶對應歸因的獨立條目、且有三元排序主因；漏欄或無歸因＝🔴；
-**前份該欄本身為空或缺欄（前一版格式沒有）者不計**，只給 🟡 提醒或 🟢。gate_view (f) 為空物件或
-`status` 非 `"ok"` 時（無前份）填 🟢 並註「無前份」。
+每一欄是否都映射到 `contradictions[]` 一個帶 `cause` 的條目（`prior_field` 可為欄名陣列，多個變動欄
+可共用同一條目、不必逐欄重寫）、且三元排序主因站得住；**裁決／核心假設／情境方法的變更不得併入純
+價格原因**；漏欄或無歸因＝🔴；**前份該欄本身為空或缺欄（前一版格式沒有）者不計**，只給 🟡 提醒或
+🟢。gate_view (f) 為空物件或 `status` 非 `"ok"` 時（無前份）填 🟢 並註「無前份」。（2026-09-10
+WP-E：口徑從「每欄獨立條目」同步為 A4 原因分組後的「每欄映射到一個原因條目」，判斷嚴格度不降——
+分組不得掩蓋裁決／方法變動，只是不強逼逐欄重寫同一段文字。）
 
 ## 🔴／🟡／🟢 口徑（與 gate.md.tmpl 本體「## 🔴 的口徑」一節一字不改，此處僅重申不得脫鉤）
 

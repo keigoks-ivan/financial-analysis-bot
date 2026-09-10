@@ -170,6 +170,19 @@ def unexpanded_blocks(j):
 _COUNTER_VIEWS = ("論點失敗", "論點成功但股東經濟變差", "價格已反映太多")
 
 
+def _premortem_is_new_format(premortem):
+    """2026-09-10（WP-E 修 #4）：新舊反證形狀判別，與
+    validate_judgment._premortem_is_new_format 同一詞表／同一判準（各自小函式，
+    非共用 import——一個管渲染一個管驗證，職責不同）。任一 blind_spots 條目是
+    帶 view 的 object，或 premortem 缺 failure_story／second_failure，即新格式
+    ——render_how_to_lose 只對新格式強制優先呈現三視角，不被可選摘要遮住。"""
+    premortem = premortem or {}
+    blind_spots = premortem.get("blind_spots") or []
+    has_view_obj = any(isinstance(b, dict) and b.get("view") for b in blind_spots)
+    missing_story = not premortem.get("failure_story") and not premortem.get("second_failure")
+    return bool(has_view_obj or missing_story)
+
+
 def counter_records(j):
     """把 premortem.blind_spots[] 正規化成反證紀錄 list（舊形狀一併吃）。"""
     out = []
@@ -445,6 +458,16 @@ def render_growth_funding(j):
 
 def render_how_to_lose(j):
     how_to_lose = (j.get("plain") or {}).get("how_to_lose")
+    # 2026-09-10（WP-E 修 #4，Codex 複審點 4）：新格式的反證唯一來源是
+    # premortem.blind_spots[] 三視角分組——how_to_lose 若非空只能當前言一句，
+    # 不得取代三視角內容（否則反證被摘要遮住，下游只看得到一句話）。舊格式
+    # （有 failure_story 且 blind_spots 為純字串）維持原行為：how_to_lose 非空
+    # 就整段用它取代機械渲染。
+    if _premortem_is_new_format(j.get("premortem")):
+        body = render_premortem(j)
+        if how_to_lose:
+            return f"    <p>{esc(how_to_lose)}</p>\n  {body}", False
+        return body, True
     if how_to_lose:
         return f"    <p>{esc(how_to_lose)}</p>", False
     return render_premortem(j), True

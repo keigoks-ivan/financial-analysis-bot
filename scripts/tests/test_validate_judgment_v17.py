@@ -262,17 +262,24 @@ def test_conditional_block_unexpanded_marker_validates(tmp_path, top, key):
 
 
 def test_counter_evidence_record_shape_validates(tmp_path):
-    """A1：反證紀錄的 canonical 形狀合法，且 failure_story／second_failure 可缺。"""
+    """A1：反證紀錄的 canonical 形狀合法，且 failure_story／second_failure 可缺。
+    2026-09-10（WP-E 修 #3）：新格式三視角均須至少一條非空 evidence／assumption
+    ——這裡三視角都給齊，同時驗證形狀合法與覆蓋完整（單視角版另見
+    test_premortem_new_format_cannot_be_fully_empty 對面的反例）。"""
     data = _src_judgment()
-    data["premortem"]["blind_spots"] = [{
-        "view": "論點成功但股東經濟變差",
-        "evidence": "產能擴張三年吃掉 FCF",
-        "assumption": "H2 營運槓桿",
-        "consequence": "FCF Margin 由 18% 降至 9%，估值框架由 P/FCF 切到 EV/S",
-        "ruling": "採納——已反映進 Bull 終端倍數",
-        "watch": "季度 maintenance capex 占 FCF 比重",
-        "evidence_refs": [],
-    }]
+    data["premortem"]["blind_spots"] = [
+        {
+            "view": "論點成功但股東經濟變差",
+            "evidence": "產能擴張三年吃掉 FCF",
+            "assumption": "H2 營運槓桿",
+            "consequence": "FCF Margin 由 18% 降至 9%，估值框架由 P/FCF 切到 EV/S",
+            "ruling": "採納——已反映進 Bull 終端倍數",
+            "watch": "季度 maintenance capex 占 FCF 比重",
+            "evidence_refs": [],
+        },
+        {"view": "論點失敗", "evidence": "共識成長假設未兌現，訂單能見度回落"},
+        {"view": "價格已反映太多", "assumption": "現價已隱含樂觀情境的多數上行"},
+    ]
     data["premortem"].pop("failure_story", None)
     data["premortem"].pop("second_failure", None)
     data["premortem"]["max_dd"].pop("trigger_time", None)
@@ -308,6 +315,114 @@ def test_thesis_h_periods_may_be_omitted(tmp_path):
     fails, _warns = vj.validate_file(path, None, j1_warn=False)
 
     assert fails == [], f"H 期限缺欄被判 FAIL：{fails}"
+
+
+# ---------------------------------------------------------------------------
+# WP-E（2026-09-10）：修 WP-D 五個契約接線洞（Codex 複審
+# notes/site-internal/dd/_codex_wpd_review_20260910.md 發現點 1–3；點 4 在
+# test_dd_brief.py、點 5 是 prompt 文案同步不落測試）
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("field", ["runway_post_y5", "archetype"])
+def test_leak_scan_prior_field_array_is_not_a_prose_leak(field):
+    """修 #1：A4 開放 prior_field 為欄名陣列後，_walk_strings 對陣列元素產生的
+    路徑是 `prior_field[0]`，QC-49 機器欄名豁免原本只匹配字串形狀的
+    `prior_field` 這個路徑，漏接陣列形狀、把合法欄名誤判成讀者面文字外洩。"""
+    assert vj.leak_and_punct_checks({"contradictions": [{"prior_field": field}]}) == []
+    assert vj.leak_and_punct_checks({"contradictions": [{"prior_field": [field]}]}) == []
+
+
+@pytest.mark.parametrize("top,key", [
+    ("industry", "tam_table"), ("growth", "segments"),
+    ("governance", "capital_returns"), ("valuation", "peers"),
+])
+@pytest.mark.parametrize("marker", [
+    {},
+    {"expanded": False},
+    {"expanded": True},
+    {"expanded": False, "reason": "   "},
+])
+def test_expandable_block_illegal_marker_fails(tmp_path, top, key, marker):
+    """修 #2：generic schema_validate 不支援 oneOf，B1–B4 條件式展開區塊的
+    object 形態原本沒有 required/properties 可管——空物件、缺 reason、
+    expanded 不是明確 false、reason 全空白，四種都必須 FAIL；合法標記
+    （test_conditional_block_unexpanded_marker_validates）與陣列／原展開形狀
+    （test_src_judgment_zero_fail）仍維持 PASS，不受此檢查影響。"""
+    data = _src_judgment()
+    data[top][key] = dict(marker)
+    path = tmp_path / "judgment.json"
+    path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+
+    fails, _warns = vj.validate_file(path, None, j1_warn=False)
+
+    assert fails, f"{top}.{key} 不合法未展開標記未被擋：{marker}"
+
+
+def test_premortem_new_format_cannot_be_fully_empty(tmp_path):
+    """修 #3：A1 撤掉 premortem.failure_story／second_failure 必填後，新格式的
+    反證唯一來源（blind_spots[] 依 view 分組）沒有機械契約接住「三視角全空」
+    ——用原本驗證通過的 BE 存查複本，清空 blind_spots、拿掉 failure_story／
+    second_failure、trap_analysis 只留 verdict，必須 FAIL。"""
+    data = _src_judgment()
+    data["premortem"]["blind_spots"] = []
+    data["premortem"].pop("failure_story", None)
+    data["premortem"].pop("second_failure", None)
+    data["trap_analysis"] = {"verdict": data["trap_analysis"]["verdict"]}
+    path = tmp_path / "judgment.json"
+    path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+
+    fails, _warns = vj.validate_file(path, None, j1_warn=False)
+
+    assert any("視角" in f for f in fails), f"新格式反證三視角全空未被擋：{fails}"
+
+
+def test_premortem_new_format_with_all_three_views_passes(tmp_path):
+    """三視角齊（各至少一條非空 evidence）：PASS。"""
+    data = _src_judgment()
+    data["premortem"]["blind_spots"] = [
+        {"view": v, "evidence": f"視角{i}的具體證據"} for i, v in enumerate(vj._COUNTER_VIEWS)
+    ]
+    data["premortem"].pop("failure_story", None)
+    data["premortem"].pop("second_failure", None)
+    path = tmp_path / "judgment.json"
+    path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+
+    fails, _warns = vj.validate_file(path, None, j1_warn=False)
+
+    assert fails == [], fails
+
+
+def test_premortem_new_format_not_applicable_reason_is_legal_escape(tmp_path):
+    """三視角之一沒有 evidence／assumption，但有非空 not_applicable_reason——
+    合法的「此視角不適用」出口，不強逼硬湊散文。"""
+    data = _src_judgment()
+    data["premortem"]["blind_spots"] = [
+        {"view": "論點失敗", "evidence": "共識成長假設未兌現，訂單能見度回落"},
+        {"view": "論點成功但股東經濟變差", "assumption": "H2 營運槓桿吃掉 FCF"},
+        {"view": "價格已反映太多", "not_applicable_reason": "現價仍低於三年均值，無 priced-in 疑慮"},
+    ]
+    data["premortem"].pop("failure_story", None)
+    data["premortem"].pop("second_failure", None)
+    path = tmp_path / "judgment.json"
+    path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+
+    fails, _warns = vj.validate_file(path, None, j1_warn=False)
+
+    assert fails == [], fails
+
+
+def test_premortem_old_format_untouched_by_new_completeness_check(tmp_path):
+    """舊格式（有 failure_story 且 blind_spots 為純字串，BE 存查原樣）不受
+    修 #3 的新檢查影響，維持原本沒有此檢查的路。"""
+    data = _src_judgment()
+    assert data["premortem"].get("failure_story"), "fixture 前提：BE 應為舊格式"
+    assert all(isinstance(b, str) for b in data["premortem"]["blind_spots"])
+    path = tmp_path / "judgment.json"
+    path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+
+    fails, _warns = vj.validate_file(path, None, j1_warn=False)
+
+    assert fails == [], fails
 
 
 def test_j4_no_longer_warns_on_derivable_plain_fields():
