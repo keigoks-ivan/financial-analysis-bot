@@ -833,7 +833,7 @@ def build_lens_table():
     for r in LENS_ROWS:
         cov = f'{r["n_dd"]} 檔／{r["n_win"]/r["n_dd"]*100:.1f}% 窗內'
         trs.append(
-            f'<tr><td class="lbl"><a href="{r["slug"]}.html">鏡頭{r["n"]}・{r["name"]}</a></td>'
+            f'<tr><td class="lbl"><a href="us/{r["slug"]}.html">鏡頭{r["n"]}・{r["name"]}</a></td>'
             f'<td class="why">{r["q"]}</td><td class="why">{r["a"]}</td>'
             f'<td class="num" style="white-space:nowrap">{cov}</td><td class="why">{r["gap"]}</td></tr>'
         )
@@ -1256,7 +1256,7 @@ def main():
     # 九子頁連結列
     body.append('<div class="footlinks">')
     for r in LENS_ROWS:
-        body.append(f'<a href="{r["slug"]}.html">鏡頭{r["n"]}・{r["name"]}</a>')
+        body.append(f'<a href="us/{r["slug"]}.html">鏡頭{r["n"]}・{r["name"]}</a>')
     body.append('<a href="/backtest/#scan">回國家掃描</a>')
     body.append('</div>')
 
