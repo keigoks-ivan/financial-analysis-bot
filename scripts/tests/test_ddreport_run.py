@@ -1207,5 +1207,351 @@ def test_judge_bundle_loads_latest_quarter_from_full_path(tmp_path):
     assert "找不到逐字稿" not in text
 
 
+# ---------------------------------------------------------------------------
+# 8) 2026-09-10（WP-B）：逐字稿摘要內容雜湊永久快取
+# ---------------------------------------------------------------------------
+
+def test_digest_content_hash_cache_hits_on_unchanged_file(tmp_path, monkeypatch):
+    """同一份逐字稿檔跑兩次：第一次快取全 miss（pending 含該檔），本輪摘要
+    完成後把結果寫進永久快取，第二次（新的 parts_dir，模擬新的一輪 plan）
+    必須零 pending、直接命中快取。"""
+    tmpl_path = tmp_path / "digest.md.tmpl"
+    tmpl_path.write_text("摘要樣板 v1", encoding="utf-8")
+    monkeypatch.setattr(ddreport, "DIGEST_CACHE_DIR", tmp_path / "digest_cache")
+    monkeypatch.setattr(ddreport, "DIGEST_TMPL_PATH", tmpl_path)
+
+    transcript = tmp_path / "Q1.md"
+    transcript.write_text("逐字稿內容 v1", encoding="utf-8")
+
+    parts_dir = tmp_path / "parts"
+    parts_dir.mkdir()
+    pending, reused = ddreport._prepare_digest_reuse([str(transcript)], None, 30, parts_dir)
+    assert pending == [str(transcript)]
+    assert reused == []
+
+    # 模擬本輪摘要完成：`_merge_digest_parts` 會呼叫這個 helper 把結果寫回永久快取。
+    ddreport._digest_cache_store(str(transcript), [{
+        "topic": "guidance", "claim": "c1", "quote": "q1", "speaker": "CFO",
+        "date": "2026-01-01", "file": str(transcript),
+    }], [])
+
+    parts_dir2 = tmp_path / "parts2"
+    parts_dir2.mkdir()
+    pending2, reused2 = ddreport._prepare_digest_reuse([str(transcript)], None, 30, parts_dir2)
+    assert pending2 == []
+    assert reused2 == [str(transcript)]
+    part = json.loads((parts_dir2 / "digest_0.json").read_text(encoding="utf-8"))
+    assert part["items"][0]["claim"] == "c1"
+    assert part["items"][0]["reused_from"] == "digest_cache"
+
+
+def test_digest_content_hash_cache_miss_on_file_content_change(tmp_path, monkeypatch):
+    """逐字稿內容改一個字：SHA-256 變了，即使檔名不變也必須視為 cache miss、
+    重新摘要（不受任何天數窗限制）。"""
+    tmpl_path = tmp_path / "digest.md.tmpl"
+    tmpl_path.write_text("摘要樣板 v1", encoding="utf-8")
+    monkeypatch.setattr(ddreport, "DIGEST_CACHE_DIR", tmp_path / "digest_cache")
+    monkeypatch.setattr(ddreport, "DIGEST_TMPL_PATH", tmpl_path)
+
+    transcript = tmp_path / "Q1.md"
+    transcript.write_text("逐字稿內容 v1", encoding="utf-8")
+    ddreport._digest_cache_store(str(transcript), [{"claim": "c1", "file": str(transcript)}], [])
+
+    parts_dir = tmp_path / "parts"
+    parts_dir.mkdir()
+    pending, reused = ddreport._prepare_digest_reuse([str(transcript)], None, 30, parts_dir)
+    assert pending == []
+    assert reused == [str(transcript)]
+
+    transcript.write_text("逐字稿內容 v2（改了一個字）", encoding="utf-8")
+    parts_dir2 = tmp_path / "parts2"
+    parts_dir2.mkdir()
+    pending2, reused2 = ddreport._prepare_digest_reuse([str(transcript)], None, 30, parts_dir2)
+    assert pending2 == [str(transcript)]
+    assert reused2 == []
+
+
+def test_digest_content_hash_cache_miss_on_tmpl_change(tmp_path, monkeypatch):
+    """digest.md.tmpl 改版：即使逐字稿本身一字未變，key 也會變，必須重新摘要
+    ——prompt 改版讓快取自動失效，不需要手動清快取。"""
+    tmpl_path = tmp_path / "digest.md.tmpl"
+    tmpl_path.write_text("摘要樣板 v1", encoding="utf-8")
+    monkeypatch.setattr(ddreport, "DIGEST_CACHE_DIR", tmp_path / "digest_cache")
+    monkeypatch.setattr(ddreport, "DIGEST_TMPL_PATH", tmpl_path)
+
+    transcript = tmp_path / "Q1.md"
+    transcript.write_text("逐字稿內容 v1", encoding="utf-8")
+    ddreport._digest_cache_store(str(transcript), [{"claim": "c1", "file": str(transcript)}], [])
+
+    tmpl_path.write_text("摘要樣板 v2（改版）", encoding="utf-8")
+
+    parts_dir = tmp_path / "parts"
+    parts_dir.mkdir()
+    pending, reused = ddreport._prepare_digest_reuse([str(transcript)], None, 30, parts_dir)
+    assert pending == [str(transcript)]
+    assert reused == []
+
+
+def test_merge_digest_parts_writes_content_hash_cache(tmp_path, monkeypatch):
+    """`_merge_digest_parts` 完成合併後應把每篇來源逐字稿的 items 依內容雜湊
+    寫回永久快取，且快取內容不帶『這次沿用』的暫時標記（reused_from）。"""
+    tmpl_path = tmp_path / "digest.md.tmpl"
+    tmpl_path.write_text("摘要樣板 v1", encoding="utf-8")
+    monkeypatch.setattr(ddreport, "DIGEST_CACHE_DIR", tmp_path / "digest_cache")
+    monkeypatch.setattr(ddreport, "DIGEST_TMPL_PATH", tmpl_path)
+
+    transcript = tmp_path / "Q1.md"
+    transcript.write_text("逐字稿內容 v1", encoding="utf-8")
+
+    run_dir = tmp_path / "run"
+    (run_dir / "parts").mkdir(parents=True)
+    (run_dir / "parts" / "digest_1.json").write_text(json.dumps({
+        "source_files": [str(transcript)],
+        "items": [{"topic": "guidance", "claim": "c1", "quote": "q1",
+                    "speaker": "CFO", "date": "2026-01-01", "file": str(transcript)}],
+        "qa_flags": [],
+    }), encoding="utf-8")
+
+    ddreport._merge_digest_parts(run_dir)
+
+    cache_path = ddreport._digest_cache_path(str(transcript))
+    assert cache_path.exists()
+    cached = json.loads(cache_path.read_text(encoding="utf-8"))
+    assert cached["items"][0]["claim"] == "c1"
+    assert "reused_from" not in cached["items"][0]
+
+    # 下一輪（不同 run_dir／不同 parts_dir）該檔應直接命中快取，不必重新摘要。
+    parts_dir2 = tmp_path / "parts2"
+    parts_dir2.mkdir()
+    pending, reused = ddreport._prepare_digest_reuse([str(transcript)], None, 30, parts_dir2)
+    assert pending == []
+    assert reused == [str(transcript)]
+
+
+def test_digest_cache_skipped_during_replay(tmp_path, monkeypatch):
+    """`DD_REPLAY_FROM` 生效時必須整個跳過永久快取查詢——否則同一份 replay
+    fixture 跑兩次，第二次會因為第一次已把摘要寫進永久快取而少掉 a2_{k}
+    spawn，破壞測試可重現性（比照 `_run_koyfin_step`／`cmd_plan` 對
+    `reuse_days` 的同一慣例）。"""
+    tmpl_path = tmp_path / "digest.md.tmpl"
+    tmpl_path.write_text("摘要樣板 v1", encoding="utf-8")
+    monkeypatch.setattr(ddreport, "DIGEST_CACHE_DIR", tmp_path / "digest_cache")
+    monkeypatch.setattr(ddreport, "DIGEST_TMPL_PATH", tmpl_path)
+    monkeypatch.setenv("DD_REPLAY_FROM", str(tmp_path / "fixture"))
+
+    transcript = tmp_path / "Q1.md"
+    transcript.write_text("逐字稿內容 v1", encoding="utf-8")
+    ddreport._digest_cache_store(str(transcript), [{"claim": "c1", "file": str(transcript)}], [])
+
+    parts_dir = tmp_path / "parts"
+    parts_dir.mkdir()
+    pending, reused = ddreport._prepare_digest_reuse([str(transcript)], None, 30, parts_dir)
+    assert pending == [str(transcript)]
+    assert reused == []
+
+
+# ---------------------------------------------------------------------------
+# 9) 2026-09-10（WP-B）：coverage 軸沿用改按軸失效（COVERAGE_REUSE_POLICY）
+# ---------------------------------------------------------------------------
+
+def _write_axis_snapshot(tmp_path, name, source_date, coverage, age_days):
+    archive_dir = tmp_path / name
+    archive_dir.mkdir()
+    evidence_path = archive_dir / "{0}.evidence.json".format(name)
+    evidence_path.write_text(json.dumps({"coverage": coverage}, ensure_ascii=False), encoding="utf-8")
+    return {
+        "archive_dir": archive_dir, "evidence_path": evidence_path,
+        "digest_path": None, "source_date": source_date, "age_days": age_days,
+    }
+
+
+def test_coverage_reuse_new_quarter_blocks_earnings_group_not_structural(tmp_path):
+    """財報失效組（`customer_concentration_credit` 等）遇到快照之後已出現
+    新一季逐字稿時不沿用；結構組（`competitive_share_entrants` 等）90 天窗
+    內不受新一季逐字稿影響，照樣沿用。"""
+    coverage = {
+        "customer_concentration_credit": {"status": "found", "findings": [{"claim": "old"}]},
+        "competitive_share_entrants": {"status": "found", "findings": [{"claim": "old"}]},
+        "major_events": {"status": "none", "queries_run": ["q"]},
+    }
+    snapshot = _write_axis_snapshot(tmp_path, "ZAXIS_20260101_dryrun", "20260101", coverage, age_days=5)
+    axis_list = [
+        {"id": "customer_concentration_credit"},
+        {"id": "competitive_share_entrants"},
+        {"id": "major_events"},
+    ]
+    # 快照之後（20260101）已出現新一季逐字稿（20260201）。
+    transcripts_obj = {"transcripts": {"selected": {
+        "recent_four_quarters": ["/x/T_Q1_2026_Earnings_Call_20260201.md"],
+    }}}
+    parts_dir = tmp_path / "parts"
+    parts_dir.mkdir()
+
+    reused_ids, decisions = ddreport._prepare_coverage_reuse(
+        axis_list, snapshot, ddreport.REUSE_DAYS_DEFAULT, parts_dir, transcripts_obj)
+
+    assert "customer_concentration_credit" not in reused_ids
+    assert "competitive_share_entrants" in reused_ids
+    assert "major_events" not in reused_ids
+    assert decisions["customer_concentration_credit"]["reused"] is False
+    assert decisions["competitive_share_entrants"]["reused"] is True
+    assert decisions["major_events"]["reused"] is False
+
+
+def test_coverage_reuse_no_new_quarter_allows_earnings_group_reuse(tmp_path):
+    """財報失效組在沒有新一季逐字稿出現時，天數窗內照樣沿用（不是恆重抓）。"""
+    coverage = {"customer_concentration_credit": {"status": "found", "findings": [{"claim": "old"}]}}
+    snapshot = _write_axis_snapshot(tmp_path, "ZAXIS2_20260101_dryrun", "20260101", coverage, age_days=5)
+    axis_list = [{"id": "customer_concentration_credit"}]
+    transcripts_obj = {"transcripts": {"selected": {
+        "recent_four_quarters": ["/x/T_Q4_2025_Earnings_Call_20251215.md"],  # 早於快照日
+    }}}
+    parts_dir = tmp_path / "parts"
+    parts_dir.mkdir()
+
+    reused_ids, decisions = ddreport._prepare_coverage_reuse(
+        axis_list, snapshot, ddreport.REUSE_DAYS_DEFAULT, parts_dir, transcripts_obj)
+
+    assert reused_ids == ["customer_concentration_credit"]
+    assert decisions["customer_concentration_credit"]["reused"] is True
+
+
+def test_coverage_reuse_pricing_axis_seven_day_window(tmp_path):
+    """`capital_markets_pricing` 固定 7 天窗：8 天即過期不沿用。"""
+    coverage = {"capital_markets_pricing": {"status": "found", "findings": [{"claim": "old"}]}}
+    snapshot = _write_axis_snapshot(tmp_path, "ZPRICE_20260101_dryrun", "20260101", coverage, age_days=8)
+    axis_list = [{"id": "capital_markets_pricing"}]
+    parts_dir = tmp_path / "parts"
+    parts_dir.mkdir()
+
+    reused_ids, decisions = ddreport._prepare_coverage_reuse(
+        axis_list, snapshot, ddreport.REUSE_DAYS_DEFAULT, parts_dir, None)
+
+    assert reused_ids == []
+    assert decisions["capital_markets_pricing"]["reused"] is False
+    assert "7" in decisions["capital_markets_pricing"]["reason"]
+
+
+def test_coverage_reuse_pricing_axis_within_seven_days(tmp_path):
+    """對照組：`capital_markets_pricing` 7 天內（例如 3 天）仍沿用。"""
+    coverage = {"capital_markets_pricing": {"status": "found", "findings": [{"claim": "old"}]}}
+    snapshot = _write_axis_snapshot(tmp_path, "ZPRICE2_20260101_dryrun", "20260101", coverage, age_days=3)
+    axis_list = [{"id": "capital_markets_pricing"}]
+    parts_dir = tmp_path / "parts"
+    parts_dir.mkdir()
+
+    reused_ids, decisions = ddreport._prepare_coverage_reuse(
+        axis_list, snapshot, ddreport.REUSE_DAYS_DEFAULT, parts_dir, None)
+
+    assert reused_ids == ["capital_markets_pricing"]
+    assert decisions["capital_markets_pricing"]["reused"] is True
+
+
+def test_coverage_reuse_default_reuse_days_zero_disables_everything(tmp_path):
+    """`--reuse-days 0`（或 replay）是全域關閉，不管軸在不在政策表上，一律
+    不沿用——延續既有『0＝全部重抓』語意，不因改按軸失效而破功。"""
+    coverage = {
+        "competitive_share_entrants": {"status": "found", "findings": [{"claim": "old"}]},
+    }
+    snapshot = _write_axis_snapshot(tmp_path, "ZZERO_20260101_dryrun", "20260101", coverage, age_days=1)
+    axis_list = [{"id": "competitive_share_entrants"}]
+    parts_dir = tmp_path / "parts"
+    parts_dir.mkdir()
+
+    reused_ids, decisions = ddreport._prepare_coverage_reuse(
+        axis_list, snapshot, 0, parts_dir, None)
+
+    assert reused_ids == []
+    assert decisions["competitive_share_entrants"]["reused"] is False
+
+
+# ---------------------------------------------------------------------------
+# 10) 2026-09-10（WP-B）：用量帳改報真成本（cache_read／output／cost 分模型）
+# ---------------------------------------------------------------------------
+
+def _fake_agent_usage(model_id, input_tokens, output_tokens, cache_read, cache_creation, cost_usd):
+    return {
+        "cost_usd": cost_usd, "duration_ms": 1000, "num_turns": 1,
+        "by_model": {
+            model_id: {
+                "inputTokens": input_tokens, "outputTokens": output_tokens,
+                "cacheReadInputTokens": cache_read, "cacheCreationInputTokens": cache_creation,
+                "costUSD": cost_usd,
+            },
+        },
+    }
+
+
+def test_build_token_ledger_tracks_input_output_cost_per_model():
+    manifest = {"stages": {
+        "stage0": {
+            "started": "2026-09-10T00:00:00", "ended": "2026-09-10T00:10:00",
+            "agent_usage": [_fake_agent_usage("claude-sonnet-5", 100, 200, 1000, 50, 0.5)],
+        },
+        "judged": {
+            "started": "2026-09-10T00:10:00", "ended": "2026-09-10T00:20:00",
+            "agent_usage": [_fake_agent_usage("claude-fable-5-1", 10, 500, 300, 20, 2.0)],
+        },
+    }}
+    ledger = ddreport._build_token_ledger(manifest)
+
+    sonnet = ledger["totals"]["sonnet"]
+    assert sonnet["input"] == 100 + 50  # inputTokens + cache_creation
+    assert sonnet["output"] == 200
+    assert sonnet["cost_usd"] == pytest.approx(0.5)
+
+    fable = ledger["totals"]["fable"]
+    assert fable["input"] == 10 + 20
+    assert fable["output"] == 500
+    assert fable["cost_usd"] == pytest.approx(2.0)
+
+    assert ledger["summary"]["cost_usd"] == pytest.approx(2.5)
+    assert ddreport._ledger_output_total(ledger) == 700
+    assert ddreport._ledger_cache_read_total(ledger) == 1300
+
+
+def test_build_token_ledger_tolerates_missing_fields_in_old_manifest():
+    """舊 manifest 缺欄位（沒有 inputTokens／costUSD 等）時不得炸掉，缺的視
+    為 0——WP-B 只是新增欄位，不得讓既有 manifest 讀壞。"""
+    manifest = {"stages": {"stage0": {"agent_usage": [{"by_model": {"claude-sonnet-5": {}}}]}}}
+    ledger = ddreport._build_token_ledger(manifest)
+    sonnet = ledger["totals"]["sonnet"]
+    assert sonnet == {"cache_read": 0, "cache_creation": 0, "input": 0, "output": 0, "cost_usd": 0.0}
+
+
+def test_ledger_summary_line_reports_real_cost_and_output_not_just_cache_read():
+    manifest = {"stages": {"stage0": {
+        "started": "2026-09-10T00:00:00", "ended": "2026-09-10T00:10:00",
+        "agent_usage": [_fake_agent_usage("claude-fable-5-1", 5, 90000, 10, 5, 3.0)],
+    }}}
+    ledger = ddreport._build_token_ledger(manifest)
+    line = ddreport._ledger_summary_line(ledger)
+    assert "cache_read" in line
+    assert "output" in line
+    assert "$3.00" in line
+    assert "fable $3.00" in line
+
+
+def test_batch_summary_md_includes_output_column_and_totals():
+    ledger = {
+        "totals": {"fable": {"cache_read": 100, "cache_creation": 0, "input": 0,
+                              "output": 5000, "cost_usd": 1.23}},
+        "by_stage": {}, "summary": {"cost_usd": 1.23, "stage_wall_seconds": 0.0},
+    }
+    row = {
+        "ticker": "ZTEST", "date": "20260910", "state": "done",
+        "verdict": "進場", "role": "核心", "ev5y_pct": 50.0, "irr_base_pct": 20.0,
+        "max_dd_pct": -10.0, "ledger": ledger,
+        "ledger_line": ddreport._ledger_summary_line(ledger),
+        "stage_times": "stage0 1.0m", "output_tokens": 5000, "cost_usd": 1.23,
+        "elapsed_min": 5.0, "rc": 0, "log_path": "x.log", "quota_hit": False,
+    }
+    md = ddreport._build_batch_summary_md([row], "20260910")
+    header = md.splitlines()[2]
+    assert "output" in header
+    assert "5.0K" in md
+    assert "output 合計" in md
+
+
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-v"]))

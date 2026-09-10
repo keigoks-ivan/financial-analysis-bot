@@ -19,6 +19,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import html as html_lib
 import json
 import os
@@ -361,7 +362,177 @@ def _resolve_peers(cli_peers, ticker):
 
 # ---------------------------------------------------------------------------
 # 2026-09-06：Stage 0 證據沿用——只沿用仍在時效內的結構軸；數字與事件每次重抓。
+# 2026-09-10（WP-B）：coverage 軸沿用改按軸失效，取代單一 30 天窗——軸 id 取自
+# `.claude/skills/stock-analyst/references/coverage-axes.md` 的 12 個 common
+# 軸（by_archetype 附加軸不在表上，一律退回下方 `default_reuse_days`）：
+#   - `major_events`：永遠重抓（QC-19 重大事件，時效最敏感）。
+#   - 財報失效組（`end_markets`／`customer_concentration_credit`／
+#     `supply_demand_durability`／`channel_business_model_shift`）：快照之後
+#     若已出現新一季逐字稿（比對 `transcripts.selected.recent_four_quarters`
+#     最後一篇檔名內的日期 vs 快照日），新財報代表這幾軸的數字/敘事可能已
+#     過時，一律不沿用；否則沿用上限維持既有 `REUSE_DAYS_DEFAULT`（30 天）。
+#   - `capital_markets_pricing`：市場定價/共識落差變動快，縮到 7 天。
+#   - 結構組（`competitive_share_entrants`／`customer_second_source`／
+#     `regulatory_antitrust`／`reg_tariff_export`／`geo_supply_chain`／
+#     `substitute_technology`）：結構性慢變量，放寬到 90 天。
+# `--reuse-days`／`REUSE_DAYS_DEFAULT` 改為「表上沒列的軸」的預設上限；
+# 傳 0（或 `DD_REPLAY_FROM` 場景）仍是全域關閉——不管在不在表上，一律不沿用
+# （沿用既有語意，見 `_axis_reuse_decision`）。
 # ---------------------------------------------------------------------------
+
+COVERAGE_REUSE_POLICY = {
+    "major_events": {"mode": "never"},
+    "end_markets": {"mode": "earnings_gated", "reuse_days": REUSE_DAYS_DEFAULT},
+    "customer_concentration_credit": {"mode": "earnings_gated", "reuse_days": REUSE_DAYS_DEFAULT},
+    "supply_demand_durability": {"mode": "earnings_gated", "reuse_days": REUSE_DAYS_DEFAULT},
+    "channel_business_model_shift": {"mode": "earnings_gated", "reuse_days": REUSE_DAYS_DEFAULT},
+    "capital_markets_pricing": {"mode": "fixed_days", "reuse_days": 7},
+    "competitive_share_entrants": {"mode": "fixed_days", "reuse_days": 90},
+    "customer_second_source": {"mode": "fixed_days", "reuse_days": 90},
+    "regulatory_antitrust": {"mode": "fixed_days", "reuse_days": 90},
+    "reg_tariff_export": {"mode": "fixed_days", "reuse_days": 90},
+    "geo_supply_chain": {"mode": "fixed_days", "reuse_days": 90},
+    "substitute_technology": {"mode": "fixed_days", "reuse_days": 90},
+}
+
+_TRANSCRIPT_DATE_RE = re.compile(r"(\d{8})\.md$")
+
+
+def _latest_transcript_date(transcripts_obj):
+    """`recent_four_quarters` 依日期由舊到新排列（koyfin 選檔慣例），取最後
+    一篇檔名尾端的 8 碼日期；缺檔或格式不符回傳 None。"""
+    sel = ((transcripts_obj or {}).get("transcripts") or {}).get("selected") or {}
+    recent4 = sel.get("recent_four_quarters") or []
+    if not recent4:
+        return None
+    m = _TRANSCRIPT_DATE_RE.search(Path(recent4[-1]).name)
+    return m.group(1) if m else None
+
+
+def _new_quarter_since_snapshot(snapshot, transcripts_obj):
+    """財報失效組專用：快照之後是否已出現更新一季的逐字稿。查無資訊（koyfin
+    失敗、無逐字稿）時保守回傳 False，不因為查不到就強制重抓——與既有
+    `_prepare_digest_reuse` 的容錯精神一致。"""
+    if not snapshot:
+        return False
+    latest = _latest_transcript_date(transcripts_obj)
+    if not latest:
+        return False
+    return latest > snapshot["source_date"]
+
+
+def _axis_reuse_decision(axis_id, snapshot, transcripts_obj, default_reuse_days):
+    """回傳 `(允許沿用, 原因, 這次用的沿用天數)`，供 `_prepare_coverage_reuse`
+    逐軸決定。`default_reuse_days<=0`（即 `--reuse-days 0` 或 replay 場景）
+    是全域關閉，不管軸在不在政策表上都不沿用——保留舊行為。"""
+    if default_reuse_days <= 0:
+        return False, "default_reuse_days<=0，全域關閉沿用", 0
+    if axis_id == "major_events":
+        return False, "major_events 恆重抓（QC-19）", 0
+    policy = COVERAGE_REUSE_POLICY.get(axis_id)
+    if policy is None:
+        days = default_reuse_days
+        if snapshot["age_days"] > days:
+            return False, "不在政策表，退回預設 {0} 天，已過期".format(days), days
+        return True, "不在政策表，退回預設 {0} 天".format(days), days
+    days = policy.get("reuse_days", default_reuse_days)
+    mode = policy["mode"]
+    if mode == "fixed_days":
+        if snapshot["age_days"] > days:
+            return False, "固定 {0} 天窗，已過期".format(days), days
+        return True, "固定 {0} 天窗".format(days), days
+    if mode == "earnings_gated":
+        if snapshot["age_days"] > days:
+            return False, "財報失效組 {0} 天窗，已過期".format(days), days
+        if _new_quarter_since_snapshot(snapshot, transcripts_obj):
+            return False, "財報失效組，快照後已出現新一季逐字稿", days
+        return True, "財報失效組 {0} 天窗內且無新季報".format(days), days
+    return False, "未知政策模式 {0!r}".format(mode), days
+
+
+# ---------------------------------------------------------------------------
+# 2026-09-10（WP-B）：逐字稿摘要改內容雜湊永久快取，不受 30 天沿用窗限制——
+# 同一份逐字稿檔一字未變，永遠不重新摘要。key＝逐字稿檔 SHA-256 前 16 碼＋
+# `dd_prompts/digest.md.tmpl` 內容 SHA-256 前 8 碼，prompt 改版即自動失效，
+# 不需要手動清快取。
+# ---------------------------------------------------------------------------
+
+DIGEST_CACHE_DIR = BUILD_DIR / "digest_cache"
+DIGEST_TMPL_PATH = PROMPTS_TMPL_DIR / "digest.md.tmpl"
+
+
+def _digest_cache_key(file_path):
+    """檔案讀不到（搬移／刪除）時回傳 None，呼叫端視為 cache miss。"""
+    try:
+        file_hash = hashlib.sha256(Path(file_path).read_bytes()).hexdigest()[:16]
+    except OSError:
+        return None
+    try:
+        tmpl_hash = hashlib.sha256(DIGEST_TMPL_PATH.read_bytes()).hexdigest()[:8]
+    except OSError:
+        tmpl_hash = "notmpl00"
+    return "{0}_{1}".format(file_hash, tmpl_hash)
+
+
+def _digest_cache_path(file_path):
+    key = _digest_cache_key(file_path)
+    return (DIGEST_CACHE_DIR / "{0}.json".format(key)) if key else None
+
+
+def _digest_cache_lookup(file_path):
+    """查永久快取；命中回傳 `{items, qa_flags}`（`file` 改指到這次的路徑、
+    `reused_from` 標 `"digest_cache"`），未命中回傳 None。"""
+    cache_path = _digest_cache_path(file_path)
+    if cache_path is None or not cache_path.exists():
+        return None
+    try:
+        cached = _load_json(cache_path)
+    except Exception:
+        return None
+    items = []
+    for item in cached.get("items") or []:
+        if not isinstance(item, dict):
+            continue
+        copied = dict(item)
+        copied["file"] = str(file_path)
+        copied["reused_from"] = "digest_cache"
+        items.append(copied)
+    qa_flags = []
+    for flag in cached.get("qa_flags") or []:
+        if not isinstance(flag, dict):
+            continue
+        copied = dict(flag)
+        copied["file"] = str(file_path)
+        copied["reused_from"] = "digest_cache"
+        qa_flags.append(copied)
+    return {"items": items, "qa_flags": qa_flags}
+
+
+def _digest_cache_store(file_path, items, qa_flags):
+    """把某篇逐字稿的 items／qa_flags 依內容雜湊寫進永久快取，先剝掉
+    `reused_from`／`age_days`（那是『這次沿用』的暫時標記，不是摘要本身的
+    內容）。檔案讀不到時放棄寫入、不報錯（冪等、可重複呼叫）。"""
+    cache_path = _digest_cache_path(file_path)
+    if cache_path is None:
+        return False
+    strip_keys = ("reused_from", "age_days")
+    clean_items = [
+        {k: v for k, v in item.items() if k not in strip_keys}
+        for item in items if isinstance(item, dict)
+    ]
+    clean_flags = [
+        {k: v for k, v in flag.items() if k not in strip_keys}
+        for flag in qa_flags if isinstance(flag, dict)
+    ]
+    DIGEST_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    _atomic_write_json(cache_path, {
+        "source_file": str(file_path),
+        "cached_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "items": clean_items,
+        "qa_flags": clean_flags,
+    })
+    return True
+
 
 def _parse_yyyymmdd(value):
     try:
@@ -420,24 +591,35 @@ def _archive_snapshot(ticker, date):
     }
 
 
-def _prepare_coverage_reuse(axis_list, snapshot, reuse_days, parts_dir):
-    """把可沿用的結構軸寫成 part，回傳沿用軸 id；`major_events` 永遠重抓。"""
-    if not snapshot or reuse_days <= 0 or snapshot["age_days"] > reuse_days:
-        return []
+def _prepare_coverage_reuse(axis_list, snapshot, default_reuse_days, parts_dir, transcripts_obj=None):
+    """把可沿用的結構軸寫成 part，回傳 `(沿用軸 id 清單, decisions)`。
+    2026-09-10（WP-B）：逐軸決定改交給 `_axis_reuse_decision`（見
+    `COVERAGE_REUSE_POLICY`），不再是單一 30 天窗；`decisions` 記每軸的
+    `{reused, reason, reuse_days}`，供 `manifest["coverage_reuse"]` 落地。"""
+    if not snapshot:
+        return [], {}
     try:
         old = _load_json(snapshot["evidence_path"])
     except Exception:
-        return []
+        return [], {}
     old_coverage = old.get("coverage") or {}
     reused = {}
+    decisions = {}
     source_label = snapshot["archive_dir"].name
     for axis in axis_list:
         axis_id = axis.get("id")
-        if not axis_id or axis_id == "major_events" or axis_id not in old_coverage:
+        if not axis_id or axis_id not in old_coverage:
+            continue
+        allow, reason, days_used = _axis_reuse_decision(
+            axis_id, snapshot, transcripts_obj, default_reuse_days)
+        decisions[axis_id] = {"reused": allow, "reason": reason, "reuse_days": days_used}
+        if not allow:
             continue
         # 2026-09-06：舊存查偶有保留已拆分母軸的 pending 骨架；這種不是證據，
         # 不能沿用後又跳過 agent，應留給本次重新收集。
         if not isinstance(old_coverage[axis_id], dict) or old_coverage[axis_id].get("status") == "pending":
+            decisions[axis_id]["reused"] = False
+            decisions[axis_id]["reason"] += "；舊存查為 pending 骨架非證據"
             continue
         axis_obj = json.loads(json.dumps(old_coverage[axis_id], ensure_ascii=False))
         axis_obj["reused_from"] = source_label
@@ -449,48 +631,80 @@ def _prepare_coverage_reuse(axis_list, snapshot, reuse_days, parts_dir):
         reused[axis_id] = axis_obj
     if reused:
         _atomic_write_json(Path(parts_dir) / "reused_coverage.json", {"coverage": reused})
-    return list(reused.keys())
+    return list(reused.keys()), decisions
 
 
 def _prepare_digest_reuse(targets, snapshot, reuse_days, parts_dir):
-    """相同逐字稿沿用舊 digest；新出現的檔案才回傳給摘要 agent。"""
-    if (not snapshot or reuse_days <= 0 or snapshot["age_days"] > reuse_days
-            or not snapshot.get("digest_path")):
-        return list(targets), []
-    try:
-        old = _load_json(snapshot["digest_path"])
-    except Exception:
-        return list(targets), []
-    old_items = old.get("items") or []
-    old_flags = old.get("qa_flags") or []
-    source_label = snapshot["archive_dir"].name
-    pending = []
+    """相同逐字稿沿用舊 digest；新出現的檔案才回傳給摘要 agent。2026-09-10
+    （WP-B）：先查內容雜湊永久快取（`_digest_cache_lookup`，不受
+    `reuse_days` 限制——同一份逐字稿一字未變就永遠沿用，prompt 樣板改版才
+    失效）；未命中才退回既有『同 ticker 舊存查 N 天內、依檔名比對』的路徑。
+    `DD_REPLAY_FROM` 生效時整個跳過永久快取查詢（比照 `_run_koyfin_step`／
+    `cmd_plan` 對 `reuse_days` 的同一慣例）——replay 要如實重放原始 Stage 0
+    分工，不能被『上一次 replay 已把摘要寫進永久快取』短路掉 a2_{k} spawn，
+    否則同一份 fixture 跑兩次的結果會不一樣，破壞測試可重現性。"""
+    replay_mode = bool(os.environ.get("DD_REPLAY_FROM"))
+    cache_hits = []
+    cache_misses = []
     reused_files = []
     reused_items = []
     reused_flags = []
-    for target in targets:
-        target_base = Path(target).name
-        matched = [
-            item for item in old_items
-            if isinstance(item, dict) and Path(item.get("file") or "").name == target_base
-        ]
-        if not matched:
-            pending.append(target)
-            continue
-        reused_files.append(str(target))
-        for item in matched:
-            copied = dict(item)
-            copied["file"] = str(target)
-            copied["reused_from"] = source_label
-            copied["age_days"] = snapshot["age_days"]
-            reused_items.append(copied)
-        for flag in old_flags:
-            if isinstance(flag, dict) and Path(flag.get("file") or "").name == target_base:
-                copied_flag = dict(flag)
-                copied_flag["file"] = str(target)
-                copied_flag["reused_from"] = source_label
-                copied_flag["age_days"] = snapshot["age_days"]
-                reused_flags.append(copied_flag)
+
+    if replay_mode:
+        cache_misses = list(targets)
+    else:
+        for target in targets:
+            cached = _digest_cache_lookup(target)
+            if cached is None:
+                cache_misses.append(target)
+                continue
+            cache_hits.append(target)
+            reused_files.append(str(target))
+            reused_items.extend(cached["items"])
+            reused_flags.extend(cached["qa_flags"])
+
+    if cache_hits:
+        print("digest_cache：命中 {0} 篇（內容雜湊一字未變，永久沿用）".format(len(cache_hits)))
+    if cache_misses and not replay_mode:
+        print("digest_cache：未命中 {0} 篇，退回既有存查沿用規則".format(len(cache_misses)))
+
+    pending = list(cache_misses)
+    if (cache_misses and snapshot and reuse_days > 0
+            and snapshot["age_days"] <= reuse_days and snapshot.get("digest_path")):
+        try:
+            old = _load_json(snapshot["digest_path"])
+        except Exception:
+            old = None
+        if old is not None:
+            old_items = old.get("items") or []
+            old_flags = old.get("qa_flags") or []
+            source_label = snapshot["archive_dir"].name
+            still_pending = []
+            for target in cache_misses:
+                target_base = Path(target).name
+                matched = [
+                    item for item in old_items
+                    if isinstance(item, dict) and Path(item.get("file") or "").name == target_base
+                ]
+                if not matched:
+                    still_pending.append(target)
+                    continue
+                reused_files.append(str(target))
+                for item in matched:
+                    copied = dict(item)
+                    copied["file"] = str(target)
+                    copied["reused_from"] = source_label
+                    copied["age_days"] = snapshot["age_days"]
+                    reused_items.append(copied)
+                for flag in old_flags:
+                    if isinstance(flag, dict) and Path(flag.get("file") or "").name == target_base:
+                        copied_flag = dict(flag)
+                        copied_flag["file"] = str(target)
+                        copied_flag["reused_from"] = source_label
+                        copied_flag["age_days"] = snapshot["age_days"]
+                        reused_flags.append(copied_flag)
+            pending = still_pending
+
     if reused_files:
         _atomic_write_json(Path(parts_dir) / "digest_0.json", {
             "source_files": reused_files,
@@ -826,17 +1040,36 @@ def cmd_plan(args):
         return 1
     _atomic_write_json(run_dir / "axes.json", axes)
 
-    # 2026-09-06：數字與事件仍每次重抓；只有 coverage 結構軸在時效內沿用。
     axis_list = axes if isinstance(axes, list) else []
+
+    # 5b. Koyfin 逐字稿（WP7a #1：零 LLM，plan 內直接跑，立刻 merge 進
+    # evidence.json；失敗只 warn，不 abort）。2026-09-10（WP-B）：提前到
+    # 這裡（原本排在 numbers_extra 之後）——coverage 沿用改按軸失效後，
+    # 財報失效組要拿 `transcripts_obj` 判斷「快照之後是否已出現新一季逐字
+    # 稿」，必須在 `_prepare_coverage_reuse` 之前就有這份資料；對
+    # evidence.json 的 merge 行為本身不變，只是呼叫時間點提前。
+    transcripts_obj = _run_koyfin_step(ticker, date, run_dir, evidence_dest, manifest)
+
+    # 2026-09-06：數字與事件仍每次重抓；只有 coverage 結構軸在時效內沿用。
+    # 2026-09-10（WP-B）：沿用政策改按軸失效（COVERAGE_REUSE_POLICY），見該
+    # 常數區塊註解；`reuse_days`（來自 `--reuse-days`）現為「表上沒列的軸」
+    # 的預設上限，傳 0 仍是全域關閉。
     snapshot = _archive_snapshot(ticker, date)
-    reused_axis_ids = _prepare_coverage_reuse(
-        axis_list, snapshot, reuse_days, parts_dir,
+    reused_axis_ids, coverage_reuse_decisions = _prepare_coverage_reuse(
+        axis_list, snapshot, reuse_days, parts_dir, transcripts_obj,
     )
     manifest["evidence_reuse"] = {
         "reuse_days": reuse_days,
         "source": snapshot["archive_dir"].name if snapshot else None,
         "age_days": snapshot["age_days"] if snapshot else None,
         "reused_axis_ids": reused_axis_ids,
+    }
+    manifest["coverage_reuse"] = {
+        "default_reuse_days": reuse_days,
+        "source": snapshot["archive_dir"].name if snapshot else None,
+        "age_days": snapshot["age_days"] if snapshot else None,
+        "reused_axis_ids": reused_axis_ids,
+        "decisions": coverage_reuse_decisions,
     }
     if reused_axis_ids:
         print("reuse：沿用 {0} 個結構軸（來源 {1}，{2} 天）".format(
@@ -869,10 +1102,6 @@ def cmd_plan(args):
         if r.returncode != 0:
             print("[warn] dd_numbers_extra.py 失敗（不 abort）：{0}".format(
                 r.stderr.strip()[-500:]), file=sys.stderr)
-
-    # 5b. Koyfin 逐字稿（WP7a #1：零 LLM，plan 內直接跑，立刻 merge 進
-    # evidence.json；失敗只 warn，不 abort）
-    transcripts_obj = _run_koyfin_step(ticker, date, run_dir, evidence_dest, manifest)
 
     # 6. 軸分批：先排除已沿用軸；一般軸預設兩軸一 agent，CLI 仍可調批次大小。
     #    major_events 單獨一批；per_segment 展開軸逐軸獨立，避免一批塞五個
@@ -1222,7 +1451,14 @@ def _merge_digest_parts(run_dir):
     `digest.json`（形狀不變，`validate_digest.py` 直接吃）。依檔名數字序合
     併，`source_files` 依序去重、`items`／`qa_flags` 直接接尾。沒有任何
     `digest_*.json`（例如 Koyfin 找不到逐字稿）時寫出空殼，維持既有
-    fallback 語意。"""
+    fallback 語意。
+
+    2026-09-10（WP-B）：合併完成後，把每篇來源逐字稿的 items／qa_flags 依
+    `file` 欄位拆開，回寫進 `_digest_cache_store`（內容雜湊永久快取）——
+    不論這篇本次是新摘要還是沿用來的，都重新落一次（冪等，供下次任何
+    ticker 遇到同一份逐字稿直接命中，見 `_prepare_digest_reuse`）。逐字稿
+    檔案本身若已不在磁碟（搬移／刪除）會被 `_digest_cache_store` 靜默略過，
+    不影響 digest.json 本身的合併結果。"""
     parts_dir = Path(run_dir) / "parts"
     digest_files = []
     if parts_dir.exists():
@@ -1250,6 +1486,13 @@ def _merge_digest_parts(run_dir):
 
     merged = {"source_files": source_files, "items": items, "qa_flags": qa_flags}
     _atomic_write_json(Path(run_dir) / "digest.json", merged)
+
+    for sf in source_files:
+        file_items = [it for it in items if isinstance(it, dict) and it.get("file") == sf]
+        file_flags = [fl for fl in qa_flags if isinstance(fl, dict) and fl.get("file") == sf]
+        if file_items or file_flags:
+            _digest_cache_store(sf, file_items, file_flags)
+
     return merged
 
 
@@ -3253,7 +3496,11 @@ def _model_bucket(model_id):
 
 
 def _empty_bucket():
-    return {"cache_read": 0, "cache_creation": 0, "output": 0, "cost_usd": 0.0}
+    # 2026-09-10（WP-B）：加 `input`＝`inputTokens`＋`cacheCreationInputTokens`
+    # ——真成本（尤其判斷段 Fable）主要燒在輸出＋非快取輸入，只報
+    # `cache_read` 會低估；`cache_read`／`cache_creation` 兩欄原樣保留供既有
+    # 呼叫端相容，`input` 是新增的疊加視角，不取代前兩者。
+    return {"cache_read": 0, "cache_creation": 0, "input": 0, "output": 0, "cost_usd": 0.0}
 
 
 def _sum_usage_by_model(usage_list):
@@ -3263,7 +3510,9 @@ def _sum_usage_by_model(usage_list):
         for mid, vals in by_model.items():
             b = buckets.setdefault(_model_bucket(mid), _empty_bucket())
             b["cache_read"] += (vals or {}).get("cacheReadInputTokens", 0) or 0
-            b["cache_creation"] += (vals or {}).get("cacheCreationInputTokens", 0) or 0
+            cache_creation = (vals or {}).get("cacheCreationInputTokens", 0) or 0
+            b["cache_creation"] += cache_creation
+            b["input"] += ((vals or {}).get("inputTokens", 0) or 0) + cache_creation
             b["output"] += (vals or {}).get("outputTokens", 0) or 0
             b["cost_usd"] += (vals or {}).get("costUSD", 0) or 0
     return buckets
@@ -3330,7 +3579,7 @@ def _build_token_ledger(manifest):
         total_stage_wall += wall_seconds or 0.0
         for k, v in buckets.items():
             t = totals.setdefault(k, _empty_bucket())
-            for kk in ("cache_read", "cache_creation", "output", "cost_usd"):
+            for kk in ("cache_read", "cache_creation", "input", "output", "cost_usd"):
                 t[kk] += v[kk]
     return {
         "totals": totals,
@@ -3341,6 +3590,12 @@ def _build_token_ledger(manifest):
 
 def _ledger_cache_read_total(ledger, models=("fable", "opus", "sonnet", "other", "haiku")):
     return sum((ledger["totals"].get(m) or {}).get("cache_read", 0) for m in models)
+
+
+def _ledger_output_total(ledger, models=("fable", "opus", "sonnet", "other", "haiku")):
+    """2026-09-10（WP-B）：同 `_ledger_cache_read_total`，但加總 output——
+    判斷段（Fable）的錢主要燒在輸出，只報 cache_read 看不出這塊。"""
+    return sum((ledger["totals"].get(m) or {}).get("output", 0) for m in models)
 
 
 def _prior_usage_cache_read_total(manifest):
@@ -3358,16 +3613,29 @@ def _ledger_summary_line(ledger, prior_total=0):
     """2026-09-06：`prior_total`（cache_read，來自 `_prior_usage_cache_read_total`）
     非零時附一句「（含先前段 Y.YM）」，讓 --resume 後的全帳行看得出這次數字
     有沒有含前面失敗但已燒的段；`total` 本身已經含 prior（見
-    `_build_token_ledger`），這裡只是額外標註來源，不重複相加。"""
-    total = _ledger_cache_read_total(ledger)
-    fable = (ledger["totals"].get("fable") or {}).get("cache_read", 0)
-    opus = (ledger["totals"].get("opus") or {}).get("cache_read", 0)
-    sonnet = (ledger["totals"].get("sonnet") or {}).get("cache_read", 0)
-    line = "全帳 {0:.1f}M（fable {1:.1f}M／opus {2:.1f}M／sonnet {3:.1f}M）".format(
-        total / 1_000_000.0, fable / 1_000_000.0, opus / 1_000_000.0, sonnet / 1_000_000.0,
+    `_build_token_ledger`），這裡只是額外標註來源，不重複相加。
+
+    2026-09-10（WP-B）：只報 cache_read 低估真成本——判斷段（Fable）的錢
+    主要燒在輸出，不是快取讀取。改印 cache_read／output／$ 總額，並列
+    fable／opus／sonnet 三模型各自的美元成本（cost_usd 直接來自
+    `by_model.*.costUSD` 加總，不是 token 數換算，見 `_sum_usage_by_model`）。
+    舊 manifest 缺 `input`／`cost_usd` 欄位時 `_empty_bucket` 已補 0，這裡
+    不需要另外容錯。"""
+    total_cache_read = _ledger_cache_read_total(ledger)
+    total_output = _ledger_output_total(ledger)
+    total_cost = (ledger.get("summary") or {}).get("cost_usd", 0.0)
+    fable_cost = (ledger["totals"].get("fable") or {}).get("cost_usd", 0.0)
+    opus_cost = (ledger["totals"].get("opus") or {}).get("cost_usd", 0.0)
+    sonnet_cost = (ledger["totals"].get("sonnet") or {}).get("cost_usd", 0.0)
+    line = (
+        "全帳 cache_read {0:.1f}M／output {1:.1f}K／${2:.2f}"
+        "（fable ${3:.2f}／opus ${4:.2f}／sonnet ${5:.2f}）"
+    ).format(
+        total_cache_read / 1_000_000.0, total_output / 1_000.0, total_cost,
+        fable_cost, opus_cost, sonnet_cost,
     )
     if prior_total:
-        line += "（含先前段 {0:.1f}M）".format(prior_total / 1_000_000.0)
+        line += "（含先前段 cache_read {0:.1f}M）".format(prior_total / 1_000_000.0)
     return line
 
 
@@ -3929,8 +4197,11 @@ def _do_finish(ticker, date, dry_run=False, no_push=False, skip_dd_screener=Fals
     role = meta.get("dca_role") or "—"
     label = "DD 快速版" if meta.get("brief") else "DD 完整版"
     total_m = _ledger_cache_read_total(ledger) / 1_000_000.0
-    commit_subject = "Add {0} {1} {2}（{3}｜{4}；v17 全帳 {5:.1f}M）".format(
-        ticker, label, date, verdict, role, total_m,
+    total_cost = (ledger.get("summary") or {}).get("cost_usd", 0.0)
+    # 2026-09-10（WP-B）：「v17 全帳 X.XM」只算 cache_read 低估真成本，改成
+    # 「v17 $Z.ZZ／X.XM」——$ 在前（真成本），cache_read 仍留在後面當量級參考。
+    commit_subject = "Add {0} {1} {2}（{3}｜{4}；v17 ${5:.2f}／{6:.1f}M）".format(
+        ticker, label, date, verdict, role, total_cost, total_m,
     )
     if not sync_later:
         commit_subject += "; resync research+screener"
@@ -4250,6 +4521,7 @@ def _batch_row_from_run_dir(ticker, date, run_dir, rc, elapsed_min, log_path):
         "ev5y_pct": ev5y, "irr_base_pct": irr_base, "max_dd_pct": max_dd,
         "ledger": ledger, "ledger_line": ledger_line,
         "stage_times": "／".join(stage_times) or "—",
+        "output_tokens": _ledger_output_total(ledger),  # 2026-09-10（WP-B）
         "cost_usd": (ledger.get("summary") or {}).get("cost_usd", 0.0),
         "elapsed_min": elapsed_min, "rc": rc,
         "log_path": str(log_path),
@@ -4260,10 +4532,14 @@ def _batch_row_from_run_dir(ticker, date, run_dir, rc, elapsed_min, log_path):
 def _build_batch_summary_md(rows, date, quota_stopped_ticker=None, remaining=None):
     lines = [
         "# DD batch 摘要 {0}".format(date), "",
-        "| ticker | state | 裁決／角色 | 5Y EV | IRR base | Max DD | 全帳 | cost | 分段耗時 | 耗時(分) | rc | 備註 |",
-        "|---|---|---|---|---|---|---|---|---|---|---|---|",
+        # 2026-09-10（WP-B）：加 output 欄（判斷段 Fable 的錢主要燒在輸出，
+        # 只看 cache_read 會低估）；cost 欄原本就存在，來源不變
+        # （`ledger.summary.cost_usd`，見 `_batch_row_from_run_dir`）。
+        "| ticker | state | 裁決／角色 | 5Y EV | IRR base | Max DD | 全帳 | output | cost | 分段耗時 | 耗時(分) | rc | 備註 |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     total_cache_read = 0
+    total_output = 0
     total_elapsed = 0.0
     total_cost = 0.0
     ok_n = 0
@@ -4274,13 +4550,15 @@ def _build_batch_summary_md(rows, date, quota_stopped_ticker=None, remaining=Non
         if r["rc"] != 0:
             note = "`python3 scripts/ddreport.py run {0} --date {1} --resume`".format(r["ticker"], r["date"])
         lines.append(
-            "| {0} | {1} | {2} | {3} | {4} | {5} | {6} | ${7:.2f} | {8} | {9:.1f} | {10} | {11} |".format(
+            "| {0} | {1} | {2} | {3} | {4} | {5} | {6} | {7:.1f}K | ${8:.2f} | {9} | {10:.1f} | {11} | {12} |".format(
                 r["ticker"], r["state"], verdict_role,
                 _fmt_pct(r["ev5y_pct"]), _fmt_pct(r["irr_base_pct"]), _fmt_pct(r["max_dd_pct"]),
-                r["ledger_line"], r["cost_usd"], r["stage_times"], r["elapsed_min"], r["rc"], note,
+                r["ledger_line"], r.get("output_tokens", 0) / 1000.0, r["cost_usd"],
+                r["stage_times"], r["elapsed_min"], r["rc"], note,
             )
         )
         total_cache_read += _ledger_cache_read_total(r["ledger"])
+        total_output += r.get("output_tokens", 0)
         total_elapsed += r["elapsed_min"]
         total_cost += r["cost_usd"]
         if r["rc"] == 0:
@@ -4289,8 +4567,10 @@ def _build_batch_summary_md(rows, date, quota_stopped_ticker=None, remaining=Non
             fail_n += 1
     lines.append("")
     lines.append(
-        "總計：成功 {0}／失敗 {1}／總耗時 {2:.1f} 分／全帳合計 {3:.1f}M／列表成本 ${4:.2f}".format(
-            ok_n, fail_n, total_elapsed, total_cache_read / 1_000_000.0, total_cost,
+        "總計：成功 {0}／失敗 {1}／總耗時 {2:.1f} 分／全帳合計 {3:.1f}M／output 合計 {4:.1f}K／"
+        "列表成本 ${5:.2f}".format(
+            ok_n, fail_n, total_elapsed, total_cache_read / 1_000_000.0,
+            total_output / 1000.0, total_cost,
         )
     )
     if quota_stopped_ticker:
@@ -4531,7 +4811,7 @@ def build_parser():
     pl.add_argument("--segments", default=None)
     pl.add_argument("--axes-per-batch", type=int, default=AXES_PER_BATCH_DEFAULT)
     pl.add_argument("--reuse-days", type=int, default=REUSE_DAYS_DEFAULT,
-                    help="結構軸 evidence 沿用天數；0＝全部重抓（預設 30）")  # 2026-09-06
+                    help="表上未列軸的預設沿用上限（見 COVERAGE_REUSE_POLICY）；0＝全部不沿用（2026-09-06；2026-09-10 改按軸失效）")
     pl.add_argument("--offline", action="store_true")
     pl.set_defaults(func=cmd_plan)
 
@@ -4547,7 +4827,7 @@ def build_parser():
     rn.add_argument("--peers", default=None)
     rn.add_argument("--axes-per-batch", type=int, default=AXES_PER_BATCH_DEFAULT)
     rn.add_argument("--reuse-days", type=int, default=REUSE_DAYS_DEFAULT,
-                    help="結構軸 evidence 沿用天數；0＝全部重抓（預設 30）")  # 2026-09-06
+                    help="表上未列軸的預設沿用上限（見 COVERAGE_REUSE_POLICY）；0＝全部不沿用（2026-09-06；2026-09-10 改按軸失效）")
     rn.add_argument("--judgment-model", default=None, choices=["fable", "opus", "sonnet"])
     rn.add_argument("--judge-mode", default=None, choices=["short", "loop"],
                     help="判斷段跑法：short（預設，只給 Write、≤4 輪，check 由 orchestrator 跑）／loop（舊：agent 自己 Write＋check＋修）")
@@ -4583,7 +4863,7 @@ def build_parser():
     s0.add_argument("--peers", default=None)
     s0.add_argument("--axes-per-batch", type=int, default=AXES_PER_BATCH_DEFAULT)
     s0.add_argument("--reuse-days", type=int, default=REUSE_DAYS_DEFAULT,
-                    help="結構軸 evidence 沿用天數；0＝全部重抓（預設 30）")  # 2026-09-06
+                    help="表上未列軸的預設沿用上限（見 COVERAGE_REUSE_POLICY）；0＝全部不沿用（2026-09-06；2026-09-10 改按軸失效）")
     s0.add_argument("--offline", action="store_true")
     s0.add_argument("--replay-from", default=None, metavar="DIR")
     s0.add_argument("--accept-over-budget", action="store_true")
