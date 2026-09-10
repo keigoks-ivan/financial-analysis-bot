@@ -21,14 +21,21 @@ Removed: stat cards, search box, top3 cards, scoreboard table, accordion
 directory, their JS, `_extract_verdict()` / VERDICT_OVERRIDES / THEMES /
 LEGACY_HASH.
 
-2026-09-10 — housing_gdp 獨立分區，全部 50 頁列出
+2026-09-10 — housing_gdp 獨立分區，全部 50 頁列出（同日追加：catchup_v1 下架）
 ================================================================================
 Supersedes the line above: housing_gdp's ~47 country/case pages no longer
-stay off this page. New 🏠 房價與所得 block covers all 50
-docs/backtest/housing_gdp/ pages (hub + 9 series + 6 主線／假說 pages + 35
+stay off this page. New 🏠 房價與所得 block covers 49 of the 50
+docs/backtest/housing_gdp/ pages (hub + 9 series + 5 主線／假說 pages + 35
 country/case pages, one row per region/status). The old 🌏 總經・跨國「房價×GDP」
 row (hub + regression.html) is removed — those two links moved into 🏠; 🌏
 now carries 國家掃描 only.
+Same-day addendum: catchup_v1.html (frozen old version of the catchup
+hypothesis) is deliberately NOT linked from this page — it's a redirect
+stub now (see docs/backtest/housing_gdp/catchup_v1.html), owner didn't want
+readers landing on two versions of the same research. So folder file count
+stays 50 but linked-page count in this block is 49; catchup.html (the
+current version) is the only catchup link, appearing once under 九個系列 and
+once under 主線與假說 (same page, two shelves — not a stray duplicate).
 
 Run: python3 _build_index.py   (this module is imported, not run directly)
 """
@@ -187,8 +194,7 @@ BLOCKS = [
         ]),
         ("主線與假說", None, [
             ("/backtest/housing_gdp/regression.html", "主線迴歸", "研究", False),
-            ("/backtest/housing_gdp/catchup.html", "追趕假說（重測版）", "研究", False),
-            ("/backtest/housing_gdp/catchup_v1.html", "追趕假說（舊版，已凍結）", "研究", False),
+            ("/backtest/housing_gdp/catchup.html", "追趕假說", "研究", False),
             ("/backtest/housing_gdp/divergence.html", "三型分流", "研究", False),
             ("/backtest/housing_gdp/gdp_band.html", "GDP 帶假說", "研究", False),
             ("/backtest/housing_gdp/city_catchup.html", "補漲假說：城市版", "研究", False),
