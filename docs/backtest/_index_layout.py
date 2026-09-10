@@ -211,9 +211,9 @@ BLOCKS = [
             ("/backtest/housing_gdp/usa.html", "美國：負擔重、槓桿輕、量凍住", "研究", False),
             ("/backtest/housing_gdp/usa_metro.html", "美國都會區：410 個房市", "研究", False),
             ("/backtest/housing_gdp/thailand.html", "泰國：變便宜、負債重、先老後富", "研究", False),
+            ("/backtest/housing_gdp/australia.html", "澳洲：貴、槓桿重、沒崩過", "研究", False),
         ]),
         ("個案・亞太", None, [
-            ("/backtest/housing_gdp/australia.html", "澳洲", "研究", False),
             ("/backtest/housing_gdp/china.html", "中國", "研究", False),
             ("/backtest/housing_gdp/hongkong.html", "香港", "研究", False),
             ("/backtest/housing_gdp/india.html", "印度", "研究", False),
