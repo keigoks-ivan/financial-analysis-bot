@@ -51,6 +51,7 @@ build_backfill 規則回放近 1260 交易日＝約五年（source='replay'）�
 _daily_record 追加當日實錄（source='live'）；merge_history 以日期為 key 冪等，上限
 HISTORY_CAP。回放與實錄在圖上以虛線／實線區隔（誠實紀律，回放不偽裝成實錄）。
 """
+import argparse
 import json
 import sys
 from datetime import datetime, timezone, timedelta
@@ -561,8 +562,16 @@ def ticker_card(t: str, d: dict) -> str:
 
 
 def recent_table(t: str, d: dict) -> str:
+    recent = d.get("recent")
+    if recent is None:
+        # --render-only：sigs 由 state.json 重建，state 不存「近 8 週」逐週背景資料
+        # （需要價格序列才能算），故只重跑 HTML 不重抓價時這張表無法重繪。
+        return f"""<div class="card">
+<h3>{t} — 近 8 週閘門軌跡（週線 W-FRI）</h3>
+<p style="font-size:.82rem;color:var(--muted)">render-only 模式（未重新抓取價格）不重繪此表；下次正常執行（抓價）會自動補回。</p>
+</div>"""
     rows = ""
-    for r in d["recent"]:
+    for r in recent:
         if r["w52"] is None:
             continue
         d52 = (r["close"] / r["w52"] - 1) * 100
@@ -979,10 +988,63 @@ def market_switch_buttons() -> str:
 
 
 # ---------------------------------------------------------------------------
+# 「今天結論」box（2026-09-10，頁面最上方三句白話）— 全部沿用既有已算好的值
+# （sigs 的 gate/final/wk_close/w52、exp、last_change_date/desc），不新增任何指標。
+# ---------------------------------------------------------------------------
+def today_conclusion(sigs: dict, exp: dict, last_change_date: str | None,
+                     last_change_desc: str | None) -> str:
+    # 句 1：現在持有什麼（各腿權重＋帳戶曝險）
+    leg_bits = []
+    for m in MARKETS:
+        parts = [f"{t} {sigs[t]['final']*100:.0f}%（{'在場' if sigs[t]['gate'] else '出場'}）"
+                 for t in m["legs"]]
+        leg_bits.append(f"{m['short']}＝{'＋'.join(parts)}，帳戶目標曝險 {exp[m['key']]:.0f}%")
+    holding = "現在持有：" + "；".join(leg_bits) + "。"
+
+    # 句 2：最近一次變動——哪天、發生了什麼（沿用 detect_changes 已寫入 state 的敘述）
+    if last_change_date:
+        changed = f"最近一次執行層變動：{last_change_date}，{last_change_desc or '（無敘述）'}。"
+    else:
+        changed = "最近一次執行層變動：尚無紀錄（近期沒有任何一腿的目標與現持差達到 20 個百分點的調整門檻）。"
+
+    # 句 3：下一個可能觸發的條件——挑離 W52 閘門最近的一腿；在場＝還要跌多少才出場，
+    # 出場＝還要漲多少才重新進場（距離＝既有 wk_close/w52 現算的百分比差，非新指標）。
+    trig = []
+    for t in ALL_TICKERS:
+        d = sigs[t]
+        d52 = (d["wk_close"] / d["w52"] - 1) * 100 if d["w52"] else 0.0
+        trig.append((abs(d52), t, d52, d["gate"]))
+    trig.sort(key=lambda x: x[0])
+    _, tt, td52, tgate = trig[0]
+    if tgate:
+        nxt = (f"下一個可能觸發：{tt} 目前週收在 W52（過去 52 週收盤均線，本系統用它判斷長期趨勢方向"
+               f"的閘門）之上 {abs(td52):.1f}%，若週收跌破 W52 即觸發出場（仍須配合執行層 A2——"
+               f"目標與現持差要達到 20 個百分點門檻才會真的調整部位、且取整至 10% 一格）。")
+    else:
+        nxt = (f"下一個可能觸發：{tt} 目前已出場（週收在 W52 之下 {abs(td52):.1f}%），"
+               f"需要週收漲回 W52 之上才會重新觸發進場。")
+
+    return f"""<div class="card" style="border:2px solid var(--brand);background:#eef4ff">
+<h3 style="color:var(--brand)">今天結論</h3>
+<div class="rule-list" style="font-size:.88rem">
+{holding}<br>
+{changed}<br>
+{nxt}
+</div>
+<div style="font-size:.72rem;color:var(--muted);margin-top:.6rem;line-height:1.7">
+名詞：<b>W52</b>＝過去 52 週（約一年）收盤價的平均線，本系統用它當長期趨勢的進出場閘門（週收在上方視為多頭、在下方視為空頭）；
+<b>套袖（自適應波動率）</b>＝波動低於自身近 3 年中位數時加碼、波動升高時自動減碼的機制；
+<b>cap</b>＝曝險上限（本頁 1.5＝單一腿最高可放大到自身額度的 150%）；
+<b>執行層／A2</b>＝目標權重與現持部位差要達到 20 個百分點門檻才真的調整，避免天天微調。
+</div>
+</div>"""
+
+
+# ---------------------------------------------------------------------------
 # Full HTML
 # ---------------------------------------------------------------------------
 def generate_html(sigs: dict, changes: list | None, last_change_date: str | None,
-                  hist_map: dict, exec_map: dict) -> str:
+                  hist_map: dict, exec_map: dict, last_change_desc: str | None = None) -> str:
     changes = changes or []
     now = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M")
     data_date = max(sigs[t]["wk_date"] for t in ALL_TICKERS)
@@ -1000,6 +1062,8 @@ def generate_html(sigs: dict, changes: list | None, last_change_date: str | None
     md_map = {m["key"]: _market_data(m, sigs, hist_map.get(m["key"], []), exec_map[m["key"]]) for m in MARKETS}
     exp_us = md_map["us"]["combined"]
     exp_tw = md_map["tw"]["combined"]
+    today_conclusion_html = today_conclusion(sigs, {"us": exp_us, "tw": exp_tw},
+                                             last_change_date, last_change_desc)
 
     change_html = (
         ('<div style="background:var(--red-bg);border:2px solid var(--red-border);border-radius:10px;'
@@ -1125,6 +1189,9 @@ footer{{background:var(--card);border-top:1px solid var(--border);color:var(--mu
 </head>
 <body>
 {NAV_BLOCK}
+<div class="container" style="padding-top:1rem">
+{today_conclusion_html}
+</div>
 <div class="page-hdr">
   <div class="container">
     <div class="crumb"><a href="/">首頁</a> / W52 × 自適應波動率 150%（實單主系統）</div>
@@ -1351,12 +1418,59 @@ def build_mail_html(changes: list, sigs: dict, exp: dict, data_date) -> str:
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--render-only", action="store_true",
+                        help="只用既有 state.json 重繪 _body.html：不抓價（無網路呼叫）、"
+                             "不寫 state.json（不 append 歷史）、不產生 alert／mail HTML（不觸發 email）。"
+                             "供本機驗證頁面渲染用；CI 預設（不帶此旗標）行為完全不變。")
+    args = parser.parse_args()
+
     prev_state = {}
     if STATE_JSON.exists():
         try:
             prev_state = json.loads(STATE_JSON.read_text())
         except Exception:
             prev_state = {}
+
+    if args.render_only:
+        if not prev_state or "tickers" not in prev_state:
+            print(f"--render-only 需要既有可解析的 {STATE_JSON}，但檔案不存在或缺 'tickers'。",
+                  file=sys.stderr)
+            sys.exit(1)
+        # 由既有 state.json 逐欄還原 sigs（不重抓價）；欄位對應見 compute_ticker／main
+        # 正常路徑寫入 state 時的欄位名。"recent"（近 8 週背景表）需要價格序列，
+        # state.json 不存，留 None，recent_table 會顯示說明而非報錯。
+        sigs = {}
+        for t in ALL_TICKERS:
+            tk = prev_state["tickers"][t]
+            gate = bool(tk["gate"])
+            sleeve = tk["sleeve_weight"]
+            raw_ratio = tk["raw_ratio"]
+            sigs[t] = {
+                "gate": gate, "wk_date": tk["wk_date"], "wk_close": tk["wk_close"],
+                "w52": tk["w52"], "w104": tk["w104"], "w250": tk["w250"],
+                "s104_pos": tk["s104_pos"], "s250_pos": tk["s250_pos"],
+                "rv20": tk["rv20_pct"] / 100, "sigma_t": tk["sigma_t_pct"] / 100,
+                "sleeve": sleeve, "raw_ratio": raw_ratio, "levered": tk["levered"],
+                "dist_to_lever": max(0.0, 1.0 - raw_ratio),
+                "fill": sleeve if gate else 0.0,
+                "final": tk["final_weight_pct"] / 100,
+                "recent": None,
+            }
+        exp = {"us": prev_state["combined_exposure_us_pct"], "tw": prev_state["combined_exposure_tw_pct"]}
+        hist_map = {"us": prev_state.get("history_us", []), "tw": prev_state.get("history_tw", [])}
+        # 執行層對每市場的 history 確定性重放（純計算、無網路呼叫），與正常路徑同函式
+        exec_map = {m["key"]: band_exec_replay(hist_map[m["key"]], m["legs"]) for m in MARKETS}
+        last_change_date = prev_state.get("last_change_date")
+        last_change_desc = prev_state.get("last_change_desc")
+
+        html = generate_html(sigs, [], last_change_date, hist_map, exec_map,
+                             last_change_desc=last_change_desc)
+        OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+        OUTPUT.write_text(html, encoding="utf-8")
+        print(f"[render-only] Written {OUTPUT} ({len(html):,} bytes). "
+              f"No fetch, no state.json write, no alert/mail HTML written.")
+        return
 
     px_map, sigs = {}, {}
     for t in ALL_TICKERS:
@@ -1430,7 +1544,8 @@ def main():
         ALERT_HTML.write_text(build_mail_html(changes, sigs, exp, data_date), encoding="utf-8")
         print(f"Mail HTML written: {ALERT_HTML}")
 
-    html = generate_html(sigs, changes, last_change_date, hist_map, exec_map)
+    html = generate_html(sigs, changes, last_change_date, hist_map, exec_map,
+                         last_change_desc=last_change_desc)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(html, encoding="utf-8")
     print(f"Written {OUTPUT} ({len(html):,} bytes)")
