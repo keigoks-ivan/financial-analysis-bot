@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""系統主控台 /long-track/ 產生器（fab）— 2026-08-23 系統群整併，2026-09-10 總覽儀表板化＋分頁重分組。
+"""系統主控台 /long-track/ 產生器（fab）— 2026-08-23 系統群整併，2026-09-10 總覽儀表板化＋分頁重分組，
+2026-09-10 移除「個股：持倉週掃」分頁。
 
-五分頁單一入口：
+四分頁單一入口：
   #overview   總覽        — 頂部「今天」儀表板（讀 state.json／live_scoreboard.json，見
                             render_today_strip；今天曝險＋影子帳戶一覽，不重算任何數字）
                             ＋家族地圖（實單主系統大卡片／影子對照＋前瞻 OOS 候選一行式／
@@ -9,15 +10,20 @@
   #live       美股即時    — iframe 嵌入 /long-track-w52-adaptive/_body.html
   #scoreboard 記分板      — iframe 嵌入 /long-track/_scoreboard_body.html（2026-09-10 由
                             #live 拆出獨立分頁；#live 內保留一個跳轉連結）
-  #positions  個股：持倉週掃 — iframe 嵌入 /pm/_body.html
   #record     個股：裁決實績 — iframe 嵌入 /track-record/_body.html
 
-舊 3 個獨立 URL（/long-track-w52-adaptive/、/pm/、/track-record/）已改為
-meta-refresh redirect stub，指回對應分頁錨點；三個來源頁的 builder
-（update_long_track_w52_adaptive.py／build_pm_index.py／build_track_record.py）
-改產 nav-less _body.html 片段。stub／片段皆已加入 scripts/site_nav.py 的
-SKIP_FILES。/long-track-w52-adaptive/leverage.html 與 tw-semivol.html 維持
-獨立完整頁，不在此整併範圍內。
+「個股：持倉週掃」（#positions，原本 iframe 嵌 /pm/_body.html）已於 2026-09-10 移除——
+它是一份人工個股研究報告（最後更新 2026-08-24），不屬於本系統主控台的機械化追蹤
+範圍。docs/pm/ 本身未動、仍可獨立造訪；本檔的 console-tabbar／CONSOLE_JS 已不再嵌入它。
+console-tabbar／CONSOLE_JS 的 TABS 白名單機制原本就會把未知 hash 落回 #overview，
+所以舊的 /long-track/#positions 連結會自動 fallback 到總覽分頁，不會出錯。
+
+舊獨立 URL（/long-track-w52-adaptive/、/track-record/）已改為
+meta-refresh redirect stub，指回對應分頁錨點；來源頁的 builder
+（update_long_track_w52_adaptive.py／build_track_record.py）
+改產 nav-less _body.html 片段，已加入 scripts/site_nav.py 的 SKIP_FILES。
+/long-track-w52-adaptive/leverage.html 與 tw-semivol.html 維持獨立完整頁，
+不在此整併範圍內。
 
 nav 用 full_nav_block("system","lthub")（追蹤總覽，MENU 條目本身未改動——
 nav 瘦身留待下一批）。設計沿用本頁既有 token 體系（--brand:#1a56db 等），
@@ -73,9 +79,10 @@ GROUPS = [
          "one": "GLD/USO→期貨 商品 sleeve 疊上 STX50 的 80/20 組合曝險，OOS 並行追蹤。",
          "status": ("前瞻 OOS・候選", "cand"), "freq": "每交易日", "email": "—"},
         {"name": "🧩 F70：A 70%＋D1（TLT／GLD／DBC）30%", "url": "/backtest/f_comfort/",
-         "one": "擁有者 2026-09-10 選定的 paper 候選；記分板 S-F70 影子帳戶每日追蹤，見 #scoreboard；"
+         "one": "2026-09-10 選定的紙上候選；記分板 S-F70 影子帳戶每日追蹤，見 #scoreboard；"
                 "D1 拿掉 SPY 因為 A 已是美股。",
-         "status": ("前瞻 OOS・候選", "cand"), "freq": "每交易日（隨 W52 主系統更新）", "email": "—"},
+         "status": ("前瞻 OOS・候選", "cand"), "freq": "每交易日（隨 W52 主系統更新）",
+         "email": "✅（D1X 腿部位變化、月底再平衡）"},
     ]),
     ("已退役・凍結對照（被 W52×自適應取代）", "ret", False, [
         {"name": "STX50（SMH/QQQ 美股）", "url": "/long-track-smh/",
@@ -202,12 +209,15 @@ CONSOLE_JS = """
 <script>
 (function(){
   "use strict";
-  var TABS = ['overview','live','scoreboard','positions','record'];
+  var TABS = ['overview','live','scoreboard','record'];
   // 2026-09-10 分頁重新分組：live（美股即時）與 scoreboard（記分板）各自獨立分頁
-  // （先前 F1 修法把兩個 iframe 疊在同一個 live 分頁下，本次拆開，#live／#positions／
-  // #record 舊錨點維持可用，新增 #scoreboard）。每個 tab 對應一個 id 陣列。
+  // （先前 F1 修法把兩個 iframe 疊在同一個 live 分頁下，本次拆開，#live／
+  // #record 舊錨點維持可用，新增 #scoreboard）。「個股：持倉週掃」（#positions）
+  // 已於同日移除（人工報告、非本系統機械化追蹤範圍）——不在 TABS 白名單內的
+  // hash 一律落回 #overview，故舊的 #positions 連結不會出錯。每個 tab 對應一個
+  // id 陣列。
   var FRAME_ID = {live:['live-frame'], scoreboard:['scoreboard-frame'],
-                  positions:['positions-frame'], record:['record-frame']};
+                  record:['record-frame']};
 
   function sizeFrame(fr){
     try{
@@ -420,14 +430,13 @@ def render() -> str:
 <div class="page-hdr"><div class="container">
   <div class="crumb"><a href="/">首頁</a> / 系統主控台</div>
   <h1>系統主控台</h1>
-  <div class="sub">總覽 · 美股即時 · 記分板 · 個股：持倉週掃 · 個股：裁決實績 — 五分頁單一入口，一頁看清整個追蹤家族的定位、現況與紀律紀錄。</div>
+  <div class="sub">總覽 · 美股即時 · 記分板 · 個股：裁決實績 — 四分頁單一入口，一頁看清整個追蹤家族的定位、現況與紀律紀錄。</div>
 </div></div>
 <div class="container">
 <div class="console-tabbar" role="tablist">
   <button type="button" class="console-tab-btn" data-ctab="overview" role="tab">總覽</button>
   <button type="button" class="console-tab-btn" data-ctab="live" role="tab">美股即時</button>
   <button type="button" class="console-tab-btn" data-ctab="scoreboard" role="tab">記分板</button>
-  <button type="button" class="console-tab-btn" data-ctab="positions" role="tab">個股：持倉週掃</button>
   <button type="button" class="console-tab-btn" data-ctab="record" role="tab">個股：裁決實績</button>
 </div>
 <div class="console-tab-panel" id="panel-overview">{overview_body}</div>
@@ -438,10 +447,6 @@ def render() -> str:
 <div class="console-tab-panel" id="panel-scoreboard">
   <p class="console-embed-note">實單前瞻記分板（NAV／回撤／基準差／資料缺口，PREREG 2026-09-05） · <a href="/long-track/_scoreboard_body.html">獨立片段</a></p>
   <iframe class="console-embed-frame" id="scoreboard-frame" data-src="/long-track/_scoreboard_body.html" title="實單前瞻記分板" scrolling="no" loading="lazy"></iframe>
-</div>
-<div class="console-tab-panel" id="panel-positions">
-  <p class="console-embed-note">逐一檢查每個持倉與近期研究 DD 的否證指標、催化劑時程、thesis 老化 · <a href="/pm/">獨立頁</a></p>
-  <iframe class="console-embed-frame" id="positions-frame" data-src="/pm/_body.html" title="持倉週掃" scrolling="no" loading="lazy"></iframe>
 </div>
 <div class="console-tab-panel" id="panel-record">
   <p class="console-embed-note">本站個股 DD 裁決的回顧性前瞻報酬統計，描述器語言、非績效宣傳 · <a href="/track-record/">獨立頁</a></p>

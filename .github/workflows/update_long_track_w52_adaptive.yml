@@ -44,6 +44,13 @@ jobs:
         # docs/Live_Scoreboard_Spec.md（v7-backtest）。
         run: python scripts/build_live_scoreboard.py
 
+      - name: Run F70 D1X alert (paper candidate)
+        # F70 紙上候選（70% 系統 A ＋ 30% D1X／TLT/GLD/DBC）：D1X 三腿部位變化／
+        # 月底再平衡提醒，date-keyed state 冪等；任何例外一律 exit 0 不寫檔
+        # （build_f70_alert.py 內建 fail-safe）。A 腿（QQQ/SMH）的變化已由上面
+        # update_long_track_w52_adaptive.py 的 alert 通知，本步驟只描述 D1X 腿。
+        run: python scripts/build_f70_alert.py
+
       - name: Run W52 × adaptive cap 1.0 shadow control page
         # cap 1.0 (100%) shadow control page (docs/long-track-w52-adaptive/leverage.html).
         # Since 2026-07-18 main/shadow swap: LIVE main is now cap 1.5 (index.html);
@@ -68,6 +75,20 @@ jobs:
               echo "body<<ALERT_EOF"
               awk 1 lt_w52a_alert.txt   # 保證恰好一個尾換行（不論來源檔有無），避免最後一行與 ALERT_EOF 黏連
               echo "ALERT_EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Read F70 alert
+        id: f70alert
+        run: |
+          if [ -f lt_f70_alert.txt ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            {
+              echo "body<<F70ALERT_EOF"
+              awk 1 lt_f70_alert.txt   # 保證恰好一個尾換行，避免最後一行與 F70ALERT_EOF 黏連
+              echo "F70ALERT_EOF"
             } >> "$GITHUB_OUTPUT"
           else
             echo "changed=false" >> "$GITHUB_OUTPUT"
@@ -113,11 +134,32 @@ jobs:
             每交易日台股/美股收盤後自動檢查 · 可行動變化＝任一腿閘門翻轉或最終權重與現持差 ≥ 10pp
             退訂：移除 repo secret MAIL_APP_PASSWORD 或編輯 update_long_track_w52_adaptive.yml
 
+      - name: Email F70 alert (paper candidate)
+        if: (steps.f70alert.outputs.changed == 'true' || inputs.test_email == true) && steps.mailcfg.outputs.ready == 'true'
+        continue-on-error: true
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_APP_PASSWORD }}
+          subject: "F70 紙上候選訊號 ${{ steps.f70alert.outputs.changed == 'true' && '' || '(測試信)' }}"
+          to: keigoks@gmail.com
+          from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
+          body: |
+            ${{ steps.f70alert.outputs.changed == 'true' && steps.f70alert.outputs.body || '這是測試信 — F70 email 推播管線正常。目前無可行動變化。' }}
+
+            —
+            InvestMQuest · F70 紙上候選（70% 系統 A ＋ 30% D1X／TLT/GLD/DBC，尚非實單）
+            每交易日台股/美股收盤後自動檢查 · 事件＝D1X 任一腿部位變化或月底再平衡日
+            退訂：移除 repo secret MAIL_APP_PASSWORD 或編輯 update_long_track_w52_adaptive.yml
+
       - name: Commit and push
         run: |
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
-          git add docs/long-track-w52-adaptive/_body.html docs/long-track-w52-adaptive/state.json docs/long-track-w52-adaptive/leverage.html docs/long-track-w52-adaptive/leverage_state.json docs/long-track-w52-adaptive/tw-semivol.html docs/long-track-w52-adaptive/tw_semivol_state.json docs/market/data/live_scoreboard.json docs/long-track/_scoreboard_body.html
+          git add docs/long-track-w52-adaptive/_body.html docs/long-track-w52-adaptive/state.json docs/long-track-w52-adaptive/leverage.html docs/long-track-w52-adaptive/leverage_state.json docs/long-track-w52-adaptive/tw-semivol.html docs/long-track-w52-adaptive/tw_semivol_state.json docs/market/data/live_scoreboard.json docs/long-track/_scoreboard_body.html docs/long-track/f70_signal_state.json
           git diff --staged --quiet || git commit -m "Auto update W52 × adaptive vol-target (US+TW): $(date -u '+%Y-%m-%d')"
           for i in 1 2 3 4 5 6; do
             if git push; then
