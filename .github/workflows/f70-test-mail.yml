@@ -1,0 +1,97 @@
+name: "F70 Paper Candidate Signal — Manual Test Mail"
+
+# 手動測試用小 workflow：只驗證「F70 紙上候選訊號」email 管線本身通不通，
+# 不跑 update_long_track_w52_adaptive.yml 那整條帶（那條帶會下載並改動當天的
+# A 腿訊號/state/live scoreboard 等資料，離峰手動觸發會弄髒資料）。本 workflow
+# 只跑 scripts/build_f70_alert.py --test-email：抓三腿（TLT/GLD/DBC）今天的
+# 即時報價算訊號、寫 f70_mail.html，不比對前次記錄、不寫
+# docs/long-track/f70_signal_state.json、不寫 lt_f70_alert.txt（--test-email
+# 分支本就不落地這個檔，見 build_f70_alert.py），也不 commit 任何東西。
+#
+# workflow_dispatch only：故意不掛排程，update_long_track_w52_adaptive.yml 的
+# 「Run F70 D1X alert (paper candidate)」步驟才是正式每日通知來源；該 workflow
+# 本身也有 test_email input 可以測，本檔是給只想測 F70 這一封信、不想碰 A 腿
+# 主系統與其 commit 的獨立管道。
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  test-mail:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"  # 與 update_long_track_w52_adaptive.yml 的對應步驟同版本
+
+      # build_f70_alert.py 匯入 scripts/_crossasset_frozen.py（numpy/pandas/
+      # yfinance）與 scripts/mail_html.py（純標準庫），跟 update_long_track_
+      # w52_adaptive.yml 安裝的依賴集合相同——不需要 cockpit-roster-test-mail.yml
+      # 那種因 requests 而額外加裝的套件（F70 這條 import 鏈沒有直接用到 requests；
+      # yfinance 自己的 install_requires 會連帶裝好它需要的 requests）。
+      - name: Install dependencies
+        run: pip install "yfinance>=0.2.40" pandas numpy
+
+      - name: Write test alert body
+        run: python scripts/build_f70_alert.py --test-email
+
+      - name: Read F70 alert
+        id: f70alert
+        run: |
+          if [ -f lt_f70_alert.txt ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            {
+              echo "body<<F70ALERT_EOF"
+              awk 1 lt_f70_alert.txt   # 保證恰好一個尾換行，避免最後一行與 F70ALERT_EOF 黏連
+              echo "F70ALERT_EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Fail-safe: probe SMTP secret presence via env (the `secrets` context is
+      # not reliable inside `if:`), then gate the email step on the result so a
+      # missing secret never fails the workflow. Same MAIL_USERNAME /
+      # MAIL_APP_PASSWORD pair used by update_long_track_w52_adaptive.yml's F70
+      # email step and 7+ other workflows — no user action needed.
+      - name: Check mail secrets
+        id: mailcfg
+        env:
+          MU: ${{ secrets.MAIL_USERNAME }}
+          MP: ${{ secrets.MAIL_APP_PASSWORD }}
+        run: |
+          if [ -n "$MU" ] && [ -n "$MP" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false (SMTP secrets missing — email skipped)" >&2
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Email test alert
+        if: steps.mailcfg.outputs.ready == 'true'
+        continue-on-error: true
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_APP_PASSWORD }}
+          subject: "F70 紙上候選訊號（測試信）"
+          to: keigoks@gmail.com
+          from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
+          html_body: file://f70_mail.html
+          body: |
+            ${{ steps.f70alert.outputs.changed == 'true' && steps.f70alert.outputs.body || '這是測試信 — F70 email 推播管線正常。--test-email 模式不比對前次記錄，不產生可行動事件；今天三腿的實際狀態見附上的 HTML 版本。' }}
+
+            —
+            InvestMQuest · F70 紙上候選（70% 系統 A ＋ 30% D1X／TLT/GLD/DBC，尚非實單）
+            這是手動測試信，不代表今天有可行動變化
+            退訂：移除 repo secret MAIL_APP_PASSWORD 或編輯 f70-test-mail.yml
