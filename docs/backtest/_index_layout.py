@@ -209,7 +209,7 @@ BLOCKS = [
         ("個案・已重寫", None, [
             ("/backtest/housing_gdp/taiwan.html", "台灣：貴、熱、還沒跌", "研究", False),
             ("/backtest/housing_gdp/malaysia.html", "馬來西亞：變便宜、去槓桿、原地踏步", "研究", False),
-            ("/backtest/housing_gdp/japan.html", "日本：崩過、沒回來、租金比偏貴", "研究", False),
+            ("/backtest/housing_gdp/japan.html", "日本：全國沒回來、東京回來了、租金比偏貴", "研究", False),
             ("/backtest/housing_gdp/usa.html", "美國：負擔重、槓桿輕、量凍住", "研究", False),
             ("/backtest/housing_gdp/usa_metro.html", "美國都會區：410 個房市", "研究", False),
             ("/backtest/housing_gdp/thailand.html", "泰國：變便宜、負債重、先老後富", "研究", False),
