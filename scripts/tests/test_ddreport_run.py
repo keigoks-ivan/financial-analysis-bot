@@ -1662,5 +1662,309 @@ def test_batch_summary_md_includes_output_column_and_totals():
     assert "output 合計" in md
 
 
+# ---------------------------------------------------------------------------
+# 10) WP-C（2026-09-10）：例行複審 delta 判斷路由——`_judge_delta_route`／
+#    `_do_judge_delta`／`_judge_reuse_prior`。`SRC_ARCHIVE_DIR` 一律 monkeypatch
+#    到 tmp_path，不碰真實 `notes/site-internal/dd/_src/`；`dd_delta.py`
+#    generate／check 兩支零 LLM 子行程真的跑（快、決定性），只有 `_judge_check`
+#    （dd_scenario/dd_decision/validate_judgment 那組，需要 schema-valid 判斷物）
+#    與 Fable spawn 走 monkeypatch，同既有 `_do_judge` 測試慣例。
+# ---------------------------------------------------------------------------
+
+def _build_prior_archive(base_dir, ticker, date, evidence, judgment, scenario=None):
+    """在 `base_dir`（monkeypatch 成 `ddreport.SRC_ARCHIVE_DIR`）下建一份符合
+    `_prior_judgment_archive`／`dd_delta.py --prior` 目錄名規則
+    （`{ticker}_{date}`，整段字串）的存查包。"""
+    d = base_dir / "{0}_{1}".format(ticker, date)
+    d.mkdir(parents=True, exist_ok=True)
+    stem = d.name
+    (d / "{0}.evidence.json".format(stem)).write_text(json.dumps(evidence, ensure_ascii=False), encoding="utf-8")
+    (d / "{0}.judgment.json".format(stem)).write_text(json.dumps(judgment, ensure_ascii=False), encoding="utf-8")
+    if scenario is not None:
+        (d / "{0}.scenario.json".format(stem)).write_text(json.dumps(scenario, ensure_ascii=False), encoding="utf-8")
+    return d
+
+
+def _minimal_evidence(ticker, date_iso, price, transcript="/fake/Q1.md", archetype_hint="品質複利成長"):
+    return {
+        "ticker": ticker, "date": date_iso, "archetype_hint": archetype_hint,
+        "numbers": {"price_at_dd": {"price": price}},
+        "coverage": {}, "events": {},
+        "transcripts": {"selected": {"recent_four_quarters": [transcript]}},
+    }
+
+
+def _minimal_judgment(ticker, date_iso, price, verdict="進場", contradictions=None):
+    return {
+        "meta": {"ticker": ticker, "date": date_iso, "schema": "v15.0"},
+        "decision_out": {"verdict": verdict},
+        "decision_inputs": {"price_at_dd": price},
+        "contradictions": contradictions or [],
+        "kill_metrics": [], "triggers": [],
+    }
+
+
+def test_judge_delta_route_no_prior_defaults_to_full(tmp_path, monkeypatch):
+    """(vi)：無 prior 存查 → 既有行為不變，直接 full，不呼叫 dd_delta.py。"""
+    monkeypatch.setattr(ddreport, "SRC_ARCHIVE_DIR", tmp_path / "src")
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    (run_dir / "evidence.json").write_text(
+        json.dumps(_minimal_evidence("ZDNOPRIOR", "2026-09-10", 100.0)), encoding="utf-8")
+
+    route = ddreport._judge_delta_route("ZDNOPRIOR", "20260910", run_dir, False)
+    assert route["mode"] == "full"
+    assert route["reasons"] == ["no_prior_judgment_archive"]
+    assert route["delta_path"] is None
+
+
+def test_judge_delta_route_no_delta_flag_forces_full(tmp_path, monkeypatch):
+    """(iv)：`--no-delta` 強制整份重寫，即使有 prior 存查也不問路由。"""
+    src = tmp_path / "src"
+    monkeypatch.setattr(ddreport, "SRC_ARCHIVE_DIR", src)
+    _build_prior_archive(
+        src, "ZDNODELTA", "20260701",
+        _minimal_evidence("ZDNODELTA", "2026-07-01", 100.0),
+        _minimal_judgment("ZDNODELTA", "2026-07-01", 100.0),
+        scenario={"ticker": "ZDNODELTA", "date": "2026-07-01", "price": 100.0},
+    )
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    (run_dir / "evidence.json").write_text(
+        json.dumps(_minimal_evidence("ZDNODELTA", "2026-07-10", 100.0)), encoding="utf-8")
+
+    route = ddreport._judge_delta_route("ZDNODELTA", "20260710", run_dir, True)
+    assert route["mode"] == "full"
+    assert route["reasons"] == ["cli --no-delta"]
+
+
+def test_judge_delta_route_full_rewrite_required_on_age(tmp_path, monkeypatch):
+    """(iii)：prior 存查 >180 天 → `dd_delta.py` 自算 `full_rewrite_required`，
+    路由直接 full（(c) 的 180 天年限已內含在 (a) 裡，不另外重算）。"""
+    monkeypatch.setattr(ddreport, "SRC_ARCHIVE_DIR", tmp_path / "src")
+    monkeypatch.setattr(ddreport, "_pick_python", lambda: sys.executable)
+    src = tmp_path / "src"
+    _build_prior_archive(
+        src, "ZDOLD", "20260101",
+        _minimal_evidence("ZDOLD", "2026-01-01", 100.0),
+        _minimal_judgment("ZDOLD", "2026-01-01", 100.0),
+        scenario={"ticker": "ZDOLD", "date": "2026-01-01", "price": 100.0},
+    )
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    (run_dir / "evidence.json").write_text(
+        json.dumps(_minimal_evidence("ZDOLD", "2026-09-10", 105.0)), encoding="utf-8")
+
+    route = ddreport._judge_delta_route("ZDOLD", "20260910", run_dir, False)
+    assert route["mode"] == "full"
+    assert any("full_rewrite_required" in r for r in route["reasons"])
+    assert any("180" in r for r in route["reasons"])
+    # 升級全套理由裡含年限字樣，確認真的是 (a)／(c) 命中，不是誤判別的理由
+    assert Path(route["delta_path"]).exists()
+
+
+def test_judge_reuse_prior_skips_fable_when_no_material_change(tmp_path, monkeypatch):
+    """(v)：<45 天且 delta 三塊皆空 → 沿用 prior 判斷、零 spawn。"""
+    monkeypatch.setattr(ddreport, "SRC_ARCHIVE_DIR", tmp_path / "src")
+    monkeypatch.setattr(ddreport, "_pick_python", lambda: sys.executable)
+    ticker, date = "ZDREUSE", "20260910"
+    run_dir = _clean_run_dir(ticker, date)
+    (run_dir / "agents").mkdir(parents=True)
+    (run_dir / "prompts").mkdir(parents=True)
+
+    src = tmp_path / "src"
+    prior_evidence = _minimal_evidence(ticker, "2026-09-01", 100.0)
+    prior_judgment = _minimal_judgment(ticker, "2026-09-01", 100.0)
+    _build_prior_archive(
+        src, ticker, "20260901", prior_evidence, prior_judgment,
+        scenario={"ticker": ticker, "date": "2026-09-01", "price": 100.0},
+    )
+    # 新 evidence 與 prior 完全相同（連 price 都沒變）——delta 三塊必空。
+    (run_dir / "evidence.json").write_text(json.dumps(prior_evidence), encoding="utf-8")
+
+    def _unexpected_spawn(**kw):
+        raise AssertionError("reuse 分支不該呼叫 dd_headless.spawn（應零 Fable）")
+
+    monkeypatch.setattr(ddreport.dd_headless, "spawn", _unexpected_spawn)
+    monkeypatch.setattr(ddreport, "_judge_check", lambda t, d: (True, "[PASS] 假造：judge check ok"))
+
+    try:
+        manifest = {"ticker": ticker, "date": date, "stages": {}}
+        rc = ddreport._do_judge(ticker, date, "fable", None, False, manifest)
+        assert rc == 0
+        m = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
+        stage = m["stages"]["judged"]
+        assert stage["state"] == "PASS"
+        assert stage["delta_mode"] == "reuse"
+        assert stage["agent_usage"] == []
+
+        judgment = json.loads((run_dir / "judgment.json").read_text(encoding="utf-8"))
+        assert judgment["meta"]["date"] == "2026-09-10"
+        assert judgment["meta"]["judge_mode"] == "delta"
+        assert judgment["meta"]["delta_of"] == "{0}_20260901".format(ticker)
+        assert judgment["decision_out"]["verdict"] == "進場"  # 沿用 prior，不改裁決
+    finally:
+        shutil.rmtree(run_dir, ignore_errors=True)
+
+
+def test_do_judge_delta_mode_spawns_judge_delta_prompt(tmp_path, monkeypatch):
+    """(i)：有 prior 且無升級理由 → `judge_mode`（本 WP 的 `delta_mode`）＝delta，
+    且 spawn 吃到的是 `judge_delta.md.tmpl` 渲染出的 prompt（不是 `judge.md.tmpl`）。"""
+    monkeypatch.setattr(ddreport, "SRC_ARCHIVE_DIR", tmp_path / "src")
+    monkeypatch.setattr(ddreport, "_pick_python", lambda: sys.executable)
+    ticker, date = "ZDDELTA1", "20260910"
+    run_dir = _clean_run_dir(ticker, date)
+    (run_dir / "agents").mkdir(parents=True)
+    (run_dir / "prompts").mkdir(parents=True)
+    (run_dir / "bundles").mkdir(parents=True)
+
+    src = tmp_path / "src"
+    prior_judgment = _minimal_judgment(ticker, "2026-07-01", 100.0)
+    _build_prior_archive(
+        src, ticker, "20260701",
+        _minimal_evidence(ticker, "2026-07-01", 100.0), prior_judgment,
+        scenario={"ticker": ticker, "date": "2026-07-01", "price": 100.0},
+    )
+    # 71 天（>=45、<180）＋ 1% 價格變動（<40%）＋ 同 archetype_hint ＝不升級，
+    # 落在 delta 分支（非 full 也非 reuse）。
+    (run_dir / "evidence.json").write_text(
+        json.dumps(_minimal_evidence(ticker, "2026-09-10", 101.0)), encoding="utf-8")
+
+    spawn_calls = []
+
+    def fake_spawn(**kw):
+        spawn_calls.append(kw)
+        # 模擬 Fable 用 Write 落檔：只改允許路徑（meta／decision_inputs／
+        # contradictions），裁決不翻面，讓 dd_delta.py check 乾淨通過。
+        new_judgment = dict(prior_judgment)
+        new_judgment["meta"] = {"ticker": ticker, "date": "2026-09-10", "schema": "v15.0"}
+        new_judgment["decision_inputs"] = {"price_at_dd": 101.0}
+        new_judgment["contradictions"] = [{
+            "axis": "price_at_dd", "prior_field": "price_at_dd",
+            "side_a": "100.0", "side_b": "101.0", "ruling": "數字更新",
+        }]
+        (run_dir / "judgment.json").write_text(json.dumps(new_judgment), encoding="utf-8")
+        (run_dir / "scenario.json").write_text(
+            json.dumps({"ticker": ticker, "date": "2026-09-10", "price": 101.0}), encoding="utf-8")
+        return {"ok": True, "over_budget": False, "num_turns": 1, "cache_read": 0, "result_text": "DONE"}
+
+    monkeypatch.setattr(ddreport.dd_headless, "spawn", fake_spawn)
+    monkeypatch.setattr(ddreport, "_judge_check", lambda t, d: (True, "[PASS] 假造：judge check ok"))
+
+    try:
+        manifest = {"ticker": ticker, "date": date, "stages": {}}
+        rc = ddreport._do_judge(ticker, date, "fable", None, False, manifest)
+        assert rc == 0
+        assert len(spawn_calls) == 1
+
+        prompt_path = Path(spawn_calls[0]["prompt_path"])
+        assert prompt_path.name == "b1_judge_delta_inline.md"
+        text = prompt_path.read_text(encoding="utf-8")
+        assert "例行複審的 delta 判斷" in text
+        assert "===== BUNDLE =====" in text
+        assert "prior judgment.json 全文" in text
+
+        m = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
+        stage = m["stages"]["judged"]
+        assert stage["state"] == "PASS"
+        assert stage["delta_mode"] == "delta"
+        assert "dd_delta_check" not in stage or stage["dd_delta_check"]["ok"] is True
+
+        judgment = json.loads((run_dir / "judgment.json").read_text(encoding="utf-8"))
+        assert judgment["meta"]["judge_mode"] == "delta"
+        assert judgment["meta"]["delta_of"] == "{0}_20260701".format(ticker)
+    finally:
+        shutil.rmtree(run_dir, ignore_errors=True)
+
+
+def test_do_judge_delta_verdict_flip_escalates_to_full(tmp_path, monkeypatch):
+    """(ii)：delta 判斷寫出的裁決相對 prior 翻面 → 這輪 delta 判斷作廢、自動
+    升級全套；manifest 記理由、`judgment_delta_rejected.json` 存在。"""
+    monkeypatch.setattr(ddreport, "SRC_ARCHIVE_DIR", tmp_path / "src")
+    monkeypatch.setattr(ddreport, "_pick_python", lambda: sys.executable)
+    ticker, date = "ZDFLIP1", "20260910"
+    run_dir = _clean_run_dir(ticker, date)
+    (run_dir / "agents").mkdir(parents=True)
+    (run_dir / "prompts").mkdir(parents=True)
+    (run_dir / "bundles").mkdir(parents=True)
+
+    src = tmp_path / "src"
+    prior_judgment = _minimal_judgment(ticker, "2026-07-01", 100.0, verdict="進場")
+    _build_prior_archive(
+        src, ticker, "20260701",
+        _minimal_evidence(ticker, "2026-07-01", 100.0), prior_judgment,
+        scenario={"ticker": ticker, "date": "2026-07-01", "price": 100.0},
+    )
+    (run_dir / "evidence.json").write_text(
+        json.dumps(_minimal_evidence(ticker, "2026-09-10", 101.0)), encoding="utf-8")
+
+    # dd_delta.py generate／check 兩支真的跑（快、決定性）；dd_bundle.py（全套
+    # 升級後才會呼叫）不需要真的產出，假造成功即可，`_write_inline_prompt`
+    # 對缺席的 bundle 檔本就有空尾巴 fallback。
+    real_run = subprocess.run
+
+    def selective_subprocess_run(cmd, *a, **k):
+        prog = str(cmd[1]) if len(cmd) > 1 else ""
+        if prog.endswith("dd_delta.py"):
+            return real_run(cmd, *a, **k)
+        return _FakeCompleted(0)
+
+    monkeypatch.setattr(ddreport.subprocess, "run", selective_subprocess_run)
+    monkeypatch.setattr(ddreport, "_judge_check", lambda t, d: (True, "[PASS] 假造：judge check ok"))
+
+    spawn_calls = []
+
+    def fake_spawn(**kw):
+        spawn_calls.append(kw)
+        call_n = len(spawn_calls)
+        if call_n == 1:
+            # 第一輪：delta 判斷——裁決翻面（進場→觀望），且翻面欄位也有
+            # 補 contradictions，讓 dd_delta.py check 本身乾淨通過（本測試
+            # 要單獨驗證「翻面」這個 orchestrator 端判準，不是驗 dd_delta
+            # check 失敗那條路）。
+            new_judgment = dict(prior_judgment)
+            new_judgment["meta"] = {"ticker": ticker, "date": "2026-09-10", "schema": "v15.0"}
+            new_judgment["decision_out"] = {"verdict": "觀望"}
+            new_judgment["decision_inputs"] = {"price_at_dd": 101.0}
+            new_judgment["contradictions"] = [
+                {"axis": "price_at_dd", "prior_field": "price_at_dd",
+                 "side_a": "100.0", "side_b": "101.0", "ruling": "數字更新"},
+                {"axis": "verdict", "prior_field": "dca_verdict",
+                 "side_a": "進場", "side_b": "觀望", "ruling": "測試用翻面"},
+            ]
+            (run_dir / "judgment.json").write_text(json.dumps(new_judgment), encoding="utf-8")
+            (run_dir / "scenario.json").write_text(
+                json.dumps({"ticker": ticker, "date": "2026-09-10", "price": 101.0}), encoding="utf-8")
+        else:
+            # 升級全套後的第二輪：內容不重要（`_judge_check` 已 mock 成恆
+            # PASS），只需要兩檔存在讓 `_short_outputs_ready` 判定完成。
+            (run_dir / "judgment.json").write_text(
+                json.dumps(dict(prior_judgment, meta={
+                    "ticker": ticker, "date": "2026-09-10", "schema": "v15.0"})), encoding="utf-8")
+            (run_dir / "scenario.json").write_text(
+                json.dumps({"ticker": ticker, "date": "2026-09-10", "price": 101.0}), encoding="utf-8")
+        return {"ok": True, "over_budget": False, "num_turns": 1, "cache_read": 0, "result_text": "DONE"}
+
+    monkeypatch.setattr(ddreport.dd_headless, "spawn", fake_spawn)
+
+    try:
+        manifest = {"ticker": ticker, "date": date, "stages": {}}
+        rc = ddreport._do_judge(ticker, date, "fable", None, False, manifest)
+        assert rc == 0
+        assert len(spawn_calls) == 2  # delta 先花一次，才升級全套再花一次——不是免費重試
+
+        m = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
+        stage = m["stages"]["judged"]
+        assert stage["state"] == "PASS"
+        assert stage["delta_mode"] == "full"
+        assert any(r.startswith("delta_rejected: verdict_flip") for r in stage["judge_route_reasons"])
+        assert stage["delta_rejected"]["reason"].startswith("verdict_flip")
+        assert (run_dir / "judgment_delta_rejected.json").exists()
+        rejected = json.loads((run_dir / "judgment_delta_rejected.json").read_text(encoding="utf-8"))
+        assert rejected["decision_out"]["verdict"] == "觀望"
+    finally:
+        shutil.rmtree(run_dir, ignore_errors=True)
+
+
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-v"]))

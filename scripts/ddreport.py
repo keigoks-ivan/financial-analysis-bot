@@ -31,6 +31,7 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import dd_bundle  # noqa: E402  （WP-C：delta 判斷 prompt 沿用 `_transcript_section` 抓最新一季逐字稿，只 import 不改其內部）
 import dd_headless  # noqa: E402  （WP1c 無頭執行器，import 呼叫，不改其內部）
 import dd_meta_reader  # noqa: E402  （WP7a peers 來源③：讀 id-meta related_tickers，不改其內部）
 import dd_metric_resolver  # noqa: E402  （2026-09-07：batch 摘要 Max DD 改用共用 helper，只 import 不改其內部）
@@ -178,6 +179,54 @@ PICKS_CANDIDATES_PATH = REPO_ROOT / "docs" / "picks" / "candidates.json"
 TICKER_HUB_DIR = REPO_ROOT / "docs" / "t"  # build_ticker_hubs.py 輸出（update_dd_index 連鎖重生）
 SRC_ARCHIVE_DIR = REPO_ROOT / "notes" / "site-internal" / "dd" / "_src"
 ID_DIR = REPO_ROOT / "docs" / "id"
+
+# ---------------------------------------------------------------------------
+# WP-C（2026-09-10）：例行複審 delta 判斷路由——`_do_judge` 開頭先問
+# `dd_delta.py`（零 LLM 差異引擎）本輪跟 prior 存查比起來改了什麼，決定
+# Fable 要整份重寫（full）、只補被點名欄位（delta），還是完全不必進 Fable
+# （reuse，見下方 DELTA_NOCHANGE_MAX_AGE_DAYS）。規則表列在這裡（repo
+# governance：判斷類規則寫在腳本頂部常數），實作見 `_judge_delta_route`／
+# `_do_judge_delta`／`_judge_reuse_prior`。
+# ---------------------------------------------------------------------------
+
+# (f)：<45 天且 delta 三塊（numbers_changed／coverage_changed／events_changed）
+# 皆空 → 不進 Fable，直接複製 prior 判斷物當本輪判斷（只補 meta.date／
+# delta_of）。上界刻意比 dd_delta.py 自身的 full_rewrite_required 年限
+# （180 天）短很多——這條只想抓「同一週內幾乎零資訊增量」的重跑，不是要
+# 放寬到一般複審間隔（例行複審通常是季度、`numbers.price_at_dd` 幾乎必變，
+# 這條路徑在真實用量下預期少見，多半靠人工短間隔重跑或測試觸發）。
+DELTA_NOCHANGE_MAX_AGE_DAYS = 45
+
+# (b)：evidence.events 目前只有 QC-19 addendum 定義的五個固定類別（見
+# `EVENTS_ADDENDUM`）——現行 schema 沒有「guidance 撤回」或「CEO 更迭」
+# 專屬事件類別（兩者若被查到，會落在 coverage.capital_markets_pricing 或
+# 治理相關軸的 finding 裡，走一般 judgment_fields_to_review 路徑，不在本表
+# 管轄——WP-C 未新增這兩類的抓取，已知缺口，見任務回報）。本表只回答
+# 「evidence.events 五類裡，新 finding 出現在哪些類別時足以判定為重大事件、
+# 直接升級全套」：`ma_merger`（併購，任務指示原文即含）／
+# `sec_investigation_restatement`（SEC 調查／重編財報，治理重定價等級，
+# 最貼近「法規裁定」語意）／`clinical_fda`（多數非藥品業務為 not_applicable，
+# 一旦真的 found 就是監管裁定等級）。`lawsuit_class_action`／
+# `product_recall_warning` 留給 delta 正常欄位路由（見 `dd_delta.py` 的
+# `EVENTS_CATEGORY_FALLBACK`），不自動升級——範圍畫太廣會讓 delta 路徑名存
+# 實亡（任何一條新聞都能把每輪都打回全套）。
+EVENTS_MAJOR_CATEGORIES = ("ma_merger", "sec_investigation_restatement", "clinical_fda")
+
+# (d)：`kill_metrics[]`／`triggers[]` 的 `bear_threshold`／`threshold` 是自由
+# 文字複合門檻（見 TXN_20260906 實檔，如「連 4 季 <60% 減碼；連 4 季 <58%
+# 且 FCF/share 未達→清倉」），沒有統一「metric 標籤 → evidence.numbers 欄位」
+# 映射，無法安全機械比對新證據是否已越線——誤判（漏判或假判）都會讓 delta
+# 路由靜默錯誤，代價比省下的 Fable 成本高。固定回報這個字串，不嘗試 regex
+# 硬猜；未來若要做，需要先把 schema 改成結構化門檻（metric_key/comparator/
+# value 三欄），這是本 WP 的已知範圍缺口，見任務回報。
+TRIGGER_MECHANICAL_CHECK = "not_mechanizable"
+
+# delta 判斷 agent 的輪次與熔斷線——Fable 單輪（Write judgment／Write
+# scenario／Bash 自檢，同 `judge_oneshot_tail.md.tmpl` 精神但輸入小很多，
+# 只帶 prior 判斷物＋delta.json＋受影響軸節錄，不帶整包 evidence／digest／
+# judgment-rules.md）。budget 目前是未經真實案例校準的估計值——見任務回報。
+JUDGE_DELTA_MAX_TURNS = 4
+JUDGE_DELTA_BUDGET_CACHE_READ = 500_000
 
 
 # ---------------------------------------------------------------------------
@@ -586,6 +635,61 @@ def _archive_snapshot(ticker, date):
         "archive_dir": archive_dir,
         "evidence_path": evidence_path,
         "digest_path": digest_path if digest_path.exists() else None,
+        "source_date": source_date,
+        "age_days": max(0, int((target_epoch - source_epoch) // 86400)),
+    }
+
+
+def _prior_judgment_archive(ticker, date):
+    """WP-C：複審 delta 路由用——找不晚於報告日、且**真的跑完判斷段**（存查
+    有 `{stem}.judgment.json`）的最近存查包。與 `_archive_snapshot` 共用同一套
+    「掃 `{ticker}_{date}` 資料夾、取不晚於目標日期最近一份」找法，但：
+
+    1. 額外要求該筆存查有 judgment.json——只有 evidence 沒有判斷物的存查
+       （例如中途失敗的舊 run）不能當複審 prior，否則 `dd_delta.py generate`
+       會在開頭直接報錯缺檔。
+    2. 目錄名須**嚴格**符合 `{ticker}_{8碼日期}`（不像 `_archive_snapshot`
+       只要求前綴是 8 碼數字）——`dd_delta.py` 自己的 `--prior` 目錄名規則
+       （`_PRIOR_DIRNAME_RE`）要求整段字串就是這個形狀，`SNOW_20260904_dryrun`
+       這類測試 fixture 目錄不符合，直接排除，避免呼叫 `dd_delta.py generate`
+       時因目錄名不符而報錯。
+    3. 排除「本輪自己」（同 ticker 同 date）——重跑同一天的既有報告時，若
+       archive 已存在（例如同日二次執行），不得把它當成自己的 prior（見
+       `_do_stage0` 對 replay 自我參照的同款防呆）。
+
+    回傳 `{"archive_dir": Path, "judgment_path": Path, "source_date": str,
+    "age_days": int}` 或 None（找不到）。"""
+    target = _parse_yyyymmdd(date)
+    if target is None or not SRC_ARCHIVE_DIR.exists():
+        return None
+    target_epoch = time.mktime(target)
+    self_name = "{0}_{1}".format(ticker, date)
+    candidates = []
+    prefix = "{0}_".format(ticker)
+    for archive_dir in SRC_ARCHIVE_DIR.glob(prefix + "*"):
+        if not archive_dir.is_dir() or archive_dir.name == self_name:
+            continue
+        suffix = archive_dir.name[len(prefix):]
+        m = re.match(r"^(\d{8})$", suffix)
+        if not m:
+            continue
+        source_date = m.group(1)
+        source_date_struct = _parse_yyyymmdd(source_date)
+        if source_date_struct is None:
+            continue
+        source_epoch = time.mktime(source_date_struct)
+        if source_epoch > target_epoch:
+            continue
+        judgment_path = archive_dir / "{0}.judgment.json".format(archive_dir.name)
+        if not judgment_path.exists():
+            continue
+        candidates.append((source_epoch, archive_dir, judgment_path, source_date))
+    if not candidates:
+        return None
+    source_epoch, archive_dir, judgment_path, source_date = max(candidates, key=lambda x: x[0])
+    return {
+        "archive_dir": archive_dir,
+        "judgment_path": judgment_path,
         "source_date": source_date,
         "age_days": max(0, int((target_epoch - source_epoch) // 86400)),
     }
@@ -2067,7 +2171,343 @@ def _repair_broken_judge_files(run_dir, ticker, date, judgment_model, agents_dir
     return {"files": files_result, "ok": ok, "agent_usage": agent_usage}
 
 
-def _do_judge(ticker, date, judgment_model, replay_dir, accept_over_budget, manifest):
+# ---------------------------------------------------------------------------
+# WP-C（2026-09-10）：複審 delta 判斷——路由決定＋delta 判斷 spawn＋零 Fable
+# 沿用。三個出口共用同一顆「判斷級🔴一律走 opus 跨模型冷讀」的下游閘
+# （`_do_gate` 不因判斷是 full／delta／reuse 產出而改行為，見任務點 3）。
+# ---------------------------------------------------------------------------
+
+def _judge_delta_route(ticker, date, run_dir, no_delta):
+    """回傳本輪判斷要走 `full`／`delta`／`reuse`，附帶決策理由與（若算過）
+    delta.json 路徑：`{"mode", "reasons", "delta_path", "prior_archive_dir",
+    "prior_date"}`。任何一步找不到東西或子行程失敗都保守回退 `full`（既有
+    行為的超集，不會因為這條新路由讓判斷「漏做」，只會讓它「多做」）。"""
+    if no_delta:
+        return {"mode": "full", "reasons": ["cli --no-delta"], "delta_path": None}
+
+    prior = _prior_judgment_archive(ticker, date)
+    if not prior:
+        return {"mode": "full", "reasons": ["no_prior_judgment_archive"], "delta_path": None}
+
+    evidence_path = run_dir / "evidence.json"
+    if not evidence_path.exists():
+        return {"mode": "full", "reasons": ["evidence_missing_for_delta"], "delta_path": None}
+
+    delta_path = run_dir / "delta.json"
+    py = _pick_python()
+    cmd = [py, str(SCRIPTS_DIR / "dd_delta.py"), ticker, date,
+           "--prior", str(prior["archive_dir"]), "--evidence", str(evidence_path),
+           "--out", str(delta_path)]
+    digest_path = run_dir / "digest.json"
+    if digest_path.exists():
+        cmd += ["--digest", str(digest_path)]
+    r = subprocess.run(cmd, capture_output=True, text=True)
+    if r.returncode != 0:
+        return {"mode": "full",
+                "reasons": ["dd_delta_generate_failed: {0}".format((r.stdout + r.stderr).strip()[-500:])],
+                "delta_path": None}
+
+    delta = _load_json_or(delta_path, None)
+    if delta is None:
+        return {"mode": "full", "reasons": ["delta_json_unreadable"], "delta_path": str(delta_path)}
+
+    base = {"delta_path": str(delta_path), "prior_archive_dir": str(prior["archive_dir"]),
+            "prior_date": prior["source_date"]}
+
+    # (a)：dd_delta.py 自己算的 full_rewrite_required（price_at_dd >40%／prior
+    # >180 天／archetype_hint 與 prior 判斷 archetype 不同）——(c) 的 180 天
+    # 門檻已內含在這裡，不另外重算一次年限。
+    full_req = delta.get("full_rewrite_required") or {}
+    if full_req.get("required"):
+        reasons = ["full_rewrite_required: {0}".format(x) for x in (full_req.get("reasons") or [])]
+        return dict(base, mode="full", reasons=reasons or ["full_rewrite_required"])
+
+    # (b)：events 五類裡的重大類（見 EVENTS_MAJOR_CATEGORIES 常數註解）出現
+    # 新 finding。
+    events_changed = delta.get("events_changed") or {}
+    major_hits = sorted(
+        cat for cat in events_changed
+        if cat in EVENTS_MAJOR_CATEGORIES and (events_changed.get(cat) or {}).get("new_findings")
+    )
+    if major_hits:
+        return dict(base, mode="full",
+                    reasons=["events_major_category_changed: {0}".format(", ".join(major_hits))])
+
+    # (f)：<45 天且三塊皆空 → 不進 Fable，直接沿用 prior。
+    no_change = (
+        not delta.get("numbers_changed")
+        and not delta.get("coverage_changed")
+        and not delta.get("events_changed")
+    )
+    if no_change and prior["age_days"] < DELTA_NOCHANGE_MAX_AGE_DAYS:
+        return dict(base, mode="reuse",
+                    reasons=["no_material_change age_days={0}<{1}".format(
+                        prior["age_days"], DELTA_NOCHANGE_MAX_AGE_DAYS)])
+
+    return dict(base, mode="delta", reasons=["delta_mode age_days={0}".format(prior["age_days"])])
+
+
+def _delta_has_new_quarter(prior_evidence, new_evidence):
+    """WP-C：判斷本輪 evidence 的最新一季逐字稿是否與 prior 不同——沿用
+    `dd_bundle.py::_transcript_section` 的同一條規則（`recent_four_quarters`
+    依日期由舊到新，`[-1]` 是最新那篇）。只比檔名，不比內容。"""
+    def _latest(ev):
+        rec = ((ev or {}).get("transcripts") or {}).get("selected") or {}
+        files = rec.get("recent_four_quarters") or []
+        return files[-1] if files else None
+    new_latest = _latest(new_evidence)
+    return bool(new_latest) and new_latest != _latest(prior_evidence)
+
+
+def _delta_evidence_excerpt(evidence, delta):
+    """WP-C：只把 delta.json 標為『有變動』的 evidence 節錄接進 judge_delta
+    bundle——不是整份 evidence.json，也不只是新增的 finding。`coverage_changed`／
+    `events_changed` 的軸／類別鍵直接對回 `evidence.coverage[axis]`／
+    `evidence.events[category]` **整段現況**（不只 delta 裡的 `new_findings`），
+    讓 Fable 看得到該軸完整現況才判斷得出裁決；`numbers_changed` 的路徑第二段
+    是 `numbers.<subkey>`，同樣對回整個子鍵現況。沒被 delta 點名的軸／子鍵
+    視為維持 prior 認定，不附。"""
+    lines = []
+    numbers_subkeys = sorted({
+        (rec.get("path") or "").split(".")[1]
+        for rec in (delta.get("numbers_changed") or [])
+        if len((rec.get("path") or "").split(".")) > 1
+    })
+    if numbers_subkeys:
+        excerpt = {k: (evidence.get("numbers") or {}).get(k) for k in numbers_subkeys}
+        lines.append("### numbers（僅列有變動的子鍵：{0}）\n\n```json\n{1}\n```".format(
+            ", ".join(numbers_subkeys), json.dumps(excerpt, ensure_ascii=False, indent=2)))
+    cov_axes = sorted((delta.get("coverage_changed") or {}).keys())
+    if cov_axes:
+        excerpt = {a: (evidence.get("coverage") or {}).get(a) for a in cov_axes}
+        lines.append("### coverage（僅列有變動的軸，含完整現況非只新增 finding：{0}）\n\n```json\n{1}\n```".format(
+            ", ".join(cov_axes), json.dumps(excerpt, ensure_ascii=False, indent=2)))
+    ev_cats = sorted((delta.get("events_changed") or {}).keys())
+    if ev_cats:
+        excerpt = {c: (evidence.get("events") or {}).get(c) for c in ev_cats}
+        lines.append("### events（僅列有變動的類別，含完整現況非只新增 finding：{0}）\n\n```json\n{1}\n```".format(
+            ", ".join(ev_cats), json.dumps(excerpt, ensure_ascii=False, indent=2)))
+    if not lines:
+        lines.append("（delta.json 三塊皆無變動——理論上不會走到 delta 分支，見 `_judge_delta_route` 的 reuse 出口）")
+    return "\n\n".join(lines)
+
+
+def _judge_delta_bundle_text(prior_judgment_text, prior_scenario_text, delta, evidence_excerpt, transcript_section):
+    """WP-C：delta 判斷 bundle——比照 `judge.md.tmpl` 的 bundle-after-separator
+    慣例（見 `_write_inline_prompt`），大段原文（可能含大括號）一律走這裡，
+    不經 `.format_map`。"""
+    parts = [
+        "## prior judgment.json 全文\n\n```json\n{0}\n```".format(
+            _compact_json_text(prior_judgment_text)),
+        "## prior scenario.json 全文（`dd_scenario.py` 輸入格式；delta 沒有涉及"
+        "估值輸入時原樣照抄這份）\n\n```json\n{0}\n```".format(
+            _compact_json_text(prior_scenario_text) if prior_scenario_text else "null"),
+        "## delta.json 全文\n\n```json\n{0}\n```".format(
+            json.dumps(delta, ensure_ascii=False, separators=(",", ":"))),
+        "## evidence 節錄（僅列有變動的軸／子鍵）\n\n{0}".format(evidence_excerpt),
+        "## 最新一季逐字稿\n\n{0}".format(transcript_section),
+    ]
+    return "\n\n---\n\n".join(parts) + "\n"
+
+
+def _do_judge_delta(ticker, date, judgment_model, accept_over_budget, manifest, stage, route):
+    """WP-C：Fable 單輪只改 `delta.judgment_fields_to_review` 涉及欄位。輸出
+    經 `judge check`＋`dd_delta.py check` 雙重驗算；任一 FAIL、或裁決相對
+    prior 翻面，本輪 delta 判斷作廢（保留在 `judgment_delta_rejected.json`），
+    自動升級全套（呼叫 `_do_judge_full`，延續同一個 `stage` 物件累計成本，
+    不歸零重算）。"""
+    run_dir = _run_dir(ticker, date)
+    manifest_path = run_dir / "manifest.json"
+    agents_dir = run_dir / "agents"
+    agents_dir.mkdir(parents=True, exist_ok=True)
+
+    prior_archive_dir = Path(route["prior_archive_dir"])
+    prior_stem = prior_archive_dir.name
+    prior_judgment_path = prior_archive_dir / "{0}.judgment.json".format(prior_stem)
+    prior_evidence_path = prior_archive_dir / "{0}.evidence.json".format(prior_stem)
+    prior_scenario_path = prior_archive_dir / "{0}.scenario.json".format(prior_stem)
+    delta_path = Path(route["delta_path"])
+
+    evidence = _load_json_or(run_dir / "evidence.json", {})
+    prior_evidence = _load_json_or(prior_evidence_path, {})
+    delta = _load_json_or(delta_path, {})
+    prior_judgment_text = prior_judgment_path.read_text(encoding="utf-8")
+    prior_judgment = json.loads(prior_judgment_text)
+    prior_scenario_text = prior_scenario_path.read_text(encoding="utf-8") if prior_scenario_path.exists() else None
+
+    transcript_section = (
+        dd_bundle._transcript_section(evidence, None)
+        if _delta_has_new_quarter(prior_evidence, evidence)
+        else "（delta 判定本輪最新一季與 prior 相同，沿用 prior 既有親讀結論，不重附全文）"
+    )
+    evidence_excerpt = _delta_evidence_excerpt(evidence, delta)
+
+    bundle_text = _judge_delta_bundle_text(
+        prior_judgment_text, prior_scenario_text, delta, evidence_excerpt, transcript_section)
+    bundle_path = run_dir / "bundles" / "judge_delta.md"
+    bundle_path.parent.mkdir(parents=True, exist_ok=True)
+    bundle_path.write_text(bundle_text, encoding="utf-8")
+
+    judgment_path = run_dir / "judgment.json"
+    scenario_path = run_dir / "scenario.json"
+    prompt_path = run_dir / "prompts" / "b1_judge_delta.md"
+    review_fields = delta.get("judgment_fields_to_review") or []
+    prior_date_display = (prior_judgment.get("meta") or {}).get("date") or route.get("prior_date")
+    mapping = {
+        "ticker": ticker, "date": date, "prior_date": prior_date_display,
+        "judgment_path": str(judgment_path), "scenario_path": str(scenario_path),
+        "max_turns": str(JUDGE_DELTA_MAX_TURNS),
+        "review_fields_block": "\n".join("- `{0}`".format(p) for p in review_fields)
+            or "（無——理論上不會走到這裡，delta_fields 至少恆含 `contradictions`）",
+        "check_cmd": _judge_syntax_check_cmd(str(judgment_path), str(scenario_path)),
+    }
+    prompt_path.write_text(
+        _render_format_template(PROMPTS_TMPL_DIR / "judge_delta.md.tmpl", mapping), encoding="utf-8")
+    inline_prompt_path = _write_inline_prompt(prompt_path, bundle_path)
+
+    t0 = time.time()
+    r = _spawn_short(inline_prompt_path, judgment_model, agents_dir / "judge_delta_1.json",
+                      run_dir, JUDGE_DELTA_BUDGET_CACHE_READ, JUDGE_DELTA_MAX_TURNS)
+    stage["agent_usage"].append(r)
+    _atomic_write_json(manifest_path, manifest)
+
+    if r.get("quota_exhausted"):
+        stage["state"] = "FAIL"
+        stage["ended"] = _now()
+        stage["note"] = "delta：訂閱額度耗盡"
+        manifest["stages"]["judged"] = stage
+        manifest["state"] = "judged_fail"
+        _atomic_write_json(manifest_path, manifest)
+        _print_step_status("judged", "delta quota_exhausted", "validate PASS", "FAIL")
+        _print_resume_hint(ticker, date, "judged")
+        return 1
+
+    ready = _short_outputs_ready(run_dir, t0, r.get("result_text"))
+    if not ready:
+        stage["judge_route_reasons"] = list(stage.get("judge_route_reasons") or []) + ["delta_no_output_escalate_full"]
+        stage["delta_mode"] = "full"
+        print("[judged] delta 判斷未寫出兩檔，升級全套")
+        return _do_judge_full(ticker, date, judgment_model, None, accept_over_budget, manifest, stage)
+
+    _, normalize_errors = _normalize_judge_outputs(run_dir)
+    if normalize_errors:
+        stage["normalize_error"] = normalize_errors
+        repair = _repair_broken_judge_files(
+            run_dir, ticker, date, judgment_model, agents_dir,
+            JUDGE_DELTA_BUDGET_CACHE_READ, normalize_errors,
+        )
+        stage["json_repair"] = repair
+        stage["agent_usage"].extend(repair["agent_usage"])
+        if not repair["ok"]:
+            stage["judge_route_reasons"] = list(stage.get("judge_route_reasons") or []) + ["delta_json_unrepairable_escalate_full"]
+            stage["delta_mode"] = "full"
+            print("[judged] delta 判斷 JSON 修復失敗，升級全套")
+            return _do_judge_full(ticker, date, judgment_model, None, accept_over_budget, manifest, stage)
+        _, normalize_errors = _normalize_judge_outputs(run_dir)
+        stage["normalize_error"] = normalize_errors
+
+    # ---- 雙重驗算：judge check（一般機械驗算）＋ dd_delta.py check（delta 專屬：
+    # 改動範圍是否越界、DRIFT_WATCH 漂移是否都有歸因）----
+    ok, report = _judge_check(ticker, date)
+    delta_ok, delta_report = True, ""
+    if ok:
+        py = _pick_python()
+        rc_check = subprocess.run(
+            [py, str(SCRIPTS_DIR / "dd_delta.py"), "check", str(delta_path),
+             "--judgment", str(judgment_path), "--prior-judgment", str(prior_judgment_path)],
+            capture_output=True, text=True,
+        )
+        delta_ok = (rc_check.returncode == 0)
+        delta_report = (rc_check.stdout + rc_check.stderr).strip()
+        stage["dd_delta_check"] = {"ok": delta_ok, "tail": delta_report[-4000:]}
+
+    prior_verdict = (prior_judgment.get("decision_out") or {}).get("verdict")
+    new_verdict = _read_decision_verdict(run_dir) if (ok and delta_ok) else None
+    verdict_flipped = bool(ok and delta_ok and prior_verdict and new_verdict and new_verdict != prior_verdict)
+
+    if (not ok) or (not delta_ok) or verdict_flipped:
+        reject_path = run_dir / "judgment_delta_rejected.json"
+        if judgment_path.exists():
+            reject_path.write_text(judgment_path.read_text(encoding="utf-8"), encoding="utf-8")
+        if not ok:
+            reason = "judge_check_fail"
+        elif not delta_ok:
+            reason = "dd_delta_check_fail"
+        else:
+            reason = "verdict_flip prior={0} new={1}".format(prior_verdict, new_verdict)
+        stage["delta_rejected"] = {
+            "reason": reason, "rejected_path": str(reject_path),
+            "judge_check_tail": report[-2000:], "dd_delta_check_tail": delta_report[-2000:],
+        }
+        stage["judge_route_reasons"] = list(stage.get("judge_route_reasons") or []) + ["delta_rejected: {0}".format(reason)]
+        stage["delta_mode"] = "full"
+        manifest["stages"]["judged"] = stage
+        _atomic_write_json(manifest_path, manifest)
+        print("[judged] delta 判斷作廢（{0}），升級全套".format(reason))
+        return _do_judge_full(ticker, date, judgment_model, None, accept_over_budget, manifest, stage)
+
+    # delta 判斷通過（judge check PASS、dd_delta check PASS、裁決未翻面）——
+    # 補 meta 兩欄後直接收尾，不重跑 judge check（內容除 meta 外未再變動）。
+    judgment = _load_json(judgment_path)
+    judgment.setdefault("meta", {})["judge_mode"] = "delta"
+    judgment["meta"]["delta_of"] = prior_stem
+    judgment_path.write_text(json.dumps(judgment, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    return _judge_finalize_after_check(
+        ticker, date, judgment_model, None, accept_over_budget, manifest, stage,
+        agents_dir, True, report, fix_suffix="delta", fix_mode="short",
+    )
+
+
+def _judge_reuse_prior(ticker, date, judgment_model, accept_over_budget, manifest, stage, route):
+    """WP-C (f)：<45 天且 delta 三塊皆無變動——不進 Fable，直接複製 prior 判斷物
+    當本輪判斷（只改 `meta.date`、補 `meta.judge_mode`/`meta.delta_of`），跑
+    一次 `judge check` 確認在新日期下仍自洽（`tables/`／`scenario_meta.json`
+    也要在本輪 run_dir 重新產生，不能沿用 prior 那份路徑已失效的檔）。prior
+    存查缺 `scenario.json`（理論上不會，判斷段的必要輸出）時保守降級走
+    delta 模式，不強行沿用半殘的存查。"""
+    run_dir = _run_dir(ticker, date)
+    (run_dir / "agents").mkdir(parents=True, exist_ok=True)
+    (run_dir / "prompts").mkdir(parents=True, exist_ok=True)
+    prior_archive_dir = Path(route["prior_archive_dir"])
+    prior_stem = prior_archive_dir.name
+    prior_judgment_path = prior_archive_dir / "{0}.judgment.json".format(prior_stem)
+    prior_scenario_path = prior_archive_dir / "{0}.scenario.json".format(prior_stem)
+
+    if not prior_scenario_path.exists():
+        stage["judge_route_reasons"] = list(stage.get("judge_route_reasons") or []) + [
+            "reuse_missing_prior_scenario_fallback_delta"]
+        stage["delta_mode"] = "delta"
+        print("[judged] reuse：prior 存查缺 scenario.json，回退 delta 模式")
+        return _do_judge_delta(ticker, date, judgment_model, accept_over_budget, manifest, stage, route)
+
+    judgment = _load_json(prior_judgment_path)
+    judgment.setdefault("meta", {})
+    judgment["meta"]["date"] = "{0}-{1}-{2}".format(date[0:4], date[4:6], date[6:8])
+    judgment["meta"]["judge_mode"] = "delta"
+    judgment["meta"]["delta_of"] = prior_stem
+    (run_dir / "judgment.json").write_text(
+        json.dumps(judgment, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    scenario = _load_json(prior_scenario_path)
+    scenario["date"] = judgment["meta"]["date"]
+    (run_dir / "scenario.json").write_text(
+        json.dumps(scenario, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    ok, report = _judge_check(ticker, date)
+    return _judge_finalize_after_check(
+        ticker, date, judgment_model, None, accept_over_budget, manifest, stage,
+        run_dir / "agents", ok, report, fix_suffix="reuse", fix_mode="short",
+    )
+
+
+def _do_judge(ticker, date, judgment_model, replay_dir, accept_over_budget, manifest, no_delta=False):
+    """WP-C（2026-09-10）：判斷段總入口。先建立/接續 `judged` stage，再問一次
+    `_judge_delta_route` 決定本輪要 `full`（既有整份判斷流程，改名
+    `_do_judge_full` 承接，行為完全不變）、`delta`（`_do_judge_delta`：Fable
+    單輪只補被點名欄位）還是 `reuse`（`_judge_reuse_prior`：<45 天且零實質
+    變動，不進 Fable）。`replay_dir` 一律走 full（回溯重放的既有語意不變、
+    也沒有「prior 存查」這個概念可比）。"""
     run_dir = _run_dir(ticker, date)
     manifest_path = run_dir / "manifest.json"
     stage = _fresh_stage_preserving_prior(manifest, "judged")
@@ -2075,6 +2515,35 @@ def _do_judge(ticker, date, judgment_model, replay_dir, accept_over_budget, mani
     manifest["judgment_model"] = judgment_model
     manifest["state"] = "judged_running"
     _atomic_write_json(manifest_path, manifest)
+
+    route = {"mode": "full", "reasons": ["replay_from"] if replay_dir else ["no_prior_judgment_archive"],
+             "delta_path": None}
+    if not replay_dir:
+        route = _judge_delta_route(ticker, date, run_dir, no_delta)
+    stage["delta_mode"] = route["mode"]
+    stage["judge_route_reasons"] = route["reasons"]
+    stage["trigger_check"] = TRIGGER_MECHANICAL_CHECK  # (d)：見常數區塊註解，恆定回報，不影響路由
+    if route.get("delta_path"):
+        stage["delta_path"] = route["delta_path"]
+    manifest["stages"]["judged"] = stage
+    _atomic_write_json(manifest_path, manifest)
+
+    if route["mode"] == "reuse":
+        return _judge_reuse_prior(ticker, date, judgment_model, accept_over_budget, manifest, stage, route)
+    if route["mode"] == "delta":
+        return _do_judge_delta(ticker, date, judgment_model, accept_over_budget, manifest, stage, route)
+
+    return _do_judge_full(ticker, date, judgment_model, replay_dir, accept_over_budget, manifest, stage)
+
+
+def _do_judge_full(ticker, date, judgment_model, replay_dir, accept_over_budget, manifest, stage):
+    """WP-C 抽出：v17 既有整份判斷流程（bundle → judge.md.tmpl → spawn →
+    judge check → 修正輪），原本是 `_do_judge` 本體，行為完全不變——只是改成
+    接受已建好的 `stage` 物件，讓 `_do_judge`（一般全套路徑）與
+    `_do_judge_delta`（delta 判斷作廢後升級全套）共用同一支函式與同一個
+    `stage`（累計成本不因升級而歸零）。"""
+    run_dir = _run_dir(ticker, date)
+    manifest_path = run_dir / "manifest.json"
 
     py = _pick_python()
     bundle_path = run_dir / "bundles" / "judge.md"
@@ -4354,6 +4823,7 @@ def cmd_run(args):
     global _JUDGE_MODE_OVERRIDE, _GATE_PATCH_MODE_OVERRIDE
     _JUDGE_MODE_OVERRIDE = getattr(args, "judge_mode", None)
     _GATE_PATCH_MODE_OVERRIDE = getattr(args, "gate_patch_mode", None)  # 2026-09-06
+    no_delta = getattr(args, "no_delta", False)  # WP-C（2026-09-10）：強制整份重寫，不問 delta 路由
 
     start_idx = 0
     if args.resume:
@@ -4395,7 +4865,8 @@ def cmd_run(args):
             if resuming_this_stage:
                 rc = _resume_judge_stage(ticker, date, judgment_model, replay_dir, args.accept_over_budget, manifest)
             else:
-                rc = _do_judge(ticker, date, judgment_model, replay_dir, args.accept_over_budget, manifest)
+                rc = _do_judge(ticker, date, judgment_model, replay_dir, args.accept_over_budget, manifest,
+                                no_delta=no_delta)
         elif stage_name == "gated":
             if resuming_this_stage:
                 rc = _resume_gate_stage(ticker, date, judgment_model, replay_dir, args.accept_over_budget, manifest)
@@ -4854,6 +5325,9 @@ def build_parser():
                     help="只略過本次開工前的 pending 補同步；不清除 pending")  # 2026-09-07
     rn.add_argument("--accept-mismatch", action="store_true",
                     help="僅持有人明確放行時使用；三方原值會寫入 manifest")  # 2026-09-07
+    rn.add_argument("--no-delta", action="store_true",
+                     help="WP-C：判斷段強制整份重寫（有 prior 存查時預設改走複審 delta 路由；"
+                          "見 _judge_delta_route）")
     rn.set_defaults(func=cmd_run)
 
     s0 = sub.add_parser("stage0")
@@ -4890,6 +5364,8 @@ def build_parser():
     jg.add_argument("--judge-mode", default=None, choices=["short", "loop"])
     jg.add_argument("--replay-from", default=None, metavar="DIR")
     jg.add_argument("--accept-over-budget", action="store_true")
+    jg.add_argument("--no-delta", action="store_true",
+                     help="WP-C：強制整份重寫，不問複審 delta 路由（即使有 prior 存查）")
 
     def _cmd_judge(args):
         ticker = args.ticker.strip().upper()
@@ -4902,7 +5378,8 @@ def build_parser():
         model = args.judgment_model or manifest.get("judgment_model") or DEFAULT_JUDGMENT_MODEL
         global _JUDGE_MODE_OVERRIDE
         _JUDGE_MODE_OVERRIDE = args.judge_mode
-        return _do_judge(ticker, date, model, replay_dir, args.accept_over_budget, manifest)
+        return _do_judge(ticker, date, model, replay_dir, args.accept_over_budget, manifest,
+                          no_delta=args.no_delta)
 
     jg.set_defaults(func=_cmd_judge)
 
