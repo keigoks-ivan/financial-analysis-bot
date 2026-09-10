@@ -63,6 +63,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from build_stages import STAGE_NAMES  # noqa: E402 — 階段代碼→白話標籤，不在本檔重複定義
+from mail_html import esc, frame, note, section, table, tiles  # noqa: E402 — §5.7 共用 email 版型
 
 ROOT = Path(__file__).resolve().parent.parent
 ARENA_JSON = ROOT / "docs" / "engine" / "arena.json"
@@ -71,6 +72,7 @@ STAGES_LATEST_JSON = ROOT / "docs" / "stages" / "data" / "latest.json"
 UNIVERSE_BOARD_JSON = ROOT / "docs" / "engine" / "universe_board.json"
 STATE_JSON = ROOT / "docs" / "stages" / "data" / "seat_stage_state.json"
 ALERT_TXT = ROOT / "docs" / "stages" / "data" / "seat_stage_alert.txt"
+MAIL_HTML = ROOT / "cockpit_roster_mail.html"  # 同一事件的美觀 HTML 版（§5.7）；純本地 workspace 產物，gitignored
 COCKPIT_URL = "https://research.investmquest.com/cockpit/"
 
 S0 = "S0"
@@ -191,16 +193,23 @@ def compute() -> dict:
 
     primary_events: list[str] = []
     secondary_events: list[str] = []
+    added_events: list[str] = []
+    removed_events: list[str] = []
+    switched_events: list[str] = []
     new_state_seats: dict[str, dict] = {}
     new_state_quality: dict[str, bool | None] = {}
 
     if not first_run:
         for ticker in sorted(current_tickers - prev_tickers):
             info = seats[ticker]
-            primary_events.append(_added_line(ticker, info["role"], lamp_map.get(ticker)))
+            line = _added_line(ticker, info["role"], lamp_map.get(ticker))
+            primary_events.append(line)
+            added_events.append(line)
         for ticker in sorted(prev_tickers - current_tickers):
             prev_section, prev_stage = _split_prev(prev_seats_raw.get(ticker))
-            primary_events.append(_removed_line(ticker, prev_section, prev_stage))
+            line = _removed_line(ticker, prev_section, prev_stage)
+            primary_events.append(line)
+            removed_events.append(line)
 
     for ticker in sorted(seats):
         info = seats[ticker]
@@ -224,7 +233,9 @@ def compute() -> dict:
         # 換區：兩邊都在、上次 section 已知（v2 state）、且變了
         if (not first_run and ticker in prev_tickers and prev_section is not None
                 and prev_section != info["role"]):
-            primary_events.append(_switch_line(ticker, prev_section, info["role"]))
+            line = _switch_line(ticker, prev_section, info["role"])
+            primary_events.append(line)
+            switched_events.append(line)
 
         # 品質閘翻轉（見檔頭說明）——board 缺該 ticker（today_q 為 None）：
         # 沿用舊值不比較不觸發，跟階段缺資料同一套處理方式。
@@ -249,9 +260,13 @@ def compute() -> dict:
     return {
         "seats": seats,
         "as_of": as_of,
+        "lamp_map": lamp_map,
         "first_run": first_run,
         "primary_events": primary_events,
         "secondary_events": secondary_events,
+        "added_events": added_events,
+        "removed_events": removed_events,
+        "switched_events": switched_events,
         "new_state": new_state,
     }
 
@@ -292,6 +307,69 @@ def build_alert_body(as_of: str, primary_events: list[str], secondary_events: li
     return "\n".join(full) + "\n"
 
 
+def _mail_list(lines: list[str]) -> str:
+    """純文字事件行的 HTML bullet 版（呼叫端已 esc()）——不用 one_minute()：
+    後者少於 2 條就不渲染，這裡單一事件也要完整顯示（tiles 的計數要對得上）。"""
+    if not lines:
+        return "（無）"
+    lis = "".join(f'<li style="margin:0 0 6px;">{line}</li>' for line in lines)
+    return (f'<ul style="margin:0;padding-left:18px;font-size:13.5px;line-height:1.65;'
+            f'color:#333333;">{lis}</ul>')
+
+
+def build_mail_html(as_of: str, seats: dict, lamp_map: dict,
+                     primary_events: list[str], secondary_events: list[str],
+                     added_n: int, removed_n: int, switched_n: int,
+                     *, is_test: bool = False) -> str:
+    """組 cockpit_roster_mail.html（§5.7 版型，見 scripts/mail_html.py）。
+
+    is_test：--test-email 專用——沒有前次 state 可比對，KPI 磚改顯示今天三個
+    分組各自的檔數（而非新增/移除/換區），並在信末加一行測試信提示。
+    """
+    if is_test:
+        tile_items = [(role, str(sum(1 for i in seats.values() if i["role"] == role)), None)
+                      for role, _key in ROLE_LABELS]
+    else:
+        tile_items = [("新增", str(added_n), None), ("移除", str(removed_n), None),
+                      ("換區", str(switched_n), None)]
+
+    body = tiles(tile_items)
+    body += section("MEMBERSHIP EVENTS", "事件",
+                    _mail_list([esc(line) for line in primary_events]))
+    if secondary_events:
+        body += section("STAGE & QUALITY", "階段與品質變化",
+                        _mail_list([esc(line) for line in secondary_events]))
+
+    roster_rows = []
+    for role, _key in ROLE_LABELS:
+        tickers = sorted(t for t, i in seats.items() if i["role"] == role)
+        if tickers:
+            parts = []
+            for t in tickers:
+                stage = lamp_map.get(t)
+                label = f"{stage} {STAGE_NAMES.get(stage, '')}".rstrip() if stage else "—"
+                parts.append(f"{esc(t)}（{esc(label)}）")
+            roster_html = "、".join(parts)
+        else:
+            roster_html = "（無）"
+        roster_rows.append([esc(role), str(len(tickers)), roster_html])
+    body += section("CURRENT ROSTER", "目前名單",
+                    table(["區塊", "檔數", "名單（含階段）"], roster_rows, numeric_cols={1}))
+
+    if is_test:
+        body += note("這是測試信：名單沒有變動；正式信只在名單新增／移除／換區時寄出。")
+
+    return frame(
+        title="選股主控台名單變化",
+        date=as_of,
+        body_html=body,
+        button_label="前往選股主控台 →",
+        button_url=COCKPIT_URL,
+        accent="navy",
+        disclaimer="本信為機械化名單異動通知器，非投資判斷或買賣建議；階段與品質變化僅供參考，詳見頁面。",
+    )
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dry-run", action="store_true",
@@ -309,7 +387,9 @@ def main(argv=None) -> int:
         body = build_test_alert_body(as_of, seats, lamp_map)
         ALERT_TXT.parent.mkdir(parents=True, exist_ok=True)
         ALERT_TXT.write_text(body, encoding="utf-8")
-        print(f"seat_stage_alerts: --test-email 測試信已寫入 {ALERT_TXT}（state 檔未動）")
+        html = build_mail_html(as_of, seats, lamp_map, [], [], 0, 0, 0, is_test=True)
+        MAIL_HTML.write_text(html, encoding="utf-8")
+        print(f"seat_stage_alerts: --test-email 測試信已寫入 {ALERT_TXT} 與 {MAIL_HTML}（state 檔未動）")
         return 0
 
     result = compute()
@@ -341,11 +421,17 @@ def main(argv=None) -> int:
 
     if body:
         ALERT_TXT.write_text(body, encoding="utf-8")
+        html = build_mail_html(as_of, seats, result["lamp_map"], primary_events, secondary_events,
+                                len(result["added_events"]), len(result["removed_events"]),
+                                len(result["switched_events"]))
+        MAIL_HTML.write_text(html, encoding="utf-8")
         print(f"seat_stage_alerts: {len(primary_events)} 則名單事件、"
-              f"{len(secondary_events)} 則階段/品質事件（as_of {as_of}）→ {ALERT_TXT}")
+              f"{len(secondary_events)} 則階段/品質事件（as_of {as_of}）→ {ALERT_TXT}、{MAIL_HTML}")
     else:
         if ALERT_TXT.exists():
             ALERT_TXT.unlink()
+        if MAIL_HTML.exists():
+            MAIL_HTML.unlink()
         print(f"seat_stage_alerts: 無事件（as_of {as_of}）")
     return 0
 

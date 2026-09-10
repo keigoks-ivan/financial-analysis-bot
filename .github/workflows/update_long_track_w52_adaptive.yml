@@ -49,7 +49,15 @@ jobs:
         # 月底再平衡提醒，date-keyed state 冪等；任何例外一律 exit 0 不寫檔
         # （build_f70_alert.py 內建 fail-safe）。A 腿（QQQ/SMH）的變化已由上面
         # update_long_track_w52_adaptive.py 的 alert 通知，本步驟只描述 D1X 腿。
-        run: python scripts/build_f70_alert.py
+        # test_email 手動觸發時改跑 --test-email：只抓價寫 f70_mail.html（今天
+        # 實際腿狀態），不比對前次記錄、不寫 state.json——避免測試觸發把真實
+        # last_alert_date 治理狀態弄髒（見 build_f70_alert.py --test-email 說明）。
+        run: |
+          if [ "${{ inputs.test_email }}" = "true" ]; then
+            python scripts/build_f70_alert.py --test-email
+          else
+            python scripts/build_f70_alert.py
+          fi
 
       - name: Run W52 × adaptive cap 1.0 shadow control page
         # cap 1.0 (100%) shadow control page (docs/long-track-w52-adaptive/leverage.html).
@@ -147,6 +155,7 @@ jobs:
           subject: "F70 紙上候選訊號 ${{ steps.f70alert.outputs.changed == 'true' && '' || '(測試信)' }}"
           to: keigoks@gmail.com
           from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
+          html_body: file://f70_mail.html
           body: |
             ${{ steps.f70alert.outputs.changed == 'true' && steps.f70alert.outputs.body || '這是測試信 — F70 email 推播管線正常。目前無可行動變化。' }}
 

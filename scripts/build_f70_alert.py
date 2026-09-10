@@ -62,10 +62,14 @@ from pandas.tseries.offsets import CustomBusinessDay
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import _crossasset_frozen as _d1  # noqa: E402 — D1 訊號單一來源，不在本檔重複實作訊號邏輯
+from mail_html import esc, frame, note, pill, section, table, tiles  # noqa: E402 — §5.7 共用 email 版型
 
 ROOT = HERE.parent
 STATE_JSON = ROOT / "docs" / "long-track" / "f70_signal_state.json"
 ALERT_FILE = ROOT / "lt_f70_alert.txt"
+MAIL_HTML = ROOT / "f70_mail.html"  # 同一事件的美觀 HTML 版（§5.7）；純本地 workspace 產物，gitignored
+F70_PAGE_URL = "https://research.investmquest.com/backtest/f_comfort/"
+SCOREBOARD_URL = "https://research.investmquest.com/long-track/#scoreboard"
 
 D1X_LEGS = ["TLT", "GLD", "DBC"]
 WEIGHT_D1X = 0.30
@@ -120,6 +124,19 @@ def is_last_trading_day_of_month(date_str: str) -> bool:
     return nxt.month != d.month
 
 
+def next_rebalance_date(date_str: str) -> str:
+    """同一套 MONTH-END APPROXIMATION：從 date_str 往後走近似營業日，直到下一步
+    會跨月為止，回傳跨月前那一天——即「今天所在月份」的近似最後交易日（若今天
+    已經是，回傳今天自己）。供 mail HTML 的「下次月底再平衡日」KPI 磚使用。"""
+    cbd = CustomBusinessDay(calendar=USFederalHolidayCalendar())
+    cur = pd.Timestamp(date_str)
+    while True:
+        nxt = cur + cbd
+        if nxt.month != cur.month:
+            return cur.strftime("%Y-%m-%d")
+        cur = nxt
+
+
 def describe_leg_change(t: str, old: dict, new: dict) -> str:
     parts = []
     for key, label in VOTE_FIELDS:
@@ -145,12 +162,14 @@ def load_state() -> dict:
     return {"schema": "f70-signal-v0", "records": {}, "last_alert_date": None}
 
 
-def compute_events(state: dict, leg_states: dict, data_date: str) -> tuple[list, bool]:
-    """回傳 (events, is_first_run)。is_first_run＝records 裡完全沒有可比較的基準
-    （真正第一次執行）——此時永不觸發事件，只播種。同一天重跑（比照主系統台股／
-    美股收盤後各一班 cron）以「今天自己上一次記錄的值」為比較基準：同一交易日
-    兩腿部位正常不會再變，天然得到「無變化」；月底再平衡提醒只在當天第一次產生
-    alert 時發一次，同一天重跑不重複提醒，避免兩班 cron 各寄一封重複信。"""
+def compute_events(state: dict, leg_states: dict, data_date: str) -> tuple[list, bool, bool]:
+    """回傳 (leg_events, month_end, is_first_run)。is_first_run＝records 裡完全沒有可
+    比較的基準（真正第一次執行）——此時永不觸發事件，只播種。同一天重跑（比照主
+    系統台股／美股收盤後各一班 cron）以「今天自己上一次記錄的值」為比較基準：同一
+    交易日兩腿部位正常不會再變，天然得到「無變化」；月底再平衡提醒只在當天第一次
+    產生 alert 時發一次，同一天重跑不重複提醒，避免兩班 cron 各寄一封重複信。
+    leg_events 與 month_end 分開回傳（而非合併成一份 events list）：mail HTML 的
+    「變動腿數」KPI 磚只算腿部位變化，不含月底提醒這一行。"""
     records = state.get("records", {})
     rerun_of_today = data_date in records
     if rerun_of_today:
@@ -160,9 +179,9 @@ def compute_events(state: dict, leg_states: dict, data_date: str) -> tuple[list,
         baseline = records[prior_dates[-1]] if prior_dates else None
 
     if baseline is None:
-        return [], True
+        return [], False, True
 
-    events = []
+    leg_events = []
     for t in D1X_LEGS:
         old = baseline.get(t)
         new = leg_states[t]
@@ -171,12 +190,11 @@ def compute_events(state: dict, leg_states: dict, data_date: str) -> tuple[list,
         old_key = (old["w40"], old["w52"], old["tsmom"], old["gate"], round(old["pos"], 6))
         new_key = (new["w40"], new["w52"], new["tsmom"], new["gate"], round(new["pos"], 6))
         if old_key != new_key:
-            events.append(describe_leg_change(t, old, new))
+            leg_events.append(describe_leg_change(t, old, new))
 
-    if not rerun_of_today and is_last_trading_day_of_month(data_date):
-        events.append("月底再平衡日：把 A：D1X 拉回 70：30。")
+    month_end = (not rerun_of_today) and is_last_trading_day_of_month(data_date)
 
-    return events, False
+    return leg_events, month_end, False
 
 
 def build_alert_text(events: list, data_date: str) -> str:
@@ -197,18 +215,89 @@ def format_leg_table(leg_states: dict) -> str:
     return "\n".join(rows)
 
 
+def _mail_list(lines: list[str]) -> str:
+    """純文字事件行的 HTML bullet 版（呼叫端已 esc()）——不用 one_minute()：
+    後者少於 2 條就不渲染，這裡單一事件也要完整顯示（tiles 的計數要對得上）。"""
+    if not lines:
+        return "（本次無事件）"
+    lis = "".join(f'<li style="margin:0 0 6px;">{line}</li>' for line in lines)
+    return (f'<ul style="margin:0;padding-left:18px;font-size:13.5px;line-height:1.65;'
+            f'color:#333333;">{lis}</ul>')
+
+
+def build_mail_html(leg_states: dict, data_date: str, leg_events: list[str], month_end: bool,
+                     *, is_test: bool = False) -> str:
+    """組 f70_mail.html（§5.7 版型，見 scripts/mail_html.py）。
+
+    is_test：--test-email 專用——不比對前次記錄，只呈現今天三腿的實際狀態，
+    events 一律傳空 list、month_end 一律傳 False（見呼叫端）。
+    """
+    events = list(leg_events)
+    if month_end:
+        events.append("月底再平衡日：把 A：D1X 拉回 70：30。")
+
+    total_risk_pct = sum(leg_states[t]["pos"] for t in D1X_LEGS) * WEIGHT_D1X * LEG_WEIGHT * 100
+    tile_items = [
+        ("D1X 風險部位合計", f"{total_risk_pct:.1f}%", "佔 F70 整體帳戶"),
+        ("變動腿數", str(len(leg_events)), None),
+        ("下次月底再平衡日", next_rebalance_date(data_date), None),
+    ]
+
+    body = tiles(tile_items)
+    body += section("EVENTS", "事件", _mail_list([esc(e) for e in events]))
+
+    headers = ["資產", "W40", "W52", "TSMOM", "Chandelier 閘門", "部位", "佔 F70 帳戶"]
+    rows = []
+    for t in D1X_LEGS:
+        s = leg_states[t]
+        acct_pct = s["pos"] * WEIGHT_D1X * LEG_WEIGHT * 100
+        gate_pill = pill("在場", "green") if s["gate"] else pill("出場", "gray")
+        rows.append([f"<strong>{esc(t)}</strong>", str(s["w40"]), str(s["w52"]), str(s["tsmom"]),
+                    gate_pill, frac_label(s["pos"]), f"{acct_pct:.1f}%"])
+    body += section("D1X LEGS", "D1X 三腿目前狀態",
+                    table(headers, rows, numeric_cols={1, 2, 3, 5, 6}))
+
+    body += note("A 腿（QQQ／SMH）的變化由主系統通知。")
+    body += note("F70 是紙上候選，不是實單。")
+    body += note(f'三腿明細亦見 <a href="{esc(SCOREBOARD_URL)}">長軌記分板</a>。')
+    if is_test:
+        body += note("這是測試信：以下為目前實際腿狀態，非事件比對。")
+
+    return frame(
+        title="F70 紙上候選訊號",
+        date=data_date,
+        body_html=body,
+        button_label="前往 F70 頁面 →",
+        button_url=F70_PAGE_URL,
+        accent="navy",
+        disclaimer="F70 為紙上候選組合（70% 系統 A ＋ 30% D1X），尚非實單，本信為機械化訊號通知，非投資建議。",
+    )
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true",
                          help="只抓價、印出今天的腿狀態與會不會觸發 alert；不寫 state.json、不寫 lt_f70_alert.txt。")
+    parser.add_argument("--test-email", action="store_true",
+                         help="只抓價、寫一份標明「測試信」的 f70_mail.html（今天的實際腿狀態，非事件比對），"
+                              "供手動觸發的測試送信驗證管線；不比對前次記錄、不寫 state.json、不寫 lt_f70_alert.txt。")
     args = parser.parse_args()
 
     leg_states, data_date = compute_leg_states()
     print(f"Data date: {data_date}")
     print(format_leg_table(leg_states))
 
+    if args.test_email:
+        html = build_mail_html(leg_states, data_date, [], False, is_test=True)
+        MAIL_HTML.write_text(html, encoding="utf-8")
+        print(f"build_f70_alert: --test-email 測試 HTML 已寫入 {MAIL_HTML}（state 檔未動）")
+        return
+
     state = load_state()
-    events, is_first_run = compute_events(state, leg_states, data_date)
+    leg_events, month_end, is_first_run = compute_events(state, leg_states, data_date)
+    events = list(leg_events)
+    if month_end:
+        events.append("月底再平衡日：把 A：D1X 拉回 70：30。")
 
     if is_first_run:
         print("First run (no prior recorded date < today): would seed state only, no alert.")
@@ -234,6 +323,10 @@ def main():
         if ALERT_FILE.exists():
             ALERT_FILE.unlink()
         print("No alert file written.")
+
+    html = build_mail_html(leg_states, data_date, leg_events, month_end, is_test=False)
+    MAIL_HTML.write_text(html, encoding="utf-8")
+    print(f"Mail HTML written: {MAIL_HTML}")
 
     STATE_JSON.parent.mkdir(parents=True, exist_ok=True)
     STATE_JSON.write_text(json.dumps(state, indent=2, ensure_ascii=False, sort_keys=True), encoding="utf-8")
