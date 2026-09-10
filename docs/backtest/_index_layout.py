@@ -37,6 +37,12 @@ stays 50 but linked-page count in this block is 49; catchup.html (the
 current version) is the only catchup link, appearing once under 九個系列 and
 once under 主線與假說 (same page, two shelves — not a stray duplicate).
 
+2026-09-10 (later same day) — usa_metro.html ships (B-phase of the usa.html
+case-page rewrite): folder file count is now 51, linked-page count in this
+block is 50 (the 49 above + usa_metro.html; catchup_v1.html is still the
+only deliberate exclusion). "美國（重寫中）" also updated to "美國：負擔重、
+槓桿輕、量凍住" now that the A-phase rewrite is live, not in progress.
+
 Run: python3 _build_index.py   (this module is imported, not run directly)
 """
 from __future__ import annotations
@@ -203,7 +209,8 @@ BLOCKS = [
             ("/backtest/housing_gdp/taiwan.html", "台灣：貴、熱、還沒跌", "研究", False),
             ("/backtest/housing_gdp/malaysia.html", "馬來西亞：變便宜、去槓桿、原地踏步", "研究", False),
             ("/backtest/housing_gdp/japan.html", "日本：崩過、沒回來、租金比偏貴", "研究", False),
-            ("/backtest/housing_gdp/usa.html", "美國（重寫中）", "研究", False),
+            ("/backtest/housing_gdp/usa.html", "美國：負擔重、槓桿輕、量凍住", "研究", False),
+            ("/backtest/housing_gdp/usa_metro.html", "美國都會區：410 個房市", "研究", False),
         ]),
         ("個案・亞太", None, [
             ("/backtest/housing_gdp/australia.html", "澳洲", "研究", False),
