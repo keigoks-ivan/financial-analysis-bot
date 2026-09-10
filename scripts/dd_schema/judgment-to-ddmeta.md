@@ -32,6 +32,8 @@
 
 **`scenario_ref` 的落地形狀（WP1c 判斷）**：草案 §3.2 只寫 `"scenario_ref":"{T}_{D}.scenario.json"`，未定形狀。WP1c 落地為指向 `scripts/dd_scenario.py --meta` 的**輸出**檔（不是它的輸入檔）——即已含 `bull_5y_price`／`bear_5y_price`／`p_bull_pct`／`p_bear_pct`／`upside_5y_pct`／`ev5y_pct`／`irr_base_pct`／`asym_ratio`／`scenario_tree` 的 JSON，這樣 `gen_dd_tables.py` 與 `validate_judgment.py`（重用 `dd_scenario.check_meta()`）都能直接消費，不必重新跑一次情境樹輸入格式的 schema。`gen_dd_tables.py` 也接受 `--scenario-meta FILE` 明示覆蓋（優先於 `scenario_ref`）。
 
+**同源投影欄改「有就用、缺才投影」（v18，2026-09-10）**：`signal`／`val`／`ma`／`verdict`／`pct_5y`／`upside_short_pct`／`upside_mid_pct` 在 `judgment.schema.json` 已降為選填——本表宣告的同源側（`decision_inputs.signal`／`val`／`ma`、`valuation.percentile_5y`／`upside_short_pct`／`upside_mid_pct`；`verdict` 退回 `signal`）就是權威來源，`gen_dd_tables.py` 的 `build_dd_meta()`、`render_appA_table_html()`、`render_appA_section_html()` 在 `appendix_a` 缺值時從該側投影。**判斷 agent 不必再填第二份抄本**；舊檔兩側都有值時取 `appendix_a` 側，同源檢查保證同值，故舊檔渲染結果不變。`fpe_fy2`／`peg_fy2` 不在此列（下段）。
+
 **`fpe_fy2`／`peg_fy2` 口徑待定義（2026-09-07 附註，P2-1 複審）**：本表原寫「`appendix_a.fpe_fy2`＝`valuation.fwd_pe`」「`appendix_a.peg_fy2`＝`valuation.peg`」，但複審實測 18 份 2026-09 存查 judgment 發現 `fpe_fy2` 有 10 份、`peg_fy2` 有 8 份兩側不同值——AVGO 的 reasoning 明確區分 FY26（30.77x／0.51）與 FY27（18.51x／0.31）兩個不同財年。appendix 側與 valuation 側很可能各自鎖定不同財年（FY1 vs FY2，或報告當下 vs 下一財年），**口徑待定義，兩者不得視為同義，不加 equality 檢查**。`scripts/validate_judgment.py::SAME_SOURCE_PAIRS` 因此故意不含這兩欄；日後若要合併需先由持有人拍板財年口徑，而非直接改程式複製其中一側覆蓋另一側。
 
 ## 二、v13 必填 5 欄（決策層）

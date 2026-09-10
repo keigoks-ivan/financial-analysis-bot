@@ -486,3 +486,67 @@ def test_new_format_how_to_lose_summary_does_not_hide_counter_evidence_in_full_p
     assert "獨有證據Alpha" in html_text
     assert "獨有證據Beta" in html_text
     assert "獨有證據Gamma" in html_text
+
+
+# ---------------------------------------------------------------------------
+# v18（2026-09-10 WP-F）：新形狀 fixture 要渲染得出六問、三視角反證與數字表；
+# 舊形狀（沒有 plain.six）維持「五句話」標題與原本的 five 路徑，逐 byte 不變。
+# ---------------------------------------------------------------------------
+
+V18_FIXTURE = Path(__file__).resolve().parent / "fixtures" / "judgment_v18_TXN.json"
+V18_SRC = SRC_DIR / "TXN_20260907"
+
+
+def _render_v18(tmp_path):
+    out = tmp_path / "v18_TXN.html"
+    r = _run_cli([
+        "--judgment", str(V18_FIXTURE),
+        "--scenario-meta", str(V18_SRC / "TXN_20260907.scenario_meta.json"),
+        "--evidence", str(V18_SRC / "TXN_20260907.evidence.json"),
+        "--out", str(out),
+    ])
+    assert r.returncode == 0, r.stderr
+    return out.read_text(encoding="utf-8")
+
+
+def test_v18_six_questions_render_one_paragraph_each(tmp_path):
+    html_text = _render_v18(tmp_path)
+    assert "{{" not in html_text
+    m = re.search(r"六個問題</h2>\s*<div class=\"([^\"]*)\">(.*?)</div>\s*</section>", html_text, re.S)
+    assert m, "六問首段未渲染"
+    assert "fallback" not in m.group(1)
+    body = m.group(2)
+    for _key, label in dd_brief._SIX_ORDER:
+        assert f"<b>{label}</b>" in body, f"六問缺「{label}」"
+    assert body.count("<p>") == 6
+    assert "五句話" not in html_text
+
+
+def test_v18_three_counter_views_render(tmp_path):
+    html_text = _render_v18(tmp_path)
+    for view in dd_brief._COUNTER_VIEWS:
+        assert f"<b>{view}</b>" in html_text, f"反證缺視角「{view}」"
+
+
+def test_v18_numbers_survive_the_slim_shape(tmp_path):
+    """EV／IRR／Max DD／PEG 四個數字：appendix_a 已不再重填 val／pct_5y 等投影
+    欄，這些數字必須仍從權威欄（scenario／premortem／valuation／decision_inputs）
+    渲染得出來，dd-meta 也要一起補回。"""
+    html_text = _render_v18(tmp_path)
+    assert re.search(r"5Y 期望值 EV</div><div class=\"v\">[+\-]\d", html_text)
+    assert re.search(r"Base IRR</div><div class=\"v\">\d", html_text)
+    assert re.search(r"Max DD</div><div class=\"v\">-\d+%", html_text)
+    assert re.search(r"PEG \d", html_text)
+    meta = _extract_dd_meta(html_text)
+    for key in ("signal", "val", "ma", "verdict", "pct_5y", "upside_short_pct",
+                "upside_mid_pct", "moat_score", "dca_role", "max_dd_pct",
+                "ev5y_pct", "irr_base_pct", "peg_fy2"):
+        assert meta.get(key) is not None, f"dd-meta 缺 {key}"
+
+
+def test_old_shape_keeps_five_heading(tmp_path):
+    """沒有 plain.six 的舊檔：標題仍是「五句話」（14 份重渲染 byte-identical 的
+    契約，這裡用單元層再釘一次）。"""
+    j = json.loads((SRC_DIR / "BE_20260905" / "BE_20260905.judgment.json").read_text(encoding="utf-8"))
+    heading, _html, _fb = dd_brief.render_five(j)
+    assert heading == dd_brief.LEAD_HEADING_FIVE

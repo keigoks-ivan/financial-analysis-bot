@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "dd_schema/judgment.schema.json",
   "title": "stock-analyst v17 judgment.json (WP1c draft-07 subset)",
-  "description": "2026-09-10 (WP-D 規則精簡): (1) premortem.blind_spots[] 是反證紀錄的 canonical 居所 (view/evidence/assumption/consequence/ruling/watch)，failure_story/second_failure/trap_analysis 各欄降為選填的引用面；(2) 條件式展開區塊 (industry.tam_table / growth.segments / governance.capital_returns / valuation.peers) 額外接受 {\"expanded\": false, \"reason\": \"...\"} 物件形狀；(3) contradictions[].prior_field 可為欄名陣列並帶 cause，讓多欄共用一個歸因。全部只放寬不收緊，舊形狀仍合法。Interpreted by scripts/validate_judgment.py's lightweight generic validator (supports: type/required/properties/items/enum/pattern/minItems/minLength/maxLength/additionalProperties only -- NOT a full draft-07 implementation). Cross-field rules (H<->R<->triggers mapping, decision_inputs completeness, scenario_ref consistency, date>=1 row) are NOT expressible here and are checked separately in validate_judgment.py. See scripts/dd_schema/judgment-to-ddmeta.md for the dd-meta field derivation table.",
+  "description": "2026-09-10 (v18 基準版, 前身 WP-D/WP-E): (0) required 條目 184->136——固定表格的逐欄子項、與權威欄同源的 appendix_a 投影欄、reasoning 非承重模組改選填；判斷輸入 (decision_inputs 22 欄)、下游直讀欄 (dca_role/max_dd/ev5y_pct/irr_base_pct/peg/percentile_5y/val_light)、四個條件式區塊 key、premortem/contradictions/triggers 契約全部維持必填。plain.six = 六問白話。以下為 WP-D 既有條款: (1) premortem.blind_spots[] 是反證紀錄的 canonical 居所 (view/evidence/assumption/consequence/ruling/watch)，failure_story/second_failure/trap_analysis 各欄降為選填的引用面；(2) 條件式展開區塊 (industry.tam_table / growth.segments / governance.capital_returns / valuation.peers) 額外接受 {\"expanded\": false, \"reason\": \"...\"} 物件形狀；(3) contradictions[].prior_field 可為欄名陣列並帶 cause，讓多欄共用一個歸因。全部只放寬不收緊，舊形狀仍合法。Interpreted by scripts/validate_judgment.py's lightweight generic validator (supports: type/required/properties/items/enum/pattern/minItems/minLength/maxLength/additionalProperties only -- NOT a full draft-07 implementation). Cross-field rules (H<->R<->triggers mapping, decision_inputs completeness, scenario_ref consistency, date>=1 row) are NOT expressible here and are checked separately in validate_judgment.py. See scripts/dd_schema/judgment-to-ddmeta.md for the dd-meta field derivation table.",
   "type": "object",
   "required": [
     "meta", "oneliner", "archetype", "thesis", "industry", "moat", "growth",
@@ -25,7 +25,7 @@
 
     "archetype": {
       "type": "object",
-      "required": ["primary", "secondary", "confidence", "fingerprint"],
+      "required": ["primary"],
       "properties": {
         "primary": {
           "type": ["string", "null"],
@@ -42,7 +42,7 @@
 
     "thesis": {
       "type": "object",
-      "required": ["holding_period", "H", "R", "single_thing"],
+      "required": ["H", "R", "single_thing"],
       "properties": {
         "headline": {"type": ["string", "null"]},
         "holding_period": {
@@ -105,7 +105,7 @@
 
     "industry": {
       "type": "object",
-      "required": ["clock_phase", "sd_verdict_source", "bargaining", "profit_pool_dir", "tam_table"],
+      "required": ["clock_phase", "sd_verdict_source", "tam_table"],
       "properties": {
         "clock_phase": {"type": ["string", "null"], "enum": ["I", "II", "III", "IV", null]},
         "sd_verdict_source": {"type": ["string", "null"]},
@@ -129,8 +129,7 @@
 
     "moat": {
       "type": "object",
-      "required": ["execution", "pricing", "combined", "grade", "score", "trend", "trend_evidence",
-                   "spread_table", "threats", "roic_durability", "competitors"],
+      "required": ["grade", "score", "trend", "trend_evidence", "threats", "roic_durability"],
       "properties": {
         "execution": {"type": ["number", "null"]},
         "pricing": {"type": ["number", "null"]},
@@ -157,8 +156,6 @@
           "minItems": 1,
           "items": {
             "type": "object",
-            "required": ["name", "rev_growth", "gm", "om", "rd_intensity", "fcf_margin",
-                         "net_cash", "strategy_note"],
             "properties": {
               "name": {"type": ["string", "null"]},
               "rev_growth": {"type": ["number", "string", "null"]},
@@ -173,7 +170,7 @@
         },
         "roic_durability": {
           "type": "object",
-          "required": ["quadrant", "checkpoints", "roiic", "reinvest_rate", "endo_ceiling", "formula_note"],
+          "required": ["checkpoints", "roiic", "reinvest_rate", "endo_ceiling"],
           "properties": {
             "quadrant": {"type": ["string", "null"]},
             "checkpoints": {"type": "array", "minItems": 4, "items": {"type": "object"}},
@@ -188,7 +185,7 @@
 
     "growth": {
       "type": "object",
-      "required": ["runway_years", "runway_post_y5", "seven_questions", "segments", "decay_signals", "trap_rating"],
+      "required": ["runway_post_y5", "segments"],
       "properties": {
         "runway_years": {"type": ["number", "string", "null"]},
         "runway_post_y5": {"type": ["string", "null"], "enum": ["🟢", "🟡", "🔴", null]},
@@ -206,8 +203,7 @@
 
     "quality": {
       "type": "object",
-      "required": ["three_year", "dupont", "ccc", "buyback", "lumpiness"],
-      "properties": {
+            "properties": {
         "three_year": {"type": "array", "items": {"type": "object"}},
         "dupont": {"type": "array", "minItems": 1, "items": {"type": "object"}},
         "ccc": {"type": "array", "minItems": 1, "items": {"type": "object"}},
@@ -218,7 +214,7 @@
 
     "governance": {
       "type": "object",
-      "required": ["capalloc_grade", "scorecard", "sbc", "capital_returns"],
+      "required": ["capalloc_grade", "capital_returns"],
       "properties": {
         "capalloc_grade": {"type": ["string", "null"], "enum": ["A", "B", "C", null]},
         "scorecard": {"type": "array", "minItems": 1, "items": {"type": "object"}},
@@ -234,8 +230,8 @@
 
     "valuation": {
       "type": "object",
-      "required": ["tier", "peers", "fwd_pe", "peg", "percentile_5y", "val_light",
-                   "val_light_derivation", "targets", "upside_short_pct", "upside_mid_pct"],
+      "required": ["peers", "peg", "percentile_5y", "val_light",
+                   "val_light_derivation", "upside_short_pct", "upside_mid_pct"],
       "properties": {
         "tier": {"type": ["string", "null"]},
         "peers": {
@@ -271,9 +267,8 @@
 
     "appendix_a": {
       "type": "object",
-      "required": ["signal", "moat_score", "growth_durability", "quality_score", "ai_risk",
-                   "long_term_confidence", "val", "ma", "fpe_fy2", "pct_5y", "peg_fy2",
-                   "upside_short_pct", "upside_mid_pct", "stress", "verdict"],
+      "required": ["growth_durability", "quality_score", "ai_risk",
+                   "long_term_confidence", "fpe_fy2", "peg_fy2", "stress"],
       "properties": {
         "signal": {"type": ["string", "null"], "enum": ["A+", "A", "B", "C", "X", null]},
         "moat_score": {"type": ["number", "null"]},
@@ -529,9 +524,9 @@
     "reasoning": {
       "type": "object",
       "required": [
-        "archetype", "thesis", "industry", "moat", "growth", "quality",
-        "governance", "valuation", "trap_analysis", "premortem"
+        "industry", "moat", "growth", "governance", "valuation", "premortem"
       ],
+      "description": "v18（2026-09-10）：必填＝六個核心問題各一則推導（問一 industry／問二 moat／問三 growth／問四 governance／問五 valuation／問六 premortem，judgment-rules.md §2）；其餘模組（archetype／thesis／quality／trap_analysis／roic_durability／scenario）承重時照寫、不承重不強迫交作文。",
       "properties": {
         "archetype": {"type": "string"},
         "thesis": {"type": "string"},
@@ -562,6 +557,18 @@
       "properties": {
         "verdict_line": {"type": ["string", "null"]},
         "verdict_sub": {"type": ["string", "null"]},
+        "six": {
+          "type": "object",
+          "description": "v18（2026-09-10）：六個核心問題各一段白話（judgment-rules.md §2）。有 six 時快速版首段渲染六問、不再需要 five；舊檔只有 five 者照舊渲染五句話。",
+          "properties": {
+            "how_it_makes_money": {"type": ["string", "null"]},
+            "moat": {"type": ["string", "null"]},
+            "growth": {"type": ["string", "null"]},
+            "capital": {"type": ["string", "null"]},
+            "valuation": {"type": ["string", "null"]},
+            "how_wrong": {"type": ["string", "null"]}
+          }
+        },
         "five": {
           "type": "object",
           "properties": {

@@ -456,3 +456,50 @@ def test_j5_negated_role_is_not_a_conflict():
     data = {"decision_out": {"role": "衛星"}, "plain": {"five": {"why_this_size": "所以只能當衛星，不當核心。"}}}
     fails, warns = vj.j5_plain_role_checks(data)
     assert not fails
+
+
+# ---------------------------------------------------------------------------
+# v18 新形狀 fixture（2026-09-10 WP-F）：六問骨架＋精簡 plain＋三視角反證＋
+# 漂移按 cause 分組，且 v18 降選填的欄位真的不在檔內。這份是 required 184→137
+# 之後「新形狀確實過得了 validator」的證據；舊形狀相容性由既有 _src 迴歸測試
+# （test_src_judgment_zero_fail）顧。
+# ---------------------------------------------------------------------------
+
+V18_FIXTURE = Path(__file__).resolve().parent / "fixtures" / "judgment_v18_TXN.json"
+
+
+def test_v18_shape_validates_without_evidence():
+    fails, _warns = vj.validate_file(V18_FIXTURE, None, j1_warn=False)
+    assert fails == [], fails
+
+
+def test_v18_shape_validates_with_evidence():
+    """帶 evidence：J1 負向證據處置與漂移歸因（cause 分組、prior_field 陣列）
+    在新形狀下同樣要過。"""
+    ev = NOTES_SRC / "TXN_20260907" / "TXN_20260907.evidence.json"
+    if not ev.exists():
+        pytest.skip(f"fixture 不存在：{ev}")
+    fails, _warns = vj.validate_file(V18_FIXTURE, ev, j1_warn=False)
+    assert fails == [], fails
+
+
+def test_v18_fixture_really_is_the_slim_shape():
+    """防呆：有人把 fixture 改回舊形狀時先響，否則上面兩個測試會變成空測。"""
+    j = json.loads(V18_FIXTURE.read_text(encoding="utf-8"))
+    six = (j.get("plain") or {}).get("six") or {}
+    assert set(six) == set(vj._PLAIN_SIX_KEYS), list(six)
+    assert "five" not in (j.get("plain") or {})
+    views = {b.get("view") for b in j["premortem"]["blind_spots"]}
+    assert views == set(vj._COUNTER_VIEWS), views
+    assert "failure_story" not in j["premortem"]
+    grouped = [c for c in j["contradictions"] if isinstance(c.get("prior_field"), list)]
+    assert grouped and grouped[0].get("cause") in ("價格變動", "新證據", "方法變動")
+    for top, key in (("moat", "competitors"), ("quality", "three_year"),
+                     ("appendix_a", "signal"), ("appendix_a", "val"),
+                     ("growth", "seven_questions"), ("industry", "bargaining")):
+        assert key not in (j.get(top) or {}), f"{top}.{key} 不該還在 v18 fixture 裡"
+
+
+def test_v18_j4_plain_checks_accept_six_without_five():
+    warns = vj.j4_plain_checks(json.loads(V18_FIXTURE.read_text(encoding="utf-8")))
+    assert warns == [], warns

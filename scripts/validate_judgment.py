@@ -880,6 +880,10 @@ def drift_checks(data: dict, judgment_path: Path, evidence_path: Path | None) ->
 #   bets（thesis.H）／fears（thesis.R）／change_my_mind（triggers）／
 #   business.moat_direction（moat.grade+trend）。
 _PLAIN_FIVE_KEYS = ("how_it_makes_money", "why_now", "why_this_size", "biggest_fear", "how_to_act")
+# v18（2026-09-10）：六問白話 `plain.six` 取代 `plain.five` 當首段來源（dd_brief
+# 同樣優先讀 six）。有 six 就只查 six 的六欄、不再催 five；舊檔（只有 five）維持
+# 原本查 five 的路——兩者都缺才報 five 缺欄，語意仍是「首段沒有白話來源」。
+_PLAIN_SIX_KEYS = ("how_it_makes_money", "moat", "growth", "capital", "valuation", "how_wrong")
 _PLAIN_BUSINESS_KEYS = ("what_to_whom", "why_customers_stay")
 _PLAIN_STORIES_KEYS = ("bull", "base", "bear")
 _PLAIN_TOP_SCALAR_KEYS = (
@@ -934,9 +938,14 @@ def j4_plain_checks(data: dict) -> list:
     for k in _PLAIN_TOP_SCALAR_KEYS:
         _check(plain, k, f"plain.{k}")
 
-    five = plain.get("five") or {}
-    for k in _PLAIN_FIVE_KEYS:
-        _check(five, k, f"plain.five.{k}")
+    six = plain.get("six") or {}
+    if six:
+        for k in _PLAIN_SIX_KEYS:
+            _check(six, k, f"plain.six.{k}")
+    else:
+        five = plain.get("five") or {}
+        for k in _PLAIN_FIVE_KEYS:
+            _check(five, k, f"plain.five.{k}")
 
     business = plain.get("business") or {}
     for k in _PLAIN_BUSINESS_KEYS:

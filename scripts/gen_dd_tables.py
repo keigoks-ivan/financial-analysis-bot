@@ -120,29 +120,39 @@ def build_dd_meta(j: dict, scenario_meta: dict | None) -> dict:
     industry = j.get("industry") or {}
     eps_meta = j.get("eps_meta") or {}
 
+    # v18（2026-09-10）：appendix_a 與權威欄同源的投影欄（signal／val／ma／
+    # verdict／pct_5y／兩個 upside／moat_score）改為「有就用、沒有就從權威欄投
+    # 影」——schema 已把這些 appendix_a 子欄降為選填（judgment-to-ddmeta.md 宣
+    # 告的同源 pair 就是權威來源），舊檔兩側都有值時取值不變（同源檢查保證同
+    # 值），故舊檔渲染結果完全不動。fpe_fy2／peg_fy2 不在此列：口徑待定義，
+    # 沒有可投影的權威側（見 judgment-to-ddmeta.md 2026-09-07 附註）。
+    def _aa(key, fallback):
+        v = aa.get(key)
+        return fallback if v is None else v
+
     meta = {
         "ticker": meta_top.get("ticker"),
         "schema": meta_top.get("schema"),
         "date": meta_top.get("date"),
         "price_at_dd": di.get("price_at_dd"),
-        "signal": aa.get("signal"),
+        "signal": _aa("signal", di.get("signal")),
         "trap": trap.get("verdict"),
         "trap_label": trap.get("label"),
         "moat": moat.get("grade"),
-        "val": aa.get("val"),
-        "ma": aa.get("ma"),
+        "val": _aa("val", di.get("val")),
+        "ma": _aa("ma", di.get("ma")),
         "fpe_fy2": aa.get("fpe_fy2"),
-        "pct_5y": aa.get("pct_5y"),
+        "pct_5y": _aa("pct_5y", val.get("percentile_5y")),
         "peg_fy2": aa.get("peg_fy2"),
-        "upside_short_pct": aa.get("upside_short_pct"),
-        "upside_mid_pct": aa.get("upside_mid_pct"),
+        "upside_short_pct": _aa("upside_short_pct", val.get("upside_short_pct")),
+        "upside_mid_pct": _aa("upside_mid_pct", val.get("upside_mid_pct")),
         "stress": aa.get("stress"),
         "moat_score": moat.get("score"),
         "growth_durability": aa.get("growth_durability"),
         "quality_score": aa.get("quality_score"),
         "ai_risk": aa.get("ai_risk"),
         "long_term_confidence": aa.get("long_term_confidence"),
-        "verdict": aa.get("verdict"),
+        "verdict": _aa("verdict", _aa("signal", di.get("signal"))),
         "oneliner": j.get("oneliner"),
         "dca_verdict": dout.get("verdict"),
         "dca_role": dout.get("role"),
@@ -283,6 +293,16 @@ def render_e12_html(j: dict) -> str:
 # Appendix A -- one-row mechanical grade table
 # ---------------------------------------------------------------------------
 
+# v18（2026-09-10）：appendix_a 的 signal／val／ma 已降為選填（與
+# decision_inputs 同源，judgment-to-ddmeta.md 宣告）。呈現層跟 build_dd_meta
+# 一樣「有就用、沒有才回退權威欄」，否則完整版附錄 A 會在新形狀下渲染成空格。
+def _aa_or_di(j: dict, key: str):
+    v = (j.get("appendix_a") or {}).get(key)
+    if v is None:
+        v = (j.get("decision_inputs") or {}).get(key)
+    return v
+
+
 def render_appA_table_html(j: dict) -> str:
     aa = j.get("appendix_a") or {}
     moat = j.get("moat") or {}
@@ -294,9 +314,9 @@ def render_appA_table_html(j: dict) -> str:
     row = (
         "<tr><td>{signal}</td><td>{moat_s}/{growth_d}/{quality_s}</td><td>{val}</td>"
         "<td>{ma}</td><td>{trap}</td><td>{sp}/{st}</td><td>{ltc}</td></tr>".format(
-            signal=esc(aa.get("signal")), moat_s=esc(moat.get("score")),
+            signal=esc(_aa_or_di(j, "signal")), moat_s=esc(moat.get("score")),
             growth_d=esc(aa.get("growth_durability")), quality_s=esc(aa.get("quality_score")),
-            val=esc(aa.get("val")), ma=esc(aa.get("ma")),
+            val=esc(_aa_or_di(j, "val")), ma=esc(_aa_or_di(j, "ma")),
             trap=esc((j.get("trap_analysis") or {}).get("verdict")),
             sp=esc(stress.get("pass")), st=esc(stress.get("total")),
             ltc=esc(aa.get("long_term_confidence")),
@@ -641,9 +661,9 @@ def render_appA_section_html(j: dict) -> str:
         "{stress_desc}，長期持有信心因資本配置等級 {capalloc} 定在「{ltc}」——這是本檔"
         "角色被限定在{role}而非{other_role}的機械依據。"
     ).format(
-        signal=esc(aa.get("signal")), moat_score=esc(moat.get("score")),
+        signal=esc(_aa_or_di(j, "signal")), moat_score=esc(moat.get("score")),
         growth_d=esc(aa.get("growth_durability")), quality_s=esc(aa.get("quality_score")),
-        val_desc=_val_desc(aa.get("val")), ma_desc=_ma_desc(aa.get("ma")),
+        val_desc=_val_desc(_aa_or_di(j, "val")), ma_desc=_ma_desc(_aa_or_di(j, "ma")),
         trap_label=esc(trap_label) or "—", stress_desc=stress_desc,
         capalloc=esc(gov.get("capalloc_grade")), ltc=esc(aa.get("long_term_confidence")),
         role=esc(role), other_role=other_role,

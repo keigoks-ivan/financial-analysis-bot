@@ -337,16 +337,42 @@ _FIVE_ORDER = [
 ]
 
 
+# v18（2026-09-10）：六問白話 `plain.six`（judgment-rules.md §2）。有 six 就把首段
+# 換成六個核心問題各一段，標題同步改「六個問題」；沒有 six 的舊檔走原本的 five
+# 路徑、標題仍是「五句話」，輸出逐 byte 不變。
+_SIX_ORDER = [
+    ("how_it_makes_money", "怎麼賺錢"),
+    ("moat", "競爭優勢"),
+    ("growth", "成長"),
+    ("capital", "現金與資本配置"),
+    ("valuation", "估值"),
+    ("how_wrong", "可能看錯在哪"),
+]
+
+LEAD_HEADING_FIVE = "五句話"
+LEAD_HEADING_SIX = "六個問題"
+
+
 def render_five(j):
-    five = ((j.get("plain") or {}).get("five")) or {}
+    """首段白話：優先讀 `plain.six`（v18 六問），退回 `plain.five`（v17 五句話），
+    再退回 oneliner。回傳 (heading, html, fallback)。"""
+    plain = j.get("plain") or {}
+    six = plain.get("six") or {}
+    if six:
+        parts = [
+            f"    <p><b>{label}</b>：{dash(six.get(key))}</p>"
+            for key, label in _SIX_ORDER
+        ]
+        return LEAD_HEADING_SIX, "\n".join(parts), False
+    five = plain.get("five") or {}
     if not five:
         oneliner = j.get("oneliner") or (j.get("thesis") or {}).get("headline")
-        return (f"    <p>{dash(oneliner)}</p>", True)
+        return (LEAD_HEADING_FIVE, f"    <p>{dash(oneliner)}</p>", True)
     parts = [
         f"    <p><b>{label}</b>：{dash(five.get(key))}</p>"
         for key, label in _FIVE_ORDER
     ]
-    return "\n".join(parts), False
+    return LEAD_HEADING_FIVE, "\n".join(parts), False
 
 
 def render_business(j):
@@ -956,7 +982,7 @@ def build_brief_html(j, scenario_meta, evidence, audit_path, decision_audit_html
     eyebrow, h1, sub, sub_fallback, meta_box = render_header(j, evidence)
     scenario_rows, scenario_note, scenario_eps, scenario_eps_note = render_scenario(j, scenario_meta)
     stories_html, stories_fallback = render_stories(j)
-    five_html, five_fallback = render_five(j)
+    lead_heading, five_html, five_fallback = render_five(j)
     business_html, business_fallback = render_business(j)
     bets_html, bets_fallback = render_bets(j)
     fears_html, fears_fallback = render_fears(j)
@@ -979,6 +1005,7 @@ def build_brief_html(j, scenario_meta, evidence, audit_path, decision_audit_html
         "{{SUB}}": sub,
         "{{META_BOX}}": meta_box,
         "{{TILES}}": render_tiles(j, scenario_meta),
+        "{{LEAD_HEADING}}": esc(lead_heading),
         "{{FIVE_CLASS}}": _cls(five_fallback),
         "{{FIVE_HTML}}": five_html,
         "{{BUSINESS_CLASS}}": _cls(business_fallback),
