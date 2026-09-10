@@ -255,7 +255,7 @@ BLOCKS = [
         ("國家掃描", "scan", [
             ("/backtest/country_scan/us.html", "美國：十檔股票的指數、一千五百檔的兩種定價", "研究", False),
             ("/backtest/country_scan/taiwan.html", "台灣：一檔股票的指數、六百七十檔的兩種定價", "研究", False),
-            ("/backtest/country_scan/japan.html", "日本：市場結構與七個投資鏡頭", "研究", False),
+            ("/backtest/country_scan/japan.html", "日本：大盤便宜已定價完、金利回來兩把尺相反", "研究", False),
             ("/backtest/country_scan/malaysia.html", "馬來西亞：報酬寫在股息裡、價差十年為負", "研究", False),
         ]),
     ]),

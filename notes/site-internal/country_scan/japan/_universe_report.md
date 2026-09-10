@@ -1,132 +1,123 @@
-# JP Universe — Coverage & Quality Report
+# 日股國家掃描 · 母體重建報告（2026-09-10）
 
-**As of**: 2026-08-14
-**Output**: `notes/site-internal/country_scan/japan/_universe.json`
-**Threshold**: market cap ≥ ¥100bn (≈ US$680M at ~147 JPY/USD)
+- **快照日期**：2026-09-10
+- **母體檔案**：`_universe.json`（新，939 檔）；先前版本存為 `_universe_v1_476.json`（476 檔，2026-08-14 快照，保留供對照）
+- **母體定義**：東京證券交易所主板（Prime／Standard／Growth 皆可入選）普通股，市值 ≥ ¥1,000 億
+- **範圍**：東證主板普通股，排除 REIT／信託、優先股、非普通股
 
-## 1. How the ticker list was sourced
+## 一、為什麼要重建
 
-The spec called for starting from the current TOPIX 500 constituent list. That list is not freely downloadable in machine-readable form — JPX's live "TOPIX Component Stocks Weight" file sits behind their paid Index Data Service / client portal, and the JPX public index page returned HTTP 403 to automated fetch. The only fully-enumerated TOPIX 500 ticker list locatable via web search was a **2022-02 vintage** file (`topix500_202202.txt`, 500 codes, originally sourced from JPX data by a third-party site). No current (2026) TOPIX 500 list could be sourced.
+先前版本（`_universe_v1_476.json`）的候選清單主體是一份 2022-02 版 TOPIX 500 成分股清單 + 6 檔手動補丁，
+`_universe_report.md`（舊版）自陳會系統性漏掉 2023 年後的 IPO／分拆與從 Standard 市場長大的公司，
+且頁面曾把它描述為「市值≥¥1,000 億母體」——但實際上是一份「TOPIX 500 骨架＋補丁」，不是對全市場市值的
+獨立篩選，兩者口徑不同，舊版報告本身已指出這個名不副實的問題。本輪重建改用即時的 TradingView 全市場
+篩選器做候選清單，不再依賴 2022 年的靜態骨架。
 
-**Skeleton** = that 2022-02 TOPIX 500 list (500 tickers).
+## 二、建構方法
 
-**Supplemental additions** = 6 tickers manually identified as large-cap (post-2022 IPOs/spin-offs) and individually confirmed via yfinance to (a) be ≥¥100bn market cap and (b) be absent from the 2022 list:
+### 1. 候選清單來源與篩選條件
 
-| Ticker | Name | Reason not in 2022 list |
+以 TradingView 日本股票篩選器（`POST scanner.tradingview.com/japan/scan`）查詢，條件：
+
+- `exchange = TSE`（東京證券交易所主板；Nagoya／Sapporo／Fukuoka 的重複掛牌代碼已透過此條件排除，避免同一家公司被重複計入）
+- `subtype = common`（排除優先股）
+- `market_cap_basic > ¥1,000 億`
+
+首輪查詢回傳 982 檔（979 檔 common + 3 檔 preferred，已用 subtype 條件濾除）。進一步排除
+`industry = "Real Estate Investment Trusts"`（40 檔 J-REIT，TradingView 將其歸類在 `type=stock` 底下，
+未被前述 subtype 條件濾除，需額外手動排除）後，**最終候選 939 檔**。
+
+欄位取自 TradingView：`name`／`description`／`sector`／`industry`／`market_cap_basic`／`close`／
+`price_earnings_ttm`／`non_gaap_price_to_earnings_per_share_forecast_next_fy`（前瞻本益比，TradingView
+的 `price_earnings_forward_fy` 欄位對東證股票 100% 回傳空值，改用此欄位）／`price_book_fq`／
+`dividends_yield_current`（`dividend_yield_recent` 欄位同樣對東證股票 100% 回傳空值）／`return_on_equity_fy`／
+`total_revenue_yoy_growth_fy`／`net_income_yoy_growth_fy`／`gross_margin_fy`／`operating_margin_fy`／
+`total_debt_fy`／`cash_n_short_term_invest_fq`／`total_shares_outstanding_current`／
+`price_52_week_high`／`price_52_week_low`。
+
+### 2. yfinance 抽樣驗證與整欄替換
+
+以 `~/.venvs/v7bt/bin/python`（yfinance 1.4.1、pandas 2.3.3<3）對依市值分四分位、各抽 10 檔（共 40 檔）
+做交叉比對，計算各欄位中位數絕對百分比偏差：
+
+| 欄位 | 中位數偏差 | 判定 |
 |---|---|---|
-| 9023.T | Tokyo Metro | IPO Oct 2024 |
-| 285A.T | Kioxia Holdings | IPO Dec 2024 |
-| 5838.T | Rakuten Bank | IPO Apr 2023 |
-| 6525.T | Kokusai Electric | IPO Oct 2023 |
-| 6526.T | Socionext | IPO Oct 2022 (after the Feb-2022 skeleton snapshot) |
-| 5016.T | JX Advanced Metals | IPO Mar 2025 (spin-off of ENEOS) |
+| market_cap | 1.8% | 保留 TradingView |
+| price_to_book | ~0.0% | 保留 TradingView |
+| cash | 0.0% | 保留 TradingView |
+| shares_outstanding | 0.01% | 保留 TradingView |
+| 52週高／低 | 0.0% | 保留 TradingView |
+| trailing_pe | 5.86% | **整欄改抓 yfinance** |
+| forward_pe | 19.84% | **整欄改抓 yfinance** |
+| roe | 7.64% | **整欄改抓 yfinance** |
+| dividend_yield | 7.42% | **整欄改抓 yfinance** |
+| total_debt | 7.81% | 未使用於頁面計算，未替換（見盲區） |
+| revenue_growth／net_income_growth／operating_margin | 30%–150% | 疑為計算基期定義不同（TradingView 用 FY YoY、yfinance 用不同期間），未使用於頁面計算，未替換 |
 
-**Total candidate list**: 506 tickers (500 + 6).
+四個超過 5% 偏差門檻且頁面實際使用的欄位（trailing_pe、forward_pe、roe、dividend_yield），已對全部
+939 檔以 `~/.venvs/v7bt/bin/python` 重新抓取 yfinance `get_info()`（批次 20 檔、批間 sleep 2 秒、失敗
+重試一次），**939 檔零硬失敗**。3 檔 trailing_pe 原始回傳字串 `"Infinity"`（非數值），已清為 null 處理。
 
-**Honest gap**: this is a skeleton, not an exhaustive scan. A 2022-vintage TOPIX 500 list is ~4 years stale — TOPIX itself has been undergoing periodic (semi-annual) reconstitution the whole time, and JPX is mid-way through a broader structural reform of TOPIX (Phase 2 starts Oct 2026, extending eligibility screening to Prime+Standard+Growth on free-float market cap / liquidity criteria). Likely **systematic misses** beyond the 6 manually patched: (a) any other 2023–2026 IPO/spin-off that grew past ¥100bn and isn't one of the 6 we happened to search for, (b) Standard-market names that organically appreciated past ¥100bn since 2022 without ever being TOPIX-500-eligible on liquidity grounds, (c) any name promoted into TOPIX 500 by a periodic review that a 2022 snapshot wouldn't reflect. A true zero-gap universe would require either a paid JPX data feed or a full market-cap screen of all ~3,100 Prime+Standard listed names — the latter was assessed and rejected for this run on time/rate-limit grounds (at ~1s/ticker sequential yfinance calls plus the mandated inter-batch sleeps, a full Prime+Standard sweep would run ~50–60 minutes and materially raise 429 risk for a payoff of mostly sub-threshold names). This is the deliberate "note honestly, don't chase completeness" tradeoff the task spec anticipated.
+替換後覆蓋率：trailing_pe 96.5%、forward_pe 88.2%、roe 94.4%、dividend_yield 96.5%。
 
-## 2. Fetch results
+### 3. 與先前 476 檔母體的對應
 
-| Stage | Count |
-|---|---|
-| Candidate tickers | 506 |
-| yfinance fetch — hard failure (no response at all, even after retry) | 0 |
-| yfinance fetch — reproducible empty payload ("unresolved", see below) | 29 |
-| Confirmed below ¥100bn threshold after fetch | 1 |
-| **Final universe (confirmed ≥¥100bn)** | **476** |
+先前建構的 476 檔母體中，**474 檔（99.6%）在新母體 939 檔中找到**。缺少的 2 檔：
 
-No batch hit a sustained 429 wall — batching at 25 tickers/call with 3–5s inter-batch sleep and a single 30s-delayed retry-per-ticker was sufficient to clear the whole 506-ticker candidate list without any hard-missing tickers.
-
-### 2a. The 29 "unresolved" tickers
-
-These 29 codes returned a near-empty yfinance payload (no name, no sector, no market cap — essentially a stub) on **both** the original fetch pass and an independent re-fetch pass run afterward specifically to rule out a rate-limit artifact. Because the result was identical and reproducible on retry (not a transient 404-then-succeeds pattern), this is a real data gap, not a rate-limit issue.
-
-Most likely explanation: the 2022-vintage skeleton contains codes for companies that have since **delisted, gone private, merged, or had their ticker code reassigned**. Spot check: `6502.T` was Toshiba Corporation, which was taken private via TOB by a Japan Industrial Partners-led consortium in December 2023 — consistent with this theory. The remaining 28 were not individually verified against corporate-action records; that would require per-name research beyond this data-engineering pass.
-
-These 29 are **excluded from `stocks[]` and from every coverage/sector/P-B statistic below** — their true current market cap is neither confirmed ≥¥100bn nor confirmed below it, so including them either way would fabricate certainty the data doesn't support.
-
-Excluded ticker list: `2412.T, 2427.T, 2651.T, 3141.T, 4185.T, 4530.T, 4581.T, 4739.T, 4921.T, 5486.T, 6028.T, 6201.T, 6406.T, 6502.T, 6755.T, 6967.T, 7205.T, 7518.T, 7732.T, 8279.T, 8355.T, 8369.T, 8382.T, 8385.T, 8905.T, 9086.T, 9613.T, 9719.T, 9783.T`
-
-### 2b. Confirmed sub-threshold name
-
-One 2022-skeleton constituent fetched cleanly but is now below ¥100bn: **JCR Pharmaceuticals (4552.T)**, market cap ¥64.3bn. Excluded from the final universe (it's a real data point, just under the bar — TOPIX 500 membership isn't a pure market-cap ranking, so a name can be in the 2022 list on liquidity/other grounds while sitting under ¥100bn).
-
-## 3. Per-field coverage (of the 476 confirmed-in-universe names)
-
-| Field | Coverage |
-|---|---|
-| name | 100.0% |
-| sector | 100.0% |
-| industry | 100.0% |
-| market_cap | 100.0% |
-| price | 100.0% |
-| currency | 100.0% |
-| price_to_book | 100.0% |
-| payout_ratio | 100.0% |
-| shares_outstanding | 100.0% |
-| 52w high / low (+ derived % from high/low) | 100.0% |
-| dividend_yield | 97.9% |
-| forward_pe | 98.3% |
-| trailing_pe | 96.4% |
-| revenue_growth | 97.1% |
-| total_debt | 99.8% |
-| total_cash / net_cash / net_cash_to_mktcap | 99.6% |
-| roe | 92.4% |
-| roa | 92.2% |
-| earnings_growth | 85.9% |
-
-**Systematic gaps checked and NOT found to be significant**: the anticipated "banks/financials lack ROE via yfinance" pattern did not materialize strongly here — Financial Services is missing ROE for only 4/40 names (10%), roughly in line with the all-sector average (7.6% missing). ROA/ROE/earnings_growth gaps are mildly concentrated in Industrials (11/125 missing ROE) but not dramatically so; this looks like ordinary per-company data-vendor sparsity rather than a sector-systematic hole. `earnings_growth` is the weakest field overall (85.9%) across all sectors roughly evenly — treat it as the least reliable derived-growth field in this dataset.
-
-## 4. P/B < 1 count at ≥¥100bn (governance lens — load-bearing stat)
-
-- **105 of 476** confirmed-universe names (of which 476/476 have a known `price_to_book` value, so this is a clean denominator — no missing-data ambiguity) have **price_to_book < 1**.
-- **105 / 476 = 22.1%** of the ≥¥100bn universe trades below book value.
-
-By sector (count of P/B<1 names):
-
-| Sector | P/B<1 count |
-|---|---|
-| Consumer Cyclical | 22 |
-| Industrials | 20 |
-| Basic Materials | 20 |
-| Utilities | 11 |
-| Healthcare | 9 |
-| Financial Services | 7 |
-| Consumer Defensive | 4 |
-| Energy | 4 |
-| Real Estate | 3 |
-| Communication Services | 3 |
-| Technology | 2 |
-
-Note for the governance lens: Financial Services shows only 7/40 (17.5%) below book here — lower than the popular narrative of "Japanese banks structurally trade sub-1x P/B," though banks are a subset of Financial Services (which also includes insurers, brokers, credit-card cos) so this sector-level number will dilute a bank-specific read. The lens agent consuming this file should filter `sector == "Financial Services"` and cross-check `industry` for a bank-only cut if it needs that specific claim.
-
-## 5. Sector distribution (476 names)
-
-| Sector | Count | % |
+| 代號 | 名稱 | 原因 |
 |---|---|---|
-| Industrials | 125 | 26.3% |
-| Consumer Cyclical | 74 | 15.5% |
-| Technology | 51 | 10.7% |
-| Basic Materials | 46 | 9.7% |
-| Consumer Defensive | 44 | 9.2% |
-| Healthcare | 42 | 8.8% |
-| Financial Services | 40 | 8.4% |
-| Communication Services | 26 | 5.5% |
-| Utilities | 13 | 2.7% |
-| Real Estate | 11 | 2.3% |
-| Energy | 4 | 0.8% |
+| 4919 | Milbon | 現市值約 ¥98.9 億，剛好跌破 ¥1,000 億門檻的邊界案例（市值波動，非資料缺失） |
+| 8283 | PALTAC | 已於 2026 年經 MediPal 控股 TOB 完成收購下市（2026-05-12 公告 TOB、2026-07-14 起交割），親子上市解消的真實案例，與治理鏡頭「MediPal 自身正 TOB 收購 PALTAC 消除親子上市」的敘事互相印證，非資料缺失 |
 
-Industrials being the largest single bucket (over a quarter of the universe) reflects both Japan's genuine industrial-conglomerate weight and yfinance's coarse GICS-like bucketing (auto parts, machinery, trading houses, and shipping all land in "Industrials").
+反向查證：兩者皆已用 TradingView 個別查詢確認（4919 現值可查得、8283 完全查無掛牌資料），並用 WebSearch
+交叉核對 PALTAC 下市時程，結論一致。
 
-## 6. Derived fields note
+## 三、母體組成（939 檔）
 
-- `net_cash = total_cash − total_debt`; `net_cash_to_mktcap = net_cash / market_cap`. Both null wherever either input is null (4 names: coverage 99.6%).
-- `pb_below_1` is a boolean computed only where `price_to_book` is non-null; all 476 names have a known P/B so this flag is fully populated.
-- `pct_from_52w_high` / `pct_from_52w_low` computed as `(price − level) / level`; negative for the high-distance figure in the normal case (price below 52w high).
+| 項目 | 數字 |
+|---|---|
+| 候選總數（TSE common，市值＞¥1,000億） | 982 檔 |
+| 排除：優先股 | 3 檔 |
+| 排除：REIT／信託 | 40 檔 |
+| **母體合格檔數** | **939 檔** |
+| 母體總市值 | 約 ¥1,284.7 兆 |
+| 前十大個股占母體市值 | 22.2%（本頁自算，見 hub Exhibit 相關計算） |
+| 母體 P/B&lt;1 比率 | 23.7%（222／936 檔，4 檔無 P/B 資料） |
+| 母體 ROE 中位數 | 10.2% |
+| 母體前瞻本益比中位數 | 16.6 倍 |
+| 母體殖利率中位數（配息股） | 2.54% |
 
-## 7. Bottom line for downstream lens agents
+產業分布採 TradingView 自身 20 類粗分類（非 JPX 官方 33 業種——後者本次未能透過自動化工具取得逐檔對應表，
+是誠實列出的分類口徑差異）；完整分布與前 12 大分類的 ROE 中位數由 `_build_hub.py` 對 `_universe.json`
+現算並嵌入頁面 Exhibit 4，不在此報告重複列出精確數字（避免日後母體更新時本報告與頁面數字不同步）。
 
-- Treat `notes/site-internal/country_scan/japan/_universe.json` `stocks[]` (476 rows) as the working universe. Every row has confirmed market cap ≥¥100bn and a known P/B.
-- Do not silently backfill the 29 unresolved tickers or the 1 sub-threshold name — they're intentionally excluded, not lost.
-- `roe`/`roa`/`earnings_growth` are the fields most likely to be null on any given row (85–92% coverage); build fallback logic rather than assuming presence.
-- This is a **skeleton-plus-patch** universe, not a guaranteed-exhaustive ¥100bn+ Tokyo-listed screen — see §1 for the honest completeness caveat.
+## 四、缺值率（939 檔，替換後）
+
+| 欄位 | 缺值率 | 判讀 |
+|---|---|---|
+| market_cap／sector／industry／close／price_book | 0%–0.4% | 全數或近全數取得 |
+| trailing_pe | 3.5% | 多為近期虧損，PE 無意義，屬業務事實 |
+| forward_pe | 11.8% | 分析師覆蓋不足，日股中小型股常見 |
+| roe | 5.6% | 個別公司財報結構特殊或近期虧損 |
+| dividend_yield（含不配息股） | — | 33 檔不配息，未列入殖利率中位數計算分母 |
+| cash | 7.7% | 部分金融股資產負債表結構特殊，Yahoo/TradingView 不 populate 此欄，屬業務事實非缺失 |
+
+## 五、盲區自陳
+
+1. **JPX 官方 33 業種分類未取得**：本頁產業分類全部採 TradingView 自身粗分類（20 類），與東證官方
+   33 業種分類口徑不同，兩者不可互換引用；若需業種層級精確對照，須另外查證 JPX 官方分類對照表。
+2. **total_debt／revenue_growth／net_income_growth／operating_margin／gross_margin 未做 yfinance 整欄替換**：
+   雖然抽樣顯示偏差超過 5%，但這些欄位並未用於本頁計分卡或五個論點卡的計算，經評估後判定替換的優先序
+   低於頁面實際引用的四個欄位（trailing_pe／forward_pe／roe／dividend_yield），故保留 TradingView 原值，
+   列為誠實揭露的方法論取捨，非疏漏。
+3. **子頁（七個投資鏡頭）仍使用先前 476 檔母體計算**：compounders／governance／financials／dividends／
+   events／ai-chain／domestic 七個子頁是在本輪母體重建之前完成的獨立研究，其量化篩選結果（如「476 檔
+   篩出 70 檔候選」「105/476 落在 P/B&lt;1」）皆以先前 476 檔母體為分母，本頁 hub 引用子頁結論時已明寫
+   「476 檔母體」字樣以資區分，不與新母體 939 檔的數字混寫成同一口徑。
+4. **候選清單本身依賴 TradingView 篩選器的即時性與正確性**：若 TradingView 的 exchange／subtype／
+   market_cap_basic 欄位本身有分類錯誤或延遲更新，本頁母體會同樣繼承該誤差；本輪僅能透過 40 檔抽樣與
+   yfinance 交叉比對做有限度的品質驗證，無法做到逐檔獨立複核全部 939 檔。
+5. **REIT 排除規則的邊界**：僅排除 `industry = "Real Estate Investment Trusts"` 這一個精確字串匹配的
+   40 檔，未逐檔人工複核是否有其他信託／基金結構的公司使用不同 industry 標籤逃過此規則；已交叉檢查
+   全部 20 類 sector 與逐一 industry 標籤中含「trust」「fund」「reit」關鍵字者，僅此 40 檔命中，
+   信心度高但非窮舉式人工複核。
