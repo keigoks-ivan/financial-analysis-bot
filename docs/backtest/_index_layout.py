@@ -146,6 +146,8 @@ BLOCKS = [
             ("/backtest/tw_0050_dual/", "0050 雙軌多空", "否決", False),
         ]),
         ("選擇權", None, _conv(navc.OPTIONS_LINKS)),
+        # 2026-09-10：台指期趨勢研究按日線與 60 分 K 兩個時間框架列示，與日內策略分開。
+        ("期貨趨勢", None, _conv(navc.FUTURES_DAILY_LINKS)),
         ("日內", None, _conv(navc.INTRADAY_LINKS)),
         ("可轉債", None, _conv(navc.TW_CB_LINKS)),
         ("實單追蹤", None, [

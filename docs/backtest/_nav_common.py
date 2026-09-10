@@ -117,6 +117,12 @@ TAIWAN_LINKS = [
     ("/backtest/tw_0050_dual/", "0050 雙軌多空", "tw0050d", "否決"),
 ]
 
+# 2026-09-10：台指期趨勢研究按日線與 60 分 K 兩個時間框架列示。
+FUTURES_DAILY_LINKS = [
+    ("/backtest/txf_daily/", "台指期日線・20 日通道", "txf_daily", "研究"),
+    ("/backtest/txf_hourly/", "台指期60分K・趨勢與通道", "txf_hourly", "研究"),
+]
+
 INTRADAY_LINKS = [
     ("/backtest/txf_intraday/", "台指當沖", "txf_intra", "未過"),
     ("/backtest/txf_chips/", "籌碼偏向", "txf_chips", "觀察"),
@@ -277,6 +283,7 @@ def make_toggle(active: str) -> str:
             + _row("多資產", MULTI_LINKS, active)
             + _row("台股波段", TAIWAN_LINKS, active)
             + _row("台股選擇權", OPTIONS_LINKS, active)
+            + _row("期貨趨勢", FUTURES_DAILY_LINKS, active)
             + _row("日內交易", INTRADAY_LINKS, active)
             + _row("研究・主動式ETF", RESEARCH_ETF_LINKS, active)
             + _row("研究・頻率", RESEARCH_FREQ_LINKS, active)
