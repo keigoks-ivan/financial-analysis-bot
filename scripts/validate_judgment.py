@@ -675,7 +675,7 @@ def expandable_block_checks(data: dict) -> list:
             continue  # list（正常展開形狀）或缺欄，交給 layer1 required 檢查
         if value.get("expanded") is not False:
             fails.append(
-                f"$.{top}.{key}: object 形態必須是未展開標記（expanded 須明確為 false），"
+                f"$.{top}.{key}: object 形態必須是未展開標記（expanded 須明確為 false）；要展開請改用陣列（逐列 item／value），"
                 f"得到 {value.get('expanded')!r}"
             )
             continue

@@ -18,7 +18,7 @@
 
 **(一)反證紀錄=`premortem.blind_spots[]`單一居所**——「這判斷可能錯在哪」只寫這一份，每條：`view`(擇一：`論點失敗`/`論點成功但股東經濟變差`/`價格已反映太多`)｜`evidence`｜`assumption`受影響假設｜`consequence`財務或估值後果｜`ruling`採納或反駁＋理由｜`watch`觀測點(＋`evidence_refs`)。三視角**至少各一條**，不適用就在該條寫`not_applicable_reason`(validator認這個欄)。steelman、失敗故事與第二敗局、自我攻擊、trap判斷依據、`plain.fears`/`plain.how_to_lose`一律**引用本紀錄不重寫**。
 
-**(二)未展開標記**——`industry.tam_table`(問一)/`growth.segments`(問三)/`governance.capital_returns`(問四)/`valuation.peers`(問五)為條件式(觸發見各題)。不展開時該欄填`{"expanded": false, "reason": "為何不展開＋何時重新展開"}`，**理由與重啟觸發缺一即無效**(頁面渲染成一行「未展開：理由」)。展開與否是判斷：估值或裁決承重在該區塊就必須展開；理由不得只寫「營收占比低」「資料難找」。
+**(二)未展開標記**——`industry.tam_table`(問一)/`growth.segments`(問三)/`governance.capital_returns`(問四)/`valuation.peers`(問五)為條件式(觸發見各題)。**展開時該欄必須是陣列**（`[{"item": "…", "value": "…"}]` 這種逐列形狀，不得用物件裝散文）；不展開時該欄填`{"expanded": false, "reason": "為何不展開＋何時重新展開"}`，**理由與重啟觸發缺一即無效**(頁面渲染成一行「未展開：理由」)。展開與否是判斷：估值或裁決承重在該區塊就必須展開；理由不得只寫「營收占比低」「資料難找」。
 
 **(三)一次判斷、寫一遍**(v18)——同一結論只寫在權威欄一次，其他地方引用，不換個問法再答一次。白話六段寫`plain.six`(六題各1-2句)，寫了不必再填`plain.five`；有機械退路的白話子欄(`verdict_line`/`verdict_sub`/`bets`/`fears`/`market_wrong`/`change_my_mind`/`how_to_lose`/`business.moat_direction`)寫得出就寫、寫不出不必勉強。**證據足以支持判斷就停**；缺關鍵證據在該欄明說「證據包未涵蓋」並回報，不繼續堆篇幅。查證與計算不能省，重複作文可以省。
 
