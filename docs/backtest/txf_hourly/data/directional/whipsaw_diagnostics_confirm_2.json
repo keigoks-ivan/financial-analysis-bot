@@ -1,0 +1,1703 @@
+{
+  "definitions": {
+    "sizing": "floor(entry NAV / (raw entry price * 50)), fixed contracts until exit; entry notional cap 1x",
+    "low_direction": "Entry ER60 < 0.25; ER60 = abs(close-close[-60])/sum(abs(one-bar close changes),60). This is a proxy, not a causal label.",
+    "partition_order": [
+      "cost_only",
+      "forced",
+      "fast_failure",
+      "weak_followthrough",
+      "giveback"
+    ],
+    "fast_failure": "Net loss, raw price loss, signal exit within 6 subsequent signal bars, MFE < entry ATR20.",
+    "mfe": "Raw minute favorable extreme from entry through minute before exit, plus raw exit price; measured from raw entry. Period-end close includes final minute. No costs included in MFE.",
+    "quick_reentry": "Losing signal-exit trade followed by next trade in same direction within 6 completed signal bars; retrospective and overlaps other labels.",
+    "limitation": "Uses frozen complete-hour build and original joint-system quantities. Post-selection diagnosis, not a filter backtest or causal attribution."
+  },
+  "periods": {
+    "development": {
+      "baseline": {
+        "all": {
+          "trades": 309,
+          "losing_trades": 221,
+          "loss_ntd": 5351060.862,
+          "profit_ntd": 6295796.902000001,
+          "net_ntd": 944736.0399999998,
+          "contracts": {
+            "min": 8,
+            "max": 13,
+            "mean": 8.906148867313917,
+            "distribution": {
+              "8": 109,
+              "9": 147,
+              "10": 34,
+              "11": 15,
+              "13": 4
+            }
+          },
+          "loss_partition": {
+            "cost_only": {
+              "trades": 4,
+              "losing_trades": 4,
+              "loss_ntd": 4972.146000000001,
+              "profit_ntd": 0.0,
+              "net_ntd": -4972.146000000001
+            },
+            "forced": {
+              "trades": 2,
+              "losing_trades": 2,
+              "loss_ntd": 23636.381999999998,
+              "profit_ntd": 0.0,
+              "net_ntd": -23636.381999999998
+            },
+            "fast_failure": {
+              "trades": 114,
+              "losing_trades": 114,
+              "loss_ntd": 2199130.786,
+              "profit_ntd": 0.0,
+              "net_ntd": -2199130.786
+            },
+            "weak_followthrough": {
+              "trades": 26,
+              "losing_trades": 26,
+              "loss_ntd": 1384018.939,
+              "profit_ntd": 0.0,
+              "net_ntd": -1384018.939
+            },
+            "giveback": {
+              "trades": 75,
+              "losing_trades": 75,
+              "loss_ntd": 1739302.609,
+              "profit_ntd": 0.0,
+              "net_ntd": -1739302.609
+            }
+          },
+          "low_direction": {
+            "trades": 275,
+            "losing_trades": 199,
+            "loss_ntd": 4397038.1790000005,
+            "profit_ntd": 5741549.992,
+            "net_ntd": 1344511.813
+          },
+          "quick_reentry": {
+            "trades": 99,
+            "losing_trades": 99,
+            "loss_ntd": 1841773.529,
+            "profit_ntd": 0.0,
+            "net_ntd": -1841773.529
+          },
+          "fast_failure_sensitivity": {
+            "3": {
+              "trades": 93,
+              "losing_trades": 93,
+              "loss_ntd": 1646060.3229999999,
+              "profit_ntd": 0.0,
+              "net_ntd": -1646060.3229999999
+            },
+            "6": {
+              "trades": 114,
+              "losing_trades": 114,
+              "loss_ntd": 2199130.786,
+              "profit_ntd": 0.0,
+              "net_ntd": -2199130.786
+            },
+            "12": {
+              "trades": 127,
+              "losing_trades": 127,
+              "loss_ntd": 2787836.466,
+              "profit_ntd": 0.0,
+              "net_ntd": -2787836.466
+            }
+          }
+        },
+        "long": {
+          "trades": 233,
+          "losing_trades": 170,
+          "loss_ntd": 3624322.3680000002,
+          "profit_ntd": 4136019.18,
+          "net_ntd": 511696.8120000001,
+          "contracts": {
+            "min": 8,
+            "max": 11,
+            "mean": 8.836909871244636,
+            "distribution": {
+              "8": 92,
+              "9": 102,
+              "10": 24,
+              "11": 15
+            }
+          },
+          "loss_partition": {
+            "cost_only": {
+              "trades": 3,
+              "losing_trades": 3,
+              "loss_ntd": 4803.114,
+              "profit_ntd": 0.0,
+              "net_ntd": -4803.114
+            },
+            "forced": {
+              "trades": 2,
+              "losing_trades": 2,
+              "loss_ntd": 23636.381999999998,
+              "profit_ntd": 0.0,
+              "net_ntd": -23636.381999999998
+            },
+            "fast_failure": {
+              "trades": 90,
+              "losing_trades": 90,
+              "loss_ntd": 1639767.106,
+              "profit_ntd": 0.0,
+              "net_ntd": -1639767.106
+            },
+            "weak_followthrough": {
+              "trades": 17,
+              "losing_trades": 17,
+              "loss_ntd": 820852.5430000001,
+              "profit_ntd": 0.0,
+              "net_ntd": -820852.5430000001
+            },
+            "giveback": {
+              "trades": 58,
+              "losing_trades": 58,
+              "loss_ntd": 1135263.223,
+              "profit_ntd": 0.0,
+              "net_ntd": -1135263.223
+            }
+          },
+          "low_direction": {
+            "trades": 207,
+            "losing_trades": 153,
+            "loss_ntd": 3004171.5700000003,
+            "profit_ntd": 3764109.64,
+            "net_ntd": 759938.0700000001
+          },
+          "quick_reentry": {
+            "trades": 84,
+            "losing_trades": 84,
+            "loss_ntd": 1402385.8229999999,
+            "profit_ntd": 0.0,
+            "net_ntd": -1402385.8229999999
+          },
+          "fast_failure_sensitivity": {
+            "3": {
+              "trades": 73,
+              "losing_trades": 73,
+              "loss_ntd": 1246191.815,
+              "profit_ntd": 0.0,
+              "net_ntd": -1246191.815
+            },
+            "6": {
+              "trades": 90,
+              "losing_trades": 90,
+              "loss_ntd": 1639767.106,
+              "profit_ntd": 0.0,
+              "net_ntd": -1639767.106
+            },
+            "12": {
+              "trades": 100,
+              "losing_trades": 100,
+              "loss_ntd": 2061970.6719999998,
+              "profit_ntd": 0.0,
+              "net_ntd": -2061970.6719999998
+            }
+          }
+        },
+        "short": {
+          "trades": 76,
+          "losing_trades": 51,
+          "loss_ntd": 1726738.494,
+          "profit_ntd": 2159777.722,
+          "net_ntd": 433039.22799999994,
+          "contracts": {
+            "min": 8,
+            "max": 13,
+            "mean": 9.118421052631579,
+            "distribution": {
+              "8": 17,
+              "9": 45,
+              "10": 10,
+              "13": 4
+            }
+          },
+          "loss_partition": {
+            "cost_only": {
+              "trades": 1,
+              "losing_trades": 1,
+              "loss_ntd": 169.03199999999998,
+              "profit_ntd": 0.0,
+              "net_ntd": -169.03199999999998
+            },
+            "forced": {
+              "trades": 0,
+              "losing_trades": 0,
+              "loss_ntd": 0.0,
+              "profit_ntd": 0.0,
+              "net_ntd": 0.0
+            },
+            "fast_failure": {
+              "trades": 24,
+              "losing_trades": 24,
+              "loss_ntd": 559363.6799999999,
+              "profit_ntd": 0.0,
+              "net_ntd": -559363.6799999999
+            },
+            "weak_followthrough": {
+              "trades": 9,
+              "losing_trades": 9,
+              "loss_ntd": 563166.396,
+              "profit_ntd": 0.0,
+              "net_ntd": -563166.396
+            },
+            "giveback": {
+              "trades": 17,
+              "losing_trades": 17,
+              "loss_ntd": 604039.3859999999,
+              "profit_ntd": 0.0,
+              "net_ntd": -604039.3859999999
+            }
+          },
+          "low_direction": {
+            "trades": 68,
+            "losing_trades": 46,
+            "loss_ntd": 1392866.609,
+            "profit_ntd": 1977440.3520000002,
+            "net_ntd": 584573.7430000001
+          },
+          "quick_reentry": {
+            "trades": 15,
+            "losing_trades": 15,
+            "loss_ntd": 439387.70599999995,
+            "profit_ntd": 0.0,
+            "net_ntd": -439387.70599999995
+          },
+          "fast_failure_sensitivity": {
+            "3": {
+              "trades": 20,
+              "losing_trades": 20,
+              "loss_ntd": 399868.508,
+              "profit_ntd": 0.0,
+              "net_ntd": -399868.508
+            },
+            "6": {
+              "trades": 24,
+              "losing_trades": 24,
+              "loss_ntd": 559363.6799999999,
+              "profit_ntd": 0.0,
+              "net_ntd": -559363.6799999999
+            },
+            "12": {
+              "trades": 27,
+              "losing_trades": 27,
+              "loss_ntd": 725865.794,
+              "profit_ntd": 0.0,
+              "net_ntd": -725865.794
+            }
+          }
+        }
+      },
+      "confirm_2": {
+        "all": {
+          "trades": 193,
+          "losing_trades": 127,
+          "loss_ntd": 4472159.1510000015,
+          "profit_ntd": 5665865.142,
+          "net_ntd": 1193705.991,
+          "contracts": {
+            "min": 8,
+            "max": 13,
+            "mean": 9.181347150259068,
+            "distribution": {
+              "8": 35,
+              "9": 110,
+              "10": 31,
+              "11": 14,
+              "12": 1,
+              "13": 2
+            }
+          },
+          "loss_partition": {
+            "cost_only": {
+              "trades": 3,
+              "losing_trades": 3,
+              "loss_ntd": 1404.214,
+              "profit_ntd": 0.0,
+              "net_ntd": -1404.214
+            },
+            "forced": {
+              "trades": 2,
+              "losing_trades": 2,
+              "loss_ntd": 28545.445,
+              "profit_ntd": 0.0,
+              "net_ntd": -28545.445
+            },
+            "fast_failure": {
+              "trades": 34,
+              "losing_trades": 34,
+              "loss_ntd": 1303084.953,
+              "profit_ntd": 0.0,
+              "net_ntd": -1303084.953
+            },
+            "weak_followthrough": {
+              "trades": 29,
+              "losing_trades": 29,
+              "loss_ntd": 1433600.7160000005,
+              "profit_ntd": 0.0,
+              "net_ntd": -1433600.7160000005
+            },
+            "giveback": {
+              "trades": 59,
+              "losing_trades": 59,
+              "loss_ntd": 1705523.8229999999,
+              "profit_ntd": 0.0,
+              "net_ntd": -1705523.8229999999
+            }
+          },
+          "low_direction": {
+            "trades": 163,
+            "losing_trades": 107,
+            "loss_ntd": 3922253.76,
+            "profit_ntd": 5071671.901000001,
+            "net_ntd": 1149418.141
+          },
+          "quick_reentry": {
+            "trades": 24,
+            "losing_trades": 24,
+            "loss_ntd": 587594.078,
+            "profit_ntd": 0.0,
+            "net_ntd": -587594.078
+          },
+          "fast_failure_sensitivity": {
+            "3": {
+              "trades": 17,
+              "losing_trades": 17,
+              "loss_ntd": 516728.312,
+              "profit_ntd": 0.0,
+              "net_ntd": -516728.312
+            },
+            "6": {
+              "trades": 34,
+              "losing_trades": 34,
+              "loss_ntd": 1303084.953,
+              "profit_ntd": 0.0,
+              "net_ntd": -1303084.953
+            },
+            "12": {
+              "trades": 46,
+              "losing_trades": 46,
+              "loss_ntd": 1758798.9760000003,
+              "profit_ntd": 0.0,
+              "net_ntd": -1758798.9760000003
+            }
+          }
+        },
+        "long": {
+          "trades": 140,
+          "losing_trades": 94,
+          "loss_ntd": 3027605.337,
+          "profit_ntd": 3748295.439,
+          "net_ntd": 720690.1020000002,
+          "contracts": {
+            "min": 8,
+            "max": 12,
+            "mean": 9.121428571428572,
+            "distribution": {
+              "8": 29,
+              "9": 79,
+              "10": 19,
+              "11": 12,
+              "12": 1
+            }
+          },
+          "loss_partition": {
+            "cost_only": {
+              "trades": 2,
+              "losing_trades": 2,
+              "loss_ntd": 1210.464,
+              "profit_ntd": 0.0,
+              "net_ntd": -1210.464
+            },
+            "forced": {
+              "trades": 2,
+              "losing_trades": 2,
+              "loss_ntd": 28545.445,
+              "profit_ntd": 0.0,
+              "net_ntd": -28545.445
+            },
+            "fast_failure": {
+              "trades": 30,
+              "losing_trades": 30,
+              "loss_ntd": 1121202.608,
+              "profit_ntd": 0.0,
+              "net_ntd": -1121202.608
+            },
+            "weak_followthrough": {
+              "trades": 21,
+              "losing_trades": 21,
+              "loss_ntd": 897936.993,
+              "profit_ntd": 0.0,
+              "net_ntd": -897936.993
+            },
+            "giveback": {
+              "trades": 39,
+              "losing_trades": 39,
+              "loss_ntd": 978709.8269999999,
+              "profit_ntd": 0.0,
+              "net_ntd": -978709.8269999999
+            }
+          },
+          "low_direction": {
+            "trades": 116,
+            "losing_trades": 78,
+            "loss_ntd": 2606279.706,
+            "profit_ntd": 3248675.773,
+            "net_ntd": 642396.0670000002
+          },
+          "quick_reentry": {
+            "trades": 21,
+            "losing_trades": 21,
+            "loss_ntd": 522563.25299999997,
+            "profit_ntd": 0.0,
+            "net_ntd": -522563.25299999997
+          },
+          "fast_failure_sensitivity": {
+            "3": {
+              "trades": 15,
+              "losing_trades": 15,
+              "loss_ntd": 457630.81899999996,
+              "profit_ntd": 0.0,
+              "net_ntd": -457630.81899999996
+            },
+            "6": {
+              "trades": 30,
+              "losing_trades": 30,
+              "loss_ntd": 1121202.608,
+              "profit_ntd": 0.0,
+              "net_ntd": -1121202.608
+            },
+            "12": {
+              "trades": 41,
+              "losing_trades": 41,
+              "loss_ntd": 1453187.896,
+              "profit_ntd": 0.0,
+              "net_ntd": -1453187.896
+            }
+          }
+        },
+        "short": {
+          "trades": 53,
+          "losing_trades": 33,
+          "loss_ntd": 1444553.8139999998,
+          "profit_ntd": 1917569.7030000002,
+          "net_ntd": 473015.8890000002,
+          "contracts": {
+            "min": 8,
+            "max": 13,
+            "mean": 9.339622641509434,
+            "distribution": {
+              "8": 6,
+              "9": 31,
+              "10": 12,
+              "11": 2,
+              "13": 2
+            }
+          },
+          "loss_partition": {
+            "cost_only": {
+              "trades": 1,
+              "losing_trades": 1,
+              "loss_ntd": 193.75,
+              "profit_ntd": 0.0,
+              "net_ntd": -193.75
+            },
+            "forced": {
+              "trades": 0,
+              "losing_trades": 0,
+              "loss_ntd": 0.0,
+              "profit_ntd": 0.0,
+              "net_ntd": 0.0
+            },
+            "fast_failure": {
+              "trades": 4,
+              "losing_trades": 4,
+              "loss_ntd": 181882.34499999997,
+              "profit_ntd": 0.0,
+              "net_ntd": -181882.34499999997
+            },
+            "weak_followthrough": {
+              "trades": 8,
+              "losing_trades": 8,
+              "loss_ntd": 535663.723,
+              "profit_ntd": 0.0,
+              "net_ntd": -535663.723
+            },
+            "giveback": {
+              "trades": 20,
+              "losing_trades": 20,
+              "loss_ntd": 726813.9959999999,
+              "profit_ntd": 0.0,
+              "net_ntd": -726813.9959999999
+            }
+          },
+          "low_direction": {
+            "trades": 47,
+            "losing_trades": 29,
+            "loss_ntd": 1315974.0539999998,
+            "profit_ntd": 1822996.1279999998,
+            "net_ntd": 507022.074
+          },
+          "quick_reentry": {
+            "trades": 3,
+            "losing_trades": 3,
+            "loss_ntd": 65030.825,
+            "profit_ntd": 0.0,
+            "net_ntd": -65030.825
+          },
+          "fast_failure_sensitivity": {
+            "3": {
+              "trades": 2,
+              "losing_trades": 2,
+              "loss_ntd": 59097.493,
+              "profit_ntd": 0.0,
+              "net_ntd": -59097.493
+            },
+            "6": {
+              "trades": 4,
+              "losing_trades": 4,
+              "loss_ntd": 181882.34499999997,
+              "profit_ntd": 0.0,
+              "net_ntd": -181882.34499999997
+            },
+            "12": {
+              "trades": 5,
+              "losing_trades": 5,
+              "loss_ntd": 305611.07999999996,
+              "profit_ntd": 0.0,
+              "net_ntd": -305611.07999999996
+            }
+          }
+        }
+      }
+    },
+    "validation": {
+      "baseline": {
+        "all": {
+          "trades": 304,
+          "losing_trades": 213,
+          "loss_ntd": 5275524.33,
+          "profit_ntd": 6729388.07,
+          "net_ntd": 1453863.74,
+          "contracts": {
+            "min": 5,
+            "max": 9,
+            "mean": 6.845394736842105,
+            "distribution": {
+              "5": 19,
+              "6": 117,
+              "7": 75,
+              "8": 78,
+              "9": 15
+            }
+          },
+          "loss_partition": {
+            "cost_only": {
+              "trades": 4,
+              "losing_trades": 4,
+              "loss_ntd": 2357.2110000000002,
+              "profit_ntd": 0.0,
+              "net_ntd": -2357.2110000000002
+            },
+            "forced": {
+              "trades": 3,
+              "losing_trades": 3,
+              "loss_ntd": 28675.248,
+              "profit_ntd": 0.0,
+              "net_ntd": -28675.248
+            },
+            "fast_failure": {
+              "trades": 98,
+              "losing_trades": 98,
+              "loss_ntd": 1736608.055,
+              "profit_ntd": 0.0,
+              "net_ntd": -1736608.055
+            },
+            "weak_followthrough": {
+              "trades": 24,
+              "losing_trades": 24,
+              "loss_ntd": 1140455.8660000002,
+              "profit_ntd": 0.0,
+              "net_ntd": -1140455.8660000002
+            },
+            "giveback": {
+              "trades": 84,
+              "losing_trades": 84,
+              "loss_ntd": 2367427.9499999993,
+              "profit_ntd": 0.0,
+              "net_ntd": -2367427.9499999993
+            }
+          },
+          "low_direction": {
+            "trades": 279,
+            "losing_trades": 200,
+            "loss_ntd": 4553755.196,
+            "profit_ntd": 5982292.654000002,
+            "net_ntd": 1428537.4580000003
+          },
+          "quick_reentry": {
+            "trades": 105,
+            "losing_trades": 105,
+            "loss_ntd": 2140490.478,
+            "profit_ntd": 0.0,
+            "net_ntd": -2140490.478
+          },
+          "fast_failure_sensitivity": {
+            "3": {
+              "trades": 82,
+              "losing_trades": 82,
+              "loss_ntd": 1337510.0740000003,
+              "profit_ntd": 0.0,
+              "net_ntd": -1337510.0740000003
+            },
+            "6": {
+              "trades": 98,
+              "losing_trades": 98,
+              "loss_ntd": 1736608.055,
+              "profit_ntd": 0.0,
+              "net_ntd": -1736608.055
+            },
+            "12": {
+              "trades": 110,
+              "losing_trades": 110,
+              "loss_ntd": 2064296.529,
+              "profit_ntd": 0.0,
+              "net_ntd": -2064296.529
+            }
+          }
+        },
+        "long": {
+          "trades": 179,
+          "losing_trades": 123,
+          "loss_ntd": 2474085.775,
+          "profit_ntd": 3726453.728,
+          "net_ntd": 1252367.9529999997,
+          "contracts": {
+            "min": 5,
+            "max": 9,
+            "mean": 6.675977653631285,
+            "distribution": {
+              "5": 16,
+              "6": 77,
+              "7": 39,
+              "8": 43,
+              "9": 4
+            }
+          },
+          "loss_partition": {
+            "cost_only": {
+              "trades": 2,
+              "losing_trades": 2,
+              "loss_ntd": 1015.6800000000001,
+              "profit_ntd": 0.0,
+              "net_ntd": -1015.6800000000001
+            },
+            "forced": {
+              "trades": 3,
+              "losing_trades": 3,
+              "loss_ntd": 28675.248,
+              "profit_ntd": 0.0,
+              "net_ntd": -28675.248
+            },
+            "fast_failure": {
+              "trades": 61,
+              "losing_trades": 61,
+              "loss_ntd": 950662.3839999998,
+              "profit_ntd": 0.0,
+              "net_ntd": -950662.3839999998
+            },
+            "weak_followthrough": {
+              "trades": 11,
+              "losing_trades": 11,
+              "loss_ntd": 328099.48400000005,
+              "profit_ntd": 0.0,
+              "net_ntd": -328099.48400000005
+            },
+            "giveback": {
+              "trades": 46,
+              "losing_trades": 46,
+              "loss_ntd": 1165632.9789999998,
+              "profit_ntd": 0.0,
+              "net_ntd": -1165632.9789999998
+            }
+          },
+          "low_direction": {
+            "trades": 167,
+            "losing_trades": 117,
+            "loss_ntd": 2254981.8759999997,
+            "profit_ntd": 3272123.784,
+            "net_ntd": 1017141.9079999999
+          },
+          "quick_reentry": {
+            "trades": 65,
+            "losing_trades": 65,
+            "loss_ntd": 1172388.488,
+            "profit_ntd": 0.0,
+            "net_ntd": -1172388.488
+          },
+          "fast_failure_sensitivity": {
+            "3": {
+              "trades": 49,
+              "losing_trades": 49,
+              "loss_ntd": 715435.195,
+              "profit_ntd": 0.0,
+              "net_ntd": -715435.195
+            },
+            "6": {
+              "trades": 61,
+              "losing_trades": 61,
+              "loss_ntd": 950662.3839999998,
+              "profit_ntd": 0.0,
+              "net_ntd": -950662.3839999998
+            },
+            "12": {
+              "trades": 68,
+              "losing_trades": 68,
+              "loss_ntd": 1036691.215,
+              "profit_ntd": 0.0,
+              "net_ntd": -1036691.215
+            }
+          }
+        },
+        "short": {
+          "trades": 125,
+          "losing_trades": 90,
+          "loss_ntd": 2801438.5550000006,
+          "profit_ntd": 3002934.3419999997,
+          "net_ntd": 201495.78700000013,
+          "contracts": {
+            "min": 5,
+            "max": 9,
+            "mean": 7.088,
+            "distribution": {
+              "5": 3,
+              "6": 40,
+              "7": 36,
+              "8": 35,
+              "9": 11
+            }
+          },
+          "loss_partition": {
+            "cost_only": {
+              "trades": 2,
+              "losing_trades": 2,
+              "loss_ntd": 1341.531,
+              "profit_ntd": 0.0,
+              "net_ntd": -1341.531
+            },
+            "forced": {
+              "trades": 0,
+              "losing_trades": 0,
+              "loss_ntd": 0.0,
+              "profit_ntd": 0.0,
+              "net_ntd": 0.0
+            },
+            "fast_failure": {
+              "trades": 37,
+              "losing_trades": 37,
+              "loss_ntd": 785945.6709999999,
+              "profit_ntd": 0.0,
+              "net_ntd": -785945.6709999999
+            },
+            "weak_followthrough": {
+              "trades": 13,
+              "losing_trades": 13,
+              "loss_ntd": 812356.382,
+              "profit_ntd": 0.0,
+              "net_ntd": -812356.382
+            },
+            "giveback": {
+              "trades": 38,
+              "losing_trades": 38,
+              "loss_ntd": 1201794.9710000001,
+              "profit_ntd": 0.0,
+              "net_ntd": -1201794.9710000001
+            }
+          },
+          "low_direction": {
+            "trades": 112,
+            "losing_trades": 83,
+            "loss_ntd": 2298773.32,
+            "profit_ntd": 2710168.87,
+            "net_ntd": 411395.55000000005
+          },
+          "quick_reentry": {
+            "trades": 40,
+            "losing_trades": 40,
+            "loss_ntd": 968101.99,
+            "profit_ntd": 0.0,
+            "net_ntd": -968101.99
+          },
+          "fast_failure_sensitivity": {
+            "3": {
+              "trades": 33,
+              "losing_trades": 33,
+              "loss_ntd": 622074.879,
+              "profit_ntd": 0.0,
+              "net_ntd": -622074.879
+            },
+            "6": {
+              "trades": 37,
+              "losing_trades": 37,
+              "loss_ntd": 785945.6709999999,
+              "profit_ntd": 0.0,
+              "net_ntd": -785945.6709999999
+            },
+            "12": {
+              "trades": 42,
+              "losing_trades": 42,
+              "loss_ntd": 1027605.314,
+              "profit_ntd": 0.0,
+              "net_ntd": -1027605.314
+            }
+          }
+        }
+      },
+      "confirm_2": {
+        "all": {
+          "trades": 200,
+          "losing_trades": 126,
+          "loss_ntd": 4714697.273,
+          "profit_ntd": 6571414.096,
+          "net_ntd": 1856716.8229999994,
+          "contracts": {
+            "min": 6,
+            "max": 10,
+            "mean": 7.32,
+            "distribution": {
+              "6": 74,
+              "7": 34,
+              "8": 55,
+              "9": 28,
+              "10": 9
+            }
+          },
+          "loss_partition": {
+            "cost_only": {
+              "trades": 2,
+              "losing_trades": 2,
+              "loss_ntd": 1989.141,
+              "profit_ntd": 0.0,
+              "net_ntd": -1989.141
+            },
+            "forced": {
+              "trades": 4,
+              "losing_trades": 4,
+              "loss_ntd": 63703.001000000004,
+              "profit_ntd": 0.0,
+              "net_ntd": -63703.001000000004
+            },
+            "fast_failure": {
+              "trades": 31,
+              "losing_trades": 31,
+              "loss_ntd": 863686.4559999999,
+              "profit_ntd": 0.0,
+              "net_ntd": -863686.4559999999
+            },
+            "weak_followthrough": {
+              "trades": 21,
+              "losing_trades": 21,
+              "loss_ntd": 1266162.1150000002,
+              "profit_ntd": 0.0,
+              "net_ntd": -1266162.1150000002
+            },
+            "giveback": {
+              "trades": 68,
+              "losing_trades": 68,
+              "loss_ntd": 2519156.56,
+              "profit_ntd": 0.0,
+              "net_ntd": -2519156.56
+            }
+          },
+          "low_direction": {
+            "trades": 176,
+            "losing_trades": 112,
+            "loss_ntd": 3998585.07,
+            "profit_ntd": 5841818.2190000005,
+            "net_ntd": 1843233.1489999995
+          },
+          "quick_reentry": {
+            "trades": 27,
+            "losing_trades": 27,
+            "loss_ntd": 652964.223,
+            "profit_ntd": 0.0,
+            "net_ntd": -652964.223
+          },
+          "fast_failure_sensitivity": {
+            "3": {
+              "trades": 17,
+              "losing_trades": 17,
+              "loss_ntd": 485005.42499999993,
+              "profit_ntd": 0.0,
+              "net_ntd": -485005.42499999993
+            },
+            "6": {
+              "trades": 31,
+              "losing_trades": 31,
+              "loss_ntd": 863686.4559999999,
+              "profit_ntd": 0.0,
+              "net_ntd": -863686.4559999999
+            },
+            "12": {
+              "trades": 40,
+              "losing_trades": 40,
+              "loss_ntd": 1258855.531,
+              "profit_ntd": 0.0,
+              "net_ntd": -1258855.531
+            }
+          }
+        },
+        "long": {
+          "trades": 118,
+          "losing_trades": 70,
+          "loss_ntd": 1972509.6400000001,
+          "profit_ntd": 3687191.8219999997,
+          "net_ntd": 1714682.1819999996,
+          "contracts": {
+            "min": 6,
+            "max": 9,
+            "mean": 7.127118644067797,
+            "distribution": {
+              "6": 50,
+              "7": 20,
+              "8": 31,
+              "9": 17
+            }
+          },
+          "loss_partition": {
+            "cost_only": {
+              "trades": 1,
+              "losing_trades": 1,
+              "loss_ntd": 1179.855,
+              "profit_ntd": 0.0,
+              "net_ntd": -1179.855
+            },
+            "forced": {
+              "trades": 3,
+              "losing_trades": 3,
+              "loss_ntd": 53678.504,
+              "profit_ntd": 0.0,
+              "net_ntd": -53678.504
+            },
+            "fast_failure": {
+              "trades": 19,
+              "losing_trades": 19,
+              "loss_ntd": 457626.308,
+              "profit_ntd": 0.0,
+              "net_ntd": -457626.308
+            },
+            "weak_followthrough": {
+              "trades": 11,
+              "losing_trades": 11,
+              "loss_ntd": 415648.55,
+              "profit_ntd": 0.0,
+              "net_ntd": -415648.55
+            },
+            "giveback": {
+              "trades": 36,
+              "losing_trades": 36,
+              "loss_ntd": 1044376.423,
+              "profit_ntd": 0.0,
+              "net_ntd": -1044376.423
+            }
+          },
+          "low_direction": {
+            "trades": 107,
+            "losing_trades": 65,
+            "loss_ntd": 1827366.3040000002,
+            "profit_ntd": 3246853.6499999994,
+            "net_ntd": 1419487.346
+          },
+          "quick_reentry": {
+            "trades": 18,
+            "losing_trades": 18,
+            "loss_ntd": 382243.8540000001,
+            "profit_ntd": 0.0,
+            "net_ntd": -382243.8540000001
+          },
+          "fast_failure_sensitivity": {
+            "3": {
+              "trades": 9,
+              "losing_trades": 9,
+              "loss_ntd": 226630.541,
+              "profit_ntd": 0.0,
+              "net_ntd": -226630.541
+            },
+            "6": {
+              "trades": 19,
+              "losing_trades": 19,
+              "loss_ntd": 457626.308,
+              "profit_ntd": 0.0,
+              "net_ntd": -457626.308
+            },
+            "12": {
+              "trades": 25,
+              "losing_trades": 25,
+              "loss_ntd": 632055.884,
+              "profit_ntd": 0.0,
+              "net_ntd": -632055.884
+            }
+          }
+        },
+        "short": {
+          "trades": 82,
+          "losing_trades": 56,
+          "loss_ntd": 2742187.6329999994,
+          "profit_ntd": 2884222.274,
+          "net_ntd": 142034.64099999977,
+          "contracts": {
+            "min": 6,
+            "max": 10,
+            "mean": 7.597560975609756,
+            "distribution": {
+              "6": 24,
+              "7": 14,
+              "8": 24,
+              "9": 11,
+              "10": 9
+            }
+          },
+          "loss_partition": {
+            "cost_only": {
+              "trades": 1,
+              "losing_trades": 1,
+              "loss_ntd": 809.2860000000001,
+              "profit_ntd": 0.0,
+              "net_ntd": -809.2860000000001
+            },
+            "forced": {
+              "trades": 1,
+              "losing_trades": 1,
+              "loss_ntd": 10024.497,
+              "profit_ntd": 0.0,
+              "net_ntd": -10024.497
+            },
+            "fast_failure": {
+              "trades": 12,
+              "losing_trades": 12,
+              "loss_ntd": 406060.148,
+              "profit_ntd": 0.0,
+              "net_ntd": -406060.148
+            },
+            "weak_followthrough": {
+              "trades": 10,
+              "losing_trades": 10,
+              "loss_ntd": 850513.565,
+              "profit_ntd": 0.0,
+              "net_ntd": -850513.565
+            },
+            "giveback": {
+              "trades": 32,
+              "losing_trades": 32,
+              "loss_ntd": 1474780.137,
+              "profit_ntd": 0.0,
+              "net_ntd": -1474780.137
+            }
+          },
+          "low_direction": {
+            "trades": 69,
+            "losing_trades": 47,
+            "loss_ntd": 2171218.766,
+            "profit_ntd": 2594964.5689999997,
+            "net_ntd": 423745.80299999967
+          },
+          "quick_reentry": {
+            "trades": 9,
+            "losing_trades": 9,
+            "loss_ntd": 270720.369,
+            "profit_ntd": 0.0,
+            "net_ntd": -270720.369
+          },
+          "fast_failure_sensitivity": {
+            "3": {
+              "trades": 8,
+              "losing_trades": 8,
+              "loss_ntd": 258374.884,
+              "profit_ntd": 0.0,
+              "net_ntd": -258374.884
+            },
+            "6": {
+              "trades": 12,
+              "losing_trades": 12,
+              "loss_ntd": 406060.148,
+              "profit_ntd": 0.0,
+              "net_ntd": -406060.148
+            },
+            "12": {
+              "trades": 15,
+              "losing_trades": 15,
+              "loss_ntd": 626799.647,
+              "profit_ntd": 0.0,
+              "net_ntd": -626799.647
+            }
+          }
+        }
+      }
+    },
+    "holdout": {
+      "baseline": {
+        "all": {
+          "trades": 309,
+          "losing_trades": 225,
+          "loss_ntd": 6460488.663000001,
+          "profit_ntd": 7436765.347999999,
+          "net_ntd": 976276.6850000002,
+          "contracts": {
+            "min": 2,
+            "max": 5,
+            "mean": 3.7896440129449838,
+            "distribution": {
+              "2": 39,
+              "3": 44,
+              "4": 169,
+              "5": 57
+            }
+          },
+          "loss_partition": {
+            "cost_only": {
+              "trades": 3,
+              "losing_trades": 3,
+              "loss_ntd": 1495.906,
+              "profit_ntd": 0.0,
+              "net_ntd": -1495.906
+            },
+            "forced": {
+              "trades": 5,
+              "losing_trades": 5,
+              "loss_ntd": 68621.011,
+              "profit_ntd": 0.0,
+              "net_ntd": -68621.011
+            },
+            "fast_failure": {
+              "trades": 109,
+              "losing_trades": 109,
+              "loss_ntd": 2509686.2260000003,
+              "profit_ntd": 0.0,
+              "net_ntd": -2509686.2260000003
+            },
+            "weak_followthrough": {
+              "trades": 26,
+              "losing_trades": 26,
+              "loss_ntd": 1444059.586,
+              "profit_ntd": 0.0,
+              "net_ntd": -1444059.586
+            },
+            "giveback": {
+              "trades": 82,
+              "losing_trades": 82,
+              "loss_ntd": 2436625.9340000004,
+              "profit_ntd": 0.0,
+              "net_ntd": -2436625.9340000004
+            }
+          },
+          "low_direction": {
+            "trades": 287,
+            "losing_trades": 209,
+            "loss_ntd": 5783040.572000001,
+            "profit_ntd": 6929060.572000001,
+            "net_ntd": 1146020.0
+          },
+          "quick_reentry": {
+            "trades": 92,
+            "losing_trades": 92,
+            "loss_ntd": 2013771.836,
+            "profit_ntd": 0.0,
+            "net_ntd": -2013771.836
+          },
+          "fast_failure_sensitivity": {
+            "3": {
+              "trades": 88,
+              "losing_trades": 88,
+              "loss_ntd": 1923292.345,
+              "profit_ntd": 0.0,
+              "net_ntd": -1923292.345
+            },
+            "6": {
+              "trades": 109,
+              "losing_trades": 109,
+              "loss_ntd": 2509686.2260000003,
+              "profit_ntd": 0.0,
+              "net_ntd": -2509686.2260000003
+            },
+            "12": {
+              "trades": 122,
+              "losing_trades": 122,
+              "loss_ntd": 3078788.323,
+              "profit_ntd": 0.0,
+              "net_ntd": -3078788.323
+            }
+          }
+        },
+        "long": {
+          "trades": 207,
+          "losing_trades": 147,
+          "loss_ntd": 3462091.028,
+          "profit_ntd": 5488496.451,
+          "net_ntd": 2026405.423,
+          "contracts": {
+            "min": 2,
+            "max": 5,
+            "mean": 3.748792270531401,
+            "distribution": {
+              "2": 29,
+              "3": 27,
+              "4": 118,
+              "5": 33
+            }
+          },
+          "loss_partition": {
+            "cost_only": {
+              "trades": 2,
+              "losing_trades": 2,
+              "loss_ntd": 911.7900000000001,
+              "profit_ntd": 0.0,
+              "net_ntd": -911.7900000000001
+            },
+            "forced": {
+              "trades": 3,
+              "losing_trades": 3,
+              "loss_ntd": 38327.272,
+              "profit_ntd": 0.0,
+              "net_ntd": -38327.272
+            },
+            "fast_failure": {
+              "trades": 77,
+              "losing_trades": 77,
+              "loss_ntd": 1508847.312,
+              "profit_ntd": 0.0,
+              "net_ntd": -1508847.312
+            },
+            "weak_followthrough": {
+              "trades": 15,
+              "losing_trades": 15,
+              "loss_ntd": 526637.197,
+              "profit_ntd": 0.0,
+              "net_ntd": -526637.197
+            },
+            "giveback": {
+              "trades": 50,
+              "losing_trades": 50,
+              "loss_ntd": 1387367.457,
+              "profit_ntd": 0.0,
+              "net_ntd": -1387367.457
+            }
+          },
+          "low_direction": {
+            "trades": 191,
+            "losing_trades": 135,
+            "loss_ntd": 2929401.6900000004,
+            "profit_ntd": 5112407.12,
+            "net_ntd": 2183005.43
+          },
+          "quick_reentry": {
+            "trades": 65,
+            "losing_trades": 65,
+            "loss_ntd": 1209410.0669999998,
+            "profit_ntd": 0.0,
+            "net_ntd": -1209410.0669999998
+          },
+          "fast_failure_sensitivity": {
+            "3": {
+              "trades": 62,
+              "losing_trades": 62,
+              "loss_ntd": 1103714.697,
+              "profit_ntd": 0.0,
+              "net_ntd": -1103714.697
+            },
+            "6": {
+              "trades": 77,
+              "losing_trades": 77,
+              "loss_ntd": 1508847.312,
+              "profit_ntd": 0.0,
+              "net_ntd": -1508847.312
+            },
+            "12": {
+              "trades": 85,
+              "losing_trades": 85,
+              "loss_ntd": 1762202.774,
+              "profit_ntd": 0.0,
+              "net_ntd": -1762202.774
+            }
+          }
+        },
+        "short": {
+          "trades": 102,
+          "losing_trades": 78,
+          "loss_ntd": 2998397.6350000002,
+          "profit_ntd": 1948268.897,
+          "net_ntd": -1050128.738,
+          "contracts": {
+            "min": 2,
+            "max": 5,
+            "mean": 3.872549019607843,
+            "distribution": {
+              "2": 10,
+              "3": 17,
+              "4": 51,
+              "5": 24
+            }
+          },
+          "loss_partition": {
+            "cost_only": {
+              "trades": 1,
+              "losing_trades": 1,
+              "loss_ntd": 584.116,
+              "profit_ntd": 0.0,
+              "net_ntd": -584.116
+            },
+            "forced": {
+              "trades": 2,
+              "losing_trades": 2,
+              "loss_ntd": 30293.739,
+              "profit_ntd": 0.0,
+              "net_ntd": -30293.739
+            },
+            "fast_failure": {
+              "trades": 32,
+              "losing_trades": 32,
+              "loss_ntd": 1000838.914,
+              "profit_ntd": 0.0,
+              "net_ntd": -1000838.914
+            },
+            "weak_followthrough": {
+              "trades": 11,
+              "losing_trades": 11,
+              "loss_ntd": 917422.389,
+              "profit_ntd": 0.0,
+              "net_ntd": -917422.389
+            },
+            "giveback": {
+              "trades": 32,
+              "losing_trades": 32,
+              "loss_ntd": 1049258.477,
+              "profit_ntd": 0.0,
+              "net_ntd": -1049258.477
+            }
+          },
+          "low_direction": {
+            "trades": 96,
+            "losing_trades": 74,
+            "loss_ntd": 2853638.8819999998,
+            "profit_ntd": 1816653.4519999996,
+            "net_ntd": -1036985.4299999999
+          },
+          "quick_reentry": {
+            "trades": 27,
+            "losing_trades": 27,
+            "loss_ntd": 804361.7689999999,
+            "profit_ntd": 0.0,
+            "net_ntd": -804361.7689999999
+          },
+          "fast_failure_sensitivity": {
+            "3": {
+              "trades": 26,
+              "losing_trades": 26,
+              "loss_ntd": 819577.6479999999,
+              "profit_ntd": 0.0,
+              "net_ntd": -819577.6479999999
+            },
+            "6": {
+              "trades": 32,
+              "losing_trades": 32,
+              "loss_ntd": 1000838.914,
+              "profit_ntd": 0.0,
+              "net_ntd": -1000838.914
+            },
+            "12": {
+              "trades": 37,
+              "losing_trades": 37,
+              "loss_ntd": 1316585.549,
+              "profit_ntd": 0.0,
+              "net_ntd": -1316585.549
+            }
+          }
+        }
+      },
+      "confirm_2": {
+        "all": {
+          "trades": 214,
+          "losing_trades": 137,
+          "loss_ntd": 5995818.723999999,
+          "profit_ntd": 7175709.243000001,
+          "net_ntd": 1179890.5189999999,
+          "contracts": {
+            "min": 2,
+            "max": 5,
+            "mean": 3.878504672897196,
+            "distribution": {
+              "2": 21,
+              "3": 28,
+              "4": 121,
+              "5": 44
+            }
+          },
+          "loss_partition": {
+            "cost_only": {
+              "trades": 3,
+              "losing_trades": 3,
+              "loss_ntd": 1920.0529999999999,
+              "profit_ntd": 0.0,
+              "net_ntd": -1920.0529999999999
+            },
+            "forced": {
+              "trades": 4,
+              "losing_trades": 4,
+              "loss_ntd": 71505.104,
+              "profit_ntd": 0.0,
+              "net_ntd": -71505.104
+            },
+            "fast_failure": {
+              "trades": 41,
+              "losing_trades": 41,
+              "loss_ntd": 1299517.5,
+              "profit_ntd": 0.0,
+              "net_ntd": -1299517.5
+            },
+            "weak_followthrough": {
+              "trades": 23,
+              "losing_trades": 23,
+              "loss_ntd": 1541905.401,
+              "profit_ntd": 0.0,
+              "net_ntd": -1541905.401
+            },
+            "giveback": {
+              "trades": 66,
+              "losing_trades": 66,
+              "loss_ntd": 3080970.6659999997,
+              "profit_ntd": 0.0,
+              "net_ntd": -3080970.6659999997
+            }
+          },
+          "low_direction": {
+            "trades": 198,
+            "losing_trades": 128,
+            "loss_ntd": 5583576.697000001,
+            "profit_ntd": 6437706.694,
+            "net_ntd": 854129.9970000002
+          },
+          "quick_reentry": {
+            "trades": 35,
+            "losing_trades": 35,
+            "loss_ntd": 1133427.012,
+            "profit_ntd": 0.0,
+            "net_ntd": -1133427.012
+          },
+          "fast_failure_sensitivity": {
+            "3": {
+              "trades": 28,
+              "losing_trades": 28,
+              "loss_ntd": 888311.318,
+              "profit_ntd": 0.0,
+              "net_ntd": -888311.318
+            },
+            "6": {
+              "trades": 41,
+              "losing_trades": 41,
+              "loss_ntd": 1299517.5,
+              "profit_ntd": 0.0,
+              "net_ntd": -1299517.5
+            },
+            "12": {
+              "trades": 53,
+              "losing_trades": 53,
+              "loss_ntd": 1955808.8729999997,
+              "profit_ntd": 0.0,
+              "net_ntd": -1955808.8729999997
+            }
+          }
+        },
+        "long": {
+          "trades": 136,
+          "losing_trades": 82,
+          "loss_ntd": 3037113.831,
+          "profit_ntd": 5466275.576000001,
+          "net_ntd": 2429161.745,
+          "contracts": {
+            "min": 2,
+            "max": 5,
+            "mean": 3.860294117647059,
+            "distribution": {
+              "2": 13,
+              "3": 18,
+              "4": 80,
+              "5": 25
+            }
+          },
+          "loss_partition": {
+            "cost_only": {
+              "trades": 1,
+              "losing_trades": 1,
+              "loss_ntd": 457.46,
+              "profit_ntd": 0.0,
+              "net_ntd": -457.46
+            },
+            "forced": {
+              "trades": 4,
+              "losing_trades": 4,
+              "loss_ntd": 71505.104,
+              "profit_ntd": 0.0,
+              "net_ntd": -71505.104
+            },
+            "fast_failure": {
+              "trades": 27,
+              "losing_trades": 27,
+              "loss_ntd": 885023.9009999998,
+              "profit_ntd": 0.0,
+              "net_ntd": -885023.9009999998
+            },
+            "weak_followthrough": {
+              "trades": 13,
+              "losing_trades": 13,
+              "loss_ntd": 558155.4950000001,
+              "profit_ntd": 0.0,
+              "net_ntd": -558155.4950000001
+            },
+            "giveback": {
+              "trades": 37,
+              "losing_trades": 37,
+              "loss_ntd": 1521971.8709999998,
+              "profit_ntd": 0.0,
+              "net_ntd": -1521971.8709999998
+            }
+          },
+          "low_direction": {
+            "trades": 126,
+            "losing_trades": 76,
+            "loss_ntd": 2793612.54,
+            "profit_ntd": 4887698.717,
+            "net_ntd": 2094086.1770000001
+          },
+          "quick_reentry": {
+            "trades": 22,
+            "losing_trades": 22,
+            "loss_ntd": 617905.8790000001,
+            "profit_ntd": 0.0,
+            "net_ntd": -617905.8790000001
+          },
+          "fast_failure_sensitivity": {
+            "3": {
+              "trades": 18,
+              "losing_trades": 18,
+              "loss_ntd": 577845.111,
+              "profit_ntd": 0.0,
+              "net_ntd": -577845.111
+            },
+            "6": {
+              "trades": 27,
+              "losing_trades": 27,
+              "loss_ntd": 885023.9009999998,
+              "profit_ntd": 0.0,
+              "net_ntd": -885023.9009999998
+            },
+            "12": {
+              "trades": 35,
+              "losing_trades": 35,
+              "loss_ntd": 1225905.768,
+              "profit_ntd": 0.0,
+              "net_ntd": -1225905.768
+            }
+          }
+        },
+        "short": {
+          "trades": 78,
+          "losing_trades": 55,
+          "loss_ntd": 2958704.8929999997,
+          "profit_ntd": 1709433.667,
+          "net_ntd": -1249271.226,
+          "contracts": {
+            "min": 2,
+            "max": 5,
+            "mean": 3.91025641025641,
+            "distribution": {
+              "2": 8,
+              "3": 10,
+              "4": 41,
+              "5": 19
+            }
+          },
+          "loss_partition": {
+            "cost_only": {
+              "trades": 2,
+              "losing_trades": 2,
+              "loss_ntd": 1462.593,
+              "profit_ntd": 0.0,
+              "net_ntd": -1462.593
+            },
+            "forced": {
+              "trades": 0,
+              "losing_trades": 0,
+              "loss_ntd": 0.0,
+              "profit_ntd": 0.0,
+              "net_ntd": 0.0
+            },
+            "fast_failure": {
+              "trades": 14,
+              "losing_trades": 14,
+              "loss_ntd": 414493.599,
+              "profit_ntd": 0.0,
+              "net_ntd": -414493.599
+            },
+            "weak_followthrough": {
+              "trades": 10,
+              "losing_trades": 10,
+              "loss_ntd": 983749.906,
+              "profit_ntd": 0.0,
+              "net_ntd": -983749.906
+            },
+            "giveback": {
+              "trades": 29,
+              "losing_trades": 29,
+              "loss_ntd": 1558998.7949999995,
+              "profit_ntd": 0.0,
+              "net_ntd": -1558998.7949999995
+            }
+          },
+          "low_direction": {
+            "trades": 72,
+            "losing_trades": 52,
+            "loss_ntd": 2789964.157,
+            "profit_ntd": 1550007.977,
+            "net_ntd": -1239956.18
+          },
+          "quick_reentry": {
+            "trades": 13,
+            "losing_trades": 13,
+            "loss_ntd": 515521.13300000003,
+            "profit_ntd": 0.0,
+            "net_ntd": -515521.13300000003
+          },
+          "fast_failure_sensitivity": {
+            "3": {
+              "trades": 10,
+              "losing_trades": 10,
+              "loss_ntd": 310466.207,
+              "profit_ntd": 0.0,
+              "net_ntd": -310466.207
+            },
+            "6": {
+              "trades": 14,
+              "losing_trades": 14,
+              "loss_ntd": 414493.599,
+              "profit_ntd": 0.0,
+              "net_ntd": -414493.599
+            },
+            "12": {
+              "trades": 18,
+              "losing_trades": 18,
+              "loss_ntd": 729903.105,
+              "profit_ntd": 0.0,
+              "net_ntd": -729903.105
+            }
+          }
+        }
+      }
+    }
+  }
+}
