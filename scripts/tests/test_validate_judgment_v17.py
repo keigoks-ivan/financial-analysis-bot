@@ -191,6 +191,137 @@ def test_derived_decision_inputs_null_remain_valid(tmp_path):
     assert fails == []
 
 
+# ---------------------------------------------------------------------------
+# WP-D（2026-09-10 規則精簡）：A4 原因分組歸因、B 類條件式展開、A1 反證紀錄
+# ---------------------------------------------------------------------------
+
+def test_drift_prior_field_array_attributes_multiple_fields(tmp_path):
+    """A4：一條 `cause` 條目用 prior_field 陣列同時歸因多個漂移欄。"""
+    jpath = tmp_path / "judgment.json"
+    data = _minimal_judgment()
+    data["appendix_a"]["signal"] = "🟢"
+    data["appendix_a"]["val"] = "🟠"
+    data["contradictions"] = [{
+        "cause": "價格變動",
+        "prior_field": ["signal", "val"],
+        "axis": "前份漂移：現價一次變動連帶改訊號與估值燈",
+        "ruling": "signal 🔴→🟢／val 🔴→🟠，主因＝股價",
+    }]
+    ev_path = _write_evidence(
+        tmp_path, prior_meta={"signal": "🔴", "val": "🔴"}, drift_watch=["signal", "val"]
+    )
+
+    fails, _warns = vj.drift_checks(data, jpath, ev_path)
+
+    assert not any("漂移未歸因" in f for f in fails), fails
+
+
+def test_drift_prior_field_array_still_fails_for_uncovered_field(tmp_path):
+    """A4 的放寬有底線：陣列沒涵蓋到的漂移欄仍 FAIL（不是叫 writer 少寫）。"""
+    jpath = tmp_path / "judgment.json"
+    data = _minimal_judgment()
+    data["appendix_a"]["signal"] = "🟢"
+    data["appendix_a"]["val"] = "🟠"
+    data["contradictions"] = [{"cause": "價格變動", "prior_field": ["signal"], "axis": "只歸因訊號"}]
+    ev_path = _write_evidence(
+        tmp_path, prior_meta={"signal": "🔴", "val": "🔴"}, drift_watch=["signal", "val"]
+    )
+
+    fails, _warns = vj.drift_checks(data, jpath, ev_path)
+
+    assert any("漂移未歸因" in f and "val" in f for f in fails), fails
+    assert not any("漂移未歸因" in f and "signal" in f for f in fails), fails
+
+
+_UNEXPANDED = {"expanded": False, "reason": "本案估值不靠低滲透；份額或新品類成為承重假設時重新展開"}
+
+
+def _src_judgment(name="BE_20260905"):
+    path = NOTES_SRC / name / f"{name}.judgment.json"
+    if not path.exists():
+        pytest.skip(f"fixture 不存在：{path}")
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+@pytest.mark.parametrize("top,key", [
+    ("industry", "tam_table"),
+    ("growth", "segments"),
+    ("governance", "capital_returns"),
+    ("valuation", "peers"),
+])
+def test_conditional_block_unexpanded_marker_validates(tmp_path, top, key):
+    """B1–B4：條件式區塊填 {"expanded": false, "reason": …} 仍是合法判斷物。"""
+    data = _src_judgment()
+    data[top][key] = dict(_UNEXPANDED)
+    path = tmp_path / "judgment.json"
+    path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+
+    fails, _warns = vj.validate_file(path, None, j1_warn=False)
+
+    assert fails == [], f"{top}.{key} 未展開標記被判 FAIL：{fails}"
+
+
+def test_counter_evidence_record_shape_validates(tmp_path):
+    """A1：反證紀錄的 canonical 形狀合法，且 failure_story／second_failure 可缺。"""
+    data = _src_judgment()
+    data["premortem"]["blind_spots"] = [{
+        "view": "論點成功但股東經濟變差",
+        "evidence": "產能擴張三年吃掉 FCF",
+        "assumption": "H2 營運槓桿",
+        "consequence": "FCF Margin 由 18% 降至 9%，估值框架由 P/FCF 切到 EV/S",
+        "ruling": "採納——已反映進 Bull 終端倍數",
+        "watch": "季度 maintenance capex 占 FCF 比重",
+        "evidence_refs": [],
+    }]
+    data["premortem"].pop("failure_story", None)
+    data["premortem"].pop("second_failure", None)
+    data["premortem"]["max_dd"].pop("trigger_time", None)
+    path = tmp_path / "judgment.json"
+    path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+
+    fails, _warns = vj.validate_file(path, None, j1_warn=False)
+
+    assert fails == [], f"反證紀錄形狀被判 FAIL：{fails}"
+
+
+def test_counter_evidence_view_enum_is_enforced(tmp_path):
+    """放寬不等於放任：view 只能是三視角之一。"""
+    data = _src_judgment()
+    data["premortem"]["blind_spots"] = [{"view": "隨便寫", "evidence": "x"}]
+    path = tmp_path / "judgment.json"
+    path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+
+    fails, _warns = vj.validate_file(path, None, j1_warn=False)
+
+    assert any("view" in f for f in fails), fails
+
+
+def test_thesis_h_periods_may_be_omitted(tmp_path):
+    """B6：2y／5y／10y 依可觀測時間窗給 1–3 段，缺欄不再 FAIL。"""
+    data = _src_judgment()
+    for h in data["thesis"]["H"]:
+        h.pop("5y", None)
+        h.pop("10y", None)
+    path = tmp_path / "judgment.json"
+    path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+
+    fails, _warns = vj.validate_file(path, None, j1_warn=False)
+
+    assert fails == [], f"H 期限缺欄被判 FAIL：{fails}"
+
+
+def test_j4_no_longer_warns_on_derivable_plain_fields():
+    """A3：有機械 fallback 的 plain 子欄位缺了不再逐欄催稿。"""
+    plain = {
+        "five": {k: "x" for k in vj._PLAIN_FIVE_KEYS},
+        "business": {k: "x" for k in vj._PLAIN_BUSINESS_KEYS},
+        "stories": {k: "x" for k in vj._PLAIN_STORIES_KEYS},
+        "growth_funding": "x", "prior_compare_reason": "x", "evidence_quality": "x",
+    }
+    warns = vj.j4_plain_checks({"plain": plain})
+    assert warns == [], warns
+
+
 def test_j5_plain_role_mismatch_is_fail():
     import validate_judgment as vj
     data = {"decision_out": {"role": "衛星"}, "plain": {"verdict_line": "進場，當核心持股，但先買三分之一。", "five": {"how_to_act": "首階三分之一"}}}

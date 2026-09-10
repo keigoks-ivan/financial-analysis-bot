@@ -249,6 +249,81 @@ def test_minimal_judgment_does_not_crash(tmp_path):
     assert "{{" not in html_text
 
 
+def test_unexpanded_block_renders_reason_line(tmp_path):
+    """WP-D（B1–B4）：條件式區塊標成未展開時，快速版要看得到「未展開：理由」。"""
+    src = SRC_DIR / "BE_20260905"
+    j = copy.deepcopy(json.loads((src / "BE_20260905.judgment.json").read_text(encoding="utf-8")))
+    j["industry"]["tam_table"] = {
+        "expanded": False,
+        "reason": "估值不靠低滲透；份額擴張成為承重假設時重新展開",
+    }
+    jpath = tmp_path / "BE_unexpanded.judgment.json"
+    jpath.write_text(json.dumps(j, ensure_ascii=False), encoding="utf-8")
+    out = tmp_path / "BE_unexpanded.html"
+    r = _run_cli([
+        "--judgment", str(jpath),
+        "--scenario-meta", str(src / "BE_20260905.scenario_meta.json"),
+        "--evidence", str(src / "BE_20260905.evidence.json"),
+        "--out", str(out),
+    ])
+    assert r.returncode == 0, r.stderr
+    html_text = out.read_text(encoding="utf-8")
+    assert "{{" not in html_text
+    assert "未展開區塊" in html_text
+    assert "市場邊界與利潤池——估值不靠低滲透" in html_text
+
+
+def test_counter_evidence_records_render_by_view(tmp_path):
+    """WP-D（A1）：反證紀錄按三視角分組渲染；plain.how_to_lose 缺時走這條 fallback。"""
+    src = SRC_DIR / "BE_20260905"
+    j = copy.deepcopy(json.loads((src / "BE_20260905.judgment.json").read_text(encoding="utf-8")))
+    j.pop("plain", None)
+    j["premortem"]["blind_spots"] = [
+        {"view": "論點失敗", "evidence": "訂單能見度只到 2027",
+         "assumption": "H1 產能滿載", "consequence": "FY2 EPS 砍三成",
+         "ruling": "採納", "watch": "季度 backlog"},
+        {"view": "價格已反映太多", "evidence": "五年分位 92%",
+         "assumption": "終端倍數不收斂", "consequence": "re-rate 由正轉負",
+         "ruling": "採納", "watch": "FY2 倍數"},
+    ]
+    j["premortem"].pop("failure_story", None)
+    j["premortem"].pop("second_failure", None)
+    jpath = tmp_path / "BE_counter.judgment.json"
+    jpath.write_text(json.dumps(j, ensure_ascii=False), encoding="utf-8")
+    out = tmp_path / "BE_counter.html"
+    r = _run_cli([
+        "--judgment", str(jpath),
+        "--scenario-meta", str(src / "BE_20260905.scenario_meta.json"),
+        "--out", str(out),
+    ])
+    assert r.returncode == 0, r.stderr
+    html_text = out.read_text(encoding="utf-8")
+    assert "{{" not in html_text
+    assert "<b>論點失敗</b>" in html_text
+    assert "<b>價格已反映太多</b>" in html_text
+    assert "訂單能見度只到 2027 → H1 產能滿載" in html_text
+    assert "觀測點：季度 backlog" in html_text
+
+
+def test_max_dd_without_trigger_time_renders_clean(tmp_path):
+    """WP-D（撤配額 4）：Max DD 沒有觸發時點時不留下空冒號。"""
+    src = SRC_DIR / "BE_20260905"
+    j = copy.deepcopy(json.loads((src / "BE_20260905.judgment.json").read_text(encoding="utf-8")))
+    j.pop("plain", None)
+    j["premortem"].pop("failure_story", None)
+    j["premortem"].pop("second_failure", None)
+    j["premortem"]["blind_spots"] = []
+    j["premortem"]["max_dd"].pop("trigger_time", None)
+    jpath = tmp_path / "BE_nodd.judgment.json"
+    jpath.write_text(json.dumps(j, ensure_ascii=False), encoding="utf-8")
+    out = tmp_path / "BE_nodd.html"
+    r = _run_cli(["--judgment", str(jpath), "--out", str(out)])
+    assert r.returncode == 0, r.stderr
+    html_text = out.read_text(encoding="utf-8")
+    assert "（路徑風險" in html_text
+    assert "）：</p>" not in html_text
+
+
 def test_missing_judgment_file_exits_nonzero(tmp_path):
     out = tmp_path / "nope.html"
     r = _run_cli(["--judgment", str(tmp_path / "does_not_exist.json"), "--out", str(out)])

@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "dd_schema/judgment.schema.json",
   "title": "stock-analyst v17 judgment.json (WP1c draft-07 subset)",
-  "description": "Interpreted by scripts/validate_judgment.py's lightweight generic validator (supports: type/required/properties/items/enum/pattern/minItems/minLength/maxLength/additionalProperties only -- NOT a full draft-07 implementation). Cross-field rules (H<->R<->triggers mapping, decision_inputs completeness, scenario_ref consistency, date>=1 row) are NOT expressible here and are checked separately in validate_judgment.py. See scripts/dd_schema/judgment-to-ddmeta.md for the dd-meta field derivation table.",
+  "description": "2026-09-10 (WP-D 規則精簡): (1) premortem.blind_spots[] 是反證紀錄的 canonical 居所 (view/evidence/assumption/consequence/ruling/watch)，failure_story/second_failure/trap_analysis 各欄降為選填的引用面；(2) 條件式展開區塊 (industry.tam_table / growth.segments / governance.capital_returns / valuation.peers) 額外接受 {\"expanded\": false, \"reason\": \"...\"} 物件形狀；(3) contradictions[].prior_field 可為欄名陣列並帶 cause，讓多欄共用一個歸因。全部只放寬不收緊，舊形狀仍合法。Interpreted by scripts/validate_judgment.py's lightweight generic validator (supports: type/required/properties/items/enum/pattern/minItems/minLength/maxLength/additionalProperties only -- NOT a full draft-07 implementation). Cross-field rules (H<->R<->triggers mapping, decision_inputs completeness, scenario_ref consistency, date>=1 row) are NOT expressible here and are checked separately in validate_judgment.py. See scripts/dd_schema/judgment-to-ddmeta.md for the dd-meta field derivation table.",
   "type": "object",
   "required": [
     "meta", "oneliner", "archetype", "thesis", "industry", "moat", "growth",
@@ -59,7 +59,8 @@
           "minItems": 3,
           "items": {
             "type": "object",
-            "required": ["id", "text", "2y", "5y", "10y", "threshold", "source", "drift_rule"],
+            "required": ["id", "text", "threshold", "source", "drift_rule"],
+            "description": "B6（2026-09-10）：2y／5y／10y 改依假設可觀測時間窗填 1–3 段，不再硬配三段；欄位保留、值可 null。",
             "properties": {
               "id": {"type": "string", "pattern": "^H[1-9][0-9]*$"},
               "text": {"type": ["string", "null"]},
@@ -117,7 +118,12 @@
           }
         },
         "profit_pool_dir": {"type": ["string", "null"]},
-        "tam_table": {"type": "array", "minItems": 1, "items": {"type": "object"}}
+        "tam_table": {
+          "type": ["array", "object"],
+          "minItems": 1,
+          "items": {"type": "object"},
+          "description": "B1（2026-09-10）：條件式展開。未展開時填 {\"expanded\": false, \"reason\": \"…\"}。"
+        }
       }
     },
 
@@ -187,7 +193,12 @@
         "runway_years": {"type": ["number", "string", "null"]},
         "runway_post_y5": {"type": ["string", "null"], "enum": ["🟢", "🟡", "🔴", null]},
         "seven_questions": {"type": "array", "items": {"type": ["string", "object"]}},
-        "segments": {"type": "array", "minItems": 1, "items": {"type": "object"}},
+        "segments": {
+          "type": ["array", "object"],
+          "minItems": 1,
+          "items": {"type": "object"},
+          "description": "B2（2026-09-10）：條件式展開。未展開時填 {\"expanded\": false, \"reason\": \"…\"}。"
+        },
         "decay_signals": {"type": "array", "items": {"type": ["string", "object"]}},
         "trap_rating": {"type": ["string", "null"]}
       }
@@ -211,7 +222,12 @@
       "properties": {
         "capalloc_grade": {"type": ["string", "null"], "enum": ["A", "B", "C", null]},
         "scorecard": {"type": "array", "minItems": 1, "items": {"type": "object"}},
-        "capital_returns": {"type": "array", "minItems": 1, "items": {"type": "object"}},
+        "capital_returns": {
+          "type": ["array", "object"],
+          "minItems": 1,
+          "items": {"type": "object"},
+          "description": "B3（2026-09-10）：條件式展開（十年全史）。未展開時填 {\"expanded\": false, \"reason\": \"…\"}。"
+        },
         "sbc": {"type": "object"}
       }
     },
@@ -222,7 +238,11 @@
                    "val_light_derivation", "targets", "upside_short_pct", "upside_mid_pct"],
       "properties": {
         "tier": {"type": ["string", "null"]},
-        "peers": {"type": "array", "items": {"type": "object"}},
+        "peers": {
+        "type": ["array", "object"],
+        "items": {"type": "object"},
+        "description": "B4（2026-09-10）：同業 tier 比較改條件式。未展開時填 {\"expanded\": false, \"reason\": \"…\"}；peg／percentile_5y／val_light 仍必填。"
+      },
         "fwd_pe": {"type": ["number", "null"]},
         "peg": {"type": ["number", "null"]},
         "percentile_5y": {"type": ["number", "null"]},
@@ -236,7 +256,8 @@
 
     "trap_analysis": {
       "type": "object",
-      "required": ["pattern", "evidence_against", "evidence_for", "bear_case", "monitor", "verdict", "label"],
+      "required": ["verdict"],
+      "description": "A1（2026-09-10）：判斷依據移到 premortem.blind_spots[] 反證紀錄，本區只留 verdict（與 decision_inputs.trap 同源）＋選填 label；其餘欄位保留但不再必填。",
       "properties": {
         "pattern": {"type": ["string", "null"]},
         "evidence_against": {"type": ["string", "null"]},
@@ -425,6 +446,16 @@
         "type": "object",
         "properties": {
           "axis": {"type": ["string", "null"]},
+          "cause": {
+            "type": ["string", "null"],
+            "enum": ["價格變動", "新證據", "方法變動", null],
+            "description": "A4（2026-09-10）：漂移歸因的原因分組；多個漂移欄可共用同一條目。"
+          },
+          "prior_field": {
+            "type": ["string", "array", "null"],
+            "items": {"type": "string"},
+            "description": "A4（2026-09-10）：dd-meta 欄名；同一原因涵蓋多欄時填欄名陣列，單欄仍可填字串。"
+          },
           "side_a": {"type": ["string", "null"]},
           "side_b": {"type": ["string", "null"]},
           "ruling": {"type": ["string", "null"]},
@@ -438,13 +469,23 @@
 
     "premortem": {
       "type": "object",
-      "required": ["blind_spots", "failure_story", "second_failure", "max_dd"],
+      "required": ["blind_spots", "max_dd"],
+      "description": "A1（2026-09-10）：blind_spots[] 升為反證紀錄的 canonical 居所；failure_story／second_failure 降為選填（其內容改由 view=論點失敗／論點成功但股東經濟變差 的條目承接），舊檔照填仍合法。",
       "properties": {
         "blind_spots": {
           "type": "array",
           "items": {
             "type": ["string", "object"],
             "properties": {
+              "view": {
+                "type": ["string", "null"],
+                "enum": ["論點失敗", "論點成功但股東經濟變差", "價格已反映太多", null]
+              },
+              "evidence": {"type": ["string", "null"]},
+              "assumption": {"type": ["string", "null"]},
+              "consequence": {"type": ["string", "null"]},
+              "ruling": {"type": ["string", "null"]},
+              "watch": {"type": ["string", "null"]},
               "text": {"type": ["string", "null"]},
               "evidence_refs": {"type": "array", "items": {"type": "string"}}
             }
@@ -454,7 +495,8 @@
         "second_failure": {"type": ["string", "null"]},
         "max_dd": {
           "type": "object",
-          "required": ["lo", "hi", "path_risk", "trigger_time"],
+          "required": ["lo", "hi", "path_risk"],
+          "description": "2026-09-10：trigger_time（觸發時點／恢復年數）降為選填——沒有依據不得為填欄位生成精確時間；lo 仍必填（下游 dd-meta max_dd_pct 直讀）。",
           "properties": {
             "lo": {"type": ["number", "null"]},
             "hi": {"type": ["number", "null"]},

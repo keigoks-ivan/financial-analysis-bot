@@ -124,6 +124,76 @@ def _truncate(s, n=60):
 
 
 # ---------------------------------------------------------------------------
+# 2026-09-10（WP-D 規則精簡）兩個共用形狀
+#   (1) 條件式展開區塊未展開時，該欄改填 {"expanded": false, "reason": "…"}
+#       （judgment-rules.md §0.5(二)：industry.tam_table／growth.segments／
+#       governance.capital_returns／valuation.peers），頁面渲染成一行「未展開：理由」。
+#   (2) premortem.blind_spots[] 是反證紀錄的 canonical 居所（§0.5(一)），每條帶
+#       view／evidence／assumption／consequence／ruling／watch；舊形狀（純字串或
+#       只有 text 的物件）仍原樣渲染，不必回填。
+# ---------------------------------------------------------------------------
+
+def unexpanded_reason(block):
+    """區塊被標成「本案不展開」時回傳理由字串，否則 None。"""
+    if isinstance(block, dict) and block.get("expanded") is False:
+        return block.get("reason") or "（未附理由）"
+    return None
+
+
+def render_unexpanded(block):
+    """未展開區塊的一行說明；非未展開回 None（呼叫端走原本的渲染）。"""
+    reason = unexpanded_reason(block)
+    if reason is None:
+        return None
+    return f'    <p class="note">未展開：{esc(reason)}</p>'
+
+
+# 條件式展開區塊 → 讀者面標籤（順序＝頁面列出的順序）
+_CONDITIONAL_BLOCKS = (
+    ("市場邊界與利潤池", ("industry", "tam_table")),
+    ("分部三年模型", ("growth", "segments")),
+    ("十年資本配置全史", ("governance", "capital_returns")),
+    ("同業倍數對照", ("valuation", "peers")),
+)
+
+
+def unexpanded_blocks(j):
+    """回傳 [(標籤, 理由), …]，本份判斷裡被標成「不展開」的條件式區塊。"""
+    out = []
+    for label, (top, key) in _CONDITIONAL_BLOCKS:
+        reason = unexpanded_reason((j.get(top) or {}).get(key))
+        if reason is not None:
+            out.append((label, reason))
+    return out
+
+
+_COUNTER_VIEWS = ("論點失敗", "論點成功但股東經濟變差", "價格已反映太多")
+
+
+def counter_records(j):
+    """把 premortem.blind_spots[] 正規化成反證紀錄 list（舊形狀一併吃）。"""
+    out = []
+    for b in (j.get("premortem") or {}).get("blind_spots") or []:
+        if isinstance(b, str):
+            out.append({"text": b})
+        elif isinstance(b, dict):
+            out.append(b)
+    return out
+
+
+def _counter_line(rec):
+    """一條反證紀錄的一行文字：優先用 canonical 五欄，退回舊的 text。"""
+    bits = [rec.get(k) for k in ("evidence", "assumption", "consequence", "ruling")]
+    bits = [b for b in bits if b]
+    if not bits:
+        return esc(rec.get("text") or "")
+    line = " → ".join(esc(b) for b in bits)
+    if rec.get("watch"):
+        line += f'<br><span class="note">觀測點：{esc(rec["watch"])}</span>'
+    return line
+
+
+# ---------------------------------------------------------------------------
 # header
 # ---------------------------------------------------------------------------
 
@@ -309,6 +379,12 @@ def render_fears(j):
             for f in fears[:3]
         )
         return items, False
+    # 2026-09-10（A1）：plain.fears 缺時先讀反證紀錄的「論點失敗」條目，再退回
+    # thesis.R——同一份反證只寫一次，這裡只是引用。
+    failures = [r for r in counter_records(j) if r.get("view") == "論點失敗"]
+    if failures:
+        items = "\n".join(f"    <li>{_counter_line(r)}</li>" for r in failures[:3])
+        return items, True
     R = (j.get("thesis") or {}).get("R") or []
     if not R:
         return "    <li>—</li>", True
@@ -574,20 +650,35 @@ def render_premortem(j):
     prem = j.get("premortem") or {}
     max_dd = prem.get("max_dd") or {}
     parts = []
+    # 舊形狀（v17 之前把失敗故事／第二敗局各寫一欄）仍原樣渲染在前，新檔不再寫這兩欄。
     if prem.get("failure_story"):
         parts.append(f"<p><b>失敗故事</b>：{esc(prem['failure_story'])}</p>")
     if prem.get("second_failure"):
         parts.append(f"<p><b>第二敗局</b>：{esc(prem['second_failure'])}</p>")
-    blind_spots = prem.get("blind_spots") or []
-    if blind_spots:
-        items = "".join(f"<li>{esc(b)}</li>" for b in blind_spots)
-        parts.append(f"<p><b>盲點</b></p><ul>{items}</ul>")
+    recs = counter_records(j)
+    if recs:
+        by_view = [(v, [r for r in recs if r.get("view") == v]) for v in _COUNTER_VIEWS]
+        if any(rs for _, rs in by_view):
+            for view, rs in by_view:
+                if not rs:
+                    continue
+                items = "".join(f"<li>{_counter_line(r)}</li>" for r in rs)
+                parts.append(f"<p><b>{esc(view)}</b></p><ul>{items}</ul>")
+            rest = [r for r in recs if r.get("view") not in _COUNTER_VIEWS]
+            if rest:
+                items = "".join(f"<li>{_counter_line(r)}</li>" for r in rest)
+                parts.append(f"<p><b>其他反證</b></p><ul>{items}</ul>")
+        else:
+            items = "".join(f"<li>{_counter_line(r)}</li>" for r in recs)
+            parts.append(f"<p><b>盲點</b></p><ul>{items}</ul>")
     if max_dd:
         lo, hi = max_dd.get("lo"), max_dd.get("hi")
+        # trigger_time 2026-09-10 起選填——沒有依據就不硬寫時點（撤配額 4）。
+        tt = max_dd.get("trigger_time")
+        tail = f"：{esc(tt)}" if tt else ""
         parts.append(
-            "<p><b>Max DD</b> {lo}%～{hi}%（路徑風險 {pr}）：{tt}</p>".format(
-                lo=esc(lo), hi=esc(hi), pr=esc(max_dd.get("path_risk")),
-                tt=esc(max_dd.get("trigger_time")),
+            "<p><b>Max DD</b> {lo}%～{hi}%（路徑風險 {pr}）{tail}</p>".format(
+                lo=esc(lo), hi=esc(hi), pr=esc(max_dd.get("path_risk")), tail=tail,
             )
         )
     return "\n  ".join(parts) if parts else "<p>—</p>"
@@ -815,6 +906,12 @@ def render_evidence_quality(j, evidence, audit_path):
         f'    <tr><td>產業報告對帳</td><td>{esc(id_cell)}</td>'
         f'<td>知識帳本</td><td>{esc(ledger_cell)}</td></tr>'
     )
+    # 2026-09-10（B1–B4）：條件式展開的區塊若本案未展開，理由要看得見——沒有
+    # 未展開區塊時整列不出現（既有判斷物的渲染完全不變）。
+    skipped = unexpanded_blocks(j)
+    if skipped:
+        cell = "；".join(f"{label}——{reason}" for label, reason in skipped)
+        rows += f'\n    <tr><td>未展開區塊</td><td colspan="3">{esc(cell)}</td></tr>'
     return lead_html, lead_fallback, rows
 
 

@@ -325,8 +325,21 @@ def render_audit_html(j: dict) -> str | None:
 # E3 -- §3.F 逐段 TAM/SAM + 利潤池合一 (industry.tam_table[])
 # ---------------------------------------------------------------------------
 
+def _unexpanded_table(table_id: str, block, header: str):
+    """2026-09-10（B1–B4）：條件式展開區塊被標成 {"expanded": false, "reason": …}
+    時，整張表改渲染成一行「未展開：理由」——欄數對齊原表頭，讀者看得到為什麼
+    沒展開，不是靜靜消失。非未展開形狀回 None，呼叫端照原路走。"""
+    if not (isinstance(block, dict) and block.get("expanded") is False):
+        return None
+    ncol = header.count("<th>")
+    reason = esc(block.get("reason") or "（未附理由）")
+    return ('<table id="{tid}">\n'.format(tid=table_id) + header + "\n"
+            + '<tr><td colspan="{n}">未展開：{r}</td></tr>\n</table>\n'.format(n=ncol, r=reason))
+
+
 def render_e3_html(j: dict) -> str:
-    rows_data = (j.get("industry") or {}).get("tam_table") or []
+    block = (j.get("industry") or {}).get("tam_table")
+    rows_data = block if isinstance(block, list) else []
     rows = []
     for r in rows_data:
         rows.append(
@@ -341,6 +354,9 @@ def render_e3_html(j: dict) -> str:
         "<tr><th>段</th><th>TAM(現)</th><th>TAM(5Y)</th><th>滲透率</th>"
         "<th>段CAGR</th><th>Value Chain位置</th><th>利潤池占比遷移</th></tr>"
     )
+    skipped = _unexpanded_table("e3", block, header)
+    if skipped:
+        return skipped
     return '<table id="e3">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n"
 
 
@@ -423,7 +439,8 @@ def render_e7_html(j: dict) -> str:
 # ---------------------------------------------------------------------------
 
 def render_e8_html(j: dict) -> str:
-    rows_data = (j.get("growth") or {}).get("segments") or []
+    block = (j.get("growth") or {}).get("segments")
+    rows_data = block if isinstance(block, list) else []
     rows = []
     for r in rows_data:
         rows.append(
@@ -438,6 +455,9 @@ def render_e8_html(j: dict) -> str:
         "<tr><th>段</th><th>FY0營收</th><th>FY+1E</th><th>FY+2E</th>"
         "<th>OM軌跡(FY0→FY+2E)</th><th>對EPS貢獻%</th></tr>"
     )
+    skipped = _unexpanded_table("e8", block, header)
+    if skipped:
+        return skipped
     return '<table id="e8">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n"
 
 
@@ -478,7 +498,8 @@ def render_e9_html(j: dict) -> str:
 
 def render_e10_html(j: dict) -> str:
     gov = j.get("governance") or {}
-    rows_data = gov.get("capital_returns") or []
+    block = gov.get("capital_returns")
+    rows_data = block if isinstance(block, list) else []
     rows = []
     for r in rows_data:
         rows.append(
@@ -488,7 +509,8 @@ def render_e10_html(j: dict) -> str:
             )
         )
     header = "<tr><th>年度</th><th>回購</th><th>股利</th><th>資本支出</th><th>研發</th></tr>"
-    table = '<table id="e10">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n"
+    skipped = _unexpanded_table("e10", block, header)
+    table = skipped or ('<table id="e10">\n' + header + "\n" + "\n".join(rows) + "\n</table>\n")
     score_rows = gov.get("scorecard") or []
     if score_rows:
         items = "".join(

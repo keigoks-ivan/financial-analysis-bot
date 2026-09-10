@@ -45,6 +45,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import dd_prior  # sibling module — reuse DRIFT_WATCH (single source of truth)
+import validate_judgment  # sibling module — reuse _prior_fields_of（A4 歸因正規化，單一權威）
 import dd_metric_resolver  # sibling module — reuse resolve_scenario_metrics (P2-2 2026-09-07)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -708,7 +709,15 @@ def cmd_check(argv):
     special_fields = set(dd_metric_resolver.SCENARIO_METRIC_FIELDS) | set(SCENARIO_ONLY_FIELDS)
 
     contradictions = judgment.get("contradictions") or []
-    prior_fields_present = {c.get("prior_field") for c in contradictions if c.get("prior_field")}
+    # 2026-09-10（A4 規則精簡）：一個 contradictions 條目可用 `cause`（價格變動／
+    # 新證據／方法變動）歸因多個漂移欄，`prior_field` 因此可以是欄名陣列。規則從
+    # 「每個變動欄必須有獨立 prior_field 條目」放寬成「每個變動欄必須映射到一個
+    # 原因條目」——欄位仍逐欄對帳，只是文字不必逐欄重寫。正規化邏輯 import
+    # validate_judgment 的單一權威，不在此複製。
+    prior_fields_present = set()
+    for c in contradictions:
+        if isinstance(c, dict):
+            prior_fields_present |= validate_judgment._prior_fields_of(c)
     missing_prior_field = []
     for field, jpath in DRIFT_FIELD_JUDGMENT_PATH.items():
         if field in special_fields:
@@ -724,7 +733,7 @@ def cmd_check(argv):
     ok = not violations and not missing_prior_field
     if ok:
         print("PASS: judgment.json 只改動 judgment_fields_to_review（含永遠允許欄）列出的路徑；"
-              "漂移欄位皆有 contradictions[].prior_field 條目。")
+              "漂移欄位皆已映射到 contradictions[] 的原因條目。")
         return 0
 
     print("FAIL")
@@ -733,7 +742,8 @@ def cmd_check(argv):
         for v in violations:
             print(f"    - [{v['kind']}] {v['path']}: {v['old']!r} -> {v['new']!r}")
     if missing_prior_field:
-        print(f"  漂移欄位缺 contradictions[].prior_field 條目（{len(missing_prior_field)} 項）：")
+        print(f"  漂移欄位未映射到任何 contradictions[] 原因條目（prior_field 字串或陣列皆可，"
+              f"{len(missing_prior_field)} 項）：")
         for m in missing_prior_field:
             print(f"    - {m['field']} ({m['path']}): {m['old']!r} -> {m['new']!r}")
     return 1

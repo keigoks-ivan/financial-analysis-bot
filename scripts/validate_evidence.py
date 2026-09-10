@@ -10,7 +10,9 @@
   3. 每軸 status ∈ {found, none, not_applicable}；pending（或非法值）＝FAIL。
      - found：≥1 條 findings，每條須有 claim/source/as_of/direction(+|0|-)/affects[]；
        as_of 距 evidence date > 180 天 → WARN；as_of 無法解析為日期 → FAIL。
-     - none：queries_run ≥2 條，否則 FAIL。
+     - none：queries_run ≥1 條，否則 FAIL（2026-09-10 B8：撤「每軸獨立湊查詢次數」
+       的 ≥2 下限，同一次搜尋可支撐多軸；1 條仍是「12 軸全掃」的可稽核下限，
+       <2 條降為 WARN 供 Stage 1G 覆蓋面掃描判讀）。
      - not_applicable：note 非空字串，且該軸 coverage-axes.md 標 na_allowed=true，
        否則 FAIL（不得用「不適用」逃避查證）。
   4. numbers 必含 price_at_dd／price_as_of／earnings_recency（v15.2.4 命名沿用）。
@@ -299,9 +301,14 @@ def check_axis(axis_id, axis_obj, matrix):
                 fails.append(f"[{axis_id}] findings[{i}].as_of={f['as_of']!r} 無法解析為日期")
 
     elif status == "none":
+        # 2026-09-10（B8 規則精簡）：撤「每軸 ≥2 條獨立查詢」的湊數下限——同一次搜尋
+        # 的來源可同時支撐多個軸，硬性 ≥2 只會逼出為湊數而編造的查詢詞。仍留 ≥1 條，
+        # 因為「12 軸全掃」若沒有任何查詢紀錄就無法稽核（B8 的硬條件是保留全掃）。
         qr = c.get("queries_run") or []
-        if len(qr) < 2:
-            fails.append(f"[{axis_id}] status=none 但 queries_run 僅 {len(qr)} 條（須 ≥2）")
+        if len(qr) < 1:
+            fails.append(f"[{axis_id}] status=none 但沒有任何 queries_run 紀錄（12 軸全掃須可稽核）")
+        elif len(qr) < 2:
+            warns.append(f"[{axis_id}] status=none 且 queries_run 僅 1 條（不擋，供覆蓋面掃描判讀）")
 
     elif status == "not_applicable":
         note = c.get("note") or ""

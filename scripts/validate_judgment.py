@@ -37,6 +37,9 @@ Two layers:
      (via gen_dd_tables.build_dd_meta — the single judgment→dd-meta mapping,
      reused not re-derived) must have a corresponding entry in
      judgment.contradictions[] (see _v16_design_spec §5.5 / drift_check_spec.md).
+     2026-09-10（A4 規則精簡）：條目可用 `cause`（價格變動／新證據／方法變動）
+     歸因多個欄位，`prior_field` 因此接受欄名陣列——規則從「每個變動欄必須有
+     獨立條目」放寬成「每個變動欄必須映射到一個原因條目」，逐欄記帳不變。
   5. J1 負向證據可追溯（--evidence 給定才啟用，WP2 2026-09-05）: evidence
      coverage／events 內每條 direction=="-" 的 finding（無 id 時以
      {axis}#{index} 現算）須出現在 judgment 任一 evidence_refs 陣列
@@ -52,12 +55,15 @@ Two layers:
   7. J3 `--fix`（WP2）: 自動修正 scenario_ref 相對路徑→絕對路徑、字串內半形
      標點轉全形；scenario_meta.valuation_dependent 與 decision_inputs 不一致
      不自動修，仍由 J2 列 FAIL。
-  8. J4 plain 完整性（WARN，WP5a 2026-09-05）: 頂層選填 `plain`（白話區塊，
-     契約見 `_wp_spec_v17_batch3_20260905.md`）缺、或任一子欄缺／空字串、或
-     `bets`／`fears`／`change_my_mind` 三個陣列長度 ≠3 → WARN 逐項列出（不
-     FAIL；`plain` 是內容欄不是判斷規則）。另檢查 plain 內數字 ⊆ judgment
-     其他欄位數字集合（正規化去千分位／%／$／全半形，只比對 ≥2 位數字的
-     token）為 WARN。`plain` 內字串仍照常走 leak_and_punct_checks（FAIL）。
+  8. J4 plain 完整性（WARN，WP5a 2026-09-05；2026-09-10 A3 收斂）: 頂層選填
+     `plain`（白話區塊）只對**dd_brief 真的渲染、且無法從別處機械導出**的子欄
+     位列 WARN——`verdict_line`／`verdict_sub`／`market_wrong`／`how_to_lose`／
+     `bets`／`fears`／`change_my_mind`／`business.moat_direction` 都有機械
+     fallback（decision_out／oneliner／valuation.targets／premortem／thesis.H／
+     thesis.R／triggers／moat），缺了頁面自動退回結構欄位並標 `class="fallback"`，
+     不再逐欄催稿；三個陣列的「長度必須是 3」配額同時撤除。另檢查 plain 內數字
+     ⊆ judgment 其他欄位數字集合為 WARN。`plain` 內字串仍照常走
+     leak_and_punct_checks（FAIL）。
 
 Usage:
   python3 scripts/validate_judgment.py FILE.json [--report] [--evidence EVIDENCE.json]
@@ -664,6 +670,19 @@ def _field_drifted(field: str, prior_v, cur_v) -> bool:
     return _norm_str_for_drift(prior_v) != _norm_str_for_drift(cur_v)
 
 
+def _prior_fields_of(c: dict) -> set:
+    """A4（2026-09-10 規則精簡）：一個 contradictions 條目可用 `cause`（價格變動／新證據／
+    方法變動）歸因多個漂移欄，故 `prior_field` 允許欄名陣列；單欄仍可填字串。這裡把兩種
+    形狀正規化成集合，讓「每個變動欄必須有獨立條目」放寬成「每個變動欄必須映射到一個
+    原因條目」——欄位仍逐欄記帳，只是文字不必逐欄重寫一遍。"""
+    pf = (c or {}).get("prior_field")
+    if isinstance(pf, str):
+        return {pf} if pf else set()
+    if isinstance(pf, list):
+        return {x for x in pf if isinstance(x, str) and x}
+    return set()
+
+
 def drift_checks(data: dict, judgment_path: Path, evidence_path: Path | None) -> tuple[list, list]:
     fails, warns = [], []
 
@@ -713,7 +732,7 @@ def drift_checks(data: dict, judgment_path: Path, evidence_path: Path | None) ->
         for c in contradictions:
             if not isinstance(c, dict):
                 continue
-            if c.get("prior_field") == f:
+            if f in _prior_fields_of(c):
                 attributed = True
                 break
             axis = c.get("axis") or ""
@@ -731,7 +750,7 @@ def drift_checks(data: dict, judgment_path: Path, evidence_path: Path | None) ->
             else:
                 fails.append(
                     f"漂移未歸因：{f}（本次={cv!r}／前份={pv!r}）— judgment.contradictions[] "
-                    f"找不到 prior_field={f!r} 或 axis 含 {f!r} token 的條目"
+                    f"找不到 prior_field 涵蓋 {f!r}（字串或陣列皆可）或 axis 含 {f!r} token 的條目"
                 )
 
     return fails, warns
@@ -745,14 +764,18 @@ def drift_checks(data: dict, judgment_path: Path, evidence_path: Path | None) ->
 # leak_and_punct_checks（跑在 data 全樹，plain 已含在內，不需另呼叫）。
 # ---------------------------------------------------------------------------
 
+# 2026-09-10（A3）：只留「dd_brief 有渲染且沒有機械 fallback」的子欄位。
+# 有 fallback 因而移出清單者（括號內為 dd_brief 的退路）：
+#   verdict_line（decision_out.verdict）／verdict_sub（oneliner）／
+#   market_wrong（valuation.targets.market_wrong_where）／how_to_lose（premortem）／
+#   bets（thesis.H）／fears（thesis.R）／change_my_mind（triggers）／
+#   business.moat_direction（moat.grade+trend）。
 _PLAIN_FIVE_KEYS = ("how_it_makes_money", "why_now", "why_this_size", "biggest_fear", "how_to_act")
-_PLAIN_BUSINESS_KEYS = ("what_to_whom", "why_customers_stay", "moat_direction")
+_PLAIN_BUSINESS_KEYS = ("what_to_whom", "why_customers_stay")
 _PLAIN_STORIES_KEYS = ("bull", "base", "bear")
 _PLAIN_TOP_SCALAR_KEYS = (
-    "verdict_line", "verdict_sub", "market_wrong", "growth_funding",
-    "prior_compare_reason", "how_to_lose", "evidence_quality",
+    "growth_funding", "prior_compare_reason", "evidence_quality",
 )
-_PLAIN_ARRAY_KEYS = ("bets", "fears", "change_my_mind")
 _PLAIN_NUM_TOKEN_RE = re.compile(r"\d+(?:\.\d+)?")
 _PLAIN_NUM_STRIP_RE = re.compile(r"[,，%＄$]")
 
@@ -813,12 +836,6 @@ def j4_plain_checks(data: dict) -> list:
     stories = plain.get("stories") or {}
     for k in _PLAIN_STORIES_KEYS:
         _check(stories, k, f"plain.stories.{k}")
-
-    for k in _PLAIN_ARRAY_KEYS:
-        arr = plain.get(k)
-        n = len(arr) if isinstance(arr, list) else 0
-        if n != 3:
-            warns.append(f"J4：plain.{k} 長度應為 3，實際 {n}")
 
     other = {k: v for k, v in data.items() if k != "plain"}
     other_nums = _collect_numbers(other)

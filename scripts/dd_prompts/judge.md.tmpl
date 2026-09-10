@@ -27,37 +27,59 @@ bundle 證據包內**每一條 `dir=-` 的 finding**，都必須落到下列其�
 
 `validate_judgment.py` 會逐條比對：有任一 `dir=-` finding 既不在 `evidence_refs` 也不在 `evidence_dismissed` 即 FAIL。**先掃一遍負向 finding 清單再動筆**，比事後補洞省輪次。
 
+## 反證只寫一份（`premortem.blind_spots[]`）
+
+「這個判斷可能錯在哪」**只寫這一個欄位**（judgment-rules.md §0.5(一)）。每條一個物件：
+
+```
+{{"view": "論點失敗|論點成功但股東經濟變差|價格已反映太多",
+  "evidence": "觸發這條反證的證據", "assumption": "打到哪個假設",
+  "consequence": "財務或估值後果", "ruling": "採納或反駁＋理由",
+  "watch": "觀測點", "evidence_refs": ["<finding ref>"]}}
+```
+
+規則見 judgment-rules.md §0.5(一)：三視角至少各一條，§11 steelman／§12 失敗故事與第二敗局／trap 判斷依據／`plain.fears`／`plain.how_to_lose` 一律引用不重寫。`trap_analysis` 只需 `verdict`（與 `decision_inputs.trap` 同值）＋一句 `label`；`premortem.failure_story`／`second_failure` 已降為選填。
+
+## 條件式展開區塊（不展開就說為什麼）
+
+`industry.tam_table`／`growth.segments`／`governance.capital_returns`／`valuation.peers` 觸發才展開（觸發條件見 judgment-rules.md §0.5(二) 與各節）。不展開時該欄改填 `{{"expanded": false, "reason": "為何不展開＋何時重新展開"}}`，理由與重啟觸發缺一即無效。**`valuation.peg` 與 `valuation.percentile_5y` 不在此列，永遠必交**（估值燈與 screener 直讀）。`thesis.H[]` 的 `2y`／`5y`／`10y` 依該假設何時看得出來填 1–3 段、其餘留 `null`。
+
 ## reasoning 欄必填
 
-judgment.json 頂層 `reasoning` 物件：每個承重數字模組（roic_durability／scenario／valuation／premortem 等）≤3 行推導，下游會原樣鋪進 `<div class="reasoning">`——敷衍或寫「估計約 X%」無算式即無效輸出。
+judgment.json 頂層 `reasoning` 物件：每個承重數字模組（roic_durability／scenario／valuation／premortem 等）都要有推導，下游原樣鋪進 `<div class="reasoning">`——敷衍或寫「估計約 X%」無算式即無效輸出。**無行數地板也無三行上限**。ROIIC／再投資率／內生成長上界**只在 `moat.roic_durability` 推導一次**，`growth` 與情境 sanity check 引用同一組數字、只解釋與共識的口徑差。
 
 ## plain 白話欄必填
 
-judgment.json 頂層 `plain` 物件（快速版頁面直接渲染這段、零 LLM 二次加工；讀者是持有人本人，不是分析師）：
+judgment.json 頂層 `plain` 物件（快速版頁面直接渲染這段、零 LLM 二次加工；讀者是持有人本人，不是分析師）。**2026-09-10 收斂**：只有下列子欄位「沒有機械退路、缺了頁面就空一塊」，是必寫的：
 
-- `verdict_line` 一句話裁決（≤40 字）、`verdict_sub` 怎麼做的一句話（≤80 字）
 - `five`：`how_it_makes_money`／`why_now`／`why_this_size`／`biggest_fear`／`how_to_act`，各 1–2 句
-- `business`：`what_to_whom`／`why_customers_stay`／`moat_direction`（等級、方向與最弱處），各 1–2 句
-- `bets` 3 條 `{{"claim": "我押的事", "wrong_when": "什麼時候算我錯"}}`
-- `fears` 3 條 `{{"clock": "⚡|🔥|🐢", "text": "怕什麼（含關鍵數字）"}}`
-- `market_wrong` 2–4 句（跟共識差在哪個假設）；`growth_funding` 1–2 句（引天花板與共識數字）
+- `business`：`what_to_whom`／`why_customers_stay`，各 1–2 句
 - `stories`：`bull`／`base`／`bear` 各 1–2 句「怎麼發生」
-- `change_my_mind` 3 條 `{{"what": "看什麼", "threshold": "門檻", "then": "就會", "when": "日期或—"}}`
+- `growth_funding` 1–2 句（引天花板與共識數字）
 - `prior_compare_reason` 1–2 句（主因是價格、方法論還是基本面；無前份填「首份」）
-- `how_to_lose` 2–3 句（含第二種死法）；`evidence_quality` 1–2 句（軸覆蓋、數字季別、逐字稿親讀哪季）
+- `evidence_quality` 1–2 句（軸覆蓋、數字季別、逐字稿親讀哪季）
+
+其餘子欄位**有機械 fallback，寫得出來就寫、寫不出來不必勉強**（缺了頁面自動退回結構欄位並標灰）：`verdict_line`／`verdict_sub`（退回 `decision_out.verdict`／`oneliner`）、`bets`（退回 `thesis.H`）、`fears`（退回反證紀錄的「論點失敗」條目，再退 `thesis.R`）、`market_wrong`（退回 `valuation.targets`）、`change_my_mind`（退回 `triggers`）、`how_to_lose`（退回反證紀錄）、`business.moat_direction`（退回護城河等級＋方向）。**三個陣列不再要求剛好 3 條。**
 
 寫作規則五條：
 1. 先講人話再給數字，不要用數字開頭。
 2. 每句 ≤40 字，一段 ≤2 句。
 3. 數字只能引 judgment 其他欄位已有的，`plain` 不得新增數字或自行換算。
 4. `plain` 內不得出現 QC 代號、欄位名、row 編號等機器語言。
-5. `change_my_mind` 三條必含唯一那條清倉級觸發器，且每條寫出日期（無明確日期填「—」）。
+5. 有寫 `change_my_mind` 就必含那條清倉級觸發器，每條寫出日期（無明確日期填「—」）。
 
 中文全形標點；`plain` 是內容欄，不改變任何機器欄位語意，缺欄或字數超標由 validator 以 WARN 逐項列出。
 
 ## 前份漂移逐欄歸因（judgment-rules.md §12 item 3b，QC-49 執行細則）
 
-`evidence.json.prior_dd.prior_meta`（前份 dd-meta 全欄）＋`.drift_watch`（固定 20 欄清單）已由 `dd_prior.py` 準備好——`decision_inputs`／情境六欄／`rearm`／`val`／`runway_post_y5` 與 `prior_meta` 任一欄不同，逐欄在 `contradictions[]` 開獨立條目（本次值／前份值／三元歸因排序主因，每條目帶 `prior_field`＝dd-meta 欄名，方法論驅動須明標）；無歸因＝`validate_judgment.py` FAIL。
+`evidence.json.prior_dd.prior_meta`（前份 dd-meta 全欄）＋`.drift_watch`（固定 20 欄清單）已由 `dd_prior.py` 準備好。**2026-09-10 改按原因分組**：20 欄仍逐欄記新舊值，但文字不必逐欄重寫——現價一次變動連帶改 IRR／EV／AR／估值燈時，開**一個** `contradictions[]` 條目：
+
+```
+{{"cause": "價格變動|新證據|方法變動", "prior_field": ["price_at_dd", "irr_base_pct", "ev5y_pct", "val"],
+  "axis": "…", "ruling": "各欄本次值／前份值逐欄列清＋主因"}}
+```
+
+`prior_field` 可填欄名陣列（單欄仍可填字串）。**每個漂移欄都必須映射到某一個原因條目**，漏一欄＝`validate_judgment.py` FAIL；「更新數據」不算歸因，方法驅動須明標。裁決（`dca_verdict`）、核心假設與情境方法的改變仍各自一條實質解釋，不得併進價格那條。
 
 <!-- 2026-09-07：避免判斷 agent 自行混入股利或重複計入回購，三個衍生欄交由 scenario 腳本回填。 -->
 
