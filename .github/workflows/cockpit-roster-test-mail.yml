@@ -1,0 +1,83 @@
+name: "Cockpit Roster Alert — Manual Test Mail"
+
+# 手動測試用小 workflow：只驗證「🧭 選股主控台名單變化」email 管線本身通不通，
+# 不跑 daily-us-close.yml 那整條帶（那條帶會下載並改動當天的價格/篩選/階段等
+# 資料，離峰手動觸發會弄髒資料）。本 workflow 只讀今天已經在 repo 裡的
+# docs/engine/arena.json + docs/stages/data/lamp.json，不下載任何行情，不寫
+# state 檔，不 commit——純粹跑 scripts/check_seat_stage_alerts.py --test-email
+# 產生一封標明「測試信」的信並寄出。
+#
+# workflow_dispatch only：故意不掛排程，daily-us-close.yml 的
+# 「[stages] Check cockpit roster alerts」步驟才是正式每日通知來源。
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  test-mail:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"  # 與 daily-us-close.yml 的 stages/check_seat_stage_alerts 步驟同版本
+
+      # check_seat_stage_alerts.py 及其匯入的 build_stages.py 只用標準庫
+      # （json / sys / argparse / pathlib），無需額外安裝套件。
+
+      - name: Write test alert body
+        run: python scripts/check_seat_stage_alerts.py --test-email
+
+      - name: Read test alert
+        id: seat_alert
+        run: |
+          echo "date=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+          if [ -f docs/stages/data/seat_stage_alert.txt ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            {
+              echo "body<<ALERT_EOF"
+              cat docs/stages/data/seat_stage_alert.txt
+              echo "ALERT_EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Fail-safe: probe SMTP secret presence via env (the `secrets` context is
+      # not reliable inside `if:`), then gate the email step on the result so a
+      # missing secret never fails the workflow. Same MAIL_USERNAME /
+      # MAIL_APP_PASSWORD pair used by daily-us-close.yml's cockpit roster
+      # email step and 7+ other workflows — no user action needed.
+      - name: Check mail secrets
+        id: mailcfg
+        env:
+          MU: ${{ secrets.MAIL_USERNAME }}
+          MP: ${{ secrets.MAIL_APP_PASSWORD }}
+        run: |
+          if [ -n "$MU" ] && [ -n "$MP" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false (SMTP secrets missing — email skipped)" >&2
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Email test alert
+        if: steps.seat_alert.outputs.changed == 'true' && steps.mailcfg.outputs.ready == 'true'
+        continue-on-error: true
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_APP_PASSWORD }}
+          subject: "🧭 選股主控台名單變化（測試信）"
+          to: keigoks@gmail.com
+          from: InvestMQuest Signals <${{ secrets.MAIL_USERNAME }}>
+          body: ${{ steps.seat_alert.outputs.body }}

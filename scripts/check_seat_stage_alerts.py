@@ -256,6 +256,27 @@ def compute() -> dict:
     }
 
 
+def build_test_alert_body(as_of: str, seats: dict, lamp_map: dict) -> str:
+    """--test-email 專用：不比對前次 state，只印今天的實際名單（核心／衛星／候補
+    逐檔含現階段），明白標示「測試信」，讓收件人一看就知道這不是真事件通知。"""
+    body_lines: list[str] = []
+    for role, _key in ROLE_LABELS:
+        tickers = sorted(t for t, i in seats.items() if i["role"] == role)
+        if not tickers:
+            body_lines.append(f"{role}（0）：（無）")
+            continue
+        parts = []
+        for t in tickers:
+            stage = lamp_map.get(t)
+            label = f"{stage} {STAGE_NAMES.get(stage, '')}".rstrip() if stage else "—"
+            parts.append(f"{t}（{label}）")
+        body_lines.append(f"{role}（{len(tickers)}）：" + "、".join(parts))
+    full = ([f"🧭 選股主控台名單變化（測試信）{as_of}", ""] + body_lines +
+            ["", "這是測試信：名單沒有變動；正式信只在名單新增／移除／換區時寄出。",
+             "", f"詳見 {COCKPIT_URL}"])
+    return "\n".join(full) + "\n"
+
+
 def build_alert_body(as_of: str, primary_events: list[str], secondary_events: list[str]) -> str | None:
     if not primary_events and not secondary_events:
         return None
@@ -275,7 +296,21 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dry-run", action="store_true",
                          help="印出今天名單與將發生的事件，不寫 state／alert 檔")
+    parser.add_argument("--test-email", action="store_true",
+                         help="寫一封標明「測試信」的 alert 檔（今天的實際名單，非事件比對），"
+                              "供手動觸發的測試 workflow 送信驗證管線；不寫 state 檔")
     args = parser.parse_args(argv)
+
+    if args.test_email:
+        seats = current_seats()
+        lamp_doc = _load_json(LAMP_JSON, {}) or {}
+        lamp_map = lamp_doc.get("lamp") or {}
+        as_of = lamp_doc.get("as_of") or "—"
+        body = build_test_alert_body(as_of, seats, lamp_map)
+        ALERT_TXT.parent.mkdir(parents=True, exist_ok=True)
+        ALERT_TXT.write_text(body, encoding="utf-8")
+        print(f"seat_stage_alerts: --test-email 測試信已寫入 {ALERT_TXT}（state 檔未動）")
+        return 0
 
     result = compute()
     seats = result["seats"]
